@@ -1,68 +1,59 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 05/11] kernel/printk: Dont try to print from IRQ/NMI region
-Date: Tue, 12 Jul 2016 12:49:55 -0400
-Message-ID: <20160712165020.638397631@goodmis.org>
-References: <20160712164950.490572026@goodmis.org>
+Subject: [PATCH RT 09/14] arm: lazy preempt: correct resched condition
+Date: Tue, 12 Jul 2016 12:48:08 -0400
+Message-ID: <20160712164818.966924570@goodmis.org>
+References: <20160712164759.154249453@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0005-kernel-printk-Don-t-try-to-print-from-IRQ-NMI-region.patch
+Content-Disposition: inline; filename=0009-arm-lazy-preempt-correct-resched-condition.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.12.61-rt82-rc1 stable review patch.
+3.14.72-rt76-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-On -RT we try to acquire sleeping locks which might lead to warnings
-from lockdep or a warn_on() from spin_try_lock() (which is a rtmutex on
-RT).
-We don't print in general from a IRQ off region so we should not try
-this via console_unblank() / bust_spinlocks() as well.
+If we get out of preempt_schedule_irq() then we check for NEED_RESCHED
+and call the former function again if set because the preemption counter
+has be zero at this point.
+However the counter for lazy-preempt might not be zero therefore we have
+to check the counter before looking at the need_resched_lazy flag.
 
+Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/printk/printk.c | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+ arch/arm/kernel/entry-armv.S | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-index 9a751f6c471e..7283909a9943 100644
---- a/kernel/printk/printk.c
-+++ b/kernel/printk/printk.c
-@@ -1293,6 +1293,11 @@ static void call_console_drivers(int level, const char *text, size_t len)
- 	if (!console_drivers)
- 		return;
- 
-+	if (IS_ENABLED(CONFIG_PREEMPT_RT_BASE)) {
-+		if (in_irq() || in_nmi())
-+			return;
-+	}
+diff --git a/arch/arm/kernel/entry-armv.S b/arch/arm/kernel/entry-armv.S
+index 62bc04cc9b7d..ceda9997a29d 100644
+--- a/arch/arm/kernel/entry-armv.S
++++ b/arch/arm/kernel/entry-armv.S
+@@ -234,7 +234,11 @@ svc_preempt:
+ 	bne	1b
+ 	tst	r0, #_TIF_NEED_RESCHED_LAZY
+ 	moveq	pc, r8				@ go again
+-	b	1b
++	ldr	r0, [tsk, #TI_PREEMPT_LAZY]	@ get preempt lazy count
++	teq	r0, #0				@ if preempt lazy count != 0
++	beq	1b
++	mov	pc, r8				@ go again
 +
- 	migrate_disable();
- 	for_each_console(con) {
- 		if (exclusive_console && con != exclusive_console)
-@@ -2215,6 +2220,11 @@ void console_unblank(void)
- {
- 	struct console *c;
+ #endif
  
-+	if (IS_ENABLED(CONFIG_PREEMPT_RT_BASE)) {
-+		if (in_irq() || in_nmi())
-+			return;
-+	}
-+
- 	/*
- 	 * console_unblank can no longer be called in interrupt context unless
- 	 * oops_in_progress is set to 1..
+ __und_fault:
 -- 
 2.8.1
