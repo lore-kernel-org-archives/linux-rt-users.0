@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 13/20] perf/x86/intel/rapl: Make PMU lock raw
-Date: Tue, 12 Jul 2016 10:24:18 -0400
-Message-ID: <20160712142419.689032759@goodmis.org>
+Subject: [PATCH RT 06/20] kvm, rt: change async pagefault code locking for PREEMPT_RT
+Date: Tue, 12 Jul 2016 10:24:11 -0400
+Message-ID: <20160712142418.343296848@goodmis.org>
 References: <20160712142405.634544943@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,21 +10,12 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	"Peter Zijlstra (Intel)" <peterz@infradead.org>,
-	Andi Kleen <andi.kleen@intel.com>,
-	Arnaldo Carvalho de Melo <acme@redhat.com>,
-	Borislav Petkov <bp@alien8.de>,
-	Harish Chegondi <harish.chegondi@intel.com>,
-	Jacob Pan <jacob.jun.pan@linux.intel.com>,
-	Jiri Olsa <jolsa@redhat.com>, Kan Liang <kan.liang@intel.com>,
-	Linus Torvalds <torvalds@linux-foundation.org>,
-	Stephane Eranian <eranian@google.com>,
-	Vince Weaver <vincent.weaver@maine.edu>,
-	<stable-rt@vger.kernel.org>, Ingo Molnar <mingo@kernel.org>
+	Rik van Riel <riel@redhat.com>,
+	Paolo Bonzini <pbonzini@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0013-perf-x86-intel-rapl-Make-PMU-lock-raw.patch
+Content-Disposition: inline; filename=0006-kvm-rt-change-async-pagefault-code-locking-for-PREEM.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -33,120 +24,163 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Rik van Riel <riel@redhat.com>
 
-Upstream commit: a208749c6426 ("perf/x86/intel/rapl: Make PMU lock raw")
+The async pagefault wake code can run from the idle task in exception
+context, so everything here needs to be made non-preemptible.
 
-This lock is taken in hard interrupt context even on Preempt-RT. Make it raw
-so RT does not have to patch it.
+Conversion to a simple wait queue and raw spinlock does the trick.
 
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-Cc: Andi Kleen <andi.kleen@intel.com>
-Cc: Arnaldo Carvalho de Melo <acme@redhat.com>
-Cc: Borislav Petkov <bp@alien8.de>
-Cc: Harish Chegondi <harish.chegondi@intel.com>
-Cc: Jacob Pan <jacob.jun.pan@linux.intel.com>
-Cc: Jiri Olsa <jolsa@redhat.com>
-Cc: Kan Liang <kan.liang@intel.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Stephane Eranian <eranian@google.com>
-Cc: Vince Weaver <vincent.weaver@maine.edu>
-Cc: linux-kernel@vger.kernel.org
-Cc: stable-rt@vger.kernel.org
-Link: http://lkml.kernel.org/r/20160222221012.669411833@linutronix.de
-Signed-off-by: Ingo Molnar <mingo@kernel.org>
+Signed-off-by: Rik van Riel <riel@redhat.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/x86/kernel/cpu/perf_event_intel_rapl.c | 20 ++++++++++----------
- 1 file changed, 10 insertions(+), 10 deletions(-)
+ arch/x86/kernel/kvm.c | 37 +++++++++++++++++++------------------
+ 1 file changed, 19 insertions(+), 18 deletions(-)
 
-diff --git a/arch/x86/kernel/cpu/perf_event_intel_rapl.c b/arch/x86/kernel/cpu/perf_event_intel_rapl.c
-index 358c54ad20d4..94689f19ad92 100644
---- a/arch/x86/kernel/cpu/perf_event_intel_rapl.c
-+++ b/arch/x86/kernel/cpu/perf_event_intel_rapl.c
-@@ -119,7 +119,7 @@ static struct perf_pmu_events_attr event_attr_##v = {			\
+diff --git a/arch/x86/kernel/kvm.c b/arch/x86/kernel/kvm.c
+index 9435620062df..ba97b5b45879 100644
+--- a/arch/x86/kernel/kvm.c
++++ b/arch/x86/kernel/kvm.c
+@@ -36,6 +36,7 @@
+ #include <linux/kprobes.h>
+ #include <linux/debugfs.h>
+ #include <linux/nmi.h>
++#include <linux/wait-simple.h>
+ #include <asm/timer.h>
+ #include <asm/cpu.h>
+ #include <asm/traps.h>
+@@ -91,14 +92,14 @@ static void kvm_io_delay(void)
+ 
+ struct kvm_task_sleep_node {
+ 	struct hlist_node link;
+-	wait_queue_head_t wq;
++	struct swait_head wq;
+ 	u32 token;
+ 	int cpu;
+ 	bool halted;
  };
  
- struct rapl_pmu {
--	spinlock_t	 lock;
-+	raw_spinlock_t	 lock;
- 	int		 n_active; /* number of active events */
- 	struct list_head active_list;
- 	struct pmu	 *pmu; /* pointer to rapl_pmu_class */
-@@ -223,13 +223,13 @@ static enum hrtimer_restart rapl_hrtimer_handle(struct hrtimer *hrtimer)
- 	if (!pmu->n_active)
- 		return HRTIMER_NORESTART;
+ static struct kvm_task_sleep_head {
+-	spinlock_t lock;
++	raw_spinlock_t lock;
+ 	struct hlist_head list;
+ } async_pf_sleepers[KVM_TASK_SLEEP_HASHSIZE];
  
--	spin_lock_irqsave(&pmu->lock, flags);
-+	raw_spin_lock_irqsave(&pmu->lock, flags);
+@@ -122,17 +123,17 @@ void kvm_async_pf_task_wait(u32 token)
+ 	u32 key = hash_32(token, KVM_TASK_SLEEP_HASHBITS);
+ 	struct kvm_task_sleep_head *b = &async_pf_sleepers[key];
+ 	struct kvm_task_sleep_node n, *e;
+-	DEFINE_WAIT(wait);
++	DEFINE_SWAITER(wait);
  
- 	list_for_each_entry(event, &pmu->active_list, active_entry) {
- 		rapl_event_update(event);
+ 	rcu_irq_enter();
+ 
+-	spin_lock(&b->lock);
++	raw_spin_lock(&b->lock);
+ 	e = _find_apf_task(b, token);
+ 	if (e) {
+ 		/* dummy entry exist -> wake up was delivered ahead of PF */
+ 		hlist_del(&e->link);
+ 		kfree(e);
+-		spin_unlock(&b->lock);
++		raw_spin_unlock(&b->lock);
+ 
+ 		rcu_irq_exit();
+ 		return;
+@@ -141,13 +142,13 @@ void kvm_async_pf_task_wait(u32 token)
+ 	n.token = token;
+ 	n.cpu = smp_processor_id();
+ 	n.halted = is_idle_task(current) || preempt_count() > 1;
+-	init_waitqueue_head(&n.wq);
++	init_swait_head(&n.wq);
+ 	hlist_add_head(&n.link, &b->list);
+-	spin_unlock(&b->lock);
++	raw_spin_unlock(&b->lock);
+ 
+ 	for (;;) {
+ 		if (!n.halted)
+-			prepare_to_wait(&n.wq, &wait, TASK_UNINTERRUPTIBLE);
++			swait_prepare(&n.wq, &wait, TASK_UNINTERRUPTIBLE);
+ 		if (hlist_unhashed(&n.link))
+ 			break;
+ 
+@@ -166,7 +167,7 @@ void kvm_async_pf_task_wait(u32 token)
+ 		}
+ 	}
+ 	if (!n.halted)
+-		finish_wait(&n.wq, &wait);
++		swait_finish(&n.wq, &wait);
+ 
+ 	rcu_irq_exit();
+ 	return;
+@@ -178,8 +179,8 @@ static void apf_task_wake_one(struct kvm_task_sleep_node *n)
+ 	hlist_del_init(&n->link);
+ 	if (n->halted)
+ 		smp_send_reschedule(n->cpu);
+-	else if (waitqueue_active(&n->wq))
+-		wake_up(&n->wq);
++	else if (swaitqueue_active(&n->wq))
++		swait_wake(&n->wq);
+ }
+ 
+ static void apf_task_wake_all(void)
+@@ -189,14 +190,14 @@ static void apf_task_wake_all(void)
+ 	for (i = 0; i < KVM_TASK_SLEEP_HASHSIZE; i++) {
+ 		struct hlist_node *p, *next;
+ 		struct kvm_task_sleep_head *b = &async_pf_sleepers[i];
+-		spin_lock(&b->lock);
++		raw_spin_lock(&b->lock);
+ 		hlist_for_each_safe(p, next, &b->list) {
+ 			struct kvm_task_sleep_node *n =
+ 				hlist_entry(p, typeof(*n), link);
+ 			if (n->cpu == smp_processor_id())
+ 				apf_task_wake_one(n);
+ 		}
+-		spin_unlock(&b->lock);
++		raw_spin_unlock(&b->lock);
+ 	}
+ }
+ 
+@@ -212,7 +213,7 @@ void kvm_async_pf_task_wake(u32 token)
  	}
  
--	spin_unlock_irqrestore(&pmu->lock, flags);
-+	raw_spin_unlock_irqrestore(&pmu->lock, flags);
- 
- 	hrtimer_forward_now(hrtimer, pmu->timer_interval);
- 
-@@ -266,9 +266,9 @@ static void rapl_pmu_event_start(struct perf_event *event, int mode)
- 	struct rapl_pmu *pmu = __this_cpu_read(rapl_pmu);
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&pmu->lock, flags);
-+	raw_spin_lock_irqsave(&pmu->lock, flags);
- 	__rapl_pmu_event_start(pmu, event);
--	spin_unlock_irqrestore(&pmu->lock, flags);
-+	raw_spin_unlock_irqrestore(&pmu->lock, flags);
+ again:
+-	spin_lock(&b->lock);
++	raw_spin_lock(&b->lock);
+ 	n = _find_apf_task(b, token);
+ 	if (!n) {
+ 		/*
+@@ -225,17 +226,17 @@ again:
+ 			 * Allocation failed! Busy wait while other cpu
+ 			 * handles async PF.
+ 			 */
+-			spin_unlock(&b->lock);
++			raw_spin_unlock(&b->lock);
+ 			cpu_relax();
+ 			goto again;
+ 		}
+ 		n->token = token;
+ 		n->cpu = smp_processor_id();
+-		init_waitqueue_head(&n->wq);
++		init_swait_head(&n->wq);
+ 		hlist_add_head(&n->link, &b->list);
+ 	} else
+ 		apf_task_wake_one(n);
+-	spin_unlock(&b->lock);
++	raw_spin_unlock(&b->lock);
+ 	return;
  }
- 
- static void rapl_pmu_event_stop(struct perf_event *event, int mode)
-@@ -277,7 +277,7 @@ static void rapl_pmu_event_stop(struct perf_event *event, int mode)
- 	struct hw_perf_event *hwc = &event->hw;
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&pmu->lock, flags);
-+	raw_spin_lock_irqsave(&pmu->lock, flags);
- 
- 	/* mark event as deactivated and stopped */
- 	if (!(hwc->state & PERF_HES_STOPPED)) {
-@@ -302,7 +302,7 @@ static void rapl_pmu_event_stop(struct perf_event *event, int mode)
- 		hwc->state |= PERF_HES_UPTODATE;
- 	}
- 
--	spin_unlock_irqrestore(&pmu->lock, flags);
-+	raw_spin_unlock_irqrestore(&pmu->lock, flags);
- }
- 
- static int rapl_pmu_event_add(struct perf_event *event, int mode)
-@@ -311,14 +311,14 @@ static int rapl_pmu_event_add(struct perf_event *event, int mode)
- 	struct hw_perf_event *hwc = &event->hw;
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&pmu->lock, flags);
-+	raw_spin_lock_irqsave(&pmu->lock, flags);
- 
- 	hwc->state = PERF_HES_UPTODATE | PERF_HES_STOPPED;
- 
- 	if (mode & PERF_EF_START)
- 		__rapl_pmu_event_start(pmu, event);
- 
--	spin_unlock_irqrestore(&pmu->lock, flags);
-+	raw_spin_unlock_irqrestore(&pmu->lock, flags);
- 
- 	return 0;
- }
-@@ -594,7 +594,7 @@ static int rapl_cpu_prepare(int cpu)
- 	pmu = kzalloc_node(sizeof(*pmu), GFP_KERNEL, cpu_to_node(cpu));
- 	if (!pmu)
- 		return -1;
--	spin_lock_init(&pmu->lock);
-+	raw_spin_lock_init(&pmu->lock);
- 
- 	INIT_LIST_HEAD(&pmu->active_list);
+ EXPORT_SYMBOL_GPL(kvm_async_pf_task_wake);
+@@ -486,7 +487,7 @@ void __init kvm_guest_init(void)
+ 	paravirt_ops_setup();
+ 	register_reboot_notifier(&kvm_pv_reboot_nb);
+ 	for (i = 0; i < KVM_TASK_SLEEP_HASHSIZE; i++)
+-		spin_lock_init(&async_pf_sleepers[i].lock);
++		raw_spin_lock_init(&async_pf_sleepers[i].lock);
+ 	if (kvm_para_has_feature(KVM_FEATURE_ASYNC_PF))
+ 		x86_init.irqs.trap_init = kvm_apf_trap_init;
  
 -- 
 2.8.1
