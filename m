@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 02/11] net: dev: always take qdiscs busylock in __dev_xmit_skb()
-Date: Tue, 12 Jul 2016 12:49:52 -0400
-Message-ID: <20160712165019.955844356@goodmis.org>
+Subject: [PATCH RT 01/11] kvm, rt: change async pagefault code locking for PREEMPT_RT
+Date: Tue, 12 Jul 2016 12:49:51 -0400
+Message-ID: <20160712165019.506477655@goodmis.org>
 References: <20160712164950.490572026@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,59 +9,178 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Rik van Riel <riel@redhat.com>,
+	Paolo Bonzini <pbonzini@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:43474 "EHLO mail.kernel.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754262AbcGLQuX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 12 Jul 2016 12:50:23 -0400
-Content-Disposition: inline; filename=0002-net-dev-always-take-qdisc-s-busylock-in-__dev_xmit_s.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0001-kvm-rt-change-async-pagefault-code-locking-for-PREEM.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 3.12.61-rt82-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Rik van Riel <riel@redhat.com>
 
-The root-lock is dropped before dev_hard_start_xmit() is invoked and after
-setting the __QDISC___STATE_RUNNING bit. If this task is now pushed away
-by a task with a higher priority then the task with the higher priority
-won't be able to submit packets to the NIC directly instead they will be
-enqueued into the Qdisc. The NIC will remain idle until the task(s) with
-higher priority leave the CPU and the task with lower priority gets back
-and finishes the job.
+The async pagefault wake code can run from the idle task in exception
+context, so everything here needs to be made non-preemptible.
 
-If we take always the busylock we ensure that the RT task can boost the
-low-prio task and submit the packet.
+Conversion to a simple wait queue and raw spinlock does the trick.
 
+Signed-off-by: Rik van Riel <riel@redhat.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- net/core/dev.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ arch/x86/kernel/kvm.c | 37 +++++++++++++++++++------------------
+ 1 file changed, 19 insertions(+), 18 deletions(-)
 
-diff --git a/net/core/dev.c b/net/core/dev.c
-index ee08da0fe0d7..c34af0bf3c0e 100644
---- a/net/core/dev.c
-+++ b/net/core/dev.c
-@@ -2713,7 +2713,11 @@ static inline int __dev_xmit_skb(struct sk_buff *skb, struct Qdisc *q,
- 	 * This permits __QDISC_STATE_RUNNING owner to get the lock more often
- 	 * and dequeue packets faster.
- 	 */
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	contended = true;
-+#else
- 	contended = qdisc_is_running(q);
-+#endif
- 	if (unlikely(contended))
- 		spin_lock(&q->busylock);
+diff --git a/arch/x86/kernel/kvm.c b/arch/x86/kernel/kvm.c
+index e72593338df6..7e640682699d 100644
+--- a/arch/x86/kernel/kvm.c
++++ b/arch/x86/kernel/kvm.c
+@@ -35,6 +35,7 @@
+ #include <linux/slab.h>
+ #include <linux/kprobes.h>
+ #include <linux/debugfs.h>
++#include <linux/wait-simple.h>
+ #include <asm/timer.h>
+ #include <asm/cpu.h>
+ #include <asm/traps.h>
+@@ -90,14 +91,14 @@ static void kvm_io_delay(void)
+ 
+ struct kvm_task_sleep_node {
+ 	struct hlist_node link;
+-	wait_queue_head_t wq;
++	struct swait_head wq;
+ 	u32 token;
+ 	int cpu;
+ 	bool halted;
+ };
+ 
+ static struct kvm_task_sleep_head {
+-	spinlock_t lock;
++	raw_spinlock_t lock;
+ 	struct hlist_head list;
+ } async_pf_sleepers[KVM_TASK_SLEEP_HASHSIZE];
+ 
+@@ -121,17 +122,17 @@ void kvm_async_pf_task_wait(u32 token)
+ 	u32 key = hash_32(token, KVM_TASK_SLEEP_HASHBITS);
+ 	struct kvm_task_sleep_head *b = &async_pf_sleepers[key];
+ 	struct kvm_task_sleep_node n, *e;
+-	DEFINE_WAIT(wait);
++	DEFINE_SWAITER(wait);
+ 
+ 	rcu_irq_enter();
+ 
+-	spin_lock(&b->lock);
++	raw_spin_lock(&b->lock);
+ 	e = _find_apf_task(b, token);
+ 	if (e) {
+ 		/* dummy entry exist -> wake up was delivered ahead of PF */
+ 		hlist_del(&e->link);
+ 		kfree(e);
+-		spin_unlock(&b->lock);
++		raw_spin_unlock(&b->lock);
+ 
+ 		rcu_irq_exit();
+ 		return;
+@@ -140,13 +141,13 @@ void kvm_async_pf_task_wait(u32 token)
+ 	n.token = token;
+ 	n.cpu = smp_processor_id();
+ 	n.halted = is_idle_task(current) || preempt_count() > 1;
+-	init_waitqueue_head(&n.wq);
++	init_swait_head(&n.wq);
+ 	hlist_add_head(&n.link, &b->list);
+-	spin_unlock(&b->lock);
++	raw_spin_unlock(&b->lock);
+ 
+ 	for (;;) {
+ 		if (!n.halted)
+-			prepare_to_wait(&n.wq, &wait, TASK_UNINTERRUPTIBLE);
++			swait_prepare(&n.wq, &wait, TASK_UNINTERRUPTIBLE);
+ 		if (hlist_unhashed(&n.link))
+ 			break;
+ 
+@@ -165,7 +166,7 @@ void kvm_async_pf_task_wait(u32 token)
+ 		}
+ 	}
+ 	if (!n.halted)
+-		finish_wait(&n.wq, &wait);
++		swait_finish(&n.wq, &wait);
+ 
+ 	rcu_irq_exit();
+ 	return;
+@@ -177,8 +178,8 @@ static void apf_task_wake_one(struct kvm_task_sleep_node *n)
+ 	hlist_del_init(&n->link);
+ 	if (n->halted)
+ 		smp_send_reschedule(n->cpu);
+-	else if (waitqueue_active(&n->wq))
+-		wake_up(&n->wq);
++	else if (swaitqueue_active(&n->wq))
++		swait_wake(&n->wq);
+ }
+ 
+ static void apf_task_wake_all(void)
+@@ -188,14 +189,14 @@ static void apf_task_wake_all(void)
+ 	for (i = 0; i < KVM_TASK_SLEEP_HASHSIZE; i++) {
+ 		struct hlist_node *p, *next;
+ 		struct kvm_task_sleep_head *b = &async_pf_sleepers[i];
+-		spin_lock(&b->lock);
++		raw_spin_lock(&b->lock);
+ 		hlist_for_each_safe(p, next, &b->list) {
+ 			struct kvm_task_sleep_node *n =
+ 				hlist_entry(p, typeof(*n), link);
+ 			if (n->cpu == smp_processor_id())
+ 				apf_task_wake_one(n);
+ 		}
+-		spin_unlock(&b->lock);
++		raw_spin_unlock(&b->lock);
+ 	}
+ }
+ 
+@@ -211,7 +212,7 @@ void kvm_async_pf_task_wake(u32 token)
+ 	}
+ 
+ again:
+-	spin_lock(&b->lock);
++	raw_spin_lock(&b->lock);
+ 	n = _find_apf_task(b, token);
+ 	if (!n) {
+ 		/*
+@@ -224,17 +225,17 @@ again:
+ 			 * Allocation failed! Busy wait while other cpu
+ 			 * handles async PF.
+ 			 */
+-			spin_unlock(&b->lock);
++			raw_spin_unlock(&b->lock);
+ 			cpu_relax();
+ 			goto again;
+ 		}
+ 		n->token = token;
+ 		n->cpu = smp_processor_id();
+-		init_waitqueue_head(&n->wq);
++		init_swait_head(&n->wq);
+ 		hlist_add_head(&n->link, &b->list);
+ 	} else
+ 		apf_task_wake_one(n);
+-	spin_unlock(&b->lock);
++	raw_spin_unlock(&b->lock);
+ 	return;
+ }
+ EXPORT_SYMBOL_GPL(kvm_async_pf_task_wake);
+@@ -484,7 +485,7 @@ void __init kvm_guest_init(void)
+ 	paravirt_ops_setup();
+ 	register_reboot_notifier(&kvm_pv_reboot_nb);
+ 	for (i = 0; i < KVM_TASK_SLEEP_HASHSIZE; i++)
+-		spin_lock_init(&async_pf_sleepers[i].lock);
++		raw_spin_lock_init(&async_pf_sleepers[i].lock);
+ 	if (kvm_para_has_feature(KVM_FEATURE_ASYNC_PF))
+ 		x86_init.irqs.trap_init = kvm_apf_trap_init;
  
 -- 
 2.8.1
-
-
