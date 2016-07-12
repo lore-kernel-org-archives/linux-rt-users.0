@@ -1,10 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/8] net: dev: always take qdiscs busylock in __dev_xmit_skb()
-Date: Tue, 12 Jul 2016 12:57:51 -0400
-Message-ID: <20160712165802.151719221@goodmis.org>
-References: <20160712165749.741663758@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Subject: [PATCH RT 0/8] Linux 3.10.102-rt113-rc1
+Date: Tue, 12 Jul 2016 12:57:49 -0400
+Message-ID: <20160712165749.741663758@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -13,49 +10,73 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-net-dev-always-take-qdisc-s-busylock-in-__dev_xmit_s.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.10.102-rt113-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+This is the RT stable review cycle of patch 3.10.102-rt113-rc1.
 
-The root-lock is dropped before dev_hard_start_xmit() is invoked and after
-setting the __QDISC___STATE_RUNNING bit. If this task is now pushed away
-by a task with a higher priority then the task with the higher priority
-won't be able to submit packets to the NIC directly instead they will be
-enqueued into the Qdisc. The NIC will remain idle until the task(s) with
-higher priority leave the CPU and the task with lower priority gets back
-and finishes the job.
+Please scream at me if I messed something up. Please test the patches too.
 
-If we take always the busylock we ensure that the RT task can boost the
-low-prio task and submit the packet.
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 7/14/2016.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.10.102-rt113-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.102.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.102-rt113-rc1.patch.xz
+
+You can also build from 3.10.102-rt112 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.102-rt112-rt113-rc1.patch.xz
+
+
+Changes from 3.10.102-rt112:
+
 ---
- net/core/dev.c | 4 ++++
- 1 file changed, 4 insertions(+)
 
-diff --git a/net/core/dev.c b/net/core/dev.c
-index 1857dde698ca..28e1c539099f 100644
---- a/net/core/dev.c
-+++ b/net/core/dev.c
-@@ -2680,7 +2680,11 @@ static inline int __dev_xmit_skb(struct sk_buff *skb, struct Qdisc *q,
- 	 * This permits __QDISC_STATE_RUNNING owner to get the lock more often
- 	 * and dequeue packets faster.
- 	 */
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	contended = true;
-+#else
- 	contended = qdisc_is_running(q);
-+#endif
- 	if (unlikely(contended))
- 		spin_lock(&q->busylock);
- 
--- 
-2.8.1
+
+Corey Minyard (1):
+      x86: Fix an RT MCE crash
+
+Josh Cartwright (1):
+      list_bl: fixup bogus lockdep warning
+
+Rik van Riel (1):
+      kvm, rt: change async pagefault code locking for PREEMPT_RT
+
+Sebastian Andrzej Siewior (4):
+      net: dev: always take qdisc's busylock in __dev_xmit_skb()
+      kernel/printk: Don't try to print from IRQ/NMI region
+      arm: lazy preempt: correct resched condition
+      trace: correct off by one while recording the trace-event
+
+Steven Rostedt (Red Hat) (1):
+      Linux 3.10.102-rt113-rc1
+
+----
+ arch/arm/kernel/entry-armv.S     |  6 +++++-
+ arch/x86/kernel/cpu/mcheck/mce.c |  3 ++-
+ arch/x86/kernel/kvm.c            | 37 +++++++++++++++++++------------------
+ include/linux/list_bl.h          | 12 +++++++-----
+ include/trace/ftrace.h           |  3 +++
+ kernel/printk.c                  | 10 ++++++++++
+ localversion-rt                  |  2 +-
+ net/core/dev.c                   |  4 ++++
+ 8 files changed, 51 insertions(+), 26 deletions(-)
