@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 3/8] list_bl: fixup bogus lockdep warning
-Date: Tue, 12 Jul 2016 12:57:52 -0400
-Message-ID: <20160712165802.302285289@goodmis.org>
+Subject: [PATCH RT 7/8] x86: Fix an RT MCE crash
+Date: Tue, 12 Jul 2016 12:57:56 -0400
+Message-ID: <20160712165802.938737832@goodmis.org>
 References: <20160712165749.741663758@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,12 +10,12 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
-	Josh Cartwright <joshc@ni.com>
+	Borislav Petkov <bp@alien8.de>,
+	Corey Minyard <cminyard@mvista.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-list_bl-fixup-bogus-lockdep-warning.patch
+Content-Disposition: inline; filename=0007-x86-Fix-an-RT-MCE-crash.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -24,103 +24,36 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Josh Cartwright <joshc@ni.com>
+From: Corey Minyard <cminyard@mvista.com>
 
-At first glance, the use of 'static inline' seems appropriate for
-INIT_HLIST_BL_HEAD().
+On some x86 systems an MCE interrupt would come in before the kernel
+was ready for it.  Looking at the latest RT code, it has similar
+(but not quite the same) code, except it adds a bool that tells if
+MCE handling is initialized.  That was required because they had
+switched to use swork instead of a kernel thread.  Here, just
+checking to see if the thread is NULL is good enough to see if
+MCE handling is initialized.
 
-However, when a 'static inline' function invocation is inlined by gcc,
-all callers share any static local data declared within that inline
-function.
-
-This presents a problem for how lockdep classes are setup.  raw_spinlocks, for
-example, when CONFIG_DEBUG_SPINLOCK,
-
-	# define raw_spin_lock_init(lock)				\
-	do {								\
-		static struct lock_class_key __key;			\
-									\
-		__raw_spin_lock_init((lock), #lock, &__key);		\
-	} while (0)
-
-When this macro is expanded into a 'static inline' caller, like
-INIT_HLIST_BL_HEAD():
-
-	static inline INIT_HLIST_BL_HEAD(struct hlist_bl_head *h)
-	{
-		h->first = NULL;
-		raw_spin_lock_init(&h->lock);
-	}
-
-...the static local lock_class_key object is made a function static.
-
-For compilation units which initialize invoke INIT_HLIST_BL_HEAD() more
-than once, then, all of the invocations share this same static local
-object.
-
-This can lead to some very confusing lockdep splats (example below).
-Solve this problem by forcing the INIT_HLIST_BL_HEAD() to be a macro,
-which prevents the lockdep class object sharing.
-
- =============================================
- [ INFO: possible recursive locking detected ]
- 4.4.4-rt11 #4 Not tainted
- ---------------------------------------------
- kswapd0/59 is trying to acquire lock:
-  (&h->lock#2){+.+.-.}, at: mb_cache_shrink_scan
-
- but task is already holding lock:
-  (&h->lock#2){+.+.-.}, at:  mb_cache_shrink_scan
-
- other info that might help us debug this:
-  Possible unsafe locking scenario:
-
-        CPU0
-        ----
-   lock(&h->lock#2);
-   lock(&h->lock#2);
-
-  *** DEADLOCK ***
-
-  May be due to missing lock nesting notation
-
- 2 locks held by kswapd0/59:
-  #0:  (shrinker_rwsem){+.+...}, at: rt_down_read_trylock
-  #1:  (&h->lock#2){+.+.-.}, at: mb_cache_shrink_scan
-
-Reported-by: Luis Claudio R. Goncalves <lclaudio@uudg.org>
-Tested-by: Luis Claudio R. Goncalves <lclaudio@uudg.org>
-Signed-off-by: Josh Cartwright <joshc@ni.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Suggested-by: Borislav Petkov <bp@alien8.de>
+Signed-off-by: Corey Minyard <cminyard@mvista.com>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- include/linux/list_bl.h | 12 +++++++-----
- 1 file changed, 7 insertions(+), 5 deletions(-)
+ arch/x86/kernel/cpu/mcheck/mce.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
-index d8876a0cf036..017d0f1c1eb4 100644
---- a/include/linux/list_bl.h
-+++ b/include/linux/list_bl.h
-@@ -42,13 +42,15 @@ struct hlist_bl_node {
- 	struct hlist_bl_node *next, **pprev;
- };
+diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
+index aaf4b9b94f38..cc70d98a30f6 100644
+--- a/arch/x86/kernel/cpu/mcheck/mce.c
++++ b/arch/x86/kernel/cpu/mcheck/mce.c
+@@ -1391,7 +1391,8 @@ static int mce_notify_work_init(void)
  
--static inline void INIT_HLIST_BL_HEAD(struct hlist_bl_head *h)
--{
--	h->first = NULL;
- #ifdef CONFIG_PREEMPT_RT_BASE
--	raw_spin_lock_init(&h->lock);
-+#define INIT_HLIST_BL_HEAD(h)		\
-+do {					\
-+	(h)->first = NULL;		\
-+	raw_spin_lock_init(&(h)->lock);	\
-+} while (0)
-+#else
-+#define INIT_HLIST_BL_HEAD(h) (h)->first = NULL
- #endif
--}
- 
- static inline void INIT_HLIST_BL_NODE(struct hlist_bl_node *h)
+ static void mce_notify_work(void)
  {
+-	wake_up_process(mce_notify_helper);
++	if (mce_notify_helper)
++		wake_up_process(mce_notify_helper);
+ }
+ #else
+ static void mce_notify_work(void)
 -- 
 2.8.1
