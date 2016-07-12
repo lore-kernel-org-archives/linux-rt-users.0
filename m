@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 09/15] sched,preempt: Fix preempt_count manipulations
-Date: Tue, 12 Jul 2016 10:29:16 -0400
-Message-ID: <20160712142920.119571643@goodmis.org>
+Subject: [PATCH RT 05/15] list_bl: fixup bogus lockdep warning
+Date: Tue, 12 Jul 2016 10:29:12 -0400
+Message-ID: <20160712142919.488675728@goodmis.org>
 References: <20160712142907.636678217@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,72 +10,123 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable@vger.kernel.org>, <stable-rt@vger.kernel.org>,
-	Vikram Mulukutla <markivx@codeaurora.org>,
-	"Peter Zijlstra (Intel)" <peterz@infradead.org>
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
+	Josh Cartwright <joshc@ni.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0009-sched-preempt-Fix-preempt_count-manipulations.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.136]:52364 "EHLO mail.kernel.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755058AbcGLO3X (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 12 Jul 2016 10:29:23 -0400
+Content-Disposition: inline; filename=0005-list_bl-fixup-bogus-lockdep-warning.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 3.18.36-rt38-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Peter Zijlstra <peterz@infradead.org>
+From: Josh Cartwright <joshc@ni.com>
 
-Vikram reported that his ARM64 compiler managed to 'optimize' away the
-preempt_count manipulations in code like:
+At first glance, the use of 'static inline' seems appropriate for
+INIT_HLIST_BL_HEAD().
 
-	preempt_enable_no_resched();
-	put_user();
-	preempt_disable();
+However, when a 'static inline' function invocation is inlined by gcc,
+all callers share any static local data declared within that inline
+function.
 
-Irrespective of that fact that that is horrible code that should be
-fixed for many reasons, it does highlight a deficiency in the generic
-preempt_count manipulators. As it is never right to combine/elide
-preempt_count manipulations like this.
+This presents a problem for how lockdep classes are setup.  raw_spinlocks, for
+example, when CONFIG_DEBUG_SPINLOCK,
 
-Therefore sprinkle some volatile in the two generic accessors to
-ensure the compiler is aware of the fact that the preempt_count is
-observed outside of the regular program-order view and thus cannot be
-optimized away like this.
+	# define raw_spin_lock_init(lock)				\
+	do {								\
+		static struct lock_class_key __key;			\
+									\
+		__raw_spin_lock_init((lock), #lock, &__key);		\
+	} while (0)
 
-x86; the only arch not using the generic code is not affected as we
-do all this in asm in order to use the segment base per-cpu stuff.
+When this macro is expanded into a 'static inline' caller, like
+INIT_HLIST_BL_HEAD():
 
-Cc: stable@vger.kernel.org
-Cc: stable-rt@vger.kernel.org
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Fixes: a787870924db ("sched, arch: Create asm/preempt.h")
-Reported-by: Vikram Mulukutla <markivx@codeaurora.org>
-Tested-by: Vikram Mulukutla <markivx@codeaurora.org>
-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+	static inline INIT_HLIST_BL_HEAD(struct hlist_bl_head *h)
+	{
+		h->first = NULL;
+		raw_spin_lock_init(&h->lock);
+	}
+
+...the static local lock_class_key object is made a function static.
+
+For compilation units which initialize invoke INIT_HLIST_BL_HEAD() more
+than once, then, all of the invocations share this same static local
+object.
+
+This can lead to some very confusing lockdep splats (example below).
+Solve this problem by forcing the INIT_HLIST_BL_HEAD() to be a macro,
+which prevents the lockdep class object sharing.
+
+ =============================================
+ [ INFO: possible recursive locking detected ]
+ 4.4.4-rt11 #4 Not tainted
+ ---------------------------------------------
+ kswapd0/59 is trying to acquire lock:
+  (&h->lock#2){+.+.-.}, at: mb_cache_shrink_scan
+
+ but task is already holding lock:
+  (&h->lock#2){+.+.-.}, at:  mb_cache_shrink_scan
+
+ other info that might help us debug this:
+  Possible unsafe locking scenario:
+
+        CPU0
+        ----
+   lock(&h->lock#2);
+   lock(&h->lock#2);
+
+  *** DEADLOCK ***
+
+  May be due to missing lock nesting notation
+
+ 2 locks held by kswapd0/59:
+  #0:  (shrinker_rwsem){+.+...}, at: rt_down_read_trylock
+  #1:  (&h->lock#2){+.+.-.}, at: mb_cache_shrink_scan
+
+Reported-by: Luis Claudio R. Goncalves <lclaudio@uudg.org>
+Tested-by: Luis Claudio R. Goncalves <lclaudio@uudg.org>
+Signed-off-by: Josh Cartwright <joshc@ni.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- include/asm-generic/preempt.h | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ include/linux/list_bl.h | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
 
-diff --git a/include/asm-generic/preempt.h b/include/asm-generic/preempt.h
-index 1cd3f5d767a8..ed1881dd9b36 100644
---- a/include/asm-generic/preempt.h
-+++ b/include/asm-generic/preempt.h
-@@ -7,10 +7,10 @@
+diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
+index d8876a0cf036..017d0f1c1eb4 100644
+--- a/include/linux/list_bl.h
++++ b/include/linux/list_bl.h
+@@ -42,13 +42,15 @@ struct hlist_bl_node {
+ 	struct hlist_bl_node *next, **pprev;
+ };
  
- static __always_inline int preempt_count(void)
- {
--	return current_thread_info()->preempt_count;
-+	return READ_ONCE(current_thread_info()->preempt_count);
- }
+-static inline void INIT_HLIST_BL_HEAD(struct hlist_bl_head *h)
+-{
+-	h->first = NULL;
+ #ifdef CONFIG_PREEMPT_RT_BASE
+-	raw_spin_lock_init(&h->lock);
++#define INIT_HLIST_BL_HEAD(h)		\
++do {					\
++	(h)->first = NULL;		\
++	raw_spin_lock_init(&(h)->lock);	\
++} while (0)
++#else
++#define INIT_HLIST_BL_HEAD(h) (h)->first = NULL
+ #endif
+-}
  
--static __always_inline int *preempt_count_ptr(void)
-+static __always_inline volatile int *preempt_count_ptr(void)
+ static inline void INIT_HLIST_BL_NODE(struct hlist_bl_node *h)
  {
- 	return &current_thread_info()->preempt_count;
- }
 -- 
 2.8.1
+
+
