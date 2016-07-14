@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.14.72-rt76
-Date: Thu, 14 Jul 2016 10:58:15 -0400
-Message-ID: <20160714105815.4a824249@gandalf.local.home>
+Subject: [ANNOUNCE] 3.12.61-rt82
+Date: Thu, 14 Jul 2016 10:58:44 -0400
+Message-ID: <20160714105844.0f5ff887@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,30 +18,30 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.14.72-rt76 stable release.
+I'm pleased to announce the 3.12.61-rt82 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.14-rt
-  Head SHA1: e9deb8e0208728e04f658d89e60e641f0beefe54
+  branch: v3.12-rt
+  Head SHA1: 275c808f91fc8e1873873718290a7f242fe127cd
 
 
-Or to build 3.14.72-rt76 directly, the following patches should be applied:
+Or to build 3.12.61-rt82 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.14.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.14.72.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.61.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.72-rt76.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.61-rt82.patch.xz
 
 
 
-You can also build from 3.14.72-rt75 by applying the incremental patch:
+You can also build from 3.12.61-rt81 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/incr/patch-3.14.72-rt75-rt76.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.61-rt81-rt82.patch.xz
 
 
 
@@ -50,7 +50,7 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.14.72-rt75:
+Changes from v3.12.61-rt81:
 
 ---
 
@@ -63,12 +63,6 @@ Josh Cartwright (1):
 Luiz Capitulino (1):
       mm: perform lru_add_drain_all() remotely
 
-Mike Galbraith (1):
-      mm/zsmalloc: Use get/put_cpu_light in zs_map_object()/zs_unmap_object()
-
-Peter Zijlstra (1):
-      sched,preempt: Fix preempt_count manipulations
-
 Rik van Riel (1):
       kvm, rt: change async pagefault code locking for PREEMPT_RT
 
@@ -80,29 +74,23 @@ Sebastian Andrzej Siewior (5):
       trace: correct off by one while recording the trace-event
 
 Steven Rostedt (Red Hat) (1):
-      Linux 3.14.72-rt76
-
-Thomas Gleixner (1):
-      perf/x86/intel/rapl: Make PMU lock raw
+      Linux 3.12.61-rt82
 
 ----
- arch/arm/kernel/entry-armv.S                |  6 ++++-
- arch/x86/kernel/cpu/mcheck/mce.c            |  3 ++-
- arch/x86/kernel/cpu/perf_event_intel_rapl.c | 20 ++++++++--------
- arch/x86/kernel/kvm.c                       | 37 +++++++++++++++--------------
- include/asm-generic/preempt.h               |  4 ++--
- include/linux/list_bl.h                     | 12 ++++++----
- include/linux/locallock.h                   |  6 +++++
- include/trace/ftrace.h                      |  3 +++
- kernel/printk/printk.c                      | 10 ++++++++
- localversion-rt                             |  2 +-
- mm/swap.c                                   | 37 +++++++++++++++++++++++------
- mm/zsmalloc.c                               |  4 ++--
- net/core/dev.c                              |  4 ++++
- 13 files changed, 101 insertions(+), 47 deletions(-)
+ arch/arm/kernel/entry-armv.S     |  6 +++++-
+ arch/x86/kernel/cpu/mcheck/mce.c |  3 ++-
+ arch/x86/kernel/kvm.c            | 37 +++++++++++++++++++------------------
+ include/linux/list_bl.h          | 12 +++++++-----
+ include/linux/locallock.h        |  6 ++++++
+ include/trace/ftrace.h           |  3 +++
+ kernel/printk/printk.c           | 10 ++++++++++
+ localversion-rt                  |  2 +-
+ mm/swap.c                        | 37 ++++++++++++++++++++++++++++++-------
+ net/core/dev.c                   |  4 ++++
+ 10 files changed, 87 insertions(+), 33 deletions(-)
 ---------------------------
 diff --git a/arch/arm/kernel/entry-armv.S b/arch/arm/kernel/entry-armv.S
-index 62bc04cc9b7d..ceda9997a29d 100644
+index 8c5e809c1f07..96eb4d26a5c1 100644
 --- a/arch/arm/kernel/entry-armv.S
 +++ b/arch/arm/kernel/entry-armv.S
 @@ -234,7 +234,11 @@ svc_preempt:
@@ -119,7 +107,7 @@ index 62bc04cc9b7d..ceda9997a29d 100644
  
  __und_fault:
 diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
-index d4867bd532f3..31ec14000e4a 100644
+index 3a7ab0b08cdf..9901b77ed819 100644
 --- a/arch/x86/kernel/cpu/mcheck/mce.c
 +++ b/arch/x86/kernel/cpu/mcheck/mce.c
 @@ -1403,7 +1403,8 @@ static int mce_notify_work_init(void)
@@ -132,93 +120,8 @@ index d4867bd532f3..31ec14000e4a 100644
  }
  #else
  static void mce_notify_work(void)
-diff --git a/arch/x86/kernel/cpu/perf_event_intel_rapl.c b/arch/x86/kernel/cpu/perf_event_intel_rapl.c
-index 95700e52061d..4d270d910c33 100644
---- a/arch/x86/kernel/cpu/perf_event_intel_rapl.c
-+++ b/arch/x86/kernel/cpu/perf_event_intel_rapl.c
-@@ -98,7 +98,7 @@ static struct kobj_attribute format_attr_##_var =		\
- #define RAPL_CNTR_WIDTH 32 /* 32-bit rapl counters */
- 
- struct rapl_pmu {
--	spinlock_t	 lock;
-+	raw_spinlock_t	 lock;
- 	int		 hw_unit;  /* 1/2^hw_unit Joule */
- 	int		 n_active; /* number of active events */
- 	struct list_head active_list;
-@@ -188,13 +188,13 @@ static enum hrtimer_restart rapl_hrtimer_handle(struct hrtimer *hrtimer)
- 	if (!pmu->n_active)
- 		return HRTIMER_NORESTART;
- 
--	spin_lock_irqsave(&pmu->lock, flags);
-+	raw_spin_lock_irqsave(&pmu->lock, flags);
- 
- 	list_for_each_entry(event, &pmu->active_list, active_entry) {
- 		rapl_event_update(event);
- 	}
- 
--	spin_unlock_irqrestore(&pmu->lock, flags);
-+	raw_spin_unlock_irqrestore(&pmu->lock, flags);
- 
- 	hrtimer_forward_now(hrtimer, pmu->timer_interval);
- 
-@@ -231,9 +231,9 @@ static void rapl_pmu_event_start(struct perf_event *event, int mode)
- 	struct rapl_pmu *pmu = __get_cpu_var(rapl_pmu);
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&pmu->lock, flags);
-+	raw_spin_lock_irqsave(&pmu->lock, flags);
- 	__rapl_pmu_event_start(pmu, event);
--	spin_unlock_irqrestore(&pmu->lock, flags);
-+	raw_spin_unlock_irqrestore(&pmu->lock, flags);
- }
- 
- static void rapl_pmu_event_stop(struct perf_event *event, int mode)
-@@ -242,7 +242,7 @@ static void rapl_pmu_event_stop(struct perf_event *event, int mode)
- 	struct hw_perf_event *hwc = &event->hw;
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&pmu->lock, flags);
-+	raw_spin_lock_irqsave(&pmu->lock, flags);
- 
- 	/* mark event as deactivated and stopped */
- 	if (!(hwc->state & PERF_HES_STOPPED)) {
-@@ -267,7 +267,7 @@ static void rapl_pmu_event_stop(struct perf_event *event, int mode)
- 		hwc->state |= PERF_HES_UPTODATE;
- 	}
- 
--	spin_unlock_irqrestore(&pmu->lock, flags);
-+	raw_spin_unlock_irqrestore(&pmu->lock, flags);
- }
- 
- static int rapl_pmu_event_add(struct perf_event *event, int mode)
-@@ -276,14 +276,14 @@ static int rapl_pmu_event_add(struct perf_event *event, int mode)
- 	struct hw_perf_event *hwc = &event->hw;
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&pmu->lock, flags);
-+	raw_spin_lock_irqsave(&pmu->lock, flags);
- 
- 	hwc->state = PERF_HES_UPTODATE | PERF_HES_STOPPED;
- 
- 	if (mode & PERF_EF_START)
- 		__rapl_pmu_event_start(pmu, event);
- 
--	spin_unlock_irqrestore(&pmu->lock, flags);
-+	raw_spin_unlock_irqrestore(&pmu->lock, flags);
- 
- 	return 0;
- }
-@@ -526,7 +526,7 @@ static int rapl_cpu_prepare(int cpu)
- 	if (!pmu)
- 		return -1;
- 
--	spin_lock_init(&pmu->lock);
-+	raw_spin_lock_init(&pmu->lock);
- 
- 	INIT_LIST_HEAD(&pmu->active_list);
- 
 diff --git a/arch/x86/kernel/kvm.c b/arch/x86/kernel/kvm.c
-index 0b1e1d5dbc5b..7606d7c35bd2 100644
+index e72593338df6..7e640682699d 100644
 --- a/arch/x86/kernel/kvm.c
 +++ b/arch/x86/kernel/kvm.c
 @@ -35,6 +35,7 @@
@@ -360,23 +263,6 @@ index 0b1e1d5dbc5b..7606d7c35bd2 100644
  	if (kvm_para_has_feature(KVM_FEATURE_ASYNC_PF))
  		x86_init.irqs.trap_init = kvm_apf_trap_init;
  
-diff --git a/include/asm-generic/preempt.h b/include/asm-generic/preempt.h
-index 54352f4dde1a..65759d8b0b46 100644
---- a/include/asm-generic/preempt.h
-+++ b/include/asm-generic/preempt.h
-@@ -7,10 +7,10 @@
- 
- static __always_inline int preempt_count(void)
- {
--	return current_thread_info()->preempt_count;
-+	return READ_ONCE(current_thread_info()->preempt_count);
- }
- 
--static __always_inline int *preempt_count_ptr(void)
-+static __always_inline volatile int *preempt_count_ptr(void)
- {
- 	return &current_thread_info()->preempt_count;
- }
 diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
 index d8876a0cf036..017d0f1c1eb4 100644
 --- a/include/linux/list_bl.h
@@ -427,10 +313,10 @@ index 21653e9bfa20..015271ff8ec8 100644
  {
  	spin_lock_irqsave(&lv->lock, lv->flags);
 diff --git a/include/trace/ftrace.h b/include/trace/ftrace.h
-index 1ee19a24cc5f..73a9f766e904 100644
+index 645d749d3c9c..1c74dcd4c76e 100644
 --- a/include/trace/ftrace.h
 +++ b/include/trace/ftrace.h
-@@ -555,6 +555,9 @@ ftrace_raw_event_##call(void *__data, proto)				\
+@@ -536,6 +536,9 @@ ftrace_raw_event_##call(void *__data, proto)				\
  									\
  	local_save_flags(irq_flags);					\
  	pc = preempt_count();						\
@@ -441,10 +327,10 @@ index 1ee19a24cc5f..73a9f766e904 100644
  	__data_size = ftrace_get_offsets_##call(&__data_offsets, args); \
  									\
 diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-index 0b47939efd62..4472339e2156 100644
+index 9a751f6c471e..7283909a9943 100644
 --- a/kernel/printk/printk.c
 +++ b/kernel/printk/printk.c
-@@ -1289,6 +1289,11 @@ static void call_console_drivers(int level, const char *text, size_t len)
+@@ -1293,6 +1293,11 @@ static void call_console_drivers(int level, const char *text, size_t len)
  	if (!console_drivers)
  		return;
  
@@ -456,7 +342,7 @@ index 0b47939efd62..4472339e2156 100644
  	migrate_disable();
  	for_each_console(con) {
  		if (exclusive_console && con != exclusive_console)
-@@ -2214,6 +2219,11 @@ void console_unblank(void)
+@@ -2215,6 +2220,11 @@ void console_unblank(void)
  {
  	struct console *c;
  
@@ -469,17 +355,17 @@ index 0b47939efd62..4472339e2156 100644
  	 * console_unblank can no longer be called in interrupt context unless
  	 * oops_in_progress is set to 1..
 diff --git a/localversion-rt b/localversion-rt
-index 54e7da6f49fb..c1f2720eaf25 100644
+index 8269ec129c0c..56556986917c 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt75
-+-rt76
+--rt81
++-rt82
 diff --git a/mm/swap.c b/mm/swap.c
-index 9a9d4c7da2cc..a9064ed57fc2 100644
+index 8ab73ba62a68..05e75d61c707 100644
 --- a/mm/swap.c
 +++ b/mm/swap.c
-@@ -750,9 +750,15 @@ void lru_add_drain_cpu(int cpu)
+@@ -718,9 +718,15 @@ void lru_add_drain_cpu(int cpu)
  		unsigned long flags;
  
  		/* No harm done if a racing interrupt already did this */
@@ -495,7 +381,7 @@ index 9a9d4c7da2cc..a9064ed57fc2 100644
  	}
  
  	pvec = &per_cpu(lru_deactivate_pvecs, cpu);
-@@ -795,12 +801,32 @@ void lru_add_drain(void)
+@@ -763,12 +769,32 @@ void lru_add_drain(void)
  	local_unlock_cpu(swapvec_lock);
  }
  
@@ -528,7 +414,7 @@ index 9a9d4c7da2cc..a9064ed57fc2 100644
  
  void lru_add_drain_all(void)
  {
-@@ -813,20 +839,17 @@ void lru_add_drain_all(void)
+@@ -781,20 +807,17 @@ void lru_add_drain_all(void)
  	cpumask_clear(&has_work);
  
  	for_each_online_cpu(cpu) {
@@ -553,33 +439,11 @@ index 9a9d4c7da2cc..a9064ed57fc2 100644
  
  	put_online_cpus();
  	mutex_unlock(&lock);
-diff --git a/mm/zsmalloc.c b/mm/zsmalloc.c
-index c03ca5e9fe15..df9c7a189118 100644
---- a/mm/zsmalloc.c
-+++ b/mm/zsmalloc.c
-@@ -1037,7 +1037,7 @@ void *zs_map_object(struct zs_pool *pool, unsigned long handle,
- 	class = &pool->size_class[class_idx];
- 	off = obj_idx_to_offset(page, obj_idx, class->size);
- 
--	area = &get_cpu_var(zs_map_area);
-+	area = per_cpu_ptr(&zs_map_area, get_cpu_light());
- 	area->vm_mm = mm;
- 	if (off + class->size <= PAGE_SIZE) {
- 		/* this object is contained entirely within a page */
-@@ -1083,7 +1083,7 @@ void zs_unmap_object(struct zs_pool *pool, unsigned long handle)
- 
- 		__zs_unmap_object(area, pages, off, class->size);
- 	}
--	put_cpu_var(zs_map_area);
-+	put_cpu_light();
- }
- EXPORT_SYMBOL_GPL(zs_unmap_object);
- 
 diff --git a/net/core/dev.c b/net/core/dev.c
-index 4259edb6d29b..0a680b4adf35 100644
+index ee08da0fe0d7..c34af0bf3c0e 100644
 --- a/net/core/dev.c
 +++ b/net/core/dev.c
-@@ -2720,7 +2720,11 @@ static inline int __dev_xmit_skb(struct sk_buff *skb, struct Qdisc *q,
+@@ -2713,7 +2713,11 @@ static inline int __dev_xmit_skb(struct sk_buff *skb, struct Qdisc *q,
  	 * This permits __QDISC_STATE_RUNNING owner to get the lock more often
  	 * and dequeue packets faster.
  	 */
