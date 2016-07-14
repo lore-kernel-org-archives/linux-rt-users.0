@@ -1,78 +1,48 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] 4.6.4-rt7
-Date: Thu, 14 Jul 2016 19:15:41 +0200
-Message-ID: <20160714171541.GC12152@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [RT PATCH 1/2] timers: wakeup all timer waiters
+Date: Thu, 14 Jul 2016 13:19:45 -0400
+Message-ID: <20160714131945.67cc8ce5@gandalf.local.home>
+References: <1468512304-15310-1-git-send-email-bigeasy@linutronix.de>
+	<20160714121341.2b0e70f5@gandalf.local.home>
+	<e014d4ad-316f-3afe-fcac-923cd2f9a7e6@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	tglx@linutronix.de
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
+In-Reply-To: <e014d4ad-316f-3afe-fcac-923cd2f9a7e6@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Dear RT folks!
+On Thu, 14 Jul 2016 19:14:58 +0200
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 
-I'm pleased to announce the v4.6.4-rt7 patch set.
+> On 07/14/2016 06:13 PM, Steven Rostedt wrote:
+> >>  
+> >> -# define wakeup_timer_waiters(b)	wake_up(&(b)->wait_for_running_timer)
+> >> +# define wakeup_timer_waiters(b)	wake_up_all(&(b)->wait_for_running_timer)  
+> > 
+> > OK, I just received this patch (way after patch 2)
+> > 
+> > I'm assuming that patch two was done such that you don't do a
+> > "wake_up_all" under a spinlock.  
+> 
+> No. I pulled in new timer code in and had to redo this part of RT.
+> 
+> While doing so I noticed that we drop the base lock during timer
+> invocations and so it could be possible that we have two invocations
+> of del_timer_sync() on a timer on the same "base" (one after the
+> other). This is patch #1.
+> 
+> After that I saw that we do the wake up under the base lock but there
+> is no reason for it. So here is patch #2.
+> 
+> Patch #1 is something that could happen in theory and I did not run in
+> any problem.
+>
 
-Changes since v4.6.4-rt6:
+OK, so patch 2 was just discovered by reviewing code?
 
-  - Wake up all waiters of del_timer_sync(). Usually there should not
-    be more than just one waiter (per timer base) but it possible to
-    gain more.
-
-  - Wake up the waiters of del_timer_sync() after dropping the base lock.
-
-Known issues
-    - CPU hotplug got a little better but can deadlock.
-
-The delta patch against 4.6.4-rt6 is appended below and can be found here:
-
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.6/incr/patch-4.6.4-rt6-rt7.patch.xz
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.6.4-rt7
-
-The RT patch against 4.6.2 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.6/patch-4.6.4-rt7.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.6/patches-4.6.4-rt7.tar.xz
-
-Sebastian
-
-diff --git a/kernel/time/timer.c b/kernel/time/timer.c
-index 5f9d3599ef0a..716ef84a5d87 100644
---- a/kernel/time/timer.c
-+++ b/kernel/time/timer.c
-@@ -1051,7 +1051,7 @@ static void wait_for_running_timer(struct timer_list *timer)
- 		   base->running_timer != timer);
- }
- 
--# define wakeup_timer_waiters(b)	wake_up(&(b)->wait_for_running_timer)
-+# define wakeup_timer_waiters(b)	wake_up_all(&(b)->wait_for_running_timer)
- #else
- static inline void wait_for_running_timer(struct timer_list *timer)
- {
-@@ -1313,8 +1313,8 @@ static inline void __run_timers(struct tvec_base *base)
- 			}
- 		}
- 	}
--	wakeup_timer_waiters(base);
- 	spin_unlock_irq(&base->lock);
-+	wakeup_timer_waiters(base);
- }
- 
- #ifdef CONFIG_NO_HZ_COMMON
-diff --git a/localversion-rt b/localversion-rt
-index 8fc605d80667..045478966e9f 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt6
-+-rt7
+-- Steve
