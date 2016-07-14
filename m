@@ -1,55 +1,41 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Subject: Re: [RT PATCH 1/2] timers: wakeup all timer waiters
-Date: Thu, 14 Jul 2016 12:13:41 -0400
-Message-ID: <20160714121341.2b0e70f5@gandalf.local.home>
+Date: Thu, 14 Jul 2016 19:14:58 +0200
+Message-ID: <e014d4ad-316f-3afe-fcac-923cd2f9a7e6@linutronix.de>
 References: <1468512304-15310-1-git-send-email-bigeasy@linutronix.de>
+ <20160714121341.2b0e70f5@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
 Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
 	tglx@linutronix.de
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1468512304-15310-1-git-send-email-bigeasy@linutronix.de>
+In-Reply-To: <20160714121341.2b0e70f5@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 14 Jul 2016 18:05:03 +0200
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
-
-> The base lock is dropped during the invocation if the timer. That means
-> it is possible that we have one waiter while timer1 is running and once
-> this one finished, we get another waiter while timer2 is running. Since
-> we wake up only one waiter it is possible that we miss the other one.
-> This will probably heal itself over time because most of the time we
-> complete timers without an active wake up.
-> To avoid the scenario where we don't wake up all waiters at once,
-> wake_up_all() is used.
+On 07/14/2016 06:13 PM, Steven Rostedt wrote:
+>>  
+>> -# define wakeup_timer_waiters(b)	wake_up(&(b)->wait_for_running_timer)
+>> +# define wakeup_timer_waiters(b)	wake_up_all(&(b)->wait_for_running_timer)
 > 
-> Cc: stable-rt@vger.kernel.org
-> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> ---
->  kernel/time/timer.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+> OK, I just received this patch (way after patch 2)
 > 
-> diff --git a/kernel/time/timer.c b/kernel/time/timer.c
-> index 5f9d3599ef0a..b3c3d3a6216f 100644
-> --- a/kernel/time/timer.c
-> +++ b/kernel/time/timer.c
-> @@ -1051,7 +1051,7 @@ static void wait_for_running_timer(struct timer_list *timer)
->  		   base->running_timer != timer);
->  }
->  
-> -# define wakeup_timer_waiters(b)	wake_up(&(b)->wait_for_running_timer)
-> +# define wakeup_timer_waiters(b)	wake_up_all(&(b)->wait_for_running_timer)
+> I'm assuming that patch two was done such that you don't do a
+> "wake_up_all" under a spinlock.
 
-OK, I just received this patch (way after patch 2)
+No. I pulled in new timer code in and had to redo this part of RT.
 
-I'm assuming that patch two was done such that you don't do a
-"wake_up_all" under a spinlock.
+While doing so I noticed that we drop the base lock during timer
+invocations and so it could be possible that we have two invocations
+of del_timer_sync() on a timer on the same "base" (one after the
+other). This is patch #1.
 
--- Steve
+After that I saw that we do the wake up under the base lock but there
+is no reason for it. So here is patch #2.
 
->  #else
->  static inline void wait_for_running_timer(struct timer_list *timer)
->  {
+Patch #1 is something that could happen in theory and I did not run in
+any problem.
+
+Sebastian
