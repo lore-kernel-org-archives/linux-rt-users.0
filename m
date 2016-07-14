@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.4.112-rt143
-Date: Thu, 14 Jul 2016 10:59:43 -0400
-Message-ID: <20160714105943.7164eba9@gandalf.local.home>
+Subject: [ANNOUNCE] 3.2.81-rt117
+Date: Thu, 14 Jul 2016 11:00:19 -0400
+Message-ID: <20160714110019.0dd2ca3d@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -11,37 +11,42 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtprelay0082.hostedemail.com ([216.40.44.82]:59070 "EHLO
+	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1751175AbcGNPAX (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 14 Jul 2016 11:00:23 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.4.112-rt143 stable release.
+I'm pleased to announce the 3.2.81-rt117 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.4-rt
-  Head SHA1: 7a6baa46e0f5e19beea329413b9832722f86ee5e
+  branch: v3.2-rt
+  Head SHA1: fe7588485c196d9dcfb35019c846c7f9cdde64fa
 
 
-Or to build 3.4.112-rt143 directly, the following patches should be applied:
+Or to build 3.2.81-rt117 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.112.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.81.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.112-rt143.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.81-rt117.patch.xz
 
 
 
-You can also build from 3.4.112-rt142 by applying the incremental patch:
+You can also build from 3.2.81-rt116 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.112-rt142-rt143.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.81-rt116-rt117.patch.xz
 
 
 
@@ -50,7 +55,7 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.4.112-rt142:
+Changes from v3.2.81-rt116:
 
 ---
 
@@ -62,7 +67,7 @@ Sebastian Andrzej Siewior (1):
 
 Steven Rostedt (Red Hat) (2):
       Revert: KVM: lapic: mark LAPIC timer handler as irqsafe
-      Linux 3.4.112-rt143
+      Linux 3.2.81-rt117
 
 ----
  arch/x86/kernel/cpu/mcheck/mce.c |  3 ++-
@@ -72,10 +77,10 @@ Steven Rostedt (Red Hat) (2):
  4 files changed, 9 insertions(+), 41 deletions(-)
 ---------------------------
 diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
-index 27068f690ede..674872b08ea4 100644
+index b08a373f66fb..fc02fe279ddc 100644
 --- a/arch/x86/kernel/cpu/mcheck/mce.c
 +++ b/arch/x86/kernel/cpu/mcheck/mce.c
-@@ -1344,7 +1344,8 @@ static int mce_notify_work_init(void)
+@@ -1206,7 +1206,8 @@ static int mce_notify_work_init(void)
  
  static void mce_notify_work(void)
  {
@@ -86,10 +91,10 @@ index 27068f690ede..674872b08ea4 100644
  #else
  static void mce_notify_work(void)
 diff --git a/arch/x86/kvm/lapic.c b/arch/x86/kvm/lapic.c
-index b6dffeacbe92..53454a6775bf 100644
+index 7198be07b406..055cc49ffb10 100644
 --- a/arch/x86/kvm/lapic.c
 +++ b/arch/x86/kvm/lapic.c
-@@ -683,38 +683,8 @@ static void update_divide_count(struct kvm_lapic *apic)
+@@ -679,38 +679,8 @@ static void update_divide_count(struct kvm_lapic *apic)
  				   apic->divide_count);
  }
  
@@ -128,7 +133,7 @@ index b6dffeacbe92..53454a6775bf 100644
  	ktime_t now;
  	atomic_set(&apic->lapic_timer.pending, 0);
  
-@@ -744,11 +714,9 @@ static void start_apic_timer(struct kvm_lapic *apic)
+@@ -740,11 +710,9 @@ static void start_apic_timer(struct kvm_lapic *apic)
  			}
  		}
  
@@ -141,7 +146,7 @@ index b6dffeacbe92..53454a6775bf 100644
  
  		apic_debug("%s: bus cycle is %" PRId64 "ns, now 0x%016"
  			   PRIx64 ", "
-@@ -778,10 +746,8 @@ static void start_apic_timer(struct kvm_lapic *apic)
+@@ -774,10 +742,8 @@ static void start_apic_timer(struct kvm_lapic *apic)
  			ns = (tscdeadline - guest_tsc) * 1000000ULL;
  			do_div(ns, this_tsc_khz);
  		}
@@ -153,7 +158,7 @@ index b6dffeacbe92..53454a6775bf 100644
  
  		local_irq_restore(flags);
  	}
-@@ -1211,7 +1177,6 @@ int kvm_create_lapic(struct kvm_vcpu *vcpu)
+@@ -1207,7 +1173,6 @@ int kvm_create_lapic(struct kvm_vcpu *vcpu)
  	hrtimer_init(&apic->lapic_timer.timer, CLOCK_MONOTONIC,
  		     HRTIMER_MODE_ABS);
  	apic->lapic_timer.timer.function = kvm_timer_fn;
@@ -161,7 +166,7 @@ index b6dffeacbe92..53454a6775bf 100644
  	apic->lapic_timer.t_ops = &lapic_timer_ops;
  	apic->lapic_timer.kvm = vcpu->kvm;
  	apic->lapic_timer.vcpu = vcpu;
-@@ -1309,8 +1274,7 @@ void __kvm_migrate_apic_timer(struct kvm_vcpu *vcpu)
+@@ -1305,8 +1270,7 @@ void __kvm_migrate_apic_timer(struct kvm_vcpu *vcpu)
  
  	timer = &apic->lapic_timer.timer;
  	if (hrtimer_cancel(timer))
@@ -186,9 +191,9 @@ index 763bf05ccb27..73aab555b42d 100644
  	__data_size = ftrace_get_offsets_##call(&__data_offsets, args); \
  									\
 diff --git a/localversion-rt b/localversion-rt
-index 234720dc343d..a7cc5d609b19 100644
+index 34eca4e89203..9788245dd428 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt142
-+-rt143
+--rt116
++-rt117
