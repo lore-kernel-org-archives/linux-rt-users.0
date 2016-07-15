@@ -1,46 +1,74 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ANNOUNCE] 4.6.4-rt8
-Date: Fri, 15 Jul 2016 11:37:15 -0400
-Message-ID: <20160715113715.302b550a@gandalf.local.home>
-References: <20160715114803.GA11606@linutronix.de>
-	<20160715112244.4ff6ecab@gandalf.local.home>
-	<20160715153122.GC16938@linutronix.de>
+Subject: Re: v3.14.73-rt77 build: 6 failures 10 warnings (v3.14.73-rt77)
+Date: Fri, 15 Jul 2016 14:34:10 -0400
+Message-ID: <20160715143410.7da7d02c@gandalf.local.home>
+References: <E1bNvA3-0006oU-Ex@optimist>
+	<6896332.PzHULJX9vz@wuerfel>
+	<20160715120837.GC11606@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	linaro-kernel@lists.linaro.org,
+	Build bot for Mark Brown <broonie@kernel.org>,
+	kernel-build-reports@lists.linaro.org,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160715153122.GC16938@linutronix.de>
+In-Reply-To: <20160715120837.GC11606@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 15 Jul 2016 17:31:22 +0200
+On Fri, 15 Jul 2016 14:08:37 +0200
 Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 
-> * Steven Rostedt | 2016-07-15 11:22:44 [-0400]:
+> + Steven
 > 
-> >> Changes since v4.6.4-rt8:
+> * Arnd Bergmann | 2016-07-15 09:42:40 [+0200]:
+> 
+> >On Friday, July 15, 2016 5:55:39 AM CEST Build bot for Mark Brown wrote:  
 > >> 
-> >>   - Import Thomas' timer rework known as "timer: Refactor the timer
-> >>     wheel" patch set which made its way into the -TIP tree. With this
-> >>     changes we get NOHZ_FULL working. Finally.  
+> >>         arm64-allnoconfig
+> >> /home/broonie/build/linux-stable-rt/include/asm-generic/preempt.h:10:9: error: implicit declaration of function 'READ_ONCE' [-Werror=implicit-function-declaration]
+> >> 
+> >>         arm64-allmodconfig
+> >> /home/broonie/build/linux-stable-rt/include/asm-generic/preempt.h:10:9: error: implicit declaration of function 'READ_ONCE' [-Werror=implicit-function-declaration]
+> >> 
+> >>         arm-multi_v7_defconfig
+> >> /home/broonie/build/linux-stable-rt/include/asm-generic/preempt.h:10:9: error: implicit declaration of function 'READ_ONCE' [-Werror=implicit-function-declaration]
+> >> 
+> >>         arm-allmodconfig
+> >> /home/broonie/build/linux-stable-rt/include/asm-generic/preempt.h:10:9: error: implicit declaration of function 'READ_ONCE' [-Werror=implicit-function-declaration]
+> >> 
+> >>         arm-allnoconfig
+> >> /home/broonie/build/linux-stable-rt/include/asm-generic/preempt.h:10:9: error: implicit declaration of function 'READ_ONCE' [-Werror=implicit-function-declaration]
+> >> 
+> >>         arm64-defconfig
+> >> /home/broonie/build/linux-stable-rt/include/asm-generic/preempt.h:10:9: error: implicit declaration of function 'READ_ONCE' [-Werror=implicit-function-declaration]  
 > >
-> >Does this mean that there's no more 1 second tick?  
+> >These all started failing yesterday with v3.14.72-rt76, before it was
+> >
+> >	v3.14.72-rt75 build: 0 failures 113 warnings (v3.14.72-rt75)
+> >
+> >	Arnd  
 > 
-> >From tracing there a timer wakeup each second but before we had a wakeup  
-> each jiffy because we could not lookup the next timer without taking the
-> base lock which we can do now.
-> However if there is room for improvement to have a wakeup every two or
-> five seconds I am all for it because from RT point of view we should be
-> able to do the same things as the non-RT version.
 
-Ah, that's right. I forgot that NOHZ_FULL was broken in -rt, which
-sorta defeated the point, as NOHZ_FULL is a birth child of -rt in the
-first place.
+Arnd,
 
-OK, thanks for clarifying.
+Does this fix the issue?
 
 -- Steve
+
+diff --git a/include/asm-generic/preempt.h b/include/asm-generic/preempt.h
+index 65759d8b0b46..25c09df2c046 100644
+--- a/include/asm-generic/preempt.h
++++ b/include/asm-generic/preempt.h
+@@ -7,7 +7,7 @@
+ 
+ static __always_inline int preempt_count(void)
+ {
+-	return READ_ONCE(current_thread_info()->preempt_count);
++	return ACCESS_ONCE(current_thread_info()->preempt_count);
+ }
+ 
+ static __always_inline volatile int *preempt_count_ptr(void)
