@@ -1,62 +1,94 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: v3.14.73-rt77 build: 6 failures 10 warnings (v3.14.73-rt77)
-Date: Fri, 15 Jul 2016 22:58:43 +0200
-Message-ID: <2832430.yoY9mz5Why@wuerfel>
-References: <E1bNvA3-0006oU-Ex@optimist> <20160715120837.GC11606@linutronix.de> <20160715143410.7da7d02c@gandalf.local.home>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.14.73-rt78
+Date: Fri, 15 Jul 2016 23:23:45 -0400
+Message-ID: <20160715232345.5c3f72f3@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linaro-kernel@lists.linaro.org,
-	Build bot for Mark Brown <broonie@kernel.org>,
-	kernel-build-reports@lists.linaro.org,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160715143410.7da7d02c@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Arnd Bergmann <arnd@arndb.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtprelay0242.hostedemail.com ([216.40.44.242]:34871 "EHLO
+	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1751217AbcGPDXu (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 15 Jul 2016 23:23:50 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Friday, July 15, 2016 2:34:10 PM CEST Steven Rostedt wrote:
-> > * Arnd Bergmann | 2016-07-15 09:42:40 [+0200]:
-> > 
-> > >On Friday, July 15, 2016 5:55:39 AM CEST Build bot for Mark Brown wrote:  
-> > >> 
-> > >>         arm64-allnoconfig
-> > >> /home/broonie/build/linux-stable-rt/include/asm-generic/preempt.h:10:9: error: implicit declaration of function 'READ_ONCE' [-Werror=implicit-function-declaration]
-> > >> 
-> > >>         arm64-allmodconfig
-> > >> /home/broonie/build/linux-stable-rt/include/asm-generic/preempt.h:10:9: error: implicit declaration of function 'READ_ONCE' [-Werror=implicit-function-declaration]
-> > >> 
-> > >>         arm-multi_v7_defconfig
-> > >> /home/broonie/build/linux-stable-rt/include/asm-generic/preempt.h:10:9: error: implicit declaration of function 'READ_ONCE' [-Werror=implicit-function-declaration]
-> > >> 
-> > >>         arm-allmodconfig
-> > >> /home/broonie/build/linux-stable-rt/include/asm-generic/preempt.h:10:9: error: implicit declaration of function 'READ_ONCE' [-Werror=implicit-function-declaration]
-> > >> 
-> > >>         arm-allnoconfig
-> > >> /home/broonie/build/linux-stable-rt/include/asm-generic/preempt.h:10:9: error: implicit declaration of function 'READ_ONCE' [-Werror=implicit-function-declaration]
-> > >> 
-> > >>         arm64-defconfig
-> > >> /home/broonie/build/linux-stable-rt/include/asm-generic/preempt.h:10:9: error: implicit declaration of function 'READ_ONCE' [-Werror=implicit-function-declaration]  
-> > >
-> > >These all started failing yesterday with v3.14.72-rt76, before it was
-> > >
-> > >     v3.14.72-rt75 build: 0 failures 113 warnings (v3.14.72-rt75)
-> > >
-> > >     Arnd  
-> > 
-> 
-> Arnd,
-> 
-> Does this fix the issue?
-> 
 
->From looking at it I'm fairly sure it addresses the build problem,
-and semantically it looks correct as well, but I haven't had a
-chance to test it on my machine yet.
+Dear RT Folks,
 
-The build results above come from Mark Brown's automated build setup,
-so your testing is as good as mine in reproducing it.
+I'm pleased to announce the 3.14.73-rt78 stable release.
 
-	Arnd
+Due to a bug in a backport, I had to make a quick update.
+
+Reported-by: Arnd Bergmann <arnd@arndb.de>
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v3.14-rt
+  Head SHA1: 01af6fad4dae666b64d5db5ec6807b1f2994f438
+
+
+Or to build 3.14.73-rt78 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.14.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.14.73.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.73-rt78.patch.xz
+
+
+
+You can also build from 3.14.73-rt77 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/incr/patch-3.14.73-rt77-rt78.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
+
+
+Changes from v3.14.73-rt77:
+
+---
+
+Steven Rostedt (Red Hat) (2):
+      Fix backport of: sched,preempt: Fix preempt_count manipulations
+      Linux 3.14.73-rt78
+
+----
+ include/asm-generic/preempt.h | 2 +-
+ localversion-rt               | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+---------------------------
+diff --git a/include/asm-generic/preempt.h b/include/asm-generic/preempt.h
+index 65759d8b0b46..25c09df2c046 100644
+--- a/include/asm-generic/preempt.h
++++ b/include/asm-generic/preempt.h
+@@ -7,7 +7,7 @@
+ 
+ static __always_inline int preempt_count(void)
+ {
+-	return READ_ONCE(current_thread_info()->preempt_count);
++	return ACCESS_ONCE(current_thread_info()->preempt_count);
+ }
+ 
+ static __always_inline volatile int *preempt_count_ptr(void)
+diff --git a/localversion-rt b/localversion-rt
+index 595841feef80..30758e0b2242 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt77
++-rt78
