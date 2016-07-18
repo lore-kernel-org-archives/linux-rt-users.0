@@ -1,61 +1,49 @@
-From: Bernhard Landauer <oberon@manjaro.org>
-Subject: rt8 and virtualbox-dkms
-Date: Sat, 16 Jul 2016 20:57:07 +0200
-Message-ID: <1e93878d-4357-16fc-009e-b01c0efacfc5@manjaro.org>
+From: Grygorii Strashko <grygorii.strashko@ti.com>
+Subject: Re: [PATCH RT 11/20] ARM: imx: always use TWD on IMX6Q
+Date: Mon, 18 Jul 2016 20:18:59 +0300
+Message-ID: <578D0F83.2010403@ti.com>
+References: <20160712142405.634544943@goodmis.org>
+ <20160712142419.367116752@goodmis.org> <20160712200429.GA4302@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Cc: <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from manjaro.org ([176.9.38.148]:54557 "EHLO manjaro.org"
+Received: from arroyo.ext.ti.com ([198.47.19.12]:47099 "EHLO arroyo.ext.ti.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751687AbcGPTRC (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 16 Jul 2016 15:17:02 -0400
-Received: from localhost (localhost [127.0.0.1])
-	by manjaro.org (Postfix) with ESMTP id AB53130A253E
-	for <linux-rt-users@vger.kernel.org>; Sat, 16 Jul 2016 20:57:11 +0200 (CEST)
-Received: from manjaro.org ([127.0.0.1])
-	by localhost (manjaro.org [127.0.0.1]) (amavisd-new, port 10024)
-	with ESMTP id W68pCS-dqYEe for <linux-rt-users@vger.kernel.org>;
-	Sat, 16 Jul 2016 20:57:09 +0200 (CEST)
+	id S1751451AbcGRST0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 18 Jul 2016 14:19:26 -0400
+In-Reply-To: <20160712200429.GA4302@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi everyone and thank you for your awesome work.
-Since recently we are building an rt-kernel for Manjarolinux.
-With the latest rt8 patch we are running into this issue with building=20
-the virtualbox-dkms modules:
+On 07/12/2016 11:04 PM, Sebastian Andrzej Siewior wrote:
+> * Steven Rostedt | 2016-07-12 10:24:16 [-0400]:
+> 
+>> 4.1.27-rt31-rc1 stable review patch.
+>> If anyone has any objections, please let me know.
+> 
+> I don't recommend to cherry-pick this. The symbol it selects
+> (HAVE_ARM_TWD) has "depends on SMP" in v4.1. In v4.4 there should be
+> AM43xx which is UP and also uses the TWD so the change is simple here.
+> 
 
-/var/lib/dkms/vboxhost/5.1.0_OSE/build/vboxdrv/r0drv/linux/timer-r0drv-=
-linux.c:=20
-In function =E2=80=98rtTimerLnxStartSubTimer=E2=80=99:
-/var/lib/dkms/vboxhost/5.1.0_OSE/build/vboxdrv/r0drv/linux/timer-r0drv-=
-linux.c:364:13:=20
-error: implicit declaration of function =E2=80=98mod_timer_pinned=E2=80=
-=99 [-$
-              mod_timer_pinned(&pSubTimer->u.Std.LnxTimer,=20
-pSubTimer->u.Std.ulNextJiffies);
-              ^~~~~~~~~~~~~~~~
-cc1: some warnings being treated as errors
-make[2]: *** [scripts/Makefile.build:292:=20
-/var/lib/dkms/vboxhost/5.1.0_OSE/build/vboxdrv/r0drv/linux/timer-r0drv-=
-linux.o]=20
-Error 1
-make[1]: *** [scripts/Makefile.build:440:=20
-/var/lib/dkms/vboxhost/5.1.0_OSE/build/vboxdrv] Error 2
-make: *** [Makefile:1429:=20
-_module_/var/lib/dkms/vboxhost/5.1.0_OSE/build] Error 2
-make: Leaving directory '/usr/lib/modules/4.6.4-1-rt8-MANJARO/build'
+yes. AM43xx is UP and supports ARM TWD, but there could be some 'issues' in !RT case :(
 
-The issue persists with the very latest virutalbox packages 5.1.0
+ARM TWD might be powered off in deep CPU Idle states and lose its context if !RT & CPUIDLE,
+so there are should be backup broadcast timer configured. And that can cause build issues
+related to tick_broadcast()->smp_cross_call().
 
-Any hints will be greatly appreciated.
-kind regards
-Bernhard Landauer
+I've solved it locally for OMAP2 only: commit 0b3e6fca4d1af4aa150d32506220f4241323a00c
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+^Just FYI. But may be it can be done in more generic way.
+
+regards,
+-grygorii
