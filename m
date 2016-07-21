@@ -1,67 +1,112 @@
-From: Carol Wong <carolw@netacquire.com>
-Subject: RE: v3.18-RT
-Date: Wed, 20 Jul 2016 20:53:21 +0000
-Message-ID: <82DB755727433D4A981ED5650C27BBEF729546A9@S1P5DAG9E.EXCHPROD.USA.NET>
-References: <FCC5AC80E299464B82E1345E2C10FC9D8098CE51@S1P5DAG4C.EXCHPROD.USA.NET>
- <20160603163732.GD4496@linutronix.de>
- <FCC5AC80E299464B82E1345E2C10FC9D8099ACF6@S1P5DAG4C.EXCHPROD.USA.NET>
- <16d5e3f2-dd20-c802-37aa-86eab553fcfc@linutronix.de>
- <FCC5AC80E299464B82E1345E2C10FC9D809A150B@S1P5DAG4C.EXCHPROD.USA.NET>
- <4061065f-dd2b-0a76-299e-ce66783d85dd@linutronix.de>
+From: Daniel Bristot de Oliveira <bristot@redhat.com>
+Subject: [PATCH] cyclictest: Fix a maybe-uninitialized warn on duration option
+Date: Wed, 20 Jul 2016 21:48:08 -0300
+Message-ID: <1469062088-3608-1-git-send-email-bristot@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"David Hauck" <davidh@netacquire.com>,
-	Preston Hauck <prestonh@netacquire.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: John Kacur <jkacur@redhat.com>,
+	Clark Williams <williams@redhat.com>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gwo4.mbox.net ([165.212.64.24]:49848 "EHLO gwo4.mbox.net"
+Received: from mx1.redhat.com ([209.132.183.28]:39439 "EHLO mx1.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755114AbcGTVAx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 20 Jul 2016 17:00:53 -0400
-In-Reply-To: <4061065f-dd2b-0a76-299e-ce66783d85dd@linutronix.de>
-Content-Language: en-US
+	id S1753231AbcGUAsQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 20 Jul 2016 20:48:16 -0400
+Received: from int-mx14.intmail.prod.int.phx2.redhat.com (int-mx14.intmail.prod.int.phx2.redhat.com [10.5.11.27])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mx1.redhat.com (Postfix) with ESMTPS id 006967F0A4
+	for <linux-rt-users@vger.kernel.org>; Thu, 21 Jul 2016 00:48:16 +0000 (UTC)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-SGkgU2ViYXN0aWFuLA0KDQpXZSBmaW5hbGx5IHRyYWNlZCB0aGUgYm9vdC11cCBjcmFzaCB0byB0
-aGUgZm9sbG93aW5nIHBhdGNoIGluIGtlcm5lbC9zY2hlZC9jb3JlLmM6DQoNCmh0dHBzOi8vZ2l0
-Lmtlcm5lbC5vcmcvY2dpdC9saW51eC9rZXJuZWwvZ2l0L3J0L2xpbnV4LXN0YWJsZS1ydC5naXQv
-Y29tbWl0Lz9oPXYzLjE4LXJ0JmlkPTYyMDQ0ZTU1NGYxNDU0NzA2MWFmY2ZlZjdmMGFjZWRhNDNl
-Mjg5ODINCg0KQWZ0ZXIgcmV2ZXJ0aW5nIHRoZSB0d28tbGluZSBwYXRjaCBpbiAzLjE4LjI5LXJ0
-MzAsIHRoZSBjcmFzaCBubyBsb25nZXIgb2NjdXJzIG9uIG91ciBkdWFsIFhlb24gKDJ4MTIgY29y
-ZSkgc3lzdGVtLg0KDQpPdGhlciBvYnNlcnZhdGlvbnM6DQotIERvZXMgbm90IHJlcHJvZHVjZSBv
-biBzaW5nbGUgcHJvY2Vzc29yICgyIGFuZCA0IGNvcmUpIHN5c3RlbXMNCi0gUmVwcm9kdWNlcyB1
-bmRlciAzLjE4LjI3LXJ0MjcgYW5kIDMuMTguMzYtcnQzOCBvbiB0aGUgZHVhbCBYZW9uDQotIERv
-ZXMgbm90IHJlcHJvZHVjZSBvbiAzLjE4LjI3LXJ0MjYgYW5kIGVhcmxpZXIgb24gdGhlIGR1YWwg
-WGVvbg0KLSBSZXByb2R1Y2VzIG1vcmUgZnJlcXVlbnRseSBvbiAuMjktcnQzMCAoMSBpbiAyMCBy
-ZWJvb3RzKSBjb21wYXJlZCB0byAuMjctcnQyNyAoMSBpbiAxMDAgcmVib290cykNCg0KU28gZmFy
-IHdlJ3ZlIG5vdCBvYnNlcnZlZCBhbnkgc2lkZSBlZmZlY3RzIGFmdGVyIHJldmVydGluZyB0aGlz
-IHBhdGNoLg0KDQpJIHVuZGVyc3RhbmQgdGhhdCBhIGhpZ2ggY29yZSBjb3VudCBzeXN0ZW0gbWF5
-IG5vdCBiZSBlYXN5IHRvIGNvbWUgYnksIHNvIGlmIHRoZXJlIGFyZSBkaWFnbm9zdGljcyBvciBw
-YXRjaGVzIHlvdSB3b3VsZCBsaWtlIHRvIHRyeSBvbiB0aGUgZHVhbCBYZW9uIHN5c3RlbSwgd2Ug
-Y2FuIGFzc2lzdCB3aXRoIHRoYXQuDQoNCkNoZWVycywNCkNhcm9sIFdvbmcNCk5ldEFjcXVpcmUg
-Q29ycG9yYXRpb24NCg0KPiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQ0KPiBGcm9tOiBsaW51
-eC1ydC11c2Vycy1vd25lckB2Z2VyLmtlcm5lbC5vcmcgW21haWx0bzpsaW51eC1ydC11c2Vycy0N
-Cj4gb3duZXJAdmdlci5rZXJuZWwub3JnXSBPbiBCZWhhbGYgT2YgU2ViYXN0aWFuIEFuZHJ6ZWog
-U2lld2lvcg0KPiBTZW50OiBUdWVzZGF5LCBKdW5lIDA3LCAyMDE2IDE6MzcgQU0NCj4gVG86IERh
-dmlkIEhhdWNrDQo+IENjOiBsaW51eC1ydC11c2Vyc0B2Z2VyLmtlcm5lbC5vcmcNCj4gU3ViamVj
-dDogUmU6IHYzLjE4LVJUDQo+IA0KPiBPbiAwNi8wNi8yMDE2IDA3OjQ1IFBNLCBEYXZpZCBIYXVj
-ayB3cm90ZToNCj4gPiBIaSBTZWJhc3RpYW4sDQo+IA0KPiBIaSwNCj4gDQo+ID4gVGh4LCBoZXJl
-J3Mgb25lIC0gaG9wZSB0aGlzIG1pZ2h0IGJlIGhlbHBmdWw6DQo+ID4NCj4gPiBbICAgIDEuMzUy
-MTY1XSBCVUc6IHVuYWJsZSB0byBoYW5kbGUga2VybmVsDQo+ID4gWyAgICAxLjM1MjE2N10gcGFn
-aW5nIHJlcXVlc3QNCj4gPiBbICAgIDEuMzUyMTY5XSAgYXQgYTkzYzI1NjANCj4gPiBbICAgIDEu
-MzUyMTcyXSBJUDoNCj4gPiBbICAgIDEuMzUyMTc4XSAgWzxjMTA3YzI0OD5dIGNhbl9taWdyYXRl
-X3Rhc2srMHg1OC8weDIyMA0KPiA+IFsgICAgMS4zNTIxODJdICpwZGUgPSAwMDAwMDAwMA0KPiAN
-Cj4gbW9zdCBvZiBpdCBzaG91bGQgYmUgb25lIGxpbmUuDQo+IA0KPiB0aGlzIGNvbWVzIGRvd24g
-dG8NCj4gICBpZiAoIWNwdW1hc2tfdGVzdF9jcHUoZW52LT5kc3RfY3B1LCB0c2tfY3B1c19hbGxv
-d2VkKHApKSkgew0KPiANCj4gaW4gY2FuX21pZ3JhdGVfdGFzaygpIGFuZCB0aGUgY3Jhc2ggaGFw
-cGVucyBiZWNhdXNlIHRoZSBwb2ludGVyDQo+IHJldHVybmVkIGluIHRza19jcHVzX2FsbG93ZWQo
-KSBpcyBpbnZhbGlkLiBDdXJyZW50bHkgbm90aGluZyByaW5ncyBhDQo+IGJlbGwuDQo+IA0KPiA+
-IEdyZWF0LCB0aHgsIHdlJ2xsIGdldCBzdGFydGVkIG9uIHRoaXMgdGhpcyB3ZWVrLg0KPiANCj4g
-b2theS4NCj4gDQo+ID4NCj4gPiBUaGFua3MgYWdhaW4sDQo+ID4gLURhdmlkDQo+IA0KPiBTZWJh
-c3RpYW4NCj4gLS0NCj4gVG8gdW5zdWJzY3JpYmUgZnJvbSB0aGlzIGxpc3Q6IHNlbmQgdGhlIGxp
-bmUgInVuc3Vic2NyaWJlIGxpbnV4LXJ0LQ0KPiB1c2VycyIgaW4gdGhlIGJvZHkgb2YgYSBtZXNz
-YWdlIHRvIG1ham9yZG9tb0B2Z2VyLmtlcm5lbC5vcmcgTW9yZQ0KPiBtYWpvcmRvbW8gaW5mbyBh
-dCAgaHR0cDovL3ZnZXIua2VybmVsLm9yZy9tYWpvcmRvbW8taW5mby5odG1sDQo=
+I am having the following warning while compiling cyclictest on
+=46edera 24 (GCC 6.1.1 20160621):
+
+--------------------------%<-------------------------------------------=
+-
+[root@f24desk rt-tests]# make
+cc -D VERSION=3D1.1 -c src/cyclictest/cyclictest.c -Wall -Wno-nonnull -=
+O2 -DNUMA -DHAVE_PARSE_CPUSTRING_ALL -D_GNU_SOURCE -Isrc/include -o bld=
+/cyclictest.o
+src/cyclictest/cyclictest.c: In function =E2=80=98timerthread=E2=80=99:
+src/cyclictest/cyclictest.c:427:30: warning: =E2=80=98*((void *)&stop+8=
+)=E2=80=99 may be used uninitialized in this function [-Wmaybe-uninitia=
+lized]
+  diff +=3D ((int) t1.tv_nsec - (int) t2.tv_nsec) / 1000;
+                              ^~~~~~~~~~~~~~~~
+src/cyclictest/cyclictest.c:980:39: note: =E2=80=98*((void *)&stop+8)=E2=
+=80=99 was declared here
+  struct timespec now, next, interval, stop;
+                                       ^~~~
+src/cyclictest/cyclictest.c:426:54: warning: =E2=80=98stop.tv_sec=E2=80=
+=99 may be used uninitialized in this function [-Wmaybe-uninitialized]
+  diff =3D USEC_PER_SEC * (long long)((int) t1.tv_sec - (int) t2.tv_sec=
+);
+                                                      ^~~~~~~~~~~~~~~
+src/cyclictest/cyclictest.c:980:39: note: =E2=80=98stop.tv_sec=E2=80=99=
+ was declared here
+  struct timespec now, next, interval, stop;
+                                       ^~~~
+-------------------------->%-------------------------------------------=
+-
+
+This is a false positive, but rather than workaround it using GCC pragm=
+a
+option, I think it is better to use stop variable itself to define
+whether it should be used of not.
+
+Cc: John Kacur <jkacur@redhat.com>
+Cc: Clark Williams <williams@redhat.com>
+Signed-off-by: Daniel Bristot de Oliveira <bristot@redhat.com>
+---
+ src/cyclictest/cyclictest.c | 13 ++++++++-----
+ 1 file changed, 8 insertions(+), 5 deletions(-)
+
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 5e23fc5..ad11b1b 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -977,7 +977,8 @@ static void *timerthread(void *param)
+ 	struct sigevent sigev;
+ 	sigset_t sigset;
+ 	timer_t timer;
+-	struct timespec now, next, interval, stop;
++	struct timespec now, next, interval;
++	struct timespec *stop =3D NULL;
+ 	struct itimerval itimer;
+ 	struct itimerspec tspec;
+ 	struct thread_stat *stat =3D par->stats;
+@@ -1066,9 +1067,11 @@ static void *timerthread(void *param)
+ 	tsnorm(&next);
+=20
+ 	if (duration) {
+-		memset(&stop, 0, sizeof(stop)); /* grrr */
+-		stop =3D now;
+-		stop.tv_sec +=3D duration;
++		stop =3D malloc(sizeof(struct timespec));
++		if (!stop)
++			fatal("error allocating space for duration option\n");
++		stop->tv_sec =3D now.tv_sec + duration;
++		stop->tv_nsec =3D now.tv_nsec;
+ 	}
+ 	if (par->mode =3D=3D MODE_CYCLIC) {
+ 		if (par->timermode =3D=3D TIMER_ABSTIME)
+@@ -1185,7 +1188,7 @@ static void *timerthread(void *param)
+ 		}
+=20
+=20
+-		if (duration && (calcdiff(now, stop) >=3D 0))
++		if (stop && (calcdiff(now, *stop) >=3D 0))
+ 			shutdown++;
+=20
+ 		if (!stopped && tracelimit && (diff > tracelimit)) {
+--=20
+2.7.4
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
