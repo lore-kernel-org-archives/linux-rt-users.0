@@ -1,117 +1,97 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH] cyclictest: Fix a maybe-uninitialized warn on duration
- option
-Date: Thu, 21 Jul 2016 15:35:44 +0200 (CEST)
-Message-ID: <alpine.LFD.2.20.1607211533190.5970@riemann.fritz.box>
-References: <1469062088-3608-1-git-send-email-bristot@redhat.com>
+From: Bernhard Landauer <oberon@manjaro.org>
+Subject: Re: rt8 and virtualbox-dkms
+Date: Sat, 23 Jul 2016 02:02:52 +0200
+Message-ID: <6b0724e6-de34-9c8c-53d2-c36396c7f237@manjaro.org>
+References: <1e93878d-4357-16fc-009e-b01c0efacfc5@manjaro.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; BOUNDARY="-1463806030-991391548-1469108151=:5970"
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Clark Williams <williams@redhat.com>
-To: Daniel Bristot de Oliveira <bristot@redhat.com>
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-lf0-f67.google.com ([209.85.215.67]:33251 "EHLO
-	mail-lf0-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752485AbcGUNfy (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 21 Jul 2016 09:35:54 -0400
-Received: by mail-lf0-f67.google.com with SMTP id f93so5528186lfi.0
-        for <linux-rt-users@vger.kernel.org>; Thu, 21 Jul 2016 06:35:53 -0700 (PDT)
-In-Reply-To: <1469062088-3608-1-git-send-email-bristot@redhat.com>
+Received: from manjaro.org ([176.9.38.148]:51874 "EHLO manjaro.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751768AbcGWADJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 22 Jul 2016 20:03:09 -0400
+Received: from localhost (localhost [127.0.0.1])
+	by manjaro.org (Postfix) with ESMTP id D1EE430A28A4
+	for <linux-rt-users@vger.kernel.org>; Sat, 23 Jul 2016 02:03:06 +0200 (CEST)
+Received: from manjaro.org ([127.0.0.1])
+	by localhost (manjaro.org [127.0.0.1]) (amavisd-new, port 10024)
+	with ESMTP id NnTot1uR+I4w for <linux-rt-users@vger.kernel.org>;
+	Sat, 23 Jul 2016 02:02:58 +0200 (CEST)
+In-Reply-To: <1e93878d-4357-16fc-009e-b01c0efacfc5@manjaro.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+I've investigated a little more into this.
+Removing the mod_timer_pinned function - as happened here:
 
----1463806030-991391548-1469108151=:5970
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+https://lkml.org/lkml/2016/7/4/214
 
+means that VirtualBox module can no longer be built because it still=20
+relies on it:
 
+$ grep -re "mod_timer_pinned"
+src/VBox/Runtime/r0drv/linux/timer-r0drv-linux.c:# define=20
+mod_timer_pinned               mod_timer
+src/VBox/Runtime/r0drv/linux/timer-r0drv-linux.c:=20
+mod_timer_pinned(&pSubTimer->u.Std.LnxTimer,=20
+pSubTimer->u.Std.ulNextJiffies);
+src/VBox/Runtime/r0drv/linux/timer-r0drv-linux.c:=20
+mod_timer_pinned(&pSubTimer->u.Std.LnxTimer,=20
+pSubTimer->u.Std.ulNextJiffies);
+src/VBox/Runtime/r0drv/linux/timer-r0drv-linux.c:=20
+mod_timer_pinned(&pSubTimer->u.Std.LnxTimer,=20
+pSubTimer->u.Std.ulNextJiffies);
 
-On Wed, 20 Jul 2016, Daniel Bristot de Oliveira wrote:
+So does that mean the rt-kernel will no longer run VirtualBox??
 
-> I am having the following warning while compiling cyclictest on
-> Federa 24 (GCC 6.1.1 20160621):
-> 
-> --------------------------%<--------------------------------------------
-> [root@f24desk rt-tests]# make
-> cc -D VERSION=1.1 -c src/cyclictest/cyclictest.c -Wall -Wno-nonnull -O2 -DNUMA -DHAVE_PARSE_CPUSTRING_ALL -D_GNU_SOURCE -Isrc/include -o bld/cyclictest.o
-> src/cyclictest/cyclictest.c: In function ‘timerthread’:
-> src/cyclictest/cyclictest.c:427:30: warning: ‘*((void *)&stop+8)’ may be used uninitialized in this function [-Wmaybe-uninitialized]
->   diff += ((int) t1.tv_nsec - (int) t2.tv_nsec) / 1000;
->                               ^~~~~~~~~~~~~~~~
-> src/cyclictest/cyclictest.c:980:39: note: ‘*((void *)&stop+8)’ was declared here
->   struct timespec now, next, interval, stop;
->                                        ^~~~
-> src/cyclictest/cyclictest.c:426:54: warning: ‘stop.tv_sec’ may be used uninitialized in this function [-Wmaybe-uninitialized]
->   diff = USEC_PER_SEC * (long long)((int) t1.tv_sec - (int) t2.tv_sec);
->                                                       ^~~~~~~~~~~~~~~
-> src/cyclictest/cyclictest.c:980:39: note: ‘stop.tv_sec’ was declared here
->   struct timespec now, next, interval, stop;
->                                        ^~~~
-> -------------------------->%--------------------------------------------
-> 
-> This is a false positive, but rather than workaround it using GCC pragma
-> option, I think it is better to use stop variable itself to define
-> whether it should be used of not.
-> 
-> Cc: John Kacur <jkacur@redhat.com>
-> Cc: Clark Williams <williams@redhat.com>
-> Signed-off-by: Daniel Bristot de Oliveira <bristot@redhat.com>
-> ---
->  src/cyclictest/cyclictest.c | 13 ++++++++-----
->  1 file changed, 8 insertions(+), 5 deletions(-)
-> 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index 5e23fc5..ad11b1b 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -977,7 +977,8 @@ static void *timerthread(void *param)
->  	struct sigevent sigev;
->  	sigset_t sigset;
->  	timer_t timer;
-> -	struct timespec now, next, interval, stop;
-> +	struct timespec now, next, interval;
-> +	struct timespec *stop = NULL;
->  	struct itimerval itimer;
->  	struct itimerspec tspec;
->  	struct thread_stat *stat = par->stats;
-> @@ -1066,9 +1067,11 @@ static void *timerthread(void *param)
->  	tsnorm(&next);
->  
->  	if (duration) {
-> -		memset(&stop, 0, sizeof(stop)); /* grrr */
-> -		stop = now;
-> -		stop.tv_sec += duration;
-> +		stop = malloc(sizeof(struct timespec));
-> +		if (!stop)
-> +			fatal("error allocating space for duration option\n");
-> +		stop->tv_sec = now.tv_sec + duration;
-> +		stop->tv_nsec = now.tv_nsec;
->  	}
->  	if (par->mode == MODE_CYCLIC) {
->  		if (par->timermode == TIMER_ABSTIME)
-> @@ -1185,7 +1188,7 @@ static void *timerthread(void *param)
->  		}
->  
->  
-> -		if (duration && (calcdiff(now, stop) >= 0))
-> +		if (stop && (calcdiff(now, *stop) >= 0))
->  			shutdown++;
->  
->  		if (!stopped && tracelimit && (diff > tracelimit)) {
-> -- 
-> 2.7.4
-> 
+Regards
+Bernhard Landauer
 
-I'm not sure about this one. Do we really need to change our code for a 
-false positive, that is really a compiler regression? And then we're 
-adding a malloc to a rt program for that? I'd rather ignore the warning if 
-we can't do this in a simpler manner.
+On 16/07/16 20:57, Bernhard Landauer wrote:
+> Hi everyone and thank you for your awesome work.
+> Since recently we are building an rt-kernel for Manjarolinux.
+> With the latest rt8 patch we are running into this issue with buildin=
+g=20
+> the virtualbox-dkms modules:
+>
+> /var/lib/dkms/vboxhost/5.1.0_OSE/build/vboxdrv/r0drv/linux/timer-r0dr=
+v-linux.c:=20
+> In function =E2=80=98rtTimerLnxStartSubTimer=E2=80=99:
+> /var/lib/dkms/vboxhost/5.1.0_OSE/build/vboxdrv/r0drv/linux/timer-r0dr=
+v-linux.c:364:13:=20
+> error: implicit declaration of function =E2=80=98mod_timer_pinned=E2=80=
+=99 [-$
+>              mod_timer_pinned(&pSubTimer->u.Std.LnxTimer,=20
+> pSubTimer->u.Std.ulNextJiffies);
+>              ^~~~~~~~~~~~~~~~
+> cc1: some warnings being treated as errors
+> make[2]: *** [scripts/Makefile.build:292:=20
+> /var/lib/dkms/vboxhost/5.1.0_OSE/build/vboxdrv/r0drv/linux/timer-r0dr=
+v-linux.o]=20
+> Error 1
+> make[1]: *** [scripts/Makefile.build:440:=20
+> /var/lib/dkms/vboxhost/5.1.0_OSE/build/vboxdrv] Error 2
+> make: *** [Makefile:1429:=20
+> _module_/var/lib/dkms/vboxhost/5.1.0_OSE/build] Error 2
+> make: Leaving directory '/usr/lib/modules/4.6.4-1-rt8-MANJARO/build'
+>
+> The issue persists with the very latest virutalbox packages 5.1.0
+>
+> Any hints will be greatly appreciated.
+> kind regards
+> Bernhard Landauer
+>
+> --=20
+> To unsubscribe from this list: send the line "unsubscribe=20
+> linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
-Thanks
-
-John
----1463806030-991391548-1469108151=:5970--
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
