@@ -1,56 +1,44 @@
-From: Bernhard Landauer <oberon@manjaro.org>
-Subject: Re: rt8 and virtualbox-dkms
-Date: Tue, 26 Jul 2016 15:53:54 +0200
-Message-ID: <cb3206d6-3967-a775-edc4-ea1fe0e5653a@manjaro.org>
-References: <1e93878d-4357-16fc-009e-b01c0efacfc5@manjaro.org>
- <6b0724e6-de34-9c8c-53d2-c36396c7f237@manjaro.org>
- <20160726134438.GA24262@linutronix.de>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: [patch-rt] scsi/fcoe: Fix get_cpu()/put_cpu_light() imbalance in
+ fcoe_recv_frame()
+Date: Thu, 28 Jul 2016 06:04:49 +0200
+Message-ID: <1469678689.3889.10.camel@gmail.com>
+References: <20160715114803.GA11606@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from manjaro.org ([176.9.38.148]:34378 "EHLO manjaro.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752056AbcGZNyE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 26 Jul 2016 09:54:04 -0400
-In-Reply-To: <20160726134438.GA24262@linutronix.de>
+Received: from mail-wm0-f68.google.com ([74.125.82.68]:34660 "EHLO
+	mail-wm0-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750711AbcG1EEw (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 28 Jul 2016 00:04:52 -0400
+In-Reply-To: <20160715114803.GA11606@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Ok. Thank you for the information.
+During master->rt merge, I stumbled across the buglet below.
 
-regards
-Bernhard
+Fix get_cpu()/put_cpu_light() imbalance.
 
+Signed-off-by: Mike Gabraith <umgwanakikbuti@gmail.com>
+---
+ drivers/scsi/fcoe/fcoe.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-On 26/07/16 15:44, Sebastian Andrzej Siewior wrote:
-> * Bernhard Landauer | 2016-07-23 02:02:52 [+0200]:
->
->> $ grep -re "mod_timer_pinned"
->> src/VBox/Runtime/r0drv/linux/timer-r0drv-linux.c:# define
->> mod_timer_pinned               mod_timer
->> src/VBox/Runtime/r0drv/linux/timer-r0drv-linux.c:
->> mod_timer_pinned(&pSubTimer->u.Std.LnxTimer,
->> pSubTimer->u.Std.ulNextJiffies);
->> src/VBox/Runtime/r0drv/linux/timer-r0drv-linux.c:
->> mod_timer_pinned(&pSubTimer->u.Std.LnxTimer,
->> pSubTimer->u.Std.ulNextJiffies);
->> src/VBox/Runtime/r0drv/linux/timer-r0drv-linux.c:
->> mod_timer_pinned(&pSubTimer->u.Std.LnxTimer,
->> pSubTimer->u.Std.ulNextJiffies);
->>
->> So does that mean the rt-kernel will no longer run VirtualBox??
-> This change will be part of v4.8. If virtualbox wants to work with v4.8+
-> they need to update their code. Once this happens, it will work with
-> -RT.
->
->> Regards
->> Bernhard Landauer
-> Sebastian
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
+--- a/drivers/scsi/fcoe/fcoe.c
++++ b/drivers/scsi/fcoe/fcoe.c
+@@ -1814,7 +1814,7 @@ static void fcoe_recv_frame(struct sk_bu
+ 	 */
+ 	hp = (struct fcoe_hdr *) skb_network_header(skb);
+ 
+-	stats = per_cpu_ptr(lport->stats, get_cpu());
++	stats = per_cpu_ptr(lport->stats, get_cpu_light());
+ 	if (unlikely(FC_FCOE_DECAPS_VER(hp) != FC_FCOE_VER)) {
+ 		if (stats->ErrorFrames < 5)
+ 			printk(KERN_WARNING "fcoe: FCoE version "
