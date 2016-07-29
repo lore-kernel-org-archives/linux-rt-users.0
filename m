@@ -1,47 +1,39 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: INFO: rcu_preempt detected stalls on CPUs/tasks
-Date: Fri, 29 Jul 2016 18:46:58 +0200
-Message-ID: <20160729164658.GH21715@linutronix.de>
-References: <FC629F1A536C6F42B960B5E32E20BD358C2466E3@exc2.buero.ginzinger.com>
- <20160714152703.GA12152@linutronix.de>
- <150d1d1f-b427-50be-524d-dbe80dd5523e@ginzinger.com>
+From: Corey Minyard <cminyard@mvista.com>
+Subject: Re: [PATCH] sched: Fix compile warning when using CONFIG_PREEMPT_NONE
+Date: Fri, 29 Jul 2016 12:49:31 -0500
+Message-ID: <579B972B.3050409@mvista.com>
+References: <1467219311-19424-1-git-send-email-minyard@acm.org>
+ <20160729154602.GF21715@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Henri Roosen <henri.roosen@ginzinger.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>, minyard@acm.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:52007 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751695AbcG2QrA (ORCPT
+Received: from mail-pa0-f46.google.com ([209.85.220.46]:33146 "EHLO
+	mail-pa0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753409AbcG2Rte (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 29 Jul 2016 12:47:00 -0400
-Content-Disposition: inline
-In-Reply-To: <150d1d1f-b427-50be-524d-dbe80dd5523e@ginzinger.com>
+	Fri, 29 Jul 2016 13:49:34 -0400
+Received: by mail-pa0-f46.google.com with SMTP id ks6so33196213pab.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 29 Jul 2016 10:49:33 -0700 (PDT)
+In-Reply-To: <20160729154602.GF21715@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Henri Roosen | 2016-07-15 12:54:25 [+0200]:
-
->The problem is easily triggered, but only after starting a flood-ping to
->the PREEMPT_RT-system under test. This also results in huge latency,
->much bigger than on a 'normal' PREEMPT-system, which seems to be
->resistant against the flood-ping.
+On 07/29/2016 10:46 AM, Sebastian Andrzej Siewior wrote:
+> * minyard@acm.org | 2016-06-29 11:55:11 [-0500]:
 >
->Any suggestions how to best trace this down?
+>> From: Corey Minyard <cminyard@mvista.com>
+>>
+>> preemptible_lazy() is only used under CONFIG_PREEMPT, but it was
+>> always defined.  Move it into a CONFIG_PREEMPT ifdef.
+> Oh sorry, I missed that one but the problem is gone, right?
+>
+> Sebastian
+Yes, it appears to be gone.  Before I think you could define 
+CONFIG_PREEMPT_LAZY
+without CONFIG_PREEMPT being defined.
 
-Hmm. 4.1.27-rt30 has
- softirq: split timer softirqs out of ksoftirqd
- net: provide a way to delegate processing a softirq to ksoftirqd
-
-I would suggest using those two but you should have them.
-Your ksoftirqd runs as SCHED_OTHER, right? And you do have
-CONFIG_RCU_BOOST enabled? Your do_hell script which starts hackbench
-does not run with higher priority?
->From the backtrace it is hackbench "doing things" and this one should be
-preempted by RCU and ethernet networking napi code should be preempted /
-moved to ksoftirqd during the flood-ping. Can you check this happens?
-
->Thanks,
->Henri
-
-Sebastian
+-corey
