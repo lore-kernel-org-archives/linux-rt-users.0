@@ -1,30 +1,32 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [patch-rt] scsi/fcoe: Fix get_cpu()/put_cpu_light() imbalance in
- fcoe_recv_frame()
-Date: Fri, 29 Jul 2016 17:39:55 +0200
-Message-ID: <20160729153955.GD21715@linutronix.de>
-References: <20160715114803.GA11606@linutronix.de>
- <1469678689.3889.10.camel@gmail.com>
+Subject: Re: [PATCH] sched: Fix compile warning when using CONFIG_PREEMPT_NONE
+Date: Fri, 29 Jul 2016 17:46:02 +0200
+Message-ID: <20160729154602.GF21715@linutronix.de>
+References: <1467219311-19424-1-git-send-email-minyard@acm.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Mike Galbraith <umgwanakikbuti@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Cc: linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Corey Minyard <cminyard@mvista.com>
+To: minyard@acm.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:51897 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751600AbcG2PqI (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 29 Jul 2016 11:46:08 -0400
 Content-Disposition: inline
-In-Reply-To: <1469678689.3889.10.camel@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <1467219311-19424-1-git-send-email-minyard@acm.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* Mike Galbraith | 2016-07-28 06:04:49 [+0200]:
+* minyard@acm.org | 2016-06-29 11:55:11 [-0500]:
 
->During master->rt merge, I stumbled across the buglet below.
+>From: Corey Minyard <cminyard@mvista.com>
 >
->Fix get_cpu()/put_cpu_light() imbalance.
-applied.
+>preemptible_lazy() is only used under CONFIG_PREEMPT, but it was
+>always defined.  Move it into a CONFIG_PREEMPT ifdef.
 
->Signed-off-by: Mike Gabraith <umgwanakikbuti@gmail.com>
+Oh sorry, I missed that one but the problem is gone, right?
 
 Sebastian
