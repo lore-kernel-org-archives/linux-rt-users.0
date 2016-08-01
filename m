@@ -1,69 +1,49 @@
-From: Francis Giraldeau <francis.giraldeau@gmail.com>
-Subject: Timer tick not disabled with NO_HZ_FULL
-Date: Fri, 29 Jul 2016 16:56:15 -0400
-Message-ID: <CAC6yHM4kTvXiJwsyFqmi3p_4U8a54wwUJz9QFHAGsO+aM6G6Wg@mail.gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.12.62-rt83
+Date: Mon, 1 Aug 2016 12:08:40 -0400
+Message-ID: <20160801120840.29ff5f16@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-oi0-f68.google.com ([209.85.218.68]:35692 "EHLO
-	mail-oi0-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753601AbcG2U4R (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 29 Jul 2016 16:56:17 -0400
-Received: by mail-oi0-f68.google.com with SMTP id w143so8649030oiw.2
-        for <linux-rt-users@vger.kernel.org>; Fri, 29 Jul 2016 13:56:17 -0700 (PDT)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-It seems that the timer tick occurs with a PREEMPT_RT kernel even if configured
-with NO_HZ_FULL. On a real-time system where some cores are configured with
-isolcpu, the tick increases the execution jitter.
 
-# tracer: nop
-#
-# entries-in-buffer/entries-written: 20219/20219   #P:8
-#
-#                              _-----=> irqs-off
-#                             / _----=> need-resched
-#                            |/  _-----=> need-resched_lazy
-#                            || / _---=> hardirq/softirq
-#                            ||| / _--=> preempt-depth
-#                            |||| /_--=> preempt-lazy-depth
-#                            |||||  _-=> migrate-disable
-#                            ||||| /    delay
-#           TASK-PID   CPU#  ||||||    TIMESTAMP  FUNCTION
-#              | |       |   ||||||       |         |
-          <idle>-0     [002] d..h2..    41.314675:
-hrtimer_expire_entry: hrtimer=ffff88013fc8f860
-function=tick_sched_timer now=41136043338
-          <idle>-0     [002] d..h2..    41.318675:
-hrtimer_expire_entry: hrtimer=ffff88013fc8f860
-function=tick_sched_timer now=41140043943
-          <idle>-0     [002] d..h2..    41.322675:
-hrtimer_expire_entry: hrtimer=ffff88013fc8f860
-function=tick_sched_timer now=41144043138
+Dear RT Folks,
 
-I think the issue comes from commit 8aede461ab35 in kernel/time/timer.c:
+I'm pleased to announce the 3.12.62-rt83 stable release.
 
-    u64 get_next_timer_interrupt(unsigned long basej, u64 basem)
-    {
-    [...]
-    #ifdef CONFIG_PREEMPT_RT_FULL
 
-        /*
-        * On PREEMPT_RT we cannot sleep here. As a result we can't take
-        * the base lock to check when the next timer is pending and so
-        * we assume the next jiffy.
-        */
-        return basem + TICK_NSEC;
-    #endif
-    [...]
+This release is just an update to the new stable 3.12.62 version
+and no RT specific changes have been made.
 
-This commit is quite old, maybe a solution exists to the problem of base timer
-locking. Would it be possible for instance to use RCU instead here to support
-NO_HZ_FULL with a PREEMPT_RT kernel?
 
-Thanks,
+You can get this release via the git tree at:
 
-Francis
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v3.12-rt
+  Head SHA1: f0e8efc27e0ff567758cecd47dba4b50adbad373
+
+
+Or to build 3.12.62-rt83 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.62.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.62-rt83.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
