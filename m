@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [RFC][PATCH 2/3] tracing: Add documentation for hwlat_detector tracer
-Date: Thu, 04 Aug 2016 10:57:10 -0400
-Message-ID: <20160804145840.044642364@goodmis.org>
+Subject: [RFC][PATCH 3/3] tracing: Have hwlat trace migrate across tracing_cpumask CPUs
+Date: Thu, 04 Aug 2016 10:57:11 -0400
+Message-ID: <20160804145840.183035905@goodmis.org>
 References: <20160804145708.158968389@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -14,105 +14,131 @@ Cc: Ingo Molnar <mingo@kernel.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:34362 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.136]:34412 "EHLO mail.kernel.org"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1758741AbcHDPAc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	id S1758743AbcHDPAc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
 	Thu, 4 Aug 2016 11:00:32 -0400
-Content-Disposition: inline; filename=0002-tracing-Add-documentation-for-hwlat_detector-tracer.patch
+Content-Disposition: inline; filename=0003-tracing-Have-hwlat-trace-migrate-across-tracing_cpum.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Jon Masters <jcm@redhat.com>
+From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
 
-Added the documentation on how to use th hwlat_detector.
+Instead of having the hwlat detector thread stay on one CPU, have it migrate
+across all the CPUs specified by tracing_cpumask. If the user modifies the
+thread's CPU affinity, the migration will stop until the next instance that
+the tracer is instantiated. The migration happens at the end of each window
+(period).
 
-Signed-off-by: Jon Masters <jcm@redhat.com>
-[ Various updates and modified to show hwlat as a tracer ]
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- Documentation/trace/hwlat_detector.txt | 73 ++++++++++++++++++++++++++++++++++
- 1 file changed, 73 insertions(+)
- create mode 100644 Documentation/trace/hwlat_detector.txt
+ Documentation/trace/hwlat_detector.txt |  6 ++++
+ kernel/trace/trace_hwlat.c             | 55 ++++++++++++++++++++++++++++++++++
+ 2 files changed, 61 insertions(+)
 
 diff --git a/Documentation/trace/hwlat_detector.txt b/Documentation/trace/hwlat_detector.txt
-new file mode 100644
-index 000000000000..c02e8ef800cf
---- /dev/null
+index c02e8ef800cf..3207717a0d1a 100644
+--- a/Documentation/trace/hwlat_detector.txt
 +++ b/Documentation/trace/hwlat_detector.txt
-@@ -0,0 +1,73 @@
-+Introduction:
-+-------------
+@@ -69,5 +69,11 @@ in /sys/kernel/tracing:
+ 
+  tracing_threshold	- minimum latency value to be considered (usecs)
+  tracing_max_latency	- maximum hardware latency actually observed (usecs)
++ tracing_cpumask	- the CPUs to move the hwlat thread across
+  hwlat_detector/width	- specified amount of time to spin within window (usecs)
+  hwlat_detector/window	- amount of time between (width) runs (usecs)
 +
-+The tracer hwlat_detector is a special purpose tracer that is used to
-+detect large system latencies induced by the behavior of certain underlying
-+hardware or firmware, independent of Linux itself. The code was developed
-+originally to detect SMIs (System Management Interrupts) on x86 systems,
-+however there is nothing x86 specific about this patchset. It was
-+originally written for use by the "RT" patch since the Real Time
-+kernel is highly latency sensitive.
++The hwlat detector's kernel thread will migrate across each CPU specified in
++tracing_cpumask between each window. To limit the migration, either modify
++tracing_cpumask, or modify the hwlat kernel thread (named [hwlatd]) CPU
++affinity directly, and the migration will stop.
+diff --git a/kernel/trace/trace_hwlat.c b/kernel/trace/trace_hwlat.c
+index 08dfabe4e862..f0b5b2944ee7 100644
+--- a/kernel/trace/trace_hwlat.c
++++ b/kernel/trace/trace_hwlat.c
+@@ -42,6 +42,7 @@
+ #include <linux/kthread.h>
+ #include <linux/tracefs.h>
+ #include <linux/uaccess.h>
++#include <linux/cpumask.h>
+ #include <linux/delay.h>
+ #include "trace.h"
+ 
+@@ -211,6 +212,57 @@ out:
+ 	return ret;
+ }
+ 
++static struct cpumask save_cpumask;
++static bool disable_migrate;
 +
-+SMIs are not serviced by the Linux kernel, which means that it does not
-+even know that they are occuring. SMIs are instead set up by BIOS code
-+and are serviced by BIOS code, usually for "critical" events such as
-+management of thermal sensors and fans. Sometimes though, SMIs are used for
-+other tasks and those tasks can spend an inordinate amount of time in the
-+handler (sometimes measured in milliseconds). Obviously this is a problem if
-+you are trying to keep event service latencies down in the microsecond range.
++static void move_to_next_cpu(void)
++{
++	static struct cpumask *current_mask;
++	int next_cpu;
 +
-+The hardware latency detector works by hogging one of the cpus for configurable
-+amounts of time (with interrupts disabled), polling the CPU Time Stamp Counter
-+for some period, then looking for gaps in the TSC data. Any gap indicates a
-+time when the polling was interrupted and since the interrupts are disabled,
-+the only thing that could do that would be an SMI or other hardware hiccup
-+(or an NMI, but those can be tracked).
++	if (disable_migrate)
++		return;
 +
-+Note that the hwlat detector should *NEVER* be used in a production environment.
-+It is intended to be run manually to determine if the hardware platform has a
-+problem with long system firmware service routines.
++	/* Just pick the first CPU on first iteration */
++	if (!current_mask) {
++		current_mask = &save_cpumask;
++		get_online_cpus();
++		cpumask_and(current_mask, cpu_online_mask, tracing_buffer_mask);
++		put_online_cpus();
++		next_cpu = cpumask_first(current_mask);
++		goto set_affinity;
++	}
++		
++	/*
++	 * If for some reason the user modifies the CPU affinity
++	 * of this thread, than stop migrating for the duration
++	 * of the current test.
++	 */
++	if (!cpumask_equal(current_mask, &current->cpus_allowed))
++		goto disable;
 +
-+Usage:
-+------
++	get_online_cpus();
++	cpumask_and(current_mask, cpu_online_mask, tracing_buffer_mask);
++	next_cpu = cpumask_next(smp_processor_id(), current_mask);
++	put_online_cpus();
 +
-+Write the ASCII text "hwlat" into the current_tracer file of the tracing system
-+(mounted at /sys/kernel/tracing or /sys/kernel/tracing). It is possible to
-+redefine the threshold in microseconds (us) above which latency spikes will
-+be taken into account.
++	if (next_cpu >= nr_cpu_ids)
++		next_cpu = cpumask_first(current_mask);
 +
-+Example:
++ set_affinity:
++	if (next_cpu >= nr_cpu_ids) /* Shouldn't happen! */
++		goto disable;
 +
-+	# echo hwlat > /sys/kernel/tracing/current_tracer
-+	# echo 100 > /sys/kernel/tracing/tracing_thresh
++	cpumask_clear(current_mask);
++	cpumask_set_cpu(next_cpu, current_mask);
 +
-+The /sys/kernel/tracing/hwlat_detector interface contains the following files:
++	sched_setaffinity(0, current_mask);
++	return;
 +
-+width			- time period to sample with CPUs held (usecs)
-+			  must be less than the total window size (enforced)
-+window			- total period of sampling, width being inside (usecs)
++ disable:
++	disable_migrate = true;
++}
 +
-+By default the width is set to 500,000 and window to 1,000,000, meaning that
-+for every 1,000,000 usecs (1s) the hwlat detector will spin for 500,000 usecs
-+(0.5s). If tracing_thresh contains zero when hwlat tracer is enabled, it will
-+change to a default of 10 usecs. If any latencies that exceed the threshold is
-+observed then the data will be written to the tracing ring buffer.
+ /*
+  * kthread_fn - The CPU time sampling/hardware latency detection kernel thread
+  *
+@@ -230,6 +282,8 @@ static int kthread_fn(void *data)
+ 
+ 	while (!kthread_should_stop()) {
+ 
++		move_to_next_cpu();
 +
-+The minimum sleep time between periods is 1 millisecond. Even if width
-+is less than 1 millisecond apart from window, to allow the system to not
-+be totally starved.
-+
-+If tracing_thresh was zero when hwlat detector was started, it will be set
-+back to zero if another tracer is loaded. Note, the last value in
-+tracing_thresh that hwlat detector had will be saved and this value will
-+be restored in tracing_thresh if it is still zero when hwlat detector is
-+started again.
-+
-+The following tracing directory files are used by the hwlat_detector:
-+
-+in /sys/kernel/tracing:
-+
-+ tracing_threshold	- minimum latency value to be considered (usecs)
-+ tracing_max_latency	- maximum hardware latency actually observed (usecs)
-+ hwlat_detector/width	- specified amount of time to spin within window (usecs)
-+ hwlat_detector/window	- amount of time between (width) runs (usecs)
+ 		local_irq_disable();
+ 		get_sample();
+ 		local_irq_enable();
+@@ -473,6 +527,7 @@ static int hwlat_tracer_init(struct trace_array *tr)
+ 
+ 	hwlat_trace = tr;
+ 
++	disable_migrate = false;
+ 	hwlat_data.count = 0;
+ 	tr->max_latency = 0;
+ 	save_tracing_thresh = tracing_thresh;
 -- 
 2.8.1
 
