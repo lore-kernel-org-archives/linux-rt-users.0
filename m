@@ -1,13 +1,15 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [RFC][PATCH 1/3] tracing: Added hardware latency tracer
-Date: Fri, 5 Aug 2016 17:28:33 +0200
-Message-ID: <866492b0-182c-4810-e738-6d19605c858f@linutronix.de>
+Date: Fri, 5 Aug 2016 11:36:40 -0400
+Message-ID: <20160805113640.5464702e@gandalf.local.home>
 References: <20160804145708.158968389@goodmis.org>
- <20160804145839.856286626@goodmis.org> <20160805142521.GA21312@linutronix.de>
- <20160805104413.781611b5@gandalf.local.home>
+	<20160804145839.856286626@goodmis.org>
+	<20160805142521.GA21312@linutronix.de>
+	<20160805104413.781611b5@gandalf.local.home>
+	<866492b0-182c-4810-e738-6d19605c858f@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	Ingo Molnar <mingo@kernel.org>,
 	Andrew Morton <akpm@linux-foundation.org>,
@@ -15,56 +17,19 @@ Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Jon Masters <jcm@redhat.com>, Daniel Wagner <wagi@monom.org>,
 	Carsten Emde <C.Emde@osadl.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160805104413.781611b5@gandalf.local.home>
+In-Reply-To: <866492b0-182c-4810-e738-6d19605c858f@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 08/05/2016 04:44 PM, Steven Rostedt wrote:
-> On Fri, 5 Aug 2016 16:25:21 +0200
-> Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
-> 
->> * Steven Rostedt | 2016-08-04 10:57:09 [-0400]:
->>
->>> diff --git a/kernel/trace/trace_hwlat.c b/kernel/trace/trace_hwlat.c
->>> new file mode 100644
->>> index 000000000000..08dfabe4e862
->>> --- /dev/null
->>> +++ b/kernel/trace/trace_hwlat.c  
->> …
->>> +/* Macros to encapsulate the time capturing infrastructure */
->>> +#define time_type	u64
->>> +#define time_get()	trace_clock_local()
->>> +#define time_to_us(x)	div_u64(x, 1000)
->>> +#define time_sub(a, b)	((a) - (b))
->>> +#define init_time(a, b)	(a = b)
->>> +#define time_u64(a)	a  
->>
->> Do we need a macro for this? In the old code we could choose between
->> CONFIG_TRACING but now we don't.
->>
-> 
-> Probably not, I kept it for two reasons. 1) to keep the same logic as
-> what was in PREEMPT_RT, and 2) in case we can come up with a better
-> clock.
+On Fri, 5 Aug 2016 17:28:33 +0200
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 
-I assumed it was a leftover.
 
-> But it's not that important. Should it be nuked? They do somewhat make
-> the code easier to read.
+> If you want to keep it, keep it. I just assumed it was a leftover.
 
-that time_get() is close to ktime_get() which is almost u64 nowadays.
-So it might not be that cool for upstream. A hwlat prefix makes the
-whole thing not prettier.
+I have mixed feelings about it. I may just nuke it anyway. I forgot to
+add #3 laziness, it worked and I didn't want to add bugs by removing it.
 
-1. PREEMPT_RT. Do I need any changes? I assumed I could keep this 1:1
-   (once it is merged) and throw the current hwlat out.
-2. a better clock is an argument. But why would you have a better clock
-   for hwlat and not for the whole tracing infrastructure?
-
-If you want to keep it, keep it. I just assumed it was a leftover.
-> 
-> -- Steve
-
-Sebastian
+--Steve
