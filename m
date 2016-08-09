@@ -1,169 +1,79 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [RFC][PATCH 5/3] tracing: Add smi counting to HWLAT
-Date: Tue, 9 Aug 2016 14:05:43 -0400
-Message-ID: <20160809140543.2e5c83b5@gandalf.local.home>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: [RFC][PATCH 0/3] tracing: Add Hardware Latency detector tracer
+Date: Tue, 9 Aug 2016 13:15:16 -0500
+Message-ID: <20160809131516.6a83e93e@sluggy.hsv.redhat.com>
 References: <20160804145708.158968389@goodmis.org>
+	<20160804113033.78132a93@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@kernel.org>,
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ boundary="Sig_/g=e.BAs97YUI.wtvYg9a/sO"; protocol="application/pgp-signature"
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Ingo Molnar <mingo@kernel.org>,
 	Andrew Morton <akpm@linux-foundation.org>,
-	Clark Williams <williams@redhat.com>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Jon Masters <jcm@redhat.com>, Daniel Wagner <wagi@monom.org>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>
-To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0111.hostedemail.com ([216.40.44.111]:33834 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S932207AbcHISFs (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 9 Aug 2016 14:05:48 -0400
-In-Reply-To: <20160804145708.158968389@goodmis.org>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Steven Rostedt <rostedt@goodmis.org>,
+	Carsten Emde <C.Emde@osadl.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160804113033.78132a93@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
+--Sig_/g=e.BAs97YUI.wtvYg9a/sO
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-If an arch supports counting of SMIs (like newer intel chips do), then it
-can implement arch_smi_count() to return the number of SMIs that were
-triggered. The hwlat detector will call this function to get the current
-number of SMIs, and then after a period, it will read that function again,
-and if there's a difference, it will record that into the sample.
+On Thu, 4 Aug 2016 11:30:33 -0400
+Steven Rostedt <rostedt@goodmis.org> wrote:
 
-For example:
+> Note, I'm currently working on adding code to detect NMIs to this as
+> well. And perhaps even tracing SMI counters. Just to show what caused
+> the latency, as latency isn't measured by the counters (that I know of).
+>=20
 
- [99] inner:13 outer:16 ts:1470352534.886878855
- [100] inner:14 outer:18747 ts:1470352538.917966818 smi-count:2
- [101] inner:0 outer:19162 ts:1470352539.920988709 smi-count:6
- [102] inner:19376 outer:19276 ts:1470352540.923010578 smi-count:6
- [103] inner:19650 outer:20665 ts:1470352541.926032469 smi-count:6
- [104] inner:20526 outer:20680 ts:1470352542.973055312 smi-count:6
- [105] inner:17 outer:17 ts:1470352543.990077507
+I like the trace report, but for one small thing; I think it's worth either=
+ adding units to the reported latency values (us suffix) or putting in a he=
+ader line that hwlatdetect values are reported in microseconds.
 
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- arch/x86/events/msr.c        | 12 ++++++++++++
- kernel/trace/trace_entries.h |  1 +
- kernel/trace/trace_hwlat.c   | 11 +++++++++++
- kernel/trace/trace_output.c  |  4 ++++
- 4 files changed, 28 insertions(+)
+>    <...>-2644  [001] d...   202.735708: [99] inner:13 outer:16 ts:1470352=
+534.886878855
+>    <...>-2644  [001] d...   206.767274: [100] inner:14 outer:18747 ts:147=
+0352538.917966818 smi-total:2
+>    <...>-2644  [002] d...   207.775164: [101] inner:0 outer:19162 ts:1470=
+352539.920988709 smi-total:6
+>    <...>-2644  [003] d...   208.783067: [102] inner:19376 outer:19276 ts:=
+1470352540.923010578 smi-total:6
+>    <...>-2644  [000] d...   209.827416: [103] inner:19650 outer:20665 ts:=
+1470352541.926032469 smi-total:6
+>    <...>-2644  [001] d...   210.831062: [104] inner:20526 outer:20680 ts:=
+1470352542.973055312 smi-total:6
 
-diff --git a/arch/x86/events/msr.c b/arch/x86/events/msr.c
-index 85ef3c2e80e0..ff0c6e6351b0 100644
---- a/arch/x86/events/msr.c
-+++ b/arch/x86/events/msr.c
-@@ -27,6 +27,18 @@ static bool test_irperf(int idx)
- 	return boot_cpu_has(X86_FEATURE_IRPERF);
- }
- 
-+int arch_smi_count(void)
-+{
-+	unsigned long long count;
-+	int err;
-+
-+	err = rdmsrl_safe(MSR_SMI_COUNT, &count);
-+	if (err)
-+		return 0;
-+
-+	return count;
-+}
-+
- static bool test_intel(int idx)
- {
- 	if (boot_cpu_data.x86_vendor != X86_VENDOR_INTEL ||
-diff --git a/kernel/trace/trace_entries.h b/kernel/trace/trace_entries.h
-index d1cc37e78f99..207faa837d3d 100644
---- a/kernel/trace/trace_entries.h
-+++ b/kernel/trace/trace_entries.h
-@@ -335,6 +335,7 @@ FTRACE_ENTRY(hwlat, hwlat_entry,
- 		__field_desc(	long,	timestamp,	tv_sec		)
- 		__field_desc(	long,	timestamp,	tv_nsec		)
- 		__field(	unsigned int,		nmi_count	)
-+		__field(	unsigned int,		smi_count	)
- 		__field(	unsigned int,		seqnum		)
- 	),
- 
-diff --git a/kernel/trace/trace_hwlat.c b/kernel/trace/trace_hwlat.c
-index 2a668e55dcc6..1d60ef5c404f 100644
---- a/kernel/trace/trace_hwlat.c
-+++ b/kernel/trace/trace_hwlat.c
-@@ -69,6 +69,7 @@ static u64 nmi_ts_start;
- static u64 nmi_total_ts;
- static int nmi_count;
- static int nmi_cpu;
-+static int smi_count;
- 
- /* Tells NMIs to call back to the hwlat tracer to record timestamps */
- bool trace_hwlat_callback_enabled;
-@@ -84,6 +85,7 @@ struct hwlat_sample {
- 	u64		nmi_total_ts;	/* Total time spent in NMIs */
- 	struct timespec	timestamp;	/* wall time */
- 	int		nmi_count;	/* # NMIs during this sample */
-+	int		smi_count;	/* # SMIs during sampling (if arch supported) */
- };
- 
- /* keep the global state somewhere. */
-@@ -125,6 +127,7 @@ static void trace_hwlat_sample(struct hwlat_sample *sample)
- 	entry->timestamp		= sample->timestamp;
- 	entry->nmi_total_ts		= sample->nmi_total_ts;
- 	entry->nmi_count		= sample->nmi_count;
-+	entry->smi_count		= sample->smi_count;
- 
- 	if (!call_filter_check_discard(call, entry, buffer, event))
- 		__buffer_unlock_commit(buffer, event);
-@@ -138,6 +141,11 @@ static void trace_hwlat_sample(struct hwlat_sample *sample)
- #define init_time(a, b)	(a = b)
- #define time_u64(a)	a
- 
-+__weak unsigned long long arch_smi_count(void)
-+{
-+	return 0;
-+}
-+
- void trace_hwlat_callback(bool enter)
- {
- 	if (smp_processor_id() != nmi_cpu)
-@@ -180,6 +188,7 @@ static int get_sample(void)
- 	nmi_cpu = smp_processor_id();
- 	nmi_total_ts = 0;
- 	nmi_count = 0;
-+	smi_count = arch_smi_count();
- 	/* Make sure NMIs see this first */
- 	barrier();
- 
-@@ -231,6 +240,7 @@ static int get_sample(void)
- 
- 	barrier(); /* finish the above in the view for NMIs */
- 	trace_hwlat_callback_enabled = false;
-+	smi_count = arch_smi_count() - smi_count;
- 	barrier(); /* Make sure nmi_total_ts is no longer updated */
- 
- 	ret = 0;
-@@ -252,6 +262,7 @@ static int get_sample(void)
- 		s.timestamp = CURRENT_TIME;
- 		s.nmi_total_ts = nmi_total_ts;
- 		s.nmi_count = nmi_count;
-+		s.smi_count = smi_count;
- 		trace_hwlat_sample(&s);
- 
- 		/* Keep a running maximum ever recorded hardware latency */
-diff --git a/kernel/trace/trace_output.c b/kernel/trace/trace_output.c
-index 5478a97e8db3..498eb7363e05 100644
---- a/kernel/trace/trace_output.c
-+++ b/kernel/trace/trace_output.c
-@@ -1128,6 +1128,10 @@ trace_hwlat_print(struct trace_iterator *iter, int flags,
- 				 field->nmi_count);
- 	}
- 
-+	if (field->smi_count)
-+		trace_seq_printf(s, " smi-count:%u",
-+			 field->smi_count);
-+
- 	trace_seq_putc(s, '\n');
- 
- 	return trace_handle_return(s);
--- 
-1.9.3
+Clark
 
+--=20
+The United States Coast Guard:
+Ruining natural selection since 1790
+
+--Sig_/g=e.BAs97YUI.wtvYg9a/sO
+Content-Type: application/pgp-signature
+Content-Description: OpenPGP digital signature
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIcBAEBCgAGBQJXqh20AAoJEOI5asVwYXLrEWAP/0f2aQf9Fta6uazE7759ijuq
+b0dB+JwrJEi2+15pXZhk5JmF7vq3Bt3YgDk4hkLzMNyqiI/FLN/U3lL/LWhgDaY3
+a2PUe9H++W6PfGh8ITqEUzKGp7bfw1W8YS1hc/7De2M5Zmr6sbDWDFuBBRSynsak
+7ZzYnmuefDbYCvSV6CQWZ+ib/faUhvj7C58zYaBxP1fsWxiVykjXr6R1CGOPBUTt
+06Dl5FOrlJCZxfkvRuk+oi57am107xhET+0Dd34Sl/L7wUPBqnRGM6WPlP7uJ6KD
+Jsei0ESsZRMWVwg7wCORgsUWYpti/ZVfbJJxViHnPbdzVmSCEY/YfmTla0CibY8r
+5n681c9YT8PoW7I62QSJftv+L4tnzmDQ0KM4volP51LRQQPsmgGzxhGdfD66sQrY
+da/acJc/f0atHOCojZDvnUItILQgFocuh+iAjKjzwz5EQWjMxpKAEHyD5giIxV5O
+dzByRj+16Yxc08H0ypwTUVvbt0epIr9I+4rtBYp9xMzJpdHyUoseF4k3SI/0PUrC
+QRpBfwfuYYhruGT7m/6Rhuvgsbp5DyKSJ86mErIAhB1z48Ec8+IaFjVTXg6xmnU/
+A/2caIdo5oOtnePQj4XEVhacal3IUSq9SA+jRfqX0eF+fsePcF2/kPzByj3B0DiZ
+DHkMXVC+RbShcc37/Vx5
+=1eqv
+-----END PGP SIGNATURE-----
+
+--Sig_/g=e.BAs97YUI.wtvYg9a/sO--
