@@ -1,79 +1,56 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: [RFC][PATCH 0/3] tracing: Add Hardware Latency detector tracer
-Date: Tue, 9 Aug 2016 13:15:16 -0500
-Message-ID: <20160809131516.6a83e93e@sluggy.hsv.redhat.com>
+From: Daniel Bristot de Oliveira <bristot@redhat.com>
+Subject: Re: [RFC][PATCH 5/3] tracing: Add smi counting to HWLAT
+Date: Tue, 9 Aug 2016 15:28:57 -0300
+Message-ID: <81075ecf-90c3-fdb2-59eb-defd215af2eb@redhat.com>
 References: <20160804145708.158968389@goodmis.org>
-	<20160804113033.78132a93@gandalf.local.home>
+ <20160809140543.2e5c83b5@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- boundary="Sig_/g=e.BAs97YUI.wtvYg9a/sO"; protocol="application/pgp-signature"
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Ingo Molnar <mingo@kernel.org>,
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@kernel.org>,
 	Andrew Morton <akpm@linux-foundation.org>,
+	Clark Williams <williams@redhat.com>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Jon Masters <jcm@redhat.com>, Daniel Wagner <wagi@monom.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>,
-	Carsten Emde <C.Emde@osadl.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160804113033.78132a93@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Peter Zijlstra <peterz@infradead.org>
+To: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-qk0-f175.google.com ([209.85.220.175]:33222 "EHLO
+	mail-qk0-f175.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932257AbcHIS3E (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 9 Aug 2016 14:29:04 -0400
+Received: by mail-qk0-f175.google.com with SMTP id t7so21397899qkh.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 09 Aug 2016 11:29:03 -0700 (PDT)
+In-Reply-To: <20160809140543.2e5c83b5@gandalf.local.home>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/g=e.BAs97YUI.wtvYg9a/sO
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+On 08/09/2016 03:05 PM, Steven Rostedt wrote:
+> If an arch supports counting of SMIs (like newer intel chips do), then it
+> can implement arch_smi_count() to return the number of SMIs that were
+> triggered. The hwlat detector will call this function to get the current
+> number of SMIs, and then after a period, it will read that function again,
+> and if there's a difference, it will record that into the sample.
+> 
+> For example:
+> 
+>  [99] inner:13 outer:16 ts:1470352534.886878855
+>  [100] inner:14 outer:18747 ts:1470352538.917966818 smi-count:2
+>  [101] inner:0 outer:19162 ts:1470352539.920988709 smi-count:6
+>  [102] inner:19376 outer:19276 ts:1470352540.923010578 smi-count:6
+>  [103] inner:19650 outer:20665 ts:1470352541.926032469 smi-count:6
+>  [104] inner:20526 outer:20680 ts:1470352542.973055312 smi-count:6
+>  [105] inner:17 outer:17 ts:1470352543.990077507
+> 
+> Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 
-On Thu, 4 Aug 2016 11:30:33 -0400
-Steven Rostedt <rostedt@goodmis.org> wrote:
+It worked fine in a system that I can manually cause SMIs (by turning
+keyboard's backlight on and off).
 
-> Note, I'm currently working on adding code to detect NMIs to this as
-> well. And perhaps even tracing SMI counters. Just to show what caused
-> the latency, as latency isn't measured by the counters (that I know of).
->=20
+Tested-by: Daniel Bristot de Oliveira <bristot@redhat.com>
 
-I like the trace report, but for one small thing; I think it's worth either=
- adding units to the reported latency values (us suffix) or putting in a he=
-ader line that hwlatdetect values are reported in microseconds.
-
->    <...>-2644  [001] d...   202.735708: [99] inner:13 outer:16 ts:1470352=
-534.886878855
->    <...>-2644  [001] d...   206.767274: [100] inner:14 outer:18747 ts:147=
-0352538.917966818 smi-total:2
->    <...>-2644  [002] d...   207.775164: [101] inner:0 outer:19162 ts:1470=
-352539.920988709 smi-total:6
->    <...>-2644  [003] d...   208.783067: [102] inner:19376 outer:19276 ts:=
-1470352540.923010578 smi-total:6
->    <...>-2644  [000] d...   209.827416: [103] inner:19650 outer:20665 ts:=
-1470352541.926032469 smi-total:6
->    <...>-2644  [001] d...   210.831062: [104] inner:20526 outer:20680 ts:=
-1470352542.973055312 smi-total:6
-
-Clark
-
---=20
-The United States Coast Guard:
-Ruining natural selection since 1790
-
---Sig_/g=e.BAs97YUI.wtvYg9a/sO
-Content-Type: application/pgp-signature
-Content-Description: OpenPGP digital signature
-
------BEGIN PGP SIGNATURE-----
-
-iQIcBAEBCgAGBQJXqh20AAoJEOI5asVwYXLrEWAP/0f2aQf9Fta6uazE7759ijuq
-b0dB+JwrJEi2+15pXZhk5JmF7vq3Bt3YgDk4hkLzMNyqiI/FLN/U3lL/LWhgDaY3
-a2PUe9H++W6PfGh8ITqEUzKGp7bfw1W8YS1hc/7De2M5Zmr6sbDWDFuBBRSynsak
-7ZzYnmuefDbYCvSV6CQWZ+ib/faUhvj7C58zYaBxP1fsWxiVykjXr6R1CGOPBUTt
-06Dl5FOrlJCZxfkvRuk+oi57am107xhET+0Dd34Sl/L7wUPBqnRGM6WPlP7uJ6KD
-Jsei0ESsZRMWVwg7wCORgsUWYpti/ZVfbJJxViHnPbdzVmSCEY/YfmTla0CibY8r
-5n681c9YT8PoW7I62QSJftv+L4tnzmDQ0KM4volP51LRQQPsmgGzxhGdfD66sQrY
-da/acJc/f0atHOCojZDvnUItILQgFocuh+iAjKjzwz5EQWjMxpKAEHyD5giIxV5O
-dzByRj+16Yxc08H0ypwTUVvbt0epIr9I+4rtBYp9xMzJpdHyUoseF4k3SI/0PUrC
-QRpBfwfuYYhruGT7m/6Rhuvgsbp5DyKSJ86mErIAhB1z48Ec8+IaFjVTXg6xmnU/
-A/2caIdo5oOtnePQj4XEVhacal3IUSq9SA+jRfqX0eF+fsePcF2/kPzByj3B0DiZ
-DHkMXVC+RbShcc37/Vx5
-=1eqv
------END PGP SIGNATURE-----
-
---Sig_/g=e.BAs97YUI.wtvYg9a/sO--
+-- Daniel
