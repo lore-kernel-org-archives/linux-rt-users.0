@@ -1,41 +1,36 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [RFC][PATCH 5/3] tracing: Add smi counting to HWLAT
-Date: Tue, 9 Aug 2016 23:25:58 +0200
-Message-ID: <20160809212558.GJ30192@twins.programming.kicks-ass.net>
+From: Jon Masters <jcm@redhat.com>
+Subject: Re: [RFC][PATCH 4/3] tracing: Add NMI tracing in hwlat detector
+Date: Wed, 10 Aug 2016 10:10:05 -0400
+Message-ID: <c9973e20-eb77-91b0-2af0-a08dd101bb72@redhat.com>
 References: <20160804145708.158968389@goodmis.org>
- <20160809140543.2e5c83b5@gandalf.local.home>
+ <20160804125618.6db9b5b3@gandalf.local.home>
+ <20160804131645.1ba3244a@gandalf.local.home>
+ <20160805143555.GB21312@linutronix.de>
+ <20160805105207.16e26a41@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	Ingo Molnar <mingo@kernel.org>,
 	Andrew Morton <akpm@linux-foundation.org>,
 	Clark Williams <williams@redhat.com>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Jon Masters <jcm@redhat.com>, Daniel Wagner <wagi@monom.org>,
-	Carsten Emde <C.Emde@osadl.org>,
+	Daniel Wagner <wagi@monom.org>, Carsten Emde <C.Emde@osadl.org>
+To: Steven Rostedt <rostedt@goodmis.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20160809140543.2e5c83b5@gandalf.local.home>
+In-Reply-To: <20160805105207.16e26a41@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, Aug 09, 2016 at 02:05:43PM -0400, Steven Rostedt wrote:
-> +int arch_smi_count(void)
-> +{
-> +	unsigned long long count;
-> +	int err;
-> +
-> +	err = rdmsrl_safe(MSR_SMI_COUNT, &count);
-> +	if (err)
-> +		return 0;
+On 08/05/2016 10:52 AM, Steven Rostedt wrote:
 
-That's really yucky, relying on _safe() to detect availability.
+> Ah, this is when we have GENERIC_SCHED_CLOCK, which would break tracing
+> if any arch that has this also has NMIs. Probably need to look at arm64.
 
-Also, I just found AMD Fam15h has this counter through PMCs (event
-0x2b).
+Today, we don't have NMIs on arm64 that are supported in Linux.
 
-> +
-> +	return count;
-> +}
+Jon.
+
+-- 
+Computer Architect | Sent from my Fedora powered laptop
