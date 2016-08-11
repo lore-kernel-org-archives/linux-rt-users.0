@@ -1,44 +1,130 @@
-From: Jon Masters <jcm@redhat.com>
-Subject: Re: [RFC][PATCH 2/3] tracing: Add documentation for hwlat_detector
- tracer
-Date: Wed, 10 Aug 2016 10:12:47 -0400
-Message-ID: <fdd1fa48-8792-2950-8338-30f5d81ec911@redhat.com>
-References: <20160804145708.158968389@goodmis.org>
- <20160804145840.044642364@goodmis.org>
+From: Grygorii Strashko <grygorii.strashko@ti.com>
+Subject: [4.4-RT PATCH RFC/RFT] drivers: net: cpsw: mark rx/tx irq as IRQF_NO_THREAD
+Date: Thu, 11 Aug 2016 19:15:40 +0300
+Message-ID: <20160811161540.9613-1-grygorii.strashko@ti.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@kernel.org>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Clark Williams <williams@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Daniel Wagner <wagi@monom.org>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160804145840.044642364@goodmis.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain
+Cc: <linux-omap@vger.kernel.org>,
+	Alison Chaiken <alison@peloton-tech.com>,
+	<linux-rt-users@vger.kernel.org>, <netdev@vger.kernel.org>,
+	Grygorii Strashko <grygorii.strashko@ti.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from devils.ext.ti.com ([198.47.26.153]:39041 "EHLO
+	devils.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751059AbcHKQQB (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 11 Aug 2016 12:16:01 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 08/04/2016 10:57 AM, Steven Rostedt wrote:
-> From: Jon Masters <jcm@redhat.com>
-> 
-> Added the documentation on how to use th hwlat_detector.
-> 
-> Signed-off-by: Jon Masters <jcm@redhat.com>
-> [ Various updates and modified to show hwlat as a tracer ]
-> Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Mark CPSW Rx/Tx IRQs as IRQF_NO_THREAD and avoid double scheduling on -RT
+where this IRQs are forced threaded:
+ rx-irq
+  |- schedule threaded rx-irq handler
+...
+  |- threaded rx-irq handler -> cpsw_rx_interrupt()
+     |- napi_schedule()
+	|- __raise_softirq_irqoff()
+	   |- wakeup_proper_softirq()
+...
+  napi
 
-Thanks for cleaning up the original hwlat mess, making it actually
-useful and not an embarrassing hack, and shepherding this upstream
-Steven. I owe you many beers :)
+after:
+ rx-irq
+  |- cpsw_rx_interrupt()
+     |- napi_schedule()
+  |- irq_exit()
+     |- invoke_softirq()
+	   |- wakeup_softirqd()
+...
+  napi
 
-I wish someone could get as motivated about cleaning my apartment, or
-doing my laundry...volunteers are always welcome...
+And, as result, get benefits from the following improvements (tested
+on am57xx-evm):
 
-Jon.
+1) "[ 78.348599] NOHZ: local_softirq_pending 80" message will not be
+   seen any more. Now these warnings can be seen once iperf is started.
+   # iperf -c $IPERFHOST -w 128K  -d -t 60
 
+2) latency reduction when cyclictest is run in parallel with network load
+ where net_perf.sh is:
+   iperf -c $IPERFHOST -w 8K    -d -t 60
+   iperf -c $IPERFHOST -w 16K   -d -t 60
+   iperf -c $IPERFHOST -w 32K   -d -t 60
+   iperf -c $IPERFHOST -w 64K   -d -t 60
+   iperf -c $IPERFHOST -w 128K  -d -t 60
+
+before:
+T: 0 ( 1326) P:98 I:1000 C: 240000 Min:      8 Act:   13 Avg:   18 Max:      70
+T: 1 ( 1327) P:98 I:1500 C: 159981 Min:      9 Act:   15 Avg:   16 Max:      43
+after:
+T: 0 ( 1331) P:98 I:1000 C: 240000 Min:      8 Act:   15 Avg:   14 Max:      51
+T: 1 ( 1332) P:98 I:1500 C: 159953 Min:      8 Act:   16 Avg:   15 Max:      33
+
+3) network performance increase
+
+win, K	Mbits/s
+	before	after	%
+8K	354	350.3	0.0
+16K	412	551	33.7
+32K	423	659.5	55.9
+64K	436	728.3	67.0
+128K	537	845	57.4
+
+This change does not affect on non-RT.
+
+Signed-off-by: Grygorii Strashko <grygorii.strashko@ti.com>
+---
+Hi All,
+
+I'll be appreciated on any feedback or tested-by.
+In case of positive feedback I'll resend it for upstream.
+
+ drivers/net/ethernet/ti/cpsw.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/net/ethernet/ti/cpsw.c b/drivers/net/ethernet/ti/cpsw.c
+index 7b59283..fa4bb81 100644
+--- a/drivers/net/ethernet/ti/cpsw.c
++++ b/drivers/net/ethernet/ti/cpsw.c
+@@ -769,7 +769,7 @@ static irqreturn_t cpsw_tx_interrupt(int irq, void *dev_id)
+ 		priv->tx_irq_disabled = true;
+ 	}
+ 
+-	napi_schedule(&priv->napi_tx);
++	napi_schedule_irqoff(&priv->napi_tx);
+ 	return IRQ_HANDLED;
+ }
+ 
+@@ -785,7 +785,7 @@ static irqreturn_t cpsw_rx_interrupt(int irq, void *dev_id)
+ 		priv->rx_irq_disabled = true;
+ 	}
+ 
+-	napi_schedule(&priv->napi_rx);
++	napi_schedule_irqoff(&priv->napi_rx);
+ 	return IRQ_HANDLED;
+ }
+ 
+@@ -2827,7 +2827,7 @@ static int cpsw_probe(struct platform_device *pdev)
+ 
+ 	priv->irqs_table[0] = irq;
+ 	ret = devm_request_irq(&pdev->dev, irq, cpsw_rx_interrupt,
+-			       0, dev_name(&pdev->dev), priv);
++			       IRQF_NO_THREAD, dev_name(&pdev->dev), priv);
+ 	if (ret < 0) {
+ 		dev_err(priv->dev, "error attaching irq (%d)\n", ret);
+ 		goto clean_ale_ret;
+@@ -2842,7 +2842,7 @@ static int cpsw_probe(struct platform_device *pdev)
+ 
+ 	priv->irqs_table[1] = irq;
+ 	ret = devm_request_irq(&pdev->dev, irq, cpsw_tx_interrupt,
+-			       0, dev_name(&pdev->dev), priv);
++			       IRQF_NO_THREAD, dev_name(&pdev->dev), priv);
+ 	if (ret < 0) {
+ 		dev_err(priv->dev, "error attaching irq (%d)\n", ret);
+ 		goto clean_ale_ret;
 -- 
-Computer Architect | Sent from my Fedora powered laptop
+2.9.2
+
