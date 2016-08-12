@@ -1,28 +1,27 @@
 From: Grygorii Strashko <grygorii.strashko@ti.com>
-Subject: [v4.1-rt PATCH] RM: lazy-preempt: add missed TIF_NEED_RESCHED_LAZY to _TIF_WORK_MASK
-Date: Fri, 12 Aug 2016 20:14:16 +0300
-Message-ID: <20160812171416.11322-1-grygorii.strashko@ti.com>
+Subject: [v4.1-rt PATCH resend] RM: lazy-preempt: add missed TIF_NEED_RESCHED_LAZY to _TIF_WORK_MASK
+Date: Fri, 12 Aug 2016 20:21:28 +0300
+Message-ID: <20160812172128.11543-1-grygorii.strashko@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Cc: Grygorii Strashko <grygorii.strashko@linaro.org>
+Cc: Grygorii Strashko <grygorii.strashko@ti.com>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	Steven Rostedt <rostedt@goodmis.org>,
 	<linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from comal.ext.ti.com ([198.47.26.152]:42217 "EHLO comal.ext.ti.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752461AbcHLROe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 12 Aug 2016 13:14:34 -0400
+Received: from devils.ext.ti.com ([198.47.26.153]:33615 "EHLO
+	devils.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752461AbcHLRVr (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 12 Aug 2016 13:21:47 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-
-From: Grygorii Strashko <grygorii.strashko@linaro.org>
 
 The flag TIF_NEED_RESCHED_LAZY is missed in _TIF_WORK_MASK [1], so add it.
 
 [1] http://www.spinics.net/lists/linux-rt-users/msg14450.html
 
-Signed-off-by: Grygorii Strashko <grygorii.strashko@linaro.org>
+Signed-off-by: Grygorii Strashko <grygorii.strashko@ti.com>
 ---
  arch/arm/include/asm/thread_info.h | 3 ++-
  1 file changed, 2 insertions(+), 1 deletion(-)
