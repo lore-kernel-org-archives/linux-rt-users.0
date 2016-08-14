@@ -1,77 +1,108 @@
-From: Carsten Emde <C.Emde@osadl.org>
-Subject: [PATCH] Make output of RT throttling more verbose
-Date: Sun, 14 Aug 2016 02:12:35 +0200
-Message-ID: <99b19596-c11b-0b92-7376-b1a07f1aaa88@osadl.org>
+From: Jan Kiszka <jan.kiszka@web.de>
+Subject: Re: Gilles Chanteperdrix, 1975-2016
+Date: Sun, 14 Aug 2016 21:36:51 +0200
+Message-ID: <450776d3-a178-b273-c03a-a6fa25f3a35d@web.de>
+References: <c289b77a-5be2-e55b-b0aa-4808de060a5d@xenomai.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ protocol="application/pgp-signature";
+ boundary="hWRbrijGdl1VdJLJgPKfPleemPSMlSEOH"
+To: Philippe Gerum <rpm@xenomai.org>,
+	"Xenomai@xenomai.org" <Xenomai@xenomai.org>,
+	rtnet-developers <rtnet-developers@lists.sourceforge.net>,
+	rtai@rtai.org, RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:50836 "EHLO toro.web-alm.net"
+Received: from mout.web.de ([217.72.192.78]:56743 "EHLO mout.web.de"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752415AbcHNKDD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 14 Aug 2016 06:03:03 -0400
+	id S1751015AbcHNThK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 14 Aug 2016 15:37:10 -0400
+In-Reply-To: <c289b77a-5be2-e55b-b0aa-4808de060a5d@xenomai.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--hWRbrijGdl1VdJLJgPKfPleemPSMlSEOH
+Content-Type: multipart/mixed; boundary="1JS7ErrF3kNrdOPT5wIjNKF46wJhSLJOl"
+From: Jan Kiszka <jan.kiszka@web.de>
+To: Philippe Gerum <rpm@xenomai.org>,
+ "Xenomai@xenomai.org" <Xenomai@xenomai.org>,
+ rtnet-developers <rtnet-developers@lists.sourceforge.net>, rtai@rtai.org,
+ RT <linux-rt-users@vger.kernel.org>
+Message-ID: <450776d3-a178-b273-c03a-a6fa25f3a35d@web.de>
+Subject: Re: Gilles Chanteperdrix, 1975-2016
+References: <c289b77a-5be2-e55b-b0aa-4808de060a5d@xenomai.org>
+In-Reply-To: <c289b77a-5be2-e55b-b0aa-4808de060a5d@xenomai.org>
 
-Make output of RT throttling more verbose.
+--1JS7ErrF3kNrdOPT5wIjNKF46wJhSLJOl
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-Most of the time when a system is hit by RT throttling
-activation it is evident which task is running havoc.
-Sometimes, however, the culprit may be more difficult
-to detect. Add some more debug output to the RT
-throttling activation message for such cases.
+On 2016-08-13 18:11, Philippe Gerum wrote:
+>=20
+> It is with deep sorrow that I have to inform you that Gilles
+> Chanteperdrix has passed away on Sunday 7th August. He now rests in the=
 
-Test it:
-Generate an artificial block of an RT task using the blocksys driver
-# chrt -r 99 taskset -c 7 echo 4500000000 >/dev/blocksys
-Kernel messages
-# dmesg | tail -20 | grep -e blocksys -e sched
-blocksys: preemption and interrupts of CPU #7 will be blocked for 4500000000 nops
-sched: RT throttling activated cmd echo cpu 7 pid 4780 prio 99 us 1155825 flags 0x10000088
-blocksys: preemption and interrupts of CPU #7 blocked for about 1311139 us
+> cemetery of Baillargues, in Southern France.
+>=20
+> You can extend your sympathy to Gilles's family by sending a message to=
 
-Signed-off-by: Carsten Emde <C.Emde@osadl.org>
+> im-gilles@xenomai.org.
+>=20
+> Gilles will forever be remembered as a true-hearted man, a brilliant
+> mind always scratching beneath the surface, looking for elegance in the=
 
----
- kernel/sched/rt.c |   13 ++++++++++---
- 1 file changed, 10 insertions(+), 3 deletions(-)
+> driest topics, never jaded from such accomplishment.
+>=20
+> According to Paul Valery, "death is a trick played by the inconceivable=
 
-Index: linux-4.6.5-rt10/kernel/sched/rt.c
-===================================================================
---- linux-4.6.5-rt10.orig/kernel/sched/rt.c
-+++ linux-4.6.5-rt10/kernel/sched/rt.c
-@@ -899,7 +899,8 @@ static inline int rt_se_prio(struct sche
- 	return rt_task_of(rt_se)->prio;
- }
- 
--static int sched_rt_runtime_exceeded(struct rt_rq *rt_rq)
-+static int sched_rt_runtime_exceeded(struct rt_rq *rt_rq,
-+				     struct task_struct *curr, u64 delta_exec)
- {
- 	u64 runtime = sched_rt_runtime(rt_rq);
- 
-@@ -923,7 +924,11 @@ static int sched_rt_runtime_exceeded(str
- 		 */
- 		if (likely(rt_b->rt_runtime)) {
- 			rt_rq->rt_throttled = 1;
--			printk_deferred_once("sched: RT throttling activated\n");
-+			printk_deferred("sched: RT throttling activated cmd %s "
-+			   "cpu %d pid %d prio %d us %llu flags 0x%08lx\n",
-+			   curr->comm, task_cpu(curr), task_pid_nr(curr),
-+			   MAX_RT_PRIO-1 - curr->prio, delta_exec >> 10,
-+			   (unsigned long) task_thread_info(curr)->flags);
- 		} else {
- 			/*
- 			 * In case we did anyway, make it go away,
-@@ -983,7 +988,7 @@ static void update_curr_rt(struct rq *rq
- 		if (sched_rt_runtime(rt_rq) != RUNTIME_INF) {
- 			raw_spin_lock(&rt_rq->rt_runtime_lock);
- 			rt_rq->rt_time += delta_exec;
--			if (sched_rt_runtime_exceeded(rt_rq))
-+			if (sched_rt_runtime_exceeded(rt_rq, curr, delta_exec))
- 				resched_curr(rq);
- 			raw_spin_unlock(&rt_rq->rt_runtime_lock);
- 		}
+> on the conceivable". Gilles's absence is inconceivable to me, I can onl=
+y
+> assume that for once, he just got rest from tirelessly helping all of u=
+s.
+>=20
+> Repose en paix mon ami, l'=C3=A9clat de ta m=C3=A9moire dissipera ces h=
+eures  sombres.
+>=20
+
+I'm very sad having to read this. My deepest sympathy to his family and
+friends.
+
+Gilles has been working in these communities for ages, as long as I can
+remember. From the early RTAI-fusion days, over his POSIX skin, the
+continuous hard work on ARM over all the years, his FCSE patches,
+countless enhancements and tricky fixes for both Xenomai series, its
+infrastructure and much more.
+
+As if all the coding wasn't enough, he was also always trying to help
+people with their questions and problems on the lists, and did thorough
+reviews of our patches. Tedious work, sometimes repeating, and we cannot
+thank him enough for all the time he spent on this, with almost infinite
+endurance.
+
+I will specifically keep is valuable contributions to RTnet in memory
+which finally led to a perfect take-over. He achieved what I was only
+imagining: the smooth integration of this project into Xenomai.
+
+With his amazing expertise, passion for free software, dedication to his
+work, he was shaping the co-kernel real-time Linux projects enduringly.
+It's so sad that we lost him. Way too early.
+
+Jan
+
+
+--1JS7ErrF3kNrdOPT5wIjNKF46wJhSLJOl--
+
+--hWRbrijGdl1VdJLJgPKfPleemPSMlSEOH
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iEYEARECAAYFAlewyFMACgkQitSsb3rl5xQy2wCfVxRWU5lC71dLW8S0MK4HG97Y
+MVwAn0xkhcb60iRVYZOY5h1yhQIF/Xsn
+=nhRn
+-----END PGP SIGNATURE-----
+
+--hWRbrijGdl1VdJLJgPKfPleemPSMlSEOH--
