@@ -1,93 +1,107 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH] Make output of RT throttling more verbose
-Date: Wed, 17 Aug 2016 10:46:14 +0200
-Message-ID: <20160817084613.npcfmylluwhi5suh@linutronix.de>
-References: <99b19596-c11b-0b92-7376-b1a07f1aaa88@osadl.org>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: hwlatdetect:  Add --hardlimit to define the real test failing
+ criteria
+Date: Wed, 17 Aug 2016 19:00:37 +0100 (IST)
+Message-ID: <alpine.LFD.2.20.1608171848410.12882@riemann>
+References: <20160815152857.054f67e3@sluggy.hsv.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Carsten Emde <C.Emde@osadl.org>
+Content-Type: text/plain; charset=US-ASCII
+Cc: RT <linux-rt-users@vger.kernel.org>
+To: Clark Williams <williams@redhat.com>,
+	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:40306 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750922AbcHQIqQ (ORCPT
+Received: from mail-wm0-f65.google.com ([74.125.82.65]:36587 "EHLO
+	mail-wm0-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752406AbcHQSPb (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 17 Aug 2016 04:46:16 -0400
-Content-Disposition: inline
-In-Reply-To: <99b19596-c11b-0b92-7376-b1a07f1aaa88@osadl.org>
+	Wed, 17 Aug 2016 14:15:31 -0400
+Received: by mail-wm0-f65.google.com with SMTP id i138so26671609wmf.3
+        for <linux-rt-users@vger.kernel.org>; Wed, 17 Aug 2016 11:15:30 -0700 (PDT)
+In-Reply-To: <20160815152857.054f67e3@sluggy.hsv.redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2016-08-14 02:12:35 [+0200], Carsten Emde wrote:
-> 
-> Make output of RT throttling more verbose.
-> 
-> Most of the time when a system is hit by RT throttling
-> activation it is evident which task is running havoc.
-> Sometimes, however, the culprit may be more difficult
-> to detect. Add some more debug output to the RT
-> throttling activation message for such cases.
-> 
-> Test it:
-> Generate an artificial block of an RT task using the blocksys driver
-> # chrt -r 99 taskset -c 7 echo 4500000000 >/dev/blocksys
 
-This is not in tree.
 
-> Kernel messages
-> # dmesg | tail -20 | grep -e blocksys -e sched
-> blocksys: preemption and interrupts of CPU #7 will be blocked for 4500000000 nops
-> sched: RT throttling activated cmd echo cpu 7 pid 4780 prio 99 us 1155825 flags 0x10000088
-> blocksys: preemption and interrupts of CPU #7 blocked for about 1311139 us
+On Mon, 15 Aug 2016, Clark Williams wrote:
+
+> John,
 > 
-> Signed-off-by: Carsten Emde <C.Emde@osadl.org>
+> Luis and I were working on our tests and decided it is more interesting, in our 
+> automated tests, to have a higher tolerance for SMIs, as most of the test boxes are 
+> not optimized for RT. On the other hand, we would like to know how big the firmware-induced
+> latencies on these boxes.
 > 
-> ---
->  kernel/sched/rt.c |   13 ++++++++++---
->  1 file changed, 10 insertions(+), 3 deletions(-)
+> This commit adds the --hardlimit parameter, which defines the real
+> PASS/FAIL latency criteria. Latencies above --threshold will be
+> annotated, but the test may PASS if the observed latencies are smaller
+> than --hardlimit.
 > 
-> Index: linux-4.6.5-rt10/kernel/sched/rt.c
-> ===================================================================
-> --- linux-4.6.5-rt10.orig/kernel/sched/rt.c
-> +++ linux-4.6.5-rt10/kernel/sched/rt.c
-> @@ -899,7 +899,8 @@ static inline int rt_se_prio(struct sche
->  	return rt_task_of(rt_se)->prio;
->  }
+> When --hardlimit is not informed, the value used for --threshold is also
+> used as the hard limit.
+> 
+> Signed-off-by: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
+> Signed-off-by: Clark Williams <williams@redhat.com>
+
+Note, to apply your patch you have to cd to src/hwlatdetect instead
+of being in rt-tests
+
+Since this would go in unstable, we don't have to maintain backwards 
+compatibility. So, you could remove the --threshold parameter and create
+--hardlimit, and --softlimit parameters that consistently do the same 
+thing. (instead of having --threshold mean two different things depending 
+on whether or not --hardlimit exists)
+
+That might even be better because you could annotate a --softlimit without 
+even requiring there to be a hard one.
+
+I'm going to impose a new requirement on people submitting patches to also 
+submit patches to update documentation. So once, we are agreed on what 
+this change should look like you have to also change the hwlatdetect.8
+page as well as the output to hwlatdetect --help
+
+Thanks
+
+John 
+ > 
+> diff --git a/hwlatdetect.py b/hwlatdetect.py
+> index d9ef027..51bb401 100755
+> --- a/hwlatdetect.py
+> +++ b/hwlatdetect.py
+> @@ -474,6 +474,10 @@ if __name__ == '__main__':
+>                        dest="threshold",
+>                        help="value above which is considered an hardware latency")
 >  
-> -static int sched_rt_runtime_exceeded(struct rt_rq *rt_rq)
-> +static int sched_rt_runtime_exceeded(struct rt_rq *rt_rq,
-> +				     struct task_struct *curr, u64 delta_exec)
->  {
->  	u64 runtime = sched_rt_runtime(rt_rq);
+> +    parser.add_option("--hardlimit", default=None, type="string",
+> +                      dest="hardlimit",
+> +                      help="value above which the test is considered to fail")
+> +
+>      parser.add_option("--window", default=None, type="string",
+>                        dest="window",
+>                        help="time between samples")
+> @@ -526,6 +530,12 @@ if __name__ == '__main__':
+>          detect.set("threshold", t)
+>          debug("threshold set to %dus" % t)
 >  
-> @@ -923,7 +924,11 @@ static int sched_rt_runtime_exceeded(str
->  		 */
->  		if (likely(rt_b->rt_runtime)) {
->  			rt_rq->rt_throttled = 1;
-> -			printk_deferred_once("sched: RT throttling activated\n");
-> +			printk_deferred("sched: RT throttling activated cmd %s "
-> +			   "cpu %d pid %d prio %d us %llu flags 0x%08lx\n",
-> +			   curr->comm, task_cpu(curr), task_pid_nr(curr),
-> +			   MAX_RT_PRIO-1 - curr->prio, delta_exec >> 10,
-> +			   (unsigned long) task_thread_info(curr)->flags);
-
-I would keep the _once. Other than that, I don't think that the output
-is correct. The runtime is counted for all tasks within the RT class.
-That means if you have 100us of RT runtime and you have one task using
-regulary 10us but for some reason it used 90us and the second uses 20us
-(as always and this time) then the second task will be blamed wrongly.
-
->  		} else {
->  			/*
->  			 * In case we did anyway, make it go away,
-> @@ -983,7 +988,7 @@ static void update_curr_rt(struct rq *rq
->  		if (sched_rt_runtime(rt_rq) != RUNTIME_INF) {
->  			raw_spin_lock(&rt_rq->rt_runtime_lock);
->  			rt_rq->rt_time += delta_exec;
-> -			if (sched_rt_runtime_exceeded(rt_rq))
-> +			if (sched_rt_runtime_exceeded(rt_rq, curr, delta_exec))
->  				resched_curr(rq);
->  			raw_spin_unlock(&rt_rq->rt_runtime_lock);
->  		}
-
-Sebastian
+> +    if o.hardlimit:
+> +        hardlimit = microseconds(o.hardlimit)
+> +    else:
+> +        hardlimit = detect.get("threshold")
+> +    debug("hardlimit set to %dus" % hardlimit)
+> +
+>      if o.window:
+>          w = microseconds(o.window)
+>          if w < detect.get("width"):
+> @@ -595,5 +605,6 @@ if __name__ == '__main__':
+>          for s in detect.samples:
+>              print("%s" % s)
+>  
+> +    maxlatency = int(detect.get("max"))
+>      detect.cleanup()
+> -    sys.exit(exceeding)
+> +    sys.exit(maxlatency > hardlimit)
+> 
+> -- 
+> The United States Coast Guard:
+> Ruining natural selection since 1790
+> 
