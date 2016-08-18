@@ -1,93 +1,35 @@
-From: Carol Wong <carolw@netacquire.com>
-Subject: RE: v3.18-RT
-Date: Fri, 19 Aug 2016 00:41:46 +0000
-Message-ID: <82DB755727433D4A981ED5650C27BBEF72A4055B@S1P5DAG9E.EXCHPROD.USA.NET>
-References: <FCC5AC80E299464B82E1345E2C10FC9D8098CE51@S1P5DAG4C.EXCHPROD.USA.NET>
- <20160603163732.GD4496@linutronix.de>
- <FCC5AC80E299464B82E1345E2C10FC9D8099ACF6@S1P5DAG4C.EXCHPROD.USA.NET>
- <16d5e3f2-dd20-c802-37aa-86eab553fcfc@linutronix.de>
- <FCC5AC80E299464B82E1345E2C10FC9D809A150B@S1P5DAG4C.EXCHPROD.USA.NET>
- <4061065f-dd2b-0a76-299e-ce66783d85dd@linutronix.de>
- <82DB755727433D4A981ED5650C27BBEF729546A9@S1P5DAG9E.EXCHPROD.USA.NET>
- <20160729161933.GG21715@linutronix.de>
+From: Bernhard Landauer <oberon@manjaro.org>
+Subject: nvidia 370.23 not compiling against rt-patched kernel
+Date: Thu, 18 Aug 2016 20:57:34 +0200
+Message-ID: <4b0c04a5-82c8-dc36-8503-c2f7defafb12@manjaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "David Hauck" <davidh@netacquire.com>,
-        Preston Hauck <prestonh@netacquire.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gwo5.mbox.net ([165.212.64.23]:57828 "EHLO gwo5.mbox.net"
+Received: from mail.manjaro.org ([176.9.38.148]:59484 "EHLO manjaro.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1753842AbcHSAtB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 18 Aug 2016 20:49:01 -0400
-Content-Language: en-US
+        id S1753669AbcHSCp7 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 18 Aug 2016 22:45:59 -0400
+Received: from localhost (localhost [127.0.0.1])
+        by manjaro.org (Postfix) with ESMTP id 1AE8330E0893
+        for <linux-rt-users@vger.kernel.org>; Thu, 18 Aug 2016 20:57:39 +0200 (CEST)
+Received: from manjaro.org ([127.0.0.1])
+        by localhost (manjaro.org [127.0.0.1]) (amavisd-new, port 10024)
+        with ESMTP id LnRAZ6ZCcPU3 for <linux-rt-users@vger.kernel.org>;
+        Thu, 18 Aug 2016 20:57:37 +0200 (CEST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-SGkgU2ViYXN0aWFuLA0KDQpXZXJlIHlvdSBhYmxlIHRvIGdhaW4gYW55IGluc2lnaHQgZnJvbSB0
-aGUgdHJhY2VzPw0KDQpJZiB3ZSB3ZXJlIHRvIHByb2NlZWQgd2l0aCByZXZlcnRpbmcgdGhlIGtl
-cm5lbC9zY2hlZC9jb3JlLmMgcGF0Y2ggaW4gb3VyIGJ1aWxkIG9mIDMuMTguMjktcnQzMCwgd291
-bGQgdGhlIGFkZGl0aW9uIG9mIHRoZSBXQVJOX09OX09OQ0UocC0+bWlncmF0ZV9kaXNhYmxlX2F0
-b21pYyA8PSAwKSBkZWJ1ZyBjaGVjayB0aGF0IHlvdSByZWNvbW1lbmRlZCAoMjAxNi8wNy8yOSkg
-YmUgc3VmZmljaWVudCBmb3IgZGV0ZWN0aW5nIGltYmFsYW5jZXM/IFdlIHdvdWxkIHBlcmZvcm0g
-ZXh0ZW5kZWQgdGVzdGluZyBvbiBtdWx0aXBsZSBzeXN0ZW1zIHRvIGRldGVybWluZSB0aGUgZWZm
-ZWN0cyBvZiByZXZlcnRpbmcgdGhlIHBhdGNoLg0KDQpDaGVlcnMsDQpDYXJvbA0KDQo+IC0tLS0t
-T3JpZ2luYWwgTWVzc2FnZS0tLS0tDQo+IEZyb206IENhcm9sIFdvbmcNCj4gU2VudDogV2VkbmVz
-ZGF5LCBBdWd1c3QgMDMsIDIwMTYgNjozMiBQTQ0KPiBUbzogJ1NlYmFzdGlhbiBBbmRyemVqIFNp
-ZXdpb3InDQo+IENjOiBsaW51eC1ydC11c2Vyc0B2Z2VyLmtlcm5lbC5vcmc7IERhdmlkIEhhdWNr
-OyBQcmVzdG9uIEhhdWNrDQo+IFN1YmplY3Q6IFJFOiB2My4xOC1SVA0KPiANCj4gSGkgU2ViYXN0
-aWFuLA0KPiANCj4gSSBtYWRlIHRoZSBzdWdnZXN0ZWQgY2hhbmdlIHRvIHNjaGVkL2NvcmUuYyBh
-bmQgdmVyaWZpZWQgdGhhdA0KPiBDT05GSUdfU0NIRURfREVCVUc9eS4gSSByZXByb2R1Y2VkIHRo
-ZSBjcmFzaCAzIHRpbWVzIGFuZCBjYXB0dXJlZCB0aGUNCj4gYXR0YWNoZWQgdHJhY2VzLg0KPiAN
-Cj4gVGhhbmtzLA0KPiBDYXJvbA0KPiANCj4gPiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQ0K
-PiA+IEZyb206IFNlYmFzdGlhbiBBbmRyemVqIFNpZXdpb3IgW21haWx0bzpiaWdlYXN5QGxpbnV0
-cm9uaXguZGVdDQo+ID4gU2VudDogRnJpZGF5LCBKdWx5IDI5LCAyMDE2IDk6MjAgQU0NCj4gPiBU
-bzogQ2Fyb2wgV29uZw0KPiA+IENjOiBsaW51eC1ydC11c2Vyc0B2Z2VyLmtlcm5lbC5vcmc7IERh
-dmlkIEhhdWNrOyBQcmVzdG9uIEhhdWNrDQo+ID4gU3ViamVjdDogUmU6IHYzLjE4LVJUDQo+ID4N
-Cj4gPiAqIENhcm9sIFdvbmcgfCAyMDE2LTA3LTIwIDIwOjUzOjIxIFsrMDAwMF06DQo+ID4NCj4g
-PiA+SGkgU2ViYXN0aWFuLA0KPiA+IEhpIENhcm9sLA0KPiA+DQo+ID4gPldlIGZpbmFsbHkgdHJh
-Y2VkIHRoZSBib290LXVwIGNyYXNoIHRvIHRoZSBmb2xsb3dpbmcgcGF0Y2ggaW4NCj4gPiBrZXJu
-ZWwvc2NoZWQvY29yZS5jOg0KPiA+ID4NCj4gPiA+aHR0cHM6Ly9naXQua2VybmVsLm9yZy9jZ2l0
-L2xpbnV4L2tlcm5lbC9naXQvcnQvbGludXgtc3RhYmxlLQ0KPiA+IHJ0LmdpdC9jb20NCj4gPiA+
-bWl0Lz9oPXYzLjE4LXJ0JmlkPTYyMDQ0ZTU1NGYxNDU0NzA2MWFmY2ZlZjdmMGFjZWRhNDNlMjg5
-ODINCj4gPiA+DQo+ID4gPkFmdGVyIHJldmVydGluZyB0aGUgdHdvLWxpbmUgcGF0Y2ggaW4gMy4x
-OC4yOS1ydDMwLCB0aGUgY3Jhc2ggbm8NCj4gPiBsb25nZXIgb2NjdXJzIG9uIG91ciBkdWFsIFhl
-b24gKDJ4MTIgY29yZSkgc3lzdGVtLg0KPiA+ID4NCj4gPiA+T3RoZXIgb2JzZXJ2YXRpb25zOg0K
-PiA+ID4tIERvZXMgbm90IHJlcHJvZHVjZSBvbiBzaW5nbGUgcHJvY2Vzc29yICgyIGFuZCA0IGNv
-cmUpIHN5c3RlbXMNCj4gPiA+LSBSZXByb2R1Y2VzIHVuZGVyIDMuMTguMjctcnQyNyBhbmQgMy4x
-OC4zNi1ydDM4IG9uIHRoZSBkdWFsIFhlb24NCj4gPiA+LSBEb2VzIG5vdCByZXByb2R1Y2Ugb24g
-My4xOC4yNy1ydDI2IGFuZCBlYXJsaWVyIG9uIHRoZSBkdWFsIFhlb24NCj4gPiA+LSBSZXByb2R1
-Y2VzIG1vcmUgZnJlcXVlbnRseSBvbiAuMjktcnQzMCAoMSBpbiAyMCByZWJvb3RzKQ0KPiBjb21w
-YXJlZA0KPiA+IHRvDQo+ID4gPi4yNy1ydDI3ICgxIGluIDEwMCByZWJvb3RzKQ0KPiA+ID4NCj4g
-PiA+U28gZmFyIHdlJ3ZlIG5vdCBvYnNlcnZlZCBhbnkgc2lkZSBlZmZlY3RzIGFmdGVyIHJldmVy
-dGluZyB0aGlzDQo+ID4gcGF0Y2guDQo+ID4NCj4gPiBUaGlzIHdhcyBwYXJ0IG9mIENQVSBob3Rw
-bHVnIGZpeHVwcy4gTG9ja2RlcCBtaWdodCBiZSBicm9rZW4NCj4gd2l0aG91dA0KPiA+IGl0IGJ1
-dCBJIGFtIG5vdCBzdXJlIGlmIGlzIG1vc3Qgb2YgdGhlIHRpbWUgdGhlIGNhc2Ugb3IganVzdCBk
-dXJpbmcNCj4gPiBob3RwbHVnLg0KPiA+DQo+ID4gPkkgdW5kZXJzdGFuZCB0aGF0IGEgaGlnaCBj
-b3JlIGNvdW50IHN5c3RlbSBtYXkgbm90IGJlIGVhc3kgdG8gY29tZQ0KPiA+IGJ5LCBzbyBpZiB0
-aGVyZSBhcmUgZGlhZ25vc3RpY3Mgb3IgcGF0Y2hlcyB5b3Ugd291bGQgbGlrZSB0byB0cnkgb24N
-Cj4gPiB0aGUgZHVhbCBYZW9uIHN5c3RlbSwgd2UgY2FuIGFzc2lzdCB3aXRoIHRoYXQuDQo+ID4N
-Cj4gPiBXaXRoIHRoYXQgcGF0Y2gsIG1pZ3JhdGVfZGlzYWJsZSgpIHNraXBzIHRoZSB3aG9sZSBw
-cmVlbXB0LWxhenkgKw0KPiA+IHBpbi1jcHUgY29kZSBpZiBjYWxsZWQgd2l0aCBJUlFzIG9mZi4g
-U2luY2UgaW50ZXJydXB0cyBhcmUgZGlzYWJsZWQNCj4gd2UNCj4gPiBjYW4ndCBtaWdyYXRlIHRv
-IGFub3RoZXIgc28gaXQgaXMgYSBwb3NzaWJsZSBvcHRpbXNhdGlvbi4NCj4gPiBJdCBvbmx5IG1h
-a2VzIGEgZGlmZmVyZW5jZSBpZiBtaWdyYXRlX2Rpc2FibGUoKSArIG1pZ3JhdGVfZW5hYmxlKCkN
-Cj4gPiBjYWxscyBhcmUgbm90IGluIGJhbGFuY2UuIFRoZSBjb21taXQNCj4gPiAgIGh0dHBzOi8v
-Z2l0Lmtlcm5lbC5vcmcvY2dpdC9saW51eC9rZXJuZWwvZ2l0L3J0L2xpbnV4LXN0YWJsZS0NCj4g
-PiBydC5naXQvY29tbWl0Lz9oPXYzLjE4LQ0KPiBydCZpZD04ZDUxZDNhMjk2YjZlYzRhZWJkMGQ2
-ZDdlMWI3MTYyY2Q5YmY2NjYyDQo+ID4gaXMgb25lIGV4YW1wbGUgd2hlcmUgSSBmaXhlZCB0aGUg
-aW5iYWxhbmNlLg0KPiA+IERvIHlvdSBnZXQgYWRkaXRpb25hbCBiYWNrdHJhY2VzIHdpdGggQ09O
-RklHX1NDSEVEX0RFQlVHIGVuYWJsZWQ/DQo+ID4NCj4gPiBUaGVyZSBpcyBvbmUgdGhpbmcgdGhl
-IGRlYnVnIGNvZGUgZG9lcyBub3QgY292ZXIsIHNvIGNvdWxkIHlvdQ0KPiBwbGVhc2UNCj4gPiBh
-ZGQgdGhpcyBjaHVuaz8NCj4gPg0KPiA+IGRpZmYgLS1naXQgYS9rZXJuZWwvc2NoZWQvY29yZS5j
-IGIva2VybmVsL3NjaGVkL2NvcmUuYyBpbmRleA0KPiA+IDE0MGVlMDYwNzliNi4uMWY4NjEzZjc3
-NTk4IDEwMDY0NA0KPiA+IC0tLSBhL2tlcm5lbC9zY2hlZC9jb3JlLmMNCj4gPiArKysgYi9rZXJu
-ZWwvc2NoZWQvY29yZS5jDQo+ID4gQEAgLTMyMjksNiArMzIyOSw3IEBAIHZvaWQgbWlncmF0ZV9l
-bmFibGUodm9pZCkNCj4gPg0KPiA+ICAJaWYgKGluX2F0b21pYygpIHx8IGlycXNfZGlzYWJsZWQo
-KSkgeyAgI2lmZGVmDQo+IENPTkZJR19TQ0hFRF9ERUJVRw0KPiA+ICsJCVdBUk5fT05fT05DRShw
-LT5taWdyYXRlX2Rpc2FibGVfYXRvbWljIDw9IDApOw0KPiA+ICAJCXAtPm1pZ3JhdGVfZGlzYWJs
-ZV9hdG9taWMtLTsNCj4gPiAgI2VuZGlmDQo+ID4gIAkJcmV0dXJuOw0KPiA+DQo+ID4gPkNoZWVy
-cywNCj4gPiA+Q2Fyb2wgV29uZw0KPiA+ID5OZXRBY3F1aXJlIENvcnBvcmF0aW9uDQo+ID4NCj4g
-PiBTZWJhc3RpYW4NCg==
+Latest nvidia 370.23 driver is unhappy with 'rt_mutex_destroy' and the 
+extramodule fails to build with
+
+FATAL: modpost: GPL-incompatible module nvidia-drm.ko uses GPL-only 
+symbol 'rt_mutex_destroy'
+
+This concerns 4.6.5_rt10 aswell as 4.4.17_rt25 at least
+What can we do about that?
+
+kind regards
+Bernhard Landauer
+
