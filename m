@@ -1,107 +1,93 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: hwlatdetect:  Add --hardlimit to define the real test failing
- criteria
-Date: Wed, 17 Aug 2016 19:00:37 +0100 (IST)
-Message-ID: <alpine.LFD.2.20.1608171848410.12882@riemann>
-References: <20160815152857.054f67e3@sluggy.hsv.redhat.com>
+From: Carol Wong <carolw@netacquire.com>
+Subject: RE: v3.18-RT
+Date: Fri, 19 Aug 2016 00:41:46 +0000
+Message-ID: <82DB755727433D4A981ED5650C27BBEF72A4055B@S1P5DAG9E.EXCHPROD.USA.NET>
+References: <FCC5AC80E299464B82E1345E2C10FC9D8098CE51@S1P5DAG4C.EXCHPROD.USA.NET>
+ <20160603163732.GD4496@linutronix.de>
+ <FCC5AC80E299464B82E1345E2C10FC9D8099ACF6@S1P5DAG4C.EXCHPROD.USA.NET>
+ <16d5e3f2-dd20-c802-37aa-86eab553fcfc@linutronix.de>
+ <FCC5AC80E299464B82E1345E2C10FC9D809A150B@S1P5DAG4C.EXCHPROD.USA.NET>
+ <4061065f-dd2b-0a76-299e-ce66783d85dd@linutronix.de>
+ <82DB755727433D4A981ED5650C27BBEF729546A9@S1P5DAG9E.EXCHPROD.USA.NET>
+ <20160729161933.GG21715@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Cc: RT <linux-rt-users@vger.kernel.org>
-To: Clark Williams <williams@redhat.com>,
-	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        "David Hauck" <davidh@netacquire.com>,
+        Preston Hauck <prestonh@netacquire.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f65.google.com ([74.125.82.65]:36587 "EHLO
-	mail-wm0-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752406AbcHQSPb (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 17 Aug 2016 14:15:31 -0400
-Received: by mail-wm0-f65.google.com with SMTP id i138so26671609wmf.3
-        for <linux-rt-users@vger.kernel.org>; Wed, 17 Aug 2016 11:15:30 -0700 (PDT)
-In-Reply-To: <20160815152857.054f67e3@sluggy.hsv.redhat.com>
+Received: from gwo5.mbox.net ([165.212.64.23]:57828 "EHLO gwo5.mbox.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1753842AbcHSAtB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 18 Aug 2016 20:49:01 -0400
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
-
-On Mon, 15 Aug 2016, Clark Williams wrote:
-
-> John,
-> 
-> Luis and I were working on our tests and decided it is more interesting, in our 
-> automated tests, to have a higher tolerance for SMIs, as most of the test boxes are 
-> not optimized for RT. On the other hand, we would like to know how big the firmware-induced
-> latencies on these boxes.
-> 
-> This commit adds the --hardlimit parameter, which defines the real
-> PASS/FAIL latency criteria. Latencies above --threshold will be
-> annotated, but the test may PASS if the observed latencies are smaller
-> than --hardlimit.
-> 
-> When --hardlimit is not informed, the value used for --threshold is also
-> used as the hard limit.
-> 
-> Signed-off-by: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
-> Signed-off-by: Clark Williams <williams@redhat.com>
-
-Note, to apply your patch you have to cd to src/hwlatdetect instead
-of being in rt-tests
-
-Since this would go in unstable, we don't have to maintain backwards 
-compatibility. So, you could remove the --threshold parameter and create
---hardlimit, and --softlimit parameters that consistently do the same 
-thing. (instead of having --threshold mean two different things depending 
-on whether or not --hardlimit exists)
-
-That might even be better because you could annotate a --softlimit without 
-even requiring there to be a hard one.
-
-I'm going to impose a new requirement on people submitting patches to also 
-submit patches to update documentation. So once, we are agreed on what 
-this change should look like you have to also change the hwlatdetect.8
-page as well as the output to hwlatdetect --help
-
-Thanks
-
-John 
- > 
-> diff --git a/hwlatdetect.py b/hwlatdetect.py
-> index d9ef027..51bb401 100755
-> --- a/hwlatdetect.py
-> +++ b/hwlatdetect.py
-> @@ -474,6 +474,10 @@ if __name__ == '__main__':
->                        dest="threshold",
->                        help="value above which is considered an hardware latency")
->  
-> +    parser.add_option("--hardlimit", default=None, type="string",
-> +                      dest="hardlimit",
-> +                      help="value above which the test is considered to fail")
-> +
->      parser.add_option("--window", default=None, type="string",
->                        dest="window",
->                        help="time between samples")
-> @@ -526,6 +530,12 @@ if __name__ == '__main__':
->          detect.set("threshold", t)
->          debug("threshold set to %dus" % t)
->  
-> +    if o.hardlimit:
-> +        hardlimit = microseconds(o.hardlimit)
-> +    else:
-> +        hardlimit = detect.get("threshold")
-> +    debug("hardlimit set to %dus" % hardlimit)
-> +
->      if o.window:
->          w = microseconds(o.window)
->          if w < detect.get("width"):
-> @@ -595,5 +605,6 @@ if __name__ == '__main__':
->          for s in detect.samples:
->              print("%s" % s)
->  
-> +    maxlatency = int(detect.get("max"))
->      detect.cleanup()
-> -    sys.exit(exceeding)
-> +    sys.exit(maxlatency > hardlimit)
-> 
-> -- 
-> The United States Coast Guard:
-> Ruining natural selection since 1790
-> 
+SGkgU2ViYXN0aWFuLA0KDQpXZXJlIHlvdSBhYmxlIHRvIGdhaW4gYW55IGluc2lnaHQgZnJvbSB0
+aGUgdHJhY2VzPw0KDQpJZiB3ZSB3ZXJlIHRvIHByb2NlZWQgd2l0aCByZXZlcnRpbmcgdGhlIGtl
+cm5lbC9zY2hlZC9jb3JlLmMgcGF0Y2ggaW4gb3VyIGJ1aWxkIG9mIDMuMTguMjktcnQzMCwgd291
+bGQgdGhlIGFkZGl0aW9uIG9mIHRoZSBXQVJOX09OX09OQ0UocC0+bWlncmF0ZV9kaXNhYmxlX2F0
+b21pYyA8PSAwKSBkZWJ1ZyBjaGVjayB0aGF0IHlvdSByZWNvbW1lbmRlZCAoMjAxNi8wNy8yOSkg
+YmUgc3VmZmljaWVudCBmb3IgZGV0ZWN0aW5nIGltYmFsYW5jZXM/IFdlIHdvdWxkIHBlcmZvcm0g
+ZXh0ZW5kZWQgdGVzdGluZyBvbiBtdWx0aXBsZSBzeXN0ZW1zIHRvIGRldGVybWluZSB0aGUgZWZm
+ZWN0cyBvZiByZXZlcnRpbmcgdGhlIHBhdGNoLg0KDQpDaGVlcnMsDQpDYXJvbA0KDQo+IC0tLS0t
+T3JpZ2luYWwgTWVzc2FnZS0tLS0tDQo+IEZyb206IENhcm9sIFdvbmcNCj4gU2VudDogV2VkbmVz
+ZGF5LCBBdWd1c3QgMDMsIDIwMTYgNjozMiBQTQ0KPiBUbzogJ1NlYmFzdGlhbiBBbmRyemVqIFNp
+ZXdpb3InDQo+IENjOiBsaW51eC1ydC11c2Vyc0B2Z2VyLmtlcm5lbC5vcmc7IERhdmlkIEhhdWNr
+OyBQcmVzdG9uIEhhdWNrDQo+IFN1YmplY3Q6IFJFOiB2My4xOC1SVA0KPiANCj4gSGkgU2ViYXN0
+aWFuLA0KPiANCj4gSSBtYWRlIHRoZSBzdWdnZXN0ZWQgY2hhbmdlIHRvIHNjaGVkL2NvcmUuYyBh
+bmQgdmVyaWZpZWQgdGhhdA0KPiBDT05GSUdfU0NIRURfREVCVUc9eS4gSSByZXByb2R1Y2VkIHRo
+ZSBjcmFzaCAzIHRpbWVzIGFuZCBjYXB0dXJlZCB0aGUNCj4gYXR0YWNoZWQgdHJhY2VzLg0KPiAN
+Cj4gVGhhbmtzLA0KPiBDYXJvbA0KPiANCj4gPiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQ0K
+PiA+IEZyb206IFNlYmFzdGlhbiBBbmRyemVqIFNpZXdpb3IgW21haWx0bzpiaWdlYXN5QGxpbnV0
+cm9uaXguZGVdDQo+ID4gU2VudDogRnJpZGF5LCBKdWx5IDI5LCAyMDE2IDk6MjAgQU0NCj4gPiBU
+bzogQ2Fyb2wgV29uZw0KPiA+IENjOiBsaW51eC1ydC11c2Vyc0B2Z2VyLmtlcm5lbC5vcmc7IERh
+dmlkIEhhdWNrOyBQcmVzdG9uIEhhdWNrDQo+ID4gU3ViamVjdDogUmU6IHYzLjE4LVJUDQo+ID4N
+Cj4gPiAqIENhcm9sIFdvbmcgfCAyMDE2LTA3LTIwIDIwOjUzOjIxIFsrMDAwMF06DQo+ID4NCj4g
+PiA+SGkgU2ViYXN0aWFuLA0KPiA+IEhpIENhcm9sLA0KPiA+DQo+ID4gPldlIGZpbmFsbHkgdHJh
+Y2VkIHRoZSBib290LXVwIGNyYXNoIHRvIHRoZSBmb2xsb3dpbmcgcGF0Y2ggaW4NCj4gPiBrZXJu
+ZWwvc2NoZWQvY29yZS5jOg0KPiA+ID4NCj4gPiA+aHR0cHM6Ly9naXQua2VybmVsLm9yZy9jZ2l0
+L2xpbnV4L2tlcm5lbC9naXQvcnQvbGludXgtc3RhYmxlLQ0KPiA+IHJ0LmdpdC9jb20NCj4gPiA+
+bWl0Lz9oPXYzLjE4LXJ0JmlkPTYyMDQ0ZTU1NGYxNDU0NzA2MWFmY2ZlZjdmMGFjZWRhNDNlMjg5
+ODINCj4gPiA+DQo+ID4gPkFmdGVyIHJldmVydGluZyB0aGUgdHdvLWxpbmUgcGF0Y2ggaW4gMy4x
+OC4yOS1ydDMwLCB0aGUgY3Jhc2ggbm8NCj4gPiBsb25nZXIgb2NjdXJzIG9uIG91ciBkdWFsIFhl
+b24gKDJ4MTIgY29yZSkgc3lzdGVtLg0KPiA+ID4NCj4gPiA+T3RoZXIgb2JzZXJ2YXRpb25zOg0K
+PiA+ID4tIERvZXMgbm90IHJlcHJvZHVjZSBvbiBzaW5nbGUgcHJvY2Vzc29yICgyIGFuZCA0IGNv
+cmUpIHN5c3RlbXMNCj4gPiA+LSBSZXByb2R1Y2VzIHVuZGVyIDMuMTguMjctcnQyNyBhbmQgMy4x
+OC4zNi1ydDM4IG9uIHRoZSBkdWFsIFhlb24NCj4gPiA+LSBEb2VzIG5vdCByZXByb2R1Y2Ugb24g
+My4xOC4yNy1ydDI2IGFuZCBlYXJsaWVyIG9uIHRoZSBkdWFsIFhlb24NCj4gPiA+LSBSZXByb2R1
+Y2VzIG1vcmUgZnJlcXVlbnRseSBvbiAuMjktcnQzMCAoMSBpbiAyMCByZWJvb3RzKQ0KPiBjb21w
+YXJlZA0KPiA+IHRvDQo+ID4gPi4yNy1ydDI3ICgxIGluIDEwMCByZWJvb3RzKQ0KPiA+ID4NCj4g
+PiA+U28gZmFyIHdlJ3ZlIG5vdCBvYnNlcnZlZCBhbnkgc2lkZSBlZmZlY3RzIGFmdGVyIHJldmVy
+dGluZyB0aGlzDQo+ID4gcGF0Y2guDQo+ID4NCj4gPiBUaGlzIHdhcyBwYXJ0IG9mIENQVSBob3Rw
+bHVnIGZpeHVwcy4gTG9ja2RlcCBtaWdodCBiZSBicm9rZW4NCj4gd2l0aG91dA0KPiA+IGl0IGJ1
+dCBJIGFtIG5vdCBzdXJlIGlmIGlzIG1vc3Qgb2YgdGhlIHRpbWUgdGhlIGNhc2Ugb3IganVzdCBk
+dXJpbmcNCj4gPiBob3RwbHVnLg0KPiA+DQo+ID4gPkkgdW5kZXJzdGFuZCB0aGF0IGEgaGlnaCBj
+b3JlIGNvdW50IHN5c3RlbSBtYXkgbm90IGJlIGVhc3kgdG8gY29tZQ0KPiA+IGJ5LCBzbyBpZiB0
+aGVyZSBhcmUgZGlhZ25vc3RpY3Mgb3IgcGF0Y2hlcyB5b3Ugd291bGQgbGlrZSB0byB0cnkgb24N
+Cj4gPiB0aGUgZHVhbCBYZW9uIHN5c3RlbSwgd2UgY2FuIGFzc2lzdCB3aXRoIHRoYXQuDQo+ID4N
+Cj4gPiBXaXRoIHRoYXQgcGF0Y2gsIG1pZ3JhdGVfZGlzYWJsZSgpIHNraXBzIHRoZSB3aG9sZSBw
+cmVlbXB0LWxhenkgKw0KPiA+IHBpbi1jcHUgY29kZSBpZiBjYWxsZWQgd2l0aCBJUlFzIG9mZi4g
+U2luY2UgaW50ZXJydXB0cyBhcmUgZGlzYWJsZWQNCj4gd2UNCj4gPiBjYW4ndCBtaWdyYXRlIHRv
+IGFub3RoZXIgc28gaXQgaXMgYSBwb3NzaWJsZSBvcHRpbXNhdGlvbi4NCj4gPiBJdCBvbmx5IG1h
+a2VzIGEgZGlmZmVyZW5jZSBpZiBtaWdyYXRlX2Rpc2FibGUoKSArIG1pZ3JhdGVfZW5hYmxlKCkN
+Cj4gPiBjYWxscyBhcmUgbm90IGluIGJhbGFuY2UuIFRoZSBjb21taXQNCj4gPiAgIGh0dHBzOi8v
+Z2l0Lmtlcm5lbC5vcmcvY2dpdC9saW51eC9rZXJuZWwvZ2l0L3J0L2xpbnV4LXN0YWJsZS0NCj4g
+PiBydC5naXQvY29tbWl0Lz9oPXYzLjE4LQ0KPiBydCZpZD04ZDUxZDNhMjk2YjZlYzRhZWJkMGQ2
+ZDdlMWI3MTYyY2Q5YmY2NjYyDQo+ID4gaXMgb25lIGV4YW1wbGUgd2hlcmUgSSBmaXhlZCB0aGUg
+aW5iYWxhbmNlLg0KPiA+IERvIHlvdSBnZXQgYWRkaXRpb25hbCBiYWNrdHJhY2VzIHdpdGggQ09O
+RklHX1NDSEVEX0RFQlVHIGVuYWJsZWQ/DQo+ID4NCj4gPiBUaGVyZSBpcyBvbmUgdGhpbmcgdGhl
+IGRlYnVnIGNvZGUgZG9lcyBub3QgY292ZXIsIHNvIGNvdWxkIHlvdQ0KPiBwbGVhc2UNCj4gPiBh
+ZGQgdGhpcyBjaHVuaz8NCj4gPg0KPiA+IGRpZmYgLS1naXQgYS9rZXJuZWwvc2NoZWQvY29yZS5j
+IGIva2VybmVsL3NjaGVkL2NvcmUuYyBpbmRleA0KPiA+IDE0MGVlMDYwNzliNi4uMWY4NjEzZjc3
+NTk4IDEwMDY0NA0KPiA+IC0tLSBhL2tlcm5lbC9zY2hlZC9jb3JlLmMNCj4gPiArKysgYi9rZXJu
+ZWwvc2NoZWQvY29yZS5jDQo+ID4gQEAgLTMyMjksNiArMzIyOSw3IEBAIHZvaWQgbWlncmF0ZV9l
+bmFibGUodm9pZCkNCj4gPg0KPiA+ICAJaWYgKGluX2F0b21pYygpIHx8IGlycXNfZGlzYWJsZWQo
+KSkgeyAgI2lmZGVmDQo+IENPTkZJR19TQ0hFRF9ERUJVRw0KPiA+ICsJCVdBUk5fT05fT05DRShw
+LT5taWdyYXRlX2Rpc2FibGVfYXRvbWljIDw9IDApOw0KPiA+ICAJCXAtPm1pZ3JhdGVfZGlzYWJs
+ZV9hdG9taWMtLTsNCj4gPiAgI2VuZGlmDQo+ID4gIAkJcmV0dXJuOw0KPiA+DQo+ID4gPkNoZWVy
+cywNCj4gPiA+Q2Fyb2wgV29uZw0KPiA+ID5OZXRBY3F1aXJlIENvcnBvcmF0aW9uDQo+ID4NCj4g
+PiBTZWJhc3RpYW4NCg==
