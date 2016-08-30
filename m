@@ -1,67 +1,32 @@
-From: Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: [PATCH] mlock.2: document that is a bad idea to fork() after mlock()
-Date: Tue, 30 Aug 2016 10:59:11 +0200
-Message-ID: <20160830085911.5336-1-bigeasy@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: 4.6.7-rt11
+Date: Tue, 30 Aug 2016 12:36:56 +0200
+Message-ID: <20160830103656.zjxo5kp3cxihwgj7@linutronix.de>
+References: <68414555-96c5-accd-d76f-34d56f27060b@manjaro.org>
 Mime-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-        linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-        Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Bernhard Landauer <oberon@manjaro.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:44900 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1756771AbcH3Kg7 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 30 Aug 2016 06:36:59 -0400
+Content-Disposition: inline
+In-Reply-To: <68414555-96c5-accd-d76f-34d56f27060b@manjaro.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-fork() will remove the write PTE bit from the page table on each VMA
-which will be copied via COW. A such such, the memory is available but
-marked read only in the page table and will fault on write access.
-This renders the previous mlock() operation almost useless because in a
-multi threaded application the RT thread may block on mmap_sem while the
-thread with low priority is holding the mmap_sem (for instance because
-it is allocating memory which needs to be mapped in).
+On 2016-08-25 13:32:09 [+0200], Bernhard Landauer wrote:
+> Somehow this didn't get announced ;)
+> In any case seems to be available: https://www.kernel.org/pub/linux/kernel/projects/rt/4.6/patches-4.6.7-rt11.tar.xz
 
-There is actually nothing we can do to mitigate the outcome. We could
-add a warning to the kernel for people that are not yet aware of the
-updated documentation.
+It is just a stable update. And I didn't get around to release -rt12
+before you notice it :)
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
----
- man2/mlock.2 | 14 ++++++++++++++
- 1 file changed, 14 insertions(+)
+> Thank you! :)
 
-diff --git a/man2/mlock.2 b/man2/mlock.2
-index e34bb3b4e045..27f80f6664ef 100644
---- a/man2/mlock.2
-+++ b/man2/mlock.2
-@@ -350,6 +350,20 @@ settings are not inherited by a child created via
- and are cleared during an
- .BR execve (2).
-=20
-+Note that
-+.BR fork (2)
-+will prepare the address space for a copy-on-write operation. The conseque=
-nce
-+is that any write access that follows will cause a page fault which in tur=
-n may
-+cause high latencies for a real-time process. Therefore it is crucial not =
-to
-+invoke
-+.BR fork (2)
-+after the
-+.BR mlockall ()
-+or
-+.BR mlock ()
-+operation not even from thread which runs at a low priority within a proce=
-ss
-+which also has a thread running at elevated priority.
-+
- The memory lock on an address range is automatically removed
- if the address range is unmapped via
- .BR munmap (2).
---=20
-2.9.3
+You are welcome.
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-man" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Sebastian
