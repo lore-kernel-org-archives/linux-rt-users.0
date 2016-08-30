@@ -1,29 +1,67 @@
-From: Bernhard Landauer <oberon@manjaro.org>
-Subject: 4.6.7-rt11
-Date: Thu, 25 Aug 2016 13:32:09 +0200
-Message-ID: <68414555-96c5-accd-d76f-34d56f27060b@manjaro.org>
+From: Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: [PATCH] mlock.2: document that is a bad idea to fork() after mlock()
+Date: Tue, 30 Aug 2016 10:59:11 +0200
+Message-ID: <20160830085911.5336-1-bigeasy@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.manjaro.org ([176.9.38.148]:48863 "EHLO manjaro.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1758466AbcHYLdP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 25 Aug 2016 07:33:15 -0400
-Received: from localhost (localhost [127.0.0.1])
-        by manjaro.org (Postfix) with ESMTP id 047A23103459
-        for <linux-rt-users@vger.kernel.org>; Thu, 25 Aug 2016 13:33:10 +0200 (CEST)
-Received: from manjaro.org ([127.0.0.1])
-        by localhost (manjaro.org [127.0.0.1]) (amavisd-new, port 10024)
-        with ESMTP id JP66wpwtypt5 for <linux-rt-users@vger.kernel.org>;
-        Thu, 25 Aug 2016 13:33:08 +0200 (CEST)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Transfer-Encoding: quoted-printable
+Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
+        linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
+        Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Somehow this didn't get announced ;)
-In any case seems to be available: 
-https://www.kernel.org/pub/linux/kernel/projects/rt/4.6/patches-4.6.7-rt11.tar.xz
+fork() will remove the write PTE bit from the page table on each VMA
+which will be copied via COW. A such such, the memory is available but
+marked read only in the page table and will fault on write access.
+This renders the previous mlock() operation almost useless because in a
+multi threaded application the RT thread may block on mmap_sem while the
+thread with low priority is holding the mmap_sem (for instance because
+it is allocating memory which needs to be mapped in).
 
-Thank you! :)
+There is actually nothing we can do to mitigate the outcome. We could
+add a warning to the kernel for people that are not yet aware of the
+updated documentation.
 
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+---
+ man2/mlock.2 | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/man2/mlock.2 b/man2/mlock.2
+index e34bb3b4e045..27f80f6664ef 100644
+--- a/man2/mlock.2
++++ b/man2/mlock.2
+@@ -350,6 +350,20 @@ settings are not inherited by a child created via
+ and are cleared during an
+ .BR execve (2).
+=20
++Note that
++.BR fork (2)
++will prepare the address space for a copy-on-write operation. The conseque=
+nce
++is that any write access that follows will cause a page fault which in tur=
+n may
++cause high latencies for a real-time process. Therefore it is crucial not =
+to
++invoke
++.BR fork (2)
++after the
++.BR mlockall ()
++or
++.BR mlock ()
++operation not even from thread which runs at a low priority within a proce=
+ss
++which also has a thread running at elevated priority.
++
+ The memory lock on an address range is automatically removed
+ if the address range is unmapped via
+ .BR munmap (2).
+--=20
+2.9.3
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
