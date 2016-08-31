@@ -1,118 +1,77 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [RT PATCH 1/2] net: add back the missing serialization in
- ip_send_unicast_reply()
-Date: Wed, 31 Aug 2016 12:15:53 -0400
-Message-ID: <20160831121553.6aea5cda@gandalf.local.home>
+From: Eric Dumazet <eric.dumazet@gmail.com>
+Subject: Re: [RT PATCH 2/2] net: add a lock around icmp_sk()
+Date: Wed, 31 Aug 2016 09:37:43 -0700
+Message-ID: <1472661463.14381.327.camel@edumazet-glaptop3.roam.corp.google.com>
 References: <20160831160049.14303-1-bigeasy@linutronix.de>
+         <20160831160049.14303-2-bigeasy@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        tglx@linutronix.de, netdev@vger.kernel.org
+        tglx@linutronix.de, Steven Rostedt <rostedt@goodmis.org>,
+        netdev@vger.kernel.org
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0007.hostedemail.com ([216.40.44.7]:54014 "EHLO
-        smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S965097AbcHaQP7 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 31 Aug 2016 12:15:59 -0400
-In-Reply-To: <20160831160049.14303-1-bigeasy@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160831160049.14303-2-bigeasy@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 31 Aug 2016 18:00:48 +0200
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+On Wed, 2016-08-31 at 18:00 +0200, Sebastian Andrzej Siewior wrote:
+> It looks like the this_cpu_ptr() access in icmp_sk() is protected with
+> local_bh_disable(). To avoid missing serialization in -RT I am adding
+> here a local lock. No crash has been observed, this is just precaution.
+> 
 
-> Some time ago Sami Pietikäinen reported a crash on -RT in
-> ip_send_unicast_reply() which was later fixed by Nicholas Mc Guire
-> (v3.12.8-rt11). Later (v3.18.8) the code was reworked and I dropped the
-> patch. As it turns out it was mistake.
-> I have reports that the same crash is possible with a similar backtrace.
-> It seems that vanilla protects access to this_cpu_ptr() via
-> local_bh_disable(). This does not work on -RT since we can have
-> NET_RX and NET_TX running in parallel on the same CPU.
-> This is brings back the old locks.
-> 
-> |Unable to handle kernel NULL pointer dereference at virtual address 00000010
-> |PC is at __ip_make_skb+0x198/0x3e8
-> |[<c04e39d8>] (__ip_make_skb) from [<c04e3ca8>] (ip_push_pending_frames+0x20/0x40)
-> |[<c04e3ca8>] (ip_push_pending_frames) from [<c04e3ff0>] (ip_send_unicast_reply+0x210/0x22c)
-> |[<c04e3ff0>] (ip_send_unicast_reply) from [<c04fbb54>] (tcp_v4_send_reset+0x190/0x1c0)
-> |[<c04fbb54>] (tcp_v4_send_reset) from [<c04fcc1c>] (tcp_v4_do_rcv+0x22c/0x288)
-> |[<c04fcc1c>] (tcp_v4_do_rcv) from [<c0474364>] (release_sock+0xb4/0x150)
-> |[<c0474364>] (release_sock) from [<c04ed904>] (tcp_close+0x240/0x454)
-> |[<c04ed904>] (tcp_close) from [<c0511408>] (inet_release+0x74/0x7c)
-> |[<c0511408>] (inet_release) from [<c0470728>] (sock_release+0x30/0xb0)
-> |[<c0470728>] (sock_release) from [<c0470abc>] (sock_close+0x1c/0x24)
-> |[<c0470abc>] (sock_close) from [<c0115ec4>] (__fput+0xe8/0x20c)
-> |[<c0115ec4>] (__fput) from [<c0116050>] (____fput+0x18/0x1c)
-> |[<c0116050>] (____fput) from [<c0058138>] (task_work_run+0xa4/0xb8)
-> |[<c0058138>] (task_work_run) from [<c0011478>] (do_work_pending+0xd0/0xe4)
-> |[<c0011478>] (do_work_pending) from [<c000e740>] (work_pending+0xc/0x20)
-> |Code: e3530001 8a000001 e3a00040 ea000011 (e5973010)
-> 
+
+Hmm...
+
 > Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 > ---
->  net/ipv4/tcp_ipv4.c | 7 +++++++
->  1 file changed, 7 insertions(+)
+>  net/ipv4/icmp.c | 8 ++++++++
+>  1 file changed, 8 insertions(+)
 > 
-> diff --git a/net/ipv4/tcp_ipv4.c b/net/ipv4/tcp_ipv4.c
-> index ad450509029b..c5521d1f1263 100644
-> --- a/net/ipv4/tcp_ipv4.c
-> +++ b/net/ipv4/tcp_ipv4.c
-> @@ -62,6 +62,7 @@
->  #include <linux/init.h>
->  #include <linux/times.h>
+> diff --git a/net/ipv4/icmp.c b/net/ipv4/icmp.c
+> index c1f1d5030d37..63731fd6af3e 100644
+> --- a/net/ipv4/icmp.c
+> +++ b/net/ipv4/icmp.c
+> @@ -78,6 +78,7 @@
+>  #include <linux/string.h>
+>  #include <linux/netfilter_ipv4.h>
 >  #include <linux/slab.h>
 > +#include <linux/locallock.h>
->  
->  #include <net/net_namespace.h>
->  #include <net/icmp.h>
-> @@ -565,6 +566,7 @@ void tcp_v4_send_check(struct sock *sk, struct sk_buff *skb)
->  }
->  EXPORT_SYMBOL(tcp_v4_send_check);
->  
-> +static DEFINE_LOCAL_IRQ_LOCK(tcp_sk_lock);
->  /*
->   *	This routine will send an RST to the other tcp.
+>  #include <net/snmp.h>
+>  #include <net/ip.h>
+>  #include <net/route.h>
+> @@ -205,6 +206,8 @@ static const struct icmp_control icmp_pointers[NR_ICMP_TYPES+1];
 >   *
-> @@ -689,10 +691,13 @@ static void tcp_v4_send_reset(const struct sock *sk, struct sk_buff *skb)
->  		     offsetof(struct inet_timewait_sock, tw_bound_dev_if));
->  
->  	arg.tos = ip_hdr(skb)->tos;
+>   *	On SMP we have one ICMP socket per-cpu.
+>   */
+> +static DEFINE_LOCAL_IRQ_LOCK(icmp_sk_lock);
 > +
-> +	local_lock(tcp_sk_lock);
-
-Interesting that I noticed in mainline, they have:
-
-	local_bh_disable();
-
-here.
-
-I'm surprised we don't have a local_lock_bh() or something to that
-effect.
-
--- Steve
-
->  	ip_send_unicast_reply(*this_cpu_ptr(net->ipv4.tcp_sk),
->  			      skb, &TCP_SKB_CB(skb)->header.h4.opt,
->  			      ip_hdr(skb)->saddr, ip_hdr(skb)->daddr,
->  			      &arg, arg.iov[0].iov_len);
-> +	local_unlock(tcp_sk_lock);
+>  static struct sock *icmp_sk(struct net *net)
+>  {
+>  	return *this_cpu_ptr(net->ipv4.icmp_sk);
+> @@ -216,12 +219,14 @@ static inline struct sock *icmp_xmit_lock(struct net *net)
 >  
->  	TCP_INC_STATS_BH(net, TCP_MIB_OUTSEGS);
->  	TCP_INC_STATS_BH(net, TCP_MIB_OUTRSTS);
-> @@ -774,10 +779,12 @@ static void tcp_v4_send_ack(struct net *net,
->  	if (oif)
->  		arg.bound_dev_if = oif;
->  	arg.tos = tos;
-> +	local_lock(tcp_sk_lock);
->  	ip_send_unicast_reply(*this_cpu_ptr(net->ipv4.tcp_sk),
->  			      skb, &TCP_SKB_CB(skb)->header.h4.opt,
->  			      ip_hdr(skb)->saddr, ip_hdr(skb)->daddr,
->  			      &arg, arg.iov[0].iov_len);
-> +	local_unlock(tcp_sk_lock);
+>  	local_bh_disable();
 >  
->  	TCP_INC_STATS_BH(net, TCP_MIB_OUTSEGS);
->  }
+> +	local_lock(icmp_sk_lock);
 
+Deadlock alert ?
+Please read the comment few lines after, explaining why we have to use
+spin_trylock().
+Or maybe I should double check what is local_lock() in RT
+
+>  	sk = icmp_sk(net);
+>  
+>  	if (unlikely(!spin_trylock(&sk->sk_lock.slock))) {
+
+...
+>  		/* This can happen if the output path signals a
+>  		 * dst_link_failure() for an outgoing ICMP packet.
+>  		 */
+
+
+> +		local_unlock(icmp_sk_lock);
+>  		local_bh_enable();
+>  		return NULL;
