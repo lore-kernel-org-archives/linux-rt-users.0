@@ -1,77 +1,45 @@
-From: Eric Dumazet <eric.dumazet@gmail.com>
-Subject: Re: [RT PATCH 2/2] net: add a lock around icmp_sk()
-Date: Wed, 31 Aug 2016 09:37:43 -0700
-Message-ID: <1472661463.14381.327.camel@edumazet-glaptop3.roam.corp.google.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [RT PATCH 1/2] net: add back the missing serialization in
+ ip_send_unicast_reply()
+Date: Wed, 31 Aug 2016 18:36:14 +0200
+Message-ID: <20160831163613.dg5hgb6l2jd5b5ms@linutronix.de>
 References: <20160831160049.14303-1-bigeasy@linutronix.de>
-         <20160831160049.14303-2-bigeasy@linutronix.de>
+ <20160831121553.6aea5cda@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
 Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        tglx@linutronix.de, Steven Rostedt <rostedt@goodmis.org>,
-        netdev@vger.kernel.org
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+        tglx@linutronix.de, netdev@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160831160049.14303-2-bigeasy@linutronix.de>
+Content-Disposition: inline
+In-Reply-To: <20160831121553.6aea5cda@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2016-08-31 at 18:00 +0200, Sebastian Andrzej Siewior wrote:
-> It looks like the this_cpu_ptr() access in icmp_sk() is protected with
-> local_bh_disable(). To avoid missing serialization in -RT I am adding
-> here a local lock. No crash has been observed, this is just precaution.
+On 2016-08-31 12:15:53 [-0400], Steven Rostedt wrote:
+> > @@ -689,10 +691,13 @@ static void tcp_v4_send_reset(const struct sock *sk, struct sk_buff *skb)
+> >  		     offsetof(struct inet_timewait_sock, tw_bound_dev_if));
+> >  
+> >  	arg.tos = ip_hdr(skb)->tos;
+> > +
+> > +	local_lock(tcp_sk_lock);
 > 
-
-
-Hmm...
-
-> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> ---
->  net/ipv4/icmp.c | 8 ++++++++
->  1 file changed, 8 insertions(+)
+> Interesting that I noticed in mainline, they have:
 > 
-> diff --git a/net/ipv4/icmp.c b/net/ipv4/icmp.c
-> index c1f1d5030d37..63731fd6af3e 100644
-> --- a/net/ipv4/icmp.c
-> +++ b/net/ipv4/icmp.c
-> @@ -78,6 +78,7 @@
->  #include <linux/string.h>
->  #include <linux/netfilter_ipv4.h>
->  #include <linux/slab.h>
-> +#include <linux/locallock.h>
->  #include <net/snmp.h>
->  #include <net/ip.h>
->  #include <net/route.h>
-> @@ -205,6 +206,8 @@ static const struct icmp_control icmp_pointers[NR_ICMP_TYPES+1];
->   *
->   *	On SMP we have one ICMP socket per-cpu.
->   */
-> +static DEFINE_LOCAL_IRQ_LOCK(icmp_sk_lock);
-> +
->  static struct sock *icmp_sk(struct net *net)
->  {
->  	return *this_cpu_ptr(net->ipv4.icmp_sk);
-> @@ -216,12 +219,14 @@ static inline struct sock *icmp_xmit_lock(struct net *net)
->  
->  	local_bh_disable();
->  
-> +	local_lock(icmp_sk_lock);
+> 	local_bh_disable();
+> 
+> here.
+> 
+> I'm surprised we don't have a local_lock_bh() or something to that
+> effect.
 
-Deadlock alert ?
-Please read the comment few lines after, explaining why we have to use
-spin_trylock().
-Or maybe I should double check what is local_lock() in RT
+Turning local_bh_disable() into local_lock_bh(). One side effect would
+be that the network driver will be flushed out / waited for completion
+during socket write (due to the spin_lock_bh()). Not sure how much fun
+all this will bring.
+We could try this…
 
->  	sk = icmp_sk(net);
->  
->  	if (unlikely(!spin_trylock(&sk->sk_lock.slock))) {
+> -- Steve
 
-...
->  		/* This can happen if the output path signals a
->  		 * dst_link_failure() for an outgoing ICMP packet.
->  		 */
-
-
-> +		local_unlock(icmp_sk_lock);
->  		local_bh_enable();
->  		return NULL;
+Sebastian
