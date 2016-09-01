@@ -1,28 +1,63 @@
-From: Eric Dumazet <eric.dumazet@gmail.com>
-Subject: Re: [RT PATCH 2/2] net: add a lock around icmp_sk()
-Date: Thu, 01 Sep 2016 06:11:00 -0700
-Message-ID: <1472735460.5019.21.camel@edumazet-glaptop3.roam.corp.google.com>
-References: <20160831160049.14303-1-bigeasy@linutronix.de>
-         <20160831160049.14303-2-bigeasy@linutronix.de>
-         <1472661463.14381.327.camel@edumazet-glaptop3.roam.corp.google.com>
-         <20160901081146.nabh52qssjkvztxz@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH] hyperv: Fix compilation issue with 4.4.19-rt27
+Date: Thu, 1 Sep 2016 11:13:59 -0400
+Message-ID: <20160901111359.7811d741@gandalf.local.home>
+References: <89ebab62-4bda-4a8e-a256-5ee46a88e99d@manjaro.org>
+        <20160901085714.14815-1-juerg.haefliger@hpe.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        tglx@linutronix.de, Steven Rostedt <rostedt@goodmis.org>,
-        netdev@vger.kernel.org
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: oberon@manjaro.org, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org, tglx@linutronix.de,
+        C.Emde@osadl.org, jkacur@redhat.com, bigeasy@linutronix.de
+To: Juerg Haefliger <juerg.haefliger@hpe.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160901081146.nabh52qssjkvztxz@linutronix.de>
+In-Reply-To: <20160901085714.14815-1-juerg.haefliger@hpe.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2016-09-01 at 10:11 +0200, Sebastian Andrzej Siewior wrote:
+On Thu,  1 Sep 2016 10:57:14 +0200
+Juerg Haefliger <juerg.haefliger@hpe.com> wrote:
 
-> On !RT local_lock() is preempt_disable().
-> On RT local_lock() is a per-CPU sleeping spinlock which can be taken
-> recursively by the owner.
+> Fix a compilation issue introduced by upstream commit
+> 4b44f2d18a330565227a7348844493c59366171e
+> 
+> The upstream commit exports the symbol add_interrupt_randomness()
+> which is now being used in the Hyper-V driver. The RT patch adds another
+> argument to that function so its usage in the Hyper-V driver needs to
+> be fixed.
+> 
 
-Ok, thanks for the explanation, the 'recursively' part I was not aware
-of ;)
+I guess I should have run "make allmodconfig" before posting. Just
+didn't have the time. :-/
+
+Thanks for the patch. I'm currently working to get my mainline work
+finished (that's taking up my resources). I'll work to include this
+patch either tomorrow, or it will have to wait for next week, as it's a
+US holiday weekend.
+
+-- Steve
+
+> This patch should be merged with:
+> patches/0216-random-Make-it-work-on-rt.patch
+> commit 20985550b01a21ba00a587d17d7c26da61e01acc random: Make it work on rt
+> 
+> Signed-off-by: Juerg Haefliger <juerg.haefliger@hpe.com>
+> Reviewed-by: T Makphaibulchoke <tmac@hpe.com>
+> ---
+>  drivers/hv/vmbus_drv.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/drivers/hv/vmbus_drv.c b/drivers/hv/vmbus_drv.c
+> index 9b5440f6b3b4..c9c4899834f2 100644
+> --- a/drivers/hv/vmbus_drv.c
+> +++ b/drivers/hv/vmbus_drv.c
+> @@ -828,7 +828,7 @@ static void vmbus_isr(void)
+>  			tasklet_schedule(&msg_dpc);
+>  	}
+>  
+> -	add_interrupt_randomness(HYPERVISOR_CALLBACK_VECTOR, 0);
+> +	add_interrupt_randomness(HYPERVISOR_CALLBACK_VECTOR, 0, 0);
+>  }
+>  
+>  
