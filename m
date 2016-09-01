@@ -1,50 +1,47 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [RT PATCH 2/2] net: add a lock around icmp_sk()
-Date: Thu, 1 Sep 2016 10:11:46 +0200
-Message-ID: <20160901081146.nabh52qssjkvztxz@linutronix.de>
-References: <20160831160049.14303-1-bigeasy@linutronix.de>
- <20160831160049.14303-2-bigeasy@linutronix.de>
- <1472661463.14381.327.camel@edumazet-glaptop3.roam.corp.google.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        tglx@linutronix.de, Steven Rostedt <rostedt@goodmis.org>,
-        netdev@vger.kernel.org
-To: Eric Dumazet <eric.dumazet@gmail.com>
+From: Juerg Haefliger <juerg.haefliger@hpe.com>
+Subject: [PATCH] hyperv: Fix compilation issue with 4.4.19-rt27
+Date: Thu,  1 Sep 2016 10:57:14 +0200
+Message-ID: <20160901085714.14815-1-juerg.haefliger@hpe.com>
+References: <89ebab62-4bda-4a8e-a256-5ee46a88e99d@manjaro.org>
+Cc: tglx@linutronix.de, C.Emde@osadl.org, jkacur@redhat.com,
+        bigeasy@linutronix.de, Juerg Haefliger <juerg.haefliger@hpe.com>
+To: oberon@manjaro.org, rostedt@goodmis.org,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1472661463.14381.327.camel@edumazet-glaptop3.roam.corp.google.com>
+In-Reply-To: <89ebab62-4bda-4a8e-a256-5ee46a88e99d@manjaro.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2016-08-31 09:37:43 [-0700], Eric Dumazet wrote:
-> > --- a/net/ipv4/icmp.c
-> > +++ b/net/ipv4/icmp.c
-> > @@ -216,12 +219,14 @@ static inline struct sock *icmp_xmit_lock(struct net *net)
-> >  
-> >  	local_bh_disable();
-> >  
-> > +	local_lock(icmp_sk_lock);
-> 
-> Deadlock alert ?
-> Please read the comment few lines after, explaining why we have to use
-> spin_trylock().
-> Or maybe I should double check what is local_lock() in RT
+Fix a compilation issue introduced by upstream commit
+4b44f2d18a330565227a7348844493c59366171e
 
-On !RT local_lock() is preempt_disable().
-On RT local_lock() is a per-CPU sleeping spinlock which can be taken
-recursively by the owner.
+The upstream commit exports the symbol add_interrupt_randomness()
+which is now being used in the Hyper-V driver. The RT patch adds another
+argument to that function so its usage in the Hyper-V driver needs to
+be fixed.
 
-On a "normal" ping reply we have
-- icmp_reply()
-  - icmp_xmit_lock()
-    - local_lock()
-  - icmp_push_reply()
- icmp_send()
-    - local_lock()
+This patch should be merged with:
+patches/0216-random-Make-it-work-on-rt.patch
+commit 20985550b01a21ba00a587d17d7c26da61e01acc random: Make it work on rt
 
-so that works. I didn't manage to resolve a possible dst_link_failure()
-path but I would assume it is like the above (where the owner takes the
-same local_lock() multiple times).
+Signed-off-by: Juerg Haefliger <juerg.haefliger@hpe.com>
+Reviewed-by: T Makphaibulchoke <tmac@hpe.com>
+---
+ drivers/hv/vmbus_drv.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Sebastian
+diff --git a/drivers/hv/vmbus_drv.c b/drivers/hv/vmbus_drv.c
+index 9b5440f6b3b4..c9c4899834f2 100644
+--- a/drivers/hv/vmbus_drv.c
++++ b/drivers/hv/vmbus_drv.c
+@@ -828,7 +828,7 @@ static void vmbus_isr(void)
+ 			tasklet_schedule(&msg_dpc);
+ 	}
+ 
+-	add_interrupt_randomness(HYPERVISOR_CALLBACK_VECTOR, 0);
++	add_interrupt_randomness(HYPERVISOR_CALLBACK_VECTOR, 0, 0);
+ }
+ 
+ 
+-- 
+2.9.3
