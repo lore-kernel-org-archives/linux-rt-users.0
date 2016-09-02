@@ -1,63 +1,26 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH] hyperv: Fix compilation issue with 4.4.19-rt27
-Date: Thu, 1 Sep 2016 11:13:59 -0400
-Message-ID: <20160901111359.7811d741@gandalf.local.home>
-References: <89ebab62-4bda-4a8e-a256-5ee46a88e99d@manjaro.org>
-        <20160901085714.14815-1-juerg.haefliger@hpe.com>
+From: Lei Li <matrixs.zero@gmail.com>
+Subject: Subscription
+Date: Fri, 2 Sep 2016 14:10:08 +0800
+Message-ID: <57C917C0.6070209@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: oberon@manjaro.org, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org, tglx@linutronix.de,
-        C.Emde@osadl.org, jkacur@redhat.com, bigeasy@linutronix.de
-To: Juerg Haefliger <juerg.haefliger@hpe.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160901085714.14815-1-juerg.haefliger@hpe.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-pf0-f179.google.com ([209.85.192.179]:33392 "EHLO
+        mail-pf0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751453AbcIBGGN (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 2 Sep 2016 02:06:13 -0400
+Received: by mail-pf0-f179.google.com with SMTP id g202so16018020pfb.0
+        for <linux-rt-users@vger.kernel.org>; Thu, 01 Sep 2016 23:06:13 -0700 (PDT)
+Received: from [10.100.203.66] ([118.144.186.207])
+        by smtp.gmail.com with ESMTPSA id g13sm11714425pfb.7.2016.09.01.23.06.10
+        for <linux-rt-users@vger.kernel.org>
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Thu, 01 Sep 2016 23:06:11 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu,  1 Sep 2016 10:57:14 +0200
-Juerg Haefliger <juerg.haefliger@hpe.com> wrote:
+subscription
 
-> Fix a compilation issue introduced by upstream commit
-> 4b44f2d18a330565227a7348844493c59366171e
-> 
-> The upstream commit exports the symbol add_interrupt_randomness()
-> which is now being used in the Hyper-V driver. The RT patch adds another
-> argument to that function so its usage in the Hyper-V driver needs to
-> be fixed.
-> 
-
-I guess I should have run "make allmodconfig" before posting. Just
-didn't have the time. :-/
-
-Thanks for the patch. I'm currently working to get my mainline work
-finished (that's taking up my resources). I'll work to include this
-patch either tomorrow, or it will have to wait for next week, as it's a
-US holiday weekend.
-
--- Steve
-
-> This patch should be merged with:
-> patches/0216-random-Make-it-work-on-rt.patch
-> commit 20985550b01a21ba00a587d17d7c26da61e01acc random: Make it work on rt
-> 
-> Signed-off-by: Juerg Haefliger <juerg.haefliger@hpe.com>
-> Reviewed-by: T Makphaibulchoke <tmac@hpe.com>
-> ---
->  drivers/hv/vmbus_drv.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/drivers/hv/vmbus_drv.c b/drivers/hv/vmbus_drv.c
-> index 9b5440f6b3b4..c9c4899834f2 100644
-> --- a/drivers/hv/vmbus_drv.c
-> +++ b/drivers/hv/vmbus_drv.c
-> @@ -828,7 +828,7 @@ static void vmbus_isr(void)
->  			tasklet_schedule(&msg_dpc);
->  	}
->  
-> -	add_interrupt_randomness(HYPERVISOR_CALLBACK_VECTOR, 0);
-> +	add_interrupt_randomness(HYPERVISOR_CALLBACK_VECTOR, 0, 0);
->  }
->  
->  
