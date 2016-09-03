@@ -1,58 +1,51 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH] Force processes to non-realtime before mm_exit
-Date: Fri, 2 Sep 2016 17:02:29 +0200 (CEST)
-Message-ID: <alpine.DEB.2.20.1609021700530.5647@nanos>
-References: <1464995924-16367-1-git-send-email-brian@peloton-tech.com> <20160714172429.GH30935@twins.programming.kicks-ass.net>
+From: Joachim Achtzehnter <joachima@netacquire.com>
+Subject: Undesirable priority inversion for real-time threads that use timerfd
+Date: Fri, 2 Sep 2016 17:25:55 -0700
+Message-ID: <e1363850-537a-f6d1-52c7-3e7398374b49@netacquire.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Cc: Brian Silverman <brian@peloton-tech.com>,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        bigeasy@linutronix.de, Ingo Molnar <mingo@kernel.org>,
-        Mike Galbraith <umgwanakikbuti@gmail.com>
-To: Peter Zijlstra <peterz@infradead.org>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:54373 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1753563AbcIBPEv (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 2 Sep 2016 11:04:51 -0400
-In-Reply-To: <20160714172429.GH30935@twins.programming.kicks-ass.net>
+Received: from penguin.kraut.ca ([96.53.60.142]:51347 "EHLO penguin.kraut.ca"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751765AbcICA41 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 2 Sep 2016 20:56:27 -0400
+Received: from [184.71.173.194] (helo=[205.159.216.152])
+        by penguin.kraut.ca with esmtpsa (TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128)
+        (Exim 4.87)
+        (envelope-from <joachima@netacquire.com>)
+        id 1bfyea-00027w-Uq
+        for linux-rt-users@vger.kernel.org; Fri, 02 Sep 2016 17:17:49 -0700
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 14 Jul 2016, Peter Zijlstra wrote:
-> On Fri, Jun 03, 2016 at 04:18:44PM -0700, Brian Silverman wrote:
-> > Without this, a realtime process which has called mlockall exiting
-> > causes large latencies for other realtime processes at the same or
-> > lower priorities. This seems like a fairly common use case too, because
-> > realtime processes generally want their memory locked into RAM.
-> 
-> So I'm not too sure..  SCHED_FIFO/RR are a complete trainwreck and
-> provide absolutely no isolation from badly behaving tasks what so ever,
-> so I'm not too inclined to protect them from exit either, its just one
-> more way in which they can cause pain.
-> 
-> But aside from the, the patch has issues..
-> 
-> > +++ b/kernel/exit.c
-> > @@ -730,6 +730,12 @@ void do_exit(long code)
-> >  	tsk->exit_code = code;
-> >  	taskstats_exit(tsk, group_dead);
-> >  
-> > +	if (tsk->policy == SCHED_FIFO || tsk->policy == SCHED_RR) {
-> > +		struct sched_param param = { .sched_priority = 0 };
-> > +
-> > +		sched_setscheduler_nocheck(current, SCHED_NORMAL, &param);
-> > +	}
-> > +
-> >  	exit_mm(tsk);
-> 
-> That only does half a job. You forget about SCHED_DEADLINE and negative
-> nice tasks.
-> 
-> Something like the below perhaps... But yeah, unconvinced.
+We find that real-time threads running at priorities greater than 1, 
+which use the timerfd abstraction in order to simultaneously wait for 
+either a timeout or another event that is reported via a file descriptor 
+experience undesirable delays for the timeouts when lower-priority 
+real-time threads threads are running.
 
-I agree that FIFO/RR can cause pain, but running exit_mm() with RT priority
-or consuming DL time is silly.
- 
-FWIW: Acked-by-me
+This happens because the notification about timeouts depends on kernel 
+threads with names like ktimersoftd/N, where N is an index for a CPU 
+core on the system. These threads are scheduled with real-time priority 1.
+
+As an obvious fix for the priority inversion we can raise the priority 
+of the ktimersoftd/N kernel threads to a priority that is at least as 
+high as our highest-priority thread that uses timers.
+
+The only downside of this fix is that all timeouts used by low-priority 
+threads, presumably even non-real-time threads, will briefly preempt our 
+high-priority threads, although hopefully not for long, hence there may 
+be some impact on throughput.
+
+A possibly more optimal approach would be to have a separate ktimersoftd 
+thread for every priority at which threads wait for timer notifications. 
+We could potentially build such a facility in user code, as long as 
+there is some timer available that is not dependent on ktimersoftd. What 
+about Posix timers? Would they have the same issue? Anything else we 
+should be looking at?
+
+Thanks,
+
+Joachim
