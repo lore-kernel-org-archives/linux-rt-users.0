@@ -1,145 +1,81 @@
-From: Grygorii Strashko <grygorii.strashko@ti.com>
-Subject: Re: [4.4-RT PATCH RFC/RFT] drivers: net: cpsw: mark rx/tx irq as
- IRQF_NO_THREAD
-Date: Thu, 8 Sep 2016 19:24:07 +0300
-Message-ID: <4f134c90-9230-711e-6993-df84e5facd3b@ti.com>
-References: <20160811161540.9613-1-grygorii.strashko@ti.com>
- <20160812083206.t7lvxpo44marwpf5@linutronix.de>
- <a5d1bd8f-4219-4890-9e1e-d4bc4181eb57@ti.com>
- <20160908142813.tma7j6p44e3z3nqc@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH] fs/dcache: resched/chill only if we make no progress
+Date: Thu, 8 Sep 2016 20:25:03 +0200
+Message-ID: <20160908182503.bh77mwwhjhiaqf4y@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
-Cc: Steven Rostedt <rostedt@goodmis.org>, <linux-omap@vger.kernel.org>,
-        Alison Chaiken <alison@peloton-tech.com>,
-        <linux-rt-users@vger.kernel.org>, <netdev@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20160908142813.tma7j6p44e3z3nqc@linutronix.de>
-Sender: netdev-owner@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: linux-kernel@vger.kernel.org, tglx@linutronix.de,
+        Steven Rostedt <rostedt@goodmis.org>
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 09/08/2016 05:28 PM, Sebastian Andrzej Siewior wrote:
-> On 2016-08-12 18:58:21 [+0300], Grygorii Strashko wrote:
->> Hi Sebastian,
-> Hi Grygorii,
-> 
->> Thankds for comment. You're right:
->> irq_thread()->irq_forced_thread_fn()->local_bh_enable()
->>
->> but wouldn't here two wake_up_process() calls any way,
->> plus preempt_check_resched_rt() in napi_schedule().
-> 
-> Usually you prefer BH handling in the IRQ-thread because it runs at
-> higher priority and is not interrupted by a SCHED_OTHER process. And you
-> can assign it a higher priority if it should be preferred over an other
-> interrupt. However, if the processing of the interrupt is taking too
-> much time (like that ping flood, a lot of network traffic) then we push
-> it to the softirq thread. If you do this now unconditionally in the
-> SCHED_OTHER softirq thread then you take away all the `good' things we
-> had (like processing important packets at higher priority as long as
-> nobody floods us). Plus you share this thread with everything else that
-> runs in there.
+Upstream commit 47be61845c77 ("fs/dcache.c: avoid soft-lockup in
+dput()") changed the condition _when_ cpu_relax() / cond_resched() was
+invoked. This change was adapted in -RT into mostly the same thing
+except that if cond_resched() did nothing we had to do cpu_chill() to
+force the task off CPU for a tiny little bit in case the task had RT
+priority and did not want to leave the CPU.
+This change resulted in a performance regression (in my testcase the
+build time on /dev/shm increased from 19min to 24min). The reason is
+that with this change cpu_chill() was invoked even dput() made progress
+(dentry_kill() returned a different dentry) instead only if we were
+trying this operation on the same dentry over and over again.
 
-That's i understand, but effect from this patch on network throughput
-is pretty amazing :)
+This patch brings back to the old behavior back to cond_resched() &
+chill if we make no progress. A little improvement is to invoke
+cpu_chill() only if we are a RT task (and avoid the sleep otherwise).
+Otherwise the scheduler should remove us from the CPU if we make no
+progress.
 
-> 
->>>> And, as result, get benefits from the following improvements (tested
->>>> on am57xx-evm):
->>>>
->>>> 1) "[ 78.348599] NOHZ: local_softirq_pending 80" message will not be
->>>>    seen any more. Now these warnings can be seen once iperf is started.
->>>>    # iperf -c $IPERFHOST -w 128K  -d -t 60
->>>
->>> Do you also see "sched: RT throttling activated"? Because I don't see
->>> otherwise why this should pop up.
->>
->> I've reverted my patch an did requested experiments (some additional info below).
->>
->> I do not see "sched: RT throttling activated" :(
-> 
-> That is okay. However if aim for throughput you might want to switch
-> away from NO_HZ (and deactivate the software watchdog wich runs at
-> prio 99 if enabled).
-> 
->> root@am57xx-evm:~# ./net_perf.sh & cyclictest -m -Sp98 -q  -D4m
->> [1] 1301
->> # /dev/cpu_dma_latency set to 0us
->> Linux am57xx-evm 4.4.16-rt23-00321-ga195e6a-dirty #92 SMP PREEMPT RT Fri Aug 12 14:03:59 EEST 2016 armv7l GNU/Linux
->>
-> …
->> [1]+  Done                    ./net_perf.sh
-> 
-> I can't parse this. But that local_softirq_pending() warning might
-> contribute to lower numbers.
-> 
->> =============================================== before, no net load:
->> cyclictest -m -Sp98 -q  -D4m -i250 -d0
->> # /dev/cpu_dma_latency set to 0us
->> T: 0 ( 1288) P:98 I:250 C: 960000 Min:      8 Act:    9 Avg:    8 Max:      33
->> T: 1 ( 1289) P:98 I:250 C: 959929 Min:      7 Act:   11 Avg:    9 Max:      26
-> 
->> =============================================== after, no net load:
->> cyclictest -m -Sp98 -q  -D4m -i250 -d0
->> T: 0 ( 1301) P:98 I:250 C: 960000 Min:      7 Act:    9 Avg:    8 Max:      22
->> T: 1 ( 1302) P:98 I:250 C: 959914 Min:      7 Act:   11 Avg:    8 Max:      28
-> 
-> I think those two should be equal more or less since the change should
-> have no impact on "no net load" or do I miss something?
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ fs/dcache.c |   19 +++++++++++++------
+ 1 file changed, 13 insertions(+), 6 deletions(-)
 
-Correct I see no differences in this case, as per above.
-
-> 
->> =============================================== before, with net load:
->> cyclictest -m -Sp98 -q -D4m -i250 -d0
->> T: 0 ( 1400) P:98 I:250 C: 960000 Min:      8 Act:   25 Avg:   18 Max:      83
->> T: 1 ( 1401) P:98 I:250 C: 959801 Min:      7 Act:   27 Avg:   17 Max:      48
->>
->>
->> =============================================== after, with net load:
->> cyclictest -m -Sp98 -q  -D4m -i250 -d0
->> T: 0 ( 1358) P:98 I:250 C: 960000 Min:      8 Act:   11 Avg:   14 Max:      42
->> T: 1 ( 1359) P:98 I:250 C: 959743 Min:      7 Act:   18 Avg:   15 Max:      36
-> 
-> So the max value dropped by ~50% with your patch. Interesting. What I
-> remember from testing is that once you had, say, one hour of hackbench
-> running then after that, the extra network traffic didn't contribute
-> much (if at all) to the max value.
-> That said it is hard to believe that one extra context switch
-> contributes about 40us to the max value on CPU0.
-
-Yup. but short time testing provides very stable results.
-This patch is going to be tested more intensively shortly.
-
-> 
->>> What happens if s/__raise_softirq_irqoff_ksoft/__raise_softirq_irqoff/
->>> in net/core/dev.c and chrt the priority of you network interrupt
->>> handlers to SCHED_OTHER priority?
->>
->> ===== without this patch + __raise_softirq_irqoff + netIRQs->SCHED_OTHER
->>
->> with net load:
->> cyclictest -m -Sp98 -q -D4m -i250 -d0
->> T: 0 ( 1325) P:98 I:1000 C: 240000 Min:      8 Act:   22 Avg:   17 Max:      51
->> T: 1 ( 1326) P:98 I:1500 C: 159981 Min:      8 Act:   15 Avg:   15 Max:      39
->>
->> cyclictest -m -Sp98 -q  -D4m -i250 -d0
->> T: 0 ( 1307) P:98 I:250 C: 960000 Min:      7 Act:   13 Avg:   16 Max:      50
->> T: 1 ( 1308) P:98 I:250 C: 959819 Min:      8 Act:   12 Avg:   14 Max:      37
->>
-
-> 
-> So that looks nice, doesn't it?
-
-Yah, This improvement, in general. 
-But the fact that so significant net performance drop observed out of the box 
-(without any tunning) and on idle system - triggers a lot of questions ;(
-
-I'm worry if observed original behavior can depend on usage NAPI polling  for both RX/TX 
-in CPSW driver. CPSW request two IRQs RX and TX and both handler just do napi_schedule()[NET_RX].
-
-
--- 
-regards,
--grygorii
+--- a/fs/dcache.c
++++ b/fs/dcache.c
+@@ -40,6 +40,8 @@
+ #include <linux/ratelimit.h>
+ #include <linux/list_lru.h>
+ #include <linux/kasan.h>
++#include <linux/sched/rt.h>
++#include <linux/sched/deadline.h>
+ 
+ #include "internal.h"
+ #include "mount.h"
+@@ -748,6 +750,8 @@ static inline bool fast_dput(struct dent
+  */
+ void dput(struct dentry *dentry)
+ {
++	struct dentry *parent;
++
+ 	if (unlikely(!dentry))
+ 		return;
+ 
+@@ -784,14 +788,17 @@ void dput(struct dentry *dentry)
+ 	return;
+ 
+ kill_it:
+-	dentry = dentry_kill(dentry);
+-	if (dentry) {
++	parent = dentry_kill(dentry);
++	if (parent) {
+ 		int r;
+ 
+-		/* the task with the highest priority won't schedule */
+-		r = cond_resched();
+-		if (!r)
+-			cpu_chill();
++		if (parent == dentry) {
++			/* the task with the highest priority won't schedule */
++			r = cond_resched();
++			if (!r && (rt_task(current) || dl_task(current)))
++				cpu_chill();
++		} else
++			dentry = parent;
+ 		goto repeat;
+ 	}
+ }
