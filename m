@@ -1,55 +1,43 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-        <u.kleine-koenig@pengutronix.de>
-Subject: Re: Network Issue
-Date: Thu, 8 Sep 2016 08:19:20 +0200
-Message-ID: <20160908061920.msefkdj4nk3exzpr@pengutronix.de>
-References: <CAGiFfw4o2c1f=pR+gKkVYAoHQ7V8ywLXu-_g9ahWSZoAoSD7tA@mail.gmail.com>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: Re: [ANNOUNCE] 4.8-rc5-rt1 beta
+Date: Thu, 08 Sep 2016 07:47:40 +0200
+Message-ID: <1473313660.9698.38.camel@gmail.com>
+References: <20160906182508.GB9950@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Cc: linux-rt-users@vger.kernel.org
-To: "Hardik A Gohil (WMSC-HW)" <hardik@willowglen.asia>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.4.pengutronix.de ([92.198.50.35]:58830 "EHLO
-        metis.ext.4.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1756856AbcIHGg7 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 8 Sep 2016 02:36:59 -0400
-Content-Disposition: inline
-In-Reply-To: <CAGiFfw4o2c1f=pR+gKkVYAoHQ7V8ywLXu-_g9ahWSZoAoSD7tA@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Paul Gortmaker <paul.gortmaker@windriver.com>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160906182508.GB9950@windriver.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hello,
+On Tue, 2016-09-06 at 14:25 -0400, Paul Gortmaker wrote:
 
-On Thu, Sep 08, 2016 at 09:49:14AM +0800, Hardik A Gohil (WMSC-HW) wrote:
-> I am working on Linux 3.2.0.
-
-Wow, you're still developing on a kernel that is 4.5 years old and
-you're not even taking the stable updates.
-
-> We had a requirement to make Linux Real Time so using RT-PREEMPT
-> (patch-3.2-rt10.patch.bz2)
-
-Even if you stick to 3.2.x, there is 3.2.82-rt118.
-
-> We are facing a network hang issue while running the periodic task of 5 ms.
+>   Patch conflicts/issues of interest 4.6 --> 4.7
+>   ----------------------------------------------
 > 
-> cannot ping any more when task is running is ran for some time.
-> 
-> I am using Timer fd protocol to achieve this.
-> 
-> I would like to know if there is such know issue in this patch.
-> 
-> Any help will be appreciated.
+> -v4.7 introduced a lot of users of down_write_killable which wasn't
+>  implemented for -rt (rwsem_rt.h), so I created one.  (see new patch
+>  rt-create-down_write_killable.patch -- local commit 14625e96ff085f),
+>  it probably warrants a look see from other people smarter than me.
 
-I bet you won't find help here until you reproduce the issue with a
-recent kernel (currently there is v4.6.7-rt11) and show the code of your
-periodic task.
+You forgot nested, so btrfs won't build.  I posted a patchlet here that
+includes it.
 
-Best regards
-Uwe
+> -Al Viro added a 2nd user of down_read_non_owner into NFS unlink.
+>  Previously it was just bcache and Sebastian just made that depend on
+>  !RT_FULL (md-disable-bcache.patch).  So we'll need to decide what to
+>  with that; I just ignored NFS for now, since it is horrible anyway.
+>  (see upstream commit 884be175351e73c)
 
--- 
-Pengutronix e.K.                           | Uwe Kleine-König            |
-Industrial Linux Solutions                 | http://www.pengutronix.de/  |
+Yeah, that is annoying.  I've been carrying a revert ever since, with
+poke nfs on todo, but it seems to be marooned there (haven't even
+gotten around to generating the first obligatory explosion).
+
+	-Mike
