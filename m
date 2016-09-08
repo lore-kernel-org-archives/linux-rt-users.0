@@ -1,56 +1,31 @@
-From: Sebastian Andrzej Siewior <sebastian.siewior@linutronix.de>
-Subject: Re: Undesirable priority inversion for real-time threads that use
- timerfd
-Date: Thu, 8 Sep 2016 12:24:08 +0200
-Message-ID: <20160908102408.n4cc2e6vjslyprgm@linutronix.de>
-References: <e1363850-537a-f6d1-52c7-3e7398374b49@netacquire.com>
+From: Jens Koehler <jenskxxx@googlemail.com>
+Subject: Re: hrtimer: interrupt took 10252 ns - meaning?
+Date: Thu, 8 Sep 2016 12:36:08 +0200
+Message-ID: <CAL7_A_WcvqmghJiQaDdnYRZmPf9=-s3eveMfM1uYtHfKykbmVg@mail.gmail.com>
+References: <CAL7_A_VUiLH9JBkL8HBrUaAn6_yF+3jefXHMwGFS8Sr4g29q0A@mail.gmail.com>
+ <9f943b0e-12f5-2779-0bba-c4bc2b7357fa@linutronix.de> <20160808164505.GA13707@linutronix.de>
+ <CAL7_A_Vz+BCg-QXraob1ndDF4b3ggGN-j+fnQ9FTqY1FdbVvug@mail.gmail.com> <20160812123735.zboeocbv4o5sjnwb@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=UTF-8
 Cc: linux-rt-users@vger.kernel.org
-To: Joachim Achtzehnter <joachima@netacquire.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:43390 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S941089AbcIHKYK (ORCPT
+Received: from mail-ua0-f178.google.com ([209.85.217.178]:36581 "EHLO
+        mail-ua0-f178.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S941231AbcIHKgJ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 8 Sep 2016 06:24:10 -0400
-Content-Disposition: inline
-In-Reply-To: <e1363850-537a-f6d1-52c7-3e7398374b49@netacquire.com>
+        Thu, 8 Sep 2016 06:36:09 -0400
+Received: by mail-ua0-f178.google.com with SMTP id b7so36471297uab.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 08 Sep 2016 03:36:09 -0700 (PDT)
+In-Reply-To: <20160812123735.zboeocbv4o5sjnwb@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2016-09-02 17:25:55 [-0700], Joachim Achtzehnter wrote:
-> The only downside of this fix is that all timeouts used by low-priority
-> threads, presumably even non-real-time threads, will briefly preempt our
-> high-priority threads, although hopefully not for long, hence there may be
-> some impact on throughput.
+Hello Sebastian,
 
-_all_ timers which are not marked as irq_safe are deferred here to the
-timersoftirq. This is because they take (possible long standing)
-sleeping locks.
+After adding of your patch "disable preemption during CR3 read+write"
+we have since 2 weeks no rt throttling event. This is very good
+improvement.
 
-> A possibly more optimal approach would be to have a separate ktimersoftd
-> thread for every priority at which threads wait for timer notifications. We
-you don't know this in advance. You are in hardirq context and a hrtimer
-expires. You invoke the timerfd callback, need to take a sleeping lock
-to figure out who is waiting on this. *That* is the point you learn
-about the waiter.
-
-> could potentially build such a facility in user code, as long as there is
-> some timer available that is not dependent on ktimersoftd. What about Posix
-> timers? Would they have the same issue? Anything else we should be looking
-> at?
-
-posix timers have the same issue. Basically all timers which are not
-marked as irq_safe are completed in ktimersoftd. If you look at
-clock_nanosleep() you will see that it is marked as irqsafe and the wake
-up happens in hardirq.
-
-Btw: the situation got better once we got ktimersoftd. Before that it
-was a little worse.
-
-> Thanks,
-> 
-> Joachim
-
-Sebastian
+Thanks a lot,
+Jens
