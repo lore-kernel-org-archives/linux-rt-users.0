@@ -1,215 +1,169 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] 4.6.7-rt12
-Date: Thu, 8 Sep 2016 21:00:27 +0200
-Message-ID: <20160908190027.akgbp32hs6l5y5i6@linutronix.de>
+From: Grygorii Strashko <grygorii.strashko@ti.com>
+Subject: Re: [4.4-RT PATCH RFC/RFT] drivers: net: cpsw: mark rx/tx irq as
+ IRQF_NO_THREAD
+Date: Fri, 9 Sep 2016 15:46:44 +0300
+Message-ID: <cdfe7655-a3b3-9b38-0231-cf90c2af037b@ti.com>
+References: <20160811161540.9613-1-grygorii.strashko@ti.com>
+ <20160812083206.t7lvxpo44marwpf5@linutronix.de>
+ <9f811252-82ff-fd24-1006-2b40cd448927@ti.com>
+ <20160908160042.lci5xkd37o4rrrg5@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>, <linux-omap@vger.kernel.org>,
+        Alison Chaiken <alison@peloton-tech.com>,
+        <linux-rt-users@vger.kernel.org>, <netdev@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20160908160042.lci5xkd37o4rrrg5@linutronix.de>
+Sender: netdev-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Dear RT folks!
+On 09/08/2016 07:00 PM, Sebastian Andrzej Siewior wrote:
+> On 2016-08-19 17:29:16 [+0300], Grygorii Strashko wrote:
+>> I've collected trace before first occurrence of  "NOHZ: local_softirq_pending 80"
+>>
 
-I'm pleased to announce the v4.6.7-rt12 patch set. 
+> 
+>>  irq/354-4848400-85    [000]    90.642393: softirq_exit:         vec=3 [action=NET_RX]
+>>  irq/354-4848400-85    [000]    90.642419: sched_switch:         irq/354-4848400:85 [49] S ==> rcuc/0:11 [98]
+> 
+> We don't serve TIMER & SCHED because those two are pushed to the
+> ksoftirq thread(s). So we keep mostly doing NET_RX and now we switch to
+> the next best thing which is RCU.
+> 
+>>           rcuc/0-11    [000]    90.642430: irq_handler_entry:    irq=354 name=48484000.ethernet
+> but not for long.
+> 
+>>           rcuc/0-11    [000]    90.642432: irq_handler_exit:     irq=354 ret=handled
+>>           rcuc/0-11    [000]    90.642435: sched_waking:         comm=irq/354-4848400 pid=85 prio=49 target_cpu=000
+>>           rcuc/0-11    [000]    90.642442: sched_migrate_task:   comm=irq/354-4848400 pid=85 prio=49 orig_cpu=0 dest_cpu=1
+>>           rcuc/0-11    [000]    90.642453: sched_wakeup:         irq/354-4848400:85 [49] success=1 CPU:001
+>>            iperf-1284  [001]    90.642462: sched_stat_runtime:   comm=iperf pid=1284 runtime=113053 [ns] vruntime=2106997666 [ns]
+>>           rcuc/0-11    [000]    90.642464: irq_handler_entry:    irq=355 name=48484000.ethernet
+>>           rcuc/0-11    [000]    90.642466: irq_handler_exit:     irq=355 ret=handled
+>>           rcuc/0-11    [000]    90.642469: sched_waking:         comm=irq/355-4848400 pid=86 prio=49 target_cpu=001
+>>            iperf-1284  [001]    90.642473: sched_switch:         iperf:1284 [120] R ==> irq/354-4848400:85 [49]
+>>  irq/354-4848400-85    [001]    90.642481: softirq_raise:        vec=3 [action=NET_RX]
+>>           rcuc/0-11    [000]    90.642483: sched_wakeup:         irq/355-4848400:86 [49] success=1 CPU:001
+>>  irq/354-4848400-85    [001]    90.642493: softirq_entry:        vec=3 [action=NET_RX]
+>>           rcuc/0-11    [000]    90.642497: sched_migrate_task:   comm=irq/355-4848400 pid=86 prio=49 orig_cpu=1 dest_cpu=0
+> ach that IRQ thread no pinned. Good. We migrate.
+> 
 
-Changes since v4.6.7-rt11:
+It looks like scheduler playing ping-pong between CPUs with threaded irqs irq/354-355.
+And seems this might be the case - if I pin both threaded IRQ handlers to CPU0
+I can see better latency and netperf improvement
+cyclictest -m -Sp98 -q  -D4m
+T: 0 ( 1318) P:98 I:1000 C: 240000 Min:      9 Act:   14 Avg:   15 Max:      42
+T: 1 ( 1319) P:98 I:1500 C: 159909 Min:      9 Act:   14 Avg:   16 Max:      39
 
-  - The update to v4.6.7-rt11 introduced a performance regression
-    especially visible when compiling a kernel on /dev/shm. It is fixed
-    by invoking less often the "chill" function. Reported by Joakim
-    Hernberg.
-  
-  - We had a fix in v3.12.8-rt11 for ip_send_unicast_reply() which I
-    dropped in v3.18.8 based -RT due code change and I assumed the need
-    for extra serialization is no longer required. As it turns out it is
-    still required :)
+if I arrange hwirqs  and pin pin both threaded IRQ handlers on CPU1 
+I can observe more less similar results as with this patch. 
 
-  - While looking around a similar serialisation might be required in
-    icmp_sk(). No crash has been observed, this is just precaution.
 
-Known issues
-	- CPU hotplug got a little better but can deadlock.
+>>           rcuc/0-11    [000]    90.642515: irq_handler_entry:    irq=354 name=48484000.ethernet
+>>           rcuc/0-11    [000]    90.642516: irq_handler_exit:     irq=354 ret=handled
 
-The delta patch against 4.6.7-rt11 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.6/incr/patch-4.6.7-rt11-rt12.patch.xz
+> 
+> As you see ksoftirqd left the CPU with a D so I would assume it is
+> blocked on a lock and waits. 
+> NET_RX is in progress but scheduled out due to RCUC which is also
+> scheduled out.
+> 
+> I assume we got to softirq because nothing else can run. It will see
+> that NET_RX is pending and tries it but blocks on the lock
+> (lock_softirq()). It schedules out. Nothing left -> idle.
+> 
+> The idle code checks to see if a softirq is pending and in fact there is
+> SCHED on the list and ksoftirq was about to handle it but due to
+> ordering complication (NET_RX before SCHED) it can't. And we have the
+> warning.
+> 
+> This 
+> 
+> --- a/kernel/softirq.c
+> +++ b/kernel/softirq.c
+> @@ -105,6 +105,7 @@ void softirq_check_pending_idle(void)
+>  {
+>  	static int rate_limit;
+>  	struct softirq_runner *sr = this_cpu_ptr(&softirq_runners);
+> +	struct task_struct *ksoft_tsk = __this_cpu_read(ksoftirqd);
+>  	u32 warnpending;
+>  	int i;
+>  
+> @@ -112,7 +113,7 @@ void softirq_check_pending_idle(void)
+>  		return;
+>  
+>  	warnpending = local_softirq_pending() & SOFTIRQ_STOP_IDLE_MASK;
+> -	for (i = 0; i < NR_SOFTIRQS; i++) {
+> +	for (i = 0; (i < NR_SOFTIRQS) && warnpending; i++) {
+>  		struct task_struct *tsk = sr->runner[i];
+>  
+>  		/*
+> @@ -132,6 +133,15 @@ void softirq_check_pending_idle(void)
+>  		}
+>  	}
+>  
+> +	if (warnpending && ksoft_tsk) {
+> +		raw_spin_lock(&ksoft_tsk->pi_lock);
+> +		if (ksoft_tsk->pi_blocked_on || ksoft_tsk->state == TASK_RUNNING) {
+> +			/* Clear all bits pending in that task */
+> +			warnpending &= ~(ksoft_tsk->softirqs_raised);
+> +		}
+> +		raw_spin_unlock(&ksoft_tsk->pi_lock);
+> +	}
+> +
+>  	if (warnpending) {
+>  		printk(KERN_ERR "NOHZ: local_softirq_pending %02x\n",
+>  		       warnpending);
+> 
+> 
+> should avoid the warning if the softirq thread is blocked.
 
-You can get this release via the git tree at:
 
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.6.7-rt12
+with this change i do not see  "NOHZ: local_softirq_pending 80" any more 
+Tested-by: Grygorii Strashko <grygorii.strashko@ti.com> 
 
-The RT patch against 4.6.5 can be found here:
+> 
+> However:
+> - RCU boosting with RT prio might help here or there.
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.6/patch-4.6.7-rt12.patch.xz
+That I'll try. current settings
+CONFIG_RCU_BOOST=y
+CONFIG_RCU_KTHREAD_PRIO=1
+CONFIG_RCU_BOOST_DELAY=500
 
-The split quilt queue is available at:
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.6/patches-4.6.7-rt12.tar.xz
+> - having the hard-IRQ and IRQ-thread on the same CPU might help, too. It
+>   is not strictly required but saves a few cycles if you don't have to
+>   perform cross CPU wake ups and migrate task forth and back. The latter
+>   happens at prio 99.
 
-Sebastian
+I've experimented with this and it improves netperf and I also followed instructions from [1].
+But seems messed ti pin threaded irqs to cpu.
+[1] https://www.osadl.org/Real-time-Ethernet-UDP-worst-case-roun.qa-farm-rt-ethernet-udp-monitor.0.html
 
-diff --git a/fs/dcache.c b/fs/dcache.c
-index 32c0bfecc920..aa418c1bdcb5 100644
---- a/fs/dcache.c
-+++ b/fs/dcache.c
-@@ -40,6 +40,8 @@
- #include <linux/ratelimit.h>
- #include <linux/list_lru.h>
- #include <linux/kasan.h>
-+#include <linux/sched/rt.h>
-+#include <linux/sched/deadline.h>
- 
- #include "internal.h"
- #include "mount.h"
-@@ -748,6 +750,8 @@ static inline bool fast_dput(struct dentry *dentry)
-  */
- void dput(struct dentry *dentry)
- {
-+	struct dentry *parent;
-+
- 	if (unlikely(!dentry))
- 		return;
- 
-@@ -784,14 +788,17 @@ void dput(struct dentry *dentry)
- 	return;
- 
- kill_it:
--	dentry = dentry_kill(dentry);
--	if (dentry) {
-+	parent = dentry_kill(dentry);
-+	if (parent) {
- 		int r;
- 
--		/* the task with the highest priority won't schedule */
--		r = cond_resched();
--		if (!r)
--			cpu_chill();
-+		if (parent == dentry) {
-+			/* the task with the highest priority won't schedule */
-+			r = cond_resched();
-+			if (!r && (rt_task(current) || dl_task(current)))
-+				cpu_chill();
-+		} else
-+			dentry = parent;
- 		goto repeat;
- 	}
- }
-diff --git a/localversion-rt b/localversion-rt
-index 05c35cb58077..6e44e540b927 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt11
-+-rt12
-diff --git a/net/ipv4/icmp.c b/net/ipv4/icmp.c
-index c1f1d5030d37..63731fd6af3e 100644
---- a/net/ipv4/icmp.c
-+++ b/net/ipv4/icmp.c
-@@ -78,6 +78,7 @@
- #include <linux/string.h>
- #include <linux/netfilter_ipv4.h>
- #include <linux/slab.h>
-+#include <linux/locallock.h>
- #include <net/snmp.h>
- #include <net/ip.h>
- #include <net/route.h>
-@@ -205,6 +206,8 @@ static const struct icmp_control icmp_pointers[NR_ICMP_TYPES+1];
-  *
-  *	On SMP we have one ICMP socket per-cpu.
-  */
-+static DEFINE_LOCAL_IRQ_LOCK(icmp_sk_lock);
-+
- static struct sock *icmp_sk(struct net *net)
- {
- 	return *this_cpu_ptr(net->ipv4.icmp_sk);
-@@ -216,12 +219,14 @@ static inline struct sock *icmp_xmit_lock(struct net *net)
- 
- 	local_bh_disable();
- 
-+	local_lock(icmp_sk_lock);
- 	sk = icmp_sk(net);
- 
- 	if (unlikely(!spin_trylock(&sk->sk_lock.slock))) {
- 		/* This can happen if the output path signals a
- 		 * dst_link_failure() for an outgoing ICMP packet.
- 		 */
-+		local_unlock(icmp_sk_lock);
- 		local_bh_enable();
- 		return NULL;
- 	}
-@@ -231,6 +236,7 @@ static inline struct sock *icmp_xmit_lock(struct net *net)
- static inline void icmp_xmit_unlock(struct sock *sk)
- {
- 	spin_unlock_bh(&sk->sk_lock.slock);
-+	local_unlock(icmp_sk_lock);
- }
- 
- int sysctl_icmp_msgs_per_sec __read_mostly = 1000;
-@@ -359,6 +365,7 @@ static void icmp_push_reply(struct icmp_bxm *icmp_param,
- 	struct sock *sk;
- 	struct sk_buff *skb;
- 
-+	local_lock(icmp_sk_lock);
- 	sk = icmp_sk(dev_net((*rt)->dst.dev));
- 	if (ip_append_data(sk, fl4, icmp_glue_bits, icmp_param,
- 			   icmp_param->data_len+icmp_param->head_len,
-@@ -381,6 +388,7 @@ static void icmp_push_reply(struct icmp_bxm *icmp_param,
- 		skb->ip_summed = CHECKSUM_NONE;
- 		ip_push_pending_frames(sk, fl4);
- 	}
-+	local_unlock(icmp_sk_lock);
- }
- 
- /*
-diff --git a/net/ipv4/tcp_ipv4.c b/net/ipv4/tcp_ipv4.c
-index ad450509029b..c5521d1f1263 100644
---- a/net/ipv4/tcp_ipv4.c
-+++ b/net/ipv4/tcp_ipv4.c
-@@ -62,6 +62,7 @@
- #include <linux/init.h>
- #include <linux/times.h>
- #include <linux/slab.h>
-+#include <linux/locallock.h>
- 
- #include <net/net_namespace.h>
- #include <net/icmp.h>
-@@ -565,6 +566,7 @@ void tcp_v4_send_check(struct sock *sk, struct sk_buff *skb)
- }
- EXPORT_SYMBOL(tcp_v4_send_check);
- 
-+static DEFINE_LOCAL_IRQ_LOCK(tcp_sk_lock);
- /*
-  *	This routine will send an RST to the other tcp.
-  *
-@@ -689,10 +691,13 @@ static void tcp_v4_send_reset(const struct sock *sk, struct sk_buff *skb)
- 		     offsetof(struct inet_timewait_sock, tw_bound_dev_if));
- 
- 	arg.tos = ip_hdr(skb)->tos;
-+
-+	local_lock(tcp_sk_lock);
- 	ip_send_unicast_reply(*this_cpu_ptr(net->ipv4.tcp_sk),
- 			      skb, &TCP_SKB_CB(skb)->header.h4.opt,
- 			      ip_hdr(skb)->saddr, ip_hdr(skb)->daddr,
- 			      &arg, arg.iov[0].iov_len);
-+	local_unlock(tcp_sk_lock);
- 
- 	TCP_INC_STATS_BH(net, TCP_MIB_OUTSEGS);
- 	TCP_INC_STATS_BH(net, TCP_MIB_OUTRSTS);
-@@ -774,10 +779,12 @@ static void tcp_v4_send_ack(struct net *net,
- 	if (oif)
- 		arg.bound_dev_if = oif;
- 	arg.tos = tos;
-+	local_lock(tcp_sk_lock);
- 	ip_send_unicast_reply(*this_cpu_ptr(net->ipv4.tcp_sk),
- 			      skb, &TCP_SKB_CB(skb)->header.h4.opt,
- 			      ip_hdr(skb)->saddr, ip_hdr(skb)->daddr,
- 			      &arg, arg.iov[0].iov_len);
-+	local_unlock(tcp_sk_lock);
- 
- 	TCP_INC_STATS_BH(net, TCP_MIB_OUTSEGS);
- }
+> - I am not sure NAPI works as expected. I would assume so. There is IRQ
+>   354 and 355 which fire after each other. One would be enough I guess.
+>   And they seem to be short living / fire often. If NAPI works then it
+>   should put an end to it and push it to the softirq thread.
+>   If you have IRQ-pacing support I suggest to use something like 10ms or
+>   so. That means your ping response will go from <= 1ms to 10ms in the
+>   worst case but since you process more packets at a time your
+>   throughput should increase.
+>   If I count this correct, it too you alsmost 4ms from "raise SCHED" to
+>   "try process SCHED" and most of the time was spent in 35[45] hard irq,
+>   raise NET_RX or cross wakeup the IRQ thread.
+
+The question I have to dial with is why switching to RT cause so significant
+netperf drop (without additional tunning) comparing to vanilla - ~120% for 256K and ~200% for 128K windows?
+
+It's of course expected to see netperf drop, but I assume not so significant :(
+And I can't find any reports or statistic related to this. Does the same happen on x86?
+
+Thanks a lot for your comments.
+
+-- 
+regards,
+-grygorii
