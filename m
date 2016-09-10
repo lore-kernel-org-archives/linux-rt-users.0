@@ -1,40 +1,40 @@
-From: Sebastian Andrzej Siewior <sebastian.siewior@linutronix.de>
-Subject: Re: [PATCH] sc16is7xx: drop bogus use of IRQF_ONESHOT
-Date: Fri, 9 Sep 2016 15:14:32 +0200
-Message-ID: <20160909131432.baydlypki3wch5nv@linutronix.de>
-References: <20160218084634.017c3ab4@laptop>
- <1455816372-13989-1-git-send-email-joshc@ni.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH] fs/dcache: resched/chill only if we make no progress
+Date: Sat, 10 Sep 2016 08:17:13 +0200 (CEST)
+Message-ID: <alpine.DEB.2.20.1609100811410.9305@nanos>
+References: <20160908182503.bh77mwwhjhiaqf4y@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Jakub Kicinski <moorray3@wp.pl>, linux-serial@vger.kernel.org,
-        linux-rt-users@vger.kernel.org,
-        Sean Nyekjaer <sean.nyekjaer@prevas.dk>,
-        linux-kernel@vger.kernel.org
-To: Josh Cartwright <joshc@ni.com>
+Content-Type: text/plain; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1455816372-13989-1-git-send-email-joshc@ni.com>
+In-Reply-To: <20160908182503.bh77mwwhjhiaqf4y@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2016-02-18 11:26:12 [-0600], Josh Cartwright wrote:
-> The use of IRQF_ONESHOT when registering an interrupt handler with
-> request_irq() is non-sensical.
-> 
-> Not only that, it also prevents the handler from being threaded when it
-> otherwise should be w/ IRQ_FORCED_THREADING is enabled.  This causes the
-> following deadlock observed by Sean Nyekjaer on -rt:
+On Thu, 8 Sep 2016, Sebastian Andrzej Siewior wrote:
+> +		if (parent == dentry) {
+> +			/* the task with the highest priority won't schedule */
+> +			r = cond_resched();
+> +			if (!r && (rt_task(current) || dl_task(current)))
 
-So we this patch 
-  http://lkml.iu.edu/hypermail/linux/kernel/1602.2/02637.html
+That's wrong because a non RT task will just spin until its time slice is
+up. Wasted cycles for nothing.
 
-sitting in -RT. Then someone posted
-  http://www.spinics.net/lists/linux-rt-users/msg14975.html
-which depends on it.
-Before I was are of the first patch, I posted
-  http://www.spinics.net/lists/linux-rt-users/msg14666.html
+Ideally we make spinning conditional on 
 
-and nobody seems to care if anything of this gets merged upstream
-where it belongs. Could some please carry this to Greg upstream?
+    !on_cpu(dentry->lock->owner)
 
-Sebastian
+That would avoid going to sleep if the owner runs on another cpu. We have
+no mechanism for that, but I think it'd be worth to think about one.
+
+> +				cpu_chill();
+> +		} else
+> +			dentry = parent;
+
+Missing braces
+
+Thanks,
+
+	tglx
