@@ -1,40 +1,39 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH] fs/dcache: resched/chill only if we make no progress
-Date: Sat, 10 Sep 2016 08:17:13 +0200 (CEST)
-Message-ID: <alpine.DEB.2.20.1609100811410.9305@nanos>
-References: <20160908182503.bh77mwwhjhiaqf4y@linutronix.de>
+From: Stanislav Meduna <stano@meduna.org>
+Subject: Re: hrtimer: interrupt took 10252 ns - meaning?
+Date: Mon, 12 Sep 2016 11:16:55 +0200
+Message-ID: <1e95689e-ae42-7f47-03ff-732f1bc4841c@meduna.org>
+References: <CAL7_A_VUiLH9JBkL8HBrUaAn6_yF+3jefXHMwGFS8Sr4g29q0A@mail.gmail.com>
+ <9f943b0e-12f5-2779-0bba-c4bc2b7357fa@linutronix.de>
+ <20160808164505.GA13707@linutronix.de>
+ <CAL7_A_Vz+BCg-QXraob1ndDF4b3ggGN-j+fnQ9FTqY1FdbVvug@mail.gmail.com>
+ <20160812123735.zboeocbv4o5sjnwb@linutronix.de>
+ <CAL7_A_WcvqmghJiQaDdnYRZmPf9=-s3eveMfM1uYtHfKykbmVg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160908182503.bh77mwwhjhiaqf4y@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.meduna.org ([92.240.244.38]:42089 "EHLO meduna.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1755210AbcILJmy (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 12 Sep 2016 05:42:54 -0400
+In-Reply-To: <CAL7_A_WcvqmghJiQaDdnYRZmPf9=-s3eveMfM1uYtHfKykbmVg@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 8 Sep 2016, Sebastian Andrzej Siewior wrote:
-> +		if (parent == dentry) {
-> +			/* the task with the highest priority won't schedule */
-> +			r = cond_resched();
-> +			if (!r && (rt_task(current) || dl_task(current)))
+On 9/8/2016 12:36 PM, Jens Koehler wrote:
 
-That's wrong because a non RT task will just spin until its time slice is
-up. Wasted cycles for nothing.
+> disable preemption during CR3 read+write
 
-Ideally we make spinning conditional on 
+This got my attention as I have hunted some very similar looking
+thing 3 years ago:
 
-    !on_cpu(dentry->lock->owner)
+https://lkml.org/lkml/2013/5/17/109
 
-That would avoid going to sleep if the owner runs on another cpu. We have
-no mechanism for that, but I think it'd be worth to think about one.
+Coud it explain this? I am unfortunately not able to quickly
+reproduce the environment back then.
 
-> +				cpu_chill();
-> +		} else
-> +			dentry = parent;
+-- 
+                                    Stano
 
-Missing braces
-
-Thanks,
-
-	tglx
