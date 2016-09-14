@@ -1,48 +1,63 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH] fs/dcache: resched/chill only if we make no progress
-Date: Wed, 14 Sep 2016 19:14:16 +0200
-Message-ID: <20160914171416.c2k7l2flu4ufdks2@linutronix.de>
-References: <20160908182503.bh77mwwhjhiaqf4y@linutronix.de>
- <alpine.DEB.2.20.1609100811410.9305@nanos>
+Subject: [PATCH RT] x86/preempt-lazy: fixup should_resched()
+Date: Wed, 14 Sep 2016 19:22:24 +0200
+Message-ID: <20160914172224.2giblohltenb73ol@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+Cc: linux-kernel@vger.kernel.org, tglx@linutronix.de,
         Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.20.1609100811410.9305@nanos>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2016-09-10 08:17:13 [+0200], Thomas Gleixner wrote:
-> On Thu, 8 Sep 2016, Sebastian Andrzej Siewior wrote:
-> > +		if (parent == dentry) {
-> > +			/* the task with the highest priority won't schedule */
-> > +			r = cond_resched();
-> > +			if (!r && (rt_task(current) || dl_task(current)))
-> 
-> That's wrong because a non RT task will just spin until its time slice is
-> up. Wasted cycles for nothing.
-> 
-> Ideally we make spinning conditional on 
-> 
->     !on_cpu(dentry->lock->owner)
-> 
-> That would avoid going to sleep if the owner runs on another cpu. We have
-> no mechanism for that, but I think it'd be worth to think about one.
+should_resched() returns true if NEED_RESCHED is set and the
+preempt_count is 0 _or_ if NEED_RESCHED_LAZY is set ignoring the preempt
+counter. Ignoring the preemp counter is wrong. This patch adds this into
+account.
+While at it, __preempt_count_dec_and_test() ignores preempt_lazy_count
+while checking TIF_NEED_RESCHED_LAZY so we this check, too.
 
-something like
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ arch/x86/include/asm/preempt.h | 17 +++++++++++++++--
+ 1 file changed, 15 insertions(+), 2 deletions(-)
 
-|#ifdef CONFIG_SMP
-|                             task_running(task_rq(lock_owner), lock_owner))
-|#else
-|                             1)
-|#endif
-|                                 cpu_chill();
-
-the lock_owner is tricky because we have two locks: inode->i_lock and
-parent->d_lock. So we would have to do the same lookup, like
-dentry_kill() is doing, and check both in worth case.
-
-Sebastian
+diff --git a/arch/x86/include/asm/preempt.h b/arch/x86/include/asm/preempt.h
+index 190af4271b5c..58fd4ff3f53a 100644
+--- a/arch/x86/include/asm/preempt.h
++++ b/arch/x86/include/asm/preempt.h
+@@ -89,6 +89,8 @@ static __always_inline bool __preempt_count_dec_and_test(void)
+ 	if (____preempt_count_dec_and_test())
+ 		return true;
+ #ifdef CONFIG_PREEMPT_LAZY
++	if (current_thread_info()->preempt_lazy_count)
++		return false;
+ 	return test_thread_flag(TIF_NEED_RESCHED_LAZY);
+ #else
+ 	return false;
+@@ -101,8 +103,19 @@ static __always_inline bool __preempt_count_dec_and_test(void)
+ static __always_inline bool should_resched(int preempt_offset)
+ {
+ #ifdef CONFIG_PREEMPT_LAZY
+-	return unlikely(raw_cpu_read_4(__preempt_count) == preempt_offset ||
+-			test_thread_flag(TIF_NEED_RESCHED_LAZY));
++	u32 tmp;
++
++	tmp = raw_cpu_read_4(__preempt_count);
++	if (tmp == preempt_offset)
++		return true;
++
++	/* preempt count == 0 ? */
++	tmp &= ~PREEMPT_NEED_RESCHED;
++	if (tmp)
++		return false;
++	if (current_thread_info()->preempt_lazy_count)
++		return false;
++	return test_thread_flag(TIF_NEED_RESCHED_LAZY);
+ #else
+ 	return unlikely(raw_cpu_read_4(__preempt_count) == preempt_offset);
+ #endif
+-- 
+2.9.3
