@@ -1,50 +1,48 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-        <u.kleine-koenig@pengutronix.de>
-Subject: Re: Network Issue
-Date: Wed, 14 Sep 2016 13:26:14 +0200
-Message-ID: <20160914112614.afmbzxbgufz455u5@pengutronix.de>
-References: <CAGiFfw4o2c1f=pR+gKkVYAoHQ7V8ywLXu-_g9ahWSZoAoSD7tA@mail.gmail.com>
- <20160908061920.msefkdj4nk3exzpr@pengutronix.de>
- <CAGiFfw64YmXt7-dRG-_UM+nZ9R8VznqThiWhDxMVJtXvnKBwSQ@mail.gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH] fs/dcache: resched/chill only if we make no progress
+Date: Wed, 14 Sep 2016 19:14:16 +0200
+Message-ID: <20160914171416.c2k7l2flu4ufdks2@linutronix.de>
+References: <20160908182503.bh77mwwhjhiaqf4y@linutronix.de>
+ <alpine.DEB.2.20.1609100811410.9305@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Cc: linux-rt-users@vger.kernel.org
-To: "Hardik A Gohil (WMSC-HW)" <hardik@willowglen.asia>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.4.pengutronix.de ([92.198.50.35]:58235 "EHLO
-        metis.ext.4.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1761649AbcINL0R (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 14 Sep 2016 07:26:17 -0400
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAGiFfw64YmXt7-dRG-_UM+nZ9R8VznqThiWhDxMVJtXvnKBwSQ@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.20.1609100811410.9305@nanos>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Sep 14, 2016 at 03:51:28PM +0800, Hardik A Gohil (WMSC-HW) wrote:
-> On Thu, Sep 8, 2016 at 2:19 PM, Uwe Kleine-König
-> <u.kleine-koenig@pengutronix.de> wrote:
-> > Hello,
-> >
-> > On Thu, Sep 08, 2016 at 09:49:14AM +0800, Hardik A Gohil (WMSC-HW) wrote:
-> >> I am working on Linux 3.2.0.
-> >
-> > Wow, you're still developing on a kernel that is 4.5 years old and
-> > you're not even taking the stable updates.
+On 2016-09-10 08:17:13 [+0200], Thomas Gleixner wrote:
+> On Thu, 8 Sep 2016, Sebastian Andrzej Siewior wrote:
+> > +		if (parent == dentry) {
+> > +			/* the task with the highest priority won't schedule */
+> > +			r = cond_resched();
+> > +			if (!r && (rt_task(current) || dl_task(current)))
 > 
-> since we did development with phyCORE-AM335x-PD13.1.2 which is using 3.2 kernel.
-> we have already completed production and it wont be a easy task to
-> shift to 4. series
+> That's wrong because a non RT task will just spin until its time slice is
+> up. Wasted cycles for nothing.
+> 
+> Ideally we make spinning conditional on 
+> 
+>     !on_cpu(dentry->lock->owner)
+> 
+> That would avoid going to sleep if the owner runs on another cpu. We have
+> no mechanism for that, but I think it'd be worth to think about one.
 
-Consider it a development step to update to a newer kernel. This allows
-you to test if the problem exists there, too, fix it and then being able
-to backport it. Note all this doesn't force you to upgrade your machines
-in the field.
+something like
 
-Best regards
-Uwe
+|#ifdef CONFIG_SMP
+|                             task_running(task_rq(lock_owner), lock_owner))
+|#else
+|                             1)
+|#endif
+|                                 cpu_chill();
 
--- 
-Pengutronix e.K.                           | Uwe Kleine-König            |
-Industrial Linux Solutions                 | http://www.pengutronix.de/  |
+the lock_owner is tricky because we have two locks: inode->i_lock and
+parent->d_lock. So we would have to do the same lookup, like
+dentry_kill() is doing, and check both in worth case.
+
+Sebastian
