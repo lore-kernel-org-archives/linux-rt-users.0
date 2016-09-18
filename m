@@ -1,61 +1,63 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: Re: [ANNOUNCE] 4.8-rc5-rt1 beta
-Date: Sat, 17 Sep 2016 16:45:06 -0400
-Message-ID: <20160917204505.GP2513@windriver.com>
-References: <20160906182508.GB9950@windriver.com>
- <1473313660.9698.38.camel@gmail.com>
+From: Giuliano Colla <giuliano.colla@fastwebnet.it>
+Subject: RT_PREEMPT on Raspberry PI 3
+Date: Sun, 18 Sep 2016 12:03:42 +0200
+Message-ID: <2c0e540f-c501-f65b-1292-782e12f71039@fastwebnet.it>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Mike Galbraith <umgwanakikbuti@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1473313660.9698.38.camel@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=iso-8859-15; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mr005msr.fastwebnet.it ([85.18.95.68]:44788 "EHLO
+        mr005msr.fastwebnet.it" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1755670AbcIRKJF (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 18 Sep 2016 06:09:05 -0400
+Received: from probookcolla.localdomain (2.224.139.229) by mr005msr.fastwebnet.it (8.5.140.05) (authenticated as giuliano.colla@fastwebnet.it)
+        id 57D6D1BC0051BC49 for linux-rt-users@vger.kernel.org; Sun, 18 Sep 2016 12:03:43 +0200
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-[Re: [ANNOUNCE] 4.8-rc5-rt1 beta] On 08/09/2016 (Thu 07:47) Mike Galbraith wrote:
+Hi everybody,
 
-> On Tue, 2016-09-06 at 14:25 -0400, Paul Gortmaker wrote:
-> 
-> >   Patch conflicts/issues of interest 4.6 --> 4.7
-> >   ----------------------------------------------
-> > 
-> > -v4.7 introduced a lot of users of down_write_killable which wasn't
-> >  implemented for -rt (rwsem_rt.h), so I created one.  (see new patch
-> >  rt-create-down_write_killable.patch -- local commit 14625e96ff085f),
-> >  it probably warrants a look see from other people smarter than me.
-> 
-> You forgot nested, so btrfs won't build.  I posted a patchlet here that
-> includes it.
+I'm developing industrial applications requiring real-time performance 
+on a Raspberry pi3 platform.
 
-I didn't see the patchlet, so I just did my own:  https://goo.gl/MNiUy7
-Let me know if anything looks wrong with it.
+I have managed to achieve both good performance and good stability, but 
+I have been obliged to overcome some difficulties which IMHO could have 
+been avoided if the Raspberry platform peculiarities had been given more 
+attention. Being a very popular platform, particularly suited also for 
+real-time applications, I believe it deserves it.
 
-I also integrated the latest changes from Sebastian from the 4.6 branch
-for this 4.8 repo; build tested btrfs and sanity boot tested the series
-against 4.8-rc6 and pushed the changes out:
+The main items are:
 
-https://git.kernel.org/cgit/linux/kernel/git/paulg/4.8-rt-patches
+1) The RT patches are not in sync with mainline Raspbian kernel 
+versions. At the time of writing, the stock 4.x kernel supported is 
+4.4.21, while the last available patch is 4.4.19-rt27. Even going 
+backwards it's impossible to find a perfect match: 4.4.14 against 
+4.4.12-rt20 or 4.4.15-rt23, and so on.
 
-Everything else is unchanged (incl. the NFS borkage below.)
+I'm currently using a 4.4.13 kernel with a 4.4.12-rt19 patch, which was 
+the best match I could find, and which required some minor manual 
+adjustments.
 
-Paul.
---
+Is there a way to provide a better sync?
 
-> 
-> > -Al Viro added a 2nd user of down_read_non_owner into NFS unlink.
-> >  Previously it was just bcache and Sebastian just made that depend on
-> >  !RT_FULL (md-disable-bcache.patch).  So we'll need to decide what to
-> >  with that; I just ignored NFS for now, since it is horrible anyway.
-> >  (see upstream commit 884be175351e73c)
-> 
-> Yeah, that is annoying.  I've been carrying a revert ever since, with
-> poke nfs on todo, but it seems to be marooned there (haven't even
-> gotten around to generating the first obligatory explosion).
-> 
-> 	-Mike
+2) The RT_PREEMPT patch is not compatible with FIQ (or maybe FIQ is not 
+compatible with RT_PREEMPT). Leaving FIQ enabled generates intolerably 
+frequent freezes. It appears to work properly only on the basic 
+Raspberry pi (single core) but not on the multicore Pi2 and Pi3. 
+Currently the only way to make a real-time kernel run on Raspberry PI 2 
+or 3 is to disable FIQ on the command line.
+
+If the RT_PREEMPT patch could somehow support this incompatibility 
+(either by fully disabling FIQ or fixing the code) this would be a great 
+help, thus avoiding populating forums with "my raspberry pi2/3 freezes 
+with rt patch"
+
+Can something be done to solve those issues?
+
+Thanks,
+
+Giuliano
+
+
