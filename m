@@ -1,63 +1,86 @@
-From: Giuliano Colla <giuliano.colla@fastwebnet.it>
-Subject: RT_PREEMPT on Raspberry PI 3
-Date: Sun, 18 Sep 2016 12:03:42 +0200
-Message-ID: <2c0e540f-c501-f65b-1292-782e12f71039@fastwebnet.it>
+From: Carol Wong <carolw@netacquire.com>
+Subject: RE: v3.18-RT
+Date: Tue, 20 Sep 2016 18:27:10 +0000
+Message-ID: <82DB755727433D4A981ED5650C27BBEF72A517EF@S1P5DAG9E.EXCHPROD.USA.NET>
+References: <FCC5AC80E299464B82E1345E2C10FC9D8098CE51@S1P5DAG4C.EXCHPROD.USA.NET>
+ <20160603163732.GD4496@linutronix.de>
+ <FCC5AC80E299464B82E1345E2C10FC9D8099ACF6@S1P5DAG4C.EXCHPROD.USA.NET>
+ <16d5e3f2-dd20-c802-37aa-86eab553fcfc@linutronix.de>
+ <FCC5AC80E299464B82E1345E2C10FC9D809A150B@S1P5DAG4C.EXCHPROD.USA.NET>
+ <4061065f-dd2b-0a76-299e-ce66783d85dd@linutronix.de>
+ <82DB755727433D4A981ED5650C27BBEF729546A9@S1P5DAG9E.EXCHPROD.USA.NET>
+ <20160729161933.GG21715@linutronix.de>
+ <82DB755727433D4A981ED5650C27BBEF72A4055B@S1P5DAG9E.EXCHPROD.USA.NET>
+ <20160908134509.g22izjojzdsso4pa@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15; format=flowed
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        "David Hauck" <davidh@netacquire.com>,
+        Preston Hauck <prestonh@netacquire.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mr005msr.fastwebnet.it ([85.18.95.68]:44788 "EHLO
-        mr005msr.fastwebnet.it" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1755670AbcIRKJF (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 18 Sep 2016 06:09:05 -0400
-Received: from probookcolla.localdomain (2.224.139.229) by mr005msr.fastwebnet.it (8.5.140.05) (authenticated as giuliano.colla@fastwebnet.it)
-        id 57D6D1BC0051BC49 for linux-rt-users@vger.kernel.org; Sun, 18 Sep 2016 12:03:43 +0200
+Received: from gwo4.mbox.net ([165.212.64.24]:41922 "EHLO gwo4.mbox.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751040AbcITS1T (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 20 Sep 2016 14:27:19 -0400
+In-Reply-To: <20160908134509.g22izjojzdsso4pa@linutronix.de>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi everybody,
-
-I'm developing industrial applications requiring real-time performance 
-on a Raspberry pi3 platform.
-
-I have managed to achieve both good performance and good stability, but 
-I have been obliged to overcome some difficulties which IMHO could have 
-been avoided if the Raspberry platform peculiarities had been given more 
-attention. Being a very popular platform, particularly suited also for 
-real-time applications, I believe it deserves it.
-
-The main items are:
-
-1) The RT patches are not in sync with mainline Raspbian kernel 
-versions. At the time of writing, the stock 4.x kernel supported is 
-4.4.21, while the last available patch is 4.4.19-rt27. Even going 
-backwards it's impossible to find a perfect match: 4.4.14 against 
-4.4.12-rt20 or 4.4.15-rt23, and so on.
-
-I'm currently using a 4.4.13 kernel with a 4.4.12-rt19 patch, which was 
-the best match I could find, and which required some minor manual 
-adjustments.
-
-Is there a way to provide a better sync?
-
-2) The RT_PREEMPT patch is not compatible with FIQ (or maybe FIQ is not 
-compatible with RT_PREEMPT). Leaving FIQ enabled generates intolerably 
-frequent freezes. It appears to work properly only on the basic 
-Raspberry pi (single core) but not on the multicore Pi2 and Pi3. 
-Currently the only way to make a real-time kernel run on Raspberry PI 2 
-or 3 is to disable FIQ on the command line.
-
-If the RT_PREEMPT patch could somehow support this incompatibility 
-(either by fully disabling FIQ or fixing the code) this would be a great 
-help, thus avoiding populating forums with "my raspberry pi2/3 freezes 
-with rt patch"
-
-Can something be done to solve those issues?
-
-Thanks,
-
-Giuliano
-
-
+SGkgU2ViYXN0aWFuLA0KDQpZb3Ugd3JvdGU6DQo+IE9uZSB0aGluZyBvbiB0aGUgYmlzZWN0LiBU
+aGUgZ2l0IHRyZWUgaGFzIHRoZSBwYXRjaGVzIGluIHRoaXMgb3JkZXI6DQo+ICAoMSkga2VybmVs
+OiBtaWdyYXRlX2Rpc2FibGUoKSBkbyBmYXN0cGF0aCBpbiBhdG9taWMgJiBpcnFzLW9mZg0KPiAg
+KDIpIGtlcm5lbDogc29mdGlycTogdW5sb2NrIHdpdGggaXJxcyBvbg0KPiANCj4gYnV0IHlvdSBu
+ZWVkIGFwcGx5IFBhdGNoICMyIGJlZm9yZSAjMS4gU28gaWYgeW91IGJpc2VjdCBhbmQgeW91IGhp
+dA0KPiB3YXJuaW5ncyBkdWUgdG8gIzEgcGxlYXNlIG5vdGUgdGhhdCBuZWVkIGFwcGx5ICMyLg0K
+PiANCj4gVDAxIGFuZCBUMDIgc2hvdyBwcm9iYWJseSB0aGUgc2FtZSBpc3N1ZSBidXQgdGhlcmUg
+YXJlIHRvbyBtYW55DQo+IHdhcm5pbmdzIGNvbW1pbmcgaW4gcGFyYWxsZWwuIElmIHRoaXMgY29t
+ZXMgZnJvbSB0aGUgc2NoZWQgcGF0Y2ggZHVlDQo+ICMxLyMyIG1peCB1cCB0aGVuIGRvbid0IGJp
+c2VjdCBoZXJlIG9yIGhhdmUgdGhlbSBib3RoIGFwcGxpZWQuDQo+IFRoZSBjYWxsIHBhdGggaXRz
+ZWxmIGRvZXMgbG9vayBzcGVjaWFsIGFzIGl0IHdvdWxkIHZpb2xhdGUgdGhlIHJ1bGUNCj4gb2Yg
+YXRvbWljIGxvY2tpbmcgLyB1bmxvY2tpbmcgKGFzIGl0IHdhcyBmaXhlZCBpbiAjMiBmb3IgaW5z
+dGFuY2UpLg0KPiBBdCB0aGlzIHBvaW50IEkgYXNzdW1lIHRoYXQgeW91ciBiaXNlY3Qgd2VudCB3
+cm9uZyBkdWUgdG8gcGF0Y2gNCj4gIzEvIzIuDQoNClRoZSB0cmFjZXMgd2VyZSBwcm9kdWNlZCB1
+c2luZyB0aGUgb3JpZ2luYWwgMy4xOC4yOS1ydDMwIGtlcm5lbCAod2l0aCBhbGwgcGF0Y2hlcykg
+cGx1cyB0aGUgYWRkaXRpb24gb2YgDQpXQVJOX09OX09OQ0UocC0+bWlncmF0ZV9kaXNhYmxlX2F0
+b21pYyA8PSAwKSBpbiBtaWdyYXRlX2VuYWJsZSgpIGFuZCBDT05GSUdfU0NIRURfREVCVUc9eS4N
+Cg0KV2hlbiBJIHJldmVydCBvbmx5IHBhdGNoICMxLCBmcm9tIHRoZSAzLjE4LjI5LXJ0MzAga2Vy
+bmVsLCB0aGUga2VybmVsIG5ldmVyIGNyYXNoZXMuIEkndmUgYmVlbiBwZXJmb3JtaW5nIGxvbmct
+cnVubmluZyB0ZXN0cyBvbiBhIGR1YWwgWGVvbiBzeXN0ZW0gYW5kIGEgcXVhZC1jb3JlIGk3IHN5
+c3RlbSB3aXRoIHBhdGNoICMxIHJldmVydGVkLg0KDQpDaGVlcnMsDQpDYXJvbA0KDQo+IC0tLS0t
+T3JpZ2luYWwgTWVzc2FnZS0tLS0tDQo+IEZyb206IFNlYmFzdGlhbiBBbmRyemVqIFNpZXdpb3Ig
+W21haWx0bzpiaWdlYXN5QGxpbnV0cm9uaXguZGVdDQo+IFNlbnQ6IFRodXJzZGF5LCBTZXB0ZW1i
+ZXIgMDgsIDIwMTYgNjo0NSBBTQ0KPiBUbzogQ2Fyb2wgV29uZw0KPiBDYzogbGludXgtcnQtdXNl
+cnNAdmdlci5rZXJuZWwub3JnOyBEYXZpZCBIYXVjazsgUHJlc3RvbiBIYXVjaw0KPiBTdWJqZWN0
+OiBSZTogdjMuMTgtUlQNCj4gDQo+IE9uIDIwMTYtMDgtMTkgMDA6NDE6NDYgWyswMDAwXSwgQ2Fy
+b2wgV29uZyB3cm90ZToNCj4gPiBIaSBTZWJhc3RpYW4sDQo+IEhpIENhcm9sLA0KPiANCj4gPiBX
+ZXJlIHlvdSBhYmxlIHRvIGdhaW4gYW55IGluc2lnaHQgZnJvbSB0aGUgdHJhY2VzPw0KPiANCj4g
+bm90IHJlYWxseS4gVDAwIHNob3dzIGEgZmF1bHQgaW4NCj4gWyAgICAyLjc1NjI4NF0gQlVHOiB1
+bmFibGUgdG8gaGFuZGxlIGtlcm5lbCBOVUxMIHBvaW50ZXIgZGVyZWZlcmVuY2UNCj4gYXQgMDAw
+MDAwMDQNCj4gWyAgICAyLjc1NjI4OV0gSVA6IFs8YzExNjUzZTc+XSBrbWVtX2NhY2hlX2FsbG9j
+KzB4ODcvMHgyMzANCj4gZnJvbSBpZGFfcHJlX2dldCgpIC8gY3JlYXRlX3dvcmtlcigpLiBUaGF0
+IGlzIHF1aXRlIGxhdGUgc28gSSBoYXZlIG5vDQo+IGlkZWEgd2h5IHRoYXQgd291bGQgaGFwcGVu
+Lg0KPiBUaGUgb3RoZXIgdHdvIGFyZSBub3QgcmVhbGx5IGhlbHAgZnVsbC4NCj4gDQo+ID4gSWYg
+d2Ugd2VyZSB0byBwcm9jZWVkIHdpdGggcmV2ZXJ0aW5nIHRoZSBrZXJuZWwvc2NoZWQvY29yZS5j
+IHBhdGNoDQo+IGluIG91ciBidWlsZCBvZiAzLjE4LjI5LXJ0MzAsIHdvdWxkIHRoZSBhZGRpdGlv
+biBvZiB0aGUNCj4gV0FSTl9PTl9PTkNFKHAtPm1pZ3JhdGVfZGlzYWJsZV9hdG9taWMgPD0gMCkg
+ZGVidWcgY2hlY2sgdGhhdCB5b3UNCj4gcmVjb21tZW5kZWQgKDIwMTYvMDcvMjkpIGJlIHN1ZmZp
+Y2llbnQgZm9yIGRldGVjdGluZyBpbWJhbGFuY2VzPyBXZQ0KPiB3b3VsZCBwZXJmb3JtIGV4dGVu
+ZGVkIHRlc3Rpbmcgb24gbXVsdGlwbGUgc3lzdGVtcyB0byBkZXRlcm1pbmUgdGhlDQo+IGVmZmVj
+dHMgb2YgcmV2ZXJ0aW5nIHRoZSBwYXRjaC4NCj4gDQo+IE9uZSB0aGluZyBvbiB0aGUgYmlzZWN0
+LiBUaGUgZ2l0IHRyZWUgaGFzIHRoZSBwYXRjaGVzIGluIHRoaXMgb3JkZXI6DQo+ICAoMSkga2Vy
+bmVsOiBtaWdyYXRlX2Rpc2FibGUoKSBkbyBmYXN0cGF0aCBpbiBhdG9taWMgJiBpcnFzLW9mZg0K
+PiAgKDIpIGtlcm5lbDogc29mdGlycTogdW5sb2NrIHdpdGggaXJxcyBvbg0KPiANCj4gYnV0IHlv
+dSBuZWVkIGFwcGx5IFBhdGNoICMyIGJlZm9yZSAjMS4gU28gaWYgeW91IGJpc2VjdCBhbmQgeW91
+IGhpdA0KPiB3YXJuaW5ncyBkdWUgdG8gIzEgcGxlYXNlIG5vdGUgdGhhdCBuZWVkIGFwcGx5ICMy
+Lg0KPiANCj4gVDAxIGFuZCBUMDIgc2hvdyBwcm9iYWJseSB0aGUgc2FtZSBpc3N1ZSBidXQgdGhl
+cmUgYXJlIHRvbyBtYW55DQo+IHdhcm5pbmdzIGNvbW1pbmcgaW4gcGFyYWxsZWwuIElmIHRoaXMg
+Y29tZXMgZnJvbSB0aGUgc2NoZWQgcGF0Y2ggZHVlDQo+ICMxLyMyIG1peCB1cCB0aGVuIGRvbid0
+IGJpc2VjdCBoZXJlIG9yIGhhdmUgdGhlbSBib3RoIGFwcGxpZWQuDQo+IFRoZSBjYWxsIHBhdGgg
+aXRzZWxmIGRvZXMgbG9vayBzcGVjaWFsIGFzIGl0IHdvdWxkIHZpb2xhdGUgdGhlIHJ1bGUNCj4g
+b2YgYXRvbWljIGxvY2tpbmcgLyB1bmxvY2tpbmcgKGFzIGl0IHdhcyBmaXhlZCBpbiAjMiBmb3Ig
+aW5zdGFuY2UpLg0KPiBBdCB0aGlzIHBvaW50IEkgYXNzdW1lIHRoYXQgeW91ciBiaXNlY3Qgd2Vu
+dCB3cm9uZyBkdWUgdG8gcGF0Y2gNCj4gIzEvIzIuDQo+IA0KPiA+IENoZWVycywNCj4gPiBDYXJv
+bA0KPiA+DQo+IFNlYmFzdGlhbg0K
