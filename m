@@ -1,86 +1,90 @@
-From: Carol Wong <carolw@netacquire.com>
-Subject: RE: v3.18-RT
-Date: Tue, 20 Sep 2016 18:27:10 +0000
-Message-ID: <82DB755727433D4A981ED5650C27BBEF72A517EF@S1P5DAG9E.EXCHPROD.USA.NET>
-References: <FCC5AC80E299464B82E1345E2C10FC9D8098CE51@S1P5DAG4C.EXCHPROD.USA.NET>
- <20160603163732.GD4496@linutronix.de>
- <FCC5AC80E299464B82E1345E2C10FC9D8099ACF6@S1P5DAG4C.EXCHPROD.USA.NET>
- <16d5e3f2-dd20-c802-37aa-86eab553fcfc@linutronix.de>
- <FCC5AC80E299464B82E1345E2C10FC9D809A150B@S1P5DAG4C.EXCHPROD.USA.NET>
- <4061065f-dd2b-0a76-299e-ce66783d85dd@linutronix.de>
- <82DB755727433D4A981ED5650C27BBEF729546A9@S1P5DAG9E.EXCHPROD.USA.NET>
- <20160729161933.GG21715@linutronix.de>
- <82DB755727433D4A981ED5650C27BBEF72A4055B@S1P5DAG9E.EXCHPROD.USA.NET>
- <20160908134509.g22izjojzdsso4pa@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 4.4.21-rt30
+Date: Wed, 21 Sep 2016 14:55:21 -0400
+Message-ID: <20160921145521.4042c25a@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "David Hauck" <davidh@netacquire.com>,
-        Preston Hauck <prestonh@netacquire.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gwo4.mbox.net ([165.212.64.24]:41922 "EHLO gwo4.mbox.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751040AbcITS1T (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 20 Sep 2016 14:27:19 -0400
-In-Reply-To: <20160908134509.g22izjojzdsso4pa@linutronix.de>
-Content-Language: en-US
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-SGkgU2ViYXN0aWFuLA0KDQpZb3Ugd3JvdGU6DQo+IE9uZSB0aGluZyBvbiB0aGUgYmlzZWN0LiBU
-aGUgZ2l0IHRyZWUgaGFzIHRoZSBwYXRjaGVzIGluIHRoaXMgb3JkZXI6DQo+ICAoMSkga2VybmVs
-OiBtaWdyYXRlX2Rpc2FibGUoKSBkbyBmYXN0cGF0aCBpbiBhdG9taWMgJiBpcnFzLW9mZg0KPiAg
-KDIpIGtlcm5lbDogc29mdGlycTogdW5sb2NrIHdpdGggaXJxcyBvbg0KPiANCj4gYnV0IHlvdSBu
-ZWVkIGFwcGx5IFBhdGNoICMyIGJlZm9yZSAjMS4gU28gaWYgeW91IGJpc2VjdCBhbmQgeW91IGhp
-dA0KPiB3YXJuaW5ncyBkdWUgdG8gIzEgcGxlYXNlIG5vdGUgdGhhdCBuZWVkIGFwcGx5ICMyLg0K
-PiANCj4gVDAxIGFuZCBUMDIgc2hvdyBwcm9iYWJseSB0aGUgc2FtZSBpc3N1ZSBidXQgdGhlcmUg
-YXJlIHRvbyBtYW55DQo+IHdhcm5pbmdzIGNvbW1pbmcgaW4gcGFyYWxsZWwuIElmIHRoaXMgY29t
-ZXMgZnJvbSB0aGUgc2NoZWQgcGF0Y2ggZHVlDQo+ICMxLyMyIG1peCB1cCB0aGVuIGRvbid0IGJp
-c2VjdCBoZXJlIG9yIGhhdmUgdGhlbSBib3RoIGFwcGxpZWQuDQo+IFRoZSBjYWxsIHBhdGggaXRz
-ZWxmIGRvZXMgbG9vayBzcGVjaWFsIGFzIGl0IHdvdWxkIHZpb2xhdGUgdGhlIHJ1bGUNCj4gb2Yg
-YXRvbWljIGxvY2tpbmcgLyB1bmxvY2tpbmcgKGFzIGl0IHdhcyBmaXhlZCBpbiAjMiBmb3IgaW5z
-dGFuY2UpLg0KPiBBdCB0aGlzIHBvaW50IEkgYXNzdW1lIHRoYXQgeW91ciBiaXNlY3Qgd2VudCB3
-cm9uZyBkdWUgdG8gcGF0Y2gNCj4gIzEvIzIuDQoNClRoZSB0cmFjZXMgd2VyZSBwcm9kdWNlZCB1
-c2luZyB0aGUgb3JpZ2luYWwgMy4xOC4yOS1ydDMwIGtlcm5lbCAod2l0aCBhbGwgcGF0Y2hlcykg
-cGx1cyB0aGUgYWRkaXRpb24gb2YgDQpXQVJOX09OX09OQ0UocC0+bWlncmF0ZV9kaXNhYmxlX2F0
-b21pYyA8PSAwKSBpbiBtaWdyYXRlX2VuYWJsZSgpIGFuZCBDT05GSUdfU0NIRURfREVCVUc9eS4N
-Cg0KV2hlbiBJIHJldmVydCBvbmx5IHBhdGNoICMxLCBmcm9tIHRoZSAzLjE4LjI5LXJ0MzAga2Vy
-bmVsLCB0aGUga2VybmVsIG5ldmVyIGNyYXNoZXMuIEkndmUgYmVlbiBwZXJmb3JtaW5nIGxvbmct
-cnVubmluZyB0ZXN0cyBvbiBhIGR1YWwgWGVvbiBzeXN0ZW0gYW5kIGEgcXVhZC1jb3JlIGk3IHN5
-c3RlbSB3aXRoIHBhdGNoICMxIHJldmVydGVkLg0KDQpDaGVlcnMsDQpDYXJvbA0KDQo+IC0tLS0t
-T3JpZ2luYWwgTWVzc2FnZS0tLS0tDQo+IEZyb206IFNlYmFzdGlhbiBBbmRyemVqIFNpZXdpb3Ig
-W21haWx0bzpiaWdlYXN5QGxpbnV0cm9uaXguZGVdDQo+IFNlbnQ6IFRodXJzZGF5LCBTZXB0ZW1i
-ZXIgMDgsIDIwMTYgNjo0NSBBTQ0KPiBUbzogQ2Fyb2wgV29uZw0KPiBDYzogbGludXgtcnQtdXNl
-cnNAdmdlci5rZXJuZWwub3JnOyBEYXZpZCBIYXVjazsgUHJlc3RvbiBIYXVjaw0KPiBTdWJqZWN0
-OiBSZTogdjMuMTgtUlQNCj4gDQo+IE9uIDIwMTYtMDgtMTkgMDA6NDE6NDYgWyswMDAwXSwgQ2Fy
-b2wgV29uZyB3cm90ZToNCj4gPiBIaSBTZWJhc3RpYW4sDQo+IEhpIENhcm9sLA0KPiANCj4gPiBX
-ZXJlIHlvdSBhYmxlIHRvIGdhaW4gYW55IGluc2lnaHQgZnJvbSB0aGUgdHJhY2VzPw0KPiANCj4g
-bm90IHJlYWxseS4gVDAwIHNob3dzIGEgZmF1bHQgaW4NCj4gWyAgICAyLjc1NjI4NF0gQlVHOiB1
-bmFibGUgdG8gaGFuZGxlIGtlcm5lbCBOVUxMIHBvaW50ZXIgZGVyZWZlcmVuY2UNCj4gYXQgMDAw
-MDAwMDQNCj4gWyAgICAyLjc1NjI4OV0gSVA6IFs8YzExNjUzZTc+XSBrbWVtX2NhY2hlX2FsbG9j
-KzB4ODcvMHgyMzANCj4gZnJvbSBpZGFfcHJlX2dldCgpIC8gY3JlYXRlX3dvcmtlcigpLiBUaGF0
-IGlzIHF1aXRlIGxhdGUgc28gSSBoYXZlIG5vDQo+IGlkZWEgd2h5IHRoYXQgd291bGQgaGFwcGVu
-Lg0KPiBUaGUgb3RoZXIgdHdvIGFyZSBub3QgcmVhbGx5IGhlbHAgZnVsbC4NCj4gDQo+ID4gSWYg
-d2Ugd2VyZSB0byBwcm9jZWVkIHdpdGggcmV2ZXJ0aW5nIHRoZSBrZXJuZWwvc2NoZWQvY29yZS5j
-IHBhdGNoDQo+IGluIG91ciBidWlsZCBvZiAzLjE4LjI5LXJ0MzAsIHdvdWxkIHRoZSBhZGRpdGlv
-biBvZiB0aGUNCj4gV0FSTl9PTl9PTkNFKHAtPm1pZ3JhdGVfZGlzYWJsZV9hdG9taWMgPD0gMCkg
-ZGVidWcgY2hlY2sgdGhhdCB5b3UNCj4gcmVjb21tZW5kZWQgKDIwMTYvMDcvMjkpIGJlIHN1ZmZp
-Y2llbnQgZm9yIGRldGVjdGluZyBpbWJhbGFuY2VzPyBXZQ0KPiB3b3VsZCBwZXJmb3JtIGV4dGVu
-ZGVkIHRlc3Rpbmcgb24gbXVsdGlwbGUgc3lzdGVtcyB0byBkZXRlcm1pbmUgdGhlDQo+IGVmZmVj
-dHMgb2YgcmV2ZXJ0aW5nIHRoZSBwYXRjaC4NCj4gDQo+IE9uZSB0aGluZyBvbiB0aGUgYmlzZWN0
-LiBUaGUgZ2l0IHRyZWUgaGFzIHRoZSBwYXRjaGVzIGluIHRoaXMgb3JkZXI6DQo+ICAoMSkga2Vy
-bmVsOiBtaWdyYXRlX2Rpc2FibGUoKSBkbyBmYXN0cGF0aCBpbiBhdG9taWMgJiBpcnFzLW9mZg0K
-PiAgKDIpIGtlcm5lbDogc29mdGlycTogdW5sb2NrIHdpdGggaXJxcyBvbg0KPiANCj4gYnV0IHlv
-dSBuZWVkIGFwcGx5IFBhdGNoICMyIGJlZm9yZSAjMS4gU28gaWYgeW91IGJpc2VjdCBhbmQgeW91
-IGhpdA0KPiB3YXJuaW5ncyBkdWUgdG8gIzEgcGxlYXNlIG5vdGUgdGhhdCBuZWVkIGFwcGx5ICMy
-Lg0KPiANCj4gVDAxIGFuZCBUMDIgc2hvdyBwcm9iYWJseSB0aGUgc2FtZSBpc3N1ZSBidXQgdGhl
-cmUgYXJlIHRvbyBtYW55DQo+IHdhcm5pbmdzIGNvbW1pbmcgaW4gcGFyYWxsZWwuIElmIHRoaXMg
-Y29tZXMgZnJvbSB0aGUgc2NoZWQgcGF0Y2ggZHVlDQo+ICMxLyMyIG1peCB1cCB0aGVuIGRvbid0
-IGJpc2VjdCBoZXJlIG9yIGhhdmUgdGhlbSBib3RoIGFwcGxpZWQuDQo+IFRoZSBjYWxsIHBhdGgg
-aXRzZWxmIGRvZXMgbG9vayBzcGVjaWFsIGFzIGl0IHdvdWxkIHZpb2xhdGUgdGhlIHJ1bGUNCj4g
-b2YgYXRvbWljIGxvY2tpbmcgLyB1bmxvY2tpbmcgKGFzIGl0IHdhcyBmaXhlZCBpbiAjMiBmb3Ig
-aW5zdGFuY2UpLg0KPiBBdCB0aGlzIHBvaW50IEkgYXNzdW1lIHRoYXQgeW91ciBiaXNlY3Qgd2Vu
-dCB3cm9uZyBkdWUgdG8gcGF0Y2gNCj4gIzEvIzIuDQo+IA0KPiA+IENoZWVycywNCj4gPiBDYXJv
-bA0KPiA+DQo+IFNlYmFzdGlhbg0K
+
+Dear RT Folks,
+
+I'm pleased to announce the 4.4.21-rt30 stable release.
+
+Note, 4.4.21-rt29 was released with just the stable updates. This has
+a fix for a broken build that was caused by a previous stable merge.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.4-rt
+  Head SHA1: c12d36b1603022530ddceb79c2e182799b4c6634
+
+
+Or to build 4.4.21-rt30 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.21.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.21-rt30.patch.xz
+
+
+
+You can also build from 4.4.21-rt29 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/incr/patch-4.4.21-rt29-rt30.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
+
+
+Changes from v4.4.21-rt29:
+
+---
+
+Juerg Haefliger (1):
+      hyperv: Fix compilation issue with 4.4.19-rt27
+
+Steven Rostedt (Red Hat) (1):
+      Linux 4.4.21-rt30
+
+----
+ drivers/hv/vmbus_drv.c | 2 +-
+ localversion-rt        | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+---------------------------
+diff --git a/drivers/hv/vmbus_drv.c b/drivers/hv/vmbus_drv.c
+index 509ed9731630..b2498b270f2c 100644
+--- a/drivers/hv/vmbus_drv.c
++++ b/drivers/hv/vmbus_drv.c
+@@ -820,7 +820,7 @@ static void vmbus_isr(void)
+ 			tasklet_schedule(&msg_dpc);
+ 	}
+ 
+-	add_interrupt_randomness(HYPERVISOR_CALLBACK_VECTOR, 0);
++	add_interrupt_randomness(HYPERVISOR_CALLBACK_VECTOR, 0, 0);
+ }
+ 
+ 
+diff --git a/localversion-rt b/localversion-rt
+index 90290c642ed5..b72862e06be4 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt29
++-rt30
