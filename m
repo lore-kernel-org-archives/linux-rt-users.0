@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 4.1.33-rt37
-Date: Wed, 21 Sep 2016 14:55:53 -0400
-Message-ID: <20160921145553.42ddc76c@gandalf.local.home>
+Subject: [ANNOUNCE] 3.18.42-rt44
+Date: Wed, 21 Sep 2016 14:56:21 -0400
+Message-ID: <20160921145621.44fd321a@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,10 +18,10 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 4.1.33-rt37 stable release.
+I'm pleased to announce the 3.18.42-rt44 stable release.
 
 
-This release is just an update to the new stable 4.1.33 version
+This release is just an update to the new stable 3.18.42 version
 and no RT specific changes have been made.
 
 
@@ -29,17 +29,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v4.1-rt
-  Head SHA1: f889d4faf1d07f2dd94446c7755bf7eac6de887e
+  branch: v3.18-rt
+  Head SHA1: 0b1264494b1a295a74c301530124835e6841918b
 
 
-Or to build 4.1.33-rt37 directly, the following patches should be applied:
+Or to build 3.18.42-rt44 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.1.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.1.33.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.42.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/patch-4.1.33-rt37.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.42-rt44.patch.xz
 
 
 
