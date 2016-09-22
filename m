@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 08/10] x86/preempt-lazy: fixup should_resched()
-Date: Thu, 22 Sep 2016 17:57:55 -0400
-Message-ID: <20160922215834.781622917@goodmis.org>
+Subject: [PATCH RT 03/10] sched: lazy_preempt: avoid a warning in the !RT case
+Date: Thu, 22 Sep 2016 17:57:50 -0400
+Message-ID: <20160922215833.230064314@goodmis.org>
 References: <20160922215747.696761304@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -13,7 +13,7 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0008-x86-preempt-lazy-fixup-should_resched.patch
+Content-Disposition: inline; filename=0003-sched-lazy_preempt-avoid-a-warning-in-the-RT-case.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -24,53 +24,24 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-should_resched() returns true if NEED_RESCHED is set and the
-preempt_count is 0 _or_ if NEED_RESCHED_LAZY is set ignoring the preempt
-counter. Ignoring the preemp counter is wrong. This patch adds this into
-account.
-While at it, __preempt_count_dec_and_test() ignores preempt_lazy_count
-while checking TIF_NEED_RESCHED_LAZY so we this check, too.
-
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/x86/include/asm/preempt.h | 17 +++++++++++++++--
- 1 file changed, 15 insertions(+), 2 deletions(-)
+ kernel/sched/core.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/arch/x86/include/asm/preempt.h b/arch/x86/include/asm/preempt.h
-index c08949b0314d..eff1b8609f77 100644
---- a/arch/x86/include/asm/preempt.h
-+++ b/arch/x86/include/asm/preempt.h
-@@ -92,6 +92,8 @@ static __always_inline bool __preempt_count_dec_and_test(void)
- 	if (____preempt_count_dec_and_test())
- 		return true;
- #ifdef CONFIG_PREEMPT_LAZY
-+	if (current_thread_info()->preempt_lazy_count)
-+		return false;
- 	return test_thread_flag(TIF_NEED_RESCHED_LAZY);
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 5396888893da..9f05a3dacd16 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -3123,7 +3123,7 @@ static __always_inline int preemptible_lazy(void)
+ 
  #else
- 	return false;
-@@ -104,8 +106,19 @@ static __always_inline bool __preempt_count_dec_and_test(void)
- static __always_inline bool should_resched(int preempt_offset)
+ 
+-static int preemptible_lazy(void)
++static inline int preemptible_lazy(void)
  {
- #ifdef CONFIG_PREEMPT_LAZY
--	return unlikely(raw_cpu_read_4(__preempt_count) == preempt_offset ||
--			test_thread_flag(TIF_NEED_RESCHED_LAZY));
-+	u32 tmp;
-+
-+	tmp = raw_cpu_read_4(__preempt_count);
-+	if (tmp == preempt_offset)
-+		return true;
-+
-+	/* preempt count == 0 ? */
-+	tmp &= ~PREEMPT_NEED_RESCHED;
-+	if (tmp)
-+		return false;
-+	if (current_thread_info()->preempt_lazy_count)
-+		return false;
-+	return test_thread_flag(TIF_NEED_RESCHED_LAZY);
- #else
- 	return unlikely(raw_cpu_read_4(__preempt_count) == preempt_offset);
- #endif
+ 	return 1;
+ }
 -- 
 2.8.1
