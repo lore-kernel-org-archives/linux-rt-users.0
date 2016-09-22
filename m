@@ -1,62 +1,84 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 04/10] scsi/fcoe: Fix get_cpu()/put_cpu_light() imbalance in
- fcoe_recv_frame()
-Date: Thu, 22 Sep 2016 17:47:56 -0400
-Message-ID: <20160922214817.432017905@goodmis.org>
-References: <20160922214752.178698951@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Subject: [PATCH RT 00/10] Linux 4.4.21-rt31-rc1
+Date: Thu, 22 Sep 2016 17:47:52 -0400
+Message-ID: <20160922214752.178698951@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
-        Paul Gortmaker <paul.gortmaker@windriver.com>,
-        <stable-rt@vger.kernel.org>,
-        Mike Gabraith <umgwanakikbuti@gmail.com>
+        Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:48656 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.136]:48576 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1033477AbcIVVsW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 22 Sep 2016 17:48:22 -0400
-Content-Disposition: inline; filename=0004-scsi-fcoe-Fix-get_cpu-put_cpu_light-imbalance-in-fco.patch
+        id S1030481AbcIVVsV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 22 Sep 2016 17:48:21 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-4.4.21-rt31-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
+This is the RT stable review cycle of patch 4.4.21-rt31-rc1.
 
-During master->rt merge, I stumbled across the buglet below.
+Please scream at me if I messed something up. Please test the patches too.
 
-Fix get_cpu()/put_cpu_light() imbalance.
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Mike Gabraith <umgwanakikbuti@gmail.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 9/25/2016.
+
+Enjoy,
+
+-- Steve
+
+
+To build 4.4.21-rt31-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.21.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.21-rt31-rc1.patch.xz
+
+You can also build from 4.4.21-rt30 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/incr/patch-4.4.21-rt30-rt31-rc1.patch.xz
+
+
+Changes from 4.4.21-rt30:
+
 ---
- drivers/scsi/fcoe/fcoe.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/drivers/scsi/fcoe/fcoe.c b/drivers/scsi/fcoe/fcoe.c
-index f1622a05854b..cbbbebd86c6e 100644
---- a/drivers/scsi/fcoe/fcoe.c
-+++ b/drivers/scsi/fcoe/fcoe.c
-@@ -1814,7 +1814,7 @@ static void fcoe_recv_frame(struct sk_buff *skb)
- 	 */
- 	hp = (struct fcoe_hdr *) skb_network_header(skb);
- 
--	stats = per_cpu_ptr(lport->stats, get_cpu());
-+	stats = per_cpu_ptr(lport->stats, get_cpu_light());
- 	if (unlikely(FC_FCOE_DECAPS_VER(hp) != FC_FCOE_VER)) {
- 		if (stats->ErrorFrames < 5)
- 			printk(KERN_WARNING "fcoe: FCoE version "
--- 
-2.8.1
 
 
+Mike Galbraith (1):
+      scsi/fcoe: Fix get_cpu()/put_cpu_light() imbalance in fcoe_recv_frame()
+
+Sebastian Andrzej Siewior (8):
+      timers: wakeup all timer waiters
+      timers: wakeup all timer waiters without holding the base lock
+      sched: lazy_preempt: avoid a warning in the !RT case
+      net: add back the missing serialization in ip_send_unicast_reply()
+      net: add a lock around icmp_sk()
+      fs/dcache: resched/chill only if we make no progress
+      x86/preempt-lazy: fixup should_resched()
+      fs/dcache: incremental fixup of the retry routine
+
+Steven Rostedt (Red Hat) (1):
+      Linux 4.4.21-rt31-rc1
+
+----
+ arch/x86/include/asm/preempt.h | 17 +++++++++++++++--
+ drivers/scsi/fcoe/fcoe.c       |  2 +-
+ fs/dcache.c                    | 18 ++++++++++++------
+ kernel/sched/core.c            |  2 +-
+ kernel/time/timer.c            |  4 ++--
+ localversion-rt                |  2 +-
+ net/ipv4/icmp.c                |  8 ++++++++
+ net/ipv4/tcp_ipv4.c            |  7 +++++++
+ 8 files changed, 47 insertions(+), 13 deletions(-)
