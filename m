@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 02/10] timers: wakeup all timer waiters without holding the base lock
-Date: Thu, 22 Sep 2016 19:17:30 -0400
-Message-ID: <20160922231741.447494586@goodmis.org>
+Subject: [PATCH RT 07/10] fs/dcache: resched/chill only if we make no progress
+Date: Thu, 22 Sep 2016 19:17:35 -0400
+Message-ID: <20160922231742.260150553@goodmis.org>
 References: <20160922231728.394180695@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -13,10 +13,14 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         <stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-timers-wakeup-all-timer-waiters-without-holding-the-.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.136]:56970 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1757404AbcIVXRr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 22 Sep 2016 19:17:47 -0400
+Content-Disposition: inline; filename=0007-fs-dcache-resched-chill-only-if-we-make-no-progress.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 3.18.42-rt45-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -25,30 +29,78 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-There should be no need to hold the base lock during the wakeup. There
-should be no boosting involved, the wakeup list has its own lock so it
-should be safe to do this without the lock.
+Upstream commit 47be61845c77 ("fs/dcache.c: avoid soft-lockup in
+dput()") changed the condition _when_ cpu_relax() / cond_resched() was
+invoked. This change was adapted in -RT into mostly the same thing
+except that if cond_resched() did nothing we had to do cpu_chill() to
+force the task off CPU for a tiny little bit in case the task had RT
+priority and did not want to leave the CPU.
+This change resulted in a performance regression (in my testcase the
+build time on /dev/shm increased from 19min to 24min). The reason is
+that with this change cpu_chill() was invoked even dput() made progress
+(dentry_kill() returned a different dentry) instead only if we were
+trying this operation on the same dentry over and over again.
+
+This patch brings back to the old behavior back to cond_resched() &
+chill if we make no progress. A little improvement is to invoke
+cpu_chill() only if we are a RT task (and avoid the sleep otherwise).
+Otherwise the scheduler should remove us from the CPU if we make no
+progress.
 
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/time/timer.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ fs/dcache.c | 19 +++++++++++++------
+ 1 file changed, 13 insertions(+), 6 deletions(-)
 
-diff --git a/kernel/time/timer.c b/kernel/time/timer.c
-index 495de6337357..0df5cbfbcb5b 100644
---- a/kernel/time/timer.c
-+++ b/kernel/time/timer.c
-@@ -1281,8 +1281,8 @@ static inline void __run_timers(struct tvec_base *base)
- 			}
- 		}
- 	}
--	wakeup_timer_waiters(base);
- 	spin_unlock_irq(&base->lock);
-+	wakeup_timer_waiters(base);
- }
+diff --git a/fs/dcache.c b/fs/dcache.c
+index 1cb13a024cf8..44a3419c7125 100644
+--- a/fs/dcache.c
++++ b/fs/dcache.c
+@@ -39,6 +39,8 @@
+ #include <linux/prefetch.h>
+ #include <linux/ratelimit.h>
+ #include <linux/list_lru.h>
++#include <linux/sched/rt.h>
++#include <linux/sched/deadline.h>
+ #include "internal.h"
+ #include "mount.h"
  
- #ifdef CONFIG_NO_HZ_COMMON
+@@ -722,6 +724,8 @@ static inline bool fast_dput(struct dentry *dentry)
+  */
+ void dput(struct dentry *dentry)
+ {
++	struct dentry *parent;
++
+ 	if (unlikely(!dentry))
+ 		return;
+ 
+@@ -758,14 +762,17 @@ repeat:
+ 	return;
+ 
+ kill_it:
+-	dentry = dentry_kill(dentry);
+-	if (dentry) {
++	parent = dentry_kill(dentry);
++	if (parent) {
+ 		int r;
+ 
+-		/* the task with the highest priority won't schedule */
+-		r = cond_resched();
+-		if (!r)
+-			cpu_chill();
++		if (parent == dentry) {
++			/* the task with the highest priority won't schedule */
++			r = cond_resched();
++			if (!r && (rt_task(current) || dl_task(current)))
++				cpu_chill();
++		} else
++			dentry = parent;
+ 		goto repeat;
+ 	}
+ }
 -- 
 2.8.1
+
+
