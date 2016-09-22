@@ -1,10 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 03/10] sched: lazy_preempt: avoid a warning in the !RT case
-Date: Thu, 22 Sep 2016 19:17:31 -0400
-Message-ID: <20160922231741.619682140@goodmis.org>
-References: <20160922231728.394180695@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Subject: [PATCH RT 00/10] Linux 3.18.42-rt45-rc1
+Date: Thu, 22 Sep 2016 19:17:28 -0400
+Message-ID: <20160922231728.394180695@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -13,35 +10,71 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-sched-lazy_preempt-avoid-a-warning-in-the-RT-case.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.18.42-rt45-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+This is the RT stable review cycle of patch 3.18.42-rt45-rc1.
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Please scream at me if I messed something up. Please test the patches too.
+
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 9/25/2016.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.18.42-rt45-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.42.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.42-rt45-rc1.patch.xz
+
+You can also build from 3.18.42-rt44 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/incr/patch-3.18.42-rt44-rt45-rc1.patch.xz
+
+
+Changes from 3.18.42-rt44:
+
 ---
- kernel/sched/core.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 371fa38784e0..ce6d5c6ba8f7 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -3171,7 +3171,7 @@ static __always_inline int preemptible_lazy(void)
- 
- #else
- 
--static int preemptible_lazy(void)
-+static inline int preemptible_lazy(void)
- {
- 	return 1;
- }
--- 
-2.8.1
+
+Mike Galbraith (1):
+      scsi/fcoe: Fix get_cpu()/put_cpu_light() imbalance in fcoe_recv_frame()
+
+Sebastian Andrzej Siewior (8):
+      timers: wakeup all timer waiters
+      timers: wakeup all timer waiters without holding the base lock
+      sched: lazy_preempt: avoid a warning in the !RT case
+      net: add back the missing serialization in ip_send_unicast_reply()
+      net: add a lock around icmp_sk()
+      fs/dcache: resched/chill only if we make no progress
+      x86/preempt-lazy: fixup should_resched()
+      fs/dcache: incremental fixup of the retry routine
+
+Steven Rostedt (Red Hat) (1):
+      Linux 3.18.42-rt45-rc1
+
+----
+ arch/x86/include/asm/preempt.h | 16 ++++++++++++++--
+ drivers/scsi/fcoe/fcoe.c       |  2 +-
+ fs/dcache.c                    | 18 ++++++++++++------
+ kernel/sched/core.c            |  2 +-
+ kernel/time/timer.c            |  4 ++--
+ localversion-rt                |  2 +-
+ net/ipv4/icmp.c                |  8 ++++++++
+ net/ipv4/tcp_ipv4.c            |  7 +++++++
+ 8 files changed, 46 insertions(+), 13 deletions(-)
