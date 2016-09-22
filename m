@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 03/10] sched: lazy_preempt: avoid a warning in the !RT case
-Date: Thu, 22 Sep 2016 17:57:50 -0400
-Message-ID: <20160922215833.230064314@goodmis.org>
+Subject: [PATCH RT 04/10] scsi/fcoe: Fix get_cpu()/put_cpu_light() imbalance in
+ fcoe_recv_frame()
+Date: Thu, 22 Sep 2016 17:57:51 -0400
+Message-ID: <20160922215833.445379825@goodmis.org>
 References: <20160922215747.696761304@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,39 +10,53 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
-        Paul Gortmaker <paul.gortmaker@windriver.com>
+        Paul Gortmaker <paul.gortmaker@windriver.com>,
+        <stable-rt@vger.kernel.org>,
+        Mike Gabraith <umgwanakikbuti@gmail.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-sched-lazy_preempt-avoid-a-warning-in-the-RT-case.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.136]:50036 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S941325AbcIVV6i (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 22 Sep 2016 17:58:38 -0400
+Content-Disposition: inline; filename=0004-scsi-fcoe-Fix-get_cpu-put_cpu_light-imbalance-in-fco.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 4.1.33-rt38-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
 
+During master->rt merge, I stumbled across the buglet below.
+
+Fix get_cpu()/put_cpu_light() imbalance.
+
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Mike Gabraith <umgwanakikbuti@gmail.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/sched/core.c | 2 +-
+ drivers/scsi/fcoe/fcoe.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 5396888893da..9f05a3dacd16 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -3123,7 +3123,7 @@ static __always_inline int preemptible_lazy(void)
+diff --git a/drivers/scsi/fcoe/fcoe.c b/drivers/scsi/fcoe/fcoe.c
+index d6b6dde64fb9..455bf9c67b16 100644
+--- a/drivers/scsi/fcoe/fcoe.c
++++ b/drivers/scsi/fcoe/fcoe.c
+@@ -1815,7 +1815,7 @@ static void fcoe_recv_frame(struct sk_buff *skb)
+ 	 */
+ 	hp = (struct fcoe_hdr *) skb_network_header(skb);
  
- #else
- 
--static int preemptible_lazy(void)
-+static inline int preemptible_lazy(void)
- {
- 	return 1;
- }
+-	stats = per_cpu_ptr(lport->stats, get_cpu());
++	stats = per_cpu_ptr(lport->stats, get_cpu_light());
+ 	if (unlikely(FC_FCOE_DECAPS_VER(hp) != FC_FCOE_VER)) {
+ 		if (stats->ErrorFrames < 5)
+ 			printk(KERN_WARNING "fcoe: FCoE version "
 -- 
 2.8.1
+
+
