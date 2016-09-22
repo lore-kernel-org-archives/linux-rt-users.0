@@ -1,79 +1,79 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: RT_PREEMPT on Raspberry PI 3
-Date: Thu, 22 Sep 2016 16:10:41 +0200
-Message-ID: <20160922141041.ytyils2x3ehzoqhb@linutronix.de>
-References: <2c0e540f-c501-f65b-1292-782e12f71039@fastwebnet.it>
+From: Claudius Heine <ch@denx.de>
+Subject: Re: Got stacktrace "irq 17: nobody cared" on Intel GalileoGen2 with
+ 4.6.7-rt13
+Date: Thu, 22 Sep 2016 16:16:19 +0200
+Message-ID: <1474553779.10922.87.camel@denx.de>
+References: <1474532371.10922.50.camel@denx.de>
+         <b8c6cd44-4a29-fe84-af0d-747584c04ad0@siemens.com>
+         <20160922134912.6ttkfpphn2ga4z22@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: multipart/signed; micalg="pgp-sha512";
+        protocol="application/pgp-signature"; boundary="=-Fm9IfEuakHm1SH8J7vrN"
 Cc: linux-rt-users@vger.kernel.org
-To: Giuliano Colla <giuliano.colla@fastwebnet.it>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Jan Kiszka <jan.kiszka@siemens.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:38234 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1753595AbcIVOKo (ORCPT
+Received: from mail-out.m-online.net ([212.18.0.9]:42517 "EHLO
+        mail-out.m-online.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1756223AbcIVOQb (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 22 Sep 2016 10:10:44 -0400
-Content-Disposition: inline
-In-Reply-To: <2c0e540f-c501-f65b-1292-782e12f71039@fastwebnet.it>
+        Thu, 22 Sep 2016 10:16:31 -0400
+In-Reply-To: <20160922134912.6ttkfpphn2ga4z22@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2016-09-18 12:03:42 [+0200], Giuliano Colla wrote:
-> I have managed to achieve both good performance and good stability, but I
-> have been obliged to overcome some difficulties which IMHO could have been
-> avoided if the Raspberry platform peculiarities had been given more
-> attention. Being a very popular platform, particularly suited also for
-> real-time applications, I believe it deserves it.
 
-who should give Raspberry more attention?
+--=-Fm9IfEuakHm1SH8J7vrN
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-> The main items are:
-> 
-> 1) The RT patches are not in sync with mainline Raspbian kernel versions. At
-> the time of writing, the stock 4.x kernel supported is 4.4.21, while the
-> last available patch is 4.4.19-rt27. Even going backwards it's impossible to
-> find a perfect match: 4.4.14 against 4.4.12-rt20 or 4.4.15-rt23, and so on.
+On Thu, 2016-09-22 at 15:49 +0200, Sebastian Andrzej Siewior wrote:
+> On 2016-09-22 10:24:26 [+0200], Jan Kiszka wrote:
+> >=20
+> > One theory I was thinking about: Could - for whatever reason -
+> > disabling
+> > of the interrupt line from the primary handler be broken / work
+> > unreliably and cause this storm?
+>=20
+> It seems so. If you look at the complete boot log then the core code
+> attempts multiple times to disable IRQ #17 with zero success.
+> I would assume that booting an unpatched kernel with the threadirqs
+> option would give the same result.
 
-we do have v4.4.21-rt30 as of the time of writing. I hope that you do
-not ask to align the -RT development & stable updates on the Raspberry
-tree.
+Thanks for your help, but I am sorry to disappoint:
 
-> I'm currently using a 4.4.13 kernel with a 4.4.12-rt19 patch, which was the
-> best match I could find, and which required some minor manual adjustments.
-> 
-> Is there a way to provide a better sync?
+Full bootlog:=C2=A0http://pastebin.com/8dHz0LLq
+Kernel config:=C2=A0http://pastebin.com/itPLjpjS
+ps:=C2=A0http://pastebin.com/D4N0DXae
 
-You can always take the latest -RT patch from the v4.4 branch and
-manually apply it on top of your BSP. And then fixup what broke.
+Claudius
 
-> 2) The RT_PREEMPT patch is not compatible with FIQ (or maybe FIQ is not
-> compatible with RT_PREEMPT). Leaving FIQ enabled generates intolerably
-> frequent freezes. It appears to work properly only on the basic Raspberry pi
-> (single core) but not on the multicore Pi2 and Pi3. Currently the only way
-> to make a real-time kernel run on Raspberry PI 2 or 3 is to disable FIQ on
-> the command line.
+--=20
+DENX Software Engineering GmbH,=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 Managing Dire=
+ctor: Wolfgang Denk
+HRB 165235 Munich, Office: Kirchenstr.5, D-82194 Groebenzell, Germany
+Phone: (+49)-8142-66989-54 Fax: (+49)-8142-66989-80 Email:=C2=A0ch@denx.de
+--=-Fm9IfEuakHm1SH8J7vrN
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
+Content-Transfer-Encoding: 7bit
 
-I wouldn't say that this is PREEMPT-RT's fault. FIQ is a non-maskable
-interrupt which we do have on x86 and we call it NMI. As long as you
-don't do anything illegal like taking locks which may lead to a dead
-lock then no harm will happen to you. Therefore I assume that PREEMPT-RT
-triggers the bugs that are already there more reliably.
+-----BEGIN PGP SIGNATURE-----
 
-> If the RT_PREEMPT patch could somehow support this incompatibility (either
-> by fully disabling FIQ or fixing the code) this would be a great help, thus
-> avoiding populating forums with "my raspberry pi2/3 freezes with rt patch"
+iQIcBAABCgAGBQJX4+ezAAoJEBFzyxmYCLFTN+QP/AxrSbqzxatmnAFy5qiJRbjR
+mjZqaRdf6XJzIVFZPjtw1+ihNcSC48WM9ean6y3SzFlYsVOhA5I4qBYWtJkz6JPn
+OL7sdvz6hKVOGZhW57aioViO/z5GGvjaTg/vhB/SPYL+wraXGnQsTiXjXbQBOjW6
+mSp0ZJrK4/e6PY0Rc4ZHzNZ2BzMD9LQT2rv9KDxwPq/fUNGgGTcR5whA0Oy0IuTM
+EfBIWlDiPu7pvzIkDhOICsZqopG31mEdHeYsS3Nyd/FhRQII93dsBDB3KVroYYC8
+VdrfzMbVUKqRvt1UF1bWvrAXxq2yiCaob1W9cgMwkoED4/vPhnfH6c0Tkolwqxo6
+DGD5xeERK8XBul1YBgHMpJTZGrhqygiyyrrnGGd+5yFwvkPZYPibg+Zcz9MFeCo3
+L8A+m/3LczUTFAi/oaCatT82JG5y0yshxL+LKuRPSpILt1zvM5AQywgerA5YyJdT
++djdcW0pAWuBV6wXQr/ktpwqjAuCiRl8eztYJDBpbezQ2PtvGE1pZM4Xsji4EjTa
+6nOwneYsngwbXb1sYR4hC2iMmekPV2CGfQBHgUCWt4b241OaEsWxtlp/jU6D7eTk
+y5AkIh4yZIzZ8DY9/OEgYaiRWWU6PXp/vd27zRDsGVCB5/Nm8UlNdcVq7AdkI36q
+8ISkFs28vnzSoqblB9ig
+=cA5U
+-----END PGP SIGNATURE-----
 
-We could disable FIQ on rpi3 if PREEMPT_RT is enabled but this would
-require that the rpi3 is supported upstream. There is no way I suck the
-rpi3 bsp into the RT queue. 
+--=-Fm9IfEuakHm1SH8J7vrN--
 
-> Can something be done to solve those issues?
-
-You could talk to the rpi3 people to put a link next to their bsp which
-describes the common pitfalls with -RT.
-
-> Thanks,
-> 
-> Giuliano
-
-Sebastian
