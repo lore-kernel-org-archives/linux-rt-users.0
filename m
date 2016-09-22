@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 06/10] net: add a lock around icmp_sk()
-Date: Thu, 22 Sep 2016 17:47:58 -0400
-Message-ID: <20160922214817.711191112@goodmis.org>
+Subject: [PATCH RT 07/10] fs/dcache: resched/chill only if we make no progress
+Date: Thu, 22 Sep 2016 17:47:59 -0400
+Message-ID: <20160922214817.864535469@goodmis.org>
 References: <20160922214752.178698951@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -14,7 +14,7 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0006-net-add-a-lock-around-icmp_sk.patch
+Content-Disposition: inline; filename=0007-fs-dcache-resched-chill-only-if-we-make-no-progress.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -25,76 +25,76 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-It looks like the this_cpu_ptr() access in icmp_sk() is protected with
-local_bh_disable(). To avoid missing serialization in -RT I am adding
-here a local lock. No crash has been observed, this is just precaution.
+Upstream commit 47be61845c77 ("fs/dcache.c: avoid soft-lockup in
+dput()") changed the condition _when_ cpu_relax() / cond_resched() was
+invoked. This change was adapted in -RT into mostly the same thing
+except that if cond_resched() did nothing we had to do cpu_chill() to
+force the task off CPU for a tiny little bit in case the task had RT
+priority and did not want to leave the CPU.
+This change resulted in a performance regression (in my testcase the
+build time on /dev/shm increased from 19min to 24min). The reason is
+that with this change cpu_chill() was invoked even dput() made progress
+(dentry_kill() returned a different dentry) instead only if we were
+trying this operation on the same dentry over and over again.
+
+This patch brings back to the old behavior back to cond_resched() &
+chill if we make no progress. A little improvement is to invoke
+cpu_chill() only if we are a RT task (and avoid the sleep otherwise).
+Otherwise the scheduler should remove us from the CPU if we make no
+progress.
 
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- net/ipv4/icmp.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ fs/dcache.c | 19 +++++++++++++------
+ 1 file changed, 13 insertions(+), 6 deletions(-)
 
-diff --git a/net/ipv4/icmp.c b/net/ipv4/icmp.c
-index 74314d95d0f8..ff2593269089 100644
---- a/net/ipv4/icmp.c
-+++ b/net/ipv4/icmp.c
-@@ -78,6 +78,7 @@
- #include <linux/string.h>
- #include <linux/netfilter_ipv4.h>
- #include <linux/slab.h>
-+#include <linux/locallock.h>
- #include <net/snmp.h>
- #include <net/ip.h>
- #include <net/route.h>
-@@ -205,6 +206,8 @@ static const struct icmp_control icmp_pointers[NR_ICMP_TYPES+1];
-  *
-  *	On SMP we have one ICMP socket per-cpu.
+diff --git a/fs/dcache.c b/fs/dcache.c
+index 76f007eb28f8..3730c7f757ff 100644
+--- a/fs/dcache.c
++++ b/fs/dcache.c
+@@ -40,6 +40,8 @@
+ #include <linux/ratelimit.h>
+ #include <linux/list_lru.h>
+ #include <linux/kasan.h>
++#include <linux/sched/rt.h>
++#include <linux/sched/deadline.h>
+ 
+ #include "internal.h"
+ #include "mount.h"
+@@ -748,6 +750,8 @@ static inline bool fast_dput(struct dentry *dentry)
   */
-+static DEFINE_LOCAL_IRQ_LOCK(icmp_sk_lock);
+ void dput(struct dentry *dentry)
+ {
++	struct dentry *parent;
 +
- static struct sock *icmp_sk(struct net *net)
- {
- 	return *this_cpu_ptr(net->ipv4.icmp_sk);
-@@ -216,12 +219,14 @@ static inline struct sock *icmp_xmit_lock(struct net *net)
+ 	if (unlikely(!dentry))
+ 		return;
  
- 	local_bh_disable();
+@@ -784,14 +788,17 @@ repeat:
+ 	return;
  
-+	local_lock(icmp_sk_lock);
- 	sk = icmp_sk(net);
+ kill_it:
+-	dentry = dentry_kill(dentry);
+-	if (dentry) {
++	parent = dentry_kill(dentry);
++	if (parent) {
+ 		int r;
  
- 	if (unlikely(!spin_trylock(&sk->sk_lock.slock))) {
- 		/* This can happen if the output path signals a
- 		 * dst_link_failure() for an outgoing ICMP packet.
- 		 */
-+		local_unlock(icmp_sk_lock);
- 		local_bh_enable();
- 		return NULL;
+-		/* the task with the highest priority won't schedule */
+-		r = cond_resched();
+-		if (!r)
+-			cpu_chill();
++		if (parent == dentry) {
++			/* the task with the highest priority won't schedule */
++			r = cond_resched();
++			if (!r && (rt_task(current) || dl_task(current)))
++				cpu_chill();
++		} else
++			dentry = parent;
+ 		goto repeat;
  	}
-@@ -231,6 +236,7 @@ static inline struct sock *icmp_xmit_lock(struct net *net)
- static inline void icmp_xmit_unlock(struct sock *sk)
- {
- 	spin_unlock_bh(&sk->sk_lock.slock);
-+	local_unlock(icmp_sk_lock);
  }
- 
- int sysctl_icmp_msgs_per_sec __read_mostly = 1000;
-@@ -359,6 +365,7 @@ static void icmp_push_reply(struct icmp_bxm *icmp_param,
- 	struct sock *sk;
- 	struct sk_buff *skb;
- 
-+	local_lock(icmp_sk_lock);
- 	sk = icmp_sk(dev_net((*rt)->dst.dev));
- 	if (ip_append_data(sk, fl4, icmp_glue_bits, icmp_param,
- 			   icmp_param->data_len+icmp_param->head_len,
-@@ -381,6 +388,7 @@ static void icmp_push_reply(struct icmp_bxm *icmp_param,
- 		skb->ip_summed = CHECKSUM_NONE;
- 		ip_push_pending_frames(sk, fl4);
- 	}
-+	local_unlock(icmp_sk_lock);
- }
- 
- /*
 -- 
 2.8.1
