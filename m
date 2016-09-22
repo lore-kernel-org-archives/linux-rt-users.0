@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 07/10] fs/dcache: resched/chill only if we make no progress
-Date: Thu, 22 Sep 2016 17:47:59 -0400
-Message-ID: <20160922214817.864535469@goodmis.org>
+Subject: [PATCH RT 04/10] scsi/fcoe: Fix get_cpu()/put_cpu_light() imbalance in
+ fcoe_recv_frame()
+Date: Thu, 22 Sep 2016 17:47:56 -0400
+Message-ID: <20160922214817.432017905@goodmis.org>
 References: <20160922214752.178698951@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,91 +11,52 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
-        <stable-rt@vger.kernel.org>
+        <stable-rt@vger.kernel.org>,
+        Mike Gabraith <umgwanakikbuti@gmail.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0007-fs-dcache-resched-chill-only-if-we-make-no-progress.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.136]:48656 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1033477AbcIVVsW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 22 Sep 2016 17:48:22 -0400
+Content-Disposition: inline; filename=0004-scsi-fcoe-Fix-get_cpu-put_cpu_light-imbalance-in-fco.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 4.4.21-rt31-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
 
-Upstream commit 47be61845c77 ("fs/dcache.c: avoid soft-lockup in
-dput()") changed the condition _when_ cpu_relax() / cond_resched() was
-invoked. This change was adapted in -RT into mostly the same thing
-except that if cond_resched() did nothing we had to do cpu_chill() to
-force the task off CPU for a tiny little bit in case the task had RT
-priority and did not want to leave the CPU.
-This change resulted in a performance regression (in my testcase the
-build time on /dev/shm increased from 19min to 24min). The reason is
-that with this change cpu_chill() was invoked even dput() made progress
-(dentry_kill() returned a different dentry) instead only if we were
-trying this operation on the same dentry over and over again.
+During master->rt merge, I stumbled across the buglet below.
 
-This patch brings back to the old behavior back to cond_resched() &
-chill if we make no progress. A little improvement is to invoke
-cpu_chill() only if we are a RT task (and avoid the sleep otherwise).
-Otherwise the scheduler should remove us from the CPU if we make no
-progress.
+Fix get_cpu()/put_cpu_light() imbalance.
 
 Cc: stable-rt@vger.kernel.org
+Signed-off-by: Mike Gabraith <umgwanakikbuti@gmail.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- fs/dcache.c | 19 +++++++++++++------
- 1 file changed, 13 insertions(+), 6 deletions(-)
+ drivers/scsi/fcoe/fcoe.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/fs/dcache.c b/fs/dcache.c
-index 76f007eb28f8..3730c7f757ff 100644
---- a/fs/dcache.c
-+++ b/fs/dcache.c
-@@ -40,6 +40,8 @@
- #include <linux/ratelimit.h>
- #include <linux/list_lru.h>
- #include <linux/kasan.h>
-+#include <linux/sched/rt.h>
-+#include <linux/sched/deadline.h>
+diff --git a/drivers/scsi/fcoe/fcoe.c b/drivers/scsi/fcoe/fcoe.c
+index f1622a05854b..cbbbebd86c6e 100644
+--- a/drivers/scsi/fcoe/fcoe.c
++++ b/drivers/scsi/fcoe/fcoe.c
+@@ -1814,7 +1814,7 @@ static void fcoe_recv_frame(struct sk_buff *skb)
+ 	 */
+ 	hp = (struct fcoe_hdr *) skb_network_header(skb);
  
- #include "internal.h"
- #include "mount.h"
-@@ -748,6 +750,8 @@ static inline bool fast_dput(struct dentry *dentry)
-  */
- void dput(struct dentry *dentry)
- {
-+	struct dentry *parent;
-+
- 	if (unlikely(!dentry))
- 		return;
- 
-@@ -784,14 +788,17 @@ repeat:
- 	return;
- 
- kill_it:
--	dentry = dentry_kill(dentry);
--	if (dentry) {
-+	parent = dentry_kill(dentry);
-+	if (parent) {
- 		int r;
- 
--		/* the task with the highest priority won't schedule */
--		r = cond_resched();
--		if (!r)
--			cpu_chill();
-+		if (parent == dentry) {
-+			/* the task with the highest priority won't schedule */
-+			r = cond_resched();
-+			if (!r && (rt_task(current) || dl_task(current)))
-+				cpu_chill();
-+		} else
-+			dentry = parent;
- 		goto repeat;
- 	}
- }
+-	stats = per_cpu_ptr(lport->stats, get_cpu());
++	stats = per_cpu_ptr(lport->stats, get_cpu_light());
+ 	if (unlikely(FC_FCOE_DECAPS_VER(hp) != FC_FCOE_VER)) {
+ 		if (stats->ErrorFrames < 5)
+ 			printk(KERN_WARNING "fcoe: FCoE version "
 -- 
 2.8.1
+
+
