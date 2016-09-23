@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 8/9] fs/dcache: incremental fixup of the retry routine
-Date: Fri, 23 Sep 2016 11:28:34 -0400
-Message-ID: <20160923152839.983302701@goodmis.org>
+Subject: [PATCH RT 4/9] scsi/fcoe: Fix get_cpu()/put_cpu_light() imbalance in
+ fcoe_recv_frame()
+Date: Fri, 23 Sep 2016 11:28:30 -0400
+Message-ID: <20160923152839.278510558@goodmis.org>
 References: <20160923152826.308633481@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,11 +10,13 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
-        Paul Gortmaker <paul.gortmaker@windriver.com>
+        Paul Gortmaker <paul.gortmaker@windriver.com>,
+        <stable-rt@vger.kernel.org>,
+        Mike Gabraith <umgwanakikbuti@gmail.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0008-fs-dcache-incremental-fixup-of-the-retry-routine.patch
+Content-Disposition: inline; filename=0004-scsi-fcoe-Fix-get_cpu-put_cpu_light-imbalance-in-fco.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -22,45 +25,32 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
 
-It has been pointed out by tglx that on UP the non-RT task could spin
-its entire time slice because the lock owner is preempted. This won't
-happen on !RT. So we back to "chill" if we can't cond_resched() did not
-work.
+During master->rt merge, I stumbled across the buglet below.
 
+Fix get_cpu()/put_cpu_light() imbalance.
+
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Mike Gabraith <umgwanakikbuti@gmail.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- fs/dcache.c | 7 +++----
- 1 file changed, 3 insertions(+), 4 deletions(-)
+ drivers/scsi/fcoe/fcoe.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/fs/dcache.c b/fs/dcache.c
-index cc739409efbf..b6cebcacfacd 100644
---- a/fs/dcache.c
-+++ b/fs/dcache.c
-@@ -39,8 +39,6 @@
- #include <linux/prefetch.h>
- #include <linux/ratelimit.h>
- #include <linux/list_lru.h>
--#include <linux/sched/rt.h>
--#include <linux/sched/deadline.h>
- #include "internal.h"
- #include "mount.h"
+diff --git a/drivers/scsi/fcoe/fcoe.c b/drivers/scsi/fcoe/fcoe.c
+index b439c20524ce..bd02c14b3719 100644
+--- a/drivers/scsi/fcoe/fcoe.c
++++ b/drivers/scsi/fcoe/fcoe.c
+@@ -1809,7 +1809,7 @@ static void fcoe_recv_frame(struct sk_buff *skb)
+ 	 */
+ 	hp = (struct fcoe_hdr *) skb_network_header(skb);
  
-@@ -656,10 +654,11 @@ kill_it:
- 		if (parent == dentry) {
- 			/* the task with the highest priority won't schedule */
- 			r = cond_resched();
--			if (!r && (rt_task(current) || dl_task(current)))
-+			if (!r)
- 				cpu_chill();
--		} else
-+		} else {
- 			dentry = parent;
-+		}
- 		goto repeat;
- 	}
- }
+-	stats = per_cpu_ptr(lport->stats, get_cpu());
++	stats = per_cpu_ptr(lport->stats, get_cpu_light());
+ 	if (unlikely(FC_FCOE_DECAPS_VER(hp) != FC_FCOE_VER)) {
+ 		if (stats->ErrorFrames < 5)
+ 			printk(KERN_WARNING "fcoe: FCoE version "
 -- 
 2.8.1
