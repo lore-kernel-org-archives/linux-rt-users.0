@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 01/10] timers: wakeup all timer waiters
-Date: Thu, 22 Sep 2016 22:49:28 -0400
-Message-ID: <20160923024937.624618837@goodmis.org>
+Subject: [PATCH RT 05/10] net: add back the missing serialization in ip_send_unicast_reply()
+Date: Thu, 22 Sep 2016 22:49:32 -0400
+Message-ID: <20160923024938.487010640@goodmis.org>
 References: <20160923024927.685936218@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -14,7 +14,7 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-timers-wakeup-all-timer-waiters.patch
+Content-Disposition: inline; filename=0005-net-add-back-the-missing-serialization-in-ip_send_un.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -25,34 +25,85 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-The base lock is dropped during the invocation if the timer. That means
-it is possible that we have one waiter while timer1 is running and once
-this one finished, we get another waiter while timer2 is running. Since
-we wake up only one waiter it is possible that we miss the other one.
-This will probably heal itself over time because most of the time we
-complete timers without an active wake up.
-To avoid the scenario where we don't wake up all waiters at once,
-wake_up_all() is used.
+Some time ago Sami Pietikainen reported a crash on -RT in
+ip_send_unicast_reply() which was later fixed by Nicholas Mc Guire
+(v3.12.8-rt11). Later (v3.18.8) the code was reworked and I dropped the
+patch. As it turns out it was mistake.
+I have reports that the same crash is possible with a similar backtrace.
+It seems that vanilla protects access to this_cpu_ptr() via
+local_bh_disable(). This does not work the on -RT since we can have
+NET_RX and NET_TX running in parallel on the same CPU.
+This is brings back the old locks.
+
+|Unable to handle kernel NULL pointer dereference at virtual address 00000010
+|PC is at __ip_make_skb+0x198/0x3e8
+|[<c04e39d8>] (__ip_make_skb) from [<c04e3ca8>] (ip_push_pending_frames+0x20/0x40)
+|[<c04e3ca8>] (ip_push_pending_frames) from [<c04e3ff0>] (ip_send_unicast_reply+0x210/0x22c)
+|[<c04e3ff0>] (ip_send_unicast_reply) from [<c04fbb54>] (tcp_v4_send_reset+0x190/0x1c0)
+|[<c04fbb54>] (tcp_v4_send_reset) from [<c04fcc1c>] (tcp_v4_do_rcv+0x22c/0x288)
+|[<c04fcc1c>] (tcp_v4_do_rcv) from [<c0474364>] (release_sock+0xb4/0x150)
+|[<c0474364>] (release_sock) from [<c04ed904>] (tcp_close+0x240/0x454)
+|[<c04ed904>] (tcp_close) from [<c0511408>] (inet_release+0x74/0x7c)
+|[<c0511408>] (inet_release) from [<c0470728>] (sock_release+0x30/0xb0)
+|[<c0470728>] (sock_release) from [<c0470abc>] (sock_close+0x1c/0x24)
+|[<c0470abc>] (sock_close) from [<c0115ec4>] (__fput+0xe8/0x20c)
+|[<c0115ec4>] (__fput) from [<c0116050>] (____fput+0x18/0x1c)
+|[<c0116050>] (____fput) from [<c0058138>] (task_work_run+0xa4/0xb8)
+|[<c0058138>] (task_work_run) from [<c0011478>] (do_work_pending+0xd0/0xe4)
+|[<c0011478>] (do_work_pending) from [<c000e740>] (work_pending+0xc/0x20)
+|Code: e3530001 8a000001 e3a00040 ea000011 (e5973010)
 
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/timer.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ net/ipv4/tcp_ipv4.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-diff --git a/kernel/timer.c b/kernel/timer.c
-index 3796af212c95..d0552cd25b40 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -1009,7 +1009,7 @@ static void wait_for_running_timer(struct timer_list *timer)
- 			   base->running_timer != timer);
- }
+diff --git a/net/ipv4/tcp_ipv4.c b/net/ipv4/tcp_ipv4.c
+index 1b2a53e625cc..ded5b34eba27 100644
+--- a/net/ipv4/tcp_ipv4.c
++++ b/net/ipv4/tcp_ipv4.c
+@@ -62,6 +62,7 @@
+ #include <linux/init.h>
+ #include <linux/times.h>
+ #include <linux/slab.h>
++#include <linux/locallock.h>
  
--# define wakeup_timer_waiters(b)	wake_up(&(b)->wait_for_running_timer)
-+# define wakeup_timer_waiters(b)	wake_up_all(&(b)->wait_for_running_timer)
- #else
- static inline void wait_for_running_timer(struct timer_list *timer)
- {
+ #include <net/net_namespace.h>
+ #include <net/icmp.h>
+@@ -573,6 +574,7 @@ void tcp_v4_send_check(struct sock *sk, struct sk_buff *skb)
+ }
+ EXPORT_SYMBOL(tcp_v4_send_check);
+ 
++static DEFINE_LOCAL_IRQ_LOCK(tcp_sk_lock);
+ /*
+  *	This routine will send an RST to the other tcp.
+  *
+@@ -691,9 +693,12 @@ static void tcp_v4_send_reset(struct sock *sk, struct sk_buff *skb)
+ 
+ 	net = dev_net(skb_dst(skb)->dev);
+ 	arg.tos = ip_hdr(skb)->tos;
++
++	local_lock(tcp_sk_lock);
+ 	ip_send_unicast_reply(*this_cpu_ptr(net->ipv4.tcp_sk),
+ 			      skb, ip_hdr(skb)->saddr,
+ 			      ip_hdr(skb)->daddr, &arg, arg.iov[0].iov_len);
++	local_unlock(tcp_sk_lock);
+ 
+ 	TCP_INC_STATS_BH(net, TCP_MIB_OUTSEGS);
+ 	TCP_INC_STATS_BH(net, TCP_MIB_OUTRSTS);
+@@ -775,9 +780,11 @@ static void tcp_v4_send_ack(struct sk_buff *skb, u32 seq, u32 ack,
+ 	if (oif)
+ 		arg.bound_dev_if = oif;
+ 	arg.tos = tos;
++	local_lock(tcp_sk_lock);
+ 	ip_send_unicast_reply(*this_cpu_ptr(net->ipv4.tcp_sk),
+ 			      skb, ip_hdr(skb)->saddr,
+ 			      ip_hdr(skb)->daddr, &arg, arg.iov[0].iov_len);
++	local_unlock(tcp_sk_lock);
+ 
+ 	TCP_INC_STATS_BH(net, TCP_MIB_OUTSEGS);
+ }
 -- 
 2.8.1
