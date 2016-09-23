@@ -1,66 +1,58 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 6/7] fs/dcache: incremental fixup of the retry routine
-Date: Fri, 23 Sep 2016 12:48:06 -0400
-Message-ID: <20160923164810.060123811@goodmis.org>
-References: <20160923164800.627094159@goodmis.org>
+Subject: [PATCH RT 1/7] timers: wakeup all timer waiters
+Date: Fri, 23 Sep 2016 15:50:09 -0400
+Message-ID: <20160923195018.863631514@goodmis.org>
+References: <20160923195008.543008518@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
-        Paul Gortmaker <paul.gortmaker@windriver.com>
+        Paul Gortmaker <paul.gortmaker@windriver.com>,
+        <stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0006-fs-dcache-incremental-fixup-of-the-retry-routine.patch
+Content-Disposition: inline; filename=0001-timers-wakeup-all-timer-waiters.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.4.112-rt144-rc1 stable review patch.
+3.2.82-rt119-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-It has been pointed out by tglx that on UP the non-RT task could spin
-its entire time slice because the lock owner is preempted. This won't
-happen on !RT. So we back to "chill" if we can't cond_resched() did not
-work.
+The base lock is dropped during the invocation if the timer. That means
+it is possible that we have one waiter while timer1 is running and once
+this one finished, we get another waiter while timer2 is running. Since
+we wake up only one waiter it is possible that we miss the other one.
+This will probably heal itself over time because most of the time we
+complete timers without an active wake up.
+To avoid the scenario where we don't wake up all waiters at once,
+wake_up_all() is used.
 
+Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- fs/dcache.c | 7 +++----
- 1 file changed, 3 insertions(+), 4 deletions(-)
+ kernel/timer.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/fs/dcache.c b/fs/dcache.c
-index 408551d483b7..e0a439c13318 100644
---- a/fs/dcache.c
-+++ b/fs/dcache.c
-@@ -38,8 +38,6 @@
- #include <linux/prefetch.h>
- #include <linux/ratelimit.h>
- #include <linux/delay.h>
--#include <linux/sched/rt.h>
--#include <linux/sched/deadline.h>
- #include "internal.h"
- #include "mount.h"
- 
-@@ -575,10 +573,11 @@ kill_it:
- 		if (parent == dentry) {
- 			/* the task with the highest priority won't schedule */
- 			r = cond_resched();
--			if (!r && (rt_task(current) || dl_task(current)))
-+			if (!r)
- 				cpu_chill();
--		} else
-+		} else {
- 			dentry = parent;
-+		}
- 		goto repeat;
- 	}
+diff --git a/kernel/timer.c b/kernel/timer.c
+index badd2d2066dc..3beac326b447 100644
+--- a/kernel/timer.c
++++ b/kernel/timer.c
+@@ -932,7 +932,7 @@ static void wait_for_running_timer(struct timer_list *timer)
+ 			   base->running_timer != timer);
  }
+ 
+-# define wakeup_timer_waiters(b)	wake_up(&(b)->wait_for_running_timer)
++# define wakeup_timer_waiters(b)	wake_up_all(&(b)->wait_for_running_timer)
+ #else
+ static inline void wait_for_running_timer(struct timer_list *timer)
+ {
 -- 
 2.8.1
