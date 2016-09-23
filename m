@@ -1,58 +1,33 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/9] timers: wakeup all timer waiters
-Date: Fri, 23 Sep 2016 11:28:27 -0400
-Message-ID: <20160923152838.599990160@goodmis.org>
+Subject: Re: [PATCH RT 0/9] Linux 3.12.63-rt85-rc2
+Date: Fri, 23 Sep 2016 11:31:49 -0400
+Message-ID: <20160923113149.1553338b@gandalf.local.home>
 References: <20160923152826.308633481@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
-        Paul Gortmaker <paul.gortmaker@windriver.com>,
-        <stable-rt@vger.kernel.org>
+        Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-timers-wakeup-all-timer-waiters.patch
+In-Reply-To: <20160923152826.308633481@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.12.63-rt85-rc2 stable review patch.
-If anyone has any objections, please let me know.
+On Fri, 23 Sep 2016 11:28:26 -0400
+Steven Rostedt <rostedt@goodmis.org> wrote:
 
-------------------
+> Dear RT Folks,
+> 
+> This is the RT stable review cycle of patch 3.12.63-rt85-rc2.
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Bah, it's suppose to be rc1.
 
-The base lock is dropped during the invocation if the timer. That means
-it is possible that we have one waiter while timer1 is running and once
-this one finished, we get another waiter while timer2 is running. Since
-we wake up only one waiter it is possible that we miss the other one.
-This will probably heal itself over time because most of the time we
-complete timers without an active wake up.
-To avoid the scenario where we don't wake up all waiters at once,
-wake_up_all() is used.
+The patch has the change correct, even though its subject is wrong as
+well.
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- kernel/timer.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/kernel/timer.c b/kernel/timer.c
-index 400ef0bde253..13d87cffb33e 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -1009,7 +1009,7 @@ static void wait_for_running_timer(struct timer_list *timer)
- 			   base->running_timer != timer);
- }
- 
--# define wakeup_timer_waiters(b)	wake_up(&(b)->wait_for_running_timer)
-+# define wakeup_timer_waiters(b)	wake_up_all(&(b)->wait_for_running_timer)
- #else
- static inline void wait_for_running_timer(struct timer_list *timer)
- {
--- 
-2.8.1
+-- Steve
