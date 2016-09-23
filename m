@@ -1,8 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 04/10] scsi/fcoe: Fix get_cpu()/put_cpu_light() imbalance in
- fcoe_recv_frame()
-Date: Thu, 22 Sep 2016 22:49:31 -0400
-Message-ID: <20160923024938.331662264@goodmis.org>
+Subject: [PATCH RT 01/10] timers: wakeup all timer waiters
+Date: Thu, 22 Sep 2016 22:49:28 -0400
+Message-ID: <20160923024937.624618837@goodmis.org>
 References: <20160923024927.685936218@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -11,12 +10,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
-        <stable-rt@vger.kernel.org>,
-        Mike Gabraith <umgwanakikbuti@gmail.com>
+        <stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-scsi-fcoe-Fix-get_cpu-put_cpu_light-imbalance-in-fco.patch
+Content-Disposition: inline; filename=0001-timers-wakeup-all-timer-waiters.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -25,32 +23,36 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-During master->rt merge, I stumbled across the buglet below.
-
-Fix get_cpu()/put_cpu_light() imbalance.
+The base lock is dropped during the invocation if the timer. That means
+it is possible that we have one waiter while timer1 is running and once
+this one finished, we get another waiter while timer2 is running. Since
+we wake up only one waiter it is possible that we miss the other one.
+This will probably heal itself over time because most of the time we
+complete timers without an active wake up.
+To avoid the scenario where we don't wake up all waiters at once,
+wake_up_all() is used.
 
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Mike Gabraith <umgwanakikbuti@gmail.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- drivers/scsi/fcoe/fcoe.c | 2 +-
+ kernel/timer.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/scsi/fcoe/fcoe.c b/drivers/scsi/fcoe/fcoe.c
-index 9df3ba445d03..d24665c27bef 100644
---- a/drivers/scsi/fcoe/fcoe.c
-+++ b/drivers/scsi/fcoe/fcoe.c
-@@ -1816,7 +1816,7 @@ static void fcoe_recv_frame(struct sk_buff *skb)
- 	 */
- 	hp = (struct fcoe_hdr *) skb_network_header(skb);
+diff --git a/kernel/timer.c b/kernel/timer.c
+index 3796af212c95..d0552cd25b40 100644
+--- a/kernel/timer.c
++++ b/kernel/timer.c
+@@ -1009,7 +1009,7 @@ static void wait_for_running_timer(struct timer_list *timer)
+ 			   base->running_timer != timer);
+ }
  
--	stats = per_cpu_ptr(lport->stats, get_cpu());
-+	stats = per_cpu_ptr(lport->stats, get_cpu_light());
- 	if (unlikely(FC_FCOE_DECAPS_VER(hp) != FC_FCOE_VER)) {
- 		if (stats->ErrorFrames < 5)
- 			printk(KERN_WARNING "fcoe: FCoE version "
+-# define wakeup_timer_waiters(b)	wake_up(&(b)->wait_for_running_timer)
++# define wakeup_timer_waiters(b)	wake_up_all(&(b)->wait_for_running_timer)
+ #else
+ static inline void wait_for_running_timer(struct timer_list *timer)
+ {
 -- 
 2.8.1
