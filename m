@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 00/10] Linux 3.18.42-rt45-rc1
-Date: Thu, 22 Sep 2016 19:17:28 -0400
-Message-ID: <20160922231728.394180695@goodmis.org>
+Subject: [PATCH RT 00/10] Linux 3.14.79-rt85-rc1
+Date: Thu, 22 Sep 2016 22:49:27 -0400
+Message-ID: <20160923024927.685936218@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -16,7 +16,7 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-This is the RT stable review cycle of patch 3.18.42-rt45-rc1.
+This is the RT stable review cycle of patch 3.14.79-rt85-rc1.
 
 Please scream at me if I messed something up. Please test the patches too.
 
@@ -34,20 +34,20 @@ Enjoy,
 -- Steve
 
 
-To build 3.18.42-rt45-rc1 directly, the following patches should be applied:
+To build 3.14.79-rt85-rc1 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.14.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.42.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.14.79.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.42-rt45-rc1.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.79-rt85-rc1.patch.xz
 
-You can also build from 3.18.42-rt44 by applying the incremental patch:
+You can also build from 3.14.79-rt84 by applying the incremental patch:
 
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/incr/patch-3.18.42-rt44-rt45-rc1.patch.xz
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/incr/patch-3.14.79-rt84-rt85-rc1.patch.xz
 
 
-Changes from 3.18.42-rt44:
+Changes from 3.14.79-rt84:
 
 ---
 
@@ -66,15 +66,15 @@ Sebastian Andrzej Siewior (8):
       fs/dcache: incremental fixup of the retry routine
 
 Steven Rostedt (Red Hat) (1):
-      Linux 3.18.42-rt45-rc1
+      Linux 3.14.79-rt85-rc1
 
 ----
- arch/x86/include/asm/preempt.h | 16 ++++++++++++++--
+ arch/x86/include/asm/preempt.h | 17 +++++++++++++++--
  drivers/scsi/fcoe/fcoe.c       |  2 +-
- fs/dcache.c                    | 18 ++++++++++++------
+ fs/dcache.c                    | 17 +++++++++++++++--
  kernel/sched/core.c            |  2 +-
- kernel/time/timer.c            |  4 ++--
+ kernel/timer.c                 |  4 ++--
  localversion-rt                |  2 +-
  net/ipv4/icmp.c                |  8 ++++++++
  net/ipv4/tcp_ipv4.c            |  7 +++++++
- 8 files changed, 46 insertions(+), 13 deletions(-)
+ 8 files changed, 50 insertions(+), 9 deletions(-)
