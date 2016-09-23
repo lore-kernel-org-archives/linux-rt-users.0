@@ -1,7 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/7] Linux 3.2.82-rt119-rc1
-Date: Fri, 23 Sep 2016 15:50:08 -0400
-Message-ID: <20160923195008.543008518@goodmis.org>
+Subject: [PATCH RT 7/7] Linux 3.2.82-rt119-rc1
+Date: Fri, 23 Sep 2016 15:50:15 -0400
+Message-ID: <20160923195020.439785753@goodmis.org>
+References: <20160923195008.543008518@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -9,68 +12,28 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:42854 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1752894AbcIWTuW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 23 Sep 2016 15:50:22 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0007-Linux-3.2.82-rt119-rc1.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
+3.2.82-rt119-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.2.82-rt119-rc1.
-
-Please scream at me if I messed something up. Please test the patches too.
-
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 9/25/2016.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.2.82-rt119-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.82.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.82-rt119-rc1.patch.xz
-
-You can also build from 3.2.82-rt118 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.82-rt118-rt119-rc1.patch.xz
-
-
-Changes from 3.2.82-rt118:
+From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
 
 ---
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-
-Sebastian Andrzej Siewior (6):
-      timers: wakeup all timer waiters
-      timers: wakeup all timer waiters without holding the base lock
-      net: add back the missing serialization in ip_send_unicast_reply()
-      net: add a lock around icmp_sk()
-      fs/dcache: resched/chill only if we make no progress
-      fs/dcache: incremental fixup of the retry routine
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.2.82-rt119-rc1
-
-----
- fs/dcache.c         | 17 +++++++++++++++--
- kernel/timer.c      |  4 ++--
- localversion-rt     |  2 +-
- net/ipv4/icmp.c     |  8 ++++++++
- net/ipv4/tcp_ipv4.c |  7 +++++++
- 5 files changed, 33 insertions(+), 5 deletions(-)
+diff --git a/localversion-rt b/localversion-rt
+index 4e32122c6b30..bd54f56d15eb 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt118
++-rt119-rc1
+-- 
+2.8.1
