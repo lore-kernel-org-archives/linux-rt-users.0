@@ -1,198 +1,74 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] 4.6.7-rt14
-Date: Fri, 30 Sep 2016 23:50:56 +0200
-Message-ID: <20160930215056.3e6ysbsvktywg6wz@linutronix.de>
+From: Sabar Siddhartha Dasgupta <sabard@stanford.edu>
+Subject: RT File Logging
+Date: Fri, 30 Sep 2016 17:20:29 -0700
+Message-ID: <CAHDbYRiH04GpceLOtboR3QAF9OrYbGLMUgi-f7x6jneqzqbnAQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtp2.stanford.edu ([171.67.219.82]:33900 "EHLO
+        smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+        with ESMTP id S1752720AbcJAAVL (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 30 Sep 2016 20:21:11 -0400
+Received: from codegreen1.stanford.edu (codegreen1.stanford.edu [171.67.224.2])
+        (using TLSv1 with cipher DHE-RSA-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by smtp.stanford.edu (Postfix) with ESMTPS id 9A089340D86
+        for <linux-rt-users@vger.kernel.org>; Fri, 30 Sep 2016 17:20:52 -0700 (PDT)
+Received: from codegreen1.stanford.edu (localhost.localdomain [127.0.0.1])
+        by codegreen1.stanford.edu (Postfix) with ESMTP id 8299381
+        for <linux-rt-users@vger.kernel.org>; Fri, 30 Sep 2016 17:20:52 -0700 (PDT)
+Received: from pps00-smtp.stanford.edu (pps00-smtp.stanford.edu [171.67.214.166])
+        by codegreen1.stanford.edu (Postfix) with ESMTP id 6C7B781
+        for <linux-rt-users@vger.kernel.org>; Fri, 30 Sep 2016 17:20:52 -0700 (PDT)
+Received: from pps.filterd (pps00-smtp.stanford.edu [127.0.0.1])
+        by pps00-smtp.stanford.edu (8.15.0.59/8.15.0.59) with SMTP id u910JjO1021117
+        for <linux-rt-users@vger.kernel.org>; Fri, 30 Sep 2016 17:20:52 -0700
+Received: from smtp.stanford.edu (smtp3.stanford.edu [171.67.219.83])
+        by pps00-smtp.stanford.edu with ESMTP id 25sapjncjd-1
+        for <linux-rt-users@vger.kernel.org>; Fri, 30 Sep 2016 17:20:52 -0700
+Received: from mail-wm0-f69.google.com (mail-wm0-f69.google.com [74.125.82.69])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+        (No client certificate requested)
+        by smtp.stanford.edu (Postfix) with ESMTPS id E5C9310160C
+        for <linux-rt-users@vger.kernel.org>; Fri, 30 Sep 2016 17:20:51 -0700 (PDT)
+Received: by mail-wm0-f69.google.com with SMTP id f193so6472348wmg.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 30 Sep 2016 17:20:51 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear RT folks!
+Hi all,
 
-I'm pleased to announce the v4.6.7-rt14 patch set. 
+I am working with the 4.4.12-rt19 kernel patch.
 
-Changes since v4.6.7-rt13:
+I have a realtime application that has separate processes running on
+separate cores taking in data from the network, computing on that
+data, and then logging results. I am attempting to log on the order of
+10KB per ms tick of data to file.
 
-  - It is possible that a task which got priority boosted, de-boosted
-    itself too early in the unlock path. This leads to then priority
-    inversion because the waiter with priority waits while a process
-    with lower priority runs.
+The logging process has access to all of the incoming data in shared
+memory. Right now, I am using sqlite3 and sqlite3async to buffer the
+database to memory in one thread of the logging process and then
+commit the in-memory instance to file every second with a call to
+sqlite3async_run().
 
-Known issues
-	- CPU hotplug got a little better but can deadlock.
+The problem is that during part of the sqlite3async_run() execution,
+the sqlite3_step() command to write to the in-memory database buffer
+hangs and violates my 1ms timing guarantee.
 
-The delta patch against 4.6.7-rt13 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.6/incr/patch-4.6.7-rt13-rt14.patch.xz
+This question may not be relevant here, but I am still not sure if the
+error is happening because of how threaded processes work in a
+realtime environment or because of how sqlite3async works. As far as I
+can tell, sqlite3async is supposed to be able to buffer the database
+in memory using the sqlite3 virtual file system and then handle the
+actual file write with a background thread (as detailed here:
+https://www.sqlite.org/asyncvfs.html). I have tried changing the
+scheduling priorities and nicenesses of each thread to no avail.
 
-You can get this release via the git tree at:
+Any help or suggestions would be greatly appreciated! (or direction to
+the right forum if this is not the right place).
 
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.6.7-rt14
+Best,
+Sabar
 
-The RT patch against 4.6.7 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.6/patch-4.6.7-rt14.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.6/patches-4.6.7-rt14.tar.xz
-
-Sebastian
-
-diff --git a/include/linux/spinlock.h b/include/linux/spinlock.h
-index b241cc044bd3..02928fa5499d 100644
---- a/include/linux/spinlock.h
-+++ b/include/linux/spinlock.h
-@@ -355,6 +355,12 @@ static __always_inline void spin_unlock(spinlock_t *lock)
- 	raw_spin_unlock(&lock->rlock);
- }
- 
-+static __always_inline int spin_unlock_no_deboost(spinlock_t *lock)
-+{
-+	raw_spin_unlock(&lock->rlock);
-+	return 0;
-+}
-+
- static __always_inline void spin_unlock_bh(spinlock_t *lock)
- {
- 	raw_spin_unlock_bh(&lock->rlock);
-diff --git a/include/linux/spinlock_rt.h b/include/linux/spinlock_rt.h
-index 3b2825537531..7eb87584e843 100644
---- a/include/linux/spinlock_rt.h
-+++ b/include/linux/spinlock_rt.h
-@@ -26,6 +26,7 @@ extern void __lockfunc rt_spin_lock(spinlock_t *lock);
- extern unsigned long __lockfunc rt_spin_lock_trace_flags(spinlock_t *lock);
- extern void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subclass);
- extern void __lockfunc rt_spin_unlock(spinlock_t *lock);
-+extern int __lockfunc rt_spin_unlock_no_deboost(spinlock_t *lock);
- extern void __lockfunc rt_spin_unlock_wait(spinlock_t *lock);
- extern int __lockfunc rt_spin_trylock_irqsave(spinlock_t *lock, unsigned long *flags);
- extern int __lockfunc rt_spin_trylock_bh(spinlock_t *lock);
-@@ -112,6 +113,7 @@ static inline unsigned long spin_lock_trace_flags(spinlock_t *lock)
- #define spin_lock_nest_lock(lock, nest_lock) spin_lock_nested(lock, 0)
- 
- #define spin_unlock(lock)			rt_spin_unlock(lock)
-+#define spin_unlock_no_deboost(lock)		rt_spin_unlock_no_deboost(lock)
- 
- #define spin_unlock_bh(lock)				\
- 	do {						\
-diff --git a/kernel/futex.c b/kernel/futex.c
-index 2d572edcac53..e12dea2ef4d6 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -1347,7 +1347,7 @@ static int wake_futex_pi(u32 __user *uaddr, u32 uval, struct futex_q *this,
- 	 * deboost first (and lose our higher priority), then the task might get
- 	 * scheduled away before the wake up can take place.
- 	 */
--	spin_unlock(&hb->lock);
-+	deboost |= spin_unlock_no_deboost(&hb->lock);
- 	wake_up_q(&wake_q);
- 	wake_up_q_sleeper(&wake_sleeper_q);
- 	if (deboost)
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index fde5e54f1096..bea124d6cbee 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -939,13 +939,14 @@ static inline void rt_spin_lock_fastlock(struct rt_mutex *lock,
- 		slowfn(lock, do_mig_dis);
- }
- 
--static inline void rt_spin_lock_fastunlock(struct rt_mutex *lock,
--					   void  (*slowfn)(struct rt_mutex *lock))
-+static inline int rt_spin_lock_fastunlock(struct rt_mutex *lock,
-+					  int (*slowfn)(struct rt_mutex *lock))
- {
--	if (likely(rt_mutex_cmpxchg_release(lock, current, NULL)))
-+	if (likely(rt_mutex_cmpxchg_release(lock, current, NULL))) {
- 		rt_mutex_deadlock_account_unlock(current);
--	else
--		slowfn(lock);
-+		return 0;
-+	}
-+	return slowfn(lock);
- }
- #ifdef CONFIG_SMP
- /*
-@@ -1086,7 +1087,7 @@ static void mark_wakeup_next_waiter(struct wake_q_head *wake_q,
- /*
-  * Slow path to release a rt_mutex spin_lock style
-  */
--static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
-+static int noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
- {
- 	unsigned long flags;
- 	WAKE_Q(wake_q);
-@@ -1101,7 +1102,7 @@ static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
- 	if (!rt_mutex_has_waiters(lock)) {
- 		lock->owner = NULL;
- 		raw_spin_unlock_irqrestore(&lock->wait_lock, flags);
--		return;
-+		return 0;
- 	}
- 
- 	mark_wakeup_next_waiter(&wake_q, &wake_sleeper_q, lock);
-@@ -1112,6 +1113,33 @@ static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
- 
- 	/* Undo pi boosting.when necessary */
- 	rt_mutex_adjust_prio(current);
-+	return 0;
-+}
-+
-+static int noinline __sched rt_spin_lock_slowunlock_no_deboost(struct rt_mutex *lock)
-+{
-+	unsigned long flags;
-+	WAKE_Q(wake_q);
-+	WAKE_Q(wake_sleeper_q);
-+
-+	raw_spin_lock_irqsave(&lock->wait_lock, flags);
-+
-+	debug_rt_mutex_unlock(lock);
-+
-+	rt_mutex_deadlock_account_unlock(current);
-+
-+	if (!rt_mutex_has_waiters(lock)) {
-+		lock->owner = NULL;
-+		raw_spin_unlock_irqrestore(&lock->wait_lock, flags);
-+		return 0;
-+	}
-+
-+	mark_wakeup_next_waiter(&wake_q, &wake_sleeper_q, lock);
-+
-+	raw_spin_unlock_irqrestore(&lock->wait_lock, flags);
-+	wake_up_q(&wake_q);
-+	wake_up_q_sleeper(&wake_sleeper_q);
-+	return 1;
- }
- 
- void __lockfunc rt_spin_lock__no_mg(spinlock_t *lock)
-@@ -1166,6 +1194,17 @@ void __lockfunc rt_spin_unlock(spinlock_t *lock)
- }
- EXPORT_SYMBOL(rt_spin_unlock);
- 
-+int __lockfunc rt_spin_unlock_no_deboost(spinlock_t *lock)
-+{
-+	int ret;
-+
-+	/* NOTE: we always pass in '1' for nested, for simplicity */
-+	spin_release(&lock->dep_map, 1, _RET_IP_);
-+	ret = rt_spin_lock_fastunlock(&lock->lock, rt_spin_lock_slowunlock_no_deboost);
-+	migrate_enable();
-+	return ret;
-+}
-+
- void __lockfunc __rt_spin_unlock(struct rt_mutex *lock)
- {
- 	rt_spin_lock_fastunlock(lock, rt_spin_lock_slowunlock);
-diff --git a/localversion-rt b/localversion-rt
-index 9f7d0bdbffb1..08b3e75841ad 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt13
-+-rt14
