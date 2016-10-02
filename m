@@ -1,44 +1,53 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT] kernel/futex: don't deboost too early
-Date: Sun, 2 Oct 2016 06:01:37 -0400
-Message-ID: <20161002060137.2716b089@grimm.local.home>
-References: <20160930083913.aqjpynzsj5d3xxho@linutronix.de>
-        <20160930120038.5fe7d535@grimm.local.home>
-        <alpine.DEB.2.20.1609302041410.5508@nanos>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Re: [ANNOUNCE] 4.8-rc5-rt1 beta
+Date: Sun, 2 Oct 2016 19:35:15 -0400
+Message-ID: <20161002233515.GA18997@windriver.com>
+References: <20160906182508.GB9950@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        peterz@infradead.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0238.hostedemail.com ([216.40.44.238]:53694 "EHLO
-        smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1750912AbcJBKBn (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 2 Oct 2016 06:01:43 -0400
-In-Reply-To: <alpine.DEB.2.20.1609302041410.5508@nanos>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20160906182508.GB9950@windriver.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 30 Sep 2016 20:43:26 +0200 (CEST)
-Thomas Gleixner <tglx@linutronix.de> wrote:
+[[ANNOUNCE] 4.8-rc5-rt1 beta] On 06/09/2016 (Tue 14:25) Paul Gortmaker wrote:
 
-> On Fri, 30 Sep 2016, Steven Rostedt wrote:
-> > This looks awfully complex. Would something as simple as this work?
-> > 
-> > What harm can happen by moving the holding of the lock after the
-> > wakeups for RT?  
+> This is a carry forward of the -rt patches off v4.6.7-rt11 through
+> mainline commits of v4.7 and up to the current v4.8-rc5.
 > 
-> That's exactly bringing us back to the state before we added the delayed
-> wakeup so that the woken waiter will not be blocked on hb->lock right
-> away. That's 2 extra context switches for nothing.
+> https://git.kernel.org/cgit/linux/kernel/git/paulg/4.8-rt-patches.git
+> 
 
-Ah crap, that's the wake up of the owner that's about to grab the lock,
-in which case (if on the same CPU) may preempt this guy, just to grab
-the hb->lock and block again.
+[...]
 
-Grumble, how come the easy way is never a possibility :-p
+> 
+>   Patch conflicts/issues of interest 4.7 --> 4.8
+>   ----------------------------------------------
+> 
 
--- Steve
+-mainline changed the qdisc from a simple bit to a seqcount; this causes
+ a splat from migrate_enable, but I didn't initially see that since the
+ sanity check relies on SCHED_DEBUG=y.  This causes the -rt patch that
+ faked out the lock status to splat; further details are at kernel.org:
+
+	https://goo.gl/0fdRKR
+
+No point in anyone else having to redo the root cause research on this a
+second time;  I've updated the above repo for this and for some other mm
+fallout from 4.8-rc7 in memcontrol.c so that the patches will apply for
+what inevitably becomes v4.8 final in a couple hours.
+
+That said, my original comments still apply -- this remains as a resource
+for developers who track the -rt progress, and how mainline will impact
+it.  The release of 4.8 in mainline does not somehow change this repo
+into a stable/supported -rt release by osmosis.  If you don't regularly
+manually apply and test patches, including resolving sleeping while
+atomic kernel backtrace dumps, you probably should not be using this.
+
+Paul.
