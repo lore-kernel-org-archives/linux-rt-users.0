@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.10.103-rt115
-Date: Mon, 3 Oct 2016 18:05:12 -0400
-Message-ID: <20161003180512.78972aa1@gandalf.local.home>
+Subject: [ANNOUNCE] 3.4.112-rt144
+Date: Mon, 3 Oct 2016 18:05:39 -0400
+Message-ID: <20161003180539.4d15c869@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -12,41 +12,41 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0052.hostedemail.com ([216.40.44.52]:48325 "EHLO
+Received: from smtprelay0111.hostedemail.com ([216.40.44.111]:32832 "EHLO
         smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1753383AbcJCWFU (ORCPT
+        by vger.kernel.org with ESMTP id S1753353AbcJCWFn (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 3 Oct 2016 18:05:20 -0400
+        Mon, 3 Oct 2016 18:05:43 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.10.103-rt115 stable release.
+I'm pleased to announce the 3.4.112-rt144 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.10-rt
-  Head SHA1: 26493c0a2fc04eac200052239594196dd4992656
+  branch: v3.4-rt
+  Head SHA1: 4a9c0c15edbde9dffad4ad8677ef71003ef08445
 
 
-Or to build 3.10.103-rt115 directly, the following patches should be applied:
+Or to build 3.4.112-rt144 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.103.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.112.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.103-rt115.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.112-rt144.patch.xz
 
 
 
-You can also build from 3.10.103-rt114 by applying the incremental patch:
+You can also build from 3.4.112-rt143 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.103-rt114-rt115.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.112-rt143-rt144.patch.xz
 
 
 
@@ -55,12 +55,9 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.10.103-rt114:
+Changes from v3.4.112-rt143:
 
 ---
-
-Mike Galbraith (1):
-      scsi/fcoe: Fix get_cpu()/put_cpu_light() imbalance in fcoe_recv_frame()
 
 Sebastian Andrzej Siewior (6):
       timers: wakeup all timer waiters
@@ -71,35 +68,21 @@ Sebastian Andrzej Siewior (6):
       fs/dcache: incremental fixup of the retry routine
 
 Steven Rostedt (Red Hat) (1):
-      Linux 3.10.103-rt115
+      Linux 3.4.112-rt144
 
 ----
- drivers/scsi/fcoe/fcoe.c |  2 +-
- fs/dcache.c              | 17 +++++++++++++++--
- kernel/timer.c           |  4 ++--
- localversion-rt          |  2 +-
- net/ipv4/icmp.c          |  8 ++++++++
- net/ipv4/tcp_ipv4.c      |  7 +++++++
- 6 files changed, 34 insertions(+), 6 deletions(-)
+ fs/dcache.c         | 17 +++++++++++++++--
+ kernel/timer.c      |  4 ++--
+ localversion-rt     |  2 +-
+ net/ipv4/icmp.c     |  8 ++++++++
+ net/ipv4/tcp_ipv4.c |  7 +++++++
+ 5 files changed, 33 insertions(+), 5 deletions(-)
 ---------------------------
-diff --git a/drivers/scsi/fcoe/fcoe.c b/drivers/scsi/fcoe/fcoe.c
-index 7586dd90d67e..26fa668e5b4c 100644
---- a/drivers/scsi/fcoe/fcoe.c
-+++ b/drivers/scsi/fcoe/fcoe.c
-@@ -1805,7 +1805,7 @@ static void fcoe_recv_frame(struct sk_buff *skb)
- 	 */
- 	hp = (struct fcoe_hdr *) skb_network_header(skb);
- 
--	stats = per_cpu_ptr(lport->stats, get_cpu());
-+	stats = per_cpu_ptr(lport->stats, get_cpu_light());
- 	if (unlikely(FC_FCOE_DECAPS_VER(hp) != FC_FCOE_VER)) {
- 		if (stats->ErrorFrames < 5)
- 			printk(KERN_WARNING "fcoe: FCoE version "
 diff --git a/fs/dcache.c b/fs/dcache.c
-index 3bdb1e87bb7a..df0420c8a4cd 100644
+index 67a137772f13..e0a439c13318 100644
 --- a/fs/dcache.c
 +++ b/fs/dcache.c
-@@ -507,6 +507,8 @@ relock:
+@@ -527,6 +527,8 @@ relock:
   */
  void dput(struct dentry *dentry)
  {
@@ -108,7 +91,7 @@ index 3bdb1e87bb7a..df0420c8a4cd 100644
  	if (!dentry)
  		return;
  
-@@ -541,9 +543,20 @@ repeat:
+@@ -564,9 +566,20 @@ repeat:
  	return;
  
  kill_it:
@@ -132,10 +115,10 @@ index 3bdb1e87bb7a..df0420c8a4cd 100644
  EXPORT_SYMBOL(dput);
  
 diff --git a/kernel/timer.c b/kernel/timer.c
-index 2fd6ea5c6519..e6addc8e9b5a 100644
+index c9b100922747..d94b2c463d9b 100644
 --- a/kernel/timer.c
 +++ b/kernel/timer.c
-@@ -1009,7 +1009,7 @@ static void wait_for_running_timer(struct timer_list *timer)
+@@ -978,7 +978,7 @@ static void wait_for_running_timer(struct timer_list *timer)
  			   base->running_timer != timer);
  }
  
@@ -144,8 +127,8 @@ index 2fd6ea5c6519..e6addc8e9b5a 100644
  #else
  static inline void wait_for_running_timer(struct timer_list *timer)
  {
-@@ -1267,8 +1267,8 @@ static inline void __run_timers(struct tvec_base *base)
- 			}
+@@ -1235,8 +1235,8 @@ static inline void __run_timers(struct tvec_base *base)
+ 			spin_lock_irq(&base->lock);
  		}
  	}
 -	wakeup_timer_waiters(base);
@@ -153,16 +136,16 @@ index 2fd6ea5c6519..e6addc8e9b5a 100644
 +	wakeup_timer_waiters(base);
  }
  
- #ifdef CONFIG_NO_HZ_COMMON
+ #ifdef CONFIG_NO_HZ
 diff --git a/localversion-rt b/localversion-rt
-index f1a99cb304ba..f2aa035883e8 100644
+index a7cc5d609b19..b479c897962f 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt114
-+-rt115
+--rt143
++-rt144
 diff --git a/net/ipv4/icmp.c b/net/ipv4/icmp.c
-index d0a56ee5a008..220cdc5dd592 100644
+index 9a37732e8f32..a0d96df4cd2d 100644
 --- a/net/ipv4/icmp.c
 +++ b/net/ipv4/icmp.c
 @@ -78,6 +78,7 @@
@@ -173,7 +156,7 @@ index d0a56ee5a008..220cdc5dd592 100644
  #include <net/snmp.h>
  #include <net/ip.h>
  #include <net/route.h>
-@@ -204,6 +205,8 @@ static const struct icmp_control icmp_pointers[NR_ICMP_TYPES+1];
+@@ -203,6 +204,8 @@ static const struct icmp_control icmp_pointers[NR_ICMP_TYPES+1];
   *
   *	On SMP we have one ICMP socket per-cpu.
   */
@@ -182,7 +165,7 @@ index d0a56ee5a008..220cdc5dd592 100644
  static struct sock *icmp_sk(struct net *net)
  {
  	return net->ipv4.icmp_sk[smp_processor_id()];
-@@ -215,12 +218,14 @@ static inline struct sock *icmp_xmit_lock(struct net *net)
+@@ -214,12 +217,14 @@ static inline struct sock *icmp_xmit_lock(struct net *net)
  
  	local_bh_disable();
  
@@ -197,7 +180,7 @@ index d0a56ee5a008..220cdc5dd592 100644
  		local_bh_enable();
  		return NULL;
  	}
-@@ -230,6 +235,7 @@ static inline struct sock *icmp_xmit_lock(struct net *net)
+@@ -229,6 +234,7 @@ static inline struct sock *icmp_xmit_lock(struct net *net)
  static inline void icmp_xmit_unlock(struct sock *sk)
  {
  	spin_unlock_bh(&sk->sk_lock.slock);
@@ -205,7 +188,7 @@ index d0a56ee5a008..220cdc5dd592 100644
  }
  
  /*
-@@ -301,6 +307,7 @@ static void icmp_push_reply(struct icmp_bxm *icmp_param,
+@@ -299,6 +305,7 @@ static void icmp_push_reply(struct icmp_bxm *icmp_param,
  	struct sock *sk;
  	struct sk_buff *skb;
  
@@ -213,7 +196,7 @@ index d0a56ee5a008..220cdc5dd592 100644
  	sk = icmp_sk(dev_net((*rt)->dst.dev));
  	if (ip_append_data(sk, fl4, icmp_glue_bits, icmp_param,
  			   icmp_param->data_len+icmp_param->head_len,
-@@ -323,6 +330,7 @@ static void icmp_push_reply(struct icmp_bxm *icmp_param,
+@@ -321,6 +328,7 @@ static void icmp_push_reply(struct icmp_bxm *icmp_param,
  		skb->ip_summed = CHECKSUM_NONE;
  		ip_push_pending_frames(sk, fl4);
  	}
@@ -222,7 +205,7 @@ index d0a56ee5a008..220cdc5dd592 100644
  
  /*
 diff --git a/net/ipv4/tcp_ipv4.c b/net/ipv4/tcp_ipv4.c
-index 11f27a45b8ef..673b5f893980 100644
+index 727678dc7968..0981d537d8dd 100644
 --- a/net/ipv4/tcp_ipv4.c
 +++ b/net/ipv4/tcp_ipv4.c
 @@ -62,6 +62,7 @@
@@ -233,7 +216,7 @@ index 11f27a45b8ef..673b5f893980 100644
  
  #include <net/net_namespace.h>
  #include <net/icmp.h>
-@@ -589,6 +590,7 @@ int tcp_v4_gso_send_check(struct sk_buff *skb)
+@@ -569,6 +570,7 @@ int tcp_v4_gso_send_check(struct sk_buff *skb)
  	return 0;
  }
  
@@ -241,27 +224,25 @@ index 11f27a45b8ef..673b5f893980 100644
  /*
   *	This routine will send an RST to the other tcp.
   *
-@@ -707,9 +709,12 @@ static void tcp_v4_send_reset(struct sock *sk, struct sk_buff *skb)
+@@ -686,8 +688,11 @@ static void tcp_v4_send_reset(struct sock *sk, struct sk_buff *skb)
  
  	net = dev_net(skb_dst(skb)->dev);
  	arg.tos = ip_hdr(skb)->tos;
 +
 +	local_lock(tcp_sk_lock);
- 	ip_send_unicast_reply(*this_cpu_ptr(net->ipv4.tcp_sk),
- 			      skb, ip_hdr(skb)->saddr,
- 			      ip_hdr(skb)->daddr, &arg, arg.iov[0].iov_len);
+ 	ip_send_reply(net->ipv4.tcp_sock, skb, ip_hdr(skb)->saddr,
+ 		      &arg, arg.iov[0].iov_len);
 +	local_unlock(tcp_sk_lock);
  
  	TCP_INC_STATS_BH(net, TCP_MIB_OUTSEGS);
  	TCP_INC_STATS_BH(net, TCP_MIB_OUTRSTS);
-@@ -791,9 +796,11 @@ static void tcp_v4_send_ack(struct sk_buff *skb, u32 seq, u32 ack,
+@@ -769,8 +774,10 @@ static void tcp_v4_send_ack(struct sk_buff *skb, u32 seq, u32 ack,
  	if (oif)
  		arg.bound_dev_if = oif;
  	arg.tos = tos;
 +	local_lock(tcp_sk_lock);
- 	ip_send_unicast_reply(*this_cpu_ptr(net->ipv4.tcp_sk),
- 			      skb, ip_hdr(skb)->saddr,
- 			      ip_hdr(skb)->daddr, &arg, arg.iov[0].iov_len);
+ 	ip_send_reply(net->ipv4.tcp_sock, skb, ip_hdr(skb)->saddr,
+ 		      &arg, arg.iov[0].iov_len);
 +	local_unlock(tcp_sk_lock);
  
  	TCP_INC_STATS_BH(net, TCP_MIB_OUTSEGS);
