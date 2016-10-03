@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.12.63-rt85
-Date: Mon, 3 Oct 2016 18:04:47 -0400
-Message-ID: <20161003180447.56389289@gandalf.local.home>
+Subject: [ANNOUNCE] 3.10.103-rt115
+Date: Mon, 3 Oct 2016 18:05:12 -0400
+Message-ID: <20161003180512.78972aa1@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -12,41 +12,41 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0147.hostedemail.com ([216.40.44.147]:52065 "EHLO
+Received: from smtprelay0052.hostedemail.com ([216.40.44.52]:48325 "EHLO
         smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1752889AbcJCWEv (ORCPT
+        by vger.kernel.org with ESMTP id S1753383AbcJCWFU (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 3 Oct 2016 18:04:51 -0400
+        Mon, 3 Oct 2016 18:05:20 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.12.63-rt85 stable release.
+I'm pleased to announce the 3.10.103-rt115 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.12-rt
-  Head SHA1: 627b1727879f54adb8d88a1599439fb073e33f2b
+  branch: v3.10-rt
+  Head SHA1: 26493c0a2fc04eac200052239594196dd4992656
 
 
-Or to build 3.12.63-rt85 directly, the following patches should be applied:
+Or to build 3.10.103-rt115 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.63.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.103.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.63-rt85.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.103-rt115.patch.xz
 
 
 
-You can also build from 3.12.63-rt84 by applying the incremental patch:
+You can also build from 3.10.103-rt114 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.63-rt84-rt85.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.103-rt114-rt115.patch.xz
 
 
 
@@ -55,40 +55,38 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.12.63-rt84:
+Changes from v3.10.103-rt114:
 
 ---
 
 Mike Galbraith (1):
       scsi/fcoe: Fix get_cpu()/put_cpu_light() imbalance in fcoe_recv_frame()
 
-Sebastian Andrzej Siewior (7):
+Sebastian Andrzej Siewior (6):
       timers: wakeup all timer waiters
       timers: wakeup all timer waiters without holding the base lock
-      sched: lazy_preempt: avoid a warning in the !RT case
       net: add back the missing serialization in ip_send_unicast_reply()
       net: add a lock around icmp_sk()
       fs/dcache: resched/chill only if we make no progress
       fs/dcache: incremental fixup of the retry routine
 
 Steven Rostedt (Red Hat) (1):
-      Linux 3.12.63-rt85
+      Linux 3.10.103-rt115
 
 ----
  drivers/scsi/fcoe/fcoe.c |  2 +-
  fs/dcache.c              | 17 +++++++++++++++--
- kernel/sched/core.c      |  2 +-
  kernel/timer.c           |  4 ++--
  localversion-rt          |  2 +-
  net/ipv4/icmp.c          |  8 ++++++++
  net/ipv4/tcp_ipv4.c      |  7 +++++++
- 7 files changed, 35 insertions(+), 7 deletions(-)
+ 6 files changed, 34 insertions(+), 6 deletions(-)
 ---------------------------
 diff --git a/drivers/scsi/fcoe/fcoe.c b/drivers/scsi/fcoe/fcoe.c
-index b439c20524ce..bd02c14b3719 100644
+index 7586dd90d67e..26fa668e5b4c 100644
 --- a/drivers/scsi/fcoe/fcoe.c
 +++ b/drivers/scsi/fcoe/fcoe.c
-@@ -1809,7 +1809,7 @@ static void fcoe_recv_frame(struct sk_buff *skb)
+@@ -1805,7 +1805,7 @@ static void fcoe_recv_frame(struct sk_buff *skb)
  	 */
  	hp = (struct fcoe_hdr *) skb_network_header(skb);
  
@@ -98,25 +96,25 @@ index b439c20524ce..bd02c14b3719 100644
  		if (stats->ErrorFrames < 5)
  			printk(KERN_WARNING "fcoe: FCoE version "
 diff --git a/fs/dcache.c b/fs/dcache.c
-index 50ddb10aced6..b6cebcacfacd 100644
+index 3bdb1e87bb7a..df0420c8a4cd 100644
 --- a/fs/dcache.c
 +++ b/fs/dcache.c
-@@ -617,6 +617,8 @@ again:
+@@ -507,6 +507,8 @@ relock:
   */
  void dput(struct dentry *dentry)
  {
 +	struct dentry *parent;
 +
- 	if (unlikely(!dentry))
+ 	if (!dentry)
  		return;
  
-@@ -645,9 +647,20 @@ repeat:
+@@ -541,9 +543,20 @@ repeat:
  	return;
  
  kill_it:
--	dentry = dentry_kill(dentry);
+-	dentry = dentry_kill(dentry, 1);
 -	if (dentry)
-+	parent = dentry_kill(dentry);
++	parent = dentry_kill(dentry, 1);
 +	if (parent) {
 +		int r;
 +
@@ -133,21 +131,8 @@ index 50ddb10aced6..b6cebcacfacd 100644
  }
  EXPORT_SYMBOL(dput);
  
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index ca7fd86309ed..0e348717ab05 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -2757,7 +2757,7 @@ static __always_inline int preemptible_lazy(void)
- 
- #else
- 
--static int preemptible_lazy(void)
-+static inline int preemptible_lazy(void)
- {
- 	return 1;
- }
 diff --git a/kernel/timer.c b/kernel/timer.c
-index 400ef0bde253..3c3bc6bba12e 100644
+index 2fd6ea5c6519..e6addc8e9b5a 100644
 --- a/kernel/timer.c
 +++ b/kernel/timer.c
 @@ -1009,7 +1009,7 @@ static void wait_for_running_timer(struct timer_list *timer)
@@ -170,14 +155,14 @@ index 400ef0bde253..3c3bc6bba12e 100644
  
  #ifdef CONFIG_NO_HZ_COMMON
 diff --git a/localversion-rt b/localversion-rt
-index fc6ea32352bc..168858f0521b 100644
+index f1a99cb304ba..f2aa035883e8 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt84
-+-rt85
+--rt114
++-rt115
 diff --git a/net/ipv4/icmp.c b/net/ipv4/icmp.c
-index 9d1218165571..a599898a00ae 100644
+index d0a56ee5a008..220cdc5dd592 100644
 --- a/net/ipv4/icmp.c
 +++ b/net/ipv4/icmp.c
 @@ -78,6 +78,7 @@
@@ -237,7 +222,7 @@ index 9d1218165571..a599898a00ae 100644
  
  /*
 diff --git a/net/ipv4/tcp_ipv4.c b/net/ipv4/tcp_ipv4.c
-index 6184d17c9126..578d2590cf37 100644
+index 11f27a45b8ef..673b5f893980 100644
 --- a/net/ipv4/tcp_ipv4.c
 +++ b/net/ipv4/tcp_ipv4.c
 @@ -62,6 +62,7 @@
@@ -248,15 +233,15 @@ index 6184d17c9126..578d2590cf37 100644
  
  #include <net/net_namespace.h>
  #include <net/icmp.h>
-@@ -572,6 +573,7 @@ void tcp_v4_send_check(struct sock *sk, struct sk_buff *skb)
+@@ -589,6 +590,7 @@ int tcp_v4_gso_send_check(struct sk_buff *skb)
+ 	return 0;
  }
- EXPORT_SYMBOL(tcp_v4_send_check);
  
 +static DEFINE_LOCAL_IRQ_LOCK(tcp_sk_lock);
  /*
   *	This routine will send an RST to the other tcp.
   *
-@@ -690,9 +692,12 @@ static void tcp_v4_send_reset(struct sock *sk, struct sk_buff *skb)
+@@ -707,9 +709,12 @@ static void tcp_v4_send_reset(struct sock *sk, struct sk_buff *skb)
  
  	net = dev_net(skb_dst(skb)->dev);
  	arg.tos = ip_hdr(skb)->tos;
@@ -269,7 +254,7 @@ index 6184d17c9126..578d2590cf37 100644
  
  	TCP_INC_STATS_BH(net, TCP_MIB_OUTSEGS);
  	TCP_INC_STATS_BH(net, TCP_MIB_OUTRSTS);
-@@ -774,9 +779,11 @@ static void tcp_v4_send_ack(struct net *net,
+@@ -791,9 +796,11 @@ static void tcp_v4_send_ack(struct sk_buff *skb, u32 seq, u32 ack,
  	if (oif)
  		arg.bound_dev_if = oif;
  	arg.tos = tos;
