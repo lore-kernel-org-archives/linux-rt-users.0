@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 4.1.33-rt38
-Date: Mon, 3 Oct 2016 18:03:30 -0400
-Message-ID: <20161003180330.4ef65245@gandalf.local.home>
+Subject: [ANNOUNCE] 3.18.42-rt45
+Date: Mon, 3 Oct 2016 18:03:54 -0400
+Message-ID: <20161003180354.5981ef9b@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -12,41 +12,41 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0039.hostedemail.com ([216.40.44.39]:43507 "EHLO
+Received: from smtprelay0176.hostedemail.com ([216.40.44.176]:47079 "EHLO
         smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1751631AbcJCWDe (ORCPT
+        by vger.kernel.org with ESMTP id S1752254AbcJCWD5 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 3 Oct 2016 18:03:34 -0400
+        Mon, 3 Oct 2016 18:03:57 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 4.1.33-rt38 stable release.
+I'm pleased to announce the 3.18.42-rt45 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v4.1-rt
-  Head SHA1: 08c164be8174a7c236d0ff09a691571f1834b13d
+  branch: v3.18-rt
+  Head SHA1: 940c8067f2f58aab66fa27a6a64bd1d5eeecdab9
 
 
-Or to build 4.1.33-rt38 directly, the following patches should be applied:
+Or to build 3.18.42-rt45 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.1.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.1.33.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.42.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/patch-4.1.33-rt38.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.42-rt45.patch.xz
 
 
 
-You can also build from 4.1.33-rt37 by applying the incremental patch:
+You can also build from 3.18.42-rt44 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/incr/patch-4.1.33-rt37-rt38.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/incr/patch-3.18.42-rt44-rt45.patch.xz
 
 
 
@@ -55,7 +55,7 @@ Enjoy,
 -- Steve
 
 
-Changes from v4.1.33-rt37:
+Changes from v3.18.42-rt44:
 
 ---
 
@@ -73,24 +73,24 @@ Sebastian Andrzej Siewior (8):
       fs/dcache: incremental fixup of the retry routine
 
 Steven Rostedt (Red Hat) (1):
-      Linux 4.1.33-rt38
+      Linux 3.18.42-rt45
 
 ----
- arch/x86/include/asm/preempt.h | 17 +++++++++++++++--
+ arch/x86/include/asm/preempt.h | 16 ++++++++++++++--
  drivers/scsi/fcoe/fcoe.c       |  2 +-
- fs/dcache.c                    | 17 ++++++++++++-----
+ fs/dcache.c                    | 18 ++++++++++++------
  kernel/sched/core.c            |  2 +-
  kernel/time/timer.c            |  4 ++--
  localversion-rt                |  2 +-
  net/ipv4/icmp.c                |  8 ++++++++
  net/ipv4/tcp_ipv4.c            |  7 +++++++
- 8 files changed, 47 insertions(+), 12 deletions(-)
+ 8 files changed, 46 insertions(+), 13 deletions(-)
 ---------------------------
 diff --git a/arch/x86/include/asm/preempt.h b/arch/x86/include/asm/preempt.h
-index c08949b0314d..eff1b8609f77 100644
+index 060d1b4e475d..6806369bddf5 100644
 --- a/arch/x86/include/asm/preempt.h
 +++ b/arch/x86/include/asm/preempt.h
-@@ -92,6 +92,8 @@ static __always_inline bool __preempt_count_dec_and_test(void)
+@@ -95,6 +95,8 @@ static __always_inline bool __preempt_count_dec_and_test(void)
  	if (____preempt_count_dec_and_test())
  		return true;
  #ifdef CONFIG_PREEMPT_LAZY
@@ -99,16 +99,15 @@ index c08949b0314d..eff1b8609f77 100644
  	return test_thread_flag(TIF_NEED_RESCHED_LAZY);
  #else
  	return false;
-@@ -104,8 +106,19 @@ static __always_inline bool __preempt_count_dec_and_test(void)
- static __always_inline bool should_resched(int preempt_offset)
+@@ -107,8 +109,18 @@ static __always_inline bool __preempt_count_dec_and_test(void)
+ static __always_inline bool should_resched(void)
  {
  #ifdef CONFIG_PREEMPT_LAZY
--	return unlikely(raw_cpu_read_4(__preempt_count) == preempt_offset ||
+-	return unlikely(!raw_cpu_read_4(__preempt_count) || \
 -			test_thread_flag(TIF_NEED_RESCHED_LAZY));
 +	u32 tmp;
 +
-+	tmp = raw_cpu_read_4(__preempt_count);
-+	if (tmp == preempt_offset)
++	if (!raw_cpu_read_4(__preempt_count))
 +		return true;
 +
 +	/* preempt count == 0 ? */
@@ -119,13 +118,13 @@ index c08949b0314d..eff1b8609f77 100644
 +		return false;
 +	return test_thread_flag(TIF_NEED_RESCHED_LAZY);
  #else
- 	return unlikely(raw_cpu_read_4(__preempt_count) == preempt_offset);
+ 	return unlikely(!raw_cpu_read_4(__preempt_count));
  #endif
 diff --git a/drivers/scsi/fcoe/fcoe.c b/drivers/scsi/fcoe/fcoe.c
-index d6b6dde64fb9..455bf9c67b16 100644
+index c1f2bd0bcdb7..8933c02b6729 100644
 --- a/drivers/scsi/fcoe/fcoe.c
 +++ b/drivers/scsi/fcoe/fcoe.c
-@@ -1815,7 +1815,7 @@ static void fcoe_recv_frame(struct sk_buff *skb)
+@@ -1816,7 +1816,7 @@ static void fcoe_recv_frame(struct sk_buff *skb)
  	 */
  	hp = (struct fcoe_hdr *) skb_network_header(skb);
  
@@ -135,10 +134,10 @@ index d6b6dde64fb9..455bf9c67b16 100644
  		if (stats->ErrorFrames < 5)
  			printk(KERN_WARNING "fcoe: FCoE version "
 diff --git a/fs/dcache.c b/fs/dcache.c
-index d96330db7f80..c790b2b070ab 100644
+index 1cb13a024cf8..986acc945c06 100644
 --- a/fs/dcache.c
 +++ b/fs/dcache.c
-@@ -748,6 +748,8 @@ static inline bool fast_dput(struct dentry *dentry)
+@@ -722,6 +722,8 @@ static inline bool fast_dput(struct dentry *dentry)
   */
  void dput(struct dentry *dentry)
  {
@@ -147,7 +146,7 @@ index d96330db7f80..c790b2b070ab 100644
  	if (unlikely(!dentry))
  		return;
  
-@@ -784,13 +786,18 @@ repeat:
+@@ -758,14 +760,18 @@ repeat:
  	return;
  
  kill_it:
@@ -157,6 +156,7 @@ index d96330db7f80..c790b2b070ab 100644
 +	if (parent) {
  		int r;
  
+-		/* the task with the highest priority won't schedule */
 -		r = cond_resched();
 -		if (!r)
 -			cpu_chill();
@@ -172,10 +172,10 @@ index d96330db7f80..c790b2b070ab 100644
  	}
  }
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 5396888893da..9f05a3dacd16 100644
+index 371fa38784e0..ce6d5c6ba8f7 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -3123,7 +3123,7 @@ static __always_inline int preemptible_lazy(void)
+@@ -3171,7 +3171,7 @@ static __always_inline int preemptible_lazy(void)
  
  #else
  
@@ -185,10 +185,10 @@ index 5396888893da..9f05a3dacd16 100644
  	return 1;
  }
 diff --git a/kernel/time/timer.c b/kernel/time/timer.c
-index c68ba873da3c..b1f9e6c5bec4 100644
+index 12d071d9063e..0df5cbfbcb5b 100644
 --- a/kernel/time/timer.c
 +++ b/kernel/time/timer.c
-@@ -1019,7 +1019,7 @@ static void wait_for_running_timer(struct timer_list *timer)
+@@ -1023,7 +1023,7 @@ static void wait_for_running_timer(struct timer_list *timer)
  			   base->running_timer != timer);
  }
  
@@ -197,7 +197,7 @@ index c68ba873da3c..b1f9e6c5bec4 100644
  #else
  static inline void wait_for_running_timer(struct timer_list *timer)
  {
-@@ -1279,8 +1279,8 @@ static inline void __run_timers(struct tvec_base *base)
+@@ -1281,8 +1281,8 @@ static inline void __run_timers(struct tvec_base *base)
  			}
  		}
  	}
@@ -208,14 +208,14 @@ index c68ba873da3c..b1f9e6c5bec4 100644
  
  #ifdef CONFIG_NO_HZ_COMMON
 diff --git a/localversion-rt b/localversion-rt
-index a3b2408c1da6..49bae8d6aa67 100644
+index ac4d836a809d..38c40b21a885 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt37
-+-rt38
+--rt44
++-rt45
 diff --git a/net/ipv4/icmp.c b/net/ipv4/icmp.c
-index be5fd9b81292..d7358c1ac63c 100644
+index 3c71d5fc54ea..46571b86e171 100644
 --- a/net/ipv4/icmp.c
 +++ b/net/ipv4/icmp.c
 @@ -78,6 +78,7 @@
@@ -234,7 +234,7 @@ index be5fd9b81292..d7358c1ac63c 100644
 +
  static struct sock *icmp_sk(struct net *net)
  {
- 	return *this_cpu_ptr(net->ipv4.icmp_sk);
+ 	return net->ipv4.icmp_sk[smp_processor_id()];
 @@ -215,12 +218,14 @@ static inline struct sock *icmp_xmit_lock(struct net *net)
  
  	local_bh_disable();
@@ -275,7 +275,7 @@ index be5fd9b81292..d7358c1ac63c 100644
  
  /*
 diff --git a/net/ipv4/tcp_ipv4.c b/net/ipv4/tcp_ipv4.c
-index 13b92d595138..6bfa68fb5f21 100644
+index 5d5390299277..7a9139da3854 100644
 --- a/net/ipv4/tcp_ipv4.c
 +++ b/net/ipv4/tcp_ipv4.c
 @@ -62,6 +62,7 @@
@@ -286,7 +286,7 @@ index 13b92d595138..6bfa68fb5f21 100644
  
  #include <net/net_namespace.h>
  #include <net/icmp.h>
-@@ -563,6 +564,7 @@ void tcp_v4_send_check(struct sock *sk, struct sk_buff *skb)
+@@ -562,6 +563,7 @@ void tcp_v4_send_check(struct sock *sk, struct sk_buff *skb)
  }
  EXPORT_SYMBOL(tcp_v4_send_check);
  
@@ -294,7 +294,7 @@ index 13b92d595138..6bfa68fb5f21 100644
  /*
   *	This routine will send an RST to the other tcp.
   *
-@@ -684,10 +686,13 @@ static void tcp_v4_send_reset(struct sock *sk, struct sk_buff *skb)
+@@ -683,10 +685,13 @@ static void tcp_v4_send_reset(struct sock *sk, struct sk_buff *skb)
  		arg.bound_dev_if = sk->sk_bound_dev_if;
  
  	arg.tos = ip_hdr(skb)->tos;
@@ -308,7 +308,7 @@ index 13b92d595138..6bfa68fb5f21 100644
  
  	TCP_INC_STATS_BH(net, TCP_MIB_OUTSEGS);
  	TCP_INC_STATS_BH(net, TCP_MIB_OUTRSTS);
-@@ -769,10 +774,12 @@ static void tcp_v4_send_ack(struct net *net,
+@@ -768,10 +773,12 @@ static void tcp_v4_send_ack(struct sk_buff *skb, u32 seq, u32 ack,
  	if (oif)
  		arg.bound_dev_if = oif;
  	arg.tos = tos;
