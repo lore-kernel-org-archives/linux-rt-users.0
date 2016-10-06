@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 4.4.23-rt33
-Date: Wed, 5 Oct 2016 21:58:11 -0400
-Message-ID: <20161005215811.4b158d58@gandalf.local.home>
+Subject: [ANNOUNCE] 3.12.64-rt86
+Date: Wed, 5 Oct 2016 21:58:35 -0400
+Message-ID: <20161005215835.2cd37bc1@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,10 +18,10 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 4.4.23-rt33 stable release.
+I'm pleased to announce the 3.12.64-rt86 stable release.
 
 
-This release is just an update to the new stable 4.4.23 version
+This release is just an update to the new stable 3.12.64 version
 and no RT specific changes have been made.
 
 
@@ -29,17 +29,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v4.4-rt
-  Head SHA1: 914271f643a1d9b39bf9e1968a090bf6e6709424
+  branch: v3.12-rt
+  Head SHA1: 9e9bb146e1cc72cabbcb1097bf0e0ae58e96862e
 
 
-Or to build 4.4.23-rt33 directly, the following patches should be applied:
+Or to build 3.12.64-rt86 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.23.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.64.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.23-rt33.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.64-rt86.patch.xz
 
 
 
