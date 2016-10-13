@@ -1,91 +1,117 @@
 From: Julia Cartwright <julia@ni.com>
-Subject: [PATCH v2] sc16is7xx: Drop bogus use of IRQF_ONESHOT
-Date: Thu, 13 Oct 2016 10:44:33 -0500
-Message-ID: <20161013154433.GU10625@jcartwri.amer.corp.natinst.com>
-References: <20161003151432.17828-1-julia@ni.com>
+Subject: Re: Kernel 4.6.7-rt13: Intel Ethernet driver igb causes huge
+ latencies in cyclictest
+Date: Thu, 13 Oct 2016 11:18:39 -0500
+Message-ID: <20161013161839.GV10625@jcartwri.amer.corp.natinst.com>
+References: <487032ca81f84e70bdacc39a024eff5e@FE-MBX1012.de.bosch.com>
+ <20161004193445.GF10625@jcartwri.amer.corp.natinst.com>
+ <584755c2766e4b94a604ece16760fe14@FE-MBX1012.de.bosch.com>
+ <20161005155959.GH10625@jcartwri.amer.corp.natinst.com>
+ <13c3cd3ffee4490fb22b8de383e51361@FE-MBX1012.de.bosch.com>
+ <AAEA33E297BCAC4B9BB20A7C2DF0AB8D8045E418@FMSMSX113.amr.corp.intel.com>
+ <29250f87b1d84aacb8aa312935582291@FE-MBX1012.de.bosch.com>
+ <20161010193958.GE22235@jcartwri.amer.corp.natinst.com>
+ <e9661abf93194ad3849e3864a8361993@FE-MBX1012.de.bosch.com>
+ <b77ea8ab312149d2b20a717d3ab0a8dc@FE-MBX1012.de.bosch.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Jakub Kicinski <kubakici@wp.pl>, linux-kernel@vger.kernel.org,
-        Sean Nyekjaer <sean.nyekjaer@prevas.dk>,
-        Josh Cartwright <joshc@ni.com>, linux-rt-users@vger.kernel.org,
-        stable@vger.kernel.org, linux-serial@vger.kernel.org,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod2.natinst.com ([130.164.80.23]:50188 "EHLO ni.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1755412AbcJMPoq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 13 Oct 2016 11:44:46 -0400
-In-Reply-To: <20161003151432.17828-1-julia@ni.com>
+Cc: "Williams, Mitch A" <mitch.a.williams@intel.com>,
+        "Kirsher, Jeffrey T" <jeffrey.t.kirsher@intel.com>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        Sebastian Andrzej Siewior <sebastian.siewior@linutronix.de>,
+        "netdev@vger.kernel.org" <netdev@vger.kernel.org>,
+        "intel-wired-lan@lists.osuosl.org" <intel-wired-lan@lists.osuosl.org>,
+        Greg <gvrose8192@gmail.com>
+To: "Koehrer Mathias (ETAS/ESW5)" <mathias.koehrer@etas.com>
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <b77ea8ab312149d2b20a717d3ab0a8dc@FE-MBX1012.de.bosch.com>
 Content-Disposition: inline
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: netdev-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-From: Josh Cartwright <joshc@ni.com>
+Hey Mathias-
 
-The use of IRQF_ONESHOT when registering an interrupt handler with
-request_irq() is non-sensical.
-
-Not only that, it also prevents the handler from being threaded when it
-otherwise should be w/ IRQ_FORCED_THREADING is enabled.  This causes the
-following deadlock observed by Sean Nyekjaer on -rt:
-
-Internal error: Oops - BUG: 0 [#1] PREEMPT SMP ARM
+On Thu, Oct 13, 2016 at 10:57:18AM +0000, Koehrer Mathias (ETAS/ESW5) wrote:
 [..]
-   rt_spin_lock_slowlock from queue_kthread_work
-   queue_kthread_work from sc16is7xx_irq
-   sc16is7xx_irq [sc16is7xx] from handle_irq_event_percpu
-   handle_irq_event_percpu from handle_irq_event
-   handle_irq_event from handle_level_irq
-   handle_level_irq from generic_handle_irq
-   generic_handle_irq from mxc_gpio_irq_handler
-   mxc_gpio_irq_handler from mx3_gpio_irq_handler
-   mx3_gpio_irq_handler from generic_handle_irq
-   generic_handle_irq from __handle_domain_irq
-   __handle_domain_irq from gic_handle_irq
-   gic_handle_irq from __irq_svc
-   __irq_svc from rt_spin_unlock
-   rt_spin_unlock from kthread_worker_fn
-   kthread_worker_fn from kthread
-   kthread from ret_from_fork
 
-Fixes: 9e6f4ca3e567 ("sc16is7xx: use kthread_worker for tx_work and irq")
-Reported-by: Sean Nyekjaer <sean.nyekjaer@prevas.dk>
-Signed-off-by: Josh Cartwright <joshc@ni.com>
-Cc: linux-rt-users@vger.kernel.org
-Cc: Jakub Kicinski <moorray3@wp.pl>
-Cc: stable@vger.kernel.org
-Cc: linux-serial@vger.kernel.org
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Julia Cartwright <julia@ni.com>
-Acked-by: Jakub Kicinski <kubakici@wp.pl>
----
-v1 -> v2:
- * Fixed up From:
- * Added Jakub's Acked-by.
+Interesting indeed!
 
-This patch has been in -rt for a little while, but it isn't -rt specific.
+> > Here are some places where I added traces:
+> > In file igb_ptp.c:
+> > void igb_ptp_rx_hang(struct igb_adapter *adapter) {
+> >         struct e1000_hw *hw = &adapter->hw;
+> >         unsigned long rx_event;
+> >         u32 tsyncrxctl;
+> >         trace_igb(700);
+> >         tsyncrxctl = rd32(E1000_TSYNCRXCTL);
+> >         trace_igb(701);
+> >
+> >         /* Other hardware uses per-packet timestamps */
+> >         if (hw->mac.type != e1000_82576)
+> >                 return;
+> > ...
+> >
+> > In file igb_main.c:
+> > static void igb_check_lvmmc(struct igb_adapter *adapter) {
+> >         struct e1000_hw *hw = &adapter->hw;
+> >         u32 lvmmc;
+> >
+> >         trace_igb(600);
+> >         lvmmc = rd32(E1000_LVMMC);
+> >         trace_igb(601);
+> >         if (lvmmc) {
+> > ...
+> >
+[..]
+> > The time between my trace points 700 and 701 is about 30us, the time between my
+> > trace points 600 and 601 is even 37us!!
+> >
+> > The code in between is
+> >      tsyncrxctl = rd32(E1000_TSYNCRXCTL); resp.
+> >      lvmmc = rd32(E1000_LVMMC);
+> >
+> > In both cases this is a single read from a register.
+> >
+> > I have no idea why this single read could take that much time!
 
-See relevant bug report thread which starts here:
+Are these the only registers you see this amount of delay when reading?
 
-  http://www.spinics.net/lists/linux-rt-users/msg14620.html
+It's also possible that it's not these registers themselves that cause
+problems, but any writes prior to these reads.  That is, given to PCI's
+posted write behavior, it could be that these reads are delayed only
+because it's flushing previously writes to the device.
 
- drivers/tty/serial/sc16is7xx.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+> > Is it possible that the igb hardware is in a state that delays the read access and this is
+> > why the whole I/O system might be delayed?
 
-diff --git a/drivers/tty/serial/sc16is7xx.c b/drivers/tty/serial/sc16is7xx.c
-index a9d94f7..96a374d 100644
---- a/drivers/tty/serial/sc16is7xx.c
-+++ b/drivers/tty/serial/sc16is7xx.c
-@@ -1260,7 +1260,7 @@ static int sc16is7xx_probe(struct device *dev,
- 
- 	/* Setup interrupt */
- 	ret = devm_request_irq(dev, irq, sc16is7xx_irq,
--			       IRQF_ONESHOT | flags, dev_name(dev), s);
-+			       flags, dev_name(dev), s);
- 	if (!ret)
- 		return 0;
- 
--- 
-2.9.3
+One additional hypothesis is that some register accesses trigger
+accesses to off-chip resources synchronously; for example, a write to
+enable timestamping needs to access an external phy on a slower bus,
+etc.  I don't know enough about this device to say whether or not that
+happens or not.
 
+> To have a proper comparison, I did the same with kernel 3.18.27-rt27.
+> Also here, I instrumented the igb driver to get traces for the rd32 calls.
+> However, here everything is generally much faster!
+
+> In the idle system the maximum I got for a read was about 6us, most times it was 1-2us.
+> On the 4.8 kernel this is always much slower (see above).
+> My question is now: Is there any kernel config option that has been introduced in the meantime
+> that may lead to this effect and which is not set in my 4.8 config?
+
+Have you tested on a vanilla (non-RT) kernel?  I doubt there is anything
+RT specific about what you are seeing, but it might be nice to get
+confirmation.  Also, bisection would probably be easier if you confirm
+on a vanilla kernel.
+
+I find it unlikely that it's a kernel config option that changed which
+regressed you, but instead was a code change to a driver.  Which driver
+is now the question, and the surface area is still big (processor
+mapping attributes for this region, PCI root complex configuration, PCI
+brige configuration, igb driver itself, etc.).
+
+Big enough that I'd recommend a bisection.  It looks like a bisection
+between 3.18 and 4.8 would take you about 18 tries to narrow down,
+assuming all goes well.
+
+   Julia
