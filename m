@@ -1,74 +1,91 @@
-From: David Laight <David.Laight@ACULAB.COM>
-Subject: RE: Kernel 4.6.7-rt13: Intel Ethernet driver igb causes huge
- latencies in cyclictest
-Date: Thu, 13 Oct 2016 14:02:15 +0000
-Message-ID: <063D6719AE5E284EB5DD2968C1650D6DB01E7AC1@AcuExch.aculab.com>
-References: <20160923144140.5tkzeymamrb5qnsv@linutronix.de>
- <a5ea146cf078457ab001131ca0886b0b@FE-MBX1012.de.bosch.com>
- <20160928194519.GA32423@jcartwri.amer.corp.natinst.com>
- <487032ca81f84e70bdacc39a024eff5e@FE-MBX1012.de.bosch.com>
- <20161004193445.GF10625@jcartwri.amer.corp.natinst.com>
- <584755c2766e4b94a604ece16760fe14@FE-MBX1012.de.bosch.com>
- <20161005155959.GH10625@jcartwri.amer.corp.natinst.com>
- <13c3cd3ffee4490fb22b8de383e51361@FE-MBX1012.de.bosch.com>
- <AAEA33E297BCAC4B9BB20A7C2DF0AB8D8045E418@FMSMSX113.amr.corp.intel.com>
- <29250f87b1d84aacb8aa312935582291@FE-MBX1012.de.bosch.com>
- <20161010193958.GE22235@jcartwri.amer.corp.natinst.com>
- <e9661abf93194ad3849e3864a8361993@FE-MBX1012.de.bosch.com>
- <b77ea8ab312149d2b20a717d3ab0a8dc@FE-MBX1012.de.bosch.com>
+From: Julia Cartwright <julia@ni.com>
+Subject: [PATCH v2] sc16is7xx: Drop bogus use of IRQF_ONESHOT
+Date: Thu, 13 Oct 2016 10:44:33 -0500
+Message-ID: <20161013154433.GU10625@jcartwri.amer.corp.natinst.com>
+References: <20161003151432.17828-1-julia@ni.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="Windows-1252"
-Content-Transfer-Encoding: 8BIT
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        Sebastian Andrzej Siewior <sebastian.siewior@linutronix.de>,
-        "netdev@vger.kernel.org" <netdev@vger.kernel.org>,
-        "intel-wired-lan@lists.osuosl.org" <intel-wired-lan@lists.osuosl.org>,
-        Greg <gvrose8192@gmail.com>
-To: "'Koehrer Mathias (ETAS/ESW5)'" <mathias.koehrer@etas.com>,
-        "Julia Cartwright" <julia@ni.com>,
-        "Williams, Mitch A" <mitch.a.williams@intel.com>,
-        "Kirsher, Jeffrey T" <jeffrey.t.kirsher@intel.com>
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <b77ea8ab312149d2b20a717d3ab0a8dc@FE-MBX1012.de.bosch.com>
-Content-Language: en-US
-Sender: netdev-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Jakub Kicinski <kubakici@wp.pl>, linux-kernel@vger.kernel.org,
+        Sean Nyekjaer <sean.nyekjaer@prevas.dk>,
+        Josh Cartwright <joshc@ni.com>, linux-rt-users@vger.kernel.org,
+        stable@vger.kernel.org, linux-serial@vger.kernel.org,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from skprod2.natinst.com ([130.164.80.23]:50188 "EHLO ni.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S1755412AbcJMPoq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 13 Oct 2016 11:44:46 -0400
+In-Reply-To: <20161003151432.17828-1-julia@ni.com>
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Koehrer Mathias
-> Sent: 13 October 2016 11:57
-..
-> > The time between my trace points 700 and 701 is about 30us, the time between my
-> > trace points 600 and 601 is even 37us!!
-> > The code in between is
-> >      tsyncrxctl = rd32(E1000_TSYNCRXCTL); resp.
-> >      lvmmc = rd32(E1000_LVMMC);
-> >
-> > In both cases this is a single read from a register.
-> > I have no idea why this single read could take that much time!
-> > Is it possible that the igb hardware is in a state that delays the read access and this is
-> > why the whole I/O system might be delayed?
-> >
-> 
-> To have a proper comparison, I did the same with kernel 3.18.27-rt27.
-> Also here, I instrumented the igb driver to get traces for the rd32 calls.
-> However, here everything is generally much faster!
-> In the idle system the maximum I got for a read was about 6us, most times it was 1-2us.
+From: Josh Cartwright <joshc@ni.com>
 
-1-2us is probably about right, PCIe is high throughput high latency.
-You should see the latencies we get talking to fpga!
+The use of IRQF_ONESHOT when registering an interrupt handler with
+request_irq() is non-sensical.
 
-> On the 4.8 kernel this is always much slower (see above).
-> My question is now: Is there any kernel config option that has been introduced in the meantime
-> that may lead to this effect and which is not set in my 4.8 config?
+Not only that, it also prevents the handler from being threaded when it
+otherwise should be w/ IRQ_FORCED_THREADING is enabled.  This causes the
+following deadlock observed by Sean Nyekjaer on -rt:
 
-Have a look at the generated code for rd32().
-Someone might have added a load of synchronisation instructions to it.
-On x86 I don't think it needs any.
+Internal error: Oops - BUG: 0 [#1] PREEMPT SMP ARM
+[..]
+   rt_spin_lock_slowlock from queue_kthread_work
+   queue_kthread_work from sc16is7xx_irq
+   sc16is7xx_irq [sc16is7xx] from handle_irq_event_percpu
+   handle_irq_event_percpu from handle_irq_event
+   handle_irq_event from handle_level_irq
+   handle_level_irq from generic_handle_irq
+   generic_handle_irq from mxc_gpio_irq_handler
+   mxc_gpio_irq_handler from mx3_gpio_irq_handler
+   mx3_gpio_irq_handler from generic_handle_irq
+   generic_handle_irq from __handle_domain_irq
+   __handle_domain_irq from gic_handle_irq
+   gic_handle_irq from __irq_svc
+   __irq_svc from rt_spin_unlock
+   rt_spin_unlock from kthread_worker_fn
+   kthread_worker_fn from kthread
+   kthread from ret_from_fork
 
-It is also possible for other PCIe accesses to slow things down
-(which might be why you see 6us).
+Fixes: 9e6f4ca3e567 ("sc16is7xx: use kthread_worker for tx_work and irq")
+Reported-by: Sean Nyekjaer <sean.nyekjaer@prevas.dk>
+Signed-off-by: Josh Cartwright <joshc@ni.com>
+Cc: linux-rt-users@vger.kernel.org
+Cc: Jakub Kicinski <moorray3@wp.pl>
+Cc: stable@vger.kernel.org
+Cc: linux-serial@vger.kernel.org
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Julia Cartwright <julia@ni.com>
+Acked-by: Jakub Kicinski <kubakici@wp.pl>
+---
+v1 -> v2:
+ * Fixed up From:
+ * Added Jakub's Acked-by.
 
-I presume you are doing these comparisons on the same hardware?
-Obscure bus topologies could slow things down.
+This patch has been in -rt for a little while, but it isn't -rt specific.
 
-	David
+See relevant bug report thread which starts here:
+
+  http://www.spinics.net/lists/linux-rt-users/msg14620.html
+
+ drivers/tty/serial/sc16is7xx.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/tty/serial/sc16is7xx.c b/drivers/tty/serial/sc16is7xx.c
+index a9d94f7..96a374d 100644
+--- a/drivers/tty/serial/sc16is7xx.c
++++ b/drivers/tty/serial/sc16is7xx.c
+@@ -1260,7 +1260,7 @@ static int sc16is7xx_probe(struct device *dev,
+ 
+ 	/* Setup interrupt */
+ 	ret = devm_request_irq(dev, irq, sc16is7xx_irq,
+-			       IRQF_ONESHOT | flags, dev_name(dev), s);
++			       flags, dev_name(dev), s);
+ 	if (!ret)
+ 		return 0;
+ 
+-- 
+2.9.3
+
