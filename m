@@ -1,130 +1,178 @@
-From: Joel Fernandes <joelaf@google.com>
-Subject: [PATCH v3] mm: vmalloc: Replace purge_lock spinlock with atomic refcount
-Date: Sat, 15 Oct 2016 05:52:59 -0700
-Message-ID: <1476535979-27467-1-git-send-email-joelaf@google.com>
-Cc: linux-rt-users@vger.kernel.org, Joel Fernandes <joelaf@google.com>,
-        Chris Wilson <chris@chris-wilson.co.uk>,
-        Jisheng Zhang <jszhang@marvell.com>,
-        John Dias <joaodias@google.com>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        linux-mm@kvack.org (open list:MEMORY MANAGEMENT)
-To: linux-kernel@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH v3] mm: vmalloc: Replace purge_lock spinlock with atomic
+ refcount
+Date: Sat, 15 Oct 2016 09:46:13 -0700
+Message-ID: <20161015164613.GA26079@infradead.org>
+References: <1476535979-27467-1-git-send-email-joelaf@google.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Chris Wilson <chris@chris-wilson.co.uk>,
+	Jisheng Zhang <jszhang@marvell.com>,
+	John Dias <joaodias@google.com>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	"open list:MEMORY MANAGEMENT" <linux-mm@kvack.org>
+To: Joel Fernandes <joelaf@google.com>
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <1476535979-27467-1-git-send-email-joelaf@google.com>
+Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-The purge_lock spinlock causes high latencies with non RT kernel. This has been
-reported multiple times on lkml [1] [2] and affects applications like audio.
+atomic_t magic for llocking is always a bit iffy.
 
-In this patch, I replace the spinlock with an atomic refcount so that
-preemption is kept turned on during purge. This Ok to do since [3] builds the
-lazy free list in advance and atomically retrieves the list so any instance of
-purge will have its own list it is purging. Since the individual vmap area
-frees are themselves protected by a lock, this is Ok.
+The real question is: what is purge_lock even supposed to protect?
 
-The only thing left is the fact that previously it had trylock behavior, so
-preserve that by using the refcount to keep track of in-progress purges and
-abort like previously if there is an ongoing purge. Lastly, decrement
-vmap_lazy_nr as the vmap areas are freed, and not in advance, so that the
-vmap_lazy_nr is not reduced too soon as suggested in [2].
+ - purge_fragmented_blocks seems to have it's own local protection.
+ - all handling of of valist is implicity protected by the atomic
+   list deletion in llist_del_all
+ - the manipulation of vmap_lazy_nr already is atomic
+ - flush_tlb_kernel_range should not require any synchronization
+ - the calls to __free_vmap_area are sychronized by vmap_area_lock
+ - *start and *end always point to on-stack variables, never mind
+   that the caller never looks at the updated values anyway.
 
-Tests:
-x86_64 quad core machine on kernel 4.8, run: cyclictest -p 99 -n
-Concurrently in a kernel module, run vmalloc and vfree 8K buffer in a loop.
-Preemption configuration: CONFIG_PREEMPT__LL=y (low-latency desktop)
+And once we use the cmpxchg in llist_del_all as the effectit protection
+against multiple concurrent callers (slightly sloopy) there just be
+nothing else to synchronize.
 
-Without patch, cyclictest output:
-policy: fifo: loadavg: 0.05 0.01 0.00 1/85 1272          Avg:  128 Max:    1177
-policy: fifo: loadavg: 0.11 0.03 0.01 2/87 1447          Avg:  122 Max:    1897
-policy: fifo: loadavg: 0.10 0.03 0.01 1/89 1656          Avg:   93 Max:    2886
+And while we're at it the code structure here is totally grotty.
 
-With patch, cyclictest output:
-policy: fifo: loadavg: 1.15 0.68 0.30 1/162 8399         Avg:   92 Max:     284
-policy: fifo: loadavg: 1.21 0.71 0.32 2/164 9840         Avg:   94 Max:     296
-policy: fifo: loadavg: 1.18 0.72 0.32 2/166 11253        Avg:  107 Max:     321
-
-[1] http://lists.openwall.net/linux-kernel/2016/03/23/29
-[2] https://lkml.org/lkml/2016/10/9/59
-[3] https://lkml.org/lkml/2016/4/15/287
-
-[thanks Chris for the cond_resched_lock ideas]
-Cc: Chris Wilson <chris@chris-wilson.co.uk>
-Cc: Jisheng Zhang <jszhang@marvell.com>
-Cc: John Dias <joaodias@google.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Signed-off-by: Joel Fernandes <joelaf@google.com>
----
-v3 changes:
-Fixed ordering of va pointer access and __free_vmap_area
-
-v2 changes:
-Updated test description in commit message, and typos.
-
- mm/vmalloc.c | 25 +++++++++++++------------
- 1 file changed, 13 insertions(+), 12 deletions(-)
+So what about the patch below (only boot tested):
 
 diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index 613d1d9..0270723 100644
+index f2481cb..c2b9a98 100644
 --- a/mm/vmalloc.c
 +++ b/mm/vmalloc.c
-@@ -626,11 +626,11 @@ void set_iounmap_nonlazy(void)
- static void __purge_vmap_area_lazy(unsigned long *start, unsigned long *end,
- 					int sync, int force_flush)
+@@ -613,82 +613,43 @@ void set_iounmap_nonlazy(void)
+ 	atomic_set(&vmap_lazy_nr, lazy_max_pages()+1);
+ }
+ 
+-/*
+- * Purges all lazily-freed vmap areas.
+- *
+- * If sync is 0 then don't purge if there is already a purge in progress.
+- * If force_flush is 1, then flush kernel TLBs between *start and *end even
+- * if we found no lazy vmap areas to unmap (callers can use this to optimise
+- * their own TLB flushing).
+- * Returns with *start = min(*start, lowest purged address)
+- *              *end = max(*end, highest purged address)
+- */
+-static void __purge_vmap_area_lazy(unsigned long *start, unsigned long *end,
+-					int sync, int force_flush)
++static bool __purge_vmap_area_lazy(unsigned long start, unsigned long end)
  {
 -	static DEFINE_SPINLOCK(purge_lock);
-+	static atomic_t purging;
  	struct llist_node *valist;
  	struct vmap_area *va;
  	struct vmap_area *n_va;
--	int nr = 0;
-+	int dofree = 0;
+ 	int nr = 0;
  
- 	/*
- 	 * If sync is 0 but force_flush is 1, we'll go sync anyway but callers
-@@ -638,10 +638,10 @@ static void __purge_vmap_area_lazy(unsigned long *start, unsigned long *end,
- 	 * the case that isn't actually used at the moment anyway.
- 	 */
- 	if (!sync && !force_flush) {
+-	/*
+-	 * If sync is 0 but force_flush is 1, we'll go sync anyway but callers
+-	 * should not expect such behaviour. This just simplifies locking for
+-	 * the case that isn't actually used at the moment anyway.
+-	 */
+-	if (!sync && !force_flush) {
 -		if (!spin_trylock(&purge_lock))
-+		if (atomic_cmpxchg(&purging, 0, 1))
- 			return;
- 	} else
+-			return;
+-	} else
 -		spin_lock(&purge_lock);
-+		atomic_inc(&purging);
- 
- 	if (sync)
- 		purge_fragmented_blocks_allcpus();
-@@ -652,22 +652,23 @@ static void __purge_vmap_area_lazy(unsigned long *start, unsigned long *end,
- 			*start = va->va_start;
- 		if (va->va_end > *end)
- 			*end = va->va_end;
--		nr += (va->va_end - va->va_start) >> PAGE_SHIFT;
-+		dofree = 1;
+-
+-	if (sync)
+-		purge_fragmented_blocks_allcpus();
+-
+ 	valist = llist_del_all(&vmap_purge_list);
+ 	llist_for_each_entry(va, valist, purge_list) {
+-		if (va->va_start < *start)
+-			*start = va->va_start;
+-		if (va->va_end > *end)
+-			*end = va->va_end;
++		if (va->va_start < start)
++			start = va->va_start;
++		if (va->va_end > end)
++			end = va->va_end;
+ 		nr += (va->va_end - va->va_start) >> PAGE_SHIFT;
  	}
  
 -	if (nr)
 -		atomic_sub(nr, &vmap_lazy_nr);
 -
 -	if (nr || force_flush)
-+	if (dofree || force_flush)
- 		flush_tlb_kernel_range(*start, *end);
- 
+-		flush_tlb_kernel_range(*start, *end);
+-
 -	if (nr) {
-+	if (dofree) {
- 		spin_lock(&vmap_area_lock);
+-		spin_lock(&vmap_area_lock);
 -		llist_for_each_entry_safe(va, n_va, valist, purge_list)
-+		llist_for_each_entry_safe(va, n_va, valist, purge_list) {
-+			int nrfree = ((va->va_end - va->va_start) >> PAGE_SHIFT);
- 			__free_vmap_area(va);
-+			atomic_sub(nrfree, &vmap_lazy_nr);
-+			cond_resched_lock(&vmap_area_lock);
-+		}
- 		spin_unlock(&vmap_area_lock);
- 	}
+-			__free_vmap_area(va);
+-		spin_unlock(&vmap_area_lock);
+-	}
 -	spin_unlock(&purge_lock);
-+	atomic_dec(&purging);
+-}
++	if (!nr)
++		return false;
+ 
+-/*
+- * Kick off a purge of the outstanding lazy areas. Don't bother if somebody
+- * is already purging.
+- */
+-static void try_purge_vmap_area_lazy(void)
+-{
+-	unsigned long start = ULONG_MAX, end = 0;
++	atomic_sub(nr, &vmap_lazy_nr);
+ 
+-	__purge_vmap_area_lazy(&start, &end, 0, 0);
++	spin_lock(&vmap_area_lock);
++	llist_for_each_entry_safe(va, n_va, valist, purge_list)
++		__free_vmap_area(va);
++	spin_unlock(&vmap_area_lock);
++	return true;
  }
  
  /*
--- 
-2.8.0.rc3.226.g39d4020
+- * Kick off a purge of the outstanding lazy areas.
++ * Kick off a purge of the outstanding lazy areas, including the fragment
++ * blocks on the per-cpu lists.
+  */
+ static void purge_vmap_area_lazy(void)
+ {
+-	unsigned long start = ULONG_MAX, end = 0;
++	purge_fragmented_blocks_allcpus();
++	__purge_vmap_area_lazy(ULONG_MAX, 0);
+ 
+-	__purge_vmap_area_lazy(&start, &end, 1, 0);
+ }
+ 
+ /*
+@@ -706,8 +667,12 @@ static void free_vmap_area_noflush(struct vmap_area *va)
+ 	/* After this point, we may free va at any time */
+ 	llist_add(&va->purge_list, &vmap_purge_list);
+ 
++	/*
++	 * Kick off a purge of the outstanding lazy areas. Don't bother to
++	 * to purge the per-cpu lists of fragmented blocks.
++	 */
+ 	if (unlikely(nr_lazy > lazy_max_pages()))
+-		try_purge_vmap_area_lazy();
++		__purge_vmap_area_lazy(ULONG_MAX, 0);
+ }
+ 
+ /*
+@@ -1094,7 +1059,9 @@ void vm_unmap_aliases(void)
+ 		rcu_read_unlock();
+ 	}
+ 
+-	__purge_vmap_area_lazy(&start, &end, 1, flush);
++	purge_fragmented_blocks_allcpus();
++	if (!__purge_vmap_area_lazy(start, end) && flush)
++		flush_tlb_kernel_range(start, end);
+ }
+ EXPORT_SYMBOL_GPL(vm_unmap_aliases);
+ 
+
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
