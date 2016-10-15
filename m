@@ -1,18 +1,24 @@
 From: Joel Fernandes <joelaf@google.com>
-Subject: [PATCH] mm: vmalloc: Replace purge_lock spinlock with atomic refcount
-Date: Sat, 15 Oct 2016 03:10:17 -0700
-Message-ID: <1476526217-19368-1-git-send-email-joelaf@google.com>
-Cc: linux-rt-users@vger.kernel.org,
-	Joel Fernandes <joelaf@google.com>,
-	Chris Wilson <chris@chris-wilson.co.uk>,
-	Jisheng Zhang <jszhang@marvell.com>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	joelaf <joelaf@joelaf-glaptop0.roam.corp.google.com>,
-	linux-mm@kvack.org (open list:MEMORY MANAGEMENT)
+Subject: [PATCH v2] mm: vmalloc: Replace purge_lock spinlock with atomic refcount
+Date: Sat, 15 Oct 2016 03:42:42 -0700
+Message-ID: <1476528162-21981-1-git-send-email-joelaf@google.com>
+Cc: linux-rt-users@vger.kernel.org, Joel Fernandes <joelaf@google.com>,
+        Chris Wilson <chris@chris-wilson.co.uk>,
+        Jisheng Zhang <jszhang@marvell.com>,
+        John Dias <joaodias@google.com>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        linux-mm@kvack.org (open list:MEMORY MANAGEMENT)
 To: linux-kernel@vger.kernel.org
-Return-path: <owner-linux-mm@kvack.org>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wm0-f49.google.com ([74.125.82.49]:37683 "EHLO
+        mail-wm0-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751725AbcJOKn1 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 15 Oct 2016 06:43:27 -0400
+Received: by mail-wm0-f49.google.com with SMTP id c78so24612619wme.0
+        for <linux-rt-users@vger.kernel.org>; Sat, 15 Oct 2016 03:43:26 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 The purge_lock spinlock causes high latencies with non RT kernel. This has been
 reported multiple times on lkml [1] [2] and affects applications like audio.
@@ -23,16 +29,15 @@ lazy free list in advance and atomically retrieves the list so any instance of
 purge will have its own list it is purging. Since the individual vmap area
 frees are themselves protected by a lock, this is Ok.
 
-The only things left is the fact that previously it had trylock behavior, so
-use the refcount to keep track of in-progress purges and abort like previously
-if there is an ongoing purge. Lastly, lets reduce vmap_lazy_nr as the vmap
-area are freed, and not in advance, so that the vmap_lazy_nr is not reduced
-too soon as suggested in [2].
+The only thing left is the fact that previously it had trylock behavior, so
+preserve that by using the refcount to keep track of in-progress purges and
+abort like previously if there is an ongoing purge. Lastly, decrement
+vmap_lazy_nr as the vmap areas are freed, and not in advance, so that the
+vmap_lazy_nr is not reduced too soon as suggested in [2].
 
 Tests:
-
-cyclictest -p 99 -n
-Concurrently in a kernel module, vmalloc and vfree 8K buffer in a loop.
+x86_64 quad core machine on kernel 4.8, run: cyclictest -p 99 -n
+Concurrently in a kernel module, run vmalloc and vfree 8K buffer in a loop.
 Preemption configuration: CONFIG_PREEMPT__LL=y (low-latency desktop)
 
 Without patch, cyclictest output:
@@ -49,11 +54,16 @@ policy: fifo: loadavg: 1.18 0.72 0.32 2/166 11253        Avg:  107 Max:     321
 [2] https://lkml.org/lkml/2016/10/9/59
 [3] https://lkml.org/lkml/2016/4/15/287
 
+[thanks Chris for the cond_resched_lock ideas]
 Cc: Chris Wilson <chris@chris-wilson.co.uk>
 Cc: Jisheng Zhang <jszhang@marvell.com>
+Cc: John Dias <joaodias@google.com>
 Cc: Andrew Morton <akpm@linux-foundation.org>
 Signed-off-by: Joel Fernandes <joelaf@google.com>
 ---
+v2 changes:
+Updated test description in commit message, and typos.
+
  mm/vmalloc.c | 25 +++++++++++++------------
  1 file changed, 13 insertions(+), 12 deletions(-)
 
@@ -123,8 +133,3 @@ index 613d1d9..ab25966 100644
 -- 
 2.8.0.rc3.226.g39d4020
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
