@@ -1,9 +1,10 @@
 From: Christoph Hellwig <hch@infradead.org>
 Subject: Re: [PATCH v3] mm: vmalloc: Replace purge_lock spinlock with atomic
  refcount
-Date: Sat, 15 Oct 2016 09:46:13 -0700
-Message-ID: <20161015164613.GA26079@infradead.org>
+Date: Sat, 15 Oct 2016 09:54:05 -0700
+Message-ID: <20161015165405.GA31568@infradead.org>
 References: <1476535979-27467-1-git-send-email-joelaf@google.com>
+ <20161015164613.GA26079@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
@@ -15,36 +16,47 @@ Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 To: Joel Fernandes <joelaf@google.com>
 Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <1476535979-27467-1-git-send-email-joelaf@google.com>
+In-Reply-To: <20161015164613.GA26079@infradead.org>
 Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-atomic_t magic for llocking is always a bit iffy.
+And now with a proper changelog, and the accidentall dropped call to
+flush_tlb_kernel_range reinstated:
 
-The real question is: what is purge_lock even supposed to protect?
+---
+>From f720cc324498ab5e7931c7ccb1653bd9b8cddc63 Mon Sep 17 00:00:00 2001
+From: Christoph Hellwig <hch@lst.de>
+Date: Sat, 15 Oct 2016 18:39:44 +0200
+Subject: mm: rewrite __purge_vmap_area_lazy
 
- - purge_fragmented_blocks seems to have it's own local protection.
- - all handling of of valist is implicity protected by the atomic
-   list deletion in llist_del_all
- - the manipulation of vmap_lazy_nr already is atomic
- - flush_tlb_kernel_range should not require any synchronization
- - the calls to __free_vmap_area are sychronized by vmap_area_lock
- - *start and *end always point to on-stack variables, never mind
-   that the caller never looks at the updated values anyway.
+Remove the purge lock, there was nothing left to be protected:
 
-And once we use the cmpxchg in llist_del_all as the effectit protection
-against multiple concurrent callers (slightly sloopy) there just be
-nothing else to synchronize.
+  - purge_fragmented_blocks seems to has it's own local protection.
+  - all handling of of valist is implicity protected by the atomic
+    list deletion in llist_del_all, which also avoids multiple callers
+    stomping on each other here.
+  - the manipulation of vmap_lazy_nr already is atomic
+  - flush_tlb_kernel_range does not require any synchronization
+  - the calls to __free_vmap_area are sychronized by vmap_area_lock
+  - *start and *end always point to on-stack variables, never mind
+    that the caller never looks at the updated values anyway.
 
-And while we're at it the code structure here is totally grotty.
+Once that is done we can remove the sync argument by moving the calls
+to purge_fragmented_blocks_allcpus into the callers that need it,
+and the forced flush_tlb_kernel_range call even if no entries were
+found into the one caller that cares, and we can also pass start and
+end by reference.
 
-So what about the patch below (only boot tested):
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ mm/vmalloc.c | 84 +++++++++++++++++++-----------------------------------------
+ 1 file changed, 26 insertions(+), 58 deletions(-)
 
 diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index f2481cb..c2b9a98 100644
+index f2481cb..c3ca992 100644
 --- a/mm/vmalloc.c
 +++ b/mm/vmalloc.c
-@@ -613,82 +613,43 @@ void set_iounmap_nonlazy(void)
+@@ -613,82 +613,44 @@ void set_iounmap_nonlazy(void)
  	atomic_set(&vmap_lazy_nr, lazy_max_pages()+1);
  }
  
@@ -120,6 +132,7 @@ index f2481cb..c2b9a98 100644
 -{
 -	unsigned long start = ULONG_MAX, end = 0;
 +	atomic_sub(nr, &vmap_lazy_nr);
++	flush_tlb_kernel_range(start, end);
  
 -	__purge_vmap_area_lazy(&start, &end, 0, 0);
 +	spin_lock(&vmap_area_lock);
@@ -144,7 +157,7 @@ index f2481cb..c2b9a98 100644
  }
  
  /*
-@@ -706,8 +667,12 @@ static void free_vmap_area_noflush(struct vmap_area *va)
+@@ -706,8 +668,12 @@ static void free_vmap_area_noflush(struct vmap_area *va)
  	/* After this point, we may free va at any time */
  	llist_add(&va->purge_list, &vmap_purge_list);
  
@@ -158,7 +171,7 @@ index f2481cb..c2b9a98 100644
  }
  
  /*
-@@ -1094,7 +1059,9 @@ void vm_unmap_aliases(void)
+@@ -1094,7 +1060,9 @@ void vm_unmap_aliases(void)
  		rcu_read_unlock();
  	}
  
@@ -169,7 +182,8 @@ index f2481cb..c2b9a98 100644
  }
  EXPORT_SYMBOL_GPL(vm_unmap_aliases);
  
-
+-- 
+2.1.4
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
