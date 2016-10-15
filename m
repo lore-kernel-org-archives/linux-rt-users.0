@@ -1,7 +1,7 @@
 From: Joel Fernandes <joelaf@google.com>
-Subject: [PATCH v2] mm: vmalloc: Replace purge_lock spinlock with atomic refcount
-Date: Sat, 15 Oct 2016 03:42:42 -0700
-Message-ID: <1476528162-21981-1-git-send-email-joelaf@google.com>
+Subject: [PATCH v3] mm: vmalloc: Replace purge_lock spinlock with atomic refcount
+Date: Sat, 15 Oct 2016 05:52:59 -0700
+Message-ID: <1476535979-27467-1-git-send-email-joelaf@google.com>
 Cc: linux-rt-users@vger.kernel.org, Joel Fernandes <joelaf@google.com>,
         Chris Wilson <chris@chris-wilson.co.uk>,
         Jisheng Zhang <jszhang@marvell.com>,
@@ -9,16 +9,9 @@ Cc: linux-rt-users@vger.kernel.org, Joel Fernandes <joelaf@google.com>,
         Andrew Morton <akpm@linux-foundation.org>,
         linux-mm@kvack.org (open list:MEMORY MANAGEMENT)
 To: linux-kernel@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f49.google.com ([74.125.82.49]:37683 "EHLO
-        mail-wm0-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751725AbcJOKn1 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 15 Oct 2016 06:43:27 -0400
-Received: by mail-wm0-f49.google.com with SMTP id c78so24612619wme.0
-        for <linux-rt-users@vger.kernel.org>; Sat, 15 Oct 2016 03:43:26 -0700 (PDT)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 The purge_lock spinlock causes high latencies with non RT kernel. This has been
 reported multiple times on lkml [1] [2] and affects applications like audio.
@@ -61,6 +54,9 @@ Cc: John Dias <joaodias@google.com>
 Cc: Andrew Morton <akpm@linux-foundation.org>
 Signed-off-by: Joel Fernandes <joelaf@google.com>
 ---
+v3 changes:
+Fixed ordering of va pointer access and __free_vmap_area
+
 v2 changes:
 Updated test description in commit message, and typos.
 
@@ -68,7 +64,7 @@ Updated test description in commit message, and typos.
  1 file changed, 13 insertions(+), 12 deletions(-)
 
 diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index 613d1d9..ab25966 100644
+index 613d1d9..0270723 100644
 --- a/mm/vmalloc.c
 +++ b/mm/vmalloc.c
 @@ -626,11 +626,11 @@ void set_iounmap_nonlazy(void)
@@ -118,9 +114,9 @@ index 613d1d9..ab25966 100644
  		spin_lock(&vmap_area_lock);
 -		llist_for_each_entry_safe(va, n_va, valist, purge_list)
 +		llist_for_each_entry_safe(va, n_va, valist, purge_list) {
++			int nrfree = ((va->va_end - va->va_start) >> PAGE_SHIFT);
  			__free_vmap_area(va);
-+			atomic_sub(((va->va_end - va->va_start) >> PAGE_SHIFT),
-+				   &vmap_lazy_nr);
++			atomic_sub(nrfree, &vmap_lazy_nr);
 +			cond_resched_lock(&vmap_area_lock);
 +		}
  		spin_unlock(&vmap_area_lock);
@@ -132,4 +128,3 @@ index 613d1d9..ab25966 100644
  /*
 -- 
 2.8.0.rc3.226.g39d4020
-
