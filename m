@@ -1,47 +1,130 @@
-From: Richard Cochran <richardcochran@gmail.com>
-Subject: Re: Kernel 4.6.7-rt13: Intel Ethernet driver igb causes huge
- latencies in cyclictest
-Date: Sat, 15 Oct 2016 00:06:33 +0200
-Message-ID: <20161014220633.GA1811@netboy>
-References: <584755c2766e4b94a604ece16760fe14@FE-MBX1012.de.bosch.com>
- <20161005155959.GH10625@jcartwri.amer.corp.natinst.com>
- <13c3cd3ffee4490fb22b8de383e51361@FE-MBX1012.de.bosch.com>
- <AAEA33E297BCAC4B9BB20A7C2DF0AB8D8045E418@FMSMSX113.amr.corp.intel.com>
- <29250f87b1d84aacb8aa312935582291@FE-MBX1012.de.bosch.com>
- <20161010193958.GE22235@jcartwri.amer.corp.natinst.com>
- <e9661abf93194ad3849e3864a8361993@FE-MBX1012.de.bosch.com>
- <b77ea8ab312149d2b20a717d3ab0a8dc@FE-MBX1012.de.bosch.com>
- <20161013161839.GV10625@jcartwri.amer.corp.natinst.com>
- <f395ea6cd1274fac83d2744121da7441@FE-MBX1012.de.bosch.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Julia Cartwright <julia@ni.com>,
-        "Williams, Mitch A" <mitch.a.williams@intel.com>,
-        "Kirsher, Jeffrey T" <jeffrey.t.kirsher@intel.com>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        Sebastian Andrzej Siewior <sebastian.siewior@linutronix.de>,
-        "netdev@vger.kernel.org" <netdev@vger.kernel.org>,
-        "intel-wired-lan@lists.osuosl.org" <intel-wired-lan@lists.osuosl.org>,
-        Greg <gvrose8192@gmail.com>
-To: "Koehrer Mathias (ETAS/ESW5)" <mathias.koehrer@etas.com>
-Return-path: <netdev-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <f395ea6cd1274fac83d2744121da7441@FE-MBX1012.de.bosch.com>
-Sender: netdev-owner@vger.kernel.org
+From: Joel Fernandes <joelaf@google.com>
+Subject: [PATCH] mm: vmalloc: Replace purge_lock spinlock with atomic refcount
+Date: Sat, 15 Oct 2016 03:10:17 -0700
+Message-ID: <1476526217-19368-1-git-send-email-joelaf@google.com>
+Cc: linux-rt-users@vger.kernel.org,
+	Joel Fernandes <joelaf@google.com>,
+	Chris Wilson <chris@chris-wilson.co.uk>,
+	Jisheng Zhang <jszhang@marvell.com>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	joelaf <joelaf@joelaf-glaptop0.roam.corp.google.com>,
+	linux-mm@kvack.org (open list:MEMORY MANAGEMENT)
+To: linux-kernel@vger.kernel.org
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Oct 14, 2016 at 08:58:22AM +0000, Koehrer Mathias (ETAS/ESW5) wrote:
-> @@ -753,7 +756,9 @@ u32 igb_rd32(struct e1000_hw *hw, u32 re
->  	if (E1000_REMOVED(hw_addr))
->  		return ~value;
->  
-> +        trace_igb(801);
->  	value = readl(&hw_addr[reg]);
-> +        trace_igb(802);
+The purge_lock spinlock causes high latencies with non RT kernel. This has been
+reported multiple times on lkml [1] [2] and affects applications like audio.
 
-Nothing prevents this code from being preempted between the two trace
-points, and so you can't be sure whether the time delta in the trace
-is caused by the PCIe read stalling or not.
+In this patch, I replace the spinlock with an atomic refcount so that
+preemption is kept turned on during purge. This Ok to do since [3] builds the
+lazy free list in advance and atomically retrieves the list so any instance of
+purge will have its own list it is purging. Since the individual vmap area
+frees are themselves protected by a lock, this is Ok.
 
-Thanks,
-Richard
+The only things left is the fact that previously it had trylock behavior, so
+use the refcount to keep track of in-progress purges and abort like previously
+if there is an ongoing purge. Lastly, lets reduce vmap_lazy_nr as the vmap
+area are freed, and not in advance, so that the vmap_lazy_nr is not reduced
+too soon as suggested in [2].
+
+Tests:
+
+cyclictest -p 99 -n
+Concurrently in a kernel module, vmalloc and vfree 8K buffer in a loop.
+Preemption configuration: CONFIG_PREEMPT__LL=y (low-latency desktop)
+
+Without patch, cyclictest output:
+policy: fifo: loadavg: 0.05 0.01 0.00 1/85 1272          Avg:  128 Max:    1177
+policy: fifo: loadavg: 0.11 0.03 0.01 2/87 1447          Avg:  122 Max:    1897
+policy: fifo: loadavg: 0.10 0.03 0.01 1/89 1656          Avg:   93 Max:    2886
+
+With patch, cyclictest output:
+policy: fifo: loadavg: 1.15 0.68 0.30 1/162 8399         Avg:   92 Max:     284
+policy: fifo: loadavg: 1.21 0.71 0.32 2/164 9840         Avg:   94 Max:     296
+policy: fifo: loadavg: 1.18 0.72 0.32 2/166 11253        Avg:  107 Max:     321
+
+[1] http://lists.openwall.net/linux-kernel/2016/03/23/29
+[2] https://lkml.org/lkml/2016/10/9/59
+[3] https://lkml.org/lkml/2016/4/15/287
+
+Cc: Chris Wilson <chris@chris-wilson.co.uk>
+Cc: Jisheng Zhang <jszhang@marvell.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Joel Fernandes <joelaf@google.com>
+---
+ mm/vmalloc.c | 25 +++++++++++++------------
+ 1 file changed, 13 insertions(+), 12 deletions(-)
+
+diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+index 613d1d9..ab25966 100644
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -626,11 +626,11 @@ void set_iounmap_nonlazy(void)
+ static void __purge_vmap_area_lazy(unsigned long *start, unsigned long *end,
+ 					int sync, int force_flush)
+ {
+-	static DEFINE_SPINLOCK(purge_lock);
++	static atomic_t purging;
+ 	struct llist_node *valist;
+ 	struct vmap_area *va;
+ 	struct vmap_area *n_va;
+-	int nr = 0;
++	int dofree = 0;
+ 
+ 	/*
+ 	 * If sync is 0 but force_flush is 1, we'll go sync anyway but callers
+@@ -638,10 +638,10 @@ static void __purge_vmap_area_lazy(unsigned long *start, unsigned long *end,
+ 	 * the case that isn't actually used at the moment anyway.
+ 	 */
+ 	if (!sync && !force_flush) {
+-		if (!spin_trylock(&purge_lock))
++		if (atomic_cmpxchg(&purging, 0, 1))
+ 			return;
+ 	} else
+-		spin_lock(&purge_lock);
++		atomic_inc(&purging);
+ 
+ 	if (sync)
+ 		purge_fragmented_blocks_allcpus();
+@@ -652,22 +652,23 @@ static void __purge_vmap_area_lazy(unsigned long *start, unsigned long *end,
+ 			*start = va->va_start;
+ 		if (va->va_end > *end)
+ 			*end = va->va_end;
+-		nr += (va->va_end - va->va_start) >> PAGE_SHIFT;
++		dofree = 1;
+ 	}
+ 
+-	if (nr)
+-		atomic_sub(nr, &vmap_lazy_nr);
+-
+-	if (nr || force_flush)
++	if (dofree || force_flush)
+ 		flush_tlb_kernel_range(*start, *end);
+ 
+-	if (nr) {
++	if (dofree) {
+ 		spin_lock(&vmap_area_lock);
+-		llist_for_each_entry_safe(va, n_va, valist, purge_list)
++		llist_for_each_entry_safe(va, n_va, valist, purge_list) {
+ 			__free_vmap_area(va);
++			atomic_sub(((va->va_end - va->va_start) >> PAGE_SHIFT),
++				   &vmap_lazy_nr);
++			cond_resched_lock(&vmap_area_lock);
++		}
+ 		spin_unlock(&vmap_area_lock);
+ 	}
+-	spin_unlock(&purge_lock);
++	atomic_dec(&purging);
+ }
+ 
+ /*
+-- 
+2.8.0.rc3.226.g39d4020
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
