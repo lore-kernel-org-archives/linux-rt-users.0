@@ -1,146 +1,56 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: Re: Making rcu_normal=1 in RT
-Date: Sun, 16 Oct 2016 04:45:32 +0300
-Message-ID: <20161016044420-mutt-send-email-mst@kernel.org>
-References: <20161012111251.74d1d52e@redhat.com>
- <20161012162114.GA9362@jcartwri.amer.corp.natinst.com>
- <20161012124956.3cb5f988@redhat.com>
- <20161012171553.GA18392@jcartwri.amer.corp.natinst.com>
- <20161012203223.GK29518@linux.vnet.ibm.com>
- <20161013191332-mutt-send-email-mst@kernel.org>
- <20161014092050.GW29518@linux.vnet.ibm.com>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: [patch] ftrace: Fix latency trace header alignment
+Date: Sun, 16 Oct 2016 05:08:30 +0200
+Message-ID: <1476587310.1538.3.camel@gmail.com>
+References: <20161006085228.jl6rpszdp5c2p2nr@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Julia Cartwright <julia@ni.com>,
-        Luiz Capitulino <lcapitulino@redhat.com>,
-        linux-rt-users@vger.kernel.org, bigeasy@linutronix.de
-To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:54276 "EHLO mx1.redhat.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1752729AbcJPBpf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 15 Oct 2016 21:45:35 -0400
-Content-Disposition: inline
-In-Reply-To: <20161014092050.GW29518@linux.vnet.ibm.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20161006085228.jl6rpszdp5c2p2nr@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Oct 14, 2016 at 02:20:50AM -0700, Paul E. McKenney wrote:
-> On Thu, Oct 13, 2016 at 07:25:56PM +0300, Michael S. Tsirkin wrote:
-> > On Wed, Oct 12, 2016 at 01:32:23PM -0700, Paul E. McKenney wrote:
-> > > On Wed, Oct 12, 2016 at 12:15:53PM -0500, Julia Cartwright wrote:
-> > > > On Wed, Oct 12, 2016 at 12:49:56PM -0400, Luiz Capitulino wrote:
-> > > > > On Wed, 12 Oct 2016 11:21:14 -0500
-> > > > > Julia Cartwright <julia@ni.com> wrote:
-> > > > > 
-> > > > > > On Wed, Oct 12, 2016 at 11:12:51AM -0400, Luiz Capitulino wrote:
-> > > > > > > Hi,
-> > > > > > > 
-> > > > > > > We have the following patch applied to the RT tree:
-> > > > > > > 
-> > > > > > >   commit a9d3cc781a3306bfa332fa7cb6134b70696058d5
-> > > > > > >   Author: Josh Cartwright <joshc@ni.com>
-> > > > > > >   Date:   Tue Oct 27 07:31:53 2015 -0500
-> > > > > > >   
-> > > > > > >       net: Make synchronize_rcu_expedited() conditional on !RT_FULL
-> > > > > > > 
-> > > > > > > However, as noted by Michael, making rcu_normal=1 default in the
-> > > > > > > RT kernel should have the same effect (ie.  not calling
-> > > > > > > synchronize_sched_expedited()).
-> > > > > > > 
-> > > > > > > So, honest question, is there a reason not to:
-> > > > > > > 
-> > > > > > >  1. Drop the patch above
-> > > > > > >  2. Make rcu_normal=1 default?  
-> > > > > > 
-> > > > > > I think this is probably a cleaner way to fix the problems which
-> > > > > > motivated this patch in the first place.  In my defense, the above patch
-> > > > > > predates rcu_normal :).
-> > > > > 
-> > > > > No need to defend yourself! We debugged this very spike in one of
-> > > > > our kernels that don't have rcu_normal. We decided to do exactly
-> > > > > what you're doing before looking at upstream. Your patch helped
-> > > > > us confirm that we were in the right track.
-> > > > 
-> > > > Great!  Glad I could help in some way!
-> > > > 
-> > > > > > Something like this, perhaps?
-> > > > >
-> > > > > Looks good, but (honest question) what does it buy us using
-> > > > > rcu_normal_after_boot vs rcu_normal? Is the boot process
-> > > > > improved someway?
-> > > > 
-> > > > That's the idea, although I don't have data to show much it actually
-> > > > buys us.
-> > > 
-> > > It means that grace periods can be expedited during boot.  If you really
-> > > care about boot speed, you can also set rcu_expedited=1 and also
-> > > rcu_normal_after_boot=1, which will expedite all grace periods during
-> > > the boot process, but stop doing so just before spawning init.
-> > > After that point, any attempt to do an expedited grace period gets you
-> > > a normal grace period instead.
-> > > 
-> > > So you get fast boot and then clean realtime.
-> > > 
-> > > > > As long as we're rcu_normal=1 before launching user-space,
-> > > > > this should be fine.
-> > > > 
-> > > > Agreed.
-> > > 
-> > > Yes, you can also set them manually instead of at boot, if you wish.
-> > > 
-> > > 							Thanx, Paul
-> > 
-> > FWIW
-> > 
-> > Acked-by: Michael S. Tsirkin <mst@redhat.com>
-> > 
-> > But I have a question - here's the commit that started
-> > it all:
-> > 
-> > 
-> > commit be3fc413da9eb17cce0991f214ab019d16c88c41
-> > Author: Eric Dumazet <eric.dumazet@gmail.com>
-> > Date:   Mon May 23 23:07:32 2011 +0000
-> > 
-> >     net: use synchronize_rcu_expedited()
-> >     
-> >     synchronize_rcu() is very slow in various situations (HZ=100,
-> >     CONFIG_NO_HZ=y, CONFIG_PREEMPT=n)
-> >     
-> >     Extract from my (mostly idle) 8 core machine :
-> >     
-> >      synchronize_rcu() in 99985 us
-> >      synchronize_rcu() in 79982 us
-> >      synchronize_rcu() in 87612 us
-> >      synchronize_rcu() in 79827 us
-> >      synchronize_rcu() in 109860 us
-> >      synchronize_rcu() in 98039 us
-> >      synchronize_rcu() in 89841 us
-> >      synchronize_rcu() in 79842 us
-> >      synchronize_rcu() in 80151 us
-> >      synchronize_rcu() in 119833 us
-> >      synchronize_rcu() in 99858 us
-> >      synchronize_rcu() in 73999 us
-> >      synchronize_rcu() in 79855 us
-> >      synchronize_rcu() in 79853 us
-> >     
-> >     When we hold RTNL mutex, we would like to spend some cpu cycles but not
-> >     block too long other processes waiting for this mutex.
-> >     
-> >     We also want to setup/dismantle network features as fast as possible at
-> >     boot/shutdown time.
-> > 
-> > 
-> > To make sure this does not regress for RT,
-> > how about clearing this flag on shutdown as well?
-> 
-> By that, you mean having some way to force all grace periods to be
-> expedited during shutdown?  Or am I missing your point?
-> 
-> 							Thanx, Paul
+Line up helper arrows to the right column.
 
-Exactly. And maybe kexec.
+Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+---
+ kernel/trace/trace.c |   22 +++++++++++-----------
+ 1 file changed, 11 insertions(+), 11 deletions(-)
 
--- 
-MST
+--- a/kernel/trace/trace.c
++++ b/kernel/trace/trace.c
+@@ -2896,17 +2896,17 @@ get_total_entries(struct trace_buffer *b
+ 
+ static void print_lat_help_header(struct seq_file *m)
+ {
+-	seq_puts(m, "#                   _--------=> CPU#              \n"
+-		    "#                  / _-------=> irqs-off          \n"
+-		    "#                 | / _------=> need-resched      \n"
+-		    "#                 || / _-----=> need-resched_lazy \n"
+-		    "#                 ||| / _----=> hardirq/softirq   \n"
+-		    "#                 |||| / _---=> preempt-depth     \n"
+-		    "#                 ||||| / _--=> preempt-lazy-depth\n"
+-		    "#                 |||||| / _-=> migrate-disable   \n"
+-		    "#                 ||||||| /     delay             \n"
+-		    "#  cmd     pid    |||||||| time  |   caller       \n"
+-		    "#     \\   /      ||||||||  \\   |   /            \n");
++	seq_puts(m, "#                  _--------=> CPU#              \n"
++		    "#                 / _-------=> irqs-off          \n"
++		    "#                | / _------=> need-resched      \n"
++		    "#                || / _-----=> need-resched_lazy \n"
++		    "#                ||| / _----=> hardirq/softirq   \n"
++		    "#                |||| / _---=> preempt-depth     \n"
++		    "#                ||||| / _--=> preempt-lazy-depth\n"
++		    "#                |||||| / _-=> migrate-disable   \n"
++		    "#                ||||||| /     delay             \n"
++		    "# cmd     pid    |||||||| time   |  caller       \n"
++		    "#     \\   /      ||||||||   \\    |  /            \n");
+ }
+ 
+ static void print_event_info(struct trace_buffer *buf, struct seq_file *m)
