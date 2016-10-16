@@ -1,101 +1,166 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH v3] mm: vmalloc: Replace purge_lock spinlock with atomic
- refcount
-Date: Sat, 15 Oct 2016 23:10:57 -0700
-Message-ID: <20161016061057.GA26990@infradead.org>
-References: <1476535979-27467-1-git-send-email-joelaf@google.com>
- <20161015164613.GA26079@infradead.org>
- <20161015165405.GA31568@infradead.org>
- <CAJWu+opcYnvYXwLcOz49u9N7ZFpsLaqzccG7MZV2w85pgsR0Bw@mail.gmail.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: Making rcu_normal=1 in RT
+Date: Sun, 16 Oct 2016 04:28:46 -0700
+Message-ID: <20161016112846.GR29518@linux.vnet.ibm.com>
+References: <20161012111251.74d1d52e@redhat.com>
+ <20161012162114.GA9362@jcartwri.amer.corp.natinst.com>
+ <20161012124956.3cb5f988@redhat.com>
+ <20161012171553.GA18392@jcartwri.amer.corp.natinst.com>
+ <20161012203223.GK29518@linux.vnet.ibm.com>
+ <20161013191332-mutt-send-email-mst@kernel.org>
+ <20161014092050.GW29518@linux.vnet.ibm.com>
+ <20161016044420-mutt-send-email-mst@kernel.org>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Christoph Hellwig <hch@infradead.org>,
-	LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
-	Chris Wilson <chris@chris-wilson.co.uk>,
-	Jisheng Zhang <jszhang@marvell.com>,
-	John Dias <joaodias@google.com>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	"open list:MEMORY MANAGEMENT" <linux-mm@kvack.org>
-To: Joel Fernandes <joelaf@google.com>
-Return-path: <owner-linux-mm@kvack.org>
+Cc: Julia Cartwright <julia@ni.com>,
+        Luiz Capitulino <lcapitulino@redhat.com>,
+        linux-rt-users@vger.kernel.org, bigeasy@linutronix.de
+To: "Michael S. Tsirkin" <mst@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx0b-001b2d01.pphosted.com ([148.163.158.5]:48095 "EHLO
+        mx0a-001b2d01.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1755789AbcJPL3E (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 16 Oct 2016 07:29:04 -0400
+Received: from pps.filterd (m0098414.ppops.net [127.0.0.1])
+        by mx0b-001b2d01.pphosted.com (8.16.0.17/8.16.0.17) with SMTP id u9GBSWKH022392
+        for <linux-rt-users@vger.kernel.org>; Sun, 16 Oct 2016 07:28:49 -0400
+Received: from e34.co.us.ibm.com (e34.co.us.ibm.com [32.97.110.152])
+        by mx0b-001b2d01.pphosted.com with ESMTP id 263gkmbdv2-1
+        (version=TLSv1.2 cipher=AES256-SHA bits=256 verify=NOT)
+        for <linux-rt-users@vger.kernel.org>; Sun, 16 Oct 2016 07:28:49 -0400
+Received: from localhost
+        by e34.co.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
+        for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
+        Sun, 16 Oct 2016 05:28:48 -0600
 Content-Disposition: inline
-In-Reply-To: <CAJWu+opcYnvYXwLcOz49u9N7ZFpsLaqzccG7MZV2w85pgsR0Bw@mail.gmail.com>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <20161016044420-mutt-send-email-mst@kernel.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, Oct 15, 2016 at 03:59:34PM -0700, Joel Fernandes wrote:
-> Your patch changes the behavior of the original code I think.
+On Sun, Oct 16, 2016 at 04:45:32AM +0300, Michael S. Tsirkin wrote:
+> On Fri, Oct 14, 2016 at 02:20:50AM -0700, Paul E. McKenney wrote:
+> > On Thu, Oct 13, 2016 at 07:25:56PM +0300, Michael S. Tsirkin wrote:
+> > > On Wed, Oct 12, 2016 at 01:32:23PM -0700, Paul E. McKenney wrote:
+> > > > On Wed, Oct 12, 2016 at 12:15:53PM -0500, Julia Cartwright wrote:
+> > > > > On Wed, Oct 12, 2016 at 12:49:56PM -0400, Luiz Capitulino wrote:
+> > > > > > On Wed, 12 Oct 2016 11:21:14 -0500
+> > > > > > Julia Cartwright <julia@ni.com> wrote:
+> > > > > > 
+> > > > > > > On Wed, Oct 12, 2016 at 11:12:51AM -0400, Luiz Capitulino wrote:
+> > > > > > > > Hi,
+> > > > > > > > 
+> > > > > > > > We have the following patch applied to the RT tree:
+> > > > > > > > 
+> > > > > > > >   commit a9d3cc781a3306bfa332fa7cb6134b70696058d5
+> > > > > > > >   Author: Josh Cartwright <joshc@ni.com>
+> > > > > > > >   Date:   Tue Oct 27 07:31:53 2015 -0500
+> > > > > > > >   
+> > > > > > > >       net: Make synchronize_rcu_expedited() conditional on !RT_FULL
+> > > > > > > > 
+> > > > > > > > However, as noted by Michael, making rcu_normal=1 default in the
+> > > > > > > > RT kernel should have the same effect (ie.  not calling
+> > > > > > > > synchronize_sched_expedited()).
+> > > > > > > > 
+> > > > > > > > So, honest question, is there a reason not to:
+> > > > > > > > 
+> > > > > > > >  1. Drop the patch above
+> > > > > > > >  2. Make rcu_normal=1 default?  
+> > > > > > > 
+> > > > > > > I think this is probably a cleaner way to fix the problems which
+> > > > > > > motivated this patch in the first place.  In my defense, the above patch
+> > > > > > > predates rcu_normal :).
+> > > > > > 
+> > > > > > No need to defend yourself! We debugged this very spike in one of
+> > > > > > our kernels that don't have rcu_normal. We decided to do exactly
+> > > > > > what you're doing before looking at upstream. Your patch helped
+> > > > > > us confirm that we were in the right track.
+> > > > > 
+> > > > > Great!  Glad I could help in some way!
+> > > > > 
+> > > > > > > Something like this, perhaps?
+> > > > > >
+> > > > > > Looks good, but (honest question) what does it buy us using
+> > > > > > rcu_normal_after_boot vs rcu_normal? Is the boot process
+> > > > > > improved someway?
+> > > > > 
+> > > > > That's the idea, although I don't have data to show much it actually
+> > > > > buys us.
+> > > > 
+> > > > It means that grace periods can be expedited during boot.  If you really
+> > > > care about boot speed, you can also set rcu_expedited=1 and also
+> > > > rcu_normal_after_boot=1, which will expedite all grace periods during
+> > > > the boot process, but stop doing so just before spawning init.
+> > > > After that point, any attempt to do an expedited grace period gets you
+> > > > a normal grace period instead.
+> > > > 
+> > > > So you get fast boot and then clean realtime.
+> > > > 
+> > > > > > As long as we're rcu_normal=1 before launching user-space,
+> > > > > > this should be fine.
+> > > > > 
+> > > > > Agreed.
+> > > > 
+> > > > Yes, you can also set them manually instead of at boot, if you wish.
+> > > > 
+> > > > 							Thanx, Paul
+> > > 
+> > > FWIW
+> > > 
+> > > Acked-by: Michael S. Tsirkin <mst@redhat.com>
+> > > 
+> > > But I have a question - here's the commit that started
+> > > it all:
+> > > 
+> > > 
+> > > commit be3fc413da9eb17cce0991f214ab019d16c88c41
+> > > Author: Eric Dumazet <eric.dumazet@gmail.com>
+> > > Date:   Mon May 23 23:07:32 2011 +0000
+> > > 
+> > >     net: use synchronize_rcu_expedited()
+> > >     
+> > >     synchronize_rcu() is very slow in various situations (HZ=100,
+> > >     CONFIG_NO_HZ=y, CONFIG_PREEMPT=n)
+> > >     
+> > >     Extract from my (mostly idle) 8 core machine :
+> > >     
+> > >      synchronize_rcu() in 99985 us
+> > >      synchronize_rcu() in 79982 us
+> > >      synchronize_rcu() in 87612 us
+> > >      synchronize_rcu() in 79827 us
+> > >      synchronize_rcu() in 109860 us
+> > >      synchronize_rcu() in 98039 us
+> > >      synchronize_rcu() in 89841 us
+> > >      synchronize_rcu() in 79842 us
+> > >      synchronize_rcu() in 80151 us
+> > >      synchronize_rcu() in 119833 us
+> > >      synchronize_rcu() in 99858 us
+> > >      synchronize_rcu() in 73999 us
+> > >      synchronize_rcu() in 79855 us
+> > >      synchronize_rcu() in 79853 us
+> > >     
+> > >     When we hold RTNL mutex, we would like to spend some cpu cycles but not
+> > >     block too long other processes waiting for this mutex.
+> > >     
+> > >     We also want to setup/dismantle network features as fast as possible at
+> > >     boot/shutdown time.
+> > > 
+> > > 
+> > > To make sure this does not regress for RT,
+> > > how about clearing this flag on shutdown as well?
+> > 
+> > By that, you mean having some way to force all grace periods to be
+> > expedited during shutdown?  Or am I missing your point?
+> > 
+> > 							Thanx, Paul
+> 
+> Exactly. And maybe kexec.
 
-It does.  And it does so as I don't think the existing behavior makes
-sense, as mentioned in the changelog.
+If the relevant maintainers are OK with that, I am OK with it as long
+as it is non-default (at least to begin with) and does not introduce
+additional Kconfig questions.  My guess is that a boot parameter would
+work best, but something to discuss.
 
-> With the
-> patch, for the case where you have 2 concurrent tasks executing
-> alloc_vmap_area function, say both hit the overflow label and enter
-> the __purge_vmap_area_lazy at the same time. The first task empties
-> the purge list and sets nr to the total number of pages of all the
-> vmap areas in the list. Say the first task has just emptied the list
-> but hasn't started freeing the vmap areas and is preempted at this
-> point. Now the second task runs and since the purge list is empty, the
-> second task doesn't have anything to do and immediately returns to
-> alloc_vmap_area. Once it returns, it sets purged to 1 in
-> alloc_vmap_area and retries. Say it hits overflow label again in the
-> retry path. Now because purged was set to 1, it goes to err_free.
-> Without your patch, it would have waited on the spin_lock (sync = 1)
-> instead of just erroring out, so your patch does change the behavior
-> of the original code by not using the purge_lock. I realize my patch
-> also changes the behavior, but in mine I think we can make it behave
-> like the original code by spinning until purging=0 (if sync = 1)
-> because I still have the purging variable..
+							Thanx, Paul
 
-But for sync = 1 you don't spin on it in any way.  This is the logic
-in your patch:
-
-	if (!sync && !force_flush) {
-		if (atomic_cmpxchg(&purging, 0, 1))
-			return;
-	} else
-		atomic_inc(&purging);
-
-So when called from free_vmap_area_noflush your skip the whole call
-if anyone else is currently purging the list, but all other cases
-we will always execute the code.  So maybe my mistake with to follow
-what your patch did as I just jumped onto it for seeing this atomic_t
-"synchronization", but the change in behavior to your is very limited,
-basically the only difference is that if free_vmap_area_noflush hits
-the purge cases due to having lots of lazy pages on the purge list
-it will execute despite some other purge being in progress.
-
-> You should add a cond_resched_lock here as Chris Wilson suggested. I
-> tried your patch both with and without cond_resched_lock in this loop,
-> and without it I see the same problems my patch solves (high latencies
-> on cyclic test). With cond_resched_lock, your patch does solve my
-> problem although as I was worried above - that it changes the original
-> behavior.
-
-Yes, I actually pointed that out to "zhouxianrong", who sent a patch
-just after yours.  I just thought lock breaking is a different aspect
-to improving this whole function.  In fact I suspect even my patch
-should probably be split up quite a bit more.
-
-> Also, could you share your concerns about use of atomic_t in my patch?
-> I believe that since this is not a contented variable, the question of
-> lock fairness is not a concern. It is also not a lock really the way
-> I'm using it, it just keeps track of how many purges are in progress..
-
-atomic_t doesn't have any acquire/release semantics, and will require
-off memory barrier dances to actually get the behavior you intended.
-And from looking at the code I can't really see why we even would
-want synchronization behavior - for the sort of problems where we
-don't want multiple threads to run the same code at the same time
-for effiency but not correctness reasons it's usually better to have
-batch thresholds and/or splicing into local data structures before
-operations.  Both are techniques used in this code, and I'd rather
-rely on them and if required improve on them then using very odd
-hoc synchronization methods.
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
