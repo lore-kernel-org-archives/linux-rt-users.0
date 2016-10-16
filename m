@@ -1,79 +1,101 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: [patch ]mm/zs_malloc: Fix bit spinlock replacement
-Date: Sun, 16 Oct 2016 05:18:03 +0200
-Message-ID: <1476587883.1538.12.camel@gmail.com>
-References: <20161006085228.jl6rpszdp5c2p2nr@linutronix.de>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH v3] mm: vmalloc: Replace purge_lock spinlock with atomic
+ refcount
+Date: Sat, 15 Oct 2016 23:10:57 -0700
+Message-ID: <20161016061057.GA26990@infradead.org>
+References: <1476535979-27467-1-git-send-email-joelaf@google.com>
+ <20161015164613.GA26079@infradead.org>
+ <20161015165405.GA31568@infradead.org>
+ <CAJWu+opcYnvYXwLcOz49u9N7ZFpsLaqzccG7MZV2w85pgsR0Bw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f66.google.com ([74.125.82.66]:33716 "EHLO
-        mail-wm0-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1755286AbcJPDSI (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 15 Oct 2016 23:18:08 -0400
-In-Reply-To: <20161006085228.jl6rpszdp5c2p2nr@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Christoph Hellwig <hch@infradead.org>,
+	LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
+	Chris Wilson <chris@chris-wilson.co.uk>,
+	Jisheng Zhang <jszhang@marvell.com>,
+	John Dias <joaodias@google.com>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	"open list:MEMORY MANAGEMENT" <linux-mm@kvack.org>
+To: Joel Fernandes <joelaf@google.com>
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <CAJWu+opcYnvYXwLcOz49u9N7ZFpsLaqzccG7MZV2w85pgsR0Bw@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+List-Id: linux-rt-users.vger.kernel.org
 
+On Sat, Oct 15, 2016 at 03:59:34PM -0700, Joel Fernandes wrote:
+> Your patch changes the behavior of the original code I think.
 
-Do not alter HANDLE_SIZE, memory corruption ensues.  The handle is
-a pointer, allocate space for the struct it points to and align it
-ZS_ALIGN.  Also, when accessing the struct, mask HANDLE_PIN_BIT.
+It does.  And it does so as I don't think the existing behavior makes
+sense, as mentioned in the changelog.
 
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
----
- mm/zsmalloc.c |   13 ++++++++-----
- 1 file changed, 8 insertions(+), 5 deletions(-)
+> With the
+> patch, for the case where you have 2 concurrent tasks executing
+> alloc_vmap_area function, say both hit the overflow label and enter
+> the __purge_vmap_area_lazy at the same time. The first task empties
+> the purge list and sets nr to the total number of pages of all the
+> vmap areas in the list. Say the first task has just emptied the list
+> but hasn't started freeing the vmap areas and is preempted at this
+> point. Now the second task runs and since the purge list is empty, the
+> second task doesn't have anything to do and immediately returns to
+> alloc_vmap_area. Once it returns, it sets purged to 1 in
+> alloc_vmap_area and retries. Say it hits overflow label again in the
+> retry path. Now because purged was set to 1, it goes to err_free.
+> Without your patch, it would have waited on the spin_lock (sync = 1)
+> instead of just erroring out, so your patch does change the behavior
+> of the original code by not using the purge_lock. I realize my patch
+> also changes the behavior, but in mine I think we can make it behave
+> like the original code by spinning until purging=0 (if sync = 1)
+> because I still have the purging variable..
 
---- a/mm/zsmalloc.c
-+++ b/mm/zsmalloc.c
-@@ -71,6 +71,8 @@
- #define ZS_MAX_ZSPAGE_ORDER 2
- #define ZS_MAX_PAGES_PER_ZSPAGE (_AC(1, UL) << ZS_MAX_ZSPAGE_ORDER)
- 
-+#define ZS_HANDLE_SIZE (sizeof(unsigned long))
-+
- #ifdef CONFIG_PREEMPT_RT_BASE
- 
- struct zsmalloc_handle {
-@@ -78,11 +80,11 @@ struct zsmalloc_handle {
- 	struct mutex lock;
- };
- 
--#define ZS_HANDLE_SIZE (sizeof(struct zsmalloc_handle))
-+#define ZS_HANDLE_ALLOC_SIZE (sizeof(struct zsmalloc_handle))
- 
- #else
- 
--#define ZS_HANDLE_SIZE (sizeof(unsigned long))
-+#define ZS_HANDLE_ALLOC_SIZE ZS_HANDLE_SIZE
- #endif
- 
- /*
-@@ -339,8 +341,9 @@ static void SetZsPageMovable(struct zs_p
- 
- static int create_cache(struct zs_pool *pool)
- {
--	pool->handle_cachep = kmem_cache_create("zs_handle", ZS_HANDLE_SIZE,
--					0, 0, NULL);
-+	pool->handle_cachep = kmem_cache_create("zs_handle",
-+						ZS_HANDLE_ALLOC_SIZE,
-+						ZS_ALIGN, 0, NULL);
- 	if (!pool->handle_cachep)
- 		return 1;
- 
-@@ -380,7 +383,7 @@ static unsigned long cache_alloc_handle(
- #ifdef CONFIG_PREEMPT_RT_BASE
- static struct zsmalloc_handle *zs_get_pure_handle(unsigned long handle)
- {
--	return (void *)(handle &~((1 << OBJ_TAG_BITS) - 1));
-+	return (void *)(handle & ~BIT(HANDLE_PIN_BIT));
- }
- #endif
- 
+But for sync = 1 you don't spin on it in any way.  This is the logic
+in your patch:
+
+	if (!sync && !force_flush) {
+		if (atomic_cmpxchg(&purging, 0, 1))
+			return;
+	} else
+		atomic_inc(&purging);
+
+So when called from free_vmap_area_noflush your skip the whole call
+if anyone else is currently purging the list, but all other cases
+we will always execute the code.  So maybe my mistake with to follow
+what your patch did as I just jumped onto it for seeing this atomic_t
+"synchronization", but the change in behavior to your is very limited,
+basically the only difference is that if free_vmap_area_noflush hits
+the purge cases due to having lots of lazy pages on the purge list
+it will execute despite some other purge being in progress.
+
+> You should add a cond_resched_lock here as Chris Wilson suggested. I
+> tried your patch both with and without cond_resched_lock in this loop,
+> and without it I see the same problems my patch solves (high latencies
+> on cyclic test). With cond_resched_lock, your patch does solve my
+> problem although as I was worried above - that it changes the original
+> behavior.
+
+Yes, I actually pointed that out to "zhouxianrong", who sent a patch
+just after yours.  I just thought lock breaking is a different aspect
+to improving this whole function.  In fact I suspect even my patch
+should probably be split up quite a bit more.
+
+> Also, could you share your concerns about use of atomic_t in my patch?
+> I believe that since this is not a contented variable, the question of
+> lock fairness is not a concern. It is also not a lock really the way
+> I'm using it, it just keeps track of how many purges are in progress..
+
+atomic_t doesn't have any acquire/release semantics, and will require
+off memory barrier dances to actually get the behavior you intended.
+And from looking at the code I can't really see why we even would
+want synchronization behavior - for the sort of problems where we
+don't want multiple threads to run the same code at the same time
+for effiency but not correctness reasons it's usually better to have
+batch thresholds and/or splicing into local data structures before
+operations.  Both are techniques used in this code, and I'd rather
+rely on them and if required improve on them then using very odd
+hoc synchronization methods.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
