@@ -1,182 +1,146 @@
-From: Joel Fernandes <joelaf@google.com>
-Subject: Re: [PATCH v3] mm: vmalloc: Replace purge_lock spinlock with atomic refcount
-Date: Sat, 15 Oct 2016 15:59:34 -0700
-Message-ID: <CAJWu+opcYnvYXwLcOz49u9N7ZFpsLaqzccG7MZV2w85pgsR0Bw@mail.gmail.com>
-References: <1476535979-27467-1-git-send-email-joelaf@google.com>
- <20161015164613.GA26079@infradead.org> <20161015165405.GA31568@infradead.org>
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Subject: Re: Making rcu_normal=1 in RT
+Date: Sun, 16 Oct 2016 04:45:32 +0300
+Message-ID: <20161016044420-mutt-send-email-mst@kernel.org>
+References: <20161012111251.74d1d52e@redhat.com>
+ <20161012162114.GA9362@jcartwri.amer.corp.natinst.com>
+ <20161012124956.3cb5f988@redhat.com>
+ <20161012171553.GA18392@jcartwri.amer.corp.natinst.com>
+ <20161012203223.GK29518@linux.vnet.ibm.com>
+ <20161013191332-mutt-send-email-mst@kernel.org>
+ <20161014092050.GW29518@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users@vger.kernel.org,
-	Chris Wilson <chris@chris-wilson.co.uk>, Jisheng Zhang <jszhang@marvell.com>,
-	John Dias <joaodias@google.com>, Andrew Morton <akpm@linux-foundation.org>,
-	"open list:MEMORY MANAGEMENT" <linux-mm@kvack.org>
-To: Christoph Hellwig <hch@infradead.org>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20161015165405.GA31568@infradead.org>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Julia Cartwright <julia@ni.com>,
+        Luiz Capitulino <lcapitulino@redhat.com>,
+        linux-rt-users@vger.kernel.org, bigeasy@linutronix.de
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx1.redhat.com ([209.132.183.28]:54276 "EHLO mx1.redhat.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1752729AbcJPBpf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 15 Oct 2016 21:45:35 -0400
+Content-Disposition: inline
+In-Reply-To: <20161014092050.GW29518@linux.vnet.ibm.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Christoph,
+On Fri, Oct 14, 2016 at 02:20:50AM -0700, Paul E. McKenney wrote:
+> On Thu, Oct 13, 2016 at 07:25:56PM +0300, Michael S. Tsirkin wrote:
+> > On Wed, Oct 12, 2016 at 01:32:23PM -0700, Paul E. McKenney wrote:
+> > > On Wed, Oct 12, 2016 at 12:15:53PM -0500, Julia Cartwright wrote:
+> > > > On Wed, Oct 12, 2016 at 12:49:56PM -0400, Luiz Capitulino wrote:
+> > > > > On Wed, 12 Oct 2016 11:21:14 -0500
+> > > > > Julia Cartwright <julia@ni.com> wrote:
+> > > > > 
+> > > > > > On Wed, Oct 12, 2016 at 11:12:51AM -0400, Luiz Capitulino wrote:
+> > > > > > > Hi,
+> > > > > > > 
+> > > > > > > We have the following patch applied to the RT tree:
+> > > > > > > 
+> > > > > > >   commit a9d3cc781a3306bfa332fa7cb6134b70696058d5
+> > > > > > >   Author: Josh Cartwright <joshc@ni.com>
+> > > > > > >   Date:   Tue Oct 27 07:31:53 2015 -0500
+> > > > > > >   
+> > > > > > >       net: Make synchronize_rcu_expedited() conditional on !RT_FULL
+> > > > > > > 
+> > > > > > > However, as noted by Michael, making rcu_normal=1 default in the
+> > > > > > > RT kernel should have the same effect (ie.  not calling
+> > > > > > > synchronize_sched_expedited()).
+> > > > > > > 
+> > > > > > > So, honest question, is there a reason not to:
+> > > > > > > 
+> > > > > > >  1. Drop the patch above
+> > > > > > >  2. Make rcu_normal=1 default?  
+> > > > > > 
+> > > > > > I think this is probably a cleaner way to fix the problems which
+> > > > > > motivated this patch in the first place.  In my defense, the above patch
+> > > > > > predates rcu_normal :).
+> > > > > 
+> > > > > No need to defend yourself! We debugged this very spike in one of
+> > > > > our kernels that don't have rcu_normal. We decided to do exactly
+> > > > > what you're doing before looking at upstream. Your patch helped
+> > > > > us confirm that we were in the right track.
+> > > > 
+> > > > Great!  Glad I could help in some way!
+> > > > 
+> > > > > > Something like this, perhaps?
+> > > > >
+> > > > > Looks good, but (honest question) what does it buy us using
+> > > > > rcu_normal_after_boot vs rcu_normal? Is the boot process
+> > > > > improved someway?
+> > > > 
+> > > > That's the idea, although I don't have data to show much it actually
+> > > > buys us.
+> > > 
+> > > It means that grace periods can be expedited during boot.  If you really
+> > > care about boot speed, you can also set rcu_expedited=1 and also
+> > > rcu_normal_after_boot=1, which will expedite all grace periods during
+> > > the boot process, but stop doing so just before spawning init.
+> > > After that point, any attempt to do an expedited grace period gets you
+> > > a normal grace period instead.
+> > > 
+> > > So you get fast boot and then clean realtime.
+> > > 
+> > > > > As long as we're rcu_normal=1 before launching user-space,
+> > > > > this should be fine.
+> > > > 
+> > > > Agreed.
+> > > 
+> > > Yes, you can also set them manually instead of at boot, if you wish.
+> > > 
+> > > 							Thanx, Paul
+> > 
+> > FWIW
+> > 
+> > Acked-by: Michael S. Tsirkin <mst@redhat.com>
+> > 
+> > But I have a question - here's the commit that started
+> > it all:
+> > 
+> > 
+> > commit be3fc413da9eb17cce0991f214ab019d16c88c41
+> > Author: Eric Dumazet <eric.dumazet@gmail.com>
+> > Date:   Mon May 23 23:07:32 2011 +0000
+> > 
+> >     net: use synchronize_rcu_expedited()
+> >     
+> >     synchronize_rcu() is very slow in various situations (HZ=100,
+> >     CONFIG_NO_HZ=y, CONFIG_PREEMPT=n)
+> >     
+> >     Extract from my (mostly idle) 8 core machine :
+> >     
+> >      synchronize_rcu() in 99985 us
+> >      synchronize_rcu() in 79982 us
+> >      synchronize_rcu() in 87612 us
+> >      synchronize_rcu() in 79827 us
+> >      synchronize_rcu() in 109860 us
+> >      synchronize_rcu() in 98039 us
+> >      synchronize_rcu() in 89841 us
+> >      synchronize_rcu() in 79842 us
+> >      synchronize_rcu() in 80151 us
+> >      synchronize_rcu() in 119833 us
+> >      synchronize_rcu() in 99858 us
+> >      synchronize_rcu() in 73999 us
+> >      synchronize_rcu() in 79855 us
+> >      synchronize_rcu() in 79853 us
+> >     
+> >     When we hold RTNL mutex, we would like to spend some cpu cycles but not
+> >     block too long other processes waiting for this mutex.
+> >     
+> >     We also want to setup/dismantle network features as fast as possible at
+> >     boot/shutdown time.
+> > 
+> > 
+> > To make sure this does not regress for RT,
+> > how about clearing this flag on shutdown as well?
+> 
+> By that, you mean having some way to force all grace periods to be
+> expedited during shutdown?  Or am I missing your point?
+> 
+> 							Thanx, Paul
 
-On Sat, Oct 15, 2016 at 9:54 AM, Christoph Hellwig <hch@infradead.org> wrote:
-> And now with a proper changelog, and the accidentall dropped call to
-> flush_tlb_kernel_range reinstated:
->
-> ---
-> From f720cc324498ab5e7931c7ccb1653bd9b8cddc63 Mon Sep 17 00:00:00 2001
-> From: Christoph Hellwig <hch@lst.de>
-> Date: Sat, 15 Oct 2016 18:39:44 +0200
-> Subject: mm: rewrite __purge_vmap_area_lazy
->
-> Remove the purge lock, there was nothing left to be protected:
->
->   - purge_fragmented_blocks seems to has it's own local protection.
->   - all handling of of valist is implicity protected by the atomic
->     list deletion in llist_del_all, which also avoids multiple callers
->     stomping on each other here.
->   - the manipulation of vmap_lazy_nr already is atomic
->   - flush_tlb_kernel_range does not require any synchronization
->   - the calls to __free_vmap_area are sychronized by vmap_area_lock
->   - *start and *end always point to on-stack variables, never mind
->     that the caller never looks at the updated values anyway.
->
-> Once that is done we can remove the sync argument by moving the calls
-> to purge_fragmented_blocks_allcpus into the callers that need it,
-> and the forced flush_tlb_kernel_range call even if no entries were
-> found into the one caller that cares, and we can also pass start and
-> end by reference.
+Exactly. And maybe kexec.
 
-Your patch changes the behavior of the original code I think. With the
-patch, for the case where you have 2 concurrent tasks executing
-alloc_vmap_area function, say both hit the overflow label and enter
-the __purge_vmap_area_lazy at the same time. The first task empties
-the purge list and sets nr to the total number of pages of all the
-vmap areas in the list. Say the first task has just emptied the list
-but hasn't started freeing the vmap areas and is preempted at this
-point. Now the second task runs and since the purge list is empty, the
-second task doesn't have anything to do and immediately returns to
-alloc_vmap_area. Once it returns, it sets purged to 1 in
-alloc_vmap_area and retries. Say it hits overflow label again in the
-retry path. Now because purged was set to 1, it goes to err_free.
-Without your patch, it would have waited on the spin_lock (sync = 1)
-instead of just erroring out, so your patch does change the behavior
-of the original code by not using the purge_lock. I realize my patch
-also changes the behavior, but in mine I think we can make it behave
-like the original code by spinning until purging=0 (if sync = 1)
-because I still have the purging variable..
-
-Some more comments below:
-
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  mm/vmalloc.c | 84 +++++++++++++++++++-----------------------------------------
->  1 file changed, 26 insertions(+), 58 deletions(-)
->
-> diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-> index f2481cb..c3ca992 100644
-> --- a/mm/vmalloc.c
-> +++ b/mm/vmalloc.c
-> @@ -613,82 +613,44 @@ void set_iounmap_nonlazy(void)
->         atomic_set(&vmap_lazy_nr, lazy_max_pages()+1);
->  }
->
-> -/*
-> - * Purges all lazily-freed vmap areas.
-> - *
-> - * If sync is 0 then don't purge if there is already a purge in progress.
-> - * If force_flush is 1, then flush kernel TLBs between *start and *end even
-> - * if we found no lazy vmap areas to unmap (callers can use this to optimise
-> - * their own TLB flushing).
-> - * Returns with *start = min(*start, lowest purged address)
-> - *              *end = max(*end, highest purged address)
-> - */
-> -static void __purge_vmap_area_lazy(unsigned long *start, unsigned long *end,
-> -                                       int sync, int force_flush)
-> +static bool __purge_vmap_area_lazy(unsigned long start, unsigned long end)
->  {
-> -       static DEFINE_SPINLOCK(purge_lock);
->         struct llist_node *valist;
->         struct vmap_area *va;
->         struct vmap_area *n_va;
->         int nr = 0;
->
-> -       /*
-> -        * If sync is 0 but force_flush is 1, we'll go sync anyway but callers
-> -        * should not expect such behaviour. This just simplifies locking for
-> -        * the case that isn't actually used at the moment anyway.
-> -        */
-> -       if (!sync && !force_flush) {
-> -               if (!spin_trylock(&purge_lock))
-> -                       return;
-> -       } else
-> -               spin_lock(&purge_lock);
-> -
-> -       if (sync)
-> -               purge_fragmented_blocks_allcpus();
-> -
->         valist = llist_del_all(&vmap_purge_list);
->         llist_for_each_entry(va, valist, purge_list) {
-> -               if (va->va_start < *start)
-> -                       *start = va->va_start;
-> -               if (va->va_end > *end)
-> -                       *end = va->va_end;
-> +               if (va->va_start < start)
-> +                       start = va->va_start;
-> +               if (va->va_end > end)
-> +                       end = va->va_end;
->                 nr += (va->va_end - va->va_start) >> PAGE_SHIFT;
->         }
->
-> -       if (nr)
-> -               atomic_sub(nr, &vmap_lazy_nr);
-> -
-> -       if (nr || force_flush)
-> -               flush_tlb_kernel_range(*start, *end);
-> -
-> -       if (nr) {
-> -               spin_lock(&vmap_area_lock);
-> -               llist_for_each_entry_safe(va, n_va, valist, purge_list)
-> -                       __free_vmap_area(va);
-> -               spin_unlock(&vmap_area_lock);
-> -       }
-> -       spin_unlock(&purge_lock);
-> -}
-> +       if (!nr)
-> +               return false;
->
-> -/*
-> - * Kick off a purge of the outstanding lazy areas. Don't bother if somebody
-> - * is already purging.
-> - */
-> -static void try_purge_vmap_area_lazy(void)
-> -{
-> -       unsigned long start = ULONG_MAX, end = 0;
-> +       atomic_sub(nr, &vmap_lazy_nr);
-> +       flush_tlb_kernel_range(start, end);
->
-> -       __purge_vmap_area_lazy(&start, &end, 0, 0);
-> +       spin_lock(&vmap_area_lock);
-> +       llist_for_each_entry_safe(va, n_va, valist, purge_list)
-> +               __free_vmap_area(va);
-> +       spin_unlock(&vmap_area_lock);
-
-You should add a cond_resched_lock here as Chris Wilson suggested. I
-tried your patch both with and without cond_resched_lock in this loop,
-and without it I see the same problems my patch solves (high latencies
-on cyclic test). With cond_resched_lock, your patch does solve my
-problem although as I was worried above - that it changes the original
-behavior.
-
-Also, could you share your concerns about use of atomic_t in my patch?
-I believe that since this is not a contented variable, the question of
-lock fairness is not a concern. It is also not a lock really the way
-I'm using it, it just keeps track of how many purges are in progress..
-
-Thanks,
-Joel
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+MST
