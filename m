@@ -1,27 +1,28 @@
-From: Nicholas Piggin <npiggin@gmail.com>
+From: Jisheng Zhang <jszhang@marvell.com>
 Subject: Re: [RFC] reduce latency in __purge_vmap_area_lazy
-Date: Tue, 18 Oct 2016 21:40:11 +1100
-Message-ID: <20161018214011.02b0deab@roar.ozlabs.ibm.com>
+Date: Tue, 18 Oct 2016 19:21:49 +0800
+Message-ID: <20161018192149.3de86109@xhacker>
 References: <1476773771-11470-1-git-send-email-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="US-ASCII"
 Content-Transfer-Encoding: 7bit
-Cc: akpm@linux-foundation.org, joelaf@google.com, jszhang@marvell.com,
-        chris@chris-wilson.co.uk, joaodias@google.com, linux-mm@kvack.org,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: <akpm@linux-foundation.org>, <joelaf@google.com>,
+        <chris@chris-wilson.co.uk>, <joaodias@google.com>,
+        <linux-mm@kvack.org>, <linux-rt-users@vger.kernel.org>,
+        <linux-kernel@vger.kernel.org>,
+        <linux-arm-kernel@lists.infradead.org>
 To: Christoph Hellwig <hch@lst.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pf0-f196.google.com ([209.85.192.196]:34135 "EHLO
-        mail-pf0-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1753425AbcJRKkW (ORCPT
+Received: from mx0a-0016f401.pphosted.com ([67.231.148.174]:37716 "EHLO
+        mx0b-0016f401.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1753095AbcJRL1W (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 18 Oct 2016 06:40:22 -0400
+        Tue, 18 Oct 2016 07:27:22 -0400
 In-Reply-To: <1476773771-11470-1-git-send-email-hch@lst.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 18 Oct 2016 08:56:05 +0200
-Christoph Hellwig <hch@lst.de> wrote:
+On Tue, 18 Oct 2016 08:56:05 +0200 Christoph Hellwig wrote:
 
 > Hi all,
 > 
@@ -32,7 +33,9 @@ Christoph Hellwig <hch@lst.de> wrote:
 > changelogs could still be improved as well, but I'd rather get it
 > out quickly for feedback and testing.
 
-All seems pretty good to me.
+I just tested this series, the preempt off ftrace log doesn't complain
+__purge_vmap_area_lazy any more in my test case, this latency is removed!
 
-Thanks,
-Nick
+So feel free to add
+
+Tested-by: Jisheng Zhang <jszhang@marvell.com>
