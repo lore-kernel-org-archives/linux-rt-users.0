@@ -1,151 +1,111 @@
 From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: [patch v2 ] mm/zs_malloc: Fix bit spinlock replacement
-Date: Wed, 19 Oct 2016 17:50:38 +0200
-Message-ID: <1476892238.3975.1.camel@gmail.com>
+Subject: [patch v2] drivers/zram: Don't disable preemption in
+ zcomp_stream_get/put()
+Date: Wed, 19 Oct 2016 17:56:30 +0200
+Message-ID: <1476892590.3975.6.camel@gmail.com>
 References: <20161006085228.jl6rpszdp5c2p2nr@linutronix.de>
-         <1476587883.1538.12.camel@gmail.com>
+         <1476587662.1538.8.camel@gmail.com>
+         <20161017142428.25dyxefk2arjeyfz@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-lf0-f68.google.com ([209.85.215.68]:32769 "EHLO
-        mail-lf0-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S945761AbcJSPum (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 19 Oct 2016 11:50:42 -0400
-In-Reply-To: <1476587883.1538.12.camel@gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20161017142428.25dyxefk2arjeyfz@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
+On Mon, 2016-10-17 at 16:24 +0200, Sebastian Andrzej Siewior wrote:
+> On 2016-10-16 05:14:22 [+0200], Mike Galbraith wrote:
+> > 
+> > In v4.7, the driver switched to percpu compression streams, disabling
+> > preemption (get/put_cpu_ptr()).  Use get/put_cpu_light() instead.
+> 
+> I am not convinced that this will work. Nothing prevents
+> zram_bvec_write() to be reentrant on the same CPU what I can tell from
+> browsing over the code and since it uses zstrm->buffer for compression
+> it can go wrong. Also I don't know if crypto's tfm handler can be used
+> in parallel for any ops (it usually does not work for crypto).
+> 
+> I suggest a local lock or a good reason why the this patch works.
 
-Do not alter HANDLE_SIZE, memory corruption ensues.  The handle is
-a pointer, allocate space for the struct it points to and align it
-ZS_ALIGN.  Also, when accessing the struct, mask HANDLE_PIN_BIT.
+(taking a break from hotplug squabble to pick on something easier:)
 
-v2: mutex is only needed for PREEMPT_RT_FULL, with PREEMPT_RT_RTB,
-preemption is disabled when we take it...
+drivers/zram: Don't disable preemption in zcomp_stream_get/put()
+
+In v4.7, the driver switched to percpu compression streams, disabling
+preemption vai get/put_cpu_ptr().  Use a local lock instead for RT.
+We also have to fix an RT lock order issue in zram_decompress_page()
+such that zs_map_object() nests inside of zcomp_stream_put() as it
+does in zram_bvec_write().
 
 Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 ---
- mm/zsmalloc.c |   31 +++++++++++++++++--------------
- 1 file changed, 17 insertions(+), 14 deletions(-)
+ drivers/block/zram/zcomp.c    |    7 +++++--
+ drivers/block/zram/zram_drv.c |   11 +++++------
+ 2 files changed, 10 insertions(+), 8 deletions(-)
 
---- a/mm/zsmalloc.c
-+++ b/mm/zsmalloc.c
-@@ -71,18 +71,20 @@
- #define ZS_MAX_ZSPAGE_ORDER 2
- #define ZS_MAX_PAGES_PER_ZSPAGE (_AC(1, UL) << ZS_MAX_ZSPAGE_ORDER)
+--- a/drivers/block/zram/zcomp.c
++++ b/drivers/block/zram/zcomp.c
+@@ -15,6 +15,7 @@
+ #include <linux/sched.h>
+ #include <linux/cpu.h>
+ #include <linux/crypto.h>
++#include <linux/locallock.h>
  
--#ifdef CONFIG_PREEMPT_RT_BASE
-+#define ZS_HANDLE_SIZE (sizeof(unsigned long))
+ #include "zcomp.h"
+ 
+@@ -116,14 +117,16 @@ ssize_t zcomp_available_show(const char
+ 	return sz;
+ }
+ 
++DEFINE_LOCAL_IRQ_LOCK(zram_stream_lock);
 +
-+#ifdef CONFIG_PREEMPT_RT_FULL
- 
- struct zsmalloc_handle {
- 	unsigned long addr;
- 	struct mutex lock;
- };
- 
--#define ZS_HANDLE_SIZE (sizeof(struct zsmalloc_handle))
-+#define ZS_HANDLE_ALLOC_SIZE (sizeof(struct zsmalloc_handle))
- 
- #else
- 
--#define ZS_HANDLE_SIZE (sizeof(unsigned long))
-+#define ZS_HANDLE_ALLOC_SIZE ZS_HANDLE_SIZE
- #endif
- 
- /*
-@@ -339,8 +341,9 @@ static void SetZsPageMovable(struct zs_p
- 
- static int create_cache(struct zs_pool *pool)
+ struct zcomp_strm *zcomp_stream_get(struct zcomp *comp)
  {
--	pool->handle_cachep = kmem_cache_create("zs_handle", ZS_HANDLE_SIZE,
--					0, 0, NULL);
-+	pool->handle_cachep = kmem_cache_create("zs_handle",
-+						ZS_HANDLE_ALLOC_SIZE,
-+						ZS_ALIGN, 0, NULL);
- 	if (!pool->handle_cachep)
- 		return 1;
- 
-@@ -367,7 +370,7 @@ static unsigned long cache_alloc_handle(
- 
- 	p = kmem_cache_alloc(pool->handle_cachep,
- 			     gfp & ~(__GFP_HIGHMEM|__GFP_MOVABLE));
--#ifdef CONFIG_PREEMPT_RT_BASE
-+#ifdef CONFIG_PREEMPT_RT_FULL
- 	if (p) {
- 		struct zsmalloc_handle *zh = p;
- 
-@@ -377,10 +380,10 @@ static unsigned long cache_alloc_handle(
- 	return (unsigned long)p;
+-	return *get_cpu_ptr(comp->stream);
++	return get_locked_var(zram_stream_lock, *comp->stream);
  }
  
--#ifdef CONFIG_PREEMPT_RT_BASE
-+#ifdef CONFIG_PREEMPT_RT_FULL
- static struct zsmalloc_handle *zs_get_pure_handle(unsigned long handle)
+ void zcomp_stream_put(struct zcomp *comp)
  {
--	return (void *)(handle &~((1 << OBJ_TAG_BITS) - 1));
-+	return (void *)(handle & ~BIT(HANDLE_PIN_BIT));
+-	put_cpu_ptr(comp->stream);
++	put_locked_var(zram_stream_lock, *comp->stream);
  }
- #endif
  
-@@ -402,7 +405,7 @@ static void cache_free_zspage(struct zs_
+ int zcomp_compress(struct zcomp_strm *zstrm,
+--- a/drivers/block/zram/zram_drv.c
++++ b/drivers/block/zram/zram_drv.c
+@@ -566,6 +566,7 @@ static int zram_decompress_page(struct z
+ 	int ret = 0;
+ 	unsigned char *cmem;
+ 	struct zram_meta *meta = zram->meta;
++	struct zcomp_strm *zstrm;
+ 	unsigned long handle;
+ 	unsigned int size;
  
- static void record_obj(unsigned long handle, unsigned long obj)
- {
--#ifdef CONFIG_PREEMPT_RT_BASE
-+#ifdef CONFIG_PREEMPT_RT_FULL
- 	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
+@@ -579,16 +580,14 @@ static int zram_decompress_page(struct z
+ 		return 0;
+ 	}
  
- 	WRITE_ONCE(zh->addr, obj);
-@@ -937,7 +940,7 @@ static unsigned long location_to_obj(str
++	zstrm = zcomp_stream_get(zram->comp);
+ 	cmem = zs_map_object(meta->mem_pool, handle, ZS_MM_RO);
+-	if (size == PAGE_SIZE) {
++	if (size == PAGE_SIZE)
+ 		copy_page(mem, cmem);
+-	} else {
+-		struct zcomp_strm *zstrm = zcomp_stream_get(zram->comp);
+-
++	else
+ 		ret = zcomp_decompress(zstrm, cmem, size, mem);
+-		zcomp_stream_put(zram->comp);
+-	}
+ 	zs_unmap_object(meta->mem_pool, handle);
++	zcomp_stream_put(zram->comp);
+ 	zram_unlock_table(&meta->table[index]);
  
- static unsigned long handle_to_obj(unsigned long handle)
- {
--#ifdef CONFIG_PREEMPT_RT_BASE
-+#ifdef CONFIG_PREEMPT_RT_FULL
- 	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
- 
- 	return zh->addr;
-@@ -957,7 +960,7 @@ static unsigned long obj_to_head(struct
- 
- static inline int testpin_tag(unsigned long handle)
- {
--#ifdef CONFIG_PREEMPT_RT_BASE
-+#ifdef CONFIG_PREEMPT_RT_FULL
- 	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
- 
- 	return mutex_is_locked(&zh->lock);
-@@ -968,7 +971,7 @@ static inline int testpin_tag(unsigned l
- 
- static inline int trypin_tag(unsigned long handle)
- {
--#ifdef CONFIG_PREEMPT_RT_BASE
-+#ifdef CONFIG_PREEMPT_RT_FULL
- 	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
- 
- 	return mutex_trylock(&zh->lock);
-@@ -979,7 +982,7 @@ static inline int trypin_tag(unsigned lo
- 
- static void pin_tag(unsigned long handle)
- {
--#ifdef CONFIG_PREEMPT_RT_BASE
-+#ifdef CONFIG_PREEMPT_RT_FULL
- 	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
- 
- 	return mutex_lock(&zh->lock);
-@@ -990,7 +993,7 @@ static void pin_tag(unsigned long handle
- 
- static void unpin_tag(unsigned long handle)
- {
--#ifdef CONFIG_PREEMPT_RT_BASE
-+#ifdef CONFIG_PREEMPT_RT_FULL
- 	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
- 
- 	return mutex_unlock(&zh->lock);
+ 	/* Should NEVER happen. Return bio error if it does. */
