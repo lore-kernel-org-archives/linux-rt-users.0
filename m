@@ -1,77 +1,232 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: [rfc patch] hotplug: Call mmdrop_delayed() in sched_cpu_dying() if
- PREEMPT_RT_FULL
-Date: Thu, 20 Oct 2016 11:34:03 +0200
-Message-ID: <1476956043.18007.15.camel@gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [patch v2 ] mm/zs_malloc: Fix bit spinlock replacement
+Date: Thu, 20 Oct 2016 12:59:33 +0200
+Message-ID: <20161020105933.jvu44pe6vniwlmy5@linutronix.de>
 References: <20161006085228.jl6rpszdp5c2p2nr@linutronix.de>
+ <1476587883.1538.12.camel@gmail.com>
+ <1476892238.3975.1.camel@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset=utf-8
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20161006085228.jl6rpszdp5c2p2nr@linutronix.de>
+Content-Disposition: inline
+In-Reply-To: <1476892238.3975.1.camel@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-My 64 core box just passed an hour running Steven's hotplug stress
-script along with stockfish and futextests (tip-rt.today w. hotplug
-hacks you saw a while back), and seems content to just keep on grinding
-away.  Without it, box quickly becomes a doorstop.
+On 2016-10-19 17:50:38 [+0200], Mike Galbraith wrote:
+> 
+> Do not alter HANDLE_SIZE, memory corruption ensues.  The handle is
+> a pointer, allocate space for the struct it points to and align it
+> ZS_ALIGN.  Also, when accessing the struct, mask HANDLE_PIN_BIT.
+> 
+> v2: mutex is only needed for PREEMPT_RT_FULL, with PREEMPT_RT_RTB,
+> preemption is disabled when we take it...
+> 
+> Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 
-[  634.896901] BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:931
-[  634.896902] in_atomic(): 1, irqs_disabled(): 1, pid: 104, name: migration/6
-[  634.896902] no locks held by migration/6/104.
-[  634.896903] irq event stamp: 1208518
-[  634.896907] hardirqs last  enabled at (1208517): [<ffffffff816de46c>] _raw_spin_unlock_irqrestore+0x8c/0xa0
-[  634.896910] hardirqs last disabled at (1208518): [<ffffffff81146055>] multi_cpu_stop+0xc5/0x110
-[  634.896912] softirqs last  enabled at (0): [<ffffffff81075dd2>] copy_process.part.32+0x672/0x1fc0
-[  634.896913] softirqs last disabled at (0): [<          (null)>]           (null)
-[  634.896914] Preemption disabled at:[<ffffffff8114629c>] cpu_stopper_thread+0x8c/0x120
-[  634.896914] 
-[  634.896915] CPU: 6 PID: 104 Comm: migration/6 Tainted: G            E   4.8.2-rt1-rt_debug #23
-[  634.896916] Hardware name: MEDION MS-7848/MS-7848, BIOS M7848W08.20C 09/23/2013
-[  634.896918]  0000000000000000 ffff880176fb3c40 ffffffff8139c04d 0000000000000000
-[  634.896919]  ffff880176fa8000 ffff880176fb3c68 ffffffff810a8102 ffffffff81c29cc0
-[  634.896919]  ffff8803fc825640 ffff8803fc825640 ffff880176fb3c88 ffffffff816de754
-[  634.896920] Call Trace:
-[  634.896923]  [<ffffffff8139c04d>] dump_stack+0x85/0xc8
-[  634.896924]  [<ffffffff810a8102>] ___might_sleep+0x152/0x250
-[  634.896926]  [<ffffffff816de754>] rt_spin_lock+0x24/0x80
-[  634.896928]  [<ffffffff810d67f9>] ? __lock_is_held+0x49/0x70
-[  634.896929]  [<ffffffff810623ee>] pgd_free+0x1e/0xb0
-[  634.896930]  [<ffffffff81074877>] __mmdrop+0x27/0xd0
-[  634.896932]  [<ffffffff810b4a0d>] sched_cpu_dying+0x24d/0x2c0
-[  634.896933]  [<ffffffff810b47c0>] ? sched_cpu_starting+0x60/0x60
-[  634.896934]  [<ffffffff81079864>] cpuhp_invoke_callback+0xd4/0x350
-[  634.896935]  [<ffffffff81079e56>] take_cpu_down+0x86/0xd0
-[  634.896936]  [<ffffffff81146060>] multi_cpu_stop+0xd0/0x110
-[  634.896937]  [<ffffffff81145f90>] ? cpu_stop_queue_work+0x90/0x90
-[  634.896938]  [<ffffffff811462a2>] cpu_stopper_thread+0x92/0x120
-[  634.896940]  [<ffffffff810a50fe>] smpboot_thread_fn+0x1de/0x360
-[  634.896941]  [<ffffffff810a4f20>] ? smpboot_update_cpumask_percpu_thread+0x130/0x130
-[  634.896942]  [<ffffffff810a093f>] kthread+0xef/0x110
-[  634.896944]  [<ffffffff816df16f>] ret_from_fork+0x1f/0x40
-[  634.896945]  [<ffffffff810a0850>] ? kthread_park+0x60/0x60
-[  634.896970] smpboot: CPU 6 is now offline
+The folded version:
+
+
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Date: Tue, 22 Mar 2016 11:16:09 +0100
+Subject: [PATCH] mm/zsmalloc: copy with get_cpu_var() and locking
+
+get_cpu_var() disables preemption and triggers a might_sleep() splat later.
+This is replaced with get_locked_var().
+This bitspinlocks are replaced with a proper mutex which requires a slightly
+larger struct to allocate.
 
 Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+[bigeasy: replace the bitspin_lock() with a mutex, get_locked_var(). Mike then
+fixed the size magic]
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/sched/core.c |    3 +++
- 1 file changed, 3 insertions(+)
+ mm/zsmalloc.c |   80 +++++++++++++++++++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 74 insertions(+), 6 deletions(-)
 
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -7569,6 +7569,9 @@ int sched_cpu_dying(unsigned int cpu)
- 	nohz_balance_exit_idle(cpu);
- 	hrtick_clear(rq);
- 	if (per_cpu(idle_last_mm, cpu)) {
-+	if (IS_ENABLED(CONFIG_PREEMPT_RT_FULL))
-+		mmdrop_delayed(per_cpu(idle_last_mm, cpu));
-+	else
- 		mmdrop(per_cpu(idle_last_mm, cpu));
- 		per_cpu(idle_last_mm, cpu) = NULL;
+--- a/mm/zsmalloc.c
++++ b/mm/zsmalloc.c
+@@ -53,6 +53,7 @@
+ #include <linux/mount.h>
+ #include <linux/migrate.h>
+ #include <linux/pagemap.h>
++#include <linux/locallock.h>
+ 
+ #define ZSPAGE_MAGIC	0x58
+ 
+@@ -70,9 +71,22 @@
+  */
+ #define ZS_MAX_ZSPAGE_ORDER 2
+ #define ZS_MAX_PAGES_PER_ZSPAGE (_AC(1, UL) << ZS_MAX_ZSPAGE_ORDER)
+-
+ #define ZS_HANDLE_SIZE (sizeof(unsigned long))
+ 
++#ifdef CONFIG_PREEMPT_RT_FULL
++
++struct zsmalloc_handle {
++	unsigned long addr;
++	struct mutex lock;
++};
++
++#define ZS_HANDLE_ALLOC_SIZE (sizeof(struct zsmalloc_handle))
++
++#else
++
++#define ZS_HANDLE_ALLOC_SIZE (sizeof(unsigned long))
++#endif
++
+ /*
+  * Object location (<PFN>, <obj_idx>) is encoded as
+  * as single (unsigned long) handle value.
+@@ -327,7 +341,7 @@ static void SetZsPageMovable(struct zs_p
+ 
+ static int create_cache(struct zs_pool *pool)
+ {
+-	pool->handle_cachep = kmem_cache_create("zs_handle", ZS_HANDLE_SIZE,
++	pool->handle_cachep = kmem_cache_create("zs_handle", ZS_HANDLE_ALLOC_SIZE,
+ 					0, 0, NULL);
+ 	if (!pool->handle_cachep)
+ 		return 1;
+@@ -351,10 +365,27 @@ static void destroy_cache(struct zs_pool
+ 
+ static unsigned long cache_alloc_handle(struct zs_pool *pool, gfp_t gfp)
+ {
+-	return (unsigned long)kmem_cache_alloc(pool->handle_cachep,
+-			gfp & ~(__GFP_HIGHMEM|__GFP_MOVABLE));
++	void *p;
++
++	p = kmem_cache_alloc(pool->handle_cachep,
++			     gfp & ~(__GFP_HIGHMEM|__GFP_MOVABLE));
++#ifdef CONFIG_PREEMPT_RT_FULL
++	if (p) {
++		struct zsmalloc_handle *zh = p;
++
++		mutex_init(&zh->lock);
++	}
++#endif
++	return (unsigned long)p;
+ }
+ 
++#ifdef CONFIG_PREEMPT_RT_FULL
++static struct zsmalloc_handle *zs_get_pure_handle(unsigned long handle)
++{
++	return (void *)(handle &~((1 << OBJ_TAG_BITS) - 1));
++}
++#endif
++
+ static void cache_free_handle(struct zs_pool *pool, unsigned long handle)
+ {
+ 	kmem_cache_free(pool->handle_cachep, (void *)handle);
+@@ -373,12 +404,18 @@ static void cache_free_zspage(struct zs_
+ 
+ static void record_obj(unsigned long handle, unsigned long obj)
+ {
++#ifdef CONFIG_PREEMPT_RT_FULL
++	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
++
++	WRITE_ONCE(zh->addr, obj);
++#else
+ 	/*
+ 	 * lsb of @obj represents handle lock while other bits
+ 	 * represent object value the handle is pointing so
+ 	 * updating shouldn't do store tearing.
+ 	 */
+ 	WRITE_ONCE(*(unsigned long *)handle, obj);
++#endif
+ }
+ 
+ /* zpool driver */
+@@ -467,6 +504,7 @@ MODULE_ALIAS("zpool-zsmalloc");
+ 
+ /* per-cpu VM mapping areas for zspage accesses that cross page boundaries */
+ static DEFINE_PER_CPU(struct mapping_area, zs_map_area);
++static DEFINE_LOCAL_IRQ_LOCK(zs_map_area_lock);
+ 
+ static bool is_zspage_isolated(struct zspage *zspage)
+ {
+@@ -902,7 +940,13 @@ static unsigned long location_to_obj(str
+ 
+ static unsigned long handle_to_obj(unsigned long handle)
+ {
++#ifdef CONFIG_PREEMPT_RT_FULL
++	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
++
++	return zh->addr;
++#else
+ 	return *(unsigned long *)handle;
++#endif
+ }
+ 
+ static unsigned long obj_to_head(struct page *page, void *obj)
+@@ -916,22 +960,46 @@ static unsigned long obj_to_head(struct
+ 
+ static inline int testpin_tag(unsigned long handle)
+ {
++#ifdef CONFIG_PREEMPT_RT_FULL
++	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
++
++	return mutex_is_locked(&zh->lock);
++#else
+ 	return bit_spin_is_locked(HANDLE_PIN_BIT, (unsigned long *)handle);
++#endif
+ }
+ 
+ static inline int trypin_tag(unsigned long handle)
+ {
++#ifdef CONFIG_PREEMPT_RT_FULL
++	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
++
++	return mutex_trylock(&zh->lock);
++#else
+ 	return bit_spin_trylock(HANDLE_PIN_BIT, (unsigned long *)handle);
++#endif
+ }
+ 
+ static void pin_tag(unsigned long handle)
+ {
++#ifdef CONFIG_PREEMPT_RT_FULL
++	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
++
++	return mutex_lock(&zh->lock);
++#else
+ 	bit_spin_lock(HANDLE_PIN_BIT, (unsigned long *)handle);
++#endif
+ }
+ 
+ static void unpin_tag(unsigned long handle)
+ {
++#ifdef CONFIG_PREEMPT_RT_FULL
++	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
++
++	return mutex_unlock(&zh->lock);
++#else
+ 	bit_spin_unlock(HANDLE_PIN_BIT, (unsigned long *)handle);
++#endif
+ }
+ 
+ static void reset_page(struct page *page)
+@@ -1423,7 +1491,7 @@ void *zs_map_object(struct zs_pool *pool
+ 	class = pool->size_class[class_idx];
+ 	off = (class->size * obj_idx) & ~PAGE_MASK;
+ 
+-	area = &get_cpu_var(zs_map_area);
++	area = &get_locked_var(zs_map_area_lock, zs_map_area);
+ 	area->vm_mm = mm;
+ 	if (off + class->size <= PAGE_SIZE) {
+ 		/* this object is contained entirely within a page */
+@@ -1477,7 +1545,7 @@ void zs_unmap_object(struct zs_pool *poo
+ 
+ 		__zs_unmap_object(area, pages, off, class->size);
  	}
+-	put_cpu_var(zs_map_area);
++	put_locked_var(zs_map_area_lock, zs_map_area);
+ 
+ 	migrate_read_unlock(zspage);
+ 	unpin_tag(handle);
+
+Sebastian
