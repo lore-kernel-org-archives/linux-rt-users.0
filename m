@@ -1,10 +1,12 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [patch v2 ] mm/zs_malloc: Fix bit spinlock replacement
-Date: Thu, 20 Oct 2016 12:59:33 +0200
-Message-ID: <20161020105933.jvu44pe6vniwlmy5@linutronix.de>
+Subject: Re: [patch v2] drivers/zram: Don't disable preemption in
+ zcomp_stream_get/put()
+Date: Thu, 20 Oct 2016 13:02:00 +0200
+Message-ID: <20161020110200.zt2yguxq2zdvqyfc@linutronix.de>
 References: <20161006085228.jl6rpszdp5c2p2nr@linutronix.de>
- <1476587883.1538.12.camel@gmail.com>
- <1476892238.3975.1.camel@gmail.com>
+ <1476587662.1538.8.camel@gmail.com>
+ <20161017142428.25dyxefk2arjeyfz@linutronix.de>
+ <1476892590.3975.6.camel@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -12,221 +14,114 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>
 To: Mike Galbraith <umgwanakikbuti@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:47869 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1757162AbcJTLCD (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 20 Oct 2016 07:02:03 -0400
 Content-Disposition: inline
-In-Reply-To: <1476892238.3975.1.camel@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <1476892590.3975.6.camel@gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2016-10-19 17:50:38 [+0200], Mike Galbraith wrote:
-> 
-> Do not alter HANDLE_SIZE, memory corruption ensues.  The handle is
-> a pointer, allocate space for the struct it points to and align it
-> ZS_ALIGN.  Also, when accessing the struct, mask HANDLE_PIN_BIT.
-> 
-> v2: mutex is only needed for PREEMPT_RT_FULL, with PREEMPT_RT_RTB,
-> preemption is disabled when we take it...
-> 
-> Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+On 2016-10-19 17:56:30 [+0200], Mike Galbraith wrote:
+> In v4.7, the driver switched to percpu compression streams, disabling
+> preemption vai get/put_cpu_ptr().  Use a local lock instead for RT.
 
-The folded version:
-
+since you could have multiple streams which would be then serialized
+with the local lock I went for this:
 
 From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Date: Tue, 22 Mar 2016 11:16:09 +0100
-Subject: [PATCH] mm/zsmalloc: copy with get_cpu_var() and locking
+Date: Thu, 20 Oct 2016 11:15:22 +0200
+Subject: [PATCH] drivers/zram: Don't disable preemption in
+ zcomp_stream_get/put()
 
-get_cpu_var() disables preemption and triggers a might_sleep() splat later.
-This is replaced with get_locked_var().
-This bitspinlocks are replaced with a proper mutex which requires a slightly
-larger struct to allocate.
+In v4.7, the driver switched to percpu compression streams, disabling
+preemption via get/put_cpu_ptr(). Use a per-zcomp_strm lock here. We
+also have to fix an lock order issue in zram_decompress_page() such
+that zs_map_object() nests inside of zcomp_stream_put() as it does in
+zram_bvec_write().
 
 Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
-[bigeasy: replace the bitspin_lock() with a mutex, get_locked_var(). Mike then
-fixed the size magic]
+[bigeasy: get_locked_var() -> per zcomp_strm lock]
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- mm/zsmalloc.c |   80 +++++++++++++++++++++++++++++++++++++++++++++++++++++-----
- 1 file changed, 74 insertions(+), 6 deletions(-)
+ drivers/block/zram/zcomp.c    |   12 ++++++++++--
+ drivers/block/zram/zcomp.h    |    1 +
+ drivers/block/zram/zram_drv.c |    6 +++---
+ 3 files changed, 14 insertions(+), 5 deletions(-)
 
---- a/mm/zsmalloc.c
-+++ b/mm/zsmalloc.c
-@@ -53,6 +53,7 @@
- #include <linux/mount.h>
- #include <linux/migrate.h>
- #include <linux/pagemap.h>
-+#include <linux/locallock.h>
+--- a/drivers/block/zram/zcomp.c
++++ b/drivers/block/zram/zcomp.c
+@@ -118,12 +118,19 @@ ssize_t zcomp_available_show(const char
  
- #define ZSPAGE_MAGIC	0x58
- 
-@@ -70,9 +71,22 @@
-  */
- #define ZS_MAX_ZSPAGE_ORDER 2
- #define ZS_MAX_PAGES_PER_ZSPAGE (_AC(1, UL) << ZS_MAX_ZSPAGE_ORDER)
--
- #define ZS_HANDLE_SIZE (sizeof(unsigned long))
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+
-+struct zsmalloc_handle {
-+	unsigned long addr;
-+	struct mutex lock;
-+};
-+
-+#define ZS_HANDLE_ALLOC_SIZE (sizeof(struct zsmalloc_handle))
-+
-+#else
-+
-+#define ZS_HANDLE_ALLOC_SIZE (sizeof(unsigned long))
-+#endif
-+
- /*
-  * Object location (<PFN>, <obj_idx>) is encoded as
-  * as single (unsigned long) handle value.
-@@ -327,7 +341,7 @@ static void SetZsPageMovable(struct zs_p
- 
- static int create_cache(struct zs_pool *pool)
+ struct zcomp_strm *zcomp_stream_get(struct zcomp *comp)
  {
--	pool->handle_cachep = kmem_cache_create("zs_handle", ZS_HANDLE_SIZE,
-+	pool->handle_cachep = kmem_cache_create("zs_handle", ZS_HANDLE_ALLOC_SIZE,
- 					0, 0, NULL);
- 	if (!pool->handle_cachep)
- 		return 1;
-@@ -351,10 +365,27 @@ static void destroy_cache(struct zs_pool
- 
- static unsigned long cache_alloc_handle(struct zs_pool *pool, gfp_t gfp)
- {
--	return (unsigned long)kmem_cache_alloc(pool->handle_cachep,
--			gfp & ~(__GFP_HIGHMEM|__GFP_MOVABLE));
-+	void *p;
+-	return *get_cpu_ptr(comp->stream);
++	struct zcomp_strm *zstrm;
 +
-+	p = kmem_cache_alloc(pool->handle_cachep,
-+			     gfp & ~(__GFP_HIGHMEM|__GFP_MOVABLE));
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	if (p) {
-+		struct zsmalloc_handle *zh = p;
-+
-+		mutex_init(&zh->lock);
-+	}
-+#endif
-+	return (unsigned long)p;
++	zstrm = *this_cpu_ptr(comp->stream);
++	spin_lock(&zstrm->zcomp_lock);
++	return zstrm;
  }
  
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static struct zsmalloc_handle *zs_get_pure_handle(unsigned long handle)
-+{
-+	return (void *)(handle &~((1 << OBJ_TAG_BITS) - 1));
-+}
-+#endif
-+
- static void cache_free_handle(struct zs_pool *pool, unsigned long handle)
+ void zcomp_stream_put(struct zcomp *comp)
  {
- 	kmem_cache_free(pool->handle_cachep, (void *)handle);
-@@ -373,12 +404,18 @@ static void cache_free_zspage(struct zs_
- 
- static void record_obj(unsigned long handle, unsigned long obj)
- {
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
+-	put_cpu_ptr(comp->stream);
++	struct zcomp_strm *zstrm;
 +
-+	WRITE_ONCE(zh->addr, obj);
-+#else
- 	/*
- 	 * lsb of @obj represents handle lock while other bits
- 	 * represent object value the handle is pointing so
- 	 * updating shouldn't do store tearing.
- 	 */
- 	WRITE_ONCE(*(unsigned long *)handle, obj);
-+#endif
++	zstrm = *this_cpu_ptr(comp->stream);
++	spin_unlock(&zstrm->zcomp_lock);
  }
  
- /* zpool driver */
-@@ -467,6 +504,7 @@ MODULE_ALIAS("zpool-zsmalloc");
+ int zcomp_compress(struct zcomp_strm *zstrm,
+@@ -174,6 +181,7 @@ static int __zcomp_cpu_notifier(struct z
+ 			pr_err("Can't allocate a compression stream\n");
+ 			return NOTIFY_BAD;
+ 		}
++		spin_lock_init(&zstrm->zcomp_lock);
+ 		*per_cpu_ptr(comp->stream, cpu) = zstrm;
+ 		break;
+ 	case CPU_DEAD:
+--- a/drivers/block/zram/zcomp.h
++++ b/drivers/block/zram/zcomp.h
+@@ -14,6 +14,7 @@ struct zcomp_strm {
+ 	/* compression/decompression buffer */
+ 	void *buffer;
+ 	struct crypto_comp *tfm;
++	spinlock_t zcomp_lock;
+ };
  
- /* per-cpu VM mapping areas for zspage accesses that cross page boundaries */
- static DEFINE_PER_CPU(struct mapping_area, zs_map_area);
-+static DEFINE_LOCAL_IRQ_LOCK(zs_map_area_lock);
+ /* dynamic per-device compression frontend */
+--- a/drivers/block/zram/zram_drv.c
++++ b/drivers/block/zram/zram_drv.c
+@@ -568,6 +568,7 @@ static int zram_decompress_page(struct z
+ 	struct zram_meta *meta = zram->meta;
+ 	unsigned long handle;
+ 	unsigned int size;
++	struct zcomp_strm *zstrm;
  
- static bool is_zspage_isolated(struct zspage *zspage)
- {
-@@ -902,7 +940,13 @@ static unsigned long location_to_obj(str
- 
- static unsigned long handle_to_obj(unsigned long handle)
- {
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
-+
-+	return zh->addr;
-+#else
- 	return *(unsigned long *)handle;
-+#endif
- }
- 
- static unsigned long obj_to_head(struct page *page, void *obj)
-@@ -916,22 +960,46 @@ static unsigned long obj_to_head(struct
- 
- static inline int testpin_tag(unsigned long handle)
- {
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
-+
-+	return mutex_is_locked(&zh->lock);
-+#else
- 	return bit_spin_is_locked(HANDLE_PIN_BIT, (unsigned long *)handle);
-+#endif
- }
- 
- static inline int trypin_tag(unsigned long handle)
- {
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
-+
-+	return mutex_trylock(&zh->lock);
-+#else
- 	return bit_spin_trylock(HANDLE_PIN_BIT, (unsigned long *)handle);
-+#endif
- }
- 
- static void pin_tag(unsigned long handle)
- {
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
-+
-+	return mutex_lock(&zh->lock);
-+#else
- 	bit_spin_lock(HANDLE_PIN_BIT, (unsigned long *)handle);
-+#endif
- }
- 
- static void unpin_tag(unsigned long handle)
- {
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	struct zsmalloc_handle *zh = zs_get_pure_handle(handle);
-+
-+	return mutex_unlock(&zh->lock);
-+#else
- 	bit_spin_unlock(HANDLE_PIN_BIT, (unsigned long *)handle);
-+#endif
- }
- 
- static void reset_page(struct page *page)
-@@ -1423,7 +1491,7 @@ void *zs_map_object(struct zs_pool *pool
- 	class = pool->size_class[class_idx];
- 	off = (class->size * obj_idx) & ~PAGE_MASK;
- 
--	area = &get_cpu_var(zs_map_area);
-+	area = &get_locked_var(zs_map_area_lock, zs_map_area);
- 	area->vm_mm = mm;
- 	if (off + class->size <= PAGE_SIZE) {
- 		/* this object is contained entirely within a page */
-@@ -1477,7 +1545,7 @@ void zs_unmap_object(struct zs_pool *poo
- 
- 		__zs_unmap_object(area, pages, off, class->size);
+ 	zram_lock_table(&meta->table[index]);
+ 	handle = meta->table[index].handle;
+@@ -579,16 +580,15 @@ static int zram_decompress_page(struct z
+ 		return 0;
  	}
--	put_cpu_var(zs_map_area);
-+	put_locked_var(zs_map_area_lock, zs_map_area);
  
- 	migrate_read_unlock(zspage);
- 	unpin_tag(handle);
++	zstrm = zcomp_stream_get(zram->comp);
+ 	cmem = zs_map_object(meta->mem_pool, handle, ZS_MM_RO);
+ 	if (size == PAGE_SIZE) {
+ 		copy_page(mem, cmem);
+ 	} else {
+-		struct zcomp_strm *zstrm = zcomp_stream_get(zram->comp);
+-
+ 		ret = zcomp_decompress(zstrm, cmem, size, mem);
+-		zcomp_stream_put(zram->comp);
+ 	}
+ 	zs_unmap_object(meta->mem_pool, handle);
++	zcomp_stream_put(zram->comp);
+ 	zram_unlock_table(&meta->table[index]);
+ 
+ 	/* Should NEVER happen. Return bio error if it does. */
 
 Sebastian
