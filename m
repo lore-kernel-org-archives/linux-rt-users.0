@@ -1,59 +1,95 @@
 From: Joel Fernandes <joelaf@google.com>
-Subject: Re: [PATCH 2/6] mm: mark all calls into the vmalloc subsystem as
- potentially sleeping
-Date: Thu, 20 Oct 2016 17:32:19 -0700
-Message-ID: <CAJWu+oric2eq1WOrx9fKHxiMhyq490av-1TbRPDfTptOydfM+A@mail.gmail.com>
-References: <1476773771-11470-1-git-send-email-hch@lst.de> <1476773771-11470-3-git-send-email-hch@lst.de>
- <20161019111541.GQ29358@nuc-i3427.alporthouse.com> <20161019130552.GB5876@lst.de>
- <CALCETrVqjejgpQVUdem8RK3uxdEgfOZy4cOJqJQjCLtBDnJfyQ@mail.gmail.com> <20161019163112.GA31091@lst.de>
+Subject: Re: [PATCH 4/6] mm: remove free_unmap_vmap_area_addr
+Date: Thu, 20 Oct 2016 17:46:36 -0700
+Message-ID: <CAJWu+oqOw6uMh+Q_78MGjO8WKLxCuh4fmVmKxEJ5aoviXjoMcA@mail.gmail.com>
+References: <1476773771-11470-1-git-send-email-hch@lst.de> <1476773771-11470-5-git-send-email-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Cc: Andy Lutomirski <luto@amacapital.net>, Chris Wilson <chris@chris-wilson.co.uk>,
-	Andrew Morton <akpm@linux-foundation.org>, Jisheng Zhang <jszhang@marvell.com>,
-	John Dias <joaodias@google.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, linux-rt-users@vger.kernel.org,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>,
+        Jisheng Zhang <jszhang@marvell.com>,
+        Chris Wilson <chris@chris-wilson.co.uk>,
+        John Dias <joaodias@google.com>,
+        "open list:MEMORY MANAGEMENT" <linux-mm@kvack.org>,
+        linux-rt-users@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
 To: Christoph Hellwig <hch@lst.de>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20161019163112.GA31091@lst.de>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-lf0-f48.google.com ([209.85.215.48]:35301 "EHLO
+        mail-lf0-f48.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1753100AbcJUAqj (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 20 Oct 2016 20:46:39 -0400
+Received: by mail-lf0-f48.google.com with SMTP id l131so108384047lfl.2
+        for <linux-rt-users@vger.kernel.org>; Thu, 20 Oct 2016 17:46:38 -0700 (PDT)
+In-Reply-To: <1476773771-11470-5-git-send-email-hch@lst.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 Hi Christoph,
 
-On Wed, Oct 19, 2016 at 9:31 AM, Christoph Hellwig <hch@lst.de> wrote:
-> On Wed, Oct 19, 2016 at 08:34:40AM -0700, Andy Lutomirski wrote:
->>
->> It would be quite awkward for a task stack to get freed from a
->> sleepable context, because the obvious sleepable context is the task
->> itself, and it still needs its stack.  This was true even in the old
->> regime when task stacks were freed from RCU context.
->>
->> But vfree has a magic automatic deferral mechanism.  Couldn't you make
->> the non-deferred case might_sleep()?
+On Mon, Oct 17, 2016 at 11:56 PM, Christoph Hellwig <hch@lst.de> wrote:
+> Just inline it into the only caller.
 >
-> But it's only magic from interrupt context..
->
-> Chris, does this patch make virtually mapped stack work for you again?
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> ---
+>  mm/vmalloc.c | 21 ++++++++-------------
+>  1 file changed, 8 insertions(+), 13 deletions(-)
 >
 > diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-> index f2481cb..942e02d 100644
+> index 8cedfa0..2af2921 100644
 > --- a/mm/vmalloc.c
 > +++ b/mm/vmalloc.c
-> @@ -1533,7 +1533,7 @@ void vfree(const void *addr)
+> @@ -717,16 +717,6 @@ static struct vmap_area *find_vmap_area(unsigned long addr)
+>         return va;
+>  }
 >
->         if (!addr)
->                 return;
-> -       if (unlikely(in_interrupt())) {
-> +       if (in_interrupt() || in_atomic()) {
+> -static void free_unmap_vmap_area_addr(unsigned long addr)
+> -{
+> -       struct vmap_area *va;
+> -
+> -       va = find_vmap_area(addr);
+> -       BUG_ON(!va);
+> -       free_unmap_vmap_area(va);
+> -}
+> -
+> -
+>  /*** Per cpu kva allocator ***/
+>
+>  /*
+> @@ -1090,6 +1080,7 @@ void vm_unmap_ram(const void *mem, unsigned int count)
+>  {
+>         unsigned long size = (unsigned long)count << PAGE_SHIFT;
+>         unsigned long addr = (unsigned long)mem;
+> +       struct vmap_area *va;
+>
+>         might_sleep();
+>         BUG_ON(!addr);
+> @@ -1100,10 +1091,14 @@ void vm_unmap_ram(const void *mem, unsigned int count)
+>         debug_check_no_locks_freed(mem, size);
+>         vmap_debug_free_range(addr, addr+size);
+>
+> -       if (likely(count <= VMAP_MAX_ALLOC))
+> +       if (likely(count <= VMAP_MAX_ALLOC)) {
+>                 vb_free(mem, size);
+> -       else
+> -               free_unmap_vmap_area_addr(addr);
+> +               return;
+> +       }
+> +
+> +       va = find_vmap_area(addr);
+> +       BUG_ON(!va);
 
-in_atomic() also checks in_interrupt() cases so only in_atomic() should suffice.
+Considering recent objections to BUG_ON [1], lets make this a WARN_ON
+while we're moving the code?
+
+> +       free_unmap_vmap_area(va);
+>  }
+>  EXPORT_SYMBOL(vm_unmap_ram);
+>
+> --
+> 2.1.4
 
 Thanks,
 
 Joel
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+[1] https://lkml.org/lkml/2016/10/6/65
