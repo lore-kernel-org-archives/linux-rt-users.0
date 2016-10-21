@@ -1,53 +1,47 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: [PATCH 4.8-rt] x86-32: fix stalled boot issues due to missing thread info in %ebp
-Date: Fri, 21 Oct 2016 14:10:51 -0400
-Message-ID: <20161021181051.25437-1-paul.gortmaker@windriver.com>
+From: Daniel Vetter <daniel@ffwll.ch>
+Subject: Re: [Intel-gfx] i915 monitor hotplug on 4.1/4.4 PREEMPT
+Date: Fri, 21 Oct 2016 20:14:08 +0200
+Message-ID: <20161021181408.GM20761@phenom.ffwll.local>
+References: <CAKP5S=2GhofOeDr7tv32s+WPue+QhtFYUGjdQ7Mxfh91Neh+7A@mail.gmail.com>
+ <87r37bqk6d.fsf@intel.com>
+ <20161020125708.GB8202@suiko.acc.umu.se>
+ <CAKP5S=1Rb-Ees3TgeviXFdPfJqt3E0YwfRQKuyeumXAjM4bGOw@mail.gmail.com>
+ <20161021122756.GY20761@phenom.ffwll.local>
+ <CAKP5S=3Fwws3tMFcijT+PfBFQnCqNLhXL89_SVPv4iWmu0YDYA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Paul Gortmaker <paul.gortmaker@windriver.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=us-ascii
+Cc: Daniel Vetter <daniel@ffwll.ch>, David Weinehall <tao@kernel.org>,
+        dri-devel@lists.freedesktop.org, intel-gfx@lists.freedesktop.org,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Nicolae Rosia <nicolae.rosia.oss@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:45306 "EHLO
-        mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S932749AbcJUSL2 (ORCPT
+Received: from mail-wm0-f66.google.com ([74.125.82.66]:36066 "EHLO
+        mail-wm0-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S932749AbcJUSOM (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 21 Oct 2016 14:11:28 -0400
+        Fri, 21 Oct 2016 14:14:12 -0400
+Received: by mail-wm0-f66.google.com with SMTP id f193so653628wmg.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 21 Oct 2016 11:14:12 -0700 (PDT)
+Content-Disposition: inline
+In-Reply-To: <CAKP5S=3Fwws3tMFcijT+PfBFQnCqNLhXL89_SVPv4iWmu0YDYA@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-In 4.7 development window, we got commit 1e17880371f8 ("x86/entry/32:
-Remove GET_THREAD_INFO() from entry code") which said:
+On Fri, Oct 21, 2016 at 04:21:53PM +0300, Nicolae Rosia wrote:
+> Hello,
+> 
+> On Fri, Oct 21, 2016 at 3:27 PM, Daniel Vetter <daniel@ffwll.ch> wrote:
+> > So yeah, "upgrade" is very likely is.
+> I see...
+> 
+> i915.disable_power_well=0 seems to do the trick.
+> Is it safe to use? The kernel gets tainted because of this.
 
- The entry code used to cache the thread_info pointer in the EBP register,
- but all the code that used it has been moved to C.  Remove the unused
- code to get the pointer.
-
-The problem arises when this commit interacts with the -rt patch
-"x86: Support for lazy preemption" -- as it added another instance
-where we were expecting thread info in %ebp.  But after the upstream
-commit we end up looking for preempt_lazy in whatever random junk
-was left there, which doesn't work so well.
-
-Load up %ebp just before we try to use it ; this is also basically
-what x86-64 does in the -rt preempt lazy patch mentioned above,
-but it instead uses %rcx.
-
-Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
-
-diff --git a/arch/x86/entry/entry_32.S b/arch/x86/entry/entry_32.S
-index aa149231b1ff..1d8ee026c9c5 100644
---- a/arch/x86/entry/entry_32.S
-+++ b/arch/x86/entry/entry_32.S
-@@ -282,6 +282,7 @@ need_resched:
- 	cmpl $_PREEMPT_ENABLED,PER_CPU_VAR(__preempt_count)
- 	jne restore_all
- 
-+	GET_THREAD_INFO(%ebp)
- 	cmpl $0,TI_preempt_lazy_count(%ebp)	# non-zero preempt_lazy_count ?
- 	jnz restore_all
- 
+We taint the kernel on principle if you touch any of these debug options,
+i.e. don't send us bug reports if it blows up. Because it'll be running
+untested codepaths.
+-Daniel
 -- 
-2.10.0
-
+Daniel Vetter
+Software Engineer, Intel Corporation
+http://blog.ffwll.ch
