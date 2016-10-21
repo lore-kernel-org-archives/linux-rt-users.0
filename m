@@ -1,49 +1,59 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.18.43-rt46
-Date: Thu, 20 Oct 2016 16:48:01 -0400
-Message-ID: <20161020164801.0bbea1a8@gandalf.local.home>
+From: Joel Fernandes <joelaf@google.com>
+Subject: Re: [PATCH 2/6] mm: mark all calls into the vmalloc subsystem as
+ potentially sleeping
+Date: Thu, 20 Oct 2016 17:32:19 -0700
+Message-ID: <CAJWu+oric2eq1WOrx9fKHxiMhyq490av-1TbRPDfTptOydfM+A@mail.gmail.com>
+References: <1476773771-11470-1-git-send-email-hch@lst.de> <1476773771-11470-3-git-send-email-hch@lst.de>
+ <20161019111541.GQ29358@nuc-i3427.alporthouse.com> <20161019130552.GB5876@lst.de>
+ <CALCETrVqjejgpQVUdem8RK3uxdEgfOZy4cOJqJQjCLtBDnJfyQ@mail.gmail.com> <20161019163112.GA31091@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Cc: Andy Lutomirski <luto@amacapital.net>, Chris Wilson <chris@chris-wilson.co.uk>,
+	Andrew Morton <akpm@linux-foundation.org>, Jisheng Zhang <jszhang@marvell.com>,
+	John Dias <joaodias@google.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, linux-rt-users@vger.kernel.org,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+To: Christoph Hellwig <hch@lst.de>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20161019163112.GA31091@lst.de>
+Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hi Christoph,
 
-Dear RT Folks,
+On Wed, Oct 19, 2016 at 9:31 AM, Christoph Hellwig <hch@lst.de> wrote:
+> On Wed, Oct 19, 2016 at 08:34:40AM -0700, Andy Lutomirski wrote:
+>>
+>> It would be quite awkward for a task stack to get freed from a
+>> sleepable context, because the obvious sleepable context is the task
+>> itself, and it still needs its stack.  This was true even in the old
+>> regime when task stacks were freed from RCU context.
+>>
+>> But vfree has a magic automatic deferral mechanism.  Couldn't you make
+>> the non-deferred case might_sleep()?
+>
+> But it's only magic from interrupt context..
+>
+> Chris, does this patch make virtually mapped stack work for you again?
+>
+> diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+> index f2481cb..942e02d 100644
+> --- a/mm/vmalloc.c
+> +++ b/mm/vmalloc.c
+> @@ -1533,7 +1533,7 @@ void vfree(const void *addr)
+>
+>         if (!addr)
+>                 return;
+> -       if (unlikely(in_interrupt())) {
+> +       if (in_interrupt() || in_atomic()) {
 
-I'm pleased to announce the 3.18.43-rt46 stable release.
+in_atomic() also checks in_interrupt() cases so only in_atomic() should suffice.
 
+Thanks,
 
-This release is just an update to the new stable 3.18.43 version
-and no RT specific changes have been made.
+Joel
 
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.18-rt
-  Head SHA1: 970149ffe7b4f8e027989a8a7d4696b8d9cc64d1
-
-
-Or to build 3.18.43-rt46 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.43.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.43-rt46.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
