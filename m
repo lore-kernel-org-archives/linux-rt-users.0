@@ -1,47 +1,63 @@
-From: Daniel Vetter <daniel@ffwll.ch>
-Subject: Re: [Intel-gfx] i915 monitor hotplug on 4.1/4.4 PREEMPT
-Date: Fri, 21 Oct 2016 20:14:08 +0200
-Message-ID: <20161021181408.GM20761@phenom.ffwll.local>
-References: <CAKP5S=2GhofOeDr7tv32s+WPue+QhtFYUGjdQ7Mxfh91Neh+7A@mail.gmail.com>
- <87r37bqk6d.fsf@intel.com>
- <20161020125708.GB8202@suiko.acc.umu.se>
- <CAKP5S=1Rb-Ees3TgeviXFdPfJqt3E0YwfRQKuyeumXAjM4bGOw@mail.gmail.com>
- <20161021122756.GY20761@phenom.ffwll.local>
- <CAKP5S=3Fwws3tMFcijT+PfBFQnCqNLhXL89_SVPv4iWmu0YDYA@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Daniel Vetter <daniel@ffwll.ch>, David Weinehall <tao@kernel.org>,
-        dri-devel@lists.freedesktop.org, intel-gfx@lists.freedesktop.org,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Nicolae Rosia <nicolae.rosia.oss@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f66.google.com ([74.125.82.66]:36066 "EHLO
-        mail-wm0-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S932749AbcJUSOM (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 21 Oct 2016 14:14:12 -0400
-Received: by mail-wm0-f66.google.com with SMTP id f193so653628wmg.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 21 Oct 2016 11:14:12 -0700 (PDT)
-Content-Disposition: inline
-In-Reply-To: <CAKP5S=3Fwws3tMFcijT+PfBFQnCqNLhXL89_SVPv4iWmu0YDYA@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 1/7] mm: remove free_unmap_vmap_area_noflush
+Date: Sat, 22 Oct 2016 17:17:14 +0200
+Message-ID: <1477149440-12478-2-git-send-email-hch@lst.de>
+References: <1477149440-12478-1-git-send-email-hch@lst.de>
+Cc: joelaf@google.com,
+	jszhang@marvell.com,
+	chris@chris-wilson.co.uk,
+	joaodias@google.com,
+	linux-mm@kvack.org,
+	linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+To: akpm@linux-foundation.org
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1477149440-12478-1-git-send-email-hch@lst.de>
+Sender: owner-linux-mm@kvack.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Oct 21, 2016 at 04:21:53PM +0300, Nicolae Rosia wrote:
-> Hello,
-> 
-> On Fri, Oct 21, 2016 at 3:27 PM, Daniel Vetter <daniel@ffwll.ch> wrote:
-> > So yeah, "upgrade" is very likely is.
-> I see...
-> 
-> i915.disable_power_well=0 seems to do the trick.
-> Is it safe to use? The kernel gets tainted because of this.
+Just inline it into the only caller.
 
-We taint the kernel on principle if you touch any of these debug options,
-i.e. don't send us bug reports if it blows up. Because it'll be running
-untested codepaths.
--Daniel
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Tested-by: Jisheng Zhang <jszhang@marvell.com>
+---
+ mm/vmalloc.c | 13 ++-----------
+ 1 file changed, 2 insertions(+), 11 deletions(-)
+
+diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+index f2481cb..45de736 100644
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -711,22 +711,13 @@ static void free_vmap_area_noflush(struct vmap_area *va)
+ }
+ 
+ /*
+- * Free and unmap a vmap area, caller ensuring flush_cache_vunmap had been
+- * called for the correct range previously.
+- */
+-static void free_unmap_vmap_area_noflush(struct vmap_area *va)
+-{
+-	unmap_vmap_area(va);
+-	free_vmap_area_noflush(va);
+-}
+-
+-/*
+  * Free and unmap a vmap area
+  */
+ static void free_unmap_vmap_area(struct vmap_area *va)
+ {
+ 	flush_cache_vunmap(va->va_start, va->va_end);
+-	free_unmap_vmap_area_noflush(va);
++	unmap_vmap_area(va);
++	free_vmap_area_noflush(va);
+ }
+ 
+ static struct vmap_area *find_vmap_area(unsigned long addr)
 -- 
-Daniel Vetter
-Software Engineer, Intel Corporation
-http://blog.ffwll.ch
+2.1.4
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
