@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 2/7] mm: remove free_unmap_vmap_area_addr
-Date: Sat, 22 Oct 2016 17:17:15 +0200
-Message-ID: <1477149440-12478-3-git-send-email-hch@lst.de>
+Subject: [PATCH 7/7] mm: add preempt points into __purge_vmap_area_lazy
+Date: Sat, 22 Oct 2016 17:17:20 +0200
+Message-ID: <1477149440-12478-8-git-send-email-hch@lst.de>
 References: <1477149440-12478-1-git-send-email-hch@lst.de>
 Cc: joelaf@google.com,
 	jszhang@marvell.com,
@@ -16,61 +16,60 @@ In-Reply-To: <1477149440-12478-1-git-send-email-hch@lst.de>
 Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Just inline it into the only caller.
+From: Joel Fernandes <joelaf@google.com>
 
+Use cond_resched_lock to avoid holding the vmap_area_lock for a
+potentially long time and thus creating bad latencies for various
+workloads.
+
+Signed-off-by: Joel Fernandes <joelaf@google.com>
+[hch: split from a larger patch by Joel, wrote the crappy changelog]
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 Tested-by: Jisheng Zhang <jszhang@marvell.com>
 ---
- mm/vmalloc.c | 21 ++++++++-------------
- 1 file changed, 8 insertions(+), 13 deletions(-)
+ mm/vmalloc.c | 14 +++++++++-----
+ 1 file changed, 9 insertions(+), 5 deletions(-)
 
 diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index 45de736..cf1a5ab 100644
+index 23d6797..6c8b921 100644
 --- a/mm/vmalloc.c
 +++ b/mm/vmalloc.c
-@@ -731,16 +731,6 @@ static struct vmap_area *find_vmap_area(unsigned long addr)
- 	return va;
- }
+@@ -628,7 +628,7 @@ static bool __purge_vmap_area_lazy(unsigned long start, unsigned long end)
+ 	struct llist_node *valist;
+ 	struct vmap_area *va;
+ 	struct vmap_area *n_va;
+-	int nr = 0;
++	bool do_free = false;
  
--static void free_unmap_vmap_area_addr(unsigned long addr)
--{
--	struct vmap_area *va;
--
--	va = find_vmap_area(addr);
--	BUG_ON(!va);
--	free_unmap_vmap_area(va);
--}
--
--
- /*** Per cpu kva allocator ***/
+ 	lockdep_assert_held(&vmap_purge_lock);
  
- /*
-@@ -1098,6 +1088,7 @@ void vm_unmap_ram(const void *mem, unsigned int count)
- {
- 	unsigned long size = (unsigned long)count << PAGE_SHIFT;
- 	unsigned long addr = (unsigned long)mem;
-+	struct vmap_area *va;
+@@ -638,18 +638,22 @@ static bool __purge_vmap_area_lazy(unsigned long start, unsigned long end)
+ 			start = va->va_start;
+ 		if (va->va_end > end)
+ 			end = va->va_end;
+-		nr += (va->va_end - va->va_start) >> PAGE_SHIFT;
++		do_free = true;
+ 	}
  
- 	BUG_ON(!addr);
- 	BUG_ON(addr < VMALLOC_START);
-@@ -1107,10 +1098,14 @@ void vm_unmap_ram(const void *mem, unsigned int count)
- 	debug_check_no_locks_freed(mem, size);
- 	vmap_debug_free_range(addr, addr+size);
+-	if (!nr)
++	if (!do_free)
+ 		return false;
  
--	if (likely(count <= VMAP_MAX_ALLOC))
-+	if (likely(count <= VMAP_MAX_ALLOC)) {
- 		vb_free(mem, size);
--	else
--		free_unmap_vmap_area_addr(addr);
-+		return;
-+	}
+-	atomic_sub(nr, &vmap_lazy_nr);
+ 	flush_tlb_kernel_range(start, end);
+ 
+ 	spin_lock(&vmap_area_lock);
+-	llist_for_each_entry_safe(va, n_va, valist, purge_list)
++	llist_for_each_entry_safe(va, n_va, valist, purge_list) {
++		int nr = (va->va_end - va->va_start) >> PAGE_SHIFT;
 +
-+	va = find_vmap_area(addr);
-+	BUG_ON(!va);
-+	free_unmap_vmap_area(va);
+ 		__free_vmap_area(va);
++		atomic_sub(nr, &vmap_lazy_nr);
++		cond_resched_lock(&vmap_area_lock);
++	}
+ 	spin_unlock(&vmap_area_lock);
+ 	return true;
  }
- EXPORT_SYMBOL(vm_unmap_ram);
- 
 -- 
 2.1.4
 
