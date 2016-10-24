@@ -1,74 +1,32 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 5/7] mm: mark all calls into the vmalloc subsystem as potentially sleeping
-Date: Sat, 22 Oct 2016 17:17:18 +0200
-Message-ID: <1477149440-12478-6-git-send-email-hch@lst.de>
-References: <1477149440-12478-1-git-send-email-hch@lst.de>
-Cc: joelaf@google.com,
-	jszhang@marvell.com,
-	chris@chris-wilson.co.uk,
-	joaodias@google.com,
-	linux-mm@kvack.org,
-	linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-To: akpm@linux-foundation.org
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1477149440-12478-1-git-send-email-hch@lst.de>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH 4.8-rt] x86-32: fix stalled boot issues due to missing
+ thread info in %ebp
+Date: Mon, 24 Oct 2016 10:45:25 +0200
+Message-ID: <20161024084525.qqn6esku3m5v426w@linutronix.de>
+References: <20161021181051.25437-1-paul.gortmaker@windriver.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>
+To: Paul Gortmaker <paul.gortmaker@windriver.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:57155 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S934850AbcJXIpa (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 24 Oct 2016 04:45:30 -0400
+Content-Disposition: inline
+In-Reply-To: <20161021181051.25437-1-paul.gortmaker@windriver.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-We will take a sleeping lock in later in this series, so this adds the
-proper safeguards.
+On 2016-10-21 14:10:51 [-0400], Paul Gortmaker wrote:
+> Load up %ebp just before we try to use it ; this is also basically
+> what x86-64 does in the -rt preempt lazy patch mentioned above,
+> but it instead uses %rcx.
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-Tested-by: Jisheng Zhang <jszhang@marvell.com>
----
- mm/vmalloc.c | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
+Applied, thanks.
 
-diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index bcc1a64..0e7f523 100644
---- a/mm/vmalloc.c
-+++ b/mm/vmalloc.c
-@@ -365,7 +365,7 @@ static struct vmap_area *alloc_vmap_area(unsigned long size,
- 	BUG_ON(offset_in_page(size));
- 	BUG_ON(!is_power_of_2(align));
- 
--	might_sleep_if(gfpflags_allow_blocking(gfp_mask));
-+	might_sleep();
- 
- 	va = kmalloc_node(sizeof(struct vmap_area),
- 			gfp_mask & GFP_RECLAIM_MASK, node);
-@@ -1037,6 +1037,8 @@ void vm_unmap_aliases(void)
- 	if (unlikely(!vmap_initialized))
- 		return;
- 
-+	might_sleep();
-+
- 	for_each_possible_cpu(cpu) {
- 		struct vmap_block_queue *vbq = &per_cpu(vmap_block_queue, cpu);
- 		struct vmap_block *vb;
-@@ -1080,6 +1082,7 @@ void vm_unmap_ram(const void *mem, unsigned int count)
- 	unsigned long addr = (unsigned long)mem;
- 	struct vmap_area *va;
- 
-+	might_sleep();
- 	BUG_ON(!addr);
- 	BUG_ON(addr < VMALLOC_START);
- 	BUG_ON(addr > VMALLOC_END);
-@@ -1431,6 +1434,8 @@ struct vm_struct *remove_vm_area(const void *addr)
- {
- 	struct vmap_area *va;
- 
-+	might_sleep();
-+
- 	va = find_vmap_area((unsigned long)addr);
- 	if (va && va->flags & VM_VM_AREA) {
- 		struct vm_struct *vm = va->vm;
--- 
-2.1.4
+> Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Sebastian
