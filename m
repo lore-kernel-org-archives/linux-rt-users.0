@@ -1,54 +1,77 @@
-From: Andrey Ryabinin <aryabinin@virtuozzo.com>
-Subject: Re: [PATCH 4/7] mm: defer vmalloc from atomic context
-Date: Mon, 24 Oct 2016 18:44:37 +0300
-Message-ID: <25c117ae-6d06-9846-6a88-ae6221ad6bfe@virtuozzo.com>
-References: <1477149440-12478-1-git-send-email-hch@lst.de>
- <1477149440-12478-5-git-send-email-hch@lst.de>
+From: "Koehrer Mathias (ETAS/ESW5)" <mathias.koehrer@etas.com>
+Subject: RE: [ANNOUNCE] 3.18.43-rt46
+Date: Wed, 26 Oct 2016 10:37:01 +0000
+Message-ID: <7e3ad2f2475b41979a77419a8d99b6c0@FE-MBX1012.de.bosch.com>
+References: <20161020164801.0bbea1a8@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: 7bit
-Cc: <joelaf@google.com>, <jszhang@marvell.com>, <chris@chris-wilson.co.uk>,
-	<joaodias@google.com>, <linux-mm@kvack.org>,
-	<linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>
-To: Christoph Hellwig <hch@lst.de>, <akpm@linux-foundation.org>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1477149440-12478-5-git-send-email-hch@lst.de>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Steven Rostedt <rostedt@goodmis.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtp6-v.fe.bosch.de ([139.15.237.11]:53455 "EHLO
+        smtp6-v.fe.bosch.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751033AbcJZKhE (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 26 Oct 2016 06:37:04 -0400
+In-Reply-To: <20161020164801.0bbea1a8@gandalf.local.home>
+Content-Language: de-DE
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi Steven,
 
-
-On 10/22/2016 06:17 PM, Christoph Hellwig wrote:
-> We want to be able to use a sleeping lock for freeing vmap to keep
-> latency down.  For this we need to use the deferred vfree mechanisms
-> no only from interrupt, but from any atomic context.
+> Or to build 3.18.43-rt46 directly, the following patches should be applied:
 > 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  mm/vmalloc.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-> index a4e2cec..bcc1a64 100644
-> --- a/mm/vmalloc.c
-> +++ b/mm/vmalloc.c
-> @@ -1509,7 +1509,7 @@ void vfree(const void *addr)
->  
->  	if (!addr)
->  		return;
-> -	if (unlikely(in_interrupt())) {
-> +	if (unlikely(in_atomic())) {
+>   http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
+>   http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.43.xz
+>   http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.43-rt46.patch.xz
+I am using the patches as proposed.
 
-in_atomic() cannot always detect atomic context, thus it shouldn't be used here.
-You can add something like vfree_in_atomic() and use it in atomic call sites.
+However with this version I get lots of compiler warnings:
 
->  		struct vfree_deferred *p = this_cpu_ptr(&vfree_deferred);
->  		if (llist_add((struct llist_node *)addr, &p->list))
->  			schedule_work(&p->wq);
-> 
+./arch/x86/include/asm/preempt.h:118:6: warning: 'tmp' may be used uninitialized in this function [-Wmaybe-uninitialized]
+  tmp &= ~PREEMPT_NEED_RESCHED;
+         ^
+./arch/x86/include/asm/preempt.h:112:6: note: 'tmp' was declared here
+  u32 tmp;
+        ^
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+The relevant code is the following:
+
+/*
+ * Returns true when we need to resched and can (barring IRQ state).
+ */
+static __always_inline bool should_resched(void)
+{
+#ifdef CONFIG_PREEMPT_LAZY
+	u32 tmp;
+
+	if (!raw_cpu_read_4(__preempt_count))
+		return true;
+
+	/* preempt count == 0 ? */
+	tmp &= ~PREEMPT_NEED_RESCHED;
+	if (tmp)
+		return false;
+	if (current_thread_info()->preempt_lazy_count)
+		return false;
+	return test_thread_flag(TIF_NEED_RESCHED_LAZY);
+#else
+	return unlikely(!raw_cpu_read_4(__preempt_count));
+#endif
+}
+
+And within this code tmp is actually not initialized, the warning is fine.
+This code is new with the patch-3.18.43-rt46.patch.xz.
+With the previous patch-3.18.42-rt44.patch.xz the code of should_resched
+was differently (much more compact) and did not show the warnings.
+
+Regards
+
+Mathias
+
