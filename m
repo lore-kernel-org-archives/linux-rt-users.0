@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.18.44-rt47
-Date: Wed, 26 Oct 2016 21:40:08 -0400
-Message-ID: <20161026214008.79e47594@gandalf.local.home>
+Subject: [ANNOUNCE] 3.12.66-rt88
+Date: Wed, 26 Oct 2016 21:40:37 -0400
+Message-ID: <20161026214037.1219d6f3@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -11,17 +11,22 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To: LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtprelay0036.hostedemail.com ([216.40.44.36]:52792 "EHLO
+        smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1754100AbcJ0Bkk (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 26 Oct 2016 21:40:40 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.18.44-rt47 stable release.
+I'm pleased to announce the 3.12.66-rt88 stable release.
 
 
-This release is just an update to the new stable 3.18.44 version
+This release is just an update to the new stable 3.12.66 version
 and no RT specific changes have been made.
 
 
@@ -29,17 +34,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.18-rt
-  Head SHA1: 6f5042e7314887c56de5f0441ac585b549f1f90f
+  branch: v3.12-rt
+  Head SHA1: adf4cb183f2d4a1ef6fb671e960bef4a165e1762
 
 
-Or to build 3.18.44-rt47 directly, the following patches should be applied:
+Or to build 3.12.66-rt88 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.44.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.66.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.44-rt47.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.66-rt88.patch.xz
 
 
 
@@ -47,3 +52,4 @@ Or to build 3.18.44-rt47 directly, the following patches should be applied:
 Enjoy,
 
 -- Steve
+
