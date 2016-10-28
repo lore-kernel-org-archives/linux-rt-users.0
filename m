@@ -1,61 +1,57 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH] net: detect recursive dev_queue_xmit() on RT properly
-Date: Fri, 28 Oct 2016 16:44:12 +0200
-Message-ID: <20161028144412.7mk22zboiwupfsi4@linutronix.de>
-References: <1476325561-16755-1-git-send-email-brian@peloton-tech.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org, mark.beauchemin@sycamorenet.com,
-        mbeauch@cox.net, mingo@kernel.org, tglx@linutronix.de,
-        Ingo Molnar <mingo@elte.hu>
-To: brian@peloton-tech.com
+From: John Kacur <jkacur@redhat.com>
+Subject: [PATCH 2/2] rt-tests: cyclictest: Correct short option 's'
+Date: Fri, 28 Oct 2016 17:11:10 +0200
+Message-ID: <1477667470-9691-2-git-send-email-jkacur@redhat.com>
+References: <1477667470-9691-1-git-send-email-jkacur@redhat.com>
+Cc: Clark Williams <williams@redhat.com>,
+        Anna-Maria Gleixner <anna-maria@linutronix.de>,
+        John Kacur <jkacur@redhat.com>
+To: rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:47264 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1756035AbcJ1OoQ (ORCPT
+Received: from mail-wm0-f65.google.com ([74.125.82.65]:36098 "EHLO
+        mail-wm0-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S932873AbcJ1PLg (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 28 Oct 2016 10:44:16 -0400
-Content-Disposition: inline
-In-Reply-To: <1476325561-16755-1-git-send-email-brian@peloton-tech.com>
+        Fri, 28 Oct 2016 11:11:36 -0400
+Received: by mail-wm0-f65.google.com with SMTP id c17so7849304wmc.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 28 Oct 2016 08:11:35 -0700 (PDT)
+In-Reply-To: <1477667470-9691-1-git-send-email-jkacur@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2016-10-12 22:26:01 [-0400], brian@peloton-tech.com wrote:
-> From: mbeauch <mbeauch@cox.net>
-> 
-> Changed the real-time patch code to detect recursive calls
-> to dev_queue_xmit and drop the packet when detected.
-> 
-> >From Brian Silverman:
-> !RT is relying on rcu_read_lock_bh to disable preemption here, so it can
-> rely a given smp_processor_id() only being in the call stack once.
-> However, on RT, that's not true when one task preempts another one,
-> which results in false warnings and dropped packets.
-> 
-> Without this, messages like
-> "Dead loop on virtual device vcan0, fix it urgently!" show up in dmesg
-> when multiple processes are sending on the same virtual device at the
-> same time and sendmsg calls return ENETDOWN at random.
-> 
-> This also includes "543a589a00e8 net: xmit lock owner cleanup" from
-> v2.6.33.9-rt31 by mingo and tglx, which was just some cleanups to the
-> original patch which make porting to to current upstream easier.
-> 
-> Signed-off-by: Mark Beauchemin <mark.beauchemin@sycamorenet.com>
-> [ ported to latest upstream ]
-> Signed-off-by: Ingo Molnar <mingo@elte.hu>
-> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-> [ ported to 4.8 and used struct task_struct instead of void ]
-> Signed-off-by: Brian Silverman <brian@peloton-tech.com>
+The short option 's' was originally intended to be the short form of
+--system
 
-The signed-off-by chain suggest that Mark passed the patch to Ingo,
-Thomas and to Brian. I doubt that. I can't resolve the sha1 id mentioned
-here.
-Do you have a testcase for this? Speaking of vcan, then this is
-something that does not require real HW.
-Is this still broken as of v4.8-RT? I remember fixing something similar
-with bridge devices.
-I suggest to not use the second the argument of __netif_tx_lock()
-instead patching it away it a bunch of drivers.
+Commit b35bc97cfd05bd27324b9c373ff8c5e0bcb07f7f
+which added the new option --secaligned broke this, by accidently
+inserting the new option between the short form and long form.
 
-Sebastian
+Reported-by: Daniel Seemer <phaiax-cyclictest@invisibletower.de>
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ src/cyclictest/cyclictest.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 5e23fc58f602..3f1bef1ffca9 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -1688,7 +1688,6 @@ static void process_options (int argc, char *argv[], int max_cpus)
+ 		case 'R':
+ 		case OPT_RESOLUTION:
+ 			check_clock_resolution = 1; break;
+-		case 's':
+ 		case OPT_SECALIGNED:
+ 			secaligned = 1;
+ 			if (optarg != NULL)
+@@ -1698,6 +1697,7 @@ static void process_options (int argc, char *argv[], int max_cpus)
+ 			else
+ 				offset = 0;
+ 			break;
++		case 's':
+ 		case OPT_SYSTEM:
+ 			use_system = MODE_SYS_OFFSET; break;
+ 		case 'S':
+-- 
+2.5.5
+
