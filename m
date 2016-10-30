@@ -1,10 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 6/6] Linux 4.4.27-rt38-rc1
-Date: Sun, 30 Oct 2016 12:45:13 -0400
-Message-ID: <20161030164520.034772790@goodmis.org>
-References: <20161030164507.542995196@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Subject: [PATCH RT 0/6] Linux 4.4.27-rt38-rc1
+Date: Sun, 30 Oct 2016 12:45:07 -0400
+Message-ID: <20161030164507.542995196@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -13,33 +10,72 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:48480 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.136]:48446 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S932619AbcJ3QpY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 30 Oct 2016 12:45:24 -0400
-Content-Disposition: inline; filename=0006-Linux-4.4.27-rt38-rc1.patch
+        id S932604AbcJ3QpX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 30 Oct 2016 12:45:23 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-4.4.27-rt38-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
+This is the RT stable review cycle of patch 4.4.27-rt38-rc1.
+
+Please scream at me if I messed something up. Please test the patches too.
+
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 11/2/2016.
+
+Enjoy,
+
+-- Steve
+
+
+To build 4.4.27-rt38-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.27.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.27-rt38-rc1.patch.xz
+
+You can also build from 4.4.27-rt37 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/incr/patch-4.4.27-rt37-rt38-rc1.patch.xz
+
+
+Changes from 4.4.27-rt37:
 
 ---
- localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/localversion-rt b/localversion-rt
-index a3b2408c1da6..625367387621 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt37
-+-rt38-rc1
--- 
-2.9.3
 
 
+Mike Galbraith (1):
+      ftrace: Fix trace header alignment
+
+Sebastian Andrzej Siewior (4):
+      kernel/futex: don't deboost too early
+      zsmalloc: turn that get_cpu_light() into a local_lock()
+      x86/apic: get rid of "warning: 'acpi_ioapic_lock' defined but not used"
+      kbuild: add -fno-PIE
+
+Steven Rostedt (Red Hat) (1):
+      Linux 4.4.27-rt38-rc1
+
+----
+ Makefile                    |  2 +-
+ arch/x86/kernel/acpi/boot.c |  2 ++
+ include/linux/spinlock.h    |  6 +++++
+ include/linux/spinlock_rt.h |  2 ++
+ kernel/futex.c              |  2 +-
+ kernel/locking/rtmutex.c    | 53 +++++++++++++++++++++++++++++++++++++++------
+ kernel/trace/trace.c        | 32 +++++++++++++--------------
+ localversion-rt             |  2 +-
+ mm/zsmalloc.c               |  6 +++--
+ 9 files changed, 79 insertions(+), 28 deletions(-)
