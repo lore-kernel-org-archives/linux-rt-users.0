@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/6] ftrace: Fix trace header alignment
-Date: Sun, 30 Oct 2016 12:45:09 -0400
-Message-ID: <20161030164519.357938499@goodmis.org>
+Subject: [PATCH RT 4/6] x86/apic: get rid of "warning: acpi_ioapic_lock defined but not
+ used"
+Date: Sun, 30 Oct 2016 12:45:11 -0400
+Message-ID: <20161030164519.682263781@goodmis.org>
 References: <20161030164507.542995196@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,12 +11,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
-        stable-rt@vger.kernel.org,
-        Mike Galbraith <umgwanakikbuti@gmail.com>
+        kbuild test robot <fengguang.wu@intel.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-ftrace-Fix-trace-header-alignment.patch
+Content-Disposition: inline; filename=0004-x86-apic-get-rid-of-warning-acpi_ioapic_lock-defined.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -24,68 +24,48 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Line up helper arrows to the right column.
+kbuild test robot reported this against the -RT tree:
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-[bigeasy: fixup function tracer header]
+|   In file included from include/linux/mutex.h:30:0,
+|                    from include/linux/notifier.h:13,
+|                    from include/linux/memory_hotplug.h:6,
+|                    from include/linux/mmzone.h:777,
+|                    from include/linux/gfp.h:5,
+|                    from include/linux/slab.h:14,
+|                    from include/linux/resource_ext.h:19,
+|                    from include/linux/acpi.h:26,
+|                    from arch/x86/kernel/acpi/boot.c:27:
+|>> arch/x86/kernel/acpi/boot.c:90:21: warning: 'acpi_ioapic_lock' defined but not used [-Wunused-variable]
+|    static DEFINE_MUTEX(acpi_ioapic_lock);
+|                        ^
+|   include/linux/mutex_rt.h:27:15: note: in definition of macro 'DEFINE_MUTEX'
+|     struct mutex mutexname = __MUTEX_INITIALIZER(mutexname)
+                  ^~~~~~~~~
+which is also true (as in non-used) for !RT but the compiler does not
+emit a warning.
+
+Reported-by: kbuild test robot <fengguang.wu@intel.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/trace/trace.c | 32 ++++++++++++++++----------------
- 1 file changed, 16 insertions(+), 16 deletions(-)
+ arch/x86/kernel/acpi/boot.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index aebdbff7d425..cad1a28bfbe2 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -2559,17 +2559,17 @@ get_total_entries(struct trace_buffer *buf,
+diff --git a/arch/x86/kernel/acpi/boot.c b/arch/x86/kernel/acpi/boot.c
+index e75907601a41..a29fc4f84fc4 100644
+--- a/arch/x86/kernel/acpi/boot.c
++++ b/arch/x86/kernel/acpi/boot.c
+@@ -87,7 +87,9 @@ static u64 acpi_lapic_addr __initdata = APIC_DEFAULT_PHYS_BASE;
+  *		->ioapic_mutex
+  *			->ioapic_lock
+  */
++#ifdef CONFIG_X86_IO_APIC
+ static DEFINE_MUTEX(acpi_ioapic_lock);
++#endif
  
- static void print_lat_help_header(struct seq_file *m)
- {
--	seq_puts(m, "#                   _--------=> CPU#              \n"
--		    "#                  / _-------=> irqs-off          \n"
--		    "#                 | / _------=> need-resched      \n"
--		    "#                 || / _-----=> need-resched_lazy \n"
--		    "#                 ||| / _----=> hardirq/softirq   \n"
--		    "#                 |||| / _---=> preempt-depth     \n"
--		    "#                 ||||| / _--=> preempt-lazy-depth\n"
--		    "#                 |||||| / _-=> migrate-disable   \n"
--		    "#                 ||||||| /     delay             \n"
--		    "#  cmd     pid    |||||||| time  |   caller       \n"
--		    "#     \\   /      ||||||||  \\   |   /            \n");
-+	seq_puts(m, "#                  _--------=> CPU#              \n"
-+		    "#                 / _-------=> irqs-off          \n"
-+		    "#                | / _------=> need-resched      \n"
-+		    "#                || / _-----=> need-resched_lazy \n"
-+		    "#                ||| / _----=> hardirq/softirq   \n"
-+		    "#                |||| / _---=> preempt-depth     \n"
-+		    "#                ||||| / _--=> preempt-lazy-depth\n"
-+		    "#                |||||| / _-=> migrate-disable   \n"
-+		    "#                ||||||| /     delay             \n"
-+		    "# cmd     pid    |||||||| time   |  caller       \n"
-+		    "#     \\   /      ||||||||   \\    |  /            \n");
- }
- 
- static void print_event_info(struct trace_buffer *buf, struct seq_file *m)
-@@ -2598,11 +2598,11 @@ static void print_func_help_header_irq(struct trace_buffer *buf, struct seq_file
- 		    "#                            |/  _-----=> need-resched_lazy\n"
- 		    "#                            || / _---=> hardirq/softirq\n"
- 		    "#                            ||| / _--=> preempt-depth\n"
--		    "#                            |||| /_--=> preempt-lazy-depth\n"
--		    "#                            |||||  _-=> migrate-disable   \n"
--		    "#                            ||||| /    delay\n"
--		    "#           TASK-PID   CPU#  ||||||    TIMESTAMP  FUNCTION\n"
--		    "#              | |       |   ||||||       |         |\n");
-+		    "#                            |||| / _-=> preempt-lazy-depth\n"
-+		    "#                            ||||| / _-=> migrate-disable   \n"
-+		    "#                            |||||| /    delay\n"
-+		    "#           TASK-PID   CPU#  |||||||   TIMESTAMP  FUNCTION\n"
-+		    "#              | |       |   |||||||      |         |\n");
- }
- 
- void
+ /* --------------------------------------------------------------------------
+                               Boot-time Configuration
 -- 
 2.9.3
