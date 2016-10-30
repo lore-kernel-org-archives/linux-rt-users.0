@@ -1,10 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/3] kbuild: add -fno-PIE
-Date: Sun, 30 Oct 2016 12:48:31 -0400
-Message-ID: <20161030164840.942789645@goodmis.org>
-References: <20161030164829.552034185@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Subject: [PATCH RT 0/3] Linux 3.10.104-rt117-rc1
+Date: Sun, 30 Oct 2016 12:49:31 -0400
+Message-ID: <20161030164931.614263675@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -13,39 +10,59 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-kbuild-add-fno-PIE.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.12.66-rt89-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+This is the RT stable review cycle of patch 3.10.104-rt117-rc1.
 
-Debian started to build the gcc with -fPIE by default so the kernel
-build ends before it starts properly with:
-|kernel/bounds.c:1:0: error: code model kernel does not support PIC mode
+Please scream at me if I messed something up. Please test the patches too.
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 11/2/2016.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.10.104-rt117-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.104.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.104-rt117-rc1.patch.xz
+
+You can also build from 3.10.104-rt116 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.104-rt116-rt117-rc1.patch.xz
+
+
+Changes from 3.10.104-rt116:
+
 ---
- Makefile | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/Makefile b/Makefile
-index eb81ece69d00..c8ce2ba51358 100644
---- a/Makefile
-+++ b/Makefile
-@@ -376,7 +376,7 @@ KBUILD_CPPFLAGS := -D__KERNEL__
- KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
- 		   -fno-strict-aliasing -fno-common \
- 		   -Werror-implicit-function-declaration \
--		   -Wno-format-security \
-+		   -Wno-format-security -fno-PIE \
- 		   -fno-delete-null-pointer-checks \
- 		   -std=gnu89
- 
--- 
-2.9.3
+
+Mike Galbraith (1):
+      ftrace: Fix trace header alignment
+
+Sebastian Andrzej Siewior (1):
+      kbuild: add -fno-PIE
+
+Steven Rostedt (Red Hat) (1):
+      Linux 3.10.104-rt117-rc1
+
+----
+ Makefile             |  2 +-
+ kernel/trace/trace.c | 22 +++++++++++-----------
+ localversion-rt      |  2 +-
+ 3 files changed, 13 insertions(+), 13 deletions(-)
