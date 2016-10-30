@@ -1,7 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/5] Linux 4.1.35-rt41-rc1
-Date: Sun, 30 Oct 2016 12:46:35 -0400
-Message-ID: <20161030164635.444929710@goodmis.org>
+Subject: [PATCH RT 4/5] kbuild: add -fno-PIE
+Date: Sun, 30 Oct 2016 12:46:39 -0400
+Message-ID: <20161030164647.632632669@goodmis.org>
+References: <20161030164635.444929710@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -10,63 +13,39 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0004-kbuild-add-fno-PIE.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+4.1.35-rt41-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 4.1.35-rt41-rc1.
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Please scream at me if I messed something up. Please test the patches too.
+Debian started to build the gcc with -fPIE by default so the kernel
+build ends before it starts properly with:
+|kernel/bounds.c:1:0: error: code model kernel does not support PIC mode
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 11/2/2016.
-
-Enjoy,
-
--- Steve
-
-
-To build 4.1.35-rt41-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.1.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.1.35.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/patch-4.1.35-rt41-rc1.patch.xz
-
-You can also build from 4.1.35-rt40 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/incr/patch-4.1.35-rt40-rt41-rc1.patch.xz
-
-
-Changes from 4.1.35-rt40:
-
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-
-Mike Galbraith (1):
-      ftrace: Fix trace header alignment
-
-Sebastian Andrzej Siewior (3):
-      zsmalloc: turn that get_cpu_light() into a local_lock()
-      x86/apic: get rid of "warning: 'acpi_ioapic_lock' defined but not used"
-      kbuild: add -fno-PIE
-
-Steven Rostedt (Red Hat) (1):
-      Linux 4.1.35-rt41-rc1
-
-----
- Makefile                    |  2 +-
- arch/x86/kernel/acpi/boot.c |  2 ++
- kernel/trace/trace.c        | 32 ++++++++++++++++----------------
- localversion-rt             |  2 +-
- mm/zsmalloc.c               |  6 ++++--
- 5 files changed, 24 insertions(+), 20 deletions(-)
+diff --git a/Makefile b/Makefile
+index 21f657f2c4e6..384ef0e05826 100644
+--- a/Makefile
++++ b/Makefile
+@@ -400,7 +400,7 @@ KBUILD_CPPFLAGS := -D__KERNEL__
+ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
+ 		   -fno-strict-aliasing -fno-common \
+ 		   -Werror-implicit-function-declaration \
+-		   -Wno-format-security \
++		   -Wno-format-security -fno-PIE \
+ 		   -std=gnu89
+ 
+ KBUILD_AFLAGS_KERNEL :=
+-- 
+2.9.3
