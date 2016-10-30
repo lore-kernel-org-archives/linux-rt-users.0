@@ -1,8 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 4/6] x86/apic: get rid of "warning: acpi_ioapic_lock defined but not
- used"
-Date: Sun, 30 Oct 2016 12:45:11 -0400
-Message-ID: <20161030164519.682263781@goodmis.org>
+Subject: [PATCH RT 3/6] zsmalloc: turn that get_cpu_light() into a local_lock()
+Date: Sun, 30 Oct 2016 12:45:10 -0400
+Message-ID: <20161030164519.507357496@goodmis.org>
 References: <20161030164507.542995196@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -11,13 +10,17 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
-        kbuild test robot <fengguang.wu@intel.com>
+        stable-rt@vger.kernel.org
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-x86-apic-get-rid-of-warning-acpi_ioapic_lock-defined.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.136]:48540 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S932697AbcJ3Qp0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 30 Oct 2016 12:45:26 -0400
+Content-Disposition: inline; filename=0003-zsmalloc-turn-that-get_cpu_light-into-a-local_lock.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 4.4.27-rt38-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -26,46 +29,55 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-kbuild test robot reported this against the -RT tree:
+We might get preempted, grab the same ressource again and then corrupt
+the memory.
 
-|   In file included from include/linux/mutex.h:30:0,
-|                    from include/linux/notifier.h:13,
-|                    from include/linux/memory_hotplug.h:6,
-|                    from include/linux/mmzone.h:777,
-|                    from include/linux/gfp.h:5,
-|                    from include/linux/slab.h:14,
-|                    from include/linux/resource_ext.h:19,
-|                    from include/linux/acpi.h:26,
-|                    from arch/x86/kernel/acpi/boot.c:27:
-|>> arch/x86/kernel/acpi/boot.c:90:21: warning: 'acpi_ioapic_lock' defined but not used [-Wunused-variable]
-|    static DEFINE_MUTEX(acpi_ioapic_lock);
-|                        ^
-|   include/linux/mutex_rt.h:27:15: note: in definition of macro 'DEFINE_MUTEX'
-|     struct mutex mutexname = __MUTEX_INITIALIZER(mutexname)
-                  ^~~~~~~~~
-which is also true (as in non-used) for !RT but the compiler does not
-emit a warning.
-
-Reported-by: kbuild test robot <fengguang.wu@intel.com>
+Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/x86/kernel/acpi/boot.c | 2 ++
- 1 file changed, 2 insertions(+)
+ mm/zsmalloc.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/arch/x86/kernel/acpi/boot.c b/arch/x86/kernel/acpi/boot.c
-index e75907601a41..a29fc4f84fc4 100644
---- a/arch/x86/kernel/acpi/boot.c
-+++ b/arch/x86/kernel/acpi/boot.c
-@@ -87,7 +87,9 @@ static u64 acpi_lapic_addr __initdata = APIC_DEFAULT_PHYS_BASE;
-  *		->ioapic_mutex
-  *			->ioapic_lock
-  */
-+#ifdef CONFIG_X86_IO_APIC
- static DEFINE_MUTEX(acpi_ioapic_lock);
-+#endif
+diff --git a/mm/zsmalloc.c b/mm/zsmalloc.c
+index b552fd607df8..529552c3716d 100644
+--- a/mm/zsmalloc.c
++++ b/mm/zsmalloc.c
+@@ -64,6 +64,7 @@
+ #include <linux/debugfs.h>
+ #include <linux/zsmalloc.h>
+ #include <linux/zpool.h>
++#include <linux/locallock.h>
  
- /* --------------------------------------------------------------------------
-                               Boot-time Configuration
+ /*
+  * This must be power of 2 and greater than of equal to sizeof(link_free).
+@@ -403,6 +404,7 @@ static unsigned int get_maxobj_per_zspage(int size, int pages_per_zspage)
+ 
+ /* per-cpu VM mapping areas for zspage accesses that cross page boundaries */
+ static DEFINE_PER_CPU(struct mapping_area, zs_map_area);
++static DEFINE_LOCAL_IRQ_LOCK(zs_map_area_lock);
+ 
+ static int is_first_page(struct page *page)
+ {
+@@ -1289,7 +1291,7 @@ void *zs_map_object(struct zs_pool *pool, unsigned long handle,
+ 	class = pool->size_class[class_idx];
+ 	off = obj_idx_to_offset(page, obj_idx, class->size);
+ 
+-	area = per_cpu_ptr(&zs_map_area, get_cpu_light());
++	area = &get_locked_var(zs_map_area_lock, zs_map_area);
+ 	area->vm_mm = mm;
+ 	if (off + class->size <= PAGE_SIZE) {
+ 		/* this object is contained entirely within a page */
+@@ -1342,7 +1344,7 @@ void zs_unmap_object(struct zs_pool *pool, unsigned long handle)
+ 
+ 		__zs_unmap_object(area, pages, off, class->size);
+ 	}
+-	put_cpu_light();
++	put_locked_var(zs_map_area_lock, zs_map_area);
+ 	unpin_tag(handle);
+ }
+ EXPORT_SYMBOL_GPL(zs_unmap_object);
 -- 
 2.9.3
+
+
