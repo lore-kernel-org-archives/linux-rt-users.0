@@ -1,66 +1,57 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/3] Linux 3.2.83-rt121-rc1
-Date: Sun, 30 Oct 2016 12:51:09 -0400
-Message-ID: <20161030165109.200928387@goodmis.org>
+Subject: [PATCH RT 2/3] work-simple: Add missing #include <linux/export.h>
+Date: Sun, 30 Oct 2016 12:51:11 -0400
+Message-ID: <20161030165121.921645255@goodmis.org>
+References: <20161030165109.200928387@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
-        Paul Gortmaker <paul.gortmaker@windriver.com>
+        Paul Gortmaker <paul.gortmaker@windriver.com>,
+        Ben Hutchings <ben@decadent.org.uk>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.136]:50218 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S932589AbcJ3Qv0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 30 Oct 2016 12:51:26 -0400
+Content-Disposition: inline; filename=0002-work-simple-Add-missing-include-linux-export.h.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+3.2.83-rt121-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.2.83-rt121-rc1.
+From: Ben Hutchings <ben@decadent.org.uk>
 
-Please scream at me if I messed something up. Please test the patches too.
+work-simple.c uses EXPORT_SYMBOL_GPL(), defined in <linux/export.h>.
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
+Link: http://lkml.kernel.org/r/20160930090504.GX10601@decadent.org.uk
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 11/2/2016.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.2.83-rt121-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.83.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.83-rt121-rc1.patch.xz
-
-You can also build from 3.2.83-rt120 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.83-rt120-rt121-rc1.patch.xz
-
-
-Changes from 3.2.83-rt120:
-
+Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
-
-
-Ben Hutchings (2):
-      genirq: Fix pointer cast warning for randomness on 32-bit architectures
-      work-simple: Add missing #include <linux/export.h>
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.2.83-rt121-rc1
-
-----
- kernel/irq/manage.c  | 3 ++-
  kernel/work-simple.c | 1 +
- localversion-rt      | 2 +-
- 3 files changed, 4 insertions(+), 2 deletions(-)
+ 1 file changed, 1 insertion(+)
+
+diff --git a/kernel/work-simple.c b/kernel/work-simple.c
+index c996f755dba6..e57a0522573f 100644
+--- a/kernel/work-simple.c
++++ b/kernel/work-simple.c
+@@ -10,6 +10,7 @@
+ #include <linux/kthread.h>
+ #include <linux/slab.h>
+ #include <linux/spinlock.h>
++#include <linux/export.h>
+ 
+ #define SWORK_EVENT_PENDING     (1 << 0)
+ 
+-- 
+2.9.3
+
+
