@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 3/6] zsmalloc: turn that get_cpu_light() into a local_lock()
-Date: Sun, 30 Oct 2016 12:45:10 -0400
-Message-ID: <20161030164519.507357496@goodmis.org>
+Subject: [PATCH RT 5/6] kbuild: add -fno-PIE
+Date: Sun, 30 Oct 2016 12:45:12 -0400
+Message-ID: <20161030164519.867652213@goodmis.org>
 References: <20161030164507.542995196@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,16 +9,15 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
-        Paul Gortmaker <paul.gortmaker@windriver.com>,
-        stable-rt@vger.kernel.org
+        Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:48540 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.136]:48534 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S932697AbcJ3Qp0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 30 Oct 2016 12:45:26 -0400
-Content-Disposition: inline; filename=0003-zsmalloc-turn-that-get_cpu_light-into-a-local_lock.patch
+        id S932696AbcJ3QpZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 30 Oct 2016 12:45:25 -0400
+Content-Disposition: inline; filename=0005-kbuild-add-fno-PIE.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -29,54 +28,29 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-We might get preempted, grab the same ressource again and then corrupt
-the memory.
+Debian started to build the gcc with -fPIE by default so the kernel
+build ends before it starts properly with:
+|kernel/bounds.c:1:0: error: code model kernel does not support PIC mode
 
-Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- mm/zsmalloc.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/mm/zsmalloc.c b/mm/zsmalloc.c
-index b552fd607df8..529552c3716d 100644
---- a/mm/zsmalloc.c
-+++ b/mm/zsmalloc.c
-@@ -64,6 +64,7 @@
- #include <linux/debugfs.h>
- #include <linux/zsmalloc.h>
- #include <linux/zpool.h>
-+#include <linux/locallock.h>
+diff --git a/Makefile b/Makefile
+index 3b2614a0fa1b..e2c9fdc9d22f 100644
+--- a/Makefile
++++ b/Makefile
+@@ -394,7 +394,7 @@ KBUILD_CPPFLAGS := -D__KERNEL__
+ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
+ 		   -fno-strict-aliasing -fno-common \
+ 		   -Werror-implicit-function-declaration \
+-		   -Wno-format-security \
++		   -Wno-format-security -fno-PIE \
+ 		   -std=gnu89
  
- /*
-  * This must be power of 2 and greater than of equal to sizeof(link_free).
-@@ -403,6 +404,7 @@ static unsigned int get_maxobj_per_zspage(int size, int pages_per_zspage)
- 
- /* per-cpu VM mapping areas for zspage accesses that cross page boundaries */
- static DEFINE_PER_CPU(struct mapping_area, zs_map_area);
-+static DEFINE_LOCAL_IRQ_LOCK(zs_map_area_lock);
- 
- static int is_first_page(struct page *page)
- {
-@@ -1289,7 +1291,7 @@ void *zs_map_object(struct zs_pool *pool, unsigned long handle,
- 	class = pool->size_class[class_idx];
- 	off = obj_idx_to_offset(page, obj_idx, class->size);
- 
--	area = per_cpu_ptr(&zs_map_area, get_cpu_light());
-+	area = &get_locked_var(zs_map_area_lock, zs_map_area);
- 	area->vm_mm = mm;
- 	if (off + class->size <= PAGE_SIZE) {
- 		/* this object is contained entirely within a page */
-@@ -1342,7 +1344,7 @@ void zs_unmap_object(struct zs_pool *pool, unsigned long handle)
- 
- 		__zs_unmap_object(area, pages, off, class->size);
- 	}
--	put_cpu_light();
-+	put_locked_var(zs_map_area_lock, zs_map_area);
- 	unpin_tag(handle);
- }
- EXPORT_SYMBOL_GPL(zs_unmap_object);
+ KBUILD_AFLAGS_KERNEL :=
 -- 
 2.9.3
 
