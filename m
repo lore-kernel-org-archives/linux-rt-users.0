@@ -1,7 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/3] Linux 3.12.66-rt89-rc1
-Date: Sun, 30 Oct 2016 12:48:29 -0400
-Message-ID: <20161030164829.552034185@goodmis.org>
+Subject: [PATCH RT 3/3] Linux 3.12.66-rt89-rc1
+Date: Sun, 30 Oct 2016 12:48:32 -0400
+Message-ID: <20161030164841.154710494@goodmis.org>
+References: <20161030164829.552034185@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -10,59 +13,27 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0003-Linux-3.12.66-rt89-rc1.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+3.12.66-rt89-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.12.66-rt89-rc1.
-
-Please scream at me if I messed something up. Please test the patches too.
-
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 11/2/2016.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.12.66-rt89-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.66.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.66-rt89-rc1.patch.xz
-
-You can also build from 3.12.66-rt88 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.66-rt88-rt89-rc1.patch.xz
-
-
-Changes from 3.12.66-rt88:
+From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
 
 ---
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-
-Mike Galbraith (1):
-      ftrace: Fix trace header alignment
-
-Sebastian Andrzej Siewior (1):
-      kbuild: add -fno-PIE
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.12.66-rt89-rc1
-
-----
- Makefile             |  2 +-
- kernel/trace/trace.c | 22 +++++++++++-----------
- localversion-rt      |  2 +-
- 3 files changed, 13 insertions(+), 13 deletions(-)
+diff --git a/localversion-rt b/localversion-rt
+index 666227d921a3..d1173dc87024 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt88
++-rt89-rc1
+-- 
+2.9.3
