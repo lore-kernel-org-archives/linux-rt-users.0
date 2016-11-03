@@ -1,37 +1,115 @@
-From: Luiz Capitulino <lcapitulino@redhat.com>
-Subject: Re: Making rcu_normal=1 in RT
-Date: Wed, 2 Nov 2016 13:41:29 -0400
-Message-ID: <20161102134129.46b98de7@redhat.com>
-References: <20161012111251.74d1d52e@redhat.com>
-        <20161012162114.GA9362@jcartwri.amer.corp.natinst.com>
-        <20161102165149.kg66lwfon6phhfik@linutronix.de>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [PATCH] rcu: update: make RCU_EXPEDITE_BOOT default
+Date: Thu, 3 Nov 2016 09:22:28 -0700
+Message-ID: <20161103162228.GG3716@linux.vnet.ibm.com>
+References: <20161012124956.3cb5f988@redhat.com>
+ <20161012171553.GA18392@jcartwri.amer.corp.natinst.com>
+ <20161012203223.GK29518@linux.vnet.ibm.com>
+ <20161013191332-mutt-send-email-mst@kernel.org>
+ <20161014092050.GW29518@linux.vnet.ibm.com>
+ <20161016044420-mutt-send-email-mst@kernel.org>
+ <20161016112846.GR29518@linux.vnet.ibm.com>
+ <20161031173852.a3ji7hhgjis5l3u4@linutronix.de>
+ <20161031181543.GN3716@linux.vnet.ibm.com>
+ <20161102163002.igni3zdnid535nou@linutronix.de>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Julia Cartwright <julia@ni.com>, linux-rt-users@vger.kernel.org,
-        mst@redhat.com, paulmck@linux.vnet.ibm.com
+Content-Type: text/plain; charset=us-ascii
+Cc: "Michael S. Tsirkin" <mst@redhat.com>,
+        Julia Cartwright <julia@ni.com>,
+        Luiz Capitulino <lcapitulino@redhat.com>,
+        linux-rt-users@vger.kernel.org,
+        Josh Triplett <josh@joshtriplett.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Lai Jiangshan <jiangshanlai@gmail.com>,
+        linux-kernel@vger.kernel.org
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:36842 "EHLO mx1.redhat.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1756288AbcKBRlb (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 2 Nov 2016 13:41:31 -0400
-In-Reply-To: <20161102165149.kg66lwfon6phhfik@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20161102163002.igni3zdnid535nou@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2 Nov 2016 17:51:49 +0100
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
-
-> On 2016-10-12 11:21:14 [-0500], Julia Cartwright wrote:
-> > Something like this, perhaps?
-> > 
-> >    Julia
-> > 
-> > -- 8< --
-> > Subject: [PATCH] rcu: enable rcu_normal_after_boot by default for RT  
+On Wed, Nov 02, 2016 at 05:30:02PM +0100, Sebastian Andrzej Siewior wrote:
+> RCU_EXPEDITE_BOOT should speed up the boot process by enforcing
+> synchronize_rcu_expedited() instead of synchronize_rcu() during the boot
+> process. There should be no reason why one does not want this and there
+> is no need worry about real time latency at this point.
+> Therefore make it default.
 > 
-> finally applied and dropped ("net: Make synchronize_rcu_expedited()
-> conditional on !RT_FULL").
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Cool, thanks for all involved!
+Well, it has been awhile since I removed a Kconfig parameter.
+
+So why could this be a bad thing?
+
+1.	Very large systems might see scalability issues with unconditional
+	expediting at boot.  But if we don't try it, we won't know.
+
+2.	People bringing up new hardware might not want quite so many
+	IPIs.  But they can just set rcu_normal to prevent that.
+
+I am therefore queuing it for testiong and review.  ;-)
+
+							Thanx, Paul
+
+> ---
+> Checked on two boxes and synchronize_rcu() was invoked four times before
+> it reached rcu_end_inkernel_boot()
+> 
+>  init/Kconfig        | 13 -------------
+>  kernel/rcu/update.c |  6 ++----
+>  2 files changed, 2 insertions(+), 17 deletions(-)
+> 
+> diff --git a/init/Kconfig b/init/Kconfig
+> index b6c9166d878a..fe51bd3bbc61 100644
+> --- a/init/Kconfig
+> +++ b/init/Kconfig
+> @@ -771,19 +771,6 @@ config RCU_NOCB_CPU_ALL
+> 
+>  endchoice
+> 
+> -config RCU_EXPEDITE_BOOT
+> -	bool
+> -	default n
+> -	help
+> -	  This option enables expedited grace periods at boot time,
+> -	  as if rcu_expedite_gp() had been invoked early in boot.
+> -	  The corresponding rcu_unexpedite_gp() is invoked from
+> -	  rcu_end_inkernel_boot(), which is intended to be invoked
+> -	  at the end of the kernel-only boot sequence, just before
+> -	  init is exec'ed.
+> -
+> -	  Accept the default if unsure.
+> -
+>  endmenu # "RCU Subsystem"
+> 
+>  config BUILD_BIN2C
+> diff --git a/kernel/rcu/update.c b/kernel/rcu/update.c
+> index b40d3468ba4e..419ca811bda9 100644
+> --- a/kernel/rcu/update.c
+> +++ b/kernel/rcu/update.c
+> @@ -130,8 +130,7 @@ bool rcu_gp_is_normal(void)
+>  }
+>  EXPORT_SYMBOL_GPL(rcu_gp_is_normal);
+> 
+> -static atomic_t rcu_expedited_nesting =
+> -	ATOMIC_INIT(IS_ENABLED(CONFIG_RCU_EXPEDITE_BOOT) ? 1 : 0);
+> +static atomic_t rcu_expedited_nesting = ATOMIC_INIT(1);
+> 
+>  /*
+>   * Should normal grace-period primitives be expedited?  Intended for
+> @@ -179,8 +178,7 @@ EXPORT_SYMBOL_GPL(rcu_unexpedite_gp);
+>   */
+>  void rcu_end_inkernel_boot(void)
+>  {
+> -	if (IS_ENABLED(CONFIG_RCU_EXPEDITE_BOOT))
+> -		rcu_unexpedite_gp();
+> +	rcu_unexpedite_gp();
+>  	if (rcu_normal_after_boot)
+>  		WRITE_ONCE(rcu_normal, 1);
+>  }
+> -- 
+> 2.10.2
+> 
