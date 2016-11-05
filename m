@@ -1,75 +1,66 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [PATCH] rcu: update: make RCU_EXPEDITE_BOOT default
-Date: Thu, 3 Nov 2016 09:59:31 -0700
-Message-ID: <20161103165931.GJ3716@linux.vnet.ibm.com>
-References: <20161012203223.GK29518@linux.vnet.ibm.com>
- <20161013191332-mutt-send-email-mst@kernel.org>
- <20161014092050.GW29518@linux.vnet.ibm.com>
- <20161016044420-mutt-send-email-mst@kernel.org>
- <20161016112846.GR29518@linux.vnet.ibm.com>
- <20161031173852.a3ji7hhgjis5l3u4@linutronix.de>
- <20161031181543.GN3716@linux.vnet.ibm.com>
- <20161102163002.igni3zdnid535nou@linutronix.de>
- <20161103162228.GG3716@linux.vnet.ibm.com>
- <20161103163326.jkjbncoz7a5oriy5@linutronix.de>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Joel Fernandes <joelaf@google.com>
+Subject: Re: [PATCH 4/7] mm: defer vmalloc from atomic context
+Date: Fri, 4 Nov 2016 20:43:16 -0700
+Message-ID: <CAJWu+oppRL5kD9qPcdCbFAbEkE7bN+kmrvTuaueVZnY+WtK_tg@mail.gmail.com>
+References: <1477149440-12478-1-git-send-email-hch@lst.de> <1477149440-12478-5-git-send-email-hch@lst.de>
+ <25c117ae-6d06-9846-6a88-ae6221ad6bfe@virtuozzo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Cc: "Michael S. Tsirkin" <mst@redhat.com>,
-        Julia Cartwright <julia@ni.com>,
-        Luiz Capitulino <lcapitulino@redhat.com>,
-        linux-rt-users@vger.kernel.org,
-        Josh Triplett <josh@joshtriplett.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-        Lai Jiangshan <jiangshanlai@gmail.com>,
-        linux-kernel@vger.kernel.org
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20161103163326.jkjbncoz7a5oriy5@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Cc: Christoph Hellwig <hch@lst.de>, Andrew Morton <akpm@linux-foundation.org>,
+	Jisheng Zhang <jszhang@marvell.com>, Chris Wilson <chris@chris-wilson.co.uk>,
+	John Dias <joaodias@google.com>, "open list:MEMORY MANAGEMENT" <linux-mm@kvack.org>, linux-rt-users@vger.kernel.org,
+	LKML <linux-kernel@vger.kernel.org>
+To: Andrey Ryabinin <aryabinin@virtuozzo.com>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <25c117ae-6d06-9846-6a88-ae6221ad6bfe@virtuozzo.com>
+Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Nov 03, 2016 at 05:33:27PM +0100, Sebastian Andrzej Siewior wrote:
-> On 2016-11-03 09:22:28 [-0700], Paul E. McKenney wrote:
-> > On Wed, Nov 02, 2016 at 05:30:02PM +0100, Sebastian Andrzej Siewior wrote:
-> > > RCU_EXPEDITE_BOOT should speed up the boot process by enforcing
-> > > synchronize_rcu_expedited() instead of synchronize_rcu() during the boot
-> > > process. There should be no reason why one does not want this and there
-> > > is no need worry about real time latency at this point.
-> > > Therefore make it default.
-> > > 
-> > > Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> > 
-> > Well, it has been awhile since I removed a Kconfig parameter.
-> > 
-> > So why could this be a bad thing?
-> > 
-> > 1.	Very large systems might see scalability issues with unconditional
-> > 	expediting at boot.  But if we don't try it, we won't know.
-> 
-> You mean we would make the boot process slower for them instead of
-> faster?
+On Mon, Oct 24, 2016 at 8:44 AM, Andrey Ryabinin
+<aryabinin@virtuozzo.com> wrote:
+>
+>
+> On 10/22/2016 06:17 PM, Christoph Hellwig wrote:
+>> We want to be able to use a sleeping lock for freeing vmap to keep
+>> latency down.  For this we need to use the deferred vfree mechanisms
+>> no only from interrupt, but from any atomic context.
+>>
+>> Signed-off-by: Christoph Hellwig <hch@lst.de>
+>> ---
+>>  mm/vmalloc.c | 2 +-
+>>  1 file changed, 1 insertion(+), 1 deletion(-)
+>>
+>> diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+>> index a4e2cec..bcc1a64 100644
+>> --- a/mm/vmalloc.c
+>> +++ b/mm/vmalloc.c
+>> @@ -1509,7 +1509,7 @@ void vfree(const void *addr)
+>>
+>>       if (!addr)
+>>               return;
+>> -     if (unlikely(in_interrupt())) {
+>> +     if (unlikely(in_atomic())) {
+>
+> in_atomic() cannot always detect atomic context, thus it shouldn't be used here.
+> You can add something like vfree_in_atomic() and use it in atomic call sites.
+>
 
-For really bit systems, quite possibly, where "really big" means
-many hundreds or (more likely) thousands of CPUs.
+So because in_atomic doesn't work for !CONFIG_PREEMPT kernels, can we
+always defer the work in these cases?
 
-But there are things that I can do to fix this when and if.
+So for non-preemptible kernels, we always defer:
 
-> > 2.	People bringing up new hardware might not want quite so many
-> > 	IPIs.  But they can just set rcu_normal to prevent that.
-> 
-> I wanted to make things simple and not complicated…
+if (!IS_ENABLED(CONFIG_PREEMPT) || in_atomic()) {
+  // defer
+}
 
-I know that feeling.  ;-)
+Is this fine? Or any other ideas?
 
-> > I am therefore queuing it for testiong and review.  ;-)
-> 
-> Okay thanks.
+Thanks,
+Joel
 
-							Thanx, Paul
-
-> Sebastian
-> 
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
