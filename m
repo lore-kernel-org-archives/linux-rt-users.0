@@ -1,78 +1,25 @@
-From: Joel Fernandes <joelaf@google.com>
-Subject: Re: [PATCH 4/7] mm: defer vmalloc from atomic context
-Date: Mon, 7 Nov 2016 08:50:46 -0800
-Message-ID: <CAJWu+ordN8eDodGYp8Bm_92U1NZmGJya5pGi3SSg3FvmciGzaw@mail.gmail.com>
-References: <1477149440-12478-1-git-send-email-hch@lst.de> <1477149440-12478-5-git-send-email-hch@lst.de>
- <25c117ae-6d06-9846-6a88-ae6221ad6bfe@virtuozzo.com> <CAJWu+oppRL5kD9qPcdCbFAbEkE7bN+kmrvTuaueVZnY+WtK_tg@mail.gmail.com>
- <a40cccff-3a6e-b0be-5d06-bac6cdb0e1e6@virtuozzo.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: Christoph Hellwig <hch@lst.de>, Andrew Morton <akpm@linux-foundation.org>,
-	Jisheng Zhang <jszhang@marvell.com>, Chris Wilson <chris@chris-wilson.co.uk>,
-	John Dias <joaodias@google.com>, "open list:MEMORY MANAGEMENT" <linux-mm@kvack.org>, linux-rt-users@vger.kernel.org,
-	LKML <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>
-To: Andrey Ryabinin <aryabinin@virtuozzo.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <a40cccff-3a6e-b0be-5d06-bac6cdb0e1e6@virtuozzo.com>
-Sender: owner-linux-mm@kvack.org
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: [PATCH] sched/rt: RT_RUNTIME_GREED sched feature
+Date: Mon, 7 Nov 2016 10:55:38 -0600 (CST)
+Message-ID: <alpine.DEB.2.20.1611071054320.17809@east.gentwo.org>
+References: <fa5b1b55d8934c6a0e02e04a7ad6afdf4012c2e0.1478506194.git.bristot@redhat.com>
+Content-Type: text/plain; charset=US-ASCII
+Cc: Ingo Molnar <mingo@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>
+To: Daniel Bristot de Oliveira <bristot@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <fa5b1b55d8934c6a0e02e04a7ad6afdf4012c2e0.1478506194.git.bristot@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, Nov 7, 2016 at 7:01 AM, Andrey Ryabinin <aryabinin@virtuozzo.com> wrote:
-> On 11/05/2016 06:43 AM, Joel Fernandes wrote:
->> On Mon, Oct 24, 2016 at 8:44 AM, Andrey Ryabinin
->> <aryabinin@virtuozzo.com> wrote:
->>>
->>>
->>> On 10/22/2016 06:17 PM, Christoph Hellwig wrote:
->>>> We want to be able to use a sleeping lock for freeing vmap to keep
->>>> latency down.  For this we need to use the deferred vfree mechanisms
->>>> no only from interrupt, but from any atomic context.
->>>>
->>>> Signed-off-by: Christoph Hellwig <hch@lst.de>
->>>> ---
->>>>  mm/vmalloc.c | 2 +-
->>>>  1 file changed, 1 insertion(+), 1 deletion(-)
->>>>
->>>> diff --git a/mm/vmalloc.c b/mm/vmalloc.c
->>>> index a4e2cec..bcc1a64 100644
->>>> --- a/mm/vmalloc.c
->>>> +++ b/mm/vmalloc.c
->>>> @@ -1509,7 +1509,7 @@ void vfree(const void *addr)
->>>>
->>>>       if (!addr)
->>>>               return;
->>>> -     if (unlikely(in_interrupt())) {
->>>> +     if (unlikely(in_atomic())) {
->>>
->>> in_atomic() cannot always detect atomic context, thus it shouldn't be used here.
->>> You can add something like vfree_in_atomic() and use it in atomic call sites.
->>>
->>
->> So because in_atomic doesn't work for !CONFIG_PREEMPT kernels, can we
->> always defer the work in these cases?
->>
->> So for non-preemptible kernels, we always defer:
->>
->> if (!IS_ENABLED(CONFIG_PREEMPT) || in_atomic()) {
->>   // defer
->> }
->>
->> Is this fine? Or any other ideas?
->>
->
-> What's wrong with my idea?
-> We can add vfree_in_atomic() and use it to free vmapped stacks
-> and for any other places where vfree() used 'in_atomict() && !in_interrupt()' context.
+On Mon, 7 Nov 2016, Daniel Bristot de Oliveira wrote:
 
-Yes, this sounds like a better idea as there may not be that many
-callers and my idea may hurt perf.
+> With these two options set, the user will guarantee some runtime
+> for non-rt-tasks on all CPUs, while keeping real-time tasks running
+> as much as possible.
 
-Thanks,
-
-Joel
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Excellent this would improve the situation with deadlocks as a result of
+cgroup_locks not being released due to lack of workqueue processing.
