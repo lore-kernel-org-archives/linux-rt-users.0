@@ -1,91 +1,48 @@
-From: Daniel Bristot de Oliveira <bristot@redhat.com>
-Subject: Re: [PATCH] sched/rt: RT_RUNTIME_GREED sched feature
-Date: Mon, 7 Nov 2016 14:51:37 +0100
-Message-ID: <0893b09f-7412-d6d3-4b8d-ad811af814dd@redhat.com>
-References: <fa5b1b55d8934c6a0e02e04a7ad6afdf4012c2e0.1478506194.git.bristot@redhat.com>
- <04fe756b-27f6-b9d0-f0a3-ee66a403cd96@sssup.it>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH 4/7] mm: defer vmalloc from atomic context
+Date: Mon, 7 Nov 2016 16:09:47 +0100
+Message-ID: <20161107150947.GA11279@lst.de>
+References: <1477149440-12478-1-git-send-email-hch@lst.de> <1477149440-12478-5-git-send-email-hch@lst.de> <25c117ae-6d06-9846-6a88-ae6221ad6bfe@virtuozzo.com> <CAJWu+oppRL5kD9qPcdCbFAbEkE7bN+kmrvTuaueVZnY+WtK_tg@mail.gmail.com> <a40cccff-3a6e-b0be-5d06-bac6cdb0e1e6@virtuozzo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-        Christoph Lameter <cl@linux.com>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>
-To: Tommaso Cucinotta <tommaso.cucinotta@sssup.it>,
-        Ingo Molnar <mingo@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Joel Fernandes <joelaf@google.com>, Christoph Hellwig <hch@lst.de>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Jisheng Zhang <jszhang@marvell.com>,
+        Chris Wilson <chris@chris-wilson.co.uk>,
+        John Dias <joaodias@google.com>,
+        "open list:MEMORY MANAGEMENT" <linux-mm@kvack.org>,
+        linux-rt-users@vger.kernel.org,
+        LKML <linux-kernel@vger.kernel.org>,
+        Andy Lutomirski <luto@kernel.org>
+To: Andrey Ryabinin <aryabinin@virtuozzo.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <04fe756b-27f6-b9d0-f0a3-ee66a403cd96@sssup.it>
+Content-Disposition: inline
+In-Reply-To: <a40cccff-3a6e-b0be-5d06-bac6cdb0e1e6@virtuozzo.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Tommaso,
+On Mon, Nov 07, 2016 at 06:01:45PM +0300, Andrey Ryabinin wrote:
+> > So because in_atomic doesn't work for !CONFIG_PREEMPT kernels, can we
+> > always defer the work in these cases?
+> > 
+> > So for non-preemptible kernels, we always defer:
+> > 
+> > if (!IS_ENABLED(CONFIG_PREEMPT) || in_atomic()) {
+> >   // defer
+> > }
+> > 
+> > Is this fine? Or any other ideas?
+> > 
+> 
+> What's wrong with my idea?
+> We can add vfree_in_atomic() and use it to free vmapped stacks
+> and for any other places where vfree() used 'in_atomict() && !in_interrupt()' context.
 
-On 11/07/2016 11:31 AM, Tommaso Cucinotta wrote:
-> as anticipated live to Daniel:
-> -) +1 for the general concept, we'd need something similar also for
-> SCHED_DEADLINE
+I somehow missed the mail, sorry.  That beeing said always defer is
+going to suck badly in terms of performance, so I'm not sure it's an all
+that good idea.
 
-Resumed: the sum of the runtime of deadline tasks will not be greater
-than the "to_ratio(global_rt_period(), global_rt_runtime())" - see
-init_dl_bw(). Therefore, DL rq will not be throttle by the RT throttling
-mechanism.
-
-Extended: RT tasks' throttling aims to bound, for all CPUS of a domain -
-when RT_RUNTIME_SHARING sharing is enabled; or per-rq - when
-RT_RUNTIME_SHARING is disabled; the amount of time that RT tasks can run
-continuously, in such way to provide some CPU time for non-real-time
-tasks to run. RT tasks need this global/local throttling mechanism to
-avoid the starvation of non-rt tasks because RT tasks do not have a
-limited runtime - RT task (or taskset) can run for an infinity runtime.
-
-DL tasks' throttling has another meaning. DL tasks' throttling aims to
-avoid *a* DL task for running for more than *its own* pre-allocated runtime.
-
-The sum of allocated runtime for all DL tasks will not to be greater
-than RT throttling enforcement runtime. The DL scheduler admission
-control already avoids this by limiting the amount of CPU time all DL
-tasks can consume (see init_dl_bw()). So, DL tasks are avoid ind the
-"global" throttling on before hand - in the admission control.
-
-GRUB might implement something <<similar>> for the DEADLINE scheduler.
-With GRUB, a deadline tasks will have more runtime than previously
-set/granted..... But I am quite sure it will still be bounded by the sum
-of the already allocated DL runtime, that will continue being smaller
-than "to_ratio(global_rt_period(), global_rt_runtime())".
-
-Am I missing something?
-
-> -) only issue might be that, if a non-RT task wakes up after the
-> unthrottle, it will have to wait, but worst-case it will have a chance
-> in the next throttling window
-
-In the current default behavior (RT_RUNTIME_SHARING), in a domain with
-more than two CPUs, the worst case easily become "infinity," because a
-CPU can borrow runtime from another CPU. There is no guarantee for
-minimum latency for non-rt tasks. Anyway, if the user wants to provide
-such guarantee, they just need not enable this feature, while disabling
-RT_RUNTIME_SHARING (or run the non-rt task as a deadline task ;-))
-
-> -) an alternative to unthrottling might be temporary class downgrade to
-> sched_other, but that might be much more complex, instead this Daniel's
-> one looks quite simple
-
-Yeah, decrease the priority of the task would be something way more
-complicated and prone to errors. RT tasks would need to reduce its
-priority to a level higher than the IDLE task, but lower than SCHED_IDLE...
-
-> -) when considering also DEADLINE tasks, it might be good to think about
-> how we'd like the throttling of DEADLINE and RT tasks to inter-relate,
-> e.g.:
-
-Currently, DL tasks are limited (in the bw control) to the global RT
-throttling limit...
-
-I think that this might be an extension to GRUB... that is extending the
-current behavior... so... things for the future - and IMHO it is another
-topic - way more challenging.
-
-Comments are welcome :-)
-
--- Daniel
+vfree_in_atomic sounds good, but I wonder if we'll need to annotate
+more callers than just the stacks.  I'm fairly bust this week, do you
+want to give that a spin?  Otherwise I'll give it a try towards the
+end of this week or next week.
