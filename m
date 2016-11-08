@@ -1,76 +1,63 @@
-From: Daniel Bristot de Oliveira <daniel@bristot.me>
-Subject: [PATCH] sched/rt: Change default setup for RT THROTTLING
-Date: Tue, 8 Nov 2016 10:22:01 +0100
-Message-ID: <879730f8-3966-7c6d-a581-d46a735a73e9@bristot.me>
+From: Juri Lelli <juri.lelli@arm.com>
+Subject: Re: [PATCH] sched/rt: RT_RUNTIME_GREED sched feature
+Date: Tue, 8 Nov 2016 10:30:52 +0000
+Message-ID: <20161108103052.GE16920@e106622-lin>
 References: <fa5b1b55d8934c6a0e02e04a7ad6afdf4012c2e0.1478506194.git.bristot@redhat.com>
- <alpine.DEB.2.20.1611071054320.17809@east.gentwo.org>
- <20161107133207.4282de69@gandalf.local.home>
- <alpine.DEB.2.20.1611071328470.19249@east.gentwo.org>
- <20161107144738.4811a5dd@gandalf.local.home>
- <alpine.DEB.2.20.1611071353440.19543@east.gentwo.org>
- <20161107150003.66777b43@gandalf.local.home>
- <1e79f711-95f1-da2f-f572-1ac4329c8be7@bristot.me>
- <20161107151617.486b1b42@gandalf.local.home>
- <c46a03ef-89f5-b0c1-5886-e77266dc9a40@bristot.me>
- <20161107154401.16f0214e@gandalf.local.home>
+ <04fe756b-27f6-b9d0-f0a3-ee66a403cd96@sssup.it>
+ <0893b09f-7412-d6d3-4b8d-ad811af814dd@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Cc: Christoph Lameter <cl@linux.com>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
+Content-Type: text/plain; charset=us-ascii
+Cc: Tommaso Cucinotta <tommaso.cucinotta@sssup.it>,
         Ingo Molnar <mingo@redhat.com>,
         Peter Zijlstra <peterz@infradead.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Christoph Lameter <cl@linux.com>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        Tommaso Cucinotta <tommaso.cucinotta@sssup.it>,
-        Luca Abeni <luca.abeni@unitn.it>,
-        Clark Williams <williams@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20161107154401.16f0214e@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+        LKML <linux-kernel@vger.kernel.org>
+To: Daniel Bristot de Oliveira <bristot@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from foss.arm.com ([217.140.101.70]:56174 "EHLO foss.arm.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S932223AbcKHKae (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 8 Nov 2016 05:30:34 -0500
+Content-Disposition: inline
+In-Reply-To: <0893b09f-7412-d6d3-4b8d-ad811af814dd@redhat.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-[ looks good? if so, I will send a v2 patch set including the ]
-[ RT_RUNTIME_GREED patch and this one.                         ]
+Hi Daniel,
 
-Currently, the option RT_RUNTIME_SHARE is enabled by default. This
-option enables the sharing of rt_runtime between CPUs, allowing a CPU to
-borrow rt_runtime from another CPU, permitting a real-time task to run
-100% of the time on a single CPU. The problem is that this can lead to
-the starvation of a non-real-time task pinned to the CPU running the CPU
-bound RT workload. One example of non-real-time task pinned to a CPU are
-the kworkers. Often kworkers starve on this scenario, causing a system
-hang.
+On 07/11/16 14:51, Daniel Bristot de Oliveira wrote:
+> On 11/07/2016 11:31 AM, Tommaso Cucinotta wrote:
 
-This patch changes the default setup for RT THROTTLING, disabling the
-RT_RUNTIME_SHARE option while enabling the RT_RUNTIME_GREED option. In
-such configuration, real-time tasks will be able to run 100% of the time
-in the absence of non-real-time tasks starving in the local CPU.
+[...]
 
-Signed-off-by: Daniel Bristot de Oliveira <bristot@redhat.com>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Christoph Lameter <cl@linux.com>
-Cc: Tommaso Cucinotta <tommaso.cucinotta@sssup.it>
-Cc: Luca Abeni <luca.abeni@unitn.it>
-Cc: Clark Williams <williams@redhat.com>
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc: LKML <linux-kernel@vger.kernel.org>
+> > -) only issue might be that, if a non-RT task wakes up after the
+> > unthrottle, it will have to wait, but worst-case it will have a chance
+> > in the next throttling window
+> 
+> In the current default behavior (RT_RUNTIME_SHARING), in a domain with
+> more than two CPUs, the worst case easily become "infinity," because a
+> CPU can borrow runtime from another CPU. There is no guarantee for
+> minimum latency for non-rt tasks. Anyway, if the user wants to provide
+> such guarantee, they just need not enable this feature, while disabling
+> RT_RUNTIME_SHARING (or run the non-rt task as a deadline task ;-))
+> 
 
+I could only skim through the patch, so please forgive me if I'm talking
+gibberish, but I think what Tommaso is saying is that with your current
+approach if an unlucky OTHER task wakes up just after you unthrottled an
+rt_rq (by replenishment), it will have to wait until the next throttling
+event. I agree that this is still better than current status, and that
+you can still configure the system to avoid this from happening. What
+I'm wondering though is if we could modify your implementation and only
+do the replenishment when the replenishment timer actually fires, but
+let RT tasks continue to run, while their rt_rq is throttled, if no
+OTHER task is present, or wakes up. I guess this will complicate things,
+and maybe doesn't buy us much, just an idea. :)
 
-diff --git a/kernel/sched/features.h b/kernel/sched/features.h
-index 3bd7a6d..265c0db 100644
---- a/kernel/sched/features.h
-+++ b/kernel/sched/features.h
-@@ -65,8 +65,8 @@ SCHED_FEAT(RT_PUSH_IPI, true)
- #endif
+Otherwise, the patch looks good and useful to me.
 
- SCHED_FEAT(FORCE_SD_OVERLAP, false)
--SCHED_FEAT(RT_RUNTIME_SHARE, true)
--SCHED_FEAT(RT_RUNTIME_GREED, false)
-+SCHED_FEAT(RT_RUNTIME_SHARE, false)
-+SCHED_FEAT(RT_RUNTIME_GREED, true)
- SCHED_FEAT(LB_MIN, false)
- SCHED_FEAT(ATTACH_AGE_LOAD, true)
+Best,
+
+- Juri
