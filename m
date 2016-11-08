@@ -1,60 +1,60 @@
-From: Andrey Ryabinin <aryabinin@virtuozzo.com>
-Subject: [PATCH 2/3] kernel/fork: use vfree_atomic() to free thread stack
-Date: Tue, 8 Nov 2016 18:05:44 +0300
-Message-ID: <1478617545-8443-2-git-send-email-aryabinin@virtuozzo.com>
-References: <20161107150947.GA11279@lst.de>
- <1478617545-8443-1-git-send-email-aryabinin@virtuozzo.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH] sched/rt: RT_RUNTIME_GREED sched feature
+Date: Tue, 8 Nov 2016 17:51:33 +0100
+Message-ID: <20161108165133.GI3117@twins.programming.kicks-ass.net>
+References: <fa5b1b55d8934c6a0e02e04a7ad6afdf4012c2e0.1478506194.git.bristot@redhat.com>
+ <20161108115958.GO3142@twins.programming.kicks-ass.net>
+ <20161108090740.4226ffc9@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: Andrew Morton <akpm@linux-foundation.org>, <linux-mm@kvack.org>,
-	<linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>, Andrey
- Ryabinin <aryabinin@virtuozzo.com>, Andy Lutomirski <luto@kernel.org>, Joel
- Fernandes <joelaf@google.com>, Jisheng Zhang <jszhang@marvell.com>, Chris
- Wilson <chris@chris-wilson.co.uk>, John Dias <joaodias@google.com>, Thomas
- Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter
- Anvin" <hpa@zytor.com>, <x86@kernel.org>
-To: Christoph Hellwig <hch@lst.de>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1478617545-8443-1-git-send-email-aryabinin@virtuozzo.com>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Ingo Molnar <mingo@redhat.com>,
+        Christoph Lameter <cl@linux.com>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from merlin.infradead.org ([205.233.59.134]:45838 "EHLO
+        merlin.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S933255AbcKHQvg (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 8 Nov 2016 11:51:36 -0500
+Content-Disposition: inline
+In-Reply-To: <20161108090740.4226ffc9@gandalf.local.home>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-vfree() is going to use sleeping lock. Thread stack freed in atomic
-context, therefore we must use vfree_atomic() here.
+On Tue, Nov 08, 2016 at 09:07:40AM -0500, Steven Rostedt wrote:
+> On Tue, 8 Nov 2016 12:59:58 +0100
+> Peter Zijlstra <peterz@infradead.org> wrote:
+> 
+> > No, none of this stands a chance of being accepted.
+> > 
+> > This is making bad code worse.
+> 
+> Peter,
+> 
+> Instead of a flat out rejection, can you please provide some
+> constructive criticism to let those that are working on this know what
+> would be accepted? And what their next steps should be.
+> 
+> There's obviously a problem with the current code, what steps do you
+> recommend to fix it?
 
-Signed-off-by: Andrey Ryabinin <aryabinin@virtuozzo.com>
-Cc: Andy Lutomirski <luto@kernel.org>
-Cc: Joel Fernandes <joelaf@google.com>
-Cc: Christoph Hellwig <hch@lst.de>
-Cc: Jisheng Zhang <jszhang@marvell.com>
-Cc: Chris Wilson <chris@chris-wilson.co.uk>
-Cc: John Dias <joaodias@google.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: "H. Peter Anvin" <hpa@zytor.com>
-Cc: x86@kernel.org
----
- kernel/fork.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+You really should already know this.
 
-diff --git a/kernel/fork.c b/kernel/fork.c
-index fd85c68..417e94f 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -229,7 +229,7 @@ static inline void free_thread_stack(struct task_struct *tsk)
- 		}
- 		local_irq_restore(flags);
- 
--		vfree(tsk->stack);
-+		vfree_atomic(tsk->stack);
- 		return;
- 	}
- #endif
--- 
-2.7.3
+As stands the current rt cgroup code (and all this throttling code) is a
+giant mess (as in, its not actually correct from a RT pov). We should
+not make it worse by adding random hacks to it.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+The right way to to about doing this is by replacing it with something
+better; like the proposed DL server for FIFO tasks -- which is entirely
+non-trivial as well, see existing discussion on that.
+
+I'm not entirely sure what this patch was supposed to fix, but it could
+be running CFS tasks with higher priority than RT for a window, instead
+of throttling RT tasks. This seems fairly ill specified, but something
+like that could easily done with an explicit or slack time DL server for
+CFS tasks.
+
+
