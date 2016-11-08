@@ -1,7 +1,7 @@
 From: Andrey Ryabinin <aryabinin@virtuozzo.com>
-Subject: [PATCH 3/3] x86/ldt: use vfree_atomic() to free ldt entries
-Date: Tue, 8 Nov 2016 18:05:45 +0300
-Message-ID: <1478617545-8443-3-git-send-email-aryabinin@virtuozzo.com>
+Subject: [PATCH 2/3] kernel/fork: use vfree_atomic() to free thread stack
+Date: Tue, 8 Nov 2016 18:05:44 +0300
+Message-ID: <1478617545-8443-2-git-send-email-aryabinin@virtuozzo.com>
 References: <20161107150947.GA11279@lst.de>
  <1478617545-8443-1-git-send-email-aryabinin@virtuozzo.com>
 Mime-Version: 1.0
@@ -19,18 +19,8 @@ In-Reply-To: <1478617545-8443-1-git-send-email-aryabinin@virtuozzo.com>
 Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-vfree() is going to use sleeping lock. free_ldt_struct()
-may be called with disabled preemption, therefore we must
-use vfree_atomic() here.
-
-E.g. call trace:
-	vfree()
-	free_ldt_struct()
-	destroy_context_ldt()
-	__mmdrop()
-	finish_task_switch()
-	schedule_tail()
-	ret_from_fork()
+vfree() is going to use sleeping lock. Thread stack freed in atomic
+context, therefore we must use vfree_atomic() here.
 
 Signed-off-by: Andrey Ryabinin <aryabinin@virtuozzo.com>
 Cc: Andy Lutomirski <luto@kernel.org>
@@ -44,22 +34,22 @@ Cc: Ingo Molnar <mingo@redhat.com>
 Cc: "H. Peter Anvin" <hpa@zytor.com>
 Cc: x86@kernel.org
 ---
- arch/x86/kernel/ldt.c | 2 +-
+ kernel/fork.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/arch/x86/kernel/ldt.c b/arch/x86/kernel/ldt.c
-index 6707039..4d12cdf 100644
---- a/arch/x86/kernel/ldt.c
-+++ b/arch/x86/kernel/ldt.c
-@@ -93,7 +93,7 @@ static void free_ldt_struct(struct ldt_struct *ldt)
+diff --git a/kernel/fork.c b/kernel/fork.c
+index fd85c68..417e94f 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -229,7 +229,7 @@ static inline void free_thread_stack(struct task_struct *tsk)
+ 		}
+ 		local_irq_restore(flags);
  
- 	paravirt_free_ldt(ldt->entries, ldt->size);
- 	if (ldt->size * LDT_ENTRY_SIZE > PAGE_SIZE)
--		vfree(ldt->entries);
-+		vfree_atomic(ldt->entries);
- 	else
- 		free_page((unsigned long)ldt->entries);
- 	kfree(ldt);
+-		vfree(tsk->stack);
++		vfree_atomic(tsk->stack);
+ 		return;
+ 	}
+ #endif
 -- 
 2.7.3
 
