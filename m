@@ -1,8 +1,9 @@
 From: Andrey Ryabinin <aryabinin@virtuozzo.com>
-Subject: [PATCH 1/3] mm/vmalloc: add vfree_atomic()
-Date: Tue, 8 Nov 2016 18:05:43 +0300
-Message-ID: <1478617545-8443-1-git-send-email-aryabinin@virtuozzo.com>
+Subject: [PATCH 3/3] x86/ldt: use vfree_atomic() to free ldt entries
+Date: Tue, 8 Nov 2016 18:05:45 +0300
+Message-ID: <1478617545-8443-3-git-send-email-aryabinin@virtuozzo.com>
 References: <20161107150947.GA11279@lst.de>
+ <1478617545-8443-1-git-send-email-aryabinin@virtuozzo.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Cc: Andrew Morton <akpm@linux-foundation.org>, <linux-mm@kvack.org>,
@@ -14,14 +15,22 @@ Cc: Andrew Morton <akpm@linux-foundation.org>, <linux-mm@kvack.org>,
  Anvin" <hpa@zytor.com>, <x86@kernel.org>
 To: Christoph Hellwig <hch@lst.de>
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20161107150947.GA11279@lst.de>
+In-Reply-To: <1478617545-8443-1-git-send-email-aryabinin@virtuozzo.com>
 Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-We are going to use sleeping lock for freeing vmap. However some
-vfree() users want to free memory from atomic (but not from interrupt)
-context. For this we add vfree_atomic() - deferred variation of vfree()
-which can be used in any atomic context (except NMIs).
+vfree() is going to use sleeping lock. free_ldt_struct()
+may be called with disabled preemption, therefore we must
+use vfree_atomic() here.
+
+E.g. call trace:
+	vfree()
+	free_ldt_struct()
+	destroy_context_ldt()
+	__mmdrop()
+	finish_task_switch()
+	schedule_tail()
+	ret_from_fork()
 
 Signed-off-by: Andrey Ryabinin <aryabinin@virtuozzo.com>
 Cc: Andy Lutomirski <luto@kernel.org>
@@ -35,76 +44,22 @@ Cc: Ingo Molnar <mingo@redhat.com>
 Cc: "H. Peter Anvin" <hpa@zytor.com>
 Cc: x86@kernel.org
 ---
- include/linux/vmalloc.h |  1 +
- mm/vmalloc.c            | 36 ++++++++++++++++++++++++++++++------
- 2 files changed, 31 insertions(+), 6 deletions(-)
+ arch/x86/kernel/ldt.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/include/linux/vmalloc.h b/include/linux/vmalloc.h
-index 3d9d786..d68edff 100644
---- a/include/linux/vmalloc.h
-+++ b/include/linux/vmalloc.h
-@@ -82,6 +82,7 @@ extern void *__vmalloc_node_range(unsigned long size, unsigned long align,
- 			const void *caller);
+diff --git a/arch/x86/kernel/ldt.c b/arch/x86/kernel/ldt.c
+index 6707039..4d12cdf 100644
+--- a/arch/x86/kernel/ldt.c
++++ b/arch/x86/kernel/ldt.c
+@@ -93,7 +93,7 @@ static void free_ldt_struct(struct ldt_struct *ldt)
  
- extern void vfree(const void *addr);
-+extern void vfree_atomic(const void *addr);
- 
- extern void *vmap(struct page **pages, unsigned int count,
- 			unsigned long flags, pgprot_t prot);
-diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index 719ced3..b0edc67 100644
---- a/mm/vmalloc.c
-+++ b/mm/vmalloc.c
-@@ -1471,7 +1471,33 @@ static void __vunmap(const void *addr, int deallocate_pages)
- 	kfree(area);
- 	return;
- }
-- 
-+
-+static inline void __vfree_deferred(const void *addr)
-+{
-+	struct vfree_deferred *p = this_cpu_ptr(&vfree_deferred);
-+
-+	if (llist_add((struct llist_node *)addr, &p->list))
-+		schedule_work(&p->wq);
-+}
-+
-+/**
-+ *	vfree_atomic  -  release memory allocated by vmalloc()
-+ *	@addr:		memory base address
-+ *
-+ *	This one is just like vfree() but can be called in any atomic context
-+ *	except NMIs.
-+ */
-+void vfree_atomic(const void *addr)
-+{
-+	BUG_ON(in_nmi());
-+
-+	kmemleak_free(addr);
-+
-+	if (!addr)
-+		return;
-+	__vfree_deferred(addr);
-+}
-+
- /**
-  *	vfree  -  release memory allocated by vmalloc()
-  *	@addr:		memory base address
-@@ -1494,11 +1520,9 @@ void vfree(const void *addr)
- 
- 	if (!addr)
- 		return;
--	if (unlikely(in_interrupt())) {
--		struct vfree_deferred *p = this_cpu_ptr(&vfree_deferred);
--		if (llist_add((struct llist_node *)addr, &p->list))
--			schedule_work(&p->wq);
--	} else
-+	if (unlikely(in_interrupt()))
-+		__vfree_deferred(addr);
-+	else
- 		__vunmap(addr, 1);
- }
- EXPORT_SYMBOL(vfree);
+ 	paravirt_free_ldt(ldt->entries, ldt->size);
+ 	if (ldt->size * LDT_ENTRY_SIZE > PAGE_SIZE)
+-		vfree(ldt->entries);
++		vfree_atomic(ldt->entries);
+ 	else
+ 		free_page((unsigned long)ldt->entries);
+ 	kfree(ldt);
 -- 
 2.7.3
 
