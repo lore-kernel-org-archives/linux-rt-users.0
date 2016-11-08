@@ -1,102 +1,40 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.83-rt121
-Date: Tue, 8 Nov 2016 18:01:48 -0500
-Message-ID: <20161108180148.096f2b03@gandalf.local.home>
-Mime-Version: 1.0
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: [PATCH] sched/rt: RT_RUNTIME_GREED sched feature
+Date: Tue, 8 Nov 2016 17:42:38 -0600 (CST)
+Message-ID: <alpine.DEB.2.20.1611081742180.22679@east.gentwo.org>
+References: <fa5b1b55d8934c6a0e02e04a7ad6afdf4012c2e0.1478506194.git.bristot@redhat.com> <alpine.DEB.2.20.1611071054320.17809@east.gentwo.org> <20161107133207.4282de69@gandalf.local.home> <alpine.DEB.2.20.1611071328470.19249@east.gentwo.org>
+ <20161107144738.4811a5dd@gandalf.local.home> <alpine.DEB.2.20.1611071353440.19543@east.gentwo.org> <20161107150003.66777b43@gandalf.local.home> <1e79f711-95f1-da2f-f572-1ac4329c8be7@bristot.me> <20161107151617.486b1b42@gandalf.local.home>
 Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: Daniel Bristot de Oliveira <daniel@bristot.me>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Ingo Molnar <mingo@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from resqmta-ch2-11v.sys.comcast.net ([69.252.207.43]:48546 "EHLO
+        resqmta-ch2-11v.sys.comcast.net" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1750905AbcKHXmm (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 8 Nov 2016 18:42:42 -0500
+In-Reply-To: <20161107151617.486b1b42@gandalf.local.home>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+On Mon, 7 Nov 2016, Steven Rostedt wrote:
 
-Dear RT Folks,
+> On Mon, 7 Nov 2016 21:06:50 +0100
+> Daniel Bristot de Oliveira <daniel@bristot.me> wrote:
+>
+> > The throttling allowed the kworker to run, but once the kworker went to
+> > sleep, the RT tasks started to work again. In the previous behavior,
+> > the system would either go idle, or the kworker would starve because
+> > the runtime become infinity for RR tasks.
+>
+> I'm confused? Are you saying that RR tasks don't get throttled in the
+> current code? That sounds like a bug to me.
 
-I'm pleased to announce the 3.2.83-rt121 stable release.
+Good. Thats what I wanted to hear after all these justifications that the
+system is just behaving as designed.
 
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.2-rt
-  Head SHA1: 761b76bd5e59d1320f0e66d8d86b583c9a5854a0
-
-
-Or to build 3.2.83-rt121 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.83.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.83-rt121.patch.xz
-
-
-
-You can also build from 3.2.83-rt120 by applying the incremental patch:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.83-rt120-rt121.patch.xz
-
-
-
-Enjoy,
-
--- Steve
-
-
-Changes from v3.2.83-rt120:
-
----
-
-Ben Hutchings (2):
-      genirq: Fix pointer cast warning for randomness on 32-bit architectures
-      work-simple: Add missing #include <linux/export.h>
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.2.83-rt121
-
-----
- kernel/irq/manage.c  | 3 ++-
- kernel/work-simple.c | 1 +
- localversion-rt      | 2 +-
- 3 files changed, 4 insertions(+), 2 deletions(-)
----------------------------
-diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
-index c4677795d7c8..b1683ba80c88 100644
---- a/kernel/irq/manage.c
-+++ b/kernel/irq/manage.c
-@@ -897,7 +897,8 @@ static int irq_thread(void *data)
- #ifdef CONFIG_PREEMPT_RT_FULL
- 			migrate_disable();
- 			add_interrupt_randomness(action->irq, 0,
--						 desc->random_ip ^ (u64) action);
-+						 desc->random_ip ^
-+						 (unsigned long) action);
- 			migrate_enable();
- #endif
- 		}
-diff --git a/kernel/work-simple.c b/kernel/work-simple.c
-index c996f755dba6..e57a0522573f 100644
---- a/kernel/work-simple.c
-+++ b/kernel/work-simple.c
-@@ -10,6 +10,7 @@
- #include <linux/kthread.h>
- #include <linux/slab.h>
- #include <linux/spinlock.h>
-+#include <linux/export.h>
- 
- #define SWORK_EVENT_PENDING     (1 << 0)
- 
-diff --git a/localversion-rt b/localversion-rt
-index fff72aad59ab..8188d85cffe0 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt120
-+-rt121
