@@ -1,40 +1,72 @@
-From: Christoph Lameter <cl@linux.com>
+From: Daniel Bristot de Oliveira <bristot@redhat.com>
 Subject: Re: [PATCH] sched/rt: RT_RUNTIME_GREED sched feature
-Date: Tue, 8 Nov 2016 17:42:38 -0600 (CST)
-Message-ID: <alpine.DEB.2.20.1611081742180.22679@east.gentwo.org>
-References: <fa5b1b55d8934c6a0e02e04a7ad6afdf4012c2e0.1478506194.git.bristot@redhat.com> <alpine.DEB.2.20.1611071054320.17809@east.gentwo.org> <20161107133207.4282de69@gandalf.local.home> <alpine.DEB.2.20.1611071328470.19249@east.gentwo.org>
- <20161107144738.4811a5dd@gandalf.local.home> <alpine.DEB.2.20.1611071353440.19543@east.gentwo.org> <20161107150003.66777b43@gandalf.local.home> <1e79f711-95f1-da2f-f572-1ac4329c8be7@bristot.me> <20161107151617.486b1b42@gandalf.local.home>
-Content-Type: text/plain; charset=US-ASCII
-Cc: Daniel Bristot de Oliveira <daniel@bristot.me>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
+Date: Wed, 9 Nov 2016 14:33:55 +0100
+Message-ID: <8a80c2c2-3803-5648-67b2-4dee7381d5a6@redhat.com>
+References: <fa5b1b55d8934c6a0e02e04a7ad6afdf4012c2e0.1478506194.git.bristot@redhat.com>
+ <20161108115958.GO3142@twins.programming.kicks-ass.net>
+ <20161108090740.4226ffc9@gandalf.local.home>
+ <20161108165133.GI3117@twins.programming.kicks-ass.net>
+ <20161108121710.3e7eb664@gandalf.local.home>
+ <20161108180548.GN3117@twins.programming.kicks-ass.net>
+ <f4095990-3fa0-ac2f-7277-3b8f0cdbc333@redhat.com>
+ <20161108195015.GP3117@twins.programming.kicks-ass.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>,
         Ingo Molnar <mingo@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
+        Christoph Lameter <cl@linux.com>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from resqmta-ch2-11v.sys.comcast.net ([69.252.207.43]:48546 "EHLO
-        resqmta-ch2-11v.sys.comcast.net" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1750905AbcKHXmm (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 8 Nov 2016 18:42:42 -0500
-In-Reply-To: <20161107151617.486b1b42@gandalf.local.home>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+        LKML <linux-kernel@vger.kernel.org>,
+        Tommaso Cucinotta <tommaso.cucinotta@sssup.it>
+To: Peter Zijlstra <peterz@infradead.org>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20161108195015.GP3117@twins.programming.kicks-ass.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 7 Nov 2016, Steven Rostedt wrote:
 
-> On Mon, 7 Nov 2016 21:06:50 +0100
-> Daniel Bristot de Oliveira <daniel@bristot.me> wrote:
->
-> > The throttling allowed the kworker to run, but once the kworker went to
-> > sleep, the RT tasks started to work again. In the previous behavior,
-> > the system would either go idle, or the kworker would starve because
-> > the runtime become infinity for RR tasks.
->
-> I'm confused? Are you saying that RR tasks don't get throttled in the
-> current code? That sounds like a bug to me.
 
-Good. Thats what I wanted to hear after all these justifications that the
-system is just behaving as designed.
+On 11/08/2016 08:50 PM, Peter Zijlstra wrote:
+>> The problem is that using RT_RUNTIME_SHARE a CPU will almost always
+>> > borrow enough runtime to make a CPU intensive rt task to run forever...
+>> > well not forever, but until the system crash because a kworker starved
+>> > in this CPU. Kworkers are sched fair by design and users do not always
+>> > have a way to avoid them in an isolated CPU, for example.
+>> > 
+>> > The user then can disable RT_RUNTIME_SHARE, but then the user will have
+>> > the CPU going idle for (period - runtime) at each period... throwing CPU
+>> > time in the trash.
+> So why is this a problem? You really should not be running that much
+> FIFO tasks to begin with.
 
+I agree that a spinning real-time task is not a good practice, but there
+are people using it and they have their own reasons/metrics/evaluations
+motivating them.
+
+> So I'm willing to take out (or at least default disable
+> RT_RUNTIME_SHARE). But other than this, this never really worked to
+> begin with. So it cannot be a regression. And we've lived this long with
+> the 'problem'.
+
+I agree! It would work perfectly in the absence of tasks pinned to a
+processor, but that is not the case.
+
+Trying to attend the users that want as much CPU time for -rt tasks as
+possible, the proposed patch seems to be a better solution when compared
+to RT_RUNTIME_SHARE, and it is way simpler! Even though it is not as
+perfect as a DL Server would be in the future, it seems to be useful
+until there...
+
+> We really should be doing the right thing here, not make a bigger mess.
+
+I see, agree and I am anxious to have it! :-). Tommaso and I discussed
+about DL servers implementing such rt throttling. The more complicated
+point so far (as Rostedt pointed on another e-mail) will be to have DL
+servers with arbitrary affinity, or serving task with arbitrary
+affinity. For example, one DL server pinned to each CPU providing
+bandwidth for fair tasks to run for (rt_period - rt_runtime)us at each
+rt_period... it will take sometime until someone propose it.
+
+-- Daniel
