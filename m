@@ -1,49 +1,50 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 4.4.30-rt41
-Date: Wed, 9 Nov 2016 10:46:28 -0500
-Message-ID: <20161109104628.4b820ca3@gandalf.local.home>
+From: Piotr Gregor <piotrgregor@rsyncme.org>
+Subject: Ubuntu 16.04 with Intel i7-6700
+Date: Thu, 10 Nov 2016 00:39:32 +0000
+Message-ID: <CAK+oA4U8=YwZb5ewpZSDRO+FPv1EgvvbSgoumdooaunTXKsjCg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-yb0-f176.google.com ([209.85.213.176]:33834 "EHLO
+        mail-yb0-f176.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751420AbcKJAjd (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 9 Nov 2016 19:39:33 -0500
+Received: by mail-yb0-f176.google.com with SMTP id d59so46973133ybi.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 09 Nov 2016 16:39:33 -0800 (PST)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+Dear RT users,
 
-Dear RT Folks,
+I am working on a simulation system. This system uses
+several simulation modules for generating of video, navigation, motion,
+digital and analog signals.
+The data must be generated deterministically to assert proper
+synchronization
+with peripherals. These external instruments are accessed via PCI HSD
+interface.
+This is outdated technology but it must be used, because this is what these
+specialized instruments use and replacing the link is not the case, this
+must be HSD. I have driver for PCIHSD but for 2.4 - 2.6 kernels, this must
+be ported.
 
-I'm pleased to announce the 4.4.30-rt41 stable release.
+It is said that simulation software would ideally run on Ubuntu and
+motherboard
+with Intel Core i7-6700 is proposed (very likely with SSD and DDR 4 RAM).
+I have patched recent version of Ubuntu - Ubuntu 16.04 LTS
+with recent rt preempt patch patch-4.4.27-rt37 and I can boot to new kernel.
+In the next step I will measure the worst case latency using cyclictest
+utility
+and I will check overall system's performance. Results will be reported.
 
+What is your experience with Ubuntu (16.04)
+and rt preempt.
+What is your experience with rt preempt and Intel Core i7-6700?
+Is there any definite "no" for Ubuntu as a real-time operating system?
+Would it be better to start from Debian?
+I would appreciate if you could share related information.
 
-This release is just an update to the new stable 4.4.30 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.4-rt
-  Head SHA1: 4db7ec2e7bd93dfb285e12537e61af3dc693e866
-
-
-Or to build 4.4.30-rt41 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.30.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.30-rt41.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
+cheers,
+Piotr
