@@ -1,50 +1,41 @@
-From: Piotr Gregor <piotrgregor@rsyncme.org>
-Subject: Ubuntu 16.04 with Intel i7-6700
-Date: Thu, 10 Nov 2016 00:39:32 +0000
-Message-ID: <CAK+oA4U8=YwZb5ewpZSDRO+FPv1EgvvbSgoumdooaunTXKsjCg@mail.gmail.com>
+From: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
+Subject: Re: Ubuntu 16.04 with Intel i7-6700
+Date: Thu, 10 Nov 2016 10:01:58 +0100
+Message-ID: <20161110100158.0b2df05b@archlinux.localdomain>
+References: <CAK+oA4U8=YwZb5ewpZSDRO+FPv1EgvvbSgoumdooaunTXKsjCg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yb0-f176.google.com ([209.85.213.176]:33834 "EHLO
-        mail-yb0-f176.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751420AbcKJAjd (ORCPT
+Received: from mail77c50.megamailservers.eu ([91.136.10.87]:42590 "EHLO
+        mail70c50.megamailservers.eu" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1751664AbcKJJKG (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 9 Nov 2016 19:39:33 -0500
-Received: by mail-yb0-f176.google.com with SMTP id d59so46973133ybi.1
-        for <linux-rt-users@vger.kernel.org>; Wed, 09 Nov 2016 16:39:33 -0800 (PST)
+        Thu, 10 Nov 2016 04:10:06 -0500
+Received: from archlinux.localdomain (x5ce0d1bb.dyn.telefonica.de [92.224.209.187])
+        (authenticated bits=0)
+        by mail70c50.megamailservers.eu (8.14.9/8.13.1) with ESMTP id uAA91wCL001178
+        (version=TLSv1/SSLv3 cipher=AES256-GCM-SHA384 bits=256 verify=NO)
+        for <linux-rt-users@vger.kernel.org>; Thu, 10 Nov 2016 09:02:00 +0000
+In-Reply-To: <CAK+oA4U8=YwZb5ewpZSDRO+FPv1EgvvbSgoumdooaunTXKsjCg@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear RT users,
+Hi,
 
-I am working on a simulation system. This system uses
-several simulation modules for generating of video, navigation, motion,
-digital and analog signals.
-The data must be generated deterministically to assert proper
-synchronization
-with peripherals. These external instruments are accessed via PCI HSD
-interface.
-This is outdated technology but it must be used, because this is what these
-specialized instruments use and replacing the link is not the case, this
-must be HSD. I have driver for PCIHSD but for 2.4 - 2.6 kernels, this must
-be ported.
+by default Ubuntu starts everything that is contained in a packages,
+that could be auto-started, let alone that an Ubuntu desktop flavours
+install tons of services you unlikely need at all.
 
-It is said that simulation software would ideally run on Ubuntu and
-motherboard
-with Intel Core i7-6700 is proposed (very likely with SSD and DDR 4 RAM).
-I have patched recent version of Ubuntu - Ubuntu 16.04 LTS
-with recent rt preempt patch patch-4.4.27-rt37 and I can boot to new kernel.
-In the next step I will measure the worst case latency using cyclictest
-utility
-and I will check overall system's performance. Results will be reported.
+Consider to install Ubuntu from e.g. the server image, after
+unchecking all recommended packages. Then install just what you need
+and after installing a package, disable all unwanted auto-start stuff,
+or use a distro, e.g. Arch Linux, that follows another approach and
+btw. provides rt patched kernels.
 
-What is your experience with Ubuntu (16.04)
-and rt preempt.
-What is your experience with rt preempt and Intel Core i7-6700?
-Is there any definite "no" for Ubuntu as a real-time operating system?
-Would it be better to start from Debian?
-I would appreciate if you could share related information.
+Regarding Intel I don't have experiences, but I often read that
+hyperthreading seems to cause issues.
 
-cheers,
-Piotr
+Regards,
+Ralf
