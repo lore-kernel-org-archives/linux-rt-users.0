@@ -1,40 +1,64 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: your mail
-Date: Wed, 16 Nov 2016 15:28:21 +0100
-Message-ID: <20161116142821.GZ3117@twins.programming.kicks-ass.net>
-References: <alpine.DEB.2.20.1611151428190.28591@east.gentwo.org>
- <20161116104014.GQ3142@twins.programming.kicks-ass.net>
- <20161116092543.663e1d2c@gandalf.local.home>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: Calculate average latencies on the fly
+Date: Wed, 16 Nov 2016 15:47:47 +0100 (CET)
+Message-ID: <alpine.LFD.2.20.1611161525280.12617@riemann.fritz.box>
+References: <CAK+oA4V8yFDnieAa4tsCQKTapNe6gA_VLJvvEh6_u_jgWpyahQ@mail.gmail.com> <CAK+oA4WFAaT4DmR=8nKqTsyKe9imDYCu5p6DG4kqbhoBPD=LXw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Christoph Lameter <cl@linux.com>, Daniel Vacek <neelx.g@gmail.com>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Tommaso Cucinotta <tommaso.cucinotta@sssup.it>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Ingo Molnar <mingo@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20161116092543.663e1d2c@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: multipart/mixed; BOUNDARY="-1463806542-875870259-1479307668=:12617"
+Cc: Clark Williams <williams@redhat.com>,
+        linux-rt-users@vger.kernel.org
+To: Piotr Gregor <piotrgregor@rsyncme.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-qk0-f179.google.com ([209.85.220.179]:34490 "EHLO
+        mail-qk0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752206AbcKPOru (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 16 Nov 2016 09:47:50 -0500
+Received: by mail-qk0-f179.google.com with SMTP id q130so177869322qke.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 16 Nov 2016 06:47:49 -0800 (PST)
+In-Reply-To: <CAK+oA4WFAaT4DmR=8nKqTsyKe9imDYCu5p6DG4kqbhoBPD=LXw@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Nov 16, 2016 at 09:25:43AM -0500, Steven Rostedt wrote:
-> On Wed, 16 Nov 2016 11:40:14 +0100
-> Peter Zijlstra <peterz@infradead.org> wrote:
-> 
-> 
-> > On top of which, the implementation had issues; now I know you're the
-> > blinder kind of person that disregards everything not in his immediate
-> > interest, but if you'd looked at the patch you'd have seen he'd added
-> > code the idle entry path, which will slow down every single to-idle
-> > transition.
-> 
-> Isn't to-idle a bit bloated anyway? Or has that been fixed. I know
-> there was some issues with idle_balance() which can add latency to
-> wakeups. idle_balance() is also in the to-idle path.
-> 
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-Yes it is too heavy as is, but just stacking more crap in just because
-its already expensive seems to wrong way around.
+---1463806542-875870259-1479307668=:12617
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+
+
+Please inline the patches
+
+There are 1000000 microseconds / second, the default interval is 1000us, 
+but let's say we did it more frequently at 100us
+
+1000000 us /  100 intervals = 10000 samples / second * 60 sec/min * 60 
+min/hr * 24 hrs/day * 365 days / year * 1000 (very pessimistic diff) =
+an accumulated diff of 3.1536×10^14
+
+With a max double of 9x10^15/3.15*10^14 we could run for 30 years before 
+we move into normal numbers.
+
+So, the problem with your patch, is not just the problem which it proposes 
+to fix, is one I see as mostly theoretical, but there is the potential for 
+accumulating small inaccuracies.
+
+Of course, there is always the chance that I made some kind of error in my 
+analysis here, please feel free to point it out!
+
+What might be more interesting is how long would it take for the cycles to 
+overflow?
+
+Thanks
+
+John
+
+On Mon, 14 Nov 2016, Piotr Gregor wrote:
+
+> There was an error in previous patch. Please find attached corrected patch.
+> 
+> cheers,
+> Piotr
+> 
+---1463806542-875870259-1479307668=:12617--
