@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 02/10] mm: remove free_unmap_vmap_area_addr
-Date: Fri, 18 Nov 2016 14:03:48 +0100
-Message-ID: <1479474236-4139-3-git-send-email-hch@lst.de>
+Subject: [PATCH 06/10] x86/ldt: use vfree_atomic() to free ldt entries
+Date: Fri, 18 Nov 2016 14:03:52 +0100
+Message-ID: <1479474236-4139-7-git-send-email-hch@lst.de>
 References: <1479474236-4139-1-git-send-email-hch@lst.de>
 Cc: aryabinin@virtuozzo.com,
 	joelaf@google.com,
@@ -18,61 +18,39 @@ In-Reply-To: <1479474236-4139-1-git-send-email-hch@lst.de>
 Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Just inline it into the only caller.
+From: Andrey Ryabinin <aryabinin@virtuozzo.com>
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-Tested-by: Jisheng Zhang <jszhang@marvell.com>
+vfree() is going to use sleeping lock. free_ldt_struct()
+may be called with disabled preemption, therefore we must
+use vfree_atomic() here.
+
+E.g. call trace:
+	vfree()
+	free_ldt_struct()
+	destroy_context_ldt()
+	__mmdrop()
+	finish_task_switch()
+	schedule_tail()
+	ret_from_fork()
+
+Signed-off-by: Andrey Ryabinin <aryabinin@virtuozzo.com>
 ---
- mm/vmalloc.c | 21 ++++++++-------------
- 1 file changed, 8 insertions(+), 13 deletions(-)
+ arch/x86/kernel/ldt.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index 45de736..cf1a5ab 100644
---- a/mm/vmalloc.c
-+++ b/mm/vmalloc.c
-@@ -731,16 +731,6 @@ static struct vmap_area *find_vmap_area(unsigned long addr)
- 	return va;
- }
+diff --git a/arch/x86/kernel/ldt.c b/arch/x86/kernel/ldt.c
+index 6707039..4d12cdf 100644
+--- a/arch/x86/kernel/ldt.c
++++ b/arch/x86/kernel/ldt.c
+@@ -93,7 +93,7 @@ static void free_ldt_struct(struct ldt_struct *ldt)
  
--static void free_unmap_vmap_area_addr(unsigned long addr)
--{
--	struct vmap_area *va;
--
--	va = find_vmap_area(addr);
--	BUG_ON(!va);
--	free_unmap_vmap_area(va);
--}
--
--
- /*** Per cpu kva allocator ***/
- 
- /*
-@@ -1098,6 +1088,7 @@ void vm_unmap_ram(const void *mem, unsigned int count)
- {
- 	unsigned long size = (unsigned long)count << PAGE_SHIFT;
- 	unsigned long addr = (unsigned long)mem;
-+	struct vmap_area *va;
- 
- 	BUG_ON(!addr);
- 	BUG_ON(addr < VMALLOC_START);
-@@ -1107,10 +1098,14 @@ void vm_unmap_ram(const void *mem, unsigned int count)
- 	debug_check_no_locks_freed(mem, size);
- 	vmap_debug_free_range(addr, addr+size);
- 
--	if (likely(count <= VMAP_MAX_ALLOC))
-+	if (likely(count <= VMAP_MAX_ALLOC)) {
- 		vb_free(mem, size);
--	else
--		free_unmap_vmap_area_addr(addr);
-+		return;
-+	}
-+
-+	va = find_vmap_area(addr);
-+	BUG_ON(!va);
-+	free_unmap_vmap_area(va);
- }
- EXPORT_SYMBOL(vm_unmap_ram);
- 
+ 	paravirt_free_ldt(ldt->entries, ldt->size);
+ 	if (ldt->size * LDT_ENTRY_SIZE > PAGE_SIZE)
+-		vfree(ldt->entries);
++		vfree_atomic(ldt->entries);
+ 	else
+ 		free_page((unsigned long)ldt->entries);
+ 	kfree(ldt);
 -- 
 2.1.4
 
