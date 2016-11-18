@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 08/10] mm: mark all calls into the vmalloc subsystem as potentially sleeping
-Date: Fri, 18 Nov 2016 14:03:54 +0100
-Message-ID: <1479474236-4139-9-git-send-email-hch@lst.de>
+Subject: [PATCH 10/10] mm: add preempt points into __purge_vmap_area_lazy
+Date: Fri, 18 Nov 2016 14:03:56 +0100
+Message-ID: <1479474236-4139-11-git-send-email-hch@lst.de>
 References: <1479474236-4139-1-git-send-email-hch@lst.de>
 Cc: aryabinin@virtuozzo.com,
 	joelaf@google.com,
@@ -18,54 +18,60 @@ In-Reply-To: <1479474236-4139-1-git-send-email-hch@lst.de>
 Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-We will take a sleeping lock in later in this series, so this adds the
-proper safeguards.
+From: Joel Fernandes <joelaf@google.com>
 
+Use cond_resched_lock to avoid holding the vmap_area_lock for a
+potentially long time and thus creating bad latencies for various
+workloads.
+
+Signed-off-by: Joel Fernandes <joelaf@google.com>
+[hch: split from a larger patch by Joel, wrote the crappy changelog]
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 Tested-by: Jisheng Zhang <jszhang@marvell.com>
 ---
- mm/vmalloc.c | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
+ mm/vmalloc.c | 14 +++++++++-----
+ 1 file changed, 9 insertions(+), 5 deletions(-)
 
 diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index e2030b4..25283af 100644
+index dccf242..976db21 100644
 --- a/mm/vmalloc.c
 +++ b/mm/vmalloc.c
-@@ -365,7 +365,7 @@ static struct vmap_area *alloc_vmap_area(unsigned long size,
- 	BUG_ON(offset_in_page(size));
- 	BUG_ON(!is_power_of_2(align));
- 
--	might_sleep_if(gfpflags_allow_blocking(gfp_mask));
-+	might_sleep();
- 
- 	va = kmalloc_node(sizeof(struct vmap_area),
- 			gfp_mask & GFP_RECLAIM_MASK, node);
-@@ -1037,6 +1037,8 @@ void vm_unmap_aliases(void)
- 	if (unlikely(!vmap_initialized))
- 		return;
- 
-+	might_sleep();
-+
- 	for_each_possible_cpu(cpu) {
- 		struct vmap_block_queue *vbq = &per_cpu(vmap_block_queue, cpu);
- 		struct vmap_block *vb;
-@@ -1080,6 +1082,7 @@ void vm_unmap_ram(const void *mem, unsigned int count)
- 	unsigned long addr = (unsigned long)mem;
+@@ -628,7 +628,7 @@ static bool __purge_vmap_area_lazy(unsigned long start, unsigned long end)
+ 	struct llist_node *valist;
  	struct vmap_area *va;
+ 	struct vmap_area *n_va;
+-	int nr = 0;
++	bool do_free = false;
  
-+	might_sleep();
- 	BUG_ON(!addr);
- 	BUG_ON(addr < VMALLOC_START);
- 	BUG_ON(addr > VMALLOC_END);
-@@ -1431,6 +1434,8 @@ struct vm_struct *remove_vm_area(const void *addr)
- {
- 	struct vmap_area *va;
+ 	lockdep_assert_held(&vmap_purge_lock);
  
-+	might_sleep();
+@@ -638,18 +638,22 @@ static bool __purge_vmap_area_lazy(unsigned long start, unsigned long end)
+ 			start = va->va_start;
+ 		if (va->va_end > end)
+ 			end = va->va_end;
+-		nr += (va->va_end - va->va_start) >> PAGE_SHIFT;
++		do_free = true;
+ 	}
+ 
+-	if (!nr)
++	if (!do_free)
+ 		return false;
+ 
+-	atomic_sub(nr, &vmap_lazy_nr);
+ 	flush_tlb_kernel_range(start, end);
+ 
+ 	spin_lock(&vmap_area_lock);
+-	llist_for_each_entry_safe(va, n_va, valist, purge_list)
++	llist_for_each_entry_safe(va, n_va, valist, purge_list) {
++		int nr = (va->va_end - va->va_start) >> PAGE_SHIFT;
 +
- 	va = find_vmap_area((unsigned long)addr);
- 	if (va && va->flags & VM_VM_AREA) {
- 		struct vm_struct *vm = va->vm;
+ 		__free_vmap_area(va);
++		atomic_sub(nr, &vmap_lazy_nr);
++		cond_resched_lock(&vmap_area_lock);
++	}
+ 	spin_unlock(&vmap_area_lock);
+ 	return true;
+ }
 -- 
 2.1.4
 
