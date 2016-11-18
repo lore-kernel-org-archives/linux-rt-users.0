@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 05/10] kernel/fork: use vfree_atomic() to free thread stack
-Date: Fri, 18 Nov 2016 14:03:51 +0100
-Message-ID: <1479474236-4139-6-git-send-email-hch@lst.de>
+Subject: [PATCH 04/10] mm: add vfree_atomic()
+Date: Fri, 18 Nov 2016 14:03:50 +0100
+Message-ID: <1479474236-4139-5-git-send-email-hch@lst.de>
 References: <1479474236-4139-1-git-send-email-hch@lst.de>
 Cc: aryabinin@virtuozzo.com,
 	joelaf@google.com,
@@ -20,27 +20,83 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Andrey Ryabinin <aryabinin@virtuozzo.com>
 
-vfree() is going to use sleeping lock. Thread stack freed in atomic
-context, therefore we must use vfree_atomic() here.
+We are going to use sleeping lock for freeing vmap. However some
+vfree() users want to free memory from atomic (but not from interrupt)
+context. For this we add vfree_atomic() - deferred variation of vfree()
+which can be used in any atomic context (except NMIs).
 
 Signed-off-by: Andrey Ryabinin <aryabinin@virtuozzo.com>
 ---
- kernel/fork.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ include/linux/vmalloc.h |  1 +
+ mm/vmalloc.c            | 36 ++++++++++++++++++++++++++++++------
+ 2 files changed, 31 insertions(+), 6 deletions(-)
 
-diff --git a/kernel/fork.c b/kernel/fork.c
-index 997ac1d..cfee5ec 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -229,7 +229,7 @@ static inline void free_thread_stack(struct task_struct *tsk)
- 		}
- 		local_irq_restore(flags);
+diff --git a/include/linux/vmalloc.h b/include/linux/vmalloc.h
+index 3d9d786..d68edff 100644
+--- a/include/linux/vmalloc.h
++++ b/include/linux/vmalloc.h
+@@ -82,6 +82,7 @@ extern void *__vmalloc_node_range(unsigned long size, unsigned long align,
+ 			const void *caller);
  
--		vfree(tsk->stack);
-+		vfree_atomic(tsk->stack);
+ extern void vfree(const void *addr);
++extern void vfree_atomic(const void *addr);
+ 
+ extern void *vmap(struct page **pages, unsigned int count,
+ 			unsigned long flags, pgprot_t prot);
+diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+index a4e2cec..80f3fae 100644
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -1486,7 +1486,33 @@ static void __vunmap(const void *addr, int deallocate_pages)
+ 	kfree(area);
+ 	return;
+ }
+- 
++
++static inline void __vfree_deferred(const void *addr)
++{
++	struct vfree_deferred *p = this_cpu_ptr(&vfree_deferred);
++
++	if (llist_add((struct llist_node *)addr, &p->list))
++		schedule_work(&p->wq);
++}
++
++/**
++ *	vfree_atomic  -  release memory allocated by vmalloc()
++ *	@addr:		memory base address
++ *
++ *	This one is just like vfree() but can be called in any atomic context
++ *	except NMIs.
++ */
++void vfree_atomic(const void *addr)
++{
++	BUG_ON(in_nmi());
++
++	kmemleak_free(addr);
++
++	if (!addr)
++		return;
++	__vfree_deferred(addr);
++}
++
+ /**
+  *	vfree  -  release memory allocated by vmalloc()
+  *	@addr:		memory base address
+@@ -1509,11 +1535,9 @@ void vfree(const void *addr)
+ 
+ 	if (!addr)
  		return;
- 	}
- #endif
+-	if (unlikely(in_interrupt())) {
+-		struct vfree_deferred *p = this_cpu_ptr(&vfree_deferred);
+-		if (llist_add((struct llist_node *)addr, &p->list))
+-			schedule_work(&p->wq);
+-	} else
++	if (unlikely(in_interrupt()))
++		__vfree_deferred(addr);
++	else
+ 		__vunmap(addr, 1);
+ }
+ EXPORT_SYMBOL(vfree);
 -- 
 2.1.4
 
