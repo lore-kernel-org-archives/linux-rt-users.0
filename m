@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 04/10] mm: add vfree_atomic()
-Date: Fri, 18 Nov 2016 14:03:50 +0100
-Message-ID: <1479474236-4139-5-git-send-email-hch@lst.de>
+Subject: [PATCH 02/10] mm: remove free_unmap_vmap_area_addr
+Date: Fri, 18 Nov 2016 14:03:48 +0100
+Message-ID: <1479474236-4139-3-git-send-email-hch@lst.de>
 References: <1479474236-4139-1-git-send-email-hch@lst.de>
 Cc: aryabinin@virtuozzo.com,
 	joelaf@google.com,
@@ -18,85 +18,61 @@ In-Reply-To: <1479474236-4139-1-git-send-email-hch@lst.de>
 Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Andrey Ryabinin <aryabinin@virtuozzo.com>
+Just inline it into the only caller.
 
-We are going to use sleeping lock for freeing vmap. However some
-vfree() users want to free memory from atomic (but not from interrupt)
-context. For this we add vfree_atomic() - deferred variation of vfree()
-which can be used in any atomic context (except NMIs).
-
-Signed-off-by: Andrey Ryabinin <aryabinin@virtuozzo.com>
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Tested-by: Jisheng Zhang <jszhang@marvell.com>
 ---
- include/linux/vmalloc.h |  1 +
- mm/vmalloc.c            | 36 ++++++++++++++++++++++++++++++------
- 2 files changed, 31 insertions(+), 6 deletions(-)
+ mm/vmalloc.c | 21 ++++++++-------------
+ 1 file changed, 8 insertions(+), 13 deletions(-)
 
-diff --git a/include/linux/vmalloc.h b/include/linux/vmalloc.h
-index 3d9d786..d68edff 100644
---- a/include/linux/vmalloc.h
-+++ b/include/linux/vmalloc.h
-@@ -82,6 +82,7 @@ extern void *__vmalloc_node_range(unsigned long size, unsigned long align,
- 			const void *caller);
- 
- extern void vfree(const void *addr);
-+extern void vfree_atomic(const void *addr);
- 
- extern void *vmap(struct page **pages, unsigned int count,
- 			unsigned long flags, pgprot_t prot);
 diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index a4e2cec..80f3fae 100644
+index 45de736..cf1a5ab 100644
 --- a/mm/vmalloc.c
 +++ b/mm/vmalloc.c
-@@ -1486,7 +1486,33 @@ static void __vunmap(const void *addr, int deallocate_pages)
- 	kfree(area);
- 	return;
+@@ -731,16 +731,6 @@ static struct vmap_area *find_vmap_area(unsigned long addr)
+ 	return va;
  }
-- 
-+
-+static inline void __vfree_deferred(const void *addr)
-+{
-+	struct vfree_deferred *p = this_cpu_ptr(&vfree_deferred);
-+
-+	if (llist_add((struct llist_node *)addr, &p->list))
-+		schedule_work(&p->wq);
-+}
-+
-+/**
-+ *	vfree_atomic  -  release memory allocated by vmalloc()
-+ *	@addr:		memory base address
-+ *
-+ *	This one is just like vfree() but can be called in any atomic context
-+ *	except NMIs.
-+ */
-+void vfree_atomic(const void *addr)
-+{
-+	BUG_ON(in_nmi());
-+
-+	kmemleak_free(addr);
-+
-+	if (!addr)
-+		return;
-+	__vfree_deferred(addr);
-+}
-+
- /**
-  *	vfree  -  release memory allocated by vmalloc()
-  *	@addr:		memory base address
-@@ -1509,11 +1535,9 @@ void vfree(const void *addr)
  
- 	if (!addr)
- 		return;
--	if (unlikely(in_interrupt())) {
--		struct vfree_deferred *p = this_cpu_ptr(&vfree_deferred);
--		if (llist_add((struct llist_node *)addr, &p->list))
--			schedule_work(&p->wq);
--	} else
-+	if (unlikely(in_interrupt()))
-+		__vfree_deferred(addr);
-+	else
- 		__vunmap(addr, 1);
+-static void free_unmap_vmap_area_addr(unsigned long addr)
+-{
+-	struct vmap_area *va;
+-
+-	va = find_vmap_area(addr);
+-	BUG_ON(!va);
+-	free_unmap_vmap_area(va);
+-}
+-
+-
+ /*** Per cpu kva allocator ***/
+ 
+ /*
+@@ -1098,6 +1088,7 @@ void vm_unmap_ram(const void *mem, unsigned int count)
+ {
+ 	unsigned long size = (unsigned long)count << PAGE_SHIFT;
+ 	unsigned long addr = (unsigned long)mem;
++	struct vmap_area *va;
+ 
+ 	BUG_ON(!addr);
+ 	BUG_ON(addr < VMALLOC_START);
+@@ -1107,10 +1098,14 @@ void vm_unmap_ram(const void *mem, unsigned int count)
+ 	debug_check_no_locks_freed(mem, size);
+ 	vmap_debug_free_range(addr, addr+size);
+ 
+-	if (likely(count <= VMAP_MAX_ALLOC))
++	if (likely(count <= VMAP_MAX_ALLOC)) {
+ 		vb_free(mem, size);
+-	else
+-		free_unmap_vmap_area_addr(addr);
++		return;
++	}
++
++	va = find_vmap_area(addr);
++	BUG_ON(!va);
++	free_unmap_vmap_area(va);
  }
- EXPORT_SYMBOL(vfree);
+ EXPORT_SYMBOL(vm_unmap_ram);
+ 
 -- 
 2.1.4
 
