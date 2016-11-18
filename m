@@ -1,7 +1,8 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: reduce latency in __purge_vmap_area_lazy V2
-Date: Fri, 18 Nov 2016 14:03:46 +0100
-Message-ID: <1479474236-4139-1-git-send-email-hch@lst.de>
+Subject: [PATCH 01/10] mm: remove free_unmap_vmap_area_noflush
+Date: Fri, 18 Nov 2016 14:03:47 +0100
+Message-ID: <1479474236-4139-2-git-send-email-hch@lst.de>
+References: <1479474236-4139-1-git-send-email-hch@lst.de>
 Cc: aryabinin@virtuozzo.com,
 	joelaf@google.com,
 	jszhang@marvell.com,
@@ -13,16 +14,49 @@ Cc: aryabinin@virtuozzo.com,
 	linux-kernel@vger.kernel.org
 To: akpm@linux-foundation.org
 Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1479474236-4139-1-git-send-email-hch@lst.de>
 Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi all,
+Just inline it into the only caller.
 
-this is my spin at sorting out the long lock hold times in
-__purge_vmap_area_lazy.  It is based on a patch from Joel.
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Tested-by: Jisheng Zhang <jszhang@marvell.com>
+---
+ mm/vmalloc.c | 13 ++-----------
+ 1 file changed, 2 insertions(+), 11 deletions(-)
 
-Changes since V1:
- - add vfree_atomic, thanks to Andrey Ryabinin.
+diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+index f2481cb..45de736 100644
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -711,22 +711,13 @@ static void free_vmap_area_noflush(struct vmap_area *va)
+ }
+ 
+ /*
+- * Free and unmap a vmap area, caller ensuring flush_cache_vunmap had been
+- * called for the correct range previously.
+- */
+-static void free_unmap_vmap_area_noflush(struct vmap_area *va)
+-{
+-	unmap_vmap_area(va);
+-	free_vmap_area_noflush(va);
+-}
+-
+-/*
+  * Free and unmap a vmap area
+  */
+ static void free_unmap_vmap_area(struct vmap_area *va)
+ {
+ 	flush_cache_vunmap(va->va_start, va->va_end);
+-	free_unmap_vmap_area_noflush(va);
++	unmap_vmap_area(va);
++	free_vmap_area_noflush(va);
+ }
+ 
+ static struct vmap_area *find_vmap_area(unsigned long addr)
+-- 
+2.1.4
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
