@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 07/10] mm: warn about vfree from atomic context
-Date: Fri, 18 Nov 2016 14:03:53 +0100
-Message-ID: <1479474236-4139-8-git-send-email-hch@lst.de>
+Subject: [PATCH 09/10] mm: turn vmap_purge_lock into a mutex
+Date: Fri, 18 Nov 2016 14:03:55 +0100
+Message-ID: <1479474236-4139-10-git-send-email-hch@lst.de>
 References: <1479474236-4139-1-git-send-email-hch@lst.de>
 Cc: aryabinin@virtuozzo.com,
 	joelaf@google.com,
@@ -18,28 +18,76 @@ In-Reply-To: <1479474236-4139-1-git-send-email-hch@lst.de>
 Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-We can't handle vfree itself from atomic context, but callers
-can explicitly use vfree_atomic instead, which defers the actual
-vfree to a workqueue.  Unfortunately in_atomic does not work
-on non-preemptible kernels, so we can't just do the right thing
-by default.
+The purge_lock spinlock causes high latencies with non RT kernel. This
+has been reported multiple times on lkml [1] [2] and affects
+applications like audio.
+
+This patch replaces it with a mutex to allow preemption while holding
+the lock.
+
+Thanks to Joel Fernandes for the detailed report and analysis as well
+as an earlier attempt at fixing this issue.
+
+[1] http://lists.openwall.net/linux-kernel/2016/03/23/29
+[2] https://lkml.org/lkml/2016/10/9/59
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Tested-by: Jisheng Zhang <jszhang@marvell.com>
 ---
- mm/vmalloc.c | 1 +
- 1 file changed, 1 insertion(+)
+ mm/vmalloc.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 
 diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index 80f3fae..e2030b4 100644
+index 25283af..dccf242 100644
 --- a/mm/vmalloc.c
 +++ b/mm/vmalloc.c
-@@ -1530,6 +1530,7 @@ void vfree_atomic(const void *addr)
- void vfree(const void *addr)
- {
- 	BUG_ON(in_nmi());
-+	WARN_ON_ONCE(in_atomic());
+@@ -606,7 +606,7 @@ static atomic_t vmap_lazy_nr = ATOMIC_INIT(0);
+  * by this look, but we want to avoid concurrent calls for performance
+  * reasons and to make the pcpu_get_vm_areas more deterministic.
+  */
+-static DEFINE_SPINLOCK(vmap_purge_lock);
++static DEFINE_MUTEX(vmap_purge_lock);
  
- 	kmemleak_free(addr);
+ /* for per-CPU blocks */
+ static void purge_fragmented_blocks_allcpus(void);
+@@ -660,9 +660,9 @@ static bool __purge_vmap_area_lazy(unsigned long start, unsigned long end)
+  */
+ static void try_purge_vmap_area_lazy(void)
+ {
+-	if (spin_trylock(&vmap_purge_lock)) {
++	if (mutex_trylock(&vmap_purge_lock)) {
+ 		__purge_vmap_area_lazy(ULONG_MAX, 0);
+-		spin_unlock(&vmap_purge_lock);
++		mutex_unlock(&vmap_purge_lock);
+ 	}
+ }
+ 
+@@ -671,10 +671,10 @@ static void try_purge_vmap_area_lazy(void)
+  */
+ static void purge_vmap_area_lazy(void)
+ {
+-	spin_lock(&vmap_purge_lock);
++	mutex_lock(&vmap_purge_lock);
+ 	purge_fragmented_blocks_allcpus();
+ 	__purge_vmap_area_lazy(ULONG_MAX, 0);
+-	spin_unlock(&vmap_purge_lock);
++	mutex_unlock(&vmap_purge_lock);
+ }
+ 
+ /*
+@@ -1063,11 +1063,11 @@ void vm_unmap_aliases(void)
+ 		rcu_read_unlock();
+ 	}
+ 
+-	spin_lock(&vmap_purge_lock);
++	mutex_lock(&vmap_purge_lock);
+ 	purge_fragmented_blocks_allcpus();
+ 	if (!__purge_vmap_area_lazy(start, end) && flush)
+ 		flush_tlb_kernel_range(start, end);
+-	spin_unlock(&vmap_purge_lock);
++	mutex_unlock(&vmap_purge_lock);
+ }
+ EXPORT_SYMBOL_GPL(vm_unmap_aliases);
  
 -- 
 2.1.4
