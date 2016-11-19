@@ -1,114 +1,37 @@
 From: Piotr Gregor <piotrgregor@rsyncme.org>
-Subject: Re: latency induced by hrtimer stacking
-Date: Sat, 19 Nov 2016 15:43:41 +0000
-Message-ID: <CAK+oA4Wi9n_ZHk2FzetxHK+Dam2BmqQaT6he3E0ew=D6428gEw@mail.gmail.com>
-References: <87d1htem52.fsf@kerf.amer.corp.natinst.com>
+Subject: Re: Calculate average latencies on the fly
+Date: Sat, 19 Nov 2016 23:27:24 +0000
+Message-ID: <CAK+oA4UTKEazEFZ9+H6xWT7yNw50LNLe+e_DpfwKFvnwaYe1xQ@mail.gmail.com>
+References: <CAK+oA4V8yFDnieAa4tsCQKTapNe6gA_VLJvvEh6_u_jgWpyahQ@mail.gmail.com>
+ <CAK+oA4WFAaT4DmR=8nKqTsyKe9imDYCu5p6DG4kqbhoBPD=LXw@mail.gmail.com> <alpine.LFD.2.20.1611161525280.12617@riemann.fritz.box>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Cc: Linux RT Users <linux-rt-users@vger.kernel.org>
-To: Gratian Crisan <gratian.crisan@ni.com>
+Cc: Clark Williams <williams@redhat.com>,
+        Linux RT Users <linux-rt-users@vger.kernel.org>
+To: John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yw0-f173.google.com ([209.85.161.173]:36534 "EHLO
-        mail-yw0-f173.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1752985AbcKSPnm (ORCPT
+Received: from mail-yw0-f175.google.com ([209.85.161.175]:34984 "EHLO
+        mail-yw0-f175.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752971AbcKSX1Z (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 19 Nov 2016 10:43:42 -0500
-Received: by mail-yw0-f173.google.com with SMTP id a10so182965681ywa.3
-        for <linux-rt-users@vger.kernel.org>; Sat, 19 Nov 2016 07:43:41 -0800 (PST)
-In-Reply-To: <87d1htem52.fsf@kerf.amer.corp.natinst.com>
+        Sat, 19 Nov 2016 18:27:25 -0500
+Received: by mail-yw0-f175.google.com with SMTP id i145so188329051ywg.2
+        for <linux-rt-users@vger.kernel.org>; Sat, 19 Nov 2016 15:27:25 -0800 (PST)
+In-Reply-To: <alpine.LFD.2.20.1611161525280.12617@riemann.fritz.box>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Gratian,
+Hi John, Clark,
 
-Just created pull request for your timer-stress repo.
-Added Makefile and changed type of g_stop from integer to sig_atomic_t
-as this variable is accessed from signal handler.
-
->From 921b6576fc27e4ca09636121bbfa668958cc5bf1 Mon Sep 17 00:00:00 2001
-From: Piotr Gregor <piotrgregor@rsyncme.org>
-Date: Sat, 19 Nov 2016 15:15:48 +0000
-Subject: [PATCH 1/2] Global int to sig_atomic_t
-MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------2.1.4"
-
-This is a multi-part message in MIME format.
---------------2.1.4
-Content-Type: text/plain; charset=UTF-8; format=fixed
-Content-Transfer-Encoding: 8bit
-
-
-As it is accessed from signal handler.
-
-Signed-off-by: Piotr Gregor <piotrgregor@rsyncme.org>
----
- timer-stress/ttest.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-
---------------2.1.4
-Content-Type: text/x-patch; name="0001-Global-int-to-sig_atomic_t.patch"
-Content-Transfer-Encoding: 8bit
-Content-Disposition: inline; filename="0001-Global-int-to-sig_atomic_t.patch"
-
-diff --git a/timer-stress/ttest.c b/timer-stress/ttest.c
-index c3df67c..bb97645 100644
---- a/timer-stress/ttest.c
-+++ b/timer-stress/ttest.c
-@@ -18,7 +18,7 @@
- #define CLOCK CLOCK_MONOTONIC
-
- static int g_nthreads = 1;
--static int g_stop = 0;
-+sig_atomic_t g_stop = 0;
-
- enum {
-        OPT_HELP = 1,
-
---------------2.1.4--
-
-
-
->From 3b5ba7fb5ed1ecb67148c6729c0724349bf9ff65 Mon Sep 17 00:00:00 2001
-From: Piotr Gregor <piotrgregor@rsyncme.org>
-Date: Sat, 19 Nov 2016 15:16:57 +0000
-Subject: [PATCH 2/2] Add Makefile
-MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------2.1.4"
-
-This is a multi-part message in MIME format.
---------------2.1.4
-Content-Type: text/plain; charset=UTF-8; format=fixed
-Content-Transfer-Encoding: 8bit
-
-
-Signed-off-by: Piotr Gregor <piotrgregor@rsyncme.org>
----
- timer-stress/Makefile | 7 +++++++
- 1 file changed, 7 insertions(+)
- create mode 100644 timer-stress/Makefile
-
-
---------------2.1.4
-Content-Type: text/x-patch; name="0002-Add-Makefile.patch"
-Content-Transfer-Encoding: 8bit
-Content-Disposition: inline; filename="0002-Add-Makefile.patch"
-
-diff --git a/timer-stress/Makefile b/timer-stress/Makefile
-new file mode 100644
-index 0000000..7fb4ed7
---- /dev/null
-+++ b/timer-stress/Makefile
-@@ -0,0 +1,7 @@
-+prog = ttest
-+all: $(prog)
-+
-+$(prog):
-+       $(CC) ttest.c -o $(prog) -lpthread
-+clean:
-+       rm -rf $(prog)
-
---------------2.1.4--
+Recently I observed jitter of > 100 000 during tests of virtualized system.
+In that case 30 years would change into 0.3 year which is not as much.
+The jitter depends on the hardware/software you test, what if someone
+deliberately wishes to measure jitter of more than this or he is just
+out of luck and gets huge values?
+Also, the limit will change if the type of average changes, but if it
+is calculated in the way I proposed, it will always work.
+Apart from this, since the benign possibility exists - why not to fix this
+if the fix is easy.
 
 cheers,
 Piotr
