@@ -1,33 +1,47 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: 4.8.6-rt5 ftrace function_graph hangs
-Date: Mon, 21 Nov 2016 09:45:59 -0500
-Message-ID: <20161121094559.68a8296a@gandalf.local.home>
-References: <d275a464-c787-6e21-0d3f-bbb3d854176e@windriver.com>
-        <20161118113524.43f6ff3c@gandalf.local.home>
-        <1785742b-8094-56af-01b9-6bac5c67865f@windriver.com>
-        <67df43c6-ac39-dea0-025d-5fce434d2743@windriver.com>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: Calculate average latencies on the fly
+Date: Mon, 21 Nov 2016 19:32:41 +0100 (CET)
+Message-ID: <alpine.LFD.2.20.1611211928160.8986@riemann>
+References: <CAK+oA4V8yFDnieAa4tsCQKTapNe6gA_VLJvvEh6_u_jgWpyahQ@mail.gmail.com> <CAK+oA4WFAaT4DmR=8nKqTsyKe9imDYCu5p6DG4kqbhoBPD=LXw@mail.gmail.com> <alpine.LFD.2.20.1611161525280.12617@riemann.fritz.box>
+ <CAK+oA4UTKEazEFZ9+H6xWT7yNw50LNLe+e_DpfwKFvnwaYe1xQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: <tglx@linutronix.de>, <linux-rt-users@vger.kernel.org>,
-        Yang Shi <yang.shi@windriver.com>
-To: He Zhe <zhe.he@windriver.com>
+Cc: Clark Williams <williams@redhat.com>,
+        Linux RT Users <linux-rt-users@vger.kernel.org>
+To: Piotr Gregor <piotrgregor@rsyncme.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0215.hostedemail.com ([216.40.44.215]:60937 "EHLO
-        smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S932333AbcKUOqF (ORCPT
+Received: from mail-wm0-f45.google.com ([74.125.82.45]:35390 "EHLO
+        mail-wm0-f45.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1754009AbcKUScw (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 21 Nov 2016 09:46:05 -0500
-In-Reply-To: <67df43c6-ac39-dea0-025d-5fce434d2743@windriver.com>
+        Mon, 21 Nov 2016 13:32:52 -0500
+Received: by mail-wm0-f45.google.com with SMTP id a197so162962307wmd.0
+        for <linux-rt-users@vger.kernel.org>; Mon, 21 Nov 2016 10:32:51 -0800 (PST)
+In-Reply-To: <CAK+oA4UTKEazEFZ9+H6xWT7yNw50LNLe+e_DpfwKFvnwaYe1xQ@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 21 Nov 2016 16:30:40 +0800
-He Zhe <zhe.he@windriver.com> wrote:
 
 
-> And I've tried on "a7fac75 Linux 4.8.1" and the latest linux-4.8.y-rt-rebase branch.They have the same issue.
+On Sat, 19 Nov 2016, Piotr Gregor wrote:
 
-Would you be able to bisect this?
+> Hi John, Clark,
+> 
+> Recently I observed jitter of > 100 000 during tests of virtualized system.
+> In that case 30 years would change into 0.3 year which is not as much.
+> The jitter depends on the hardware/software you test, what if someone
+> deliberately wishes to measure jitter of more than this or he is just
+> out of luck and gets huge values?
+> Also, the limit will change if the type of average changes, but if it
+> is calculated in the way I proposed, it will always work.
+> Apart from this, since the benign possibility exists - why not to fix this
+> if the fix is easy.
+> 
 
--- Steve
+I already explained why. Everytime you do a floating point long division 
+you are potentially accumulating small errors. Something is terribly 
+wrong if you are getting a diff of greater than 100,000, if that really 
+is true you need to fix it right away instead of run cyclictest for a 
+long period of time.
+
+John> 
