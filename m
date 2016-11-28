@@ -1,32 +1,58 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 07/10] mm: warn about vfree from atomic context
-Date: Wed, 23 Nov 2016 09:39:49 +0100
-Message-ID: <20161123083949.GD16966@lst.de>
-References: <1479474236-4139-1-git-send-email-hch@lst.de> <1479474236-4139-8-git-send-email-hch@lst.de> <996e56cb-137f-cd3e-eb69-e9ef03ad75c4@virtuozzo.com>
+From: "$rik@nth " <srikanth007m@gmail.com>
+Subject: failed to compile rt-sched
+Date: Mon, 28 Nov 2016 15:13:02 +0530
+Message-ID: <CANKSX+FhtJFu=wifY-ppnSGkhWrwxJGS5sZw04ujPHH5-r+P=g@mail.gmail.com>
+Reply-To: srikanth007m@gmail.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Christoph Hellwig <hch@lst.de>, akpm@linux-foundation.org,
-	joelaf@google.com, jszhang@marvell.com, chris@chris-wilson.co.uk,
-	joaodias@google.com, linux-mm@kvack.org,
-	linux-rt-users@vger.kernel.org, x86@kernel.org,
-	linux-kernel@vger.kernel.org
-To: Andrey Ryabinin <aryabinin@virtuozzo.com>
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <996e56cb-137f-cd3e-eb69-e9ef03ad75c4@virtuozzo.com>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-qk0-f194.google.com ([209.85.220.194]:35523 "EHLO
+        mail-qk0-f194.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S932294AbcK1JnE (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 28 Nov 2016 04:43:04 -0500
+Received: by mail-qk0-f194.google.com with SMTP id n204so12466433qke.2
+        for <linux-rt-users@vger.kernel.org>; Mon, 28 Nov 2016 01:43:03 -0800 (PST)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, Nov 22, 2016 at 07:35:34PM +0300, Andrey Ryabinin wrote:
-> This one is wrong. We still can call vfree() from interrupt context.
-> So WARN_ON_ONCE(in_atomic() && !in_interrupt()) would be correct,
-> but also redundant. DEBUG_ATOMIC_SLEEP=y should catch illegal vfree() calls.
-> Let's just drop this patch, ok?
+Hi All,
 
-Ok, fine.
+I am trying to cross compile rt-tests on Ubuntu with 64bit cross gcc
+tool chain and ended up with below error (Able to compile successfully
+with 32bit tool chain). Can someone help clarifying the below error?
+Is this the issue with syscalls or with linux kernel version. How to
+get it compile successfully for 64bit ARCH.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+aarch64-linux-gnu-gcc-4.8 -D VERSION=3D1.0 -c src/lib/rt-sched.c -Wall
+-Wno-nonnull -O2 -D_GNU_SOURCE -Isrc/include -o bld/rt-sched.o
+src/lib/rt-sched.c: In function =C3=A2sched_setattr=C3=A2:
+src/lib/rt-sched.c:34:17: error: =C3=A2__NR_sched_setattr=C3=A2 undeclared
+(first use in this function)
+  return syscall(__NR_sched_setattr, pid, attr, flags);
+                 ^
+src/lib/rt-sched.c:34:17: note: each undeclared identifier is reported
+only once for each function it appears in
+src/lib/rt-sched.c: In function =C3=A2sched_getattr=C3=A2:
+src/lib/rt-sched.c:42:24: error: =C3=A2__NR_sched_getattr=C3=A2 undeclared
+(first use in this function)
+         return syscall(__NR_sched_getattr, pid, attr, size, flags);
+                        ^
+src/lib/rt-sched.c: In function =C3=A2sched_setattr=C3=A2:
+src/lib/rt-sched.c:35:1: warning: control reaches end of non-void
+function [-Wreturn-type]
+ }
+ ^
+src/lib/rt-sched.c: In function =C3=A2sched_getattr=C3=A2:
+src/lib/rt-sched.c:43:1: warning: control reaches end of non-void
+function [-Wreturn-type]
+ }
+ ^
+make: *** [bld/rt-sched.o] Error 1
+
+
+--=20
+Thanks & Regards,
+M.Srikanth Kumar.
