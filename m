@@ -1,33 +1,65 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: 4.8.6-rt5 ftrace function_graph hangs
-Date: Mon, 28 Nov 2016 15:33:17 +0100
-Message-ID: <20161128143317.oz6n6jzvu227jnz3@linutronix.de>
-References: <d275a464-c787-6e21-0d3f-bbb3d854176e@windriver.com>
- <20161118113524.43f6ff3c@gandalf.local.home>
- <1785742b-8094-56af-01b9-6bac5c67865f@windriver.com>
- <67df43c6-ac39-dea0-025d-5fce434d2743@windriver.com>
+From: "$rik@nth " <srikanth007m@gmail.com>
+Subject: Re: failed to compile rt-sched
+Date: Mon, 28 Nov 2016 20:40:34 +0530
+Message-ID: <CANKSX+GXnEreqjLWuzQfA1CWx8E05xwsCgqmin+KoT+MeV+AvQ@mail.gmail.com>
+References: <CANKSX+FhtJFu=wifY-ppnSGkhWrwxJGS5sZw04ujPHH5-r+P=g@mail.gmail.com>
+ <20161128141246.hlbqdxiavslkn4ds@linutronix.de>
+Reply-To: srikanth007m@gmail.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Steven Rostedt <rostedt@goodmis.org>, tglx@linutronix.de,
-        linux-rt-users@vger.kernel.org, Yang Shi <yang.shi@windriver.com>
-To: He Zhe <zhe.he@windriver.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Cc: linux-rt-users@vger.kernel.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:46076 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S932626AbcK1OdV (ORCPT
+Received: from mail-qk0-f195.google.com ([209.85.220.195]:36075 "EHLO
+        mail-qk0-f195.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S932517AbcK1PKf (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 28 Nov 2016 09:33:21 -0500
-Content-Disposition: inline
-In-Reply-To: <67df43c6-ac39-dea0-025d-5fce434d2743@windriver.com>
+        Mon, 28 Nov 2016 10:10:35 -0500
+Received: by mail-qk0-f195.google.com with SMTP id h201so13585455qke.3
+        for <linux-rt-users@vger.kernel.org>; Mon, 28 Nov 2016 07:10:35 -0800 (PST)
+In-Reply-To: <20161128141246.hlbqdxiavslkn4ds@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2016-11-21 16:30:40 [+0800], He Zhe wrote:
-> And I've tried on "a7fac75 Linux 4.8.1" and the latest linux-4.8.y-rt-rebase branch.They have the same issue.
+On Mon, Nov 28, 2016 at 7:42 PM, Sebastian Andrzej Siewior
+<bigeasy@linutronix.de> wrote:
+> On 2016-11-28 15:13:02 [+0530], $rik@nth  wrote:
+>> Hi All,
+> Hi,
+>
+> I suggest to set a proper From: in your mail client.
+>
+>> I am trying to cross compile rt-tests on Ubuntu with 64bit cross gcc
+>> tool chain and ended up with below error (Able to compile successfully
+>> with 32bit tool chain). Can someone help clarifying the below error?
+>> Is this the issue with syscalls or with linux kernel version. How to
+>> get it compile successfully for 64bit ARCH.
+>>
+>> aarch64-linux-gnu-gcc-4.8 -D VERSION=3D1.0 -c src/lib/rt-sched.c -Wall
+>> -Wno-nonnull -O2 -D_GNU_SOURCE -Isrc/include -o bld/rt-sched.o
+>> src/lib/rt-sched.c: In function =C3=A2sched_setattr=C3=A2:
+>> src/lib/rt-sched.c:34:17: error: =C3=A2__NR_sched_setattr=C3=A2 undeclar=
+ed
+>> (first use in this function)
+>>   return syscall(__NR_sched_setattr, pid, attr, flags);
+>
+> It works here:
+> aarch64-linux-gnu-gcc -D VERSION=3D1.0 -c src/lib/rt-sched.c -Wall
+> -Wno-nonnull -O2 -D_GNU_SOURCE -Isrc/include -o bld/rt-sched.o
+>
+> with gcc version 6.2.1 20161124 (Debian 6.2.1-5).
+> I assume your toolchain is too old. __NR_sched_setattr was added in
+> v3.14 so I assume your kernel headers are pre v3.14.
+That makes sense.. mine is having little old gcc. But strange thing,
+Why 32bit compiler is not returning such error.
+arm-linux-gnueabihf-gcc (Ubuntu/Linaro 4.8.4-2ubuntu1~14.04.1) 4.8.4
+aarch64-linux-gnu-gcc (Ubuntu/Linaro 4.8.4-2ubuntu1~14.04.1) 4.8.4
+>
+> Sebastian
 
-It works here. I tried your config with oldconfig on a x86-64 box. Do
-you have a x86-64 config?
 
-> Zhe
 
-Sebastian
+--=20
+Thanks & Regards,
+M.Srikanth Kumar.
