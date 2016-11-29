@@ -1,25 +1,51 @@
-From: msteinme <tmambrilla@iol.it>
-Subject: =?utf-8?B?dXNlZnVsIHN0dWZm?=
-Date: Wed, 30 Nov 2016 00:21:32 +0300
-Message-ID: <00004fa994b7$a0687b45$0c726e20$@andrew.cmu.edu>
+From: Grygorii Strashko <grygorii.strashko@ti.com>
+Subject: question about irq_enter()/irq_exit() calling policy
+Date: Tue, 29 Nov 2016 17:47:12 -0600
+Message-ID: <22d0d991-bbe2-ce10-5202-3cdf97a9ecf2@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-To: "linux-audio-dev" <linux-audio-dev@music.columbia.edu>,
-        "linscotc" <linscotc@ohio.edu>,
-        "linux-rt-users" <linux-rt-users@vger.kernel.org>,
-        "ling.fung.chan" <ling.fung.chan@andrew.cmu.edu>,
-        "linux-xfs" <linux-xfs@oss.sgi.com>,
-        "linux-cluster" <linux-cluster@redhat.com>
+Content-Transfer-Encoding: 7bit
+To: <linux-arm-kernel@lists.infradead.org>,
+        <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp-31-i6.italiaonline.it ([212.48.14.165]:41095 "EHLO
-        libero.it" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1751537AbcK2VaB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 29 Nov 2016 16:30:01 -0500
+Received: from lelnx194.ext.ti.com ([198.47.27.80]:38218 "EHLO
+        lelnx194.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1750754AbcK2Xrl (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 29 Nov 2016 18:47:41 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-SGV5LA0KSSd2ZSBoZWFyZCB5b3Ugd2VyZSBsb29raW5nICBmb3IgdGhhdCBzdHVmZiAgZm9yICBhIGxv
-bmcgdGltZSwgIHNvIEkgZ3Vlc3MgSSBoYXZlIGZpbmFsbHkgZm91bmQgaXQgZm9yIHlvdSwgY2hlY2sg
-aXQgIG91dCAgPGh0dHA6Ly9zYWxlLmFkbWl0ZXJlb25saW5lLmNvbS9sbmhmLzc+DQoNCm1zdGVpbm1l
-DQo=
+Hi All,
+
+Sorry for the may be dumb question, but what is the calling policy for irq_enter()/irq_exit()?
+
+1) Should these function be called each time system enter/exit IRQ context?
+
+HW IRQ:
+ switch (IRQ mode)
+  ...
+  irq_enter()
+	handle irq - execute hw_irq_hadler
+  irq_exit()
+  ...
+ switch
+
+2) Should these function be called for each processed irq?
+
+
+HW IRQ:
+ switch (IRQ mode)
+  ...
+  while (irq = get_pending_irq()) {
+  	...
+  	irq_enter()
+		handle(irq) - execute hw_irq_hadler
+  	irq_exit()
+ }
+ ...
+ switch
+
+-- 
+regards,
+-grygorii
