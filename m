@@ -1,54 +1,53 @@
-From: Brian Silverman <brian@peloton-tech.com>
-Subject: Re: [PATCH] net: detect recursive dev_queue_xmit() on RT properly
-Date: Tue, 29 Nov 2016 19:35:14 -0500
-Message-ID: <CAGt3f4nCZRtdDFeC8bjf+xJn9mX=CFLAPAUmgmbYHy_L8Xui+Q@mail.gmail.com>
-References: <1476325561-16755-1-git-send-email-brian@peloton-tech.com> <20161028144412.7mk22zboiwupfsi4@linutronix.de>
+From: Russell King - ARM Linux <linux@armlinux.org.uk>
+Subject: Re: question about irq_enter()/irq_exit() calling policy
+Date: Wed, 30 Nov 2016 10:21:34 +0000
+Message-ID: <20161130102134.GB14217@n2100.armlinux.org.uk>
+References: <22d0d991-bbe2-ce10-5202-3cdf97a9ecf2@ti.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-        mark.beauchemin@sycamorenet.com, mbeauch@cox.net, mingo@kernel.org,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@elte.hu>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qk0-f169.google.com ([209.85.220.169]:33512 "EHLO
-        mail-qk0-f169.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1754590AbcK3Afp (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 29 Nov 2016 19:35:45 -0500
-Received: by mail-qk0-f169.google.com with SMTP id x190so193745499qkb.0
-        for <linux-rt-users@vger.kernel.org>; Tue, 29 Nov 2016 16:35:45 -0800 (PST)
-In-Reply-To: <20161028144412.7mk22zboiwupfsi4@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
+To: Grygorii Strashko <grygorii.strashko@ti.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <22d0d991-bbe2-ce10-5202-3cdf97a9ecf2@ti.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-This is already fixed by 0f27b2b421a4 ("net: move xmit_recursion to
-per-task variable on -RT"), which is in the various stable-rts too.
-Apologies for the noise.
+On Tue, Nov 29, 2016 at 05:47:12PM -0600, Grygorii Strashko wrote:
+> 2) Should these function be called for each processed irq?
+> 
+> 
+> HW IRQ:
+>  switch (IRQ mode)
+>   ...
+>   while (irq = get_pending_irq()) {
+>   	...
+>   	irq_enter()
+> 		handle(irq) - execute hw_irq_hadler
+>   	irq_exit()
+>  }
+>  ...
+>  switch
 
->> This also includes "543a589a00e8 net: xmit lock owner cleanup" from
->> v2.6.33.9-rt31 by mingo and tglx, which was just some cleanups to the
->> original patch which make porting to to current upstream easier.
->>
->> Signed-off-by: Mark Beauchemin <mark.beauchemin@sycamorenet.com>
->> [ ported to latest upstream ]
->> Signed-off-by: Ingo Molnar <mingo@elte.hu>
->> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
->> [ ported to 4.8 and used struct task_struct instead of void ]
->> Signed-off-by: Brian Silverman <brian@peloton-tech.com>
->
-> The signed-off-by chain suggest that Mark passed the patch to Ingo,
-> Thomas and to Brian. I doubt that. I can't resolve the sha1 id mentioned
-> here.
+We tend to do (2) as a general rule, which isn't much different from what
+other architectures do - even if they have a method to directly enter
+through vectors (eg, x86) the effect of two pending interrupts is that one
+will run after each other, and there will be an intervening exit -> entry.
 
-It's from the rt-history repository. The original commit in the
-rt-history repository has that Signed-off-by chain except I added me
-at the bottom. I guess it would make more sense to remove the other
-people who just cherry-picked it if I run into this again.
+In the case of ARM CPUs, if the interrupt signal is active, you vector
+back to the interrupt handler as soon as you exit back to the parent
+context without executing any parent context instructions.
 
-> Is this still broken as of v4.8-RT? I remember fixing something similar
-> with bridge devices.
+So, we have the choice of going through all the IRQ entry code, processing
+one interrupt, and returning only to then re-vector back through the IRQ
+entry code, or we can process all the pending IRQs that we can see at that
+time.
 
-Indeed you did it. It was cherry-picked to v4.1.19-rt22 too, which
-matches the 4.1 kernel I originally found this on. I thought I checked
-for the problem one or both of those, but apparently not... My bad.
+The former method wastes all the CPU cycles getting from the parent context
+to the IRQ context for each and every interrupt.
+
+-- 
+RMK's Patch system: http://www.armlinux.org.uk/developer/patches/
+FTTC broadband for 0.8mile line: currently at 9.6Mbps down 400kbps up
+according to speedtest.net.
