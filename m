@@ -1,72 +1,61 @@
-From: Grygorii Strashko <grygorii.strashko@ti.com>
-Subject: Re: question about irq_enter()/irq_exit() calling policy
-Date: Wed, 30 Nov 2016 11:07:49 -0600
-Message-ID: <9c334b42-6b22-397f-93f6-e19e9163a17c@ti.com>
-References: <22d0d991-bbe2-ce10-5202-3cdf97a9ecf2@ti.com>
- <20161130102134.GB14217@n2100.armlinux.org.uk>
+From: Trevor Woerner <twoerner@gmail.com>
+Subject: Re: RT_PREEMPT on Raspberry PI 3
+Date: Wed, 30 Nov 2016 21:11:10 -0500
+Message-ID: <20161201021110.GA32547@openSUSE-i7.site>
+References: <2c0e540f-c501-f65b-1292-782e12f71039@fastwebnet.it>
+ <20160922141041.ytyils2x3ehzoqhb@linutronix.de>
+ <CABfLueFUNmudobECEZ_jt4Q6ixqOSeTajKW2SpdLJW=Qi0zQyg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: 7bit
-Cc: <linux-arm-kernel@lists.infradead.org>,
-        <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-To: Russell King - ARM Linux <linux@armlinux.org.uk>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20161130102134.GB14217@n2100.armlinux.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: Giuliano Colla <giuliano.colla@fastwebnet.it>,
+        linux-rt-users@vger.kernel.org,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Oussama Ghorbel <ghorbel@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-io0-f194.google.com ([209.85.223.194]:35014 "EHLO
+        mail-io0-f194.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1756084AbcLACLO (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 30 Nov 2016 21:11:14 -0500
+Received: by mail-io0-f194.google.com with SMTP id h133so6984996ioe.2
+        for <linux-rt-users@vger.kernel.org>; Wed, 30 Nov 2016 18:11:13 -0800 (PST)
+Content-Disposition: inline
+In-Reply-To: <CABfLueFUNmudobECEZ_jt4Q6ixqOSeTajKW2SpdLJW=Qi0zQyg@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Russell,
+On Fri 2016-11-18 @ 11:25:26 AM, Oussama Ghorbel wrote:
+> I have written recently a patch that solve the FIQ issue with RT
+> Preempt on the 4-core Raspberry Pi board.
+> Please see this article for full description on the solution.
+> https://www.osadl.org/Single-View.111+M5c03315dc57.0.html
 
-On 11/30/2016 04:21 AM, Russell King - ARM Linux wrote:
-> On Tue, Nov 29, 2016 at 05:47:12PM -0600, Grygorii Strashko wrote:
->> 2) Should these function be called for each processed irq?
->>
->>
->> HW IRQ:
->>  switch (IRQ mode)
->>   ...
->>   while (irq = get_pending_irq()) {
->>   	...
->>   	irq_enter()
->> 		handle(irq) - execute hw_irq_hadler
->>   	irq_exit()
->>  }
->>  ...
->>  switch
-> 
-> We tend to do (2) as a general rule, which isn't much different from what
-> other architectures do - even if they have a method to directly enter
-> through vectors (eg, x86) the effect of two pending interrupts is that one
-> will run after each other, and there will be an intervening exit -> entry.
-> 
-> In the case of ARM CPUs, if the interrupt signal is active, you vector
-> back to the interrupt handler as soon as you exit back to the parent
-> context without executing any parent context instructions.
-> 
-> So, we have the choice of going through all the IRQ entry code, processing
-> one interrupt, and returning only to then re-vector back through the IRQ
-> entry code, or we can process all the pending IRQs that we can see at that
-> time.
-> 
-> The former method wastes all the CPU cycles getting from the parent context
-> to the IRQ context for each and every interrupt.
-> 
+This is excellent, thank you very much!
 
-Thanks a lot for your detailed explanation.
-When I've asked this question my intention was to understand possibility of calling 
-irq_enter()/irq_exit() only once for the case (2), like:
- HW IRQ:
-  switch (IRQ mode)
-   ...
-  irq_enter()
-   while (irq = get_pending_irq()) {
-   	...
- 	handle(irq) - execute hw_irq_hadler
-  }
-  irq_exit()
-  ...
-  switch
+Previously my raspi2/3 systems were barely able to survive 15 minutes of
+either "stress" or "cyclictest", but by simply adding the two kernel cmdline
+options I've now been running:
 
--- 
-regards,
--grygorii
+	$ stress --cpu 5 --io 4 --vm 2 --vm-bytes 128M&
+	$ cyclictest -p 80 -t5 -n
+
+on a raspi3 for over 10 hours. The latest cyclictest numbers are:
+
+	policy: fifo: loadavg: 11.72 11.87 11.85 9/180 3097           
+
+	T: 0 (  525) P:80 I:1000 C:37527692 Min:     12 Act:   21 Avg:   25 Max:     725
+	T: 1 (  526) P:80 I:1500 C:25018460 Min:     13 Act:   20 Avg:   23 Max:     540
+	T: 2 (  527) P:80 I:2000 C:18763840 Min:     13 Act:   23 Avg:   24 Max:     914
+	T: 3 (  528) P:80 I:2500 C:15011069 Min:     14 Act:   19 Avg:   26 Max:     514
+	T: 4 (  529) P:80 I:3000 C:12509225 Min:     14 Act:   19 Avg:   24 Max:     568
+
+This is running the 4.4.35 linux-raspberrypi kernel from
+git://github.com/raspberrypi/linux.git with patch-4.4.32-rt43.patch.xz applied
+(only one small hunk had to be removed from the Makefile patch in order for it
+to apply cleanly).
+
+$ uname -a
+Linux raspberrypi3 4.4.35-rt43-yocto-standard #1 SMP PREEMPT RT Tue Nov 29 15:16:27 EST 2016 armv7l armv7l armv7l GNU/Linux
+
+Best regards,
+	Trevor
