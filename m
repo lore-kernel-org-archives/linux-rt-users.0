@@ -1,35 +1,41 @@
-From: Trevor Woerner <twoerner@gmail.com>
-Subject: Re: RT_PREEMPT on Raspberry PI 3
-Date: Wed, 30 Nov 2016 21:25:51 -0500
-Message-ID: <20161201022551.GB32547@openSUSE-i7.site>
-References: <2c0e540f-c501-f65b-1292-782e12f71039@fastwebnet.it>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH] arm: kprobe: replace patch_lock to raw lock
+Date: Thu, 1 Dec 2016 15:11:39 +0100
+Message-ID: <20161201141138.css266nzcutzfapw@linutronix.de>
+References: <1478823475-15087-1-git-send-email-yang.shi@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org
-To: Giuliano Colla <giuliano.colla@fastwebnet.it>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-io0-f169.google.com ([209.85.223.169]:32837 "EHLO
-        mail-io0-f169.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1754165AbcLACZz (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 30 Nov 2016 21:25:55 -0500
-Received: by mail-io0-f169.google.com with SMTP id j65so389994705iof.0
-        for <linux-rt-users@vger.kernel.org>; Wed, 30 Nov 2016 18:25:55 -0800 (PST)
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: linaro-kernel@lists.linaro.org, linux-rt-users@vger.kernel.org,
+ linux@armlinux.org.uk, rostedt@goodmis.org, linux-kernel@vger.kernel.org,
+ tglx@linutronix.de, linux-arm-kernel@lists.infradead.org
+To: Yang Shi <yang.shi@linaro.org>
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
 Content-Disposition: inline
-In-Reply-To: <2c0e540f-c501-f65b-1292-782e12f71039@fastwebnet.it>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <1478823475-15087-1-git-send-email-yang.shi@linaro.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Sun 2016-09-18 @ 12:03:42 PM, Giuliano Colla wrote:
-> 1) The RT patches are not in sync with mainline Raspbian kernel versions.
+On 2016-11-10 16:17:55 [-0800], Yang Shi wrote:
+> 
+> Since patch_text_stop_machine() is called in stop_machine() which disables IRQ,
+> sleepable lock should be not used in this atomic context, so replace patch_lock
+> to raw lock.
 
-The PREEMPT_RT patches aren't only meant for RaspberryPi devices. But even if
-they were, there are dozens (!) of GNU/Linux-based distributions which target
-RaspberryPi devices[1]. I'm glad the -rt developers don't show bias in the
-distros to which they align their patches :-)
+I am taking this one. Thank you.
+We have jump_labels() deactivated on ARM because stop_machine() may
+cause latencies at runtime. kprobe and kgdb is used by the user on
+purpose (and not because he changed some sched setting) I think we are
+fine. I am going to document this.
 
+> Signed-off-by: Yang Shi <yang.shi@linaro.org>
 
-
-
-[1] http://elinux.org/RPi_Distributions (NOTE: not all of the listed distros
-are GNU/Linux, but many of them are)
+Sebastian
