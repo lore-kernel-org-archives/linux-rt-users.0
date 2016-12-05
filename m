@@ -1,48 +1,31 @@
-From: Yang Shi <yang.shi@windriver.com>
-Subject: Re: 4.8.6-rt5 ftrace function_graph hangs
-Date: Fri, 2 Dec 2016 13:42:06 -0800
-Message-ID: <433512e3-cb70-a6dc-395b-4afb827734f9@windriver.com>
-References: <d275a464-c787-6e21-0d3f-bbb3d854176e@windriver.com>
- <20161118113524.43f6ff3c@gandalf.local.home>
- <1785742b-8094-56af-01b9-6bac5c67865f@windriver.com>
- <67df43c6-ac39-dea0-025d-5fce434d2743@windriver.com>
- <20161128143317.oz6n6jzvu227jnz3@linutronix.de>
+From: Ran Shalit <ranshalit@gmail.com>
+Subject: patch for 3.4.27
+Date: Mon, 5 Dec 2016 17:19:07 +0200
+Message-ID: <CAJ2oMh+N3Y1g1zu5UjJ=X4TF3WmbfZiU3Y+OhtoZFjyNEZSr6Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>, <tglx@linutronix.de>,
-        <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        He Zhe <zhe.he@windriver.com>
+Content-Type: text/plain; charset=UTF-8
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail1.windriver.com ([147.11.146.13]:44294 "EHLO
-        mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751534AbcLBVmf (ORCPT
+Received: from mail-wm0-f53.google.com ([74.125.82.53]:36424 "EHLO
+        mail-wm0-f53.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751161AbcLEPUF (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 2 Dec 2016 16:42:35 -0500
-In-Reply-To: <20161128143317.oz6n6jzvu227jnz3@linutronix.de>
+        Mon, 5 Dec 2016 10:20:05 -0500
+Received: by mail-wm0-f53.google.com with SMTP id g23so100999304wme.1
+        for <linux-rt-users@vger.kernel.org>; Mon, 05 Dec 2016 07:19:08 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 11/28/2016 6:33 AM, Sebastian Andrzej Siewior wrote:
-> On 2016-11-21 16:30:40 [+0800], He Zhe wrote:
->> And I've tried on "a7fac75 Linux 4.8.1" and the latest linux-4.8.y-rt-rebase branch.They have the same issue.
-> It works here. I tried your config with oldconfig on a x86-64 box. Do
-> you have a x86-64 config?
+Hello,
 
-Hi Sebastian,
+I am newcomer with RT linux.
+I have made some general reading about RT patch.
+I see that there is a patch for 3.4.1_rc9.
+I wanted to ask if I can try to apply this patch on 3.4.27 ?
 
-Thanks for following up. I had been distracted by something else. And, I 
-did more testing, then I narrowed it down to ARM and PPC only.
+Another question:
+Is it correct to assume that kernel is always more real-time than
+userspace even when using CONFIG_PREEMPT ?
 
-In addition, I narrowed it down to CONFIG_DEBUG_PREEMPT. function_graph 
-tracer works well with it disabled on ARM and PPC. But, I haven't got 
-time to figure out why.
-
-Yang
-
->
->> Zhe
-> Sebastian
-
-
+Thank you,
+Ran
