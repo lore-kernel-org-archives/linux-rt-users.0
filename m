@@ -1,158 +1,46 @@
-From: Haris Okanovic <haris.okanovic@ni.com>
-Subject: [RFC] timers: Don't wake ktimersoftd on every tick
-Date: Mon, 5 Dec 2016 14:07:02 -0600
-Message-ID: <20161205200702.17248-1-haris.okanovic@ni.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: 4.8.6-rt5 ftrace function_graph hangs
+Date: Tue, 6 Dec 2016 12:07:15 +0100
+Message-ID: <20161206110715.3mnfjzflaq3semrd@linutronix.de>
+References: <d275a464-c787-6e21-0d3f-bbb3d854176e@windriver.com>
+ <20161118113524.43f6ff3c@gandalf.local.home>
+ <1785742b-8094-56af-01b9-6bac5c67865f@windriver.com>
+ <67df43c6-ac39-dea0-025d-5fce434d2743@windriver.com>
+ <20161128143317.oz6n6jzvu227jnz3@linutronix.de>
+ <433512e3-cb70-a6dc-395b-4afb827734f9@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <bigeasy@linutronix.de>, <tglx@linutronix.de>,
-        <julia.cartwright@ni.com>, <gratian.crisan@ni.com>,
-        <haris.okanovic@ni.com>
-To: <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: He Zhe <zhe.he@windriver.com>,
+        Steven Rostedt <rostedt@goodmis.org>, tglx@linutronix.de,
+        linux-rt-users@vger.kernel.org
+To: Yang Shi <yang.shi@windriver.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod3.natinst.com ([130.164.80.24]:52182 "EHLO ni.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1751672AbcLEUil (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 5 Dec 2016 15:38:41 -0500
+Received: from Galois.linutronix.de ([146.0.238.70]:38402 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752263AbcLFLHW (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 6 Dec 2016 06:07:22 -0500
+Content-Disposition: inline
+In-Reply-To: <433512e3-cb70-a6dc-395b-4afb827734f9@windriver.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We recently upgraded from 4.1 to 4.6 and noticed a minor latency
-regression caused by an additional thread wakeup (ktimersoftd) in
-interrupt context on every tick. The wakeups are from
-run_local_timers() raising TIMER_SOFTIRQ. Both TIMER and SCHED softirq
-coalesced into one ksoftirqd wakeup prior to Sebastian's change to split
-timers into their own thread (c002d3c0).
+On 2016-12-02 13:42:06 [-0800], Yang Shi wrote:
+> Hi Sebastian,
+Hi Yang,
 
-There's already logic in run_local_timers() to avoid some unnecessary
-wakeups of ksoftirqd, but it doesn't seems to catch them all. In
-particular, I've seen many unnecessary wakeups when jiffies increments
-prior to run_local_timers().
+> Thanks for following up. I had been distracted by something else. And, I did
+> more testing, then I narrowed it down to ARM and PPC only.
+okay.
 
-This patch attempts to improve things by servicing timers in interrupt
-context until one or more are ready to fire:
+> In addition, I narrowed it down to CONFIG_DEBUG_PREEMPT. function_graph
+> tracer works well with it disabled on ARM and PPC. But, I haven't got time
+> to figure out why.
 
- * Increments base->clk to keep up with jiffies in interrupt context
- * Wakes ktimersoftd only when pending_map shows one or more ready
-   timers
+It could be a warning that comes with CONFIG_DEBUG_PREEMPT triggers once
+function_graph gets enabled. This warning in turn could cause another
+warning or go for another reason recursive.
 
-`cyclictest -p 98 -m` (4h run, no cpu affinity) shows ~5-10% decrease in
-22-70us latency range, but a ~21% increase 20-21us and mixed results
- >70us. No change in max jitter. No change when `-S` is used.
-
-[Traces]
-
-ftp://ftp.ni.com/outgoing/tp01-timer-peek-traces.tgz
-(Email me if link dies. Server periodically purges old files.)
-
-Prior to this change, event traces of an idle system (before.dat) show
-TIMER softirq_raise()s each tick without subsequent timer_expire_entries()s.
-I.e. ktimesoftd woke to perform no work on both CPUs. after.dat only shows
-TIMER softirq_raise()s only when followed by one or more expiring timers.
-
-[Hardware/software/config]
-
- NI cRIO-9033
-  2 core Intel Atom CPU
-
- Kernel 4.8.6-rt5
-  CONFIG_HZ_PERIODIC=y
-
-[Concerns/Issues/questions]
-
-I'm relatively new to the timer subsystem, so please feel free to poke
-as many holes as possible in this change. A few things that concern me
-at the moment are:
-
-Can jiffies change while one or more cpus is inside tick_sched_timer(),
- in interrupt context? I'm copying jiffies to a local variable in
- has_expired_timers() to ensure it doesn't run unbounded, but I'm not
- sure if that's necessary.
-
-There may be a faster way to query pending_map. I copied the current
- algorithm from __collect_expired_timers(), which performs a linear
- search of each level for each clk, up to jiffies+HZ.
-
-Special considerations for testing NO_HZ builds?
-
-Other performance benchmark I should run?
-
-Source: https://github.com/harisokanovic/linux/tree/dev/hokanovi/timer-peek
-
-Thanks,
-Haris
----
- kernel/time/timer.c | 47 +++++++++++++++++++++++++++++++++++++++++++++--
- 1 file changed, 45 insertions(+), 2 deletions(-)
-
-diff --git a/kernel/time/timer.c b/kernel/time/timer.c
-index ba53447..c6241ac 100644
---- a/kernel/time/timer.c
-+++ b/kernel/time/timer.c
-@@ -1374,6 +1374,49 @@ static void expire_timers(struct timer_base *base, struct hlist_head *head)
- 	}
- }
- 
-+/* Called in interrupt context to quickly check if one or
-+ * more timers are expired in base
-+ */
-+static bool has_expired_timers(struct timer_base *base)
-+{
-+	bool res = false;
-+	unsigned long clk, end_clk, idx;
-+	int i;
-+
-+	raw_spin_lock(&base->lock);
-+
-+	end_clk = jiffies;
-+	if (unlikely(time_after(end_clk, base->clk + HZ))) {
-+		/* Don't spend too much time in interrupt context. If we didn't
-+		 * service timers in the last second, defer to ktimersoftd.
-+		 */
-+		res = true;
-+		goto end;
-+	}
-+
-+	for ( ; base->clk <= end_clk; base->clk++) {
-+		clk = base->clk;
-+		for (i = 0; i < LVL_DEPTH; i++) {
-+			idx = (clk & LVL_MASK) + i * LVL_SIZE;
-+
-+			if (test_bit(idx, base->pending_map)) {
-+				res = true;
-+				goto end;
-+			}
-+
-+			/* Is it time to look at the next level? */
-+			if (clk & LVL_CLK_MASK)
-+				break;
-+			/* Shift clock for the next level granularity */
-+			clk >>= LVL_CLK_SHIFT;
-+		}
-+	}
-+
-+	end:
-+	raw_spin_unlock(&base->lock);
-+	return res;
-+}
-+
- static int __collect_expired_timers(struct timer_base *base,
- 				    struct hlist_head *heads)
- {
-@@ -1686,12 +1729,12 @@ void run_local_timers(void)
- 
- 	hrtimer_run_queues();
- 	/* Raise the softirq only if required. */
--	if (time_before(jiffies, base->clk)) {
-+	if (time_before(jiffies, base->clk) || !has_expired_timers(base)) {
- 		if (!IS_ENABLED(CONFIG_NO_HZ_COMMON) || !base->nohz_active)
- 			return;
- 		/* CPU is awake, so check the deferrable base. */
- 		base++;
--		if (time_before(jiffies, base->clk))
-+		if (time_before(jiffies, base->clk) || !has_expired_timers(base))
- 			return;
- 	}
- 	raise_softirq(TIMER_SOFTIRQ);
--- 
-2.10.1
-
+> Yang
+> 
+Sebastian
