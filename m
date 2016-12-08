@@ -1,57 +1,102 @@
-From: John Keeping <john@metanate.com>
-Subject: Re: Lockdep splat from destroy_workqueue() with RT_PREEMPT_FULL
-Date: Thu, 8 Dec 2016 16:25:44 +0000
-Message-ID: <20161208162544.1909caf2.john@metanate.com>
-References: <20161208122028.18e7b9e1.john@metanate.com>
-        <20161208133306.254xkj2d4a2c24yr@linutronix.de>
+From: Julia Cartwright <julia@ni.com>
+Subject: Re: [RFC] timers: Don't wake ktimersoftd on every tick
+Date: Thu, 8 Dec 2016 10:48:10 -0600
+Message-ID: <20161208164810.GG1335@jcartwri.amer.corp.natinst.com>
+References: <20161205200702.17248-1-haris.okanovic@ni.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, Tejun Heo <tj@kernel.org>,
-        Lai Jiangshan <jiangshanlai@gmail.com>,
-        linux-rt-users@vger.kernel.org,
-        Thomas Gleixner <tglx@linutronix.de>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20161208133306.254xkj2d4a2c24yr@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Cc: <linux-rt-users@vger.kernel.org>, <bigeasy@linutronix.de>,
+        <tglx@linutronix.de>, <gratian.crisan@ni.com>
+To: Haris Okanovic <haris.okanovic@ni.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from skprod2.natinst.com ([130.164.80.23]:49853 "EHLO ni.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S1752246AbcLHQsU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 8 Dec 2016 11:48:20 -0500
+Content-Disposition: inline
+In-Reply-To: <20161205200702.17248-1-haris.okanovic@ni.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Sebastian,
-
-On Thu, 8 Dec 2016 14:33:06 +0100, Sebastian Andrzej Siewior wrote:
-> On 2016-12-08 12:20:28 [+0000], John Keeping wrote:
-> > I am seeing the following splat when stopping btattach on v4.4.30-rt41
-> > with PREEMPT_RT_FULL with lockdep and slub_debug.
-> > 
-> > The bad unlock balance seems to just be an effect of the lock having
-> > been overwritten with POISON_FREE, the real issue is that
-> > put_pwq_unlocked() is not resuming and unlocking the pool before the RCU
-> > work scheduled indirectly by put_pwq() has completed.  
+On Mon, Dec 05, 2016 at 02:07:02PM -0600, Haris Okanovic wrote:
+> We recently upgraded from 4.1 to 4.6 and noticed a minor latency
+> regression caused by an additional thread wakeup (ktimersoftd) in
+> interrupt context on every tick. The wakeups are from
+> run_local_timers() raising TIMER_SOFTIRQ. Both TIMER and SCHED softirq
+> coalesced into one ksoftirqd wakeup prior to Sebastian's change to split
+> timers into their own thread (c002d3c0).
 > 
-> can you reproduce this? If so, is this patch helping?
-
-Yes, I am able to reproduce it reasonably reliably, or at least I *was*
-able to: since applying the patch below I haven't seen it fail at all,
-so consider the patch:
-
-Tested-by: John Keeping <john@metanate.com>
-
-
-> diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-> --- a/kernel/workqueue.c
-> +++ b/kernel/workqueue.c
-> @@ -1135,9 +1135,11 @@ static void put_pwq_unlocked(struct pool_workqueue *pwq)
->  		 * As both pwqs and pools are RCU protected, the
->  		 * following lock operations are safe.
->  		 */
-> +		rcu_read_lock();
->  		local_spin_lock_irq(pendingb_lock, &pwq->pool->lock);
->  		put_pwq(pwq);
->  		local_spin_unlock_irq(pendingb_lock, &pwq->pool->lock);
-> +		rcu_read_unlock();
+> There's already logic in run_local_timers() to avoid some unnecessary
+> wakeups of ksoftirqd, but it doesn't seems to catch them all. In
+> particular, I've seen many unnecessary wakeups when jiffies increments
+> prior to run_local_timers().
+> 
+> This patch attempts to improve things by servicing timers in interrupt
+> context until one or more are ready to fire:
+[..]
+>  kernel/time/timer.c | 47 +++++++++++++++++++++++++++++++++++++++++++++--
+>  1 file changed, 45 insertions(+), 2 deletions(-)
+> 
+> diff --git a/kernel/time/timer.c b/kernel/time/timer.c
+> index ba53447..c6241ac 100644
+> --- a/kernel/time/timer.c
+> +++ b/kernel/time/timer.c
+> @@ -1374,6 +1374,49 @@ static void expire_timers(struct timer_base *base, struct hlist_head *head)
 >  	}
 >  }
+>  
+> +/* Called in interrupt context to quickly check if one or
+> + * more timers are expired in base
+> + */
+> +static bool has_expired_timers(struct timer_base *base)
+> +{
+> +	bool res = false;
+> +	unsigned long clk, end_clk, idx;
+> +	int i;
+> +
+> +	raw_spin_lock(&base->lock);
+> +
+> +	end_clk = jiffies;
+> +	if (unlikely(time_after(end_clk, base->clk + HZ))) {
+> +		/* Don't spend too much time in interrupt context. If we didn't
+> +		 * service timers in the last second, defer to ktimersoftd.
+> +		 */
+> +		res = true;
+> +		goto end;
+> +	}
+> +
+> +	for ( ; base->clk <= end_clk; base->clk++) {
+> +		clk = base->clk;
+> +		for (i = 0; i < LVL_DEPTH; i++) {
+> +			idx = (clk & LVL_MASK) + i * LVL_SIZE;
+> +
+> +			if (test_bit(idx, base->pending_map)) {
+> +				res = true;
+> +				goto end;
+> +			}
+> +
+> +			/* Is it time to look at the next level? */
+> +			if (clk & LVL_CLK_MASK)
+> +				break;
+> +			/* Shift clock for the next level granularity */
+> +			clk >>= LVL_CLK_SHIFT;
+> +		}
+> +	}
+> +
+> +	end:
+> +	raw_spin_unlock(&base->lock);
+> +	return res;
+> +}
+> +
 
+I'm wondering if instead of iterating through and bailing when we see a
+expired timer, we should also just go ahead and splice the expired
+timers onto a per-CPU "expired" list, bump base->clk, and then schedule the
+softirq, which would then only iterate this list and call expiry.
 
-John
+That's marginally more logic in hardirq context than what you are doing
+here, but not a lot (and more importantly, it's bounded), and it
+prevents us from having to walk the wheel twice (once in hardirq
+context, once in softirq) as you have written here.
+
+   Julia
