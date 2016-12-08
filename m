@@ -1,102 +1,148 @@
-From: Julia Cartwright <julia@ni.com>
-Subject: Re: [RFC] timers: Don't wake ktimersoftd on every tick
-Date: Thu, 8 Dec 2016 10:48:10 -0600
-Message-ID: <20161208164810.GG1335@jcartwri.amer.corp.natinst.com>
-References: <20161205200702.17248-1-haris.okanovic@ni.com>
+From: Grygorii Strashko <grygorii.strashko@ti.com>
+Subject: [PATCH] irqchip: keystone: Fix "scheduling while atomic" on rt
+Date: Thu, 8 Dec 2016 17:33:10 -0600
+Message-ID: <20161208233310.10329-1-grygorii.strashko@ti.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Cc: <linux-rt-users@vger.kernel.org>, <bigeasy@linutronix.de>,
-        <tglx@linutronix.de>, <gratian.crisan@ni.com>
-To: Haris Okanovic <haris.okanovic@ni.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod2.natinst.com ([130.164.80.23]:49853 "EHLO ni.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1752246AbcLHQsU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 8 Dec 2016 11:48:20 -0500
-Content-Disposition: inline
-In-Reply-To: <20161205200702.17248-1-haris.okanovic@ni.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain
+Cc: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
+        Sam Nelson <sam.nelson@ti.com>, <bigeasy@linutronix.de>,
+        "Strashko, Grygorii" <grygorii.strashko@ti.com>
+To: Santosh Shilimkar <ssantosh@kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Marc Zyngier <marc.zyngier@arm.com>,
+        Jason Cooper <jason@lakedaemon.net>, Suman Anna <s-anna@ti.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, Dec 05, 2016 at 02:07:02PM -0600, Haris Okanovic wrote:
-> We recently upgraded from 4.1 to 4.6 and noticed a minor latency
-> regression caused by an additional thread wakeup (ktimersoftd) in
-> interrupt context on every tick. The wakeups are from
-> run_local_timers() raising TIMER_SOFTIRQ. Both TIMER and SCHED softirq
-> coalesced into one ksoftirqd wakeup prior to Sebastian's change to split
-> timers into their own thread (c002d3c0).
-> 
-> There's already logic in run_local_timers() to avoid some unnecessary
-> wakeups of ksoftirqd, but it doesn't seems to catch them all. In
-> particular, I've seen many unnecessary wakeups when jiffies increments
-> prior to run_local_timers().
-> 
-> This patch attempts to improve things by servicing timers in interrupt
-> context until one or more are ready to fire:
-[..]
->  kernel/time/timer.c | 47 +++++++++++++++++++++++++++++++++++++++++++++--
->  1 file changed, 45 insertions(+), 2 deletions(-)
-> 
-> diff --git a/kernel/time/timer.c b/kernel/time/timer.c
-> index ba53447..c6241ac 100644
-> --- a/kernel/time/timer.c
-> +++ b/kernel/time/timer.c
-> @@ -1374,6 +1374,49 @@ static void expire_timers(struct timer_base *base, struct hlist_head *head)
->  	}
->  }
->  
-> +/* Called in interrupt context to quickly check if one or
-> + * more timers are expired in base
-> + */
-> +static bool has_expired_timers(struct timer_base *base)
-> +{
-> +	bool res = false;
-> +	unsigned long clk, end_clk, idx;
-> +	int i;
-> +
-> +	raw_spin_lock(&base->lock);
-> +
-> +	end_clk = jiffies;
-> +	if (unlikely(time_after(end_clk, base->clk + HZ))) {
-> +		/* Don't spend too much time in interrupt context. If we didn't
-> +		 * service timers in the last second, defer to ktimersoftd.
-> +		 */
-> +		res = true;
-> +		goto end;
-> +	}
-> +
-> +	for ( ; base->clk <= end_clk; base->clk++) {
-> +		clk = base->clk;
-> +		for (i = 0; i < LVL_DEPTH; i++) {
-> +			idx = (clk & LVL_MASK) + i * LVL_SIZE;
-> +
-> +			if (test_bit(idx, base->pending_map)) {
-> +				res = true;
-> +				goto end;
-> +			}
-> +
-> +			/* Is it time to look at the next level? */
-> +			if (clk & LVL_CLK_MASK)
-> +				break;
-> +			/* Shift clock for the next level granularity */
-> +			clk >>= LVL_CLK_SHIFT;
-> +		}
-> +	}
-> +
-> +	end:
-> +	raw_spin_unlock(&base->lock);
-> +	return res;
-> +}
-> +
+From: "Strashko, Grygorii" <grygorii.strashko@ti.com>
 
-I'm wondering if instead of iterating through and bailing when we see a
-expired timer, we should also just go ahead and splice the expired
-timers onto a per-CPU "expired" list, bump base->clk, and then schedule the
-softirq, which would then only iterate this list and call expiry.
+The below call chain generates "scheduling while atomic" backtrace and
+causes system crash when Keystone 2 IRQ chip driver is used with RT-kernel:
 
-That's marginally more logic in hardirq context than what you are doing
-here, but not a lot (and more importantly, it's bounded), and it
-prevents us from having to walk the wheel twice (once in hardirq
-context, once in softirq) as you have written here.
+gic_handle_irq()
+ |-__handle_domain_irq()
+  |-generic_handle_irq()
+   |-keystone_irq_handler()
+    |-regmap_read()
+     |-regmap_lock_spinlock()
+      |-rt_spin_lock()
 
-   Julia
+The reason is that Keystone driver dispatches IRQ using chained IRQ handler
+and accesses I/O memory through syscon->regmap(mmio) which is implemented
+as fast_io regmap and uses regular spinlocks for synchronization, but
+spinlocks transformed to rt_mutexes on RT.
+
+Hence, convert Keystone 2 IRQ driver to use generic irq handler instead of
+chained IRQ handler. This way it will be compatible with RT kernel where it
+will be forced thread IRQ handler while in non-RT kernel it still will be
+executed in HW IRQ context.
+
+Cc: Suman Anna <s-anna@ti.com>
+Signed-off-by: Grygorii Strashko <grygorii.strashko@ti.com>
+---
+Hi,
+
+In general, there is an option to convert this driver to use nested threaded
+irq handlers (this should not affect our current user of these irqs from
+performance point of view), but that will affect on our current remoteproc and
+UIO based drivers (including uio core) which do not expect to use threaded
+irq and use request_irq(). These drivers and UIO core might require to be
+updated to use threaded irqs and (or) request_any_context_irq().
+
+Suman, what do you think?
+
+ drivers/irqchip/irq-keystone.c | 28 +++++++++++++++++++---------
+ 1 file changed, 19 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/irqchip/irq-keystone.c b/drivers/irqchip/irq-keystone.c
+index 54a5e87..efbcf84 100644
+--- a/drivers/irqchip/irq-keystone.c
++++ b/drivers/irqchip/irq-keystone.c
+@@ -19,9 +19,9 @@
+ #include <linux/bitops.h>
+ #include <linux/module.h>
+ #include <linux/moduleparam.h>
++#include <linux/interrupt.h>
+ #include <linux/irqdomain.h>
+ #include <linux/irqchip.h>
+-#include <linux/irqchip/chained_irq.h>
+ #include <linux/of.h>
+ #include <linux/of_platform.h>
+ #include <linux/mfd/syscon.h>
+@@ -39,6 +39,7 @@ struct keystone_irq_device {
+ 	struct irq_domain	*irqd;
+ 	struct regmap		*devctrl_regs;
+ 	u32			devctrl_offset;
++	raw_spinlock_t		wa_lock;
+ };
+ 
+ static inline u32 keystone_irq_readl(struct keystone_irq_device *kirq)
+@@ -83,17 +84,15 @@ static void keystone_irq_ack(struct irq_data *d)
+ 	/* nothing to do here */
+ }
+ 
+-static void keystone_irq_handler(struct irq_desc *desc)
++static irqreturn_t keystone_irq_handler(int irq, void *keystone_irq)
+ {
+-	unsigned int irq = irq_desc_get_irq(desc);
+-	struct keystone_irq_device *kirq = irq_desc_get_handler_data(desc);
++	struct keystone_irq_device *kirq = keystone_irq;
++	unsigned long wa_lock_flags;
+ 	unsigned long pending;
+ 	int src, virq;
+ 
+ 	dev_dbg(kirq->dev, "start irq %d\n", irq);
+ 
+-	chained_irq_enter(irq_desc_get_chip(desc), desc);
+-
+ 	pending = keystone_irq_readl(kirq);
+ 	keystone_irq_writel(kirq, pending);
+ 
+@@ -111,13 +110,15 @@ static void keystone_irq_handler(struct irq_desc *desc)
+ 			if (!virq)
+ 				dev_warn(kirq->dev, "spurious irq detected hwirq %d, virq %d\n",
+ 					 src, virq);
++			raw_spin_lock_irqsave(&kirq->wa_lock, wa_lock_flags);
+ 			generic_handle_irq(virq);
++			raw_spin_unlock_irqrestore(&kirq->wa_lock,
++						   wa_lock_flags);
+ 		}
+ 	}
+ 
+-	chained_irq_exit(irq_desc_get_chip(desc), desc);
+-
+ 	dev_dbg(kirq->dev, "end irq %d\n", irq);
++	return IRQ_HANDLED;
+ }
+ 
+ static int keystone_irq_map(struct irq_domain *h, unsigned int virq,
+@@ -182,9 +183,16 @@ static int keystone_irq_probe(struct platform_device *pdev)
+ 		return -ENODEV;
+ 	}
+ 
++	raw_spin_lock_init(&kirq->wa_lock);
++
+ 	platform_set_drvdata(pdev, kirq);
+ 
+-	irq_set_chained_handler_and_data(kirq->irq, keystone_irq_handler, kirq);
++	ret = request_irq(kirq->irq, keystone_irq_handler,
++			  0, dev_name(dev), kirq);
++	if (ret) {
++		irq_domain_remove(kirq->irqd);
++		return ret;
++	}
+ 
+ 	/* clear all source bits */
+ 	keystone_irq_writel(kirq, ~0x0);
+@@ -199,6 +207,8 @@ static int keystone_irq_remove(struct platform_device *pdev)
+ 	struct keystone_irq_device *kirq = platform_get_drvdata(pdev);
+ 	int hwirq;
+ 
++	free_irq(kirq->irq, kirq);
++
+ 	for (hwirq = 0; hwirq < KEYSTONE_N_IRQ; hwirq++)
+ 		irq_dispose_mapping(irq_find_mapping(kirq->irqd, hwirq));
+ 
+-- 
+2.10.1
