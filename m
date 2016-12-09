@@ -1,64 +1,65 @@
-From: Rasmus Ahlberg <rasmus.ahlberg@electrolux.com>
-Subject: Blocked kworker in single core RT system
-Date: Fri, 9 Dec 2016 15:44:56 +0000
-Message-ID: <DB6PR0601MB24234A8580A50FC97001DD46E0870@DB6PR0601MB2423.eurprd06.prod.outlook.com>
+From: Julia Cartwright <julia@ni.com>
+Subject: Re: Blocked kworker in single core RT system
+Date: Fri, 9 Dec 2016 16:20:09 -0600
+Message-ID: <20161209222009.GJ1335@jcartwri.amer.corp.natinst.com>
+References: <DB6PR0601MB24234A8580A50FC97001DD46E0870@DB6PR0601MB2423.eurprd06.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Cc: Rasmus Ahlberg <rasmus.ahlberg@electrolux.com>
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Rasmus Ahlberg <rasmus.ahlberg@electrolux.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-db5eur01on0117.outbound.protection.outlook.com ([104.47.2.117]:49371
-        "EHLO EUR01-DB5-obe.outbound.protection.outlook.com"
+Received: from skprod3.natinst.com ([130.164.80.24]:51950 "EHLO ni.com"
         rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1752840AbcLIVTI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 9 Dec 2016 16:19:08 -0500
-Content-Language: en-US
+        id S1752273AbcLIWUN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 9 Dec 2016 17:20:13 -0500
+Content-Disposition: inline
+In-Reply-To: <DB6PR0601MB24234A8580A50FC97001DD46E0870@DB6PR0601MB2423.eurprd06.prod.outlook.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
-We're running Linux with the RT patch on our single core ARM embedded syste=
-m, kernel version 3.14. Our application has several threads, of which some =
-are running in mode SCHED_RR, with different priorities.
+On Fri, Dec 09, 2016 at 03:44:56PM +0000, Rasmus Ahlberg wrote:
+> Hi,
 
-One of the higher prio SCHED_RR threads is dependent on data from the TTY d=
-river. In the driver, a workqueue is used to deliver the data received, whi=
-ch is serviced by a kworker. The kworker runs in mode SCHED_OTHER. If one o=
-f the lower priority SCHED_RR threads is running, it will therefore block t=
-he kworker, and indirectly the higher prio SCHED_RR thread.
+Hello!
 
-Our tests show that the problem can be solved by setting mode SCHED_RR for =
-the kworker, which makes sense. However, this is not easily implemented in =
-the real system, as kworkers are created and destroyed dynamically. Also, a=
-s the kworkers performs work for other drivers also, this might not be opti=
-mal.
+> We're running Linux with the RT patch on our single core ARM embedded
+> system, kernel version 3.14. Our application has several threads, of
+> which some are running in mode SCHED_RR, with different priorities.
+>
+> One of the higher prio SCHED_RR threads is dependent on data from the
+> TTY driver. In the driver, a workqueue is used to deliver the data
+> received, which is serviced by a kworker. The kworker runs in mode
+> SCHED_OTHER. If one of the lower priority SCHED_RR threads is running,
+> it will therefore block the kworker, and indirectly the higher prio
+> SCHED_RR thread.
 
-What is the recommended way to solve this problem? Is there some kernel opt=
-ion that solves this, or do we need to make our own implementation?
+Is the workqueue usage that is problematic in the tty core?  Or, is it
+in a specific driver?  This is a more generic problem with most of the
+deferred work mechanisms that the kernel offers.
 
-Regards,
+Any work deferral system that doesn't map work units one-to-one with
+threads suffers the problem where the units cannot independently be
+prioritized amongst other system tasks.
 
- Rasmus Ahlberg
- Software Developer, R&D
- Electrolux Small Appliances
- Cell phone: +46-(0)738-857392
+> Our tests show that the problem can be solved by setting mode SCHED_RR
+> for the kworker, which makes sense. However, this is not easily
+> implemented in the real system, as kworkers are created and destroyed
+> dynamically.  Also, as the kworkers performs work for other drivers
+> also, this might not be optimal.
+>
+> What is the recommended way to solve this problem? Is there some
+> kernel option that solves this, or do we need to make our own
+> implementation?
 
- S:t G=F6ransgatan 143
- SE-105 45 Stockholm
- Sweden
+Everyone always asks "is there a kernel config option that magically
+fixes my problem?", and the answer is almost always "no" :).
 
+Without having more information about the case you are looking at, I
+think it will be difficult to prescribe a potential solution.  If the
+workqueue is being used to defer work from interrupt context, then the
+use of request_threaded_irq() and pushing the work to thread context
+would be better.
 
-This email and any attached files is for the attention of the intended reci=
-pient. The email and any attachments may contain material that is confident=
-ial, privileged and/or attorney work product. If you are not the intended r=
-ecipient: (a) contact the sender immediately and delete from your system al=
-l copies of the email including any attachments. (b) do not read, print, re=
-tain, copy or disseminate this message or any part of it. Any such unauthor=
-ized use may be unlawful. E-mail transmission cannot be guaranteed to be se=
-cure or error-free as information could be intercepted, corrupted, lost, de=
-stroyed, arrive late or incomplete, or contain viruses. The sender therefor=
-e can not accept liability for any errors or omissions in the contents of t=
-his message, which arise as a result of e-mail transmission. If verificatio=
-n is required please request a hard-copy version. The Electrolux Group www.=
-electrolux.com
+Hope that helps,
+
+   Julia
