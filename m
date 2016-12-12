@@ -1,65 +1,62 @@
-From: Julia Cartwright <julia@ni.com>
-Subject: Re: Blocked kworker in single core RT system
-Date: Fri, 9 Dec 2016 16:20:09 -0600
-Message-ID: <20161209222009.GJ1335@jcartwri.amer.corp.natinst.com>
-References: <DB6PR0601MB24234A8580A50FC97001DD46E0870@DB6PR0601MB2423.eurprd06.prod.outlook.com>
+From: =?UTF-8?Q?Zsitvai_P=C3=A9ter?= <pervuj.pjotr@gmail.com>
+Subject: Cyclictest latencies and deadlocks
+Date: Mon, 12 Dec 2016 13:08:22 +0100
+Message-ID: <CADMEAP7A7ACq3rVD-5WFufY=xjWHpTEm9PZ-E=S4qr=n=PLgsw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Rasmus Ahlberg <rasmus.ahlberg@electrolux.com>
+Content-Type: text/plain; charset=UTF-8
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod3.natinst.com ([130.164.80.24]:51950 "EHLO ni.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1752273AbcLIWUN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 9 Dec 2016 17:20:13 -0500
-Content-Disposition: inline
-In-Reply-To: <DB6PR0601MB24234A8580A50FC97001DD46E0870@DB6PR0601MB2423.eurprd06.prod.outlook.com>
+Received: from mail-wm0-f43.google.com ([74.125.82.43]:35554 "EHLO
+        mail-wm0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1750712AbcLLMIY (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 12 Dec 2016 07:08:24 -0500
+Received: by mail-wm0-f43.google.com with SMTP id a197so58428397wmd.0
+        for <linux-rt-users@vger.kernel.org>; Mon, 12 Dec 2016 04:08:23 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Dec 09, 2016 at 03:44:56PM +0000, Rasmus Ahlberg wrote:
-> Hi,
+Dear RT users,
 
-Hello!
+I've been trying to install the 4.4.32-rt43 kernel but am having
+trouble confirming it's working properly.
+For the config the only thing I changed was the Preemption Model to
+"Fully Preemptible Kernel (RT) (PREEMPT_RT_FULL)" while making sure
+high resolution timer support was on, the rest is from an earlier
+Ubuntu installation.
+It patched and compiled without any issues and was installed simply using make.
 
-> We're running Linux with the RT patch on our single core ARM embedded
-> system, kernel version 3.14. Our application has several threads, of
-> which some are running in mode SCHED_RR, with different priorities.
->
-> One of the higher prio SCHED_RR threads is dependent on data from the
-> TTY driver. In the driver, a workqueue is used to deliver the data
-> received, which is serviced by a kworker. The kworker runs in mode
-> SCHED_OTHER. If one of the lower priority SCHED_RR threads is running,
-> it will therefore block the kworker, and indirectly the higher prio
-> SCHED_RR thread.
+To test it I used cyclictest from
+https://rt.wiki.kernel.org/index.php/Cyclictest to measure the maximum
+latency under 100% load (the load was generated using the pi
+calculator from the same bundle).
+However the latency not only didn't improve but the stress test also
+frequently exited due to deadlocks.
 
-Is the workqueue usage that is problematic in the tty core?  Or, is it
-in a specific driver?  This is a more generic problem with most of the
-deferred work mechanisms that the kernel offers.
+The hardware is:
 
-Any work deferral system that doesn't map work units one-to-one with
-threads suffers the problem where the units cannot independently be
-prioritized amongst other system tasks.
+    Intel(R) Xeon(R) CPU E5-2420 0 @ 1.90GHz
+    64GB RAM
 
-> Our tests show that the problem can be solved by setting mode SCHED_RR
-> for the kworker, which makes sense. However, this is not easily
-> implemented in the real system, as kworkers are created and destroyed
-> dynamically.  Also, as the kworkers performs work for other drivers
-> also, this might not be optimal.
->
-> What is the recommended way to solve this problem? Is there some
-> kernel option that solves this, or do we need to make our own
-> implementation?
+And finally an example of pi_stress deadlocking:
 
-Everyone always asks "is there a kernel config option that magically
-fixes my problem?", and the answer is almost always "no" :).
+    $ ./pi_stress --duration=240 --groups=24
+    Starting PI Stress Test
+    Number of thread groups: 24
+    Duration of test run: 240 seconds
+    Number of inversions per group: unlimited
+        Admin thread SCHED_FIFO priority 4
+    24 groups of 3 threads will be created
+        High thread SCHED_FIFO priority 3
+        Med thread SCHED_FIFO priority 2
+        Low thread SCHED_FIFO priority 1
+    Current Inversions: 842971
+    WATCHDOG triggered: group 13 is deadlocked!
+    reporter stopping due to watchdog event
+    Stopping test
 
-Without having more information about the case you are looking at, I
-think it will be difficult to prescribe a potential solution.  If the
-workqueue is being used to defer work from interrupt context, then the
-use of request_threaded_irq() and pushing the work to thread context
-would be better.
+If anyone has any insight into what I could be doing wrong I'd greatly
+appreciate it.
 
-Hope that helps,
-
-   Julia
+Regards,
+Peter Zsitvai
