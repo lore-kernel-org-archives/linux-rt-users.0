@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.84-rt122
-Date: Tue, 13 Dec 2016 19:02:35 -0500
-Message-ID: <20161213190235.48ab47b8@gandalf.local.home>
+Subject: [ANNOUNCE] 4.1.36-rt42
+Date: Tue, 13 Dec 2016 19:00:59 -0500
+Message-ID: <20161213190059.0257003f@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,10 +18,10 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.2.84-rt122 stable release.
+I'm pleased to announce the 4.1.36-rt42 stable release.
 
 
-This release is just an update to the new stable 3.2.84 version
+This release is just an update to the new stable 4.1.36 version
 and no RT specific changes have been made.
 
 
@@ -29,17 +29,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.2-rt
-  Head SHA1: 98a2275e22b704b4b08d0bb3bb061d9aee139849
+  branch: v4.1-rt
+  Head SHA1: cb2511b843f39cc0a86cc638da41b558f466146e
 
 
-Or to build 3.2.84-rt122 directly, the following patches should be applied:
+Or to build 4.1.36-rt42 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.1.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.84.xz
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.1.36.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.84-rt122.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/patch-4.1.36-rt42.patch.xz
 
 
 
