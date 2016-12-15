@@ -1,49 +1,24 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 4.1.36-rt42
-Date: Tue, 13 Dec 2016 19:00:59 -0500
-Message-ID: <20161213190059.0257003f@gandalf.local.home>
+From: Bentley <lucio.filho@casacivil.ce.gov.br>
+Subject: Hello Beautiful
+Date: Thu, 15 Dec 2016 05:53:49 -0300 (BRT)
+Message-ID: <228763552.157796.1481792029076.JavaMail.zimbra__21558.0821889036$1481796430$gmane$org@casacivil.ce.gov.br>
+Reply-To: Bentley <2724479582@qq.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: unlisted-recipients:; (no To-header on input)
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from relay1.casacivil.ce.gov.br ([189.90.171.5]:53963 "EHLO
+        relay1.casacivil.ce.gov.br" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1755291AbcLOKFk (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 15 Dec 2016 05:05:40 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+How you doing today? I hope you are doing well. My name is Bentley, from the US. I'm in Syria right now fighting ISIS. I want to get to know you better, if I may be so bold. I consider myself an easy-going man, and I am currently looking for a relationship in which I feel loved. Please tell me more about yourself, if you don't mind.
 
-Dear RT Folks,
+Hope to hear from you soon.
 
-I'm pleased to announce the 4.1.36-rt42 stable release.
-
-
-This release is just an update to the new stable 4.1.36 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.1-rt
-  Head SHA1: cb2511b843f39cc0a86cc638da41b558f466146e
-
-
-Or to build 4.1.36-rt42 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.1.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.1.36.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/patch-4.1.36-rt42.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
+Regards,
+Bentley.
