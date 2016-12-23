@@ -1,86 +1,41 @@
-From: Zhang Xiao <xiao.zhang@windriver.com>
-Subject: [PATCH] genirq: use simple work queue for polling spurious irq
-Date: Fri, 23 Dec 2016 12:37:58 +0800
-Message-ID: <1482467878-17158-1-git-send-email-xiao.zhang@windriver.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [ANNOUNCE] v4.9-rt1
+Date: Fri, 23 Dec 2016 17:32:13 +0100
+Message-ID: <20161223163213.szj43nv7rnelkbty@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <linux-rt-users@vger.kernel.org>, <mingo@elte.hu>,
-        <tglx@linutronix.de>, <xiao.zhang@windriver.com>
-To: <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Spurious irq will be disabled and then polled through mod_timer in
-interrupt context. While mod_timer has a common spin_lock operation
-thus will cause an error: BUG: sleeping function called from invalid
-context.
+Dear RT folks!
 
-Move the mod_timer into simple work queue to fix it.
+I'm pleased to announce the v4.9-rt1 patch set. 
 
-Signed-off-by: Zhang Xiao <xiao.zhang@windriver.com>
----
- kernel/irq/spurious.c | 39 +++++++++++++++++++++++++++++++++++++++
- 1 file changed, 39 insertions(+)
+Please don't download and boot this before Christmas Eve.
 
-diff --git a/kernel/irq/spurious.c b/kernel/irq/spurious.c
-index 903a69c..0ce2a38 100644
---- a/kernel/irq/spurious.c
-+++ b/kernel/irq/spurious.c
-@@ -24,6 +24,36 @@ static DEFINE_TIMER(poll_spurious_irq_timer, poll_spurious_irqs, 0, 0);
- static int irq_poll_cpu;
- static atomic_t irq_poll_active;
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+#include <linux/work-simple.h>
-+
-+static bool mod_timer_work_ready __read_mostly;
-+static struct swork_event mod_timer_work;
-+
-+static void __mod_timer_work(struct swork_event *event)
-+{
-+	mod_timer(&poll_spurious_irq_timer,
-+		  jiffies + POLL_SPURIOUS_IRQ_INTERVAL);
-+}
-+
-+static int __init mod_timer_work_init(void)
-+{
-+	int err;
-+
-+	err = swork_get();
-+	if(err) {
-+		printk(KERN_ERR "mod_timer work init failed.\n");
-+		return err;
-+	}
-+
-+	INIT_SWORK(&mod_timer_work, __mod_timer_work);
-+	mod_timer_work_ready = true;
-+	return 0;
-+}
-+
-+early_initcall(mod_timer_work_init);
-+#endif /* CONFIG_PREEMPT_RT_FULL */
-+
- /*
-  * We wait here for a poller to finish.
-  *
-@@ -422,8 +452,17 @@ void note_interrupt(unsigned int irq, struct irq_desc *desc,
- 		desc->depth++;
- 		irq_disable(desc);
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+		/*
-+		 * Avoid calling mod_timer directly in interrupt
-+		 * contex here. Let simple workqueue do it.
-+		 */
-+		if(mod_timer_work_ready)
-+			swork_queue(&mod_timer_work);
-+#else
- 		mod_timer(&poll_spurious_irq_timer,
- 			  jiffies + POLL_SPURIOUS_IRQ_INTERVAL);
-+#endif /* CONFIG_PREEMPT_RT_FULL */
- 	}
- 	desc->irqs_unhandled = 0;
- }
--- 
-1.9.1
+Changes since v4.8.15-rt10
+
+  - rebase to v4.9
+
+Known issues
+	- CPU hotplug got a little better but can deadlock.
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.9-rt1
+
+The RT patch against v4.9 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.9/older/patch-4.9-rt1.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.9/older/patches-4.9-rt1.tar.xz
+
+Sebastian
