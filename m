@@ -1,35 +1,86 @@
-From: Federico Reghenzani <federico.reghenzani@polimi.it>
-Subject: Disable lapic timer
-Date: Thu, 22 Dec 2016 14:36:03 +0100
-Message-ID: <CACKey4zCv-B1EkcmzzAGpUMC5CyjyAfOEgfSmNS0Z=8cNe8R6A@mail.gmail.com>
+From: Zhang Xiao <xiao.zhang@windriver.com>
+Subject: [PATCH] genirq: use simple work queue for polling spurious irq
+Date: Fri, 23 Dec 2016 12:37:58 +0800
+Message-ID: <1482467878-17158-1-git-send-email-xiao.zhang@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-To: <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-db5eur01on0080.outbound.protection.outlook.com ([104.47.2.80]:4145
-        "EHLO EUR01-DB5-obe.outbound.protection.outlook.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S941153AbcLVNgx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 22 Dec 2016 08:36:53 -0500
-Received: by mail-oi0-f43.google.com with SMTP id b126so241897281oia.2
-        for <linux-rt-users@vger.kernel.org>; Thu, 22 Dec 2016 05:36:28 -0800 (PST)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain
+Cc: <linux-rt-users@vger.kernel.org>, <mingo@elte.hu>,
+        <tglx@linutronix.de>, <xiao.zhang@windriver.com>
+To: <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi all,
+Spurious irq will be disabled and then polled through mod_timer in
+interrupt context. While mod_timer has a common spin_lock operation
+thus will cause an error: BUG: sleeping function called from invalid
+context.
 
-I found this very old topic
+Move the mod_timer into simple work queue to fix it.
 
-https://www.spinics.net/lists/linux-rt-users/msg05422.html
+Signed-off-by: Zhang Xiao <xiao.zhang@windriver.com>
+---
+ kernel/irq/spurious.c | 39 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 39 insertions(+)
 
-is there any update on this? I want to disable the APIC timer in order
-to increase the determinism of my system, but I'm not sure if this is
-possible without editing the kernel source code.
-
-On my machine smp_apic_timer_interrupt takes 2-3 us, I know this is
-already low, but it's actually the only "frequent" latency that I have
-on the isolated cpu.
-
-
-Thank you,
-Federico Reghenzani
+diff --git a/kernel/irq/spurious.c b/kernel/irq/spurious.c
+index 903a69c..0ce2a38 100644
+--- a/kernel/irq/spurious.c
++++ b/kernel/irq/spurious.c
+@@ -24,6 +24,36 @@ static DEFINE_TIMER(poll_spurious_irq_timer, poll_spurious_irqs, 0, 0);
+ static int irq_poll_cpu;
+ static atomic_t irq_poll_active;
+ 
++#ifdef CONFIG_PREEMPT_RT_FULL
++#include <linux/work-simple.h>
++
++static bool mod_timer_work_ready __read_mostly;
++static struct swork_event mod_timer_work;
++
++static void __mod_timer_work(struct swork_event *event)
++{
++	mod_timer(&poll_spurious_irq_timer,
++		  jiffies + POLL_SPURIOUS_IRQ_INTERVAL);
++}
++
++static int __init mod_timer_work_init(void)
++{
++	int err;
++
++	err = swork_get();
++	if(err) {
++		printk(KERN_ERR "mod_timer work init failed.\n");
++		return err;
++	}
++
++	INIT_SWORK(&mod_timer_work, __mod_timer_work);
++	mod_timer_work_ready = true;
++	return 0;
++}
++
++early_initcall(mod_timer_work_init);
++#endif /* CONFIG_PREEMPT_RT_FULL */
++
+ /*
+  * We wait here for a poller to finish.
+  *
+@@ -422,8 +452,17 @@ void note_interrupt(unsigned int irq, struct irq_desc *desc,
+ 		desc->depth++;
+ 		irq_disable(desc);
+ 
++#ifdef CONFIG_PREEMPT_RT_FULL
++		/*
++		 * Avoid calling mod_timer directly in interrupt
++		 * contex here. Let simple workqueue do it.
++		 */
++		if(mod_timer_work_ready)
++			swork_queue(&mod_timer_work);
++#else
+ 		mod_timer(&poll_spurious_irq_timer,
+ 			  jiffies + POLL_SPURIOUS_IRQ_INTERVAL);
++#endif /* CONFIG_PREEMPT_RT_FULL */
+ 	}
+ 	desc->irqs_unhandled = 0;
+ }
+-- 
+1.9.1
