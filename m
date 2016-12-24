@@ -1,101 +1,171 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [RFC v2] timers: Don't wake ktimersoftd on every tick
-Date: Fri, 23 Dec 2016 18:28:55 +0100
-Message-ID: <20161223172855.oulixazoxikkkijp@linutronix.de>
-References: <20161213214405.28554-1-haris.okanovic@ni.com>
+From: Suman Anna <s-anna@ti.com>
+Subject: Re: [PATCH] irqchip: keystone: Fix "scheduling while atomic" on rt
+Date: Fri, 23 Dec 2016 19:34:38 -0600
+Message-ID: <a5044346-620a-8102-01ff-8c8f536f8bf0@ti.com>
+References: <20161208233310.10329-1-grygorii.strashko@ti.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        tglx@linutronix.de, julia.cartwright@ni.com, gratian.crisan@ni.com
-To: Haris Okanovic <haris.okanovic@ni.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20161213214405.28554-1-haris.okanovic@ni.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: 7bit
+Cc: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
+        Sam Nelson <sam.nelson@ti.com>, <bigeasy@linutronix.de>
+To: Grygorii Strashko <grygorii.strashko@ti.com>,
+        Santosh Shilimkar <ssantosh@kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Marc Zyngier <marc.zyngier@arm.com>,
+        Jason Cooper <jason@lakedaemon.net>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from lelnx194.ext.ti.com ([198.47.27.80]:50879 "EHLO
+        lelnx194.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752989AbcLXBfg (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 23 Dec 2016 20:35:36 -0500
+In-Reply-To: <20161208233310.10329-1-grygorii.strashko@ti.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2016-12-13 15:44:05 [-0600], Haris Okanovic wrote:
-> Changed the way timers are collected per Julia and Thomas'
+Hi Grygorii,
 
-I can only see Julia's response to the initial thread.
-
-> recommendation: Expired timers are now collected in interrupt context
-> and fired in ktimersoftd to avoid double-walk of `pending_map`.
+On 12/08/2016 05:33 PM, Grygorii Strashko wrote:
+> From: "Strashko, Grygorii" <grygorii.strashko@ti.com>
 > 
-> This is implemented by storing lists of expired timers in timer_base,
-> which carries a memory overhead 9*sizeof(pointer) per CPU. The timer
-> system uses hlist's which don't have end-node references, making it
-> impossible to merge 2 hlist's in constant time. I.e. Merging requires
-> walking one list. I also considered switching `vectors` to regular
-> list's which don't have this limitations, but that approach has the same
-> memory overhead. list_head is bigger than hlist_head by sizeof(pointer)
-> and is instantiated 9+ times per CPU as `vectors`. I believe the only
-> way to trim overhead is to spend more CPU cycles in interrupt context
-> either in list merging (unbounded operation) or the original double-walk
-> implementation. Any suggestions/preferences?
+> The below call chain generates "scheduling while atomic" backtrace and
+> causes system crash when Keystone 2 IRQ chip driver is used with RT-kernel:
 > 
-> As before, a 6h run of cyclictest without CPU affinity shows decrease in
-> 22-70us latency range. 
-what does this mean? Your cyclictest runs on a random CPU with one thread
-only?
-
-> No change in max jitter. 
-Does this mean your average latency went down 20-70us and your max is
-the same?
-
-> No change when `-S` is
-> used.
-
--S gives you one thread per core, makes sure it stays on that core and
-uses clock_nanosleep().
-
-clock_nanosleep() should be used no matter what. 
-
-
-> [Before/after traces]
+> gic_handle_irq()
+>  |-__handle_domain_irq()
+>   |-generic_handle_irq()
+>    |-keystone_irq_handler()
+>     |-regmap_read()
+>      |-regmap_lock_spinlock()
+>       |-rt_spin_lock()
 > 
-> ftp://ftp.ni.com/outgoing/tp02-timer-peek-traces.tgz
-> (Email me if link dies. Server periodically purges old files.)
+> The reason is that Keystone driver dispatches IRQ using chained IRQ handler
+> and accesses I/O memory through syscon->regmap(mmio) which is implemented
+> as fast_io regmap and uses regular spinlocks for synchronization, but
+> spinlocks transformed to rt_mutexes on RT.
 > 
-> [Hardware/software/config]
+> Hence, convert Keystone 2 IRQ driver to use generic irq handler instead of
+> chained IRQ handler. This way it will be compatible with RT kernel where it
+> will be forced thread IRQ handler while in non-RT kernel it still will be
+> executed in HW IRQ context.
 > 
->  NI cRIO-9033
->   2 core Intel Atom CPU
+> Cc: Suman Anna <s-anna@ti.com>
+> Signed-off-by: Grygorii Strashko <grygorii.strashko@ti.com>
+> ---
+> Hi,
 > 
->  Kernel 4.8.6-rt5
->   CONFIG_HZ_PERIODIC=y
+> In general, there is an option to convert this driver to use nested threaded
+> irq handlers (this should not affect our current user of these irqs from
+> performance point of view), but that will affect on our current remoteproc and
+> UIO based drivers (including uio core) which do not expect to use threaded
+> irq and use request_irq(). These drivers and UIO core might require to be
+> updated to use threaded irqs and (or) request_any_context_irq().
 > 
-> [Outstanding concerns/issues/questions]
-> 
-> I'm relatively new to the timer subsystem, so please feel free to poke
-> as many holes as possible in this change. A few things that concern me
-> at the moment are:
-> 
-> Can jiffies change while one or more cpus is inside tick_sched_timer(),
->  in interrupt context? I'm copying jiffies to a local variable in
->  find_expired_timers() to ensure it doesn't run unbounded, but I'm not
->  sure if that's necessary.
+> Suman, what do you think?
 
-It could change. Only the house keeping does update jiffies in
-tick_sched_do_timer().
+I like the current patch as is as we do not want the downstream
+subsystems/interrupt users of this driver to change their design
+semantics to have to use threaded irqs, and cause a cascading effect.
 
-> Any special considerations for testing NO_HZ builds? (Other than letting
-> it run idle for a while)
+Tested-by: Suman Anna <s-anna@ti.com>
+
+regards
+Suman
+
+
+
 > 
-> timers_dead_cpu() presently asserts no timer callback is actively
-> running, which suggests that timers must be canceled prior to disabling
-> CPUs; otherwise, there's a race between active timers and hotplug
-> which can crash the whole kernel. Is this a safe assumption to make and
-> are there any special considerations for CPU hotplug testing?
-
-timers_dead_cpu() and hrtimers_dead_cpu() migrate timer away. At that
-point the CPU should be down already so a timer can't run on that CPU.
-
-> Other tests/performance benchmark I should run?
+>  drivers/irqchip/irq-keystone.c | 28 +++++++++++++++++++---------
+>  1 file changed, 19 insertions(+), 9 deletions(-)
 > 
-> Source: https://github.com/harisokanovic/linux/tree/dev/hokanovi/timer-peek-v2
+> diff --git a/drivers/irqchip/irq-keystone.c b/drivers/irqchip/irq-keystone.c
+> index 54a5e87..efbcf84 100644
+> --- a/drivers/irqchip/irq-keystone.c
+> +++ b/drivers/irqchip/irq-keystone.c
+> @@ -19,9 +19,9 @@
+>  #include <linux/bitops.h>
+>  #include <linux/module.h>
+>  #include <linux/moduleparam.h>
+> +#include <linux/interrupt.h>
+>  #include <linux/irqdomain.h>
+>  #include <linux/irqchip.h>
+> -#include <linux/irqchip/chained_irq.h>
+>  #include <linux/of.h>
+>  #include <linux/of_platform.h>
+>  #include <linux/mfd/syscon.h>
+> @@ -39,6 +39,7 @@ struct keystone_irq_device {
+>  	struct irq_domain	*irqd;
+>  	struct regmap		*devctrl_regs;
+>  	u32			devctrl_offset;
+> +	raw_spinlock_t		wa_lock;
+>  };
+>  
+>  static inline u32 keystone_irq_readl(struct keystone_irq_device *kirq)
+> @@ -83,17 +84,15 @@ static void keystone_irq_ack(struct irq_data *d)
+>  	/* nothing to do here */
+>  }
+>  
+> -static void keystone_irq_handler(struct irq_desc *desc)
+> +static irqreturn_t keystone_irq_handler(int irq, void *keystone_irq)
+>  {
+> -	unsigned int irq = irq_desc_get_irq(desc);
+> -	struct keystone_irq_device *kirq = irq_desc_get_handler_data(desc);
+> +	struct keystone_irq_device *kirq = keystone_irq;
+> +	unsigned long wa_lock_flags;
+>  	unsigned long pending;
+>  	int src, virq;
+>  
+>  	dev_dbg(kirq->dev, "start irq %d\n", irq);
+>  
+> -	chained_irq_enter(irq_desc_get_chip(desc), desc);
+> -
+>  	pending = keystone_irq_readl(kirq);
+>  	keystone_irq_writel(kirq, pending);
+>  
+> @@ -111,13 +110,15 @@ static void keystone_irq_handler(struct irq_desc *desc)
+>  			if (!virq)
+>  				dev_warn(kirq->dev, "spurious irq detected hwirq %d, virq %d\n",
+>  					 src, virq);
+> +			raw_spin_lock_irqsave(&kirq->wa_lock, wa_lock_flags);
+>  			generic_handle_irq(virq);
+> +			raw_spin_unlock_irqrestore(&kirq->wa_lock,
+> +						   wa_lock_flags);
+>  		}
+>  	}
+>  
+> -	chained_irq_exit(irq_desc_get_chip(desc), desc);
+> -
+>  	dev_dbg(kirq->dev, "end irq %d\n", irq);
+> +	return IRQ_HANDLED;
+>  }
+>  
+>  static int keystone_irq_map(struct irq_domain *h, unsigned int virq,
+> @@ -182,9 +183,16 @@ static int keystone_irq_probe(struct platform_device *pdev)
+>  		return -ENODEV;
+>  	}
+>  
+> +	raw_spin_lock_init(&kirq->wa_lock);
+> +
+>  	platform_set_drvdata(pdev, kirq);
+>  
+> -	irq_set_chained_handler_and_data(kirq->irq, keystone_irq_handler, kirq);
+> +	ret = request_irq(kirq->irq, keystone_irq_handler,
+> +			  0, dev_name(dev), kirq);
+> +	if (ret) {
+> +		irq_domain_remove(kirq->irqd);
+> +		return ret;
+> +	}
+>  
+>  	/* clear all source bits */
+>  	keystone_irq_writel(kirq, ~0x0);
+> @@ -199,6 +207,8 @@ static int keystone_irq_remove(struct platform_device *pdev)
+>  	struct keystone_irq_device *kirq = platform_get_drvdata(pdev);
+>  	int hwirq;
+>  
+> +	free_irq(kirq->irq, kirq);
+> +
+>  	for (hwirq = 0; hwirq < KEYSTONE_N_IRQ; hwirq++)
+>  		irq_dispose_mapping(irq_find_mapping(kirq->irqd, hwirq));
+>  
 > 
-> Thanks,
-> Haris
 
-Sebastian
