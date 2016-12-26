@@ -1,7 +1,7 @@
 From: Mike Galbraith <efault@gmx.de>
-Subject: [patch-rt] kvm: Convert pvclock_gtod_sync_lock to raw_spinlock_t
-Date: Mon, 26 Dec 2016 07:54:08 +0100
-Message-ID: <1482735248.4476.58.camel@gmx.de>
+Subject: [rfc patch-rt] posix_cpu_timers: Kill hotplug cpu notifier
+Date: Mon, 26 Dec 2016 08:00:54 +0100
+Message-ID: <1482735654.4476.62.camel@gmx.de>
 References: <20161223163213.szj43nv7rnelkbty@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -12,142 +12,229 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mout.gmx.net ([212.227.17.21]:50049 "EHLO mout.gmx.net"
+Received: from mout.gmx.net ([212.227.15.19]:52964 "EHLO mout.gmx.net"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1750975AbcLZGy2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 26 Dec 2016 01:54:28 -0500
+        id S1751222AbcLZHBJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 26 Dec 2016 02:01:09 -0500
 In-Reply-To: <20161223163213.szj43nv7rnelkbty@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Fix splat below.  Lock is short hold, make it raw.
-
-[15528.614216] BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:995
-[15528.614218] in_atomic(): 0, irqs_disabled(): 1, pid: 19619, name: qemu-system-x86
-[15528.614218] no locks held by qemu-system-x86/19619.
-[15528.614219] irq event stamp: 321840
-[15528.614224] hardirqs last  enabled at (321839): [<ffffffff816a8467>] entry_SYSCALL_64_fastpath+0x5/0xc2
-[15528.614244] hardirqs last disabled at (321840): [<ffffffffa08578f4>] kvm_arch_vm_ioctl+0x234/0xda0 [kvm]
-[15528.614246] softirqs last  enabled at (0): [<ffffffff81077e8a>] copy_process.part.36+0x5ba/0x20b0
-[15528.614247] softirqs last disabled at (0): [<          (null)>]           (null)
-[15528.614250] CPU: 7 PID: 19619 Comm: qemu-system-x86 Tainted: G            E   4.9.0-rt1-virgin #1
-[15528.614250] Hardware name: MEDION MS-7848/MS-7848, BIOS M7848W08.20C 09/23/2013
-[15528.614253]  ffffc9000b98bc30 ffffffff8136874d 0000000000000000 ffff8803e76db200
-[15528.614255]  ffffc9000b98bc68 ffffffff810abe9d ffff8800353472d0 ffff8800353472d0
-[15528.614257]  00007ffc53dbc2b0 000000000000000b 00007ffc53dbc2b0 ffffc9000b98bc88
-[15528.614257] Call Trace:
-[15528.614262]  [<ffffffff8136874d>] dump_stack+0x85/0xc8
-[15528.614266]  [<ffffffff810abe9d>] ___might_sleep+0x15d/0x260
-[15528.614268]  [<ffffffff816a7ca4>] rt_spin_lock+0x24/0x80
-[15528.614283]  [<ffffffffa084b212>] __get_kvmclock_ns+0x22/0xf0 [kvm]
-[15528.614297]  [<ffffffffa08578fc>] kvm_arch_vm_ioctl+0x23c/0xda0 [kvm]
-[15528.614300]  [<ffffffff810dc5d5>] ? __lock_acquire+0x305/0x16a0
-[15528.614301]  [<ffffffff8107d916>] ? unpin_current_cpu+0x16/0x70
-[15528.614314]  [<ffffffffa08409dd>] kvm_vm_ioctl+0x9d/0x920 [kvm]
-[15528.614316]  [<ffffffff8127b547>] ? __fget+0x107/0x220
-[15528.614318]  [<ffffffff810da5f9>] ? __lock_is_held+0x49/0x70
-[15528.614320]  [<ffffffff8126e9b6>] do_vfs_ioctl+0x96/0x6c0
-[15528.614321]  [<ffffffff8127b564>] ? __fget+0x124/0x220
-[15528.614322]  [<ffffffff8127b445>] ? __fget+0x5/0x220
-[15528.614324]  [<ffffffff8126f021>] SyS_ioctl+0x41/0x70
-[15528.614326]  [<ffffffff816a8481>] entry_SYSCALL_64_fastpath+0x1f/0xc2
+Shamelessly steal softirq.c thread initialization method.
 
 Signed-off-by: Mike Galbraith <efault@gmx.de>
 ---
- arch/x86/include/asm/kvm_host.h |    2 +-
- arch/x86/kvm/x86.c              |   20 ++++++++++----------
- 2 files changed, 11 insertions(+), 11 deletions(-)
+ include/linux/cpuhotplug.h     |    1 
+ kernel/time/posix-cpu-timers.c |  158 ++++++++++++++---------------------------
+ 2 files changed, 56 insertions(+), 103 deletions(-)
 
---- a/arch/x86/include/asm/kvm_host.h
-+++ b/arch/x86/include/asm/kvm_host.h
-@@ -755,7 +755,7 @@ struct kvm_arch {
- 	u64 cur_tsc_generation;
- 	int nr_vcpus_matched_tsc;
+--- a/include/linux/cpuhotplug.h
++++ b/include/linux/cpuhotplug.h
+@@ -20,6 +20,7 @@ enum cpuhp_state {
+ 	CPUHP_SLUB_DEAD,
+ 	CPUHP_MM_WRITEBACK_DEAD,
+ 	CPUHP_SOFTIRQ_DEAD,
++	CPUHP_POSIXCPUTMR_DEAD,
+ 	CPUHP_NET_MVNETA_DEAD,
+ 	CPUHP_CPUIDLE_DEAD,
+ 	CPUHP_ARM64_FPSIMD_DEAD,
+--- a/kernel/time/posix-cpu-timers.c
++++ b/kernel/time/posix-cpu-timers.c
+@@ -13,6 +13,8 @@
+ #include <linux/random.h>
+ #include <linux/tick.h>
+ #include <linux/workqueue.h>
++#include <linux/smpboot.h>
++#include <linux/cpuhotplug.h>
  
--	spinlock_t pvclock_gtod_sync_lock;
-+	raw_spinlock_t pvclock_gtod_sync_lock;
- 	bool use_master_clock;
- 	u64 master_kernel_ns;
- 	cycle_t master_cycle_now;
---- a/arch/x86/kvm/x86.c
-+++ b/arch/x86/kvm/x86.c
-@@ -1540,7 +1540,7 @@ void kvm_write_tsc(struct kvm_vcpu *vcpu
- 	kvm_vcpu_write_tsc_offset(vcpu, offset);
- 	raw_spin_unlock_irqrestore(&kvm->arch.tsc_write_lock, flags);
+ /*
+  * Called after updating RLIMIT_CPU to run cpu timer and update
+@@ -1220,62 +1222,36 @@ static void __run_posix_cpu_timers(struc
+ DEFINE_PER_CPU(struct task_struct *, posix_timer_task);
+ DEFINE_PER_CPU(struct task_struct *, posix_timer_tasklist);
  
--	spin_lock(&kvm->arch.pvclock_gtod_sync_lock);
-+	raw_spin_lock(&kvm->arch.pvclock_gtod_sync_lock);
- 	if (!matched) {
- 		kvm->arch.nr_vcpus_matched_tsc = 0;
- 	} else if (!already_matched) {
-@@ -1548,7 +1548,7 @@ void kvm_write_tsc(struct kvm_vcpu *vcpu
+-static int posix_cpu_timers_thread(void *data)
++static void posix_cpu_timers_thread(unsigned int cpu)
+ {
+-	int cpu = (long)data;
++	struct task_struct *tsk = NULL;
++	struct task_struct *next = NULL;
+ 
+-	BUG_ON(per_cpu(posix_timer_task,cpu) != current);
++	/* grab task list */
++	raw_local_irq_disable();
++	tsk = per_cpu(posix_timer_tasklist, cpu);
++	per_cpu(posix_timer_tasklist, cpu) = NULL;
++	raw_local_irq_enable();
++
++	/* Process task list */
++	while (tsk) {
++		/* save next */
++		next = tsk->posix_timer_list;
+ 
+-	while (!kthread_should_stop()) {
+-		struct task_struct *tsk = NULL;
+-		struct task_struct *next = NULL;
+-
+-		if (cpu_is_offline(cpu))
+-			goto wait_to_die;
+-
+-		/* grab task list */
+-		raw_local_irq_disable();
+-		tsk = per_cpu(posix_timer_tasklist, cpu);
+-		per_cpu(posix_timer_tasklist, cpu) = NULL;
+-		raw_local_irq_enable();
+-
+-		/* its possible the list is empty, just return */
+-		if (!tsk) {
+-			set_current_state(TASK_INTERRUPTIBLE);
+-			schedule();
+-			__set_current_state(TASK_RUNNING);
+-			continue;
+-		}
+-
+-		/* Process task list */
+-		while (1) {
+-			/* save next */
+-			next = tsk->posix_timer_list;
++		/* run the task timers, clear its ptr and
++		 * unreference it
++		 */
++		__run_posix_cpu_timers(tsk);
++		tsk->posix_timer_list = NULL;
++		put_task_struct(tsk);
+ 
+-			/* run the task timers, clear its ptr and
+-			 * unreference it
+-			 */
+-			__run_posix_cpu_timers(tsk);
+-			tsk->posix_timer_list = NULL;
+-			put_task_struct(tsk);
+-
+-			/* check if this is the last on the list */
+-			if (next == tsk)
+-				break;
+-			tsk = next;
+-		}
++		/* check if this is the last on the list */
++		if (next == tsk)
++			break;
++		tsk = next;
  	}
+-	return 0;
  
- 	kvm_track_tsc_matching(vcpu);
--	spin_unlock(&kvm->arch.pvclock_gtod_sync_lock);
-+	raw_spin_unlock(&kvm->arch.pvclock_gtod_sync_lock);
+-wait_to_die:
+-	/* Wait for kthread_stop */
+-	set_current_state(TASK_INTERRUPTIBLE);
+-	while (!kthread_should_stop()) {
+-		schedule();
+-		set_current_state(TASK_INTERRUPTIBLE);
+-	}
+-	__set_current_state(TASK_RUNNING);
+-	return 0;
++	return;
  }
  
- EXPORT_SYMBOL_GPL(kvm_write_tsc);
-@@ -1715,7 +1715,7 @@ static void kvm_gen_update_masterclock(s
- 	struct kvm_vcpu *vcpu;
- 	struct kvm_arch *ka = &kvm->arch;
- 
--	spin_lock(&ka->pvclock_gtod_sync_lock);
-+	raw_spin_lock(&ka->pvclock_gtod_sync_lock);
- 	kvm_make_mclock_inprogress_request(kvm);
- 	/* no guest entries from this point */
- 	pvclock_update_vm_gtod_copy(kvm);
-@@ -1727,7 +1727,7 @@ static void kvm_gen_update_masterclock(s
- 	kvm_for_each_vcpu(i, vcpu, kvm)
- 		clear_bit(KVM_REQ_MCLOCK_INPROGRESS, &vcpu->requests);
- 
--	spin_unlock(&ka->pvclock_gtod_sync_lock);
-+	raw_spin_unlock(&ka->pvclock_gtod_sync_lock);
- #endif
+ static inline int __fastpath_timer_check(struct task_struct *tsk)
+@@ -1322,72 +1298,48 @@ void run_posix_cpu_timers(struct task_st
+ 	}
  }
  
-@@ -1736,15 +1736,15 @@ static u64 __get_kvmclock_ns(struct kvm
- 	struct kvm_arch *ka = &kvm->arch;
- 	struct pvclock_vcpu_time_info hv_clock;
+-/*
+- * posix_cpu_thread_call - callback that gets triggered when a CPU is added.
+- * Here we can start up the necessary migration thread for the new CPU.
+- */
+-static int posix_cpu_thread_call(struct notifier_block *nfb,
+-				 unsigned long action, void *hcpu)
++static void posix_cpu_thread_setup(unsigned int cpu)
+ {
+-	int cpu = (long)hcpu;
+-	struct task_struct *p;
+-	struct sched_param param;
++	struct sched_param param = { .sched_priority = MAX_RT_PRIO-1 };
  
--	spin_lock(&ka->pvclock_gtod_sync_lock);
-+	raw_spin_lock(&ka->pvclock_gtod_sync_lock);
- 	if (!ka->use_master_clock) {
--		spin_unlock(&ka->pvclock_gtod_sync_lock);
-+		raw_spin_unlock(&ka->pvclock_gtod_sync_lock);
- 		return ktime_get_boot_ns() + ka->kvmclock_offset;
- 	}
+-	switch (action) {
+-	case CPU_UP_PREPARE:
+-		p = kthread_create(posix_cpu_timers_thread, hcpu,
+-					"posixcputmr/%d",cpu);
+-		if (IS_ERR(p))
+-			return NOTIFY_BAD;
+-		p->flags |= PF_NOFREEZE;
+-		kthread_bind(p, cpu);
+-		/* Must be high prio to avoid getting starved */
+-		param.sched_priority = MAX_RT_PRIO-1;
+-		sched_setscheduler(p, SCHED_FIFO, &param);
+-		per_cpu(posix_timer_task,cpu) = p;
+-		break;
+-	case CPU_ONLINE:
+-		/* Strictly unneccessary, as first user will wake it. */
+-		wake_up_process(per_cpu(posix_timer_task,cpu));
+-		break;
+-#ifdef CONFIG_HOTPLUG_CPU
+-	case CPU_UP_CANCELED:
+-		/* Unbind it from offline cpu so it can run.  Fall thru. */
+-		kthread_bind(per_cpu(posix_timer_task, cpu),
+-			     cpumask_any(cpu_online_mask));
+-		kthread_stop(per_cpu(posix_timer_task,cpu));
+-		per_cpu(posix_timer_task,cpu) = NULL;
+-		break;
+-	case CPU_DEAD:
+-		kthread_stop(per_cpu(posix_timer_task,cpu));
+-		per_cpu(posix_timer_task,cpu) = NULL;
+-		break;
+-#endif
+-	}
+-	return NOTIFY_OK;
++	current->flags |= PF_NOFREEZE;
++	sched_setscheduler(current, SCHED_FIFO, &param);
+ }
  
- 	hv_clock.tsc_timestamp = ka->master_cycle_now;
- 	hv_clock.system_time = ka->master_kernel_ns + ka->kvmclock_offset;
--	spin_unlock(&ka->pvclock_gtod_sync_lock);
-+	raw_spin_unlock(&ka->pvclock_gtod_sync_lock);
+-/* Register at highest priority so that task migration (migrate_all_tasks)
+- * happens before everything else.
+- */
+-static struct notifier_block posix_cpu_thread_notifier = {
+-	.notifier_call = posix_cpu_thread_call,
+-	.priority = 10
++static void posix_cpu_thread_cleanup(unsigned int cpu, bool online)
++{
++	struct sched_param param = { .sched_priority = 0 };
++
++	current->flags &= ~PF_NOFREEZE;
++	sched_setscheduler(current, SCHED_NORMAL, &param);
++}
++
++static int posix_cpu_thread_should_run(unsigned int cpu)
++{
++	return !!per_cpu(posix_timer_tasklist, cpu);
++}
++
++static struct smp_hotplug_thread posix_timer_threads = {
++	.store			= &posix_timer_task,
++	.setup			= posix_cpu_thread_setup,
++	.cleanup		= posix_cpu_thread_cleanup,
++	.thread_should_run	= posix_cpu_thread_should_run,
++	.thread_fn		= posix_cpu_timers_thread,
++	.thread_comm		= "posixcputmr/%u",
+ };
  
- 	kvm_get_time_scale(NSEC_PER_SEC, __this_cpu_read(cpu_tsc_khz) * 1000LL,
- 			   &hv_clock.tsc_shift,
-@@ -1835,13 +1835,13 @@ static int kvm_guest_time_update(struct
- 	 * If the host uses TSC clock, then passthrough TSC as stable
- 	 * to the guest.
- 	 */
--	spin_lock(&ka->pvclock_gtod_sync_lock);
-+	raw_spin_lock(&ka->pvclock_gtod_sync_lock);
- 	use_master_clock = ka->use_master_clock;
- 	if (use_master_clock) {
- 		host_tsc = ka->master_cycle_now;
- 		kernel_ns = ka->master_kernel_ns;
- 	}
--	spin_unlock(&ka->pvclock_gtod_sync_lock);
-+	raw_spin_unlock(&ka->pvclock_gtod_sync_lock);
+ static int __init posix_cpu_thread_init(void)
+ {
+-	void *hcpu = (void *)(long)smp_processor_id();
+-	/* Start one for boot CPU. */
++	struct smp_hotplug_thread *t = &posix_timer_threads;
+ 	unsigned long cpu;
  
- 	/* Keep irq disabled to prevent changes to the clock */
- 	local_irq_save(flags);
-@@ -7831,7 +7831,7 @@ int kvm_arch_init_vm(struct kvm *kvm, un
+-	/* init the per-cpu posix_timer_tasklets */
++	/* init the per-cpu posix_timer_tasklist */
+ 	for_each_possible_cpu(cpu)
+ 		per_cpu(posix_timer_tasklist, cpu) = NULL;
  
- 	raw_spin_lock_init(&kvm->arch.tsc_write_lock);
- 	mutex_init(&kvm->arch.apic_map_lock);
--	spin_lock_init(&kvm->arch.pvclock_gtod_sync_lock);
-+	raw_spin_lock_init(&kvm->arch.pvclock_gtod_sync_lock);
- 
- 	kvm->arch.kvmclock_offset = -ktime_get_boot_ns();
- 	pvclock_update_vm_gtod_copy(kvm);
+-	posix_cpu_thread_call(&posix_cpu_thread_notifier, CPU_UP_PREPARE, hcpu);
+-	posix_cpu_thread_call(&posix_cpu_thread_notifier, CPU_ONLINE, hcpu);
+-	register_cpu_notifier(&posix_cpu_thread_notifier);
++	cpuhp_setup_state_nocalls(CPUHP_POSIXCPUTMR_DEAD, "posixcputmr:dead", NULL, NULL);
++	BUG_ON(smpboot_register_percpu_thread(t));
++
+ 	return 0;
+ }
+ early_initcall(posix_cpu_thread_init);
