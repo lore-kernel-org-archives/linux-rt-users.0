@@ -1,171 +1,153 @@
-From: Suman Anna <s-anna@ti.com>
-Subject: Re: [PATCH] irqchip: keystone: Fix "scheduling while atomic" on rt
-Date: Fri, 23 Dec 2016 19:34:38 -0600
-Message-ID: <a5044346-620a-8102-01ff-8c8f536f8bf0@ti.com>
-References: <20161208233310.10329-1-grygorii.strashko@ti.com>
+From: Mike Galbraith <efault@gmx.de>
+Subject: [patch-rt] kvm: Convert pvclock_gtod_sync_lock to raw_spinlock_t
+Date: Mon, 26 Dec 2016 07:54:08 +0100
+Message-ID: <1482735248.4476.58.camel@gmx.de>
+References: <20161223163213.szj43nv7rnelkbty@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Cc: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
-        Sam Nelson <sam.nelson@ti.com>, <bigeasy@linutronix.de>
-To: Grygorii Strashko <grygorii.strashko@ti.com>,
-        Santosh Shilimkar <ssantosh@kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Marc Zyngier <marc.zyngier@arm.com>,
-        Jason Cooper <jason@lakedaemon.net>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lelnx194.ext.ti.com ([198.47.27.80]:50879 "EHLO
-        lelnx194.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1752989AbcLXBfg (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 23 Dec 2016 20:35:36 -0500
-In-Reply-To: <20161208233310.10329-1-grygorii.strashko@ti.com>
+Received: from mout.gmx.net ([212.227.17.21]:50049 "EHLO mout.gmx.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1750975AbcLZGy2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 26 Dec 2016 01:54:28 -0500
+In-Reply-To: <20161223163213.szj43nv7rnelkbty@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Grygorii,
+Fix splat below.  Lock is short hold, make it raw.
 
-On 12/08/2016 05:33 PM, Grygorii Strashko wrote:
-> From: "Strashko, Grygorii" <grygorii.strashko@ti.com>
-> 
-> The below call chain generates "scheduling while atomic" backtrace and
-> causes system crash when Keystone 2 IRQ chip driver is used with RT-kernel:
-> 
-> gic_handle_irq()
->  |-__handle_domain_irq()
->   |-generic_handle_irq()
->    |-keystone_irq_handler()
->     |-regmap_read()
->      |-regmap_lock_spinlock()
->       |-rt_spin_lock()
-> 
-> The reason is that Keystone driver dispatches IRQ using chained IRQ handler
-> and accesses I/O memory through syscon->regmap(mmio) which is implemented
-> as fast_io regmap and uses regular spinlocks for synchronization, but
-> spinlocks transformed to rt_mutexes on RT.
-> 
-> Hence, convert Keystone 2 IRQ driver to use generic irq handler instead of
-> chained IRQ handler. This way it will be compatible with RT kernel where it
-> will be forced thread IRQ handler while in non-RT kernel it still will be
-> executed in HW IRQ context.
-> 
-> Cc: Suman Anna <s-anna@ti.com>
-> Signed-off-by: Grygorii Strashko <grygorii.strashko@ti.com>
-> ---
-> Hi,
-> 
-> In general, there is an option to convert this driver to use nested threaded
-> irq handlers (this should not affect our current user of these irqs from
-> performance point of view), but that will affect on our current remoteproc and
-> UIO based drivers (including uio core) which do not expect to use threaded
-> irq and use request_irq(). These drivers and UIO core might require to be
-> updated to use threaded irqs and (or) request_any_context_irq().
-> 
-> Suman, what do you think?
+[15528.614216] BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:995
+[15528.614218] in_atomic(): 0, irqs_disabled(): 1, pid: 19619, name: qemu-system-x86
+[15528.614218] no locks held by qemu-system-x86/19619.
+[15528.614219] irq event stamp: 321840
+[15528.614224] hardirqs last  enabled at (321839): [<ffffffff816a8467>] entry_SYSCALL_64_fastpath+0x5/0xc2
+[15528.614244] hardirqs last disabled at (321840): [<ffffffffa08578f4>] kvm_arch_vm_ioctl+0x234/0xda0 [kvm]
+[15528.614246] softirqs last  enabled at (0): [<ffffffff81077e8a>] copy_process.part.36+0x5ba/0x20b0
+[15528.614247] softirqs last disabled at (0): [<          (null)>]           (null)
+[15528.614250] CPU: 7 PID: 19619 Comm: qemu-system-x86 Tainted: G            E   4.9.0-rt1-virgin #1
+[15528.614250] Hardware name: MEDION MS-7848/MS-7848, BIOS M7848W08.20C 09/23/2013
+[15528.614253]  ffffc9000b98bc30 ffffffff8136874d 0000000000000000 ffff8803e76db200
+[15528.614255]  ffffc9000b98bc68 ffffffff810abe9d ffff8800353472d0 ffff8800353472d0
+[15528.614257]  00007ffc53dbc2b0 000000000000000b 00007ffc53dbc2b0 ffffc9000b98bc88
+[15528.614257] Call Trace:
+[15528.614262]  [<ffffffff8136874d>] dump_stack+0x85/0xc8
+[15528.614266]  [<ffffffff810abe9d>] ___might_sleep+0x15d/0x260
+[15528.614268]  [<ffffffff816a7ca4>] rt_spin_lock+0x24/0x80
+[15528.614283]  [<ffffffffa084b212>] __get_kvmclock_ns+0x22/0xf0 [kvm]
+[15528.614297]  [<ffffffffa08578fc>] kvm_arch_vm_ioctl+0x23c/0xda0 [kvm]
+[15528.614300]  [<ffffffff810dc5d5>] ? __lock_acquire+0x305/0x16a0
+[15528.614301]  [<ffffffff8107d916>] ? unpin_current_cpu+0x16/0x70
+[15528.614314]  [<ffffffffa08409dd>] kvm_vm_ioctl+0x9d/0x920 [kvm]
+[15528.614316]  [<ffffffff8127b547>] ? __fget+0x107/0x220
+[15528.614318]  [<ffffffff810da5f9>] ? __lock_is_held+0x49/0x70
+[15528.614320]  [<ffffffff8126e9b6>] do_vfs_ioctl+0x96/0x6c0
+[15528.614321]  [<ffffffff8127b564>] ? __fget+0x124/0x220
+[15528.614322]  [<ffffffff8127b445>] ? __fget+0x5/0x220
+[15528.614324]  [<ffffffff8126f021>] SyS_ioctl+0x41/0x70
+[15528.614326]  [<ffffffff816a8481>] entry_SYSCALL_64_fastpath+0x1f/0xc2
 
-I like the current patch as is as we do not want the downstream
-subsystems/interrupt users of this driver to change their design
-semantics to have to use threaded irqs, and cause a cascading effect.
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+---
+ arch/x86/include/asm/kvm_host.h |    2 +-
+ arch/x86/kvm/x86.c              |   20 ++++++++++----------
+ 2 files changed, 11 insertions(+), 11 deletions(-)
 
-Tested-by: Suman Anna <s-anna@ti.com>
-
-regards
-Suman
-
-
-
-> 
->  drivers/irqchip/irq-keystone.c | 28 +++++++++++++++++++---------
->  1 file changed, 19 insertions(+), 9 deletions(-)
-> 
-> diff --git a/drivers/irqchip/irq-keystone.c b/drivers/irqchip/irq-keystone.c
-> index 54a5e87..efbcf84 100644
-> --- a/drivers/irqchip/irq-keystone.c
-> +++ b/drivers/irqchip/irq-keystone.c
-> @@ -19,9 +19,9 @@
->  #include <linux/bitops.h>
->  #include <linux/module.h>
->  #include <linux/moduleparam.h>
-> +#include <linux/interrupt.h>
->  #include <linux/irqdomain.h>
->  #include <linux/irqchip.h>
-> -#include <linux/irqchip/chained_irq.h>
->  #include <linux/of.h>
->  #include <linux/of_platform.h>
->  #include <linux/mfd/syscon.h>
-> @@ -39,6 +39,7 @@ struct keystone_irq_device {
->  	struct irq_domain	*irqd;
->  	struct regmap		*devctrl_regs;
->  	u32			devctrl_offset;
-> +	raw_spinlock_t		wa_lock;
->  };
->  
->  static inline u32 keystone_irq_readl(struct keystone_irq_device *kirq)
-> @@ -83,17 +84,15 @@ static void keystone_irq_ack(struct irq_data *d)
->  	/* nothing to do here */
->  }
->  
-> -static void keystone_irq_handler(struct irq_desc *desc)
-> +static irqreturn_t keystone_irq_handler(int irq, void *keystone_irq)
->  {
-> -	unsigned int irq = irq_desc_get_irq(desc);
-> -	struct keystone_irq_device *kirq = irq_desc_get_handler_data(desc);
-> +	struct keystone_irq_device *kirq = keystone_irq;
-> +	unsigned long wa_lock_flags;
->  	unsigned long pending;
->  	int src, virq;
->  
->  	dev_dbg(kirq->dev, "start irq %d\n", irq);
->  
-> -	chained_irq_enter(irq_desc_get_chip(desc), desc);
-> -
->  	pending = keystone_irq_readl(kirq);
->  	keystone_irq_writel(kirq, pending);
->  
-> @@ -111,13 +110,15 @@ static void keystone_irq_handler(struct irq_desc *desc)
->  			if (!virq)
->  				dev_warn(kirq->dev, "spurious irq detected hwirq %d, virq %d\n",
->  					 src, virq);
-> +			raw_spin_lock_irqsave(&kirq->wa_lock, wa_lock_flags);
->  			generic_handle_irq(virq);
-> +			raw_spin_unlock_irqrestore(&kirq->wa_lock,
-> +						   wa_lock_flags);
->  		}
->  	}
->  
-> -	chained_irq_exit(irq_desc_get_chip(desc), desc);
-> -
->  	dev_dbg(kirq->dev, "end irq %d\n", irq);
-> +	return IRQ_HANDLED;
->  }
->  
->  static int keystone_irq_map(struct irq_domain *h, unsigned int virq,
-> @@ -182,9 +183,16 @@ static int keystone_irq_probe(struct platform_device *pdev)
->  		return -ENODEV;
->  	}
->  
-> +	raw_spin_lock_init(&kirq->wa_lock);
-> +
->  	platform_set_drvdata(pdev, kirq);
->  
-> -	irq_set_chained_handler_and_data(kirq->irq, keystone_irq_handler, kirq);
-> +	ret = request_irq(kirq->irq, keystone_irq_handler,
-> +			  0, dev_name(dev), kirq);
-> +	if (ret) {
-> +		irq_domain_remove(kirq->irqd);
-> +		return ret;
-> +	}
->  
->  	/* clear all source bits */
->  	keystone_irq_writel(kirq, ~0x0);
-> @@ -199,6 +207,8 @@ static int keystone_irq_remove(struct platform_device *pdev)
->  	struct keystone_irq_device *kirq = platform_get_drvdata(pdev);
->  	int hwirq;
->  
-> +	free_irq(kirq->irq, kirq);
-> +
->  	for (hwirq = 0; hwirq < KEYSTONE_N_IRQ; hwirq++)
->  		irq_dispose_mapping(irq_find_mapping(kirq->irqd, hwirq));
->  
-> 
-
+--- a/arch/x86/include/asm/kvm_host.h
++++ b/arch/x86/include/asm/kvm_host.h
+@@ -755,7 +755,7 @@ struct kvm_arch {
+ 	u64 cur_tsc_generation;
+ 	int nr_vcpus_matched_tsc;
+ 
+-	spinlock_t pvclock_gtod_sync_lock;
++	raw_spinlock_t pvclock_gtod_sync_lock;
+ 	bool use_master_clock;
+ 	u64 master_kernel_ns;
+ 	cycle_t master_cycle_now;
+--- a/arch/x86/kvm/x86.c
++++ b/arch/x86/kvm/x86.c
+@@ -1540,7 +1540,7 @@ void kvm_write_tsc(struct kvm_vcpu *vcpu
+ 	kvm_vcpu_write_tsc_offset(vcpu, offset);
+ 	raw_spin_unlock_irqrestore(&kvm->arch.tsc_write_lock, flags);
+ 
+-	spin_lock(&kvm->arch.pvclock_gtod_sync_lock);
++	raw_spin_lock(&kvm->arch.pvclock_gtod_sync_lock);
+ 	if (!matched) {
+ 		kvm->arch.nr_vcpus_matched_tsc = 0;
+ 	} else if (!already_matched) {
+@@ -1548,7 +1548,7 @@ void kvm_write_tsc(struct kvm_vcpu *vcpu
+ 	}
+ 
+ 	kvm_track_tsc_matching(vcpu);
+-	spin_unlock(&kvm->arch.pvclock_gtod_sync_lock);
++	raw_spin_unlock(&kvm->arch.pvclock_gtod_sync_lock);
+ }
+ 
+ EXPORT_SYMBOL_GPL(kvm_write_tsc);
+@@ -1715,7 +1715,7 @@ static void kvm_gen_update_masterclock(s
+ 	struct kvm_vcpu *vcpu;
+ 	struct kvm_arch *ka = &kvm->arch;
+ 
+-	spin_lock(&ka->pvclock_gtod_sync_lock);
++	raw_spin_lock(&ka->pvclock_gtod_sync_lock);
+ 	kvm_make_mclock_inprogress_request(kvm);
+ 	/* no guest entries from this point */
+ 	pvclock_update_vm_gtod_copy(kvm);
+@@ -1727,7 +1727,7 @@ static void kvm_gen_update_masterclock(s
+ 	kvm_for_each_vcpu(i, vcpu, kvm)
+ 		clear_bit(KVM_REQ_MCLOCK_INPROGRESS, &vcpu->requests);
+ 
+-	spin_unlock(&ka->pvclock_gtod_sync_lock);
++	raw_spin_unlock(&ka->pvclock_gtod_sync_lock);
+ #endif
+ }
+ 
+@@ -1736,15 +1736,15 @@ static u64 __get_kvmclock_ns(struct kvm
+ 	struct kvm_arch *ka = &kvm->arch;
+ 	struct pvclock_vcpu_time_info hv_clock;
+ 
+-	spin_lock(&ka->pvclock_gtod_sync_lock);
++	raw_spin_lock(&ka->pvclock_gtod_sync_lock);
+ 	if (!ka->use_master_clock) {
+-		spin_unlock(&ka->pvclock_gtod_sync_lock);
++		raw_spin_unlock(&ka->pvclock_gtod_sync_lock);
+ 		return ktime_get_boot_ns() + ka->kvmclock_offset;
+ 	}
+ 
+ 	hv_clock.tsc_timestamp = ka->master_cycle_now;
+ 	hv_clock.system_time = ka->master_kernel_ns + ka->kvmclock_offset;
+-	spin_unlock(&ka->pvclock_gtod_sync_lock);
++	raw_spin_unlock(&ka->pvclock_gtod_sync_lock);
+ 
+ 	kvm_get_time_scale(NSEC_PER_SEC, __this_cpu_read(cpu_tsc_khz) * 1000LL,
+ 			   &hv_clock.tsc_shift,
+@@ -1835,13 +1835,13 @@ static int kvm_guest_time_update(struct
+ 	 * If the host uses TSC clock, then passthrough TSC as stable
+ 	 * to the guest.
+ 	 */
+-	spin_lock(&ka->pvclock_gtod_sync_lock);
++	raw_spin_lock(&ka->pvclock_gtod_sync_lock);
+ 	use_master_clock = ka->use_master_clock;
+ 	if (use_master_clock) {
+ 		host_tsc = ka->master_cycle_now;
+ 		kernel_ns = ka->master_kernel_ns;
+ 	}
+-	spin_unlock(&ka->pvclock_gtod_sync_lock);
++	raw_spin_unlock(&ka->pvclock_gtod_sync_lock);
+ 
+ 	/* Keep irq disabled to prevent changes to the clock */
+ 	local_irq_save(flags);
+@@ -7831,7 +7831,7 @@ int kvm_arch_init_vm(struct kvm *kvm, un
+ 
+ 	raw_spin_lock_init(&kvm->arch.tsc_write_lock);
+ 	mutex_init(&kvm->arch.apic_map_lock);
+-	spin_lock_init(&kvm->arch.pvclock_gtod_sync_lock);
++	raw_spin_lock_init(&kvm->arch.pvclock_gtod_sync_lock);
+ 
+ 	kvm->arch.kvmclock_offset = -ktime_get_boot_ns();
+ 	pvclock_update_vm_gtod_copy(kvm);
