@@ -1,92 +1,119 @@
-From: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
-Subject: Re: Building 4.9 RT kernel help
-Date: Mon, 26 Dec 2016 21:40:46 +0100
-Message-ID: <1482784846.9839.1.camel@alice-dsl.net>
-References: <CAHS-zUEv6uBTR8yo9PPWvV8wEurG6ojaa9UjBT11yZ0abPEo6g@mail.gmail.com>
-         <20161226212405.7758bea5@archlinux.localdomain>
+From: Haris Okanovic <haris.okanovic@ni.com>
+Subject: Re: [RFC v2] timers: Don't wake ktimersoftd on every tick
+Date: Wed, 28 Dec 2016 12:06:42 -0600
+Message-ID: <6febe7d3-9969-7802-72cb-f5d9b297a559@ni.com>
+References: <20161213214405.28554-1-haris.okanovic@ni.com>
+ <20161223172855.oulixazoxikkkijp@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail79c50.megamailservers.eu ([91.136.10.89]:54064 "EHLO
-        mail70c50.megamailservers.eu" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1755608AbcLZUkv (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 26 Dec 2016 15:40:51 -0500
-Received: from archlinux.localdomain (x5ce0d10d.dyn.telefonica.de [92.224.209.13])
-        (authenticated bits=0)
-        by mail70c50.megamailservers.eu (8.14.9/8.13.1) with ESMTP id uBQKekgx019878
-        (version=TLSv1/SSLv3 cipher=AES256-GCM-SHA384 bits=256 verify=NO)
-        for <linux-rt-users@vger.kernel.org>; Mon, 26 Dec 2016 20:40:48 +0000
-In-Reply-To: <20161226212405.7758bea5@archlinux.localdomain>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        tglx@linutronix.de, julia.cartwright@ni.com, gratian.crisan@ni.com
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20161223172855.oulixazoxikkkijp@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 2016-12-26 at 21:24 +0100, Ralf Mardorf wrote:
-> On Mon, 26 Dec 2016 15:01:01 -0500, Vasiliy Gagin wrote:
-> > I was able to build plain kernel v4.9.
-> > It builds v4.9-rt1 fine too, but fails when I try to install it.
-> > 
-> > console message is
-> 
-> Message of what?
-> 
-> Did you try to install packages, perhaps a linux package, before a
-> linux-header package was installed?
-> 
-> > run-parts: executing /etc/kernel/postinst.d/dkms 4.9.0-rt1
-> > /boot/vmlinuz-4.9.0-rt1
-> > Error! Bad return status for module build on kernel: 4.9.0-rt1 (x86_64)
-> > 
-> > and there is following in make.log
-> > 
-> > KMS make.log for open-vm-tools-9.4.6 for kernel 4.9.0-rt1 (x86_64)
-> > Mon Dec 26 14:09:03 EST 2016
-> > /bin/sh: 1: test: -I./arch/x86/include: unexpected operator
-> > Using standalone build system.
-> > Makefile:167: Makefile.normal: No such file or directory
-> > make[3]: *** No rule to make target 'Makefile.normal'.  Stop.
-> > /bin/sh: 1: test: -I./arch/x86/include: unexpected operator
-> > Using standalone build system.
-> > Makefile:167: Makefile.normal: No such file or directory
-> > make[3]: *** No rule to make target 'Makefile.normal'.  Stop.
-> > 
-> > I'm very new to the linux building process. Please Help
-> 
-> There seems to be a DKMS hook. DKMS fails to build kernel modules. The
-> kernel itself and all other modules might be installed, just some
-> custom modules perhaps failed to build.
-> 
-> I build 4.9-rt1 without issues and had also good luck with DKMS. It was
-> able to build vbox modules.
-> 
-> $ ls -hAl /lib/modules/4.9.0-rt1-1-rt-presonus/kernel/misc/ total 688K
-> -rw-r--r-- 1 root root 582K Dec 24 08:14 vboxdrv.ko
-> -rw-r--r-- 1 root root  16K Dec 24 08:14 vboxnetadp.ko
-> -rw-r--r-- 1 root root  41K Dec 24 08:14 vboxnetflt.ko
-> -rw-r--r-- 1 root root  39K Dec 24 08:14 vboxpci.ko
-> 
-> However, sometimes DKMS can't build those modules, but then the kernel
-> still could be used, just vbox doesn't work with this kernel.
-> 
-> In your case, KMS is something graphics related and you seemingly use
-> VMware.
+On 12/23/2016 11:28 AM, Sebastian Andrzej Siewior wrote:
+> On 2016-12-13 15:44:05 [-0600], Haris Okanovic wrote:
+>> Changed the way timers are collected per Julia and Thomas'
+>
+> I can only see Julia's response to the initial thread.
+>
 
-Hahaha :D, pardon, "KMS" most likely is from "DKMS", just the "K" is
-missing. But, the rest still might be correct. Did you try to boot the
-kernel? I suspect it is installed, just running VMware might fail.
-Assuming just a header package wasn't installed, simply reinstall the
-kernel package, after the the headers are installed, or run DKMS
-manually from command line.
+I should have been more clear. Thomas commented on irc and recommended 
+Julia's approach.
 
-> Again, perhaps a linux-header package wasn't installed and after
-> installing the linux package DMKS was missing headers.
-> 
-> Regards,
-> Ralf
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
+>> recommendation: Expired timers are now collected in interrupt context
+>> and fired in ktimersoftd to avoid double-walk of `pending_map`.
+>>
+>> This is implemented by storing lists of expired timers in timer_base,
+>> which carries a memory overhead 9*sizeof(pointer) per CPU. The timer
+>> system uses hlist's which don't have end-node references, making it
+>> impossible to merge 2 hlist's in constant time. I.e. Merging requires
+>> walking one list. I also considered switching `vectors` to regular
+>> list's which don't have this limitations, but that approach has the same
+>> memory overhead. list_head is bigger than hlist_head by sizeof(pointer)
+>> and is instantiated 9+ times per CPU as `vectors`. I believe the only
+>> way to trim overhead is to spend more CPU cycles in interrupt context
+>> either in list merging (unbounded operation) or the original double-walk
+>> implementation. Any suggestions/preferences?
+>>
+>> As before, a 6h run of cyclictest without CPU affinity shows decrease in
+>> 22-70us latency range.
+> what does this mean? Your cyclictest runs on a random CPU with one thread
+> only?
+>
+
+Yes. My point is that cyclictest only shows a significant difference 
+(before and after this change) when `-S` is not used.
+
+>> No change in max jitter.
+> Does this mean your average latency went down 20-70us and your max is
+> the same?
+>
+
+Yes. Average latency (20-70us range) goes down in a single-threaded run 
+of cyclictest. Max jitter stays the same in both single and multi-thread 
+runs.
+
+>> No change when `-S` is
+>> used.
+>
+> -S gives you one thread per core, makes sure it stays on that core and
+> uses clock_nanosleep().
+>
+> clock_nanosleep() should be used no matter what.
+>
+>
+>> [Before/after traces]
+>>
+>> ftp://ftp.ni.com/outgoing/tp02-timer-peek-traces.tgz
+>> (Email me if link dies. Server periodically purges old files.)
+>>
+>> [Hardware/software/config]
+>>
+>>  NI cRIO-9033
+>>   2 core Intel Atom CPU
+>>
+>>  Kernel 4.8.6-rt5
+>>   CONFIG_HZ_PERIODIC=y
+>>
+>> [Outstanding concerns/issues/questions]
+>>
+>> I'm relatively new to the timer subsystem, so please feel free to poke
+>> as many holes as possible in this change. A few things that concern me
+>> at the moment are:
+>>
+>> Can jiffies change while one or more cpus is inside tick_sched_timer(),
+>>  in interrupt context? I'm copying jiffies to a local variable in
+>>  find_expired_timers() to ensure it doesn't run unbounded, but I'm not
+>>  sure if that's necessary.
+>
+> It could change. Only the house keeping does update jiffies in
+> tick_sched_do_timer().
+>
+>> Any special considerations for testing NO_HZ builds? (Other than letting
+>> it run idle for a while)
+>>
+>> timers_dead_cpu() presently asserts no timer callback is actively
+>> running, which suggests that timers must be canceled prior to disabling
+>> CPUs; otherwise, there's a race between active timers and hotplug
+>> which can crash the whole kernel. Is this a safe assumption to make and
+>> are there any special considerations for CPU hotplug testing?
+>
+> timers_dead_cpu() and hrtimers_dead_cpu() migrate timer away. At that
+> point the CPU should be down already so a timer can't run on that CPU.
+>
+>> Other tests/performance benchmark I should run?
+>>
+>> Source: https://github.com/harisokanovic/linux/tree/dev/hokanovi/timer-peek-v2
+>>
+>> Thanks,
+>> Haris
+>
+> Sebastian
+>
+
+-- Haris
