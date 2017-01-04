@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.18.46-rt50
-Date: Wed, 4 Jan 2017 15:58:27 -0500
-Message-ID: <20170104155827.48475423@gandalf.local.home>
+Subject: [ANNOUNCE] 4.4.39-rt50
+Date: Wed, 4 Jan 2017 15:57:20 -0500
+Message-ID: <20170104155720.284cd6ea@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,10 +18,10 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.18.46-rt50 stable release.
+I'm pleased to announce the 4.4.39-rt50 stable release.
 
 
-This release is just an update to the new stable 3.18.46 version
+This release is just an update to the new stable 4.4.39 version
 and no RT specific changes have been made.
 
 
@@ -29,17 +29,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.18-rt
-  Head SHA1: cd7973372c310ab7ed8cd4db79d96ec29fcf9a17
+  branch: v4.4-rt
+  Head SHA1: b7f7e93d2a5699d64cafdeb944c92a09801aa46e
 
 
-Or to build 3.18.46-rt50 directly, the following patches should be applied:
+Or to build 4.4.39-rt50 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.46.xz
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.39.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.46-rt50.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.39-rt50.patch.xz
 
 
 
