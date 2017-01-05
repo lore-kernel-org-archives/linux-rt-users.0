@@ -1,49 +1,50 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 4.4.39-rt50
-Date: Wed, 4 Jan 2017 15:57:20 -0500
-Message-ID: <20170104155720.284cd6ea@gandalf.local.home>
+From: Federico Reghenzani <federico.reghenzani@polimi.it>
+Subject: NO_HZ and ktimersoftd
+Date: Thu, 5 Jan 2017 10:29:57 +0100
+Message-ID: <CACKey4zmx_=k6r8BY3B7K9ZuR6x5=11U25-st4oK8WAgo1WgQQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+To: <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-ve1eur01on0081.outbound.protection.outlook.com ([104.47.1.81]:23212
+        "EHLO EUR01-VE1-obe.outbound.protection.outlook.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S1755593AbdAEJa1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 5 Jan 2017 04:30:27 -0500
+Received: by mail-oi0-f47.google.com with SMTP id 3so390734878oih.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 05 Jan 2017 01:30:21 -0800 (PST)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
+
+Hi all,
+
+I'm trying to setup a RT Linux system (currently on 4.8.2 PREEMPT_RT
+patched), and I enabled he NO_HZ_FULL flag in order to reduce the
+scheduling interrupts jitter. Trying to isolate one core, I also moved
+all interrupts and threads to other CPUs.
+
+This works fine, however when I run my RT application, the thread
+kimersoftd is always in "running" state, thus the scheduling interrupt
+triggers (because there exists more than 1 task available to run).
+Consequently, the advantages of NO_HZ_FULL are vanished.
+
+With kernel trace I found these events on the isolated CPU:
+
+       user_loop-772   [003] d..h...   419.818172: softirq_raise:
+vec=1 [action=TIMER]
+       user_loop-772   [003] d...2..   419.818174: sched_switch:
+prev_comm=user_loop prev_pid=772 prev_prio=120 prev_state=R ==>
+next_comm=ktimersoftd/3 next_pid=41 next_prio=98
+   ktimersoftd/3-41    [003] .....11   419.818175: softirq_entry:
+vec=1 [action=TIMER]
+   ktimersoftd/3-41    [003] .....11   419.818176: softirq_exit: vec=1
+[action=TIMER]
+   ktimersoftd/3-41    [003] d...2..   419.818177: sched_switch:
+prev_comm=ktimersoftd/3 prev_pid=41 prev_prio=98 prev_state=S ==>
+next_comm=user_loop next_pid=772 next_prio=120
+
+I don't know why ktimersoftd is running at every tick.
 
 
-Dear RT Folks,
-
-I'm pleased to announce the 4.4.39-rt50 stable release.
-
-
-This release is just an update to the new stable 4.4.39 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.4-rt
-  Head SHA1: b7f7e93d2a5699d64cafdeb944c92a09801aa46e
-
-
-Or to build 4.4.39-rt50 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.39.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.39-rt50.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
+Thank you in advance for any hint,
+Federico
