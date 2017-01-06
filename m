@@ -1,41 +1,53 @@
-From: Julia Cartwright <julia@ni.com>
-Subject: Re: NO_HZ and ktimersoftd
-Date: Thu, 5 Jan 2017 10:32:10 -0600
-Message-ID: <20170105163210.GJ1335@jcartwri.amer.corp.natinst.com>
-References: <CACKey4zmx_=k6r8BY3B7K9ZuR6x5=11U25-st4oK8WAgo1WgQQ@mail.gmail.com>
+From: Mike Galbraith <efault@gmx.de>
+Subject: [rfc patch-rt] radix-tree: Partially disable memcg accounting in
+ radix_tree_node_alloc()
+Date: Fri, 06 Jan 2017 09:13:23 +0100
+Message-ID: <1483690403.11478.8.camel@gmx.de>
+References: <20161223163213.szj43nv7rnelkbty@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Cc: <linux-rt-users@vger.kernel.org>
-To: Federico Reghenzani <federico.reghenzani@polimi.it>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod2.natinst.com ([130.164.80.23]:59789 "EHLO ni.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1761257AbdAEQcQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 5 Jan 2017 11:32:16 -0500
-Content-Disposition: inline
-In-Reply-To: <CACKey4zmx_=k6r8BY3B7K9ZuR6x5=11U25-st4oK8WAgo1WgQQ@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20161223163213.szj43nv7rnelkbty@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Jan 05, 2017 at 10:29:57AM +0100, Federico Reghenzani wrote:
-> Hi all,
->
+radix-tree: Partially disable memcg accounting in radix_tree_node_alloc()
 
-Hello-
+Having no preload, which turns accounting off for non-rt kernels, trying to
+allocate coming from shmem_fault() when memcg is full sends us scurrying off
+to pagefault_out_of_memory(), with dramatic (usually terminal) consequences.
+LTP's madvise06 testcase triggers this quite well, and per gitk, the below
+was the beginning of RT memcg woes.
 
-> I'm trying to setup a RT Linux system (currently on 4.8.2 PREEMPT_RT
-> patched), and I enabled he NO_HZ_FULL flag in order to reduce the
-> scheduling interrupts jitter. Trying to isolate one core, I also moved
-> all interrupts and threads to other CPUs.
-> 
-> This works fine, however when I run my RT application, the thread
-> kimersoftd is always in "running" state, thus the scheduling interrupt
-> triggers (because there exists more than 1 task available to run).
-> Consequently, the advantages of NO_HZ_FULL are vanished.
+58e698af4c63 radix-tree: account radix_tree_node to memory cgroup
 
-This sounds like the same problem that Haris (cc'd) has looked into and
-has put together a proposed solution.  See the thread here:
+Turn memcg accounting off for RT in the problematic path.
 
-   http://www.spinics.net/lists/linux-rt-users/msg16113.html
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+Cc: stable-rt@vger.kernel.org # +v4.6-rt
+---
+ lib/radix-tree.c |    7 +++++++
+ 1 file changed, 7 insertions(+)
 
-   Julia
+--- a/lib/radix-tree.c
++++ b/lib/radix-tree.c
+@@ -303,6 +303,13 @@ radix_tree_node_alloc(struct radix_tree_
+ 	if (!gfpflags_allow_blocking(gfp_mask) && !in_interrupt()) {
+ 		struct radix_tree_preload *rtp;
+ 
++#if defined(CONFIG_PREEMPT_RT_FULL) && defined(CONFIG_MEMCG)
++		/*
++		 * Arriving here from shmem_fault() and meeting a full memcg
++		 * will send us to pagefault_out_of_memory(), and a dead box.
++		 */
++		gfp_mask &= ~__GFP_ACCOUNT;
++#endif
+ 		/*
+ 		 * Even if the caller has preloaded, try to allocate from the
+ 		 * cache first for the new node to get accounted to the memory
