@@ -1,300 +1,82 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: {patch-rt] cpuset: Convert callback_lock to raw_spinlock_t
-Date: Sun, 08 Jan 2017 09:32:25 +0100
-Message-ID: <1483864345.5676.3.camel@gmx.de>
-References: <20161223163213.szj43nv7rnelkbty@linutronix.de>
+From: Alexander Dahl <post@lespocky.de>
+Subject: Re: debian 8 rt kernel
+Date: Fri, 13 Jan 2017 08:52:15 +0100
+Message-ID: <20170113075215.GF2532@falbala.home.lespocky.de>
+References: <CADzbtTJ8BAX+HaBQkxe8_YOjX7RKyghNz5jS8UToEoSbMXXo3w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20161223163213.szj43nv7rnelkbty@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="65ImJOski3p8EhYV"
+Cc: linux-rt-users@vger.kernel.org, info@pengutronix.de
+To: luca paganotti <luca.paganotti@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mout.kundenserver.de ([212.227.17.10]:62954 "EHLO
+        mout.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751132AbdAMHwf (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 13 Jan 2017 02:52:35 -0500
+Content-Disposition: inline
+In-Reply-To: <CADzbtTJ8BAX+HaBQkxe8_YOjX7RKyghNz5jS8UToEoSbMXXo3w@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 
-The two commits below add up to a cpuset might_sleep() splat for RT:
+--65ImJOski3p8EhYV
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-8447a0fee974 cpuset: convert callback_mutex to a spinlock
-344736f29b35 cpuset: simplify cpuset_node_allowed API
+Hei hei,
 
-BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:995
-in_atomic(): 0, irqs_disabled(): 1, pid: 11718, name: cset
-CPU: 135 PID: 11718 Comm: cset Tainted: G            E   4.10.0-rt1-rt #4
-Hardware name: Intel Corporation BRICKLAND/BRICKLAND, BIOS BRHSXSD1.86B.0056.R01.1409242327 09/24/2014
-Call Trace:
- ? dump_stack+0x5c/0x81
- ? ___might_sleep+0xf4/0x170
- ? rt_spin_lock+0x1c/0x50
- ? __cpuset_node_allowed+0x66/0xc0
- ? ___slab_alloc+0x390/0x570
- ? anon_vma_fork+0x8f/0x140
- ? copy_page_range+0x6cf/0xb00
- ? anon_vma_fork+0x8f/0x140
- ? __slab_alloc.isra.74+0x5a/0x81
- ? anon_vma_fork+0x8f/0x140
- ? kmem_cache_alloc+0x1b5/0x1f0
- ? anon_vma_fork+0x8f/0x140
- ? copy_process.part.35+0x1670/0x1ee0
- ? _do_fork+0xdd/0x3f0
- ? _do_fork+0xdd/0x3f0
- ? do_syscall_64+0x61/0x170
- ? entry_SYSCALL64_slow_path+0x25/0x25
+On Tue, Dec 20, 2016 at 10:01:26AM +0100, luca paganotti wrote:
+> Hi all, I'm new to debian and I would like to install an rt kernel on
+> my debian 8 jessie machine, I've configured the pengutronix repository
+> in my /etc/apt/sources.list.d as:
+> deb http://debian.pengutronix.de/debian jessie main contrib non-free
+> in pengutronix.list file, but I don't know which packages I need to
+> install. I would like to use the rt kernel for my musical work with
+> jack, ardour, etc ...
 
-The later ensured that a NUMA box WILL take callback_lock in atomic
-context by removing the allocator and reclaim path __GFP_HARDWALL
-usage which prevented such contexts from taking callback_mutex.
+I had a look at this package repository and it contains only very old
+kernels, 2.6.29, 2.6.31 and 2.6.33. If you are on jessie, you may want
+to try linux-image-rt-686-pae or linux-image-rt-amd64 from backports
+which depends on a more recent 4.8 rt kernel. I'm not sure why
+pengutronix still allows access to those outdated kernels.
 
-One option would be to reinstate __GFP_HARDWALL protections for
-RT, however, as the 8447a0fee974 changelog states:
+Besides: I used jack some time ago on Debian and some packages for
+music, which were available in previous Debian releases are not
+available anymore. Also the default sound setup is not optimized for
+audio production, as far as I could tell and what I heard and saw, I
+would have a look for a specialised Linux distribution like Ubuntu
+Studio, AVLinux, or KXStudio (there are more, use a search engine).
 
-The callback_mutex is only used to synchronize reads/updates of cpusets'
-flags and cpu/node masks. These operations should always proceed fast so
-there's no reason why we can't use a spinlock instead of the mutex.
+Greets
+Alex
 
-Signed-off-by: Mike Galbraith <efault@gmx.de>
-Cc: stable-rt@vger.kernel.org
----
- kernel/cpuset.c |   66 ++++++++++++++++++++++++++++----------------------------
- 1 file changed, 33 insertions(+), 33 deletions(-)
+--=20
+=BBWith the first link, the chain is forged. The first speech censured,=20
+the first thought forbidden, the first freedom denied, chains us all=20
+irrevocably.=AB (Jean-Luc Picard, quoting Judge Aaron Satie)
+*** GnuPG-FP: C28E E6B9 0263 95CF 8FAF  08FA 34AD CD00 7221 5CC6 ***
 
---- a/kernel/cpuset.c
-+++ b/kernel/cpuset.c
-@@ -284,7 +284,7 @@ static struct cpuset top_cpuset = {
-  */
- 
- static DEFINE_MUTEX(cpuset_mutex);
--static DEFINE_SPINLOCK(callback_lock);
-+static DEFINE_RAW_SPINLOCK(callback_lock);
- 
- static struct workqueue_struct *cpuset_migrate_mm_wq;
- 
-@@ -907,9 +907,9 @@ static void update_cpumasks_hier(struct
- 			continue;
- 		rcu_read_unlock();
- 
--		spin_lock_irq(&callback_lock);
-+		raw_spin_lock_irq(&callback_lock);
- 		cpumask_copy(cp->effective_cpus, new_cpus);
--		spin_unlock_irq(&callback_lock);
-+		raw_spin_unlock_irq(&callback_lock);
- 
- 		WARN_ON(!cgroup_subsys_on_dfl(cpuset_cgrp_subsys) &&
- 			!cpumask_equal(cp->cpus_allowed, cp->effective_cpus));
-@@ -974,9 +974,9 @@ static int update_cpumask(struct cpuset
- 	if (retval < 0)
- 		return retval;
- 
--	spin_lock_irq(&callback_lock);
-+	raw_spin_lock_irq(&callback_lock);
- 	cpumask_copy(cs->cpus_allowed, trialcs->cpus_allowed);
--	spin_unlock_irq(&callback_lock);
-+	raw_spin_unlock_irq(&callback_lock);
- 
- 	/* use trialcs->cpus_allowed as a temp variable */
- 	update_cpumasks_hier(cs, trialcs->cpus_allowed);
-@@ -1176,9 +1176,9 @@ static void update_nodemasks_hier(struct
- 			continue;
- 		rcu_read_unlock();
- 
--		spin_lock_irq(&callback_lock);
-+		raw_spin_lock_irq(&callback_lock);
- 		cp->effective_mems = *new_mems;
--		spin_unlock_irq(&callback_lock);
-+		raw_spin_unlock_irq(&callback_lock);
- 
- 		WARN_ON(!cgroup_subsys_on_dfl(cpuset_cgrp_subsys) &&
- 			!nodes_equal(cp->mems_allowed, cp->effective_mems));
-@@ -1246,9 +1246,9 @@ static int update_nodemask(struct cpuset
- 	if (retval < 0)
- 		goto done;
- 
--	spin_lock_irq(&callback_lock);
-+	raw_spin_lock_irq(&callback_lock);
- 	cs->mems_allowed = trialcs->mems_allowed;
--	spin_unlock_irq(&callback_lock);
-+	raw_spin_unlock_irq(&callback_lock);
- 
- 	/* use trialcs->mems_allowed as a temp variable */
- 	update_nodemasks_hier(cs, &trialcs->mems_allowed);
-@@ -1339,9 +1339,9 @@ static int update_flag(cpuset_flagbits_t
- 	spread_flag_changed = ((is_spread_slab(cs) != is_spread_slab(trialcs))
- 			|| (is_spread_page(cs) != is_spread_page(trialcs)));
- 
--	spin_lock_irq(&callback_lock);
-+	raw_spin_lock_irq(&callback_lock);
- 	cs->flags = trialcs->flags;
--	spin_unlock_irq(&callback_lock);
-+	raw_spin_unlock_irq(&callback_lock);
- 
- 	if (!cpumask_empty(trialcs->cpus_allowed) && balance_flag_changed)
- 		rebuild_sched_domains_locked();
-@@ -1756,7 +1756,7 @@ static int cpuset_common_seq_show(struct
- 	cpuset_filetype_t type = seq_cft(sf)->private;
- 	int ret = 0;
- 
--	spin_lock_irq(&callback_lock);
-+	raw_spin_lock_irq(&callback_lock);
- 
- 	switch (type) {
- 	case FILE_CPULIST:
-@@ -1775,7 +1775,7 @@ static int cpuset_common_seq_show(struct
- 		ret = -EINVAL;
- 	}
- 
--	spin_unlock_irq(&callback_lock);
-+	raw_spin_unlock_irq(&callback_lock);
- 	return ret;
- }
- 
-@@ -1989,12 +1989,12 @@ static int cpuset_css_online(struct cgro
- 
- 	cpuset_inc();
- 
--	spin_lock_irq(&callback_lock);
-+	raw_spin_lock_irq(&callback_lock);
- 	if (cgroup_subsys_on_dfl(cpuset_cgrp_subsys)) {
- 		cpumask_copy(cs->effective_cpus, parent->effective_cpus);
- 		cs->effective_mems = parent->effective_mems;
- 	}
--	spin_unlock_irq(&callback_lock);
-+	raw_spin_unlock_irq(&callback_lock);
- 
- 	if (!test_bit(CGRP_CPUSET_CLONE_CHILDREN, &css->cgroup->flags))
- 		goto out_unlock;
-@@ -2021,12 +2021,12 @@ static int cpuset_css_online(struct cgro
- 	}
- 	rcu_read_unlock();
- 
--	spin_lock_irq(&callback_lock);
-+	raw_spin_lock_irq(&callback_lock);
- 	cs->mems_allowed = parent->mems_allowed;
- 	cs->effective_mems = parent->mems_allowed;
- 	cpumask_copy(cs->cpus_allowed, parent->cpus_allowed);
- 	cpumask_copy(cs->effective_cpus, parent->cpus_allowed);
--	spin_unlock_irq(&callback_lock);
-+	raw_spin_unlock_irq(&callback_lock);
- out_unlock:
- 	mutex_unlock(&cpuset_mutex);
- 	return 0;
-@@ -2065,7 +2065,7 @@ static void cpuset_css_free(struct cgrou
- static void cpuset_bind(struct cgroup_subsys_state *root_css)
- {
- 	mutex_lock(&cpuset_mutex);
--	spin_lock_irq(&callback_lock);
-+	raw_spin_lock_irq(&callback_lock);
- 
- 	if (cgroup_subsys_on_dfl(cpuset_cgrp_subsys)) {
- 		cpumask_copy(top_cpuset.cpus_allowed, cpu_possible_mask);
-@@ -2076,7 +2076,7 @@ static void cpuset_bind(struct cgroup_su
- 		top_cpuset.mems_allowed = top_cpuset.effective_mems;
- 	}
- 
--	spin_unlock_irq(&callback_lock);
-+	raw_spin_unlock_irq(&callback_lock);
- 	mutex_unlock(&cpuset_mutex);
- }
- 
-@@ -2177,12 +2177,12 @@ hotplug_update_tasks_legacy(struct cpuse
- {
- 	bool is_empty;
- 
--	spin_lock_irq(&callback_lock);
-+	raw_spin_lock_irq(&callback_lock);
- 	cpumask_copy(cs->cpus_allowed, new_cpus);
- 	cpumask_copy(cs->effective_cpus, new_cpus);
- 	cs->mems_allowed = *new_mems;
- 	cs->effective_mems = *new_mems;
--	spin_unlock_irq(&callback_lock);
-+	raw_spin_unlock_irq(&callback_lock);
- 
- 	/*
- 	 * Don't call update_tasks_cpumask() if the cpuset becomes empty,
-@@ -2219,10 +2219,10 @@ hotplug_update_tasks(struct cpuset *cs,
- 	if (nodes_empty(*new_mems))
- 		*new_mems = parent_cs(cs)->effective_mems;
- 
--	spin_lock_irq(&callback_lock);
-+	raw_spin_lock_irq(&callback_lock);
- 	cpumask_copy(cs->effective_cpus, new_cpus);
- 	cs->effective_mems = *new_mems;
--	spin_unlock_irq(&callback_lock);
-+	raw_spin_unlock_irq(&callback_lock);
- 
- 	if (cpus_updated)
- 		update_tasks_cpumask(cs);
-@@ -2308,21 +2308,21 @@ static void cpuset_hotplug_workfn(struct
- 
- 	/* synchronize cpus_allowed to cpu_active_mask */
- 	if (cpus_updated) {
--		spin_lock_irq(&callback_lock);
-+		raw_spin_lock_irq(&callback_lock);
- 		if (!on_dfl)
- 			cpumask_copy(top_cpuset.cpus_allowed, &new_cpus);
- 		cpumask_copy(top_cpuset.effective_cpus, &new_cpus);
--		spin_unlock_irq(&callback_lock);
-+		raw_spin_unlock_irq(&callback_lock);
- 		/* we don't mess with cpumasks of tasks in top_cpuset */
- 	}
- 
- 	/* synchronize mems_allowed to N_MEMORY */
- 	if (mems_updated) {
--		spin_lock_irq(&callback_lock);
-+		raw_spin_lock_irq(&callback_lock);
- 		if (!on_dfl)
- 			top_cpuset.mems_allowed = new_mems;
- 		top_cpuset.effective_mems = new_mems;
--		spin_unlock_irq(&callback_lock);
-+		raw_spin_unlock_irq(&callback_lock);
- 		update_tasks_nodemask(&top_cpuset);
- 	}
- 
-@@ -2420,11 +2420,11 @@ void cpuset_cpus_allowed(struct task_str
- {
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&callback_lock, flags);
-+	raw_spin_lock_irqsave(&callback_lock, flags);
- 	rcu_read_lock();
- 	guarantee_online_cpus(task_cs(tsk), pmask);
- 	rcu_read_unlock();
--	spin_unlock_irqrestore(&callback_lock, flags);
-+	raw_spin_unlock_irqrestore(&callback_lock, flags);
- }
- 
- void cpuset_cpus_allowed_fallback(struct task_struct *tsk)
-@@ -2472,11 +2472,11 @@ nodemask_t cpuset_mems_allowed(struct ta
- 	nodemask_t mask;
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&callback_lock, flags);
-+	raw_spin_lock_irqsave(&callback_lock, flags);
- 	rcu_read_lock();
- 	guarantee_online_mems(task_cs(tsk), &mask);
- 	rcu_read_unlock();
--	spin_unlock_irqrestore(&callback_lock, flags);
-+	raw_spin_unlock_irqrestore(&callback_lock, flags);
- 
- 	return mask;
- }
-@@ -2568,14 +2568,14 @@ bool __cpuset_node_allowed(int node, gfp
- 		return true;
- 
- 	/* Not hardwall and node outside mems_allowed: scan up cpusets */
--	spin_lock_irqsave(&callback_lock, flags);
-+	raw_spin_lock_irqsave(&callback_lock, flags);
- 
- 	rcu_read_lock();
- 	cs = nearest_hardwall_ancestor(task_cs(current));
- 	allowed = node_isset(node, cs->mems_allowed);
- 	rcu_read_unlock();
- 
--	spin_unlock_irqrestore(&callback_lock, flags);
-+	raw_spin_unlock_irqrestore(&callback_lock, flags);
- 	return allowed;
- }
- 
+--65ImJOski3p8EhYV
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIcBAABCAAGBQJYeIcuAAoJEDStzQByIVzG1FsQAK1YgBIX9IXUCP6mw+4GoM7A
+tQCx77Z+xZl1+BMcYx672s5MfuWXvAhZif9b5+heESS52qWpby/QKZUd1cI7v7Jm
+a+twCC6kB/KX5xr0kvQQJrzqWlNlM+P/MfY1fLxA71ybLX/kGi5jB0SgejBoCApK
+1CBQ8DilXSncb1AdQC15Cn2GT/tFkIDgGLKnpp2QW9vwpfaBNuM/NooY/GjhQhU/
+FUEOplzq+aHxHCE1qN39AwHalcEPma+TOpWzY3ms7i2bK2Ij/gkjR9ZwlWnEyeB6
+DnAtJ8GG25M1qlSJ5lxh18WXGTN9wGODxFm+KEngH2IP1XwsruEKcOrZwNuv3Iah
+GssyhbXbSnC1LyqmgColisUXgONrCcbBUoNqiEhlroX/t/pU45dcgtgTOG16DdSw
+oQc7Tzxwp09d0rmcMo45kOT+ztNGe+kIrzn59DDeNs7+Fds3XzODorCfECINuxLf
+lM2nCbHM+WaYI2mqO23Km89RQ+m6z+XyxlDPot9Px2OnzP8wpxvDer0kDFXDSx8q
+uGzMPgVCQ3FqtXNcgFkiAoLsOc5SzTItNy+1xTdE1KDK0UoGJUCE1hhcLh2Yb1aa
+uqOGTckDGU9xfDAMbVQ+hMlasE5WtWyIM3khDQct74BZGKgoBuBK7CEumEcUlfpX
+400PPNyJ2FbGApTYop1E
+=wPyb
+-----END PGP SIGNATURE-----
+
+--65ImJOski3p8EhYV--
