@@ -1,68 +1,69 @@
-From: Robert Schwebel <r.schwebel@pengutronix.de>
+From: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
 Subject: Re: debian 8 rt kernel
-Date: Fri, 13 Jan 2017 09:20:16 +0100
-Message-ID: <20170113082016.gn24ywehbwwcd76v@pengutronix.de>
+Date: Fri, 13 Jan 2017 11:36:14 +0100
+Message-ID: <20170113113614.0f7db08a@archlinux.localdomain>
 References: <CADzbtTJ8BAX+HaBQkxe8_YOjX7RKyghNz5jS8UToEoSbMXXo3w@mail.gmail.com>
- <20170113075215.GF2532@falbala.home.lespocky.de>
+        <20170113075215.GF2532@falbala.home.lespocky.de>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-        protocol="application/pgp-signature"; boundary="vceneiewmtwzm2ml"
-Cc: luca paganotti <luca.paganotti@gmail.com>,
-        linux-rt-users@vger.kernel.org, info@pengutronix.de
-To: Alexander Dahl <post@lespocky.de>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.4.pengutronix.de ([92.198.50.35]:35527 "EHLO
-        metis.ext.4.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1751157AbdAMIUU (ORCPT
+Received: from mail76c50.megamailservers.eu ([91.136.10.86]:35196 "EHLO
+        mail70c50.megamailservers.eu" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1751356AbdAMKgS (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 13 Jan 2017 03:20:20 -0500
-Content-Disposition: inline
+        Fri, 13 Jan 2017 05:36:18 -0500
+Received: from archlinux.localdomain (x5ce0d113.dyn.telefonica.de [92.224.209.19])
+        (authenticated bits=0)
+        by mail70c50.megamailservers.eu (8.14.9/8.13.1) with ESMTP id v0DAaDMQ020678
+        (version=TLSv1/SSLv3 cipher=AES256-GCM-SHA384 bits=256 verify=NO)
+        for <linux-rt-users@vger.kernel.org>; Fri, 13 Jan 2017 10:36:15 +0000
 In-Reply-To: <20170113075215.GF2532@falbala.home.lespocky.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+On Fri, 13 Jan 2017 08:52:15 +0100, Alexander Dahl wrote:
+>Ubuntu Studio
 
---vceneiewmtwzm2ml
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Hi,
 
-On Fri, Jan 13, 2017 at 08:52:15AM +0100, Alexander Dahl wrote:
-> On Tue, Dec 20, 2016 at 10:01:26AM +0100, luca paganotti wrote:
-> > Hi all, I'm new to debian and I would like to install an rt kernel on
-> > my debian 8 jessie machine, I've configured the pengutronix repository
-> > in my /etc/apt/sources.list.d as:
-> > deb http://debian.pengutronix.de/debian jessie main contrib non-free
-> > in pengutronix.list file, but I don't know which packages I need to
-> > install. I would like to use the rt kernel for my musical work with
-> > jack, ardour, etc ...
->=20
-> I had a look at this package repository and it contains only very old
-> kernels, 2.6.29, 2.6.31 and 2.6.33. If you are on jessie, you may want
-> to try linux-image-rt-686-pae or linux-image-rt-amd64 from backports
-> which depends on a more recent 4.8 rt kernel. I'm not sure why
-> pengutronix still allows access to those outdated kernels.
+I'm an Arch Linux user, but I'm helping users with Ubuntu flavours,
+including Ubuntu Studio.
 
-There are people out there who still rely on those (maybe with
-questionable reasons, who knows). If you don't have one of those, please
-use the latest and greatest.
+The Ubuntu repositories provide a so called "lowlatency" kernel,
+without the rt patch. I doubt that this is much better than a vanilla
+kernel with threadirqs as boot option. It's easy to build the linux-rt
+packages for Ubuntu flavours, but Ubuntu Studio has got other pitfalls,
+too.
 
-rsc
---=20
-Pengutronix e.K.                           |                             |
-Industrial Linux Solutions                 | http://www.pengutronix.de/  |
-Peiner Str. 6-8, 31137 Hildesheim, Germany | Phone: +49-5121-206917-0    |
-Amtsgericht Hildesheim, HRA 2686           | Fax:   +49-5121-206917-5555 |
+Ubuntu Studio is a distro for artists, it's not optimised for
+musicians. The default is a jackdbus-pulseaudio mix/mess. While I'm an
+Arch user, I anyway set up a tailored Ubuntu install, based upon a
+minimal install from a server image.
+The Ubuntu policy is to start all services provided by package, so the
+user needs to disable all unwanted services, even when starting with a
+minimal install, but at least such an install doesn't come with
+pulseaudio and you could chose jackd instead of jackdbus.
 
---vceneiewmtwzm2ml
-Content-Type: application/pgp-signature; name="signature.asc"
+I recommend against Ubuntu Studio, if a user should be unwilling to
+check everything on her own and unwilling to set up everything on her
+own. You even can't be sure that somebody really cares that rtirq and
+the used kernel fit to each other.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
+Btw. there's nothing wrong with even using a vanilla kernel with
+threadirqs as boot option. In regards to audio latency and MIDI jitter
+there are a lot of things to consider, e.g. unbinding USB ports that
+share unfavourable IRQs, caring about the CPU frequency handling ...
 
-iD8DBQFYeI3A+8z+IKgDhyARAhKbAJ4iXkBnUWmzxXahrDvSnyaVLkuC0QCeIaR0
-WAHc+HhY3J/oDpHcxcu3SaU=
-=6pGW
------END PGP SIGNATURE-----
+In my more than a decade of Linux audio experiences IMO the best
+approach is to set up everything on your own, by optimizing several
+settings. Without knowing all "audio distros" I anyway recommend
+against just installing an "audio distro". In my experiences the work
+that has to be done by the user is the same for "normal" distros and
+"audio distros".
 
---vceneiewmtwzm2ml--
+YMMV!
+
+Regards,
+Ralf
