@@ -1,40 +1,79 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: [rfc patch-rt] posix_cpu_timers: Kill hotplug cpu notifier
-Date: Fri, 20 Jan 2017 18:56:59 +0100
-Message-ID: <1484935019.20890.20.camel@gmx.de>
-References: <20161223163213.szj43nv7rnelkbty@linutronix.de>
-         <1482735654.4476.62.camel@gmx.de>
-         <20170120164608.2oorygs5nfpxgptj@linutronix.de>
-         <1484933394.20890.5.camel@gmx.de>
-         <20170120173411.usjgyql6xeqfb75h@linutronix.de>
+From: Bjorn Andersson <bjorn.andersson@linaro.org>
+Subject: Re: [PATCH] pinctrl: qcom: Use raw spinlock variants
+Date: Fri, 20 Jan 2017 10:04:40 -0800
+Message-ID: <20170120180440.GY10531@minitux>
+References: <CAEYdEeQ63HZzi8yJk4eAAa=XeEeOFR_wqnL_PW3d6Nt5N955pQ@mail.gmail.com>
+ <20170117201906.GB1335@jcartwri.amer.corp.natinst.com>
+ <CACRpkdbxZw6QLKA0A8b=VuHmtkSHFywDT19pFZ3ioQ0kA=3VNg@mail.gmail.com>
+ <CAEYdEeQ00axyXD0noFJDsPxHeMb0qhC6jTG4Lee7En+cOqHkXw@mail.gmail.com>
+ <CAEYdEeR1Z0RWkGJ1PUyMujZf3kHqxZE-B6yHpXcNkcXVJg75Mg@mail.gmail.com>
+ <20170120161347.GI1335@jcartwri.amer.corp.natinst.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170120173411.usjgyql6xeqfb75h@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Linus Walleij <linus.walleij@linaro.org>,
+        Brian Wrenn <dcbrianw@gmail.com>,
+        linux-rt-users@vger.kernel.org,
+        "linux-arm-msm@vger.kernel.org" <linux-arm-msm@vger.kernel.org>,
+        "open list:ARM/QUALCOMM SUPPORT" <linux-soc@vger.kernel.org>,
+        "linux-gpio@vger.kernel.org" <linux-gpio@vger.kernel.org>,
+        Andy Gross <andy.gross@linaro.org>,
+        David Brown <david.brown@linaro.org>
+To: Julia Cartwright <julia@ni.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-pg0-f53.google.com ([74.125.83.53]:33830 "EHLO
+        mail-pg0-f53.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752197AbdATSEp (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 20 Jan 2017 13:04:45 -0500
+Received: by mail-pg0-f53.google.com with SMTP id 14so25327654pgg.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 20 Jan 2017 10:04:45 -0800 (PST)
+Content-Disposition: inline
+In-Reply-To: <20170120161347.GI1335@jcartwri.amer.corp.natinst.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2017-01-20 at 18:34 +0100, Sebastian Andrzej Siewior wrote:
-> On 2017-01-20 18:29:54 [+0100], Mike Galbraith wrote:
-> > On Fri, 2017-01-20 at 17:46 +0100, Sebastian Andrzej Siewior wrote:
-> > > On 2016-12-26 08:00:54 [+0100], Mike Galbraith wrote:
-> > > > Shamelessly steal softirq.c thread initialization method.
-> > > What is the problem here?
-> > 
-> > There is no problem in 4.9.  I did that for upstream, thought it might 
-> > save someone a minute or two.
+On Fri 20 Jan 08:13 PST 2017, Julia Cartwright wrote:
+
+> The MSM pinctrl driver currently implements an irq_chip for handling
+> GPIO interrupts; due to how irq_chip handling is done, it's necessary
+> for the irq_chip methods to be invoked from hardirq context, even on a
+> a real-time kernel.  Because the spinlock_t type becomes a "sleeping"
+> spinlock w/ RT kernels, it is not suitable to be used with irq_chips.
 > 
-> I see. The subject says RT so I assumed it is somehow RT related. But as
-> of now we should have this hotplug notifier removed, right?
 
-Yeah, RT only, it adds the thread and soon to be obsolete hotplug bits.
+Thanks for the explanation.
 
-patches/0101-posix-timers-Thread-posix-cpu-timers-on-rt.patch
+> A quick audit of the operations under the lock reveal that they do only
+> minimal, bounded work, and are therefore safe to do under a raw
+> spinlock.
+> 
 
-	-Mike
+I agree with this conclusion.
+
+> On real-time kernels, this fixes an OOPs which looks like the following,
+> as reported by Brian Wrenn:
+> 
+>     kernel BUG at kernel/locking/rtmutex.c:1014!
+>     Internal error: Oops - BUG: 0 [#1] PREEMPT SMP
+>     Modules linked in: spidev_irq(O) smsc75xx wcn36xx [last unloaded: spidev]
+>     CPU: 0 PID: 1163 Comm: irq/144-mmc0 Tainted: G        W  O    4.4.9-linaro-lt-qcom #1
+>     PC is at rt_spin_lock_slowlock+0x80/0x2d8
+>     LR is at rt_spin_lock_slowlock+0x68/0x2d8
+>     [..]
+>   Call trace:
+>     rt_spin_lock_slowlock
+>     rt_spin_lock
+>     msm_gpio_irq_ack
+>     handle_edge_irq
+>     generic_handle_irq
+>     msm_gpio_irq_handler
+>     generic_handle_irq
+>     __handle_domain_irq
+>     gic_handle_irq
+> 
+> Cc: Bjorn Andersson <bjorn.andersson@linaro.org>
+
+Acked-by: Bjorn Andersson <bjorn.andersson@linaro.org>
+
+Regards,
+Bjorn
