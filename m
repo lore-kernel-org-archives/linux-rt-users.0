@@ -1,79 +1,50 @@
-From: Bjorn Andersson <bjorn.andersson@linaro.org>
-Subject: Re: [PATCH] pinctrl: qcom: Use raw spinlock variants
-Date: Fri, 20 Jan 2017 10:04:40 -0800
-Message-ID: <20170120180440.GY10531@minitux>
-References: <CAEYdEeQ63HZzi8yJk4eAAa=XeEeOFR_wqnL_PW3d6Nt5N955pQ@mail.gmail.com>
- <20170117201906.GB1335@jcartwri.amer.corp.natinst.com>
- <CACRpkdbxZw6QLKA0A8b=VuHmtkSHFywDT19pFZ3ioQ0kA=3VNg@mail.gmail.com>
- <CAEYdEeQ00axyXD0noFJDsPxHeMb0qhC6jTG4Lee7En+cOqHkXw@mail.gmail.com>
- <CAEYdEeR1Z0RWkGJ1PUyMujZf3kHqxZE-B6yHpXcNkcXVJg75Mg@mail.gmail.com>
- <20170120161347.GI1335@jcartwri.amer.corp.natinst.com>
+From: John Ogness <john.ogness@linutronix.de>
+Subject: [PATCH] x86/mm/cpa: avoid wbinvd() for PREEMPT_RT_FULL
+Date: Fri, 20 Jan 2017 23:42:57 +0100
+Message-ID: <87o9z1ic9a.fsf@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Linus Walleij <linus.walleij@linaro.org>,
-        Brian Wrenn <dcbrianw@gmail.com>,
-        linux-rt-users@vger.kernel.org,
-        "linux-arm-msm@vger.kernel.org" <linux-arm-msm@vger.kernel.org>,
-        "open list:ARM/QUALCOMM SUPPORT" <linux-soc@vger.kernel.org>,
-        "linux-gpio@vger.kernel.org" <linux-gpio@vger.kernel.org>,
-        Andy Gross <andy.gross@linaro.org>,
-        David Brown <david.brown@linaro.org>
-To: Julia Cartwright <julia@ni.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pg0-f53.google.com ([74.125.83.53]:33830 "EHLO
-        mail-pg0-f53.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1752197AbdATSEp (ORCPT
+Received: from Galois.linutronix.de ([146.0.238.70]:34085 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752069AbdATWnb (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 20 Jan 2017 13:04:45 -0500
-Received: by mail-pg0-f53.google.com with SMTP id 14so25327654pgg.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 20 Jan 2017 10:04:45 -0800 (PST)
-Content-Disposition: inline
-In-Reply-To: <20170120161347.GI1335@jcartwri.amer.corp.natinst.com>
+        Fri, 20 Jan 2017 17:43:31 -0500
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri 20 Jan 08:13 PST 2017, Julia Cartwright wrote:
+Although wbinvd() is faster than flushing many individual pages, it
+blocks the memory bus for "long" periods of time (>100us), thus
+directly causing unusually large latencies for PREEMPT_RT_FULL. For
+1024 pages, flushing those pages individually can take up to 2200us,
+but the task remains fully preemptible during that time.
 
-> The MSM pinctrl driver currently implements an irq_chip for handling
-> GPIO interrupts; due to how irq_chip handling is done, it's necessary
-> for the irq_chip methods to be invoked from hardirq context, even on a
-> a real-time kernel.  Because the spinlock_t type becomes a "sleeping"
-> spinlock w/ RT kernels, it is not suitable to be used with irq_chips.
-> 
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: John Ogness <john.ogness@linutronix.de>
+---
+ arch/x86/mm/pageattr.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-Thanks for the explanation.
-
-> A quick audit of the operations under the lock reveal that they do only
-> minimal, bounded work, and are therefore safe to do under a raw
-> spinlock.
-> 
-
-I agree with this conclusion.
-
-> On real-time kernels, this fixes an OOPs which looks like the following,
-> as reported by Brian Wrenn:
-> 
->     kernel BUG at kernel/locking/rtmutex.c:1014!
->     Internal error: Oops - BUG: 0 [#1] PREEMPT SMP
->     Modules linked in: spidev_irq(O) smsc75xx wcn36xx [last unloaded: spidev]
->     CPU: 0 PID: 1163 Comm: irq/144-mmc0 Tainted: G        W  O    4.4.9-linaro-lt-qcom #1
->     PC is at rt_spin_lock_slowlock+0x80/0x2d8
->     LR is at rt_spin_lock_slowlock+0x68/0x2d8
->     [..]
->   Call trace:
->     rt_spin_lock_slowlock
->     rt_spin_lock
->     msm_gpio_irq_ack
->     handle_edge_irq
->     generic_handle_irq
->     msm_gpio_irq_handler
->     generic_handle_irq
->     __handle_domain_irq
->     gic_handle_irq
-> 
-> Cc: Bjorn Andersson <bjorn.andersson@linaro.org>
-
-Acked-by: Bjorn Andersson <bjorn.andersson@linaro.org>
-
-Regards,
-Bjorn
+diff --git a/arch/x86/mm/pageattr.c b/arch/x86/mm/pageattr.c
+index e3353c9..a182477 100644
+--- a/arch/x86/mm/pageattr.c
++++ b/arch/x86/mm/pageattr.c
+@@ -214,7 +214,12 @@ static void cpa_flush_array(unsigned long *start, int numpages, int cache,
+ 			    int in_flags, struct page **pages)
+ {
+ 	unsigned int i, level;
++#ifdef CONFIG_PREEMPT_RT_FULL
++	/* wbinvd() causes ugly latencies, avoid it */
++	unsigned long do_wbinvd = 0;
++#else
+ 	unsigned long do_wbinvd = cache && numpages >= 1024; /* 4M threshold */
++#endif
+ 
+ 	BUG_ON(irqs_disabled());
+ 
+-- 
+2.9.3
