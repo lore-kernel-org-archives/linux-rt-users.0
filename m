@@ -1,84 +1,42 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH] x86/mm/cpa: avoid wbinvd() for PREEMPT_RT_FULL
-Date: Wed, 25 Jan 2017 18:07:14 +0100
-Message-ID: <20170125170713.qgxwsywb2wki6h4v@linutronix.de>
-References: <87o9z1ic9a.fsf@linutronix.de>
- <20170121141915.GT6485@twins.programming.kicks-ass.net>
- <20170125161217.k6h5weu34i2knl3f@linutronix.de>
- <20170125162431.GU6515@twins.programming.kicks-ass.net>
+Subject: Re: Disable lapic timer
+Date: Wed, 25 Jan 2017 18:12:33 +0100
+Message-ID: <20170125171233.i6lc5ttshd2nftxj@linutronix.de>
+References: <CACKey4zCv-B1EkcmzzAGpUMC5CyjyAfOEgfSmNS0Z=8cNe8R6A@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: x86@kernel.org, John Ogness <john.ogness@linutronix.de>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
-        fenghua.yu@intel.com, h.peter.anvin@intel.com,
-        vikas.shivappa@linux.intel.com, tony.luck@intel.com,
-        davidcc@google.com, dave.hansen@intel.com, eranian@google.com
-To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Cc: linux-rt-users@vger.kernel.org
+To: Federico Reghenzani <federico.reghenzani@polimi.it>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:46446 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751016AbdAYRMg (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 25 Jan 2017 12:12:36 -0500
 Content-Disposition: inline
-In-Reply-To: <20170125162431.GU6515@twins.programming.kicks-ass.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <CACKey4zCv-B1EkcmzzAGpUMC5CyjyAfOEgfSmNS0Z=8cNe8R6A@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-01-25 17:24:31 [+0100], Peter Zijlstra wrote:
-> On Wed, Jan 25, 2017 at 05:12:17PM +0100, Sebastian Andrzej Siewior wrote:
-> > On 2017-01-21 15:19:15 [+0100], Peter Zijlstra wrote:
-> > > On Fri, Jan 20, 2017 at 11:42:57PM +0100, John Ogness wrote:
-> > > > Although wbinvd() is faster than flushing many individual pages, it
-> > > > blocks the memory bus for "long" periods of time (>100us), thus
-> > > > directly causing unusually large latencies for PREEMPT_RT_FULL. For
-> > > > 1024 pages, flushing those pages individually can take up to 2200us,
-> > > > but the task remains fully preemptible during that time.
-> > > > 
-> > > > Cc: Peter Zijlstra <peterz@infradead.org>
-> > > > Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> > > > Signed-off-by: John Ogness <john.ogness@linutronix.de>
-> > > > ---
-> > > >  arch/x86/mm/pageattr.c | 5 +++++
-> > > >  1 file changed, 5 insertions(+)
-> > > > 
-> > > > diff --git a/arch/x86/mm/pageattr.c b/arch/x86/mm/pageattr.c
-> > > > index e3353c9..a182477 100644
-> > > > --- a/arch/x86/mm/pageattr.c
-> > > > +++ b/arch/x86/mm/pageattr.c
-> > > > @@ -214,7 +214,12 @@ static void cpa_flush_array(unsigned long *start, int numpages, int cache,
-> > > >  			    int in_flags, struct page **pages)
-> > > >  {
-> > > >  	unsigned int i, level;
-> > > > +#ifdef CONFIG_PREEMPT_RT_FULL
-> > > > +	/* wbinvd() causes ugly latencies, avoid it */
-> > > > +	unsigned long do_wbinvd = 0;
-> > > 
-> > > Arguably we should do the same for CONFIG_PREEMPT and possibly even
-> > > always, esp. when considering CAT.
-> > 
-> > So you want to see this patch again with CONFIG_PREEMPT instead of
-> > CONFIG_PREEMPT_RT_FULL and also targeting lkml?
+On 2016-12-22 14:36:03 [+0100], Federico Reghenzani wrote:
+> I found this very old topic
 > 
-> Patches should go to LKML irrespective of PREEMPT_RT_FULL or not.
+> https://www.spinics.net/lists/linux-rt-users/msg05422.html
 > 
-> But yes, I think it makes sense for PREEMPT as well.
+> is there any update on this? I want to disable the APIC timer in order
+> to increase the determinism of my system, but I'm not sure if this is
+> possible without editing the kernel source code.
 > 
-> > I don't get quite the link between wbindv and CAT (assuming it stands
-> > for Intel's Cache Allocation support). But if you want unconditionally
-> > want to drop that wbinvd because it is bad for another !RT usecase, fine
-> > by me :)
-> 
-> Yes, that CAT.
-> 
-> I suspect; but I couldn't find the SDM making any statement what so ever
-> on this; that when you do wbinvd you kill the _entire_ cache,
-> irrespective of our CAT mask.
-> 
-> This means that a random task doing wbinvd(), even if it is 'isolated'
-> with a CAT mask, will affect the performance of all other tasks on that
-> cache domain.
-> 
-> IOW, your X11 running in some 'system' group will affect your RT
-> workload on the isolated CPU by killing its cache.
+> On my machine smp_apic_timer_interrupt takes 2-3 us, I know this is
+> already low, but it's actually the only "frequent" latency that I have
+> on the isolated cpu.
 
-Based on this I would say it makes sense to get rid of wbinvd. If wbinvd
-would respect the CAT mask then it would be noted in the SDM.
+You need a timer for each active CPU that participates in the system.
+The timer interrupt which comes each tick can't be disabled. You can
+look at NO_HZ_FULL where you can have an isolated CPU and as long as you
+don't go into kernel, you shouldn't see the timer interrupt very often.
+
+> Thank you,
+> Federico Reghenzani
 
 Sebastian
