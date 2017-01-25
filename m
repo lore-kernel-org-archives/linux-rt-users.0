@@ -1,51 +1,63 @@
-From: "Koehrer Mathias (ETAS/ESW5)" <mathias.koehrer@etas.com>
-Subject: RE: Kernel 4.9.x-rt Fully Preemptible Kernel: Issue with gdb and
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: Kernel 4.9.x-rt Fully Preemptible Kernel: Issue with gdb and
  unexpected SIGSTOP signals
-Date: Wed, 25 Jan 2017 13:36:27 +0000
-Message-ID: <d3906c1c79be47b1889d19e23048ecf7@FE-MBX1012.de.bosch.com>
+Date: Wed, 25 Jan 2017 14:40:17 +0100
+Message-ID: <20170125134016.ffj6xpissz4iy7ph@linutronix.de>
 References: <6bec5da671344b7e862ee74dafacb3b5@FE-MBX1012.de.bosch.com>
  <39174b3e2e7a47c48b3688a2b28ab83e@FE-MBX1012.de.bosch.com>
  <20170125095628.pcuxqk7l4xnvbsve@linutronix.de>
  <f8526e600a9a45dc959ddf5d12bc430b@FE-MBX1012.de.bosch.com>
  <87521e75b64f4b84b2ecd8b47bb7fe72@FE-MBX1012.de.bosch.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
 Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: "Koehrer Mathias (ETAS/ESW5)" <mathias.koehrer@etas.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp6-v.fe.bosch.de ([139.15.237.11]:21249 "EHLO
-        smtp6-v.fe.bosch.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751386AbdAYNgb (ORCPT
+Received: from Galois.linutronix.de ([146.0.238.70]:45841 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751676AbdAYNkT (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 25 Jan 2017 08:36:31 -0500
+        Wed, 25 Jan 2017 08:40:19 -0500
+Content-Disposition: inline
 In-Reply-To: <87521e75b64f4b84b2ecd8b47bb7fe72@FE-MBX1012.de.bosch.com>
-Content-Language: de-DE
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-SGkgU2ViYXN0aWFuLA0KPiA+ID4gPiBUaGUga2VybmVsIHZlcnNpb24gNC4xLjM3LXJ0NDMgaXMg
-d29ya2luZyBmaW5lLCB0aGUga2VybmVsDQo+ID4gPiA+IHZlcnNpb25zDQo+ID4gPiA+IDQuNC4z
-OS1ydDUwIGFuZA0KPiA+ID4gNC44LjExLXJ0NyBzaG93IHRoZSBzYW1lIHN0cmFuZ2UgYmVoYXZp
-b3IgYXMgNC45LjAtcnQxLg0KPiA+ID4gPiBTb21ldGhpbmcgb24gdGhlIHdheSBiZXR3ZWVuIDQu
-MS4zNy1ydDQzIGFuZCA0LjQuMzktcnQ1MCBzZWVtcyB0bw0KPiA+ID4gPiBjYXVzZSB0aGUNCj4g
-PiA+IHRyb3VibGUuDQo+ID4gPg0KPiA+ID4gY2FuIHlvdSBjaGVjayBpZiBvbmUgb2YgdGhlIGVh
-cmxpZXIgdjQuNC1SVCByZWxlYXNlcyAobWF5YmUgc3RhcnQNCj4gPiA+IHdpdGgNCj4gPiA+IC1y
-dDIgb3IgLXJ0MSkgYWxzbyBzaG93cyB0aGlzIGJlaGF2aW91cj8NCj4gPiA+IElmIG5vdCwgd291
-bGQgeW91IGhhdmUgYSB0ZXN0Y2FzZT8NCj4gPiBJIHRlc3RlZCB3aXRoIDQuNC4wLXJ0Mi4NCj4g
-PiBIZXJlIHRoaXMgaXNzdWUgb2NjdXJzIHZlcnkgcmFyZWx5LiBJIHJhbiB0aGUgZ2RiIGZvciBh
-Ym91dCAzMCB0aW1lcywNCj4gPiBhbmQgaGVyZSBJIGdvdCBvbmUgaGl0Lg0KPiA+IFdpdGggdGhl
-IG90aGVyIGtlcm5lbCB2ZXJzaW9ucyBJIGdvdCB0aGUgaXNzdWUgaW4gMjAtNDAlIG9mIHRoZSBj
-YXNlcy4NCj4gPg0KPiA+IEkgd2lsbCB0cnkgb3V0IHRoZSBvdGhlciA0LjQuMCByZWxlYXNlcy4u
-Lg0KPiANCj4gSSByYW4gbW9yZSB0ZXN0cy4gVGhlIGtlcm5lbCA0LjQuMS1ydDQgaXMgd29ya2lu
-ZyBmYWlybHkgZmluZSAob25seSBhYm91dCBvbmUgaGl0IGV2ZXJ5DQo+IDMwIHJ1bnMpIGJ1dCB0
-aGUga2VybmVsIDQuNC4xLXJ0NSBpcyBjYXVzaW5nIHRoZSBpc3N1ZSB2ZXJ5IG9mdGVuLg0KPiAN
-ClVwZGF0ZToNCkkgcmVtb3ZlZCB0aGUgcGF0Y2ggImtlcm5lbC1wZXJmLW1hcmstcGVyZl9jcHVf
-Y29udGV4dC1zLXRpbWVyLWFzLWlycXNhZmUucGF0Y2giIGZyb20gdGhlIDQuNC4xLXJ0NSBzZXJp
-ZXMuDQpUaGlzIGltcHJvdmVkIHRoZSBzaXR1YXRpb24uIE5vIEkgZ290IHRoZSBpc3N1ZSBhYm91
-dCBpbiA1LTEwJSBvZiB0aGUgcnVucy4NCg0KDQpXaXRoIDQuOS40LXJ0MiBJIHRyaWVkIHRvIHJl
-bW92ZSB0aGUgc2FtZSBhc3NpZ25tZW50IChhcyBwYXJ0IG9mIHRoaXMgdmVyeSBwYXRjaCkgaW4g
-a2VybmVsL2V2ZW50cy9jb3JlLmM6DQp0aW1lci0+aXJxc2FmZSA9IDE7DQpIb3dldmVyIHRoaXMg
-ZGlkIG5vdCBzaG93IGFueSBtYWpvciBpbXByb3ZlbWVudC4uLiANCkl0IGxvb2tzIGFzIHRoaXMg
-bm90IHRoZSBpc3N1ZSBhbG9uZS4gSG93ZXZlciBpdCBtaWdodCBiZSBhbiBpbmRpY2F0aW9uIHdo
-ZXJlIHRoZSBpc3N1ZSBpcyBjYXVzZWQgZnJvbS4NCg0KUmVnYXJkcw0KDQpNYXRoaWFzDQo=
+On 2017-01-25 12:55:30 [+0000], Koehrer Mathias (ETAS/ESW5) wrote:
+> Hi Sebastian,
+Hi Mathias,
+
+> > > > The kernel version 4.1.37-rt43 is working fine, the kernel versions
+> > > > 4.4.39-rt50 and
+> > > 4.8.11-rt7 show the same strange behavior as 4.9.0-rt1.
+> > > > Something on the way between 4.1.37-rt43 and 4.4.39-rt50 seems to
+> > > > cause the
+> > > trouble.
+> > >
+> > > can you check if one of the earlier v4.4-RT releases (maybe start with
+> > > -rt2 or -rt1) also shows this behaviour?
+> > > If not, would you have a testcase?
+> > I tested with 4.4.0-rt2.
+> > Here this issue occurs very rarely. I ran the gdb for about 30 times, and here I got
+> > one hit.
+> > With the other kernel versions I got the issue in 20-40% of the cases.
+> > 
+> > I will try out the other 4.4.0 releases...
+> 
+> I ran more tests. The kernel 4.4.1-rt4 is working fairly fine (only about one hit every 30 runs)
+> but the kernel 4.4.1-rt5 is causing the issue very often.
+
+and 4.1.37-rt43 shows not SIGSTOPS in 100 runs?
+The reason I asked for testing early 4.4 kernel was to bisect the
+failure if we had a version which did not show the failure.
+Now we got from rarely hitting the problem to more often. Going through
+the history of rt4…rt5 shows only fixes. One thing is fixing
+lazy-preempt and another migrate-disable. And I believe one problem was
+that we did not utilize more than one CPU under certain circumstances.
+So if you bisect between those two it might be that the fix uncovers a
+bug or showing more reliably.
+But in the end, I have no idea where the extra SIGSTOPs signals are
+from.
+
+Sebastian
