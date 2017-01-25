@@ -1,47 +1,186 @@
-From: "Koehrer Mathias (ETAS/ESW5)" <mathias.koehrer@etas.com>
-Subject: RE: Kernel 4.9.x-rt Fully Preemptible Kernel: Issue with gdb and
- unexpected SIGSTOP signals
-Date: Wed, 25 Jan 2017 14:00:21 +0000
-Message-ID: <ef2c680e3ed541c4b0df5e0715ca8264@FE-MBX1012.de.bosch.com>
-References: <6bec5da671344b7e862ee74dafacb3b5@FE-MBX1012.de.bosch.com>
- <39174b3e2e7a47c48b3688a2b28ab83e@FE-MBX1012.de.bosch.com>
- <20170125095628.pcuxqk7l4xnvbsve@linutronix.de>
- <f8526e600a9a45dc959ddf5d12bc430b@FE-MBX1012.de.bosch.com>
- <87521e75b64f4b84b2ecd8b47bb7fe72@FE-MBX1012.de.bosch.com>
- <20170125134016.ffj6xpissz4iy7ph@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [rfc patch-rt] radix-tree: Partially disable memcg accounting in
+ radix_tree_node_alloc()
+Date: Wed, 25 Jan 2017 16:06:02 +0100
+Message-ID: <20170125150602.krsix5lmwh6h5yxf@linutronix.de>
+References: <20161223163213.szj43nv7rnelkbty@linutronix.de>
+ <1483690403.11478.8.camel@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp6-v.fe.bosch.de ([139.15.237.11]:22166 "EHLO
-        smtp6-v.fe.bosch.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751834AbdAYOAY (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 25 Jan 2017 09:00:24 -0500
-In-Reply-To: <20170125134016.ffj6xpissz4iy7ph@linutronix.de>
-Content-Language: de-DE
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Mike Galbraith <efault@gmx.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1483690403.11478.8.camel@gmx.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-SGkgU2ViYXN0aWFuLA0KDQo+ID4gPiA+ID4gVGhlIGtlcm5lbCB2ZXJzaW9uIDQuMS4zNy1ydDQz
-IGlzIHdvcmtpbmcgZmluZSwgdGhlIGtlcm5lbA0KPiA+ID4gPiA+IHZlcnNpb25zDQo+ID4gPiA+
-ID4gNC40LjM5LXJ0NTAgYW5kDQo+ID4gPiA+IDQuOC4xMS1ydDcgc2hvdyB0aGUgc2FtZSBzdHJh
-bmdlIGJlaGF2aW9yIGFzIDQuOS4wLXJ0MS4NCj4gPiA+ID4gPiBTb21ldGhpbmcgb24gdGhlIHdh
-eSBiZXR3ZWVuIDQuMS4zNy1ydDQzIGFuZCA0LjQuMzktcnQ1MCBzZWVtcw0KPiA+ID4gPiA+IHRv
-IGNhdXNlIHRoZQ0KPiA+ID4gPiB0cm91YmxlLg0KPiA+ID4gPg0KPiA+ID4gPiBjYW4geW91IGNo
-ZWNrIGlmIG9uZSBvZiB0aGUgZWFybGllciB2NC40LVJUIHJlbGVhc2VzIChtYXliZSBzdGFydA0K
-PiA+ID4gPiB3aXRoDQo+ID4gPiA+IC1ydDIgb3IgLXJ0MSkgYWxzbyBzaG93cyB0aGlzIGJlaGF2
-aW91cj8NCj4gPiA+ID4gSWYgbm90LCB3b3VsZCB5b3UgaGF2ZSBhIHRlc3RjYXNlPw0KPiA+ID4g
-SSB0ZXN0ZWQgd2l0aCA0LjQuMC1ydDIuDQo+ID4gPiBIZXJlIHRoaXMgaXNzdWUgb2NjdXJzIHZl
-cnkgcmFyZWx5LiBJIHJhbiB0aGUgZ2RiIGZvciBhYm91dCAzMA0KPiA+ID4gdGltZXMsIGFuZCBo
-ZXJlIEkgZ290IG9uZSBoaXQuDQo+ID4gPiBXaXRoIHRoZSBvdGhlciBrZXJuZWwgdmVyc2lvbnMg
-SSBnb3QgdGhlIGlzc3VlIGluIDIwLTQwJSBvZiB0aGUgY2FzZXMuDQo+ID4gPg0KPiA+ID4gSSB3
-aWxsIHRyeSBvdXQgdGhlIG90aGVyIDQuNC4wIHJlbGVhc2VzLi4uDQo+ID4NCj4gPiBJIHJhbiBt
-b3JlIHRlc3RzLiBUaGUga2VybmVsIDQuNC4xLXJ0NCBpcyB3b3JraW5nIGZhaXJseSBmaW5lIChv
-bmx5DQo+ID4gYWJvdXQgb25lIGhpdCBldmVyeSAzMCBydW5zKSBidXQgdGhlIGtlcm5lbCA0LjQu
-MS1ydDUgaXMgY2F1c2luZyB0aGUgaXNzdWUgdmVyeQ0KPiBvZnRlbi4NCj4gDQo+IGFuZCA0LjEu
-MzctcnQ0MyBzaG93cyBub3QgU0lHU1RPUFMgaW4gMTAwIHJ1bnM/DQpUaGF0J3MgcmlnaHQuDQpJ
-IHVzZWQgNC4xLjM3LXJ0NDMgYW5kIHJhbiB0aGUgdGVzdCBmb3IgMjAwIHRpbWVzLiBUaGVyZSB3
-YXMgbm8gc2luZ2xlIGlzc3VlLg0KDQpSZWdhcmRzDQoNCk1hdGhpYXMNCg0KDQo=
+On 2017-01-06 09:13:23 [+0100], Mike Galbraith wrote:
+> radix-tree: Partially disable memcg accounting in radix_tree_node_alloc()
+> 
+> Having no preload, which turns accounting off for non-rt kernels, trying to
+> allocate coming from shmem_fault() when memcg is full sends us scurrying off
+> to pagefault_out_of_memory(), with dramatic (usually terminal) consequences.
+> LTP's madvise06 testcase triggers this quite well, and per gitk, the below
+> was the beginning of RT memcg woes.
+> 
+> 58e698af4c63 radix-tree: account radix_tree_node to memory cgroup
+> 
+> Turn memcg accounting off for RT in the problematic path.
+
+According to the to description of radix_tree_preload() the return code
+of 0 means that the following addition of a single element does not
+fail. But in RT's case this requirement is not fulfilled. There is more
+than just one user of that function. So instead adding an exception here
+and maybe later one someplace else, what about the following patch?
+That testcase you mentioned passes now:
+
+|testcases/kernel/syscalls/madvise/madvise06
+|tst_test.c:760: INFO: Timeout per run is 0h 05m 00s
+|madvise06.c:65: INFO: dropping caches
+|madvise06.c:139: INFO: SwapCached (before madvise): 304
+|madvise06.c:153: INFO: SwapCached (after madvise): 309988
+|madvise06.c:155: PASS: Regression test pass
+|
+|Summary:
+|passed   1
+|failed   0
+|skipped  0
+|warnings 0
+
+diff --git a/include/linux/radix-tree.h b/include/linux/radix-tree.h
+index f87f87dec84c..277295039c8f 100644
+--- a/include/linux/radix-tree.h
++++ b/include/linux/radix-tree.h
+@@ -289,19 +289,11 @@ unsigned int radix_tree_gang_lookup(struct radix_tree_root *root,
+ unsigned int radix_tree_gang_lookup_slot(struct radix_tree_root *root,
+ 			void ***results, unsigned long *indices,
+ 			unsigned long first_index, unsigned int max_items);
+-#ifdef CONFIG_PREEMPT_RT_FULL
+-static inline int radix_tree_preload(gfp_t gm) { return 0; }
+-static inline int radix_tree_maybe_preload(gfp_t gfp_mask) { return 0; }
+-static inline int radix_tree_maybe_preload_order(gfp_t gfp_mask, int order)
+-{
+-	return 0;
+-};
+-
+-#else
+ int radix_tree_preload(gfp_t gfp_mask);
+ int radix_tree_maybe_preload(gfp_t gfp_mask);
+ int radix_tree_maybe_preload_order(gfp_t gfp_mask, int order);
+-#endif
++void radix_tree_preload_end(void);
++
+ void radix_tree_init(void);
+ void *radix_tree_tag_set(struct radix_tree_root *root,
+ 			unsigned long index, unsigned int tag);
+@@ -324,11 +316,6 @@ unsigned long radix_tree_range_tag_if_tagged(struct radix_tree_root *root,
+ int radix_tree_tagged(struct radix_tree_root *root, unsigned int tag);
+ unsigned long radix_tree_locate_item(struct radix_tree_root *root, void *item);
+ 
+-static inline void radix_tree_preload_end(void)
+-{
+-	preempt_enable_nort();
+-}
+-
+ /**
+  * struct radix_tree_iter - radix tree iterator state
+  *
+diff --git a/lib/radix-tree.c b/lib/radix-tree.c
+index 881cc195d85f..e96c6a99f25c 100644
+--- a/lib/radix-tree.c
++++ b/lib/radix-tree.c
+@@ -36,7 +36,7 @@
+ #include <linux/bitops.h>
+ #include <linux/rcupdate.h>
+ #include <linux/preempt.h>		/* in_interrupt() */
+-
++#include <linux/locallock.h>
+ 
+ /* Number of nodes in fully populated tree of given height */
+ static unsigned long height_to_maxnodes[RADIX_TREE_MAX_PATH + 1] __read_mostly;
+@@ -68,6 +68,7 @@ struct radix_tree_preload {
+ 	struct radix_tree_node *nodes;
+ };
+ static DEFINE_PER_CPU(struct radix_tree_preload, radix_tree_preloads) = { 0, };
++static DEFINE_LOCAL_IRQ_LOCK(radix_tree_preloads_lock);
+ 
+ static inline void *node_to_entry(void *ptr)
+ {
+@@ -290,14 +291,14 @@ radix_tree_node_alloc(struct radix_tree_root *root)
+ 		 * succeed in getting a node here (and never reach
+ 		 * kmem_cache_alloc)
+ 		 */
+-		rtp = &get_cpu_var(radix_tree_preloads);
++		rtp = &get_locked_var(radix_tree_preloads_lock, radix_tree_preloads);
+ 		if (rtp->nr) {
+ 			ret = rtp->nodes;
+ 			rtp->nodes = ret->private_data;
+ 			ret->private_data = NULL;
+ 			rtp->nr--;
+ 		}
+-		put_cpu_var(radix_tree_preloads);
++		put_locked_var(radix_tree_preloads_lock, radix_tree_preloads);
+ 		/*
+ 		 * Update the allocation stack trace as this is more useful
+ 		 * for debugging.
+@@ -337,7 +338,6 @@ radix_tree_node_free(struct radix_tree_node *node)
+ 	call_rcu(&node->rcu_head, radix_tree_node_rcu_free);
+ }
+ 
+-#ifndef CONFIG_PREEMPT_RT_FULL
+ /*
+  * Load up this CPU's radix_tree_node buffer with sufficient objects to
+  * ensure that the addition of a single element in the tree cannot fail.  On
+@@ -359,14 +359,14 @@ static int __radix_tree_preload(gfp_t gfp_mask, int nr)
+ 	 */
+ 	gfp_mask &= ~__GFP_ACCOUNT;
+ 
+-	preempt_disable();
++	local_lock(radix_tree_preloads_lock);
+ 	rtp = this_cpu_ptr(&radix_tree_preloads);
+ 	while (rtp->nr < nr) {
+-		preempt_enable();
++		local_unlock(radix_tree_preloads_lock);
+ 		node = kmem_cache_alloc(radix_tree_node_cachep, gfp_mask);
+ 		if (node == NULL)
+ 			goto out;
+-		preempt_disable();
++		local_lock(radix_tree_preloads_lock);
+ 		rtp = this_cpu_ptr(&radix_tree_preloads);
+ 		if (rtp->nr < nr) {
+ 			node->private_data = rtp->nodes;
+@@ -408,7 +408,7 @@ int radix_tree_maybe_preload(gfp_t gfp_mask)
+ 	if (gfpflags_allow_blocking(gfp_mask))
+ 		return __radix_tree_preload(gfp_mask, RADIX_TREE_PRELOAD_SIZE);
+ 	/* Preloading doesn't help anything with this gfp mask, skip it */
+-	preempt_disable();
++	local_lock(radix_tree_preloads_lock);
+ 	return 0;
+ }
+ EXPORT_SYMBOL(radix_tree_maybe_preload);
+@@ -424,7 +424,7 @@ int radix_tree_maybe_preload_order(gfp_t gfp_mask, int order)
+ 
+ 	/* Preloading doesn't help anything with this gfp mask, skip it */
+ 	if (!gfpflags_allow_blocking(gfp_mask)) {
+-		preempt_disable();
++		local_lock(radix_tree_preloads_lock);
+ 		return 0;
+ 	}
+ 
+@@ -457,7 +457,11 @@ int radix_tree_maybe_preload_order(gfp_t gfp_mask, int order)
+ 
+ 	return __radix_tree_preload(gfp_mask, nr_nodes);
+ }
+-#endif
++
++void radix_tree_preload_end(void)
++{
++	local_unlock(radix_tree_preloads_lock);
++}
+ 
+ /*
+  * The maximum index which can be stored in a radix tree
