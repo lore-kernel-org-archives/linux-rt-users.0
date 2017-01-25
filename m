@@ -1,77 +1,101 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH] x86/mm/cpa: avoid wbinvd() for PREEMPT_RT_FULL
-Date: Wed, 25 Jan 2017 17:24:31 +0100
-Message-ID: <20170125162431.GU6515@twins.programming.kicks-ass.net>
-References: <87o9z1ic9a.fsf@linutronix.de>
- <20170121141915.GT6485@twins.programming.kicks-ass.net>
- <20170125161217.k6h5weu34i2knl3f@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [btrfs/rt] lockdep false positive
+Date: Wed, 25 Jan 2017 18:02:09 +0100
+Message-ID: <20170125170209.h6tqr6zgaq6ojmco@linutronix.de>
+References: <1485074793.4467.49.camel@gmail.com>
+ <1485107114.4467.73.camel@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: x86@kernel.org, John Ogness <john.ogness@linutronix.de>,
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
-        linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
-        fenghua.yu@intel.com, h.peter.anvin@intel.com,
-        vikas.shivappa@linux.intel.com, tony.luck@intel.com,
-        davidcc@google.com, dave.hansen@intel.com, eranian@google.com
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20170125161217.k6h5weu34i2knl3f@linutronix.de>
+In-Reply-To: <1485107114.4467.73.camel@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Jan 25, 2017 at 05:12:17PM +0100, Sebastian Andrzej Siewior wrote:
-> On 2017-01-21 15:19:15 [+0100], Peter Zijlstra wrote:
-> > On Fri, Jan 20, 2017 at 11:42:57PM +0100, John Ogness wrote:
-> > > Although wbinvd() is faster than flushing many individual pages, it
-> > > blocks the memory bus for "long" periods of time (>100us), thus
-> > > directly causing unusually large latencies for PREEMPT_RT_FULL. For
-> > > 1024 pages, flushing those pages individually can take up to 2200us,
-> > > but the task remains fully preemptible during that time.
-> > > 
-> > > Cc: Peter Zijlstra <peterz@infradead.org>
-> > > Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> > > Signed-off-by: John Ogness <john.ogness@linutronix.de>
-> > > ---
-> > >  arch/x86/mm/pageattr.c | 5 +++++
-> > >  1 file changed, 5 insertions(+)
-> > > 
-> > > diff --git a/arch/x86/mm/pageattr.c b/arch/x86/mm/pageattr.c
-> > > index e3353c9..a182477 100644
-> > > --- a/arch/x86/mm/pageattr.c
-> > > +++ b/arch/x86/mm/pageattr.c
-> > > @@ -214,7 +214,12 @@ static void cpa_flush_array(unsigned long *start, int numpages, int cache,
-> > >  			    int in_flags, struct page **pages)
-> > >  {
-> > >  	unsigned int i, level;
-> > > +#ifdef CONFIG_PREEMPT_RT_FULL
-> > > +	/* wbinvd() causes ugly latencies, avoid it */
-> > > +	unsigned long do_wbinvd = 0;
-> > 
-> > Arguably we should do the same for CONFIG_PREEMPT and possibly even
-> > always, esp. when considering CAT.
+On 2017-01-22 18:45:14 [+0100], Mike Galbraith wrote:
+> RT does not have a way to describe its rwlock semantics to lockdep,
+> leading to the btrfs false positive below.  Btrfs maintains an array
+> of keys which it assigns on the fly in order to avoid false positives
+> in stock code, however, that scheme depends upon lockdep knowing that
+> read_lock()+read_lock() is allowed within a class, as multiple locks
+> are assigned to the same class, and end up acquired by the same task.
+
+read_lock(A)+read_lock(A) of the same lock is okay because the lock is
+already held and a writer is blocked. Lockdep won't see the second lock.
+That means the second read_lock() is also successful if we have a writer
+waiting after the first read_lock().
+
+> [  341.960754] =============================================
+> [  341.960754] [ INFO: possible recursive locking detected ]
+> [  341.960756] 4.10.0-rt1-rt #124 Tainted: G            E  
+> [  341.960756] ---------------------------------------------
+> [  341.960757] kworker/u8:9/2039 is trying to acquire lock:
+> [  341.960757]  (btrfs-tree-00){+.+...}, at: [<ffffffffa036fd15>] btrfs_clear_lock_blocking_rw+0x55/0x100 [btrfs]
 > 
-> So you want to see this patch again with CONFIG_PREEMPT instead of
-> CONFIG_PREEMPT_RT_FULL and also targeting lkml?
+> This kworker assigned this lock to class 'tree' level 0 shortly
+> before acquisition, however..
+> 
+> [  341.960783] 
+> [  341.960783]  but task is already holding lock:
+> [  341.960783]  (btrfs-tree-00){+.+...}, at: [<ffffffffa036fd15>] btrfs_clear_lock_blocking_rw+0x55/0x100 [btrfs]
+> 
+> ..another kworker previously assigned another lock we now hold to the
+> 'tree' level 0 key as well.  Since RT tells lockdep that read_lock() is an
+> exclusive acquisition, in class read_lock()+read_lock() is forbidden.
 
-Patches should go to LKML irrespective of PREEMPT_RT_FULL or not.
+Hmm. So if you have kworker1 doing
+	read_lock(A), read_lock(B)
+and kworker2 doing
+	read_lock(B), read_lock(A)
 
-But yes, I think it makes sense for PREEMPT as well.
+then this is something that will work fine on mainline (assuming that
+neither B nor A is write-locked by something that depends one something
+that is done / held by kworker1 or kworker2). However on -RT it might
+deadlock because a read lock can only be taken recursively on -RT. That
+means you can't have two kworkers holding the same lock at the time. One
+of them will be blocked until reader lock is release. For the
+non-recursively case a reader-lock on -RT behaves like a "normal" lock.
+So yes, it is an exclusive acquisition.
 
-> I don't get quite the link between wbindv and CAT (assuming it stands
-> for Intel's Cache Allocation support). But if you want unconditionally
-> want to drop that wbinvd because it is bad for another !RT usecase, fine
-> by me :)
+> [  341.960794]        CPU0
+> [  341.960795]        ----
+> [  341.960795]   lock(btrfs-tree-00);
+> [  341.960795]   lock(btrfs-tree-00);
+> [  341.960796] 
+> [  341.960796]  *** DEADLOCK ***
+> [  341.960796]
+> [  341.960796]  May be due to missing lock nesting notation
+> [  341.960796]
+> [  341.960796] 6 locks held by kworker/u8:9/2039:
+> [  341.960797]  #0:  ("%s-%s""btrfs", name){.+.+..}, at: [<ffffffff8109f711>] process_one_work+0x171/0x700
+> [  341.960812]  #1:  ((&work->normal_work)){+.+...}, at: [<ffffffff8109f711>] process_one_work+0x171/0x700
+> [  341.960815]  #2:  (sb_internal){.+.+..}, at: [<ffffffffa032d4f7>] start_transaction+0x2a7/0x5a0 [btrfs]
+> [  341.960825]  #3:  (btrfs-tree-02){+.+...}, at: [<ffffffffa036fd15>] btrfs_clear_lock_blocking_rw+0x55/0x100 [btrfs]
+> [  341.960835]  #4:  (btrfs-tree-01){+.+...}, at: [<ffffffffa036fd15>] btrfs_clear_lock_blocking_rw+0x55/0x100 [btrfs]
+> [  341.960854]  #5:  (btrfs-tree-00){+.+...}, at: [<ffffffffa036fd15>] btrfs_clear_lock_blocking_rw+0x55/0x100 [btrfs]
+> 
+> Attempting to describe RT rwlock semantics to lockdep prevents this.
 
-Yes, that CAT.
+and this is what I don't get. I stumbled upon this myself [0] but didn't
+fully understand the problem (assuming this is the same problem colored
+differently).
+With your explanation I am not sure if I get what is happening. If btrfs
+is taking here read-locks on random locks then it may deadlock if
+another btrfs-thread is doing the same and need each other's locks.
+If btrfs takes locks recursively which it already holds (in the same
+context / process) then it shouldn't be visible here because lockdep
+does not account this on -RT.
+If btrfs takes the locks in a special order for instance only ascending
+according to inode's number then it shouldn't deadlock.
 
-I suspect; but I couldn't find the SDM making any statement what so ever
-on this; that when you do wbinvd you kill the _entire_ cache,
-irrespective of our CAT mask.
+[0] https://www.spinics.net/lists/linux-btrfs/msg61423.html
 
-This means that a random task doing wbinvd(), even if it is 'isolated'
-with a CAT mask, will affect the performance of all other tasks on that
-cache domain.
+> 
+> Not-signed-off-by: /me
 
-IOW, your X11 running in some 'system' group will affect your RT
-workload on the isolated CPU by killing its cache.
+Sebastian
