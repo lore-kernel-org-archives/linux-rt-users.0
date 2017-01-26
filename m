@@ -1,178 +1,170 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: [rfc patch-rt] radix-tree: Partially disable memcg accounting
- in radix_tree_node_alloc()
-Date: Thu, 26 Jan 2017 04:42:51 +0100
-Message-ID: <1485402171.4451.2.camel@gmx.de>
-References: <20161223163213.szj43nv7rnelkbty@linutronix.de>
-         <1483690403.11478.8.camel@gmx.de>
-         <20170125150602.krsix5lmwh6h5yxf@linutronix.de>
+From: "Koehrer Mathias (ETAS/ESW5)" <mathias.koehrer@etas.com>
+Subject: RE: Kernel 4.9.x-rt Fully Preemptible Kernel: Issue with gdb and
+ unexpected SIGSTOP signals
+Date: Thu, 26 Jan 2017 09:26:08 +0000
+Message-ID: <3c9395f9c6b944978c1f420276bde0ee@FE-MBX1012.de.bosch.com>
+References: <6bec5da671344b7e862ee74dafacb3b5@FE-MBX1012.de.bosch.com>
+ <39174b3e2e7a47c48b3688a2b28ab83e@FE-MBX1012.de.bosch.com>
+ <20170125095628.pcuxqk7l4xnvbsve@linutronix.de>
+ <f8526e600a9a45dc959ddf5d12bc430b@FE-MBX1012.de.bosch.com>
+ <87521e75b64f4b84b2ecd8b47bb7fe72@FE-MBX1012.de.bosch.com>
+ <20170125134016.ffj6xpissz4iy7ph@linutronix.de>
+ <ef2c680e3ed541c4b0df5e0715ca8264@FE-MBX1012.de.bosch.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170125150602.krsix5lmwh6h5yxf@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: multipart/mixed;
+        boundary="_002_3c9395f9c6b944978c1f420276bde0eeFEMBX1012deboschcom_"
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: "Koehrer Mathias (ETAS/ESW5)" <mathias.koehrer@etas.com>,
+        "Sebastian Andrzej Siewior" <bigeasy@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtp6-v.fe.bosch.de ([139.15.237.11]:48270 "EHLO
+        smtp6-v.fe.bosch.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1753019AbdAZJ0M (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 26 Jan 2017 04:26:12 -0500
+In-Reply-To: <ef2c680e3ed541c4b0df5e0715ca8264@FE-MBX1012.de.bosch.com>
+Content-Language: de-DE
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2017-01-25 at 16:06 +0100, Sebastian Andrzej Siewior wrote:
+--_002_3c9395f9c6b944978c1f420276bde0eeFEMBX1012deboschcom_
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-> According to the to description of radix_tree_preload() the return code
-> of 0 means that the following addition of a single element does not
-> fail. But in RT's case this requirement is not fulfilled. There is more
-> than just one user of that function. So instead adding an exception here
-> and maybe later one someplace else, what about the following patch?
-> That testcase you mentioned passes now:
+SGkgU2ViYXN0aWFuLA0KDQogDQo+ID4gPiA+ID4gPiBUaGUga2VybmVsIHZlcnNpb24gNC4xLjM3
+LXJ0NDMgaXMgd29ya2luZyBmaW5lLCB0aGUga2VybmVsDQo+ID4gPiA+ID4gPiB2ZXJzaW9ucw0K
+PiA+ID4gPiA+ID4gNC40LjM5LXJ0NTAgYW5kDQo+ID4gPiA+ID4gNC44LjExLXJ0NyBzaG93IHRo
+ZSBzYW1lIHN0cmFuZ2UgYmVoYXZpb3IgYXMgNC45LjAtcnQxLg0KPiA+ID4gPiA+ID4gU29tZXRo
+aW5nIG9uIHRoZSB3YXkgYmV0d2VlbiA0LjEuMzctcnQ0MyBhbmQgNC40LjM5LXJ0NTAgc2VlbXMN
+Cj4gPiA+ID4gPiA+IHRvIGNhdXNlIHRoZQ0KPiA+ID4gPiA+IHRyb3VibGUuDQo+ID4gPiA+ID4N
+Cj4gPiA+ID4gPiBjYW4geW91IGNoZWNrIGlmIG9uZSBvZiB0aGUgZWFybGllciB2NC40LVJUIHJl
+bGVhc2VzIChtYXliZQ0KPiA+ID4gPiA+IHN0YXJ0IHdpdGgNCj4gPiA+ID4gPiAtcnQyIG9yIC1y
+dDEpIGFsc28gc2hvd3MgdGhpcyBiZWhhdmlvdXI/DQo+ID4gPiA+ID4gSWYgbm90LCB3b3VsZCB5
+b3UgaGF2ZSBhIHRlc3RjYXNlPw0KPiA+ID4gPiBJIHRlc3RlZCB3aXRoIDQuNC4wLXJ0Mi4NCj4g
+PiA+ID4gSGVyZSB0aGlzIGlzc3VlIG9jY3VycyB2ZXJ5IHJhcmVseS4gSSByYW4gdGhlIGdkYiBm
+b3IgYWJvdXQgMzANCj4gPiA+ID4gdGltZXMsIGFuZCBoZXJlIEkgZ290IG9uZSBoaXQuDQo+ID4g
+PiA+IFdpdGggdGhlIG90aGVyIGtlcm5lbCB2ZXJzaW9ucyBJIGdvdCB0aGUgaXNzdWUgaW4gMjAt
+NDAlIG9mIHRoZSBjYXNlcy4NCj4gPiA+ID4NCj4gPiA+ID4gSSB3aWxsIHRyeSBvdXQgdGhlIG90
+aGVyIDQuNC4wIHJlbGVhc2VzLi4uDQo+ID4gPg0KPiA+ID4gSSByYW4gbW9yZSB0ZXN0cy4gVGhl
+IGtlcm5lbCA0LjQuMS1ydDQgaXMgd29ya2luZyBmYWlybHkgZmluZSAob25seQ0KPiA+ID4gYWJv
+dXQgb25lIGhpdCBldmVyeSAzMCBydW5zKSBidXQgdGhlIGtlcm5lbCA0LjQuMS1ydDUgaXMgY2F1
+c2luZyB0aGUNCj4gPiA+IGlzc3VlIHZlcnkNCj4gPiBvZnRlbi4NCj4gPg0KPiA+IGFuZCA0LjEu
+MzctcnQ0MyBzaG93cyBub3QgU0lHU1RPUFMgaW4gMTAwIHJ1bnM/DQo+IFRoYXQncyByaWdodC4N
+Cj4gSSB1c2VkIDQuMS4zNy1ydDQzIGFuZCByYW4gdGhlIHRlc3QgZm9yIDIwMCB0aW1lcy4gVGhl
+cmUgd2FzIG5vIHNpbmdsZSBpc3N1ZS4NCg0KSSBoYXZlIG5vdyBhIHNpbXBsZSBleGVjdXRhYmxl
+IHdoZXJlIEkgY2FuIHJlcHJvZHVjZSBhIHZlcnkgc2ltaWxhciBpc3N1ZS4NCkl0IG1pZ2h0IGJl
+IHJlbGF0ZWQgdG8gdGhlIG9uZSBJIHNlZSBhcyBpdCBlZmZlY3RzIGFsc28gZ2RiIGRlYnVnZ2lu
+Zy4NCg0KVGhlIHNpbXBsZSBleGVjdXRhYmxlIChzZWUgYmVsb3cgb3IgaW4gdGhlIGF0dGFjaG1l
+bnQpIHJ1bnMgcGVyZmVjdGx5IHdpdGhvdXQgZ2RiLg0KSG93ZXZlciwgdXNpbmcga2VybmVsIHZl
+cnNpb24gNC40LjEtcnQ2IGFuZCBhbHNvIHdpdGggNC45LjQtcnQyIGl0IHZlcnkgb2Z0ZW4gZG9l
+cyBub3QgcnVuIHByb3Blcmx5DQp1c2luZyBnZGIuDQpJbiBrZXJuZWwgdmVyc2lvbiA0LjEuMzct
+cnQ0MyBpdCBhbHdheXMgcnVucyBwcm9wZXJseSBpbiBnZGIuDQoNCldoZW5ldmVyIHRoZSBpc3N1
+ZSBvY2N1cnMsIHRoZSBnZGIgZG9lcyBub3QgcmVhY2ggdGhlIGVuZCBvZiB0aGUgZXhlY3V0YWJs
+ZS4NCkkgaGF2ZSB0byBzdG9wIHRoZSBnZGIgd2l0aCB3aXRoIENUUkwtQy4NCkhlcmUgaXMgdGhl
+IGdkYiBvdXRwdXQgb2Yga2VybmVsIDQuOS40LXJ0Nw0KKGdkYikgaW5mbyB0aHINCnNob3dzDQog
+IElkICAgVGFyZ2V0IElkICAgICAgICAgRnJhbWUNCiogMSAgICBUaHJlYWQgMHg3ZmZmZjdmZGY3
+MDAgKExXUCA1MzgzKSAiZ2RiLWlzc3VlIiAweDAwMDA3ZmZmZjc5YmQ2YmQgaW4gcHRocmVhZF9q
+b2luICh0aHJlYWRpZD0xNDA3MzczNDM3NDM3NDQsDQogICAgdGhyZWFkX3JldHVybj0weDApIGF0
+IHB0aHJlYWRfam9pbi5jOjkwDQogIDIgICAgVGhyZWFkIDB4N2ZmZmY3NjE2NzAwIChMV1AgNTM4
+NykgImdkYi1pc3N1ZSIgMHgwMDAwN2ZmZmY3NmNlZTRiIGluIF9fR0lfX193YWl0cGlkIChwaWQ9
+NTU0MCwNCiAgICBzdGF0X2xvYz1zdGF0X2xvY0BlbnRyeT0weDdmZmZmNzYxNWQ1MCwgb3B0aW9u
+cz1vcHRpb25zQGVudHJ5PTApIGF0IC4uL3N5c2RlcHMvdW5peC9zeXN2L2xpbnV4L3dhaXRwaWQu
+YzoyOQ0KKGdkYikgdGhyIDINCihnZGIpIGJ0DQpzaG93cw0KIzAgIDB4MDAwMDdmZmZmNzZjZWU0
+YiBpbiBfX0dJX19fd2FpdHBpZCAocGlkPTU1NDAsIHN0YXRfbG9jPXN0YXRfbG9jQGVudHJ5PTB4
+N2ZmZmY3NjE1ZDUwLCBvcHRpb25zPW9wdGlvbnNAZW50cnk9MCkNCiAgICBhdCAuLi9zeXNkZXBz
+L3VuaXgvc3lzdi9saW51eC93YWl0cGlkLmM6MjkNCiMxICAweDAwMDA3ZmZmZjc2NTYwOGIgaW4g
+ZG9fc3lzdGVtIChsaW5lPTxvcHRpbWl6ZWQgb3V0PikgYXQgLi4vc3lzZGVwcy9wb3NpeC9zeXN0
+ZW0uYzoxNDgNCiMyICAweDAwMDA1NTU1NTU1NTRkZjggaW4gdGhyZWFkX2Z1bmMgKGFyZz0weDU1
+NTU1NTc1NjBjMCA8dGhyZWFkX2RhdGE+KSBhdCBnZGItaXNzdWUuYzo1NA0KIzMgIDB4MDAwMDdm
+ZmZmNzliYzQ2NCBpbiBzdGFydF90aHJlYWQgKGFyZz0weDdmZmZmNzYxNjcwMCkgYXQgcHRocmVh
+ZF9jcmVhdGUuYzozMzMNCiM0ICAweDAwMDA3ZmZmZjc2ZmY5ZGYgaW4gY2xvbmUgKCkgYXQgLi4v
+c3lzZGVwcy91bml4L3N5c3YvbGludXgveDg2XzY0L2Nsb25lLlM6MTA1DQoNClNvbWV0aW1lcyBp
+dCB3b3JrcyBmaW5lLCBob3dldmVyIGluIGFib3V0IDIwLTMwJSBvZiB0aGUgcnVucywgdGhlIGdk
+YiBzZXNzaW9uIGRvZXMgbm90IHdvcmsgcHJvcGVybHkuDQpEb2VzIHRoaXMgZ2l2ZSB5b3UgYW55
+IGhpbnQ/DQoNClRoYW5rcyBmb3IgdGhlIHN1cHBvcnQuDQoNClJlZ2FyZHMNCg0KTWF0aGlhcw0K
+DQotLS0tLS0tLS0tLS0tLS0gQkVHSU4gb2YgQyBDT0RFIC0tLS0tLS0tLS0tLS0NCiNkZWZpbmUg
+X0dOVV9TT1VSQ0UNCiNpbmNsdWRlIDxzY2hlZC5oPg0KI2luY2x1ZGUgPHN0ZGlvLmg+DQojaW5j
+bHVkZSA8c3RyaW5nLmg+DQojaW5jbHVkZSA8cHRocmVhZC5oPg0KI2luY2x1ZGUgPHN0ZGludC5o
+Pg0KI2luY2x1ZGUgPHN0ZGxpYi5oPg0KI2luY2x1ZGUgPHVuaXN0ZC5oPg0KI2luY2x1ZGUgPHN0
+ZGJvb2wuaD4NCiNpbmNsdWRlIDxzeXMvZXZlbnRmZC5oPg0KI2luY2x1ZGUgPHN5cy9tbWFuLmg+
+DQoNCnN0YXRpYyB2b2xhdGlsZSBib29sIHRlcm1pbmF0ZWQ7DQoNCnR5cGVkZWYgc3RydWN0DQp7
+DQogICAgcHRocmVhZF90IHRocmVhZDsNCiAgICBpbnQgaWQ7DQogICAgaW50IHRyaWdnZXJfZmQ7
+DQp9DQp0aHJlYWRfZGF0YV90Ow0KDQp2b2lkICp0aHJlYWRfZnVuYyh2b2lkICphcmcpDQp7DQog
+ICAgaW50IHJjOw0KICAgIHRocmVhZF9kYXRhX3QgKnRociA9IGFyZzsNCiAgICBpbnQgbG9vcDsN
+CiAgICB7DQogICAgICAgIHN0cnVjdCBzY2hlZF9wYXJhbSBwYXJhbTsNCiAgICAgICAgbWVtc2V0
+KCZwYXJhbSwgMCwgc2l6ZW9mKHBhcmFtKSk7DQogICAgICAgIHBhcmFtLnNjaGVkX3ByaW9yaXR5
+ID0gNjA7DQogICAgICAgIHJjID0gcHRocmVhZF9zZXRzY2hlZHBhcmFtKHB0aHJlYWRfc2VsZigp
+LCBTQ0hFRF9GSUZPLCAmcGFyYW0pOw0KICAgICAgICBpZiAocmMpIHsNCiAgICAgICAgICAgIGZw
+cmludGYoc3RkZXJyLCAicHRocmVhZF9zZXRzY2hlZHBhcmFtICVtXG4iKTsNCiAgICAgICAgICAg
+IGV4aXQoMSk7DQogICAgICAgIH0NCg0KICAgICAgICAvKiBSdW4gZWFjaCB0aHJlYWQgb24gYSBz
+ZXBhcmF0ZSBDUFUgY29yZSAqLw0KICAgICAgICBjcHVfc2V0X3Qgc2V0Ow0KICAgICAgICBDUFVf
+WkVSTygmc2V0KTsNCiAgICAgICAgQ1BVX1NFVCh0aHItPmlkLCAmc2V0KTsNCiAgICAgICAgcmMg
+PSBzY2hlZF9zZXRhZmZpbml0eSgwLCBzaXplb2Yoc2V0KSwgJnNldCk7DQogICAgICAgIGlmIChy
+Yykgew0KICAgICAgICAgICAgZnByaW50ZihzdGRlcnIsICJzY2hlZF9zZXRhZmZpbml0eSAlbVxu
+Iik7DQogICAgICAgICAgICBleGl0KDEpOw0KICAgICAgICB9DQogICAgfQ0KDQogICAgZm9yIChs
+b29wPTA7ICF0ZXJtaW5hdGVkIDsgbG9vcCsrKSB7DQogICAgICAgIHVpbnQ2NF90IHU2NDsNCiAg
+ICAgICAgaW50IHJjID0gcmVhZCh0aHItPnRyaWdnZXJfZmQsICZ1NjQsIDgpOw0KICAgICAgICBp
+ZiAocmMgPiAwKSB7DQogICAgICAgICAgICAvKiBwcmludGYoInRocmVhZCAlaSBsb29wICVpXG4i
+LCB0aHItPmlkLCBsb29wKTsgKi8NCiAgICAgICAgICAgIHN5c3RlbSgibHNwY2kgLXh4eCA+IC9k
+ZXYvbnVsbCIpOw0KICAgICAgICB9DQogICAgICAgIGVsc2Ugew0KICAgICAgICAgICAgZnByaW50
+ZihzdGRlcnIsICJyZWFkICVtXG4iKTsNCiAgICAgICAgfQ0KICAgIH0NCiAgICBwcmludGYoIkVu
+ZCBvZiB0aHJlYWQgJWlcbiIsIHRoci0+aWQpOw0KICAgIHJldHVybiBOVUxMOw0KfQ0KDQojZGVm
+aW5lIE5PX1RIUkVBRFMgNA0Kc3RhdGljIHRocmVhZF9kYXRhX3QgdGhyZWFkX2RhdGFbTk9fVEhS
+RUFEU107DQoNCmludCBtYWluKGludCBhcmdjLCBjaGFyICphcmd2W10pDQp7DQogICAgaW50IGk7
+DQogICAgaW50IHJjOw0KICAgIC8qIEluaXQgKi8NCiAgICBtbG9ja2FsbChNQ0xfQ1VSUkVOVCB8
+IE1DTF9GVVRVUkUpOw0KICAgIGZvciAoaT0wOyBpPE5PX1RIUkVBRFM7IGkrKykgew0KICAgICAg
+ICB0aHJlYWRfZGF0YVtpXS5pZCA9IGk7DQogICAgICAgIHJjID0gdGhyZWFkX2RhdGFbaV0udHJp
+Z2dlcl9mZCA9IGV2ZW50ZmQoMCwwKTsNCiAgICAgICAgaWYgKHJjIDwgMCkgew0KICAgICAgICAg
+ICAgZnByaW50ZihzdGRlcnIsICJFcnJvciBjcmVhdGluZyBldmVudGZkOiAlbVxuIik7IA0KICAg
+ICAgICAgICAgcmV0dXJuIDE7DQogICAgICAgIH0NCiAgICB9DQoNCiAgICBmb3IgKGk9MDsgaTxO
+T19USFJFQURTOyBpKyspIHsNCiAgICAgICAgcmMgPSBwdGhyZWFkX2NyZWF0ZSgmdGhyZWFkX2Rh
+dGFbaV0udGhyZWFkLCBOVUxMLCB0aHJlYWRfZnVuYywgJnRocmVhZF9kYXRhW2ldKTsNCiAgICAg
+ICAgaWYgKHJjKSB7DQogICAgICAgICAgICBmcHJpbnRmKHN0ZGVyciwgIkVycm9yIGNyZWF0aW5n
+IHRocmVhZDogJW1cbiIpOw0KICAgICAgICAgICAgcmV0dXJuIDE7DQogICAgICAgIH0NCiAgICB9
+DQoNCiAgICAvKiBMb29wICovDQogICAgaW50IGo7DQogICAgaW50IG1heCA9IDEwMDsNCiAgICBm
+b3IgKGo9MDsgajw9bWF4OyBqKyspIHsNCiAgICAgICAgc3RydWN0IHRpbWVzcGVjIHRzID0geyAw
+LCAxMDAwMDAwMCB9Ow0KICAgICAgICBjbG9ja19uYW5vc2xlZXAoQ0xPQ0tfTU9OT1RPTklDLCAw
+LCAmdHMsIE5VTEwpOw0KDQogICAgICAgIGlmIChqID09IG1heCkgew0KICAgICAgICAgICAgdGVy
+bWluYXRlZCA9IHRydWU7DQogICAgICAgIH0NCg0KICAgICAgICBmb3IgKGk9MDsgaTxOT19USFJF
+QURTOyBpKyspIHsNCiAgICAgICAgICAgIHVpbnQ2NF90IHU2NCA9IDE7DQogICAgICAgICAgICB3
+cml0ZSh0aHJlYWRfZGF0YVtpXS50cmlnZ2VyX2ZkLCAmdTY0LCA4KTsNCiAgICAgICAgfQ0KICAg
+IH0NCiAgICANCiAgICAvKiBDbGVhbnVwICovDQogICAgZm9yIChpPTA7IGk8Tk9fVEhSRUFEUzsg
+aSsrKSB7DQogICAgICAgIHB0aHJlYWRfam9pbih0aHJlYWRfZGF0YVtpXS50aHJlYWQsIE5VTEwp
+Ow0KICAgICAgICBwcmludGYoIlRocmVhZCAlaSBqb2luZWRcbiIsIGkpOw0KICAgICAgICBjbG9z
+ZSh0aHJlYWRfZGF0YVtpXS50cmlnZ2VyX2ZkKTsNCiAgICB9DQogICAgcmV0dXJuIDA7DQp9DQoN
+Ci0tLS0tLS0tLS0tLS0tLSBFTkQgb2YgQyBDT0RFIC0tLS0tLS0tLS0tLS0NCg0KDQo=
 
-Modulo missing EXPORT_SYMBOL(), yup, works fine.
+--_002_3c9395f9c6b944978c1f420276bde0eeFEMBX1012deboschcom_
+Content-Type: application/x-compressed; name="gdb-issue.tgz"
+Content-Description: gdb-issue.tgz
+Content-Disposition: attachment; filename="gdb-issue.tgz"; size=1273;
+	creation-date="Thu, 26 Jan 2017 09:25:10 GMT";
+	modification-date="Thu, 26 Jan 2017 09:20:58 GMT"
+Content-Transfer-Encoding: base64
 
-> > testcases/kernel/syscalls/madvise/madvise06
-> > tst_test.c:760: INFO: Timeout per run is 0h 05m 00s
-> > madvise06.c:65: INFO: dropping caches
-> > madvise06.c:139: INFO: SwapCached (before madvise): 304
-> > madvise06.c:153: INFO: SwapCached (after madvise): 309988
-> > madvise06.c:155: PASS: Regression test pass
-> > 
-> > Summary:
-> > passed   1
-> > failed   0
-> > skipped  0
-> > warnings 0
-> 
-> diff --git a/include/linux/radix-tree.h b/include/linux/radix-tree.h
-> index f87f87dec84c..277295039c8f 100644
-> --- a/include/linux/radix-tree.h
-> +++ b/include/linux/radix-tree.h
-> @@ -289,19 +289,11 @@ unsigned int radix_tree_gang_lookup(struct radix_tree_root *root,
->  unsigned int radix_tree_gang_lookup_slot(struct radix_tree_root *root,
->  > 	> 	> 	> void ***results, unsigned long *indices,
->  > 	> 	> 	> unsigned long first_index, unsigned int max_items);
-> -#ifdef CONFIG_PREEMPT_RT_FULL
-> -static inline int radix_tree_preload(gfp_t gm) { return 0; }
-> -static inline int radix_tree_maybe_preload(gfp_t gfp_mask) { return 0; }
-> -static inline int radix_tree_maybe_preload_order(gfp_t gfp_mask, int order)
-> -{
-> -> 	> return 0;
-> -};
-> -
-> -#else
->  int radix_tree_preload(gfp_t gfp_mask);
->  int radix_tree_maybe_preload(gfp_t gfp_mask);
->  int radix_tree_maybe_preload_order(gfp_t gfp_mask, int order);
-> -#endif
-> +void radix_tree_preload_end(void);
-> +
->  void radix_tree_init(void);
->  void *radix_tree_tag_set(struct radix_tree_root *root,
->  > 	> 	> 	> unsigned long index, unsigned int tag);
-> @@ -324,11 +316,6 @@ unsigned long radix_tree_range_tag_if_tagged(struct radix_tree_root *root,
->  int radix_tree_tagged(struct radix_tree_root *root, unsigned int tag);
->  unsigned long radix_tree_locate_item(struct radix_tree_root *root, void *item);
->  
-> -static inline void radix_tree_preload_end(void)
-> -{
-> -> 	> preempt_enable_nort();
-> -}
-> -
->  /**
->   * struct radix_tree_iter - radix tree iterator state
->   *
-> diff --git a/lib/radix-tree.c b/lib/radix-tree.c
-> index 881cc195d85f..e96c6a99f25c 100644
-> --- a/lib/radix-tree.c
-> +++ b/lib/radix-tree.c
-> @@ -36,7 +36,7 @@
->  #include 
->  #include 
->  #include > 	> 	> /* in_interrupt() */
-> -
-> +#include 
->  
->  /* Number of nodes in fully populated tree of given height */
->  static unsigned long height_to_maxnodes[RADIX_TREE_MAX_PATH + 1] __read_mostly;
-> @@ -68,6 +68,7 @@ struct radix_tree_preload {
->  > 	> struct radix_tree_node *nodes;
->  };
->  static DEFINE_PER_CPU(struct radix_tree_preload, radix_tree_preloads) = { 0, };
-> +static DEFINE_LOCAL_IRQ_LOCK(radix_tree_preloads_lock);
->  
->  static inline void *node_to_entry(void *ptr)
->  {
-> @@ -290,14 +291,14 @@ radix_tree_node_alloc(struct radix_tree_root *root)
->  > 	> 	>  * succeed in getting a node here (and never reach
->  > 	> 	>  * kmem_cache_alloc)
->  > 	> 	>  */
-> -> 	> 	> rtp = &get_cpu_var(radix_tree_preloads);
-> +> 	> 	> rtp = &get_locked_var(radix_tree_preloads_lock, radix_tree_preloads);
->  > 	> 	> if (rtp->nr) {
->  > 	> 	> 	> ret = rtp->nodes;
->  > 	> 	> 	> rtp->nodes = ret->private_data;
->  > 	> 	> 	> ret->private_data = NULL;
->  > 	> 	> 	> rtp->nr--;
->  > 	> 	> }
-> -> 	> 	> put_cpu_var(radix_tree_preloads);
-> +> 	> 	> put_locked_var(radix_tree_preloads_lock, radix_tree_preloads);
->  > 	> 	> /*
->  > 	> 	>  * Update the allocation stack trace as this is more useful
->  > 	> 	>  * for debugging.
-> @@ -337,7 +338,6 @@ radix_tree_node_free(struct radix_tree_node *node)
->  > 	> call_rcu(&node->rcu_head, radix_tree_node_rcu_free);
->  }
->  
-> -#ifndef CONFIG_PREEMPT_RT_FULL
->  /*
->   * Load up this CPU's radix_tree_node buffer with sufficient objects to
->   * ensure that the addition of a single element in the tree cannot fail.  On
-> @@ -359,14 +359,14 @@ static int __radix_tree_preload(gfp_t gfp_mask, int nr)
->  > 	>  */
->  > 	> gfp_mask &= ~__GFP_ACCOUNT;
->  
-> -> 	> preempt_disable();
-> +> 	> local_lock(radix_tree_preloads_lock);
->  > 	> rtp = this_cpu_ptr(&radix_tree_preloads);
->  > 	> while (rtp->nr < nr) {
-> -> 	> 	> preempt_enable();
-> +> 	> 	> local_unlock(radix_tree_preloads_lock);
->  > 	> 	> node = kmem_cache_alloc(radix_tree_node_cachep, gfp_mask);
->  > 	> 	> if (node == NULL)
->  > 	> 	> 	> goto out;
-> -> 	> 	> preempt_disable();
-> +> 	> 	> local_lock(radix_tree_preloads_lock);
->  > 	> 	> rtp = this_cpu_ptr(&radix_tree_preloads);
->  > 	> 	> if (rtp->nr < nr) {
->  > 	> 	> 	> node->private_data = rtp->nodes;
-> @@ -408,7 +408,7 @@ int radix_tree_maybe_preload(gfp_t gfp_mask)
->  > 	> if (gfpflags_allow_blocking(gfp_mask))
->  > 	> 	> return __radix_tree_preload(gfp_mask, RADIX_TREE_PRELOAD_SIZE);
->  > 	> /* Preloading doesn't help anything with this gfp mask, skip it */
-> -> 	> preempt_disable();
-> +> 	> local_lock(radix_tree_preloads_lock);
->  > 	> return 0;
->  }
->  EXPORT_SYMBOL(radix_tree_maybe_preload);
-> @@ -424,7 +424,7 @@ int radix_tree_maybe_preload_order(gfp_t gfp_mask, int order)
->  
->  > 	> /* Preloading doesn't help anything with this gfp mask, skip it */
->  > 	> if (!gfpflags_allow_blocking(gfp_mask)) {
-> -> 	> 	> preempt_disable();
-> +> 	> 	> local_lock(radix_tree_preloads_lock);
->  > 	> 	> return 0;
->  > 	> }
->  
-> @@ -457,7 +457,11 @@ int radix_tree_maybe_preload_order(gfp_t gfp_mask, int order)
->  
->  > 	> return __radix_tree_preload(gfp_mask, nr_nodes);
->  }
-> -#endif
-> +
-> +void radix_tree_preload_end(void)
-> +{
-> +> 	> local_unlock(radix_tree_preloads_lock);
-> +}
->  
->  /*
->   * The maximum index which can be stored in a radix tree
+H4sIAHq/iVgAA+1YbVPjNhDmK/4VWw4Ym0uCDQE6CWHmmgs9Wkg6IZl2emU8RpGDOL9kZJkCV/57
+V7Id2wkF2hm4D/XzIbJWq33Xys50cllnURTTBll5LZiI/WZTjtbBnqnmVjKX2LMODlasXbO5s7u7
+v7e7s2JaO7i+AuarWVRAHAmHA+BI+dN8lEdvYdDb4t2EuiygYP/YH9vng/Gw29PesYB48YTCYUSu
+6KRxdVQkiQkLF0mcBdMybSauOHUe2RuIJZrHLsu0OGBIXuK7DENvgXgXbdMbGgh3kRsXfN8JJFXD
+DAtG4Cb0cPQoSDkgKPdZ4Ag6aWuauJtRDASgJzER2lcNEKkLtoDkoa2o6ACwwjP6Pp1SbrtIe9DS
+LRNHOLZAwTchm8BWSnXjgOgJxeFTI1UjhXCSCCxtV/ugA8ibq/PCcJbMkt0SidWgkmXPHO74oH7b
+cw6f+hEV+qYi18CsQcTuaejqimAYOaciNFJRnIWciTu0Yd/MWThBQhYcFKuY1T49p3qubtTgvPup
+99E+Pjke1CBRXlDFXNA5MQqOSLioFfOpY74p5zVYe1QTbPh/BGsFYRL0lgndKhAftPnj9hYM4wCo
+Q67SKEMYgAMRlfIEhe4vYyAhp7C1Pd9EZrFUi6nA31wsstq/94YDfRPJRpl+3hvpKL9+xCbocnld
+BS4JLS44Lh48jK6eZ0OyL+16YZiW5L40RIVAuSEHXVZYx2zDd/kJgbaqu/fvi1bEqH+/ibGJ95sF
+a1U1o58yxEkk8hOCviFzDb5fcg+OwFx0EVOWOrmWZmyDKTtwRM9qMI+zJBrtYuYksAcI6utrXjQj
+DOq3t7eoZXtCb7aD2PPWloKg4uNF9LlIJ6YsBDeLo/zNrO4FWGQuzI0vGp1u5VTEPID++PRUtg8t
+a8f9gT36NOx9+HgOzax/lZtDYfY5577AniNT4Dss0OUDNg9SA3KFd5xsOjefL4p9h+WNJWtBGPUT
+LJ8smL4Xki+O5+ln3VO7Ox4Oe/0R/AVydjwejYe91BFVOkzWDTvMzcFZuWiKVrOLBrbCTmaECoes
+nAWevHxwLW32eGbM5Ro6XK6hpeT1OEdLCWoQeGdl8lpZPqG0O82O9dRxed7nUr9Umqm+ueikmtZU
+IdSgcF/gkSmz/vvOsOByIq71aHt4xmGsjVN5/tLakGVznVeQ79yio5ZpFiriWkbn+rCDaziW45Je
+W4L5NJpRrO8It3+Vl5OVvhnCQ24IkYVoB04QRh6lM717Ouj+bJ8N+oPRoH/SVZfapoiSEKJbpShd
+Q6cj7VuMVaHFYd3xmD56d7wwzxLFpiiDUQ7vn3ibUv0f6/ux9ljsK1kOuh51gniehheal1XgdYit
+4YnyK74MpI1sNG+/cjOdqEbGjFJyoiccSzkfii3PVP3uW7/+/u9x5nzBG8ejr6njme8/s4nffNn3
+X9Oy8PvPapoH1fffW6D3Ww9aHZhmfwNo58NuidAg2uCHnyRpXce1VoN0GqGhjT4MExoKMBpieq9p
++JbQSgmaloxyjrsNbXVKCNR/RRaoT6EepnzpMtQ9LvAnbVGattEIWxuoeWHbYAfqBNYPNY3IFtjS
+Vuvch7qbicmUY0Zbq+s62qgskWMrMd+ArOC1VZl34t5DwrC0/q0zU6FChQoVKlSoUKFChQoVKlSo
+UKFChQoVKvx3/A1edzewACgAAA==
+
+--_002_3c9395f9c6b944978c1f420276bde0eeFEMBX1012deboschcom_--
+
