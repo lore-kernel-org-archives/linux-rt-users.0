@@ -1,90 +1,54 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [btrfs/rt] lockdep false positive
-Date: Thu, 26 Jan 2017 19:01:48 +0100
-Message-ID: <1485453708.4239.17.camel@gmail.com>
-References: <1485074793.4467.49.camel@gmail.com>
-         <1485107114.4467.73.camel@gmail.com>
-         <20170125170209.h6tqr6zgaq6ojmco@linutronix.de>
-         <1485368989.5150.60.camel@gmail.com>
-         <20170126170903.ikq7iequ4g5mhszo@linutronix.de>
+From: Andy Ng <andreas2025@gmail.com>
+Subject: Re: wake_up does not return
+Date: Fri, 27 Jan 2017 14:09:24 +0000
+Message-ID: <CAAVaN8yq4BveUhhed66embAx+NZE0wq6+RgKF_K7imi=07dj2g@mail.gmail.com>
+References: <CAAVaN8wqmh9qYYU7TXR58-0=5Lk_s1vMcdHKdWEp4Ln9iEf=wg@mail.gmail.com>
+ <20170126165752.lsjdyuheyvzwjess@linutronix.de> <CAAVaN8zW6vEq4Y84N4NKvUFMJsgrUDPbpihuQcon+4jEfsyoEA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-btrfs@vger.kernel.org, David Sterba <dsterba@suse.com>,
-        Josef Bacik <jbacik@fb.com>, Chris Mason <clm@fb.com>
+Content-Type: text/plain; charset=UTF-8
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f67.google.com ([74.125.82.67]:34385 "EHLO
-        mail-wm0-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1752626AbdAZSzy (ORCPT
+Received: from mail-ua0-f178.google.com ([209.85.217.178]:36830 "EHLO
+        mail-ua0-f178.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S932697AbdA0OKk (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 26 Jan 2017 13:55:54 -0500
-In-Reply-To: <20170126170903.ikq7iequ4g5mhszo@linutronix.de>
+        Fri, 27 Jan 2017 09:10:40 -0500
+Received: by mail-ua0-f178.google.com with SMTP id 96so205448177uaq.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 27 Jan 2017 06:09:30 -0800 (PST)
+In-Reply-To: <CAAVaN8zW6vEq4Y84N4NKvUFMJsgrUDPbpihuQcon+4jEfsyoEA@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2017-01-26 at 18:09 +0100, Sebastian Andrzej Siewior wrote:
-> On 2017-01-25 19:29:49 [+0100], Mike Galbraith wrote:
-> > On Wed, 2017-01-25 at 18:02 +0100, Sebastian Andrzej Siewior wrote:
-> > 
-> > > > [  341.960794]        CPU0
-> > > > [  341.960795]        ----
-> > > > [  341.960795]   lock(btrfs-tree-00);
-> > > > [  341.960795]   lock(btrfs-tree-00);
-> > > > [  341.960796] 
-> > > > [  341.960796]  *** DEADLOCK ***
-> > > > [  341.960796]
-> > > > [  341.960796]  May be due to missing lock nesting notation
-> > > > [  341.960796]
-> > > > [  341.960796] 6 locks held by kworker/u8:9/2039:
-> > > > [  341.960797]  #0:  ("%s-%s""btrfs", name){.+.+..}, at: [] process_one_work+0x171/0x700
-> > > > [  341.960812]  #1:  ((&work->normal_work)){+.+...}, at: [] process_one_work+0x171/0x700
-> > > > [  341.960815]  #2:  (sb_internal){.+.+..}, at: [] start_transaction+0x2a7/0x5a0 [btrfs]
-> > > > [  341.960825]  #3:  (btrfs-tree-02){+.+...}, at: [] btrfs_clear_lock_blocking_rw+0x55/0x100 [btrfs]
-> > > > [  341.960835]  #4:  (btrfs-tree-01){+.+...}, at: [] btrfs_clear_lock_blocking_rw+0x55/0x100 [btrfs]
-> > > > [  341.960854]  #5:  (btrfs-tree-00){+.+...}, at: [] btrfs_clear_lock_blocking_rw+0x55/0x100 [btrfs]
-> > > > 
-> > > > Attempting to describe RT rwlock semantics to lockdep prevents this.
-> > > 
-> > > and this is what I don't get. I stumbled upon this myself [0] but didn't
-> > > fully understand the problem (assuming this is the same problem colored
-> > > differently).
-> > 
-> > Yeah, [0] looks like it, though I haven't met an 'fs' variant, my
-> > encounters were always either 'tree' or 'csum' flavors.
-> > 
-> > > With your explanation I am not sure if I get what is happening. If btrfs
-> > > is taking here read-locks on random locks then it may deadlock if
-> > > another btrfs-thread is doing the same and need each other's locks.
-> > 
-> > I don't know if a real RT deadlock is possible.  I haven't met one,
-> > only variants of this bogus recursion gripe.
-> >  
-> > > If btrfs takes locks recursively which it already holds (in the same
-> > > context / process) then it shouldn't be visible here because lockdep
-> > > does not account this on -RT.
-> > 
-> > If what lockdep gripes about were true, we would never see the splat,
-> > we'd zip straight through that (illusion) recursive read_lock() with
-> > lockdep being none the wiser. 
-> > 
-> > > If btrfs takes the locks in a special order for instance only ascending
-> > > according to inode's number then it shouldn't deadlock.
-> > 
-> > No idea.  Locking fancy enough to require dynamic key assignment to
-> > appease lockdep is too fancy for me.
-> 
-> yup, for me, too. As long as nobody from the btrfs camp explains how
-> that locking workings and if it is safe I am not feeling comfortable to
-> shut up lockdep here.
+I have activated kprobes and it seems that timer tick and schedule
+don't get called. I have a gpio line to monitor the kprobe entry and
+exit handlers
 
-Works for me.  What we're talking about is an obvious false positive in
-one and only one contrived situation.  It's annoying/sub-optimal, but
-happily has no (known) impact other than testing, and that's trivial to
-remedy.
 
-	-Mike
+On Fri, Jan 27, 2017 at 2:04 PM, Andy Ng <andreas2025@gmail.com> wrote:
+> Thank you. However when I turn debug on the problem goes away :(
+>
+> On Thu, Jan 26, 2017 at 4:57 PM, Sebastian Andrzej Siewior
+> <bigeasy@linutronix.de> wrote:
+>> On 2017-01-25 13:54:15 [+0000], Andy Ng wrote:
+>>> Dear List,
+>>>
+>>> I have an interesting problem on 3.0.35 with the rt56 patch on ARM.
+>>>
+>>> I have some external events that drive my ISR, which I have set it up
+>>> as non_threaded one.
+>>> When the interrupt rate is low, 1.8msec things are going fine, but
+>>> when the rate is higher, the wake_up call from the isr does not
+>>> return. The system is frozen. No Magic SysRq. Nothing.
+>>>
+>>> All will work fine once I change my ISR to be a threaded one.
+>>>
+>>> Any ideas where to search?
+>>
+>> If you you enable lockdep and sleeping-while-atomic warning you should
+>> see quite a few warnings. That would be a good starting point to search.
+>>
+>>> Kind regards,
+>>> Andy
+>>
+>> Sebastian
