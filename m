@@ -1,147 +1,52 @@
-From: thierry bultel <tbultel@pixelsurmer.com>
-Subject: 4.9.6-rt4: big latency due to a kworker upon serial interrupts
-Date: Tue, 31 Jan 2017 17:05:28 +0100
-Message-ID: <488a615d-8256-3dc6-9e9d-8101adca3126@pixelsurmer.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: Kernel 4.9.x-rt Fully Preemptible Kernel: Issue with gdb and
+ unexpected SIGSTOP signals
+Date: Fri, 27 Jan 2017 16:33:41 +0100
+Message-ID: <20170127153341.6er3av4saygdzr7o@linutronix.de>
+References: <6bec5da671344b7e862ee74dafacb3b5@FE-MBX1012.de.bosch.com>
+ <39174b3e2e7a47c48b3688a2b28ab83e@FE-MBX1012.de.bosch.com>
+ <20170125095628.pcuxqk7l4xnvbsve@linutronix.de>
+ <f8526e600a9a45dc959ddf5d12bc430b@FE-MBX1012.de.bosch.com>
+ <87521e75b64f4b84b2ecd8b47bb7fe72@FE-MBX1012.de.bosch.com>
+ <20170125134016.ffj6xpissz4iy7ph@linutronix.de>
+ <ef2c680e3ed541c4b0df5e0715ca8264@FE-MBX1012.de.bosch.com>
+ <3c9395f9c6b944978c1f420276bde0ee@FE-MBX1012.de.bosch.com>
+ <61f913336df14059bc409249f0e70ea3@FE-MBX1012.de.bosch.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Transfer-Encoding: 7bit
-To: <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: "Koehrer Mathias (ETAS/ESW5)" <mathias.koehrer@etas.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smart-C.cogent.hosteam.fr ([154.41.64.12]:41098 "EHLO
-        smart-C.cogent.hosteam.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751057AbdAaQPN (ORCPT
+Received: from Galois.linutronix.de ([146.0.238.70]:52861 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1755039AbdA0Qok (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 31 Jan 2017 11:15:13 -0500
-Received: from webmail10.hosteam.fr (unknown [192.168.2.161])
-        by smart-C.cogent.hosteam.fr (Postfix) with ESMTPS id 986CF2A013F
-        for <linux-rt-users@vger.kernel.org>; Tue, 31 Jan 2017 17:05:28 +0100 (CET)
+        Fri, 27 Jan 2017 11:44:40 -0500
+Content-Disposition: inline
+In-Reply-To: <61f913336df14059bc409249f0e70ea3@FE-MBX1012.de.bosch.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+On 2017-01-27 14:04:35 [+0000], Koehrer Mathias (ETAS/ESW5) wrote:
+> Hi Sebastian,
+Hi Mathias,
 
-I am using the latest 4.9.6-rt4 patch. I can reproduce the issue with
-4.9.4, too.
+> In all the successful loops the lines in the trace look like the lines in the successful (2nd) example below.
+> In the error case there is an additional sched_waking and sched_wakeup in the trace.
+> Also there is always "prev_state=S" within the forked process.
+> In the error case, there is "prev_state=T|K".
 
-The machine is an imx6 solo, and the kernel is the vanilla one.
-I have CONFIG_PREEMPT_RT_FULL
+That T|K is probably some kind of debug state the program remains until
+the debugger puts it back on track. I think the interesting
+part ist figure out what decided to send this signal or put the program
+into stop-state. Usually a breakpoint, invalid opcode, … causes this
+kind of action but my understanding is that you use none of those.
 
-I have basically taken the trivial hello_world example, and just added a 
-check on the wakeup time (see below):
+> Thanks
+> 
+> Best regards
+> 
+> Mathias
 
-The problem is that I am getting errors.
-The process should wakeup every 20 milliseconds, but sometimes wakes up 
-2 to 4 msecs too late.
-
-To reproduce this very easily, I generate interrupts by just keeping
-the return key pressed in the serial console.
-It it also reproducible, by performing a 'ping -f' from another machine.
-
-I have tried to investigate this, with lttng at first.
-
-In the control flow, I can see kworker/u:2 that can use 100% CPU during 
-about 27 msecs
-
-After having activated some debug traces, I found out that the work 
-function for the kworker is 'write_to_ldisc' , which seems
-pertinent since the interrupts come from the serial console.
-But I still unable to tell why it starves the CPU for so much time.
-
-Another fact is that test shows less fails, with CONFIG_PREEMPT, than 
-with CONFIG_PREEMPT_RT_FULL. And with CONFIG_PREEMPT, the late delay in 
-never bigger than 2 msecs.
-
-As anyone encountered such an issue ?
-Thanks !
-
------------------
-
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-#include <sched.h>
-#include <sys/mman.h>
-#include <string.h>
-#include <stdint.h>
-
-#define MY_PRIORITY (49) /* we use 49 as the PRREMPT_RT use 50
-                                 as the priority of kernel tasklets
-                                 and interrupt handler by default */
-
-#define MAX_SAFE_STACK (8*1024) /* The maximum stack size which is
-                                        guaranteed safe to access without
-                                        faulting */
-
-#define NSEC_PER_SEC    (1000000000) /* The number of nsecs per sec. */
-
-void stack_prefault(void) {
-
-	unsigned char dummy[MAX_SAFE_STACK];
-
-	memset(dummy, 0, MAX_SAFE_STACK);
-	return;
-}
-
-uint64_t timespec2msec(const struct timespec * t) {
-	return (t->tv_sec*1000 + t->tv_nsec / 1000000.0);
-}
-
-int main(int argc, char* argv[])
-{
-	struct timespec t;
-	struct sched_param param;
-	int interval = 20000000; /* 20 milliseconds */
-
-	/* Declare ourself as a real time task */
-
-	param.sched_priority = MY_PRIORITY;
-	if(sched_setscheduler(0, SCHED_FIFO, &param) == -1) {
-		perror("sched_setscheduler failed");
-		exit(-1);
-	}
-
-	/* Lock memory */
-
-	if(mlockall(MCL_CURRENT|MCL_FUTURE) == -1) {
-		perror("mlockall failed");
-		exit(-2);
-	}
-
-	/* Pre-fault our stack */
-
-	stack_prefault();
-
-	clock_gettime(CLOCK_MONOTONIC ,&t);
-	/* start after one second */
-	t.tv_sec++;
-
-	while(1) {
-		struct timespec now;
-		int ret;
-		/* wait until next shot */
-		ret = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
-
-		clock_gettime(CLOCK_MONOTONIC, &now);
-		uint64_t late = timespec2msec(&now) - timespec2msec(&t);
-
-		if (ret < 0)
-			printf("ERROR\n");
-
-		if (late >= 2) {
-			printf("Too late: %lld\n", late);
-		}
-
-		/* do the stuff */
-
-		/* calculate next shot */
-		t.tv_nsec += interval;
-
-		while (t.tv_nsec >= NSEC_PER_SEC) {
-			t.tv_nsec -= NSEC_PER_SEC;
-			t.tv_sec++;
-		}
-	}
-}
-
-
+Sebastian
