@@ -1,58 +1,49 @@
-From: Andy Ng <andreas2025@gmail.com>
-Subject: Re: wake_up does not return
-Date: Fri, 27 Jan 2017 19:24:55 +0000
-Message-ID: <CAAVaN8xHrt6NgS9R24eWnBjPcAJV6A05QaCS4HpTj+=6+3kWQw@mail.gmail.com>
-References: <CAAVaN8wqmh9qYYU7TXR58-0=5Lk_s1vMcdHKdWEp4Ln9iEf=wg@mail.gmail.com>
- <20170126165752.lsjdyuheyvzwjess@linutronix.de> <CAAVaN8zW6vEq4Y84N4NKvUFMJsgrUDPbpihuQcon+4jEfsyoEA@mail.gmail.com>
- <CAAVaN8yq4BveUhhed66embAx+NZE0wq6+RgKF_K7imi=07dj2g@mail.gmail.com>
+From: Brian Wrenn <dcbrianw@gmail.com>
+Subject: Fail to load module wcn36xx
+Date: Fri, 27 Jan 2017 15:54:59 -0500
+Message-ID: <CAEYdEeT960G82ONFrRSrzzxMajFfGp3tSDqU5NBCGcx00ci4gA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-vk0-f43.google.com ([209.85.213.43]:33440 "EHLO
-        mail-vk0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1750895AbdA0TZn (ORCPT
+Received: from mail-io0-f195.google.com ([209.85.223.195]:33747 "EHLO
+        mail-io0-f195.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751354AbdA0UzP (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 27 Jan 2017 14:25:43 -0500
-Received: by mail-vk0-f43.google.com with SMTP id k127so181428716vke.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 27 Jan 2017 11:24:56 -0800 (PST)
-In-Reply-To: <CAAVaN8yq4BveUhhed66embAx+NZE0wq6+RgKF_K7imi=07dj2g@mail.gmail.com>
+        Fri, 27 Jan 2017 15:55:15 -0500
+Received: by mail-io0-f195.google.com with SMTP id 101so9148691iom.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 27 Jan 2017 12:55:10 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-i have replaced wake_up call with wake_up_locked ... and it seems better.
+Hi,
 
-On Fri, Jan 27, 2017 at 2:09 PM, Andy Ng <andreas2025@gmail.com> wrote:
-> I have activated kprobes and it seems that timer tick and schedule
-> don't get called. I have a gpio line to monitor the kprobe entry and
-> exit handlers
->
->
-> On Fri, Jan 27, 2017 at 2:04 PM, Andy Ng <andreas2025@gmail.com> wrote:
->> Thank you. However when I turn debug on the problem goes away :(
->>
->> On Thu, Jan 26, 2017 at 4:57 PM, Sebastian Andrzej Siewior
->> <bigeasy@linutronix.de> wrote:
->>> On 2017-01-25 13:54:15 [+0000], Andy Ng wrote:
->>>> Dear List,
->>>>
->>>> I have an interesting problem on 3.0.35 with the rt56 patch on ARM.
->>>>
->>>> I have some external events that drive my ISR, which I have set it up
->>>> as non_threaded one.
->>>> When the interrupt rate is low, 1.8msec things are going fine, but
->>>> when the rate is higher, the wake_up call from the isr does not
->>>> return. The system is frozen. No Magic SysRq. Nothing.
->>>>
->>>> All will work fine once I change my ISR to be a threaded one.
->>>>
->>>> Any ideas where to search?
->>>
->>> If you you enable lockdep and sleeping-while-atomic warning you should
->>> see quite a few warnings. That would be a good starting point to search.
->>>
->>>> Kind regards,
->>>> Andy
->>>
->>> Sebastian
+I'm trying to get the WLAN wcn36xx driver to load on PRREMPT RT.
+
+By some fluke I had this module load successfully in the PREEMPT RT
+kernel at one point in time, but I have not been able to reproduce
+getting to to load since my first trial build.
+
+I'm patching Linaro 4.4.9 with PREEMPT RT patch 4.4.9-rt17.  I've also
+manually applied a patch for
+kernel/drivers/pinctrl/qcom/pinctrl-msm.c, which replaces uses of
+spinlock calls with raw_spinlock calls.
+
+Here's the dmesg output, which indicates unknown symbols as the
+problem.  However, I'm not sure why this module can't load those
+symbols.
+
+I can successfully load them if I just build plain Linaro 4.4.9,
+without PREEMPT RT.
+
+[   14.023055] wcn36xx: Unknown symbol mutex_lock (err 0)
+[   14.023105] wcn36xx: Unknown symbol __mutex_init (err 0)
+[   14.027153] wcn36xx: Unknown symbol mutex_unlock (err 0)
+[   14.027208] wcn36xx: Unknown symbol _raw_spin_unlock (err 0)
+[   16.961824] wcn36xx: Unknown symbol mutex_lock (err 0)
+[   16.961889] wcn36xx: Unknown symbol __mutex_init (err 0)
+[   16.965955] wcn36xx: Unknown symbol mutex_unlock (err 0)
+[   16.971391] wcn36xx: Unknown symbol _raw_spin_unlock (err 0)
+
+Thanks for any help,
+Brian
