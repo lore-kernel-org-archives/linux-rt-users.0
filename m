@@ -1,49 +1,78 @@
-From: Brian Wrenn <dcbrianw@gmail.com>
-Subject: Fail to load module wcn36xx
-Date: Fri, 27 Jan 2017 15:54:59 -0500
-Message-ID: <CAEYdEeT960G82ONFrRSrzzxMajFfGp3tSDqU5NBCGcx00ci4gA@mail.gmail.com>
+From: Julia Cartwright <julia@ni.com>
+Subject: Re: Fail to load module wcn36xx
+Date: Fri, 27 Jan 2017 15:30:29 -0600
+Message-ID: <20170127213029.GN5599@jcartwri.amer.corp.natinst.com>
+References: <CAEYdEeT960G82ONFrRSrzzxMajFfGp3tSDqU5NBCGcx00ci4gA@mail.gmail.com>
+ <20170127211921.GM5599@jcartwri.amer.corp.natinst.com>
+ <CAEYdEeQ6SdogbomzdEsxOBeXxgaaEvthbc3DOkj15Lxwrt-s4g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Cc: <linux-rt-users@vger.kernel.org>
+To: Brian Wrenn <dcbrianw@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-io0-f195.google.com ([209.85.223.195]:33747 "EHLO
-        mail-io0-f195.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751354AbdA0UzP (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 27 Jan 2017 15:55:15 -0500
-Received: by mail-io0-f195.google.com with SMTP id 101so9148691iom.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 27 Jan 2017 12:55:10 -0800 (PST)
+Received: from skprod2.natinst.com ([130.164.80.23]:49299 "EHLO ni.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S1751764AbdA0Vah (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 27 Jan 2017 16:30:37 -0500
+Content-Disposition: inline
+In-Reply-To: <CAEYdEeQ6SdogbomzdEsxOBeXxgaaEvthbc3DOkj15Lxwrt-s4g@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+Hey Brian-
 
-I'm trying to get the WLAN wcn36xx driver to load on PRREMPT RT.
+Please respond inline in the future.
 
-By some fluke I had this module load successfully in the PREEMPT RT
-kernel at one point in time, but I have not been able to reproduce
-getting to to load since my first trial build.
+On Fri, Jan 27, 2017 at 04:24:02PM -0500, Brian Wrenn wrote:
+> On Fri, Jan 27, 2017 at 4:19 PM, Julia Cartwright <julia@ni.com> wrote:
+> > On Fri, Jan 27, 2017 at 03:54:59PM -0500, Brian Wrenn wrote:
+[..]
+> >> Here's the dmesg output, which indicates unknown symbols as the
+> >> problem.  However, I'm not sure why this module can't load those
+> >> symbols.
+> >>
+> >> I can successfully load them if I just build plain Linaro 4.4.9,
+> >> without PREEMPT RT.
+> >>
+> >> [   14.023055] wcn36xx: Unknown symbol mutex_lock (err 0)
+> >> [   14.023105] wcn36xx: Unknown symbol __mutex_init (err 0)
+> >> [   14.027153] wcn36xx: Unknown symbol mutex_unlock (err 0)
+> >> [   14.027208] wcn36xx: Unknown symbol _raw_spin_unlock (err 0)
+> >> [   16.961824] wcn36xx: Unknown symbol mutex_lock (err 0)
+> >> [   16.961889] wcn36xx: Unknown symbol __mutex_init (err 0)
+> >> [   16.965955] wcn36xx: Unknown symbol mutex_unlock (err 0)
+> >> [   16.971391] wcn36xx: Unknown symbol _raw_spin_unlock (err 0)
+> >
+> > This just seems to indicate that you haven't rebuilt this module for the
+> > RT kernel.  These symbols don't exist w/ RT, because they're switched up
+> > through macros/inlines to make use of the rt_mutex type.
+> >
+> > You'll need to ensure you're building the module for the target kernel.
+> >
+>
+> So it looks like I found the culprit, which is related to your point.
+> In my config I had this:
+> 
+> CONFIG_WCN36XX=m
+> 
+> when I needed to have this:
+> 
+> CONFIG_WCN36XX=y
+> 
+> I thought the dependency that would have triggered the 'm' state of
+> the config item existed, but evidently not.  So indeed I was not
+> building the module when I thought I was.
 
-I'm patching Linaro 4.4.9 with PREEMPT RT patch 4.4.9-rt17.  I've also
-manually applied a patch for
-kernel/drivers/pinctrl/qcom/pinctrl-msm.c, which replaces uses of
-spinlock calls with raw_spinlock calls.
+I want to ensure you walk away with the right conclusion :).
 
-Here's the dmesg output, which indicates unknown symbols as the
-problem.  However, I'm not sure why this module can't load those
-symbols.
+There is nothing fundamentally wrong with building with
+CONFIG_WCN36XX=m.  This should Just Work(tm).  The problem is when there
+exists a mismatch between the target kernel you are booting, and the
+module set that was built with that kernel.
 
-I can successfully load them if I just build plain Linaro 4.4.9,
-without PREEMPT RT.
+It looks like, what you've done is booted a PREEMPT_RT_FULL build of
+Linux, but then tried to load a module which was built against a
+non-PREEMPT_RT_FULL configuration.
 
-[   14.023055] wcn36xx: Unknown symbol mutex_lock (err 0)
-[   14.023105] wcn36xx: Unknown symbol __mutex_init (err 0)
-[   14.027153] wcn36xx: Unknown symbol mutex_unlock (err 0)
-[   14.027208] wcn36xx: Unknown symbol _raw_spin_unlock (err 0)
-[   16.961824] wcn36xx: Unknown symbol mutex_lock (err 0)
-[   16.961889] wcn36xx: Unknown symbol __mutex_init (err 0)
-[   16.965955] wcn36xx: Unknown symbol mutex_unlock (err 0)
-[   16.971391] wcn36xx: Unknown symbol _raw_spin_unlock (err 0)
-
-Thanks for any help,
-Brian
+Glad I could help,
+   Julia
