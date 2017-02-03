@@ -1,47 +1,35 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: 4.9.6-rt4: big latency due to a kworker upon serial interrupts
-Date: Fri, 3 Feb 2017 16:50:32 +0100
-Message-ID: <20170203155031.xb5jhptsktfwhcb3@linutronix.de>
-References: <488a615d-8256-3dc6-9e9d-8101adca3126@pixelsurmer.com>
+Subject: Re: [PATCH RT] Align rt_mutex inlining with upstream behavior
+Date: Fri, 3 Feb 2017 16:54:34 +0100
+Message-ID: <20170203155434.utptndmoskcyimn7@linutronix.de>
+References: <1485312350-1265-1-git-send-email-agoins@nvidia.com>
+ <20170126170109.6zhoohgodtvxot54@linutronix.de>
+ <20170130173534.GA24966@prokofiev.nvidia.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Cc: linux-rt-users@vger.kernel.org
-To: thierry bultel <tbultel@pixelsurmer.com>
+Cc: Alex Goins <agoins@nvidia.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org
+To: Andy Ritger <aritger@nvidia.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:44589 "EHLO
+Received: from Galois.linutronix.de ([146.0.238.70]:44611 "EHLO
         Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751092AbdBCPuf (ORCPT
+        with ESMTP id S1751346AbdBCPyq (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 3 Feb 2017 10:50:35 -0500
+        Fri, 3 Feb 2017 10:54:46 -0500
 Content-Disposition: inline
-In-Reply-To: <488a615d-8256-3dc6-9e9d-8101adca3126@pixelsurmer.com>
+In-Reply-To: <20170130173534.GA24966@prokofiev.nvidia.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-01-31 17:05:28 [+0100], thierry bultel wrote:
-> Hi,
-Hi,
+On 2017-01-30 09:35:34 [-0800], Andy Ritger wrote:
+> The problem is that various static inline functions such as
+> reservation_object_fini() indirectly call mutex_destroy.  On DEBUG_MUTEX
+> kernels, mutex_destroy is EXPORT_SYMBOL_GPL.
 
-…
-> To reproduce this very easily, I generate interrupts by just keeping
-> the return key pressed in the serial console.
-> It it also reproducible, by performing a 'ping -f' from another machine.
-> 
-…
-
-> #define MY_PRIORITY (49) /* we use 49 as the PRREMPT_RT use 50
->                                 as the priority of kernel tasklets
->                                 and interrupt handler by default */
-> 
-…
-> 	param.sched_priority = MY_PRIORITY;
-> 	if(sched_setscheduler(0, SCHED_FIFO, &param) == -1) {
-
-If I read this right your application has a lower priority than the
-threaded interrupt which means the interrupt will be preferred over the
-application. This in turn means the your application won't wake up in
-time if there is an interrupt pending. However the kworker should not
-block the application.
+So your problem is simply that your non-GPL module can't link anymore
+with -RT.  Would it help you if I simply replace the export for
+mutex_destroy with EXPORT_SYMBOL and leave it the function as is?
 
 Sebastian
