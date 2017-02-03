@@ -1,35 +1,40 @@
-From: Andy Ritger <aritger@nvidia.com>
-Subject: Re: [PATCH RT] Align rt_mutex inlining with upstream behavior
-Date: Fri, 3 Feb 2017 08:49:24 -0800
-Message-ID: <20170203164924.GB19814@prokofiev.nvidia.com>
-References: <1485312350-1265-1-git-send-email-agoins@nvidia.com>
- <20170126170109.6zhoohgodtvxot54@linutronix.de>
- <20170130173534.GA24966@prokofiev.nvidia.com>
- <20170203155434.utptndmoskcyimn7@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [RFC v2] timers: Don't wake ktimersoftd on every tick
+Date: Fri, 3 Feb 2017 17:51:51 +0100
+Message-ID: <20170203165151.qbpjothhaqctuzx5@linutronix.de>
+References: <20161213214405.28554-1-haris.okanovic@ni.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Cc: Andy Ritger <aritger@nvidia.com>, Alex Goins <agoins@nvidia.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        tglx@linutronix.de, julia.cartwright@ni.com, gratian.crisan@ni.com
+To: Haris Okanovic <haris.okanovic@ni.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:44817 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1750891AbdBCQvz (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 3 Feb 2017 11:51:55 -0500
 Content-Disposition: inline
-In-Reply-To: <20170203155434.utptndmoskcyimn7@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <20161213214405.28554-1-haris.okanovic@ni.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Feb 03, 2017 at 04:54:34PM +0100, Sebastian Andrzej Siewior wrote:
-> On 2017-01-30 09:35:34 [-0800], Andy Ritger wrote:
-> > The problem is that various static inline functions such as
-> > reservation_object_fini() indirectly call mutex_destroy.  On DEBUG_MUTEX
-> > kernels, mutex_destroy is EXPORT_SYMBOL_GPL.
-> 
-> So your problem is simply that your non-GPL module can't link anymore
-> with -RT.  Would it help you if I simply replace the export for
-> mutex_destroy with EXPORT_SYMBOL and leave it the function as is?
+On 2016-12-13 15:44:05 [-0600], Haris Okanovic wrote:
+> Changed the way timers are collected per Julia and Thomas'
+> recommendation: Expired timers are now collected in interrupt context
+> and fired in ktimersoftd to avoid double-walk of `pending_map`.
+…
+> Thanks,
+> Haris
 
-Yes, definitely.
+I've been staring at it for a while now and now I applied it locally and
+look how it goes.
+I would need that patch signed as per
+	https://kernel.org/doc/html/latest/process/submitting-patches.html#sign-your-work-the-developer-s-certificate-of-origin
+if you want it applied.
+> ---
+>  kernel/time/timer.c | 97 ++++++++++++++++++++++++++++++++++++-----------------
+>  1 file changed, 67 insertions(+), 30 deletions(-)
 
-Thanks,
-- Andy
+Sebastian
