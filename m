@@ -1,78 +1,130 @@
-From: Ran Shalit <ranshalit@gmail.com>
-Subject: Latency difference between posix & non-posix timer
-Date: Sun, 5 Feb 2017 19:11:01 +0200
-Message-ID: <CAJ2oMhLAwf7AEjOGLTx9Lhd0DVH1Psd-rmOoQkiKVTAiVaDXMQ@mail.gmail.com>
+From: Juri Lelli <juri.lelli@arm.com>
+Subject: [ANNOUNCE][CFP] Power Management and Scheduling in the Linux Kernel
+ (OSPM-summit)
+Date: Tue, 7 Feb 2017 14:51:48 +0000
+Message-ID: <20170207145148.GA18354@e106622-lin>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wr0-f174.google.com ([209.85.128.174]:35576 "EHLO
-        mail-wr0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751532AbdBERLD (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 5 Feb 2017 12:11:03 -0500
-Received: by mail-wr0-f174.google.com with SMTP id 89so12062064wrr.2
-        for <linux-rt-users@vger.kernel.org>; Sun, 05 Feb 2017 09:11:03 -0800 (PST)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Peter Zijlstra <peterz@infradead.org>,
+        "Rafael J. Wysocki" <rafael@kernel.org>,
+        Vincent Guittot <vincent.guittot@linaro.org>,
+        Ulf Hansson <ulf.hansson@linaro.org>,
+        Morten Rasmussen <morten.rasmussen@arm.com>,
+        Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>,
+        Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        Luca Abeni <luca.abeni@santannapisa.it>,
+        Tommaso Cucinotta <tommaso.cucinotta@sssup.it>,
+        Sudeep Holla <sudeep.holla@arm.com>, juri.lelli@arm.com,
+        Viresh Kumar <viresh.kumar@linaro.org>,
+        Patrick Bellasi <patrick.bellasi@arm.com>,
+        Kevin Hilman <khilman@baylibre.com>,
+        Michael Turquette <mturquette@baylibre.com>,
+        Paolo Valente <paolo.valente@unimore.it>,
+        Claudio Scordino <claudio@evidence.eu.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@
+To: linux-pm@vger.kernel.org, linux-acpi@vger.kernel.org,
+        linux-pci@vger.kernel.org, linux-rt-users@vger.kernel.org
+Return-path: <linux-pm-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-pm-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hello,
+Power Management and Scheduling in the Linux Kernel (OSPM-summit)
+April 3-4, 2017
+Scuola Superiore Sant'Anna (SSSA)
+Pisa, Italy
 
-We made some testing on out cpu, installed with 4.1.15-rt17 kernel,
-and we observed significant difference in latency between posic to
-non-posix cyclictest benchmark.
+http://retis.sssup.it/ospm-summit/
+---
 
-with non posix we reach max ~50usec
-while with posix we reach max ~170usec
+.:: FOCUS
 
-On checking the exaples in cyclic test wiki, it seems that the
-difference should not be that big :
-https://rt.wiki.kernel.org/index.php/Cyclictest
+Power management and scheduling techniques to reduce energy consumption while
+meeting performance and latency requirements are receiving considerable
+attention from the Linux Kernel development community. 
 
-What is the reason for such difference in behaviour ?
-Does it mean we better use non-posix timer in application ?
+The Power Management and Scheduling in the Linux Kernel (OSPM-summit) summit
+aims at fostering further interest and discussion to happen.
 
-kernel version
-==========
-user@user-desktop:~/rt-tests-1.0$ uname -a
-Linux user-desktop 4.1.15-rt17mah #6 SMP PREEMPT RT Wed Dec 23
-20:12:08 CET 2015 x86_64 x86_64 x86_64 GNU/Linux
+.:: FORMAT
 
-cpu information
-==========
-user@user-desktop:~/rt-tests-1.0$ cat /proc/cpuinfo
-processor    : 0
-vendor_id    : GenuineIntel
-cpu family    : 6
-model        : 55
-model name    : Intel(R) Atom(TM) CPU  E3815  @ 1.46GHz
-stepping    : 9
-microcode    : 0x903
-cpu MHz        : 1463.000
-cache size    : 512 KB
-physical id    : 0
-siblings    : 1
-core id        : 0
-cpu cores    : 1
-apicid        : 0
-initial apicid    : 0
-fpu        : yes
-fpu_exception    : yes
-cpuid level    : 11
-wp        : yes
-flags        : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge
-mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe
-syscall nx rdtscp lm constant_tsc arch_perfmon pebs bts rep_good nopl
-xtopology nonstop_tsc aperfmperf pni pclmulqdq dtes64 monitor ds_cpl
-vmx est tm2 ssse3 cx16 xtpr pdcm sse4_1 sse4_2 movbe popcnt
-tsc_deadline_timer aes rdrand lahf_lm 3dnowprefetch arat epb dtherm
-tpr_shadow vnmi flexpriority ept vpid tsc_adjust smep erms
-bugs        :
-bogomips    : 2930.40
-clflush size    : 64
-cache_alignment    : 64
-address sizes    : 36 bits physical, 48 bits virtual
-power management:
+The summit is organized to cover two days of discussions and talks.
 
-Best Regards,
-Ran
+First day is mainly focused on discussion and hacking sessions about
+topics/patches that are already under review in the Linux kernel mailing lists
+and to debate and plan development tasks for more forward looking work items
+centred around power management in the Linux kernel. The list of topics
+includes (but it is not limited to):
+
+* Energy Aware Scheduling: next steps and energy model expression;
+* SCHED_DEADLINE reclaiming of unused bandwidth, coupling with schedutil
+  cpufreq governor and group scheduling support;
+* fix the load metric exposed to cpuidle;
+* IRQ prediction;
+* ACPI power management: kernel/firmware bindings and development model;
+
+Second day instead welcomes presentations from both end users and developers on
+topics about Power management and scheduling in Linux covering, but not limited
+to:
+
+* Power management techniques
+* Real-time and non real-time scheduling techniques
+* Energy awareness
+* Mobile/Server power management real-world use cases (successes and
+  failures)
+* Power management and scheduling tooling (tracing, configuration,
+  integration testing, etc.)
+
+Presentations can cover recently developed technologies, ongoing work and new
+ideas. Please understand that this workshop is not intended for presenting
+sales and marketing pitches.
+
+.:: ATTENDING
+
+Attending the OSPM-summit is free of charge, but registration to the event is
+mandatory. The event can allow a maximum of 50 people (so, be sure to register
+early!). To register send an email to ospm-registration@retis.sssup.it. While
+it is not strictly required to submit a topic/presentation, registrations with
+a topic/presentation proposal will take precedence.
+
+.:: VENUE
+
+The workshop will take place at ReTiS Lab*, Scuola Superiore Sant'Anna, Pisa,
+Italy. Pisa is a small town, walking distance from the city center to the venue
+is 20 minutes, walking distance from the airport to the city center is 30
+minutes. More details are available from the summit web page:
+http://retis.sssup.it/ospm-summit/
+
+* https://goo.gl/maps/2pPXG2v7Lfp
+
+.:: SUBMIT A TOPIC/PRESENTATION
+
+To submit a topic/presentation send an email to
+ospm-registration@retis.sssup.it specifying:
+
+ subject
+  - [TOPIC] or [PRESENTATION]
+  - short title
+
+ body
+  - first name, family name
+  - abstract/topic of interest
+  - affiliation (if any)
+  - short biography
+  - expected duration (only for topics, presentations get 30min slots)
+
+Deadline for submitting topics/presentations is 26th of February 2017.
+Notifications for accepted topics/presentations will be sent out on 5th of
+March 2017.
+
+.:: ORGANIZERS (in alphabetical order)
+
+Luca Abeni (SSSA)
+Patrick Bellasi (ARM)
+Tommaso Cucinotta (SSSA)
+Dietmar Eggemann (ARM)
+Sudeep Holla (ARM)
+Juri Lelli (ARM)
+Lorenzo Pieralisi (ARM)
+Morten Rasmussen (ARM)
