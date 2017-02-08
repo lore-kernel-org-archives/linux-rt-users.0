@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [RFC][PATCH 21/21] tracing: Add inter-event hist trigger Documentation
-Date: Wed,  8 Feb 2017 11:25:17 -0600
-Message-ID: <5b024478574b01c4ad03d219851533617b939047.1486569306.git.tom.zanussi@linux.intel.com>
+Subject: [RFC][PATCH 20/21] tracing: Add 'onmax' hist trigger action support
+Date: Wed,  8 Feb 2017 11:25:16 -0600
+Message-ID: <7b63932147dc0f36cc40ee6eb7a8af07a1535b5e.1486569306.git.tom.zanussi@linux.intel.com>
 References: <cover.1486569306.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
@@ -14,358 +14,433 @@ References: <cover.1486569306.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Add background and details on inter-event hist triggers, including
-hist variables, synthetic events, and actions.
+Add an 'onmax(var).save(field...)' hist trigger action which is
+invoked whenever an event exceeds the current maximum.
+
+The end result is that the trace event fields specified as the
+onmax.save() params will be saved if 'var' exceeds the current maximum
+for that hist trigger entry.  This allows context from the event that
+exhibited the new maximum to be saved for later reference.  When the
+histogram is displayed, additional fields displaying the saved values
+will be printed.
+
+As an example the below defines a couple of hist triggers, one for
+sched_wakeup and another for sched_switch, keyed on pid.  Whenever a
+sched_wakeup occurs, the timestamp is saved in the entry corresponding
+to the current pid, and when the scheduler switches back to that pid,
+the timestamp difference is calculated.  If the resulting latency
+exceeds the current maximum latency, the specified save() values are
+saved:
+
+    # echo 'hist:keys=pid:ts0=common_timestamp.usecs \
+      if comm=="cyclictest"' >> \
+      /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+
+    # echo 'hist:keys=next_pid:\
+      wakeup_lat=common_timestamp.usecs-ts0:\
+      onmax(wakeup_lat).save(next_comm,prev_pid,prev_prio,prev_comm) \
+      if next_comm=="cyclictest"' >> \
+      /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+
+When the histogram is displayed, the max value and the saved values
+corresponding to the max are displayed following the rest of the
+fields:
+
+    # cat /sys/kernel/debug/tracing/events/sched/sched_switch/hist
+      { next_pid:       2255 } hitcount:        239 \
+        common_timestamp-ts0:          0
+        max:         27  next_comm: cyclictest \
+        prev_pid:          0  prev_prio:        120  prev_comm: swapper/1 \
+      { next_pid:       2256 } hitcount:       2355  common_timestamp-ts0: 0 \
+      	max:         49  next_comm: cyclictest \
+        prev_pid:          0  prev_prio:        120  prev_comm: swapper/0
+
+    Totals:
+        Hits: 12970
+        Entries: 2
+        Dropped: 0
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- Documentation/trace/events.txt | 330 +++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 330 insertions(+)
+ kernel/trace/trace_events_hist.c | 280 ++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 278 insertions(+), 2 deletions(-)
 
-diff --git a/Documentation/trace/events.txt b/Documentation/trace/events.txt
-index 2cc08d4..e3fb774 100644
---- a/Documentation/trace/events.txt
-+++ b/Documentation/trace/events.txt
-@@ -571,6 +571,7 @@ The following commands are supported:
- 	.sym-offset display an address as a symbol and offset
- 	.syscall    display a syscall id as a system call name
- 	.execname   display a common_pid as a program name
-+	.usecs      display a common_timestamp in microseconds
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 2f9efb8..14e05da 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -36,6 +36,7 @@ typedef u64 (*hist_field_fn_t) (struct hist_field *field,
+ #define HIST_FIELD_OPERANDS_MAX	2
+ #define HIST_ASSIGNMENT_MAX	4
+ #define HIST_ACTIONS_MAX	8
++#define HIST_ON_MAX_SAVE_MAX	8
  
-   Note that in general the semantics of a given field aren't
-   interpreted when applying a modifier to it, but there are some
-@@ -2064,3 +2065,332 @@ The following commands are supported:
-         Hits: 489
-         Entries: 7
-         Dropped: 0
-+
-+6.3 Inter-event hist triggers
-+-----------------------------
-+
-+Inter-event hist triggers are hist triggers that combine values from
-+one or more other events and create a histogram using that data.  Data
-+from an inter-event histogram can in turn become the source for
-+further combined histograms, thus providing a chain of related
-+histograms, which is important for some applications.
-+
-+The most important example of an inter-event quantity that can be used
-+in this manner is latency, which is simply a difference in timestamps
-+between two events (although trace events don't have an externally
-+visible timestamp field, the inter-event hist trigger support adds a
-+pseudo-field to all events named 'common_timestamp' which can be used
-+as if it were an actual event field).  Although latency is the most
-+important inter-event quantity, note that because the support is
-+completely general across the trace event subsystem, any event field
-+can be used in an inter-event quantity.
-+
-+An example of a histogram that combines data from other histograms
-+into a useful chain would be a 'wakeupswitch latency' histogram that
-+combines a 'wakeup latency' histogram and a 'switch latency'
-+histogram.
-+
-+Normally, a hist trigger specification consists of a (possibly
-+compound) key along with one or more numeric values, which are
-+continually updated sums associated with that key.  A histogram
-+specification in this case consists of individual key and value
-+specifications that refer to trace event fields associated with a
-+single event type.
-+
-+The inter-event hist trigger extension allows fields from multiple
-+events to be referenced and combined into a multi-event histogram
-+specification.  In support of this overall goal, a few enabling
-+features have been added to the hist trigger support:
-+
-+  - In order to compute an inter-event quantity, a value from one
-+    event needs to saved and then referenced from another event.  This
-+    requires the introduction of support for histogram 'variables'.
-+
-+  - The computation of inter-event quantities and their combination
-+    require some minimal amount of support for applying simple
-+    expressions to variables (+ and -).
-+
-+  - A histogram consisting of inter-event quantities isn't logically a
-+    histogram on either event (so having the 'hist' file for either
-+    event host the histogram output doesn't really make sense).  To
-+    address the idea that the histogram is associated with a
-+    combination of events, support is added allowing the creation of
-+    'synthetic' events that are events derived from other events.
-+    These synthetic events are full-fledged events just like any other
-+    and can be used as such, as for instance to create the
-+    'combination' histograms mentioned previously.
-+
-+  - A set of 'actions' can be associated with histogram entries -
-+    these can be used to generate the previously mentioned synthetic
-+    events, but can also be used for other purposes, such as for
-+    example saving context when a 'max' latency has been hit.
-+
-+  - Trace events don't have a 'timestamp' associated with them, but
-+    there is an implicit timestamp saved along with an event in the
-+    underlying ftrace ring buffer.  This timestamp is now exposed as a
-+    a synthetic field named 'common_timestamp' which can be used in
-+    histograms as if it were any other event field.  By default it is
-+    in units of nanoseconds; appending '.usecs' to a common_timestamp
-+    field changes the units to microseconds.
-+
-+These features are decribed in more detail in the following sections.
-+
-+6.3.1 Histogram Variables
-+-------------------------
-+
-+Variables are simply named locations used for saving and retrieving
-+values between matching events.  A 'matching' event is defined as an
-+event that has a matching key - if a variable is saved for a histogram
-+entry corresponding to that key, any subsequent event with a matching
-+key can access that variable.
-+
-+A variable's value is normally available to any subsequent event until
-+it is set to something else by a subsequent event.  The one exception
-+to that rule is that any variable used in an expression is essentially
-+'read-once' - once it's used by an expression in a subsequent event,
-+it's reset to its 'unset' state, which means it can't be used again
-+unless it's set again.  This ensures not only that an event doesn't
-+use an uninitialized variable in a calculation, but that that variable
-+is used only once and not for any unrelated subsequent match.
-+
-+The basic syntax for saving a variable is to simply prefix a unique
-+variable name not corresponding to any keyword along with an '=' sign
-+to any event field.
-+
-+Either keys or values can be saved and retrieved in this way.  This
-+creates a variable named 'ts0' for a histogram entry with the key
-+'next_pid':
-+
-+  # echo 'hist:keys=next_pid:vals=ts0=common_timestamp ... >> event/trigger
-+
-+The ts0 variable can be accessed by any subsequent event having the
-+same pid as 'next_pid'.  Because 'vals=' is used, the common_timestamp
-+variable value will also be summed as a normal histogram value would
-+(though for a timestamp it makes little sense).
-+
-+The below shows that a key value can also be saved in the same way:
-+
-+  # echo 'hist:key=timer_pid=common_pid ...' >> event/trigger
-+
-+If a variable isn't a key variable or prefixed with 'vals=', the
-+associated event field will be saved in a variable but won't be summed
-+as a value:
-+
-+  # echo 'hist:keys=next_pid:ts1=common_timestamp ... >> event/trigger
-+
-+Multiple variables can be assigned at the same time.  The below would
-+result in both ts0 and b being created as variables, with both
-+common_timestamp and field1 additionally being summed as values:
-+
-+  # echo 'hist:keys=pid:vals=ts0=common_timestamp,b=field1 ... >> event/trigger
-+
-+Any number of variables not bound to a 'vals=' prefix can also be
-+assigned by simply separating them with colons.  Below is the same
-+thing but without the values being summed in the histogram:
-+
-+  # echo 'hist:keys=pid:ts0=common_timestamp:b=field1 ... >> event/trigger
-+
-+Variables set as above can be referenced and used in expressions on
-+another event.
-+
-+For example, here's how a latency can be calculated:
-+
-+  # echo 'hist:keys=pid,prio:ts0=common_timestamp ... >> event1/trigger
-+  # echo 'hist:keys=next_pid:wakeup_lat=common_timestamp-ts0 ... >> event2/trigger
-+
-+In the first line above, the event's timetamp is saved into the
-+variable ts0.  In the next line, ts0 is subtracted from the second
-+event's timestamp to produce the latency, which is then assigned into
-+yet another variable, 'wakeup_lat'.  The hist trigger below in turn
-+makes use of the wakeup_lat variable to compute a combined latency
-+using the same key and variable from yet another event:
-+
-+  # echo 'hist:key=pid:wakeupswitch_lat=wakeup_lat+switchtime_lat ... >> event3/trigger
-+
-+6.3.2 Synthetic Events
-+----------------------
-+
-+Synthetic events are user-defined events generated from hist trigger
-+variables associated with one or more other events.  Their purpose is
-+to provide a mechanism for displaying data spanning multiple events
-+consistent with the existing and already familiar usage for normal
-+events.
-+
-+Because they are derived from one or more other hist triggers, using
-+them requires that those other triggers be defined before the
-+synthetic event can be full resolved and generated.  A synthetic event
-+can be defined before or after those events, but can't be used until
-+all references to other events are resolved.
-+
-+To define a synthetic event, the user writes a simple specification
-+consisting of the name of the new event along with one or more
-+variables defined on other events, to the tracing/synthetic_events
-+file.
-+
-+For instance, the following creates a new event named 'wakeup_latency'
-+with 3 fields: lat, pid, and prio.  Each of those fields is simply a
-+variable reference to a variable on another event:
-+
-+  # echo 'wakeup_latency \
-+          lat=sched_switch:wakeup_lat \
-+          pid=sched_switch:woken_pid \
-+	  prio=sched_switch:woken_prio' >> \
-+	  /sys/kernel/debug/tracing/synthetic_events
-+
-+Reading the tracing/synthetic_events file lists all the currently
-+defined synthetic events, in this case the event defined above:
-+
-+  # cat /sys/kernel/debug/tracing/synthetic_events
-+    wakeup_latency lat=sched_switch:wakeup_lat*, \
-+                   pid=sched_switch:woken_pid*, \
-+                   prio=sched_switch:woken_prio*
-+
-+Any event field that hasn't yet been 'resolved' is shown with an
-+asterisk following it.  A field will be unresolved if another event
-+defining the specified variable hasn't been defined yet.  Once the
-+second event below is added, those variables are defined:
-+
-+  # echo 'hist:keys=pid,prio:ts0=common_timestamp.usecs' >> \
-+          /sys/kernel/debug/tracing/events/sched/sched_wakeup_new/trigger
-+
-+  # echo 'hist:keys=woken_pid=next_pid,woken_prio=next_prio:\
-+          wakeup_lat=common_timestamp.usecs-ts0:' >> \
-+          /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-+
-+At that point the variables are defined and displaying the
-+synthetic_event no longer displays the asterisks:
-+
-+  # cat /sys/kernel/debug/tracing/synthetic_events
-+        wakeup_latency \
-+	lat=sched:sched_switch:wakeup_lat, \
-+        pid=sched:sched_switch:woken_pid, \
-+	prio=sched:sched_switch:woken_prio
-+
-+At this point, the synthetic event is ready to use, and a histogram
-+can be defined using it:
-+
-+  # echo 'hist:keys=pid,prio,lat.log2:sort=pid,lat' >> \
-+        /sys/kernel/debug/tracing/events/synthetic/wakeup_latency/trigger
-+
-+The new event is created under the tracing/events/synthetic/ directory
-+and looks and behaves just like any other event:
-+
-+  # ls /sys/kernel/debug/tracing/events/synthetic/wakeup_latency
-+        enable  filter  format  hist  id  trigger
-+
-+Like any other event, once a histogram is enabled for the event, the
-+output can be displayed by reading the event's 'hist' file.
-+
-+Although a histogram can be defined for a synthetic event, it won't be
-+populated until actions that actually trace that event occur.  To set
-+that up, the user associates a 'trace' action naming the synthetic
-+event with a triggering event.  This causes the synthetic event to be
-+traced whenever a match occurs (see Section 6.3.3 below).
-+
-+6.3.3 Hist trigger 'actions'
-+----------------------------
-+
-+A hist trigger 'action' is a function that's executed whenever a
-+histogram entry is added or updated.
-+
-+The default 'action' if no special function is explicity specified is
-+as it always has been, to simply update the set of values associated
-+with an entry.  Some applications, however, may want to perform
-+additional actions at that point, such as generate another event, or
-+compare and save a maximum.
-+
-+The following additional actions are available.  To specify an action
-+for a given event, simply specify the action between colons in the
-+hist trigger specification.
-+
-+  - onmatch().trace(synthetic_event_name)
-+
-+    The 'onmatch().trace(event)' hist trigger action is invoked
-+    whenever an event matches and the histogram entry would be or is
-+    added or updated.  It causes the named synthetic event to be
-+    generated with the values of the set of resolved variables named
-+    in the given synthetic event.  The result is the generation of a
-+    synthetic event that consists of the values contained in those
-+    variables at the time the invoking event was hit.
-+
-+    As an example the below defines a simple synthetic event using a
-+    variable defined on the sched_wakeup_new event, and shows the
-+    event definition with unresolved fields, since the
-+    sched_wakeup_new event with the testpid variable hasn't been
-+    defined yet:
-+
-+    # echo 'wakeup_new_test pid=sched_wakeup_new:testpid' >> \
-+           /sys/kernel/debug/tracing/synthetic_events
-+
-+    # cat /sys/kernel/debug/tracing/synthetic_events
-+          wakeup_new_test pid=sched_wakeup_new:testpid*
-+
-+    The following hist trigger both defines the missing testpid
-+    variable and specifies an onmatch().trace action that generates a
-+    wakeup_new_test synthetic event whenever a sched_wakeup_new event
-+    occurs, which because of the 'if comm == "cyclictest"' filter only
-+    happens when the executable is cyclictest:
-+
-+    # echo 'hist:keys=testpid=pid:onmatch().trace(wakeup_new_test) \
-+            if comm=="cyclictest"' >> \
-+            /sys/kernel/debug/tracing/events/sched/sched_wakeup_new/trigger
-+
-+    Creating and displaying a histogram based on those events is now
-+    just a matter of using the fields and new synthetic event in the
-+    tracing/events/synthetic directory, as usual:
-+
-+    # echo 'hist:keys=pid:sort=pid' >> \
-+           /sys/kernel/debug/tracing/events/synthetic/wakeup_new_test/trigger
-+
-+  - onmax(var).save(field,...)
-+
-+    The 'onmax(var).save(field,...)' hist trigger action is invoked
-+    whenever the value of 'var' associated with a histogram entry
-+    exceeds the current maximum contained in that variable.
-+
-+    The end result is that the trace event fields specified as the
-+    onmax.save() params will be saved if 'var' exceeds the current
-+    maximum for that hist trigger entry.  This allows context from the
-+    event that exhibited the new maximum to be saved for later
-+    reference.  When the histogram is displayed, additional fields
-+    displaying the saved values will be printed.
-+
-+    As an example the below defines a couple of hist triggers, one for
-+    sched_wakeup and another for sched_switch, keyed on pid.  Whenever
-+    a sched_wakeup occurs, the timestamp is saved in the entry
-+    corresponding to the current pid, and when the scheduler switches
-+    back to that pid, the timestamp difference is calculated.  If the
-+    resulting latency, stored in wakeup_lat, exceeds the current
-+    maximum latency, the values specified in the save() fields are
-+    recoreded:
-+
-+    # echo 'hist:keys=pid:ts0=common_timestamp.usecs \
-+            if comm=="cyclictest"' >> \
-+            /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-+
-+    # echo 'hist:keys=next_pid:\
-+            wakeup_lat=common_timestamp.usecs-ts0:\
-+            onmax(wakeup_lat).save(next_comm,prev_pid,prev_prio,prev_comm) \
-+            if next_comm=="cyclictest"' >> \
-+            /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-+
-+    When the histogram is displayed, the max value and the saved
-+    values corresponding to the max are displayed following the rest
-+    of the fields:
-+
-+    # cat /sys/kernel/debug/tracing/events/sched/sched_switch/hist
-+      { next_pid:       2255 } hitcount:        239
-+        common_timestamp-ts0:          0
-+        max:         27
-+	next_comm: cyclictest
-+        prev_pid:          0  prev_prio:        120  prev_comm: swapper/1
-+
-+      { next_pid:       2256 } hitcount:       2355
-+        common_timestamp-ts0: 0
-+        max:         49  next_comm: cyclictest
-+        prev_pid:          0  prev_prio:        120  prev_comm: swapper/0
-+
-+      Totals:
-+          Hits: 12970
-+          Entries: 2
-+          Dropped: 0
+ enum field_op_id {
+ 	FIELD_OP_NONE,
+@@ -260,6 +261,7 @@ struct hist_trigger_data {
+ 	bool				enable_timestamps;
+ 	struct action_data		*actions[HIST_ACTIONS_MAX];
+ 	unsigned int			n_actions;
++	unsigned int			n_onmax_str;
+ };
+ 
+ static u64 hist_field_timestamp(struct hist_field *hist_field,
+@@ -450,6 +452,7 @@ static struct hist_field *find_var_field(struct hist_trigger_data *hist_data,
+ struct hist_elt_data {
+ 	char *comm;
+ 	u64 *var_ref_vals;
++	char *onmax_str[HIST_ON_MAX_SAVE_MAX];
+ };
+ 
+ static u64 hist_field_var_ref(struct hist_field *hist_field,
+@@ -611,7 +614,8 @@ static int parse_action(char *str, struct hist_trigger_attrs *attrs)
+ 	if (attrs->n_actions == HIST_ACTIONS_MAX)
+ 		return -EINVAL;
+ 
+-	if ((strncmp(str, "onmatch(", strlen("onmatch(")) == 0)) {
++	if ((strncmp(str, "onmatch(", strlen("onmatch(")) == 0) ||
++	    (strncmp(str, "onmax(", strlen("onmax(")) == 0)) {
+ 		attrs->action_str[attrs->n_actions] = kstrdup(str, GFP_KERNEL);
+ 		if (!attrs->action_str[attrs->n_actions]) {
+ 			ret = -ENOMEM;
+@@ -729,7 +733,12 @@ static inline void save_comm(char *comm, struct task_struct *task)
+ 
+ static void hist_trigger_elt_data_free(struct tracing_map_elt *elt)
+ {
++	struct hist_trigger_data *hist_data = elt->map->private_data;
+ 	struct hist_elt_data *private_data = elt->private_data;
++	unsigned int i;
++
++	for (i = 0; i < hist_data->n_onmax_str; i++)
++		kfree(private_data->onmax_str[i]);
+ 
+ 	kfree(private_data->comm);
+ 	kfree(private_data);
+@@ -761,6 +770,14 @@ static int hist_trigger_elt_data_alloc(struct tracing_map_elt *elt)
+ 		}
+ 	}
+ 
++	for (i = 0; i < hist_data->n_onmax_str; i++) {
++		elt_data->onmax_str[i] = kzalloc(size, GFP_KERNEL);
++		if (!elt_data->onmax_str[i]) {
++			hist_trigger_elt_data_free(elt);
++			return -ENOMEM;
++		}
++	}
++
+ 	return 0;
+ }
+ 
+@@ -990,6 +1007,12 @@ struct action_data {
+ 	action_fn_t	fn;
+ 	unsigned int	var_ref_idx;
+ 	struct synthetic_event *synthetic_event;
++
++	unsigned int		max_var_ref_idx;
++	struct hist_field	*max_save_val[HIST_ON_MAX_SAVE_MAX];
++	struct hist_field	*max_save_var[HIST_ON_MAX_SAVE_MAX];
++	unsigned int		max_n_save;
++	struct hist_field	*max_var;
+ };
+ 
+ static LIST_HEAD(synthetic_events_list);
+@@ -1957,6 +1980,225 @@ static int create_onmatch_data(char *str, struct hist_trigger_data *hist_data)
+ 	return ret;
+ }
+ 
++static void onmax_print(struct seq_file *m,
++			struct hist_trigger_data *hist_data,
++			struct tracing_map_elt *elt,
++			struct action_data *data)
++{
++	unsigned int i, save_var_idx, max_idx = data->max_var->var_ref.idx;
++
++	seq_printf(m, "\n\tmax: %10llu", tracing_map_read_var(elt, max_idx));
++
++	for (i = 0; i < data->max_n_save; i++) {
++		struct hist_field *save_val = data->max_save_val[i];
++		struct hist_field *save_var = data->max_save_var[i];
++		u64 val;
++
++		save_var_idx = save_var->var_ref.idx;
++
++		val = tracing_map_read_var(elt, save_var_idx);
++
++		if (save_val->flags & HIST_FIELD_FL_STRING) {
++			seq_printf(m, "  %s: %-50s", save_var->var_name,
++				   (char *)(val));
++		} else
++			seq_printf(m, "  %s: %10llu", save_var->var_name, val);
++	}
++}
++
++static void onmax_save(struct hist_trigger_data *hist_data,
++		       struct tracing_map_elt *elt, void *rec,
++		       struct ring_buffer_event *rbe,
++		       struct action_data *data, u64 *var_ref_vals)
++{
++	unsigned int i, j, save_idx, max_idx = data->max_var->var_ref.idx;
++	unsigned int max_var_ref_idx = data->max_var_ref_idx;
++	struct hist_elt_data *elt_data = elt->private_data;
++
++	u64 var_val, max_val;
++
++	var_val = var_ref_vals[max_var_ref_idx];
++	max_val = tracing_map_read_var(elt, max_idx);
++
++	if (var_val <= max_val)
++		return;
++
++	tracing_map_set_var(elt, max_idx, var_val);
++
++	for (i = 0, j = 0; i < data->max_n_save; i++) {
++		struct hist_field *save_val = data->max_save_val[i];
++
++		var_val = save_val->fn(save_val, elt, rbe, rec);
++		save_idx = data->max_save_var[i]->var_ref.idx;
++
++		if (save_val->flags & HIST_FIELD_FL_STRING) {
++			char *onmax_str = elt_data->onmax_str[j++];
++
++			memcpy(onmax_str, (char *)var_val, TASK_COMM_LEN + 1);
++			var_val = (u64)onmax_str;
++		}
++		tracing_map_set_var(elt, save_idx, var_val);
++	}
++}
++
++static struct hist_field *create_free_var(struct hist_trigger_data *hist_data,
++					  char *name)
++{
++	struct hist_field *var;
++	unsigned int idx;
++
++	var = kzalloc(sizeof(struct hist_field), GFP_KERNEL);
++	if (!var) {
++		var = ERR_PTR(-ENOMEM);
++		goto out;
++	}
++
++	idx = tracing_map_add_var(hist_data->map);
++	if (idx < 0) {
++		kfree(var);
++		var = ERR_PTR(-EINVAL);
++		goto out;
++	}
++
++	var->flags = HIST_FIELD_FL_VAR;
++	var->var_ref.idx = idx;
++	var->var_ref.hist_data = hist_data;
++	var->var_name = kstrdup(name, GFP_KERNEL);
++ out:
++	return var;
++}
++
++static int create_save_var(struct hist_trigger_data *hist_data,
++			   struct trace_event_file *file,
++			   struct action_data *data,
++			   const char *event_name, char *field_str)
++{
++	struct hist_field *val_field, *save_var;
++	unsigned long flags = HIST_FIELD_FL_VAR;
++	int ret = 0;
++
++	val_field = parse_atom(hist_data, file, field_str,
++			       &flags, NULL);
++	if (IS_ERR(val_field)) {
++		ret = PTR_ERR(val_field);
++		goto out;
++	}
++	data->max_save_val[data->max_n_save] = val_field;
++	if (val_field->flags & HIST_FIELD_FL_STRING)
++		hist_data->n_onmax_str++;
++
++	save_var = create_free_var(hist_data, field_str);
++	if (IS_ERR(save_var)) {
++		ret = PTR_ERR(save_var);
++		goto out;
++	}
++	data->max_save_var[data->max_n_save++] = save_var;
++
++	if (WARN_ON(data->max_n_save > HIST_ON_MAX_SAVE_MAX)) {
++		ret = -EINVAL;
++		goto out;
++	}
++ out:
++	return ret;
++}
++
++static void destroy_onmax_data(struct action_data *data)
++{
++	unsigned int i;
++
++	destroy_hist_field(data->max_var);
++
++	for (i = 0; i < data->max_n_save; i++) {
++		destroy_hist_field(data->max_save_val[i]);
++		destroy_hist_field(data->max_save_var[i]);
++	}
++
++	kfree(data);
++}
++
++static int create_onmax_data(char *str, struct hist_trigger_data *hist_data)
++{
++	struct trace_event_call *call = hist_data->event_file->event_call;
++	unsigned int n_save = 0, var_ref_idx = hist_data->n_var_refs;
++	struct hist_field *var_field, *ref_field, *max_var_field;
++	struct trace_event_file *file = hist_data->event_file;
++	char *fn_name, *onmax_var;
++	struct action_data *data;
++	const char *event_name;
++	unsigned long flags;
++	int ret = 0;
++
++	onmax_var = strsep(&str, ")");
++	if (!onmax_var || !str)
++		return -EINVAL;
++
++	event_name = trace_event_name(call);
++	var_field = find_var_field(hist_data, NULL, event_name, onmax_var);
++	if (var_field) {
++		flags = HIST_FIELD_FL_VAR_REF;
++		ref_field = create_hist_field(NULL, flags, NULL);
++		if (ref_field) {
++			ref_field->var_ref.idx = var_field->var_ref.idx;
++			ref_field->var_ref.hist_data = hist_data;
++			ref_field->name = kstrdup(var_field->var_name, GFP_KERNEL);
++			hist_data->var_refs[hist_data->n_var_refs] = ref_field;
++			ref_field->var_ref_idx = hist_data->n_var_refs++;
++		}
++	}
++
++	data = kzalloc(sizeof(*data), GFP_KERNEL);
++	if (!data)
++		return -ENOMEM;
++	data->fn = onmax_save;
++	data->max_var_ref_idx = var_ref_idx;
++	max_var_field = create_free_var(hist_data, "max");
++	if (IS_ERR(max_var_field)) {
++		ret = PTR_ERR(max_var_field);
++		goto free;
++	}
++	data->max_var = max_var_field;
++
++	strsep(&str, ".");
++	if (!str) {
++		ret = -EINVAL;
++		goto free;
++	}
++
++	fn_name = strsep(&str, "(");
++	if (!fn_name || !str) {
++		ret = -EINVAL;
++		goto free;
++	}
++
++	if (strncmp(fn_name, "save", strlen("save")) == 0) {
++		char *save_param = strsep(&str, ")");
++
++		if (!save_param) {
++			ret = -EINVAL;
++			goto free;
++		}
++
++		while (save_param) {
++			char *save_var = strsep(&save_param, ",");
++
++			ret = create_save_var(hist_data, file, data,
++					      event_name, save_var);
++			if (ret)
++				goto free;
++			n_save++;
++		}
++	}
++
++	data->max_n_save = n_save;
++
++	hist_data->actions[hist_data->n_actions++] = data;
++ out:
++	return ret;
++ free:
++	destroy_onmax_data(data);
++	goto out;
++}
++
+ static void destroy_actions(struct hist_trigger_data *hist_data)
+ {
+ 	unsigned int i;
+@@ -1964,7 +2206,10 @@ static void destroy_actions(struct hist_trigger_data *hist_data)
+ 	for (i = 0; i < hist_data->n_actions; i++) {
+ 		struct action_data *data = hist_data->actions[i];
+ 
+-		kfree(data);
++		if (data->fn == onmax_save)
++			destroy_onmax_data(data);
++		else
++			kfree(data);
+ 	}
+ }
+ 
+@@ -1983,6 +2228,12 @@ static int create_actions(struct hist_trigger_data *hist_data)
+ 			ret = create_onmatch_data(action_str, hist_data);
+ 			if (ret)
+ 				return ret;
++		} else if (strncmp(str, "onmax(", strlen("onmax(")) == 0) {
++			char *action_str = str + strlen("onmax(");
++
++			ret = create_onmax_data(action_str, hist_data);
++			if (ret)
++				return ret;
+ 		}
+ 	}
+ 
+@@ -1997,7 +2248,28 @@ static void print_actions(struct seq_file *m,
+ 
+ 	for (i = 0; i < hist_data->n_actions; i++) {
+ 		struct action_data *data = hist_data->actions[i];
++
++		if (data->fn == onmax_save)
++			onmax_print(m, hist_data, elt, data);
++	}
++}
++
++static void print_onmax_spec(struct seq_file *m,
++			     struct hist_trigger_data *hist_data,
++			     struct action_data *data)
++{
++	unsigned int i;
++
++	seq_puts(m, ":onmax(");
++	seq_printf(m, "%s", hist_data->var_refs[data->max_var_ref_idx]->name);
++	seq_puts(m, ").save(");
++
++	for (i = 0; i < data->max_n_save; i++) {
++		seq_printf(m, "%s", data->max_save_var[i]->var_name);
++		if (i < data->max_n_save - 1)
++			seq_puts(m, ",");
+ 	}
++	seq_puts(m, ")");
+ }
+ 
+ static void print_onmatch_spec(struct seq_file *m,
+@@ -2020,6 +2292,8 @@ static void print_actions_spec(struct seq_file *m,
+ 
+ 		if (data->fn == action_trace)
+ 			print_onmatch_spec(m, hist_data, data);
++		else if (data->fn == onmax_save)
++			print_onmax_spec(m, hist_data, data);
+ 	}
+ }
+ 
+@@ -2324,6 +2598,8 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
+ 		}
+ 	}
+ 
++	print_actions(m, hist_data, elt);
++
+ 	seq_puts(m, "\n");
+ }
+ 
 -- 
 1.9.3
