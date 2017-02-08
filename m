@@ -1,323 +1,357 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [RFC][PATCH 04/21] tracing: Give event triggers access to ring_buffer_event
-Date: Wed,  8 Feb 2017 11:25:00 -0600
-Message-ID: <a8fe827ba23b8cac627dae3c69d8e0b81c8e87c1.1486569306.git.tom.zanussi@linux.intel.com>
+Subject: [RFC][PATCH 17/21] tracing: Add hist trigger action hook
+Date: Wed,  8 Feb 2017 11:25:13 -0600
+Message-ID: <f1dfe9d9cd68572aaafe956411cc82ed2a3abd13.1486569306.git.tom.zanussi@linux.intel.com>
 References: <cover.1486569306.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         Tom Zanussi <tom.zanussi@linux.intel.com>
 To: rostedt@goodmis.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga02.intel.com ([134.134.136.20]:30837 "EHLO mga02.intel.com"
+Received: from mga06.intel.com ([134.134.136.31]:15527 "EHLO mga06.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1754546AbdBHRbx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 8 Feb 2017 12:31:53 -0500
+        id S932587AbdBHRiS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 8 Feb 2017 12:38:18 -0500
 In-Reply-To: <cover.1486569306.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1486569306.git.tom.zanussi@linux.intel.com>
 References: <cover.1486569306.git.tom.zanussi@linux.intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-The ring_buffer event can provide a timestamp that may be useful to
-various triggers - pass it into the handlers for that purpose.
+Add a hook for executing extra actions whenever a histogram entry is
+added or updated.
+
+The default 'action' when a hist entry is added to a histogram is to
+update the set of values associated with it.  Some applications may
+want to perform additional actions at that point, such as generate
+another event, or compare and save a maximum.
+
+Add a simple framework for doing that; specific actions will be
+implemented on top of it in later patches.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- include/linux/trace_events.h        | 14 ++++++-----
- kernel/trace/trace.h                |  9 +++----
- kernel/trace/trace_events_hist.c    | 11 +++++----
- kernel/trace/trace_events_trigger.c | 47 +++++++++++++++++++++++--------------
- 4 files changed, 49 insertions(+), 32 deletions(-)
+ kernel/trace/trace_events_hist.c | 155 +++++++++++++++++++++++++++++++++++----
+ 1 file changed, 139 insertions(+), 16 deletions(-)
 
-diff --git a/include/linux/trace_events.h b/include/linux/trace_events.h
-index be00761..06a5d2d 100644
---- a/include/linux/trace_events.h
-+++ b/include/linux/trace_events.h
-@@ -395,11 +395,13 @@ enum event_trigger_type {
- 
- extern int filter_match_preds(struct event_filter *filter, void *rec);
- 
--extern enum event_trigger_type event_triggers_call(struct trace_event_file *file,
--						   void *rec);
--extern void event_triggers_post_call(struct trace_event_file *file,
--				     enum event_trigger_type tt,
--				     void *rec);
-+extern enum event_trigger_type
-+event_triggers_call(struct trace_event_file *file, void *rec,
-+		    struct ring_buffer_event *event);
-+extern void
-+event_triggers_post_call(struct trace_event_file *file,
-+			 enum event_trigger_type tt,
-+			 void *rec, struct ring_buffer_event *event);
- 
- bool trace_event_ignore_this_pid(struct trace_event_file *trace_file);
- 
-@@ -419,7 +421,7 @@ extern void event_triggers_post_call(struct trace_event_file *file,
- 
- 	if (!(eflags & EVENT_FILE_FL_TRIGGER_COND)) {
- 		if (eflags & EVENT_FILE_FL_TRIGGER_MODE)
--			event_triggers_call(file, NULL);
-+			event_triggers_call(file, NULL, NULL);
- 		if (eflags & EVENT_FILE_FL_SOFT_DISABLED)
- 			return true;
- 		if (eflags & EVENT_FILE_FL_PID_FILTER)
-diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
-index 12bc7fa..ac55fa1 100644
---- a/kernel/trace/trace.h
-+++ b/kernel/trace/trace.h
-@@ -1187,7 +1187,7 @@ static inline void trace_buffer_unlock_commit(struct trace_array *tr,
- 	unsigned long eflags = file->flags;
- 
- 	if (eflags & EVENT_FILE_FL_TRIGGER_COND)
--		*tt = event_triggers_call(file, entry);
-+		*tt = event_triggers_call(file, entry, event);
- 
- 	if (test_bit(EVENT_FILE_FL_SOFT_DISABLED_BIT, &file->flags) ||
- 	    (unlikely(file->flags & EVENT_FILE_FL_FILTERED) &&
-@@ -1224,7 +1224,7 @@ static inline void trace_buffer_unlock_commit(struct trace_array *tr,
- 		trace_buffer_unlock_commit(file->tr, buffer, event, irq_flags, pc);
- 
- 	if (tt)
--		event_triggers_post_call(file, tt, entry);
-+		event_triggers_post_call(file, tt, entry, event);
- }
- 
- /**
-@@ -1257,7 +1257,7 @@ static inline void trace_buffer_unlock_commit(struct trace_array *tr,
- 						irq_flags, pc, regs);
- 
- 	if (tt)
--		event_triggers_post_call(file, tt, entry);
-+		event_triggers_post_call(file, tt, entry, event);
- }
- 
- #define FILTER_PRED_INVALID	((unsigned short)-1)
-@@ -1479,7 +1479,8 @@ extern void set_named_trigger_data(struct event_trigger_data *data,
-  */
- struct event_trigger_ops {
- 	void			(*func)(struct event_trigger_data *data,
--					void *rec);
-+					void *rec,
-+					struct ring_buffer_event *rbe);
- 	int			(*init)(struct event_trigger_ops *ops,
- 					struct event_trigger_data *data);
- 	void			(*free)(struct event_trigger_ops *ops,
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index afd766a..902df2c 100644
+index 13d67d3..0147141 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -907,7 +907,8 @@ static inline void add_to_key(char *compound_key, void *key,
+@@ -32,6 +32,7 @@ typedef u64 (*hist_field_fn_t) (struct hist_field *field,
+ 
+ #define HIST_FIELD_OPERANDS_MAX	2
+ #define HIST_ASSIGNMENT_MAX	4
++#define HIST_ACTIONS_MAX	8
+ 
+ enum field_op_id {
+ 	FIELD_OP_NONE,
+@@ -60,6 +61,7 @@ struct hist_field {
+ 	char				*name;
+ 	u64				var_val;
+ 	unsigned int			var_idx;
++	bool                            read_once;
+ };
+ 
+ static u64 hist_field_none(struct hist_field *field,
+@@ -230,6 +232,8 @@ struct hist_trigger_attrs {
+ 	bool		clear;
+ 	bool		ts_in_usecs;
+ 	unsigned int	map_bits;
++	char		*action_str[HIST_ACTIONS_MAX];
++	unsigned int	n_actions;
+ };
+ 
+ struct hist_trigger_data {
+@@ -247,6 +251,8 @@ struct hist_trigger_data {
+ 	struct hist_trigger_attrs	*attrs;
+ 	struct tracing_map		*map;
+ 	bool				enable_timestamps;
++	struct action_data		*actions[HIST_ACTIONS_MAX];
++	unsigned int			n_actions;
+ };
+ 
+ static u64 hist_field_timestamp(struct hist_field *hist_field,
+@@ -452,7 +458,7 @@ static u64 hist_field_var_ref(struct hist_field *hist_field,
+ 
+ static bool resolve_var_refs(struct hist_trigger_data *hist_data,
+ 			     void *key,
+-			     u64 *var_ref_vals)
++			     u64 *var_ref_vals, bool self)
+ {
+ 	struct hist_trigger_data *var_data;
+ 	struct tracing_map_elt *var_elt;
+@@ -466,17 +472,26 @@ static bool resolve_var_refs(struct hist_trigger_data *hist_data,
+ 		var_idx = hist_field->var_ref.idx;
+ 		var_data = hist_field->var_ref.hist_data;
+ 
++		if ((self && var_data != hist_data) ||
++		    (!self && var_data == hist_data))
++			continue;
++
+ 		var_elt = tracing_map_lookup(var_data->map, key);
+ 		if (!var_elt) {
+ 			resolved = false;
+ 			break;
+ 		}
++
+ 		if (!tracing_map_var_set(var_elt, var_idx)) {
+ 			resolved = false;
+ 			break;
+ 		}
+ 
+-		var_val = tracing_map_read_var(var_elt, var_idx);
++		if (self || !hist_field->read_once)
++			var_val = tracing_map_read_var(var_elt, var_idx);
++		else
++			var_val = tracing_map_read_var_once(var_elt, var_idx);
++
+ 		var_ref_vals[i] = var_val;
+ 	}
+ 
+@@ -569,6 +584,9 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
+ 	for (i = 0; i < attrs->n_assignments; i++)
+ 		kfree(attrs->assignment_str[i]);
+ 
++	for (i = 0; i < attrs->n_actions; i++)
++		kfree(attrs->action_str[i]);
++
+ 	kfree(attrs->name);
+ 	kfree(attrs->sort_key_str);
+ 	kfree(attrs->keys_str);
+@@ -576,6 +594,16 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
+ 	kfree(attrs);
+ }
+ 
++static int parse_action(char *str, struct hist_trigger_attrs *attrs)
++{
++	int ret = 0;
++
++	if (attrs->n_actions == HIST_ACTIONS_MAX)
++		return -EINVAL;
++
++	return ret;
++}
++
+ static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
+ {
+ 	int ret = 0;
+@@ -642,8 +670,13 @@ static struct hist_trigger_attrs *parse_hist_trigger_attrs(char *trigger_str)
+ 		else if (strcmp(str, "clear") == 0)
+ 			attrs->clear = true;
+ 		else {
+-			ret = -EINVAL;
+-			goto free;
++			ret = parse_action(str, attrs);
++			if (ret < 0)
++				goto free;
++			if (!ret) {
++				ret = -EINVAL;
++				goto free;
++			}
+ 		}
+ 	}
+ 
+@@ -910,6 +943,18 @@ static void destroy_hist_fields(struct hist_trigger_data *hist_data)
+ 	}
+ }
+ 
++struct action_data;
++
++typedef void (*action_fn_t) (struct hist_trigger_data *hist_data,
++			     struct tracing_map_elt *elt, void *rec,
++			     struct ring_buffer_event *rbe,
++			     struct action_data *data, u64 *var_ref_vals);
++
++struct action_data {
++	action_fn_t	fn;
++	unsigned int	var_ref_idx;
++};
++
+ static struct hist_field *parse_var_ref(char *var_name)
+ {
+ 	struct hist_var_data *var_data;
+@@ -1150,6 +1195,9 @@ static struct hist_field *parse_expr(struct hist_trigger_data *hist_data,
+ 		goto free;
+ 	}
+ 
++	operand1->read_once = true;
++	operand2->read_once = true;
++
+ 	expr->operands[0] = operand1;
+ 	expr->operands[1] = operand2;
+ 	expr->operator = field_op;
+@@ -1529,14 +1577,6 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
+ 	return ret;
+ }
+ 
+-static void destroy_hist_data(struct hist_trigger_data *hist_data)
+-{
+-	destroy_hist_trigger_attrs(hist_data->attrs);
+-	destroy_hist_fields(hist_data);
+-	tracing_map_destroy(hist_data->map);
+-	kfree(hist_data);
+-}
+-
+ static int create_tracing_map_fields(struct hist_trigger_data *hist_data)
+ {
+ 	struct tracing_map *map = hist_data->map;
+@@ -1582,6 +1622,63 @@ static int create_tracing_map_fields(struct hist_trigger_data *hist_data)
+ 	return 0;
+ }
+ 
++static void destroy_actions(struct hist_trigger_data *hist_data)
++{
++	unsigned int i;
++
++	for (i = 0; i < hist_data->n_actions; i++) {
++		struct action_data *data = hist_data->actions[i];
++
++		kfree(data);
++	}
++}
++
++static int create_actions(struct hist_trigger_data *hist_data)
++{
++	unsigned int i;
++	int ret = 0;
++	char *str;
++
++	for (i = 0; i < hist_data->attrs->n_actions; i++) {
++		str = hist_data->attrs->action_str[i];
++	}
++
++	return ret;
++}
++
++static void print_actions(struct seq_file *m,
++			  struct hist_trigger_data *hist_data,
++			  struct tracing_map_elt *elt)
++{
++	unsigned int i;
++
++	for (i = 0; i < hist_data->n_actions; i++) {
++		struct action_data *data = hist_data->actions[i];
++	}
++}
++
++static void print_actions_spec(struct seq_file *m,
++			       struct hist_trigger_data *hist_data)
++{
++	unsigned int i;
++
++	for (i = 0; i < hist_data->n_actions; i++) {
++		struct action_data *data = hist_data->actions[i];
++	}
++}
++
++static void destroy_hist_data(struct hist_trigger_data *hist_data)
++{
++	if (!hist_data)
++		return;
++
++	destroy_hist_trigger_attrs(hist_data->attrs);
++	destroy_hist_fields(hist_data);
++	tracing_map_destroy(hist_data->map);
++	destroy_actions(hist_data);
++	kfree(hist_data);
++}
++
+ static struct hist_trigger_data *
+ create_hist_data(unsigned int map_bits,
+ 		 struct hist_trigger_attrs *attrs,
+@@ -1695,6 +1792,20 @@ static inline void add_to_key(char *compound_key, void *key,
  	memcpy(compound_key + key_field->offset, key, size);
  }
  
--static void event_hist_trigger(struct event_trigger_data *data, void *rec)
-+static void event_hist_trigger(struct event_trigger_data *data, void *rec,
-+			       struct ring_buffer_event *event)
++static void
++hist_trigger_actions(struct hist_trigger_data *hist_data,
++		     struct tracing_map_elt *elt, void *rec,
++		     struct ring_buffer_event *rbe, u64 *var_ref_vals)
++{
++	struct action_data *data;
++	unsigned int i;
++
++	for (i = 0; i < hist_data->n_actions; i++) {
++		data = hist_data->actions[i];
++		data->fn(hist_data, elt, rec, rbe, data, var_ref_vals);
++	}
++}
++
+ static void event_hist_trigger(struct event_trigger_data *data, void *rec,
+ 			       struct ring_buffer_event *rbe)
  {
- 	struct hist_trigger_data *hist_data = data->private_data;
- 	bool use_compound_key = (hist_data->n_keys > 1);
-@@ -1658,7 +1659,8 @@ __init int register_trigger_hist_cmd(void)
- }
+@@ -1741,7 +1852,7 @@ static void event_hist_trigger(struct event_trigger_data *data, void *rec,
+ 		key = compound_key;
  
- static void
--hist_enable_trigger(struct event_trigger_data *data, void *rec)
-+hist_enable_trigger(struct event_trigger_data *data, void *rec,
-+		    struct ring_buffer_event *event)
- {
- 	struct enable_trigger_data *enable_data = data->private_data;
- 	struct event_trigger_data *test;
-@@ -1674,7 +1676,8 @@ __init int register_trigger_hist_cmd(void)
- }
- 
- static void
--hist_enable_count_trigger(struct event_trigger_data *data, void *rec)
-+hist_enable_count_trigger(struct event_trigger_data *data, void *rec,
-+			  struct ring_buffer_event *event)
- {
- 	if (!data->count)
+ 	if (hist_data->n_var_refs &&
+-	    !resolve_var_refs(hist_data, key, var_ref_vals))
++	    !resolve_var_refs(hist_data, key, var_ref_vals, false))
  		return;
-@@ -1682,7 +1685,7 @@ __init int register_trigger_hist_cmd(void)
- 	if (data->count != -1)
- 		(data->count)--;
  
--	hist_enable_trigger(data, rec);
-+	hist_enable_trigger(data, rec, event);
+ 	elt = tracing_map_insert(hist_data->map, key);
+@@ -1749,6 +1860,9 @@ static void event_hist_trigger(struct event_trigger_data *data, void *rec,
+ 		return;
+ 
+ 	hist_trigger_elt_update(hist_data, elt, rec, rbe, var_ref_vals);
++
++	if (resolve_var_refs(hist_data, key, var_ref_vals, true))
++		hist_trigger_actions(hist_data, elt, rec, rbe, var_ref_vals);
  }
  
- static struct event_trigger_ops hist_enable_trigger_ops = {
-diff --git a/kernel/trace/trace_events_trigger.c b/kernel/trace/trace_events_trigger.c
-index 6721a1e8..152548f 100644
---- a/kernel/trace/trace_events_trigger.c
-+++ b/kernel/trace/trace_events_trigger.c
-@@ -62,7 +62,8 @@ void trigger_data_free(struct event_trigger_data *data)
-  * any trigger that should be deferred, ETT_NONE if nothing to defer.
-  */
- enum event_trigger_type
--event_triggers_call(struct trace_event_file *file, void *rec)
-+event_triggers_call(struct trace_event_file *file, void *rec,
-+		    struct ring_buffer_event *event)
- {
- 	struct event_trigger_data *data;
- 	enum event_trigger_type tt = ETT_NONE;
-@@ -75,7 +76,7 @@ enum event_trigger_type
- 		if (data->paused)
- 			continue;
- 		if (!rec) {
--			data->ops->func(data, rec);
-+			data->ops->func(data, rec, event);
- 			continue;
- 		}
- 		filter = rcu_dereference_sched(data->filter);
-@@ -85,7 +86,7 @@ enum event_trigger_type
- 			tt |= data->cmd_ops->trigger_type;
- 			continue;
- 		}
--		data->ops->func(data, rec);
-+		data->ops->func(data, rec, event);
+ static void hist_trigger_stacktrace_print(struct seq_file *m,
+@@ -2069,6 +2183,8 @@ static int event_hist_trigger_print(struct seq_file *m,
  	}
- 	return tt;
- }
-@@ -107,7 +108,7 @@ enum event_trigger_type
- void
- event_triggers_post_call(struct trace_event_file *file,
- 			 enum event_trigger_type tt,
--			 void *rec)
-+			 void *rec, struct ring_buffer_event *event)
- {
- 	struct event_trigger_data *data;
+ 	seq_printf(m, ":size=%u", (1 << hist_data->map->map_bits));
  
-@@ -115,7 +116,7 @@ enum event_trigger_type
- 		if (data->paused)
- 			continue;
- 		if (data->cmd_ops->trigger_type & tt)
--			data->ops->func(data, rec);
-+			data->ops->func(data, rec, event);
- 	}
- }
- EXPORT_SYMBOL_GPL(event_triggers_post_call);
-@@ -908,7 +909,8 @@ void set_named_trigger_data(struct event_trigger_data *data,
- }
++	print_actions_spec(m, hist_data);
++
+ 	if (data->filter_str)
+ 		seq_printf(m, " if %s", data->filter_str);
  
- static void
--traceon_trigger(struct event_trigger_data *data, void *rec)
-+traceon_trigger(struct event_trigger_data *data, void *rec,
-+		struct ring_buffer_event *event)
- {
- 	if (tracing_is_on())
- 		return;
-@@ -917,7 +919,8 @@ void set_named_trigger_data(struct event_trigger_data *data,
- }
+@@ -2421,6 +2537,7 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
+ 	struct hist_trigger_attrs *attrs;
+ 	struct event_trigger_ops *trigger_ops;
+ 	struct hist_trigger_data *hist_data;
++	bool unreg_self = false;
+ 	char *trigger;
+ 	int ret = 0;
  
- static void
--traceon_count_trigger(struct event_trigger_data *data, void *rec)
-+traceon_count_trigger(struct event_trigger_data *data, void *rec,
-+		      struct ring_buffer_event *event)
- {
- 	if (tracing_is_on())
- 		return;
-@@ -932,7 +935,8 @@ void set_named_trigger_data(struct event_trigger_data *data,
- }
+@@ -2496,6 +2613,10 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
+ 	if (has_hist_vars(hist_data))
+ 		save_hist_vars(hist_data);
  
- static void
--traceoff_trigger(struct event_trigger_data *data, void *rec)
-+traceoff_trigger(struct event_trigger_data *data, void *rec,
-+		 struct ring_buffer_event *event)
- {
- 	if (!tracing_is_on())
- 		return;
-@@ -941,7 +945,8 @@ void set_named_trigger_data(struct event_trigger_data *data,
++	ret = create_actions(hist_data);
++	if (ret)
++		goto out_unreg;
++
+ 	ret = tracing_map_init(hist_data->map);
+ 	if (ret)
+ 		goto out_unreg;
+@@ -2503,18 +2624,20 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
+ 	ret = hist_trigger_enable(trigger_data, file);
+ 	if (ret)
+ 		goto out_unreg;
+-
+ 	/* Just return zero, not the number of registered triggers */
+ 	ret = 0;
+  out:
+ 	return ret;
+  out_unreg:
+ 	cmd_ops->unreg(glob+1, trigger_ops, trigger_data, file);
++	unreg_self = true;
+  out_free:
+ 	if (cmd_ops->set_filter)
+ 		cmd_ops->set_filter(NULL, trigger_data, NULL);
+-	kfree(trigger_data);
+-	destroy_hist_data(hist_data);
++	if (!unreg_self) {
++		kfree(trigger_data);
++		destroy_hist_data(hist_data);
++	}
+ 	goto out;
  }
  
- static void
--traceoff_count_trigger(struct event_trigger_data *data, void *rec)
-+traceoff_count_trigger(struct event_trigger_data *data, void *rec,
-+		       struct ring_buffer_event *event)
- {
- 	if (!tracing_is_on())
- 		return;
-@@ -1038,13 +1043,15 @@ void set_named_trigger_data(struct event_trigger_data *data,
- 
- #ifdef CONFIG_TRACER_SNAPSHOT
- static void
--snapshot_trigger(struct event_trigger_data *data, void *rec)
-+snapshot_trigger(struct event_trigger_data *data, void *rec,
-+		 struct ring_buffer_event *event)
- {
- 	tracing_snapshot();
- }
- 
- static void
--snapshot_count_trigger(struct event_trigger_data *data, void *rec)
-+snapshot_count_trigger(struct event_trigger_data *data, void *rec,
-+		       struct ring_buffer_event *event)
- {
- 	if (!data->count)
- 		return;
-@@ -1052,7 +1059,7 @@ void set_named_trigger_data(struct event_trigger_data *data,
- 	if (data->count != -1)
- 		(data->count)--;
- 
--	snapshot_trigger(data, rec);
-+	snapshot_trigger(data, rec, event);
- }
- 
- static int
-@@ -1131,13 +1138,15 @@ static __init int register_trigger_snapshot_cmd(void)
- #define STACK_SKIP 3
- 
- static void
--stacktrace_trigger(struct event_trigger_data *data, void *rec)
-+stacktrace_trigger(struct event_trigger_data *data, void *rec,
-+		   struct ring_buffer_event *event)
- {
- 	trace_dump_stack(STACK_SKIP);
- }
- 
- static void
--stacktrace_count_trigger(struct event_trigger_data *data, void *rec)
-+stacktrace_count_trigger(struct event_trigger_data *data, void *rec,
-+			 struct ring_buffer_event *event)
- {
- 	if (!data->count)
- 		return;
-@@ -1145,7 +1154,7 @@ static __init int register_trigger_snapshot_cmd(void)
- 	if (data->count != -1)
- 		(data->count)--;
- 
--	stacktrace_trigger(data, rec);
-+	stacktrace_trigger(data, rec, event);
- }
- 
- static int
-@@ -1207,7 +1216,8 @@ static __init void unregister_trigger_traceon_traceoff_cmds(void)
- }
- 
- static void
--event_enable_trigger(struct event_trigger_data *data, void *rec)
-+event_enable_trigger(struct event_trigger_data *data, void *rec,
-+		     struct ring_buffer_event *event)
- {
- 	struct enable_trigger_data *enable_data = data->private_data;
- 
-@@ -1218,7 +1228,8 @@ static __init void unregister_trigger_traceon_traceoff_cmds(void)
- }
- 
- static void
--event_enable_count_trigger(struct event_trigger_data *data, void *rec)
-+event_enable_count_trigger(struct event_trigger_data *data, void *rec,
-+			   struct ring_buffer_event *event)
- {
- 	struct enable_trigger_data *enable_data = data->private_data;
- 
-@@ -1232,7 +1243,7 @@ static __init void unregister_trigger_traceon_traceoff_cmds(void)
- 	if (data->count != -1)
- 		(data->count)--;
- 
--	event_enable_trigger(data, rec);
-+	event_enable_trigger(data, rec, event);
- }
- 
- int event_enable_trigger_print(struct seq_file *m,
 -- 
 1.9.3
 
