@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/5] arm: kprobe: replace patch_lock to raw lock
-Date: Thu, 09 Feb 2017 10:32:53 -0500
-Message-ID: <20170209153303.842625081@goodmis.org>
+Subject: [PATCH RT 5/5] Linux 4.1.38-rt45-rc1
+Date: Thu, 09 Feb 2017 10:32:57 -0500
+Message-ID: <20170209153304.810231249@goodmis.org>
 References: <20170209153252.869145006@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,12 +9,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
-        Paul Gortmaker <paul.gortmaker@windriver.com>,
-        Yang Shi <yang.shi@linaro.org>
+        Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-arm-kprobe-replace-patch_lock-to-raw-lock.patch
+Content-Disposition: inline; filename=0005-Linux-4.1.38-rt45-rc1.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -23,75 +22,18 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Yang Shi <yang.shi@linaro.org>
+From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
 
-When running kprobe on -rt kernel, the below bug is caught:
-
-BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:931
-in_atomic(): 1, irqs_disabled(): 128, pid: 14, name: migration/0
-INFO: lockdep is turned off.
-irq event stamp: 238
-hardirqs last enabled at (237): [<80b5aecc>] _raw_spin_unlock_irqrestore+0x88/0x90
-hardirqs last disabled at (238): [<80b56d88>] __schedule+0xec/0x94c
-softirqs last enabled at (0): [<80225584>] copy_process.part.5+0x30c/0x1994
-softirqs last disabled at (0): [< (null)>] (null)
-Preemption disabled at:[<802f2b98>] cpu_stopper_thread+0xc0/0x140
-
-CPU: 0 PID: 14 Comm: migration/0 Tainted: G O 4.8.3-rt2 #1
-Hardware name: Freescale LS1021A
-[<80212e7c>] (unwind_backtrace) from [<8020cd2c>] (show_stack+0x20/0x24)
-[<8020cd2c>] (show_stack) from [<80689e14>] (dump_stack+0xa0/0xcc)
-[<80689e14>] (dump_stack) from [<8025a43c>] (___might_sleep+0x1b8/0x2a4)
-[<8025a43c>] (___might_sleep) from [<80b5b324>] (rt_spin_lock+0x34/0x74)
-[<80b5b324>] (rt_spin_lock) from [<80b5c31c>] (__patch_text_real+0x70/0xe8)
-[<80b5c31c>] (__patch_text_real) from [<80b5c3ac>] (patch_text_stop_machine+0x18/0x20)
-[<80b5c3ac>] (patch_text_stop_machine) from [<802f2920>] (multi_cpu_stop+0xfc/0x134)
-[<802f2920>] (multi_cpu_stop) from [<802f2ba0>] (cpu_stopper_thread+0xc8/0x140)
-[<802f2ba0>] (cpu_stopper_thread) from [<802563a4>] (smpboot_thread_fn+0x1a4/0x354)
-[<802563a4>] (smpboot_thread_fn) from [<80251d38>] (kthread+0x104/0x11c)
-[<80251d38>] (kthread) from [<80207f70>] (ret_from_fork+0x14/0x24)
-
-Since patch_text_stop_machine() is called in stop_machine() which disables IRQ,
-sleepable lock should be not used in this atomic context, so replace patch_lock
-to raw lock.
-
-Signed-off-by: Yang Shi <yang.shi@linaro.org>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/arm/kernel/patch.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/arch/arm/kernel/patch.c b/arch/arm/kernel/patch.c
-index 69bda1a5707e..1f665acaa6a9 100644
---- a/arch/arm/kernel/patch.c
-+++ b/arch/arm/kernel/patch.c
-@@ -15,7 +15,7 @@ struct patch {
- 	unsigned int insn;
- };
- 
--static DEFINE_SPINLOCK(patch_lock);
-+static DEFINE_RAW_SPINLOCK(patch_lock);
- 
- static void __kprobes *patch_map(void *addr, int fixmap, unsigned long *flags)
- 	__acquires(&patch_lock)
-@@ -32,7 +32,7 @@ static void __kprobes *patch_map(void *addr, int fixmap, unsigned long *flags)
- 		return addr;
- 
- 	if (flags)
--		spin_lock_irqsave(&patch_lock, *flags);
-+		raw_spin_lock_irqsave(&patch_lock, *flags);
- 	else
- 		__acquire(&patch_lock);
- 
-@@ -47,7 +47,7 @@ static void __kprobes patch_unmap(int fixmap, unsigned long *flags)
- 	clear_fixmap(fixmap);
- 
- 	if (flags)
--		spin_unlock_irqrestore(&patch_lock, *flags);
-+		raw_spin_unlock_irqrestore(&patch_lock, *flags);
- 	else
- 		__release(&patch_lock);
- }
+diff --git a/localversion-rt b/localversion-rt
+index ac4d836a809d..e6421b58f4c8 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt44
++-rt45-rc1
 -- 
 2.10.2
