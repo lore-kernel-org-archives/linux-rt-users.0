@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/2] workqueue: use rcu_readlock() in put_pwq_unlocked()
-Date: Thu, 09 Feb 2017 11:45:11 -0500
-Message-ID: <20170209164522.717487731@goodmis.org>
+Subject: [PATCH RT 2/2] Linux 3.18.47-rt52-rc1
+Date: Thu, 09 Feb 2017 11:45:12 -0500
+Message-ID: <20170209164522.846983515@goodmis.org>
 References: <20170209164510.503129025@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,12 +9,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
-        Paul Gortmaker <paul.gortmaker@windriver.com>,
-        stable-rt@vger.kernel.org, John Keeping <john@metanate.com>
+        Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-workqueue-use-rcu_readlock-in-put_pwq_unlocked.patch
+Content-Disposition: inline; filename=0002-Linux-3.18.47-rt52-rc1.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -23,55 +22,18 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-The RCU sched protection was changed to RCU only and so all IRQ-off and
-preempt-off disabled region were changed to the relevant rcu-read-lock
-primitives. One was missed and triggered:
-|[ BUG: bad unlock balance detected! ]
-|4.4.30-rt41 #51 Tainted: G        W
-|btattach/345 is trying to release lock (
-|Unable to handle kernel paging request at virtual address 6b6b6bbb
-|Backtrace:
-|[<c016b5a0>] (lock_release) from [<c0804844>] (rt_spin_unlock+0x20/0x30)
-|[<c0804824>] (rt_spin_unlock) from [<c0138954>] (put_pwq_unlocked+0xa4/0x118)
-|[<c01388b0>] (put_pwq_unlocked) from [<c0138b2c>] (destroy_workqueue+0x164/0x1b0)
-|[<c01389c8>] (destroy_workqueue) from [<c078e1ac>] (hci_unregister_dev+0x120/0x21c)
-|[<c078e08c>] (hci_unregister_dev) from [<c054f658>] (hci_uart_tty_close+0x90/0xbc)
-|[<c054f5c8>] (hci_uart_tty_close) from [<c03a2be8>] (tty_ldisc_close+0x50/0x58)
-|[<c03a2b98>] (tty_ldisc_close) from [<c03a2cb4>] (tty_ldisc_kill+0x18/0x78)
-|[<c03a2c9c>] (tty_ldisc_kill) from [<c03a3528>] (tty_ldisc_release+0x100/0x134)
-|[<c03a3428>] (tty_ldisc_release) from [<c039cd68>] (tty_release+0x3bc/0x460)
-|[<c039c9ac>] (tty_release) from [<c020cc08>] (__fput+0xe0/0x1b4)
-|[<c020cb28>] (__fput) from [<c020cd3c>] (____fput+0x10/0x14)
-|[<c020cd2c>] (____fput) from [<c013e0d4>] (task_work_run+0xa4/0xb8)
-|[<c013e030>] (task_work_run) from [<c0121754>] (do_exit+0x40c/0x8b0)
-|[<c0121348>] (do_exit) from [<c0122ff8>] (do_group_exit+0x54/0xc4)
-
-Cc: stable-rt@vger.kernel.org
-Reported-by: John Keeping <john@metanate.com>
-Tested-by: John Keeping <john@metanate.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/workqueue.c | 2 ++
- 1 file changed, 2 insertions(+)
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-index 6122f386dd5d..8af30f579c15 100644
---- a/kernel/workqueue.c
-+++ b/kernel/workqueue.c
-@@ -1109,9 +1109,11 @@ static void put_pwq_unlocked(struct pool_workqueue *pwq)
- 		 * As both pwqs and pools are RCU protected, the
- 		 * following lock operations are safe.
- 		 */
-+		rcu_read_lock();
- 		local_spin_lock_irq(pendingb_lock, &pwq->pool->lock);
- 		put_pwq(pwq);
- 		local_spin_unlock_irq(pendingb_lock, &pwq->pool->lock);
-+		rcu_read_unlock();
- 	}
- }
- 
+diff --git a/localversion-rt b/localversion-rt
+index 75493460c41f..d42746076d9b 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt51
++-rt52-rc1
 -- 
 2.10.2
