@@ -1,74 +1,77 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/5] Linux 4.4.47-rt59-rc1
-Date: Thu, 09 Feb 2017 10:21:15 -0500
-Message-ID: <20170209152115.146963512@goodmis.org>
+Subject: [PATCH RT 4/5] workqueue: use rcu_readlock() in put_pwq_unlocked()
+Date: Thu, 09 Feb 2017 10:21:19 -0500
+Message-ID: <20170209152229.750478840@goodmis.org>
+References: <20170209152115.146963512@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
-        Paul Gortmaker <paul.gortmaker@windriver.com>
+        Paul Gortmaker <paul.gortmaker@windriver.com>,
+        stable-rt@vger.kernel.org, John Keeping <john@metanate.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0004-workqueue-use-rcu_readlock-in-put_pwq_unlocked.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+4.4.47-rt59-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 4.4.47-rt59-rc1.
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Please scream at me if I messed something up. Please test the patches too.
+The RCU sched protection was changed to RCU only and so all IRQ-off and
+preempt-off disabled region were changed to the relevant rcu-read-lock
+primitives. One was missed and triggered:
+|[ BUG: bad unlock balance detected! ]
+|4.4.30-rt41 #51 Tainted: G        W
+|btattach/345 is trying to release lock (
+|Unable to handle kernel paging request at virtual address 6b6b6bbb
+|Backtrace:
+|[<c016b5a0>] (lock_release) from [<c0804844>] (rt_spin_unlock+0x20/0x30)
+|[<c0804824>] (rt_spin_unlock) from [<c0138954>] (put_pwq_unlocked+0xa4/0x118)
+|[<c01388b0>] (put_pwq_unlocked) from [<c0138b2c>] (destroy_workqueue+0x164/0x1b0)
+|[<c01389c8>] (destroy_workqueue) from [<c078e1ac>] (hci_unregister_dev+0x120/0x21c)
+|[<c078e08c>] (hci_unregister_dev) from [<c054f658>] (hci_uart_tty_close+0x90/0xbc)
+|[<c054f5c8>] (hci_uart_tty_close) from [<c03a2be8>] (tty_ldisc_close+0x50/0x58)
+|[<c03a2b98>] (tty_ldisc_close) from [<c03a2cb4>] (tty_ldisc_kill+0x18/0x78)
+|[<c03a2c9c>] (tty_ldisc_kill) from [<c03a3528>] (tty_ldisc_release+0x100/0x134)
+|[<c03a3428>] (tty_ldisc_release) from [<c039cd68>] (tty_release+0x3bc/0x460)
+|[<c039c9ac>] (tty_release) from [<c020cc08>] (__fput+0xe0/0x1b4)
+|[<c020cb28>] (__fput) from [<c020cd3c>] (____fput+0x10/0x14)
+|[<c020cd2c>] (____fput) from [<c013e0d4>] (task_work_run+0xa4/0xb8)
+|[<c013e030>] (task_work_run) from [<c0121754>] (do_exit+0x40c/0x8b0)
+|[<c0121348>] (do_exit) from [<c0122ff8>] (do_group_exit+0x54/0xc4)
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 2/13/2017.
-
-Enjoy,
-
--- Steve
-
-
-To build 4.4.47-rt59-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.47.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.47-rt59-rc1.patch.xz
-
-You can also build from 4.4.47-rt58 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/incr/patch-4.4.47-rt58-rt59-rc1.patch.xz
-
-
-Changes from 4.4.47-rt58:
-
+Cc: stable-rt@vger.kernel.org
+Reported-by: John Keeping <john@metanate.com>
+Tested-by: John Keeping <john@metanate.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
+ kernel/workqueue.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-
-Sebastian Andrzej Siewior (2):
-      net: free the sbs in skbufhead
-      workqueue: use rcu_readlock() in put_pwq_unlocked()
-
-Steven Rostedt (1):
-      net: Have __napi_schedule_irqoff() disable interrupts on RT
-
-Steven Rostedt (Red Hat) (1):
-      Linux 4.4.47-rt59-rc1
-
-Yang Shi (1):
-      arm: kprobe: replace patch_lock to raw lock
-
-----
- arch/arm/kernel/patch.c   |  6 +++---
- include/linux/netdevice.h | 12 ++++++++++++
- kernel/workqueue.c        |  2 ++
- localversion-rt           |  2 +-
- net/core/dev.c            | 10 ++++++++++
- 5 files changed, 28 insertions(+), 4 deletions(-)
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index 965d5f65e847..d5b0f4fc0eb0 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -1135,9 +1135,11 @@ static void put_pwq_unlocked(struct pool_workqueue *pwq)
+ 		 * As both pwqs and pools are RCU protected, the
+ 		 * following lock operations are safe.
+ 		 */
++		rcu_read_lock();
+ 		local_spin_lock_irq(pendingb_lock, &pwq->pool->lock);
+ 		put_pwq(pwq);
+ 		local_spin_unlock_irq(pendingb_lock, &pwq->pool->lock);
++		rcu_read_unlock();
+ 	}
+ }
+ 
+-- 
+2.10.2
