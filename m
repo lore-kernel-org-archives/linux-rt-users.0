@@ -1,176 +1,37 @@
-From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: Re: [RFC][PATCH 00/21] tracing: Inter-event (e.g. latency) support
-Date: Thu, 9 Feb 2017 23:18:37 +0900
-Message-ID: <20170209231837.c29ad7da3f1e73a1f8a245f4@kernel.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [RFC][PATCH 03/21] ring-buffer: Add TIME_EXTEND_ABS ring buffer
+ type
+Date: Thu, 9 Feb 2017 09:54:08 -0500
+Message-ID: <20170209095408.7c3a8f70@gandalf.local.home>
 References: <cover.1486569306.git.tom.zanussi@linux.intel.com>
-        <20170209081327.0f0f4db4e5cb8f1b9be25338@kernel.org>
-        <1486602862.2871.62.camel@tzanussi-mobl.amr.corp.intel.com>
+        <a27fc1371e12174ee9f806d67d0c60844ebbe04c.1486569306.git.tom.zanussi@linux.intel.com>
+        <20170208153200.38be2965@gandalf.local.home>
+        <1486587348.2871.15.camel@tzanussi-mobl.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: rostedt@goodmis.org, tglx@linutronix.de, namhyung@kernel.org,
+Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 To: Tom Zanussi <tom.zanussi@linux.intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1486602862.2871.62.camel@tzanussi-mobl.amr.corp.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.136]:59516 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751675AbdBIO41 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 9 Feb 2017 09:56:27 -0500
+In-Reply-To: <1486587348.2871.15.camel@tzanussi-mobl.amr.corp.intel.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Tom,
-
-On Wed, 08 Feb 2017 19:14:22 -0600
+On Wed, 08 Feb 2017 14:55:48 -0600
 Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
 
-> > > I'm submitting the patchset (based on tracing/for-next) as an RFC not
-> > > only to get comments, but because there are still some problems I
-> > > haven't fixed yet...
-> > > 
-> > > Here are some examples that should make things less abstract.
-> > > 
-> > >   ====
-> > >   Example - wakeup latency
-> > >   ====
-> > > 
-> > >   This basically implements the -RT latency_hist 'wakeup_latency'
-> > >   histogram using the synthetic events, variables, and actions
-> > >   described.  The output below is from a run of cyclictest using the
-> > >   following command:
-> > > 
-> > >     # rt-tests/cyclictest -p 80 -n -s -t 2
-> > > 
-> > >   What we're measuring the latency of is the time between when a
-> > >   thread (of cyclictest) is awakened and when it's scheduled in.  To
-> > >   do that we add triggers to sched_wakeup and sched_switch with the
-> > >   appropriate variables, and on a matching sched_switch event,
-> > >   generate a synthetic 'wakeup_latency' event.  Since it's just
-> > >   another trace event like any other, we can also define a histogram
-> > >   on that event, the output of which is what we see displayed when
-> > >   reading the wakeup_latency 'hist' file.
-> > > 
-> > >   First, we create a synthetic event called wakeup_latency, that
-> > >   references 3 variables from other events:
-> > > 
-> > >     # echo 'wakeup_latency lat=sched_switch:wakeup_lat \
-> > >                            pid=sched_switch:woken_pid \
-> > >                            prio=sched_switch:woken_prio' >> \
-> > >             /sys/kernel/debug/tracing/synthetic_events
-> > > 
-> > >   Next we add a trigger to sched_wakeup, which saves the value of the
-> > >   'common_timestamp' when that event is hit in a variable, ts0.  Note
-> > >   that this happens only when 'comm==cyclictest'.
-> > > 
-> > >   Also, 'common_timestamp' is a new field defined on every event (if
-> > >   needed - if there are no users of timestamps in a trace, timestamps
-> > >   won't be saved and there's no additional overhead from that).
-> > > 
-> > >     #  echo 'hist:keys=pid:ts0=common_timestamp.usecs if \
-> > >              comm=="cyclictest"' >> \
-> > >              /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-> > > 
-> > >   Next, we add a trigger to sched_switch.  When the pid being switched
-> > >   to matches the pid woken up by a previous sched_wakeup event, this
-> > >   event grabs the ts0 saved on that event, takes the difference
-> > >   between it and the current sched_switch's common_timestamp, and
-> > >   assigns it to a new 'wakeup_lat' variable.  It also saves a couple
-> > >   other variables and then invokes the onmatch().trace() action which
-> > >   generates a new wakeup_latency event using those variables.
-> > > 
-> > >     # echo 'hist:keys=woken_pid=next_pid:woken_prio=next_prio:\
-> > >        wakeup_lat=common_timestamp.usecs-ts0:onmatch().trace(wakeup_latency) \
-> > >             if next_comm=="cyclictest"' >> \
-> > >             /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-> > 
-> > Hmm, this looks a bit hard to understand, I guess that onmatch() means
-> > "if there is an event which has ts0 variable and the event's key matches
-> > this key, take some action".
-> 
-> Yes, that's pretty much it. It's essentially shorthand for this kind of
-> common idiom, where timestamp[] is an associative array, which in our
-> case is the tracing_map of the histogram: 
-> 
-> event sched_wakeup()
-> {
-> 	ts0[wakeup_pid] = now()
-> }
-> 
-> event sched_switch()
-> {
-> 	if (ts0[next_pid])
-> 		latency = now() - ts0[next_pid] /* next_pid == wakeup_pid */
-> }
-> 
-> Only if ts0 has already been set does the onmatch() get invoked - if ts0
-> hasn't been set, there's no match and the trace(wakeup_latency) doesn't
-> happen.
 
-OK, it reminds me other questions.
+> OK, I'll break it up if I don't see you do anything with it in the
+> meantime..
 
-- Even if there is no matched ts0, sched_switch's hist will store
-  woken_pid etc on its histogram map?
-- If there is matched ts0 and wakeup_latency event has been kicked,
-  the matched entry on ts0 is removed? and also in that case what
-  happens on sched_switch's hist?
+I think I'll let you break it up, and then work on the part that just
+handles the implementation of the time stamp. I'll have to see how it
+affects trace-cmd too.
 
-> > I think there are 2 indefinate point that
-> > - Where the 'ts0' came from? what the variable will have 'global' scope?
-> 
-> ts0 is basically a per-table-entry variable - there's one for each entry
-> in the table, and it can only be accessed by events with matching keys.
-> The table owns the variable name, so you can't have two different tables
-> with the ts0 variable.
+-- Steve
 
-Would you mean 'ts0' is a special name?
-
-> So if we create a histogram on event1 and associate a variable ts0 with
-> it, any event hit on that histogram assigns to the corresponding entry's
-> ts0 instance. 
-> 
-> If we create a histogram on event2 which references ts0, it knows that
-> ts0 belongs to event1's histogram, and when there's a hit on event2, the
-> same key is used to look up the entry corresponding to that key on
-> event1, and if there's a matching entry, it grabs the value of ts0 from
-> that and subtracts it from the current event's value to produce the
-> latency or whatever it is.
-> 
-> So, that's a long-winded way of saying that the name ts0 is global
-> across all tables (histograms) but an instance of ts0 is local to each
-> entry in the table that owns the name.
-
-Ah, what I concerned was the scope of name... not instance.
-
-Hmm, in that case, what about other variables in sched_switch?
-it seems to have woken_pid,woken_prio and wakeup_lat. Are those also
-becomes global instance?
-
-Since I saw below definition, I expected those were not global.
-> > >     # echo 'wakeup_latency lat=sched_switch:wakeup_lat \
-> > >                            pid=sched_switch:woken_pid \
-> > >                            prio=sched_switch:woken_prio' >> \
-> > >             /sys/kernel/debug/tracing/synthetic_events
-
-And if so, it is very unsure for users to check what variables are
-already defined. I think we'd better to have a 'global'tag for ts0.
-
-> > - What matches to what? onmatch() doesn't tell it.
-> > 
-> 
-> It's implied by the references to other events - in order for ts0 to be
-> resolved, it needs to find the match on event1.  Also, the synthetic
-> event has references to variables on other events - in order to generate
-> the synthetic event, those variables also need to be resolved to
-> matching events - note that variables can also come from the current
-> event as well.
-
-I don't like such implications, which can make users lost in events easily,
-especially for triggers since we don't have the system-wide list of triggers.
-IMHO, since this interface is for a kind of programming, it should provide
-the abstract but consistent system model too. Implication will mislead
-users.
-
-> Hope that clears things up a bit (although the details under the covers
-> might seem confusing).
-
-Thank you,
-
--- 
-Masami Hiramatsu <mhiramat@kernel.org>
