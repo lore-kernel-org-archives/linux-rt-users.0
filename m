@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 3/5] net: Have __napi_schedule_irqoff() disable interrupts on RT
-Date: Thu, 09 Feb 2017 10:32:55 -0500
-Message-ID: <20170209153304.471768789@goodmis.org>
+Subject: [PATCH RT 4/5] workqueue: use rcu_readlock() in put_pwq_unlocked()
+Date: Thu, 09 Feb 2017 10:32:56 -0500
+Message-ID: <20170209153304.655735997@goodmis.org>
 References: <20170209153252.869145006@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,11 +10,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
-        stable-rt@vger.kernel.org
+        stable-rt@vger.kernel.org, John Keeping <john@metanate.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-net-Have-__napi_schedule_irqoff-disable-interrupts-o.patch
+Content-Disposition: inline; filename=0004-workqueue-use-rcu_readlock-in-put_pwq_unlocked.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -23,74 +23,55 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-A customer hit a crash where the napi sd->poll_list became corrupted.
-The customer had the bnx2x driver, which does a
-__napi_schedule_irqoff() in its interrupt handler. Unfortunately, when
-running with CONFIG_PREEMPT_RT_FULL, this interrupt handler is run as a
-thread and is preemptable. The call to ____napi_schedule() must be done
-with interrupts disabled to protect the per cpu softnet_data's
-"poll_list, which is protected by disabling interrupts (disabling
-preemption is enough when all interrupts are threaded and
-local_bh_disable() can't preempt)."
-
-As bnx2x isn't the only driver that does this, the safest thing to do
-is to make __napi_schedule_irqoff() call __napi_schedule() instead when
-CONFIG_PREEMPT_RT_FULL is enabled, which will call local_irq_save()
-before calling ____napi_schedule().
+The RCU sched protection was changed to RCU only and so all IRQ-off and
+preempt-off disabled region were changed to the relevant rcu-read-lock
+primitives. One was missed and triggered:
+|[ BUG: bad unlock balance detected! ]
+|4.4.30-rt41 #51 Tainted: G        W
+|btattach/345 is trying to release lock (
+|Unable to handle kernel paging request at virtual address 6b6b6bbb
+|Backtrace:
+|[<c016b5a0>] (lock_release) from [<c0804844>] (rt_spin_unlock+0x20/0x30)
+|[<c0804824>] (rt_spin_unlock) from [<c0138954>] (put_pwq_unlocked+0xa4/0x118)
+|[<c01388b0>] (put_pwq_unlocked) from [<c0138b2c>] (destroy_workqueue+0x164/0x1b0)
+|[<c01389c8>] (destroy_workqueue) from [<c078e1ac>] (hci_unregister_dev+0x120/0x21c)
+|[<c078e08c>] (hci_unregister_dev) from [<c054f658>] (hci_uart_tty_close+0x90/0xbc)
+|[<c054f5c8>] (hci_uart_tty_close) from [<c03a2be8>] (tty_ldisc_close+0x50/0x58)
+|[<c03a2b98>] (tty_ldisc_close) from [<c03a2cb4>] (tty_ldisc_kill+0x18/0x78)
+|[<c03a2c9c>] (tty_ldisc_kill) from [<c03a3528>] (tty_ldisc_release+0x100/0x134)
+|[<c03a3428>] (tty_ldisc_release) from [<c039cd68>] (tty_release+0x3bc/0x460)
+|[<c039c9ac>] (tty_release) from [<c020cc08>] (__fput+0xe0/0x1b4)
+|[<c020cb28>] (__fput) from [<c020cd3c>] (____fput+0x10/0x14)
+|[<c020cd2c>] (____fput) from [<c013e0d4>] (task_work_run+0xa4/0xb8)
+|[<c013e030>] (task_work_run) from [<c0121754>] (do_exit+0x40c/0x8b0)
+|[<c0121348>] (do_exit) from [<c0122ff8>] (do_group_exit+0x54/0xc4)
 
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Steven Rostedt (Red Hat) <rostedt@goodmis.org>
+Reported-by: John Keeping <john@metanate.com>
+Tested-by: John Keeping <john@metanate.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- include/linux/netdevice.h | 12 ++++++++++++
- net/core/dev.c            |  2 ++
- 2 files changed, 14 insertions(+)
+ kernel/workqueue.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/include/linux/netdevice.h b/include/linux/netdevice.h
-index c033d226fca3..336725583223 100644
---- a/include/linux/netdevice.h
-+++ b/include/linux/netdevice.h
-@@ -390,7 +390,19 @@ typedef enum rx_handler_result rx_handler_result_t;
- typedef rx_handler_result_t rx_handler_func_t(struct sk_buff **pskb);
- 
- void __napi_schedule(struct napi_struct *n);
-+
-+/*
-+ * When PREEMPT_RT_FULL is defined, all device interrupt handlers
-+ * run as threads, and they can also be preempted (without PREEMPT_RT
-+ * interrupt threads can not be preempted). Which means that calling
-+ * __napi_schedule_irqoff() from an interrupt handler can be preempted
-+ * and can corrupt the napi->poll_list.
-+ */
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+#define __napi_schedule_irqoff(n) __napi_schedule(n)
-+#else
- void __napi_schedule_irqoff(struct napi_struct *n);
-+#endif
- 
- static inline bool napi_disable_pending(struct napi_struct *n)
- {
-diff --git a/net/core/dev.c b/net/core/dev.c
-index 6b2436f0fc66..fc74ea6d8b63 100644
---- a/net/core/dev.c
-+++ b/net/core/dev.c
-@@ -4529,6 +4529,7 @@ void __napi_schedule(struct napi_struct *n)
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index 80f3bb082136..bb994a4e0fe2 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -1139,9 +1139,11 @@ static void put_pwq_unlocked(struct pool_workqueue *pwq)
+ 		 * As both pwqs and pools are RCU protected, the
+ 		 * following lock operations are safe.
+ 		 */
++		rcu_read_lock();
+ 		local_spin_lock_irq(pendingb_lock, &pwq->pool->lock);
+ 		put_pwq(pwq);
+ 		local_spin_unlock_irq(pendingb_lock, &pwq->pool->lock);
++		rcu_read_unlock();
+ 	}
  }
- EXPORT_SYMBOL(__napi_schedule);
  
-+#ifndef CONFIG_PREEMPT_RT_FULL
- /**
-  * __napi_schedule_irqoff - schedule for receive
-  * @n: entry to schedule
-@@ -4540,6 +4541,7 @@ void __napi_schedule_irqoff(struct napi_struct *n)
- 	____napi_schedule(this_cpu_ptr(&softnet_data), n);
- }
- EXPORT_SYMBOL(__napi_schedule_irqoff);
-+#endif
- 
- void __napi_complete(struct napi_struct *n)
- {
 -- 
 2.10.2
