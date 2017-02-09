@@ -1,37 +1,74 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [RFC][PATCH 03/21] ring-buffer: Add TIME_EXTEND_ABS ring buffer
- type
-Date: Thu, 9 Feb 2017 09:54:08 -0500
-Message-ID: <20170209095408.7c3a8f70@gandalf.local.home>
-References: <cover.1486569306.git.tom.zanussi@linux.intel.com>
-        <a27fc1371e12174ee9f806d67d0c60844ebbe04c.1486569306.git.tom.zanussi@linux.intel.com>
-        <20170208153200.38be2965@gandalf.local.home>
-        <1486587348.2871.15.camel@tzanussi-mobl.amr.corp.intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Tom Zanussi <tom.zanussi@linux.intel.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:59516 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751675AbdBIO41 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 9 Feb 2017 09:56:27 -0500
-In-Reply-To: <1486587348.2871.15.camel@tzanussi-mobl.amr.corp.intel.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
-
-On Wed, 08 Feb 2017 14:55:48 -0600
-Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
+Subject: [PATCH RT 0/5] Linux 4.4.47-rt59-rc1
+Date: Thu, 09 Feb 2017 10:21:15 -0500
+Message-ID: <20170209152115.146963512@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        John Kacur <jkacur@redhat.com>,
+        Paul Gortmaker <paul.gortmaker@windriver.com>
+To: linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
-> OK, I'll break it up if I don't see you do anything with it in the
-> meantime..
+Dear RT Folks,
 
-I think I'll let you break it up, and then work on the part that just
-handles the implementation of the time stamp. I'll have to see how it
-affects trace-cmd too.
+This is the RT stable review cycle of patch 4.4.47-rt59-rc1.
+
+Please scream at me if I messed something up. Please test the patches too.
+
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 2/13/2017.
+
+Enjoy,
 
 -- Steve
 
+
+To build 4.4.47-rt59-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.47.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.47-rt59-rc1.patch.xz
+
+You can also build from 4.4.47-rt58 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/incr/patch-4.4.47-rt58-rt59-rc1.patch.xz
+
+
+Changes from 4.4.47-rt58:
+
+---
+
+
+Sebastian Andrzej Siewior (2):
+      net: free the sbs in skbufhead
+      workqueue: use rcu_readlock() in put_pwq_unlocked()
+
+Steven Rostedt (1):
+      net: Have __napi_schedule_irqoff() disable interrupts on RT
+
+Steven Rostedt (Red Hat) (1):
+      Linux 4.4.47-rt59-rc1
+
+Yang Shi (1):
+      arm: kprobe: replace patch_lock to raw lock
+
+----
+ arch/arm/kernel/patch.c   |  6 +++---
+ include/linux/netdevice.h | 12 ++++++++++++
+ kernel/workqueue.c        |  2 ++
+ localversion-rt           |  2 +-
+ net/core/dev.c            | 10 ++++++++++
+ 5 files changed, 28 insertions(+), 4 deletions(-)
