@@ -1,175 +1,153 @@
 From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [RFC][PATCH 00/21] tracing: Inter-event (e.g. latency) support
-Date: Fri, 10 Feb 2017 13:16:17 +0900
-Message-ID: <20170210041617.GE599@sejong>
+Subject: Re: [RFC][PATCH 03/21] ring-buffer: Add TIME_EXTEND_ABS ring buffer
+ type
+Date: Fri, 10 Feb 2017 15:04:51 +0900
+Message-ID: <20170210060451.GA14705@sejong>
 References: <cover.1486569306.git.tom.zanussi@linux.intel.com>
+ <a27fc1371e12174ee9f806d67d0c60844ebbe04c.1486569306.git.tom.zanussi@linux.intel.com>
+ <20170208153200.38be2965@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Tom Zanussi <tom.zanussi@linux.intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Cc: Tom Zanussi <tom.zanussi@linux.intel.com>, <tglx@linutronix.de>,
+        <mhiramat@kernel.org>, <linux-kernel@vger.kernel.org>,
+        <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from LGEAMRELO12.lge.com ([156.147.23.52]:53633 "EHLO
+        lgeamrelo12.lge.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1750972AbdBJGE4 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 10 Feb 2017 01:04:56 -0500
+In-Reply-To: <20170208153200.38be2965@gandalf.local.home>
 Content-Disposition: inline
-In-Reply-To: <cover.1486569306.git.tom.zanussi@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Tom,
+On Wed, Feb 08, 2017 at 03:32:00PM -0500, Steven Rostedt wrote:
+> On Wed,  8 Feb 2017 11:24:59 -0600
+> Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
+> 
+> > Replace the unused RINGBUF_TYPE_TIME_STAMP ring buffer type with
+> > RINGBUF_TYPE_TIME_EXTEND_ABS, which forces extended time_deltas for
+> > all events.
+> 
+> Hmm, I could probably have this be used for nested commits :-/
+> 
+> > 
+> > Having time_deltas that aren't dependent on previous events in the
+> > ring buffer makes it feasible to use the ring_buffer_event timetamps
+> > in a more random-access way, to be used for purposes other than serial
+> > event printing.
+> > 
+> > To set/reset this mode, use tracing_set_timestamp_abs().
+> > 
+> > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> > ---
+> >  include/linux/ring_buffer.h |  12 ++++-
+> >  kernel/trace/ring_buffer.c  | 109 ++++++++++++++++++++++++++++++++------------
+> >  kernel/trace/trace.c        |  25 +++++++++-
+> >  kernel/trace/trace.h        |   2 +
+> >  4 files changed, 117 insertions(+), 31 deletions(-)
+> > 
+> > diff --git a/include/linux/ring_buffer.h b/include/linux/ring_buffer.h
+> > index b6d4568..c3a1064 100644
+> > --- a/include/linux/ring_buffer.h
+> > +++ b/include/linux/ring_buffer.h
+> > @@ -36,6 +36,12 @@ struct ring_buffer_event {
+> >   *				 array[0] = time delta (28 .. 59)
+> >   *				 size = 8 bytes
+> >   *
+> > + * @RINGBUF_TYPE_TIME_EXTEND_ABS:
+> > + *				 Extend the time delta, but interpret it as
+> > + *				 absolute, not relative
+> > + *				 array[0] = time delta (28 .. 59)
 
-On Wed, Feb 08, 2017 at 11:24:56AM -0600, Tom Zanussi wrote:
-> This patchset adds support for 'inter-event' quantities to the trace
-> event subsystem.  The most important example of inter-event quantities
-> are latencies, or the time differences between two events.
-> 
-> One of the main motivations for adding this capability is to provide a
-> general-purpose base that existing existing tools such as the -RT
-> latency_hist patchset can be built upon, while at the same time
-> providing a simple way for users to track latencies (or any
-> inter-event quantity) generically between any two events.
-> 
-> Previous -RT latency_hist patchsets that take advantage of the trace
-> event subsystem have been submitted, but they essentially hard-code
-> special-case tracepoints and application logic in ways that can't be
-> reused.  It seemed to me that rather than providing a one-off patchset
-> devoted specifically to generating the specific histograms in the
-> latency_hist patchset, it should be possible to build the same
-> functionality on top of a generic layer allowing users to do similar
-> things for other non-latency_hist applications.
-> 
-> In addition to preliminary patches that add some basic missing
-> functionality such as a common ringbuffer-derived timestamp and
-> dynamically-creatable tracepoints, the overall patchset is divided up
-> into a few different areas that combine to produce the overall goal
-> (The Documentation patch explains all the details):
+It's not a delta.
 
-Looks very nice!
+> > + *				 size = 8 bytes
+> > + *
+> >   * @RINGBUF_TYPE_TIME_STAMP:	Sync time stamp with external clock
+> 
+> I guess you need to nuke this comment too.
+> 
+> >   *				 array[0]    = tv_nsec
+> >   *				 array[1..2] = tv_sec
+> > @@ -56,12 +62,12 @@ enum ring_buffer_type {
+> >  	RINGBUF_TYPE_DATA_TYPE_LEN_MAX = 28,
+> >  	RINGBUF_TYPE_PADDING,
+> >  	RINGBUF_TYPE_TIME_EXTEND,
+> > -	/* FIXME: RINGBUF_TYPE_TIME_STAMP not implemented */
+> > -	RINGBUF_TYPE_TIME_STAMP,
+> > +	RINGBUF_TYPE_TIME_EXTEND_ABS,
+> >  };
+> >  
+> >  unsigned ring_buffer_event_length(struct ring_buffer_event *event);
+> >  void *ring_buffer_event_data(struct ring_buffer_event *event);
+> > +u64 ring_buffer_event_time_stamp(struct ring_buffer_event *event);
+> >  
+> >  /*
+> >   * ring_buffer_discard_commit will remove an event that has not
+> > @@ -180,6 +186,8 @@ void ring_buffer_normalize_time_stamp(struct ring_buffer *buffer,
+> >  				      int cpu, u64 *ts);
+> >  void ring_buffer_set_clock(struct ring_buffer *buffer,
+> >  			   u64 (*clock)(void));
+> > +void ring_buffer_set_time_stamp_abs(struct ring_buffer *buffer, bool abs);
+> > +bool ring_buffer_time_stamp_abs(struct ring_buffer *buffer);
+> >  
+> >  size_t ring_buffer_page_len(void *page);
+> >  
+> > diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
+> > index a85739e..c9c9a83 100644
+> > --- a/kernel/trace/ring_buffer.c
+> > +++ b/kernel/trace/ring_buffer.c
+> > @@ -41,6 +41,8 @@ int ring_buffer_print_entry_header(struct trace_seq *s)
+> >  			 RINGBUF_TYPE_PADDING);
+> >  	trace_seq_printf(s, "\ttime_extend : type == %d\n",
+> >  			 RINGBUF_TYPE_TIME_EXTEND);
+> > +	trace_seq_printf(s, "\ttime_extend_abs : type == %d\n",
+> > +			 RINGBUF_TYPE_TIME_EXTEND_ABS);
+> >  	trace_seq_printf(s, "\tdata max type_len  == %d\n",
+> >  			 RINGBUF_TYPE_DATA_TYPE_LEN_MAX);
+> >  
+> > @@ -186,11 +188,9 @@ static void rb_event_set_padding(struct ring_buffer_event *event)
+> >  		return  event->array[0] + RB_EVNT_HDR_SIZE;
+> >  
+> >  	case RINGBUF_TYPE_TIME_EXTEND:
+> > +	case RINGBUF_TYPE_TIME_EXTEND_ABS:
+> >  		return RB_LEN_TIME_EXTEND;
+> >  
+> > -	case RINGBUF_TYPE_TIME_STAMP:
+> > -		return RB_LEN_TIME_STAMP;
+> > -
+> >  	case RINGBUF_TYPE_DATA:
+> >  		return rb_event_data_length(event);
+> >  	default:
+> > @@ -209,7 +209,8 @@ static void rb_event_set_padding(struct ring_buffer_event *event)
+> >  {
+> >  	unsigned len = 0;
+> >  
+> > -	if (event->type_len == RINGBUF_TYPE_TIME_EXTEND) {
+> > +	if (event->type_len == RINGBUF_TYPE_TIME_EXTEND ||
+> > +	    event->type_len == RINGBUF_TYPE_TIME_EXTEND_ABS) {
+> 
+> Hmm, we could micro-optimize this with:
+> 
+> 	event->type_len > RINGBUF_TYPE_PADDING
+> 
+> But it would require comments and/or a wrapper to define it so people
+> in the future know what it is doing.
 
-> 
->   - variables and simple expressions required to calculate a latency
-> 
->     In order to calculate a latency or any inter-event value,
->     something from one event needs to be saved and later retrieved,
->     and some operation such as subtraction or addition is performed on
->     it.  This means some minimal form of variables and expressions,
->     which the first set of patches implements.  Saving and retrieving
->     events to use in a latency calculation is normally done using a
->     hash table, and that's exactly what we have with trace event hist
->     triggers, so that's where variables are instantiated, set, and
->     retrieved.  Basically, variables are set on one entry and
->     retrieved and used by a 'matching' event.
-> 
->   - 'synthetic' events, combining variables from other events
-> 
->     The trace event interface is based on pseudo-files associated with
->     individual events, so it wouldn't really make sense to have
->     quantities derived from multiple events attached to any one of
->     those events.  For that reason, the patchset implements a means of
->     combining variables from other events into a separate 'synthetic'
->     event, which can be treated as if it were just like any other
->     trace event in the system.
-> 
->   - 'actions' generating synthetic events, among other things
-> 
->     Variables and synthetic events provide the data and data structure
->     for new events, but something still needs to actually generate an
->     event using that data.  'Actions' are expanded to provide that
->     capability.  Though it hasn't been explicitly called as much
->     before, the default 'action' currently for a hist trigger is to
->     update the matching histogram entry's sum values.  This patchset
->     essentially expands that to provide a new 'onmatch.trace(event)'
->     action that can be used to have one event generate another.  The
->     mechanism is extensible to other actions, and in fact the patchset
->     also includes another, 'onmax(var).save(field,...)' that can be
->     used to save context whenever a value exceeds the previous maximum
->     (something also needed by latency_hist).
-> 
-> I'm submitting the patchset (based on tracing/for-next) as an RFC not
-> only to get comments, but because there are still some problems I
-> haven't fixed yet...
-> 
-> Here are some examples that should make things less abstract.
-> 
->   ====
->   Example - wakeup latency
->   ====
-> 
->   This basically implements the -RT latency_hist 'wakeup_latency'
->   histogram using the synthetic events, variables, and actions
->   described.  The output below is from a run of cyclictest using the
->   following command:
-> 
->     # rt-tests/cyclictest -p 80 -n -s -t 2
-> 
->   What we're measuring the latency of is the time between when a
->   thread (of cyclictest) is awakened and when it's scheduled in.  To
->   do that we add triggers to sched_wakeup and sched_switch with the
->   appropriate variables, and on a matching sched_switch event,
->   generate a synthetic 'wakeup_latency' event.  Since it's just
->   another trace event like any other, we can also define a histogram
->   on that event, the output of which is what we see displayed when
->   reading the wakeup_latency 'hist' file.
-> 
->   First, we create a synthetic event called wakeup_latency, that
->   references 3 variables from other events:
-> 
->     # echo 'wakeup_latency lat=sched_switch:wakeup_lat \
->                            pid=sched_switch:woken_pid \
->                            prio=sched_switch:woken_prio' >> \
->             /sys/kernel/debug/tracing/synthetic_events
-> 
->   Next we add a trigger to sched_wakeup, which saves the value of the
->   'common_timestamp' when that event is hit in a variable, ts0.  Note
->   that this happens only when 'comm==cyclictest'.
-> 
->   Also, 'common_timestamp' is a new field defined on every event (if
->   needed - if there are no users of timestamps in a trace, timestamps
->   won't be saved and there's no additional overhead from that).
-> 
->     #  echo 'hist:keys=pid:ts0=common_timestamp.usecs if \
->              comm=="cyclictest"' >> \
->              /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-> 
->   Next, we add a trigger to sched_switch.  When the pid being switched
->   to matches the pid woken up by a previous sched_wakeup event, this
->   event grabs the ts0 saved on that event, takes the difference
->   between it and the current sched_switch's common_timestamp, and
->   assigns it to a new 'wakeup_lat' variable.  It also saves a couple
->   other variables and then invokes the onmatch().trace() action which
->   generates a new wakeup_latency event using those variables.
-> 
->     # echo 'hist:keys=woken_pid=next_pid:woken_prio=next_prio:\
->        wakeup_lat=common_timestamp.usecs-ts0:onmatch().trace(wakeup_latency) \
->             if next_comm=="cyclictest"' >> \
->             /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+What about
 
-As Masami said, I think the syntax is a bit hard to understand.  Also
-it'd be nice to access an event field directly (i.e. not by adding a
-field in a hist).  Maybe we can use a prefix like '$' to identify hist
-fields..
+	event->type_len >= RINGBUF_TYPE_TIME_EXTEND
 
-How about below?
-
-  # echo 'wakeup_latency \
-  		lat=sched_switch.$wakeup_lat  \
-		pid=sched_switch.next_pid     \
-		prio=sched_switch.next_prio' >> \
-	/sys/kernel/debug/tracing/synthetic_events
-
-  # echo 'hist: \
-  		keys=pid: \
-		ts0=common_timestamp.usec \
-		if comm=="cyclictest"' >> \
-	/sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-
-  # echo 'hist: \
-		keys=next_pid: \
-		wakeup_lat=common_timestamp.usec-$ts0: \
-		onmatch(sched_wakeup).trace(wakeup_latency) \
-		if next_comm=="cyclictest"' >> \
-	/sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-
-By passing an event name to 'onmatch', we can know where to find $ts0
-easily IMHO.
+?  I think it's easier to understand what it's doing.
 
 Thanks,
 Namhyung
+
+> 
+> 
+> >  		/* time extends include the data event after it */
+> >  		len = RB_LEN_TIME_EXTEND;
+> >  		event = skip_time_extend(event);
