@@ -1,123 +1,129 @@
-From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [RFC][PATCH 09/21] tracing: Add hist trigger timestamp support
-Date: Fri, 10 Feb 2017 15:14:14 +0900
-Message-ID: <20170210061414.GB14705@sejong>
+From: Masami Hiramatsu <mhiramat@kernel.org>
+Subject: Re: [RFC][PATCH 00/21] tracing: Inter-event (e.g. latency) support
+Date: Fri, 10 Feb 2017 18:34:25 +0900
+Message-ID: <20170210183425.3444f5a28779bec9034230d4@kernel.org>
 References: <cover.1486569306.git.tom.zanussi@linux.intel.com>
- <8781998ccd0678ef5ddf1cc7720a9586806b44ae.1486569306.git.tom.zanussi@linux.intel.com>
+        <20170210041617.GE599@sejong>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Cc: <rostedt@goodmis.org>, <tglx@linutronix.de>, <mhiramat@kernel.org>,
-        <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-To: Tom Zanussi <tom.zanussi@linux.intel.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from LGEAMRELO13.lge.com ([156.147.23.53]:54905 "EHLO
-        lgeamrelo13.lge.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1750979AbdBJG3k (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 10 Feb 2017 01:29:40 -0500
-In-Reply-To: <8781998ccd0678ef5ddf1cc7720a9586806b44ae.1486569306.git.tom.zanussi@linux.intel.com>
-Content-Disposition: inline
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Tom Zanussi <tom.zanussi@linux.intel.com>, rostedt@goodmis.org,
+        tglx@linutronix.de, mhiramat@kernel.org,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Namhyung Kim <namhyung@kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170210041617.GE599@sejong>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Feb 08, 2017 at 11:25:05AM -0600, Tom Zanussi wrote:
-> Add support for a timestamp event field.  This is actually a 'pseudo-'
-> event field in that it behaves like it's part of the event record, but
-> is really part of the corresponding ring buffer event.
+On Fri, 10 Feb 2017 13:16:17 +0900
+Namhyung Kim <namhyung@kernel.org> wrote:
+
+> >   ====
+> >   Example - wakeup latency
+> >   ====
+> > 
+> >   This basically implements the -RT latency_hist 'wakeup_latency'
+> >   histogram using the synthetic events, variables, and actions
+> >   described.  The output below is from a run of cyclictest using the
+> >   following command:
+> > 
+> >     # rt-tests/cyclictest -p 80 -n -s -t 2
+> > 
+> >   What we're measuring the latency of is the time between when a
+> >   thread (of cyclictest) is awakened and when it's scheduled in.  To
+> >   do that we add triggers to sched_wakeup and sched_switch with the
+> >   appropriate variables, and on a matching sched_switch event,
+> >   generate a synthetic 'wakeup_latency' event.  Since it's just
+> >   another trace event like any other, we can also define a histogram
+> >   on that event, the output of which is what we see displayed when
+> >   reading the wakeup_latency 'hist' file.
+> > 
+> >   First, we create a synthetic event called wakeup_latency, that
+> >   references 3 variables from other events:
+> > 
+> >     # echo 'wakeup_latency lat=sched_switch:wakeup_lat \
+> >                            pid=sched_switch:woken_pid \
+> >                            prio=sched_switch:woken_prio' >> \
+> >             /sys/kernel/debug/tracing/synthetic_events
+> > 
+> >   Next we add a trigger to sched_wakeup, which saves the value of the
+> >   'common_timestamp' when that event is hit in a variable, ts0.  Note
+> >   that this happens only when 'comm==cyclictest'.
+> > 
+> >   Also, 'common_timestamp' is a new field defined on every event (if
+> >   needed - if there are no users of timestamps in a trace, timestamps
+> >   won't be saved and there's no additional overhead from that).
+> > 
+> >     #  echo 'hist:keys=pid:ts0=common_timestamp.usecs if \
+> >              comm=="cyclictest"' >> \
+> >              /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+> > 
+> >   Next, we add a trigger to sched_switch.  When the pid being switched
+> >   to matches the pid woken up by a previous sched_wakeup event, this
+> >   event grabs the ts0 saved on that event, takes the difference
+> >   between it and the current sched_switch's common_timestamp, and
+> >   assigns it to a new 'wakeup_lat' variable.  It also saves a couple
+> >   other variables and then invokes the onmatch().trace() action which
+> >   generates a new wakeup_latency event using those variables.
+> > 
+> >     # echo 'hist:keys=woken_pid=next_pid:woken_prio=next_prio:\
+> >        wakeup_lat=common_timestamp.usecs-ts0:onmatch().trace(wakeup_latency) \
+> >             if next_comm=="cyclictest"' >> \
+> >             /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
 > 
-> To make use of the timestamp field, users can specify "common_timestamp"
-> as a field name for any histogram.  Note that this doesn't make much
-> sense on its own either as either a key or value, but needs to be
-> supported even so, since follow-on patches will add support for making
-> use of this field in time deltas.
+> As Masami said, I think the syntax is a bit hard to understand.  Also
+> it'd be nice to access an event field directly (i.e. not by adding a
+> field in a hist).  Maybe we can use a prefix like '$' to identify hist
+> fields..
+
+Ah that's a nice idea!
+
 > 
-> Note that the use of this field requires the ring buffer be put into
-> TIME_EXTEND_ABS mode, which saves the complete timestamp for each
-> event rather than an offset.  This mode will be enabled if and only if
-> a histogram makes use of the "common_timestamp" field.
+> How about below?
 > 
-> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> ---
->  kernel/trace/trace_events_hist.c | 85 +++++++++++++++++++++++++++++-----------
->  1 file changed, 62 insertions(+), 23 deletions(-)
+>   # echo 'wakeup_latency \
+>   		lat=sched_switch.$wakeup_lat  \
+> 		pid=sched_switch.next_pid     \
+> 		prio=sched_switch.next_prio' >> \
+> 	/sys/kernel/debug/tracing/synthetic_events
+
+Should we define these parameter assignment at this.point?
+
+I think this syntax binds wakeup_latency event to sched_switch too tight. I 
+mean, if someone kicks this event from some other event, it may easily lose 
+values.
+So, at this point, we will define event name and what parameters it has,
+until binding this event to onmatch().
+
+>   # echo 'hist: \
+>   		keys=pid: \
+> 		ts0=common_timestamp.usec \
+> 		if comm=="cyclictest"' >> \
+> 	/sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
 > 
-> diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-> index 4e70872..8d7f7dd 100644
-> --- a/kernel/trace/trace_events_hist.c
-> +++ b/kernel/trace/trace_events_hist.c
-> @@ -88,6 +88,12 @@ static u64 hist_field_log2(struct hist_field *hist_field, void *event,
->  	return (u64) ilog2(roundup_pow_of_two(val));
->  }
->  
-> +static u64 hist_field_timestamp(struct hist_field *hist_field, void *event,
-> +				struct ring_buffer_event *rbe)
-> +{
-> +	return ring_buffer_event_time_stamp(rbe);
-> +}
-> +
->  #define DEFINE_HIST_FIELD_FN(type)					\
->  	static u64 hist_field_##type(struct hist_field *hist_field,	\
->  				     void *event,			\
-> @@ -134,6 +140,7 @@ enum hist_field_flags {
->  	HIST_FIELD_FL_SYSCALL		= 128,
->  	HIST_FIELD_FL_STACKTRACE	= 256,
->  	HIST_FIELD_FL_LOG2		= 512,
-> +	HIST_FIELD_FL_TIMESTAMP		= 1024,
->  };
->  
->  struct hist_trigger_attrs {
-> @@ -158,6 +165,7 @@ struct hist_trigger_data {
->  	struct trace_event_file		*event_file;
->  	struct hist_trigger_attrs	*attrs;
->  	struct tracing_map		*map;
-> +	bool				enable_timestamps;
->  };
->  
->  static const char *hist_field_name(struct hist_field *field)
-> @@ -404,6 +412,7 @@ static struct hist_field *create_hist_field(struct ftrace_event_field *field,
->  	hist_field = kzalloc(sizeof(struct hist_field), GFP_KERNEL);
->  	if (!hist_field)
->  		return NULL;
-> +	hist_field->is_signed = false;
+>   # echo 'hist: \
+> 		keys=next_pid: \
+> 		wakeup_lat=common_timestamp.usec-$ts0: \
+> 		onmatch(sched_wakeup).trace(wakeup_latency) \
 
-I think it's not needed since hist_field is allocated by kzalloc().
-Also I cannot find where ->is_signed is set.
+This one seems much better for me, but I would like to ask you call event 
+directly from onmatch, like as
 
->  
->  	if (flags & HIST_FIELD_FL_HITCOUNT) {
->  		hist_field->fn = hist_field_counter;
-> @@ -423,6 +432,12 @@ static struct hist_field *create_hist_field(struct ftrace_event_field *field,
->  		goto out;
->  	}
->  
-> +	if (flags & HIST_FIELD_FL_TIMESTAMP) {
-> +		hist_field->fn = hist_field_timestamp;
-> +		hist_field->size = sizeof(u64);
-> +		goto out;
-> +	}
-> +
->  	if (WARN_ON_ONCE(!field))
->  		goto out;
->
+ "onmatch(sched_wakeup).wakeup_latency(wakeup_lat,next_pid,next_prio)"
 
-[SNIP]
-> @@ -1520,6 +1557,8 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
->  
->  	update_cond_flag(file);
->  
-> +	tracing_set_time_stamp_abs(file->tr, true);
-> +
+At this point, kernel will finalize the wakeup_latency event with wakeup_lat,
+next_pid and next_prio.
 
-Hmm.. does it makes all events using absolute timestamp?  Where is it
-turned off?
-
-Thanks,
-Namhyung
-
-
->  	if (trace_event_trigger_enable_disable(file, 1) < 0) {
->  		list_del_rcu(&data->list);
->  		update_cond_flag(file);
-> -- 
-> 1.9.3
+> 		if next_comm=="cyclictest"' >> \
+> 	/sys/kernel/debug/tracing/events/sched/sched_switch/trigger
 > 
+> By passing an event name to 'onmatch', we can know where to find $ts0
+> easily IMHO.
+
+Agree. That's easiler to understand :)
+
+Thank you,
+
+-- 
+Masami Hiramatsu <mhiramat@kernel.org>
