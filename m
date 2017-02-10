@@ -1,132 +1,277 @@
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: Re: [RFC][PATCH 00/21] tracing: Inter-event (e.g. latency) support
-Date: Fri, 10 Feb 2017 12:43:53 -0600
-Message-ID: <1486752233.2871.163.camel@tzanussi-mobl.amr.corp.intel.com>
-References: <cover.1486569306.git.tom.zanussi@linux.intel.com>
-         <20170210041617.GE599@sejong>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [ANNOUNCE] v4.9.9-rt6
+Date: Fri, 10 Feb 2017 19:48:50 +0100
+Message-ID: <20170210184849.rwrvbdrs2oz72l2a@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Namhyung Kim <namhyung@kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170210041617.GE599@sejong>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Namhyung,
+Dear RT folks!
 
-On Fri, 2017-02-10 at 13:16 +0900, Namhyung Kim wrote:
-> Hi Tom,
-> 
-> On Wed, Feb 08, 2017 at 11:24:56AM -0600, Tom Zanussi wrote:
-> > This patchset adds support for 'inter-event' quantities to the trace
-> > event subsystem.  The most important example of inter-event quantities
-> > are latencies, or the time differences between two events.
-> > 
-> > One of the main motivations for adding this capability is to provide a
-> > general-purpose base that existing existing tools such as the -RT
-> > latency_hist patchset can be built upon, while at the same time
-> > providing a simple way for users to track latencies (or any
-> > inter-event quantity) generically between any two events.
-> > 
-> > Previous -RT latency_hist patchsets that take advantage of the trace
-> > event subsystem have been submitted, but they essentially hard-code
-> > special-case tracepoints and application logic in ways that can't be
-> > reused.  It seemed to me that rather than providing a one-off patchset
-> > devoted specifically to generating the specific histograms in the
-> > latency_hist patchset, it should be possible to build the same
-> > functionality on top of a generic layer allowing users to do similar
-> > things for other non-latency_hist applications.
-> > 
-> > In addition to preliminary patches that add some basic missing
-> > functionality such as a common ringbuffer-derived timestamp and
-> > dynamically-creatable tracepoints, the overall patchset is divided up
-> > into a few different areas that combine to produce the overall goal
-> > (The Documentation patch explains all the details):
-> 
-> Looks very nice!
-> 
+I'm pleased to announce the v4.9.9-rt6 patch set. 
 
-Thanks!
+Changes since v4.9.9-rt5:
 
-...
+  - The timer softirq was woken up under certain circumstances where it
+    could have been avoided. Patch by Haris Okanovic.
+
+  - Alex Goins noticed that a GPL only symbol will be forced on -RT
+    which is not the case on !RT configurations. This has been resolved.
+
+Known issues
+	- CPU hotplug got a little better but can deadlock.
+
+The delta patch against v4.9.9-rt6 is appended below and can be found here:
  
-> >   First, we create a synthetic event called wakeup_latency, that
-> >   references 3 variables from other events:
-> > 
-> >     # echo 'wakeup_latency lat=sched_switch:wakeup_lat \
-> >                            pid=sched_switch:woken_pid \
-> >                            prio=sched_switch:woken_prio' >> \
-> >             /sys/kernel/debug/tracing/synthetic_events
-> > 
-> >   Next we add a trigger to sched_wakeup, which saves the value of the
-> >   'common_timestamp' when that event is hit in a variable, ts0.  Note
-> >   that this happens only when 'comm==cyclictest'.
-> > 
-> >   Also, 'common_timestamp' is a new field defined on every event (if
-> >   needed - if there are no users of timestamps in a trace, timestamps
-> >   won't be saved and there's no additional overhead from that).
-> > 
-> >     #  echo 'hist:keys=pid:ts0=common_timestamp.usecs if \
-> >              comm=="cyclictest"' >> \
-> >              /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-> > 
-> >   Next, we add a trigger to sched_switch.  When the pid being switched
-> >   to matches the pid woken up by a previous sched_wakeup event, this
-> >   event grabs the ts0 saved on that event, takes the difference
-> >   between it and the current sched_switch's common_timestamp, and
-> >   assigns it to a new 'wakeup_lat' variable.  It also saves a couple
-> >   other variables and then invokes the onmatch().trace() action which
-> >   generates a new wakeup_latency event using those variables.
-> > 
-> >     # echo 'hist:keys=woken_pid=next_pid:woken_prio=next_prio:\
-> >        wakeup_lat=common_timestamp.usecs-ts0:onmatch().trace(wakeup_latency) \
-> >             if next_comm=="cyclictest"' >> \
-> >             /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-> 
-> As Masami said, I think the syntax is a bit hard to understand.  Also
-> it'd be nice to access an event field directly (i.e. not by adding a
-> field in a hist).  Maybe we can use a prefix like '$' to identify hist
-> fields..
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.9/incr/patch-4.9.9-rt5-rt6.patch.xz
 
-Yes, that's a good point, and I like the $ syntax - it makes the
-variables obvious to users.
+You can get this release via the git tree at:
 
-> 
-> How about below?
-> 
->   # echo 'wakeup_latency \
->   		lat=sched_switch.$wakeup_lat  \
-> 		pid=sched_switch.next_pid     \
-> 		prio=sched_switch.next_prio' >> \
-> 	/sys/kernel/debug/tracing/synthetic_events
-> 
->   # echo 'hist: \
->   		keys=pid: \
-> 		ts0=common_timestamp.usec \
-> 		if comm=="cyclictest"' >> \
-> 	/sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-> 
->   # echo 'hist: \
-> 		keys=next_pid: \
-> 		wakeup_lat=common_timestamp.usec-$ts0: \
-> 		onmatch(sched_wakeup).trace(wakeup_latency) \
-> 		if next_comm=="cyclictest"' >> \
-> 	/sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-> 
-> By passing an event name to 'onmatch', we can know where to find $ts0
-> easily IMHO.
-> 
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.9.9-rt6
 
-I think that also makes a lot of sense - keeping things as explicit as
-possible makes it clear what's going on.  I'll make these changes,
-modulo the comments along similar lines from Masami.
+The RT patch against v4.9.9 can be found here:
 
-Thanks for the excellent suggestions!
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.9/older/patch-4.9.9-rt6.patch.xz
 
-Tom
+The split quilt queue is available at:
 
-> Thanks,
-> Namhyung
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.9/older/patches-4.9.9-rt6.tar.xz
+
+Sebastian
+diff --git a/include/linux/mutex_rt.h b/include/linux/mutex_rt.h
+--- a/include/linux/mutex_rt.h
++++ b/include/linux/mutex_rt.h
+@@ -43,7 +43,12 @@ extern void __lockfunc _mutex_unlock(struct mutex *lock);
+ #define mutex_lock_killable(l)		_mutex_lock_killable(l)
+ #define mutex_trylock(l)		_mutex_trylock(l)
+ #define mutex_unlock(l)			_mutex_unlock(l)
++
++#ifdef CONFIG_DEBUG_MUTEXES
+ #define mutex_destroy(l)		rt_mutex_destroy(&(l)->lock)
++#else
++static inline void mutex_destroy(struct mutex *lock) {}
++#endif
+ 
+ #ifdef CONFIG_DEBUG_LOCK_ALLOC
+ # define mutex_lock_nested(l, s)	_mutex_lock_nested(l, s)
+diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -2211,8 +2211,7 @@ void rt_mutex_destroy(struct rt_mutex *lock)
+ 	lock->magic = NULL;
+ #endif
+ }
+-
+-EXPORT_SYMBOL_GPL(rt_mutex_destroy);
++EXPORT_SYMBOL(rt_mutex_destroy);
+ 
+ /**
+  * __rt_mutex_init - initialize the rt lock
+diff --git a/kernel/time/timer.c b/kernel/time/timer.c
+--- a/kernel/time/timer.c
++++ b/kernel/time/timer.c
+@@ -206,6 +206,8 @@ struct timer_base {
+ 	bool			is_idle;
+ 	DECLARE_BITMAP(pending_map, WHEEL_SIZE);
+ 	struct hlist_head	vectors[WHEEL_SIZE];
++	struct hlist_head	expired_lists[LVL_DEPTH];
++	int			expired_count;
+ } ____cacheline_aligned;
+ 
+ static DEFINE_PER_CPU(struct timer_base, timer_bases[NR_BASES]);
+@@ -1353,7 +1355,8 @@ static void call_timer_fn(struct timer_list *timer, void (*fn)(unsigned long),
+ 	}
+ }
+ 
+-static void expire_timers(struct timer_base *base, struct hlist_head *head)
++static inline void __expire_timers(struct timer_base *base,
++				   struct hlist_head *head)
+ {
+ 	while (!hlist_empty(head)) {
+ 		struct timer_list *timer;
+@@ -1384,21 +1387,38 @@ static void expire_timers(struct timer_base *base, struct hlist_head *head)
+ 	}
+ }
+ 
+-static int __collect_expired_timers(struct timer_base *base,
+-				    struct hlist_head *heads)
++static void expire_timers(struct timer_base *base)
++{
++	struct hlist_head *head;
++
++	while (base->expired_count--) {
++		head = base->expired_lists + base->expired_count;
++		__expire_timers(base, head);
++	}
++	base->expired_count = 0;
++}
++
++static void __collect_expired_timers(struct timer_base *base)
+ {
+ 	unsigned long clk = base->clk;
+ 	struct hlist_head *vec;
+-	int i, levels = 0;
++	int i;
+ 	unsigned int idx;
+ 
++	/*
++	 * expire_timers() must be called at least once before we can
++	 * collect more timers
++	 */
++	if (WARN_ON(base->expired_count))
++		return;
++
+ 	for (i = 0; i < LVL_DEPTH; i++) {
+ 		idx = (clk & LVL_MASK) + i * LVL_SIZE;
+ 
+ 		if (__test_and_clear_bit(idx, base->pending_map)) {
+ 			vec = base->vectors + idx;
+-			hlist_move_list(vec, heads++);
+-			levels++;
++			hlist_move_list(vec,
++				&base->expired_lists[base->expired_count++]);
+ 		}
+ 		/* Is it time to look at the next level? */
+ 		if (clk & LVL_CLK_MASK)
+@@ -1406,7 +1426,6 @@ static int __collect_expired_timers(struct timer_base *base,
+ 		/* Shift clock for the next level granularity */
+ 		clk >>= LVL_CLK_SHIFT;
+ 	}
+-	return levels;
+ }
+ 
+ #ifdef CONFIG_NO_HZ_COMMON
+@@ -1599,8 +1618,7 @@ void timer_clear_idle(void)
+ 	base->is_idle = false;
+ }
+ 
+-static int collect_expired_timers(struct timer_base *base,
+-				  struct hlist_head *heads)
++static void collect_expired_timers(struct timer_base *base)
+ {
+ 	/*
+ 	 * NOHZ optimization. After a long idle sleep we need to forward the
+@@ -1617,20 +1635,49 @@ static int collect_expired_timers(struct timer_base *base,
+ 		if (time_after(next, jiffies)) {
+ 			/* The call site will increment clock! */
+ 			base->clk = jiffies - 1;
+-			return 0;
++			return;
+ 		}
+ 		base->clk = next;
+ 	}
+-	return __collect_expired_timers(base, heads);
++	__collect_expired_timers(base);
+ }
+ #else
+-static inline int collect_expired_timers(struct timer_base *base,
+-					 struct hlist_head *heads)
++static inline void collect_expired_timers(struct timer_base *base)
+ {
+-	return __collect_expired_timers(base, heads);
++	__collect_expired_timers(base);
+ }
+ #endif
+ 
++static int find_expired_timers(struct timer_base *base)
++{
++	const unsigned long int end_clk = jiffies;
++
++	while (!base->expired_count && time_after_eq(end_clk, base->clk)) {
++		collect_expired_timers(base);
++		base->clk++;
++	}
++
++	return base->expired_count;
++}
++
++/* Called from CPU tick routine to quickly collect expired timers */
++static int tick_find_expired(struct timer_base *base)
++{
++	int count;
++
++	raw_spin_lock(&base->lock);
++
++	if (unlikely(time_after(jiffies, base->clk + HZ))) {
++		/* defer to ktimersoftd; don't spend too long in irq context */
++		count = -1;
++	} else
++		count = find_expired_timers(base);
++
++	raw_spin_unlock(&base->lock);
++
++	return count;
++}
++
+ /*
+  * Called from the timer interrupt handler to charge one tick to the current
+  * process.  user_tick is 1 if the tick is user time, 0 for system.
+@@ -1657,22 +1704,11 @@ void update_process_times(int user_tick)
+  */
+ static inline void __run_timers(struct timer_base *base)
+ {
+-	struct hlist_head heads[LVL_DEPTH];
+-	int levels;
+-
+-	if (!time_after_eq(jiffies, base->clk))
+-		return;
+-
+ 	raw_spin_lock_irq(&base->lock);
+ 
+-	while (time_after_eq(jiffies, base->clk)) {
++	while (find_expired_timers(base))
++		expire_timers(base);
+ 
+-		levels = collect_expired_timers(base, heads);
+-		base->clk++;
+-
+-		while (levels--)
+-			expire_timers(base, heads + levels);
+-	}
+ 	raw_spin_unlock_irq(&base->lock);
+ 	wakeup_timer_waiters(base);
+ }
+@@ -1700,12 +1736,12 @@ void run_local_timers(void)
+ 
+ 	hrtimer_run_queues();
+ 	/* Raise the softirq only if required. */
+-	if (time_before(jiffies, base->clk)) {
++	if (time_before(jiffies, base->clk) || !tick_find_expired(base)) {
+ 		if (!IS_ENABLED(CONFIG_NO_HZ_COMMON) || !base->nohz_active)
+ 			return;
+ 		/* CPU is awake, so check the deferrable base. */
+ 		base++;
+-		if (time_before(jiffies, base->clk))
++		if (time_before(jiffies, base->clk) || !tick_find_expired(base))
+ 			return;
+ 	}
+ 	raise_softirq(TIMER_SOFTIRQ);
+@@ -1875,6 +1911,7 @@ int timers_dead_cpu(unsigned int cpu)
+ 		raw_spin_lock_nested(&old_base->lock, SINGLE_DEPTH_NESTING);
+ 
+ 		BUG_ON(old_base->running_timer);
++		BUG_ON(old_base->expired_count);
+ 
+ 		for (i = 0; i < WHEEL_SIZE; i++)
+ 			migrate_timer_list(new_base, old_base->vectors + i);
+@@ -1901,6 +1938,7 @@ static void __init init_timer_cpu(int cpu)
+ #ifdef CONFIG_PREEMPT_RT_FULL
+ 		init_swait_queue_head(&base->wait_for_running_timer);
+ #endif
++		base->expired_count = 0;
+ 	}
+ }
+ 
+diff --git a/localversion-rt b/localversion-rt
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt5
++-rt6
