@@ -1,49 +1,47 @@
-From: Julia Cartwright <julia@ni.com>
-Subject: Re: mmap paging problems
-Date: Mon, 13 Feb 2017 10:03:29 -0600
-Message-ID: <20170213160329.GK5599@jcartwri.amer.corp.natinst.com>
-References: <CAEYdEeTq+exUaXK7vifQbPCOoJ-mpnQcW89Mxow31BX3St=AgA@mail.gmail.com>
+From: "Patel, Vedang" <vedang.patel@intel.com>
+Subject: Re: Regression on rt kernel while using POSIX timers
+Date: Mon, 13 Feb 2017 18:48:33 +0000
+Message-ID: <1487011713.17279.27.camel@intel.com>
+References: <1486579285.29816.105.camel@intel.com>
+         <20170210190708.gkx5pzxnd6uhfczn@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Cc: <linux-rt-users@vger.kernel.org>
-To: Brian Wrenn <dcbrianw@gmail.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: "ranshalit@gmail.com" <ranshalit@gmail.com>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        "Hart, Darren" <darren.hart@intel.com>
+To: "bigeasy@linutronix.de" <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod3.natinst.com ([130.164.80.24]:40642 "EHLO ni.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1751023AbdBMQDg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 13 Feb 2017 11:03:36 -0500
-Content-Disposition: inline
-In-Reply-To: <CAEYdEeTq+exUaXK7vifQbPCOoJ-mpnQcW89Mxow31BX3St=AgA@mail.gmail.com>
+Received: from mga01.intel.com ([192.55.52.88]:30803 "EHLO mga01.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751313AbdBMSsl (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 13 Feb 2017 13:48:41 -0500
+In-Reply-To: <20170210190708.gkx5pzxnd6uhfczn@linutronix.de>
+Content-Language: en-US
+Content-ID: <FE8568075653AC499826C54FC8B5E106@intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Feb 10, 2017 at 07:48:26PM -0500, Brian Wrenn wrote:
-> Hi,
-
-Hey Brian-
-
-> I have a kernel module running within Linaro 4.4.9 with PREEMPT RT 17.
-> Within that module I attempt to transfer data from the kernel module
-> to user space.  The user space application does not run real-time,
-> just in plain Linux user space.  With each attempted run I get a
-> kernel dump that begins with the following:
-> 
-> Unable to handle kernel paging request at virtual address <some address>
-> 
-> I'm using mmap in a fairly straightforward way.  Basically, upon an
-> IOC command from the user space application to the kernel module, the
-> kernel module attempts to copy data into the memory mapped area.  I've
-> checked, double checked, and triple checked that I'm not writing to a
-> bad address or an address outside of the mmap'ed area.
-
-How are you performing your checks?  How are you performing the copy?
-
-> Are there some special (special in the sense of in addition to or
-> instead of the way done for a non-PREEMPT-RT kernel) things one must
-> do to safely write mmap'ed data within a PREEMPT RT kernel?
-
-You didn't explicitly mention it, so I thought I'd check: the same
-operation, performed on a non-RT kernel doesn't reproduce the above
-OOPs?
-
-   Julia
+T24gRnJpLCAyMDE3LTAyLTEwIGF0IDIwOjA3ICswMTAwLCBTZWJhc3RpYW4gQW5kcnplaiBTaWV3
+aW9yIHdyb3RlOg0KPiBPbiAyMDE3LTAyLTA4IDE4OjQxOjI1IFsrMDAwMF0sIFBhdGVsLCBWZWRh
+bmcgd3JvdGU6DQo+ID4gDQo+ID4gSGkswqANCj4gSGksDQo+IA0KPiA+IA0KPiA+IFRoZSByZXN1
+bHRzIGZvciB0aGUgUE9TSVggdGltZXJzIHdlcmUgbm90IGFzIEkgZXhwZWN0ZWQuIFRoZQ0KPiA+
+IGxhdGVuY3kNCj4gPiBmb3IgcmVhbC10aW1lIGtlcm5lbCAodjQuOS40LXJ0Mikgd2FzIHdvcnNl
+IGNvbXBhcmVkIHRvIHRoZQ0KPiA+IG1haW5saW5lDQo+ID4ga2VybmVsICh2NC45LjQpLiBJbiBh
+bG1vc3QgYWxsIHRoZSBjYXNlcywgdGhlIGxhdGVuY3kgaXMgYWxtb3N0DQo+ID4gZG91YmxlZA0K
+PiA+IMKgd2l0aCB0aGUgbWF4IHZhbHVlIHJlYWNoaW5nIGFib3V0IDEwIHRpbWVzIHdoZW4gcGVy
+Zm9ybWluZyB0aGUNCj4gPiB0ZXN0cw0KPiA+IHVuZGVyIGxvYWQuDQo+IElzIGl0IGFsc28gdGhl
+IGNhc2UgaWYgeW91IGJvb3N0IHRoZSBwcmlvcml0eSBvZiBrdGltZXJzb2Z0ZC9YDQo+IHRocmVh
+ZHM/DQo+IEZvciBjbG9ja19uYW5vc2xlZXAsIHRoZSB3YWtlLXVwcyBoYXBwZW4gZGlyZWN0bHkg
+ZnJvbSBoYXJkLXRpbWVyDQo+IGludGVycnVwdC4gRm9yIHRoZSBwb3NpeC10aW1lciB3ZSBoYXZl
+IHRvIGRlbGF5IHRob3NlIHRvIHRoZQ0KPiBrdGltZXJzb2Z0ZA0KPiB0aHJlYWQgd2hpY2ggcnVu
+cyB1c3VhbGx5IFJUIHByaW8gMS4NCj4gDQpJIGFtIGdldHRpbmcgdmVyeSBzaW1pbGFyIHJlc3Vs
+dHMgZXZlbiBpZiBJIGNoYW5nZSB0aGUgcHJpb3JpdHkgb2YNCmt0aW1lcnNvZnRkIHRvIDk5LiBB
+cmUgdGhlcmUgYW55IHJlY2VudCBydCBwYXRjaGVzIHdoaWNoIG1pZ2h0IGhhdmUNCmNoYW5nZWQg
+dGhlIGJlaGF2aW91ciBvZiBQT1NJWCB0aW1lcnM/wqANCg0KQWxzbywgYXJlIFBPU0lYIHRpbWVy
+cyByZWFsbHkgc3VpdGVkIGZvciAicmVhbC10aW1lIiBhcHBsaWNhdGlvbnM/SQ0KYmVsaWV2ZSBh
+IHNpbWlsYXIgcXVlc3Rpb24gd2FzIHJhaXNlZCBieSBSYW4gU2hhbGl0IGEgZmV3IGRheXMgYmFj
+azrCoA0KaHR0cDovL3d3dy5zcGluaWNzLm5ldC9saXN0cy9saW51eC1ydC11c2Vycy9tc2cxNjI0
+OS5odG1sDQoNClRoYW5rcywNClZlZGFuZw0KPiA+IA0KPiA+IFRoYW5rcywNCj4gPiBWZWRhbmcg
+UGF0ZWwNCj4gPiBTb2Z0d2FyZSBFbmdpbmVlcg0KPiA+IEludGVsIENvcnBvcmF0aW9uDQo+IFNl
+YmFzdGlhbg==
