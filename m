@@ -1,143 +1,286 @@
 From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [RFC][PATCH 00/21] tracing: Inter-event (e.g. latency) support
-Date: Mon, 13 Feb 2017 10:04:16 +0900
-Message-ID: <20170213010416.GE14705@sejong>
+Subject: Re: [RFC][PATCH 11/21] tracing: Add variable support to hist triggers
+Date: Mon, 13 Feb 2017 15:03:30 +0900
+Message-ID: <20170213060330.GF14705@sejong>
 References: <cover.1486569306.git.tom.zanussi@linux.intel.com>
- <20170210041617.GE599@sejong>
- <20170210183425.3444f5a28779bec9034230d4@kernel.org>
- <1486753110.3005.5.camel@tzanussi-mobl.amr.corp.intel.com>
+ <5f57709aa313b2faa09ba39c889bdfd2a495106a.1486569306.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
-Cc: Masami Hiramatsu <mhiramat@kernel.org>, <rostedt@goodmis.org>,
-        <tglx@linutronix.de>, <linux-kernel@vger.kernel.org>,
-        <linux-rt-users@vger.kernel.org>
+Cc: <rostedt@goodmis.org>, <tglx@linutronix.de>, <mhiramat@kernel.org>,
+        <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
 To: Tom Zanussi <tom.zanussi@linux.intel.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from LGEAMRELO11.lge.com ([156.147.23.51]:41019 "EHLO
-        lgeamrelo11.lge.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751000AbdBMBEY (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 12 Feb 2017 20:04:24 -0500
-In-Reply-To: <1486753110.3005.5.camel@tzanussi-mobl.amr.corp.intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <5f57709aa313b2faa09ba39c889bdfd2a495106a.1486569306.git.tom.zanussi@linux.intel.com>
 Content-Disposition: inline
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Feb 10, 2017 at 12:58:30PM -0600, Tom Zanussi wrote:
-> Hi Masami,
+On Wed, Feb 08, 2017 at 11:25:07AM -0600, Tom Zanussi wrote:
+> Add support for saving the value of a current event's event field by
+> assigning it to a variable that can be read by a subsequent event.
 > 
-> On Fri, 2017-02-10 at 18:34 +0900, Masami Hiramatsu wrote:
-> > On Fri, 10 Feb 2017 13:16:17 +0900
-> > Namhyung Kim <namhyung@kernel.org> wrote:
-> > 
-> > > >   ====
-> > > >   Example - wakeup latency
-> > > >   ====
-> > > > 
-> > > >   This basically implements the -RT latency_hist 'wakeup_latency'
-> > > >   histogram using the synthetic events, variables, and actions
-> > > >   described.  The output below is from a run of cyclictest using the
-> > > >   following command:
-> > > > 
-> > > >     # rt-tests/cyclictest -p 80 -n -s -t 2
-> > > > 
-> > > >   What we're measuring the latency of is the time between when a
-> > > >   thread (of cyclictest) is awakened and when it's scheduled in.  To
-> > > >   do that we add triggers to sched_wakeup and sched_switch with the
-> > > >   appropriate variables, and on a matching sched_switch event,
-> > > >   generate a synthetic 'wakeup_latency' event.  Since it's just
-> > > >   another trace event like any other, we can also define a histogram
-> > > >   on that event, the output of which is what we see displayed when
-> > > >   reading the wakeup_latency 'hist' file.
-> > > > 
-> > > >   First, we create a synthetic event called wakeup_latency, that
-> > > >   references 3 variables from other events:
-> > > > 
-> > > >     # echo 'wakeup_latency lat=sched_switch:wakeup_lat \
-> > > >                            pid=sched_switch:woken_pid \
-> > > >                            prio=sched_switch:woken_prio' >> \
-> > > >             /sys/kernel/debug/tracing/synthetic_events
-> > > > 
-> > > >   Next we add a trigger to sched_wakeup, which saves the value of the
-> > > >   'common_timestamp' when that event is hit in a variable, ts0.  Note
-> > > >   that this happens only when 'comm==cyclictest'.
-> > > > 
-> > > >   Also, 'common_timestamp' is a new field defined on every event (if
-> > > >   needed - if there are no users of timestamps in a trace, timestamps
-> > > >   won't be saved and there's no additional overhead from that).
-> > > > 
-> > > >     #  echo 'hist:keys=pid:ts0=common_timestamp.usecs if \
-> > > >              comm=="cyclictest"' >> \
-> > > >              /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-> > > > 
-> > > >   Next, we add a trigger to sched_switch.  When the pid being switched
-> > > >   to matches the pid woken up by a previous sched_wakeup event, this
-> > > >   event grabs the ts0 saved on that event, takes the difference
-> > > >   between it and the current sched_switch's common_timestamp, and
-> > > >   assigns it to a new 'wakeup_lat' variable.  It also saves a couple
-> > > >   other variables and then invokes the onmatch().trace() action which
-> > > >   generates a new wakeup_latency event using those variables.
-> > > > 
-> > > >     # echo 'hist:keys=woken_pid=next_pid:woken_prio=next_prio:\
-> > > >        wakeup_lat=common_timestamp.usecs-ts0:onmatch().trace(wakeup_latency) \
-> > > >             if next_comm=="cyclictest"' >> \
-> > > >             /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-> > > 
-> > > As Masami said, I think the syntax is a bit hard to understand.  Also
-> > > it'd be nice to access an event field directly (i.e. not by adding a
-> > > field in a hist).  Maybe we can use a prefix like '$' to identify hist
-> > > fields..
-> > 
-> > Ah that's a nice idea!
-> > 
-> > > 
-> > > How about below?
-> > > 
-> > >   # echo 'wakeup_latency \
-> > >   		lat=sched_switch.$wakeup_lat  \
-> > > 		pid=sched_switch.next_pid     \
-> > > 		prio=sched_switch.next_prio' >> \
-> > > 	/sys/kernel/debug/tracing/synthetic_events
-> > 
-> > Should we define these parameter assignment at this.point?
-> > 
-> > I think this syntax binds wakeup_latency event to sched_switch too tight. I 
-> > mean, if someone kicks this event from some other event, it may easily lose 
-> > values.
-> > So, at this point, we will define event name and what parameters it has,
-> > until binding this event to onmatch().
-> > 
+> The basic syntax for saving a variable is to simply prefix a unique
+> variable name not corresponding to any keyword along with an '=' sign
+> to any event field.
 > 
-> Right, I agree this binding doesn't need to be done here, good idea to
-> defer it as below...
+> Both keys and values can be saved and retrieved in this way:
 > 
-> > >   # echo 'hist: \
-> > >   		keys=pid: \
-> > > 		ts0=common_timestamp.usec \
-> > > 		if comm=="cyclictest"' >> \
-> > > 	/sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-> > > 
-> > >   # echo 'hist: \
-> > > 		keys=next_pid: \
-> > > 		wakeup_lat=common_timestamp.usec-$ts0: \
-> > > 		onmatch(sched_wakeup).trace(wakeup_latency) \
-> > 
-> > This one seems much better for me, but I would like to ask you call event 
-> > directly from onmatch, like as
-> > 
-> >  "onmatch(sched_wakeup).wakeup_latency(wakeup_lat,next_pid,next_prio)"
-> > 
-> > At this point, kernel will finalize the wakeup_latency event with wakeup_lat,
-> > next_pid and next_prio.
-> > 
+>     # echo 'hist:keys=next_pid:vals=ts0=common_timestamp ...
+>     # echo 'hist:key=timer_pid=common_pid ...'
 > 
-> Yes, I like this much better - things are no longer so implicit and
-> therefore subject to confusion, and the syntax itself makes more sense,
-> even if it is a bit more verbose on the trigger, which is fine.
+> If a variable isn't a key variable or prefixed with 'vals=', the
+> associated event field will be saved in a variable but won't be summed
+> as a value:
+> 
+>     # echo 'hist:keys=next_pid:ts1=common_timestamp:...
+> 
+> Multiple variables can be assigned at the same time:
+> 
+>     # echo 'hist:keys=pid:vals=ts0=common_timestamp,b=field1,field2 ...
+> 
+> Variables set as above can be used by being referenced from another
+> event, as described in a subsequent patch.
+> 
+> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> ---
+>  kernel/trace/trace_events_hist.c | 160 ++++++++++++++++++++++++++++++++-------
+>  1 file changed, 131 insertions(+), 29 deletions(-)
+> 
+> diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+> index 8d7f7dd..e707577 100644
+> --- a/kernel/trace/trace_events_hist.c
+> +++ b/kernel/trace/trace_events_hist.c
+> @@ -29,6 +29,7 @@ typedef u64 (*hist_field_fn_t) (struct hist_field *field, void *event,
+>  				struct ring_buffer_event *rbe);
+>  
+>  #define HIST_FIELD_OPERANDS_MAX	2
+> +#define HIST_ASSIGNMENT_MAX	4
+>  
+>  struct hist_field {
+>  	struct ftrace_event_field	*field;
+> @@ -36,8 +37,10 @@ struct hist_field {
+>  	hist_field_fn_t			fn;
+>  	unsigned int			size;
+>  	unsigned int			offset;
+> -	unsigned int                    is_signed;
+> +	unsigned int			is_signed;
 
-I thought about it too, but it needs to add some kind of type checking
-then.  What if another hist generates the event with totally different
-info?
+It seems like an unnecessary change.
+
+>  	struct hist_field		*operands[HIST_FIELD_OPERANDS_MAX];
+> +	u64				var_val;
+> +	char				*var_name;
+>  };
+>  
+>  static u64 hist_field_none(struct hist_field *field, void *event,
+> @@ -140,12 +143,16 @@ enum hist_field_flags {
+>  	HIST_FIELD_FL_SYSCALL		= 128,
+>  	HIST_FIELD_FL_STACKTRACE	= 256,
+>  	HIST_FIELD_FL_LOG2		= 512,
+> -	HIST_FIELD_FL_TIMESTAMP		= 1024,
+> +	HIST_FIELD_FL_VAR		= 1024,
+> +	HIST_FIELD_FL_VAR_ONLY		= 2048,
+> +	HIST_FIELD_FL_TIMESTAMP		= 4096,
+
+Why did you move the timestamp?
+
+>  };
+>  
+>  struct hist_trigger_attrs {
+>  	char		*keys_str;
+>  	char		*vals_str;
+> +	char		*assignment_str[HIST_ASSIGNMENT_MAX];
+> +	unsigned int	n_assignments;
+>  	char		*sort_key_str;
+>  	char		*name;
+>  	bool		pause;
+> @@ -241,9 +248,14 @@ static int parse_map_size(char *str)
+>  
+>  static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
+>  {
+> +	unsigned int i;
+> +
+>  	if (!attrs)
+>  		return;
+>  
+> +	for (i = 0; i < attrs->n_assignments; i++)
+> +		kfree(attrs->assignment_str[i]);
+> +
+>  	kfree(attrs->name);
+>  	kfree(attrs->sort_key_str);
+>  	kfree(attrs->keys_str);
+> @@ -258,9 +270,9 @@ static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
+>  	if ((strncmp(str, "key=", strlen("key=")) == 0) ||
+>  	    (strncmp(str, "keys=", strlen("keys=")) == 0))
+>  		attrs->keys_str = kstrdup(str, GFP_KERNEL);
+> -	else if ((strncmp(str, "val=", strlen("val=")) == 0) ||
+> -		 (strncmp(str, "vals=", strlen("vals=")) == 0) ||
+> -		 (strncmp(str, "values=", strlen("values=")) == 0))
+> +	else if (((strncmp(str, "val=", strlen("val=")) == 0) ||
+> +		  (strncmp(str, "vals=", strlen("vals=")) == 0) ||
+> +		  (strncmp(str, "values=", strlen("values=")) == 0)))
+
+Looks unnecessary too.
+
+>  		attrs->vals_str = kstrdup(str, GFP_KERNEL);
+>  	else if (strncmp(str, "sort=", strlen("sort=")) == 0)
+>  		attrs->sort_key_str = kstrdup(str, GFP_KERNEL);
+> @@ -274,8 +286,22 @@ static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
+>  			goto out;
+>  		}
+>  		attrs->map_bits = map_bits;
+> -	} else
+> -		ret = -EINVAL;
+> +	} else {
+> +		char *assignment;
+> +
+> +		if (attrs->n_assignments == HIST_ASSIGNMENT_MAX) {
+> +			ret = -EINVAL;
+> +			goto out;
+> +		}
+> +
+> +		assignment = kstrdup(str, GFP_KERNEL);
+> +		if (!assignment) {
+> +			ret = -ENOMEM;
+> +			goto out;
+> +		}
+> +
+> +		attrs->assignment_str[attrs->n_assignments++] = assignment;
+> +	}
+>   out:
+>  	return ret;
+>  }
+
+[SNIP]
+> @@ -839,8 +913,7 @@ static int create_tracing_map_fields(struct hist_trigger_data *hist_data)
+>  			idx = tracing_map_add_key_field(map,
+>  							hist_field->offset,
+>  							cmp_fn);
+> -
+> -		} else
+> +		} else if (!(hist_field->flags & HIST_FIELD_FL_VAR))
+>  			idx = tracing_map_add_sum_field(map);
+>  
+>  		if (idx < 0)
+> @@ -931,6 +1004,11 @@ static void hist_trigger_elt_update(struct hist_trigger_data *hist_data,
+>  	for_each_hist_val_field(i, hist_data) {
+>  		hist_field = hist_data->fields[i];
+>  		hist_val = hist_field->fn(hist_field, rec, rbe);
+> +		if (hist_field->flags & HIST_FIELD_FL_VAR) {
+> +			hist_field->var_val = hist_val;
+> +			if (hist_field->flags & HIST_FIELD_FL_VAR_ONLY)
+> +				continue;
+> +		}
+>  		tracing_map_update_sum(elt, i, hist_val);
+
+Hmm.. you didn't add a field for HIST_FIELD_FL_VAR but it attempts to
+update it, no?
+
+
+>  	}
+>  }
+> @@ -996,17 +1074,21 @@ static void event_hist_trigger(struct event_trigger_data *data, void *rec,
+>  			} else
+>  				key = (void *)&field_contents;
+>  		}
+> -
+>  		if (use_compound_key)
+>  			add_to_key(compound_key, key, key_field, rec);
+> +
+> +		if (key_field->flags & HIST_FIELD_FL_VAR)
+> +			key_field->var_val = (u64)key;
+>  	}
+>  
+>  	if (use_compound_key)
+>  		key = compound_key;
+>  
+>  	elt = tracing_map_insert(hist_data->map, key);
+> -	if (elt)
+> -		hist_trigger_elt_update(hist_data, elt, rec, rbe);
+> +	if (!elt)
+> +		return;
+> +
+> +	hist_trigger_elt_update(hist_data, elt, rec, rbe);
+>  }
+>  
+>  static void hist_trigger_stacktrace_print(struct seq_file *m,
+> @@ -1228,7 +1310,12 @@ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
+>  {
+>  	const char *field_name = hist_field_name(hist_field);
+>  
+> -	seq_printf(m, "%s", field_name);
+> +	if (hist_field->var_name)
+> +		seq_printf(m, "%s=", hist_field->var_name);
+> +
+> +	if (field_name)
+> +		seq_printf(m, "%s", field_name);
+> +
+>  	if (hist_field->flags) {
+>  		const char *flags_str = get_hist_field_flags(hist_field);
+>  
+> @@ -1237,6 +1324,16 @@ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
+>  	}
+>  }
+>  
+> +static bool var_only(struct hist_trigger_data *hist_data)
+> +{
+> +	unsigned int i;
+> +
+> +	for_each_hist_val_field(i, hist_data)
+> +		if (hist_data->fields[i]->flags & HIST_FIELD_FL_VAR_ONLY)
+> +			return true;
+> +	return false;
+> +}
+
+This means if there's a var-only field, the whole hist will be treated
+as var-only, right?  What if it has normal fields and var-only fields
+at the same time?  Didn't it have "hitcount"?  Please see below..
+
+> +
+>  static int event_hist_trigger_print(struct seq_file *m,
+>  				    struct event_trigger_ops *ops,
+>  				    struct event_trigger_data *data)
+> @@ -1266,15 +1363,19 @@ static int event_hist_trigger_print(struct seq_file *m,
+>  			hist_field_print(m, key_field);
+>  	}
+>  
+> -	seq_puts(m, ":vals=");
+> +	if (!var_only(hist_data))
+> +		seq_puts(m, ":vals=");
+> +	else
+> +		seq_puts(m, ":");
+>  
+>  	for_each_hist_val_field(i, hist_data) {
+> -		if (i == HITCOUNT_IDX)
+> +		if (i == HITCOUNT_IDX && !var_only(hist_data))
+>  			seq_puts(m, "hitcount");
+
+Looks like var-only hist cannot have hitcount, right?
+
+>  		else if (hist_data->fields[i]->flags & HIST_FIELD_FL_TIMESTAMP)
+>  			seq_puts(m, "common_timestamp");
+>  		else {
+> -			seq_puts(m, ",");
+> +			if (!var_only(hist_data))
+> +				seq_puts(m, ",");
+
+If a var-only hist hist can have multiple fields, it should print ","
+as well IMHO.  Also it seems "common_timestamp" also needs it.
 
 Thanks,
 Namhyung
+
+>  			hist_field_print(m, hist_data->fields[i]);
+>  		}
+>  	}
+> @@ -1673,6 +1774,7 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
+>  	}
+>  
+>  	ret = cmd_ops->reg(glob, trigger_ops, trigger_data, file);
+> +
+>  	/*
+>  	 * The above returns on success the # of triggers registered,
+>  	 * but if it didn't register any it returns zero.  Consider no
+> -- 
+> 1.9.3
+> 
