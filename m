@@ -1,74 +1,100 @@
-From: Ran Shalit <ranshalit@gmail.com>
-Subject: Re: Regression on rt kernel while using POSIX timers
-Date: Mon, 13 Feb 2017 22:32:33 +0200
-Message-ID: <CAJ2oMhJmkUxiuohwYLDfg-GBFKOfrcuOgUGOGAbo09m--6bpvg@mail.gmail.com>
+From: Julia Cartwright <julia@ni.com>
+Subject: Re: mmap paging problems
+Date: Mon, 13 Feb 2017 15:32:54 -0600
+Message-ID: <20170213213254.GL5599@jcartwri.amer.corp.natinst.com>
+References: <CAEYdEeTq+exUaXK7vifQbPCOoJ-mpnQcW89Mxow31BX3St=AgA@mail.gmail.com>
+ <20170213160329.GK5599@jcartwri.amer.corp.natinst.com>
+ <CAEYdEeTyuYQjxA+Wn5ABB=asdxeZZeUKMdwZyU0geiOn3_ecrQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: "bigeasy@linutronix.de" <bigeasy@linutronix.de>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "Hart, Darren" <darren.hart@intel.com>
-To: "Patel, Vedang" <vedang.patel@intel.com>
+Content-Type: text/plain; charset="us-ascii"
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Brian Wrenn <dcbrianw@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wr0-f175.google.com ([209.85.128.175]:35020 "EHLO
-        mail-wr0-f175.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1752781AbdBMUcf (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 13 Feb 2017 15:32:35 -0500
-Received: by mail-wr0-f175.google.com with SMTP id c4so609430wrd.2
-        for <linux-rt-users@vger.kernel.org>; Mon, 13 Feb 2017 12:32:35 -0800 (PST)
+Received: from skprod3.natinst.com ([130.164.80.24]:49671 "EHLO ni.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S1752730AbdBMVc4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 13 Feb 2017 16:32:56 -0500
+Content-Disposition: inline
+In-Reply-To: <CAEYdEeTyuYQjxA+Wn5ABB=asdxeZZeUKMdwZyU0geiOn3_ecrQ@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Feb 13, 2017 at 8:48 PM, Patel, Vedang <vedang.patel@intel.com> wrote:
-> On Fri, 2017-02-10 at 20:07 +0100, Sebastian Andrzej Siewior wrote:
->> On 2017-02-08 18:41:25 [+0000], Patel, Vedang wrote:
->> >
->> > Hi,
->> Hi,
->>
->> >
->> > The results for the POSIX timers were not as I expected. The
->> > latency
->> > for real-time kernel (v4.9.4-rt2) was worse compared to the
->> > mainline
->> > kernel (v4.9.4). In almost all the cases, the latency is almost
->> > doubled
->> >  with the max value reaching about 10 times when performing the
->> > tests
->> > under load.
->> Is it also the case if you boost the priority of ktimersoftd/X
->> threads?
->> For clock_nanosleep, the wake-ups happen directly from hard-timer
->> interrupt. For the posix-timer we have to delay those to the
->> ktimersoftd
->> thread which runs usually RT prio 1.
->>
-> I am getting very similar results even if I change the priority of
-> ktimersoftd to 99. Are there any recent rt patches which might have
-> changed the behaviour of POSIX timers?
+On Mon, Feb 13, 2017 at 03:52:19PM -0500, Brian Wrenn wrote:
+[..]
+> On Monday, February 13, 2017, Julia Cartwright <julia@ni.com> wrote:
+> > On Fri, Feb 10, 2017 at 07:48:26PM -0500, Brian Wrenn wrote:
+[..]
+> > > Unable to handle kernel paging request at virtual address <some address>
+> > >
+> > > I'm using mmap in a fairly straightforward way.  Basically, upon an
+> > > IOC command from the user space application to the kernel module, the
+> > > kernel module attempts to copy data into the memory mapped area.
+
+What you are referring to when you say "the memory mapped area" here is
+ambiguous, as there are two separate address spaces being spoken about.
+
+Assuming you've allocated a page with get_zeroed_page(GFP_KERNEL) and
+established it as the backing page in your vm_operations_struct fault
+callback (like the linked below example), then the two mappings are:
+
+  1. A mapping in the kernels' address space.
+  2. A mapping in the calling process's address space (and, possibly in
+       forked processes address spaces as well, depending on the VM area
+       flags!)
+
+Mappings into the kernel space may be accessed by kernel code in the
+"normal" ways, through pointer dereference, memset()/memcpy() and
+friends, etc, however, kernel code must handle accesses into usermode
+very carefully.
+
+The calling user code doesn't know anything about, nor should it know
+anything about the existence of the kernel mapping.  It operates purely
+on the process mapping (number 2 above), a pointer to which is returned
+from the mmap*() system call.
+
+> > > I've checked, double checked, and triple checked that I'm not
+> > > writing to a bad address or an address outside of the mmap'ed
+> > > area.
+> >
+> > How are you performing your checks?  How are you performing the
+> > copy?
 >
-> Also, are POSIX timers really suited for "real-time" applications?I
-> believe a similar question was raised by Ran Shalit a few days back:
-> http://www.spinics.net/lists/linux-rt-users/msg16249.html
+> I use memcpy() to perform the copy.  To perorm my checks, I simply use the
+> write-to address provided by the call to get_zeroed_page(GFP_KERNEL) on the
+> kernel side.
+
+Okay, so from this it sounds like you're, in your kernel code, only
+passing the pointer returned from get_zeroed_page(GFP_KERNEL) as the
+destination pointer to memcpy().  This should work fine, as long as you
+aren't exceeding the PAGE_SIZE'd buffer.  Is this the case?
+
+> I've based the mmap aspects of my driver on this example.  I've
+> attempted memcpy() on sizes of 64 bytes, 1Kbyte and 9Kbytes.  64 bytes
+> hasn't caused a problem thus far.  1Kbyte consistently leads to the
+> OOPs.
+
+Just a thought: does your target architecture have aligned access
+requirements that aren't being met?
+
+[..]
+> > > Are there some special (special in the sense of in addition to or
+> > > instead of the way done for a non-PREEMPT-RT kernel) things one must
+> > > do to safely write mmap'ed data within a PREEMPT RT kernel?
+> >
+> > You didn't explicitly mention it, so I thought I'd check: the same
+> > operation, performed on a non-RT kernel doesn't reproduce the above
+> > OOPs?
 >
+> I have not tried this on a non-RT kernel.  I can attempt to run my setup
+> with a non-RT kernel on Thursday.  I'm out of the office without access to
+> my setup until then.  But I will see if that works just to get a basis of
+> comparsion.
 
-Right.
-I did  testing of recent kernels 4.1.15,  with Atom , and the
-non-posix timers jitter was obviously better compared to non-posix
-(42usec vs 180us),
-On trying 4.4.x kernel I seen very strange behavior for both timers
-(maybe I applied the patch wrongly or needed to disable some features
-in config?) ,
+An administrative note: I think you're beyond linux-rt-users in scope
+here, unless you can show that it is somehow an RT-specific problem.  A
+better venue for this kind of question would probably be the
+kernelnewbies list.
 
-So I decided eventually to use the 4.1.15 with non-posix timers only
-with our Atom board. I hope that's a good decision.
+Good luck,
 
-
-> Thanks,
-> Vedang
->> >
->> > Thanks,
->> > Vedang Patel
->> > Software Engineer
->> > Intel Corporation
->> Sebastian
+   Julia
