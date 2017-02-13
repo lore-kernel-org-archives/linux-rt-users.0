@@ -1,90 +1,57 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.10.104-rt118
-Date: Mon, 13 Feb 2017 17:33:35 -0500
-Message-ID: <20170213173335.25757cc7@gandalf.local.home>
+From: =?UTF-8?Q?Dominic_Sacr=c3=a9?= <dominic.sacre@gmx.de>
+Subject: Re: Changing checksums of RT patches
+Date: Mon, 13 Feb 2017 23:56:36 +0100
+Message-ID: <812bef1a-a86e-15b6-b77c-6455832c8790@gmx.de>
+References: <12e5d51b-8589-d9ba-90cd-d00688e8602d@gmx.de>
+ <20170210185433.h35nynmmeu5toml6@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
+Cc: linux-rt-users@vger.kernel.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mout.gmx.net ([212.227.15.19]:62403 "EHLO mout.gmx.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1750983AbdBMW7K (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 13 Feb 2017 17:59:10 -0500
+In-Reply-To: <20170210185433.h35nynmmeu5toml6@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
+
+On 2017-02-10 19:54, Sebastian Andrzej Siewior wrote:
+> On 2017-02-09 10:09:16 [+0100], Dominic Sacré wrote:
+>> I noticed that recently the compressed RT patches (.patch.gz) at
+>> https://www.kernel.org/pub/linux/kernel/projects/rt started changing.
+>> The actual content of the patches seems to remain unchanged, but it
+>> looks like the gzipped files are being regenerated, resulting in
+>> different checksums.
+> 
+> Can you tell me which file in which folder changed?
+
+The files I'm currently concerned with are in the rt/4.1/older directory.
+
+For example, the Bitbake recipe I'm working on
+(https://github.com/Freescale/meta-freescale/blob/master/recipes-kernel/linux/linux-fslc-imx-rt_4.1-2.0.x.bb)
+used the file rt/4.1/older/patch-4.1.35-rt41.patch.gz. At some point
+that file changed, so the recipe would fail to build from scratch (I
+don't know when exactly or how often the file changed).
+
+I then updated the recipe to a later kernel version, using
+patch-4.1.37-rt43.patch.gz instead. Two days later I noticed builds
+starting to fail again, because that file too had changed, *after* I had
+updated the recipe.
+
+>> This is a problem for example for OpenEmbedded-based projects, which use
+>> MD5 and SHA256 checksums (basically hardcoded into Bitbake recipes) to
+>> verify the integrity of files being downloaded.
+> 
+> I see. You should be able to verify the uncompressed patch against a gpg
+> key. However I guess this is not how OpenEmbedded works.
+
+Bitbake/OpenEmbedded uses only SHA256 and MD5 checksums, and I don't
+think I can get it to check the hashes after uncompressing the patches.
 
 
-Dear RT Folks,
+Thanks,
 
-I'm pleased to announce the 3.10.104-rt118 stable release.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.10-rt
-  Head SHA1: 1aa9282631e195c26f9cb97222a2d85bff3a6870
-
-
-Or to build 3.10.104-rt118 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.104.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.104-rt118.patch.xz
-
-
-
-You can also build from 3.10.104-rt117 by applying the incremental patch:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.104-rt117-rt118.patch.xz
-
-
-
-Enjoy,
-
--- Steve
-
-
-Changes from v3.10.104-rt117:
-
----
-
-Sebastian Andrzej Siewior (1):
-      workqueue: use rcu_readlock() in put_pwq_unlocked()
-
-Steven Rostedt (VMware) (1):
-      Linux 3.10.104-rt118
-
-----
- kernel/workqueue.c | 2 ++
- localversion-rt    | 2 +-
- 2 files changed, 3 insertions(+), 1 deletion(-)
----------------------------
-diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-index 0572fa0a47f9..cc14c288b6e5 100644
---- a/kernel/workqueue.c
-+++ b/kernel/workqueue.c
-@@ -1119,9 +1119,11 @@ static void put_pwq_unlocked(struct pool_workqueue *pwq)
- 		 * As both pwqs and pools are RCU protected, the
- 		 * following lock operations are safe.
- 		 */
-+		rcu_read_lock();
- 		local_spin_lock_irq(pendingb_lock, &pwq->pool->lock);
- 		put_pwq(pwq);
- 		local_spin_unlock_irq(pendingb_lock, &pwq->pool->lock);
-+		rcu_read_unlock();
- 	}
- }
- 
-diff --git a/localversion-rt b/localversion-rt
-index 9788245dd428..4e32122c6b30 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt117
-+-rt118
+Dominic
