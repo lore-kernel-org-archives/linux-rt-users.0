@@ -1,64 +1,49 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT] Align rt_mutex inlining with upstream behavior
-Date: Mon, 13 Feb 2017 14:04:35 +0100
-Message-ID: <20170213130435.zlfznlkqmainxqod@linutronix.de>
-References: <1485312350-1265-1-git-send-email-agoins@nvidia.com>
- <20170126170109.6zhoohgodtvxot54@linutronix.de>
- <20170130173534.GA24966@prokofiev.nvidia.com>
- <20170203155434.utptndmoskcyimn7@linutronix.de>
- <20170203164924.GB19814@prokofiev.nvidia.com>
- <20170210175049.3cvrk5ki7c6uiblg@linutronix.de>
- <20170213112052.GA6557@twins.programming.kicks-ass.net>
+From: Julia Cartwright <julia@ni.com>
+Subject: Re: mmap paging problems
+Date: Mon, 13 Feb 2017 10:03:29 -0600
+Message-ID: <20170213160329.GK5599@jcartwri.amer.corp.natinst.com>
+References: <CAEYdEeTq+exUaXK7vifQbPCOoJ-mpnQcW89Mxow31BX3St=AgA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Andy Ritger <aritger@nvidia.com>, Alex Goins <agoins@nvidia.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org, Ingo Molnar <mingo@kernel.org>
-To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Cc: <linux-rt-users@vger.kernel.org>
+To: Brian Wrenn <dcbrianw@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from skprod3.natinst.com ([130.164.80.24]:40642 "EHLO ni.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S1751023AbdBMQDg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 13 Feb 2017 11:03:36 -0500
 Content-Disposition: inline
-In-Reply-To: <20170213112052.GA6557@twins.programming.kicks-ass.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <CAEYdEeTq+exUaXK7vifQbPCOoJ-mpnQcW89Mxow31BX3St=AgA@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-02-13 12:20:52 [+0100], Peter Zijlstra wrote:
-> > --- a/include/linux/mutex_rt.h
-> > +++ b/include/linux/mutex_rt.h
-> > @@ -43,7 +43,12 @@ extern void __lockfunc _mutex_unlock(str
-> >  #define mutex_lock_killable(l)		_mutex_lock_killable(l)
-> >  #define mutex_trylock(l)		_mutex_trylock(l)
-> >  #define mutex_unlock(l)			_mutex_unlock(l)
-> > +
-> > +#ifdef CONFIG_DEBUG_MUTEXES
-> >  #define mutex_destroy(l)		rt_mutex_destroy(&(l)->lock)
-> > +#else
-> > +static inline void mutex_destroy(struct mutex *lock) {}
-> > +#endif
-> >  
-> >  #ifdef CONFIG_DEBUG_LOCK_ALLOC
-> >  # define mutex_lock_nested(l, s)	_mutex_lock_nested(l, s)
-> > --- a/kernel/locking/rtmutex.c
-> > +++ b/kernel/locking/rtmutex.c
-> > @@ -2027,8 +2027,7 @@ void rt_mutex_destroy(struct rt_mutex *l
-> >  	lock->magic = NULL;
-> >  #endif
-> >  }
-> > -
-> > -EXPORT_SYMBOL_GPL(rt_mutex_destroy);
-> > +EXPORT_SYMBOL(rt_mutex_destroy);
-> 
-> I don't understand:
-> 
-> $ git grep "EXPORT_SYMBOL.*mutex_destroy"
-> kernel/locking/mutex-debug.c:EXPORT_SYMBOL_GPL(mutex_destroy);
-> kernel/locking/rtmutex.c:EXPORT_SYMBOL_GPL(rt_mutex_destroy);
-> 
-> Your proposed patch makes it different from mainline.
+On Fri, Feb 10, 2017 at 07:48:26PM -0500, Brian Wrenn wrote:
+> Hi,
 
-as discussed off-list, I will drop that _GPL removal hunk and keep only
-the (first) inline hunk.
-!GPL users should compile with !CONFIG_DEBUG_MUTEXES and
-!CONFIG_DEBUG_RT_MUTEXES so there should be no regression.
+Hey Brian-
 
-Sebastian
+> I have a kernel module running within Linaro 4.4.9 with PREEMPT RT 17.
+> Within that module I attempt to transfer data from the kernel module
+> to user space.  The user space application does not run real-time,
+> just in plain Linux user space.  With each attempted run I get a
+> kernel dump that begins with the following:
+> 
+> Unable to handle kernel paging request at virtual address <some address>
+> 
+> I'm using mmap in a fairly straightforward way.  Basically, upon an
+> IOC command from the user space application to the kernel module, the
+> kernel module attempts to copy data into the memory mapped area.  I've
+> checked, double checked, and triple checked that I'm not writing to a
+> bad address or an address outside of the mmap'ed area.
+
+How are you performing your checks?  How are you performing the copy?
+
+> Are there some special (special in the sense of in addition to or
+> instead of the way done for a non-PREEMPT-RT kernel) things one must
+> do to safely write mmap'ed data within a PREEMPT RT kernel?
+
+You didn't explicitly mention it, so I thought I'd check: the same
+operation, performed on a non-RT kernel doesn't reproduce the above
+OOPs?
+
+   Julia
