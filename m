@@ -1,100 +1,201 @@
-From: Julia Cartwright <julia@ni.com>
-Subject: Re: mmap paging problems
-Date: Mon, 13 Feb 2017 15:32:54 -0600
-Message-ID: <20170213213254.GL5599@jcartwri.amer.corp.natinst.com>
-References: <CAEYdEeTq+exUaXK7vifQbPCOoJ-mpnQcW89Mxow31BX3St=AgA@mail.gmail.com>
- <20170213160329.GK5599@jcartwri.amer.corp.natinst.com>
- <CAEYdEeTyuYQjxA+Wn5ABB=asdxeZZeUKMdwZyU0geiOn3_ecrQ@mail.gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 4.4.47-rt59
+Date: Mon, 13 Feb 2017 17:31:19 -0500
+Message-ID: <20170213173119.115c900b@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Brian Wrenn <dcbrianw@gmail.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod3.natinst.com ([130.164.80.24]:49671 "EHLO ni.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1752730AbdBMVc4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 13 Feb 2017 16:32:56 -0500
-Content-Disposition: inline
-In-Reply-To: <CAEYdEeTyuYQjxA+Wn5ABB=asdxeZZeUKMdwZyU0geiOn3_ecrQ@mail.gmail.com>
+Received: from mail.kernel.org ([198.145.29.136]:34912 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751000AbdBMWbZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 13 Feb 2017 17:31:25 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Feb 13, 2017 at 03:52:19PM -0500, Brian Wrenn wrote:
-[..]
-> On Monday, February 13, 2017, Julia Cartwright <julia@ni.com> wrote:
-> > On Fri, Feb 10, 2017 at 07:48:26PM -0500, Brian Wrenn wrote:
-[..]
-> > > Unable to handle kernel paging request at virtual address <some address>
-> > >
-> > > I'm using mmap in a fairly straightforward way.  Basically, upon an
-> > > IOC command from the user space application to the kernel module, the
-> > > kernel module attempts to copy data into the memory mapped area.
 
-What you are referring to when you say "the memory mapped area" here is
-ambiguous, as there are two separate address spaces being spoken about.
+Dear RT Folks,
 
-Assuming you've allocated a page with get_zeroed_page(GFP_KERNEL) and
-established it as the backing page in your vm_operations_struct fault
-callback (like the linked below example), then the two mappings are:
+I'm pleased to announce the 4.4.47-rt59 stable release.
 
-  1. A mapping in the kernels' address space.
-  2. A mapping in the calling process's address space (and, possibly in
-       forked processes address spaces as well, depending on the VM area
-       flags!)
 
-Mappings into the kernel space may be accessed by kernel code in the
-"normal" ways, through pointer dereference, memset()/memcpy() and
-friends, etc, however, kernel code must handle accesses into usermode
-very carefully.
+You can get this release via the git tree at:
 
-The calling user code doesn't know anything about, nor should it know
-anything about the existence of the kernel mapping.  It operates purely
-on the process mapping (number 2 above), a pointer to which is returned
-from the mmap*() system call.
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-> > > I've checked, double checked, and triple checked that I'm not
-> > > writing to a bad address or an address outside of the mmap'ed
-> > > area.
-> >
-> > How are you performing your checks?  How are you performing the
-> > copy?
->
-> I use memcpy() to perform the copy.  To perorm my checks, I simply use the
-> write-to address provided by the call to get_zeroed_page(GFP_KERNEL) on the
-> kernel side.
+  branch: v4.4-rt
+  Head SHA1: 80398f6fc8e4725cd888477650b5f8a4d441b772
 
-Okay, so from this it sounds like you're, in your kernel code, only
-passing the pointer returned from get_zeroed_page(GFP_KERNEL) as the
-destination pointer to memcpy().  This should work fine, as long as you
-aren't exceeding the PAGE_SIZE'd buffer.  Is this the case?
 
-> I've based the mmap aspects of my driver on this example.  I've
-> attempted memcpy() on sizes of 64 bytes, 1Kbyte and 9Kbytes.  64 bytes
-> hasn't caused a problem thus far.  1Kbyte consistently leads to the
-> OOPs.
+Or to build 4.4.47-rt59 directly, the following patches should be applied:
 
-Just a thought: does your target architecture have aligned access
-requirements that aren't being met?
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
 
-[..]
-> > > Are there some special (special in the sense of in addition to or
-> > > instead of the way done for a non-PREEMPT-RT kernel) things one must
-> > > do to safely write mmap'ed data within a PREEMPT RT kernel?
-> >
-> > You didn't explicitly mention it, so I thought I'd check: the same
-> > operation, performed on a non-RT kernel doesn't reproduce the above
-> > OOPs?
->
-> I have not tried this on a non-RT kernel.  I can attempt to run my setup
-> with a non-RT kernel on Thursday.  I'm out of the office without access to
-> my setup until then.  But I will see if that works just to get a basis of
-> comparsion.
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.47.xz
 
-An administrative note: I think you're beyond linux-rt-users in scope
-here, unless you can show that it is somehow an RT-specific problem.  A
-better venue for this kind of question would probably be the
-kernelnewbies list.
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.47-rt59.patch.xz
 
-Good luck,
 
-   Julia
+
+You can also build from 4.4.47-rt58 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/incr/patch-4.4.47-rt58-rt59.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
+
+
+Changes from v4.4.47-rt58:
+
+---
+
+Sebastian Andrzej Siewior (2):
+      net: free the sbs in skbufhead
+      workqueue: use rcu_readlock() in put_pwq_unlocked()
+
+Steven Rostedt (1):
+      net: Have __napi_schedule_irqoff() disable interrupts on RT
+
+Steven Rostedt (VMware) (1):
+      Linux 4.4.47-rt59
+
+Yang Shi (1):
+      arm: kprobe: replace patch_lock to raw lock
+
+----
+ arch/arm/kernel/patch.c   |  6 +++---
+ include/linux/netdevice.h | 12 ++++++++++++
+ kernel/workqueue.c        |  2 ++
+ localversion-rt           |  2 +-
+ net/core/dev.c            | 10 ++++++++++
+ 5 files changed, 28 insertions(+), 4 deletions(-)
+---------------------------
+diff --git a/arch/arm/kernel/patch.c b/arch/arm/kernel/patch.c
+index 69bda1a5707e..1f665acaa6a9 100644
+--- a/arch/arm/kernel/patch.c
++++ b/arch/arm/kernel/patch.c
+@@ -15,7 +15,7 @@ struct patch {
+ 	unsigned int insn;
+ };
+ 
+-static DEFINE_SPINLOCK(patch_lock);
++static DEFINE_RAW_SPINLOCK(patch_lock);
+ 
+ static void __kprobes *patch_map(void *addr, int fixmap, unsigned long *flags)
+ 	__acquires(&patch_lock)
+@@ -32,7 +32,7 @@ static void __kprobes *patch_map(void *addr, int fixmap, unsigned long *flags)
+ 		return addr;
+ 
+ 	if (flags)
+-		spin_lock_irqsave(&patch_lock, *flags);
++		raw_spin_lock_irqsave(&patch_lock, *flags);
+ 	else
+ 		__acquire(&patch_lock);
+ 
+@@ -47,7 +47,7 @@ static void __kprobes patch_unmap(int fixmap, unsigned long *flags)
+ 	clear_fixmap(fixmap);
+ 
+ 	if (flags)
+-		spin_unlock_irqrestore(&patch_lock, *flags);
++		raw_spin_unlock_irqrestore(&patch_lock, *flags);
+ 	else
+ 		__release(&patch_lock);
+ }
+diff --git a/include/linux/netdevice.h b/include/linux/netdevice.h
+index 0590f5380814..b3fa55658bd2 100644
+--- a/include/linux/netdevice.h
++++ b/include/linux/netdevice.h
+@@ -390,7 +390,19 @@ typedef enum rx_handler_result rx_handler_result_t;
+ typedef rx_handler_result_t rx_handler_func_t(struct sk_buff **pskb);
+ 
+ void __napi_schedule(struct napi_struct *n);
++
++/*
++ * When PREEMPT_RT_FULL is defined, all device interrupt handlers
++ * run as threads, and they can also be preempted (without PREEMPT_RT
++ * interrupt threads can not be preempted). Which means that calling
++ * __napi_schedule_irqoff() from an interrupt handler can be preempted
++ * and can corrupt the napi->poll_list.
++ */
++#ifdef CONFIG_PREEMPT_RT_FULL
++#define __napi_schedule_irqoff(n) __napi_schedule(n)
++#else
+ void __napi_schedule_irqoff(struct napi_struct *n);
++#endif
+ 
+ static inline bool napi_disable_pending(struct napi_struct *n)
+ {
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index 965d5f65e847..d5b0f4fc0eb0 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -1135,9 +1135,11 @@ static void put_pwq_unlocked(struct pool_workqueue *pwq)
+ 		 * As both pwqs and pools are RCU protected, the
+ 		 * following lock operations are safe.
+ 		 */
++		rcu_read_lock();
+ 		local_spin_lock_irq(pendingb_lock, &pwq->pool->lock);
+ 		put_pwq(pwq);
+ 		local_spin_unlock_irq(pendingb_lock, &pwq->pool->lock);
++		rcu_read_unlock();
+ 	}
+ }
+ 
+diff --git a/localversion-rt b/localversion-rt
+index f9df2cf089cf..8cdeb45db6e2 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt58
++-rt59
+diff --git a/net/core/dev.c b/net/core/dev.c
+index a48dbd37dd43..d63b1f9ca08f 100644
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -4714,6 +4714,7 @@ void __napi_schedule(struct napi_struct *n)
+ }
+ EXPORT_SYMBOL(__napi_schedule);
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
+ /**
+  * __napi_schedule_irqoff - schedule for receive
+  * @n: entry to schedule
+@@ -4725,6 +4726,7 @@ void __napi_schedule_irqoff(struct napi_struct *n)
+ 	____napi_schedule(this_cpu_ptr(&softnet_data), n);
+ }
+ EXPORT_SYMBOL(__napi_schedule_irqoff);
++#endif
+ 
+ void __napi_complete(struct napi_struct *n)
+ {
+@@ -4951,13 +4953,21 @@ static void net_rx_action(struct softirq_action *h)
+ 	struct softnet_data *sd = this_cpu_ptr(&softnet_data);
+ 	unsigned long time_limit = jiffies + 2;
+ 	int budget = netdev_budget;
++	struct sk_buff_head tofree_q;
++	struct sk_buff *skb;
+ 	LIST_HEAD(list);
+ 	LIST_HEAD(repoll);
+ 
++	__skb_queue_head_init(&tofree_q);
++
+ 	local_irq_disable();
++	skb_queue_splice_init(&sd->tofree_queue, &tofree_q);
+ 	list_splice_init(&sd->poll_list, &list);
+ 	local_irq_enable();
+ 
++	while ((skb = __skb_dequeue(&tofree_q)))
++		kfree_skb(skb);
++
+ 	for (;;) {
+ 		struct napi_struct *n;
+ 
