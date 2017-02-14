@@ -1,152 +1,48 @@
-From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: Re: [RFC][PATCH 00/21] tracing: Inter-event (e.g. latency) support
-Date: Tue, 14 Feb 2017 18:37:10 +0900
-Message-ID: <20170214183710.b06ba18b6421fb033c9be8b9@kernel.org>
-References: <cover.1486569306.git.tom.zanussi@linux.intel.com>
-        <20170210041617.GE599@sejong>
-        <20170210183425.3444f5a28779bec9034230d4@kernel.org>
-        <1486753110.3005.5.camel@tzanussi-mobl.amr.corp.intel.com>
-        <20170213010416.GE14705@sejong>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: Changing checksums of RT patches
+Date: Tue, 14 Feb 2017 09:18:29 -0500
+Message-ID: <20170214091829.12273157@gandalf.local.home>
+References: <12e5d51b-8589-d9ba-90cd-d00688e8602d@gmx.de>
+        <20170210185433.h35nynmmeu5toml6@linutronix.de>
+        <812bef1a-a86e-15b6-b77c-6455832c8790@gmx.de>
+        <548e1359-5539-4a7c-e9ca-44817ffa69b6@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Masami Hiramatsu <mhiramat@kernel.org>, <rostedt@goodmis.org>,
-        <tglx@linutronix.de>, <linux-kernel@vger.kernel.org>,
-        <linux-rt-users@vger.kernel.org>
-To: Namhyung Kim <namhyung@kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        linux-rt-users@vger.kernel.org
+To: Dominic =?UTF-8?B?U2FjcsOp?= <dominic.sacre@gmx.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:60460 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.136]:38250 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751866AbdBNJhW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 14 Feb 2017 04:37:22 -0500
-In-Reply-To: <20170213010416.GE14705@sejong>
+        id S1754049AbdBNOSm (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 14 Feb 2017 09:18:42 -0500
+In-Reply-To: <548e1359-5539-4a7c-e9ca-44817ffa69b6@gmx.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 13 Feb 2017 10:04:16 +0900
-Namhyung Kim <namhyung@kernel.org> wrote:
+On Tue, 14 Feb 2017 00:15:33 +0100
+Dominic Sacré <dominic.sacre@gmx.de> wrote:
 
-> On Fri, Feb 10, 2017 at 12:58:30PM -0600, Tom Zanussi wrote:
-> > Hi Masami,
+> On 2017-02-13 23:56, Dominic Sacré wrote:
+> > On 2017-02-10 19:54, Sebastian Andrzej Siewior wrote:  
+> >> Can you tell me which file in which folder changed?  
 > > 
-> > On Fri, 2017-02-10 at 18:34 +0900, Masami Hiramatsu wrote:
-> > > On Fri, 10 Feb 2017 13:16:17 +0900
-> > > Namhyung Kim <namhyung@kernel.org> wrote:
-> > > 
-> > > > >   ====
-> > > > >   Example - wakeup latency
-> > > > >   ====
-> > > > > 
-> > > > >   This basically implements the -RT latency_hist 'wakeup_latency'
-> > > > >   histogram using the synthetic events, variables, and actions
-> > > > >   described.  The output below is from a run of cyclictest using the
-> > > > >   following command:
-> > > > > 
-> > > > >     # rt-tests/cyclictest -p 80 -n -s -t 2
-> > > > > 
-> > > > >   What we're measuring the latency of is the time between when a
-> > > > >   thread (of cyclictest) is awakened and when it's scheduled in.  To
-> > > > >   do that we add triggers to sched_wakeup and sched_switch with the
-> > > > >   appropriate variables, and on a matching sched_switch event,
-> > > > >   generate a synthetic 'wakeup_latency' event.  Since it's just
-> > > > >   another trace event like any other, we can also define a histogram
-> > > > >   on that event, the output of which is what we see displayed when
-> > > > >   reading the wakeup_latency 'hist' file.
-> > > > > 
-> > > > >   First, we create a synthetic event called wakeup_latency, that
-> > > > >   references 3 variables from other events:
-> > > > > 
-> > > > >     # echo 'wakeup_latency lat=sched_switch:wakeup_lat \
-> > > > >                            pid=sched_switch:woken_pid \
-> > > > >                            prio=sched_switch:woken_prio' >> \
-> > > > >             /sys/kernel/debug/tracing/synthetic_events
-> > > > > 
-> > > > >   Next we add a trigger to sched_wakeup, which saves the value of the
-> > > > >   'common_timestamp' when that event is hit in a variable, ts0.  Note
-> > > > >   that this happens only when 'comm==cyclictest'.
-> > > > > 
-> > > > >   Also, 'common_timestamp' is a new field defined on every event (if
-> > > > >   needed - if there are no users of timestamps in a trace, timestamps
-> > > > >   won't be saved and there's no additional overhead from that).
-> > > > > 
-> > > > >     #  echo 'hist:keys=pid:ts0=common_timestamp.usecs if \
-> > > > >              comm=="cyclictest"' >> \
-> > > > >              /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-> > > > > 
-> > > > >   Next, we add a trigger to sched_switch.  When the pid being switched
-> > > > >   to matches the pid woken up by a previous sched_wakeup event, this
-> > > > >   event grabs the ts0 saved on that event, takes the difference
-> > > > >   between it and the current sched_switch's common_timestamp, and
-> > > > >   assigns it to a new 'wakeup_lat' variable.  It also saves a couple
-> > > > >   other variables and then invokes the onmatch().trace() action which
-> > > > >   generates a new wakeup_latency event using those variables.
-> > > > > 
-> > > > >     # echo 'hist:keys=woken_pid=next_pid:woken_prio=next_prio:\
-> > > > >        wakeup_lat=common_timestamp.usecs-ts0:onmatch().trace(wakeup_latency) \
-> > > > >             if next_comm=="cyclictest"' >> \
-> > > > >             /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-> > > > 
-> > > > As Masami said, I think the syntax is a bit hard to understand.  Also
-> > > > it'd be nice to access an event field directly (i.e. not by adding a
-> > > > field in a hist).  Maybe we can use a prefix like '$' to identify hist
-> > > > fields..
-> > > 
-> > > Ah that's a nice idea!
-> > > 
-> > > > 
-> > > > How about below?
-> > > > 
-> > > >   # echo 'wakeup_latency \
-> > > >   		lat=sched_switch.$wakeup_lat  \
-> > > > 		pid=sched_switch.next_pid     \
-> > > > 		prio=sched_switch.next_prio' >> \
-> > > > 	/sys/kernel/debug/tracing/synthetic_events
-> > > 
-> > > Should we define these parameter assignment at this.point?
-> > > 
-> > > I think this syntax binds wakeup_latency event to sched_switch too tight. I 
-> > > mean, if someone kicks this event from some other event, it may easily lose 
-> > > values.
-> > > So, at this point, we will define event name and what parameters it has,
-> > > until binding this event to onmatch().
-> > > 
-> > 
-> > Right, I agree this binding doesn't need to be done here, good idea to
-> > defer it as below...
-> > 
-> > > >   # echo 'hist: \
-> > > >   		keys=pid: \
-> > > > 		ts0=common_timestamp.usec \
-> > > > 		if comm=="cyclictest"' >> \
-> > > > 	/sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-> > > > 
-> > > >   # echo 'hist: \
-> > > > 		keys=next_pid: \
-> > > > 		wakeup_lat=common_timestamp.usec-$ts0: \
-> > > > 		onmatch(sched_wakeup).trace(wakeup_latency) \
-> > > 
-> > > This one seems much better for me, but I would like to ask you call event 
-> > > directly from onmatch, like as
-> > > 
-> > >  "onmatch(sched_wakeup).wakeup_latency(wakeup_lat,next_pid,next_prio)"
-> > > 
-> > > At this point, kernel will finalize the wakeup_latency event with wakeup_lat,
-> > > next_pid and next_prio.
-> > > 
-> > 
-> > Yes, I like this much better - things are no longer so implicit and
-> > therefore subject to confusion, and the syntax itself makes more sense,
-> > even if it is a bit more verbose on the trigger, which is fine.
+> > The files I'm currently concerned with are in the rt/4.1/older directory.  
 > 
-> I thought about it too, but it needs to add some kind of type checking
-> then.  What if another hist generates the event with totally different
-> info?
+> While I was writing my previous mail, 4.1.38-rt45 was released. Attached
+> is a diff between rt/4.1/older/sha256sums.asc before (4 days ago) and
+> after -rt45 was added.
+> Note how the gzip-compressed files for 4.1.35-rt40 and 4.1.38-rt44
+> changed in the meantime.
 
-In that case, we can just reject the onmatch command :)
-Anyway, when we bind it to other events, the type should be checked.
+I wonder if my process caused this. I use to just have a copy of the
+current patches in the main directory, and someone asked me to place a
+copy in the older directory, which I started doing. Now when I release
+a newer kernel, I move the previous version from the main directory
+into the older directory deleting the copy that was there.
 
-Thank you,
+Could this be the cause of your issue?
 
--- 
-Masami Hiramatsu <mhiramat@kernel.org>
+-- Steve
+
