@@ -1,377 +1,152 @@
-From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [RFC][PATCH 13/21] tracing: Add simple expression support to
- hist triggers
-Date: Tue, 14 Feb 2017 11:37:26 +0900
-Message-ID: <20170214023726.GM14705@sejong>
+From: Masami Hiramatsu <mhiramat@kernel.org>
+Subject: Re: [RFC][PATCH 00/21] tracing: Inter-event (e.g. latency) support
+Date: Tue, 14 Feb 2017 18:37:10 +0900
+Message-ID: <20170214183710.b06ba18b6421fb033c9be8b9@kernel.org>
 References: <cover.1486569306.git.tom.zanussi@linux.intel.com>
- <0ec36d09fff75cfa8fe241b2e3026400cf22880f.1486569306.git.tom.zanussi@linux.intel.com>
+        <20170210041617.GE599@sejong>
+        <20170210183425.3444f5a28779bec9034230d4@kernel.org>
+        <1486753110.3005.5.camel@tzanussi-mobl.amr.corp.intel.com>
+        <20170213010416.GE14705@sejong>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Cc: <rostedt@goodmis.org>, <tglx@linutronix.de>, <mhiramat@kernel.org>,
-        <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-To: Tom Zanussi <tom.zanussi@linux.intel.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Masami Hiramatsu <mhiramat@kernel.org>, <rostedt@goodmis.org>,
+        <tglx@linutronix.de>, <linux-kernel@vger.kernel.org>,
+        <linux-rt-users@vger.kernel.org>
+To: Namhyung Kim <namhyung@kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from LGEAMRELO13.lge.com ([156.147.23.53]:37513 "EHLO
-        lgeamrelo13.lge.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751023AbdBNChc (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 13 Feb 2017 21:37:32 -0500
-In-Reply-To: <0ec36d09fff75cfa8fe241b2e3026400cf22880f.1486569306.git.tom.zanussi@linux.intel.com>
-Content-Disposition: inline
+Received: from mail.kernel.org ([198.145.29.136]:60460 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751866AbdBNJhW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 14 Feb 2017 04:37:22 -0500
+In-Reply-To: <20170213010416.GE14705@sejong>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Feb 08, 2017 at 11:25:09AM -0600, Tom Zanussi wrote:
-> Add support for simple addition, subtraction, and unary expressions
-> (-(expr) and expr, where expr = b-a, a+b, a+b+c) to hist triggers, in
-> order to support a minimal set of useful inter-event calculations.
+On Mon, 13 Feb 2017 10:04:16 +0900
+Namhyung Kim <namhyung@kernel.org> wrote:
+
+> On Fri, Feb 10, 2017 at 12:58:30PM -0600, Tom Zanussi wrote:
+> > Hi Masami,
+> > 
+> > On Fri, 2017-02-10 at 18:34 +0900, Masami Hiramatsu wrote:
+> > > On Fri, 10 Feb 2017 13:16:17 +0900
+> > > Namhyung Kim <namhyung@kernel.org> wrote:
+> > > 
+> > > > >   ====
+> > > > >   Example - wakeup latency
+> > > > >   ====
+> > > > > 
+> > > > >   This basically implements the -RT latency_hist 'wakeup_latency'
+> > > > >   histogram using the synthetic events, variables, and actions
+> > > > >   described.  The output below is from a run of cyclictest using the
+> > > > >   following command:
+> > > > > 
+> > > > >     # rt-tests/cyclictest -p 80 -n -s -t 2
+> > > > > 
+> > > > >   What we're measuring the latency of is the time between when a
+> > > > >   thread (of cyclictest) is awakened and when it's scheduled in.  To
+> > > > >   do that we add triggers to sched_wakeup and sched_switch with the
+> > > > >   appropriate variables, and on a matching sched_switch event,
+> > > > >   generate a synthetic 'wakeup_latency' event.  Since it's just
+> > > > >   another trace event like any other, we can also define a histogram
+> > > > >   on that event, the output of which is what we see displayed when
+> > > > >   reading the wakeup_latency 'hist' file.
+> > > > > 
+> > > > >   First, we create a synthetic event called wakeup_latency, that
+> > > > >   references 3 variables from other events:
+> > > > > 
+> > > > >     # echo 'wakeup_latency lat=sched_switch:wakeup_lat \
+> > > > >                            pid=sched_switch:woken_pid \
+> > > > >                            prio=sched_switch:woken_prio' >> \
+> > > > >             /sys/kernel/debug/tracing/synthetic_events
+> > > > > 
+> > > > >   Next we add a trigger to sched_wakeup, which saves the value of the
+> > > > >   'common_timestamp' when that event is hit in a variable, ts0.  Note
+> > > > >   that this happens only when 'comm==cyclictest'.
+> > > > > 
+> > > > >   Also, 'common_timestamp' is a new field defined on every event (if
+> > > > >   needed - if there are no users of timestamps in a trace, timestamps
+> > > > >   won't be saved and there's no additional overhead from that).
+> > > > > 
+> > > > >     #  echo 'hist:keys=pid:ts0=common_timestamp.usecs if \
+> > > > >              comm=="cyclictest"' >> \
+> > > > >              /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+> > > > > 
+> > > > >   Next, we add a trigger to sched_switch.  When the pid being switched
+> > > > >   to matches the pid woken up by a previous sched_wakeup event, this
+> > > > >   event grabs the ts0 saved on that event, takes the difference
+> > > > >   between it and the current sched_switch's common_timestamp, and
+> > > > >   assigns it to a new 'wakeup_lat' variable.  It also saves a couple
+> > > > >   other variables and then invokes the onmatch().trace() action which
+> > > > >   generates a new wakeup_latency event using those variables.
+> > > > > 
+> > > > >     # echo 'hist:keys=woken_pid=next_pid:woken_prio=next_prio:\
+> > > > >        wakeup_lat=common_timestamp.usecs-ts0:onmatch().trace(wakeup_latency) \
+> > > > >             if next_comm=="cyclictest"' >> \
+> > > > >             /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+> > > > 
+> > > > As Masami said, I think the syntax is a bit hard to understand.  Also
+> > > > it'd be nice to access an event field directly (i.e. not by adding a
+> > > > field in a hist).  Maybe we can use a prefix like '$' to identify hist
+> > > > fields..
+> > > 
+> > > Ah that's a nice idea!
+> > > 
+> > > > 
+> > > > How about below?
+> > > > 
+> > > >   # echo 'wakeup_latency \
+> > > >   		lat=sched_switch.$wakeup_lat  \
+> > > > 		pid=sched_switch.next_pid     \
+> > > > 		prio=sched_switch.next_prio' >> \
+> > > > 	/sys/kernel/debug/tracing/synthetic_events
+> > > 
+> > > Should we define these parameter assignment at this.point?
+> > > 
+> > > I think this syntax binds wakeup_latency event to sched_switch too tight. I 
+> > > mean, if someone kicks this event from some other event, it may easily lose 
+> > > values.
+> > > So, at this point, we will define event name and what parameters it has,
+> > > until binding this event to onmatch().
+> > > 
+> > 
+> > Right, I agree this binding doesn't need to be done here, good idea to
+> > defer it as below...
+> > 
+> > > >   # echo 'hist: \
+> > > >   		keys=pid: \
+> > > > 		ts0=common_timestamp.usec \
+> > > > 		if comm=="cyclictest"' >> \
+> > > > 	/sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+> > > > 
+> > > >   # echo 'hist: \
+> > > > 		keys=next_pid: \
+> > > > 		wakeup_lat=common_timestamp.usec-$ts0: \
+> > > > 		onmatch(sched_wakeup).trace(wakeup_latency) \
+> > > 
+> > > This one seems much better for me, but I would like to ask you call event 
+> > > directly from onmatch, like as
+> > > 
+> > >  "onmatch(sched_wakeup).wakeup_latency(wakeup_lat,next_pid,next_prio)"
+> > > 
+> > > At this point, kernel will finalize the wakeup_latency event with wakeup_lat,
+> > > next_pid and next_prio.
+> > > 
+> > 
+> > Yes, I like this much better - things are no longer so implicit and
+> > therefore subject to confusion, and the syntax itself makes more sense,
+> > even if it is a bit more verbose on the trigger, which is fine.
 > 
-> These operations are needed for calculating latencies between events
-> (timestamp1-timestamp0) and for combined latencies (latencies over 3
-> or more events).
-> 
-> In the process, factor out some common code from key and value
-> parsing.
-> 
-> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> ---
+> I thought about it too, but it needs to add some kind of type checking
+> then.  What if another hist generates the event with totally different
+> info?
 
-[SNIP]
-> +static struct hist_field *parse_expr(struct hist_trigger_data *hist_data,
-> +				     struct trace_event_file *file,
-> +				     char *str, unsigned long flags,
-> +				     char *var_name);
-> +
-> +static struct hist_field *parse_unary(struct hist_trigger_data *hist_data,
-> +				      struct trace_event_file *file,
-> +				      char *str, unsigned long flags,
-> +				      char *var_name)
-> +{
-> +	struct hist_field *operand1, *expr = NULL;
-> +	struct ftrace_event_field *field = NULL;
-> +	unsigned long operand_flags;
-> +	char *operand1_str;
-> +	int ret = 0;
-> +	char *s;
-> +
-> +	// we support only -(xxx) i.e. explicit parens required
-> +
-> +	str++; // skip leading '-'
-> +
-> +	s = strchr(str, '(');
-> +	if (s)
-> +		str++;
-> +	else {
-> +		ret = -EINVAL;
-> +		goto free;
-> +	}
-> +
-> +	s = strchr(str, ')');
-> +	if (s)
-> +		*s = '\0';
-> +	else {
-> +		ret = -EINVAL; // no closing ')'
-> +		goto free;
-> +	}
-> +
-> +	operand1_str = strsep(&str, "(");
-> +	if (!operand1_str)
-> +		goto free;
-> +
-> +	flags |= HIST_FIELD_FL_EXPR;
-> +	expr = create_hist_field(NULL, flags, var_name);
-> +	if (!expr) {
-> +		ret = -ENOMEM;
-> +		goto free;
-> +	}
-> +
-> +	operand_flags = 0;
-> +	operand1 = parse_expr(hist_data, file, str, operand_flags, NULL);
+In that case, we can just reject the onmatch command :)
+Anyway, when we bind it to other events, the type should be checked.
 
-Doesn't it create an unbounded recursion?
+Thank you,
 
-Thanks,
-Namhyung
-
-
-> +	if (IS_ERR(operand1)) {
-> +		ret = PTR_ERR(operand1);
-> +		goto free;
-> +	}
-> +
-> +	if (operand1 == NULL) {
-> +		operand_flags = 0;
-> +		field = parse_field(hist_data, file, operand1_str,
-> +				    &operand_flags);
-> +		if (IS_ERR(field)) {
-> +			ret = PTR_ERR(field);
-> +			goto free;
-> +		}
-> +		operand1 = create_hist_field(field, operand_flags, NULL);
-> +		if (!operand1) {
-> +			ret = -ENOMEM;
-> +			goto free;
-> +		}
-> +	}
-> +
-> +	expr->fn = hist_field_unary_minus;
-> +	expr->operands[0] = operand1;
-> +	expr->operator = FIELD_OP_UNARY_MINUS;
-> +	expr->name = expr_str(expr);
-> +
-> +	return expr;
-> + free:
-> +	return ERR_PTR(ret);
-> +}
-> +
-> +static struct hist_field *parse_expr(struct hist_trigger_data *hist_data,
-> +				     struct trace_event_file *file,
-> +				     char *str, unsigned long flags,
-> +				     char *var_name)
-> +{
-> +	struct hist_field *operand1, *operand2, *expr = NULL;
-> +	struct ftrace_event_field *field = NULL;
-> +	unsigned long operand_flags;
-> +	int field_op, ret = -EINVAL;
-> +	char *sep, *operand1_str;
-> +
-> +	field_op = contains_operator(str);
-> +	if (field_op == FIELD_OP_NONE)
-> +		return NULL;
-> +
-> +	if (field_op == FIELD_OP_UNARY_MINUS)
-> +		return parse_unary(hist_data, file, str, flags, var_name);
-> +
-> +	switch (field_op) {
-> +	case FIELD_OP_MINUS:
-> +		sep = "-";
-> +		break;
-> +	case FIELD_OP_PLUS:
-> +		sep = "+";
-> +		break;
-> +	default:
-> +		goto free;
-> +	}
-> +
-> +	operand1_str = strsep(&str, sep);
-> +	if (!operand1_str || !str)
-> +		goto free;
-> +
-> +	operand_flags = 0;
-> +	field = parse_field(hist_data, file, operand1_str, &operand_flags);
-> +	if (IS_ERR(field)) {
-> +		ret = PTR_ERR(field);
-> +		goto free;
-> +	}
-> +	operand1 = create_hist_field(field, operand_flags, NULL);
-> +	if (!operand1) {
-> +		ret = -ENOMEM;
-> +		operand1 = NULL;
-> +		goto free;
-> +	}
-> +
-> +	// rest of string could be another expression e.g. b+c in a+b+c
-> +	operand_flags = 0;
-> +	operand2 = parse_expr(hist_data, file, str, operand_flags, NULL);
-> +	if (IS_ERR(operand2)) {
-> +		ret = PTR_ERR(operand2);
-> +		operand2 = NULL;
-> +		goto free;
-> +	}
-> +	if (!operand2) {
-> +		operand_flags = 0;
-> +		field = parse_field(hist_data, file, str, &operand_flags);
-> +		if (IS_ERR(field)) {
-> +			ret = PTR_ERR(field);
-> +			goto free;
-> +		}
-> +		operand2 = create_hist_field(field, operand_flags, NULL);
-> +		if (!operand2) {
-> +			ret = -ENOMEM;
-> +			operand2 = NULL;
-> +			goto free;
-> +		}
-> +	}
-> +
-> +	flags |= HIST_FIELD_FL_EXPR;
-> +	expr = create_hist_field(NULL, flags, var_name);
-> +	if (!expr) {
-> +		ret = -ENOMEM;
-> +		goto free;
-> +	}
-> +
-> +	expr->operands[0] = operand1;
-> +	expr->operands[1] = operand2;
-> +	expr->operator = field_op;
-> +	expr->name = expr_str(expr);
-> +
-> +	switch (field_op) {
-> +	case FIELD_OP_MINUS:
-> +		expr->fn = hist_field_minus;
-> +		break;
-> +	case FIELD_OP_PLUS:
-> +		expr->fn = hist_field_plus;
-> +		break;
-> +	default:
-> +		goto free;
-> +	}
-> +
-> +	return expr;
-> + free:
-> +	destroy_hist_field(operand1);
-> +	destroy_hist_field(operand2);
-> +	destroy_hist_field(expr);
-> +
-> +	return ERR_PTR(ret);
-> +}
-> +
->  static int create_hitcount_val(struct hist_trigger_data *hist_data)
->  {
->  	hist_data->fields[HITCOUNT_IDX] =
-> @@ -529,8 +874,9 @@ static int create_val_field(struct hist_trigger_data *hist_data,
->  			    char *field_str, char *var_name)
->  {
->  	struct ftrace_event_field *field = NULL;
-> -	char *field_name, *token;
-> +	struct hist_field *hist_field;
->  	unsigned long flags = 0;
-> +	char *token;
->  	int ret = 0;
->  
->  	if (WARN_ON(val_idx >= TRACING_MAP_VALS_MAX))
-> @@ -549,32 +895,27 @@ static int create_val_field(struct hist_trigger_data *hist_data,
->  		flags |= HIST_FIELD_FL_VAR;
->  	}
->  
-> -	field_name = strsep(&field_str, ".");
-> -	if (field_str) {
-> -		if (strcmp(field_str, "hex") == 0)
-> -			flags |= HIST_FIELD_FL_HEX;
-> -		else {
-> -			ret = -EINVAL;
-> +	hist_field = parse_expr(hist_data, file, field_str, flags, var_name);
-> +	if (IS_ERR(hist_field)) {
-> +		ret = PTR_ERR(hist_field);
-> +		goto out;
-> +	}
-> +
-> +	if (!hist_field) {
-> +		field = parse_field(hist_data, file, field_str, &flags);
-> +		if (IS_ERR(field)) {
-> +			ret = PTR_ERR(field);
->  			goto out;
->  		}
-> -	}
->  
-> -	if (strcmp(field_name, "common_timestamp") == 0) {
-> -		flags |= HIST_FIELD_FL_TIMESTAMP;
-> -		hist_data->enable_timestamps = true;
-> -	} else {
-> -		field = trace_find_event_field(file->event_call, field_name);
-> -		if (!field) {
-> -			ret = -EINVAL;
-> +		hist_field = create_hist_field(field, flags, var_name);
-> +		if (!hist_field) {
-> +			ret = -ENOMEM;
->  			goto out;
->  		}
->  	}
->  
-> -	hist_data->fields[val_idx] = create_hist_field(field, flags, var_name);
-> -	if (!hist_data->fields[val_idx]) {
-> -		ret = -ENOMEM;
-> -		goto out;
-> -	}
-> +	hist_data->fields[val_idx] = hist_field;
->  
->  	++hist_data->n_vals;
->  
-> @@ -623,6 +964,7 @@ static int create_key_field(struct hist_trigger_data *hist_data,
->  			    char *field_str)
->  {
->  	struct ftrace_event_field *field = NULL;
-> +	struct hist_field *hist_field;
->  	unsigned long flags = 0;
->  	unsigned int key_size;
->  	char *var_name;
-> @@ -640,53 +982,40 @@ static int create_key_field(struct hist_trigger_data *hist_data,
->  	if (strcmp(field_str, "stacktrace") == 0) {
->  		flags |= HIST_FIELD_FL_STACKTRACE;
->  		key_size = sizeof(unsigned long) * HIST_STACKTRACE_DEPTH;
-> +		hist_field = create_hist_field(field, flags, var_name);
->  	} else {
-> -		char *field_name = strsep(&field_str, ".");
-> -
-> -		if (field_str) {
-> -			if (strcmp(field_str, "hex") == 0)
-> -				flags |= HIST_FIELD_FL_HEX;
-> -			else if (strcmp(field_str, "sym") == 0)
-> -				flags |= HIST_FIELD_FL_SYM;
-> -			else if (strcmp(field_str, "sym-offset") == 0)
-> -				flags |= HIST_FIELD_FL_SYM_OFFSET;
-> -			else if ((strcmp(field_str, "execname") == 0) &&
-> -				 (strcmp(field_name, "common_pid") == 0))
-> -				flags |= HIST_FIELD_FL_EXECNAME;
-> -			else if (strcmp(field_str, "syscall") == 0)
-> -				flags |= HIST_FIELD_FL_SYSCALL;
-> -			else if (strcmp(field_str, "log2") == 0)
-> -				flags |= HIST_FIELD_FL_LOG2;
-> -			else {
-> -				ret = -EINVAL;
-> -				goto out;
-> -			}
-> +		hist_field = parse_expr(hist_data, file, field_str, flags,
-> +					var_name);
-> +		if (IS_ERR(hist_field)) {
-> +			ret = PTR_ERR(hist_field);
-> +			goto out;
->  		}
->  
-> -		if (strcmp(field_name, "common_timestamp") == 0) {
-> -			flags |= HIST_FIELD_FL_TIMESTAMP;
-> -			hist_data->enable_timestamps = true;
-> -			key_size = sizeof(u64);
-> -		} else {
-> -			field = trace_find_event_field(file->event_call, field_name);
-> -			if (!field) {
-> -				ret = -EINVAL;
-> +		if (!hist_field) {
-> +			field = parse_field(hist_data, file, field_str,
-> +					    &flags);
-> +			if (IS_ERR(field)) {
-> +				ret = PTR_ERR(field);
->  				goto out;
->  			}
->  
-> -			if (is_string_field(field))
-> -				key_size = MAX_FILTER_STR_VAL;
-> -			else
-> -				key_size = field->size;
-> +			hist_field = create_hist_field(field, flags, var_name);
-> +			if (!hist_field) {
-> +				ret = -ENOMEM;
-> +				goto out;
-> +			}
->  		}
-> -	}
->  
-> -	hist_data->fields[key_idx] = create_hist_field(field, flags, var_name);
-> -	if (!hist_data->fields[key_idx]) {
-> -		ret = -ENOMEM;
-> -		goto out;
-> +		if (flags & HIST_FIELD_FL_TIMESTAMP)
-> +			key_size = sizeof(u64);
-> +		else if (is_string_field(field))
-> +			key_size = MAX_FILTER_STR_VAL;
-> +		else
-> +			key_size = field->size;
->  	}
->  
-> +	hist_data->fields[key_idx] = hist_field;
-> +
->  	key_size = ALIGN(key_size, sizeof(u64));
->  	hist_data->fields[key_idx]->size = key_size;
->  	hist_data->fields[key_idx]->offset = key_offset;
-> -- 
-> 1.9.3
-> 
+-- 
+Masami Hiramatsu <mhiramat@kernel.org>
