@@ -1,46 +1,46 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: Latency difference between posix & non-posix timer
-Date: Wed, 15 Feb 2017 18:12:25 +0100
-Message-ID: <20170215171225.unyjy4ivykrfpnj6@linutronix.de>
-References: <CAJ2oMhLAwf7AEjOGLTx9Lhd0DVH1Psd-rmOoQkiKVTAiVaDXMQ@mail.gmail.com>
+Subject: Re: Changing checksums of RT patches
+Date: Wed, 15 Feb 2017 18:15:23 +0100
+Message-ID: <20170215171522.3x2tnlbu3gazub46@linutronix.de>
+References: <12e5d51b-8589-d9ba-90cd-d00688e8602d@gmx.de>
+ <20170210185433.h35nynmmeu5toml6@linutronix.de>
+ <812bef1a-a86e-15b6-b77c-6455832c8790@gmx.de>
+ <548e1359-5539-4a7c-e9ca-44817ffa69b6@gmx.de>
+ <20170214091829.12273157@gandalf.local.home>
+ <ea5ff7b5-77d2-754d-b7c2-6c9f9c3d7b90@gmx.de>
+ <20170214135738.366f21e5@gandalf.local.home>
+ <0bf7c1fd-ab6e-75a3-a04b-158b6e2c1a8b@gmx.de>
+ <20170215135215.r7osipapnicj3pw3@linutronix.de>
+ <78d99832-db0e-7da5-15c4-fc3fa18d7cbd@gmx.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org
-To: Ran Shalit <ranshalit@gmail.com>
+Content-Transfer-Encoding: 8BIT
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+        linux-rt-users@vger.kernel.org
+To: Dominic =?utf-8?B?U2FjcsOp?= <dominic.sacre@gmx.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:48102 "EHLO
+Received: from Galois.linutronix.de ([146.0.238.70]:48151 "EHLO
         Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751454AbdBORM1 (ORCPT
+        with ESMTP id S1752218AbdBORPZ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 15 Feb 2017 12:12:27 -0500
+        Wed, 15 Feb 2017 12:15:25 -0500
 Content-Disposition: inline
-In-Reply-To: <CAJ2oMhLAwf7AEjOGLTx9Lhd0DVH1Psd-rmOoQkiKVTAiVaDXMQ@mail.gmail.com>
+In-Reply-To: <78d99832-db0e-7da5-15c4-fc3fa18d7cbd@gmx.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-02-05 19:11:01 [+0200], Ran Shalit wrote:
-> Hello,
-Hi,
+On 2017-02-15 15:50:48 [+0100], Dominic Sacré wrote:
+> However, as far as I can see, the only mirror that's actually defined in
+> OpenEmbedded is www.kernel.org. I could try to add cdn.kernel.org there,
+> but I don't really know how exactly OpenEmbedded handles mirror servers,
+> and what the policies are.
 
-> We made some testing on out cpu, installed with 4.1.15-rt17 kernel,
-> and we observed significant difference in latency between posic to
-> non-posix cyclictest benchmark.
-> 
-> with non posix we reach max ~50usec
-> while with posix we reach max ~170usec
-> 
-> On checking the exaples in cyclic test wiki, it seems that the
-> difference should not be that big :
-> https://rt.wiki.kernel.org/index.php/Cyclictest
-> 
-> What is the reason for such difference in behaviour ?
-> Does it mean we better use non-posix timer in application ?
-As written in the other thread (regarding posix-timer):
-I tested today v4.9-RT and didn't notice such high spikes between
-clock_nanosleep and the posix timer. You have the consider that the
-wakeup happens from ktimersoftirq so you have one additional context
-switch here.
-I general the clock_nansleep interface should be preferred if possible
-to avoid that ctx switch.
+please replace instead of add
+	https://kernel.org/introducing-fastly-cdn.html
+
+so unless you (OpenEmbedded) wants to avoid fastly/cdn I don't see a
+reason why there should be a policy against it :)
+ 
+> Dominic
 
 Sebastian
