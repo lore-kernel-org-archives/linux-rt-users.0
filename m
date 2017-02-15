@@ -1,57 +1,47 @@
-From: "bigeasy@linutronix.de" <bigeasy@linutronix.de>
-Subject: Re: Regression on rt kernel while using POSIX timers
-Date: Wed, 15 Feb 2017 17:54:47 +0100
-Message-ID: <20170215165447.zr4k5rmenwvormdk@linutronix.de>
-References: <1486579285.29816.105.camel@intel.com>
- <20170210190708.gkx5pzxnd6uhfczn@linutronix.de>
- <1487011713.17279.27.camel@intel.com>
+From: Sebastian Andrzej Siewior <sebastian.siewior@linutronix.de>
+Subject: Re: syscall from userspace thread
+Date: Wed, 15 Feb 2017 18:09:28 +0100
+Message-ID: <20170215170928.fparkvwa6xbctyfr@linutronix.de>
+References: <CAJ2oMh+=AfyLd3XEP-dBVn9f20BLNU=y9382xDLxd0UyRv5uRA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Cc: "ranshalit@gmail.com" <ranshalit@gmail.com>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "Hart, Darren" <darren.hart@intel.com>
-To: "Patel, Vedang" <vedang.patel@intel.com>
+Cc: linux-rt-users@vger.kernel.org
+To: Ran Shalit <ranshalit@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:47864 "EHLO
+Received: from Galois.linutronix.de ([146.0.238.70]:48046 "EHLO
         Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751375AbdBOQyx (ORCPT
+        with ESMTP id S1751317AbdBORJa (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 15 Feb 2017 11:54:53 -0500
+        Wed, 15 Feb 2017 12:09:30 -0500
 Content-Disposition: inline
-In-Reply-To: <1487011713.17279.27.camel@intel.com>
+In-Reply-To: <CAJ2oMh+=AfyLd3XEP-dBVn9f20BLNU=y9382xDLxd0UyRv5uRA@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-02-13 18:48:33 [+0000], Patel, Vedang wrote:
-> I am getting very similar results even if I change the priority of
-> ktimersoftd to 99. Are there any recent rt patches which might have
-> changed the behaviour of POSIX timers? 
+On 2017-02-05 00:06:13 [+0200], Ran Shalit wrote:
+> Hello,
+Hi,
 
-I had this running
+> I made reading on RT PREEMPT, but didn't find some rules/methods, to
+> make sure that a real time thread keeps its deadline.
+> For example:
+>  Can I use in the userspace thread any syscall , or will it results in
+> thread preemption ?
 
-|~# cyclictest -t1 -p 80 -i 500 -l 100000
-|# /dev/cpu_dma_latency set to 0us
-|policy: fifo: loadavg: 627.48 661.98 543.65 406/2254 18149          
-|
-|T: 0 (16148) P:80 I:500 C: 100000 Min:      5 Act:   11 Avg:   11 Max: 23
+You can use any syscall. The less you use the less of the system will
+interfere. Since the RT task runs at elevated priority it will be
+preferred over other tasks and it will boost everything in order to get
+the locks it needs to perform its job.
+If you invoke syscalls which can be slow, like write(), it might block
+your RT task until the job (writing to disk) is done and the interrupt
+is delivered. This gets worse if you also have an application which does
+intensive disk-IO. The IO requests from the RT applications don't have a
+VIP sticker and will be handled like everything else.
 
-on a AMD-A10 box and the latest v4.9-RT. This does not look that bad.
->From tracing it doesn't look too good either. The -m option should be
-your friend. Since the cyclictest isn't pinned to a CPU and I have four
-of them, the scheduler decides to migrate cyclictest on each wake up.
-yay. cyclictest itself gets woken up via a signal from the
-ktimersoftirq.
+This is one of reason why the cyclictest application has one non-RT
+thread which displays the statistics while another does the `RT' work.
 
-> Also, are POSIX timers really suited for "real-time" applications?I
-> believe a similar question was raised by Ran Shalit a few days back: 
-> http://www.spinics.net/lists/linux-rt-users/msg16249.html
-
-So it seems to work with no regression as far as I can tell. Due to the
-timersoftirq context switch I would suggest to use clock_nanosleep if
-possible.
-
-> Thanks,
-> Vedang
+> Regards,
+> Ran
 
 Sebastian
