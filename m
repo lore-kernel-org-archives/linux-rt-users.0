@@ -1,7 +1,7 @@
 From: Mike Galbraith <efault@gmx.de>
 Subject: Re: [RT] lockdep munching nr_list_entries like popcorn
-Date: Thu, 16 Feb 2017 19:06:20 +0100
-Message-ID: <1487268380.15359.4.camel@gmx.de>
+Date: Thu, 16 Feb 2017 19:16:29 +0100
+Message-ID: <1487268989.15359.10.camel@gmx.de>
 References: <1487224986.5258.45.camel@gmx.de>
          <alpine.DEB.2.20.1702160933420.3543@nanos>
          <1487235000.5258.48.camel@gmx.de>
@@ -9,6 +9,7 @@ References: <1487224986.5258.45.camel@gmx.de>
          <20170216110618.GC6557@twins.programming.kicks-ass.net>
          <1487256179.28442.8.camel@gmx.de>
          <20170216145354.unz44uocud4ybrfq@linutronix.de>
+         <1487268380.15359.4.camel@gmx.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -17,42 +18,27 @@ Cc: Peter Zijlstra <peterz@infradead.org>,
         RT <linux-rt-users@vger.kernel.org>,
         LKML <linux-kernel@vger.kernel.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170216145354.unz44uocud4ybrfq@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mout.gmx.net ([212.227.17.20]:53458 "EHLO mout.gmx.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S932914AbdBPSRJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 16 Feb 2017 13:17:09 -0500
+In-Reply-To: <1487268380.15359.4.camel@gmx.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2017-02-16 at 15:53 +0100, Sebastian Andrzej Siewior wrote:
-> On 2017-02-16 15:42:59 [+0100], Mike Galbraith wrote:
-> > 
-> > Weeell, I'm trying to cobble something kinda like that together using
-> > __RT_SPIN_INITIALIZER() instead, but seems mean ole Mr. Compiler NAKs
-> > the PER_CPU_DEP_MAP_INIT() thingy.
-> > 
-> >   CC      mm/swap.o
-> > mm/swap.c:54:689: error: braced-group within expression allowed only
-> > inside a function
+
+BTW, this ain't gone.  I'll take a peek.  It doesn't happen in my tree,
+seems likely to be because whether running sirqs fully threaded or not,
+I don't let one any thread handle what another exists to handle.
+
+[  638.107293] NOHZ: local_softirq_pending 80
+[  939.729684] NOHZ: local_softirq_pending 80
+[  945.600869] NOHZ: local_softirq_pending 80
+[ 1387.101178] NOHZ: local_softirq_pending 80
+[ 1387.101343] NOHZ: local_softirq_pending 80
+[ 1387.101549] NOHZ: local_softirq_pending 80
+[ 1413.313212] NOHZ: local_softirq_pending 80
+[ 1413.313305] NOHZ: local_softirq_pending 80
+[ 1413.313347] NOHZ: local_softirq_pending 80
 > 
-> so this is what I have now. I need to get the `static' symbol working
-> again and PER_CPU_DEP_MAP_INIT but aside from that it seems to do its
-> job.
-
-...
-
-Yeah, works, I should be able to do an ltp run with stock lockdep
-settings without it taking it's toys and going home in a snit. 
-
-berio:/sys/kernel/debug/tracing/:[0]# !while
-while sleep 60; do tail -1 trace; done
-           <...>-10315 [064] d...1..   226.953935: add_lock_to_list.isra.24.constprop.42: nr_list_entries: 14223
-               w-13148 [120] d...111   287.414978: add_lock_to_list.isra.24.constprop.42: nr_list_entries: 14465
-               w-16492 [089] d...111   347.128742: add_lock_to_list.isra.24.constprop.42: nr_list_entries: 14653
-(starts kbuild loop)
- btrfs-transacti-1964  [016] d...1..   411.101549: add_lock_to_list.isra.24.constprop.42: nr_list_entries: 17011
-           <...>-100268 [127] d...112   472.271769: add_lock_to_list.isra.24.constprop.42: nr_list_entries: 18153
-               w-18864 [011] d...1..   534.386443: add_lock_to_list.isra.24.constprop.42: nr_list_entries: 18543
-           <...>-50390 [035] dN..2..   597.794164: add_lock_to_list.isra.24.constprop.42: nr_list_entries: 18765
-           <...>-80098 [127] d...111   659.912145: add_lock_to_list.isra.24.constprop.42: nr_list_entries: 18977
-       checkproc-11123 [017] d...1..   721.483463: add_lock_to_list.isra.24.constprop.42: nr_list_entries: 19247
-          <idle>-0     [055] d..h5..   782.685953: add_lock_to_list.isra.24.constprop.42: nr_list_entries: 19383
-           <...>-93632 [055] d...111   835.527817: add_lock_to_list.isra.24.constprop.42: nr_list_entries: 19441
