@@ -1,65 +1,75 @@
-From: "Patel, Vedang" <vedang.patel@intel.com>
-Subject: Re: Regression on rt kernel while using POSIX timers
-Date: Thu, 16 Feb 2017 02:34:18 +0000
-Message-ID: <1487212458.10966.7.camel@intel.com>
-References: <1486579285.29816.105.camel@intel.com>
-         <20170210190708.gkx5pzxnd6uhfczn@linutronix.de>
-         <1487011713.17279.27.camel@intel.com>
-         <20170215165447.zr4k5rmenwvormdk@linutronix.de>
-         <20170216020516.GB1733@jcartwri.amer.corp.natinst.com>
+From: Mike Galbraith <efault@gmx.de>
+Subject: [RT] lockdep munching nr_list_entries like popcorn
+Date: Thu, 16 Feb 2017 07:03:06 +0100
+Message-ID: <1487224986.5258.45.camel@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: "ranshalit@gmail.com" <ranshalit@gmail.com>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "Hart, Darren" <darren.hart@intel.com>
-To: "julia@ni.com" <julia@ni.com>,
-        "bigeasy@linutronix.de" <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga01.intel.com ([192.55.52.88]:53747 "EHLO mga01.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1752816AbdBPCeV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 15 Feb 2017 21:34:21 -0500
-In-Reply-To: <20170216020516.GB1733@jcartwri.amer.corp.natinst.com>
-Content-Language: en-US
-Content-ID: <779C9C7546A63E48A6AD68D9BF875647@intel.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>
+To: RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-T24gV2VkLCAyMDE3LTAyLTE1IGF0IDIwOjA1IC0wNjAwLCBKdWxpYSBDYXJ0d3JpZ2h0IHdyb3Rl
-Og0KPiBPbiBXZWQsIEZlYiAxNSwgMjAxNyBhdCAwNTo1NDo0N1BNICswMTAwLCBiaWdlYXN5QGxp
-bnV0cm9uaXguZGUNCj4gd3JvdGU6DQo+ID4gDQo+ID4gT24gMjAxNy0wMi0xMyAxODo0ODozMyBb
-KzAwMDBdLCBQYXRlbCwgVmVkYW5nIHdyb3RlOg0KPiA+ID4gDQo+ID4gPiBJIGFtIGdldHRpbmcg
-dmVyeSBzaW1pbGFyIHJlc3VsdHMgZXZlbiBpZiBJIGNoYW5nZSB0aGUgcHJpb3JpdHkNCj4gPiA+
-IG9mDQo+ID4gPiBrdGltZXJzb2Z0ZCB0byA5OS4gQXJlIHRoZXJlIGFueSByZWNlbnQgcnQgcGF0
-Y2hlcyB3aGljaCBtaWdodA0KPiA+ID4gaGF2ZQ0KPiA+ID4gY2hhbmdlZCB0aGUgYmVoYXZpb3Vy
-IG9mIFBPU0lYIHRpbWVycz/CoA0KPiA+IEkgaGFkIHRoaXMgcnVubmluZw0KPiA+IA0KPiA+ID4g
-DQo+ID4gPiB+IyBjeWNsaWN0ZXN0IC10MSAtcCA4MCAtaSA1MDAgLWwgMTAwMDAwDQo+ID4gPiAj
-IC9kZXYvY3B1X2RtYV9sYXRlbmN5IHNldCB0byAwdXMNCj4gPiA+IHBvbGljeTogZmlmbzogbG9h
-ZGF2ZzogNjI3LjQ4IDY2MS45OCA1NDMuNjUgNDA2LzIyNTQNCj4gPiA+IDE4MTQ5wqDCoMKgwqDC
-oMKgwqDCoMKgwqANCj4gPiA+IA0KPiA+ID4gVDogMCAoMTYxNDgpIFA6ODAgSTo1MDAgQzogMTAw
-MDAwIE1pbjrCoMKgwqDCoMKgwqA1IEFjdDrCoMKgwqAxMSBBdmc6wqDCoMKgMTENCj4gPiA+IE1h
-eDogMjMNCj4gPiBvbiBhIEFNRC1BMTAgYm94IGFuZCB0aGUgbGF0ZXN0IHY0LjktUlQuIFRoaXMg
-ZG9lcyBub3QgbG9vayB0aGF0DQo+ID4gYmFkLg0KPiA+IEZyb20gdHJhY2luZyBpdCBkb2Vzbid0
-IGxvb2sgdG9vIGdvb2QgZWl0aGVyLiBUaGUgLW0gb3B0aW9uIHNob3VsZA0KPiA+IGJlDQo+ID4g
-eW91ciBmcmllbmQuIFNpbmNlIHRoZSBjeWNsaWN0ZXN0IGlzbid0IHBpbm5lZCB0byBhIENQVSBh
-bmQgSSBoYXZlDQo+ID4gZm91cg0KPiA+IG9mIHRoZW0sIHRoZSBzY2hlZHVsZXIgZGVjaWRlcyB0
-byBtaWdyYXRlIGN5Y2xpY3Rlc3Qgb24gZWFjaCB3YWtlDQo+ID4gdXAuDQo+ID4geWF5LiBjeWNs
-aWN0ZXN0IGl0c2VsZiBnZXRzIHdva2VuIHVwIHZpYSBhIHNpZ25hbCBmcm9tIHRoZQ0KPiA+IGt0
-aW1lcnNvZnRpcnEuDQo+IFBlcmhhcHMgYSBzZXBhcmF0ZSBvZmYtc2hvb3QgdG9waWMsIGJ1dCBo
-YXMgdGhlcmUgYmVlbiBzaWduaWZpY2FudA0KPiBjaGFuZ2VzIGluIHY0LjkgdXBzdHJlYW0gKG9y
-IHY0LjktcnQpIHdoaWNoIGltcGFjdCBob3cgb2Z0ZW4NCj4gbWlncmF0aW9uDQo+IGlzIHBlcmZv
-cm1lZD/CoMKgV2UndmUgc2VlbiB3aGF0IGFwcGVhcnMgdG8gYmUgbXVjaCBtb3JlIGFnZ3Jlc3Np
-dmUNCj4gbWlncmF0aW9uIG9mIFNDSEVEX0ZBSVIgdGFza3MsIChhZ2dyZXNzaXZlIGluIHRoZSBz
-ZW5zZSB0aGF0IG1vcmUNCj4gdGhyZWFkcyBhcmUgbWlncmF0ZWQgbW9yZSBvZnRlbiksIHdoaWNo
-IGFwcGVhcnMgdG8gY2F1c2UgY29udGVudGlvbg0KPiBvbg0KPiBycS1sb2NrcyBpbXBhY3Rpbmcg
-bGF0ZW5jaWVzIGluIHRoZSB3YWtlX3VwIHBhdGhzLg0KPiANCj4gV2UncmUgc3RpbGwgd29ya2lu
-ZyB0byBmdXJ0aGVyIGNoYXJhY3Rlcml6ZSBhdCB0aGlzDQo+IHBvaW50Li4uLmhvcGVmdWxseQ0K
-PiBtb3JlIGluZm9ybWF0aW9uIGZvcnRoY29taW5nLg0KSSB0cmllZCBjb25kdWN0aW5nIHNpbWls
-YXIgZXhwZXJpbWVudHMgb24gdjQuNC40Ny1ydDU5LiBCdXQsIHRoZQ0KcmVzdWx0cyBhcmUgc2Ft
-ZSBhcyB2NC45IGtlcm5lbC4NCg0KTXkgbWFjaGluZSBhbHNvIGhhcyA4IGNvcmVzIGFuZCBtaWdy
-YXRpb24gbWlnaHQgY2F1c2UgcmVncmVzc2lvbnMuIExldA0KbWUgdHJ5IHBpbm5pbmcgdGhlIHBy
-b2Nlc3NlcyB0byBhIHNpbmdsZSBDUFUgYW5kIHNlZSBpZiB0aGF0IGlzIG1ha2luZw0KYW55IGRp
-ZmZlcmVuY2UuwqANCg0KTW9yZSBpbmZvcm1hdGlvbiB0byBmb2xsb3cgc29vbi4uLg0KDQpUaGFu
-a3MgZm9yIGFsbCB0aGUgaW5wdXRzLMKgDQpWZWRhbmcgUGF0ZWwNClNvZnR3YXJlIEVuZ2luZWVy
-DQpJbnRlbCBDb3Jwb3JhdGlvbg0KPiDCoMKgwqBKdWxpYQ==
+4.9.10-rt6-virgin on 72 core +SMT box.
+
+Below is 1 line per minute, box idling along daintily nibbling, I fire
+up a parallel kbuild loop at 40465, and box gobbles greedily.
+
+I have entries bumped to 128k, and chain bits to 18 so box will get
+booted and run for a while before lockdep says "I quit".  With stock
+settings, this box will barely get booted.  Seems the bigger the box,
+the sooner you're gonna run out.  A NOPREEMPT kernel seems to nibble
+entries too, but nowhere remotely near as greedily as RT.
+
+           <...>-100309 [064] d....13  2885.873312: add_lock_to_list.isra.24.constprop.42+0x20/0x100: nr_list_entries: 40129
+           <...>-104320 [116] dN..211  2959.633630: add_lock_to_list.isra.24.constprop.42+0x20/0x100: nr_list_entries: 40155
+ btrfs-transacti-1955  [043] d...111  3021.073949: add_lock_to_list.isra.24.constprop.42+0x20/0x100: nr_list_entries: 40183
+           <...>-118865 [120] d....13  3086.146794: add_lock_to_list.isra.24.constprop.42+0x20/0x100: nr_list_entries: 40209
+  systemd-logind-4763  [068] d....11  3146.953001: add_lock_to_list.isra.24.constprop.42+0x20/0x100: nr_list_entries: 40239
+           <...>-123725 [032] dN..2..  3215.735774: add_lock_to_list.isra.24.constprop.42+0x20/0x100: nr_list_entries: 40285
+           <...>-33968 [031] d...1..  3347.919001: add_lock_to_list.isra.24.constprop.42+0x20/0x100: nr_list_entries: 40409
+           <...>-130886 [143] d....12  3412.586643: add_lock_to_list.isra.24.constprop.42+0x20/0x100: nr_list_entries: 40465
+           <...>-138291 [037] d....11  3477.816405: add_lock_to_list.isra.24.constprop.42+0x20/0x100: nr_list_entries: 42825
+           <...>-67678 [137] d...112  3551.648282: add_lock_to_list.isra.24.constprop.42+0x20/0x100: nr_list_entries: 47899
+    ksoftirqd/45-421   [045] d....13  3617.926394: add_lock_to_list.isra.24.constprop.42+0x20/0x100: nr_list_entries: 48751
+         ihex2fw-24635 [035] d....11  3686.899690: add_lock_to_list.isra.24.constprop.42+0x20/0x100: nr_list_entries: 49345
+           <...>-76041 [047] d...111  3758.230009: add_lock_to_list.isra.24.constprop.42+0x20/0x100: nr_list_entries: 49757
+            stty-10772 [118] d...1..  3825.626815: add_lock_to_list.isra.24.constprop.42+0x20/0x100: nr_list_entries: 50115
+  kworker/u289:4-13376 [075] d....12  3896.432428: add_lock_to_list.isra.24.constprop.42+0x20/0x100: nr_list_entries: 51189
+           <...>-92785 [047] d....12  3905.137578: add_lock_to_list.isra.24.constprop.42+0x20/0x100: nr_list_entries: 51287
+
+With stacktrace on, buffer contains 1010 __lru_cache_add+0x4f...
+
+(gdb) list *__lru_cache_add+0x4f
+0xffffffff811dca9f is in __lru_cache_add (./include/linux/locallock.h:59).
+54
+55      static inline void __local_lock(struct local_irq_lock *lv)
+56      {
+57              if (lv->owner != current) {
+58                      spin_lock_local(&lv->lock);
+59                      LL_WARN(lv->owner);
+60                      LL_WARN(lv->nestcnt);
+61                      lv->owner = current;
+62              }
+63              lv->nestcnt++;
+
+...which seems to be this.
+
+0xffffffff811dca80 is in __lru_cache_add (mm/swap.c:397).
+392     }
+393     EXPORT_SYMBOL(mark_page_accessed);
+394
+395     static void __lru_cache_add(struct page *page)
+396     {
+397             struct pagevec *pvec = &get_locked_var(swapvec_lock, lru_add_pvec);
+398
+399             get_page(page);
+400             if (!pagevec_add(pvec, page) || PageCompound(page))
+401                     __pagevec_lru_add(pvec);
+
+swapvec_lock?  Oodles of 'em?  Nope.
+
+	-Mike
