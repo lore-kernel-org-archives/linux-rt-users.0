@@ -1,100 +1,38 @@
-From: "Patel, Vedang" <vedang.patel@intel.com>
-Subject: Re: Regression on rt kernel while using POSIX timers
-Date: Wed, 22 Feb 2017 01:43:09 +0000
-Message-ID: <1487727789.28401.17.camel@intel.com>
-References: <1486579285.29816.105.camel@intel.com>
-         <20170210190708.gkx5pzxnd6uhfczn@linutronix.de>
-         <1487011713.17279.27.camel@intel.com>
-         <20170215165447.zr4k5rmenwvormdk@linutronix.de>
-         <20170216020516.GB1733@jcartwri.amer.corp.natinst.com>
-         <1487212458.10966.7.camel@intel.com>
+From: Ran Shalit <ranshalit@gmail.com>
+Subject: running RT in ubuntu in virtualbox
+Date: Thu, 23 Feb 2017 19:14:00 +0200
+Message-ID: <CAJ2oMhLBex5fuqPfSEcCw3ubg2pW8hZFtA6fViqs-DYKWSHCVw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: "ranshalit@gmail.com" <ranshalit@gmail.com>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "Hart, Darren" <darren.hart@intel.com>
-To: "julia@ni.com" <julia@ni.com>,
-        "bigeasy@linutronix.de" <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=UTF-8
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga07.intel.com ([134.134.136.100]:60262 "EHLO mga07.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1752283AbdBVBnN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 21 Feb 2017 20:43:13 -0500
-In-Reply-To: <1487212458.10966.7.camel@intel.com>
-Content-Language: en-US
-Content-ID: <481BD0677A08BD45920C9CD15449C8C4@intel.com>
+Received: from mail-wm0-f53.google.com ([74.125.82.53]:32783 "EHLO
+        mail-wm0-f53.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751284AbdBWROT (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 23 Feb 2017 12:14:19 -0500
+Received: by mail-wm0-f53.google.com with SMTP id t18so4404557wmt.0
+        for <linux-rt-users@vger.kernel.org>; Thu, 23 Feb 2017 09:14:01 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-T24gVGh1LCAyMDE3LTAyLTE2IGF0IDAyOjM0ICswMDAwLCBQYXRlbCwgVmVkYW5nIHdyb3RlOg0K
-PiBPbiBXZWQsIDIwMTctMDItMTUgYXQgMjA6MDUgLTA2MDAsIEp1bGlhIENhcnR3cmlnaHQgd3Jv
-dGU6DQo+ID4gDQo+ID4gT24gV2VkLCBGZWIgMTUsIDIwMTcgYXQgMDU6NTQ6NDdQTSArMDEwMCwg
-YmlnZWFzeUBsaW51dHJvbml4LmRlDQo+ID4gd3JvdGU6DQo+ID4gPiANCj4gPiA+IA0KPiA+ID4g
-T24gMjAxNy0wMi0xMyAxODo0ODozMyBbKzAwMDBdLCBQYXRlbCwgVmVkYW5nIHdyb3RlOg0KPiA+
-ID4gPiANCj4gPiA+ID4gDQo+ID4gPiA+IEkgYW0gZ2V0dGluZyB2ZXJ5IHNpbWlsYXIgcmVzdWx0
-cyBldmVuIGlmIEkgY2hhbmdlIHRoZSBwcmlvcml0eQ0KPiA+ID4gPiBvZg0KPiA+ID4gPiBrdGlt
-ZXJzb2Z0ZCB0byA5OS4gQXJlIHRoZXJlIGFueSByZWNlbnQgcnQgcGF0Y2hlcyB3aGljaCBtaWdo
-dA0KPiA+ID4gPiBoYXZlDQo+ID4gPiA+IGNoYW5nZWQgdGhlIGJlaGF2aW91ciBvZiBQT1NJWCB0
-aW1lcnM/wqANCj4gPiA+IEkgaGFkIHRoaXMgcnVubmluZw0KPiA+ID4gDQo+ID4gPiA+IA0KPiA+
-ID4gPiANCj4gPiA+ID4gfiMgY3ljbGljdGVzdCAtdDEgLXAgODAgLWkgNTAwIC1sIDEwMDAwMA0K
-PiA+ID4gPiAjIC9kZXYvY3B1X2RtYV9sYXRlbmN5IHNldCB0byAwdXMNCj4gPiA+ID4gcG9saWN5
-OiBmaWZvOiBsb2FkYXZnOiA2MjcuNDggNjYxLjk4IDU0My42NSA0MDYvMjI1NA0KPiA+ID4gPiAx
-ODE0OcKgwqDCoMKgwqDCoMKgwqDCoMKgDQo+ID4gPiA+IA0KPiA+ID4gPiBUOiAwICgxNjE0OCkg
-UDo4MCBJOjUwMCBDOiAxMDAwMDAgTWluOsKgwqDCoMKgwqDCoDUgQWN0OsKgwqDCoDExDQo+ID4g
-PiA+IEF2ZzrCoMKgwqAxMQ0KPiA+ID4gPiBNYXg6IDIzDQo+ID4gPiBvbiBhIEFNRC1BMTAgYm94
-IGFuZCB0aGUgbGF0ZXN0IHY0LjktUlQuIFRoaXMgZG9lcyBub3QgbG9vayB0aGF0DQo+ID4gPiBi
-YWQuDQo+ID4gPiBGcm9tIHRyYWNpbmcgaXQgZG9lc24ndCBsb29rIHRvbyBnb29kIGVpdGhlci4g
-VGhlIC1tIG9wdGlvbg0KPiA+ID4gc2hvdWxkDQo+ID4gPiBiZQ0KPiA+ID4geW91ciBmcmllbmQu
-IFNpbmNlIHRoZSBjeWNsaWN0ZXN0IGlzbid0IHBpbm5lZCB0byBhIENQVSBhbmQgSQ0KPiA+ID4g
-aGF2ZQ0KPiA+ID4gZm91cg0KPiA+ID4gb2YgdGhlbSwgdGhlIHNjaGVkdWxlciBkZWNpZGVzIHRv
-IG1pZ3JhdGUgY3ljbGljdGVzdCBvbiBlYWNoIHdha2UNCj4gPiA+IHVwLg0KPiA+ID4geWF5LiBj
-eWNsaWN0ZXN0IGl0c2VsZiBnZXRzIHdva2VuIHVwIHZpYSBhIHNpZ25hbCBmcm9tIHRoZQ0KPiA+
-ID4ga3RpbWVyc29mdGlycS4NCj4gPiBQZXJoYXBzIGEgc2VwYXJhdGUgb2ZmLXNob290IHRvcGlj
-LCBidXQgaGFzIHRoZXJlIGJlZW4gc2lnbmlmaWNhbnQNCj4gPiBjaGFuZ2VzIGluIHY0LjkgdXBz
-dHJlYW0gKG9yIHY0LjktcnQpIHdoaWNoIGltcGFjdCBob3cgb2Z0ZW4NCj4gPiBtaWdyYXRpb24N
-Cj4gPiBpcyBwZXJmb3JtZWQ/wqDCoFdlJ3ZlIHNlZW4gd2hhdCBhcHBlYXJzIHRvIGJlIG11Y2gg
-bW9yZSBhZ2dyZXNzaXZlDQo+ID4gbWlncmF0aW9uIG9mIFNDSEVEX0ZBSVIgdGFza3MsIChhZ2dy
-ZXNzaXZlIGluIHRoZSBzZW5zZSB0aGF0IG1vcmUNCj4gPiB0aHJlYWRzIGFyZSBtaWdyYXRlZCBt
-b3JlIG9mdGVuKSwgd2hpY2ggYXBwZWFycyB0byBjYXVzZSBjb250ZW50aW9uDQo+ID4gb24NCj4g
-PiBycS1sb2NrcyBpbXBhY3RpbmcgbGF0ZW5jaWVzIGluIHRoZSB3YWtlX3VwIHBhdGhzLg0KPiA+
-IA0KPiA+IFdlJ3JlIHN0aWxsIHdvcmtpbmcgdG8gZnVydGhlciBjaGFyYWN0ZXJpemUgYXQgdGhp
-cw0KPiA+IHBvaW50Li4uLmhvcGVmdWxseQ0KPiA+IG1vcmUgaW5mb3JtYXRpb24gZm9ydGhjb21p
-bmcuDQo+IEkgdHJpZWQgY29uZHVjdGluZyBzaW1pbGFyIGV4cGVyaW1lbnRzIG9uIHY0LjQuNDct
-cnQ1OS4gQnV0LCB0aGUNCj4gcmVzdWx0cyBhcmUgc2FtZSBhcyB2NC45IGtlcm5lbC4NCj4gDQo+
-IE15IG1hY2hpbmUgYWxzbyBoYXMgOCBjb3JlcyBhbmQgbWlncmF0aW9uIG1pZ2h0IGNhdXNlIHJl
-Z3Jlc3Npb25zLg0KPiBMZXQNCj4gbWUgdHJ5IHBpbm5pbmcgdGhlIHByb2Nlc3NlcyB0byBhIHNp
-bmdsZSBDUFUgYW5kIHNlZSBpZiB0aGF0IGlzDQo+IG1ha2luZw0KPiBhbnkgZGlmZmVyZW5jZS7C
-oA0KPiANClNvLCBJIHRyaWVkIHBpbm5pbmcgdGhlIHByb2Nlc3MgdG8gYSBzaW5nbGUgQ1BVLiBC
-dXQsIHR1cm5zIG91dCB0aGF0DQp0aGUgbGF0ZW5jeSBpbiBjYXNlIG9mIFBpbm5lZCBDUFUgaXMg
-d29yc2UgdGhhbiB0aGUgbGF0ZW5jeSB3aGVuIENQVSBpcw0Kbm90IHBpbm5lZC4gSSB0cmllZCAy
-IGRpZmZlcmVudCB3YXlzIGZvciBwaW5uaW5nIHRoZSBjeWNsaWN0ZXN0IHRhc2sgdG8NCmEgQ1BV
-IC0tIC1hIGFyZ3VtZW50IGluIGN5Y2xpY3Rlc3QgYW5kIHRhc2tzZXQgY29tbWFuZCB0byBzZXQg
-YSBDUFUuIEkNCmdvdCB0aGUgc2FtZSByZXN1bHRzIGZvciBib3RoIHRoZSBtZXRob2RzLiBJIGFs
-c28gdHJpZWQgZGlmZmVyZW50IENQVXMNCnRoaW5raW5nIG9uZSBvZiB0aGUgQ1BVcyBtaWdodCBo
-YXZlIHNvbWV0aGluZyBlbHNlIHBpbm5lZC4gQnV0LCB0aGUNCnJlc3VsdCByZW1haW5lZCB0aGUg
-c2FtZS4NCg0KQWxzbywgSSBjaGVja2VkIHRoZSBudW1iZXIgb2YgY3B1IG1pZ3JhdGlvbnMgYW5k
-IGNvbnRleHQgc3dpdGNoZXMgdXNpbmcNCnBlcmYgc3RhdC4gRm9sbG93aW5nIGFyZSB0aGUgcmVz
-dWx0cyBmb3IgYm90aCB0aGUgY2FzZXM6DQoNCmN5Y2xpY3Rlc3Qgbm90IHBpbm5lZCB0byBDUFU6
-IHRoZSBudW1iZXIgb2YgQ1BVIG1pZ3JhdGlvbnMgYW5kIGNvbnRleHQNCnN3aXRjaGVzIGFyZSBl
-cXVhbCB0byB0aGUgbnVtYmVyIG9mIGxvb3BzIEkgYW0gcnVubmluZyBmb3IgY3ljbGljdGVzdC4N
-CkhlcmUsIHRoZXJlIGFyZSBhIGxvdCBvZiBjb250ZXh0IHN3aXRjaGVzIHdpdGggdGhlIGt0aW1l
-cnNvZnRkIHByb2Nlc3MuDQoNCmN5Y2xpY3Rlc3QgcGlubmVkIHRvIGEgQ1BVOiB0aGVyZSBhcmUg
-dmVyeSBmZXcgQ1BVIG1pZ3JhdGlvbnMuIEJ1dCwgdGhlDQpudW1iZXIgb2YgY29udGV4dCBzd2l0
-Y2hlcyBhcmUgYXBwcm94aW1hdGVseSAzIHRpbWVzIHRoZSBudW1iZXIgb2YNCmxvb3BzLiBNb3N0
-IG9mIHRoZSBjb250ZXh0IHN3aXRjaGVzIGFyZSB3aXRoIHRoZSBzd2FwcGVyIChpZGxlKQ0KcHJv
-Y2Vzcy4NCg0KSW4gYm90aCB0aGUgY2FzZXMsIHRoZSBudW1iZXIgb2YgcGFnZSBmYXVsdHMgYXJl
-IHByZXR0eSBsb3cgKH42NSkuDQoNCkkgYWxzbyB0cmllZCBzaW1pbGFyIGV4cGVyaW1lbnRzIHdp
-dGggbWFpbmxpbmUga2VybmVsICh2NC40LjQ3KS4gVGhlDQpudW1iZXIgb2YgQ1BVIG1pZ3JhdGlv
-bnMgd2VyZSBwcmV0dHkgbG93IChzaW5nbGUgZGlnaXRzKSBmb3IgYm90aCB0aGUNCmNhc2VzIGRl
-c2NyaWJlZCBhYm92ZS4gQWxzbywgdGhlIG51bWJlciBvZiBjb250ZXh0IHN3aXRjaGVzIHdlcmUg
-ZXF1YWwNCnRvIHRoZSBudW1iZXIgb2YgbG9vcHMgcHJvdmlkZWQgYXMgYW4gYXJndW1lbnQgdG8g
-Y3ljbGljdGVzdC4NCg0KVGhhbmtzLA0KVmVkYW5nIFBhdGVsDQpTb2Z0d2FyZSBFbmdpbmVlcg0K
-SW50ZWwgQ29ycG9yYXRpb24NCg0KPiBNb3JlIGluZm9ybWF0aW9uIHRvIGZvbGxvdyBzb29uLi4u
-DQo+IA0KPiBUaGFua3MgZm9yIGFsbCB0aGUgaW5wdXRzLMKgDQo+IFZlZGFuZyBQYXRlbA0KPiBT
-b2Z0d2FyZSBFbmdpbmVlcg0KPiBJbnRlbCBDb3Jwb3JhdGlvbg0KPiA+IA0KPiA+IMKgwqDCoEp1
-bGlhBO+/vXsubu+/vSvvv73vv73vv73vv73vv73vv73vv70rJe+/ve+/vWx6d23vv73vv71i77+9
-66ey77+977+9cu+/ve+/vXpY77+977+9Gu+/vcer77+9Ke+/ve+/ve+/vXcqH2pn77+977+977+9
-Hu+/ve+/ve+/ve+/ve+/vd2iDQo+ID4gai/vv73vv73vv71677+93pbvv73vv70y77+93pnvv73v
-v73vv70m77+9Kd+h77+9Ye+/ve+/vX/vv73vv70e77+9R++/ve+/ve+/vWjvv70P77+9ajordu+/
-ve+/ve+/vXfvv73ZpQ==
+Hello,
+
+I tried to run ubuntu 14.4 with RT
+
+I am using machinekit binary for that:
+linux-image-4.1.15-rt17mah
+
+Yet, on starting ubuntu I get "vboxclient the virtualbox kernel
+service is not running"
+and it seems that all guestadditions capabilties are missing.
+
+Is anyone familiar with it ?
+
+Another question, in case I want development machine for a target
+which runs ubuntu 14.4 with linux-image-4.1.15-rt17mah, does it really
+matters if the development station runs with same kernel
+(linux-image-4.1.15-rt17mah) ?
+
+Best Regards,
+Ran
