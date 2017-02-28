@@ -1,120 +1,108 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Changing checksums of RT patches
-Date: Tue, 28 Feb 2017 13:30:23 -0500
-Message-ID: <20170228133023.3f175844@gandalf.local.home>
-References: <12e5d51b-8589-d9ba-90cd-d00688e8602d@gmx.de>
-        <20170210185433.h35nynmmeu5toml6@linutronix.de>
-        <812bef1a-a86e-15b6-b77c-6455832c8790@gmx.de>
-        <548e1359-5539-4a7c-e9ca-44817ffa69b6@gmx.de>
-        <20170214091829.12273157@gandalf.local.home>
-        <ea5ff7b5-77d2-754d-b7c2-6c9f9c3d7b90@gmx.de>
-        <20170214135738.366f21e5@gandalf.local.home>
-        <alpine.DEB.2.20.1702281856310.4732@nanos>
+Subject: Re: [CFP] RT Users Micro-Conf at Linux Plumbers 2017
+Date: Tue, 28 Feb 2017 16:04:32 -0500
+Message-ID: <20170228160432.2f8eecbe@gandalf.local.home>
+References: <20170227172556.28dcbbb5@gandalf.local.home>
+        <20170228204121.GO1733@jcartwri.amer.corp.natinst.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
-Cc: Dominic =?UTF-8?B?U2FjcsOp?= <dominic.sacre@gmx.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Kate Stewart <kstewart@linuxfoundation.org>
+To: Julia Cartwright <julia@ni.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:58586 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.136]:57614 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751134AbdB1ScO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 28 Feb 2017 13:32:14 -0500
-In-Reply-To: <alpine.DEB.2.20.1702281856310.4732@nanos>
+        id S1751603AbdB1VQp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 28 Feb 2017 16:16:45 -0500
+In-Reply-To: <20170228204121.GO1733@jcartwri.amer.corp.natinst.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 28 Feb 2017 19:03:29 +0100 (CET)
-Thomas Gleixner <tglx@linutronix.de> wrote:
-
-> On Tue, 14 Feb 2017, Steven Rostedt wrote:
-> > On Tue, 14 Feb 2017 19:42:35 +0100
-> > Dominic Sacré <dominic.sacre@gmx.de> wrote:
-> >   
-> > > Could this be the cause of your issue?  
-> > > 
-> > > I think so. Looking at the current contents of rt/4.1, I see that
-> > > patch-4.1.38-rt45.patch.gz and older/patch-4.1.38-rt45.patch.gz have
-> > > different sha256 hashes. I would have expected them to be copies of the
-> > > exact same file, so I guess the question is why they're different in the
-> > > first place.  
-> > 
-> > It's the way kernel.org does the updates. I upload a .xz file and a
-> > signed gpg file of the uncompressed image. kernel.org creates the gz
-> > file from the uncompressed version. As I upload it twice, kernel.org
-> > does two gzips of the uncompressed file. I'm guessing that there's a
-> > timestamp that gets used as well, making both gzipped files different,
-> > even though what they contain are the same.  
-> 
-> Right. And it does not matter at all.
-> 
-> The sha256 tells you that the file you downloaded is the one which
-> kernel.org advertised to you. Not more, not less.
-> 
-> The content is protected by the *.patch.sign and *.tar.sign files.
-> 
-> > I may need to change my workflow to simply delete the file in the
-> > current directory than to move it.  
-> 
-> And the point is?
-
-The issue I believe is that there's a third party downloading the
-compressed files and doing a checksum on them.
-
-> 
-> > Although, I had better make sure that there's a copy in the older
-> > directory first. Maybe I'll change my tool to download the older and
-> > current versions, uncompress them, make sure they are the same, and if
-> > they are, remove the current version, else, move the current version on
-> > the older one.  
-> 
-> That does not make any sense.
-> 
-> The proper thing to do is move file from rt/4.x/ to rt/4.x/older.
-
-This is a fallout of the change in work flow I have already made for
-multiple people that have asked.
-
-The issue is that we have a "current" and "older" directory. When we
-do a new release, the current files get moved to the older directory.
-This caused issues with people that supply scripts to down load the
-tarballs. The problem is that they would be looking for a specific
-version and suddenly it would move. I was asked to place the current
-version in the "older" directory too. What I was told was that Sebastian
-would upload the same file to both the current and older directories.
-Which is what I changed to do as well.
+On Tue, 28 Feb 2017 14:41:21 -0600
+Julia Cartwright <julia@ni.com> wrote:
 
 
+> > A month later there will be a Real-Time get together in Prague, that
+> > would be perfect to be able to bring together a list of issues that
+> > users may have and present this to the PREEMPT_RT kernel developers.  
+> 
+> Having LPC host this seems a bit strange, given your defined audience
+> (users vs. kernel developers).  Perhaps it would be more effective as a
+
+I don't find it strange at all. There should be more "users" at
+plumbers. LPC is about discussion and not presentations. When users and
+developers get together, it should be a discussion.
+
+> session in the Open Source Summit track, or at the very least, if
+> attendees at the OSS Summit were able to attend the miniconference w/o
+> the purchase of a LPC badge.
+
+I think a badge would still be worth purchasing. Having the ability to
+help influence development is a worthy goal.
 
 > 
-> If kernel.org decides to redo the archives, then you can't do anything
-> about it. And if you upload it another time there is no guarantee either
-> that the resulting gz/xz are the same.
+> > Are people willing to participate and have a discussion on what works
+> > and what doesn't work with PREEMPT_RT. Be able to share horror stories
+> > and work arounds with each other and perhaps come up with better
+> > solutions. I will take what comes out of this with me to Prague and
+> > perhaps be able to influence the development of PREEMPT_RT to address
+> > any issues that arise.  
 > 
-> What matters is the content and not the compressed thingy. Again:
+> As a brainstorming of potential content, here's what I'd like to see as
+> an attendee (certainly willing to present where appropriate too!):
 > 
->  - The sha256 only tells you that the download was not corrupted.
+>   1. Debugging case studies:
 > 
->  - The PGP signature is what protects the content and that does not change
->    whether you move it or upload the same thing again.
+> There are a ton of debugging/visualizing/tracing tools out there
+> available for finding latency problems.  Too many tools; some with
+> overlapping purpose, and some better than others.  It would be an
+> interesting exercise to have a few folks demonstrate the complete
+> identification, debugging, and fix of a performance problem on RT,
+> complete with a walkthrough of what tools were used.
 
-Actually, there's no "upload again" step. I believe Sebastian does the
-same thing that I'm changing my workflow into. That is, when I upload
-for the first time, I upload the same file into both "current" and
-"older". This was added to my old workflow. But when I do a new
-release, I didn't change my workflow to just remove what was in
-current, but instead I moved current into older *overwriting* what was
-already in older. That is the problem people are having.
+Note, LPC is about discussions and not presentations or tutorials.
+Although, I could submit a talk that would hopefully be a good
+introduction into what the plumbers track would be like. I could maybe
+get it accepted for the "shared" day (talks for both plumbers and Open
+Source Summit attendees).
 
-They had a checksum of the .gz file in "older", and when I did the move
-from current to older, I overwrote that file, and the checksum changed,
-as it was compressed twice.
+If you can create a discussion out of debugging tools. "Here's what I
+have, is there a better way to do this?"
 
-If I just do what I believe Sebastian does, and simply remove the files
-in "current" as they already exist in "older", then everyone should be
-happy.
+> 
+>   2. What to consider when designing the priority scheme of your system
+>      (application threads, irqthreads, RCU threads, ...)
+
+I would turn this into something like "here's my work arounds to my
+problems, are there better ways to do this?"
+
+> 
+>   3. An enumeration of "knobs" which impact RT behavior
+> 
+> Where knobs are any of the compile-time or run-time configuration
+> parameters and how they impact determinism (I'm thinking things we've
+> run into like IRQSOFF tracing, timerslack, the bizarre
+> /dev/cpu_dma_latency, etc).
+
+"here's what I've done, are there better ways to do this?"
+
+Hmm, I'm seeing a trend here ;-)
+
+> 
+> > There's also talk about having this combined with a Safety Critical
+> > session focused on PREEMPT_RT.
+> >
+> > Are people interesting in attending such an event? If so, I'll submit a
+> > proposal for having such a Micro-Conference at Linux Plumbers. If not,
+> > I wont bother wasting any time on it.  
+> 
+> Sounds good to me!  Let me know where I can help.
+
+I rather have you tell us were you want to help :)
+
+I'm looking for ideas from others. This email is just to poke peoples
+brains.
 
 -- Steve
-
