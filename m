@@ -1,51 +1,52 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [CFP] RT Users Micro-Conf at Linux Plumbers 2017
-Date: Mon, 27 Feb 2017 17:25:56 -0500
-Message-ID: <20170227172556.28dcbbb5@gandalf.local.home>
+From: Alexander Gerasiov <gq@cs.msu.su>
+Subject: Re: Problem with hrtimer_cancel() does not cancel timer
+Date: Tue, 28 Feb 2017 16:02:08 +0300
+Message-ID: <20170228160208.24bb89a8@brick.gerasiov.net>
+References: <20170218011522.09d42119@brick.gerasiov.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        Kate Stewart <kstewart@linuxfoundation.org>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: zlobin_d@redlab-i.ru
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:56988 "EHLO mail.kernel.org"
+Received: from off.redlab-i.ru ([195.16.34.157]:54008 "EHLO mail.gerasiov.net"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751338AbdB0W1Z (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 27 Feb 2017 17:27:25 -0500
+        id S1752540AbdB1NKb (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 28 Feb 2017 08:10:31 -0500
+In-Reply-To: <20170218011522.09d42119@brick.gerasiov.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hello Alexander,
 
-[ Call For Participation ]
+On Sat, 18 Feb 2017 01:15:22 +0300
+Alexander Gerasiov <gq@cs.msu.su> wrote:
 
-Hi folks,
+> Hello folks,
+> 
+> I met some problem with preempt version of kernel 4.4.
+> 
+> I have hrtimer which runs callback, it forwards time and returns
+> HRTIMER_RESTART. Very common scheme. When I stop the routine I call
+> hrtimer_cancel(). It should wait for callback completion if any and
+> unqueue any future timers.
+> 
+> But suddenly I noticed, that sometimes hrtimer's routine continue to
+> work and work after hrtimer_cancel(). It could be reproduced with
+> simple test:
 
-Linux Plumbers Conference (LPC) will be held this year in Los Angeles
-California on September 13-15, 2017. Usually we have a Real-Time
-Micro-Conference but this year Thomas Gleixner may not be able to
-attend. Instead of having a kernel development focused event on the
-PREEMPT_RT patch, I would like to throw out the idea of a user
-experience focused event.
+So guys, did anybody reproduce this problem?
+If no, could you provide more info on your config?
+If yes, do anyone work on the problem or we need to deal with it
+ourselves?
 
-A month later there will be a Real-Time get together in Prague, that
-would be perfect to be able to bring together a list of issues that
-users may have and present this to the PREEMPT_RT kernel developers.
 
-Are people willing to participate and have a discussion on what works
-and what doesn't work with PREEMPT_RT. Be able to share horror stories
-and work arounds with each other and perhaps come up with better
-solutions. I will take what comes out of this with me to Prague and
-perhaps be able to influence the development of PREEMPT_RT to address
-any issues that arise.
 
-There's also talk about having this combined with a Safety Critical
-session focused on PREEMPT_RT.
 
-Are people interesting in attending such an event? If so, I'll submit a
-proposal for having such a Micro-Conference at Linux Plumbers. If not,
-I wont bother wasting any time on it.
+-- 
+Best regards,
+ Alexander Gerasiov
 
-Thanks!
-
--- Steve
+ Contacts:
+ e-mail: gq@cs.msu.su  Homepage: http://gerasiov.net  Skype: gerasiov
+ PGP fingerprint: 04B5 9D90 DF7C C2AB CD49  BAEA CA87 E9E8 2AAC 33F1
