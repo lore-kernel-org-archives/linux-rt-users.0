@@ -1,63 +1,50 @@
-From: "bigeasy@linutronix.de" <bigeasy@linutronix.de>
-Subject: Re: Regression on rt kernel while using POSIX timers
-Date: Wed, 1 Mar 2017 16:22:30 +0100
-Message-ID: <20170301152230.mjoi44so6t5qy3q2@linutronix.de>
-References: <1486579285.29816.105.camel@intel.com>
- <20170210190708.gkx5pzxnd6uhfczn@linutronix.de>
- <1487011713.17279.27.camel@intel.com>
- <20170215165447.zr4k5rmenwvormdk@linutronix.de>
- <20170216020516.GB1733@jcartwri.amer.corp.natinst.com>
- <1487212458.10966.7.camel@intel.com>
- <1487727789.28401.17.camel@intel.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: Problem with hrtimer_cancel() does not cancel timer
+Date: Wed, 1 Mar 2017 16:01:04 +0100
+Message-ID: <20170301150103.4ttnvz72d4jsgui6@linutronix.de>
+References: <20170218011522.09d42119@brick.gerasiov.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: "julia@ni.com" <julia@ni.com>,
-        "ranshalit@gmail.com" <ranshalit@gmail.com>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "Hart, Darren" <darren.hart@intel.com>
-To: "Patel, Vedang" <vedang.patel@intel.com>
+Cc: linux-rt-users@vger.kernel.org, zlobin_d@redlab-i.ru
+To: Alexander Gerasiov <gq@cs.msu.su>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:39861 "EHLO
+Received: from Galois.linutronix.de ([146.0.238.70]:39921 "EHLO
         Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751988AbdCAPWr (ORCPT
+        with ESMTP id S1751565AbdCAPfD (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 1 Mar 2017 10:22:47 -0500
+        Wed, 1 Mar 2017 10:35:03 -0500
 Content-Disposition: inline
-In-Reply-To: <1487727789.28401.17.camel@intel.com>
+In-Reply-To: <20170218011522.09d42119@brick.gerasiov.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-02-22 01:43:09 [+0000], Patel, Vedang wrote:
-> Also, I checked the number of cpu migrations and context switches using
-> perf stat. Following are the results for both the cases:
-> 
-> cyclictest not pinned to CPU: the number of CPU migrations and context
-> switches are equal to the number of loops I am running for cyclictest.
-> Here, there are a lot of context switches with the ktimersoftd process.
-> 
-> cyclictest pinned to a CPU: there are very few CPU migrations. But, the
-> number of context switches are approximately 3 times the number of
-> loops. Most of the context switches are with the swapper (idle)
-> process.
-> 
-> In both the cases, the number of page faults are pretty low (~65).
-> 
-> I also tried similar experiments with mainline kernel (v4.4.47). The
-> number of CPU migrations were pretty low (single digits) for both the
-> cases described above. Also, the number of context switches were equal
-> to the number of loops provided as an argument to cyclictest.
+On 2017-02-18 01:15:22 [+0300], Alexander Gerasiov wrote:
+> Hello folks,
+Hi,
 
-The hardware interrupt wakes the "timer-softirq" thread. This RT-thread
-in turn will wake up your application / cyclictest which uses the
-posix-timers. So the priority of this thread is also important. After
-the wakeup it is possible that the newer kernel tries migrate the RT
-task if possible in order to keep it running as soon as possible. If it
-does not migrate it, then either the cyclictest task has to wait or the
-"timer-softirq" thread.
+> I met some problem with preempt version of kernel 4.4.
+> 
+> I have hrtimer which runs callback, it forwards time and returns
+> HRTIMER_RESTART. Very common scheme. When I stop the routine I call
+> hrtimer_cancel(). It should wait for callback completion if any and
+> unqueue any future timers.
 
-> Thanks,
-> Vedang Patel
-> Software Engineer
-> Intel Corporation
+Could you please check if the hunk here fixes the problem you see?
+
+diff --git a/include/linux/hrtimer.h b/include/linux/hrtimer.h
+--- a/include/linux/hrtimer.h
++++ b/include/linux/hrtimer.h
+@@ -455,7 +455,10 @@ static inline int hrtimer_is_queued(struct hrtimer *timer)
+  */
+ static inline int hrtimer_callback_running(const struct hrtimer *timer)
+ {
+-	return timer->base->cpu_base->running == timer;
++	if ((timer->base->cpu_base->running == timer) ||
++	    (timer->base->cpu_base->running_soft == timer))
++		return 1;
++	return 0;
+ }
+ 
+ /* Forward a hrtimer so it expires after now: */
 
 Sebastian
