@@ -1,64 +1,46 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [CFP] RT Users Micro-Conf at Linux Plumbers 2017
-Date: Tue, 28 Feb 2017 16:52:36 -0500
-Message-ID: <20170228165236.57ca19dd@gandalf.local.home>
-References: <20170227172556.28dcbbb5@gandalf.local.home>
-        <20170228204121.GO1733@jcartwri.amer.corp.natinst.com>
-        <20170228160432.2f8eecbe@gandalf.local.home>
-        <20170228214012.GP1733@jcartwri.amer.corp.natinst.com>
+From: Federico Reghenzani <federico.reghenzani@polimi.it>
+Subject: Re: NO_HZ and ktimersoftd
+Date: Wed, 1 Mar 2017 10:23:00 +0100
+Message-ID: <CACKey4yx1NzpiZqm4y4bUnNvp_MdERL3ykBVEUrNjq0ubZ4qjw@mail.gmail.com>
+References: <CACKey4zmx_=k6r8BY3B7K9ZuR6x5=11U25-st4oK8WAgo1WgQQ@mail.gmail.com>
+ <20170105163210.GJ1335@jcartwri.amer.corp.natinst.com> <20170223180124.ykbhfmkbmf2xa7tk@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Kate Stewart <kstewart@linuxfoundation.org>
-To: Julia Cartwright <julia@ni.com>
+Content-Type: text/plain; charset="UTF-8"
+Cc: Federico Reghenzani <federico.reghenzani@polimi.it>,
+        Julia Cartwright <julia@ni.com>,
+        <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:37240 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751767AbdB1WQN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 28 Feb 2017 17:16:13 -0500
-In-Reply-To: <20170228214012.GP1733@jcartwri.amer.corp.natinst.com>
+Received: from mail-db5eur01on0063.outbound.protection.outlook.com ([104.47.2.63]:53102
+        "EHLO EUR01-DB5-obe.outbound.protection.outlook.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S1750968AbdCAK7w (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 1 Mar 2017 05:59:52 -0500
+Received: by mail-wr0-f171.google.com with SMTP id u48so25711200wrc.0
+        for <linux-rt-users@vger.kernel.org>; Wed, 01 Mar 2017 01:23:22 -0800 (PST)
+In-Reply-To: <20170223180124.ykbhfmkbmf2xa7tk@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 28 Feb 2017 15:40:12 -0600
-Julia Cartwright <julia@ni.com> wrote:
+2017-02-23 19:01 GMT+01:00 Sebastian Andrzej Siewior <bigeasy@linutronix.de>:
+> On 2017-01-05 10:32:10 [-0600], Julia Cartwright wrote:
+>> > This works fine, however when I run my RT application, the thread
+>> > kimersoftd is always in "running" state, thus the scheduling interrupt
+>> > triggers (because there exists more than 1 task available to run).
+>> > Consequently, the advantages of NO_HZ_FULL are vanished.
+>>
+>> This sounds like the same problem that Haris (cc'd) has looked into and
+>> has put together a proposed solution.  See the thread here:
+>>
+>>    http://www.spinics.net/lists/linux-rt-users/msg16113.html
+>
+> can you please check latest v4.9.11-rt9 if the issue is still there or
+> gone?
+>
+> Sebastian
+
+It seems fixed, thank you
 
 
-> > I think a badge would still be worth purchasing. Having the ability to
-> > help influence development is a worthy goal.  
-> 
-> I didn't mean to make it sound like I didn't consider the LPC badge to
-> be worth it.  LPC is one of my favorite conferences to attend! Anyone
-> who asks me which Linux conferences to attend, LPC is always top on my
-> list.
-
-No worries, I didn't take it that way.
-
-> 
-> However, from my experience, the attendees at LPC are largely already
-> kernel engineers, or other low-level usermode people.  I suppose it's a
-> question of what "users" you are looking for.
-
-Actually, we are trying to have LPC be more cross the board and not so
-kernel centric. More like the old days of OLS.
-
-> 
-> That doesn't necessarily include people who are domain-experts in RTOS
-> applications but are relatively new to Linux; or people who use a
-> distro-packaged RT kernels for professional audio but have run into a
-> few minor snags; or ...
-
-I think these people would be perfect for LPC!
-
-
-> > I rather have you tell us were you want to help :)  
-> 
-> I'd happily talk to/facilitate discussions on the topics I mentioned
-> above.
-
-Hopefully we can get more people to reply to this. It would be useless
-to have a Micro-Conf that consists of two people sharing war stories.
-
--- Steve
+Cheers,
+Federico
