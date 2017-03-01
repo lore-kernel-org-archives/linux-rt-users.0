@@ -1,80 +1,63 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] v4.9.13-rt11
-Date: Wed, 1 Mar 2017 12:51:54 +0100
-Message-ID: <20170301115154.5hxhjw2wzo3we6ov@linutronix.de>
+From: "bigeasy@linutronix.de" <bigeasy@linutronix.de>
+Subject: Re: Regression on rt kernel while using POSIX timers
+Date: Wed, 1 Mar 2017 16:22:30 +0100
+Message-ID: <20170301152230.mjoi44so6t5qy3q2@linutronix.de>
+References: <1486579285.29816.105.camel@intel.com>
+ <20170210190708.gkx5pzxnd6uhfczn@linutronix.de>
+ <1487011713.17279.27.camel@intel.com>
+ <20170215165447.zr4k5rmenwvormdk@linutronix.de>
+ <20170216020516.GB1733@jcartwri.amer.corp.natinst.com>
+ <1487212458.10966.7.camel@intel.com>
+ <1487727789.28401.17.camel@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Cc: "julia@ni.com" <julia@ni.com>,
+        "ranshalit@gmail.com" <ranshalit@gmail.com>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        "Hart, Darren" <darren.hart@intel.com>
+To: "Patel, Vedang" <vedang.patel@intel.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:39861 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751988AbdCAPWr (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 1 Mar 2017 10:22:47 -0500
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <1487727789.28401.17.camel@intel.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear RT folks!
+On 2017-02-22 01:43:09 [+0000], Patel, Vedang wrote:
+> Also, I checked the number of cpu migrations and context switches using
+> perf stat. Following are the results for both the cases:
+> 
+> cyclictest not pinned to CPU: the number of CPU migrations and context
+> switches are equal to the number of loops I am running for cyclictest.
+> Here, there are a lot of context switches with the ktimersoftd process.
+> 
+> cyclictest pinned to a CPU: there are very few CPU migrations. But, the
+> number of context switches are approximately 3 times the number of
+> loops. Most of the context switches are with the swapper (idle)
+> process.
+> 
+> In both the cases, the number of page faults are pretty low (~65).
+> 
+> I also tried similar experiments with mainline kernel (v4.4.47). The
+> number of CPU migrations were pretty low (single digits) for both the
+> cases described above. Also, the number of context switches were equal
+> to the number of loops provided as an argument to cyclictest.
 
-I'm pleased to announce the v4.9.13-rt11 patch set. 
+The hardware interrupt wakes the "timer-softirq" thread. This RT-thread
+in turn will wake up your application / cyclictest which uses the
+posix-timers. So the priority of this thread is also important. After
+the wakeup it is possible that the newer kernel tries migrate the RT
+task if possible in order to keep it running as soon as possible. If it
+does not migrate it, then either the cyclictest task has to wait or the
+"timer-softirq" thread.
 
-Changes since v4.9.13-rt10:
-
-- The lockdep fix in last release failed to compile for UP and
-  MODULE=n configs. Fixed by Dan Murphy.
-
-Known issues
-	- CPU hotplug got a little better but can deadlock.
-
-The delta patch against v4.9.13-rt10 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.9/incr/patch-4.9.13-rt10-rt11.patch.xz
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.9.13-rt11
-
-The RT patch against v4.9.13 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.9/older/patch-4.9.13-rt11.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.9/older/patches-4.9.13-rt11.tar.xz
+> Thanks,
+> Vedang Patel
+> Software Engineer
+> Intel Corporation
 
 Sebastian
-diff --git a/include/linux/module.h b/include/linux/module.h
---- a/include/linux/module.h
-+++ b/include/linux/module.h
-@@ -664,6 +664,11 @@ static inline bool is_module_percpu_address(unsigned long addr)
- 	return false;
- }
- 
-+static inline bool __is_module_percpu_address(unsigned long addr, unsigned long *can_addr)
-+{
-+	return false;
-+}
-+
- static inline bool is_module_text_address(unsigned long addr)
- {
- 	return false;
-diff --git a/kernel/module.c b/kernel/module.c
---- a/kernel/module.c
-+++ b/kernel/module.c
-@@ -734,6 +734,11 @@ bool is_module_percpu_address(unsigned long addr)
- 	return false;
- }
- 
-+bool __is_module_percpu_address(unsigned long addr, unsigned long *can_addr)
-+{
-+	return false;
-+}
-+
- #endif /* CONFIG_SMP */
- 
- #define MODINFO_ATTR(field)	\
-diff --git a/localversion-rt b/localversion-rt
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt10
-+-rt11
