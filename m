@@ -1,51 +1,41 @@
-From: Alexander Gerasiov <gq@cs.msu.su>
-Subject: Re: Problem with hrtimer_cancel() does not cancel timer
-Date: Thu, 2 Mar 2017 02:48:08 +0300
-Message-ID: <20170302024808.7f5f29d9@brick.gerasiov.net>
-References: <20170218011522.09d42119@brick.gerasiov.net>
-        <20170301150103.4ttnvz72d4jsgui6@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [CFP] RT Users Micro-Conf at Linux Plumbers 2017
+Date: Wed, 1 Mar 2017 21:08:29 -0500
+Message-ID: <20170301210829.00dfe972@grimm.local.home>
+References: <20170227172556.28dcbbb5@gandalf.local.home>
+        <CAFTL4hy7GtKkD7AAwPP72oNeGAGg4FLMJkaTv80CJkqpY3xehw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, zlobin_d@redlab-i.ru
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Kate Stewart <kstewart@linuxfoundation.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Frederic Weisbecker <fweisbec@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from off.redlab-i.ru ([195.16.34.157]:58078 "EHLO mail.gerasiov.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1753424AbdCBAFt (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 1 Mar 2017 19:05:49 -0500
-In-Reply-To: <20170301150103.4ttnvz72d4jsgui6@linutronix.de>
+Received: from smtprelay0146.hostedemail.com ([216.40.44.146]:42603 "EHLO
+        smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1753489AbdCBCgc (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 1 Mar 2017 21:36:32 -0500
+Received: from smtprelay.hostedemail.com (10.5.19.251.rfc1918.com [10.5.19.251])
+        by smtpgrave02.hostedemail.com (Postfix) with ESMTP id 8BBFA4B80
+        for <linux-rt-users@vger.kernel.org>; Thu,  2 Mar 2017 02:10:14 +0000 (UTC)
+In-Reply-To: <CAFTL4hy7GtKkD7AAwPP72oNeGAGg4FLMJkaTv80CJkqpY3xehw@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello Sebastian,
+On Thu, 2 Mar 2017 00:39:04 +0100
+Frederic Weisbecker <fweisbec@gmail.com> wrote:
 
-On Wed, 1 Mar 2017 16:01:04 +0100
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 
-> On 2017-02-18 01:15:22 [+0300], Alexander Gerasiov wrote:
-> > Hello folks,  
-> Hi,
-> 
-> > I met some problem with preempt version of kernel 4.4.
-> > 
-> > I have hrtimer which runs callback, it forwards time and returns
-> > HRTIMER_RESTART. Very common scheme. When I stop the routine I call
-> > hrtimer_cancel(). It should wait for callback completion if any and
-> > unqueue any future timers.  
-> 
-> Could you please check if the hunk here fixes the problem you see?
+> If anybody is interested, I can do an overview of Full Nohz (and Isolation
+> alike), with a user/sysadmin focus. Unfortunately I can only talk about its
+> usage on mainline. Although I can certainly document on its specifics in
+> -rt.
 
-Great! Looks like the problem is solved.
+Remember, Linux Plumbers is not about presentations or overviews (One
+slide maximum). If you want to discuss what's not working (did we get
+rid of that once a second tick yet?), and get a discussion going about
+what needs to be done and how to fix it, then yeah, THAT would be great!
 
-When submitting patch to git, take a note, that not only 4.4 is
-affected. I'm quite sure, that 4.1 was affected too when I tested it and
-Dmitry comfirmed 4.9 is also broken.
-
--- 
-Best regards,
- Alexander Gerasiov
-
- Contacts:
- e-mail: gq@cs.msu.su  Homepage: http://gerasiov.net  Skype: gerasiov
- PGP fingerprint: 04B5 9D90 DF7C C2AB CD49  BAEA CA87 E9E8 2AAC 33F1
+-- Steve
