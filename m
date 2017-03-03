@@ -1,78 +1,47 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: [rfc patch] net/netpoll: don't disable irqs in
- netpoll_send_skb()
-Date: Fri, 03 Mar 2017 09:53:03 +0100
-Message-ID: <1488531183.4506.27.camel@gmx.de>
-References: <1488523005.4506.18.camel@gmx.de>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: Regression on rt kernel while using POSIX timers
+Date: Fri, 3 Mar 2017 17:51:37 +0100 (CET)
+Message-ID: <alpine.DEB.2.20.1703031733570.4522@nanos>
+References: <1486579285.29816.105.camel@intel.com> <20170210190708.gkx5pzxnd6uhfczn@linutronix.de> <1487011713.17279.27.camel@intel.com> <20170215165447.zr4k5rmenwvormdk@linutronix.de> <20170216020516.GB1733@jcartwri.amer.corp.natinst.com>
+ <1487212458.10966.7.camel@intel.com> <1487727789.28401.17.camel@intel.com> <20170301152230.mjoi44so6t5qy3q2@linutronix.de> <472B70D9-E1AF-4D14-BE79-ABAAC74BA4DB@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>
-To: RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Cc: "bigeasy@linutronix.de" <bigeasy@linutronix.de>,
+        "Patel, Vedang" <vedang.patel@intel.com>,
+        "julia@ni.com" <julia@ni.com>,
+        "ranshalit@gmail.com" <ranshalit@gmail.com>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        "Hart, Darren" <darren.hart@intel.com>
+To: Tracy Smith <tlsmith3777@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mout.gmx.net ([212.227.15.15]:55251 "EHLO mout.gmx.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751074AbdCCJ1z (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 3 Mar 2017 04:27:55 -0500
-In-Reply-To: <1488523005.4506.18.camel@gmx.de>
+Received: from Galois.linutronix.de ([146.0.238.70]:51102 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752188AbdCCRew (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 3 Mar 2017 12:34:52 -0500
+In-Reply-To: <472B70D9-E1AF-4D14-BE79-ABAAC74BA4DB@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Not that it matters, but there was a hunk missing.
+On Wed, 1 Mar 2017, Tracy Smith wrote:
 
-RT takes sleeping locks, we can't disable irqs.
+First of all, please do not top post and trim your replies.
 
-Signed-off-by: Mike Galbraith <efault@gmx.de>
----
- include/linux/netpoll.h |    8 ++++++--
- net/core/netpoll.c      |    6 +++---
- 2 files changed, 9 insertions(+), 5 deletions(-)
+> Pleaee isolate the specific release where latency regression occurred if
+> the community has not already done so.
 
---- a/include/linux/netpoll.h
-+++ b/include/linux/netpoll.h
-@@ -67,9 +67,13 @@ void netpoll_send_skb_on_dev(struct netp
- static inline void netpoll_send_skb(struct netpoll *np, struct sk_buff *skb)
- {
- 	unsigned long flags;
--	local_irq_save(flags);
-+	local_irq_save_nort(flags);
-+	if (IS_ENABLED(CONFIG_PREEMPT_RT_FULL))
-+		rcu_read_lock();
- 	netpoll_send_skb_on_dev(np, skb, np->dev);
--	local_irq_restore(flags);
-+	if (IS_ENABLED(CONFIG_PREEMPT_RT_FULL))
-+		rcu_read_unlock();
-+	local_irq_restore_nort(flags);
- }
- 
- #ifdef CONFIG_NETPOLL
---- a/net/core/netpoll.c
-+++ b/net/core/netpoll.c
-@@ -328,7 +328,7 @@ void netpoll_send_skb_on_dev(struct netp
- 	/* It is up to the caller to keep npinfo alive. */
- 	struct netpoll_info *npinfo;
- 
--	WARN_ON_ONCE(!irqs_disabled());
-+	WARN_ON_ONCE_NONRT(!irqs_disabled());
- 
- 	npinfo = rcu_dereference_bh(np->dev->npinfo);
- 	if (!npinfo || !netif_running(dev) || !netif_device_present(dev)) {
-@@ -362,7 +362,7 @@ void netpoll_send_skb_on_dev(struct netp
- 			udelay(USEC_PER_POLL);
- 		}
- 
--		WARN_ONCE(!irqs_disabled(),
-+		WARN_ONCE(!IS_ENABLED(CONFIG_PREEMPT_RT_FULL) && !irqs_disabled(),
- 			"netpoll_send_skb_on_dev(): %s enabled interrupts in poll (%pF)\n",
- 			dev->name, dev->netdev_ops->ndo_start_xmit);
- 
-@@ -385,7 +385,7 @@ void netpoll_send_udp(struct netpoll *np
- 	static atomic_t ip_ident;
- 	struct ipv6hdr *ip6h;
- 
--	WARN_ON_ONCE(!irqs_disabled());
-+	WARN_ON_ONCE_NONRT(!irqs_disabled());
- 
- 	udp_len = len + sizeof(*udph);
- 	if (np->ipv6)
+Which regression are you talking about?
+
+> Possibly backing out changes specific to timers and posix threads for
+> that release to see what impacted latency.
+
+The issue Vedang and Sebastian are discussing is a configuration
+problem. Backing out changes should really solve that.
+
+> This is crucial for NXP and others as they migrate to later releases of
+> the kernel.
+
+Thanks for the enlightment, we really were unaware about the crucial
+importance.
+
+       tglx
