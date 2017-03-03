@@ -1,7 +1,9 @@
 From: Mike Galbraith <efault@gmx.de>
-Subject: [rfc patch] net/netpoll: don't disable irqs in netpoll_send_skb()
-Date: Fri, 03 Mar 2017 07:36:45 +0100
-Message-ID: <1488523005.4506.18.camel@gmx.de>
+Subject: Re: [rfc patch] net/netpoll: don't disable irqs in
+ netpoll_send_skb()
+Date: Fri, 03 Mar 2017 09:53:03 +0100
+Message-ID: <1488531183.4506.27.camel@gmx.de>
+References: <1488523005.4506.18.camel@gmx.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -9,27 +11,23 @@ Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Thomas Gleixner <tglx@linutronix.de>
 To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mout.gmx.net ([212.227.15.15]:54126 "EHLO mout.gmx.net"
+Received: from mout.gmx.net ([212.227.15.15]:55251 "EHLO mout.gmx.net"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751083AbdCCGia (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 3 Mar 2017 01:38:30 -0500
+        id S1751074AbdCCJ1z (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 3 Mar 2017 04:27:55 -0500
+In-Reply-To: <1488523005.4506.18.camel@gmx.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Greetings,
-
-I occasionally want to use netconsole, but it has RT issues.  It seems
-to work fine with the not so pretty hacklet below. 
-
-net/netpoll: don't disable irqs in netpoll_send_skb()
+Not that it matters, but there was a hunk missing.
 
 RT takes sleeping locks, we can't disable irqs.
 
 Signed-off-by: Mike Galbraith <efault@gmx.de>
 ---
  include/linux/netpoll.h |    8 ++++++--
- net/core/netpoll.c      |    4 ++--
- 2 files changed, 8 insertions(+), 4 deletions(-)
+ net/core/netpoll.c      |    6 +++---
+ 2 files changed, 9 insertions(+), 5 deletions(-)
 
 --- a/include/linux/netpoll.h
 +++ b/include/linux/netpoll.h
@@ -69,3 +67,12 @@ Signed-off-by: Mike Galbraith <efault@gmx.de>
  			"netpoll_send_skb_on_dev(): %s enabled interrupts in poll (%pF)\n",
  			dev->name, dev->netdev_ops->ndo_start_xmit);
  
+@@ -385,7 +385,7 @@ void netpoll_send_udp(struct netpoll *np
+ 	static atomic_t ip_ident;
+ 	struct ipv6hdr *ip6h;
+ 
+-	WARN_ON_ONCE(!irqs_disabled());
++	WARN_ON_ONCE_NONRT(!irqs_disabled());
+ 
+ 	udp_len = len + sizeof(*udph);
+ 	if (np->ipv6)
