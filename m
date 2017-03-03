@@ -1,75 +1,95 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: "Patel, Vedang" <vedang.patel@intel.com>
 Subject: Re: Regression on rt kernel while using POSIX timers
-Date: Fri, 3 Mar 2017 22:09:56 +0100 (CET)
-Message-ID: <alpine.DEB.2.20.1703032202240.3691@nanos>
-References: <1486579285.29816.105.camel@intel.com> <20170210190708.gkx5pzxnd6uhfczn@linutronix.de> <1487011713.17279.27.camel@intel.com> <20170215165447.zr4k5rmenwvormdk@linutronix.de> <20170216020516.GB1733@jcartwri.amer.corp.natinst.com>
- <1487212458.10966.7.camel@intel.com> <1487727789.28401.17.camel@intel.com> <20170301152230.mjoi44so6t5qy3q2@linutronix.de> <472B70D9-E1AF-4D14-BE79-ABAAC74BA4DB@gmail.com> <1488424982.29259.32.camel@intel.com>
- <20170303194159.GD29100@jcartwri.amer.corp.natinst.com>
+Date: Fri, 3 Mar 2017 23:36:20 +0000
+Message-ID: <1488584180.29259.76.camel@intel.com>
+References: <1486579285.29816.105.camel@intel.com>
+         <20170210190708.gkx5pzxnd6uhfczn@linutronix.de>
+         <1487011713.17279.27.camel@intel.com>
+         <20170215165447.zr4k5rmenwvormdk@linutronix.de>
+         <20170216020516.GB1733@jcartwri.amer.corp.natinst.com>
+         <1487212458.10966.7.camel@intel.com> <1487727789.28401.17.camel@intel.com>
+         <20170301152230.mjoi44so6t5qy3q2@linutronix.de>
+         <472B70D9-E1AF-4D14-BE79-ABAAC74BA4DB@gmail.com>
+         <1488424982.29259.32.camel@intel.com>
+         <20170303194159.GD29100@jcartwri.amer.corp.natinst.com>
+         <alpine.DEB.2.20.1703032202240.3691@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Cc: "Patel, Vedang" <vedang.patel@intel.com>,
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: "ranshalit@gmail.com" <ranshalit@gmail.com>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
         "bigeasy@linutronix.de" <bigeasy@linutronix.de>,
         "tlsmith3777@gmail.com" <tlsmith3777@gmail.com>,
-        "ranshalit@gmail.com" <ranshalit@gmail.com>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
         "Hart, Darren" <darren.hart@intel.com>
-To: Julia Cartwright <julia@ni.com>
+To: "tglx@linutronix.de" <tglx@linutronix.de>,
+        "julia@ni.com" <julia@ni.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:51735 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1752026AbdCCVer (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 3 Mar 2017 16:34:47 -0500
-In-Reply-To: <20170303194159.GD29100@jcartwri.amer.corp.natinst.com>
+Received: from mga07.intel.com ([134.134.136.100]:62034 "EHLO mga07.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1752224AbdCCXsk (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 3 Mar 2017 18:48:40 -0500
+In-Reply-To: <alpine.DEB.2.20.1703032202240.3691@nanos>
+Content-Language: en-US
+Content-ID: <C506AFC388933245A2BE92CEF1BFB380@intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 3 Mar 2017, Julia Cartwright wrote:
-> 
-> Without PREEMPT_RT_FULL enabled, the critical section is executed with
-> "raw" spinlocks, and is therefore non-preemptible.  However, with
-> RT_FULL, the preemptibility of the section leads to the "bounce".
-> 
-> That should make it clear why ktimersoftd would be PI boosted, as well.
-> 
-> Now, it isn't clear to me why the affinitized scenario appears to make
-> this happen more frequently...  Nor do I have a handle on what to do to
-> fix this (if anything).
-
-The point here is:
-
-perf stat taskset 1 cyclictest -t1
-
-will make the control thread of cyclictest affine to cpu 0 and also the
-measuring thread. perf stat counts the context switches of both.
-
-CPU 0
-cyclictest-control
-
---> Interrupt
-
-ksoftirqd
-
-cyclictest-measure
-  rearm timer
-  sleep
-
-cyclictest-control
-
-....
-
-versus a non affine scenario
-
-CPU0   	     	    CPU1		CPU2
-cyclictest-control  interrupt
-		    ksoftirqd	-->	cyclictest-measure
-		    			   rearm timer
-					   sleep
-					
-					interrupt
-		    cyclicttest <--	ksoftirqd
-		    -measure		
-
-Thanks,
-
-	tglx
+SGkgSnVsaWEsIFRob21hcyzCoA0KDQpUaGFua3MgZm9yIGFsbCB0aGUgaW5wdXRzLiBUaGUgaW5m
+b3JtYXRpb24gaXMgcmVhbGx5IGhlbHBmdWwgaW4gaGVscGluZw0KbWUgZ2V0IGEgYmV0dGVyIHVu
+ZGVyc3RhbmRpbmcgb2YgdGhlIGludGVybmFscy4gOikNCg0KT24gRnJpLCAyMDE3LTAzLTAzIGF0
+IDIyOjA5ICswMTAwLCBUaG9tYXMgR2xlaXhuZXIgd3JvdGU6DQo+IE9uIEZyaSwgMyBNYXIgMjAx
+NywgSnVsaWEgQ2FydHdyaWdodCB3cm90ZToNCj4gPiANCj4gPiANCj4gPiBXaXRob3V0IFBSRUVN
+UFRfUlRfRlVMTCBlbmFibGVkLCB0aGUgY3JpdGljYWwgc2VjdGlvbiBpcyBleGVjdXRlZA0KPiA+
+IHdpdGgNCj4gPiAicmF3IiBzcGlubG9ja3MsIGFuZCBpcyB0aGVyZWZvcmUgbm9uLXByZWVtcHRp
+YmxlLsKgwqBIb3dldmVyLCB3aXRoDQo+ID4gUlRfRlVMTCwgdGhlIHByZWVtcHRpYmlsaXR5IG9m
+IHRoZSBzZWN0aW9uIGxlYWRzIHRvIHRoZSAiYm91bmNlIi4NCj4gPiANCj4gPiBUaGF0IHNob3Vs
+ZCBtYWtlIGl0IGNsZWFyIHdoeSBrdGltZXJzb2Z0ZCB3b3VsZCBiZSBQSSBib29zdGVkLCBhcw0K
+PiA+IHdlbGwuDQo+ID4gDQo+ID4gTm93LCBpdCBpc24ndCBjbGVhciB0byBtZSB3aHkgdGhlIGFm
+ZmluaXRpemVkIHNjZW5hcmlvIGFwcGVhcnMgdG8NCj4gPiBtYWtlDQo+ID4gdGhpcyBoYXBwZW4g
+bW9yZSBmcmVxdWVudGx5Li4uwqDCoE5vciBkbyBJIGhhdmUgYSBoYW5kbGUgb24gd2hhdCB0bw0K
+PiA+IGRvIHRvDQo+ID4gZml4IHRoaXMgKGlmIGFueXRoaW5nKS4NCj4gVGhlIHBvaW50IGhlcmUg
+aXM6DQo+IA0KPiBwZXJmIHN0YXQgdGFza3NldCAxIGN5Y2xpY3Rlc3QgLXQxDQo+IA0KPiB3aWxs
+IG1ha2UgdGhlIGNvbnRyb2wgdGhyZWFkIG9mIGN5Y2xpY3Rlc3QgYWZmaW5lIHRvIGNwdSAwIGFu
+ZCBhbHNvDQo+IHRoZQ0KPiBtZWFzdXJpbmcgdGhyZWFkLiBwZXJmIHN0YXQgY291bnRzIHRoZSBj
+b250ZXh0IHN3aXRjaGVzIG9mIGJvdGguDQoNCg0KSSBiZWxpZXZlIHRoYXQgaXQgaXMgbm90IG1h
+bmlmZXN0ZWQgaW4gdGhlIG5vbi1hZmZpbmNlIHNjZW5hcmlvIGJlY2F1c2UNCsKgdGhlIGN5Y2xp
+Y3Rlc3QgcHJvY2VzcyBiZWluZyBtaWdyYXRlZCB0byBhbm90aGVyIENQVSBldmVyeSB0aW1lIGl0
+DQpnb2VzIHRvIHNsZWVwIGFmdGVyIGNhbGxpbmcgc2lnd2FpdCgpLiBUaGVyZSBhcmUgbm8gImFk
+ZGl0aW9uYWwiDQpjb250ZXh0IHN3aXRjaGVzIHJlcXVpcmVkIGJldHdlZW4ga3RpbWVyc29mdGQg
+YW5kIGN5Y2xpY3Rlc3QgYmVjYXVzZSBpdA0KaXMgb24gYSBkaWZmZXJlbnQgQ1BVLsKgDQoNCkFs
+c28sIEkgYW0gdXNpbmcgdGhlICctYScgYXJndW1lbnQgwqBwcm92aWRlZCBieSBjeWNsaWN0ZXN0
+IHRvIHBpbiB0aGUNCnByb2Nlc3MgdG8gdGhlIENQVS4gVGhpcyBkb2VzIG5vdCBwaW4gdGhlIG1h
+aW4gdGhyZWFkLiBJIGNvbmZpcm1lZCBpdA0KYnkgdXNpbmcgdHJhY2UtY21kIGFuZCBrZXJuZWxz
+aGFyay4gQWxzbywgdGhlIG51bWJlciBvZiBjb250ZXh0DQpzd2l0Y2hlcyBmb3IgdGhlIG1haW4g
+dGhyZWFkIGFyZSBwcmV0dHkgbG93LiBGb3IgZXhhbXBsZSwgaWYgSSBydW4NCjEwMDAwMCBsb29w
+cywgdGhlcmUgYXJlIH4zMDAwMDAgY29udGV4dCBzd2l0Y2hlcyBvdXQgb2Ygd2hpY2ggb25seSAx
+MDAwDQphcmUgZnJvbSB0aGUgbWFpbiB0aHJlYWQuIEkgY2hlY2tlZCBpbiB0aGUgbWFpbmxpbmUg
+a2VybmVsIGFuZCB0aGUNCnNvZnRpcnFzIHNlZW0gdG8gYmUgZXhlY3V0aW5nIHdpdGggdGhlIGlu
+dGVycnVwdHMgZGlzYWJsZWQuIMKgV2hpY2ggaXMNCnByb2JhYmx5IHdoeSB0aGUgaXNzdWUgaXMg
+YXZvaWRlZC4NCg0KSSBub3cgaGF2ZSB0aGUgZm9sbG93aW5nIGNvbmNlcm5zIGFuZCBjb21tZW50
+czoNCjEuIHJlYWwtdGltZSBrZXJuZWwgdnMuIE1haW5saW5lIGtlcm5lbDogVGhlIHJlYWwtdGlt
+ZSBrZXJuZWwgaXMgd29yc2UNCndpdGggUE9TSVggdGltZXJzIHRoYW4gdGhlIG1haW5saW5lIGtl
+cm5lbC4gVGhpcyBpcyBvZGQuIElzIHRoaXMNCmJlY2F1c2UgdGhlIHNvZnRpcnFzIGFyZSBub3Qg
+dGhlIHNhbWUgYW55bW9yZShTb3JyeSwgSSBhbSBzdGlsbCBub3QNCmZhbWlsaWFyIHdpdGggd2hh
+dCB0aGV5IGhhdmUgYmVjb21lLiBJIGRlZHVjZWQgdGhlICJub3QgdGhlIHNhbWUiIHBhcnQNCmZy
+b20gY29tbWl0IG1lc3NhZ2VzL2NvbW1lbnRzIGluIGNvZGUuIDopKT8gQWxzbywgaW7CoGh0dHBz
+Oi8vZ2l0Lmtlcm5lbA0KLm9yZy9jZ2l0L2xpbnV4L2tlcm5lbC9naXQvcnQvbGludXgtc3RhYmxl
+LXJ0LmdpdC9jb21taXQvP2g9djQuNC0NCnJ0JmlkPTRhYTdjYmE1N2Y3M2FjZjFlM2U0OTk4YWUx
+NjUwOTY1MzE3YzJkZTEsIGl0IGlzIG1lbnRpb25lZDoNCiINCkJyaW5nIGJhY2sgdGhlIHNvZnRp
+cnEgc3BsaXQgZm9yIG5vdywgdW50aWwgd2UgZml4ZWQgdGhlIHNpZ25hbA0KZGVsaXZlcnkgcHJv
+YmxlbSBmb3IgcmVhbC4NCiINCldoYXQgc2lnbmFsIGRlbGl2ZXJ5IHByb2JsZW0gaXMgYmVpbmcg
+cmVmZXJyZWQgdG8/DQoNCjIuIEluIHRoZSBjYXNlIHRoZSBDUFUgYWZmaW5pdHkgaXMgc2V0LCBU
+aGUgQ1BVIGlzIHNoYXJlZCBiZXR3ZWVuDQpjeWNsaWN0ZXN0IHRocmVhZCBhbmQgdGhlIGt0aW1l
+cnNvZnRkIHRocmVhZC4gU28sIGluIHRoZSBlbmQsIDEgQ1BVDQptaWdyYXRpb24gaXMgY2hlYXBl
+ciB0aGFuIDMgY29udGV4dCBzd2l0Y2hlcy4uLiBJcyB0aGlzIHRoZSByaWdodA0KYW5hbHlzaXM/
+IEkga25vdyB0aGlzIHdpbGwgdmFyeSBmcm9tIGFwcGxpY2F0aW9uIHRvIGFwcGxpY2F0aW9uLg0K
+DQpUaGFua3MsDQpWZWRhbmcgUGF0ZWwNClNvZnR3YXJlIEVuZ2luZWVyDQpJbnRlbCBDb3Jwb3Jh
+dGlvbg0KPiBDUFUgMA0KPiBjeWNsaWN0ZXN0LWNvbnRyb2wNCj4gDQo+IC0tPiBJbnRlcnJ1cHQN
+Cj4gDQo+IGtzb2Z0aXJxZA0KPiANCj4gY3ljbGljdGVzdC1tZWFzdXJlDQo+IMKgIHJlYXJtIHRp
+bWVyDQo+IMKgIHNsZWVwDQo+IA0KPiBjeWNsaWN0ZXN0LWNvbnRyb2wNCj4gDQo+IC4uLi4NCj4g
+DQo+IHZlcnN1cyBhIG5vbiBhZmZpbmUgc2NlbmFyaW8NCj4gDQo+IENQVTDCoMKgwqAJwqDCoMKg
+wqDCoAnCoMKgwqDCoENQVTEJCUNQVTINCj4gY3ljbGljdGVzdC1jb250cm9swqDCoGludGVycnVw
+dA0KPiAJCcKgwqDCoMKga3NvZnRpcnFkCS0tPgljeWNsaWN0ZXN0LW1lYXN1cmUNCj4gCQnCoMKg
+wqDCoAkJCcKgwqDCoHJlYXJtIHRpbWVyDQo+IAkJCQkJwqDCoMKgc2xlZXANCj4gCQkJCQkNCj4g
+CQkJCQlpbnRlcnJ1cHQNCj4gCQnCoMKgwqDCoGN5Y2xpY3R0ZXN0IDwtLQlrc29mdGlycWQNCj4g
+CQnCoMKgwqDCoC1tZWFzdXJlCQkNCj4gDQo+IFRoYW5rcywNCj4gDQo+IAl0Z2x4
