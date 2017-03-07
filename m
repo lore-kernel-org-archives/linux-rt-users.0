@@ -1,73 +1,67 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] v4.9.13-rt12
-Date: Wed, 8 Mar 2017 00:10:06 +0100
-Message-ID: <20170307231006.p7wtnnlajecuysp6@linutronix.de>
+Subject: Re: Kernel 4.9.x-rt Fully Preemptible Kernel: Issue with gdb and
+ unexpected SIGSTOP signals
+Date: Wed, 8 Mar 2017 00:21:51 +0100
+Message-ID: <20170307232151.7macprg6qnl3exbh@linutronix.de>
+References: <39174b3e2e7a47c48b3688a2b28ab83e@FE-MBX1012.de.bosch.com>
+ <20170125095628.pcuxqk7l4xnvbsve@linutronix.de>
+ <f8526e600a9a45dc959ddf5d12bc430b@FE-MBX1012.de.bosch.com>
+ <87521e75b64f4b84b2ecd8b47bb7fe72@FE-MBX1012.de.bosch.com>
+ <20170125134016.ffj6xpissz4iy7ph@linutronix.de>
+ <ef2c680e3ed541c4b0df5e0715ca8264@FE-MBX1012.de.bosch.com>
+ <3c9395f9c6b944978c1f420276bde0ee@FE-MBX1012.de.bosch.com>
+ <61f913336df14059bc409249f0e70ea3@FE-MBX1012.de.bosch.com>
+ <20170302175155.rymagis536dnw5nh@linutronix.de>
+ <d831bc9a2939474f8b8290905f393088@FE-MBX1012.de.bosch.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Transfer-Encoding: 8BIT
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: "Koehrer Mathias (ETAS/ESW3)" <mathias.koehrer@etas.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:44137 "EHLO
+Received: from Galois.linutronix.de ([146.0.238.70]:44174 "EHLO
         Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751420AbdCGXMv (ORCPT
+        with ESMTP id S1756588AbdCGXna (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 7 Mar 2017 18:12:51 -0500
+        Tue, 7 Mar 2017 18:43:30 -0500
 Content-Disposition: inline
+In-Reply-To: <d831bc9a2939474f8b8290905f393088@FE-MBX1012.de.bosch.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear RT folks!
+On 2017-03-07 13:39:36 [+0000], Koehrer Mathias (ETAS/ESW3) wrote:
+> Hi Sebastian,
+Hi Mathias,
 
-I'm pleased to announce the v4.9.13-rt12 patch set. 
+> > and 8144 blocks in wait for 8424 which is never completes without additional help
+> > (like a manual SIGCONT). Right now it looks like the PTRACE_DETACH (syscall
+> > 101, 11) which should remove the task from ptrace and wakeup did not work but I
+> > see a wakeup… The wakeup worked (most likely) but since it is stuck I guess that
+> > there was a second signal it is processing and waiting for gdb.
+> I do not understand, what that means.
+> When I run the very same test on a non-rt kernel (or even on a RT kernel with a 
+> preemption model that is not configured as "Fully Preemptible Kernel"), I never see 
+> this issue.
 
-Changes since v4.9.13-rt11:
+I can reproduce the issue on a -RT kernel. I don't really know what the
+root issue is but it is a problem. We had a ptrace issue if you look
+into the queue for
+  "ptrace: fix ptrace vs tasklist_lock race"
 
-  - hrtimer_cancel() may not cancel a timer which is currently running
-    in the softirq context. Reported by Alexander Gerasiov.
+> Also - as mentioned - previously, with older RT preempted kernel versions it is working fine
+> as well. For me it looks as if the RT preempting on newer kernels somehow has impact 
+> on the way the debugging with gdb works
+> My expectation (and so far I had the experience) is that a code that is running fine 
+> with a non RT kernel should also run fine with the fully preempted kernel (of course 
+> the timing behavior is different). 
 
-Known issues
-	- CPU hotplug got a little better but can deadlock.
+That is correct - it should work. I've been tracing it for a while now
+and have no real clue what goes wrong. There a few different ways how it
+seems to go wrong and the outcome is always that the kernel puts the
+task in "stop" mode while gdb expects it to run and waits for it.
 
-The delta patch against v4.9.13-rt11 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.9/incr/patch-4.9.13-rt11-rt12.patch.xz
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.9.13-rt12
-
-The RT patch against v4.9.13 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.9/older/patch-4.9.13-rt12.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.9/older/patches-4.9.13-rt12.tar.xz
+> Regards
+> 
+> Mathias
 
 Sebastian
-diff --git a/include/linux/hrtimer.h b/include/linux/hrtimer.h
---- a/include/linux/hrtimer.h
-+++ b/include/linux/hrtimer.h
-@@ -455,7 +455,13 @@ static inline int hrtimer_is_queued(struct hrtimer *timer)
-  */
- static inline int hrtimer_callback_running(const struct hrtimer *timer)
- {
--	return timer->base->cpu_base->running == timer;
-+	if (timer->base->cpu_base->running == timer)
-+		return 1;
-+#ifdef CONFIG_PREEMPT_RT_BASE
-+	if (timer->base->cpu_base->running_soft == timer)
-+		return 1;
-+#endif
-+	return 0;
- }
- 
- /* Forward a hrtimer so it expires after now: */
-diff --git a/localversion-rt b/localversion-rt
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt11
-+-rt12
