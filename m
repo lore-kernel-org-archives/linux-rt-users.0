@@ -1,8 +1,7 @@
 From: Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 7/9] rt: Drop the removal of _GPL from rt_mutex_destroy()'s
-Date: Tue, 7 Mar 2017 16:32:57 -0600
-Message-ID: <7863a0dfe9e36907740d19c57e43b49368527564.1488919535.git.julia@ni.com>
-References: <cover.1488919535.git.julia@ni.com>
+Subject: [PATCH RT 0/9] Linux 4.1.38-rt46-rc1
+Date: Tue, 7 Mar 2017 16:32:50 -0600
+Message-ID: <cover.1488919535.git.julia@ni.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -10,48 +9,80 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
-        "Steven Rostedt" <rostedt@goodmis.org>
+        Steven Rostedt <rostedt@goodmis.org>
 To: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx0a-00010702.pphosted.com ([148.163.156.75]:40297 "EHLO
-        mx0b-00010702.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1751935AbdCHABx (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 7 Mar 2017 19:01:53 -0500
-In-Reply-To: <cover.1488919535.git.julia@ni.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-4.1.38-rt46-rc1 stable review patch.
-If you have any objection to the inclusion of this patch, let me know.
+Dear RT Folks,
 
---- 8< --- 8< --- 8< ---
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+This is the RT stable review cycle of patch 4.1.38-rt46-rc1.  Please review
+the included patches, and test!
 
-What we have now should be enough, the EXPORT_SYMBOL statement for
-rt_mutex_destroy() is not required.
+The -rc release will be uploaded to kernel.org and will be deleted when the
+final release is out. This is just a review release (or release candidate).
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-(cherry picked from commit 5dbe8fd80a2ccfc8c24874e19259df51d91e02a2)
-Signed-off-by: Julia Cartwright <julia@ni.com>
----
- kernel/locking/rtmutex.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+The pre-releases will not be pushed to the git repository, only the
+final release is.
 
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index 469075e06cde..e0b0d9b419b5 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -2015,7 +2015,8 @@ void rt_mutex_destroy(struct rt_mutex *lock)
- 	lock->magic = NULL;
- #endif
- }
--EXPORT_SYMBOL(rt_mutex_destroy);
-+
-+EXPORT_SYMBOL_GPL(rt_mutex_destroy);
- 
- /**
-  * __rt_mutex_init - initialize the rt lock
+If all goes well, this patch will be converted to the next main release
+on 3/10/2017.
+
+Many thanks to Steven Rostedt for all of his efforts in maintaining v4.1-rt,
+and his continued mentorship!
+
+   Julia
+
+----------------------------------------------------------------
+To build 4.1.38-rt46-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.1.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.1.38.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/patch-4.1.38-rt46-rc1.patch.xz
+
+You can also build from 4.1.38-rt46-rc1 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/incr/patch-4.1.38-rt45-rt46-rc1.patch.xz
+
+----------------------------------------------------------------
+Dan Murphy (1):
+  lockdep: Fix compilation error for !CONFIG_MODULES and !CONFIG_SMP
+
+John Ogness (1):
+  x86/mm/cpa: avoid wbinvd() for PREEMPT
+
+Julia Cartwright (2):
+  pinctrl: qcom: Use raw spinlock variants
+  Linux 4.1.38-rt46-rc1
+
+Mike Galbraith (1):
+  cpuset: Convert callback_lock to raw_spinlock_t
+
+Sebastian Andrzej Siewior (3):
+  radix-tree: use local locks
+  rt: Drop mutex_disable() on !DEBUG configs and the GPL suffix from
+    export symbol
+  rt: Drop the removal of _GPL from rt_mutex_destroy()'s EXPORT_SYMBOL
+
+Thomas Gleixner (1):
+  lockdep: Handle statically initialized PER_CPU locks proper
+
+ arch/x86/mm/pageattr.c             |  8 +++++
+ drivers/pinctrl/qcom/pinctrl-msm.c | 48 +++++++++++++--------------
+ include/linux/module.h             |  6 ++++
+ include/linux/mutex_rt.h           |  5 +++
+ include/linux/percpu.h             |  1 +
+ include/linux/radix-tree.h         | 12 ++-----
+ kernel/cpuset.c                    | 66 +++++++++++++++++++-------------------
+ kernel/locking/lockdep.c           | 33 +++++++++++++------
+ kernel/module.c                    | 36 ++++++++++++++-------
+ lib/radix-tree.c                   | 22 ++++++++-----
+ localversion-rt                    |  2 +-
+ mm/percpu.c                        | 37 +++++++++++++--------
+ 12 files changed, 164 insertions(+), 112 deletions(-)
+
 -- 
 2.11.1
-
