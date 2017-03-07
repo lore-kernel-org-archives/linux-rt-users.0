@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 03/10] pinctrl: qcom: Use raw spinlock variants
-Date: Tue, 07 Mar 2017 16:20:44 -0500
-Message-ID: <20170307212313.628182056@goodmis.org>
+Subject: [PATCH RT 02/10] radix-tree: use local locks
+Date: Tue, 07 Mar 2017 16:20:43 -0500
+Message-ID: <20170307212313.478962389@goodmis.org>
 References: <20170307212041.431615000@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,13 +10,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
-        Julia Cartwright <julia@ni.com>, stable-rt@vger.kernel.org,
-        Bjorn Andersson <bjorn.andersson@linaro.org>,
-        Brian Wrenn <dcbrianw@gmail.com>
+        Julia Cartwright <julia@ni.com>, stable-rt@vger.kernel.org
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-pinctrl-qcom-Use-raw-spinlock-variants.patch
+Content-Disposition: inline; filename=0002-radix-tree-use-local-locks.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -25,258 +23,136 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Julia Cartwright <julia@ni.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-The MSM pinctrl driver currently implements an irq_chip for handling
-GPIO interrupts; due to how irq_chip handling is done, it's necessary
-for the irq_chip methods to be invoked from hardirq context, even on a
-a real-time kernel.  Because the spinlock_t type becomes a "sleeping"
-spinlock w/ RT kernels, it is not suitable to be used with irq_chips.
-
-A quick audit of the operations under the lock reveal that they do only
-minimal, bounded work, and are therefore safe to do under a raw
-spinlock.
-
-On real-time kernels, this fixes an OOPs which looks like the following,
-as reported by Brian Wrenn:
-
-    kernel BUG at kernel/locking/rtmutex.c:1014!
-    Internal error: Oops - BUG: 0 [#1] PREEMPT SMP
-    Modules linked in: spidev_irq(O) smsc75xx wcn36xx [last unloaded: spidev]
-    CPU: 0 PID: 1163 Comm: irq/144-mmc0 Tainted: G        W  O    4.4.9-linaro-lt-qcom #1
-    PC is at rt_spin_lock_slowlock+0x80/0x2d8
-    LR is at rt_spin_lock_slowlock+0x68/0x2d8
-    [..]
-  Call trace:
-    rt_spin_lock_slowlock
-    rt_spin_lock
-    msm_gpio_irq_ack
-    handle_edge_irq
-    generic_handle_irq
-    msm_gpio_irq_handler
-    generic_handle_irq
-    __handle_domain_irq
-    gic_handle_irq
+The preload functionality uses per-CPU variables and preempt-disable to
+ensure that it does not switch CPUs during its usage. This patch adds
+local_locks() instead preempt_disable() for the same purpose and to
+remain preemptible on -RT.
 
 Cc: stable-rt@vger.kernel.org
-Cc: Bjorn Andersson <bjorn.andersson@linaro.org>
-Reported-by: Brian Wrenn <dcbrianw@gmail.com>
-Tested-by: Brian Wrenn <dcbrianw@gmail.com>
-Signed-off-by: Julia Cartwright <julia@ni.com>
+Reported-and-debugged-by: Mike Galbraith <efault@gmx.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- drivers/pinctrl/qcom/pinctrl-msm.c | 48 +++++++++++++++++++-------------------
- 1 file changed, 24 insertions(+), 24 deletions(-)
+ include/linux/radix-tree.h | 12 ++----------
+ lib/radix-tree.c           | 23 ++++++++++++++---------
+ 2 files changed, 16 insertions(+), 19 deletions(-)
 
-diff --git a/drivers/pinctrl/qcom/pinctrl-msm.c b/drivers/pinctrl/qcom/pinctrl-msm.c
-index 146264a41ec8..81fd38894eaf 100644
---- a/drivers/pinctrl/qcom/pinctrl-msm.c
-+++ b/drivers/pinctrl/qcom/pinctrl-msm.c
-@@ -60,7 +60,7 @@ struct msm_pinctrl {
- 	struct notifier_block restart_nb;
- 	int irq;
+diff --git a/include/linux/radix-tree.h b/include/linux/radix-tree.h
+index 8ddbd6e15a3c..327dddaf4c8f 100644
+--- a/include/linux/radix-tree.h
++++ b/include/linux/radix-tree.h
+@@ -277,13 +277,10 @@ radix_tree_gang_lookup(struct radix_tree_root *root, void **results,
+ unsigned int radix_tree_gang_lookup_slot(struct radix_tree_root *root,
+ 			void ***results, unsigned long *indices,
+ 			unsigned long first_index, unsigned int max_items);
+-#ifndef CONFIG_PREEMPT_RT_FULL
+ int radix_tree_preload(gfp_t gfp_mask);
+ int radix_tree_maybe_preload(gfp_t gfp_mask);
+-#else
+-static inline int radix_tree_preload(gfp_t gm) { return 0; }
+-static inline int radix_tree_maybe_preload(gfp_t gfp_mask) { return 0; }
+-#endif
++void radix_tree_preload_end(void);
++
+ void radix_tree_init(void);
+ void *radix_tree_tag_set(struct radix_tree_root *root,
+ 			unsigned long index, unsigned int tag);
+@@ -306,11 +303,6 @@ unsigned long radix_tree_range_tag_if_tagged(struct radix_tree_root *root,
+ int radix_tree_tagged(struct radix_tree_root *root, unsigned int tag);
+ unsigned long radix_tree_locate_item(struct radix_tree_root *root, void *item);
  
--	spinlock_t lock;
-+	raw_spinlock_t lock;
+-static inline void radix_tree_preload_end(void)
+-{
+-	preempt_enable_nort();
+-}
+-
+ /**
+  * struct radix_tree_iter - radix tree iterator state
+  *
+diff --git a/lib/radix-tree.c b/lib/radix-tree.c
+index f27e0bcb74f7..44bf36a396a9 100644
+--- a/lib/radix-tree.c
++++ b/lib/radix-tree.c
+@@ -34,7 +34,7 @@
+ #include <linux/bitops.h>
+ #include <linux/rcupdate.h>
+ #include <linux/preempt.h>		/* in_interrupt() */
+-
++#include <linux/locallock.h>
  
- 	DECLARE_BITMAP(dual_edge_irqs, MAX_NR_GPIO);
- 	DECLARE_BITMAP(enabled_irqs, MAX_NR_GPIO);
-@@ -156,14 +156,14 @@ static int msm_pinmux_set_mux(struct pinctrl_dev *pctldev,
- 	if (WARN_ON(i == g->nfuncs))
- 		return -EINVAL;
+ /*
+  * The height_to_maxindex array needs to be one deeper than the maximum
+@@ -69,6 +69,7 @@ struct radix_tree_preload {
+ 	struct radix_tree_node *nodes;
+ };
+ static DEFINE_PER_CPU(struct radix_tree_preload, radix_tree_preloads) = { 0, };
++static DEFINE_LOCAL_IRQ_LOCK(radix_tree_preloads_lock);
  
--	spin_lock_irqsave(&pctrl->lock, flags);
-+	raw_spin_lock_irqsave(&pctrl->lock, flags);
- 
- 	val = readl(pctrl->regs + g->ctl_reg);
- 	val &= ~(0x7 << g->mux_bit);
- 	val |= i << g->mux_bit;
- 	writel(val, pctrl->regs + g->ctl_reg);
- 
--	spin_unlock_irqrestore(&pctrl->lock, flags);
-+	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
- 
- 	return 0;
- }
-@@ -326,14 +326,14 @@ static int msm_config_group_set(struct pinctrl_dev *pctldev,
- 			break;
- 		case PIN_CONFIG_OUTPUT:
- 			/* set output value */
--			spin_lock_irqsave(&pctrl->lock, flags);
-+			raw_spin_lock_irqsave(&pctrl->lock, flags);
- 			val = readl(pctrl->regs + g->io_reg);
- 			if (arg)
- 				val |= BIT(g->out_bit);
- 			else
- 				val &= ~BIT(g->out_bit);
- 			writel(val, pctrl->regs + g->io_reg);
--			spin_unlock_irqrestore(&pctrl->lock, flags);
-+			raw_spin_unlock_irqrestore(&pctrl->lock, flags);
- 
- 			/* enable output */
- 			arg = 1;
-@@ -354,12 +354,12 @@ static int msm_config_group_set(struct pinctrl_dev *pctldev,
- 			return -EINVAL;
+ static inline void *ptr_to_indirect(void *ptr)
+ {
+@@ -196,14 +197,14 @@ radix_tree_node_alloc(struct radix_tree_root *root)
+ 		 * succeed in getting a node here (and never reach
+ 		 * kmem_cache_alloc)
+ 		 */
+-		rtp = &get_cpu_var(radix_tree_preloads);
++		rtp = &get_locked_var(radix_tree_preloads_lock, radix_tree_preloads);
+ 		if (rtp->nr) {
+ 			ret = rtp->nodes;
+ 			rtp->nodes = ret->private_data;
+ 			ret->private_data = NULL;
+ 			rtp->nr--;
  		}
- 
--		spin_lock_irqsave(&pctrl->lock, flags);
-+		raw_spin_lock_irqsave(&pctrl->lock, flags);
- 		val = readl(pctrl->regs + g->ctl_reg);
- 		val &= ~(mask << bit);
- 		val |= arg << bit;
- 		writel(val, pctrl->regs + g->ctl_reg);
--		spin_unlock_irqrestore(&pctrl->lock, flags);
-+		raw_spin_unlock_irqrestore(&pctrl->lock, flags);
- 	}
- 
- 	return 0;
-@@ -387,13 +387,13 @@ static int msm_gpio_direction_input(struct gpio_chip *chip, unsigned offset)
- 
- 	g = &pctrl->soc->groups[offset];
- 
--	spin_lock_irqsave(&pctrl->lock, flags);
-+	raw_spin_lock_irqsave(&pctrl->lock, flags);
- 
- 	val = readl(pctrl->regs + g->ctl_reg);
- 	val &= ~BIT(g->oe_bit);
- 	writel(val, pctrl->regs + g->ctl_reg);
- 
--	spin_unlock_irqrestore(&pctrl->lock, flags);
-+	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
- 
- 	return 0;
+-		put_cpu_var(radix_tree_preloads);
++		put_locked_var(radix_tree_preloads_lock, radix_tree_preloads);
+ 		/*
+ 		 * Update the allocation stack trace as this is more useful
+ 		 * for debugging.
+@@ -243,7 +244,6 @@ radix_tree_node_free(struct radix_tree_node *node)
+ 	call_rcu(&node->rcu_head, radix_tree_node_rcu_free);
  }
-@@ -407,7 +407,7 @@ static int msm_gpio_direction_output(struct gpio_chip *chip, unsigned offset, in
  
- 	g = &pctrl->soc->groups[offset];
+-#ifndef CONFIG_PREEMPT_RT_FULL
+ /*
+  * Load up this CPU's radix_tree_node buffer with sufficient objects to
+  * ensure that the addition of a single element in the tree cannot fail.  On
+@@ -259,14 +259,14 @@ static int __radix_tree_preload(gfp_t gfp_mask)
+ 	struct radix_tree_node *node;
+ 	int ret = -ENOMEM;
  
--	spin_lock_irqsave(&pctrl->lock, flags);
-+	raw_spin_lock_irqsave(&pctrl->lock, flags);
- 
- 	val = readl(pctrl->regs + g->io_reg);
- 	if (value)
-@@ -420,7 +420,7 @@ static int msm_gpio_direction_output(struct gpio_chip *chip, unsigned offset, in
- 	val |= BIT(g->oe_bit);
- 	writel(val, pctrl->regs + g->ctl_reg);
- 
--	spin_unlock_irqrestore(&pctrl->lock, flags);
-+	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
- 
+-	preempt_disable();
++	local_lock(radix_tree_preloads_lock);
+ 	rtp = this_cpu_ptr(&radix_tree_preloads);
+ 	while (rtp->nr < RADIX_TREE_PRELOAD_SIZE) {
+-		preempt_enable();
++		local_unlock(radix_tree_preloads_lock);
+ 		node = kmem_cache_alloc(radix_tree_node_cachep, gfp_mask);
+ 		if (node == NULL)
+ 			goto out;
+-		preempt_disable();
++		local_lock(radix_tree_preloads_lock);
+ 		rtp = this_cpu_ptr(&radix_tree_preloads);
+ 		if (rtp->nr < RADIX_TREE_PRELOAD_SIZE) {
+ 			node->private_data = rtp->nodes;
+@@ -308,11 +308,16 @@ int radix_tree_maybe_preload(gfp_t gfp_mask)
+ 	if (gfpflags_allow_blocking(gfp_mask))
+ 		return __radix_tree_preload(gfp_mask);
+ 	/* Preloading doesn't help anything with this gfp mask, skip it */
+-	preempt_disable();
++	local_lock(radix_tree_preloads_lock);
  	return 0;
  }
-@@ -446,7 +446,7 @@ static void msm_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
+ EXPORT_SYMBOL(radix_tree_maybe_preload);
+-#endif
++
++void radix_tree_preload_end(void)
++{
++	local_unlock(radix_tree_preloads_lock);
++}
++EXPORT_SYMBOL(radix_tree_preload_end);
  
- 	g = &pctrl->soc->groups[offset];
- 
--	spin_lock_irqsave(&pctrl->lock, flags);
-+	raw_spin_lock_irqsave(&pctrl->lock, flags);
- 
- 	val = readl(pctrl->regs + g->io_reg);
- 	if (value)
-@@ -455,7 +455,7 @@ static void msm_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
- 		val &= ~BIT(g->out_bit);
- 	writel(val, pctrl->regs + g->io_reg);
- 
--	spin_unlock_irqrestore(&pctrl->lock, flags);
-+	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
- }
- 
- #ifdef CONFIG_DEBUG_FS
-@@ -574,7 +574,7 @@ static void msm_gpio_irq_mask(struct irq_data *d)
- 
- 	g = &pctrl->soc->groups[d->hwirq];
- 
--	spin_lock_irqsave(&pctrl->lock, flags);
-+	raw_spin_lock_irqsave(&pctrl->lock, flags);
- 
- 	val = readl(pctrl->regs + g->intr_cfg_reg);
- 	val &= ~BIT(g->intr_enable_bit);
-@@ -582,7 +582,7 @@ static void msm_gpio_irq_mask(struct irq_data *d)
- 
- 	clear_bit(d->hwirq, pctrl->enabled_irqs);
- 
--	spin_unlock_irqrestore(&pctrl->lock, flags);
-+	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
- }
- 
- static void msm_gpio_irq_unmask(struct irq_data *d)
-@@ -595,7 +595,7 @@ static void msm_gpio_irq_unmask(struct irq_data *d)
- 
- 	g = &pctrl->soc->groups[d->hwirq];
- 
--	spin_lock_irqsave(&pctrl->lock, flags);
-+	raw_spin_lock_irqsave(&pctrl->lock, flags);
- 
- 	val = readl(pctrl->regs + g->intr_status_reg);
- 	val &= ~BIT(g->intr_status_bit);
-@@ -607,7 +607,7 @@ static void msm_gpio_irq_unmask(struct irq_data *d)
- 
- 	set_bit(d->hwirq, pctrl->enabled_irqs);
- 
--	spin_unlock_irqrestore(&pctrl->lock, flags);
-+	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
- }
- 
- static void msm_gpio_irq_ack(struct irq_data *d)
-@@ -620,7 +620,7 @@ static void msm_gpio_irq_ack(struct irq_data *d)
- 
- 	g = &pctrl->soc->groups[d->hwirq];
- 
--	spin_lock_irqsave(&pctrl->lock, flags);
-+	raw_spin_lock_irqsave(&pctrl->lock, flags);
- 
- 	val = readl(pctrl->regs + g->intr_status_reg);
- 	if (g->intr_ack_high)
-@@ -632,7 +632,7 @@ static void msm_gpio_irq_ack(struct irq_data *d)
- 	if (test_bit(d->hwirq, pctrl->dual_edge_irqs))
- 		msm_gpio_update_dual_edge_pos(pctrl, g, d);
- 
--	spin_unlock_irqrestore(&pctrl->lock, flags);
-+	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
- }
- 
- static int msm_gpio_irq_set_type(struct irq_data *d, unsigned int type)
-@@ -645,7 +645,7 @@ static int msm_gpio_irq_set_type(struct irq_data *d, unsigned int type)
- 
- 	g = &pctrl->soc->groups[d->hwirq];
- 
--	spin_lock_irqsave(&pctrl->lock, flags);
-+	raw_spin_lock_irqsave(&pctrl->lock, flags);
- 
- 	/*
- 	 * For hw without possibility of detecting both edges
-@@ -719,7 +719,7 @@ static int msm_gpio_irq_set_type(struct irq_data *d, unsigned int type)
- 	if (test_bit(d->hwirq, pctrl->dual_edge_irqs))
- 		msm_gpio_update_dual_edge_pos(pctrl, g, d);
- 
--	spin_unlock_irqrestore(&pctrl->lock, flags);
-+	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
- 
- 	if (type & (IRQ_TYPE_LEVEL_LOW | IRQ_TYPE_LEVEL_HIGH))
- 		irq_set_handler_locked(d, handle_level_irq);
-@@ -735,11 +735,11 @@ static int msm_gpio_irq_set_wake(struct irq_data *d, unsigned int on)
- 	struct msm_pinctrl *pctrl = to_msm_pinctrl(gc);
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&pctrl->lock, flags);
-+	raw_spin_lock_irqsave(&pctrl->lock, flags);
- 
- 	irq_set_irq_wake(pctrl->irq, on);
- 
--	spin_unlock_irqrestore(&pctrl->lock, flags);
-+	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
- 
- 	return 0;
- }
-@@ -885,7 +885,7 @@ int msm_pinctrl_probe(struct platform_device *pdev,
- 	pctrl->soc = soc_data;
- 	pctrl->chip = msm_gpio_template;
- 
--	spin_lock_init(&pctrl->lock);
-+	raw_spin_lock_init(&pctrl->lock);
- 
- 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
- 	pctrl->regs = devm_ioremap_resource(&pdev->dev, res);
+ /*
+  *	Return the maximum key which can be store into a
 -- 
 2.10.2
