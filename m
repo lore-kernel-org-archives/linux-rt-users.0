@@ -1,67 +1,67 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: Kernel 4.9.x-rt Fully Preemptible Kernel: Issue with gdb and
- unexpected SIGSTOP signals
-Date: Wed, 8 Mar 2017 00:21:51 +0100
-Message-ID: <20170307232151.7macprg6qnl3exbh@linutronix.de>
-References: <39174b3e2e7a47c48b3688a2b28ab83e@FE-MBX1012.de.bosch.com>
- <20170125095628.pcuxqk7l4xnvbsve@linutronix.de>
- <f8526e600a9a45dc959ddf5d12bc430b@FE-MBX1012.de.bosch.com>
- <87521e75b64f4b84b2ecd8b47bb7fe72@FE-MBX1012.de.bosch.com>
- <20170125134016.ffj6xpissz4iy7ph@linutronix.de>
- <ef2c680e3ed541c4b0df5e0715ca8264@FE-MBX1012.de.bosch.com>
- <3c9395f9c6b944978c1f420276bde0ee@FE-MBX1012.de.bosch.com>
- <61f913336df14059bc409249f0e70ea3@FE-MBX1012.de.bosch.com>
- <20170302175155.rymagis536dnw5nh@linutronix.de>
- <d831bc9a2939474f8b8290905f393088@FE-MBX1012.de.bosch.com>
+From: Julia Cartwright <julia@ni.com>
+Subject: [PATCH RT 4/9] x86/mm/cpa: avoid wbinvd() for PREEMPT
+Date: Tue, 7 Mar 2017 16:32:54 -0600
+Message-ID: <20dc04833e45cf6a3b5fcee0f357e4e829a78b8a.1488919535.git.julia@ni.com>
+References: <cover.1488919535.git.julia@ni.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: "Koehrer Mathias (ETAS/ESW3)" <mathias.koehrer@etas.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:44174 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1756588AbdCGXna (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 7 Mar 2017 18:43:30 -0500
-Content-Disposition: inline
-In-Reply-To: <d831bc9a2939474f8b8290905f393088@FE-MBX1012.de.bosch.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        John Kacur <jkacur@redhat.com>,
+        Paul Gortmaker <paul.gortmaker@windriver.com>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        <stable-rt@vger.kernel.org>,
+        John Ogness <john.ogness@linutronix.de>
+To: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <cover.1488919535.git.julia@ni.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 2017-03-07 13:39:36 [+0000], Koehrer Mathias (ETAS/ESW3) wrote:
-> Hi Sebastian,
-Hi Mathias,
+4.1.38-rt46-rc1 stable review patch.
+If you have any objection to the inclusion of this patch, let me know.
 
-> > and 8144 blocks in wait for 8424 which is never completes without additional help
-> > (like a manual SIGCONT). Right now it looks like the PTRACE_DETACH (syscall
-> > 101, 11) which should remove the task from ptrace and wakeup did not work but I
-> > see a wakeup… The wakeup worked (most likely) but since it is stuck I guess that
-> > there was a second signal it is processing and waiting for gdb.
-> I do not understand, what that means.
-> When I run the very same test on a non-rt kernel (or even on a RT kernel with a 
-> preemption model that is not configured as "Fully Preemptible Kernel"), I never see 
-> this issue.
+--- 8< --- 8< --- 8< ---
+From: John Ogness <john.ogness@linutronix.de>
 
-I can reproduce the issue on a -RT kernel. I don't really know what the
-root issue is but it is a problem. We had a ptrace issue if you look
-into the queue for
-  "ptrace: fix ptrace vs tasklist_lock race"
+Although wbinvd() is faster than flushing many individual pages, it
+blocks the memory bus for "long" periods of time (>100us), thus
+directly causing unusually large latencies on all CPUs, regardless
+of any CPU isolation features that may be active.
 
-> Also - as mentioned - previously, with older RT preempted kernel versions it is working fine
-> as well. For me it looks as if the RT preempting on newer kernels somehow has impact 
-> on the way the debugging with gdb works
-> My expectation (and so far I had the experience) is that a code that is running fine 
-> with a non RT kernel should also run fine with the fully preempted kernel (of course 
-> the timing behavior is different). 
+For 1024 pages, flushing those pages individually can take up to
+2200us, but the task remains fully preemptible during that time.
 
-That is correct - it should work. I've been tracing it for a while now
-and have no real clue what goes wrong. There a few different ways how it
-seems to go wrong and the outcome is always that the kernel puts the
-task in "stop" mode while gdb expects it to run and waits for it.
+Cc: stable-rt@vger.kernel.org
+Acked-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Signed-off-by: John Ogness <john.ogness@linutronix.de>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+(cherry picked from commit 9e539d7327b265c639c859ab1fb7d3699ba0cb19)
+Signed-off-by: Julia Cartwright <julia@ni.com>
+---
+ arch/x86/mm/pageattr.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-> Regards
-> 
-> Mathias
-
-Sebastian
+diff --git a/arch/x86/mm/pageattr.c b/arch/x86/mm/pageattr.c
+index 2dd9b3ad3bb5..4314b9103ff0 100644
+--- a/arch/x86/mm/pageattr.c
++++ b/arch/x86/mm/pageattr.c
+@@ -209,7 +209,15 @@ static void cpa_flush_array(unsigned long *start, int numpages, int cache,
+ 			    int in_flags, struct page **pages)
+ {
+ 	unsigned int i, level;
++#ifdef CONFIG_PREEMPT
++	/*
++	 * Avoid wbinvd() because it causes latencies on all CPUs,
++	 * regardless of any CPU isolation that may be in effect.
++	 */
++	unsigned long do_wbinvd = 0;
++#else
+ 	unsigned long do_wbinvd = cache && numpages >= 1024; /* 4M threshold */
++#endif
+ 
+ 	BUG_ON(irqs_disabled());
+ 
+-- 
+2.11.1
