@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.18.48-rt53
-Date: Wed, 8 Mar 2017 15:00:54 -0500
-Message-ID: <20170308150054.2b269b23@gandalf.local.home>
+Subject: [ANNOUNCE] 3.10.105-rt119
+Date: Wed, 8 Mar 2017 15:01:37 -0500
+Message-ID: <20170308150137.7591d88d@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -19,11 +19,11 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.18.48-rt53 stable release.
+I'm pleased to announce the 3.10.105-rt119 stable release.
 
-[ I had this tested when I was at ELC, but never posted it ]
+[ I had this tested when I was at ELC but never posted it ]
 
-This release is just an update to the new stable 3.18.48 version
+This release is just an update to the new stable 3.10.105 version
 and no RT specific changes have been made.
 
 
@@ -31,17 +31,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.18-rt
-  Head SHA1: e433cbc1fa41e70f7fef5038f69ee8e92154c78d
+  branch: v3.10-rt
+  Head SHA1: 62acb48c975e5d441eb7f16212b0441a1e4996e5
 
 
-Or to build 3.18.48-rt53 directly, the following patches should be applied:
+Or to build 3.10.105-rt119 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.48.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.105.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.48-rt53.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.105-rt119.patch.xz
 
 
 
