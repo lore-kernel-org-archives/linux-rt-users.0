@@ -1,8 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 3/7] rt: Drop mutex_disable() on !DEBUG configs and the GPL suffix from
- export symbol
-Date: Wed, 08 Mar 2017 15:30:10 -0500
-Message-ID: <20170308203022.291796159@goodmis.org>
+Subject: [PATCH RT 7/7] Linux 3.10.105-rt120-rc1
+Date: Wed, 08 Mar 2017 15:30:14 -0500
+Message-ID: <20170308203022.878717933@goodmis.org>
 References: <20170308203007.731237400@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -11,11 +10,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
-        Julia Cartwright <julia@ni.com>, Alex Goins <agoins@nvidia.com>
+        Julia Cartwright <julia@ni.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-rt-Drop-mutex_disable-on-DEBUG-configs-and-the-GPL-s.patch
+Content-Disposition: inline; filename=0007-Linux-3.10.105-rt120-rc1.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -24,56 +23,18 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-Alex Goins reported that mutex_destroy() on RT will force a GPL only symbol
-which won't link and therefore fail on a non-GPL kernel module.
-This does not happen on !RT and is a regression on RT which we would like to
-avoid.
-I try here the easy thing and to not use rt_mutex_destroy() if
-CONFIG_DEBUG_MUTEXES is not enabled. This will still break for the DEBUG
-configs so instead of adding a wrapper around rt_mutex_destroy() (which we have
-for rt_mutex_lock() for instance) I am simply dropping the GPL part from the
-export.
-
-Reported-by: Alex Goins <agoins@nvidia.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- include/linux/mutex_rt.h | 5 +++++
- kernel/rtmutex.c         | 3 +--
- 2 files changed, 6 insertions(+), 2 deletions(-)
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/include/linux/mutex_rt.h b/include/linux/mutex_rt.h
-index c38a44b14da5..e0284edec655 100644
---- a/include/linux/mutex_rt.h
-+++ b/include/linux/mutex_rt.h
-@@ -43,7 +43,12 @@ extern void __lockfunc _mutex_unlock(struct mutex *lock);
- #define mutex_lock_killable(l)		_mutex_lock_killable(l)
- #define mutex_trylock(l)		_mutex_trylock(l)
- #define mutex_unlock(l)			_mutex_unlock(l)
-+
-+#ifdef CONFIG_DEBUG_MUTEXES
- #define mutex_destroy(l)		rt_mutex_destroy(&(l)->lock)
-+#else
-+static inline void mutex_destroy(struct mutex *lock) {}
-+#endif
- 
- #ifdef CONFIG_DEBUG_LOCK_ALLOC
- # define mutex_lock_nested(l, s)	_mutex_lock_nested(l, s)
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index a809539f443c..a28e9fd41965 100644
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -1789,8 +1789,7 @@ void rt_mutex_destroy(struct rt_mutex *lock)
- 	lock->magic = NULL;
- #endif
- }
--
--EXPORT_SYMBOL_GPL(rt_mutex_destroy);
-+EXPORT_SYMBOL(rt_mutex_destroy);
- 
- /**
-  * __rt_mutex_init - initialize the rt lock
+diff --git a/localversion-rt b/localversion-rt
+index ba6e8821d159..2e9f43dc7c3d 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt119
++-rt120-rc1
 -- 
 2.10.2
