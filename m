@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 5/8] lockdep: Handle statically initialized PER_CPU locks proper
-Date: Wed, 08 Mar 2017 15:21:00 -0500
-Message-ID: <20170308202117.722825900@goodmis.org>
-References: <20170308202055.192561119@goodmis.org>
+Subject: [PATCH RT 7/7] Linux 3.12.70-rt95-rc1
+Date: Wed, 08 Mar 2017 15:22:34 -0500
+Message-ID: <20170308202254.708336848@goodmis.org>
+References: <20170308202227.841639815@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -10,294 +10,36 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
-        Julia Cartwright <julia@ni.com>,
-        Mike Galbraith <efault@gmx.de>, stable-rt@vger.kernel.org
+        Julia Cartwright <julia@ni.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:60702 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.136]:32854 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1753818AbdCHUZc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 8 Mar 2017 15:25:32 -0500
-Content-Disposition: inline; filename=0005-lockdep-Handle-statically-initialized-PER_CPU-locks-.patch
+        id S1753294AbdCHU0I (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 8 Mar 2017 15:26:08 -0500
+Content-Disposition: inline; filename=0007-Linux-3.12.70-rt95-rc1.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-3.18.48-rt54-rc1 stable review patch.
+3.12.70-rt95-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-If a PER_CPU struct which contains a spin_lock is statically initialized
-via:
-
-DEFINE_PER_CPU(struct foo, bla) = {
-	.lock = __SPIN_LOCK_UNLOCKED(bla.lock)
-};
-
-then lockdep assigns a seperate key to each lock because the logic for
-assigning a key to statically initialized locks is to use the address as
-the key. With per CPU locks the address is obvioulsy different on each CPU.
-
-That's wrong, because all locks should have the same key.
-
-To solve this the following modifications are required:
-
- 1) Extend the is_kernel/module_percpu_addr() functions to hand back the
-    canonical address of the per CPU address, i.e. the per CPU address
-    minus the per CPU offset.
-
- 2) Check the lock address with these functions and if the per CPU check
-    matches use the returned canonical address as the lock key, so all per
-    CPU locks have the same key.
-
- 3) Move the static_obj(key) check into look_up_lock_class() so this check
-    can be avoided for statically initialized per CPU locks.  That's
-    required because the canonical address fails the static_obj(key) check
-    for obvious reasons.
-
-Reported-by: Mike Galbraith <efault@gmx.de>
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- include/linux/module.h   |  1 +
- include/linux/percpu.h   |  1 +
- kernel/locking/lockdep.c | 32 +++++++++++++++++++++++---------
- kernel/module.c          | 31 +++++++++++++++++++------------
- mm/percpu.c              | 37 +++++++++++++++++++++++--------------
- 5 files changed, 67 insertions(+), 35 deletions(-)
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/include/linux/module.h b/include/linux/module.h
-index 6fc269ce701c..9ec8a28c65bb 100644
---- a/include/linux/module.h
-+++ b/include/linux/module.h
-@@ -394,6 +394,7 @@ static inline int module_is_live(struct module *mod)
- struct module *__module_text_address(unsigned long addr);
- struct module *__module_address(unsigned long addr);
- bool is_module_address(unsigned long addr);
-+bool __is_module_percpu_address(unsigned long addr, unsigned long *can_addr);
- bool is_module_percpu_address(unsigned long addr);
- bool is_module_text_address(unsigned long addr);
- 
-diff --git a/include/linux/percpu.h b/include/linux/percpu.h
-index 208d86d80cba..a3a446c2901b 100644
---- a/include/linux/percpu.h
-+++ b/include/linux/percpu.h
-@@ -144,6 +144,7 @@ extern int __init pcpu_page_first_chunk(size_t reserved_size,
- #endif
- 
- extern void __percpu *__alloc_reserved_percpu(size_t size, size_t align);
-+extern bool __is_kernel_percpu_address(unsigned long addr, unsigned long *can_addr);
- extern bool is_kernel_percpu_address(unsigned long addr);
- 
- #if !defined(CONFIG_SMP) || !defined(CONFIG_HAVE_SETUP_PER_CPU_AREA)
-diff --git a/kernel/locking/lockdep.c b/kernel/locking/lockdep.c
-index fce6f6f69aad..d4a4d8ea55d6 100644
---- a/kernel/locking/lockdep.c
-+++ b/kernel/locking/lockdep.c
-@@ -654,6 +654,7 @@ look_up_lock_class(struct lockdep_map *lock, unsigned int subclass)
- 	struct lockdep_subclass_key *key;
- 	struct list_head *hash_head;
- 	struct lock_class *class;
-+	bool is_static = false;
- 
- #ifdef CONFIG_DEBUG_LOCKDEP
- 	/*
-@@ -681,10 +682,23 @@ look_up_lock_class(struct lockdep_map *lock, unsigned int subclass)
- 
- 	/*
- 	 * Static locks do not have their class-keys yet - for them the key
--	 * is the lock object itself:
-+	 * is the lock object itself. If the lock is in the per cpu area,
-+	 * the canonical address of the lock (per cpu offset removed) is
-+	 * used.
- 	 */
--	if (unlikely(!lock->key))
--		lock->key = (void *)lock;
-+	if (unlikely(!lock->key)) {
-+		unsigned long can_addr, addr = (unsigned long)lock;
-+
-+		if (__is_kernel_percpu_address(addr, &can_addr))
-+			lock->key = (void *)can_addr;
-+		else if (__is_module_percpu_address(addr, &can_addr))
-+			lock->key = (void *)can_addr;
-+		else if (static_obj(lock))
-+			lock->key = (void *)lock;
-+		else
-+			return ERR_PTR(-EINVAL);
-+		is_static = true;
-+	}
- 
- 	/*
- 	 * NOTE: the class-key must be unique. For dynamic locks, a static
-@@ -714,7 +728,7 @@ look_up_lock_class(struct lockdep_map *lock, unsigned int subclass)
- 		}
- 	}
- 
--	return NULL;
-+	return is_static || static_obj(lock->key) ? NULL : ERR_PTR(-EINVAL);
- }
- 
- /*
-@@ -731,13 +745,13 @@ register_lock_class(struct lockdep_map *lock, unsigned int subclass, int force)
- 	unsigned long flags;
- 
- 	class = look_up_lock_class(lock, subclass);
--	if (likely(class))
-+	if (likely(!IS_ERR_OR_NULL(class)))
- 		goto out_set_class_cache;
- 
- 	/*
- 	 * Debug-check: all keys must be persistent!
-- 	 */
--	if (!static_obj(lock->key)) {
-+	 */
-+	if (IS_ERR(class)) {
- 		debug_locks_off();
- 		printk("INFO: trying to register non-static key.\n");
- 		printk("the code is fine but needs lockdep annotation.\n");
-@@ -3276,7 +3290,7 @@ static int match_held_lock(struct held_lock *hlock, struct lockdep_map *lock)
- 		 * Clearly if the lock hasn't been acquired _ever_, we're not
- 		 * holding it either, so report failure.
- 		 */
--		if (!class)
-+		if (IS_ERR_OR_NULL(class))
- 			return 0;
- 
- 		/*
-@@ -3938,7 +3952,7 @@ void lockdep_reset_lock(struct lockdep_map *lock)
- 		 * If the class exists we look it up and zap it:
- 		 */
- 		class = look_up_lock_class(lock, j);
--		if (class)
-+		if (!IS_ERR_OR_NULL(class))
- 			zap_class(class);
- 	}
- 	/*
-diff --git a/kernel/module.c b/kernel/module.c
-index 737d53099360..377f52a286a8 100644
---- a/kernel/module.c
-+++ b/kernel/module.c
-@@ -526,16 +526,7 @@ static void percpu_modcopy(struct module *mod,
- 		memcpy(per_cpu_ptr(mod->percpu, cpu), from, size);
- }
- 
--/**
-- * is_module_percpu_address - test whether address is from module static percpu
-- * @addr: address to test
-- *
-- * Test whether @addr belongs to module static percpu area.
-- *
-- * RETURNS:
-- * %true if @addr is from module static percpu area
-- */
--bool is_module_percpu_address(unsigned long addr)
-+bool __is_module_percpu_address(unsigned long addr, unsigned long *can_addr)
- {
- 	struct module *mod;
- 	unsigned int cpu;
-@@ -549,9 +540,11 @@ bool is_module_percpu_address(unsigned long addr)
- 			continue;
- 		for_each_possible_cpu(cpu) {
- 			void *start = per_cpu_ptr(mod->percpu, cpu);
-+			void *va = (void *)addr;
- 
--			if ((void *)addr >= start &&
--			    (void *)addr < start + mod->percpu_size) {
-+			if (va >= start && va < start + mod->percpu_size) {
-+				if (can_addr)
-+					*can_addr = (unsigned long) (va - start);
- 				preempt_enable();
- 				return true;
- 			}
-@@ -562,6 +555,20 @@ bool is_module_percpu_address(unsigned long addr)
- 	return false;
- }
- 
-+/**
-+ * is_module_percpu_address - test whether address is from module static percpu
-+ * @addr: address to test
-+ *
-+ * Test whether @addr belongs to module static percpu area.
-+ *
-+ * RETURNS:
-+ * %true if @addr is from module static percpu area
-+ */
-+bool is_module_percpu_address(unsigned long addr)
-+{
-+	return __is_module_percpu_address(addr, NULL);
-+}
-+
- #else /* ... !CONFIG_SMP */
- 
- static inline void __percpu *mod_percpu(struct module *mod)
-diff --git a/mm/percpu.c b/mm/percpu.c
-index 5ae6e0284967..d270e8077f52 100644
---- a/mm/percpu.c
-+++ b/mm/percpu.c
-@@ -1282,18 +1282,7 @@ void free_percpu(void __percpu *ptr)
- }
- EXPORT_SYMBOL_GPL(free_percpu);
- 
--/**
-- * is_kernel_percpu_address - test whether address is from static percpu area
-- * @addr: address to test
-- *
-- * Test whether @addr belongs to in-kernel static percpu area.  Module
-- * static percpu areas are not considered.  For those, use
-- * is_module_percpu_address().
-- *
-- * RETURNS:
-- * %true if @addr is from in-kernel static percpu area, %false otherwise.
-- */
--bool is_kernel_percpu_address(unsigned long addr)
-+bool __is_kernel_percpu_address(unsigned long addr, unsigned long *can_addr)
- {
- #ifdef CONFIG_SMP
- 	const size_t static_size = __per_cpu_end - __per_cpu_start;
-@@ -1302,16 +1291,36 @@ bool is_kernel_percpu_address(unsigned long addr)
- 
- 	for_each_possible_cpu(cpu) {
- 		void *start = per_cpu_ptr(base, cpu);
-+		void *va = (void *)addr;
- 
--		if ((void *)addr >= start && (void *)addr < start + static_size)
-+		if (va >= start && va < start + static_size) {
-+			if (can_addr)
-+				*can_addr = (unsigned long) (va - start);
- 			return true;
--        }
-+		}
-+	}
- #endif
- 	/* on UP, can't distinguish from other static vars, always false */
- 	return false;
- }
- 
- /**
-+ * is_kernel_percpu_address - test whether address is from static percpu area
-+ * @addr: address to test
-+ *
-+ * Test whether @addr belongs to in-kernel static percpu area.  Module
-+ * static percpu areas are not considered.  For those, use
-+ * is_module_percpu_address().
-+ *
-+ * RETURNS:
-+ * %true if @addr is from in-kernel static percpu area, %false otherwise.
-+ */
-+bool is_kernel_percpu_address(unsigned long addr)
-+{
-+	return __is_kernel_percpu_address(addr, NULL);
-+}
-+
-+/**
-  * per_cpu_ptr_to_phys - convert translated percpu address to physical address
-  * @addr: the address to be converted to physical address
-  *
+diff --git a/localversion-rt b/localversion-rt
+index 8d02a9bac500..fe529ae51f64 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt94
++-rt95-rc1
 -- 
 2.10.2
 
