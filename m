@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/8] pinctrl: qcom: Use raw spinlock variants
-Date: Wed, 08 Mar 2017 15:20:57 -0500
-Message-ID: <20170308202117.319647176@goodmis.org>
+Subject: [PATCH RT 5/8] lockdep: Handle statically initialized PER_CPU locks proper
+Date: Wed, 08 Mar 2017 15:21:00 -0500
+Message-ID: <20170308202117.722825900@goodmis.org>
 References: <20170308202055.192561119@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,17 +10,16 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
-        Julia Cartwright <julia@ni.com>, stable-rt@vger.kernel.org,
-        Bjorn Andersson <bjorn.andersson@linaro.org>,
-        Brian Wrenn <dcbrianw@gmail.com>
+        Julia Cartwright <julia@ni.com>,
+        Mike Galbraith <efault@gmx.de>, stable-rt@vger.kernel.org
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:60704 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.136]:60702 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1753773AbdCHUZc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S1753818AbdCHUZc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Wed, 8 Mar 2017 15:25:32 -0500
-Content-Disposition: inline; filename=0002-pinctrl-qcom-Use-raw-spinlock-variants.patch
+Content-Disposition: inline; filename=0005-lockdep-Handle-statically-initialized-PER_CPU-locks-.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -29,259 +28,276 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Julia Cartwright <julia@ni.com>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-The MSM pinctrl driver currently implements an irq_chip for handling
-GPIO interrupts; due to how irq_chip handling is done, it's necessary
-for the irq_chip methods to be invoked from hardirq context, even on a
-a real-time kernel.  Because the spinlock_t type becomes a "sleeping"
-spinlock w/ RT kernels, it is not suitable to be used with irq_chips.
+If a PER_CPU struct which contains a spin_lock is statically initialized
+via:
 
-A quick audit of the operations under the lock reveal that they do only
-minimal, bounded work, and are therefore safe to do under a raw
-spinlock.
+DEFINE_PER_CPU(struct foo, bla) = {
+	.lock = __SPIN_LOCK_UNLOCKED(bla.lock)
+};
 
-On real-time kernels, this fixes an OOPs which looks like the following,
-as reported by Brian Wrenn:
+then lockdep assigns a seperate key to each lock because the logic for
+assigning a key to statically initialized locks is to use the address as
+the key. With per CPU locks the address is obvioulsy different on each CPU.
 
-    kernel BUG at kernel/locking/rtmutex.c:1014!
-    Internal error: Oops - BUG: 0 [#1] PREEMPT SMP
-    Modules linked in: spidev_irq(O) smsc75xx wcn36xx [last unloaded: spidev]
-    CPU: 0 PID: 1163 Comm: irq/144-mmc0 Tainted: G        W  O    4.4.9-linaro-lt-qcom #1
-    PC is at rt_spin_lock_slowlock+0x80/0x2d8
-    LR is at rt_spin_lock_slowlock+0x68/0x2d8
-    [..]
-  Call trace:
-    rt_spin_lock_slowlock
-    rt_spin_lock
-    msm_gpio_irq_ack
-    handle_edge_irq
-    generic_handle_irq
-    msm_gpio_irq_handler
-    generic_handle_irq
-    __handle_domain_irq
-    gic_handle_irq
+That's wrong, because all locks should have the same key.
 
+To solve this the following modifications are required:
+
+ 1) Extend the is_kernel/module_percpu_addr() functions to hand back the
+    canonical address of the per CPU address, i.e. the per CPU address
+    minus the per CPU offset.
+
+ 2) Check the lock address with these functions and if the per CPU check
+    matches use the returned canonical address as the lock key, so all per
+    CPU locks have the same key.
+
+ 3) Move the static_obj(key) check into look_up_lock_class() so this check
+    can be avoided for statically initialized per CPU locks.  That's
+    required because the canonical address fails the static_obj(key) check
+    for obvious reasons.
+
+Reported-by: Mike Galbraith <efault@gmx.de>
 Cc: stable-rt@vger.kernel.org
-Cc: Bjorn Andersson <bjorn.andersson@linaro.org>
-Reported-by: Brian Wrenn <dcbrianw@gmail.com>
-Tested-by: Brian Wrenn <dcbrianw@gmail.com>
-Signed-off-by: Julia Cartwright <julia@ni.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- drivers/pinctrl/qcom/pinctrl-msm.c | 48 +++++++++++++++++++-------------------
- 1 file changed, 24 insertions(+), 24 deletions(-)
+ include/linux/module.h   |  1 +
+ include/linux/percpu.h   |  1 +
+ kernel/locking/lockdep.c | 32 +++++++++++++++++++++++---------
+ kernel/module.c          | 31 +++++++++++++++++++------------
+ mm/percpu.c              | 37 +++++++++++++++++++++++--------------
+ 5 files changed, 67 insertions(+), 35 deletions(-)
 
-diff --git a/drivers/pinctrl/qcom/pinctrl-msm.c b/drivers/pinctrl/qcom/pinctrl-msm.c
-index ed7017df065d..94f1a4fd7681 100644
---- a/drivers/pinctrl/qcom/pinctrl-msm.c
-+++ b/drivers/pinctrl/qcom/pinctrl-msm.c
-@@ -59,7 +59,7 @@ struct msm_pinctrl {
- 	struct notifier_block restart_nb;
- 	int irq;
+diff --git a/include/linux/module.h b/include/linux/module.h
+index 6fc269ce701c..9ec8a28c65bb 100644
+--- a/include/linux/module.h
++++ b/include/linux/module.h
+@@ -394,6 +394,7 @@ static inline int module_is_live(struct module *mod)
+ struct module *__module_text_address(unsigned long addr);
+ struct module *__module_address(unsigned long addr);
+ bool is_module_address(unsigned long addr);
++bool __is_module_percpu_address(unsigned long addr, unsigned long *can_addr);
+ bool is_module_percpu_address(unsigned long addr);
+ bool is_module_text_address(unsigned long addr);
  
--	spinlock_t lock;
-+	raw_spinlock_t lock;
+diff --git a/include/linux/percpu.h b/include/linux/percpu.h
+index 208d86d80cba..a3a446c2901b 100644
+--- a/include/linux/percpu.h
++++ b/include/linux/percpu.h
+@@ -144,6 +144,7 @@ extern int __init pcpu_page_first_chunk(size_t reserved_size,
+ #endif
  
- 	DECLARE_BITMAP(dual_edge_irqs, MAX_NR_GPIO);
- 	DECLARE_BITMAP(enabled_irqs, MAX_NR_GPIO);
-@@ -155,14 +155,14 @@ static int msm_pinmux_set_mux(struct pinctrl_dev *pctldev,
- 	if (WARN_ON(i == g->nfuncs))
- 		return -EINVAL;
+ extern void __percpu *__alloc_reserved_percpu(size_t size, size_t align);
++extern bool __is_kernel_percpu_address(unsigned long addr, unsigned long *can_addr);
+ extern bool is_kernel_percpu_address(unsigned long addr);
  
--	spin_lock_irqsave(&pctrl->lock, flags);
-+	raw_spin_lock_irqsave(&pctrl->lock, flags);
+ #if !defined(CONFIG_SMP) || !defined(CONFIG_HAVE_SETUP_PER_CPU_AREA)
+diff --git a/kernel/locking/lockdep.c b/kernel/locking/lockdep.c
+index fce6f6f69aad..d4a4d8ea55d6 100644
+--- a/kernel/locking/lockdep.c
++++ b/kernel/locking/lockdep.c
+@@ -654,6 +654,7 @@ look_up_lock_class(struct lockdep_map *lock, unsigned int subclass)
+ 	struct lockdep_subclass_key *key;
+ 	struct list_head *hash_head;
+ 	struct lock_class *class;
++	bool is_static = false;
  
- 	val = readl(pctrl->regs + g->ctl_reg);
- 	val &= ~(0x7 << g->mux_bit);
- 	val |= i << g->mux_bit;
- 	writel(val, pctrl->regs + g->ctl_reg);
- 
--	spin_unlock_irqrestore(&pctrl->lock, flags);
-+	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
- 
- 	return 0;
- }
-@@ -336,14 +336,14 @@ static int msm_config_group_set(struct pinctrl_dev *pctldev,
- 			break;
- 		case PIN_CONFIG_OUTPUT:
- 			/* set output value */
--			spin_lock_irqsave(&pctrl->lock, flags);
-+			raw_spin_lock_irqsave(&pctrl->lock, flags);
- 			val = readl(pctrl->regs + g->io_reg);
- 			if (arg)
- 				val |= BIT(g->out_bit);
- 			else
- 				val &= ~BIT(g->out_bit);
- 			writel(val, pctrl->regs + g->io_reg);
--			spin_unlock_irqrestore(&pctrl->lock, flags);
-+			raw_spin_unlock_irqrestore(&pctrl->lock, flags);
- 
- 			/* enable output */
- 			arg = 1;
-@@ -360,12 +360,12 @@ static int msm_config_group_set(struct pinctrl_dev *pctldev,
- 			return -EINVAL;
- 		}
- 
--		spin_lock_irqsave(&pctrl->lock, flags);
-+		raw_spin_lock_irqsave(&pctrl->lock, flags);
- 		val = readl(pctrl->regs + g->ctl_reg);
- 		val &= ~(mask << bit);
- 		val |= arg << bit;
- 		writel(val, pctrl->regs + g->ctl_reg);
--		spin_unlock_irqrestore(&pctrl->lock, flags);
-+		raw_spin_unlock_irqrestore(&pctrl->lock, flags);
- 	}
- 
- 	return 0;
-@@ -394,13 +394,13 @@ static int msm_gpio_direction_input(struct gpio_chip *chip, unsigned offset)
- 
- 	g = &pctrl->soc->groups[offset];
- 
--	spin_lock_irqsave(&pctrl->lock, flags);
-+	raw_spin_lock_irqsave(&pctrl->lock, flags);
- 
- 	val = readl(pctrl->regs + g->ctl_reg);
- 	val &= ~BIT(g->oe_bit);
- 	writel(val, pctrl->regs + g->ctl_reg);
- 
--	spin_unlock_irqrestore(&pctrl->lock, flags);
-+	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
- 
- 	return 0;
- }
-@@ -414,7 +414,7 @@ static int msm_gpio_direction_output(struct gpio_chip *chip, unsigned offset, in
- 
- 	g = &pctrl->soc->groups[offset];
- 
--	spin_lock_irqsave(&pctrl->lock, flags);
-+	raw_spin_lock_irqsave(&pctrl->lock, flags);
- 
- 	val = readl(pctrl->regs + g->io_reg);
- 	if (value)
-@@ -427,7 +427,7 @@ static int msm_gpio_direction_output(struct gpio_chip *chip, unsigned offset, in
- 	val |= BIT(g->oe_bit);
- 	writel(val, pctrl->regs + g->ctl_reg);
- 
--	spin_unlock_irqrestore(&pctrl->lock, flags);
-+	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
- 
- 	return 0;
- }
-@@ -453,7 +453,7 @@ static void msm_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
- 
- 	g = &pctrl->soc->groups[offset];
- 
--	spin_lock_irqsave(&pctrl->lock, flags);
-+	raw_spin_lock_irqsave(&pctrl->lock, flags);
- 
- 	val = readl(pctrl->regs + g->io_reg);
- 	if (value)
-@@ -462,7 +462,7 @@ static void msm_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
- 		val &= ~BIT(g->out_bit);
- 	writel(val, pctrl->regs + g->io_reg);
- 
--	spin_unlock_irqrestore(&pctrl->lock, flags);
-+	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
- }
- 
- static int msm_gpio_request(struct gpio_chip *chip, unsigned offset)
-@@ -593,7 +593,7 @@ static void msm_gpio_irq_mask(struct irq_data *d)
- 
- 	g = &pctrl->soc->groups[d->hwirq];
- 
--	spin_lock_irqsave(&pctrl->lock, flags);
-+	raw_spin_lock_irqsave(&pctrl->lock, flags);
- 
- 	val = readl(pctrl->regs + g->intr_cfg_reg);
- 	val &= ~BIT(g->intr_enable_bit);
-@@ -601,7 +601,7 @@ static void msm_gpio_irq_mask(struct irq_data *d)
- 
- 	clear_bit(d->hwirq, pctrl->enabled_irqs);
- 
--	spin_unlock_irqrestore(&pctrl->lock, flags);
-+	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
- }
- 
- static void msm_gpio_irq_unmask(struct irq_data *d)
-@@ -614,7 +614,7 @@ static void msm_gpio_irq_unmask(struct irq_data *d)
- 
- 	g = &pctrl->soc->groups[d->hwirq];
- 
--	spin_lock_irqsave(&pctrl->lock, flags);
-+	raw_spin_lock_irqsave(&pctrl->lock, flags);
- 
- 	val = readl(pctrl->regs + g->intr_status_reg);
- 	val &= ~BIT(g->intr_status_bit);
-@@ -626,7 +626,7 @@ static void msm_gpio_irq_unmask(struct irq_data *d)
- 
- 	set_bit(d->hwirq, pctrl->enabled_irqs);
- 
--	spin_unlock_irqrestore(&pctrl->lock, flags);
-+	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
- }
- 
- static void msm_gpio_irq_ack(struct irq_data *d)
-@@ -639,7 +639,7 @@ static void msm_gpio_irq_ack(struct irq_data *d)
- 
- 	g = &pctrl->soc->groups[d->hwirq];
- 
--	spin_lock_irqsave(&pctrl->lock, flags);
-+	raw_spin_lock_irqsave(&pctrl->lock, flags);
- 
- 	val = readl(pctrl->regs + g->intr_status_reg);
- 	if (g->intr_ack_high)
-@@ -651,7 +651,7 @@ static void msm_gpio_irq_ack(struct irq_data *d)
- 	if (test_bit(d->hwirq, pctrl->dual_edge_irqs))
- 		msm_gpio_update_dual_edge_pos(pctrl, g, d);
- 
--	spin_unlock_irqrestore(&pctrl->lock, flags);
-+	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
- }
- 
- static int msm_gpio_irq_set_type(struct irq_data *d, unsigned int type)
-@@ -664,7 +664,7 @@ static int msm_gpio_irq_set_type(struct irq_data *d, unsigned int type)
- 
- 	g = &pctrl->soc->groups[d->hwirq];
- 
--	spin_lock_irqsave(&pctrl->lock, flags);
-+	raw_spin_lock_irqsave(&pctrl->lock, flags);
+ #ifdef CONFIG_DEBUG_LOCKDEP
+ 	/*
+@@ -681,10 +682,23 @@ look_up_lock_class(struct lockdep_map *lock, unsigned int subclass)
  
  	/*
- 	 * For hw without possibility of detecting both edges
-@@ -738,7 +738,7 @@ static int msm_gpio_irq_set_type(struct irq_data *d, unsigned int type)
- 	if (test_bit(d->hwirq, pctrl->dual_edge_irqs))
- 		msm_gpio_update_dual_edge_pos(pctrl, g, d);
+ 	 * Static locks do not have their class-keys yet - for them the key
+-	 * is the lock object itself:
++	 * is the lock object itself. If the lock is in the per cpu area,
++	 * the canonical address of the lock (per cpu offset removed) is
++	 * used.
+ 	 */
+-	if (unlikely(!lock->key))
+-		lock->key = (void *)lock;
++	if (unlikely(!lock->key)) {
++		unsigned long can_addr, addr = (unsigned long)lock;
++
++		if (__is_kernel_percpu_address(addr, &can_addr))
++			lock->key = (void *)can_addr;
++		else if (__is_module_percpu_address(addr, &can_addr))
++			lock->key = (void *)can_addr;
++		else if (static_obj(lock))
++			lock->key = (void *)lock;
++		else
++			return ERR_PTR(-EINVAL);
++		is_static = true;
++	}
  
--	spin_unlock_irqrestore(&pctrl->lock, flags);
-+	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
+ 	/*
+ 	 * NOTE: the class-key must be unique. For dynamic locks, a static
+@@ -714,7 +728,7 @@ look_up_lock_class(struct lockdep_map *lock, unsigned int subclass)
+ 		}
+ 	}
  
- 	if (type & (IRQ_TYPE_LEVEL_LOW | IRQ_TYPE_LEVEL_HIGH))
- 		__irq_set_handler_locked(d->irq, handle_level_irq);
-@@ -754,11 +754,11 @@ static int msm_gpio_irq_set_wake(struct irq_data *d, unsigned int on)
- 	struct msm_pinctrl *pctrl = to_msm_pinctrl(gc);
+-	return NULL;
++	return is_static || static_obj(lock->key) ? NULL : ERR_PTR(-EINVAL);
+ }
+ 
+ /*
+@@ -731,13 +745,13 @@ register_lock_class(struct lockdep_map *lock, unsigned int subclass, int force)
  	unsigned long flags;
  
--	spin_lock_irqsave(&pctrl->lock, flags);
-+	raw_spin_lock_irqsave(&pctrl->lock, flags);
+ 	class = look_up_lock_class(lock, subclass);
+-	if (likely(class))
++	if (likely(!IS_ERR_OR_NULL(class)))
+ 		goto out_set_class_cache;
  
- 	irq_set_irq_wake(pctrl->irq, on);
+ 	/*
+ 	 * Debug-check: all keys must be persistent!
+- 	 */
+-	if (!static_obj(lock->key)) {
++	 */
++	if (IS_ERR(class)) {
+ 		debug_locks_off();
+ 		printk("INFO: trying to register non-static key.\n");
+ 		printk("the code is fine but needs lockdep annotation.\n");
+@@ -3276,7 +3290,7 @@ static int match_held_lock(struct held_lock *hlock, struct lockdep_map *lock)
+ 		 * Clearly if the lock hasn't been acquired _ever_, we're not
+ 		 * holding it either, so report failure.
+ 		 */
+-		if (!class)
++		if (IS_ERR_OR_NULL(class))
+ 			return 0;
  
--	spin_unlock_irqrestore(&pctrl->lock, flags);
-+	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
- 
- 	return 0;
+ 		/*
+@@ -3938,7 +3952,7 @@ void lockdep_reset_lock(struct lockdep_map *lock)
+ 		 * If the class exists we look it up and zap it:
+ 		 */
+ 		class = look_up_lock_class(lock, j);
+-		if (class)
++		if (!IS_ERR_OR_NULL(class))
+ 			zap_class(class);
+ 	}
+ 	/*
+diff --git a/kernel/module.c b/kernel/module.c
+index 737d53099360..377f52a286a8 100644
+--- a/kernel/module.c
++++ b/kernel/module.c
+@@ -526,16 +526,7 @@ static void percpu_modcopy(struct module *mod,
+ 		memcpy(per_cpu_ptr(mod->percpu, cpu), from, size);
  }
-@@ -895,7 +895,7 @@ int msm_pinctrl_probe(struct platform_device *pdev,
- 	pctrl->soc = soc_data;
- 	pctrl->chip = msm_gpio_template;
  
--	spin_lock_init(&pctrl->lock);
-+	raw_spin_lock_init(&pctrl->lock);
+-/**
+- * is_module_percpu_address - test whether address is from module static percpu
+- * @addr: address to test
+- *
+- * Test whether @addr belongs to module static percpu area.
+- *
+- * RETURNS:
+- * %true if @addr is from module static percpu area
+- */
+-bool is_module_percpu_address(unsigned long addr)
++bool __is_module_percpu_address(unsigned long addr, unsigned long *can_addr)
+ {
+ 	struct module *mod;
+ 	unsigned int cpu;
+@@ -549,9 +540,11 @@ bool is_module_percpu_address(unsigned long addr)
+ 			continue;
+ 		for_each_possible_cpu(cpu) {
+ 			void *start = per_cpu_ptr(mod->percpu, cpu);
++			void *va = (void *)addr;
  
- 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
- 	pctrl->regs = devm_ioremap_resource(&pdev->dev, res);
+-			if ((void *)addr >= start &&
+-			    (void *)addr < start + mod->percpu_size) {
++			if (va >= start && va < start + mod->percpu_size) {
++				if (can_addr)
++					*can_addr = (unsigned long) (va - start);
+ 				preempt_enable();
+ 				return true;
+ 			}
+@@ -562,6 +555,20 @@ bool is_module_percpu_address(unsigned long addr)
+ 	return false;
+ }
+ 
++/**
++ * is_module_percpu_address - test whether address is from module static percpu
++ * @addr: address to test
++ *
++ * Test whether @addr belongs to module static percpu area.
++ *
++ * RETURNS:
++ * %true if @addr is from module static percpu area
++ */
++bool is_module_percpu_address(unsigned long addr)
++{
++	return __is_module_percpu_address(addr, NULL);
++}
++
+ #else /* ... !CONFIG_SMP */
+ 
+ static inline void __percpu *mod_percpu(struct module *mod)
+diff --git a/mm/percpu.c b/mm/percpu.c
+index 5ae6e0284967..d270e8077f52 100644
+--- a/mm/percpu.c
++++ b/mm/percpu.c
+@@ -1282,18 +1282,7 @@ void free_percpu(void __percpu *ptr)
+ }
+ EXPORT_SYMBOL_GPL(free_percpu);
+ 
+-/**
+- * is_kernel_percpu_address - test whether address is from static percpu area
+- * @addr: address to test
+- *
+- * Test whether @addr belongs to in-kernel static percpu area.  Module
+- * static percpu areas are not considered.  For those, use
+- * is_module_percpu_address().
+- *
+- * RETURNS:
+- * %true if @addr is from in-kernel static percpu area, %false otherwise.
+- */
+-bool is_kernel_percpu_address(unsigned long addr)
++bool __is_kernel_percpu_address(unsigned long addr, unsigned long *can_addr)
+ {
+ #ifdef CONFIG_SMP
+ 	const size_t static_size = __per_cpu_end - __per_cpu_start;
+@@ -1302,16 +1291,36 @@ bool is_kernel_percpu_address(unsigned long addr)
+ 
+ 	for_each_possible_cpu(cpu) {
+ 		void *start = per_cpu_ptr(base, cpu);
++		void *va = (void *)addr;
+ 
+-		if ((void *)addr >= start && (void *)addr < start + static_size)
++		if (va >= start && va < start + static_size) {
++			if (can_addr)
++				*can_addr = (unsigned long) (va - start);
+ 			return true;
+-        }
++		}
++	}
+ #endif
+ 	/* on UP, can't distinguish from other static vars, always false */
+ 	return false;
+ }
+ 
+ /**
++ * is_kernel_percpu_address - test whether address is from static percpu area
++ * @addr: address to test
++ *
++ * Test whether @addr belongs to in-kernel static percpu area.  Module
++ * static percpu areas are not considered.  For those, use
++ * is_module_percpu_address().
++ *
++ * RETURNS:
++ * %true if @addr is from in-kernel static percpu area, %false otherwise.
++ */
++bool is_kernel_percpu_address(unsigned long addr)
++{
++	return __is_kernel_percpu_address(addr, NULL);
++}
++
++/**
+  * per_cpu_ptr_to_phys - convert translated percpu address to physical address
+  * @addr: the address to be converted to physical address
+  *
 -- 
 2.10.2
 
