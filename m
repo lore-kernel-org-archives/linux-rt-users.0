@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 6/8] rt: Drop the removal of _GPL from rt_mutex_destroy()s EXPORT_SYMBOL
-Date: Wed, 08 Mar 2017 15:21:01 -0500
-Message-ID: <20170308202117.860278216@goodmis.org>
+Subject: [PATCH RT 4/8] rt: Drop mutex_disable() on !DEBUG configs and the GPL suffix from
+ export symbol
+Date: Wed, 08 Mar 2017 15:20:59 -0500
+Message-ID: <20170308202117.599614028@goodmis.org>
 References: <20170308202055.192561119@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,15 +11,15 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
-        Julia Cartwright <julia@ni.com>
+        Julia Cartwright <julia@ni.com>, Alex Goins <agoins@nvidia.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:60696 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.136]:60698 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751699AbdCHUYc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S1753829AbdCHUYc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Wed, 8 Mar 2017 15:24:32 -0500
-Content-Disposition: inline; filename=0006-rt-Drop-the-removal-of-_GPL-from-rt_mutex_destroy-s-.patch
+Content-Disposition: inline; filename=0004-rt-Drop-mutex_disable-on-DEBUG-configs-and-the-GPL-s.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -29,26 +30,52 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-What we have now should be enough, the EXPORT_SYMBOL statement for
-rt_mutex_destroy() is not required.
+Alex Goins reported that mutex_destroy() on RT will force a GPL only symbol
+which won't link and therefore fail on a non-GPL kernel module.
+This does not happen on !RT and is a regression on RT which we would like to
+avoid.
+I try here the easy thing and to not use rt_mutex_destroy() if
+CONFIG_DEBUG_MUTEXES is not enabled. This will still break for the DEBUG
+configs so instead of adding a wrapper around rt_mutex_destroy() (which we have
+for rt_mutex_lock() for instance) I am simply dropping the GPL part from the
+export.
 
+Reported-by: Alex Goins <agoins@nvidia.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/locking/rtmutex.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ include/linux/mutex_rt.h | 5 +++++
+ kernel/locking/rtmutex.c | 3 +--
+ 2 files changed, 6 insertions(+), 2 deletions(-)
 
+diff --git a/include/linux/mutex_rt.h b/include/linux/mutex_rt.h
+index c38a44b14da5..e0284edec655 100644
+--- a/include/linux/mutex_rt.h
++++ b/include/linux/mutex_rt.h
+@@ -43,7 +43,12 @@ extern void __lockfunc _mutex_unlock(struct mutex *lock);
+ #define mutex_lock_killable(l)		_mutex_lock_killable(l)
+ #define mutex_trylock(l)		_mutex_trylock(l)
+ #define mutex_unlock(l)			_mutex_unlock(l)
++
++#ifdef CONFIG_DEBUG_MUTEXES
+ #define mutex_destroy(l)		rt_mutex_destroy(&(l)->lock)
++#else
++static inline void mutex_destroy(struct mutex *lock) {}
++#endif
+ 
+ #ifdef CONFIG_DEBUG_LOCK_ALLOC
+ # define mutex_lock_nested(l, s)	_mutex_lock_nested(l, s)
 diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index 89651b3e7700..8d950b4521fc 100644
+index 8d950b4521fc..89651b3e7700 100644
 --- a/kernel/locking/rtmutex.c
 +++ b/kernel/locking/rtmutex.c
-@@ -2018,7 +2018,8 @@ void rt_mutex_destroy(struct rt_mutex *lock)
+@@ -2018,8 +2018,7 @@ void rt_mutex_destroy(struct rt_mutex *lock)
  	lock->magic = NULL;
  #endif
  }
--EXPORT_SYMBOL(rt_mutex_destroy);
-+
-+EXPORT_SYMBOL_GPL(rt_mutex_destroy);
+-
+-EXPORT_SYMBOL_GPL(rt_mutex_destroy);
++EXPORT_SYMBOL(rt_mutex_destroy);
  
  /**
   * __rt_mutex_init - initialize the rt lock
