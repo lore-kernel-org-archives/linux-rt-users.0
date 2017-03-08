@@ -1,8 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 4/8] rt: Drop mutex_disable() on !DEBUG configs and the GPL suffix from
- export symbol
-Date: Wed, 08 Mar 2017 15:20:59 -0500
-Message-ID: <20170308202117.599614028@goodmis.org>
+Subject: [PATCH RT 8/8] Linux 3.18.48-rt54-rc1
+Date: Wed, 08 Mar 2017 15:21:03 -0500
+Message-ID: <20170308202118.185540088@goodmis.org>
 References: <20170308202055.192561119@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -11,15 +10,15 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
-        Julia Cartwright <julia@ni.com>, Alex Goins <agoins@nvidia.com>
+        Julia Cartwright <julia@ni.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:60698 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.136]:60692 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1753829AbdCHUYc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S1751720AbdCHUYc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Wed, 8 Mar 2017 15:24:32 -0500
-Content-Disposition: inline; filename=0004-rt-Drop-mutex_disable-on-DEBUG-configs-and-the-GPL-s.patch
+Content-Disposition: inline; filename=0008-Linux-3.18.48-rt54-rc1.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -28,57 +27,19 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-Alex Goins reported that mutex_destroy() on RT will force a GPL only symbol
-which won't link and therefore fail on a non-GPL kernel module.
-This does not happen on !RT and is a regression on RT which we would like to
-avoid.
-I try here the easy thing and to not use rt_mutex_destroy() if
-CONFIG_DEBUG_MUTEXES is not enabled. This will still break for the DEBUG
-configs so instead of adding a wrapper around rt_mutex_destroy() (which we have
-for rt_mutex_lock() for instance) I am simply dropping the GPL part from the
-export.
-
-Reported-by: Alex Goins <agoins@nvidia.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- include/linux/mutex_rt.h | 5 +++++
- kernel/locking/rtmutex.c | 3 +--
- 2 files changed, 6 insertions(+), 2 deletions(-)
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/include/linux/mutex_rt.h b/include/linux/mutex_rt.h
-index c38a44b14da5..e0284edec655 100644
---- a/include/linux/mutex_rt.h
-+++ b/include/linux/mutex_rt.h
-@@ -43,7 +43,12 @@ extern void __lockfunc _mutex_unlock(struct mutex *lock);
- #define mutex_lock_killable(l)		_mutex_lock_killable(l)
- #define mutex_trylock(l)		_mutex_trylock(l)
- #define mutex_unlock(l)			_mutex_unlock(l)
-+
-+#ifdef CONFIG_DEBUG_MUTEXES
- #define mutex_destroy(l)		rt_mutex_destroy(&(l)->lock)
-+#else
-+static inline void mutex_destroy(struct mutex *lock) {}
-+#endif
- 
- #ifdef CONFIG_DEBUG_LOCK_ALLOC
- # define mutex_lock_nested(l, s)	_mutex_lock_nested(l, s)
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index 8d950b4521fc..89651b3e7700 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -2018,8 +2018,7 @@ void rt_mutex_destroy(struct rt_mutex *lock)
- 	lock->magic = NULL;
- #endif
- }
--
--EXPORT_SYMBOL_GPL(rt_mutex_destroy);
-+EXPORT_SYMBOL(rt_mutex_destroy);
- 
- /**
-  * __rt_mutex_init - initialize the rt lock
+diff --git a/localversion-rt b/localversion-rt
+index e6c0dc6a54cd..cc1bfc08848a 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt53
++-rt54-rc1
 -- 
 2.10.2
 
