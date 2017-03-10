@@ -1,84 +1,76 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 4.4.50-rt63
-Date: Fri, 10 Mar 2017 10:24:43 -0500
-Message-ID: <20170310102443.74f098af@gandalf.local.home>
+From: Julia Cartwright <julia@ni.com>
+Subject: [ANNOUNCE] 4.1.38-rt46
+Date: Fri, 10 Mar 2017 11:30:07 -0600
+Message-ID: <20170310173007.GB32162@jcartwri.amer.corp.natinst.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Julia Cartwright <julia@ni.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+        Steven Rostedt <rostedt@goodmis.org>
+To: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx0a-00010702.pphosted.com ([148.163.156.75]:41104 "EHLO
+        mx0b-00010702.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S933173AbdCJRac (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 10 Mar 2017 12:30:32 -0500
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+Hell RT Folks!
 
-Dear RT Folks,
-
-I'm pleased to announce the 4.4.50-rt63 stable release.
-
+I'm pleased to announce the 4.1.38-rt46 stable release.
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v4.4-rt
-  Head SHA1: 2320fee589dc811ae182bb771a055bfddc8118c5
+  branch: v4.1-rt
+  Head SHA1: d7e24898bcc13308fa03b62c9c8198d86ec2349c
 
 
-Or to build 4.4.50-rt63 directly, the following patches should be applied:
+Or to build 4.1.38-rt46 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.1.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.50.xz
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.1.38.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.50-rt63.patch.xz
-
-
-
-You can also build from 4.4.50-rt62 by applying the incremental patch:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/incr/patch-4.4.50-rt62-rt63.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/patch-4.1.38-rt46.patch.xz
 
 
+You can also build from 4.1.38-rt45 by applying the incremental patch:
 
-Enjoy,
-
--- Steve
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/incr/patch-4.1.38-rt45-rt46.patch.xz
 
 
-Changes from v4.4.50-rt62:
+Enjoy!
+   Julia
 
+Changes from v4.1.38-rt45:
 ---
-
 Dan Murphy (1):
       lockdep: Fix compilation error for !CONFIG_MODULES and !CONFIG_SMP
 
 John Ogness (1):
       x86/mm/cpa: avoid wbinvd() for PREEMPT
 
-Julia Cartwright (1):
+Julia Cartwright (2):
       pinctrl: qcom: Use raw spinlock variants
+      Linux 4.1.38-rt46
 
 Mike Galbraith (1):
       cpuset: Convert callback_lock to raw_spinlock_t
 
-Sebastian Andrzej Siewior (4):
+Sebastian Andrzej Siewior (3):
       radix-tree: use local locks
       rt: Drop mutex_disable() on !DEBUG configs and the GPL suffix from export symbol
-      sched/rt: Add a missing rescheduling point
       rt: Drop the removal of _GPL from rt_mutex_destroy()'s EXPORT_SYMBOL
-
-Steven Rostedt (VMware) (1):
-      Linux 4.4.50-rt63
 
 Thomas Gleixner (1):
       lockdep: Handle statically initialized PER_CPU locks proper
-
 ----
  arch/x86/mm/pageattr.c             |  8 +++++
  drivers/pinctrl/qcom/pinctrl-msm.c | 48 +++++++++++++--------------
@@ -89,18 +81,16 @@ Thomas Gleixner (1):
  kernel/cpuset.c                    | 66 +++++++++++++++++++-------------------
  kernel/locking/lockdep.c           | 33 +++++++++++++------
  kernel/module.c                    | 36 ++++++++++++++-------
- kernel/sched/deadline.c            |  3 +-
- kernel/sched/rt.c                  |  3 +-
- lib/radix-tree.c                   | 23 +++++++------
+ lib/radix-tree.c                   | 22 ++++++++-----
  localversion-rt                    |  2 +-
  mm/percpu.c                        | 37 +++++++++++++--------
- 14 files changed, 166 insertions(+), 117 deletions(-)
+ 12 files changed, 164 insertions(+), 112 deletions(-)
 ---------------------------
 diff --git a/arch/x86/mm/pageattr.c b/arch/x86/mm/pageattr.c
-index b599a780a5a9..2e85c4117daf 100644
+index 2dd9b3ad3bb5..4314b9103ff0 100644
 --- a/arch/x86/mm/pageattr.c
 +++ b/arch/x86/mm/pageattr.c
-@@ -208,7 +208,15 @@ static void cpa_flush_array(unsigned long *start, int numpages, int cache,
+@@ -209,7 +209,15 @@ static void cpa_flush_array(unsigned long *start, int numpages, int cache,
  			    int in_flags, struct page **pages)
  {
  	unsigned int i, level;
@@ -117,10 +107,10 @@ index b599a780a5a9..2e85c4117daf 100644
  	BUG_ON(irqs_disabled());
  
 diff --git a/drivers/pinctrl/qcom/pinctrl-msm.c b/drivers/pinctrl/qcom/pinctrl-msm.c
-index 146264a41ec8..81fd38894eaf 100644
+index f3d800f796c2..9c91fe998ad8 100644
 --- a/drivers/pinctrl/qcom/pinctrl-msm.c
 +++ b/drivers/pinctrl/qcom/pinctrl-msm.c
-@@ -60,7 +60,7 @@ struct msm_pinctrl {
+@@ -59,7 +59,7 @@ struct msm_pinctrl {
  	struct notifier_block restart_nb;
  	int irq;
  
@@ -129,7 +119,7 @@ index 146264a41ec8..81fd38894eaf 100644
  
  	DECLARE_BITMAP(dual_edge_irqs, MAX_NR_GPIO);
  	DECLARE_BITMAP(enabled_irqs, MAX_NR_GPIO);
-@@ -156,14 +156,14 @@ static int msm_pinmux_set_mux(struct pinctrl_dev *pctldev,
+@@ -155,14 +155,14 @@ static int msm_pinmux_set_mux(struct pinctrl_dev *pctldev,
  	if (WARN_ON(i == g->nfuncs))
  		return -EINVAL;
  
@@ -146,7 +136,7 @@ index 146264a41ec8..81fd38894eaf 100644
  
  	return 0;
  }
-@@ -326,14 +326,14 @@ static int msm_config_group_set(struct pinctrl_dev *pctldev,
+@@ -325,14 +325,14 @@ static int msm_config_group_set(struct pinctrl_dev *pctldev,
  			break;
  		case PIN_CONFIG_OUTPUT:
  			/* set output value */
@@ -163,7 +153,7 @@ index 146264a41ec8..81fd38894eaf 100644
  
  			/* enable output */
  			arg = 1;
-@@ -354,12 +354,12 @@ static int msm_config_group_set(struct pinctrl_dev *pctldev,
+@@ -353,12 +353,12 @@ static int msm_config_group_set(struct pinctrl_dev *pctldev,
  			return -EINVAL;
  		}
  
@@ -178,7 +168,7 @@ index 146264a41ec8..81fd38894eaf 100644
  	}
  
  	return 0;
-@@ -387,13 +387,13 @@ static int msm_gpio_direction_input(struct gpio_chip *chip, unsigned offset)
+@@ -386,13 +386,13 @@ static int msm_gpio_direction_input(struct gpio_chip *chip, unsigned offset)
  
  	g = &pctrl->soc->groups[offset];
  
@@ -194,7 +184,7 @@ index 146264a41ec8..81fd38894eaf 100644
  
  	return 0;
  }
-@@ -407,7 +407,7 @@ static int msm_gpio_direction_output(struct gpio_chip *chip, unsigned offset, in
+@@ -406,7 +406,7 @@ static int msm_gpio_direction_output(struct gpio_chip *chip, unsigned offset, in
  
  	g = &pctrl->soc->groups[offset];
  
@@ -203,7 +193,7 @@ index 146264a41ec8..81fd38894eaf 100644
  
  	val = readl(pctrl->regs + g->io_reg);
  	if (value)
-@@ -420,7 +420,7 @@ static int msm_gpio_direction_output(struct gpio_chip *chip, unsigned offset, in
+@@ -419,7 +419,7 @@ static int msm_gpio_direction_output(struct gpio_chip *chip, unsigned offset, in
  	val |= BIT(g->oe_bit);
  	writel(val, pctrl->regs + g->ctl_reg);
  
@@ -212,7 +202,7 @@ index 146264a41ec8..81fd38894eaf 100644
  
  	return 0;
  }
-@@ -446,7 +446,7 @@ static void msm_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
+@@ -445,7 +445,7 @@ static void msm_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
  
  	g = &pctrl->soc->groups[offset];
  
@@ -221,7 +211,7 @@ index 146264a41ec8..81fd38894eaf 100644
  
  	val = readl(pctrl->regs + g->io_reg);
  	if (value)
-@@ -455,7 +455,7 @@ static void msm_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
+@@ -454,7 +454,7 @@ static void msm_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
  		val &= ~BIT(g->out_bit);
  	writel(val, pctrl->regs + g->io_reg);
  
@@ -229,8 +219,8 @@ index 146264a41ec8..81fd38894eaf 100644
 +	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
  }
  
- #ifdef CONFIG_DEBUG_FS
-@@ -574,7 +574,7 @@ static void msm_gpio_irq_mask(struct irq_data *d)
+ static int msm_gpio_request(struct gpio_chip *chip, unsigned offset)
+@@ -585,7 +585,7 @@ static void msm_gpio_irq_mask(struct irq_data *d)
  
  	g = &pctrl->soc->groups[d->hwirq];
  
@@ -239,7 +229,7 @@ index 146264a41ec8..81fd38894eaf 100644
  
  	val = readl(pctrl->regs + g->intr_cfg_reg);
  	val &= ~BIT(g->intr_enable_bit);
-@@ -582,7 +582,7 @@ static void msm_gpio_irq_mask(struct irq_data *d)
+@@ -593,7 +593,7 @@ static void msm_gpio_irq_mask(struct irq_data *d)
  
  	clear_bit(d->hwirq, pctrl->enabled_irqs);
  
@@ -248,7 +238,7 @@ index 146264a41ec8..81fd38894eaf 100644
  }
  
  static void msm_gpio_irq_unmask(struct irq_data *d)
-@@ -595,7 +595,7 @@ static void msm_gpio_irq_unmask(struct irq_data *d)
+@@ -606,7 +606,7 @@ static void msm_gpio_irq_unmask(struct irq_data *d)
  
  	g = &pctrl->soc->groups[d->hwirq];
  
@@ -257,7 +247,7 @@ index 146264a41ec8..81fd38894eaf 100644
  
  	val = readl(pctrl->regs + g->intr_status_reg);
  	val &= ~BIT(g->intr_status_bit);
-@@ -607,7 +607,7 @@ static void msm_gpio_irq_unmask(struct irq_data *d)
+@@ -618,7 +618,7 @@ static void msm_gpio_irq_unmask(struct irq_data *d)
  
  	set_bit(d->hwirq, pctrl->enabled_irqs);
  
@@ -266,7 +256,7 @@ index 146264a41ec8..81fd38894eaf 100644
  }
  
  static void msm_gpio_irq_ack(struct irq_data *d)
-@@ -620,7 +620,7 @@ static void msm_gpio_irq_ack(struct irq_data *d)
+@@ -631,7 +631,7 @@ static void msm_gpio_irq_ack(struct irq_data *d)
  
  	g = &pctrl->soc->groups[d->hwirq];
  
@@ -275,7 +265,7 @@ index 146264a41ec8..81fd38894eaf 100644
  
  	val = readl(pctrl->regs + g->intr_status_reg);
  	if (g->intr_ack_high)
-@@ -632,7 +632,7 @@ static void msm_gpio_irq_ack(struct irq_data *d)
+@@ -643,7 +643,7 @@ static void msm_gpio_irq_ack(struct irq_data *d)
  	if (test_bit(d->hwirq, pctrl->dual_edge_irqs))
  		msm_gpio_update_dual_edge_pos(pctrl, g, d);
  
@@ -284,7 +274,7 @@ index 146264a41ec8..81fd38894eaf 100644
  }
  
  static int msm_gpio_irq_set_type(struct irq_data *d, unsigned int type)
-@@ -645,7 +645,7 @@ static int msm_gpio_irq_set_type(struct irq_data *d, unsigned int type)
+@@ -656,7 +656,7 @@ static int msm_gpio_irq_set_type(struct irq_data *d, unsigned int type)
  
  	g = &pctrl->soc->groups[d->hwirq];
  
@@ -293,7 +283,7 @@ index 146264a41ec8..81fd38894eaf 100644
  
  	/*
  	 * For hw without possibility of detecting both edges
-@@ -719,7 +719,7 @@ static int msm_gpio_irq_set_type(struct irq_data *d, unsigned int type)
+@@ -730,7 +730,7 @@ static int msm_gpio_irq_set_type(struct irq_data *d, unsigned int type)
  	if (test_bit(d->hwirq, pctrl->dual_edge_irqs))
  		msm_gpio_update_dual_edge_pos(pctrl, g, d);
  
@@ -301,8 +291,8 @@ index 146264a41ec8..81fd38894eaf 100644
 +	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
  
  	if (type & (IRQ_TYPE_LEVEL_LOW | IRQ_TYPE_LEVEL_HIGH))
- 		irq_set_handler_locked(d, handle_level_irq);
-@@ -735,11 +735,11 @@ static int msm_gpio_irq_set_wake(struct irq_data *d, unsigned int on)
+ 		__irq_set_handler_locked(d->irq, handle_level_irq);
+@@ -746,11 +746,11 @@ static int msm_gpio_irq_set_wake(struct irq_data *d, unsigned int on)
  	struct msm_pinctrl *pctrl = to_msm_pinctrl(gc);
  	unsigned long flags;
  
@@ -316,7 +306,7 @@ index 146264a41ec8..81fd38894eaf 100644
  
  	return 0;
  }
-@@ -885,7 +885,7 @@ int msm_pinctrl_probe(struct platform_device *pdev,
+@@ -887,7 +887,7 @@ int msm_pinctrl_probe(struct platform_device *pdev,
  	pctrl->soc = soc_data;
  	pctrl->chip = msm_gpio_template;
  
@@ -326,10 +316,10 @@ index 146264a41ec8..81fd38894eaf 100644
  	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
  	pctrl->regs = devm_ioremap_resource(&pdev->dev, res);
 diff --git a/include/linux/module.h b/include/linux/module.h
-index b229a9961d02..5fea847cf95c 100644
+index b2da02e1591d..2fd71ecdd63a 100644
 --- a/include/linux/module.h
 +++ b/include/linux/module.h
-@@ -500,6 +500,7 @@ static inline int module_is_live(struct module *mod)
+@@ -386,6 +386,7 @@ static inline int module_is_live(struct module *mod)
  struct module *__module_text_address(unsigned long addr);
  struct module *__module_address(unsigned long addr);
  bool is_module_address(unsigned long addr);
@@ -337,7 +327,7 @@ index b229a9961d02..5fea847cf95c 100644
  bool is_module_percpu_address(unsigned long addr);
  bool is_module_text_address(unsigned long addr);
  
-@@ -665,6 +666,11 @@ static inline bool is_module_percpu_address(unsigned long addr)
+@@ -538,6 +539,11 @@ static inline bool is_module_percpu_address(unsigned long addr)
  	return false;
  }
  
@@ -379,7 +369,7 @@ index 53a60a51c758..4ecc057b6e27 100644
  
  #if !defined(CONFIG_SMP) || !defined(CONFIG_HAVE_SETUP_PER_CPU_AREA)
 diff --git a/include/linux/radix-tree.h b/include/linux/radix-tree.h
-index 8ddbd6e15a3c..327dddaf4c8f 100644
+index 9a80663a1574..e46b414e9e39 100644
 --- a/include/linux/radix-tree.h
 +++ b/include/linux/radix-tree.h
 @@ -277,13 +277,10 @@ radix_tree_gang_lookup(struct radix_tree_root *root, void **results,
@@ -411,19 +401,19 @@ index 8ddbd6e15a3c..327dddaf4c8f 100644
   * struct radix_tree_iter - radix tree iterator state
   *
 diff --git a/kernel/cpuset.c b/kernel/cpuset.c
-index b271353d5202..dd7b87b7f618 100644
+index 71403502411b..45da566b9749 100644
 --- a/kernel/cpuset.c
 +++ b/kernel/cpuset.c
-@@ -283,7 +283,7 @@ static struct cpuset top_cpuset = {
+@@ -284,7 +284,7 @@ static struct cpuset top_cpuset = {
   */
  
  static DEFINE_MUTEX(cpuset_mutex);
 -static DEFINE_SPINLOCK(callback_lock);
 +static DEFINE_RAW_SPINLOCK(callback_lock);
  
- static struct workqueue_struct *cpuset_migrate_mm_wq;
- 
-@@ -906,9 +906,9 @@ static void update_cpumasks_hier(struct cpuset *cs, struct cpumask *new_cpus)
+ /*
+  * CPU / memory hotplug is handled asynchronously.
+@@ -903,9 +903,9 @@ static void update_cpumasks_hier(struct cpuset *cs, struct cpumask *new_cpus)
  			continue;
  		rcu_read_unlock();
  
@@ -433,9 +423,9 @@ index b271353d5202..dd7b87b7f618 100644
 -		spin_unlock_irq(&callback_lock);
 +		raw_spin_unlock_irq(&callback_lock);
  
- 		WARN_ON(!cgroup_subsys_on_dfl(cpuset_cgrp_subsys) &&
+ 		WARN_ON(!cgroup_on_dfl(cp->css.cgroup) &&
  			!cpumask_equal(cp->cpus_allowed, cp->effective_cpus));
-@@ -973,9 +973,9 @@ static int update_cpumask(struct cpuset *cs, struct cpuset *trialcs,
+@@ -970,9 +970,9 @@ static int update_cpumask(struct cpuset *cs, struct cpuset *trialcs,
  	if (retval < 0)
  		return retval;
  
@@ -447,7 +437,7 @@ index b271353d5202..dd7b87b7f618 100644
  
  	/* use trialcs->cpus_allowed as a temp variable */
  	update_cpumasks_hier(cs, trialcs->cpus_allowed);
-@@ -1184,9 +1184,9 @@ static void update_nodemasks_hier(struct cpuset *cs, nodemask_t *new_mems)
+@@ -1159,9 +1159,9 @@ static void update_nodemasks_hier(struct cpuset *cs, nodemask_t *new_mems)
  			continue;
  		rcu_read_unlock();
  
@@ -457,9 +447,9 @@ index b271353d5202..dd7b87b7f618 100644
 -		spin_unlock_irq(&callback_lock);
 +		raw_spin_unlock_irq(&callback_lock);
  
- 		WARN_ON(!cgroup_subsys_on_dfl(cpuset_cgrp_subsys) &&
+ 		WARN_ON(!cgroup_on_dfl(cp->css.cgroup) &&
  			!nodes_equal(cp->mems_allowed, cp->effective_mems));
-@@ -1254,9 +1254,9 @@ static int update_nodemask(struct cpuset *cs, struct cpuset *trialcs,
+@@ -1229,9 +1229,9 @@ static int update_nodemask(struct cpuset *cs, struct cpuset *trialcs,
  	if (retval < 0)
  		goto done;
  
@@ -471,7 +461,7 @@ index b271353d5202..dd7b87b7f618 100644
  
  	/* use trialcs->mems_allowed as a temp variable */
  	update_nodemasks_hier(cs, &trialcs->mems_allowed);
-@@ -1347,9 +1347,9 @@ static int update_flag(cpuset_flagbits_t bit, struct cpuset *cs,
+@@ -1322,9 +1322,9 @@ static int update_flag(cpuset_flagbits_t bit, struct cpuset *cs,
  	spread_flag_changed = ((is_spread_slab(cs) != is_spread_slab(trialcs))
  			|| (is_spread_page(cs) != is_spread_page(trialcs)));
  
@@ -483,7 +473,7 @@ index b271353d5202..dd7b87b7f618 100644
  
  	if (!cpumask_empty(trialcs->cpus_allowed) && balance_flag_changed)
  		rebuild_sched_domains_locked();
-@@ -1761,7 +1761,7 @@ static int cpuset_common_seq_show(struct seq_file *sf, void *v)
+@@ -1726,7 +1726,7 @@ static int cpuset_common_seq_show(struct seq_file *sf, void *v)
  	cpuset_filetype_t type = seq_cft(sf)->private;
  	int ret = 0;
  
@@ -492,7 +482,7 @@ index b271353d5202..dd7b87b7f618 100644
  
  	switch (type) {
  	case FILE_CPULIST:
-@@ -1780,7 +1780,7 @@ static int cpuset_common_seq_show(struct seq_file *sf, void *v)
+@@ -1745,7 +1745,7 @@ static int cpuset_common_seq_show(struct seq_file *sf, void *v)
  		ret = -EINVAL;
  	}
  
@@ -501,13 +491,13 @@ index b271353d5202..dd7b87b7f618 100644
  	return ret;
  }
  
-@@ -1994,12 +1994,12 @@ static int cpuset_css_online(struct cgroup_subsys_state *css)
+@@ -1962,12 +1962,12 @@ static int cpuset_css_online(struct cgroup_subsys_state *css)
  
  	cpuset_inc();
  
 -	spin_lock_irq(&callback_lock);
 +	raw_spin_lock_irq(&callback_lock);
- 	if (cgroup_subsys_on_dfl(cpuset_cgrp_subsys)) {
+ 	if (cgroup_on_dfl(cs->css.cgroup)) {
  		cpumask_copy(cs->effective_cpus, parent->effective_cpus);
  		cs->effective_mems = parent->effective_mems;
  	}
@@ -516,7 +506,7 @@ index b271353d5202..dd7b87b7f618 100644
  
  	if (!test_bit(CGRP_CPUSET_CLONE_CHILDREN, &css->cgroup->flags))
  		goto out_unlock;
-@@ -2026,12 +2026,12 @@ static int cpuset_css_online(struct cgroup_subsys_state *css)
+@@ -1994,12 +1994,12 @@ static int cpuset_css_online(struct cgroup_subsys_state *css)
  	}
  	rcu_read_unlock();
  
@@ -531,16 +521,16 @@ index b271353d5202..dd7b87b7f618 100644
  out_unlock:
  	mutex_unlock(&cpuset_mutex);
  	return 0;
-@@ -2070,7 +2070,7 @@ static void cpuset_css_free(struct cgroup_subsys_state *css)
+@@ -2038,7 +2038,7 @@ static void cpuset_css_free(struct cgroup_subsys_state *css)
  static void cpuset_bind(struct cgroup_subsys_state *root_css)
  {
  	mutex_lock(&cpuset_mutex);
 -	spin_lock_irq(&callback_lock);
 +	raw_spin_lock_irq(&callback_lock);
  
- 	if (cgroup_subsys_on_dfl(cpuset_cgrp_subsys)) {
+ 	if (cgroup_on_dfl(root_css->cgroup)) {
  		cpumask_copy(top_cpuset.cpus_allowed, cpu_possible_mask);
-@@ -2081,7 +2081,7 @@ static void cpuset_bind(struct cgroup_subsys_state *root_css)
+@@ -2049,7 +2049,7 @@ static void cpuset_bind(struct cgroup_subsys_state *root_css)
  		top_cpuset.mems_allowed = top_cpuset.effective_mems;
  	}
  
@@ -549,7 +539,7 @@ index b271353d5202..dd7b87b7f618 100644
  	mutex_unlock(&cpuset_mutex);
  }
  
-@@ -2182,12 +2182,12 @@ hotplug_update_tasks_legacy(struct cpuset *cs,
+@@ -2149,12 +2149,12 @@ hotplug_update_tasks_legacy(struct cpuset *cs,
  {
  	bool is_empty;
  
@@ -564,7 +554,7 @@ index b271353d5202..dd7b87b7f618 100644
  
  	/*
  	 * Don't call update_tasks_cpumask() if the cpuset becomes empty,
-@@ -2224,10 +2224,10 @@ hotplug_update_tasks(struct cpuset *cs,
+@@ -2191,10 +2191,10 @@ hotplug_update_tasks(struct cpuset *cs,
  	if (nodes_empty(*new_mems))
  		*new_mems = parent_cs(cs)->effective_mems;
  
@@ -577,7 +567,7 @@ index b271353d5202..dd7b87b7f618 100644
  
  	if (cpus_updated)
  		update_tasks_cpumask(cs);
-@@ -2313,21 +2313,21 @@ static void cpuset_hotplug_workfn(struct work_struct *work)
+@@ -2280,21 +2280,21 @@ static void cpuset_hotplug_workfn(struct work_struct *work)
  
  	/* synchronize cpus_allowed to cpu_active_mask */
  	if (cpus_updated) {
@@ -603,7 +593,7 @@ index b271353d5202..dd7b87b7f618 100644
  		update_tasks_nodemask(&top_cpuset);
  	}
  
-@@ -2425,11 +2425,11 @@ void cpuset_cpus_allowed(struct task_struct *tsk, struct cpumask *pmask)
+@@ -2389,11 +2389,11 @@ void cpuset_cpus_allowed(struct task_struct *tsk, struct cpumask *pmask)
  {
  	unsigned long flags;
  
@@ -617,7 +607,7 @@ index b271353d5202..dd7b87b7f618 100644
  }
  
  void cpuset_cpus_allowed_fallback(struct task_struct *tsk)
-@@ -2477,11 +2477,11 @@ nodemask_t cpuset_mems_allowed(struct task_struct *tsk)
+@@ -2441,11 +2441,11 @@ nodemask_t cpuset_mems_allowed(struct task_struct *tsk)
  	nodemask_t mask;
  	unsigned long flags;
  
@@ -631,7 +621,7 @@ index b271353d5202..dd7b87b7f618 100644
  
  	return mask;
  }
-@@ -2573,14 +2573,14 @@ int __cpuset_node_allowed(int node, gfp_t gfp_mask)
+@@ -2537,14 +2537,14 @@ int __cpuset_node_allowed(int node, gfp_t gfp_mask)
  		return 1;
  
  	/* Not hardwall and node outside mems_allowed: scan up cpusets */
@@ -649,7 +639,7 @@ index b271353d5202..dd7b87b7f618 100644
  }
  
 diff --git a/kernel/locking/lockdep.c b/kernel/locking/lockdep.c
-index e98ee958a353..fd54dbf686cc 100644
+index 577f02617c63..1681f99ed566 100644
 --- a/kernel/locking/lockdep.c
 +++ b/kernel/locking/lockdep.c
 @@ -668,6 +668,7 @@ look_up_lock_class(struct lockdep_map *lock, unsigned int subclass)
@@ -719,7 +709,7 @@ index e98ee958a353..fd54dbf686cc 100644
  		return NULL;
  	}
  
-@@ -3278,7 +3291,7 @@ static int match_held_lock(struct held_lock *hlock, struct lockdep_map *lock)
+@@ -3297,7 +3310,7 @@ static int match_held_lock(struct held_lock *hlock, struct lockdep_map *lock)
  		 * Clearly if the lock hasn't been acquired _ever_, we're not
  		 * holding it either, so report failure.
  		 */
@@ -728,7 +718,7 @@ index e98ee958a353..fd54dbf686cc 100644
  			return 0;
  
  		/*
-@@ -3979,7 +3992,7 @@ void lockdep_reset_lock(struct lockdep_map *lock)
+@@ -3982,7 +3995,7 @@ void lockdep_reset_lock(struct lockdep_map *lock)
  		 * If the class exists we look it up and zap it:
  		 */
  		class = look_up_lock_class(lock, j);
@@ -738,10 +728,10 @@ index e98ee958a353..fd54dbf686cc 100644
  	}
  	/*
 diff --git a/kernel/module.c b/kernel/module.c
-index b14a4f31221f..be3f497a089d 100644
+index 6920d1080cdd..a7ac858fd1a1 100644
 --- a/kernel/module.c
 +++ b/kernel/module.c
-@@ -682,16 +682,7 @@ static void percpu_modcopy(struct module *mod,
+@@ -525,16 +525,7 @@ static void percpu_modcopy(struct module *mod,
  		memcpy(per_cpu_ptr(mod->percpu, cpu), from, size);
  }
  
@@ -759,7 +749,7 @@ index b14a4f31221f..be3f497a089d 100644
  {
  	struct module *mod;
  	unsigned int cpu;
-@@ -705,9 +696,11 @@ bool is_module_percpu_address(unsigned long addr)
+@@ -548,9 +539,11 @@ bool is_module_percpu_address(unsigned long addr)
  			continue;
  		for_each_possible_cpu(cpu) {
  			void *start = per_cpu_ptr(mod->percpu, cpu);
@@ -773,7 +763,7 @@ index b14a4f31221f..be3f497a089d 100644
  				preempt_enable();
  				return true;
  			}
-@@ -718,6 +711,20 @@ bool is_module_percpu_address(unsigned long addr)
+@@ -561,6 +554,20 @@ bool is_module_percpu_address(unsigned long addr)
  	return false;
  }
  
@@ -794,7 +784,7 @@ index b14a4f31221f..be3f497a089d 100644
  #else /* ... !CONFIG_SMP */
  
  static inline void __percpu *mod_percpu(struct module *mod)
-@@ -749,6 +756,11 @@ bool is_module_percpu_address(unsigned long addr)
+@@ -592,6 +599,11 @@ bool is_module_percpu_address(unsigned long addr)
  	return false;
  }
  
@@ -806,71 +796,35 @@ index b14a4f31221f..be3f497a089d 100644
  #endif /* CONFIG_SMP */
  
  #define MODINFO_ATTR(field)	\
-diff --git a/kernel/sched/deadline.c b/kernel/sched/deadline.c
-index 7a72e69fcf65..20e0c9b9ace5 100644
---- a/kernel/sched/deadline.c
-+++ b/kernel/sched/deadline.c
-@@ -1772,12 +1772,11 @@ static void switched_to_dl(struct rq *rq, struct task_struct *p)
- #ifdef CONFIG_SMP
- 		if (tsk_nr_cpus_allowed(p) > 1 && rq->dl.overloaded)
- 			queue_push_tasks(rq);
--#else
-+#endif
- 		if (dl_task(rq->curr))
- 			check_preempt_curr_dl(rq, p, 0);
- 		else
- 			resched_curr(rq);
--#endif
- 	}
- }
- 
-diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
-index 8cf360d309ec..4ac6937f4a65 100644
---- a/kernel/sched/rt.c
-+++ b/kernel/sched/rt.c
-@@ -2138,10 +2138,9 @@ static void switched_to_rt(struct rq *rq, struct task_struct *p)
- #ifdef CONFIG_SMP
- 		if (tsk_nr_cpus_allowed(p) > 1 && rq->rt.overloaded)
- 			queue_push_tasks(rq);
--#else
-+#endif /* CONFIG_SMP */
- 		if (p->prio < rq->curr->prio)
- 			resched_curr(rq);
--#endif /* CONFIG_SMP */
- 	}
- }
- 
 diff --git a/lib/radix-tree.c b/lib/radix-tree.c
-index f27e0bcb74f7..44bf36a396a9 100644
+index 19713243e698..e91567dc635f 100644
 --- a/lib/radix-tree.c
 +++ b/lib/radix-tree.c
-@@ -34,7 +34,7 @@
+@@ -34,6 +34,7 @@
  #include <linux/bitops.h>
  #include <linux/rcupdate.h>
- #include <linux/preempt.h>		/* in_interrupt() */
--
+ #include <linux/preempt_mask.h>		/* in_interrupt() */
 +#include <linux/locallock.h>
  
+ 
  /*
-  * The height_to_maxindex array needs to be one deeper than the maximum
-@@ -69,6 +69,7 @@ struct radix_tree_preload {
- 	struct radix_tree_node *nodes;
+@@ -68,6 +69,7 @@ struct radix_tree_preload {
+ 	struct radix_tree_node *nodes[RADIX_TREE_PRELOAD_SIZE];
  };
  static DEFINE_PER_CPU(struct radix_tree_preload, radix_tree_preloads) = { 0, };
 +static DEFINE_LOCAL_IRQ_LOCK(radix_tree_preloads_lock);
  
  static inline void *ptr_to_indirect(void *ptr)
  {
-@@ -196,14 +197,14 @@ radix_tree_node_alloc(struct radix_tree_root *root)
+@@ -195,13 +197,13 @@ radix_tree_node_alloc(struct radix_tree_root *root)
  		 * succeed in getting a node here (and never reach
  		 * kmem_cache_alloc)
  		 */
 -		rtp = &get_cpu_var(radix_tree_preloads);
 +		rtp = &get_locked_var(radix_tree_preloads_lock, radix_tree_preloads);
  		if (rtp->nr) {
- 			ret = rtp->nodes;
- 			rtp->nodes = ret->private_data;
- 			ret->private_data = NULL;
+ 			ret = rtp->nodes[rtp->nr - 1];
+ 			rtp->nodes[rtp->nr - 1] = NULL;
  			rtp->nr--;
  		}
 -		put_cpu_var(radix_tree_preloads);
@@ -878,7 +832,7 @@ index f27e0bcb74f7..44bf36a396a9 100644
  		/*
  		 * Update the allocation stack trace as this is more useful
  		 * for debugging.
-@@ -243,7 +244,6 @@ radix_tree_node_free(struct radix_tree_node *node)
+@@ -241,7 +243,6 @@ radix_tree_node_free(struct radix_tree_node *node)
  	call_rcu(&node->rcu_head, radix_tree_node_rcu_free);
  }
  
@@ -886,14 +840,14 @@ index f27e0bcb74f7..44bf36a396a9 100644
  /*
   * Load up this CPU's radix_tree_node buffer with sufficient objects to
   * ensure that the addition of a single element in the tree cannot fail.  On
-@@ -259,14 +259,14 @@ static int __radix_tree_preload(gfp_t gfp_mask)
+@@ -257,14 +258,14 @@ static int __radix_tree_preload(gfp_t gfp_mask)
  	struct radix_tree_node *node;
  	int ret = -ENOMEM;
  
 -	preempt_disable();
 +	local_lock(radix_tree_preloads_lock);
  	rtp = this_cpu_ptr(&radix_tree_preloads);
- 	while (rtp->nr < RADIX_TREE_PRELOAD_SIZE) {
+ 	while (rtp->nr < ARRAY_SIZE(rtp->nodes)) {
 -		preempt_enable();
 +		local_unlock(radix_tree_preloads_lock);
  		node = kmem_cache_alloc(radix_tree_node_cachep, gfp_mask);
@@ -902,10 +856,10 @@ index f27e0bcb74f7..44bf36a396a9 100644
 -		preempt_disable();
 +		local_lock(radix_tree_preloads_lock);
  		rtp = this_cpu_ptr(&radix_tree_preloads);
- 		if (rtp->nr < RADIX_TREE_PRELOAD_SIZE) {
- 			node->private_data = rtp->nodes;
-@@ -308,11 +308,16 @@ int radix_tree_maybe_preload(gfp_t gfp_mask)
- 	if (gfpflags_allow_blocking(gfp_mask))
+ 		if (rtp->nr < ARRAY_SIZE(rtp->nodes))
+ 			rtp->nodes[rtp->nr++] = node;
+@@ -303,11 +304,16 @@ int radix_tree_maybe_preload(gfp_t gfp_mask)
+ 	if (gfp_mask & __GFP_WAIT)
  		return __radix_tree_preload(gfp_mask);
  	/* Preloading doesn't help anything with this gfp mask, skip it */
 -	preempt_disable();
@@ -924,14 +878,14 @@ index f27e0bcb74f7..44bf36a396a9 100644
  /*
   *	Return the maximum key which can be store into a
 diff --git a/localversion-rt b/localversion-rt
-index 40d81d8e61b6..b0e8dd7bd707 100644
+index 38c40b21a885..272158183778 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt62
-+-rt63
+--rt45
++-rt46
 diff --git a/mm/percpu.c b/mm/percpu.c
-index 1f376bce413c..3b9a49d4f33c 100644
+index b97617587620..3289dbd519a1 100644
 --- a/mm/percpu.c
 +++ b/mm/percpu.c
 @@ -1282,18 +1282,7 @@ void free_percpu(void __percpu *ptr)
