@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.10.105-rt120
-Date: Fri, 10 Mar 2017 10:26:08 -0500
-Message-ID: <20170310102608.23c73535@gandalf.local.home>
+Subject: [ANNOUNCE] 3.12.70-rt95
+Date: Fri, 10 Mar 2017 10:25:41 -0500
+Message-ID: <20170310102541.4551416f@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -12,41 +12,37 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>
 To: LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:54352 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S933427AbdCJP0U (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 10 Mar 2017 10:26:20 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.10.105-rt120 stable release.
+I'm pleased to announce the 3.12.70-rt95 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.10-rt
-  Head SHA1: 6e9f736c520a43451cddc0eaa4876c476f9bbd68
+  branch: v3.12-rt
+  Head SHA1: 191a416169bb15c5f85105c07ce4520094b33424
 
 
-Or to build 3.10.105-rt120 directly, the following patches should be applied:
+Or to build 3.12.70-rt95 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.105.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.70.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.105-rt120.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.70-rt95.patch.xz
 
 
 
-You can also build from 3.10.105-rt119 by applying the incremental patch:
+You can also build from 3.12.70-rt94 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.105-rt119-rt120.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.70-rt94-rt95.patch.xz
 
 
 
@@ -55,7 +51,7 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.10.105-rt119:
+Changes from v3.12.70-rt94:
 
 ---
 
@@ -71,7 +67,7 @@ Sebastian Andrzej Siewior (3):
       rt: Drop the removal of _GPL from rt_mutex_destroy()'s EXPORT_SYMBOL
 
 Steven Rostedt (VMware) (1):
-      Linux 3.10.105-rt120
+      Linux 3.12.70-rt95
 
 Thomas Gleixner (1):
       lockdep: Handle statically initialized PER_CPU locks proper
@@ -81,16 +77,16 @@ Thomas Gleixner (1):
  include/linux/module.h     |  6 ++++++
  include/linux/mutex_rt.h   |  5 +++++
  include/linux/percpu.h     |  1 +
- include/linux/radix-tree.h | 10 +---------
+ include/linux/radix-tree.h | 12 ++----------
  kernel/lockdep.c           | 32 +++++++++++++++++++++++---------
  kernel/module.c            | 36 ++++++++++++++++++++++++------------
- lib/radix-tree.c           | 21 +++++++++++++--------
+ lib/radix-tree.c           | 23 ++++++++++++++---------
  localversion-rt            |  2 +-
  mm/percpu.c                | 37 +++++++++++++++++++++++--------------
- 10 files changed, 105 insertions(+), 53 deletions(-)
+ 10 files changed, 107 insertions(+), 55 deletions(-)
 ---------------------------
 diff --git a/arch/x86/mm/pageattr.c b/arch/x86/mm/pageattr.c
-index aabdf762f592..ca212268cedd 100644
+index 0fcd960b382a..0fd8d4e4c601 100644
 --- a/arch/x86/mm/pageattr.c
 +++ b/arch/x86/mm/pageattr.c
 @@ -210,7 +210,15 @@ static void cpa_flush_array(unsigned long *start, int numpages, int cache,
@@ -110,10 +106,10 @@ index aabdf762f592..ca212268cedd 100644
  	BUG_ON(irqs_disabled());
  
 diff --git a/include/linux/module.h b/include/linux/module.h
-index 761dc2848ffa..54090c4931bc 100644
+index 842ef3877d5b..874504dcc825 100644
 --- a/include/linux/module.h
 +++ b/include/linux/module.h
-@@ -394,6 +394,7 @@ static inline int module_is_live(struct module *mod)
+@@ -397,6 +397,7 @@ static inline int module_is_live(struct module *mod)
  struct module *__module_text_address(unsigned long addr);
  struct module *__module_address(unsigned long addr);
  bool is_module_address(unsigned long addr);
@@ -121,7 +117,7 @@ index 761dc2848ffa..54090c4931bc 100644
  bool is_module_percpu_address(unsigned long addr);
  bool is_module_text_address(unsigned long addr);
  
-@@ -539,6 +540,11 @@ static inline bool is_module_percpu_address(unsigned long addr)
+@@ -542,6 +543,11 @@ static inline bool is_module_percpu_address(unsigned long addr)
  	return false;
  }
  
@@ -151,7 +147,7 @@ index c38a44b14da5..e0284edec655 100644
  #ifdef CONFIG_DEBUG_LOCK_ALLOC
  # define mutex_lock_nested(l, s)	_mutex_lock_nested(l, s)
 diff --git a/include/linux/percpu.h b/include/linux/percpu.h
-index 12b394f75d8e..aa2799e07b88 100644
+index f05adf59041c..3e22237bf5db 100644
 --- a/include/linux/percpu.h
 +++ b/include/linux/percpu.h
 @@ -176,6 +176,7 @@ extern int __init pcpu_page_first_chunk(size_t reserved_size,
@@ -163,23 +159,26 @@ index 12b394f75d8e..aa2799e07b88 100644
  
  #if !defined(CONFIG_SMP) || !defined(CONFIG_HAVE_SETUP_PER_CPU_AREA)
 diff --git a/include/linux/radix-tree.h b/include/linux/radix-tree.h
-index 70d26e461feb..f815eeeff7ac 100644
+index 148ae0fb87ad..c0df4bc0d297 100644
 --- a/include/linux/radix-tree.h
 +++ b/include/linux/radix-tree.h
-@@ -231,11 +231,8 @@ unsigned long radix_tree_next_hole(struct radix_tree_root *root,
- unsigned long radix_tree_prev_hole(struct radix_tree_root *root,
- 				unsigned long index, unsigned long max_scan);
- 
+@@ -227,13 +227,10 @@ radix_tree_gang_lookup(struct radix_tree_root *root, void **results,
+ unsigned int radix_tree_gang_lookup_slot(struct radix_tree_root *root,
+ 			void ***results, unsigned long *indices,
+ 			unsigned long first_index, unsigned int max_items);
 -#ifndef CONFIG_PREEMPT_RT_FULL
  int radix_tree_preload(gfp_t gfp_mask);
+ int radix_tree_maybe_preload(gfp_t gfp_mask);
 -#else
 -static inline int radix_tree_preload(gfp_t gm) { return 0; }
+-static inline int radix_tree_maybe_preload(gfp_t gfp_mask) { return 0; }
 -#endif
 +void radix_tree_preload_end(void);
- 
++
  void radix_tree_init(void);
  void *radix_tree_tag_set(struct radix_tree_root *root,
-@@ -259,11 +256,6 @@ unsigned long radix_tree_range_tag_if_tagged(struct radix_tree_root *root,
+ 			unsigned long index, unsigned int tag);
+@@ -256,11 +253,6 @@ unsigned long radix_tree_range_tag_if_tagged(struct radix_tree_root *root,
  int radix_tree_tagged(struct radix_tree_root *root, unsigned int tag);
  unsigned long radix_tree_locate_item(struct radix_tree_root *root, void *item);
  
@@ -192,7 +191,7 @@ index 70d26e461feb..f815eeeff7ac 100644
   * struct radix_tree_iter - radix tree iterator state
   *
 diff --git a/kernel/lockdep.c b/kernel/lockdep.c
-index 6cbe12c0fc34..092fe64a49f6 100644
+index b74f7a5dc812..dadf83fa87df 100644
 --- a/kernel/lockdep.c
 +++ b/kernel/lockdep.c
 @@ -650,6 +650,7 @@ look_up_lock_class(struct lockdep_map *lock, unsigned int subclass)
@@ -275,10 +274,10 @@ index 6cbe12c0fc34..092fe64a49f6 100644
  	}
  	/*
 diff --git a/kernel/module.c b/kernel/module.c
-index 2c87e521032b..8f762a1bb944 100644
+index a8c4d4163a41..64135e935223 100644
 --- a/kernel/module.c
 +++ b/kernel/module.c
-@@ -524,16 +524,7 @@ static void percpu_modcopy(struct module *mod,
+@@ -530,16 +530,7 @@ static void percpu_modcopy(struct module *mod,
  		memcpy(per_cpu_ptr(mod->percpu, cpu), from, size);
  }
  
@@ -296,7 +295,7 @@ index 2c87e521032b..8f762a1bb944 100644
  {
  	struct module *mod;
  	unsigned int cpu;
-@@ -547,9 +538,11 @@ bool is_module_percpu_address(unsigned long addr)
+@@ -553,9 +544,11 @@ bool is_module_percpu_address(unsigned long addr)
  			continue;
  		for_each_possible_cpu(cpu) {
  			void *start = per_cpu_ptr(mod->percpu, cpu);
@@ -310,7 +309,7 @@ index 2c87e521032b..8f762a1bb944 100644
  				preempt_enable();
  				return true;
  			}
-@@ -560,6 +553,20 @@ bool is_module_percpu_address(unsigned long addr)
+@@ -566,6 +559,20 @@ bool is_module_percpu_address(unsigned long addr)
  	return false;
  }
  
@@ -331,7 +330,7 @@ index 2c87e521032b..8f762a1bb944 100644
  #else /* ... !CONFIG_SMP */
  
  static inline void __percpu *mod_percpu(struct module *mod)
-@@ -589,6 +596,11 @@ bool is_module_percpu_address(unsigned long addr)
+@@ -597,6 +604,11 @@ bool is_module_percpu_address(unsigned long addr)
  	return false;
  }
  
@@ -344,19 +343,19 @@ index 2c87e521032b..8f762a1bb944 100644
  
  #define MODINFO_ATTR(field)	\
 diff --git a/lib/radix-tree.c b/lib/radix-tree.c
-index 3ed7e8ad92be..ed36bf860975 100644
+index 980e869e19a8..1236857dfa1f 100644
 --- a/lib/radix-tree.c
 +++ b/lib/radix-tree.c
-@@ -32,7 +32,7 @@
- #include <linux/string.h>
+@@ -33,7 +33,7 @@
  #include <linux/bitops.h>
  #include <linux/rcupdate.h>
+ #include <linux/hardirq.h>		/* in_interrupt() */
 -
 +#include <linux/locallock.h>
  
  #ifdef __KERNEL__
  #define RADIX_TREE_MAP_SHIFT	(CONFIG_BASE_SMALL ? 4 : 6)
-@@ -93,6 +93,7 @@ struct radix_tree_preload {
+@@ -94,6 +94,7 @@ struct radix_tree_preload {
  	struct radix_tree_node *nodes[RADIX_TREE_PRELOAD_SIZE];
  };
  static DEFINE_PER_CPU(struct radix_tree_preload, radix_tree_preloads) = { 0, };
@@ -364,7 +363,7 @@ index 3ed7e8ad92be..ed36bf860975 100644
  
  static inline void *ptr_to_indirect(void *ptr)
  {
-@@ -215,13 +216,13 @@ radix_tree_node_alloc(struct radix_tree_root *root)
+@@ -221,13 +222,13 @@ radix_tree_node_alloc(struct radix_tree_root *root)
  		 * succeed in getting a node here (and never reach
  		 * kmem_cache_alloc)
  		 */
@@ -380,7 +379,7 @@ index 3ed7e8ad92be..ed36bf860975 100644
  	}
  	if (ret == NULL)
  		ret = kmem_cache_alloc(radix_tree_node_cachep, gfp_mask);
-@@ -256,7 +257,6 @@ radix_tree_node_free(struct radix_tree_node *node)
+@@ -262,7 +263,6 @@ radix_tree_node_free(struct radix_tree_node *node)
  	call_rcu(&node->rcu_head, radix_tree_node_rcu_free);
  }
  
@@ -388,7 +387,7 @@ index 3ed7e8ad92be..ed36bf860975 100644
  /*
   * Load up this CPU's radix_tree_node buffer with sufficient objects to
   * ensure that the addition of a single element in the tree cannot fail.  On
-@@ -272,14 +272,14 @@ int radix_tree_preload(gfp_t gfp_mask)
+@@ -278,14 +278,14 @@ static int __radix_tree_preload(gfp_t gfp_mask)
  	struct radix_tree_node *node;
  	int ret = -ENOMEM;
  
@@ -406,10 +405,15 @@ index 3ed7e8ad92be..ed36bf860975 100644
  		rtp = &__get_cpu_var(radix_tree_preloads);
  		if (rtp->nr < ARRAY_SIZE(rtp->nodes))
  			rtp->nodes[rtp->nr++] = node;
-@@ -291,7 +291,12 @@ out:
- 	return ret;
+@@ -324,11 +324,16 @@ int radix_tree_maybe_preload(gfp_t gfp_mask)
+ 	if (gfp_mask & __GFP_WAIT)
+ 		return __radix_tree_preload(gfp_mask);
+ 	/* Preloading doesn't help anything with this gfp mask, skip it */
+-	preempt_disable();
++	local_lock(radix_tree_preloads_lock);
+ 	return 0;
  }
- EXPORT_SYMBOL(radix_tree_preload);
+ EXPORT_SYMBOL(radix_tree_maybe_preload);
 -#endif
 +
 +void radix_tree_preload_end(void)
@@ -421,12 +425,12 @@ index 3ed7e8ad92be..ed36bf860975 100644
  /*
   *	Return the maximum key which can be store into a
 diff --git a/localversion-rt b/localversion-rt
-index ba6e8821d159..fff72aad59ab 100644
+index 8d02a9bac500..5a28f0a65d16 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt119
-+-rt120
+--rt94
++-rt95
 diff --git a/mm/percpu.c b/mm/percpu.c
 index 25e2ea52db82..b96d41d20b1e 100644
 --- a/mm/percpu.c
