@@ -1,47 +1,31 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Changing checksums of RT patches
-Date: Fri, 10 Mar 2017 22:21:26 -0500
-Message-ID: <20170310222126.30fbeb3d@grimm.local.home>
-References: <12e5d51b-8589-d9ba-90cd-d00688e8602d@gmx.de>
-        <20170210185433.h35nynmmeu5toml6@linutronix.de>
-        <812bef1a-a86e-15b6-b77c-6455832c8790@gmx.de>
-        <548e1359-5539-4a7c-e9ca-44817ffa69b6@gmx.de>
-        <20170214091829.12273157@gandalf.local.home>
-        <ea5ff7b5-77d2-754d-b7c2-6c9f9c3d7b90@gmx.de>
-        <20170214135738.366f21e5@gandalf.local.home>
-        <alpine.DEB.2.20.1702281856310.4732@nanos>
-        <067fe46c-dd9f-6bb4-36d5-4ceccfee2f88@gmx.de>
-        <20170310181947.3f9cde20@gandalf.local.home>
-        <20170311022751.GE32162@jcartwri.amer.corp.natinst.com>
+From: Mike Galbraith <efault@gmx.de>
+Subject: Re: oops with 4.9.13-rt12 under mild load (and no rt-tasks active)
+Date: Sat, 11 Mar 2017 06:51:14 +0100
+Message-ID: <1489211474.19578.14.camel@gmx.de>
+References: <20170310194717.GE32625@osadl.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Cc: Dominic Sacr? <dominic.sacre@gmx.de>,
-        Thomas Gleixner <tglx@linutronix.de>,
+Cc: Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        <linux-rt-users@vger.kernel.org>
-To: Julia Cartwright <julia@ni.com>
+        linux-kernel@vger.kernel.org
+To: Nicholas Mc Guire <der.herr@hofr.at>,
+        linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0235.hostedemail.com ([216.40.44.235]:57753 "EHLO
-        smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1755554AbdCKDVb (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 10 Mar 2017 22:21:31 -0500
-In-Reply-To: <20170311022751.GE32162@jcartwri.amer.corp.natinst.com>
+Received: from mout.gmx.net ([212.227.17.21]:50150 "EHLO mout.gmx.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1750960AbdCKFvZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 11 Mar 2017 00:51:25 -0500
+In-Reply-To: <20170310194717.GE32625@osadl.at>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 10 Mar 2017 20:27:51 -0600
-Julia Cartwright <julia@ni.com> wrote:
+On Fri, 2017-03-10 at 19:47 +0000, Nicholas Mc Guire wrote:
 
-> I'd still like to understand why kernel.org decides to re-compress when
-> the simply moving patches around...
+>  Has anyone seen 4.9.13-rt12 oopses related to ext4 or vfs in general ?
 
-It doesn't but I'm guessing that each upload has a different
-compression result. The change happens when we remove the one from the
-older directory and replace it with the one from the top directory. The
-moved files still have the same checksum, but it's not the same as what
-it replaced. Then it's reported that the one that got replaced had its
-checksum changed.
+FWIW, here it's seen quite a bit of hefty use on boxen large and small
+with no trouble.  That said, @stable has a large pile queued for 4.9, 8
+for ext4, some of which don't sound all that benign.
 
--- Steve
+	-Mike
