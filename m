@@ -1,55 +1,82 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Changing checksums of RT patches
-Date: Sat, 11 Mar 2017 08:43:19 -0500
-Message-ID: <20170311084319.37f294b2@gandalf.local.home>
-References: <12e5d51b-8589-d9ba-90cd-d00688e8602d@gmx.de>
-        <20170210185433.h35nynmmeu5toml6@linutronix.de>
-        <812bef1a-a86e-15b6-b77c-6455832c8790@gmx.de>
-        <548e1359-5539-4a7c-e9ca-44817ffa69b6@gmx.de>
-        <20170214091829.12273157@gandalf.local.home>
-        <ea5ff7b5-77d2-754d-b7c2-6c9f9c3d7b90@gmx.de>
-        <20170214135738.366f21e5@gandalf.local.home>
-        <alpine.DEB.2.20.1702281856310.4732@nanos>
-        <067fe46c-dd9f-6bb4-36d5-4ceccfee2f88@gmx.de>
-        <20170310181947.3f9cde20@gandalf.local.home>
-        <alpine.DEB.2.20.1703111044300.4213@nanos>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Dominic =?UTF-8?B?U2FjcsOp?= <dominic.sacre@gmx.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users@vger.kernel.org, Julia Cartwright <julia@ni.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+From: Vedang Patel <vedang.patel@intel.com>
+Subject: [PATCH] cyclictest: make clock_nanosleep as default and add option for POSIX timers.
+Date: Mon, 13 Mar 2017 10:58:57 -0700
+Message-ID: <1489427937-12583-1-git-send-email-vedang.patel@intel.com>
+Cc: linux-rt-users@vger.kernel.org,
+        Vedang Patel <vedang.patel@intel.com>
+To: williams@redhat.com, jkacur@redhar.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:38074 "EHLO mail.kernel.org"
+Received: from mga09.intel.com ([134.134.136.24]:64210 "EHLO mga09.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1755178AbdCKNnY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 11 Mar 2017 08:43:24 -0500
-In-Reply-To: <alpine.DEB.2.20.1703111044300.4213@nanos>
+        id S1751568AbdCMR7H (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 13 Mar 2017 13:59:07 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, 11 Mar 2017 10:45:32 +0100 (CET)
-Thomas Gleixner <tglx@linutronix.de> wrote:
+it is recommended that clock_nanosleep should be used for real-time
+wherever available. So, make sure that cyclictest runs clock_nanosleep
+by default. Added an option to run POSIX timers. The '-n' option is
+redundant now. I did not remove it so that it does not break existing
+scripts.
 
-> On Fri, 10 Mar 2017, Steven Rostedt wrote:
-> > Just an FYI, especially if you are using my older scripts (I haven't
-> > updated the ones I posted). I was asked when I do my upload of a new
-> > version to copy to both the main and older directory. But my scripts
-> > still moved the main to the older one when a new release went out. This
-> > caused the checksums of the created .gz to change in the older
-> > directory.
-> > 
-> > What I do now is to still upload to both main and older, but when I
-> > have a new release, I simply delete the main one, as the older one
-> > already exists.  
-> 
-> That double upload does not make sense. Upload it once to the older folder
-> and make a link. kup supports that.
-> 
+Signed-off-by: Vedang Patel <vedang.patel@intel.com>
+---
+ src/cyclictest/cyclictest.c | 12 +++++++++---
+ 1 file changed, 9 insertions(+), 3 deletions(-)
 
-OK, I'll have to update my scripts to do this.
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 00e5f3d59a5b..a185a8a99065 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -1360,7 +1360,8 @@ static void display_help(int error)
+ 	       "                           format: n:c:v n=tasknum c=count v=value in us\n"
+ 	       "-w       --wakeup          task wakeup tracing (used with -b)\n"
+ 	       "-W       --wakeuprt        rt task wakeup tracing (used with -b)\n"
+-	       "	 --dbg_cyclictest  print info useful for debugging cyclictest\n",
++	       "	 --dbg_cyclictest  print info useful for debugging cyclictest\n"
++	       "-x	 --posix_timers    use POSIX timers\n",
+ 	       tracers
+ 		);
+ 	if (error)
+@@ -1368,7 +1369,7 @@ static void display_help(int error)
+ 	exit(EXIT_SUCCESS);
+ }
+ 
+-static int use_nanosleep;
++static int use_nanosleep = MODE_CLOCK_NANOSLEEP; /* use clock_nanosleep by default. */
+ static int timermode = TIMER_ABSTIME;
+ static int use_system;
+ static int priority;
+@@ -1489,6 +1490,7 @@ enum option_values {
+ 	OPT_TRIGGER_NODES, OPT_UNBUFFERED, OPT_NUMA, OPT_VERBOSE, OPT_WAKEUP,
+ 	OPT_WAKEUPRT, OPT_DBGCYCLIC, OPT_POLICY, OPT_HELP, OPT_NUMOPTS,
+ 	OPT_ALIGNED, OPT_SECALIGNED, OPT_LAPTOP, OPT_SMI, OPT_TRACEMARK,
++	OPT_POSIX_TIMERS,
+ };
+ 
+ /* Process commandline options */
+@@ -1553,9 +1555,10 @@ static void process_options (int argc, char *argv[], int max_cpus)
+ 			{"dbg_cyclictest",   no_argument,       NULL, OPT_DBGCYCLIC },
+ 			{"policy",           required_argument, NULL, OPT_POLICY },
+ 			{"help",             no_argument,       NULL, OPT_HELP },
++			{"posix_timers",     no_argument,	NULL, OPT_POSIX_TIMERS },
+ 			{NULL, 0, NULL, 0}
+ 		};
+-		int c = getopt_long(argc, argv, "a::A::b:Bc:Cd:D:Efh:H:i:Il:MnNo:O:p:PmqrRsSt::uUvD:wWT:",
++		int c = getopt_long(argc, argv, "a::A::b:Bc:Cd:D:Efh:H:i:Il:MnNo:O:p:PmqrRsSt::uUvD:wWT:x",
+ 				    long_options, &option_index);
+ 		if (c == -1)
+ 			break;
+@@ -1756,6 +1759,9 @@ static void process_options (int argc, char *argv[], int max_cpus)
+ 		case 'W':
+ 		case OPT_WAKEUPRT:
+ 			tracetype = WAKEUPRT; break;
++		case 'x':
++		case OPT_POSIX_TIMERS:
++			use_nanosleep = MODE_CYCLIC; break;
+ 		case '?':
+ 		case OPT_HELP:
+ 			display_help(0); break;
+-- 
+2.7.3
 
-Thanks,
-
--- Steve
