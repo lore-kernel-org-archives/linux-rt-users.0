@@ -1,137 +1,102 @@
-From: John Kacur <jkacur@redhat.com>
+From: "Patel, Vedang" <vedang.patel@intel.com>
 Subject: Re: [PATCH] cyclictest: make clock_nanosleep as default and add
  option for POSIX timers.
-Date: Tue, 14 Mar 2017 16:49:39 +0100 (CET)
-Message-ID: <alpine.LFD.2.20.1703141646001.10659@riemann.fritz.box>
-References: <1489427937-12583-1-git-send-email-vedang.patel@intel.com> <1489428033.3793.1.camel@intel.com>
+Date: Tue, 14 Mar 2017 18:42:10 +0000
+Message-ID: <1489516930.3494.1.camel@intel.com>
+References: <1489427937-12583-1-git-send-email-vedang.patel@intel.com>
+         <1489428033.3793.1.camel@intel.com>
+         <alpine.LFD.2.20.1703141646001.10659@riemann.fritz.box>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; BOUNDARY="8336693-978772170-1489506587=:10659"
-Cc: "williams@redhat.com" <williams@redhat.com>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: "Patel, Vedang" <vedang.patel@intel.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        "williams@redhat.com" <williams@redhat.com>
+To: "jkacur@redhat.com" <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f65.google.com ([74.125.82.65]:35515 "EHLO
-        mail-wm0-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1752373AbdCNPtu (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 14 Mar 2017 11:49:50 -0400
-Received: by mail-wm0-f65.google.com with SMTP id z63so459302wmg.2
-        for <linux-rt-users@vger.kernel.org>; Tue, 14 Mar 2017 08:49:49 -0700 (PDT)
-In-Reply-To: <1489428033.3793.1.camel@intel.com>
+Received: from mga09.intel.com ([134.134.136.24]:29854 "EHLO mga09.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751152AbdCNSmY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 14 Mar 2017 14:42:24 -0400
+In-Reply-To: <alpine.LFD.2.20.1703141646001.10659@riemann.fritz.box>
+Content-Language: en-US
+Content-ID: <4B4A7A9A8C4C3B459DBBFA5E4B412A02@intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
-
---8336693-978772170-1489506587=:10659
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-
-
-
-On Mon, 13 Mar 2017, Patel, Vedang wrote:
-
->  Fixing a typo in John's email
-> 
-> -Vedang
-> On Mon, 2017-03-13 at 10:58 -0700, Vedang Patel wrote:
-> > it is recommended that clock_nanosleep should be used for real-time
-> > wherever available. So, make sure that cyclictest runs
-> > clock_nanosleep
-> > by default. Added an option to run POSIX timers. The '-n' option is
-> > redundant now. I did not remove it so that it does not break existing
-> > scripts.
-> > 
-> > Signed-off-by: Vedang Patel <vedang.patel@intel.com>
-> > ---
-> >  src/cyclictest/cyclictest.c | 12 +++++++++---
-> >  1 file changed, 9 insertions(+), 3 deletions(-)
-> > 
-> > diff --git a/src/cyclictest/cyclictest.c
-> > b/src/cyclictest/cyclictest.c
-> > index 00e5f3d59a5b..a185a8a99065 100644
-> > --- a/src/cyclictest/cyclictest.c
-> > +++ b/src/cyclictest/cyclictest.c
-> > @@ -1360,7 +1360,8 @@ static void display_help(int error)
-> >  	       "                           format: n:c:v n=tasknum
-> > c=count v=value in us\n"
-> >  	       "-w       --wakeup          task wakeup tracing (used
-> > with -b)\n"
-> >  	       "-W       --wakeuprt        rt task wakeup tracing
-> > (used with -b)\n"
-> > -	       "	 --dbg_cyclictest  print info useful for
-> > debugging cyclictest\n",
-> > +	       "	 --dbg_cyclictest  print info useful for
-> > debugging cyclictest\n"
-> > +	       "-x	 --posix_timers    use POSIX timers\n",
-> >  	       tracers
-> >  		);
-> >  	if (error)
-> > @@ -1368,7 +1369,7 @@ static void display_help(int error)
-> >  	exit(EXIT_SUCCESS);
-> >  }
-> >  
-> > -static int use_nanosleep;
-> > +static int use_nanosleep = MODE_CLOCK_NANOSLEEP; /* use
-> > clock_nanosleep by default. */
-> >  static int timermode = TIMER_ABSTIME;
-> >  static int use_system;
-> >  static int priority;
-> > @@ -1489,6 +1490,7 @@ enum option_values {
-> >  	OPT_TRIGGER_NODES, OPT_UNBUFFERED, OPT_NUMA, OPT_VERBOSE,
-> > OPT_WAKEUP,
-> >  	OPT_WAKEUPRT, OPT_DBGCYCLIC, OPT_POLICY, OPT_HELP,
-> > OPT_NUMOPTS,
-> >  	OPT_ALIGNED, OPT_SECALIGNED, OPT_LAPTOP, OPT_SMI,
-> > OPT_TRACEMARK,
-> > +	OPT_POSIX_TIMERS,
-> >  };
-> >  
-> >  /* Process commandline options */
-> > @@ -1553,9 +1555,10 @@ static void process_options (int argc, char
-> > *argv[], int max_cpus)
-> >  			{"dbg_cyclictest",   no_argument,       NULL
-> > , OPT_DBGCYCLIC },
-> >  			{"policy",           required_argument,
-> > NULL, OPT_POLICY },
-> >  			{"help",             no_argument,       NULL
-> > , OPT_HELP },
-> > +			{"posix_timers",     no_argument,	NUL
-> > L, OPT_POSIX_TIMERS },
-> >  			{NULL, 0, NULL, 0}
-> >  		};
-> > -		int c = getopt_long(argc, argv,
-> > "a::A::b:Bc:Cd:D:Efh:H:i:Il:MnNo:O:p:PmqrRsSt::uUvD:wWT:",
-> > +		int c = getopt_long(argc, argv,
-> > "a::A::b:Bc:Cd:D:Efh:H:i:Il:MnNo:O:p:PmqrRsSt::uUvD:wWT:x",
-> >  				    long_options, &option_index);
-> >  		if (c == -1)
-> >  			break;
-> > @@ -1756,6 +1759,9 @@ static void process_options (int argc, char
-> > *argv[], int max_cpus)
-> >  		case 'W':
-> >  		case OPT_WAKEUPRT:
-> >  			tracetype = WAKEUPRT; break;
-> > +		case 'x':
-> > +		case OPT_POSIX_TIMERS:
-> > +			use_nanosleep = MODE_CYCLIC; break;
-> >  		case '?':
-> >  		case OPT_HELP:
-> >  			display_help(0); break;
-
-
-We could apply this to the "unstable" developer version, in which case we
-are not concerned with maintaining compatibility with scripts etc, so
-you can go ahead and remove -n too.
-
-Use either one of the following branches
-unstable/devel/v1.1.1
-unstable/devel/v1.1.1-devel
-
-(yeah, I need to clean that up in the near future)
-
-Thanks
-
-John
---8336693-978772170-1489506587=:10659--
+T24gVHVlLCAyMDE3LTAzLTE0IGF0IDE2OjQ5ICswMTAwLCBKb2huIEthY3VyIHdyb3RlOg0KPiAN
+Cj4gT24gTW9uLCAxMyBNYXIgMjAxNywgUGF0ZWwsIFZlZGFuZyB3cm90ZToNCj4gDQo+ID4gDQo+
+ID4gwqBGaXhpbmcgYSB0eXBvIGluIEpvaG4ncyBlbWFpbA0KPiA+IA0KPiA+IC1WZWRhbmcNCj4g
+PiBPbiBNb24sIDIwMTctMDMtMTMgYXQgMTA6NTggLTA3MDAsIFZlZGFuZyBQYXRlbCB3cm90ZToN
+Cj4gPiA+IA0KPiA+ID4gaXQgaXMgcmVjb21tZW5kZWQgdGhhdCBjbG9ja19uYW5vc2xlZXAgc2hv
+dWxkIGJlIHVzZWQgZm9yIHJlYWwtDQo+ID4gPiB0aW1lDQo+ID4gPiB3aGVyZXZlciBhdmFpbGFi
+bGUuIFNvLCBtYWtlIHN1cmUgdGhhdCBjeWNsaWN0ZXN0IHJ1bnMNCj4gPiA+IGNsb2NrX25hbm9z
+bGVlcA0KPiA+ID4gYnkgZGVmYXVsdC4gQWRkZWQgYW4gb3B0aW9uIHRvIHJ1biBQT1NJWCB0aW1l
+cnMuIFRoZSAnLW4nIG9wdGlvbg0KPiA+ID4gaXMNCj4gPiA+IHJlZHVuZGFudCBub3cuIEkgZGlk
+IG5vdCByZW1vdmUgaXQgc28gdGhhdCBpdCBkb2VzIG5vdCBicmVhaw0KPiA+ID4gZXhpc3RpbmcN
+Cj4gPiA+IHNjcmlwdHMuDQo+ID4gPiANCj4gPiA+IFNpZ25lZC1vZmYtYnk6IFZlZGFuZyBQYXRl
+bCA8dmVkYW5nLnBhdGVsQGludGVsLmNvbT4NCj4gPiA+IC0tLQ0KPiA+ID4gwqBzcmMvY3ljbGlj
+dGVzdC9jeWNsaWN0ZXN0LmMgfCAxMiArKysrKysrKystLS0NCj4gPiA+IMKgMSBmaWxlIGNoYW5n
+ZWQsIDkgaW5zZXJ0aW9ucygrKSwgMyBkZWxldGlvbnMoLSkNCj4gPiA+IA0KPiA+ID4gZGlmZiAt
+LWdpdCBhL3NyYy9jeWNsaWN0ZXN0L2N5Y2xpY3Rlc3QuYw0KPiA+ID4gYi9zcmMvY3ljbGljdGVz
+dC9jeWNsaWN0ZXN0LmMNCj4gPiA+IGluZGV4IDAwZTVmM2Q1OWE1Yi4uYTE4NWE4YTk5MDY1IDEw
+MDY0NA0KPiA+ID4gLS0tIGEvc3JjL2N5Y2xpY3Rlc3QvY3ljbGljdGVzdC5jDQo+ID4gPiArKysg
+Yi9zcmMvY3ljbGljdGVzdC9jeWNsaWN0ZXN0LmMNCj4gPiA+IEBAIC0xMzYwLDcgKzEzNjAsOCBA
+QCBzdGF0aWMgdm9pZCBkaXNwbGF5X2hlbHAoaW50IGVycm9yKQ0KPiA+ID4gwqAJwqDCoMKgwqDC
+oMKgwqAiwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgZm9ybWF0OiBuOmM6dg0KPiA+ID4gbj10YXNrbnVtDQo+ID4gPiBjPWNvdW50IHY9dmFsdWUg
+aW4gdXNcbiINCj4gPiA+IMKgCcKgwqDCoMKgwqDCoMKgIi13wqDCoMKgwqDCoMKgwqAtLXdha2V1
+cMKgwqDCoMKgwqDCoMKgwqDCoMKgdGFzayB3YWtldXAgdHJhY2luZw0KPiA+ID4gKHVzZWQNCj4g
+PiA+IHdpdGggLWIpXG4iDQo+ID4gPiDCoAnCoMKgwqDCoMKgwqDCoCItV8KgwqDCoMKgwqDCoMKg
+LS13YWtldXBydMKgwqDCoMKgwqDCoMKgwqBydCB0YXNrIHdha2V1cA0KPiA+ID4gdHJhY2luZw0K
+PiA+ID4gKHVzZWQgd2l0aCAtYilcbiINCj4gPiA+IC0JwqDCoMKgwqDCoMKgwqAiCcKgLS1kYmdf
+Y3ljbGljdGVzdMKgwqBwcmludCBpbmZvIHVzZWZ1bCBmb3INCj4gPiA+IGRlYnVnZ2luZyBjeWNs
+aWN0ZXN0XG4iLA0KPiA+ID4gKwnCoMKgwqDCoMKgwqDCoCIJwqAtLWRiZ19jeWNsaWN0ZXN0wqDC
+oHByaW50IGluZm8gdXNlZnVsIGZvcg0KPiA+ID4gZGVidWdnaW5nIGN5Y2xpY3Rlc3RcbiINCj4g
+PiA+ICsJwqDCoMKgwqDCoMKgwqAiLXgJwqAtLXBvc2l4X3RpbWVyc8KgwqDCoMKgdXNlIFBPU0lY
+DQo+ID4gPiB0aW1lcnNcbiIsDQo+ID4gPiDCoAnCoMKgwqDCoMKgwqDCoHRyYWNlcnMNCj4gPiA+
+IMKgCQkpOw0KPiA+ID4gwqAJaWYgKGVycm9yKQ0KPiA+ID4gQEAgLTEzNjgsNyArMTM2OSw3IEBA
+IHN0YXRpYyB2b2lkIGRpc3BsYXlfaGVscChpbnQgZXJyb3IpDQo+ID4gPiDCoAlleGl0KEVYSVRf
+U1VDQ0VTUyk7DQo+ID4gPiDCoH0NCj4gPiA+IMKgDQo+ID4gPiAtc3RhdGljIGludCB1c2VfbmFu
+b3NsZWVwOw0KPiA+ID4gK3N0YXRpYyBpbnQgdXNlX25hbm9zbGVlcCA9IE1PREVfQ0xPQ0tfTkFO
+T1NMRUVQOyAvKiB1c2UNCj4gPiA+IGNsb2NrX25hbm9zbGVlcCBieSBkZWZhdWx0LiAqLw0KPiA+
+ID4gwqBzdGF0aWMgaW50IHRpbWVybW9kZSA9IFRJTUVSX0FCU1RJTUU7DQo+ID4gPiDCoHN0YXRp
+YyBpbnQgdXNlX3N5c3RlbTsNCj4gPiA+IMKgc3RhdGljIGludCBwcmlvcml0eTsNCj4gPiA+IEBA
+IC0xNDg5LDYgKzE0OTAsNyBAQCBlbnVtIG9wdGlvbl92YWx1ZXMgew0KPiA+ID4gwqAJT1BUX1RS
+SUdHRVJfTk9ERVMsIE9QVF9VTkJVRkZFUkVELCBPUFRfTlVNQSwNCj4gPiA+IE9QVF9WRVJCT1NF
+LA0KPiA+ID4gT1BUX1dBS0VVUCwNCj4gPiA+IMKgCU9QVF9XQUtFVVBSVCwgT1BUX0RCR0NZQ0xJ
+QywgT1BUX1BPTElDWSwgT1BUX0hFTFAsDQo+ID4gPiBPUFRfTlVNT1BUUywNCj4gPiA+IMKgCU9Q
+VF9BTElHTkVELCBPUFRfU0VDQUxJR05FRCwgT1BUX0xBUFRPUCwgT1BUX1NNSSwNCj4gPiA+IE9Q
+VF9UUkFDRU1BUkssDQo+ID4gPiArCU9QVF9QT1NJWF9USU1FUlMsDQo+ID4gPiDCoH07DQo+ID4g
+PiDCoA0KPiA+ID4gwqAvKiBQcm9jZXNzIGNvbW1hbmRsaW5lIG9wdGlvbnMgKi8NCj4gPiA+IEBA
+IC0xNTUzLDkgKzE1NTUsMTAgQEAgc3RhdGljIHZvaWQgcHJvY2Vzc19vcHRpb25zIChpbnQgYXJn
+YywNCj4gPiA+IGNoYXINCj4gPiA+ICphcmd2W10sIGludCBtYXhfY3B1cykNCj4gPiA+IMKgCQkJ
+eyJkYmdfY3ljbGljdGVzdCIswqDCoMKgbm9fYXJndW1lbnQswqDCoMKgwqDCoMKgwqANCj4gPiA+
+IE5VTEwNCj4gPiA+ICwgT1BUX0RCR0NZQ0xJQyB9LA0KPiA+ID4gwqAJCQl7InBvbGljeSIswqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoHJlcXVpcmVkX2FyZ3VtZW50LA0KPiA+ID4gTlVMTCwgT1BUX1BP
+TElDWSB9LA0KPiA+ID4gwqAJCQl7ImhlbHAiLMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgbm9f
+YXJndW1lbnQswqDCoMKgwqDCoMKgwqANCj4gPiA+IE5VTEwNCj4gPiA+ICwgT1BUX0hFTFAgfSwN
+Cj4gPiA+ICsJCQl7InBvc2l4X3RpbWVycyIswqDCoMKgwqDCoG5vX2FyZ3VtZW50LAkNCj4gPiA+
+IE5VTA0KPiA+ID4gTCwgT1BUX1BPU0lYX1RJTUVSUyB9LA0KPiA+ID4gwqAJCQl7TlVMTCwgMCwg
+TlVMTCwgMH0NCj4gPiA+IMKgCQl9Ow0KPiA+ID4gLQkJaW50IGMgPSBnZXRvcHRfbG9uZyhhcmdj
+LCBhcmd2LA0KPiA+ID4gImE6OkE6OmI6QmM6Q2Q6RDpFZmg6SDppOklsOk1uTm86TzpwOlBtcXJS
+c1N0Ojp1VXZEOndXVDoiLA0KPiA+ID4gKwkJaW50IGMgPSBnZXRvcHRfbG9uZyhhcmdjLCBhcmd2
+LA0KPiA+ID4gImE6OkE6OmI6QmM6Q2Q6RDpFZmg6SDppOklsOk1uTm86TzpwOlBtcXJSc1N0Ojp1
+VXZEOndXVDp4IiwNCj4gPiA+IMKgCQkJCcKgwqDCoMKgbG9uZ19vcHRpb25zLA0KPiA+ID4gJm9w
+dGlvbl9pbmRleCk7DQo+ID4gPiDCoAkJaWYgKGMgPT0gLTEpDQo+ID4gPiDCoAkJCWJyZWFrOw0K
+PiA+ID4gQEAgLTE3NTYsNiArMTc1OSw5IEBAIHN0YXRpYyB2b2lkIHByb2Nlc3Nfb3B0aW9ucyAo
+aW50IGFyZ2MsIGNoYXINCj4gPiA+ICphcmd2W10sIGludCBtYXhfY3B1cykNCj4gPiA+IMKgCQlj
+YXNlICdXJzoNCj4gPiA+IMKgCQljYXNlIE9QVF9XQUtFVVBSVDoNCj4gPiA+IMKgCQkJdHJhY2V0
+eXBlID0gV0FLRVVQUlQ7IGJyZWFrOw0KPiA+ID4gKwkJY2FzZSAneCc6DQo+ID4gPiArCQljYXNl
+IE9QVF9QT1NJWF9USU1FUlM6DQo+ID4gPiArCQkJdXNlX25hbm9zbGVlcCA9IE1PREVfQ1lDTElD
+OyBicmVhazsNCj4gPiA+IMKgCQljYXNlICc/JzoNCj4gPiA+IMKgCQljYXNlIE9QVF9IRUxQOg0K
+PiA+ID4gwqAJCQlkaXNwbGF5X2hlbHAoMCk7IGJyZWFrOw0KPiANCj4gV2UgY291bGQgYXBwbHkg
+dGhpcyB0byB0aGUgInVuc3RhYmxlIiBkZXZlbG9wZXIgdmVyc2lvbiwgaW4gd2hpY2gNCj4gY2Fz
+ZSB3ZQ0KPiBhcmUgbm90IGNvbmNlcm5lZCB3aXRoIG1haW50YWluaW5nIGNvbXBhdGliaWxpdHkg
+d2l0aCBzY3JpcHRzIGV0Yywgc28NCj4geW91IGNhbiBnbyBhaGVhZCBhbmQgcmVtb3ZlIC1uIHRv
+by4NCj4gDQo+IFVzZSBlaXRoZXIgb25lIG9mIHRoZSBmb2xsb3dpbmcgYnJhbmNoZXMNCj4gdW5z
+dGFibGUvZGV2ZWwvdjEuMS4xDQo+IHVuc3RhYmxlL2RldmVsL3YxLjEuMS1kZXZlbA0KPiANClRo
+YW5rcyBmb3IgdGhlIHF1aWNrIHJlc3BvbnNlLCBKb2huLiBTZW5kaW5nIGFub3RoZXIgcGF0Y2gg
+YWZ0ZXINCnJlbW92aW5nICctbicgb3B0aW9uIGFuZCByZWJhc2luZyBvbiB0b3Agb2YgdjEuMS4x
+LWRldmVsLg0KDQpUaGFua3MsDQpWZWRhbmcgUGF0ZWwNClNvZnR3YXJlIEVuZ2luZWVyDQpJbnRl
+bCBDb3Jwb3JhdGlvbg0KPiAoeWVhaCwgSSBuZWVkIHRvIGNsZWFuIHRoYXQgdXAgaW4gdGhlIG5l
+YXIgZnV0dXJlKQ0KPiANCj4gVGhhbmtzDQo+IA0KPiBKb2hu
