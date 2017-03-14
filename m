@@ -1,129 +1,137 @@
-From: <fbt@fbt.cz>
-Subject: 55132 linux-rt-users
-Date: Mon, 13 Mar 2017 22:46:58 -0000
-Message-ID: <148944521898.30068.974423838873374217@spdop.ru>
-Reply-To: <fbt@fbt.cz>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [PATCH] cyclictest: make clock_nanosleep as default and add
+ option for POSIX timers.
+Date: Tue, 14 Mar 2017 16:49:39 +0100 (CET)
+Message-ID: <alpine.LFD.2.20.1703141646001.10659@riemann.fritz.box>
+References: <1489427937-12583-1-git-send-email-vedang.patel@intel.com> <1489428033.3793.1.camel@intel.com>
 Mime-Version: 1.0
-Content-Type: application/zip; name="3.zip"
-Content-Transfer-Encoding: base64
-To: "linux-rt-users" <linux-rt-users@vger.kernel.org>
+Content-Type: multipart/mixed; BOUNDARY="8336693-978772170-1489506587=:10659"
+Cc: "williams@redhat.com" <williams@redhat.com>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: "Patel, Vedang" <vedang.patel@intel.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ppp95-165-92-215.pppoe.spdop.ru ([95.165.92.215]:52804 "HELO
-        spdop.ru" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with SMTP
-        id S1752444AbdCMWrC (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 13 Mar 2017 18:47:02 -0400
-Content-Disposition: attachment
+Received: from mail-wm0-f65.google.com ([74.125.82.65]:35515 "EHLO
+        mail-wm0-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752373AbdCNPtu (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 14 Mar 2017 11:49:50 -0400
+Received: by mail-wm0-f65.google.com with SMTP id z63so459302wmg.2
+        for <linux-rt-users@vger.kernel.org>; Tue, 14 Mar 2017 08:49:49 -0700 (PDT)
+In-Reply-To: <1489428033.3793.1.camel@intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-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
-AFBLBQYAAAAAAQABAFIAAAAtGAAAAAA=
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+
+--8336693-978772170-1489506587=:10659
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+
+
+
+On Mon, 13 Mar 2017, Patel, Vedang wrote:
+
+>  Fixing a typo in John's email
+> 
+> -Vedang
+> On Mon, 2017-03-13 at 10:58 -0700, Vedang Patel wrote:
+> > it is recommended that clock_nanosleep should be used for real-time
+> > wherever available. So, make sure that cyclictest runs
+> > clock_nanosleep
+> > by default. Added an option to run POSIX timers. The '-n' option is
+> > redundant now. I did not remove it so that it does not break existing
+> > scripts.
+> > 
+> > Signed-off-by: Vedang Patel <vedang.patel@intel.com>
+> > ---
+> >  src/cyclictest/cyclictest.c | 12 +++++++++---
+> >  1 file changed, 9 insertions(+), 3 deletions(-)
+> > 
+> > diff --git a/src/cyclictest/cyclictest.c
+> > b/src/cyclictest/cyclictest.c
+> > index 00e5f3d59a5b..a185a8a99065 100644
+> > --- a/src/cyclictest/cyclictest.c
+> > +++ b/src/cyclictest/cyclictest.c
+> > @@ -1360,7 +1360,8 @@ static void display_help(int error)
+> >  	       "                           format: n:c:v n=tasknum
+> > c=count v=value in us\n"
+> >  	       "-w       --wakeup          task wakeup tracing (used
+> > with -b)\n"
+> >  	       "-W       --wakeuprt        rt task wakeup tracing
+> > (used with -b)\n"
+> > -	       "	 --dbg_cyclictest  print info useful for
+> > debugging cyclictest\n",
+> > +	       "	 --dbg_cyclictest  print info useful for
+> > debugging cyclictest\n"
+> > +	       "-x	 --posix_timers    use POSIX timers\n",
+> >  	       tracers
+> >  		);
+> >  	if (error)
+> > @@ -1368,7 +1369,7 @@ static void display_help(int error)
+> >  	exit(EXIT_SUCCESS);
+> >  }
+> >  
+> > -static int use_nanosleep;
+> > +static int use_nanosleep = MODE_CLOCK_NANOSLEEP; /* use
+> > clock_nanosleep by default. */
+> >  static int timermode = TIMER_ABSTIME;
+> >  static int use_system;
+> >  static int priority;
+> > @@ -1489,6 +1490,7 @@ enum option_values {
+> >  	OPT_TRIGGER_NODES, OPT_UNBUFFERED, OPT_NUMA, OPT_VERBOSE,
+> > OPT_WAKEUP,
+> >  	OPT_WAKEUPRT, OPT_DBGCYCLIC, OPT_POLICY, OPT_HELP,
+> > OPT_NUMOPTS,
+> >  	OPT_ALIGNED, OPT_SECALIGNED, OPT_LAPTOP, OPT_SMI,
+> > OPT_TRACEMARK,
+> > +	OPT_POSIX_TIMERS,
+> >  };
+> >  
+> >  /* Process commandline options */
+> > @@ -1553,9 +1555,10 @@ static void process_options (int argc, char
+> > *argv[], int max_cpus)
+> >  			{"dbg_cyclictest",   no_argument,       NULL
+> > , OPT_DBGCYCLIC },
+> >  			{"policy",           required_argument,
+> > NULL, OPT_POLICY },
+> >  			{"help",             no_argument,       NULL
+> > , OPT_HELP },
+> > +			{"posix_timers",     no_argument,	NUL
+> > L, OPT_POSIX_TIMERS },
+> >  			{NULL, 0, NULL, 0}
+> >  		};
+> > -		int c = getopt_long(argc, argv,
+> > "a::A::b:Bc:Cd:D:Efh:H:i:Il:MnNo:O:p:PmqrRsSt::uUvD:wWT:",
+> > +		int c = getopt_long(argc, argv,
+> > "a::A::b:Bc:Cd:D:Efh:H:i:Il:MnNo:O:p:PmqrRsSt::uUvD:wWT:x",
+> >  				    long_options, &option_index);
+> >  		if (c == -1)
+> >  			break;
+> > @@ -1756,6 +1759,9 @@ static void process_options (int argc, char
+> > *argv[], int max_cpus)
+> >  		case 'W':
+> >  		case OPT_WAKEUPRT:
+> >  			tracetype = WAKEUPRT; break;
+> > +		case 'x':
+> > +		case OPT_POSIX_TIMERS:
+> > +			use_nanosleep = MODE_CYCLIC; break;
+> >  		case '?':
+> >  		case OPT_HELP:
+> >  			display_help(0); break;
+
+
+We could apply this to the "unstable" developer version, in which case we
+are not concerned with maintaining compatibility with scripts etc, so
+you can go ahead and remove -n too.
+
+Use either one of the following branches
+unstable/devel/v1.1.1
+unstable/devel/v1.1.1-devel
+
+(yeah, I need to clean that up in the near future)
+
+Thanks
+
+John
+--8336693-978772170-1489506587=:10659--
