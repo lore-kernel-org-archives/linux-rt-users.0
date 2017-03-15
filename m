@@ -1,94 +1,134 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: oops with 4.9.13-rt12 under mild load (and no rt-tasks active)
-Date: Wed, 15 Mar 2017 18:34:31 +0100
-Message-ID: <20170315173431.lpuoqsrte2qzyb5s@linutronix.de>
-References: <20170310194717.GE32625@osadl.at>
+From: Julia Cartwright <julia@ni.com>
+Subject: Re: Radeon driver hang with 4.9.0-rt
+Date: Wed, 15 Mar 2017 14:20:49 -0500
+Message-ID: <20170315192049.GA32688@jcartwri.amer.corp.natinst.com>
+References: <1389032467.26259129.1487907530442.JavaMail.zimbra@redhat.com>
+ <48ef9ca7-0c7e-730f-e8c2-6b07e75018b6@lebib.org>
+ <CAObZbXS1AsJ7MPfNacZLnCvzCzmFcpyHDNge9sOd-AhyB1CbvQ@mail.gmail.com>
+ <20170302211013.GC2723@jcartwri.amer.corp.natinst.com>
+ <c5ac6b81-6b61-2923-afc7-c594a5ab34bb@lebib.org>
+ <20170306173353.GJ29100@jcartwri.amer.corp.natinst.com>
+ <26d68eb9-746d-26ae-cbfe-28a8b4e5a3e6@lebib.org>
+ <20170306190707.GL29100@jcartwri.amer.corp.natinst.com>
+ <e1193ceb-af77-b561-5b84-c08915e7859e@lebib.org>
+ <fb9e1287-7042-9b46-1730-1e622eac99cc@lebib.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Cc: linux-rt-users@vger.kernel.org,
-        Thomas Gleixner <tglx@linutronix.de>,
-        linux-kernel@vger.kernel.org
-To: Nicholas Mc Guire <der.herr@hofr.at>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="bp/iNruPH9dso1Pn"
+Cc: Daniel Vidal <danielvidalchornet@gmail.com>,
+        Pankaj Gupta <pagupta@redhat.com>,
+        <linux-rt-users@vger.kernel.org>
+To: Wargreen <wargreen@lebib.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx0a-00010702.pphosted.com ([148.163.156.75]:33036 "EHLO
+        mx0b-00010702.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1750877AbdCOTVC (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 15 Mar 2017 15:21:02 -0400
 Content-Disposition: inline
-In-Reply-To: <20170310194717.GE32625@osadl.at>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <fb9e1287-7042-9b46-1730-1e622eac99cc@lebib.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-03-10 19:47:17 [+0000], Nicholas Mc Guire wrote:
-> 
-> Hi !
-Hello Nicholas,
+--bp/iNruPH9dso1Pn
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-> [ 5329.000726] EXT4-fs (sda2): unable to read superblock
-> [ 5329.001648] EXT4-fs (sda2): unable to read superblock
-> [ 5329.002564] EXT4-fs (sda2): unable to read superblock
-> [ 5329.003584] FAT-fs (sda2): bogus number of reserved sectors
-> [ 5329.003588] FAT-fs (sda2): Can't find a valid FAT filesystem
-> [ 5329.004645] FAT-fs (sda2): bogus number of reserved sectors
-> [ 5329.004649] FAT-fs (sda2): Can't find a valid FAT filesystem
-> [ 5329.005561] isofs_fill_super: bread failed, dev=sda2, iso_blknum=16, block=32
+On Fri, Mar 10, 2017 at 06:51:27PM +0100, Wargreen wrote:
+> Do you think i should send an issue to DRM/Radeon ?
 
-This is probably just some random noise. Usually during kernel upgrade
-it will try to access all your partition and while doing this it will
-try various fs-drivers. So it can happen that it will complain that it
-can't mount sdaX with FAT while even if sdaX is swap and you don't use
-FAT at all. I wouldn't worry too much about this.
+More eyes certainly wouldn't hurt.
 
->  but sda2 is the Extended partition - sda5 is the swap and it is mounted.
-> 
->  I´ll see if this is reproducible - unfortunately the v2 config was lost as
->  the files that seem to have been in buffer-cache are all 0 size (many of the compiled
->  files in the kernel tree are 0 size - the sources seem ok as it can be recompiled).
-> 
-> Device     Boot     Start       End   Sectors   Size Id Type
-> /dev/sda1  *         2048 470427647 470425600 224.3G 83 Linux
-> /dev/sda2       470429694 490348543  19918850   9.5G  5 Extended
-> /dev/sda5       470429696 490348543  19918848   9.5G 82 Linux swap / Solaris
+> On 07/03/2017 19:41, Wargreen wrote:
+> > Sorry, i'm more a user than a debugger...
+> >
+> > So, the /proc/[PID]/stack output, with a gnome_shell:
+> > [<ffffffffc0b37e9f>] radeon_fence_default_wait+0xbf/0x170 [radeon]
+> > [<ffffffffae34227d>] fence_wait_timeout+0x9d/0x350
+> > [<ffffffffc0a2dba5>] ttm_bo_vm_fault+0x455/0x530 [ttm]
+> > [<ffffffffc0b39e27>] radeon_ttm_fault+0x47/0x70 [radeon]
+> > [<ffffffffae00f9d1>] __do_fault+0x81/0x170
+> > [<ffffffffae01377b>] handle_mm_fault+0x57b/0x1450
+> > [<ffffffffade70459>] __do_page_fault+0x289/0x5d0
+> > [<ffffffffade707c2>] do_page_fault+0x22/0x30
+> > [<ffffffffae4fccf8>] page_fault+0x28/0x30
+> > [<ffffffffffffffff>] 0xffffffffffffffff
+> >
+> > And the corresponding locks :
+> > Mar  7 19:15:49 LaChoze kernel: [  239.624948] NOHZ:
+> > local_softirq_pending 80
+> > Mar  7 19:15:57 LaChoze kernel: [  247.718336] sysrq: SysRq : Show Locks
+> > Held
+> > Mar  7 19:15:57 LaChoze kernel: [  247.718342]
+> > Mar  7 19:15:57 LaChoze kernel: [  247.718342] Showing all locks held in
+> > the system:
+> > Mar  7 19:15:57 LaChoze kernel: [  247.718371] 5 locks held by
+> > irq/1-i8042/126:
+> > Mar  7 19:15:57 LaChoze kernel: [  247.718372]  #0:=20
+> > (&serio->lock){+.+...}, at: [<ffffffffae34dab8>] serio_interrupt+0x28/0=
+x80
+> > Mar  7 19:15:57 LaChoze kernel: [  247.718378]  #1:=20
+> > (&dev->event_lock){+.+...}, at: [<ffffffffae353cba>] input_event+0x3a/0=
+x60
+> > Mar  7 19:15:57 LaChoze kernel: [  247.718382]  #2:=20
+> > (rcu_read_lock){......}, at: [<ffffffffae352ee5>]
+> > input_pass_values.part.5+0x5/0x270
+> > Mar  7 19:15:57 LaChoze kernel: [  247.718385]  #3:=20
+> > (rcu_read_lock){......}, at: [<ffffffffae2c1eb5>] __handle_sysrq+0x5/0x=
+220
+> > Mar  7 19:15:57 LaChoze kernel: [  247.718389]  #4:=20
+> > (tasklist_lock){+.+...}, at: [<ffffffffadeeae1d>]
+> > debug_show_all_locks+0x3d/0x1a0
+> > Mar  7 19:15:57 LaChoze kernel: [  247.718412] 1 lock held by in:imklog=
+/895:
+> > Mar  7 19:15:57 LaChoze kernel: [  247.718412]  #0:=20
+> > (&f->f_pos_lock){+.+.+.}, at: [<ffffffffae08883a>] __fdget_pos+0x4a/0x50
+> > Mar  7 19:15:57 LaChoze kernel: [  247.718435] 2 locks held by Xorg/221=
+5:
+> > Mar  7 19:15:57 LaChoze kernel: [  247.718435]  #0:=20
+> > (&rdev->exclusive_lock){++++.+}, at: [<ffffffffadef3710>]
+> > rt_down_read+0x10/0x20
+> > Mar  7 19:15:57 LaChoze kernel: [  247.718439]  #1:=20
+> > (&rdev->pm.mclk_lock){++++++}, at: [<ffffffffadef3710>]
+> > rt_down_read+0x10/0x20
+> > Mar  7 19:15:57 LaChoze kernel: [  247.718452] 2 locks held by
+> > gnome-shell/2412:
+> > Mar  7 19:15:57 LaChoze kernel: [  247.718453]  #0:=20
+> > (&rdev->pm.mclk_lock){++++++}, at: [<ffffffffadef3710>]
+> > rt_down_read+0x10/0x20
+> > Mar  7 19:15:57 LaChoze kernel: [  247.718456]  #1:=20
+> > (reservation_ww_class_mutex){+.+.+.}, at: [<ffffffffc0a2d7b0>]
+> > ttm_bo_vm_fault+0x60/0x530 [ttm]
+> > Mar  7 19:15:57 LaChoze kernel: [  247.718487]
+> > Mar  7 19:15:57 LaChoze kernel: [  247.718487]
+> > =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 
-So sda1 is with EXT4 and exploded? So besides files with size 0 you have
-no further damage?
+Hmm, there is nothing obviously wrong here, or at least nothing that
+sticks out to me.  I see that there are a few fence tracepoints that the
+kernel has made available, perhaps you can run an execution in the
+working case with those tracepoints enabled (and probably sched/ irq/
+events as well), and compare them to a test run where it fails.
 
-> [ 9007.810069] ------------[ cut here ]------------
-> [ 9007.810071] kernel BUG at fs/inode.c:508!
-…
-> [ 9007.810107]  [<ffffffff811d7005>] ext4_clear_inode+0x15/0x80
-> [ 9007.810109]  [<ffffffff811c6ea9>] ext4_evict_inode+0x69/0x3d0
-> [ 9007.810111]  [<ffffffff8115ed50>] evict+0xc0/0x190
-> [ 9007.810112]  [<ffffffff8115ee54>] dispose_list+0x34/0x40
-> [ 9007.810114]  [<ffffffff8115ff06>] prune_icache_sb+0x46/0x60
-> [ 9007.810117]  [<ffffffff8114662c>] super_cache_scan+0x14c/0x1a0
-> [ 9007.810121]  [<ffffffff810fce65>] shrink_slab.part.52.constprop.73+0x1b5/0x250
-> [ 9007.810124]  [<ffffffff8110047c>] shrink_node+0x5c/0x190
-> [ 9007.810126]  [<ffffffff81100dc1>] kswapd+0x2d1/0x5c0
-> [ 9007.810128]  [<ffffffff81100af0>] ? node_reclaim+0x200/0x200
-> [ 9007.810132]  [<ffffffff8105f388>] ? call_usermodehelper_exec_async+0x148/0x160
-> [ 9007.810135]  [<ffffffff810684b7>] kthread+0xd7/0xf0
-> [ 9007.810137]  [<ffffffff810683e0>] ? kthread_park+0x60/0x60
-> [ 9007.810139]  [<ffffffff8105f240>] ? umh_complete+0x20/0x20
-> [ 9007.810143]  [<ffffffff81830612>] ret_from_fork+0x22/0x30
+Beyond that, you might have to get help from folks more familiar with
+this particular driver :(.
 
-At some point your system decided, that it needs to make room for some
-fresh memory so it kicked kswapd. That one invoked shrink_slab() which
-is something you can also trigger via
-	echo 2 > /proc/sys/vm/drop_caches 
+   Julia
 
-At this point it tried to free memory. It managed to come across an ext4
-inode which was not yet ready for clean up.
-This "exceptional" counter is used by DAX, shmem and shadow. I assume
-you don't use DAX so that leaves us with shmem and shadow.
+--bp/iNruPH9dso1Pn
+Content-Type: application/pgp-signature; name="signature.asc"
 
->  Aside from hoping that I get this a second time - is there any other meaningful
->  info I could provide ?
+-----BEGIN PGP SIGNATURE-----
 
-I've been looking at this for a while now. I try to come up tomorrow.
+iQEzBAABCAAdFiEEgKAEF431w1EL96k9jNrC4UVNdG8FAljJlA0ACgkQjNrC4UVN
+dG+6fAgAhfBwgjdZGzDOW94x+viTyiWw22Hp0FQAdlkpXIfAPUIIgBXxwiZ9EYte
+CHBNXmsa7wNIgcuw4fd/6qfA94gLl61/O20VqGOjqL7fUZrdJupV8pLGhfln/YFg
++bHg4HoV+M1p6CRhBfS99jc8Uj6BajcEVWIstp8dSUeZtEX4vItB/0OkSzI3lHQu
+iakpCDjcPzSFNiWnLp2isUn5D/3kkiKuXpUxEDYzb+TorpV1JsqMeJkNtKUq+IzY
+1qt2xBXUtpGWc/VhNFVEG9ItMikYle85D6yyn9b0181OOTZ2F8WHtnZ+/h/nhgue
+kdMQwEEoPFRsMyEphgcJtGaeGQIhOg==
+=8W59
+-----END PGP SIGNATURE-----
 
->  Has anyone seen 4.9.13-rt12 oopses related to ext4 or vfs in general ?
-
-nope, first time I see something like this.
-
-> thx!
-> hofrat
-
-Sebastian
+--bp/iNruPH9dso1Pn--
