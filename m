@@ -1,109 +1,94 @@
-From: Vedang Patel <vedang.patel@intel.com>
-Subject: [PATCH] cyclictest: make clock_nanosleep as default and add option for POSIX timers.
-Date: Tue, 14 Mar 2017 12:43:48 -0700
-Message-ID: <1489520628-9288-1-git-send-email-vedang.patel@intel.com>
-References: <alpine.LFD.2.20.1703141646001.10659@riemann.fritz.box>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: oops with 4.9.13-rt12 under mild load (and no rt-tasks active)
+Date: Wed, 15 Mar 2017 18:34:31 +0100
+Message-ID: <20170315173431.lpuoqsrte2qzyb5s@linutronix.de>
+References: <20170310194717.GE32625@osadl.at>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
 Cc: linux-rt-users@vger.kernel.org,
-        Vedang Patel <vedang.patel@intel.com>
-To: williams@redhat.com, jkacur@redhat.com
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga05.intel.com ([192.55.52.43]:28644 "EHLO mga05.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751823AbdCNTnx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 14 Mar 2017 15:43:53 -0400
-In-Reply-To: <alpine.LFD.2.20.1703141646001.10659@riemann.fritz.box>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+        Thomas Gleixner <tglx@linutronix.de>,
+        linux-kernel@vger.kernel.org
+To: Nicholas Mc Guire <der.herr@hofr.at>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20170310194717.GE32625@osadl.at>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-it is recommended that clock_nanosleep should be used for real-time
-wherever available. So, make sure that cyclictest runs clock_nanosleep
-by default. Added an option to run POSIX timers. Removing the '-n'
-option because it is redundant now.
+On 2017-03-10 19:47:17 [+0000], Nicholas Mc Guire wrote:
+> 
+> Hi !
+Hello Nicholas,
 
-Signed-off-by: Vedang Patel <vedang.patel@intel.com>
----
- src/cyclictest/cyclictest.c | 17 +++++++++--------
- 1 file changed, 9 insertions(+), 8 deletions(-)
+> [ 5329.000726] EXT4-fs (sda2): unable to read superblock
+> [ 5329.001648] EXT4-fs (sda2): unable to read superblock
+> [ 5329.002564] EXT4-fs (sda2): unable to read superblock
+> [ 5329.003584] FAT-fs (sda2): bogus number of reserved sectors
+> [ 5329.003588] FAT-fs (sda2): Can't find a valid FAT filesystem
+> [ 5329.004645] FAT-fs (sda2): bogus number of reserved sectors
+> [ 5329.004649] FAT-fs (sda2): Can't find a valid FAT filesystem
+> [ 5329.005561] isofs_fill_super: bread failed, dev=sda2, iso_blknum=16, block=32
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 3f1bef1ffca9..cf82f8e1deaa 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -1321,7 +1321,6 @@ static void display_help(int error)
- 	       "-m       --mlockall        lock current and future memory allocations\n"
- 	       "-M       --refresh_on_max  delay updating the screen until a new max\n"
- 	       "			   latency is hit. Userful for low bandwidth.\n"
--	       "-n       --nanosleep       use clock_nanosleep\n"
- 	       "	 --notrace	   suppress tracing\n"
- 	       "-N       --nsecs           print results in ns instead of us (default us)\n"
- 	       "-o RED   --oscope=RED      oscilloscope mode, reduce verbose output by RED\n"
-@@ -1364,7 +1363,8 @@ static void display_help(int error)
- 	       "                           format: n:c:v n=tasknum c=count v=value in us\n"
- 	       "-w       --wakeup          task wakeup tracing (used with -b)\n"
- 	       "-W       --wakeuprt        rt task wakeup tracing (used with -b)\n"
--	       "	 --dbg_cyclictest  print info useful for debugging cyclictest\n",
-+	       "	 --dbg_cyclictest  print info useful for debugging cyclictest\n"
-+	       "-x	 --posix_timers    use POSIX timers\n",
- 	       tracers
- 		);
- 	if (error)
-@@ -1372,7 +1372,7 @@ static void display_help(int error)
- 	exit(EXIT_SUCCESS);
- }
- 
--static int use_nanosleep;
-+static int use_nanosleep = MODE_CLOCK_NANOSLEEP; /* use clock_nanosleep by default. */
- static int timermode = TIMER_ABSTIME;
- static int use_system;
- static int priority;
-@@ -1493,6 +1493,7 @@ enum option_values {
- 	OPT_TRIGGER_NODES, OPT_UNBUFFERED, OPT_NUMA, OPT_VERBOSE, OPT_WAKEUP,
- 	OPT_WAKEUPRT, OPT_DBGCYCLIC, OPT_POLICY, OPT_HELP, OPT_NUMOPTS,
- 	OPT_ALIGNED, OPT_SECALIGNED, OPT_LAPTOP, OPT_SMI, OPT_TRACEMARK,
-+	OPT_POSIX_TIMERS,
- };
- 
- /* Process commandline options */
-@@ -1530,7 +1531,6 @@ static void process_options (int argc, char *argv[], int max_cpus)
- 			{"loops",            required_argument, NULL, OPT_LOOPS },
- 			{"mlockall",         no_argument,       NULL, OPT_MLOCKALL },
- 			{"refresh_on_max",   no_argument,       NULL, OPT_REFRESH },
--			{"nanosleep",        no_argument,       NULL, OPT_NANOSLEEP },
- 			{"nsecs",            no_argument,       NULL, OPT_NSECS },
- 			{"oscope",           required_argument, NULL, OPT_OSCOPE },
- 			{"traceopt",         required_argument, NULL, OPT_TRACEOPT },
-@@ -1557,9 +1557,10 @@ static void process_options (int argc, char *argv[], int max_cpus)
- 			{"dbg_cyclictest",   no_argument,       NULL, OPT_DBGCYCLIC },
- 			{"policy",           required_argument, NULL, OPT_POLICY },
- 			{"help",             no_argument,       NULL, OPT_HELP },
-+			{"posix_timers",     no_argument,	NULL, OPT_POSIX_TIMERS },
- 			{NULL, 0, NULL, 0}
- 		};
--		int c = getopt_long(argc, argv, "a::A::b:Bc:Cd:D:Efh:H:i:Il:MnNo:O:p:PmqrRsSt::uUvD:wWT:",
-+		int c = getopt_long(argc, argv, "a::A::b:Bc:Cd:D:Efh:H:i:Il:MNo:O:p:PmqrRsSt::uUvD:wWT:x",
- 				    long_options, &option_index);
- 		if (c == -1)
- 			break;
-@@ -1651,9 +1652,6 @@ static void process_options (int argc, char *argv[], int max_cpus)
- 		case 'M':
- 		case OPT_REFRESH:
- 			refresh_on_max = 1; break;
--		case 'n':
--		case OPT_NANOSLEEP:
--			use_nanosleep = MODE_CLOCK_NANOSLEEP; break;
- 		case 'N':
- 		case OPT_NSECS:
- 			use_nsecs = 1; break;
-@@ -1760,6 +1758,9 @@ static void process_options (int argc, char *argv[], int max_cpus)
- 		case 'W':
- 		case OPT_WAKEUPRT:
- 			tracetype = WAKEUPRT; break;
-+		case 'x':
-+		case OPT_POSIX_TIMERS:
-+			use_nanosleep = MODE_CYCLIC; break;
- 		case '?':
- 		case OPT_HELP:
- 			display_help(0); break;
--- 
-2.7.3
+This is probably just some random noise. Usually during kernel upgrade
+it will try to access all your partition and while doing this it will
+try various fs-drivers. So it can happen that it will complain that it
+can't mount sdaX with FAT while even if sdaX is swap and you don't use
+FAT at all. I wouldn't worry too much about this.
 
+>  but sda2 is the Extended partition - sda5 is the swap and it is mounted.
+> 
+>  I´ll see if this is reproducible - unfortunately the v2 config was lost as
+>  the files that seem to have been in buffer-cache are all 0 size (many of the compiled
+>  files in the kernel tree are 0 size - the sources seem ok as it can be recompiled).
+> 
+> Device     Boot     Start       End   Sectors   Size Id Type
+> /dev/sda1  *         2048 470427647 470425600 224.3G 83 Linux
+> /dev/sda2       470429694 490348543  19918850   9.5G  5 Extended
+> /dev/sda5       470429696 490348543  19918848   9.5G 82 Linux swap / Solaris
+
+So sda1 is with EXT4 and exploded? So besides files with size 0 you have
+no further damage?
+
+> [ 9007.810069] ------------[ cut here ]------------
+> [ 9007.810071] kernel BUG at fs/inode.c:508!
+…
+> [ 9007.810107]  [<ffffffff811d7005>] ext4_clear_inode+0x15/0x80
+> [ 9007.810109]  [<ffffffff811c6ea9>] ext4_evict_inode+0x69/0x3d0
+> [ 9007.810111]  [<ffffffff8115ed50>] evict+0xc0/0x190
+> [ 9007.810112]  [<ffffffff8115ee54>] dispose_list+0x34/0x40
+> [ 9007.810114]  [<ffffffff8115ff06>] prune_icache_sb+0x46/0x60
+> [ 9007.810117]  [<ffffffff8114662c>] super_cache_scan+0x14c/0x1a0
+> [ 9007.810121]  [<ffffffff810fce65>] shrink_slab.part.52.constprop.73+0x1b5/0x250
+> [ 9007.810124]  [<ffffffff8110047c>] shrink_node+0x5c/0x190
+> [ 9007.810126]  [<ffffffff81100dc1>] kswapd+0x2d1/0x5c0
+> [ 9007.810128]  [<ffffffff81100af0>] ? node_reclaim+0x200/0x200
+> [ 9007.810132]  [<ffffffff8105f388>] ? call_usermodehelper_exec_async+0x148/0x160
+> [ 9007.810135]  [<ffffffff810684b7>] kthread+0xd7/0xf0
+> [ 9007.810137]  [<ffffffff810683e0>] ? kthread_park+0x60/0x60
+> [ 9007.810139]  [<ffffffff8105f240>] ? umh_complete+0x20/0x20
+> [ 9007.810143]  [<ffffffff81830612>] ret_from_fork+0x22/0x30
+
+At some point your system decided, that it needs to make room for some
+fresh memory so it kicked kswapd. That one invoked shrink_slab() which
+is something you can also trigger via
+	echo 2 > /proc/sys/vm/drop_caches 
+
+At this point it tried to free memory. It managed to come across an ext4
+inode which was not yet ready for clean up.
+This "exceptional" counter is used by DAX, shmem and shadow. I assume
+you don't use DAX so that leaves us with shmem and shadow.
+
+>  Aside from hoping that I get this a second time - is there any other meaningful
+>  info I could provide ?
+
+I've been looking at this for a while now. I try to come up tomorrow.
+
+>  Has anyone seen 4.9.13-rt12 oopses related to ext4 or vfs in general ?
+
+nope, first time I see something like this.
+
+> thx!
+> hofrat
+
+Sebastian
