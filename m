@@ -1,44 +1,35 @@
-From: Julia Cartwright <julia@ni.com>
-Subject: [ANNOUNCE] 4.1.39-rt47
-Date: Fri, 17 Mar 2017 11:56:14 -0500
-Message-ID: <20170317165614.GE32688@jcartwri.amer.corp.natinst.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: How to write RT applications ?
+Date: Fri, 17 Mar 2017 21:18:16 +0100
+Message-ID: <20170317201741.bwwycyl5ggbpjksw@linutronix.de>
+References: <CAJ2oMhJp-uBxxj7tyPHM2M9cFnjhus4ORYYfFgNywaMFXS4Q9Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users@vger.kernel.org
+To: Ran Shalit <ranshalit@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:59533 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751101AbdCQUSx (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 17 Mar 2017 16:18:53 -0400
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <CAJ2oMhJp-uBxxj7tyPHM2M9cFnjhus4ORYYfFgNywaMFXS4Q9Q@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello RT Folks,
+On 2017-03-02 15:52:32 [+0200], Ran Shalit wrote:
+> I know it is different concepts, yet, I wander if in RT Linux there
+> are also similar ideas, that should be taken care of when writing
+> application, in order to be assure that real time threads behave as
+> expected.
 
-I'm happy to announce the 4.1.39-rt47 stable release.
+Our wiki moved
+  https://wiki.linuxfoundation.org/realtime/documentation/howto/applications/start
 
-This release is just an update to the new stable 4.1.39 version and no
-RT specific changes have been made.
+and there are two articles about simple RT applications.
 
-You can get this release via the git tree at:
+> Thank you!
+> Ran
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.1-rt
-  Head SHA1: 88627797beab29e1244211e1c76526b888b84da6
-
-
-Or to build 4.1.39-rt47 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.1.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.1.39.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/patch-4.1.39-rt47.patch.xz
-
-Let me know if there are any problems!
-
-   Julia
+Sebastian
