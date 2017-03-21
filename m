@@ -1,65 +1,55 @@
-From: Julia Cartwright <julia@ni.com>
-Subject: Re: How to write RT applications ?
-Date: Tue, 21 Mar 2017 15:17:02 -0500
-Message-ID: <20170321201702.GF10423@jcartwri.amer.corp.natinst.com>
-References: <CAJ2oMhJp-uBxxj7tyPHM2M9cFnjhus4ORYYfFgNywaMFXS4Q9Q@mail.gmail.com>
- <20170317201741.bwwycyl5ggbpjksw@linutronix.de>
- <CAEYdEeR=04qszshTum6mbCwj_H53uLwwgbE4YDnDh1hHYqP7UQ@mail.gmail.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: v4.1.38-rt46 build: 1 failures 46 warnings (v4.1.38-rt46)
+Date: Tue, 21 Mar 2017 21:40:29 +0100
+Message-ID: <CAK8P3a066bfxM+B0DYyvKzMRfzTgFpS-WihH4YSYwODTLrz5SA@mail.gmail.com>
+References: <E1cmQcG-0002cE-Cd@optimist> <CAK8P3a37VfnxHPxNs7A=3s-cOzZsZSK93f_wk-WaJpnCqk-6Bw@mail.gmail.com>
+ <20170321201000.GE10423@jcartwri.amer.corp.natinst.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="7ZAtKRhVyVSsbBD2"
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Ran Shalit <ranshalit@gmail.com>,
-        <linux-rt-users@vger.kernel.org>
-To: Brian Wrenn <dcbrianw@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx0a-00010702.pphosted.com ([148.163.156.75]:39223 "EHLO
-        mx0b-00010702.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S932511AbdCUUSi (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 21 Mar 2017 16:18:38 -0400
-Content-Disposition: inline
-In-Reply-To: <CAEYdEeR=04qszshTum6mbCwj_H53uLwwgbE4YDnDh1hHYqP7UQ@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Cc: Build bot for Mark Brown <broonie@kernel.org>,
+        kernel-build-reports@lists.linaro.org,
+        linaro-kernel@lists.linaro.org, linux-rt-users@vger.kernel.org,
+        stable@vger.kernel.org, Sasha Levin <alexander.levin@verizon.com>
+To: Julia Cartwright <julia@ni.com>
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <20170321201000.GE10423@jcartwri.amer.corp.natinst.com>
+Sender: stable-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
---7ZAtKRhVyVSsbBD2
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+On Tue, Mar 21, 2017 at 9:10 PM, Julia Cartwright <julia@ni.com> wrote:
 
-On Tue, Mar 21, 2017 at 01:08:40PM -0400, Brian Wrenn wrote:
-> I've tried to find a way to use ::std::thread or ::boost::thread to
-> accomplish what the article for creating a simple RT application with
-> pthreads does, but unfortunately I don't think those two OOP
-> approaches provide enough attribute configuration to suffice.  Has
-> anyone else found otherwise?
+> I'm also happy to hear that the 4.1-rt is getting build testing by the
+> build bot.  Is there any way I can be CC'd on build reports on this
+> branch?  Or, is the best way for me just to subscribe to the list?
 
-There is a defined member function for the std::thread type,
-native_thread() which will return the underlying native thread type,
-which, if you're using gcc/glibc is most likely the pthread_t.
+The build results for this tree get sent to these three lists:
 
-Alternatively, the thread can adjust its own scheduling properties using
-pthread_self().
+kernel-build-reports@lists.linaro.org,
+linaro-kernel@lists.linaro.org,
+linux-rt-users@vger.kernel.org
 
-See: http://en.cppreference.com/w/cpp/thread/thread/native_handle
+They should all be open for subscription.
 
-For an example.
+>> >         ../include/linux/spinlock.h:256:3: warning: 'flags' may be used uninitialized in this function [-Wmaybe-uninitialized]
+>>
+>> I could not immediately find this one.
+>
+> I'm not sure if full logs are available somewhere, but the line above
+> this is probably of more interest.  For example:
+>
+>         drivers/tty/serial/amba-pl011.c: In function 'pl011_console_write':
+>         include/linux/spinlock.h:256:3: warning: 'flags' may be used uninitialized in this function [-Wmaybe-uninitialized]
+>
+> Which looks like perhaps gcc is confused about the conditional
+> locking/unlocking in this function.
 
-   Julia
+Mark might have a way of providing more verbose build logs, I don't
+think he has a web interface though. kernelci.org and
+http://arm-soc.lixom.net/buildlogs/ have some more logs, but don't
+build this tree.
 
---7ZAtKRhVyVSsbBD2
-Content-Type: application/pgp-signature; name="signature.asc"
+It might be the exact warning you cite, I think I bisected this one in the past
+to an -rt specific commit and provided a patch, but it wasn't clear whether
+this was the best solution.
 
------BEGIN PGP SIGNATURE-----
-
-iQEzBAABCAAdFiEEgKAEF431w1EL96k9jNrC4UVNdG8FAljRij4ACgkQjNrC4UVN
-dG/b8wf/aVcz+FCFT8vf43aryQdB8HBw28A2oWweN8MigEcaMrxPyhhf84FPDEKL
-vT0bkNgHUzap/6KNtjIGLZKpntraaG4c0WWilQ0F+5DX7Bv0QdHgOOM4KIEA1Sj3
-I1xUbx3EuRRraKvj6MckDLNJmmTqSMl1m9bRk8HqthG24fcmL+iqyotiW/XMQVai
-+LPXudvCy5KiDeoLFkYEKpEeDhx3V38g24jL1QD3XcLfxPDR5g+bex/iC0DEsvnz
-BfBdh7bhkJXyC6ZH1TfFj5pEg0ROi4tsyKTALi3amaa/cI6czKN8fhF9XtMdcbcE
-1iBZlolDA0BvmgRuqjIFQQ7On8wqKQ==
-=eKlC
------END PGP SIGNATURE-----
-
---7ZAtKRhVyVSsbBD2--
+      Arnd
