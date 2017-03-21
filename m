@@ -1,23 +1,21 @@
 From: Julia Cartwright <julia@ni.com>
-Subject: [PATCH v2 5/9] mfd: t7l66xb: make use of raw_spinlock variants
-Date: Tue, 21 Mar 2017 17:43:05 -0500
-Message-ID: <1017371a656047dabe20e82a57a592b3925b5dd7.1490135047.git.julia@ni.com>
+Subject: [PATCH v2 2/9] alpha: marvel: make use of raw_spinlock variants
+Date: Tue, 21 Mar 2017 17:43:02 -0500
+Message-ID: <d3e80eff46901ad060350fb24403c3fe197c7fc6.1490135047.git.julia@ni.com>
 References: <cover.1490135047.git.julia@ni.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Cc: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-To: Lee Jones <lee.jones@linaro.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx0a-00010702.pphosted.com ([148.163.156.75]:58129 "EHLO
-        mx0b-00010702.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1757572AbdCUXcB (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 21 Mar 2017 19:32:01 -0400
+Cc: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
+        <linux-alpha@vger.kernel.org>
+To: Richard Henderson <rth@twiddle.net>,
+        Ivan Kokshaysky <ink@jurassic.park.msu.ru>,
+        Matt Turner <mattst88@gmail.com>
+Return-path: <linux-alpha-owner@vger.kernel.org>
 In-Reply-To: <cover.1490135047.git.julia@ni.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-alpha-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-The t7l66xb mfd driver currently implements an irq_chip for handling
+The alpha/marvel code currently implements an irq_chip for handling
 interrupts; due to how irq_chip handling is done, it's necessary for the
 irq_chip methods to be invoked from hardirq context, even on a a
 real-time kernel.  Because the spinlock_t type becomes a "sleeping"
@@ -26,97 +24,92 @@ spinlock w/ RT kernels, it is not suitable to be used with irq_chips.
 A quick audit of the operations under the lock reveal that they do only
 minimal, bounded work, and are therefore safe to do under a raw spinlock.
 
-Acked-for-MFD-by: Lee Jones <lee.jones@linaro.org>
 Signed-off-by: Julia Cartwright <julia@ni.com>
 ---
 v1 -> v2:
-  - No functional change.  Added Lee's ack.
+  - Add hunk which properly initializes the spin-lock (via kbuild bot).
 
- drivers/mfd/t7l66xb.c | 20 ++++++++++----------
- 1 file changed, 10 insertions(+), 10 deletions(-)
+ arch/alpha/include/asm/core_marvel.h |  2 +-
+ arch/alpha/kernel/core_marvel.c      |  2 +-
+ arch/alpha/kernel/sys_marvel.c       | 12 ++++++------
+ 3 files changed, 8 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/mfd/t7l66xb.c b/drivers/mfd/t7l66xb.c
-index 94bd89cb1f06..22c811396edc 100644
---- a/drivers/mfd/t7l66xb.c
-+++ b/drivers/mfd/t7l66xb.c
-@@ -69,7 +69,7 @@ static const struct resource t7l66xb_mmc_resources[] = {
- struct t7l66xb {
- 	void __iomem		*scr;
- 	/* Lock to protect registers requiring read/modify/write ops. */
--	spinlock_t		lock;
-+	raw_spinlock_t		lock;
+diff --git a/arch/alpha/include/asm/core_marvel.h b/arch/alpha/include/asm/core_marvel.h
+index dad300fa14ce..8dcf9dbda618 100644
+--- a/arch/alpha/include/asm/core_marvel.h
++++ b/arch/alpha/include/asm/core_marvel.h
+@@ -312,7 +312,7 @@ struct io7 {
+ 	io7_port7_csrs *csrs;
+ 	struct io7_port ports[IO7_NUM_PORTS];
  
- 	struct resource		rscr;
- 	struct clk		*clk48m;
-@@ -89,13 +89,13 @@ static int t7l66xb_mmc_enable(struct platform_device *mmc)
+-	spinlock_t irq_lock;
++	raw_spinlock_t irq_lock;
+ };
  
- 	clk_prepare_enable(t7l66xb->clk32k);
+ #ifndef __EXTERN_INLINE
+diff --git a/arch/alpha/kernel/core_marvel.c b/arch/alpha/kernel/core_marvel.c
+index d5f0580746a5..4300b1d1cf2c 100644
+--- a/arch/alpha/kernel/core_marvel.c
++++ b/arch/alpha/kernel/core_marvel.c
+@@ -118,7 +118,7 @@ alloc_io7(unsigned int pe)
  
--	spin_lock_irqsave(&t7l66xb->lock, flags);
-+	raw_spin_lock_irqsave(&t7l66xb->lock, flags);
+ 	io7 = alloc_bootmem(sizeof(*io7));
+ 	io7->pe = pe;
+-	spin_lock_init(&io7->irq_lock);
++	raw_spin_lock_init(&io7->irq_lock);
  
- 	dev_ctl = tmio_ioread8(t7l66xb->scr + SCR_DEV_CTL);
- 	dev_ctl |= SCR_DEV_CTL_MMC;
- 	tmio_iowrite8(dev_ctl, t7l66xb->scr + SCR_DEV_CTL);
+ 	for (h = 0; h < 4; h++) {
+ 		io7->ports[h].io7 = io7;
+diff --git a/arch/alpha/kernel/sys_marvel.c b/arch/alpha/kernel/sys_marvel.c
+index 24e41bd7d3c9..3e533920371f 100644
+--- a/arch/alpha/kernel/sys_marvel.c
++++ b/arch/alpha/kernel/sys_marvel.c
+@@ -115,11 +115,11 @@ io7_enable_irq(struct irq_data *d)
+ 		return;
+ 	}
  
--	spin_unlock_irqrestore(&t7l66xb->lock, flags);
-+	raw_spin_unlock_irqrestore(&t7l66xb->lock, flags);
- 
- 	tmio_core_mmc_enable(t7l66xb->scr + 0x200, 0,
- 		t7l66xb_mmc_resources[0].start & 0xfffe);
-@@ -110,13 +110,13 @@ static int t7l66xb_mmc_disable(struct platform_device *mmc)
- 	unsigned long flags;
- 	u8 dev_ctl;
- 
--	spin_lock_irqsave(&t7l66xb->lock, flags);
-+	raw_spin_lock_irqsave(&t7l66xb->lock, flags);
- 
- 	dev_ctl = tmio_ioread8(t7l66xb->scr + SCR_DEV_CTL);
- 	dev_ctl &= ~SCR_DEV_CTL_MMC;
- 	tmio_iowrite8(dev_ctl, t7l66xb->scr + SCR_DEV_CTL);
- 
--	spin_unlock_irqrestore(&t7l66xb->lock, flags);
-+	raw_spin_unlock_irqrestore(&t7l66xb->lock, flags);
- 
- 	clk_disable_unprepare(t7l66xb->clk32k);
- 
-@@ -206,11 +206,11 @@ static void t7l66xb_irq_mask(struct irq_data *data)
- 	unsigned long			flags;
- 	u8 imr;
- 
--	spin_lock_irqsave(&t7l66xb->lock, flags);
-+	raw_spin_lock_irqsave(&t7l66xb->lock, flags);
- 	imr = tmio_ioread8(t7l66xb->scr + SCR_IMR);
- 	imr |= 1 << (data->irq - t7l66xb->irq_base);
- 	tmio_iowrite8(imr, t7l66xb->scr + SCR_IMR);
--	spin_unlock_irqrestore(&t7l66xb->lock, flags);
-+	raw_spin_unlock_irqrestore(&t7l66xb->lock, flags);
+-	spin_lock(&io7->irq_lock);
++	raw_spin_lock(&io7->irq_lock);
+ 	*ctl |= 1UL << 24;
+ 	mb();
+ 	*ctl;
+-	spin_unlock(&io7->irq_lock);
++	raw_spin_unlock(&io7->irq_lock);
  }
  
- static void t7l66xb_irq_unmask(struct irq_data *data)
-@@ -219,11 +219,11 @@ static void t7l66xb_irq_unmask(struct irq_data *data)
- 	unsigned long flags;
- 	u8 imr;
+ static void
+@@ -136,11 +136,11 @@ io7_disable_irq(struct irq_data *d)
+ 		return;
+ 	}
  
--	spin_lock_irqsave(&t7l66xb->lock, flags);
-+	raw_spin_lock_irqsave(&t7l66xb->lock, flags);
- 	imr = tmio_ioread8(t7l66xb->scr + SCR_IMR);
- 	imr &= ~(1 << (data->irq - t7l66xb->irq_base));
- 	tmio_iowrite8(imr, t7l66xb->scr + SCR_IMR);
--	spin_unlock_irqrestore(&t7l66xb->lock, flags);
-+	raw_spin_unlock_irqrestore(&t7l66xb->lock, flags);
+-	spin_lock(&io7->irq_lock);
++	raw_spin_lock(&io7->irq_lock);
+ 	*ctl &= ~(1UL << 24);
+ 	mb();
+ 	*ctl;
+-	spin_unlock(&io7->irq_lock);
++	raw_spin_unlock(&io7->irq_lock);
  }
  
- static struct irq_chip t7l66xb_chip = {
-@@ -321,7 +321,7 @@ static int t7l66xb_probe(struct platform_device *dev)
- 	if (!t7l66xb)
- 		return -ENOMEM;
+ static void
+@@ -263,7 +263,7 @@ init_io7_irqs(struct io7 *io7,
+ 	 */
+ 	printk("  Interrupts reported to CPU at PE %u\n", boot_cpuid);
  
--	spin_lock_init(&t7l66xb->lock);
-+	raw_spin_lock_init(&t7l66xb->lock);
+-	spin_lock(&io7->irq_lock);
++	raw_spin_lock(&io7->irq_lock);
  
- 	platform_set_drvdata(dev, t7l66xb);
+ 	/* set up the error irqs */
+ 	io7_redirect_irq(io7, &io7->csrs->HLT_CTL.csr, boot_cpuid);
+@@ -295,7 +295,7 @@ init_io7_irqs(struct io7 *io7,
+ 	for (i = 0; i < 16; ++i)
+ 		init_one_io7_msi(io7, i, boot_cpuid);
  
+-	spin_unlock(&io7->irq_lock);
++	raw_spin_unlock(&io7->irq_lock);
+ }
+ 
+ static void __init
 -- 
 2.12.0
 
