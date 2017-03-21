@@ -1,55 +1,47 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: v4.1.38-rt46 build: 1 failures 46 warnings (v4.1.38-rt46)
-Date: Tue, 21 Mar 2017 21:40:29 +0100
-Message-ID: <CAK8P3a066bfxM+B0DYyvKzMRfzTgFpS-WihH4YSYwODTLrz5SA@mail.gmail.com>
-References: <E1cmQcG-0002cE-Cd@optimist> <CAK8P3a37VfnxHPxNs7A=3s-cOzZsZSK93f_wk-WaJpnCqk-6Bw@mail.gmail.com>
- <20170321201000.GE10423@jcartwri.amer.corp.natinst.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: Radeon driver hang with 4.9.0-rt
+Date: Tue, 21 Mar 2017 20:38:36 +0100
+Message-ID: <20170321193836.df7hxagg6wqzh6qm@linutronix.de>
+References: <20170302211013.GC2723@jcartwri.amer.corp.natinst.com>
+ <c5ac6b81-6b61-2923-afc7-c594a5ab34bb@lebib.org>
+ <20170306173353.GJ29100@jcartwri.amer.corp.natinst.com>
+ <26d68eb9-746d-26ae-cbfe-28a8b4e5a3e6@lebib.org>
+ <20170306190707.GL29100@jcartwri.amer.corp.natinst.com>
+ <e1193ceb-af77-b561-5b84-c08915e7859e@lebib.org>
+ <fb9e1287-7042-9b46-1730-1e622eac99cc@lebib.org>
+ <20170317181219.5vr4obmtiod7euuk@linutronix.de>
+ <06ee1435-7fb6-3cf5-c305-96a020665c01@lebib.org>
+ <20170320211815.qjvrty7mtmof343w@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: Build bot for Mark Brown <broonie@kernel.org>,
-        kernel-build-reports@lists.linaro.org,
-        linaro-kernel@lists.linaro.org, linux-rt-users@vger.kernel.org,
-        stable@vger.kernel.org, Sasha Levin <alexander.levin@verizon.com>
-To: Julia Cartwright <julia@ni.com>
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <20170321201000.GE10423@jcartwri.amer.corp.natinst.com>
-Sender: stable-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+Cc: Julia Cartwright <julia@ni.com>,
+        Daniel Vidal <danielvidalchornet@gmail.com>,
+        Pankaj Gupta <pagupta@redhat.com>,
+        linux-rt-users@vger.kernel.org
+To: Wargreen <wargreen@lebib.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:46880 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1758031AbdCUUmA (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 21 Mar 2017 16:42:00 -0400
+Content-Disposition: inline
+In-Reply-To: <20170320211815.qjvrty7mtmof343w@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, Mar 21, 2017 at 9:10 PM, Julia Cartwright <julia@ni.com> wrote:
+On 2017-03-20 22:18:16 [+0100], To Wargreen wrote:
+> 1993 wants exclusive_lock and blocks on it.
+> 2230 has exclusive_lock and blocks on mclk_lock.
+> 2448 has mclk_lock nad reservation_ww_class_mutex. I *think* that one
+> waits for an IRQ from the GPU which is not coming. My guess is, that it
+> sits somewhere in ttm_bo_vm_fault_idle() and waits for wakeup.
+> If this triggers so easy, could you please check if the interrupt
+> counter for radeon in /proc/interrupts increases after the accident?
 
-> I'm also happy to hear that the 4.1-rt is getting build testing by the
-> build bot.  Is there any way I can be CC'd on build reports on this
-> branch?  Or, is the best way for me just to subscribe to the list?
+The other theory is that the code can't continue because we can't have
+multiple reader of exclusive_lock. I will try to verify that but this
+will take some time…
 
-The build results for this tree get sent to these three lists:
-
-kernel-build-reports@lists.linaro.org,
-linaro-kernel@lists.linaro.org,
-linux-rt-users@vger.kernel.org
-
-They should all be open for subscription.
-
->> >         ../include/linux/spinlock.h:256:3: warning: 'flags' may be used uninitialized in this function [-Wmaybe-uninitialized]
->>
->> I could not immediately find this one.
->
-> I'm not sure if full logs are available somewhere, but the line above
-> this is probably of more interest.  For example:
->
->         drivers/tty/serial/amba-pl011.c: In function 'pl011_console_write':
->         include/linux/spinlock.h:256:3: warning: 'flags' may be used uninitialized in this function [-Wmaybe-uninitialized]
->
-> Which looks like perhaps gcc is confused about the conditional
-> locking/unlocking in this function.
-
-Mark might have a way of providing more verbose build logs, I don't
-think he has a web interface though. kernelci.org and
-http://arm-soc.lixom.net/buildlogs/ have some more logs, but don't
-build this tree.
-
-It might be the exact warning you cite, I think I bisected this one in the past
-to an -rt specific commit and provided a patch, but it wasn't clear whether
-this was the best solution.
-
-      Arnd
+Sebastian
