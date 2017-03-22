@@ -1,158 +1,89 @@
-From: William Breathitt Gray <vilhelm.gray@gmail.com>
-Subject: Re: [PATCH v2 9/9] gpio: pci-idio-16: make use of raw_spinlock
- variants
-Date: Wed, 22 Mar 2017 08:46:09 -0400
-Message-ID: <20170322124609.GC22323@sophia>
-References: <cover.1490135047.git.julia@ni.com>
- <a5d7b7ed45046ec6f7b5fbf9c284281e02204198.1490135047.git.julia@ni.com>
+From: Brian Wrenn <dcbrianw@gmail.com>
+Subject: Re: How to write RT applications ?
+Date: Wed, 22 Mar 2017 09:10:03 -0400
+Message-ID: <CAEYdEeSChwWd208jLPz+qyiSHHMnnq08q-2mNVEQBU2EL4OYzQ@mail.gmail.com>
+References: <CAJ2oMhJp-uBxxj7tyPHM2M9cFnjhus4ORYYfFgNywaMFXS4Q9Q@mail.gmail.com>
+ <20170317201741.bwwycyl5ggbpjksw@linutronix.de> <CAEYdEeR=04qszshTum6mbCwj_H53uLwwgbE4YDnDh1hHYqP7UQ@mail.gmail.com>
+ <20170321201702.GF10423@jcartwri.amer.corp.natinst.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Linus Walleij <linus.walleij@linaro.org>,
-        Alexandre Courbot <gnurou@gmail.com>,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        linux-gpio@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Ran Shalit <ranshalit@gmail.com>,
+        linux-rt-users@vger.kernel.org
 To: Julia Cartwright <julia@ni.com>
-Return-path: <linux-gpio-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <a5d7b7ed45046ec6f7b5fbf9c284281e02204198.1490135047.git.julia@ni.com>
-Sender: linux-gpio-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-io0-f173.google.com ([209.85.223.173]:32784 "EHLO
+        mail-io0-f173.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S933720AbdCVNKE (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 22 Mar 2017 09:10:04 -0400
+Received: by mail-io0-f173.google.com with SMTP id f84so65088031ioj.0
+        for <linux-rt-users@vger.kernel.org>; Wed, 22 Mar 2017 06:10:04 -0700 (PDT)
+In-Reply-To: <20170321201702.GF10423@jcartwri.amer.corp.natinst.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, Mar 21, 2017 at 05:43:09PM -0500, Julia Cartwright wrote:
->The pci-idio-16 gpio driver currently implements an irq_chip for handling
->interrupts; due to how irq_chip handling is done, it's necessary for the
->irq_chip methods to be invoked from hardirq context, even on a a
->real-time kernel.  Because the spinlock_t type becomes a "sleeping"
->spinlock w/ RT kernels, it is not suitable to be used with irq_chips.
->
->A quick audit of the operations under the lock reveal that they do only
->minimal, bounded work, and are therefore safe to do under a raw spinlock.
->
->Signed-off-by: Julia Cartwright <julia@ni.com>
+Hi Julia (and anyone else following),
 
-Acked-by: William Breathitt Gray <vilhelm.gray@gmail.com>
+I was looking at that exact page yesterday.  W.r.t. the sample code on
+the wiki, I'd need to address five function calls.  Here's what I
+found.
 
->---
->New patch as of v2 of series.
+// ::boost::thread provides it's own ::boost::thread::attributes, but
+it's not as
+// comprehensive, i.e. only includes stack size.  ::std::thread at
+this point aims to
+// be cross platform and hence doesn't.
+// Finding: ::boost::thread==>kinda, ::std::thread==>no
+pthread_attr_init(&attr);
+
+// Can apply to ::boost::thread via ::boost::thread::attributes, but
+not ::std::thread.
+// Finding: same as previous
+pthread_attr_setstack(&attr, stack_buf, PTHREAD_STACK_MIN);
+
+// Can only apply at the attribute level prior to creating, at least
+with the pthread
+// API I have for arm64, a therefore not via native_handle().
+// Finding: ::boost::thread==>no, ::std::thread==>no
+pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
+
+// Can apply via native_handle().
+// Finding: ::boost::thread==>yes, ::std::thread==>yes
+pthread_attr_setschedparam(&attr, &param);
+
+// Can only apply at the attribute level and not via native_handle().
+// Finding: ::boost::thread==>no, ::std::thread==>no
+pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
+
+If there's some way to use pthread_self() to address the calls that
+can't work on native_handle(), I haven't found it yet.
+
+Alternatively, if I were to use sched_setscheduler() instead of
+pthread attributes, that eliminates three of the above, which means
+one could conceivably use ::boost::thread and
+::boost::thread::attributes to set the stacksize, but to cross compile
+the boost libraries, as I'd need to link against boost_system.so/a, it
+may not be worth the effort over just using pthreads.
+
+
+On Tue, Mar 21, 2017 at 4:17 PM, Julia Cartwright <julia@ni.com> wrote:
+> On Tue, Mar 21, 2017 at 01:08:40PM -0400, Brian Wrenn wrote:
+>> I've tried to find a way to use ::std::thread or ::boost::thread to
+>> accomplish what the article for creating a simple RT application with
+>> pthreads does, but unfortunately I don't think those two OOP
+>> approaches provide enough attribute configuration to suffice.  Has
+>> anyone else found otherwise?
 >
-> drivers/gpio/gpio-pci-idio-16.c | 28 ++++++++++++++--------------
-> 1 file changed, 14 insertions(+), 14 deletions(-)
+> There is a defined member function for the std::thread type,
+> native_thread() which will return the underlying native thread type,
+> which, if you're using gcc/glibc is most likely the pthread_t.
 >
->diff --git a/drivers/gpio/gpio-pci-idio-16.c b/drivers/gpio/gpio-pci-idio-16.c
->index 269ab628634b..7de4f6a2cb49 100644
->--- a/drivers/gpio/gpio-pci-idio-16.c
->+++ b/drivers/gpio/gpio-pci-idio-16.c
->@@ -59,7 +59,7 @@ struct idio_16_gpio_reg {
->  */
-> struct idio_16_gpio {
-> 	struct gpio_chip chip;
->-	spinlock_t lock;
->+	raw_spinlock_t lock;
-> 	struct idio_16_gpio_reg __iomem *reg;
-> 	unsigned long irq_mask;
-> };
->@@ -121,7 +121,7 @@ static void idio_16_gpio_set(struct gpio_chip *chip, unsigned int offset,
-> 	} else
-> 		base = &idio16gpio->reg->out0_7;
-> 
->-	spin_lock_irqsave(&idio16gpio->lock, flags);
->+	raw_spin_lock_irqsave(&idio16gpio->lock, flags);
-> 
-> 	if (value)
-> 		out_state = ioread8(base) | mask;
->@@ -130,7 +130,7 @@ static void idio_16_gpio_set(struct gpio_chip *chip, unsigned int offset,
-> 
-> 	iowrite8(out_state, base);
-> 
->-	spin_unlock_irqrestore(&idio16gpio->lock, flags);
->+	raw_spin_unlock_irqrestore(&idio16gpio->lock, flags);
-> }
-> 
-> static void idio_16_gpio_set_multiple(struct gpio_chip *chip,
->@@ -140,7 +140,7 @@ static void idio_16_gpio_set_multiple(struct gpio_chip *chip,
-> 	unsigned long flags;
-> 	unsigned int out_state;
-> 
->-	spin_lock_irqsave(&idio16gpio->lock, flags);
->+	raw_spin_lock_irqsave(&idio16gpio->lock, flags);
-> 
-> 	/* process output lines 0-7 */
-> 	if (*mask & 0xFF) {
->@@ -160,7 +160,7 @@ static void idio_16_gpio_set_multiple(struct gpio_chip *chip,
-> 		iowrite8(out_state, &idio16gpio->reg->out8_15);
-> 	}
-> 
->-	spin_unlock_irqrestore(&idio16gpio->lock, flags);
->+	raw_spin_unlock_irqrestore(&idio16gpio->lock, flags);
-> }
-> 
-> static void idio_16_irq_ack(struct irq_data *data)
->@@ -177,11 +177,11 @@ static void idio_16_irq_mask(struct irq_data *data)
-> 	idio16gpio->irq_mask &= ~mask;
-> 
-> 	if (!idio16gpio->irq_mask) {
->-		spin_lock_irqsave(&idio16gpio->lock, flags);
->+		raw_spin_lock_irqsave(&idio16gpio->lock, flags);
-> 
-> 		iowrite8(0, &idio16gpio->reg->irq_ctl);
-> 
->-		spin_unlock_irqrestore(&idio16gpio->lock, flags);
->+		raw_spin_unlock_irqrestore(&idio16gpio->lock, flags);
-> 	}
-> }
-> 
->@@ -196,11 +196,11 @@ static void idio_16_irq_unmask(struct irq_data *data)
-> 	idio16gpio->irq_mask |= mask;
-> 
-> 	if (!prev_irq_mask) {
->-		spin_lock_irqsave(&idio16gpio->lock, flags);
->+		raw_spin_lock_irqsave(&idio16gpio->lock, flags);
-> 
-> 		ioread8(&idio16gpio->reg->irq_ctl);
-> 
->-		spin_unlock_irqrestore(&idio16gpio->lock, flags);
->+		raw_spin_unlock_irqrestore(&idio16gpio->lock, flags);
-> 	}
-> }
-> 
->@@ -229,11 +229,11 @@ static irqreturn_t idio_16_irq_handler(int irq, void *dev_id)
-> 	struct gpio_chip *const chip = &idio16gpio->chip;
-> 	int gpio;
-> 
->-	spin_lock(&idio16gpio->lock);
->+	raw_spin_lock(&idio16gpio->lock);
-> 
-> 	irq_status = ioread8(&idio16gpio->reg->irq_status);
-> 
->-	spin_unlock(&idio16gpio->lock);
->+	raw_spin_unlock(&idio16gpio->lock);
-> 
-> 	/* Make sure our device generated IRQ */
-> 	if (!(irq_status & 0x3) || !(irq_status & 0x4))
->@@ -242,12 +242,12 @@ static irqreturn_t idio_16_irq_handler(int irq, void *dev_id)
-> 	for_each_set_bit(gpio, &idio16gpio->irq_mask, chip->ngpio)
-> 		generic_handle_irq(irq_find_mapping(chip->irqdomain, gpio));
-> 
->-	spin_lock(&idio16gpio->lock);
->+	raw_spin_lock(&idio16gpio->lock);
-> 
-> 	/* Clear interrupt */
-> 	iowrite8(0, &idio16gpio->reg->in0_7);
-> 
->-	spin_unlock(&idio16gpio->lock);
->+	raw_spin_unlock(&idio16gpio->lock);
-> 
-> 	return IRQ_HANDLED;
-> }
->@@ -302,7 +302,7 @@ static int idio_16_probe(struct pci_dev *pdev, const struct pci_device_id *id)
-> 	idio16gpio->chip.set = idio_16_gpio_set;
-> 	idio16gpio->chip.set_multiple = idio_16_gpio_set_multiple;
-> 
->-	spin_lock_init(&idio16gpio->lock);
->+	raw_spin_lock_init(&idio16gpio->lock);
-> 
-> 	err = devm_gpiochip_add_data(dev, &idio16gpio->chip, idio16gpio);
-> 	if (err) {
->-- 
->2.12.0
+> Alternatively, the thread can adjust its own scheduling properties using
+> pthread_self().
 >
+> See: http://en.cppreference.com/w/cpp/thread/thread/native_handle
+>
+> For an example.
+>
+>    Julia
