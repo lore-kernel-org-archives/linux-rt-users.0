@@ -1,10 +1,10 @@
 From: William Breathitt Gray <vilhelm.gray@gmail.com>
-Subject: Re: [PATCH v2 8/9] gpio: 104-idio-16: make use of raw_spinlock
+Subject: Re: [PATCH v2 7/9] gpio: 104-idi-48: make use of raw_spinlock
  variants
-Date: Wed, 22 Mar 2017 08:45:22 -0400
-Message-ID: <20170322124522.GB22323@sophia>
+Date: Wed, 22 Mar 2017 08:44:14 -0400
+Message-ID: <20170322124414.GA22323@sophia>
 References: <cover.1490135047.git.julia@ni.com>
- <9b15e28c4aeeade4b44e9a2bb06c12ded5d0990b.1490135047.git.julia@ni.com>
+ <a9b84439c28b96a9b6a4cbfca85f1e13a457d25d.1490135047.git.julia@ni.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Cc: Linus Walleij <linus.walleij@linaro.org>,
@@ -12,19 +12,14 @@ Cc: Linus Walleij <linus.walleij@linaro.org>,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         linux-gpio@vger.kernel.org
 To: Julia Cartwright <julia@ni.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yw0-f193.google.com ([209.85.161.193]:35097 "EHLO
-        mail-yw0-f193.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1759189AbdCVMsW (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 22 Mar 2017 08:48:22 -0400
+Return-path: <linux-gpio-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <9b15e28c4aeeade4b44e9a2bb06c12ded5d0990b.1490135047.git.julia@ni.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <a9b84439c28b96a9b6a4cbfca85f1e13a457d25d.1490135047.git.julia@ni.com>
+Sender: linux-gpio-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, Mar 21, 2017 at 05:43:08PM -0500, Julia Cartwright wrote:
->The 104-idio-16 gpio driver currently implements an irq_chip for handling
+On Tue, Mar 21, 2017 at 05:43:07PM -0500, Julia Cartwright wrote:
+>The 104-idi-48 gpio driver currently implements an irq_chip for handling
 >interrupts; due to how irq_chip handling is done, it's necessary for the
 >irq_chip methods to be invoked from hardirq context, even on a a
 >real-time kernel.  Because the spinlock_t type becomes a "sleeping"
@@ -35,114 +30,88 @@ On Tue, Mar 21, 2017 at 05:43:08PM -0500, Julia Cartwright wrote:
 >
 >Signed-off-by: Julia Cartwright <julia@ni.com>
 
-Acked-by: William Breathitt Gray <vilhelm.gray@gmail.com>
+Hi Julia,
+
+This driver also uses a second spinlock_t, called ack_lock, to prevent
+reentrance into the idi_48_irq_handler function. Should ack_lock also be
+implemented as a raw_spinlock_t?
+
+Thanks,
+
+William Breathitt Gray
 
 >---
 >New patch as of v2 of series.
 >
-> drivers/gpio/gpio-104-idio-16.c | 24 ++++++++++++------------
-> 1 file changed, 12 insertions(+), 12 deletions(-)
+> drivers/gpio/gpio-104-idi-48.c | 18 ++++++++++--------
+> 1 file changed, 10 insertions(+), 8 deletions(-)
 >
->diff --git a/drivers/gpio/gpio-104-idio-16.c b/drivers/gpio/gpio-104-idio-16.c
->index 7053cf736648..5281e1cedb01 100644
->--- a/drivers/gpio/gpio-104-idio-16.c
->+++ b/drivers/gpio/gpio-104-idio-16.c
->@@ -50,7 +50,7 @@ MODULE_PARM_DESC(irq, "ACCES 104-IDIO-16 interrupt line numbers");
+>diff --git a/drivers/gpio/gpio-104-idi-48.c b/drivers/gpio/gpio-104-idi-48.c
+>index 568375a7ebc2..337c048168d8 100644
+>--- a/drivers/gpio/gpio-104-idi-48.c
+>+++ b/drivers/gpio/gpio-104-idi-48.c
+>@@ -51,7 +51,7 @@ MODULE_PARM_DESC(irq, "ACCES 104-IDI-48 interrupt line numbers");
 >  */
-> struct idio_16_gpio {
+> struct idi_48_gpio {
 > 	struct gpio_chip chip;
 >-	spinlock_t lock;
 >+	raw_spinlock_t lock;
-> 	unsigned long irq_mask;
+> 	spinlock_t ack_lock;
+> 	unsigned char irq_mask[6];
 > 	unsigned base;
-> 	unsigned out_state;
->@@ -99,7 +99,7 @@ static void idio_16_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
-> 	if (offset > 15)
-> 		return;
+>@@ -112,11 +112,12 @@ static void idi_48_irq_mask(struct irq_data *data)
+> 			if (!idi48gpio->irq_mask[boundary]) {
+> 				idi48gpio->cos_enb &= ~BIT(boundary);
 > 
->-	spin_lock_irqsave(&idio16gpio->lock, flags);
->+	raw_spin_lock_irqsave(&idio16gpio->lock, flags);
+>-				spin_lock_irqsave(&idi48gpio->lock, flags);
+>+				raw_spin_lock_irqsave(&idi48gpio->lock, flags);
 > 
-> 	if (value)
-> 		idio16gpio->out_state |= mask;
->@@ -111,7 +111,7 @@ static void idio_16_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
-> 	else
-> 		outb(idio16gpio->out_state, idio16gpio->base);
+> 				outb(idi48gpio->cos_enb, idi48gpio->base + 7);
 > 
->-	spin_unlock_irqrestore(&idio16gpio->lock, flags);
->+	raw_spin_unlock_irqrestore(&idio16gpio->lock, flags);
-> }
+>-				spin_unlock_irqrestore(&idi48gpio->lock, flags);
+>+				raw_spin_unlock_irqrestore(&idi48gpio->lock,
+>+						           flags);
+> 			}
 > 
-> static void idio_16_gpio_set_multiple(struct gpio_chip *chip,
->@@ -120,7 +120,7 @@ static void idio_16_gpio_set_multiple(struct gpio_chip *chip,
-> 	struct idio_16_gpio *const idio16gpio = gpiochip_get_data(chip);
-> 	unsigned long flags;
+> 			return;
+>@@ -145,11 +146,12 @@ static void idi_48_irq_unmask(struct irq_data *data)
+> 			if (!prev_irq_mask) {
+> 				idi48gpio->cos_enb |= BIT(boundary);
 > 
->-	spin_lock_irqsave(&idio16gpio->lock, flags);
->+	raw_spin_lock_irqsave(&idio16gpio->lock, flags);
+>-				spin_lock_irqsave(&idi48gpio->lock, flags);
+>+				raw_spin_lock_irqsave(&idi48gpio->lock, flags);
 > 
-> 	idio16gpio->out_state &= ~*mask;
-> 	idio16gpio->out_state |= *mask & *bits;
->@@ -130,7 +130,7 @@ static void idio_16_gpio_set_multiple(struct gpio_chip *chip,
-> 	if ((*mask >> 8) & 0xFF)
-> 		outb(idio16gpio->out_state >> 8, idio16gpio->base + 4);
+> 				outb(idi48gpio->cos_enb, idi48gpio->base + 7);
 > 
->-	spin_unlock_irqrestore(&idio16gpio->lock, flags);
->+	raw_spin_unlock_irqrestore(&idio16gpio->lock, flags);
-> }
+>-				spin_unlock_irqrestore(&idi48gpio->lock, flags);
+>+				raw_spin_unlock_irqrestore(&idi48gpio->lock,
+>+						           flags);
+> 			}
 > 
-> static void idio_16_irq_ack(struct irq_data *data)
->@@ -147,11 +147,11 @@ static void idio_16_irq_mask(struct irq_data *data)
-> 	idio16gpio->irq_mask &= ~mask;
+> 			return;
+>@@ -186,11 +188,11 @@ static irqreturn_t idi_48_irq_handler(int irq, void *dev_id)
 > 
-> 	if (!idio16gpio->irq_mask) {
->-		spin_lock_irqsave(&idio16gpio->lock, flags);
->+		raw_spin_lock_irqsave(&idio16gpio->lock, flags);
+> 	spin_lock(&idi48gpio->ack_lock);
 > 
-> 		outb(0, idio16gpio->base + 2);
+>-	spin_lock(&idi48gpio->lock);
+>+	raw_spin_lock(&idi48gpio->lock);
 > 
->-		spin_unlock_irqrestore(&idio16gpio->lock, flags);
->+		raw_spin_unlock_irqrestore(&idio16gpio->lock, flags);
-> 	}
-> }
+> 	cos_status = inb(idi48gpio->base + 7);
 > 
->@@ -166,11 +166,11 @@ static void idio_16_irq_unmask(struct irq_data *data)
-> 	idio16gpio->irq_mask |= mask;
+>-	spin_unlock(&idi48gpio->lock);
+>+	raw_spin_unlock(&idi48gpio->lock);
 > 
-> 	if (!prev_irq_mask) {
->-		spin_lock_irqsave(&idio16gpio->lock, flags);
->+		raw_spin_lock_irqsave(&idio16gpio->lock, flags);
+> 	/* IRQ Status (bit 6) is active low (0 = IRQ generated by device) */
+> 	if (cos_status & BIT(6)) {
+>@@ -256,7 +258,7 @@ static int idi_48_probe(struct device *dev, unsigned int id)
+> 	idi48gpio->chip.get = idi_48_gpio_get;
+> 	idi48gpio->base = base[id];
 > 
-> 		inb(idio16gpio->base + 2);
+>-	spin_lock_init(&idi48gpio->lock);
+>+	raw_spin_lock_init(&idi48gpio->lock);
+> 	spin_lock_init(&idi48gpio->ack_lock);
 > 
->-		spin_unlock_irqrestore(&idio16gpio->lock, flags);
->+		raw_spin_unlock_irqrestore(&idio16gpio->lock, flags);
-> 	}
-> }
-> 
->@@ -201,11 +201,11 @@ static irqreturn_t idio_16_irq_handler(int irq, void *dev_id)
-> 	for_each_set_bit(gpio, &idio16gpio->irq_mask, chip->ngpio)
-> 		generic_handle_irq(irq_find_mapping(chip->irqdomain, gpio));
-> 
->-	spin_lock(&idio16gpio->lock);
->+	raw_spin_lock(&idio16gpio->lock);
-> 
-> 	outb(0, idio16gpio->base + 1);
-> 
->-	spin_unlock(&idio16gpio->lock);
->+	raw_spin_unlock(&idio16gpio->lock);
-> 
-> 	return IRQ_HANDLED;
-> }
->@@ -249,7 +249,7 @@ static int idio_16_probe(struct device *dev, unsigned int id)
-> 	idio16gpio->base = base[id];
-> 	idio16gpio->out_state = 0xFFFF;
-> 
->-	spin_lock_init(&idio16gpio->lock);
->+	raw_spin_lock_init(&idio16gpio->lock);
-> 
-> 	err = devm_gpiochip_add_data(dev, &idio16gpio->chip, idio16gpio);
-> 	if (err) {
+> 	err = devm_gpiochip_add_data(dev, &idi48gpio->chip, idi48gpio);
 >-- 
 >2.12.0
 >
