@@ -1,89 +1,93 @@
-From: Brian Wrenn <dcbrianw@gmail.com>
-Subject: Re: How to write RT applications ?
-Date: Wed, 22 Mar 2017 09:10:03 -0400
-Message-ID: <CAEYdEeSChwWd208jLPz+qyiSHHMnnq08q-2mNVEQBU2EL4OYzQ@mail.gmail.com>
-References: <CAJ2oMhJp-uBxxj7tyPHM2M9cFnjhus4ORYYfFgNywaMFXS4Q9Q@mail.gmail.com>
- <20170317201741.bwwycyl5ggbpjksw@linutronix.de> <CAEYdEeR=04qszshTum6mbCwj_H53uLwwgbE4YDnDh1hHYqP7UQ@mail.gmail.com>
- <20170321201702.GF10423@jcartwri.amer.corp.natinst.com>
+From: Lionel Debieve <lionel.debieve@st.com>
+Subject: [PATCH RT 1/1] remoteproc: Prevent schedule while atomic
+Date: Wed, 22 Mar 2017 16:18:43 +0100
+Message-ID: <1490195923-9560-1-git-send-email-lionel.debieve@st.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Ran Shalit <ranshalit@gmail.com>,
-        linux-rt-users@vger.kernel.org
-To: Julia Cartwright <julia@ni.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-io0-f173.google.com ([209.85.223.173]:32784 "EHLO
-        mail-io0-f173.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S933720AbdCVNKE (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 22 Mar 2017 09:10:04 -0400
-Received: by mail-io0-f173.google.com with SMTP id f84so65088031ioj.0
-        for <linux-rt-users@vger.kernel.org>; Wed, 22 Mar 2017 06:10:04 -0700 (PDT)
-In-Reply-To: <20170321201702.GF10423@jcartwri.amer.corp.natinst.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain
+Cc: <bigeasy@linutronix.de>, <tglx@linutronix.de>,
+        <rostedt@goodmis.org>, Lionel Debieve <lionel.debieve@st.com>
+To: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi Julia (and anyone else following),
+Use raw_spin_lock in enable/disable channel as it comes from
+interrupt context.
 
-I was looking at that exact page yesterday.  W.r.t. the sample code on
-the wiki, I'd need to address five function calls.  Here's what I
-found.
+BUG: sleeping function called from invalid context at
+kernel/locking/rtmutex.c:995
+in_atomic(): 1, irqs_disabled(): 128, pid: 307, name: pulseaudio
+Preemption disabled at:
+[<c01790fc>] __handle_domain_irq+0x4c/0xec
+CPU: 0 PID: 307 Comm: pulseaudio
+Hardware name: STi SoC with Flattened Device Tree
+[<c011046c>] (unwind_backtrace)
+[<c010c7f4>] (show_stack)
+[<c03d1578>] (dump_stack)
+[<c014e440>] (___might_sleep)
+[<c08e7f24>] (rt_spin_lock)
+[<c069bb04>] (sti_mbox_disable_channel)
+[<c069befc>] (sti_mbox_irq_handler)
+[<c0179900>] (__handle_irq_event_percpu)
+[<c01799dc>] (handle_irq_event_percpu)
+[<c0179a78>] (handle_irq_event)
+[<c017d1c8>] (handle_fasteoi_irq)
+[<c0178c08>] (generic_handle_irq)
+[<c017912c>] (__handle_domain_irq)
+[<c0101488>] (gic_handle_irq)
 
-// ::boost::thread provides it's own ::boost::thread::attributes, but
-it's not as
-// comprehensive, i.e. only includes stack size.  ::std::thread at
-this point aims to
-// be cross platform and hence doesn't.
-// Finding: ::boost::thread==>kinda, ::std::thread==>no
-pthread_attr_init(&attr);
+Signed-off-by: Lionel Debieve <lionel.debieve@st.com>
+---
+ drivers/mailbox/mailbox-sti.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 
-// Can apply to ::boost::thread via ::boost::thread::attributes, but
-not ::std::thread.
-// Finding: same as previous
-pthread_attr_setstack(&attr, stack_buf, PTHREAD_STACK_MIN);
-
-// Can only apply at the attribute level prior to creating, at least
-with the pthread
-// API I have for arm64, a therefore not via native_handle().
-// Finding: ::boost::thread==>no, ::std::thread==>no
-pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
-
-// Can apply via native_handle().
-// Finding: ::boost::thread==>yes, ::std::thread==>yes
-pthread_attr_setschedparam(&attr, &param);
-
-// Can only apply at the attribute level and not via native_handle().
-// Finding: ::boost::thread==>no, ::std::thread==>no
-pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
-
-If there's some way to use pthread_self() to address the calls that
-can't work on native_handle(), I haven't found it yet.
-
-Alternatively, if I were to use sched_setscheduler() instead of
-pthread attributes, that eliminates three of the above, which means
-one could conceivably use ::boost::thread and
-::boost::thread::attributes to set the stacksize, but to cross compile
-the boost libraries, as I'd need to link against boost_system.so/a, it
-may not be worth the effort over just using pthreads.
-
-
-On Tue, Mar 21, 2017 at 4:17 PM, Julia Cartwright <julia@ni.com> wrote:
-> On Tue, Mar 21, 2017 at 01:08:40PM -0400, Brian Wrenn wrote:
->> I've tried to find a way to use ::std::thread or ::boost::thread to
->> accomplish what the article for creating a simple RT application with
->> pthreads does, but unfortunately I don't think those two OOP
->> approaches provide enough attribute configuration to suffice.  Has
->> anyone else found otherwise?
->
-> There is a defined member function for the std::thread type,
-> native_thread() which will return the underlying native thread type,
-> which, if you're using gcc/glibc is most likely the pthread_t.
->
-> Alternatively, the thread can adjust its own scheduling properties using
-> pthread_self().
->
-> See: http://en.cppreference.com/w/cpp/thread/thread/native_handle
->
-> For an example.
->
->    Julia
+diff --git a/drivers/mailbox/mailbox-sti.c b/drivers/mailbox/mailbox-sti.c
+index 41bcd33..f9674ca 100644
+--- a/drivers/mailbox/mailbox-sti.c
++++ b/drivers/mailbox/mailbox-sti.c
+@@ -60,7 +60,7 @@ struct sti_mbox_device {
+ 	void __iomem		*base;
+ 	const char		*name;
+ 	u32			enabled[STI_MBOX_INST_MAX];
+-	spinlock_t		lock;
++	raw_spinlock_t		lock;
+ };
+ 
+ /**
+@@ -129,10 +129,10 @@ static void sti_mbox_enable_channel(struct mbox_chan *chan)
+ 	unsigned long flags;
+ 	void __iomem *base = MBOX_BASE(mdev, instance);
+ 
+-	spin_lock_irqsave(&mdev->lock, flags);
++	raw_spin_lock_irqsave(&mdev->lock, flags);
+ 	mdev->enabled[instance] |= BIT(channel);
+ 	writel_relaxed(BIT(channel), base + STI_ENA_SET_OFFSET);
+-	spin_unlock_irqrestore(&mdev->lock, flags);
++	raw_spin_unlock_irqrestore(&mdev->lock, flags);
+ }
+ 
+ static void sti_mbox_disable_channel(struct mbox_chan *chan)
+@@ -144,10 +144,10 @@ static void sti_mbox_disable_channel(struct mbox_chan *chan)
+ 	unsigned long flags;
+ 	void __iomem *base = MBOX_BASE(mdev, instance);
+ 
+-	spin_lock_irqsave(&mdev->lock, flags);
++	raw_spin_lock_irqsave(&mdev->lock, flags);
+ 	mdev->enabled[instance] &= ~BIT(channel);
+ 	writel_relaxed(BIT(channel), base + STI_ENA_CLR_OFFSET);
+-	spin_unlock_irqrestore(&mdev->lock, flags);
++	raw_spin_unlock_irqrestore(&mdev->lock, flags);
+ }
+ 
+ static void sti_mbox_clear_irq(struct mbox_chan *chan)
+@@ -450,7 +450,7 @@ static int sti_mbox_probe(struct platform_device *pdev)
+ 	mdev->dev		= &pdev->dev;
+ 	mdev->mbox		= mbox;
+ 
+-	spin_lock_init(&mdev->lock);
++	raw_spin_lock_init(&mdev->lock);
+ 
+ 	/* STi Mailbox does not have a Tx-Done or Tx-Ready IRQ */
+ 	mbox->txdone_irq	= false;
+-- 
+2.7.4
