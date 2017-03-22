@@ -1,54 +1,69 @@
-From: Lionel DEBIEVE <lionel.debieve@st.com>
-Subject: RE: [PATCH RT] tty: serial: st-asc: Make the locking RT aware
-Date: Wed, 22 Mar 2017 16:14:28 +0000
-Message-ID: <f4c07cb2241b46dd960b35ba1cd22f5b@SFHDAG7NODE2.st.com>
-References: <1490112340-29772-1-git-send-email-lionel.debieve@st.com>
-        <20170321144437.569440c2@vmware.local.home>
-        <alpine.DEB.2.20.1703211950040.3776@nanos>
-        <20170321161533.44c4df87@vmware.local.home>
-        <99a6d117-4998-fe37-5e32-ef773597e8e9@st.com>
- <20170322091044.77df6f0c@vmware.local.home>
+From: Julia Cartwright <julia@ni.com>
+Subject: Re: [PATCH v2 1/9] Coccinelle: locks: identify callers of
+ spin_lock{, _irq, _irqsave}() in irqchip implementations
+Date: Wed, 22 Mar 2017 11:18:56 -0500
+Message-ID: <20170322161856.GJ10423@jcartwri.amer.corp.natinst.com>
+References: <cover.1490135047.git.julia@ni.com>
+ <48a11ad61edb4bec130f2ae0d46fc4e7d4855044.1490135047.git.julia@ni.com>
+ <alpine.DEB.2.20.1703221053550.3413@hadrien>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "bigeasy@linutronix.de" <bigeasy@linutronix.de>,
-        Patrice CHOTARD <patrice.chotard@st.com>,
-        "Greg Kroah-Hartman" <gregkh@linuxfoundation.org>,
-        Jiri Slaby <jslaby@suse.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx08-00178001.pphosted.com ([91.207.212.93]:45570 "EHLO
-        mx07-00178001.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1758940AbdCVQOm (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 22 Mar 2017 12:14:42 -0400
-In-Reply-To: <20170322091044.77df6f0c@vmware.local.home>
-Content-Language: en-US
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Nicolas Palix <nicolas.palix@imag.fr>, linux-kernel@vger.kernel.org,
+        cocci@systeme.lip6.fr, Michal Marek <mmarek@suse.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Linus Walleij <linus.walleij@linaro.org>
+To: Julia Lawall <julia.lawall@lip6.fr>
+Return-path: <cocci-bounces@systeme.lip6.fr>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.20.1703221053550.3413@hadrien>
+List-Unsubscribe: <https://systeme.lip6.fr/mailman/options/cocci>,
+ <mailto:cocci-request@systeme.lip6.fr?subject=unsubscribe>
+List-Archive: <https://systeme.lip6.fr/pipermail/cocci>
+List-Post: <mailto:cocci@systeme.lip6.fr>
+List-Help: <mailto:cocci-request@systeme.lip6.fr?subject=help>
+List-Subscribe: <https://systeme.lip6.fr/mailman/listinfo/cocci>,
+ <mailto:cocci-request@systeme.lip6.fr?subject=subscribe>
+Sender: cocci-bounces@systeme.lip6.fr
+Errors-To: cocci-bounces@systeme.lip6.fr
+List-Id: linux-rt-users.vger.kernel.org
 
-OK, resend without.
-BR
-Lionel
-
------Original Message-----
-From: Steven Rostedt [mailto:rostedt@goodmis.org] 
-Sent: mercredi 22 mars 2017 17:11
-To: Lionel DEBIEVE <lionel.debieve@st.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>; linux-rt-users@vger.kernel.org; linux-kernel@vger.kernel.org; bigeasy@linutronix.de; Patrice CHOTARD <patrice.chotard@st.com>; Greg Kroah-Hartman <gregkh@linuxfoundation.org>; Jiri Slaby <jslaby@suse.com>
-Subject: Re: [PATCH RT] tty: serial: st-asc: Make the locking RT aware
-
-On Wed, 22 Mar 2017 08:43:50 +0000
-Lionel DEBIEVE <lionel.debieve@st.com> wrote:
-
-> Just to agree with Thomas.
+On Wed, Mar 22, 2017 at 10:54:15AM +0100, Julia Lawall wrote:
+> On Tue, 21 Mar 2017, Julia Cartwright wrote:
+> > On PREEMPT_RT, the spinlock_t type becomes an object which sleeps under
+> > contention.  The codepaths used to support scheduling (irq dispatching, arch
+> > code, the scheduler, timers) therefore must make use of the
+> > raw_spin_lock{,_irq,_irqsave}() variations which preserve the non-sleeping
+> > spinlock behavior.
+> >
+> > Because the irq_chip callbacks are invoked in the process of interrupt
+> > dispatch, they cannot therefore make use of spin_lock_t type.  Instead, the
+> > usage of raw_spinlock_t is appropriate.
+> >
+> > Provide a spatch to identify (and attempt to patch) such problematic irqchip
+> > implementations.
+> >
+> > Note to those generating patches using this spatch; in order to maintain
+> > correct semantics w/ PREEMPT_RT, it is necessary to audit the
+> > raw_spinlock_t-protected codepaths to ensure their execution is bounded and
+> > minimal.  This is a manual audit process.
+> >
+> > See commit 47b03ca903fb0 ("pinctrl: qcom: Use raw spinlock variants") as an
+> > example of _one_ such instance, which fixed a real bug seen in the field.
+> >
+> > Cc: Thomas Gleixner <tglx@linutronix.de>
+> > Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> > Cc: Linus Walleij <linus.walleij@linaro.org>
+> > Signed-off-by: Julia Cartwright <julia@ni.com>
 > 
-> Do you want me to resend the patch without RT tag?
->
+> Acked-by: Julia Lawall <julia.lawall@lip6.fr>
 
-Yes please. And hopefully it will be picked up in mainline.
+Thanks, Julia.
 
--- Steve
+How do these semantic patches normally land?  It looks like they quite a
+few have gone through the kbuild tree, is this the norm?
+
+Thanks,
+   Other Julia
