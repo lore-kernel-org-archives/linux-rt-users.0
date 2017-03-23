@@ -1,70 +1,70 @@
-From: Patrice CHOTARD <patrice.chotard@st.com>
-Subject: Re: [PATCH 1/1] tty: serial: st-asc: Make the locking RT aware
-Date: Thu, 23 Mar 2017 07:56:27 +0000
-Message-ID: <d592cad0-1509-4eec-1012-7af17f9e577c@st.com>
-References: <1490202751-16581-1-git-send-email-lionel.debieve@st.com>
+From: Lionel DEBIEVE <lionel.debieve@st.com>
+Subject: Re: [PATCH RT 1/1] remoteproc: Prevent schedule while atomic
+Date: Thu, 23 Mar 2017 08:28:51 +0000
+Message-ID: <7b1ffee6-1f78-7b9f-206e-27a9b6cd967f@st.com>
+References: <1490195923-9560-1-git-send-email-lionel.debieve@st.com>
+ <20170322173759.GK10423@jcartwri.amer.corp.natinst.com>
+ <20170322110116.4b14dafd@vmware.local.home>
+ <21d6cfe5-3263-4eeb-c35b-c75f34185526@ti.com>
+ <20170322184733.GL10423@jcartwri.amer.corp.natinst.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="Windows-1252"
 Content-Transfer-Encoding: 8BIT
-Cc: "linux-serial@vger.kernel.org" <linux-serial@vger.kernel.org>,
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
         "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-arm-kernel@lists.infradead.org"
-        <linux-arm-kernel@lists.infradead.org>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Lionel DEBIEVE <lionel.debieve@st.com>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        Jiri Slaby <jslaby@suse.com>
+        "bigeasy@linutronix.de" <bigeasy@linutronix.de>,
+        "tglx@linutronix.de" <tglx@linutronix.de>
+To: Julia Cartwright <julia@ni.com>,
+        Grygorii Strashko <grygorii.strashko@ti.com>,
+        Lee Jones <lee.jones@linaro.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1490202751-16581-1-git-send-email-lionel.debieve@st.com>
+In-Reply-To: <20170322184733.GL10423@jcartwri.amer.corp.natinst.com>
 Content-Language: en-US
-Content-ID: <39AE01551037084B8D4FD5D8BD671354@st.com>
+Content-ID: <E91C1F77F6357B43ABDBAF866AAB2660@st.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Lionel
+On 03/22/2017 07:47 PM, Julia Cartwright wrote:
+> On Wed, Mar 22, 2017 at 01:30:12PM -0500, Grygorii Strashko wrote:
+>> On 03/22/2017 01:01 PM, Steven Rostedt wrote:
+>>> On Wed, 22 Mar 2017 12:37:59 -0500
+>>> Julia Cartwright <julia@ni.com> wrote:
+>>>
+>>>> Which kernel were you testing on, here?  From what I can tell, this
+>>>> should have been fixed with Thomas's commit:
+>>>>
+>>>>     2a1d3ab8986d ("genirq: Handle force threading of irqs with primary
+>>>> and thread handler")
+>>> Thanks Julia for looking into this. I just looked at the code, and saw
+>>> that it does very little with the lock held, and was fine with the
+>>> conversion. But if that interrupt handler should be in a thread, we
+>>> should see if that's the issue first.
+>>
+>> It will not be threaded because there are IRQF_ONESHOT used.
+>>
+>> 	ret = devm_request_threaded_irq(&pdev->dev, irq,
+>> 					sti_mbox_irq_handler,
+>> 					sti_mbox_thread_handler,
+>> 					IRQF_ONESHOT, mdev->name, mdev);
+> Indeed.  I had skipped over this important detail when I was skimming
+> through the code.
+>
+> Thanks for clarifying!
+>
+> Is IRQF_ONESHOT really necessary for this device?  The primary handler
+> invokes sti_mbox_disable_channel() on the interrupting channel, which I
+> would hope would acquiesce the pending interrupt at the device-level?
+>
+> Also, as written there are num_inst reads of STI_IRQ_VAL_OFFSET in the
+> primary handler, which seems inefficient...(unless of course reading
+> incurs side effects, here).
+>
+>     Julia
 
-On 03/22/2017 06:12 PM, Lionel Debieve wrote:
-> The lock is a sleeping lock and local_irq_save() is not the
-> standard implementation now. Working for both -RT and non
-> RT.
->
-> Signed-off-by: Lionel Debieve <lionel.debieve@st.com>
+First to reply Julia, test was made using 4.9.y kernel branch.
+For the IRQF_ONESHOT, I rely on Lee (adding in mail thread) that was at the device driver origin.
 
-Acked-by: Patrice Chotard <patrice.chotard@st.com>
+Steven, you're also right as the patch can be also pushed in mainline too.
 
-
-> ---
->  drivers/tty/serial/st-asc.c | 8 +++-----
->  1 file changed, 3 insertions(+), 5 deletions(-)
->
-> diff --git a/drivers/tty/serial/st-asc.c b/drivers/tty/serial/st-asc.c
-> index c334bcc..4889396 100644
-> --- a/drivers/tty/serial/st-asc.c
-> +++ b/drivers/tty/serial/st-asc.c
-> @@ -887,13 +887,12 @@ static void asc_console_write(struct console *co, const char *s, unsigned count)
->  	int locked = 1;
->  	u32 intenable;
->
-> -	local_irq_save(flags);
->  	if (port->sysrq)
->  		locked = 0; /* asc_interrupt has already claimed the lock */
->  	else if (oops_in_progress)
-> -		locked = spin_trylock(&port->lock);
-> +		locked = spin_trylock_irqsave(&port->lock, flags);
->  	else
-> -		spin_lock(&port->lock);
-> +		spin_lock_irqsave(&port->lock, flags);
->
->  	/*
->  	 * Disable interrupts so we don't get the IRQ line bouncing
-> @@ -911,8 +910,7 @@ static void asc_console_write(struct console *co, const char *s, unsigned count)
->  	asc_out(port, ASC_INTEN, intenable);
->
->  	if (locked)
-> -		spin_unlock(&port->lock);
-> -	local_irq_restore(flags);
-> +		spin_unlock_irqrestore(&port->lock, flags);
->  }
->
->  static int asc_console_setup(struct console *co, char *options)
->
+Lionel
