@@ -1,30 +1,30 @@
 From: Lee Jones <lee.jones@linaro.org>
-Subject: Re: [PATCH v2 4/9] mfd: asic3: make use of raw_spinlock variants
-Date: Thu, 23 Mar 2017 13:42:36 +0000
-Message-ID: <20170323134236.jc6v7qknxuyvho6t@dell>
+Subject: Re: [PATCH v2 5/9] mfd: t7l66xb: make use of raw_spinlock variants
+Date: Thu, 23 Mar 2017 13:42:47 +0000
+Message-ID: <20170323134247.clvdcuuwbzngyupp@dell>
 References: <cover.1490135047.git.julia@ni.com>
- <e5dad38e679546595326a0b11c6cd59c51c252f0.1490135047.git.julia@ni.com>
+ <1017371a656047dabe20e82a57a592b3925b5dd7.1490135047.git.julia@ni.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 To: Julia Cartwright <julia@ni.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wr0-f181.google.com ([209.85.128.181]:34345 "EHLO
-        mail-wr0-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S934183AbdCWNml (ORCPT
+Received: from mail-wm0-f54.google.com ([74.125.82.54]:35955 "EHLO
+        mail-wm0-f54.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S933251AbdCWNmw (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 23 Mar 2017 09:42:41 -0400
-Received: by mail-wr0-f181.google.com with SMTP id l37so147903366wrc.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 23 Mar 2017 06:42:39 -0700 (PDT)
+        Thu, 23 Mar 2017 09:42:52 -0400
+Received: by mail-wm0-f54.google.com with SMTP id n11so61440715wma.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 23 Mar 2017 06:42:51 -0700 (PDT)
 Content-Disposition: inline
-In-Reply-To: <e5dad38e679546595326a0b11c6cd59c51c252f0.1490135047.git.julia@ni.com>
+In-Reply-To: <1017371a656047dabe20e82a57a592b3925b5dd7.1490135047.git.julia@ni.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 On Tue, 21 Mar 2017, Julia Cartwright wrote:
 
-> The asic3 mfd driver currently implements an irq_chip for handling
+> The t7l66xb mfd driver currently implements an irq_chip for handling
 > interrupts; due to how irq_chip handling is done, it's necessary for the
 > irq_chip methods to be invoked from hardirq context, even on a a
 > real-time kernel.  Because the spinlock_t type becomes a "sleeping"
@@ -39,246 +39,92 @@ On Tue, 21 Mar 2017, Julia Cartwright wrote:
 > v1 -> v2:
 >   - No functional change.  Added Lee's ack.
 > 
->  drivers/mfd/asic3.c | 56 ++++++++++++++++++++++++++---------------------------
->  1 file changed, 28 insertions(+), 28 deletions(-)
+>  drivers/mfd/t7l66xb.c | 20 ++++++++++----------
+>  1 file changed, 10 insertions(+), 10 deletions(-)
 
 Applied, thanks.
 
-> diff --git a/drivers/mfd/asic3.c b/drivers/mfd/asic3.c
-> index 0413c8159551..cf2e25ab2940 100644
-> --- a/drivers/mfd/asic3.c
-> +++ b/drivers/mfd/asic3.c
-> @@ -78,7 +78,7 @@ struct asic3 {
->  	unsigned int bus_shift;
->  	unsigned int irq_nr;
->  	unsigned int irq_base;
-> -	spinlock_t lock;
-> +	raw_spinlock_t lock;
->  	u16 irq_bothedge[4];
->  	struct gpio_chip gpio;
->  	struct device *dev;
-> @@ -108,14 +108,14 @@ static void asic3_set_register(struct asic3 *asic, u32 reg, u32 bits, bool set)
+> diff --git a/drivers/mfd/t7l66xb.c b/drivers/mfd/t7l66xb.c
+> index 94bd89cb1f06..22c811396edc 100644
+> --- a/drivers/mfd/t7l66xb.c
+> +++ b/drivers/mfd/t7l66xb.c
+> @@ -69,7 +69,7 @@ static const struct resource t7l66xb_mmc_resources[] = {
+>  struct t7l66xb {
+>  	void __iomem		*scr;
+>  	/* Lock to protect registers requiring read/modify/write ops. */
+> -	spinlock_t		lock;
+> +	raw_spinlock_t		lock;
+>  
+>  	struct resource		rscr;
+>  	struct clk		*clk48m;
+> @@ -89,13 +89,13 @@ static int t7l66xb_mmc_enable(struct platform_device *mmc)
+>  
+>  	clk_prepare_enable(t7l66xb->clk32k);
+>  
+> -	spin_lock_irqsave(&t7l66xb->lock, flags);
+> +	raw_spin_lock_irqsave(&t7l66xb->lock, flags);
+>  
+>  	dev_ctl = tmio_ioread8(t7l66xb->scr + SCR_DEV_CTL);
+>  	dev_ctl |= SCR_DEV_CTL_MMC;
+>  	tmio_iowrite8(dev_ctl, t7l66xb->scr + SCR_DEV_CTL);
+>  
+> -	spin_unlock_irqrestore(&t7l66xb->lock, flags);
+> +	raw_spin_unlock_irqrestore(&t7l66xb->lock, flags);
+>  
+>  	tmio_core_mmc_enable(t7l66xb->scr + 0x200, 0,
+>  		t7l66xb_mmc_resources[0].start & 0xfffe);
+> @@ -110,13 +110,13 @@ static int t7l66xb_mmc_disable(struct platform_device *mmc)
 >  	unsigned long flags;
->  	u32 val;
+>  	u8 dev_ctl;
 >  
-> -	spin_lock_irqsave(&asic->lock, flags);
-> +	raw_spin_lock_irqsave(&asic->lock, flags);
->  	val = asic3_read_register(asic, reg);
->  	if (set)
->  		val |= bits;
->  	else
->  		val &= ~bits;
->  	asic3_write_register(asic, reg, val);
-> -	spin_unlock_irqrestore(&asic->lock, flags);
-> +	raw_spin_unlock_irqrestore(&asic->lock, flags);
+> -	spin_lock_irqsave(&t7l66xb->lock, flags);
+> +	raw_spin_lock_irqsave(&t7l66xb->lock, flags);
+>  
+>  	dev_ctl = tmio_ioread8(t7l66xb->scr + SCR_DEV_CTL);
+>  	dev_ctl &= ~SCR_DEV_CTL_MMC;
+>  	tmio_iowrite8(dev_ctl, t7l66xb->scr + SCR_DEV_CTL);
+>  
+> -	spin_unlock_irqrestore(&t7l66xb->lock, flags);
+> +	raw_spin_unlock_irqrestore(&t7l66xb->lock, flags);
+>  
+>  	clk_disable_unprepare(t7l66xb->clk32k);
+>  
+> @@ -206,11 +206,11 @@ static void t7l66xb_irq_mask(struct irq_data *data)
+>  	unsigned long			flags;
+>  	u8 imr;
+>  
+> -	spin_lock_irqsave(&t7l66xb->lock, flags);
+> +	raw_spin_lock_irqsave(&t7l66xb->lock, flags);
+>  	imr = tmio_ioread8(t7l66xb->scr + SCR_IMR);
+>  	imr |= 1 << (data->irq - t7l66xb->irq_base);
+>  	tmio_iowrite8(imr, t7l66xb->scr + SCR_IMR);
+> -	spin_unlock_irqrestore(&t7l66xb->lock, flags);
+> +	raw_spin_unlock_irqrestore(&t7l66xb->lock, flags);
 >  }
 >  
->  /* IRQs */
-> @@ -129,13 +129,13 @@ static void asic3_irq_flip_edge(struct asic3 *asic,
->  	u16 edge;
+>  static void t7l66xb_irq_unmask(struct irq_data *data)
+> @@ -219,11 +219,11 @@ static void t7l66xb_irq_unmask(struct irq_data *data)
 >  	unsigned long flags;
+>  	u8 imr;
 >  
-> -	spin_lock_irqsave(&asic->lock, flags);
-> +	raw_spin_lock_irqsave(&asic->lock, flags);
->  	edge = asic3_read_register(asic,
->  				   base + ASIC3_GPIO_EDGE_TRIGGER);
->  	edge ^= bit;
->  	asic3_write_register(asic,
->  			     base + ASIC3_GPIO_EDGE_TRIGGER, edge);
-> -	spin_unlock_irqrestore(&asic->lock, flags);
-> +	raw_spin_unlock_irqrestore(&asic->lock, flags);
+> -	spin_lock_irqsave(&t7l66xb->lock, flags);
+> +	raw_spin_lock_irqsave(&t7l66xb->lock, flags);
+>  	imr = tmio_ioread8(t7l66xb->scr + SCR_IMR);
+>  	imr &= ~(1 << (data->irq - t7l66xb->irq_base));
+>  	tmio_iowrite8(imr, t7l66xb->scr + SCR_IMR);
+> -	spin_unlock_irqrestore(&t7l66xb->lock, flags);
+> +	raw_spin_unlock_irqrestore(&t7l66xb->lock, flags);
 >  }
 >  
->  static void asic3_irq_demux(struct irq_desc *desc)
-> @@ -151,10 +151,10 @@ static void asic3_irq_demux(struct irq_desc *desc)
->  		u32 status;
->  		int bank;
->  
-> -		spin_lock_irqsave(&asic->lock, flags);
-> +		raw_spin_lock_irqsave(&asic->lock, flags);
->  		status = asic3_read_register(asic,
->  					     ASIC3_OFFSET(INTR, P_INT_STAT));
-> -		spin_unlock_irqrestore(&asic->lock, flags);
-> +		raw_spin_unlock_irqrestore(&asic->lock, flags);
->  
->  		/* Check all ten register bits */
->  		if ((status & 0x3ff) == 0)
-> @@ -167,7 +167,7 @@ static void asic3_irq_demux(struct irq_desc *desc)
->  
->  				base = ASIC3_GPIO_A_BASE
->  				       + bank * ASIC3_GPIO_BASE_INCR;
-> -				spin_lock_irqsave(&asic->lock, flags);
-> +				raw_spin_lock_irqsave(&asic->lock, flags);
->  				istat = asic3_read_register(asic,
->  							    base +
->  							    ASIC3_GPIO_INT_STATUS);
-> @@ -175,7 +175,7 @@ static void asic3_irq_demux(struct irq_desc *desc)
->  				asic3_write_register(asic,
->  						     base +
->  						     ASIC3_GPIO_INT_STATUS, 0);
-> -				spin_unlock_irqrestore(&asic->lock, flags);
-> +				raw_spin_unlock_irqrestore(&asic->lock, flags);
->  
->  				for (i = 0; i < ASIC3_GPIOS_PER_BANK; i++) {
->  					int bit = (1 << i);
-> @@ -230,11 +230,11 @@ static void asic3_mask_gpio_irq(struct irq_data *data)
->  	bank = asic3_irq_to_bank(asic, data->irq);
->  	index = asic3_irq_to_index(asic, data->irq);
->  
-> -	spin_lock_irqsave(&asic->lock, flags);
-> +	raw_spin_lock_irqsave(&asic->lock, flags);
->  	val = asic3_read_register(asic, bank + ASIC3_GPIO_MASK);
->  	val |= 1 << index;
->  	asic3_write_register(asic, bank + ASIC3_GPIO_MASK, val);
-> -	spin_unlock_irqrestore(&asic->lock, flags);
-> +	raw_spin_unlock_irqrestore(&asic->lock, flags);
->  }
->  
->  static void asic3_mask_irq(struct irq_data *data)
-> @@ -243,7 +243,7 @@ static void asic3_mask_irq(struct irq_data *data)
->  	int regval;
->  	unsigned long flags;
->  
-> -	spin_lock_irqsave(&asic->lock, flags);
-> +	raw_spin_lock_irqsave(&asic->lock, flags);
->  	regval = asic3_read_register(asic,
->  				     ASIC3_INTR_BASE +
->  				     ASIC3_INTR_INT_MASK);
-> @@ -255,7 +255,7 @@ static void asic3_mask_irq(struct irq_data *data)
->  			     ASIC3_INTR_BASE +
->  			     ASIC3_INTR_INT_MASK,
->  			     regval);
-> -	spin_unlock_irqrestore(&asic->lock, flags);
-> +	raw_spin_unlock_irqrestore(&asic->lock, flags);
->  }
->  
->  static void asic3_unmask_gpio_irq(struct irq_data *data)
-> @@ -267,11 +267,11 @@ static void asic3_unmask_gpio_irq(struct irq_data *data)
->  	bank = asic3_irq_to_bank(asic, data->irq);
->  	index = asic3_irq_to_index(asic, data->irq);
->  
-> -	spin_lock_irqsave(&asic->lock, flags);
-> +	raw_spin_lock_irqsave(&asic->lock, flags);
->  	val = asic3_read_register(asic, bank + ASIC3_GPIO_MASK);
->  	val &= ~(1 << index);
->  	asic3_write_register(asic, bank + ASIC3_GPIO_MASK, val);
-> -	spin_unlock_irqrestore(&asic->lock, flags);
-> +	raw_spin_unlock_irqrestore(&asic->lock, flags);
->  }
->  
->  static void asic3_unmask_irq(struct irq_data *data)
-> @@ -280,7 +280,7 @@ static void asic3_unmask_irq(struct irq_data *data)
->  	int regval;
->  	unsigned long flags;
->  
-> -	spin_lock_irqsave(&asic->lock, flags);
-> +	raw_spin_lock_irqsave(&asic->lock, flags);
->  	regval = asic3_read_register(asic,
->  				     ASIC3_INTR_BASE +
->  				     ASIC3_INTR_INT_MASK);
-> @@ -292,7 +292,7 @@ static void asic3_unmask_irq(struct irq_data *data)
->  			     ASIC3_INTR_BASE +
->  			     ASIC3_INTR_INT_MASK,
->  			     regval);
-> -	spin_unlock_irqrestore(&asic->lock, flags);
-> +	raw_spin_unlock_irqrestore(&asic->lock, flags);
->  }
->  
->  static int asic3_gpio_irq_type(struct irq_data *data, unsigned int type)
-> @@ -306,7 +306,7 @@ static int asic3_gpio_irq_type(struct irq_data *data, unsigned int type)
->  	index = asic3_irq_to_index(asic, data->irq);
->  	bit = 1<<index;
->  
-> -	spin_lock_irqsave(&asic->lock, flags);
-> +	raw_spin_lock_irqsave(&asic->lock, flags);
->  	level = asic3_read_register(asic,
->  				    bank + ASIC3_GPIO_LEVEL_TRIGGER);
->  	edge = asic3_read_register(asic,
-> @@ -348,7 +348,7 @@ static int asic3_gpio_irq_type(struct irq_data *data, unsigned int type)
->  			     edge);
->  	asic3_write_register(asic, bank + ASIC3_GPIO_TRIGGER_TYPE,
->  			     trigger);
-> -	spin_unlock_irqrestore(&asic->lock, flags);
-> +	raw_spin_unlock_irqrestore(&asic->lock, flags);
->  	return 0;
->  }
->  
-> @@ -455,7 +455,7 @@ static int asic3_gpio_direction(struct gpio_chip *chip,
->  		return -EINVAL;
->  	}
->  
-> -	spin_lock_irqsave(&asic->lock, flags);
-> +	raw_spin_lock_irqsave(&asic->lock, flags);
->  
->  	out_reg = asic3_read_register(asic, gpio_base + ASIC3_GPIO_DIRECTION);
->  
-> @@ -467,7 +467,7 @@ static int asic3_gpio_direction(struct gpio_chip *chip,
->  
->  	asic3_write_register(asic, gpio_base + ASIC3_GPIO_DIRECTION, out_reg);
->  
-> -	spin_unlock_irqrestore(&asic->lock, flags);
-> +	raw_spin_unlock_irqrestore(&asic->lock, flags);
->  
->  	return 0;
->  
-> @@ -524,7 +524,7 @@ static void asic3_gpio_set(struct gpio_chip *chip,
->  
->  	mask = ASIC3_GPIO_TO_MASK(offset);
->  
-> -	spin_lock_irqsave(&asic->lock, flags);
-> +	raw_spin_lock_irqsave(&asic->lock, flags);
->  
->  	out_reg = asic3_read_register(asic, gpio_base + ASIC3_GPIO_OUT);
->  
-> @@ -535,7 +535,7 @@ static void asic3_gpio_set(struct gpio_chip *chip,
->  
->  	asic3_write_register(asic, gpio_base + ASIC3_GPIO_OUT, out_reg);
->  
-> -	spin_unlock_irqrestore(&asic->lock, flags);
-> +	raw_spin_unlock_irqrestore(&asic->lock, flags);
->  }
->  
->  static int asic3_gpio_to_irq(struct gpio_chip *chip, unsigned offset)
-> @@ -611,13 +611,13 @@ static void asic3_clk_enable(struct asic3 *asic, struct asic3_clk *clk)
->  	unsigned long flags;
->  	u32 cdex;
->  
-> -	spin_lock_irqsave(&asic->lock, flags);
-> +	raw_spin_lock_irqsave(&asic->lock, flags);
->  	if (clk->enabled++ == 0) {
->  		cdex = asic3_read_register(asic, ASIC3_OFFSET(CLOCK, CDEX));
->  		cdex |= clk->cdex;
->  		asic3_write_register(asic, ASIC3_OFFSET(CLOCK, CDEX), cdex);
->  	}
-> -	spin_unlock_irqrestore(&asic->lock, flags);
-> +	raw_spin_unlock_irqrestore(&asic->lock, flags);
->  }
->  
->  static void asic3_clk_disable(struct asic3 *asic, struct asic3_clk *clk)
-> @@ -627,13 +627,13 @@ static void asic3_clk_disable(struct asic3 *asic, struct asic3_clk *clk)
->  
->  	WARN_ON(clk->enabled == 0);
->  
-> -	spin_lock_irqsave(&asic->lock, flags);
-> +	raw_spin_lock_irqsave(&asic->lock, flags);
->  	if (--clk->enabled == 0) {
->  		cdex = asic3_read_register(asic, ASIC3_OFFSET(CLOCK, CDEX));
->  		cdex &= ~clk->cdex;
->  		asic3_write_register(asic, ASIC3_OFFSET(CLOCK, CDEX), cdex);
->  	}
-> -	spin_unlock_irqrestore(&asic->lock, flags);
-> +	raw_spin_unlock_irqrestore(&asic->lock, flags);
->  }
->  
->  /* MFD cells (SPI, PWM, LED, DS1WM, MMC) */
-> @@ -963,7 +963,7 @@ static int __init asic3_probe(struct platform_device *pdev)
->  	if (!asic)
+>  static struct irq_chip t7l66xb_chip = {
+> @@ -321,7 +321,7 @@ static int t7l66xb_probe(struct platform_device *dev)
+>  	if (!t7l66xb)
 >  		return -ENOMEM;
 >  
-> -	spin_lock_init(&asic->lock);
-> +	raw_spin_lock_init(&asic->lock);
->  	platform_set_drvdata(pdev, asic);
->  	asic->dev = &pdev->dev;
+> -	spin_lock_init(&t7l66xb->lock);
+> +	raw_spin_lock_init(&t7l66xb->lock);
+>  
+>  	platform_set_drvdata(dev, t7l66xb);
 >  
 
 -- 
