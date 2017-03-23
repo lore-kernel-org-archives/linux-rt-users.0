@@ -1,262 +1,183 @@
-From: Lee Jones <lee.jones@linaro.org>
-Subject: Re: [PATCH v2 6/9] mfd: tc6393xb: make use of raw_spinlock variants
-Date: Thu, 23 Mar 2017 13:42:57 +0000
-Message-ID: <20170323134257.tma4qpejzgborrhi@dell>
-References: <cover.1490135047.git.julia@ni.com>
- <12d518840dde957b61348a17dd07f92f7cf5b73d.1490135047.git.julia@ni.com>
+From: Henrik Austad <henrik@austad.us>
+Subject: Re: [PATCH] cyclictest: make clock_nanosleep as default and add
+ option for POSIX timers.
+Date: Thu, 23 Mar 2017 20:14:51 +0100
+Message-ID: <20170323191451.GA32101@sisyphus.home.austad.us>
+References: <alpine.LFD.2.20.1703141646001.10659@riemann.fritz.box>
+ <1489520628-9288-1-git-send-email-vedang.patel@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Julia Cartwright <julia@ni.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+        protocol="application/pgp-signature"; boundary="mYCpIKhGyMATD0i+"
+Cc: williams@redhat.com, jkacur@redhat.com,
+        linux-rt-users@vger.kernel.org
+To: Vedang Patel <vedang.patel@intel.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-lf0-f66.google.com ([209.85.215.66]:35792 "EHLO
+        mail-lf0-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S932308AbdCWTO5 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 23 Mar 2017 15:14:57 -0400
+Received: by mail-lf0-f66.google.com with SMTP id v2so17853942lfi.2
+        for <linux-rt-users@vger.kernel.org>; Thu, 23 Mar 2017 12:14:55 -0700 (PDT)
 Content-Disposition: inline
-In-Reply-To: <12d518840dde957b61348a17dd07f92f7cf5b73d.1490135047.git.julia@ni.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <1489520628-9288-1-git-send-email-vedang.patel@intel.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 21 Mar 2017, Julia Cartwright wrote:
 
-> The tc6393xb mfd driver currently implements an irq_chip for handling
-> interrupts; due to how irq_chip handling is done, it's necessary for the
-> irq_chip methods to be invoked from hardirq context, even on a a
-> real-time kernel.  Because the spinlock_t type becomes a "sleeping"
-> spinlock w/ RT kernels, it is not suitable to be used with irq_chips.
-> 
-> A quick audit of the operations under the lock reveal that they do only
-> minimal, bounded work, and are therefore safe to do under a raw spinlock.
-> 
-> Acked-for-MFD-by: Lee Jones <lee.jones@linaro.org>
-> Signed-off-by: Julia Cartwright <julia@ni.com>
+--mYCpIKhGyMATD0i+
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+On Tue, Mar 14, 2017 at 12:43:48PM -0700, Vedang Patel wrote:
+> it is recommended that clock_nanosleep should be used for real-time
+
+extreme nitpick: Captialize first word in a sentence.
+
+> wherever available. So, make sure that cyclictest runs clock_nanosleep
+> by default. Added an option to run POSIX timers. Removing the '-n'
+> option because it is redundant now.
+>=20
+> Signed-off-by: Vedang Patel <vedang.patel@intel.com>
 > ---
-> v1 -> v2:
->   - No functional change.  Added Lee's ack.
-> 
->  drivers/mfd/tc6393xb.c | 52 +++++++++++++++++++++++++-------------------------
->  1 file changed, 26 insertions(+), 26 deletions(-)
+>  src/cyclictest/cyclictest.c | 17 +++++++++--------
+>  1 file changed, 9 insertions(+), 8 deletions(-)
+>=20
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index 3f1bef1ffca9..cf82f8e1deaa 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -1321,7 +1321,6 @@ static void display_help(int error)
+>  	       "-m       --mlockall        lock current and future memory alloc=
+ations\n"
+>  	       "-M       --refresh_on_max  delay updating the screen until a ne=
+w max\n"
+>  	       "			   latency is hit. Userful for low bandwidth.\n"
+> -	       "-n       --nanosleep       use clock_nanosleep\n"
+>  	       "	 --notrace	   suppress tracing\n"
+>  	       "-N       --nsecs           print results in ns instead of us (d=
+efault us)\n"
+>  	       "-o RED   --oscope=3DRED      oscilloscope mode, reduce verbose =
+output by RED\n"
+> @@ -1364,7 +1363,8 @@ static void display_help(int error)
+>  	       "                           format: n:c:v n=3Dtasknum c=3Dcount =
+v=3Dvalue in us\n"
+>  	       "-w       --wakeup          task wakeup tracing (used with -b)\n"
+>  	       "-W       --wakeuprt        rt task wakeup tracing (used with -b=
+)\n"
+> -	       "	 --dbg_cyclictest  print info useful for debugging cyclictest\=
+n",
+> +	       "	 --dbg_cyclictest  print info useful for debugging cyclictest\=
+n"
+> +	       "-x	 --posix_timers    use POSIX timers\n",
 
-Applied, thanks.
+Since we are now removing all references to clock_nanosleep, perhaps add=20
+note here indicating that nanosleep is the default, i.e. something like
 
-> diff --git a/drivers/mfd/tc6393xb.c b/drivers/mfd/tc6393xb.c
-> index d42d322ac7ca..d16e71bd9482 100644
-> --- a/drivers/mfd/tc6393xb.c
-> +++ b/drivers/mfd/tc6393xb.c
-> @@ -95,7 +95,7 @@ struct tc6393xb {
->  
->  	struct clk		*clk; /* 3,6 Mhz */
->  
-> -	spinlock_t		lock; /* protects RMW cycles */
-> +	raw_spinlock_t		lock; /* protects RMW cycles */
->  
->  	struct {
->  		u8		fer;
-> @@ -126,13 +126,13 @@ static int tc6393xb_nand_enable(struct platform_device *nand)
->  	struct tc6393xb *tc6393xb = platform_get_drvdata(dev);
->  	unsigned long flags;
->  
-> -	spin_lock_irqsave(&tc6393xb->lock, flags);
-> +	raw_spin_lock_irqsave(&tc6393xb->lock, flags);
->  
->  	/* SMD buffer on */
->  	dev_dbg(&dev->dev, "SMD buffer on\n");
->  	tmio_iowrite8(0xff, tc6393xb->scr + SCR_GPI_BCR(1));
->  
-> -	spin_unlock_irqrestore(&tc6393xb->lock, flags);
-> +	raw_spin_unlock_irqrestore(&tc6393xb->lock, flags);
->  
->  	return 0;
->  }
-> @@ -226,7 +226,7 @@ static int tc6393xb_ohci_enable(struct platform_device *dev)
->  	u16 ccr;
->  	u8 fer;
->  
-> -	spin_lock_irqsave(&tc6393xb->lock, flags);
-> +	raw_spin_lock_irqsave(&tc6393xb->lock, flags);
->  
->  	ccr = tmio_ioread16(tc6393xb->scr + SCR_CCR);
->  	ccr |= SCR_CCR_USBCK;
-> @@ -236,7 +236,7 @@ static int tc6393xb_ohci_enable(struct platform_device *dev)
->  	fer |= SCR_FER_USBEN;
->  	tmio_iowrite8(fer, tc6393xb->scr + SCR_FER);
->  
-> -	spin_unlock_irqrestore(&tc6393xb->lock, flags);
-> +	raw_spin_unlock_irqrestore(&tc6393xb->lock, flags);
->  
->  	return 0;
->  }
-> @@ -248,7 +248,7 @@ static int tc6393xb_ohci_disable(struct platform_device *dev)
->  	u16 ccr;
->  	u8 fer;
->  
-> -	spin_lock_irqsave(&tc6393xb->lock, flags);
-> +	raw_spin_lock_irqsave(&tc6393xb->lock, flags);
->  
->  	fer = tmio_ioread8(tc6393xb->scr + SCR_FER);
->  	fer &= ~SCR_FER_USBEN;
-> @@ -258,7 +258,7 @@ static int tc6393xb_ohci_disable(struct platform_device *dev)
->  	ccr &= ~SCR_CCR_USBCK;
->  	tmio_iowrite16(ccr, tc6393xb->scr + SCR_CCR);
->  
-> -	spin_unlock_irqrestore(&tc6393xb->lock, flags);
-> +	raw_spin_unlock_irqrestore(&tc6393xb->lock, flags);
->  
->  	return 0;
->  }
-> @@ -280,14 +280,14 @@ static int tc6393xb_fb_enable(struct platform_device *dev)
->  	unsigned long flags;
->  	u16 ccr;
->  
-> -	spin_lock_irqsave(&tc6393xb->lock, flags);
-> +	raw_spin_lock_irqsave(&tc6393xb->lock, flags);
->  
->  	ccr = tmio_ioread16(tc6393xb->scr + SCR_CCR);
->  	ccr &= ~SCR_CCR_MCLK_MASK;
->  	ccr |= SCR_CCR_MCLK_48;
->  	tmio_iowrite16(ccr, tc6393xb->scr + SCR_CCR);
->  
-> -	spin_unlock_irqrestore(&tc6393xb->lock, flags);
-> +	raw_spin_unlock_irqrestore(&tc6393xb->lock, flags);
->  
->  	return 0;
->  }
-> @@ -298,14 +298,14 @@ static int tc6393xb_fb_disable(struct platform_device *dev)
->  	unsigned long flags;
->  	u16 ccr;
->  
-> -	spin_lock_irqsave(&tc6393xb->lock, flags);
-> +	raw_spin_lock_irqsave(&tc6393xb->lock, flags);
->  
->  	ccr = tmio_ioread16(tc6393xb->scr + SCR_CCR);
->  	ccr &= ~SCR_CCR_MCLK_MASK;
->  	ccr |= SCR_CCR_MCLK_OFF;
->  	tmio_iowrite16(ccr, tc6393xb->scr + SCR_CCR);
->  
-> -	spin_unlock_irqrestore(&tc6393xb->lock, flags);
-> +	raw_spin_unlock_irqrestore(&tc6393xb->lock, flags);
->  
->  	return 0;
->  }
-> @@ -317,7 +317,7 @@ int tc6393xb_lcd_set_power(struct platform_device *fb, bool on)
->  	u8 fer;
->  	unsigned long flags;
->  
-> -	spin_lock_irqsave(&tc6393xb->lock, flags);
-> +	raw_spin_lock_irqsave(&tc6393xb->lock, flags);
->  
->  	fer = ioread8(tc6393xb->scr + SCR_FER);
->  	if (on)
-> @@ -326,7 +326,7 @@ int tc6393xb_lcd_set_power(struct platform_device *fb, bool on)
->  		fer &= ~SCR_FER_SLCDEN;
->  	iowrite8(fer, tc6393xb->scr + SCR_FER);
->  
-> -	spin_unlock_irqrestore(&tc6393xb->lock, flags);
-> +	raw_spin_unlock_irqrestore(&tc6393xb->lock, flags);
->  
->  	return 0;
->  }
-> @@ -338,12 +338,12 @@ int tc6393xb_lcd_mode(struct platform_device *fb,
->  	struct tc6393xb *tc6393xb = platform_get_drvdata(dev);
->  	unsigned long flags;
->  
-> -	spin_lock_irqsave(&tc6393xb->lock, flags);
-> +	raw_spin_lock_irqsave(&tc6393xb->lock, flags);
->  
->  	iowrite16(mode->pixclock, tc6393xb->scr + SCR_PLL1CR + 0);
->  	iowrite16(mode->pixclock >> 16, tc6393xb->scr + SCR_PLL1CR + 2);
->  
-> -	spin_unlock_irqrestore(&tc6393xb->lock, flags);
-> +	raw_spin_unlock_irqrestore(&tc6393xb->lock, flags);
->  
->  	return 0;
->  }
-> @@ -462,11 +462,11 @@ static void tc6393xb_gpio_set(struct gpio_chip *chip,
->  	struct tc6393xb *tc6393xb = gpiochip_get_data(chip);
->  	unsigned long flags;
->  
-> -	spin_lock_irqsave(&tc6393xb->lock, flags);
-> +	raw_spin_lock_irqsave(&tc6393xb->lock, flags);
->  
->  	__tc6393xb_gpio_set(chip, offset, value);
->  
-> -	spin_unlock_irqrestore(&tc6393xb->lock, flags);
-> +	raw_spin_unlock_irqrestore(&tc6393xb->lock, flags);
->  }
->  
->  static int tc6393xb_gpio_direction_input(struct gpio_chip *chip,
-> @@ -476,13 +476,13 @@ static int tc6393xb_gpio_direction_input(struct gpio_chip *chip,
->  	unsigned long flags;
->  	u8 doecr;
->  
-> -	spin_lock_irqsave(&tc6393xb->lock, flags);
-> +	raw_spin_lock_irqsave(&tc6393xb->lock, flags);
->  
->  	doecr = tmio_ioread8(tc6393xb->scr + SCR_GPO_DOECR(offset / 8));
->  	doecr &= ~TC_GPIO_BIT(offset);
->  	tmio_iowrite8(doecr, tc6393xb->scr + SCR_GPO_DOECR(offset / 8));
->  
-> -	spin_unlock_irqrestore(&tc6393xb->lock, flags);
-> +	raw_spin_unlock_irqrestore(&tc6393xb->lock, flags);
->  
->  	return 0;
->  }
-> @@ -494,7 +494,7 @@ static int tc6393xb_gpio_direction_output(struct gpio_chip *chip,
->  	unsigned long flags;
->  	u8 doecr;
->  
-> -	spin_lock_irqsave(&tc6393xb->lock, flags);
-> +	raw_spin_lock_irqsave(&tc6393xb->lock, flags);
->  
->  	__tc6393xb_gpio_set(chip, offset, value);
->  
-> @@ -502,7 +502,7 @@ static int tc6393xb_gpio_direction_output(struct gpio_chip *chip,
->  	doecr |= TC_GPIO_BIT(offset);
->  	tmio_iowrite8(doecr, tc6393xb->scr + SCR_GPO_DOECR(offset / 8));
->  
-> -	spin_unlock_irqrestore(&tc6393xb->lock, flags);
-> +	raw_spin_unlock_irqrestore(&tc6393xb->lock, flags);
->  
->  	return 0;
->  }
-> @@ -548,11 +548,11 @@ static void tc6393xb_irq_mask(struct irq_data *data)
->  	unsigned long flags;
->  	u8 imr;
->  
-> -	spin_lock_irqsave(&tc6393xb->lock, flags);
-> +	raw_spin_lock_irqsave(&tc6393xb->lock, flags);
->  	imr = tmio_ioread8(tc6393xb->scr + SCR_IMR);
->  	imr |= 1 << (data->irq - tc6393xb->irq_base);
->  	tmio_iowrite8(imr, tc6393xb->scr + SCR_IMR);
-> -	spin_unlock_irqrestore(&tc6393xb->lock, flags);
-> +	raw_spin_unlock_irqrestore(&tc6393xb->lock, flags);
->  }
->  
->  static void tc6393xb_irq_unmask(struct irq_data *data)
-> @@ -561,11 +561,11 @@ static void tc6393xb_irq_unmask(struct irq_data *data)
->  	unsigned long flags;
->  	u8 imr;
->  
-> -	spin_lock_irqsave(&tc6393xb->lock, flags);
-> +	raw_spin_lock_irqsave(&tc6393xb->lock, flags);
->  	imr = tmio_ioread8(tc6393xb->scr + SCR_IMR);
->  	imr &= ~(1 << (data->irq - tc6393xb->irq_base));
->  	tmio_iowrite8(imr, tc6393xb->scr + SCR_IMR);
-> -	spin_unlock_irqrestore(&tc6393xb->lock, flags);
-> +	raw_spin_unlock_irqrestore(&tc6393xb->lock, flags);
->  }
->  
->  static struct irq_chip tc6393xb_chip = {
-> @@ -628,7 +628,7 @@ static int tc6393xb_probe(struct platform_device *dev)
->  		goto err_kzalloc;
->  	}
->  
-> -	spin_lock_init(&tc6393xb->lock);
-> +	raw_spin_lock_init(&tc6393xb->lock);
->  
->  	platform_set_drvdata(dev, tc6393xb);
->  
+"use POSIX timers instead of clock_nanosleep"
 
--- 
-Lee Jones
-Linaro STMicroelectronics Landing Team Lead
-Linaro.org │ Open source software for ARM SoCs
-Follow Linaro: Facebook | Twitter | Blog
+>  	       tracers
+>  		);
+>  	if (error)
+> @@ -1372,7 +1372,7 @@ static void display_help(int error)
+>  	exit(EXIT_SUCCESS);
+>  }
+> =20
+> -static int use_nanosleep;
+> +static int use_nanosleep =3D MODE_CLOCK_NANOSLEEP; /* use clock_nanoslee=
+p by default. */
+
+Not sure if you really need the trailing comment, but I'll leave that up to=
+=20
+John (I'd drop it)
+
+>  static int timermode =3D TIMER_ABSTIME;
+>  static int use_system;
+>  static int priority;
+> @@ -1493,6 +1493,7 @@ enum option_values {
+>  	OPT_TRIGGER_NODES, OPT_UNBUFFERED, OPT_NUMA, OPT_VERBOSE, OPT_WAKEUP,
+>  	OPT_WAKEUPRT, OPT_DBGCYCLIC, OPT_POLICY, OPT_HELP, OPT_NUMOPTS,
+>  	OPT_ALIGNED, OPT_SECALIGNED, OPT_LAPTOP, OPT_SMI, OPT_TRACEMARK,
+> +	OPT_POSIX_TIMERS,
+>  };
+> =20
+>  /* Process commandline options */
+> @@ -1530,7 +1531,6 @@ static void process_options (int argc, char *argv[]=
+, int max_cpus)
+>  			{"loops",            required_argument, NULL, OPT_LOOPS },
+>  			{"mlockall",         no_argument,       NULL, OPT_MLOCKALL },
+>  			{"refresh_on_max",   no_argument,       NULL, OPT_REFRESH },
+> -			{"nanosleep",        no_argument,       NULL, OPT_NANOSLEEP },
+>  			{"nsecs",            no_argument,       NULL, OPT_NSECS },
+>  			{"oscope",           required_argument, NULL, OPT_OSCOPE },
+>  			{"traceopt",         required_argument, NULL, OPT_TRACEOPT },
+> @@ -1557,9 +1557,10 @@ static void process_options (int argc, char *argv[=
+], int max_cpus)
+>  			{"dbg_cyclictest",   no_argument,       NULL, OPT_DBGCYCLIC },
+>  			{"policy",           required_argument, NULL, OPT_POLICY },
+>  			{"help",             no_argument,       NULL, OPT_HELP },
+> +			{"posix_timers",     no_argument,	NULL, OPT_POSIX_TIMERS },
+>  			{NULL, 0, NULL, 0}
+>  		};
+> -		int c =3D getopt_long(argc, argv, "a::A::b:Bc:Cd:D:Efh:H:i:Il:MnNo:O:p=
+:PmqrRsSt::uUvD:wWT:",
+> +		int c =3D getopt_long(argc, argv, "a::A::b:Bc:Cd:D:Efh:H:i:Il:MNo:O:p:=
+PmqrRsSt::uUvD:wWT:x",
+>  				    long_options, &option_index);
+>  		if (c =3D=3D -1)
+>  			break;
+> @@ -1651,9 +1652,6 @@ static void process_options (int argc, char *argv[]=
+, int max_cpus)
+>  		case 'M':
+>  		case OPT_REFRESH:
+>  			refresh_on_max =3D 1; break;
+> -		case 'n':
+> -		case OPT_NANOSLEEP:
+> -			use_nanosleep =3D MODE_CLOCK_NANOSLEEP; break;
+>  		case 'N':
+>  		case OPT_NSECS:
+>  			use_nsecs =3D 1; break;
+> @@ -1760,6 +1758,9 @@ static void process_options (int argc, char *argv[]=
+, int max_cpus)
+>  		case 'W':
+>  		case OPT_WAKEUPRT:
+>  			tracetype =3D WAKEUPRT; break;
+> +		case 'x':
+> +		case OPT_POSIX_TIMERS:
+> +			use_nanosleep =3D MODE_CYCLIC; break;
+>  		case '?':
+>  		case OPT_HELP:
+>  			display_help(0); break;
+
+As a side-observation that does not have anything to do with your patch, it=
+=20
+seems like there's a lovely mix of spaces and TABS in this file (i.e.=20
+starting a line with a few spaces, then TABs and then possibly more spaces=
+=20
+for final alignment).
+
+Could be my mailclient pulling my foot though, I just found it a bit=20
+strange.
+
+> --=20
+> 2.7.3
+>=20
+
+A part form my minor nitpicks, nice change!
+
+--=20
+Henrik Austad
+
+--mYCpIKhGyMATD0i+
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iEYEARECAAYFAljUHqsACgkQ6k5VT6v45lkK/wCgnsRfp6QgFsm7huhVX7GJ8adD
+jdIAnjmnJilQjYCJGI/nkH6UDL6JoL5q
+=RSQ5
+-----END PGP SIGNATURE-----
+
+--mYCpIKhGyMATD0i+--
