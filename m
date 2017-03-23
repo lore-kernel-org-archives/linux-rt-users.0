@@ -1,115 +1,75 @@
-From: Julia Cartwright <julia@ni.com>
-Subject: Re: [PATCH RT 1/1] remoteproc: Prevent schedule while atomic
-Date: Thu, 23 Mar 2017 15:51:54 -0500
-Message-ID: <20170323205154.GP10423@jcartwri.amer.corp.natinst.com>
-References: <1490195923-9560-1-git-send-email-lionel.debieve@st.com>
- <20170322173759.GK10423@jcartwri.amer.corp.natinst.com>
- <20170322110116.4b14dafd@vmware.local.home>
- <21d6cfe5-3263-4eeb-c35b-c75f34185526@ti.com>
- <20170322184733.GL10423@jcartwri.amer.corp.natinst.com>
- <7b1ffee6-1f78-7b9f-206e-27a9b6cd967f@st.com>
- <20170323102649.5zapjhvsuvu53b2h@dell>
+From: Luiz Capitulino <lcapitulino@redhat.com>
+Subject: [BUG nohz]: wrong user and system time accounting
+Date: Thu, 23 Mar 2017 16:55:12 -0400
+Message-ID: <20170323165512.60945ac6@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="Fnm8lRGFTVS/3GuM"
-Cc: Lionel DEBIEVE <lionel.debieve@st.com>,
-        Grygorii Strashko <grygorii.strashko@ti.com>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "bigeasy@linutronix.de" <bigeasy@linutronix.de>,
-        "tglx@linutronix.de" <tglx@linutronix.de>
-To: Lee Jones <lee.jones@linaro.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170323102649.5zapjhvsuvu53b2h@dell>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: riel@redhat.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
+To: fweisbec@gmail.com
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx1.redhat.com ([209.132.183.28]:45248 "EHLO mx1.redhat.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751844AbdCWUzP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 23 Mar 2017 16:55:15 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
---Fnm8lRGFTVS/3GuM
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
 
-On Thu, Mar 23, 2017 at 10:26:49AM +0000, Lee Jones wrote:
-> On Thu, 23 Mar 2017, Lionel DEBIEVE wrote:
->=20
-> > On 03/22/2017 07:47 PM, Julia Cartwright wrote:
-> > > On Wed, Mar 22, 2017 at 01:30:12PM -0500, Grygorii Strashko wrote:
-> > >> On 03/22/2017 01:01 PM, Steven Rostedt wrote:
-> > >>> On Wed, 22 Mar 2017 12:37:59 -0500
-> > >>> Julia Cartwright <julia@ni.com> wrote:
-> > >>>
-> > >>>> Which kernel were you testing on, here?  From what I can tell, this
-> > >>>> should have been fixed with Thomas's commit:
-> > >>>>
-> > >>>>     2a1d3ab8986d ("genirq: Handle force threading of irqs with pri=
-mary
-> > >>>> and thread handler")
-> > >>> Thanks Julia for looking into this. I just looked at the code, and =
-saw
-> > >>> that it does very little with the lock held, and was fine with the
-> > >>> conversion. But if that interrupt handler should be in a thread, we
-> > >>> should see if that's the issue first.
-> > >>
-> > >> It will not be threaded because there are IRQF_ONESHOT used.
-> > >>
-> > >> 	ret =3D devm_request_threaded_irq(&pdev->dev, irq,
-> > >> 					sti_mbox_irq_handler,
-> > >> 					sti_mbox_thread_handler,
-> > >> 					IRQF_ONESHOT, mdev->name, mdev);
-> > > Indeed.  I had skipped over this important detail when I was skimming
-> > > through the code.
-> > >
-> > > Thanks for clarifying!
-> > >
-> > > Is IRQF_ONESHOT really necessary for this device?  The primary handler
-> > > invokes sti_mbox_disable_channel() on the interrupting channel, which=
- I
-> > > would hope would acquiesce the pending interrupt at the device-level?
->=20
-> Not sure.  This part of the code is remanent from when I re-wrote it.
->=20
-> What is the alternative?
+When there are two or more tasks executing in user-space and
+taking 100% of a nohz_full CPU, top reports 70% system time
+and 30% user time utilization. Sometimes I'm even able to get
+100% system time and 0% user time.
 
-If, on the completed execution of the registered primary handler, you
-can ensure that the device is no longer asserting an interrupt to the
-connected irq chip, then the IRQF_ONESHOT isn't necessary, because it's
-safe for the irq core to unmask the interrupt after the primary handler
-runs.
+This was reproduced with latest Linus tree (093b995), but I
+don't believe it's a regression (at least not a recent one)
+as I can reproduce it with older kernels. Also, I have
+CONFIG_IRQ_TIME_ACCOUNTING=y and haven't tried to reproduce
+without it yet.
 
-It appears that it might be able to make this guarantee, if that's what
-sti_mbox_disable_channel() is doing.
+Below you'll find the steps to reproduce and some initial
+analysis.
 
-> NB: What does 'acquiesce' mean in this context?  Is that a typo?
+Steps to reproduce
+------------------
 
-I mean 'acquiesce' to mean what I mention before: prevent the device
-=66rom asserting the interrupt.  Perhaps it's a uncommon use of the word.
+1. Set up a CPU for nohz_full with isolcpus= nohz_full=
 
-> > > Also, as written there are num_inst reads of STI_IRQ_VAL_OFFSET in the
-> > > primary handler, which seems inefficient...(unless of course reading
-> > > incurs side effects, here).
->
-> Inefficient in what respect?
+2. Pin two tasks that hog the CPU 100% of the time to that CPU
 
-I've since looked again and realized that the register base is
-recalculated based on 'instance', so disregard this comment.
+3. Run top -d1 and check system time
 
-   Julia
+NOTE: When there's only one task hogging a nohz_full CPU, top
+      shows 100% user-time, as expected
 
---Fnm8lRGFTVS/3GuM
-Content-Type: application/pgp-signature; name="signature.asc"
+Initial analysis
+----------------
 
------BEGIN PGP SIGNATURE-----
+When tracing vtime accounting functions and the user-space/kernel
+transitions when the issue is taking place, I see several of the
+following:
 
-iQEzBAABCAAdFiEEgKAEF431w1EL96k9jNrC4UVNdG8FAljUNWoACgkQjNrC4UVN
-dG8DmQf/UI+Ito7fwOvlfFhgib3eA/pNa9Q93W8eyM21SSQGJ2/ifYJlTzgY9lq3
-Ryp8B1VKWBN1BTyKiRcbWQns4ZX2hWOlaeB1jewlRtI73BmbmA1b2GrFyfVwqP3s
-WuLEXAhSHKWjf9WkWFPA/Jq/mQ2HQg0A/Y+4s3mSDnQ8yW0FVMPoj+iNIdXCcpxm
-Ksl/MbC+3QcFVeir6X0rrPYdmmBtI8aHWLjCEHvjnvNgdd62DP2vHfMKHnQFl/2u
-srsyKcGQoNsazVq2/uMtOR7d3HblbiuhPDkHAS/l4laklL/U5M4Wc52S77wKnCPe
-yBeKwvJAMlnz8vH4xgbPPgnPzq+y4g==
-=J4ft
------END PGP SIGNATURE-----
+hog-10552 [015]  1132.711104: function:             enter_from_user_mode <-- apic_timer_interrupt
+hog-10552 [015]  1132.711105: function:             __context_tracking_exit <-- enter_from_user_mode
+hog-10552 [015]  1132.711105: bprint:               __context_tracking_exit.part.4: new state=1 cur state=1 active=1
+hog-10552 [015]  1132.711105: function:             vtime_account_user <-- __context_tracking_exit.part.4
+hog-10552 [015]  1132.711105: function:             smp_apic_timer_interrupt <-- apic_timer_interrupt
+hog-10552 [015]  1132.711106: function:             irq_enter <-- smp_apic_timer_interrupt
+hog-10552 [015]  1132.711106: function:             tick_sched_timer <-- __hrtimer_run_queues
+hog-10552 [015]  1132.711108: function:             irq_exit <-- smp_apic_timer_interrupt
+hog-10552 [015]  1132.711108: function:             __context_tracking_enter <-- prepare_exit_to_usermode
+hog-10552 [015]  1132.711108: bprint:               __context_tracking_enter.part.2: new state=1 cur state=0 active=1
+hog-10552 [015]  1132.711109: function:             vtime_user_enter <-- __context_tracking_enter.part.2
+hog-10552 [015]  1132.711109: function:             __vtime_account_system <-- vtime_user_enter
+hog-10552 [015]  1132.711109: function:             account_system_time <-- __vtime_account_system
 
---Fnm8lRGFTVS/3GuM--
+On entering the kernel due to a timer interrupt, vtime_account_user()
+skips user-time accounting. Then later on when returning to user-space,
+vtime_user_enter() is probably accounting the whole time (ie. user-space
+plus kernel-space) to system time.
+
+Now, when does vtime_account_user() skips accounting? Well, when the
+time delta is less then one jiffie. This would imply that vtime_account_user()
+is being called less than one jiffie since the last accounting, but I haven't
+confirmed any of this yet.
