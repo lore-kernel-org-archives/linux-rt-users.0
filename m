@@ -1,183 +1,115 @@
-From: Henrik Austad <henrik@austad.us>
-Subject: Re: [PATCH] cyclictest: make clock_nanosleep as default and add
- option for POSIX timers.
-Date: Thu, 23 Mar 2017 20:14:51 +0100
-Message-ID: <20170323191451.GA32101@sisyphus.home.austad.us>
-References: <alpine.LFD.2.20.1703141646001.10659@riemann.fritz.box>
- <1489520628-9288-1-git-send-email-vedang.patel@intel.com>
+From: Julia Cartwright <julia@ni.com>
+Subject: Re: [PATCH RT 1/1] remoteproc: Prevent schedule while atomic
+Date: Thu, 23 Mar 2017 15:51:54 -0500
+Message-ID: <20170323205154.GP10423@jcartwri.amer.corp.natinst.com>
+References: <1490195923-9560-1-git-send-email-lionel.debieve@st.com>
+ <20170322173759.GK10423@jcartwri.amer.corp.natinst.com>
+ <20170322110116.4b14dafd@vmware.local.home>
+ <21d6cfe5-3263-4eeb-c35b-c75f34185526@ti.com>
+ <20170322184733.GL10423@jcartwri.amer.corp.natinst.com>
+ <7b1ffee6-1f78-7b9f-206e-27a9b6cd967f@st.com>
+ <20170323102649.5zapjhvsuvu53b2h@dell>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-        protocol="application/pgp-signature"; boundary="mYCpIKhGyMATD0i+"
-Cc: williams@redhat.com, jkacur@redhat.com,
-        linux-rt-users@vger.kernel.org
-To: Vedang Patel <vedang.patel@intel.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-lf0-f66.google.com ([209.85.215.66]:35792 "EHLO
-        mail-lf0-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S932308AbdCWTO5 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 23 Mar 2017 15:14:57 -0400
-Received: by mail-lf0-f66.google.com with SMTP id v2so17853942lfi.2
-        for <linux-rt-users@vger.kernel.org>; Thu, 23 Mar 2017 12:14:55 -0700 (PDT)
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="Fnm8lRGFTVS/3GuM"
+Cc: Lionel DEBIEVE <lionel.debieve@st.com>,
+        Grygorii Strashko <grygorii.strashko@ti.com>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "bigeasy@linutronix.de" <bigeasy@linutronix.de>,
+        "tglx@linutronix.de" <tglx@linutronix.de>
+To: Lee Jones <lee.jones@linaro.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1489520628-9288-1-git-send-email-vedang.patel@intel.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <20170323102649.5zapjhvsuvu53b2h@dell>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-
---mYCpIKhGyMATD0i+
+--Fnm8lRGFTVS/3GuM
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
-On Tue, Mar 14, 2017 at 12:43:48PM -0700, Vedang Patel wrote:
-> it is recommended that clock_nanosleep should be used for real-time
-
-extreme nitpick: Captialize first word in a sentence.
-
-> wherever available. So, make sure that cyclictest runs clock_nanosleep
-> by default. Added an option to run POSIX timers. Removing the '-n'
-> option because it is redundant now.
+On Thu, Mar 23, 2017 at 10:26:49AM +0000, Lee Jones wrote:
+> On Thu, 23 Mar 2017, Lionel DEBIEVE wrote:
 >=20
-> Signed-off-by: Vedang Patel <vedang.patel@intel.com>
-> ---
->  src/cyclictest/cyclictest.c | 17 +++++++++--------
->  1 file changed, 9 insertions(+), 8 deletions(-)
+> > On 03/22/2017 07:47 PM, Julia Cartwright wrote:
+> > > On Wed, Mar 22, 2017 at 01:30:12PM -0500, Grygorii Strashko wrote:
+> > >> On 03/22/2017 01:01 PM, Steven Rostedt wrote:
+> > >>> On Wed, 22 Mar 2017 12:37:59 -0500
+> > >>> Julia Cartwright <julia@ni.com> wrote:
+> > >>>
+> > >>>> Which kernel were you testing on, here?  From what I can tell, this
+> > >>>> should have been fixed with Thomas's commit:
+> > >>>>
+> > >>>>     2a1d3ab8986d ("genirq: Handle force threading of irqs with pri=
+mary
+> > >>>> and thread handler")
+> > >>> Thanks Julia for looking into this. I just looked at the code, and =
+saw
+> > >>> that it does very little with the lock held, and was fine with the
+> > >>> conversion. But if that interrupt handler should be in a thread, we
+> > >>> should see if that's the issue first.
+> > >>
+> > >> It will not be threaded because there are IRQF_ONESHOT used.
+> > >>
+> > >> 	ret =3D devm_request_threaded_irq(&pdev->dev, irq,
+> > >> 					sti_mbox_irq_handler,
+> > >> 					sti_mbox_thread_handler,
+> > >> 					IRQF_ONESHOT, mdev->name, mdev);
+> > > Indeed.  I had skipped over this important detail when I was skimming
+> > > through the code.
+> > >
+> > > Thanks for clarifying!
+> > >
+> > > Is IRQF_ONESHOT really necessary for this device?  The primary handler
+> > > invokes sti_mbox_disable_channel() on the interrupting channel, which=
+ I
+> > > would hope would acquiesce the pending interrupt at the device-level?
 >=20
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index 3f1bef1ffca9..cf82f8e1deaa 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -1321,7 +1321,6 @@ static void display_help(int error)
->  	       "-m       --mlockall        lock current and future memory alloc=
-ations\n"
->  	       "-M       --refresh_on_max  delay updating the screen until a ne=
-w max\n"
->  	       "			   latency is hit. Userful for low bandwidth.\n"
-> -	       "-n       --nanosleep       use clock_nanosleep\n"
->  	       "	 --notrace	   suppress tracing\n"
->  	       "-N       --nsecs           print results in ns instead of us (d=
-efault us)\n"
->  	       "-o RED   --oscope=3DRED      oscilloscope mode, reduce verbose =
-output by RED\n"
-> @@ -1364,7 +1363,8 @@ static void display_help(int error)
->  	       "                           format: n:c:v n=3Dtasknum c=3Dcount =
-v=3Dvalue in us\n"
->  	       "-w       --wakeup          task wakeup tracing (used with -b)\n"
->  	       "-W       --wakeuprt        rt task wakeup tracing (used with -b=
-)\n"
-> -	       "	 --dbg_cyclictest  print info useful for debugging cyclictest\=
-n",
-> +	       "	 --dbg_cyclictest  print info useful for debugging cyclictest\=
-n"
-> +	       "-x	 --posix_timers    use POSIX timers\n",
-
-Since we are now removing all references to clock_nanosleep, perhaps add=20
-note here indicating that nanosleep is the default, i.e. something like
-
-"use POSIX timers instead of clock_nanosleep"
-
->  	       tracers
->  		);
->  	if (error)
-> @@ -1372,7 +1372,7 @@ static void display_help(int error)
->  	exit(EXIT_SUCCESS);
->  }
-> =20
-> -static int use_nanosleep;
-> +static int use_nanosleep =3D MODE_CLOCK_NANOSLEEP; /* use clock_nanoslee=
-p by default. */
-
-Not sure if you really need the trailing comment, but I'll leave that up to=
-=20
-John (I'd drop it)
-
->  static int timermode =3D TIMER_ABSTIME;
->  static int use_system;
->  static int priority;
-> @@ -1493,6 +1493,7 @@ enum option_values {
->  	OPT_TRIGGER_NODES, OPT_UNBUFFERED, OPT_NUMA, OPT_VERBOSE, OPT_WAKEUP,
->  	OPT_WAKEUPRT, OPT_DBGCYCLIC, OPT_POLICY, OPT_HELP, OPT_NUMOPTS,
->  	OPT_ALIGNED, OPT_SECALIGNED, OPT_LAPTOP, OPT_SMI, OPT_TRACEMARK,
-> +	OPT_POSIX_TIMERS,
->  };
-> =20
->  /* Process commandline options */
-> @@ -1530,7 +1531,6 @@ static void process_options (int argc, char *argv[]=
-, int max_cpus)
->  			{"loops",            required_argument, NULL, OPT_LOOPS },
->  			{"mlockall",         no_argument,       NULL, OPT_MLOCKALL },
->  			{"refresh_on_max",   no_argument,       NULL, OPT_REFRESH },
-> -			{"nanosleep",        no_argument,       NULL, OPT_NANOSLEEP },
->  			{"nsecs",            no_argument,       NULL, OPT_NSECS },
->  			{"oscope",           required_argument, NULL, OPT_OSCOPE },
->  			{"traceopt",         required_argument, NULL, OPT_TRACEOPT },
-> @@ -1557,9 +1557,10 @@ static void process_options (int argc, char *argv[=
-], int max_cpus)
->  			{"dbg_cyclictest",   no_argument,       NULL, OPT_DBGCYCLIC },
->  			{"policy",           required_argument, NULL, OPT_POLICY },
->  			{"help",             no_argument,       NULL, OPT_HELP },
-> +			{"posix_timers",     no_argument,	NULL, OPT_POSIX_TIMERS },
->  			{NULL, 0, NULL, 0}
->  		};
-> -		int c =3D getopt_long(argc, argv, "a::A::b:Bc:Cd:D:Efh:H:i:Il:MnNo:O:p=
-:PmqrRsSt::uUvD:wWT:",
-> +		int c =3D getopt_long(argc, argv, "a::A::b:Bc:Cd:D:Efh:H:i:Il:MNo:O:p:=
-PmqrRsSt::uUvD:wWT:x",
->  				    long_options, &option_index);
->  		if (c =3D=3D -1)
->  			break;
-> @@ -1651,9 +1652,6 @@ static void process_options (int argc, char *argv[]=
-, int max_cpus)
->  		case 'M':
->  		case OPT_REFRESH:
->  			refresh_on_max =3D 1; break;
-> -		case 'n':
-> -		case OPT_NANOSLEEP:
-> -			use_nanosleep =3D MODE_CLOCK_NANOSLEEP; break;
->  		case 'N':
->  		case OPT_NSECS:
->  			use_nsecs =3D 1; break;
-> @@ -1760,6 +1758,9 @@ static void process_options (int argc, char *argv[]=
-, int max_cpus)
->  		case 'W':
->  		case OPT_WAKEUPRT:
->  			tracetype =3D WAKEUPRT; break;
-> +		case 'x':
-> +		case OPT_POSIX_TIMERS:
-> +			use_nanosleep =3D MODE_CYCLIC; break;
->  		case '?':
->  		case OPT_HELP:
->  			display_help(0); break;
-
-As a side-observation that does not have anything to do with your patch, it=
-=20
-seems like there's a lovely mix of spaces and TABS in this file (i.e.=20
-starting a line with a few spaces, then TABs and then possibly more spaces=
-=20
-for final alignment).
-
-Could be my mailclient pulling my foot though, I just found it a bit=20
-strange.
-
-> --=20
-> 2.7.3
+> Not sure.  This part of the code is remanent from when I re-wrote it.
 >=20
+> What is the alternative?
 
-A part form my minor nitpicks, nice change!
+If, on the completed execution of the registered primary handler, you
+can ensure that the device is no longer asserting an interrupt to the
+connected irq chip, then the IRQF_ONESHOT isn't necessary, because it's
+safe for the irq core to unmask the interrupt after the primary handler
+runs.
 
---=20
-Henrik Austad
+It appears that it might be able to make this guarantee, if that's what
+sti_mbox_disable_channel() is doing.
 
---mYCpIKhGyMATD0i+
+> NB: What does 'acquiesce' mean in this context?  Is that a typo?
+
+I mean 'acquiesce' to mean what I mention before: prevent the device
+=66rom asserting the interrupt.  Perhaps it's a uncommon use of the word.
+
+> > > Also, as written there are num_inst reads of STI_IRQ_VAL_OFFSET in the
+> > > primary handler, which seems inefficient...(unless of course reading
+> > > incurs side effects, here).
+>
+> Inefficient in what respect?
+
+I've since looked again and realized that the register base is
+recalculated based on 'instance', so disregard this comment.
+
+   Julia
+
+--Fnm8lRGFTVS/3GuM
 Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
 
-iEYEARECAAYFAljUHqsACgkQ6k5VT6v45lkK/wCgnsRfp6QgFsm7huhVX7GJ8adD
-jdIAnjmnJilQjYCJGI/nkH6UDL6JoL5q
-=RSQ5
+iQEzBAABCAAdFiEEgKAEF431w1EL96k9jNrC4UVNdG8FAljUNWoACgkQjNrC4UVN
+dG8DmQf/UI+Ito7fwOvlfFhgib3eA/pNa9Q93W8eyM21SSQGJ2/ifYJlTzgY9lq3
+Ryp8B1VKWBN1BTyKiRcbWQns4ZX2hWOlaeB1jewlRtI73BmbmA1b2GrFyfVwqP3s
+WuLEXAhSHKWjf9WkWFPA/Jq/mQ2HQg0A/Y+4s3mSDnQ8yW0FVMPoj+iNIdXCcpxm
+Ksl/MbC+3QcFVeir6X0rrPYdmmBtI8aHWLjCEHvjnvNgdd62DP2vHfMKHnQFl/2u
+srsyKcGQoNsazVq2/uMtOR7d3HblbiuhPDkHAS/l4laklL/U5M4Wc52S77wKnCPe
+yBeKwvJAMlnz8vH4xgbPPgnPzq+y4g==
+=J4ft
 -----END PGP SIGNATURE-----
 
---mYCpIKhGyMATD0i+--
+--Fnm8lRGFTVS/3GuM--
