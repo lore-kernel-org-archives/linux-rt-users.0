@@ -1,92 +1,109 @@
-From: Luiz Capitulino <lcapitulino@redhat.com>
-Subject: Re: [BUG nohz]: wrong user and system time accounting
-Date: Mon, 27 Mar 2017 14:38:30 -0400
-Message-ID: <20170327143830.2fbcef90@redhat.com>
-References: <20170323165512.60945ac6@redhat.com>
-        <CANRm+CxcgSP2-x+A822DmHLvFLzFmTptS6oYwYtwVdErTpiB=Q@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Frederic Weisbecker <fweisbec@gmail.com>,
-        Rik van Riel <riel@redhat.com>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org
-To: Wanpeng Li <kernellwp@gmail.com>
+From: Vedang Patel <vedang.patel@intel.com>
+Subject: [PATCH] cyclictest: make clock_nanosleep as default and add option for POSIX timers.
+Date: Mon, 27 Mar 2017 16:07:14 -0700
+Message-ID: <1490656034-31954-1-git-send-email-vedang.patel@intel.com>
+References: <1490380095.12818.13.camel@intel.com>
+Cc: linux-rt-users@vger.kernel.org,
+        Vedang Patel <vedang.patel@intel.com>
+To: jkacur@redhat.com, williams@redhat.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:57912 "EHLO mx1.redhat.com"
+Received: from mga09.intel.com ([134.134.136.24]:27078 "EHLO mga09.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1752387AbdC0SjK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 27 Mar 2017 14:39:10 -0400
-In-Reply-To: <CANRm+CxcgSP2-x+A822DmHLvFLzFmTptS6oYwYtwVdErTpiB=Q@mail.gmail.com>
+        id S1752669AbdC0XIa (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 27 Mar 2017 19:08:30 -0400
+In-Reply-To: <1490380095.12818.13.camel@intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 27 Mar 2017 09:56:47 +0800
-Wanpeng Li <kernellwp@gmail.com> wrote:
+It is recommended that clock_nanosleep should be used for real-time
+wherever available. So, make sure that cyclictest runs clock_nanosleep
+by default. Added an option to run POSIX timers. Removing the '-n'
+option because it is redundant now.
 
-> Actually after I bisect, the first bad commit is ff9a9b4c4334 ("sched,
-> time: Switch VIRT_CPU_ACCOUNTING_GEN to jiffy granularity"). The bug
-> can be reproduced readily if CONFIG_CONTEXT_TRACKING_FORCE is true,
-> then just stress all the online cpus or just one cpu and leave others
-> idle(so it stresses the global timekeeping one), top show 100%
-> sys-time. And another way to reproduce it is by nohz_full, and gives
-> the stress to the house keeping cpu, the top show 100% sys-time of the
-> house keeping cpu, and also the other cpus who have at least two tasks
-> running on and in full_nohz mode.
+Signed-off-by: Vedang Patel <vedang.patel@intel.com>
+---
+ src/cyclictest/cyclictest.c | 17 +++++++++--------
+ 1 file changed, 9 insertions(+), 8 deletions(-)
 
-We're not short on reproducers, I have a new one too:
-
- http://people.redhat.com/~lcapitul/real-time/acct-bug.c
-
-This is a single threaded task that reproduces the issue. If you
-run it as instructed, you'll get:
-
- - nohz_full CPU: 95% system time 5% idle time
- - non-nohz_full CPU: 95% user time 5% idle time (expected behavior)
-
-This reproduces the issue, but not for the reasons I expected. I was
-trying to mimic what I was seeing on my trace when tracing the two
-task problem. Which is: a task stays 995us in user-space and then
-enters the kernel. Time won't be accounted for user-space because
-we're not 1 jiffies yet, but if the task stays in the kernel for more
-than 5us, then time will be accounted for system time when going
-back to user-space.
-
-However, what really seems to be happening is: acct-bug is causing
-the tick to be re-activated (why? it shouldn't) and that causes the
-issue to appear. This is consistent with my other observations: I
-can only reproduce the issue if the nohz_full CPU re-activates the tick.
-
-> Let's consider the cpu which has responsibility for the global
-> timekeeping, as the tracing posted above, the vtime_account_user() is
-> called before tick_sched_timer() which will update jiffies,
-
-But the vtime_account_user() call and the jiffies update happen
-on different CPUs, no? So the ordering shouldn't matter.
-
-> so jiffies
-> is stale in vtime_account_user() and the run time in userspace is
-> skipped, the vtime_user_enter() is called after jiffies update, so
-> both the time in userspace and in  kernel are accumulated to sys time.
->
-> If the housekeeping cpu is idle when CONFIG_NO_HZ_FULL, everything is
-> fine. However, if you give stress to the housekeeping cpu, top will
-> show 100% sys-time of both the housekeeping cpu and the other cpus who
-> have at least two tasks running on and in full_nohz mode.
-
-The housekeeping CPUs are idle with my reproducers.
-
-> I think it
-> is because the stress delays the timer interrupt handling in some
-> degree, then the jiffies is not updated timely before other cpus
-> access it in vtime_account_user().
-> 
-> I think we can keep syscalls/exceptions context tracking still in
-> jiffies based sampling and utilize local_clock() in vtime_delta()
-> again for irqs which avoids jiffies stale influence. I can make a
-> patch if the idea is acceptable or there is any better proposal. :)
-> 
-> Regards,
-> Wanpeng Li
-> 
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 3f1bef1ffca9..0b134410244b 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -1321,7 +1321,6 @@ static void display_help(int error)
+ 	       "-m       --mlockall        lock current and future memory allocations\n"
+ 	       "-M       --refresh_on_max  delay updating the screen until a new max\n"
+ 	       "			   latency is hit. Userful for low bandwidth.\n"
+-	       "-n       --nanosleep       use clock_nanosleep\n"
+ 	       "	 --notrace	   suppress tracing\n"
+ 	       "-N       --nsecs           print results in ns instead of us (default us)\n"
+ 	       "-o RED   --oscope=RED      oscilloscope mode, reduce verbose output by RED\n"
+@@ -1364,7 +1363,8 @@ static void display_help(int error)
+ 	       "                           format: n:c:v n=tasknum c=count v=value in us\n"
+ 	       "-w       --wakeup          task wakeup tracing (used with -b)\n"
+ 	       "-W       --wakeuprt        rt task wakeup tracing (used with -b)\n"
+-	       "	 --dbg_cyclictest  print info useful for debugging cyclictest\n",
++	       "	 --dbg_cyclictest  print info useful for debugging cyclictest\n"
++	       "-x	 --posix_timers    use POSIX timers instead of clock_nanosleep.\n",
+ 	       tracers
+ 		);
+ 	if (error)
+@@ -1372,7 +1372,7 @@ static void display_help(int error)
+ 	exit(EXIT_SUCCESS);
+ }
+ 
+-static int use_nanosleep;
++static int use_nanosleep = MODE_CLOCK_NANOSLEEP;
+ static int timermode = TIMER_ABSTIME;
+ static int use_system;
+ static int priority;
+@@ -1493,6 +1493,7 @@ enum option_values {
+ 	OPT_TRIGGER_NODES, OPT_UNBUFFERED, OPT_NUMA, OPT_VERBOSE, OPT_WAKEUP,
+ 	OPT_WAKEUPRT, OPT_DBGCYCLIC, OPT_POLICY, OPT_HELP, OPT_NUMOPTS,
+ 	OPT_ALIGNED, OPT_SECALIGNED, OPT_LAPTOP, OPT_SMI, OPT_TRACEMARK,
++	OPT_POSIX_TIMERS,
+ };
+ 
+ /* Process commandline options */
+@@ -1530,7 +1531,6 @@ static void process_options (int argc, char *argv[], int max_cpus)
+ 			{"loops",            required_argument, NULL, OPT_LOOPS },
+ 			{"mlockall",         no_argument,       NULL, OPT_MLOCKALL },
+ 			{"refresh_on_max",   no_argument,       NULL, OPT_REFRESH },
+-			{"nanosleep",        no_argument,       NULL, OPT_NANOSLEEP },
+ 			{"nsecs",            no_argument,       NULL, OPT_NSECS },
+ 			{"oscope",           required_argument, NULL, OPT_OSCOPE },
+ 			{"traceopt",         required_argument, NULL, OPT_TRACEOPT },
+@@ -1557,9 +1557,10 @@ static void process_options (int argc, char *argv[], int max_cpus)
+ 			{"dbg_cyclictest",   no_argument,       NULL, OPT_DBGCYCLIC },
+ 			{"policy",           required_argument, NULL, OPT_POLICY },
+ 			{"help",             no_argument,       NULL, OPT_HELP },
++			{"posix_timers",     no_argument,	NULL, OPT_POSIX_TIMERS },
+ 			{NULL, 0, NULL, 0}
+ 		};
+-		int c = getopt_long(argc, argv, "a::A::b:Bc:Cd:D:Efh:H:i:Il:MnNo:O:p:PmqrRsSt::uUvD:wWT:",
++		int c = getopt_long(argc, argv, "a::A::b:Bc:Cd:D:Efh:H:i:Il:MNo:O:p:PmqrRsSt::uUvD:wWT:x",
+ 				    long_options, &option_index);
+ 		if (c == -1)
+ 			break;
+@@ -1651,9 +1652,6 @@ static void process_options (int argc, char *argv[], int max_cpus)
+ 		case 'M':
+ 		case OPT_REFRESH:
+ 			refresh_on_max = 1; break;
+-		case 'n':
+-		case OPT_NANOSLEEP:
+-			use_nanosleep = MODE_CLOCK_NANOSLEEP; break;
+ 		case 'N':
+ 		case OPT_NSECS:
+ 			use_nsecs = 1; break;
+@@ -1760,6 +1758,9 @@ static void process_options (int argc, char *argv[], int max_cpus)
+ 		case 'W':
+ 		case OPT_WAKEUPRT:
+ 			tracetype = WAKEUPRT; break;
++		case 'x':
++		case OPT_POSIX_TIMERS:
++			use_nanosleep = MODE_CYCLIC; break;
+ 		case '?':
+ 		case OPT_HELP:
+ 			display_help(0); break;
+-- 
+2.7.3
 
