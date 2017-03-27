@@ -1,132 +1,162 @@
-From: lkml@pengaru.com
-Subject: Re: [BUG nohz]: wrong user and system time accounting
-Date: Sun, 26 Mar 2017 22:33:55 -0700
-Message-ID: <20170327053355.GP802@shells.gnugeneration.com>
-References: <20170323165512.60945ac6@redhat.com>
- <1490316962.8850.59.camel@redhat.com>
+From: Juri Lelli <juri.lelli@arm.com>
+Subject: [ANNOUNCE] OSPM-summit is on next Monday
+Date: Mon, 27 Mar 2017 14:25:35 +0100
+Message-ID: <20170327132535.GJ10289@e106622-lin>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Cc: Luiz Capitulino <lcapitulino@redhat.com>, fweisbec@gmail.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Rik van Riel <riel@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from shells.gnugeneration.com ([66.240.222.126]:52302 "EHLO
-        shells.gnugeneration.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751854AbdC0FdD (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 27 Mar 2017 01:33:03 -0400
+Content-Type: text/plain; charset=us-ascii
+Cc: Peter Zijlstra <peterz@infradead.org>,
+        "Rafael J. Wysocki" <rafael@kernel.org>,
+        Vincent Guittot <vincent.guittot@linaro.org>,
+        Ulf Hansson <ulf.hansson@linaro.org>,
+        Morten Rasmussen <morten.rasmussen@arm.com>,
+        Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>,
+        Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        Luca Abeni <luca.abeni@santannapisa.it>,
+        Tommaso Cucinotta <tommaso.cucinotta@sssup.it>,
+        Sudeep Holla <sudeep.holla@arm.com>, juri.lelli@arm.com,
+        Viresh Kumar <viresh.kumar@linaro.org>,
+        Patrick Bellasi <patrick.bellasi@arm.com>,
+        Kevin Hilman <khilman@baylibre.com>,
+        Michael Turquette <mturquette@baylibre.com>,
+        Paolo Valente <paolo.valente@unimore.it>,
+        Claudio Scordino <claudio@evidence.eu.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@
+To: linux-pm@vger.kernel.org, linux-acpi@vger.kernel.org,
+        linux-pci@vger.kernel.org, linux-rt-users@vger.kernel.org
+Return-path: <linux-acpi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1490316962.8850.59.camel@redhat.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-acpi-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Mar 23, 2017 at 08:56:02PM -0400, Rik van Riel wrote:
-> On Thu, 2017-03-23 at 16:55 -0400, Luiz Capitulino wrote:
-> > When there are two or more tasks executing in user-space and
-> > taking 100% of a nohz_full CPU, top reports 70% system time
-> > and 30% user time utilization. Sometimes I'm even able to get
-> > 100% system time and 0% user time.
-> > 
-> > This was reproduced with latest Linus tree (093b995), but I
-> > don't believe it's a regression (at least not a recent one)
-> > as I can reproduce it with older kernels. Also, I have
-> > CONFIG_IRQ_TIME_ACCOUNTING=y and haven't tried to reproduce
-> > without it yet.
-> > 
-> > Below you'll find the steps to reproduce and some initial
-> > analysis.
-> > 
-> > Steps to reproduce
-> > ------------------
-> > 
-> > 1. Set up a CPU for nohz_full with isolcpus= nohz_full=
-> > 
-> > 2. Pin two tasks that hog the CPU 100% of the time to that CPU
-> > 
-> > 3. Run top -d1 and check system time
-> > 
-> > NOTE: When there's only one task hogging a nohz_full CPU, top
-> >       shows 100% user-time, as expected
-> > 
-> > Initial analysis
-> > ----------------
-> > 
-> > When tracing vtime accounting functions and the user-space/kernel
-> > transitions when the issue is taking place, I see several of the
-> > following:
-> > 
-> > hog-10552 [015]  1132.711104:
-> > function:             enter_from_user_mode <-- apic_timer_interrupt
-> > hog-10552 [015]  1132.711105:
-> > function:             __context_tracking_exit <--
-> > enter_from_user_mode
-> > hog-10552 [015]  1132.711105:
-> > bprint:               __context_tracking_exit.part.4: new state=1 cur
-> > state=1 active=1
-> > hog-10552 [015]  1132.711105:
-> > function:             vtime_account_user <--
-> > __context_tracking_exit.part.4
-> > hog-10552 [015]  1132.711105:
-> > function:             smp_apic_timer_interrupt <--
-> > apic_timer_interrupt
-> > hog-10552 [015]  1132.711106: function:             irq_enter <--
-> > smp_apic_timer_interrupt
-> > hog-10552 [015]  1132.711106: function:             tick_sched_timer
-> > <-- __hrtimer_run_queues
-> > hog-10552 [015]  1132.711108: function:             irq_exit <--
-> > smp_apic_timer_interrupt
-> > hog-10552 [015]  1132.711108:
-> > function:             __context_tracking_enter <--
-> > prepare_exit_to_usermode
-> > hog-10552 [015]  1132.711108:
-> > bprint:               __context_tracking_enter.part.2: new state=1
-> > cur state=0 active=1
-> > hog-10552 [015]  1132.711109: function:             vtime_user_enter
-> > <-- __context_tracking_enter.part.2
-> > hog-10552 [015]  1132.711109:
-> > function:             __vtime_account_system <-- vtime_user_enter
-> > hog-10552 [015]  1132.711109:
-> > function:             account_system_time <-- __vtime_account_system
-> > 
-> > On entering the kernel due to a timer interrupt, vtime_account_user()
-> > skips user-time accounting. Then later on when returning to user-
-> > space,
-> > vtime_user_enter() is probably accounting the whole time (ie. user-
-> > space
-> > plus kernel-space) to system time.
-> > 
-> > Now, when does vtime_account_user() skips accounting? Well, when the
-> > time delta is less then one jiffie. This would imply that
-> > vtime_account_user()
-> > is being called less than one jiffie since the last accounting, but I
-> > haven't
-> > confirmed any of this yet.
-> 
-> Jiffies should be advanced by the timer interrupt, on the
-> housekeeping CPU, which is not doing context tracking.
-> 
-> Why is the isolated/nohz_full CPU receiving timer interrupts
-> at all?
-> 
-> I thought it would not, but obviously I am wrong. What is
-> going on here?
+Hi,
 
-This thread sounds awful familiar to me.
+we are only a week away from the OSPM-summit!
 
-With CONFIG_NO_HZ_FULL=y && CONFIG_VIRT_CPU_ACCOUNTING_GEN=y I observed process
-accounting anomalies with user CPU time being misaccounted as system time all
-the way back to 4.6.0.
+Pack your bags (or stay tuned for the live streaming).
 
-After switching to CONFIG_NO_HZ_IDLE=y && CONFIG_VIRT_CPU_ACCOUNTING_GEN=n the
-issues went away.
+Don't forget to subscribe to the summit mailing list to receive updates by
+either following the instructions available at the following link
+http://groups.google.com/group/ospm-summit-2017/boxsubscribe?email=<your_email>
+or sending an email to ospm-summit-2017+subscribe@googlegroups.com
 
-The lkml thread I had seen at that time which compelled me to suspect these
-settings was this:
-http://lkml.iu.edu/hypermail/linux/kernel/1608.2/05860.html
+Archives are available at https://groups.google.com/forum/#!forum/ospm-summit-2017
 
-It sounds like this issue is finally beginning to be understood though, good
-work!
+More information about schedule and logistics follow.
 
-Regards,
-Vito Caputo
+---
+
+Power Management and Scheduling in the Linux Kernel (OSPM-summit)
+April 3-4, 2017
+Scuola Superiore Sant'Anna (SSSA)
+Pisa, Italy
+http://retis.sssup.it/ospm-summit/
+
+---
+
+.:: FOCUS
+
+Power management and scheduling techniques to reduce energy consumption while
+meeting performance and latency requirements are receiving considerable
+attention from the Linux Kernel development community. 
+
+The Power Management and Scheduling in the Linux Kernel (OSPM-summit) summit
+aims at fostering further interest and discussion to happen.
+
+.:: SCHEDULE
+
+The summit is organized to cover two days of discussions and talks.
+
+What follows is a tentative schedule, subject to last minute changes.
+Find more info and real time updates on this shared document:
+https://docs.google.com/spreadsheets/d/1B-IsUIGitvRa7ZzppEAJBMgGpIgRAAnu_OhDAGYg6SQ/edit?usp=sharing
+
+Monday (2017-04-03)
+*******************
+09:00AM - 09:30AM	Welcome and Introduction (DAY 1)
+---
+09:30AM - 10:20AM	Tooling/LISA
+---
+10:20AM - 11:10AM	About The Need to Power Instrument The Linux Kernel
+---
+11:10AM - 11:20AM	Break
+---
+11:20AM - 12:10AM	What are the latest evolutions in PELT and what next
+---
+12:10AM - 01:00PM	PELT decay clamping/UTIL_EST
+---
+01:00PM - 02:30PM	Lunch
+---
+02:30PM - 03:20PM	EAS where we are
+---	
+03:20PM - 04:10PM	Energy model/Exotic topologies
+---					
+04:10PM - 04:20PM	Break
+---
+04:20PM - 05:10PM	Schedtune
+---					
+05:10PM - 06:00PM	SCHED_DEADLINE and reclaiming
+
+
+Tuesday (2017-04-04)
+********************
+09:00AM - 09:30AM	Welcome and Introduction (DAY 2)
+---
+09:30AM - 10:20AM	Discussion about possible improvements in the schedutil governor
+---
+10:20AM - 11:10AM	Schedutil for SCHED_DEADLINE
+---
+11:10AM - 11:20AM	Break
+---
+11:20AM - 12:10AM	Parameterizing CFS load balancing: nr_running/util/load
+---					
+12:10AM - 01:00PM	Tracepoints for PELT
+---
+01:00PM - 02:30PM	Lunch
+---			
+02:30PM - 03:20PM	IRQ prediction
+---		
+03:20PM - 04:10PM	I/O scheduling and power management with storage devices
+---					
+04:10PM - 04:20PM	Break
+---
+04:20PM - 05:10PM	SCHED_DEADLINE group scheduling
+---					
+05:10PM - 06:00PM	A Hierarchical Scheduling Model for Dynamic Soft-Realtime Systems
+---
+06:00PM - 06:30PM	Closing Remarks				
+
+We are looking into setting up live streaming of the sessions. Details
+will be soon shared through the shared doc mentioned above and the
+event mailing list.
+
+List of attendees is also available in the doc and on the event website.
+
+.:: VENUE
+
+The workshop will take place at ReTiS Lab*, Scuola Superiore Sant'Anna, Pisa,
+Italy. Pisa is a small town, walking distance from the city center to the venue
+is 20 minutes, walking distance from the airport to the city center is 30
+minutes. More details are available from the summit web page:
+http://retis.sssup.it/ospm-summit/
+
+A map of the town with venue location, points of interest and
+transportation information is available at:
+https://drive.google.com/open?id=1ANKOXr2cuZkABXskDurgrGdl_js&usp=sharing
+
+Bus from Airport to city centre takes about 10 min and costs 1.20 euros
+(2 euros if bought on board). Large bills are usually not accepted.
+
+Taxi from Airport to city centre costs 10/15 euros. Credit cards are not
+accepted.
+
+.:: ORGANIZERS (in alphabetical order)
+
+Luca Abeni (SSSA)
+Patrick Bellasi (ARM)
+Tommaso Cucinotta (SSSA)
+Dietmar Eggemann (ARM)
+Sudeep Holla (ARM)
+Juri Lelli (ARM)
+Lorenzo Pieralisi (ARM)
+Morten Rasmussen (ARM)
