@@ -1,162 +1,70 @@
-From: Juri Lelli <juri.lelli@arm.com>
-Subject: [ANNOUNCE] OSPM-summit is on next Monday
-Date: Mon, 27 Mar 2017 14:25:35 +0100
-Message-ID: <20170327132535.GJ10289@e106622-lin>
+From: Rik van Riel <riel@redhat.com>
+Subject: Re: [BUG nohz]: wrong user and system time accounting
+Date: Mon, 27 Mar 2017 13:35:29 -0400
+Message-ID: <1490636129.8850.76.camel@redhat.com>
+References: <20170323165512.60945ac6@redhat.com>
+         <CANRm+CxcgSP2-x+A822DmHLvFLzFmTptS6oYwYtwVdErTpiB=Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Peter Zijlstra <peterz@infradead.org>,
-        "Rafael J. Wysocki" <rafael@kernel.org>,
-        Vincent Guittot <vincent.guittot@linaro.org>,
-        Ulf Hansson <ulf.hansson@linaro.org>,
-        Morten Rasmussen <morten.rasmussen@arm.com>,
-        Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>,
-        Dietmar Eggemann <dietmar.eggemann@arm.com>,
-        Luca Abeni <luca.abeni@santannapisa.it>,
-        Tommaso Cucinotta <tommaso.cucinotta@sssup.it>,
-        Sudeep Holla <sudeep.holla@arm.com>, juri.lelli@arm.com,
-        Viresh Kumar <viresh.kumar@linaro.org>,
-        Patrick Bellasi <patrick.bellasi@arm.com>,
-        Kevin Hilman <khilman@baylibre.com>,
-        Michael Turquette <mturquette@baylibre.com>,
-        Paolo Valente <paolo.valente@unimore.it>,
-        Claudio Scordino <claudio@evidence.eu.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@
-To: linux-pm@vger.kernel.org, linux-acpi@vger.kernel.org,
-        linux-pci@vger.kernel.org, linux-rt-users@vger.kernel.org
-Return-path: <linux-acpi-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-acpi-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+Cc: Frederic Weisbecker <fweisbec@gmail.com>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org
+To: Wanpeng Li <kernellwp@gmail.com>,
+        Luiz Capitulino <lcapitulino@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx1.redhat.com ([209.132.183.28]:53382 "EHLO mx1.redhat.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751350AbdC0RhM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 27 Mar 2017 13:37:12 -0400
+In-Reply-To: <CANRm+CxcgSP2-x+A822DmHLvFLzFmTptS6oYwYtwVdErTpiB=Q@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+On Mon, 2017-03-27 at 09:56 +0800, Wanpeng Li wrote:
+> 
+> Actually after I bisect, the first bad commit is ff9a9b4c4334
+> ("sched,
+> time: Switch VIRT_CPU_ACCOUNTING_GEN to jiffy granularity"). The bug
+> can be reproduced readily if CONFIG_CONTEXT_TRACKING_FORCE is true
 
-we are only a week away from the OSPM-summit!
+At the time, we thought it was an "occasionally bad" / "unlucky"
+kind of bug, not a systemic issue, like your observations seem
+to suggest.
 
-Pack your bags (or stay tuned for the live streaming).
+> Let's consider the cpu which has responsibility for the global
+> timekeeping, as the tracing posted above, the vtime_account_user() is
+> called before tick_sched_timer() which will update jiffies, so
+> jiffies
+> is stale in vtime_account_user() and the run time in userspace is
+> skipped, the vtime_user_enter() is called after jiffies update, so
+> both the time in userspace and in  kernel are accumulated to sys
+> time.
+> If the housekeeping cpu is idle when CONFIG_NO_HZ_FULL, everything is
+> fine. However, if you give stress to the housekeeping cpu, top will
+> show 100% sys-time of both the housekeeping cpu and the other cpus
+> who
+> have at least two tasks running on and in full_nohz mode. I think it
+> is because the stress delays the timer interrupt handling in some
+> degree, then the jiffies is not updated timely before other cpus
+> access it in vtime_account_user().
+> 
+> I think we can keep syscalls/exceptions context tracking still in
+> jiffies based sampling and utilize local_clock() in vtime_delta()
+> again for irqs which avoids jiffies stale influence. I can make a
+> patch if the idea is acceptable or there is any better proposal. :)
 
-Don't forget to subscribe to the summit mailing list to receive updates by
-either following the instructions available at the following link
-http://groups.google.com/group/ospm-summit-2017/boxsubscribe?email=<your_email>
-or sending an email to ospm-summit-2017+subscribe@googlegroups.com
+Making that patch seems worthwhile, but I would like to
+know what the root cause is of the issue that is being
+observed.
 
-Archives are available at https://groups.google.com/forum/#!forum/ospm-summit-2017
+Is the problem due to the nohz_full CPU receiving an
+interrupt at the same time the timer interrupt fires on
+the housekeeping CPU?
 
-More information about schedule and logistics follow.
+Is it due to a nohz_full CPU updating jiffies all by
+itself from irq context?  In that case, could it be
+better to always have that be done by the housekeeping
+CPU?
 
----
-
-Power Management and Scheduling in the Linux Kernel (OSPM-summit)
-April 3-4, 2017
-Scuola Superiore Sant'Anna (SSSA)
-Pisa, Italy
-http://retis.sssup.it/ospm-summit/
-
----
-
-.:: FOCUS
-
-Power management and scheduling techniques to reduce energy consumption while
-meeting performance and latency requirements are receiving considerable
-attention from the Linux Kernel development community. 
-
-The Power Management and Scheduling in the Linux Kernel (OSPM-summit) summit
-aims at fostering further interest and discussion to happen.
-
-.:: SCHEDULE
-
-The summit is organized to cover two days of discussions and talks.
-
-What follows is a tentative schedule, subject to last minute changes.
-Find more info and real time updates on this shared document:
-https://docs.google.com/spreadsheets/d/1B-IsUIGitvRa7ZzppEAJBMgGpIgRAAnu_OhDAGYg6SQ/edit?usp=sharing
-
-Monday (2017-04-03)
-*******************
-09:00AM - 09:30AM	Welcome and Introduction (DAY 1)
----
-09:30AM - 10:20AM	Tooling/LISA
----
-10:20AM - 11:10AM	About The Need to Power Instrument The Linux Kernel
----
-11:10AM - 11:20AM	Break
----
-11:20AM - 12:10AM	What are the latest evolutions in PELT and what next
----
-12:10AM - 01:00PM	PELT decay clamping/UTIL_EST
----
-01:00PM - 02:30PM	Lunch
----
-02:30PM - 03:20PM	EAS where we are
----	
-03:20PM - 04:10PM	Energy model/Exotic topologies
----					
-04:10PM - 04:20PM	Break
----
-04:20PM - 05:10PM	Schedtune
----					
-05:10PM - 06:00PM	SCHED_DEADLINE and reclaiming
-
-
-Tuesday (2017-04-04)
-********************
-09:00AM - 09:30AM	Welcome and Introduction (DAY 2)
----
-09:30AM - 10:20AM	Discussion about possible improvements in the schedutil governor
----
-10:20AM - 11:10AM	Schedutil for SCHED_DEADLINE
----
-11:10AM - 11:20AM	Break
----
-11:20AM - 12:10AM	Parameterizing CFS load balancing: nr_running/util/load
----					
-12:10AM - 01:00PM	Tracepoints for PELT
----
-01:00PM - 02:30PM	Lunch
----			
-02:30PM - 03:20PM	IRQ prediction
----		
-03:20PM - 04:10PM	I/O scheduling and power management with storage devices
----					
-04:10PM - 04:20PM	Break
----
-04:20PM - 05:10PM	SCHED_DEADLINE group scheduling
----					
-05:10PM - 06:00PM	A Hierarchical Scheduling Model for Dynamic Soft-Realtime Systems
----
-06:00PM - 06:30PM	Closing Remarks				
-
-We are looking into setting up live streaming of the sessions. Details
-will be soon shared through the shared doc mentioned above and the
-event mailing list.
-
-List of attendees is also available in the doc and on the event website.
-
-.:: VENUE
-
-The workshop will take place at ReTiS Lab*, Scuola Superiore Sant'Anna, Pisa,
-Italy. Pisa is a small town, walking distance from the city center to the venue
-is 20 minutes, walking distance from the airport to the city center is 30
-minutes. More details are available from the summit web page:
-http://retis.sssup.it/ospm-summit/
-
-A map of the town with venue location, points of interest and
-transportation information is available at:
-https://drive.google.com/open?id=1ANKOXr2cuZkABXskDurgrGdl_js&usp=sharing
-
-Bus from Airport to city centre takes about 10 min and costs 1.20 euros
-(2 euros if bought on board). Large bills are usually not accepted.
-
-Taxi from Airport to city centre costs 10/15 euros. Credit cards are not
-accepted.
-
-.:: ORGANIZERS (in alphabetical order)
-
-Luca Abeni (SSSA)
-Patrick Bellasi (ARM)
-Tommaso Cucinotta (SSSA)
-Dietmar Eggemann (ARM)
-Sudeep Holla (ARM)
-Juri Lelli (ARM)
-Lorenzo Pieralisi (ARM)
-Morten Rasmussen (ARM)
+What exactly is going on here?
