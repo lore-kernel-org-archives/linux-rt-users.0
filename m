@@ -1,120 +1,56 @@
-From: Luiz Capitulino <lcapitulino@redhat.com>
-Subject: Re: [BUG nohz]: wrong user and system time accounting
-Date: Wed, 29 Mar 2017 09:23:57 -0400
-Message-ID: <20170329092357.2ca784c2@redhat.com>
-References: <20170323165512.60945ac6@redhat.com>
-        <20170329130447.GB8306@lerouge>
-        <1490793272.28917.5.camel@redhat.com>
+From: Bert Schiettecatte <bert@bertschiettecatte.com>
+Subject: Fwd: changes to scheduler from mainline 4.8 to 4.10?
+Date: Wed, 29 Mar 2017 08:55:33 -0700
+Message-ID: <CALd3UbQo=F6YtQ-LUrw0YaX2=PdpyXh+EFueKYn4MnRtUE748Q@mail.gmail.com>
+References: <CALd3UbSKV_Qzun=9Hhwe=omP5f4A3gyOi_nGNM6JA4d5ziFZ_g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="MP_/VnTC34nrF2nX6Xsaw90i5U3"
-Cc: Frederic Weisbecker <fweisbec@gmail.com>,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        Wanpeng Li <kernellwp@gmail.com>
-To: Rik van Riel <riel@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:39636 "EHLO mx1.redhat.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1753680AbdC2NYA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 29 Mar 2017 09:24:00 -0400
-In-Reply-To: <1490793272.28917.5.camel@redhat.com>
+Received: from mail-yw0-f171.google.com ([209.85.161.171]:34421 "EHLO
+        mail-yw0-f171.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752264AbdC2Pzp (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 29 Mar 2017 11:55:45 -0400
+Received: by mail-yw0-f171.google.com with SMTP id p77so13717945ywg.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 29 Mar 2017 08:55:39 -0700 (PDT)
+In-Reply-To: <CALd3UbSKV_Qzun=9Hhwe=omP5f4A3gyOi_nGNM6JA4d5ziFZ_g@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---MP_/VnTC34nrF2nX6Xsaw90i5U3
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
+Hi all,
 
-On Wed, 29 Mar 2017 09:14:32 -0400
-Rik van Riel <riel@redhat.com> wrote:
+I'm working on a realtime audio application running on a rk3288
+platform. The application is written in the JUCE framework, and uses
+ALSA for audio output. I build the application in a debian jessie
+chroot since it needs a bunch of libraries compiled for armhf.
 
-> > I failed to reproduce with your config. I'm still getting 99%
-> > userspace
-> > cputime. So I'm wondering if the hogging style plays a role.
-> >=20
-> > I run pure user loops:
-> >=20
-> > =C2=A0=C2=A0=C2=A0=C2=A0int main(int argc, char **argv)
-> > =C2=A0=C2=A0=C2=A0=C2=A0{
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0for (;;);
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0return 0
-> > =C2=A0=C2=A0=C2=A0=C2=A0}
-> >=20
-> > Does your user program perform syscalls or IOs of some sort? =20
->=20
-> Luiz's program makes a syscall every millisecond,
-> if started with the arguments he gave as his
-> reproducer.
+The application used to run fine on 4.8 mainline, without noticable
+audio dropouts. I had to upgrade recently to 4.10 mainline to get the
+audio gadget driver working, but now the application has audio
+dropouts (pause in the audio output).
 
-There are various reproducers actually. I started off with the simple
-loop above, then wrote the attach program and then wrote the one
-you're mentioning:
+I have been using 44100 hz sample rate and 960 samples buffer size for
+testing. I increased the buffer size to 1280 which seemed to improve
+things a little, and then after googling around I changed the IO
+scheduler to noop (it was set to CFQ), which further increases the
+performance. I now only have occasional audio dropouts.
 
- http://people.redhat.com/~lcapitul/real-time/acct-bug.c
+The application does a lot of I/O via HID and has 4 audio processing
+threads for signal processing, besides other threads and callbacks for
+HID I/O.
 
-All of them reproduce the issue 100% of the time for me.
+Questions:
 
---MP_/VnTC34nrF2nX6Xsaw90i5U3
-Content-Type: text/x-c++src
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment; filename=hog.c
+1) Does anyone know if something has changed between kernel 4.8 and
+4.10 with regard to the scheduler that might negatively impact
+realtime audio or RT performance in general?
+2) are there specific kernel settings I should check?
+3) I am wondering if RT patches are still relevant for newer kernels
+like 4.8 and 4.10?
+4) I saw that the latest patches are for kernel 4.4, can they be
+applied to later kernels and is that a good idea or not?
 
-#define _GNU_SOURCE
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sched.h>
-#include <sys/types.h>
+Thanks for helping!
 
-static int move_to_cpu(int cpu)
-{
-        cpu_set_t set;
-
-        CPU_ZERO(&set);
-        CPU_SET(cpu, &set);
-        return sched_setaffinity(0, sizeof(set), &set);
-}
-
-static void loop(void)
-{
-        for (;;) ;
-}
-
-static int fork_hog(int cpu)
-{
-        int pid;
-
-        pid = (int) fork();
-        if (pid == 0) {
-                move_to_cpu(cpu);
-                loop();
-                exit(0);
-        }
-
-        return pid;
-}
-
-int main(int argc, char *argv[])
-{
-        int i, pid, cpu, nr_procs;
-
-		if (argc != 3) {
-			printf("usage: hog < nr-procs > < CPU >\n");
-			exit(1);
-		}
-
-		cpu = atoi(argv[2]);
-		nr_procs = atoi(argv[1]);
-
-        for (i = 0; i < nr_procs; i++) {
-                pid = fork_hog(cpu);
-                fprintf(stderr, "created hog%d pid=%d\n", i, pid);
-        }
-
-        fprintf(stderr, "pausing...\n");
-        pause();
-
-        return 0;
-}
-
---MP_/VnTC34nrF2nX6Xsaw90i5U3--
+Bert
