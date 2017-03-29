@@ -1,107 +1,56 @@
-From: Luiz Capitulino <lcapitulino@redhat.com>
+From: Frederic Weisbecker <fweisbec@gmail.com>
 Subject: Re: [BUG nohz]: wrong user and system time accounting
-Date: Tue, 28 Mar 2017 09:44:53 -0400
-Message-ID: <20170328094453.331ead3c@redhat.com>
+Date: Wed, 29 Mar 2017 15:04:49 +0200
+Message-ID: <20170329130447.GB8306@lerouge>
 References: <20170323165512.60945ac6@redhat.com>
-        <CANRm+CxcgSP2-x+A822DmHLvFLzFmTptS6oYwYtwVdErTpiB=Q@mail.gmail.com>
-        <20170327143830.2fbcef90@redhat.com>
-        <CANRm+CwYkyzVe1yO0aWP5j5vxmFmSxH9nLd7yvfdUJRLS9G=vA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Frederic Weisbecker <fweisbec@gmail.com>,
-        Rik van Riel <riel@redhat.com>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org
-To: Wanpeng Li <kernellwp@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CANRm+CwYkyzVe1yO0aWP5j5vxmFmSxH9nLd7yvfdUJRLS9G=vA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: riel@redhat.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org, Wanpeng Li <kernellwp@gmail.com>
+To: Luiz Capitulino <lcapitulino@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wr0-f180.google.com ([209.85.128.180]:33884 "EHLO
+        mail-wr0-f180.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1756020AbdC2NEx (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 29 Mar 2017 09:04:53 -0400
+Content-Disposition: inline
+In-Reply-To: <20170323165512.60945ac6@redhat.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 28 Mar 2017 13:28:13 +0800
-Wanpeng Li <kernellwp@gmail.com> wrote:
+On Thu, Mar 23, 2017 at 04:55:12PM -0400, Luiz Capitulino wrote:
+> 
+> When there are two or more tasks executing in user-space and
+> taking 100% of a nohz_full CPU, top reports 70% system time
+> and 30% user time utilization. Sometimes I'm even able to get
+> 100% system time and 0% user time.
+> 
+> This was reproduced with latest Linus tree (093b995), but I
+> don't believe it's a regression (at least not a recent one)
+> as I can reproduce it with older kernels. Also, I have
+> CONFIG_IRQ_TIME_ACCOUNTING=y and haven't tried to reproduce
+> without it yet.
+> 
+> Below you'll find the steps to reproduce and some initial
+> analysis.
+> 
+> Steps to reproduce
+> ------------------
+> 
+> 1. Set up a CPU for nohz_full with isolcpus= nohz_full=
+> 
+> 2. Pin two tasks that hog the CPU 100% of the time to that CPU
 
-> 2017-03-28 2:38 GMT+08:00 Luiz Capitulino <lcapitulino@redhat.com>:
-> > On Mon, 27 Mar 2017 09:56:47 +0800
-> > Wanpeng Li <kernellwp@gmail.com> wrote:
-> >  
-> >> Actually after I bisect, the first bad commit is ff9a9b4c4334 ("sched,
-> >> time: Switch VIRT_CPU_ACCOUNTING_GEN to jiffy granularity"). The bug
-> >> can be reproduced readily if CONFIG_CONTEXT_TRACKING_FORCE is true,
-> >> then just stress all the online cpus or just one cpu and leave others
-> >> idle(so it stresses the global timekeeping one), top show 100%
-> >> sys-time. And another way to reproduce it is by nohz_full, and gives
-> >> the stress to the house keeping cpu, the top show 100% sys-time of the
-> >> house keeping cpu, and also the other cpus who have at least two tasks
-> >> running on and in full_nohz mode.  
-> >
-> > We're not short on reproducers, I have a new one too:
-> >
-> >  http://people.redhat.com/~lcapitul/real-time/acct-bug.c
-> >
-> > This is a single threaded task that reproduces the issue. If you
-> > run it as instructed, you'll get:
-> >
-> >  - nohz_full CPU: 95% system time 5% idle time
-> >  - non-nohz_full CPU: 95% user time 5% idle time (expected behavior)
-> >
-> > This reproduces the issue, but not for the reasons I expected. I was
-> > trying to mimic what I was seeing on my trace when tracing the two
-> > task problem. Which is: a task stays 995us in user-space and then
-> > enters the kernel. Time won't be accounted for user-space because
-> > we're not 1 jiffies yet, but if the task stays in the kernel for more
-> > than 5us, then time will be accounted for system time when going
-> > back to user-space.
-> >
-> > However, what really seems to be happening is: acct-bug is causing
-> > the tick to be re-activated (why? it shouldn't) and that causes the
-> > issue to appear. This is consistent with my other observations: I
-> > can only reproduce the issue if the nohz_full CPU re-activates the tick.  
-> 
-> I see there are other kthreads like migration, kworker,
-> torture_shuffle etc on the isolated CPU.
+I failed to reproduce with your config. I'm still getting 99% userspace
+cputime. So I'm wondering if the hogging style plays a role.
 
-Except for torture_shuffle (which is new to me, and I guess could
-be disabled in .config) the other threads should not be runnable
-for most of the time.
+I run pure user loops:
 
-> 
-> Regards,
-> Wanpeng Li
-> 
-> >  
-> >> Let's consider the cpu which has responsibility for the global
-> >> timekeeping, as the tracing posted above, the vtime_account_user() is
-> >> called before tick_sched_timer() which will update jiffies,  
-> >
-> > But the vtime_account_user() call and the jiffies update happen
-> > on different CPUs, no? So the ordering shouldn't matter.
-> >  
-> >> so jiffies
-> >> is stale in vtime_account_user() and the run time in userspace is
-> >> skipped, the vtime_user_enter() is called after jiffies update, so
-> >> both the time in userspace and in  kernel are accumulated to sys time.
-> >>
-> >> If the housekeeping cpu is idle when CONFIG_NO_HZ_FULL, everything is
-> >> fine. However, if you give stress to the housekeeping cpu, top will
-> >> show 100% sys-time of both the housekeeping cpu and the other cpus who
-> >> have at least two tasks running on and in full_nohz mode.  
-> >
-> > The housekeeping CPUs are idle with my reproducers.
-> >  
-> >> I think it
-> >> is because the stress delays the timer interrupt handling in some
-> >> degree, then the jiffies is not updated timely before other cpus
-> >> access it in vtime_account_user().
-> >>
-> >> I think we can keep syscalls/exceptions context tracking still in
-> >> jiffies based sampling and utilize local_clock() in vtime_delta()
-> >> again for irqs which avoids jiffies stale influence. I can make a
-> >> patch if the idea is acceptable or there is any better proposal. :)
-> >>
-> >> Regards,
-> >> Wanpeng Li
-> >>  
-> >  
-> 
+    int main(int argc, char **argv)
+    {
+        for (;;);
+        return 0
+    }
+
+Does your user program perform syscalls or IOs of some sort?
