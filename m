@@ -1,124 +1,133 @@
-From: Lee Jones <lee.jones@linaro.org>
-Subject: Re: [PATCH RT 1/1] remoteproc: Prevent schedule while atomic
-Date: Thu, 30 Mar 2017 08:54:58 +0100
-Message-ID: <20170330075458.l2rofpy75fhzcgwn@dell>
-References: <1490195923-9560-1-git-send-email-lionel.debieve@st.com>
- <20170322090558.72064144@vmware.local.home>
- <20170329160653.5fcyqiuxr7j36655@linutronix.de>
+From: Wanpeng Li <kernellwp@gmail.com>
+Subject: Re: [BUG nohz]: wrong user and system time accounting
+Date: Thu, 30 Mar 2017 20:27:48 +0800
+Message-ID: <CANRm+CxxZzHSZhSO-EJAohz5Q7-Fqwo-e_b15CVjJy9nYEydCA@mail.gmail.com>
+References: <20170323165512.60945ac6@redhat.com> <CANRm+CxcgSP2-x+A822DmHLvFLzFmTptS6oYwYtwVdErTpiB=Q@mail.gmail.com>
+ <1490636129.8850.76.camel@redhat.com> <20170328132406.7d23579c@redhat.com>
+ <20170329131656.1d6cb743@redhat.com> <20170329221700.GB23895@lerouge>
+ <CANRm+CzSCJODribK6vPhQVT=CGFX7ewT6K3mTMu4vfZv5r_8LA@mail.gmail.com> <20170329221400.2b1e8d77@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-        Jassi Brar <jassisinghbrar@gmail.com>,
-        Lionel Debieve <lionel.debieve@st.com>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        tglx@linutronix.de
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=UTF-8
+Cc: Frederic Weisbecker <fweisbec@gmail.com>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org, Rik van Riel <riel@redhat.com>
+To: Luiz Capitulino <lcapitulino@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170329160653.5fcyqiuxr7j36655@linutronix.de>
+In-Reply-To: <20170329221400.2b1e8d77@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 29 Mar 2017, Sebastian Andrzej Siewior wrote:
+2017-03-30 10:14 GMT+08:00 Luiz Capitulino <lcapitulino@redhat.com>:
+> On Thu, 30 Mar 2017 06:46:30 +0800
+> Wanpeng Li <kernellwp@gmail.com> wrote:
+>
+>> > So! Now we need to find a proper fix :o)
+>> >
+>> > Hmm, how bad would it be to revert to sched_clock() instead of jiffies in vtime_delta()?
+>> > We could use nanosecond granularity to check deltas but only perform an actual cputime update
+>> > when that delta >= TICK_NSEC. That should keep the load ok.
+>>
+>> Yeah, I mentioned something similar before.
+>> https://lkml.org/lkml/2017/3/26/138 However, Rik's commit optimized
+>> syscalls by not utilize sched_clock(), so if we should distinguish
+>> between syscalls/exceptions and irqs?
+>
+> Why not use ktime_get()?
 
-> On 2017-03-22 09:05:58 [-0700], Steven Rostedt wrote:
-> > On Wed, 22 Mar 2017 16:18:43 +0100
-> > Lionel Debieve <lionel.debieve@st.com> wrote:
-> > 
-> > > Use raw_spin_lock in enable/disable channel as it comes from
-> > > interrupt context.
-> > > 
-> > > BUG: sleeping function called from invalid context at
-> > > kernel/locking/rtmutex.c:995
-> > > in_atomic(): 1, irqs_disabled(): 128, pid: 307, name: pulseaudio
-> > > Preemption disabled at:
-> > > [<c01790fc>] __handle_domain_irq+0x4c/0xec
-> > > CPU: 0 PID: 307 Comm: pulseaudio
-> > > Hardware name: STi SoC with Flattened Device Tree
-> > > [<c011046c>] (unwind_backtrace)
-> > > [<c010c7f4>] (show_stack)
-> > > [<c03d1578>] (dump_stack)
-> > > [<c014e440>] (___might_sleep)
-> > > [<c08e7f24>] (rt_spin_lock)
-> > > [<c069bb04>] (sti_mbox_disable_channel)
-> > > [<c069befc>] (sti_mbox_irq_handler)
-> > > [<c0179900>] (__handle_irq_event_percpu)
-> > > [<c01799dc>] (handle_irq_event_percpu)
-> > > [<c0179a78>] (handle_irq_event)
-> > > [<c017d1c8>] (handle_fasteoi_irq)
-> > > [<c0178c08>] (generic_handle_irq)
-> > > [<c017912c>] (__handle_domain_irq)
-> > > [<c0101488>] (gic_handle_irq)
-> > > 
-> > > Signed-off-by: Lionel Debieve <lionel.debieve@st.com>
-> > 
-> > Looks fine to me. Should this go to mainline?
-> > 
-> > Acked-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-> 
-> Could this be applied upstream, please? From looking at the thread there
-> was no reason not to do so.
+I believe ktime_get() is more heavy than local_clock() when sched
+clock is stable. So we can cooperate to improve
+https://lkml.org/lkml/2017/3/30/456.
 
-Acked-by: Lee Jones <lee.jones@linaro.org>
+Regards,
+Wanpeng Li
 
-> > > ---
-> > >  drivers/mailbox/mailbox-sti.c | 12 ++++++------
-> > >  1 file changed, 6 insertions(+), 6 deletions(-)
-> > > 
-> > > diff --git a/drivers/mailbox/mailbox-sti.c
-> > > b/drivers/mailbox/mailbox-sti.c index 41bcd33..f9674ca 100644
-> > > --- a/drivers/mailbox/mailbox-sti.c
-> > > +++ b/drivers/mailbox/mailbox-sti.c
-> > > @@ -60,7 +60,7 @@ struct sti_mbox_device {
-> > >  	void __iomem		*base;
-> > >  	const char		*name;
-> > >  	u32			enabled[STI_MBOX_INST_MAX];
-> > > -	spinlock_t		lock;
-> > > +	raw_spinlock_t		lock;
-> > >  };
-> > >  
-> > >  /**
-> > > @@ -129,10 +129,10 @@ static void sti_mbox_enable_channel(struct
-> > > mbox_chan *chan) unsigned long flags;
-> > >  	void __iomem *base = MBOX_BASE(mdev, instance);
-> > >  
-> > > -	spin_lock_irqsave(&mdev->lock, flags);
-> > > +	raw_spin_lock_irqsave(&mdev->lock, flags);
-> > >  	mdev->enabled[instance] |= BIT(channel);
-> > >  	writel_relaxed(BIT(channel), base + STI_ENA_SET_OFFSET);
-> > > -	spin_unlock_irqrestore(&mdev->lock, flags);
-> > > +	raw_spin_unlock_irqrestore(&mdev->lock, flags);
-> > >  }
-> > >  
-> > >  static void sti_mbox_disable_channel(struct mbox_chan *chan)
-> > > @@ -144,10 +144,10 @@ static void sti_mbox_disable_channel(struct
-> > > mbox_chan *chan) unsigned long flags;
-> > >  	void __iomem *base = MBOX_BASE(mdev, instance);
-> > >  
-> > > -	spin_lock_irqsave(&mdev->lock, flags);
-> > > +	raw_spin_lock_irqsave(&mdev->lock, flags);
-> > >  	mdev->enabled[instance] &= ~BIT(channel);
-> > >  	writel_relaxed(BIT(channel), base + STI_ENA_CLR_OFFSET);
-> > > -	spin_unlock_irqrestore(&mdev->lock, flags);
-> > > +	raw_spin_unlock_irqrestore(&mdev->lock, flags);
-> > >  }
-> > >  
-> > >  static void sti_mbox_clear_irq(struct mbox_chan *chan)
-> > > @@ -450,7 +450,7 @@ static int sti_mbox_probe(struct platform_device
-> > > *pdev) mdev->dev		= &pdev->dev;
-> > >  	mdev->mbox		= mbox;
-> > >  
-> > > -	spin_lock_init(&mdev->lock);
-> > > +	raw_spin_lock_init(&mdev->lock);
-> > >  
-> > >  	/* STi Mailbox does not have a Tx-Done or Tx-Ready IRQ */
-> > >  	mbox->txdone_irq	= false;
-> 
-> Sebastian
-
--- 
-Lee Jones
-Linaro STMicroelectronics Landing Team Lead
-Linaro.org │ Open source software for ARM SoCs
-Follow Linaro: Facebook | Twitter | Blog
+>
+> Here's the solution I was thinking about, it's mostly untested. I'm
+> rate limiting below TICK_NSEC because I want to avoid syncing with
+> the tick.
+>
+> diff --git a/kernel/sched/cputime.c b/kernel/sched/cputime.c
+> index f3778e2b..a8b1e85 100644
+> --- a/kernel/sched/cputime.c
+> +++ b/kernel/sched/cputime.c
+> @@ -676,18 +676,20 @@ void thread_group_cputime_adjusted(struct task_struct *p, u64 *ut, u64 *st)
+>  #ifdef CONFIG_VIRT_CPU_ACCOUNTING_GEN
+>  static u64 vtime_delta(struct task_struct *tsk)
+>  {
+> -       unsigned long now = READ_ONCE(jiffies);
+> +       return ktime_sub(ktime_get(), tsk->vtime_snap);
+> +}
+>
+> -       if (time_before(now, (unsigned long)tsk->vtime_snap))
+> -               return 0;
+> +/* A little bit less than the tick period */
+> +#define VTIME_RATE_LIMIT (TICK_NSEC - 200000)
+>
+> -       return jiffies_to_nsecs(now - tsk->vtime_snap);
+> +static bool vtime_should_account(struct task_struct *tsk)
+> +{
+> +       return vtime_delta(tsk) > VTIME_RATE_LIMIT;
+>  }
+>
+>  static u64 get_vtime_delta(struct task_struct *tsk)
+>  {
+> -       unsigned long now = READ_ONCE(jiffies);
+> -       u64 delta, other;
+> +       u64 delta, other, now = ktime_get();
+>
+>         /*
+>          * Unlike tick based timing, vtime based timing never has lost
+> @@ -696,7 +698,7 @@ static u64 get_vtime_delta(struct task_struct *tsk)
+>          * elapsed time. Limit account_other_time to prevent rounding
+>          * errors from causing elapsed vtime to go negative.
+>          */
+> -       delta = jiffies_to_nsecs(now - tsk->vtime_snap);
+> +       delta = ktime_sub(now, tsk->vtime_snap);
+>         other = account_other_time(delta);
+>         WARN_ON_ONCE(tsk->vtime_snap_whence == VTIME_INACTIVE);
+>         tsk->vtime_snap = now;
+> @@ -711,7 +713,7 @@ static void __vtime_account_system(struct task_struct *tsk)
+>
+>  void vtime_account_system(struct task_struct *tsk)
+>  {
+> -       if (!vtime_delta(tsk))
+> +       if (!vtime_should_account(tsk))
+>                 return;
+>
+>         write_seqcount_begin(&tsk->vtime_seqcount);
+> @@ -723,7 +725,7 @@ void vtime_account_user(struct task_struct *tsk)
+>  {
+>         write_seqcount_begin(&tsk->vtime_seqcount);
+>         tsk->vtime_snap_whence = VTIME_SYS;
+> -       if (vtime_delta(tsk))
+> +       if (vtime_should_account(tsk))
+>                 account_user_time(tsk, get_vtime_delta(tsk));
+>         write_seqcount_end(&tsk->vtime_seqcount);
+>  }
+> @@ -731,7 +733,7 @@ void vtime_account_user(struct task_struct *tsk)
+>  void vtime_user_enter(struct task_struct *tsk)
+>  {
+>         write_seqcount_begin(&tsk->vtime_seqcount);
+> -       if (vtime_delta(tsk))
+> +       if (vtime_should_account(tsk))
+>                 __vtime_account_system(tsk);
+>         tsk->vtime_snap_whence = VTIME_USER;
+>         write_seqcount_end(&tsk->vtime_seqcount);
+> @@ -747,7 +749,7 @@ void vtime_guest_enter(struct task_struct *tsk)
+>          * that can thus safely catch up with a tickless delta.
+>          */
+>         write_seqcount_begin(&tsk->vtime_seqcount);
+> -       if (vtime_delta(tsk))
+> +       if (vtime_should_account(tsk))
+>                 __vtime_account_system(tsk);
+>         current->flags |= PF_VCPU;
+>         write_seqcount_end(&tsk->vtime_seqcount);
+> @@ -776,7 +778,7 @@ void arch_vtime_task_switch(struct task_struct *prev)
+>
+>         write_seqcount_begin(&current->vtime_seqcount);
+>         current->vtime_snap_whence = VTIME_SYS;
+> -       current->vtime_snap = jiffies;
+> +       current->vtime_snap = ktime_get();
+>         write_seqcount_end(&current->vtime_seqcount);
+>  }
+>
