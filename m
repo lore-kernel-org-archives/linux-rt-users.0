@@ -1,133 +1,71 @@
-From: Wanpeng Li <kernellwp@gmail.com>
-Subject: Re: [BUG nohz]: wrong user and system time accounting
-Date: Thu, 30 Mar 2017 20:27:48 +0800
-Message-ID: <CANRm+CxxZzHSZhSO-EJAohz5Q7-Fqwo-e_b15CVjJy9nYEydCA@mail.gmail.com>
-References: <20170323165512.60945ac6@redhat.com> <CANRm+CxcgSP2-x+A822DmHLvFLzFmTptS6oYwYtwVdErTpiB=Q@mail.gmail.com>
- <1490636129.8850.76.camel@redhat.com> <20170328132406.7d23579c@redhat.com>
- <20170329131656.1d6cb743@redhat.com> <20170329221700.GB23895@lerouge>
- <CANRm+CzSCJODribK6vPhQVT=CGFX7ewT6K3mTMu4vfZv5r_8LA@mail.gmail.com> <20170329221400.2b1e8d77@redhat.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: Fwd: changes to scheduler from mainline 4.8 to 4.10?
+Date: Fri, 31 Mar 2017 13:30:48 +0200
+Message-ID: <20170331113048.pvsersxc67yxqzwo@linutronix.de>
+References: <CALd3UbSKV_Qzun=9Hhwe=omP5f4A3gyOi_nGNM6JA4d5ziFZ_g@mail.gmail.com>
+ <CALd3UbQo=F6YtQ-LUrw0YaX2=PdpyXh+EFueKYn4MnRtUE748Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: Frederic Weisbecker <fweisbec@gmail.com>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org, Rik van Riel <riel@redhat.com>
-To: Luiz Capitulino <lcapitulino@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170329221400.2b1e8d77@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users@vger.kernel.org
+To: Bert Schiettecatte <bert@bertschiettecatte.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:40905 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751032AbdCaLau (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 31 Mar 2017 07:30:50 -0400
+Content-Disposition: inline
+In-Reply-To: <CALd3UbQo=F6YtQ-LUrw0YaX2=PdpyXh+EFueKYn4MnRtUE748Q@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-2017-03-30 10:14 GMT+08:00 Luiz Capitulino <lcapitulino@redhat.com>:
-> On Thu, 30 Mar 2017 06:46:30 +0800
-> Wanpeng Li <kernellwp@gmail.com> wrote:
->
->> > So! Now we need to find a proper fix :o)
->> >
->> > Hmm, how bad would it be to revert to sched_clock() instead of jiffies in vtime_delta()?
->> > We could use nanosecond granularity to check deltas but only perform an actual cputime update
->> > when that delta >= TICK_NSEC. That should keep the load ok.
->>
->> Yeah, I mentioned something similar before.
->> https://lkml.org/lkml/2017/3/26/138 However, Rik's commit optimized
->> syscalls by not utilize sched_clock(), so if we should distinguish
->> between syscalls/exceptions and irqs?
->
-> Why not use ktime_get()?
+On 2017-03-29 08:55:33 [-0700], Bert Schiettecatte wrote:
+> Hi all,
+Hi,
 
-I believe ktime_get() is more heavy than local_clock() when sched
-clock is stable. So we can cooperate to improve
-https://lkml.org/lkml/2017/3/30/456.
+> I have been using 44100 hz sample rate and 960 samples buffer size for
+> testing. I increased the buffer size to 1280 which seemed to improve
+> things a little, and then after googling around I changed the IO
+> scheduler to noop (it was set to CFQ), which further increases the
+> performance. I now only have occasional audio dropouts.
 
-Regards,
-Wanpeng Li
+So v4.8 with CFG was working well but v4.10 does not?
 
->
-> Here's the solution I was thinking about, it's mostly untested. I'm
-> rate limiting below TICK_NSEC because I want to avoid syncing with
-> the tick.
->
-> diff --git a/kernel/sched/cputime.c b/kernel/sched/cputime.c
-> index f3778e2b..a8b1e85 100644
-> --- a/kernel/sched/cputime.c
-> +++ b/kernel/sched/cputime.c
-> @@ -676,18 +676,20 @@ void thread_group_cputime_adjusted(struct task_struct *p, u64 *ut, u64 *st)
->  #ifdef CONFIG_VIRT_CPU_ACCOUNTING_GEN
->  static u64 vtime_delta(struct task_struct *tsk)
->  {
-> -       unsigned long now = READ_ONCE(jiffies);
-> +       return ktime_sub(ktime_get(), tsk->vtime_snap);
-> +}
->
-> -       if (time_before(now, (unsigned long)tsk->vtime_snap))
-> -               return 0;
-> +/* A little bit less than the tick period */
-> +#define VTIME_RATE_LIMIT (TICK_NSEC - 200000)
->
-> -       return jiffies_to_nsecs(now - tsk->vtime_snap);
-> +static bool vtime_should_account(struct task_struct *tsk)
-> +{
-> +       return vtime_delta(tsk) > VTIME_RATE_LIMIT;
->  }
->
->  static u64 get_vtime_delta(struct task_struct *tsk)
->  {
-> -       unsigned long now = READ_ONCE(jiffies);
-> -       u64 delta, other;
-> +       u64 delta, other, now = ktime_get();
->
->         /*
->          * Unlike tick based timing, vtime based timing never has lost
-> @@ -696,7 +698,7 @@ static u64 get_vtime_delta(struct task_struct *tsk)
->          * elapsed time. Limit account_other_time to prevent rounding
->          * errors from causing elapsed vtime to go negative.
->          */
-> -       delta = jiffies_to_nsecs(now - tsk->vtime_snap);
-> +       delta = ktime_sub(now, tsk->vtime_snap);
->         other = account_other_time(delta);
->         WARN_ON_ONCE(tsk->vtime_snap_whence == VTIME_INACTIVE);
->         tsk->vtime_snap = now;
-> @@ -711,7 +713,7 @@ static void __vtime_account_system(struct task_struct *tsk)
->
->  void vtime_account_system(struct task_struct *tsk)
->  {
-> -       if (!vtime_delta(tsk))
-> +       if (!vtime_should_account(tsk))
->                 return;
->
->         write_seqcount_begin(&tsk->vtime_seqcount);
-> @@ -723,7 +725,7 @@ void vtime_account_user(struct task_struct *tsk)
->  {
->         write_seqcount_begin(&tsk->vtime_seqcount);
->         tsk->vtime_snap_whence = VTIME_SYS;
-> -       if (vtime_delta(tsk))
-> +       if (vtime_should_account(tsk))
->                 account_user_time(tsk, get_vtime_delta(tsk));
->         write_seqcount_end(&tsk->vtime_seqcount);
->  }
-> @@ -731,7 +733,7 @@ void vtime_account_user(struct task_struct *tsk)
->  void vtime_user_enter(struct task_struct *tsk)
->  {
->         write_seqcount_begin(&tsk->vtime_seqcount);
-> -       if (vtime_delta(tsk))
-> +       if (vtime_should_account(tsk))
->                 __vtime_account_system(tsk);
->         tsk->vtime_snap_whence = VTIME_USER;
->         write_seqcount_end(&tsk->vtime_seqcount);
-> @@ -747,7 +749,7 @@ void vtime_guest_enter(struct task_struct *tsk)
->          * that can thus safely catch up with a tickless delta.
->          */
->         write_seqcount_begin(&tsk->vtime_seqcount);
-> -       if (vtime_delta(tsk))
-> +       if (vtime_should_account(tsk))
->                 __vtime_account_system(tsk);
->         current->flags |= PF_VCPU;
->         write_seqcount_end(&tsk->vtime_seqcount);
-> @@ -776,7 +778,7 @@ void arch_vtime_task_switch(struct task_struct *prev)
->
->         write_seqcount_begin(&current->vtime_seqcount);
->         current->vtime_snap_whence = VTIME_SYS;
-> -       current->vtime_snap = jiffies;
-> +       current->vtime_snap = ktime_get();
->         write_seqcount_end(&current->vtime_seqcount);
->  }
->
+> The application does a lot of I/O via HID and has 4 audio processing
+> threads for signal processing, besides other threads and callbacks for
+> HID I/O.
+> 
+> Questions:
+> 
+> 1) Does anyone know if something has changed between kernel 4.8 and
+> 4.10 with regard to the scheduler that might negatively impact
+> realtime audio or RT performance in general?
+It should not. If you have a test case to fully reproduce the issue then
+you could v4.9 and maybe bisect it further to check which change is
+responsible for it.
+
+> 2) are there specific kernel settings I should check?
+not really. You should keep that debug stuff off and then if you take
+your v4.8 .config and put through "make oldconfig" then you should only
+see "new" options which are off/N by default.
+
+> 3) I am wondering if RT patches are still relevant for newer kernels
+> like 4.8 and 4.10?
+We have plenty of them
+	https://cdn.kernel.org/pub/linux/kernel/projects/rt/
+
+but not all major versions you see there are currently supported
+	https://wiki.linuxfoundation.org/realtime/preempt_rt_versions
+
+Not everything the RT patch provides is mainline.
+
+> 4) I saw that the latest patches are for kernel 4.4, can they be
+> applied to later kernels and is that a good idea or not?
+They won't apply cleanly. I suggest you pick one tree with patches
+provided if you want to try the RT patch.
+
+> Thanks for helping!
+> 
+> Bert
+
+Sebastian
