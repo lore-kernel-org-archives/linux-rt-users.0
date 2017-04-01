@@ -1,7 +1,7 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [patch RT 1/4] rtmutex: Make lock_killable work
-Date: Sat, 01 Apr 2017 12:50:59 +0200
-Message-ID: <20170401112758.051867031@linutronix.de>
+Subject: [patch RT 3/4] rtmutex: Provide locked slowpath
+Date: Sat, 01 Apr 2017 12:51:01 +0200
+Message-ID: <20170401112758.211070565@linutronix.de>
 References: <20170401105058.958246042@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,57 +9,154 @@ Cc: RT-users <linux-rt-users@vger.kernel.org>,
         Peter Zijlstra <peterz@infradead.org>,
         Steven Rostedt <rostedt@goodmis.org>,
         Sebastian Siewior <bigeasy@linutronix.de>,
-        Julia Cartwright <julia@ni.com>, Wargreen <wargreen@lebib.org>,
-        rt-stable@vger.kernel.org
+        Julia Cartwright <julia@ni.com>, Wargreen <wargreen@lebib.org>
 To: LKML <linux-kernel@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:44104 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751750AbdDALcE (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 1 Apr 2017 07:32:04 -0400
-Content-Disposition: inline; filename=rtmutex-Make-lock_killable-work.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=rtmutex-Provide-locked-slowpath.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Locking an rt mutex killable does not work because signal handling is
-restricted to TASK_INTERRUPTIBLE.
+The new rt rwsem implementation needs rtmutex::wait_lock to protect struct
+rw_semaphore. Dropping the lock and reaquiring it for locking the rtmutex
+would open a race window.
 
-Use signal_pending_state() unconditionaly.
+Split out the inner workings of the locked slowpath so it can be called with
+wait_lock held.
 
-Cc: rt-stable@vger.kernel.org
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 ---
- kernel/locking/rtmutex.c |   19 +++++++------------
- 1 file changed, 7 insertions(+), 12 deletions(-)
+ kernel/locking/rtmutex.c        |   72 +++++++++++++++++++++++-----------------
+ kernel/locking/rtmutex_common.h |    9 +++++
+ 2 files changed, 51 insertions(+), 30 deletions(-)
 
 --- a/kernel/locking/rtmutex.c
 +++ b/kernel/locking/rtmutex.c
-@@ -1633,18 +1633,13 @@ static int __sched
- 		if (try_to_take_rt_mutex(lock, current, waiter))
- 			break;
+@@ -1758,36 +1758,18 @@ static void ww_mutex_account_lock(struct
+ }
+ #endif
  
--		/*
--		 * TASK_INTERRUPTIBLE checks for signals and
--		 * timeout. Ignored otherwise.
--		 */
--		if (unlikely(state == TASK_INTERRUPTIBLE)) {
--			/* Signal pending? */
--			if (signal_pending(current))
--				ret = -EINTR;
--			if (timeout && !timeout->task)
--				ret = -ETIMEDOUT;
--			if (ret)
--				break;
-+		if (timeout && !timeout->task) {
-+			ret = -ETIMEDOUT;
-+			break;
-+		}
-+		if (signal_pending_state(state, current)) {
-+			ret = -EINTR;
-+			break;
- 		}
+-/*
+- * Slow path lock function:
+- */
+-static int __sched
+-rt_mutex_slowlock(struct rt_mutex *lock, int state,
+-		  struct hrtimer_sleeper *timeout,
+-		  enum rtmutex_chainwalk chwalk,
+-		  struct ww_acquire_ctx *ww_ctx)
++int __sched rt_mutex_slowlock_locked(struct rt_mutex *lock, int state,
++				     struct hrtimer_sleeper *timeout,
++				     enum rtmutex_chainwalk chwalk,
++				     struct ww_acquire_ctx *ww_ctx,
++				     struct rt_mutex_waiter *waiter)
+ {
+-	struct rt_mutex_waiter waiter;
+-	unsigned long flags;
+-	int ret = 0;
+-
+-	rt_mutex_init_waiter(&waiter, false);
+-
+-	/*
+-	 * Technically we could use raw_spin_[un]lock_irq() here, but this can
+-	 * be called in early boot if the cmpxchg() fast path is disabled
+-	 * (debug, no architecture support). In this case we will acquire the
+-	 * rtmutex with lock->wait_lock held. But we cannot unconditionally
+-	 * enable interrupts in that early boot case. So we need to use the
+-	 * irqsave/restore variants.
+-	 */
+-	raw_spin_lock_irqsave(&lock->wait_lock, flags);
++	int ret;
  
- 		if (ww_ctx && ww_ctx->acquired > 0) {
-
-
+ 	/* Try to acquire the lock again: */
+ 	if (try_to_take_rt_mutex(lock, current, NULL)) {
+ 		if (ww_ctx)
+ 			ww_mutex_account_lock(lock, ww_ctx);
+-		raw_spin_unlock_irqrestore(&lock->wait_lock, flags);
+ 		return 0;
+ 	}
+ 
+@@ -1797,13 +1779,13 @@ rt_mutex_slowlock(struct rt_mutex *lock,
+ 	if (unlikely(timeout))
+ 		hrtimer_start_expires(&timeout->timer, HRTIMER_MODE_ABS);
+ 
+-	ret = task_blocks_on_rt_mutex(lock, &waiter, current, chwalk);
++	ret = task_blocks_on_rt_mutex(lock, waiter, current, chwalk);
+ 
+-	if (likely(!ret))
++	if (likely(!ret)) {
+ 		/* sleep on the mutex */
+-		ret = __rt_mutex_slowlock(lock, state, timeout, &waiter,
++		ret = __rt_mutex_slowlock(lock, state, timeout, waiter,
+ 					  ww_ctx);
+-	else if (ww_ctx) {
++	} else if (ww_ctx) {
+ 		/* ww_mutex received EDEADLK, let it become EALREADY */
+ 		ret = __mutex_lock_check_stamp(lock, ww_ctx);
+ 		BUG_ON(!ret);
+@@ -1812,10 +1794,10 @@ rt_mutex_slowlock(struct rt_mutex *lock,
+ 	if (unlikely(ret)) {
+ 		__set_current_state(TASK_RUNNING);
+ 		if (rt_mutex_has_waiters(lock))
+-			remove_waiter(lock, &waiter);
++			remove_waiter(lock, waiter);
+ 		/* ww_mutex want to report EDEADLK/EALREADY, let them */
+ 		if (!ww_ctx)
+-			rt_mutex_handle_deadlock(ret, chwalk, &waiter);
++			rt_mutex_handle_deadlock(ret, chwalk, waiter);
+ 	} else if (ww_ctx) {
+ 		ww_mutex_account_lock(lock, ww_ctx);
+ 	}
+@@ -1825,6 +1807,36 @@ rt_mutex_slowlock(struct rt_mutex *lock,
+ 	 * unconditionally. We might have to fix that up.
+ 	 */
+ 	fixup_rt_mutex_waiters(lock);
++	return ret;
++}
++
++/*
++ * Slow path lock function:
++ */
++static int __sched
++rt_mutex_slowlock(struct rt_mutex *lock, int state,
++		  struct hrtimer_sleeper *timeout,
++		  enum rtmutex_chainwalk chwalk,
++		  struct ww_acquire_ctx *ww_ctx)
++{
++	struct rt_mutex_waiter waiter;
++	unsigned long flags;
++	int ret = 0;
++
++	rt_mutex_init_waiter(&waiter, false);
++
++	/*
++	 * Technically we could use raw_spin_[un]lock_irq() here, but this can
++	 * be called in early boot if the cmpxchg() fast path is disabled
++	 * (debug, no architecture support). In this case we will acquire the
++	 * rtmutex with lock->wait_lock held. But we cannot unconditionally
++	 * enable interrupts in that early boot case. So we need to use the
++	 * irqsave/restore variants.
++	 */
++	raw_spin_lock_irqsave(&lock->wait_lock, flags);
++
++	ret = rt_mutex_slowlock_locked(lock, state, timeout, chwalk, ww_ctx,
++				       &waiter);
+ 
+ 	raw_spin_unlock_irqrestore(&lock->wait_lock, flags);
+ 
+--- a/kernel/locking/rtmutex_common.h
++++ b/kernel/locking/rtmutex_common.h
+@@ -129,6 +129,15 @@ extern bool __rt_mutex_futex_unlock(stru
+ 
+ extern void rt_mutex_adjust_prio(struct task_struct *task);
+ 
++/* RW semaphore special interface */
++struct ww_acquire_ctx;
++
++int __sched rt_mutex_slowlock_locked(struct rt_mutex *lock, int state,
++				     struct hrtimer_sleeper *timeout,
++				     enum rtmutex_chainwalk chwalk,
++				     struct ww_acquire_ctx *ww_ctx,
++				     struct rt_mutex_waiter *waiter);
++
+ #ifdef CONFIG_DEBUG_RT_MUTEXES
+ # include "rtmutex-debug.h"
+ #else
