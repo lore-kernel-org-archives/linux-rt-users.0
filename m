@@ -1,70 +1,73 @@
-From: Ran Shalit <ranshalit@gmail.com>
-Subject: Re: EDF - "earliest deadline first" scheduler
-Date: Mon, 3 Apr 2017 15:53:27 +0300
-Message-ID: <CAJ2oMhJ-QgYCttetEF49nDge2UkheudG1MXJemerPm0P7zvUhA@mail.gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [patch RT 1/4] rtmutex: Make lock_killable work
+Date: Mon, 3 Apr 2017 11:21:26 -0400
+Message-ID: <20170403112126.75504264@gandalf.local.home>
+References: <20170401105058.958246042@linutronix.de>
+        <20170401112758.051867031@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Alison Chaiken <alison@peloton-tech.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-lf0-f44.google.com ([209.85.215.44]:35150 "EHLO
-        mail-lf0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1752143AbdDCMx3 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 3 Apr 2017 08:53:29 -0400
-Received: by mail-lf0-f44.google.com with SMTP id j90so72721483lfk.2
-        for <linux-rt-users@vger.kernel.org>; Mon, 03 Apr 2017 05:53:28 -0700 (PDT)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        RT-users <linux-rt-users@vger.kernel.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Sebastian Siewior <bigeasy@linutronix.de>,
+        Julia Cartwright <julia@ni.com>, Wargreen <wargreen@lebib.org>,
+        rt-stable@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170401112758.051867031@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, Apr 3, 2017 at 8:06 AM, Ran Shalit <ranshalit@gmail.com> wrote:
-> On Mon, Apr 3, 2017 at 5:38 AM, Alison Chaiken <alison@peloton-tech.com> =
-wrote:
->>  Ran Shalit <ranshalit@gmail.com> wrote:
->>> I have found in
->>> https://wiki.linuxfoundation.org/realtime/documentation/howto/applicati=
-ons/cyclic
->>> that there is EDF scheduler option for creating a periodic RT thread.
->>> Yet, I could not understand what's behind the EDF scheduler
->>
->>
->> Have a look at "Using SCHED_DEADLINE" at
->>
->> http://elinux.org/ELC_Europe_2016_Presentations
->>
->> Also, look for papers on this topic by Juri Lelli.
->>
->> HTH,
->> Alison
->
-> Hi Alison,
->
-> Thank you very much.
-> I reviewed the material, which is very interesting, but I am not yet
-> sure which timer are used internally in SCHED_DEADLINE.
-> Is it posix or non-posix ?
->
-> Thanks,
-> Ran
+On Sat, 01 Apr 2017 12:50:59 +0200
+Thomas Gleixner <tglx@linutronix.de> wrote:
 
-I am trying to understand which scheduler is better used with RT.
-In the wiki there is an example for SCHED_FIFO, periodic time.
-But in sched_deadline wiki ( https://wiki.automotivelinux.org/sched_deadlin=
-e )
-it is said as following:
-"
- Using SCHED_FIFO/SCHED_RR, instead, we can give that kind of
-guarantee only using a global period, with the constraint that =E2=80=9Ca
-subgroup must have a smaller or equal period to its parent=E2=80=9D.
-The latency experienced by a task (i.e., the time between two
-consecutive executions of a task) is not deterministic and cannot be
-bound, since it highly depends on the number of tasks running in the
-system at that time. Using EDF, instead, this time is deterministic,
-bounded and known at any instant of time."
+> Locking an rt mutex killable does not work because signal handling is
+> restricted to TASK_INTERRUPTIBLE.
+> 
+> Use signal_pending_state() unconditionaly.
 
-I am not sure now. Does it mean that using more than one SCHED_FIFO
-periodic thread is not deterministic compared with SCHED_DEADLINE?
+Does this mean rt mutex killable is not INTERRUPTIBLE? because the
+change log seems to just assume that.
 
-Regards,
-Ran
+In other words, mortals reading this have no idea what you are talking
+about ;-)
+
+-- Steve
+
+> 
+> Cc: rt-stable@vger.kernel.org
+> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+> ---
+>  kernel/locking/rtmutex.c |   19 +++++++------------
+>  1 file changed, 7 insertions(+), 12 deletions(-)
+> 
+> --- a/kernel/locking/rtmutex.c
+> +++ b/kernel/locking/rtmutex.c
+> @@ -1633,18 +1633,13 @@ static int __sched
+>  		if (try_to_take_rt_mutex(lock, current, waiter))
+>  			break;
+>  
+> -		/*
+> -		 * TASK_INTERRUPTIBLE checks for signals and
+> -		 * timeout. Ignored otherwise.
+> -		 */
+> -		if (unlikely(state == TASK_INTERRUPTIBLE)) {
+> -			/* Signal pending? */
+> -			if (signal_pending(current))
+> -				ret = -EINTR;
+> -			if (timeout && !timeout->task)
+> -				ret = -ETIMEDOUT;
+> -			if (ret)
+> -				break;
+> +		if (timeout && !timeout->task) {
+> +			ret = -ETIMEDOUT;
+> +			break;
+> +		}
+> +		if (signal_pending_state(state, current)) {
+> +			ret = -EINTR;
+> +			break;
+>  		}
+>  
+>  		if (ww_ctx && ww_ctx->acquired > 0) {
+> 
