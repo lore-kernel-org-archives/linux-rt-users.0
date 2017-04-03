@@ -1,32 +1,34 @@
-From: Ran Shalit <ranshalit@gmail.com>
-Subject: EDF - "earliest deadline first" scheduler
-Date: Sun, 2 Apr 2017 17:27:31 +0300
-Message-ID: <CAJ2oMhLpi4bPS24MZ9YOtSiEMDu7DPw56YsTmcc2qTrdCsgv2w@mail.gmail.com>
+From: Alison Chaiken <alison@peloton-tech.com>
+Subject: Re: EDF - "earliest deadline first" scheduler
+Date: Sun, 2 Apr 2017 19:38:48 -0700
+Message-ID: <CAOuSAjfVPjd5VFDdvzd6NN=ddCeVtmQj_WAB6xDt6R7Yxux73w@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-To: linux-rt-users@vger.kernel.org
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Ran Shalit <ranshalit@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wr0-f171.google.com ([209.85.128.171]:35603 "EHLO
-        mail-wr0-f171.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751460AbdDBO1d (ORCPT
+Received: from mail-pg0-f41.google.com ([74.125.83.41]:36499 "EHLO
+        mail-pg0-f41.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751280AbdDCCit (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 2 Apr 2017 10:27:33 -0400
-Received: by mail-wr0-f171.google.com with SMTP id k6so130823074wre.2
-        for <linux-rt-users@vger.kernel.org>; Sun, 02 Apr 2017 07:27:33 -0700 (PDT)
+        Sun, 2 Apr 2017 22:38:49 -0400
+Received: by mail-pg0-f41.google.com with SMTP id g2so104695636pge.3
+        for <linux-rt-users@vger.kernel.org>; Sun, 02 Apr 2017 19:38:49 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+ Ran Shalit <ranshalit@gmail.com> wrote:
+> I have found in
+> https://wiki.linuxfoundation.org/realtime/documentation/howto/applications/cyclic
+> that there is EDF scheduler option for creating a periodic RT thread.
+> Yet, I could not understand what's behind the EDF scheduler
 
-I have found in
-https://wiki.linuxfoundation.org/realtime/documentation/howto/applications/cyclic
-that there is EDF scheduler option for creating a periodic RT thread.
-Yet, I could not understand what's behind the EDF scheduler. Is it
-using posix or non-posix timer ?
 
-I have also found the following information:
-http://lxr.free-electrons.com/source/Documentation/scheduler/sched-deadline.txt
-Yet it does not provide more details about the timer used with EDF.
+Have a look at "Using SCHED_DEADLINE" at
 
-Thank you,
-Ran
+http://elinux.org/ELC_Europe_2016_Presentations
+
+Also, look for papers on this topic by Juri Lelli.
+
+HTH,
+Alison
