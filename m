@@ -1,73 +1,55 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [patch RT 1/4] rtmutex: Make lock_killable work
-Date: Mon, 3 Apr 2017 11:21:26 -0400
-Message-ID: <20170403112126.75504264@gandalf.local.home>
-References: <20170401105058.958246042@linutronix.de>
-        <20170401112758.051867031@linutronix.de>
+From: Julia Cartwright <julia@ni.com>
+Subject: Re: Future of RT Linux
+Date: Mon, 3 Apr 2017 15:24:46 -0500
+Message-ID: <20170403202446.GB11697@jcartwri.amer.corp.natinst.com>
+References: <CAJ2oMhLxj9R3G4OmSVfW8AS6snomAGYHpOD7Q=AFhPJZzj9XFg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        RT-users <linux-rt-users@vger.kernel.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Sebastian Siewior <bigeasy@linutronix.de>,
-        Julia Cartwright <julia@ni.com>, Wargreen <wargreen@lebib.org>,
-        rt-stable@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170401112758.051867031@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="ibTvN161/egqYuK8"
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Ran Shalit <ranshalit@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx0a-00010702.pphosted.com ([148.163.156.75]:51735 "EHLO
+        mx0b-00010702.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1751694AbdDCUYs (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 3 Apr 2017 16:24:48 -0400
+Content-Disposition: inline
+In-Reply-To: <CAJ2oMhLxj9R3G4OmSVfW8AS6snomAGYHpOD7Q=AFhPJZzj9XFg@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, 01 Apr 2017 12:50:59 +0200
-Thomas Gleixner <tglx@linutronix.de> wrote:
+--ibTvN161/egqYuK8
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-> Locking an rt mutex killable does not work because signal handling is
-> restricted to TASK_INTERRUPTIBLE.
-> 
-> Use signal_pending_state() unconditionaly.
+On Mon, Apr 03, 2017 at 03:40:57PM +0300, Ran Shalit wrote:
+> Hello,
+>=20
+> I've encountered the following post from LWN 2014
+> https://lwn.net/Articles/604695/
 
-Does this mean rt mutex killable is not INTERRUPTIBLE? because the
-change log seems to just assume that.
+You might be interested in this announcement from 2015:
 
-In other words, mortals reading this have no idea what you are talking
-about ;-)
+   https://www.linuxfoundation.org/news-media/announcements/2015/10/linux-f=
+oundation-announces-project-advance-real-time-linux
 
--- Steve
+   Julia
 
-> 
-> Cc: rt-stable@vger.kernel.org
-> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-> ---
->  kernel/locking/rtmutex.c |   19 +++++++------------
->  1 file changed, 7 insertions(+), 12 deletions(-)
-> 
-> --- a/kernel/locking/rtmutex.c
-> +++ b/kernel/locking/rtmutex.c
-> @@ -1633,18 +1633,13 @@ static int __sched
->  		if (try_to_take_rt_mutex(lock, current, waiter))
->  			break;
->  
-> -		/*
-> -		 * TASK_INTERRUPTIBLE checks for signals and
-> -		 * timeout. Ignored otherwise.
-> -		 */
-> -		if (unlikely(state == TASK_INTERRUPTIBLE)) {
-> -			/* Signal pending? */
-> -			if (signal_pending(current))
-> -				ret = -EINTR;
-> -			if (timeout && !timeout->task)
-> -				ret = -ETIMEDOUT;
-> -			if (ret)
-> -				break;
-> +		if (timeout && !timeout->task) {
-> +			ret = -ETIMEDOUT;
-> +			break;
-> +		}
-> +		if (signal_pending_state(state, current)) {
-> +			ret = -EINTR;
-> +			break;
->  		}
->  
->  		if (ww_ctx && ww_ctx->acquired > 0) {
-> 
+--ibTvN161/egqYuK8
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAABCAAdFiEEgKAEF431w1EL96k9jNrC4UVNdG8FAljir4oACgkQjNrC4UVN
+dG8z5ggAoeBFO/9Zcp2H5TCPUvNRjcfgsvdzhXXOjithiQl4iMTjlWszEKwCiNlK
+TIZFGNp7h5vOAGutLGOGx0tdPiOH81iI/H47U57TJHfKveC3HUCu4JtRfydTm9/Y
+whW4a4/IhbKUiI1Unmpi+SuLUt0rLM2q2eG8k/62QX+50Vb+DED/wBxdS8VHjvp6
+/XGYSuY/HK6MjceGnTV70FE5oW+FgBEqaD1/xDxSsfOHcqeCHM3Wle30Wrq0mZzz
+LGNfKMIrt+CxSP8tBp0GplsZx05nnJwZ8VHUAnTykraNXC5LWVPDOWk2+iqSpQAX
+6TBkx6gf5W1HB7O8oXaqTcc0h8g51w==
+=VJ38
+-----END PGP SIGNATURE-----
+
+--ibTvN161/egqYuK8--
