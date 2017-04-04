@@ -1,44 +1,94 @@
-From: Joel Fernandes <joelaf@google.com>
-Subject: preemptirqsoff tracer
-Date: Tue, 4 Apr 2017 01:27:25 -0700
-Message-ID: <CAJWu+or98ki=e0wE=jjK7S+dNCdYVvkd_M4SF0Er3Wi4o6gUGg@mail.gmail.com>
+From: Lionel DEBIEVE <lionel.debieve@st.com>
+Subject: Re: [PATCH RT 1/1] remoteproc: Prevent schedule while atomic
+Date: Tue, 4 Apr 2017 08:33:05 +0000
+Message-ID: <816a6cc4-bcd6-f2ad-d49c-26ec0f38a60a@st.com>
+References: <1490195923-9560-1-git-send-email-lionel.debieve@st.com>
+ <20170322090558.72064144@vmware.local.home>
+ <20170329160653.5fcyqiuxr7j36655@linutronix.de>
+ <20170330075458.l2rofpy75fhzcgwn@dell>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: linux-rt-users@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-vk0-f46.google.com ([209.85.213.46]:35914 "EHLO
-        mail-vk0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1752379AbdDDI10 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 4 Apr 2017 04:27:26 -0400
-Received: by mail-vk0-f46.google.com with SMTP id s68so166633612vke.3
-        for <linux-rt-users@vger.kernel.org>; Tue, 04 Apr 2017 01:27:26 -0700 (PDT)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+        Jassi Brar <jassisinghbrar@gmail.com>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "tglx@linutronix.de" <tglx@linutronix.de>
+To: Lee Jones <lee.jones@linaro.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170330075458.l2rofpy75fhzcgwn@dell>
+Content-Language: en-US
+Content-ID: <84E390FC902774429A3D2E7F1628C028@st.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi Steven,
-
-Just looking at code of the preemptirqsoff tracer, I wonder if it is
-really working as expected.
-
-With the tracer enabled, start_critical_timing will be called only if
-_both_ preemption and IRQs are turned off. Instead shouldn't this be
-an OR condition (either preemption or IRQs are turned off)?
-
->From the example in ftrace.txt documentation:
-    local_irq_disable();
-    call_function_with_irqs_off();
-    preempt_disable();
-    call_function_with_irqs_and_preemption_off();
-    local_irq_enable();
-    call_function_with_preemption_off();
-    preempt_enable();
-
-Looks to me like the preemptirqsoff tracer will starting tracing from
-preempt_disable and end at the preempt_enable. Instead, shouldn't we
-be tracing starting from the local_irq_disable and end at the
-preempt_enable?
-
-Regards,
-Joel
+SGksDQoNCkxvb2tpbmcgYXQgdGhlIHRocmVhZCBkaXNjdXNzaW9uLCBleGNlcHQgYXJjaGl0ZWN0
+dXJlIGRpc2N1c3Npb24gYXJvdW5kIHRoZSBJUlFGX09ORVNIT1QsIEkgdGhpbmsgaXQgY291bGQg
+Z28gdG8gdXBzdHJlYW0gdG9vLg0KDQpJJ2xsIHJlLXVwbG9hZCBwYXRjaCBmb3IgdXBzdHJlYW0u
+DQoNClRoYW5rcyBmb3IgcmV2aWV3aW5nLg0KDQpCUiwNCg0KTGlvbmVsDQoNCg0KT24gMDMvMzAv
+MjAxNyAwOTo1NCBBTSwgTGVlIEpvbmVzIHdyb3RlOg0KPiBPbiBXZWQsIDI5IE1hciAyMDE3LCBT
+ZWJhc3RpYW4gQW5kcnplaiBTaWV3aW9yIHdyb3RlOg0KPg0KPj4gT24gMjAxNy0wMy0yMiAwOTow
+NTo1OCBbLTA3MDBdLCBTdGV2ZW4gUm9zdGVkdCB3cm90ZToNCj4+PiBPbiBXZWQsIDIyIE1hciAy
+MDE3IDE2OjE4OjQzICswMTAwDQo+Pj4gTGlvbmVsIERlYmlldmUgPGxpb25lbC5kZWJpZXZlQHN0
+LmNvbT4gd3JvdGU6DQo+Pj4NCj4+Pj4gVXNlIHJhd19zcGluX2xvY2sgaW4gZW5hYmxlL2Rpc2Fi
+bGUgY2hhbm5lbCBhcyBpdCBjb21lcyBmcm9tDQo+Pj4+IGludGVycnVwdCBjb250ZXh0Lg0KPj4+
+Pg0KPj4+PiBCVUc6IHNsZWVwaW5nIGZ1bmN0aW9uIGNhbGxlZCBmcm9tIGludmFsaWQgY29udGV4
+dCBhdA0KPj4+PiBrZXJuZWwvbG9ja2luZy9ydG11dGV4LmM6OTk1DQo+Pj4+IGluX2F0b21pYygp
+OiAxLCBpcnFzX2Rpc2FibGVkKCk6IDEyOCwgcGlkOiAzMDcsIG5hbWU6IHB1bHNlYXVkaW8NCj4+
+Pj4gUHJlZW1wdGlvbiBkaXNhYmxlZCBhdDoNCj4+Pj4gWzxjMDE3OTBmYz5dIF9faGFuZGxlX2Rv
+bWFpbl9pcnErMHg0Yy8weGVjDQo+Pj4+IENQVTogMCBQSUQ6IDMwNyBDb21tOiBwdWxzZWF1ZGlv
+DQo+Pj4+IEhhcmR3YXJlIG5hbWU6IFNUaSBTb0Mgd2l0aCBGbGF0dGVuZWQgRGV2aWNlIFRyZWUN
+Cj4+Pj4gWzxjMDExMDQ2Yz5dICh1bndpbmRfYmFja3RyYWNlKQ0KPj4+PiBbPGMwMTBjN2Y0Pl0g
+KHNob3dfc3RhY2spDQo+Pj4+IFs8YzAzZDE1Nzg+XSAoZHVtcF9zdGFjaykNCj4+Pj4gWzxjMDE0
+ZTQ0MD5dIChfX19taWdodF9zbGVlcCkNCj4+Pj4gWzxjMDhlN2YyND5dIChydF9zcGluX2xvY2sp
+DQo+Pj4+IFs8YzA2OWJiMDQ+XSAoc3RpX21ib3hfZGlzYWJsZV9jaGFubmVsKQ0KPj4+PiBbPGMw
+NjliZWZjPl0gKHN0aV9tYm94X2lycV9oYW5kbGVyKQ0KPj4+PiBbPGMwMTc5OTAwPl0gKF9faGFu
+ZGxlX2lycV9ldmVudF9wZXJjcHUpDQo+Pj4+IFs8YzAxNzk5ZGM+XSAoaGFuZGxlX2lycV9ldmVu
+dF9wZXJjcHUpDQo+Pj4+IFs8YzAxNzlhNzg+XSAoaGFuZGxlX2lycV9ldmVudCkNCj4+Pj4gWzxj
+MDE3ZDFjOD5dIChoYW5kbGVfZmFzdGVvaV9pcnEpDQo+Pj4+IFs8YzAxNzhjMDg+XSAoZ2VuZXJp
+Y19oYW5kbGVfaXJxKQ0KPj4+PiBbPGMwMTc5MTJjPl0gKF9faGFuZGxlX2RvbWFpbl9pcnEpDQo+
+Pj4+IFs8YzAxMDE0ODg+XSAoZ2ljX2hhbmRsZV9pcnEpDQo+Pj4+DQo+Pj4+IFNpZ25lZC1vZmYt
+Ynk6IExpb25lbCBEZWJpZXZlIDxsaW9uZWwuZGViaWV2ZUBzdC5jb20+DQo+Pj4gTG9va3MgZmlu
+ZSB0byBtZS4gU2hvdWxkIHRoaXMgZ28gdG8gbWFpbmxpbmU/DQo+Pj4NCj4+PiBBY2tlZC1ieTog
+U3RldmVuIFJvc3RlZHQgKFZNd2FyZSkgPHJvc3RlZHRAZ29vZG1pcy5vcmc+DQo+PiBDb3VsZCB0
+aGlzIGJlIGFwcGxpZWQgdXBzdHJlYW0sIHBsZWFzZT8gRnJvbSBsb29raW5nIGF0IHRoZSB0aHJl
+YWQgdGhlcmUNCj4+IHdhcyBubyByZWFzb24gbm90IHRvIGRvIHNvLg0KPiBBY2tlZC1ieTogTGVl
+IEpvbmVzIDxsZWUuam9uZXNAbGluYXJvLm9yZz4NCj4NCj4+Pj4gLS0tDQo+Pj4+ICAgZHJpdmVy
+cy9tYWlsYm94L21haWxib3gtc3RpLmMgfCAxMiArKysrKystLS0tLS0NCj4+Pj4gICAxIGZpbGUg
+Y2hhbmdlZCwgNiBpbnNlcnRpb25zKCspLCA2IGRlbGV0aW9ucygtKQ0KPj4+Pg0KPj4+PiBkaWZm
+IC0tZ2l0IGEvZHJpdmVycy9tYWlsYm94L21haWxib3gtc3RpLmMNCj4+Pj4gYi9kcml2ZXJzL21h
+aWxib3gvbWFpbGJveC1zdGkuYyBpbmRleCA0MWJjZDMzLi5mOTY3NGNhIDEwMDY0NA0KPj4+PiAt
+LS0gYS9kcml2ZXJzL21haWxib3gvbWFpbGJveC1zdGkuYw0KPj4+PiArKysgYi9kcml2ZXJzL21h
+aWxib3gvbWFpbGJveC1zdGkuYw0KPj4+PiBAQCAtNjAsNyArNjAsNyBAQCBzdHJ1Y3Qgc3RpX21i
+b3hfZGV2aWNlIHsNCj4+Pj4gICAJdm9pZCBfX2lvbWVtCQkqYmFzZTsNCj4+Pj4gICAJY29uc3Qg
+Y2hhcgkJKm5hbWU7DQo+Pj4+ICAgCXUzMgkJCWVuYWJsZWRbU1RJX01CT1hfSU5TVF9NQVhdOw0K
+Pj4+PiAtCXNwaW5sb2NrX3QJCWxvY2s7DQo+Pj4+ICsJcmF3X3NwaW5sb2NrX3QJCWxvY2s7DQo+
+Pj4+ICAgfTsNCj4+Pj4gICANCj4+Pj4gICAvKioNCj4+Pj4gQEAgLTEyOSwxMCArMTI5LDEwIEBA
+IHN0YXRpYyB2b2lkIHN0aV9tYm94X2VuYWJsZV9jaGFubmVsKHN0cnVjdA0KPj4+PiBtYm94X2No
+YW4gKmNoYW4pIHVuc2lnbmVkIGxvbmcgZmxhZ3M7DQo+Pj4+ICAgCXZvaWQgX19pb21lbSAqYmFz
+ZSA9IE1CT1hfQkFTRShtZGV2LCBpbnN0YW5jZSk7DQo+Pj4+ICAgDQo+Pj4+IC0Jc3Bpbl9sb2Nr
+X2lycXNhdmUoJm1kZXYtPmxvY2ssIGZsYWdzKTsNCj4+Pj4gKwlyYXdfc3Bpbl9sb2NrX2lycXNh
+dmUoJm1kZXYtPmxvY2ssIGZsYWdzKTsNCj4+Pj4gICAJbWRldi0+ZW5hYmxlZFtpbnN0YW5jZV0g
+fD0gQklUKGNoYW5uZWwpOw0KPj4+PiAgIAl3cml0ZWxfcmVsYXhlZChCSVQoY2hhbm5lbCksIGJh
+c2UgKyBTVElfRU5BX1NFVF9PRkZTRVQpOw0KPj4+PiAtCXNwaW5fdW5sb2NrX2lycXJlc3RvcmUo
+Jm1kZXYtPmxvY2ssIGZsYWdzKTsNCj4+Pj4gKwlyYXdfc3Bpbl91bmxvY2tfaXJxcmVzdG9yZSgm
+bWRldi0+bG9jaywgZmxhZ3MpOw0KPj4+PiAgIH0NCj4+Pj4gICANCj4+Pj4gICBzdGF0aWMgdm9p
+ZCBzdGlfbWJveF9kaXNhYmxlX2NoYW5uZWwoc3RydWN0IG1ib3hfY2hhbiAqY2hhbikNCj4+Pj4g
+QEAgLTE0NCwxMCArMTQ0LDEwIEBAIHN0YXRpYyB2b2lkIHN0aV9tYm94X2Rpc2FibGVfY2hhbm5l
+bChzdHJ1Y3QNCj4+Pj4gbWJveF9jaGFuICpjaGFuKSB1bnNpZ25lZCBsb25nIGZsYWdzOw0KPj4+
+PiAgIAl2b2lkIF9faW9tZW0gKmJhc2UgPSBNQk9YX0JBU0UobWRldiwgaW5zdGFuY2UpOw0KPj4+
+PiAgIA0KPj4+PiAtCXNwaW5fbG9ja19pcnFzYXZlKCZtZGV2LT5sb2NrLCBmbGFncyk7DQo+Pj4+
+ICsJcmF3X3NwaW5fbG9ja19pcnFzYXZlKCZtZGV2LT5sb2NrLCBmbGFncyk7DQo+Pj4+ICAgCW1k
+ZXYtPmVuYWJsZWRbaW5zdGFuY2VdICY9IH5CSVQoY2hhbm5lbCk7DQo+Pj4+ICAgCXdyaXRlbF9y
+ZWxheGVkKEJJVChjaGFubmVsKSwgYmFzZSArIFNUSV9FTkFfQ0xSX09GRlNFVCk7DQo+Pj4+IC0J
+c3Bpbl91bmxvY2tfaXJxcmVzdG9yZSgmbWRldi0+bG9jaywgZmxhZ3MpOw0KPj4+PiArCXJhd19z
+cGluX3VubG9ja19pcnFyZXN0b3JlKCZtZGV2LT5sb2NrLCBmbGFncyk7DQo+Pj4+ICAgfQ0KPj4+
+PiAgIA0KPj4+PiAgIHN0YXRpYyB2b2lkIHN0aV9tYm94X2NsZWFyX2lycShzdHJ1Y3QgbWJveF9j
+aGFuICpjaGFuKQ0KPj4+PiBAQCAtNDUwLDcgKzQ1MCw3IEBAIHN0YXRpYyBpbnQgc3RpX21ib3hf
+cHJvYmUoc3RydWN0IHBsYXRmb3JtX2RldmljZQ0KPj4+PiAqcGRldikgbWRldi0+ZGV2CQk9ICZw
+ZGV2LT5kZXY7DQo+Pj4+ICAgCW1kZXYtPm1ib3gJCT0gbWJveDsNCj4+Pj4gICANCj4+Pj4gLQlz
+cGluX2xvY2tfaW5pdCgmbWRldi0+bG9jayk7DQo+Pj4+ICsJcmF3X3NwaW5fbG9ja19pbml0KCZt
+ZGV2LT5sb2NrKTsNCj4+Pj4gICANCj4+Pj4gICAJLyogU1RpIE1haWxib3ggZG9lcyBub3QgaGF2
+ZSBhIFR4LURvbmUgb3IgVHgtUmVhZHkgSVJRICovDQo+Pj4+ICAgCW1ib3gtPnR4ZG9uZV9pcnEJ
+PSBmYWxzZTsNCj4+IFNlYmFzdGlhbg0K
