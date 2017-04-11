@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 4.4.60-rt73
-Date: Tue, 11 Apr 2017 11:28:48 -0400
-Message-ID: <20170411112848.0148d143@gandalf.local.home>
+Subject: [ANNOUNCE] 3.12.72-rt97
+Date: Tue, 11 Apr 2017 11:29:17 -0400
+Message-ID: <20170411112917.20ee1b8f@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -19,10 +19,10 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 4.4.60-rt73 stable release.
+I'm pleased to announce the 3.12.72-rt97 stable release.
 
 
-This release is just an update to the new stable 4.4.60 version
+This release is just an update to the new stable 3.12.72 version
 and no RT specific changes have been made.
 
 
@@ -30,17 +30,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v4.4-rt
-  Head SHA1: 85ea85d2fb084b2588844c1c42a505ae2f6c0d30
+  branch: v3.12-rt
+  Head SHA1: a679546705eeeb21cc14b26bc6134958f5386bff
 
 
-Or to build 4.4.60-rt73 directly, the following patches should be applied:
+Or to build 3.12.72-rt97 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.60.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.72.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.60-rt73.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.72-rt97.patch.xz
 
 
 
