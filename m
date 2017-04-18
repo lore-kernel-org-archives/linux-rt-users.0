@@ -1,35 +1,108 @@
-From: Sebastian Andrzej Siewior <sebastian.siewior@linutronix.de>
-Subject: Re: Timeline or 4.9 RT Stable?
-Date: Thu, 13 Apr 2017 16:59:34 +0200
-Message-ID: <20170413145934.3d32xmnylffaqi3v@linutronix.de>
-References: <D5D6254030DBC644B6EE58B333BFBB1E9C1BFC18@ORSMSX112.amr.corp.intel.com>
+From: Grygorii Strashko <grygorii.strashko@ti.com>
+Subject: [v4.9-rt PATCH] ARM: mm: remove tasklist locking from
+ update_sections_early()
+Date: Tue, 18 Apr 2017 15:48:15 -0500
+Message-ID: <20170418204815.9001-1-grygorii.strashko@ti.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: "Hindman, Gavin" <gavin.hindman@intel.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:38424 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751212AbdDMO7g (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 13 Apr 2017 10:59:36 -0400
-Content-Disposition: inline
-In-Reply-To: <D5D6254030DBC644B6EE58B333BFBB1E9C1BFC18@ORSMSX112.amr.corp.intel.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: Laura Abbott <labbott@redhat.com>,
+ Grygorii Strashko <grygorii.strashko@ti.com>, linux-kernel@vger.kernel.org,
+ linux-arm-kernel@lists.infradead.org, Kees Cook <keescook@chromium.org>
+To: Russell King <linux@armlinux.org.uk>, Sebastian Andrzej Siewior
+ <bigeasy@linutronix.de>, <linux-rt-users@vger.kernel.org>
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 2017-04-11 16:10:23 [+0000], Hindman, Gavin wrote:
-> Hello Everyone,
-Hi Gavin,
+The below backtrace can be observed on -rt kernel with CONFIG_DEBUG_RODATA
+option enabled:
 
-> 4.9 LTS has been out for some time, now.  Is there an anticipated timeline for a 4.9 RT-Stable patch set?
+ BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:993
+ in_atomic(): 1, irqs_disabled(): 128, pid: 14, name: migration/0
+ 1 lock held by migration/0/14:
+  #0:  (tasklist_lock){+.+...}, at: [<c01183e8>] update_sections_early+0x24/0xdc
+ irq event stamp: 38
+ hardirqs last  enabled at (37): [<c08f6f7c>] _raw_spin_unlock_irq+0x24/0x68
+ hardirqs last disabled at (38): [<c01fdfe8>] multi_cpu_stop+0xd8/0x138
+ softirqs last  enabled at (0): [<c01303ec>] copy_process.part.5+0x238/0x1b64
+ softirqs last disabled at (0): [<  (null)>]   (null)
+ Preemption disabled at: [<c01fe244>] cpu_stopper_thread+0x80/0x10c
+ CPU: 0 PID: 14 Comm: migration/0 Not tainted 4.9.21-rt16-02220-g49e319c #15
+ Hardware name: Generic DRA74X (Flattened Device Tree)
+ [<c0112014>] (unwind_backtrace) from [<c010d370>] (show_stack+0x10/0x14)
+ [<c010d370>] (show_stack) from [<c049beb8>] (dump_stack+0xa8/0xd4)
+ [<c049beb8>] (dump_stack) from [<c01631a0>] (___might_sleep+0x1bc/0x2ac)
+ [<c01631a0>] (___might_sleep) from [<c08f7244>] (__rt_spin_lock+0x1c/0x30)
+ [<c08f7244>] (__rt_spin_lock) from [<c08f77a4>] (rt_read_lock+0x54/0x68)
+ [<c08f77a4>] (rt_read_lock) from [<c01183e8>] (update_sections_early+0x24/0xdc)
+ [<c01183e8>] (update_sections_early) from [<c01184b0>] (__fix_kernmem_perms+0x10/0x1c)
+ [<c01184b0>] (__fix_kernmem_perms) from [<c01fe010>] (multi_cpu_stop+0x100/0x138)
+ [<c01fe010>] (multi_cpu_stop) from [<c01fe24c>] (cpu_stopper_thread+0x88/0x10c)
+ [<c01fe24c>] (cpu_stopper_thread) from [<c015edc4>] (smpboot_thread_fn+0x174/0x31c)
+ [<c015edc4>] (smpboot_thread_fn) from [<c015a988>] (kthread+0xf0/0x108)
+ [<c015a988>] (kthread) from [<c0108818>] (ret_from_fork+0x14/0x3c)
+ Freeing unused kernel memory: 1024K (c0d00000 - c0e00000)
 
-I am not sure if I answer your question with this:
-v4.9-RT patch is set around. The usual workflow is to move the devel-RT
-tree (which is what v4.9-RT is now) to stable maintenance once we move a
-newer RT tree (newer major version).
+The stop_machine() is called with cpus = NULL from fix_kernmem_perms() and
+mark_rodata_ro() which means only one CPU will execute
+update_sections_early() while all other CPUs will spin and wait. Hence,
+it's safe to remove tasklist locking from update_sections_early(). As part of
+this change also mark functions which are local to this module as static
+to simplify code analize in the future.
 
-> Thanks,
-> Gavin Hindman
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Laura Abbott <labbott@redhat.com>
+Signed-off-by: Grygorii Strashko <grygorii.strashko@ti.com>
+---
+ arch/arm/mm/init.c | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
 
-Sebastian
+diff --git a/arch/arm/mm/init.c b/arch/arm/mm/init.c
+index 370581a..a77953a 100644
+--- a/arch/arm/mm/init.c
++++ b/arch/arm/mm/init.c
+@@ -693,30 +693,28 @@ static void update_sections_early(struct section_perm perms[], int n)
+ {
+ 	struct task_struct *t, *s;
+ 
+-	read_lock(&tasklist_lock);
+ 	for_each_process(t) {
+ 		if (t->flags & PF_KTHREAD)
+ 			continue;
+ 		for_each_thread(t, s)
+ 			set_section_perms(perms, n, true, s->mm);
+ 	}
+-	read_unlock(&tasklist_lock);
+ 	set_section_perms(perms, n, true, current->active_mm);
+ 	set_section_perms(perms, n, true, &init_mm);
+ }
+ 
+-int __fix_kernmem_perms(void *unused)
++static int __fix_kernmem_perms(void *unused)
+ {
+ 	update_sections_early(nx_perms, ARRAY_SIZE(nx_perms));
+ 	return 0;
+ }
+ 
+-void fix_kernmem_perms(void)
++static void fix_kernmem_perms(void)
+ {
+ 	stop_machine(__fix_kernmem_perms, NULL, NULL);
+ }
+ 
+-int __mark_rodata_ro(void *unused)
++static int __mark_rodata_ro(void *unused)
+ {
+ 	update_sections_early(ro_perms, ARRAY_SIZE(ro_perms));
+ 	return 0;
+-- 
+2.10.1
