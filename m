@@ -1,130 +1,63 @@
-From: Laura Abbott <labbott@redhat.com>
-Subject: Re: [v4.9-rt PATCH v2] ARM: mm: remove tasklist locking from
- update_sections_early()
-Date: Wed, 19 Apr 2017 17:36:56 -0700
-Message-ID: <46862ce1-77d2-8e82-8820-64ec47957844@redhat.com>
-References: <20170419201047.31578-1-grygorii.strashko@ti.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
-        Kees Cook <keescook@chromium.org>
-To: Grygorii Strashko <grygorii.strashko@ti.com>,
-        Russell King <linux@armlinux.org.uk>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users@vger.kernel.org
+From: Jianxun Zhang <jianxun.zhang@linux.intel.com>
+Subject: [PATCH] Make -x option position-agnostic
+Date: Thu, 20 Apr 2017 10:09:42 -0700
+Message-ID: <1492708182-104442-1-git-send-email-jianxun.zhang@linux.intel.com>
+Cc: vedang.patel@intel.com,
+        Jianxun Zhang <jianxun.zhang@linux.intel.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-io0-f182.google.com ([209.85.223.182]:33276 "EHLO
-        mail-io0-f182.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S937567AbdDTAhA (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 19 Apr 2017 20:37:00 -0400
-Received: by mail-io0-f182.google.com with SMTP id k87so45175384ioi.0
-        for <linux-rt-users@vger.kernel.org>; Wed, 19 Apr 2017 17:36:59 -0700 (PDT)
-In-Reply-To: <20170419201047.31578-1-grygorii.strashko@ti.com>
-Content-Language: en-US
+Received: from mga04.intel.com ([192.55.52.120]:22954 "EHLO mga04.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S971400AbdDTRF3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 20 Apr 2017 13:05:29 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 04/19/2017 01:10 PM, Grygorii Strashko wrote:
-> The below backtrace can be observed on -rt kernel with CONFIG_DEBUG_RODATA
-> option enabled:
-> 
->   BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:993
->   in_atomic(): 1, irqs_disabled(): 128, pid: 14, name: migration/0
->   1 lock held by migration/0/14:
->    #0:  (tasklist_lock){+.+...}, at: [<c01183e8>] update_sections_early+0x24/0xdc
->   irq event stamp: 38
->   hardirqs last  enabled at (37): [<c08f6f7c>] _raw_spin_unlock_irq+0x24/0x68
->   hardirqs last disabled at (38): [<c01fdfe8>] multi_cpu_stop+0xd8/0x138
->   softirqs last  enabled at (0): [<c01303ec>] copy_process.part.5+0x238/0x1b64
->   softirqs last disabled at (0): [<  (null)>]   (null)
->   Preemption disabled at: [<c01fe244>] cpu_stopper_thread+0x80/0x10c
->   CPU: 0 PID: 14 Comm: migration/0 Not tainted 4.9.21-rt16-02220-g49e319c #15
->   Hardware name: Generic DRA74X (Flattened Device Tree)
->   [<c0112014>] (unwind_backtrace) from [<c010d370>] (show_stack+0x10/0x14)
->   [<c010d370>] (show_stack) from [<c049beb8>] (dump_stack+0xa8/0xd4)
->   [<c049beb8>] (dump_stack) from [<c01631a0>] (___might_sleep+0x1bc/0x2ac)
->   [<c01631a0>] (___might_sleep) from [<c08f7244>] (__rt_spin_lock+0x1c/0x30)
->   [<c08f7244>] (__rt_spin_lock) from [<c08f77a4>] (rt_read_lock+0x54/0x68)
->   [<c08f77a4>] (rt_read_lock) from [<c01183e8>] (update_sections_early+0x24/0xdc)
->   [<c01183e8>] (update_sections_early) from [<c01184b0>] (__fix_kernmem_perms+0x10/0x1c)
->   [<c01184b0>] (__fix_kernmem_perms) from [<c01fe010>] (multi_cpu_stop+0x100/0x138)
->   [<c01fe010>] (multi_cpu_stop) from [<c01fe24c>] (cpu_stopper_thread+0x88/0x10c)
->   [<c01fe24c>] (cpu_stopper_thread) from [<c015edc4>] (smpboot_thread_fn+0x174/0x31c)
->   [<c015edc4>] (smpboot_thread_fn) from [<c015a988>] (kthread+0xf0/0x108)
->   [<c015a988>] (kthread) from [<c0108818>] (ret_from_fork+0x14/0x3c)
->   Freeing unused kernel memory: 1024K (c0d00000 - c0e00000)
-> 
-> The stop_machine() is called with cpus = NULL from fix_kernmem_perms() and
-> mark_rodata_ro() which means only one CPU will execute
-> update_sections_early() while all other CPUs will spin and wait. Hence,
-> it's safe to remove tasklist locking from update_sections_early(). As part
-> of this change also mark functions which are local to this module as
-> static
-Acked-by: Laura Abbott <labbott@redhat.com>
+Change 9d2c9edd86943dfea399a0176826af8bb92bf97c introduces
+the new option of POSIX timer and makes MODE_CLOCK_NANOSLEEP
+the default choice. But there are two places explicitly set
+MODE_CLOCK_NANOSLEEP to the variable use_nanosleep in the code,
+so the actual value of the variable after parsing depends on
+the position of '-x' to '-U' and '-S'.
 
-> 
-> Cc: Kees Cook <keescook@chromium.org>
-> Cc: Laura Abbott <labbott@redhat.com>
-> Signed-off-by: Grygorii Strashko <grygorii.strashko@ti.com>
-> ---
-> As I've checked it also can be applied to LKML as is.
-> 
-> Changes in v2:
->   - added comment to update_sections_early()
-> 
-> v1: https://patchwork.kernel.org/patch/9686289/
-> 
->   arch/arm/mm/init.c | 13 ++++++++-----
->   1 file changed, 8 insertions(+), 5 deletions(-)
-> 
-> diff --git a/arch/arm/mm/init.c b/arch/arm/mm/init.c
-> index 370581a..838f6b35 100644
-> --- a/arch/arm/mm/init.c
-> +++ b/arch/arm/mm/init.c
-> @@ -689,34 +689,37 @@ void set_section_perms(struct section_perm *perms, int n, bool set,
->   
->   }
->   
-> +/**
-> + * update_sections_early intended to be called only through stop_machine
-> + * framework and executed by only one CPU while all other CPUs will spin and
-> + * wait, so no locking is required in this function.
-> + */
->   static void update_sections_early(struct section_perm perms[], int n)
->   {
->   	struct task_struct *t, *s;
->   
-> -	read_lock(&tasklist_lock);
->   	for_each_process(t) {
->   		if (t->flags & PF_KTHREAD)
->   			continue;
->   		for_each_thread(t, s)
->   			set_section_perms(perms, n, true, s->mm);
->   	}
-> -	read_unlock(&tasklist_lock);
->   	set_section_perms(perms, n, true, current->active_mm);
->   	set_section_perms(perms, n, true, &init_mm);
->   }
->   
-> -int __fix_kernmem_perms(void *unused)
-> +static int __fix_kernmem_perms(void *unused)
->   {
->   	update_sections_early(nx_perms, ARRAY_SIZE(nx_perms));
->   	return 0;
->   }
->   
-> -void fix_kernmem_perms(void)
-> +static void fix_kernmem_perms(void)
->   {
->   	stop_machine(__fix_kernmem_perms, NULL, NULL);
->   }
->   
-> -int __mark_rodata_ro(void *unused)
-> +static int __mark_rodata_ro(void *unused)
->   {
->   	update_sections_early(ro_perms, ARRAY_SIZE(ro_perms));
->   	return 0;
-> 
+These command pairs result in different values in the variable:
+'cyclictest -S -x' VS 'cyclictest -x -S'
+'cyclictest -U -x' VS 'cyclictest -x -U'
+
+This change ensures -x work regardless its position by removing
+the two lines in these cases.
+
+Signed-off-by: Jianxun Zhang <jianxun.zhang@linux.intel.com>
+---
+Note: This patch is submitted after a very limited test in its scope. No real RT test was performed. Maintainers may want to do a full test or a closer review for anything I missed.
+
+There are other findings regarding to the parsing logic but I don't think they are critical as long as the usage gives correct test results. I could amend these with more patches later.
+
+Thanks
+
+ src/cyclictest/cyclictest.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 0b13441..381191c 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -1705,7 +1705,6 @@ static void process_options (int argc, char *argv[], int max_cpus)
+ 			smp = 1;
+ 			num_threads = max_cpus;
+ 			setaffinity = AFFINITY_USEALL;
+-			use_nanosleep = MODE_CLOCK_NANOSLEEP;
+ 			break;
+ 		case 't':
+ 		case OPT_THREADS:
+@@ -1744,7 +1743,6 @@ static void process_options (int argc, char *argv[], int max_cpus)
+ #ifdef NUMA
+ 			num_threads = max_cpus;
+ 			setaffinity = AFFINITY_USEALL;
+-			use_nanosleep = MODE_CLOCK_NANOSLEEP;
+ #else
+ 			warn("cyclictest was not built with the numa option\n");
+ 			warn("ignoring --numa or -U\n");
+-- 
+2.7.4
 
