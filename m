@@ -1,63 +1,94 @@
-From: Jianxun Zhang <jianxun.zhang@linux.intel.com>
-Subject: [PATCH] Make -x option position-agnostic
-Date: Thu, 20 Apr 2017 10:09:42 -0700
-Message-ID: <1492708182-104442-1-git-send-email-jianxun.zhang@linux.intel.com>
-Cc: vedang.patel@intel.com,
-        Jianxun Zhang <jianxun.zhang@linux.intel.com>
-To: linux-rt-users@vger.kernel.org
+From: Nate Dailey <nate.dailey@stratus.com>
+Subject: [PATCH] usb: Use _nort in usb_hcd_pci_remove
+Date: Thu, 20 Apr 2017 14:00:27 -0400
+Message-ID: <20170420180027.19316-1-nate.dailey@stratus.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=WINDOWS-1252
+Content-Transfer-Encoding: 8BIT
+Cc: Nate Dailey <nate.dailey@stratus.com>
+To: <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga04.intel.com ([192.55.52.120]:22954 "EHLO mga04.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S971400AbdDTRF3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 20 Apr 2017 13:05:29 -0400
+Received: from us-smtp-delivery-131.mimecast.com ([216.205.24.131]:55608 "EHLO
+        us-smtp-delivery-131.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S970193AbdDTSGn (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 20 Apr 2017 14:06:43 -0400
+Received: from EXHQ1.corp.stratus.com (exhq1.corp.stratus.com [134.111.200.125])
+        by mailhub4.stratus.com (8.12.11/8.12.11) with ESMTP id v3KI0SPZ031777
+        for <linux-rt-users@vger.kernel.org>; Thu, 20 Apr 2017 14:00:28 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Change 9d2c9edd86943dfea399a0176826af8bb92bf97c introduces
-the new option of POSIX timer and makes MODE_CLOCK_NANOSLEEP
-the default choice. But there are two places explicitly set
-MODE_CLOCK_NANOSLEEP to the variable use_nanosleep in the code,
-so the actual value of the variable after parsing depends on
-the position of '-x' to '-U' and '-S'.
+A trip through usb_hcd_pci_remove produces:
 
-These command pairs result in different values in the variable:
-'cyclictest -S -x' VS 'cyclictest -x -S'
-'cyclictest -U -x' VS 'cyclictest -x -U'
+ BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:993
+ in_atomic(): 0, irqs_disabled(): 1, pid: 4752, name: bash
+ INFO: lockdep is turned off.
+ irq event stamp: 0
+ hardirqs last  enabled at (0): [<          (null)>]           (null)
+ hardirqs last disabled at (0): [<ffffffff8108da9d>] copy_process.part.36+0x64d/0x2380
+ softirqs last  enabled at (0): [<ffffffff8108da9d>] copy_process.part.36+0x64d/0x2380
+ softirqs last disabled at (0): [<          (null)>]           (null)
+ CPU: 1 PID: 4752 Comm: bash Tainted: G        W I     4.9.0debug-rt16+ #2
+ Hardware name: Stratus ftServer 2700/G7LAY, BIOS BIOS Version 6.3:58 09/18/2014
+ ffffc90006e5fbd0 ffffffff813d243a ffff88016ac0b240 0000000000001290
+ ffffc90006e5fbf8 ffffffff810c6907 ffff8801682f45d0 ffff8801682f1000
+ ffff8801682f45d0 ffffc90006e5fc18 ffffffff817dee44 ffff88016b2aee18
+ Call Trace:
+ [<ffffffff813d243a>] dump_stack+0x99/0xcf
+ [<ffffffff810c6907>] ___might_sleep+0x137/0x210
+ [<ffffffff817dee44>] rt_spin_lock+0x24/0x60
+ [<ffffffff815b526f>] ehci_irq+0x2f/0x400
+ [<ffffffff814226b9>] ? pci_bus_read_config_word+0x99/0xb0
+ [<ffffffff81592d66>] usb_hcd_irq+0x26/0x40
+ [<ffffffff815a7a90>] usb_hcd_pci_remove+0x50/0x170
+ [<ffffffff815b933a>] ehci_pci_remove+0x1a/0x20
+ [<ffffffff8142fc39>] pci_device_remove+0x39/0xc0
+ [<ffffffff8152c4da>] __device_release_driver+0x9a/0x150
+ [<ffffffff8152c5b3>] device_release_driver+0x23/0x30
+ [<ffffffff81427f6c>] pci_stop_bus_device+0x8c/0xa0
+ [<ffffffff8142808a>] pci_stop_and_remove_bus_device_locked+0x1a/0x30
+ [<ffffffff8143182c>] remove_store+0x7c/0x90
+ [<ffffffff81526508>] dev_attr_store+0x18/0x30
+ [<ffffffff81313444>] sysfs_kf_write+0x44/0x60
+ [<ffffffff81312d7c>] kernfs_fop_write+0x13c/0x1d0
+ [<ffffffff81279bb7>] __vfs_write+0x37/0x160
+ [<ffffffff81118c82>] ? rcu_sync_lockdep_assert+0x12/0x60
+ [<ffffffff8127e3c6>] ? __sb_start_write+0x176/0x260
+ [<ffffffff8127a3f4>] ? vfs_write+0x184/0x1b0
+ [<ffffffff8127a325>] vfs_write+0xb5/0x1b0
+ [<ffffffff810025e0>] ? syscall_trace_enter+0x1d0/0x380
+ [<ffffffff8127b7e8>] SyS_write+0x58/0xc0
+ [<ffffffff81002d0a>] do_syscall_64+0x7a/0x230
+ [<ffffffff817df6c9>] entry_SYSCALL64_slow_path+0x25/0x25
 
-This change ensures -x work regardless its position by removing
-the two lines in these cases.
+Repro via something like:
 
-Signed-off-by: Jianxun Zhang <jianxun.zhang@linux.intel.com>
+> echo 1 > /sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:3d:00.0/0000:3e:01.0/0000:66:00.0/remove
+
+Switching usb_hcd_pci_remove to use _nort variants prevents the BUG.
+
+Signed-off-by: Nate Dailey <nate.dailey@stratus.com>
 ---
-Note: This patch is submitted after a very limited test in its scope. No real RT test was performed. Maintainers may want to do a full test or a closer review for anything I missed.
+ drivers/usb/core/hcd-pci.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-There are other findings regarding to the parsing logic but I don't think they are critical as long as the usage gives correct test results. I could amend these with more patches later.
-
-Thanks
-
- src/cyclictest/cyclictest.c | 2 --
- 1 file changed, 2 deletions(-)
-
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 0b13441..381191c 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -1705,7 +1705,6 @@ static void process_options (int argc, char *argv[], int max_cpus)
- 			smp = 1;
- 			num_threads = max_cpus;
- 			setaffinity = AFFINITY_USEALL;
--			use_nanosleep = MODE_CLOCK_NANOSLEEP;
- 			break;
- 		case 't':
- 		case OPT_THREADS:
-@@ -1744,7 +1743,6 @@ static void process_options (int argc, char *argv[], int max_cpus)
- #ifdef NUMA
- 			num_threads = max_cpus;
- 			setaffinity = AFFINITY_USEALL;
--			use_nanosleep = MODE_CLOCK_NANOSLEEP;
- #else
- 			warn("cyclictest was not built with the numa option\n");
- 			warn("ignoring --numa or -U\n");
+diff --git a/drivers/usb/core/hcd-pci.c b/drivers/usb/core/hcd-pci.c
+index 7859d738df41..e9e7307028bc 100644
+--- a/drivers/usb/core/hcd-pci.c
++++ b/drivers/usb/core/hcd-pci.c
+@@ -341,9 +341,9 @@ void usb_hcd_pci_remove(struct pci_dev *dev)
+ 	 * to test whether the controller hardware has been removed (e.g.,
+ 	 * cardbus physical eject).
+ 	 */
+-	local_irq_disable();
++	local_irq_disable_nort();
+ 	usb_hcd_irq(0, hcd);
+-	local_irq_enable();
++	local_irq_enable_nort();
+ 
+ 	/* Note: dev_set_drvdata must be called while holding the rwsem */
+ 	if (dev->class == CL_EHCI) {
 -- 
-2.7.4
+2.11.0
 
