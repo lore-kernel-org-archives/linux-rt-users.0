@@ -1,474 +1,328 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [RFC][PATCH tip/sched/core] sched/rt: Simplify the IPI rt
- balancing logic
-Date: Sat, 22 Apr 2017 14:41:52 -0400
-Message-ID: <20170422144152.2a9fc2e1@gandalf.local.home>
-References: <20170421224929.1a4bbeec@gandalf.local.home>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Peter Zijlstra <peterz@infradead.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@kernel.org>,
-        Clark Williams <williams@redhat.com>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        John Kacur <jkacur@redhat.com>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Alexander GQ Gerasiov <gq@cs.msu.su>
+Subject: [PATCH 1/2] raid5: Use raw_spinlock for stripe management.
+Date: Mon, 24 Apr 2017 16:33:35 +0300
+Message-ID: <1493040816-24038-1-git-send-email-gq@cs.msu.su>
+Cc: Alexander GQ Gerasiov <gq@redlab-i.ru>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:48390 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1426524AbdDVSmA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 22 Apr 2017 14:42:00 -0400
-In-Reply-To: <20170421224929.1a4bbeec@gandalf.local.home>
+Received: from gate.lvk.cs.msu.su ([158.250.17.1]:50506 "EHLO
+        mail.lvk.cs.msu.su" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S934189AbdDXNkl (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 24 Apr 2017 09:40:41 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-[
-  Here's a back port of my IPI simplified patch for 4.9.20-rt16.
-]
+From: Alexander GQ Gerasiov <gq@redlab-i.ru>
 
-When a CPU lowers its priority (schedules out a high priority task for a
-lower priority one), a check is made to see if any other CPU has overloaded
-RT tasks (more than one). It checks the rto_mask to determine this and if so
-it will request to pull one of those tasks to itself if the non running RT
-task is of higher priority than the new priority of the next task to run on
-the current CPU.
+This commit fixes the following warning:
 
-When we deal with large number of CPUs, the original pull logic suffered
-from large lock contention on a single CPU run queue, which caused a huge
-latency across all CPUs. This was caused by only having one CPU having
-overloaded RT tasks and a bunch of other CPUs lowering their priority. To
-solve this issue, commit b6366f048e0c ("sched/rt: Use IPI to trigger RT task
-push migration instead of pulling") changed the way to request a pull.
-Instead of grabbing the lock of the overloaded CPU's runqueue, it simply
-sent an IPI to that CPU to do the work.
+[ ] BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:993
+[ ] in_atomic(): 0, irqs_disabled(): 1, pid: 58, name: kworker/u12:1
+[ ] CPU: 5 PID: 58 Comm: kworker/u12:1 Tainted: G        W       4.9.20-rt16-stand6-686 #1
+[ ] Hardware name: Supermicro SYS-5027R-WRF/X9SRW-F, BIOS 3.2a 10/28/2015
+[ ] Workqueue: writeback wb_workfn (flush-253:0)
+[ ]  edf21a34 c12cdc6f c1078f0a edf08c40 edf21a64 c10787c1 c1668778 00000000
+[ ]  00000001 0000003a edf09144 00000000 80000000 ec694b18 ec775748 ec694ad0
+[ ]  edf21a70 c1584587 ec775790 edf21ac4 f893e8a3 00000000 c1078e52 00000000
+[ ] Call Trace:
+[ ]  [<c12cdc6f>] dump_stack+0x47/0x68
+[ ]  [<c1078f0a>] ? migrate_enable+0x4a/0xf0
+[ ]  [<c10787c1>] ___might_sleep+0x101/0x180
+[ ]  [<c1584587>] rt_spin_lock+0x17/0x40
+[ ]  [<f893e8a3>] add_stripe_bio+0x4e3/0x6c0 [raid456]
+[ ]  [<c1078e52>] ? preempt_count_add+0x42/0xb0
+[ ]  [<f89408f7>] raid5_make_request+0x737/0xdd0 [raid456]
 
-Although the IPI logic worked very well in removing the large latency build
-up, it still could suffer from a large number of IPIs being sent to a single
-CPU. On a 80 CPU box, I measured over 200us of processing IPIs. Worse yet,
-when I tested this on a 120 CPU box, with a stress test that had lots of
-RT tasks scheduling on all CPUs, it actually triggered the hard lockup
-detector! One CPU had so many IPIs sent to it, and due to the restart
-mechanism, of if a source run queue changes status, the CPU spent minutes!
-processing the IPIs.
-
-Thinking about this further, I realized there's no reason for each run queue
-to send its own IPI. As all CPUs with overloaded tasks must be scanned
-regardless if there's one or many CPUs lowering their priority, because
-there's no current way to find the CPU with the highest priority task that
-can schedule to one of these CPUs, there really only needs to be one IPI
-being sent around at a time.
-
-This greatly simplifies the code!
-
-The new approach is to have each root domain have its own irq work, as the
-rto_mask is per root domain. The root domain has the following fields
-attached to it:
-
-  rto_push_work	 - the irq work to process each CPU set in rto_mask
-  rto_lock	 - the lock to protect some of the other rto fields
-  rto_loop_start - an atomic that keeps contention down on rto_lock
-		    the first CPU scheduling in a lower priority task
-		    is the one to kick off the process.
-  rto_loop_next	 - an atomic that gets incremented for each CPU that
-		    schedules in a lower priority task.
-  rto_loop	 - a variable protected by rto_lock that is used to
-		    compare against rto_loop_next
-  rto_cpu	 - The cpu to send the next IPI to.
-
-When a CPU schedules in a lower priority task and wants to make sure
-overloaded CPUs know about it. It increments the rto_loop_next. Then it does
-an atomic_inc_return() on rto_loop_start. If the returned value is not "1",
-then it does atomic_dec() on rt_loop_start and returns. If the value is "1",
-then it will take the rto_lock to synchronize with a possible IPI being sent
-around to the overloaded CPUs.
-
-If rto_cpu is greater than or equal to nr_cpu_ids, then there's either no
-IPI being sent around, or one is about to finish. Then rto_cpu is set to the
-first CPU in rto_mask and an IPI is sent to that CPU. If there's no CPUs set
-in rto_mask, then there's nothing to be done.
-
-When the CPU receives the IPI, it will first try to push any RT task that is
-queued on the CPU but can't run because a higher priority RT task is
-currently running on the CPU.
-
-Then it takes the rto_lock and looks for the next CPU in the rto_mask. If it
-finds one, it simply sends an IPI to that CPU and the process continues.
-
-If there's no more CPUs in the rto_mask, then rto_loop is compared with
-rto_loop_next. If they match, everything is done and the process is over. If
-they do not match, then a CPU scheduled in a lower priority task as the IPI
-was being passed around, and the process needs to start again. The first CPU
-in rto_mask is sent the IPI.
-
-This change removes duplication of work in the IPI logic, and greatly
-lowers the latency caused by the IPIs. This removed the lockup happening on
-the 120 CPU machine. It also simplifies the code tremendously. What else
-could anyone ask for?
-
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+Signed-off-by: Alexander GQ Gerasiov <gq@redlab-i.ru>
 ---
-Index: linux-rt.git/kernel/sched/rt.c
-===================================================================
---- linux-rt.git.orig/kernel/sched/rt.c
-+++ linux-rt.git/kernel/sched/rt.c
-@@ -73,10 +73,6 @@ static void start_rt_bandwidth(struct rt
- 	raw_spin_unlock(&rt_b->rt_runtime_lock);
+ drivers/md/raid5.c | 82 +++++++++++++++++++++++++++---------------------------
+ drivers/md/raid5.h |  4 +--
+ 2 files changed, 43 insertions(+), 43 deletions(-)
+
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index fa2c4de32a64..e69525b5db7d 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -734,18 +734,18 @@ static void lock_two_stripes(struct stripe_head *sh1, struct stripe_head *sh2)
+ {
+ 	local_irq_disable();
+ 	if (sh1 > sh2) {
+-		spin_lock(&sh2->stripe_lock);
+-		spin_lock_nested(&sh1->stripe_lock, 1);
++		raw_spin_lock(&sh2->stripe_lock);
++		raw_spin_lock_nested(&sh1->stripe_lock, 1);
+ 	} else {
+-		spin_lock(&sh1->stripe_lock);
+-		spin_lock_nested(&sh2->stripe_lock, 1);
++		raw_spin_lock(&sh1->stripe_lock);
++		raw_spin_lock_nested(&sh2->stripe_lock, 1);
+ 	}
  }
  
--#if defined(CONFIG_SMP) && defined(HAVE_RT_PUSH_IPI)
--static void push_irq_work_func(struct irq_work *work);
--#endif
--
- void init_rt_rq(struct rt_rq *rt_rq)
+ static void unlock_two_stripes(struct stripe_head *sh1, struct stripe_head *sh2)
  {
- 	struct rt_prio_array *array;
-@@ -96,14 +92,6 @@ void init_rt_rq(struct rt_rq *rt_rq)
- 	rt_rq->rt_nr_migratory = 0;
- 	rt_rq->overloaded = 0;
- 	plist_head_init(&rt_rq->pushable_tasks);
--
--#ifdef HAVE_RT_PUSH_IPI
--	rt_rq->push_flags = 0;
--	rt_rq->push_cpu = nr_cpu_ids;
--	raw_spin_lock_init(&rt_rq->push_lock);
--	init_irq_work(&rt_rq->push_work, push_irq_work_func);
--	rt_rq->push_work.flags |= IRQ_WORK_HARD_IRQ;
--#endif
- #endif /* CONFIG_SMP */
- 	/* We start is dequeued state, because no RT tasks are queued */
- 	rt_rq->rt_queued = 0;
-@@ -1866,160 +1854,150 @@ static void push_rt_tasks(struct rq *rq)
+-	spin_unlock(&sh1->stripe_lock);
+-	spin_unlock(&sh2->stripe_lock);
++	raw_spin_unlock(&sh1->stripe_lock);
++	raw_spin_unlock(&sh2->stripe_lock);
+ 	local_irq_enable();
  }
  
- #ifdef HAVE_RT_PUSH_IPI
-+
- /*
-- * The search for the next cpu always starts at rq->cpu and ends
-- * when we reach rq->cpu again. It will never return rq->cpu.
-- * This returns the next cpu to check, or nr_cpu_ids if the loop
-- * is complete.
-+ * When a high priority task schedules out from a CPU and a lower priority
-+ * task is scheduled in, a check is made to see if there's any RT tasks
-+ * on other CPUs that are waiting to run because a higher priority RT task
-+ * is currently running on its CPU. In this case, the CPU with multiple RT
-+ * tasks queued on it (overloaded) needs to be notified that a CPU has opened
-+ * up that may be able to run one of its non-running queued RT tasks.
-+ *
-+ * All CPUs with overloaded RT tasks need to be notified as there is currently
-+ * no way to know which of these CPUs have the highest priority task waiting
-+ * to run. Instead of trying to take a spinlock on each of these CPUs,
-+ * which has shown to cause large latency when done on machines with many
-+ * CPUs, sending an IPI to the CPUs to have them push off the overloaded
-+ * RT tasks waiting to run.
-+ *
-+ * Just sending an IPI to each of the CPUs is also an issue, as on large
-+ * count CPU machines, this can cause an IPI storm on a CPU, especially
-+ * if its the only CPU with multiple RT tasks queued, and a large number
-+ * of CPUs scheduling a lower priority task at the same time.
-+ *
-+ * Each root domain has its own irq work function that can iterate over
-+ * all CPUs with RT overloaded tasks. Since all CPUs with overloaded RT
-+ * tassk must be checked if there's one or many CPUs that are lowering
-+ * their priority, there's a single irq work iterator that will try to
-+ * push off RT tasks that are waiting to run.
-+ *
-+ * When a CPU schedules a lower priority task, it will kick off the
-+ * irq work iterator that will jump to each CPU with overloaded RT tasks.
-+ * As it only takes the first CPU that schedules a lower priority task
-+ * to start the process, the rto_start variable is incremented and if
-+ * the atomic result is one, then that CPU will try to take the rto_lock.
-+ * This prevents high contention on the lock as the process handles all
-+ * CPUs scheduling lower priority tasks.
-+ *
-+ * All CPUs that are scheduling a lower priority task will increment the
-+ * rt_loop_next variable. This will make sure that the irq work iterator
-+ * checks all RT overloaded CPUs whenever a CPU schedules a new lower
-+ * priority task, even if the iterator is in the middle of a scan. Incrementing
-+ * the rt_loop_next will cause the iterator to perform another scan.
-  *
-- * rq->rt.push_cpu holds the last cpu returned by this function,
-- * or if this is the first instance, it must hold rq->cpu.
-  */
- static int rto_next_cpu(struct rq *rq)
- {
--	int prev_cpu = rq->rt.push_cpu;
- 	int cpu;
+@@ -823,10 +823,10 @@ static void stripe_add_to_batch_list(struct r5conf *conf, struct stripe_head *sh
+ 		goto unlock_out;
  
--	cpu = cpumask_next(prev_cpu, rq->rd->rto_mask);
--
- 	/*
--	 * If the previous cpu is less than the rq's CPU, then it already
--	 * passed the end of the mask, and has started from the beginning.
--	 * We end if the next CPU is greater or equal to rq's CPU.
-+	 * When starting the IPI RT pushing, the rto_cpu is set to nr_cpu_ids
-+	 * or greater. rt_next_cpu() will simply return the first CPU found in
-+	 * the rto_mask.
-+	 *
-+	 * If rto_next_cpu() is called with rto_cpu less than nr_cpu_ids, it
-+	 * will return the next CPU found in the rto_mask.
-+	 *
-+	 * If there are no more CPUs left in the rto_mask, then a check is made
-+	 * against rto_loop and rto_loop_next. rto_loop is only updated with
-+	 * the rto_lock held, but any CPU may increment the rto_loop_next
-+	 * without any locking.
+ 	if (head->batch_head) {
+-		spin_lock(&head->batch_head->batch_lock);
++		raw_spin_lock(&head->batch_head->batch_lock);
+ 		/* This batch list is already running */
+ 		if (!stripe_can_batch(head)) {
+-			spin_unlock(&head->batch_head->batch_lock);
++			raw_spin_unlock(&head->batch_head->batch_lock);
+ 			goto unlock_out;
+ 		}
+ 
+@@ -835,15 +835,15 @@ static void stripe_add_to_batch_list(struct r5conf *conf, struct stripe_head *sh
+ 		 * can still add the stripe to batch list
+ 		 */
+ 		list_add(&sh->batch_list, &head->batch_list);
+-		spin_unlock(&head->batch_head->batch_lock);
++		raw_spin_unlock(&head->batch_head->batch_lock);
+ 
+ 		sh->batch_head = head->batch_head;
+ 	} else {
+ 		head->batch_head = head;
+ 		sh->batch_head = head->batch_head;
+-		spin_lock(&head->batch_lock);
++		raw_spin_lock(&head->batch_lock);
+ 		list_add_tail(&sh->batch_list, &head->batch_list);
+-		spin_unlock(&head->batch_lock);
++		raw_spin_unlock(&head->batch_lock);
+ 	}
+ 
+ 	if (test_and_clear_bit(STRIPE_PREREAD_ACTIVE, &sh->state))
+@@ -1230,10 +1230,10 @@ static void ops_run_biofill(struct stripe_head *sh)
+ 		struct r5dev *dev = &sh->dev[i];
+ 		if (test_bit(R5_Wantfill, &dev->flags)) {
+ 			struct bio *rbi;
+-			spin_lock_irq(&sh->stripe_lock);
++			raw_spin_lock_irq(&sh->stripe_lock);
+ 			dev->read = rbi = dev->toread;
+ 			dev->toread = NULL;
+-			spin_unlock_irq(&sh->stripe_lock);
++			raw_spin_unlock_irq(&sh->stripe_lock);
+ 			while (rbi && rbi->bi_iter.bi_sector <
+ 				dev->sector + STRIPE_SECTORS) {
+ 				tx = async_copy_data(0, rbi, &dev->page,
+@@ -1618,13 +1618,13 @@ ops_run_biodrain(struct stripe_head *sh, struct dma_async_tx_descriptor *tx)
+ 
+ again:
+ 			dev = &sh->dev[i];
+-			spin_lock_irq(&sh->stripe_lock);
++			raw_spin_lock_irq(&sh->stripe_lock);
+ 			chosen = dev->towrite;
+ 			dev->towrite = NULL;
+ 			sh->overwrite_disks = 0;
+ 			BUG_ON(dev->written);
+ 			wbi = dev->written = chosen;
+-			spin_unlock_irq(&sh->stripe_lock);
++			raw_spin_unlock_irq(&sh->stripe_lock);
+ 			WARN_ON(dev->page != dev->orig_page);
+ 
+ 			while (wbi && wbi->bi_iter.bi_sector <
+@@ -1998,8 +1998,8 @@ static struct stripe_head *alloc_stripe(struct kmem_cache *sc, gfp_t gfp,
+ 
+ 	sh = kmem_cache_zalloc(sc, gfp);
+ 	if (sh) {
+-		spin_lock_init(&sh->stripe_lock);
+-		spin_lock_init(&sh->batch_lock);
++		raw_spin_lock_init(&sh->stripe_lock);
++		raw_spin_lock_init(&sh->batch_lock);
+ 		INIT_LIST_HEAD(&sh->batch_list);
+ 		INIT_LIST_HEAD(&sh->lru);
+ 		atomic_set(&sh->count, 1);
+@@ -2984,7 +2984,7 @@ static int add_stripe_bio(struct stripe_head *sh, struct bio *bi, int dd_idx,
+ 	 * stripe. If a stripe is owned by one stripe, the stripe lock will
+ 	 * protect it.
  	 */
--	if (prev_cpu < rq->cpu) {
--		if (cpu >= rq->cpu)
--			return nr_cpu_ids;
--
--	} else if (cpu >= nr_cpu_ids) {
--		/*
--		 * We passed the end of the mask, start at the beginning.
--		 * If the result is greater or equal to the rq's CPU, then
--		 * the loop is finished.
--		 */
-+again:
-+	if (rq->rd->rto_cpu >= nr_cpu_ids) {
- 		cpu = cpumask_first(rq->rd->rto_mask);
--		if (cpu >= rq->cpu)
--			return nr_cpu_ids;
-+		rq->rd->rto_cpu = cpu;
-+		/* If cpu is nr_cpu_ids, then there is no overloaded rqs */
-+		return cpu;
+-	spin_lock_irq(&sh->stripe_lock);
++	raw_spin_lock_irq(&sh->stripe_lock);
+ 	/* Don't allow new IO added to stripes in batch list */
+ 	if (sh->batch_head)
+ 		goto overlap;
+@@ -3044,17 +3044,17 @@ static int add_stripe_bio(struct stripe_head *sh, struct bio *bi, int dd_idx,
+ 		 * any more.
+ 		 */
+ 		set_bit(STRIPE_BITMAP_PENDING, &sh->state);
+-		spin_unlock_irq(&sh->stripe_lock);
++		raw_spin_unlock_irq(&sh->stripe_lock);
+ 		bitmap_startwrite(conf->mddev->bitmap, sh->sector,
+ 				  STRIPE_SECTORS, 0);
+-		spin_lock_irq(&sh->stripe_lock);
++		raw_spin_lock_irq(&sh->stripe_lock);
+ 		clear_bit(STRIPE_BITMAP_PENDING, &sh->state);
+ 		if (!sh->batch_head) {
+ 			sh->bm_seq = conf->seq_flush+1;
+ 			set_bit(STRIPE_BIT_DELAY, &sh->state);
+ 		}
  	}
--	rq->rt.push_cpu = cpu;
--
--	/* Return cpu to let the caller know if the loop is finished or not */
--	return cpu;
--}
+-	spin_unlock_irq(&sh->stripe_lock);
++	raw_spin_unlock_irq(&sh->stripe_lock);
  
--static int find_next_push_cpu(struct rq *rq)
--{
--	struct rq *next_rq;
--	int cpu;
-+	cpu = cpumask_next(rq->rd->rto_cpu, rq->rd->rto_mask);
-+	rq->rd->rto_cpu = cpu;
+ 	if (stripe_can_batch(sh))
+ 		stripe_add_to_batch_list(conf, sh);
+@@ -3062,7 +3062,7 @@ static int add_stripe_bio(struct stripe_head *sh, struct bio *bi, int dd_idx,
  
--	while (1) {
--		cpu = rto_next_cpu(rq);
--		if (cpu >= nr_cpu_ids)
--			break;
--		next_rq = cpu_rq(cpu);
-+	if (cpu < nr_cpu_ids)
-+		return cpu;
- 
--		/* Make sure the next rq can push to this rq */
--		if (next_rq->rt.highest_prio.next < rq->rt.highest_prio.curr)
--			break;
--	}
-+	if (rq->rd->rto_loop == atomic_read(&rq->rd->rto_loop_next))
-+		return cpu;
- 
--	return cpu;
-+	rq->rd->rto_loop = atomic_read(&rq->rd->rto_loop_next);
-+	goto again;
+  overlap:
+ 	set_bit(R5_Overlap, &sh->dev[dd_idx].flags);
+-	spin_unlock_irq(&sh->stripe_lock);
++	raw_spin_unlock_irq(&sh->stripe_lock);
+ 	return 0;
  }
  
--#define RT_PUSH_IPI_EXECUTING		1
--#define RT_PUSH_IPI_RESTART		2
--
- static void tell_cpu_to_push(struct rq *rq)
- {
--	int cpu;
-+	int start;
-+	int cpu = nr_cpu_ids;
+@@ -3114,12 +3114,12 @@ handle_failed_stripe(struct r5conf *conf, struct stripe_head *sh,
+ 				rdev_dec_pending(rdev, conf->mddev);
+ 			}
+ 		}
+-		spin_lock_irq(&sh->stripe_lock);
++		raw_spin_lock_irq(&sh->stripe_lock);
+ 		/* fail all writes first */
+ 		bi = sh->dev[i].towrite;
+ 		sh->dev[i].towrite = NULL;
+ 		sh->overwrite_disks = 0;
+-		spin_unlock_irq(&sh->stripe_lock);
++		raw_spin_unlock_irq(&sh->stripe_lock);
+ 		if (bi)
+ 			bitmap_end = 1;
  
--	if (rq->rt.push_flags & RT_PUSH_IPI_EXECUTING) {
--		raw_spin_lock(&rq->rt.push_lock);
--		/* Make sure it's still executing */
--		if (rq->rt.push_flags & RT_PUSH_IPI_EXECUTING) {
--			/*
--			 * Tell the IPI to restart the loop as things have
--			 * changed since it started.
--			 */
--			rq->rt.push_flags |= RT_PUSH_IPI_RESTART;
--			raw_spin_unlock(&rq->rt.push_lock);
--			return;
--		}
--		raw_spin_unlock(&rq->rt.push_lock);
--	}
-+	/* Keep the loop going if the IPI is currently active */
-+	atomic_inc_return(&rq->rd->rto_loop_next);
- 
--	/* When here, there's no IPI going around */
-+	/* Only one CPU can initiate a loop at a time */
-+	start = atomic_inc_return(&rq->rd->rto_loop_start);
-+	if (start != 1)
-+		goto out;
- 
--	rq->rt.push_cpu = rq->cpu;
--	cpu = find_next_push_cpu(rq);
--	if (cpu >= nr_cpu_ids)
--		return;
-+	raw_spin_lock(&rq->rd->rto_lock);
- 
--	rq->rt.push_flags = RT_PUSH_IPI_EXECUTING;
-+	/*
-+	 * The rto_cpu is updated under the lock, if it has a valid cpu
-+	 * then the IPI is still running and will continue due to the
-+	 * update to loop_next, and nothing needs to be done here.
-+	 * Otherwise it is finishing up and an ipi needs to be sent.
-+	 */
-+	if (rq->rd->rto_cpu >= nr_cpu_ids)
-+		cpu = rto_next_cpu(rq);
- 
--	irq_work_queue_on(&rq->rt.push_work, cpu);
-+	raw_spin_unlock(&rq->rd->rto_lock);
-+
-+	if (cpu < nr_cpu_ids)
-+		irq_work_queue_on(&rq->rd->rto_push_work, cpu);
-+out:
-+	atomic_dec(&rq->rd->rto_loop_start);
- }
- 
- /* Called from hardirq context */
--static void try_to_push_tasks(void *arg)
-+void rto_push_irq_work_func(struct irq_work *work)
- {
--	struct rt_rq *rt_rq = arg;
--	struct rq *rq, *src_rq;
-+	struct rq *rq;
- 	int this_cpu;
- 	int cpu;
- 
--	this_cpu = rt_rq->push_cpu;
--
--	/* Paranoid check */
--	BUG_ON(this_cpu != smp_processor_id());
--
-+	this_cpu = smp_processor_id();
- 	rq = cpu_rq(this_cpu);
--	src_rq = rq_of_rt_rq(rt_rq);
- 
--again:
-+	/*
-+	 * We do not need to grab the lock to check for has_pushable_tasks.
-+	 * When it gets updated, a check is made if a push is possible.
-+	 */
- 	if (has_pushable_tasks(rq)) {
- 		raw_spin_lock(&rq->lock);
--		push_rt_task(rq);
-+		push_rt_tasks(rq);
- 		raw_spin_unlock(&rq->lock);
+@@ -3171,10 +3171,10 @@ handle_failed_stripe(struct r5conf *conf, struct stripe_head *sh,
+ 		    s->failed > conf->max_degraded &&
+ 		    (!test_bit(R5_Insync, &sh->dev[i].flags) ||
+ 		      test_bit(R5_ReadError, &sh->dev[i].flags))) {
+-			spin_lock_irq(&sh->stripe_lock);
++			raw_spin_lock_irq(&sh->stripe_lock);
+ 			bi = sh->dev[i].toread;
+ 			sh->dev[i].toread = NULL;
+-			spin_unlock_irq(&sh->stripe_lock);
++			raw_spin_unlock_irq(&sh->stripe_lock);
+ 			if (test_and_clear_bit(R5_Overlap, &sh->dev[i].flags))
+ 				wake_up(&conf->wait_for_overlap);
+ 			if (bi)
+@@ -4219,9 +4219,9 @@ static int clear_batch_ready(struct stripe_head *sh)
+ 	struct stripe_head *tmp;
+ 	if (!test_and_clear_bit(STRIPE_BATCH_READY, &sh->state))
+ 		return (sh->batch_head && sh->batch_head != sh);
+-	spin_lock(&sh->stripe_lock);
++	raw_spin_lock(&sh->stripe_lock);
+ 	if (!sh->batch_head) {
+-		spin_unlock(&sh->stripe_lock);
++		raw_spin_unlock(&sh->stripe_lock);
+ 		return 0;
  	}
  
--	/* Pass the IPI to the next rt overloaded queue */
--	raw_spin_lock(&rt_rq->push_lock);
--	/*
--	 * If the source queue changed since the IPI went out,
--	 * we need to restart the search from that CPU again.
--	 */
--	if (rt_rq->push_flags & RT_PUSH_IPI_RESTART) {
--		rt_rq->push_flags &= ~RT_PUSH_IPI_RESTART;
--		rt_rq->push_cpu = src_rq->cpu;
--	}
-+	raw_spin_lock(&rq->rd->rto_lock);
+@@ -4230,14 +4230,14 @@ static int clear_batch_ready(struct stripe_head *sh)
+ 	 * BATCH_READY, skips it
+ 	 */
+ 	if (sh->batch_head != sh) {
+-		spin_unlock(&sh->stripe_lock);
++		raw_spin_unlock(&sh->stripe_lock);
+ 		return 1;
+ 	}
+-	spin_lock(&sh->batch_lock);
++	raw_spin_lock(&sh->batch_lock);
+ 	list_for_each_entry(tmp, &sh->batch_list, batch_list)
+ 		clear_bit(STRIPE_BATCH_READY, &tmp->state);
+-	spin_unlock(&sh->batch_lock);
+-	spin_unlock(&sh->stripe_lock);
++	raw_spin_unlock(&sh->batch_lock);
++	raw_spin_unlock(&sh->stripe_lock);
  
--	cpu = find_next_push_cpu(src_rq);
-+	/* Pass the IPI to the next rt overloaded queue */
-+	cpu = rto_next_cpu(rq);
- 
--	if (cpu >= nr_cpu_ids)
--		rt_rq->push_flags &= ~RT_PUSH_IPI_EXECUTING;
--	raw_spin_unlock(&rt_rq->push_lock);
-+	raw_spin_unlock(&rq->rd->rto_lock);
- 
- 	if (cpu >= nr_cpu_ids)
- 		return;
- 
--	/*
--	 * It is possible that a restart caused this CPU to be
--	 * chosen again. Don't bother with an IPI, just see if we
--	 * have more to push.
--	 */
--	if (unlikely(cpu == rq->cpu))
--		goto again;
--
- 	/* Try the next RT overloaded CPU */
--	irq_work_queue_on(&rt_rq->push_work, cpu);
--}
--
--static void push_irq_work_func(struct irq_work *work)
--{
--	struct rt_rq *rt_rq = container_of(work, struct rt_rq, push_work);
--
--	try_to_push_tasks(rt_rq);
-+	irq_work_queue_on(&rq->rd->rto_push_work, cpu);
- }
- #endif /* HAVE_RT_PUSH_IPI */
- 
-Index: linux-rt.git/kernel/sched/sched.h
-===================================================================
---- linux-rt.git.orig/kernel/sched/sched.h
-+++ linux-rt.git/kernel/sched/sched.h
-@@ -457,7 +457,7 @@ static inline int rt_bandwidth_enabled(v
- }
- 
- /* RT IPI pull logic requires IRQ_WORK */
--#ifdef CONFIG_IRQ_WORK
-+#if defined(CONFIG_IRQ_WORK) && defined(CONFIG_SMP)
- # define HAVE_RT_PUSH_IPI
- #endif
- 
-@@ -479,12 +479,6 @@ struct rt_rq {
- 	unsigned long rt_nr_total;
- 	int overloaded;
- 	struct plist_head pushable_tasks;
--#ifdef HAVE_RT_PUSH_IPI
--	int push_flags;
--	int push_cpu;
--	struct irq_work push_work;
--	raw_spinlock_t push_lock;
--#endif
- #endif /* CONFIG_SMP */
- 	int rt_queued;
- 
-@@ -566,6 +560,17 @@ struct root_domain {
- 	struct dl_bw dl_bw;
- 	struct cpudl cpudl;
- 
-+#ifdef HAVE_RT_PUSH_IPI
-+	/*
-+	 * For IPI pull requests, loop across the rto_mask.
-+	 */
-+	struct irq_work rto_push_work;
-+	raw_spinlock_t rto_lock;
-+	atomic_t rto_loop_next;
-+	int rto_loop;
-+	atomic_t rto_loop_start;
-+	int rto_cpu;
-+#endif
  	/*
- 	 * The "RT overload" flag: it gets set if a CPU has more than
- 	 * one runnable RT task.
-@@ -578,6 +583,9 @@ struct root_domain {
+ 	 * BATCH_READY is cleared, no new stripes can be added.
+@@ -4288,17 +4288,17 @@ static void break_stripe_batch_list(struct stripe_head *head_sh,
+ 			sh->dev[i].flags = head_sh->dev[i].flags &
+ 				(~((1 << R5_WriteError) | (1 << R5_Overlap)));
+ 		}
+-		spin_lock_irq(&sh->stripe_lock);
++		raw_spin_lock_irq(&sh->stripe_lock);
+ 		sh->batch_head = NULL;
+-		spin_unlock_irq(&sh->stripe_lock);
++		raw_spin_unlock_irq(&sh->stripe_lock);
+ 		if (handle_flags == 0 ||
+ 		    sh->state & handle_flags)
+ 			set_bit(STRIPE_HANDLE, &sh->state);
+ 		raid5_release_stripe(sh);
+ 	}
+-	spin_lock_irq(&head_sh->stripe_lock);
++	raw_spin_lock_irq(&head_sh->stripe_lock);
+ 	head_sh->batch_head = NULL;
+-	spin_unlock_irq(&head_sh->stripe_lock);
++	raw_spin_unlock_irq(&head_sh->stripe_lock);
+ 	for (i = 0; i < head_sh->disks; i++)
+ 		if (test_and_clear_bit(R5_Overlap, &head_sh->dev[i].flags))
+ 			do_wakeup = 1;
+@@ -4335,7 +4335,7 @@ static void handle_stripe(struct stripe_head *sh)
+ 		break_stripe_batch_list(sh, 0);
  
- extern struct root_domain def_root_domain;
+ 	if (test_bit(STRIPE_SYNC_REQUESTED, &sh->state) && !sh->batch_head) {
+-		spin_lock(&sh->stripe_lock);
++		raw_spin_lock(&sh->stripe_lock);
+ 		/* Cannot process 'sync' concurrently with 'discard' */
+ 		if (!test_bit(STRIPE_DISCARD, &sh->state) &&
+ 		    test_and_clear_bit(STRIPE_SYNC_REQUESTED, &sh->state)) {
+@@ -4343,7 +4343,7 @@ static void handle_stripe(struct stripe_head *sh)
+ 			clear_bit(STRIPE_INSYNC, &sh->state);
+ 			clear_bit(STRIPE_REPLACED, &sh->state);
+ 		}
+-		spin_unlock(&sh->stripe_lock);
++		raw_spin_unlock(&sh->stripe_lock);
+ 	}
+ 	clear_bit(STRIPE_DELAYED, &sh->state);
  
-+#ifdef HAVE_RT_PUSH_IPI
-+extern void rto_push_irq_work_func(struct irq_work *work);
-+#endif
- #endif /* CONFIG_SMP */
+@@ -5113,13 +5113,13 @@ static void make_discard_request(struct mddev *mddev, struct bio *bi)
+ 			goto again;
+ 		}
+ 		clear_bit(R5_Overlap, &sh->dev[sh->pd_idx].flags);
+-		spin_lock_irq(&sh->stripe_lock);
++		raw_spin_lock_irq(&sh->stripe_lock);
+ 		for (d = 0; d < conf->raid_disks; d++) {
+ 			if (d == sh->pd_idx || d == sh->qd_idx)
+ 				continue;
+ 			if (sh->dev[d].towrite || sh->dev[d].toread) {
+ 				set_bit(R5_Overlap, &sh->dev[d].flags);
+-				spin_unlock_irq(&sh->stripe_lock);
++				raw_spin_unlock_irq(&sh->stripe_lock);
+ 				raid5_release_stripe(sh);
+ 				schedule();
+ 				goto again;
+@@ -5136,7 +5136,7 @@ static void make_discard_request(struct mddev *mddev, struct bio *bi)
+ 			raid5_inc_bi_active_stripes(bi);
+ 			sh->overwrite_disks++;
+ 		}
+-		spin_unlock_irq(&sh->stripe_lock);
++		raw_spin_unlock_irq(&sh->stripe_lock);
+ 		if (conf->mddev->bitmap) {
+ 			for (d = 0;
+ 			     d < conf->raid_disks - conf->max_degraded;
+diff --git a/drivers/md/raid5.h b/drivers/md/raid5.h
+index 0739604990b7..984b156fcf01 100644
+--- a/drivers/md/raid5.h
++++ b/drivers/md/raid5.h
+@@ -216,12 +216,12 @@ struct stripe_head {
+ 						  */
+ 	enum check_states	check_state;
+ 	enum reconstruct_states reconstruct_state;
+-	spinlock_t		stripe_lock;
++	raw_spinlock_t		stripe_lock;
+ 	int			cpu;
+ 	struct r5worker_group	*group;
  
- /*
-Index: linux-rt.git/kernel/sched/core.c
-===================================================================
---- linux-rt.git.orig/kernel/sched/core.c
-+++ linux-rt.git/kernel/sched/core.c
-@@ -6121,6 +6121,13 @@ static int init_rootdomain(struct root_d
- 	if (!zalloc_cpumask_var(&rd->rto_mask, GFP_KERNEL))
- 		goto free_dlo_mask;
+ 	struct stripe_head	*batch_head; /* protected by stripe lock */
+-	spinlock_t		batch_lock; /* only header's lock is useful */
++	raw_spinlock_t		batch_lock; /* only header's lock is useful */
+ 	struct list_head	batch_list; /* protected by head's batch lock*/
  
-+#ifdef HAVE_RT_PUSH_IPI
-+	rd->rto_cpu = nr_cpu_ids;
-+	raw_spin_lock_init(&rd->rto_lock);
-+	init_irq_work(&rd->rto_push_work, rto_push_irq_work_func);
-+	rd->rto_push_work.flags |= IRQ_WORK_HARD_IRQ;
-+#endif
-+
- 	init_dl_bw(&rd->dl_bw);
- 	if (cpudl_init(&rd->cpudl) != 0)
- 		goto free_dlo_mask;
+ 	struct r5l_io_unit	*log_io;
+-- 
+2.11.0
+
