@@ -1,57 +1,81 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH] cyclictest: touch threadstacks on numa to pre-fault
- them
-Date: Mon, 24 Apr 2017 21:56:33 +0200 (CEST)
-Message-ID: <alpine.LFD.2.20.1704242156020.13237@riemann.fritz.box>
-References: <20170424170515.7051-1-williams@redhat.com>
+From: David Hauck <davidh@netacquire.com>
+Subject: RE: Kernel 4.9.x-rt Fully Preemptible Kernel: Issue with gdb and
+ unexpected SIGSTOP signals
+Date: Mon, 24 Apr 2017 19:49:09 +0000
+Message-ID: <FCC5AC80E299464B82E1345E2C10FC9D9B5C8530@S1P5DAG10E.EXCHPROD.USA.NET>
+References: <39174b3e2e7a47c48b3688a2b28ab83e@FE-MBX1012.de.bosch.com>
+ <20170125095628.pcuxqk7l4xnvbsve@linutronix.de>
+ <f8526e600a9a45dc959ddf5d12bc430b@FE-MBX1012.de.bosch.com>
+ <87521e75b64f4b84b2ecd8b47bb7fe72@FE-MBX1012.de.bosch.com>
+ <20170125134016.ffj6xpissz4iy7ph@linutronix.de>
+ <ef2c680e3ed541c4b0df5e0715ca8264@FE-MBX1012.de.bosch.com>
+ <3c9395f9c6b944978c1f420276bde0ee@FE-MBX1012.de.bosch.com>
+ <61f913336df14059bc409249f0e70ea3@FE-MBX1012.de.bosch.com>
+ <20170302175155.rymagis536dnw5nh@linutronix.de>
+ <d831bc9a2939474f8b8290905f393088@FE-MBX1012.de.bosch.com>
+ <20170307232151.7macprg6qnl3exbh@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Cc: Linux RT Users <linux-rt-users@vger.kernel.org>
-To: Clark Williams <williams@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        "Koehrer Mathias (ETAS/ESW3)" <mathias.koehrer@etas.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f67.google.com ([74.125.82.67]:36852 "EHLO
-        mail-wm0-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S977329AbdDXT4n (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 24 Apr 2017 15:56:43 -0400
-Received: by mail-wm0-f67.google.com with SMTP id u65so20096360wmu.3
-        for <linux-rt-users@vger.kernel.org>; Mon, 24 Apr 2017 12:56:42 -0700 (PDT)
-In-Reply-To: <20170424170515.7051-1-williams@redhat.com>
+Received: from gwo1.mbox.net ([165.212.64.21]:37294 "EHLO gwo1.mbox.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S977219AbdDXTy6 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 24 Apr 2017 15:54:58 -0400
+In-Reply-To: <20170307232151.7macprg6qnl3exbh@linutronix.de>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
-
-On Mon, 24 Apr 2017, Clark Williams wrote:
-
-> On a numa system we allocate a stack from the closest NUMA node
-> for each measurement thread. We need to touch those stack pages
-> to prevent them faulting when first run. Not a big deal on a
-> system with just a few cores, but overhead adds up with 32+ cores.
-> 
-> Signed-off-by: Clark Williams <williams@redhat.com>
-> ---
->  src/cyclictest/cyclictest.c | 3 +++
->  1 file changed, 3 insertions(+)
-> 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index 5e23fc58f602..49a81f168cdb 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -2376,6 +2376,9 @@ int main(int argc, char **argv)
->  			/*  allocate memory for a stack on appropriate node */
->  			stack = rt_numa_numa_alloc_onnode(stksize, node, i);
->  
-> +			/* touch the stack pages to pre-fault them in */
-> +			memset(stack, 0, stksize);
-> +
->  			/* set the thread's stack */
->  			if (pthread_attr_setstack(&attr, stack, stksize))
->  				fatal("failed to set stack addr for thread %d to 0x%x\n",
-> -- 
-> 2.9.3
-> 
-> --
-
-Signed-off-by: John Kacur <jkacur@redhat.com>
-
+SGkgU2ViYXN0aWFuIGFuZCBNYXRoaWFzLA0KIA0KSSB3YW50ZWQgdG8gZm9sbG93LXVwIG9uIHRo
+aXMgdGhyZWFkIHNpbmNlIHdlLCB0b28sIGFyZSBzZWVpbmcgaXNzdWVzIHdpdGggR0RCIGFuZCB2
+NC45LXJ0IGtlcm5lbHMuIFdlJ3ZlIGJlZW4gd29ya2luZyBvbiB1cGdyYWRpbmcgb3VyIHN5c3Rl
+bXMvYXBwbGljYXRpb24gZnJvbSB0aGUgdjMuMTgtcnQga2VybmVsIHNlcmllcyAoc3BlY2lmaWNh
+bGx5IHYzLjE4Li4yOS1ydDMwKSB0byB2NC45LXJ0IChzcGVjaWZpY2FsbHkgNC45LjEzLXJ0MTEp
+IGFuZCBpbW1lZGlhdGVseSBzdGFydGVkIGV4cGVyaWVuY2luZyB2YXJpb3VzIEdEQiByZWxhdGVk
+IGlzc3Vlcy4gVGhlIGZpcnN0IChpbmFiaWxpdHkgdG8gcGF1c2UgYXQgYnJlYWtwb2ludHMgYW5k
+IHNpbmdsZS1zdGVwKSB3YXMgZWxpbWluYXRlZCBieSByZXZlcnRpbmcgdG8gdXNpbmcgR0RCIHY3
+LjExLjEgKGZyb20gR0RCIHY3LjEyLjEpLiBIb3dldmVyLCB0aGUgc2Vjb25kICh0aGUgU0lHU1RP
+UCBpc3N1ZSBvcmlnaW5hbGx5IHJlcG9ydGVkIGJ5IE1hdGhpYXMpIGlzbid0IHNvbWV0aGluZyB3
+ZSd2ZSBiZWVuIGFibGUgdG8gd29yayBhcm91bmQuIEhhdmUgZWl0aGVyIG9mIHlvdSBtYWRlIGFu
+eSBvZiB5b3VyIG93biBwcm9ncmVzcyBvbiB0aGlzIGlzc3VlPyBBcmUgb3RoZXJzIGFsc28gc2Vl
+aW5nIHRoaXM/DQoNClRvb2xjaGFpbiAodjMuMTgtcnQgaTM4NiB0YXJnZXRzL2FwcGxpY2F0aW9u
+KQ0KCUdDQyB2NC45LjMNCglHTEliQyB2Mi4xOQ0KCUdEQiB2Ny4xMS4xDQpUb29sY2hhaW4gKHY0
+LjktcnQgaTM4NiB0YXJnZXRzL2FwcGxpY2F0aW9uKQ0KCUdDQyB2NC45LjQNCglHTGliQyB2Mi4y
+NQ0KCUdEQiB2Ny4xMS4xDQoJDQpUaGFua3MsDQotRGF2aWQgSGF1Y2sNCk5ldEFjcXVpcmUgQ29y
+cC4NCiANCk9uIFR1ZXNkYXksIE1hcmNoIDA3LCAyMDE3IDM6MjIgUE0sIGxpbnV4LXJ0LXVzZXJz
+LW93bmVyQHZnZXIua2VybmVsLm9yZyB3cm90ZToNCj4gT24gMjAxNy0wMy0wNyAxMzozOTozNiBb
+KzAwMDBdLCBLb2VocmVyIE1hdGhpYXMgKEVUQVMvRVNXMykgd3JvdGU6DQo+PiBIaSBTZWJhc3Rp
+YW4sDQo+IEhpIE1hdGhpYXMsDQo+IA0KPj4+IGFuZCA4MTQ0IGJsb2NrcyBpbiB3YWl0IGZvciA4
+NDI0IHdoaWNoIGlzIG5ldmVyIGNvbXBsZXRlcyB3aXRob3V0DQo+Pj4gYWRkaXRpb25hbCBoZWxw
+IChsaWtlIGEgbWFudWFsIFNJR0NPTlQpLiBSaWdodCBub3cgaXQgbG9va3MgbGlrZSB0aGUNCj4+
+PiBQVFJBQ0VfREVUQUNIIChzeXNjYWxsIDEwMSwgMTEpIHdoaWNoIHNob3VsZCByZW1vdmUgdGhl
+IHRhc2sgZnJvbQ0KPj4+IHB0cmFjZSBhbmQgd2FrZXVwIGRpZCBub3Qgd29yayBidXQgSSBzZWUg
+YSB3YWtldXDigKYgVGhlIHdha2V1cCB3b3JrZWQNCj4+PiAobW9zdCBsaWtlbHkpIGJ1dCBzaW5j
+ZSBpdCBpcyBzdHVjayBJIGd1ZXNzIHRoYXQgdGhlcmUgd2FzIGEgc2Vjb25kIHNpZ25hbCBpdCBp
+cyBwcm9jZXNzaW5nIGFuZCB3YWl0aW5nIGZvcg0KPiBnZGIuDQo+PiBJIGRvIG5vdCB1bmRlcnN0
+YW5kLCB3aGF0IHRoYXQgbWVhbnMuDQo+PiBXaGVuIEkgcnVuIHRoZSB2ZXJ5IHNhbWUgdGVzdCBv
+biBhIG5vbi1ydCBrZXJuZWwgKG9yIGV2ZW4gb24gYSBSVA0KPj4ga2VybmVsIHdpdGggYSBwcmVl
+bXB0aW9uIG1vZGVsIHRoYXQgaXMgbm90IGNvbmZpZ3VyZWQgYXMgIkZ1bGx5DQo+PiBQcmVlbXB0
+aWJsZSBLZXJuZWwiKSwgSSBuZXZlciBzZWUgdGhpcyBpc3N1ZS4NCj4gDQo+IEkgY2FuIHJlcHJv
+ZHVjZSB0aGUgaXNzdWUgb24gYSAtUlQga2VybmVsLiBJIGRvbid0IHJlYWxseSBrbm93IHdoYXQg
+dGhlIHJvb3QgaXNzdWUgaXMgYnV0IGl0IGlzIGEgcHJvYmxlbS4NCj4gV2UgaGFkIGEgcHRyYWNl
+IGlzc3VlIGlmIHlvdSBsb29rIGludG8gdGhlIHF1ZXVlIGZvcg0KPiAgICJwdHJhY2U6IGZpeCBw
+dHJhY2UgdnMgdGFza2xpc3RfbG9jayByYWNlIg0KPj4gQWxzbyAtIGFzIG1lbnRpb25lZCAtIHBy
+ZXZpb3VzbHksIHdpdGggb2xkZXIgUlQgcHJlZW1wdGVkIGtlcm5lbA0KPj4gdmVyc2lvbnMgaXQg
+aXMgd29ya2luZyBmaW5lIGFzIHdlbGwuIEZvciBtZSBpdCBsb29rcyBhcyBpZiB0aGUgUlQNCj4+
+IHByZWVtcHRpbmcgb24gbmV3ZXIga2VybmVscyBzb21laG93IGhhcyBpbXBhY3Qgb24gdGhlIHdh
+eSB0aGUNCj4+IGRlYnVnZ2luZyB3aXRoIGdkYiB3b3JrcyBNeSBleHBlY3RhdGlvbiAoYW5kIHNv
+IGZhciBJIGhhZCB0aGUNCj4+IGV4cGVyaWVuY2UpIGlzIHRoYXQgYSBjb2RlIHRoYXQgaXMgcnVu
+bmluZyBmaW5lIHdpdGggYSBub24gUlQga2VybmVsDQo+PiBzaG91bGQgYWxzbyBydW4gZmluZSB3
+aXRoIHRoZSBmdWxseSBwcmVlbXB0ZWQga2VybmVsIChvZiBjb3Vyc2UgdGhlIHRpbWluZyBiZWhh
+dmlvciBpcyBkaWZmZXJlbnQpLg0KPiANCj4gVGhhdCBpcyBjb3JyZWN0IC0gaXQgc2hvdWxkIHdv
+cmsuIEkndmUgYmVlbiB0cmFjaW5nIGl0IGZvciBhIHdoaWxlIG5vdyBhbmQgaGF2ZSBubyByZWFs
+IGNsdWUgd2hhdCBnb2VzDQo+IHdyb25nLiBUaGVyZSBhIGZldyBkaWZmZXJlbnQgd2F5cyBob3cg
+aXQgc2VlbXMgdG8gZ28gd3JvbmcgYW5kIHRoZSBvdXRjb21lIGlzIGFsd2F5cyB0aGF0IHRoZSBr
+ZXJuZWwNCj4gcHV0cyB0aGUgdGFzayBpbiAic3RvcCIgbW9kZSB3aGlsZSBnZGIgZXhwZWN0cyBp
+dCB0byBydW4gYW5kIHdhaXRzIGZvciBpdC4NCj4gDQo+PiBSZWdhcmRzDQo+PiANCj4+IE1hdGhp
+YXMNCj4gDQo+IFNlYmFzdGlhbg0K
