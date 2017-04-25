@@ -1,49 +1,78 @@
-From: "Koehrer Mathias (ETAS/ESW3)" <mathias.koehrer@etas.com>
-Subject: Re: Kernel 4.9.x-rt Fully Preemptible Kernel: Issue with gdb and
- unexpected SIGSTOP signals
-Date: Tue, 25 Apr 2017 06:06:00 +0000
-Message-ID: <fde43c84103d4dd48a4a09368fffc4eb@FE-MBX1012.de.bosch.com>
-References: <39174b3e2e7a47c48b3688a2b28ab83e@FE-MBX1012.de.bosch.com>
- <20170125095628.pcuxqk7l4xnvbsve@linutronix.de>
- <f8526e600a9a45dc959ddf5d12bc430b@FE-MBX1012.de.bosch.com>
- <87521e75b64f4b84b2ecd8b47bb7fe72@FE-MBX1012.de.bosch.com>
- <20170125134016.ffj6xpissz4iy7ph@linutronix.de>
- <ef2c680e3ed541c4b0df5e0715ca8264@FE-MBX1012.de.bosch.com>
- <3c9395f9c6b944978c1f420276bde0ee@FE-MBX1012.de.bosch.com>
- <61f913336df14059bc409249f0e70ea3@FE-MBX1012.de.bosch.com>
- <20170302175155.rymagis536dnw5nh@linutronix.de>
- <d831bc9a2939474f8b8290905f393088@FE-MBX1012.de.bosch.com>
- <20170307232151.7macprg6qnl3exbh@linutronix.de>
- <FCC5AC80E299464B82E1345E2C10FC9D9B5C8530@S1P5DAG10E.EXCHPROD.USA.NET>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: David Hauck <davidh@netacquire.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp6-v.fe.bosch.de ([139.15.237.11]:46802 "EHLO
-        smtp6-v.fe.bosch.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S980492AbdDYGGC (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 25 Apr 2017 02:06:02 -0400
-In-Reply-To: <FCC5AC80E299464B82E1345E2C10FC9D9B5C8530@S1P5DAG10E.EXCHPROD.USA.NET>
-Content-Language: de-DE
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Marcelo Tosatti <mtosatti@redhat.com>
+Subject: [patch 1/2] MM: remove unused quiet_vmstat function
+Date: Tue, 25 Apr 2017 10:57:18 -0300
+Message-ID: <20170425135843.636700422@redhat.com>
+References: <20170425135717.375295031@redhat.com>
+Cc: Luiz Capitulino <lcapitulino@redhat.com>, Rik van Riel <riel@redhat.com>,
+        Linux RT Users <linux-rt-users@vger.kernel.org>,
+        Marcelo Tosatti <mtosatti@redhat.com>
+To: linux-kernel@vger.kernel.org, linux-mm@kvack.org
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline; filename=remove-vmstat-quiet
+Sender: owner-linux-mm@kvack.org
+List-Id: linux-rt-users.vger.kernel.org
 
-SGkgRGF2aWQNCj4gSSB3YW50ZWQgdG8gZm9sbG93LXVwIG9uIHRoaXMgdGhyZWFkIHNpbmNlIHdl
-LCB0b28sIGFyZSBzZWVpbmcgaXNzdWVzIHdpdGggR0RCIGFuZA0KPiB2NC45LXJ0IGtlcm5lbHMu
-IFdlJ3ZlIGJlZW4gd29ya2luZyBvbiB1cGdyYWRpbmcgb3VyIHN5c3RlbXMvYXBwbGljYXRpb24g
-ZnJvbSB0aGUNCj4gdjMuMTgtcnQga2VybmVsIHNlcmllcyAoc3BlY2lmaWNhbGx5IHYzLjE4Li4y
-OS1ydDMwKSB0byB2NC45LXJ0IChzcGVjaWZpY2FsbHkgNC45LjEzLXJ0MTEpDQo+IGFuZCBpbW1l
-ZGlhdGVseSBzdGFydGVkIGV4cGVyaWVuY2luZyB2YXJpb3VzIEdEQiByZWxhdGVkIGlzc3Vlcy4g
-VGhlIGZpcnN0IChpbmFiaWxpdHkNCj4gdG8gcGF1c2UgYXQgYnJlYWtwb2ludHMgYW5kIHNpbmds
-ZS1zdGVwKSB3YXMgZWxpbWluYXRlZCBieSByZXZlcnRpbmcgdG8gdXNpbmcgR0RCDQo+IHY3LjEx
-LjEgKGZyb20gR0RCIHY3LjEyLjEpLiBIb3dldmVyLCB0aGUgc2Vjb25kICh0aGUgU0lHU1RPUCBp
-c3N1ZSBvcmlnaW5hbGx5DQo+IHJlcG9ydGVkIGJ5IE1hdGhpYXMpIGlzbid0IHNvbWV0aGluZyB3
-ZSd2ZSBiZWVuIGFibGUgdG8gd29yayBhcm91bmQuIEhhdmUgZWl0aGVyIG9mDQo+IHlvdSBtYWRl
-IGFueSBvZiB5b3VyIG93biBwcm9ncmVzcyBvbiB0aGlzIGlzc3VlPyBBcmUgb3RoZXJzIGFsc28g
-c2VlaW5nIHRoaXM/DQpObyBwcm9ncmVzcyBmcm9tIG91ciBzaWRlLi4uIFdlIGFyZSBzdGF5aW5n
-IG9uIHRoZSAzLjE4IGtlcm5lbCAod2hpY2ggaXMgbm90IHJlYWxseSBmaW5lIA0KYXMgaXQgaXMg
-bm93IEVPTC4uLi4pDQoNCkJlc3QgcmVnYXJkcw0KDQpNYXRoaWFzIA0K
+Remove unused quiet_vmstat function.
+
+Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
+
+---
+ include/linux/vmstat.h |    1 -
+ mm/vmstat.c            |   25 -------------------------
+ 2 files changed, 26 deletions(-)
+
+Index: linux-2.6-git-disable-vmstat-worker/include/linux/vmstat.h
+===================================================================
+--- linux-2.6-git-disable-vmstat-worker.orig/include/linux/vmstat.h	2017-04-24 18:52:42.957724687 -0300
++++ linux-2.6-git-disable-vmstat-worker/include/linux/vmstat.h	2017-04-24 18:53:15.086793496 -0300
+@@ -233,7 +233,6 @@
+ extern void __dec_zone_state(struct zone *, enum zone_stat_item);
+ extern void __dec_node_state(struct pglist_data *, enum node_stat_item);
+ 
+-void quiet_vmstat(void);
+ void cpu_vm_stats_fold(int cpu);
+ void refresh_zone_stat_thresholds(void);
+ 
+Index: linux-2.6-git-disable-vmstat-worker/mm/vmstat.c
+===================================================================
+--- linux-2.6-git-disable-vmstat-worker.orig/mm/vmstat.c	2017-04-24 18:52:42.957724687 -0300
++++ linux-2.6-git-disable-vmstat-worker/mm/vmstat.c	2017-04-24 18:53:53.075874785 -0300
+@@ -1657,31 +1657,6 @@
+ }
+ 
+ /*
+- * Switch off vmstat processing and then fold all the remaining differentials
+- * until the diffs stay at zero. The function is used by NOHZ and can only be
+- * invoked when tick processing is not active.
+- */
+-void quiet_vmstat(void)
+-{
+-	if (system_state != SYSTEM_RUNNING)
+-		return;
+-
+-	if (!delayed_work_pending(this_cpu_ptr(&vmstat_work)))
+-		return;
+-
+-	if (!need_update(smp_processor_id()))
+-		return;
+-
+-	/*
+-	 * Just refresh counters and do not care about the pending delayed
+-	 * vmstat_update. It doesn't fire that often to matter and canceling
+-	 * it would be too expensive from this path.
+-	 * vmstat_shepherd will take care about that for us.
+-	 */
+-	refresh_cpu_vm_stats(false);
+-}
+-
+-/*
+  * Shepherd worker thread that checks the
+  * differentials of processors that have their worker
+  * threads for vm statistics updates disabled because of
+
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
