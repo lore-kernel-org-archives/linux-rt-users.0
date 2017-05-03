@@ -1,74 +1,356 @@
 From: Marcelo Tosatti <mtosatti@redhat.com>
-Subject: Re: [patch 2/2] MM: allow per-cpu vmstat_threshold and vmstat_worker
- configuration
-Date: Tue, 2 May 2017 14:21:23 -0300
-Message-ID: <20170502172120.GB5457@amt.cnet>
-References: <20170425135717.375295031@redhat.com>
- <20170425135846.203663532@redhat.com>
- <20170502102836.4a4d34ba@redhat.com>
- <20170502165159.GA5457@amt.cnet>
- <20170502131527.7532fc2e@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org,
+Subject: [patch 2/3] MM: allow per-cpu vmstat_threshold configuration
+Date: Wed, 03 May 2017 15:40:09 -0300
+Message-ID: <20170503184039.818107646@redhat.com>
+References: <20170503184007.174707977@redhat.com>
+Cc: Luiz Capitulino <lcapitulino@redhat.com>,
         Rik van Riel <riel@redhat.com>,
-        Linux RT Users <linux-rt-users@vger.kernel.org>, cl@linux.com,
-        cmetcalf@mellanox.com
-To: Luiz Capitulino <lcapitulino@redhat.com>, Christoph Lameter <cl@linux.com>
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20170502131527.7532fc2e@redhat.com>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+        Linux RT Users <linux-rt-users@vger.kernel.org>,
+        Marcelo Tosatti <mtosatti@redhat.com>
+To: linux-kernel@vger.kernel.org, linux-mm@kvack.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx1.redhat.com ([209.132.183.28]:45834 "EHLO mx1.redhat.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751354AbdECSpC (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 3 May 2017 14:45:02 -0400
+Content-Disposition: inline; filename=vmstat-configurable-thresh
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, May 02, 2017 at 01:15:27PM -0400, Luiz Capitulino wrote:
-> On Tue, 2 May 2017 13:52:00 -0300
-> Marcelo Tosatti <mtosatti@redhat.com> wrote:
-> 
-> > > I have several questions about the tunables:
-> > > 
-> > >  - What does the vmstat_threshold value mean? What are the implications
-> > >    of changing this value? What's the difference in choosing 1, 2, 3
-> > >    or 500?  
-> > 
-> > Its the maximum value for a vmstat statistics counter to hold. After
-> > that value, the statistics are transferred to the global counter:
-> > 
-> > void __mod_node_page_state(struct pglist_data *pgdat, enum node_stat_item item,
-> >                                 long delta)
-> > {
-> >         struct per_cpu_nodestat __percpu *pcp = pgdat->per_cpu_nodestats;
-> >         s8 __percpu *p = pcp->vm_node_stat_diff + item;
-> >         long x;
-> >         long t;
-> > 
-> >         x = delta + __this_cpu_read(*p);
-> > 
-> >         t = __this_cpu_read(pcp->stat_threshold);
-> > 
-> >         if (unlikely(x > t || x < -t)) {
-> >                 node_page_state_add(x, pgdat, item);
-> >                 x = 0;
-> >         }
-> >         __this_cpu_write(*p, x);
-> > }
-> > EXPORT_SYMBOL(__mod_node_page_state);
-> > 
-> > BTW, there is a bug there, should change that to:
-> > 
-> >         if (unlikely(x >= t || x <= -t)) {
-> > 
-> > Increasing the threshold value does two things:
-> > 	1) It decreases the number of inter-processor accesses.
-> > 	2) It increases how much the global counters stay out of
-> > 	   sync relative to actual current values.
-> 
-> OK, but I'm mostly concerned with the sysadmin who will have
-> to change the tunable. So, I think it's a good idea to improve
-> the doc to contain that information.
+The per-CPU vmstat worker is a problem on -RT workloads (because
+ideally the CPU is entirely reserved for the -RT app, without
+interference). The worker transfers accumulated per-CPU 
+vmstat counters to global counters.
 
-Yes, how is that:
+To resolve the problem, create a userspace configurable per-CPU 
+vmstat threshold: by default the VM code calculates the size of
+the per-CPU vmstat arrays. This tunable allows userspace to 
+configure the vmstat threshold values.
 
+The patch below contains documentation which describes the tunables
+in more detail.
+
+Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
+
+---
+ Documentation/vm/vmstat_thresholds.txt |   78 +++++++++++++
+ mm/vmstat.c                            |  188 +++++++++++++++++++++++++++++----
+ 2 files changed, 247 insertions(+), 19 deletions(-)
+
+Index: linux-2.6-git-disable-vmstat-worker/mm/vmstat.c
+===================================================================
+--- linux-2.6-git-disable-vmstat-worker.orig/mm/vmstat.c	2017-04-25 07:39:13.941019853 -0300
++++ linux-2.6-git-disable-vmstat-worker/mm/vmstat.c	2017-05-03 10:59:43.495714336 -0300
+@@ -91,8 +91,16 @@
+ EXPORT_SYMBOL(vm_zone_stat);
+ EXPORT_SYMBOL(vm_node_stat);
+ 
++struct vmstat_uparam {
++	atomic_t user_stat_thresh;
++};
++
++static DEFINE_PER_CPU(struct vmstat_uparam, vmstat_uparam);
++
+ #ifdef CONFIG_SMP
+ 
++#define MAX_THRESHOLD 125
++
+ int calculate_pressure_threshold(struct zone *zone)
+ {
+ 	int threshold;
+@@ -110,9 +118,9 @@
+ 	threshold = max(1, (int)(watermark_distance / num_online_cpus()));
+ 
+ 	/*
+-	 * Maximum threshold is 125
++	 * Maximum threshold is MAX_THRESHOLD == 125
+ 	 */
+-	threshold = min(125, threshold);
++	threshold = min(MAX_THRESHOLD, threshold);
+ 
+ 	return threshold;
+ }
+@@ -188,15 +196,31 @@
+ 		threshold = calculate_normal_threshold(zone);
+ 
+ 		for_each_online_cpu(cpu) {
+-			int pgdat_threshold;
++			int pgdat_threshold, ustat_thresh;
++			struct vmstat_uparam *vup;
+ 
+-			per_cpu_ptr(zone->pageset, cpu)->stat_threshold
+-							= threshold;
++			struct per_cpu_nodestat __percpu *pcp;
++			struct per_cpu_pageset *p;
++
++			p = per_cpu_ptr(zone->pageset, cpu);
++
++			vup = &per_cpu(vmstat_uparam, cpu);
++			ustat_thresh = atomic_read(&vup->user_stat_thresh);
++
++			if (ustat_thresh)
++				p->stat_threshold = ustat_thresh;
++			else
++				p->stat_threshold = threshold;
++
++			pcp = per_cpu_ptr(pgdat->per_cpu_nodestats, cpu);
+ 
+ 			/* Base nodestat threshold on the largest populated zone. */
+-			pgdat_threshold = per_cpu_ptr(pgdat->per_cpu_nodestats, cpu)->stat_threshold;
+-			per_cpu_ptr(pgdat->per_cpu_nodestats, cpu)->stat_threshold
+-				= max(threshold, pgdat_threshold);
++			pgdat_threshold = pcp->stat_threshold;
++			if (ustat_thresh)
++				pcp->stat_threshold = ustat_thresh;
++			else
++				pcp->stat_threshold = max(threshold,
++							  pgdat_threshold);
+ 		}
+ 
+ 		/*
+@@ -226,9 +250,24 @@
+ 			continue;
+ 
+ 		threshold = (*calculate_pressure)(zone);
+-		for_each_online_cpu(cpu)
++		for_each_online_cpu(cpu) {
++			int t, ustat_thresh;
++			struct vmstat_uparam *vup;
++
++			vup = &per_cpu(vmstat_uparam, cpu);
++			ustat_thresh = atomic_read(&vup->user_stat_thresh);
++			t = threshold;
++
++			/*
++			 * min because pressure could cause
++			 * calculate_pressure'ed value to be smaller.
++			 */
++			if (ustat_thresh)
++				t = min(threshold, ustat_thresh);
++
+ 			per_cpu_ptr(zone->pageset, cpu)->stat_threshold
+-							= threshold;
++							= t;
++		}
+ 	}
+ }
+ 
+@@ -249,7 +288,7 @@
+ 
+ 	t = __this_cpu_read(pcp->stat_threshold);
+ 
+-	if (unlikely(x > t || x < -t)) {
++	if (unlikely(x >= t || x <= -t)) {
+ 		zone_page_state_add(x, zone, item);
+ 		x = 0;
+ 	}
+@@ -269,7 +308,7 @@
+ 
+ 	t = __this_cpu_read(pcp->stat_threshold);
+ 
+-	if (unlikely(x > t || x < -t)) {
++	if (unlikely(x >= t || x <= -t)) {
+ 		node_page_state_add(x, pgdat, item);
+ 		x = 0;
+ 	}
+@@ -308,7 +347,7 @@
+ 
+ 	v = __this_cpu_inc_return(*p);
+ 	t = __this_cpu_read(pcp->stat_threshold);
+-	if (unlikely(v > t)) {
++	if (unlikely(v >= t)) {
+ 		s8 overstep = t >> 1;
+ 
+ 		zone_page_state_add(v + overstep, zone, item);
+@@ -324,7 +363,7 @@
+ 
+ 	v = __this_cpu_inc_return(*p);
+ 	t = __this_cpu_read(pcp->stat_threshold);
+-	if (unlikely(v > t)) {
++	if (unlikely(v >= t)) {
+ 		s8 overstep = t >> 1;
+ 
+ 		node_page_state_add(v + overstep, pgdat, item);
+@@ -352,7 +391,7 @@
+ 
+ 	v = __this_cpu_dec_return(*p);
+ 	t = __this_cpu_read(pcp->stat_threshold);
+-	if (unlikely(v < - t)) {
++	if (unlikely(v <= - t)) {
+ 		s8 overstep = t >> 1;
+ 
+ 		zone_page_state_add(v - overstep, zone, item);
+@@ -368,7 +407,7 @@
+ 
+ 	v = __this_cpu_dec_return(*p);
+ 	t = __this_cpu_read(pcp->stat_threshold);
+-	if (unlikely(v < - t)) {
++	if (unlikely(v <= - t)) {
+ 		s8 overstep = t >> 1;
+ 
+ 		node_page_state_add(v - overstep, pgdat, item);
+@@ -426,7 +465,7 @@
+ 		o = this_cpu_read(*p);
+ 		n = delta + o;
+ 
+-		if (n > t || n < -t) {
++		if (n >= t || n <= -t) {
+ 			int os = overstep_mode * (t >> 1) ;
+ 
+ 			/* Overflow must be added to zone counters */
+@@ -483,7 +522,7 @@
+ 		o = this_cpu_read(*p);
+ 		n = delta + o;
+ 
+-		if (n > t || n < -t) {
++		if (n >= t || n <= -t) {
+ 			int os = overstep_mode * (t >> 1) ;
+ 
+ 			/* Overflow must be added to node counters */
+@@ -1696,6 +1735,96 @@
+ 		round_jiffies_relative(sysctl_stat_interval));
+ }
+ 
++#ifdef CONFIG_SYSFS
++
++static ssize_t vmstat_thresh_show(struct device *dev,
++				  struct device_attribute *attr, char *buf)
++{
++	int ret;
++	struct vmstat_uparam *vup;
++	unsigned int cpu = dev->id;
++
++	preempt_disable();
++
++	vup = &per_cpu(vmstat_uparam, cpu);
++	ret = sprintf(buf, "%d\n", atomic_read(&vup->user_stat_thresh));
++
++	preempt_enable();
++
++	return ret;
++}
++
++static ssize_t vmstat_thresh_store(struct device *dev,
++				   struct device_attribute *attr,
++				   const char *buf, size_t count)
++{
++	int ret, val;
++	unsigned int cpu = dev->id;
++	struct vmstat_uparam *vup;
++
++	ret = sscanf(buf, "%d", &val);
++	if (ret != 1 || val < 1 || val > MAX_THRESHOLD)
++		return -EINVAL;
++
++	preempt_disable();
++
++	if (cpu_online(cpu)) {
++		vup = &per_cpu(vmstat_uparam, cpu);
++		atomic_set(&vup->user_stat_thresh, val);
++	} else
++		count = -EINVAL;
++
++	preempt_enable();
++
++	return count;
++}
++
++struct device_attribute vmstat_threshold_attr =
++	__ATTR(vmstat_threshold, 0644, vmstat_thresh_show, vmstat_thresh_store);
++
++static struct attribute *vmstat_attrs[] = {
++	&vmstat_threshold_attr.attr,
++	NULL
++};
++
++static struct attribute_group vmstat_attr_group = {
++	.attrs  =  vmstat_attrs,
++	.name   = "vmstat"
++};
++
++static int vmstat_thresh_cpu_online(unsigned int cpu)
++{
++	struct device *dev = get_cpu_device(cpu);
++	int ret;
++
++	ret = sysfs_create_group(&dev->kobj, &vmstat_attr_group);
++	if (ret)
++		return ret;
++
++	return 0;
++}
++
++static int vmstat_thresh_cpu_down_prep(unsigned int cpu)
++{
++	struct device *dev = get_cpu_device(cpu);
++
++	sysfs_remove_group(&dev->kobj, &vmstat_attr_group);
++	return 0;
++}
++
++static void init_vmstat_sysfs(void)
++{
++	int cpu;
++
++	for_each_possible_cpu(cpu) {
++		struct vmstat_uparam *vup = &per_cpu(vmstat_uparam, cpu);
++
++		atomic_set(&vup->user_stat_thresh, 0);
++	}
++}
++
++#endif /* CONFIG_SYSFS */
++
+ static void __init init_cpu_node_state(void)
+ {
+ 	int node;
+@@ -1723,9 +1852,12 @@
+ {
+ 	const struct cpumask *node_cpus;
+ 	int node;
++	struct vmstat_uparam *vup = &per_cpu(vmstat_uparam, cpu);
+ 
+ 	node = cpu_to_node(cpu);
+ 
++	atomic_set(&vup->user_stat_thresh, 0);
++
+ 	refresh_zone_stat_thresholds();
+ 	node_cpus = cpumask_of_node(node);
+ 	if (cpumask_weight(node_cpus) > 0)
+@@ -1735,7 +1867,7 @@
+ 	return 0;
+ }
+ 
+-#endif
++#endif /* CONFIG_SMP */
+ 
+ struct workqueue_struct *mm_percpu_wq;
+ 
+@@ -1772,6 +1904,24 @@
+ #endif
+ }
+ 
++static int __init init_mm_internals_late(void)
++{
++#ifdef CONFIG_SYSFS
++	int ret;
++
++	init_vmstat_sysfs();
++
++	ret = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN, "mm/vmstat_thresh:online",
++					vmstat_thresh_cpu_online,
++					vmstat_thresh_cpu_down_prep);
++	if (ret < 0)
++		pr_err("vmstat_thresh: failed to register 'online' hotplug state\n");
++#endif
++	return 0;
++}
++
++late_initcall(init_mm_internals_late);
++
+ #if defined(CONFIG_DEBUG_FS) && defined(CONFIG_COMPACTION)
+ 
+ /*
 Index: linux-2.6-git-disable-vmstat-worker/Documentation/vm/vmstat_thresholds.txt
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
@@ -154,48 +436,3 @@ Index: linux-2.6-git-disable-vmstat-worker/Documentation/vm/vmstat_thresholds.tx
 +
 
 
-> > >  - If the purpose of having vmstat_threshold is to allow disabling
-> > >    the vmstat kworker, why can't the kernel pick a value automatically?  
-> > 
-> > Because it might be acceptable for the user to accept a small 
-> > out of syncedness of the global counters in favour of performance
-> > (one would have to analyze the situation).
-> > 
-> > Setting vmstat_threshold == 1 means the global counter is always
-> > in sync with the page counter state of the pCPU.
-> 
-> IMHO, if vmstat_threshold == 1 is the required setting for
-> disabling the vmstat kworker then I'd go with only one tunable
-> for now. But that's just a suggestion.
-
-I didnt want to force that on the user because allowing different 
-tunables covers more cases.
-
-> > >  - What are the implications of disabling the vmstat kworker? Will vm
-> > >    stats still be collected someway or will it be completely off for
-> > >    the CPU?  
-> > 
-> > It will not be necessary to collect vmstats because at every modification
-> > of the vm statistics, pCPUs with vmstat_threshold=1 transfer their 
-> > values to the global counters (that is, there is no queueing of statistics
-> > locally to improve performance).
-> 
-> Ah, OK. Got this now. I'll give this patch a try. But I think we want
-> to hear from Christoph (who worked on reducing the vmstat interruptions
-> in the past).
-
-Christoph?
-
-> > > Also, shouldn't this patch be split into two?  
-> > 
-> > First add one sysfs file, then add another sysfs file, you mean?
-> 
-> Yes, one tunable per patch.
-
-Sure.
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
