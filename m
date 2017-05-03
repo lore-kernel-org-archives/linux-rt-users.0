@@ -1,165 +1,63 @@
-From: Marcelo Tosatti <mtosatti@redhat.com>
-Subject: [patch 3/3] MM: allow per-cpu vmstat_worker configuration
-Date: Wed, 03 May 2017 15:40:10 -0300
-Message-ID: <20170503184039.901336380@redhat.com>
-References: <20170503184007.174707977@redhat.com>
-Cc: Luiz Capitulino <lcapitulino@redhat.com>, Rik van Riel <riel@redhat.com>,
-        Linux RT Users <linux-rt-users@vger.kernel.org>,
-        Marcelo Tosatti <mtosatti@redhat.com>
-To: linux-kernel@vger.kernel.org, linux-mm@kvack.org
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline; filename=vmstat-worker-disinterface
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Jeff Epler <jepler@unpythonic.net>
+Subject: Re: realtime ethernet
+Date: Wed, 3 May 2017 16:33:09 -0500
+Message-ID: <20170503213309.GA27055@unpythonic.net>
+References: <568ec603-8a01-3726-dd8e-6cf04e055767@numalliance.com>
+ <d3ca141e-916f-d7f1-e840-c1a450921f36@numalliance.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org
+To: =?iso-8859-1?Q?St=E9phane?= Ancelot <sancelot@numalliance.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from afk.unpythonic.net ([138.68.55.246]:43565 "EHLO
+        afk.unpythonic.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752037AbdECVdS (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 3 May 2017 17:33:18 -0400
+Content-Disposition: inline
+In-Reply-To: <d3ca141e-916f-d7f1-e840-c1a450921f36@numalliance.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Following the reasoning on the last patch in the series,
-this patch allows configuration of the per-CPU vmstat worker:
-it allows the user to disable the per-CPU vmstat worker.
+In LinuxCNC, we are successfully using rt preempt for realtime
+networking.  You can find the code in our public git:
+https://github.com/LinuxCNC/linuxcnc/blob/master/src/hal/drivers/mesa-hostmot2/hm2_eth.c
+(GPL2+ license).  This talks to an FPGA board from Mesa Electronics,
+which is running its own embedded realtime software stack.
 
-Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
+Depending on the setup, this generally consists of 2 UDP packets
+transmitted + 1 packet received, at a repetitive rate between 500Hz and
+4kHz, with most users selecting 1kHz as far as we're aware.  The packets
+aren't that big overall, without looking I bet it's under 1kB per period
+all told.  (so the bandwidth utilization is not high)
 
---- linux/mm/vmstat.c.sothresh	2017-05-03 11:01:17.465914562 -0300
-+++ linux/mm/vmstat.c	2017-05-03 11:01:39.746961917 -0300
-@@ -92,6 +92,7 @@
- EXPORT_SYMBOL(vm_node_stat);
- 
- struct vmstat_uparam {
-+	atomic_t vmstat_work_enabled;
- 	atomic_t user_stat_thresh;
- };
- 
-@@ -1606,6 +1607,9 @@
- 	long val;
- 	int err;
- 	int i;
-+	int cpu;
-+	struct work_struct __percpu *works;
-+	static struct cpumask has_work;
- 
- 	/*
- 	 * The regular update, every sysctl_stat_interval, may come later
-@@ -1619,9 +1623,31 @@
- 	 * transiently negative values, report an error here if any of
- 	 * the stats is negative, so we know to go looking for imbalance.
- 	 */
--	err = schedule_on_each_cpu(refresh_vm_stats);
--	if (err)
--		return err;
-+
-+	works = alloc_percpu(struct work_struct);
-+	if (!works)
-+		return -ENOMEM;
-+
-+	cpumask_clear(&has_work);
-+	get_online_cpus();
-+
-+	for_each_online_cpu(cpu) {
-+		struct work_struct *work = per_cpu_ptr(works, cpu);
-+		struct vmstat_uparam *vup = &per_cpu(vmstat_uparam, cpu);
-+
-+		if (atomic_read(&vup->vmstat_work_enabled)) {
-+			INIT_WORK(work, refresh_vm_stats);
-+			schedule_work_on(cpu, work);
-+			cpumask_set_cpu(cpu, &has_work);
-+		}
-+	}
-+
-+	for_each_cpu(cpu, &has_work)
-+		flush_work(per_cpu_ptr(works, cpu));
-+
-+	put_online_cpus();
-+	free_percpu(works);
-+
- 	for (i = 0; i < NR_VM_ZONE_STAT_ITEMS; i++) {
- 		val = atomic_long_read(&vm_zone_stat[i]);
- 		if (val < 0) {
-@@ -1713,6 +1739,10 @@
- 	/* Check processors whose vmstat worker threads have been disabled */
- 	for_each_online_cpu(cpu) {
- 		struct delayed_work *dw = &per_cpu(vmstat_work, cpu);
-+		struct vmstat_uparam *vup = &per_cpu(vmstat_uparam, cpu);
-+
-+		if (atomic_read(&vup->vmstat_work_enabled) == 0)
-+			continue;
- 
- 		if (!delayed_work_pending(dw) && need_update(cpu))
- 			queue_delayed_work_on(cpu, mm_percpu_wq, dw, 0);
-@@ -1737,6 +1767,40 @@
- 
- #ifdef CONFIG_SYSFS
- 
-+static ssize_t vmstat_worker_show(struct device *dev,
-+				  struct device_attribute *attr, char *buf)
-+{
-+	unsigned int cpu = dev->id;
-+	struct vmstat_uparam *vup = &per_cpu(vmstat_uparam, cpu);
-+
-+	return sprintf(buf, "%d\n", atomic_read(&vup->vmstat_work_enabled));
-+}
-+
-+static ssize_t vmstat_worker_store(struct device *dev,
-+				   struct device_attribute *attr,
-+				   const char *buf, size_t count)
-+{
-+	int ret, val;
-+	struct vmstat_uparam *vup;
-+	unsigned int cpu = dev->id;
-+
-+	ret = sscanf(buf, "%d", &val);
-+	if (ret != 1 || val > 1 || val < 0)
-+		return -EINVAL;
-+
-+	preempt_disable();
-+
-+	if (cpu_online(cpu)) {
-+		vup = &per_cpu(vmstat_uparam, cpu);
-+		atomic_set(&vup->vmstat_work_enabled, val);
-+	} else
-+		count = -EINVAL;
-+
-+	preempt_enable();
-+
-+	return count;
-+}
-+
- static ssize_t vmstat_thresh_show(struct device *dev,
- 				  struct device_attribute *attr, char *buf)
- {
-@@ -1779,10 +1843,14 @@
- 	return count;
- }
- 
-+struct device_attribute vmstat_worker_attr =
-+	__ATTR(vmstat_worker, 0644, vmstat_worker_show, vmstat_worker_store);
-+
- struct device_attribute vmstat_threshold_attr =
- 	__ATTR(vmstat_threshold, 0644, vmstat_thresh_show, vmstat_thresh_store);
- 
- static struct attribute *vmstat_attrs[] = {
-+	&vmstat_worker_attr.attr,
- 	&vmstat_threshold_attr.attr,
- 	NULL
- };
-@@ -1820,6 +1888,7 @@
- 		struct vmstat_uparam *vup = &per_cpu(vmstat_uparam, cpu);
- 
- 		atomic_set(&vup->user_stat_thresh, 0);
-+		atomic_set(&vup->vmstat_work_enabled, 1);
- 	}
- }
- 
-@@ -1857,6 +1926,7 @@
- 	node = cpu_to_node(cpu);
- 
- 	atomic_set(&vup->user_stat_thresh, 0);
-+	atomic_set(&vup->vmstat_work_enabled, 1);
- 
- 	refresh_zone_stat_thresholds();
- 	node_cpus = cpumask_of_node(node);
+On the Linux end we are generally using a dedicated gigabit NIC, and my
+testing personally has been with Intel PCI-E nics like 82574L.  Most
+users attach a single FPGA board (that board has a 100-megabit NIC) but
+it's also possible to attach several boards via a dedicated gigabit
+switch.
 
+(The packet data consists of information from a CNC machine such as
+motor position and other machine state, and commands to the machine
+consist of things like motor torque commands or step waveform frequency
+commands; LinuxCNC closes the position loop and performs other machine
+logic)
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+As usual, not all mainboards and NICs are suitable, but we certainly
+have success with specific Intel NICs. (and maybe some realteks?)
+
+There are some tunables like RX IRQ coalesce that need to be, er, tuned
+but I don't have that info on hand and it looks like it isn't in our
+documentation. :(
+
+I wish the tricks like manual ARP pinning and firewall manipulation
+weren't necessary, but in our situation they seem to be somewhere
+between helpful and necessary.  In particular, needing to ARP the other
+NIC is not great for latency.
+
+I've used hm2_eth with a range of RT kernels from 3.2 to 4.9 (usually
+debian -rt kernels).
+
+Disclaimer: I was compensated for the work I'm describing here
+
+Jeff
