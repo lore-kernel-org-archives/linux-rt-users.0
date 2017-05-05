@@ -1,53 +1,39 @@
-From: Richard Weinberger <richard.weinberger@gmail.com>
-Subject: Re: Realtime Community Event 2017
-Date: Thu, 4 May 2017 22:16:48 +0200
-Message-ID: <CAFLxGvx_=LdodVSzCQL8Atqoi+Fm6Q37LwgVdk1QYkk8cQLCCg@mail.gmail.com>
-References: <b8954187-03fd-ce8d-085a-4d9d81be44f9@monom.org>
+From: Jeff Epler <jepler@unpythonic.net>
+Subject: Re: realtime ethernet
+Date: Fri, 5 May 2017 10:52:07 -0500
+Message-ID: <20170505155207.GB27055@unpythonic.net>
+References: <568ec603-8a01-3726-dd8e-6cf04e055767@numalliance.com>
+ <d3ca141e-916f-d7f1-e840-c1a450921f36@numalliance.com>
+ <20170503213309.GA27055@unpythonic.net>
+ <f463783b-f11b-7139-a9b2-db0d7a39d956@numalliance.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-        Christoph Hellwig <hch@infradead.org>,
-        Andreas Gruenbacher <agruenba@redhat.com>
-To: Daniel Wagner <wagi@monom.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Cc: linux-rt-users@vger.kernel.org
+To: =?iso-8859-1?Q?St=E9phane?= Ancelot <sancelot@numalliance.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-it0-f47.google.com ([209.85.214.47]:34513 "EHLO
-        mail-it0-f47.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751428AbdEDUQ7 (ORCPT
+Received: from afk.unpythonic.net ([138.68.55.246]:46442 "EHLO
+        afk.unpythonic.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751429AbdEEPwK (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 4 May 2017 16:16:59 -0400
-Received: by mail-it0-f47.google.com with SMTP id 131so1564517itz.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 04 May 2017 13:16:59 -0700 (PDT)
-In-Reply-To: <b8954187-03fd-ce8d-085a-4d9d81be44f9@monom.org>
+        Fri, 5 May 2017 11:52:10 -0400
+Content-Disposition: inline
+In-Reply-To: <f463783b-f11b-7139-a9b2-db0d7a39d956@numalliance.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
-
-+ Andreas
-
-On Thu, May 4, 2017 at 9:03 PM, Daniel Wagner <wagi@monom.org> wrote:
+On Thu, May 04, 2017 at 09:54:36AM +0200, Stéphane Ancelot wrote:
 > Hi,
->
-> After last years really successful community event, we (Christoph and I) are
-> pleased to announce this year event.
->
-> The event takes place from 9.6.2017 to 11.6.2017 at the Glungezer lodge.
-> This is the same place as last year.
->
-> I have revived the website from last year which contains more details on the
-> event(*).
->
->         https://www.monom.org/rtce
->
-> Please consider bringing your partner with to this event. Obviously, there
-> will some technical discussion but there is also plenty time to enjoy the
-> Austrian Alps.
->
-> So far the attendee list is Thomas, Christoph and I. I hope some more are
-> able to join. You are going to miss a superb hike and excellent food.
+> 
+> In any cases, I understand that the classic linux nic driver needs
+> modifications to be realtime. (refer to rtnet work)
+> 
+> because of the NAPI stack not really suitable for realtime.
+> 
+> So, I  understand that these modifications are not parts of the rt preeempt
+> patch today.
 
-Please count me plus partner in.
+We are working without any additional RT networking patches except those in the
+debian -rt kernels.
 
--- 
-Thanks,
-//richard
+Jeff
