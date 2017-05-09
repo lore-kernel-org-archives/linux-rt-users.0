@@ -1,36 +1,74 @@
-From: Andreas Gruenbacher <agruenba@redhat.com>
-Subject: Re: Realtime Community Event 2017
-Date: Mon, 8 May 2017 19:05:42 +0200
-Message-ID: <CAHc6FU5A_jVmjC_kb-QUEo7Sn2WMLVAb4vNf8JQzUZid8QFY6w@mail.gmail.com>
-References: <b8954187-03fd-ce8d-085a-4d9d81be44f9@monom.org> <CAFLxGvx_=LdodVSzCQL8Atqoi+Fm6Q37LwgVdk1QYkk8cQLCCg@mail.gmail.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [PATCH RT] futex/rtmutex: Cure RT double blocking issue
+Date: Tue, 9 May 2017 17:11:10 +0200 (CEST)
+Message-ID: <alpine.DEB.2.20.1705091707180.1798@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: Daniel Wagner <wagi@monom.org>,
-        rt-users <linux-rt-users@vger.kernel.org>,
-        Christoph Hellwig <hch@infradead.org>
-To: Richard Weinberger <richard.weinberger@gmail.com>
+Content-Type: text/plain; charset=US-ASCII
+Cc: Sebastian Sewior <bigeasy@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Engleder Gerhard <eg@keba.com>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ua0-f174.google.com ([209.85.217.174]:34114 "EHLO
-        mail-ua0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1753056AbdEHRFo (ORCPT
+Received: from Galois.linutronix.de ([146.0.238.70]:41303 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751304AbdEIPLR (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 8 May 2017 13:05:44 -0400
-Received: by mail-ua0-f174.google.com with SMTP id g49so46908994uaa.1
-        for <linux-rt-users@vger.kernel.org>; Mon, 08 May 2017 10:05:43 -0700 (PDT)
-In-Reply-To: <CAFLxGvx_=LdodVSzCQL8Atqoi+Fm6Q37LwgVdk1QYkk8cQLCCg@mail.gmail.com>
+        Tue, 9 May 2017 11:11:17 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+RT has a problem when the wait on a futex/rtmutex got interrupted by a
+timeout or a signal. task->pi_blocked_on is still set when returning from
+rt_mutex_wait_proxy_lock(). The task must acquire the hash bucket lock
+after this.
 
-On Thu, May 4, 2017 at 10:16 PM, Richard Weinberger
-<richard.weinberger@gmail.com> wrote:
-> Hi,
->
-> + Andreas
+If the hash bucket lock is contended then the
+BUG_ON(rt_mutex_real_waiter(task->pi_blocked_on)) in
+task_blocks_on_rt_mutex() will trigger.
 
-sounds great, but I absolutely cannot make this particular weekend,
-unfortunately :(
+This can be avoided by clearing task->pi_blocked_on in the return path of
+rt_mutex_wait_proxy_lock() which removes the task from the boosting chain
+of the rtmutex. That's correct because the task is not longer blocked on
+it.
 
-Cheers,
-Andreas
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reported-by: Engleder Gerhard <eg@keba.com>
+---
+ kernel/locking/rtmutex.c |   17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -2380,6 +2380,7 @@ int rt_mutex_wait_proxy_lock(struct rt_m
+ 			       struct hrtimer_sleeper *to,
+ 			       struct rt_mutex_waiter *waiter)
+ {
++	struct task_struct *tsk = current;
+ 	int ret;
+ 
+ 	raw_spin_lock_irq(&lock->wait_lock);
+@@ -2389,6 +2390,22 @@ int rt_mutex_wait_proxy_lock(struct rt_m
+ 	/* sleep on the mutex */
+ 	ret = __rt_mutex_slowlock(lock, TASK_INTERRUPTIBLE, to, waiter, NULL);
+ 
++	/*
++	 * RT has a problem here when the wait got interrupted by a timeout
++	 * or a signal. task->pi_blocked_on is still set. The task must
++	 * acquire the hash bucket lock when returning from this function.
++	 *
++	 * If the hash bucket lock is contended then the
++	 * BUG_ON(rt_mutex_real_waiter(task->pi_blocked_on)) in
++	 * task_blocks_on_rt_mutex() will trigger. This can be avoided by
++	 * clearing task->pi_blocked_on which removes the task from the
++	 * boosting chain of the rtmutex. That's correct because the task
++	 * is not longer blocked on it.
++	 */
++	raw_spin_lock(&tsk->pi_lock);
++	tsk->pi_blocked_on = NULL;
++	raw_spin_unlock(&tsk->pi_lock);
++
+ 	raw_spin_unlock_irq(&lock->wait_lock);
+ 
+ 	return ret;
