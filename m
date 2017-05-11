@@ -1,13 +1,14 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Sebastian Sewior <bigeasy@linutronix.de>
 Subject: Re: [PATCH RT v2] futex/rtmutex: Cure RT double blocking issue
-Date: Thu, 11 May 2017 11:54:47 -0400
-Message-ID: <20170511115447.7622712d@gandalf.local.home>
+Date: Thu, 11 May 2017 18:05:23 +0200
+Message-ID: <20170511160523.ymdx4yhwatkwhq7v@linutronix.de>
 References: <alpine.DEB.2.20.1705091707180.1798@nanos>
  <CANRm+Cx9msxF2jVsW6ZSXp5+u+L8yKq_KjcwBm5Bm=HLsvCK8w@mail.gmail.com>
  <alpine.DEB.2.20.1705110931240.1758@nanos>
  <20170511152054.bpgik7etss7umxzq@linutronix.de>
+ <20170511115447.7622712d@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8BIT
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Wanpeng Li <kernellwp@gmail.com>,
@@ -15,82 +16,24 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Peter Zijlstra <peterz@infradead.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Engleder Gerhard <eg@keba.com>
-To: Sebastian Sewior <bigeasy@linutronix.de>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170511152054.bpgik7etss7umxzq@linutronix.de>
+Content-Disposition: inline
+In-Reply-To: <20170511115447.7622712d@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 11 May 2017 17:20:54 +0200
-Sebastian Sewior <bigeasy@linutronix.de> wrote:
-
-This is the same patch that Thomas wrote, right? Shouldn't this start
-with:
-
-From: Thomas Gleixner <tglx@linutronix.de>
-
-?
-
--- Steve
-
-
-> RT has a problem when the wait on a futex/rtmutex got interrupted by a
-> timeout or a signal. task->pi_blocked_on is still set when returning from
-> rt_mutex_wait_proxy_lock(). The task must acquire the hash bucket lock
-> after this.
+On 2017-05-11 11:54:47 [-0400], Steven Rostedt wrote:
+> This is the same patch that Thomas wrote, right? Shouldn't this start
+> with:
 > 
-> If the hash bucket lock is contended then the
-> BUG_ON(rt_mutex_real_waiter(task->pi_blocked_on)) in
-> task_blocks_on_rt_mutex() will trigger.
+> From: Thomas Gleixner <tglx@linutronix.de>
 > 
-> This can be avoided by clearing task->pi_blocked_on in the return path of
-> rt_mutex_wait_proxy_lock() which removes the task from the boosting chain
-> of the rtmutex. That's correct because the task is not longer blocked on
-> it.
-> 
-> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-> Reported-by: Engleder Gerhard <eg@keba.com>
-> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> ---
->  v1…v2: reset ->pi_blocked_on only in the error case.
-> 
->  kernel/locking/rtmutex.c | 19 +++++++++++++++++++
->  1 file changed, 19 insertions(+)
-> 
-> diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-> index 314fc65a35b1..4675f1197f33 100644
-> --- a/kernel/locking/rtmutex.c
-> +++ b/kernel/locking/rtmutex.c
-> @@ -2400,6 +2400,7 @@ int rt_mutex_wait_proxy_lock(struct rt_mutex *lock,
->  			       struct hrtimer_sleeper *to,
->  			       struct rt_mutex_waiter *waiter)
->  {
-> +	struct task_struct *tsk = current;
->  	int ret;
->  
->  	raw_spin_lock_irq(&lock->wait_lock);
-> @@ -2409,6 +2410,24 @@ int rt_mutex_wait_proxy_lock(struct rt_mutex *lock,
->  	/* sleep on the mutex */
->  	ret = __rt_mutex_slowlock(lock, TASK_INTERRUPTIBLE, to, waiter, NULL);
->  
-> +	/*
-> +	 * RT has a problem here when the wait got interrupted by a timeout
-> +	 * or a signal. task->pi_blocked_on is still set. The task must
-> +	 * acquire the hash bucket lock when returning from this function.
-> +	 *
-> +	 * If the hash bucket lock is contended then the
-> +	 * BUG_ON(rt_mutex_real_waiter(task->pi_blocked_on)) in
-> +	 * task_blocks_on_rt_mutex() will trigger. This can be avoided by
-> +	 * clearing task->pi_blocked_on which removes the task from the
-> +	 * boosting chain of the rtmutex. That's correct because the task
-> +	 * is not longer blocked on it.
-> +	 */
-> +	if (ret) {
-> +		raw_spin_lock(&tsk->pi_lock);
-> +		tsk->pi_blocked_on = NULL;
-> +		raw_spin_unlock(&tsk->pi_lock);
-> +	}
-> +
->  	raw_spin_unlock_irq(&lock->wait_lock);
->  
->  	return ret;
+> ?
+
+correct. It made its way properly into the patch queue, I just managed
+to get it wrong while sending it to the list…
+
+> -- Steve
+
+Sebastian
