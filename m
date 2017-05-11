@@ -1,45 +1,30 @@
-From: Marcelo Tosatti <mtosatti@redhat.com>
-Subject: Re: [patch 3/3] MM: allow per-cpu vmstat_worker configuration
-Date: Thu, 11 May 2017 12:33:29 -0300
-Message-ID: <20170511153326.GB2308@amt.cnet>
-References: <20170503184007.174707977@redhat.com>
- <20170503184039.901336380@redhat.com>
- <1494430466.29205.17.camel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org,
-        Luiz Capitulino <lcapitulino@redhat.com>,
-        Linux RT Users <linux-rt-users@vger.kernel.org>
-To: Rik van Riel <riel@redhat.com>
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: [patch 2/2] MM: allow per-cpu vmstat_threshold and vmstat_worker
+ configuration
+Date: Thu, 11 May 2017 10:37:07 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1705111035560.2894@east.gentwo.org>
+References: <20170425135717.375295031@redhat.com> <20170425135846.203663532@redhat.com> <20170502102836.4a4d34ba@redhat.com> <20170502165159.GA5457@amt.cnet> <20170502131527.7532fc2e@redhat.com>
+Content-Type: text/plain; charset=US-ASCII
+Cc: Marcelo Tosatti <mtosatti@redhat.com>, linux-kernel@vger.kernel.org,
+    linux-mm@kvack.org, Rik van Riel <riel@redhat.com>,
+    Linux RT Users <linux-rt-users@vger.kernel.org>, cmetcalf@mellanox.com
+To: Luiz Capitulino <lcapitulino@redhat.com>
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <1494430466.29205.17.camel@redhat.com>
+In-Reply-To: <20170502131527.7532fc2e@redhat.com>
 Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, May 10, 2017 at 11:34:26AM -0400, Rik van Riel wrote:
-> On Wed, 2017-05-03 at 15:40 -0300, Marcelo Tosatti wrote:
-> > Following the reasoning on the last patch in the series,
-> > this patch allows configuration of the per-CPU vmstat worker:
-> > it allows the user to disable the per-CPU vmstat worker.
-> > 
-> > Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
-> 
-> Is there ever a case where you would want to configure
-> this separately from the vmstat_threshold parameter?
-> 
-> What use cases are you trying to address?
+On Tue, 2 May 2017, Luiz Capitulino wrote:
 
-If you have a case where the performance decrease due to lack of vmstat
-collection aggretation (vmstat_threshold=1) is significant, so you
-increase vmstat_threshold on these CPUs to, say, 10 (and is willing to
-accept the cost of outdated vmstatistics by 10).
+> Ah, OK. Got this now. I'll give this patch a try. But I think we want
+> to hear from Christoph (who worked on reducing the vmstat interruptions
+> in the past).
 
-This is the case that i imagined when separating the options in two
-(with the idea to have policy in userspace, not in the kernel).
+A bit confused by this one. The vmstat worker is already disabled if there
+are no updates. Also the patches by Chris Metcalf on data plane mode add a
+prctl to quiet the vmstat workers.
 
-Do you think such case is not realistic? (Or that there are other
-problems by having vmstat_threshold > 1 and vmstat_worker=0).
+Why do we need more than this?
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
