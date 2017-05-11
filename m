@@ -1,33 +1,96 @@
-From: Christoph Lameter <cl@linux.com>
-Subject: Re: [patch 2/2] MM: allow per-cpu vmstat_threshold and vmstat_worker
- configuration
-Date: Thu, 11 May 2017 10:37:07 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1705111035560.2894@east.gentwo.org>
-References: <20170425135717.375295031@redhat.com> <20170425135846.203663532@redhat.com> <20170502102836.4a4d34ba@redhat.com> <20170502165159.GA5457@amt.cnet> <20170502131527.7532fc2e@redhat.com>
-Content-Type: text/plain; charset=US-ASCII
-Cc: Marcelo Tosatti <mtosatti@redhat.com>, linux-kernel@vger.kernel.org,
-    linux-mm@kvack.org, Rik van Riel <riel@redhat.com>,
-    Linux RT Users <linux-rt-users@vger.kernel.org>, cmetcalf@mellanox.com
-To: Luiz Capitulino <lcapitulino@redhat.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170502131527.7532fc2e@redhat.com>
-Sender: owner-linux-mm@kvack.org
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH RT v2] futex/rtmutex: Cure RT double blocking issue
+Date: Thu, 11 May 2017 11:54:47 -0400
+Message-ID: <20170511115447.7622712d@gandalf.local.home>
+References: <alpine.DEB.2.20.1705091707180.1798@nanos>
+ <CANRm+Cx9msxF2jVsW6ZSXp5+u+L8yKq_KjcwBm5Bm=HLsvCK8w@mail.gmail.com>
+ <alpine.DEB.2.20.1705110931240.1758@nanos>
+ <20170511152054.bpgik7etss7umxzq@linutronix.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        Wanpeng Li <kernellwp@gmail.com>,
+        LKML <linux-kernel@vger.kernel.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Engleder Gerhard <eg@keba.com>
+To: Sebastian Sewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170511152054.bpgik7etss7umxzq@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2 May 2017, Luiz Capitulino wrote:
+On Thu, 11 May 2017 17:20:54 +0200
+Sebastian Sewior <bigeasy@linutronix.de> wrote:
 
-> Ah, OK. Got this now. I'll give this patch a try. But I think we want
-> to hear from Christoph (who worked on reducing the vmstat interruptions
-> in the past).
+This is the same patch that Thomas wrote, right? Shouldn't this start
+with:
 
-A bit confused by this one. The vmstat worker is already disabled if there
-are no updates. Also the patches by Chris Metcalf on data plane mode add a
-prctl to quiet the vmstat workers.
+From: Thomas Gleixner <tglx@linutronix.de>
 
-Why do we need more than this?
+?
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- Steve
+
+
+> RT has a problem when the wait on a futex/rtmutex got interrupted by a
+> timeout or a signal. task->pi_blocked_on is still set when returning from
+> rt_mutex_wait_proxy_lock(). The task must acquire the hash bucket lock
+> after this.
+> 
+> If the hash bucket lock is contended then the
+> BUG_ON(rt_mutex_real_waiter(task->pi_blocked_on)) in
+> task_blocks_on_rt_mutex() will trigger.
+> 
+> This can be avoided by clearing task->pi_blocked_on in the return path of
+> rt_mutex_wait_proxy_lock() which removes the task from the boosting chain
+> of the rtmutex. That's correct because the task is not longer blocked on
+> it.
+> 
+> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+> Reported-by: Engleder Gerhard <eg@keba.com>
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> ---
+>  v1…v2: reset ->pi_blocked_on only in the error case.
+> 
+>  kernel/locking/rtmutex.c | 19 +++++++++++++++++++
+>  1 file changed, 19 insertions(+)
+> 
+> diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+> index 314fc65a35b1..4675f1197f33 100644
+> --- a/kernel/locking/rtmutex.c
+> +++ b/kernel/locking/rtmutex.c
+> @@ -2400,6 +2400,7 @@ int rt_mutex_wait_proxy_lock(struct rt_mutex *lock,
+>  			       struct hrtimer_sleeper *to,
+>  			       struct rt_mutex_waiter *waiter)
+>  {
+> +	struct task_struct *tsk = current;
+>  	int ret;
+>  
+>  	raw_spin_lock_irq(&lock->wait_lock);
+> @@ -2409,6 +2410,24 @@ int rt_mutex_wait_proxy_lock(struct rt_mutex *lock,
+>  	/* sleep on the mutex */
+>  	ret = __rt_mutex_slowlock(lock, TASK_INTERRUPTIBLE, to, waiter, NULL);
+>  
+> +	/*
+> +	 * RT has a problem here when the wait got interrupted by a timeout
+> +	 * or a signal. task->pi_blocked_on is still set. The task must
+> +	 * acquire the hash bucket lock when returning from this function.
+> +	 *
+> +	 * If the hash bucket lock is contended then the
+> +	 * BUG_ON(rt_mutex_real_waiter(task->pi_blocked_on)) in
+> +	 * task_blocks_on_rt_mutex() will trigger. This can be avoided by
+> +	 * clearing task->pi_blocked_on which removes the task from the
+> +	 * boosting chain of the rtmutex. That's correct because the task
+> +	 * is not longer blocked on it.
+> +	 */
+> +	if (ret) {
+> +		raw_spin_lock(&tsk->pi_lock);
+> +		tsk->pi_blocked_on = NULL;
+> +		raw_spin_unlock(&tsk->pi_lock);
+> +	}
+> +
+>  	raw_spin_unlock_irq(&lock->wait_lock);
+>  
+>  	return ret;
