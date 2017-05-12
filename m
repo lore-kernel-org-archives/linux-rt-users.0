@@ -1,73 +1,101 @@
-From: Christoph Lameter <cl@linux.com>
+From: Marcelo Tosatti <mtosatti@redhat.com>
 Subject: Re: [patch 2/2] MM: allow per-cpu vmstat_threshold and vmstat_worker
  configuration
-Date: Fri, 12 May 2017 10:11:14 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1705121002310.22243@east.gentwo.org>
-References: <20170425135717.375295031@redhat.com> <20170425135846.203663532@redhat.com> <20170502102836.4a4d34ba@redhat.com> <20170502165159.GA5457@amt.cnet> <20170502131527.7532fc2e@redhat.com> <alpine.DEB.2.20.1705111035560.2894@east.gentwo.org>
+Date: Fri, 12 May 2017 12:40:28 -0300
+Message-ID: <20170512154026.GA3556@amt.cnet>
+References: <20170425135717.375295031@redhat.com>
+ <20170425135846.203663532@redhat.com>
+ <20170502102836.4a4d34ba@redhat.com>
+ <20170502165159.GA5457@amt.cnet>
+ <20170502131527.7532fc2e@redhat.com>
+ <alpine.DEB.2.20.1705111035560.2894@east.gentwo.org>
  <20170512122704.GA30528@amt.cnet>
-Content-Type: text/plain; charset=US-ASCII
+ <alpine.DEB.2.20.1705121002310.22243@east.gentwo.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Cc: Luiz Capitulino <lcapitulino@redhat.com>, linux-kernel@vger.kernel.org,
-    linux-mm@kvack.org, Rik van Riel <riel@redhat.com>,
-    Linux RT Users <linux-rt-users@vger.kernel.org>, cmetcalf@mellanox.com
-To: Marcelo Tosatti <mtosatti@redhat.com>
+        linux-mm@kvack.org, Rik van Riel <riel@redhat.com>,
+        Linux RT Users <linux-rt-users@vger.kernel.org>, cmetcalf@mellanox.com
+To: Christoph Lameter <cl@linux.com>
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170512122704.GA30528@amt.cnet>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.20.1705121002310.22243@east.gentwo.org>
 Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 12 May 2017, Marcelo Tosatti wrote:
-
-> > A bit confused by this one. The vmstat worker is already disabled if there
-> > are no updates. Also the patches by Chris Metcalf on data plane mode add a
-> > prctl to quiet the vmstat workers.
+On Fri, May 12, 2017 at 10:11:14AM -0500, Christoph Lameter wrote:
+> On Fri, 12 May 2017, Marcelo Tosatti wrote:
+> 
+> > > A bit confused by this one. The vmstat worker is already disabled if there
+> > > are no updates. Also the patches by Chris Metcalf on data plane mode add a
+> > > prctl to quiet the vmstat workers.
+> > >
+> > > Why do we need more than this?
 > >
-> > Why do we need more than this?
->
-> If there are vmstat statistic updates on a given CPU, and you don't
-> want intervention from the vmstat worker, you change the behaviour of
-> stat data collection to directly write to the global structures (which
-> disables the performance optimization of collecting data in per-cpu
-> counters).
+> > If there are vmstat statistic updates on a given CPU, and you don't
+> > want intervention from the vmstat worker, you change the behaviour of
+> > stat data collection to directly write to the global structures (which
+> > disables the performance optimization of collecting data in per-cpu
+> > counters).
+> 
+> Hmmm.... Ok. That is going to be expensive if you do this for each
+> individual vmstat update.
 
-Hmmm.... Ok. That is going to be expensive if you do this for each
-individual vmstat update.
+In our case, vmstat updates are very rare (CPU is dominated by DPDK).
 
-> This way you can disable vmstat worker (because it causes undesired
-> latencies), while allowing vmstatistics to function properly.
+> > This way you can disable vmstat worker (because it causes undesired
+> > latencies), while allowing vmstatistics to function properly.
+> 
+> Best then to run the vmstat update mechanism when you leave kernel mode to
+> get all the updates in one go.
 
-Best then to run the vmstat update mechanism when you leave kernel mode to
-get all the updates in one go.
+Again, vmstat updates are very rare (CPU is dominated by DPDK).
 
+> > The prctl from Chris Metcalf patchset allows one to disable vmstat
+> > worker per CPU? If so, they replace the functionality of the patch
+> > "[patch 3/3] MM: allow per-cpu vmstat_worker configuration"
+> > of the -v2 series of my patchset, and we can use it instead.
+> >
+> > Is it integrated already?
+> 
+> The data plane mode patches disables vmstat processing  by updating the
+> vmstats immediately if necessary and switching off the kworker thread.
 
-> The prctl from Chris Metcalf patchset allows one to disable vmstat
-> worker per CPU? If so, they replace the functionality of the patch
-> "[patch 3/3] MM: allow per-cpu vmstat_worker configuration"
-> of the -v2 series of my patchset, and we can use it instead.
->
-> Is it integrated already?
+OK this is what my patch set is doing.
 
-The data plane mode patches disables vmstat processing  by updating the
-vmstats immediately if necessary and switching off the kworker thread.
+> So the kworker wont be running until the next time statistics are checked
+> by the shepherd task from a remote cpu.
 
-So the kworker wont be running until the next time statistics are checked
-by the shepherd task from a remote cpu. If the counters have been updated
-then the shepherd task will reenable the kworker. This is already merged
-and has been working for a long time. Data plan mode has not been merged
-yet but the infrastructure in vmstat.c is there because NOHZ needs it too.
+We don't want kworker thread to ever run.
 
-See linux/vmstat.c:quiet_vmstat()
+>  If the counters have been updated
+> then the shepherd task will reenable the kworker. This is already merged
+> and has been working for a long time. Data plan mode has not been merged
+> yet but the infrastructure in vmstat.c is there because NOHZ needs it too.
 
-It would be easy to add a /proc file that allows the quieting of the
-vmstat workers for a certain cpu. Just make it call the quiet_vmstat() on
-the right cpu.
+OK.
 
-This will quiet vmstat down. The shepherd task will check the stats in 2
-second intervals and will then reenable when necessasry.
+> 
+> See linux/vmstat.c:quiet_vmstat()
+> 
+> It would be easy to add a /proc file that allows the quieting of the
+> vmstat workers for a certain cpu. Just make it call the quiet_vmstat() on
+> the right cpu.
+> 
+> This will quiet vmstat down. The shepherd task will check the stats in 2
+> second intervals and will then reenable when necessasry.
+> 
+> Note that we already are updating the global structures directly if the
+> differential gets too high. Reducing the differential may get you what you
+> want.
 
-Note that we already are updating the global structures directly if the
-differential gets too high. Reducing the differential may get you what you
-want.
+Yes, we reduce the differential to 1 (== direct updates to global
+structures).
 
+OK, i'll check if the patches from Chris work for us and then add
+Tested-by on that.
+
+Thanks.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
