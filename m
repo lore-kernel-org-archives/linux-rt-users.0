@@ -1,85 +1,43 @@
-From: Sebastian Sewior <bigeasy@linutronix.de>
-Subject: [PATCH RT] random: avoid preempt_disable()ed section
-Date: Fri, 12 May 2017 18:04:04 +0200
-Message-ID: <20170512160404.e5ulzeh4s5hfnsxl@linutronix.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-kernel@vger.kernel.org
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: [patch 2/2] MM: allow per-cpu vmstat_threshold and vmstat_worker
+ configuration
+Date: Fri, 12 May 2017 11:07:48 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1705121103120.22831@east.gentwo.org>
+References: <20170425135717.375295031@redhat.com> <20170425135846.203663532@redhat.com> <20170502102836.4a4d34ba@redhat.com> <20170502165159.GA5457@amt.cnet> <20170502131527.7532fc2e@redhat.com> <alpine.DEB.2.20.1705111035560.2894@east.gentwo.org>
+ <20170512122704.GA30528@amt.cnet> <alpine.DEB.2.20.1705121002310.22243@east.gentwo.org> <20170512154026.GA3556@amt.cnet>
+Content-Type: text/plain; charset=US-ASCII
+Cc: Luiz Capitulino <lcapitulino@redhat.com>, linux-kernel@vger.kernel.org,
+    linux-mm@kvack.org, Rik van Riel <riel@redhat.com>,
+    Linux RT Users <linux-rt-users@vger.kernel.org>, cmetcalf@mellanox.com
+To: Marcelo Tosatti <mtosatti@redhat.com>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20170512154026.GA3556@amt.cnet>
+Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-extract_crng() will use sleeping locks while in a preempt_disable()
-section due to get_cpu_var().
-Work around it with local_locks.
+On Fri, 12 May 2017, Marcelo Tosatti wrote:
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- drivers/char/random.c | 12 ++++++++----
- 1 file changed, 8 insertions(+), 4 deletions(-)
+> In our case, vmstat updates are very rare (CPU is dominated by DPDK).
 
-diff --git a/drivers/char/random.c b/drivers/char/random.c
-index ec886dda1b21..25ee319dc8e3 100644
---- a/drivers/char/random.c
-+++ b/drivers/char/random.c
-@@ -262,6 +262,7 @@
- #include <linux/syscalls.h>
- #include <linux/completion.h>
- #include <linux/uuid.h>
-+#include <linux/locallock.h>
- #include <crypto/chacha20.h>
- 
- #include <asm/processor.h>
-@@ -2052,6 +2053,7 @@ struct batched_entropy {
-  * goal of being quite fast and not depleting entropy.
-  */
- static DEFINE_PER_CPU(struct batched_entropy, batched_entropy_long);
-+static DEFINE_LOCAL_IRQ_LOCK(batched_entropy_long_lock);
- unsigned long get_random_long(void)
- {
- 	unsigned long ret;
-@@ -2060,13 +2062,13 @@ unsigned long get_random_long(void)
- 	if (arch_get_random_long(&ret))
- 		return ret;
- 
--	batch = &get_cpu_var(batched_entropy_long);
-+	batch = &get_locked_var(batched_entropy_long_lock, batched_entropy_long);
- 	if (batch->position % ARRAY_SIZE(batch->entropy_long) == 0) {
- 		extract_crng((u8 *)batch->entropy_long);
- 		batch->position = 0;
- 	}
- 	ret = batch->entropy_long[batch->position++];
--	put_cpu_var(batched_entropy_long);
-+	put_locked_var(batched_entropy_long_lock, batched_entropy_long);
- 	return ret;
- }
- EXPORT_SYMBOL(get_random_long);
-@@ -2078,6 +2080,8 @@ unsigned int get_random_int(void)
- }
- #else
- static DEFINE_PER_CPU(struct batched_entropy, batched_entropy_int);
-+static DEFINE_LOCAL_IRQ_LOCK(batched_entropy_int_lock);
-+
- unsigned int get_random_int(void)
- {
- 	unsigned int ret;
-@@ -2086,13 +2090,13 @@ unsigned int get_random_int(void)
- 	if (arch_get_random_int(&ret))
- 		return ret;
- 
--	batch = &get_cpu_var(batched_entropy_int);
-+	batch = &get_locked_var(batched_entropy_int_lock, batched_entropy_int);
- 	if (batch->position % ARRAY_SIZE(batch->entropy_int) == 0) {
- 		extract_crng((u8 *)batch->entropy_int);
- 		batch->position = 0;
- 	}
- 	ret = batch->entropy_int[batch->position++];
--	put_cpu_var(batched_entropy_int);
-+	put_locked_var(batched_entropy_int_lock, batched_entropy_int);
- 	return ret;
- }
- #endif
--- 
-2.11.0
+What is the OS doing on the cores that DPDK runs on? I mean we here can
+clean a processor of all activities and are able to run for a long time
+without any interruptions.
+
+Why would you still let the OS do things on that processor? If activities
+by the OS are required then the existing NOHZ setup already minimizes
+latency to a short burst (and Chris Metcalf's work improves on that).
+
+
+What exactly is the issue you are seeing and want to address? I think we
+have similar aims and as far as I know the current situation is already
+good enough for what you may need. You may just not be aware of how to
+configure this.
+
+I doubt that doing inline updates will do much good compared to what we
+already have and what the dataplan mode can do.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
