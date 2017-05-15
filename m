@@ -1,84 +1,150 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH] Make -x option position-agnostic
-Date: Mon, 15 May 2017 16:50:46 +0200 (CEST)
-Message-ID: <alpine.LFD.2.20.1705151648310.8527@riemann>
-References: <1492708182-104442-1-git-send-email-jianxun.zhang@linux.intel.com>
+From: Marcelo Tosatti <mtosatti@redhat.com>
+Subject: Re: [patch 2/2] MM: allow per-cpu vmstat_threshold and vmstat_worker
+ configuration
+Date: Mon, 15 May 2017 16:15:34 -0300
+Message-ID: <20170515191531.GA31483@amt.cnet>
+References: <20170502102836.4a4d34ba@redhat.com>
+ <20170502165159.GA5457@amt.cnet>
+ <20170502131527.7532fc2e@redhat.com>
+ <alpine.DEB.2.20.1705111035560.2894@east.gentwo.org>
+ <20170512122704.GA30528@amt.cnet>
+ <alpine.DEB.2.20.1705121002310.22243@east.gentwo.org>
+ <20170512154026.GA3556@amt.cnet>
+ <alpine.DEB.2.20.1705121103120.22831@east.gentwo.org>
+ <20170512161915.GA4185@amt.cnet>
+ <alpine.DEB.2.20.1705121154240.23503@east.gentwo.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org, vedang.patel@intel.com,
-        Clark Williams <williams@redhat.com>
-To: Jianxun Zhang <jianxun.zhang@linux.intel.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f68.google.com ([74.125.82.68]:33675 "EHLO
-        mail-wm0-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S965150AbdEOOuz (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 15 May 2017 10:50:55 -0400
-Received: by mail-wm0-f68.google.com with SMTP id y10so29099231wmh.0
-        for <linux-rt-users@vger.kernel.org>; Mon, 15 May 2017 07:50:55 -0700 (PDT)
-In-Reply-To: <1492708182-104442-1-git-send-email-jianxun.zhang@linux.intel.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Luiz Capitulino <lcapitulino@redhat.com>, linux-kernel@vger.kernel.org,
+        linux-mm@kvack.org, Rik van Riel <riel@redhat.com>,
+        Linux RT Users <linux-rt-users@vger.kernel.org>, cmetcalf@mellanox.com
+To: Christoph Lameter <cl@linux.com>
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.20.1705121154240.23503@east.gentwo.org>
+Sender: owner-linux-mm@kvack.org
+List-Id: linux-rt-users.vger.kernel.org
 
+On Fri, May 12, 2017 at 11:57:15AM -0500, Christoph Lameter wrote:
+> On Fri, 12 May 2017, Marcelo Tosatti wrote:
+> 
+> > > What exactly is the issue you are seeing and want to address? I think we
+> > > have similar aims and as far as I know the current situation is already
+> > > good enough for what you may need. You may just not be aware of how to
+> > > configure this.
+> >
+> > I want to disable vmstat worker thread completly from an isolated CPU.
+> > Because it adds overhead to a latency target, target which
+> > the lower the better.
+> 
+> NOHZ already does that. I wanted to know what your problem is that you
+> see. The latency issue has already been solved as far as I can tell .
+> Please tell me why the existing solutions are not sufficient for you.
 
+We don't want vmstat_worker to execute on a given CPU, even if the local
+CPU updates vm-statistics. 
 
-On Thu, 20 Apr 2017, Jianxun Zhang wrote:
+Because:
 
-> Change 9d2c9edd86943dfea399a0176826af8bb92bf97c introduces
-> the new option of POSIX timer and makes MODE_CLOCK_NANOSLEEP
-> the default choice. But there are two places explicitly set
-> MODE_CLOCK_NANOSLEEP to the variable use_nanosleep in the code,
-> so the actual value of the variable after parsing depends on
-> the position of '-x' to '-U' and '-S'.
-> 
-> These command pairs result in different values in the variable:
-> 'cyclictest -S -x' VS 'cyclictest -x -S'
-> 'cyclictest -U -x' VS 'cyclictest -x -U'
-> 
-> This change ensures -x work regardless its position by removing
-> the two lines in these cases.
-> 
-> Signed-off-by: Jianxun Zhang <jianxun.zhang@linux.intel.com>
-> ---
-> Note: This patch is submitted after a very limited test in its scope. No real RT test was performed. Maintainers may want to do a full test or a closer review for anything I missed.
-> 
-> There are other findings regarding to the parsing logic but I don't think they are critical as long as the usage gives correct test results. I could amend these with more patches later.
-> 
-> Thanks
-> 
->  src/cyclictest/cyclictest.c | 2 --
->  1 file changed, 2 deletions(-)
-> 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index 0b13441..381191c 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -1705,7 +1705,6 @@ static void process_options (int argc, char *argv[], int max_cpus)
->  			smp = 1;
->  			num_threads = max_cpus;
->  			setaffinity = AFFINITY_USEALL;
-> -			use_nanosleep = MODE_CLOCK_NANOSLEEP;
->  			break;
->  		case 't':
->  		case OPT_THREADS:
-> @@ -1744,7 +1743,6 @@ static void process_options (int argc, char *argv[], int max_cpus)
->  #ifdef NUMA
->  			num_threads = max_cpus;
->  			setaffinity = AFFINITY_USEALL;
-> -			use_nanosleep = MODE_CLOCK_NANOSLEEP;
->  #else
->  			warn("cyclictest was not built with the numa option\n");
->  			warn("ignoring --numa or -U\n");
-> -- 
-> 2.7.4
-> 
-> --
+    vmstat_worker increases latency of the application
+       (i can measure it if you want on a given CPU,
+        how many ns's the following takes:
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+            schedule_out(qemu-kvm-vcpu)
+            schedule_in(kworker_thread)
+            execute function to drain local vmstat counters to
+                global counters
+            schedule_out(kworker_thread)
+            schedule_in(qemu-kvm-vcpu)
+            x86 instruction to enter guest.
+                                                (*)
 
-Thanks for the patch. In the future could you please
+But you can see right away without numbers that the sequence
+above is not desired.
 
-cc John Kacur <jkacur@redhat.com> and
-Clark Williams <williams@redhat.com>
+Why the existing solutions are not sufficient:
 
-So that we don't miss any patches. thanks!
+1) task-isolation patchset seems too heavy for our usecase (we do 
+want IPIs, signals, etc).
+
+2) With upstream linux-2.6.git, if dpdk running inside a guest happens
+to trigger any vmstat update (say for example migration), we want the
+statistics transferred directly from the point where they are generated,
+and not the sequence (*).
+
+> > > I doubt that doing inline updates will do much good compared to what we
+> > > already have and what the dataplan mode can do.
+> >
+> > Can the dataplan mode disable vmstat worker thread completly on a given
+> > CPU?
+> 
+> That already occurs when you call quiet_vmstat() and is used by the NOHZ
+> logic. Configure that correctly and you should be fine.
+
+quiet_vmstat() is not called by anyone today (upstream code). Are you
+talking about task isolation patches?
+
+Those seem a little heavy to me, for example:
+
+1)
+"Each time through the loop of TIF work to do, if TIF_TASK_ISOLATION
+is set, we call the new task_isolation_enter() routine.  This
+takes any actions that might avoid a future interrupt to the core,
+such as a worker thread being scheduled that could be quiesced now
+(e.g. the vmstat worker) or a future IPI to the core to clean up some
+state that could be cleaned up now (e.g. the mm lru per-cpu cache).
+In addition, it reqeusts rescheduling if the scheduler dyntick is
+still running."
+
+For example, what about
+
+     static void do_sync_core(void *data)
+             on_each_cpu(do_sync_core, NULL, 1);
+
+You can't enable tracing with this feature?
+
+"Prior to returning to userspace,
+isolated tasks will arrange that no future kernel
+activity will interrupt the task while the task is running
+in userspace.  By default, attempting to re-enter the kernel
+while in this mode will cause the task to be terminated
+with a signal; you must explicitly use prctl() to disable
+task isolation before resuming normal use of the kernel."
+
+2)
+
+A qemu-kvm-vcpu thread, process which runs on the host system,
+executes guest code through
+
+    ioctl(KVM_RUN) --> vcpu_enter_guest --> x86 instruction to execute
+                                            guest code.
+
+So the "isolation period where task does not want to be interrupted"
+contains kernel code.
+
+3) Before using any service of the operating system, through a
+syscall, the application has to clear the TIF_TASK_ISOLATION flag,
+then do the syscall, and when returning to userspace, setting it again.
+
+Now what guarantees regarding low amount of interrupts do you provide
+while this task is in kernel mode?
+
+4)
+
+"We also support a new "task_isolation_debug" flag which forces
+the console stack to be dumped out regardless. We try to catch the
+original source of the interrupt, e.g. if an IPI is dispatched to a
+task-isolation task, we dump the backtrace of the remote core that is
+sending the IPI, rather than just dumping out a trace showing the core
+received an IPI from somewhere."
+
+KVM uses IPI's to for example send virtual interrupts and update the
+guest clock at certain conditions (for example after VM migration).
+
+So this seems a little heavy for our usecase.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
