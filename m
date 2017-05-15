@@ -1,46 +1,59 @@
-From: Christoph Lameter <cl@linux.com>
-Subject: Re: [patch 2/2] MM: allow per-cpu vmstat_threshold and vmstat_worker
- configuration
-Date: Fri, 12 May 2017 11:57:15 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1705121154240.23503@east.gentwo.org>
-References: <20170425135717.375295031@redhat.com> <20170425135846.203663532@redhat.com> <20170502102836.4a4d34ba@redhat.com> <20170502165159.GA5457@amt.cnet> <20170502131527.7532fc2e@redhat.com> <alpine.DEB.2.20.1705111035560.2894@east.gentwo.org>
- <20170512122704.GA30528@amt.cnet> <alpine.DEB.2.20.1705121002310.22243@east.gentwo.org> <20170512154026.GA3556@amt.cnet> <alpine.DEB.2.20.1705121103120.22831@east.gentwo.org> <20170512161915.GA4185@amt.cnet>
-Content-Type: text/plain; charset=US-ASCII
-Cc: Luiz Capitulino <lcapitulino@redhat.com>, linux-kernel@vger.kernel.org,
-    linux-mm@kvack.org, Rik van Riel <riel@redhat.com>,
-    Linux RT Users <linux-rt-users@vger.kernel.org>, cmetcalf@mellanox.com
-To: Marcelo Tosatti <mtosatti@redhat.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170512161915.GA4185@amt.cnet>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Ralf Ramsauer <ralf.ramsauer@oth-regensburg.de>
+Subject: Re: Realtime Community Event 2017
+Date: Mon, 15 May 2017 14:20:08 +0200
+Message-ID: <9b8c4722-6be2-2a81-961a-4bd20bea6902@oth-regensburg.de>
+References: <b8954187-03fd-ce8d-085a-4d9d81be44f9@monom.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Cc: 'Christoph Hellwig' <hch@infradead.org>
+To: Daniel Wagner <wagi@monom.org>, <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mta01.hs-regensburg.de ([194.95.104.11]:54510 "EHLO
+        mta01.hs-regensburg.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1753765AbdEOM12 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 15 May 2017 08:27:28 -0400
+In-Reply-To: <b8954187-03fd-ce8d-085a-4d9d81be44f9@monom.org>
+Content-Language: de-DE
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 12 May 2017, Marcelo Tosatti wrote:
+count me in! This time with stronger boots ;-)
 
-> > What exactly is the issue you are seeing and want to address? I think we
-> > have similar aims and as far as I know the current situation is already
-> > good enough for what you may need. You may just not be aware of how to
-> > configure this.
->
-> I want to disable vmstat worker thread completly from an isolated CPU.
-> Because it adds overhead to a latency target, target which
-> the lower the better.
+Cheers
+  Ralf
 
-NOHZ already does that. I wanted to know what your problem is that you
-see. The latency issue has already been solved as far as I can tell .
-Please tell me why the existing solutions are not sufficient for you.
-
-> > I doubt that doing inline updates will do much good compared to what we
-> > already have and what the dataplan mode can do.
->
-> Can the dataplan mode disable vmstat worker thread completly on a given
-> CPU?
-
-That already occurs when you call quiet_vmstat() and is used by the NOHZ
-logic. Configure that correctly and you should be fine.
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+On 05/04/2017 09:03 PM, Daniel Wagner wrote:
+> Hi,
+> 
+> After last years really successful community event, we (Christoph and I)
+> are pleased to announce this year event.
+> 
+> The event takes place from 9.6.2017 to 11.6.2017 at the Glungezer lodge.
+> This is the same place as last year.
+> 
+> I have revived the website from last year which contains more details on
+> the event(*).
+> 
+>     https://www.monom.org/rtce
+> 
+> Please consider bringing your partner with to this event. Obviously,
+> there will some technical discussion but there is also plenty time to
+> enjoy the Austrian Alps.
+> 
+> So far the attendee list is Thomas, Christoph and I. I hope some more
+> are able to join. You are going to miss a superb hike and excellent food.
+> 
+> cheers,
+> Daniel
+> 
+> (*) the site might contain still some old information, will be updated
+> during the next days.
+> 
+> ps: I take the blame for getting this announce so late. Sorry about it.
+> -- 
+> To unsubscribe from this list: send the line "unsubscribe
+> linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
