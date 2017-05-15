@@ -1,55 +1,84 @@
-From: Fawad Lateef <fawadlateef@gmail.com>
-Subject: Re: Question regarding RT patches for ARM
-Date: Mon, 15 May 2017 16:20:13 +0200
-Message-ID: <CAGgoGu7z1KUve8G_Ld_Yk-1umDq1qO=HCw2vjMuU=YXqxzt0tA@mail.gmail.com>
-References: <CAGgoGu6=EKCkzbZ0=i+4e+9rJUvxG-SUix1AQVch8VF=OmokVw@mail.gmail.com>
- <3aa42082.b247.15c0c29ca5e.Coremail.qiledexin@163.com> <CAGgoGu72RebHt5yf-2WE6Dt3jUNqMph2Uwu+VRK2akRYXo8aow@mail.gmail.com>
- <646e1a43-78a7-3d04-ee29-1299b7d9d4d8@nelint.com>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [PATCH] Make -x option position-agnostic
+Date: Mon, 15 May 2017 16:50:46 +0200 (CEST)
+Message-ID: <alpine.LFD.2.20.1705151648310.8527@riemann>
+References: <1492708182-104442-1-git-send-email-jianxun.zhang@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-Cc: GuJiangfei <qiledexin@163.com>,
-        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        kernelnewbies <kernelnewbies@kernelnewbies.org>,
-        linux-rt-users@vger.kernel.org
-To: Eric Nelson <eric@nelint.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <646e1a43-78a7-3d04-ee29-1299b7d9d4d8@nelint.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org, vedang.patel@intel.com,
+        Clark Williams <williams@redhat.com>
+To: Jianxun Zhang <jianxun.zhang@linux.intel.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wm0-f68.google.com ([74.125.82.68]:33675 "EHLO
+        mail-wm0-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S965150AbdEOOuz (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 15 May 2017 10:50:55 -0400
+Received: by mail-wm0-f68.google.com with SMTP id y10so29099231wmh.0
+        for <linux-rt-users@vger.kernel.org>; Mon, 15 May 2017 07:50:55 -0700 (PDT)
+In-Reply-To: <1492708182-104442-1-git-send-email-jianxun.zhang@linux.intel.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Eric,
 
 
-On 15 May 2017 at 16:12, Eric Nelson <eric@nelint.com> wrote:
-> Hi Fawad,
->
->> =E5=8F=91=E8=87=AA=E7=BD=91=E6=98=93=E9=82=AE=E7=AE=B1=E5=A4=A7=E5=B8=88
->> On 05/15/2017 20:44, Fawad Lateef wrote:
->>
->> Hi All,
->>
->> I am working on custom i.MX6 quad hardware and using RT patches for
->> almost latest stable kernel 4.9 and facing some weird system stall OR
->> 'unhandled page fault - exceptions'.
->>
->
-> I'm not sure about the unhandled page fault, but the stalls may be
-> because of the SDMA driver.
->
-> See this patch in the Freescale/NXP community for kernel 4.1:
-> https://github.com/Freescale/meta-freescale/blob/master/recipes-kernel/li=
-nux/linux-fslc-imx-rt/0003-Work-around-CPU-stalls-in-the-imx-sdma-driver.pa=
-tch
->
+On Thu, 20 Apr 2017, Jianxun Zhang wrote:
 
-Thanks for the patch link. I will give it a try.
+> Change 9d2c9edd86943dfea399a0176826af8bb92bf97c introduces
+> the new option of POSIX timer and makes MODE_CLOCK_NANOSLEEP
+> the default choice. But there are two places explicitly set
+> MODE_CLOCK_NANOSLEEP to the variable use_nanosleep in the code,
+> so the actual value of the variable after parsing depends on
+> the position of '-x' to '-U' and '-S'.
+> 
+> These command pairs result in different values in the variable:
+> 'cyclictest -S -x' VS 'cyclictest -x -S'
+> 'cyclictest -U -x' VS 'cyclictest -x -U'
+> 
+> This change ensures -x work regardless its position by removing
+> the two lines in these cases.
+> 
+> Signed-off-by: Jianxun Zhang <jianxun.zhang@linux.intel.com>
+> ---
+> Note: This patch is submitted after a very limited test in its scope. No real RT test was performed. Maintainers may want to do a full test or a closer review for anything I missed.
+> 
+> There are other findings regarding to the parsing logic but I don't think they are critical as long as the usage gives correct test results. I could amend these with more patches later.
+> 
+> Thanks
+> 
+>  src/cyclictest/cyclictest.c | 2 --
+>  1 file changed, 2 deletions(-)
+> 
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index 0b13441..381191c 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -1705,7 +1705,6 @@ static void process_options (int argc, char *argv[], int max_cpus)
+>  			smp = 1;
+>  			num_threads = max_cpus;
+>  			setaffinity = AFFINITY_USEALL;
+> -			use_nanosleep = MODE_CLOCK_NANOSLEEP;
+>  			break;
+>  		case 't':
+>  		case OPT_THREADS:
+> @@ -1744,7 +1743,6 @@ static void process_options (int argc, char *argv[], int max_cpus)
+>  #ifdef NUMA
+>  			num_threads = max_cpus;
+>  			setaffinity = AFFINITY_USEALL;
+> -			use_nanosleep = MODE_CLOCK_NANOSLEEP;
+>  #else
+>  			warn("cyclictest was not built with the numa option\n");
+>  			warn("ignoring --numa or -U\n");
+> -- 
+> 2.7.4
+> 
+> --
 
-> Regards,
->
->
-> Eric
+Signed-off-by: John Kacur <jkacur@redhat.com>
 
-Regards,
+Thanks for the patch. In the future could you please
 
-Fawad Lateef
+cc John Kacur <jkacur@redhat.com> and
+Clark Williams <williams@redhat.com>
+
+So that we don't miss any patches. thanks!
