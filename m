@@ -1,51 +1,65 @@
-From: Federico Reghenzani <federico.reghenzani@polimi.it>
-Subject: Userspace GPIO
-Date: Thu, 18 May 2017 16:49:45 +0200
-Message-ID: <CACKey4yRDFMF9XAANDi4QWc=ZAGdKJxjZMhgts2dRtF4mMyY5g@mail.gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: Question regarding RT patches for ARM
+Date: Thu, 18 May 2017 22:10:33 +0200
+Message-ID: <20170518201033.ygdgdhdslbqypcoj@linutronix.de>
+References: <CAGgoGu6=EKCkzbZ0=i+4e+9rJUvxG-SUix1AQVch8VF=OmokVw@mail.gmail.com>
+ <3aa42082.b247.15c0c29ca5e.Coremail.qiledexin@163.com>
+ <CAGgoGu72RebHt5yf-2WE6Dt3jUNqMph2Uwu+VRK2akRYXo8aow@mail.gmail.com>
+ <646e1a43-78a7-3d04-ee29-1299b7d9d4d8@nelint.com>
+ <CAGgoGu7z1KUve8G_Ld_Yk-1umDq1qO=HCw2vjMuU=YXqxzt0tA@mail.gmail.com>
+ <CAGgoGu4LHrZJHzwBFgpEYCzBRtH24N_Y1UUspkoZJKPPdQmuvQ@mail.gmail.com>
+ <c0fc9f9b-ae0b-66d3-71c7-e2b98f6900e0@nelint.com>
+ <20170517160213.go3fiyhf5vmr7bmj@linutronix.de>
+ <CAGgoGu7qJegvp8o_33rfVbSWHNH8N4bbiTORXJYziRvKB9=O3w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-To: <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: Eric Nelson <eric@nelint.com>, GuJiangfei <qiledexin@163.com>,
+        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+        kernelnewbies <kernelnewbies@kernelnewbies.org>,
+        linux-rt-users@vger.kernel.org
+To: Fawad Lateef <fawadlateef@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-db5eur01on0083.outbound.protection.outlook.com ([104.47.2.83]:29133
-        "EHLO EUR01-DB5-obe.outbound.protection.outlook.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S932406AbdEROuK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 18 May 2017 10:50:10 -0400
-Received: by mail-wr0-f174.google.com with SMTP id l9so36893658wre.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 18 May 2017 07:50:07 -0700 (PDT)
+Received: from Galois.linutronix.de ([146.0.238.70]:52927 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751155AbdERUKn (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 18 May 2017 16:10:43 -0400
+Content-Disposition: inline
+In-Reply-To: <CAGgoGu7qJegvp8o_33rfVbSWHNH8N4bbiTORXJYziRvKB9=O3w@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi all,
+On 2017-05-18 13:08:32 [+0200], Fawad Lateef wrote:
+> Hi Sebastian,
+Hi Fawad,
 
-not sure if this is the correct kernel mailing list, but it's related
-to real-time applications.
+> > Of this "page fault" happens on boot, it has to do something without
+> > your .config + hw combination. If it happens at rune-time it is probably
+> > triggered by a driver or an application is triggering this.
+> >
+> 
+> Yes, this happens at run-time and not always. Sometimes hardware just
+> hangs/stalls.
 
-I'm performing some tests with GPIO in Linux (with PREEMPT_RT patch,
-but it's not currently important) and I noticed that user-space GPIO
-via sysfs is very slow compared to kernel-space and this is obviously
-expected, due to system calls overhead.
+So this sounds like a race condition.
 
-Then, i tried to map with ioremap() in the kernel and mmap() in the
-user space the address of the memory-mapped GPIO register and I
-noticed that on my platform (ARM, freescale imx6q) the kernel square
-wave max frequency is ~5MHz compared to ~1.6MHz of user-space. In
-theory, since both write in a virtual address mapped to a physical
-address it should be the same (I verified the assembly of the kernel
-module and of the user-space application and they have the same
-instructions in the tested loop).
+> As now RT is widely used on ARM so to me seems like it something
+> related to hardware design/setting OR application.
+> 
+> Another question: Is RT user-space application can make kernel/system
+> crash? As to me kernel should kill the app but let itself running
+> _but_ not sure in the case of RT patched kernel.
 
-I concluded that the mmap() - since MAP_SHARED is required - sets the
-VM_SHARED flag and the MMU of the ARM processor performs cache
-coherency protocols that impact on GPIO switching performance, due to
-the sharing flag in the page table.
+This is correct. With RT or without it: a use space should not be able
+to crash the kernel.
+It is possible that a race within a driver triggers more reliably on RT.
+I would recommend to strip down the system to the minimum where the
+issue should not trigger. And then slowly increase the "enabled"
+hardware components so you might get an idea when or what could cause
+it.
 
-I'm not sure if my analysis is correct, but, in that case, do you have
-any other possible solution? Or a special flag for the mmap could be
-proposed? In real-time application the performance of GPIO is often
-important, and a 4x degradation from kernel-space to user-space can be
-significant.
+> Thanks,
+> 
+> Fawad Lateef
 
-
-Cheers,
-Federico Reghenzani
+Sebastian
