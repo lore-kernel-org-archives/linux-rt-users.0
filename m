@@ -1,77 +1,95 @@
-From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-Subject: Re: [PATCH] usb: Use _nort in usb_hcd_pci_remove
-Date: Fri, 19 May 2017 13:00:55 -0300
-Message-ID: <20170519160055.5w7lurk5hqxorlr5@uudg.org>
-References: <20170420180027.19316-1-nate.dailey@stratus.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org
-To: Nate Dailey <nate.dailey@stratus.com>
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: [patch 2/2] MM: allow per-cpu vmstat_threshold and vmstat_worker
+ configuration
+Date: Fri, 19 May 2017 12:13:26 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1705191205580.19631@east.gentwo.org>
+References: <20170502131527.7532fc2e@redhat.com> <alpine.DEB.2.20.1705111035560.2894@east.gentwo.org> <20170512122704.GA30528@amt.cnet> <alpine.DEB.2.20.1705121002310.22243@east.gentwo.org> <20170512154026.GA3556@amt.cnet> <alpine.DEB.2.20.1705121103120.22831@east.gentwo.org>
+ <20170512161915.GA4185@amt.cnet> <alpine.DEB.2.20.1705121154240.23503@east.gentwo.org> <20170515191531.GA31483@amt.cnet> <alpine.DEB.2.20.1705160825480.32761@east.gentwo.org> <20170519143407.GA19282@amt.cnet>
+Content-Type: text/plain; charset=US-ASCII
+Cc: Luiz Capitulino <lcapitulino@redhat.com>,
+        linux-kernel@vger.kernel.org, linux-mm@kvack.org,
+        Rik van Riel <riel@redhat.com>,
+        Linux RT Users <linux-rt-users@vger.kernel.org>,
+        cmetcalf@mellanox.com
+To: Marcelo Tosatti <mtosatti@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qt0-f196.google.com ([209.85.216.196]:34428 "EHLO
-        mail-qt0-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751916AbdESQBD (ORCPT
+Received: from resqmta-ch2-09v.sys.comcast.net ([69.252.207.41]:52416 "EHLO
+        resqmta-ch2-09v.sys.comcast.net" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1750810AbdESRNb (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 19 May 2017 12:01:03 -0400
-Received: by mail-qt0-f196.google.com with SMTP id l39so10202267qtb.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 19 May 2017 09:01:02 -0700 (PDT)
-Content-Disposition: inline
-In-Reply-To: <20170420180027.19316-1-nate.dailey@stratus.com>
+        Fri, 19 May 2017 13:13:31 -0400
+In-Reply-To: <20170519143407.GA19282@amt.cnet>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Apr 20, 2017 at 02:00:27PM -0400, Nate Dailey wrote:
-> A trip through usb_hcd_pci_remove produces:
-> 
->  BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:993
->  in_atomic(): 0, irqs_disabled(): 1, pid: 4752, name: bash
->  INFO: lockdep is turned off.
->  irq event stamp: 0
->  hardirqs last  enabled at (0): [<          (null)>]           (null)
->  hardirqs last disabled at (0): [<ffffffff8108da9d>] copy_process.part.36+0x64d/0x2380
->  softirqs last  enabled at (0): [<ffffffff8108da9d>] copy_process.part.36+0x64d/0x2380
->  softirqs last disabled at (0): [<          (null)>]           (null)
->  CPU: 1 PID: 4752 Comm: bash Tainted: G        W I     4.9.0debug-rt16+ #2
->  Hardware name: Stratus ftServer 2700/G7LAY, BIOS BIOS Version 6.3:58 09/18/2014
->  ffffc90006e5fbd0 ffffffff813d243a ffff88016ac0b240 0000000000001290
->  ffffc90006e5fbf8 ffffffff810c6907 ffff8801682f45d0 ffff8801682f1000
->  ffff8801682f45d0 ffffc90006e5fc18 ffffffff817dee44 ffff88016b2aee18
->  Call Trace:
->  [<ffffffff813d243a>] dump_stack+0x99/0xcf
->  [<ffffffff810c6907>] ___might_sleep+0x137/0x210
->  [<ffffffff817dee44>] rt_spin_lock+0x24/0x60
->  [<ffffffff815b526f>] ehci_irq+0x2f/0x400
->  [<ffffffff814226b9>] ? pci_bus_read_config_word+0x99/0xb0
->  [<ffffffff81592d66>] usb_hcd_irq+0x26/0x40
->  [<ffffffff815a7a90>] usb_hcd_pci_remove+0x50/0x170
->  [<ffffffff815b933a>] ehci_pci_remove+0x1a/0x20
->  [<ffffffff8142fc39>] pci_device_remove+0x39/0xc0
->  [<ffffffff8152c4da>] __device_release_driver+0x9a/0x150
->  [<ffffffff8152c5b3>] device_release_driver+0x23/0x30
->  [<ffffffff81427f6c>] pci_stop_bus_device+0x8c/0xa0
->  [<ffffffff8142808a>] pci_stop_and_remove_bus_device_locked+0x1a/0x30
->  [<ffffffff8143182c>] remove_store+0x7c/0x90
->  [<ffffffff81526508>] dev_attr_store+0x18/0x30
->  [<ffffffff81313444>] sysfs_kf_write+0x44/0x60
->  [<ffffffff81312d7c>] kernfs_fop_write+0x13c/0x1d0
->  [<ffffffff81279bb7>] __vfs_write+0x37/0x160
->  [<ffffffff81118c82>] ? rcu_sync_lockdep_assert+0x12/0x60
->  [<ffffffff8127e3c6>] ? __sb_start_write+0x176/0x260
->  [<ffffffff8127a3f4>] ? vfs_write+0x184/0x1b0
->  [<ffffffff8127a325>] vfs_write+0xb5/0x1b0
->  [<ffffffff810025e0>] ? syscall_trace_enter+0x1d0/0x380
->  [<ffffffff8127b7e8>] SyS_write+0x58/0xc0
->  [<ffffffff81002d0a>] do_syscall_64+0x7a/0x230
->  [<ffffffff817df6c9>] entry_SYSCALL64_slow_path+0x25/0x25
-> 
-> Repro via something like:
-> 
-> > echo 1 > /sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:3d:00.0/0000:3e:01.0/0000:66:00.0/remove
-> 
-> Switching usb_hcd_pci_remove to use _nort variants prevents the BUG.
-> 
-> Signed-off-by: Nate Dailey <nate.dailey@stratus.com>
-> ---
+On Fri, 19 May 2017, Marcelo Tosatti wrote:
 
-Acked-by: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
+> Use-case: realtime application on an isolated core which for some reason
+> updates vmstatistics.
+
+Ok that is already only happening every 2 seconds by default and that
+interval is configurable via the vmstat_interval proc setting.
+
+> > Just a measurement of vmstat_worker. Pointless.
+>
+> Shouldnt the focus be on general scenarios rather than particular
+> usecases, so that the solution covers a wider range of usecases?
+
+Yes indeed and as far as I can tell the wider usecases are covered. Not
+sure that there is anything required here.
+
+> The situation as i see is as follows:
+>
+> Your point of view is: an "isolated CPU" with a set of applications
+> cannot update vm statistics, otherwise they pay the vmstat_update cost:
+>
+>      kworker/5:1-245   [005] ....1..   673.454295: workqueue_execute_start: work struct ffffa0cf6e493e20: function vmstat_update
+>      kworker/5:1-245   [005] ....1..   673.454305: workqueue_execute_end: work struct ffffa0cf6e493e20
+>
+> Thats 10us for example.
+
+Well with a decent cpu that is 3 usec and it occurs infrequently on the
+order of once per multiple seconds.
+
+> So if want to customize a realtime setup whose code updates vmstatistic,
+> you are dead. You have to avoid any systemcall which possibly updates
+> vmstatistics (now and in the future kernel versions).
+
+You are already dead because you allow IPIs and other kernel processing
+which creates far more overhead. Still fail to see the point.
+
+> The point is that these vmstat updates are rare. From
+> http://www.7-cpu.com/cpu/Haswell.html:
+>
+> RAM Latency = 36 cycles + 57 ns (3.4 GHz i7-4770)
+> RAM Latency = 62 cycles + 100 ns (3.6 GHz E5-2699 dual)
+>
+> Lets round to 100ns = 0.1us.
+
+That depends on the kernel functionality used.
+
+> You need 100 vmstat updates (all misses to RAM, the worst possible case)
+> to have equivalent amount of time of the batching version.
+
+The batching version occurs every couple of seconds if at all.
+
+> But thats not the point. The point is the 10us interruption
+> to execution of the realtime app (which can either mean
+> your current deadline requirements are not met, or that
+> another application with lowest latency requirement can't
+> be used).
+
+Ok then you need to get rid of the IPIs and the other stuff that you have
+going on with the OS first I think.
+
+> So why are you against integrating this simple, isolated patch which
+> does not affect how current logic works?
+
+Frankly the argument does not make sense. Vmstat updates occur very
+infrequently (probably even less than you IPIs and the other OS stuff that
+also causes additional latencies that you seem to be willing to tolerate).
+
+And you can configure the interval of vmstat updates freely.... Set
+the vmstat_interval to 60 seconds instead of 2 for a try? Is that rare
+enough?
 
