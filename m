@@ -1,47 +1,51 @@
-From: "Patel, Vedang" <vedang.patel@intel.com>
-Subject: Re: Where are the branches for stable/v1.0 and unstable/devel?
-Date: Mon, 22 May 2017 20:01:41 +0000
-Message-ID: <1495483301.9833.3.camel@intel.com>
-References: <trinity-81b115be-c7aa-430f-a6bb-a9f8512e0222-1495478595984@3capp-webde-bap56>
+From: Marcelo Tosatti <mtosatti@redhat.com>
+Subject: Re: [patch 2/2] MM: allow per-cpu vmstat_threshold and vmstat_worker
+ configuration
+Date: Mon, 22 May 2017 18:13:41 -0300
+Message-ID: <20170522211337.GA4718@amt.cnet>
+References: <20170512154026.GA3556@amt.cnet>
+ <alpine.DEB.2.20.1705121103120.22831@east.gentwo.org>
+ <20170512161915.GA4185@amt.cnet>
+ <alpine.DEB.2.20.1705121154240.23503@east.gentwo.org>
+ <20170515191531.GA31483@amt.cnet>
+ <alpine.DEB.2.20.1705160825480.32761@east.gentwo.org>
+ <20170519143407.GA19282@amt.cnet>
+ <alpine.DEB.2.20.1705191205580.19631@east.gentwo.org>
+ <20170520082646.GA16139@amt.cnet>
+ <alpine.DEB.2.20.1705221137001.12282@east.gentwo.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "rolf.freitag@email.de" <rolf.freitag@email.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga03.intel.com ([134.134.136.65]:46586 "EHLO mga03.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1761986AbdEVUBo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 22 May 2017 16:01:44 -0400
-In-Reply-To: <trinity-81b115be-c7aa-430f-a6bb-a9f8512e0222-1495478595984@3capp-webde-bap56>
-Content-Language: en-US
-Content-ID: <E1694792293A1744ACAE29562314F9AF@intel.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Luiz Capitulino <lcapitulino@redhat.com>, linux-kernel@vger.kernel.org,
+        linux-mm@kvack.org, Rik van Riel <riel@redhat.com>,
+        Linux RT Users <linux-rt-users@vger.kernel.org>, cmetcalf@mellanox.com
+To: Christoph Lameter <cl@linux.com>
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.20.1705221137001.12282@east.gentwo.org>
+Sender: owner-linux-mm@kvack.org
+List-Id: linux-rt-users.vger.kernel.org
 
-SGkgUm9sZiwNCg0KT24gTW9uLCAyMDE3LTA1LTIyIGF0IDIwOjQzICswMjAwLCByb2xmLmZyZWl0
-YWdAZW1haWwuZGUgd3JvdGU6DQo+IEhpLA0KPiDCoA0KPiBkdWUgdG8gaHR0cHM6Ly9ydC53aWtp
-Lmtlcm5lbC5vcmcvaW5kZXgucGhwL0N5Y2xpY3Rlc3QgaSB0cmllZA0KPiDCoA0KPiDCoCBnaXQg
-Y2xvbmUgZ2l0Oi8vZ2l0Lmtlcm5lbC5vcmcvcHViL3NjbS91dGlscy9ydC10ZXN0cy9ydC10ZXN0
-cy5naXQNCj4gwqANCj4gYnV0IHRoZSBSRUFETUUgZnJvbSB0aGVyZSBzYXlzIHRoYXQgdGhlIHN0
-YWJsZS92MS4wIGFuZA0KPiB1bnN0YWJsZS9kZXZlbCBicmFuY2ggaXMgbm90IHRoZXJlLg0KPiBJ
-IHRyaWVkIHRoZSBzb3VyY2VzDQo+IMKgDQo+IMKgIGdpdDovL2dpdC5rZXJuZWwub3JnL3B1Yi9z
-Y20vdXRpbHMvcnQtdGVzdHMvdW5zdGFibGUvZGV2ZWwuZ2l0DQo+IMKgIGdpdDovL2dpdC5rZXJu
-ZWwub3JnL3B1Yi9zY20vdXRpbHMvcnQtdGVzdHMvdW5zdGFibGUuZ2l0DQo+IMKgIC4uLg0KPiDC
-oA0KPiBidXQgd2l0aG91dCBzdWNjZXNzLg0KPiDCoA0KPiBXaGVyZSBhcmUgdGhlc2UgYnJhbmNo
-ZXM/DQpUaGUgZm9sbG93aW5nIDIgYnJhbmNoZXMgaW4gdGhlIGFib3ZlIHJlcG9zaXRvcnkgaGF2
-ZSBiZWVuIG1vc3QNCnJlY2VudGx5IHVwZGF0ZWQgYW5kIGNvcnJlc3BvbmQgdG8gdGhlIHN0YWJs
-ZSBhbmQgdW5zdGFibGUgYnJhbmNoOsKgDQowZTZjMmNhMjhhZGJhZWI2NjhjYTM1MjEwY2VjNTQ2
-Zjg5OTM4YmZhwqDCoMKgwqDCoMKgwqDCoHJlZnMvaGVhZHMvc3RhYmxlL2RldmVsDQovdjEuMC4x
-DQo0NGRlMWE0OTQ1ODNjMzNlNzIzMzUyMjEzNjAwODVmOWUxZmFhZDJiwqDCoMKgwqDCoMKgwqDC
-oHJlZnMvaGVhZHMvdW5zdGFibGUvZGV2DQplbC92MS4xLjENClRoZXJlIGlzIGFsc28gYSBzdGFi
-bGUvdjEuMCBicmFuY2g6wqANCmQ0ODUwNGI4ZTg1OTYxYWZhYjFjYjBiZDM0NjYyNGViMzE1Mjcx
-OTfCoMKgwqDCoMKgwqDCoMKgcmVmcy9oZWFkcy9zdGFibGUvdjEuMA0KDQp0aGUgd2lraSBwYWdl
-IHlvdSBtZW50aW9uZWQgaW4geW91ciBlbWFpbCBpcyBvdXRkYXRlZC4gUGxlYXNlIHJlZmVyIHRv
-wqANCmh0dHBzOi8vd2lraS5saW51eGZvdW5kYXRpb24ub3JnL3JlYWx0aW1lL2RvY3VtZW50YXRp
-b24vaG93dG8vdG9vbHMvY3ljDQpsaWN0ZXN0wqBmb3IgdGhlIGxhdGVzdCBpbmZvLg0KDQpUaGFu
-a3MsDQpWZWRhbmcgUGF0ZWwNCsKgDQo+IMKgDQo+IFJlZ2FyZHMsDQo+IMKgDQo+IFJvbGYNCj4g
-wqANCj4gLS0NCj4gVG8gdW5zdWJzY3JpYmUgZnJvbSB0aGlzIGxpc3Q6IHNlbmQgdGhlIGxpbmUg
-InVuc3Vic2NyaWJlIGxpbnV4LXJ0LQ0KPiB1c2VycyIgaW4NCj4gdGhlIGJvZHkgb2YgYSBtZXNz
-YWdlIHRvIG1ham9yZG9tb0B2Z2VyLmtlcm5lbC5vcmcNCj4gTW9yZSBtYWpvcmRvbW8gaW5mbyBh
-dMKgwqBodHRwOi8vdmdlci5rZXJuZWwub3JnL21ham9yZG9tby1pbmZvLmh0bWw=
+On Mon, May 22, 2017 at 11:38:02AM -0500, Christoph Lameter wrote:
+> On Sat, 20 May 2017, Marcelo Tosatti wrote:
+> 
+> > > And you can configure the interval of vmstat updates freely.... Set
+> > > the vmstat_interval to 60 seconds instead of 2 for a try? Is that rare
+> > > enough?
+> >
+> > Not rare enough. Never is rare enough.
+> 
+> Ok what about the other stuff that must be going on if you allow OS
+> activity like f.e. the tick, scheduler etc etc.
+
+Yes these are also problems... but we're either getting rid of them or
+reducing their impact as much as possible.
+
+vmstat_update is one member of the problematic set.
+
+I'll get you the detailed IPI measures, hold on...
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
