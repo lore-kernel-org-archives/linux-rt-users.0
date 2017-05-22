@@ -1,7 +1,7 @@
 From: Tommi Rantala <tommi.t.rantala@nokia.com>
-Subject: [PATCH 14/34] cyclictest: fix MODE_CYCLIC measurement failure after timer overruns
-Date: Mon, 22 May 2017 11:25:20 +0300
-Message-ID: <20170522082540.15467-15-tommi.t.rantala@nokia.com>
+Subject: [PATCH 10/34] cyclictest: use %zd for printing size_t in rt_numa_numa_alloc_onnode()
+Date: Mon, 22 May 2017 11:25:16 +0300
+Message-ID: <20170522082540.15467-11-tommi.t.rantala@nokia.com>
 References: <20170522082540.15467-1-tommi.t.rantala@nokia.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -10,55 +10,33 @@ Cc: <linux-rt-users@vger.kernel.org>,
 To: Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-eopbgr50134.outbound.protection.outlook.com ([40.107.5.134]:2496
+Received: from mail-eopbgr50097.outbound.protection.outlook.com ([40.107.5.97]:43936
         "EHLO EUR03-VE1-obe.outbound.protection.outlook.com"
         rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1752859AbdEVI0U (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 22 May 2017 04:26:20 -0400
+        id S1752826AbdEVI0P (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 22 May 2017 04:26:15 -0400
 In-Reply-To: <20170522082540.15467-1-tommi.t.rantala@nokia.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This patch aims to fix nonsensical results sometimes reported by
-cyclictest when running in MODE_CYCLIC.
-
-In MODE_CYCLIC if we hit the "now > next" case, we can end up adjusting
-the "next" timespec twice: by the tsgreater-while-loop, and after that
-on a later iteration of the loop by the result of timer_getoverrun().
-
-After this double adjustment, the results will not be correct.
-
 Signed-off-by: Tommi Rantala <tommi.t.rantala@nokia.com>
 ---
- src/cyclictest/cyclictest.c | 12 ++++++------
- 1 file changed, 6 insertions(+), 6 deletions(-)
+ src/cyclictest/rt_numa.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 7720fce..517f061 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -1230,15 +1230,15 @@ static void *timerthread(void *param)
- 			}
- 			next.tv_sec += overrun_count * interval.tv_sec;
- 			next.tv_nsec += overrun_count * interval.tv_nsec;
-+		} else {
-+			while (tsgreater(&now, &next)) {
-+				next.tv_sec += interval.tv_sec;
-+				next.tv_nsec += interval.tv_nsec;
-+				tsnorm(&next);
-+			}
- 		}
- 		tsnorm(&next);
- 
--		while (tsgreater(&now, &next)) {
--			next.tv_sec += interval.tv_sec;
--			next.tv_nsec += interval.tv_nsec;
--			tsnorm(&next);
--		}
--
- 		if (par->max_cycles && par->max_cycles == stat->cycles)
- 			break;
- 	}
+diff --git a/src/cyclictest/rt_numa.h b/src/cyclictest/rt_numa.h
+index ec29943..ee25045 100644
+--- a/src/cyclictest/rt_numa.h
++++ b/src/cyclictest/rt_numa.h
+@@ -64,7 +64,7 @@ static void *rt_numa_numa_alloc_onnode(size_t size, int node, int cpu)
+ 	void *stack;
+ 	stack = numa_alloc_onnode(size, node);
+ 	if (stack == NULL)
+-		fatal("failed to allocate %d bytes on node %d for cpu %d\n",
++		fatal("failed to allocate %zd bytes on node %d for cpu %d\n",
+ 				size, node, cpu);
+ 	return stack;
+ }
 -- 
 2.9.3
 
