@@ -1,23 +1,22 @@
 From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH 19/34] pip_stress: getopt.h and long_options[] are
- unused
-Date: Mon, 22 May 2017 18:39:21 +0200 (CEST)
-Message-ID: <alpine.LFD.2.20.1705221839030.7915@riemann>
-References: <20170522082540.15467-1-tommi.t.rantala@nokia.com> <20170522082540.15467-20-tommi.t.rantala@nokia.com>
+Subject: Re: [PATCH 24/34] signaltest: remove unused ARRAY_SIZE macro
+Date: Mon, 22 May 2017 18:44:06 +0200 (CEST)
+Message-ID: <alpine.LFD.2.20.1705221843320.7915@riemann>
+References: <20170522082540.15467-1-tommi.t.rantala@nokia.com> <20170522082540.15467-25-tommi.t.rantala@nokia.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Cc: Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
 To: Tommi Rantala <tommi.t.rantala@nokia.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wr0-f193.google.com ([209.85.128.193]:36666 "EHLO
-        mail-wr0-f193.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S933994AbdEVQjY (ORCPT
+Received: from mail-wm0-f68.google.com ([74.125.82.68]:33927 "EHLO
+        mail-wm0-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S934539AbdEVQoP (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 22 May 2017 12:39:24 -0400
-Received: by mail-wr0-f193.google.com with SMTP id v42so7508992wrc.3
-        for <linux-rt-users@vger.kernel.org>; Mon, 22 May 2017 09:39:24 -0700 (PDT)
-In-Reply-To: <20170522082540.15467-20-tommi.t.rantala@nokia.com>
+        Mon, 22 May 2017 12:44:15 -0400
+Received: by mail-wm0-f68.google.com with SMTP id d127so34271731wmf.1
+        for <linux-rt-users@vger.kernel.org>; Mon, 22 May 2017 09:44:09 -0700 (PDT)
+In-Reply-To: <20170522082540.15467-25-tommi.t.rantala@nokia.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -27,33 +26,29 @@ On Mon, 22 May 2017, Tommi Rantala wrote:
 
 > Signed-off-by: Tommi Rantala <tommi.t.rantala@nokia.com>
 > ---
->  src/pi_tests/pip_stress.c | 6 ------
->  1 file changed, 6 deletions(-)
+>  src/signaltest/signaltest.c | 2 --
+>  1 file changed, 2 deletions(-)
 > 
-> diff --git a/src/pi_tests/pip_stress.c b/src/pi_tests/pip_stress.c
-> index 1245705..15adf54 100644
-> --- a/src/pi_tests/pip_stress.c
-> +++ b/src/pi_tests/pip_stress.c
-> @@ -57,7 +57,6 @@
->  #include "pip_stress.h"
+> diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
+> index 59f979e..72a549d 100644
+> --- a/src/signaltest/signaltest.c
+> +++ b/src/signaltest/signaltest.c
+> @@ -30,8 +30,6 @@
+>  #include "error.h"
+>  #include "rt-utils.h"
 >  
->  #include <unistd.h>
-> -#include <getopt.h>
->  
->  /* default time for low priority thread usleep */
->  useconds_t usleep_val = 500;
-> @@ -79,11 +78,6 @@ struct State *statep;
->  const int policy = SCHED_FIFO;
->  const int prio_min;	/* Initialized for the minimum priority of policy */
->  
-> -struct option long_options[] = {
-> -    { "usleep", required_argument, 0, 0 },
-> -    { 0,        0,                 0, 0 },
-> -};
+> -#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 > -
->  int main(void)
->  {
->  	void *mptr;	/* memory pointer */
+>  /* Ugly, but .... */
+>  #define gettid() syscall(__NR_gettid)
+>  
 > -- 
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+NAK
+
+You're right, it could be removed, but it's not really causing in harm 
+either. I'm going to leave it in for now.
+
+Thanks
+
+John
