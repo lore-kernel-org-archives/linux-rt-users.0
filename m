@@ -1,52 +1,37 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH 15/34] cyclictest: param is unused in fifothread()
-Date: Mon, 22 May 2017 18:29:05 +0200 (CEST)
-Message-ID: <alpine.LFD.2.20.1705221828470.7915@riemann>
-References: <20170522082540.15467-1-tommi.t.rantala@nokia.com> <20170522082540.15467-16-tommi.t.rantala@nokia.com>
-Mime-Version: 1.0
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: [patch 2/2] MM: allow per-cpu vmstat_threshold and vmstat_worker
+ configuration
+Date: Mon, 22 May 2017 11:35:55 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1705221134540.11040@east.gentwo.org>
+References: <20170502131527.7532fc2e@redhat.com> <alpine.DEB.2.20.1705111035560.2894@east.gentwo.org> <20170512122704.GA30528@amt.cnet> <alpine.DEB.2.20.1705121002310.22243@east.gentwo.org> <20170512154026.GA3556@amt.cnet> <alpine.DEB.2.20.1705121103120.22831@east.gentwo.org>
+ <20170512161915.GA4185@amt.cnet> <alpine.DEB.2.20.1705121154240.23503@east.gentwo.org> <20170515191531.GA31483@amt.cnet> <alpine.DEB.2.20.1705160825480.32761@east.gentwo.org> <20170519143407.GA19282@amt.cnet> <alpine.DEB.2.20.1705191205580.19631@east.gentwo.org>
+ <20170519134934.0c298882@redhat.com>
 Content-Type: text/plain; charset=US-ASCII
-Cc: Clark Williams <williams@redhat.com>,
-        linux-rt-users@vger.kernel.org
-To: Tommi Rantala <tommi.t.rantala@nokia.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wr0-f195.google.com ([209.85.128.195]:36494 "EHLO
-        mail-wr0-f195.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S932514AbdEVQ3I (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 22 May 2017 12:29:08 -0400
-Received: by mail-wr0-f195.google.com with SMTP id v42so7479243wrc.3
-        for <linux-rt-users@vger.kernel.org>; Mon, 22 May 2017 09:29:07 -0700 (PDT)
-In-Reply-To: <20170522082540.15467-16-tommi.t.rantala@nokia.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Marcelo Tosatti <mtosatti@redhat.com>, linux-kernel@vger.kernel.org,
+    linux-mm@kvack.org, Rik van Riel <riel@redhat.com>,
+    Linux RT Users <linux-rt-users@vger.kernel.org>, cmetcalf@mellanox.com
+To: Luiz Capitulino <lcapitulino@redhat.com>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20170519134934.0c298882@redhat.com>
+Sender: owner-linux-mm@kvack.org
+List-Id: linux-rt-users.vger.kernel.org
 
+On Fri, 19 May 2017, Luiz Capitulino wrote:
 
+> Something that crossed my mind was to add a new tunable to set
+> the vmstat_interval for each CPU, this way we could essentially
+> disable it to the CPUs where DPDK is running. What's the implications
+> of doing this besides not getting up to date stats in /proc/vmstat
+> (which I still have to confirm would be OK)? Can this break anything
+> in the kernel for example?
 
-On Mon, 22 May 2017, Tommi Rantala wrote:
+The data is still going to be updated when the differential gets to big.
 
-> src/cyclictest/cyclictest.c: In function 'fifothread':
-> src/cyclictest/cyclictest.c:2119:31: warning: unused parameter 'param' [-Wunused-parameter]
->  static void *fifothread(void *param)
->                                ^~~~~
-> 
-> Signed-off-by: Tommi Rantala <tommi.t.rantala@nokia.com>
-> ---
->  src/cyclictest/cyclictest.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index 517f061..b4dec98 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -2115,7 +2115,7 @@ static void print_stat(FILE *fp, struct thread_param *par, int index, int verbos
->   * thread that creates a named fifo and hands out run stats when someone
->   * reads from the fifo.
->   */
-> -static void *fifothread(void *param)
-> +static void *fifothread(void *param __attribute__((unused)))
->  {
->  	int ret;
->  	int fd;
-> -- 
+Increasing the vmstat interval and reducing the differential threshold
+would get your there....
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
