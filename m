@@ -1,51 +1,75 @@
-From: Marcelo Tosatti <mtosatti@redhat.com>
-Subject: Re: [patch 2/2] MM: allow per-cpu vmstat_threshold and vmstat_worker
- configuration
-Date: Mon, 22 May 2017 18:13:41 -0300
-Message-ID: <20170522211337.GA4718@amt.cnet>
-References: <20170512154026.GA3556@amt.cnet>
- <alpine.DEB.2.20.1705121103120.22831@east.gentwo.org>
- <20170512161915.GA4185@amt.cnet>
- <alpine.DEB.2.20.1705121154240.23503@east.gentwo.org>
- <20170515191531.GA31483@amt.cnet>
- <alpine.DEB.2.20.1705160825480.32761@east.gentwo.org>
- <20170519143407.GA19282@amt.cnet>
- <alpine.DEB.2.20.1705191205580.19631@east.gentwo.org>
- <20170520082646.GA16139@amt.cnet>
- <alpine.DEB.2.20.1705221137001.12282@east.gentwo.org>
+From: rolf.freitag@email.de
+Subject: Aw: Re: Where are the branches for stable/v1.0 and unstable/devel?
+Date: Tue, 23 May 2017 01:14:44 +0200
+Message-ID: <trinity-23e9b876-7a25-4560-995c-4cd3a4373c90-1495494884583@3capp-webde-bap62>
+References: <trinity-81b115be-c7aa-430f-a6bb-a9f8512e0222-1495478595984@3capp-webde-bap56>
+ <1495483301.9833.3.camel@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Luiz Capitulino <lcapitulino@redhat.com>, linux-kernel@vger.kernel.org,
-        linux-mm@kvack.org, Rik van Riel <riel@redhat.com>,
-        Linux RT Users <linux-rt-users@vger.kernel.org>, cmetcalf@mellanox.com
-To: Christoph Lameter <cl@linux.com>
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.20.1705221137001.12282@east.gentwo.org>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mout.web.de ([212.227.17.12]:65244 "EHLO mout.web.de"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1758552AbdEVXOq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 22 May 2017 19:14:46 -0400
+In-Reply-To: <1495483301.9833.3.camel@intel.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, May 22, 2017 at 11:38:02AM -0500, Christoph Lameter wrote:
-> On Sat, 20 May 2017, Marcelo Tosatti wrote:
-> 
-> > > And you can configure the interval of vmstat updates freely.... Set
-> > > the vmstat_interval to 60 seconds instead of 2 for a try? Is that rare
-> > > enough?
-> >
-> > Not rare enough. Never is rare enough.
-> 
-> Ok what about the other stuff that must be going on if you allow OS
-> activity like f.e. the tick, scheduler etc etc.
+Thanks, the "git checkout stable/v1.0" worked, but not "git checkout unstable/devel".
 
-Yes these are also problems... but we're either getting rid of them or
-reducing their impact as much as possible.
+How do i get the delvel version?
 
-vmstat_update is one member of the problematic set.
+Regards, 
 
-I'll get you the detailed IPI measures, hold on...
+Rolf 
+ 
+-------------------------------------------------------------------------
+Betreff: Re: Where are the branches for stable/v1.0 and unstable/devel?
+Hi Rolf,
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+On Mon, 2017-05-22 at 20:43 +0200, rolf.freitag@email.de wrote:
+> Hi,
+>  
+> due to https://rt.wiki.kernel.org/index.php/Cyclictest i tried
+>  
+>   git clone git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
+>  
+> but the README from there says that the stable/v1.0 and
+> unstable/devel branch is not there.
+> I tried the sources
+>  
+>   git://git.kernel.org/pub/scm/utils/rt-tests/unstable/devel.git
+>   git://git.kernel.org/pub/scm/utils/rt-tests/unstable.git
+>   ...
+>  
+> but without success.
+>  
+> Where are these branches?
+The following 2 branches in the above repository have been most
+recently updated and correspond to the stable and unstable branch: 
+0e6c2ca28adbaeb668ca35210cec546f89938bfa        refs/heads/stable/devel
+/v1.0.1
+44de1a494583c33e72335221360085f9e1faad2b        refs/heads/unstable/dev
+el/v1.1.1
+There is also a stable/v1.0 branch: 
+d48504b8e85961afab1cb0bd346624eb31527197        refs/heads/stable/v1.0
+
+the wiki page you mentioned in your email is outdated. Please refer to 
+https://wiki.linuxfoundation.org/realtime/documentation/howto/tools/cyc[https://wiki.linuxfoundation.org/realtime/documentation/howto/tools/cyc]
+lictest for the latest info.
+
+Thanks,
+Vedang Patel
+ 
+>  
+> Regards,
+>  
+> Rolf
+>  
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-
+> users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html[http://vger.kernel.org/majordomo-info.html]
