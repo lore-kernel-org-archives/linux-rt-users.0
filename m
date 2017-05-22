@@ -1,7 +1,7 @@
 From: Tommi Rantala <tommi.t.rantala@nokia.com>
-Subject: [PATCH 12/34] cyclictest: fix off-by-one in clocksel check
-Date: Mon, 22 May 2017 11:25:18 +0300
-Message-ID: <20170522082540.15467-13-tommi.t.rantala@nokia.com>
+Subject: [PATCH 08/34] cyclictest: adjust whitespace in display_help() output
+Date: Mon, 22 May 2017 11:25:14 +0300
+Message-ID: <20170522082540.15467-9-tommi.t.rantala@nokia.com>
 References: <20170522082540.15467-1-tommi.t.rantala@nokia.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -10,41 +10,35 @@ Cc: <linux-rt-users@vger.kernel.org>,
 To: Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-eopbgr50097.outbound.protection.outlook.com ([40.107.5.97]:43936
+Received: from mail-eopbgr50134.outbound.protection.outlook.com ([40.107.5.134]:2496
         "EHLO EUR03-VE1-obe.outbound.protection.outlook.com"
         rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1752848AbdEVI0T (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 22 May 2017 04:26:19 -0400
+        id S1752771AbdEVI0S (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 22 May 2017 04:26:18 -0400
 In-Reply-To: <20170522082540.15467-1-tommi.t.rantala@nokia.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Fix off-by-one when checking that clocksel is valid index to the array.
-
-Also fix a compiler warning:
-
-src/cyclictest/cyclictest.c: In function 'process_options':
-src/cyclictest/cyclictest.c:1828:31: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
-  if (clocksel < 0 || clocksel > ARRAY_SIZE(clocksources))
-
 Signed-off-by: Tommi Rantala <tommi.t.rantala@nokia.com>
 ---
- src/cyclictest/cyclictest.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ src/cyclictest/cyclictest.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index f2747e4..d89cb0f 100644
+index 2630296..0a2cd9e 100644
 --- a/src/cyclictest/cyclictest.c
 +++ b/src/cyclictest/cyclictest.c
-@@ -1823,7 +1823,7 @@ static void process_options (int argc, char *argv[], int max_cpus)
- 	if (tracelimit)
- 		fileprefix = procfileprefix;
- 
--	if (clocksel < 0 || clocksel > ARRAY_SIZE(clocksources))
-+	if (clocksel < 0 || clocksel >= (int)ARRAY_SIZE(clocksources))
- 		error = 1;
- 
- 	if (oscope_reduction < 1)
+@@ -1349,8 +1349,8 @@ static void display_help(int error)
+ 	       "-s       --system          use sys_nanosleep and sys_setitimer\n"
+ 	       "-S       --smp             Standard SMP testing: options -a -t and\n"
+ 	       "                           same priority of all threads\n"
+-	       "	--spike=<trigger>  record all spikes > trigger\n"
+-	       "	--spike-nodes=[num of nodes]\n"
++	       "	 --spike=<trigger> record all spikes > trigger\n"
++	       "	 --spike-nodes=[num of nodes]\n"
+ 	       "			   These are the maximum number of spikes we can record.\n"
+ 	       "			   The default is 1024 if not specified\n"
+ #ifdef ARCH_HAS_SMI_COUNTER
 -- 
 2.9.3
 
