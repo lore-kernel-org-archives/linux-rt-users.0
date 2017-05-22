@@ -1,109 +1,87 @@
-From: Marcelo Tosatti <mtosatti@redhat.com>
-Subject: Re: [patch 2/2] MM: allow per-cpu vmstat_threshold and vmstat_worker
- configuration
-Date: Sat, 20 May 2017 05:26:46 -0300
-Message-ID: <20170520082646.GA16139@amt.cnet>
-References: <20170512122704.GA30528@amt.cnet>
- <alpine.DEB.2.20.1705121002310.22243@east.gentwo.org>
- <20170512154026.GA3556@amt.cnet>
- <alpine.DEB.2.20.1705121103120.22831@east.gentwo.org>
- <20170512161915.GA4185@amt.cnet>
- <alpine.DEB.2.20.1705121154240.23503@east.gentwo.org>
- <20170515191531.GA31483@amt.cnet>
- <alpine.DEB.2.20.1705160825480.32761@east.gentwo.org>
- <20170519143407.GA19282@amt.cnet>
- <alpine.DEB.2.20.1705191205580.19631@east.gentwo.org>
+From: Tommi Rantala <tommi.t.rantala@nokia.com>
+Subject: [PATCH 00/34] rt-tests fixes and cleanups
+Date: Mon, 22 May 2017 11:25:06 +0300
+Message-ID: <20170522082540.15467-1-tommi.t.rantala@nokia.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Luiz Capitulino <lcapitulino@redhat.com>, linux-kernel@vger.kernel.org,
-        linux-mm@kvack.org, Rik van Riel <riel@redhat.com>,
-        Linux RT Users <linux-rt-users@vger.kernel.org>, cmetcalf@mellanox.com
-To: Christoph Lameter <cl@linux.com>
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.20.1705191205580.19631@east.gentwo.org>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain
+Cc: <linux-rt-users@vger.kernel.org>,
+        Tommi Rantala <tommi.t.rantala@nokia.com>
+To: Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-eopbgr50097.outbound.protection.outlook.com ([40.107.5.97]:7993
+        "EHLO EUR03-VE1-obe.outbound.protection.outlook.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S1752557AbdEVIZ4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 22 May 2017 04:25:56 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, May 19, 2017 at 12:13:26PM -0500, Christoph Lameter wrote:
-> On Fri, 19 May 2017, Marcelo Tosatti wrote:
-> 
-> > Use-case: realtime application on an isolated core which for some reason
-> > updates vmstatistics.
-> 
-> Ok that is already only happening every 2 seconds by default and that
-> interval is configurable via the vmstat_interval proc setting.
-> 
-> > > Just a measurement of vmstat_worker. Pointless.
-> >
-> > Shouldnt the focus be on general scenarios rather than particular
-> > usecases, so that the solution covers a wider range of usecases?
-> 
-> Yes indeed and as far as I can tell the wider usecases are covered. Not
-> sure that there is anything required here.
-> 
-> > The situation as i see is as follows:
-> >
-> > Your point of view is: an "isolated CPU" with a set of applications
-> > cannot update vm statistics, otherwise they pay the vmstat_update cost:
-> >
-> >      kworker/5:1-245   [005] ....1..   673.454295: workqueue_execute_start: work struct ffffa0cf6e493e20: function vmstat_update
-> >      kworker/5:1-245   [005] ....1..   673.454305: workqueue_execute_end: work struct ffffa0cf6e493e20
-> >
-> > Thats 10us for example.
-> 
-> Well with a decent cpu that is 3 usec and it occurs infrequently on the
-> order of once per multiple seconds.
-> 
-> > So if want to customize a realtime setup whose code updates vmstatistic,
-> > you are dead. You have to avoid any systemcall which possibly updates
-> > vmstatistics (now and in the future kernel versions).
-> 
-> You are already dead because you allow IPIs and other kernel processing
-> which creates far more overhead. Still fail to see the point.
-> 
-> > The point is that these vmstat updates are rare. From
-> > http://www.7-cpu.com/cpu/Haswell.html:
-> >
-> > RAM Latency = 36 cycles + 57 ns (3.4 GHz i7-4770)
-> > RAM Latency = 62 cycles + 100 ns (3.6 GHz E5-2699 dual)
-> >
-> > Lets round to 100ns = 0.1us.
-> 
-> That depends on the kernel functionality used.
-> 
-> > You need 100 vmstat updates (all misses to RAM, the worst possible case)
-> > to have equivalent amount of time of the batching version.
-> 
-> The batching version occurs every couple of seconds if at all.
-> 
-> > But thats not the point. The point is the 10us interruption
-> > to execution of the realtime app (which can either mean
-> > your current deadline requirements are not met, or that
-> > another application with lowest latency requirement can't
-> > be used).
-> 
-> Ok then you need to get rid of the IPIs and the other stuff that you have
-> going on with the OS first I think.
+Hi, various fixes and cleanups to rt-tests, developed on top of the
+"unstable/devel/v1.1.1" branch.
 
-I'll measure the cost of all IPIs in the system to confirm
-vmstat_update's costs is larger than the cost of any IPI.
+Also available here on the devel-11 branch:
+https://github.com/rantala/rt-tests
 
-> > So why are you against integrating this simple, isolated patch which
-> > does not affect how current logic works?
-> 
-> Frankly the argument does not make sense. Vmstat updates occur very
-> infrequently (probably even less than you IPIs and the other OS stuff that
-> also causes additional latencies that you seem to be willing to tolerate).
-> 
-> And you can configure the interval of vmstat updates freely.... Set
-> the vmstat_interval to 60 seconds instead of 2 for a try? Is that rare
-> enough?
+Tommi Rantala (34):
+  rt-utils: add cpus_online() helper
+  cyclictest: use cpus_online() helper
+  cyclictest: always clear stop to avoid -Wmaybe-uninitialized warning
+  cyclictest: remove extra argument in warn() and fatal() calls
+  cyclictest: fix signed vs unsigned compiler warnings
+  cyclictest: fix typo in warn() message
+  cyclictest: update --smp help: -n was removed
+  cyclictest: adjust whitespace in display_help() output
+  cyclictest: use %p for printing void*, and print stack size separately
+  cyclictest: use %zd for printing size_t in rt_numa_numa_alloc_onnode()
+  cyclictest: max_cpus unused in this variant of
+    rt_numa_parse_cpustring()
+  cyclictest: fix off-by-one in clocksel check
+  cyclictest: check timer_getoverrun() return value for failure
+  cyclictest: fix MODE_CYCLIC measurement failure after timer overruns
+  cyclictest: param is unused in fifothread()
+  cyclictest: normalize next before tsgreater() check
+  cyclictest: tsnorm() after adjusting next
+  pip_stress: fix missing argument in err_msg() call in
+    process_shared_mutex_available()
+  pip_stress: getopt.h and long_options[] are unused
+  pi_stress: use cpus_online() helper
+  pi_stress: use %lu for unsigned long
+  pi_stress: add missing argument in pi_error() call
+  svsematest: test .mindiff against UINT_MAX
+  signaltest: remove unused ARRAY_SIZE macro
+  deadline_test: fix stack corruption in setup_ftrace_marker()
+  deadline_test: remove unused tid parameter in do_runtime()
+  deadline_test: tv_nsec is long
+  deadline_test: use %llu for printing unsigned long longs
+  cyclicdeadline: fix stack corruption in setup_ftrace_marker()
+  cyclicdeadline: remove unused tid parameter from do_runtime()
+  cyclicdeadline: avoid signed vs unsigned compiler warnings
+  printf format attributes and format string constness in error helpers
+  mark unused sighand() parameters with unused attribute
+  read-only struct option array constness
 
-Not rare enough. Never is rare enough.
+ src/backfire/sendme.c                 |  2 +-
+ src/cyclictest/cyclictest.c           | 56 ++++++++++++++++++---------------
+ src/cyclictest/rt_numa.h              |  4 +--
+ src/hackbench/hackbench.c             |  2 +-
+ src/include/error.h                   | 16 +++++-----
+ src/include/rt-utils.h                |  1 +
+ src/lib/error.c                       | 16 +++++-----
+ src/lib/rt-utils.c                    | 12 +++++++
+ src/pi_tests/classic_pi.c             |  2 +-
+ src/pi_tests/pi_stress.c              | 12 +++----
+ src/pi_tests/pip_stress.c             |  8 +----
+ src/pmqtest/pmqtest.c                 |  4 +--
+ src/ptsematest/ptsematest.c           |  4 +--
+ src/rt-migrate-test/rt-migrate-test.c |  2 +-
+ src/sched_deadline/cyclicdeadline.c   | 14 ++++-----
+ src/sched_deadline/deadline_test.c    | 59 +++++++++++++++++------------------
+ src/signaltest/signaltest.c           |  6 ++--
+ src/sigwaittest/sigwaittest.c         |  4 +--
+ src/svsematest/svsematest.c           |  6 ++--
+ 19 files changed, 120 insertions(+), 110 deletions(-)
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+2.9.3
+
