@@ -1,75 +1,230 @@
-From: Clark Williams <williams@redhat.com>
-Subject: cyclictest usage
-Date: Fri, 26 May 2017 11:25:02 -0500
-Message-ID: <20170526112502.4f6a49ac@tagon>
+From: Anna-Maria Gleixner <anna-maria@linutronix.de>
+Subject: [PATCH] Revert "timers: Don't wake ktimersoftd on every tick"
+Date: Fri, 26 May 2017 19:16:07 +0200 (CEST)
+Message-ID: <alpine.DEB.2.20.1705261911230.11993@hypnos.tec.linutronix.de>
+References: <20170203165151.qbpjothhaqctuzx5@linutronix.de> <20170203182112.18053-1-haris.okanovic@ni.com> <20170210170207.3kzfqyfa4ueh7mih@linutronix.de>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- boundary="Sig_/ABLNa5VFeN029LeGulWHdn/"; protocol="application/pgp-signature"
-Cc: John Kacur <jkacur@redhat.com>
-To: RT <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:54436 "EHLO mx1.redhat.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1753542AbdEZQZG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 26 May 2017 12:25:06 -0400
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mx1.redhat.com (Postfix) with ESMTPS id DFE3D80074
-        for <linux-rt-users@vger.kernel.org>; Fri, 26 May 2017 16:25:05 +0000 (UTC)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
-
---Sig_/ABLNa5VFeN029LeGulWHdn/
 Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+Cc: Haris Okanovic <haris.okanovic@ni.com>,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        tglx@linutronix.de, julia.cartwright@ni.com, gratian.crisan@ni.com
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170210170207.3kzfqyfa4ueh7mih@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-I was gently reminded at the Linux Foundation RT board meeting that I had b=
-een tasked with sending out an email, soliciting people's use-cases for run=
-ning cyclictest on RT kernels and to announce that we're looking at doing a=
- rewrite to cyclictest 2.0. Herein is that email (better late than never).=
-=20
+This reverts commit 032f93cae150a.
 
-What we're looking for is how people are using cyclictest. For example, at =
-Red Hat we use the 'rteval' tool, which puts a large SCHED_OTHER load on th=
-e system and then runs cyclictest with a measurement thread on each core. T=
-he intent is to put a large load on the scheduler and prove that the RT pat=
-chset provides deterministic performance under load.=20
+The problem is that the look ahead optimization from the tick timer
+interrupt context can race with the softirq thread expiring timer. As
+a consequence the temporary hlist heads which hold the to expire
+timers are overwritten and the timers which are already removed from
+the wheel bucket for expiry are now dangling w/o a list head.
 
-What other types of testing/measurement are people doing with cyclictest?
+That means those timers never get expired. If one of those timers is
+canceled the removal operation will result in a hlist corruption.
 
-John Kacur and I are wanting to clean up tracing and make sure that the mos=
-t commonly used options are on by default. In addition we want to refactor =
-some of the runtime logic. Are there other areas that need to be cleaned up=
-? Features that need to be added/deleted?
+Signed-off-by: Anna-Maria Gleixner <anna-maria@linutronix.de>
+---
+ kernel/time/timer.c | 96 ++++++++++++++++-------------------------------------
+ 1 file changed, 29 insertions(+), 67 deletions(-)
 
-Thanks,
-
-Clark
-
---=20
-The United States Coast Guard
-Ruining Natural Selection since 1790
-
---Sig_/ABLNa5VFeN029LeGulWHdn/
-Content-Type: application/pgp-signature
-Content-Description: OpenPGP digital signature
-
------BEGIN PGP SIGNATURE-----
-
-iQIcBAEBCgAGBQJZKFbeAAoJEBO1XdB8U7hRACQP/2gKWm++njx02fL8p7FzPoR5
-WBOmT66iOGWt+Pqh7YTmj4wJJqgAQZDnyU9bPDsPoIHRtdcjPPx47QUW7q5Ehkro
-I8ip25NxjHCqiu0amY+uIWrMDDOfqm6LT7TG5e+z0HcFMwyRPI/Aa94K8Fz3aInP
-dudH7QozguGJuY3C13ac+KUr5OPgVpfexIcb4hVhUQsTJx1A7kpfQi/gfalv6BFd
-PdlTGy4jMFoo3zQMe8lYjZcVAAhdZz6n46Kxp+dWMBHSDfUkS7oX/uR62ypRXZqi
-2mHPKyYfmZGYRVsQIwDN5sBWUGJbtAwrETylKv4diBFq2T2IGqXwrLydt/JbbOzs
-iAMLHEYLdTkV7dqyRHnG4BzM5C+AMhQ42PpBjjfVI1gseKmD4diuZKpXgEqnHdAH
-WRA4oHrtXBGvBmhbUf8KFa8v+4OXeXSfCZUMGsGE/0RKXh2WoKW8eLM+sXzlPKDA
-5fVRegIPQe9rlWaFKvMpVClMikCOKIiA4jO0RTwZWrZXk67EuegFBdWQANiSy+XL
-Ut0Ph22UHQ/OBBmgvIQHlFeG6m7CNBykV4Z9jhpPx3VBoObtL0lcvrhZPiK+8hEm
-CNSHZj+u8z5a1g9dwTxovof96c8RhwPSKWgVby9zcQd+EgFtiA2YwEIwX1d9ZPYE
-tU9doYlKFgibbNJO+reR
-=hBFK
------END PGP SIGNATURE-----
-
---Sig_/ABLNa5VFeN029LeGulWHdn/--
+diff --git a/kernel/time/timer.c b/kernel/time/timer.c
+index cdff4411f8f6..08a5ab762495 100644
+--- a/kernel/time/timer.c
++++ b/kernel/time/timer.c
+@@ -206,8 +206,6 @@ struct timer_base {
+ 	bool			is_idle;
+ 	DECLARE_BITMAP(pending_map, WHEEL_SIZE);
+ 	struct hlist_head	vectors[WHEEL_SIZE];
+-	struct hlist_head	expired_lists[LVL_DEPTH];
+-	int			expired_count;
+ } ____cacheline_aligned;
+ 
+ static DEFINE_PER_CPU(struct timer_base, timer_bases[NR_BASES]);
+@@ -1355,8 +1353,7 @@ static void call_timer_fn(struct timer_list *timer, void (*fn)(unsigned long),
+ 	}
+ }
+ 
+-static inline void __expire_timers(struct timer_base *base,
+-				   struct hlist_head *head)
++static void expire_timers(struct timer_base *base, struct hlist_head *head)
+ {
+ 	while (!hlist_empty(head)) {
+ 		struct timer_list *timer;
+@@ -1387,38 +1384,21 @@ static inline void __expire_timers(struct timer_base *base,
+ 	}
+ }
+ 
+-static void expire_timers(struct timer_base *base)
+-{
+-	struct hlist_head *head;
+-
+-	while (base->expired_count--) {
+-		head = base->expired_lists + base->expired_count;
+-		__expire_timers(base, head);
+-	}
+-	base->expired_count = 0;
+-}
+-
+-static void __collect_expired_timers(struct timer_base *base)
++static int __collect_expired_timers(struct timer_base *base,
++				    struct hlist_head *heads)
+ {
+ 	unsigned long clk = base->clk;
+ 	struct hlist_head *vec;
+-	int i;
++	int i, levels = 0;
+ 	unsigned int idx;
+ 
+-	/*
+-	 * expire_timers() must be called at least once before we can
+-	 * collect more timers
+-	 */
+-	if (WARN_ON(base->expired_count))
+-		return;
+-
+ 	for (i = 0; i < LVL_DEPTH; i++) {
+ 		idx = (clk & LVL_MASK) + i * LVL_SIZE;
+ 
+ 		if (__test_and_clear_bit(idx, base->pending_map)) {
+ 			vec = base->vectors + idx;
+-			hlist_move_list(vec,
+-				&base->expired_lists[base->expired_count++]);
++			hlist_move_list(vec, heads++);
++			levels++;
+ 		}
+ 		/* Is it time to look at the next level? */
+ 		if (clk & LVL_CLK_MASK)
+@@ -1426,6 +1406,7 @@ static void __collect_expired_timers(struct timer_base *base)
+ 		/* Shift clock for the next level granularity */
+ 		clk >>= LVL_CLK_SHIFT;
+ 	}
++	return levels;
+ }
+ 
+ #ifdef CONFIG_NO_HZ_COMMON
+@@ -1618,7 +1599,8 @@ void timer_clear_idle(void)
+ 	base->is_idle = false;
+ }
+ 
+-static void collect_expired_timers(struct timer_base *base)
++static int collect_expired_timers(struct timer_base *base,
++				  struct hlist_head *heads)
+ {
+ 	/*
+ 	 * NOHZ optimization. After a long idle sleep we need to forward the
+@@ -1635,49 +1617,20 @@ static void collect_expired_timers(struct timer_base *base)
+ 		if (time_after(next, jiffies)) {
+ 			/* The call site will increment clock! */
+ 			base->clk = jiffies - 1;
+-			return;
++			return 0;
+ 		}
+ 		base->clk = next;
+ 	}
+-	__collect_expired_timers(base);
++	return __collect_expired_timers(base, heads);
+ }
+ #else
+-static inline void collect_expired_timers(struct timer_base *base)
++static inline int collect_expired_timers(struct timer_base *base,
++					 struct hlist_head *heads)
+ {
+-	__collect_expired_timers(base);
++	return __collect_expired_timers(base, heads);
+ }
+ #endif
+ 
+-static int find_expired_timers(struct timer_base *base)
+-{
+-	const unsigned long int end_clk = jiffies;
+-
+-	while (!base->expired_count && time_after_eq(end_clk, base->clk)) {
+-		collect_expired_timers(base);
+-		base->clk++;
+-	}
+-
+-	return base->expired_count;
+-}
+-
+-/* Called from CPU tick routine to quickly collect expired timers */
+-static int tick_find_expired(struct timer_base *base)
+-{
+-	int count;
+-
+-	raw_spin_lock(&base->lock);
+-
+-	if (unlikely(time_after(jiffies, base->clk + HZ))) {
+-		/* defer to ktimersoftd; don't spend too long in irq context */
+-		count = -1;
+-	} else
+-		count = find_expired_timers(base);
+-
+-	raw_spin_unlock(&base->lock);
+-
+-	return count;
+-}
+-
+ /*
+  * Called from the timer interrupt handler to charge one tick to the current
+  * process.  user_tick is 1 if the tick is user time, 0 for system.
+@@ -1704,11 +1657,22 @@ void update_process_times(int user_tick)
+  */
+ static inline void __run_timers(struct timer_base *base)
+ {
++	struct hlist_head heads[LVL_DEPTH];
++	int levels;
++
++	if (!time_after_eq(jiffies, base->clk))
++		return;
++
+ 	raw_spin_lock_irq(&base->lock);
+ 
+-	while (find_expired_timers(base))
+-		expire_timers(base);
++	while (time_after_eq(jiffies, base->clk)) {
++
++		levels = collect_expired_timers(base, heads);
++		base->clk++;
+ 
++		while (levels--)
++			expire_timers(base, heads + levels);
++	}
+ 	raw_spin_unlock_irq(&base->lock);
+ 	wakeup_timer_waiters(base);
+ }
+@@ -1736,12 +1700,12 @@ void run_local_timers(void)
+ 
+ 	hrtimer_run_queues();
+ 	/* Raise the softirq only if required. */
+-	if (time_before(jiffies, base->clk) || !tick_find_expired(base)) {
++	if (time_before(jiffies, base->clk)) {
+ 		if (!IS_ENABLED(CONFIG_NO_HZ_COMMON) || !base->nohz_active)
+ 			return;
+ 		/* CPU is awake, so check the deferrable base. */
+ 		base++;
+-		if (time_before(jiffies, base->clk) || !tick_find_expired(base))
++		if (time_before(jiffies, base->clk))
+ 			return;
+ 	}
+ 	raise_softirq(TIMER_SOFTIRQ);
+@@ -1911,7 +1875,6 @@ int timers_dead_cpu(unsigned int cpu)
+ 		raw_spin_lock_nested(&old_base->lock, SINGLE_DEPTH_NESTING);
+ 
+ 		BUG_ON(old_base->running_timer);
+-		BUG_ON(old_base->expired_count);
+ 
+ 		for (i = 0; i < WHEEL_SIZE; i++)
+ 			migrate_timer_list(new_base, old_base->vectors + i);
+@@ -1938,7 +1901,6 @@ static void __init init_timer_cpu(int cpu)
+ #ifdef CONFIG_PREEMPT_RT_FULL
+ 		init_swait_queue_head(&base->wait_for_running_timer);
+ #endif
+-		base->expired_count = 0;
+ 	}
+ }
+ 
+-- 
+2.11.0
