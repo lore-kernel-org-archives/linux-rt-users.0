@@ -1,230 +1,73 @@
-From: Anna-Maria Gleixner <anna-maria@linutronix.de>
-Subject: [PATCH] Revert "timers: Don't wake ktimersoftd on every tick"
-Date: Fri, 26 May 2017 19:16:07 +0200 (CEST)
-Message-ID: <alpine.DEB.2.20.1705261911230.11993@hypnos.tec.linutronix.de>
-References: <20170203165151.qbpjothhaqctuzx5@linutronix.de> <20170203182112.18053-1-haris.okanovic@ni.com> <20170210170207.3kzfqyfa4ueh7mih@linutronix.de>
+From: Marcelo Tosatti <mtosatti@redhat.com>
+Subject: Re: [patch 2/2] MM: allow per-cpu vmstat_threshold and vmstat_worker
+ configuration
+Date: Fri, 26 May 2017 16:09:29 -0300
+Message-ID: <20170526190926.GA8974@amt.cnet>
+References: <alpine.DEB.2.20.1705121103120.22831@east.gentwo.org>
+ <20170512161915.GA4185@amt.cnet>
+ <alpine.DEB.2.20.1705121154240.23503@east.gentwo.org>
+ <20170515191531.GA31483@amt.cnet>
+ <alpine.DEB.2.20.1705160825480.32761@east.gentwo.org>
+ <20170519143407.GA19282@amt.cnet>
+ <alpine.DEB.2.20.1705191205580.19631@east.gentwo.org>
+ <20170519134934.0c298882@redhat.com>
+ <20170525193508.GA30252@amt.cnet>
+ <alpine.DEB.2.20.1705252220130.7596@east.gentwo.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Cc: Haris Okanovic <haris.okanovic@ni.com>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        tglx@linutronix.de, julia.cartwright@ni.com, gratian.crisan@ni.com
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170210170207.3kzfqyfa4ueh7mih@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Luiz Capitulino <lcapitulino@redhat.com>, linux-kernel@vger.kernel.org,
+        linux-mm@kvack.org, Rik van Riel <riel@redhat.com>,
+        Linux RT Users <linux-rt-users@vger.kernel.org>, cmetcalf@mellanox.com
+To: Christoph Lameter <cl@linux.com>
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.20.1705252220130.7596@east.gentwo.org>
+Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-This reverts commit 032f93cae150a.
+On Thu, May 25, 2017 at 10:24:46PM -0500, Christoph Lameter wrote:
+> On Thu, 25 May 2017, Marcelo Tosatti wrote:
+> 
+> > Argument? We're showing you the data that this is causing a latency
+> > problem for us.
+> 
+> Sorry I am not sure where the data shows a latency problem. There are
+> interrupts and scheduler ticks. But what does this have to do with vmstat?
+> 
+> Show me your dpdk code running and trace the tick on / off events  as well
+> as the vmstat invocations. Also show all system calls occurring on the cpu
+> that runs dpdk. That is necessary to see what triggers vmstat and how the
+> system reacts to the changes to the differentials.
 
-The problem is that the look ahead optimization from the tick timer
-interrupt context can race with the softirq thread expiring timer. As
-a consequence the temporary hlist heads which hold the to expire
-timers are overwritten and the timers which are already removed from
-the wheel bucket for expiry are now dangling w/o a list head.
+Sure, i can get that to you. The question remains: Are you arguing
+its not valid for a realtime application to use any system call
+which changes a vmstat counter? 
 
-That means those timers never get expired. If one of those timers is
-canceled the removal operation will result in a hlist corruption.
+Because if they are allowed, then its obvious something like
+this is needed.
 
-Signed-off-by: Anna-Maria Gleixner <anna-maria@linutronix.de>
----
- kernel/time/timer.c | 96 ++++++++++++++++-------------------------------------
- 1 file changed, 29 insertions(+), 67 deletions(-)
+> Then please rerun the test by setting the vmstat_interval to 60.
+> 
+> Do another run with your modifications and show the difference.
 
-diff --git a/kernel/time/timer.c b/kernel/time/timer.c
-index cdff4411f8f6..08a5ab762495 100644
---- a/kernel/time/timer.c
-+++ b/kernel/time/timer.c
-@@ -206,8 +206,6 @@ struct timer_base {
- 	bool			is_idle;
- 	DECLARE_BITMAP(pending_map, WHEEL_SIZE);
- 	struct hlist_head	vectors[WHEEL_SIZE];
--	struct hlist_head	expired_lists[LVL_DEPTH];
--	int			expired_count;
- } ____cacheline_aligned;
- 
- static DEFINE_PER_CPU(struct timer_base, timer_bases[NR_BASES]);
-@@ -1355,8 +1353,7 @@ static void call_timer_fn(struct timer_list *timer, void (*fn)(unsigned long),
- 	}
- }
- 
--static inline void __expire_timers(struct timer_base *base,
--				   struct hlist_head *head)
-+static void expire_timers(struct timer_base *base, struct hlist_head *head)
- {
- 	while (!hlist_empty(head)) {
- 		struct timer_list *timer;
-@@ -1387,38 +1384,21 @@ static inline void __expire_timers(struct timer_base *base,
- 	}
- }
- 
--static void expire_timers(struct timer_base *base)
--{
--	struct hlist_head *head;
--
--	while (base->expired_count--) {
--		head = base->expired_lists + base->expired_count;
--		__expire_timers(base, head);
--	}
--	base->expired_count = 0;
--}
--
--static void __collect_expired_timers(struct timer_base *base)
-+static int __collect_expired_timers(struct timer_base *base,
-+				    struct hlist_head *heads)
- {
- 	unsigned long clk = base->clk;
- 	struct hlist_head *vec;
--	int i;
-+	int i, levels = 0;
- 	unsigned int idx;
- 
--	/*
--	 * expire_timers() must be called at least once before we can
--	 * collect more timers
--	 */
--	if (WARN_ON(base->expired_count))
--		return;
--
- 	for (i = 0; i < LVL_DEPTH; i++) {
- 		idx = (clk & LVL_MASK) + i * LVL_SIZE;
- 
- 		if (__test_and_clear_bit(idx, base->pending_map)) {
- 			vec = base->vectors + idx;
--			hlist_move_list(vec,
--				&base->expired_lists[base->expired_count++]);
-+			hlist_move_list(vec, heads++);
-+			levels++;
- 		}
- 		/* Is it time to look at the next level? */
- 		if (clk & LVL_CLK_MASK)
-@@ -1426,6 +1406,7 @@ static void __collect_expired_timers(struct timer_base *base)
- 		/* Shift clock for the next level granularity */
- 		clk >>= LVL_CLK_SHIFT;
- 	}
-+	return levels;
- }
- 
- #ifdef CONFIG_NO_HZ_COMMON
-@@ -1618,7 +1599,8 @@ void timer_clear_idle(void)
- 	base->is_idle = false;
- }
- 
--static void collect_expired_timers(struct timer_base *base)
-+static int collect_expired_timers(struct timer_base *base,
-+				  struct hlist_head *heads)
- {
- 	/*
- 	 * NOHZ optimization. After a long idle sleep we need to forward the
-@@ -1635,49 +1617,20 @@ static void collect_expired_timers(struct timer_base *base)
- 		if (time_after(next, jiffies)) {
- 			/* The call site will increment clock! */
- 			base->clk = jiffies - 1;
--			return;
-+			return 0;
- 		}
- 		base->clk = next;
- 	}
--	__collect_expired_timers(base);
-+	return __collect_expired_timers(base, heads);
- }
- #else
--static inline void collect_expired_timers(struct timer_base *base)
-+static inline int collect_expired_timers(struct timer_base *base,
-+					 struct hlist_head *heads)
- {
--	__collect_expired_timers(base);
-+	return __collect_expired_timers(base, heads);
- }
- #endif
- 
--static int find_expired_timers(struct timer_base *base)
--{
--	const unsigned long int end_clk = jiffies;
--
--	while (!base->expired_count && time_after_eq(end_clk, base->clk)) {
--		collect_expired_timers(base);
--		base->clk++;
--	}
--
--	return base->expired_count;
--}
--
--/* Called from CPU tick routine to quickly collect expired timers */
--static int tick_find_expired(struct timer_base *base)
--{
--	int count;
--
--	raw_spin_lock(&base->lock);
--
--	if (unlikely(time_after(jiffies, base->clk + HZ))) {
--		/* defer to ktimersoftd; don't spend too long in irq context */
--		count = -1;
--	} else
--		count = find_expired_timers(base);
--
--	raw_spin_unlock(&base->lock);
--
--	return count;
--}
--
- /*
-  * Called from the timer interrupt handler to charge one tick to the current
-  * process.  user_tick is 1 if the tick is user time, 0 for system.
-@@ -1704,11 +1657,22 @@ void update_process_times(int user_tick)
-  */
- static inline void __run_timers(struct timer_base *base)
- {
-+	struct hlist_head heads[LVL_DEPTH];
-+	int levels;
-+
-+	if (!time_after_eq(jiffies, base->clk))
-+		return;
-+
- 	raw_spin_lock_irq(&base->lock);
- 
--	while (find_expired_timers(base))
--		expire_timers(base);
-+	while (time_after_eq(jiffies, base->clk)) {
-+
-+		levels = collect_expired_timers(base, heads);
-+		base->clk++;
- 
-+		while (levels--)
-+			expire_timers(base, heads + levels);
-+	}
- 	raw_spin_unlock_irq(&base->lock);
- 	wakeup_timer_waiters(base);
- }
-@@ -1736,12 +1700,12 @@ void run_local_timers(void)
- 
- 	hrtimer_run_queues();
- 	/* Raise the softirq only if required. */
--	if (time_before(jiffies, base->clk) || !tick_find_expired(base)) {
-+	if (time_before(jiffies, base->clk)) {
- 		if (!IS_ENABLED(CONFIG_NO_HZ_COMMON) || !base->nohz_active)
- 			return;
- 		/* CPU is awake, so check the deferrable base. */
- 		base++;
--		if (time_before(jiffies, base->clk) || !tick_find_expired(base))
-+		if (time_before(jiffies, base->clk))
- 			return;
- 	}
- 	raise_softirq(TIMER_SOFTIRQ);
-@@ -1911,7 +1875,6 @@ int timers_dead_cpu(unsigned int cpu)
- 		raw_spin_lock_nested(&old_base->lock, SINGLE_DEPTH_NESTING);
- 
- 		BUG_ON(old_base->running_timer);
--		BUG_ON(old_base->expired_count);
- 
- 		for (i = 0; i < WHEEL_SIZE; i++)
- 			migrate_timer_list(new_base, old_base->vectors + i);
-@@ -1938,7 +1901,6 @@ static void __init init_timer_cpu(int cpu)
- #ifdef CONFIG_PREEMPT_RT_FULL
- 		init_swait_queue_head(&base->wait_for_running_timer);
- #endif
--		base->expired_count = 0;
- 	}
- }
- 
--- 
-2.11.0
+Will do so.
+
+> > > Something that crossed my mind was to add a new tunable to set
+> > > the vmstat_interval for each CPU, this way we could essentially
+> > > disable it to the CPUs where DPDK is running. What's the implications
+> > > of doing this besides not getting up to date stats in /proc/vmstat
+> > > (which I still have to confirm would be OK)? Can this break anything
+> > > in the kernel for example?
+> >
+> > Well, you get incorrect statistics.
+> 
+> The statistics are never completely accurate. You will get less accurate
+> statistics but they will be correct. The differentials may not be
+> reflected in the counts shown via /proc but there is a cap on how
+> inaccurate those can becore.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
