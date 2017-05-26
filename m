@@ -1,53 +1,47 @@
-From: Christoph Lameter <cl@linux.com>
-Subject: Re: [patch 2/2] MM: allow per-cpu vmstat_threshold and vmstat_worker
- configuration
-Date: Thu, 25 May 2017 22:24:46 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1705252220130.7596@east.gentwo.org>
-References: <alpine.DEB.2.20.1705121002310.22243@east.gentwo.org> <20170512154026.GA3556@amt.cnet> <alpine.DEB.2.20.1705121103120.22831@east.gentwo.org> <20170512161915.GA4185@amt.cnet> <alpine.DEB.2.20.1705121154240.23503@east.gentwo.org>
- <20170515191531.GA31483@amt.cnet> <alpine.DEB.2.20.1705160825480.32761@east.gentwo.org> <20170519143407.GA19282@amt.cnet> <alpine.DEB.2.20.1705191205580.19631@east.gentwo.org> <20170519134934.0c298882@redhat.com> <20170525193508.GA30252@amt.cnet>
-Content-Type: text/plain; charset=US-ASCII
-Cc: Luiz Capitulino <lcapitulino@redhat.com>, linux-kernel@vger.kernel.org,
-    linux-mm@kvack.org, Rik van Riel <riel@redhat.com>,
-    Linux RT Users <linux-rt-users@vger.kernel.org>, cmetcalf@mellanox.com
-To: Marcelo Tosatti <mtosatti@redhat.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170525193508.GA30252@amt.cnet>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+From: John Ogness <john.ogness@linutronix.de>
+Subject: Re: timer_create affinity
+Date: Fri, 26 May 2017 09:13:35 +0200
+Message-ID: <87r2zcay5c.fsf@linutronix.de>
+References: <CAKP5S=3NMzfEDdLsd6_FCNTH6o7_Qz2D6qFwx1WOdc-x2Xi0rA@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org, linuxppc-dev@lists.ozlabs.org,
+        linux-kernel@vger.kernel.org
+To: Nicolae Rosia <nicolae.rosia.oss@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:39798 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1947105AbdEZHNj (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 26 May 2017 03:13:39 -0400
+In-Reply-To: <CAKP5S=3NMzfEDdLsd6_FCNTH6o7_Qz2D6qFwx1WOdc-x2Xi0rA@mail.gmail.com>
+        (Nicolae Rosia's message of "Thu, 25 May 2017 17:57:03 +0300")
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 25 May 2017, Marcelo Tosatti wrote:
-
-> Argument? We're showing you the data that this is causing a latency
-> problem for us.
-
-Sorry I am not sure where the data shows a latency problem. There are
-interrupts and scheduler ticks. But what does this have to do with vmstat?
-
-Show me your dpdk code running and trace the tick on / off events  as well
-as the vmstat invocations. Also show all system calls occurring on the cpu
-that runs dpdk. That is necessary to see what triggers vmstat and how the
-system reacts to the changes to the differentials.
-
-Then please rerun the test by setting the vmstat_interval to 60.
-
-Do another run with your modifications and show the difference.
-
-> > Something that crossed my mind was to add a new tunable to set
-> > the vmstat_interval for each CPU, this way we could essentially
-> > disable it to the CPUs where DPDK is running. What's the implications
-> > of doing this besides not getting up to date stats in /proc/vmstat
-> > (which I still have to confirm would be OK)? Can this break anything
-> > in the kernel for example?
+On 2017-05-25, Nicolae Rosia <nicolae.rosia.oss@gmail.com> wrote:
+> I'm working on a real-time application using POSIX timers running on a
+> QorIQ PowerPC platform with a 4.1 PREEMPT RT kernel and I'm trying to
+> understand whether the following can happen:
 >
-> Well, you get incorrect statistics.
+> 1. A thread with a core affinity #0 creates a timer which will invoke
+> a callback.
+> 2. The kernel will setup the timer using a local timer running on a
+> different core, core #1
+> 3. The ISR will fire, and could be dispatched by core #2
+> 4. The scheduler will run the callback on core #3.
+>
+> Is there a way to make sure this whole chain will be executed on a
+> single core, the core of the caller?
 
-The statistics are never completely accurate. You will get less accurate
-statistics but they will be correct. The differentials may not be
-reflected in the counts shown via /proc but there is a cap on how
-inaccurate those can becore.
+Avoid POSIX timers if you can. POSIX timers not only have the issue that
+you mentioned, but also are generally bad for realtime applications.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+The realtime wiki has an example[0] of running a cyclic task. With that
+simple example you have complete control over the context of your
+task. This is necessary to avoid things like priority inversion and
+page-faults, and gives you control over things like affinity or cgroups.
+
+John Ogness
+
+[0] https://wiki.linuxfoundation.org/realtime/documentation/howto/applications/cyclic
