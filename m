@@ -1,47 +1,75 @@
-From: John Ogness <john.ogness@linutronix.de>
-Subject: Re: timer_create affinity
-Date: Fri, 26 May 2017 09:13:35 +0200
-Message-ID: <87r2zcay5c.fsf@linutronix.de>
-References: <CAKP5S=3NMzfEDdLsd6_FCNTH6o7_Qz2D6qFwx1WOdc-x2Xi0rA@mail.gmail.com>
+From: Clark Williams <williams@redhat.com>
+Subject: cyclictest usage
+Date: Fri, 26 May 2017 11:25:02 -0500
+Message-ID: <20170526112502.4f6a49ac@tagon>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org, linuxppc-dev@lists.ozlabs.org,
-        linux-kernel@vger.kernel.org
-To: Nicolae Rosia <nicolae.rosia.oss@gmail.com>
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ boundary="Sig_/ABLNa5VFeN029LeGulWHdn/"; protocol="application/pgp-signature"
+Cc: John Kacur <jkacur@redhat.com>
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:39798 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1947105AbdEZHNj (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 26 May 2017 03:13:39 -0400
-In-Reply-To: <CAKP5S=3NMzfEDdLsd6_FCNTH6o7_Qz2D6qFwx1WOdc-x2Xi0rA@mail.gmail.com>
-        (Nicolae Rosia's message of "Thu, 25 May 2017 17:57:03 +0300")
+Received: from mx1.redhat.com ([209.132.183.28]:54436 "EHLO mx1.redhat.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1753542AbdEZQZG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 26 May 2017 12:25:06 -0400
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mx1.redhat.com (Postfix) with ESMTPS id DFE3D80074
+        for <linux-rt-users@vger.kernel.org>; Fri, 26 May 2017 16:25:05 +0000 (UTC)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-05-25, Nicolae Rosia <nicolae.rosia.oss@gmail.com> wrote:
-> I'm working on a real-time application using POSIX timers running on a
-> QorIQ PowerPC platform with a 4.1 PREEMPT RT kernel and I'm trying to
-> understand whether the following can happen:
->
-> 1. A thread with a core affinity #0 creates a timer which will invoke
-> a callback.
-> 2. The kernel will setup the timer using a local timer running on a
-> different core, core #1
-> 3. The ISR will fire, and could be dispatched by core #2
-> 4. The scheduler will run the callback on core #3.
->
-> Is there a way to make sure this whole chain will be executed on a
-> single core, the core of the caller?
+--Sig_/ABLNa5VFeN029LeGulWHdn/
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-Avoid POSIX timers if you can. POSIX timers not only have the issue that
-you mentioned, but also are generally bad for realtime applications.
+I was gently reminded at the Linux Foundation RT board meeting that I had b=
+een tasked with sending out an email, soliciting people's use-cases for run=
+ning cyclictest on RT kernels and to announce that we're looking at doing a=
+ rewrite to cyclictest 2.0. Herein is that email (better late than never).=
+=20
 
-The realtime wiki has an example[0] of running a cyclic task. With that
-simple example you have complete control over the context of your
-task. This is necessary to avoid things like priority inversion and
-page-faults, and gives you control over things like affinity or cgroups.
+What we're looking for is how people are using cyclictest. For example, at =
+Red Hat we use the 'rteval' tool, which puts a large SCHED_OTHER load on th=
+e system and then runs cyclictest with a measurement thread on each core. T=
+he intent is to put a large load on the scheduler and prove that the RT pat=
+chset provides deterministic performance under load.=20
 
-John Ogness
+What other types of testing/measurement are people doing with cyclictest?
 
-[0] https://wiki.linuxfoundation.org/realtime/documentation/howto/applications/cyclic
+John Kacur and I are wanting to clean up tracing and make sure that the mos=
+t commonly used options are on by default. In addition we want to refactor =
+some of the runtime logic. Are there other areas that need to be cleaned up=
+? Features that need to be added/deleted?
+
+Thanks,
+
+Clark
+
+--=20
+The United States Coast Guard
+Ruining Natural Selection since 1790
+
+--Sig_/ABLNa5VFeN029LeGulWHdn/
+Content-Type: application/pgp-signature
+Content-Description: OpenPGP digital signature
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIcBAEBCgAGBQJZKFbeAAoJEBO1XdB8U7hRACQP/2gKWm++njx02fL8p7FzPoR5
+WBOmT66iOGWt+Pqh7YTmj4wJJqgAQZDnyU9bPDsPoIHRtdcjPPx47QUW7q5Ehkro
+I8ip25NxjHCqiu0amY+uIWrMDDOfqm6LT7TG5e+z0HcFMwyRPI/Aa94K8Fz3aInP
+dudH7QozguGJuY3C13ac+KUr5OPgVpfexIcb4hVhUQsTJx1A7kpfQi/gfalv6BFd
+PdlTGy4jMFoo3zQMe8lYjZcVAAhdZz6n46Kxp+dWMBHSDfUkS7oX/uR62ypRXZqi
+2mHPKyYfmZGYRVsQIwDN5sBWUGJbtAwrETylKv4diBFq2T2IGqXwrLydt/JbbOzs
+iAMLHEYLdTkV7dqyRHnG4BzM5C+AMhQ42PpBjjfVI1gseKmD4diuZKpXgEqnHdAH
+WRA4oHrtXBGvBmhbUf8KFa8v+4OXeXSfCZUMGsGE/0RKXh2WoKW8eLM+sXzlPKDA
+5fVRegIPQe9rlWaFKvMpVClMikCOKIiA4jO0RTwZWrZXk67EuegFBdWQANiSy+XL
+Ut0Ph22UHQ/OBBmgvIQHlFeG6m7CNBykV4Z9jhpPx3VBoObtL0lcvrhZPiK+8hEm
+CNSHZj+u8z5a1g9dwTxovof96c8RhwPSKWgVby9zcQd+EgFtiA2YwEIwX1d9ZPYE
+tU9doYlKFgibbNJO+reR
+=hBFK
+-----END PGP SIGNATURE-----
+
+--Sig_/ABLNa5VFeN029LeGulWHdn/--
