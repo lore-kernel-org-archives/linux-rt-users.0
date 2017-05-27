@@ -1,70 +1,37 @@
-From: Haris Okanovic <haris.okanovic@ni.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Subject: Re: [PATCH] Revert "timers: Don't wake ktimersoftd on every tick"
-Date: Fri, 26 May 2017 15:25:50 -0500
-Message-ID: <4b4df775-53b8-cdeb-381b-af8cabb364a8@ni.com>
+Date: Sat, 27 May 2017 09:47:47 +0200
+Message-ID: <20170527074746.6w7vakbuelurs245@linutronix.de>
 References: <20170203165151.qbpjothhaqctuzx5@linutronix.de>
  <20170203182112.18053-1-haris.okanovic@ni.com>
  <20170210170207.3kzfqyfa4ueh7mih@linutronix.de>
  <alpine.DEB.2.20.1705261911230.11993@hypnos.tec.linutronix.de>
- <faa23f3e-28c0-6de1-66a6-2b6ab5e99462@ni.com>
- <alpine.DEB.2.20.1705262147510.2137@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Anna-Maria Gleixner <anna-maria@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+Content-Type: text/plain; charset=utf-8
+Cc: Haris Okanovic <haris.okanovic@ni.com>,
         linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        julia.cartwright@ni.com, gratian.crisan@ni.com
-To: Thomas Gleixner <tglx@linutronix.de>
+        tglx@linutronix.de, julia.cartwright@ni.com, gratian.crisan@ni.com
+To: Anna-Maria Gleixner <anna-maria@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.20.1705262147510.2137@nanos>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.20.1705261911230.11993@hypnos.tec.linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Oh crap. I think I see the problem. I decrement expired_count before 
-processing the list. Dropping the lock permits another run of 
-tick_find_expired()->find_expired_timers() in the middle of 
-__expire_timers() since it uses expired_count==0 as a condition.
+On 2017-05-26 19:16:07 [+0200], Anna-Maria Gleixner wrote:
+> This reverts commit 032f93cae150a.
+> 
+> The problem is that the look ahead optimization from the tick timer
+> interrupt context can race with the softirq thread expiring timer. As
+> a consequence the temporary hlist heads which hold the to expire
+> timers are overwritten and the timers which are already removed from
+> the wheel bucket for expiry are now dangling w/o a list head.
+> 
+> That means those timers never get expired. If one of those timers is
+> canceled the removal operation will result in a hlist corruption.
+> 
+> Signed-off-by: Anna-Maria Gleixner <anna-maria@linutronix.de>
 
-This should fix it, but I'll wait for Anna-Maria's test next week before 
-submitting a patch.
+Applied
 
->  static void expire_timers(struct timer_base *base)
->  {
->         struct hlist_head *head;
-> +       int expCount = base->expired_count;
->
-> -       while (base->expired_count--) {
-> -               head = base->expired_lists + base->expired_count;
-> +       while (expCount--) {
-> +               head = base->expired_lists + expCount;
->                 __expire_timers(base, head);
->         }
->         base->expired_count = 0;
->  }
-
-Thanks,
-Haris
-
-
-On 05/26/2017 02:49 PM, Thomas Gleixner wrote:
-> On Fri, 26 May 2017, Haris Okanovic wrote:
->
->> Anna-Maria,
->>
->> Look-ahead is implemented by tick_find_expired() and expiry by __run_timers(),
->> both of which hold timer_base::lock (raw spin lock) while running. Those two
->> routines shouldn't be able to run simultaneously on the same timer_base. Are
->> you sure the race isn't in another code path?
->
-> It happens when softirq runs and drops the spinlock to call the timer
-> function. And from there stuff goes down the drain.
->
-> Anna-Maria will send you the test case on monday.
->
-> Thanks,
->
-> 	tglx
->
-> 	
->
+Sebastian
