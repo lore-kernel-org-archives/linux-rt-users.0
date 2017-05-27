@@ -1,55 +1,53 @@
-From: rolf.freitag@email.de
-Subject: Re: Where are the branches for stable/v1.0 and unstable/devel?
-Date: Sat, 27 May 2017 23:43:45 +0200
-Message-ID: <trinity-363cee20-7cf0-4d43-b5d7-058ae3582716-1495921425917@3capp-webde-bs06>
-References: <trinity-81b115be-c7aa-430f-a6bb-a9f8512e0222-1495478595984@3capp-webde-bap56>
- <1495483301.9833.3.camel@intel.com>
+From: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
+Subject: Re: [ANNOUNCE] v4.9.30-rt20
+Date: Sat, 27 May 2017 23:55:34 +0200
+Message-ID: <20170527235534.1d068819@archlinux.localdomain>
+References: <20170527163230.b7qcfbmwsmbyo7k2@linutronix.de>
+        <fccee2a1-e0d3-4591-8ecc-6a1da4934219@manjaro.org>
+        <20170527173318.ed2v6ipmrnnq4iv5@linutronix.de>
+        <17b591e8-1e28-5dad-2388-3a397d02c0d9@manjaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mout.web.de ([212.227.15.14]:63866 "EHLO mout.web.de"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1750750AbdE0Vns (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 27 May 2017 17:43:48 -0400
-In-Reply-To: <1495483301.9833.3.camel@intel.com>
+Received: from mail80c50.megamailservers.eu ([91.136.10.90]:57958 "EHLO
+        mail70c50.megamailservers.eu" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1750746AbdE0WKH (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 27 May 2017 18:10:07 -0400
+Received: from archlinux.localdomain (x4e3216e9.dyn.telefonica.de [78.50.22.233])
+        (authenticated bits=0)
+        by mail70c50.megamailservers.eu (8.14.9/8.13.1) with ESMTP id v4RLtWOY015327
+        (version=TLSv1/SSLv3 cipher=AES256-GCM-SHA384 bits=256 verify=NO)
+        for <linux-rt-users@vger.kernel.org>; Sat, 27 May 2017 21:55:34 +0000
+In-Reply-To: <17b591e8-1e28-5dad-2388-3a397d02c0d9@manjaro.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Vedang, 
+On Sat, 27 May 2017 19:36:11 +0200, Bernhard Landauer wrote:
+>Yes, meanwhile I have looked it up and found that it belongs to 
+>7B96E8162A8CF5D1
+>
+>Sorry. All good!
 
-On Mon, 2017-05-22 at 20:43 +0200, vedang.patel@intel.com wrote:
-> ...
-> The following 2 branches in the above repository have been most
-> recently updated and correspond to the stable and unstable branch: 
-> 0e6c2ca28adbaeb668ca35210cec546f89938bfa        refs/heads/stable/devel
-> /v1.0.1
-> 44de1a494583c33e72335221360085f9e1faad2b        refs/heads/unstable/dev
-> el/v1.1.1
-> There is also a stable/v1.0 branch: 
-> d48504b8e85961afab1cb0bd346624eb31527197        refs/heads/stable/v1.0
-> 
-> the wiki page you mentioned in your email is outdated. Please refer to 
-> https://wiki.linuxfoundation.org/realtime/documentation/howto/tools/cyc[https://wiki.linuxfoundation.org/realtime/documentation/howto/tools/cyc]
-> lictest for the latest info.
+Earlier today I build
 
-Ok, due to https://wiki.linuxfoundation.org/realtime/documentation/howto/tools/rt-tests
-i can get the stable/v1.0 via:
+[rocketmouse@archlinux ~]$ uname -a
+Linux archlinux 4.9.30-rt19-1-rt-pussytoes #1 SMP PREEMPT RT Sat May 27 12:44:27 CEST 2017 x86_64 GNU/Linux
 
-# git clone git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git 
-# cd rt-tests
-# git checkout stable/v1.0
+it already required to refresh the key. For cases like this I added an
+alias...
 
-But when i try it with the other two versions,
+[rocketmouse@archlinux ~]$ grep "alias gkey=" .bashrc
+alias gkey='gpg --keyserver hkp://pgp.uni-mainz.de --recv-keys'
 
-git checkout stable/devel
-git checkout unstable/dev
+...so just running
 
-i get no checkout and an error:
+[rocketmouse@archlinux ~]$ gkey 4FE5E3262872E4CC
 
-error: pathspec 'stable' did not match any file(s) known to git.
+...did the trick. When building from upstream and verifying against a
+signature, this happens all the times ;).
 
 Regards,
-
-Rolf
+Ralf
