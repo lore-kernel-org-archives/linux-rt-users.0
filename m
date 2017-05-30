@@ -1,50 +1,57 @@
-From: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
-Subject: Re: [ANNOUNCE] v4.9.30-rt20
-Date: Sun, 28 May 2017 01:59:49 +0200
-Message-ID: <20170528015949.2dc4ae46@archlinux.localdomain>
-References: <20170527163230.b7qcfbmwsmbyo7k2@linutronix.de>
-        <fccee2a1-e0d3-4591-8ecc-6a1da4934219@manjaro.org>
-        <20170527173318.ed2v6ipmrnnq4iv5@linutronix.de>
-        <17b591e8-1e28-5dad-2388-3a397d02c0d9@manjaro.org>
-        <20170527235534.1d068819@archlinux.localdomain>
-        <9119cc4d-aa76-0ad1-a740-ba18bf83cd3f@manjaro.org>
-        <20170528014737.01da53e6@archlinux.localdomain>
-Mime-Version: 1.0
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: [patch 2/2] MM: allow per-cpu vmstat_threshold and vmstat_worker
+ configuration
+Date: Tue, 30 May 2017 13:17:41 -0500 (CDT)
+Message-ID: <alpine.DEB.2.20.1705301310100.7195@east.gentwo.org>
+References: <alpine.DEB.2.20.1705121103120.22831@east.gentwo.org> <20170512161915.GA4185@amt.cnet> <alpine.DEB.2.20.1705121154240.23503@east.gentwo.org> <20170515191531.GA31483@amt.cnet> <alpine.DEB.2.20.1705160825480.32761@east.gentwo.org>
+ <20170519143407.GA19282@amt.cnet> <alpine.DEB.2.20.1705191205580.19631@east.gentwo.org> <20170519134934.0c298882@redhat.com> <20170525193508.GA30252@amt.cnet> <alpine.DEB.2.20.1705252220130.7596@east.gentwo.org> <20170526190926.GA8974@amt.cnet>
 Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Bernhard Landauer <oberon@manjaro.org>
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail221c50.megamailservers.eu ([91.136.10.231]:33044 "EHLO
-        mail33c50.megamailservers.eu" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1750757AbdE0X7w (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 27 May 2017 19:59:52 -0400
-In-Reply-To: <20170528014737.01da53e6@archlinux.localdomain>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Luiz Capitulino <lcapitulino@redhat.com>, linux-kernel@vger.kernel.org,
+    linux-mm@kvack.org, Rik van Riel <riel@redhat.com>,
+    Linux RT Users <linux-rt-users@vger.kernel.org>, cmetcalf@mellanox.com
+To: Marcelo Tosatti <mtosatti@redhat.com>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20170526190926.GA8974@amt.cnet>
+Sender: owner-linux-mm@kvack.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Sun, 28 May 2017 01:47:37 +0200, Ralf Mardorf wrote:
->On Sun, 28 May 2017 00:32:15 +0200, Bernhard Landauer wrote:
->>the whole point in signing archives at all is that I want to know 
->>who's key it is before accepting it.
->>It doesn't make much sense to just blindly accept an unknown key  
->
->Hi Bernhard,
->
->without doubts this is a valid point. I suspect that most, if not all
->important keys, for me suffer from missing validation. The "web of
->trust" is the weak point of signing. However, a download from a https
->page + a key that perhaps isn't validated by a web of trust, in
->combination with contact to upstream and/or distro communities, e.g. by
->mailing lists, isn't that bad. It's not absolutely secure, but still
->ok, assuming that the kernel is used e.g. for audio productions, that
->don't require hardcore security.
->
->Regards,
->Ralf
+On Fri, 26 May 2017, Marcelo Tosatti wrote:
 
-PS:
+> > interrupts and scheduler ticks. But what does this have to do with vmstat?
+> >
+> > Show me your dpdk code running and trace the tick on / off events  as well
+> > as the vmstat invocations. Also show all system calls occurring on the cpu
+> > that runs dpdk. That is necessary to see what triggers vmstat and how the
+> > system reacts to the changes to the differentials.
+>
+> Sure, i can get that to you. The question remains: Are you arguing
+> its not valid for a realtime application to use any system call
+> which changes a vmstat counter?
 
-Not that long ago, did a validated key protect anybody from
-Heartbleed ;)? In the end you still need to trust upstream.
+A true realtime app would be conscientious of its use of the OS services
+because the use of the services may cause additional latencies and also
+cause timers etc to fire later. A realtime app that is willing to use
+these services is therefore willing to tolerate larger latencies. A
+realtime app that is using OS service may cause the timer tick to be
+enabled which also causes additional latencies.
+
+I have seen completely OS noise free processing for extended time period
+when not using OS services and using RDMA for I/O. This fits my use case
+well.
+
+If there are really these high latencies because of kworker processing for
+vmstat then maybe we need a different mechanism there (bh? or other
+triggers) and maybe we are using far too many counters so that the
+processing becomes a heavy user of resources.
+
+> Because if they are allowed, then its obvious something like
+> this is needed.
+
+I am still wondering what benefit there is. Lets get clear on the test
+load and see if this actually makes sense.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
