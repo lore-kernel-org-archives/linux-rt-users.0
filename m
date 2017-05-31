@@ -1,57 +1,102 @@
-From: Christoph Lameter <cl@linux.com>
-Subject: Re: [patch 2/2] MM: allow per-cpu vmstat_threshold and vmstat_worker
- configuration
-Date: Tue, 30 May 2017 13:17:41 -0500 (CDT)
-Message-ID: <alpine.DEB.2.20.1705301310100.7195@east.gentwo.org>
-References: <alpine.DEB.2.20.1705121103120.22831@east.gentwo.org> <20170512161915.GA4185@amt.cnet> <alpine.DEB.2.20.1705121154240.23503@east.gentwo.org> <20170515191531.GA31483@amt.cnet> <alpine.DEB.2.20.1705160825480.32761@east.gentwo.org>
- <20170519143407.GA19282@amt.cnet> <alpine.DEB.2.20.1705191205580.19631@east.gentwo.org> <20170519134934.0c298882@redhat.com> <20170525193508.GA30252@amt.cnet> <alpine.DEB.2.20.1705252220130.7596@east.gentwo.org> <20170526190926.GA8974@amt.cnet>
-Content-Type: text/plain; charset=US-ASCII
-Cc: Luiz Capitulino <lcapitulino@redhat.com>, linux-kernel@vger.kernel.org,
-    linux-mm@kvack.org, Rik van Riel <riel@redhat.com>,
-    Linux RT Users <linux-rt-users@vger.kernel.org>, cmetcalf@mellanox.com
-To: Marcelo Tosatti <mtosatti@redhat.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20170526190926.GA8974@amt.cnet>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: Where are the branches for stable/v1.0 and unstable/devel?
+Date: Wed, 31 May 2017 16:48:16 +0200 (CEST)
+Message-ID: <alpine.LFD.2.20.1705311645190.6177@riemann>
+References: <trinity-81b115be-c7aa-430f-a6bb-a9f8512e0222-1495478595984@3capp-webde-bap56> <1495483301.9833.3.camel@intel.com> <trinity-363cee20-7cf0-4d43-b5d7-058ae3582716-1495921425917@3capp-webde-bs06>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; BOUNDARY="-1463806030-687213954-1496242110=:6177"
+Cc: linux-rt-users@vger.kernel.org
+To: rolf.freitag@email.de
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wm0-f44.google.com ([74.125.82.44]:34488 "EHLO
+        mail-wm0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751032AbdEaOsd (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 31 May 2017 10:48:33 -0400
+Received: by mail-wm0-f44.google.com with SMTP id 123so34503461wmg.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 31 May 2017 07:48:32 -0700 (PDT)
+In-Reply-To: <trinity-363cee20-7cf0-4d43-b5d7-058ae3582716-1495921425917@3capp-webde-bs06>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 26 May 2017, Marcelo Tosatti wrote:
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-> > interrupts and scheduler ticks. But what does this have to do with vmstat?
-> >
-> > Show me your dpdk code running and trace the tick on / off events  as well
-> > as the vmstat invocations. Also show all system calls occurring on the cpu
-> > that runs dpdk. That is necessary to see what triggers vmstat and how the
-> > system reacts to the changes to the differentials.
->
-> Sure, i can get that to you. The question remains: Are you arguing
-> its not valid for a realtime application to use any system call
-> which changes a vmstat counter?
+---1463806030-687213954-1496242110=:6177
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 
-A true realtime app would be conscientious of its use of the OS services
-because the use of the services may cause additional latencies and also
-cause timers etc to fire later. A realtime app that is willing to use
-these services is therefore willing to tolerate larger latencies. A
-realtime app that is using OS service may cause the timer tick to be
-enabled which also causes additional latencies.
 
-I have seen completely OS noise free processing for extended time period
-when not using OS services and using RDMA for I/O. This fits my use case
-well.
 
-If there are really these high latencies because of kworker processing for
-vmstat then maybe we need a different mechanism there (bh? or other
-triggers) and maybe we are using far too many counters so that the
-processing becomes a heavy user of resources.
+On Sat, 27 May 2017, rolf.freitag@email.de wrote:
 
-> Because if they are allowed, then its obvious something like
-> this is needed.
+> Hi Vedang, 
+> 
+> On Mon, 2017-05-22 at 20:43 +0200, vedang.patel@intel.com wrote:
+> > ...
+> > The following 2 branches in the above repository have been most
+> > recently updated and correspond to the stable and unstable branch: 
+> > 0e6c2ca28adbaeb668ca35210cec546f89938bfa        refs/heads/stable/devel
+> > /v1.0.1
+> > 44de1a494583c33e72335221360085f9e1faad2b        refs/heads/unstable/dev
+> > el/v1.1.1
+> > There is also a stable/v1.0 branch: 
+> > d48504b8e85961afab1cb0bd346624eb31527197        refs/heads/stable/v1.0
+> > 
+> > the wiki page you mentioned in your email is outdated. Please refer to 
+> > https://wiki.linuxfoundation.org/realtime/documentation/howto/tools/cyc[https://wiki.linuxfoundation.org/realtime/documentation/howto/tools/cyc]
+> > lictest for the latest info.
+> 
+> Ok, due to https://wiki.linuxfoundation.org/realtime/documentation/howto/tools/rt-tests
+> i can get the stable/v1.0 via:
+> 
+> # git clone git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git 
+> # cd rt-tests
+> # git checkout stable/v1.0
+> 
+> But when i try it with the other two versions,
+> 
+> git checkout stable/devel
+> git checkout unstable/dev
+> 
+> i get no checkout and an error:
+> 
+> error: pathspec 'stable' did not match any file(s) known to git.
+> 
+> Regards,
+> 
+> Rolf
 
-I am still wondering what benefit there is. Lets get clear on the test
-load and see if this actually makes sense.
+Here is how (one way) to check out the stable and the unstable
+branches.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+git clone git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
+Cloning into 'rt-tests'...
+remote: Counting objects: 2914, done.
+remote: Total 2914 (delta 0), reused 0 (delta 0)
+Receiving objects: 100% (2914/2914), 554.11 KiB | 513.00 KiB/s, done.
+Resolving deltas: 100% (1760/1760), done.
+Checking connectivity... done.
+[jkacur@riemann tmp]$ cd rt-tests/
+[jkacur@riemann rt-tests]$ git branch -a
+* master
+  remotes/origin/HEAD -> origin/master
+  remotes/origin/devel/v0.96
+  remotes/origin/devel/v0.96-spikes
+  remotes/origin/devel/v0.97
+  remotes/origin/devel/v0.98
+  remotes/origin/master
+  remotes/origin/stable/devel/v1.0.1
+  remotes/origin/stable/v1.0
+  remotes/origin/unstable/devel/v1.1.1
+  remotes/origin/v0.93-devel
+  remotes/origin/v0.94-devel
+[jkacur@riemann rt-tests]$ git checkout -b stable/v1.0 origin/stable/v1.0
+Branch stable/v1.0 set up to track remote branch stable/v1.0 from origin.
+Switched to a new branch 'stable/v1.0'
+[jkacur@riemann rt-tests]$ git checkout -b unstable/devel/v1.1.1 
+origin/unstable/devel/v1.1.1
+Branch unstable/devel/v1.1.1 set up to track remote branch 
+unstable/devel/v1.1.1 from origin.
+Switched to a new branch 'unstable/devel/v1.1.1'
+---1463806030-687213954-1496242110=:6177--
