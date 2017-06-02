@@ -1,152 +1,113 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: cyclictest usage
-Date: Fri, 2 Jun 2017 09:26:12 -0500
-Message-ID: <20170602092612.4069fe8f@tagon.lan>
-References: <20170526112502.4f6a49ac@tagon>
-        <20170602095911.wlqcvsi6zf336z5l@linutronix.de>
+From: Haris Okanovic <haris.okanovic@ni.com>
+Subject: Re: [PATCH] Revert "timers: Don't wake ktimersoftd on every tick"
+Date: Fri, 2 Jun 2017 09:37:04 -0500
+Message-ID: <b1486490-5a96-7ba3-c280-5d5622c8c488@ni.com>
+References: <20170203165151.qbpjothhaqctuzx5@linutronix.de>
+ <20170203182112.18053-1-haris.okanovic@ni.com>
+ <20170210170207.3kzfqyfa4ueh7mih@linutronix.de>
+ <alpine.DEB.2.20.1705261911230.11993@hypnos.tec.linutronix.de>
+ <faa23f3e-28c0-6de1-66a6-2b6ab5e99462@ni.com>
+ <alpine.DEB.2.20.1705262147510.2137@nanos>
+ <4b4df775-53b8-cdeb-381b-af8cabb364a8@ni.com>
+ <alpine.DEB.2.20.1705262232590.2137@nanos>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- boundary="Sig_/=ARl+uaZlN95/aXk7rOpEll"; protocol="application/pgp-signature"
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        RT <linux-rt-users@vger.kernel.org>,
-        John Kacur <jkacur@redhat.com>
-To: unlisted-recipients:; (no To-header on input)
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: Anna-Maria Gleixner <anna-maria@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        julia.cartwright@ni.com, gratian.crisan@ni.com
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:50594 "EHLO mx1.redhat.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1750813AbdFBO0e (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 2 Jun 2017 10:26:34 -0400
-In-Reply-To: <20170602095911.wlqcvsi6zf336z5l@linutronix.de>
+Received: from mx0a-00010702.pphosted.com ([148.163.156.75]:33736 "EHLO
+        mx0b-00010702.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1751128AbdFBOhP (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 2 Jun 2017 10:37:15 -0400
+In-Reply-To: <alpine.DEB.2.20.1705262232590.2137@nanos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/=ARl+uaZlN95/aXk7rOpEll
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+On 05/26/2017 03:50 PM, Thomas Gleixner wrote:
+> On Fri, 26 May 2017, Haris Okanovic wrote:
+>
+>> Oh crap. I think I see the problem. I decrement expired_count before
+>> processing the list. Dropping the lock permits another run of
+>> tick_find_expired()->find_expired_timers() in the middle of __expire_timers()
+>> since it uses expired_count==0 as a condition.
+>>
+>> This should fix it, but I'll wait for Anna-Maria's test next week before
+>> submitting a patch.
+>>
+>>>  static void expire_timers(struct timer_base *base)
+>>>  {
+>>>         struct hlist_head *head;
+>>> +       int expCount = base->expired_count;
+>
+> No camel case for heavens sake!
+>
+> And this requires:
+>
+>    	 cnt = READ_ONCE(base->expired_count);
+>
+>>> -       while (base->expired_count--) {
+>>> -               head = base->expired_lists + base->expired_count;
+>>> +       while (expCount--) {
+>>> +               head = base->expired_lists + expCount;
+>>>                 __expire_timers(base, head);
+>>>         }
+>
+> Plus a comment.
 
-On Fri, 2 Jun 2017 11:59:11 +0200
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+Fixed, thanks.
 
-> On 2017-05-26 11:25:02 [-0500], Clark Williams wrote:
-> > What we're looking for is how people are using cyclictest. For example,=
- at Red Hat we use the 'rteval' tool, which puts a large SCHED_OTHER load o=
-n the system and then runs cyclictest with a measurement thread on each cor=
-e. The intent is to put a large load on the scheduler and prove that the RT=
- patchset provides deterministic performance under load.=20
-> >=20
-> > What other types of testing/measurement are people doing with cyclictes=
-t? =20
->=20
-> hackbench, disk I/O, network related ping/traffic for the "normal"
-> interfaces and some custom ones to poke at the gpio, i2c, =E2=80=A6 drive=
-rs to
-> ensure that they don't a long off time. Either way, I prefer starting
-> them independently of cyclictest.
+Are your recommending READ_ONCE() purely for documentation purposes?
+All reads and writes to base->expired_count happen while base->lock is 
+held. It just can't reach zero until expired_lists is ready to be rewritten.
 
-Yeah, that's the *other* tool we should discuss some time: rteval. Currentl=
-y the only loads rteval has are 'kcompile', which is a parallel make of a k=
-ernel tree and 'hackbench' which kicks off a bunch of hackbench instances. =
-I've been thinking about adding a 'stress' load to use the stress app, but =
-just haven't had time.=20
+>
+>>>         base->expired_count = 0;
+>
+> Anna-Maria spotted the same issue, but I voted for the revert right now
+> because I was worried about the consistency of base->clk under all
+> circumstances.
+>
+> The other thing I noticed was this weird condition which does not do the
+> look ahead when base->clk is back for some time.
 
-And of course the only measurement module for rteval is cyclictest. Haven't=
- really figured out what would be another good measurement module.=20
+The soft interrupt fires unconditionally if base->clk hasn't advanced in 
+some time to limit how long cpu spends in hard interrupt context.
 
+> Why don't you use the
+> existing optimization which uses the bitmap for fast forward?
+>
 
->=20
-> > John Kacur and I are wanting to clean up tracing and make sure that the=
- most commonly used options are on by default. In addition we want to refac=
-tor some of the runtime logic. Are there other areas that need to be cleane=
-d up? Features that need to be added/deleted? =20
->=20
-> I do have (had) a tiny version of cyclictest with a lot things pulled
-> out simply to get it run a system with 8 MiB RAM in total. Learned from
-> this: everything out :)
-> Basically the only interaction between cyclictest and the tracing
-> infrastructure should be just to stop tracing only if a break value was
-> specified _and_ was the reason for cyclictest to abort.
-> This would also reduce the number of command line options which would
-> _really_ nice.=20
+Are you referring to forward_timer_base()/base->next_expiry? I think 
+it's only updated in the nohz case. Can you share function name/line 
+number(s) if you're thinking of something else.
 
-That's exactly the plan. Rip out the tracing bits (except for -b/--breaktra=
-ce) and their associated command line args.=20
+> The other issue I have is that this can race at all. If you raised the
+> softirq in the look ahead then you should not go into that function until
+> the softirq has actually completed. There is no point in wasting time in
+> the hrtimer interrupt if the softirq is running anyway.
+>
 
-> As for defaults, it should be have those arguments which are used by
-> people by default. I guess this includes clock_nanosleep(), mlockall(),
-> very high priority, one thread per-core and so on.
-> Not sure about "-d 0 --secaligned 250" but something should be default
-> so we have the same behaviour on its invocation.
+Makes sense. Skipping the large `if` block in run_local_timers() when 
+`local_softirq_pending() & TIMER_SOFTIRQ`.
 
-When rteval starts cyclictest it uses '-d0 -i100'. I know that's the worst =
-case of having every timer interrupt fire at the same time, but when we sta=
-rted this that's what we wanted to see. Do we need to have two meta-argumen=
-ts: --worst-case / --best-case? The --worst-case would do things most norma=
-l deployers of a realtime app wouldn't do, while the --best-case would stag=
-ger timer starts, isolate to numa nodes, etc.=20
+> Thanks,
+>
+> 	tglx
+>
+>
+>
+>
 
-> I remember, that there was (or is) an option to figure out if the
-> hrtimer is working on the system and estimates the resolution of the
-> clocksource. I would move that into a different tool.
-> That -M mode is nice, but it should give some kind of indication, that
-> the system is still alive like update the number of "loop" once in a
-> while. But this brings me to another topic: The output system. Usually
-> the console output is enough. Then we have the "histogram" mode to check
-> the distribution. People often use the histogram mode because the former
-> can't be used/parsed by script/tool. Here (the histogram) I hear people
-> complaining about the output which is not (easy)
-> machine-readable. *I* think it would be okay to use the "histogram" mode
-> for machine-readable but the output should be better structured.
-> Something like yaml is probably just fine. However I can't tell if this
-> will work for everyone or if a plugin-like interface would be best so we
-> can dock yaml output as well as something that creates xml based output
-> (for people that dream in XML, too).
+I also ran Anna-Maria's test for 12h without failure; I.e. no "Stalled" 
+messages. It fails withing 10-15m on my qemu VM without the fix (4-core 
+Nehalem, 1GB RAM).
 
-I don't have a problem generating XML or JSON or some sort of structured ou=
-tput. I'll put that on the list. Hmmm, plugins...
+You can view a diff at
+https://github.com/harisokanovic/linux/tree/dev/hokanovi/timers-race
 
-Regarding periodic updates, what do you think about providing a way for an =
-app to query the current state of a run? Possibly a memory region that can =
-be mmapped by a process? Or possibly a UNIX domain socket? I'm thinking of =
-the case where you're doing a 48 hour test run on a box where you don't hav=
-e easy access to the console and would just like to know if a) the box is a=
-live and b) is still showing reasonable values for max latency and jitter.=
-=20
-
-I kinda like the memory region since that's how cyclictest handles output: =
-the measurement threads all dump their data into a cpu-specific memory area=
- and a display thread (running at a low priority) is the one that wakes up,=
- reads the update and printf's to the screen. If we exported that region so=
- that another process could mmap it read-only, that would provide a way to =
-get a snapshot of the run, without actually depending on cyclictest to *do*=
- anything out of the ordinary.=20
-
-Thanks for the input Sebastian.=20
-
-Clark
-
---=20
-The United States Coast Guard
-Ruining Natural Selection since 1790
-
---Sig_/=ARl+uaZlN95/aXk7rOpEll
-Content-Type: application/pgp-signature
-Content-Description: OpenPGP digital signature
-
------BEGIN PGP SIGNATURE-----
-
-iQIcBAEBCgAGBQJZMXWEAAoJEBO1XdB8U7hRuAUP/iCHOXNjCEZMEX8kPVtTLidb
-tlCm/f9ls3xbri3Q71zFNQ4ytJ1c6OLqj+dwPRtq7Eyr7zRHfhYWnquzQSNrRSmZ
-DWAgckc9nq3gjmcqDDeEientpjHoWy3OZDy9nt/hTA7rCoTvT8JeJIWsl9IxHtmI
-GTv6zLnUQJfyTPkSGAFxAnPLmNfRI8tj0INNbHWw9HJzh/ym2qVofg6kAHfn+ji3
-136smFddN3ftkuKMPQ8OzD6puXWknEKMJE2s+IiB068h9ADz0wzpvbs2M6RjoV3U
-4Yt6Ch+UUV4Fpzzh9eKUD5i4bVc13phAgG7arafXMFQMkUsOamJYzzNPHRSzTsLM
-h0lYFo/TZzkNt7PHCchy13TqPi/WBtl7YR/UnbCWt1dVQFeOQHCDCxx/a7EqtICs
-Ms3q/NQZ16vjee/e+sihAccEKwCnvItR5RVwK8Y5eHn4kdCTgE8N73DXy/yQJDI9
-4bXQEcp9cWnX8sMt9lyKsqdGkVHwHA9FY5L+/9CvK4gSNahbijGXRVBXf2MYsZCS
-4if4Y8oAo1m65pCu52DQL0g797A67jjpcYeEq/AwBytj3Lwwl5wfO1rNiJsqTsvZ
-ntO52qN0cObdQvfarACkg9Pq+bOnGw7xZcoOqlQvqZRcjOqkicNc4G3tEWgmFU+g
-d5x/O7TvovuTFUIQiwFG
-=QVID
------END PGP SIGNATURE-----
-
---Sig_/=ARl+uaZlN95/aXk7rOpEll--
+-- Haris
