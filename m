@@ -1,100 +1,52 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [PATCH RT] sched: Prevent task state corruption by spurious lock
- wakeup
-Date: Fri, 2 Jun 2017 18:40:17 +0200 (CEST)
-Message-ID: <alpine.DEB.2.20.1706021834070.1899@nanos>
+From: Austin Schuh <austin@peloton-tech.com>
+Subject: Re: cyclictest usage
+Date: Fri, 2 Jun 2017 09:54:16 -0700
+Message-ID: <CANGgnMayznQDLuR++ZoQVVJfTCK-tjRk1-HLakSdsQU7eb7EGg@mail.gmail.com>
+References: <20170526112502.4f6a49ac@tagon> <20170602095911.wlqcvsi6zf336z5l@linutronix.de>
+ <20170602092612.4069fe8f@tagon.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Sebastian Sewior <bigeasy@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Mathias Koehrer <mathias.koehrer@etas.com>,
-        David Hauck <davidh@netacquire.com>
-To: LKML <linux-kernel@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        RT <linux-rt-users@vger.kernel.org>,
+        John Kacur <jkacur@redhat.com>
+To: Clark Williams <williams@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-vk0-f42.google.com ([209.85.213.42]:35526 "EHLO
+        mail-vk0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751140AbdFBQyi (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 2 Jun 2017 12:54:38 -0400
+Received: by mail-vk0-f42.google.com with SMTP id w1so43094707vkd.2
+        for <linux-rt-users@vger.kernel.org>; Fri, 02 Jun 2017 09:54:37 -0700 (PDT)
+In-Reply-To: <20170602092612.4069fe8f@tagon.lan>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Mathias and some others reported GDB failures on RT.
+On Fri, Jun 2, 2017 at 7:26 AM, Clark Williams <williams@redhat.com> wrote:
+> Regarding periodic updates, what do you think about providing a way for a=
+n app to query the current state of a run? Possibly a memory region that ca=
+n be mmapped by a process? Or possibly a UNIX domain socket? I'm thinking o=
+f the case where you're doing a 48 hour test run on a box where you don't h=
+ave easy access to the console and would just like to know if a) the box is=
+ alive and b) is still showing reasonable values for max latency and jitter=
+.
+>
+> I kinda like the memory region since that's how cyclictest handles output=
+: the measurement threads all dump their data into a cpu-specific memory ar=
+ea and a display thread (running at a low priority) is the one that wakes u=
+p, reads the update and printf's to the screen. If we exported that region =
+so that another process could mmap it read-only, that would provide a way t=
+o get a snapshot of the run, without actually depending on cyclictest to *d=
+o* anything out of the ordinary.
 
-The following scenario leads to task state corruption:
+I might be missing something, but if you want to be able to view the
+status remotely, why not tee the output to a file and tail that from
+the remote session, or use screen/tmux/etc?  That would stay aligned
+with Sebastian's goal of keeping it small and simple.
 
-CPU0						CPU1
+> Thanks for the input Sebastian.
+>
+> Clark
 
-T1->state = TASK_XXX;
-spin_lock(&lock)
-  rt_spin_lock_slowlock(&lock->rtmutex)
-    raw_spin_lock(&rtm->wait_lock);
-    T1->saved_state = current->state;
-    T1->state = TASK_UNINTERRUPTIBLE;
-						spin_unlock(&lock)
-    task_blocks_on_rt_mutex(rtm)  		  rt_spin_lock_slowunlock(&lock->rtmutex)
-      queue_waiter(rtm)				    raw_spin_lock(&rtm->wait_lock);
-      pi_chain_walk(rtm)
-        raw_spin_unlock(&rtm->wait_lock);
-						    mark_top_waiter_for_wakeup(T1)
-						    raw_spin_unlock(&rtm->wait_lock);
-      raw_spin_lock(&rtm->wait_lock);
-						    wake_up_top_waiter()    
-
-    for (;;) {
-      if (__try_to_take_rt_mutex())  <- Succeeds
-        break;
-      ...
-    }
-						     try_to_wake_up(T1)
-    T1->state = T1->saved_state;
-    ==> T1->state == TASK_XXX
-						       ttwu_do_wakeup(T1)
-				FAIL ---->               T1->state = TASK_RUNNING;
-
-
-In most cases this is harmless because waiting for some event, which is the
-usual reason for TASK_[UN]INTERRUPTIBLE, has to be safe against other forms
-of spurious wakeups anyway.
-
-But in case of TASK_TRACED this is actually fatal, because the task loses
-the TASK_TRACED state. In consequence it fails to consume SIGSTOP which was
-sent from the debugger and actually delivers SIGSTOP to the task which
-breaks the ptrace mechanics and brings the debugger into an unexpected
-state.
-
-The cure is way simpler as figuring it out:
-
-In a lock wakeup, check whether the task is actually blocked on a lock. If
-yes, deliver it. If not, consider the wakeup spurious and exit the wake up
-code without touching tasks state.
-
-Reported-by: Mathias Koehrer <mathias.koehrer@etas.com>
-Reported-by: David Hauck <davidh@netacquire.com>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: stable-rt@vger.kernel.org
----
- kernel/sched/core.c |   12 +++++++++++-
- 1 file changed, 11 insertions(+), 1 deletion(-)
-
-Index: b/kernel/sched/core.c
-===================================================================
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -2174,8 +2174,18 @@ try_to_wake_up(struct task_struct *p, un
- 	 * If this is a regular wakeup, then we can unconditionally
- 	 * clear the saved state of a "lock sleeper".
- 	 */
--	if (!(wake_flags & WF_LOCK_SLEEPER))
-+	if (!(wake_flags & WF_LOCK_SLEEPER)) {
- 		p->saved_state = TASK_RUNNING;
-+	} else {
-+		/*
-+		 * The task might not yet have reached schedule() and has
-+		 * taken over the lock already and restored the saved
-+		 * state. Prevent that this spurious wakeup destroys the saved
-+		 * state.
-+		 */
-+		if (!tsk_is_pi_blocked(p))
-+			goto out;
-+	}
- 
- 	trace_sched_waking(p);
- 
+Austin
