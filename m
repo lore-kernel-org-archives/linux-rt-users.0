@@ -1,113 +1,100 @@
-From: Haris Okanovic <haris.okanovic@ni.com>
-Subject: Re: [PATCH] Revert "timers: Don't wake ktimersoftd on every tick"
-Date: Fri, 2 Jun 2017 09:37:04 -0500
-Message-ID: <b1486490-5a96-7ba3-c280-5d5622c8c488@ni.com>
-References: <20170203165151.qbpjothhaqctuzx5@linutronix.de>
- <20170203182112.18053-1-haris.okanovic@ni.com>
- <20170210170207.3kzfqyfa4ueh7mih@linutronix.de>
- <alpine.DEB.2.20.1705261911230.11993@hypnos.tec.linutronix.de>
- <faa23f3e-28c0-6de1-66a6-2b6ab5e99462@ni.com>
- <alpine.DEB.2.20.1705262147510.2137@nanos>
- <4b4df775-53b8-cdeb-381b-af8cabb364a8@ni.com>
- <alpine.DEB.2.20.1705262232590.2137@nanos>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [PATCH RT] sched: Prevent task state corruption by spurious lock
+ wakeup
+Date: Fri, 2 Jun 2017 18:40:17 +0200 (CEST)
+Message-ID: <alpine.DEB.2.20.1706021834070.1899@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Anna-Maria Gleixner <anna-maria@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        julia.cartwright@ni.com, gratian.crisan@ni.com
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx0a-00010702.pphosted.com ([148.163.156.75]:33736 "EHLO
-        mx0b-00010702.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1751128AbdFBOhP (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 2 Jun 2017 10:37:15 -0400
-In-Reply-To: <alpine.DEB.2.20.1705262232590.2137@nanos>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Sebastian Sewior <bigeasy@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Mathias Koehrer <mathias.koehrer@etas.com>,
+        David Hauck <davidh@netacquire.com>
+To: LKML <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 05/26/2017 03:50 PM, Thomas Gleixner wrote:
-> On Fri, 26 May 2017, Haris Okanovic wrote:
->
->> Oh crap. I think I see the problem. I decrement expired_count before
->> processing the list. Dropping the lock permits another run of
->> tick_find_expired()->find_expired_timers() in the middle of __expire_timers()
->> since it uses expired_count==0 as a condition.
->>
->> This should fix it, but I'll wait for Anna-Maria's test next week before
->> submitting a patch.
->>
->>>  static void expire_timers(struct timer_base *base)
->>>  {
->>>         struct hlist_head *head;
->>> +       int expCount = base->expired_count;
->
-> No camel case for heavens sake!
->
-> And this requires:
->
->    	 cnt = READ_ONCE(base->expired_count);
->
->>> -       while (base->expired_count--) {
->>> -               head = base->expired_lists + base->expired_count;
->>> +       while (expCount--) {
->>> +               head = base->expired_lists + expCount;
->>>                 __expire_timers(base, head);
->>>         }
->
-> Plus a comment.
+Mathias and some others reported GDB failures on RT.
 
-Fixed, thanks.
+The following scenario leads to task state corruption:
 
-Are your recommending READ_ONCE() purely for documentation purposes?
-All reads and writes to base->expired_count happen while base->lock is 
-held. It just can't reach zero until expired_lists is ready to be rewritten.
+CPU0						CPU1
 
->
->>>         base->expired_count = 0;
->
-> Anna-Maria spotted the same issue, but I voted for the revert right now
-> because I was worried about the consistency of base->clk under all
-> circumstances.
->
-> The other thing I noticed was this weird condition which does not do the
-> look ahead when base->clk is back for some time.
+T1->state = TASK_XXX;
+spin_lock(&lock)
+  rt_spin_lock_slowlock(&lock->rtmutex)
+    raw_spin_lock(&rtm->wait_lock);
+    T1->saved_state = current->state;
+    T1->state = TASK_UNINTERRUPTIBLE;
+						spin_unlock(&lock)
+    task_blocks_on_rt_mutex(rtm)  		  rt_spin_lock_slowunlock(&lock->rtmutex)
+      queue_waiter(rtm)				    raw_spin_lock(&rtm->wait_lock);
+      pi_chain_walk(rtm)
+        raw_spin_unlock(&rtm->wait_lock);
+						    mark_top_waiter_for_wakeup(T1)
+						    raw_spin_unlock(&rtm->wait_lock);
+      raw_spin_lock(&rtm->wait_lock);
+						    wake_up_top_waiter()    
 
-The soft interrupt fires unconditionally if base->clk hasn't advanced in 
-some time to limit how long cpu spends in hard interrupt context.
+    for (;;) {
+      if (__try_to_take_rt_mutex())  <- Succeeds
+        break;
+      ...
+    }
+						     try_to_wake_up(T1)
+    T1->state = T1->saved_state;
+    ==> T1->state == TASK_XXX
+						       ttwu_do_wakeup(T1)
+				FAIL ---->               T1->state = TASK_RUNNING;
 
-> Why don't you use the
-> existing optimization which uses the bitmap for fast forward?
->
 
-Are you referring to forward_timer_base()/base->next_expiry? I think 
-it's only updated in the nohz case. Can you share function name/line 
-number(s) if you're thinking of something else.
+In most cases this is harmless because waiting for some event, which is the
+usual reason for TASK_[UN]INTERRUPTIBLE, has to be safe against other forms
+of spurious wakeups anyway.
 
-> The other issue I have is that this can race at all. If you raised the
-> softirq in the look ahead then you should not go into that function until
-> the softirq has actually completed. There is no point in wasting time in
-> the hrtimer interrupt if the softirq is running anyway.
->
+But in case of TASK_TRACED this is actually fatal, because the task loses
+the TASK_TRACED state. In consequence it fails to consume SIGSTOP which was
+sent from the debugger and actually delivers SIGSTOP to the task which
+breaks the ptrace mechanics and brings the debugger into an unexpected
+state.
 
-Makes sense. Skipping the large `if` block in run_local_timers() when 
-`local_softirq_pending() & TIMER_SOFTIRQ`.
+The cure is way simpler as figuring it out:
 
-> Thanks,
->
-> 	tglx
->
->
->
->
+In a lock wakeup, check whether the task is actually blocked on a lock. If
+yes, deliver it. If not, consider the wakeup spurious and exit the wake up
+code without touching tasks state.
 
-I also ran Anna-Maria's test for 12h without failure; I.e. no "Stalled" 
-messages. It fails withing 10-15m on my qemu VM without the fix (4-core 
-Nehalem, 1GB RAM).
+Reported-by: Mathias Koehrer <mathias.koehrer@etas.com>
+Reported-by: David Hauck <davidh@netacquire.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: stable-rt@vger.kernel.org
+---
+ kernel/sched/core.c |   12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
 
-You can view a diff at
-https://github.com/harisokanovic/linux/tree/dev/hokanovi/timers-race
-
--- Haris
+Index: b/kernel/sched/core.c
+===================================================================
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -2174,8 +2174,18 @@ try_to_wake_up(struct task_struct *p, un
+ 	 * If this is a regular wakeup, then we can unconditionally
+ 	 * clear the saved state of a "lock sleeper".
+ 	 */
+-	if (!(wake_flags & WF_LOCK_SLEEPER))
++	if (!(wake_flags & WF_LOCK_SLEEPER)) {
+ 		p->saved_state = TASK_RUNNING;
++	} else {
++		/*
++		 * The task might not yet have reached schedule() and has
++		 * taken over the lock already and restored the saved
++		 * state. Prevent that this spurious wakeup destroys the saved
++		 * state.
++		 */
++		if (!tsk_is_pi_blocked(p))
++			goto out;
++	}
+ 
+ 	trace_sched_waking(p);
+ 
