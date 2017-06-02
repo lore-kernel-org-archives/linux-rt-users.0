@@ -1,71 +1,68 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: Where are the branches for stable/v1.0 and unstable/devel?
-Date: Fri, 2 Jun 2017 10:42:27 +0200
-Message-ID: <20170602084227.7pdrv4g5mcy4palz@linutronix.de>
-References: <trinity-81b115be-c7aa-430f-a6bb-a9f8512e0222-1495478595984@3capp-webde-bap56>
- <1495483301.9833.3.camel@intel.com>
- <trinity-363cee20-7cf0-4d43-b5d7-058ae3582716-1495921425917@3capp-webde-bs06>
- <alpine.LFD.2.20.1705311645190.6177@riemann>
+Subject: Re: cyclictest usage
+Date: Fri, 2 Jun 2017 11:59:11 +0200
+Message-ID: <20170602095911.wlqcvsi6zf336z5l@linutronix.de>
+References: <20170526112502.4f6a49ac@tagon>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: rolf.freitag@email.de, linux-rt-users@vger.kernel.org
-To: John Kacur <jkacur@redhat.com>
+Content-Transfer-Encoding: 8BIT
+Cc: RT <linux-rt-users@vger.kernel.org>, John Kacur <jkacur@redhat.com>
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:40852 "EHLO
+Received: from Galois.linutronix.de ([146.0.238.70]:41334 "EHLO
         Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1750813AbdFBIma (ORCPT
+        with ESMTP id S1751126AbdFBJ7N (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 2 Jun 2017 04:42:30 -0400
+        Fri, 2 Jun 2017 05:59:13 -0400
 Content-Disposition: inline
-In-Reply-To: <alpine.LFD.2.20.1705311645190.6177@riemann>
+In-Reply-To: <20170526112502.4f6a49ac@tagon>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-05-31 16:48:16 [+0200], John Kacur wrote:
-> Here is how (one way) to check out the stable and the unstable
-> branches.
+On 2017-05-26 11:25:02 [-0500], Clark Williams wrote:
+> What we're looking for is how people are using cyclictest. For example, at Red Hat we use the 'rteval' tool, which puts a large SCHED_OTHER load on the system and then runs cyclictest with a measurement thread on each core. The intent is to put a large load on the scheduler and prove that the RT patchset provides deterministic performance under load. 
 > 
-> git clone git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-> Cloning into 'rt-tests'...
-> remote: Counting objects: 2914, done.
-> remote: Total 2914 (delta 0), reused 0 (delta 0)
-> Receiving objects: 100% (2914/2914), 554.11 KiB | 513.00 KiB/s, done.
-> Resolving deltas: 100% (1760/1760), done.
-> Checking connectivity... done.
-> [jkacur@riemann tmp]$ cd rt-tests/
-> [jkacur@riemann rt-tests]$ git branch -a
-> * master
->   remotes/origin/HEAD -> origin/master
->   remotes/origin/devel/v0.96
->   remotes/origin/devel/v0.96-spikes
->   remotes/origin/devel/v0.97
->   remotes/origin/devel/v0.98
->   remotes/origin/master
->   remotes/origin/stable/devel/v1.0.1
->   remotes/origin/stable/v1.0
->   remotes/origin/unstable/devel/v1.1.1
->   remotes/origin/v0.93-devel
->   remotes/origin/v0.94-devel
-> [jkacur@riemann rt-tests]$ git checkout -b stable/v1.0 origin/stable/v1.0
-> Branch stable/v1.0 set up to track remote branch stable/v1.0 from origin.
-> Switched to a new branch 'stable/v1.0'
-> [jkacur@riemann rt-tests]$ git checkout -b unstable/devel/v1.1.1 
-> origin/unstable/devel/v1.1.1
-> Branch unstable/devel/v1.1.1 set up to track remote branch 
-> unstable/devel/v1.1.1 from origin.
-> Switched to a new branch 'unstable/devel/v1.1.1'
+> What other types of testing/measurement are people doing with cyclictest?
 
-right, plain and simple. With the right interface you could point users
-to your devel or stable branch with something like
+hackbench, disk I/O, network related ping/traffic for the "normal"
+interfaces and some custom ones to poke at the gpio, i2c, … drivers to
+ensure that they don't a long off time. Either way, I prefer starting
+them independently of cyclictest.
 
-	git symbolic-ref HEAD refs/heads/stable/v1.0
+> John Kacur and I are wanting to clean up tracing and make sure that the most commonly used options are on by default. In addition we want to refactor some of the runtime logic. Are there other areas that need to be cleaned up? Features that need to be added/deleted?
 
-But since there a Readme file, could you add something like
+I do have (had) a tiny version of cyclictest with a lot things pulled
+out simply to get it run a system with 8 MiB RAM in total. Learned from
+this: everything out :)
+Basically the only interaction between cyclictest and the tracing
+infrastructure should be just to stop tracing only if a break value was
+specified _and_ was the reason for cyclictest to abort.
+This would also reduce the number of command line options which would
+_really_ nice. 
+As for defaults, it should be have those arguments which are used by
+people by default. I guess this includes clock_nanosleep(), mlockall(),
+very high priority, one thread per-core and so on.
+Not sure about "-d 0 --secaligned 250" but something should be default
+so we have the same behaviour on its invocation.
+I remember, that there was (or is) an option to figure out if the
+hrtimer is working on the system and estimates the resolution of the
+clocksource. I would move that into a different tool.
+That -M mode is nice, but it should give some kind of indication, that
+the system is still alive like update the number of "loop" once in a
+while. But this brings me to another topic: The output system. Usually
+the console output is enough. Then we have the "histogram" mode to check
+the distribution. People often use the histogram mode because the former
+can't be used/parsed by script/tool. Here (the histogram) I hear people
+complaining about the output which is not (easy)
+machine-readable. *I* think it would be okay to use the "histogram" mode
+for machine-readable but the output should be better structured.
+Something like yaml is probably just fine. However I can't tell if this
+will work for everyone or if a plugin-like interface would be best so we
+can dock yaml output as well as something that creates xml based output
+(for people that dream in XML, too).
 
-For the stable branch branch please do
-	git checkout stable/v1.0
-
-and development do
-	git checkout unstable/devel/v1.1.1
+> Thanks,
+> 
+> Clark
 
 Sebastian
