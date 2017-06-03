@@ -1,58 +1,102 @@
-From: "Hindman, Gavin" <gavin.hindman@intel.com>
-Subject: RE: Intel real-time Linux production kernel
-Date: Fri, 2 Jun 2017 19:05:32 +0000
-Message-ID: <D5D6254030DBC644B6EE58B333BFBB1E9D67337F@ORSMSX101.amr.corp.intel.com>
-References: <D5D6254030DBC644B6EE58B333BFBB1E9D673203@ORSMSX101.amr.corp.intel.com>
- <20170602185015.GB31147@jcartwri.amer.corp.natinst.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH RT] sched: Prevent task state corruption by spurious lock
+ wakeup
+Date: Sat, 3 Jun 2017 09:47:02 +0200 (CEST)
+Message-ID: <alpine.DEB.2.20.1706030940220.2228@nanos>
+References: <alpine.DEB.2.20.1706021834070.1899@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=US-ASCII
 Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-        "Sapra, Rajesh" <rajesh.sapra@intel.com>,
-        "Weight, Russell H" <russell.h.weight@intel.com>
-To: Julia Cartwright <julia@ni.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga14.intel.com ([192.55.52.115]:52174 "EHLO mga14.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751180AbdFBTFf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 2 Jun 2017 15:05:35 -0400
-In-Reply-To: <20170602185015.GB31147@jcartwri.amer.corp.natinst.com>
-Content-Language: en-US
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+        Sebastian Sewior <bigeasy@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Mathias Koehrer <mathias.koehrer@etas.com>,
+        David Hauck <davidh@netacquire.com>
+To: LKML <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.20.1706021834070.1899@nanos>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-> -----Original Message-----
-> From: Julia Cartwright [mailto:julia@ni.com]
-> Sent: Friday, June 02, 2017 11:50 AM
-> To: Hindman, Gavin <gavin.hindman@intel.com>
-> Cc: linux-rt-users <linux-rt-users@vger.kernel.org>; Sapra, Rajesh
-> <rajesh.sapra@intel.com>; Weight, Russell H <russell.h.weight@intel.com>
-> Subject: Re: Intel real-time Linux production kernel
-> 
-> On Fri, Jun 02, 2017 at 06:15:31PM +0000, Hindman, Gavin wrote:
-> > Hello everyone,
-> >
-> > I wanted to make you all aware that Intel is now maintaining a
-> > preempt_rt enabled version of our 4.9LTS production kernel located
-> > here: https://github.com/01org/linux-intel-4.9/wiki  Support is fairly
-> > new, and doesn't extend much beyond integrating preempt_rt at this
-> > point, but this is where we will host real-time related optimized
-> > kernel configs for Intel platforms, and feature back-ports, etc. as
-> > those emerge.
-> 
-> Hey Gavin-
-> 
-> Is there a reason why the "real-time related optimized kernel configs"
-> don't make their home in an upstream RT release?
-If we have general optimized configs, we'll push them 
-> 
-> I recall speaking with Thomas at the RTLWS in Graz about whether or not the rt-
-> devel tree should hold rt-enabled/optimized configs, to which he
-> said: "patches welcome".
+On Fri, 2 Jun 2017, Thomas Gleixner wrote:
 
-Hi Julia,
+> Mathias and some others reported GDB failures on RT.
+> 
+> The following scenario leads to task state corruption:
+> 
+> CPU0						CPU1
+> 
+> T1->state = TASK_XXX;
+> spin_lock(&lock)
+>   rt_spin_lock_slowlock(&lock->rtmutex)
+>     raw_spin_lock(&rtm->wait_lock);
+>     T1->saved_state = current->state;
+>     T1->state = TASK_UNINTERRUPTIBLE;
+> 						spin_unlock(&lock)
+>     task_blocks_on_rt_mutex(rtm)  		  rt_spin_lock_slowunlock(&lock->rtmutex)
+>       queue_waiter(rtm)				    raw_spin_lock(&rtm->wait_lock);
+>       pi_chain_walk(rtm)
+>         raw_spin_unlock(&rtm->wait_lock);
+> 						    mark_top_waiter_for_wakeup(T1)
+> 						    raw_spin_unlock(&rtm->wait_lock);
+>       raw_spin_lock(&rtm->wait_lock);
+> 						    wake_up_top_waiter()    
+> 
+>     for (;;) {
+>       if (__try_to_take_rt_mutex())  <- Succeeds
+>         break;
+>       ...
+>     }
+> 						     try_to_wake_up(T1)
+>     T1->state = T1->saved_state;
+>     ==> T1->state == TASK_XXX
+> 						       ttwu_do_wakeup(T1)
+> 				FAIL ---->               T1->state = TASK_RUNNING;
+> 
+> 
+> In most cases this is harmless because waiting for some event, which is the
+> usual reason for TASK_[UN]INTERRUPTIBLE, has to be safe against other forms
+> of spurious wakeups anyway.
+> 
+> But in case of TASK_TRACED this is actually fatal, because the task loses
+> the TASK_TRACED state. In consequence it fails to consume SIGSTOP which was
+> sent from the debugger and actually delivers SIGSTOP to the task which
+> breaks the ptrace mechanics and brings the debugger into an unexpected
+> state.
+> 
+> The cure is way simpler as figuring it out:
+> 
+> In a lock wakeup, check whether the task is actually blocked on a lock. If
+> yes, deliver it. If not, consider the wakeup spurious and exit the wake up
+> code without touching tasks state.
 
-Upstream-first is generally our priority across the board.  If they are reasonably generic/arch-independent config changes we would definitely push them all the way up to rt-devel.  I assumed if they were terribly board/chip-specific, or depended on large backported patch-sets not already held in the rt-devel, they would need another home and the production-kernel tree was a good alternative.  
+After recovering from heat and ptrace induced brain melt, I have to say
+that the fix is actually working, but it's not fixing the root cause of the
+problem.
+
+If the to be woken task has state TASK_TRACED then the wakeup state check
+should not match. But for some stupid reason wake_up_lock_sleeper() should
+not use TASK_ALL. The lock sleepers are in state UNINTERRUPTIBLE, so the
+wake state should be UNINTERRUPTIBLE as well.
+
+The extra check in try_to_wake_up() should stay though as it prevents
+spurious wake ups in general.
+
+Delta patch below.
 
 Thanks,
-Gavin
+
+	tglx
+
+8<------------------
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -2220,7 +2220,7 @@ EXPORT_SYMBOL(wake_up_process);
+  */
+ int wake_up_lock_sleeper(struct task_struct *p)
+ {
+-	return try_to_wake_up(p, TASK_ALL, WF_LOCK_SLEEPER);
++	return try_to_wake_up(p, TASK_UNINTERRUPTIBLE, WF_LOCK_SLEEPER);
+ }
+ 
+ int wake_up_state(struct task_struct *p, unsigned int state)
