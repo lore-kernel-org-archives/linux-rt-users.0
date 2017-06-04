@@ -1,82 +1,108 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-        <u.kleine-koenig@pengutronix.de>
-Subject: Re: [PATCH] no compile warnings from cyclictest
-Date: Sun, 4 Jun 2017 11:47:38 +0200
-Message-ID: <20170604094738.vvuamqandisz67c5@pengutronix.de>
-References: <trinity-e47892ae-17fb-4f87-8381-f313303cfe09-1496484084736@3capp-webde-bs10>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH] Revert "timers: Don't wake ktimersoftd on every tick"
+Date: Sun, 4 Jun 2017 16:17:55 +0200 (CEST)
+Message-ID: <alpine.DEB.2.20.1706041558150.2813@nanos>
+References: <20170203165151.qbpjothhaqctuzx5@linutronix.de> <20170203182112.18053-1-haris.okanovic@ni.com> <20170210170207.3kzfqyfa4ueh7mih@linutronix.de> <alpine.DEB.2.20.1705261911230.11993@hypnos.tec.linutronix.de> <faa23f3e-28c0-6de1-66a6-2b6ab5e99462@ni.com>
+ <alpine.DEB.2.20.1705262147510.2137@nanos> <4b4df775-53b8-cdeb-381b-af8cabb364a8@ni.com> <alpine.DEB.2.20.1705262232590.2137@nanos> <b1486490-5a96-7ba3-c280-5d5622c8c488@ni.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Cc: linux-rt-users@vger.kernel.org
-To: rolf.freitag@email.de
+Content-Type: text/plain; charset=US-ASCII
+Cc: Anna-Maria Gleixner <anna-maria@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        julia.cartwright@ni.com, gratian.crisan@ni.com
+To: Haris Okanovic <haris.okanovic@ni.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.4.pengutronix.de ([92.198.50.35]:52743 "EHLO
-        metis.ext.4.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1750847AbdFDJrk (ORCPT
+Received: from Galois.linutronix.de ([146.0.238.70]:47977 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751159AbdFDOSA (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 4 Jun 2017 05:47:40 -0400
-Content-Disposition: inline
-In-Reply-To: <trinity-e47892ae-17fb-4f87-8381-f313303cfe09-1496484084736@3capp-webde-bs10>
+        Sun, 4 Jun 2017 10:18:00 -0400
+In-Reply-To: <b1486490-5a96-7ba3-c280-5d5622c8c488@ni.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
-
-On Sat, Jun 03, 2017 at 12:01:24PM +0200, rolf.freitag@email.de wrote:
-> Hi,
+On Fri, 2 Jun 2017, Haris Okanovic wrote:
+> On 05/26/2017 03:50 PM, Thomas Gleixner wrote:
+> > > >  static void expire_timers(struct timer_base *base)
+> > > >  {
+> > > >         struct hlist_head *head;
+> > > > +       int expCount = base->expired_count;
+> > 
+> > No camel case for heavens sake!
+> > 
+> > And this requires:
+> > 
+> >    	 cnt = READ_ONCE(base->expired_count);
+> > 
+> > > > -       while (base->expired_count--) {
+> > > > -               head = base->expired_lists + base->expired_count;
+> > > > +       while (expCount--) {
+> > > > +               head = base->expired_lists + expCount;
+> > > >                 __expire_timers(base, head);
+> > > >         }
+> > 
+> > Plus a comment.
 > 
-> compiling cyclictest gives 4 warnings of type
+> Fixed, thanks.
 > 
->   warning: ignoring return value of 'write'
+> Are your recommending READ_ONCE() purely for documentation purposes?
+
+Yes.
+
+> > The other thing I noticed was this weird condition which does not do the
+> > look ahead when base->clk is back for some time.
 > 
-> and three of type
+> The soft interrupt fires unconditionally if base->clk hasn't advanced in some
+> time to limit how long cpu spends in hard interrupt context.
+
+That makes no sense.
+
+> > Why don't you use the
+> > existing optimization which uses the bitmap for fast forward?
+> > 
 > 
->   warning: ... may be used uninitialized in this function
+> Are you referring to forward_timer_base()/base->next_expiry? I think it's only
+> updated in the nohz case. Can you share function name/line number(s) if you're
+> thinking of something else.
+
+I think just using collect_expired_timers() should be enough. In the !NOHZ
+case the base shouldn't be that far back, right?
+
+> > The other issue I have is that this can race at all. If you raised the
+> > softirq in the look ahead then you should not go into that function until
+> > the softirq has actually completed. There is no point in wasting time in
+> > the hrtimer interrupt if the softirq is running anyway.
+> > 
 > 
-> So i eleminated the first sort with a trash variable, which adds up 
-> the return values and recycles them (their entropy) at the end via
-> srand(). This also avoids a write-only variable.
-> I eleminated the second sort by initializing the variables.
-> 
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -222,6 +222,7 @@ static int use_fifo = 0;
->  static pthread_t fifo_threadid;
->  static int laptop = 0;
->  static int use_histfile = 0;
-> +static unsigned int trash; // for unused return values, to avoid compiler warnings because of ignored return values
+> Makes sense. Skipping the large `if` block in run_local_timers() when
+> `local_softirq_pending() & TIMER_SOFTIRQ`.
 
-What is the good reason to collect these in a global variable?
-Ah, later in the patch you use it for srand. Is this a good idea? If so,
-document it here.
+No. You need your own state tracking. The TIMER_SOFTIRQ bit is cleared when
+the softirq is invoked, but that does not mean that it finished running.
 
-Oh, and AFAIK cyclictest uses C comments, not C++.
+run_local_timers()
+{
+	lock(base->lock);
+	if (!base->softirq_activated)
+		if (base_has_timers_to_expire()) {
+			base->softirq_activated = true;
+			raise_softirq(TIMER_SOFTIRQ);
+		}
+	}
+	unlock(base->lock);
+}
 
->  #ifdef ARCH_HAS_SMI_COUNTER
->  static int smi = 0;
-> @@ -491,10 +492,10 @@ static void tracemark(char *fmt, ...)
->         va_end(ap);
->  
->         /* write the tracemark message */
-> -       write(tracemark_fd, tracebuf, len);
-> +       trash += write(tracemark_fd, tracebuf, len);
+timer_softirq()
+{
+	lock(base->lock);
+	expire_timers();
+	base->softirq_activated = false;
+	unlock(base->lock);
+}
 
-IMHO that's not very sensible. The compiler tells you, that you ignore
-the return value of write and that might be a bad thing. So the (more)
-sensible options are:
+That way you avoid any operation in the tick interrupt as long as the soft
+interrupt processing has not completed.
 
- - add proper error checking and let (here) tracemark fail if the write
-   fails (and retry if the return value is positive but less than len).
+Thanks,
 
- - you don't care about the return value, so use:
-
- 	(void)write(tracemark_fd, tracebuf, len)
-
- - keep the warnings until someone else fixes them properly.
-
-Best regards
-Uwe
-
--- 
-Pengutronix e.K.                           | Uwe Kleine-König            |
-Industrial Linux Solutions                 | http://www.pengutronix.de/  |
+	tglx
