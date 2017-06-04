@@ -1,100 +1,82 @@
-From: rolf.freitag@email.de
-Subject: [PATCH] no compile warnings from cyclictest
-Date: Sat, 3 Jun 2017 12:01:24 +0200
-Message-ID: <trinity-e47892ae-17fb-4f87-8381-f313303cfe09-1496484084736@3capp-webde-bs10>
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+        <u.kleine-koenig@pengutronix.de>
+Subject: Re: [PATCH] no compile warnings from cyclictest
+Date: Sun, 4 Jun 2017 11:47:38 +0200
+Message-ID: <20170604094738.vvuamqandisz67c5@pengutronix.de>
+References: <trinity-e47892ae-17fb-4f87-8381-f313303cfe09-1496484084736@3capp-webde-bs10>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Cc: linux-rt-users@vger.kernel.org
+To: rolf.freitag@email.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mout.web.de ([212.227.15.14]:61175 "EHLO mout.web.de"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1750991AbdFCKB1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 3 Jun 2017 06:01:27 -0400
+Received: from metis.ext.4.pengutronix.de ([92.198.50.35]:52743 "EHLO
+        metis.ext.4.pengutronix.de" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1750847AbdFDJrk (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 4 Jun 2017 05:47:40 -0400
+Content-Disposition: inline
+In-Reply-To: <trinity-e47892ae-17fb-4f87-8381-f313303cfe09-1496484084736@3capp-webde-bs10>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+Hello,
 
-compiling cyclictest gives 4 warnings of type
+On Sat, Jun 03, 2017 at 12:01:24PM +0200, rolf.freitag@email.de wrote:
+> Hi,
+> 
+> compiling cyclictest gives 4 warnings of type
+> 
+>   warning: ignoring return value of 'write'
+> 
+> and three of type
+> 
+>   warning: ... may be used uninitialized in this function
+> 
+> So i eleminated the first sort with a trash variable, which adds up 
+> the return values and recycles them (their entropy) at the end via
+> srand(). This also avoids a write-only variable.
+> I eleminated the second sort by initializing the variables.
+> 
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -222,6 +222,7 @@ static int use_fifo = 0;
+>  static pthread_t fifo_threadid;
+>  static int laptop = 0;
+>  static int use_histfile = 0;
+> +static unsigned int trash; // for unused return values, to avoid compiler warnings because of ignored return values
 
-Â  warning: ignoring return value of 'write'
+What is the good reason to collect these in a global variable?
+Ah, later in the patch you use it for srand. Is this a good idea? If so,
+document it here.
 
-and three of type
+Oh, and AFAIK cyclictest uses C comments, not C++.
 
-Â  warning: ... may be used uninitialized in this function
+>  #ifdef ARCH_HAS_SMI_COUNTER
+>  static int smi = 0;
+> @@ -491,10 +492,10 @@ static void tracemark(char *fmt, ...)
+>         va_end(ap);
+>  
+>         /* write the tracemark message */
+> -       write(tracemark_fd, tracebuf, len);
+> +       trash += write(tracemark_fd, tracebuf, len);
 
-So i eleminated the first sort with a trash variable, which adds up 
-the return values and recycles them (their entropy) at the end via
-srand(). This also avoids a write-only variable.
-I eleminated the second sort by initializing the variables.
+IMHO that's not very sensible. The compiler tells you, that you ignore
+the return value of write and that might be a bad thing. So the (more)
+sensible options are:
 
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -222,6 +222,7 @@ static int use_fifo = 0;
- static pthread_t fifo_threadid;
- static int laptop = 0;
- static int use_histfile = 0;
-+static unsigned int trash; // for unused return values, to avoid compiler warnings because of ignored return values
- 
- #ifdef ARCH_HAS_SMI_COUNTER
- static int smi = 0;
-@@ -491,10 +492,10 @@ static void tracemark(char *fmt, ...)
-        va_end(ap);
- 
-        /* write the tracemark message */
--       write(tracemark_fd, tracebuf, len);
-+       trash += write(tracemark_fd, tracebuf, len);
- 
-        /* now stop any trace */
--       write(trace_fd, "0\n", 2);
-+       trash += write(trace_fd, "0\n", 2);
- }
- 
- 
-@@ -510,7 +511,7 @@ static void tracing(int on)
-                case KV_26_LT24: prctl(0, 1); break;
-                case KV_26_33:
-                case KV_30:
--                       write(trace_fd, "1", 1);
-+                       trash += write(trace_fd, "1", 1);
-                        break;
-                default:         break;
-                }
-@@ -520,7 +521,7 @@ static void tracing(int on)
-                case KV_26_LT24: prctl(0, 0); break;
-                case KV_26_33:
-                case KV_30:
--                       write(trace_fd, "0", 1);
-+                       trash += write(trace_fd, "0", 1);
-                        break;
-                default:        break;
-                }
-@@ -984,8 +985,10 @@ static void *timerthread(void *param)
-        int stopped = 0;
-        cpu_set_t mask;
-        pthread_t thread;
--       unsigned long smi_now, smi_old;
-+       unsigned long smi_now, smi_old=0;
- 
-+    memset(&stop, 0, sizeof(stop)); /* grrr */
-+    
-        /* if we're running in numa mode, set our memory node */
-        if (par->node != -1)
-                rt_numa_set_numa_run_on_node(par->node, par->cpu);
-@@ -1066,7 +1069,6 @@ static void *timerthread(void *param)
-        tsnorm(&next);
- 
-        if (duration) {
--               memset(&stop, 0, sizeof(stop)); /* grrr */
-                stop = now;
-                stop.tv_sec += duration;
-        }
-@@ -2623,5 +2625,7 @@ int main(int argc, char **argv)
-        if (affinity_mask)
-                rt_bitmask_free(affinity_mask);
- 
-+    srand(trash); // recycling of the trash (unused return values)
-+    
-        exit(ret);
- }
+ - add proper error checking and let (here) tracemark fail if the write
+   fails (and retry if the return value is positive but less than len).
+
+ - you don't care about the return value, so use:
+
+ 	(void)write(tracemark_fd, tracebuf, len)
+
+ - keep the warnings until someone else fixes them properly.
+
+Best regards
+Uwe
+
+-- 
+Pengutronix e.K.                           | Uwe Kleine-König            |
+Industrial Linux Solutions                 | http://www.pengutronix.de/  |
