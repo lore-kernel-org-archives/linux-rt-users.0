@@ -1,65 +1,51 @@
-From: Piotr Gregor <pgregor@quadrant-systems.co.uk>
-Subject: RE: Where are the branches for stable/v1.0 and unstable/devel?
-Date: Mon, 5 Jun 2017 07:09:48 +0000
-Message-ID: <AM3PR02MB130683B91F1744B259FCAA7C1CA0@AM3PR02MB130.eurprd02.prod.outlook.com>
-References: <trinity-81b115be-c7aa-430f-a6bb-a9f8512e0222-1495478595984@3capp-webde-bap56>
- <1495483301.9833.3.camel@intel.com>
- <trinity-363cee20-7cf0-4d43-b5d7-058ae3582716-1495921425917@3capp-webde-bs06>
- <alpine.LFD.2.20.1705311645190.6177@riemann>
- <20170602084227.7pdrv4g5mcy4palz@linutronix.de>
+From: Piotr Gregor <piotrgregor@rsyncme.org>
+Subject: [PATCH] README: Added info about setting branch --tracking
+Date: Mon, 5 Jun 2017 09:01:33 +0100
+Message-ID: <20170605080130.strwcmn6lqptqf76@debian1.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: "rolf.freitag@email.de" <rolf.freitag@email.de>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        John Kacur <jkacur@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: rolf.freitag@email.de, linux-rt-users@vger.kernel.org
+To: jkacur@redhat.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-db5eur01on0107.outbound.protection.outlook.com ([104.47.2.107]:19648
-        "EHLO EUR01-DB5-obe.outbound.protection.outlook.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1751297AbdFEHJv (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 5 Jun 2017 03:09:51 -0400
-In-Reply-To: <20170602084227.7pdrv4g5mcy4palz@linutronix.de>
-Content-Language: en-US
+Received: from mail-wm0-f49.google.com ([74.125.82.49]:35383 "EHLO
+        mail-wm0-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751352AbdFEIBg (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 5 Jun 2017 04:01:36 -0400
+Received: by mail-wm0-f49.google.com with SMTP id x70so6088067wme.0
+        for <linux-rt-users@vger.kernel.org>; Mon, 05 Jun 2017 01:01:36 -0700 (PDT)
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-DQoNCi0tLS0tT3JpZ2luYWwgTWVzc2FnZS0tLS0tDQpGcm9tOiBsaW51eC1ydC11c2Vycy1vd25l
-ckB2Z2VyLmtlcm5lbC5vcmcgW21haWx0bzpsaW51eC1ydC11c2Vycy1vd25lckB2Z2VyLmtlcm5l
-bC5vcmddIE9uIEJlaGFsZiBPZiBTZWJhc3RpYW4gQW5kcnplaiBTaWV3aW9yDQpTZW50OiAwMiBK
-dW5lIDIwMTcgMDk6NDINClRvOiBKb2huIEthY3VyIDxqa2FjdXJAcmVkaGF0LmNvbT4NCkNjOiBy
-b2xmLmZyZWl0YWdAZW1haWwuZGU7IGxpbnV4LXJ0LXVzZXJzQHZnZXIua2VybmVsLm9yZw0KU3Vi
-amVjdDogUmU6IFdoZXJlIGFyZSB0aGUgYnJhbmNoZXMgZm9yIHN0YWJsZS92MS4wIGFuZCB1bnN0
-YWJsZS9kZXZlbD8NCg0KT24gMjAxNy0wNS0zMSAxNjo0ODoxNiBbKzAyMDBdLCBKb2huIEthY3Vy
-IHdyb3RlOg0KPiBIZXJlIGlzIGhvdyAob25lIHdheSkgdG8gY2hlY2sgb3V0IHRoZSBzdGFibGUg
-YW5kIHRoZSB1bnN0YWJsZSANCj4gYnJhbmNoZXMuDQo+IA0KPiBnaXQgY2xvbmUgZ2l0Oi8vZ2l0
-Lmtlcm5lbC5vcmcvcHViL3NjbS91dGlscy9ydC10ZXN0cy9ydC10ZXN0cy5naXQNCj4gQ2xvbmlu
-ZyBpbnRvICdydC10ZXN0cycuLi4NCj4gcmVtb3RlOiBDb3VudGluZyBvYmplY3RzOiAyOTE0LCBk
-b25lLg0KPiByZW1vdGU6IFRvdGFsIDI5MTQgKGRlbHRhIDApLCByZXVzZWQgMCAoZGVsdGEgMCkg
-UmVjZWl2aW5nIG9iamVjdHM6IA0KPiAxMDAlICgyOTE0LzI5MTQpLCA1NTQuMTEgS2lCIHwgNTEz
-LjAwIEtpQi9zLCBkb25lLg0KPiBSZXNvbHZpbmcgZGVsdGFzOiAxMDAlICgxNzYwLzE3NjApLCBk
-b25lLg0KPiBDaGVja2luZyBjb25uZWN0aXZpdHkuLi4gZG9uZS4NCj4gW2prYWN1ckByaWVtYW5u
-IHRtcF0kIGNkIHJ0LXRlc3RzLw0KPiBbamthY3VyQHJpZW1hbm4gcnQtdGVzdHNdJCBnaXQgYnJh
-bmNoIC1hDQo+ICogbWFzdGVyDQo+ICAgcmVtb3Rlcy9vcmlnaW4vSEVBRCAtPiBvcmlnaW4vbWFz
-dGVyDQo+ICAgcmVtb3Rlcy9vcmlnaW4vZGV2ZWwvdjAuOTYNCj4gICByZW1vdGVzL29yaWdpbi9k
-ZXZlbC92MC45Ni1zcGlrZXMNCj4gICByZW1vdGVzL29yaWdpbi9kZXZlbC92MC45Nw0KPiAgIHJl
-bW90ZXMvb3JpZ2luL2RldmVsL3YwLjk4DQo+ICAgcmVtb3Rlcy9vcmlnaW4vbWFzdGVyDQo+ICAg
-cmVtb3Rlcy9vcmlnaW4vc3RhYmxlL2RldmVsL3YxLjAuMQ0KPiAgIHJlbW90ZXMvb3JpZ2luL3N0
-YWJsZS92MS4wDQo+ICAgcmVtb3Rlcy9vcmlnaW4vdW5zdGFibGUvZGV2ZWwvdjEuMS4xDQo+ICAg
-cmVtb3Rlcy9vcmlnaW4vdjAuOTMtZGV2ZWwNCj4gICByZW1vdGVzL29yaWdpbi92MC45NC1kZXZl
-bA0KPiBbamthY3VyQHJpZW1hbm4gcnQtdGVzdHNdJCBnaXQgY2hlY2tvdXQgLWIgc3RhYmxlL3Yx
-LjAgDQo+IG9yaWdpbi9zdGFibGUvdjEuMCBCcmFuY2ggc3RhYmxlL3YxLjAgc2V0IHVwIHRvIHRy
-YWNrIHJlbW90ZSBicmFuY2ggc3RhYmxlL3YxLjAgZnJvbSBvcmlnaW4uDQo+IFN3aXRjaGVkIHRv
-IGEgbmV3IGJyYW5jaCAnc3RhYmxlL3YxLjAnDQo+IFtqa2FjdXJAcmllbWFubiBydC10ZXN0c10k
-IGdpdCBjaGVja291dCAtYiB1bnN0YWJsZS9kZXZlbC92MS4xLjENCj4gb3JpZ2luL3Vuc3RhYmxl
-L2RldmVsL3YxLjEuMQ0KPiBCcmFuY2ggdW5zdGFibGUvZGV2ZWwvdjEuMS4xIHNldCB1cCB0byB0
-cmFjayByZW1vdGUgYnJhbmNoDQo+IHVuc3RhYmxlL2RldmVsL3YxLjEuMSBmcm9tIG9yaWdpbi4N
-Cj4gU3dpdGNoZWQgdG8gYSBuZXcgYnJhbmNoICd1bnN0YWJsZS9kZXZlbC92MS4xLjEnDQoNClVz
-ZXJzIHdvbid0IGZpbmQgZXhwZWN0ZWQgY29udGVudCBpbiB0aGUgZm9sZGVyIGlmIHRoZXkgZG8N
-Cg0KZ2l0IGNoZWNrb3V0IC1iIHN0YWJsZS92MS4wDQoNCmJ1dCB0aGV5IGRvIG5vdCBoYXZlIHJl
-bW90ZSB0cmFja2luZyBzZXQgdXAgdG8NCg0KZ2l0IGNvbmZpZyAtLWdsb2JhbCBwdXNoLmRlZmF1
-bHQgY3VycmVudA0KDQpvciBzaW1pbGFyLg0KSXQgd291bGQgYmUgdXNlZnVsIHRvIGhhdmUgdGhp
-cyBpbmZvcm1hdGlvbiBpbiBSRUFETUUuIFRoZXkgY2FuIGRvDQoNCmdpdCBjaGVja291dCAtYiBz
-dGFibGUvdjEuMCBvcmlnaW4vc3RhYmxlL3YxLjANCg0KaW4gdGhpcyBjYXNlIGFuZCBpdCB3aWxs
-IHdvcmsuDQoNCmNoZWVycywNClBpb3RyDQo=
+To setup remote tracking of the branch stable/v1.0
+git checkout with --track option can be used:
+	git checkout -b stable/v1.0 --track origin/stable/v1.0
+Otherwise when git checkout -b stable/v1.0 is used
+branch may not be properly set up to track it's remote counterpart
+(given git option) and users may be confused due to no files present
+in the folder, but README.
+
+Signed-off-by: Piotr Gregor <pgregor@quadrant-systems.co.uk>
+---
+ README | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/README b/README
+index a618eb5..47e3e54 100644
+--- a/README
++++ b/README
+@@ -4,3 +4,10 @@ The master branch is unused. You should use an existing branch instead.
+ 
+ The stable/v1.0 branch contains the old stable version.
+ The unstable/devel branches contain the development versions.
++
++To checkout stable/v1.0 and setup remote tracking to /origin/stable/v1.0 please do:
++	git checkout -b stable/v1.0 origin/stable/v1.0
++or
++	git checkout -b stable/v1.0 --track origin/stable/v1.0
++and similarly for the unstable/devel/v1.1.1 branch please do:
++	git checkout -b unstable/devel/v1.1.1 --track origin/unstable/devel/v1.1.1
+-- 
+2.1.4
+
