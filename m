@@ -1,108 +1,65 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH] Revert "timers: Don't wake ktimersoftd on every tick"
-Date: Sun, 4 Jun 2017 16:17:55 +0200 (CEST)
-Message-ID: <alpine.DEB.2.20.1706041558150.2813@nanos>
-References: <20170203165151.qbpjothhaqctuzx5@linutronix.de> <20170203182112.18053-1-haris.okanovic@ni.com> <20170210170207.3kzfqyfa4ueh7mih@linutronix.de> <alpine.DEB.2.20.1705261911230.11993@hypnos.tec.linutronix.de> <faa23f3e-28c0-6de1-66a6-2b6ab5e99462@ni.com>
- <alpine.DEB.2.20.1705262147510.2137@nanos> <4b4df775-53b8-cdeb-381b-af8cabb364a8@ni.com> <alpine.DEB.2.20.1705262232590.2137@nanos> <b1486490-5a96-7ba3-c280-5d5622c8c488@ni.com>
+From: Piotr Gregor <pgregor@quadrant-systems.co.uk>
+Subject: RE: Where are the branches for stable/v1.0 and unstable/devel?
+Date: Mon, 5 Jun 2017 07:09:48 +0000
+Message-ID: <AM3PR02MB130683B91F1744B259FCAA7C1CA0@AM3PR02MB130.eurprd02.prod.outlook.com>
+References: <trinity-81b115be-c7aa-430f-a6bb-a9f8512e0222-1495478595984@3capp-webde-bap56>
+ <1495483301.9833.3.camel@intel.com>
+ <trinity-363cee20-7cf0-4d43-b5d7-058ae3582716-1495921425917@3capp-webde-bs06>
+ <alpine.LFD.2.20.1705311645190.6177@riemann>
+ <20170602084227.7pdrv4g5mcy4palz@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Cc: Anna-Maria Gleixner <anna-maria@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        julia.cartwright@ni.com, gratian.crisan@ni.com
-To: Haris Okanovic <haris.okanovic@ni.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: "rolf.freitag@email.de" <rolf.freitag@email.de>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:47977 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751159AbdFDOSA (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 4 Jun 2017 10:18:00 -0400
-In-Reply-To: <b1486490-5a96-7ba3-c280-5d5622c8c488@ni.com>
+Received: from mail-db5eur01on0107.outbound.protection.outlook.com ([104.47.2.107]:19648
+        "EHLO EUR01-DB5-obe.outbound.protection.outlook.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S1751297AbdFEHJv (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 5 Jun 2017 03:09:51 -0400
+In-Reply-To: <20170602084227.7pdrv4g5mcy4palz@linutronix.de>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2 Jun 2017, Haris Okanovic wrote:
-> On 05/26/2017 03:50 PM, Thomas Gleixner wrote:
-> > > >  static void expire_timers(struct timer_base *base)
-> > > >  {
-> > > >         struct hlist_head *head;
-> > > > +       int expCount = base->expired_count;
-> > 
-> > No camel case for heavens sake!
-> > 
-> > And this requires:
-> > 
-> >    	 cnt = READ_ONCE(base->expired_count);
-> > 
-> > > > -       while (base->expired_count--) {
-> > > > -               head = base->expired_lists + base->expired_count;
-> > > > +       while (expCount--) {
-> > > > +               head = base->expired_lists + expCount;
-> > > >                 __expire_timers(base, head);
-> > > >         }
-> > 
-> > Plus a comment.
-> 
-> Fixed, thanks.
-> 
-> Are your recommending READ_ONCE() purely for documentation purposes?
-
-Yes.
-
-> > The other thing I noticed was this weird condition which does not do the
-> > look ahead when base->clk is back for some time.
-> 
-> The soft interrupt fires unconditionally if base->clk hasn't advanced in some
-> time to limit how long cpu spends in hard interrupt context.
-
-That makes no sense.
-
-> > Why don't you use the
-> > existing optimization which uses the bitmap for fast forward?
-> > 
-> 
-> Are you referring to forward_timer_base()/base->next_expiry? I think it's only
-> updated in the nohz case. Can you share function name/line number(s) if you're
-> thinking of something else.
-
-I think just using collect_expired_timers() should be enough. In the !NOHZ
-case the base shouldn't be that far back, right?
-
-> > The other issue I have is that this can race at all. If you raised the
-> > softirq in the look ahead then you should not go into that function until
-> > the softirq has actually completed. There is no point in wasting time in
-> > the hrtimer interrupt if the softirq is running anyway.
-> > 
-> 
-> Makes sense. Skipping the large `if` block in run_local_timers() when
-> `local_softirq_pending() & TIMER_SOFTIRQ`.
-
-No. You need your own state tracking. The TIMER_SOFTIRQ bit is cleared when
-the softirq is invoked, but that does not mean that it finished running.
-
-run_local_timers()
-{
-	lock(base->lock);
-	if (!base->softirq_activated)
-		if (base_has_timers_to_expire()) {
-			base->softirq_activated = true;
-			raise_softirq(TIMER_SOFTIRQ);
-		}
-	}
-	unlock(base->lock);
-}
-
-timer_softirq()
-{
-	lock(base->lock);
-	expire_timers();
-	base->softirq_activated = false;
-	unlock(base->lock);
-}
-
-That way you avoid any operation in the tick interrupt as long as the soft
-interrupt processing has not completed.
-
-Thanks,
-
-	tglx
+DQoNCi0tLS0tT3JpZ2luYWwgTWVzc2FnZS0tLS0tDQpGcm9tOiBsaW51eC1ydC11c2Vycy1vd25l
+ckB2Z2VyLmtlcm5lbC5vcmcgW21haWx0bzpsaW51eC1ydC11c2Vycy1vd25lckB2Z2VyLmtlcm5l
+bC5vcmddIE9uIEJlaGFsZiBPZiBTZWJhc3RpYW4gQW5kcnplaiBTaWV3aW9yDQpTZW50OiAwMiBK
+dW5lIDIwMTcgMDk6NDINClRvOiBKb2huIEthY3VyIDxqa2FjdXJAcmVkaGF0LmNvbT4NCkNjOiBy
+b2xmLmZyZWl0YWdAZW1haWwuZGU7IGxpbnV4LXJ0LXVzZXJzQHZnZXIua2VybmVsLm9yZw0KU3Vi
+amVjdDogUmU6IFdoZXJlIGFyZSB0aGUgYnJhbmNoZXMgZm9yIHN0YWJsZS92MS4wIGFuZCB1bnN0
+YWJsZS9kZXZlbD8NCg0KT24gMjAxNy0wNS0zMSAxNjo0ODoxNiBbKzAyMDBdLCBKb2huIEthY3Vy
+IHdyb3RlOg0KPiBIZXJlIGlzIGhvdyAob25lIHdheSkgdG8gY2hlY2sgb3V0IHRoZSBzdGFibGUg
+YW5kIHRoZSB1bnN0YWJsZSANCj4gYnJhbmNoZXMuDQo+IA0KPiBnaXQgY2xvbmUgZ2l0Oi8vZ2l0
+Lmtlcm5lbC5vcmcvcHViL3NjbS91dGlscy9ydC10ZXN0cy9ydC10ZXN0cy5naXQNCj4gQ2xvbmlu
+ZyBpbnRvICdydC10ZXN0cycuLi4NCj4gcmVtb3RlOiBDb3VudGluZyBvYmplY3RzOiAyOTE0LCBk
+b25lLg0KPiByZW1vdGU6IFRvdGFsIDI5MTQgKGRlbHRhIDApLCByZXVzZWQgMCAoZGVsdGEgMCkg
+UmVjZWl2aW5nIG9iamVjdHM6IA0KPiAxMDAlICgyOTE0LzI5MTQpLCA1NTQuMTEgS2lCIHwgNTEz
+LjAwIEtpQi9zLCBkb25lLg0KPiBSZXNvbHZpbmcgZGVsdGFzOiAxMDAlICgxNzYwLzE3NjApLCBk
+b25lLg0KPiBDaGVja2luZyBjb25uZWN0aXZpdHkuLi4gZG9uZS4NCj4gW2prYWN1ckByaWVtYW5u
+IHRtcF0kIGNkIHJ0LXRlc3RzLw0KPiBbamthY3VyQHJpZW1hbm4gcnQtdGVzdHNdJCBnaXQgYnJh
+bmNoIC1hDQo+ICogbWFzdGVyDQo+ICAgcmVtb3Rlcy9vcmlnaW4vSEVBRCAtPiBvcmlnaW4vbWFz
+dGVyDQo+ICAgcmVtb3Rlcy9vcmlnaW4vZGV2ZWwvdjAuOTYNCj4gICByZW1vdGVzL29yaWdpbi9k
+ZXZlbC92MC45Ni1zcGlrZXMNCj4gICByZW1vdGVzL29yaWdpbi9kZXZlbC92MC45Nw0KPiAgIHJl
+bW90ZXMvb3JpZ2luL2RldmVsL3YwLjk4DQo+ICAgcmVtb3Rlcy9vcmlnaW4vbWFzdGVyDQo+ICAg
+cmVtb3Rlcy9vcmlnaW4vc3RhYmxlL2RldmVsL3YxLjAuMQ0KPiAgIHJlbW90ZXMvb3JpZ2luL3N0
+YWJsZS92MS4wDQo+ICAgcmVtb3Rlcy9vcmlnaW4vdW5zdGFibGUvZGV2ZWwvdjEuMS4xDQo+ICAg
+cmVtb3Rlcy9vcmlnaW4vdjAuOTMtZGV2ZWwNCj4gICByZW1vdGVzL29yaWdpbi92MC45NC1kZXZl
+bA0KPiBbamthY3VyQHJpZW1hbm4gcnQtdGVzdHNdJCBnaXQgY2hlY2tvdXQgLWIgc3RhYmxlL3Yx
+LjAgDQo+IG9yaWdpbi9zdGFibGUvdjEuMCBCcmFuY2ggc3RhYmxlL3YxLjAgc2V0IHVwIHRvIHRy
+YWNrIHJlbW90ZSBicmFuY2ggc3RhYmxlL3YxLjAgZnJvbSBvcmlnaW4uDQo+IFN3aXRjaGVkIHRv
+IGEgbmV3IGJyYW5jaCAnc3RhYmxlL3YxLjAnDQo+IFtqa2FjdXJAcmllbWFubiBydC10ZXN0c10k
+IGdpdCBjaGVja291dCAtYiB1bnN0YWJsZS9kZXZlbC92MS4xLjENCj4gb3JpZ2luL3Vuc3RhYmxl
+L2RldmVsL3YxLjEuMQ0KPiBCcmFuY2ggdW5zdGFibGUvZGV2ZWwvdjEuMS4xIHNldCB1cCB0byB0
+cmFjayByZW1vdGUgYnJhbmNoDQo+IHVuc3RhYmxlL2RldmVsL3YxLjEuMSBmcm9tIG9yaWdpbi4N
+Cj4gU3dpdGNoZWQgdG8gYSBuZXcgYnJhbmNoICd1bnN0YWJsZS9kZXZlbC92MS4xLjEnDQoNClVz
+ZXJzIHdvbid0IGZpbmQgZXhwZWN0ZWQgY29udGVudCBpbiB0aGUgZm9sZGVyIGlmIHRoZXkgZG8N
+Cg0KZ2l0IGNoZWNrb3V0IC1iIHN0YWJsZS92MS4wDQoNCmJ1dCB0aGV5IGRvIG5vdCBoYXZlIHJl
+bW90ZSB0cmFja2luZyBzZXQgdXAgdG8NCg0KZ2l0IGNvbmZpZyAtLWdsb2JhbCBwdXNoLmRlZmF1
+bHQgY3VycmVudA0KDQpvciBzaW1pbGFyLg0KSXQgd291bGQgYmUgdXNlZnVsIHRvIGhhdmUgdGhp
+cyBpbmZvcm1hdGlvbiBpbiBSRUFETUUuIFRoZXkgY2FuIGRvDQoNCmdpdCBjaGVja291dCAtYiBz
+dGFibGUvdjEuMCBvcmlnaW4vc3RhYmxlL3YxLjANCg0KaW4gdGhpcyBjYXNlIGFuZCBpdCB3aWxs
+IHdvcmsuDQoNCmNoZWVycywNClBpb3RyDQo=
