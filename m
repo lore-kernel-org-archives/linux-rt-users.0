@@ -1,51 +1,56 @@
-From: Piotr Gregor <piotrgregor@rsyncme.org>
-Subject: [PATCH] README: Added info about setting branch --tracking
-Date: Mon, 5 Jun 2017 09:01:33 +0100
-Message-ID: <20170605080130.strwcmn6lqptqf76@debian1.home>
+From: Tommi Rantala <tommi.t.rantala@nokia.com>
+Subject: Re: [PATCH 24/34] signaltest: remove unused ARRAY_SIZE macro
+Date: Mon, 5 Jun 2017 13:06:22 +0300
+Message-ID: <ced54112-4dc0-5f27-ff5c-be27609087d0@nokia.com>
+References: <20170522082540.15467-1-tommi.t.rantala@nokia.com>
+ <20170522082540.15467-25-tommi.t.rantala@nokia.com>
+ <alpine.LFD.2.20.1705221843320.7915@riemann>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: rolf.freitag@email.de, linux-rt-users@vger.kernel.org
-To: jkacur@redhat.com
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: Clark Williams <williams@redhat.com>,
+        linux-rt-users@vger.kernel.org
+To: John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f49.google.com ([74.125.82.49]:35383 "EHLO
-        mail-wm0-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751352AbdFEIBg (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 5 Jun 2017 04:01:36 -0400
-Received: by mail-wm0-f49.google.com with SMTP id x70so6088067wme.0
-        for <linux-rt-users@vger.kernel.org>; Mon, 05 Jun 2017 01:01:36 -0700 (PDT)
-Content-Disposition: inline
+Received: from mail-eopbgr50135.outbound.protection.outlook.com ([40.107.5.135]:39760
+        "EHLO EUR03-VE1-obe.outbound.protection.outlook.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S1751404AbdFEKGa (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 5 Jun 2017 06:06:30 -0400
+In-Reply-To: <alpine.LFD.2.20.1705221843320.7915@riemann>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-To setup remote tracking of the branch stable/v1.0
-git checkout with --track option can be used:
-	git checkout -b stable/v1.0 --track origin/stable/v1.0
-Otherwise when git checkout -b stable/v1.0 is used
-branch may not be properly set up to track it's remote counterpart
-(given git option) and users may be confused due to no files present
-in the folder, but README.
+On 22.05.2017 19:44, John Kacur wrote:
+> On Mon, 22 May 2017, Tommi Rantala wrote:
+> 
+>> --- a/src/signaltest/signaltest.c
+>> +++ b/src/signaltest/signaltest.c
+>> @@ -30,8 +30,6 @@
+>>   #include "error.h"
+>>   #include "rt-utils.h"
+>>   
+>> -#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+>> -
+>>   /* Ugly, but .... */
+>>   #define gettid() syscall(__NR_gettid)
+>>   
+>> -- 
+> 
+> NAK
+> 
+> You're right, it could be removed, but it's not really causing in harm
+> either. I'm going to leave it in for now.
+> 
+> Thanks
+> 
+> John
 
-Signed-off-by: Piotr Gregor <pgregor@quadrant-systems.co.uk>
----
- README | 7 +++++++
- 1 file changed, 7 insertions(+)
+Hi John,
 
-diff --git a/README b/README
-index a618eb5..47e3e54 100644
---- a/README
-+++ b/README
-@@ -4,3 +4,10 @@ The master branch is unused. You should use an existing branch instead.
- 
- The stable/v1.0 branch contains the old stable version.
- The unstable/devel branches contain the development versions.
-+
-+To checkout stable/v1.0 and setup remote tracking to /origin/stable/v1.0 please do:
-+	git checkout -b stable/v1.0 origin/stable/v1.0
-+or
-+	git checkout -b stable/v1.0 --track origin/stable/v1.0
-+and similarly for the unstable/devel/v1.1.1 branch please do:
-+	git checkout -b unstable/devel/v1.1.1 --track origin/unstable/devel/v1.1.1
--- 
-2.1.4
+OK, dropped the patch also from the github repo.
 
+Any comments to the rest of the patches?
+
+-Tommi
