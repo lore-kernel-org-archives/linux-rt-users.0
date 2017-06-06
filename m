@@ -1,57 +1,63 @@
-From: "Hindman, Gavin" <gavin.hindman@intel.com>
-Subject: RE: Intel real-time Linux production kernel
-Date: Tue, 6 Jun 2017 16:09:42 +0000
-Message-ID: <D5D6254030DBC644B6EE58B333BFBB1E9D679617@ORSMSX101.amr.corp.intel.com>
-References: <D5D6254030DBC644B6EE58B333BFBB1E9D673203@ORSMSX101.amr.corp.intel.com>
- <20170602185015.GB31147@jcartwri.amer.corp.natinst.com>
- <7414773e-5610-94f6-9278-687956f3727e@numalliance.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH RT V2] sched: Prevent task state corruption by spurious
+ lock wakeup
+Date: Tue, 6 Jun 2017 18:28:15 +0200
+Message-ID: <20170606162815.jdurd7xa75fw57g7@hirez.programming.kicks-ass.net>
+References: <alpine.DEB.2.20.1706021834070.1899@nanos>
+ <alpine.DEB.2.20.1706030940220.2228@nanos>
+ <alpine.DEB.2.20.1706061412290.1885@nanos>
+ <alpine.DEB.2.20.1706061419150.1885@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-        "Sapra, Rajesh" <rajesh.sapra@intel.com>,
-        "Weight, Russell H" <russell.h.weight@intel.com>
-To: =?utf-8?B?U3TDqXBoYW5lIEFuY2Vsb3Q=?= <sancelot@numalliance.com>,
-        "Julia Cartwright" <julia@ni.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga09.intel.com ([134.134.136.24]:41452 "EHLO mga09.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751416AbdFFQJx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 6 Jun 2017 12:09:53 -0400
-In-Reply-To: <7414773e-5610-94f6-9278-687956f3727e@numalliance.com>
-Content-Language: en-US
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Sebastian Sewior <bigeasy@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Mathias Koehrer <mathias.koehrer@etas.com>,
+        David Hauck <davidh@netacquire.com>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.20.1706061419150.1885@nanos>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Q3VycmVudGx5IHRoZSBwcm9qZWN0IG9ubHkgaW5jbHVkZXMgZHJpdmVyIGJhY2twb3J0cyBmb3Ig
-dGhlIHN1cHBvcnRlZCBJbnRlbCBwbGF0Zm9ybXMgLSBpdCdzIG5vdCBpbnRlbmRlZCB0byBjYXJy
-eSBvdXQtb2YtdHJlZSB0aGlyZC1wYXJ0eSBkcml2ZXJzLCBhbmQgdGhvc2Ugd291bGQgbGlrZWx5
-IGJlIG91dCBvZiBzY29wZS4gIFBlci1wcm9qZWN0L3Byb2R1Y3QgaW50ZWdyYXRpb24gd2lsbCBz
-dGlsbCBiZSByZXF1aXJlZCBhcyBuZWVkZWQuDQoNClRoYW5rcywNCkdhdmluIEhpbmRtYW4NCg0K
-PiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQ0KPiBGcm9tOiBTdMOpcGhhbmUgQW5jZWxvdCBb
-bWFpbHRvOnNhbmNlbG90QG51bWFsbGlhbmNlLmNvbV0NCj4gU2VudDogVHVlc2RheSwgSnVuZSAw
-NiwgMjAxNyAxMjoyMCBBTQ0KPiBUbzogSnVsaWEgQ2FydHdyaWdodCA8anVsaWFAbmkuY29tPg0K
-PiBDYzogbGludXgtcnQtdXNlcnMgPGxpbnV4LXJ0LXVzZXJzQHZnZXIua2VybmVsLm9yZz47IFNh
-cHJhLCBSYWplc2gNCj4gPHJhamVzaC5zYXByYUBpbnRlbC5jb20+OyBXZWlnaHQsIFJ1c3NlbGwg
-SCA8cnVzc2VsbC5oLndlaWdodEBpbnRlbC5jb20+Ow0KPiBIaW5kbWFuLCBHYXZpbiA8Z2F2aW4u
-aGluZG1hbkBpbnRlbC5jb20+DQo+IFN1YmplY3Q6IFJlOiBJbnRlbCByZWFsLXRpbWUgTGludXgg
-cHJvZHVjdGlvbiBrZXJuZWwNCj4gDQo+IEhpLA0KPiANCj4gVGhpcyBpcyBhIGdvb2QgbmV3cy4g
-RG8geW91IHRoaW5rIHRvIHByb3ZpZGUgIG5ldHdvcmsgbmljIGRyaXZlcnMgZW5hYmxlZCBmb3IN
-Cj4gcmVhbHRpbWUuPw0KPiANCj4gDQo+IExlIDAyLzA2LzIwMTcgw6AgMjA6NTAsIEp1bGlhIENh
-cnR3cmlnaHQgYSDDqWNyaXQgOg0KPiA+IE9uIEZyaSwgSnVuIDAyLCAyMDE3IGF0IDA2OjE1OjMx
-UE0gKzAwMDAsIEhpbmRtYW4sIEdhdmluIHdyb3RlOg0KPiA+PiBIZWxsbyBldmVyeW9uZSwNCj4g
-Pj4NCj4gPj4gSSB3YW50ZWQgdG8gbWFrZSB5b3UgYWxsIGF3YXJlIHRoYXQgSW50ZWwgaXMgbm93
-IG1haW50YWluaW5nIGENCj4gPj4gcHJlZW1wdF9ydCBlbmFibGVkIHZlcnNpb24gb2Ygb3VyIDQu
-OUxUUyBwcm9kdWN0aW9uIGtlcm5lbCBsb2NhdGVkDQo+ID4+IGhlcmU6IGh0dHBzOi8vZ2l0aHVi
-LmNvbS8wMW9yZy9saW51eC1pbnRlbC00Ljkvd2lraSAgU3VwcG9ydCBpcyBmYWlybHkNCj4gPj4g
-bmV3LCBhbmQgZG9lc24ndCBleHRlbmQgbXVjaCBiZXlvbmQgaW50ZWdyYXRpbmcgcHJlZW1wdF9y
-dCBhdCB0aGlzDQo+ID4+IHBvaW50LCBidXQgdGhpcyBpcyB3aGVyZSB3ZSB3aWxsIGhvc3QgcmVh
-bC10aW1lIHJlbGF0ZWQgb3B0aW1pemVkDQo+ID4+IGtlcm5lbCBjb25maWdzIGZvciBJbnRlbCBw
-bGF0Zm9ybXMsIGFuZCBmZWF0dXJlIGJhY2stcG9ydHMsIGV0Yy4gYXMNCj4gPj4gdGhvc2UgZW1l
-cmdlLg0KPiA+IEhleSBHYXZpbi0NCj4gPg0KPiA+IElzIHRoZXJlIGEgcmVhc29uIHdoeSB0aGUg
-InJlYWwtdGltZSByZWxhdGVkIG9wdGltaXplZCBrZXJuZWwgY29uZmlncyINCj4gPiBkb24ndCBt
-YWtlIHRoZWlyIGhvbWUgaW4gYW4gdXBzdHJlYW0gUlQgcmVsZWFzZT8NCj4gPg0KPiA+IEkgcmVj
-YWxsIHNwZWFraW5nIHdpdGggVGhvbWFzIGF0IHRoZSBSVExXUyBpbiBHcmF6IGFib3V0IHdoZXRo
-ZXIgb3Igbm90DQo+ID4gdGhlIHJ0LWRldmVsIHRyZWUgc2hvdWxkIGhvbGQgcnQtZW5hYmxlZC9v
-cHRpbWl6ZWQgY29uZmlncywgdG8gd2hpY2ggaGUNCj4gPiBzYWlkOiAicGF0Y2hlcyB3ZWxjb21l
-Ii4NCj4gPg0KPiA+IFRoYW5rcywNCj4gPg0KPiA+ICAgICBKdWxpYQ0K
+On Tue, Jun 06, 2017 at 02:20:37PM +0200, Thomas Gleixner wrote:
+> --- a/kernel/sched/core.c
+> +++ b/kernel/sched/core.c
+> @@ -2210,7 +2210,7 @@ EXPORT_SYMBOL(wake_up_process);
+>   */
+>  int wake_up_lock_sleeper(struct task_struct *p)
+>  {
+> -	return try_to_wake_up(p, TASK_ALL, WF_LOCK_SLEEPER);
+> +	return try_to_wake_up(p, TASK_UNINTERRUPTIBLE, WF_LOCK_SLEEPER);
+>  }
+>  
+>  int wake_up_state(struct task_struct *p, unsigned int state)
+
+Do we want this?
+
+---
+Subject: sched: Remove TASK_ALL
+
+It's unused:
+
+$ git grep "\<TASK_ALL\>" | wc -l
+1
+
+And dangerous, kill the bugger.
+
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+---
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 3dfa5f99d6ee..e88aadbe2071 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -94,7 +94,6 @@ struct task_group;
+ 
+ /* Convenience macros for the sake of wake_up(): */
+ #define TASK_NORMAL			(TASK_INTERRUPTIBLE | TASK_UNINTERRUPTIBLE)
+-#define TASK_ALL			(TASK_NORMAL | __TASK_STOPPED | __TASK_TRACED)
+ 
+ /* get_task_state(): */
+ #define TASK_REPORT			(TASK_RUNNING | TASK_INTERRUPTIBLE | \
