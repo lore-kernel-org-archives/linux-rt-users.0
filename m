@@ -1,93 +1,112 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [PATCH RT V2] sched: Prevent task state corruption by spurious lock
- wakeup
-Date: Tue, 6 Jun 2017 14:20:37 +0200 (CEST)
-Message-ID: <alpine.DEB.2.20.1706061419150.1885@nanos>
-References: <alpine.DEB.2.20.1706021834070.1899@nanos> <alpine.DEB.2.20.1706030940220.2228@nanos> <alpine.DEB.2.20.1706061412290.1885@nanos>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: RCU simplification and RT needs
+Date: Tue, 6 Jun 2017 05:58:14 -0700
+Message-ID: <20170606125814.GD3721@linux.vnet.ibm.com>
+References: <20170605203550.GA7126@linux.vnet.ibm.com>
+ <b60afeb8-9967-3e83-8f3d-1f722ea78e8f@bristot.me>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Sebastian Sewior <bigeasy@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Mathias Koehrer <mathias.koehrer@etas.com>,
-        David Hauck <davidh@netacquire.com>
-To: LKML <linux-kernel@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.20.1706061412290.1885@nanos>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org, tglx@linutronix.de,
+        bigeasy@linutronix.de, anna-maria@linutronix.de,
+        williams@redhat.com, mingo@kernel.org, rostedt@goodmis.org
+To: Daniel Bristot de Oliveira <daniel@bristot.me>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx0a-001b2d01.pphosted.com ([148.163.156.1]:58334 "EHLO
+        mx0a-001b2d01.pphosted.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1751305AbdFFM6T (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 6 Jun 2017 08:58:19 -0400
+Received: from pps.filterd (m0098404.ppops.net [127.0.0.1])
+        by mx0a-001b2d01.pphosted.com (8.16.0.20/8.16.0.20) with SMTP id v56Cre3t069456
+        for <linux-rt-users@vger.kernel.org>; Tue, 6 Jun 2017 08:58:19 -0400
+Received: from e14.ny.us.ibm.com (e14.ny.us.ibm.com [129.33.205.204])
+        by mx0a-001b2d01.pphosted.com with ESMTP id 2awq372pr1-1
+        (version=TLSv1.2 cipher=AES256-SHA bits=256 verify=NOT)
+        for <linux-rt-users@vger.kernel.org>; Tue, 06 Jun 2017 08:58:18 -0400
+Received: from localhost
+        by e14.ny.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
+        for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
+        Tue, 6 Jun 2017 08:58:17 -0400
+Content-Disposition: inline
+In-Reply-To: <b60afeb8-9967-3e83-8f3d-1f722ea78e8f@bristot.me>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Mathias and others reported GDB failures on RT.
+On Tue, Jun 06, 2017 at 09:57:47AM +0200, Daniel Bristot de Oliveira wrote:
+> 
+> On 06/05/2017 10:35 PM, Paul E. McKenney wrote:
+> > Hello!
+> > 
+> > At Linus's request, I am simplifying the Linux-kernel RCU implementation,
+> > which includes removing code that implements features and options that
+> > are no longer needed.  This is not a half-hearted effort.  In fact,
+> > I expect that my submission to the next merge window will be a net
+> > removal of more than 2500 lines of code.
+> 
+> Nice :-)
+> 
+> > But wait, there is more!  ;-)
+> > 
+> > Although the following two features are not being axed in v4.13, they
+> > will be in v4.14 unless someone makes a convincing case for them:
+> > 
+> > 1.	The ability to build a CONFIG_RCU_NOCB_CPUS=y kernel without
+> > 	also specifying CONFIG_NO_HZ_FULL.
+> > 
+> > 	Unless someone speaks for this configuration option,
+> > 	CONFIG_RCU_NOCB_CPUS will be slaved off of CONFIG_NO_HZ_FULL,
+> > 	and the rcu_nocbs= boot parameter will be dropped.  (RCU would
+> > 	instead use the nohz_full= boot parameter to determine which
+> > 	CPUs get their callbacks offloaded.)
+> 
+> In our product (RHEL-RT), we do not have rcu offload enabled on all CPUs
+> by default, that's because there are some cases in which customers want
+> to avoid context switches - they let rcuc/ as a low priority thread and
+> let it do all the job, when there is nothing else to do. So, we let the
+> user decide in which CPUs they want to offload RCU.
+> 
+> The side effect of enforcing NOHZ_FULL on those cases are two:
+> 
+> 1) NOHZ_FULL enables NOHZ, which causes an overhead in the
+> exit-from-idle path, increasing the average latency;
+> 
+> 2) Not all RT users want to pay the syscall overheads involved on
+> NOHZ_FULL. NOHZ_FULL is very nice for HPC users (user-space busy-loop
+> tools) but not for RT users doing fine grained events. These users like
+> to offload RCU callbacks on some CPUs, but do not want to pay the
+> NOHZ_FULL price.
+> 
+> So, for event/response real-time users, NOHZ_FULL + NOHZ causes
+> undesired overhead, while they want to have rcu_nocbs= enabled. That is
+> why I believe that having both rcu_nocbs= and  nohz_full= separated is
+> very useful.
+> 
+> > 2.	The ability to specify polling for callback-offloaded CPUs.  This
+> > 	means that the rcu_nocb_poll= boot parameter will be dropped,
+> > 	and the CPU doing call_rcu() would do explicit wakeups, when
+> > 	needed, to get the corresponding rcuo kthread on the job.
+> > 
+> > 	I have no evidence that anyone has ever used this option, other
+> > 	than me running the occasional rcutorture test.
+> 
+> We are using it in some cases. There are cases in which users do not
+> want to see any interference in a CPU, let's call them heavy CPU
+> isolation users. They do not want to see any job there other than their
+> user-space busy-loop application. In those cases, they do not want to
+> see the rcuc/ threads being awakened - not even to juts wake up another
+> thread. Although these cases look more HPC than RT, those users want to
+> use the RT kernel to avoid latency in other real-time threads running in
+> the same system. I think that the best example of those users is NFV people.
+> 
+> > So, anyone need either of these?  If not, out they go!  ;-)
+> As we deal with many different sort of real-time/HPC workload in the
+> enterprise RT world... we end up facing many different user-cases, and
+> those options are very useful for us.
 
-The following scenario leads to task state corruption:
+Thanks to both you and Gerhard!
 
-CPU0						CPU1
+Looks like I should figure on keeping these, at least for the time being.
 
-T1->state = TASK_XXX;
-spin_lock(&lock)
-  rt_spin_lock_slowlock(&lock->rtmutex)
-    raw_spin_lock(&rtm->wait_lock);
-    T1->saved_state = current->state;
-    T1->state = TASK_UNINTERRUPTIBLE;
-						spin_unlock(&lock)
-    task_blocks_on_rt_mutex(rtm)  		  rt_spin_lock_slowunlock(&lock->rtmutex)
-      queue_waiter(rtm)				    raw_spin_lock(&rtm->wait_lock);
-      pi_chain_walk(rtm)
-        raw_spin_unlock(&rtm->wait_lock);
-						    wake_top_waiter(T1)
+							Thanx, Paul
 
-      raw_spin_lock(&rtm->wait_lock);
-    
-
-    for (;;) {
-      if (__try_to_take_rt_mutex())  <- Succeeds
-        break;
-      ...
-    }
-	
-    T1->state = T1->saved_state;
-						     try_to_wake_up(T1)
-						       ttwu_do_wakeup(T1)
-						         T1->state = TASK_RUNNING;
-
-In most cases this is harmless because waiting for some event, which is the
-usual reason for TASK_[UN]INTERRUPTIBLE has to be safe against other forms
-of spurious wakeups anyway.
-
-But in case of TASK_TRACED this is actually fatal, because the task loses
-the TASK_TRACED state. In consequence it fails to consume SIGSTOP which was
-sent from the debugger and actually delivers SIGSTOP to the task which
-breaks the ptrace mechanics and brings the debugger into an unexpected
-state.
-
-The TASK_TRACED state should prevent getting there due to the state
-matching logic in try_to_wake_up(). But that's not true because
-wake_up_lock_sleeper() uses TASK_ALL as state mask. That's bogus because
-lock sleepers always use TASK_UNINTERRUPTIBLE, so the wakeup should use
-that as well.
-
-The cure is way simpler as figuring it out:
-
-Change the mask used in wake_up_lock_sleeper() from TASK_ALL to
-TASK_UNINTERRUPTIBLE.
-
-Reported-by: Mathias Koehrer <mathias.koehrer@etas.com>
-Reported-by: David Hauck <davidh@netacquire.com>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: stable-rt@vger.kernel.org
----
- kernel/sched/core.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -2210,7 +2210,7 @@ EXPORT_SYMBOL(wake_up_process);
-  */
- int wake_up_lock_sleeper(struct task_struct *p)
- {
--	return try_to_wake_up(p, TASK_ALL, WF_LOCK_SLEEPER);
-+	return try_to_wake_up(p, TASK_UNINTERRUPTIBLE, WF_LOCK_SLEEPER);
- }
- 
- int wake_up_state(struct task_struct *p, unsigned int state)
