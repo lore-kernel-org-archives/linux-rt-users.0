@@ -1,94 +1,40 @@
-From: Daniel Bristot de Oliveira <daniel@bristot.me>
-Subject: Re: RCU simplification and RT needs
-Date: Tue, 6 Jun 2017 09:57:47 +0200
-Message-ID: <b60afeb8-9967-3e83-8f3d-1f722ea78e8f@bristot.me>
-References: <20170605203550.GA7126@linux.vnet.ibm.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH RT] sched: Prevent task state corruption by spurious lock
+ wakeup
+Date: Tue, 6 Jun 2017 14:16:38 +0200 (CEST)
+Message-ID: <alpine.DEB.2.20.1706061412290.1885@nanos>
+References: <alpine.DEB.2.20.1706021834070.1899@nanos> <alpine.DEB.2.20.1706030940220.2228@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Cc: tglx@linutronix.de, bigeasy@linutronix.de,
-        anna-maria@linutronix.de, williams@redhat.com, mingo@kernel.org,
-        rostedt@goodmis.org
-To: paulmck@linux.vnet.ibm.com, linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Sebastian Sewior <bigeasy@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Mathias Koehrer <mathias.koehrer@etas.com>,
+        David Hauck <davidh@netacquire.com>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtpi-sp-243.kinghost.net ([177.185.201.243]:33589 "EHLO
-        smtpi-sp-243.kinghost.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1750805AbdFFIHA (ORCPT
+Received: from Galois.linutronix.de ([146.0.238.70]:57096 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751305AbdFFMQo (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 6 Jun 2017 04:07:00 -0400
-In-Reply-To: <20170605203550.GA7126@linux.vnet.ibm.com>
-Content-Language: en-US
+        Tue, 6 Jun 2017 08:16:44 -0400
+In-Reply-To: <alpine.DEB.2.20.1706030940220.2228@nanos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
-On 06/05/2017 10:35 PM, Paul E. McKenney wrote:
-> Hello!
+On Sat, 3 Jun 2017, Thomas Gleixner wrote:
+> If the to be woken task has state TASK_TRACED then the wakeup state check
+> should not match. But for some stupid reason wake_up_lock_sleeper() should
+> not use TASK_ALL. The lock sleepers are in state UNINTERRUPTIBLE, so the
+> wake state should be UNINTERRUPTIBLE as well.
 > 
-> At Linus's request, I am simplifying the Linux-kernel RCU implementation,
-> which includes removing code that implements features and options that
-> are no longer needed.  This is not a half-hearted effort.  In fact,
-> I expect that my submission to the next merge window will be a net
-> removal of more than 2500 lines of code.
+> The extra check in try_to_wake_up() should stay though as it prevents
+> spurious wake ups in general.
 
-Nice :-)
+Further experimentation shows that it's not worth it. I'll send a V2 of
+that patch with the proper fix.
 
-> But wait, there is more!  ;-)
-> 
-> Although the following two features are not being axed in v4.13, they
-> will be in v4.14 unless someone makes a convincing case for them:
-> 
-> 1.	The ability to build a CONFIG_RCU_NOCB_CPUS=y kernel without
-> 	also specifying CONFIG_NO_HZ_FULL.
-> 
-> 	Unless someone speaks for this configuration option,
-> 	CONFIG_RCU_NOCB_CPUS will be slaved off of CONFIG_NO_HZ_FULL,
-> 	and the rcu_nocbs= boot parameter will be dropped.  (RCU would
-> 	instead use the nohz_full= boot parameter to determine which
-> 	CPUs get their callbacks offloaded.)
+Thanks,
 
-In our product (RHEL-RT), we do not have rcu offload enabled on all CPUs
-by default, that's because there are some cases in which customers want
-to avoid context switches - they let rcuc/ as a low priority thread and
-let it do all the job, when there is nothing else to do. So, we let the
-user decide in which CPUs they want to offload RCU.
-
-The side effect of enforcing NOHZ_FULL on those cases are two:
-
-1) NOHZ_FULL enables NOHZ, which causes an overhead in the
-exit-from-idle path, increasing the average latency;
-
-2) Not all RT users want to pay the syscall overheads involved on
-NOHZ_FULL. NOHZ_FULL is very nice for HPC users (user-space busy-loop
-tools) but not for RT users doing fine grained events. These users like
-to offload RCU callbacks on some CPUs, but do not want to pay the
-NOHZ_FULL price.
-
-So, for event/response real-time users, NOHZ_FULL + NOHZ causes
-undesired overhead, while they want to have rcu_nocbs= enabled. That is
-why I believe that having both rcu_nocbs= and  nohz_full= separated is
-very useful.
-
-> 2.	The ability to specify polling for callback-offloaded CPUs.  This
-> 	means that the rcu_nocb_poll= boot parameter will be dropped,
-> 	and the CPU doing call_rcu() would do explicit wakeups, when
-> 	needed, to get the corresponding rcuo kthread on the job.
-> 
-> 	I have no evidence that anyone has ever used this option, other
-> 	than me running the occasional rcutorture test.
-
-We are using it in some cases. There are cases in which users do not
-want to see any interference in a CPU, let's call them heavy CPU
-isolation users. They do not want to see any job there other than their
-user-space busy-loop application. In those cases, they do not want to
-see the rcuc/ threads being awakened - not even to juts wake up another
-thread. Although these cases look more HPC than RT, those users want to
-use the RT kernel to avoid latency in other real-time threads running in
-the same system. I think that the best example of those users is NFV people.
-
-> So, anyone need either of these?  If not, out they go!  ;-)
-As we deal with many different sort of real-time/HPC workload in the
-enterprise RT world... we end up facing many different user-cases, and
-those options are very useful for us.
-
--- Daniel
+	tglx
