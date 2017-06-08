@@ -1,42 +1,61 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: cyclictest usage
-Date: Thu, 8 Jun 2017 10:46:43 +0200
-Message-ID: <20170608084643.xanjpluaxvexa2pv@linutronix.de>
-References: <20170526112502.4f6a49ac@tagon>
- <20170602095911.wlqcvsi6zf336z5l@linutronix.de>
- <20170602092612.4069fe8f@tagon.lan>
- <CANGgnMayznQDLuR++ZoQVVJfTCK-tjRk1-HLakSdsQU7eb7EGg@mail.gmail.com>
+From: Piotr Gregor <piotrgregor@rsyncme.org>
+Subject: [PATCH] README: Added info about setting branch --tracking
+Date: Thu, 8 Jun 2017 11:19:55 +0100
+Message-ID: <20170608101953.zkiad4lttux6yaw4@debian1.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Clark Williams <williams@redhat.com>,
-        RT <linux-rt-users@vger.kernel.org>,
-        John Kacur <jkacur@redhat.com>
-To: Austin Schuh <austin@peloton-tech.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: jkacur@redhat.com, rolf.freitag@email.de,
+        linux-rt-users@vger.kernel.org
+To: bigeasy@linutronix.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:42122 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751824AbdFHIqp (ORCPT
+Received: from mail-wm0-f54.google.com ([74.125.82.54]:36756 "EHLO
+        mail-wm0-f54.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1750752AbdFHKT7 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 8 Jun 2017 04:46:45 -0400
+        Thu, 8 Jun 2017 06:19:59 -0400
+Received: by mail-wm0-f54.google.com with SMTP id 7so134716703wmo.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 08 Jun 2017 03:19:58 -0700 (PDT)
 Content-Disposition: inline
-In-Reply-To: <CANGgnMayznQDLuR++ZoQVVJfTCK-tjRk1-HLakSdsQU7eb7EGg@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-06-02 09:54:16 [-0700], Austin Schuh wrote:
-> On Fri, Jun 2, 2017 at 7:26 AM, Clark Williams <williams@redhat.com> wrote:
-> > Regarding periodic updates, what do you think about providing a way for an app to query the current state of a run? Possibly a memory region that can be mmapped by a process? Or possibly a UNIX domain socket? I'm thinking of the case where you're doing a 48 hour test run on a box where you don't have easy access to the console and would just like to know if a) the box is alive and b) is still showing reasonable values for max latency and jitter.
-> >
-> > I kinda like the memory region since that's how cyclictest handles output: the measurement threads all dump their data into a cpu-specific memory area and a display thread (running at a low priority) is the one that wakes up, reads the update and printf's to the screen. If we exported that region so that another process could mmap it read-only, that would provide a way to get a snapshot of the run, without actually depending on cyclictest to *do* anything out of the ordinary.
-> 
-> I might be missing something, but if you want to be able to view the
-> status remotely, why not tee the output to a file and tail that from
-> the remote session, or use screen/tmux/etc?  That would stay aligned
-> with Sebastian's goal of keeping it small and simple.
+To setup remote tracking of the branch stable/v1.0
+git checkout with --track option can be used:
+	git checkout -b stable/v1.0 --track origin/stable/v1.0
+Otherwise when git checkout -b stable/v1.0 is used
+branch may not be properly set up to track it's remote counterpart
+(given git option) and users may be confused due to no files present
+in the folder, but README.
 
-This works in general for you as a person. But if you want to have the
-output read by a machine/script then this won't work.
+Signed-off-by: Piotr Gregor <pgregor@quadrant-systems.co.uk>
+---
+ README | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
 
-> Austin
+diff --git a/README b/README
+index a618eb5..70e18cd 100644
+--- a/README
++++ b/README
+@@ -4,3 +4,19 @@ The master branch is unused. You should use an existing branch instead.
+ 
+ The stable/v1.0 branch contains the old stable version.
+ The unstable/devel branches contain the development versions.
++
++
++BRANCH CHECKOUT
++
++To list available branches for tracking please do:
++	git branch -r
++
++To checkout stable/v1.0 and setup remote tracking to /origin/stable/v1.0 please do:
++	git checkout -b stable/v1.0 origin/stable/v1.0
++or
++	git checkout -b stable/v1.0 --track origin/stable/v1.0
++
++Older versions of git will not work with git checkout stable/v1.0.
++
++Similarly for the unstable/devel/v1.1.1 branch please do:
++	git checkout -b unstable/devel/v1.1.1 --track origin/unstable/devel/v1.1.1
+-- 
+2.1.4
 
-Sebastian
