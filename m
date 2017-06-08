@@ -1,34 +1,50 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH] README: Added info about setting branch --tracking
-Date: Thu, 8 Jun 2017 14:17:11 +0200
-Message-ID: <20170608121710.huvdfg74uprvudlj@linutronix.de>
-References: <20170608101953.zkiad4lttux6yaw4@debian1.home>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 4.4.70-rt83
+Date: Thu, 8 Jun 2017 09:42:07 -0400
+Message-ID: <20170608094207.225f8a8e@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: jkacur@redhat.com, rolf.freitag@email.de,
-        linux-rt-users@vger.kernel.org
-To: Piotr Gregor <piotrgregor@rsyncme.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:43532 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751449AbdFHMRP (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 8 Jun 2017 08:17:15 -0400
-Content-Disposition: inline
-In-Reply-To: <20170608101953.zkiad4lttux6yaw4@debian1.home>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Julia Cartwright <julia@ni.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 2017-06-08 11:19:55 [+0100], Piotr Gregor wrote:
-> To setup remote tracking of the branch stable/v1.0
-> git checkout with --track option can be used:
-> 	git checkout -b stable/v1.0 --track origin/stable/v1.0
-> Otherwise when git checkout -b stable/v1.0 is used
-> branch may not be properly set up to track it's remote counterpart
-> (given git option) and users may be confused due to no files present
-> in the folder, but README.
-> 
-> Signed-off-by: Piotr Gregor <pgregor@quadrant-systems.co.uk>
-Acked-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Sebastian
+Dear RT Folks,
+
+I'm pleased to announce the 4.4.70-rt83 stable release.
+
+
+This release is just an update to the new stable 4.4.70 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.4-rt
+  Head SHA1: 2f7dc5c68324761977badd9b9359b487d7d403d2
+
+
+Or to build 4.4.70-rt83 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.70.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.70-rt83.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
