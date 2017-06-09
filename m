@@ -1,63 +1,50 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH 24/34] signaltest: remove unused ARRAY_SIZE macro
-Date: Thu, 8 Jun 2017 16:28:55 +0200 (CEST)
-Message-ID: <alpine.LFD.2.20.1706081628290.5309@riemann>
-References: <20170522082540.15467-1-tommi.t.rantala@nokia.com> <20170522082540.15467-25-tommi.t.rantala@nokia.com> <alpine.LFD.2.20.1705221843320.7915@riemann> <ced54112-4dc0-5f27-ff5c-be27609087d0@nokia.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.2.89-rt127
+Date: Fri, 9 Jun 2017 14:13:43 -0400
+Message-ID: <20170609141343.09cd5ed6@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-Cc: Clark Williams <williams@redhat.com>,
-        linux-rt-users@vger.kernel.org
-To: Tommi Rantala <tommi.t.rantala@nokia.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f67.google.com ([74.125.82.67]:33085 "EHLO
-        mail-wm0-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751344AbdFHO25 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 8 Jun 2017 10:28:57 -0400
-Received: by mail-wm0-f67.google.com with SMTP id x3so7592977wme.0
-        for <linux-rt-users@vger.kernel.org>; Thu, 08 Jun 2017 07:28:57 -0700 (PDT)
-In-Reply-To: <ced54112-4dc0-5f27-ff5c-be27609087d0@nokia.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Julia Cartwright <julia@ni.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
+
+
+Dear RT Folks,
+
+I'm pleased to announce the 3.2.89-rt127 stable release.
+
+
+This release is just an update to the new stable 3.2.89 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v3.2-rt
+  Head SHA1: 228f2abc278915ee979eec5f3d2dbc7e24dc783f
+
+
+Or to build 3.2.89-rt127 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.89.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.89-rt127.patch.xz
 
 
 
-On Mon, 5 Jun 2017, Tommi Rantala wrote:
 
-> On 22.05.2017 19:44, John Kacur wrote:
-> > On Mon, 22 May 2017, Tommi Rantala wrote:
-> > 
-> > > --- a/src/signaltest/signaltest.c
-> > > +++ b/src/signaltest/signaltest.c
-> > > @@ -30,8 +30,6 @@
-> > >   #include "error.h"
-> > >   #include "rt-utils.h"
-> > >   
-> > > -#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
-> > > -
-> > >   /* Ugly, but .... */
-> > >   #define gettid() syscall(__NR_gettid)
-> > >   
-> > > -- 
-> > 
-> > NAK
-> > 
-> > You're right, it could be removed, but it's not really causing in harm
-> > either. I'm going to leave it in for now.
-> > 
-> > Thanks
-> > 
-> > John
-> 
-> Hi John,
-> 
-> OK, dropped the patch also from the github repo.
-> 
-> Any comments to the rest of the patches?
-> 
+Enjoy,
 
-There're coming, give me a little more time to parse them.
-
-Thanks
-
-John
+-- Steve
