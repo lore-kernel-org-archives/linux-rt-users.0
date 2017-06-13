@@ -1,41 +1,41 @@
-From: rolf.freitag@email.de
-Subject: Aw: RT and tty communication
-Date: Mon, 12 Jun 2017 19:39:03 +0200
-Message-ID: <trinity-b2b63e8f-2aaf-417a-a388-9d39738ef158-1497289143726@3capp-webde-bap27>
-References: <CAD2hpBW1YNbS+C1osQ0zMF=f_w+fpmpZvsv=x6u-1BQrSvz3Dw@mail.gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: Why is real time pinging not possible with RT kernels?
+Date: Tue, 13 Jun 2017 13:58:18 +0200
+Message-ID: <20170613115818.yjjoec3kojryuxam@linutronix.de>
+References: <trinity-c4969a6b-8eeb-4799-93a4-349c300c9363-1497118391298@3capp-webde-bap09>
+ <f60f3487-64d7-141c-6d6c-aec8318a87da@mvista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
-Cc: linux-rt-users@vger.kernel.org
-To: "Niels Kolthoff" <nkolthoff@gmail.com>
+Content-Type: text/plain; charset=utf-8
+Cc: rolf.freitag@email.de, linux-rt-users@vger.kernel.org
+To: Corey Minyard <cminyard@mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mout.web.de ([217.72.192.78]:65184 "EHLO mout.web.de"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751331AbdFLRjG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 12 Jun 2017 13:39:06 -0400
-In-Reply-To: <CAD2hpBW1YNbS+C1osQ0zMF=f_w+fpmpZvsv=x6u-1BQrSvz3Dw@mail.gmail.com>
+Received: from Galois.linutronix.de ([146.0.238.70]:38184 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752078AbdFML6V (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 13 Jun 2017 07:58:21 -0400
+Content-Disposition: inline
+In-Reply-To: <f60f3487-64d7-141c-6d6c-aec8318a87da@mvista.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
->Gesendet: Montag, 12. Juni 2017 um 15:48 Uhr
->Von: "Niels Kolthoff" <nkolthoff@gmail.com>
->An: linux-rt-users@vger.kernel.org
->Betreff: RT and tty communication
->Hi,
->
->I'm currently testing a RT application that communicates with sensor
->hardware using a tty serial port. The application polls the tty port
->(non-blocking) in a user space thread (priority 80) for incoming data.
->On a raspberry PI3 (ttyAMA0), with kernel 4.4.9-rt17, response times <
->650usec are achieved, which is fine.
->
->Any version equal or above 4.4.12-rt20 will increase response peaks to
->(about 0.1%) > 2msec, with some peaks > 5msec.
+On 2017-06-12 07:57:18 [-0500], Corey Minyard wrote:
+> A few notes on what you have done:
+> 
+>  * ionice doesn't affect network I/O.
+>  * renice does not set real-time priorities.
+>  * You don't do anything with memory locking.  What happens
+>    if memory in your program gets paged out then is required?
+>  * Something on the other end of the ping is running, too.  It
+>    also needs to be real-time, too, and it's not by default.
 
-When you use interrupt driven input, you have to wait for the interrupt and that depends on parameters like at how many bytes in the FIFO an interrupt is triggered.
-But you can use polling instead of waiting for IRQ, e. g. check every 40 microseconds for new bytes.
-And you should use hardware with low latency, e. g. an PCIe card and NOT an USB-RS-232/422/485 adapter.
+You forgot to mention that the real-time kernel is not automatically
+overclocking the software in terms of performance (but providing
+determinism).
 
-Regards,
+> I'd suggest you need to spend some time learning before you attempt
+> something like this.
+> 
+> -corey
 
-Rolf
+Sebastian
