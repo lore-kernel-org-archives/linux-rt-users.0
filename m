@@ -1,7 +1,7 @@
 From: Daniel Bristot de Oliveira <bristot@redhat.com>
-Subject: [RFC 2/3] rt: Update nr_cpus_allowed if the affinity of a task changes while its migration is disabled
-Date: Fri, 16 Jun 2017 12:39:47 +0200
-Message-ID: <b141030d15fa0a465a1fb437111c68bc18add95d.1497607974.git.bristot@redhat.com>
+Subject: [RFC 3/3] rt: Check if the task needs to migrate when re-enabling migration
+Date: Fri, 16 Jun 2017 12:39:48 +0200
+Message-ID: <99de119c39e3af618efdb2f79bf30e60ca42a6ec.1497607974.git.bristot@redhat.com>
 References: <cover.1497607974.git.bristot@redhat.com>
 Cc: "Luis Claudio R . Goncalves" <lgoncalv@redhat.com>,
         Clark Williams <williams@redhat.com>,
@@ -17,12 +17,12 @@ In-Reply-To: <cover.1497607974.git.bristot@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Currently, if the affinity of a task changes when it is with migration
-disabled, the nr_cpus_allowed is not being updated, creating an
-inconsistency between nr_cpus_allowed and cpumask_weight(cpus_allowed)
+In the case of an affinity change during a migrate_disable section,
+__set_cpus_allowed_ptr will not try to move the task from a CPU
+in which it cannot execute anymore.
 
-This patch fixes this problem by calling set_cpus_allowed_common()
-if the cpumask of a task changes while it is with migration disable.
+So, after enabling migration, if the current task cannot execute in
+the current CPU anymore, migrate it away.
 
 Signed-off-by: Daniel Bristot de Oliveira <bristot@redhat.com>
 Cc: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
@@ -35,21 +35,47 @@ Cc: Peter Zijlstra <peterz@infradead.org>
 Cc: LKML <linux-kernel@vger.kernel.org>
 Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
 ---
- kernel/sched/core.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kernel/sched/core.c | 28 ++++++++++++++++++++++++++++
+ 1 file changed, 28 insertions(+)
 
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index aeb3e12..0396bf2 100644
+index 0396bf2..207bc85 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -1146,7 +1146,7 @@ void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
- 	lockdep_assert_held(&p->pi_lock);
- 
- 	if (__migrate_disabled(p)) {
--		cpumask_copy(&p->cpus_allowed, new_mask);
-+		set_cpus_allowed_common(p, new_mask);
- 		return;
+@@ -3462,6 +3462,34 @@ void migrate_enable(void)
+ 			task_rq(p)->dl.dl_nr_migratory++;
  	}
  
++	/*
++	 * Check if the task can still run on this CPU. In the case of an
++	 * affinity change during a migrate_disable section,
++	 * __set_cpus_allowed_ptr will not try to move the task from a CPU
++	 * that the task cannot execute anymore.
++	 *
++	 * So, if the current task cannot execute in the current CPU anymore,
++	 * migrate it away.
++	 */
++	if (unlikely(!cpumask_test_cpu(task_cpu(p), &p->cpus_allowed))) {
++		const struct cpumask *cpu_mask = (p->flags & PF_KTHREAD) ?
++			cpu_online_mask : cpu_active_mask;
++
++		int dest_cpu = cpumask_any_and(cpu_mask, &p->cpus_allowed);
++		struct migration_arg arg = {p, dest_cpu};
++
++		/* Need help from migration thread: drop lock and wait. */
++		task_rq_unlock(rq, p, &rf);
++		unpin_current_cpu();
++		preempt_enable();
++		preempt_lazy_enable();
++
++		stop_one_cpu(cpu_of(rq), migration_cpu_stop, &arg);
++		tlb_migrate_finish(p->mm);
++
++		return;
++	}
++
+ 	task_rq_unlock(rq, p, &rf);
+ 	unpin_current_cpu();
+ 	preempt_enable();
 -- 
 2.9.4
