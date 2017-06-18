@@ -1,9 +1,8 @@
 From: Mike Galbraith <efault@gmx.de>
-Subject: Re: [ANNOUNCE] v4.11.5-rt1
-Date: Sun, 18 Jun 2017 08:46:15 +0200
-Message-ID: <1497768375.8055.12.camel@gmx.de>
+Subject: [patch-rt] rtmutex: Fix lock stealing logic
+Date: Sun, 18 Jun 2017 19:01:57 +0200
+Message-ID: <1497805317.6229.3.camel@gmx.de>
 References: <20170616105610.rbc6itylcrsla56l@linutronix.de>
-         <1497687277.6908.31.camel@gmx.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
@@ -12,94 +11,162 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1497687277.6908.31.camel@gmx.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mout.gmx.net ([212.227.15.15]:65209 "EHLO mout.gmx.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751980AbdFRRCJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 18 Jun 2017 13:02:09 -0400
+In-Reply-To: <20170616105610.rbc6itylcrsla56l@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, 2017-06-17 at 10:14 +0200, Mike Galbraith wrote:
-> 
->... the RT workaround in futex.c induces
-> grumbling in nonrt builds with PREEMPT_COUNT enabled.
 
-A trivial way to fix it up is to...
+1. When trying to acquire an rtmutex, we first try to grab it without
+queueing the waiter, and explicitly check for that initial attempt
+in the !waiter path of __try_to_take_rt_mutex().  Checking whether
+the lock taker is top waiter before allowing a steal attempt in that
+path is a thinko: the lock taker has not yet blocked.
 
-futex: Fix migrate_disable/enable workaround for !PREEMPT_RT_FULL
+2. It seems wrong to change the definition of rt_mutex_waiter_less()
+to mean less or perhaps equal when we have an rt_mutex_waiter_equal().
 
-The imbalance fixed by aed0f50e58eb only exists for PREEMPT_RT_FULL,
-and creates for other PREEMPT_COUNT configs.  Create/use _rt variants
-of migrate_disable/enable() which are compiled away when not needed.
+Remove the thinko, and implement rt_mutex_stealable(steal_mode) using
+a restored rt_mutex_waiter_less(), and rt_mutex_waiter_equal().
 
 Signed-off-by: Mike Galbraith <efault@gmx.de>
-Fixes: aed0f50e58eb ("futex: workaround migrate_disable/enable in different context")
+Fixes: f34d077c6f28 ("rt: Add the preempt-rt lock replacement APIs")
 ---
- include/linux/preempt.h |   11 +++++++++++
- kernel/futex.c          |    8 ++++----
- 2 files changed, 15 insertions(+), 4 deletions(-)
+ kernel/locking/rtmutex.c |   69 +++++++++++++++++++++++------------------------
+ 1 file changed, 35 insertions(+), 34 deletions(-)
 
---- a/include/linux/preempt.h
-+++ b/include/linux/preempt.h
-@@ -227,12 +227,21 @@ do { \
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -236,26 +236,19 @@ static inline bool unlock_rt_mutex_safe(
+ }
+ #endif
  
- extern void migrate_disable(void);
- extern void migrate_enable(void);
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+#define migrate_disable_rt()		migrate_disable()
-+#define migrate_enable_rt()		migrate_enable()
-+#else
-+static inline void migrate_disable_rt(void) { }
-+static inline void migrate_enable_rt(void) { }
-+#endif
+-#define STEAL_NORMAL  0
+-#define STEAL_LATERAL 1
+-
+ /*
+  * Only use with rt_mutex_waiter_{less,equal}()
+  */
+-#define task_to_waiter(p)	\
+-	&(struct rt_mutex_waiter){ .prio = (p)->prio, .deadline = (p)->dl.deadline }
++#define task_to_waiter(p) &(struct rt_mutex_waiter) \
++	{ .prio = (p)->prio, .deadline = (p)->dl.deadline, .task = (p) }
  
- int __migrate_disabled(struct task_struct *p);
- 
- #else
- #define migrate_disable()		barrier()
- #define migrate_enable()		barrier()
-+static inline void migrate_disable_rt(void) { }
-+static inline void migrate_enable_rt(void) { }
- static inline int __migrate_disabled(struct task_struct *p)
+ static inline int
+ rt_mutex_waiter_less(struct rt_mutex_waiter *left,
+-		     struct rt_mutex_waiter *right, int mode)
++		     struct rt_mutex_waiter *right)
  {
- 	return 0;
-@@ -323,6 +332,8 @@ do { \
+-	if (mode == STEAL_NORMAL) {
+-		if (left->prio < right->prio)
+-			return 1;
+-	} else {
+-		if (left->prio <= right->prio)
+-			return 1;
+-	}
++	if (left->prio < right->prio)
++		return 1;
++
+ 	/*
+ 	 * If both waiters have dl_prio(), we check the deadlines of the
+ 	 * associated tasks.
+@@ -287,6 +280,25 @@ rt_mutex_waiter_equal(struct rt_mutex_wa
+ 	return 1;
+ }
  
- #define migrate_disable()			barrier()
- #define migrate_enable()			barrier()
-+static inline void migrate_disable_rt(void) { }
-+static inline void migrate_enable_rt(void) { }
- 
- static inline int __migrate_disabled(struct task_struct *p)
++#define STEAL_NORMAL  0
++#define STEAL_LATERAL 1
++
++static inline int rt_mutex_stealable(struct rt_mutex_waiter *thief,
++				     struct rt_mutex_waiter *victim, int mode)
++{
++	if (rt_mutex_waiter_less(thief, victim))
++		return 1;
++
++	/*
++	 * Note that RT tasks are excluded from lateral-steals
++	 * to prevent the introduction of an unbounded latency.
++	 */
++	if (mode == STEAL_NORMAL || rt_task(thief->task))
++		return 0;
++
++	return rt_mutex_waiter_equal(thief, victim);
++}
++
+ static void
+ rt_mutex_enqueue(struct rt_mutex *lock, struct rt_mutex_waiter *waiter)
  {
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -2690,12 +2690,12 @@ static int futex_lock_pi(u32 __user *uad
- 	 * one migrate_disable() pending in the slow-path which is reversed
- 	 * after the raw_spin_unlock_irq() where we leave the atomic context.
- 	 */
--	migrate_disable();
-+	migrate_disable_rt();
- 
- 	spin_unlock(q.lock_ptr);
- 	ret = __rt_mutex_start_proxy_lock(&q.pi_state->pi_mutex, &rt_waiter, current);
- 	raw_spin_unlock_irq(&q.pi_state->pi_mutex.wait_lock);
--	migrate_enable();
-+	migrate_enable_rt();
- 
- 	if (ret) {
- 		if (ret == 1)
-@@ -2846,13 +2846,13 @@ static int futex_unlock_pi(u32 __user *u
- 		 * won't undo the migrate_disable() which was issued when
- 		 * locking hb->lock.
+@@ -298,7 +310,7 @@ rt_mutex_enqueue(struct rt_mutex *lock,
+ 	while (*link) {
+ 		parent = *link;
+ 		entry = rb_entry(parent, struct rt_mutex_waiter, tree_entry);
+-		if (rt_mutex_waiter_less(waiter, entry, STEAL_NORMAL)) {
++		if (rt_mutex_waiter_less(waiter, entry)) {
+ 			link = &parent->rb_left;
+ 		} else {
+ 			link = &parent->rb_right;
+@@ -337,7 +349,7 @@ rt_mutex_enqueue_pi(struct task_struct *
+ 	while (*link) {
+ 		parent = *link;
+ 		entry = rb_entry(parent, struct rt_mutex_waiter, pi_tree_entry);
+-		if (rt_mutex_waiter_less(waiter, entry, STEAL_NORMAL)) {
++		if (rt_mutex_waiter_less(waiter, entry)) {
+ 			link = &parent->rb_left;
+ 		} else {
+ 			link = &parent->rb_right;
+@@ -847,6 +859,7 @@ static int rt_mutex_adjust_prio_chain(st
+  * @task:   The task which wants to acquire the lock
+  * @waiter: The waiter that is queued to the lock's wait tree if the
+  *	    callsite called task_blocked_on_lock(), otherwise NULL
++ * @mode:   Lock steal mode (STEAL_NORMAL, STEAL_LATERAL)
+  */
+ static int __try_to_take_rt_mutex(struct rt_mutex *lock,
+ 				  struct task_struct *task,
+@@ -890,10 +903,9 @@ static int __try_to_take_rt_mutex(struct
+ 		 * @lock, give up.
  		 */
--		migrate_disable();
-+		migrate_disable_rt();
- 		spin_unlock(&hb->lock);
- 
- 		/* Drops pi_state->pi_mutex.wait_lock */
- 		ret = wake_futex_pi(uaddr, uval, pi_state);
- 
--		migrate_enable();
-+		migrate_enable_rt();
- 
- 		put_pi_state(pi_state);
- 
+ 		if (waiter != rt_mutex_top_waiter(lock)) {
+-			/* XXX rt_mutex_waiter_less() ? */
++			/* XXX rt_mutex_stealable() ? */
+ 			return 0;
+ 		}
+-
+ 		/*
+ 		 * We can acquire the lock. Remove the waiter from the
+ 		 * lock waiters tree.
+@@ -910,25 +922,14 @@ static int __try_to_take_rt_mutex(struct
+ 		 * not need to be dequeued.
+ 		 */
+ 		if (rt_mutex_has_waiters(lock)) {
+-			struct task_struct *pown = rt_mutex_top_waiter(lock)->task;
+-
+-			if (task != pown)
+-				return 0;
+-
+-			/*
+-			 * Note that RT tasks are excluded from lateral-steals
+-			 * to prevent the introduction of an unbounded latency.
+-			 */
+-			if (rt_task(task))
+-				mode = STEAL_NORMAL;
+ 			/*
+-			 * If @task->prio is greater than or equal to
+-			 * the top waiter priority (kernel view),
+-			 * @task lost.
++			 * If @task->prio is greater than the top waiter
++			 * priority (kernel view), or equal to it when
++			 * lateral steal is forbidden, @task lost.
+ 			 */
+-			if (!rt_mutex_waiter_less(task_to_waiter(task),
+-						  rt_mutex_top_waiter(lock),
+-						  mode))
++			if (!rt_mutex_stealable(task_to_waiter(task),
++						rt_mutex_top_waiter(lock),
++						mode))
+ 				return 0;
+ 			/*
+ 			 * The current top waiter stays enqueued. We
