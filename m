@@ -1,83 +1,105 @@
-From: Corey Minyard <cminyard@mvista.com>
-Subject: Re: Why is real time pinging not possible with RT kernels?
-Date: Sat, 17 Jun 2017 07:10:27 -0500
-Message-ID: <9e257af7-66ea-4620-2e50-2c58830ac4b0@mvista.com>
-References: <trinity-c4969a6b-8eeb-4799-93a4-349c300c9363-1497118391298@3capp-webde-bap09>
- <f60f3487-64d7-141c-6d6c-aec8318a87da@mvista.com>
- <593EC529.80508@windriver.com>
- <trinity-e834ad4b-a1e3-49fd-b72d-52128c5c2288-1497688679877@3capp-webde-bs08>
+From: Mike Galbraith <efault@gmx.de>
+Subject: Re: [ANNOUNCE] v4.11.5-rt1
+Date: Sun, 18 Jun 2017 08:46:15 +0200
+Message-ID: <1497768375.8055.12.camel@gmx.de>
+References: <20170616105610.rbc6itylcrsla56l@linutronix.de>
+         <1497687277.6908.31.camel@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-To: rolf.freitag@email.de, linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-oi0-f50.google.com ([209.85.218.50]:33939 "EHLO
-        mail-oi0-f50.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1752937AbdFQMKg (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 17 Jun 2017 08:10:36 -0400
-Received: by mail-oi0-f50.google.com with SMTP id b6so35807717oia.1
-        for <linux-rt-users@vger.kernel.org>; Sat, 17 Jun 2017 05:10:36 -0700 (PDT)
-In-Reply-To: <trinity-e834ad4b-a1e3-49fd-b72d-52128c5c2288-1497688679877@3capp-webde-bs08>
-Content-Language: en-GB
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1497687277.6908.31.camel@gmx.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 06/17/2017 03:37 AM, rolf.freitag@email.de wrote:
-> Hi,
->    
-> Gesendet: Montag, 12. Juni 2017 um 18:45 Uhr
-> Von: "Chris Friesen" <chris.friesen@windriver.com>
-> ...
->>> A few notes on what you have done:
->>>
->>> * ionice doesn't affect network I/O.
->>> * renice does not set real-time priorities.
->> Good point...the OP probably wants something like "sudo chrt <prio> <cmd> ...."
-> Ok, i added chrt in the script:
->
-> ionice -c3 -p $$
-> renice +19 -p $$
-> chrt -f -p 99 $$
-> ping -q -s 28 -l 1 -p 0f1e2d3c4b5a6978 -i 0.001 localhost
->
-> and now the worst case latency is about twice the value measured with cyclictest:
->
-> 27893223 packets transmitted, 27893223 received, 0% packet loss, time 27921273ms
-> rtt min/avg/max/mdev = 0.022/0.023/0.280/0.006 ms
+On Sat, 2017-06-17 at 10:14 +0200, Mike Galbraith wrote:
+> 
+>... the RT workaround in futex.c induces
+> grumbling in nonrt builds with PREEMPT_COUNT enabled.
 
-That is pretty good, really.  However, I'm guessing you aren't doing 
-anything
-else on the system.
+A trivial way to fix it up is to...
 
-When we test RT, we do so while running a heavy I/O, network, and CPU load.
-If you do that, you may see very different results, though I doubt 
-cyclictest
-will move much.
+futex: Fix migrate_disable/enable workaround for !PREEMPT_RT_FULL
 
-That's what RT is about.  If someone decides to log on to your system 
-running
-an RT application, and compiles a kernel or something, your RT application
-still meets its deadlines.
+The imbalance fixed by aed0f50e58eb only exists for PREEMPT_RT_FULL,
+and creates for other PREEMPT_COUNT configs.  Create/use _rt variants
+of migrate_disable/enable() which are compiled away when not needed.
 
->
->>> * You don't do anything with memory locking. What happens
->>> if memory in your program gets paged out then is required?
-> I use much RAM and no swap, so i have implicit memory locking.
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+Fixes: aed0f50e58eb ("futex: workaround migrate_disable/enable in different context")
+---
+ include/linux/preempt.h |   11 +++++++++++
+ kernel/futex.c          |    8 ++++----
+ 2 files changed, 15 insertions(+), 4 deletions(-)
 
-That is not implicit memory locking.  The kernel is free to swap out 
-anything
-that is backed by disk, like your executable code.  Lots of memory helps,
-but does not offer a guarantee.  Lack of swap doesn't matter (much).
-
--corey
-
-> Regards,
->
-> Rolf
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
-
+--- a/include/linux/preempt.h
++++ b/include/linux/preempt.h
+@@ -227,12 +227,21 @@ do { \
+ 
+ extern void migrate_disable(void);
+ extern void migrate_enable(void);
++#ifdef CONFIG_PREEMPT_RT_FULL
++#define migrate_disable_rt()		migrate_disable()
++#define migrate_enable_rt()		migrate_enable()
++#else
++static inline void migrate_disable_rt(void) { }
++static inline void migrate_enable_rt(void) { }
++#endif
+ 
+ int __migrate_disabled(struct task_struct *p);
+ 
+ #else
+ #define migrate_disable()		barrier()
+ #define migrate_enable()		barrier()
++static inline void migrate_disable_rt(void) { }
++static inline void migrate_enable_rt(void) { }
+ static inline int __migrate_disabled(struct task_struct *p)
+ {
+ 	return 0;
+@@ -323,6 +332,8 @@ do { \
+ 
+ #define migrate_disable()			barrier()
+ #define migrate_enable()			barrier()
++static inline void migrate_disable_rt(void) { }
++static inline void migrate_enable_rt(void) { }
+ 
+ static inline int __migrate_disabled(struct task_struct *p)
+ {
+--- a/kernel/futex.c
++++ b/kernel/futex.c
+@@ -2690,12 +2690,12 @@ static int futex_lock_pi(u32 __user *uad
+ 	 * one migrate_disable() pending in the slow-path which is reversed
+ 	 * after the raw_spin_unlock_irq() where we leave the atomic context.
+ 	 */
+-	migrate_disable();
++	migrate_disable_rt();
+ 
+ 	spin_unlock(q.lock_ptr);
+ 	ret = __rt_mutex_start_proxy_lock(&q.pi_state->pi_mutex, &rt_waiter, current);
+ 	raw_spin_unlock_irq(&q.pi_state->pi_mutex.wait_lock);
+-	migrate_enable();
++	migrate_enable_rt();
+ 
+ 	if (ret) {
+ 		if (ret == 1)
+@@ -2846,13 +2846,13 @@ static int futex_unlock_pi(u32 __user *u
+ 		 * won't undo the migrate_disable() which was issued when
+ 		 * locking hb->lock.
+ 		 */
+-		migrate_disable();
++		migrate_disable_rt();
+ 		spin_unlock(&hb->lock);
+ 
+ 		/* Drops pi_state->pi_mutex.wait_lock */
+ 		ret = wake_futex_pi(uaddr, uval, pi_state);
+ 
+-		migrate_enable();
++		migrate_enable_rt();
+ 
+ 		put_pi_state(pi_state);
+ 
