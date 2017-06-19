@@ -1,34 +1,36 @@
-From: Mike Galbraith <efault@gmx.de>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [ANNOUNCE] v4.11.5-rt1
-Date: Mon, 19 Jun 2017 16:36:22 +0200
-Message-ID: <1497882982.7751.6.camel@gmx.de>
+Date: Mon, 19 Jun 2017 10:41:31 -0400
+Message-ID: <20170619104131.05fdc76f@gandalf.local.home>
 References: <20170616105610.rbc6itylcrsla56l@linutronix.de>
-         <1497687277.6908.31.camel@gmx.de>
-         <20170619085206.n2n22lpdfsoqbp5m@linutronix.de>
-         <1497867291.19618.52.camel@gmx.de>
-         <20170619104459.prmicsbbmljc6smb@linutronix.de>
-         <1497871888.19618.90.camel@gmx.de>
-         <20170619115019.6zpsoiwubl22mjqs@linutronix.de>
-         <1497876935.19618.122.camel@gmx.de>
-         <20170619140603.dbdpqz2pw2vf6y3x@linutronix.de>
+        <1497687277.6908.31.camel@gmx.de>
+        <20170619085206.n2n22lpdfsoqbp5m@linutronix.de>
+        <1497867291.19618.52.camel@gmx.de>
+        <20170619100838.343faaee@gandalf.local.home>
+        <20170619141341.m243ivutmwlzyhc4@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Cc: Mike Galbraith <efault@gmx.de>,
+        Thomas Gleixner <tglx@linutronix.de>,
         LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
+        linux-rt-users <linux-rt-users@vger.kernel.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170619140603.dbdpqz2pw2vf6y3x@linutronix.de>
+In-Reply-To: <20170619141341.m243ivutmwlzyhc4@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 2017-06-19 at 16:06 +0200, Sebastian Andrzej Siewior wrote:
-> 
-> I am suppressed that your desktop shows any symptoms on rt21. I tried my
-> smaller AMD box (A10), an Intel two sockets and a four socket box. Each
-> of them was fine with the run.sh and manual futex_wait invocation.
-> Could you please send the config of your desktop box?
+On Mon, 19 Jun 2017 16:13:41 +0200
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 
-(sent offline)
+
+> > Hmm, it shouldn't affect futexes, as it's only called by rtmutex when
+> > waiter->savestate is true. And that should always be false for futex.  
+> 
+> you still have sleeping locks like the hb-lock (which might matter in
+> case the task blocks on the lock and does not continue for some reason).
+
+But then I'd expect this to be an issue with any spinlock in the kernel.
+
+-- Steve
