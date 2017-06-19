@@ -1,45 +1,42 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Mike Galbraith <efault@gmx.de>
 Subject: Re: [ANNOUNCE] v4.11.5-rt1
-Date: Mon, 19 Jun 2017 18:27:26 +0200
-Message-ID: <20170619162726.crna4j45t2gik2r2@linutronix.de>
-References: <20170619085206.n2n22lpdfsoqbp5m@linutronix.de>
- <1497867291.19618.52.camel@gmx.de>
- <20170619104459.prmicsbbmljc6smb@linutronix.de>
- <1497871888.19618.90.camel@gmx.de>
- <20170619115019.6zpsoiwubl22mjqs@linutronix.de>
- <1497876935.19618.122.camel@gmx.de>
- <20170619140603.dbdpqz2pw2vf6y3x@linutronix.de>
- <1497882982.7751.6.camel@gmx.de>
- <20170619150332.oiqxjlrfcekaye6b@linutronix.de>
- <1497888892.15817.5.camel@gmx.de>
+Date: Mon, 19 Jun 2017 18:29:44 +0200
+Message-ID: <1497889784.15817.17.camel@gmx.de>
+References: <20170616105610.rbc6itylcrsla56l@linutronix.de>
+         <1497687277.6908.31.camel@gmx.de>
+         <20170619085206.n2n22lpdfsoqbp5m@linutronix.de>
+         <1497867291.19618.52.camel@gmx.de>
+         <20170619100838.343faaee@gandalf.local.home>
+         <20170619141341.m243ivutmwlzyhc4@linutronix.de>
+         <20170619104131.05fdc76f@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 8BIT
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Mike Galbraith <efault@gmx.de>
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1497888892.15817.5.camel@gmx.de>
+In-Reply-To: <20170619104131.05fdc76f@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2017-06-19 18:14:52 [+0200], Mike Galbraith wrote:
+On Mon, 2017-06-19 at 10:41 -0400, Steven Rostedt wrote:
+> On Mon, 19 Jun 2017 16:13:41 +0200
+> Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 > 
-> BTW back, I reran virgin 4.9-rt21 on desktop box while off doing the
-> have something resembling a life thing, and it did not stall in 50
-> iterations of performance/run.sh (bloody fickle thing).  Hohum, take it
-> for whatever you think it's worth.
+> 
+> > > Hmm, it shouldn't affect futexes, as it's only called by rtmutex when
+> > > waiter->savestate is true. And that should always be false for futex.  
+> > 
+> > you still have sleeping locks like the hb-lock (which might matter in
+> > case the task blocks on the lock and does not continue for some reason).
+> 
+> But then I'd expect this to be an issue with any spinlock in the kernel.
 
-that sounds good because I tried your config on three boxes with the
-same result.
-So the issue remains on the DLxxx box which is 8socket NUMA box with
-only one memory node, right?
+Thing to do is set a trap for the bugger.  I'll give that a go after I
+get some beans/biscuits work done.  For the nonce, what I've reported
+is all I know.
 
-I let run.sh run in a loop until tomorrow evening and check for results…
-
-> 	-Mike  
-
-Sebastian
+	-Mike
