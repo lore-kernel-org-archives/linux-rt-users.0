@@ -1,54 +1,71 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [ANNOUNCE] v4.11.5-rt1
-Date: Mon, 19 Jun 2017 16:06:03 +0200
-Message-ID: <20170619140603.dbdpqz2pw2vf6y3x@linutronix.de>
+Date: Mon, 19 Jun 2017 10:08:38 -0400
+Message-ID: <20170619100838.343faaee@gandalf.local.home>
 References: <20170616105610.rbc6itylcrsla56l@linutronix.de>
- <1497687277.6908.31.camel@gmx.de>
- <20170619085206.n2n22lpdfsoqbp5m@linutronix.de>
- <1497867291.19618.52.camel@gmx.de>
- <20170619104459.prmicsbbmljc6smb@linutronix.de>
- <1497871888.19618.90.camel@gmx.de>
- <20170619115019.6zpsoiwubl22mjqs@linutronix.de>
- <1497876935.19618.122.camel@gmx.de>
+        <1497687277.6908.31.camel@gmx.de>
+        <20170619085206.n2n22lpdfsoqbp5m@linutronix.de>
+        <1497867291.19618.52.camel@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8BIT
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>,
         LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
+        linux-rt-users <linux-rt-users@vger.kernel.org>
 To: Mike Galbraith <efault@gmx.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1497876935.19618.122.camel@gmx.de>
+In-Reply-To: <1497867291.19618.52.camel@gmx.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2017-06-19 14:55:35 [+0200], Mike Galbraith wrote:
-> On Mon, 2017-06-19 at 13:50 +0200, Sebastian Andrzej Siewior wrote:
+On Mon, 19 Jun 2017 12:14:51 +0200
+Mike Galbraith <efault@gmx.de> wrote:
+
+> On Mon, 2017-06-19 at 10:52 +0200, Sebastian Andrzej Siewior wrote:
+> > On 2017-06-17 10:14:37 [+0200], Mike Galbraith wrote:
+> >   
+> > > During that rebase, migrate_disable() was changed to no longer map to
+> > > preempt_disable() for nonrt, but some patches still assume it does.  It
+> > > now depends upon PREEMPT_COUNT, the RT workaround in futex.c induces
+> > > grumbling in nonrt builds with PREEMPT_COUNT enabled.  
 > > 
-> > rt20…rt21 is just
-> >   https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git/tree/patches/sched-Prevent-task-state-corruption-by-spurious-lock.patch?h=linux-4.9.y-rt-patches
+> > argh, right. It was planned to get it merged upstream but due to
+> > $reasons we never got that far. For that reason I would simply revert
+> > that change and let migrate_disable() map to preempt_disable() as it did
+> > earlier.  
 > 
-> Yup.  I got there via git checkout v4.9.x-rtx, build/test.
+> Ok, doesn't matter for RT testing.  What does matter, is that...
 > 
-> > Let me verify that here and fire maybe the four socket box.
+> diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+> index 30b24f774198..10e832da70b6 100644
+> --- a/kernel/sched/core.c
+> +++ b/kernel/sched/core.c
+> @@ -2284,7 +2284,7 @@ EXPORT_SYMBOL(wake_up_process);
+>   */
+>  int wake_up_lock_sleeper(struct task_struct *p)
+>  {
+> -       return try_to_wake_up(p, TASK_ALL, WF_LOCK_SLEEPER);
+> +       return try_to_wake_up(p, TASK_UNINTERRUPTIBLE, WF_LOCK_SLEEPER);
+>  }
 > 
-> One thing perhaps interesting about the DL980 is that it is 8 socket,
-> but with 7 memoryless nodes (poor thing).  I wouldn't be surprised if
-> you had to try a lot harder than I.
-> DL980 now seems happy with master-rt21 fwtw.  It's not virgin though,
-> not even considering continuous merge 4.9..today.
-> 
-> Hopefully desktop will cease with the comatose widget business too, I
-> really don't want to go there.  These things give tglx headaches, might
-> well blow the point clean off of my head. 
+> ...appears to be inducing lost futex wakeups.
 
-I am suppressed that your desktop shows any symptoms on rt21. I tried my
-smaller AMD box (A10), an Intel two sockets and a four socket box. Each
-of them was fine with the run.sh and manual futex_wait invocation.
-Could you please send the config of your desktop box?
+Hmm, it shouldn't affect futexes, as it's only called by rtmutex when
+waiter->savestate is true. And that should always be false for futex.
 
+-- Steve
+
+> 
+> Scratch that "appears", changing it to TASK_NORMAL just fixed my DL980
+> running otherwise absolutely pristine 4.9-rt21, after having double
+> verified that rt20 works fine.  Now to go back to 4.11/master/tip-rt,
+> make sure that the little bugger really really REALLY ain't fscking
+> with me for the sheer fun of it, futexes being made of pure evil :)
+> 
+> My testcase is to run futex_wait -n 4 in a modest sized loop.  Odd
+> thing is that it only reproduces on the DL980 if I let it use multiple
+> sockets, pin it to one, and all is peachy, (rather seems to be given)
+> whereas on desktop box, the hang is far more intermittent, but there.
+> 
 > 	-Mike
-
-Sebastian
