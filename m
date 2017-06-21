@@ -1,39 +1,46 @@
 From: Allen Martin <amartin@nvidia.com>
-Subject: [PATCH 0/3] cyclictest: Better handle offline CPUs
-Date: Wed, 21 Jun 2017 15:25:31 -0700
-Message-ID: <20170621222534.24125-1-amartin@nvidia.com>
+Subject: [PATCH 1/3] Android: add pthread_getaffinity_np()
+Date: Wed, 21 Jun 2017 15:25:32 -0700
+Message-ID: <20170621222534.24125-2-amartin@nvidia.com>
+References: <20170621222534.24125-1-amartin@nvidia.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Cc: Allen Martin <amartin@nvidia.com>
 To: <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hqemgate14.nvidia.com ([216.228.121.143]:13271 "EHLO
+Received: from hqemgate14.nvidia.com ([216.228.121.143]:13274 "EHLO
         hqemgate14.nvidia.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1750854AbdFUWZr (ORCPT
+        with ESMTP id S1750854AbdFUWZt (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 21 Jun 2017 18:25:47 -0400
+        Wed, 21 Jun 2017 18:25:49 -0400
+In-Reply-To: <20170621222534.24125-1-amartin@nvidia.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-When running cyclictest with -t and -a options one thread is created
-per online CPU.  However if there are any offline CPUs the affinity of
-the threads created is incorrect.  This is because cyclictest assumes
-the online CPUs are numbered 0..N where N is the number of online
-CPUs.  In reality there can be holes in the online CPU numbering.
-This patch series fixes this by checking the online status of each CPU
-via sysfs before setting the CPU affinity.  It also adds some sanity
-checking by reading back the CPU affinity after setting it to see if
-it was set correctly.
+Add pthread_getaffinity_np() wrapper for Android
 
-Allen Martin (3):
-  Android: add pthread_getaffinity_np()
-  cyclictest: read back CPU affinity to verify
-  cyclictest: Handle non sequential online CPU numbering
+Signed-off-by: Allen Martin <amartin@nvidia.com>
+---
+ src/include/bionic.h | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
- src/cyclictest/cyclictest.c | 61 +++++++++++++++++++++++++++++++++++++--------
- src/include/bionic.h        |  6 +++++
- 2 files changed, 57 insertions(+), 10 deletions(-)
-
+diff --git a/src/include/bionic.h b/src/include/bionic.h
+index 54f9c54b0824..04a04de5fd1a 100644
+--- a/src/include/bionic.h
++++ b/src/include/bionic.h
+@@ -37,6 +37,12 @@ static inline int pthread_setaffinity_np(pthread_t thread, size_t cpusetsize,
+     return sched_setaffinity(0, cpusetsize, cpuset);
+ }
+ 
++static inline int pthread_getaffinity_np(pthread_t thread, size_t cpusetsize,
++                                         cpu_set_t *cpuset)
++{
++    return sched_getaffinity(0, cpusetsize, cpuset);
++}
++
+ #endif	/* PTHREAD_BIONIC */
+ 
+ #endif /* BIONIC_H */
 -- 
 2.11.0
 
