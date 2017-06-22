@@ -1,137 +1,56 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [PATCH 2/2] rt: Increase/decrease the nr of migratory tasks when
- enabling/disabling migration
-Date: Thu, 22 Jun 2017 21:49:44 +0200
-Message-ID: <20170622194943.ho4yekdqqeg2qiva@gmail.com>
-References: <cover.1498068819.git.bristot@redhat.com>
- <a6c37371135c028dda5fb09133e093b234576ee3.1498068819.git.bristot@redhat.com>
- <20170622083830.5thlni7wy6ggdbh5@gmail.com>
- <5c90773d-1283-d3de-4282-e3855331d4e4@redhat.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [ANNOUNCE] v4.11.5-rt1
+Date: Thu, 22 Jun 2017 23:36:09 +0200 (CEST)
+Message-ID: <alpine.DEB.2.20.1706222331020.2221@nanos>
+References: <20170616105610.rbc6itylcrsla56l@linutronix.de>  <1497687277.6908.31.camel@gmx.de>  <20170619085206.n2n22lpdfsoqbp5m@linutronix.de>  <1497867291.19618.52.camel@gmx.de>  <20170619100838.343faaee@gandalf.local.home>  <20170619141341.m243ivutmwlzyhc4@linutronix.de>
+  <20170619104131.05fdc76f@gandalf.local.home>  <1497889784.15817.17.camel@gmx.de> <1497944706.5454.7.camel@gmx.de>  <20170622163453.iymm3ctqv2a76k6k@linutronix.de> <1498152607.5559.19.camel@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-        "Luis Claudio R . Goncalves" <lgoncalv@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        Luiz Capitulino <lcapitulino@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: multipart/mixed; BOUNDARY="8323329-2032092997-1498167370=:2221"
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Steven Rostedt <rostedt@goodmis.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        LKML <linux-kernel@vger.kernel.org>
-To: Daniel Bristot de Oliveira <bristot@redhat.com>
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Mike Galbraith <efault@gmx.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <5c90773d-1283-d3de-4282-e3855331d4e4@redhat.com>
+In-Reply-To: <1498152607.5559.19.camel@gmx.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-* Daniel Bristot de Oliveira <bristot@redhat.com> wrote:
+--8323329-2032092997-1498167370=:2221
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 
-> On 06/22/2017 10:38 AM, Ingo Molnar wrote:
+On Thu, 22 Jun 2017, Mike Galbraith wrote:
+> On Thu, 2017-06-22 at 18:34 +0200, Sebastian Andrzej Siewior wrote:
+> > On 2017-06-20 09:45:06 [+0200], Mike Galbraith wrote:
+> > > See ! and ?
 > > 
-> > * Daniel Bristot de Oliveira <bristot@redhat.com> wrote:
-> > 
-> >>  void migrate_disable(void)
-> >>  {
-> >>  	struct task_struct *p = current;
-> >> +	struct rq *rq;
-> >> +	struct rq_flags rf;
-> >> +
-> >>  
-> >>  	if (in_atomic() || irqs_disabled()) {
-> >>  #ifdef CONFIG_SCHED_DEBUG
-> >> @@ -7593,10 +7596,21 @@ void migrate_disable(void)
-> >>  	preempt_disable();
-> >>  	preempt_lazy_disable();
-> >>  	pin_current_cpu();
-> >> -	p->migrate_disable = 1;
-> >>  
-> >> -	p->cpus_ptr = cpumask_of(smp_processor_id());
-> >> +	rq = task_rq_lock(p, &rf);
-> >> +	if (unlikely((p->sched_class == &rt_sched_class ||
-> >> +		      p->sched_class == &dl_sched_class) &&
-> >> +		      p->nr_cpus_allowed > 1)) {
-> >> +		if (p->sched_class == &rt_sched_class)
-> >> +			task_rq(p)->rt.rt_nr_migratory--;
-> >> +		else
-> >> +			task_rq(p)->dl.dl_nr_migratory--;
-> >> +	}
-> >>  	p->nr_cpus_allowed = 1;
-> >> +	task_rq_unlock(rq, p, &rf);
-> >> +	p->cpus_ptr = cpumask_of(smp_processor_id());
-> >> +	p->migrate_disable = 1;
-> >> +
-> >>  
-> >>  	preempt_enable();
-> >>  }
-> >> @@ -7605,6 +7619,9 @@ EXPORT_SYMBOL(migrate_disable);
-> >>  void migrate_enable(void)
-> >>  {
-> >>  	struct task_struct *p = current;
-> >> +	struct rq *rq;
-> >> +	struct rq_flags rf;
-> >> +
-> >>  
-> >>  	if (in_atomic() || irqs_disabled()) {
-> >>  #ifdef CONFIG_SCHED_DEBUG
-> >> @@ -7628,17 +7645,24 @@ void migrate_enable(void)
-> >>  
-> >>  	preempt_disable();
-> >>  
-> >> -	p->cpus_ptr = &p->cpus_mask;
-> >> -	p->nr_cpus_allowed = cpumask_weight(&p->cpus_mask);
-> >>  	p->migrate_disable = 0;
-> >> +	p->cpus_ptr = &p->cpus_mask;
-> >>  
-> >> -	if (p->migrate_disable_update) {
-> >> -		struct rq *rq;
-> >> -		struct rq_flags rf;
-> >> +	rq = task_rq_lock(p, &rf);
-> >> +	p->nr_cpus_allowed = cpumask_weight(&p->cpus_mask);
-> >> +	if (unlikely((p->sched_class == &rt_sched_class ||
-> >> +		      p->sched_class == &dl_sched_class) &&
-> >> +		      p->nr_cpus_allowed > 1)) {
-> >> +		if (p->sched_class == &rt_sched_class)
-> >> +			task_rq(p)->rt.rt_nr_migratory++;
-> >> +		else
-> >> +			task_rq(p)->dl.dl_nr_migratory++;
-> >> +	}
-> >> +	task_rq_unlock(rq, p, &rf);
-> > 
-> > The fix looks good to me, but AFAICS the repeat pattern introduced here could be 
-> > factored out into a helper function instead, right?
+> > See see.
+> > What about this:
 > 
-> Like:
+> I'll give it a go, likely during the weekend.
 > 
-> static inline int task_in_rt_class(struct task_struct *p)
-> {
-> 	return p->sched_class == &rt_sched_class;
-> }
-> 
-> static inline int task_in_dl_class(struct task_struct *p)
-> {
-> 	return p->sched_class == &dl_sched_class;
-> }
-> 
-> ?
+> I moved 4.11-rt today (also repros nicely) due to ftrace annoying me.
+>  After yet more staring at ever more huge traces (opposite of goal;),
+> then taking a break to stare at source again, I decided that the dual
+> wake_q business should die.. and the stall died with it.
 
-So AFAICS it's this block that is used twice:
+The dual wake_q business is the semantically correct seperation. The evils
+of 'sleeping spinlocks' require to preserve the task state accross the lock
+sleep and act upon the real wakeup (not the lock wakeup) proper.
 
-> >> +	rq = task_rq_lock(p, &rf);
-> >> +	p->nr_cpus_allowed = cpumask_weight(&p->cpus_mask);
-> >> +	if (unlikely((p->sched_class == &rt_sched_class ||
-> >> +		      p->sched_class == &dl_sched_class) &&
-> >> +		      p->nr_cpus_allowed > 1)) {
-> >> +		if (p->sched_class == &rt_sched_class)
-> >> +			task_rq(p)->rt.rt_nr_migratory++;
-> >> +		else
-> >> +			task_rq(p)->dl.dl_nr_migratory++;
-> >> +	}
-> >> +	task_rq_unlock(rq, p, &rf);
+The TASK_ALL wakeup of lock sleepers was hiding that non seperation of
+these two except for the resulting wreckage of ptrace, which we simply
+ignored for a long time because ....
 
-or is there some difference I haven't noticed?
+Now that we figure out that TASK_ALL is wrong we exposed the convolution of
+competing lock wakeups and regular wakeups. Seperating wake_q for those is
+the only sane solution.
 
 Thanks,
 
-	Ingo
+	tglx
+--8323329-2032092997-1498167370=:2221--
