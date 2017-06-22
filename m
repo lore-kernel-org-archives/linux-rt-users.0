@@ -1,58 +1,101 @@
-From: Allen Martin <amartin@nvidia.com>
-Subject: [PATCH 2/3] cyclictest: read back CPU affinity to verify
-Date: Wed, 21 Jun 2017 15:25:33 -0700
-Message-ID: <20170621222534.24125-3-amartin@nvidia.com>
-References: <20170621222534.24125-1-amartin@nvidia.com>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [PATCH 2/2] rt: Increase/decrease the nr of migratory tasks when
+ enabling/disabling migration
+Date: Thu, 22 Jun 2017 10:38:30 +0200
+Message-ID: <20170622083830.5thlni7wy6ggdbh5@gmail.com>
+References: <cover.1498068819.git.bristot@redhat.com>
+ <a6c37371135c028dda5fb09133e093b234576ee3.1498068819.git.bristot@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: Allen Martin <amartin@nvidia.com>
-To: <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hqemgate15.nvidia.com ([216.228.121.64]:10784 "EHLO
-        hqemgate15.nvidia.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751963AbdFUWZu (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 21 Jun 2017 18:25:50 -0400
-In-Reply-To: <20170621222534.24125-1-amartin@nvidia.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+        "Luis Claudio R . Goncalves" <lgoncalv@redhat.com>,
+        Clark Williams <williams@redhat.com>,
+        Luiz Capitulino <lcapitulino@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        LKML <linux-kernel@vger.kernel.org>
+To: Daniel Bristot de Oliveira <bristot@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <a6c37371135c028dda5fb09133e093b234576ee3.1498068819.git.bristot@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-After setting CPU affinity, read it back to verify it was set
-correctly.  Throw a warning on mismatch.  This can happen if affinity
-is set to an offline core.
 
-Signed-off-by: Allen Martin <amartin@nvidia.com>
----
- src/cyclictest/cyclictest.c | 9 ++++++++-
- 1 file changed, 8 insertions(+), 1 deletion(-)
+* Daniel Bristot de Oliveira <bristot@redhat.com> wrote:
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 0912494426ca..568e52f4b328 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -982,7 +982,7 @@ static void *timerthread(void *param)
- 	struct itimerspec tspec;
- 	struct thread_stat *stat = par->stats;
- 	int stopped = 0;
--	cpu_set_t mask;
-+	cpu_set_t mask, mask_verify;
- 	pthread_t thread;
- 	unsigned long smi_now, smi_old;
- 
-@@ -997,6 +997,13 @@ static void *timerthread(void *param)
- 		if (pthread_setaffinity_np(thread, sizeof(mask), &mask) == -1)
- 			warn("Could not set CPU affinity to CPU #%d\n",
- 			     par->cpu);
-+		/* read back affinity to verify it was set correctly */
-+		if (pthread_getaffinity_np(thread, sizeof(mask), &mask_verify) == -1)
-+			warn("Could not get CPU affinity for CPU #%d\n",
-+			     par->cpu);
-+		if (!CPU_EQUAL(&mask, &mask_verify))
-+			warn("CPU affinity was set incorrectly for CPU #%d\n",
-+			     par->cpu);
- 	}
- 
- 	interval.tv_sec = par->interval / USEC_PER_SEC;
--- 
-2.11.0
+>  void migrate_disable(void)
+>  {
+>  	struct task_struct *p = current;
+> +	struct rq *rq;
+> +	struct rq_flags rf;
+> +
+>  
+>  	if (in_atomic() || irqs_disabled()) {
+>  #ifdef CONFIG_SCHED_DEBUG
+> @@ -7593,10 +7596,21 @@ void migrate_disable(void)
+>  	preempt_disable();
+>  	preempt_lazy_disable();
+>  	pin_current_cpu();
+> -	p->migrate_disable = 1;
+>  
+> -	p->cpus_ptr = cpumask_of(smp_processor_id());
+> +	rq = task_rq_lock(p, &rf);
+> +	if (unlikely((p->sched_class == &rt_sched_class ||
+> +		      p->sched_class == &dl_sched_class) &&
+> +		      p->nr_cpus_allowed > 1)) {
+> +		if (p->sched_class == &rt_sched_class)
+> +			task_rq(p)->rt.rt_nr_migratory--;
+> +		else
+> +			task_rq(p)->dl.dl_nr_migratory--;
+> +	}
+>  	p->nr_cpus_allowed = 1;
+> +	task_rq_unlock(rq, p, &rf);
+> +	p->cpus_ptr = cpumask_of(smp_processor_id());
+> +	p->migrate_disable = 1;
+> +
+>  
+>  	preempt_enable();
+>  }
+> @@ -7605,6 +7619,9 @@ EXPORT_SYMBOL(migrate_disable);
+>  void migrate_enable(void)
+>  {
+>  	struct task_struct *p = current;
+> +	struct rq *rq;
+> +	struct rq_flags rf;
+> +
+>  
+>  	if (in_atomic() || irqs_disabled()) {
+>  #ifdef CONFIG_SCHED_DEBUG
+> @@ -7628,17 +7645,24 @@ void migrate_enable(void)
+>  
+>  	preempt_disable();
+>  
+> -	p->cpus_ptr = &p->cpus_mask;
+> -	p->nr_cpus_allowed = cpumask_weight(&p->cpus_mask);
+>  	p->migrate_disable = 0;
+> +	p->cpus_ptr = &p->cpus_mask;
+>  
+> -	if (p->migrate_disable_update) {
+> -		struct rq *rq;
+> -		struct rq_flags rf;
+> +	rq = task_rq_lock(p, &rf);
+> +	p->nr_cpus_allowed = cpumask_weight(&p->cpus_mask);
+> +	if (unlikely((p->sched_class == &rt_sched_class ||
+> +		      p->sched_class == &dl_sched_class) &&
+> +		      p->nr_cpus_allowed > 1)) {
+> +		if (p->sched_class == &rt_sched_class)
+> +			task_rq(p)->rt.rt_nr_migratory++;
+> +		else
+> +			task_rq(p)->dl.dl_nr_migratory++;
+> +	}
+> +	task_rq_unlock(rq, p, &rf);
 
+The fix looks good to me, but AFAICS the repeat pattern introduced here could be 
+factored out into a helper function instead, right?
+
+Thanks,
+
+	Ingo
