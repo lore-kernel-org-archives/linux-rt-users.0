@@ -1,10 +1,10 @@
 From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [PATCH 2/2] rt: Increase/decrease the nr of migratory tasks when
- enabling/disabling migration
-Date: Thu, 22 Jun 2017 10:38:30 +0200
-Message-ID: <20170622083830.5thlni7wy6ggdbh5@gmail.com>
+Subject: Re: [PATCH 1/2] sched/debug: Inform the number of rt/dl task that
+ can migrate
+Date: Thu, 22 Jun 2017 11:29:34 +0200
+Message-ID: <20170622092934.jokgiprvf5m7krdi@gmail.com>
 References: <cover.1498068819.git.bristot@redhat.com>
- <a6c37371135c028dda5fb09133e093b234576ee3.1498068819.git.bristot@redhat.com>
+ <9d7f19113ac410735707e0f179853100e9918c0d.1498068819.git.bristot@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -19,82 +19,45 @@ Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
 To: Daniel Bristot de Oliveira <bristot@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <a6c37371135c028dda5fb09133e093b234576ee3.1498068819.git.bristot@redhat.com>
+In-Reply-To: <9d7f19113ac410735707e0f179853100e9918c0d.1498068819.git.bristot@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
 * Daniel Bristot de Oliveira <bristot@redhat.com> wrote:
 
->  void migrate_disable(void)
->  {
->  	struct task_struct *p = current;
-> +	struct rq *rq;
-> +	struct rq_flags rf;
-> +
->  
->  	if (in_atomic() || irqs_disabled()) {
->  #ifdef CONFIG_SCHED_DEBUG
-> @@ -7593,10 +7596,21 @@ void migrate_disable(void)
->  	preempt_disable();
->  	preempt_lazy_disable();
->  	pin_current_cpu();
-> -	p->migrate_disable = 1;
->  
-> -	p->cpus_ptr = cpumask_of(smp_processor_id());
-> +	rq = task_rq_lock(p, &rf);
-> +	if (unlikely((p->sched_class == &rt_sched_class ||
-> +		      p->sched_class == &dl_sched_class) &&
-> +		      p->nr_cpus_allowed > 1)) {
-> +		if (p->sched_class == &rt_sched_class)
-> +			task_rq(p)->rt.rt_nr_migratory--;
-> +		else
-> +			task_rq(p)->dl.dl_nr_migratory--;
-> +	}
->  	p->nr_cpus_allowed = 1;
-> +	task_rq_unlock(rq, p, &rf);
-> +	p->cpus_ptr = cpumask_of(smp_processor_id());
-> +	p->migrate_disable = 1;
-> +
->  
->  	preempt_enable();
->  }
-> @@ -7605,6 +7619,9 @@ EXPORT_SYMBOL(migrate_disable);
->  void migrate_enable(void)
->  {
->  	struct task_struct *p = current;
-> +	struct rq *rq;
-> +	struct rq_flags rf;
-> +
->  
->  	if (in_atomic() || irqs_disabled()) {
->  #ifdef CONFIG_SCHED_DEBUG
-> @@ -7628,17 +7645,24 @@ void migrate_enable(void)
->  
->  	preempt_disable();
->  
-> -	p->cpus_ptr = &p->cpus_mask;
-> -	p->nr_cpus_allowed = cpumask_weight(&p->cpus_mask);
->  	p->migrate_disable = 0;
-> +	p->cpus_ptr = &p->cpus_mask;
->  
-> -	if (p->migrate_disable_update) {
-> -		struct rq *rq;
-> -		struct rq_flags rf;
-> +	rq = task_rq_lock(p, &rf);
-> +	p->nr_cpus_allowed = cpumask_weight(&p->cpus_mask);
-> +	if (unlikely((p->sched_class == &rt_sched_class ||
-> +		      p->sched_class == &dl_sched_class) &&
-> +		      p->nr_cpus_allowed > 1)) {
-> +		if (p->sched_class == &rt_sched_class)
-> +			task_rq(p)->rt.rt_nr_migratory++;
-> +		else
-> +			task_rq(p)->dl.dl_nr_migratory++;
-> +	}
-> +	task_rq_unlock(rq, p, &rf);
+> Add the value of the rt_rq.rt_nr_migratory and dl_rq.dl_nr_migratory
+> to the sched_debug output, for instance:
+> 
+> rt_rq[0]:
+>   .rt_nr_running                 : 2
+>   .rt_nr_migratory               : 1     <--- Like this
+>   .rt_throttled                  : 0
+>   .rt_time                       : 828.645877
+>   .rt_runtime                    : 1000.000000
+> 
+> This is useful to debug problems related to the dl/rt schedulers.
+> 
+> This also fixes the format of some variables, that were unsigned, rather
+> than signed.
+> 
+> [ I am sending this patch to be able to demonstrate       ]
+> [ the problem in the kernel-rt, however, this patch can   ]
+> [ be merged in the vanilla kernel, if people decide it    ]
+> [ is worth having it.                                     ]
 
-The fix looks good to me, but AFAICS the repeat pattern introduced here could be 
-factored out into a helper function instead, right?
+Note that this patch breaks in various cross-builds - here's the Alpha defconfig 
+build:
+
+/home/mingo/tip/kernel/sched/debug.c: In function 'print_rt_rq':
+/home/mingo/tip/kernel/sched/debug.c:556:60: error: 'struct rt_rq' has no member 
+named 'rt_nr_migratory'
+  SEQ_printf(m, "  .%-30s: %lu\n", #x, (unsigned long)(rt_rq->x))
+                                                            ^
+/home/mingo/tip/kernel/sched/debug.c:33:17: note: in definition of macro 
+'SEQ_printf'
+   seq_printf(m, x);  \
+...
 
 Thanks,
 
