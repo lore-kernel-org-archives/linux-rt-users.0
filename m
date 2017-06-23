@@ -1,69 +1,154 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [ANNOUNCE] v4.11.5-rt1
-Date: Fri, 23 Jun 2017 14:48:16 +0200
-Message-ID: <20170623124816.2lc6tb3h5rggwnw7@linutronix.de>
-References: <1497687277.6908.31.camel@gmx.de>
- <20170619085206.n2n22lpdfsoqbp5m@linutronix.de>
- <1497867291.19618.52.camel@gmx.de>
- <20170619100838.343faaee@gandalf.local.home>
- <20170619141341.m243ivutmwlzyhc4@linutronix.de>
- <20170619104131.05fdc76f@gandalf.local.home>
- <1497889784.15817.17.camel@gmx.de>
- <1497944706.5454.7.camel@gmx.de>
- <20170622163453.iymm3ctqv2a76k6k@linutronix.de>
- <1498152607.5559.19.camel@gmx.de>
+Subject: Re: [RFC 3/3] rt: Check if the task needs to migrate when
+ re-enabling migration
+Date: Fri, 23 Jun 2017 15:14:52 +0200
+Message-ID: <20170623131452.tb6yh6uqjeazrnv6@linutronix.de>
+References: <cover.1497607974.git.bristot@redhat.com>
+ <99de119c39e3af618efdb2f79bf30e60ca42a6ec.1497607974.git.bristot@redhat.com>
+ <20170616165815.mvu2jr323xy3dhf3@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Cc: Steven Rostedt <rostedt@goodmis.org>,
+Cc: linux-rt-users@vger.kernel.org,
+        "Luis Claudio R . Goncalves" <lgoncalv@redhat.com>,
+        Clark Williams <williams@redhat.com>,
+        Luiz Capitulino <lcapitulino@redhat.com>,
         Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Mike Galbraith <efault@gmx.de>
+        Steven Rostedt <rostedt@goodmis.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        LKML <linux-kernel@vger.kernel.org>
+To: Daniel Bristot de Oliveira <bristot@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1498152607.5559.19.camel@gmx.de>
+In-Reply-To: <20170616165815.mvu2jr323xy3dhf3@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2017-06-22 19:30:07 [+0200], Mike Galbraith wrote:
-> On Thu, 2017-06-22 at 18:34 +0200, Sebastian Andrzej Siewior wrote:
-> > On 2017-06-20 09:45:06 [+0200], Mike Galbraith wrote:
-> > > See ! and ?
-> > 
-> > See see.
-> > What about this:
-> 
-> I'll give it a go, likely during the weekend.
+On 2017-06-16 18:58:15 [+0200], To Daniel Bristot de Oliveira wrote:
+> Any objections?
 
-It survived >1d on my AMD-A10 box. I am adding this description:
+Okay, taking this for v4.9 then (mostly the same, except for one
+superfluous check):
 
-|If a task is queued as a sleeper for a wakeup and never goes to
-|schedule() (because it just obtained the lock) then it will receive a
-|spurious wake up which is not "bad", it is considered. Until that wake
-|up happens this task can no be enqueued for any wake ups handled by the
-|WAKE_Q infrastructure (because a task can only be enqueued once). This
-|wouldn't be bad if we would use the same wakeup mechanism for the wake
-|up of sleepers as we do for "normal" wake ups. But we don't…
-|
-|So.
-|   T1			T2		T3
-|   spin_lock(x)				spin_unlock(x);
-|   					wake_q_add(q1, T1)
-|   spin_unlock(x)
-|   set_state(TASK_INTERRUPTIBLE)
-|   if (!condition)
-|	schedule()
-|			condition = true
-|			wake_q_add(q2, T1)
-|			// T1 not added, still enqueued
-|			wake_up_q(q2)
-|					wake_up_q_sleeper(q1)
-|					// T1 not woken up, wrong task state
-|
-|In order to solve this race this patch adds a wake_q_node for the
-|sleeper case.
+Subject: [PATCH] sched/migrate disable: handle updated task-mask mg-dis section
 
-and consider this closed unless I hear from you different things :)
+If task's cpumask changes while in the task is in a migrate_disable()
+section then we don't react on it after a migrate_enable(). It matters
+however if current CPU is no longer part of the cpumask. We also miss
+the ->set_cpus_allowed() callback.
+This patch fixes it by setting task->migrate_disable_update once we this
+"delayed" hook.
+This bug was introduced while fixing unrelated issue in
+migrate_disable() in v4.4-rt3 (update_migrate_disable() got removed
+during that).
 
-Sebastian
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ include/linux/sched.h |  1 +
+ kernel/sched/core.c   | 59 +++++++++++++++++++++++++++++++++++++++++++++------
+ 2 files changed, 54 insertions(+), 6 deletions(-)
+
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 4d779486ad6b..89b453dc7c14 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1535,6 +1535,7 @@ struct task_struct {
+ 	unsigned int policy;
+ #ifdef CONFIG_PREEMPT_RT_FULL
+ 	int migrate_disable;
++	int migrate_disable_update;
+ # ifdef CONFIG_SCHED_DEBUG
+ 	int migrate_disable_atomic;
+ # endif
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 10e832da70b6..cadc1e14073d 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -1138,18 +1138,14 @@ void set_cpus_allowed_common(struct task_struct *p, const struct cpumask *new_ma
+ 	p->nr_cpus_allowed = cpumask_weight(new_mask);
+ }
+ 
+-void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
++static void __do_set_cpus_allowed_tail(struct task_struct *p,
++				       const struct cpumask *new_mask)
+ {
+ 	struct rq *rq = task_rq(p);
+ 	bool queued, running;
+ 
+ 	lockdep_assert_held(&p->pi_lock);
+ 
+-	if (__migrate_disabled(p)) {
+-		cpumask_copy(&p->cpus_allowed, new_mask);
+-		return;
+-	}
+-
+ 	queued = task_on_rq_queued(p);
+ 	running = task_current(rq, p);
+ 
+@@ -1172,6 +1168,20 @@ void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
+ 		set_curr_task(rq, p);
+ }
+ 
++void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
++{
++	if (__migrate_disabled(p)) {
++		lockdep_assert_held(&p->pi_lock);
++
++		cpumask_copy(&p->cpus_allowed, new_mask);
++#if defined(CONFIG_PREEMPT_RT_FULL) && defined(CONFIG_SMP)
++		p->migrate_disable_update = 1;
++#endif
++		return;
++	}
++	__do_set_cpus_allowed_tail(p, new_mask);
++}
++
+ static DEFINE_PER_CPU(struct cpumask, sched_cpumasks);
+ static DEFINE_MUTEX(sched_down_mutex);
+ static cpumask_t sched_down_cpumask;
+@@ -3435,6 +3445,43 @@ void migrate_enable(void)
+ 	 */
+ 	p->migrate_disable = 0;
+ 
++	if (p->migrate_disable_update) {
++		struct rq *rq;
++		struct rq_flags rf;
++
++		rq = task_rq_lock(p, &rf);
++		update_rq_clock(rq);
++
++		__do_set_cpus_allowed_tail(p, &p->cpus_allowed);
++		task_rq_unlock(rq, p, &rf);
++
++		p->migrate_disable_update = 0;
++
++		WARN_ON(smp_processor_id() != task_cpu(p));
++		if (!cpumask_test_cpu(task_cpu(p), &p->cpus_allowed)) {
++			const struct cpumask *cpu_valid_mask = cpu_active_mask;
++			struct migration_arg arg;
++			unsigned int dest_cpu;
++
++			if (p->flags & PF_KTHREAD) {
++				/*
++				 * Kernel threads are allowed on online && !active CPUs
++				 */
++				cpu_valid_mask = cpu_online_mask;
++			}
++			dest_cpu = cpumask_any_and(cpu_valid_mask, &p->cpus_allowed);
++			arg.task = p;
++			arg.dest_cpu = dest_cpu;
++
++			unpin_current_cpu();
++			preempt_lazy_enable();
++			preempt_enable();
++			stop_one_cpu(task_cpu(p), migration_cpu_stop, &arg);
++			tlb_migrate_finish(p->mm);
++			return;
++		}
++	}
++
+ 	unpin_current_cpu();
+ 	preempt_enable();
+ 	preempt_lazy_enable();
+-- 
+2.13.1
