@@ -1,208 +1,151 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [patch-rt v2] rtmutex: Fix lock stealing logic
-Date: Fri, 23 Jun 2017 09:33:41 -0400
-Message-ID: <20170623093341.547ce155@gandalf.local.home>
-References: <20170616105610.rbc6itylcrsla56l@linutronix.de>
-        <1497805317.6229.3.camel@gmx.de>
-        <1498203434.3988.5.camel@gmx.de>
+From: Daniel Bristot de Oliveira <bristot@redhat.com>
+Subject: Re: [PATCH 2/2] rt: Increase/decrease the nr of migratory tasks when
+ enabling/disabling migration
+Date: Fri, 23 Jun 2017 15:36:16 +0200
+Message-ID: <ba3011dc-4437-b0ea-4537-83051b83c914@redhat.com>
+References: <cover.1498068819.git.bristot@redhat.com>
+ <a6c37371135c028dda5fb09133e093b234576ee3.1498068819.git.bristot@redhat.com>
+ <20170622083830.5thlni7wy6ggdbh5@gmail.com>
+ <5c90773d-1283-d3de-4282-e3855331d4e4@redhat.com>
+ <20170622194943.ho4yekdqqeg2qiva@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+        "Luis Claudio R . Goncalves" <lgoncalv@redhat.com>,
+        Clark Williams <williams@redhat.com>,
+        Luiz Capitulino <lcapitulino@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Mike Galbraith <efault@gmx.de>
+        Steven Rostedt <rostedt@goodmis.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        LKML <linux-kernel@vger.kernel.org>
+To: Ingo Molnar <mingo@kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.99]:40854 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1750932AbdFWNdo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 23 Jun 2017 09:33:44 -0400
-In-Reply-To: <1498203434.3988.5.camel@gmx.de>
+Received: from mail-qk0-f174.google.com ([209.85.220.174]:35101 "EHLO
+        mail-qk0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751230AbdFWNgW (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 23 Jun 2017 09:36:22 -0400
+Received: by mail-qk0-f174.google.com with SMTP id 16so35611454qkg.2
+        for <linux-rt-users@vger.kernel.org>; Fri, 23 Jun 2017 06:36:22 -0700 (PDT)
+In-Reply-To: <20170622194943.ho4yekdqqeg2qiva@gmail.com>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 23 Jun 2017 09:37:14 +0200
-Mike Galbraith <efault@gmx.de> wrote:
-
-> V2 changes:
->   - beautification (ymmv)
->   - enable lock stealing when waiter is queued
+On 06/22/2017 09:49 PM, Ingo Molnar wrote:
+> So AFAICS it's this block that is used twice:
 > 
-> rtmutex: Fix lock stealing logic
-> 
-> 1. When trying to acquire an rtmutex, we first try to grab it without
-> queueing the waiter, and explicitly check for that initial attempt
-> in the !waiter path of __try_to_take_rt_mutex().  Checking whether
-> the lock taker is top waiter before allowing a steal attempt in that
-> path is a thinko: the lock taker has not yet blocked.
-> 
-> 2. It seems wrong to change the definition of rt_mutex_waiter_less()
-> to mean less or perhaps equal when we have an rt_mutex_waiter_equal().
-> 
-> Remove the thinko, restore rt_mutex_waiter_less(), implement and use
-> rt_mutex_steal() based upon rt_mutex_waiter_less/equal(), moving all
-> qualification criteria into the function itself.
-> 
-> Signed-off-by: Mike Galbraith <efault@gmx.de>
-> ---
->  kernel/locking/rtmutex.c |   76 ++++++++++++++++++++++-------------------------
->  1 file changed, 37 insertions(+), 39 deletions(-)
-> 
-> --- a/kernel/locking/rtmutex.c
-> +++ b/kernel/locking/rtmutex.c
-> @@ -236,26 +236,19 @@ static inline bool unlock_rt_mutex_safe(
->  }
->  #endif
->  
-> -#define STEAL_NORMAL  0
-> -#define STEAL_LATERAL 1
-> -
->  /*
->   * Only use with rt_mutex_waiter_{less,equal}()
->   */
-> -#define task_to_waiter(p)	\
-> -	&(struct rt_mutex_waiter){ .prio = (p)->prio, .deadline = (p)->dl.deadline }
-> +#define task_to_waiter(p) &(struct rt_mutex_waiter) \
-> +	{ .prio = (p)->prio, .deadline = (p)->dl.deadline, .task = (p) }
->  
->  static inline int
->  rt_mutex_waiter_less(struct rt_mutex_waiter *left,
-> -		     struct rt_mutex_waiter *right, int mode)
-> +		     struct rt_mutex_waiter *right)
->  {
-> -	if (mode == STEAL_NORMAL) {
-> -		if (left->prio < right->prio)
-> -			return 1;
-> -	} else {
-> -		if (left->prio <= right->prio)
-> -			return 1;
-> -	}
-> +	if (left->prio < right->prio)
-> +		return 1;
-> +
->  	/*
->  	 * If both waiters have dl_prio(), we check the deadlines of the
->  	 * associated tasks.
-> @@ -287,6 +280,27 @@ rt_mutex_waiter_equal(struct rt_mutex_wa
->  	return 1;
->  }
->  
-> +#define STEAL_NORMAL  0
-> +#define STEAL_LATERAL 1
-> +
-> +static inline int
-> +rt_mutex_steal(struct rt_mutex *lock, struct rt_mutex_waiter *waiter, int mode)
-> +{
-> +	struct rt_mutex_waiter *top_waiter = rt_mutex_top_waiter(lock);
-> +
-> +	if (waiter == top_waiter || rt_mutex_waiter_less(waiter, top_waiter))
-> +		return 1;
-> +
-> +	/*
-> +	 * Note that RT tasks are excluded from lateral-steals
-> +	 * to prevent the introduction of an unbounded latency.
-> +	 */
-> +	if (mode == STEAL_NORMAL || rt_task(waiter->task))
-> +		return 0;
-> +
-> +	return rt_mutex_waiter_equal(waiter, top_waiter);
-> +}
-> +
->  static void
->  rt_mutex_enqueue(struct rt_mutex *lock, struct rt_mutex_waiter *waiter)
->  {
-> @@ -298,7 +312,7 @@ rt_mutex_enqueue(struct rt_mutex *lock,
->  	while (*link) {
->  		parent = *link;
->  		entry = rb_entry(parent, struct rt_mutex_waiter, tree_entry);
-> -		if (rt_mutex_waiter_less(waiter, entry, STEAL_NORMAL)) {
-> +		if (rt_mutex_waiter_less(waiter, entry)) {
->  			link = &parent->rb_left;
->  		} else {
->  			link = &parent->rb_right;
-> @@ -337,7 +351,7 @@ rt_mutex_enqueue_pi(struct task_struct *
->  	while (*link) {
->  		parent = *link;
->  		entry = rb_entry(parent, struct rt_mutex_waiter, pi_tree_entry);
-> -		if (rt_mutex_waiter_less(waiter, entry, STEAL_NORMAL)) {
-> +		if (rt_mutex_waiter_less(waiter, entry)) {
->  			link = &parent->rb_left;
->  		} else {
->  			link = &parent->rb_right;
-> @@ -847,6 +861,7 @@ static int rt_mutex_adjust_prio_chain(st
->   * @task:   The task which wants to acquire the lock
->   * @waiter: The waiter that is queued to the lock's wait tree if the
->   *	    callsite called task_blocked_on_lock(), otherwise NULL
-> + * @mode:   Lock steal mode (STEAL_NORMAL, STEAL_LATERAL)
->   */
->  static int __try_to_take_rt_mutex(struct rt_mutex *lock,
->  				  struct task_struct *task,
-> @@ -886,20 +901,16 @@ static int __try_to_take_rt_mutex(struct
->  	 */
->  	if (waiter) {
->  		/*
-> -		 * If waiter is not the highest priority waiter of
-> -		 * @lock, give up.
-> +		 * If waiter is not the highest priority waiter of @lock,
-> +		 * or its peer when lateral steal is allowed, give up.
->  		 */
-> -		if (waiter != rt_mutex_top_waiter(lock)) {
-> -			/* XXX rt_mutex_waiter_less() ? */
-> +		if (!rt_mutex_steal(lock, waiter, mode))
->  			return 0;
-> -		}
-> -
->  		/*
->  		 * We can acquire the lock. Remove the waiter from the
->  		 * lock waiters tree.
->  		 */
->  		rt_mutex_dequeue(lock, waiter);
-> -
+>>>> +	rq = task_rq_lock(p, &rf);
+>>>> +	p->nr_cpus_allowed = cpumask_weight(&p->cpus_mask);
+>>>> +	if (unlikely((p->sched_class == &rt_sched_class ||
+>>>> +		      p->sched_class == &dl_sched_class) &&
+>>>> +		      p->nr_cpus_allowed > 1)) {
+>>>> +		if (p->sched_class == &rt_sched_class)
+>>>> +			task_rq(p)->rt.rt_nr_migratory++;
+>>>> +		else
+>>>> +			task_rq(p)->dl.dl_nr_migratory++;
+>>>> +	}
+>>>> +	task_rq_unlock(rq, p, &rf);
+> or is there some difference I haven't noticed?
 
-I liked that space.
+One block increases the number of migratory tasks, and the
+other one decreases... 
 
->  	} else {
->  		/*
->  		 * If the lock has waiters already we check whether @task is
-> @@ -910,25 +921,12 @@ static int __try_to_take_rt_mutex(struct
->  		 * not need to be dequeued.
->  		 */
->  		if (rt_mutex_has_waiters(lock)) {
-> -			struct task_struct *pown = rt_mutex_top_waiter(lock)->task;
-> -
-> -			if (task != pown)
-> -				return 0;
+How about this version? (if it is good, I will polish it in a v2).
 
-OK, I see what happened here. Yeah, this will always be true, because
-when waiter == NULL, it means that the task isn't on the lock's list
-yet, and pown != task is always true.
-
-
-> -
-> -			/*
-> -			 * Note that RT tasks are excluded from lateral-steals
-> -			 * to prevent the introduction of an unbounded latency.
-> -			 */
-> -			if (rt_task(task))
-> -				mode = STEAL_NORMAL;
->  			/*
-> -			 * If @task->prio is greater than or equal to
-> -			 * the top waiter priority (kernel view),
-> -			 * @task lost.
-> +			 * If @task->prio is greater than the top waiter
-> +			 * priority (kernel view), or equal to it when a
-> +			 * lateral steal is forbidden, @task lost.
->  			 */
-> -			if (!rt_mutex_waiter_less(task_to_waiter(task),
-> -						  rt_mutex_top_waiter(lock),
-> -						  mode))
-> +			if (!rt_mutex_steal(lock, task_to_waiter(task), mode))
->  				return 0;
->  			/*
->  			 * The current top waiter stays enqueued. We
-
-Reviewed-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-
--- Steve
-
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index ce34e4f..0f66376 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -7566,10 +7566,57 @@ const u32 sched_prio_to_wmult[40] = {
+ 
+ #if defined(CONFIG_PREEMPT_COUNT) && defined(CONFIG_SMP)
+ 
++enum inc_dec_migratory {
++	DEC_NR_MIGRATORY = -1,
++	INC_NR_MIGRATORY = 1,
++};
++
++static inline void
++inc_dec_nr_migratory(struct task_struct *p, enum inc_dec_migratory id)
++{
++	if (unlikely((p->sched_class == &rt_sched_class ||
++		      p->sched_class == &dl_sched_class) &&
++		      p->nr_cpus_allowed > 1)) {
++		if (p->sched_class == &rt_sched_class)
++			task_rq(p)->rt.rt_nr_migratory += id;
++		else
++			task_rq(p)->dl.dl_nr_migratory += id;
++	}
++}
++
++static inline void
++migrate_disable_update_cpus_allowed(struct task_struct *p)
++{
++	struct rq *rq;
++	struct rq_flags rf;
++
++	p->cpus_ptr = cpumask_of(smp_processor_id());
++
++	rq = task_rq_lock(p, &rf);
++	inc_dec_nr_migratory(p, DEC_NR_MIGRATORY);
++	p->nr_cpus_allowed = 1;
++	task_rq_unlock(rq, p, &rf);
++}
++
++static inline void
++migrate_enable_update_cpus_allowed(struct task_struct *p)
++{
++	struct rq *rq;
++	struct rq_flags rf;
++
++	p->cpus_ptr = &p->cpus_mask;
++
++	rq = task_rq_lock(p, &rf);
++	p->nr_cpus_allowed = cpumask_weight(&p->cpus_mask);
++	inc_dec_nr_migratory(p, INC_NR_MIGRATORY);
++	task_rq_unlock(rq, p, &rf);
++}
++
+ void migrate_disable(void)
+ {
+ 	struct task_struct *p = current;
+ 
++
+ 	if (in_atomic() || irqs_disabled()) {
+ #ifdef CONFIG_SCHED_DEBUG
+ 		p->migrate_disable_atomic++;
+@@ -7593,10 +7640,9 @@ void migrate_disable(void)
+ 	preempt_disable();
+ 	preempt_lazy_disable();
+ 	pin_current_cpu();
+-	p->migrate_disable = 1;
+ 
+-	p->cpus_ptr = cpumask_of(smp_processor_id());
+-	p->nr_cpus_allowed = 1;
++	migrate_disable_update_cpus_allowed(p);
++	p->migrate_disable = 1;
+ 
+ 	preempt_enable();
+ }
+@@ -7606,6 +7652,7 @@ void migrate_enable(void)
+ {
+ 	struct task_struct *p = current;
+ 
++
+ 	if (in_atomic() || irqs_disabled()) {
+ #ifdef CONFIG_SCHED_DEBUG
+ 		p->migrate_disable_atomic--;
+@@ -7628,9 +7675,8 @@ void migrate_enable(void)
+ 
+ 	preempt_disable();
+ 
+-	p->cpus_ptr = &p->cpus_mask;
+-	p->nr_cpus_allowed = cpumask_weight(&p->cpus_mask);
+ 	p->migrate_disable = 0;
++	migrate_enable_update_cpus_allowed(p);
+ 
+ 	if (p->migrate_disable_update) {
+ 		struct rq *rq;
