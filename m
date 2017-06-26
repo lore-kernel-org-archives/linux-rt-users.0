@@ -1,7 +1,7 @@
 From: Daniel Bristot de Oliveira <bristot@redhat.com>
-Subject: [PATCH V2 2/2] rt: Increase/decrease the nr of migratory tasks when  enabling/disabling migration
-Date: Mon, 26 Jun 2017 17:07:15 +0200
-Message-ID: <e981d271cbeca975bca710e2fbcc6078c09741b0.1498482127.git.bristot@redhat.com>
+Subject: [PATCH V2 1/2] sched/debug: Inform the number of rt/dl task that can migrate
+Date: Mon, 26 Jun 2017 17:07:14 +0200
+Message-ID: <7896f71cada54ee7dd8507bb666063a2e051c3d4.1498482127.git.bristot@redhat.com>
 References: <cover.1498482127.git.bristot@redhat.com>
 Cc: "Luis Claudio R . Goncalves" <lgoncalv@redhat.com>,
         Clark Williams <williams@redhat.com>,
@@ -13,71 +13,30 @@ Cc: "Luis Claudio R . Goncalves" <lgoncalv@redhat.com>,
         Ingo Molnar <mingo@kernel.org>,
         LKML <linux-kernel@vger.kernel.org>
 To: linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx1.redhat.com ([209.132.183.28]:49200 "EHLO mx1.redhat.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751752AbdFZPL5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 26 Jun 2017 11:11:57 -0400
 In-Reply-To: <cover.1498482127.git.bristot@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-There is a problem in the migrate_disable()/enable() implementation
-regarding the number of migratory tasks in the rt/dl RQs. The problem
-is the following:
+Add the value of the rt_rq.rt_nr_migratory and dl_rq.dl_nr_migratory
+to the sched_debug output, for instance:
 
-When a task is attached to the rt runqueue, it is checked if it either
-can run in more than one CPU, or if it is with migration disable. If
-either check is true, the rt_rq->rt_nr_migratory counter is not
-increased. The counter increases otherwise.
+rt_rq[0]:
+  .rt_nr_running                 : 2
+  .rt_nr_migratory               : 1     <--- Like this
+  .rt_throttled                  : 0
+  .rt_time                       : 828.645877
+  .rt_runtime                    : 1000.000000
 
-When the task is detached, the same check is done. If either check is
-true, the rt_rq->rt_nr_migratory counter is not decreased. The counter
-decreases otherwise. The same check is done in the dl scheduler.
+This is useful to debug problems related to the dl/rt schedulers.
 
-One important thing is that, migrate disable/enable does not touch this
-counter for tasks attached to the rt rq. So suppose the following chain
-of events.
+This also fixes the format of some variables, that were unsigned, rather
+than signed.
 
-Assumptions:
-Task A is the only runnable task in A      Task B runs on the CPU B
-Task A runs on CFS (non-rt)                Task B has RT priority
-Thus, rt_nr_migratory is 0                 B is running
-Task A can run on all CPUS.
-
-Timeline:
-        CPU A/TASK A                        CPU B/TASK B
-A takes the rt mutex X                           .
-A disables migration                             .
-           .                          B tries to take the rt mutex X
-           .                          As it is held by A {
-           .                            A inherits the rt priority of B
-           .                            A is dequeued from CFS RQ of CPU A
-           .                            A is enqueued in the RT RQ of CPU A
-           .                            As migration is disabled
-           .                              rt_nr_migratory in A is not increased
-           .
-A enables migration
-A releases the rt mutex X {
-  A returns to its original priority
-  A ask to be dequeued from RT RQ {
-    As migration is now enabled and it can run on all CPUS {
-       rt_nr_migratory should be decreased
-       As rt_nr_migratory is 0, rt_nr_migratory under flows
-    }
-}
-
-This variable is important because it notifies if there are more than one
-runnable & migratory task in the runqueue. If there are more than one
-tasks, the rt_rq is set as overloaded, and then tries to migrate some
-tasks. This rule is important to keep the scheduler working conserving,
-that is, in a system with M CPUs, the M highest priority tasks should be
-running.
-
-As rt_nr_migratory is unsigned, it will become > 0, notifying that the
-RQ is overloaded, activating pushing mechanism without need.
-
-This patch fixes this problem by decreasing/increasing the
-rt/dl_nr_migratory in the migrate disable/enable operations.
-
-Reported-by: Pei Zhang <pezhang@redhat.com>
-Reported-by: Luiz Capitulino <lcapitulino@redhat.com>
 Signed-off-by: Daniel Bristot de Oliveira <bristot@redhat.com>
 Cc: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
 Cc: Clark Williams <williams@redhat.com>
@@ -90,84 +49,59 @@ Cc: Ingo Molnar <mingo@kernel.org>
 Cc: LKML <linux-kernel@vger.kernel.org>
 Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
 ---
- kernel/sched/core.c | 49 ++++++++++++++++++++++++++++++++++++++++++++-----
- 1 file changed, 44 insertions(+), 5 deletions(-)
+ kernel/sched/debug.c | 17 +++++++++++++++--
+ 1 file changed, 15 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index ce34e4f..7d3565e 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -7566,6 +7566,47 @@ const u32 sched_prio_to_wmult[40] = {
+diff --git a/kernel/sched/debug.c b/kernel/sched/debug.c
+index 0e2af53..287615a 100644
+--- a/kernel/sched/debug.c
++++ b/kernel/sched/debug.c
+@@ -552,15 +552,21 @@ void print_rt_rq(struct seq_file *m, int cpu, struct rt_rq *rt_rq)
  
- #if defined(CONFIG_PREEMPT_COUNT) && defined(CONFIG_SMP)
+ #define P(x) \
+ 	SEQ_printf(m, "  .%-30s: %Ld\n", #x, (long long)(rt_rq->x))
++#define PU(x) \
++	SEQ_printf(m, "  .%-30s: %lu\n", #x, (unsigned long)(rt_rq->x))
+ #define PN(x) \
+ 	SEQ_printf(m, "  .%-30s: %Ld.%06ld\n", #x, SPLIT_NS(rt_rq->x))
  
-+static inline void
-+update_nr_migratory(struct task_struct *p, long delta)
-+{
-+	if (unlikely((p->sched_class == &rt_sched_class ||
-+		      p->sched_class == &dl_sched_class) &&
-+		      p->nr_cpus_allowed > 1)) {
-+		if (p->sched_class == &rt_sched_class)
-+			task_rq(p)->rt.rt_nr_migratory += delta;
-+		else
-+			task_rq(p)->dl.dl_nr_migratory += delta;
-+	}
-+}
-+
-+static inline void
-+migrate_disable_update_cpus_allowed(struct task_struct *p)
-+{
-+	struct rq *rq;
-+	struct rq_flags rf;
-+
-+	p->cpus_ptr = cpumask_of(smp_processor_id());
-+
-+	rq = task_rq_lock(p, &rf);
-+	update_nr_migratory(p, -1);
-+	p->nr_cpus_allowed = 1;
-+	task_rq_unlock(rq, p, &rf);
-+}
-+
-+static inline void
-+migrate_enable_update_cpus_allowed(struct task_struct *p)
-+{
-+	struct rq *rq;
-+	struct rq_flags rf;
-+
-+	p->cpus_ptr = &p->cpus_mask;
-+
-+	rq = task_rq_lock(p, &rf);
-+	p->nr_cpus_allowed = cpumask_weight(&p->cpus_mask);
-+	update_nr_migratory(p, 1);
-+	task_rq_unlock(rq, p, &rf);
-+}
-+
- void migrate_disable(void)
- {
- 	struct task_struct *p = current;
-@@ -7593,10 +7634,9 @@ void migrate_disable(void)
- 	preempt_disable();
- 	preempt_lazy_disable();
- 	pin_current_cpu();
--	p->migrate_disable = 1;
+-	P(rt_nr_running);
++	PU(rt_nr_running);
++#ifdef CONFIG_SMP
++	PU(rt_nr_migratory);
++#endif
+ 	P(rt_throttled);
+ 	PN(rt_time);
+ 	PN(rt_runtime);
  
--	p->cpus_ptr = cpumask_of(smp_processor_id());
--	p->nr_cpus_allowed = 1;
-+	migrate_disable_update_cpus_allowed(p);
-+	p->migrate_disable = 1;
- 
- 	preempt_enable();
+ #undef PN
++#undef PU
+ #undef P
  }
-@@ -7628,9 +7668,8 @@ void migrate_enable(void)
  
- 	preempt_disable();
+@@ -569,14 +575,21 @@ void print_dl_rq(struct seq_file *m, int cpu, struct dl_rq *dl_rq)
+ 	struct dl_bw *dl_bw;
  
--	p->cpus_ptr = &p->cpus_mask;
--	p->nr_cpus_allowed = cpumask_weight(&p->cpus_mask);
- 	p->migrate_disable = 0;
-+	migrate_enable_update_cpus_allowed(p);
+ 	SEQ_printf(m, "\ndl_rq[%d]:\n", cpu);
+-	SEQ_printf(m, "  .%-30s: %ld\n", "dl_nr_running", dl_rq->dl_nr_running);
++
++#define PU(x) \
++	SEQ_printf(m, "  .%-30s: %lu\n", #x, (unsigned long)(dl_rq->x))
++
++	PU(dl_nr_running);
+ #ifdef CONFIG_SMP
++	PU(dl_nr_migratory);
+ 	dl_bw = &cpu_rq(cpu)->rd->dl_bw;
+ #else
+ 	dl_bw = &dl_rq->dl_bw;
+ #endif
+ 	SEQ_printf(m, "  .%-30s: %lld\n", "dl_bw->bw", dl_bw->bw);
+ 	SEQ_printf(m, "  .%-30s: %lld\n", "dl_bw->total_bw", dl_bw->total_bw);
++
++#undef PU
+ }
  
- 	if (p->migrate_disable_update) {
- 		struct rq *rq;
+ extern __read_mostly int sched_clock_running;
 -- 
 2.9.4
+
