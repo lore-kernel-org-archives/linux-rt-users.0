@@ -1,52 +1,40 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [linux-rt-devel:linux-4.11.y-rt-rebase 160/353]
- init/init_task.c:19:8: error: unknown field 'posix_timer_list' specified in
- initializer
-Date: Mon, 26 Jun 2017 18:09:07 +0200
-Message-ID: <20170626160907.u6bnkbi2atcymkac@linutronix.de>
-References: <201706162151.0vcyGri3%fengguang.wu@intel.com>
+Subject: Re: Variance, Standard Deviation, Skewness and Kurtosis for
+ cyclictest results?
+Date: Mon, 26 Jun 2017 18:20:32 +0200
+Message-ID: <20170626162032.3r4uxnvucrkvitv5@linutronix.de>
+References: <trinity-bc729c2f-fd82-4804-bc70-99fab82bf762-1498257529316@3capp-webde-bs65>
+ <20170626143035.kir3ym6so6yifrza@linutronix.de>
+ <AM3PR02MB1305D909595CD5A0AE25D29C1DF0@AM3PR02MB130.eurprd02.prod.outlook.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: John Stultz <johnstul@us.ibm.com>, kbuild-all@01.org,
-        Thomas Gleixner <tglx@linutronix.de>,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: kbuild test robot <fengguang.wu@intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Cc: "rolf.freitag@email.de" <rolf.freitag@email.de>,
+        r t <linux-rt-users@vger.kernel.org>
+To: Piotr Gregor <pgregor@quadrant-systems.co.uk>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:41440 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751402AbdFZQUj (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 26 Jun 2017 12:20:39 -0400
 Content-Disposition: inline
-In-Reply-To: <201706162151.0vcyGri3%fengguang.wu@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <AM3PR02MB1305D909595CD5A0AE25D29C1DF0@AM3PR02MB130.eurprd02.prod.outlook.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-06-16 21:55:59 [+0800], kbuild test robot wrote:
-> tree:   https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git linux-4.11.y-rt-rebase
-> head:   9a5f5870d7dedcb287c4a1af27de7cf35302c56c
-> commit: 470637c623fc39a4804c3611e480b5ccdf3dca1c [160/353] posix-timers: Thread posix-cpu-timers on -rt
-> config: x86_64-randconfig-i0-201724 (attached as .config)
-> compiler: gcc-4.9 (Debian 4.9.4-2) 4.9.4
-> reproduce:
->         git checkout 470637c623fc39a4804c3611e480b5ccdf3dca1c
->         # save the attached .config to linux build tree
->         make ARCH=x86_64 
-> 
-> All error/warnings (new ones prefixed by >>):
-> 
-> >> init/init_task.c:19:8: error: unknown field 'posix_timer_list' specified in initializer
->     struct task_struct init_task = INIT_TASK(init_task);
->            ^
+On 2017-06-26 15:59:20 [+0000], Piotr Gregor wrote:
+> Hi Sebastian,
+Hi Piotr,
 
-Taking this as the fix for the v4.11 RT only fallout.
+> I think Rolf understands that but he is simply interested in deviation anyway.
+Sure. I just tried to clarify why we have what we have and I can't
+remember patches floating around implementing something else. I am not
+saying no to any other "average" implementation.
 
-diff --git a/include/linux/init_task.h b/include/linux/init_task.h
---- a/include/linux/init_task.h
-+++ b/include/linux/init_task.h
-@@ -167,7 +167,7 @@ extern struct cred init_cred;
- # define INIT_PERF_EVENTS(tsk)
- #endif
- 
--#ifdef CONFIG_PREEMPT_RT_BASE
-+#if defined(CONFIG_POSIX_TIMERS) && defined(CONFIG_PREEMPT_RT_BASE)
- # define INIT_TIMER_LIST		.posix_timer_list = NULL,
- #else
- # define INIT_TIMER_LIST
+That said, there is the latency-histogram output and people feed those
+numbers into gnuplot. So there is this.
+
+> cheers,
+> Piotr
 
 Sebastian
