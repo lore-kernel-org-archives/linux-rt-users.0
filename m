@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH 22/32] tracing: Add support for 'synthetic' events
-Date: Mon, 26 Jun 2017 17:49:23 -0500
-Message-ID: <17e9dcfcdd927e42d3d70cb41f7189b0b3682c20.1498510759.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 29/32] tracing: Add 'last error' error facility for hist triggers
+Date: Mon, 26 Jun 2017 17:49:30 -0500
+Message-ID: <cad8b161d443ba1140572d764745ea113a60f4b9.1498510759.git.tom.zanussi@linux.intel.com>
 References: <cover.1498510759.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, linux-kernel@vger.kernel.org,
@@ -9,834 +9,513 @@ Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         Tom Zanussi <tom.zanussi@linux.intel.com>
 To: rostedt@goodmis.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga04.intel.com ([192.55.52.120]:23434 "EHLO mga04.intel.com"
+Received: from mga07.intel.com ([134.134.136.100]:60509 "EHLO mga07.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1752052AbdFZWug (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 26 Jun 2017 18:50:36 -0400
+        id S1752140AbdFZWuw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 26 Jun 2017 18:50:52 -0400
 In-Reply-To: <cover.1498510759.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1498510759.git.tom.zanussi@linux.intel.com>
 References: <cover.1498510759.git.tom.zanussi@linux.intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Synthetic events are user-defined events generated from hist trigger
-variables saved from one or more other events.
+With the addition of variables and actions, it's become necessary to
+provide more detailed error information to users about syntax errors.
 
-To define a synthetic event, the user writes a simple specification
-consisting of the name of the new event along with one or more
-variables and their type(s), to the tracing/synthetic_events file.
+Add a 'last error' facility accessible via the erroring event's 'hist'
+file.  Reading the hist file after an error will display more detailed
+information about what went wrong, if information is available.  This
+extended error information will be available until the next hist
+trigger command for that event.
 
-For instance, the following creates a new event named 'wakeup_latency'
-with 3 fields: lat, pid, and prio:
+  # echo xxx > /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+  echo: write error: Invalid argument
 
-    # echo 'wakeup_latency u64 lat; pid_t pid; int prio' >> \
-      /sys/kernel/debug/tracing/synthetic_events
+  # cat /sys/kernel/debug/tracing/events/sched/sched_wakeup/hist
 
-Reading the tracing/synthetic_events file lists all the
-currently-defined synthetic events, in this case the event we defined
-above:
+  ERROR: Couldn't yyy: zzz
+  Last command: xxx
 
-    # cat /sys/kernel/debug/tracing/synthetic_events
-    wakeup_latency u64 lat; pid_t pid; int prio
-
-At this point, the synthetic event is ready to use, and a histogram
-can be defined using it:
-
-    # echo 'hist:keys=pid,prio,lat.log2:sort=pid,lat' >> \
-    /sys/kernel/debug/tracing/events/synthetic/wakeup_latency/trigger
-
-The new event is created under the tracing/events/synthetic/ directory
-and looks and behaves just like any other event:
-
-    # ls /sys/kernel/debug/tracing/events/synthetic/wakeup_latency
-      enable  filter  format  hist  id  trigger
-
-Although a histogram can be defined for it, nothing will happen until
-an action tracing that event via the trace_synth() function occurs.
-The trace_synth() function is very similar to all the other trace_*
-invocations spread throughout the kernel, except in this case the
-trace_ function and its corresponding tracepoint isn't statically
-generated but defined by the user at run-time.
-
-How this can be automatically hooked up via a hist trigger 'action' is
-discussed in a subsequent patch.
+Also add specific error messages for variable and action errors.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 738 +++++++++++++++++++++++++++++++++++++++
- 1 file changed, 738 insertions(+)
+ Documentation/trace/events.txt   |  19 ++++
+ kernel/trace/trace_events_hist.c | 181 ++++++++++++++++++++++++++++++++++++---
+ 2 files changed, 188 insertions(+), 12 deletions(-)
 
+diff --git a/Documentation/trace/events.txt b/Documentation/trace/events.txt
+index 9717688..f271d87 100644
+--- a/Documentation/trace/events.txt
++++ b/Documentation/trace/events.txt
+@@ -686,6 +686,25 @@ The following commands are supported:
+ 				 interpreted as microseconds.
+     cpu                    int - the cpu on which the event occurred.
+ 
++  Extended error information
++  --------------------------
++
++  For some error conditions encountered when invoking a hist trigger
++  command, extended error information is available via the
++  corresponding event's 'hist' file.  Reading the hist file after an
++  error will display more detailed information about what went wrong,
++  if information is available.  This extended error information will
++  be available until the next hist trigger command for that event.
++
++  If available for a given error condition, the extended error
++  information and usage takes the following form:
++
++    # echo xxx > /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
++    echo: write error: Invalid argument
++
++    # cat /sys/kernel/debug/tracing/events/sched/sched_wakeup/hist
++    ERROR: Couldn't yyy: zzz
++      Last command: xxx
+ 
+ 6.2 'hist' trigger examples
+ ---------------------------
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 338a9d5..e11b3a3 100644
+index 799b95e..06049f8 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -20,10 +20,14 @@
- #include <linux/slab.h>
- #include <linux/stacktrace.h>
- #include <linux/rculist.h>
-+#include <linux/tracefs.h>
- 
- #include "tracing_map.h"
- #include "trace.h"
- 
-+#define SYNTH_SYSTEM		"synthetic"
-+#define SYNTH_FIELDS_MAX	16
-+
- struct hist_field;
- 
- typedef u64 (*hist_field_fn_t) (struct hist_field *field,
-@@ -261,6 +265,23 @@ struct hist_trigger_data {
- 	unsigned int			n_actions;
+@@ -288,6 +288,7 @@ struct hist_trigger_data {
+ 	struct field_var		*max_vars[SYNTH_FIELDS_MAX];
+ 	unsigned int			n_max_vars;
+ 	unsigned int			n_max_var_str;
++	char				*last_err;
  };
  
-+struct synth_field {
-+	char *type;
-+	char *name;
-+	unsigned int size;
-+	bool is_signed;
-+};
-+
-+struct synth_event {
-+	struct list_head			list;
-+	char					*name;
-+	struct synth_field			**fields;
-+	unsigned int				n_fields;
-+	struct trace_event_class		class;
-+	struct trace_event_call			call;
-+	struct tracepoint			*tp;
-+};
-+
- struct action_data;
- 
- typedef void (*action_fn_t) (struct hist_trigger_data *hist_data,
-@@ -273,6 +294,688 @@ struct action_data {
- 	unsigned int		var_ref_idx;
+ struct synth_field {
+@@ -332,6 +333,83 @@ struct action_data {
+ 	struct hist_field	*onmax_var;
  };
  
-+static LIST_HEAD(synth_event_list);
-+static DEFINE_MUTEX(synth_event_mutex);
 +
-+struct synth_trace_event {
-+	struct trace_entry	ent;
-+	int			n_fields;
-+	u64			fields[];
-+};
++static char *hist_err_str;
++static char *last_hist_cmd;
 +
-+static int synth_event_define_fields(struct trace_event_call *call)
++static int hist_err_alloc(void)
 +{
-+	struct synth_trace_event trace;
-+	int offset = offsetof(typeof(trace), fields);
-+	struct synth_event *event = call->data;
-+	unsigned int i, size;
-+	char *name, *type;
-+	bool is_signed;
 +	int ret = 0;
 +
-+	for (i = 0; i < event->n_fields; i++) {
-+		size = event->fields[i]->size;
-+		is_signed = event->fields[i]->is_signed;
-+		type = event->fields[i]->type;
-+		name = event->fields[i]->name;
-+		ret = trace_define_field(call, type, name, offset, size,
-+					 is_signed, FILTER_OTHER);
-+		offset += sizeof(u64);
-+	}
++	last_hist_cmd = kzalloc(MAX_FILTER_STR_VAL, GFP_KERNEL);
++	hist_err_str = kzalloc(MAX_FILTER_STR_VAL, GFP_KERNEL);
++	if (!last_hist_cmd || !hist_err_str)
++		ret = -ENOMEM;
 +
 +	return ret;
 +}
 +
-+static enum print_line_t print_synth_event(struct trace_iterator *iter,
-+					   int flags,
-+					   struct trace_event *event)
++static void last_cmd_set(char *str)
 +{
-+	struct trace_array *tr = iter->tr;
-+	struct trace_seq *s = &iter->seq;
-+	struct synth_trace_event *entry;
-+	struct synth_event *se;
-+	unsigned int i;
-+
-+	entry = (struct synth_trace_event *)iter->ent;
-+	se = container_of(event, struct synth_event, call.event);
-+
-+	trace_seq_printf(s, "%s: ", se->name);
-+
-+	for (i = 0; i < entry->n_fields; i++) {
-+		if (trace_seq_has_overflowed(s))
-+			goto end;
-+
-+		/* parameter types */
-+		if (tr->trace_flags & TRACE_ITER_VERBOSE)
-+			trace_seq_printf(s, "%s ", "u64");
-+
-+		/* parameter values */
-+		trace_seq_printf(s, "%s=%llu%s", se->fields[i]->name,
-+				 entry->fields[i],
-+				 i == entry->n_fields - 1 ? "" : ", ");
-+	}
-+end:
-+	trace_seq_putc(s, '\n');
-+
-+	return trace_handle_return(s);
-+}
-+
-+static struct trace_event_functions synth_event_funcs = {
-+	.trace		= print_synth_event
-+};
-+
-+static notrace void trace_event_raw_event_synth(void *__data,
-+						u64 *var_ref_vals,
-+						unsigned int var_ref_idx)
-+{
-+	struct trace_event_file *trace_file = __data;
-+	struct synth_trace_event *entry;
-+	struct trace_event_buffer fbuffer;
-+	int fields_size;
-+	unsigned int i;
-+
-+	struct synth_event *event;
-+
-+	event = trace_file->event_call->data;
-+
-+	if (trace_trigger_soft_disabled(trace_file))
++	if (!last_hist_cmd || !str)
 +		return;
 +
-+	fields_size = event->n_fields * sizeof(u64);
-+
-+	entry = trace_event_buffer_reserve(&fbuffer, trace_file,
-+					   sizeof(*entry) + fields_size);
-+	if (!entry)
++	if (strlen(last_hist_cmd) > MAX_FILTER_STR_VAL - 1)
 +		return;
 +
-+	entry->n_fields = event->n_fields;
-+
-+	for (i = 0; i < event->n_fields; i++)
-+		entry->fields[i] = var_ref_vals[var_ref_idx + i];
-+
-+	trace_event_buffer_commit(&fbuffer);
++	strcpy(last_hist_cmd, str);
 +}
 +
-+static void free_synth_event_print_fmt(struct trace_event_call *call)
++static void hist_err(char *str, char *var)
 +{
-+	if (call)
-+		kfree(call->print_fmt);
-+}
++	int maxlen = MAX_FILTER_STR_VAL - 1;
 +
-+static int __set_synth_event_print_fmt(struct synth_event *event,
-+				       char *buf, int len)
-+{
-+	int pos = 0;
-+	int i;
-+
-+	/* When len=0, we just calculate the needed length */
-+#define LEN_OR_ZERO (len ? len - pos : 0)
-+
-+	pos += snprintf(buf + pos, LEN_OR_ZERO, "\"");
-+	for (i = 0; i < event->n_fields; i++) {
-+		pos += snprintf(buf + pos, LEN_OR_ZERO, "%s: 0x%%0%zulx%s",
-+				event->fields[i]->name, sizeof(u64),
-+				i == event->n_fields - 1 ? "" : ", ");
-+	}
-+	pos += snprintf(buf + pos, LEN_OR_ZERO, "\"");
-+
-+	for (i = 0; i < event->n_fields; i++) {
-+		pos += snprintf(buf + pos, LEN_OR_ZERO,
-+				", ((u64)(REC->%s))", event->fields[i]->name);
-+	}
-+
-+#undef LEN_OR_ZERO
-+
-+	/* return the length of print_fmt */
-+	return pos;
-+}
-+
-+static int set_synth_event_print_fmt(struct trace_event_call *call)
-+{
-+	struct synth_event *event = call->data;
-+	char *print_fmt;
-+	int len;
-+
-+	/* First: called with 0 length to calculate the needed length */
-+	len = __set_synth_event_print_fmt(event, NULL, 0);
-+
-+	print_fmt = kmalloc(len + 1, GFP_KERNEL);
-+	if (!print_fmt)
-+		return -ENOMEM;
-+
-+	/* Second: actually write the @print_fmt */
-+	__set_synth_event_print_fmt(event, print_fmt, len + 1);
-+	call->print_fmt = print_fmt;
-+
-+	return 0;
-+}
-+
-+int dynamic_trace_event_reg(struct trace_event_call *call,
-+			    enum trace_reg type, void *data)
-+{
-+	struct trace_event_file *file = data;
-+
-+	WARN_ON(!(call->flags & TRACE_EVENT_FL_TRACEPOINT));
-+	switch (type) {
-+	case TRACE_REG_REGISTER:
-+		return dynamic_tracepoint_probe_register(call->tp,
-+							 call->class->probe,
-+							 file);
-+	case TRACE_REG_UNREGISTER:
-+		tracepoint_probe_unregister(call->tp,
-+					    call->class->probe,
-+					    file, true);
-+		return 0;
-+
-+#ifdef CONFIG_PERF_EVENTS
-+	case TRACE_REG_PERF_REGISTER:
-+		return dynamic_tracepoint_probe_register(call->tp,
-+							 call->class->perf_probe,
-+							 call);
-+	case TRACE_REG_PERF_UNREGISTER:
-+		tracepoint_probe_unregister(call->tp,
-+					    call->class->perf_probe,
-+					    call, true);
-+		return 0;
-+	case TRACE_REG_PERF_OPEN:
-+	case TRACE_REG_PERF_CLOSE:
-+	case TRACE_REG_PERF_ADD:
-+	case TRACE_REG_PERF_DEL:
-+		return 0;
-+#endif
-+	}
-+	return 0;
-+}
-+
-+static void free_synth_field(struct synth_field *field)
-+{
-+	kfree(field->type);
-+	kfree(field->name);
-+	kfree(field);
-+}
-+
-+static bool synth_field_signed(char *type)
-+{
-+	if (strncmp(type, "u", 1) == 0)
-+		return false;
-+
-+	return true;
-+}
-+
-+static unsigned int synth_field_size(char *type)
-+{
-+	unsigned int size = 0;
-+
-+	if (strcmp(type, "s64") == 0)
-+		size = sizeof(s64);
-+	else if (strcmp(type, "u64") == 0)
-+		size = sizeof(u64);
-+	else if (strcmp(type, "s32") == 0)
-+		size = sizeof(s32);
-+	else if (strcmp(type, "u32") == 0)
-+		size = sizeof(u32);
-+	else if (strcmp(type, "s16") == 0)
-+		size = sizeof(s16);
-+	else if (strcmp(type, "u16") == 0)
-+		size = sizeof(u16);
-+	else if (strcmp(type, "s8") == 0)
-+		size = sizeof(s8);
-+	else if (strcmp(type, "u8") == 0)
-+		size = sizeof(u8);
-+	else if (strcmp(type, "char") == 0)
-+		size = sizeof(char);
-+	else if (strcmp(type, "unsigned char") == 0)
-+		size = sizeof(unsigned char);
-+	else if (strcmp(type, "int") == 0)
-+		size = sizeof(int);
-+	else if (strcmp(type, "unsigned int") == 0)
-+		size = sizeof(unsigned int);
-+	else if (strcmp(type, "long") == 0)
-+		size = sizeof(long);
-+	else if (strcmp(type, "unsigned long") == 0)
-+		size = sizeof(unsigned long);
-+	else if (strcmp(type, "pid_t") == 0)
-+		size = sizeof(pid_t);
-+	else if (strstr(type, "[") == 0)
-+		size = sizeof(u64);
-+
-+	return size;
-+}
-+
-+static struct synth_field *parse_synth_field(char *field_type,
-+					     char *field_name)
-+{
-+	struct synth_field *field;
-+	int len, ret = 0;
-+	char *array;
-+
-+	if (field_type[0] == ';')
-+		field_type++;
-+
-+	len = strlen(field_name);
-+	if (field_name[len - 1] == ';')
-+		field_name[len - 1] = '\0';
-+
-+	field = kzalloc(sizeof(*field), GFP_KERNEL);
-+	if (!field)
-+		return ERR_PTR(-ENOMEM);
-+
-+	len = strlen(field_type) + 1;
-+	array = strchr(field_name, '[');
-+	if (array)
-+		len += strlen(array);
-+	field->type = kzalloc(len, GFP_KERNEL);
-+	if (!field->type) {
-+		ret = -ENOMEM;
-+		goto free;
-+	}
-+	strcat(field->type, field_type);
-+	if (array)
-+		strcat(field->type, array);
-+
-+	field->size = synth_field_size(field->type);
-+	if (!field->size) {
-+		ret = -EINVAL;
-+		goto free;
-+	}
-+
-+	field->is_signed = synth_field_signed(field->type);
-+
-+	field->name = kstrdup(field_name, GFP_KERNEL);
-+	if (!field->name) {
-+		ret = -ENOMEM;
-+		goto free;
-+	}
-+ out:
-+	return field;
-+ free:
-+	free_synth_field(field);
-+	field = ERR_PTR(ret);
-+	goto out;
-+}
-+
-+static void free_synth_tracepoint(struct tracepoint *tp)
-+{
-+	if (!tp)
++	if (strlen(hist_err_str))
 +		return;
 +
-+	kfree(tp->name);
-+	kfree(tp);
-+}
-+
-+static struct tracepoint *alloc_synth_tracepoint(char *name)
-+{
-+	struct tracepoint *tp;
-+	int ret = 0;
-+
-+	tp = kzalloc(sizeof(*tp), GFP_KERNEL);
-+	if (!tp) {
-+		ret = -ENOMEM;
-+		goto free;
-+	}
-+
-+	tp->name = kstrdup(name, GFP_KERNEL);
-+	if (!tp->name) {
-+		ret = -ENOMEM;
-+		goto free;
-+	}
-+
-+	return tp;
-+ free:
-+	free_synth_tracepoint(tp);
-+
-+	return ERR_PTR(ret);
-+}
-+
-+static inline void trace_synth(struct synth_event *event, u64 *var_ref_vals,
-+			       unsigned int var_ref_idx)
-+{
-+	struct tracepoint *tp = event->tp;
-+
-+	if (unlikely(atomic_read(&tp->key.enabled) > 0)) {
-+		struct tracepoint_func *it_func_ptr;
-+		void *it_func;
-+		void *__data;
-+
-+		if (!(cpu_online(raw_smp_processor_id())))
-+			return;
-+
-+		it_func_ptr = rcu_dereference_sched((tp)->funcs);
-+		if (it_func_ptr) {
-+			do {
-+				it_func = (it_func_ptr)->func;
-+				__data = (it_func_ptr)->data;
-+				((void(*)(void *__data, u64 *var_ref_vals, unsigned int var_ref_idx))(it_func))(__data, var_ref_vals, var_ref_idx);
-+			} while ((++it_func_ptr)->func);
-+		}
-+	}
-+}
-+
-+static struct synth_event *find_synth_event(const char *name)
-+{
-+	struct synth_event *event;
-+
-+	list_for_each_entry(event, &synth_event_list, list) {
-+		if (strcmp(event->name, name) == 0)
-+			return event;
-+	}
-+
-+	return NULL;
-+}
-+
-+static int register_synth_event(struct synth_event *event)
-+{
-+	struct trace_event_call *call = &event->call;
-+	int ret = 0;
-+
-+	event->call.class = &event->class;
-+	event->class.system = kstrdup(SYNTH_SYSTEM, GFP_KERNEL);
-+	if (!event->class.system) {
-+		ret = -ENOMEM;
-+		goto out;
-+	}
-+
-+	event->tp = alloc_synth_tracepoint(event->name);
-+	if (IS_ERR(event->tp)) {
-+		ret = PTR_ERR(event->tp);
-+		event->tp = NULL;
-+		goto out;
-+	}
-+
-+	INIT_LIST_HEAD(&call->class->fields);
-+	call->event.funcs = &synth_event_funcs;
-+	call->class->define_fields = synth_event_define_fields;
-+
-+	ret = register_trace_event(&call->event);
-+	if (!ret) {
-+		ret = -ENODEV;
-+		goto out;
-+	}
-+	call->flags = TRACE_EVENT_FL_TRACEPOINT;
-+	call->class->reg = dynamic_trace_event_reg;
-+	call->class->probe = trace_event_raw_event_synth;
-+	call->data = event;
-+	call->tp = event->tp;
-+	ret = trace_add_event_call(call);
-+	if (ret) {
-+		pr_warn("Failed to register synthetic event: %s\n",
-+			trace_event_name(call));
-+		goto err;
-+	}
-+
-+	ret = set_synth_event_print_fmt(call);
-+	if (ret < 0) {
-+		trace_remove_event_call(call);
-+		goto err;
-+	}
-+ out:
-+	return ret;
-+ err:
-+	unregister_trace_event(&call->event);
-+	goto out;
-+}
-+
-+static int unregister_synth_event(struct synth_event *event)
-+{
-+	struct trace_event_call *call = &event->call;
-+	int ret;
-+
-+	ret = trace_remove_event_call(call);
-+	if (ret) {
-+		pr_warn("Failed to remove synthetic event: %s\n",
-+			trace_event_name(call));
-+		free_synth_event_print_fmt(call);
-+		unregister_trace_event(&call->event);
-+	}
-+
-+	return ret;
-+}
-+
-+static void remove_synth_event(struct synth_event *event)
-+{
-+	unregister_synth_event(event);
-+	list_del(&event->list);
-+}
-+
-+static int add_synth_event(struct synth_event *event)
-+{
-+	int ret;
-+
-+	ret = register_synth_event(event);
-+	if (ret)
-+		return ret;
-+
-+	list_add(&event->list, &synth_event_list);
-+
-+	return 0;
-+}
-+
-+static void free_synth_event(struct synth_event *event)
-+{
-+	unsigned int i;
-+
-+	if (!event)
++	if (!hist_err_str || !str)
 +		return;
 +
-+	for (i = 0; i < event->n_fields; i++)
-+		free_synth_field(event->fields[i]);
++	if (!var)
++		var = "";
 +
-+	kfree(event->fields);
-+	kfree(event->name);
-+	kfree(event->class.system);
-+	free_synth_tracepoint(event->tp);
-+	free_synth_event_print_fmt(&event->call);
-+	kfree(event);
++	if (strlen(hist_err_str) + strlen(str) + strlen(var) > maxlen)
++		return;
++
++	strcat(hist_err_str, str);
++	strcat(hist_err_str, var);
 +}
 +
-+static struct synth_event *alloc_synth_event(char *event_name, int n_fields,
-+					     struct synth_field **fields)
++static void hist_err_event(char *str, char *system, char *event, char *var)
 +{
-+	struct synth_event *event;
-+	unsigned int i;
++	char err[MAX_FILTER_STR_VAL];
 +
-+	event = kzalloc(sizeof(*event), GFP_KERNEL);
-+	if (!event) {
-+		event = ERR_PTR(-ENOMEM);
-+		goto out;
-+	}
++	if (system && var)
++		sprintf(err, "%s.%s.%s", system, event, var);
++	else if (system)
++		sprintf(err, "%s.%s", system, event);
++	else
++		strcpy(err, var);
 +
-+	event->name = kstrdup(event_name, GFP_KERNEL);
-+	if (!event->name) {
-+		kfree(event);
-+		event = ERR_PTR(-ENOMEM);
-+		goto out;
-+	}
-+
-+	event->fields = kcalloc(n_fields, sizeof(event->fields), GFP_KERNEL);
-+	if (!event->fields) {
-+		free_synth_event(event);
-+		event = ERR_PTR(-ENOMEM);
-+		goto out;
-+	}
-+
-+	for (i = 0; i < n_fields; i++)
-+		event->fields[i] = fields[i];
-+
-+	event->n_fields = n_fields;
-+ out:
-+	return event;
++	hist_err(str, err);
 +}
 +
-+static int create_synth_event(int argc, char **argv)
++static void hist_err_clear(void)
 +{
-+	struct synth_field *fields[SYNTH_FIELDS_MAX];
-+	struct synth_event *event = NULL;
-+	bool delete_event = false;
-+	int i, n_fields = 0, ret = 0;
-+	char *name;
++	if (!hist_err_str)
++		return;
 +
-+	mutex_lock(&synth_event_mutex);
-+
-+	/*
-+	 * Argument syntax:
-+	 *  - Add synthetic event: <event_name> field[;field] ...
-+	 *  - Remove synthetic event: !<event_name> field[;field] ...
-+	 *      where 'field' = type field_name
-+	 */
-+	if (argc < 1) {
-+		ret = -EINVAL;
-+		goto err;
-+	}
-+
-+	name = argv[0];
-+	if (name[0] == '!') {
-+		delete_event = true;
-+		name++;
-+	}
-+
-+	event = find_synth_event(name);
-+	if (event) {
-+		if (delete_event) {
-+			remove_synth_event(event);
-+			goto err;
-+		} else
-+			ret = -EEXIST;
-+		goto out;
-+	} else if (delete_event) {
-+		ret = -EINVAL;
-+		goto out;
-+	}
-+
-+	if (argc < 2) {
-+		ret = -EINVAL;
-+		goto err;
-+	}
-+
-+	for (i = 1; i < argc - 1; i++) {
-+		if (strcmp(argv[i], ";") == 0)
-+			continue;
-+		if (n_fields == SYNTH_FIELDS_MAX) {
-+			ret = -EINVAL;
-+			goto out;
-+		}
-+		fields[n_fields] = parse_synth_field(argv[i], argv[i + 1]);
-+		if (!fields[n_fields])
-+			goto err;
-+		i++; n_fields++;
-+	}
-+	if (i < argc) {
-+		ret = -EINVAL;
-+		goto out;
-+	}
-+
-+	event = alloc_synth_event(name, n_fields, fields);
-+	if (IS_ERR(event)) {
-+		ret = PTR_ERR(event);
-+		event = NULL;
-+		goto err;
-+	}
-+
-+	add_synth_event(event);
-+ out:
-+	mutex_unlock(&synth_event_mutex);
-+
-+	return ret;
-+ err:
-+	for (i = 0; i < n_fields; i++)
-+		free_synth_field(fields[i]);
-+	free_synth_event(event);
-+
-+	goto out;
++	hist_err_str[0] = '\0';
 +}
 +
-+static int release_all_synth_events(void)
++static bool have_hist_err(void)
 +{
-+	struct synth_event *event, *e;
-+	int ret = 0;
++	if (hist_err_str && strlen(hist_err_str))
++		return true;
 +
-+	mutex_lock(&synth_event_mutex);
-+
-+	list_for_each_entry_safe(event, e, &synth_event_list, list) {
-+		remove_synth_event(event);
-+		free_synth_event(event);
-+	}
-+
-+	mutex_unlock(&synth_event_mutex);
-+
-+	return ret;
++	return false;
 +}
 +
-+
-+static void *synth_events_seq_start(struct seq_file *m, loff_t *pos)
-+{
-+	mutex_lock(&synth_event_mutex);
-+
-+	return seq_list_start(&synth_event_list, *pos);
-+}
-+
-+static void *synth_events_seq_next(struct seq_file *m, void *v, loff_t *pos)
-+{
-+	return seq_list_next(v, &synth_event_list, pos);
-+}
-+
-+static void synth_events_seq_stop(struct seq_file *m, void *v)
-+{
-+	mutex_unlock(&synth_event_mutex);
-+}
-+
-+static int synth_events_seq_show(struct seq_file *m, void *v)
-+{
-+	struct synth_field *field;
-+	struct synth_event *event = v;
-+	unsigned int i;
-+
-+	seq_printf(m, "%s\t", event->name);
-+
-+	for (i = 0; i < event->n_fields; i++) {
-+		field = event->fields[i];
-+
-+		/* parameter values */
-+		seq_printf(m, "%s %s%s", field->type, field->name,
-+			   i == event->n_fields - 1 ? "" : "; ");
-+	}
-+
-+	seq_putc(m, '\n');
-+
-+	return 0;
-+}
-+
-+static const struct seq_operations synth_events_seq_op = {
-+	.start  = synth_events_seq_start,
-+	.next   = synth_events_seq_next,
-+	.stop   = synth_events_seq_stop,
-+	.show   = synth_events_seq_show
-+};
-+
-+static int synth_events_open(struct inode *inode, struct file *file)
-+{
-+	int ret;
-+
-+	if ((file->f_mode & FMODE_WRITE) && (file->f_flags & O_TRUNC)) {
-+		ret = release_all_synth_events();
-+		if (ret < 0)
-+			return ret;
-+	}
-+
-+	return seq_open(file, &synth_events_seq_op);
-+}
-+
-+static ssize_t synth_events_write(struct file *file,
-+				  const char __user *buffer,
-+				  size_t count, loff_t *ppos)
-+{
-+	return trace_parse_run_command(file, buffer, count, ppos,
-+				       create_synth_event);
-+}
-+
-+static const struct file_operations synth_events_fops = {
-+	.open           = synth_events_open,
-+	.write		= synth_events_write,
-+	.read           = seq_read,
-+	.llseek         = seq_lseek,
-+	.release        = seq_release,
-+};
-+
- static u64 hist_field_timestamp(struct hist_field *hist_field,
- 				struct tracing_map_elt *elt,
- 				struct ring_buffer_event *rbe,
-@@ -3028,3 +3731,38 @@ __init int register_trigger_hist_enable_disable_cmds(void)
+ static LIST_HEAD(synth_event_list);
+ static DEFINE_MUTEX(synth_event_mutex);
  
- 	return ret;
+@@ -1954,12 +2032,21 @@ static struct hist_field *create_var_ref(struct hist_field *var_field)
+ 	return ref_field;
  }
-+
-+static __init int trace_events_hist_init(void)
+ 
++static bool is_common_field(char *var_name)
 +{
-+	struct dentry *entry = NULL;
-+	struct trace_array *tr;
-+	struct dentry *d_tracer;
-+	int err = 0;
++	if (strncmp(var_name, "$common_timestamp", strlen("$common_timestamp")) == 0)
++		return true;
 +
-+	tr = top_trace_array();
-+	if (!tr) {
-+		err = -ENODEV;
-+		goto err;
-+	}
-+
-+	d_tracer = tracing_init_dentry();
-+	if (IS_ERR(d_tracer)) {
-+		err = PTR_ERR(d_tracer);
-+		goto err;
-+	}
-+
-+	entry = tracefs_create_file("synthetic_events", 0644, d_tracer,
-+				    tr, &synth_events_fops);
-+	if (!entry) {
-+		err = -ENODEV;
-+		goto err;
-+	}
-+
-+	return err;
-+ err:
-+	pr_warn("Could not create tracefs 'synthetic_events' entry\n");
-+
-+	return err;
++	return false;
 +}
 +
-+fs_initcall(trace_events_hist_init);
+ static struct hist_field *parse_var_ref(char *system, char *event_name,
+ 					char *var_name)
+ {
+ 	struct hist_field *var_field = NULL, *ref_field = NULL;
+ 
+-	if (!var_name || strlen(var_name) < 2 || var_name[0] != '$')
++	if (!var_name || strlen(var_name) < 2 || var_name[0] != '$' ||
++	    is_common_field(var_name))
+ 		return NULL;
+ 
+ 	var_name++;
+@@ -1968,6 +2055,10 @@ static struct hist_field *parse_var_ref(char *system, char *event_name,
+ 	if (var_field)
+ 		ref_field = create_var_ref(var_field);
+ 
++	if (!ref_field)
++		hist_err_event("Couldn't find variable: $",
++			       system, event_name, var_name);
++
+ 	return ref_field;
+ }
+ 
+@@ -2426,8 +2517,11 @@ static struct trace_event_file *event_file(char *system, char *event_name)
+ 	char *cmd;
+ 	int ret;
+ 
+-	if (target_hist_data->n_field_var_hists >= SYNTH_FIELDS_MAX)
++	if (target_hist_data->n_field_var_hists >= SYNTH_FIELDS_MAX) {
++		hist_err_event("onmatch: Too many field variables defined: ",
++			       system, event_name, field_name);
+ 		return ERR_PTR(-EINVAL);
++	}
+ 
+ 	tr = top_trace_array();
+ 	if (!tr)
+@@ -2435,13 +2529,18 @@ static struct trace_event_file *event_file(char *system, char *event_name)
+ 
+ 	file = event_file(system, event_name);
+ 	if (IS_ERR(file)) {
++		hist_err_event("onmatch: Event file not found: ",
++			       system, event_name, field_name);
+ 		ret = PTR_ERR(file);
+ 		return ERR_PTR(ret);
+ 	}
+ 
+ 	hist_data = find_compatible_hist(target_hist_data, file);
+-	if (!hist_data)
++	if (!hist_data) {
++		hist_err_event("onmatch: Matching event histogram not found: ",
++			       system, event_name, field_name);
+ 		return ERR_PTR(-EINVAL);
++	}
+ 
+ 	var_hist = kzalloc(sizeof(*var_hist), GFP_KERNEL);
+ 	if (!var_hist)
+@@ -2489,6 +2588,8 @@ static struct trace_event_file *event_file(char *system, char *event_name)
+ 		kfree(cmd);
+ 		kfree(var_hist->cmd);
+ 		kfree(var_hist);
++		hist_err_event("onmatch: Couldn't create histogram for field: ",
++			       system, event_name, field_name);
+ 		return ERR_PTR(ret);
+ 	}
+ 
+@@ -2500,6 +2601,8 @@ static struct trace_event_file *event_file(char *system, char *event_name)
+ 		kfree(cmd);
+ 		kfree(var_hist->cmd);
+ 		kfree(var_hist);
++		hist_err_event("onmatch: Couldn't find synthetic variable: ",
++			       system, event_name, field_name);
+ 		return ERR_PTR(-EINVAL);
+ 	}
+ 
+@@ -2636,18 +2739,21 @@ static struct field_var *create_field_var(struct hist_trigger_data *hist_data,
+ 	int ret = 0;
+ 
+ 	if (hist_data->n_field_vars >= SYNTH_FIELDS_MAX) {
++		hist_err("Too many field variables defined: ", field_name);
+ 		ret = -EINVAL;
+ 		goto err;
+ 	}
+ 
+ 	val = parse_atom(hist_data, file, field_name, &flags, NULL);
+ 	if (IS_ERR(val)) {
++		hist_err("Couldn't parse field variable: ", field_name);
+ 		ret = PTR_ERR(val);
+ 		goto err;
+ 	}
+ 
+ 	var = create_var(hist_data, file, field_name, val->size, val->type);
+ 	if (IS_ERR(var)) {
++		hist_err("Couldn't create or find variable: ", field_name);
+ 		kfree(val);
+ 		ret = PTR_ERR(var);
+ 		goto err;
+@@ -2772,14 +2878,18 @@ static int onmax_create(struct hist_trigger_data *hist_data,
+ 	int ret = 0;
+ 
+ 	onmax_var_str = data->onmax_var_str;
+-	if (onmax_var_str[0] != '$')
++	if (onmax_var_str[0] != '$') {
++		hist_err("onmax: For onmax(x), x must be a variable: ", onmax_var_str);
+ 		return -EINVAL;
++	}
+ 	onmax_var_str++;
+ 
+ 	event_name = trace_event_name(call);
+ 	var_field = find_target_event_var(hist_data, NULL, NULL, onmax_var_str);
+-	if (!var_field)
++	if (!var_field) {
++		hist_err("onmax: Couldn't find onmax variable: ", onmax_var_str);
+ 		return -EINVAL;
++	}
+ 
+ 	flags = HIST_FIELD_FL_VAR_REF;
+ 	ref_field = create_hist_field(hist_data, NULL, flags, NULL);
+@@ -2803,6 +2913,7 @@ static int onmax_create(struct hist_trigger_data *hist_data,
+ 	data->max_var_ref_idx = var_ref_idx;
+ 	max_var = create_var(hist_data, file, "max", sizeof(u64), "u64");
+ 	if (IS_ERR(max_var)) {
++		hist_err("onmax: Couldn't create onmax variable: ", "max");
+ 		ret = PTR_ERR(max_var);
+ 		goto out;
+ 	}
+@@ -2815,6 +2926,7 @@ static int onmax_create(struct hist_trigger_data *hist_data,
+ 
+ 		field_var = create_target_field_var(hist_data, NULL, NULL, param);
+ 		if (IS_ERR(field_var)) {
++			hist_err("onmax: Couldn't create field variable: ", param);
+ 			ret = PTR_ERR(field_var);
+ 			kfree(param);
+ 			goto out;
+@@ -2847,6 +2959,7 @@ static int parse_action_params(char *params, struct action_data *data)
+ 
+ 		param = strstrip(param);
+ 		if (strlen(param) < 2) {
++			hist_err("Invalid action param: ", param);
+ 			ret = -EINVAL;
+ 			goto out;
+ 		}
+@@ -3004,6 +3117,9 @@ static int check_synth_field(struct synth_event *event,
+ 		hist_field = find_event_var(system, event, var);
+ 	}
+ 
++	if (!hist_field)
++		hist_err_event("onmatch: Couldn't find onmatch param: $", system, event, var);
++
+ 	return hist_field;
+ }
+ 
+@@ -3055,6 +3171,7 @@ static int onmatch_create(struct hist_trigger_data *hist_data,
+ 
+ 	event = find_synth_event(data->synth_event_name);
+ 	if (!event) {
++		hist_err("onmatch: Couldn't find synthetic event: ", data->synth_event_name);
+ 		ret = -EINVAL;
+ 		goto out;
+ 	}
+@@ -3094,6 +3211,7 @@ static int onmatch_create(struct hist_trigger_data *hist_data,
+ 			ret = -EINVAL;
+ 			goto out;
+ 		}
++
+ 		if (check_synth_field(event, hist_field, field_pos) == 0) {
+ 			var_ref = create_var_ref(hist_field);
+ 			if (!var_ref) {
+@@ -3108,12 +3226,15 @@ static int onmatch_create(struct hist_trigger_data *hist_data,
+ 			continue;
+ 		}
+ 
++		hist_err_event("onmatch: Param type doesn't match synthetic event field type: ",
++			       system, event_name, param);
+ 		kfree(p);
+ 		ret = -EINVAL;
+ 		goto out;
+ 	}
+ 
+ 	if (field_pos != event->n_fields) {
++		hist_err("onmatch: Param count doesn't match synthetic event field count: ", event->name);
+ 		ret = -EINVAL;
+ 		goto out;
+ 	}
+@@ -3141,31 +3262,44 @@ static struct action_data *onmatch_parse(char *str)
+ 		return ERR_PTR(-ENOMEM);
+ 
+ 	match_event = strsep(&str, ")");
+-	if (!match_event || !str)
++	if (!match_event || !str) {
++		hist_err("onmatch: Missing closing paren: ", match_event);
+ 		goto free;
++	}
+ 
+ 	match_event_system = strsep(&match_event, ".");
+-	if (!match_event)
++	if (!match_event) {
++		hist_err("onmatch: Missing subsystem for match event: ", match_event_system);
+ 		goto free;
++	}
+ 
+-	if (IS_ERR(event_file(match_event_system, match_event)))
++	if (IS_ERR(event_file(match_event_system, match_event))) {
++		hist_err_event("onmatch: Invalid subsystem or event name: ",
++			       match_event_system, match_event, NULL);
+ 		goto free;
++	}
+ 
+ 	data->match_event = kstrdup(match_event, GFP_KERNEL);
+ 	data->match_event_system = kstrdup(match_event_system, GFP_KERNEL);
+ 
+ 	strsep(&str, ".");
+-	if (!str)
++	if (!str) {
++		hist_err("onmatch: Missing . after onmatch(): ", str);
+ 		goto free;
++	}
+ 
+ 	synth_event_name = strsep(&str, "(");
+-	if (!synth_event_name || !str)
++	if (!synth_event_name || !str) {
++		hist_err("onmatch: Missing opening paramlist paren: ", synth_event_name);
+ 		goto free;
++	}
+ 	data->synth_event_name = kstrdup(synth_event_name, GFP_KERNEL);
+ 
+ 	params = strsep(&str, ")");
+-	if (!params || !str || (str && strlen(str)))
++	if (!params || !str || (str && strlen(str))) {
++		hist_err("onmatch: Missing closing paramlist paren: ", params);
+ 		goto free;
++	}
+ 
+ 	ret = parse_action_params(params, data);
+ 	if (ret)
+@@ -3217,6 +3351,7 @@ static int create_val_field(struct hist_trigger_data *hist_data,
+ 	if (field_str && var_name) {
+ 		if (find_var(file, var_name) &&
+ 		    !hist_data->remove) {
++			hist_err("Variable already defined: ", var_name);
+ 			ret = -EINVAL;
+ 			goto out;
+ 		}
+@@ -3224,6 +3359,7 @@ static int create_val_field(struct hist_trigger_data *hist_data,
+ 		flags |= HIST_FIELD_FL_VAR;
+ 		hist_data->n_vars++;
+ 		if (hist_data->n_vars > TRACING_MAP_VARS_MAX) {
++			hist_err("Too many variables defined: ", var_name);
+ 			ret = -EINVAL;
+ 			goto out;
+ 		}
+@@ -3234,6 +3370,7 @@ static int create_val_field(struct hist_trigger_data *hist_data,
+ 		field_str = var_name;
+ 		var_name = NULL;
+ 	} else {
++		hist_err("Malformed assignment: ", var_name);
+ 		ret = -EINVAL;
+ 		goto out;
+ 	}
+@@ -3248,6 +3385,7 @@ static int create_val_field(struct hist_trigger_data *hist_data,
+ 		hist_field = parse_atom(hist_data, file, field_str,
+ 					&flags, var_name);
+ 		if (IS_ERR(hist_field)) {
++			hist_err("Unable to parse atom: ", field_str);
+ 			ret = PTR_ERR(hist_field);
+ 			goto out;
+ 		}
+@@ -4138,6 +4276,11 @@ static int hist_show(struct seq_file *m, void *v)
+ 			hist_trigger_show(m, data, n++);
+ 	}
+ 
++	if (have_hist_err()) {
++		seq_printf(m, "\nERROR: %s\n", hist_err_str);
++		seq_printf(m, "  Last command: %s\n", last_hist_cmd);
++	}
++
+  out_unlock:
+ 	mutex_unlock(&event_mutex);
+ 
+@@ -4509,6 +4652,7 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
+ 		if (named_data) {
+ 			if (!hist_trigger_match(data, named_data, named_data,
+ 						true)) {
++				hist_err("Named hist trigger doesn't match existing named trigger (includes variables): ", hist_data->attrs->name);
+ 				ret = -EINVAL;
+ 				goto out;
+ 			}
+@@ -4528,13 +4672,16 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
+ 				test->paused = false;
+ 			else if (hist_data->attrs->clear)
+ 				hist_clear(test);
+-			else
++			else {
++				hist_err("Hist trigger already exists", NULL);
+ 				ret = -EEXIST;
++			}
+ 			goto out;
+ 		}
+ 	}
+  new:
+ 	if (hist_data->attrs->cont || hist_data->attrs->clear) {
++		hist_err("Can't clear or continue a nonexistent hist trigger", NULL);
+ 		ret = -ENOENT;
+ 		goto out;
+ 	}
+@@ -4701,6 +4848,11 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
+ 	char *trigger, *p;
+ 	int ret = 0;
+ 
++	if (glob && strlen(glob)) {
++		last_cmd_set(param);
++		hist_err_clear();
++	}
++
+ 	if (!param)
+ 		return -EINVAL;
+ 
+@@ -4804,6 +4956,9 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
+ 	/* Just return zero, not the number of registered triggers */
+ 	ret = 0;
+  out:
++	if (ret == 0)
++		hist_err_clear();
++
+ 	return ret;
+  out_unreg:
+ 	cmd_ops->unreg(glob+1, trigger_ops, trigger_data, file);
+@@ -5002,6 +5157,8 @@ static __init int trace_events_hist_init(void)
+ 		goto err;
+ 	}
+ 
++	hist_err_alloc();
++
+ 	return err;
+  err:
+ 	pr_warn("Could not create tracefs 'synthetic_events' entry\n");
 -- 
 1.9.3
 
