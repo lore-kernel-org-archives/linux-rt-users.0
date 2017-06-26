@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH 10/32] tracing: Add NO_DISCARD event file flag
-Date: Mon, 26 Jun 2017 17:49:11 -0500
-Message-ID: <39effea57d7b72d262ed98f376bd1f722ca71559.1498510759.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 12/32] tracing: Add hist trigger timestamp support
+Date: Mon, 26 Jun 2017 17:49:13 -0500
+Message-ID: <dc2a86608cd3adcf957f7f4cc0252e659acf0fce.1498510759.git.tom.zanussi@linux.intel.com>
 References: <cover.1498510759.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, linux-kernel@vger.kernel.org,
@@ -15,111 +15,233 @@ References: <cover.1498510759.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Whenever an event_command has a post-trigger that needs access to the
-event record, the event record can't be discarded, or the post-trigger
-will eventually see bogus data.
+Add support for a timestamp event field.  This is actually a 'pseudo-'
+event field in that it behaves like it's part of the event record, but
+is really part of the corresponding ring buffer event.
 
-In order to allow the discard check to treat this case separately, add
-an EVENT_FILE_FL_NO_DISCARD flag to the event file flags, along with
-code in the discard check that checks the flag and avoids the discard
-when the flag is set.
+To make use of the timestamp field, users can specify
+"$common_timestamp" as a field name for any histogram.  Note that this
+doesn't make much sense on its own either as either a key or value,
+but needs to be supported even so, since follow-on patches will add
+support for making use of this field in time deltas.  The '$' is used
+as a prefix on the variable name to indicate that it's not an bonafide
+event field - so you won't find it in the event description - but
+rather it's a synthetic field that can be used like a real field).
+
+Note that the use of this field requires the ring buffer be put into
+TIME_EXTEND_ABS mode, which saves the complete timestamp for each
+event rather than an offset.  This mode will be enabled if and only if
+a histogram makes use of the "$common_timestamp" field.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- include/linux/trace_events.h        |  3 +++
- kernel/trace/trace.h                | 13 ++++++++++---
- kernel/trace/trace_events_trigger.c | 16 +++++++++++++---
- 3 files changed, 26 insertions(+), 6 deletions(-)
+ kernel/trace/trace_events_hist.c | 90 +++++++++++++++++++++++++++++-----------
+ 1 file changed, 66 insertions(+), 24 deletions(-)
 
-diff --git a/include/linux/trace_events.h b/include/linux/trace_events.h
-index f333114..d7b230b 100644
---- a/include/linux/trace_events.h
-+++ b/include/linux/trace_events.h
-@@ -297,6 +297,7 @@ enum {
- 	EVENT_FILE_FL_TRIGGER_MODE_BIT,
- 	EVENT_FILE_FL_TRIGGER_COND_BIT,
- 	EVENT_FILE_FL_PID_FILTER_BIT,
-+	EVENT_FILE_FL_NO_DISCARD_BIT,
- };
- 
- /*
-@@ -311,6 +312,7 @@ enum {
-  *  TRIGGER_MODE  - When set, invoke the triggers associated with the event
-  *  TRIGGER_COND  - When set, one or more triggers has an associated filter
-  *  PID_FILTER    - When set, the event is filtered based on pid
-+ *  NO_DISCARD    - When set, do not discard events, something needs them later
-  */
- enum {
- 	EVENT_FILE_FL_ENABLED		= (1 << EVENT_FILE_FL_ENABLED_BIT),
-@@ -322,6 +324,7 @@ enum {
- 	EVENT_FILE_FL_TRIGGER_MODE	= (1 << EVENT_FILE_FL_TRIGGER_MODE_BIT),
- 	EVENT_FILE_FL_TRIGGER_COND	= (1 << EVENT_FILE_FL_TRIGGER_COND_BIT),
- 	EVENT_FILE_FL_PID_FILTER	= (1 << EVENT_FILE_FL_PID_FILTER_BIT),
-+	EVENT_FILE_FL_NO_DISCARD	= (1 << EVENT_FILE_FL_NO_DISCARD_BIT),
- };
- 
- struct trace_event_file {
-diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
-index 78c7694..81b1d07 100644
---- a/kernel/trace/trace.h
-+++ b/kernel/trace/trace.h
-@@ -1271,9 +1271,16 @@ static inline void trace_buffer_unlock_commit(struct trace_array *tr,
- 	if (eflags & EVENT_FILE_FL_TRIGGER_COND)
- 		*tt = event_triggers_call(file, entry, event);
- 
--	if (test_bit(EVENT_FILE_FL_SOFT_DISABLED_BIT, &file->flags) ||
--	    (unlikely(file->flags & EVENT_FILE_FL_FILTERED) &&
--	     !filter_match_preds(file->filter, entry))) {
-+	if (unlikely(file->flags & EVENT_FILE_FL_FILTERED) &&
-+	    !filter_match_preds(file->filter, entry)) {
-+		__trace_event_discard_commit(buffer, event);
-+		return true;
-+	}
-+
-+	if (test_bit(EVENT_FILE_FL_NO_DISCARD_BIT, &file->flags))
-+		return false;
-+
-+	if (test_bit(EVENT_FILE_FL_SOFT_DISABLED_BIT, &file->flags)) {
- 		__trace_event_discard_commit(buffer, event);
- 		return true;
- 	}
-diff --git a/kernel/trace/trace_events_trigger.c b/kernel/trace/trace_events_trigger.c
-index 9b0fe31..d345820 100644
---- a/kernel/trace/trace_events_trigger.c
-+++ b/kernel/trace/trace_events_trigger.c
-@@ -505,20 +505,30 @@ int trace_event_trigger_enable_disable(struct trace_event_file *file,
- void update_cond_flag(struct trace_event_file *file)
- {
- 	struct event_trigger_data *data;
--	bool set_cond = false;
-+	bool set_cond = false, set_no_discard = false;
- 
- 	list_for_each_entry_rcu(data, &file->triggers, list) {
- 		if (data->filter || event_command_post_trigger(data->cmd_ops) ||
--		    event_command_needs_rec(data->cmd_ops)) {
-+		    event_command_needs_rec(data->cmd_ops))
- 			set_cond = true;
-+
-+		if (event_command_post_trigger(data->cmd_ops) &&
-+		    event_command_needs_rec(data->cmd_ops))
-+			set_no_discard = true;
-+
-+		if (set_cond && set_no_discard)
- 			break;
--		}
- 	}
- 
- 	if (set_cond)
- 		set_bit(EVENT_FILE_FL_TRIGGER_COND_BIT, &file->flags);
- 	else
- 		clear_bit(EVENT_FILE_FL_TRIGGER_COND_BIT, &file->flags);
-+
-+	if (set_no_discard)
-+		set_bit(EVENT_FILE_FL_NO_DISCARD_BIT, &file->flags);
-+	else
-+		clear_bit(EVENT_FILE_FL_NO_DISCARD_BIT, &file->flags);
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index dab6ff6..aeae3b4 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -89,6 +89,12 @@ static u64 hist_field_log2(struct hist_field *hist_field, void *event,
+ 	return (u64) ilog2(roundup_pow_of_two(val));
  }
  
- /**
++static u64 hist_field_timestamp(struct hist_field *hist_field, void *event,
++				struct ring_buffer_event *rbe)
++{
++	return ring_buffer_event_time_stamp(rbe);
++}
++
+ #define DEFINE_HIST_FIELD_FN(type)					\
+ 	static u64 hist_field_##type(struct hist_field *hist_field,	\
+ 				     void *event,			\
+@@ -135,6 +141,7 @@ enum hist_field_flags {
+ 	HIST_FIELD_FL_SYSCALL		= 128,
+ 	HIST_FIELD_FL_STACKTRACE	= 256,
+ 	HIST_FIELD_FL_LOG2		= 512,
++	HIST_FIELD_FL_TIMESTAMP		= 1024,
+ };
+ 
+ struct hist_trigger_attrs {
+@@ -159,6 +166,7 @@ struct hist_trigger_data {
+ 	struct trace_event_file		*event_file;
+ 	struct hist_trigger_attrs	*attrs;
+ 	struct tracing_map		*map;
++	bool				enable_timestamps;
+ };
+ 
+ static const char *hist_field_name(struct hist_field *field,
+@@ -173,6 +181,8 @@ static const char *hist_field_name(struct hist_field *field,
+ 		field_name = field->field->name;
+ 	else if (field->flags & HIST_FIELD_FL_LOG2)
+ 		field_name = hist_field_name(field->operands[0], ++level);
++	else if (field->flags & HIST_FIELD_FL_TIMESTAMP)
++		field_name = "$common_timestamp";
+ 
+ 	if (field_name == NULL)
+ 		field_name = "";
+@@ -435,6 +445,12 @@ static struct hist_field *create_hist_field(struct ftrace_event_field *field,
+ 		goto out;
+ 	}
+ 
++	if (flags & HIST_FIELD_FL_TIMESTAMP) {
++		hist_field->fn = hist_field_timestamp;
++		hist_field->size = sizeof(u64);
++		goto out;
++	}
++
+ 	if (WARN_ON_ONCE(!field))
+ 		goto out;
+ 
+@@ -512,10 +528,15 @@ static int create_val_field(struct hist_trigger_data *hist_data,
+ 		}
+ 	}
+ 
+-	field = trace_find_event_field(file->event_call, field_name);
+-	if (!field) {
+-		ret = -EINVAL;
+-		goto out;
++	if (strcmp(field_name, "$common_timestamp") == 0) {
++		flags |= HIST_FIELD_FL_TIMESTAMP;
++		hist_data->enable_timestamps = true;
++	} else {
++		field = trace_find_event_field(file->event_call, field_name);
++		if (!field) {
++			ret = -EINVAL;
++			goto out;
++		}
+ 	}
+ 
+ 	hist_data->fields[val_idx] = create_hist_field(field, flags);
+@@ -610,16 +631,22 @@ static int create_key_field(struct hist_trigger_data *hist_data,
+ 			}
+ 		}
+ 
+-		field = trace_find_event_field(file->event_call, field_name);
+-		if (!field) {
+-			ret = -EINVAL;
+-			goto out;
+-		}
++		if (strcmp(field_name, "$common_timestamp") == 0) {
++			flags |= HIST_FIELD_FL_TIMESTAMP;
++			hist_data->enable_timestamps = true;
++			key_size = sizeof(u64);
++		} else {
++			field = trace_find_event_field(file->event_call, field_name);
++			if (!field) {
++				ret = -EINVAL;
++				goto out;
++			}
+ 
+-		if (is_string_field(field))
+-			key_size = MAX_FILTER_STR_VAL;
+-		else
+-			key_size = field->size;
++			if (is_string_field(field))
++				key_size = MAX_FILTER_STR_VAL;
++			else
++				key_size = field->size;
++		}
+ 	}
+ 
+ 	hist_data->fields[key_idx] = create_hist_field(field, flags);
+@@ -756,7 +783,7 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
+ 			break;
+ 		}
+ 
+-		if (strcmp(field_name, "hitcount") == 0) {
++		if ((strcmp(field_name, "hitcount") == 0)) {
+ 			descending = is_descending(field_str);
+ 			if (descending < 0) {
+ 				ret = descending;
+@@ -816,6 +843,9 @@ static int create_tracing_map_fields(struct hist_trigger_data *hist_data)
+ 
+ 			if (hist_field->flags & HIST_FIELD_FL_STACKTRACE)
+ 				cmp_fn = tracing_map_cmp_none;
++			else if (!field)
++				cmp_fn = tracing_map_cmp_num(hist_field->size,
++							     hist_field->is_signed);
+ 			else if (is_string_field(field))
+ 				cmp_fn = tracing_map_cmp_string;
+ 			else
+@@ -1213,7 +1243,11 @@ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
+ {
+ 	const char *field_name = hist_field_name(hist_field, 0);
+ 
+-	seq_printf(m, "%s", field_name);
++	if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP)
++		seq_puts(m, "$common_timestamp");
++	else if (field_name)
++		seq_printf(m, "%s", field_name);
++
+ 	if (hist_field->flags) {
+ 		const char *flags_str = get_hist_field_flags(hist_field);
+ 
+@@ -1264,27 +1298,25 @@ static int event_hist_trigger_print(struct seq_file *m,
+ 
+ 	for (i = 0; i < hist_data->n_sort_keys; i++) {
+ 		struct tracing_map_sort_key *sort_key;
++		unsigned int idx;
+ 
+ 		sort_key = &hist_data->sort_keys[i];
++		idx = sort_key->field_idx;
++
++		if (WARN_ON(idx >= TRACING_MAP_FIELDS_MAX))
++			return -EINVAL;
+ 
+ 		if (i > 0)
+ 			seq_puts(m, ",");
+ 
+-		if (sort_key->field_idx == HITCOUNT_IDX)
++		if (idx == HITCOUNT_IDX)
+ 			seq_puts(m, "hitcount");
+-		else {
+-			unsigned int idx = sort_key->field_idx;
+-
+-			if (WARN_ON(idx >= TRACING_MAP_FIELDS_MAX))
+-				return -EINVAL;
+-
++		else
+ 			hist_field_print(m, hist_data->fields[idx]);
+-		}
+ 
+ 		if (sort_key->descending)
+ 			seq_puts(m, ".descending");
+ 	}
+-
+ 	seq_printf(m, ":size=%u", (1 << hist_data->map->map_bits));
+ 
+ 	if (data->filter_str)
+@@ -1452,6 +1484,10 @@ static bool hist_trigger_match(struct event_trigger_data *data,
+ 			return false;
+ 		if (key_field->offset != key_field_test->offset)
+ 			return false;
++		if (key_field->size != key_field_test->size)
++			return false;
++		if (key_field->is_signed != key_field_test->is_signed)
++			return false;
+ 	}
+ 
+ 	for (i = 0; i < hist_data->n_sort_keys; i++) {
+@@ -1534,6 +1570,9 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
+ 
+ 	update_cond_flag(file);
+ 
++	if (hist_data->enable_timestamps)
++		tracing_set_time_stamp_abs(file->tr, true);
++
+ 	if (trace_event_trigger_enable_disable(file, 1) < 0) {
+ 		list_del_rcu(&data->list);
+ 		update_cond_flag(file);
+@@ -1568,6 +1607,9 @@ static void hist_unregister_trigger(char *glob, struct event_trigger_ops *ops,
+ 
+ 	if (unregistered && test->ops->free)
+ 		test->ops->free(test->ops, test);
++
++	if (hist_data->enable_timestamps)
++		tracing_set_time_stamp_abs(file->tr, false);
+ }
+ 
+ static void hist_unreg_all(struct trace_event_file *file)
 -- 
 1.9.3
