@@ -1,125 +1,243 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH 28/32] tracing: Add hist trigger support for variable reference aliases
-Date: Mon, 26 Jun 2017 17:49:29 -0500
-Message-ID: <efad21f9f790340b3118e857656b78037c3e193c.1498510759.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 21/32] tracing: Add hist trigger action hook
+Date: Mon, 26 Jun 2017 17:49:22 -0500
+Message-ID: <d200c45d17bf23176bcbc7b45925da4dfa31eeae.1498510759.git.tom.zanussi@linux.intel.com>
 References: <cover.1498510759.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, linux-kernel@vger.kernel.org,
         linux-rt-users@vger.kernel.org,
         Tom Zanussi <tom.zanussi@linux.intel.com>
 To: rostedt@goodmis.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga02.intel.com ([134.134.136.20]:25283 "EHLO mga02.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1752136AbdFZWut (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 26 Jun 2017 18:50:49 -0400
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1498510759.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1498510759.git.tom.zanussi@linux.intel.com>
 References: <cover.1498510759.git.tom.zanussi@linux.intel.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Add support for alias=$somevar where alias can be used as
-onmatch($alias).
+Add a hook for executing extra actions whenever a histogram entry is
+added or updated.
+
+The default 'action' when a hist entry is added to a histogram is to
+update the set of values associated with it.  Some applications may
+want to perform additional actions at that point, such as generate
+another event, or compare and save a maximum.
+
+Add a simple framework for doing that; specific actions will be
+implemented on top of it in later patches.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 46 +++++++++++++++++++++++++++++++++++++---
- 1 file changed, 43 insertions(+), 3 deletions(-)
+ kernel/trace/trace_events_hist.c | 114 +++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 111 insertions(+), 3 deletions(-)
 
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 904a635..799b95e 100644
+index d83d4ca..338a9d5 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -225,6 +225,7 @@ enum hist_field_flags {
- 	HIST_FIELD_FL_EXPR		= 16384,
- 	HIST_FIELD_FL_VAR_REF		= 32768,
- 	HIST_FIELD_FL_CPU		= 65536,
-+	HIST_FIELD_FL_ALIAS		= 131072,
+@@ -33,6 +33,7 @@ typedef u64 (*hist_field_fn_t) (struct hist_field *field,
+ 
+ #define HIST_FIELD_OPERANDS_MAX	2
+ #define HIST_FIELDS_MAX		(TRACING_MAP_FIELDS_MAX + TRACING_MAP_VARS_MAX)
++#define HIST_ACTIONS_MAX	8
+ 
+ enum field_op_id {
+ 	FIELD_OP_NONE,
+@@ -233,6 +234,9 @@ struct hist_trigger_attrs {
+ 
+ 	char		*assignment_str[TRACING_MAP_VARS_MAX];
+ 	unsigned int	n_assignments;
++
++	char		*action_str[HIST_ACTIONS_MAX];
++	unsigned int	n_actions;
  };
  
- struct hist_trigger_attrs {
-@@ -1414,7 +1415,8 @@ static const char *hist_field_name(struct hist_field *field,
+ struct hist_trigger_data {
+@@ -252,6 +256,21 @@ struct hist_trigger_data {
+ 	bool				remove;
+ 	struct hist_field               *var_refs[TRACING_MAP_VARS_MAX];
+ 	unsigned int			n_var_refs;
++
++	struct action_data		*actions[HIST_ACTIONS_MAX];
++	unsigned int			n_actions;
++};
++
++struct action_data;
++
++typedef void (*action_fn_t) (struct hist_trigger_data *hist_data,
++			     struct tracing_map_elt *elt, void *rec,
++			     struct ring_buffer_event *rbe,
++			     struct action_data *data, u64 *var_ref_vals);
++
++struct action_data {
++	action_fn_t		fn;
++	unsigned int		var_ref_idx;
+ };
  
- 	if (field->field)
- 		field_name = field->field->name;
--	else if (field->flags & HIST_FIELD_FL_LOG2)
-+	else if (field->flags & HIST_FIELD_FL_LOG2 ||
-+		 field->flags & HIST_FIELD_FL_ALIAS)
- 		field_name = hist_field_name(field->operands[0], ++level);
- 	else if (field->flags & HIST_FIELD_FL_TIMESTAMP)
- 		field_name = "$common_timestamp";
-@@ -1819,7 +1821,7 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
+ static u64 hist_field_timestamp(struct hist_field *hist_field,
+@@ -681,6 +700,9 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
+ 	for (i = 0; i < attrs->n_assignments; i++)
+ 		kfree(attrs->assignment_str[i]);
  
- 	hist_field->hist_data = hist_data;
- 
--	if (flags & HIST_FIELD_FL_EXPR)
-+	if (flags & HIST_FIELD_FL_EXPR || flags & HIST_FIELD_FL_ALIAS)
- 		goto out; /* caller will populate */
- 
- 	if (flags & HIST_FIELD_FL_VAR_REF) {
-@@ -2013,6 +2015,34 @@ static struct hist_field *parse_var_ref(char *system, char *event_name,
- 	return field;
++	for (i = 0; i < attrs->n_actions; i++)
++		kfree(attrs->action_str[i]);
++
+ 	kfree(attrs->name);
+ 	kfree(attrs->sort_key_str);
+ 	kfree(attrs->keys_str);
+@@ -688,6 +710,16 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
+ 	kfree(attrs);
  }
  
-+static struct hist_field *create_alias(struct hist_trigger_data *hist_data,
-+				       struct hist_field *var_ref,
-+				       char *var_name)
++static int parse_action(char *str, struct hist_trigger_attrs *attrs)
 +{
-+	struct hist_field *alias = NULL;
-+	unsigned long flags = HIST_FIELD_FL_ALIAS | HIST_FIELD_FL_VAR |
-+		HIST_FIELD_FL_VAR_ONLY;
++	int ret = 0;
 +
-+	alias = create_hist_field(hist_data, NULL, flags, var_name);
-+	if (!alias)
-+		return NULL;
++	if (attrs->n_actions >= HIST_ACTIONS_MAX)
++		return ret;
 +
-+	alias->fn = var_ref->fn;
-+	alias->operands[0] = var_ref;
-+	alias->var.idx = var_ref->var.idx;
-+	alias->var.hist_data = var_ref->hist_data;
-+	alias->size = var_ref->size;
-+	alias->is_signed = var_ref->is_signed;
-+	alias->type = kstrdup(var_ref->type, GFP_KERNEL);
-+	if (!alias->type) {
-+		kfree(alias->type);
-+		destroy_hist_field(alias, 0);
-+		return NULL;
-+	}
-+
-+	return alias;
++	return ret;
 +}
 +
- struct hist_field *parse_atom(struct hist_trigger_data *hist_data,
- 			      struct trace_event_file *file, char *str,
- 			      unsigned long *flags, char *var_name)
-@@ -2036,6 +2066,13 @@ struct hist_field *parse_atom(struct hist_trigger_data *hist_data,
- 	if (hist_field) {
- 		hist_data->var_refs[hist_data->n_var_refs] = hist_field;
- 		hist_field->var_ref_idx = hist_data->n_var_refs++;
-+		if (var_name) {
-+			hist_field = create_alias(hist_data, hist_field, var_name);
-+			if (!hist_field) {
-+				ret = -ENOMEM;
-+				goto out;
-+			}
-+		}
- 		return hist_field;
+ static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
+ {
+ 	int ret = 0;
+@@ -755,8 +787,9 @@ static struct hist_trigger_attrs *parse_hist_trigger_attrs(char *trigger_str)
+ 		else if (strcmp(str, "clear") == 0)
+ 			attrs->clear = true;
+ 		else {
+-			ret = -EINVAL;
+-			goto free;
++			ret = parse_action(str, attrs);
++			if (ret)
++				goto free;
+ 		}
  	}
  
-@@ -4152,8 +4189,11 @@ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
- 		seq_puts(m, "$common_timestamp");
- 	else if (hist_field->flags & HIST_FIELD_FL_CPU)
- 		seq_puts(m, "cpu");
--	else if (field_name)
-+	else if (field_name) {
-+		if (hist_field->flags & HIST_FIELD_FL_ALIAS)
-+			seq_putc(m, '$');
- 		seq_printf(m, "%s", field_name);
-+	}
+@@ -1722,11 +1755,63 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
+ 	return ret;
+ }
  
- 	if (hist_field->flags) {
- 		const char *flags_str = get_hist_field_flags(hist_field);
++static void destroy_actions(struct hist_trigger_data *hist_data)
++{
++	unsigned int i;
++
++	for (i = 0; i < hist_data->n_actions; i++) {
++		struct action_data *data = hist_data->actions[i];
++
++		kfree(data);
++	}
++}
++
++static int create_actions(struct hist_trigger_data *hist_data,
++			  struct trace_event_file *file)
++{
++	unsigned int i;
++	int ret = 0;
++	char *str;
++
++	for (i = 0; i < hist_data->attrs->n_actions; i++) {
++		str = hist_data->attrs->action_str[i];
++	}
++
++	return ret;
++}
++
++static void print_actions(struct seq_file *m,
++			  struct hist_trigger_data *hist_data,
++			  struct tracing_map_elt *elt)
++{
++	unsigned int i;
++
++	for (i = 0; i < hist_data->n_actions; i++) {
++		struct action_data *data = hist_data->actions[i];
++	}
++}
++
++static void print_actions_spec(struct seq_file *m,
++			       struct hist_trigger_data *hist_data)
++{
++	unsigned int i;
++
++	for (i = 0; i < hist_data->n_actions; i++) {
++		struct action_data *data = hist_data->actions[i];
++	}
++}
++
+ static void destroy_hist_data(struct hist_trigger_data *hist_data)
+ {
++	if (!hist_data)
++		return;
++
+ 	destroy_hist_trigger_attrs(hist_data->attrs);
+ 	destroy_hist_fields(hist_data);
+ 	tracing_map_destroy(hist_data->map);
++
++	destroy_actions(hist_data);
++
+ 	kfree(hist_data);
+ }
+ 
+@@ -1886,6 +1971,20 @@ static inline void add_to_key(char *compound_key, void *key,
+ 	memcpy(compound_key + key_field->offset, key, size);
+ }
+ 
++static void
++hist_trigger_actions(struct hist_trigger_data *hist_data,
++		     struct tracing_map_elt *elt, void *rec,
++		     struct ring_buffer_event *rbe, u64 *var_ref_vals)
++{
++	struct action_data *data;
++	unsigned int i;
++
++	for (i = 0; i < hist_data->n_actions; i++) {
++		data = hist_data->actions[i];
++		data->fn(hist_data, elt, rec, rbe, data, var_ref_vals);
++	}
++}
++
+ static void event_hist_trigger(struct event_trigger_data *data, void *rec,
+ 			       struct ring_buffer_event *rbe)
+ {
+@@ -1941,6 +2040,9 @@ static void event_hist_trigger(struct event_trigger_data *data, void *rec,
+ 		return;
+ 
+ 	hist_trigger_elt_update(hist_data, elt, rec, rbe, var_ref_vals);
++
++	if (resolve_var_refs(hist_data, key, var_ref_vals, true))
++		hist_trigger_actions(hist_data, elt, rec, rbe, var_ref_vals);
+ }
+ 
+ static void hist_trigger_stacktrace_print(struct seq_file *m,
+@@ -2278,6 +2380,8 @@ static int event_hist_trigger_print(struct seq_file *m,
+ 	}
+ 	seq_printf(m, ":size=%u", (1 << hist_data->map->map_bits));
+ 
++	print_actions_spec(m, hist_data);
++
+ 	if (data->filter_str)
+ 		seq_printf(m, " if %s", data->filter_str);
+ 
+@@ -2740,6 +2844,10 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
+ 	if (has_hist_vars(hist_data))
+ 		save_hist_vars(hist_data);
+ 
++	ret = create_actions(hist_data, file);
++	if (ret)
++		goto out_unreg;
++
+ 	ret = tracing_map_init(hist_data->map);
+ 	if (ret)
+ 		goto out_unreg;
+@@ -2761,8 +2869,8 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
+ 	remove_hist_vars(hist_data);
+ 
+ 	kfree(trigger_data);
+-
+ 	destroy_hist_data(hist_data);
++
+ 	goto out;
+ }
+ 
 -- 
 1.9.3
-
