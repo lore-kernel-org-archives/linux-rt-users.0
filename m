@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH 21/32] tracing: Add hist trigger action hook
-Date: Mon, 26 Jun 2017 17:49:22 -0500
-Message-ID: <d200c45d17bf23176bcbc7b45925da4dfa31eeae.1498510759.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 26/32] tracing: Make duplicate count from tracing_map available
+Date: Mon, 26 Jun 2017 17:49:27 -0500
+Message-ID: <a04e0c203d1e6f097e6198eba74c661d77cd813b.1498510759.git.tom.zanussi@linux.intel.com>
 References: <cover.1498510759.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, linux-kernel@vger.kernel.org,
@@ -15,229 +15,129 @@ References: <cover.1498510759.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Add a hook for executing extra actions whenever a histogram entry is
-added or updated.
+Though extremely rare, there can be duplicate entries in the tracing
+map.  This isn't normally a problem, as the sorting code makes this
+transparent by merging them during the sort.
 
-The default 'action' when a hist entry is added to a histogram is to
-update the set of values associated with it.  Some applications may
-want to perform additional actions at that point, such as generate
-another event, or compare and save a maximum.
+It's useful to know however, as a check on that assumption - if a
+non-zero duplicate count is seen more than rarely, it might indicate
+an unexpected change to the algorithm, or a pathological data set.
 
-Add a simple framework for doing that; specific actions will be
-implemented on top of it in later patches.
+Add an extra param to tracing_map_sort_entries() and use it to display
+the value in the hist trigger output.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 114 +++++++++++++++++++++++++++++++++++++--
- 1 file changed, 111 insertions(+), 3 deletions(-)
+ kernel/trace/trace_events_hist.c | 14 ++++++++------
+ kernel/trace/tracing_map.c       | 12 +++++++++---
+ kernel/trace/tracing_map.h       |  3 ++-
+ 3 files changed, 19 insertions(+), 10 deletions(-)
 
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index d83d4ca..338a9d5 100644
+index 53a0634..ab94e2a 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -33,6 +33,7 @@ typedef u64 (*hist_field_fn_t) (struct hist_field *field,
- 
- #define HIST_FIELD_OPERANDS_MAX	2
- #define HIST_FIELDS_MAX		(TRACING_MAP_FIELDS_MAX + TRACING_MAP_VARS_MAX)
-+#define HIST_ACTIONS_MAX	8
- 
- enum field_op_id {
- 	FIELD_OP_NONE,
-@@ -233,6 +234,9 @@ struct hist_trigger_attrs {
- 
- 	char		*assignment_str[TRACING_MAP_VARS_MAX];
- 	unsigned int	n_assignments;
-+
-+	char		*action_str[HIST_ACTIONS_MAX];
-+	unsigned int	n_actions;
- };
- 
- struct hist_trigger_data {
-@@ -252,6 +256,21 @@ struct hist_trigger_data {
- 	bool				remove;
- 	struct hist_field               *var_refs[TRACING_MAP_VARS_MAX];
- 	unsigned int			n_var_refs;
-+
-+	struct action_data		*actions[HIST_ACTIONS_MAX];
-+	unsigned int			n_actions;
-+};
-+
-+struct action_data;
-+
-+typedef void (*action_fn_t) (struct hist_trigger_data *hist_data,
-+			     struct tracing_map_elt *elt, void *rec,
-+			     struct ring_buffer_event *rbe,
-+			     struct action_data *data, u64 *var_ref_vals);
-+
-+struct action_data {
-+	action_fn_t		fn;
-+	unsigned int		var_ref_idx;
- };
- 
- static u64 hist_field_timestamp(struct hist_field *hist_field,
-@@ -681,6 +700,9 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
- 	for (i = 0; i < attrs->n_assignments; i++)
- 		kfree(attrs->assignment_str[i]);
- 
-+	for (i = 0; i < attrs->n_actions; i++)
-+		kfree(attrs->action_str[i]);
-+
- 	kfree(attrs->name);
- 	kfree(attrs->sort_key_str);
- 	kfree(attrs->keys_str);
-@@ -688,6 +710,16 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
- 	kfree(attrs);
+@@ -4011,7 +4011,8 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
  }
  
-+static int parse_action(char *str, struct hist_trigger_attrs *attrs)
-+{
-+	int ret = 0;
-+
-+	if (attrs->n_actions >= HIST_ACTIONS_MAX)
-+		return ret;
-+
-+	return ret;
-+}
-+
- static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
+ static int print_entries(struct seq_file *m,
+-			 struct hist_trigger_data *hist_data)
++			 struct hist_trigger_data *hist_data,
++			 unsigned int *n_dups)
  {
- 	int ret = 0;
-@@ -755,8 +787,9 @@ static struct hist_trigger_attrs *parse_hist_trigger_attrs(char *trigger_str)
- 		else if (strcmp(str, "clear") == 0)
- 			attrs->clear = true;
- 		else {
--			ret = -EINVAL;
--			goto free;
-+			ret = parse_action(str, attrs);
-+			if (ret)
-+				goto free;
- 		}
+ 	struct tracing_map_sort_entry **sort_entries = NULL;
+ 	struct tracing_map *map = hist_data->map;
+@@ -4019,7 +4020,7 @@ static int print_entries(struct seq_file *m,
+ 
+ 	n_entries = tracing_map_sort_entries(map, hist_data->sort_keys,
+ 					     hist_data->n_sort_keys,
+-					     &sort_entries);
++					     &sort_entries, n_dups);
+ 	if (n_entries < 0)
+ 		return n_entries;
+ 
+@@ -4038,6 +4039,7 @@ static void hist_trigger_show(struct seq_file *m,
+ {
+ 	struct hist_trigger_data *hist_data;
+ 	int n_entries, ret = 0;
++	unsigned int n_dups;
+ 
+ 	if (n > 0)
+ 		seq_puts(m, "\n\n");
+@@ -4047,15 +4049,15 @@ static void hist_trigger_show(struct seq_file *m,
+ 	seq_puts(m, "#\n\n");
+ 
+ 	hist_data = data->private_data;
+-	n_entries = print_entries(m, hist_data);
++	n_entries = print_entries(m, hist_data, &n_dups);
+ 	if (n_entries < 0) {
+ 		ret = n_entries;
+ 		n_entries = 0;
  	}
  
-@@ -1722,11 +1755,63 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
- 	return ret;
+-	seq_printf(m, "\nTotals:\n    Hits: %llu\n    Entries: %u\n    Dropped: %llu\n",
+-		   (u64)atomic64_read(&hist_data->map->hits),
+-		   n_entries, (u64)atomic64_read(&hist_data->map->drops));
++	seq_printf(m, "\nTotals:\n    Hits: %llu\n    Entries: %u\n    Dropped: %llu\n    Duplicates: %u\n",
++		   (u64)atomic64_read(&hist_data->map->hits), n_entries,
++		   (u64)atomic64_read(&hist_data->map->drops), n_dups);
  }
  
-+static void destroy_actions(struct hist_trigger_data *hist_data)
-+{
-+	unsigned int i;
-+
-+	for (i = 0; i < hist_data->n_actions; i++) {
-+		struct action_data *data = hist_data->actions[i];
-+
-+		kfree(data);
-+	}
-+}
-+
-+static int create_actions(struct hist_trigger_data *hist_data,
-+			  struct trace_event_file *file)
-+{
-+	unsigned int i;
-+	int ret = 0;
-+	char *str;
-+
-+	for (i = 0; i < hist_data->attrs->n_actions; i++) {
-+		str = hist_data->attrs->action_str[i];
-+	}
-+
-+	return ret;
-+}
-+
-+static void print_actions(struct seq_file *m,
-+			  struct hist_trigger_data *hist_data,
-+			  struct tracing_map_elt *elt)
-+{
-+	unsigned int i;
-+
-+	for (i = 0; i < hist_data->n_actions; i++) {
-+		struct action_data *data = hist_data->actions[i];
-+	}
-+}
-+
-+static void print_actions_spec(struct seq_file *m,
-+			       struct hist_trigger_data *hist_data)
-+{
-+	unsigned int i;
-+
-+	for (i = 0; i < hist_data->n_actions; i++) {
-+		struct action_data *data = hist_data->actions[i];
-+	}
-+}
-+
- static void destroy_hist_data(struct hist_trigger_data *hist_data)
+ static int hist_show(struct seq_file *m, void *v)
+diff --git a/kernel/trace/tracing_map.c b/kernel/trace/tracing_map.c
+index f987069..9ed04b6 100644
+--- a/kernel/trace/tracing_map.c
++++ b/kernel/trace/tracing_map.c
+@@ -1084,6 +1084,7 @@ static void sort_secondary(struct tracing_map *map,
+  * @map: The tracing_map
+  * @sort_key: The sort key to use for sorting
+  * @sort_entries: outval: pointer to allocated and sorted array of entries
++ * @n_dups: outval: pointer to variable receiving a count of duplicates found
+  *
+  * tracing_map_sort_entries() sorts the current set of entries in the
+  * map and returns the list of tracing_map_sort_entries containing
+@@ -1100,13 +1101,16 @@ static void sort_secondary(struct tracing_map *map,
+  * The client should not hold on to the returned array but should use
+  * it and call tracing_map_destroy_sort_entries() when done.
+  *
+- * Return: the number of sort_entries in the struct tracing_map_sort_entry
+- * array, negative on error
++ * Return: the number of sort_entries in the struct
++ * tracing_map_sort_entry array, negative on error.  If n_dups is
++ * non-NULL, it will receive the number of duplicate entries found
++ * (and merged) during the sort.
+  */
+ int tracing_map_sort_entries(struct tracing_map *map,
+ 			     struct tracing_map_sort_key *sort_keys,
+ 			     unsigned int n_sort_keys,
+-			     struct tracing_map_sort_entry ***sort_entries)
++			     struct tracing_map_sort_entry ***sort_entries,
++			     unsigned int *n_dups)
  {
-+	if (!hist_data)
-+		return;
-+
- 	destroy_hist_trigger_attrs(hist_data->attrs);
- 	destroy_hist_fields(hist_data);
- 	tracing_map_destroy(hist_data->map);
-+
-+	destroy_actions(hist_data);
-+
- 	kfree(hist_data);
- }
+ 	int (*cmp_entries_fn)(const struct tracing_map_sort_entry **,
+ 			      const struct tracing_map_sort_entry **);
+@@ -1147,6 +1151,8 @@ int tracing_map_sort_entries(struct tracing_map *map,
+ 	if (ret < 0)
+ 		goto free;
+ 	n_entries -= ret;
++	if (n_dups)
++		*n_dups = ret;
  
-@@ -1886,6 +1971,20 @@ static inline void add_to_key(char *compound_key, void *key,
- 	memcpy(compound_key + key_field->offset, key, size);
- }
+ 	if (is_key(map, sort_keys[0].field_idx))
+ 		cmp_entries_fn = cmp_entries_key;
+diff --git a/kernel/trace/tracing_map.h b/kernel/trace/tracing_map.h
+index 303bc4f..a44cc0c 100644
+--- a/kernel/trace/tracing_map.h
++++ b/kernel/trace/tracing_map.h
+@@ -286,7 +286,8 @@ extern void tracing_map_set_field_descr(struct tracing_map *map,
+ tracing_map_sort_entries(struct tracing_map *map,
+ 			 struct tracing_map_sort_key *sort_keys,
+ 			 unsigned int n_sort_keys,
+-			 struct tracing_map_sort_entry ***sort_entries);
++			 struct tracing_map_sort_entry ***sort_entries,
++			 unsigned int *n_dups);
  
-+static void
-+hist_trigger_actions(struct hist_trigger_data *hist_data,
-+		     struct tracing_map_elt *elt, void *rec,
-+		     struct ring_buffer_event *rbe, u64 *var_ref_vals)
-+{
-+	struct action_data *data;
-+	unsigned int i;
-+
-+	for (i = 0; i < hist_data->n_actions; i++) {
-+		data = hist_data->actions[i];
-+		data->fn(hist_data, elt, rec, rbe, data, var_ref_vals);
-+	}
-+}
-+
- static void event_hist_trigger(struct event_trigger_data *data, void *rec,
- 			       struct ring_buffer_event *rbe)
- {
-@@ -1941,6 +2040,9 @@ static void event_hist_trigger(struct event_trigger_data *data, void *rec,
- 		return;
- 
- 	hist_trigger_elt_update(hist_data, elt, rec, rbe, var_ref_vals);
-+
-+	if (resolve_var_refs(hist_data, key, var_ref_vals, true))
-+		hist_trigger_actions(hist_data, elt, rec, rbe, var_ref_vals);
- }
- 
- static void hist_trigger_stacktrace_print(struct seq_file *m,
-@@ -2278,6 +2380,8 @@ static int event_hist_trigger_print(struct seq_file *m,
- 	}
- 	seq_printf(m, ":size=%u", (1 << hist_data->map->map_bits));
- 
-+	print_actions_spec(m, hist_data);
-+
- 	if (data->filter_str)
- 		seq_printf(m, " if %s", data->filter_str);
- 
-@@ -2740,6 +2844,10 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
- 	if (has_hist_vars(hist_data))
- 		save_hist_vars(hist_data);
- 
-+	ret = create_actions(hist_data, file);
-+	if (ret)
-+		goto out_unreg;
-+
- 	ret = tracing_map_init(hist_data->map);
- 	if (ret)
- 		goto out_unreg;
-@@ -2761,8 +2869,8 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
- 	remove_hist_vars(hist_data);
- 
- 	kfree(trigger_data);
--
- 	destroy_hist_data(hist_data);
-+
- 	goto out;
- }
- 
+ extern void
+ tracing_map_destroy_sort_entries(struct tracing_map_sort_entry **entries,
 -- 
 1.9.3
