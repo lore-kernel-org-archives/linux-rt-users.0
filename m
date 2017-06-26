@@ -1,247 +1,140 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH 12/32] tracing: Add hist trigger timestamp support
-Date: Mon, 26 Jun 2017 17:49:13 -0500
-Message-ID: <dc2a86608cd3adcf957f7f4cc0252e659acf0fce.1498510759.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 03/32] ring-buffer: Add interface for setting absolute time stamps
+Date: Mon, 26 Jun 2017 17:49:04 -0500
+Message-ID: <2e6714e525e62f54dd72d563c7d220be76f8f808.1498510759.git.tom.zanussi@linux.intel.com>
 References: <cover.1498510759.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, linux-kernel@vger.kernel.org,
         linux-rt-users@vger.kernel.org,
         Tom Zanussi <tom.zanussi@linux.intel.com>
 To: rostedt@goodmis.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mga04.intel.com ([192.55.52.120]:11033 "EHLO mga04.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751498AbdFZWts (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 26 Jun 2017 18:49:48 -0400
 In-Reply-To: <cover.1498510759.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1498510759.git.tom.zanussi@linux.intel.com>
 References: <cover.1498510759.git.tom.zanussi@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Add support for a timestamp event field.  This is actually a 'pseudo-'
-event field in that it behaves like it's part of the event record, but
-is really part of the corresponding ring buffer event.
+Define a new function, tracing_set_time_stamp_abs(), which can be used
+to enable or disable the use of absolute timestamps rather than time
+deltas for a trace array.
 
-To make use of the timestamp field, users can specify
-"$common_timestamp" as a field name for any histogram.  Note that this
-doesn't make much sense on its own either as either a key or value,
-but needs to be supported even so, since follow-on patches will add
-support for making use of this field in time deltas.  The '$' is used
-as a prefix on the variable name to indicate that it's not an bonafide
-event field - so you won't find it in the event description - but
-rather it's a synthetic field that can be used like a real field).
+This resets the buffer to prevent a mix of time deltas and absolute
+timestamps.
 
-Note that the use of this field requires the ring buffer be put into
-TIME_EXTEND_ABS mode, which saves the complete timestamp for each
-event rather than an offset.  This mode will be enabled if and only if
-a histogram makes use of the "$common_timestamp" field.
+Only the interface is added here; a subsequent patch will add the
+underlying implementation.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 90 +++++++++++++++++++++++++++++-----------
- 1 file changed, 66 insertions(+), 24 deletions(-)
+ include/linux/ring_buffer.h |  2 ++
+ kernel/trace/ring_buffer.c  | 11 +++++++++++
+ kernel/trace/trace.c        | 25 ++++++++++++++++++++++++-
+ kernel/trace/trace.h        |  2 ++
+ 4 files changed, 39 insertions(+), 1 deletion(-)
 
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index dab6ff6..aeae3b4 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -89,6 +89,12 @@ static u64 hist_field_log2(struct hist_field *hist_field, void *event,
- 	return (u64) ilog2(roundup_pow_of_two(val));
+diff --git a/include/linux/ring_buffer.h b/include/linux/ring_buffer.h
+index ee9b461..28e3472 100644
+--- a/include/linux/ring_buffer.h
++++ b/include/linux/ring_buffer.h
+@@ -180,6 +180,8 @@ void ring_buffer_normalize_time_stamp(struct ring_buffer *buffer,
+ 				      int cpu, u64 *ts);
+ void ring_buffer_set_clock(struct ring_buffer *buffer,
+ 			   u64 (*clock)(void));
++void ring_buffer_set_time_stamp_abs(struct ring_buffer *buffer, bool abs);
++bool ring_buffer_time_stamp_abs(struct ring_buffer *buffer);
+ 
+ size_t ring_buffer_page_len(void *page);
+ 
+diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
+index 4ae268e..f544738 100644
+--- a/kernel/trace/ring_buffer.c
++++ b/kernel/trace/ring_buffer.c
+@@ -485,6 +485,7 @@ struct ring_buffer {
+ 	u64				(*clock)(void);
+ 
+ 	struct rb_irq_work		irq_work;
++	bool				time_stamp_abs;
+ };
+ 
+ struct ring_buffer_iter {
+@@ -1379,6 +1380,16 @@ void ring_buffer_set_clock(struct ring_buffer *buffer,
+ 	buffer->clock = clock;
  }
  
-+static u64 hist_field_timestamp(struct hist_field *hist_field, void *event,
-+				struct ring_buffer_event *rbe)
++void ring_buffer_set_time_stamp_abs(struct ring_buffer *buffer, bool abs)
 +{
-+	return ring_buffer_event_time_stamp(rbe);
++	buffer->time_stamp_abs = abs;
 +}
 +
- #define DEFINE_HIST_FIELD_FN(type)					\
- 	static u64 hist_field_##type(struct hist_field *hist_field,	\
- 				     void *event,			\
-@@ -135,6 +141,7 @@ enum hist_field_flags {
- 	HIST_FIELD_FL_SYSCALL		= 128,
- 	HIST_FIELD_FL_STACKTRACE	= 256,
- 	HIST_FIELD_FL_LOG2		= 512,
-+	HIST_FIELD_FL_TIMESTAMP		= 1024,
- };
- 
- struct hist_trigger_attrs {
-@@ -159,6 +166,7 @@ struct hist_trigger_data {
- 	struct trace_event_file		*event_file;
- 	struct hist_trigger_attrs	*attrs;
- 	struct tracing_map		*map;
-+	bool				enable_timestamps;
- };
- 
- static const char *hist_field_name(struct hist_field *field,
-@@ -173,6 +181,8 @@ static const char *hist_field_name(struct hist_field *field,
- 		field_name = field->field->name;
- 	else if (field->flags & HIST_FIELD_FL_LOG2)
- 		field_name = hist_field_name(field->operands[0], ++level);
-+	else if (field->flags & HIST_FIELD_FL_TIMESTAMP)
-+		field_name = "$common_timestamp";
- 
- 	if (field_name == NULL)
- 		field_name = "";
-@@ -435,6 +445,12 @@ static struct hist_field *create_hist_field(struct ftrace_event_field *field,
- 		goto out;
- 	}
- 
-+	if (flags & HIST_FIELD_FL_TIMESTAMP) {
-+		hist_field->fn = hist_field_timestamp;
-+		hist_field->size = sizeof(u64);
-+		goto out;
-+	}
++bool ring_buffer_time_stamp_abs(struct ring_buffer *buffer)
++{
++	return buffer->time_stamp_abs;
++}
 +
- 	if (WARN_ON_ONCE(!field))
- 		goto out;
+ static void rb_reset_cpu(struct ring_buffer_per_cpu *cpu_buffer);
  
-@@ -512,10 +528,15 @@ static int create_val_field(struct hist_trigger_data *hist_data,
- 		}
- 	}
+ static inline unsigned long rb_page_entries(struct buffer_page *bpage)
+diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
+index 19ac208..da8cd51 100644
+--- a/kernel/trace/trace.c
++++ b/kernel/trace/trace.c
+@@ -2169,7 +2169,7 @@ struct ring_buffer_event *
  
--	field = trace_find_event_field(file->event_call, field_name);
--	if (!field) {
--		ret = -EINVAL;
--		goto out;
-+	if (strcmp(field_name, "$common_timestamp") == 0) {
-+		flags |= HIST_FIELD_FL_TIMESTAMP;
-+		hist_data->enable_timestamps = true;
-+	} else {
-+		field = trace_find_event_field(file->event_call, field_name);
-+		if (!field) {
-+			ret = -EINVAL;
-+			goto out;
-+		}
- 	}
+ 	*current_rb = trace_file->tr->trace_buffer.buffer;
  
- 	hist_data->fields[val_idx] = create_hist_field(field, flags);
-@@ -610,16 +631,22 @@ static int create_key_field(struct hist_trigger_data *hist_data,
- 			}
- 		}
- 
--		field = trace_find_event_field(file->event_call, field_name);
--		if (!field) {
--			ret = -EINVAL;
--			goto out;
--		}
-+		if (strcmp(field_name, "$common_timestamp") == 0) {
-+			flags |= HIST_FIELD_FL_TIMESTAMP;
-+			hist_data->enable_timestamps = true;
-+			key_size = sizeof(u64);
-+		} else {
-+			field = trace_find_event_field(file->event_call, field_name);
-+			if (!field) {
-+				ret = -EINVAL;
-+				goto out;
-+			}
- 
--		if (is_string_field(field))
--			key_size = MAX_FILTER_STR_VAL;
--		else
--			key_size = field->size;
-+			if (is_string_field(field))
-+				key_size = MAX_FILTER_STR_VAL;
-+			else
-+				key_size = field->size;
-+		}
- 	}
- 
- 	hist_data->fields[key_idx] = create_hist_field(field, flags);
-@@ -756,7 +783,7 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
- 			break;
- 		}
- 
--		if (strcmp(field_name, "hitcount") == 0) {
-+		if ((strcmp(field_name, "hitcount") == 0)) {
- 			descending = is_descending(field_str);
- 			if (descending < 0) {
- 				ret = descending;
-@@ -816,6 +843,9 @@ static int create_tracing_map_fields(struct hist_trigger_data *hist_data)
- 
- 			if (hist_field->flags & HIST_FIELD_FL_STACKTRACE)
- 				cmp_fn = tracing_map_cmp_none;
-+			else if (!field)
-+				cmp_fn = tracing_map_cmp_num(hist_field->size,
-+							     hist_field->is_signed);
- 			else if (is_string_field(field))
- 				cmp_fn = tracing_map_cmp_string;
- 			else
-@@ -1213,7 +1243,11 @@ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
- {
- 	const char *field_name = hist_field_name(hist_field, 0);
- 
--	seq_printf(m, "%s", field_name);
-+	if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP)
-+		seq_puts(m, "$common_timestamp");
-+	else if (field_name)
-+		seq_printf(m, "%s", field_name);
-+
- 	if (hist_field->flags) {
- 		const char *flags_str = get_hist_field_flags(hist_field);
- 
-@@ -1264,27 +1298,25 @@ static int event_hist_trigger_print(struct seq_file *m,
- 
- 	for (i = 0; i < hist_data->n_sort_keys; i++) {
- 		struct tracing_map_sort_key *sort_key;
-+		unsigned int idx;
- 
- 		sort_key = &hist_data->sort_keys[i];
-+		idx = sort_key->field_idx;
-+
-+		if (WARN_ON(idx >= TRACING_MAP_FIELDS_MAX))
-+			return -EINVAL;
- 
- 		if (i > 0)
- 			seq_puts(m, ",");
- 
--		if (sort_key->field_idx == HITCOUNT_IDX)
-+		if (idx == HITCOUNT_IDX)
- 			seq_puts(m, "hitcount");
--		else {
--			unsigned int idx = sort_key->field_idx;
--
--			if (WARN_ON(idx >= TRACING_MAP_FIELDS_MAX))
--				return -EINVAL;
--
-+		else
- 			hist_field_print(m, hist_data->fields[idx]);
--		}
- 
- 		if (sort_key->descending)
- 			seq_puts(m, ".descending");
- 	}
--
- 	seq_printf(m, ":size=%u", (1 << hist_data->map->map_bits));
- 
- 	if (data->filter_str)
-@@ -1452,6 +1484,10 @@ static bool hist_trigger_match(struct event_trigger_data *data,
- 			return false;
- 		if (key_field->offset != key_field_test->offset)
- 			return false;
-+		if (key_field->size != key_field_test->size)
-+			return false;
-+		if (key_field->is_signed != key_field_test->is_signed)
-+			return false;
- 	}
- 
- 	for (i = 0; i < hist_data->n_sort_keys; i++) {
-@@ -1534,6 +1570,9 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
- 
- 	update_cond_flag(file);
- 
-+	if (hist_data->enable_timestamps)
-+		tracing_set_time_stamp_abs(file->tr, true);
-+
- 	if (trace_event_trigger_enable_disable(file, 1) < 0) {
- 		list_del_rcu(&data->list);
- 		update_cond_flag(file);
-@@ -1568,6 +1607,9 @@ static void hist_unregister_trigger(char *glob, struct event_trigger_ops *ops,
- 
- 	if (unregistered && test->ops->free)
- 		test->ops->free(test->ops, test);
-+
-+	if (hist_data->enable_timestamps)
-+		tracing_set_time_stamp_abs(file->tr, false);
+-	if ((trace_file->flags &
++	if (!ring_buffer_time_stamp_abs(*current_rb) && (trace_file->flags &
+ 	     (EVENT_FILE_FL_SOFT_DISABLED | EVENT_FILE_FL_FILTERED)) &&
+ 	    (entry = this_cpu_read(trace_buffered_event))) {
+ 		/* Try to use the per cpu buffer first */
+@@ -6079,6 +6079,29 @@ static int tracing_clock_open(struct inode *inode, struct file *file)
+ 	return ret;
  }
  
- static void hist_unreg_all(struct trace_event_file *file)
++int tracing_set_time_stamp_abs(struct trace_array *tr, bool abs)
++{
++	mutex_lock(&trace_types_lock);
++
++	ring_buffer_set_time_stamp_abs(tr->trace_buffer.buffer, abs);
++
++	/*
++	 * New timestamps may not be consistent with the previous setting.
++	 * Reset the buffer so that it doesn't have incomparable timestamps.
++	 */
++	tracing_reset_online_cpus(&tr->trace_buffer);
++
++#ifdef CONFIG_TRACER_MAX_TRACE
++	if (tr->flags & TRACE_ARRAY_FL_GLOBAL && tr->max_buffer.buffer)
++		ring_buffer_set_time_stamp_abs(tr->max_buffer.buffer, abs);
++	tracing_reset_online_cpus(&tr->max_buffer);
++#endif
++
++	mutex_unlock(&trace_types_lock);
++
++	return 0;
++}
++
+ struct ftrace_buffer_info {
+ 	struct trace_iterator	iter;
+ 	void			*spare;
+diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
+index 69a3ab3..155ad9a 100644
+--- a/kernel/trace/trace.h
++++ b/kernel/trace/trace.h
+@@ -281,6 +281,8 @@ enum {
+ extern int trace_array_get(struct trace_array *tr);
+ extern void trace_array_put(struct trace_array *tr);
+ 
++extern int tracing_set_time_stamp_abs(struct trace_array *tr, bool abs);
++
+ /*
+  * The global tracer (top) should be the first trace array added,
+  * but we check the flag anyway.
 -- 
 1.9.3
+
