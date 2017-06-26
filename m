@@ -1,249 +1,348 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH 13/32] tracing: Add per-element variable support to tracing_map
-Date: Mon, 26 Jun 2017 17:49:14 -0500
-Message-ID: <17566f1f2870ef5124e33de56f08f1fd304a06e0.1498510759.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 09/32] tracing: Make traceprobe parsing code reusable
+Date: Mon, 26 Jun 2017 17:49:10 -0500
+Message-ID: <1c0b9397d8fb9ab70e5a5a85936fe10259fa028f.1498510759.git.tom.zanussi@linux.intel.com>
 References: <cover.1498510759.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, linux-kernel@vger.kernel.org,
         linux-rt-users@vger.kernel.org,
         Tom Zanussi <tom.zanussi@linux.intel.com>
 To: rostedt@goodmis.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mga03.intel.com ([134.134.136.65]:32858 "EHLO mga03.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751798AbdFZWuH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 26 Jun 2017 18:50:07 -0400
 In-Reply-To: <cover.1498510759.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1498510759.git.tom.zanussi@linux.intel.com>
 References: <cover.1498510759.git.tom.zanussi@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-In order to allow information to be passed between trace events, add
-support for per-element variables to tracing_map.  This provides a
-means for histograms to associate a value or values with an entry when
-it's saved or updated, and retrieved by a subsequent event occurrences.
+traceprobe_probes_write() and traceprobe_command() actually contain
+nothing that ties them to kprobes - the code is generically useful for
+similar types of parsing elsewhere, so separate it out and move it to
+trace.c/trace.h.
 
-Variables can be set using tracing_map_set_var() and read using
-tracing_map_read_var().  tracing_map_var_set() returns true or false
-depending on whether or not the variable has been set or not, which is
-important for event-matching applications.
-
-tracing_map_read_var_once() reads the variable and resets it to the
-'unset' state, implementing read-once variables, which are also
-important for event-matching uses.
+Other than moving it, the only change is in naming:
+traceprobe_probes_write() becomes trace_parse_run_command() and
+traceprobe_command() becomes trace_run_command().
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/tracing_map.c | 113 +++++++++++++++++++++++++++++++++++++++++++++
- kernel/trace/tracing_map.h |  11 +++++
- 2 files changed, 124 insertions(+)
+ kernel/trace/trace.c        | 86 +++++++++++++++++++++++++++++++++++++++++++++
+ kernel/trace/trace.h        |  7 ++++
+ kernel/trace/trace_kprobe.c | 18 +++++-----
+ kernel/trace/trace_probe.c  | 86 ---------------------------------------------
+ kernel/trace/trace_probe.h  |  7 ----
+ kernel/trace/trace_uprobe.c |  2 +-
+ 6 files changed, 103 insertions(+), 103 deletions(-)
 
-diff --git a/kernel/trace/tracing_map.c b/kernel/trace/tracing_map.c
-index 0a689bb..f987069 100644
---- a/kernel/trace/tracing_map.c
-+++ b/kernel/trace/tracing_map.c
-@@ -66,6 +66,73 @@ u64 tracing_map_read_sum(struct tracing_map_elt *elt, unsigned int i)
- 	return (u64)atomic64_read(&elt->fields[i].sum);
+diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
+index da8cd51..f66a3df 100644
+--- a/kernel/trace/trace.c
++++ b/kernel/trace/trace.c
+@@ -8082,6 +8082,92 @@ void ftrace_dump(enum ftrace_dump_mode oops_dump_mode)
  }
+ EXPORT_SYMBOL_GPL(ftrace_dump);
  
-+/**
-+ * tracing_map_set_var - Assign a tracing_map_elt's variable field
-+ * @elt: The tracing_map_elt
-+ * @i: The index of the given variable associated with the tracing_map_elt
-+ * @n: The value to assign
-+ *
-+ * Assign n to variable i associated with the specified tracing_map_elt
-+ * instance.  The index i is the index returned by the call to
-+ * tracing_map_add_var() when the tracing map was set up.
-+ */
-+void tracing_map_set_var(struct tracing_map_elt *elt, unsigned int i, u64 n)
++int trace_run_command(const char *buf, int (*createfn)(int, char **))
 +{
-+	atomic64_set(&elt->vars[i], n);
-+	elt->var_set[i] = true;
-+}
++	char **argv;
++	int argc, ret;
 +
-+/**
-+ * tracing_map_var_set - Return whether or not a variable has been set
-+ * @elt: The tracing_map_elt
-+ * @i: The index of the given variable associated with the tracing_map_elt
-+ *
-+ * Return true if the variable has been set, false otherwise.  The
-+ * index i is the index returned by the call to tracing_map_add_var()
-+ * when the tracing map was set up.
-+ */
-+bool tracing_map_var_set(struct tracing_map_elt *elt, unsigned int i)
-+{
-+	return elt->var_set[i];
-+}
++	argc = 0;
++	ret = 0;
++	argv = argv_split(GFP_KERNEL, buf, &argc);
++	if (!argv)
++		return -ENOMEM;
 +
-+/**
-+ * tracing_map_read_var - Return the value of a tracing_map_elt's variable field
-+ * @elt: The tracing_map_elt
-+ * @i: The index of the given variable associated with the tracing_map_elt
-+ *
-+ * Retrieve the value of the variable i associated with the specified
-+ * tracing_map_elt instance.  The index i is the index returned by the
-+ * call to tracing_map_add_var() when the tracing map was set
-+ * up.
-+ *
-+ * Return: The variable value associated with field i for elt.
-+ */
-+u64 tracing_map_read_var(struct tracing_map_elt *elt, unsigned int i)
-+{
-+	return (u64)atomic64_read(&elt->vars[i]);
-+}
++	if (argc)
++		ret = createfn(argc, argv);
 +
-+/**
-+ * tracing_map_read_var_once - Return and reset a tracing_map_elt's variable field
-+ * @elt: The tracing_map_elt
-+ * @i: The index of the given variable associated with the tracing_map_elt
-+ *
-+ * Retrieve the value of the variable i associated with the specified
-+ * tracing_map_elt instance, and reset the variable to the 'not set'
-+ * state.  The index i is the index returned by the call to
-+ * tracing_map_add_var() when the tracing map was set up.  The reset
-+ * essentially makes the variable a read-once variable if it's only
-+ * accessed using this function.
-+ *
-+ * Return: The variable value associated with field i for elt.
-+ */
-+u64 tracing_map_read_var_once(struct tracing_map_elt *elt, unsigned int i)
-+{
-+	elt->var_set[i] = false;
-+	return (u64)atomic64_read(&elt->vars[i]);
-+}
-+
- int tracing_map_cmp_string(void *val_a, void *val_b)
- {
- 	char *a = val_a;
-@@ -171,6 +238,28 @@ int tracing_map_add_sum_field(struct tracing_map *map)
- }
- 
- /**
-+ * tracing_map_add_var - Add a field describing a tracing_map var
-+ * @map: The tracing_map
-+ *
-+ * Add a var to the map and return the index identifying it in the map
-+ * and associated tracing_map_elts.  This is the index used for
-+ * instance to update a var for a particular tracing_map_elt using
-+ * tracing_map_update_var() or reading it via tracing_map_read_var().
-+ *
-+ * Return: The index identifying the var in the map and associated
-+ * tracing_map_elts, or -EINVAL on error.
-+ */
-+int tracing_map_add_var(struct tracing_map *map)
-+{
-+	int ret = -EINVAL;
-+
-+	if (map->n_vars < TRACING_MAP_VARS_MAX)
-+		ret = map->n_vars++;
++	argv_free(argv);
 +
 +	return ret;
 +}
 +
-+/**
-  * tracing_map_add_key_field - Add a field describing a tracing_map key
-  * @map: The tracing_map
-  * @offset: The offset within the key
-@@ -277,6 +366,11 @@ static void tracing_map_elt_clear(struct tracing_map_elt *elt)
- 		if (elt->fields[i].cmp_fn == tracing_map_cmp_atomic64)
- 			atomic64_set(&elt->fields[i].sum, 0);
- 
-+	for (i = 0; i < elt->map->n_vars; i++) {
-+		atomic64_set(&elt->vars[i], 0);
-+		elt->var_set[i] = false;
-+	}
++#define WRITE_BUFSIZE  4096
 +
- 	if (elt->map->ops && elt->map->ops->elt_clear)
- 		elt->map->ops->elt_clear(elt);
++ssize_t trace_parse_run_command(struct file *file, const char __user *buffer,
++				size_t count, loff_t *ppos,
++				int (*createfn)(int, char **))
++{
++	char *kbuf, *buf, *tmp;
++	int ret = 0;
++	size_t done = 0;
++	size_t size;
++
++	kbuf = kmalloc(WRITE_BUFSIZE, GFP_KERNEL);
++	if (!kbuf)
++		return -ENOMEM;
++
++	while (done < count) {
++		size = count - done;
++
++		if (size >= WRITE_BUFSIZE)
++			size = WRITE_BUFSIZE - 1;
++
++		if (copy_from_user(kbuf, buffer + done, size)) {
++			ret = -EFAULT;
++			goto out;
++		}
++		kbuf[size] = '\0';
++		buf = kbuf;
++		do {
++			tmp = strchr(buf, '\n');
++			if (tmp) {
++				*tmp = '\0';
++				size = tmp - buf + 1;
++			} else {
++				size = strlen(buf);
++				if (done + size < count) {
++					if (buf != kbuf)
++						break;
++					/* This can accept WRITE_BUFSIZE - 2 ('\n' + '\0') */
++					pr_warn("Line length is too long: Should be less than %d\n",
++						WRITE_BUFSIZE - 2);
++					ret = -EINVAL;
++					goto out;
++				}
++			}
++			done += size;
++
++			/* Remove comments */
++			tmp = strchr(buf, '#');
++
++			if (tmp)
++				*tmp = '\0';
++
++			ret = trace_run_command(buf, createfn);
++			if (ret)
++				goto out;
++			buf += size;
++
++		} while (done < count);
++	}
++	ret = done;
++
++out:
++	kfree(kbuf);
++
++	return ret;
++}
++
+ __init static int tracer_alloc_buffers(void)
+ {
+ 	int ring_buf_size;
+diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
+index fc892b9..78c7694 100644
+--- a/kernel/trace/trace.h
++++ b/kernel/trace/trace.h
+@@ -1730,6 +1730,13 @@ extern int trace_event_enable_disable(struct trace_event_file *file,
+ int trace_keep_overwrite(struct tracer *tracer, u32 mask, int set);
+ int set_tracer_flag(struct trace_array *tr, unsigned int mask, int enabled);
+ 
++#define MAX_EVENT_NAME_LEN	64
++
++extern int trace_run_command(const char *buf, int (*createfn)(int, char**));
++extern ssize_t trace_parse_run_command(struct file *file,
++		const char __user *buffer, size_t count, loff_t *ppos,
++		int (*createfn)(int, char**));
++
+ /*
+  * Normal trace_printk() and friends allocates special buffers
+  * to do the manipulation, as well as saves the print formats
+diff --git a/kernel/trace/trace_kprobe.c b/kernel/trace/trace_kprobe.c
+index c129fca..577cc69 100644
+--- a/kernel/trace/trace_kprobe.c
++++ b/kernel/trace/trace_kprobe.c
+@@ -902,8 +902,8 @@ static int probes_open(struct inode *inode, struct file *file)
+ static ssize_t probes_write(struct file *file, const char __user *buffer,
+ 			    size_t count, loff_t *ppos)
+ {
+-	return traceprobe_probes_write(file, buffer, count, ppos,
+-			create_trace_kprobe);
++	return trace_parse_run_command(file, buffer, count, ppos,
++				       create_trace_kprobe);
  }
-@@ -303,6 +397,8 @@ static void tracing_map_elt_free(struct tracing_map_elt *elt)
- 	if (elt->map->ops && elt->map->ops->elt_free)
- 		elt->map->ops->elt_free(elt);
- 	kfree(elt->fields);
-+	kfree(elt->vars);
-+	kfree(elt->var_set);
- 	kfree(elt->key);
- 	kfree(elt);
- }
-@@ -330,6 +426,18 @@ static struct tracing_map_elt *tracing_map_elt_alloc(struct tracing_map *map)
- 		goto free;
+ 
+ static const struct file_operations kprobe_events_ops = {
+@@ -1428,9 +1428,9 @@ static __init int kprobe_trace_self_tests_init(void)
+ 
+ 	pr_info("Testing kprobe tracing: ");
+ 
+-	ret = traceprobe_command("p:testprobe kprobe_trace_selftest_target "
+-				  "$stack $stack0 +0($stack)",
+-				  create_trace_kprobe);
++	ret = trace_run_command("p:testprobe kprobe_trace_selftest_target "
++				"$stack $stack0 +0($stack)",
++				create_trace_kprobe);
+ 	if (WARN_ON_ONCE(ret)) {
+ 		pr_warn("error on probing function entry.\n");
+ 		warn++;
+@@ -1450,8 +1450,8 @@ static __init int kprobe_trace_self_tests_init(void)
+ 		}
  	}
  
-+	elt->vars = kcalloc(map->n_vars, sizeof(*elt->vars), GFP_KERNEL);
-+	if (!elt->vars) {
-+		err = -ENOMEM;
-+		goto free;
-+	}
-+
-+	elt->var_set = kcalloc(map->n_vars, sizeof(*elt->var_set), GFP_KERNEL);
-+	if (!elt->var_set) {
-+		err = -ENOMEM;
-+		goto free;
-+	}
-+
- 	tracing_map_elt_init_fields(elt);
- 
- 	if (map->ops && map->ops->elt_alloc) {
-@@ -833,6 +941,11 @@ static struct tracing_map_elt *copy_elt(struct tracing_map_elt *elt)
- 		dup_elt->fields[i].cmp_fn = elt->fields[i].cmp_fn;
+-	ret = traceprobe_command("r:testprobe2 kprobe_trace_selftest_target "
+-				  "$retval", create_trace_kprobe);
++	ret = trace_run_command("r:testprobe2 kprobe_trace_selftest_target "
++				"$retval", create_trace_kprobe);
+ 	if (WARN_ON_ONCE(ret)) {
+ 		pr_warn("error on probing function return.\n");
+ 		warn++;
+@@ -1521,13 +1521,13 @@ static __init int kprobe_trace_self_tests_init(void)
+ 			disable_trace_kprobe(tk, file);
  	}
  
-+	for (i = 0; i < elt->map->n_vars; i++) {
-+		atomic64_set(&dup_elt->vars[i], atomic64_read(&elt->vars[i]));
-+		dup_elt->var_set[i] = elt->var_set[i];
-+	}
-+
- 	return dup_elt;
+-	ret = traceprobe_command("-:testprobe", create_trace_kprobe);
++	ret = trace_run_command("-:testprobe", create_trace_kprobe);
+ 	if (WARN_ON_ONCE(ret)) {
+ 		pr_warn("error on deleting a probe.\n");
+ 		warn++;
+ 	}
+ 
+-	ret = traceprobe_command("-:testprobe2", create_trace_kprobe);
++	ret = trace_run_command("-:testprobe2", create_trace_kprobe);
+ 	if (WARN_ON_ONCE(ret)) {
+ 		pr_warn("error on deleting a probe.\n");
+ 		warn++;
+diff --git a/kernel/trace/trace_probe.c b/kernel/trace/trace_probe.c
+index 52478f0..d593573 100644
+--- a/kernel/trace/trace_probe.c
++++ b/kernel/trace/trace_probe.c
+@@ -623,92 +623,6 @@ void traceprobe_free_probe_arg(struct probe_arg *arg)
+ 	kfree(arg->comm);
  }
  
-diff --git a/kernel/trace/tracing_map.h b/kernel/trace/tracing_map.h
-index f097511..303bc4f 100644
---- a/kernel/trace/tracing_map.h
-+++ b/kernel/trace/tracing_map.h
-@@ -9,6 +9,7 @@
- #define TRACING_MAP_VALS_MAX		3
- #define TRACING_MAP_FIELDS_MAX		(TRACING_MAP_KEYS_MAX + \
- 					 TRACING_MAP_VALS_MAX)
-+#define TRACING_MAP_VARS_MAX		16
- #define TRACING_MAP_SORT_KEYS_MAX	2
+-int traceprobe_command(const char *buf, int (*createfn)(int, char **))
+-{
+-	char **argv;
+-	int argc, ret;
+-
+-	argc = 0;
+-	ret = 0;
+-	argv = argv_split(GFP_KERNEL, buf, &argc);
+-	if (!argv)
+-		return -ENOMEM;
+-
+-	if (argc)
+-		ret = createfn(argc, argv);
+-
+-	argv_free(argv);
+-
+-	return ret;
+-}
+-
+-#define WRITE_BUFSIZE  4096
+-
+-ssize_t traceprobe_probes_write(struct file *file, const char __user *buffer,
+-				size_t count, loff_t *ppos,
+-				int (*createfn)(int, char **))
+-{
+-	char *kbuf, *buf, *tmp;
+-	int ret = 0;
+-	size_t done = 0;
+-	size_t size;
+-
+-	kbuf = kmalloc(WRITE_BUFSIZE, GFP_KERNEL);
+-	if (!kbuf)
+-		return -ENOMEM;
+-
+-	while (done < count) {
+-		size = count - done;
+-
+-		if (size >= WRITE_BUFSIZE)
+-			size = WRITE_BUFSIZE - 1;
+-
+-		if (copy_from_user(kbuf, buffer + done, size)) {
+-			ret = -EFAULT;
+-			goto out;
+-		}
+-		kbuf[size] = '\0';
+-		buf = kbuf;
+-		do {
+-			tmp = strchr(buf, '\n');
+-			if (tmp) {
+-				*tmp = '\0';
+-				size = tmp - buf + 1;
+-			} else {
+-				size = strlen(buf);
+-				if (done + size < count) {
+-					if (buf != kbuf)
+-						break;
+-					/* This can accept WRITE_BUFSIZE - 2 ('\n' + '\0') */
+-					pr_warn("Line length is too long: Should be less than %d\n",
+-						WRITE_BUFSIZE - 2);
+-					ret = -EINVAL;
+-					goto out;
+-				}
+-			}
+-			done += size;
+-
+-			/* Remove comments */
+-			tmp = strchr(buf, '#');
+-
+-			if (tmp)
+-				*tmp = '\0';
+-
+-			ret = traceprobe_command(buf, createfn);
+-			if (ret)
+-				goto out;
+-			buf += size;
+-
+-		} while (done < count);
+-	}
+-	ret = done;
+-
+-out:
+-	kfree(kbuf);
+-
+-	return ret;
+-}
+-
+ static int __set_print_fmt(struct trace_probe *tp, char *buf, int len,
+ 			   bool is_return)
+ {
+diff --git a/kernel/trace/trace_probe.h b/kernel/trace/trace_probe.h
+index 903273c..fb66e3e 100644
+--- a/kernel/trace/trace_probe.h
++++ b/kernel/trace/trace_probe.h
+@@ -42,7 +42,6 @@
  
- typedef int (*tracing_map_cmp_fn_t) (void *val_a, void *val_b);
-@@ -136,6 +137,8 @@ struct tracing_map_field {
- struct tracing_map_elt {
- 	struct tracing_map		*map;
- 	struct tracing_map_field	*fields;
-+	atomic64_t			*vars;
-+	bool				*var_set;
- 	void				*key;
- 	void				*private_data;
- };
-@@ -191,6 +194,7 @@ struct tracing_map {
- 	int				key_idx[TRACING_MAP_KEYS_MAX];
- 	unsigned int			n_keys;
- 	struct tracing_map_sort_key	sort_key;
-+	unsigned int			n_vars;
- 	atomic64_t			hits;
- 	atomic64_t			drops;
- };
-@@ -247,6 +251,7 @@ struct tracing_map_ops {
- extern int tracing_map_init(struct tracing_map *map);
+ #define MAX_TRACE_ARGS		128
+ #define MAX_ARGSTR_LEN		63
+-#define MAX_EVENT_NAME_LEN	64
+ #define MAX_STRING_SIZE		PATH_MAX
  
- extern int tracing_map_add_sum_field(struct tracing_map *map);
-+extern int tracing_map_add_var(struct tracing_map *map);
- extern int tracing_map_add_key_field(struct tracing_map *map,
- 				     unsigned int offset,
- 				     tracing_map_cmp_fn_t cmp_fn);
-@@ -266,7 +271,13 @@ extern tracing_map_cmp_fn_t tracing_map_cmp_num(int field_size,
+ /* Reserved field names */
+@@ -356,12 +355,6 @@ extern int traceprobe_conflict_field_name(const char *name,
  
- extern void tracing_map_update_sum(struct tracing_map_elt *elt,
- 				   unsigned int i, u64 n);
-+extern void tracing_map_set_var(struct tracing_map_elt *elt,
-+				unsigned int i, u64 n);
-+extern bool tracing_map_var_set(struct tracing_map_elt *elt, unsigned int i);
- extern u64 tracing_map_read_sum(struct tracing_map_elt *elt, unsigned int i);
-+extern u64 tracing_map_read_var(struct tracing_map_elt *elt, unsigned int i);
-+extern u64 tracing_map_read_var_once(struct tracing_map_elt *elt, unsigned int i);
-+
- extern void tracing_map_set_field_descr(struct tracing_map *map,
- 					unsigned int i,
- 					unsigned int key_offset,
+ extern int traceprobe_split_symbol_offset(char *symbol, unsigned long *offset);
+ 
+-extern ssize_t traceprobe_probes_write(struct file *file,
+-		const char __user *buffer, size_t count, loff_t *ppos,
+-		int (*createfn)(int, char**));
+-
+-extern int traceprobe_command(const char *buf, int (*createfn)(int, char**));
+-
+ /* Sum up total data length for dynamic arraies (strings) */
+ static nokprobe_inline int
+ __get_data_size(struct trace_probe *tp, struct pt_regs *regs)
+diff --git a/kernel/trace/trace_uprobe.c b/kernel/trace/trace_uprobe.c
+index a7581fe..402120b 100644
+--- a/kernel/trace/trace_uprobe.c
++++ b/kernel/trace/trace_uprobe.c
+@@ -651,7 +651,7 @@ static int probes_open(struct inode *inode, struct file *file)
+ static ssize_t probes_write(struct file *file, const char __user *buffer,
+ 			    size_t count, loff_t *ppos)
+ {
+-	return traceprobe_probes_write(file, buffer, count, ppos, create_trace_uprobe);
++	return trace_parse_run_command(file, buffer, count, ppos, create_trace_uprobe);
+ }
+ 
+ static const struct file_operations uprobe_events_ops = {
 -- 
 1.9.3
+
