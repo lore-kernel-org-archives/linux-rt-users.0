@@ -1,52 +1,47 @@
-From: Bernhard Landauer <oberon@manjaro.org>
-Subject: Re: [ANNOUNCE] v4.11.7-rt3
-Date: Thu, 29 Jun 2017 11:56:59 +0200
-Message-ID: <7a940c90-206d-05cd-a73d-c5456a60bbfe@manjaro.org>
-References: <20170627135750.dezrobqd4twryeeb@linutronix.de>
- <79973421-cb21-aa5c-29f7-d05dd57283cc@manjaro.org>
- <20170629075000.haum2aiv25pj2xpg@linutronix.de>
+From: David Miller <davem@davemloft.net>
+Subject: Re: kernel (master) build failure w. !CONFIG_NET_RX_BUSY_POLL
+Date: Thu, 29 Jun 2017 15:35:27 -0400 (EDT)
+Message-ID: <20170629.153527.1327069677943074079.davem@davemloft.net>
+References: <1498636860.5505.28.camel@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.manjaro.org ([176.9.38.148]:49386 "EHLO manjaro.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751639AbdF2J5E (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 29 Jun 2017 05:57:04 -0400
-In-Reply-To: <20170629075000.haum2aiv25pj2xpg@linutronix.de>
-Content-Language: en-US
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: Text/Plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8BIT
+Cc: netdev@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: efault@gmx.de
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <1498636860.5505.28.camel@gmx.de>
+Sender: netdev-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 29/06/17 09:50, Sebastian Andrzej Siewior wrote:
-> On 2017-06-29 02:30:12 [+0200], Bernhard Landauer wrote:
->> I'm unable to compile the ndiswrapper extramodule against 4.11.7-rt3
-> I am surprised that this is still needed.
->
->> I get lots of errors of the kind
->>
->> 'struct task_struct' has no member named 'cpus_allowed'; did you mean
->> 'nr_cpus_allowed'?
->>
->> What can I do?
-> You should only need a read copy and ->cpus_ptr is for that.
-ntoskernel.h has this:
+From: Mike Galbraith <efault@gmx.de>
+Date: Wed, 28 Jun 2017 10:01:00 +0200
 
-   #define tsk_cpus_allowed(tsk) (&(tsk)->cpus_allowed)
+> Greetings network wizards,
+> 
+> The latest RT explicitly disables CONFIG_NET_RX_BUSY_POLL, thus
+> uncovering $subject.  Below is what I did about it.
+> 
+> 	-Mike
+> 
+> net: Move napi_hash_add/del() inside CONFIG_NET_RX_BUSY_POLL
+> 
+> Since 545cd5e5ec54 ("net: Busy polling should ignore sender CPUs"),
+> kernel build fails when CONFIG_NET_RX_BUSY_POLL is disabled.  Move
+> napi_hash_add/del() accordingly.
+> 
+> Banged-upon-by: Mike Galbraith <efault@gmx.de>
 
-so should it become:
+First, this is in no way a standard signoff or ack tag.
 
-   #define tsk_cpus_allowed(tsk) ((tsk)->cpus_ptr)
+Second, you must provide the complete set of build failure details
+so that anyone just reading your posting can understand and fully
+review your patch without having to go anywhere else for the
+pertinent information.
 
-?
+And, lastly, I can't see how anything like this could be necessary
+with the way the code is currently structures in the 'net' tree.  This
+is really why you need to make a full report, with build failure
+messages, as well as an explanation of what your change does, and why
+it does it that way.
 
->
->> kind regards
->> Bernhard
-> Sebastian
-
+Thanks.
