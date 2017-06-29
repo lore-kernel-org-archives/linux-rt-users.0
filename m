@@ -1,42 +1,49 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [ANNOUNCE] v4.11.7-rt3
-Date: Thu, 29 Jun 2017 09:50:00 +0200
-Message-ID: <20170629075000.haum2aiv25pj2xpg@linutronix.de>
-References: <20170627135750.dezrobqd4twryeeb@linutronix.de>
- <79973421-cb21-aa5c-29f7-d05dd57283cc@manjaro.org>
+From: "Zhou, Li" <li.zhou@windriver.com>
+Subject: Re: Kernel 4.9.x-rt Fully Preemptible Kernel: Issue with gdb and
+ unexpected SIGSTOP signals
+Date: Thu, 29 Jun 2017 16:42:10 +0800
+Message-ID: <2a824587-65ba-6d37-c22c-7b795512fee9@windriver.com>
+References: <6a05f9f4-9299-4b36-7f11-5e334768880a@windriver.com>
+ <85216e5b-7c2d-9ff7-c118-9279023a1726@windriver.com>
+ <fd047718-33e1-a103-0530-453fadbb2076@windriver.com>
+ <f2d4cc83875c496bb7c1bab25c7a16b5@FE-MBX1012.de.bosch.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Bernhard Landauer <oberon@manjaro.org>
+Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Transfer-Encoding: 7bit
+To: "Koehrer Mathias (ETAS/EHE1)" <mathias.koehrer@etas.com>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:55239 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751855AbdF2HuF (ORCPT
+Received: from mail1.windriver.com ([147.11.146.13]:39477 "EHLO
+        mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751804AbdF2ImB (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 29 Jun 2017 03:50:05 -0400
-Content-Disposition: inline
-In-Reply-To: <79973421-cb21-aa5c-29f7-d05dd57283cc@manjaro.org>
+        Thu, 29 Jun 2017 04:42:01 -0400
+In-Reply-To: <f2d4cc83875c496bb7c1bab25c7a16b5@FE-MBX1012.de.bosch.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-06-29 02:30:12 [+0200], Bernhard Landauer wrote:
-> I'm unable to compile the ndiswrapper extramodule against 4.11.7-rt3
+Hi, Mathias:
 
-I am surprised that this is still needed.
+         Thank you very much for your help. The related changes can 
+solve my issue.
 
-> I get lots of errors of the kind
-> 
-> 'struct task_struct' has no member named 'cpus_allowed'; did you mean
-> 'nr_cpus_allowed'?
-> 
-> What can I do?
 
-You should only need a read copy and ->cpus_ptr is for that.
+On 06/29/2017 03:45 PM, Koehrer Mathias (ETAS/EHE1) wrote:
+> Hi,
+>> Issue with gdb and unexpected SIGSTOP signals" in this mail list, I wonder if there is
+>> any update for this.
+>> I want to follow this thread too, because I meet almost the same issue.
+>> My kernel version is based on rt kernel 4.8.x.
+> According to the announcements this should be fixed with v4.9.33-rt23.
+> Please read the announcements for this version and the one for 4.9.30-rt21.
+>
+> Regards
+>
+> Mathias
+>
 
-> kind regards
-> Bernhard
+-- 
+Best Regards!
+Zhou Li
+Phone number: 86-10-84778511
 
-Sebastian
