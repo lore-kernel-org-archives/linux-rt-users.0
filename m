@@ -1,34 +1,59 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: [ANNOUNCE] v4.11.7-rt3
-Date: Thu, 29 Jun 2017 04:55:13 +0200
-Message-ID: <1498704913.6128.21.camel@gmx.de>
-References: <20170627135750.dezrobqd4twryeeb@linutronix.de>
-         <79973421-cb21-aa5c-29f7-d05dd57283cc@manjaro.org>
+From: Feng Feng24 Liu <liufeng24@lenovo.com>
+Subject: RE: BUG: unable to handle kernel NULL pointer dereference at
+ 0000000000000038 !//RE: kernel BUG at kernel/locking/rtmutex.c:1027
+Date: Thu, 29 Jun 2017 03:06:19 +0000
+Message-ID: <2B18E8E1DDAE074A82D1060396451DAE263CCAD6@CNMAILEX04.lenovo.com>
+References: <2B18E8E1DDAE074A82D1060396451DAE263CBBD6@CNMAILEX04.lenovo.com>
+ <20170626102418.310bb1ce@gandalf.local.home>
+ <20170626145436.npgsaz4eyvnh2j2k@linutronix.de>
+ <20170626155555.GB8190@jcartwri.amer.corp.natinst.com>
+ <2B18E8E1DDAE074A82D1060396451DAE263CC234@CNMAILEX04.lenovo.com>
+ <20170627142757.GA1463@jcartwri.amer.corp.natinst.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 8BIT
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Bernhard Landauer <oberon@manjaro.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <79973421-cb21-aa5c-29f7-d05dd57283cc@manjaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: Sebastian Andrzej Siewior <sebastian.siewior@linutronix.de>,
+        "Steven Rostedt" <rostedt@goodmis.org>,
+        Mike Galbraith <efault@gmx.de>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Julia Cartwright <julia@ni.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail1.bemta8.messagelabs.com ([216.82.243.207]:8286 "EHLO
+        mail1.bemta8.messagelabs.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1751541AbdF2DJz (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 28 Jun 2017 23:09:55 -0400
+In-Reply-To: <20170627142757.GA1463@jcartwri.amer.corp.natinst.com>
+Content-Language: zh-CN
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2017-06-29 at 02:30 +0200, Bernhard Landauer wrote:
-> I'm unable to compile the ndiswrapper extramodule against 4.11.7-rt3
-> 
-> I get lots of errors of the kind
-> 
-> 'struct task_struct' has no member named 'cpus_allowed'; did you mean 
-> 'nr_cpus_allowed'?
-> 
-> What can I do?
+Thanks Julia, I will try it
 
-cpus_allowed became cpus_mask.  Anything (crash.. hohum, yet again)
-that rummages around in the kernels gizzard will have to adapt.
+Thanks
+Feng
 
-	-Mike
+>-----Original Message-----
+>From: Julia Cartwright [mailto:julia@ni.com]
+>Sent: Tuesday, June 27, 2017 10:28 PM
+>To: Feng Feng24 Liu
+>Cc: Sebastian Andrzej Siewior; Steven Rostedt; Mike Galbraith;
+>linux-kernel@vger.kernel.org; linux-rt-users@vger.kernel.org
+>Subject: Re: BUG: unable to handle kernel NULL pointer dereference at
+>0000000000000038 !//RE: kernel BUG at kernel/locking/rtmutex.c:1027
+>
+>On Tue, Jun 27, 2017 at 05:47:41AM +0000, Feng Feng24 Liu wrote:
+>> Hi, Julia
+>> 	Thanks for your kindly hit. I will try this patch
+>> 	The problem is accidental. I will try to reproduce it.
+>> 	BTW, could you help to give the link about the emails which
+>> 	discuss about " nsfs: mark dentry with DCACHE_RCUACCESS ". I
+>> 	cannot find them(just patch email)
+>
+>Conversation upstream started with a syzkaller-found problem here:
+>
+>   https://marc.info/?l=linux-netdev&m=149183505630266&w=2
+>
+>Hopefully that helps,
+>   Julia
