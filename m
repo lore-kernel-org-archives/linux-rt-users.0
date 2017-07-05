@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 4.4.75-rt88
-Date: Wed, 5 Jul 2017 15:32:00 -0400
-Message-ID: <20170705153200.1f11e562@gandalf.local.home>
+Subject: [ANNOUNCE] 3.18.59-rt65
+Date: Wed, 5 Jul 2017 15:32:39 -0400
+Message-ID: <20170705153239.5062d75d@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -19,10 +19,10 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 4.4.75-rt88 stable release.
+I'm pleased to announce the 3.18.59-rt65 stable release.
 
 
-This release is just an update to the new stable 4.4.75 version
+This release is just an update to the new stable 3.18.59 version
 and no RT specific changes have been made.
 
 
@@ -30,17 +30,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v4.4-rt
-  Head SHA1: e20548a8930274683f57c0d2b7d109b23c14a13a
+  branch: v3.18-rt
+  Head SHA1: d5b42d415fd58d56734a79fb997606488eba7ef0
 
 
-Or to build 4.4.75-rt88 directly, the following patches should be applied:
+Or to build 3.18.59-rt65 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.75.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.59.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.75-rt88.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.59-rt65.patch.xz
 
 
 
