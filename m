@@ -1,43 +1,95 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH] cpu_pm: replace raw_notifier to atomic_notifier
-Date: Tue, 11 Jul 2017 17:16:04 +0200
-Message-ID: <20170711151604.nu6pqblxyo4lgnfa@linutronix.de>
-References: <1499330866-19520-1-git-send-email-alex.shi@linaro.org>
- <6cbcde77-8911-8439-9603-b2c1ae1dc595@linaro.org>
- <20170711150634.jwwiamei25q2veyx@linutronix.de>
- <71438284.RUbDNKAoy6@aspire.rjw.lan>
+From: Marcelo Tosatti <mtosatti@redhat.com>
+Subject: Re: [patch 2/2] MM: allow per-cpu vmstat_threshold and vmstat_worker
+ configuration
+Date: Mon, 10 Jul 2017 12:05:20 -0300
+Message-ID: <20170710150520.GA16692@amt.cnet>
+References: <alpine.DEB.2.20.1705121154240.23503@east.gentwo.org>
+ <20170515191531.GA31483@amt.cnet>
+ <alpine.DEB.2.20.1705160825480.32761@east.gentwo.org>
+ <20170519143407.GA19282@amt.cnet>
+ <alpine.DEB.2.20.1705191205580.19631@east.gentwo.org>
+ <20170519134934.0c298882@redhat.com>
+ <20170525193508.GA30252@amt.cnet>
+ <alpine.DEB.2.20.1705252220130.7596@east.gentwo.org>
+ <20170526190926.GA8974@amt.cnet>
+ <alpine.DEB.2.20.1705301310100.7195@east.gentwo.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: open list <linux-kernel@vger.kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Anders Roxell <anders.roxell@linaro.org>,
-        Rik van Riel <riel@redhat.com>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Daniel Lezcano <daniel.lezcano@linaro.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-To: "Rafael J. Wysocki" <rjw@rjwysocki.net>,
-        Alex Shi <alex.shi@linaro.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Luiz Capitulino <lcapitulino@redhat.com>, linux-kernel@vger.kernel.org,
+        linux-mm@kvack.org, Rik van Riel <riel@redhat.com>,
+        Linux RT Users <linux-rt-users@vger.kernel.org>, cmetcalf@mellanox.com
+To: Christoph Lameter <cl@linux.com>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <71438284.RUbDNKAoy6@aspire.rjw.lan>
-Sender: linux-kernel-owner@vger.kernel.org
+In-Reply-To: <alpine.DEB.2.20.1705301310100.7195@east.gentwo.org>
+Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2017-07-11 17:01:09 [+0200], Rafael J. Wysocki wrote:
-> > As far as RT is concerned, I am taking this for the next v4.11 release.
-> > I would appreciate if upstream would apply this as well.
-> > Rafael do you feel responsible for this?
+On Tue, May 30, 2017 at 01:17:41PM -0500, Christoph Lameter wrote:
+> On Fri, 26 May 2017, Marcelo Tosatti wrote:
 > 
-> I can apply this if no one else wants to. :-)
+> > > interrupts and scheduler ticks. But what does this have to do with vmstat?
+> > >
+> > > Show me your dpdk code running and trace the tick on / off events  as well
+> > > as the vmstat invocations. Also show all system calls occurring on the cpu
+> > > that runs dpdk. That is necessary to see what triggers vmstat and how the
+> > > system reacts to the changes to the differentials.
 
-prosze.
+This was in the host, while performing virtual machine migration... Which you can
+say "invalidates the argument" because virtual machine migration takes 
+MUCH longer time than what vmstat_update introduces.
 
-> However, I'd appreciate a resend with a CC to linux-pm@vger.kernel.org for
-> easier processing.
+> >
+> > Sure, i can get that to you. The question remains: Are you arguing
+> > its not valid for a realtime application to use any system call
+> > which changes a vmstat counter?
+> 
+> A true realtime app would be conscientious of its use of the OS services
+> because the use of the services may cause additional latencies and also
+> cause timers etc to fire later. A realtime app that is willing to use
+> these services is therefore willing to tolerate larger latencies. A
+> realtime app that is using OS service may cause the timer tick to be
+> enabled which also causes additional latencies.
+> 
+> I have seen completely OS noise free processing for extended time period
+> when not using OS services and using RDMA for I/O. This fits my use case
+> well.
 
-Alex: please repost.
+People might want to use O/S services.
 
-> Thanks,
-> Rafael
+> If there are really these high latencies because of kworker processing for
+> vmstat then maybe we need a different mechanism there (bh? or other
+> triggers) and maybe we are using far too many counters so that the
+> processing becomes a heavy user of resources.
+> 
+> > Because if they are allowed, then its obvious something like
+> > this is needed.
+> 
+> I am still wondering what benefit there is. Lets get clear on the test
+> load and see if this actually makes sense.
 
-Sebastian
+Ok, test load: 
+
+	* Any userspace app that causes a systemcall which triggers
+	vmstat_update is susceptible to vmstat_update running on that
+	CPU, which might be detrimental to latency.
+
+So either something which moves vmstat_update work to another CPU, 
+or that avoids vmstat_update (which is what the proposed patchset does),
+must be necessary.
+
+So if a customer comes to me and says: "i am using sys_XXX in my
+application, but my latency is high", i'll have to tell him: "ok, please
+don't use that system call since it triggers kernel activity on the CPU
+which does not allow you to achieve the latency you desire".
+
+But it seems the "no syscalls" rule seems to be a good idea for 
+CPU isolated, low latency stuff...
+
+So i give up on the use-case behind this patch.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
