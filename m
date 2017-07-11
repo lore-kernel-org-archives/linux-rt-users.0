@@ -1,95 +1,244 @@
-From: Marcelo Tosatti <mtosatti@redhat.com>
-Subject: Re: [patch 2/2] MM: allow per-cpu vmstat_threshold and vmstat_worker
- configuration
-Date: Mon, 10 Jul 2017 12:05:20 -0300
-Message-ID: <20170710150520.GA16692@amt.cnet>
-References: <alpine.DEB.2.20.1705121154240.23503@east.gentwo.org>
- <20170515191531.GA31483@amt.cnet>
- <alpine.DEB.2.20.1705160825480.32761@east.gentwo.org>
- <20170519143407.GA19282@amt.cnet>
- <alpine.DEB.2.20.1705191205580.19631@east.gentwo.org>
- <20170519134934.0c298882@redhat.com>
- <20170525193508.GA30252@amt.cnet>
- <alpine.DEB.2.20.1705252220130.7596@east.gentwo.org>
- <20170526190926.GA8974@amt.cnet>
- <alpine.DEB.2.20.1705301310100.7195@east.gentwo.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [ANNOUNCE] v4.11.9-rt7
+Date: Tue, 11 Jul 2017 18:15:48 +0200
+Message-ID: <20170711161548.omcfjth6h66frhdb@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Luiz Capitulino <lcapitulino@redhat.com>, linux-kernel@vger.kernel.org,
-        linux-mm@kvack.org, Rik van Riel <riel@redhat.com>,
-        Linux RT Users <linux-rt-users@vger.kernel.org>, cmetcalf@mellanox.com
-To: Christoph Lameter <cl@linux.com>
-Return-path: <owner-linux-mm@kvack.org>
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.20.1705301310100.7195@east.gentwo.org>
-Sender: owner-linux-mm@kvack.org
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, May 30, 2017 at 01:17:41PM -0500, Christoph Lameter wrote:
-> On Fri, 26 May 2017, Marcelo Tosatti wrote:
-> 
-> > > interrupts and scheduler ticks. But what does this have to do with vmstat?
-> > >
-> > > Show me your dpdk code running and trace the tick on / off events  as well
-> > > as the vmstat invocations. Also show all system calls occurring on the cpu
-> > > that runs dpdk. That is necessary to see what triggers vmstat and how the
-> > > system reacts to the changes to the differentials.
+Dear RT folks!
 
-This was in the host, while performing virtual machine migration... Which you can
-say "invalidates the argument" because virtual machine migration takes 
-MUCH longer time than what vmstat_update introduces.
+I'm pleased to announce the v4.11.9-rt7 patch set. 
 
-> >
-> > Sure, i can get that to you. The question remains: Are you arguing
-> > its not valid for a realtime application to use any system call
-> > which changes a vmstat counter?
-> 
-> A true realtime app would be conscientious of its use of the OS services
-> because the use of the services may cause additional latencies and also
-> cause timers etc to fire later. A realtime app that is willing to use
-> these services is therefore willing to tolerate larger latencies. A
-> realtime app that is using OS service may cause the timer tick to be
-> enabled which also causes additional latencies.
-> 
-> I have seen completely OS noise free processing for extended time period
-> when not using OS services and using RDMA for I/O. This fits my use case
-> well.
+Changes since v4.11.9-rt6:
 
-People might want to use O/S services.
+  - Alex Shi fixed a "scheduling while atomic" bug on arm64 in the
+    CPU idle code.
 
-> If there are really these high latencies because of kworker processing for
-> vmstat then maybe we need a different mechanism there (bh? or other
-> triggers) and maybe we are using far too many counters so that the
-> processing becomes a heavy user of resources.
-> 
-> > Because if they are allowed, then its obvious something like
-> > this is needed.
-> 
-> I am still wondering what benefit there is. Lets get clear on the test
-> load and see if this actually makes sense.
+  - Vikram Mulukutla reported a problem where a parked CPU-hotplug
+    thread was still on the runqueue. Patched by Thomas Gleixner.
 
-Ok, test load: 
+Known issues
+	- CPU hotplug got a little better but can deadlock.
 
-	* Any userspace app that causes a systemcall which triggers
-	vmstat_update is susceptible to vmstat_update running on that
-	CPU, which might be detrimental to latency.
+The delta patch against v4.11.9-rt6 is appended below and can be found here:
+ 
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.11/incr/patch-4.11.9-rt6-rt7.patch.xz
 
-So either something which moves vmstat_update work to another CPU, 
-or that avoids vmstat_update (which is what the proposed patchset does),
-must be necessary.
+You can get this release via the git tree at:
 
-So if a customer comes to me and says: "i am using sys_XXX in my
-application, but my latency is high", i'll have to tell him: "ok, please
-don't use that system call since it triggers kernel activity on the CPU
-which does not allow you to achieve the latency you desire".
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.11.9-rt7
 
-But it seems the "no syscalls" rule seems to be a good idea for 
-CPU isolated, low latency stuff...
+The RT patch against v4.11.9 can be found here:
 
-So i give up on the use-case behind this patch.
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.11/older/patch-4.11.9-rt7.patch.xz
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.11/older/patches-4.11.9-rt7.tar.xz
+
+Sebastian
+diff --git a/kernel/cpu.c b/kernel/cpu.c
+--- a/kernel/cpu.c
++++ b/kernel/cpu.c
+@@ -627,13 +627,25 @@ void cpu_hotplug_enable(void)
+ EXPORT_SYMBOL_GPL(cpu_hotplug_enable);
+ #endif	/* CONFIG_HOTPLUG_CPU */
+ 
+-/* Notifier wrappers for transitioning to state machine */
++static void __cpuhp_kick_ap_work(struct cpuhp_cpu_state *st);
+ 
+ static int bringup_wait_for_ap(unsigned int cpu)
+ {
+ 	struct cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
+ 
++	/* Wait for the CPU to reach CPUHP_AP_ONLINE_IDLE */
+ 	wait_for_completion(&st->done);
++	BUG_ON(!cpu_online(cpu));
++
++	/* Unpark the stopper thread and the hotplug thread of the target cpu */
++	stop_machine_unpark(cpu);
++	kthread_unpark(st->thread);
++
++	/* Should we go further up ? */
++	if (st->target > CPUHP_AP_ONLINE_IDLE) {
++		__cpuhp_kick_ap_work(st);
++		wait_for_completion(&st->done);
++	}
+ 	return st->result;
+ }
+ 
+@@ -654,9 +666,7 @@ static int bringup_cpu(unsigned int cpu)
+ 	irq_unlock_sparse();
+ 	if (ret)
+ 		return ret;
+-	ret = bringup_wait_for_ap(cpu);
+-	BUG_ON(!cpu_online(cpu));
+-	return ret;
++	return bringup_wait_for_ap(cpu);
+ }
+ 
+ /*
+@@ -1181,31 +1191,20 @@ void notify_cpu_starting(unsigned int cpu)
+ }
+ 
+ /*
+- * Called from the idle task. We need to set active here, so we can kick off
+- * the stopper thread and unpark the smpboot threads. If the target state is
+- * beyond CPUHP_AP_ONLINE_IDLE we kick cpuhp thread and let it bring up the
+- * cpu further.
++ * Called from the idle task. Wake up the controlling task which brings the
++ * stopper and the hotplug thread of the upcoming CPU up and then delegates
++ * the rest of the online bringup to the hotplug thread.
+  */
+ void cpuhp_online_idle(enum cpuhp_state state)
+ {
+ 	struct cpuhp_cpu_state *st = this_cpu_ptr(&cpuhp_state);
+-	unsigned int cpu = smp_processor_id();
+ 
+ 	/* Happens for the boot cpu */
+ 	if (state != CPUHP_AP_ONLINE_IDLE)
+ 		return;
+ 
+ 	st->state = CPUHP_AP_ONLINE_IDLE;
+-
+-	/* Unpark the stopper thread and the hotplug thread of this cpu */
+-	stop_machine_unpark(cpu);
+-	kthread_unpark(st->thread);
+-
+-	/* Should we go further up ? */
+-	if (st->target > CPUHP_AP_ONLINE_IDLE)
+-		__cpuhp_kick_ap_work(st);
+-	else
+-		complete(&st->done);
++	complete(&st->done);
+ }
+ 
+ /* Requires cpu_add_remove_lock to be held */
+diff --git a/kernel/cpu_pm.c b/kernel/cpu_pm.c
+--- a/kernel/cpu_pm.c
++++ b/kernel/cpu_pm.c
+@@ -22,14 +22,13 @@
+ #include <linux/spinlock.h>
+ #include <linux/syscore_ops.h>
+ 
+-static DEFINE_RWLOCK(cpu_pm_notifier_lock);
+-static RAW_NOTIFIER_HEAD(cpu_pm_notifier_chain);
++static ATOMIC_NOTIFIER_HEAD(cpu_pm_notifier_chain);
+ 
+ static int cpu_pm_notify(enum cpu_pm_event event, int nr_to_call, int *nr_calls)
+ {
+ 	int ret;
+ 
+-	ret = __raw_notifier_call_chain(&cpu_pm_notifier_chain, event, NULL,
++	ret = __atomic_notifier_call_chain(&cpu_pm_notifier_chain, event, NULL,
+ 		nr_to_call, nr_calls);
+ 
+ 	return notifier_to_errno(ret);
+@@ -47,14 +46,7 @@ static int cpu_pm_notify(enum cpu_pm_event event, int nr_to_call, int *nr_calls)
+  */
+ int cpu_pm_register_notifier(struct notifier_block *nb)
+ {
+-	unsigned long flags;
+-	int ret;
+-
+-	write_lock_irqsave(&cpu_pm_notifier_lock, flags);
+-	ret = raw_notifier_chain_register(&cpu_pm_notifier_chain, nb);
+-	write_unlock_irqrestore(&cpu_pm_notifier_lock, flags);
+-
+-	return ret;
++	return atomic_notifier_chain_register(&cpu_pm_notifier_chain, nb);
+ }
+ EXPORT_SYMBOL_GPL(cpu_pm_register_notifier);
+ 
+@@ -69,14 +61,7 @@ EXPORT_SYMBOL_GPL(cpu_pm_register_notifier);
+  */
+ int cpu_pm_unregister_notifier(struct notifier_block *nb)
+ {
+-	unsigned long flags;
+-	int ret;
+-
+-	write_lock_irqsave(&cpu_pm_notifier_lock, flags);
+-	ret = raw_notifier_chain_unregister(&cpu_pm_notifier_chain, nb);
+-	write_unlock_irqrestore(&cpu_pm_notifier_lock, flags);
+-
+-	return ret;
++	return atomic_notifier_chain_unregister(&cpu_pm_notifier_chain, nb);
+ }
+ EXPORT_SYMBOL_GPL(cpu_pm_unregister_notifier);
+ 
+@@ -100,7 +85,6 @@ int cpu_pm_enter(void)
+ 	int nr_calls;
+ 	int ret = 0;
+ 
+-	read_lock(&cpu_pm_notifier_lock);
+ 	ret = cpu_pm_notify(CPU_PM_ENTER, -1, &nr_calls);
+ 	if (ret)
+ 		/*
+@@ -108,7 +92,6 @@ int cpu_pm_enter(void)
+ 		 * PM entry who are notified earlier to prepare for it.
+ 		 */
+ 		cpu_pm_notify(CPU_PM_ENTER_FAILED, nr_calls - 1, NULL);
+-	read_unlock(&cpu_pm_notifier_lock);
+ 
+ 	return ret;
+ }
+@@ -128,13 +111,7 @@ EXPORT_SYMBOL_GPL(cpu_pm_enter);
+  */
+ int cpu_pm_exit(void)
+ {
+-	int ret;
+-
+-	read_lock(&cpu_pm_notifier_lock);
+-	ret = cpu_pm_notify(CPU_PM_EXIT, -1, NULL);
+-	read_unlock(&cpu_pm_notifier_lock);
+-
+-	return ret;
++	return cpu_pm_notify(CPU_PM_EXIT, -1, NULL);
+ }
+ EXPORT_SYMBOL_GPL(cpu_pm_exit);
+ 
+@@ -159,7 +136,6 @@ int cpu_cluster_pm_enter(void)
+ 	int nr_calls;
+ 	int ret = 0;
+ 
+-	read_lock(&cpu_pm_notifier_lock);
+ 	ret = cpu_pm_notify(CPU_CLUSTER_PM_ENTER, -1, &nr_calls);
+ 	if (ret)
+ 		/*
+@@ -167,7 +143,6 @@ int cpu_cluster_pm_enter(void)
+ 		 * PM entry who are notified earlier to prepare for it.
+ 		 */
+ 		cpu_pm_notify(CPU_CLUSTER_PM_ENTER_FAILED, nr_calls - 1, NULL);
+-	read_unlock(&cpu_pm_notifier_lock);
+ 
+ 	return ret;
+ }
+@@ -190,13 +165,7 @@ EXPORT_SYMBOL_GPL(cpu_cluster_pm_enter);
+  */
+ int cpu_cluster_pm_exit(void)
+ {
+-	int ret;
+-
+-	read_lock(&cpu_pm_notifier_lock);
+-	ret = cpu_pm_notify(CPU_CLUSTER_PM_EXIT, -1, NULL);
+-	read_unlock(&cpu_pm_notifier_lock);
+-
+-	return ret;
++	return cpu_pm_notify(CPU_CLUSTER_PM_EXIT, -1, NULL);
+ }
+ EXPORT_SYMBOL_GPL(cpu_cluster_pm_exit);
+ 
+diff --git a/localversion-rt b/localversion-rt
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt6
++-rt7
