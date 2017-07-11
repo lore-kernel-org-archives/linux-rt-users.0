@@ -1,47 +1,206 @@
-From: John Ogness <john.ogness@linutronix.de>
-Subject: Re: Realtime tasks and cgroups (cpu.shares)
-Date: Mon, 10 Jul 2017 15:39:14 +0200
-Message-ID: <87fue4h0n1.fsf@linutronix.de>
-References: <cb8cd411e19f4039b7edf024b7762041@FE-MBX1012.de.bosch.com>
+From: Alex Shi <alex.shi@linaro.org>
+Subject: Re: [PATCH] cpu_pm: replace raw_notifier to atomic_notifier
+Date: Tue, 11 Jul 2017 22:42:04 +0800
+Message-ID: <6cbcde77-8911-8439-9603-b2c1ae1dc595@linaro.org>
+References: <1499330866-19520-1-git-send-email-alex.shi@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: "Koehrer Mathias \(ETAS\/EHE1\)" <mathias.koehrer@etas.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Anders Roxell <anders.roxell@linaro.org>,
+        Rik van Riel <riel@redhat.com>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>,
+        Daniel Lezcano <daniel.lezcano@linaro.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+To: open list <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:39348 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1754005AbdGJNjR (ORCPT
+Received: from mail-pf0-f170.google.com ([209.85.192.170]:34363 "EHLO
+        mail-pf0-f170.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S933172AbdGKOmP (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 10 Jul 2017 09:39:17 -0400
-In-Reply-To: <cb8cd411e19f4039b7edf024b7762041@FE-MBX1012.de.bosch.com>
-        (Koehrer Mathias's message of "Mon, 10 Jul 2017 12:57:05 +0000")
+        Tue, 11 Jul 2017 10:42:15 -0400
+Received: by mail-pf0-f170.google.com with SMTP id q85so790255pfq.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 11 Jul 2017 07:42:09 -0700 (PDT)
+In-Reply-To: <1499330866-19520-1-git-send-email-alex.shi@linaro.org>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Mathias,
+It is a serious bug: add a waiting lock in idle and cause boot failure
+in arm/arm64 RT.
 
-On 2017-07-10, Koehrer Mathias (ETAS/EHE1) <mathias.koehrer@etas.com> wrote:
-> is it possible to combine real time tasks and cgroups (in particular
-> cpu.shares)? The background of the question is the following:
-> If a real time task hangs by accident in an endless loop, it blocks
-> the complete access to the system.  One idea could be to reserve a
-> small percentage of the CPU for non real time stuff to avoid these
-> kind of situations.
+Any more comments for this change?
 
-For your particular situation, that is what the following proc-settings
-are for:
-
-   /proc/sys/kernel/sched_rt_period_us
-   /proc/sys/kernel/sched_rt_runtime_us
-
-However, be aware that these settings apply collectively to *all*
-realtime processes within a period. You need to be certain that a
-correctly running system is never in danger of hitting these
-deadlines. Otherwise you have crippled your realtime system.
-
-For cgroups, I assume you are referring to CONFIG_CFS_BANDWIDTH. I
-expect this would work as well, but personally have no experience using
-cgroups in this manner and am not certain that it has no adverse affects
-on realtime scheduling.
-
-John Ogness
+On 07/06/2017 04:47 PM, Alex Shi wrote:
+> This patch replace a rwlock and raw notifier by atomic notifier which
+> protected by spin_lock and rcu.
+> 
+> The first to reason to have this replace is due to a 'scheduling while
+>  atomic' bug of RT kernel on arm/arm64 platform. On arm/arm64, rwlock
+> cpu_pm_notifier_lock in cpu_pm cause a potential schedule after irq
+> disable in idle call chain:
+> 
+> cpu_startup_entry
+>   cpu_idle_loop
+>     local_irq_disable()
+>     cpuidle_idle_call
+>       call_cpuidle
+>         cpuidle_enter
+>           cpuidle_enter_state
+>             ->enter :arm_enter_idle_state
+>               cpu_pm_enter/exit
+>                 CPU_PM_CPU_IDLE_ENTER
+>                   read_lock(&cpu_pm_notifier_lock); <-- sleep in idle
+>                      __rt_spin_lock();
+>                         schedule();
+> 
+> The kernel panic is here:
+> [    4.609601] BUG: scheduling while atomic: swapper/1/0/0x00000002
+> [    4.609608] [<ffff0000086fae70>] arm_enter_idle_state+0x18/0x70
+> [    4.609614] Modules linked in:
+> [    4.609615] [<ffff0000086f9298>] cpuidle_enter_state+0xf0/0x218
+> [    4.609620] [<ffff0000086f93f8>] cpuidle_enter+0x18/0x20
+> [    4.609626] Preemption disabled at:
+> [    4.609627] [<ffff0000080fa234>] call_cpuidle+0x24/0x40
+> [    4.609635] [<ffff000008882fa4>] schedule_preempt_disabled+0x1c/0x28
+> [    4.609639] [<ffff0000080fa49c>] cpu_startup_entry+0x154/0x1f8
+> [    4.609645] [<ffff00000808e004>] secondary_start_kernel+0x15c/0x1a0
+> 
+> Daniel Lezcano said this notification is needed on arm/arm64 platforms.
+> Sebastian suggested using atomic_notifier instead of rwlock, which is not
+> only removing the sleeping in idle, but also getting better latency
+> improvement.
+> 
+> This patch passed Fengguang's 0day testing.
+> 
+> Signed-off-by: Alex Shi <alex.shi@linaro.org>
+> Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> Cc: Thomas Gleixner <tglx@linutronix.de>
+> Cc: Anders Roxell <anders.roxell@linaro.org>
+> Cc: Rik van Riel <riel@redhat.com>
+> Cc: Steven Rostedt <rostedt@goodmis.org>
+> Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+> Cc: Daniel Lezcano <daniel.lezcano@linaro.org>
+> Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+> ---
+>  kernel/cpu_pm.c | 43 ++++++-------------------------------------
+>  1 file changed, 6 insertions(+), 37 deletions(-)
+> 
+> diff --git a/kernel/cpu_pm.c b/kernel/cpu_pm.c
+> index 009cc9a..10f4640 100644
+> --- a/kernel/cpu_pm.c
+> +++ b/kernel/cpu_pm.c
+> @@ -22,14 +22,13 @@
+>  #include <linux/spinlock.h>
+>  #include <linux/syscore_ops.h>
+>  
+> -static DEFINE_RWLOCK(cpu_pm_notifier_lock);
+> -static RAW_NOTIFIER_HEAD(cpu_pm_notifier_chain);
+> +static ATOMIC_NOTIFIER_HEAD(cpu_pm_notifier_chain);
+>  
+>  static int cpu_pm_notify(enum cpu_pm_event event, int nr_to_call, int *nr_calls)
+>  {
+>  	int ret;
+>  
+> -	ret = __raw_notifier_call_chain(&cpu_pm_notifier_chain, event, NULL,
+> +	ret = __atomic_notifier_call_chain(&cpu_pm_notifier_chain, event, NULL,
+>  		nr_to_call, nr_calls);
+>  
+>  	return notifier_to_errno(ret);
+> @@ -47,14 +46,7 @@ static int cpu_pm_notify(enum cpu_pm_event event, int nr_to_call, int *nr_calls)
+>   */
+>  int cpu_pm_register_notifier(struct notifier_block *nb)
+>  {
+> -	unsigned long flags;
+> -	int ret;
+> -
+> -	write_lock_irqsave(&cpu_pm_notifier_lock, flags);
+> -	ret = raw_notifier_chain_register(&cpu_pm_notifier_chain, nb);
+> -	write_unlock_irqrestore(&cpu_pm_notifier_lock, flags);
+> -
+> -	return ret;
+> +	return atomic_notifier_chain_register(&cpu_pm_notifier_chain, nb);
+>  }
+>  EXPORT_SYMBOL_GPL(cpu_pm_register_notifier);
+>  
+> @@ -69,14 +61,7 @@ EXPORT_SYMBOL_GPL(cpu_pm_register_notifier);
+>   */
+>  int cpu_pm_unregister_notifier(struct notifier_block *nb)
+>  {
+> -	unsigned long flags;
+> -	int ret;
+> -
+> -	write_lock_irqsave(&cpu_pm_notifier_lock, flags);
+> -	ret = raw_notifier_chain_unregister(&cpu_pm_notifier_chain, nb);
+> -	write_unlock_irqrestore(&cpu_pm_notifier_lock, flags);
+> -
+> -	return ret;
+> +	return atomic_notifier_chain_unregister(&cpu_pm_notifier_chain, nb);
+>  }
+>  EXPORT_SYMBOL_GPL(cpu_pm_unregister_notifier);
+>  
+> @@ -100,7 +85,6 @@ int cpu_pm_enter(void)
+>  	int nr_calls;
+>  	int ret = 0;
+>  
+> -	read_lock(&cpu_pm_notifier_lock);
+>  	ret = cpu_pm_notify(CPU_PM_ENTER, -1, &nr_calls);
+>  	if (ret)
+>  		/*
+> @@ -108,7 +92,6 @@ int cpu_pm_enter(void)
+>  		 * PM entry who are notified earlier to prepare for it.
+>  		 */
+>  		cpu_pm_notify(CPU_PM_ENTER_FAILED, nr_calls - 1, NULL);
+> -	read_unlock(&cpu_pm_notifier_lock);
+>  
+>  	return ret;
+>  }
+> @@ -128,13 +111,7 @@ EXPORT_SYMBOL_GPL(cpu_pm_enter);
+>   */
+>  int cpu_pm_exit(void)
+>  {
+> -	int ret;
+> -
+> -	read_lock(&cpu_pm_notifier_lock);
+> -	ret = cpu_pm_notify(CPU_PM_EXIT, -1, NULL);
+> -	read_unlock(&cpu_pm_notifier_lock);
+> -
+> -	return ret;
+> +	return cpu_pm_notify(CPU_PM_EXIT, -1, NULL);
+>  }
+>  EXPORT_SYMBOL_GPL(cpu_pm_exit);
+>  
+> @@ -159,7 +136,6 @@ int cpu_cluster_pm_enter(void)
+>  	int nr_calls;
+>  	int ret = 0;
+>  
+> -	read_lock(&cpu_pm_notifier_lock);
+>  	ret = cpu_pm_notify(CPU_CLUSTER_PM_ENTER, -1, &nr_calls);
+>  	if (ret)
+>  		/*
+> @@ -167,7 +143,6 @@ int cpu_cluster_pm_enter(void)
+>  		 * PM entry who are notified earlier to prepare for it.
+>  		 */
+>  		cpu_pm_notify(CPU_CLUSTER_PM_ENTER_FAILED, nr_calls - 1, NULL);
+> -	read_unlock(&cpu_pm_notifier_lock);
+>  
+>  	return ret;
+>  }
+> @@ -190,13 +165,7 @@ EXPORT_SYMBOL_GPL(cpu_cluster_pm_enter);
+>   */
+>  int cpu_cluster_pm_exit(void)
+>  {
+> -	int ret;
+> -
+> -	read_lock(&cpu_pm_notifier_lock);
+> -	ret = cpu_pm_notify(CPU_CLUSTER_PM_EXIT, -1, NULL);
+> -	read_unlock(&cpu_pm_notifier_lock);
+> -
+> -	return ret;
+> +	return cpu_pm_notify(CPU_CLUSTER_PM_EXIT, -1, NULL);
+>  }
+>  EXPORT_SYMBOL_GPL(cpu_cluster_pm_exit);
+>  
+> 
