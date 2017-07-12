@@ -1,68 +1,46 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: Re: [PATCH 00/32] tracing: Inter-event (e.g. latency) support
-Date: Wed, 12 Jul 2017 14:17:38 -0500
-Message-ID: <1499887058.3995.28.camel@tzanussi-mobl.amr.corp.intel.com>
+Subject: Re: [PATCH 00/32]  tracing: Inter-event (e.g. latency) support
+Date: Wed, 12 Jul 2017 14:20:39 -0500
+Message-ID: <1499887239.3995.30.camel@tzanussi-mobl.amr.corp.intel.com>
 References: <cover.1498510759.git.tom.zanussi@linux.intel.com>
-         <CAEi0qN=FNd056iBufikmRuuVLUPZbsYH=bAZNVnaOmRVjoQHuw@mail.gmail.com>
+         <20170704161240.4qmwbm4gcy474tc4@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
         namhyung@kernel.org, vedang.patel@intel.com,
-        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org
-To: "Joel Fernandes (Google)" <joel.opensrc@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAEi0qN=FNd056iBufikmRuuVLUPZbsYH=bAZNVnaOmRVjoQHuw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mga03.intel.com ([134.134.136.65]:15930 "EHLO mga03.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751871AbdGLTUr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 12 Jul 2017 15:20:47 -0400
+In-Reply-To: <20170704161240.4qmwbm4gcy474tc4@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Joel,
+Hi Sebastian,
 
-Sorry for the delayed reply, was out for the holidays..
-
-On Sat, 2017-07-01 at 00:01 -0700, Joel Fernandes (Google) wrote:
-> Hi Tom,
-> Nice series and nice ELC talk as well. Thanks.
-> 
-> On Mon, Jun 26, 2017 at 3:49 PM, Tom Zanussi
-> <tom.zanussi@linux.intel.com> wrote:
+On Tue, 2017-07-04 at 18:12 +0200, Sebastian Andrzej Siewior wrote:
+> On 2017-06-26 17:49:00 [-0500], Tom Zanussi wrote:
 > > This patchset adds support for 'inter-event' quantities to the trace
 > > event subsystem.  The most important example of inter-event quantities
 > > are latencies, or the time differences between two events.
+> …
 > 
-> I tried your patches out and they are working fine for me. I will test
-> them out more.
-> 
-> I think for the wakeup latency in your examples, its better / more
-> accurate to use sched_waking instead of sched_wakeup tracepoint? [1]
-> 
+> I took this series and pushed into my v4.11 RT tree and removed the
+> "old" latency hist patches I had there.
 
-Yeah, makes sense - thanks for pointing it out.
+That's great, thanks!
 
-> Also, one other comment I had is, it would be nice to suppress the
-> output of individual trace events that are part of the synthetic event
-> into the trace buffer. Otherwise I feel the value of it is slightly
-> diminished - because one can simply post-process the individual
-> non-synthetic trace events themselves to get wake up latencies which
-> the synthetic events is trying to calculate in the first place.
-> Inorder to conserve space, if a user doesn't care about individual
-> events, and just the synthetic events then the individual ones
-> shouldn't be written to the trace buffer IMO.
+> Please keep me in CC if you post new versions of this series.
 > 
 
-Yes, you're right, this is also something I need to fix.  I added a flag
-to avoid discards, but this has the effect of, well, avoiding discards,
-so unwanted events appear in the trace buffer.  Also, regardless, any
-trigger that exists simply to provide input to a synthetic event should
-be filtered out, regardless of the enable state.  I'll have to think
-about a better way do handle all this...
-
-Thanks,
+I will, and will have a new version coming soon. ;-)
 
 Tom
 
-> -Joel
-> 
-> [1] commit fbd705a0c6184580d0e2fbcbd47a37b6e5822511 (sched: Introduce
-> the 'trace_sched_waking' tracepoint)
+> Sebastian
+
+
