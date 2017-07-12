@@ -1,53 +1,41 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-        <u.kleine-koenig@pengutronix.de>
-Subject: Re: [PATCH] backfire: fix build failure for 4.11+ kernels
-Date: Wed, 12 Jul 2017 10:42:18 +0200
-Message-ID: <20170712084218.mkw22vz7qpoaunhf@pengutronix.de>
-References: <1499795099-29710-1-git-send-email-marcelo.cerri@canonical.com>
+From: Phil Edworthy <phil.edworthy@renesas.com>
+Subject: hrtimers with ARM architected timer
+Date: Wed, 12 Jul 2017 13:55:34 +0000
+Message-ID: <HK2PR0601MB139370058E9696E9648BC8CCF5AF0@HK2PR0601MB1393.apcprd06.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Cc: Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>,
-        rt-users <linux-rt-users@vger.kernel.org>
-To: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+To: rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.4.pengutronix.de ([92.198.50.35]:37535 "EHLO
-        metis.ext.4.pengutronix.de" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1756858AbdGLImY (ORCPT
+Received: from relmlor4.renesas.com ([210.160.252.174]:55902 "EHLO
+        relmlie3.idc.renesas.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1752305AbdGLNzj (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 12 Jul 2017 04:42:24 -0400
-Content-Disposition: inline
-In-Reply-To: <1499795099-29710-1-git-send-email-marcelo.cerri@canonical.com>
+        Wed, 12 Jul 2017 09:55:39 -0400
+Received: from relmlii2.idc.renesas.com (relmlii2.idc.renesas.com [10.200.68.66])
+        by relmlir2.idc.renesas.com (Postfix) with ESMTP id 735447ECA3
+        for <linux-rt-users@vger.kernel.org>; Wed, 12 Jul 2017 22:55:37 +0900 (JST)
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, Jul 11, 2017 at 02:44:59PM -0300, Marcelo Henrique Cerri wrote:
-> Since v4.11-rc1~18^2~76, kill_pid() is declared in
-> "linux/sched/signal.h" instead of in "linux/sched.h".
-> 
-> Include the correct header file based on the kernel version to keep
-> it compatible with older kernels.
-> 
-> Signed-off-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
+Hi,
 
-When talking on irc to Sebastian we thought it a better idea to just
-remove backfire. I patched if already in the past for the debian
-packaging to build on 2.6.32 and 3.6 which were the versions available
-in Debian back then. That also means that the patch in question here
-isn't sufficient to make backfire build on 4.11. In fact it doesn't
-compile since 2.6.39-rc1 when SPIN_LOCK_UNLOCKED was killed in
-d04fa5a3ba06 ("locking: Remove deprecated lock initializers").
+I'm new to rt-linux, so please forgive me if I ask some dumb questions.
+I have searched for a while, but not found what I am looking for.
 
-@John and Clark: Which branch do you want me to base a "remove bitrotten
-backfire" patch on? IMHO there is a bit of chaos there because the v1.1
-tag bases on v2.0 and has VERSION = 2.0 in Makefile. stable/v1.0
-bases on v1.0, while unstable/devel/v1.1.1 bases on v1.1 and v1.1.1
-seems to be its target version?
+I'm trying out the rt-linux patches (v4.9.35) on an out-of-tree BSP for
+a new ARM Cortex A7 device. When I tried cyclictest, it complained that
+I don't have High Resolution timers, so I checked and sure enough
+/proc/timer_list showed the timer resolution is 10ms. I've checked my
+kernel config and I have enabled hrtimers.
 
-Best regards
-Uwe
+This device uses the ARM architected timer (CONFIG_ARM_ARCH_TIMER)
+running at a lowly 6.25MHz.
 
--- 
-Pengutronix e.K.                           | Uwe Kleine-König            |
-Industrial Linux Solutions                 | http://www.pengutronix.de/  |
+So, how can I tell if a driver is supposed to support hrtimers?
+If the ARM architected timer driver does support hrtimers, what could
+stop them being used?
+
+Thanks
+Phil
