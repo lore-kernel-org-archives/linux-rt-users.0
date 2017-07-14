@@ -1,116 +1,91 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH] backfire: fix build failure for 4.11+ kernels
-Date: Fri, 14 Jul 2017 02:06:14 +0200 (CEST)
-Message-ID: <alpine.LFD.2.20.1707140205460.12788@planxty>
-References: <1499795099-29710-1-git-send-email-marcelo.cerri@canonical.com> <20170712084218.mkw22vz7qpoaunhf@pengutronix.de> <alpine.LFD.2.20.1707131719280.12788@planxty> <20170713163948.kzj4yfqm7fejswly@pengutronix.de>
+From: Namhyung Kim <namhyung@kernel.org>
+Subject: Re: [PATCH 01/32] tracing: Add hist_field_name() accessor
+Date: Fri, 14 Jul 2017 11:19:38 +0900
+Message-ID: <20170714021938.GC6959@sejong>
+References: <cover.1498510759.git.tom.zanussi@linux.intel.com>
+ <a0f2699176fffe26bce68cc78811b573fe83636e.1498510759.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; BOUNDARY="-1463804494-912263818-1499990775=:12788"
-Cc: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>,
-        Clark Williams <williams@redhat.com>,
-        rt-users <linux-rt-users@vger.kernel.org>
-To: =?ISO-8859-15?Q?Uwe_Kleine-K=F6nig?=
-        <u.kleine-koenig@pengutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f65.google.com ([74.125.82.65]:33629 "EHLO
-        mail-wm0-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751198AbdGNAGS (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 13 Jul 2017 20:06:18 -0400
-Received: by mail-wm0-f65.google.com with SMTP id j85so7966642wmj.0
-        for <linux-rt-users@vger.kernel.org>; Thu, 13 Jul 2017 17:06:17 -0700 (PDT)
-In-Reply-To: <20170713163948.kzj4yfqm7fejswly@pengutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
+        vedang.patel@intel.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org, kernel-team@lge.com
+To: Tom Zanussi <tom.zanussi@linux.intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <a0f2699176fffe26bce68cc78811b573fe83636e.1498510759.git.tom.zanussi@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+Hi Tom,
 
----1463804494-912263818-1499990775=:12788
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8BIT
-
-
-
-On Thu, 13 Jul 2017, Uwe Kleine-König wrote:
-
-> Hello John,
+On Mon, Jun 26, 2017 at 05:49:02PM -0500, Tom Zanussi wrote:
+> In preparation for hist_fields that won't be strictly based on
+> trace_event_fields, add a new hist_field_name() accessor to allow that
+> flexibility and update associated users.
 > 
-> On Thu, Jul 13, 2017 at 05:26:08PM +0200, John Kacur wrote:
-> > On Wed, 12 Jul 2017, Uwe Kleine-König wrote:
-> > > On Tue, Jul 11, 2017 at 02:44:59PM -0300, Marcelo Henrique Cerri wrote:
-> > > > Since v4.11-rc1~18^2~76, kill_pid() is declared in
-> > > > "linux/sched/signal.h" instead of in "linux/sched.h".
-> > > > 
-> > > > Include the correct header file based on the kernel version to keep
-> > > > it compatible with older kernels.
-> > > > 
-> > > > Signed-off-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
-> > > 
-> > > When talking on irc to Sebastian we thought it a better idea to just
-> > > remove backfire. I patched if already in the past for the debian
-> > > packaging to build on 2.6.32 and 3.6 which were the versions available
-> > > in Debian back then. That also means that the patch in question here
-> > > isn't sufficient to make backfire build on 4.11. In fact it doesn't
-> > > compile since 2.6.39-rc1 when SPIN_LOCK_UNLOCKED was killed in
-> > > d04fa5a3ba06 ("locking: Remove deprecated lock initializers").
-> > > 
-> > > @John and Clark: Which branch do you want me to base a "remove bitrotten
-> > > backfire" patch on? IMHO there is a bit of chaos there because the v1.1
-> > > tag bases on v2.0 and has VERSION = 2.0 in Makefile. stable/v1.0
-> > > bases on v1.0, while unstable/devel/v1.1.1 bases on v1.1 and v1.1.1
-> > > seems to be its target version?
-> > > 
-> > > Best regards
-> > > Uwe
-> > 
-> > Hmmn, I find the idea of backfire kinda neat, my first instinct is to
-> > say, why can't we fix this? If something is broken in the devel version
-> > too, that's okay with me, you can disable that part if you want to
-> > ship the devel version.
+> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> ---
+>  kernel/trace/trace_events_hist.c | 68 +++++++++++++++++++++++++++-------------
+>  1 file changed, 46 insertions(+), 22 deletions(-)
 > 
-> "neat" isn't IMHO enough to justify keeping that. If nobody is using it
-> and even nobody notices that it doesn't compile on kernels released in
-> the last 6 years ...
+> diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+> index 1c21d0e..91ffc39 100644
+> --- a/kernel/trace/trace_events_hist.c
+> +++ b/kernel/trace/trace_events_hist.c
+> @@ -146,6 +146,23 @@ struct hist_trigger_data {
+>  	struct tracing_map		*map;
+>  };
 >  
-> > The naming chaos is my fault, it took my awhile to settle on naming
-> > the devel version. However I wonder if something is wrong with your
-> > local repo, because I thought I had cleaned that all up? I don't
-> > see VERSION = 2.0 in the makefile for example.
-> 
-> It's not my local repo:
-> 
-> 	uwe@taurus:~$ git clone git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.gitCloning into 'rt-tests'...
-> 	remote: Counting objects: 2917, done.
-> 	remote: Total 2917 (delta 0), reused 0 (delta 0)
-> 	Receiving objects: 100% (2917/2917), 739.04 KiB | 0 bytes/s, done.
-> 	Resolving deltas: 100% (1898/1898), done.
-> 	uwe@taurus:~$ cd rt-tests/
-> 	uwe@taurus:~/rt-tests$ git show v1.1:Makefile | grep ^VERSION
-> 	VERSION = 2.0
-> 
-I fixed the above over a year ago
+> +static const char *hist_field_name(struct hist_field *field,
+> +				   unsigned int level)
+> +{
+> +	const char *field_name = "";
+> +
+> +	if (level > 1)
+> +		return field_name;
+> +
+> +	if (field->field)
+> +		field_name = field->field->name;
+> +
+> +	if (field_name == NULL)
+> +		field_name = "";
+> +
+> +	return field_name;
+> +}
+> +
+>  static hist_field_fn_t select_value_fn(int field_size, int field_is_signed)
+>  {
+>  	hist_field_fn_t fn = NULL;
+> @@ -653,7 +670,6 @@ static int is_descending(const char *str)
+>  static int create_sort_keys(struct hist_trigger_data *hist_data)
+>  {
+>  	char *fields_str = hist_data->attrs->sort_key_str;
+> -	struct ftrace_event_field *field = NULL;
+>  	struct tracing_map_sort_key *sort_key;
+>  	int descending, ret = 0;
+>  	unsigned int i, j;
+> @@ -670,7 +686,9 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
+>  	}
+>  
+>  	for (i = 0; i < TRACING_MAP_SORT_KEYS_MAX; i++) {
+> +		struct hist_field *hist_field;
+>  		char *field_str, *field_name;
+> +		const char *test_name;
+>  
+>  		sort_key = &hist_data->sort_keys[i];
+>  
+> @@ -703,8 +721,11 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
+>  		}
+>  
+>  		for (j = 1; j < hist_data->n_fields; j++) {
+> -			field = hist_data->fields[j]->field;
+> -			if (field && (strcmp(field_name, field->name) == 0)) {
+> +			hist_field = hist_data->fields[j];
+> +			test_name = hist_field_name(hist_field, 0);
+> +			if (test_name == NULL)
+> +				continue;
 
-git show c8ce47ae170a
-commit c8ce47ae170a2d6d1634ad948c56113ec8d64b64
-Author: John Kacur <jkacur@redhat.com>
-Date:   Thu Jun 23 12:19:05 2016 +0200
+The hist_field_name() don't return NULL.
 
-    rt-tests: Makefile, change version to 1.1
-    
-    Rethinking the naming scheme, so changing the development line from 
-2.0
-    to 1.1
-    
-    Signed-off-by: John Kacur <jkacur@redhat.com>
-
-diff --git a/Makefile b/Makefile
-index a54d82bd8964..d60282e05931 100644
---- a/Makefile
-+++ b/Makefile
-@@ -1,4 +1,4 @@
--VERSION = 2.0
-+VERSION = 1.1
- CC?=$(CROSS_COMPILE)gcc
- AR?=$(CROSS_COMPILE)ar
-
----1463804494-912263818-1499990775=:12788--
+Thanks,
+Namhyung
