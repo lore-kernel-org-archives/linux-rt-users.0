@@ -1,9 +1,9 @@
 From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [PATCH 01/32] tracing: Add hist_field_name() accessor
-Date: Fri, 14 Jul 2017 11:19:38 +0900
-Message-ID: <20170714021938.GC6959@sejong>
+Subject: Re: [PATCH 02/32] tracing: Reimplement log2
+Date: Fri, 14 Jul 2017 11:33:21 +0900
+Message-ID: <20170714023321.GD6959@sejong>
 References: <cover.1498510759.git.tom.zanussi@linux.intel.com>
- <a0f2699176fffe26bce68cc78811b573fe83636e.1498510759.git.tom.zanussi@linux.intel.com>
+ <032f7234ba8aef8428ed717f624e805e1d0e5524.1498510759.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
@@ -12,80 +12,96 @@ Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
 To: Tom Zanussi <tom.zanussi@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <a0f2699176fffe26bce68cc78811b573fe83636e.1498510759.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <032f7234ba8aef8428ed717f624e805e1d0e5524.1498510759.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Tom,
-
-On Mon, Jun 26, 2017 at 05:49:02PM -0500, Tom Zanussi wrote:
-> In preparation for hist_fields that won't be strictly based on
-> trace_event_fields, add a new hist_field_name() accessor to allow that
-> flexibility and update associated users.
+On Mon, Jun 26, 2017 at 05:49:03PM -0500, Tom Zanussi wrote:
+> log2 as currently implemented applies only to u64 trace_event_field
+> derived fields, and assumes that anything it's applied to is a u64
+> field.
+> 
+> To prepare for synthetic fields like latencies, log2 should be
+> applicable to those as well, so take the opportunity now to fix the
+> current problems as well as expand to more general uses.
+> 
+> log2 should be thought of as a chaining function rather than a field
+> type.  To enable this as well as possible future function
+> implementations, add a hist_field operand array into the hist_field
+> definition for this purpose, and make use of it to implement the log2
+> 'function'.
 > 
 > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 > ---
->  kernel/trace/trace_events_hist.c | 68 +++++++++++++++++++++++++++-------------
->  1 file changed, 46 insertions(+), 22 deletions(-)
+>  kernel/trace/trace_events_hist.c | 31 +++++++++++++++++++++++++++----
+>  1 file changed, 27 insertions(+), 4 deletions(-)
 > 
 > diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-> index 1c21d0e..91ffc39 100644
+> index 91ffc39..7b55956 100644
 > --- a/kernel/trace/trace_events_hist.c
 > +++ b/kernel/trace/trace_events_hist.c
-> @@ -146,6 +146,23 @@ struct hist_trigger_data {
->  	struct tracing_map		*map;
+> @@ -28,12 +28,16 @@
+>  
+>  typedef u64 (*hist_field_fn_t) (struct hist_field *field, void *event);
+>  
+> +#define HIST_FIELD_OPERANDS_MAX	2
+> +
+>  struct hist_field {
+>  	struct ftrace_event_field	*field;
+>  	unsigned long			flags;
+>  	hist_field_fn_t			fn;
+>  	unsigned int			size;
+>  	unsigned int			offset;
+> +	unsigned int                    is_signed;
+> +	struct hist_field		*operands[HIST_FIELD_OPERANDS_MAX];
 >  };
 >  
-> +static const char *hist_field_name(struct hist_field *field,
-> +				   unsigned int level)
-> +{
-> +	const char *field_name = "";
-> +
-> +	if (level > 1)
-> +		return field_name;
-> +
-> +	if (field->field)
-> +		field_name = field->field->name;
-> +
-> +	if (field_name == NULL)
-> +		field_name = "";
-> +
-> +	return field_name;
-> +}
-> +
->  static hist_field_fn_t select_value_fn(int field_size, int field_is_signed)
+>  static u64 hist_field_none(struct hist_field *field, void *event)
+> @@ -71,7 +75,9 @@ static u64 hist_field_pstring(struct hist_field *hist_field, void *event)
+>  
+>  static u64 hist_field_log2(struct hist_field *hist_field, void *event)
 >  {
->  	hist_field_fn_t fn = NULL;
-> @@ -653,7 +670,6 @@ static int is_descending(const char *str)
->  static int create_sort_keys(struct hist_trigger_data *hist_data)
+> -	u64 val = *(u64 *)(event + hist_field->field->offset);
+> +	struct hist_field *operand = hist_field->operands[0];
+> +
+> +	u64 val = operand->fn(operand, event);
+>  
+>  	return (u64) ilog2(roundup_pow_of_two(val));
+>  }
+> @@ -156,6 +162,8 @@ static const char *hist_field_name(struct hist_field *field,
+>  
+>  	if (field->field)
+>  		field_name = field->field->name;
+> +	else if (field->flags & HIST_FIELD_FL_LOG2)
+> +		field_name = hist_field_name(field->operands[0], ++level);
+>  
+>  	if (field_name == NULL)
+>  		field_name = "";
+> @@ -357,8 +365,20 @@ static void hist_trigger_elt_comm_init(struct tracing_map_elt *elt)
+>  	.elt_init	= hist_trigger_elt_comm_init,
+>  };
+>  
+> -static void destroy_hist_field(struct hist_field *hist_field)
+> +static void destroy_hist_field(struct hist_field *hist_field,
+> +			       unsigned int level)
 >  {
->  	char *fields_str = hist_data->attrs->sort_key_str;
-> -	struct ftrace_event_field *field = NULL;
->  	struct tracing_map_sort_key *sort_key;
->  	int descending, ret = 0;
->  	unsigned int i, j;
-> @@ -670,7 +686,9 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
->  	}
->  
->  	for (i = 0; i < TRACING_MAP_SORT_KEYS_MAX; i++) {
-> +		struct hist_field *hist_field;
->  		char *field_str, *field_name;
-> +		const char *test_name;
->  
->  		sort_key = &hist_data->sort_keys[i];
->  
-> @@ -703,8 +721,11 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
->  		}
->  
->  		for (j = 1; j < hist_data->n_fields; j++) {
-> -			field = hist_data->fields[j]->field;
-> -			if (field && (strcmp(field_name, field->name) == 0)) {
-> +			hist_field = hist_data->fields[j];
-> +			test_name = hist_field_name(hist_field, 0);
-> +			if (test_name == NULL)
-> +				continue;
+> +	unsigned int i;
+> +
+> +	if (level > 2)
+> +		return;
+> +
+> +	if (!hist_field)
+> +		return;
+> +
+> +	for (i = 0; i < HIST_FIELD_OPERANDS_MAX; i++)
+> +		destroy_hist_field(hist_field->operands[i], ++level);
 
-The hist_field_name() don't return NULL.
+Wouldn't it be 'level + 1' ?
 
 Thanks,
 Namhyung
+
+
+> +
+>  	kfree(hist_field);
+>  }
