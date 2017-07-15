@@ -1,134 +1,88 @@
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: Re: [PATCH 03/32] ring-buffer: Add interface for setting absolute
- time stamps
-Date: Fri, 14 Jul 2017 11:14:46 -0500
-Message-ID: <1500048886.29272.2.camel@tzanussi-mobl.amr.corp.intel.com>
-References: <cover.1498510759.git.tom.zanussi@linux.intel.com>
-         <2e6714e525e62f54dd72d563c7d220be76f8f808.1498510759.git.tom.zanussi@linux.intel.com>
-         <20170714052505.GA27035@sejong>
+From: Jacek Konieczny <jajcus@jajcus.net>
+Subject: RT kernel on Acer laptop unreliable
+Date: Sat, 15 Jul 2017 19:43:11 +0200
+Message-ID: <8c1a0cb6-d90c-1f6f-2d23-9865a17b379e@jajcus.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
-        vedang.patel@intel.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org, kernel-team@lge.com
-To: Namhyung Kim <namhyung@kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga04.intel.com ([192.55.52.120]:57377 "EHLO mga04.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1753124AbdGNQPZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 14 Jul 2017 12:15:25 -0400
-In-Reply-To: <20170714052505.GA27035@sejong>
+Received: from tropek.jajcus.net ([31.179.132.94]:39650 "EHLO
+        tropek.jajcus.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751105AbdGORwh (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 15 Jul 2017 13:52:37 -0400
+Received: from [10.253.0.123] (unknown [31.179.132.92])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+        (No client certificate requested)
+        by tropek.jajcus.net (Postfix) with ESMTPSA id DCF525002
+        for <linux-rt-users@vger.kernel.org>; Sat, 15 Jul 2017 19:43:16 +0200 (CEST)
+Content-Language: en-GB
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Namhyung,
+Hello,
 
-On Fri, 2017-07-14 at 14:25 +0900, Namhyung Kim wrote:
-> On Mon, Jun 26, 2017 at 05:49:04PM -0500, Tom Zanussi wrote:
-> > Define a new function, tracing_set_time_stamp_abs(), which can be used
-> > to enable or disable the use of absolute timestamps rather than time
-> > deltas for a trace array.
-> > 
-> > This resets the buffer to prevent a mix of time deltas and absolute
-> > timestamps.
-> > 
-> > Only the interface is added here; a subsequent patch will add the
-> > underlying implementation.
-> > 
-> > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> > ---
-> >  include/linux/ring_buffer.h |  2 ++
-> >  kernel/trace/ring_buffer.c  | 11 +++++++++++
-> >  kernel/trace/trace.c        | 25 ++++++++++++++++++++++++-
-> >  kernel/trace/trace.h        |  2 ++
-> >  4 files changed, 39 insertions(+), 1 deletion(-)
-> > 
-> > diff --git a/include/linux/ring_buffer.h b/include/linux/ring_buffer.h
-> > index ee9b461..28e3472 100644
-> > --- a/include/linux/ring_buffer.h
-> > +++ b/include/linux/ring_buffer.h
-> > @@ -180,6 +180,8 @@ void ring_buffer_normalize_time_stamp(struct ring_buffer *buffer,
-> >  				      int cpu, u64 *ts);
-> >  void ring_buffer_set_clock(struct ring_buffer *buffer,
-> >  			   u64 (*clock)(void));
-> > +void ring_buffer_set_time_stamp_abs(struct ring_buffer *buffer, bool abs);
-> > +bool ring_buffer_time_stamp_abs(struct ring_buffer *buffer);
-> >  
-> >  size_t ring_buffer_page_len(void *page);
-> >  
-> > diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
-> > index 4ae268e..f544738 100644
-> > --- a/kernel/trace/ring_buffer.c
-> > +++ b/kernel/trace/ring_buffer.c
-> > @@ -485,6 +485,7 @@ struct ring_buffer {
-> >  	u64				(*clock)(void);
-> >  
-> >  	struct rb_irq_work		irq_work;
-> > +	bool				time_stamp_abs;
-> >  };
-> >  
-> >  struct ring_buffer_iter {
-> > @@ -1379,6 +1380,16 @@ void ring_buffer_set_clock(struct ring_buffer *buffer,
-> >  	buffer->clock = clock;
-> >  }
-> >  
-> > +void ring_buffer_set_time_stamp_abs(struct ring_buffer *buffer, bool abs)
-> > +{
-> > +	buffer->time_stamp_abs = abs;
-> > +}
-> > +
-> > +bool ring_buffer_time_stamp_abs(struct ring_buffer *buffer)
-> > +{
-> > +	return buffer->time_stamp_abs;
-> > +}
-> > +
-> >  static void rb_reset_cpu(struct ring_buffer_per_cpu *cpu_buffer);
-> >  
-> >  static inline unsigned long rb_page_entries(struct buffer_page *bpage)
-> > diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-> > index 19ac208..da8cd51 100644
-> > --- a/kernel/trace/trace.c
-> > +++ b/kernel/trace/trace.c
-> > @@ -2169,7 +2169,7 @@ struct ring_buffer_event *
-> >  
-> >  	*current_rb = trace_file->tr->trace_buffer.buffer;
-> >  
-> > -	if ((trace_file->flags &
-> > +	if (!ring_buffer_time_stamp_abs(*current_rb) && (trace_file->flags &
-> >  	     (EVENT_FILE_FL_SOFT_DISABLED | EVENT_FILE_FL_FILTERED)) &&
-> >  	    (entry = this_cpu_read(trace_buffered_event))) {
-> >  		/* Try to use the per cpu buffer first */
-> > @@ -6079,6 +6079,29 @@ static int tracing_clock_open(struct inode *inode, struct file *file)
-> >  	return ret;
-> >  }
-> >  
-> > +int tracing_set_time_stamp_abs(struct trace_array *tr, bool abs)
-> > +{
-> > +	mutex_lock(&trace_types_lock);
-> > +
-> > +	ring_buffer_set_time_stamp_abs(tr->trace_buffer.buffer, abs);
-> > +
-> > +	/*
-> > +	 * New timestamps may not be consistent with the previous setting.
-> > +	 * Reset the buffer so that it doesn't have incomparable timestamps.
-> > +	 */
-> > +	tracing_reset_online_cpus(&tr->trace_buffer);
-> > +
-> > +#ifdef CONFIG_TRACER_MAX_TRACE
-> > +	if (tr->flags & TRACE_ARRAY_FL_GLOBAL && tr->max_buffer.buffer)
-> > +		ring_buffer_set_time_stamp_abs(tr->max_buffer.buffer, abs);
-> > +	tracing_reset_online_cpus(&tr->max_buffer);
-> 
-> Why do you do this only for the global array?  AFAIK instance arrays
-> can have the max buffer too.  Am I missing something?
-> 
+I need low and stable latency for audio processing. I use Guitarix,
+Ardour and other jack-based applications. For anything else I would use
+the regular kernel package from my distribution (PLD Linux), but the
+latency spikes are unacceptable in some cases. That is why I have been
+trying to use RT kernel, for a few months now…
 
-Yes, I think you're right.  Will take a closer look and change as
-needed.
+First I added the RT patch to the PLD Linux kernel package. I have tried
+both the 4.4 and 4.9 kernel. Neither of them worked well. Then I
+manually compiled a few vanilla 4.9.x kernels, just with the most recent
+RT patch and with a configuration made from scratch (not to copy any PLD
+mistakes). Still no luck.
 
-Thanks,
+Most of the information I could find online is quite outdated or
+incomplete, so I have really little idea what the proper configuration
+of the RT kernel is or how to debug it.
 
-Tom
+When the RT kernel works, it would provide quite acceptable latency – I
+could get down to 8ms in jack with no significant xruns. Unfortunately
+none of the RT kernels I tried would be reliable. With little load the
+system would work for a few hours sometimes, but often it would slow
+down and crash much earlier. With high load, e.g. when trying to play
+some demanding game, the system would usually crash quite quickly.
+
+Sometimes it would just lock up hard with no warning and nothing would
+work – not even magic sysrq.
+Other times it would gradually slow down until it is not usable at all.
+Sometimes I would be able to see some 'BUG' in dmesg, but rarely I would
+be able to restart the system cleanly.
+Sometimes only some subsystems would fail, while otherwise the system
+still seems to work. It could be sound, mouse, keyboard or network that
+doesn't work.
+
+System logs would contain some kernel BUGs/WARNINGs, but they would
+often look generic and would not point to a specific problem (not for me).
+
+Today I have tried kernel 4.9.37 with the 4.9.35-rt25 patch. It failed
+again, here are the kernel error logs:
+
+https://gist.github.com/Jajcus/494b79062b537269b49265ff3c50ee78
+
+I have no idea how to properly debug the problem, even what data should
+I collect to prepare a reasonable bug report.
+
+I have already upgraded laptop firmware to the latest available, I have
+also played with some BIOS setup options.
+
+One thing that looks suspicious is the amount of time spent in IRQ 16
+handling, which is: 'idma64, i801_smbus, i2c_designware'. Also the
+i801-smbus in i2c-designware-platform were first to fail when loaded.
+Regular kernel (without PREEMPT_RT_FULL) seems to generate much lower
+number of those interrupts.
+
+However, the system would crash even if the i2c modules are blacklisted
+and not loaded. Getting rid of idma64 would not help much either. IRQ 16
+would not come any more, but the system would slow down and crash anyway.
 
 
+Any idea what is the problem?
+Any hints how to debug it?
+
+
+Greets,
+Jacek
