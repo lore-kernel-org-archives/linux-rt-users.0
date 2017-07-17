@@ -1,122 +1,136 @@
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: Re: [PATCH 12/32] tracing: Add hist trigger timestamp support
-Date: Mon, 17 Jul 2017 11:57:26 -0500
-Message-ID: <1500310646.15006.1.camel@tzanussi-mobl.amr.corp.intel.com>
-References: <cover.1498510759.git.tom.zanussi@linux.intel.com>
-         <dc2a86608cd3adcf957f7f4cc0252e659acf0fce.1498510759.git.tom.zanussi@linux.intel.com>
-         <20170717060039.GA32084@danjae.aot.lge.com>
+From: Piotr Gregor <piotrgregor@rsyncme.org>
+Subject: Re: RT kernel on Acer laptop unreliable
+Date: Mon, 17 Jul 2017 18:59:13 +0100
+Message-ID: <20170717175912.GA11283@westernst>
+References: <8c1a0cb6-d90c-1f6f-2d23-9865a17b379e@jajcus.net>
+ <ac7edffc-9f5f-527d-71b1-211ffa342ddc@numalliance.com>
+ <AM3PR02MB1301C4E614B49A78835967DC1A00@AM3PR02MB130.eurprd02.prod.outlook.com>
+ <3a2a9504-812c-466c-7417-7dce3490492e@jajcus.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
-        vedang.patel@intel.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org, kernel-team@lge.com
-To: Namhyung Kim <namhyung@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170717060039.GA32084@danjae.aot.lge.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Cc: linux-rt-users@vger.kernel.org,
+        =?iso-8859-1?Q?St=E9phane?= Ancelot <sancelot@numalliance.com>,
+        Piotr Gregor <pgregor@quadrant-systems.co.uk>
+To: Jacek Konieczny <jajcus@jajcus.net>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wr0-f177.google.com ([209.85.128.177]:34889 "EHLO
+        mail-wr0-f177.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751301AbdGQSCc (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 17 Jul 2017 14:02:32 -0400
+Received: by mail-wr0-f177.google.com with SMTP id w4so26498095wrb.2
+        for <linux-rt-users@vger.kernel.org>; Mon, 17 Jul 2017 11:02:31 -0700 (PDT)
+Content-Disposition: inline
+In-Reply-To: <3a2a9504-812c-466c-7417-7dce3490492e@jajcus.net>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Namhyung,
+Hi Jacek,
 
-On Mon, 2017-07-17 at 15:00 +0900, Namhyung Kim wrote:
-> On Mon, Jun 26, 2017 at 05:49:13PM -0500, Tom Zanussi wrote:
-> > Add support for a timestamp event field.  This is actually a 'pseudo-'
-> > event field in that it behaves like it's part of the event record, but
-> > is really part of the corresponding ring buffer event.
-> > 
-> > To make use of the timestamp field, users can specify
-> > "$common_timestamp" as a field name for any histogram.  Note that this
-> > doesn't make much sense on its own either as either a key or value,
-> > but needs to be supported even so, since follow-on patches will add
-> > support for making use of this field in time deltas.  The '$' is used
-> > as a prefix on the variable name to indicate that it's not an bonafide
-> > event field - so you won't find it in the event description - but
-> > rather it's a synthetic field that can be used like a real field).
-> > 
-> > Note that the use of this field requires the ring buffer be put into
-> > TIME_EXTEND_ABS mode, which saves the complete timestamp for each
-> > event rather than an offset.  This mode will be enabled if and only if
-> > a histogram makes use of the "$common_timestamp" field.
-> > 
-> > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> > ---
-> >  kernel/trace/trace_events_hist.c | 90 +++++++++++++++++++++++++++++-----------
-> >  1 file changed, 66 insertions(+), 24 deletions(-)
-> > 
-> > diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-> > index dab6ff6..aeae3b4 100644
-> > --- a/kernel/trace/trace_events_hist.c
-> > +++ b/kernel/trace/trace_events_hist.c
-> 
-> [SNIP]
-> > @@ -756,7 +783,7 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
-> >  			break;
-> >  		}
-> >  
-> > -		if (strcmp(field_name, "hitcount") == 0) {
-> > +		if ((strcmp(field_name, "hitcount") == 0)) {
-> 
-> Seems like an unnecessary change.
-> 
-> 
-> >  			descending = is_descending(field_str);
-> >  			if (descending < 0) {
-> >  				ret = descending;
-> > @@ -816,6 +843,9 @@ static int create_tracing_map_fields(struct hist_trigger_data *hist_data)
-> >  
-> >  			if (hist_field->flags & HIST_FIELD_FL_STACKTRACE)
-> >  				cmp_fn = tracing_map_cmp_none;
-> > +			else if (!field)
-> > +				cmp_fn = tracing_map_cmp_num(hist_field->size,
-> > +							     hist_field->is_signed);
-> 
-> I couldn't find where the hist_field->is_signed is set.
+I have a script to install rt-patched kernel and thought you may give it
+a go.
 
-It's set in a later patch (the one that adds onmatch).  I'll move the
-code that defines and sets the field to the same patch.
+https://github.com/spinlockirqsave/scripts/blob/master/rt.sh
 
-> 
-> 
-> >  			else if (is_string_field(field))
-> >  				cmp_fn = tracing_map_cmp_string;
-> >  			else
-> 
-> [SNIP]
-> > @@ -1534,6 +1570,9 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
-> >  
-> >  	update_cond_flag(file);
-> >  
-> > +	if (hist_data->enable_timestamps)
-> > +		tracing_set_time_stamp_abs(file->tr, true);
-> > +
-> >  	if (trace_event_trigger_enable_disable(file, 1) < 0) {
-> >  		list_del_rcu(&data->list);
-> >  		update_cond_flag(file);
-> > @@ -1568,6 +1607,9 @@ static void hist_unregister_trigger(char *glob, struct event_trigger_ops *ops,
-> >  
-> >  	if (unregistered && test->ops->free)
-> >  		test->ops->free(test->ops, test);
-> > +
-> > +	if (hist_data->enable_timestamps)
-> > +		tracing_set_time_stamp_abs(file->tr, false);
-> 
-> I think it needs some kind of refcount to disable the absolute
-> timestamp.  Otherwise unregistering a timestamp-enabled hist might
-> corrupt others IMHO.
-> 
+Script allows for installation of several versions of kernels though
+some of them may require update of the url link to download kernel or
+patch as these links change every now and then. I am using this script
+these days to install linux-4.4.70 with patch-4.4.70-rt83 patch on a
+couple of machines with success. Please use default option in Step 3
+and 6.3 Substep in Step 6 to install former and copy existing kernel
+config.
 
-Good point, I'll add that.  Thanks,
+cheers,
+Piotr
 
-Tom
-
-> Thanks,
-> Namhyung
+On Mon, Jul 17, 2017 at 05:06:58PM +0200, Jacek Konieczny wrote:
+> On 2017-07-17 08:21, Stéphane Ancelot wrote:
+> > If you don't manage to achieve realtime, you have some wrong options in
+> > your kernel settings .
+> 
+> I do achieve real-time (stable, low-enough latency), but it doesn't last.
 > 
 > 
-> >  }
-> >  
-> >  static void hist_unreg_all(struct trace_event_file *file)
-> > -- 
-> > 1.9.3
-> > 
+> On 2017-07-17 08:31, Piotr Gregor wrote:
+> > Just to clarify: does the laptop works fine with other, non-rt-patched kernel?
+> 
+> Yes.
+> 
+> > If yes, couldn't you copy existing config from /boot and make oldconfig based on that? 
+> 
+> I have not done exactly that – I have added the RT patch and
+> CONFIG_PREEMPT_RT_FULL option (with dependencies) to the package source
+> from which the original kernel was built.
+> 
+> I can try the 'make oldconfig' with a working non-rt kernel config next
+> time, but I won't be able to do that in the next week.
+> 
+> > You may have to do some tricks to get GUI with reasonable graphics though
+> > but this should give you runnable, stable system.
+> 
+> I use GUI applications, rely on working OpenGL. Graphics is 'reasonable'
+> as long as the system is stable, but sooner or later it locks-up/crashes.
+> 
+> Here are two of the kernel configs I have tried:
+> 
+> https://gist.github.com/Jajcus/9af258ae55555afb126537e42d697d76
+> 
+> 
+> I suspect some firmware/hardware related thing which triggers the problem.
+> 
+> 
+> BIOS Information
+>         Vendor: Insyde Corp.
+>         Version: V1.25
+>         Release Date: 03/03/2017
+> 
+> System Information
+>         Manufacturer: Acer
+>         Product Name: Aspire E5-575
+>         Version: V1.25
+> 
+> Base Board Information
+>         Manufacturer: Acer
+>         Product Name: Ironman_SK
+>         Version: V1.25
+> 
+> CPU: Intel(R) Core(TM) i5-6267U CPU @ 2.90GHz
+> 
+> lspci:
+> 00:00.0 Host bridge: Intel Corporation Skylake Host Bridge/DRAM
+> Registers (rev 09)
+> 00:02.0 VGA compatible controller: Intel Corporation Iris Graphics 550
+> (rev 0a)
+> 00:14.0 USB controller: Intel Corporation Sunrise Point-LP USB 3.0 xHCI
+> Controller (rev 21)
+> 00:14.2 Signal processing controller: Intel Corporation Sunrise Point-LP
+> Thermal subsystem (rev 21)
+> 00:15.0 Signal processing controller: Intel Corporation Sunrise Point-LP
+> Serial IO I2C Controller #0 (rev 21)
+> 00:16.0 Communication controller: Intel Corporation Sunrise Point-LP
+> CSME HECI #1 (rev 21)
+> 00:17.0 SATA controller: Intel Corporation Sunrise Point-LP SATA
+> Controller [AHCI mode] (rev 21)
+> 00:1d.0 PCI bridge: Intel Corporation Sunrise Point-LP PCI Express Root
+> Port (rev f1)
+> 00:1d.2 PCI bridge: Intel Corporation Device 9d1a (rev f1)
+> 00:1d.3 PCI bridge: Intel Corporation Device 9d1b (rev f1)
+> 00:1f.0 ISA bridge: Intel Corporation Sunrise Point-LP LPC Controller
+> (rev 21)
+> 00:1f.2 Memory controller: Intel Corporation Sunrise Point-LP PMC (rev 21)
+> 00:1f.3 Audio device: Intel Corporation Sunrise Point-LP HD Audio (rev 21)
+> 00:1f.4 SMBus: Intel Corporation Sunrise Point-LP SMBus (rev 21)
+> 02:00.0 Network controller: Qualcomm Atheros QCA9377 802.11ac Wireless
+> Network Adapter (rev 31)
+> 03:00.0 Unassigned class [ff00]: Realtek Semiconductor Co., Ltd.
+> RTL8411B PCI Express Card Reader (rev 01)
+> 03:00.1 Ethernet controller: Realtek Semiconductor Co., Ltd.
+> RTL8111/8168/8411 PCI Express Gigabit Ethernet Controller (rev 12)
+> 
+> 
+> Jacek
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
