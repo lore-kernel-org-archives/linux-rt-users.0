@@ -1,143 +1,139 @@
-From: Piotr Gregor <piotrgregor@rsyncme.org>
-Subject: Re: [BUG] drivers: staging: comedi: do not call blocking ops when
- !TASK_RUNNING; state=1
-Date: Mon, 17 Jul 2017 19:14:40 +0100
-Message-ID: <20170717181439.GB11283@westernst>
-References: <20170717144850.GA1696@piotrpc>
- <710d1c24-a4f2-c0c0-3d20-76e1f0e402a9@mev.co.uk>
+From: Haris Okanovic <haris.okanovic@ni.com>
+Subject: Re: [PATCH] Revert "timers: Don't wake ktimersoftd on every tick"
+Date: Mon, 17 Jul 2017 16:58:42 -0500
+Message-ID: <b8cec915-f6f5-8249-d72a-ecf9566ce6ee@ni.com>
+References: <20170203165151.qbpjothhaqctuzx5@linutronix.de>
+ <20170203182112.18053-1-haris.okanovic@ni.com>
+ <20170210170207.3kzfqyfa4ueh7mih@linutronix.de>
+ <alpine.DEB.2.20.1705261911230.11993@hypnos.tec.linutronix.de>
+ <faa23f3e-28c0-6de1-66a6-2b6ab5e99462@ni.com>
+ <alpine.DEB.2.20.1705262147510.2137@nanos>
+ <4b4df775-53b8-cdeb-381b-af8cabb364a8@ni.com>
+ <alpine.DEB.2.20.1705262232590.2137@nanos>
+ <b1486490-5a96-7ba3-c280-5d5622c8c488@ni.com>
+ <alpine.DEB.2.20.1706041558150.2813@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        sebastian.siewior@linutronix.de, tglx@linutronix.de,
-        gregkh@linuxfoundation.org, devel@driverdev.osuosl.org
-To: Ian Abbott <abbotti@mev.co.uk>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: Anna-Maria Gleixner <anna-maria@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        julia.cartwright@ni.com, gratian.crisan@ni.com, harisokn@gmail.com
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <710d1c24-a4f2-c0c0-3d20-76e1f0e402a9@mev.co.uk>
+In-Reply-To: <alpine.DEB.2.20.1706041558150.2813@nanos>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Ian,
-
-I am afraid I have more problems with running Comedi on rt-patched kernel than
-only that. I am still trying to figure out the specific reason - hopefully it is
-my fault and I scrued up my own code, but so far it seems pcie215
-support doesn't work at least in the same way on rt-patched kernel
-as it was on non-rt. I will dig it a little bit harder, likely coming with another
-bug reports shoud they be observed.
-
-Do you know about other experience other people may have using Comedi
-for pcie215 on rt-patched kernels, specifically 4.4.70?
-
-Has Comedi been tested on rt kernels by yourself?
-
-cheers,
-Piotr
-
-On Mon, Jul 17, 2017 at 05:02:45PM +0100, Ian Abbott wrote:
-> On 17/07/17 15:48, Piotr Gregor wrote:
-> >Calling blocking operations from wrong context.
-> >Kernel:
-> >
-> >Linux piotrpc 4.4.70-rt83 #1 SMP PREEMPT RT Thu Jul 13 08:42:02 BST 2017 x86_64 GNU/Linux
-> >
-> >[   80.542018] NOHZ: local_softirq_pending 80
-> >[  125.175471] ------------[ cut here ]------------
-> >[  125.175491] WARNING: CPU: 0 PID: 1497 at kernel/sched/core.c:7833 __might_sleep+0x9f/0xb0()
-> >[  125.175728] do not call blocking ops when !TASK_RUNNING; state=1 set at [<ffffffffc0575741>] comedi_read+0x1a1/0x610 [comedi]
-> >[  125.175735] Modules linked in: cpufreq_conservative cpufreq_powersave cpufreq_userspace cfg80211 nfsd auth_rpcgss oid_registry nfs_acl nfs lockd grace fscache sunrpc nls_ascii nls_cp437 vfat fat snd_hda_codec_hdmi snd_hda_codec_realtek snd_hda_codec_generic intel_rapl joydev intel_powerclamp coretemp kvm drbg efi_pstore ansi_cprng irqbypass crct10dif_pclmul crc32_pclmul ghash_clmulni_intel aesni_intel aes_x86_64 lrw gf128mul glue_helper ablk_helper cryptd i915 serio_raw pcspkr efivars snd_hda_intel amplc_dio200_pci(C) amplc_dio200_common(C) snd_hda_codec iTCO_wdt comedi_8254(C) comedi_pci(C) iTCO_vendor_support comedi(C) snd_hda_core snd_hwdep snd_pcm drm_kms_helper snd_timer drm snd mei_me soundcore mei i2c_algo_bit shpchp eeepc_wmi asus_wmi sparse_keymap mxm_wmi battery hci_uart bt
- bcm btqca btintel
-> >[  125.175824]  bluetooth
-> >[  125.175825]  wmi
-> >[  125.175826]  rfkill
-> >[  125.175827]  video
-> >[  125.175828]  intel_lpss_acpi
-> >[  125.175830]  intel_lpss
-> >[  125.175831]  evdev
-> >[  125.175832]  mfd_core
-> >[  125.175833]  acpi_als
-> >[  125.175834]  acpi_pad
-> >[  125.175835]  kfifo_buf
-> >[  125.175836]  button
-> >[  125.175838]  industrialio
-> >[  125.175839]  fuse
-> >[  125.175840]  parport_pc
-> >[  125.175841]  ppdev
-> >[  125.175842]  lp
-> >[  125.175843]  parport
-> >[  125.175844]  autofs4
-> >[  125.175845]  ext4
-> >[  125.175846]  crc16
-> >[  125.175847]  mbcache
-> >[  125.175848]  jbd2
-> >[  125.175849]  hid_generic
-> >[  125.175851]  usbhid
-> >[  125.175852]  sg
-> >[  125.175853]  sr_mod
-> >[  125.175854]  cdrom
-> >[  125.175855]  sd_mod
-> >[  125.175856]  crc32c_intel
-> >[  125.175857]  ahci
-> >[  125.175858]  libahci
-> >[  125.175859]  psmouse
-> >[  125.175860]  xhci_pci
-> >[  125.175861]  libata
-> >[  125.175862]  r8169
-> >[  125.175864]  i2c_i801
-> >[  125.175865]  mii
-> >[  125.175866]  xhci_hcd
-> >[  125.175867]  tg3
-> >[  125.175868]  ptp
-> >[  125.175869]  scsi_mod
-> >[  125.175870]  usbcore
-> >[  125.175871]  pps_core
-> >[  125.175872]  libphy
-> >[  125.175873]  usb_common
-> >[  125.175874]  fan
-> >[  125.175875]  thermal
-> >[  125.175876]  i2c_hid
-> >[  125.175877]  hid
-> >[  125.175878]  fjes
-> >
-> >[  125.175926] CPU: 0 PID: 1497 Comm: txrx Tainted: G        WC      4.4.70-rt83 #1
-> >[  125.175928] Hardware name: NOVATECH LTD PC-XB04472/H110M-C, BIOS 3019 01/06/2017
-> >[  125.175935]  0000000000000000 ffff8802205b3cb0 ffffffff81387160 ffff8802205b3cf8
-> >[  125.175940]  0000000000000009 ffff8802205b3ce8 ffffffff81089766 ffffffffc057ca60
-> >[  125.175944]  00000000000002dc 0000000000000000 0000000000000001 0000000000000001
-> >[  125.175945] Call Trace:
-> >[  125.175955]  [<ffffffff81387160>] dump_stack+0x85/0xc5
-> >[  125.175963]  [<ffffffff81089766>] warn_slowpath_common+0x86/0xe0
-> >[  125.175971]  [<ffffffff8108980c>] warn_slowpath_fmt+0x4c/0x50
-> >[  125.175980]  [<ffffffff81185577>] ? trace_preempt_on+0x1a7/0x2b0
-> >[  125.175985]  [<ffffffff8168ca95>] ? schedule+0x55/0xe0
-> >[  125.175994]  [<ffffffffc0575741>] ? comedi_read+0x1a1/0x610 [comedi]
-> >[  125.176001]  [<ffffffffc0575741>] ? comedi_read+0x1a1/0x610 [comedi]
-> >[  125.176005]  [<ffffffff810b6d0f>] __might_sleep+0x9f/0xb0
-> >[  125.176012]  [<ffffffff811f54cb>] __might_fault+0x3b/0xb0
-> >[  125.176020]  [<ffffffffc057597f>] comedi_read+0x3df/0x610 [comedi]
-> >[  125.176034]  [<ffffffff810bebf0>] ? wake_up_process+0x20/0x20
-> >[  125.176044]  [<ffffffff812406d8>] __vfs_read+0x28/0xe0
-> >[  125.176053]  [<ffffffff812f1f06>] ? security_file_permission+0xa6/0xc0
-> >[  125.176060]  [<ffffffff81240c53>] ? rw_verify_area+0x53/0xf0
-> >[  125.176066]  [<ffffffff81240d79>] vfs_read+0x89/0x130
-> >[  125.176074]  [<ffffffff81241b79>] SyS_read+0x49/0xb0
-> >[  125.176084]  [<ffffffff81691876>] entry_SYSCALL_64_fastpath+0x16/0x7a
-> >[  125.176095] ---[ end trace 0000000000000003 ]---
-> >
-> >
-> >cheers,
-> >Piotr
+On 06/04/2017 09:17 AM, Thomas Gleixner wrote:
+> On Fri, 2 Jun 2017, Haris Okanovic wrote:
+>> On 05/26/2017 03:50 PM, Thomas Gleixner wrote:
+>>>>>   static void expire_timers(struct timer_base *base)
+>>>>>   {
+>>>>>          struct hlist_head *head;
+>>>>> +       int expCount = base->expired_count;
+>>>
+>>> No camel case for heavens sake!
+>>>
+>>> And this requires:
+>>>
+>>>     	 cnt = READ_ONCE(base->expired_count);
+>>>
+>>>>> -       while (base->expired_count--) {
+>>>>> -               head = base->expired_lists + base->expired_count;
+>>>>> +       while (expCount--) {
+>>>>> +               head = base->expired_lists + expCount;
+>>>>>                  __expire_timers(base, head);
+>>>>>          }
+>>>
+>>> Plus a comment.
+>>
+>> Fixed, thanks.
+>>
+>> Are your recommending READ_ONCE() purely for documentation purposes?
 > 
-> Thanks for the bug report.  I think comedi_read() in
-> "drivers/staging/comedi/comedi_fops.c" needs a call to
-> set_current_state(TASK_RUNNING) just before the call to copy_to_user(...).
+> Yes.
 > 
-> Similarly, comedi_write() needs a call to set_current_task(TASK_RUNNING)
-> just before the call to copy_from_user(...), and another call to
-> set_current_task(TASK_RUNNING) before the call to mutex_lock().
+>>> The other thing I noticed was this weird condition which does not do the
+>>> look ahead when base->clk is back for some time.
+>>
+>> The soft interrupt fires unconditionally if base->clk hasn't advanced in some
+>> time to limit how long cpu spends in hard interrupt context.
 > 
-> I'll work on a patch.
+> That makes no sense.
 > 
-> -- 
-> -=( Ian Abbott @ MEV Ltd.    E-mail: <abbotti@mev.co.uk> )=-
-> -=(                          Web: http://www.mev.co.uk/  )=-
+
+I wrote this part out of an abundance of caution: I didn't want a 
+potentially unbounded operation to run in hardirq context. This logic 
+forces both the update to timer bases & firing of timers into softirq 
+context if the clock advances by a lot (some arbitrary large number of 
+ticks, HZ in this case).
+
+However, I think you're right that this is unneeded since 
+run_local_timers() is called per tick, and thus would never exercise 
+this case.
+
+Removed this case.
+
+>>> Why don't you use the
+>>> existing optimization which uses the bitmap for fast forward?
+>>>
+>>
+>> Are you referring to forward_timer_base()/base->next_expiry? I think it's only
+>> updated in the nohz case. Can you share function name/line number(s) if you're
+>> thinking of something else.
+> 
+> I think just using collect_expired_timers() should be enough. In the !NOHZ
+> case the base shouldn't be that far back, right?
+> 
+
+Refactored.
+
+>>> The other issue I have is that this can race at all. If you raised the
+>>> softirq in the look ahead then you should not go into that function until
+>>> the softirq has actually completed. There is no point in wasting time in
+>>> the hrtimer interrupt if the softirq is running anyway.
+>>>
+>>
+>> Makes sense. Skipping the large `if` block in run_local_timers() when
+>> `local_softirq_pending() & TIMER_SOFTIRQ`.
+> 
+> No. You need your own state tracking. The TIMER_SOFTIRQ bit is cleared when
+> the softirq is invoked, but that does not mean that it finished running.
+> 
+> run_local_timers()
+> {
+> 	lock(base->lock);
+> 	if (!base->softirq_activated)
+> 		if (base_has_timers_to_expire()) {
+> 			base->softirq_activated = true;
+> 			raise_softirq(TIMER_SOFTIRQ);
+> 		}
+> 	}
+> 	unlock(base->lock);
+> }
+> 
+> timer_softirq()
+> {
+> 	lock(base->lock);
+> 	expire_timers();
+> 	base->softirq_activated = false;
+> 	unlock(base->lock);
+> }
+> 
+> That way you avoid any operation in the tick interrupt as long as the soft
+> interrupt processing has not completed.
+
+Added a per-cpu block_softirq boolean.
+
+> 
+> Thanks,
+> 
+> 	tglx
+> 
+
+I'll post a v2 patch shortly.
+
+Thanks,
+Haris
