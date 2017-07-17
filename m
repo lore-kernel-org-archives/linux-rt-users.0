@@ -1,102 +1,104 @@
-From: =?UTF-8?Q?St=c3=a9phane_Ancelot?= <sancelot@numalliance.com>
-Subject: Re: RT kernel on Acer laptop unreliable
-Date: Mon, 17 Jul 2017 08:21:29 +0200
-Message-ID: <ac7edffc-9f5f-527d-71b1-211ffa342ddc@numalliance.com>
+From: Piotr Gregor <pgregor@quadrant-systems.co.uk>
+Subject: RE: RT kernel on Acer laptop unreliable
+Date: Mon, 17 Jul 2017 06:31:50 +0000
+Message-ID: <AM3PR02MB1301C4E614B49A78835967DC1A00@AM3PR02MB130.eurprd02.prod.outlook.com>
 References: <8c1a0cb6-d90c-1f6f-2d23-9865a17b379e@jajcus.net>
+ <ac7edffc-9f5f-527d-71b1-211ffa342ddc@numalliance.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8BIT
-To: Jacek Konieczny <jajcus@jajcus.net>, linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+To: =?utf-8?B?U3TDqXBoYW5lIEFuY2Vsb3Q=?= <sancelot@numalliance.com>,
+        "Jacek Konieczny" <jajcus@jajcus.net>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.numalliance.com ([194.2.198.111]:55756 "EHLO
-        mail.numalliance.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751253AbdGQG2L (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 17 Jul 2017 02:28:11 -0400
-In-Reply-To: <8c1a0cb6-d90c-1f6f-2d23-9865a17b379e@jajcus.net>
-Content-Language: fr
+Received: from mail-db5eur01on0114.outbound.protection.outlook.com ([104.47.2.114]:64480
+        "EHLO EUR01-DB5-obe.outbound.protection.outlook.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S1751256AbdGQGbx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 17 Jul 2017 02:31:53 -0400
+In-Reply-To: <ac7edffc-9f5f-527d-71b1-211ffa342ddc@numalliance.com>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
-
-If you don't manage to achieve realtime, you have some wrong options in 
-your kernel settings .
-
-Please share your kernel config.
-
-Regards,
-
-S.Ancelot
-
-
-Le 15/07/2017 à 19:43, Jacek Konieczny a écrit :
-> Hello,
->
-> I need low and stable latency for audio processing. I use Guitarix,
-> Ardour and other jack-based applications. For anything else I would use
-> the regular kernel package from my distribution (PLD Linux), but the
-> latency spikes are unacceptable in some cases. That is why I have been
-> trying to use RT kernel, for a few months now…
->
-> First I added the RT patch to the PLD Linux kernel package. I have tried
-> both the 4.4 and 4.9 kernel. Neither of them worked well. Then I
-> manually compiled a few vanilla 4.9.x kernels, just with the most recent
-> RT patch and with a configuration made from scratch (not to copy any PLD
-> mistakes). Still no luck.
->
-> Most of the information I could find online is quite outdated or
-> incomplete, so I have really little idea what the proper configuration
-> of the RT kernel is or how to debug it.
->
-> When the RT kernel works, it would provide quite acceptable latency – I
-> could get down to 8ms in jack with no significant xruns. Unfortunately
-> none of the RT kernels I tried would be reliable. With little load the
-> system would work for a few hours sometimes, but often it would slow
-> down and crash much earlier. With high load, e.g. when trying to play
-> some demanding game, the system would usually crash quite quickly.
->
-> Sometimes it would just lock up hard with no warning and nothing would
-> work – not even magic sysrq.
-> Other times it would gradually slow down until it is not usable at all.
-> Sometimes I would be able to see some 'BUG' in dmesg, but rarely I would
-> be able to restart the system cleanly.
-> Sometimes only some subsystems would fail, while otherwise the system
-> still seems to work. It could be sound, mouse, keyboard or network that
-> doesn't work.
->
-> System logs would contain some kernel BUGs/WARNINGs, but they would
-> often look generic and would not point to a specific problem (not for me).
->
-> Today I have tried kernel 4.9.37 with the 4.9.35-rt25 patch. It failed
-> again, here are the kernel error logs:
->
-> https://gist.github.com/Jajcus/494b79062b537269b49265ff3c50ee78
->
-> I have no idea how to properly debug the problem, even what data should
-> I collect to prepare a reasonable bug report.
->
-> I have already upgraded laptop firmware to the latest available, I have
-> also played with some BIOS setup options.
->
-> One thing that looks suspicious is the amount of time spent in IRQ 16
-> handling, which is: 'idma64, i801_smbus, i2c_designware'. Also the
-> i801-smbus in i2c-designware-platform were first to fail when loaded.
-> Regular kernel (without PREEMPT_RT_FULL) seems to generate much lower
-> number of those interrupts.
->
-> However, the system would crash even if the i2c modules are blacklisted
-> and not loaded. Getting rid of idma64 would not help much either. IRQ 16
-> would not come any more, but the system would slow down and crash anyway.
->
->
-> Any idea what is the problem?
-> Any hints how to debug it?
->
->
-> Greets,
-> Jacek
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+SGkgSmFjZWssDQoNCkp1c3QgdG8gY2xhcmlmeTogZG9lcyB0aGUgbGFwdG9wIHdvcmtzIGZpbmUg
+d2l0aCBvdGhlciwgbm9uLXJ0LXBhdGNoZWQga2VybmVsPw0KSWYgeWVzLCBjb3VsZG4ndCB5b3Ug
+Y29weSBleGlzdGluZyBjb25maWcgZnJvbSAvYm9vdCBhbmQgbWFrZSBvbGRjb25maWcgYmFzZWQg
+b24gdGhhdD8gDQoNCmNkIGxpbnV4LTQuNC4zMg0KY3AgL2Jvb3QvY29uZmlnLWB1bmFtZSAtcmAg
+LmNvbmZpZzsNCm1ha2Ugb2xkY29uZmlnDQoNClRoZW4gZW5hYmxlIENPTkZJR19QUkVFTVBUX1JU
+X0ZVTEwgYW5kIGNvbmZpZ3VyZSB0aGUgcmVzdCBpZiBuZWVkZWQuDQpTaW1wbHkgZW5hYmxpbmcg
+UFJFRU1QVF9SVF9GVUxMIGlzIGVub3VnaCB0byBnZXQgeW91IHN0YXJ0ZWQuDQpZb3UgbWF5IGhh
+dmUgdG8gZG8gc29tZSB0cmlja3MgdG8gZ2V0IEdVSSB3aXRoIHJlYXNvbmFibGUgZ3JhcGhpY3Mg
+dGhvdWdoDQpidXQgdGhpcyBzaG91bGQgZ2l2ZSB5b3UgcnVubmFibGUsIHN0YWJsZSBzeXN0ZW0u
+DQoNCkkgaGF2ZSBzb21lIGx1Y2sgd2l0aCB0aGlzIGFwcHJvYWNoIG9uIGEgY291cGxlIG9mIG1h
+Y2hpbmVzIHNvIGZhci4NCg0KY2hlZXJzLA0KUGlvdHINCg0KLS0tLS1PcmlnaW5hbCBNZXNzYWdl
+LS0tLS0NCkZyb206IGxpbnV4LXJ0LXVzZXJzLW93bmVyQHZnZXIua2VybmVsLm9yZyBbbWFpbHRv
+OmxpbnV4LXJ0LXVzZXJzLW93bmVyQHZnZXIua2VybmVsLm9yZ10gT24gQmVoYWxmIE9mIFN0w6lw
+aGFuZSBBbmNlbG90DQpTZW50OiAxNyBKdWx5IDIwMTcgMDc6MjENClRvOiBKYWNlayBLb25pZWN6
+bnkgPGphamN1c0BqYWpjdXMubmV0PjsgbGludXgtcnQtdXNlcnNAdmdlci5rZXJuZWwub3JnDQpT
+dWJqZWN0OiBSZTogUlQga2VybmVsIG9uIEFjZXIgbGFwdG9wIHVucmVsaWFibGUNCg0KSGksDQoN
+CklmIHlvdSBkb24ndCBtYW5hZ2UgdG8gYWNoaWV2ZSByZWFsdGltZSwgeW91IGhhdmUgc29tZSB3
+cm9uZyBvcHRpb25zIGluIHlvdXIga2VybmVsIHNldHRpbmdzIC4NCg0KUGxlYXNlIHNoYXJlIHlv
+dXIga2VybmVsIGNvbmZpZy4NCg0KUmVnYXJkcywNCg0KUy5BbmNlbG90DQoNCg0KTGUgMTUvMDcv
+MjAxNyDDoCAxOTo0MywgSmFjZWsgS29uaWVjem55IGEgw6ljcml0IDoNCj4gSGVsbG8sDQo+DQo+
+IEkgbmVlZCBsb3cgYW5kIHN0YWJsZSBsYXRlbmN5IGZvciBhdWRpbyBwcm9jZXNzaW5nLiBJIHVz
+ZSBHdWl0YXJpeCwgDQo+IEFyZG91ciBhbmQgb3RoZXIgamFjay1iYXNlZCBhcHBsaWNhdGlvbnMu
+IEZvciBhbnl0aGluZyBlbHNlIEkgd291bGQgDQo+IHVzZSB0aGUgcmVndWxhciBrZXJuZWwgcGFj
+a2FnZSBmcm9tIG15IGRpc3RyaWJ1dGlvbiAoUExEIExpbnV4KSwgYnV0IA0KPiB0aGUgbGF0ZW5j
+eSBzcGlrZXMgYXJlIHVuYWNjZXB0YWJsZSBpbiBzb21lIGNhc2VzLiBUaGF0IGlzIHdoeSBJIGhh
+dmUgDQo+IGJlZW4gdHJ5aW5nIHRvIHVzZSBSVCBrZXJuZWwsIGZvciBhIGZldyBtb250aHMgbm93
+4oCmDQo+DQo+IEZpcnN0IEkgYWRkZWQgdGhlIFJUIHBhdGNoIHRvIHRoZSBQTEQgTGludXgga2Vy
+bmVsIHBhY2thZ2UuIEkgaGF2ZSANCj4gdHJpZWQgYm90aCB0aGUgNC40IGFuZCA0Ljkga2VybmVs
+LiBOZWl0aGVyIG9mIHRoZW0gd29ya2VkIHdlbGwuIFRoZW4gSSANCj4gbWFudWFsbHkgY29tcGls
+ZWQgYSBmZXcgdmFuaWxsYSA0LjkueCBrZXJuZWxzLCBqdXN0IHdpdGggdGhlIG1vc3QgDQo+IHJl
+Y2VudCBSVCBwYXRjaCBhbmQgd2l0aCBhIGNvbmZpZ3VyYXRpb24gbWFkZSBmcm9tIHNjcmF0Y2gg
+KG5vdCB0byANCj4gY29weSBhbnkgUExEIG1pc3Rha2VzKS4gU3RpbGwgbm8gbHVjay4NCj4NCj4g
+TW9zdCBvZiB0aGUgaW5mb3JtYXRpb24gSSBjb3VsZCBmaW5kIG9ubGluZSBpcyBxdWl0ZSBvdXRk
+YXRlZCBvciANCj4gaW5jb21wbGV0ZSwgc28gSSBoYXZlIHJlYWxseSBsaXR0bGUgaWRlYSB3aGF0
+IHRoZSBwcm9wZXIgY29uZmlndXJhdGlvbiANCj4gb2YgdGhlIFJUIGtlcm5lbCBpcyBvciBob3cg
+dG8gZGVidWcgaXQuDQo+DQo+IFdoZW4gdGhlIFJUIGtlcm5lbCB3b3JrcywgaXQgd291bGQgcHJv
+dmlkZSBxdWl0ZSBhY2NlcHRhYmxlIGxhdGVuY3kg4oCTIA0KPiBJIGNvdWxkIGdldCBkb3duIHRv
+IDhtcyBpbiBqYWNrIHdpdGggbm8gc2lnbmlmaWNhbnQgeHJ1bnMuIA0KPiBVbmZvcnR1bmF0ZWx5
+IG5vbmUgb2YgdGhlIFJUIGtlcm5lbHMgSSB0cmllZCB3b3VsZCBiZSByZWxpYWJsZS4gV2l0aCAN
+Cj4gbGl0dGxlIGxvYWQgdGhlIHN5c3RlbSB3b3VsZCB3b3JrIGZvciBhIGZldyBob3VycyBzb21l
+dGltZXMsIGJ1dCBvZnRlbiANCj4gaXQgd291bGQgc2xvdyBkb3duIGFuZCBjcmFzaCBtdWNoIGVh
+cmxpZXIuIFdpdGggaGlnaCBsb2FkLCBlLmcuIHdoZW4gDQo+IHRyeWluZyB0byBwbGF5IHNvbWUg
+ZGVtYW5kaW5nIGdhbWUsIHRoZSBzeXN0ZW0gd291bGQgdXN1YWxseSBjcmFzaCBxdWl0ZSBxdWlj
+a2x5Lg0KPg0KPiBTb21ldGltZXMgaXQgd291bGQganVzdCBsb2NrIHVwIGhhcmQgd2l0aCBubyB3
+YXJuaW5nIGFuZCBub3RoaW5nIHdvdWxkIA0KPiB3b3JrIOKAkyBub3QgZXZlbiBtYWdpYyBzeXNy
+cS4NCj4gT3RoZXIgdGltZXMgaXQgd291bGQgZ3JhZHVhbGx5IHNsb3cgZG93biB1bnRpbCBpdCBp
+cyBub3QgdXNhYmxlIGF0IGFsbC4NCj4gU29tZXRpbWVzIEkgd291bGQgYmUgYWJsZSB0byBzZWUg
+c29tZSAnQlVHJyBpbiBkbWVzZywgYnV0IHJhcmVseSBJIA0KPiB3b3VsZCBiZSBhYmxlIHRvIHJl
+c3RhcnQgdGhlIHN5c3RlbSBjbGVhbmx5Lg0KPiBTb21ldGltZXMgb25seSBzb21lIHN1YnN5c3Rl
+bXMgd291bGQgZmFpbCwgd2hpbGUgb3RoZXJ3aXNlIHRoZSBzeXN0ZW0gDQo+IHN0aWxsIHNlZW1z
+IHRvIHdvcmsuIEl0IGNvdWxkIGJlIHNvdW5kLCBtb3VzZSwga2V5Ym9hcmQgb3IgbmV0d29yayAN
+Cj4gdGhhdCBkb2Vzbid0IHdvcmsuDQo+DQo+IFN5c3RlbSBsb2dzIHdvdWxkIGNvbnRhaW4gc29t
+ZSBrZXJuZWwgQlVHcy9XQVJOSU5HcywgYnV0IHRoZXkgd291bGQgDQo+IG9mdGVuIGxvb2sgZ2Vu
+ZXJpYyBhbmQgd291bGQgbm90IHBvaW50IHRvIGEgc3BlY2lmaWMgcHJvYmxlbSAobm90IGZvciBt
+ZSkuDQo+DQo+IFRvZGF5IEkgaGF2ZSB0cmllZCBrZXJuZWwgNC45LjM3IHdpdGggdGhlIDQuOS4z
+NS1ydDI1IHBhdGNoLiBJdCBmYWlsZWQgDQo+IGFnYWluLCBoZXJlIGFyZSB0aGUga2VybmVsIGVy
+cm9yIGxvZ3M6DQo+DQo+IGh0dHBzOi8vZ2lzdC5naXRodWIuY29tL0phamN1cy80OTRiNzkwNjJi
+NTM3MjY5YjQ5MjY1ZmYzYzUwZWU3OA0KPg0KPiBJIGhhdmUgbm8gaWRlYSBob3cgdG8gcHJvcGVy
+bHkgZGVidWcgdGhlIHByb2JsZW0sIGV2ZW4gd2hhdCBkYXRhIA0KPiBzaG91bGQgSSBjb2xsZWN0
+IHRvIHByZXBhcmUgYSByZWFzb25hYmxlIGJ1ZyByZXBvcnQuDQo+DQo+IEkgaGF2ZSBhbHJlYWR5
+IHVwZ3JhZGVkIGxhcHRvcCBmaXJtd2FyZSB0byB0aGUgbGF0ZXN0IGF2YWlsYWJsZSwgSSANCj4g
+aGF2ZSBhbHNvIHBsYXllZCB3aXRoIHNvbWUgQklPUyBzZXR1cCBvcHRpb25zLg0KPg0KPiBPbmUg
+dGhpbmcgdGhhdCBsb29rcyBzdXNwaWNpb3VzIGlzIHRoZSBhbW91bnQgb2YgdGltZSBzcGVudCBp
+biBJUlEgMTYgDQo+IGhhbmRsaW5nLCB3aGljaCBpczogJ2lkbWE2NCwgaTgwMV9zbWJ1cywgaTJj
+X2Rlc2lnbndhcmUnLiBBbHNvIHRoZSANCj4gaTgwMS1zbWJ1cyBpbiBpMmMtZGVzaWdud2FyZS1w
+bGF0Zm9ybSB3ZXJlIGZpcnN0IHRvIGZhaWwgd2hlbiBsb2FkZWQuDQo+IFJlZ3VsYXIga2VybmVs
+ICh3aXRob3V0IFBSRUVNUFRfUlRfRlVMTCkgc2VlbXMgdG8gZ2VuZXJhdGUgbXVjaCBsb3dlciAN
+Cj4gbnVtYmVyIG9mIHRob3NlIGludGVycnVwdHMuDQo+DQo+IEhvd2V2ZXIsIHRoZSBzeXN0ZW0g
+d291bGQgY3Jhc2ggZXZlbiBpZiB0aGUgaTJjIG1vZHVsZXMgYXJlIA0KPiBibGFja2xpc3RlZCBh
+bmQgbm90IGxvYWRlZC4gR2V0dGluZyByaWQgb2YgaWRtYTY0IHdvdWxkIG5vdCBoZWxwIG11Y2gg
+DQo+IGVpdGhlci4gSVJRIDE2IHdvdWxkIG5vdCBjb21lIGFueSBtb3JlLCBidXQgdGhlIHN5c3Rl
+bSB3b3VsZCBzbG93IGRvd24gYW5kIGNyYXNoIGFueXdheS4NCj4NCj4NCj4gQW55IGlkZWEgd2hh
+dCBpcyB0aGUgcHJvYmxlbT8NCj4gQW55IGhpbnRzIGhvdyB0byBkZWJ1ZyBpdD8NCj4NCj4NCj4g
+R3JlZXRzLA0KPiBKYWNlaw0KPiAtLQ0KPiBUbyB1bnN1YnNjcmliZSBmcm9tIHRoaXMgbGlzdDog
+c2VuZCB0aGUgbGluZSAidW5zdWJzY3JpYmUgDQo+IGxpbnV4LXJ0LXVzZXJzIiBpbiB0aGUgYm9k
+eSBvZiBhIG1lc3NhZ2UgdG8gbWFqb3Jkb21vQHZnZXIua2VybmVsLm9yZyANCj4gTW9yZSBtYWpv
+cmRvbW8gaW5mbyBhdCAgaHR0cDovL3ZnZXIua2VybmVsLm9yZy9tYWpvcmRvbW8taW5mby5odG1s
+DQotLQ0KVG8gdW5zdWJzY3JpYmUgZnJvbSB0aGlzIGxpc3Q6IHNlbmQgdGhlIGxpbmUgInVuc3Vi
+c2NyaWJlIGxpbnV4LXJ0LXVzZXJzIiBpbiB0aGUgYm9keSBvZiBhIG1lc3NhZ2UgdG8gbWFqb3Jk
+b21vQHZnZXIua2VybmVsLm9yZyBNb3JlIG1ham9yZG9tbyBpbmZvIGF0ICBodHRwOi8vdmdlci5r
+ZXJuZWwub3JnL21ham9yZG9tby1pbmZvLmh0bWwNCg==
