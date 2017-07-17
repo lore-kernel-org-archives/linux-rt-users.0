@@ -1,104 +1,107 @@
-From: Piotr Gregor <pgregor@quadrant-systems.co.uk>
-Subject: RE: RT kernel on Acer laptop unreliable
-Date: Mon, 17 Jul 2017 06:31:50 +0000
-Message-ID: <AM3PR02MB1301C4E614B49A78835967DC1A00@AM3PR02MB130.eurprd02.prod.outlook.com>
-References: <8c1a0cb6-d90c-1f6f-2d23-9865a17b379e@jajcus.net>
- <ac7edffc-9f5f-527d-71b1-211ffa342ddc@numalliance.com>
+From: Piotr Gregor <piotrgregor@rsyncme.org>
+Subject: [BUG] drivers: staging: comedi: do not call blocking ops when
+ !TASK_RUNNING; state=1
+Date: Mon, 17 Jul 2017 15:48:50 +0100
+Message-ID: <20170717144850.GA1696@piotrpc>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-To: =?utf-8?B?U3TDqXBoYW5lIEFuY2Vsb3Q=?= <sancelot@numalliance.com>,
-        "Jacek Konieczny" <jajcus@jajcus.net>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-db5eur01on0114.outbound.protection.outlook.com ([104.47.2.114]:64480
-        "EHLO EUR01-DB5-obe.outbound.protection.outlook.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1751256AbdGQGbx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 17 Jul 2017 02:31:53 -0400
-In-Reply-To: <ac7edffc-9f5f-527d-71b1-211ffa342ddc@numalliance.com>
-Content-Language: en-US
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org, sebastian.siewior@linutronix.de,
+        tglx@linutronix.de, gregkh@linuxfoundation.org, abbotti@mev.co.uk,
+        devel@driverdev.osuosl.org
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-SGkgSmFjZWssDQoNCkp1c3QgdG8gY2xhcmlmeTogZG9lcyB0aGUgbGFwdG9wIHdvcmtzIGZpbmUg
-d2l0aCBvdGhlciwgbm9uLXJ0LXBhdGNoZWQga2VybmVsPw0KSWYgeWVzLCBjb3VsZG4ndCB5b3Ug
-Y29weSBleGlzdGluZyBjb25maWcgZnJvbSAvYm9vdCBhbmQgbWFrZSBvbGRjb25maWcgYmFzZWQg
-b24gdGhhdD8gDQoNCmNkIGxpbnV4LTQuNC4zMg0KY3AgL2Jvb3QvY29uZmlnLWB1bmFtZSAtcmAg
-LmNvbmZpZzsNCm1ha2Ugb2xkY29uZmlnDQoNClRoZW4gZW5hYmxlIENPTkZJR19QUkVFTVBUX1JU
-X0ZVTEwgYW5kIGNvbmZpZ3VyZSB0aGUgcmVzdCBpZiBuZWVkZWQuDQpTaW1wbHkgZW5hYmxpbmcg
-UFJFRU1QVF9SVF9GVUxMIGlzIGVub3VnaCB0byBnZXQgeW91IHN0YXJ0ZWQuDQpZb3UgbWF5IGhh
-dmUgdG8gZG8gc29tZSB0cmlja3MgdG8gZ2V0IEdVSSB3aXRoIHJlYXNvbmFibGUgZ3JhcGhpY3Mg
-dGhvdWdoDQpidXQgdGhpcyBzaG91bGQgZ2l2ZSB5b3UgcnVubmFibGUsIHN0YWJsZSBzeXN0ZW0u
-DQoNCkkgaGF2ZSBzb21lIGx1Y2sgd2l0aCB0aGlzIGFwcHJvYWNoIG9uIGEgY291cGxlIG9mIG1h
-Y2hpbmVzIHNvIGZhci4NCg0KY2hlZXJzLA0KUGlvdHINCg0KLS0tLS1PcmlnaW5hbCBNZXNzYWdl
-LS0tLS0NCkZyb206IGxpbnV4LXJ0LXVzZXJzLW93bmVyQHZnZXIua2VybmVsLm9yZyBbbWFpbHRv
-OmxpbnV4LXJ0LXVzZXJzLW93bmVyQHZnZXIua2VybmVsLm9yZ10gT24gQmVoYWxmIE9mIFN0w6lw
-aGFuZSBBbmNlbG90DQpTZW50OiAxNyBKdWx5IDIwMTcgMDc6MjENClRvOiBKYWNlayBLb25pZWN6
-bnkgPGphamN1c0BqYWpjdXMubmV0PjsgbGludXgtcnQtdXNlcnNAdmdlci5rZXJuZWwub3JnDQpT
-dWJqZWN0OiBSZTogUlQga2VybmVsIG9uIEFjZXIgbGFwdG9wIHVucmVsaWFibGUNCg0KSGksDQoN
-CklmIHlvdSBkb24ndCBtYW5hZ2UgdG8gYWNoaWV2ZSByZWFsdGltZSwgeW91IGhhdmUgc29tZSB3
-cm9uZyBvcHRpb25zIGluIHlvdXIga2VybmVsIHNldHRpbmdzIC4NCg0KUGxlYXNlIHNoYXJlIHlv
-dXIga2VybmVsIGNvbmZpZy4NCg0KUmVnYXJkcywNCg0KUy5BbmNlbG90DQoNCg0KTGUgMTUvMDcv
-MjAxNyDDoCAxOTo0MywgSmFjZWsgS29uaWVjem55IGEgw6ljcml0IDoNCj4gSGVsbG8sDQo+DQo+
-IEkgbmVlZCBsb3cgYW5kIHN0YWJsZSBsYXRlbmN5IGZvciBhdWRpbyBwcm9jZXNzaW5nLiBJIHVz
-ZSBHdWl0YXJpeCwgDQo+IEFyZG91ciBhbmQgb3RoZXIgamFjay1iYXNlZCBhcHBsaWNhdGlvbnMu
-IEZvciBhbnl0aGluZyBlbHNlIEkgd291bGQgDQo+IHVzZSB0aGUgcmVndWxhciBrZXJuZWwgcGFj
-a2FnZSBmcm9tIG15IGRpc3RyaWJ1dGlvbiAoUExEIExpbnV4KSwgYnV0IA0KPiB0aGUgbGF0ZW5j
-eSBzcGlrZXMgYXJlIHVuYWNjZXB0YWJsZSBpbiBzb21lIGNhc2VzLiBUaGF0IGlzIHdoeSBJIGhh
-dmUgDQo+IGJlZW4gdHJ5aW5nIHRvIHVzZSBSVCBrZXJuZWwsIGZvciBhIGZldyBtb250aHMgbm93
-4oCmDQo+DQo+IEZpcnN0IEkgYWRkZWQgdGhlIFJUIHBhdGNoIHRvIHRoZSBQTEQgTGludXgga2Vy
-bmVsIHBhY2thZ2UuIEkgaGF2ZSANCj4gdHJpZWQgYm90aCB0aGUgNC40IGFuZCA0Ljkga2VybmVs
-LiBOZWl0aGVyIG9mIHRoZW0gd29ya2VkIHdlbGwuIFRoZW4gSSANCj4gbWFudWFsbHkgY29tcGls
-ZWQgYSBmZXcgdmFuaWxsYSA0LjkueCBrZXJuZWxzLCBqdXN0IHdpdGggdGhlIG1vc3QgDQo+IHJl
-Y2VudCBSVCBwYXRjaCBhbmQgd2l0aCBhIGNvbmZpZ3VyYXRpb24gbWFkZSBmcm9tIHNjcmF0Y2gg
-KG5vdCB0byANCj4gY29weSBhbnkgUExEIG1pc3Rha2VzKS4gU3RpbGwgbm8gbHVjay4NCj4NCj4g
-TW9zdCBvZiB0aGUgaW5mb3JtYXRpb24gSSBjb3VsZCBmaW5kIG9ubGluZSBpcyBxdWl0ZSBvdXRk
-YXRlZCBvciANCj4gaW5jb21wbGV0ZSwgc28gSSBoYXZlIHJlYWxseSBsaXR0bGUgaWRlYSB3aGF0
-IHRoZSBwcm9wZXIgY29uZmlndXJhdGlvbiANCj4gb2YgdGhlIFJUIGtlcm5lbCBpcyBvciBob3cg
-dG8gZGVidWcgaXQuDQo+DQo+IFdoZW4gdGhlIFJUIGtlcm5lbCB3b3JrcywgaXQgd291bGQgcHJv
-dmlkZSBxdWl0ZSBhY2NlcHRhYmxlIGxhdGVuY3kg4oCTIA0KPiBJIGNvdWxkIGdldCBkb3duIHRv
-IDhtcyBpbiBqYWNrIHdpdGggbm8gc2lnbmlmaWNhbnQgeHJ1bnMuIA0KPiBVbmZvcnR1bmF0ZWx5
-IG5vbmUgb2YgdGhlIFJUIGtlcm5lbHMgSSB0cmllZCB3b3VsZCBiZSByZWxpYWJsZS4gV2l0aCAN
-Cj4gbGl0dGxlIGxvYWQgdGhlIHN5c3RlbSB3b3VsZCB3b3JrIGZvciBhIGZldyBob3VycyBzb21l
-dGltZXMsIGJ1dCBvZnRlbiANCj4gaXQgd291bGQgc2xvdyBkb3duIGFuZCBjcmFzaCBtdWNoIGVh
-cmxpZXIuIFdpdGggaGlnaCBsb2FkLCBlLmcuIHdoZW4gDQo+IHRyeWluZyB0byBwbGF5IHNvbWUg
-ZGVtYW5kaW5nIGdhbWUsIHRoZSBzeXN0ZW0gd291bGQgdXN1YWxseSBjcmFzaCBxdWl0ZSBxdWlj
-a2x5Lg0KPg0KPiBTb21ldGltZXMgaXQgd291bGQganVzdCBsb2NrIHVwIGhhcmQgd2l0aCBubyB3
-YXJuaW5nIGFuZCBub3RoaW5nIHdvdWxkIA0KPiB3b3JrIOKAkyBub3QgZXZlbiBtYWdpYyBzeXNy
-cS4NCj4gT3RoZXIgdGltZXMgaXQgd291bGQgZ3JhZHVhbGx5IHNsb3cgZG93biB1bnRpbCBpdCBp
-cyBub3QgdXNhYmxlIGF0IGFsbC4NCj4gU29tZXRpbWVzIEkgd291bGQgYmUgYWJsZSB0byBzZWUg
-c29tZSAnQlVHJyBpbiBkbWVzZywgYnV0IHJhcmVseSBJIA0KPiB3b3VsZCBiZSBhYmxlIHRvIHJl
-c3RhcnQgdGhlIHN5c3RlbSBjbGVhbmx5Lg0KPiBTb21ldGltZXMgb25seSBzb21lIHN1YnN5c3Rl
-bXMgd291bGQgZmFpbCwgd2hpbGUgb3RoZXJ3aXNlIHRoZSBzeXN0ZW0gDQo+IHN0aWxsIHNlZW1z
-IHRvIHdvcmsuIEl0IGNvdWxkIGJlIHNvdW5kLCBtb3VzZSwga2V5Ym9hcmQgb3IgbmV0d29yayAN
-Cj4gdGhhdCBkb2Vzbid0IHdvcmsuDQo+DQo+IFN5c3RlbSBsb2dzIHdvdWxkIGNvbnRhaW4gc29t
-ZSBrZXJuZWwgQlVHcy9XQVJOSU5HcywgYnV0IHRoZXkgd291bGQgDQo+IG9mdGVuIGxvb2sgZ2Vu
-ZXJpYyBhbmQgd291bGQgbm90IHBvaW50IHRvIGEgc3BlY2lmaWMgcHJvYmxlbSAobm90IGZvciBt
-ZSkuDQo+DQo+IFRvZGF5IEkgaGF2ZSB0cmllZCBrZXJuZWwgNC45LjM3IHdpdGggdGhlIDQuOS4z
-NS1ydDI1IHBhdGNoLiBJdCBmYWlsZWQgDQo+IGFnYWluLCBoZXJlIGFyZSB0aGUga2VybmVsIGVy
-cm9yIGxvZ3M6DQo+DQo+IGh0dHBzOi8vZ2lzdC5naXRodWIuY29tL0phamN1cy80OTRiNzkwNjJi
-NTM3MjY5YjQ5MjY1ZmYzYzUwZWU3OA0KPg0KPiBJIGhhdmUgbm8gaWRlYSBob3cgdG8gcHJvcGVy
-bHkgZGVidWcgdGhlIHByb2JsZW0sIGV2ZW4gd2hhdCBkYXRhIA0KPiBzaG91bGQgSSBjb2xsZWN0
-IHRvIHByZXBhcmUgYSByZWFzb25hYmxlIGJ1ZyByZXBvcnQuDQo+DQo+IEkgaGF2ZSBhbHJlYWR5
-IHVwZ3JhZGVkIGxhcHRvcCBmaXJtd2FyZSB0byB0aGUgbGF0ZXN0IGF2YWlsYWJsZSwgSSANCj4g
-aGF2ZSBhbHNvIHBsYXllZCB3aXRoIHNvbWUgQklPUyBzZXR1cCBvcHRpb25zLg0KPg0KPiBPbmUg
-dGhpbmcgdGhhdCBsb29rcyBzdXNwaWNpb3VzIGlzIHRoZSBhbW91bnQgb2YgdGltZSBzcGVudCBp
-biBJUlEgMTYgDQo+IGhhbmRsaW5nLCB3aGljaCBpczogJ2lkbWE2NCwgaTgwMV9zbWJ1cywgaTJj
-X2Rlc2lnbndhcmUnLiBBbHNvIHRoZSANCj4gaTgwMS1zbWJ1cyBpbiBpMmMtZGVzaWdud2FyZS1w
-bGF0Zm9ybSB3ZXJlIGZpcnN0IHRvIGZhaWwgd2hlbiBsb2FkZWQuDQo+IFJlZ3VsYXIga2VybmVs
-ICh3aXRob3V0IFBSRUVNUFRfUlRfRlVMTCkgc2VlbXMgdG8gZ2VuZXJhdGUgbXVjaCBsb3dlciAN
-Cj4gbnVtYmVyIG9mIHRob3NlIGludGVycnVwdHMuDQo+DQo+IEhvd2V2ZXIsIHRoZSBzeXN0ZW0g
-d291bGQgY3Jhc2ggZXZlbiBpZiB0aGUgaTJjIG1vZHVsZXMgYXJlIA0KPiBibGFja2xpc3RlZCBh
-bmQgbm90IGxvYWRlZC4gR2V0dGluZyByaWQgb2YgaWRtYTY0IHdvdWxkIG5vdCBoZWxwIG11Y2gg
-DQo+IGVpdGhlci4gSVJRIDE2IHdvdWxkIG5vdCBjb21lIGFueSBtb3JlLCBidXQgdGhlIHN5c3Rl
-bSB3b3VsZCBzbG93IGRvd24gYW5kIGNyYXNoIGFueXdheS4NCj4NCj4NCj4gQW55IGlkZWEgd2hh
-dCBpcyB0aGUgcHJvYmxlbT8NCj4gQW55IGhpbnRzIGhvdyB0byBkZWJ1ZyBpdD8NCj4NCj4NCj4g
-R3JlZXRzLA0KPiBKYWNlaw0KPiAtLQ0KPiBUbyB1bnN1YnNjcmliZSBmcm9tIHRoaXMgbGlzdDog
-c2VuZCB0aGUgbGluZSAidW5zdWJzY3JpYmUgDQo+IGxpbnV4LXJ0LXVzZXJzIiBpbiB0aGUgYm9k
-eSBvZiBhIG1lc3NhZ2UgdG8gbWFqb3Jkb21vQHZnZXIua2VybmVsLm9yZyANCj4gTW9yZSBtYWpv
-cmRvbW8gaW5mbyBhdCAgaHR0cDovL3ZnZXIua2VybmVsLm9yZy9tYWpvcmRvbW8taW5mby5odG1s
-DQotLQ0KVG8gdW5zdWJzY3JpYmUgZnJvbSB0aGlzIGxpc3Q6IHNlbmQgdGhlIGxpbmUgInVuc3Vi
-c2NyaWJlIGxpbnV4LXJ0LXVzZXJzIiBpbiB0aGUgYm9keSBvZiBhIG1lc3NhZ2UgdG8gbWFqb3Jk
-b21vQHZnZXIua2VybmVsLm9yZyBNb3JlIG1ham9yZG9tbyBpbmZvIGF0ICBodHRwOi8vdmdlci5r
-ZXJuZWwub3JnL21ham9yZG9tby1pbmZvLmh0bWwNCg==
+Calling blocking operations from wrong context.
+Kernel:
+
+Linux piotrpc 4.4.70-rt83 #1 SMP PREEMPT RT Thu Jul 13 08:42:02 BST 2017 x86_64 GNU/Linux
+
+[   80.542018] NOHZ: local_softirq_pending 80
+[  125.175471] ------------[ cut here ]------------
+[  125.175491] WARNING: CPU: 0 PID: 1497 at kernel/sched/core.c:7833 __might_sleep+0x9f/0xb0()
+[  125.175728] do not call blocking ops when !TASK_RUNNING; state=1 set at [<ffffffffc0575741>] comedi_read+0x1a1/0x610 [comedi]
+[  125.175735] Modules linked in: cpufreq_conservative cpufreq_powersave cpufreq_userspace cfg80211 nfsd auth_rpcgss oid_registry nfs_acl nfs lockd grace fscache sunrpc nls_ascii nls_cp437 vfat fat snd_hda_codec_hdmi snd_hda_codec_realtek snd_hda_codec_generic intel_rapl joydev intel_powerclamp coretemp kvm drbg efi_pstore ansi_cprng irqbypass crct10dif_pclmul crc32_pclmul ghash_clmulni_intel aesni_intel aes_x86_64 lrw gf128mul glue_helper ablk_helper cryptd i915 serio_raw pcspkr efivars snd_hda_intel amplc_dio200_pci(C) amplc_dio200_common(C) snd_hda_codec iTCO_wdt comedi_8254(C) comedi_pci(C) iTCO_vendor_support comedi(C) snd_hda_core snd_hwdep snd_pcm drm_kms_helper snd_timer drm snd mei_me soundcore mei i2c_algo_bit shpchp eeepc_wmi asus_wmi sparse_keymap mxm_wmi battery hci_uart btbcm
+  btqca btintel
+[  125.175824]  bluetooth
+[  125.175825]  wmi
+[  125.175826]  rfkill
+[  125.175827]  video
+[  125.175828]  intel_lpss_acpi
+[  125.175830]  intel_lpss
+[  125.175831]  evdev
+[  125.175832]  mfd_core
+[  125.175833]  acpi_als
+[  125.175834]  acpi_pad
+[  125.175835]  kfifo_buf
+[  125.175836]  button
+[  125.175838]  industrialio
+[  125.175839]  fuse
+[  125.175840]  parport_pc
+[  125.175841]  ppdev
+[  125.175842]  lp
+[  125.175843]  parport
+[  125.175844]  autofs4
+[  125.175845]  ext4
+[  125.175846]  crc16
+[  125.175847]  mbcache
+[  125.175848]  jbd2
+[  125.175849]  hid_generic
+[  125.175851]  usbhid
+[  125.175852]  sg
+[  125.175853]  sr_mod
+[  125.175854]  cdrom
+[  125.175855]  sd_mod
+[  125.175856]  crc32c_intel
+[  125.175857]  ahci
+[  125.175858]  libahci
+[  125.175859]  psmouse
+[  125.175860]  xhci_pci
+[  125.175861]  libata
+[  125.175862]  r8169
+[  125.175864]  i2c_i801
+[  125.175865]  mii
+[  125.175866]  xhci_hcd
+[  125.175867]  tg3
+[  125.175868]  ptp
+[  125.175869]  scsi_mod
+[  125.175870]  usbcore
+[  125.175871]  pps_core
+[  125.175872]  libphy
+[  125.175873]  usb_common
+[  125.175874]  fan
+[  125.175875]  thermal
+[  125.175876]  i2c_hid
+[  125.175877]  hid
+[  125.175878]  fjes
+
+[  125.175926] CPU: 0 PID: 1497 Comm: txrx Tainted: G        WC      4.4.70-rt83 #1
+[  125.175928] Hardware name: NOVATECH LTD PC-XB04472/H110M-C, BIOS 3019 01/06/2017
+[  125.175935]  0000000000000000 ffff8802205b3cb0 ffffffff81387160 ffff8802205b3cf8
+[  125.175940]  0000000000000009 ffff8802205b3ce8 ffffffff81089766 ffffffffc057ca60
+[  125.175944]  00000000000002dc 0000000000000000 0000000000000001 0000000000000001
+[  125.175945] Call Trace:
+[  125.175955]  [<ffffffff81387160>] dump_stack+0x85/0xc5
+[  125.175963]  [<ffffffff81089766>] warn_slowpath_common+0x86/0xe0
+[  125.175971]  [<ffffffff8108980c>] warn_slowpath_fmt+0x4c/0x50
+[  125.175980]  [<ffffffff81185577>] ? trace_preempt_on+0x1a7/0x2b0
+[  125.175985]  [<ffffffff8168ca95>] ? schedule+0x55/0xe0
+[  125.175994]  [<ffffffffc0575741>] ? comedi_read+0x1a1/0x610 [comedi]
+[  125.176001]  [<ffffffffc0575741>] ? comedi_read+0x1a1/0x610 [comedi]
+[  125.176005]  [<ffffffff810b6d0f>] __might_sleep+0x9f/0xb0
+[  125.176012]  [<ffffffff811f54cb>] __might_fault+0x3b/0xb0
+[  125.176020]  [<ffffffffc057597f>] comedi_read+0x3df/0x610 [comedi]
+[  125.176034]  [<ffffffff810bebf0>] ? wake_up_process+0x20/0x20
+[  125.176044]  [<ffffffff812406d8>] __vfs_read+0x28/0xe0
+[  125.176053]  [<ffffffff812f1f06>] ? security_file_permission+0xa6/0xc0
+[  125.176060]  [<ffffffff81240c53>] ? rw_verify_area+0x53/0xf0
+[  125.176066]  [<ffffffff81240d79>] vfs_read+0x89/0x130
+[  125.176074]  [<ffffffff81241b79>] SyS_read+0x49/0xb0
+[  125.176084]  [<ffffffff81691876>] entry_SYSCALL_64_fastpath+0x16/0x7a
+[  125.176095] ---[ end trace 0000000000000003 ]---
+
+
+cheers,
+Piotr
