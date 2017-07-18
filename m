@@ -1,303 +1,120 @@
-From: Haris Okanovic <haris.okanovic@ni.com>
-Subject: [PATCH v2] timers: Don't wake ktimersoftd on every tick
-Date: Mon, 17 Jul 2017 17:04:30 -0500
-Message-ID: <20170717220430.20117-1-haris.okanovic@ni.com>
-References: <alpine.DEB.2.20.1706041558150.2813@nanos>
+From: Piotr Gregor <piotrgregor@rsyncme.org>
+Subject: [BUG] x86/mm: Found insecure W+X mapping at address
+ ffff88000005f000/0xffff88000005f000
+Date: Tue, 18 Jul 2017 09:50:35 +0100
+Message-ID: <20170718085034.GA6388@piotrpc>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <haris.okanovic@ni.com>, <harisokn@gmail.com>,
-        <bigeasy@linutronix.de>, <tglx@linutronix.de>,
-        <julia.cartwright@ni.com>, <gratian.crisan@ni.com>,
-        <anna-maria@linutronix.de>
-To: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.20.1706041558150.2813@nanos>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: mingo@redhat.com, hpa@zytor.com, x86@kernel.org,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: tglx@linutronix.de
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wr0-f172.google.com ([209.85.128.172]:34623 "EHLO
+        mail-wr0-f172.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751348AbdGRIus (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 18 Jul 2017 04:50:48 -0400
+Received: by mail-wr0-f172.google.com with SMTP id 12so18894590wrb.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 18 Jul 2017 01:50:47 -0700 (PDT)
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-We recently upgraded from 4.1 to 4.6 and noticed a minor latency
-regression caused by an additional thread wakeup (ktimersoftd) in
-interrupt context on every tick. The wakeups are from
-run_local_timers() raising TIMER_SOFTIRQ. Both TIMER and SCHED softirq
-coalesced into one ksoftirqd wakeup prior to Sebastian's change to split
-timers into their own thread.
+Hi Thomas,
 
-There's already logic in run_local_timers() to avoid some unnecessary
-wakeups of ksoftirqd, but it doesn't seems to catch them all. In
-particular, I've seen many unnecessary wakeups when jiffies increments
-prior to run_local_timers().
+Dmesg reports insecure W+X mapping found at address
+ffff88000005f000/0xffff88000005f000
 
-Change the way timers are collected per Julia and Thomas'
-recommendation: Expired timers are now collected in interrupt context
-and fired in ktimersoftd to avoid double-walk of `pending_map`.
+on 4.4.70 kernel patched with -rt83 patch:
 
-Collect expired timers in interrupt context to avoid overhead of waking
-ktimersoftd on every tick. ktimersoftd now wakes only when one or more
-timers are ready, which yields a minor reduction in small latency spikes.
+# uname -a
+Linux piotrpc 4.4.70-rt83 #1 SMP PREEMPT RT Thu Jul 13 08:42:02 BST 2017 x86_64 GNU/Linux
 
-This is implemented by storing lists of expired timers in timer_base,
-updated on each tick. Any addition to the lists wakes ktimersoftd
-(softirq) to process those timers.
+[    4.888146] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[    4.909507] 00:02: ttyS0 at I/O 0x3f8 (irq = 4, base_baud = 115200) is a 16550A
+[    4.931377] 00:03: ttyS1 at I/O 0x2f8 (irq = 3, base_baud = 115200) is a 16550A
+[    4.933500] serial 0000:04:00.0: enabling device (0000 -> 0003)
+[    4.958689] 0000:04:00.0: ttyS2 at I/O 0xe010 (irq = 18, base_baud = 115200) is a ST16650V2
+[    4.959402] serial 0000:04:00.1: enabling device (0000 -> 0003)
+[    4.982118] 0000:04:00.1: ttyS3 at I/O 0xe000 (irq = 19, base_baud = 115200) is a ST16650V2
+[    4.983587] Linux agpgart interface v0.103
+[    4.984757] AMD IOMMUv2 driver by Joerg Roedel <jroedel@suse.de>
+[    4.984758] AMD IOMMUv2 functionality not available on this system
+[    4.991048] i8042: PNP: No PS/2 controller found. Probing ports directly.
+[    4.995120] serio: i8042 KBD port at 0x60,0x64 irq 1
+[    4.995228] serio: i8042 AUX port at 0x60,0x64 irq 12
+[    4.997121] mousedev: PS/2 mouse device common for all mice
+[    4.997633] rtc_cmos 00:06: RTC can wake from S4
+[    4.998756] rtc_cmos 00:06: rtc core: registered rtc_cmos as rtc0
+[    4.999328] rtc_cmos 00:06: alarms up to one month, y3k, 242 bytes nvram, hpet irqs
+[    4.999420] Intel P-state driver initializing.
+[    4.999429] intel_pstate: HWP enabled
+[    5.011424] NET: Registered protocol family 10
+[    5.013542] mip6: Mobile IPv6
+[    5.013581] NET: Registered protocol family 17
+[    5.013595] mpls_gso: MPLS GSO support
+[    5.016288] microcode: CPU0 sig=0x506e3, pf=0x2, revision=0xa0
+[    5.016308] microcode: CPU1 sig=0x506e3, pf=0x2, revision=0xa0
+[    5.016362] microcode: CPU2 sig=0x506e3, pf=0x2, revision=0xa0
+[    5.016416] microcode: CPU3 sig=0x506e3, pf=0x2, revision=0xa0
+[    5.016475] microcode: CPU4 sig=0x506e3, pf=0x2, revision=0xa0
+[    5.016503] microcode: CPU5 sig=0x506e3, pf=0x2, revision=0xa0
+[    5.016585] microcode: CPU6 sig=0x506e3, pf=0x2, revision=0xa0
+[    5.016642] microcode: CPU7 sig=0x506e3, pf=0x2, revision=0xa0
+[    5.017158] microcode: Microcode Update Driver: v2.01 <tigran@aivazian.fsnet.co.uk>, Peter Oruba
+[    5.018455] registered taskstats version 1
+[    5.018595] zswap: loaded using pool lzo/zbud
+[    5.019280] ima: No TPM chip found, activating TPM-bypass!
+[    5.025017] rtc_cmos 00:06: setting system clock to 2017-07-18 07:39:01 UTC (1500363541)
+[    5.025669] PM: Hibernation image not present or could not be loaded.
+[    5.031098] Freeing unused kernel memory: 3484K (ffffffff81d55000 - ffffffff820bc000)
+[    5.031100] Write protecting the kernel read-only data: 12288k
+[    5.036397] Freeing unused kernel memory: 1436K (ffff880002899000 - ffff880002a00000)
+[    5.039665] Freeing unused kernel memory: 976K (ffff880002d0c000 - ffff880002e00000)
+[    5.039669] ------------[ cut here ]------------
+[    5.039672] WARNING: CPU: 1 PID: 1 at arch/x86/mm/dump_pagetables.c:225 note_page+0x61e/0x7e0()
+[    5.039673] x86/mm: Found insecure W+X mapping at address ffff88000005f000/0xffff88000005f000
+[    5.039674] Modules linked in:
+[    5.039677] CPU: 1 PID: 1 Comm: swapper/0 Not tainted 4.4.70-rt83 #1
+[    5.039679] Hardware name: NOVATECH LTD PC-XB04472/H110M-C, BIOS 3019 01/06/2017
+[    5.039681]  0000000000000000 ffff880226a97d60 ffffffff81387160 ffff880226a97da8
+[    5.039682]  0000000000000009 ffff880226a97d98 ffffffff81089766 ffff880004145308
+[    5.039683]  0000000000000004 8000000000000163 ffff880226a97e98 0000000000000000
+[    5.039683] Call Trace:
+[    5.039692]  [<ffffffff81387160>] dump_stack+0x85/0xc5
+[    5.039694]  [<ffffffff81089766>] warn_slowpath_common+0x86/0xe0
+[    5.039696]  [<ffffffff8108980c>] warn_slowpath_fmt+0x4c/0x50
+[    5.039698]  [<ffffffff8107a45e>] note_page+0x61e/0x7e0
+[    5.039699]  [<ffffffff8107a991>] ptdump_walk_pgd_level_core+0x371/0x420
+[    5.039703]  [<ffffffff8107aa77>] ptdump_walk_pgd_level_checkwx+0x17/0x20
+[    5.039704]  [<ffffffff8107000e>] mark_rodata_ro+0xee/0x100
+[    5.039706]  [<ffffffff81683fe0>] ? rest_init+0x140/0x140
+[    5.039707]  [<ffffffff81683ffd>] kernel_init+0x1d/0xe0
+[    5.039709]  [<ffffffff81691c2f>] ret_from_fork+0x3f/0x70
+[    5.039710]  [<ffffffff81683fe0>] ? rest_init+0x140/0x140
+[    5.039712] ---[ end trace 0000000000000002 ]---
+[    5.044120] x86/mm: Checked W+X mappings: FAILED, 55997 W+X pages found.
+[    5.085104] systemd-udevd[134]: starting version 215
+[    5.086349] random: systemd-udevd: uninitialized urandom read (16 bytes read, 6 bits of entropy available)
+[    5.173659] FUJITSU Extended Socket Network Device Driver - version 1.0 - Copyright (c) 2015 FUJITSU LIMITED
+[    5.265179] hidraw: raw HID events driver (C) Jiri Kosina
+[    5.698741] thermal LNXTHERM:00: registered as thermal_zone0
+[    5.698745] ACPI: Thermal Zone [TZ00] (28 C)
+[    5.707387] pps_core: LinuxPPS API ver. 1 registered
+[    5.707389] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    5.718091] thermal LNXTHERM:01: registered as thermal_zone1
+[    5.718095] ACPI: Thermal Zone [TZ01] (30 C)
+[    5.742162] ACPI: bus type USB registered
+[    5.743514] PTP clock support registered
+[    5.749182] usbcore: registered new interface driver usbfs
+[    5.754191] usbcore: registered new interface driver hub
+[    5.757681] usbcore: registered new device driver usb
+[    5.830580] i801_smbus 0000:00:1f.4: SMBus using PCI interrupt
+[    5.831771] tg3.c:v3.137 (May 11, 2014)
+[    5.831786] tg3 0000:01:00.0: enabling device (0000 -> 0002)
+[    5.836078] tsc: Refined TSC clocksource calibration: 3407.991 MHz
+[    5.836081] clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x311fcb8dbdf, max_idle_ns: 440795301826 ns
+[    5.848627] r8169 Gigabit Ethernet driver 2.3LK-NAPI loaded
 
-https://github.com/harisokanovic/linux/tree/dev/hokanovi/timer-peek-v4
-
-Signed-off-by: Haris Okanovic <haris.okanovic@ni.com>
----
-[PATCH v2] Applied Thomas Gleixner's suggestions:
- - Fix expired_count race
- - Remove unneeded base->clk lookahead
- - Return expired_count in collect_expired_timers()
- - Add block_softirq
- - Rebase to v4.11.8-rt5
----
- kernel/time/timer.c | 122 +++++++++++++++++++++++++++++++++++++++-------------
- 1 file changed, 92 insertions(+), 30 deletions(-)
-
-diff --git a/kernel/time/timer.c b/kernel/time/timer.c
-index 5730d42bfd67..e5b537f2308c 100644
---- a/kernel/time/timer.c
-+++ b/kernel/time/timer.c
-@@ -209,9 +209,12 @@ struct timer_base {
- 	bool			is_idle;
- 	DECLARE_BITMAP(pending_map, WHEEL_SIZE);
- 	struct hlist_head	vectors[WHEEL_SIZE];
-+	struct hlist_head	expired_lists[LVL_DEPTH];
-+	int			expired_count;
- } ____cacheline_aligned;
- 
- static DEFINE_PER_CPU(struct timer_base, timer_bases[NR_BASES]);
-+static DEFINE_PER_CPU(int, block_softirqs);
- 
- #if defined(CONFIG_SMP) && defined(CONFIG_NO_HZ_COMMON)
- unsigned int sysctl_timer_migration = 1;
-@@ -1314,7 +1317,8 @@ static void call_timer_fn(struct timer_list *timer, void (*fn)(unsigned long),
- 	}
- }
- 
--static void expire_timers(struct timer_base *base, struct hlist_head *head)
-+static inline void __expire_timers(struct timer_base *base,
-+				   struct hlist_head *head)
- {
- 	while (!hlist_empty(head)) {
- 		struct timer_list *timer;
-@@ -1344,21 +1348,45 @@ static void expire_timers(struct timer_base *base, struct hlist_head *head)
- 	}
- }
- 
--static int __collect_expired_timers(struct timer_base *base,
--				    struct hlist_head *heads)
-+static void expire_timers(struct timer_base *base)
- {
--	unsigned long clk = base->clk;
-+	struct hlist_head *head;
-+	int count = READ_ONCE(base->expired_count);
-+
-+	while (count--) {
-+		head = base->expired_lists + count;
-+		__expire_timers(base, head);
-+	}
-+
-+	/* Zero base->expired_count after processing all base->expired_lists
-+	 * to signal it's ready to get re-populated. Otherwise, we race with
-+	 * tick_find_expired() when base->lock is temporarily dropped in
-+	 * __expire_timers() */
-+	base->expired_count = 0;
-+}
-+
-+static int __collect_expired_timers(struct timer_base *base)
-+{
-+	unsigned long clk;
- 	struct hlist_head *vec;
--	int i, levels = 0;
-+	int i;
- 	unsigned int idx;
- 
-+	/*
-+	 * expire_timers() must be called at least once before we can
-+	 * collect more timers
-+	 */
-+	if (base->expired_count)
-+		goto end;
-+
-+	clk = base->clk;
- 	for (i = 0; i < LVL_DEPTH; i++) {
- 		idx = (clk & LVL_MASK) + i * LVL_SIZE;
- 
- 		if (__test_and_clear_bit(idx, base->pending_map)) {
- 			vec = base->vectors + idx;
--			hlist_move_list(vec, heads++);
--			levels++;
-+			hlist_move_list(vec,
-+				&base->expired_lists[base->expired_count++]);
- 		}
- 		/* Is it time to look at the next level? */
- 		if (clk & LVL_CLK_MASK)
-@@ -1366,7 +1394,8 @@ static int __collect_expired_timers(struct timer_base *base,
- 		/* Shift clock for the next level granularity */
- 		clk >>= LVL_CLK_SHIFT;
- 	}
--	return levels;
-+
-+	end: return base->expired_count;
- }
- 
- #ifdef CONFIG_NO_HZ_COMMON
-@@ -1559,8 +1588,7 @@ void timer_clear_idle(void)
- 	base->is_idle = false;
- }
- 
--static int collect_expired_timers(struct timer_base *base,
--				  struct hlist_head *heads)
-+static int collect_expired_timers(struct timer_base *base)
- {
- 	/*
- 	 * NOHZ optimization. After a long idle sleep we need to forward the
-@@ -1581,16 +1609,41 @@ static int collect_expired_timers(struct timer_base *base,
- 		}
- 		base->clk = next;
- 	}
--	return __collect_expired_timers(base, heads);
-+	return __collect_expired_timers(base);
- }
- #else
--static inline int collect_expired_timers(struct timer_base *base,
--					 struct hlist_head *heads)
-+static inline int collect_expired_timers(struct timer_base *base)
- {
--	return __collect_expired_timers(base, heads);
-+	return __collect_expired_timers(base);
- }
- #endif
- 
-+/* Increments timer_base to current jiffies or until first expired
-+ * timer is found. Return number of expired timers. */
-+static int find_expired_timers(struct timer_base *base)
-+{
-+	const unsigned long int end_clk = jiffies;
-+	int expired_count;
-+
-+	while ( !(expired_count = collect_expired_timers(base)) &&
-+			time_after_eq(end_clk, base->clk) ) {
-+		base->clk++;
-+	}
-+
-+	return expired_count;
-+}
-+
-+/* Called from CPU tick routine to collect expired timers up to current
-+ * jiffies. Return number of expired timers. */
-+static int tick_find_expired(struct timer_base *base)
-+{
-+	int count;
-+	raw_spin_lock(&base->lock);
-+	count = find_expired_timers(base);
-+	raw_spin_unlock(&base->lock);
-+	return count;
-+}
-+
- /*
-  * Called from the timer interrupt handler to charge one tick to the current
-  * process.  user_tick is 1 if the tick is user time, 0 for system.
-@@ -1618,22 +1671,11 @@ void update_process_times(int user_tick)
-  */
- static inline void __run_timers(struct timer_base *base)
- {
--	struct hlist_head heads[LVL_DEPTH];
--	int levels;
--
--	if (!time_after_eq(jiffies, base->clk))
--		return;
--
- 	raw_spin_lock_irq(&base->lock);
- 
--	while (time_after_eq(jiffies, base->clk)) {
-+	while (find_expired_timers(base))
-+		expire_timers(base);
- 
--		levels = collect_expired_timers(base, heads);
--		base->clk++;
--
--		while (levels--)
--			expire_timers(base, heads + levels);
--	}
- 	raw_spin_unlock_irq(&base->lock);
- 	wakeup_timer_waiters(base);
- }
-@@ -1644,12 +1686,16 @@ static inline void __run_timers(struct timer_base *base)
- static __latent_entropy void run_timer_softirq(struct softirq_action *h)
- {
- 	struct timer_base *base = this_cpu_ptr(&timer_bases[BASE_STD]);
-+	int* block_softirq = this_cpu_ptr(&block_softirqs);
- 
- 	irq_work_tick_soft();
- 
- 	__run_timers(base);
- 	if (IS_ENABLED(CONFIG_NO_HZ_COMMON) && base->nohz_active)
- 		__run_timers(this_cpu_ptr(&timer_bases[BASE_DEF]));
-+
-+	/* Allow new TIMER_SOFTIRQs to get scheduled by run_local_timers() */
-+	WRITE_ONCE(*block_softirq, 0);
- }
- 
- /*
-@@ -1657,18 +1703,28 @@ static __latent_entropy void run_timer_softirq(struct softirq_action *h)
-  */
- void run_local_timers(void)
- {
--	struct timer_base *base = this_cpu_ptr(&timer_bases[BASE_STD]);
-+	int* block_softirq = this_cpu_ptr(&block_softirqs);
-+	struct timer_base *base;
- 
- 	hrtimer_run_queues();
-+
-+	/* Skip if TIMER_SOFTIRQ is already running for this CPU */
-+	if (READ_ONCE(*block_softirq))
-+		return;
-+
-+	base = this_cpu_ptr(&timer_bases[BASE_STD]);
-+
- 	/* Raise the softirq only if required. */
--	if (time_before(jiffies, base->clk)) {
-+	if (time_before(jiffies, base->clk) || !tick_find_expired(base)) {
- 		if (!IS_ENABLED(CONFIG_NO_HZ_COMMON) || !base->nohz_active)
- 			return;
- 		/* CPU is awake, so check the deferrable base. */
- 		base++;
--		if (time_before(jiffies, base->clk))
-+		if (time_before(jiffies, base->clk) || !tick_find_expired(base))
- 			return;
- 	}
-+
-+	WRITE_ONCE(*block_softirq, 1);
- 	raise_softirq(TIMER_SOFTIRQ);
- }
- 
-@@ -1826,6 +1882,7 @@ int timers_dead_cpu(unsigned int cpu)
- 		raw_spin_lock_nested(&old_base->lock, SINGLE_DEPTH_NESTING);
- 
- 		BUG_ON(old_base->running_timer);
-+		BUG_ON(old_base->expired_count);
- 
- 		for (i = 0; i < WHEEL_SIZE; i++)
- 			migrate_timer_list(new_base, old_base->vectors + i);
-@@ -1842,6 +1899,7 @@ int timers_dead_cpu(unsigned int cpu)
- static void __init init_timer_cpu(int cpu)
- {
- 	struct timer_base *base;
-+	int* block_softirq;
- 	int i;
- 
- 	for (i = 0; i < NR_BASES; i++) {
-@@ -1852,6 +1910,10 @@ static void __init init_timer_cpu(int cpu)
- #ifdef CONFIG_PREEMPT_RT_FULL
- 		init_swait_queue_head(&base->wait_for_running_timer);
- #endif
-+		base->expired_count = 0;
-+
-+		block_softirq = per_cpu_ptr(&block_softirqs, cpu);
-+		*block_softirq = 0;
- 	}
- }
- 
--- 
-2.13.2
+cheers,
+Piotr
