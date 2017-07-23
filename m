@@ -1,9 +1,9 @@
 From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [PATCH 22/32] tracing: Add support for 'synthetic' events
-Date: Sun, 23 Jul 2017 21:00:22 +0900
-Message-ID: <20170723120022.GA3902@danjae.aot.lge.com>
+Subject: Re: [PATCH 23/32] tracing: Add 'onmatch' hist trigger action support
+Date: Mon, 24 Jul 2017 00:12:26 +0900
+Message-ID: <20170723151226.GA4947@danjae.aot.lge.com>
 References: <cover.1498510759.git.tom.zanussi@linux.intel.com>
- <17e9dcfcdd927e42d3d70cb41f7189b0b3682c20.1498510759.git.tom.zanussi@linux.intel.com>
+ <8411497118160688b13fcf500596f6094d2eabcd.1498510759.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
@@ -12,223 +12,192 @@ Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
 To: Tom Zanussi <tom.zanussi@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <17e9dcfcdd927e42d3d70cb41f7189b0b3682c20.1498510759.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <8411497118160688b13fcf500596f6094d2eabcd.1498510759.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Tom,
-
-On Mon, Jun 26, 2017 at 05:49:23PM -0500, Tom Zanussi wrote:
-> Synthetic events are user-defined events generated from hist trigger
-> variables saved from one or more other events.
+On Mon, Jun 26, 2017 at 05:49:24PM -0500, Tom Zanussi wrote:
+> Add an 'onmatch(matching.event).<synthetic_event_name>(param list)'
+> hist trigger action which is invoked with the set of variables or
+> event fields named in the 'param list'.  The result is the generation
+> of a synthetic event that consists of the values contained in those
+> variables and/or fields at the time the invoking event was hit.
 > 
-> To define a synthetic event, the user writes a simple specification
-> consisting of the name of the new event along with one or more
-> variables and their type(s), to the tracing/synthetic_events file.
+> As an example the below defines a simple synthetic event using a
+> variable defined on the sched_wakeup_new event, and shows the event
+> definition with unresolved fields, since the sched_wakeup_new event
+> with the testpid variable hasn't been defined yet:
 > 
-> For instance, the following creates a new event named 'wakeup_latency'
-> with 3 fields: lat, pid, and prio:
-> 
->     # echo 'wakeup_latency u64 lat; pid_t pid; int prio' >> \
+>     # echo 'wakeup_new_test pid_t pid; int prio' >> \
 >       /sys/kernel/debug/tracing/synthetic_events
 > 
-> Reading the tracing/synthetic_events file lists all the
-> currently-defined synthetic events, in this case the event we defined
-> above:
-> 
 >     # cat /sys/kernel/debug/tracing/synthetic_events
->     wakeup_latency u64 lat; pid_t pid; int prio
+>       wakeup_new_test pid_t pid; int prio
 > 
-> At this point, the synthetic event is ready to use, and a histogram
-> can be defined using it:
+> The following hist trigger both defines a testpid variable and
+> specifies an onmatch() trace action that uses that variable along with
+> a non-variable field to generate a wakeup_new_test synthetic event
+> whenever a sched_wakeup_new event occurs, which because of the 'if
+> comm == "cyclictest"' filter only happens when the executable is
+> cyclictest:
 > 
->     # echo 'hist:keys=pid,prio,lat.log2:sort=pid,lat' >> \
->     /sys/kernel/debug/tracing/events/synthetic/wakeup_latency/trigger
+>     # echo 'hist:keys=testpid=pid:\
+>       onmatch(sched.sched_wakeup_new).wakeup_new_test($testpid, prio) \
+>         if comm=="cyclictest"' >> \
+>       /sys/kernel/debug/tracing/events/sched/sched_wakeup_new/trigger
 > 
-> The new event is created under the tracing/events/synthetic/ directory
-> and looks and behaves just like any other event:
+> Creating and displaying a histogram based on those events is now just
+> a matter of using the fields and new synthetic event in the
+> tracing/events/synthetic directory, as usual:
 > 
->     # ls /sys/kernel/debug/tracing/events/synthetic/wakeup_latency
->       enable  filter  format  hist  id  trigger
-> 
-> Although a histogram can be defined for it, nothing will happen until
-> an action tracing that event via the trace_synth() function occurs.
-> The trace_synth() function is very similar to all the other trace_*
-> invocations spread throughout the kernel, except in this case the
-> trace_ function and its corresponding tracepoint isn't statically
-> generated but defined by the user at run-time.
-> 
-> How this can be automatically hooked up via a hist trigger 'action' is
-> discussed in a subsequent patch.
+>     # echo 'hist:keys=pid,prio:sort=pid,prio' >> \
+>       /sys/kernel/debug/tracing/events/synthetic/wakeup_new_test/trigger
 > 
 > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 > ---
->  kernel/trace/trace_events_hist.c | 738 +++++++++++++++++++++++++++++++++++++++
->  1 file changed, 738 insertions(+)
+
+This patch is also big and it'd be better splitting - add type to
+hist_field, add variable handling and implement onmatch() action.
+
+
+>  kernel/trace/trace_events_hist.c | 955 ++++++++++++++++++++++++++++++++++++++-
+>  1 file changed, 940 insertions(+), 15 deletions(-)
 > 
 > diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-> index 338a9d5..e11b3a3 100644
+> index e11b3a3..b1f859c 100644
 > --- a/kernel/trace/trace_events_hist.c
 > +++ b/kernel/trace/trace_events_hist.c
-
-[SNIP]
-> @@ -273,6 +294,688 @@ struct action_data {
->  	unsigned int		var_ref_idx;
+> @@ -59,6 +59,7 @@ struct hist_field {
+>  	unsigned int			size;
+>  	unsigned int			offset;
+>  	unsigned int                    is_signed;
+> +	const char			*type;
+>  	struct hist_field		*operands[HIST_FIELD_OPERANDS_MAX];
+>  	struct hist_trigger_data	*hist_data;
+>  	struct hist_var			var;
+> @@ -243,6 +244,16 @@ struct hist_trigger_attrs {
+>  	unsigned int	n_actions;
 >  };
 >  
-> +static LIST_HEAD(synth_event_list);
-> +static DEFINE_MUTEX(synth_event_mutex);
-> +
-> +struct synth_trace_event {
-> +	struct trace_entry	ent;
-> +	int			n_fields;
-> +	u64			fields[];
+> +struct field_var {
+> +	struct hist_field	*var;
+> +	struct hist_field	*val;
 > +};
 > +
-> +static int synth_event_define_fields(struct trace_event_call *call)
+> +struct field_var_hist {
+> +	struct hist_trigger_data	*hist_data;
+> +	char				*cmd;
+> +};
+> +
+>  struct hist_trigger_data {
+>  	struct hist_field               *fields[HIST_FIELDS_MAX];
+>  	unsigned int			n_vals;
+> @@ -263,6 +274,14 @@ struct hist_trigger_data {
+>  
+>  	struct action_data		*actions[HIST_ACTIONS_MAX];
+>  	unsigned int			n_actions;
+> +
+> +	struct hist_field		*synth_var_refs[SYNTH_FIELDS_MAX];
+> +	unsigned int			n_synth_var_refs;
+> +	struct field_var		*field_vars[SYNTH_FIELDS_MAX];
+> +	unsigned int			n_field_vars;
+> +	unsigned int			n_field_var_str;
+> +	struct field_var_hist		*field_var_hists[SYNTH_FIELDS_MAX];
+> +	unsigned int			n_field_var_hists;
+>  };
+>  
+>  struct synth_field {
+> @@ -291,7 +310,14 @@ typedef void (*action_fn_t) (struct hist_trigger_data *hist_data,
+>  
+>  struct action_data {
+>  	action_fn_t		fn;
+> +	unsigned int		n_params;
+> +	char			*params[SYNTH_FIELDS_MAX];
+> +
+>  	unsigned int		var_ref_idx;
+> +	char			*match_event;
+> +	char			*match_event_system;
+> +	char			*synth_event_name;
+> +	struct synth_event	*synth_event;
+>  };
+>  
+>  static LIST_HEAD(synth_event_list);
+> @@ -802,6 +828,50 @@ static struct synth_event *alloc_synth_event(char *event_name, int n_fields,
+>  	return event;
+>  }
+>  
+> +static void action_trace(struct hist_trigger_data *hist_data,
+> +			 struct tracing_map_elt *elt, void *rec,
+> +			 struct ring_buffer_event *rbe,
+> +			 struct action_data *data, u64 *var_ref_vals)
 > +{
-> +	struct synth_trace_event trace;
-> +	int offset = offsetof(typeof(trace), fields);
-> +	struct synth_event *event = call->data;
-> +	unsigned int i, size;
-> +	char *name, *type;
-> +	bool is_signed;
-> +	int ret = 0;
+> +	struct synth_event *event = data->synth_event;
 > +
-> +	for (i = 0; i < event->n_fields; i++) {
-> +		size = event->fields[i]->size;
-> +		is_signed = event->fields[i]->is_signed;
-> +		type = event->fields[i]->type;
-> +		name = event->fields[i]->name;
-> +		ret = trace_define_field(call, type, name, offset, size,
-> +					 is_signed, FILTER_OTHER);
-> +		offset += sizeof(u64);
-
-So you assume size of a field is up to 64-bit, right?  Does it
-guaranteed somewhere?
-
-
-> +	}
-> +
-> +	return ret;
+> +	trace_synth(event, var_ref_vals, data->var_ref_idx);
 > +}
 > +
-> +static enum print_line_t print_synth_event(struct trace_iterator *iter,
-> +					   int flags,
-> +					   struct trace_event *event)
+> +static bool check_hist_action_refs(struct hist_trigger_data *hist_data,
+> +				   struct synth_event *event)
 > +{
-> +	struct trace_array *tr = iter->tr;
-> +	struct trace_seq *s = &iter->seq;
-> +	struct synth_trace_event *entry;
-> +	struct synth_event *se;
 > +	unsigned int i;
 > +
-> +	entry = (struct synth_trace_event *)iter->ent;
-> +	se = container_of(event, struct synth_event, call.event);
+> +	for (i = 0; i < hist_data->n_actions; i++) {
+> +		struct action_data *data = hist_data->actions[i];
 > +
-> +	trace_seq_printf(s, "%s: ", se->name);
-> +
-> +	for (i = 0; i < entry->n_fields; i++) {
-> +		if (trace_seq_has_overflowed(s))
-> +			goto end;
-> +
-> +		/* parameter types */
-> +		if (tr->trace_flags & TRACE_ITER_VERBOSE)
-> +			trace_seq_printf(s, "%s ", "u64");
-
-Why did you hardcode 'u64' here?
-
-> +
-> +		/* parameter values */
-> +		trace_seq_printf(s, "%s=%llu%s", se->fields[i]->name,
-> +				 entry->fields[i],
-> +				 i == entry->n_fields - 1 ? "" : ", ");
+> +		if (data->fn == action_trace && data->synth_event == event)
+> +			return true;
 > +	}
-> +end:
-> +	trace_seq_putc(s, '\n');
 > +
-> +	return trace_handle_return(s);
+> +	return false;
 > +}
 > +
-> +static struct trace_event_functions synth_event_funcs = {
-> +	.trace		= print_synth_event
+> +static LIST_HEAD(hist_action_list);
+> +static LIST_HEAD(hist_var_list);
+> +
+> +struct hist_var_data {
+> +	struct list_head list;
+> +	struct hist_trigger_data *hist_data;
 > +};
 > +
-
-[SNIP]
-> +static unsigned int synth_field_size(char *type)
+> +static bool check_synth_action_refs(struct synth_event *event)
 > +{
-> +	unsigned int size = 0;
+> +	struct hist_var_data *var_data;
 > +
-> +	if (strcmp(type, "s64") == 0)
-> +		size = sizeof(s64);
-> +	else if (strcmp(type, "u64") == 0)
-> +		size = sizeof(u64);
-> +	else if (strcmp(type, "s32") == 0)
-> +		size = sizeof(s32);
-> +	else if (strcmp(type, "u32") == 0)
-> +		size = sizeof(u32);
-> +	else if (strcmp(type, "s16") == 0)
-> +		size = sizeof(s16);
-> +	else if (strcmp(type, "u16") == 0)
-> +		size = sizeof(u16);
-> +	else if (strcmp(type, "s8") == 0)
-> +		size = sizeof(s8);
-> +	else if (strcmp(type, "u8") == 0)
-> +		size = sizeof(u8);
-> +	else if (strcmp(type, "char") == 0)
-> +		size = sizeof(char);
-> +	else if (strcmp(type, "unsigned char") == 0)
-> +		size = sizeof(unsigned char);
-> +	else if (strcmp(type, "int") == 0)
-> +		size = sizeof(int);
-> +	else if (strcmp(type, "unsigned int") == 0)
-> +		size = sizeof(unsigned int);
-> +	else if (strcmp(type, "long") == 0)
-> +		size = sizeof(long);
-> +	else if (strcmp(type, "unsigned long") == 0)
-> +		size = sizeof(unsigned long);
-> +	else if (strcmp(type, "pid_t") == 0)
-> +		size = sizeof(pid_t);
-> +	else if (strstr(type, "[") == 0)
-> +		size = sizeof(u64);
-
-Ah ok, so you don't accept arrays and all supported fields are less
-than or equal to 8 bytes.
-
+> +	list_for_each_entry(var_data, &hist_action_list, list)
+> +		if (check_hist_action_refs(var_data->hist_data, event))
+> +			return true;
 > +
-> +	return size;
+> +	return false;
 > +}
 > +
+>  static int create_synth_event(int argc, char **argv)
+>  {
+>  	struct synth_field *fields[SYNTH_FIELDS_MAX];
+> @@ -832,15 +902,17 @@ static int create_synth_event(int argc, char **argv)
+>  	event = find_synth_event(name);
+>  	if (event) {
+>  		if (delete_event) {
+> +			if (check_synth_action_refs(event)) {
+> +				ret = -EBUSY;
+> +				goto out;
+> +			}
+>  			remove_synth_event(event);
+>  			goto err;
+>  		} else
+>  			ret = -EEXIST;
+>  		goto out;
+> -	} else if (delete_event) {
+> -		ret = -EINVAL;
+> +	} else if (delete_event)
+>  		goto out;
+> -	}
 
-[SNIP]
-> +static inline void trace_synth(struct synth_event *event, u64 *var_ref_vals,
-> +			       unsigned int var_ref_idx)
-> +{
-> +	struct tracepoint *tp = event->tp;
-> +
-> +	if (unlikely(atomic_read(&tp->key.enabled) > 0)) {
-> +		struct tracepoint_func *it_func_ptr;
-> +		void *it_func;
-> +		void *__data;
-> +
-> +		if (!(cpu_online(raw_smp_processor_id())))
-> +			return;
-> +
-> +		it_func_ptr = rcu_dereference_sched((tp)->funcs);
-> +		if (it_func_ptr) {
-> +			do {
-> +				it_func = (it_func_ptr)->func;
-> +				__data = (it_func_ptr)->data;
-> +				((void(*)(void *__data, u64 *var_ref_vals, unsigned int var_ref_idx))(it_func))(__data, var_ref_vals, var_ref_idx);
-
-Ouch, why not defining a function pointer?
+Why is it changed?
 
 Thanks,
 Namhyung
 
 
-> +			} while ((++it_func_ptr)->func);
-> +		}
-> +	}
-> +}
+>  
+>  	if (argc < 2) {
+>  		ret = -EINVAL;
