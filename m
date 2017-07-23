@@ -1,77 +1,234 @@
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: Re: [PATCH 19/32] tracing: Add variable reference handling to hist
- triggers
-Date: Fri, 21 Jul 2017 11:41:18 -0500
-Message-ID: <1500655278.21148.21.camel@tzanussi-mobl.amr.corp.intel.com>
+From: Namhyung Kim <namhyung@kernel.org>
+Subject: Re: [PATCH 22/32] tracing: Add support for 'synthetic' events
+Date: Sun, 23 Jul 2017 21:00:22 +0900
+Message-ID: <20170723120022.GA3902@danjae.aot.lge.com>
 References: <cover.1498510759.git.tom.zanussi@linux.intel.com>
-         <f7caa5656819589319f15638b87cac9b9e1a8bd1.1498510759.git.tom.zanussi@linux.intel.com>
-         <20170721033108.GC21128@danjae.aot.lge.com>
+ <17e9dcfcdd927e42d3d70cb41f7189b0b3682c20.1498510759.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
 Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
         vedang.patel@intel.com, linux-kernel@vger.kernel.org,
         linux-rt-users@vger.kernel.org, kernel-team@lge.com
-To: Namhyung Kim <namhyung@kernel.org>
+To: Tom Zanussi <tom.zanussi@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170721033108.GC21128@danjae.aot.lge.com>
+Content-Disposition: inline
+In-Reply-To: <17e9dcfcdd927e42d3d70cb41f7189b0b3682c20.1498510759.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Namhyung,
+Hi Tom,
 
-On Fri, 2017-07-21 at 12:31 +0900, Namhyung Kim wrote:
-> On Mon, Jun 26, 2017 at 05:49:20PM -0500, Tom Zanussi wrote:
-> > Add the necessary infrastructure to allow the variables defined on one
-> > event to be referenced in another.  This allows variables set by a
-> > previous event to be referenced and used in expressions combining the
-> > variable values saved by that previous event and the event fields of
-> > the current event.  For example, here's how a latency can be
-> > calculated and saved into yet another variable named 'wakeup_lat':
-> > 
-> >     # echo 'hist:keys=pid,prio:ts0=common_timestamp ...
-> >     # echo 'hist:keys=next_pid:wakeup_lat=common_timestamp-$ts0 ...
-> > 
-> > In the first event, the event's timetamp is saved into the variable
-> > ts0.  In the next line, ts0 is subtracted from the second event's
-> > timestamp to produce the latency.
-> > 
-> > Further users of variable references will be described in subsequent
-> > patches, such as for instance how the 'wakeup_lat' variable above can
-> > be displayed in a latency histogram.
-> > 
-> > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> > ---
+On Mon, Jun 26, 2017 at 05:49:23PM -0500, Tom Zanussi wrote:
+> Synthetic events are user-defined events generated from hist trigger
+> variables saved from one or more other events.
 > 
-> I think it'd be better spliting this into 3 parts: add hist_elt_data,
-> pass tracing_map_elt to hist field func and add var ref logic.
+> To define a synthetic event, the user writes a simple specification
+> consisting of the name of the new event along with one or more
+> variables and their type(s), to the tracing/synthetic_events file.
 > 
+> For instance, the following creates a new event named 'wakeup_latency'
+> with 3 fields: lat, pid, and prio:
+> 
+>     # echo 'wakeup_latency u64 lat; pid_t pid; int prio' >> \
+>       /sys/kernel/debug/tracing/synthetic_events
+> 
+> Reading the tracing/synthetic_events file lists all the
+> currently-defined synthetic events, in this case the event we defined
+> above:
+> 
+>     # cat /sys/kernel/debug/tracing/synthetic_events
+>     wakeup_latency u64 lat; pid_t pid; int prio
+> 
+> At this point, the synthetic event is ready to use, and a histogram
+> can be defined using it:
+> 
+>     # echo 'hist:keys=pid,prio,lat.log2:sort=pid,lat' >> \
+>     /sys/kernel/debug/tracing/events/synthetic/wakeup_latency/trigger
+> 
+> The new event is created under the tracing/events/synthetic/ directory
+> and looks and behaves just like any other event:
+> 
+>     # ls /sys/kernel/debug/tracing/events/synthetic/wakeup_latency
+>       enable  filter  format  hist  id  trigger
+> 
+> Although a histogram can be defined for it, nothing will happen until
+> an action tracing that event via the trace_synth() function occurs.
+> The trace_synth() function is very similar to all the other trace_*
+> invocations spread throughout the kernel, except in this case the
+> trace_ function and its corresponding tracepoint isn't statically
+> generated but defined by the user at run-time.
+> 
+> How this can be automatically hooked up via a hist trigger 'action' is
+> discussed in a subsequent patch.
+> 
+> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> ---
+>  kernel/trace/trace_events_hist.c | 738 +++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 738 insertions(+)
+> 
+> diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+> index 338a9d5..e11b3a3 100644
+> --- a/kernel/trace/trace_events_hist.c
+> +++ b/kernel/trace/trace_events_hist.c
 
-Yeah, that makes sense, will do.
+[SNIP]
+> @@ -273,6 +294,688 @@ struct action_data {
+>  	unsigned int		var_ref_idx;
+>  };
+>  
+> +static LIST_HEAD(synth_event_list);
+> +static DEFINE_MUTEX(synth_event_mutex);
+> +
+> +struct synth_trace_event {
+> +	struct trace_entry	ent;
+> +	int			n_fields;
+> +	u64			fields[];
+> +};
+> +
+> +static int synth_event_define_fields(struct trace_event_call *call)
+> +{
+> +	struct synth_trace_event trace;
+> +	int offset = offsetof(typeof(trace), fields);
+> +	struct synth_event *event = call->data;
+> +	unsigned int i, size;
+> +	char *name, *type;
+> +	bool is_signed;
+> +	int ret = 0;
+> +
+> +	for (i = 0; i < event->n_fields; i++) {
+> +		size = event->fields[i]->size;
+> +		is_signed = event->fields[i]->is_signed;
+> +		type = event->fields[i]->type;
+> +		name = event->fields[i]->name;
+> +		ret = trace_define_field(call, type, name, offset, size,
+> +					 is_signed, FILTER_OTHER);
+> +		offset += sizeof(u64);
 
-> 
-> [SNIP]
-> > @@ -241,6 +270,324 @@ static u64 hist_field_timestamp(struct hist_field *hist_field, void *event,
-> >  	return ts;
-> >  }
-> >  
-> > +static LIST_HEAD(hist_var_list);
-> > +
-> > +struct hist_var_data {
-> > +	struct list_head list;
-> > +	struct hist_trigger_data *hist_data;
-> > +};
-> 
-> Hmm.. I'm confused whether this list maintains reference of variable
-> or defintion (or both?).  It seems an entry is added only by
-> save_hist_vars() which is for definition.  But find_any_var_ref()
-> looks it up for references..  What am I missing?
-> 
+So you assume size of a field is up to 64-bit, right?  Does it
+guaranteed somewhere?
 
-Nothing - it should be both, but as you point out it's missing the
-reference-only triggers.  Most of the time when you create a hist
-trigger that references a variable, you also create a variable to
-receive the result and use it later, which is why you don't normally
-see a problem.  Thanks for noticing this..
 
-Tom
+> +	}
+> +
+> +	return ret;
+> +}
+> +
+> +static enum print_line_t print_synth_event(struct trace_iterator *iter,
+> +					   int flags,
+> +					   struct trace_event *event)
+> +{
+> +	struct trace_array *tr = iter->tr;
+> +	struct trace_seq *s = &iter->seq;
+> +	struct synth_trace_event *entry;
+> +	struct synth_event *se;
+> +	unsigned int i;
+> +
+> +	entry = (struct synth_trace_event *)iter->ent;
+> +	se = container_of(event, struct synth_event, call.event);
+> +
+> +	trace_seq_printf(s, "%s: ", se->name);
+> +
+> +	for (i = 0; i < entry->n_fields; i++) {
+> +		if (trace_seq_has_overflowed(s))
+> +			goto end;
+> +
+> +		/* parameter types */
+> +		if (tr->trace_flags & TRACE_ITER_VERBOSE)
+> +			trace_seq_printf(s, "%s ", "u64");
+
+Why did you hardcode 'u64' here?
+
+> +
+> +		/* parameter values */
+> +		trace_seq_printf(s, "%s=%llu%s", se->fields[i]->name,
+> +				 entry->fields[i],
+> +				 i == entry->n_fields - 1 ? "" : ", ");
+> +	}
+> +end:
+> +	trace_seq_putc(s, '\n');
+> +
+> +	return trace_handle_return(s);
+> +}
+> +
+> +static struct trace_event_functions synth_event_funcs = {
+> +	.trace		= print_synth_event
+> +};
+> +
+
+[SNIP]
+> +static unsigned int synth_field_size(char *type)
+> +{
+> +	unsigned int size = 0;
+> +
+> +	if (strcmp(type, "s64") == 0)
+> +		size = sizeof(s64);
+> +	else if (strcmp(type, "u64") == 0)
+> +		size = sizeof(u64);
+> +	else if (strcmp(type, "s32") == 0)
+> +		size = sizeof(s32);
+> +	else if (strcmp(type, "u32") == 0)
+> +		size = sizeof(u32);
+> +	else if (strcmp(type, "s16") == 0)
+> +		size = sizeof(s16);
+> +	else if (strcmp(type, "u16") == 0)
+> +		size = sizeof(u16);
+> +	else if (strcmp(type, "s8") == 0)
+> +		size = sizeof(s8);
+> +	else if (strcmp(type, "u8") == 0)
+> +		size = sizeof(u8);
+> +	else if (strcmp(type, "char") == 0)
+> +		size = sizeof(char);
+> +	else if (strcmp(type, "unsigned char") == 0)
+> +		size = sizeof(unsigned char);
+> +	else if (strcmp(type, "int") == 0)
+> +		size = sizeof(int);
+> +	else if (strcmp(type, "unsigned int") == 0)
+> +		size = sizeof(unsigned int);
+> +	else if (strcmp(type, "long") == 0)
+> +		size = sizeof(long);
+> +	else if (strcmp(type, "unsigned long") == 0)
+> +		size = sizeof(unsigned long);
+> +	else if (strcmp(type, "pid_t") == 0)
+> +		size = sizeof(pid_t);
+> +	else if (strstr(type, "[") == 0)
+> +		size = sizeof(u64);
+
+Ah ok, so you don't accept arrays and all supported fields are less
+than or equal to 8 bytes.
+
+> +
+> +	return size;
+> +}
+> +
+
+[SNIP]
+> +static inline void trace_synth(struct synth_event *event, u64 *var_ref_vals,
+> +			       unsigned int var_ref_idx)
+> +{
+> +	struct tracepoint *tp = event->tp;
+> +
+> +	if (unlikely(atomic_read(&tp->key.enabled) > 0)) {
+> +		struct tracepoint_func *it_func_ptr;
+> +		void *it_func;
+> +		void *__data;
+> +
+> +		if (!(cpu_online(raw_smp_processor_id())))
+> +			return;
+> +
+> +		it_func_ptr = rcu_dereference_sched((tp)->funcs);
+> +		if (it_func_ptr) {
+> +			do {
+> +				it_func = (it_func_ptr)->func;
+> +				__data = (it_func_ptr)->data;
+> +				((void(*)(void *__data, u64 *var_ref_vals, unsigned int var_ref_idx))(it_func))(__data, var_ref_vals, var_ref_idx);
+
+Ouch, why not defining a function pointer?
+
+Thanks,
+Namhyung
+
+
+> +			} while ((++it_func_ptr)->func);
+> +		}
+> +	}
+> +}
