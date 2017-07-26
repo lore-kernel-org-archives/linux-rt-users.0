@@ -1,10 +1,10 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: Re: [PATCH 23/32] tracing: Add 'onmatch' hist trigger action support
-Date: Wed, 26 Jul 2017 11:38:33 -0500
-Message-ID: <1501087113.3214.11.camel@tzanussi-mobl.amr.corp.intel.com>
+Subject: Re: [PATCH 24/32] tracing: Add 'onmax' hist trigger action support
+Date: Wed, 26 Jul 2017 11:45:47 -0500
+Message-ID: <1501087547.3214.18.camel@tzanussi-mobl.amr.corp.intel.com>
 References: <cover.1498510759.git.tom.zanussi@linux.intel.com>
-         <8411497118160688b13fcf500596f6094d2eabcd.1498510759.git.tom.zanussi@linux.intel.com>
-         <20170726024019.GA32043@sejong>
+         <eba89c852028b147fe695bb47cfafd690c345e74.1498510759.git.tom.zanussi@linux.intel.com>
+         <20170726030427.GB32043@sejong>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
@@ -13,195 +13,191 @@ Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
         linux-rt-users@vger.kernel.org, kernel-team@lge.com
 To: Namhyung Kim <namhyung@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170726024019.GA32043@sejong>
+In-Reply-To: <20170726030427.GB32043@sejong>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 Hi Namhyung,
 
-On Wed, 2017-07-26 at 11:40 +0900, Namhyung Kim wrote:
-> Hi Tom,
-> 
-> On Mon, Jun 26, 2017 at 05:49:24PM -0500, Tom Zanussi wrote:
-> > Add an 'onmatch(matching.event).<synthetic_event_name>(param list)'
-> > hist trigger action which is invoked with the set of variables or
-> > event fields named in the 'param list'.  The result is the generation
-> > of a synthetic event that consists of the values contained in those
-> > variables and/or fields at the time the invoking event was hit.
+On Wed, 2017-07-26 at 12:04 +0900, Namhyung Kim wrote:
+> On Mon, Jun 26, 2017 at 05:49:25PM -0500, Tom Zanussi wrote:
+> > Add an 'onmax(var).save(field,...)' hist trigger action which is
+> > invoked whenever an event exceeds the current maximum.
 > > 
-> > As an example the below defines a simple synthetic event using a
-> > variable defined on the sched_wakeup_new event, and shows the event
-> > definition with unresolved fields, since the sched_wakeup_new event
-> > with the testpid variable hasn't been defined yet:
+> > The end result is that the trace event fields or variables specified
+> > as the onmax.save() params will be saved if 'var' exceeds the current
+> > maximum for that hist trigger entry.  This allows context from the
+> > event that exhibited the new maximum to be saved for later reference.
+> > When the histogram is displayed, additional fields displaying the
+> > saved values will be printed.
 > > 
-> >     # echo 'wakeup_new_test pid_t pid; int prio' >> \
-> >       /sys/kernel/debug/tracing/synthetic_events
+> > As an example the below defines a couple of hist triggers, one for
+> > sched_wakeup and another for sched_switch, keyed on pid.  Whenever a
+> > sched_wakeup occurs, the timestamp is saved in the entry corresponding
+> > to the current pid, and when the scheduler switches back to that pid,
+> > the timestamp difference is calculated.  If the resulting latency
+> > exceeds the current maximum latency, the specified save() values are
+> > saved:
 > > 
-> >     # cat /sys/kernel/debug/tracing/synthetic_events
-> >       wakeup_new_test pid_t pid; int prio
-> > 
-> > The following hist trigger both defines a testpid variable and
-> > specifies an onmatch() trace action that uses that variable along with
-> > a non-variable field to generate a wakeup_new_test synthetic event
-> > whenever a sched_wakeup_new event occurs, which because of the 'if
-> > comm == "cyclictest"' filter only happens when the executable is
-> > cyclictest:
-> > 
-> >     # echo 'hist:keys=testpid=pid:\
-> >       onmatch(sched.sched_wakeup_new).wakeup_new_test($testpid, prio) \
+> >     # echo 'hist:keys=pid:ts0=common_timestamp.usecs \
 > >         if comm=="cyclictest"' >> \
-> >       /sys/kernel/debug/tracing/events/sched/sched_wakeup_new/trigger
+> >       /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
 > > 
-> > Creating and displaying a histogram based on those events is now just
-> > a matter of using the fields and new synthetic event in the
-> > tracing/events/synthetic directory, as usual:
+> >     # echo 'hist:keys=next_pid:\
+> >       wakeup_lat=common_timestamp.usecs-$ts0:\
+> >       onmax($wakeup_lat).save(next_comm,prev_pid,prev_prio,prev_comm) \
+> >         if next_comm=="cyclictest"' >> \
+> >       /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
 > > 
-> >     # echo 'hist:keys=pid,prio:sort=pid,prio' >> \
-> >       /sys/kernel/debug/tracing/events/synthetic/wakeup_new_test/trigger
+> > When the histogram is displayed, the max value and the saved values
+> > corresponding to the max are displayed following the rest of the
+> > fields:
+> > 
+> >     # cat /sys/kernel/debug/tracing/events/sched/sched_switch/hist
+> >       { next_pid:       2255 } hitcount:        239 \
+> >         common_timestamp-$ts0:          0
+> 
+> What is this, wakeup_lat?  If so, it'd be better showing the variable name.
+> 
+
+Yeah, this is actually old output - I need to update the examples in the
+commit messages.  Anyway, this kind of thing is no longer displayed at
+all in the current version.
+
+> 
+> >         max:         27  next_comm: cyclictest \
+> >         prev_pid:          0  prev_prio:        120  prev_comm: swapper/1 \
+> >       { next_pid:       2256 } hitcount:       2355  common_timestamp-$ts0: 0 \
+> >       	max:         49  next_comm: cyclictest \
+> >         prev_pid:          0  prev_prio:        120  prev_comm: swapper/0
+> > 
+> >     Totals:
+> >         Hits: 12970
+> 
+> Why total hits is different than the sum of two?
+> 
+
+The reason for differences like this is that the tracing map counts
+lookups as 'hits', and we're using lookups to resolve variable
+references, so this number no longer matches the actual number of
+updates to elements.  I'm going to add a patch that doesn't account
+lookups in the hitcount, as I don't think it should.
+
+> >         Entries: 2
+> >         Dropped: 0
 > > 
 > > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 > > ---
+> >  kernel/trace/trace_events_hist.c | 310 ++++++++++++++++++++++++++++++++++-----
+> >  1 file changed, 276 insertions(+), 34 deletions(-)
+> > 
+> > diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+> > index b1f859c..d191f1a 100644
+> > --- a/kernel/trace/trace_events_hist.c
+> > +++ b/kernel/trace/trace_events_hist.c
+> > @@ -282,6 +282,10 @@ struct hist_trigger_data {
+> >  	unsigned int			n_field_var_str;
+> >  	struct field_var_hist		*field_var_hists[SYNTH_FIELDS_MAX];
+> >  	unsigned int			n_field_var_hists;
+> > +
+> > +	struct field_var		*max_vars[SYNTH_FIELDS_MAX];
+> > +	unsigned int			n_max_vars;
+> > +	unsigned int			n_max_var_str;
+> >  };
+> >  
+> >  struct synth_field {
+> > @@ -318,6 +322,12 @@ struct action_data {
+> >  	char			*match_event_system;
+> >  	char			*synth_event_name;
+> >  	struct synth_event	*synth_event;
+> > +
+> > +	char			*onmax_var_str;
+> > +	char			*onmax_fn_name;
+> > +	unsigned int		max_var_ref_idx;
+> > +	struct hist_field	*max_var;
+> > +	struct hist_field	*onmax_var;
+> 
+> Couldn't it be a union?
+> 
+
+Yeah, I think that makes more sense.
+
+> >  };
 > 
 > [SNIP]
-> >  static void hist_trigger_elt_data_free(struct tracing_map_elt *elt)
-> >  {
-> > +	struct hist_trigger_data *hist_data = elt->map->private_data;
-> >  	struct hist_elt_data *private_data = elt->private_data;
-> > +	unsigned int i, n_str;
-> > +
-> > +	n_str = hist_data->n_field_var_str;
-> > +
-> > +	for (i = 0; i < n_str; i++)
-> > +		kfree(private_data->field_var_str[i]);
-> >  
-> >  	kfree(private_data->comm);
-> >  	kfree(private_data);
-> > @@ -1537,7 +1627,7 @@ static int hist_trigger_elt_data_alloc(struct tracing_map_elt *elt)
-> >  	unsigned int size = TASK_COMM_LEN + 1;
-> >  	struct hist_elt_data *elt_data;
-> >  	struct hist_field *key_field;
-> > -	unsigned int i;
-> > +	unsigned int i, n_str;
-> >  
-> >  	elt->private_data = elt_data = kzalloc(sizeof(*elt_data), GFP_KERNEL);
-> >  	if (!elt_data)
-> > @@ -1557,6 +1647,16 @@ static int hist_trigger_elt_data_alloc(struct tracing_map_elt *elt)
-> >  		}
-> >  	}
-> >  
-> > +	n_str = hist_data->n_field_var_str;
-> > +
-> > +	for (i = 0; i < n_str; i++) {
-> > +		elt_data->field_var_str[i] = kzalloc(size, GFP_KERNEL);
-> 
-> So the max length of a string variable is TASK_COMM_LEN, right?
-> 
-
-Yes, but I think it should be a bit larger - looking at existing events,
-I also see 32 as a common length, so it would probably be good to up it
-to that.  Unless you have a better idea...
-
-> In addition, isn't it necessary for hist_trigger_elt_data_copy() to
-> copy the field_var_str array?
-> 
-
-Yep, missed that, will add.
-
-> 
-> > +		if (!elt_data->field_var_str[i]) {
-> > +			hist_trigger_elt_data_free(elt);
-> > +			return -ENOMEM;
-> > +		}
-> > +	}
-> > +
-> >  	return 0;
+> > @@ -2613,6 +2633,222 @@ static struct field_var *create_field_var(struct hist_trigger_data *hist_data,
+> >  	return create_field_var(hist_data, file, var_name);
 > >  }
+> >  
+> > +static void onmax_print(struct seq_file *m,
+> > +			struct hist_trigger_data *hist_data,
+> > +			struct tracing_map_elt *elt,
+> > +			struct action_data *data)
+> > +{
+> > +	unsigned int i, save_var_idx, max_idx = data->max_var->var.idx;
+> > +
+> > +	seq_printf(m, "\n\tmax: %10llu", tracing_map_read_var(elt, max_idx));
+> > +
+> > +	for (i = 0; i < hist_data->n_max_vars; i++) {
+> > +		struct hist_field *save_val = hist_data->max_vars[i]->val;
+> > +		struct hist_field *save_var = hist_data->max_vars[i]->var;
+> > +		u64 val;
+> > +
+> > +		save_var_idx = save_var->var.idx;
+> > +
+> > +		val = tracing_map_read_var(elt, save_var_idx);
+> > +
+> > +		if (save_val->flags & HIST_FIELD_FL_STRING) {
+> > +			seq_printf(m, "  %s: %-50s", save_var->var.name,
+> 
+> It seems TASK_COMM_LEN is enough.  Or please define STR_VAR_LEN or
+> something.
+> 
+> 
+> > +				   (char *)(uintptr_t)(val));
+> > +		} else
+> > +			seq_printf(m, "  %s: %10llu", save_var->var.name, val);
+> > +	}
+> > +}
 > 
 > [SNIP]
-> > +static bool compatible_keys(struct hist_trigger_data *target_hist_data,
-> > +			    struct hist_trigger_data *hist_data,
-> > +			    unsigned int n_keys)
+> > +static struct action_data *onmax_parse(char *str)
 > > +{
-> > +	struct hist_field *target_hist_field, *hist_field;
-> > +	unsigned int n, i, j;
+> > +	char *onmax_fn_name, *onmax_var_str;
+> > +	struct action_data *data;
+> > +	int ret = -EINVAL;
 > > +
-> > +	if (hist_data->n_fields - hist_data->n_vals != n_keys)
-> > +		return false;
+> > +	data = kzalloc(sizeof(*data), GFP_KERNEL);
+> > +	if (!data)
+> > +		return ERR_PTR(-ENOMEM);
 > > +
-> > +	i = hist_data->n_vals;
-> > +	j = target_hist_data->n_vals;
-> > +
-> > +	for (n = 0; n < n_keys; n++) {
-> > +		hist_field = hist_data->fields[i + n];
-> > +		target_hist_field = hist_data->fields[j + n];
-> 
-> Shouldn't it be 'target_hist_field = target_hist_data->fields[j + n]'?
->                                      ^^^^^^^^^^^^^^^^
-> 
-
-Yeah, thanks for point out the typo.
-
-> > +
-> > +		if (strcmp(hist_field->type, target_hist_field->type) != 0)
-> > +			return false;
-> > +		if (hist_field->size != target_hist_field->size)
-> > +			return false;
-> > +		if (hist_field->is_signed != target_hist_field->is_signed)
-> > +			return false;
-> > +	}
-> > +
-> > +	return true;
-> > +}
-> > +
-> > +static struct hist_trigger_data *
-> > +find_compatible_hist(struct hist_trigger_data *target_hist_data,
-> > +		     struct trace_event_file *file)
-> > +{
-> > +	struct hist_trigger_data *hist_data;
-> > +	struct event_trigger_data *test;
-> > +	unsigned int n_keys;
-> > +
-> > +	n_keys = target_hist_data->n_fields - target_hist_data->n_vals;
-> > +
-> > +	list_for_each_entry_rcu(test, &file->triggers, list) {
-> > +		if (test->cmd_ops->trigger_type == ETT_EVENT_HIST) {
-> > +			hist_data = test->private_data;
-> > +
-> > +			if (compatible_keys(target_hist_data, hist_data, n_keys))
-> > +				return hist_data;
-> > +		}
-> > +	}
-> > +
-> > +	return NULL;
-> > +}
-> > +
-> > +static struct trace_event_file *event_file(char *system, char *event_name)
-> > +{
-> > +	struct trace_event_file *file;
-> > +	struct trace_array *tr;
-> > +
-> > +	tr = top_trace_array();
-> > +	if (!tr)
-> > +		return ERR_PTR(-ENODEV);
-> > +
-> > +	file = find_event_file(tr, system, event_name);
-> > +	if (!file)
+> > +	onmax_var_str = strsep(&str, ")");
+> > +	if (!onmax_var_str || !str)
 > > +		return ERR_PTR(-EINVAL);
+> > +	data->onmax_var_str = kstrdup(onmax_var_str, GFP_KERNEL);
 > > +
-> > +	return file;
-> > +}
+> > +	strsep(&str, ".");
+> > +	if (!str)
+> > +		goto free;
 > > +
-> > +static struct hist_field *
-> > +create_field_var_hist(struct hist_trigger_data *target_hist_data,
-> > +		      char *system, char *event_name, char *field_name)
+> > +	onmax_fn_name = strsep(&str, "(");
+> > +	if (!onmax_fn_name || !str)
+> > +		goto free;
+> > +
+> > +	if (strncmp(onmax_fn_name, "save", strlen("save")) == 0) {
+> > +		char *params = strsep(&str, ")");
+> > +
+> > +		if (!params)
+> > +			goto free;
+> > +
+> > +		ret = parse_action_params(params, data);
+> > +		if (ret)
+> > +			goto free;
+> > +	}
 > 
-> IIUC this is needed to create a new hist on a match_event only to
-> provide a variable for a field, right?  I guess it's needed because
-> adding a new variable is dangerous/unsafe for a running hist.
+> Hmm.. is it ok to give a function name other than 'save'?
 > 
 
-Exactly.  I'll add a comment to make that clear.
-
-Thanks,
+No, good point, thanks for pointing it out.
 
 Tom
