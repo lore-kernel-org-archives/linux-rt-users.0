@@ -1,124 +1,82 @@
-From: Jacek Konieczny <jajcus@jajcus.net>
-Subject: System hung for a few minutes on rt kernel
-Date: Sun, 30 Jul 2017 19:37:41 +0200
-Message-ID: <b9015e55-85fa-9e1c-736a-746c439e635d@jajcus.net>
+From: "Rafael J. Wysocki" <rjw@rjwysocki.net>
+Subject: Re: [PATCH] cpu_pm: replace raw_notifier to atomic_notifier
+Date: Wed, 02 Aug 2017 01:19:06 +0200
+Message-ID: <22760982.ucUucSmheq@aspire.rjw.lan>
+References: <1501225765-16869-1-git-send-email-alex.shi@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from tropek.jajcus.net ([31.179.132.94]:46398 "EHLO
-        tropek.jajcus.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1754475AbdG3Rhs (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 30 Jul 2017 13:37:48 -0400
-Received: from [10.253.0.123] (unknown [31.179.132.92])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
-        (No client certificate requested)
-        by tropek.jajcus.net (Postfix) with ESMTPSA id 6AC565002
-        for <linux-rt-users@vger.kernel.org>; Sun, 30 Jul 2017 19:37:46 +0200 (CEST)
-Content-Language: en-GB
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Cc: rafael@kernel.org, open list <linux-kernel@vger.kernel.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Anders Roxell <anders.roxell@linaro.org>,
+        Daniel Lezcano <daniel.lezcano@linaro.org>,
+        Tony Lindgren <tony@atomide.com>, linux-pm@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Alex Shi <alex.shi@linaro.org>
+Return-path: <linux-pm-owner@vger.kernel.org>
+In-Reply-To: <1501225765-16869-1-git-send-email-alex.shi@linaro.org>
+Sender: linux-pm-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
+On Friday, July 28, 2017 03:09:25 PM Alex Shi wrote:
+> This patch replace a rwlock and raw notifier by atomic notifier which
+> protected by spin_lock and rcu.
+> 
+> The first to reason to have this replace is due to a 'scheduling while
+>  atomic' bug of RT kernel on arm/arm64 platform. On arm/arm64, rwlock
+> cpu_pm_notifier_lock in cpu_pm cause a potential schedule after irq
+> disable in idle call chain:
+> 
+> cpu_startup_entry
+>   cpu_idle_loop
+>     local_irq_disable()
+>     cpuidle_idle_call
+>       call_cpuidle
+>         cpuidle_enter
+>           cpuidle_enter_state
+>             ->enter :arm_enter_idle_state
+>               cpu_pm_enter/exit
+>                 CPU_PM_CPU_IDLE_ENTER
+>                   read_lock(&cpu_pm_notifier_lock); <-- sleep in idle
+>                      __rt_spin_lock();
+>                         schedule();
+> 
+> The kernel panic is here:
+> [    4.609601] BUG: scheduling while atomic: swapper/1/0/0x00000002
+> [    4.609608] [<ffff0000086fae70>] arm_enter_idle_state+0x18/0x70
+> [    4.609614] Modules linked in:
+> [    4.609615] [<ffff0000086f9298>] cpuidle_enter_state+0xf0/0x218
+> [    4.609620] [<ffff0000086f93f8>] cpuidle_enter+0x18/0x20
+> [    4.609626] Preemption disabled at:
+> [    4.609627] [<ffff0000080fa234>] call_cpuidle+0x24/0x40
+> [    4.609635] [<ffff000008882fa4>] schedule_preempt_disabled+0x1c/0x28
+> [    4.609639] [<ffff0000080fa49c>] cpu_startup_entry+0x154/0x1f8
+> [    4.609645] [<ffff00000808e004>] secondary_start_kernel+0x15c/0x1a0
+> 
+> Daniel Lezcano said this notification is needed on arm/arm64 platforms.
+> Sebastian suggested using atomic_notifier instead of rwlock, which is not
+> only removing the sleeping in idle, but also getting better latency
+> improvement.
+> 
+> Tony Lindgren found a miss use that rcu_read_lock used after rcu_idle_enter
+> Paul E. McKenney suggested trying RCU_NONIDLE.
+> 
+> Thanks everyone! :)
+> 
+> This patch passed Fengguang's 0day testing.
+> 
+> Signed-off-by: Alex Shi <alex.shi@linaro.org>
+> Tested-by: Tony Lindgren <tony@atomide.com>
+> To: linux-kernel@vger.kernel.org
+> Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> Cc: Thomas Gleixner <tglx@linutronix.de>
+> Cc: Anders Roxell <anders.roxell@linaro.org>
+> Cc: Daniel Lezcano <daniel.lezcano@linaro.org>
+> Cc: Rafael J. Wysocki <rafael@kernel.org>
+> Cc: Tony Lindgren <tony@atomide.com>
+> Cc: linux-pm@vger.kernel.org
+> Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+> Acked-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-I have tried yet another RT kernel on my Acer laptop. This time it is
-4.4.75 patched with the -rt88 patch.
-
-The system hung again when I started a few applications I would normally
-use with RT. This time I have not tried to reboot it immediately and the
-system came back to life after a couple of minutes.
-
->From the kernel logs:
-
-Some time before the hung:
-
-Jul 30 19:01:54 lolek kernel: NOHZ: local_softirq_pending 80
-
-The system locked up around 19:10
-
-Next thing I got in the logs was:
-
-Jul 30 19:12:09 lolek kernel: INFO: task jbd2/dm-4-8:1407 blocked for
-more than 120 seconds.
-Jul 30 19:12:09 lolek kernel:       Tainted: G        W
-4.4.75-rt88-1 #1
-Jul 30 19:12:09 lolek kernel: "echo 0 >
-/proc/sys/kernel/hung_task_timeout_secs" disables this message.
-Jul 30 19:12:09 lolek kernel: jbd2/dm-4-8     D ffff880036a0bac0     0
-1407      2 0x00000080
-Jul 30 19:12:09 lolek kernel:  ffff880036a0bac0 00ff88008fcb58a0
-ffff880243ab0f80 ffff880243978000
-Jul 30 19:12:09 lolek kernel:  ffff880036a0c000 ffff880243978000
-7fffffffffffffff ffffffff81658de0
-Jul 30 19:12:09 lolek kernel:  ffff880036a0bc28 ffff880036a0bae0
-ffffffff8165838b 0000000000000000
-Jul 30 19:12:09 lolek kernel: Call Trace:
-Jul 30 19:12:09 lolek kernel:  [<ffffffff81658de0>] ? bit_wait+0x60/0x60
-Jul 30 19:12:09 lolek kernel:  [<ffffffff8165838b>] schedule+0x4b/0xe0
-Jul 30 19:12:09 lolek kernel:  [<ffffffff8165a660>]
-schedule_timeout+0x1e0/0x290
-Jul 30 19:12:09 lolek kernel:  [<ffffffff8135a4f7>] ?
-debug_smp_processor_id+0x17/0x20
-Jul 30 19:12:09 lolek kernel:  [<ffffffff81081387>] ?
-pin_current_cpu+0x87/0x1f0
-Jul 30 19:12:09 lolek kernel:  [<ffffffff81658de0>] ? bit_wait+0x60/0x60
-Jul 30 19:12:09 lolek kernel:  [<ffffffff81657934>]
-io_schedule_timeout+0xa4/0x110
-Jul 30 19:12:09 lolek kernel:  [<ffffffff8165b4f7>] ?
-rt_spin_unlock+0x27/0x40
-Jul 30 19:12:09 lolek kernel:  [<ffffffff81658dfb>] bit_wait_io+0x1b/0x70
-Jul 30 19:12:09 lolek kernel:  [<ffffffff816589db>] __wait_on_bit+0x5b/0x90
-Jul 30 19:12:09 lolek kernel:  [<ffffffff81658de0>] ? bit_wait+0x60/0x60
-Jul 30 19:12:09 lolek kernel:  [<ffffffff81658a92>]
-out_of_line_wait_on_bit+0x82/0xb0
-Jul 30 19:12:09 lolek kernel:  [<ffffffff810c7070>] ?
-autoremove_wake_function+0x40/0x40
-Jul 30 19:12:09 lolek kernel:  [<ffffffff812400f7>]
-__wait_on_buffer+0x27/0x30
-Jul 30 19:12:09 lolek kernel:  [<ffffffffc05ed54e>]
-jbd2_journal_commit_transaction+0x113e/0x1ad0 [jbd2]
-Jul 30 19:12:09 lolek kernel:  [<ffffffff810efe8a>] ?
-try_to_del_timer_sync+0x5a/0x80
-Jul 30 19:12:09 lolek kernel:  [<ffffffff8135a4f7>] ?
-debug_smp_processor_id+0x17/0x20
-Jul 30 19:12:09 lolek kernel:  [<ffffffff81081506>] ?
-unpin_current_cpu+0x16/0x70
-Jul 30 19:12:09 lolek kernel:  [<ffffffffc05f37aa>]
-kjournald2+0xca/0x270 [jbd2]
-Jul 30 19:12:09 lolek kernel:  [<ffffffff810c7030>] ?
-wake_atomic_t_function+0x60/0x60
-Jul 30 19:12:09 lolek kernel:  [<ffffffffc05f36e0>] ?
-commit_timeout+0x10/0x10 [jbd2]
-Jul 30 19:12:09 lolek kernel:  [<ffffffff810a13d5>] kthread+0xe5/0x100
-Jul 30 19:12:09 lolek kernel:  [<ffffffff810a12f0>] ?
-kthread_worker_fn+0x170/0x170
-Jul 30 19:12:09 lolek kernel:  [<ffffffff8165bc8f>] ret_from_fork+0x3f/0x70
-Jul 30 19:12:09 lolek kernel:  [<ffffffff810a12f0>] ?
-kthread_worker_fn+0x170/0x170
-
-and few other tasks hung in 'bit_wait' under jbd/ext4.
-
-Then problems from i915 drm driver were reported:
-
-Jul 30 19:12:22 lolek kernel: [drm:intel_pipe_update_end [i915]] *ERROR*
-Atomic update failure on pipe A (start=40468 end=40469) time 173 us, min
-1073, max 1079, scanline start 1068, end 1081
-[...]
-Jul 30 19:18:46 lolek kernel: [drm:intel_pipe_update_end [i915]] *ERROR*
-Atomic update failure on pipe A (start=63501 end=63502) time 249 us, min
-1073, max 1079, scanline start 1065, end 1081
-Jul 30 19:19:58 lolek kernel: [drm:intel_pipe_update_end [i915]] *ERROR*
-Atomic update failure on pipe A (start=67818 end=67819) time 100 us, min
-1073, max 1079, scanline start 1072, end 1080
-Jul 30 19:21:33 lolek kernel: [drm:intel_pipe_update_end [i915]] *ERROR*
-Atomic update failure on pipe A (start=73522 end=73523) time 127 us, min
-1073, max 1079, scanline start 1071, end 1080
-
-System seems to be working correctly after the lockup.
-
-Any ideas what is going on?
-
-
-Jacek
+Applied, thanks!
