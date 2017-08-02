@@ -1,82 +1,44 @@
-From: "Rafael J. Wysocki" <rjw@rjwysocki.net>
-Subject: Re: [PATCH] cpu_pm: replace raw_notifier to atomic_notifier
-Date: Wed, 02 Aug 2017 01:19:06 +0200
-Message-ID: <22760982.ucUucSmheq@aspire.rjw.lan>
-References: <1501225765-16869-1-git-send-email-alex.shi@linaro.org>
+From: Julia Cartwright <julia@ni.com>
+Subject: [ANNOUNCE] 4.1.42-rt49
+Date: Wed, 2 Aug 2017 14:11:21 -0500
+Message-ID: <20170802191121.GV8384@jcartwri.amer.corp.natinst.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Cc: rafael@kernel.org, open list <linux-kernel@vger.kernel.org>,
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Anders Roxell <anders.roxell@linaro.org>,
-        Daniel Lezcano <daniel.lezcano@linaro.org>,
-        Tony Lindgren <tony@atomide.com>, linux-pm@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>
+To: LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Alex Shi <alex.shi@linaro.org>
-Return-path: <linux-pm-owner@vger.kernel.org>
-In-Reply-To: <1501225765-16869-1-git-send-email-alex.shi@linaro.org>
-Sender: linux-pm-owner@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Friday, July 28, 2017 03:09:25 PM Alex Shi wrote:
-> This patch replace a rwlock and raw notifier by atomic notifier which
-> protected by spin_lock and rcu.
-> 
-> The first to reason to have this replace is due to a 'scheduling while
->  atomic' bug of RT kernel on arm/arm64 platform. On arm/arm64, rwlock
-> cpu_pm_notifier_lock in cpu_pm cause a potential schedule after irq
-> disable in idle call chain:
-> 
-> cpu_startup_entry
->   cpu_idle_loop
->     local_irq_disable()
->     cpuidle_idle_call
->       call_cpuidle
->         cpuidle_enter
->           cpuidle_enter_state
->             ->enter :arm_enter_idle_state
->               cpu_pm_enter/exit
->                 CPU_PM_CPU_IDLE_ENTER
->                   read_lock(&cpu_pm_notifier_lock); <-- sleep in idle
->                      __rt_spin_lock();
->                         schedule();
-> 
-> The kernel panic is here:
-> [    4.609601] BUG: scheduling while atomic: swapper/1/0/0x00000002
-> [    4.609608] [<ffff0000086fae70>] arm_enter_idle_state+0x18/0x70
-> [    4.609614] Modules linked in:
-> [    4.609615] [<ffff0000086f9298>] cpuidle_enter_state+0xf0/0x218
-> [    4.609620] [<ffff0000086f93f8>] cpuidle_enter+0x18/0x20
-> [    4.609626] Preemption disabled at:
-> [    4.609627] [<ffff0000080fa234>] call_cpuidle+0x24/0x40
-> [    4.609635] [<ffff000008882fa4>] schedule_preempt_disabled+0x1c/0x28
-> [    4.609639] [<ffff0000080fa49c>] cpu_startup_entry+0x154/0x1f8
-> [    4.609645] [<ffff00000808e004>] secondary_start_kernel+0x15c/0x1a0
-> 
-> Daniel Lezcano said this notification is needed on arm/arm64 platforms.
-> Sebastian suggested using atomic_notifier instead of rwlock, which is not
-> only removing the sleeping in idle, but also getting better latency
-> improvement.
-> 
-> Tony Lindgren found a miss use that rcu_read_lock used after rcu_idle_enter
-> Paul E. McKenney suggested trying RCU_NONIDLE.
-> 
-> Thanks everyone! :)
-> 
-> This patch passed Fengguang's 0day testing.
-> 
-> Signed-off-by: Alex Shi <alex.shi@linaro.org>
-> Tested-by: Tony Lindgren <tony@atomide.com>
-> To: linux-kernel@vger.kernel.org
-> Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> Cc: Thomas Gleixner <tglx@linutronix.de>
-> Cc: Anders Roxell <anders.roxell@linaro.org>
-> Cc: Daniel Lezcano <daniel.lezcano@linaro.org>
-> Cc: Rafael J. Wysocki <rafael@kernel.org>
-> Cc: Tony Lindgren <tony@atomide.com>
-> Cc: linux-pm@vger.kernel.org
-> Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-> Acked-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Hello RT Folks,
 
-Applied, thanks!
+I'm happy to announce the 4.1.42-rt49 stable release.
+
+This release is just an update to the new stable 4.1.42 version and no
+RT specific changes have been made.
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.1-rt
+  Head SHA1: 64fd80a3b0ef4db0d91b6fa224f49197745ef503
+
+
+Or to build 4.1.42-rt49 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.1.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.1.42.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/patch-4.1.42-rt49.patch.xz
+
+Let me know if there are any problems!
+
+   Julia
