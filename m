@@ -1,61 +1,89 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] v4.11.12-rt9
-Date: Fri, 4 Aug 2017 19:38:23 +0200
-Message-ID: <20170804173823.lzuhnejlnxczr2lj@linutronix.de>
+From: Haris Okanovic <haris.okanovic@ni.com>
+Subject: [PATCH] [RFC] tpm_tis: tpm_tcg_flush() after iowrite*()s
+Date: Fri, 4 Aug 2017 16:56:51 -0500
+Message-ID: <20170804215651.29247-1-haris.okanovic@ni.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain
+Cc: <haris.okanovic@ni.com>, <harisokn@gmail.com>,
+        <julia.cartwright@ni.com>, <gratian.crisan@ni.com>,
+        <scott.hartman@ni.com>, <chris.graf@ni.com>, <brad.mouring@ni.com>,
+        <jonathan.david@ni.com>
+To: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Dear RT folks!
+I have a latency issue using a SPI-based TPM chip with tpm_tis driver
+from non-rt usermode application, which induces ~400 us latency spikes
+in cyclictest (Intel Atom E3940 system, PREEMPT_RT_FULL kernel).
 
-I'm pleased to announce the v4.11.12-rt9 patch set. 
+The spikes are caused by a stalling ioread8() operation, following a
+sequence of 30+ iowrite8()s to the same address. I believe this happens
+because the writes are cached (in cpu or somewhere along the bus), which
+gets flushed on the first LOAD instruction (ioread*()) that follows.
 
-Changes since v4.11.12-rt8:
+The enclosed change appears to fix this issue: read the TPM chip's
+access register (status code) after every iowrite*() operation.
 
-  - CPU hotplug could be rock solid now. Yes. The rewrite of the hotplug
-    related parts for RT including rwlock's implementation over the last
-    few weeks looks good. 'good' means that Steven's CPU-hotplug test script
-    run a x86 box with two nodes without hanging for over a week.
+I believe this works because it amortize the cost of flushing data to
+chip across multiple instructions. However, I don't have any direct
+evidence to support this theory.
 
-  - In v4.4.1-rt6 we enabled migration across scheduling while waiting
-    for a lock [0]. As part of the hotplug rework, this optimisation is
-    gone and the old behaviour is back.
+Does this seem like a reasonable theory?
 
-[0] https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git/tree/patches/rt-locking-Reenable-migration-accross-schedule.patch?h=linux-4.4.y-rt-patches
+Any feedback on the change (a better way to do it, perhaps)?
 
-  - Reader biased RWLOCK implementation for Preempt-RT. This is an
-    alternative RWLOCK implementation for Preempt-RT and via Kconfig off
-    by default. Please enable it and help testing to see if something
-    stalls (as it not writer friendly). Nothing RT related should be
-    affected but please test your workload it to make sure.
+Thanks,
+Haris Okanovic
 
-Known issues
-	- none so far.
+https://github.com/harisokanovic/linux/tree/dev/hokanovi/tpm-latency-spike-fix-rfc
+---
+ drivers/char/tpm/tpm_tis.c | 18 +++++++++++++++++-
+ 1 file changed, 17 insertions(+), 1 deletion(-)
 
-The web diff against v4.11.12-rt8
-     https://git.kernel.org/rt/linux-rt-devel/d/v4.11.12-rt9/v4.11.12-rt8
-
-The delta patch against v4.11.12-rt8 found here:
+diff --git a/drivers/char/tpm/tpm_tis.c b/drivers/char/tpm/tpm_tis.c
+index c7e1384f1b08..5cdbfec0ad67 100644
+--- a/drivers/char/tpm/tpm_tis.c
++++ b/drivers/char/tpm/tpm_tis.c
+@@ -89,6 +89,19 @@ static inline int is_itpm(struct acpi_device *dev)
+ }
+ #endif
  
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.11/incr/patch-4.11.12-rt8-rt9.patch.xz
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.11.12-rt9
-
-The RT patch against v4.11.12 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.11/older/patch-4.11.12-rt9.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.11/older/patches-4.11.12-rt9.tar.xz
-
-Sebastian
++#ifdef CONFIG_PREEMPT_RT_FULL
++/*
++ * Flushes previous iowrite*() operations to chip so that a subsequent
++ * ioread*() won't stall a cpu.
++ */
++static void tpm_tcg_flush(struct tpm_tis_tcg_phy *phy)
++{
++	ioread8(phy->iobase + TPM_ACCESS(0));
++}
++#else
++#define tpm_tcg_flush do { } while(0)
++#endif
++
+ static int tpm_tcg_read_bytes(struct tpm_tis_data *data, u32 addr, u16 len,
+ 			      u8 *result)
+ {
+@@ -104,8 +117,10 @@ static int tpm_tcg_write_bytes(struct tpm_tis_data *data, u32 addr, u16 len,
+ {
+ 	struct tpm_tis_tcg_phy *phy = to_tpm_tis_tcg_phy(data);
+ 
+-	while (len--)
++	while (len--) {
+ 		iowrite8(*value++, phy->iobase + addr);
++		tpm_tcg_flush(phy);
++	}
+ 	return 0;
+ }
+ 
+@@ -130,6 +145,7 @@ static int tpm_tcg_write32(struct tpm_tis_data *data, u32 addr, u32 value)
+ 	struct tpm_tis_tcg_phy *phy = to_tpm_tis_tcg_phy(data);
+ 
+ 	iowrite32(value, phy->iobase + addr);
++	tpm_tcg_flush(phy);
+ 	return 0;
+ }
+ 
+-- 
+2.13.2
