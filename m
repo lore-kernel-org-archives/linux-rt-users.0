@@ -1,274 +1,61 @@
-From: Haris Okanovic <haris.okanovic@ni.com>
-Subject: [PATCH v3 1/2] timers: Don't wake ktimersoftd on every tick
-Date: Thu, 3 Aug 2017 16:06:56 -0500
-Message-ID: <20170803210657.19179-1-haris.okanovic@ni.com>
-References: <alpine.DEB.2.20.1707182206110.2425@nanos>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [ANNOUNCE] v4.11.12-rt9
+Date: Fri, 4 Aug 2017 19:38:23 +0200
+Message-ID: <20170804173823.lzuhnejlnxczr2lj@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <haris.okanovic@ni.com>, <harisokn@gmail.com>,
-        <bigeasy@linutronix.de>, <tglx@linutronix.de>,
-        <julia.cartwright@ni.com>, <gratian.crisan@ni.com>,
-        <anna-maria@linutronix.de>
-To: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.20.1707182206110.2425@nanos>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-We recently upgraded from 4.1 to 4.6 and noticed a minor latency
-regression caused by an additional thread wakeup (ktimersoftd) in
-interrupt context on every tick. The wakeups are from
-run_local_timers() raising TIMER_SOFTIRQ. Both TIMER and SCHED softirq
-coalesced into one ksoftirqd wakeup prior to Sebastian's change to split
-timers into their own thread.
+Dear RT folks!
 
-There's already logic in run_local_timers() to avoid some unnecessary
-wakeups of ksoftirqd, but it doesn't seems to catch them all. In
-particular, I've seen many unnecessary wakeups when jiffies increments
-prior to run_local_timers().
+I'm pleased to announce the v4.11.12-rt9 patch set. 
 
-Change the way timers are collected per Julia and Thomas'
-recommendation: Expired timers are now collected in interrupt context
-and fired in ktimersoftd to avoid double-walk of `pending_map`.
+Changes since v4.11.12-rt8:
 
-Collect expired timers in interrupt context to avoid overhead of waking
-ktimersoftd on every tick. ktimersoftd now wakes only when one or more
-timers are ready, which yields a minor reduction in small latency
-spikes measure by cyclictest.
+  - CPU hotplug could be rock solid now. Yes. The rewrite of the hotplug
+    related parts for RT including rwlock's implementation over the last
+    few weeks looks good. 'good' means that Steven's CPU-hotplug test script
+    run a x86 box with two nodes without hanging for over a week.
 
-Execution time of run_local_timers() increases by 0.2us to 2.5us as
-measured by TSC on a 2core Intel Atom E3825 system.
+  - In v4.4.1-rt6 we enabled migration across scheduling while waiting
+    for a lock [0]. As part of the hotplug rework, this optimisation is
+    gone and the old behaviour is back.
 
-This is implemented by storing lists of expired timers in timer_base,
-updated on each tick. Any addition to the lists wakes ktimersoftd
-(softirq) to process those timers.
+[0] https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git/tree/patches/rt-locking-Reenable-migration-accross-schedule.patch?h=linux-4.4.y-rt-patches
 
-Signed-off-by: Haris Okanovic <haris.okanovic@ni.com>
----
-[PATCH v2] Applied Thomas Gleixner's suggestions:
- - Fix expired_count race
- - Remove unneeded base->clk lookahead
- - Return expired_count in collect_expired_timers()
- - Add block_softirq
- - Rebase to v4.11.8-rt5
-[PATCH v3]
- - Fix cosmetic issues
- - Rename "count" to "levels" in timer_base and various functions
- - Move expired_levels and block_softirq to fill holes in timer_base
- - Remove READ_ONCE/WRITE_ONCE around block_softirq
+  - Reader biased RWLOCK implementation for Preempt-RT. This is an
+    alternative RWLOCK implementation for Preempt-RT and via Kconfig off
+    by default. Please enable it and help testing to see if something
+    stalls (as it not writer friendly). Nothing RT related should be
+    affected but please test your workload it to make sure.
 
-https://github.com/harisokanovic/linux/tree/dev/hokanovi/timer-peek-v5
----
- kernel/time/timer.c | 111 ++++++++++++++++++++++++++++++++++++++--------------
- 1 file changed, 82 insertions(+), 29 deletions(-)
+Known issues
+	- none so far.
 
-diff --git a/kernel/time/timer.c b/kernel/time/timer.c
-index 5730d42bfd67..078027d8a866 100644
---- a/kernel/time/timer.c
-+++ b/kernel/time/timer.c
-@@ -197,6 +197,7 @@ EXPORT_SYMBOL(jiffies_64);
+The web diff against v4.11.12-rt8
+     https://git.kernel.org/rt/linux-rt-devel/d/v4.11.12-rt9/v4.11.12-rt8
+
+The delta patch against v4.11.12-rt8 found here:
  
- struct timer_base {
- 	raw_spinlock_t		lock;
-+	int					expired_levels;
- 	struct timer_list	*running_timer;
- #ifdef CONFIG_PREEMPT_RT_FULL
- 	struct swait_queue_head	wait_for_running_timer;
-@@ -209,6 +210,7 @@ struct timer_base {
- 	bool			is_idle;
- 	DECLARE_BITMAP(pending_map, WHEEL_SIZE);
- 	struct hlist_head	vectors[WHEEL_SIZE];
-+	struct hlist_head	expired_lists[LVL_DEPTH];
- } ____cacheline_aligned;
- 
- static DEFINE_PER_CPU(struct timer_base, timer_bases[NR_BASES]);
-@@ -1314,7 +1316,8 @@ static void call_timer_fn(struct timer_list *timer, void (*fn)(unsigned long),
- 	}
- }
- 
--static void expire_timers(struct timer_base *base, struct hlist_head *head)
-+static void __expire_timers(struct timer_base *base,
-+				   struct hlist_head *head)
- {
- 	while (!hlist_empty(head)) {
- 		struct timer_list *timer;
-@@ -1344,21 +1347,49 @@ static void expire_timers(struct timer_base *base, struct hlist_head *head)
- 	}
- }
- 
--static int __collect_expired_timers(struct timer_base *base,
--				    struct hlist_head *heads)
-+static void expire_timers(struct timer_base *base)
-+{
-+	struct hlist_head *head;
-+	int levels = base->expired_levels;
-+
-+	while (levels--) {
-+		head = base->expired_lists + levels;
-+		__expire_timers(base, head);
-+	}
-+
-+	/*
-+	 * Zero base->expired_levels after processing all base->expired_lists
-+	 * to signal it's ready to get re-populated. Otherwise, we race with
-+	 * tick_find_expired() when base->lock is temporarily dropped in
-+	 * __expire_timers()
-+	 */
-+	base->expired_levels = 0;
-+}
-+
-+static int __collect_expired_timers(struct timer_base *base)
- {
--	unsigned long clk = base->clk;
- 	struct hlist_head *vec;
--	int i, levels = 0;
-+	struct hlist_head *expired_list = base->expired_lists;
-+	unsigned long clk;
-+	int i;
- 	unsigned int idx;
- 
-+	/*
-+	 * expire_timers() must be called at least once before we can
-+	 * collect more timers.
-+	 */
-+	if (base->expired_levels)
-+		return base->expired_levels;
-+
-+	clk = base->clk;
- 	for (i = 0; i < LVL_DEPTH; i++) {
- 		idx = (clk & LVL_MASK) + i * LVL_SIZE;
- 
- 		if (__test_and_clear_bit(idx, base->pending_map)) {
- 			vec = base->vectors + idx;
--			hlist_move_list(vec, heads++);
--			levels++;
-+			hlist_move_list(vec, expired_list);
-+			base->expired_levels++;
-+			expired_list++;
- 		}
- 		/* Is it time to look at the next level? */
- 		if (clk & LVL_CLK_MASK)
-@@ -1366,7 +1397,8 @@ static int __collect_expired_timers(struct timer_base *base,
- 		/* Shift clock for the next level granularity */
- 		clk >>= LVL_CLK_SHIFT;
- 	}
--	return levels;
-+
-+	return base->expired_levels;
- }
- 
- #ifdef CONFIG_NO_HZ_COMMON
-@@ -1559,8 +1591,7 @@ void timer_clear_idle(void)
- 	base->is_idle = false;
- }
- 
--static int collect_expired_timers(struct timer_base *base,
--				  struct hlist_head *heads)
-+static int collect_expired_timers(struct timer_base *base)
- {
- 	/*
- 	 * NOHZ optimization. After a long idle sleep we need to forward the
-@@ -1581,17 +1612,48 @@ static int collect_expired_timers(struct timer_base *base,
- 		}
- 		base->clk = next;
- 	}
--	return __collect_expired_timers(base, heads);
-+	return __collect_expired_timers(base);
- }
- #else
--static inline int collect_expired_timers(struct timer_base *base,
--					 struct hlist_head *heads)
-+static inline int collect_expired_timers(struct timer_base *base)
- {
--	return __collect_expired_timers(base, heads);
-+	return __collect_expired_timers(base);
- }
- #endif
- 
- /*
-+ * Increments timer_base to current jiffies or until first expired
-+ * timer is found. Return number of expired levels.
-+ */
-+static int find_expired_timers(struct timer_base *base)
-+{
-+	unsigned long int end_clk = jiffies;
-+	int expired_levels;
-+
-+	while (!(expired_levels = collect_expired_timers(base)) &&
-+			time_after_eq(end_clk, base->clk)) {
-+		base->clk++;
-+	}
-+
-+	return expired_levels;
-+}
-+
-+/*
-+ * Called from CPU tick routine to collect expired timers up to current
-+ * jiffies. Return number of expired levels.
-+ */
-+static int tick_find_expired(struct timer_base *base)
-+{
-+	int levels;
-+
-+	raw_spin_lock(&base->lock);
-+	levels = find_expired_timers(base);
-+	raw_spin_unlock(&base->lock);
-+
-+	return levels;
-+}
-+
-+/*
-  * Called from the timer interrupt handler to charge one tick to the current
-  * process.  user_tick is 1 if the tick is user time, 0 for system.
-  */
-@@ -1618,22 +1680,12 @@ void update_process_times(int user_tick)
-  */
- static inline void __run_timers(struct timer_base *base)
- {
--	struct hlist_head heads[LVL_DEPTH];
--	int levels;
--
--	if (!time_after_eq(jiffies, base->clk))
--		return;
--
- 	raw_spin_lock_irq(&base->lock);
- 
--	while (time_after_eq(jiffies, base->clk)) {
-+	do {
-+		expire_timers(base);
-+	} while (find_expired_timers(base));
- 
--		levels = collect_expired_timers(base, heads);
--		base->clk++;
--
--		while (levels--)
--			expire_timers(base, heads + levels);
--	}
- 	raw_spin_unlock_irq(&base->lock);
- 	wakeup_timer_waiters(base);
- }
-@@ -1661,12 +1713,12 @@ void run_local_timers(void)
- 
- 	hrtimer_run_queues();
- 	/* Raise the softirq only if required. */
--	if (time_before(jiffies, base->clk)) {
-+	if (time_before(jiffies, base->clk) || !tick_find_expired(base)) {
- 		if (!IS_ENABLED(CONFIG_NO_HZ_COMMON) || !base->nohz_active)
- 			return;
- 		/* CPU is awake, so check the deferrable base. */
- 		base++;
--		if (time_before(jiffies, base->clk))
-+		if (time_before(jiffies, base->clk) || !tick_find_expired(base))
- 			return;
- 	}
- 	raise_softirq(TIMER_SOFTIRQ);
-@@ -1826,6 +1878,7 @@ int timers_dead_cpu(unsigned int cpu)
- 		raw_spin_lock_nested(&old_base->lock, SINGLE_DEPTH_NESTING);
- 
- 		BUG_ON(old_base->running_timer);
-+		BUG_ON(old_base->expired_levels);
- 
- 		for (i = 0; i < WHEEL_SIZE; i++)
- 			migrate_timer_list(new_base, old_base->vectors + i);
--- 
-2.13.2
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.11/incr/patch-4.11.12-rt8-rt9.patch.xz
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.11.12-rt9
+
+The RT patch against v4.11.12 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.11/older/patch-4.11.12-rt9.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.11/older/patches-4.11.12-rt9.tar.xz
+
+Sebastian
