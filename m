@@ -1,105 +1,170 @@
 From: Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 3/6] sched: Prevent task state corruption by spurious lock wakeup
-Date: Mon, 7 Aug 2017 12:40:59 -0500
-Message-ID: <20170807174102.5448-4-julia@ni.com>
+Subject: [PATCH RT 1/6] lockdep: Fix per-cpu static objects
+Date: Mon, 7 Aug 2017 12:40:57 -0500
+Message-ID: <20170807174102.5448-2-julia@ni.com>
 References: <20170807174102.5448-1-julia@ni.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Steven Rostedt
+	<rostedt@goodmis.org>, Carsten Emde <C.Emde@osadl.org>,
+        "Sebastian Andrzej
+ Siewior" <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
-        Paul Gortmaker <paul.gortmaker@windriver.com>,
-        <stable-rt@vger.kernel.org>
+        "Paul
+ Gortmaker" <paul.gortmaker@windriver.com>,
+        Peter Zijlstra
+	<peterz@infradead.org>, <linux-mm@kvack.org>,
+        <wfg@linux.intel.com>, "kernel
+ test robot" <fengguang.wu@intel.com>,
+        LKP <lkp@01.org>
 To: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <20170807174102.5448-1-julia@ni.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
 4.1.42-rt50-rc1 stable review patch.
 If you have any objection to the inclusion of this patch, let me know.
 
 --- 8< --- 8< --- 8< ---
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Peter Zijlstra <peterz@infradead.org>
 
-Mathias and others reported GDB failures on RT.
+Since commit 383776fa7527 ("locking/lockdep: Handle statically initialized
+PER_CPU locks properly") we try to collapse per-cpu locks into a single
+class by giving them all the same key. For this key we choose the canonical
+address of the per-cpu object, which would be the offset into the per-cpu
+area.
 
-The following scenario leads to task state corruption:
+This has two problems:
 
-CPU0						CPU1
+ - there is a case where we run !0 lock->key through static_obj() and
+   expect this to pass; it doesn't for canonical pointers.
 
-T1->state = TASK_XXX;
-spin_lock(&lock)
-  rt_spin_lock_slowlock(&lock->rtmutex)
-    raw_spin_lock(&rtm->wait_lock);
-    T1->saved_state = current->state;
-    T1->state = TASK_UNINTERRUPTIBLE;
-						spin_unlock(&lock)
-    task_blocks_on_rt_mutex(rtm)  		  rt_spin_lock_slowunlock(&lock->rtmutex)
-      queue_waiter(rtm)				    raw_spin_lock(&rtm->wait_lock);
-      pi_chain_walk(rtm)
-        raw_spin_unlock(&rtm->wait_lock);
-						    wake_top_waiter(T1)
+ - 0 is a valid canonical address.
 
-      raw_spin_lock(&rtm->wait_lock);
+Cure both issues by redefining the canonical address as the address of the
+per-cpu variable on the boot CPU.
 
-    for (;;) {
-      if (__try_to_take_rt_mutex())  <- Succeeds
-        break;
-      ...
-    }
+Since I didn't want to rely on CPU0 being the boot-cpu, or even existing at
+all, track the boot CPU in a variable.
 
-    T1->state = T1->saved_state;
-						     try_to_wake_up(T1)
-						       ttwu_do_wakeup(T1)
-						         T1->state = TASK_RUNNING;
-
-In most cases this is harmless because waiting for some event, which is the
-usual reason for TASK_[UN]INTERRUPTIBLE has to be safe against other forms
-of spurious wakeups anyway.
-
-But in case of TASK_TRACED this is actually fatal, because the task loses
-the TASK_TRACED state. In consequence it fails to consume SIGSTOP which was
-sent from the debugger and actually delivers SIGSTOP to the task which
-breaks the ptrace mechanics and brings the debugger into an unexpected
-state.
-
-The TASK_TRACED state should prevent getting there due to the state
-matching logic in try_to_wake_up(). But that's not true because
-wake_up_lock_sleeper() uses TASK_ALL as state mask. That's bogus because
-lock sleepers always use TASK_UNINTERRUPTIBLE, so the wakeup should use
-that as well.
-
-The cure is way simpler as figuring it out:
-
-Change the mask used in wake_up_lock_sleeper() from TASK_ALL to
-TASK_UNINTERRUPTIBLE.
-
-Cc: stable-rt@vger.kernel.org
-Reported-by: Mathias Koehrer <mathias.koehrer@etas.com>
-Reported-by: David Hauck <davidh@netacquire.com>
+Fixes: 383776fa7527 ("locking/lockdep: Handle statically initialized PER_CPU locks properly")
+Reported-by: kernel test robot <fengguang.wu@intel.com>
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Tested-by: Borislav Petkov <bp@suse.de>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: linux-mm@kvack.org
+Cc: wfg@linux.intel.com
+Cc: kernel test robot <fengguang.wu@intel.com>
+Cc: LKP <lkp@01.org>
+Link: http://lkml.kernel.org/r/20170320114108.kbvcsuepem45j5cr@hirez.programming.kicks-ass.net
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-(cherry picked from commit 2f9f24e15088d2ef3244d088a9604d7e98c9c625)
+(cherry picked from commit c9fe9196079f738c89c3ffcdce3fbe142ac3f3c4)
 Signed-off-by: Julia Cartwright <julia@ni.com>
 ---
- kernel/sched/core.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ include/linux/smp.h | 12 ++++++++++++
+ init/main.c         |  8 ++++++++
+ kernel/module.c     |  6 +++++-
+ mm/percpu.c         |  5 ++++-
+ 4 files changed, 29 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 0d3a40b24304..ee11a59e53ff 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -1876,7 +1876,7 @@ EXPORT_SYMBOL(wake_up_process);
+diff --git a/include/linux/smp.h b/include/linux/smp.h
+index e6ab36aeaaab..cbf6836524dc 100644
+--- a/include/linux/smp.h
++++ b/include/linux/smp.h
+@@ -120,6 +120,13 @@ extern unsigned int setup_max_cpus;
+ extern void __init setup_nr_cpu_ids(void);
+ extern void __init smp_init(void);
+ 
++extern int __boot_cpu_id;
++
++static inline int get_boot_cpu_id(void)
++{
++	return __boot_cpu_id;
++}
++
+ #else /* !SMP */
+ 
+ static inline void smp_send_stop(void) { }
+@@ -158,6 +165,11 @@ static inline void smp_init(void) { up_late_init(); }
+ static inline void smp_init(void) { }
+ #endif
+ 
++static inline int get_boot_cpu_id(void)
++{
++	return 0;
++}
++
+ #endif /* !SMP */
+ 
+ /*
+diff --git a/init/main.c b/init/main.c
+index 0486a8e11fc0..e1bae15a2154 100644
+--- a/init/main.c
++++ b/init/main.c
+@@ -451,6 +451,10 @@ void __init parse_early_param(void)
+  *	Activate the first processor.
   */
- int wake_up_lock_sleeper(struct task_struct *p)
+ 
++#ifdef CONFIG_SMP
++int __boot_cpu_id;
++#endif
++
+ static void __init boot_cpu_init(void)
  {
--	return try_to_wake_up(p, TASK_ALL, WF_LOCK_SLEEPER);
-+	return try_to_wake_up(p, TASK_UNINTERRUPTIBLE, WF_LOCK_SLEEPER);
+ 	int cpu = smp_processor_id();
+@@ -459,6 +463,10 @@ static void __init boot_cpu_init(void)
+ 	set_cpu_active(cpu, true);
+ 	set_cpu_present(cpu, true);
+ 	set_cpu_possible(cpu, true);
++
++#ifdef CONFIG_SMP
++	__boot_cpu_id = cpu;
++#endif
  }
  
- int wake_up_state(struct task_struct *p, unsigned int state)
+ void __init __weak smp_setup_processor_id(void)
+diff --git a/kernel/module.c b/kernel/module.c
+index a7ac858fd1a1..982c57b2c2a1 100644
+--- a/kernel/module.c
++++ b/kernel/module.c
+@@ -542,8 +542,12 @@ bool __is_module_percpu_address(unsigned long addr, unsigned long *can_addr)
+ 			void *va = (void *)addr;
+ 
+ 			if (va >= start && va < start + mod->percpu_size) {
+-				if (can_addr)
++				if (can_addr) {
+ 					*can_addr = (unsigned long) (va - start);
++					*can_addr += (unsigned long)
++						per_cpu_ptr(mod->percpu,
++							    get_boot_cpu_id());
++				}
+ 				preempt_enable();
+ 				return true;
+ 			}
+diff --git a/mm/percpu.c b/mm/percpu.c
+index 4146b00bfde7..b41c3960d5fb 100644
+--- a/mm/percpu.c
++++ b/mm/percpu.c
+@@ -1297,8 +1297,11 @@ bool __is_kernel_percpu_address(unsigned long addr, unsigned long *can_addr)
+ 		void *va = (void *)addr;
+ 
+ 		if (va >= start && va < start + static_size) {
+-			if (can_addr)
++			if (can_addr) {
+ 				*can_addr = (unsigned long) (va - start);
++				*can_addr += (unsigned long)
++					per_cpu_ptr(base, get_boot_cpu_id());
++			}
+ 			return true;
+ 		}
+ 	}
 -- 
 2.13.1
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
