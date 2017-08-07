@@ -1,7 +1,7 @@
 From: Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 2/6] rtmutex: Make lock_killable work
-Date: Mon, 7 Aug 2017 12:40:58 -0500
-Message-ID: <20170807174102.5448-3-julia@ni.com>
+Subject: [PATCH RT 3/6] sched: Prevent task state corruption by spurious lock wakeup
+Date: Mon, 7 Aug 2017 12:40:59 -0500
+Message-ID: <20170807174102.5448-4-julia@ni.com>
 References: <20170807174102.5448-1-julia@ni.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -11,7 +11,7 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
-        <rt-stable@vger.kernel.org>
+        <stable-rt@vger.kernel.org>
 To: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20170807174102.5448-1-julia@ni.com>
@@ -24,49 +24,82 @@ If you have any objection to the inclusion of this patch, let me know.
 --- 8< --- 8< --- 8< ---
 From: Thomas Gleixner <tglx@linutronix.de>
 
-Locking an rt mutex killable does not work because signal handling is
-restricted to TASK_INTERRUPTIBLE.
+Mathias and others reported GDB failures on RT.
 
-Use signal_pending_state() unconditionaly.
+The following scenario leads to task state corruption:
 
-Cc: rt-stable@vger.kernel.org
+CPU0						CPU1
+
+T1->state = TASK_XXX;
+spin_lock(&lock)
+  rt_spin_lock_slowlock(&lock->rtmutex)
+    raw_spin_lock(&rtm->wait_lock);
+    T1->saved_state = current->state;
+    T1->state = TASK_UNINTERRUPTIBLE;
+						spin_unlock(&lock)
+    task_blocks_on_rt_mutex(rtm)  		  rt_spin_lock_slowunlock(&lock->rtmutex)
+      queue_waiter(rtm)				    raw_spin_lock(&rtm->wait_lock);
+      pi_chain_walk(rtm)
+        raw_spin_unlock(&rtm->wait_lock);
+						    wake_top_waiter(T1)
+
+      raw_spin_lock(&rtm->wait_lock);
+
+    for (;;) {
+      if (__try_to_take_rt_mutex())  <- Succeeds
+        break;
+      ...
+    }
+
+    T1->state = T1->saved_state;
+						     try_to_wake_up(T1)
+						       ttwu_do_wakeup(T1)
+						         T1->state = TASK_RUNNING;
+
+In most cases this is harmless because waiting for some event, which is the
+usual reason for TASK_[UN]INTERRUPTIBLE has to be safe against other forms
+of spurious wakeups anyway.
+
+But in case of TASK_TRACED this is actually fatal, because the task loses
+the TASK_TRACED state. In consequence it fails to consume SIGSTOP which was
+sent from the debugger and actually delivers SIGSTOP to the task which
+breaks the ptrace mechanics and brings the debugger into an unexpected
+state.
+
+The TASK_TRACED state should prevent getting there due to the state
+matching logic in try_to_wake_up(). But that's not true because
+wake_up_lock_sleeper() uses TASK_ALL as state mask. That's bogus because
+lock sleepers always use TASK_UNINTERRUPTIBLE, so the wakeup should use
+that as well.
+
+The cure is way simpler as figuring it out:
+
+Change the mask used in wake_up_lock_sleeper() from TASK_ALL to
+TASK_UNINTERRUPTIBLE.
+
+Cc: stable-rt@vger.kernel.org
+Reported-by: Mathias Koehrer <mathias.koehrer@etas.com>
+Reported-by: David Hauck <davidh@netacquire.com>
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-(cherry picked from commit 9edcb2cd71ff3684755f52129538260efa382789)
+(cherry picked from commit 2f9f24e15088d2ef3244d088a9604d7e98c9c625)
 Signed-off-by: Julia Cartwright <julia@ni.com>
 ---
- kernel/locking/rtmutex.c | 19 +++++++------------
- 1 file changed, 7 insertions(+), 12 deletions(-)
+ kernel/sched/core.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index e0b0d9b419b5..3e45ceb862bd 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -1511,18 +1511,13 @@ __rt_mutex_slowlock(struct rt_mutex *lock, int state,
- 		if (try_to_take_rt_mutex(lock, current, waiter))
- 			break;
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 0d3a40b24304..ee11a59e53ff 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -1876,7 +1876,7 @@ EXPORT_SYMBOL(wake_up_process);
+  */
+ int wake_up_lock_sleeper(struct task_struct *p)
+ {
+-	return try_to_wake_up(p, TASK_ALL, WF_LOCK_SLEEPER);
++	return try_to_wake_up(p, TASK_UNINTERRUPTIBLE, WF_LOCK_SLEEPER);
+ }
  
--		/*
--		 * TASK_INTERRUPTIBLE checks for signals and
--		 * timeout. Ignored otherwise.
--		 */
--		if (unlikely(state == TASK_INTERRUPTIBLE)) {
--			/* Signal pending? */
--			if (signal_pending(current))
--				ret = -EINTR;
--			if (timeout && !timeout->task)
--				ret = -ETIMEDOUT;
--			if (ret)
--				break;
-+		if (timeout && !timeout->task) {
-+			ret = -ETIMEDOUT;
-+			break;
-+		}
-+		if (signal_pending_state(state, current)) {
-+			ret = -EINTR;
-+			break;
- 		}
- 
- 		if (ww_ctx && ww_ctx->acquired > 0) {
+ int wake_up_state(struct task_struct *p, unsigned int state)
 -- 
 2.13.1
