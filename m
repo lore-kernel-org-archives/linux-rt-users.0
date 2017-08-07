@@ -1,51 +1,74 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH V2 2/2] rt: Increase/decrease the nr of migratory tasks
- when  enabling/disabling migration
-Date: Mon, 7 Aug 2017 17:46:57 +0200
-Message-ID: <20170807154657.dixtykrdqwp7nhkq@linutronix.de>
-References: <cover.1498482127.git.bristot@redhat.com>
- <e981d271cbeca975bca710e2fbcc6078c09741b0.1498482127.git.bristot@redhat.com>
+From: Julia Cartwright <julia@ni.com>
+Subject: [PATCH RT 0/6] Linux 4.1.42-rt50-rc1
+Date: Mon, 7 Aug 2017 12:40:56 -0500
+Message-ID: <20170807174102.5448-1-julia@ni.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-        "Luis Claudio R . Goncalves" <lgoncalv@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        Luiz Capitulino <lcapitulino@redhat.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain
+Cc: Thomas Gleixner <tglx@linutronix.de>,
         Steven Rostedt <rostedt@goodmis.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Ingo Molnar <mingo@kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>
-To: Daniel Bristot de Oliveira <bristot@redhat.com>
+        Carsten Emde <C.Emde@osadl.org>,
+        "Sebastian Andrzej Siewior" <bigeasy@linutronix.de>,
+        John Kacur <jkacur@redhat.com>,
+        "Paul Gortmaker" <paul.gortmaker@windriver.com>
+To: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <e981d271cbeca975bca710e2fbcc6078c09741b0.1498482127.git.bristot@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2017-06-26 17:07:15 [+0200], Daniel Bristot de Oliveira wrote:
-> There is a problem in the migrate_disable()/enable() implementation
-> regarding the number of migratory tasks in the rt/dl RQs. The problem
-> is the following:
-…
-> This patch fixes this problem by decreasing/increasing the
-> rt/dl_nr_migratory in the migrate disable/enable operations.
-> 
-> Reported-by: Pei Zhang <pezhang@redhat.com>
-> Reported-by: Luiz Capitulino <lcapitulino@redhat.com>
-> Signed-off-by: Daniel Bristot de Oliveira <bristot@redhat.com>
-> Cc: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
-> Cc: Clark Williams <williams@redhat.com>
-> Cc: Luiz Capitulino <lcapitulino@redhat.com>
-> Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> Cc: Thomas Gleixner <tglx@linutronix.de>
-> Cc: Steven Rostedt <rostedt@goodmis.org>
-> Cc: Peter Zijlstra <peterz@infradead.org>
-> Cc: Ingo Molnar <mingo@kernel.org>
-> Cc: LKML <linux-kernel@vger.kernel.org>
-> Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+Dear RT Folks,
 
-Applied.
+This is the RT stable review cycle of patch 4.1.42-rt50-rc1.  Please review
+the included patches, and test!
 
-Sebastian
+The -rc release will be uploaded to kernel.org and will be deleted when the
+final release is out. This is just a review release (or release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 8/14/2017.
+
+   Julia
+
+----------------------------------------------------------------
+To build 4.1.42-rt50-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.1.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.1.42.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/patch-4.1.42-rt50-rc1.patch.xz
+
+You can also build from 4.1.42-rt49 release by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/incr/patch-4.1.42-rt49-rt50-rc1.patch.xz
+
+----------------------------------------------------------------
+Alex Shi (1):
+  cpu_pm: replace raw_notifier to atomic_notifier
+
+Julia Cartwright (1):
+  Linux 4.1.42-rt50-rc1
+
+Peter Zijlstra (2):
+  lockdep: Fix per-cpu static objects
+  sched: Remove TASK_ALL
+
+Thomas Gleixner (2):
+  rtmutex: Make lock_killable work
+  sched: Prevent task state corruption by spurious lock wakeup
+
+ include/linux/sched.h    |  1 -
+ include/linux/smp.h      | 12 ++++++++++++
+ init/main.c              |  8 ++++++++
+ kernel/cpu_pm.c          | 43 ++++++-------------------------------------
+ kernel/locking/rtmutex.c | 19 +++++++------------
+ kernel/module.c          |  6 +++++-
+ kernel/sched/core.c      |  2 +-
+ localversion-rt          |  2 +-
+ mm/percpu.c              |  5 ++++-
+ 9 files changed, 44 insertions(+), 54 deletions(-)
+
+-- 
+2.13.1
