@@ -1,45 +1,54 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: 4.9.33-rt23 latency under high load
-Date: Mon, 7 Aug 2017 15:46:22 +0200
-Message-ID: <20170807134622.okjuu56qupao4zqk@linutronix.de>
-References: <efca9200a0d04af788a7f32322091337@S1P7MBX1A.EXCHPROD.USA.NET>
+Subject: Re: System hung for a few minutes on rt kernel
+Date: Mon, 7 Aug 2017 15:51:04 +0200
+Message-ID: <20170807135104.nt5tsatjwcvttvve@linutronix.de>
+References: <b9015e55-85fa-9e1c-736a-746c439e635d@jajcus.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Carol Wong <carolw@netacquire.com>
+Cc: linux-rt-users@vger.kernel.org
+To: Jacek Konieczny <jajcus@jajcus.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:44406 "EHLO
+Received: from Galois.linutronix.de ([146.0.238.70]:44431 "EHLO
         Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751375AbdHGNqZ (ORCPT
+        with ESMTP id S1751857AbdHGNvG (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 7 Aug 2017 09:46:25 -0400
+        Mon, 7 Aug 2017 09:51:06 -0400
 Content-Disposition: inline
-In-Reply-To: <efca9200a0d04af788a7f32322091337@S1P7MBX1A.EXCHPROD.USA.NET>
+In-Reply-To: <b9015e55-85fa-9e1c-736a-746c439e635d@jajcus.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-07-27 22:45:38 [+0000], Carol Wong wrote:
+On 2017-07-30 19:37:41 [+0200], Jacek Konieczny wrote:
 > Hi,
 Hi,
 
-> On my test setup, cyclictest is reporting max latency > 500 us in 4.9.33-rt23 and 4.9.35-rt25. Max latency is small in 4.9.33-rt22 and 4.9.33-rt21 (< 50 us) under the same conditions. 
 > 
-> My test setup uses a Core i7 (3.4GHz 3rd gen) with hyper-threading disabled. The system is under heavy load (60-90% each core) servicing network traffic and performing arithmetic on the packet payloads. Interrupt rate is approximately 60K intr/s. I've tried a few different NICs (e1000, e1000e, and ixgbe) with the same result. Occasional big hits start occurring within 30 minutes.
+> Jul 30 19:12:22 lolek kernel: [drm:intel_pipe_update_end [i915]] *ERROR*
+> Atomic update failure on pipe A (start=40468 end=40469) time 173 us, min
+> 1073, max 1079, scanline start 1068, end 1081
+> [...]
+> Jul 30 19:18:46 lolek kernel: [drm:intel_pipe_update_end [i915]] *ERROR*
+> Atomic update failure on pipe A (start=63501 end=63502) time 249 us, min
+> 1073, max 1079, scanline start 1065, end 1081
+> Jul 30 19:19:58 lolek kernel: [drm:intel_pipe_update_end [i915]] *ERROR*
+> Atomic update failure on pipe A (start=67818 end=67819) time 100 us, min
+> 1073, max 1079, scanline start 1072, end 1080
+> Jul 30 19:21:33 lolek kernel: [drm:intel_pipe_update_end [i915]] *ERROR*
+> Atomic update failure on pipe A (start=73522 end=73523) time 127 us, min
+> 1073, max 1079, scanline start 1071, end 1080
 > 
-> I tried a modified 4.9.33-rt23 kernel with the following commit removed: 
-> <https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git/commit/kernel/sched/core.c?h=v4.9-rt&id=1dc89be37874bfc7bb4a0ea7c45492d7db39f62b>
-> The big latency hits do not happen with this commit backed out.
-
-so you say with this change is responsible for 450us of latency?
-This change should be a nop if you don't change the task's CPU-mask
-while the task is in a migrate-disable section. Do I miss something? Is
-part of your workload changing cpu-affinity mask?
-
-> I've not yet had a chance to try a 4.11 kernel, but it looks like there's been recent work on migrate_disable/enable in that branch. Maybe a backport to 4.9 is needed?
-
-v4.11 should have the same change you just pointed out.
-
-> Cheers,
-> Carol
+> System seems to be working correctly after the lockup.
 > 
+> Any ideas what is going on?
+
+It is possible, that the task doing i915 hung for some reason and
+blocked other tasks while doing so. I can't answer why. But it looks
+like once i915 recovered, it released some locks and the remaining part
+of the system continued to work.
+
+One thing: You could if the number of your problems decrease if you
+switch from CONFIG_NOHZ_FULL to CONFIG_HZ_PERIODIC.
+
+> Jacek
+
 Sebastian
