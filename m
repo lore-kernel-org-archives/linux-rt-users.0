@@ -1,170 +1,204 @@
 From: Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 1/6] lockdep: Fix per-cpu static objects
-Date: Mon, 7 Aug 2017 12:40:57 -0500
-Message-ID: <20170807174102.5448-2-julia@ni.com>
+Subject: [PATCH RT 5/6] cpu_pm: replace raw_notifier to atomic_notifier
+Date: Mon, 7 Aug 2017 12:41:01 -0500
+Message-ID: <20170807174102.5448-6-julia@ni.com>
 References: <20170807174102.5448-1-julia@ni.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt
-	<rostedt@goodmis.org>, Carsten Emde <C.Emde@osadl.org>,
-        "Sebastian Andrzej
- Siewior" <bigeasy@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
-        "Paul
- Gortmaker" <paul.gortmaker@windriver.com>,
-        Peter Zijlstra
-	<peterz@infradead.org>, <linux-mm@kvack.org>,
-        <wfg@linux.intel.com>, "kernel
- test robot" <fengguang.wu@intel.com>,
-        LKP <lkp@01.org>
+        Paul Gortmaker <paul.gortmaker@windriver.com>,
+        Alex Shi <alex.shi@linaro.org>,
+        Anders Roxell <anders.roxell@linaro.org>,
+        Rik van Riel <riel@redhat.com>,
+        "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>,
+        Daniel Lezcano <daniel.lezcano@linaro.org>
 To: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20170807174102.5448-1-julia@ni.com>
-Sender: owner-linux-mm@kvack.org
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 4.1.42-rt50-rc1 stable review patch.
 If you have any objection to the inclusion of this patch, let me know.
 
 --- 8< --- 8< --- 8< ---
-From: Peter Zijlstra <peterz@infradead.org>
+From: Alex Shi <alex.shi@linaro.org>
 
-Since commit 383776fa7527 ("locking/lockdep: Handle statically initialized
-PER_CPU locks properly") we try to collapse per-cpu locks into a single
-class by giving them all the same key. For this key we choose the canonical
-address of the per-cpu object, which would be the offset into the per-cpu
-area.
+This patch replace a rwlock and raw notifier by atomic notifier which
+protected by spin_lock and rcu.
 
-This has two problems:
+The first to reason to have this replace is due to a 'scheduling while
+ atomic' bug of RT kernel on arm/arm64 platform. On arm/arm64, rwlock
+cpu_pm_notifier_lock in cpu_pm cause a potential schedule after irq
+disable in idle call chain:
 
- - there is a case where we run !0 lock->key through static_obj() and
-   expect this to pass; it doesn't for canonical pointers.
+cpu_startup_entry
+  cpu_idle_loop
+    local_irq_disable()
+    cpuidle_idle_call
+      call_cpuidle
+        cpuidle_enter
+          cpuidle_enter_state
+            ->enter :arm_enter_idle_state
+              cpu_pm_enter/exit
+                CPU_PM_CPU_IDLE_ENTER
+                  read_lock(&cpu_pm_notifier_lock); <-- sleep in idle
+                     __rt_spin_lock();
+                        schedule();
 
- - 0 is a valid canonical address.
+The kernel panic is here:
+[    4.609601] BUG: scheduling while atomic: swapper/1/0/0x00000002
+[    4.609608] [<ffff0000086fae70>] arm_enter_idle_state+0x18/0x70
+[    4.609614] Modules linked in:
+[    4.609615] [<ffff0000086f9298>] cpuidle_enter_state+0xf0/0x218
+[    4.609620] [<ffff0000086f93f8>] cpuidle_enter+0x18/0x20
+[    4.609626] Preemption disabled at:
+[    4.609627] [<ffff0000080fa234>] call_cpuidle+0x24/0x40
+[    4.609635] [<ffff000008882fa4>] schedule_preempt_disabled+0x1c/0x28
+[    4.609639] [<ffff0000080fa49c>] cpu_startup_entry+0x154/0x1f8
+[    4.609645] [<ffff00000808e004>] secondary_start_kernel+0x15c/0x1a0
 
-Cure both issues by redefining the canonical address as the address of the
-per-cpu variable on the boot CPU.
+Daniel Lezcano said this notification is needed on arm/arm64 platforms.
+Sebastian suggested using atomic_notifier instead of rwlock, which is not
+only removing the sleeping in idle, but also getting better latency
+improvement.
 
-Since I didn't want to rely on CPU0 being the boot-cpu, or even existing at
-all, track the boot CPU in a variable.
+This patch passed Fengguang's 0day testing.
 
-Fixes: 383776fa7527 ("locking/lockdep: Handle statically initialized PER_CPU locks properly")
-Reported-by: kernel test robot <fengguang.wu@intel.com>
-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-Tested-by: Borislav Petkov <bp@suse.de>
+Signed-off-by: Alex Shi <alex.shi@linaro.org>
 Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: linux-mm@kvack.org
-Cc: wfg@linux.intel.com
-Cc: kernel test robot <fengguang.wu@intel.com>
-Cc: LKP <lkp@01.org>
-Link: http://lkml.kernel.org/r/20170320114108.kbvcsuepem45j5cr@hirez.programming.kicks-ass.net
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-(cherry picked from commit c9fe9196079f738c89c3ffcdce3fbe142ac3f3c4)
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Anders Roxell <anders.roxell@linaro.org>
+Cc: Rik van Riel <riel@redhat.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+Cc: Daniel Lezcano <daniel.lezcano@linaro.org>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+(cherry picked from commit df0fba5ba4c69cdc68bdaa5ca7a4100d959fdd07)
 Signed-off-by: Julia Cartwright <julia@ni.com>
 ---
- include/linux/smp.h | 12 ++++++++++++
- init/main.c         |  8 ++++++++
- kernel/module.c     |  6 +++++-
- mm/percpu.c         |  5 ++++-
- 4 files changed, 29 insertions(+), 2 deletions(-)
+ kernel/cpu_pm.c | 43 ++++++-------------------------------------
+ 1 file changed, 6 insertions(+), 37 deletions(-)
 
-diff --git a/include/linux/smp.h b/include/linux/smp.h
-index e6ab36aeaaab..cbf6836524dc 100644
---- a/include/linux/smp.h
-+++ b/include/linux/smp.h
-@@ -120,6 +120,13 @@ extern unsigned int setup_max_cpus;
- extern void __init setup_nr_cpu_ids(void);
- extern void __init smp_init(void);
+diff --git a/kernel/cpu_pm.c b/kernel/cpu_pm.c
+index 9656a3c36503..9da42f83ee03 100644
+--- a/kernel/cpu_pm.c
++++ b/kernel/cpu_pm.c
+@@ -22,14 +22,13 @@
+ #include <linux/spinlock.h>
+ #include <linux/syscore_ops.h>
  
-+extern int __boot_cpu_id;
-+
-+static inline int get_boot_cpu_id(void)
-+{
-+	return __boot_cpu_id;
-+}
-+
- #else /* !SMP */
+-static DEFINE_RWLOCK(cpu_pm_notifier_lock);
+-static RAW_NOTIFIER_HEAD(cpu_pm_notifier_chain);
++static ATOMIC_NOTIFIER_HEAD(cpu_pm_notifier_chain);
  
- static inline void smp_send_stop(void) { }
-@@ -158,6 +165,11 @@ static inline void smp_init(void) { up_late_init(); }
- static inline void smp_init(void) { }
- #endif
- 
-+static inline int get_boot_cpu_id(void)
-+{
-+	return 0;
-+}
-+
- #endif /* !SMP */
- 
- /*
-diff --git a/init/main.c b/init/main.c
-index 0486a8e11fc0..e1bae15a2154 100644
---- a/init/main.c
-+++ b/init/main.c
-@@ -451,6 +451,10 @@ void __init parse_early_param(void)
-  *	Activate the first processor.
-  */
- 
-+#ifdef CONFIG_SMP
-+int __boot_cpu_id;
-+#endif
-+
- static void __init boot_cpu_init(void)
+ static int cpu_pm_notify(enum cpu_pm_event event, int nr_to_call, int *nr_calls)
  {
- 	int cpu = smp_processor_id();
-@@ -459,6 +463,10 @@ static void __init boot_cpu_init(void)
- 	set_cpu_active(cpu, true);
- 	set_cpu_present(cpu, true);
- 	set_cpu_possible(cpu, true);
-+
-+#ifdef CONFIG_SMP
-+	__boot_cpu_id = cpu;
-+#endif
+ 	int ret;
+ 
+-	ret = __raw_notifier_call_chain(&cpu_pm_notifier_chain, event, NULL,
++	ret = __atomic_notifier_call_chain(&cpu_pm_notifier_chain, event, NULL,
+ 		nr_to_call, nr_calls);
+ 
+ 	return notifier_to_errno(ret);
+@@ -47,14 +46,7 @@ static int cpu_pm_notify(enum cpu_pm_event event, int nr_to_call, int *nr_calls)
+  */
+ int cpu_pm_register_notifier(struct notifier_block *nb)
+ {
+-	unsigned long flags;
+-	int ret;
+-
+-	write_lock_irqsave(&cpu_pm_notifier_lock, flags);
+-	ret = raw_notifier_chain_register(&cpu_pm_notifier_chain, nb);
+-	write_unlock_irqrestore(&cpu_pm_notifier_lock, flags);
+-
+-	return ret;
++	return atomic_notifier_chain_register(&cpu_pm_notifier_chain, nb);
  }
+ EXPORT_SYMBOL_GPL(cpu_pm_register_notifier);
  
- void __init __weak smp_setup_processor_id(void)
-diff --git a/kernel/module.c b/kernel/module.c
-index a7ac858fd1a1..982c57b2c2a1 100644
---- a/kernel/module.c
-+++ b/kernel/module.c
-@@ -542,8 +542,12 @@ bool __is_module_percpu_address(unsigned long addr, unsigned long *can_addr)
- 			void *va = (void *)addr;
+@@ -69,14 +61,7 @@ EXPORT_SYMBOL_GPL(cpu_pm_register_notifier);
+  */
+ int cpu_pm_unregister_notifier(struct notifier_block *nb)
+ {
+-	unsigned long flags;
+-	int ret;
+-
+-	write_lock_irqsave(&cpu_pm_notifier_lock, flags);
+-	ret = raw_notifier_chain_unregister(&cpu_pm_notifier_chain, nb);
+-	write_unlock_irqrestore(&cpu_pm_notifier_lock, flags);
+-
+-	return ret;
++	return atomic_notifier_chain_unregister(&cpu_pm_notifier_chain, nb);
+ }
+ EXPORT_SYMBOL_GPL(cpu_pm_unregister_notifier);
  
- 			if (va >= start && va < start + mod->percpu_size) {
--				if (can_addr)
-+				if (can_addr) {
- 					*can_addr = (unsigned long) (va - start);
-+					*can_addr += (unsigned long)
-+						per_cpu_ptr(mod->percpu,
-+							    get_boot_cpu_id());
-+				}
- 				preempt_enable();
- 				return true;
- 			}
-diff --git a/mm/percpu.c b/mm/percpu.c
-index 4146b00bfde7..b41c3960d5fb 100644
---- a/mm/percpu.c
-+++ b/mm/percpu.c
-@@ -1297,8 +1297,11 @@ bool __is_kernel_percpu_address(unsigned long addr, unsigned long *can_addr)
- 		void *va = (void *)addr;
+@@ -100,7 +85,6 @@ int cpu_pm_enter(void)
+ 	int nr_calls;
+ 	int ret = 0;
  
- 		if (va >= start && va < start + static_size) {
--			if (can_addr)
-+			if (can_addr) {
- 				*can_addr = (unsigned long) (va - start);
-+				*can_addr += (unsigned long)
-+					per_cpu_ptr(base, get_boot_cpu_id());
-+			}
- 			return true;
- 		}
- 	}
+-	read_lock(&cpu_pm_notifier_lock);
+ 	ret = cpu_pm_notify(CPU_PM_ENTER, -1, &nr_calls);
+ 	if (ret)
+ 		/*
+@@ -108,7 +92,6 @@ int cpu_pm_enter(void)
+ 		 * PM entry who are notified earlier to prepare for it.
+ 		 */
+ 		cpu_pm_notify(CPU_PM_ENTER_FAILED, nr_calls - 1, NULL);
+-	read_unlock(&cpu_pm_notifier_lock);
+ 
+ 	return ret;
+ }
+@@ -128,13 +111,7 @@ EXPORT_SYMBOL_GPL(cpu_pm_enter);
+  */
+ int cpu_pm_exit(void)
+ {
+-	int ret;
+-
+-	read_lock(&cpu_pm_notifier_lock);
+-	ret = cpu_pm_notify(CPU_PM_EXIT, -1, NULL);
+-	read_unlock(&cpu_pm_notifier_lock);
+-
+-	return ret;
++	return cpu_pm_notify(CPU_PM_EXIT, -1, NULL);
+ }
+ EXPORT_SYMBOL_GPL(cpu_pm_exit);
+ 
+@@ -159,7 +136,6 @@ int cpu_cluster_pm_enter(void)
+ 	int nr_calls;
+ 	int ret = 0;
+ 
+-	read_lock(&cpu_pm_notifier_lock);
+ 	ret = cpu_pm_notify(CPU_CLUSTER_PM_ENTER, -1, &nr_calls);
+ 	if (ret)
+ 		/*
+@@ -167,7 +143,6 @@ int cpu_cluster_pm_enter(void)
+ 		 * PM entry who are notified earlier to prepare for it.
+ 		 */
+ 		cpu_pm_notify(CPU_CLUSTER_PM_ENTER_FAILED, nr_calls - 1, NULL);
+-	read_unlock(&cpu_pm_notifier_lock);
+ 
+ 	return ret;
+ }
+@@ -190,13 +165,7 @@ EXPORT_SYMBOL_GPL(cpu_cluster_pm_enter);
+  */
+ int cpu_cluster_pm_exit(void)
+ {
+-	int ret;
+-
+-	read_lock(&cpu_pm_notifier_lock);
+-	ret = cpu_pm_notify(CPU_CLUSTER_PM_EXIT, -1, NULL);
+-	read_unlock(&cpu_pm_notifier_lock);
+-
+-	return ret;
++	return cpu_pm_notify(CPU_CLUSTER_PM_EXIT, -1, NULL);
+ }
+ EXPORT_SYMBOL_GPL(cpu_cluster_pm_exit);
+ 
 -- 
 2.13.1
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
