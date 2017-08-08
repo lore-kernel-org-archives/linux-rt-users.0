@@ -1,86 +1,60 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: [ANNOUNCE] v4.11.12-rt9
-Date: Tue, 08 Aug 2017 12:00:59 +0200
-Message-ID: <1502186459.8042.31.camel@gmx.de>
-References: <20170804173823.lzuhnejlnxczr2lj@linutronix.de>
-         <1501913583.7917.42.camel@gmx.de> <1501945043.5473.31.camel@gmx.de>
-         <20170807073350.nwytftryfp34mrwi@linutronix.de>
-         <1502094121.5568.22.camel@gmx.de>
+From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Subject: Re: [PATCH] [RFC] tpm_tis: tpm_tcg_flush() after iowrite*()s
+Date: Wed, 9 Aug 2017 00:58:48 +0300
+Message-ID: <20170808215848.nngnph6wkqvx6zh3@linux.intel.com>
+References: <20170804215651.29247-1-haris.okanovic@ni.com>
+ <20170807145935.GW8384@jcartwri.amer.corp.natinst.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=us-ascii
+Cc: Haris Okanovic <haris.okanovic@ni.com>,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        harisokn@gmail.com, gratian.crisan@ni.com, scott.hartman@ni.com,
+        chris.graf@ni.com, brad.mouring@ni.com, jonathan.david@ni.com
+To: Julia Cartwright <julia@ni.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1502094121.5568.22.camel@gmx.de>
+Content-Disposition: inline
+In-Reply-To: <20170807145935.GW8384@jcartwri.amer.corp.natinst.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 2017-08-07 at 10:22 +0200, Mike Galbraith wrote:
-> On Mon, 2017-08-07 at 09:33 +0200, Sebastian Andrzej Siewior wrote:
->  
-> > what timer is it :)?
+On Mon, Aug 07, 2017 at 09:59:35AM -0500, Julia Cartwright wrote:
+> On Fri, Aug 04, 2017 at 04:56:51PM -0500, Haris Okanovic wrote:
+> > I have a latency issue using a SPI-based TPM chip with tpm_tis driver
+> > from non-rt usermode application, which induces ~400 us latency spikes
+> > in cyclictest (Intel Atom E3940 system, PREEMPT_RT_FULL kernel).
+> >
+> > The spikes are caused by a stalling ioread8() operation, following a
+> > sequence of 30+ iowrite8()s to the same address. I believe this happens
+> > because the writes are cached (in cpu or somewhere along the bus), which
+> > gets flushed on the first LOAD instruction (ioread*()) that follows.
 > 
-> kernel/exit.c:
-> 851                     hrtimer_cancel(&tsk->signal->real_timer);
+> To use the ARM parlance, these accesses aren't "cached" (which would
+> imply that a result could be returned to the load from any intermediate
+> node in the interconnect), but instead are "bufferable".
 > 
-> That one.
+> It is really unfortunate that we continue to run into this class of
+> problem across various CPU vendors and various underlying bus
+> technologies; it's the continuing curse of running an PREEMPT_RT on
+> commodity hardware.  RT is not easy :)
+> 
+> > The enclosed change appears to fix this issue: read the TPM chip's
+> > access register (status code) after every iowrite*() operation.
+> 
+> Are we engaged in a game of wack-a-mole with all of the drivers which
+> use this same access pattern (of which I imagine there are quite a
+> few!)?
+> 
+> I'm wondering if we should explore the idea of adding a load in the
+> iowriteN()/writeX() macros (marking those accesses in which reads cause
+> side effects explicitly, redirecting to a _raw() variant or something).
+> 
+> Obviously that would be expensive for non-RT use cases, but for helping
+> constrain latency, it may be worth it for RT.
+> 
+>    Julia
 
-cb_entry being base.expired (deferred) is the "what" part.
+What if we as quick resort we add tpm_tis_iowrite8() to the TPM driver.
+Would be easy to move to iowrite8() if the problem is sorted out there
+later on.
 
-Freshly captured crash dump:
-
-crash> hrtimer ffff8801605a7400
-struct hrtimer {
-  node = {
-    node = {
-      __rb_parent_color = 18446612138225726464, 
-      rb_right = 0xffff88017f0d4be0, 
-      rb_left = 0x0
-    }, 
-    expires = 323599443206
-  }, 
-  _softexpires = 323599443206, 
-  function = 0xffffffff81129f00 <it_real_fn>, 
-  base = 0xffff88017f0d4580, 
-  cb_entry = {
-    next = 0xffff88017f0d45a0,
-    prev = 0xffff88017f0d45a0
-  }, 
-  irqsafe = 0, 
-  state = 0 '\000', 
-  is_rel = 0 '\000'
-}
-crash> hrtimer_clock_base 0xffff88017f0d4580
-struct hrtimer_clock_base {
-  cpu_base = 0xffff88017f0d4440, 
-  index = 0, 
-  clockid = 1, 
-  active = {
-    head = {
-      rb_node = 0xffffc900079cfa48
-    }, 
-    next = 0xffff88017f0d4be0
-  }, 
-  expired = {
-    next = 0xffff88017f0d45a0, 
-    prev = 0xffff88017f0d45a0
-  }, 
-  get_time = 0xffffffff8111dc90 <ktime_get>, 
-  offset = 0
-}
-crash> hrtimer_clock_base -ox 0xffff88017f0d4580
-struct hrtimer_clock_base {
-  [ffff88017f0d4580] struct hrtimer_cpu_base *cpu_base;
-  [ffff88017f0d4588] int index;
-  [ffff88017f0d458c] clockid_t clockid;
-  [ffff88017f0d4590] struct timerqueue_head active;
-  [ffff88017f0d45a0] struct list_head expired;
-  [ffff88017f0d45b0] ktime_t (*get_time)(void);
-  [ffff88017f0d45b8] ktime_t offset;
-}
-SIZE: 0x40
-crash
+/Jarkko
