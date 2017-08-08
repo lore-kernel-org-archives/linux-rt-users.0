@@ -1,58 +1,86 @@
-From: Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 4/6] sched: Remove TASK_ALL
-Date: Mon, 7 Aug 2017 12:41:00 -0500
-Message-ID: <20170807174102.5448-5-julia@ni.com>
-References: <20170807174102.5448-1-julia@ni.com>
+From: Mike Galbraith <efault@gmx.de>
+Subject: Re: [ANNOUNCE] v4.11.12-rt9
+Date: Tue, 08 Aug 2017 12:00:59 +0200
+Message-ID: <1502186459.8042.31.camel@gmx.de>
+References: <20170804173823.lzuhnejlnxczr2lj@linutronix.de>
+         <1501913583.7917.42.camel@gmx.de> <1501945043.5473.31.camel@gmx.de>
+         <20170807073350.nwytftryfp34mrwi@linutronix.de>
+         <1502094121.5568.22.camel@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8BIT
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Carsten Emde <C.Emde@osadl.org>,
-        "Sebastian Andrzej Siewior" <bigeasy@linutronix.de>,
-        John Kacur <jkacur@redhat.com>,
-        "Paul Gortmaker" <paul.gortmaker@windriver.com>,
-        <stable-rt@vger.kernel.org>,
-        "Peter Zijlstra" <peterz@infradead.org>
-To: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170807174102.5448-1-julia@ni.com>
+In-Reply-To: <1502094121.5568.22.camel@gmx.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-4.1.42-rt50-rc1 stable review patch.
-If you have any objection to the inclusion of this patch, let me know.
+On Mon, 2017-08-07 at 10:22 +0200, Mike Galbraith wrote:
+> On Mon, 2017-08-07 at 09:33 +0200, Sebastian Andrzej Siewior wrote:
+>  
+> > what timer is it :)?
+> 
+> kernel/exit.c:
+> 851                     hrtimer_cancel(&tsk->signal->real_timer);
+> 
+> That one.
 
---- 8< --- 8< --- 8< ---
-From: Peter Zijlstra <peterz@infradead.org>
+cb_entry being base.expired (deferred) is the "what" part.
 
-It's unused:
+Freshly captured crash dump:
 
-$ git grep "\<TASK_ALL\>" | wc -l
-1
-
-And dangerous, kill the bugger.
-
-Cc: stable-rt@vger.kernel.org
-Acked-by: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-(cherry picked from commit a1762267d95649bddf6e94e7e3305e0207d0fff0)
-Signed-off-by: Julia Cartwright <julia@ni.com>
----
- include/linux/sched.h | 1 -
- 1 file changed, 1 deletion(-)
-
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index d51525ce2c41..7587d6181cd2 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -227,7 +227,6 @@ extern char ___assert_task_state[1 - 2*!!(
- 
- /* Convenience macros for the sake of wake_up */
- #define TASK_NORMAL		(TASK_INTERRUPTIBLE | TASK_UNINTERRUPTIBLE)
--#define TASK_ALL		(TASK_NORMAL | __TASK_STOPPED | __TASK_TRACED)
- 
- /* get_task_state() */
- #define TASK_REPORT		(TASK_RUNNING | TASK_INTERRUPTIBLE | \
--- 
-2.13.1
+crash> hrtimer ffff8801605a7400
+struct hrtimer {
+  node = {
+    node = {
+      __rb_parent_color = 18446612138225726464, 
+      rb_right = 0xffff88017f0d4be0, 
+      rb_left = 0x0
+    }, 
+    expires = 323599443206
+  }, 
+  _softexpires = 323599443206, 
+  function = 0xffffffff81129f00 <it_real_fn>, 
+  base = 0xffff88017f0d4580, 
+  cb_entry = {
+    next = 0xffff88017f0d45a0,
+    prev = 0xffff88017f0d45a0
+  }, 
+  irqsafe = 0, 
+  state = 0 '\000', 
+  is_rel = 0 '\000'
+}
+crash> hrtimer_clock_base 0xffff88017f0d4580
+struct hrtimer_clock_base {
+  cpu_base = 0xffff88017f0d4440, 
+  index = 0, 
+  clockid = 1, 
+  active = {
+    head = {
+      rb_node = 0xffffc900079cfa48
+    }, 
+    next = 0xffff88017f0d4be0
+  }, 
+  expired = {
+    next = 0xffff88017f0d45a0, 
+    prev = 0xffff88017f0d45a0
+  }, 
+  get_time = 0xffffffff8111dc90 <ktime_get>, 
+  offset = 0
+}
+crash> hrtimer_clock_base -ox 0xffff88017f0d4580
+struct hrtimer_clock_base {
+  [ffff88017f0d4580] struct hrtimer_cpu_base *cpu_base;
+  [ffff88017f0d4588] int index;
+  [ffff88017f0d458c] clockid_t clockid;
+  [ffff88017f0d4590] struct timerqueue_head active;
+  [ffff88017f0d45a0] struct list_head expired;
+  [ffff88017f0d45b0] ktime_t (*get_time)(void);
+  [ffff88017f0d45b8] ktime_t offset;
+}
+SIZE: 0x40
+crash
