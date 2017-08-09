@@ -1,60 +1,19 @@
-From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Subject: Re: [PATCH] [RFC] tpm_tis: tpm_tcg_flush() after iowrite*()s
-Date: Wed, 9 Aug 2017 00:58:48 +0300
-Message-ID: <20170808215848.nngnph6wkqvx6zh3@linux.intel.com>
-References: <20170804215651.29247-1-haris.okanovic@ni.com>
- <20170807145935.GW8384@jcartwri.amer.corp.natinst.com>
+From: Journey Journey <journeywang123@gmail.com>
+Subject: Kdump not working with rt patch, tested under 4.4.32/4.4.79/4.9.40
+Date: Wed, 9 Aug 2017 17:05:42 +0800
+Message-ID: <CAF6bL9=e4Ah6iwmvj+PponVgYaSGKYJ1WW98sZgvAY9cK8_9Eg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Haris Okanovic <haris.okanovic@ni.com>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        harisokn@gmail.com, gratian.crisan@ni.com, scott.hartman@ni.com,
-        chris.graf@ni.com, brad.mouring@ni.com, jonathan.david@ni.com
-To: Julia Cartwright <julia@ni.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20170807145935.GW8384@jcartwri.amer.corp.natinst.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-pg0-f54.google.com ([74.125.83.54]:37891 "EHLO
+        mail-pg0-f54.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752333AbdHIJFn (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 9 Aug 2017 05:05:43 -0400
+Received: by mail-pg0-f54.google.com with SMTP id l64so25528129pge.5
+        for <linux-rt-users@vger.kernel.org>; Wed, 09 Aug 2017 02:05:43 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Aug 07, 2017 at 09:59:35AM -0500, Julia Cartwright wrote:
-> On Fri, Aug 04, 2017 at 04:56:51PM -0500, Haris Okanovic wrote:
-> > I have a latency issue using a SPI-based TPM chip with tpm_tis driver
-> > from non-rt usermode application, which induces ~400 us latency spikes
-> > in cyclictest (Intel Atom E3940 system, PREEMPT_RT_FULL kernel).
-> >
-> > The spikes are caused by a stalling ioread8() operation, following a
-> > sequence of 30+ iowrite8()s to the same address. I believe this happens
-> > because the writes are cached (in cpu or somewhere along the bus), which
-> > gets flushed on the first LOAD instruction (ioread*()) that follows.
-> 
-> To use the ARM parlance, these accesses aren't "cached" (which would
-> imply that a result could be returned to the load from any intermediate
-> node in the interconnect), but instead are "bufferable".
-> 
-> It is really unfortunate that we continue to run into this class of
-> problem across various CPU vendors and various underlying bus
-> technologies; it's the continuing curse of running an PREEMPT_RT on
-> commodity hardware.  RT is not easy :)
-> 
-> > The enclosed change appears to fix this issue: read the TPM chip's
-> > access register (status code) after every iowrite*() operation.
-> 
-> Are we engaged in a game of wack-a-mole with all of the drivers which
-> use this same access pattern (of which I imagine there are quite a
-> few!)?
-> 
-> I'm wondering if we should explore the idea of adding a load in the
-> iowriteN()/writeX() macros (marking those accesses in which reads cause
-> side effects explicitly, redirecting to a _raw() variant or something).
-> 
-> Obviously that would be expensive for non-RT use cases, but for helping
-> constrain latency, it may be worth it for RT.
-> 
->    Julia
-
-What if we as quick resort we add tpm_tis_iowrite8() to the TPM driver.
-Would be easy to move to iowrite8() if the problem is sorted out there
-later on.
-
-/Jarkko
+Test case: https://github.com/saiyamd/softlockup_test/blob/master/softlockup_test.c
