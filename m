@@ -1,59 +1,70 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: [patch-rt] hotplug, hrtimer: Migrate expired/deferred timers
- during cpu offline
-Date: Fri, 11 Aug 2017 10:15:12 +0200
-Message-ID: <1502439312.16425.19.camel@gmx.de>
-References: <20170804173823.lzuhnejlnxczr2lj@linutronix.de>
-         <1501913583.7917.42.camel@gmx.de> <1501945043.5473.31.camel@gmx.de>
-         <20170807073350.nwytftryfp34mrwi@linutronix.de>
-         <1502094121.5568.22.camel@gmx.de> <1502186459.8042.31.camel@gmx.de>
-         <1502438116.16425.18.camel@gmx.de>
+From: Carol Wong <carolw@netacquire.com>
+Subject: RE: 4.9.33-rt23 latency under high load
+Date: Fri, 11 Aug 2017 22:15:02 +0000
+Message-ID: <79e87984082046ca9cafa8baf74ee864@S1P7MBX1A.EXCHPROD.USA.NET>
+References: <efca9200a0d04af788a7f32322091337@S1P7MBX1A.EXCHPROD.USA.NET>
+ <20170807134622.okjuu56qupao4zqk@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1502438116.16425.18.camel@gmx.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from gateout03.ct.mbox.net ([165.212.182.32]:42026 "EHLO
+        goe3.ct.mbox.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1753581AbdHKWPK (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 11 Aug 2017 18:15:10 -0400
+In-Reply-To: <20170807134622.okjuu56qupao4zqk@linutronix.de>
+Content-Language: en-US
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2017-08-11 at 09:55 +0200, Mike Galbraith wrote:
-> The below fixes the list debug explosion up.
-> 
-> If we do not migrate expired/deferred timers during cpu offline, ->cb_entry
-> will be corrupted by online initialization of base->expired, leading to a
-> loud list debug complaint should someone call __remove_hrtimer() thereafter.
-> 
-> Signed-off-by: Mike Galvraith <efault@gmx.de>
-ahem.....................b
-
-> ---
->  kernel/time/hrtimer.c |   13 +++++++++++++
->  1 file changed, 13 insertions(+)
-> 
-> --- a/kernel/time/hrtimer.c
-> +++ b/kernel/time/hrtimer.c
-> @@ -1802,6 +1802,19 @@ static void migrate_hrtimer_list(struct
->  		 */
->  		enqueue_hrtimer(timer, new_base);
->  	}
-> +
-> +	/*
-> +	 * Finally, migrate any expired timers deferred by RT.
-> +	 */
-> +	while (!list_empty(&old_base->expired)) {
-> +		struct list_head *entry = old_base->expired.next;
-> +
-> +		timer = container_of(entry, struct hrtimer, cb_entry);
-> +		/* XXX: hm, perhaps defer again instead of enqueueing. */
-> +		__remove_hrtimer(timer, old_base, HRTIMER_STATE_ENQUEUED, 0);
-> +		timer->base = new_base;
-> +		enqueue_hrtimer(timer, new_base);
-> +	}
->  }
->  
->  int hrtimers_dead_cpu(unsigned int scpu)
+SGkgU2ViYXN0aWFuLA0KDQo+IC0tLS0tT3JpZ2luYWwgTWVzc2FnZS0tLS0tDQo+IEZyb206IFNl
+YmFzdGlhbiBBbmRyemVqIFNpZXdpb3IgW21haWx0bzpiaWdlYXN5QGxpbnV0cm9uaXguZGVdDQo+
+IFNlbnQ6IE1vbmRheSwgQXVndXN0IDA3LCAyMDE3IDY6NDYgQU0NCj4gVG86IENhcm9sIFdvbmcN
+Cj4gQ2M6IGxpbnV4LXJ0LXVzZXJzQHZnZXIua2VybmVsLm9yZw0KPiBTdWJqZWN0OiBSZTogNC45
+LjMzLXJ0MjMgbGF0ZW5jeSB1bmRlciBoaWdoIGxvYWQNCj4gDQo+IE9uIDIwMTctMDctMjcgMjI6
+NDU6MzggWyswMDAwXSwgQ2Fyb2wgV29uZyB3cm90ZToNCj4gPiBIaSwNCj4gSGksDQo+IA0KPiA+
+IE9uIG15IHRlc3Qgc2V0dXAsIGN5Y2xpY3Rlc3QgaXMgcmVwb3J0aW5nIG1heCBsYXRlbmN5ID4g
+NTAwIHVzIGluDQo+IDQuOS4zMy1ydDIzIGFuZCA0LjkuMzUtcnQyNS4gTWF4IGxhdGVuY3kgaXMg
+c21hbGwgaW4gNC45LjMzLXJ0MjIgYW5kDQo+IDQuOS4zMy1ydDIxICg8IDUwIHVzKSB1bmRlciB0
+aGUgc2FtZSBjb25kaXRpb25zLg0KPiA+DQo+ID4gTXkgdGVzdCBzZXR1cCB1c2VzIGEgQ29yZSBp
+NyAoMy40R0h6IDNyZCBnZW4pIHdpdGggaHlwZXItdGhyZWFkaW5nDQo+IGRpc2FibGVkLiBUaGUg
+c3lzdGVtIGlzIHVuZGVyIGhlYXZ5IGxvYWQgKDYwLTkwJSBlYWNoIGNvcmUpIHNlcnZpY2luZw0K
+PiBuZXR3b3JrIHRyYWZmaWMgYW5kIHBlcmZvcm1pbmcgYXJpdGhtZXRpYyBvbiB0aGUgcGFja2V0
+IHBheWxvYWRzLg0KPiBJbnRlcnJ1cHQgcmF0ZSBpcyBhcHByb3hpbWF0ZWx5IDYwSyBpbnRyL3Mu
+IEkndmUgdHJpZWQgYSBmZXcNCj4gZGlmZmVyZW50IE5JQ3MgKGUxMDAwLCBlMTAwMGUsIGFuZCBp
+eGdiZSkgd2l0aCB0aGUgc2FtZSByZXN1bHQuDQo+IE9jY2FzaW9uYWwgYmlnIGhpdHMgc3RhcnQg
+b2NjdXJyaW5nIHdpdGhpbiAzMCBtaW51dGVzLg0KPiA+DQo+ID4gSSB0cmllZCBhIG1vZGlmaWVk
+IDQuOS4zMy1ydDIzIGtlcm5lbCB3aXRoIHRoZSBmb2xsb3dpbmcgY29tbWl0DQo+IHJlbW92ZWQ6
+DQo+ID4gPGh0dHBzOi8vZ2l0Lmtlcm5lbC5vcmcvcHViL3NjbS9saW51eC9rZXJuZWwvZ2l0L3J0
+L2xpbnV4LXN0YWJsZS0NCj4gcnQuZ2kNCj4gPiB0L2NvbW1pdC9rZXJuZWwvc2NoZWQvY29yZS5j
+P2g9djQuOS0NCj4gcnQmaWQ9MWRjODliZTM3ODc0YmZjN2JiNGEwZWE3YzQ1NA0KPiA+IDkyZDdk
+YjM5ZjYyYj4gVGhlIGJpZyBsYXRlbmN5IGhpdHMgZG8gbm90IGhhcHBlbiB3aXRoIHRoaXMgY29t
+bWl0DQo+ID4gYmFja2VkIG91dC4NCj4gDQo+IHNvIHlvdSBzYXkgd2l0aCB0aGlzIGNoYW5nZSBp
+cyByZXNwb25zaWJsZSBmb3IgNDUwdXMgb2YgbGF0ZW5jeT8NCg0KSSBjYW4ndCBzYXkgdGhhdCB0
+aGlzIGNoYW5nZSBpcyByZXNwb25zaWJsZSwgYnV0IEkgc2VlIGEgZHJhbWF0aWMgZGlmZmVyZW5j
+ZSB3aGVuIHRoaXMgcGF0Y2ggaXMgcmVtb3ZlZC4gUGVyaGFwcyB0aGlzIGlzIGEgcmVkIGhlcnJp
+bmcuIEZvciBzdXJlIGluIG15IHRlc3QgY2FzZSwgNC45LjMwLXJ0MjEgcmVwb3J0cyBzbWFsbCBs
+YXRlbmN5IGFuZCA0LjkuMzMtcnQyMyByZXBvcnRzIGxhcmdlIGxhdGVuY3kuDQoNCj4gVGhpcyBj
+aGFuZ2Ugc2hvdWxkIGJlIGEgbm9wIGlmIHlvdSBkb24ndCBjaGFuZ2UgdGhlIHRhc2sncyBDUFUt
+bWFzaw0KPiB3aGlsZSB0aGUgdGFzayBpcyBpbiBhIG1pZ3JhdGUtZGlzYWJsZSBzZWN0aW9uLiBE
+byBJIG1pc3Mgc29tZXRoaW5nPw0KPiBJcyBwYXJ0IG9mIHlvdXIgd29ya2xvYWQgY2hhbmdpbmcg
+Y3B1LWFmZmluaXR5IG1hc2s/DQo+IA0KDQpUaGUgdGVzdCBwcm9ncmFtIGRvZXMgbm90IGFsdGVy
+IGFmZmluaXR5IG1hc2tzLiANCg0KPiA+IEkndmUgbm90IHlldCBoYWQgYSBjaGFuY2UgdG8gdHJ5
+IGEgNC4xMSBrZXJuZWwsIGJ1dCBpdCBsb29rcyBsaWtlDQo+IHRoZXJlJ3MgYmVlbiByZWNlbnQg
+d29yayBvbiBtaWdyYXRlX2Rpc2FibGUvZW5hYmxlIGluIHRoYXQgYnJhbmNoLg0KPiBNYXliZSBh
+IGJhY2twb3J0IHRvIDQuOSBpcyBuZWVkZWQ/DQo+IA0KPiB2NC4xMSBzaG91bGQgaGF2ZSB0aGUg
+c2FtZSBjaGFuZ2UgeW91IGp1c3QgcG9pbnRlZCBvdXQuDQo+IA0KDQpJIHBlcmZvcm1lZCB0aGUg
+c2FtZSB0ZXN0IHdpdGggNC4xMS4xMi1ydDkgYW5kIG9ic2VydmVkIGxhcmdlIGxhdGVuY2llcyB1
+bmRlciBoZWF2eSBjcHUgJiBuZXQgbG9hZC4NCg0KW2xvY2FsaG9zdDp+XSMgY3ljbGljdGVzdCAt
+UyAtcDk4IC0tcG9saWN5PXJyDQojIC9kZXYvY3B1X2RtYV9sYXRlbmN5IHNldCB0byAwdXMNCnBv
+bGljeTogcnI6IGxvYWRhdmc6IDAuNjUgMC42MSAwLjU2IDEvMjA0IDIyMDYNCg0KVDogMCAoIDIx
+MzEpIFA6OTggSToxMDAwIEM6MTExMzIxMzggTWluOiAgICAgIDEgQWN0OiAgICAxIEF2ZzogICAg
+MSBNYXg6ICAgICAzNzUNClQ6IDEgKCAyMTMyKSBQOjk4IEk6MTUwMCBDOjc0MjE0MjUgTWluOiAg
+ICAgIDEgQWN0OiAgICAxIEF2ZzogICAgMSBNYXg6ICAgICAxMDUNClQ6IDIgKCAyMTMzKSBQOjk4
+IEk6MjAwMCBDOjU1NjYwNjkgTWluOiAgICAgIDEgQWN0OiAgICAxIEF2ZzogICAgMSBNYXg6ICAg
+ICAgNjgNClQ6IDMgKCAyMTM0KSBQOjk4IEk6MjUwMCBDOjQ0NTI4NTUgTWluOiAgICAgIDEgQWN0
+OiAgICAyIEF2ZzogICAgMSBNYXg6ICAgICAgNjQNCg0KDQpDaGVlcnMsDQpDYXJvbA0KDQo+ID4g
+Q2hlZXJzLA0KPiA+IENhcm9sDQo+ID4NCj4gU2ViYXN0aWFuDQo=
