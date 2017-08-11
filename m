@@ -1,71 +1,55 @@
-From: Julia Cartwright <julia@ni.com>
-Subject: Re: Kdump not working with rt patch, tested under
- 4.4.32/4.4.79/4.9.40
-Date: Wed, 9 Aug 2017 10:35:24 -0500
-Message-ID: <20170809153524.GY8384@jcartwri.amer.corp.natinst.com>
-References: <CAF6bL9=e4Ah6iwmvj+PponVgYaSGKYJ1WW98sZgvAY9cK8_9Eg@mail.gmail.com>
+From: Mike Galbraith <efault@gmx.de>
+Subject: [patch-rt] hotplug, hrtimer: Migrate expired/deferred timers during
+ cpu offline
+Date: Fri, 11 Aug 2017 09:55:16 +0200
+Message-ID: <1502438116.16425.18.camel@gmx.de>
+References: <20170804173823.lzuhnejlnxczr2lj@linutronix.de>
+         <1501913583.7917.42.camel@gmx.de> <1501945043.5473.31.camel@gmx.de>
+         <20170807073350.nwytftryfp34mrwi@linutronix.de>
+         <1502094121.5568.22.camel@gmx.de> <1502186459.8042.31.camel@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Cc: <linux-rt-users@vger.kernel.org>
-To: Journey Journey <journeywang123@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx0a-00010702.pphosted.com ([148.163.156.75]:36672 "EHLO
-        mx0b-00010702.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1752608AbdHIPf1 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 9 Aug 2017 11:35:27 -0400
-Content-Disposition: inline
-In-Reply-To: <CAF6bL9=e4Ah6iwmvj+PponVgYaSGKYJ1WW98sZgvAY9cK8_9Eg@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1502186459.8042.31.camel@gmx.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Aug 09, 2017 at 05:05:42PM +0800, Journey Journey wrote:
-> Test case: https://github.com/saiyamd/softlockup_test/blob/master/softlockup_test.c
->
+The below fixes the list debug explosion up.
 
-Please in the future provide more information as to what you are trying
-to do, what it is you are trying, what you are seeing, and why you think
-it's wrong.
+If we do not migrate expired/deferred timers during cpu offline, ->cb_entry
+will be corrupted by online initialization of base->expired, leading to a
+loud list debug complaint should someone call __remove_hrtimer() thereafter.
 
-Because otherwise, we're forced to reverse engineer your intent. :(
+Signed-off-by: Mike Galvraith <efault@gmx.de>
+---
+ kernel/time/hrtimer.c |   13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
-I'm _guessing_ that what you meant to say was:
-
-   I have a testcase module that I use that attempts to trigger the
-   kernels softlockup detection.  Here is a link:
-
-      https://github.com/saiyamd/softlockup_test/blob/master/softlockup_test.c
-
-   I'm expecting it to fire the softlockup detector and panic the system
-   (I use CONFIG_BOOTPARAM_SOFTLOCKUP_PANIC in my test rig), however,
-   when I load this module on an RT system, it doesn't appear to trigger
-   the softlockup detector![1]
-
-   What could be wrong?
-
-If that's what you meant, then the answer is:
-
-The way that you are "hogging" the CPU, on PREEMPT_RT, doesn't prevent
-the kernel from scheduling other tasks in and out (including the
-watchdog thread which pets the watchdog!).
-
-Your test case, effectively is:
-
-    spin_lock(&lock)
-    while (1)
-       printk("...");
-    spin_unlock(&lock)
-
-On RT, spin-lock protected regions are preemptible.  When the watchdog
-hrtimer fires and wakes up the softlockup thread, that thread preempts
-the thread stuck in this region and touches the watchdog.  This prevents
-the watchdog threshold from being reached.
-
-The good news for you is that it should be entirely possible for you to
-trigger the softlockup detector on RT entirely in usermode.  All you'd
-need to do is disable RT throttling, and set a thread SCHED_FIFO w/ prio
-99 spinning.
-
-   Julia
-
-1: Note: this has nothing to do with Kdump whatsoever.
+--- a/kernel/time/hrtimer.c
++++ b/kernel/time/hrtimer.c
+@@ -1802,6 +1802,19 @@ static void migrate_hrtimer_list(struct
+ 		 */
+ 		enqueue_hrtimer(timer, new_base);
+ 	}
++
++	/*
++	 * Finally, migrate any expired timers deferred by RT.
++	 */
++	while (!list_empty(&old_base->expired)) {
++		struct list_head *entry = old_base->expired.next;
++
++		timer = container_of(entry, struct hrtimer, cb_entry);
++		/* XXX: hm, perhaps defer again instead of enqueueing. */
++		__remove_hrtimer(timer, old_base, HRTIMER_STATE_ENQUEUED, 0);
++		timer->base = new_base;
++		enqueue_hrtimer(timer, new_base);
++	}
+ }
+ 
+ int hrtimers_dead_cpu(unsigned int scpu)
