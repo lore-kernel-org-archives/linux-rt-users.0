@@ -1,90 +1,69 @@
 From: Haris Okanovic <haris.okanovic@ni.com>
-Subject: [PATCH] tpm_tis: fix stall after iowrite*()s
-Date: Mon, 14 Aug 2017 17:53:47 -0500
-Message-ID: <20170814225347.30670-1-haris.okanovic@ni.com>
+Subject: Re: [PATCH] [RFC] tpm_tis: tpm_tcg_flush() after iowrite*()s
+Date: Mon, 14 Aug 2017 17:53:15 -0500
+Message-ID: <ccc022a8-de6c-3d68-27db-ee4117f190db@ni.com>
 References: <20170804215651.29247-1-haris.okanovic@ni.com>
+ <20170807145935.GW8384@jcartwri.amer.corp.natinst.com>
+ <20170808215848.nngnph6wkqvx6zh3@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <tpmdd-devel@lists.sourceforge.net>, <haris.okanovic@ni.com>,
-        <harisokn@gmail.com>, <julia.cartwright@ni.com>,
-        <gratian.crisan@ni.com>, <scott.hartman@ni.com>,
-        <chris.graf@ni.com>, <brad.mouring@ni.com>,
-        <jonathan.david@ni.com>, <peterhuewe@gmx.de>, <tpmdd@selhorst.net>,
-        <jarkko.sakkinen@linux.intel.com>,
-        <jgunthorpe@obsidianresearch.com>, <eric.gardiner@ni.com>
-To: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        harisokn@gmail.com, gratian.crisan@ni.com, scott.hartman@ni.com,
+        chris.graf@ni.com, brad.mouring@ni.com, jonathan.david@ni.com
+To: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>,
+        Julia Cartwright <julia@ni.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170804215651.29247-1-haris.okanovic@ni.com>
+In-Reply-To: <20170808215848.nngnph6wkqvx6zh3@linux.intel.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-ioread8() operations to TPM MMIO addresses can stall the cpu when
-immediately following a sequence of iowrite*()'s to the same region.
 
-For example, cyclitest measures ~400us latency spikes when a non-RT
-usermode application communicates with an SPI-based TPM chip (Intel Atom
-E3940 system, PREEMPT_RT_FULL kernel). The spikes are caused by a
-stalling ioread8() operation following a sequence of 30+ iowrite8()s to
-the same address. I believe this happens because the write sequence is
-buffered (in cpu or somewhere along the bus), and gets flushed on the
-first LOAD instruction (ioread*()) that follows.
 
-The enclosed change appears to fix this issue: read the TPM chip's
-access register (status code) after every iowrite*() operation to
-amortize the cost of flushing data to chip across multiple instructions.
+On 08/08/2017 04:58 PM, Jarkko Sakkinen wrote:
+> On Mon, Aug 07, 2017 at 09:59:35AM -0500, Julia Cartwright wrote:
+>> On Fri, Aug 04, 2017 at 04:56:51PM -0500, Haris Okanovic wrote:
+>>> I have a latency issue using a SPI-based TPM chip with tpm_tis driver
+>>> from non-rt usermode application, which induces ~400 us latency spikes
+>>> in cyclictest (Intel Atom E3940 system, PREEMPT_RT_FULL kernel).
+>>>
+>>> The spikes are caused by a stalling ioread8() operation, following a
+>>> sequence of 30+ iowrite8()s to the same address. I believe this happens
+>>> because the writes are cached (in cpu or somewhere along the bus), which
+>>> gets flushed on the first LOAD instruction (ioread*()) that follows.
+>>
+>> To use the ARM parlance, these accesses aren't "cached" (which would
+>> imply that a result could be returned to the load from any intermediate
+>> node in the interconnect), but instead are "bufferable".
+>>
+>> It is really unfortunate that we continue to run into this class of
+>> problem across various CPU vendors and various underlying bus
+>> technologies; it's the continuing curse of running an PREEMPT_RT on
+>> commodity hardware.  RT is not easy :)
+>>
+>>> The enclosed change appears to fix this issue: read the TPM chip's
+>>> access register (status code) after every iowrite*() operation.
+>>
+>> Are we engaged in a game of wack-a-mole with all of the drivers which
+>> use this same access pattern (of which I imagine there are quite a
+>> few!)?
+>>
+>> I'm wondering if we should explore the idea of adding a load in the
+>> iowriteN()/writeX() macros (marking those accesses in which reads cause
+>> side effects explicitly, redirecting to a _raw() variant or something).
+>>
+>> Obviously that would be expensive for non-RT use cases, but for helping
+>> constrain latency, it may be worth it for RT.
+>>
+>>     Julia
+> 
+> What if we as quick resort we add tpm_tis_iowrite8() to the TPM driver.
+> Would be easy to move to iowrite8() if the problem is sorted out there
+> later on.
+> 
 
-Signed-off-by: Haris Okanovic <haris.okanovic@ni.com>
----
-https://patchwork.kernel.org/patch/9882119/
-https://github.com/harisokanovic/linux/tree/dev/hokanovi/tpm-latency-spike-fix
----
- drivers/char/tpm/tpm_tis.c | 20 ++++++++++++++++++--
- 1 file changed, 18 insertions(+), 2 deletions(-)
+Sounds OK to me. I will submit a PATCH shortly.
 
-diff --git a/drivers/char/tpm/tpm_tis.c b/drivers/char/tpm/tpm_tis.c
-index c7e1384f1b08..3be2755d0514 100644
---- a/drivers/char/tpm/tpm_tis.c
-+++ b/drivers/char/tpm/tpm_tis.c
-@@ -52,6 +52,22 @@ static inline struct tpm_tis_tcg_phy *to_tpm_tis_tcg_phy(struct tpm_tis_data *da
- 	return container_of(data, struct tpm_tis_tcg_phy, priv);
- }
- 
-+static inline void tpm_tis_iowrite8(u8 b, void __iomem *iobase, u32 addr)
-+{
-+	iowrite8(b, iobase + addr);
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	ioread8(iobase + TPM_ACCESS(0));
-+#endif
-+}
-+
-+static inline void tpm_tis_iowrite32(u32 b, void __iomem *iobase, u32 addr)
-+{
-+	iowrite32(b, iobase + addr);
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	ioread8(iobase + TPM_ACCESS(0));
-+#endif
-+}
-+
- static bool interrupts = true;
- module_param(interrupts, bool, 0444);
- MODULE_PARM_DESC(interrupts, "Enable interrupts");
-@@ -105,7 +121,7 @@ static int tpm_tcg_write_bytes(struct tpm_tis_data *data, u32 addr, u16 len,
- 	struct tpm_tis_tcg_phy *phy = to_tpm_tis_tcg_phy(data);
- 
- 	while (len--)
--		iowrite8(*value++, phy->iobase + addr);
-+		tpm_tis_iowrite8(*value++, phy->iobase, addr);
- 	return 0;
- }
- 
-@@ -129,7 +145,7 @@ static int tpm_tcg_write32(struct tpm_tis_data *data, u32 addr, u32 value)
- {
- 	struct tpm_tis_tcg_phy *phy = to_tpm_tis_tcg_phy(data);
- 
--	iowrite32(value, phy->iobase + addr);
-+	tpm_tis_iowrite32(value, phy->iobase, addr);
- 	return 0;
- }
- 
--- 
-2.13.2
+> /Jarkko
+> 
