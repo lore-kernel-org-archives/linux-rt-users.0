@@ -1,141 +1,90 @@
-From: Corey Minyard <cminyard@mvista.com>
-Subject: Re: Kdump not working with rt patch, tested under
- 4.4.32/4.4.79/4.9.40
-Date: Thu, 17 Aug 2017 07:19:46 -0500
-Message-ID: <5985de84-db52-05d9-5899-95b9bbecf91a@mvista.com>
-References: <CAF6bL9=e4Ah6iwmvj+PponVgYaSGKYJ1WW98sZgvAY9cK8_9Eg@mail.gmail.com>
- <20170809153524.GY8384@jcartwri.amer.corp.natinst.com>
- <CAF6bL9k1zzPR6Y7-LrSXSqBc2S-v+zspb+1JLvSamrF+Zcd3OA@mail.gmail.com>
- <CAF6bL9mRqHqf8tdGk53EHwRnHM_BSbpSWMechfHh4OJJz_XMRQ@mail.gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [patch-rt] hotplug, hrtimer: Migrate expired/deferred timers
+ during cpu offline
+Date: Thu, 17 Aug 2017 18:50:42 +0200
+Message-ID: <20170817165041.3agf2btidfdcspiq@linutronix.de>
+References: <20170804173823.lzuhnejlnxczr2lj@linutronix.de>
+ <1501913583.7917.42.camel@gmx.de>
+ <1501945043.5473.31.camel@gmx.de>
+ <20170807073350.nwytftryfp34mrwi@linutronix.de>
+ <1502094121.5568.22.camel@gmx.de>
+ <1502186459.8042.31.camel@gmx.de>
+ <1502438116.16425.18.camel@gmx.de>
+ <1502439312.16425.19.camel@gmx.de>
+ <1502697588.12319.199.camel@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Journey Journey <journeywang123@gmail.com>,
-        Julia Cartwright <julia@ni.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pg0-f43.google.com ([74.125.83.43]:34027 "EHLO
-        mail-pg0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751786AbdHQMTs (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 17 Aug 2017 08:19:48 -0400
-Received: by mail-pg0-f43.google.com with SMTP id u185so41787038pgb.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 17 Aug 2017 05:19:48 -0700 (PDT)
-In-Reply-To: <CAF6bL9mRqHqf8tdGk53EHwRnHM_BSbpSWMechfHh4OJJz_XMRQ@mail.gmail.com>
-Content-Language: en-GB
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Mike Galbraith <efault@gmx.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1502697588.12319.199.camel@gmx.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 08/17/2017 05:05 AM, Journey Journey wrote:
-> Anyone reproduce this problem?
+On 2017-08-14 09:59:48 [+0200], Mike Galbraith wrote:
+> On Fri, 2017-08-11 at 10:15 +0200, Mike Galbraith wrote:
+> > On Fri, 2017-08-11 at 09:55 +0200, Mike Galbraith wrote:
+> > > The below fixes the list debug explosion up.
+> > > 
+> > > If we do not migrate expired/deferred timers during cpu offline, ->cb_entry
+> > > will be corrupted by online initialization of base->expired, leading to a
+> > > loud list debug complaint should someone call __remove_hrtimer() thereafter.
+> > > 
+> > > Signed-off-by: Mike Galvraith <efault@gmx.de>
+> > ahem.....................b
+> 
+> (actually, I shouldn't have signed, question being why we now leave
+> them lying about when we _apparently_ previously did not)
 
-You need to read Julia's previous email on this.  I think it has the 
-answers you need.
+takedown_cpu() invokes early smpboot_park_threads() which parks/ stops
+the ksoftirqd. That means each hrtimer that fires after that and is not
+marked as irqsafe won't be processed but just enqueued onto the
+->expired list. The timer would be processed once the CPU goes back
+online. Be not really. The thing is that once the CPU goes back online
+the "expired" list head will be initialized and that timer is lost. Once
+you try to cancel it, it will remove itself from the expired list and
+this is when the list corruption is noticed.
+My guess here is that the hotplug rework changed the timing and the bug
+is more obvious now: if you cancel the timer before the CPU goes back
+online then nothing happens.
 
--corey
+> > > ---
+> > >  kernel/time/hrtimer.c |   13 +++++++++++++
+> > >  1 file changed, 13 insertions(+)
+> > > 
+> > > --- a/kernel/time/hrtimer.c
+> > > +++ b/kernel/time/hrtimer.c
+> > > @@ -1802,6 +1802,19 @@ static void migrate_hrtimer_list(struct
+> > >  		 */
+> > >  		enqueue_hrtimer(timer, new_base);
+> > >  	}
+> > > +
+> > > +	/*
+> > > +	 * Finally, migrate any expired timers deferred by RT.
+> > > +	 */
+> > > +	while (!list_empty(&old_base->expired)) {
+> > > +		struct list_head *entry = old_base->expired.next;
+> > > +
+> > > +		timer = container_of(entry, struct hrtimer, cb_entry);
+> 
+> (oops, forgot to change that back too. [scribble scribble])
+> 
+> > > +		/* XXX: hm, perhaps defer again instead of enqueueing. */
+> > > +		__remove_hrtimer(timer, old_base, HRTIMER_STATE_ENQUEUED, 0);
+> > > +		timer->base = new_base;
+> > > +		enqueue_hrtimer(timer, new_base);
 
-> Thanks
->
-> On Wed, Aug 16, 2017 at 12:39 PM, Journey Journey
-> <journeywang123@gmail.com> wrote:
->> Thank you all for replying my question. The Details following:
->>
->> Kernel Version: 4.4.32                from
->> https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.4.32.tar.xz
->> Rt Patch Version: 4.4.32-rt43     from
->> https://www.kernel.org/pub/linux/kernel/projects/rt/4.4/older/patch-4.4.32-rt43.patch.gz
->>
->> Configs as attached,
->> (1) config.4.4.32 for non rt kernel
->> (2) config.4.4.32.rt for rt kernel
->>
->> Testcase code as attached,
->> (1) softlockup-nonrt.c for non rt kernel;
->> (2) softlockup-rt.c for rt kernel, using raw_spinlock
->> (3) softlockup-rt-fifo.c for rt kernel, using sched_fifo & priority 99
->> (4) sample Makefile for building kernel module
->>
->>
->> Test Case 1: non rt kernel + softlockup-nonrt.c
->>       Picture attached  nonrt-1.png
->> The kernel had no response for keyboard input....
->>       Picture attached  nonrt-2.png
->> After several minutes, the kdump is triggered.
->>
->> Test Case 2:  rt kernel + softlockup-rt.c
->>       Picture attached  rt-1.png
->> The kernel had no response for keyboard input....
->> Hangs forever ........
->>
->> Test Case 3:  rt kernel + softlockup-rt-fifo.c
->>            Picture attached  rt-2.png
->> The kernel had no response for keyboard input....
->> Hangs forever ........
->>
->> Test Case 4:  rt kernel + softlockup-rt-fifo.c + throttling
->>           Picture attached  rt-3.png
->> The kernel had no response for keyboard input....
->> Hangs forever ........
->>
->> By the way, my test environment  is virtualbox with ubuntu.
->> Virtualbox Configration:
->>    Picture attached  Virtualbox-1.png Virtualbox-2.png  Virtualbox-3.png
->>
->> crashkernel config
->>   crashkernel=512M
->>
->> Please help me, thanks all!!
->>
->>
->> On Wed, Aug 9, 2017 at 11:35 PM, Julia Cartwright <julia@ni.com> wrote:
->>> On Wed, Aug 09, 2017 at 05:05:42PM +0800, Journey Journey wrote:
->>>> Test case: https://github.com/saiyamd/softlockup_test/blob/master/softlockup_test.c
->>>>
->>> Please in the future provide more information as to what you are trying
->>> to do, what it is you are trying, what you are seeing, and why you think
->>> it's wrong.
->>>
->>> Because otherwise, we're forced to reverse engineer your intent. :(
->>>
->>> I'm _guessing_ that what you meant to say was:
->>>
->>>     I have a testcase module that I use that attempts to trigger the
->>>     kernels softlockup detection.  Here is a link:
->>>
->>>        https://github.com/saiyamd/softlockup_test/blob/master/softlockup_test.c
->>>
->>>     I'm expecting it to fire the softlockup detector and panic the system
->>>     (I use CONFIG_BOOTPARAM_SOFTLOCKUP_PANIC in my test rig), however,
->>>     when I load this module on an RT system, it doesn't appear to trigger
->>>     the softlockup detector![1]
->>>
->>>     What could be wrong?
->>>
->>> If that's what you meant, then the answer is:
->>>
->>> The way that you are "hogging" the CPU, on PREEMPT_RT, doesn't prevent
->>> the kernel from scheduling other tasks in and out (including the
->>> watchdog thread which pets the watchdog!).
->>>
->>> Your test case, effectively is:
->>>
->>>      spin_lock(&lock)
->>>      while (1)
->>>         printk("...");
->>>      spin_unlock(&lock)
->>>
->>> On RT, spin-lock protected regions are preemptible.  When the watchdog
->>> hrtimer fires and wakes up the softlockup thread, that thread preempts
->>> the thread stuck in this region and touches the watchdog.  This prevents
->>> the watchdog threshold from being reached.
->>>
->>> The good news for you is that it should be entirely possible for you to
->>> trigger the softlockup detector on RT entirely in usermode.  All you'd
->>> need to do is disable RT throttling, and set a thread SCHED_FIFO w/ prio
->>> 99 spinning.
->>>
->>>     Julia
->>>
->>> 1: Note: this has nothing to do with Kdump whatsoever.
+__remove_hrtimer() shouldn't be required because it has been done
+already. It should be enough to just list_splice() one list to the
+other and raise the softirq afterwards.
 
+> > > +	}
+> > >  }
+> > >  
+> > >  int hrtimers_dead_cpu(unsigned int scpu)
 
+Sebastian
