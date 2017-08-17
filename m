@@ -1,52 +1,54 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: [patch-rt] hotplug, hrtimer: Migrate expired/deferred timers
- during cpu offline
-Date: Thu, 17 Aug 2017 20:43:37 +0200
-Message-ID: <1502995417.16063.0.camel@gmx.de>
-References: <20170804173823.lzuhnejlnxczr2lj@linutronix.de>
-         <1501913583.7917.42.camel@gmx.de> <1501945043.5473.31.camel@gmx.de>
-         <20170807073350.nwytftryfp34mrwi@linutronix.de>
-         <1502094121.5568.22.camel@gmx.de> <1502186459.8042.31.camel@gmx.de>
-         <1502438116.16425.18.camel@gmx.de> <1502439312.16425.19.camel@gmx.de>
-         <1502697588.12319.199.camel@gmx.de>
-         <20170817165041.3agf2btidfdcspiq@linutronix.de>
-         <20170817171720.jz2ok332bpxcjzme@linutronix.de>
+From: Julia Cartwright <julia@ni.com>
+Subject: Re: [ANNOUNCE] 4.1.42-rt50
+Date: Thu, 17 Aug 2017 13:53:27 -0500
+Message-ID: <20170817185327.GH8384@jcartwri.amer.corp.natinst.com>
+References: <20170816204228.GE8384@jcartwri.amer.corp.natinst.com>
+ <20170817073027.xzkn7sn4cxki3lcr@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
+Content-Type: text/plain; charset="us-ascii"
+Cc: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
+        "Thomas Gleixner" <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
         Steven Rostedt <rostedt@goodmis.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170817171720.jz2ok332bpxcjzme@linutronix.de>
+Content-Disposition: inline
+In-Reply-To: <20170817073027.xzkn7sn4cxki3lcr@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2017-08-17 at 19:17 +0200, Sebastian Andrzej Siewior wrote:
-> On 2017-08-17 18:50:42 [+0200], To Mike Galbraith wrote:
-> > __remove_hrtimer() shouldn't be required because it has been done
-> > already. It should be enough to just list_splice() one list to the
-> > other and raise the softirq afterwards.
+On Thu, Aug 17, 2017 at 09:30:28AM +0200, Sebastian Andrzej Siewior wrote:
+> On 2017-08-16 15:42:28 [-0500], Julia Cartwright wrote:
+[..]
+> > diff --git a/kernel/cpu_pm.c b/kernel/cpu_pm.c
+> > index 9656a3c36503..9da42f83ee03 100644
+> > --- a/kernel/cpu_pm.c
+> > +++ b/kernel/cpu_pm.c
+> > @@ -22,14 +22,13 @@
+> >  #include <linux/spinlock.h>
+> >  #include <linux/syscore_ops.h>
+> >  
+> > -static DEFINE_RWLOCK(cpu_pm_notifier_lock);
+> > -static RAW_NOTIFIER_HEAD(cpu_pm_notifier_chain);
+> > +static ATOMIC_NOTIFIER_HEAD(cpu_pm_notifier_chain);
+> >  
+> >  static int cpu_pm_notify(enum cpu_pm_event event, int nr_to_call, int *nr_calls)
+> >  {
+> >  	int ret;
+> >  
+> > -	ret = __raw_notifier_call_chain(&cpu_pm_notifier_chain, event, NULL,
+> > +	ret = __atomic_notifier_call_chain(&cpu_pm_notifier_chain, event, NULL,
+> >  		nr_to_call, nr_calls);
 > 
-> Mike, can you check this please:
+> there is a piece missing, upstream has a different change queued. I know
+> that this is the same as in latest RT, this is just to let you know in
+> case someone complains about an RCU backtrace???
 
-Done, works.
+Ah!  Thanks. Indeed.  I did see the upstream-queued version get cc'd to
+linux-rt-users, but didn't see the rcu_irq_{enter,exit}_irqson()
+addition, assuming it to be what landed in rt-devel.
 
-> diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
-> index 55839ff2bba6..4b9264e0d363 100644
-> --- a/kernel/time/hrtimer.c
-> +++ b/kernel/time/hrtimer.c
-> @@ -1802,6 +1802,11 @@ static void migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
->  		 */
->  		enqueue_hrtimer(timer, new_base);
->  	}
-> +#ifdef CONFIG_PREEMPT_RT_BASE
-> +	list_splice_tail(&old_base->expired, &new_base->expired);
-> +	if (!list_empty(&new_base->expired))
-> +		raise_softirq_irqoff(HRTIMER_SOFTIRQ);
-> +#endif
->  }
->  
->  int hrtimers_dead_cpu(unsigned int scpu)
+Will you be fixing this up in 4.11-rt?
+
+   Julia
