@@ -1,52 +1,47 @@
-From: Tommaso Cucinotta <tommaso.cucinotta@santannapisa.it>
-Subject: Re: Does calling sched_yield() in a SCHED_DEADLINE thread guarantee
- wakeup at beginning of next period?
-Date: Thu, 17 Aug 2017 18:31:44 +0200
-Message-ID: <ef939f8a-dd96-cff2-7f90-6ee8e88737e7@santannapisa.it>
-References: <CANf15E_4N-BZDLFmYXUFqfMrX6T+7btTsQGYsYs7J_HNDXzSCg@mail.gmail.com>
+From: Mike Galbraith <efault@gmx.de>
+Subject: Re: [patch-rt] hotplug, hrtimer: Migrate expired/deferred timers
+ during cpu offline
+Date: Thu, 17 Aug 2017 19:37:50 +0200
+Message-ID: <1502991470.6840.11.camel@gmx.de>
+References: <20170804173823.lzuhnejlnxczr2lj@linutronix.de>
+         <1501913583.7917.42.camel@gmx.de> <1501945043.5473.31.camel@gmx.de>
+         <20170807073350.nwytftryfp34mrwi@linutronix.de>
+         <1502094121.5568.22.camel@gmx.de> <1502186459.8042.31.camel@gmx.de>
+         <1502438116.16425.18.camel@gmx.de> <1502439312.16425.19.camel@gmx.de>
+         <1502697588.12319.199.camel@gmx.de>
+         <20170817165041.3agf2btidfdcspiq@linutronix.de>
+         <20170817171720.jz2ok332bpxcjzme@linutronix.de>
+         <1502990778.6840.2.camel@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: luca abeni <luca.abeni@santannapisa.it>,
-        Juri Lelli <juri.lelli@arm.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Bjarke Freund-Hansen <bjarkefh@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8BIT
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.santannapisa.it ([193.205.80.98]:60550 "EHLO
-        mail.santannapisa.it" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1753233AbdHQRb5 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 17 Aug 2017 13:31:57 -0400
-In-Reply-To: <CANf15E_4N-BZDLFmYXUFqfMrX6T+7btTsQGYsYs7J_HNDXzSCg@mail.gmail.com>
-Content-Language: en-US
+Received: from mout.gmx.net ([212.227.17.21]:60936 "EHLO mout.gmx.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1753233AbdHQRiK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 17 Aug 2017 13:38:10 -0400
+In-Reply-To: <1502990778.6840.2.camel@gmx.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-[ cc-ing a few others who might have a say in this regard and linux-rt-users@ - see below for my comments... ]
-
-On 17/08/2017 12:21, Bjarke Freund-Hansen wrote:
-> Hi Tommaso
+On Thu, 2017-08-17 at 19:26 +0200, Mike Galbraith wrote:
+> On Thu, 2017-08-17 at 19:17 +0200, Sebastian Andrzej Siewior wrote:
+> > On 2017-08-17 18:50:42 [+0200], To Mike Galbraith wrote:
+> > > __remove_hrtimer() shouldn't be required because it has been done
+> > > already. It should be enough to just list_splice() one list to the
+> > > other and raise the softirq afterwards.
+> > 
+> > Mike, can you check this please:
 > 
-> In the Linux kernel in 'Documentation/scheduler/sched-deadline.txt' you write:
-> 
->  >> This behavior of sched_yield() allows the task to wake-up exactly at the beginning of the next period. Also, this may be useful in the future with bandwidth reclaiming mechanisms, where sched_yield() will make the leftoever runtime available for reclamation by other SCHED_DEADLINE tasks. <<
-> 
-> Does this mean that thread is guaranteed to wake up at the beginning of the next period if sched_yield() is called in the current period to relinquish the remaining runtime?
+> Yeah, will do.
 
-Yes, sched_yield() in such case blocks the task till the next period starts. At that time, the task is woken up (back to ready to run) with full runtime and absolute deadline set to the absolute period start-time plus its relative deadline, but it will be scheduled only once it gets among the m SCHED_DEADLINE tasks with the earliest absolute deadline, where 'm' is the number of CPUs in the scheduling domain. That's a convenience behavior that saves you setting an app-level timer if all you need is a periodic task, and lets you easily sync-up with the time(r) as seen/used by the SCHED_DEADLINE scheduler.
+BTW, with holes stopped up, 8 socket box took a hefty beating for 20
+hours.  It was actually 4.12, but it's the same code, just rolled
+forward.  This is hotplug code is looking pretty darn durable.
 
-Note: when calling sched_yield(), one should be really sure that the leftover runtime is sufficient to not let the task be throttled during the yield() call itself. The problem being that, if I'm close enough to ending my runtime, and I call sched_yield(), but I'm throttled before sched_yield() can get to do some real work in the kernel, then I'll be throttled till the next period starts, then once I'll be unthrottled the sched_yield() will actually occur, forcing me to skipping one whole period -- guess that's NEVER what one expects. If you set-up an app-level timer instead, and you sleep till an absolute time, then in the worst-and-bad-case (of being unexpectedly throttled) you ask to sleep till a time back in time, that is a no-op returning back immediately to the task.
-
-About the note for future extensions, AFAIK Luca Abeni (in cc) recently worked on a work-conserving extension of SCHED_DEADLINE based on GRUB (that should be [almost] mainline), but I'm not sure about what sched_yield() is doing in such extension (Luca?).
-
-Feel free to write again, should you have further doubts about the use of SCHED_DEADLINE. With more information about your use-case, we might be able to help more of course :-)!
-
-Bye,
-
-	T.
--- 
-Tommaso Cucinotta, Computer Engineering PhD
-Associate Professor at the Real-Time Systems Laboratory (ReTiS)
-Scuola Superiore Sant'Anna, Pisa, Italy
-http://retis.sssup.it/people/tommaso
+	-Mike
