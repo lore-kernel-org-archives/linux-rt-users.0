@@ -1,8 +1,8 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Subject: Re: [patch-rt] hotplug, hrtimer: Migrate expired/deferred timers
  during cpu offline
-Date: Thu, 17 Aug 2017 18:50:42 +0200
-Message-ID: <20170817165041.3agf2btidfdcspiq@linutronix.de>
+Date: Thu, 17 Aug 2017 19:17:21 +0200
+Message-ID: <20170817171720.jz2ok332bpxcjzme@linutronix.de>
 References: <20170804173823.lzuhnejlnxczr2lj@linutronix.de>
  <1501913583.7917.42.camel@gmx.de>
  <1501945043.5473.31.camel@gmx.de>
@@ -12,6 +12,7 @@ References: <20170804173823.lzuhnejlnxczr2lj@linutronix.de>
  <1502438116.16425.18.camel@gmx.de>
  <1502439312.16425.19.camel@gmx.de>
  <1502697588.12319.199.camel@gmx.de>
+ <20170817165041.3agf2btidfdcspiq@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -21,70 +22,34 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: Mike Galbraith <efault@gmx.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1502697588.12319.199.camel@gmx.de>
+In-Reply-To: <20170817165041.3agf2btidfdcspiq@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2017-08-14 09:59:48 [+0200], Mike Galbraith wrote:
-> On Fri, 2017-08-11 at 10:15 +0200, Mike Galbraith wrote:
-> > On Fri, 2017-08-11 at 09:55 +0200, Mike Galbraith wrote:
-> > > The below fixes the list debug explosion up.
-> > > 
-> > > If we do not migrate expired/deferred timers during cpu offline, ->cb_entry
-> > > will be corrupted by online initialization of base->expired, leading to a
-> > > loud list debug complaint should someone call __remove_hrtimer() thereafter.
-> > > 
-> > > Signed-off-by: Mike Galvraith <efault@gmx.de>
-> > ahem.....................b
-> 
-> (actually, I shouldn't have signed, question being why we now leave
-> them lying about when we _apparently_ previously did not)
+On 2017-08-17 18:50:42 [+0200], To Mike Galbraith wrote:
+> __remove_hrtimer() shouldn't be required because it has been done
+> already. It should be enough to just list_splice() one list to the
+> other and raise the softirq afterwards.
 
-takedown_cpu() invokes early smpboot_park_threads() which parks/ stops
-the ksoftirqd. That means each hrtimer that fires after that and is not
-marked as irqsafe won't be processed but just enqueued onto the
-->expired list. The timer would be processed once the CPU goes back
-online. Be not really. The thing is that once the CPU goes back online
-the "expired" list head will be initialized and that timer is lost. Once
-you try to cancel it, it will remove itself from the expired list and
-this is when the list corruption is noticed.
-My guess here is that the hotplug rework changed the timing and the bug
-is more obvious now: if you cancel the timer before the CPU goes back
-online then nothing happens.
+Mike, can you check this please:
 
-> > > ---
-> > >  kernel/time/hrtimer.c |   13 +++++++++++++
-> > >  1 file changed, 13 insertions(+)
-> > > 
-> > > --- a/kernel/time/hrtimer.c
-> > > +++ b/kernel/time/hrtimer.c
-> > > @@ -1802,6 +1802,19 @@ static void migrate_hrtimer_list(struct
-> > >  		 */
-> > >  		enqueue_hrtimer(timer, new_base);
-> > >  	}
-> > > +
-> > > +	/*
-> > > +	 * Finally, migrate any expired timers deferred by RT.
-> > > +	 */
-> > > +	while (!list_empty(&old_base->expired)) {
-> > > +		struct list_head *entry = old_base->expired.next;
-> > > +
-> > > +		timer = container_of(entry, struct hrtimer, cb_entry);
-> 
-> (oops, forgot to change that back too. [scribble scribble])
-> 
-> > > +		/* XXX: hm, perhaps defer again instead of enqueueing. */
-> > > +		__remove_hrtimer(timer, old_base, HRTIMER_STATE_ENQUEUED, 0);
-> > > +		timer->base = new_base;
-> > > +		enqueue_hrtimer(timer, new_base);
-
-__remove_hrtimer() shouldn't be required because it has been done
-already. It should be enough to just list_splice() one list to the
-other and raise the softirq afterwards.
-
-> > > +	}
-> > >  }
-> > >  
-> > >  int hrtimers_dead_cpu(unsigned int scpu)
+diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+index 55839ff2bba6..4b9264e0d363 100644
+--- a/kernel/time/hrtimer.c
++++ b/kernel/time/hrtimer.c
+@@ -1802,6 +1802,11 @@ static void migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
+ 		 */
+ 		enqueue_hrtimer(timer, new_base);
+ 	}
++#ifdef CONFIG_PREEMPT_RT_BASE
++	list_splice_tail(&old_base->expired, &new_base->expired);
++	if (!list_empty(&new_base->expired))
++		raise_softirq_irqoff(HRTIMER_SOFTIRQ);
++#endif
+ }
+ 
+ int hrtimers_dead_cpu(unsigned int scpu)
+-- 
+2.13.2
 
 Sebastian
