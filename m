@@ -1,55 +1,72 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [patch-rt] hotplug, hrtimer: Migrate expired/deferred timers
- during cpu offline
-Date: Thu, 17 Aug 2017 19:17:21 +0200
-Message-ID: <20170817171720.jz2ok332bpxcjzme@linutronix.de>
-References: <20170804173823.lzuhnejlnxczr2lj@linutronix.de>
- <1501913583.7917.42.camel@gmx.de>
- <1501945043.5473.31.camel@gmx.de>
- <20170807073350.nwytftryfp34mrwi@linutronix.de>
- <1502094121.5568.22.camel@gmx.de>
- <1502186459.8042.31.camel@gmx.de>
- <1502438116.16425.18.camel@gmx.de>
- <1502439312.16425.19.camel@gmx.de>
- <1502697588.12319.199.camel@gmx.de>
- <20170817165041.3agf2btidfdcspiq@linutronix.de>
+From: Jason Gunthorpe <jgunthorpe-ePGOBjL8dl3ta4EC/59zMFaTQe2KTcn/@public.gmane.org>
+Subject: Re: [PATCH v2] tpm_tis: fix stall after iowrite*()s
+Date: Thu, 17 Aug 2017 11:17:32 -0600
+Message-ID: <20170817171732.GA22792@obsidianresearch.com>
+References: <20170804215651.29247-1-haris.okanovic@ni.com>
+ <20170815201308.20024-1-haris.okanovic@ni.com>
+ <13741b28-1b5c-de55-3945-e05911e5a4e2@linux.vnet.ibm.com>
+ <20170817103807.ubrbylnud6wxod3s@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Mike Galbraith <efault@gmx.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: Haris Okanovic <haris.okanovic-acOepvfBmUk@public.gmane.org>, julia.cartwright-acOepvfBmUk@public.gmane.org,
+ linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, harisokn-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org,
+ linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jarkko.sakkinen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org,
+ eric.gardiner-acOepvfBmUk@public.gmane.org, jonathan.david-acOepvfBmUk@public.gmane.org, tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org,
+ scott.hartman-acOepvfBmUk@public.gmane.org, chris.graf-acOepvfBmUk@public.gmane.org, gratian.crisan-acOepvfBmUk@public.gmane.org,
+ brad.mouring-acOepvfBmUk@public.gmane.org
+To: Sebastian Andrzej Siewior <sebastian.siewior-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Return-path: <tpmdd-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20170817165041.3agf2btidfdcspiq@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
+In-Reply-To: <20170817103807.ubrbylnud6wxod3s-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/tpmdd-devel>,
+ <mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=tpmdd-devel>
+List-Post: <mailto:tpmdd-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>
+List-Help: <mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/tpmdd-devel>,
+ <mailto:tpmdd-devel-request-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org?subject=subscribe>
+Errors-To: tpmdd-devel-bounces-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2017-08-17 18:50:42 [+0200], To Mike Galbraith wrote:
-> __remove_hrtimer() shouldn't be required because it has been done
-> already. It should be enough to just list_splice() one list to the
-> other and raise the softirq afterwards.
+On Thu, Aug 17, 2017 at 12:38:07PM +0200, Sebastian Andrzej Siewior wrote:
 
-Mike, can you check this please:
+> > I worry a bit about "appears to fix".  It seems odd that the TPM device
+> > driver would be the first code to uncover this.  Can anyone confirm that the
+> > chipset does indeed have this bug?
+> 
+> What Haris says makes sense. It is just not all architectures
+> accumulate/ batch writes to HW.
 
-diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
-index 55839ff2bba6..4b9264e0d363 100644
---- a/kernel/time/hrtimer.c
-+++ b/kernel/time/hrtimer.c
-@@ -1802,6 +1802,11 @@ static void migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
- 		 */
- 		enqueue_hrtimer(timer, new_base);
- 	}
-+#ifdef CONFIG_PREEMPT_RT_BASE
-+	list_splice_tail(&old_base->expired, &new_base->expired);
-+	if (!list_empty(&new_base->expired))
-+		raise_softirq_irqoff(HRTIMER_SOFTIRQ);
-+#endif
- }
- 
- int hrtimers_dead_cpu(unsigned int scpu)
--- 
-2.13.2
+It doesn't seem that odd to me.. In modern Intel chipsets the physical
+LPC bus is used for very little. Maybe some flash and possibly a
+winbond super IO at worst?  Plus the TPM.
 
-Sebastian
+I can't confirm what Intel has done, but if writes are posted, then it
+is not a 'bug', but expected operation for a PCI/LPC bridge device to
+have an ordered queue of posted writes, and thus higher latency when
+processing reads due to ordering requirments.
+
+Other drivers may not see it because most LPC usages would not be
+write heavy, or might use IO instructions which are not posted..
+
+I can confirm that my ARM systems with a custom PCI-LPC bridge will
+have exactly the same problem, and that the readl is the only
+solution.
+
+This is becuase writes to LPC are posted over PCI and will be buffered
+in the root complex, device end port and internally in the LPC
+bridge. Since they are posted there is no way for the CPU to know when
+the complete and when it would be 'low latency' to issue a read.
+
+> So powerpc (for instance) has a sync operation after each write to HW. I
+> am wondering if we could need something like that on x86.
+
+Even on something like PPC 'sync' is not defined to globally flush
+posted writes, and wil not help. WMB is probably similar.
+
+Jason
+
+------------------------------------------------------------------------------
+Check out the vibrant tech community on one of the world's most
+engaging tech sites, Slashdot.org! http://sdm.link/slashdot
