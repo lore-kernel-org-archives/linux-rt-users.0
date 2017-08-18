@@ -1,39 +1,53 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: RT kernel on Acer laptop unreliable
-Date: Fri, 18 Aug 2017 14:44:06 +0200
-Message-ID: <20170818124406.6cem4po52xrzi5qc@linutronix.de>
-References: <8c1a0cb6-d90c-1f6f-2d23-9865a17b379e@jajcus.net>
- <20170807131937.ijj7n4yuk6inds4h@linutronix.de>
- <56cb9f42-83e3-6648-2489-7c9e486c8ecc@jajcus.net>
+From: Cliff Brake <cliff.brake@gmail.com>
+Subject: Re: how fast can you run a hrtimer?
+Date: Fri, 18 Aug 2017 10:34:19 -0400
+Message-ID: <CAOd_LFx5Bn6HtnzD59Hn6feY=ZS3Re+GXHcRU2x2J54cuJDagw@mail.gmail.com>
+References: <CAOd_LFwErYmZS-5b=a1O8DkqpAZqhgGXwnLhHHWZ8NnheK72Xw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org
-To: Jacek Konieczny <jajcus@jajcus.net>
+Content-Type: text/plain; charset="UTF-8"
+Cc: Cliff Brake <cbrake@bec-systems.com>
+To: rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:42100 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1750881AbdHRMoH (ORCPT
+Received: from mail-lf0-f54.google.com ([209.85.215.54]:33031 "EHLO
+        mail-lf0-f54.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1750984AbdHROeV (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 18 Aug 2017 08:44:07 -0400
-Content-Disposition: inline
-In-Reply-To: <56cb9f42-83e3-6648-2489-7c9e486c8ecc@jajcus.net>
+        Fri, 18 Aug 2017 10:34:21 -0400
+Received: by mail-lf0-f54.google.com with SMTP id d17so43332818lfe.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 18 Aug 2017 07:34:21 -0700 (PDT)
+In-Reply-To: <CAOd_LFwErYmZS-5b=a1O8DkqpAZqhgGXwnLhHHWZ8NnheK72Xw@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-08-14 20:03:26 [+0200], Jacek Konieczny wrote:
-> On 2017-08-07 15:19, Sebastian Andrzej Siewior wrote:
-> > One thing you could try, is to see if the latest v4.11 based RT kernel
-> > works more reliable.
-> 
-> I tried 4.11.12-rt9 (with your patch applied, just in case). It worked
-> find for a day and then failed like the older kernels:
+After a suggestion of using a NMI and a bit of research, it seems
+something like the following article is the probably a reasonable
+approach:
 
-I see. Could you try to enable lockdep and see if it yell in dmesg?
-lockdep would be:
-	CONFIG_DEBUG_RT_MUTEXES=y
-	CONFIG_PROVE_LOCKING=y
-	CONFIG_DEBUG_ATOMIC_SLEEP=y
+http://free-electrons.com/blog/fiq-handlers-in-the-arm-linux-kernel/
 
-> Jacek
+Cliff
 
-Sebastian
+On Fri, Aug 18, 2017 at 8:35 AM, Cliff Brake <cliff.brake@gmail.com> wrote:
+> Hi,
+>
+> I have an application where we need to tweak a PWM setting every 10uS.
+> My impression is this is beyond the capabilities of linux+rt, but want
+> to verify I'm not missing anything before we add an external
+> microcontroller to handle this.
+>
+> I've run some experiments on a i.MX6UL with v4.1+rt, and observe
+> delays of ~50us when toggling a GPIO in a Linux driver using a
+> hrtimer.
+>
+> Thanks,
+> Cliff
+>
+> --
+> =================
+> http://bec-systems.com
+
+
+
+-- 
+=================
+http://bec-systems.com
