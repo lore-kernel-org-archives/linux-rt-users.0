@@ -1,44 +1,36 @@
-From: Sebastian Andrzej Siewior <sebastian@linutronix.de>
-Subject: Re: Kdump not working with rt patch, tested under
- 4.4.32/4.4.79/4.9.40
-Date: Fri, 18 Aug 2017 14:16:37 +0200
-Message-ID: <20170818121637.k4s3htlfmv2363du@linutronix.de>
-References: <CAF6bL9=e4Ah6iwmvj+PponVgYaSGKYJ1WW98sZgvAY9cK8_9Eg@mail.gmail.com>
- <20170809153524.GY8384@jcartwri.amer.corp.natinst.com>
- <CAF6bL9k1zzPR6Y7-LrSXSqBc2S-v+zspb+1JLvSamrF+Zcd3OA@mail.gmail.com>
- <CAF6bL9mRqHqf8tdGk53EHwRnHM_BSbpSWMechfHh4OJJz_XMRQ@mail.gmail.com>
- <5985de84-db52-05d9-5899-95b9bbecf91a@mvista.com>
- <CAF6bL9k+k-d+xvVpKm7eP2eVkWT+uWXtXfm6ubgR5xYkY6mZrw@mail.gmail.com>
- <CAF6bL9msL8moMG1FKtZXp5vf5pP60kxc33609j8zfOY1Pn5m8Q@mail.gmail.com>
+From: Cliff Brake <cliff.brake@gmail.com>
+Subject: how fast can you run a hrtimer?
+Date: Fri, 18 Aug 2017 08:35:56 -0400
+Message-ID: <CAOd_LFwErYmZS-5b=a1O8DkqpAZqhgGXwnLhHHWZ8NnheK72Xw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Corey Minyard <cminyard@mvista.com>,
-        Julia Cartwright <julia@ni.com>, linux-rt-users@vger.kernel.org
-To: Journey Journey <journeywang123@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Cc: Cliff Brake <cbrake@bec-systems.com>
+To: rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:41845 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751328AbdHRMQk (ORCPT
+Received: from mail-lf0-f50.google.com ([209.85.215.50]:37046 "EHLO
+        mail-lf0-f50.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751167AbdHRMf7 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 18 Aug 2017 08:16:40 -0400
-Content-Disposition: inline
-In-Reply-To: <CAF6bL9msL8moMG1FKtZXp5vf5pP60kxc33609j8zfOY1Pn5m8Q@mail.gmail.com>
+        Fri, 18 Aug 2017 08:35:59 -0400
+Received: by mail-lf0-f50.google.com with SMTP id f7so22144342lfg.4
+        for <linux-rt-users@vger.kernel.org>; Fri, 18 Aug 2017 05:35:58 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-08-18 14:51:09 [+0800], Journey Journey wrote:
-> Hi all
-> 
-> Any updates ? If anyone can show me an example to trigger softlockup
-> detector under rt kernel, I'll be very glad.
+Hi,
 
-a thread that recevies no wake ups and does this:
+I have an application where we need to tweak a PWM setting every 10uS.
+My impression is this is beyond the capabilities of linux+rt, but want
+to verify I'm not missing anything before we add an external
+microcontroller to handle this.
 
-	set_current_state(TASK_UNINTERRUPTIBLE);
-	schedule();
+I've run some experiments on a i.MX6UL with v4.1+rt, and observe
+delays of ~50us when toggling a GPIO in a Linux driver using a
+hrtimer.
 
-should trigger the printk warning after 120secs.
+Thanks,
+Cliff
 
-> Thanks all
-
-Sebastian
+-- 
+=================
+http://bec-systems.com
