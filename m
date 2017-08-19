@@ -1,62 +1,66 @@
-From: Julia Cartwright <julia@ni.com>
-Subject: Re: how fast can you run a hrtimer?
-Date: Fri, 18 Aug 2017 09:52:32 -0500
-Message-ID: <20170818145232.GJ8384@jcartwri.amer.corp.natinst.com>
-References: <CAOd_LFwErYmZS-5b=a1O8DkqpAZqhgGXwnLhHHWZ8NnheK72Xw@mail.gmail.com>
- <CAOd_LFx5Bn6HtnzD59Hn6feY=ZS3Re+GXHcRU2x2J54cuJDagw@mail.gmail.com>
+From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Subject: Re: [tpmdd-devel] [PATCH v2] tpm_tis: fix stall after iowrite*()s
+Date: Sat, 19 Aug 2017 20:03:46 +0300
+Message-ID: <20170819170346.6mytggeq3rgu6b2q@linux.intel.com>
+References: <20170804215651.29247-1-haris.okanovic@ni.com>
+ <20170815201308.20024-1-haris.okanovic@ni.com>
+ <13741b28-1b5c-de55-3945-e05911e5a4e2@linux.vnet.ibm.com>
+ <20170817103807.ubrbylnud6wxod3s@linutronix.de>
+ <20170817171732.GA22792@obsidianresearch.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="huBJOJF9BsF479P6"
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-        Cliff Brake <cbrake@bec-systems.com>
-To: Cliff Brake <cliff.brake@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: Sebastian Andrzej Siewior <sebastian.siewior@linutronix.de>,
+        Ken Goldman <kgold@linux.vnet.ibm.com>,
+        Haris Okanovic <haris.okanovic@ni.com>,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        tpmdd-devel@lists.sourceforge.net, harisokn@gmail.com,
+        julia.cartwright@ni.com, gratian.crisan@ni.com,
+        scott.hartman@ni.com, chris.graf@ni.com, brad.mouring@ni.com,
+        jonathan.david@ni.com, peterhuewe@gmx.de, tpmdd@selhorst.net,
+        eric.gardiner@ni.com
+To: Jason Gunthorpe <jgunthorpe@obsidianresearch.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx0a-00010702.pphosted.com ([148.163.156.75]:52213 "EHLO
-        mx0b-00010702.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1751106AbdHROwf (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 18 Aug 2017 10:52:35 -0400
+Received: from mga14.intel.com ([192.55.52.115]:38902 "EHLO mga14.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751752AbdHSRDw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 19 Aug 2017 13:03:52 -0400
 Content-Disposition: inline
-In-Reply-To: <CAOd_LFx5Bn6HtnzD59Hn6feY=ZS3Re+GXHcRU2x2J54cuJDagw@mail.gmail.com>
+In-Reply-To: <20170817171732.GA22792@obsidianresearch.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---huBJOJF9BsF479P6
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+On Thu, Aug 17, 2017 at 11:17:32AM -0600, Jason Gunthorpe wrote:
+> On Thu, Aug 17, 2017 at 12:38:07PM +0200, Sebastian Andrzej Siewior wrote:
+> 
+> > > I worry a bit about "appears to fix".  It seems odd that the TPM device
+> > > driver would be the first code to uncover this.  Can anyone confirm that the
+> > > chipset does indeed have this bug?
+> > 
+> > What Haris says makes sense. It is just not all architectures
+> > accumulate/ batch writes to HW.
+> 
+> It doesn't seem that odd to me.. In modern Intel chipsets the physical
+> LPC bus is used for very little. Maybe some flash and possibly a
+> winbond super IO at worst?  Plus the TPM.
+> 
+> I can't confirm what Intel has done, but if writes are posted, then it
+> is not a 'bug', but expected operation for a PCI/LPC bridge device to
+> have an ordered queue of posted writes, and thus higher latency when
+> processing reads due to ordering requirments.
+> 
+> Other drivers may not see it because most LPC usages would not be
+> write heavy, or might use IO instructions which are not posted..
+> 
+> I can confirm that my ARM systems with a custom PCI-LPC bridge will
+> have exactly the same problem, and that the readl is the only
+> solution.
+> 
+> This is becuase writes to LPC are posted over PCI and will be buffered
+> in the root complex, device end port and internally in the LPC
+> bridge. Since they are posted there is no way for the CPU to know when
+> the complete and when it would be 'low latency' to issue a read.
 
-On Fri, Aug 18, 2017 at 10:34:19AM -0400, Cliff Brake wrote:
-> After a suggestion of using a NMI and a bit of research, it seems
-> something like the following article is the probably a reasonable
-> approach:
->=20
-> http://free-electrons.com/blog/fiq-handlers-in-the-arm-linux-kernel/
+What you say makes sense to me but wasn't the patch tried with SPI-TPM,
+not LPC? Anyway, what you're saying probably still applies.
 
-The use of a FIQ probably gives you the best chance to achieve the
-latencies you want; but keep in mind that the use of FIQ means you'll
-need to get your hands pretty dirty.
-
-The set of operations legal to perform from NMI context is very, very
-small.  The usage of gpiolib (and therefore any existing i.MX gpio
-driver) is probably not going to work from NMI context, so you'll have
-to roll your own solution.
-
-   Julia
-
---huBJOJF9BsF479P6
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQEzBAABCAAdFiEEgKAEF431w1EL96k9jNrC4UVNdG8FAlmW/y0ACgkQjNrC4UVN
-dG9d+wgAm4mT1LCBIBP2SIXQ5vFzrOH17pgSTgdf8K+s8A/p90BmjDZ/vRfj8KWO
-9LwTtgMMOqfEtxktTkRLd05XSqmeX2Dmo2ocorB1QWdKXGx4hkVHxhtwljI3TtJZ
-7Z7LoAxSugLAlFzRqn14a/TfdEVrfWSKkfR0UYumHCtGQGEMhc0yPGx2AFqrzfVy
-Ffu9VZ8Eqz9bo3iA7zCyekoqK5G+s9IV22L/kkcEm+KS4L16X7Jqezmqr6kqjSOE
-7KQwCPbY/xtCfyc/LOqg1pluR0IUcS7tyvPJB85f9Y+z8v6FhfMGdbAjADYqEAq6
-3kh+OP2qqQQRq+kpHt2U/sfvpjYjWQ==
-=79bZ
------END PGP SIGNATURE-----
-
---huBJOJF9BsF479P6--
+/Jarkko
