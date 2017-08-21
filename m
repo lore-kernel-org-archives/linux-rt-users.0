@@ -1,81 +1,55 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: RT kernel on Acer laptop unreliable
-Date: Mon, 21 Aug 2017 15:12:54 +0200
-Message-ID: <20170821131254.5nuacfv62d3l4rhe@linutronix.de>
-References: <8c1a0cb6-d90c-1f6f-2d23-9865a17b379e@jajcus.net>
- <20170807131937.ijj7n4yuk6inds4h@linutronix.de>
- <56cb9f42-83e3-6648-2489-7c9e486c8ecc@jajcus.net>
- <20170818124406.6cem4po52xrzi5qc@linutronix.de>
- <b1209f35-67a2-5cb2-d0e1-ad142b34aab9@jajcus.net>
+Subject: Re: 4.9.33-rt23 latency under high load
+Date: Mon, 21 Aug 2017 15:25:22 +0200
+Message-ID: <20170821132522.nbtbdaj2ls5an6zw@linutronix.de>
+References: <efca9200a0d04af788a7f32322091337@S1P7MBX1A.EXCHPROD.USA.NET>
+ <20170807134622.okjuu56qupao4zqk@linutronix.de>
+ <79e87984082046ca9cafa8baf74ee864@S1P7MBX1A.EXCHPROD.USA.NET>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org
-To: Jacek Konieczny <jajcus@jajcus.net>
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Carol Wong <carolw@netacquire.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:50597 "EHLO
+Received: from Galois.linutronix.de ([146.0.238.70]:50647 "EHLO
         Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1753755AbdHUNM4 (ORCPT
+        with ESMTP id S1753387AbdHUNZZ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 21 Aug 2017 09:12:56 -0400
+        Mon, 21 Aug 2017 09:25:25 -0400
 Content-Disposition: inline
-In-Reply-To: <b1209f35-67a2-5cb2-d0e1-ad142b34aab9@jajcus.net>
+In-Reply-To: <79e87984082046ca9cafa8baf74ee864@S1P7MBX1A.EXCHPROD.USA.NET>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-08-20 16:48:24 [+0200], Jacek Konieczny wrote:
-> Does this help?
+On 2017-08-11 22:15:02 [+0000], Carol Wong wrote:
+> Hi Sebastian,
+Hi Carol,
 
-yup, the following patch should make it go away.
+> I can't say that this change is responsible, but I see a dramatic difference when this patch is removed. Perhaps this is a red herring. For sure in my test case, 4.9.30-rt21 reports small latency and 4.9.33-rt23 reports large latency.
+> 
+> > This change should be a nop if you don't change the task's CPU-mask
+> > while the task is in a migrate-disable section. Do I miss something?
+> > Is part of your workload changing cpu-affinity mask?
+> > 
+> 
+> The test program does not alter affinity masks. 
 
-diff --git a/net/ipv4/tcp_ipv4.c b/net/ipv4/tcp_ipv4.c
-index 55c5f068d986..8bbb8f967614 100644
---- a/net/ipv4/tcp_ipv4.c
-+++ b/net/ipv4/tcp_ipv4.c
-@@ -713,8 +713,8 @@ static void tcp_v4_send_reset(const struct sock *sk, struct sk_buff *skb)
- 
- 	arg.tos = ip_hdr(skb)->tos;
- 	arg.uid = sock_net_uid(net, sk && sk_fullsock(sk) ? sk : NULL);
--	local_lock(tcp_sk_lock);
- 	local_bh_disable();
-+	local_lock(tcp_sk_lock);
- 	ip_send_unicast_reply(*this_cpu_ptr(net->ipv4.tcp_sk),
- 			      skb, &TCP_SKB_CB(skb)->header.h4.opt,
- 			      ip_hdr(skb)->saddr, ip_hdr(skb)->daddr,
-@@ -722,8 +722,8 @@ static void tcp_v4_send_reset(const struct sock *sk, struct sk_buff *skb)
- 
- 	__TCP_INC_STATS(net, TCP_MIB_OUTSEGS);
- 	__TCP_INC_STATS(net, TCP_MIB_OUTRSTS);
--	local_bh_enable();
- 	local_unlock(tcp_sk_lock);
-+	local_bh_enable();
- 
- #ifdef CONFIG_TCP_MD5SIG
- out:
-@@ -801,16 +801,16 @@ static void tcp_v4_send_ack(const struct sock *sk,
- 		arg.bound_dev_if = oif;
- 	arg.tos = tos;
- 	arg.uid = sock_net_uid(net, sk_fullsock(sk) ? sk : NULL);
--	local_lock(tcp_sk_lock);
- 	local_bh_disable();
-+	local_lock(tcp_sk_lock);
- 	ip_send_unicast_reply(*this_cpu_ptr(net->ipv4.tcp_sk),
- 			      skb, &TCP_SKB_CB(skb)->header.h4.opt,
- 			      ip_hdr(skb)->saddr, ip_hdr(skb)->daddr,
- 			      &arg, arg.iov[0].iov_len);
- 
- 	__TCP_INC_STATS(net, TCP_MIB_OUTSEGS);
--	local_bh_enable();
- 	local_unlock(tcp_sk_lock);
-+	local_bh_enable();
- }
- 
- static void tcp_v4_timewait_ack(struct sock *sk, struct sk_buff *skb)
+interesting. Could you add a trace-printk to check if it gets into that
+inner-loop if the mask changes and it needs to do the fixup? Other than
+that I don't see anything that could make any difference.
 
-
-> The system has not crashed yet, I may catch something more.
-
-okay.
-
-> Jacek
+> I performed the same test with 4.11.12-rt9 and observed large latencies under heavy cpu & net load.
+> 
+> [localhost:~]# cyclictest -S -p98 --policy=rr
+> # /dev/cpu_dma_latency set to 0us
+> policy: rr: loadavg: 0.65 0.61 0.56 1/204 2206
+> 
+> T: 0 ( 2131) P:98 I:1000 C:11132138 Min:      1 Act:    1 Avg:    1 Max:     375
+> T: 1 ( 2132) P:98 I:1500 C:7421425 Min:      1 Act:    1 Avg:    1 Max:     105
+> T: 2 ( 2133) P:98 I:2000 C:5566069 Min:      1 Act:    1 Avg:    1 Max:      68
+> T: 3 ( 2134) P:98 I:2500 C:4452855 Min:      1 Act:    2 Avg:    1 Max:      64
+> 
+> 
+> Cheers,
+> Carol
 
 Sebastian
