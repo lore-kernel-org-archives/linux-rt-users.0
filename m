@@ -1,162 +1,115 @@
-From: Jacek Konieczny <jajcus@jajcus.net>
-Subject: Re: RT kernel on Acer laptop unreliable
-Date: Sun, 20 Aug 2017 16:48:24 +0200
-Message-ID: <b1209f35-67a2-5cb2-d0e1-ad142b34aab9@jajcus.net>
-References: <8c1a0cb6-d90c-1f6f-2d23-9865a17b379e@jajcus.net>
- <20170807131937.ijj7n4yuk6inds4h@linutronix.de>
- <56cb9f42-83e3-6648-2489-7c9e486c8ecc@jajcus.net>
- <20170818124406.6cem4po52xrzi5qc@linutronix.de>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: Does calling sched_yield() in a SCHED_DEADLINE thread guarantee
+ wakeup at beginning of next period?
+Date: Mon, 21 Aug 2017 13:24:51 +0200
+Message-ID: <20170821112451.264rytgl3tzzt3em@hirez.programming.kicks-ass.net>
+References: <CANf15E_4N-BZDLFmYXUFqfMrX6T+7btTsQGYsYs7J_HNDXzSCg@mail.gmail.com>
+ <ef939f8a-dd96-cff2-7f90-6ee8e88737e7@santannapisa.it>
+ <CANf15E_hZ69Rds9v0N_--=pu_9+vT_yuO3utcF_wY+QVeO4xXA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Transfer-Encoding: 8bit
+Cc: Tommaso Cucinotta <tommaso.cucinotta@santannapisa.it>,
+        luca abeni <luca.abeni@santannapisa.it>,
+        Juri Lelli <juri.lelli@arm.com>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Bjarke Freund-Hansen <bjarkefh@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from tropek.jajcus.net ([31.179.132.94]:48806 "EHLO
-        tropek.jajcus.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1752560AbdHTOs2 (ORCPT
+Received: from bombadil.infradead.org ([65.50.211.133]:38835 "EHLO
+        bombadil.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751814AbdHULY5 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 20 Aug 2017 10:48:28 -0400
-In-Reply-To: <20170818124406.6cem4po52xrzi5qc@linutronix.de>
-Content-Language: en-GB
+        Mon, 21 Aug 2017 07:24:57 -0400
+Content-Disposition: inline
+In-Reply-To: <CANf15E_hZ69Rds9v0N_--=pu_9+vT_yuO3utcF_wY+QVeO4xXA@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-08-18 14:44, Sebastian Andrzej Siewior wrote:
-> On 2017-08-14 20:03:26 [+0200], Jacek Konieczny wrote:
->> On 2017-08-07 15:19, Sebastian Andrzej Siewior wrote:
->>> One thing you could try, is to see if the latest v4.11 based RT kernel
->>> works more reliable.
->>
->> I tried 4.11.12-rt9 (with your patch applied, just in case). It worked
->> find for a day and then failed like the older kernels:
+On Mon, Aug 21, 2017 at 08:16:05AM +0000, Bjarke Freund-Hansen wrote:
+> So what I gather from this is that the answer is yes, if and only if the
+> SCHED_DEADLINE task is the one with the earliest absolute deadline.
+> Otherwise, the task might not be woken up at the exact beginning of the
+> next period.
+
+'Exact' is a difficult word. The only hard guarantee we can give is that
+you'll not wake up before the beginning. How long after depends on a
+number of things:
+
+ - (hardware) timer granularity
+ - IRQ disabled regions
+ - scheduler lock contention
+ - scheduling policy (what Tomaso said)
+
+Linux-RT aims to put bounds on things like IRQ disabled regions, but
+you're still subject to them. The (scheduler) locks are FIFO fair, so
+depending on the number of CPUs and the worst case section length you
+can compute bounds on that.
+
+So in practise it might be good enough (and that's all that counts), but
+'exact' things are never :-)
+
+Note that the point of Real-Time programming is to not be late
+completing, we don't strictly care about when we start.
+
+> My use case is actually quite simple. I have a period of say 20ms. Within
+> this period certain things have to happen at certain points in time. These
+> things being (among others) sending a network message and validating
+> received messages (received asynchronously from the realtime thread.)
 > 
-> I see. Could you try to enable lockdep and see if it yell in dmesg?
-> lockdep would be:
-> 	CONFIG_DEBUG_RT_MUTEXES=y
-> 	CONFIG_PROVE_LOCKING=y
-> 	CONFIG_DEBUG_ATOMIC_SLEEP=y
+> 0ms                  20ms                 40ms                 60ms
+> |--------------------|--------------------|--------------------|
+>        ^ 0+7ms              ^ 20+7ms             ^ 40+7ms                 -
+> transmit message
+>                      ^ 0+20ms             ^ 20+20ms            ^ 40+20ms  -
+> validate received messages
+> 
+> Writing this I am questioning if SCHED_DEADLINE is the correct tool for the
+> problem.
+> 
+> My current approach is to schedule the thread as an SCHED_DEADLINE task
+> with period 20ms and runtime ~1ms (less than 1ms is needed).
+> The task is the only SCHED_DEADLINE task on the system, so I rely on the
+> task being woken up exactly at the start of the period and perform the
+> received messages validation. I then calculate how long I have to sleep
+> before the +7ms point, perform that sleep for the appropriate time and
+> after being woken up I transmit the message. Tolerances are somewhere
+> around 100μs.
+> 
+> Is this a valid approach? I have a sneaking suspicion that I might be
+> thinking about all this the wrong way.
+> 
+> I am open to all and any suggestions, thank you in advance. :)
 
-Sure. I have recompiled the kernel with those settings, and got this:
+So if I understand correctly, your TX constraints are:
 
+ - not before +7ms
+ - not after  +7ms + 100us
 
-======================================================
-[ INFO: possible circular locking dependency detected ]
-4.11.12-rt9-1 #3 Not tainted
--------------------------------------------------------
-zabbix_agentd/1299 is trying to acquire lock:
- (&per_cpu(local_softirq_locks[i], __cpu).lock){+.+...}, at:
-[<ffffffff8a06e1ed>] do_current_softirqs+0x14d/0x670
+That's a fairly tight set. The traditional way to represent that would
+be a task with:
 
-                              but task is already holding lock:
- ((tcp_sk_lock).lock){+.+...}, at: [<ffffffff8a65eab1>]
-tcp_v4_send_reset+0x3b1/0x7d0
+  sched_attr = {
+	.sched_period   = 20ms,
+	.sched_deadline = 100us,
+	.sched_runtime  = ... /* something <= 100us */
+  }
 
-                              which lock already depends on the new lock.
+Which will get woken at the +7ms edge.
 
-                              the existing dependency chain (in reverse
-order) is:
+I'm not entirely clear on the RX constraints, are they at all correlated
+to the TX other than needing to happen in the same period? If not,
+they're an independent task:
 
-                              -> #1 ((tcp_sk_lock).lock){+.+...}:
-       lock_acquire+0xb7/0x250
-       rt_spin_lock+0x4b/0x60
-       tcp_v4_send_reset+0x3b1/0x7d0
-       tcp_v4_rcv+0x7c0/0xfb0
-       ip_local_deliver_finish+0xe4/0x3d0
-       ip_local_deliver+0x1a7/0x220
-       ip_rcv_finish+0x222/0x6e0
-       ip_rcv+0x3aa/0x540
-       __netif_receive_skb_core+0x790/0xdc0
-       __netif_receive_skb+0x1d/0x60
-       process_backlog+0x9f/0x270
-       net_rx_action+0x389/0x6c0
-       do_current_softirqs+0x22e/0x670
-       __local_bh_enable+0x5b/0x80
-       ip_finish_output2+0x2aa/0x5e0
-       ip_finish_output+0x229/0x320
-       ip_output+0x182/0x260
-       ip_local_out+0x39/0x70
-       ip_queue_xmit+0x1e8/0x5e0
-       tcp_transmit_skb+0x4ce/0x9e0
-       tcp_connect+0x658/0x9f0
-       tcp_v4_connect+0x56e/0x5b0
-       __inet_stream_connect+0xb7/0x320
-       inet_stream_connect+0x3b/0x60
-       SyS_connect+0xe1/0x120
-       do_syscall_64+0x7f/0x210
-       return_from_SYSCALL_64+0x0/0x7a
+  sched_attr = {
+	.sched_period   = 20ms,
+	.sched_deadline = 20ms,
+	.sched_runtime  = ... /* something <= 20ms */
+  }
 
-                              -> #0 (&per_cpu(local_softirq_locks[i],
-__cpu).lock){+.+...}:
-       __lock_acquire+0x1b84/0x1d30
-       lock_acquire+0xb7/0x250
-       rt_spin_lock+0x4b/0x60
-       do_current_softirqs+0x14d/0x670
-       __local_bh_enable+0x5b/0x80
-       tcp_v4_send_reset+0x48b/0x7d0
-       tcp_v4_do_rcv+0x73/0x200
-       __release_sock+0x86/0x160
-       release_sock+0x35/0xc0
-       inet_shutdown+0x86/0x100
-       SyS_shutdown+0x84/0x90
-       do_syscall_64+0x7f/0x210
-       return_from_SYSCALL_64+0x0/0x7a
+Which get woken at the period edge. But writing that it seems wrong,
+supposedly you want to process the packets received in _this_ period, so
+you need to better specify by which time you expect them to have been
+received and when you need to be done validating them.
 
-                              other info that might help us debug this:
- Possible unsafe locking scenario:
-       CPU0                    CPU1
-       ----                    ----
-  lock((tcp_sk_lock).lock);
-                               lock(&per_cpu(local_softirq_locks[i],
-__cpu).lock);
-                               lock((tcp_sk_lock).lock);
-  lock(&per_cpu(local_softirq_locks[i], __cpu).lock);
-
-                               *** DEADLOCK ***
-3 locks held by zabbix_agentd/1299:
- #0:  (sk_lock-AF_INET){+.+.+.}, at: [<ffffffff8a67d45b>]
-inet_shutdown+0x3b/0x100
- #1:  (rcu_read_lock){......}, at: [<ffffffff8a65e834>]
-tcp_v4_send_reset+0x134/0x7d0
- #2:  ((tcp_sk_lock).lock){+.+...}, at: [<ffffffff8a65eab1>]
-tcp_v4_send_reset+0x3b1/0x7d0
-
-                              stack backtrace:
-CPU: 1 PID: 1299 Comm: zabbix_agentd Not tainted 4.11.12-rt9-1 #3
-Hardware name: Acer Aspire E5-575/Ironman_SK  , BIOS V1.25 03/03/2017
-Call Trace:
- dump_stack+0x68/0x92
- print_circular_bug+0x1f6/0x300
- __lock_acquire+0x1b84/0x1d30
- ? preempt_count_sub+0xa1/0x100
- lock_acquire+0xb7/0x250
- ? lock_acquire+0xb7/0x250
- ? do_current_softirqs+0x14d/0x670
- rt_spin_lock+0x4b/0x60
- ? do_current_softirqs+0x14d/0x670
- do_current_softirqs+0x14d/0x670
- ? __local_bh_enable+0x23/0x80
- __local_bh_enable+0x5b/0x80
- tcp_v4_send_reset+0x48b/0x7d0
- ? tcp_rcv_state_process+0x28c/0xf20
- tcp_v4_do_rcv+0x73/0x200
- ? tcp_v4_do_rcv+0x73/0x200
- __release_sock+0x86/0x160
- release_sock+0x35/0xc0
- inet_shutdown+0x86/0x100
- SyS_shutdown+0x84/0x90
- do_syscall_64+0x7f/0x210
- entry_SYSCALL64_slow_path+0x25/0x25
-RIP: 0033:0x7fbaa1dbbb57
-RSP: 002b:00007ffd750de028 EFLAGS: 00000202 ORIG_RAX: 0000000000000030
-RAX: ffffffffffffffda RBX: 00007ffd750de0b0 RCX: 00007fbaa1dbbb57
-RDX: 00000000ffffffff RSI: 0000000000000002 RDI: 0000000000000007
-RBP: 00000000006671f8 R08: 0000000000995de0 R09: 0000000000000000
-R10: 00007fbaa206ebe8 R11: 0000000000000202 R12: 000000000044afb0
-R13: 00000000006607dc R14: 00000000006615e0 R15: 00007ffd750de070
-
-Does this help?
-
-The system has not crashed yet, I may catch something more.
-
-Jacek
+In any case, the important point being that you need to specify when you
+want to be _done_.
