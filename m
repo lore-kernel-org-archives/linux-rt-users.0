@@ -1,55 +1,50 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: 4.9.33-rt23 latency under high load
-Date: Mon, 21 Aug 2017 15:25:22 +0200
-Message-ID: <20170821132522.nbtbdaj2ls5an6zw@linutronix.de>
-References: <efca9200a0d04af788a7f32322091337@S1P7MBX1A.EXCHPROD.USA.NET>
- <20170807134622.okjuu56qupao4zqk@linutronix.de>
- <79e87984082046ca9cafa8baf74ee864@S1P7MBX1A.EXCHPROD.USA.NET>
+From: afzal mohammed <afzal.mohd.ma@gmail.com>
+Subject: Re: how fast can you run a hrtimer?
+Date: Tue, 22 Aug 2017 18:15:54 +0530
+Message-ID: <20170822124554.GA5898@afzalpc>
+References: <CAOd_LFwErYmZS-5b=a1O8DkqpAZqhgGXwnLhHHWZ8NnheK72Xw@mail.gmail.com>
+ <CAOd_LFx5Bn6HtnzD59Hn6feY=ZS3Re+GXHcRU2x2J54cuJDagw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Carol Wong <carolw@netacquire.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+        Cliff Brake <cbrake@bec-systems.com>
+To: Cliff Brake <cliff.brake@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:50647 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1753387AbdHUNZZ (ORCPT
+Received: from mail-pf0-f177.google.com ([209.85.192.177]:34460 "EHLO
+        mail-pf0-f177.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S932720AbdHVMqD (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 21 Aug 2017 09:25:25 -0400
+        Tue, 22 Aug 2017 08:46:03 -0400
+Received: by mail-pf0-f177.google.com with SMTP id h75so9643877pfh.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 22 Aug 2017 05:46:03 -0700 (PDT)
 Content-Disposition: inline
-In-Reply-To: <79e87984082046ca9cafa8baf74ee864@S1P7MBX1A.EXCHPROD.USA.NET>
+In-Reply-To: <CAOd_LFx5Bn6HtnzD59Hn6feY=ZS3Re+GXHcRU2x2J54cuJDagw@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-08-11 22:15:02 [+0000], Carol Wong wrote:
-> Hi Sebastian,
-Hi Carol,
+Hi
 
-> I can't say that this change is responsible, but I see a dramatic difference when this patch is removed. Perhaps this is a red herring. For sure in my test case, 4.9.30-rt21 reports small latency and 4.9.33-rt23 reports large latency.
-> 
-> > This change should be a nop if you don't change the task's CPU-mask
-> > while the task is in a migrate-disable section. Do I miss something?
-> > Is part of your workload changing cpu-affinity mask?
-> > 
-> 
-> The test program does not alter affinity masks. 
+> On Fri, Aug 18, 2017 at 8:35 AM, Cliff Brake <cliff.brake@gmail.com> wrote:
 
-interesting. Could you add a trace-printk to check if it gets into that
-inner-loop if the mask changes and it needs to do the fixup? Other than
-that I don't see anything that could make any difference.
+> > I have an application where we need to tweak a PWM setting every 10uS.
+> > My impression is this is beyond the capabilities of linux+rt, but want
+> > to verify I'm not missing anything before we add an external
+> > microcontroller to handle this.
+> >
+> > I've run some experiments on a i.MX6UL with v4.1+rt, and observe
+> > delays of ~50us when toggling a GPIO in a Linux driver using a
+> > hrtimer.
 
-> I performed the same test with 4.11.12-rt9 and observed large latencies under heavy cpu & net load.
+On Fri, Aug 18, 2017 at 10:34:19AM -0400, Cliff Brake wrote:
+> After a suggestion of using a NMI and a bit of research, it seems
+> something like the following article is the probably a reasonable
+> approach:
 > 
-> [localhost:~]# cyclictest -S -p98 --policy=rr
-> # /dev/cpu_dma_latency set to 0us
-> policy: rr: loadavg: 0.65 0.61 0.56 1/204 2206
-> 
-> T: 0 ( 2131) P:98 I:1000 C:11132138 Min:      1 Act:    1 Avg:    1 Max:     375
-> T: 1 ( 2132) P:98 I:1500 C:7421425 Min:      1 Act:    1 Avg:    1 Max:     105
-> T: 2 ( 2133) P:98 I:2000 C:5566069 Min:      1 Act:    1 Avg:    1 Max:      68
-> T: 3 ( 2134) P:98 I:2500 C:4452855 Min:      1 Act:    2 Avg:    1 Max:      64
-> 
-> 
-> Cheers,
-> Carol
+> http://free-electrons.com/blog/fiq-handlers-in-the-arm-linux-kernel/
 
-Sebastian
+If a PWM IP is present on the chip, won't updating the PWM compare
+registers within 10us (PWM @100KHz) achieve the required ?, toggling
+delay & jitter shouldn't be a worry here, right ? (assuming PWM
+compare registers can be updated every 10us using hrtimers)
+
+afzal
