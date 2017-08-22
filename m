@@ -1,50 +1,145 @@
-From: afzal mohammed <afzal.mohd.ma@gmail.com>
-Subject: Re: how fast can you run a hrtimer?
-Date: Tue, 22 Aug 2017 18:15:54 +0530
-Message-ID: <20170822124554.GA5898@afzalpc>
-References: <CAOd_LFwErYmZS-5b=a1O8DkqpAZqhgGXwnLhHHWZ8NnheK72Xw@mail.gmail.com>
- <CAOd_LFx5Bn6HtnzD59Hn6feY=ZS3Re+GXHcRU2x2J54cuJDagw@mail.gmail.com>
+From: Luca Abeni <luca.abeni@santannapisa.it>
+Subject: Re: Does calling sched_yield() in a SCHED_DEADLINE thread guarantee
+ wakeup at beginning of next period?
+Date: Tue, 22 Aug 2017 13:59:35 +0200
+Message-ID: <20170822135935.4af36894@luca>
+References: <CANf15E_4N-BZDLFmYXUFqfMrX6T+7btTsQGYsYs7J_HNDXzSCg@mail.gmail.com>
+        <ef939f8a-dd96-cff2-7f90-6ee8e88737e7@santannapisa.it>
+        <CANf15E_hZ69Rds9v0N_--=pu_9+vT_yuO3utcF_wY+QVeO4xXA@mail.gmail.com>
+        <20170821112451.264rytgl3tzzt3em@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-        Cliff Brake <cbrake@bec-systems.com>
-To: Cliff Brake <cliff.brake@gmail.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+Cc: Bjarke Freund-Hansen <bjarkefh@gmail.com>,
+        Tommaso Cucinotta <tommaso.cucinotta@santannapisa.it>,
+        Juri Lelli <juri.lelli@arm.com>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pf0-f177.google.com ([209.85.192.177]:34460 "EHLO
-        mail-pf0-f177.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S932720AbdHVMqD (ORCPT
+Received: from mail.santannapisa.it ([193.205.80.98]:22816 "EHLO
+        mail.santannapisa.it" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S932720AbdHVM7q (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 22 Aug 2017 08:46:03 -0400
-Received: by mail-pf0-f177.google.com with SMTP id h75so9643877pfh.1
-        for <linux-rt-users@vger.kernel.org>; Tue, 22 Aug 2017 05:46:03 -0700 (PDT)
-Content-Disposition: inline
-In-Reply-To: <CAOd_LFx5Bn6HtnzD59Hn6feY=ZS3Re+GXHcRU2x2J54cuJDagw@mail.gmail.com>
+        Tue, 22 Aug 2017 08:59:46 -0400
+In-Reply-To: <20170821112451.264rytgl3tzzt3em@hirez.programming.kicks-ass.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi
+Hi all,
 
-> On Fri, Aug 18, 2017 at 8:35 AM, Cliff Brake <cliff.brake@gmail.com> wrote:
+On Mon, 21 Aug 2017 13:24:51 +0200
+Peter Zijlstra <peterz@infradead.org> wrote:
 
-> > I have an application where we need to tweak a PWM setting every 10uS.
-> > My impression is this is beyond the capabilities of linux+rt, but want
-> > to verify I'm not missing anything before we add an external
-> > microcontroller to handle this.
-> >
-> > I've run some experiments on a i.MX6UL with v4.1+rt, and observe
-> > delays of ~50us when toggling a GPIO in a Linux driver using a
-> > hrtimer.
-
-On Fri, Aug 18, 2017 at 10:34:19AM -0400, Cliff Brake wrote:
-> After a suggestion of using a NMI and a bit of research, it seems
-> something like the following article is the probably a reasonable
-> approach:
+> On Mon, Aug 21, 2017 at 08:16:05AM +0000, Bjarke Freund-Hansen wrote:
+> > So what I gather from this is that the answer is yes, if and only if the
+> > SCHED_DEADLINE task is the one with the earliest absolute deadline.
+> > Otherwise, the task might not be woken up at the exact beginning of the
+> > next period.  
 > 
-> http://free-electrons.com/blog/fiq-handlers-in-the-arm-linux-kernel/
+> 'Exact' is a difficult word. The only hard guarantee we can give is that
+> you'll not wake up before the beginning.
 
-If a PWM IP is present on the chip, won't updating the PWM compare
-registers within 10us (PWM @100KHz) achieve the required ?, toggling
-delay & jitter shouldn't be a worry here, right ? (assuming PWM
-compare registers can be updated every 10us using hrtimers)
+I suspect there might be some terminology issues, here...
+When I read "the task is woken up" I think about the task moving from a
+"blocked" state to a "ready" state (that is, the task entering the
+runqueue). So, I would say that the task is woken up (or, even better,
+"untrhottled") at the beginning of the next period (modulo interrupt
+disabling and timer granularity).
 
-afzal
+Then, the task is scheduled later (due to scheduler lock contention and
+due to the scheduling algorithm) and might be dispatched even later
+(due to other sources of kernel latencies).
+
+I think what Tommaso wrote is that the task (ignoring kernel latencies)
+the task enters the runqueue at the beginning of the next period, but
+could be scheduled later (if there are tasks with earlier deadlines).
+
+Then, if we do not ignore the kernel latencies the dispatching of the
+task can be delayed even more by the effects pointed out by Peter.
+
+
+
+				Luca
+
+> How long after depends on a
+> number of things:
+> 
+>  - (hardware) timer granularity
+>  - IRQ disabled regions
+>  - scheduler lock contention
+>  - scheduling policy (what Tomaso said)
+> 
+> Linux-RT aims to put bounds on things like IRQ disabled regions, but
+> you're still subject to them. The (scheduler) locks are FIFO fair, so
+> depending on the number of CPUs and the worst case section length you
+> can compute bounds on that.
+> 
+> So in practise it might be good enough (and that's all that counts), but
+> 'exact' things are never :-)
+> 
+> Note that the point of Real-Time programming is to not be late
+> completing, we don't strictly care about when we start.
+> 
+> > My use case is actually quite simple. I have a period of say 20ms. Within
+> > this period certain things have to happen at certain points in time. These
+> > things being (among others) sending a network message and validating
+> > received messages (received asynchronously from the realtime thread.)
+> > 
+> > 0ms                  20ms                 40ms                 60ms
+> > |--------------------|--------------------|--------------------|
+> >        ^ 0+7ms              ^ 20+7ms             ^ 40+7ms                 -
+> > transmit message
+> >                      ^ 0+20ms             ^ 20+20ms            ^ 40+20ms  -
+> > validate received messages
+> > 
+> > Writing this I am questioning if SCHED_DEADLINE is the correct tool for the
+> > problem.
+> > 
+> > My current approach is to schedule the thread as an SCHED_DEADLINE task
+> > with period 20ms and runtime ~1ms (less than 1ms is needed).
+> > The task is the only SCHED_DEADLINE task on the system, so I rely on the
+> > task being woken up exactly at the start of the period and perform the
+> > received messages validation. I then calculate how long I have to sleep
+> > before the +7ms point, perform that sleep for the appropriate time and
+> > after being woken up I transmit the message. Tolerances are somewhere
+> > around 100μs.
+> > 
+> > Is this a valid approach? I have a sneaking suspicion that I might be
+> > thinking about all this the wrong way.
+> > 
+> > I am open to all and any suggestions, thank you in advance. :)  
+> 
+> So if I understand correctly, your TX constraints are:
+> 
+>  - not before +7ms
+>  - not after  +7ms + 100us
+> 
+> That's a fairly tight set. The traditional way to represent that would
+> be a task with:
+> 
+>   sched_attr = {
+> 	.sched_period   = 20ms,
+> 	.sched_deadline = 100us,
+> 	.sched_runtime  = ... /* something <= 100us */
+>   }
+> 
+> Which will get woken at the +7ms edge.
+> 
+> I'm not entirely clear on the RX constraints, are they at all correlated
+> to the TX other than needing to happen in the same period? If not,
+> they're an independent task:
+> 
+>   sched_attr = {
+> 	.sched_period   = 20ms,
+> 	.sched_deadline = 20ms,
+> 	.sched_runtime  = ... /* something <= 20ms */
+>   }
+> 
+> Which get woken at the period edge. But writing that it seems wrong,
+> supposedly you want to process the packets received in _this_ period, so
+> you need to better specify by which time you expect them to have been
+> received and when you need to be done validating them.
+> 
+> In any case, the important point being that you need to specify when you
+> want to be _done_.
+
