@@ -1,102 +1,84 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [ANNOUNCE] 4.1.42-rt50
-Date: Mon, 28 Aug 2017 18:59:47 +0200
-Message-ID: <20170828165947.j6lwd5c6quchi2th@linutronix.de>
-References: <20170816204228.GE8384@jcartwri.amer.corp.natinst.com>
+From: Mart van de Wege <mvdwege@gmail.com>
+Subject: kernel BUG at kernel/locking/rtmutex.c:1059
+Date: Wed, 30 Aug 2017 23:25:53 +0200
+Message-ID: <86val4928u.fsf@gaheris.avalon.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Julia Cartwright <julia@ni.com>
+Content-Type: text/plain
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:49016 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751207AbdH1Q7w (ORCPT
+Received: from lb2-smtp-cloud9.xs4all.net ([194.109.24.26]:50678 "EHLO
+        lb2-smtp-cloud9.xs4all.net" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1750980AbdH3V0J (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 28 Aug 2017 12:59:52 -0400
-Content-Disposition: inline
-In-Reply-To: <20170816204228.GE8384@jcartwri.amer.corp.natinst.com>
+        Wed, 30 Aug 2017 17:26:09 -0400
+Received: from hector (localhost [127.0.0.1])
+        by hector.avalon.lan (Postfix) with ESMTP id 7DCE866002
+        for <linux-rt-users@vger.kernel.org>; Wed, 30 Aug 2017 23:26:06 +0200 (CEST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-08-16 15:42:28 [-0500], Julia Cartwright wrote:
-> Hello RT Folks!
-> 
-> I'm pleased to announce the 4.1.42-rt50 stable release.
+Hi,
 
-Okay. So this seemed to happen around v4.1.19 RT where this chunk got
-in:
-+#define assert_rcu_or_wq_mutex_or_pool_mutex(wq)                       \
-+       rcu_lockdep_assert(rcu_read_lock_sched_held() ||                \
-+                          lockdep_is_held(&wq->mutex) ||               \
-+                          lockdep_is_held(&wq_pool_mutex),             \
-+                          "sched RCU, wq->mutex or wq_pool_mutex should be held")
-+
+As of v4.11.12-rt8 my laptop runs into trouble booting up, throwing a
+kernel BUG when starting up bluetooth. Bisecting *seems* to lead back to
+commit 6fb87cb1181786dc88432c6c6093a02a897e5789, 'Add the hotplug rework
+including all its side stories'.
 
-to kernel/workqueue.c. The rcu_read_lock_sched_held() is not correct for
-RT because we push everything into "normal" RCU. However with lockdep I
-get this:
-|===============================
-|[ INFO: suspicious RCU usage. ]
-|4.1.40-rt48+ #17 Not tainted
-|-------------------------------
-|kernel/workqueue.c:608 sched RCU, wq->mutex or wq_pool_mutex should be held!
-|
-|other info that might help us debug this:
-|
-|rcu_scheduler_active = 1, debug_locks = 0
-|2 locks held by cryptomgr_test/58:
-| #0:  ((pendingb_lock).lock){+.+...}, at: [<c106842b>] queue_work_on+0x4b/0x160
-| #1:  (rcu_read_lock){......}, at: [<c1067c80>] __queue_work+0x20/0x780
-|
-|stack backtrace:
-|CPU: 1 PID: 58 Comm: cryptomgr_test Not tainted 4.1.40-rt48+ #17
-|Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.10.2-1 04/01/2014
-| 00000286 00000286 f509bc24 c16d6bb1 00000001 00000000 f509bc40 c1096f9b
-| c187b572 f5092280 f5914400 f5927ae0 f5914400 f509bc4c c1067397 c1a6c260
-| f509bc70 c1067e77 f509bc70 00000056 00000001 00000008 c1a6c260 00000001
-|Call Trace:
-| [<c16d6bb1>] dump_stack+0x7d/0xb1
-| [<c1096f9b>] lockdep_rcu_suspicious+0xbb/0xf0
-| [<c1067397>] unbound_pwq_by_node.constprop.47+0x77/0xd0
-| [<c1067e77>] __queue_work+0x217/0x780
-| [<c1068474>] queue_work_on+0x94/0x160
-| [<c1063f69>] call_usermodehelper_exec+0xf9/0x180
-| [<c10645a9>] __request_module+0x139/0x410
-| [<c139e8c3>] crypto_larval_lookup.part.8+0x53/0x120
-| [<c139e9e4>] crypto_alg_mod_lookup+0x34/0xb0
-| [<c139e3f1>] crypto_alloc_tfm+0x41/0xf0
-| [<c13a5270>] crypto_alloc_shash+0x10/0x20
-| [<c13b4f36>] drbg_init_hash_kernel+0x16/0x90
-| [<c13b5328>] drbg_instantiate+0x108/0x2c0
-| [<c13b56af>] drbg_kcapi_init+0x3f/0xd0
-| [<c139eb35>] __crypto_alloc_tfm+0x85/0x130
-| [<c139ec1a>] crypto_alloc_base+0x3a/0xb0
-| [<c13a7ac3>] drbg_cavs_test+0x43/0x250
-| [<c13a7d19>] alg_test_drbg+0x49/0x90
-| [<c13a6d10>] alg_test+0x100/0x220
+The issue persists up to v4.11.12-rt10
 
-After looking at the Code it seems that all we need is just:
- 
-diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-index bb994a4e0fe2..11815663a56d 100644
---- a/kernel/workqueue.c
-+++ b/kernel/workqueue.c
-@@ -362,10 +362,10 @@ static void workqueue_sysfs_unregister(struct workqueue_struct *wq);
- 			   "RCU or wq->mutex should be held")
- 
- #define assert_rcu_or_wq_mutex_or_pool_mutex(wq)			\
--	rcu_lockdep_assert(rcu_read_lock_sched_held() ||		\
-+	rcu_lockdep_assert(rcu_read_lock_held() ||		\
- 			   lockdep_is_held(&wq->mutex) ||		\
- 			   lockdep_is_held(&wq_pool_mutex),		\
--			   "sched RCU, wq->mutex or wq_pool_mutex should be held")
-+			   "RCU, wq->mutex or wq_pool_mutex should be held")
- 
- #define for_each_cpu_worker_pool(pool, cpu)				\
- 	for ((pool) = &per_cpu(cpu_worker_pools, cpu)[0];		\
+Stacktrace:
 
-Sebastian
+Aug 29 17:28:04 localhost kernel: [   46.483810] ------------[ cut here ]------------
+Aug 29 17:28:04 localhost kernel: [   46.483812] kernel BUG at kernel/locking/rtmutex.c:1059!
+Aug 29 17:28:04 localhost kernel: [   46.483816] invalid opcode: 0000 [#1] PREEMPT SMP
+Aug 29 17:28:04 localhost kernel: [   46.483817] Modules linked in: cmac bnep msr fuse intel_rapl intel_powerclamp kvm_intel kvm irqbypass crct10dif_pclmul crc32_pclmul ghash_clmulni_intel uvcvideo videobuf2_vmalloc videobuf2_memops video
+buf2_v4l2 videobuf2_core videodev pcbc media aesni_intel btusb joydev evdev aes_x86_64 btrtl crypto_simd glue_helper serio_raw cryptd intel_cstate intel_uncore hci_uart intel_rapl_perf btbcm efi_pstore arc4 snd_hda_codec_hdmi snd_hda_code
+c_realtek snd_hda_codec_generic btqca btintel iwlmvm snd_hda_intel mac80211 snd_hda_codec pcspkr snd_hda_core iwlwifi i915 snd_hwdep snd_pcm_oss iTCO_wdt sg efivars iTCO_vendor_support rtsx_pci_ms memstick wmi bluetooth crc16 drm_kms_help
+er snd_mixer_oss snd_pcm snd_timer mei_me snd cfg80211 drm soundcore mei rfkill i2c_algo_bit intel_lpss_acpi intel_lpss video battery
+Aug 29 17:28:04 localhost kernel: [   46.483870]  ac acpi_pad button intel_pch_thermal tpm_crb shpchp binfmt_misc nls_ascii nls_cp437 vfat fat coretemp ecryptfs cbc encrypted_keys parport_pc ppdev lp parport loop dm_crypt dm_mod sunrpc ef
+ivarfs ip_tables x_tables autofs4 btrfs raid10 raid456 async_raid6_recov async_memcpy async_pq async_xor async_tx xor raid6_pq libcrc32c crc32c_generic raid1 raid0 multipath linear md_mod sr_mod cdrom sd_mod mmc_block rtsx_pci_sdmmc mmc_c
+ore ahci libahci xhci_pci xhci_hcd libata rtsx_pci r8169 crc32c_intel psmouse mfd_core mii i2c_i801 scsi_mod usbcore thermal i2c_hid hid
+Aug 29 17:28:04 localhost kernel: [   46.483945] CPU: 3 PID: 227 Comm: kworker/u9:0 Not tainted 4.11.12-rt8+ #6
+Aug 29 17:28:04 localhost kernel: [   46.483947] Hardware name: Notebook                         W94_95_97JU/W94_95_97JU, BIOS 5.11 10/21/2015
+Aug 29 17:28:04 localhost kernel: [   46.483988] Workqueue: hci0 hci_rx_work [bluetooth]
+Aug 29 17:28:04 localhost kernel: [   46.483990] task: ffff935b9a506000 task.stack: ffff9edcc3398000
+Aug 29 17:28:04 localhost kernel: [   46.483996] RIP: 0010:rt_spin_lock_slowlock_locked+0x26e/0x2d0
+Aug 29 17:28:04 localhost kernel: [   46.483998] RSP: 0018:ffff9edcc339bb20 EFLAGS: 00010046
+Aug 29 17:28:04 localhost kernel: [   46.484000] RAX: ffff935b9a506000 RBX: ffffffffc0b13268 RCX: 0000000000000001
+Aug 29 17:28:04 localhost kernel: [   46.484002] RDX: 0000000000000000 RSI: ffff935b9a506000 RDI: ffffffffc0b13268
+Aug 29 17:28:04 localhost kernel: [   46.484003] RBP: 0000000000000246 R08: ffff935b9a506000 R09: ffffffffc0b13280
+Aug 29 17:28:04 localhost kernel: [   46.484004] R10: ffff935b9a506001 R11: 0000000000000001 R12: ffff935b9a506000
+Aug 29 17:28:04 localhost kernel: [   46.484005] R13: ffff9edcc339bb68 R14: 0000000000000246 R15: ffff935b8f0de800
+Aug 29 17:28:04 localhost kernel: [   46.484008] FS:  0000000000000000(0000) GS:ffff935bb3d80000(0000) knlGS:0000000000000000
+Aug 29 17:28:04 localhost kernel: [   46.484009] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+Aug 29 17:28:04 localhost kernel: [   46.484011] CR2: 0000009b9614e800 CR3: 0000000418c0e000 CR4: 00000000003406e0
+Aug 29 17:28:04 localhost kernel: [   46.484012] Call Trace:
+Aug 29 17:28:04 localhost kernel: [   46.484019]  ? __slab_alloc.isra.76+0x72/0xb0
+Aug 29 17:28:04 localhost kernel: [   46.484023]  ? rt_spin_lock_slowlock+0x50/0x80
+Aug 29 17:28:04 localhost kernel: [   46.484029]  ? __kmalloc_reserve.isra.35+0x2e/0x80
+Aug 29 17:28:04 localhost kernel: [   46.484056]  ? hci_send_to_channel+0x2c/0xe0 [bluetooth]
+Aug 29 17:28:04 localhost kernel: [   46.484080]  ? hci_send_monitor_ctrl_event+0x17a/0x1b0 [bluetooth]
+Aug 29 17:28:04 localhost kernel: [   46.484108]  ? mgmt_send_event+0x104/0x110 [bluetooth]
+Aug 29 17:28:04 localhost kernel: [   46.484131]  ? mgmt_set_class_of_dev_complete+0xb6/0x150 [bluetooth]
+Aug 29 17:28:04 localhost kernel: [   46.484152]  ? hci_cmd_complete_evt+0x15c5/0x2f40 [bluetooth]
+Aug 29 17:28:04 localhost kernel: [   46.484172]  ? hci_event_packet+0x13b2/0x2cd0 [bluetooth]
+Aug 29 17:28:04 localhost kernel: [   46.484178]  ? cpuacct_charge+0x5f/0x80
+Aug 29 17:28:04 localhost kernel: [   46.484181]  ? unpin_current_cpu+0x37/0x90
+Aug 29 17:28:04 localhost kernel: [   46.484187]  ? migrate_enable+0x230/0x380
+Aug 29 17:28:04 localhost kernel: [   46.484206]  ? hci_rx_work+0x192/0x370 [bluetooth]
+Aug 29 17:28:04 localhost kernel: [   46.484222]  ? hci_rx_work+0x192/0x370 [bluetooth]
+Aug 29 17:28:04 localhost kernel: [   46.484226]  ? process_one_work+0x174/0x480
+Aug 29 17:28:04 localhost kernel: [   46.484230]  ? worker_thread+0x4a/0x4d0
+Aug 29 17:28:04 localhost kernel: [   46.484233]  ? process_one_work+0x480/0x480
+Aug 29 17:28:04 localhost kernel: [   46.484237]  ? kthread+0x118/0x130
+Aug 29 17:28:04 localhost kernel: [   46.484241]  ? kthread_create_on_node+0x70/0x70
+Aug 29 17:28:04 localhost kernel: [   46.484244]  ? do_group_exit+0x47/0xc0
+Aug 29 17:28:04 localhost kernel: [   46.484247]  ? ret_from_fork+0x25/0x30
+Aug 29 17:28:04 localhost kernel: [   46.484250] Code: ff ff ff 7f 0f 85 4b fe ff ff 41 8b 74 24 08 85 f6 0f 85 3e fe ff ff 49 8b 04 24 f6 c4 02 0f 84 31 fe ff ff e9 27 fe ff ff 0f 0b <0f> 0b a9 ff ff ff 7f 0f 85 20 ff ff ff 41 8b 46 08 8
+5 c0 0f 85 
+Aug 29 17:28:04 localhost kernel: [   46.484286] RIP: rt_spin_lock_slowlock_locked+0x26e/0x2d0 RSP: ffff9edcc339bb20
+Aug 29 17:28:04 localhost kernel: [   46.561380] ---[ end trace 0000000000000002 ]---
+
+-- 
+"We will need a longer wall when the revolution comes."
+--- AJS, quoting an uncertain source.
