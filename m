@@ -1,35 +1,67 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: kernel BUG at kernel/locking/rtmutex.c:1059
-Date: Thu, 31 Aug 2017 16:54:35 +0200
-Message-ID: <20170831145435.lgeod4vih3blevfw@linutronix.de>
-References: <86val4928u.fsf@gaheris.avalon.lan>
- <CAAnMKKa2LiYMCr0v32Wnd6TzdpnfZ0qKcecaFp6vpT8gR6+fvg@mail.gmail.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: Possible BT deadlock due to recursive read locking (Was: Re:
+ kernel BUG at kernel/locking/rtmutex.c:1059)
+Date: Thu, 31 Aug 2017 16:56:37 +0200 (CEST)
+Message-ID: <alpine.DEB.2.20.1708311654240.1874@nanos>
+References: <86val4928u.fsf@gaheris.avalon.lan> <20170831145211.xlu6cvocqdkzevsl@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=US-ASCII
 Cc: Mart van de Wege <mvdwege@gmail.com>,
-        linux-rt-users@vger.kernel.org
-To: Pratyush Patel <pratyushpatel.1995@gmail.com>
+        Marcel Holtmann <marcel@holtmann.org>,
+        Johan Hedberg <johan.hedberg@intel.com>,
+        Gustavo Padovan <gustavo@padovan.org>,
+        linux-bluetooth@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org,
+        Peter Zijlstra <peterz@infradead.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:33453 "EHLO
+Received: from Galois.linutronix.de ([146.0.238.70]:33480 "EHLO
         Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751511AbdHaOyg (ORCPT
+        with ESMTP id S1751034AbdHaO4l (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 31 Aug 2017 10:54:36 -0400
-Content-Disposition: inline
-In-Reply-To: <CAAnMKKa2LiYMCr0v32Wnd6TzdpnfZ0qKcecaFp6vpT8gR6+fvg@mail.gmail.com>
+        Thu, 31 Aug 2017 10:56:41 -0400
+In-Reply-To: <20170831145211.xlu6cvocqdkzevsl@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-08-31 16:29:54 [+0530], Pratyush Patel wrote:
-> Hello,
-Hi,
+On Thu, 31 Aug 2017, Sebastian Andrzej Siewior wrote:
 
-> I too faced a similar issue on startup when I ran v4.11.12-rt10 on a
-> virtual QEMU-KVM setup with Arch Linux. The kernel panics when the
-> Locking API test suite runs during the startup. I'm not sure if these
-> could be related.
+> On 2017-08-30 23:25:53 [+0200], Mart van de Wege wrote:
+> > Hi,
+> Hi,
+> 
+> > The issue persists up to v4.11.12-rt10
+> Does
+> 	CONFIG_RWLOCK_RT_READER_BIASED=y
+> make it go away?
+> 
+> > Stacktrace:
+> > 
+> > Aug 29 17:28:04 localhost kernel: [   46.483810] ------------[ cut here ]------------
+> > Aug 29 17:28:04 localhost kernel: [   46.483812] kernel BUG at kernel/locking/rtmutex.c:1059!
+> 
+> this is a deadlock on RT however !RT has a hidden problem which not
+> yelled at by lockdep. We have the following call path:
+> 
+> | hci_send_monitor_ctrl_event()
+> |   read_lock(&hci_sk_list.lock);
+> |
+> |   hci_send_to_channel()
+> |      read_lock(&hci_sk_list.lock);
+> 
+> So both functions acquire the same read_lock. If a write comes along
+> between the first read_lock() and second read_lock() then we have a
+> deadlock because the write_lock() will lock down further readers from
+> acquiring the read-lock until the writer completed its task.
+> 
+> This recursive locking was introduced in 38ceaa00d02d ("Bluetooth: Add
+> support for sending MGMT commands and events to monitor").
 
-This recursive locking is done by the self-test with the same result. I
-suggest you disable it.
+Just for clarification: This is a mainline issue because qrlock based
+rwlocks are writer fair, while the traditional rwlocks are reader
+biased. Lockdep does not yell about it yet, because the wrapper function
+use read-recursive mode.
 
-Sebastian
+Thanks,
+
+	tglx
