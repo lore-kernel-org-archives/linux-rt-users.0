@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v2 04/40] tracing: Add hist_field_name() accessor
-Date: Tue,  5 Sep 2017 16:57:16 -0500
-Message-ID: <c8564dbb3a65488529f124a5eae09f1bda396044.1504642143.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v2 08/40] ring-buffer: Redefine the unimplemented RINGBUF_TIME_TIME_STAMP
+Date: Tue,  5 Sep 2017 16:57:20 -0500
+Message-ID: <ea37886f329f2e23d1e08014d3dc67016d4967a1.1504642143.git.tom.zanussi@linux.intel.com>
 References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -17,176 +17,328 @@ References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-In preparation for hist_fields that won't be strictly based on
-trace_event_fields, add a new hist_field_name() accessor to allow that
-flexibility and update associated users.
+RINGBUF_TYPE_TIME_STAMP is defined but not used, and from what I can
+gather was reserved for something like an absolute timestamp feature
+for the ring buffer, if not a complete replacement of the current
+time_delta scheme.
+
+This code redefines RINGBUF_TYPE_TIME_STAMP to implement absolute time
+stamps.  Another way to look at it is that it essentially forces
+extended time_deltas for all events.
+
+The motivation for doing this is to enable time_deltas that aren't
+dependent on previous events in the ring buffer, making it feasible to
+use the ring_buffer_event timetamps in a more random-access way, for
+purposes other than serial event printing.
+
+To set/reset this mode, use tracing_set_timestamp_abs() from the
+previous interface patch.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 67 +++++++++++++++++++++++++++-------------
- 1 file changed, 45 insertions(+), 22 deletions(-)
+ include/linux/ring_buffer.h |  12 ++---
+ kernel/trace/ring_buffer.c  | 105 ++++++++++++++++++++++++++++++++------------
+ 2 files changed, 83 insertions(+), 34 deletions(-)
 
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 773a66e..0184acd 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -146,6 +146,23 @@ struct hist_trigger_data {
- 	struct tracing_map		*map;
+diff --git a/include/linux/ring_buffer.h b/include/linux/ring_buffer.h
+index 28e3472..74bc276 100644
+--- a/include/linux/ring_buffer.h
++++ b/include/linux/ring_buffer.h
+@@ -36,10 +36,12 @@ struct ring_buffer_event {
+  *				 array[0] = time delta (28 .. 59)
+  *				 size = 8 bytes
+  *
+- * @RINGBUF_TYPE_TIME_STAMP:	Sync time stamp with external clock
+- *				 array[0]    = tv_nsec
+- *				 array[1..2] = tv_sec
+- *				 size = 16 bytes
++ * @RINGBUF_TYPE_TIME_STAMP:	Absolute timestamp
++ *				 Same format as TIME_EXTEND except that the
++ *				 value is an absolute timestamp, not a delta
++ *				 event.time_delta contains bottom 27 bits
++ *				 array[0] = top (28 .. 59) bits
++ *				 size = 8 bytes
+  *
+  * <= @RINGBUF_TYPE_DATA_TYPE_LEN_MAX:
+  *				Data record
+@@ -56,12 +58,12 @@ enum ring_buffer_type {
+ 	RINGBUF_TYPE_DATA_TYPE_LEN_MAX = 28,
+ 	RINGBUF_TYPE_PADDING,
+ 	RINGBUF_TYPE_TIME_EXTEND,
+-	/* FIXME: RINGBUF_TYPE_TIME_STAMP not implemented */
+ 	RINGBUF_TYPE_TIME_STAMP,
  };
  
-+static const char *hist_field_name(struct hist_field *field,
-+				   unsigned int level)
+ unsigned ring_buffer_event_length(struct ring_buffer_event *event);
+ void *ring_buffer_event_data(struct ring_buffer_event *event);
++u64 ring_buffer_event_time_stamp(struct ring_buffer_event *event);
+ 
+ /*
+  * ring_buffer_discard_commit will remove an event that has not
+diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
+index cff15a2..0bcc53e 100644
+--- a/kernel/trace/ring_buffer.c
++++ b/kernel/trace/ring_buffer.c
+@@ -42,6 +42,8 @@ int ring_buffer_print_entry_header(struct trace_seq *s)
+ 			 RINGBUF_TYPE_PADDING);
+ 	trace_seq_printf(s, "\ttime_extend : type == %d\n",
+ 			 RINGBUF_TYPE_TIME_EXTEND);
++	trace_seq_printf(s, "\ttime_stamp : type == %d\n",
++			 RINGBUF_TYPE_TIME_STAMP);
+ 	trace_seq_printf(s, "\tdata max type_len  == %d\n",
+ 			 RINGBUF_TYPE_DATA_TYPE_LEN_MAX);
+ 
+@@ -141,12 +143,15 @@ int ring_buffer_print_entry_header(struct trace_seq *s)
+ 
+ enum {
+ 	RB_LEN_TIME_EXTEND = 8,
+-	RB_LEN_TIME_STAMP = 16,
++	RB_LEN_TIME_STAMP =  8,
+ };
+ 
+ #define skip_time_extend(event) \
+ 	((struct ring_buffer_event *)((char *)event + RB_LEN_TIME_EXTEND))
+ 
++#define extended_time(event) \
++	(event->type_len >= RINGBUF_TYPE_TIME_EXTEND)
++
+ static inline int rb_null_event(struct ring_buffer_event *event)
+ {
+ 	return event->type_len == RINGBUF_TYPE_PADDING && !event->time_delta;
+@@ -210,7 +215,7 @@ static void rb_event_set_padding(struct ring_buffer_event *event)
+ {
+ 	unsigned len = 0;
+ 
+-	if (event->type_len == RINGBUF_TYPE_TIME_EXTEND) {
++	if (extended_time(event)) {
+ 		/* time extends include the data event after it */
+ 		len = RB_LEN_TIME_EXTEND;
+ 		event = skip_time_extend(event);
+@@ -232,7 +237,7 @@ unsigned ring_buffer_event_length(struct ring_buffer_event *event)
+ {
+ 	unsigned length;
+ 
+-	if (event->type_len == RINGBUF_TYPE_TIME_EXTEND)
++	if (extended_time(event))
+ 		event = skip_time_extend(event);
+ 
+ 	length = rb_event_length(event);
+@@ -249,7 +254,7 @@ unsigned ring_buffer_event_length(struct ring_buffer_event *event)
+ static __always_inline void *
+ rb_event_data(struct ring_buffer_event *event)
+ {
+-	if (event->type_len == RINGBUF_TYPE_TIME_EXTEND)
++	if (extended_time(event))
+ 		event = skip_time_extend(event);
+ 	BUG_ON(event->type_len > RINGBUF_TYPE_DATA_TYPE_LEN_MAX);
+ 	/* If length is in len field, then array[0] has the data */
+@@ -276,6 +281,27 @@ void *ring_buffer_event_data(struct ring_buffer_event *event)
+ #define TS_MASK		((1ULL << TS_SHIFT) - 1)
+ #define TS_DELTA_TEST	(~TS_MASK)
+ 
++/**
++ * ring_buffer_event_time_stamp - return the event's extended timestamp
++ * @event: the event to get the timestamp of
++ *
++ * Returns the extended timestamp associated with a data event.
++ * An extended time_stamp is a 64-bit timestamp represented
++ * internally in a special way that makes the best use of space
++ * contained within a ring buffer event.  This function decodes
++ * it and maps it to a straight u64 value.
++ */
++u64 ring_buffer_event_time_stamp(struct ring_buffer_event *event)
 +{
-+	const char *field_name = "";
++	u64 ts;
 +
-+	if (level > 1)
-+		return field_name;
++	ts = event->array[0];
++	ts <<= TS_SHIFT;
++	ts += event->time_delta;
 +
-+	if (field->field)
-+		field_name = field->field->name;
-+
-+	if (field_name == NULL)
-+		field_name = "";
-+
-+	return field_name;
++	return ts;
 +}
 +
- static hist_field_fn_t select_value_fn(int field_size, int field_is_signed)
+ /* Flag when events were overwritten */
+ #define RB_MISSED_EVENTS	(1 << 31)
+ /* Missed count stored at end */
+@@ -2220,13 +2246,16 @@ static void rb_inc_iter(struct ring_buffer_iter *iter)
+ }
+ 
+ /* Slow path, do not inline */
+-static noinline struct ring_buffer_event *
+-rb_add_time_stamp(struct ring_buffer_event *event, u64 delta)
++static struct noinline ring_buffer_event *
++rb_add_time_stamp(struct ring_buffer_event *event, u64 delta, bool abs)
  {
- 	hist_field_fn_t fn = NULL;
-@@ -642,7 +659,6 @@ static int is_descending(const char *str)
- static int create_sort_keys(struct hist_trigger_data *hist_data)
+-	event->type_len = RINGBUF_TYPE_TIME_EXTEND;
++	if (abs)
++		event->type_len = RINGBUF_TYPE_TIME_STAMP;
++	else
++		event->type_len = RINGBUF_TYPE_TIME_EXTEND;
+ 
+-	/* Not the first event on the page? */
+-	if (rb_event_index(event)) {
++	/* Not the first event on the page, or not delta? */
++	if (abs || rb_event_index(event)) {
+ 		event->time_delta = delta & TS_MASK;
+ 		event->array[0] = delta >> TS_SHIFT;
+ 	} else {
+@@ -2269,7 +2298,9 @@ static inline bool rb_event_is_commit(struct ring_buffer_per_cpu *cpu_buffer,
+ 	 * add it to the start of the resevered space.
+ 	 */
+ 	if (unlikely(info->add_timestamp)) {
+-		event = rb_add_time_stamp(event, delta);
++		bool abs = ring_buffer_time_stamp_abs(cpu_buffer->buffer);
++
++		event = rb_add_time_stamp(event, info->delta, abs);
+ 		length -= RB_LEN_TIME_EXTEND;
+ 		delta = 0;
+ 	}
+@@ -2457,7 +2488,7 @@ static __always_inline void rb_end_commit(struct ring_buffer_per_cpu *cpu_buffer
+ 
+ static inline void rb_event_discard(struct ring_buffer_event *event)
  {
- 	char *fields_str = hist_data->attrs->sort_key_str;
--	struct ftrace_event_field *field = NULL;
- 	struct tracing_map_sort_key *sort_key;
- 	int descending, ret = 0;
- 	unsigned int i, j;
-@@ -659,7 +675,9 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
- 	}
+-	if (event->type_len == RINGBUF_TYPE_TIME_EXTEND)
++	if (extended_time(event))
+ 		event = skip_time_extend(event);
  
- 	for (i = 0; i < TRACING_MAP_SORT_KEYS_MAX; i++) {
-+		struct hist_field *hist_field;
- 		char *field_str, *field_name;
-+		const char *test_name;
- 
- 		sort_key = &hist_data->sort_keys[i];
- 
-@@ -692,8 +710,10 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
- 		}
- 
- 		for (j = 1; j < hist_data->n_fields; j++) {
--			field = hist_data->fields[j]->field;
--			if (field && (strcmp(field_name, field->name) == 0)) {
-+			hist_field = hist_data->fields[j];
-+			test_name = hist_field_name(hist_field, 0);
-+
-+			if (strcmp(field_name, test_name) == 0) {
- 				sort_key->field_idx = j;
- 				descending = is_descending(field_str);
- 				if (descending < 0) {
-@@ -941,6 +961,7 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
- 	struct hist_field *key_field;
- 	char str[KSYM_SYMBOL_LEN];
- 	bool multiline = false;
-+	const char *field_name;
- 	unsigned int i;
- 	u64 uval;
- 
-@@ -952,26 +973,27 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
- 		if (i > hist_data->n_vals)
- 			seq_puts(m, ", ");
- 
-+		field_name = hist_field_name(key_field, 0);
-+
- 		if (key_field->flags & HIST_FIELD_FL_HEX) {
- 			uval = *(u64 *)(key + key_field->offset);
--			seq_printf(m, "%s: %llx",
--				   key_field->field->name, uval);
-+			seq_printf(m, "%s: %llx", field_name, uval);
- 		} else if (key_field->flags & HIST_FIELD_FL_SYM) {
- 			uval = *(u64 *)(key + key_field->offset);
- 			sprint_symbol_no_offset(str, uval);
--			seq_printf(m, "%s: [%llx] %-45s",
--				   key_field->field->name, uval, str);
-+			seq_printf(m, "%s: [%llx] %-45s", field_name,
-+				   uval, str);
- 		} else if (key_field->flags & HIST_FIELD_FL_SYM_OFFSET) {
- 			uval = *(u64 *)(key + key_field->offset);
- 			sprint_symbol(str, uval);
--			seq_printf(m, "%s: [%llx] %-55s",
--				   key_field->field->name, uval, str);
-+			seq_printf(m, "%s: [%llx] %-55s", field_name,
-+				   uval, str);
- 		} else if (key_field->flags & HIST_FIELD_FL_EXECNAME) {
- 			char *comm = elt->private_data;
- 
- 			uval = *(u64 *)(key + key_field->offset);
--			seq_printf(m, "%s: %-16s[%10llu]",
--				   key_field->field->name, comm, uval);
-+			seq_printf(m, "%s: %-16s[%10llu]", field_name,
-+				   comm, uval);
- 		} else if (key_field->flags & HIST_FIELD_FL_SYSCALL) {
- 			const char *syscall_name;
- 
-@@ -980,8 +1002,8 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
- 			if (!syscall_name)
- 				syscall_name = "unknown_syscall";
- 
--			seq_printf(m, "%s: %-30s[%3llu]",
--				   key_field->field->name, syscall_name, uval);
-+			seq_printf(m, "%s: %-30s[%3llu]", field_name,
-+				   syscall_name, uval);
- 		} else if (key_field->flags & HIST_FIELD_FL_STACKTRACE) {
- 			seq_puts(m, "stacktrace:\n");
- 			hist_trigger_stacktrace_print(m,
-@@ -989,15 +1011,14 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
- 						      HIST_STACKTRACE_DEPTH);
- 			multiline = true;
- 		} else if (key_field->flags & HIST_FIELD_FL_LOG2) {
--			seq_printf(m, "%s: ~ 2^%-2llu", key_field->field->name,
-+			seq_printf(m, "%s: ~ 2^%-2llu", field_name,
- 				   *(u64 *)(key + key_field->offset));
- 		} else if (key_field->flags & HIST_FIELD_FL_STRING) {
--			seq_printf(m, "%s: %-50s", key_field->field->name,
-+			seq_printf(m, "%s: %-50s", field_name,
- 				   (char *)(key + key_field->offset));
- 		} else {
- 			uval = *(u64 *)(key + key_field->offset);
--			seq_printf(m, "%s: %10llu", key_field->field->name,
--				   uval);
-+			seq_printf(m, "%s: %10llu", field_name, uval);
- 		}
- 	}
- 
-@@ -1010,13 +1031,13 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
- 		   tracing_map_read_sum(elt, HITCOUNT_IDX));
- 
- 	for (i = 1; i < hist_data->n_vals; i++) {
-+		field_name = hist_field_name(hist_data->fields[i], 0);
-+
- 		if (hist_data->fields[i]->flags & HIST_FIELD_FL_HEX) {
--			seq_printf(m, "  %s: %10llx",
--				   hist_data->fields[i]->field->name,
-+			seq_printf(m, "  %s: %10llx", field_name,
- 				   tracing_map_read_sum(elt, i));
- 		} else {
--			seq_printf(m, "  %s: %10llu",
--				   hist_data->fields[i]->field->name,
-+			seq_printf(m, "  %s: %10llu", field_name,
- 				   tracing_map_read_sum(elt, i));
- 		}
- 	}
-@@ -1131,7 +1152,9 @@ static const char *get_hist_field_flags(struct hist_field *hist_field)
- 
- static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
+ 	/* array[0] holds the actual length for the discarded event */
+@@ -2488,6 +2519,10 @@ static inline void rb_event_discard(struct ring_buffer_event *event)
  {
--	seq_printf(m, "%s", hist_field->field->name);
-+	const char *field_name = hist_field_name(hist_field, 0);
-+
-+	seq_printf(m, "%s", field_name);
- 	if (hist_field->flags) {
- 		const char *flags_str = get_hist_field_flags(hist_field);
+ 	u64 delta;
  
++	/* In TIME_STAMP mode, write_stamp is unused, nothing to do */
++	if (event->type_len == RINGBUF_TYPE_TIME_STAMP)
++		return;
++
+ 	/*
+ 	 * The event first in the commit queue updates the
+ 	 * time stamp.
+@@ -2501,9 +2536,7 @@ static inline void rb_event_discard(struct ring_buffer_event *event)
+ 			cpu_buffer->write_stamp =
+ 				cpu_buffer->commit_page->page->time_stamp;
+ 		else if (event->type_len == RINGBUF_TYPE_TIME_EXTEND) {
+-			delta = event->array[0];
+-			delta <<= TS_SHIFT;
+-			delta += event->time_delta;
++			delta = ring_buffer_event_time_stamp(event);
+ 			cpu_buffer->write_stamp += delta;
+ 		} else
+ 			cpu_buffer->write_stamp += event->time_delta;
+@@ -2687,7 +2720,7 @@ int ring_buffer_unlock_commit(struct ring_buffer *buffer,
+ 	 * If this is the first commit on the page, then it has the same
+ 	 * timestamp as the page itself.
+ 	 */
+-	if (!tail)
++	if (!tail && !ring_buffer_time_stamp_abs(cpu_buffer->buffer))
+ 		info->delta = 0;
+ 
+ 	/* See if we shot pass the end of this buffer page */
+@@ -2765,8 +2798,11 @@ int ring_buffer_unlock_commit(struct ring_buffer *buffer,
+ 	/* make sure this diff is calculated here */
+ 	barrier();
+ 
+-	/* Did the write stamp get updated already? */
+-	if (likely(info.ts >= cpu_buffer->write_stamp)) {
++	if (ring_buffer_time_stamp_abs(buffer)) {
++		info.delta = info.ts;
++		rb_handle_timestamp(cpu_buffer, &info);
++	} else /* Did the write stamp get updated already? */
++		if (likely(info.ts >= cpu_buffer->write_stamp)) {
+ 		info.delta = diff;
+ 		if (unlikely(test_time_stamp(info.delta)))
+ 			rb_handle_timestamp(cpu_buffer, &info);
+@@ -3448,14 +3484,12 @@ int ring_buffer_iter_empty(struct ring_buffer_iter *iter)
+ 		return;
+ 
+ 	case RINGBUF_TYPE_TIME_EXTEND:
+-		delta = event->array[0];
+-		delta <<= TS_SHIFT;
+-		delta += event->time_delta;
++		delta = ring_buffer_event_time_stamp(event);
+ 		cpu_buffer->read_stamp += delta;
+ 		return;
+ 
+ 	case RINGBUF_TYPE_TIME_STAMP:
+-		/* FIXME: not implemented */
++		/* In TIME_STAMP mode, write_stamp is unused, nothing to do */
+ 		return;
+ 
+ 	case RINGBUF_TYPE_DATA:
+@@ -3479,14 +3513,12 @@ int ring_buffer_iter_empty(struct ring_buffer_iter *iter)
+ 		return;
+ 
+ 	case RINGBUF_TYPE_TIME_EXTEND:
+-		delta = event->array[0];
+-		delta <<= TS_SHIFT;
+-		delta += event->time_delta;
++		delta = ring_buffer_event_time_stamp(event);
+ 		iter->read_stamp += delta;
+ 		return;
+ 
+ 	case RINGBUF_TYPE_TIME_STAMP:
+-		/* FIXME: not implemented */
++		/* In TIME_STAMP mode, write_stamp is unused, nothing to do */
+ 		return;
+ 
+ 	case RINGBUF_TYPE_DATA:
+@@ -3710,6 +3742,8 @@ static int rb_lost_events(struct ring_buffer_per_cpu *cpu_buffer)
+ 	struct buffer_page *reader;
+ 	int nr_loops = 0;
+ 
++	if (ts)
++		*ts = 0;
+  again:
+ 	/*
+ 	 * We repeat when a time extend is encountered.
+@@ -3746,12 +3780,17 @@ static int rb_lost_events(struct ring_buffer_per_cpu *cpu_buffer)
+ 		goto again;
+ 
+ 	case RINGBUF_TYPE_TIME_STAMP:
+-		/* FIXME: not implemented */
++		if (ts) {
++			*ts = ring_buffer_event_time_stamp(event);
++			ring_buffer_normalize_time_stamp(cpu_buffer->buffer,
++							 cpu_buffer->cpu, ts);
++		}
++		/* Internal data, OK to advance */
+ 		rb_advance_reader(cpu_buffer);
+ 		goto again;
+ 
+ 	case RINGBUF_TYPE_DATA:
+-		if (ts) {
++		if (ts && !(*ts)) {
+ 			*ts = cpu_buffer->read_stamp + event->time_delta;
+ 			ring_buffer_normalize_time_stamp(cpu_buffer->buffer,
+ 							 cpu_buffer->cpu, ts);
+@@ -3776,6 +3815,9 @@ static int rb_lost_events(struct ring_buffer_per_cpu *cpu_buffer)
+ 	struct ring_buffer_event *event;
+ 	int nr_loops = 0;
+ 
++	if (ts)
++		*ts = 0;
++
+ 	cpu_buffer = iter->cpu_buffer;
+ 	buffer = cpu_buffer->buffer;
+ 
+@@ -3828,12 +3870,17 @@ static int rb_lost_events(struct ring_buffer_per_cpu *cpu_buffer)
+ 		goto again;
+ 
+ 	case RINGBUF_TYPE_TIME_STAMP:
+-		/* FIXME: not implemented */
++		if (ts) {
++			*ts = ring_buffer_event_time_stamp(event);
++			ring_buffer_normalize_time_stamp(cpu_buffer->buffer,
++							 cpu_buffer->cpu, ts);
++		}
++		/* Internal data, OK to advance */
+ 		rb_advance_iter(iter);
+ 		goto again;
+ 
+ 	case RINGBUF_TYPE_DATA:
+-		if (ts) {
++		if (ts && !(*ts)) {
+ 			*ts = iter->read_stamp + event->time_delta;
+ 			ring_buffer_normalize_time_stamp(buffer,
+ 							 cpu_buffer->cpu, ts);
 -- 
 1.9.3
