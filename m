@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v2 34/40] tracing: Add 'last error' error facility for hist triggers
-Date: Tue,  5 Sep 2017 16:57:46 -0500
-Message-ID: <89e851e663a2322cbe1d952d6e7695dacfed8a96.1504642143.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v2 33/40] tracing: Add hist trigger support for variable reference aliases
+Date: Tue,  5 Sep 2017 16:57:45 -0500
+Message-ID: <35c0e47907c9acaa847c83ad0ec3af0092cde250.1504642143.git.tom.zanussi@linux.intel.com>
 References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -17,502 +17,128 @@ References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-With the addition of variables and actions, it's become necessary to
-provide more detailed error information to users about syntax errors.
-
-Add a 'last error' facility accessible via the erroring event's 'hist'
-file.  Reading the hist file after an error will display more detailed
-information about what went wrong, if information is available.  This
-extended error information will be available until the next hist
-trigger command for that event.
-
-  # echo xxx > /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-  echo: write error: Invalid argument
-
-  # cat /sys/kernel/debug/tracing/events/sched/sched_wakeup/hist
-
-  ERROR: Couldn't yyy: zzz
-  Last command: xxx
-
-Also add specific error messages for variable and action errors.
+Add support for alias=$somevar where alias can be used as
+onmatch($alias).
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- Documentation/trace/events.txt   |  19 ++++
- kernel/trace/trace_events_hist.c | 188 ++++++++++++++++++++++++++++++++++++---
- 2 files changed, 194 insertions(+), 13 deletions(-)
+ kernel/trace/trace_events_hist.c | 61 ++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 58 insertions(+), 3 deletions(-)
 
-diff --git a/Documentation/trace/events.txt b/Documentation/trace/events.txt
-index 9717688..f271d87 100644
---- a/Documentation/trace/events.txt
-+++ b/Documentation/trace/events.txt
-@@ -686,6 +686,25 @@ The following commands are supported:
- 				 interpreted as microseconds.
-     cpu                    int - the cpu on which the event occurred.
- 
-+  Extended error information
-+  --------------------------
-+
-+  For some error conditions encountered when invoking a hist trigger
-+  command, extended error information is available via the
-+  corresponding event's 'hist' file.  Reading the hist file after an
-+  error will display more detailed information about what went wrong,
-+  if information is available.  This extended error information will
-+  be available until the next hist trigger command for that event.
-+
-+  If available for a given error condition, the extended error
-+  information and usage takes the following form:
-+
-+    # echo xxx > /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-+    echo: write error: Invalid argument
-+
-+    # cat /sys/kernel/debug/tracing/events/sched/sched_wakeup/hist
-+    ERROR: Couldn't yyy: zzz
-+      Last command: xxx
- 
- 6.2 'hist' trigger examples
- ---------------------------
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 764c5e5..655b731 100644
+index 0782766..764c5e5 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -351,6 +351,88 @@ struct action_data {
- 	};
+@@ -227,6 +227,7 @@ enum hist_field_flags {
+ 	HIST_FIELD_FL_EXPR		= 16384,
+ 	HIST_FIELD_FL_VAR_REF		= 32768,
+ 	HIST_FIELD_FL_CPU		= 65536,
++	HIST_FIELD_FL_ALIAS		= 131072,
  };
  
-+
-+static char *hist_err_str;
-+static char *last_hist_cmd;
-+
-+static int hist_err_alloc(void)
-+{
-+	int ret = 0;
-+
-+	last_hist_cmd = kzalloc(MAX_FILTER_STR_VAL, GFP_KERNEL);
-+	if (!last_hist_cmd)
-+		return -ENOMEM;
-+
-+	hist_err_str = kzalloc(MAX_FILTER_STR_VAL, GFP_KERNEL);
-+	if (!hist_err_str) {
-+		kfree(last_hist_cmd);
-+		ret = -ENOMEM;
-+	}
-+
-+	return ret;
-+}
-+
-+static void last_cmd_set(char *str)
-+{
-+	if (!last_hist_cmd || !str)
-+		return;
-+
-+	if (strlen(str) > MAX_FILTER_STR_VAL - 1)
-+		return;
-+
-+	strcpy(last_hist_cmd, str);
-+}
-+
-+static void hist_err(char *str, char *var)
-+{
-+	int maxlen = MAX_FILTER_STR_VAL - 1;
-+
-+	if (!hist_err_str || !str)
-+		return;
-+
-+	if (strlen(hist_err_str))
-+		return;
-+
-+	if (!var)
-+		var = "";
-+
-+	if (strlen(hist_err_str) + strlen(str) + strlen(var) > maxlen)
-+		return;
-+
-+	strcat(hist_err_str, str);
-+	strcat(hist_err_str, var);
-+}
-+
-+static void hist_err_event(char *str, char *system, char *event, char *var)
-+{
-+	char err[MAX_FILTER_STR_VAL];
-+
-+	if (system && var)
-+		sprintf(err, "%s.%s.%s", system, event, var);
-+	else if (system)
-+		sprintf(err, "%s.%s", system, event);
-+	else
-+		strcpy(err, var);
-+
-+	hist_err(str, err);
-+}
-+
-+static void hist_err_clear(void)
-+{
-+	if (!hist_err_str)
-+		return;
-+
-+	hist_err_str[0] = '\0';
-+}
-+
-+static bool have_hist_err(void)
-+{
-+	if (hist_err_str && strlen(hist_err_str))
-+		return true;
-+
-+	return false;
-+}
-+
- static LIST_HEAD(synth_event_list);
- static DEFINE_MUTEX(synth_event_mutex);
+ struct var_defs {
+@@ -1525,7 +1526,8 @@ static const char *hist_field_name(struct hist_field *field,
  
-@@ -2110,9 +2192,18 @@ static struct hist_field *create_var_ref(struct hist_field *var_field)
- 	return ref_field;
+ 	if (field->field)
+ 		field_name = field->field->name;
+-	else if (field->flags & HIST_FIELD_FL_LOG2)
++	else if (field->flags & HIST_FIELD_FL_LOG2 ||
++		 field->flags & HIST_FIELD_FL_ALIAS)
+ 		field_name = hist_field_name(field->operands[0], ++level);
+ 	else if (field->flags & HIST_FIELD_FL_TIMESTAMP)
+ 		field_name = "$common_timestamp";
+@@ -1961,7 +1963,7 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
+ 
+ 	hist_field->hist_data = hist_data;
+ 
+-	if (flags & HIST_FIELD_FL_EXPR)
++	if (flags & HIST_FIELD_FL_EXPR || flags & HIST_FIELD_FL_ALIAS)
+ 		goto out; /* caller will populate */
+ 
+ 	if (flags & HIST_FIELD_FL_VAR_REF) {
+@@ -2219,6 +2221,29 @@ static struct hist_field *parse_var_ref(struct trace_array *tr,
+ 	return field;
  }
  
-+static bool is_common_field(char *var_name)
++static struct hist_field *create_alias(struct hist_trigger_data *hist_data,
++				       struct hist_field *var_ref,
++				       char *var_name)
 +{
-+	if (strncmp(var_name, "$common_timestamp", strlen("$common_timestamp")) == 0)
-+		return true;
++	struct hist_field *alias = NULL;
++	unsigned long flags = HIST_FIELD_FL_ALIAS | HIST_FIELD_FL_VAR |
++		HIST_FIELD_FL_VAR_ONLY;
 +
-+	return false;
++	alias = create_hist_field(hist_data, NULL, flags, var_name);
++	if (!alias)
++		return NULL;
++
++	alias->fn = var_ref->fn;
++	alias->operands[0] = var_ref;
++
++	if (init_var_ref(alias, var_ref)) {
++		destroy_hist_field(alias, 0);
++		return NULL;
++	}
++
++	return alias;
 +}
 +
- static bool is_var_ref(char *var_name)
- {
--	if (!var_name || strlen(var_name) < 2 || var_name[0] != '$')
-+	if (!var_name || strlen(var_name) < 2 || var_name[0] != '$' ||
-+	    is_common_field(var_name))
- 		return false;
- 
- 	return true;
-@@ -2164,6 +2255,10 @@ static struct hist_field *parse_var_ref(struct trace_array *tr,
- 	if (var_field)
- 		ref_field = create_var_ref(var_field);
- 
-+	if (!ref_field)
-+		hist_err_event("Couldn't find variable: $",
-+			       system, event_name, var_name);
-+
- 	return ref_field;
- }
- 
-@@ -2399,8 +2494,10 @@ static int check_expr_operands(struct hist_field *operand1,
- 	}
- 
- 	if ((operand1_flags & HIST_FIELD_FL_TIMESTAMP_USECS) !=
--	    (operand2_flags & HIST_FIELD_FL_TIMESTAMP_USECS))
-+	    (operand2_flags & HIST_FIELD_FL_TIMESTAMP_USECS)) {
-+		hist_err("Timestamp units in expression don't match", NULL);
- 		return -EINVAL;
-+	}
- 
- 	return 0;
- }
-@@ -2600,19 +2697,27 @@ static struct trace_event_file *event_file(struct trace_array *tr,
- 	char *cmd;
- 	int ret;
- 
--	if (target_hist_data->n_field_var_hists >= SYNTH_FIELDS_MAX)
-+	if (target_hist_data->n_field_var_hists >= SYNTH_FIELDS_MAX) {
-+		hist_err_event("onmatch: Too many field variables defined: ",
-+			       system, event_name, field_name);
- 		return ERR_PTR(-EINVAL);
-+	}
- 
- 	file = event_file(tr, system, event_name);
- 
- 	if (IS_ERR(file)) {
-+		hist_err_event("onmatch: Event file not found: ",
-+			       system, event_name, field_name);
- 		ret = PTR_ERR(file);
- 		return ERR_PTR(ret);
- 	}
- 
- 	hist_data = find_compatible_hist(target_hist_data, file);
--	if (!hist_data)
-+	if (!hist_data) {
-+		hist_err_event("onmatch: Matching event histogram not found: ",
-+			       system, event_name, field_name);
- 		return ERR_PTR(-EINVAL);
-+	}
- 
- 	var_hist = kzalloc(sizeof(*var_hist), GFP_KERNEL);
- 	if (!var_hist)
-@@ -2660,6 +2765,8 @@ static struct trace_event_file *event_file(struct trace_array *tr,
- 		kfree(cmd);
- 		kfree(var_hist->cmd);
- 		kfree(var_hist);
-+		hist_err_event("onmatch: Couldn't create histogram for field: ",
-+			       system, event_name, field_name);
- 		return ERR_PTR(ret);
- 	}
- 
-@@ -2671,6 +2778,8 @@ static struct trace_event_file *event_file(struct trace_array *tr,
- 		kfree(cmd);
- 		kfree(var_hist->cmd);
- 		kfree(var_hist);
-+		hist_err_event("onmatch: Couldn't find synthetic variable: ",
-+			       system, event_name, field_name);
- 		return ERR_PTR(-EINVAL);
- 	}
- 
-@@ -2807,18 +2916,21 @@ static struct field_var *create_field_var(struct hist_trigger_data *hist_data,
- 	int ret = 0;
- 
- 	if (hist_data->n_field_vars >= SYNTH_FIELDS_MAX) {
-+		hist_err("Too many field variables defined: ", field_name);
- 		ret = -EINVAL;
- 		goto err;
- 	}
- 
- 	val = parse_atom(hist_data, file, field_name, &flags, NULL);
- 	if (IS_ERR(val)) {
-+		hist_err("Couldn't parse field variable: ", field_name);
- 		ret = PTR_ERR(val);
- 		goto err;
- 	}
- 
- 	var = create_var(hist_data, file, field_name, val->size, val->type);
- 	if (IS_ERR(var)) {
-+		hist_err("Couldn't create or find variable: ", field_name);
- 		kfree(val);
- 		ret = PTR_ERR(var);
- 		goto err;
-@@ -2943,14 +3055,18 @@ static int onmax_create(struct hist_trigger_data *hist_data,
- 	int ret = 0;
- 
- 	onmax_var_str = data->onmax.var_str;
--	if (onmax_var_str[0] != '$')
-+	if (onmax_var_str[0] != '$') {
-+		hist_err("onmax: For onmax(x), x must be a variable: ", onmax_var_str);
- 		return -EINVAL;
-+	}
- 	onmax_var_str++;
- 
- 	event_name = trace_event_name(call);
- 	var_field = find_target_event_var(hist_data, NULL, NULL, onmax_var_str);
--	if (!var_field)
-+	if (!var_field) {
-+		hist_err("onmax: Couldn't find onmax variable: ", onmax_var_str);
- 		return -EINVAL;
-+	}
- 
- 	flags = HIST_FIELD_FL_VAR_REF;
- 	ref_field = create_hist_field(hist_data, NULL, flags, NULL);
-@@ -2970,6 +3086,7 @@ static int onmax_create(struct hist_trigger_data *hist_data,
- 	data->onmax.max_var_ref_idx = var_ref_idx;
- 	max_var = create_var(hist_data, file, "max", sizeof(u64), "u64");
- 	if (IS_ERR(max_var)) {
-+		hist_err("onmax: Couldn't create onmax variable: ", "max");
- 		ret = PTR_ERR(max_var);
- 		goto out;
- 	}
-@@ -2982,6 +3099,7 @@ static int onmax_create(struct hist_trigger_data *hist_data,
- 
- 		field_var = create_target_field_var(hist_data, NULL, NULL, param);
- 		if (IS_ERR(field_var)) {
-+			hist_err("onmax: Couldn't create field variable: ", param);
- 			ret = PTR_ERR(field_var);
- 			kfree(param);
- 			goto out;
-@@ -3014,6 +3132,7 @@ static int parse_action_params(char *params, struct action_data *data)
- 
- 		param = strstrip(param);
- 		if (strlen(param) < 2) {
-+			hist_err("Invalid action param: ", param);
- 			ret = -EINVAL;
- 			goto out;
- 		}
-@@ -3185,6 +3304,9 @@ static int check_synth_field(struct synth_event *event,
- 		hist_field = find_event_var(tr, system, event, var);
- 	}
- 
-+	if (!hist_field)
-+		hist_err_event("onmatch: Couldn't find onmatch param: $", system, event, var);
-+
- 	return hist_field;
- }
- 
-@@ -3236,6 +3358,7 @@ static int onmatch_create(struct hist_trigger_data *hist_data,
- 
- 	event = find_synth_event(data->onmatch.synth_event_name);
- 	if (!event) {
-+		hist_err("onmatch: Couldn't find synthetic event: ", data->onmatch.synth_event_name);
- 		ret = -EINVAL;
- 		goto out;
- 	}
-@@ -3275,6 +3398,7 @@ static int onmatch_create(struct hist_trigger_data *hist_data,
- 			ret = -EINVAL;
- 			goto out;
- 		}
-+
- 		if (check_synth_field(event, hist_field, field_pos) == 0) {
- 			var_ref = create_var_ref(hist_field);
- 			if (!var_ref) {
-@@ -3289,12 +3413,15 @@ static int onmatch_create(struct hist_trigger_data *hist_data,
- 			continue;
- 		}
- 
-+		hist_err_event("onmatch: Param type doesn't match synthetic event field type: ",
-+			       system, event_name, param);
- 		kfree(p);
- 		ret = -EINVAL;
- 		goto out;
- 	}
- 
- 	if (field_pos != event->n_fields) {
-+		hist_err("onmatch: Param count doesn't match synthetic event field count: ", event->name);
- 		ret = -EINVAL;
- 		goto out;
- 	}
-@@ -3322,15 +3449,22 @@ static struct action_data *onmatch_parse(struct trace_array *tr, char *str)
- 		return ERR_PTR(-ENOMEM);
- 
- 	match_event = strsep(&str, ")");
--	if (!match_event || !str)
-+	if (!match_event || !str) {
-+		hist_err("onmatch: Missing closing paren: ", match_event);
- 		goto free;
-+	}
- 
- 	match_event_system = strsep(&match_event, ".");
--	if (!match_event)
-+	if (!match_event) {
-+		hist_err("onmatch: Missing subsystem for match event: ", match_event_system);
- 		goto free;
-+	}
- 
--	if (IS_ERR(event_file(tr, match_event_system, match_event)))
-+	if (IS_ERR(event_file(tr, match_event_system, match_event))) {
-+		hist_err_event("onmatch: Invalid subsystem or event name: ",
-+			       match_event_system, match_event, NULL);
- 		goto free;
-+	}
- 
- 	data->onmatch.match_event = kstrdup(match_event, GFP_KERNEL);
- 	if (!data->onmatch.match_event) {
-@@ -3345,12 +3479,16 @@ static struct action_data *onmatch_parse(struct trace_array *tr, char *str)
- 	}
- 
- 	strsep(&str, ".");
--	if (!str)
-+	if (!str) {
-+		hist_err("onmatch: Missing . after onmatch(): ", str);
- 		goto free;
-+	}
- 
- 	synth_event_name = strsep(&str, "(");
--	if (!synth_event_name || !str)
-+	if (!synth_event_name || !str) {
-+		hist_err("onmatch: Missing opening paramlist paren: ", synth_event_name);
- 		goto free;
-+	}
- 
- 	data->onmatch.synth_event_name = kstrdup(synth_event_name, GFP_KERNEL);
- 	if (!data->onmatch.synth_event_name) {
-@@ -3359,8 +3497,10 @@ static struct action_data *onmatch_parse(struct trace_array *tr, char *str)
- 	}
- 
- 	params = strsep(&str, ")");
--	if (!params || !str || (str && strlen(str)))
-+	if (!params || !str || (str && strlen(str))) {
-+		hist_err("onmatch: Missing closing paramlist paren: ", params);
- 		goto free;
-+	}
- 
- 	ret = parse_action_params(params, data);
- 	if (ret)
-@@ -3440,12 +3580,14 @@ static int create_var_field(struct hist_trigger_data *hist_data,
- 		return -EINVAL;
- 
- 	if (find_var(file, var_name) && !hist_data->remove) {
-+		hist_err("Variable already defined: ", var_name);
- 		return -EINVAL;
- 	}
- 
- 	flags |= HIST_FIELD_FL_VAR;
- 	hist_data->n_vars++;
- 	if (hist_data->n_vars > TRACING_MAP_VARS_MAX) {
-+		hist_err("Too many variables defined: ", var_name);
- 		return -EINVAL;
- 	}
- 
-@@ -3636,6 +3778,7 @@ static int parse_var_defs(struct hist_trigger_data *hist_data)
- 
- 			var_name = strsep(&field_str, "=");
- 			if (!var_name || !field_str) {
-+				hist_err("Malformed assignment: ", var_name);
- 				ret = -EINVAL;
- 				goto free;
- 			}
-@@ -4362,6 +4505,11 @@ static int hist_show(struct seq_file *m, void *v)
- 			hist_trigger_show(m, data, n++);
- 	}
- 
-+	if (have_hist_err()) {
-+		seq_printf(m, "\nERROR: %s\n", hist_err_str);
-+		seq_printf(m, "  Last command: %s\n", last_hist_cmd);
-+	}
-+
-  out_unlock:
- 	mutex_unlock(&event_mutex);
- 
-@@ -4709,6 +4857,7 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
- 		if (named_data) {
- 			if (!hist_trigger_match(data, named_data, named_data,
- 						true)) {
-+				hist_err("Named hist trigger doesn't match existing named trigger (includes variables): ", hist_data->attrs->name);
- 				ret = -EINVAL;
- 				goto out;
- 			}
-@@ -4728,13 +4877,16 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
- 				test->paused = false;
- 			else if (hist_data->attrs->clear)
- 				hist_clear(test);
--			else
-+			else {
-+				hist_err("Hist trigger already exists", NULL);
- 				ret = -EEXIST;
+ struct hist_field *parse_atom(struct hist_trigger_data *hist_data,
+ 			      struct trace_event_file *file, char *str,
+ 			      unsigned long *flags, char *var_name)
+@@ -2245,6 +2270,13 @@ struct hist_field *parse_atom(struct hist_trigger_data *hist_data,
+ 		if (hist_field) {
+ 			hist_data->var_refs[hist_data->n_var_refs] = hist_field;
+ 			hist_field->var_ref_idx = hist_data->n_var_refs++;
++			if (var_name) {
++				hist_field = create_alias(hist_data, hist_field, var_name);
++				if (!hist_field) {
++					ret = -ENOMEM;
++					goto out;
++				}
 +			}
- 			goto out;
+ 			return hist_field;
  		}
- 	}
-  new:
- 	if (hist_data->attrs->cont || hist_data->attrs->clear) {
-+		hist_err("Can't clear or continue a nonexistent hist trigger", NULL);
- 		ret = -ENOENT;
- 		goto out;
- 	}
-@@ -4901,6 +5053,11 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
- 	char *trigger, *p;
- 	int ret = 0;
+ 	} else
+@@ -2346,6 +2378,26 @@ static int check_expr_operands(struct hist_field *operand1,
+ 	unsigned long operand1_flags = operand1->flags;
+ 	unsigned long operand2_flags = operand2->flags;
  
-+	if (glob && strlen(glob)) {
-+		last_cmd_set(param);
-+		hist_err_clear();
++	if ((operand1_flags & HIST_FIELD_FL_VAR_REF) ||
++	    (operand1_flags & HIST_FIELD_FL_ALIAS)) {
++		struct hist_field *var;
++
++		var = find_var_field(operand1->var.hist_data, operand1->name);
++		if (!var)
++			return -EINVAL;
++		operand1_flags = var->flags;
 +	}
 +
- 	if (!param)
++	if ((operand2_flags & HIST_FIELD_FL_VAR_REF) ||
++	    (operand2_flags & HIST_FIELD_FL_ALIAS)) {
++		struct hist_field *var;
++
++		var = find_var_field(operand2->var.hist_data, operand2->name);
++		if (!var)
++			return -EINVAL;
++		operand2_flags = var->flags;
++	}
++
+ 	if ((operand1_flags & HIST_FIELD_FL_TIMESTAMP_USECS) !=
+ 	    (operand2_flags & HIST_FIELD_FL_TIMESTAMP_USECS))
  		return -EINVAL;
+@@ -4339,8 +4391,11 @@ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
+ 		seq_puts(m, "$common_timestamp");
+ 	else if (hist_field->flags & HIST_FIELD_FL_CPU)
+ 		seq_puts(m, "cpu");
+-	else if (field_name)
++	else if (field_name) {
++		if (hist_field->flags & HIST_FIELD_FL_ALIAS)
++			seq_putc(m, '$');
+ 		seq_printf(m, "%s", field_name);
++	}
  
-@@ -5019,6 +5176,9 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
- 	/* Just return zero, not the number of registered triggers */
- 	ret = 0;
-  out:
-+	if (ret == 0)
-+		hist_err_clear();
-+
- 	return ret;
-  out_unreg:
- 	cmd_ops->unreg(glob+1, trigger_ops, trigger_data, file);
-@@ -5208,6 +5368,8 @@ static __init int trace_events_hist_init(void)
- 		goto err;
- 	}
- 
-+	hist_err_alloc();
-+
- 	return err;
-  err:
- 	pr_warn("Could not create tracefs 'synthetic_events' entry\n");
+ 	if (hist_field->flags) {
+ 		const char *flags_str = get_hist_field_flags(hist_field);
 -- 
 1.9.3
