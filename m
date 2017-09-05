@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v2 23/40] tracing: Add hist_field 'type' field
-Date: Tue,  5 Sep 2017 16:57:35 -0500
-Message-ID: <aab975489fabff648cb6d82cbfc9104acaffd443.1504642143.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v2 25/40] tracing: Add support for dynamic tracepoints
+Date: Tue,  5 Sep 2017 16:57:37 -0500
+Message-ID: <9f89af4588c84850a58edcf72d2591ba78906c30.1504642143.git.tom.zanussi@linux.intel.com>
 References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -17,115 +17,82 @@ References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Future support for synthetic events requires hist_field 'type'
-information, so add a field for that.
+The tracepoint infrastructure assumes statically-defined tracepoints
+and uses static_keys for tracepoint enablement.  In order to define
+tracepoints on the fly, we need to have a dynamic counterpart.
 
-Also, make other hist_field attribute usage consistent (size,
-is_signed, etc).
+Add a 'dynamic' flag to struct tracepoint along with accompanying
+logic for this purpose.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 33 +++++++++++++++++++++++++++++++++
- 1 file changed, 33 insertions(+)
+ include/linux/tracepoint-defs.h |  1 +
+ kernel/tracepoint.c             | 18 +++++++++++++-----
+ 2 files changed, 14 insertions(+), 5 deletions(-)
 
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index c7dbe37..4650c22 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -54,6 +54,7 @@ struct hist_field {
- 	unsigned int			size;
- 	unsigned int			offset;
- 	unsigned int                    is_signed;
-+	const char			*type;
- 	struct hist_field		*operands[HIST_FIELD_OPERANDS_MAX];
- 	struct hist_trigger_data	*hist_data;
- 	struct hist_var			var;
-@@ -650,6 +651,7 @@ static void destroy_hist_field(struct hist_field *hist_field,
+diff --git a/include/linux/tracepoint-defs.h b/include/linux/tracepoint-defs.h
+index a031920..bc22d54 100644
+--- a/include/linux/tracepoint-defs.h
++++ b/include/linux/tracepoint-defs.h
+@@ -32,6 +32,7 @@ struct tracepoint {
+ 	int (*regfunc)(void);
+ 	void (*unregfunc)(void);
+ 	struct tracepoint_func __rcu *funcs;
++	bool dynamic;
+ };
  
- 	kfree(hist_field->var.name);
- 	kfree(hist_field->name);
-+	kfree(hist_field->type);
+ #endif
+diff --git a/kernel/tracepoint.c b/kernel/tracepoint.c
+index 685c50a..1c5957f 100644
+--- a/kernel/tracepoint.c
++++ b/kernel/tracepoint.c
+@@ -197,7 +197,9 @@ static int tracepoint_add_func(struct tracepoint *tp,
+ 	struct tracepoint_func *old, *tp_funcs;
+ 	int ret;
  
- 	kfree(hist_field);
+-	if (tp->regfunc && !static_key_enabled(&tp->key)) {
++	if (tp->regfunc &&
++	    ((tp->dynamic && !(atomic_read(&tp->key.enabled) > 0)) ||
++	     !static_key_enabled(&tp->key))) {
+ 		ret = tp->regfunc();
+ 		if (ret < 0)
+ 			return ret;
+@@ -219,7 +221,9 @@ static int tracepoint_add_func(struct tracepoint *tp,
+ 	 * is used.
+ 	 */
+ 	rcu_assign_pointer(tp->funcs, tp_funcs);
+-	if (!static_key_enabled(&tp->key))
++	if (tp->dynamic && !(atomic_read(&tp->key.enabled) > 0))
++		atomic_inc(&tp->key.enabled);
++	else if (!tp->dynamic && !static_key_enabled(&tp->key))
+ 		static_key_slow_inc(&tp->key);
+ 	release_probes(old);
+ 	return 0;
+@@ -246,10 +250,14 @@ static int tracepoint_remove_func(struct tracepoint *tp,
+ 
+ 	if (!tp_funcs) {
+ 		/* Removed last function */
+-		if (tp->unregfunc && static_key_enabled(&tp->key))
++		if (tp->unregfunc &&
++		    ((tp->dynamic && (atomic_read(&tp->key.enabled) > 0)) ||
++		     static_key_enabled(&tp->key)))
+ 			tp->unregfunc();
+ 
+-		if (static_key_enabled(&tp->key))
++		if (tp->dynamic && (atomic_read(&tp->key.enabled) > 0))
++			atomic_dec(&tp->key.enabled);
++		else if (!tp->dynamic && static_key_enabled(&tp->key))
+ 			static_key_slow_dec(&tp->key);
+ 	}
+ 	rcu_assign_pointer(tp->funcs, tp_funcs);
+@@ -258,7 +266,7 @@ static int tracepoint_remove_func(struct tracepoint *tp,
  }
-@@ -675,6 +677,10 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
  
- 	if (flags & HIST_FIELD_FL_HITCOUNT) {
- 		hist_field->fn = hist_field_counter;
-+		hist_field->size = sizeof(u64);
-+		hist_field->type = kstrdup("u64", GFP_KERNEL);
-+		if (!hist_field->type)
-+			goto free;
- 		goto out;
- 	}
- 
-@@ -688,12 +694,18 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
- 		hist_field->fn = hist_field_log2;
- 		hist_field->operands[0] = create_hist_field(hist_data, field, fl, NULL);
- 		hist_field->size = hist_field->operands[0]->size;
-+		hist_field->type = kstrdup(hist_field->operands[0]->type, GFP_KERNEL);
-+		if (!hist_field->type)
-+			goto free;
- 		goto out;
- 	}
- 
- 	if (flags & HIST_FIELD_FL_TIMESTAMP) {
- 		hist_field->fn = hist_field_timestamp;
- 		hist_field->size = sizeof(u64);
-+		hist_field->type = kstrdup("u64", GFP_KERNEL);
-+		if (!hist_field->type)
-+			goto free;
- 		goto out;
- 	}
- 
-@@ -703,6 +715,11 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
- 	if (is_string_field(field)) {
- 		flags |= HIST_FIELD_FL_STRING;
- 
-+		hist_field->size = MAX_FILTER_STR_VAL;
-+		hist_field->type = kstrdup(field->type, GFP_KERNEL);
-+		if (!hist_field->type)
-+			goto free;
-+
- 		if (field->filter_type == FILTER_STATIC_STRING)
- 			hist_field->fn = hist_field_string;
- 		else if (field->filter_type == FILTER_DYN_STRING)
-@@ -710,6 +727,12 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
- 		else
- 			hist_field->fn = hist_field_pstring;
- 	} else {
-+		hist_field->size = field->size;
-+		hist_field->is_signed = field->is_signed;
-+		hist_field->type = kstrdup(field->type, GFP_KERNEL);
-+		if (!hist_field->type)
-+			goto free;
-+
- 		hist_field->fn = select_value_fn(field->size,
- 						 field->is_signed);
- 		if (!hist_field->fn) {
-@@ -917,6 +940,11 @@ static struct hist_field *parse_unary(struct hist_trigger_data *hist_data,
- 	expr->operands[0] = operand1;
- 	expr->operator = FIELD_OP_UNARY_MINUS;
- 	expr->name = expr_str(expr, 0);
-+	expr->type = kstrdup(operand1->type, GFP_KERNEL);
-+	if (!expr->type) {
-+		ret = -ENOMEM;
-+		goto free;
-+	}
- 
- 	return expr;
-  free:
-@@ -1005,6 +1033,11 @@ static struct hist_field *parse_expr(struct hist_trigger_data *hist_data,
- 	expr->operands[1] = operand2;
- 	expr->operator = field_op;
- 	expr->name = expr_str(expr, 0);
-+	expr->type = kstrdup(operand1->type, GFP_KERNEL);
-+	if (!expr->type) {
-+		ret = -ENOMEM;
-+		goto free;
-+	}
- 
- 	switch (field_op) {
- 	case FIELD_OP_MINUS:
+ /**
+- * tracepoint_probe_register -  Connect a probe to a tracepoint
++ * tracepoint_probe_register_prio -  Connect a probe to a tracepoint
+  * @tp: tracepoint
+  * @probe: probe handler
+  * @data: tracepoint data
 -- 
 1.9.3
