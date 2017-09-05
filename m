@@ -1,13 +1,14 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v2 02/40] tracing: Add support to detect and avoid duplicates
-Date: Tue,  5 Sep 2017 16:57:14 -0500
-Message-ID: <7f3ca68455bdac47285ed45d608075a4af287362.1504642143.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v2 04/40] tracing: Add hist_field_name() accessor
+Date: Tue,  5 Sep 2017 16:57:16 -0500
+Message-ID: <c8564dbb3a65488529f124a5eae09f1bda396044.1504642143.git.tom.zanussi@linux.intel.com>
 References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
         joel.opensrc@gmail.com, joelaf@google.com,
         mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        Tom Zanussi <tom.zanussi@linux.intel.com>
 To: rostedt@goodmis.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1504642143.git.tom.zanussi@linux.intel.com>
@@ -16,112 +17,176 @@ References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Vedang Patel <vedang.patel@intel.com>
+In preparation for hist_fields that won't be strictly based on
+trace_event_fields, add a new hist_field_name() accessor to allow that
+flexibility and update associated users.
 
-A duplicate in the tracing_map hash table is when 2 different entries
-have the same key and, as a result, the key_hash. This is possible due
-to a race condition in the algorithm. This race condition is inherent to
-the algorithm and not a bug. This was fine because, until now, we were
-only interested in the sum of all the values related to a particular
-key (the duplicates are dealt with in tracing_map_sort_entries()). But,
-with the inclusion of variables[1], we are interested in individual
-values. So, it will not be clear what value to choose when
-there are duplicates. So, the duplicates need to be removed.
-
-The duplicates can occur in the code in the following scenarios:
-
-- A thread is in the process of adding a new element. It has
-successfully executed cmpxchg() and inserted the key. But, it is still
-not done acquiring the trace_map_elt struct, populating it and storing
-the pointer to the struct in the value field of tracing_map hash table.
-If another thread comes in at this time and wants to add an element with
-the same key, it will not see the current element and add a new one.
-
-- There are multiple threads trying to execute cmpxchg at the same time,
-one of the threads will succeed and the others will fail. The ones which
-fail will go ahead increment 'idx' and add a new element there creating
-a duplicate.
-
-This patch detects and avoids the first condition by asking the thread
-which detects the duplicate to loop one more time. There is also a
-possibility of infinite loop if the thread which is trying to insert
-goes to sleep indefinitely and the one which is trying to insert a new
-element detects a duplicate. Which is why, the thread loops for
-map_size iterations before returning NULL.
-
-The second scenario is avoided by preventing the threads which failed
-cmpxchg() from incrementing idx. This way, they will loop
-around and check if the thread which succeeded in executing cmpxchg()
-had the same key.
-
-[1] - https://lkml.org/lkml/2017/6/26/751
-
-Signed-off-by: Vedang Patel <vedang.patel@intel.com>
+Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/tracing_map.c | 37 +++++++++++++++++++++++++++++++++----
- 1 file changed, 33 insertions(+), 4 deletions(-)
+ kernel/trace/trace_events_hist.c | 67 +++++++++++++++++++++++++++-------------
+ 1 file changed, 45 insertions(+), 22 deletions(-)
 
-diff --git a/kernel/trace/tracing_map.c b/kernel/trace/tracing_map.c
-index 305039b..437b490 100644
---- a/kernel/trace/tracing_map.c
-+++ b/kernel/trace/tracing_map.c
-@@ -414,6 +414,7 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
- __tracing_map_insert(struct tracing_map *map, void *key, bool lookup_only)
- {
- 	u32 idx, key_hash, test_key;
-+	int dup_try = 0;
- 	struct tracing_map_entry *entry;
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 773a66e..0184acd 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -146,6 +146,23 @@ struct hist_trigger_data {
+ 	struct tracing_map		*map;
+ };
  
- 	key_hash = jhash(key, map->key_size, 0);
-@@ -426,10 +427,31 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
- 		entry = TRACING_MAP_ENTRY(map->map, idx);
- 		test_key = entry->key;
- 
--		if (test_key && test_key == key_hash && entry->val &&
--		    keys_match(key, entry->val->key, map->key_size)) {
--			atomic64_inc(&map->hits);
--			return entry->val;
-+		if (test_key && test_key == key_hash) {
-+			if (entry->val &&
-+			    keys_match(key, entry->val->key, map->key_size)) {
-+				atomic64_inc(&map->hits);
-+				return entry->val;
-+			} else if (unlikely(!entry->val)) {
-+				/*
-+				 * The key is present. But, val (pointer to elt
-+				 * struct) is still NULL. which means some other
-+				 * thread is in the process of inserting an
-+				 * element.
-+				 *
-+				 * On top of that, it's key_hash is same as the
-+				 * one being inserted right now. So, it's
-+				 * possible that the element has the same
-+				 * key as well.
-+				 */
++static const char *hist_field_name(struct hist_field *field,
++				   unsigned int level)
++{
++	const char *field_name = "";
 +
-+				dup_try++;
-+				if (dup_try > map->map_size) {
-+					atomic64_inc(&map->drops);
-+					break;
-+				}
-+				continue;
-+			}
++	if (level > 1)
++		return field_name;
++
++	if (field->field)
++		field_name = field->field->name;
++
++	if (field_name == NULL)
++		field_name = "";
++
++	return field_name;
++}
++
+ static hist_field_fn_t select_value_fn(int field_size, int field_is_signed)
+ {
+ 	hist_field_fn_t fn = NULL;
+@@ -642,7 +659,6 @@ static int is_descending(const char *str)
+ static int create_sort_keys(struct hist_trigger_data *hist_data)
+ {
+ 	char *fields_str = hist_data->attrs->sort_key_str;
+-	struct ftrace_event_field *field = NULL;
+ 	struct tracing_map_sort_key *sort_key;
+ 	int descending, ret = 0;
+ 	unsigned int i, j;
+@@ -659,7 +675,9 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
+ 	}
+ 
+ 	for (i = 0; i < TRACING_MAP_SORT_KEYS_MAX; i++) {
++		struct hist_field *hist_field;
+ 		char *field_str, *field_name;
++		const char *test_name;
+ 
+ 		sort_key = &hist_data->sort_keys[i];
+ 
+@@ -692,8 +710,10 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
  		}
  
- 		if (!test_key) {
-@@ -451,6 +473,13 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
- 				atomic64_inc(&map->hits);
+ 		for (j = 1; j < hist_data->n_fields; j++) {
+-			field = hist_data->fields[j]->field;
+-			if (field && (strcmp(field_name, field->name) == 0)) {
++			hist_field = hist_data->fields[j];
++			test_name = hist_field_name(hist_field, 0);
++
++			if (strcmp(field_name, test_name) == 0) {
+ 				sort_key->field_idx = j;
+ 				descending = is_descending(field_str);
+ 				if (descending < 0) {
+@@ -941,6 +961,7 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
+ 	struct hist_field *key_field;
+ 	char str[KSYM_SYMBOL_LEN];
+ 	bool multiline = false;
++	const char *field_name;
+ 	unsigned int i;
+ 	u64 uval;
  
- 				return entry->val;
-+			} else {
-+				/*
-+				 * cmpxchg() failed. Loop around once
-+				 * more to check what key was inserted.
-+				 */
-+				dup_try++;
-+				continue;
- 			}
+@@ -952,26 +973,27 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
+ 		if (i > hist_data->n_vals)
+ 			seq_puts(m, ", ");
+ 
++		field_name = hist_field_name(key_field, 0);
++
+ 		if (key_field->flags & HIST_FIELD_FL_HEX) {
+ 			uval = *(u64 *)(key + key_field->offset);
+-			seq_printf(m, "%s: %llx",
+-				   key_field->field->name, uval);
++			seq_printf(m, "%s: %llx", field_name, uval);
+ 		} else if (key_field->flags & HIST_FIELD_FL_SYM) {
+ 			uval = *(u64 *)(key + key_field->offset);
+ 			sprint_symbol_no_offset(str, uval);
+-			seq_printf(m, "%s: [%llx] %-45s",
+-				   key_field->field->name, uval, str);
++			seq_printf(m, "%s: [%llx] %-45s", field_name,
++				   uval, str);
+ 		} else if (key_field->flags & HIST_FIELD_FL_SYM_OFFSET) {
+ 			uval = *(u64 *)(key + key_field->offset);
+ 			sprint_symbol(str, uval);
+-			seq_printf(m, "%s: [%llx] %-55s",
+-				   key_field->field->name, uval, str);
++			seq_printf(m, "%s: [%llx] %-55s", field_name,
++				   uval, str);
+ 		} else if (key_field->flags & HIST_FIELD_FL_EXECNAME) {
+ 			char *comm = elt->private_data;
+ 
+ 			uval = *(u64 *)(key + key_field->offset);
+-			seq_printf(m, "%s: %-16s[%10llu]",
+-				   key_field->field->name, comm, uval);
++			seq_printf(m, "%s: %-16s[%10llu]", field_name,
++				   comm, uval);
+ 		} else if (key_field->flags & HIST_FIELD_FL_SYSCALL) {
+ 			const char *syscall_name;
+ 
+@@ -980,8 +1002,8 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
+ 			if (!syscall_name)
+ 				syscall_name = "unknown_syscall";
+ 
+-			seq_printf(m, "%s: %-30s[%3llu]",
+-				   key_field->field->name, syscall_name, uval);
++			seq_printf(m, "%s: %-30s[%3llu]", field_name,
++				   syscall_name, uval);
+ 		} else if (key_field->flags & HIST_FIELD_FL_STACKTRACE) {
+ 			seq_puts(m, "stacktrace:\n");
+ 			hist_trigger_stacktrace_print(m,
+@@ -989,15 +1011,14 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
+ 						      HIST_STACKTRACE_DEPTH);
+ 			multiline = true;
+ 		} else if (key_field->flags & HIST_FIELD_FL_LOG2) {
+-			seq_printf(m, "%s: ~ 2^%-2llu", key_field->field->name,
++			seq_printf(m, "%s: ~ 2^%-2llu", field_name,
+ 				   *(u64 *)(key + key_field->offset));
+ 		} else if (key_field->flags & HIST_FIELD_FL_STRING) {
+-			seq_printf(m, "%s: %-50s", key_field->field->name,
++			seq_printf(m, "%s: %-50s", field_name,
+ 				   (char *)(key + key_field->offset));
+ 		} else {
+ 			uval = *(u64 *)(key + key_field->offset);
+-			seq_printf(m, "%s: %10llu", key_field->field->name,
+-				   uval);
++			seq_printf(m, "%s: %10llu", field_name, uval);
  		}
+ 	}
+ 
+@@ -1010,13 +1031,13 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
+ 		   tracing_map_read_sum(elt, HITCOUNT_IDX));
+ 
+ 	for (i = 1; i < hist_data->n_vals; i++) {
++		field_name = hist_field_name(hist_data->fields[i], 0);
++
+ 		if (hist_data->fields[i]->flags & HIST_FIELD_FL_HEX) {
+-			seq_printf(m, "  %s: %10llx",
+-				   hist_data->fields[i]->field->name,
++			seq_printf(m, "  %s: %10llx", field_name,
+ 				   tracing_map_read_sum(elt, i));
+ 		} else {
+-			seq_printf(m, "  %s: %10llu",
+-				   hist_data->fields[i]->field->name,
++			seq_printf(m, "  %s: %10llu", field_name,
+ 				   tracing_map_read_sum(elt, i));
+ 		}
+ 	}
+@@ -1131,7 +1152,9 @@ static const char *get_hist_field_flags(struct hist_field *hist_field)
+ 
+ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
+ {
+-	seq_printf(m, "%s", hist_field->field->name);
++	const char *field_name = hist_field_name(hist_field, 0);
++
++	seq_printf(m, "%s", field_name);
+ 	if (hist_field->flags) {
+ 		const char *flags_str = get_hist_field_flags(hist_field);
  
 -- 
 1.9.3
