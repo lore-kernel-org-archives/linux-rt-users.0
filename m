@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v2 10/40] tracing: Add ring buffer event param to hist field functions
-Date: Tue,  5 Sep 2017 16:57:22 -0500
-Message-ID: <0b531994b01cc96ce13269a695507fe6d135f863.1504642143.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v2 05/40] tracing: Reimplement log2
+Date: Tue,  5 Sep 2017 16:57:17 -0500
+Message-ID: <6679e2551b65bdcb560446a750cda486d7a343a0.1504642143.git.tom.zanussi@linux.intel.com>
 References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -17,140 +17,116 @@ References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Some events such as timestamps require access to a ring_buffer_event
-struct; add a param so that hist field functions can access that.
+log2 as currently implemented applies only to u64 trace_event_field
+derived fields, and assumes that anything it's applied to is a u64
+field.
+
+To prepare for synthetic fields like latencies, log2 should be
+applicable to those as well, so take the opportunity now to fix the
+current problems as well as expand to more general uses.
+
+log2 should be thought of as a chaining function rather than a field
+type.  To enable this as well as possible future function
+implementations, add a hist_field operand array into the hist_field
+definition for this purpose, and make use of it to implement the log2
+'function'.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 39 ++++++++++++++++++++++++---------------
- 1 file changed, 24 insertions(+), 15 deletions(-)
+ kernel/trace/trace_events_hist.c | 31 +++++++++++++++++++++++++++----
+ 1 file changed, 27 insertions(+), 4 deletions(-)
 
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 9809243..bec2574 100644
+index 0184acd..a16904c 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -26,7 +26,8 @@
+@@ -28,12 +28,16 @@
  
- struct hist_field;
+ typedef u64 (*hist_field_fn_t) (struct hist_field *field, void *event);
  
--typedef u64 (*hist_field_fn_t) (struct hist_field *field, void *event);
-+typedef u64 (*hist_field_fn_t) (struct hist_field *field, void *event,
-+				struct ring_buffer_event *rbe);
- 
- #define HIST_FIELD_OPERANDS_MAX	2
- 
-@@ -40,24 +41,28 @@ struct hist_field {
- 	struct hist_field		*operands[HIST_FIELD_OPERANDS_MAX];
++#define HIST_FIELD_OPERANDS_MAX	2
++
+ struct hist_field {
+ 	struct ftrace_event_field	*field;
+ 	unsigned long			flags;
+ 	hist_field_fn_t			fn;
+ 	unsigned int			size;
+ 	unsigned int			offset;
++	unsigned int                    is_signed;
++	struct hist_field		*operands[HIST_FIELD_OPERANDS_MAX];
  };
  
--static u64 hist_field_none(struct hist_field *field, void *event)
-+static u64 hist_field_none(struct hist_field *field, void *event,
-+			   struct ring_buffer_event *rbe)
+ static u64 hist_field_none(struct hist_field *field, void *event)
+@@ -71,7 +75,9 @@ static u64 hist_field_pstring(struct hist_field *hist_field, void *event)
+ 
+ static u64 hist_field_log2(struct hist_field *hist_field, void *event)
  {
- 	return 0;
- }
- 
--static u64 hist_field_counter(struct hist_field *field, void *event)
-+static u64 hist_field_counter(struct hist_field *field, void *event,
-+			      struct ring_buffer_event *rbe)
- {
- 	return 1;
- }
- 
--static u64 hist_field_string(struct hist_field *hist_field, void *event)
-+static u64 hist_field_string(struct hist_field *hist_field, void *event,
-+			     struct ring_buffer_event *rbe)
- {
- 	char *addr = (char *)(event + hist_field->field->offset);
- 
- 	return (u64)(unsigned long)addr;
- }
- 
--static u64 hist_field_dynstring(struct hist_field *hist_field, void *event)
-+static u64 hist_field_dynstring(struct hist_field *hist_field, void *event,
-+				struct ring_buffer_event *rbe)
- {
- 	u32 str_item = *(u32 *)(event + hist_field->field->offset);
- 	int str_loc = str_item & 0xffff;
-@@ -66,24 +71,28 @@ static u64 hist_field_dynstring(struct hist_field *hist_field, void *event)
- 	return (u64)(unsigned long)addr;
- }
- 
--static u64 hist_field_pstring(struct hist_field *hist_field, void *event)
-+static u64 hist_field_pstring(struct hist_field *hist_field, void *event,
-+			      struct ring_buffer_event *rbe)
- {
- 	char **addr = (char **)(event + hist_field->field->offset);
- 
- 	return (u64)(unsigned long)*addr;
- }
- 
--static u64 hist_field_log2(struct hist_field *hist_field, void *event)
-+static u64 hist_field_log2(struct hist_field *hist_field, void *event,
-+			   struct ring_buffer_event *rbe)
- {
- 	struct hist_field *operand = hist_field->operands[0];
- 
--	u64 val = operand->fn(operand, event);
-+	u64 val = operand->fn(operand, event, rbe);
+-	u64 val = *(u64 *)(event + hist_field->field->offset);
++	struct hist_field *operand = hist_field->operands[0];
++
++	u64 val = operand->fn(operand, event);
  
  	return (u64) ilog2(roundup_pow_of_two(val));
  }
+@@ -156,6 +162,8 @@ static const char *hist_field_name(struct hist_field *field,
  
- #define DEFINE_HIST_FIELD_FN(type)					\
--static u64 hist_field_##type(struct hist_field *hist_field, void *event)\
-+	static u64 hist_field_##type(struct hist_field *hist_field,	\
-+				     void *event,			\
-+				     struct ring_buffer_event *rbe)	\
- {									\
- 	type *addr = (type *)(event + hist_field->field->offset);	\
- 									\
-@@ -871,8 +880,8 @@ static bool need_tracing_map_ops(struct hist_trigger_data *hist_data)
+ 	if (field->field)
+ 		field_name = field->field->name;
++	else if (field->flags & HIST_FIELD_FL_LOG2)
++		field_name = hist_field_name(field->operands[0], ++level);
+ 
+ 	if (field_name == NULL)
+ 		field_name = "";
+@@ -346,8 +354,20 @@ static void hist_trigger_elt_comm_init(struct tracing_map_elt *elt)
+ 	.elt_init	= hist_trigger_elt_comm_init,
+ };
+ 
+-static void destroy_hist_field(struct hist_field *hist_field)
++static void destroy_hist_field(struct hist_field *hist_field,
++			       unsigned int level)
+ {
++	unsigned int i;
++
++	if (level > 2)
++		return;
++
++	if (!hist_field)
++		return;
++
++	for (i = 0; i < HIST_FIELD_OPERANDS_MAX; i++)
++		destroy_hist_field(hist_field->operands[i], level + 1);
++
+ 	kfree(hist_field);
  }
  
- static void hist_trigger_elt_update(struct hist_trigger_data *hist_data,
--				    struct tracing_map_elt *elt,
--				    void *rec)
-+				    struct tracing_map_elt *elt, void *rec,
-+				    struct ring_buffer_event *rbe)
- {
- 	struct hist_field *hist_field;
- 	unsigned int i;
-@@ -880,7 +889,7 @@ static void hist_trigger_elt_update(struct hist_trigger_data *hist_data,
- 
- 	for_each_hist_val_field(i, hist_data) {
- 		hist_field = hist_data->fields[i];
--		hist_val = hist_field->fn(hist_field, rec);
-+		hist_val = hist_field->fn(hist_field, rec, rbe);
- 		tracing_map_update_sum(elt, i, hist_val);
+@@ -374,7 +394,10 @@ static struct hist_field *create_hist_field(struct ftrace_event_field *field,
  	}
- }
-@@ -910,7 +919,7 @@ static inline void add_to_key(char *compound_key, void *key,
- }
  
- static void event_hist_trigger(struct event_trigger_data *data, void *rec,
--			       struct ring_buffer_event *event)
-+			       struct ring_buffer_event *rbe)
- {
- 	struct hist_trigger_data *hist_data = data->private_data;
- 	bool use_compound_key = (hist_data->n_keys > 1);
-@@ -939,7 +948,7 @@ static void event_hist_trigger(struct event_trigger_data *data, void *rec,
+ 	if (flags & HIST_FIELD_FL_LOG2) {
++		unsigned long fl = flags & ~HIST_FIELD_FL_LOG2;
+ 		hist_field->fn = hist_field_log2;
++		hist_field->operands[0] = create_hist_field(field, fl);
++		hist_field->size = hist_field->operands[0]->size;
+ 		goto out;
+ 	}
  
- 			key = entries;
- 		} else {
--			field_contents = key_field->fn(key_field, rec);
-+			field_contents = key_field->fn(key_field, rec, rbe);
- 			if (key_field->flags & HIST_FIELD_FL_STRING) {
- 				key = (void *)(unsigned long)field_contents;
- 				use_compound_key = true;
-@@ -956,7 +965,7 @@ static void event_hist_trigger(struct event_trigger_data *data, void *rec,
+@@ -394,7 +417,7 @@ static struct hist_field *create_hist_field(struct ftrace_event_field *field,
+ 		hist_field->fn = select_value_fn(field->size,
+ 						 field->is_signed);
+ 		if (!hist_field->fn) {
+-			destroy_hist_field(hist_field);
++			destroy_hist_field(hist_field, 0);
+ 			return NULL;
+ 		}
+ 	}
+@@ -411,7 +434,7 @@ static void destroy_hist_fields(struct hist_trigger_data *hist_data)
  
- 	elt = tracing_map_insert(hist_data->map, key);
- 	if (elt)
--		hist_trigger_elt_update(hist_data, elt, rec);
-+		hist_trigger_elt_update(hist_data, elt, rec, rbe);
- }
- 
- static void hist_trigger_stacktrace_print(struct seq_file *m,
+ 	for (i = 0; i < TRACING_MAP_FIELDS_MAX; i++) {
+ 		if (hist_data->fields[i]) {
+-			destroy_hist_field(hist_data->fields[i]);
++			destroy_hist_field(hist_data->fields[i], 0);
+ 			hist_data->fields[i] = NULL;
+ 		}
+ 	}
 -- 
 1.9.3
