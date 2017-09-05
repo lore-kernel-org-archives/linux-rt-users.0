@@ -1,40 +1,39 @@
-From: Sebastian Andrzej Siewior <sebastian.siewior@linutronix.de>
-Subject: Re: high resolution timers
-Date: Tue, 5 Sep 2017 17:18:02 +0200
-Message-ID: <20170905151801.ao5t4k6ktk4kgien@linutronix.de>
-References: <CAJ2oMhJp8gnJ92OPL25-GSXgYxTBWYXv4AKRLoZGPZsO1CHbNg@mail.gmail.com>
+From: Simon Thelen <urday@student.kit.edu>
+Subject: Low USB polling frequency with RT-PREEMPT
+Date: Tue, 5 Sep 2017 17:05:39 +0200
+Message-ID: <20170905150539.GF2607@anonymous>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Ran Shalit <ranshalit@gmail.com>
+Content-Type: text/plain; charset="utf-8"
+To: <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:46093 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751316AbdIEPSD (ORCPT
+Received: from scc-mailout-kit-02.scc.kit.edu ([129.13.231.82]:50874 "EHLO
+        scc-mailout-kit-02.scc.kit.edu" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1751386AbdIEPYZ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 5 Sep 2017 11:18:03 -0400
+        Tue, 5 Sep 2017 11:24:25 -0400
+Received: from kit-msx-25.kit.edu ([2a00:1398:9:f612::25])
+        by scc-mailout-kit-02.scc.kit.edu with esmtps (TLS1.2:ECDHE_RSA_AES_256_CBC_SHA384:256)
+        (envelope-from <urday@student.kit.edu>)
+        id 1dpFQ4-0001We-7c
+        for linux-rt-users@vger.kernel.org; Tue, 05 Sep 2017 17:05:41 +0200
 Content-Disposition: inline
-In-Reply-To: <CAJ2oMhJp8gnJ92OPL25-GSXgYxTBWYXv4AKRLoZGPZsO1CHbNg@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-09-05 16:11:38 [+0300], Ran Shalit wrote:
-> Hello,
-Hi,
+Hello,
 
-> In case we need high resolution timers in userspace, is it by using
-> timer_xxx APIs:
-> timer_create
-> timer_settime/timergettime
-> ?
+We have some Dynamixel robitic actuators hooked up via USB to an Ubuntu
+14.04 system running the 4.4.79-rt92 kernel. When using a kernel built
+without the realtime patches (CONFIG_PREEMPT not set) we can query the
+bus at 1000Hz (2 devices at 500Hz each) whereas with the realtime kernel
+(CONFIG_PREEMPT=y, CONFIG_PREEMPT_RT_FULL=y) we only get 62.5Hz per
+device. The USB device requests Ivl=0ms in both cases and the issue
+isn't related to load etc. The polling rate is always 62.5Hz (It takes
+~15ms for every read()).
 
-You are using a "POSIX timer" that way. See
-  https://wiki.linuxfoundation.org/realtime/documentation/technical_details/hr_timers
 
-In the "Regression on rt kernel while using POSIX timers" thread you
-were unhappy with the signal delivery.
+Is this a known limitation of USB with the CONFIG_PREEMPT_RT patches and
+is there any method to improve the polling rate?
 
-> Best Regards,
-> Ran
-
-Sebastian
+-- 
+Simon Thelen
