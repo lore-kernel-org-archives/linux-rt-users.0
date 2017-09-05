@@ -1,51 +1,43 @@
-From: Niels Kolthoff <nkolthoff@gmail.com>
-Subject: Re: Low USB polling frequency with RT-PREEMPT
-Date: Tue, 5 Sep 2017 19:53:17 +0200
-Message-ID: <CAD2hpBUsMz70-502BhOzxnH8H6zka3N86CNBspXizKr4WH5aNQ@mail.gmail.com>
-References: <20170905150539.GF2607@anonymous>
+From: Jacek Konieczny <jajcus@jajcus.net>
+Subject: Re: RT kernel on Acer laptop unreliable
+Date: Tue, 5 Sep 2017 21:37:48 +0200
+Message-ID: <6def1dd2-eaae-a5d2-8bdb-26070ee5de7a@jajcus.net>
+References: <8c1a0cb6-d90c-1f6f-2d23-9865a17b379e@jajcus.net>
+ <20170807131937.ijj7n4yuk6inds4h@linutronix.de>
+ <56cb9f42-83e3-6648-2489-7c9e486c8ecc@jajcus.net>
+ <20170818124406.6cem4po52xrzi5qc@linutronix.de>
+ <b1209f35-67a2-5cb2-d0e1-ad142b34aab9@jajcus.net>
+ <20170821131254.5nuacfv62d3l4rhe@linutronix.de>
+ <52e67cfd-0bb3-ce97-7b28-f2afb1d3c1cb@jajcus.net>
+ <20170905091712.koywolqt5qwaslpk@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Cc: linux-rt-users@vger.kernel.org
-To: Simon Thelen <urday@student.kit.edu>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yw0-f169.google.com ([209.85.161.169]:32939 "EHLO
-        mail-yw0-f169.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1752064AbdIERxS (ORCPT
+Received: from tropek.jajcus.net ([31.179.132.94]:57182 "EHLO
+        tropek.jajcus.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752550AbdIETh6 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 5 Sep 2017 13:53:18 -0400
-Received: by mail-yw0-f169.google.com with SMTP id c191so10696635ywb.0
-        for <linux-rt-users@vger.kernel.org>; Tue, 05 Sep 2017 10:53:18 -0700 (PDT)
-In-Reply-To: <20170905150539.GF2607@anonymous>
+        Tue, 5 Sep 2017 15:37:58 -0400
+In-Reply-To: <20170905091712.koywolqt5qwaslpk@linutronix.de>
+Content-Language: en-GB
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Simon,
+On 2017-09-05 11:17, Sebastian Andrzej Siewior wrote:
+> On 2017-08-23 19:04:20 [+0200], Jacek Konieczny wrote:
+>> I have applied the patch, no crash since then, but I got another problem
+>> detected:
+> I'm sorry, I missed that.
 
-Not sure if this helps; are you polling the actuators using usb-serial io?
+No problem. I was away on my holidays anyway.
 
-I've had performance issues reading from the raspberry pi serial port.
-see: http://www.spinics.net/lists/linux-rt-users/msg16880.html
+> What about this on-top?
 
+That would not apply on top of my previous source, but I took
+patch-4.11.12-rt13.patch and applied over that. I should have some
+results in a few days.
 
-On Tue, Sep 5, 2017 at 5:05 PM, Simon Thelen <urday@student.kit.edu> wrote:
-> Hello,
->
-> We have some Dynamixel robitic actuators hooked up via USB to an Ubuntu
-> 14.04 system running the 4.4.79-rt92 kernel. When using a kernel built
-> without the realtime patches (CONFIG_PREEMPT not set) we can query the
-> bus at 1000Hz (2 devices at 500Hz each) whereas with the realtime kernel
-> (CONFIG_PREEMPT=y, CONFIG_PREEMPT_RT_FULL=y) we only get 62.5Hz per
-> device. The USB device requests Ivl=0ms in both cases and the issue
-> isn't related to load etc. The polling rate is always 62.5Hz (It takes
-> ~15ms for every read()).
->
->
-> Is this a known limitation of USB with the CONFIG_PREEMPT_RT patches and
-> is there any method to improve the polling rate?
->
-> --
-> Simon Thelen
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Jacek
