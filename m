@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v2 31/40] tracing: Allow whitespace to surround hist trigger filter
-Date: Tue,  5 Sep 2017 16:57:43 -0500
-Message-ID: <9e6d9f17bcd71f29dec9039ab00d316ca2965c43.1504642143.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v2 26/40] tracing: Add hist trigger action hook
+Date: Tue,  5 Sep 2017 16:57:38 -0500
+Message-ID: <6a1ddf26d953b39504284c715fe35cc523a8d0db.1504642143.git.tom.zanussi@linux.intel.com>
 References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -17,58 +17,229 @@ References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-The existing code only allows for one space before and after the 'if'
-specifying the filter for a hist trigger.  Add code to make that more
-permissive as far as whitespace goes.
+Add a hook for executing extra actions whenever a histogram entry is
+added or updated.
+
+The default 'action' when a hist entry is added to a histogram is to
+update the set of values associated with it.  Some applications may
+want to perform additional actions at that point, such as generate
+another event, or compare and save a maximum.
+
+Add a simple framework for doing that; specific actions will be
+implemented on top of it in later patches.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 19 +++++++++++++++----
- 1 file changed, 15 insertions(+), 4 deletions(-)
+ kernel/trace/trace_events_hist.c | 114 +++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 111 insertions(+), 3 deletions(-)
 
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 0a398f3..4f66f2e 100644
+index 397dca1..c3edf7a 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -4819,7 +4819,7 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
- 	struct synth_event *se;
- 	const char *se_name;
- 	bool remove = false;
--	char *trigger;
-+	char *trigger, *p;
+@@ -33,6 +33,7 @@ typedef u64 (*hist_field_fn_t) (struct hist_field *field,
+ 
+ #define HIST_FIELD_OPERANDS_MAX	2
+ #define HIST_FIELDS_MAX		(TRACING_MAP_FIELDS_MAX + TRACING_MAP_VARS_MAX)
++#define HIST_ACTIONS_MAX	8
+ 
+ enum field_op_id {
+ 	FIELD_OP_NONE,
+@@ -241,6 +242,9 @@ struct hist_trigger_attrs {
+ 	char		*assignment_str[TRACING_MAP_VARS_MAX];
+ 	unsigned int	n_assignments;
+ 
++	char		*action_str[HIST_ACTIONS_MAX];
++	unsigned int	n_actions;
++
+ 	struct var_defs	var_defs;
+ };
+ 
+@@ -261,6 +265,21 @@ struct hist_trigger_data {
+ 	bool				remove;
+ 	struct hist_field               *var_refs[TRACING_MAP_VARS_MAX];
+ 	unsigned int			n_var_refs;
++
++	struct action_data		*actions[HIST_ACTIONS_MAX];
++	unsigned int			n_actions;
++};
++
++struct action_data;
++
++typedef void (*action_fn_t) (struct hist_trigger_data *hist_data,
++			     struct tracing_map_elt *elt, void *rec,
++			     struct ring_buffer_event *rbe,
++			     struct action_data *data, u64 *var_ref_vals);
++
++struct action_data {
++	action_fn_t		fn;
++	unsigned int		var_ref_idx;
+ };
+ 
+ static u64 hist_field_timestamp(struct hist_field *hist_field,
+@@ -710,6 +729,9 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
+ 	for (i = 0; i < attrs->n_assignments; i++)
+ 		kfree(attrs->assignment_str[i]);
+ 
++	for (i = 0; i < attrs->n_actions; i++)
++		kfree(attrs->action_str[i]);
++
+ 	kfree(attrs->name);
+ 	kfree(attrs->sort_key_str);
+ 	kfree(attrs->keys_str);
+@@ -717,6 +739,16 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
+ 	kfree(attrs);
+ }
+ 
++static int parse_action(char *str, struct hist_trigger_attrs *attrs)
++{
++	int ret = 0;
++
++	if (attrs->n_actions >= HIST_ACTIONS_MAX)
++		return ret;
++
++	return ret;
++}
++
+ static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
+ {
  	int ret = 0;
- 
- 	if (!param)
-@@ -4829,9 +4829,19 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
- 		remove = true;
- 
- 	/* separate the trigger from the filter (k:v [if filter]) */
--	trigger = strsep(&param, " \t");
--	if (!trigger)
--		return -EINVAL;
-+	trigger = param;
-+	p = strstr(param, " if");
-+	if (!p)
-+		p = strstr(param, "\tif");
-+	if (p) {
-+		if (p == trigger)
-+			return -EINVAL;
-+		param = p + 1;
-+		param = strstrip(param);
-+		*p = '\0';
-+		trigger = strstrip(trigger);
-+	} else
-+		param = NULL;
- 
- 	attrs = parse_hist_trigger_attrs(trigger);
- 	if (IS_ERR(attrs))
-@@ -4889,6 +4899,7 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
+@@ -784,8 +816,9 @@ static struct hist_trigger_attrs *parse_hist_trigger_attrs(char *trigger_str)
+ 		else if (strcmp(str, "clear") == 0)
+ 			attrs->clear = true;
+ 		else {
+-			ret = -EINVAL;
+-			goto free;
++			ret = parse_action(str, attrs);
++			if (ret)
++				goto free;
+ 		}
  	}
  
- 	ret = cmd_ops->reg(glob, trigger_ops, trigger_data, file);
+@@ -1917,11 +1950,63 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
+ 	return ret;
+ }
+ 
++static void destroy_actions(struct hist_trigger_data *hist_data)
++{
++	unsigned int i;
 +
- 	/*
- 	 * The above returns on success the # of triggers registered,
- 	 * but if it didn't register any it returns zero.  Consider no
++	for (i = 0; i < hist_data->n_actions; i++) {
++		struct action_data *data = hist_data->actions[i];
++
++		kfree(data);
++	}
++}
++
++static int create_actions(struct hist_trigger_data *hist_data,
++			  struct trace_event_file *file)
++{
++	unsigned int i;
++	int ret = 0;
++	char *str;
++
++	for (i = 0; i < hist_data->attrs->n_actions; i++) {
++		str = hist_data->attrs->action_str[i];
++	}
++
++	return ret;
++}
++
++static void print_actions(struct seq_file *m,
++			  struct hist_trigger_data *hist_data,
++			  struct tracing_map_elt *elt)
++{
++	unsigned int i;
++
++	for (i = 0; i < hist_data->n_actions; i++) {
++		struct action_data *data = hist_data->actions[i];
++	}
++}
++
++static void print_actions_spec(struct seq_file *m,
++			       struct hist_trigger_data *hist_data)
++{
++	unsigned int i;
++
++	for (i = 0; i < hist_data->n_actions; i++) {
++		struct action_data *data = hist_data->actions[i];
++	}
++}
++
+ static void destroy_hist_data(struct hist_trigger_data *hist_data)
+ {
++	if (!hist_data)
++		return;
++
+ 	destroy_hist_trigger_attrs(hist_data->attrs);
+ 	destroy_hist_fields(hist_data);
+ 	tracing_map_destroy(hist_data->map);
++
++	destroy_actions(hist_data);
++
+ 	kfree(hist_data);
+ }
+ 
+@@ -2080,6 +2165,20 @@ static inline void add_to_key(char *compound_key, void *key,
+ 	memcpy(compound_key + key_field->offset, key, size);
+ }
+ 
++static void
++hist_trigger_actions(struct hist_trigger_data *hist_data,
++		     struct tracing_map_elt *elt, void *rec,
++		     struct ring_buffer_event *rbe, u64 *var_ref_vals)
++{
++	struct action_data *data;
++	unsigned int i;
++
++	for (i = 0; i < hist_data->n_actions; i++) {
++		data = hist_data->actions[i];
++		data->fn(hist_data, elt, rec, rbe, data, var_ref_vals);
++	}
++}
++
+ static void event_hist_trigger(struct event_trigger_data *data, void *rec,
+ 			       struct ring_buffer_event *rbe)
+ {
+@@ -2135,6 +2234,9 @@ static void event_hist_trigger(struct event_trigger_data *data, void *rec,
+ 		return;
+ 
+ 	hist_trigger_elt_update(hist_data, elt, rec, rbe, var_ref_vals);
++
++	if (resolve_var_refs(hist_data, key, var_ref_vals, true))
++		hist_trigger_actions(hist_data, elt, rec, rbe, var_ref_vals);
+ }
+ 
+ static void hist_trigger_stacktrace_print(struct seq_file *m,
+@@ -2450,6 +2552,8 @@ static int event_hist_trigger_print(struct seq_file *m,
+ 	}
+ 	seq_printf(m, ":size=%u", (1 << hist_data->map->map_bits));
+ 
++	print_actions_spec(m, hist_data);
++
+ 	if (data->filter_str)
+ 		seq_printf(m, " if %s", data->filter_str);
+ 
+@@ -2910,6 +3014,10 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
+ 	if (has_hist_vars(hist_data))
+ 		save_hist_vars(hist_data);
+ 
++	ret = create_actions(hist_data, file);
++	if (ret)
++		goto out_unreg;
++
+ 	ret = tracing_map_init(hist_data->map);
+ 	if (ret)
+ 		goto out_unreg;
+@@ -2931,8 +3039,8 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
+ 	remove_hist_vars(hist_data);
+ 
+ 	kfree(trigger_data);
+-
+ 	destroy_hist_data(hist_data);
++
+ 	goto out;
+ }
+ 
 -- 
 1.9.3
