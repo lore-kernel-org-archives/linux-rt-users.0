@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v2 14/40] tracing: Add hist trigger timestamp support
-Date: Tue,  5 Sep 2017 16:57:26 -0500
-Message-ID: <0f527b23bdbcbc3056a575e393e4992c67460969.1504642143.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v2 11/40] tracing: Increase tracing map KEYS_MAX size
+Date: Tue,  5 Sep 2017 16:57:23 -0500
+Message-ID: <0b1bd436068a511a460f6e90580bed45d2872c92.1504642143.git.tom.zanussi@linux.intel.com>
 References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -17,224 +17,26 @@ References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Add support for a timestamp event field.  This is actually a 'pseudo-'
-event field in that it behaves like it's part of the event record, but
-is really part of the corresponding ring buffer event.
-
-To make use of the timestamp field, users can specify
-"$common_timestamp" as a field name for any histogram.  Note that this
-doesn't make much sense on its own either as either a key or value,
-but needs to be supported even so, since follow-on patches will add
-support for making use of this field in time deltas.  The '$' is used
-as a prefix on the variable name to indicate that it's not an bonafide
-event field - so you won't find it in the event description - but
-rather it's a synthetic field that can be used like a real field).
-
-Note that the use of this field requires the ring buffer be put into
-TIME_EXTEND_ABS mode, which saves the complete timestamp for each
-event rather than an offset.  This mode will be enabled if and only if
-a histogram makes use of the "$common_timestamp" field.
+The current default for the number of subkeys in a compound key is 2,
+which is too restrictive.  Increase it to a more realistic value of 3.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 88 +++++++++++++++++++++++++++++-----------
- 1 file changed, 65 insertions(+), 23 deletions(-)
+ kernel/trace/tracing_map.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 3d92faa..dfaf07b 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -89,6 +89,12 @@ static u64 hist_field_log2(struct hist_field *hist_field, void *event,
- 	return (u64) ilog2(roundup_pow_of_two(val));
- }
+diff --git a/kernel/trace/tracing_map.h b/kernel/trace/tracing_map.h
+index 4eabbcb..98ef6d6 100644
+--- a/kernel/trace/tracing_map.h
++++ b/kernel/trace/tracing_map.h
+@@ -5,7 +5,7 @@
+ #define TRACING_MAP_BITS_MAX		17
+ #define TRACING_MAP_BITS_MIN		7
  
-+static u64 hist_field_timestamp(struct hist_field *hist_field, void *event,
-+				struct ring_buffer_event *rbe)
-+{
-+	return ring_buffer_event_time_stamp(rbe);
-+}
-+
- #define DEFINE_HIST_FIELD_FN(type)					\
- 	static u64 hist_field_##type(struct hist_field *hist_field,	\
- 				     void *event,			\
-@@ -135,6 +141,7 @@ enum hist_field_flags {
- 	HIST_FIELD_FL_SYSCALL		= 128,
- 	HIST_FIELD_FL_STACKTRACE	= 256,
- 	HIST_FIELD_FL_LOG2		= 512,
-+	HIST_FIELD_FL_TIMESTAMP		= 1024,
- };
- 
- struct hist_trigger_attrs {
-@@ -159,6 +166,7 @@ struct hist_trigger_data {
- 	struct trace_event_file		*event_file;
- 	struct hist_trigger_attrs	*attrs;
- 	struct tracing_map		*map;
-+	bool				enable_timestamps;
- };
- 
- static const char *hist_field_name(struct hist_field *field,
-@@ -173,6 +181,8 @@ static const char *hist_field_name(struct hist_field *field,
- 		field_name = field->field->name;
- 	else if (field->flags & HIST_FIELD_FL_LOG2)
- 		field_name = hist_field_name(field->operands[0], ++level);
-+	else if (field->flags & HIST_FIELD_FL_TIMESTAMP)
-+		field_name = "$common_timestamp";
- 
- 	if (field_name == NULL)
- 		field_name = "";
-@@ -424,6 +434,12 @@ static struct hist_field *create_hist_field(struct ftrace_event_field *field,
- 		goto out;
- 	}
- 
-+	if (flags & HIST_FIELD_FL_TIMESTAMP) {
-+		hist_field->fn = hist_field_timestamp;
-+		hist_field->size = sizeof(u64);
-+		goto out;
-+	}
-+
- 	if (WARN_ON_ONCE(!field))
- 		goto out;
- 
-@@ -501,10 +517,15 @@ static int create_val_field(struct hist_trigger_data *hist_data,
- 		}
- 	}
- 
--	field = trace_find_event_field(file->event_call, field_name);
--	if (!field || !field->size) {
--		ret = -EINVAL;
--		goto out;
-+	if (strcmp(field_name, "$common_timestamp") == 0) {
-+		flags |= HIST_FIELD_FL_TIMESTAMP;
-+		hist_data->enable_timestamps = true;
-+	} else {
-+		field = trace_find_event_field(file->event_call, field_name);
-+		if (!field || !field->size) {
-+			ret = -EINVAL;
-+			goto out;
-+		}
- 	}
- 
- 	hist_data->fields[val_idx] = create_hist_field(field, flags);
-@@ -599,16 +620,22 @@ static int create_key_field(struct hist_trigger_data *hist_data,
- 			}
- 		}
- 
--		field = trace_find_event_field(file->event_call, field_name);
--		if (!field || !field->size) {
--			ret = -EINVAL;
--			goto out;
--		}
-+		if (strcmp(field_name, "$common_timestamp") == 0) {
-+			flags |= HIST_FIELD_FL_TIMESTAMP;
-+			hist_data->enable_timestamps = true;
-+			key_size = sizeof(u64);
-+		} else {
-+			field = trace_find_event_field(file->event_call, field_name);
-+			if (!field || !field->size) {
-+				ret = -EINVAL;
-+				goto out;
-+			}
- 
--		if (is_string_field(field))
--			key_size = MAX_FILTER_STR_VAL;
--		else
--			key_size = field->size;
-+			if (is_string_field(field))
-+				key_size = MAX_FILTER_STR_VAL;
-+			else
-+				key_size = field->size;
-+		}
- 	}
- 
- 	hist_data->fields[key_idx] = create_hist_field(field, flags);
-@@ -804,6 +831,9 @@ static int create_tracing_map_fields(struct hist_trigger_data *hist_data)
- 
- 			if (hist_field->flags & HIST_FIELD_FL_STACKTRACE)
- 				cmp_fn = tracing_map_cmp_none;
-+			else if (!field)
-+				cmp_fn = tracing_map_cmp_num(hist_field->size,
-+							     hist_field->is_signed);
- 			else if (is_string_field(field))
- 				cmp_fn = tracing_map_cmp_string;
- 			else
-@@ -1201,7 +1231,11 @@ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
- {
- 	const char *field_name = hist_field_name(hist_field, 0);
- 
--	seq_printf(m, "%s", field_name);
-+	if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP)
-+		seq_puts(m, "$common_timestamp");
-+	else if (field_name)
-+		seq_printf(m, "%s", field_name);
-+
- 	if (hist_field->flags) {
- 		const char *flags_str = get_hist_field_flags(hist_field);
- 
-@@ -1252,27 +1286,25 @@ static int event_hist_trigger_print(struct seq_file *m,
- 
- 	for (i = 0; i < hist_data->n_sort_keys; i++) {
- 		struct tracing_map_sort_key *sort_key;
-+		unsigned int idx;
- 
- 		sort_key = &hist_data->sort_keys[i];
-+		idx = sort_key->field_idx;
-+
-+		if (WARN_ON(idx >= TRACING_MAP_FIELDS_MAX))
-+			return -EINVAL;
- 
- 		if (i > 0)
- 			seq_puts(m, ",");
- 
--		if (sort_key->field_idx == HITCOUNT_IDX)
-+		if (idx == HITCOUNT_IDX)
- 			seq_puts(m, "hitcount");
--		else {
--			unsigned int idx = sort_key->field_idx;
--
--			if (WARN_ON(idx >= TRACING_MAP_FIELDS_MAX))
--				return -EINVAL;
--
-+		else
- 			hist_field_print(m, hist_data->fields[idx]);
--		}
- 
- 		if (sort_key->descending)
- 			seq_puts(m, ".descending");
- 	}
--
- 	seq_printf(m, ":size=%u", (1 << hist_data->map->map_bits));
- 
- 	if (data->filter_str)
-@@ -1440,6 +1472,10 @@ static bool hist_trigger_match(struct event_trigger_data *data,
- 			return false;
- 		if (key_field->offset != key_field_test->offset)
- 			return false;
-+		if (key_field->size != key_field_test->size)
-+			return false;
-+		if (key_field->is_signed != key_field_test->is_signed)
-+			return false;
- 	}
- 
- 	for (i = 0; i < hist_data->n_sort_keys; i++) {
-@@ -1522,6 +1558,9 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
- 
- 	update_cond_flag(file);
- 
-+	if (hist_data->enable_timestamps)
-+		tracing_set_time_stamp_abs(file->tr, true);
-+
- 	if (trace_event_trigger_enable_disable(file, 1) < 0) {
- 		list_del_rcu(&data->list);
- 		update_cond_flag(file);
-@@ -1556,6 +1595,9 @@ static void hist_unregister_trigger(char *glob, struct event_trigger_ops *ops,
- 
- 	if (unregistered && test->ops->free)
- 		test->ops->free(test->ops, test);
-+
-+	if (hist_data->enable_timestamps)
-+		tracing_set_time_stamp_abs(file->tr, false);
- }
- 
- static void hist_unreg_all(struct trace_event_file *file)
+-#define TRACING_MAP_KEYS_MAX		2
++#define TRACING_MAP_KEYS_MAX		3
+ #define TRACING_MAP_VALS_MAX		3
+ #define TRACING_MAP_FIELDS_MAX		(TRACING_MAP_KEYS_MAX + \
+ 					 TRACING_MAP_VALS_MAX)
 -- 
 1.9.3
