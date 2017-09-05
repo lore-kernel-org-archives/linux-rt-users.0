@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v2 40/40] tracing: Add trace_event_buffer_reserve() variant that allows recursion
-Date: Tue,  5 Sep 2017 16:57:52 -0500
-Message-ID: <417873f6f05e44b6c93abd9771f85fa8f2dd37d0.1504642143.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v2 30/40] tracing: Add 'onmax' hist trigger action support
+Date: Tue,  5 Sep 2017 16:57:42 -0500
+Message-ID: <bb8023c75793998454567351c6fd31fa1ca7ffb7.1504642143.git.tom.zanussi@linux.intel.com>
 References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -17,354 +17,463 @@ References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Synthetic event generation requires the reservation of a second event
-while the reservation of a previous event is still in progress.  The
-trace_recursive_lock() check in ring_buffer_lock_reserve() prevents
-this however.
+Add an 'onmax(var).save(field,...)' hist trigger action which is
+invoked whenever an event exceeds the current maximum.
 
-This sets up a special reserve pathway for this particular case,
-leaving existing pathways untouched, other than an additional check in
-ring_buffer_lock_reserve() and trace_event_buffer_reserve().  These
-checks could be gotten rid of as well, with copies of those functions,
-but for now try to avoid that unless necessary.
+The end result is that the trace event fields or variables specified
+as the onmax.save() params will be saved if 'var' exceeds the current
+maximum for that hist trigger entry.  This allows context from the
+event that exhibited the new maximum to be saved for later reference.
+When the histogram is displayed, additional fields displaying the
+saved values will be printed.
+
+As an example the below defines a couple of hist triggers, one for
+sched_wakeup and another for sched_switch, keyed on pid.  Whenever a
+sched_wakeup occurs, the timestamp is saved in the entry corresponding
+to the current pid, and when the scheduler switches back to that pid,
+the timestamp difference is calculated.  If the resulting latency
+exceeds the current maximum latency, the specified save() values are
+saved:
+
+    # echo 'hist:keys=pid:ts0=$common_timestamp.usecs \
+        if comm=="cyclictest"' >> \
+      /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+
+    # echo 'hist:keys=next_pid:\
+      wakeup_lat=$common_timestamp.usecs-$ts0:\
+      onmax($wakeup_lat).save(next_comm,prev_pid,prev_prio,prev_comm) \
+        if next_comm=="cyclictest"' >> \
+      /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+
+When the histogram is displayed, the max value and the saved values
+corresponding to the max are displayed following the rest of the
+fields:
+
+    # cat /sys/kernel/debug/tracing/events/sched/sched_switch/hist
+
+      { next_pid:       3728 } hitcount:        199 \
+        max:        123  next_comm: cyclictest  prev_pid:          0 \
+	prev_prio:        120  prev_comm: swapper/3
+      { next_pid:       3730 } hitcount:       1321 \
+        max:         15  next_comm: cyclictest  prev_pid:          0 \
+	prev_prio:        120  prev_comm: swapper/1
+      { next_pid:       3729 } hitcount:       1973\
+        max:         25  next_comm: cyclictest  prev_pid:          0  \
+	prev_prio:        120  prev_comm: swapper/0
+
+    Totals:
+        Hits: 3493
+        Entries: 3
+	Dropped: 0
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- include/linux/ring_buffer.h      |  3 +-
- include/linux/trace_events.h     | 10 +++++++
- kernel/trace/ring_buffer.c       | 10 +++++--
- kernel/trace/trace.c             | 65 +++++++++++++++++++++++++++-------------
- kernel/trace/trace_events.c      | 35 +++++++++++++++++-----
- kernel/trace/trace_events_hist.c |  4 +--
- 6 files changed, 93 insertions(+), 34 deletions(-)
+ kernel/trace/trace_events_hist.c | 313 ++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 279 insertions(+), 34 deletions(-)
 
-diff --git a/include/linux/ring_buffer.h b/include/linux/ring_buffer.h
-index 74bc276..5459516 100644
---- a/include/linux/ring_buffer.h
-+++ b/include/linux/ring_buffer.h
-@@ -113,7 +113,8 @@ int ring_buffer_poll_wait(struct ring_buffer *buffer, int cpu,
- void ring_buffer_change_overwrite(struct ring_buffer *buffer, int val);
- 
- struct ring_buffer_event *ring_buffer_lock_reserve(struct ring_buffer *buffer,
--						   unsigned long length);
-+						   unsigned long length,
-+						   bool allow_recursion);
- int ring_buffer_unlock_commit(struct ring_buffer *buffer,
- 			      struct ring_buffer_event *event);
- int ring_buffer_write(struct ring_buffer *buffer,
-diff --git a/include/linux/trace_events.h b/include/linux/trace_events.h
-index bfd2a53..eb03abb 100644
---- a/include/linux/trace_events.h
-+++ b/include/linux/trace_events.h
-@@ -151,6 +151,12 @@ struct ring_buffer_event *
- 				int type, unsigned long len,
- 				unsigned long flags, int pc);
- 
-+struct ring_buffer_event *
-+trace_event_buffer_lock_reserve_recursive(struct ring_buffer **current_buffer,
-+					  struct trace_event_file *trace_file,
-+					  int type, unsigned long len,
-+					  unsigned long flags, int pc);
-+
- #define TRACE_RECORD_CMDLINE	BIT(0)
- #define TRACE_RECORD_TGID	BIT(1)
- 
-@@ -210,6 +216,10 @@ void *trace_event_buffer_reserve(struct trace_event_buffer *fbuffer,
- 				  struct trace_event_file *trace_file,
- 				  unsigned long len);
- 
-+void *trace_event_buffer_reserve_recursive(struct trace_event_buffer *fbuffer,
-+					   struct trace_event_file *trace_file,
-+					   unsigned long len);
-+
- void trace_event_buffer_commit(struct trace_event_buffer *fbuffer);
- 
- enum {
-diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
-index 0bcc53e..8e5bcfa 100644
---- a/kernel/trace/ring_buffer.c
-+++ b/kernel/trace/ring_buffer.c
-@@ -2830,6 +2830,7 @@ int ring_buffer_unlock_commit(struct ring_buffer *buffer,
-  * ring_buffer_lock_reserve - reserve a part of the buffer
-  * @buffer: the ring buffer to reserve from
-  * @length: the length of the data to reserve (excluding event header)
-+ * @allow_recursion: flag allowing recursion check to be overridden
-  *
-  * Returns a reseverd event on the ring buffer to copy directly to.
-  * The user of this interface will need to get the body to write into
-@@ -2842,7 +2843,8 @@ int ring_buffer_unlock_commit(struct ring_buffer *buffer,
-  * If NULL is returned, then nothing has been allocated or locked.
-  */
- struct ring_buffer_event *
--ring_buffer_lock_reserve(struct ring_buffer *buffer, unsigned long length)
-+ring_buffer_lock_reserve(struct ring_buffer *buffer, unsigned long length,
-+			 bool allow_recursion)
- {
- 	struct ring_buffer_per_cpu *cpu_buffer;
- 	struct ring_buffer_event *event;
-@@ -2867,8 +2869,10 @@ struct ring_buffer_event *
- 	if (unlikely(length > BUF_MAX_DATA_SIZE))
- 		goto out;
- 
--	if (unlikely(trace_recursive_lock(cpu_buffer)))
--		goto out;
-+	if (unlikely(trace_recursive_lock(cpu_buffer))) {
-+		if (!allow_recursion)
-+			goto out;
-+	}
- 
- 	event = rb_reserve_next_event(buffer, cpu_buffer, length);
- 	if (!event)
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index ecdf456..1d009e4 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -744,13 +744,14 @@ static inline void ftrace_trace_stack(struct trace_array *tr,
- 
- static __always_inline struct ring_buffer_event *
- __trace_buffer_lock_reserve(struct ring_buffer *buffer,
--			  int type,
--			  unsigned long len,
--			  unsigned long flags, int pc)
-+			    int type,
-+			    unsigned long len,
-+			    unsigned long flags, int pc,
-+			    bool allow_recursion)
- {
- 	struct ring_buffer_event *event;
- 
--	event = ring_buffer_lock_reserve(buffer, len);
-+	event = ring_buffer_lock_reserve(buffer, len, allow_recursion);
- 	if (event != NULL)
- 		trace_event_setup(event, type, flags, pc);
- 
-@@ -829,8 +830,8 @@ int __trace_puts(unsigned long ip, const char *str, int size)
- 
- 	local_save_flags(irq_flags);
- 	buffer = global_trace.trace_buffer.buffer;
--	event = __trace_buffer_lock_reserve(buffer, TRACE_PRINT, alloc, 
--					    irq_flags, pc);
-+	event = __trace_buffer_lock_reserve(buffer, TRACE_PRINT, alloc,
-+					    irq_flags, pc, false);
- 	if (!event)
- 		return 0;
- 
-@@ -878,7 +879,7 @@ int __trace_bputs(unsigned long ip, const char *str)
- 	local_save_flags(irq_flags);
- 	buffer = global_trace.trace_buffer.buffer;
- 	event = __trace_buffer_lock_reserve(buffer, TRACE_BPUTS, size,
--					    irq_flags, pc);
-+					    irq_flags, pc, false);
- 	if (!event)
- 		return 0;
- 
-@@ -2150,7 +2151,7 @@ struct ring_buffer_event *
- 			  unsigned long len,
- 			  unsigned long flags, int pc)
- {
--	return __trace_buffer_lock_reserve(buffer, type, len, flags, pc);
-+	return __trace_buffer_lock_reserve(buffer, type, len, flags, pc, false);
- }
- 
- DEFINE_PER_CPU(struct ring_buffer_event *, trace_buffered_event);
-@@ -2267,10 +2268,11 @@ void trace_buffered_event_disable(void)
- static struct ring_buffer *temp_buffer;
- 
- struct ring_buffer_event *
--trace_event_buffer_lock_reserve(struct ring_buffer **current_rb,
--			  struct trace_event_file *trace_file,
--			  int type, unsigned long len,
--			  unsigned long flags, int pc)
-+__trace_event_buffer_lock_reserve(struct ring_buffer **current_rb,
-+				  struct trace_event_file *trace_file,
-+				  int type, unsigned long len,
-+				  unsigned long flags, int pc,
-+				  bool allow_recursion)
- {
- 	struct ring_buffer_event *entry;
- 	int val;
-@@ -2291,7 +2293,7 @@ struct ring_buffer_event *
- 	}
- 
- 	entry = __trace_buffer_lock_reserve(*current_rb,
--					    type, len, flags, pc);
-+					    type, len, flags, pc, allow_recursion);
- 	/*
- 	 * If tracing is off, but we have triggers enabled
- 	 * we still need to look at the event data. Use the temp_buffer
-@@ -2301,12 +2303,33 @@ struct ring_buffer_event *
- 	if (!entry && trace_file->flags & EVENT_FILE_FL_TRIGGER_COND) {
- 		*current_rb = temp_buffer;
- 		entry = __trace_buffer_lock_reserve(*current_rb,
--						    type, len, flags, pc);
-+						    type, len, flags, pc, allow_recursion);
- 	}
- 	return entry;
- }
-+
-+struct ring_buffer_event *
-+trace_event_buffer_lock_reserve(struct ring_buffer **current_rb,
-+			  struct trace_event_file *trace_file,
-+			  int type, unsigned long len,
-+			  unsigned long flags, int pc)
-+{
-+	return __trace_event_buffer_lock_reserve(current_rb, trace_file, type,
-+						 len, flags, pc, false);
-+}
- EXPORT_SYMBOL_GPL(trace_event_buffer_lock_reserve);
- 
-+struct ring_buffer_event *
-+trace_event_buffer_lock_reserve_recursive(struct ring_buffer **current_rb,
-+					  struct trace_event_file *trace_file,
-+					  int type, unsigned long len,
-+					  unsigned long flags, int pc)
-+{
-+	return __trace_event_buffer_lock_reserve(current_rb, trace_file, type,
-+						 len, flags, pc, true);
-+}
-+EXPORT_SYMBOL_GPL(trace_event_buffer_lock_reserve_recursive);
-+
- static DEFINE_SPINLOCK(tracepoint_iter_lock);
- static DEFINE_MUTEX(tracepoint_printk_mutex);
- 
-@@ -2548,7 +2571,7 @@ int unregister_ftrace_export(struct trace_export *export)
- 	struct ftrace_entry *entry;
- 
- 	event = __trace_buffer_lock_reserve(buffer, TRACE_FN, sizeof(*entry),
--					    flags, pc);
-+					    flags, pc, false);
- 	if (!event)
- 		return;
- 	entry	= ring_buffer_event_data(event);
-@@ -2628,7 +2651,7 @@ static void __ftrace_trace_stack(struct ring_buffer *buffer,
- 	size *= sizeof(unsigned long);
- 
- 	event = __trace_buffer_lock_reserve(buffer, TRACE_STACK,
--					    sizeof(*entry) + size, flags, pc);
-+					    sizeof(*entry) + size, flags, pc, false);
- 	if (!event)
- 		goto out;
- 	entry = ring_buffer_event_data(event);
-@@ -2759,7 +2782,7 @@ void trace_dump_stack(int skip)
- 	__this_cpu_inc(user_stack_count);
- 
- 	event = __trace_buffer_lock_reserve(buffer, TRACE_USER_STACK,
--					    sizeof(*entry), flags, pc);
-+					    sizeof(*entry), flags, pc, false);
- 	if (!event)
- 		goto out_drop_count;
- 	entry	= ring_buffer_event_data(event);
-@@ -2930,7 +2953,7 @@ int trace_vbprintk(unsigned long ip, const char *fmt, va_list args)
- 	size = sizeof(*entry) + sizeof(u32) * len;
- 	buffer = tr->trace_buffer.buffer;
- 	event = __trace_buffer_lock_reserve(buffer, TRACE_BPRINT, size,
--					    flags, pc);
-+					    flags, pc, false);
- 	if (!event)
- 		goto out;
- 	entry = ring_buffer_event_data(event);
-@@ -2986,7 +3009,7 @@ int trace_vbprintk(unsigned long ip, const char *fmt, va_list args)
- 	local_save_flags(flags);
- 	size = sizeof(*entry) + len + 1;
- 	event = __trace_buffer_lock_reserve(buffer, TRACE_PRINT, size,
--					    flags, pc);
-+					    flags, pc, false);
- 	if (!event)
- 		goto out;
- 	entry = ring_buffer_event_data(event);
-@@ -6097,7 +6120,7 @@ static ssize_t tracing_splice_read_pipe(struct file *filp,
- 
- 	buffer = tr->trace_buffer.buffer;
- 	event = __trace_buffer_lock_reserve(buffer, TRACE_PRINT, size,
--					    irq_flags, preempt_count());
-+					    irq_flags, preempt_count(), false);
- 	if (unlikely(!event))
- 		/* Ring buffer disabled, return as if not open for write */
- 		return -EBADF;
-@@ -6169,7 +6192,7 @@ static ssize_t tracing_splice_read_pipe(struct file *filp,
- 
- 	buffer = tr->trace_buffer.buffer;
- 	event = __trace_buffer_lock_reserve(buffer, TRACE_RAW_DATA, size,
--					    irq_flags, preempt_count());
-+					    irq_flags, preempt_count(), false);
- 	if (!event)
- 		/* Ring buffer disabled, return as if not open for write */
- 		return -EBADF;
-diff --git a/kernel/trace/trace_events.c b/kernel/trace/trace_events.c
-index 889802c..7b90462 100644
---- a/kernel/trace/trace_events.c
-+++ b/kernel/trace/trace_events.c
-@@ -249,9 +249,9 @@ bool trace_event_ignore_this_pid(struct trace_event_file *trace_file)
- }
- EXPORT_SYMBOL_GPL(trace_event_ignore_this_pid);
- 
--void *trace_event_buffer_reserve(struct trace_event_buffer *fbuffer,
--				 struct trace_event_file *trace_file,
--				 unsigned long len)
-+void *__trace_event_buffer_reserve(struct trace_event_buffer *fbuffer,
-+				   struct trace_event_file *trace_file,
-+				   unsigned long len, bool allow_recursion)
- {
- 	struct trace_event_call *event_call = trace_file->event_call;
- 
-@@ -271,18 +271,39 @@ void *trace_event_buffer_reserve(struct trace_event_buffer *fbuffer,
- 		fbuffer->pc--;
- 	fbuffer->trace_file = trace_file;
- 
--	fbuffer->event =
--		trace_event_buffer_lock_reserve(&fbuffer->buffer, trace_file,
--						event_call->event.type, len,
--						fbuffer->flags, fbuffer->pc);
-+	if (!allow_recursion)
-+		fbuffer->event =
-+			trace_event_buffer_lock_reserve(&fbuffer->buffer, trace_file,
-+							event_call->event.type, len,
-+							fbuffer->flags, fbuffer->pc);
-+	else
-+		fbuffer->event =
-+			trace_event_buffer_lock_reserve_recursive(&fbuffer->buffer, trace_file,
-+								  event_call->event.type, len,
-+								  fbuffer->flags, fbuffer->pc);
- 	if (!fbuffer->event)
- 		return NULL;
- 
- 	fbuffer->entry = ring_buffer_event_data(fbuffer->event);
- 	return fbuffer->entry;
- }
-+
-+void *trace_event_buffer_reserve(struct trace_event_buffer *fbuffer,
-+				 struct trace_event_file *trace_file,
-+				 unsigned long len)
-+{
-+	return __trace_event_buffer_reserve(fbuffer, trace_file, len, false);
-+}
- EXPORT_SYMBOL_GPL(trace_event_buffer_reserve);
- 
-+void *trace_event_buffer_reserve_recursive(struct trace_event_buffer *fbuffer,
-+					   struct trace_event_file *trace_file,
-+					   unsigned long len)
-+{
-+	return __trace_event_buffer_reserve(fbuffer, trace_file, len, true);
-+}
-+EXPORT_SYMBOL_GPL(trace_event_buffer_reserve_recursive);
-+
- int trace_event_reg(struct trace_event_call *call,
- 		    enum trace_reg type, void *data)
- {
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index eb77eee..67a25bf 100644
+index 73d2bd4..0a398f3 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -674,8 +674,8 @@ static notrace void trace_event_raw_event_synth(void *__data,
+@@ -292,6 +292,10 @@ struct hist_trigger_data {
+ 	unsigned int			n_field_var_str;
+ 	struct field_var_hist		*field_var_hists[SYNTH_FIELDS_MAX];
+ 	unsigned int			n_field_var_hists;
++
++	struct field_var		*max_vars[SYNTH_FIELDS_MAX];
++	unsigned int			n_max_vars;
++	unsigned int			n_max_var_str;
+ };
  
- 	fields_size = event->n_u64 * sizeof(u64);
+ struct synth_field {
+@@ -334,6 +338,14 @@ struct action_data {
+ 			char			*synth_event_name;
+ 			struct synth_event	*synth_event;
+ 		} onmatch;
++
++		struct {
++			char			*var_str;
++			char			*fn_name;
++			unsigned int		max_var_ref_idx;
++			struct hist_field	*max_var;
++			struct hist_field	*var;
++		} onmax;
+ 	};
+ };
  
--	entry = trace_event_buffer_reserve(&fbuffer, trace_file,
--					   sizeof(*entry) + fields_size);
-+	entry = trace_event_buffer_reserve_recursive(&fbuffer, trace_file,
-+						     sizeof(*entry) + fields_size);
- 	if (!entry)
- 		return;
+@@ -1602,7 +1614,8 @@ static int parse_action(char *str, struct hist_trigger_attrs *attrs)
+ 	if (attrs->n_actions >= HIST_ACTIONS_MAX)
+ 		return ret;
+ 
+-	if ((strncmp(str, "onmatch(", strlen("onmatch(")) == 0)) {
++	if ((strncmp(str, "onmatch(", strlen("onmatch(")) == 0) ||
++	    (strncmp(str, "onmax(", strlen("onmax(")) == 0)) {
+ 		attrs->action_str[attrs->n_actions] = kstrdup(str, GFP_KERNEL);
+ 		if (!attrs->action_str[attrs->n_actions]) {
+ 			ret = -ENOMEM;
+@@ -1721,7 +1734,7 @@ static void hist_trigger_elt_data_free(struct tracing_map_elt *elt)
+ 	struct hist_elt_data *private_data = elt->private_data;
+ 	unsigned int i, n_str;
+ 
+-	n_str = hist_data->n_field_var_str;
++	n_str = hist_data->n_field_var_str + hist_data->n_max_var_str;
+ 
+ 	for (i = 0; i < n_str; i++)
+ 		kfree(private_data->field_var_str[i]);
+@@ -1756,7 +1769,7 @@ static int hist_trigger_elt_data_alloc(struct tracing_map_elt *elt)
+ 		}
+ 	}
+ 
+-	n_str = hist_data->n_field_var_str;
++	n_str = hist_data->n_field_var_str + hist_data->n_max_var_str;
+ 
+ 	size = STR_VAR_LEN_MAX;
+ 
+@@ -2658,6 +2671,15 @@ static void update_field_vars(struct hist_trigger_data *hist_data,
+ 			    hist_data->n_field_vars, 0);
+ }
+ 
++static void update_max_vars(struct hist_trigger_data *hist_data,
++			    struct tracing_map_elt *elt,
++			    struct ring_buffer_event *rbe,
++			    void *rec)
++{
++	__update_field_vars(elt, rbe, rec, hist_data->max_vars,
++			    hist_data->n_max_vars, hist_data->n_field_var_str);
++}
++
+ static struct hist_field *create_var(struct hist_trigger_data *hist_data,
+ 				     struct trace_event_file *file,
+ 				     char *name, int size, const char *type)
+@@ -2767,6 +2789,223 @@ static struct field_var *create_field_var(struct hist_trigger_data *hist_data,
+ 	return create_field_var(hist_data, file, var_name);
+ }
+ 
++static void onmax_print(struct seq_file *m,
++			struct hist_trigger_data *hist_data,
++			struct tracing_map_elt *elt,
++			struct action_data *data)
++{
++	unsigned int i, save_var_idx, max_idx = data->onmax.max_var->var.idx;
++
++	seq_printf(m, "\n\tmax: %10llu", tracing_map_read_var(elt, max_idx));
++
++	for (i = 0; i < hist_data->n_max_vars; i++) {
++		struct hist_field *save_val = hist_data->max_vars[i]->val;
++		struct hist_field *save_var = hist_data->max_vars[i]->var;
++		u64 val;
++
++		save_var_idx = save_var->var.idx;
++
++		val = tracing_map_read_var(elt, save_var_idx);
++
++		if (save_val->flags & HIST_FIELD_FL_STRING) {
++			seq_printf(m, "  %s: %-32s", save_var->var.name,
++				   (char *)(uintptr_t)(val));
++		} else
++			seq_printf(m, "  %s: %10llu", save_var->var.name, val);
++	}
++}
++
++static void onmax_save(struct hist_trigger_data *hist_data,
++		       struct tracing_map_elt *elt, void *rec,
++		       struct ring_buffer_event *rbe,
++		       struct action_data *data, u64 *var_ref_vals)
++{
++	unsigned int max_idx = data->onmax.max_var->var.idx;
++	unsigned int max_var_ref_idx = data->onmax.max_var_ref_idx;
++
++	u64 var_val, max_val;
++
++	var_val = var_ref_vals[max_var_ref_idx];
++	max_val = tracing_map_read_var(elt, max_idx);
++
++	if (var_val <= max_val)
++		return;
++
++	tracing_map_set_var(elt, max_idx, var_val);
++
++	update_max_vars(hist_data, elt, rbe, rec);
++}
++
++static void onmax_destroy(struct action_data *data)
++{
++	unsigned int i;
++
++	destroy_hist_field(data->onmax.max_var, 0);
++	destroy_hist_field(data->onmax.var, 0);
++
++	kfree(data->onmax.var_str);
++	kfree(data->onmax.fn_name);
++
++	for (i = 0; i < data->n_params; i++)
++		kfree(data->params[i]);
++
++	kfree(data);
++}
++
++static int onmax_create(struct hist_trigger_data *hist_data,
++			struct action_data *data)
++{
++	struct trace_event_call *call = hist_data->event_file->event_call;
++	struct trace_event_file *file = hist_data->event_file;
++	struct hist_field *var_field, *ref_field, *max_var;
++	unsigned int var_ref_idx = hist_data->n_var_refs;
++	struct field_var *field_var;
++	char *onmax_var_str, *param;
++	const char *event_name;
++	unsigned long flags;
++	unsigned int i;
++	int ret = 0;
++
++	onmax_var_str = data->onmax.var_str;
++	if (onmax_var_str[0] != '$')
++		return -EINVAL;
++	onmax_var_str++;
++
++	event_name = trace_event_name(call);
++	var_field = find_target_event_var(hist_data, NULL, NULL, onmax_var_str);
++	if (!var_field)
++		return -EINVAL;
++
++	flags = HIST_FIELD_FL_VAR_REF;
++	ref_field = create_hist_field(hist_data, NULL, flags, NULL);
++	if (!ref_field)
++		return -ENOMEM;
++
++	if (init_var_ref(ref_field, var_field)) {
++		destroy_hist_field(ref_field, 0);
++		ret = -ENOMEM;
++		goto out;
++	}
++	hist_data->var_refs[hist_data->n_var_refs] = ref_field;
++	ref_field->var_ref_idx = hist_data->n_var_refs++;
++	data->onmax.var = ref_field;
++
++	data->fn = onmax_save;
++	data->onmax.max_var_ref_idx = var_ref_idx;
++	max_var = create_var(hist_data, file, "max", sizeof(u64), "u64");
++	if (IS_ERR(max_var)) {
++		ret = PTR_ERR(max_var);
++		goto out;
++	}
++	data->onmax.max_var = max_var;
++
++	for (i = 0; i < data->n_params; i++) {
++		param = kstrdup(data->params[i], GFP_KERNEL);
++		if (!param)
++			goto out;
++
++		field_var = create_target_field_var(hist_data, NULL, NULL, param);
++		if (IS_ERR(field_var)) {
++			ret = PTR_ERR(field_var);
++			kfree(param);
++			goto out;
++		}
++
++		hist_data->max_vars[hist_data->n_max_vars++] = field_var;
++		if (field_var->val->flags & HIST_FIELD_FL_STRING)
++			hist_data->n_max_var_str++;
++
++		kfree(param);
++	}
++
++	hist_data->actions[hist_data->n_actions++] = data;
++ out:
++	return ret;
++}
++
++static int parse_action_params(char *params, struct action_data *data)
++{
++	char *param, *saved_param;
++	int ret = 0;
++
++	while (params) {
++		if (data->n_params >= SYNTH_FIELDS_MAX)
++			goto out;
++
++		param = strsep(&params, ",");
++		if (!param)
++			goto out;
++
++		param = strstrip(param);
++		if (strlen(param) < 2) {
++			ret = -EINVAL;
++			goto out;
++		}
++
++		saved_param = kstrdup(param, GFP_KERNEL);
++		if (!saved_param) {
++			ret = -ENOMEM;
++			goto out;
++		}
++
++		data->params[data->n_params++] = saved_param;
++	}
++ out:
++	return ret;
++}
++
++static struct action_data *onmax_parse(char *str)
++{
++	char *onmax_fn_name, *onmax_var_str;
++	struct action_data *data;
++	int ret = -EINVAL;
++
++	data = kzalloc(sizeof(*data), GFP_KERNEL);
++	if (!data)
++		return ERR_PTR(-ENOMEM);
++
++	onmax_var_str = strsep(&str, ")");
++	if (!onmax_var_str || !str)
++		return ERR_PTR(-EINVAL);
++	data->onmax.var_str = kstrdup(onmax_var_str, GFP_KERNEL);
++	if (!data->onmax.var_str) {
++		ret = -ENOMEM;
++		goto free;
++	}
++
++	strsep(&str, ".");
++	if (!str)
++		goto free;
++
++	onmax_fn_name = strsep(&str, "(");
++	if (!onmax_fn_name || !str)
++		goto free;
++
++	if (strncmp(onmax_fn_name, "save", strlen("save")) == 0) {
++		char *params = strsep(&str, ")");
++
++		if (!params)
++			goto free;
++
++		ret = parse_action_params(params, data);
++		if (ret)
++			goto free;
++	} else
++		goto free;
++
++	data->onmax.fn_name = kstrdup(onmax_fn_name, GFP_KERNEL);
++	if (!data->onmax.fn_name) {
++		ret = -ENOMEM;
++		goto free;
++	}
++ out:
++	return data;
++ free:
++	onmax_destroy(data);
++	data = ERR_PTR(ret);
++	goto out;
++}
++
+ static void onmatch_destroy(struct action_data *data)
+ {
+ 	unsigned int i;
+@@ -2851,37 +3090,6 @@ static int check_synth_field(struct synth_event *event,
+ 	return 0;
+ }
+ 
+-static int parse_action_params(char *params, struct action_data *data)
+-{
+-	char *param, *saved_param;
+-	int ret = 0;
+-
+-	while (params) {
+-		if (data->n_params >= SYNTH_FIELDS_MAX)
+-			goto out;
+-
+-		param = strsep(&params, ",");
+-		if (!param)
+-			goto out;
+-
+-		param = strstrip(param);
+-		if (strlen(param) < 2) {
+-			ret = -EINVAL;
+-			goto out;
+-		}
+-
+-		saved_param = kstrdup(param, GFP_KERNEL);
+-		if (!saved_param) {
+-			ret = -ENOMEM;
+-			goto out;
+-		}
+-
+-		data->params[data->n_params++] = saved_param;
+-	}
+- out:
+-	return ret;
+-}
+-
+ static struct hist_field *
+ onmatch_find_var(struct hist_trigger_data *hist_data, struct action_data *data,
+ 		 char *system, char *event, char *var)
+@@ -3521,6 +3729,8 @@ static void destroy_actions(struct hist_trigger_data *hist_data)
+ 
+ 		if (data->fn == action_trace)
+ 			onmatch_destroy(data);
++		else if (data->fn == onmax_save)
++			onmax_destroy(data);
+ 		else
+ 			kfree(data);
+ 	}
+@@ -3550,6 +3760,18 @@ static int create_actions(struct hist_trigger_data *hist_data,
+ 				onmatch_destroy(data);
+ 				return ret;
+ 			}
++		} else if (strncmp(str, "onmax(", strlen("onmax(")) == 0) {
++			char *action_str = str + strlen("onmax(");
++
++			data = onmax_parse(action_str);
++			if (IS_ERR(data))
++				return PTR_ERR(data);
++
++			ret = onmax_create(hist_data, data);
++			if (ret) {
++				onmax_destroy(data);
++				return ret;
++			}
+ 		}
+ 	}
+ 
+@@ -3564,9 +3786,30 @@ static void print_actions(struct seq_file *m,
+ 
+ 	for (i = 0; i < hist_data->n_actions; i++) {
+ 		struct action_data *data = hist_data->actions[i];
++
++		if (data->fn == onmax_save)
++			onmax_print(m, hist_data, elt, data);
+ 	}
+ }
+ 
++static void print_onmax_spec(struct seq_file *m,
++			     struct hist_trigger_data *hist_data,
++			     struct action_data *data)
++{
++	unsigned int i;
++
++	seq_puts(m, ":onmax(");
++	seq_printf(m, "%s", data->onmax.var_str);
++	seq_printf(m, ").%s(", data->onmax.fn_name);
++
++	for (i = 0; i < hist_data->n_max_vars; i++) {
++		seq_printf(m, "%s", hist_data->max_vars[i]->var->var.name);
++		if (i < hist_data->n_max_vars - 1)
++			seq_puts(m, ",");
++	}
++	seq_puts(m, ")");
++}
++
+ static void print_onmatch_spec(struct seq_file *m,
+ 			       struct hist_trigger_data *hist_data,
+ 			       struct action_data *data)
+@@ -3597,6 +3840,8 @@ static void print_actions_spec(struct seq_file *m,
+ 
+ 		if (data->fn == action_trace)
+ 			print_onmatch_spec(m, hist_data, data);
++		else if (data->fn == onmax_save)
++			print_onmax_spec(m, hist_data, data);
+ 	}
+ }
  
 -- 
 1.9.3
