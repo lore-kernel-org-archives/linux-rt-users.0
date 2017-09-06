@@ -1,55 +1,52 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.92-rt130
-Date: Wed, 6 Sep 2017 11:00:20 -0400
-Message-ID: <20170906110020.756f78d4@gandalf.local.home>
+Subject: Re: [PATCH v2 02/40] tracing: Add support to detect and avoid
+ duplicates
+Date: Wed, 6 Sep 2017 14:32:43 -0400
+Message-ID: <20170906143243.381a38df@gandalf.local.home>
+References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
+        <7f3ca68455bdac47285ed45d608075a4af287362.1504642143.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Julia Cartwright <julia@ni.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.99]:54460 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S932247AbdIFPAX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 6 Sep 2017 11:00:23 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
+        vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel.opensrc@gmail.com, joelaf@google.com,
+        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Tom Zanussi <tom.zanussi@linux.intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <7f3ca68455bdac47285ed45d608075a4af287362.1504642143.git.tom.zanussi@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
+
+On Tue,  5 Sep 2017 16:57:14 -0500
+Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
+
+> From: Vedang Patel <vedang.patel@intel.com>
+> 
+> A duplicate in the tracing_map hash table is when 2 different entries
+> have the same key and, as a result, the key_hash. This is possible due
+> to a race condition in the algorithm. This race condition is inherent to
+> the algorithm and not a bug. This was fine because, until now, we were
+> only interested in the sum of all the values related to a particular
+> key (the duplicates are dealt with in tracing_map_sort_entries()). But,
+> with the inclusion of variables[1], we are interested in individual
+> values. So, it will not be clear what value to choose when
+> there are duplicates. So, the duplicates need to be removed.
+> 
 
 
-Dear RT Folks,
+> [1] - https://lkml.org/lkml/2017/6/26/751
 
-I'm pleased to announce the 3.2.92-rt130 stable release.
+FYI, something like this should have:
 
+Link: http://lkml.kernel.org/r/cover.1498510759.git.tom.zanussi@linux.intel.com
 
-This release is just an update to the new stable 3.2.92 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.2-rt
-  Head SHA1: 5cd7e2c392a8d7e91322d3b9f465d853f3ffd39f
-
-
-Or to build 3.2.92-rt130 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.92.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.92-rt130.patch.xz
-
-
-
-
-Enjoy,
+And avoid any non kernel.org archiving system.
 
 -- Steve
 
+> 
+> Signed-off-by: Vedang Patel <vedang.patel@intel.com>
+> ---
+>
