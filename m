@@ -1,10 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH v2 02/40] tracing: Add support to detect and avoid
- duplicates
-Date: Wed, 6 Sep 2017 14:47:22 -0400
-Message-ID: <20170906144722.6eb71312@gandalf.local.home>
+Subject: Re: [PATCH v2 07/40] tracing: Apply absolute timestamps to instance
+ max buffer
+Date: Wed, 6 Sep 2017 15:57:58 -0400
+Message-ID: <20170906155758.18e4a683@gandalf.local.home>
 References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
-        <7f3ca68455bdac47285ed45d608075a4af287362.1504642143.git.tom.zanussi@linux.intel.com>
+        <ebdb168d0be042dcdf51f81e696b17fabe3609c1.1504642143.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -14,108 +14,61 @@ Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 To: Tom Zanussi <tom.zanussi@linux.intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <7f3ca68455bdac47285ed45d608075a4af287362.1504642143.git.tom.zanussi@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.99]:44156 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1752187AbdIFT6C (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 6 Sep 2017 15:58:02 -0400
+In-Reply-To: <ebdb168d0be042dcdf51f81e696b17fabe3609c1.1504642143.git.tom.zanussi@linux.intel.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue,  5 Sep 2017 16:57:14 -0500
+On Tue,  5 Sep 2017 16:57:19 -0500
 Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
 
+> From: Baohong Liu <baohong.liu@intel.com>
+> 
+> Currently absolute timestamps are applied to both regular and max
+> buffers only for global trace. For instance trace, absolute
+> timestamps are applied only to regular buffer. But, regular and max
+> buffers can be swapped, for example, following a snapshot. So, for
+> instance trace, bad timestamps can be seen following a snapshot.
+> Let's apply absolute timestamps to instance max buffer as well.
+> 
+> Similarly, buffer clock change is applied to instance max buffer
+> as well.
 
-> diff --git a/kernel/trace/tracing_map.c b/kernel/trace/tracing_map.c
-> index 305039b..437b490 100644
-> --- a/kernel/trace/tracing_map.c
-> +++ b/kernel/trace/tracing_map.c
-> @@ -414,6 +414,7 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
->  __tracing_map_insert(struct tracing_map *map, void *key, bool lookup_only)
->  {
->  	u32 idx, key_hash, test_key;
-> +	int dup_try = 0;
->  	struct tracing_map_entry *entry;
->  
->  	key_hash = jhash(key, map->key_size, 0);
-> @@ -426,10 +427,31 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
->  		entry = TRACING_MAP_ENTRY(map->map, idx);
->  		test_key = entry->key;
->  
-> -		if (test_key && test_key == key_hash && entry->val &&
-> -		    keys_match(key, entry->val->key, map->key_size)) {
-> -			atomic64_inc(&map->hits);
-> -			return entry->val;
-> +		if (test_key && test_key == key_hash) {
-> +			if (entry->val &&
-> +			    keys_match(key, entry->val->key, map->key_size)) {
-> +				atomic64_inc(&map->hits);
-> +				return entry->val;
-> +			} else if (unlikely(!entry->val)) {
-
-I'm thinking we need a READ_ONCE() here.
-
-		val = READ_ONCE(entry->val);
-
-then use "val" instead of entry->val. Otherwise, wont it be possible
-if two tasks are inserting at the same time, to have this:
-
-(Using reg as when the value is read into a register from memory)
-
-	CPU0			CPU1
-	----			----
- reg = entry->val
- (reg == zero)
-
-			   entry->val = elt;
-
- keys_match(key, reg)
- (false)
-
- reg = entry->val
- (reg = elt)
-
- if (unlikely(!reg))
-
-Causes the if to fail.
-
-A READ_ONCE(), would make sure the entry->val used to test against key
-would also be the same value used to test if it is zero.
+Hmm, this is a bug fix in its own right. I'll pull this in for the
+current merge window and slap a stable tag on it too.
 
 -- Steve
 
+> 
+> Signed-off-by: Baohong Liu <baohong.liu@intel.com>
+> ---
+>  kernel/trace/trace.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+> 
+> diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
+> index 66d465e..719e4c1 100644
+> --- a/kernel/trace/trace.c
+> +++ b/kernel/trace/trace.c
+> @@ -6223,7 +6223,7 @@ static int tracing_set_clock(struct trace_array *tr, const char *clockstr)
+>  	tracing_reset_online_cpus(&tr->trace_buffer);
+>  
+>  #ifdef CONFIG_TRACER_MAX_TRACE
+> -	if (tr->flags & TRACE_ARRAY_FL_GLOBAL && tr->max_buffer.buffer)
+> +	if (tr->max_buffer.buffer)
+>  		ring_buffer_set_clock(tr->max_buffer.buffer, trace_clocks[i].func);
+>  	tracing_reset_online_cpus(&tr->max_buffer);
+>  #endif
+> @@ -6307,7 +6307,7 @@ int tracing_set_time_stamp_abs(struct trace_array *tr, bool abs)
+>  	tracing_reset_online_cpus(&tr->trace_buffer);
+>  
+>  #ifdef CONFIG_TRACER_MAX_TRACE
+> -	if (tr->flags & TRACE_ARRAY_FL_GLOBAL && tr->max_buffer.buffer)
+> +	if (tr->max_buffer.buffer)
+>  		ring_buffer_set_time_stamp_abs(tr->max_buffer.buffer, abs);
+>  	tracing_reset_online_cpus(&tr->max_buffer);
+>  #endif
 
-
-> +				/*
-> +				 * The key is present. But, val (pointer to elt
-> +				 * struct) is still NULL. which means some other
-> +				 * thread is in the process of inserting an
-> +				 * element.
-> +				 *
-> +				 * On top of that, it's key_hash is same as the
-> +				 * one being inserted right now. So, it's
-> +				 * possible that the element has the same
-> +				 * key as well.
-> +				 */
-> +
-> +				dup_try++;
-> +				if (dup_try > map->map_size) {
-> +					atomic64_inc(&map->drops);
-> +					break;
-> +				}
-> +				continue;
-> +			}
->  		}
->  
->  		if (!test_key) {
-> @@ -451,6 +473,13 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
->  				atomic64_inc(&map->hits);
->  
->  				return entry->val;
-> +			} else {
-> +				/*
-> +				 * cmpxchg() failed. Loop around once
-> +				 * more to check what key was inserted.
-> +				 */
-> +				dup_try++;
-> +				continue;
->  			}
->  		}
->  
