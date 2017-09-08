@@ -1,45 +1,45 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH v2 28/40] tracing: Add support for 'field variables'
-Date: Thu, 7 Sep 2017 19:43:52 -0400
-Message-ID: <20170907194352.7c003f7f@gandalf.local.home>
-References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
-        <af32f8a5f2cfc345dc2b3d34d38400a9d81bd1e4.1504642143.git.tom.zanussi@linux.intel.com>
+From: =?iso-8859-1?Q?Andr=E9_Pribil?= <a.pribil@beck-ipc.com>
+Subject: Re: RT and tty communication
+Date: Fri, 8 Sep 2017 13:50:43 +0200
+Message-ID: <681500CE65202E47A192754B01DAB4671B22332E5F@SDE12.beckipc.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Tom Zanussi <tom.zanussi@linux.intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <af32f8a5f2cfc345dc2b3d34d38400a9d81bd1e4.1504642143.git.tom.zanussi@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: 8BIT
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: "CAD2hpBW1YNbS+C1osQ0zMF=f_w+fpmpZvsv=x6u-1BQrSvz3Dw@mail.gmail.com"
+        <CAD2hpBW1YNbS+C1osQ0zMF=f_w+fpmpZvsv=x6u-1BQrSvz3Dw@mail.gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx.beck-ipc.com ([195.243.140.130]:56268 "EHLO mx.beck-ipc.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1752858AbdIHL6d (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 8 Sep 2017 07:58:33 -0400
+Received: from remote.beck-ipc.com (sde12.beckipc.net [172.30.2.12])
+        by mx.beck-ipc.com (Postfix) with ESMTPS id 970C311F7FC
+        for <linux-rt-users@vger.kernel.org>; Fri,  8 Sep 2017 13:50:46 +0200 (CEST)
+Content-Language: de-DE
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue,  5 Sep 2017 16:57:40 -0500
-Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
+Hi,
 
-> Users should be able to directly specify event fields in hist trigger
-> 'actions' rather than being forced to explicitly create a variable for
-> that purpose.
-> 
-> Add support allowing fields to be used directly in actions, which
-> essentially does just that - creates 'invisible' variables for each
-> bare field specified in an action.  If a bare field refers to a field
-> on another (matching) event, it even creates a special histogram for
-> the purpose (since variables can't be defined on an existing histogram
-> after histogram creation).
+I'm having the same problem. 
 
-Can you show some examples here to describe what you mean better?
+In my RT application, running currently at kernel 4.9.13-rt12, a high priority 
+thread communicates with a tty serial port. This thread is checking for incoming 
+characters with a non-blocking read() call. The execution time of this read() 
+call is normally within some hundreds of microseconds. In case some lower 
+priority thread/process accesses some other tty, e.g. for console output, 
+the non-blocking read() execution time within the high priority task rises to 
+hundreds of milliseconds. 
 
--- Steve
+After reverting the OpenSSH patch that Niels Kolthoff mentioned, I do no longer 
+see these big delays inside the non-blocking read(). However, now the high 
+priority task does not receive any characters from the tty serial port during 
+these long periods. The non-blocking read() returns -1, although there
+must be characters available. This leads to timeouts in my application. 
+So just reverting this patch is no workaround for me.
 
-> 
-> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> ---
->  kernel/trace/trace_events_hist.c | 452 ++++++++++++++++++++++++++++++++++++++-
->  1 file changed, 451 insertions(+), 1 deletion(-)
-> 
->
+Any ideas how to solve this issue are very welcome.
+
+Regards,
+Andre
