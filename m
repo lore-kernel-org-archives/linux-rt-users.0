@@ -1,12 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH v2 35/40] tracing: Reverse the order
- event_mutex/trace_types_lock are taken
-Date: Fri, 8 Sep 2017 16:00:39 -0400
-Message-ID: <20170908160039.24ab418c@gandalf.local.home>
+Subject: Re: [PATCH v2 40/40] tracing: Add trace_event_buffer_reserve()
+ variant that allows recursion
+Date: Fri, 8 Sep 2017 16:27:56 -0400
+Message-ID: <20170908162756.74c6be8a@gandalf.local.home>
 References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
-        <4b52f9b1c49599780af1a193736df609b2785a63.1504642143.git.tom.zanussi@linux.intel.com>
-        <20170908153135.14725f01@gandalf.local.home>
-        <20170908154136.096d49ff@gandalf.local.home>
+        <417873f6f05e44b6c93abd9771f85fa8f2dd37d0.1504642143.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -17,37 +15,125 @@ Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 To: Tom Zanussi <tom.zanussi@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170908154136.096d49ff@gandalf.local.home>
+In-Reply-To: <417873f6f05e44b6c93abd9771f85fa8f2dd37d0.1504642143.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 8 Sep 2017 15:41:36 -0400
-Steven Rostedt <rostedt@goodmis.org> wrote:
+On Tue,  5 Sep 2017 16:57:52 -0500
+Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
 
-> On Fri, 8 Sep 2017 15:31:35 -0400
-> Steven Rostedt <rostedt@goodmis.org> wrote:
+> Synthetic event generation requires the reservation of a second event
+> while the reservation of a previous event is still in progress.  The
+> trace_recursive_lock() check in ring_buffer_lock_reserve() prevents
+> this however.
 > 
-> > On Tue,  5 Sep 2017 16:57:47 -0500
-> > Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
-> >   
-> > > Change the order event_mutex and trace_types_lock are taken, to avoid
-> > > circular dependencies and lockdep spew.
-> > > 
-> > > Changing the order shouldn't matter to any current code, but does to
-> > > anything that takes the event_mutex first and then trace_types_lock.
-> > > This is the case when calling tracing_set_clock from inside an event
-> > > command, which already holds the event_mutex.    
-> > 
-> > This is a very scary patch. I'll apply it and run a bunch of tests with
-> > lockdep enabled. Let's see what blows up (or not).  
+> This sets up a special reserve pathway for this particular case,
+> leaving existing pathways untouched, other than an additional check in
+> ring_buffer_lock_reserve() and trace_event_buffer_reserve().  These
+> checks could be gotten rid of as well, with copies of those functions,
+> but for now try to avoid that unless necessary.
 > 
-> Boom!
->
+> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 
+I've been planing on changing that lock, which may help you here
+without having to mess around with parameters. That is to simply add a
+counter. Would this patch help you. You can add a patch to increment
+the count to 5 with an explanation of handling synthetic events, but
+even getting to 4 is extremely unlikely.
 
-> It appears to be caused by instance creation. I'll look at that.
-
-OK, this may be a simple fix. I'll send you a patch to fold in after I
-finish testing it.
+I'll make this into an official patch if this works for you, and then
+you can include it in your series.
 
 -- Steve
+
+diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
+index 0bcc53e..9dbb459 100644
+--- a/kernel/trace/ring_buffer.c
++++ b/kernel/trace/ring_buffer.c
+@@ -2582,61 +2582,29 @@ rb_wakeups(struct ring_buffer *buffer, struct ring_buffer_per_cpu *cpu_buffer)
+  * The lock and unlock are done within a preempt disable section.
+  * The current_context per_cpu variable can only be modified
+  * by the current task between lock and unlock. But it can
+- * be modified more than once via an interrupt. To pass this
+- * information from the lock to the unlock without having to
+- * access the 'in_interrupt()' functions again (which do show
+- * a bit of overhead in something as critical as function tracing,
+- * we use a bitmask trick.
++ * be modified more than once via an interrupt. There are four
++ * different contexts that we need to consider.
+  *
+- *  bit 0 =  NMI context
+- *  bit 1 =  IRQ context
+- *  bit 2 =  SoftIRQ context
+- *  bit 3 =  normal context.
++ *  Normal context.
++ *  SoftIRQ context
++ *  IRQ context
++ *  NMI context
+  *
+- * This works because this is the order of contexts that can
+- * preempt other contexts. A SoftIRQ never preempts an IRQ
+- * context.
+- *
+- * When the context is determined, the corresponding bit is
+- * checked and set (if it was set, then a recursion of that context
+- * happened).
+- *
+- * On unlock, we need to clear this bit. To do so, just subtract
+- * 1 from the current_context and AND it to itself.
+- *
+- * (binary)
+- *  101 - 1 = 100
+- *  101 & 100 = 100 (clearing bit zero)
+- *
+- *  1010 - 1 = 1001
+- *  1010 & 1001 = 1000 (clearing bit 1)
+- *
+- * The least significant bit can be cleared this way, and it
+- * just so happens that it is the same bit corresponding to
+- * the current context.
++ * If for some reason the ring buffer starts to recurse, we
++ * only allow that to happen at most 4 times (one for each
++ * context). If it happens 5 times, then we consider this a
++ * recusive loop and do not let it go further.
+  */
+ 
+ static __always_inline int
+ trace_recursive_lock(struct ring_buffer_per_cpu *cpu_buffer)
+ {
+-	unsigned int val = cpu_buffer->current_context;
+-	int bit;
+-
+-	if (in_interrupt()) {
+-		if (in_nmi())
+-			bit = RB_CTX_NMI;
+-		else if (in_irq())
+-			bit = RB_CTX_IRQ;
+-		else
+-			bit = RB_CTX_SOFTIRQ;
+-	} else
+-		bit = RB_CTX_NORMAL;
+-
+-	if (unlikely(val & (1 << bit)))
++	if (cpu_buffer->current_context >= 4)
+ 		return 1;
+ 
+-	val |= (1 << bit);
+-	cpu_buffer->current_context = val;
++	cpu_buffer->current_context++;
++	/* Interrupts must see this update */
++	barrier();
+ 
+ 	return 0;
+ }
+@@ -2644,7 +2612,9 @@ trace_recursive_lock(struct ring_buffer_per_cpu *cpu_buffer)
+ static __always_inline void
+ trace_recursive_unlock(struct ring_buffer_per_cpu *cpu_buffer)
+ {
+-	cpu_buffer->current_context &= cpu_buffer->current_context - 1;
++	/* Don't let the dec leak out */
++	barrier();
++	cpu_buffer->current_context--;
+ }
+ 
+ /**
