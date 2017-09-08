@@ -1,10 +1,11 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: Re: [PATCH v2 32/40] tracing: Add cpu field for hist triggers
-Date: Fri, 08 Sep 2017 14:35:27 -0500
-Message-ID: <1504899327.5276.8.camel@tzanussi-mobl.amr.corp.intel.com>
+Subject: Re: [PATCH v2 33/40] tracing: Add hist trigger support for variable
+ reference aliases
+Date: Fri, 08 Sep 2017 14:41:42 -0500
+Message-ID: <1504899702.5276.14.camel@tzanussi-mobl.amr.corp.intel.com>
 References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
-         <5d893e726dcbb6982a5e3d44414df06becdd5e6f.1504642143.git.tom.zanussi@linux.intel.com>
-         <20170908150808.6fb4295b@gandalf.local.home>
+         <35c0e47907c9acaa847c83ad0ec3af0092cde250.1504642143.git.tom.zanussi@linux.intel.com>
+         <20170908150955.2ea9351e@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
@@ -14,164 +15,37 @@ Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170908150808.6fb4295b@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mga07.intel.com ([134.134.136.100]:41080 "EHLO mga07.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1757010AbdIHTlp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 8 Sep 2017 15:41:45 -0400
+In-Reply-To: <20170908150955.2ea9351e@gandalf.local.home>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2017-09-08 at 15:08 -0400, Steven Rostedt wrote:
-> On Tue,  5 Sep 2017 16:57:44 -0500
+On Fri, 2017-09-08 at 15:09 -0400, Steven Rostedt wrote:
+> On Tue,  5 Sep 2017 16:57:45 -0500
 > Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
 > 
-> > A common key to use in a histogram is the cpuid - add a new cpu
-> > 'synthetic' field for that purpose.  This field is named cpu rather
-> > than $cpu or $common_cpu because 'cpu' already exists as a special
-> > filter field and it makes more sense to match that rather than add
-> > another name for the same thing.
-> > 
-> > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> > ---
-> >  Documentation/trace/events.txt   | 18 ++++++++++++++++++
-> >  kernel/trace/trace_events_hist.c | 30 +++++++++++++++++++++++++++---
-> >  2 files changed, 45 insertions(+), 3 deletions(-)
-> > 
-> > diff --git a/Documentation/trace/events.txt b/Documentation/trace/events.txt
-> > index 2cc08d4..9717688 100644
-> > --- a/Documentation/trace/events.txt
-> > +++ b/Documentation/trace/events.txt
-> > @@ -668,6 +668,24 @@ The following commands are supported:
-> >    The examples below provide a more concrete illustration of the
-> >    concepts and typical usage patterns discussed above.
-> >  
-> > +  'synthetic' event fields
-> > +  ------------------------
-> > +
-> > +  There are a number of 'synthetic fields' available for use as keys
-> > +  or values in a hist trigger.  These look like and behave as if they
-> > +  were event fields, but aren't actually part of the event's field
-> > +  definition or format file.  They are however available for any
-> > +  event, and can be used anywhere an actual event field could be.
-> > +  'Synthetic' field names are always prefixed with a '$' character to
-> > +  indicate that they're not normal fields (with the exception of
-> > +  'cpu', for compatibility with existing filter usage):
-> > +
-> > +    $common_timestamp      u64 - timestamp (from ring buffer) associated
-> > +                                 with the event, in nanoseconds.  May be
-> > +				 modified by .usecs to have timestamps
-> > +				 interpreted as microseconds.
+> > Add support for alias=$somevar where alias can be used as
+> > onmatch($alias).
 > 
-> I guess the above should have been added with the synthetic field
-> addition.
+> This change log is very lacking. What exactly is the purpose of alias?
+> 
+> Sounds like the variable is going undercover.
 > 
 
-Yeah, somehow this bit got shuffled to the wrong place refactoring the
-patches. 
+This was a feature added at the request of a user, who wanted more
+flexibility in making naming clearer in certain cases e.g.:
 
-> > +    cpu                    int - the cpu on which the event occurred.
-> 
-> Then this (and the explanation of '$' for cpu above) should be added
-> with this patch.
-> 
+# echo 'hist:keys=next_pid:new_lat=$common_timestamp.usecs' > /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
 
-Yep, will do.
+# echo 'hist:keys=pid:latency=$new_lat:onmatch(sched.sched_switch).wake2($latency,pid)' > /sys/kernel/debug/tracing/events/synthetic/wake1/trigger
 
-> 
-> > +
-> >  
-> >  6.2 'hist' trigger examples
-> >  ---------------------------
-> > diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-> > index 4f66f2e..0782766 100644
-> > --- a/kernel/trace/trace_events_hist.c
-> > +++ b/kernel/trace/trace_events_hist.c
-> > @@ -226,6 +226,7 @@ enum hist_field_flags {
-> >  	HIST_FIELD_FL_VAR_ONLY		= 8192,
-> >  	HIST_FIELD_FL_EXPR		= 16384,
-> >  	HIST_FIELD_FL_VAR_REF		= 32768,
-> > +	HIST_FIELD_FL_CPU		= 65536,
-> >  };
-> >  
-> >  struct var_defs {
-> > @@ -1170,6 +1171,16 @@ static u64 hist_field_timestamp(struct hist_field *hist_field,
-> >  	return ts;
-> >  }
-> >  
-> > +static u64 hist_field_cpu(struct hist_field *hist_field,
-> > +			  struct tracing_map_elt *elt,
-> > +			  struct ring_buffer_event *rbe,
-> > +			  void *event)
-> > +{
-> > +	int cpu = raw_smp_processor_id();
-> 
-> Hmm, I wonder if this should be just smp_processor_id(). Why have the
-> raw_?
-> 
+I'll add a better description and exampe to the change log for this.
 
-You're right, smp_processor_id() should be fine.
+Tom 
 
-> > +
-> > +	return cpu;
-> > +}
-> > +
-> >  static struct hist_field *check_var_ref(struct hist_field *hist_field,
-> >  					struct hist_trigger_data *var_data,
-> >  					unsigned int var_idx)
-> > @@ -1518,6 +1529,8 @@ static const char *hist_field_name(struct hist_field *field,
-> >  		field_name = hist_field_name(field->operands[0], ++level);
-> >  	else if (field->flags & HIST_FIELD_FL_TIMESTAMP)
-> >  		field_name = "$common_timestamp";
-> > +	else if (field->flags & HIST_FIELD_FL_CPU)
-> > +		field_name = "cpu";
-> >  	else if (field->flags & HIST_FIELD_FL_EXPR ||
-> >  		 field->flags & HIST_FIELD_FL_VAR_REF)
-> >  		field_name = field->name;
-> > @@ -1990,6 +2003,15 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
-> >  		goto out;
-> >  	}
-> >  
-> > +	if (flags & HIST_FIELD_FL_CPU) {
-> > +		hist_field->fn = hist_field_cpu;
-> > +		hist_field->size = sizeof(int);
-> > +		hist_field->type = kstrdup("int", GFP_KERNEL);
-> > +		if (!hist_field->type)
-> > +			goto free;
-> > +		goto out;
-> > +	}
-> > +
-> >  	if (WARN_ON_ONCE(!field))
-> >  		goto out;
-> >  
-> > @@ -2182,7 +2204,9 @@ static struct hist_field *parse_var_ref(struct trace_array *tr,
-> >  		hist_data->enable_timestamps = true;
-> >  		if (*flags & HIST_FIELD_FL_TIMESTAMP_USECS)
-> >  			hist_data->attrs->ts_in_usecs = true;
-> > -	} else {
-> > +	} else if (strcmp(field_name, "cpu") == 0)
-> > +		*flags |= HIST_FIELD_FL_CPU;
-> > +	else {
-> >  		field = trace_find_event_field(file->event_call, field_name);
-> >  		if (!field || !field->size) {
-> >  			field = ERR_PTR(-EINVAL);
-> 
-> 
-> > @@ -3185,7 +3209,6 @@ static int onmatch_create(struct hist_trigger_data *hist_data,
-> >  				goto out;
-> >  			}
-> >  		}
-> > -
-> >  		if (param[0] == '$')
-> >  			hist_field = onmatch_find_var(hist_data, data, system,
-> >  						      event_name, param);
-> > @@ -3200,7 +3223,6 @@ static int onmatch_create(struct hist_trigger_data *hist_data,
-> >  			ret = -EINVAL;
-> >  			goto out;
-> >  		}
-> > -
-> 
-> Why the modification of whitespace here?
-> 
 
-Again no good reason, another casualty of refactoring lots of
-patches ;-)
 
-Tom
