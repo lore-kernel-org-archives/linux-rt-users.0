@@ -1,45 +1,43 @@
-From: =?iso-8859-1?Q?Andr=E9_Pribil?= <a.pribil@beck-ipc.com>
-Subject: Re: RT and tty communication
-Date: Fri, 8 Sep 2017 13:50:43 +0200
-Message-ID: <681500CE65202E47A192754B01DAB4671B22332E5F@SDE12.beckipc.net>
+From: Tom Zanussi <tom.zanussi@linux.intel.com>
+Subject: Re: [PATCH v2 25/40] tracing: Add support for dynamic tracepoints
+Date: Fri, 08 Sep 2017 09:18:27 -0500
+Message-ID: <1504880307.13310.15.camel@tzanussi-mobl.amr.corp.intel.com>
+References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
+         <9f89af4588c84850a58edcf72d2591ba78906c30.1504642143.git.tom.zanussi@linux.intel.com>
+         <20170907180226.1497e96c@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: 8BIT
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: "CAD2hpBW1YNbS+C1osQ0zMF=f_w+fpmpZvsv=x6u-1BQrSvz3Dw@mail.gmail.com"
-        <CAD2hpBW1YNbS+C1osQ0zMF=f_w+fpmpZvsv=x6u-1BQrSvz3Dw@mail.gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx.beck-ipc.com ([195.243.140.130]:56268 "EHLO mx.beck-ipc.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1752858AbdIHL6d (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 8 Sep 2017 07:58:33 -0400
-Received: from remote.beck-ipc.com (sde12.beckipc.net [172.30.2.12])
-        by mx.beck-ipc.com (Postfix) with ESMTPS id 970C311F7FC
-        for <linux-rt-users@vger.kernel.org>; Fri,  8 Sep 2017 13:50:46 +0200 (CEST)
-Content-Language: de-DE
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
+        vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel.opensrc@gmail.com, joelaf@google.com,
+        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20170907180226.1497e96c@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
+Hi Steve,
 
-I'm having the same problem. 
+On Thu, 2017-09-07 at 18:02 -0400, Steven Rostedt wrote:
+> On Tue,  5 Sep 2017 16:57:37 -0500
+> Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
+> 
+> > The tracepoint infrastructure assumes statically-defined tracepoints
+> > and uses static_keys for tracepoint enablement.  In order to define
+> > tracepoints on the fly, we need to have a dynamic counterpart.
+> 
+> Do we?
+> 
+> I believe the static keys should work just fine if you don't have any
+> defined static keys jumps, and they should work as a simple counter.
+> 
+> Could we do that instead of adding another variable to a structure that
+> is defined over a thousand times? Save us 4k of memory.
+> 
 
-In my RT application, running currently at kernel 4.9.13-rt12, a high priority 
-thread communicates with a tty serial port. This thread is checking for incoming 
-characters with a non-blocking read() call. The execution time of this read() 
-call is normally within some hundreds of microseconds. In case some lower 
-priority thread/process accesses some other tty, e.g. for console output, 
-the non-blocking read() execution time within the high priority task rises to 
-hundreds of milliseconds. 
+OK, yeah, makes sense if possible - let me look into that... 
 
-After reverting the OpenSSH patch that Niels Kolthoff mentioned, I do no longer 
-see these big delays inside the non-blocking read(). However, now the high 
-priority task does not receive any characters from the tty serial port during 
-these long periods. The non-blocking read() returns -1, although there
-must be characters available. This leads to timeouts in my application. 
-So just reverting this patch is no workaround for me.
-
-Any ideas how to solve this issue are very welcome.
-
-Regards,
-Andre
+Tom
