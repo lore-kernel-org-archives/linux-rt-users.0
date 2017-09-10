@@ -1,149 +1,49 @@
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: Re: [PATCH v2 40/40] tracing: Add trace_event_buffer_reserve()
- variant that allows recursion
-Date: Fri, 08 Sep 2017 15:41:42 -0500
-Message-ID: <1504903302.5276.22.camel@tzanussi-mobl.amr.corp.intel.com>
-References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
-         <417873f6f05e44b6c93abd9771f85fa8f2dd37d0.1504642143.git.tom.zanussi@linux.intel.com>
-         <20170908162756.74c6be8a@gandalf.local.home>
+From: Jacek Konieczny <jajcus@jajcus.net>
+Subject: Re: RT kernel on Acer laptop unreliable
+Date: Sun, 10 Sep 2017 14:49:24 +0200
+Message-ID: <99107e1e-3013-b90d-40fb-f7f245960af5@jajcus.net>
+References: <8c1a0cb6-d90c-1f6f-2d23-9865a17b379e@jajcus.net>
+ <20170807131937.ijj7n4yuk6inds4h@linutronix.de>
+ <56cb9f42-83e3-6648-2489-7c9e486c8ecc@jajcus.net>
+ <20170818124406.6cem4po52xrzi5qc@linutronix.de>
+ <b1209f35-67a2-5cb2-d0e1-ad142b34aab9@jajcus.net>
+ <20170821131254.5nuacfv62d3l4rhe@linutronix.de>
+ <52e67cfd-0bb3-ce97-7b28-f2afb1d3c1cb@jajcus.net>
+ <20170905091712.koywolqt5qwaslpk@linutronix.de>
+ <6def1dd2-eaae-a5d2-8bdb-26070ee5de7a@jajcus.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170908162756.74c6be8a@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: linux-rt-users@vger.kernel.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from tropek.jajcus.net ([31.179.132.94]:57048 "EHLO
+        tropek.jajcus.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751503AbdIJMtb (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 10 Sep 2017 08:49:31 -0400
+In-Reply-To: <6def1dd2-eaae-a5d2-8bdb-26070ee5de7a@jajcus.net>
+Content-Language: en-GB
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2017-09-08 at 16:27 -0400, Steven Rostedt wrote:
-> On Tue,  5 Sep 2017 16:57:52 -0500
-> Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
+On 2017-09-05 21:37, Jacek Konieczny wrote:
+> On 2017-09-05 11:17, Sebastian Andrzej Siewior wrote:
+>> On 2017-08-23 19:04:20 [+0200], Jacek Konieczny wrote:
+>>> I have applied the patch, no crash since then, but I got another problem
+>>> detected:
+>> I'm sorry, I missed that.
 > 
-> > Synthetic event generation requires the reservation of a second event
-> > while the reservation of a previous event is still in progress.  The
-> > trace_recursive_lock() check in ring_buffer_lock_reserve() prevents
-> > this however.
-> > 
-> > This sets up a special reserve pathway for this particular case,
-> > leaving existing pathways untouched, other than an additional check in
-> > ring_buffer_lock_reserve() and trace_event_buffer_reserve().  These
-> > checks could be gotten rid of as well, with copies of those functions,
-> > but for now try to avoid that unless necessary.
-> > 
-> > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> No problem. I was away on my holidays anyway.
 > 
-> I've been planing on changing that lock, which may help you here
-> without having to mess around with parameters. That is to simply add a
-> counter. Would this patch help you. You can add a patch to increment
-> the count to 5 with an explanation of handling synthetic events, but
-> even getting to 4 is extremely unlikely.
+>> What about this on-top?
 > 
-> I'll make this into an official patch if this works for you, and then
-> you can include it in your series.
-> 
+> That would not apply on top of my previous source, but I took
+> patch-4.11.12-rt13.patch and applied over that. I should have some
+> results in a few days.
 
-Yes, this should definitely work, and in fact I considered something
-similar at one point.  Thanks for doing this, it's much simpler than I
-would have ended up with!
-
-Tom
+I have been running it for a few days and no problems here. It seems
+this fixed the locking problem for me.
 
 
-> -- Steve
-> 
-> diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
-> index 0bcc53e..9dbb459 100644
-> --- a/kernel/trace/ring_buffer.c
-> +++ b/kernel/trace/ring_buffer.c
-> @@ -2582,61 +2582,29 @@ rb_wakeups(struct ring_buffer *buffer, struct ring_buffer_per_cpu *cpu_buffer)
->   * The lock and unlock are done within a preempt disable section.
->   * The current_context per_cpu variable can only be modified
->   * by the current task between lock and unlock. But it can
-> - * be modified more than once via an interrupt. To pass this
-> - * information from the lock to the unlock without having to
-> - * access the 'in_interrupt()' functions again (which do show
-> - * a bit of overhead in something as critical as function tracing,
-> - * we use a bitmask trick.
-> + * be modified more than once via an interrupt. There are four
-> + * different contexts that we need to consider.
->   *
-> - *  bit 0 =  NMI context
-> - *  bit 1 =  IRQ context
-> - *  bit 2 =  SoftIRQ context
-> - *  bit 3 =  normal context.
-> + *  Normal context.
-> + *  SoftIRQ context
-> + *  IRQ context
-> + *  NMI context
->   *
-> - * This works because this is the order of contexts that can
-> - * preempt other contexts. A SoftIRQ never preempts an IRQ
-> - * context.
-> - *
-> - * When the context is determined, the corresponding bit is
-> - * checked and set (if it was set, then a recursion of that context
-> - * happened).
-> - *
-> - * On unlock, we need to clear this bit. To do so, just subtract
-> - * 1 from the current_context and AND it to itself.
-> - *
-> - * (binary)
-> - *  101 - 1 = 100
-> - *  101 & 100 = 100 (clearing bit zero)
-> - *
-> - *  1010 - 1 = 1001
-> - *  1010 & 1001 = 1000 (clearing bit 1)
-> - *
-> - * The least significant bit can be cleared this way, and it
-> - * just so happens that it is the same bit corresponding to
-> - * the current context.
-> + * If for some reason the ring buffer starts to recurse, we
-> + * only allow that to happen at most 4 times (one for each
-> + * context). If it happens 5 times, then we consider this a
-> + * recusive loop and do not let it go further.
->   */
->  
->  static __always_inline int
->  trace_recursive_lock(struct ring_buffer_per_cpu *cpu_buffer)
->  {
-> -	unsigned int val = cpu_buffer->current_context;
-> -	int bit;
-> -
-> -	if (in_interrupt()) {
-> -		if (in_nmi())
-> -			bit = RB_CTX_NMI;
-> -		else if (in_irq())
-> -			bit = RB_CTX_IRQ;
-> -		else
-> -			bit = RB_CTX_SOFTIRQ;
-> -	} else
-> -		bit = RB_CTX_NORMAL;
-> -
-> -	if (unlikely(val & (1 << bit)))
-> +	if (cpu_buffer->current_context >= 4)
->  		return 1;
->  
-> -	val |= (1 << bit);
-> -	cpu_buffer->current_context = val;
-> +	cpu_buffer->current_context++;
-> +	/* Interrupts must see this update */
-> +	barrier();
->  
->  	return 0;
->  }
-> @@ -2644,7 +2612,9 @@ trace_recursive_lock(struct ring_buffer_per_cpu *cpu_buffer)
->  static __always_inline void
->  trace_recursive_unlock(struct ring_buffer_per_cpu *cpu_buffer)
->  {
-> -	cpu_buffer->current_context &= cpu_buffer->current_context - 1;
-> +	/* Don't let the dec leak out */
-> +	barrier();
-> +	cpu_buffer->current_context--;
->  }
->  
->  /**
+Jacek
