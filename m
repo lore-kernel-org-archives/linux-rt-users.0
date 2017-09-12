@@ -1,21 +1,65 @@
-From: Tim Orling <timothy.t.orling@linux.intel.com>
-Subject: Plans for 4.14 -rt?
-Date: Mon, 11 Sep 2017 10:07:16 -0700
-Message-ID: <753579E6-CE9E-4914-A83F-7D28BEDB21DD@linux.intel.com>
-Mime-Version: 1.0 (Mac OS X Mail 10.3 \(3273\))
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga01.intel.com ([192.55.52.88]:11194 "EHLO mga01.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751541AbdIKRHa (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 11 Sep 2017 13:07:30 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Masami Hiramatsu <mhiramat@kernel.org>
+Subject: Re: [PATCH v2 00/40] tracing: Inter-event (e.g. latency) support
+Date: Tue, 12 Sep 2017 10:50:03 +0900
+Message-ID: <20170912105003.860ff7b4cd9bfd3e4d1796b1@kernel.org>
+References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
+        namhyung@kernel.org, vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel.opensrc@gmail.com, joelaf@google.com,
+        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Tom Zanussi <tom.zanussi@linux.intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <cover.1504642143.git.tom.zanussi@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Now that 4.13 is out, we are looking into our crystal ball for the next LTS kernel and the next -rt-devel patchset. Assuming the 4.14 merge window closes sometime in November, would we expect a 4.14.y-rt branch sometime in January?
+On Tue,  5 Sep 2017 16:57:12 -0500
+Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
 
-Regards,
+> Hi,
+> 
+> This is V2 of the inter-event tracing patchset.
+> 
+> There are too many changes to list in detail, most of them directly
+> addressing input from V1, but here are the major changes from V1
+> (thanks to everyone who reviewed V1 and thanks to both Vedang Patel
+> and Baohong Liu for their contributions and included patches):
+[..]
 
-—Tim
+> 
+>  Documentation/trace/events.txt      |  431 ++++
+>  include/linux/ring_buffer.h         |   17 +-
+>  include/linux/trace_events.h        |   24 +-
+>  include/linux/tracepoint-defs.h     |    1 +
+>  kernel/trace/ring_buffer.c          |  126 +-
+>  kernel/trace/trace.c                |  205 +-
+>  kernel/trace/trace.h                |   25 +-
+>  kernel/trace/trace_events.c         |   51 +-
+>  kernel/trace/trace_events_hist.c    | 4472 +++++++++++++++++++++++++++++++----
+>  kernel/trace/trace_events_trigger.c |   53 +-
+>  kernel/trace/trace_kprobe.c         |   18 +-
+>  kernel/trace/trace_probe.c          |   86 -
+>  kernel/trace/trace_probe.h          |    7 -
+>  kernel/trace/trace_uprobe.c         |    2 +-
+>  kernel/trace/tracing_map.c          |  229 +-
+>  kernel/trace/tracing_map.h          |   20 +-
+>  kernel/tracepoint.c                 |   18 +-
+>  17 files changed, 5073 insertions(+), 712 deletions(-)
+
+There seems no Makefile and Kconfig changes. Would this mean
+we just need CONFIG_HIST_TRIGGERS=y to enable it?
+
+I think you'd better update the HIST_TRIGGER's description
+so that user can notice which should be enabled for inter-event
+tracing.
+
+Thank you,
+
+
+
+-- 
+Masami Hiramatsu <mhiramat@kernel.org>
