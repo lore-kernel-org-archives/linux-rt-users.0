@@ -1,74 +1,72 @@
-From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: Re: [PATCH v2 38/40] tracing: Make tracing_set_clock() non-static
-Date: Tue, 12 Sep 2017 11:18:50 +0900
-Message-ID: <20170912111850.8536d7986d4f0c9dfaa210fc@kernel.org>
+From: Tom Zanussi <tom.zanussi@linux.intel.com>
+Subject: Re: [PATCH v2 00/40] tracing: Inter-event (e.g. latency) support
+Date: Tue, 12 Sep 2017 09:14:41 -0500
+Message-ID: <1505225681.1331.1.camel@tzanussi-mobl.amr.corp.intel.com>
 References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
-        <b279a2707aaf0077577fa05596bb6d80628a7b52.1504642143.git.tom.zanussi@linux.intel.com>
+         <20170912105003.860ff7b4cd9bfd3e4d1796b1@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
-        namhyung@kernel.org, vedang.patel@intel.com, bigeasy@linutronix.de,
+Cc: rostedt@goodmis.org, tglx@linutronix.de, namhyung@kernel.org,
+        vedang.patel@intel.com, bigeasy@linutronix.de,
         joel.opensrc@gmail.com, joelaf@google.com,
         mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Tom Zanussi <tom.zanussi@linux.intel.com>
+To: Masami Hiramatsu <mhiramat@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <b279a2707aaf0077577fa05596bb6d80628a7b52.1504642143.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <20170912105003.860ff7b4cd9bfd3e4d1796b1@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue,  5 Sep 2017 16:57:50 -0500
-Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
+Hi Masami,
 
-> Allow tracing code outside of trace.c to access tracing_set_clock().
+On Tue, 2017-09-12 at 10:50 +0900, Masami Hiramatsu wrote:
+> On Tue,  5 Sep 2017 16:57:12 -0500
+> Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
 > 
-> Some applications may require a particular clock in order to function
-> properly, such as latency calculations.
+> > Hi,
+> > 
+> > This is V2 of the inter-event tracing patchset.
+> > 
+> > There are too many changes to list in detail, most of them directly
+> > addressing input from V1, but here are the major changes from V1
+> > (thanks to everyone who reviewed V1 and thanks to both Vedang Patel
+> > and Baohong Liu for their contributions and included patches):
+> [..]
 > 
-> Also, add an accessor returning the current clock string.
-
-It seems this patch should be merged in the next patch, which
-is actual consumer of this API.
-
-Thank you,
-
+> > 
+> >  Documentation/trace/events.txt      |  431 ++++
+> >  include/linux/ring_buffer.h         |   17 +-
+> >  include/linux/trace_events.h        |   24 +-
+> >  include/linux/tracepoint-defs.h     |    1 +
+> >  kernel/trace/ring_buffer.c          |  126 +-
+> >  kernel/trace/trace.c                |  205 +-
+> >  kernel/trace/trace.h                |   25 +-
+> >  kernel/trace/trace_events.c         |   51 +-
+> >  kernel/trace/trace_events_hist.c    | 4472 +++++++++++++++++++++++++++++++----
+> >  kernel/trace/trace_events_trigger.c |   53 +-
+> >  kernel/trace/trace_kprobe.c         |   18 +-
+> >  kernel/trace/trace_probe.c          |   86 -
+> >  kernel/trace/trace_probe.h          |    7 -
+> >  kernel/trace/trace_uprobe.c         |    2 +-
+> >  kernel/trace/tracing_map.c          |  229 +-
+> >  kernel/trace/tracing_map.h          |   20 +-
+> >  kernel/tracepoint.c                 |   18 +-
+> >  17 files changed, 5073 insertions(+), 712 deletions(-)
 > 
-> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> ---
->  kernel/trace/trace.c | 2 +-
->  kernel/trace/trace.h | 1 +
->  2 files changed, 2 insertions(+), 1 deletion(-)
-> 
-> diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-> index d40839d..ecdf456 100644
-> --- a/kernel/trace/trace.c
-> +++ b/kernel/trace/trace.c
-> @@ -6207,7 +6207,7 @@ static int tracing_clock_show(struct seq_file *m, void *v)
->  	return 0;
->  }
->  
-> -static int tracing_set_clock(struct trace_array *tr, const char *clockstr)
-> +int tracing_set_clock(struct trace_array *tr, const char *clockstr)
->  {
->  	int i;
->  
-> diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
-> index 7b78762..1f3443a 100644
-> --- a/kernel/trace/trace.h
-> +++ b/kernel/trace/trace.h
-> @@ -288,6 +288,7 @@ enum {
->  extern void trace_array_put(struct trace_array *tr);
->  
->  extern int tracing_set_time_stamp_abs(struct trace_array *tr, bool abs);
-> +extern int tracing_set_clock(struct trace_array *tr, const char *clockstr);
->  
->  extern bool trace_clock_in_ns(struct trace_array *tr);
->  
-> -- 
-> 1.9.3
+> There seems no Makefile and Kconfig changes. Would this mean
+> we just need CONFIG_HIST_TRIGGERS=y to enable it?
 > 
 
+Yes - I didn't see a need for a separate config for this.
 
--- 
-Masami Hiramatsu <mhiramat@kernel.org>
+> I think you'd better update the HIST_TRIGGER's description
+> so that user can notice which should be enabled for inter-event
+> tracing.
+> 
+
+Good point, will do.
+
+Thanks,
+
+Tom
