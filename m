@@ -1,9 +1,11 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: Re: [PATCH v2 00/40] tracing: Inter-event (e.g. latency) support
-Date: Tue, 12 Sep 2017 09:14:41 -0500
-Message-ID: <1505225681.1331.1.camel@tzanussi-mobl.amr.corp.intel.com>
+Subject: Re: [PATCH v2 36/40] tracing: Remove lookups from tracing_map
+ hitcount
+Date: Tue, 12 Sep 2017 09:16:11 -0500
+Message-ID: <1505225771.1331.3.camel@tzanussi-mobl.amr.corp.intel.com>
 References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
-         <20170912105003.860ff7b4cd9bfd3e4d1796b1@kernel.org>
+         <4c3ada8f9d958a5a926bbfa812c816bf8e73764b.1504642143.git.tom.zanussi@linux.intel.com>
+         <20170912111611.a629bdf12ccaa001c3c518ff@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
@@ -14,58 +16,45 @@ Cc: rostedt@goodmis.org, tglx@linutronix.de, namhyung@kernel.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 To: Masami Hiramatsu <mhiramat@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170912105003.860ff7b4cd9bfd3e4d1796b1@kernel.org>
+In-Reply-To: <20170912111611.a629bdf12ccaa001c3c518ff@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 Hi Masami,
 
-On Tue, 2017-09-12 at 10:50 +0900, Masami Hiramatsu wrote:
-> On Tue,  5 Sep 2017 16:57:12 -0500
+On Tue, 2017-09-12 at 11:16 +0900, Masami Hiramatsu wrote:
+> Hi Tom,
+> 
+> On Tue,  5 Sep 2017 16:57:48 -0500
 > Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
 > 
-> > Hi,
+> > Lookups inflate the hitcount, making it essentially useless.  Only
+> > inserts and updates should really affect the hitcount anyway, so
+> > explicitly filter lookups out.
 > > 
-> > This is V2 of the inter-event tracing patchset.
+> > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> > ---
+> >  kernel/trace/tracing_map.c | 3 ++-
+> >  1 file changed, 2 insertions(+), 1 deletion(-)
 > > 
-> > There are too many changes to list in detail, most of them directly
-> > addressing input from V1, but here are the major changes from V1
-> > (thanks to everyone who reviewed V1 and thanks to both Vedang Patel
-> > and Baohong Liu for their contributions and included patches):
-> [..]
+> > diff --git a/kernel/trace/tracing_map.c b/kernel/trace/tracing_map.c
+> > index a4e5a56..f8e2338 100644
+> > --- a/kernel/trace/tracing_map.c
+> > +++ b/kernel/trace/tracing_map.c
+> > @@ -538,7 +538,8 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
+> >  		if (test_key && test_key == key_hash) {
+> >  			if (entry->val &&
+> >  			    keys_match(key, entry->val->key, map->key_size)) {
+> > -				atomic64_inc(&map->hits);
+> > +				if (!lookup_only)
+> > +					atomic64_inc(&map->hits);
 > 
-> > 
-> >  Documentation/trace/events.txt      |  431 ++++
-> >  include/linux/ring_buffer.h         |   17 +-
-> >  include/linux/trace_events.h        |   24 +-
-> >  include/linux/tracepoint-defs.h     |    1 +
-> >  kernel/trace/ring_buffer.c          |  126 +-
-> >  kernel/trace/trace.c                |  205 +-
-> >  kernel/trace/trace.h                |   25 +-
-> >  kernel/trace/trace_events.c         |   51 +-
-> >  kernel/trace/trace_events_hist.c    | 4472 +++++++++++++++++++++++++++++++----
-> >  kernel/trace/trace_events_trigger.c |   53 +-
-> >  kernel/trace/trace_kprobe.c         |   18 +-
-> >  kernel/trace/trace_probe.c          |   86 -
-> >  kernel/trace/trace_probe.h          |    7 -
-> >  kernel/trace/trace_uprobe.c         |    2 +-
-> >  kernel/trace/tracing_map.c          |  229 +-
-> >  kernel/trace/tracing_map.h          |   20 +-
-> >  kernel/tracepoint.c                 |   18 +-
-> >  17 files changed, 5073 insertions(+), 712 deletions(-)
-> 
-> There seems no Makefile and Kconfig changes. Would this mean
-> we just need CONFIG_HIST_TRIGGERS=y to enable it?
+> Is this a kind of bugfix for current code?
+> If so, such patch can be posted in separate series.
 > 
 
-Yes - I didn't see a need for a separate config for this.
-
-> I think you'd better update the HIST_TRIGGER's description
-> so that user can notice which should be enabled for inter-event
-> tracing.
-> 
-
-Good point, will do.
+Yeah, that sounds like a good idea - will separate this out along with
+another one or two in the same boat..
 
 Thanks,
 
