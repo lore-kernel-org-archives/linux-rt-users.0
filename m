@@ -1,11 +1,10 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: Re: [PATCH v2 36/40] tracing: Remove lookups from tracing_map
- hitcount
-Date: Tue, 12 Sep 2017 09:16:11 -0500
-Message-ID: <1505225771.1331.3.camel@tzanussi-mobl.amr.corp.intel.com>
+Subject: Re: [PATCH v2 38/40] tracing: Make tracing_set_clock() non-static
+Date: Tue, 12 Sep 2017 09:18:00 -0500
+Message-ID: <1505225880.1331.5.camel@tzanussi-mobl.amr.corp.intel.com>
 References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
-         <4c3ada8f9d958a5a926bbfa812c816bf8e73764b.1504642143.git.tom.zanussi@linux.intel.com>
-         <20170912111611.a629bdf12ccaa001c3c518ff@kernel.org>
+         <b279a2707aaf0077577fa05596bb6d80628a7b52.1504642143.git.tom.zanussi@linux.intel.com>
+         <20170912111850.8536d7986d4f0c9dfaa210fc@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
@@ -16,45 +15,26 @@ Cc: rostedt@goodmis.org, tglx@linutronix.de, namhyung@kernel.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 To: Masami Hiramatsu <mhiramat@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170912111611.a629bdf12ccaa001c3c518ff@kernel.org>
+In-Reply-To: <20170912111850.8536d7986d4f0c9dfaa210fc@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Masami,
-
-On Tue, 2017-09-12 at 11:16 +0900, Masami Hiramatsu wrote:
-> Hi Tom,
-> 
-> On Tue,  5 Sep 2017 16:57:48 -0500
+On Tue, 2017-09-12 at 11:18 +0900, Masami Hiramatsu wrote:
+> On Tue,  5 Sep 2017 16:57:50 -0500
 > Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
 > 
-> > Lookups inflate the hitcount, making it essentially useless.  Only
-> > inserts and updates should really affect the hitcount anyway, so
-> > explicitly filter lookups out.
+> > Allow tracing code outside of trace.c to access tracing_set_clock().
 > > 
-> > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> > ---
-> >  kernel/trace/tracing_map.c | 3 ++-
-> >  1 file changed, 2 insertions(+), 1 deletion(-)
+> > Some applications may require a particular clock in order to function
+> > properly, such as latency calculations.
 > > 
-> > diff --git a/kernel/trace/tracing_map.c b/kernel/trace/tracing_map.c
-> > index a4e5a56..f8e2338 100644
-> > --- a/kernel/trace/tracing_map.c
-> > +++ b/kernel/trace/tracing_map.c
-> > @@ -538,7 +538,8 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
-> >  		if (test_key && test_key == key_hash) {
-> >  			if (entry->val &&
-> >  			    keys_match(key, entry->val->key, map->key_size)) {
-> > -				atomic64_inc(&map->hits);
-> > +				if (!lookup_only)
-> > +					atomic64_inc(&map->hits);
+> > Also, add an accessor returning the current clock string.
 > 
-> Is this a kind of bugfix for current code?
-> If so, such patch can be posted in separate series.
+> It seems this patch should be merged in the next patch, which
+> is actual consumer of this API.
 > 
 
-Yeah, that sounds like a good idea - will separate this out along with
-another one or two in the same boat..
+Yeah, that might make more sense in this case.
 
 Thanks,
 
