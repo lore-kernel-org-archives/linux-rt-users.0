@@ -1,41 +1,32 @@
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: Re: [PATCH v2 38/40] tracing: Make tracing_set_clock() non-static
-Date: Tue, 12 Sep 2017 09:18:00 -0500
-Message-ID: <1505225880.1331.5.camel@tzanussi-mobl.amr.corp.intel.com>
-References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
-         <b279a2707aaf0077577fa05596bb6d80628a7b52.1504642143.git.tom.zanussi@linux.intel.com>
-         <20170912111850.8536d7986d4f0c9dfaa210fc@kernel.org>
+From: Allen Martin <amartin@nvidia.com>
+Subject: Interference from CFS scheduler
+Date: Tue, 12 Sep 2017 18:53:00 -0700
+Message-ID: <20170913015300.GB5931@nvidia.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: rostedt@goodmis.org, tglx@linutronix.de, namhyung@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Masami Hiramatsu <mhiramat@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170912111850.8536d7986d4f0c9dfaa210fc@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+To: <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hqemgate15.nvidia.com ([216.228.121.64]:2180 "EHLO
+        hqemgate15.nvidia.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751691AbdIMBxW (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 12 Sep 2017 21:53:22 -0400
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2017-09-12 at 11:18 +0900, Masami Hiramatsu wrote:
-> On Tue,  5 Sep 2017 16:57:50 -0500
-> Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
-> 
-> > Allow tracing code outside of trace.c to access tracing_set_clock().
-> > 
-> > Some applications may require a particular clock in order to function
-> > properly, such as latency calculations.
-> > 
-> > Also, add an accessor returning the current clock string.
-> 
-> It seems this patch should be merged in the next patch, which
-> is actual consumer of this API.
-> 
+I've been trying to eliminate sources of unpredictability in the
+latency of interrupt response in my real-time application, and I'm
+struggling a bit with the CFS scheduler.  If a SCHED_OTHER task was
+preempted the rt scheduler eventually calls put_prev_task() which
+results in a rb tree insert in the CFS scheduler.  So the latency of
+my real-time task depends on the scheduling class of the task I'm
+interrupting and how many SCHED_OTHER tasks are in the runqueue, which
+seems like a priority inversion.
 
-Yeah, that might make more sense in this case.
+Are there any ways to mitigate this other than trying to minimize the
+number of SCHED_OTHER tasks in the system?  Ideally what I'd really
+like is to defer the work in put_prev_task_fair() until there's no
+real-time work to do.
 
-Thanks,
-
-Tom
+-Allen
