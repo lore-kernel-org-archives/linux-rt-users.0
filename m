@@ -1,59 +1,33 @@
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: Re: [PATCH v2 00/40] tracing: Inter-event (e.g. latency) support
-Date: Tue, 19 Sep 2017 13:44:28 -0500
-Message-ID: <1505846668.29775.13.camel@tzanussi-mobl.amr.corp.intel.com>
-References: <cover.1504642143.git.tom.zanussi@linux.intel.com>
-         <20170919123113.499b59b1@gandalf.local.home>
+From: Brian Wrenn <dcbrianw@gmail.com>
+Subject: kernel 4.9.39
+Date: Tue, 19 Sep 2017 23:13:56 -0400
+Message-ID: <CAEYdEeRhQ+OTQcuM4a0pTQ4JkVNftp6Q8jwQDD4hMS9JFzHR+Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20170919123113.499b59b1@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-it0-f51.google.com ([209.85.214.51]:56909 "EHLO
+        mail-it0-f51.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1750884AbdITDN5 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 19 Sep 2017 23:13:57 -0400
+Received: by mail-it0-f51.google.com with SMTP id g18so1606116itg.5
+        for <linux-rt-users@vger.kernel.org>; Tue, 19 Sep 2017 20:13:57 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Steve,
+Hi,
 
-On Tue, 2017-09-19 at 12:31 -0400, Steven Rostedt wrote:
-> On Tue,  5 Sep 2017 16:57:12 -0500
-> Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
-> 
-> > Hi,
-> > 
-> > This is V2 of the inter-event tracing patchset.
-> > 
-> 
-> Hi Tom,
-> 
-> I was wondering if you had a v3 ready? I would like to get it into the
-> next merge window, but I would also like it to be in linux-next early,
-> which means we need the next version rather soon (hopefully that will
-> be the last version).
-> 
+my project is currently running 4.4.9 with the PREEMPT-RT patch.  We
+may need to upgrader our kernel.  We're constrained by the vendor of
+our SOM in what kernels we can use, and at this time and the
+foreseeable future, we only can use 4.9.34 or 4.9.39.  I looked on the
+PREEMPT-RT site's list of patches, but I don't see one for either of
+those versions.  Just for the sake of trying, I attempted to patch
+4.9.39 with 4.9.40-rt30, but to no surprise that failed.
 
-Yeah, it's almost ready.  At this point, I've addressed all the comments
-except for:
+Do I have any other options?  Does a non-published PREEMPT-RT patch
+that would successfully patch 4.9.39 exist somewhere I haven't looked?
 
- - PATCH v2 25/40] tracing: Add support for dynamic tracepoints
-
- which I need to do a little bit of research on to figure out what
-exactly I need to do there.
-
-I was also kind of looking for a couple patches from you to fold in
-which you had mentioned you were going to send for:
-
- -  [PATCH v2 35/40] tracing: Reverse the order event_mutex/trace_types_lock are taken
- -  [PATCH v2 40/40] tracing: Add trace_event_buffer_reserve() variant that allows recursion
-
-I've been using the trace_recursive_lock() patch you posted in place of
-the latter and it's working fine.  :-)
-
-Tom
-
-> -- Steve
+Thank you for any help,
+Brian
