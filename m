@@ -1,89 +1,31 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH] Bluetooth: avoid recursive locking in hci_send_to_channel()
-Date: Thu, 21 Sep 2017 15:51:23 +0200
-Message-ID: <20170921135123.rgzacdgfonqftlu7@linutronix.de>
-References: <86val4928u.fsf@gaheris.avalon.lan>
- <20170831145211.xlu6cvocqdkzevsl@linutronix.de>
+Subject: Re: Plans for 4.14 -rt?
+Date: Thu, 21 Sep 2017 15:53:48 +0200
+Message-ID: <20170921135348.y4iofolcpgmc5mti@linutronix.de>
+References: <753579E6-CE9E-4914-A83F-7D28BEDB21DD@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org, tglx@linutronix.de,
-        Peter Zijlstra <peterz@infradead.org>
-To: Mart van de Wege <mvdwege@gmail.com>,
-        Marcel Holtmann <marcel@holtmann.org>,
-        Johan Hedberg <johan.hedberg@intel.com>,
-        Gustavo Padovan <gustavo@padovan.org>,
-        linux-bluetooth@vger.kernel.org, linux-kernel@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Transfer-Encoding: 8BIT
+Cc: linux-rt-users@vger.kernel.org
+To: Tim Orling <timothy.t.orling@linux.intel.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:35924 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751738AbdIUNxu (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 21 Sep 2017 09:53:50 -0400
 Content-Disposition: inline
-In-Reply-To: <20170831145211.xlu6cvocqdkzevsl@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <753579E6-CE9E-4914-A83F-7D28BEDB21DD@linux.intel.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Mart reported a deadlock in -RT in the call path:
-  hci_send_monitor_ctrl_event() -> hci_send_to_channel()
+On 2017-09-11 10:07:16 [-0700], Tim Orling wrote:
+> Now that 4.13 is out, we are looking into our crystal ball for the next LTS kernel and the next -rt-devel patchset. Assuming the 4.14 merge window closes sometime in November, would we expect a 4.14.y-rt branch sometime in January?
 
-because both functions acquire the same read lock hci_sk_list.lock. This
-is also a mainline issue because the qrwlock implementation is writer
-fair (the traditional rwlock implementation is reader biased).
+This depends whether or not v4.14 gets its LTS hat.
 
-To avoid the deadlock there is now __hci_send_to_channel() which expects
-the readlock to be held.
+> Regards,
+> 
+> —Tim--
 
-Cc: Marcel Holtmann <marcel@holtmann.org>
-Cc: Johan Hedberg <johan.hedberg@intel.com>
-Fixes: 38ceaa00d02d ("Bluetooth: Add support for sending MGMT commands and events to monitor")
-Reported-by: Mart van de Wege <mvdwege@gmail.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- net/bluetooth/hci_sock.c | 17 +++++++++++------
- 1 file changed, 11 insertions(+), 6 deletions(-)
-
-diff --git a/net/bluetooth/hci_sock.c b/net/bluetooth/hci_sock.c
-index 638bf0e1a2e3..f1ee820d871c 100644
---- a/net/bluetooth/hci_sock.c
-+++ b/net/bluetooth/hci_sock.c
-@@ -251,15 +251,13 @@ void hci_send_to_sock(struct hci_dev *hdev, struct sk_buff *skb)
- }
- 
- /* Send frame to sockets with specific channel */
--void hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
--			 int flag, struct sock *skip_sk)
-+static void __hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
-+				  int flag, struct sock *skip_sk)
- {
- 	struct sock *sk;
- 
- 	BT_DBG("channel %u len %d", channel, skb->len);
- 
--	read_lock(&hci_sk_list.lock);
--
- 	sk_for_each(sk, &hci_sk_list.head) {
- 		struct sk_buff *nskb;
- 
-@@ -285,6 +283,13 @@ void hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
- 			kfree_skb(nskb);
- 	}
- 
-+}
-+
-+void hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
-+			 int flag, struct sock *skip_sk)
-+{
-+	read_lock(&hci_sk_list.lock);
-+	__hci_send_to_channel(channel, skb, flag, skip_sk);
- 	read_unlock(&hci_sk_list.lock);
- }
- 
-@@ -388,8 +393,8 @@ void hci_send_monitor_ctrl_event(struct hci_dev *hdev, u16 event,
- 		hdr->index = index;
- 		hdr->len = cpu_to_le16(skb->len - HCI_MON_HDR_SIZE);
- 
--		hci_send_to_channel(HCI_CHANNEL_MONITOR, skb,
--				    HCI_SOCK_TRUSTED, NULL);
-+		__hci_send_to_channel(HCI_CHANNEL_MONITOR, skb,
-+				      HCI_SOCK_TRUSTED, NULL);
- 		kfree_skb(skb);
- 	}
- 
--- 
-2.14.1
+Sebastian
