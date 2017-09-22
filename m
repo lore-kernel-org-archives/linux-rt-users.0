@@ -1,15 +1,14 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v3 16/33] tracing: Generalize per-element hist trigger data
-Date: Fri, 22 Sep 2017 14:59:56 -0500
-Message-ID: <18c12e2cd12243914d9cc98909c6720da084f3bd.1506105131.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v3 01/33] tracing: Add support to detect and avoid duplicates
+Date: Fri, 22 Sep 2017 14:59:41 -0500
+Message-ID: <673cdf4491e1c9e73b52519ab48b891c6a755009.1506105131.git.tom.zanussi@linux.intel.com>
 References: <cover.1506105131.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
         joel.opensrc@gmail.com, joelaf@google.com,
         mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
         rajvi.jingar@intel.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org,
-        Tom Zanussi <tom.zanussi@linux.intel.com>
+        linux-rt-users@vger.kernel.org
 To: rostedt@goodmis.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1506105131.git.tom.zanussi@linux.intel.com>
@@ -18,151 +17,117 @@ References: <cover.1506105131.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Up until now, hist triggers only needed per-element support for saving
-'comm' data, which was saved directly as a private data pointer.
+From: Vedang Patel <vedang.patel@intel.com>
 
-In anticipation of the need to save other data besides 'comm', add a
-new hist_elt_data struct for the purpose, and switch the current
-'comm'-related code over to that.
+A duplicate in the tracing_map hash table is when 2 different entries
+have the same key and, as a result, the key_hash. This is possible due
+to a race condition in the algorithm. This race condition is inherent to
+the algorithm and not a bug. This was fine because, until now, we were
+only interested in the sum of all the values related to a particular
+key (the duplicates are dealt with in tracing_map_sort_entries()). But,
+with the inclusion of variables[1], we are interested in individual
+values. So, it will not be clear what value to choose when
+there are duplicates. So, the duplicates need to be removed.
 
-Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+The duplicates can occur in the code in the following scenarios:
+
+- A thread is in the process of adding a new element. It has
+successfully executed cmpxchg() and inserted the key. But, it is still
+not done acquiring the trace_map_elt struct, populating it and storing
+the pointer to the struct in the value field of tracing_map hash table.
+If another thread comes in at this time and wants to add an element with
+the same key, it will not see the current element and add a new one.
+
+- There are multiple threads trying to execute cmpxchg at the same time,
+one of the threads will succeed and the others will fail. The ones which
+fail will go ahead increment 'idx' and add a new element there creating
+a duplicate.
+
+This patch detects and avoids the first condition by asking the thread
+which detects the duplicate to loop one more time. There is also a
+possibility of infinite loop if the thread which is trying to insert
+goes to sleep indefinitely and the one which is trying to insert a new
+element detects a duplicate. Which is why, the thread loops for
+map_size iterations before returning NULL.
+
+The second scenario is avoided by preventing the threads which failed
+cmpxchg() from incrementing idx. This way, they will loop
+around and check if the thread which succeeded in executing cmpxchg()
+had the same key.
+
+[1] http://lkml.kernel.org/r/cover.1498510759.git.tom.zanussi@linux.intel.com
+
+Signed-off-by: Vedang Patel <vedang.patel@intel.com>
 ---
- kernel/trace/trace_events_hist.c | 71 +++++++++++++++++++++-------------------
- 1 file changed, 38 insertions(+), 33 deletions(-)
+ kernel/trace/tracing_map.c | 41 ++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 36 insertions(+), 5 deletions(-)
 
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 7a58279..2a66d62 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -249,6 +249,10 @@ static u64 hist_field_timestamp(struct hist_field *hist_field, void *event,
- 	return ts;
- }
- 
-+struct hist_elt_data {
-+	char *comm;
-+};
-+
- static const char *hist_field_name(struct hist_field *field,
- 				   unsigned int level)
+diff --git a/kernel/trace/tracing_map.c b/kernel/trace/tracing_map.c
+index 07e7534..b30f343 100644
+--- a/kernel/trace/tracing_map.c
++++ b/kernel/trace/tracing_map.c
+@@ -414,7 +414,9 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
+ __tracing_map_insert(struct tracing_map *map, void *key, bool lookup_only)
  {
-@@ -463,45 +467,61 @@ static inline void save_comm(char *comm, struct task_struct *task)
- 	memcpy(comm, task->comm, TASK_COMM_LEN);
- }
+ 	u32 idx, key_hash, test_key;
++	int dup_try = 0;
+ 	struct tracing_map_entry *entry;
++	struct tracing_map_elt *val;
  
--static void hist_trigger_elt_comm_free(struct tracing_map_elt *elt)
-+static void hist_elt_data_free(struct hist_elt_data *elt_data)
-+{
-+	kfree(elt_data->comm);
-+	kfree(elt_data);
-+}
+ 	key_hash = jhash(key, map->key_size, 0);
+ 	if (key_hash == 0)
+@@ -426,11 +428,33 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
+ 		entry = TRACING_MAP_ENTRY(map->map, idx);
+ 		test_key = entry->key;
+ 
+-		if (test_key && test_key == key_hash && entry->val &&
+-		    keys_match(key, entry->val->key, map->key_size)) {
+-			if (!lookup_only)
+-				atomic64_inc(&map->hits);
+-			return entry->val;
++		if (test_key && test_key == key_hash) {
++			val = READ_ONCE(entry->val);
++			if (val &&
++			    keys_match(key, val->key, map->key_size)) {
++				if (!lookup_only)
++					atomic64_inc(&map->hits);
++				return val;
++			} else if (unlikely(!val)) {
++				/*
++				 * The key is present. But, val (pointer to elt
++				 * struct) is still NULL. which means some other
++				 * thread is in the process of inserting an
++				 * element.
++				 *
++				 * On top of that, it's key_hash is same as the
++				 * one being inserted right now. So, it's
++				 * possible that the element has the same
++				 * key as well.
++				 */
 +
-+static void hist_trigger_elt_data_free(struct tracing_map_elt *elt)
- {
--	kfree((char *)elt->private_data);
-+	struct hist_elt_data *elt_data = elt->private_data;
-+
-+	hist_elt_data_free(elt_data);
- }
- 
--static int hist_trigger_elt_comm_alloc(struct tracing_map_elt *elt)
-+static int hist_trigger_elt_data_alloc(struct tracing_map_elt *elt)
- {
- 	struct hist_trigger_data *hist_data = elt->map->private_data;
-+	unsigned int size = TASK_COMM_LEN + 1;
-+	struct hist_elt_data *elt_data;
- 	struct hist_field *key_field;
- 	unsigned int i;
- 
-+	elt_data = kzalloc(sizeof(*elt_data), GFP_KERNEL);
-+	if (!elt_data)
-+		return -ENOMEM;
-+
- 	for_each_hist_key_field(i, hist_data) {
- 		key_field = hist_data->fields[i];
- 
- 		if (key_field->flags & HIST_FIELD_FL_EXECNAME) {
--			unsigned int size = TASK_COMM_LEN + 1;
--
--			elt->private_data = kzalloc(size, GFP_KERNEL);
--			if (!elt->private_data)
-+			elt_data->comm = kzalloc(size, GFP_KERNEL);
-+			if (!elt_data->comm) {
-+				kfree(elt_data);
- 				return -ENOMEM;
++				dup_try++;
++				if (dup_try > map->map_size) {
++					atomic64_inc(&map->drops);
++					break;
++				}
++				continue;
 +			}
- 			break;
  		}
- 	}
  
-+	elt->private_data = elt_data;
-+
- 	return 0;
- }
+ 		if (!test_key) {
+@@ -452,6 +476,13 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
+ 				atomic64_inc(&map->hits);
  
--static void hist_trigger_elt_comm_init(struct tracing_map_elt *elt)
-+static void hist_trigger_elt_data_init(struct tracing_map_elt *elt)
- {
--	char *comm = elt->private_data;
-+	struct hist_elt_data *elt_data = elt->private_data;
+ 				return entry->val;
++			} else {
++				/*
++				 * cmpxchg() failed. Loop around once
++				 * more to check what key was inserted.
++				 */
++				dup_try++;
++				continue;
+ 			}
+ 		}
  
--	if (comm)
--		save_comm(comm, current);
-+	if (elt_data->comm)
-+		save_comm(elt_data->comm, current);
- }
- 
--static const struct tracing_map_ops hist_trigger_elt_comm_ops = {
--	.elt_alloc	= hist_trigger_elt_comm_alloc,
--	.elt_free	= hist_trigger_elt_comm_free,
--	.elt_init	= hist_trigger_elt_comm_init,
-+static const struct tracing_map_ops hist_trigger_elt_data_ops = {
-+	.elt_alloc	= hist_trigger_elt_data_alloc,
-+	.elt_free	= hist_trigger_elt_data_free,
-+	.elt_init	= hist_trigger_elt_data_init,
- };
- 
- static const char *get_hist_field_flags(struct hist_field *hist_field)
-@@ -1512,21 +1532,6 @@ static int create_tracing_map_fields(struct hist_trigger_data *hist_data)
- 	return 0;
- }
- 
--static bool need_tracing_map_ops(struct hist_trigger_data *hist_data)
--{
--	struct hist_field *key_field;
--	unsigned int i;
--
--	for_each_hist_key_field(i, hist_data) {
--		key_field = hist_data->fields[i];
--
--		if (key_field->flags & HIST_FIELD_FL_EXECNAME)
--			return true;
--	}
--
--	return false;
--}
--
- static struct hist_trigger_data *
- create_hist_data(unsigned int map_bits,
- 		 struct hist_trigger_attrs *attrs,
-@@ -1552,8 +1557,7 @@ static bool need_tracing_map_ops(struct hist_trigger_data *hist_data)
- 	if (ret)
- 		goto free;
- 
--	if (need_tracing_map_ops(hist_data))
--		map_ops = &hist_trigger_elt_comm_ops;
-+	map_ops = &hist_trigger_elt_data_ops;
- 
- 	hist_data->map = tracing_map_create(map_bits, hist_data->key_size,
- 					    map_ops, hist_data);
-@@ -1742,7 +1746,8 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
- 			seq_printf(m, "%s: [%llx] %-55s", field_name,
- 				   uval, str);
- 		} else if (key_field->flags & HIST_FIELD_FL_EXECNAME) {
--			char *comm = elt->private_data;
-+			struct hist_elt_data *elt_data = elt->private_data;
-+			char *comm = elt_data->comm;
- 
- 			uval = *(u64 *)(key + key_field->offset);
- 			seq_printf(m, "%s: %-16s[%10llu]", field_name,
 -- 
 1.9.3
