@@ -1,38 +1,76 @@
-From: Sebastian Andrzej Siewior <sebastian.siewior@linutronix.de>
-Subject: Re: Plans for 4.14 -rt?
-Date: Fri, 22 Sep 2017 11:55:42 +0200
-Message-ID: <20170922095542.uhicyrawesh3uvkm@linutronix.de>
-References: <753579E6-CE9E-4914-A83F-7D28BEDB21DD@linux.intel.com>
- <20170921135348.y4iofolcpgmc5mti@linutronix.de>
- <8810324.nOFNHxIY4G@ada>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org
-To: Alexander Dahl <ada@thorsis.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:38640 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751826AbdIVJzo (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 22 Sep 2017 05:55:44 -0400
-Content-Disposition: inline
-In-Reply-To: <8810324.nOFNHxIY4G@ada>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Tom Zanussi <tom.zanussi@linux.intel.com>
+Subject: [PATCH 0/9] tracing: Bug fixes and minor cleanup
+Date: Fri, 22 Sep 2017 14:58:14 -0500
+Message-ID: <cover.1506105045.git.tom.zanussi@linux.intel.com>
+Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
+        vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel.opensrc@gmail.com, joelaf@google.com,
+        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
+        rajvi.jingar@intel.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org,
+        Tom Zanussi <tom.zanussi@linux.intel.com>
+To: rostedt@goodmis.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 2017-09-22 08:13:59 [+0200], Alexander Dahl wrote:
-> Hello,
 Hi,
 
-> Am Donnerstag, 21. September 2017, 15:53:48 CEST schrieb Sebastian Andrzej 
-> Siewior:
-> > This depends whether or not v4.14 gets its LTS hat.
-> 
-> In other words: how safe is it to assume a LTS kernel gets RT patches? O:-)
+This is a set of small fixes and cleanup patches that were originally
+part of V2 of the inter-event tracing patchset, along with 2 of Steve
+Rostedt's patches related to that patchset.
 
-reasonable.
+The 'tracing: Steve's unofficial trace_recursive_lock() patch' patch
+is from Steve but not signed off on - he has a replacement under test
+that should replace this.
 
-> Greets
-> Alex
+The 'tracing: Reverse the order of trace_types_lock and event_mutex'
+is an official patch from Steve, included here for convenience.
 
-Sebastian
+The rest are bugfixes and cleanups from the old V2 inter-event
+patchset, separated out since they're standalone improvements that can
+stand on their own outside of the inter-event patches.
+
+Thanks,
+
+Tom
+
+The following changes since commit 170b3b1050e28d1ba0700e262f0899ffa4fccc52:
+
+  tracing: Apply trace_clock changes to instance max buffer (2017-09-06 20:52:20 -0400)
+
+are available in the git repository at:
+
+  https://github.com/tzanussi/linux-trace-inter-event.git tzanussi/pre-inter-event-v3
+  https://github.com/tzanussi/linux-trace-inter-event/tree/tzanussi/pre-inter-event-v3
+
+Steven Rostedt (1):
+  tracing: Steve's unofficial trace_recursive_lock() patch
+
+Steven Rostedt (VMware) (1):
+  tracing: Reverse the order of trace_types_lock and event_mutex
+
+Tom Zanussi (7):
+  tracing: Exclude 'generic fields' from histograms
+  tracing: Remove lookups from tracing_map hitcount
+  tracing: Increase tracing map KEYS_MAX size
+  tracing: Make traceprobe parsing code reusable
+  tracing: Clean up hist_field_flags enum
+  tracing: Add hist_field_name() accessor
+  tracing: Reimplement log2
+
+ kernel/trace/ring_buffer.c       |  64 ++++++--------------
+ kernel/trace/trace.c             |  91 +++++++++++++++++++++++++++++
+ kernel/trace/trace.h             |   7 +++
+ kernel/trace/trace_events.c      |  31 +++++-----
+ kernel/trace/trace_events_hist.c | 122 +++++++++++++++++++++++++++------------
+ kernel/trace/trace_kprobe.c      |  18 +++---
+ kernel/trace/trace_probe.c       |  86 ---------------------------
+ kernel/trace/trace_probe.h       |   7 ---
+ kernel/trace/trace_uprobe.c      |   2 +-
+ kernel/trace/tracing_map.c       |   3 +-
+ kernel/trace/tracing_map.h       |   2 +-
+ 11 files changed, 227 insertions(+), 206 deletions(-)
+
+-- 
+1.9.3
