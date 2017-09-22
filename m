@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v3 27/33] tracing: Add hist trigger support for variable reference aliases
-Date: Fri, 22 Sep 2017 15:00:07 -0500
-Message-ID: <a29379114998055d4ab6aac7411f4617ac50f458.1506105131.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v3 31/33] tracing: Add a clock attribute for hist triggers
+Date: Fri, 22 Sep 2017 15:00:11 -0500
+Message-ID: <5f60038e5c7c447f46d3ac3cedf1ecb712e23d4d.1506105131.git.tom.zanussi@linux.intel.com>
 References: <cover.1506105131.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,142 +18,124 @@ References: <cover.1506105131.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Add support for alias=$somevar where alias can be used as
-onmatch($alias).
+The default clock if timestamps are used in a histogram is "global".
+If timestamps aren't used, the clock is irrelevant.
 
-Aliases are a way of creating a new name for an existing variable, for
-flexibly in making naming more clear in certain cases.  For example in
-the below the user perhaps feels that using $new_lat in the synthetic
-event invocation is opaque or doesn't fit well stylistically with
-previous triggers, so creates an alias of $new_lat named $latency and
-uses that in the call instead:
-
-  # echo 'hist:keys=next_pid:new_lat=$common_timestamp.usecs' >
-    /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-
-  # echo 'hist:keys=pid:latency=$new_lat:
-    onmatch(sched.sched_switch).wake2($latency,pid)' >
-    /sys/kernel/debug/tracing/events/synthetic/wake1/trigger
+Use the "clock=" param only if you want to override the default
+"global" clock for a histogram with timestamps.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+Signed-off-by: Rajvi Jingar <rajvi.jingar@intel.com>
 ---
- kernel/trace/trace_events_hist.c | 61 ++++++++++++++++++++++++++++++++++++++--
- 1 file changed, 58 insertions(+), 3 deletions(-)
+ Documentation/trace/events.txt   |  9 +++++++++
+ kernel/trace/trace_events_hist.c | 38 ++++++++++++++++++++++++++++++++++++--
+ 2 files changed, 45 insertions(+), 2 deletions(-)
 
+diff --git a/Documentation/trace/events.txt b/Documentation/trace/events.txt
+index ccdd7ec..820bbf3 100644
+--- a/Documentation/trace/events.txt
++++ b/Documentation/trace/events.txt
+@@ -2173,6 +2173,15 @@ features have been added to the hist trigger support:
+     default it is in units of nanoseconds; appending '.usecs' to a
+     common_timestamp field changes the units to microseconds.
+ 
++A note on inter-event timestamps: If $common_timestamp is used in a
++histogram, the trace buffer is automatically switched over to using
++absolute timestamps and the "global" trace clock, in order to avoid
++bogus timestamp differences with other clocks that aren't coherent
++across CPUs.  This can be overridden by specifying one of the other
++trace clocks instead, using the "clock=XXX" hist trigger attribute,
++where XXX is any of the clocks listed in the tracing/trace_clock
++pseudo-file.
++
+ These features are decribed in more detail in the following sections.
+ 
+ 6.3.1 Histogram Variables
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 5b3d66f..fad93ee 100644
+index 491fe74..e884d5d 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -227,6 +227,7 @@ enum hist_field_flags {
- 	HIST_FIELD_FL_EXPR		= 1 << 14,
- 	HIST_FIELD_FL_VAR_REF		= 1 << 15,
- 	HIST_FIELD_FL_CPU		= 1 << 16,
-+	HIST_FIELD_FL_ALIAS		= 1 << 17,
- };
- 
- struct var_defs {
-@@ -1527,7 +1528,8 @@ static const char *hist_field_name(struct hist_field *field,
- 
- 	if (field->field)
- 		field_name = field->field->name;
--	else if (field->flags & HIST_FIELD_FL_LOG2)
-+	else if (field->flags & HIST_FIELD_FL_LOG2 ||
-+		 field->flags & HIST_FIELD_FL_ALIAS)
- 		field_name = hist_field_name(field->operands[0], ++level);
- 	else if (field->flags & HIST_FIELD_FL_TIMESTAMP)
- 		field_name = "$common_timestamp";
-@@ -1983,7 +1985,7 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
- 
- 	hist_field->hist_data = hist_data;
- 
--	if (flags & HIST_FIELD_FL_EXPR)
-+	if (flags & HIST_FIELD_FL_EXPR || flags & HIST_FIELD_FL_ALIAS)
- 		goto out; /* caller will populate */
- 
- 	if (flags & HIST_FIELD_FL_VAR_REF) {
-@@ -2241,6 +2243,29 @@ static struct hist_field *parse_var_ref(struct trace_array *tr,
- 	return field;
+@@ -241,6 +241,7 @@ struct hist_trigger_attrs {
+ 	char		*vals_str;
+ 	char		*sort_key_str;
+ 	char		*name;
++	char		*clock;
+ 	bool		pause;
+ 	bool		cont;
+ 	bool		clear;
+@@ -1680,6 +1681,7 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
+ 	kfree(attrs->sort_key_str);
+ 	kfree(attrs->keys_str);
+ 	kfree(attrs->vals_str);
++	kfree(attrs->clock);
+ 	kfree(attrs);
  }
  
-+static struct hist_field *create_alias(struct hist_trigger_data *hist_data,
-+				       struct hist_field *var_ref,
-+				       char *var_name)
-+{
-+	struct hist_field *alias = NULL;
-+	unsigned long flags = HIST_FIELD_FL_ALIAS | HIST_FIELD_FL_VAR |
-+		HIST_FIELD_FL_VAR_ONLY;
-+
-+	alias = create_hist_field(hist_data, NULL, flags, var_name);
-+	if (!alias)
-+		return NULL;
-+
-+	alias->fn = var_ref->fn;
-+	alias->operands[0] = var_ref;
-+
-+	if (init_var_ref(alias, var_ref)) {
-+		destroy_hist_field(alias, 0);
-+		return NULL;
-+	}
-+
-+	return alias;
-+}
-+
- struct hist_field *parse_atom(struct hist_trigger_data *hist_data,
- 			      struct trace_event_file *file, char *str,
- 			      unsigned long *flags, char *var_name)
-@@ -2275,6 +2300,13 @@ struct hist_field *parse_atom(struct hist_trigger_data *hist_data,
- 		if (hist_field) {
- 			hist_data->var_refs[hist_data->n_var_refs] = hist_field;
- 			hist_field->var_ref_idx = hist_data->n_var_refs++;
-+			if (var_name) {
-+				hist_field = create_alias(hist_data, hist_field, var_name);
-+				if (!hist_field) {
-+					ret = -ENOMEM;
-+					goto out;
-+				}
-+			}
- 			return hist_field;
+@@ -1735,6 +1737,19 @@ static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
+ 			ret = -ENOMEM;
+ 			goto out;
  		}
- 	} else
-@@ -2378,6 +2410,26 @@ static int check_expr_operands(struct hist_field *operand1,
- 	unsigned long operand1_flags = operand1->flags;
- 	unsigned long operand2_flags = operand2->flags;
++	} else if (strncmp(str, "clock=", strlen("clock=")) == 0) {
++		strsep(&str, "=");
++		if (!str) {
++			ret = -EINVAL;
++			goto out;
++		}
++
++		str = strstrip(str);
++		attrs->clock = kstrdup(str, GFP_KERNEL);
++		if (!attrs->clock) {
++			ret = -ENOMEM;
++			goto out;
++		}
+ 	} else if (strncmp(str, "size=", strlen("size=")) == 0) {
+ 		int map_bits = parse_map_size(str);
  
-+	if ((operand1_flags & HIST_FIELD_FL_VAR_REF) ||
-+	    (operand1_flags & HIST_FIELD_FL_ALIAS)) {
-+		struct hist_field *var;
-+
-+		var = find_var_field(operand1->var.hist_data, operand1->name);
-+		if (!var)
-+			return -EINVAL;
-+		operand1_flags = var->flags;
-+	}
-+
-+	if ((operand2_flags & HIST_FIELD_FL_VAR_REF) ||
-+	    (operand2_flags & HIST_FIELD_FL_ALIAS)) {
-+		struct hist_field *var;
-+
-+		var = find_var_field(operand2->var.hist_data, operand2->name);
-+		if (!var)
-+			return -EINVAL;
-+		operand2_flags = var->flags;
-+	}
-+
- 	if ((operand1_flags & HIST_FIELD_FL_TIMESTAMP_USECS) !=
- 	    (operand2_flags & HIST_FIELD_FL_TIMESTAMP_USECS))
- 		return -EINVAL;
-@@ -4379,8 +4431,11 @@ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
- 		seq_puts(m, "$common_timestamp");
- 	else if (hist_field->flags & HIST_FIELD_FL_CPU)
- 		seq_puts(m, "cpu");
--	else if (field_name)
-+	else if (field_name) {
-+		if (hist_field->flags & HIST_FIELD_FL_ALIAS)
-+			seq_putc(m, '$');
- 		seq_printf(m, "%s", field_name);
-+	}
+@@ -1798,6 +1813,14 @@ static struct hist_trigger_attrs *parse_hist_trigger_attrs(char *trigger_str)
+ 		goto free;
+ 	}
  
- 	if (hist_field->flags) {
- 		const char *flags_str = get_hist_field_flags(hist_field);
++	if (!attrs->clock) {
++		attrs->clock = kstrdup("global", GFP_KERNEL);
++		if (!attrs->clock) {
++			ret = -ENOMEM;
++			goto free;
++		}
++	}
++
+ 	return attrs;
+  free:
+ 	destroy_hist_trigger_attrs(attrs);
+@@ -4660,6 +4683,8 @@ static int event_hist_trigger_print(struct seq_file *m,
+ 			seq_puts(m, ".descending");
+ 	}
+ 	seq_printf(m, ":size=%u", (1 << hist_data->map->map_bits));
++	if (hist_data->enable_timestamps)
++		seq_printf(m, ":clock=%s", hist_data->attrs->clock);
+ 
+ 	print_actions_spec(m, hist_data);
+ 
+@@ -4922,10 +4947,19 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
+ 			goto out;
+ 	}
+ 
+-	ret++;
++	if (hist_data->enable_timestamps) {
++		char *clock = hist_data->attrs->clock;
++
++		ret = tracing_set_clock(file->tr, hist_data->attrs->clock);
++		if (ret) {
++			hist_err("Couldn't set trace_clock: ", clock);
++			goto out;
++		}
+ 
+-	if (hist_data->enable_timestamps)
+ 		tracing_set_time_stamp_abs(file->tr, true);
++	}
++
++	ret++;
+  out:
+ 	return ret;
+ }
 -- 
 1.9.3
