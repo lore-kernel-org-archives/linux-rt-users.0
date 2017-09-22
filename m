@@ -1,73 +1,61 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: RT kernel on Acer laptop unreliable
-Date: Fri, 22 Sep 2017 09:40:50 +0200
-Message-ID: <20170922074050.pjtyzzd2n2khtxsn@linutronix.de>
-References: <8c1a0cb6-d90c-1f6f-2d23-9865a17b379e@jajcus.net>
- <20170807131937.ijj7n4yuk6inds4h@linutronix.de>
- <56cb9f42-83e3-6648-2489-7c9e486c8ecc@jajcus.net>
- <20170818124406.6cem4po52xrzi5qc@linutronix.de>
- <b1209f35-67a2-5cb2-d0e1-ad142b34aab9@jajcus.net>
- <20170821131254.5nuacfv62d3l4rhe@linutronix.de>
- <52e67cfd-0bb3-ce97-7b28-f2afb1d3c1cb@jajcus.net>
- <20170905091712.koywolqt5qwaslpk@linutronix.de>
+Subject: [ANNOUNCE] v4.11.12-rt14
+Date: Fri, 22 Sep 2017 11:48:33 +0200
+Message-ID: <20170922094832.mer4rlkwdw3dq7ic@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org
-To: Jacek Konieczny <jajcus@jajcus.net>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:38126 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751795AbdIVHkz (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 22 Sep 2017 03:40:55 -0400
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20170905091712.koywolqt5qwaslpk@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 2017-09-05 11:17:13 [+0200], To Jacek Konieczny wrote:
-> I'm sorry, I missed that. What about this on-top?
-> 
-> diff --git a/include/linux/locallock.h b/include/linux/locallock.h
-> index eeb1a66df402..298afcd8e219 100644
-> --- a/include/linux/locallock.h
-> +++ b/include/linux/locallock.h
-> @@ -61,6 +61,9 @@ static inline int __local_trylock(struct local_irq_lock *lv)
->  		lv->owner = current;
->  		lv->nestcnt = 1;
->  		return 1;
-> +	} else if (lv->owner == current) {
-> +		lv->nestcnt++;
-> +		return 1;
->  	}
->  	return 0;
->  }
+Dear RT folks!
 
-I am going to split up that part out in a separate patch and also add
-the !RT part to it.
+I'm pleased to announce the v4.11.12-rt14 patch set. 
 
---- a/include/linux/locallock.h
-+++ b/include/linux/locallock.h
-@@ -68,6 +68,9 @@ static inline int __local_trylock(struct
- 		lv->owner = current;
- 		lv->nestcnt = 1;
- 		return 1;
-+	} else if (lv->owner == current) {
-+		lv->nestcnt++;
-+		return 1;
- 	}
- 	return 0;
- }
-@@ -238,6 +241,12 @@ static inline int __local_unlock_irqrest
+Changes since v4.11.12-rt13:
+
+  - Update the "Inter-event (e.g. latency) support" patch to v2 as
+    posted by Tom Zanussi on 2017-09-05. Patch 40 from this series has
+    been replaced with Steven Rostedt's version of it (as posted as
+    reply to the original patch) since the original broke some things.
+
+  - The bluetooth code could deadlock itself on RT. Reported by Mart van
+    de Wege.
+
+  - The AMD-iommu driver produced "sleeping while atomic" warnings.
+    Reported by Vinod Adhikary.
+
+  - The local_lock locking around icmp_sk_lock needs to be a try-lock
+    because it may be recursive. With this fixed, the deadlocks as
+    reported by Jacek Konieczny are gone.
+
+  - Since the futex work, the RT-only fixup needed adaption and was
+    overseen which led to strange errors. Reported by Gusenleitner
+    Klaus.
+
+Known issues
+	none
+
+The delta patch against v4.11.12-rt13 will be send as response to this
+message can be found here:
  
- static inline void local_irq_lock_init(int lvar) { }
- 
-+#define local_trylock(lvar)					\
-+	({							\
-+		preempt_disable();				\
-+		1;						\
-+	})
-+
- #define local_lock(lvar)			preempt_disable()
- #define local_unlock(lvar)			preempt_enable()
- #define local_lock_irq(lvar)			local_irq_disable()
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.11/incr/patch-4.11.12-rt13-rt14.patch.xz
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.11.12-rt14
+
+The RT patch against v4.11.12 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.11/older/patch-4.11.12-rt14.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.11/older/patches-4.11.12-rt14.tar.xz
+
+Sebastian
