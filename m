@@ -1,76 +1,144 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH 0/9] tracing: Bug fixes and minor cleanup
-Date: Fri, 22 Sep 2017 14:58:14 -0500
-Message-ID: <cover.1506105045.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 1/9] tracing: Steve's unofficial trace_recursive_lock() patch
+Date: Fri, 22 Sep 2017 14:58:15 -0500
+Message-ID: <fe59b88febaa0f29c624cc08b8f9c3b7a499aa00.1506105045.git.tom.zanussi@linux.intel.com>
+References: <cover.1506105045.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
         joel.opensrc@gmail.com, joelaf@google.com,
         mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
         rajvi.jingar@intel.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org,
-        Tom Zanussi <tom.zanussi@linux.intel.com>
+        linux-rt-users@vger.kernel.org
 To: rostedt@goodmis.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <cover.1506105045.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <cover.1506105045.git.tom.zanussi@linux.intel.com>
+References: <cover.1506105045.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
+From: Steven Rostedt <rostedt@goodmis.org>
 
-This is a set of small fixes and cleanup patches that were originally
-part of V2 of the inter-event tracing patchset, along with 2 of Steve
-Rostedt's patches related to that patchset.
+On Tue,  5 Sep 2017 16:57:52 -0500
+Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
 
-The 'tracing: Steve's unofficial trace_recursive_lock() patch' patch
-is from Steve but not signed off on - he has a replacement under test
-that should replace this.
+> Synthetic event generation requires the reservation of a second event
+> while the reservation of a previous event is still in progress.  The
+> trace_recursive_lock() check in ring_buffer_lock_reserve() prevents
+> this however.
+>
+> This sets up a special reserve pathway for this particular case,
+> leaving existing pathways untouched, other than an additional check in
+> ring_buffer_lock_reserve() and trace_event_buffer_reserve().  These
+> checks could be gotten rid of as well, with copies of those functions,
+> but for now try to avoid that unless necessary.
+>
+> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-The 'tracing: Reverse the order of trace_types_lock and event_mutex'
-is an official patch from Steve, included here for convenience.
+I've been planing on changing that lock, which may help you here
+without having to mess around with parameters. That is to simply add a
+counter. Would this patch help you. You can add a patch to increment
+the count to 5 with an explanation of handling synthetic events, but
+even getting to 4 is extremely unlikely.
 
-The rest are bugfixes and cleanups from the old V2 inter-event
-patchset, separated out since they're standalone improvements that can
-stand on their own outside of the inter-event patches.
+I'll make this into an official patch if this works for you, and then
+you can include it in your series.
 
-Thanks,
+-- Steve
+---
+ kernel/trace/ring_buffer.c | 64 ++++++++++++----------------------------------
+ 1 file changed, 17 insertions(+), 47 deletions(-)
 
-Tom
-
-The following changes since commit 170b3b1050e28d1ba0700e262f0899ffa4fccc52:
-
-  tracing: Apply trace_clock changes to instance max buffer (2017-09-06 20:52:20 -0400)
-
-are available in the git repository at:
-
-  https://github.com/tzanussi/linux-trace-inter-event.git tzanussi/pre-inter-event-v3
-  https://github.com/tzanussi/linux-trace-inter-event/tree/tzanussi/pre-inter-event-v3
-
-Steven Rostedt (1):
-  tracing: Steve's unofficial trace_recursive_lock() patch
-
-Steven Rostedt (VMware) (1):
-  tracing: Reverse the order of trace_types_lock and event_mutex
-
-Tom Zanussi (7):
-  tracing: Exclude 'generic fields' from histograms
-  tracing: Remove lookups from tracing_map hitcount
-  tracing: Increase tracing map KEYS_MAX size
-  tracing: Make traceprobe parsing code reusable
-  tracing: Clean up hist_field_flags enum
-  tracing: Add hist_field_name() accessor
-  tracing: Reimplement log2
-
- kernel/trace/ring_buffer.c       |  64 ++++++--------------
- kernel/trace/trace.c             |  91 +++++++++++++++++++++++++++++
- kernel/trace/trace.h             |   7 +++
- kernel/trace/trace_events.c      |  31 +++++-----
- kernel/trace/trace_events_hist.c | 122 +++++++++++++++++++++++++++------------
- kernel/trace/trace_kprobe.c      |  18 +++---
- kernel/trace/trace_probe.c       |  86 ---------------------------
- kernel/trace/trace_probe.h       |   7 ---
- kernel/trace/trace_uprobe.c      |   2 +-
- kernel/trace/tracing_map.c       |   3 +-
- kernel/trace/tracing_map.h       |   2 +-
- 11 files changed, 227 insertions(+), 206 deletions(-)
-
+diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
+index 81279c6..f6ee9b1 100644
+--- a/kernel/trace/ring_buffer.c
++++ b/kernel/trace/ring_buffer.c
+@@ -2538,61 +2538,29 @@ static void rb_commit(struct ring_buffer_per_cpu *cpu_buffer,
+  * The lock and unlock are done within a preempt disable section.
+  * The current_context per_cpu variable can only be modified
+  * by the current task between lock and unlock. But it can
+- * be modified more than once via an interrupt. To pass this
+- * information from the lock to the unlock without having to
+- * access the 'in_interrupt()' functions again (which do show
+- * a bit of overhead in something as critical as function tracing,
+- * we use a bitmask trick.
++ * be modified more than once via an interrupt. There are four
++ * different contexts that we need to consider.
+  *
+- *  bit 0 =  NMI context
+- *  bit 1 =  IRQ context
+- *  bit 2 =  SoftIRQ context
+- *  bit 3 =  normal context.
++ *  Normal context.
++ *  SoftIRQ context
++ *  IRQ context
++ *  NMI context
+  *
+- * This works because this is the order of contexts that can
+- * preempt other contexts. A SoftIRQ never preempts an IRQ
+- * context.
+- *
+- * When the context is determined, the corresponding bit is
+- * checked and set (if it was set, then a recursion of that context
+- * happened).
+- *
+- * On unlock, we need to clear this bit. To do so, just subtract
+- * 1 from the current_context and AND it to itself.
+- *
+- * (binary)
+- *  101 - 1 = 100
+- *  101 & 100 = 100 (clearing bit zero)
+- *
+- *  1010 - 1 = 1001
+- *  1010 & 1001 = 1000 (clearing bit 1)
+- *
+- * The least significant bit can be cleared this way, and it
+- * just so happens that it is the same bit corresponding to
+- * the current context.
++ * If for some reason the ring buffer starts to recurse, we
++ * only allow that to happen at most 4 times (one for each
++ * context). If it happens 5 times, then we consider this a
++ * recusive loop and do not let it go further.
+  */
+ 
+ static __always_inline int
+ trace_recursive_lock(struct ring_buffer_per_cpu *cpu_buffer)
+ {
+-	unsigned int val = cpu_buffer->current_context;
+-	int bit;
+-
+-	if (in_interrupt()) {
+-		if (in_nmi())
+-			bit = RB_CTX_NMI;
+-		else if (in_irq())
+-			bit = RB_CTX_IRQ;
+-		else
+-			bit = RB_CTX_SOFTIRQ;
+-	} else
+-		bit = RB_CTX_NORMAL;
+-
+-	if (unlikely(val & (1 << bit)))
++	if (cpu_buffer->current_context >= 4)
+ 		return 1;
+ 
+-	val |= (1 << bit);
+-	cpu_buffer->current_context = val;
++	cpu_buffer->current_context++;
++	/* Interrupts must see this update */
++	barrier();
+ 
+ 	return 0;
+ }
+@@ -2600,7 +2568,9 @@ static void rb_commit(struct ring_buffer_per_cpu *cpu_buffer,
+ static __always_inline void
+ trace_recursive_unlock(struct ring_buffer_per_cpu *cpu_buffer)
+ {
+-	cpu_buffer->current_context &= cpu_buffer->current_context - 1;
++	/* Don't let the dec leak out */
++	barrier();
++	cpu_buffer->current_context--;
+ }
+ 
+ /**
 -- 
 1.9.3
