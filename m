@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v3 32/33] tracing: Increase trace_recursive_lock() limit for synthetic events
-Date: Fri, 22 Sep 2017 15:00:12 -0500
-Message-ID: <bf816d195e53c650b041d1aff63e8a19609d622a.1506105131.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v3 33/33] tracing: Add inter-event blurb to HIST_TRIGGERS config option
+Date: Fri, 22 Sep 2017 15:00:13 -0500
+Message-ID: <644b319598413128c8d85bf8f132123f96b124e1.1506105131.git.tom.zanussi@linux.intel.com>
 References: <cover.1506105131.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -11,51 +11,40 @@ Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         linux-rt-users@vger.kernel.org,
         Tom Zanussi <tom.zanussi@linux.intel.com>
 To: rostedt@goodmis.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mga14.intel.com ([192.55.52.115]:58917 "EHLO mga14.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751850AbdIVUGG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 22 Sep 2017 16:06:06 -0400
 In-Reply-To: <cover.1506105131.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1506105131.git.tom.zanussi@linux.intel.com>
 References: <cover.1506105131.git.tom.zanussi@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Synthetic event generation needs to happen while the current event is
-still in progress, so add 1 to the trace_recursive_lock() recursion
-limit to account for that.
-
-Because we also want to allow for the possibility of a synthetic event
-being generated from another synthetic event, add an additional
-increment for that as well.
+So that users know that inter-event tracing is supported as part of
+the HIST_TRIGGERS option, include text to that effect in the help
+text.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/ring_buffer.c | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+ kernel/trace/Kconfig | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
-index 9dbb459..f78a1ad 100644
---- a/kernel/trace/ring_buffer.c
-+++ b/kernel/trace/ring_buffer.c
-@@ -2590,16 +2590,16 @@ static void rb_commit(struct ring_buffer_per_cpu *cpu_buffer,
-  *  IRQ context
-  *  NMI context
-  *
-- * If for some reason the ring buffer starts to recurse, we
-- * only allow that to happen at most 4 times (one for each
-- * context). If it happens 5 times, then we consider this a
-- * recusive loop and do not let it go further.
-+ * If for some reason the ring buffer starts to recurse, we only allow
-+ * that to happen at most 6 times (one for each context, plus possibly
-+ * two levels of synthetic event generation). If it happens 7 times,
-+ * then we consider this a recusive loop and do not let it go further.
-  */
+diff --git a/kernel/trace/Kconfig b/kernel/trace/Kconfig
+index 434c840..ad55dde 100644
+--- a/kernel/trace/Kconfig
++++ b/kernel/trace/Kconfig
+@@ -585,6 +585,9 @@ config HIST_TRIGGERS
+ 	  event activity as an initial guide for further investigation
+ 	  using more advanced tools.
  
- static __always_inline int
- trace_recursive_lock(struct ring_buffer_per_cpu *cpu_buffer)
- {
--	if (cpu_buffer->current_context >= 4)
-+	if (cpu_buffer->current_context >= 6)
- 		return 1;
++	  Inter-event tracing of quantities such as latencies is also
++	  supported using hist triggers under this option.
++
+ 	  See Documentation/trace/events.txt.
+ 	  If in doubt, say N.
  
- 	cpu_buffer->current_context++;
 -- 
 1.9.3
+
