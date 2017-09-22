@@ -1,8 +1,8 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v3 01/33] tracing: Add support to detect and avoid duplicates
-Date: Fri, 22 Sep 2017 14:59:41 -0500
-Message-ID: <673cdf4491e1c9e73b52519ab48b891c6a755009.1506105131.git.tom.zanussi@linux.intel.com>
-References: <cover.1506105131.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 2/9] tracing: Reverse the order of trace_types_lock and event_mutex
+Date: Fri, 22 Sep 2017 14:58:16 -0500
+Message-ID: <7d9febe58f3cd7ddb14dd3c0f19e36ee929bab26.1506105045.git.tom.zanussi@linux.intel.com>
+References: <cover.1506105045.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
         joel.opensrc@gmail.com, joelaf@google.com,
@@ -11,123 +11,199 @@ Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         linux-rt-users@vger.kernel.org
 To: rostedt@goodmis.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1506105131.git.tom.zanussi@linux.intel.com>
-In-Reply-To: <cover.1506105131.git.tom.zanussi@linux.intel.com>
-References: <cover.1506105131.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <cover.1506105045.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <cover.1506105045.git.tom.zanussi@linux.intel.com>
+References: <cover.1506105045.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Vedang Patel <vedang.patel@intel.com>
+From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-A duplicate in the tracing_map hash table is when 2 different entries
-have the same key and, as a result, the key_hash. This is possible due
-to a race condition in the algorithm. This race condition is inherent to
-the algorithm and not a bug. This was fine because, until now, we were
-only interested in the sum of all the values related to a particular
-key (the duplicates are dealt with in tracing_map_sort_entries()). But,
-with the inclusion of variables[1], we are interested in individual
-values. So, it will not be clear what value to choose when
-there are duplicates. So, the duplicates need to be removed.
+In order to make future changes where we need to call
+tracing_set_clock() from within an event command, the order of
+trace_types_lock and event_mutex must be reversed, as the event command
+will hold event_mutex and the trace_types_lock is taken from within
+tracing_set_clock().
 
-The duplicates can occur in the code in the following scenarios:
-
-- A thread is in the process of adding a new element. It has
-successfully executed cmpxchg() and inserted the key. But, it is still
-not done acquiring the trace_map_elt struct, populating it and storing
-the pointer to the struct in the value field of tracing_map hash table.
-If another thread comes in at this time and wants to add an element with
-the same key, it will not see the current element and add a new one.
-
-- There are multiple threads trying to execute cmpxchg at the same time,
-one of the threads will succeed and the others will fail. The ones which
-fail will go ahead increment 'idx' and add a new element there creating
-a duplicate.
-
-This patch detects and avoids the first condition by asking the thread
-which detects the duplicate to loop one more time. There is also a
-possibility of infinite loop if the thread which is trying to insert
-goes to sleep indefinitely and the one which is trying to insert a new
-element detects a duplicate. Which is why, the thread loops for
-map_size iterations before returning NULL.
-
-The second scenario is avoided by preventing the threads which failed
-cmpxchg() from incrementing idx. This way, they will loop
-around and check if the thread which succeeded in executing cmpxchg()
-had the same key.
-
-[1] http://lkml.kernel.org/r/cover.1498510759.git.tom.zanussi@linux.intel.com
-
-Signed-off-by: Vedang Patel <vedang.patel@intel.com>
+Requested-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/trace/tracing_map.c | 41 ++++++++++++++++++++++++++++++++++++-----
- 1 file changed, 36 insertions(+), 5 deletions(-)
+ kernel/trace/trace.c        |  5 +++++
+ kernel/trace/trace_events.c | 31 +++++++++++++++----------------
+ 2 files changed, 20 insertions(+), 16 deletions(-)
 
-diff --git a/kernel/trace/tracing_map.c b/kernel/trace/tracing_map.c
-index 07e7534..b30f343 100644
---- a/kernel/trace/tracing_map.c
-+++ b/kernel/trace/tracing_map.c
-@@ -414,7 +414,9 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
- __tracing_map_insert(struct tracing_map *map, void *key, bool lookup_only)
+diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
+index 5360b7a..b0ad927 100644
+--- a/kernel/trace/trace.c
++++ b/kernel/trace/trace.c
+@@ -7674,6 +7674,7 @@ static int instance_mkdir(const char *name)
+ 	struct trace_array *tr;
+ 	int ret;
+ 
++	mutex_lock(&event_mutex);
+ 	mutex_lock(&trace_types_lock);
+ 
+ 	ret = -EEXIST;
+@@ -7729,6 +7730,7 @@ static int instance_mkdir(const char *name)
+ 	list_add(&tr->list, &ftrace_trace_arrays);
+ 
+ 	mutex_unlock(&trace_types_lock);
++	mutex_unlock(&event_mutex);
+ 
+ 	return 0;
+ 
+@@ -7740,6 +7742,7 @@ static int instance_mkdir(const char *name)
+ 
+  out_unlock:
+ 	mutex_unlock(&trace_types_lock);
++	mutex_unlock(&event_mutex);
+ 
+ 	return ret;
+ 
+@@ -7752,6 +7755,7 @@ static int instance_rmdir(const char *name)
+ 	int ret;
+ 	int i;
+ 
++	mutex_lock(&event_mutex);
+ 	mutex_lock(&trace_types_lock);
+ 
+ 	ret = -ENODEV;
+@@ -7797,6 +7801,7 @@ static int instance_rmdir(const char *name)
+ 
+  out_unlock:
+ 	mutex_unlock(&trace_types_lock);
++	mutex_unlock(&event_mutex);
+ 
+ 	return ret;
+ }
+diff --git a/kernel/trace/trace_events.c b/kernel/trace/trace_events.c
+index 8746839..ec0f9aa 100644
+--- a/kernel/trace/trace_events.c
++++ b/kernel/trace/trace_events.c
+@@ -1406,8 +1406,8 @@ static int subsystem_open(struct inode *inode, struct file *filp)
+ 		return -ENODEV;
+ 
+ 	/* Make sure the system still exists */
+-	mutex_lock(&trace_types_lock);
+ 	mutex_lock(&event_mutex);
++	mutex_lock(&trace_types_lock);
+ 	list_for_each_entry(tr, &ftrace_trace_arrays, list) {
+ 		list_for_each_entry(dir, &tr->systems, list) {
+ 			if (dir == inode->i_private) {
+@@ -1421,8 +1421,8 @@ static int subsystem_open(struct inode *inode, struct file *filp)
+ 		}
+ 	}
+  exit_loop:
+-	mutex_unlock(&event_mutex);
+ 	mutex_unlock(&trace_types_lock);
++	mutex_unlock(&event_mutex);
+ 
+ 	if (!system)
+ 		return -ENODEV;
+@@ -2294,15 +2294,15 @@ void trace_event_eval_update(struct trace_eval_map **map, int len)
+ int trace_add_event_call(struct trace_event_call *call)
  {
- 	u32 idx, key_hash, test_key;
-+	int dup_try = 0;
- 	struct tracing_map_entry *entry;
-+	struct tracing_map_elt *val;
+ 	int ret;
+-	mutex_lock(&trace_types_lock);
+ 	mutex_lock(&event_mutex);
++	mutex_lock(&trace_types_lock);
  
- 	key_hash = jhash(key, map->key_size, 0);
- 	if (key_hash == 0)
-@@ -426,11 +428,33 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
- 		entry = TRACING_MAP_ENTRY(map->map, idx);
- 		test_key = entry->key;
+ 	ret = __register_event(call, NULL);
+ 	if (ret >= 0)
+ 		__add_event_to_tracers(call);
  
--		if (test_key && test_key == key_hash && entry->val &&
--		    keys_match(key, entry->val->key, map->key_size)) {
--			if (!lookup_only)
--				atomic64_inc(&map->hits);
--			return entry->val;
-+		if (test_key && test_key == key_hash) {
-+			val = READ_ONCE(entry->val);
-+			if (val &&
-+			    keys_match(key, val->key, map->key_size)) {
-+				if (!lookup_only)
-+					atomic64_inc(&map->hits);
-+				return val;
-+			} else if (unlikely(!val)) {
-+				/*
-+				 * The key is present. But, val (pointer to elt
-+				 * struct) is still NULL. which means some other
-+				 * thread is in the process of inserting an
-+				 * element.
-+				 *
-+				 * On top of that, it's key_hash is same as the
-+				 * one being inserted right now. So, it's
-+				 * possible that the element has the same
-+				 * key as well.
-+				 */
-+
-+				dup_try++;
-+				if (dup_try > map->map_size) {
-+					atomic64_inc(&map->drops);
-+					break;
-+				}
-+				continue;
-+			}
- 		}
+-	mutex_unlock(&event_mutex);
+ 	mutex_unlock(&trace_types_lock);
++	mutex_unlock(&event_mutex);
+ 	return ret;
+ }
  
- 		if (!test_key) {
-@@ -452,6 +476,13 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
- 				atomic64_inc(&map->hits);
+@@ -2356,13 +2356,13 @@ int trace_remove_event_call(struct trace_event_call *call)
+ {
+ 	int ret;
  
- 				return entry->val;
-+			} else {
-+				/*
-+				 * cmpxchg() failed. Loop around once
-+				 * more to check what key was inserted.
-+				 */
-+				dup_try++;
-+				continue;
- 			}
- 		}
+-	mutex_lock(&trace_types_lock);
+ 	mutex_lock(&event_mutex);
++	mutex_lock(&trace_types_lock);
+ 	down_write(&trace_event_sem);
+ 	ret = probe_remove_event_call(call);
+ 	up_write(&trace_event_sem);
+-	mutex_unlock(&event_mutex);
+ 	mutex_unlock(&trace_types_lock);
++	mutex_unlock(&event_mutex);
+ 
+ 	return ret;
+ }
+@@ -2424,8 +2424,8 @@ static int trace_module_notify(struct notifier_block *self,
+ {
+ 	struct module *mod = data;
+ 
+-	mutex_lock(&trace_types_lock);
+ 	mutex_lock(&event_mutex);
++	mutex_lock(&trace_types_lock);
+ 	switch (val) {
+ 	case MODULE_STATE_COMING:
+ 		trace_module_add_events(mod);
+@@ -2434,8 +2434,8 @@ static int trace_module_notify(struct notifier_block *self,
+ 		trace_module_remove_events(mod);
+ 		break;
+ 	}
+-	mutex_unlock(&event_mutex);
+ 	mutex_unlock(&trace_types_lock);
++	mutex_unlock(&event_mutex);
+ 
+ 	return 0;
+ }
+@@ -2950,24 +2950,24 @@ static __init int setup_trace_event(char *str)
+  * creates the event hierachry in the @parent/events directory.
+  *
+  * Returns 0 on success.
++ *
++ * Must be called with event_mutex held.
+  */
+ int event_trace_add_tracer(struct dentry *parent, struct trace_array *tr)
+ {
+ 	int ret;
+ 
+-	mutex_lock(&event_mutex);
++	lockdep_assert_held(&event_mutex);
+ 
+ 	ret = create_event_toplevel_files(parent, tr);
+ 	if (ret)
+-		goto out_unlock;
++		goto out;
+ 
+ 	down_write(&trace_event_sem);
+ 	__trace_add_event_dirs(tr);
+ 	up_write(&trace_event_sem);
+ 
+- out_unlock:
+-	mutex_unlock(&event_mutex);
+-
++ out:
+ 	return ret;
+ }
+ 
+@@ -2996,9 +2996,10 @@ int event_trace_add_tracer(struct dentry *parent, struct trace_array *tr)
+ 	return ret;
+ }
+ 
++/* Must be called with event_mutex held */
+ int event_trace_del_tracer(struct trace_array *tr)
+ {
+-	mutex_lock(&event_mutex);
++	lockdep_assert_held(&event_mutex);
+ 
+ 	/* Disable any event triggers and associated soft-disabled events */
+ 	clear_event_triggers(tr);
+@@ -3019,8 +3020,6 @@ int event_trace_del_tracer(struct trace_array *tr)
+ 
+ 	tr->event_dir = NULL;
+ 
+-	mutex_unlock(&event_mutex);
+-
+ 	return 0;
+ }
  
 -- 
 1.9.3
