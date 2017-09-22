@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH 8/9] tracing: Add hist_field_name() accessor
-Date: Fri, 22 Sep 2017 14:58:22 -0500
-Message-ID: <5b5a2d36dde067cbbe2434b10f06daac27b7dbd5.1506105045.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 9/9] tracing: Reimplement log2
+Date: Fri, 22 Sep 2017 14:58:23 -0500
+Message-ID: <b47f93fc0b87b36eccf716b0c018f3a71e1f1111.1506105045.git.tom.zanussi@linux.intel.com>
 References: <cover.1506105045.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,176 +18,116 @@ References: <cover.1506105045.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-In preparation for hist_fields that won't be strictly based on
-trace_event_fields, add a new hist_field_name() accessor to allow that
-flexibility and update associated users.
+log2 as currently implemented applies only to u64 trace_event_field
+derived fields, and assumes that anything it's applied to is a u64
+field.
+
+To prepare for synthetic fields like latencies, log2 should be
+applicable to those as well, so take the opportunity now to fix the
+current problems as well as expand to more general uses.
+
+log2 should be thought of as a chaining function rather than a field
+type.  To enable this as well as possible future function
+implementations, add a hist_field operand array into the hist_field
+definition for this purpose, and make use of it to implement the log2
+'function'.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 67 +++++++++++++++++++++++++++-------------
- 1 file changed, 45 insertions(+), 22 deletions(-)
+ kernel/trace/trace_events_hist.c | 31 +++++++++++++++++++++++++++----
+ 1 file changed, 27 insertions(+), 4 deletions(-)
 
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 4f6b640..4dc39e3 100644
+index 4dc39e3..4eddc19 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -146,6 +146,23 @@ struct hist_trigger_data {
- 	struct tracing_map		*map;
+@@ -28,12 +28,16 @@
+ 
+ typedef u64 (*hist_field_fn_t) (struct hist_field *field, void *event);
+ 
++#define HIST_FIELD_OPERANDS_MAX	2
++
+ struct hist_field {
+ 	struct ftrace_event_field	*field;
+ 	unsigned long			flags;
+ 	hist_field_fn_t			fn;
+ 	unsigned int			size;
+ 	unsigned int			offset;
++	unsigned int                    is_signed;
++	struct hist_field		*operands[HIST_FIELD_OPERANDS_MAX];
  };
  
-+static const char *hist_field_name(struct hist_field *field,
-+				   unsigned int level)
-+{
-+	const char *field_name = "";
-+
-+	if (level > 1)
-+		return field_name;
-+
-+	if (field->field)
-+		field_name = field->field->name;
-+
-+	if (field_name == NULL)
-+		field_name = "";
-+
-+	return field_name;
-+}
-+
- static hist_field_fn_t select_value_fn(int field_size, int field_is_signed)
+ static u64 hist_field_none(struct hist_field *field, void *event)
+@@ -71,7 +75,9 @@ static u64 hist_field_pstring(struct hist_field *hist_field, void *event)
+ 
+ static u64 hist_field_log2(struct hist_field *hist_field, void *event)
  {
- 	hist_field_fn_t fn = NULL;
-@@ -653,7 +670,6 @@ static int is_descending(const char *str)
- static int create_sort_keys(struct hist_trigger_data *hist_data)
+-	u64 val = *(u64 *)(event + hist_field->field->offset);
++	struct hist_field *operand = hist_field->operands[0];
++
++	u64 val = operand->fn(operand, event);
+ 
+ 	return (u64) ilog2(roundup_pow_of_two(val));
+ }
+@@ -156,6 +162,8 @@ static const char *hist_field_name(struct hist_field *field,
+ 
+ 	if (field->field)
+ 		field_name = field->field->name;
++	else if (field->flags & HIST_FIELD_FL_LOG2)
++		field_name = hist_field_name(field->operands[0], ++level);
+ 
+ 	if (field_name == NULL)
+ 		field_name = "";
+@@ -357,8 +365,20 @@ static void hist_trigger_elt_comm_init(struct tracing_map_elt *elt)
+ 	.elt_init	= hist_trigger_elt_comm_init,
+ };
+ 
+-static void destroy_hist_field(struct hist_field *hist_field)
++static void destroy_hist_field(struct hist_field *hist_field,
++			       unsigned int level)
  {
- 	char *fields_str = hist_data->attrs->sort_key_str;
--	struct ftrace_event_field *field = NULL;
- 	struct tracing_map_sort_key *sort_key;
- 	int descending, ret = 0;
- 	unsigned int i, j;
-@@ -670,7 +686,9 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
++	unsigned int i;
++
++	if (level > 2)
++		return;
++
++	if (!hist_field)
++		return;
++
++	for (i = 0; i < HIST_FIELD_OPERANDS_MAX; i++)
++		destroy_hist_field(hist_field->operands[i], level + 1);
++
+ 	kfree(hist_field);
+ }
+ 
+@@ -385,7 +405,10 @@ static struct hist_field *create_hist_field(struct ftrace_event_field *field,
  	}
  
- 	for (i = 0; i < TRACING_MAP_SORT_KEYS_MAX; i++) {
-+		struct hist_field *hist_field;
- 		char *field_str, *field_name;
-+		const char *test_name;
- 
- 		sort_key = &hist_data->sort_keys[i];
- 
-@@ -703,8 +721,10 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
- 		}
- 
- 		for (j = 1; j < hist_data->n_fields; j++) {
--			field = hist_data->fields[j]->field;
--			if (field && (strcmp(field_name, field->name) == 0)) {
-+			hist_field = hist_data->fields[j];
-+			test_name = hist_field_name(hist_field, 0);
-+
-+			if (strcmp(field_name, test_name) == 0) {
- 				sort_key->field_idx = j;
- 				descending = is_descending(field_str);
- 				if (descending < 0) {
-@@ -952,6 +972,7 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
- 	struct hist_field *key_field;
- 	char str[KSYM_SYMBOL_LEN];
- 	bool multiline = false;
-+	const char *field_name;
- 	unsigned int i;
- 	u64 uval;
- 
-@@ -963,26 +984,27 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
- 		if (i > hist_data->n_vals)
- 			seq_puts(m, ", ");
- 
-+		field_name = hist_field_name(key_field, 0);
-+
- 		if (key_field->flags & HIST_FIELD_FL_HEX) {
- 			uval = *(u64 *)(key + key_field->offset);
--			seq_printf(m, "%s: %llx",
--				   key_field->field->name, uval);
-+			seq_printf(m, "%s: %llx", field_name, uval);
- 		} else if (key_field->flags & HIST_FIELD_FL_SYM) {
- 			uval = *(u64 *)(key + key_field->offset);
- 			sprint_symbol_no_offset(str, uval);
--			seq_printf(m, "%s: [%llx] %-45s",
--				   key_field->field->name, uval, str);
-+			seq_printf(m, "%s: [%llx] %-45s", field_name,
-+				   uval, str);
- 		} else if (key_field->flags & HIST_FIELD_FL_SYM_OFFSET) {
- 			uval = *(u64 *)(key + key_field->offset);
- 			sprint_symbol(str, uval);
--			seq_printf(m, "%s: [%llx] %-55s",
--				   key_field->field->name, uval, str);
-+			seq_printf(m, "%s: [%llx] %-55s", field_name,
-+				   uval, str);
- 		} else if (key_field->flags & HIST_FIELD_FL_EXECNAME) {
- 			char *comm = elt->private_data;
- 
- 			uval = *(u64 *)(key + key_field->offset);
--			seq_printf(m, "%s: %-16s[%10llu]",
--				   key_field->field->name, comm, uval);
-+			seq_printf(m, "%s: %-16s[%10llu]", field_name,
-+				   comm, uval);
- 		} else if (key_field->flags & HIST_FIELD_FL_SYSCALL) {
- 			const char *syscall_name;
- 
-@@ -991,8 +1013,8 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
- 			if (!syscall_name)
- 				syscall_name = "unknown_syscall";
- 
--			seq_printf(m, "%s: %-30s[%3llu]",
--				   key_field->field->name, syscall_name, uval);
-+			seq_printf(m, "%s: %-30s[%3llu]", field_name,
-+				   syscall_name, uval);
- 		} else if (key_field->flags & HIST_FIELD_FL_STACKTRACE) {
- 			seq_puts(m, "stacktrace:\n");
- 			hist_trigger_stacktrace_print(m,
-@@ -1000,15 +1022,14 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
- 						      HIST_STACKTRACE_DEPTH);
- 			multiline = true;
- 		} else if (key_field->flags & HIST_FIELD_FL_LOG2) {
--			seq_printf(m, "%s: ~ 2^%-2llu", key_field->field->name,
-+			seq_printf(m, "%s: ~ 2^%-2llu", field_name,
- 				   *(u64 *)(key + key_field->offset));
- 		} else if (key_field->flags & HIST_FIELD_FL_STRING) {
--			seq_printf(m, "%s: %-50s", key_field->field->name,
-+			seq_printf(m, "%s: %-50s", field_name,
- 				   (char *)(key + key_field->offset));
- 		} else {
- 			uval = *(u64 *)(key + key_field->offset);
--			seq_printf(m, "%s: %10llu", key_field->field->name,
--				   uval);
-+			seq_printf(m, "%s: %10llu", field_name, uval);
- 		}
+ 	if (flags & HIST_FIELD_FL_LOG2) {
++		unsigned long fl = flags & ~HIST_FIELD_FL_LOG2;
+ 		hist_field->fn = hist_field_log2;
++		hist_field->operands[0] = create_hist_field(field, fl);
++		hist_field->size = hist_field->operands[0]->size;
+ 		goto out;
  	}
  
-@@ -1021,13 +1042,13 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
- 		   tracing_map_read_sum(elt, HITCOUNT_IDX));
- 
- 	for (i = 1; i < hist_data->n_vals; i++) {
-+		field_name = hist_field_name(hist_data->fields[i], 0);
-+
- 		if (hist_data->fields[i]->flags & HIST_FIELD_FL_HEX) {
--			seq_printf(m, "  %s: %10llx",
--				   hist_data->fields[i]->field->name,
-+			seq_printf(m, "  %s: %10llx", field_name,
- 				   tracing_map_read_sum(elt, i));
- 		} else {
--			seq_printf(m, "  %s: %10llu",
--				   hist_data->fields[i]->field->name,
-+			seq_printf(m, "  %s: %10llu", field_name,
- 				   tracing_map_read_sum(elt, i));
+@@ -405,7 +428,7 @@ static struct hist_field *create_hist_field(struct ftrace_event_field *field,
+ 		hist_field->fn = select_value_fn(field->size,
+ 						 field->is_signed);
+ 		if (!hist_field->fn) {
+-			destroy_hist_field(hist_field);
++			destroy_hist_field(hist_field, 0);
+ 			return NULL;
  		}
  	}
-@@ -1142,7 +1163,9 @@ static const char *get_hist_field_flags(struct hist_field *hist_field)
+@@ -422,7 +445,7 @@ static void destroy_hist_fields(struct hist_trigger_data *hist_data)
  
- static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
- {
--	seq_printf(m, "%s", hist_field->field->name);
-+	const char *field_name = hist_field_name(hist_field, 0);
-+
-+	seq_printf(m, "%s", field_name);
- 	if (hist_field->flags) {
- 		const char *flags_str = get_hist_field_flags(hist_field);
- 
+ 	for (i = 0; i < TRACING_MAP_FIELDS_MAX; i++) {
+ 		if (hist_data->fields[i]) {
+-			destroy_hist_field(hist_data->fields[i]);
++			destroy_hist_field(hist_data->fields[i], 0);
+ 			hist_data->fields[i] = NULL;
+ 		}
+ 	}
 -- 
 1.9.3
