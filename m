@@ -1,35 +1,73 @@
-From: Alexander Dahl <ada@thorsis.com>
-Subject: Re: Plans for 4.14 -rt?
-Date: Fri, 22 Sep 2017 08:13:59 +0200
-Message-ID: <8810324.nOFNHxIY4G@ada>
-References: <753579E6-CE9E-4914-A83F-7D28BEDB21DD@linux.intel.com> <20170921135348.y4iofolcpgmc5mti@linutronix.de>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-To: linux-rt-users@vger.kernel.org
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: RT kernel on Acer laptop unreliable
+Date: Fri, 22 Sep 2017 09:40:50 +0200
+Message-ID: <20170922074050.pjtyzzd2n2khtxsn@linutronix.de>
+References: <8c1a0cb6-d90c-1f6f-2d23-9865a17b379e@jajcus.net>
+ <20170807131937.ijj7n4yuk6inds4h@linutronix.de>
+ <56cb9f42-83e3-6648-2489-7c9e486c8ecc@jajcus.net>
+ <20170818124406.6cem4po52xrzi5qc@linutronix.de>
+ <b1209f35-67a2-5cb2-d0e1-ad142b34aab9@jajcus.net>
+ <20170821131254.5nuacfv62d3l4rhe@linutronix.de>
+ <52e67cfd-0bb3-ce97-7b28-f2afb1d3c1cb@jajcus.net>
+ <20170905091712.koywolqt5qwaslpk@linutronix.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users@vger.kernel.org
+To: Jacek Konieczny <jajcus@jajcus.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.thorsis.com ([213.211.200.15]:55825 "EHLO mail.thorsis.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751637AbdIVGOF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 22 Sep 2017 02:14:05 -0400
-Received: from localhost (localhost [127.0.0.1])
-        by mail.thorsis.com (Postfix) with ESMTP id D9F763A22AD
-        for <linux-rt-users@vger.kernel.org>; Fri, 22 Sep 2017 08:14:42 +0200 (CEST)
-Received: from mail.thorsis.com ([127.0.0.1])
-        by localhost (mail.thorsis.com [127.0.0.1]) (amavisd-new, port 10024)
-        with ESMTP id oPLbzP-J7dqt for <linux-rt-users@vger.kernel.org>;
-        Fri, 22 Sep 2017 08:14:39 +0200 (CEST)
-In-Reply-To: <20170921135348.y4iofolcpgmc5mti@linutronix.de>
+Received: from Galois.linutronix.de ([146.0.238.70]:38126 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751795AbdIVHkz (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 22 Sep 2017 03:40:55 -0400
+Content-Disposition: inline
+In-Reply-To: <20170905091712.koywolqt5qwaslpk@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+On 2017-09-05 11:17:13 [+0200], To Jacek Konieczny wrote:
+> I'm sorry, I missed that. What about this on-top?
+> 
+> diff --git a/include/linux/locallock.h b/include/linux/locallock.h
+> index eeb1a66df402..298afcd8e219 100644
+> --- a/include/linux/locallock.h
+> +++ b/include/linux/locallock.h
+> @@ -61,6 +61,9 @@ static inline int __local_trylock(struct local_irq_lock *lv)
+>  		lv->owner = current;
+>  		lv->nestcnt = 1;
+>  		return 1;
+> +	} else if (lv->owner == current) {
+> +		lv->nestcnt++;
+> +		return 1;
+>  	}
+>  	return 0;
+>  }
 
-Am Donnerstag, 21. September 2017, 15:53:48 CEST schrieb Sebastian Andrzej 
-Siewior:
-> This depends whether or not v4.14 gets its LTS hat.
+I am going to split up that part out in a separate patch and also add
+the !RT part to it.
 
-In other words: how safe is it to assume a LTS kernel gets RT patches? O:-)
-
-Greets
-Alex
-
+--- a/include/linux/locallock.h
++++ b/include/linux/locallock.h
+@@ -68,6 +68,9 @@ static inline int __local_trylock(struct
+ 		lv->owner = current;
+ 		lv->nestcnt = 1;
+ 		return 1;
++	} else if (lv->owner == current) {
++		lv->nestcnt++;
++		return 1;
+ 	}
+ 	return 0;
+ }
+@@ -238,6 +241,12 @@ static inline int __local_unlock_irqrest
+ 
+ static inline void local_irq_lock_init(int lvar) { }
+ 
++#define local_trylock(lvar)					\
++	({							\
++		preempt_disable();				\
++		1;						\
++	})
++
+ #define local_lock(lvar)			preempt_disable()
+ #define local_unlock(lvar)			preempt_enable()
+ #define local_lock_irq(lvar)			local_irq_disable()
