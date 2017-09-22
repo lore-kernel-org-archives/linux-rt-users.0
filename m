@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v3 30/33] tracing: Make tracing_set_clock() non-static
-Date: Fri, 22 Sep 2017 15:00:10 -0500
-Message-ID: <8b288a2d1747d54402ca030fcb903a532ab7e698.1506105131.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v3 16/33] tracing: Generalize per-element hist trigger data
+Date: Fri, 22 Sep 2017 14:59:56 -0500
+Message-ID: <18c12e2cd12243914d9cc98909c6720da084f3bd.1506105131.git.tom.zanussi@linux.intel.com>
 References: <cover.1506105131.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,43 +18,151 @@ References: <cover.1506105131.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Allow tracing code outside of trace.c to access tracing_set_clock().
+Up until now, hist triggers only needed per-element support for saving
+'comm' data, which was saved directly as a private data pointer.
 
-Some applications may require a particular clock in order to function
-properly, such as latency calculations.
-
-Also, add an accessor returning the current clock string.
+In anticipation of the need to save other data besides 'comm', add a
+new hist_elt_data struct for the purpose, and switch the current
+'comm'-related code over to that.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace.c | 2 +-
- kernel/trace/trace.h | 1 +
- 2 files changed, 2 insertions(+), 1 deletion(-)
+ kernel/trace/trace_events_hist.c | 71 +++++++++++++++++++++-------------------
+ 1 file changed, 38 insertions(+), 33 deletions(-)
 
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index 5eb313a..a66a30a 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -6213,7 +6213,7 @@ static int tracing_clock_show(struct seq_file *m, void *v)
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 7a58279..2a66d62 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -249,6 +249,10 @@ static u64 hist_field_timestamp(struct hist_field *hist_field, void *event,
+ 	return ts;
+ }
+ 
++struct hist_elt_data {
++	char *comm;
++};
++
+ static const char *hist_field_name(struct hist_field *field,
+ 				   unsigned int level)
+ {
+@@ -463,45 +467,61 @@ static inline void save_comm(char *comm, struct task_struct *task)
+ 	memcpy(comm, task->comm, TASK_COMM_LEN);
+ }
+ 
+-static void hist_trigger_elt_comm_free(struct tracing_map_elt *elt)
++static void hist_elt_data_free(struct hist_elt_data *elt_data)
++{
++	kfree(elt_data->comm);
++	kfree(elt_data);
++}
++
++static void hist_trigger_elt_data_free(struct tracing_map_elt *elt)
+ {
+-	kfree((char *)elt->private_data);
++	struct hist_elt_data *elt_data = elt->private_data;
++
++	hist_elt_data_free(elt_data);
+ }
+ 
+-static int hist_trigger_elt_comm_alloc(struct tracing_map_elt *elt)
++static int hist_trigger_elt_data_alloc(struct tracing_map_elt *elt)
+ {
+ 	struct hist_trigger_data *hist_data = elt->map->private_data;
++	unsigned int size = TASK_COMM_LEN + 1;
++	struct hist_elt_data *elt_data;
+ 	struct hist_field *key_field;
+ 	unsigned int i;
+ 
++	elt_data = kzalloc(sizeof(*elt_data), GFP_KERNEL);
++	if (!elt_data)
++		return -ENOMEM;
++
+ 	for_each_hist_key_field(i, hist_data) {
+ 		key_field = hist_data->fields[i];
+ 
+ 		if (key_field->flags & HIST_FIELD_FL_EXECNAME) {
+-			unsigned int size = TASK_COMM_LEN + 1;
+-
+-			elt->private_data = kzalloc(size, GFP_KERNEL);
+-			if (!elt->private_data)
++			elt_data->comm = kzalloc(size, GFP_KERNEL);
++			if (!elt_data->comm) {
++				kfree(elt_data);
+ 				return -ENOMEM;
++			}
+ 			break;
+ 		}
+ 	}
+ 
++	elt->private_data = elt_data;
++
  	return 0;
  }
  
--static int tracing_set_clock(struct trace_array *tr, const char *clockstr)
-+int tracing_set_clock(struct trace_array *tr, const char *clockstr)
+-static void hist_trigger_elt_comm_init(struct tracing_map_elt *elt)
++static void hist_trigger_elt_data_init(struct tracing_map_elt *elt)
  {
- 	int i;
+-	char *comm = elt->private_data;
++	struct hist_elt_data *elt_data = elt->private_data;
  
-diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
-index 7b78762..1f3443a 100644
---- a/kernel/trace/trace.h
-+++ b/kernel/trace/trace.h
-@@ -288,6 +288,7 @@ enum {
- extern void trace_array_put(struct trace_array *tr);
+-	if (comm)
+-		save_comm(comm, current);
++	if (elt_data->comm)
++		save_comm(elt_data->comm, current);
+ }
  
- extern int tracing_set_time_stamp_abs(struct trace_array *tr, bool abs);
-+extern int tracing_set_clock(struct trace_array *tr, const char *clockstr);
+-static const struct tracing_map_ops hist_trigger_elt_comm_ops = {
+-	.elt_alloc	= hist_trigger_elt_comm_alloc,
+-	.elt_free	= hist_trigger_elt_comm_free,
+-	.elt_init	= hist_trigger_elt_comm_init,
++static const struct tracing_map_ops hist_trigger_elt_data_ops = {
++	.elt_alloc	= hist_trigger_elt_data_alloc,
++	.elt_free	= hist_trigger_elt_data_free,
++	.elt_init	= hist_trigger_elt_data_init,
+ };
  
- extern bool trace_clock_in_ns(struct trace_array *tr);
+ static const char *get_hist_field_flags(struct hist_field *hist_field)
+@@ -1512,21 +1532,6 @@ static int create_tracing_map_fields(struct hist_trigger_data *hist_data)
+ 	return 0;
+ }
  
+-static bool need_tracing_map_ops(struct hist_trigger_data *hist_data)
+-{
+-	struct hist_field *key_field;
+-	unsigned int i;
+-
+-	for_each_hist_key_field(i, hist_data) {
+-		key_field = hist_data->fields[i];
+-
+-		if (key_field->flags & HIST_FIELD_FL_EXECNAME)
+-			return true;
+-	}
+-
+-	return false;
+-}
+-
+ static struct hist_trigger_data *
+ create_hist_data(unsigned int map_bits,
+ 		 struct hist_trigger_attrs *attrs,
+@@ -1552,8 +1557,7 @@ static bool need_tracing_map_ops(struct hist_trigger_data *hist_data)
+ 	if (ret)
+ 		goto free;
+ 
+-	if (need_tracing_map_ops(hist_data))
+-		map_ops = &hist_trigger_elt_comm_ops;
++	map_ops = &hist_trigger_elt_data_ops;
+ 
+ 	hist_data->map = tracing_map_create(map_bits, hist_data->key_size,
+ 					    map_ops, hist_data);
+@@ -1742,7 +1746,8 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
+ 			seq_printf(m, "%s: [%llx] %-55s", field_name,
+ 				   uval, str);
+ 		} else if (key_field->flags & HIST_FIELD_FL_EXECNAME) {
+-			char *comm = elt->private_data;
++			struct hist_elt_data *elt_data = elt->private_data;
++			char *comm = elt_data->comm;
+ 
+ 			uval = *(u64 *)(key + key_field->offset);
+ 			seq_printf(m, "%s: %-16s[%10llu]", field_name,
 -- 
 1.9.3
