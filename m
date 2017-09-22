@@ -1,14 +1,15 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH 1/9] tracing: Steve's unofficial trace_recursive_lock() patch
-Date: Fri, 22 Sep 2017 14:58:15 -0500
-Message-ID: <fe59b88febaa0f29c624cc08b8f9c3b7a499aa00.1506105045.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 3/9] tracing: Exclude 'generic fields' from histograms
+Date: Fri, 22 Sep 2017 14:58:17 -0500
+Message-ID: <956154cbc3e8a4f0633d619b886c97f0f0edf7b4.1506105045.git.tom.zanussi@linux.intel.com>
 References: <cover.1506105045.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
         joel.opensrc@gmail.com, joelaf@google.com,
         mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
         rajvi.jingar@intel.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org
+        linux-rt-users@vger.kernel.org,
+        Tom Zanussi <tom.zanussi@linux.intel.com>
 To: rostedt@goodmis.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1506105045.git.tom.zanussi@linux.intel.com>
@@ -17,128 +18,39 @@ References: <cover.1506105045.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Steven Rostedt <rostedt@goodmis.org>
+There are a small number of 'generic fields' (comm/COMM/cpu/CPU) that
+are found by trace_find_event_field() but are only meant for
+filtering.  Specifically, they unlike normal fields, they have a size
+of 0 and thus wreak havoc when used as a histogram key.
 
-On Tue,  5 Sep 2017 16:57:52 -0500
-Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
+Exclude these (return -EINVAL) when used as histogram keys.
 
-> Synthetic event generation requires the reservation of a second event
-> while the reservation of a previous event is still in progress.  The
-> trace_recursive_lock() check in ring_buffer_lock_reserve() prevents
-> this however.
->
-> This sets up a special reserve pathway for this particular case,
-> leaving existing pathways untouched, other than an additional check in
-> ring_buffer_lock_reserve() and trace_event_buffer_reserve().  These
-> checks could be gotten rid of as well, with copies of those functions,
-> but for now try to avoid that unless necessary.
->
-> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-
-I've been planing on changing that lock, which may help you here
-without having to mess around with parameters. That is to simply add a
-counter. Would this patch help you. You can add a patch to increment
-the count to 5 with an explanation of handling synthetic events, but
-even getting to 4 is extremely unlikely.
-
-I'll make this into an official patch if this works for you, and then
-you can include it in your series.
-
--- Steve
+Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/ring_buffer.c | 64 ++++++++++++----------------------------------
- 1 file changed, 17 insertions(+), 47 deletions(-)
+ kernel/trace/trace_events_hist.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
-index 81279c6..f6ee9b1 100644
---- a/kernel/trace/ring_buffer.c
-+++ b/kernel/trace/ring_buffer.c
-@@ -2538,61 +2538,29 @@ static void rb_commit(struct ring_buffer_per_cpu *cpu_buffer,
-  * The lock and unlock are done within a preempt disable section.
-  * The current_context per_cpu variable can only be modified
-  * by the current task between lock and unlock. But it can
-- * be modified more than once via an interrupt. To pass this
-- * information from the lock to the unlock without having to
-- * access the 'in_interrupt()' functions again (which do show
-- * a bit of overhead in something as critical as function tracing,
-- * we use a bitmask trick.
-+ * be modified more than once via an interrupt. There are four
-+ * different contexts that we need to consider.
-  *
-- *  bit 0 =  NMI context
-- *  bit 1 =  IRQ context
-- *  bit 2 =  SoftIRQ context
-- *  bit 3 =  normal context.
-+ *  Normal context.
-+ *  SoftIRQ context
-+ *  IRQ context
-+ *  NMI context
-  *
-- * This works because this is the order of contexts that can
-- * preempt other contexts. A SoftIRQ never preempts an IRQ
-- * context.
-- *
-- * When the context is determined, the corresponding bit is
-- * checked and set (if it was set, then a recursion of that context
-- * happened).
-- *
-- * On unlock, we need to clear this bit. To do so, just subtract
-- * 1 from the current_context and AND it to itself.
-- *
-- * (binary)
-- *  101 - 1 = 100
-- *  101 & 100 = 100 (clearing bit zero)
-- *
-- *  1010 - 1 = 1001
-- *  1010 & 1001 = 1000 (clearing bit 1)
-- *
-- * The least significant bit can be cleared this way, and it
-- * just so happens that it is the same bit corresponding to
-- * the current context.
-+ * If for some reason the ring buffer starts to recurse, we
-+ * only allow that to happen at most 4 times (one for each
-+ * context). If it happens 5 times, then we consider this a
-+ * recusive loop and do not let it go further.
-  */
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 1c21d0e..7eb975a 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -450,7 +450,7 @@ static int create_val_field(struct hist_trigger_data *hist_data,
+ 	}
  
- static __always_inline int
- trace_recursive_lock(struct ring_buffer_per_cpu *cpu_buffer)
- {
--	unsigned int val = cpu_buffer->current_context;
--	int bit;
--
--	if (in_interrupt()) {
--		if (in_nmi())
--			bit = RB_CTX_NMI;
--		else if (in_irq())
--			bit = RB_CTX_IRQ;
--		else
--			bit = RB_CTX_SOFTIRQ;
--	} else
--		bit = RB_CTX_NORMAL;
--
--	if (unlikely(val & (1 << bit)))
-+	if (cpu_buffer->current_context >= 4)
- 		return 1;
+ 	field = trace_find_event_field(file->event_call, field_name);
+-	if (!field) {
++	if (!field || !field->size) {
+ 		ret = -EINVAL;
+ 		goto out;
+ 	}
+@@ -548,7 +548,7 @@ static int create_key_field(struct hist_trigger_data *hist_data,
+ 		}
  
--	val |= (1 << bit);
--	cpu_buffer->current_context = val;
-+	cpu_buffer->current_context++;
-+	/* Interrupts must see this update */
-+	barrier();
- 
- 	return 0;
- }
-@@ -2600,7 +2568,9 @@ static void rb_commit(struct ring_buffer_per_cpu *cpu_buffer,
- static __always_inline void
- trace_recursive_unlock(struct ring_buffer_per_cpu *cpu_buffer)
- {
--	cpu_buffer->current_context &= cpu_buffer->current_context - 1;
-+	/* Don't let the dec leak out */
-+	barrier();
-+	cpu_buffer->current_context--;
- }
- 
- /**
+ 		field = trace_find_event_field(file->event_call, field_name);
+-		if (!field) {
++		if (!field || !field->size) {
+ 			ret = -EINVAL;
+ 			goto out;
+ 		}
 -- 
 1.9.3
