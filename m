@@ -1,209 +1,95 @@
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH 2/9] tracing: Reverse the order of trace_types_lock and event_mutex
-Date: Fri, 22 Sep 2017 14:58:16 -0500
-Message-ID: <7d9febe58f3cd7ddb14dd3c0f19e36ee929bab26.1506105045.git.tom.zanussi@linux.intel.com>
-References: <cover.1506105045.git.tom.zanussi@linux.intel.com>
-Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        rajvi.jingar@intel.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org
-To: rostedt@goodmis.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1506105045.git.tom.zanussi@linux.intel.com>
-In-Reply-To: <cover.1506105045.git.tom.zanussi@linux.intel.com>
-References: <cover.1506105045.git.tom.zanussi@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
+From: Mart van de Wege <mvdwege-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] Bluetooth: avoid recursive locking in
+ hci_send_to_channel()
+Date: Sun, 24 Sep 2017 16:53:54 +0200
+Message-ID: <20170924165354.33a5da4d@gmail.com>
+References: <86val4928u.fsf@gaheris.avalon.lan>
+        <20170831145211.xlu6cvocqdkzevsl@linutronix.de>
+        <20170921135123.rgzacdgfonqftlu7@linutronix.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Marcel Holtmann <marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org>,
+        Johan Hedberg <johan.hedberg-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>,
+        Gustavo Padovan <gustavo-THi1TnShQwVAfugRpC6u6w@public.gmane.org>,
+        linux-bluetooth-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
+        linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org,
+        Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+To: Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Return-path: <linux-bluetooth-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20170921135123.rgzacdgfonqftlu7-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Sender: linux-bluetooth-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+Confirm that 4.11.12-rt14 with this fix boots normally.
 
-In order to make future changes where we need to call
-tracing_set_clock() from within an event command, the order of
-trace_types_lock and event_mutex must be reversed, as the event command
-will hold event_mutex and the trace_types_lock is taken from within
-tracing_set_clock().
+On Thu, 21 Sep 2017 15:51:23 +0200
+Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org> wrote:
 
-Requested-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
----
- kernel/trace/trace.c        |  5 +++++
- kernel/trace/trace_events.c | 31 +++++++++++++++----------------
- 2 files changed, 20 insertions(+), 16 deletions(-)
-
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index 5360b7a..b0ad927 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -7674,6 +7674,7 @@ static int instance_mkdir(const char *name)
- 	struct trace_array *tr;
- 	int ret;
- 
-+	mutex_lock(&event_mutex);
- 	mutex_lock(&trace_types_lock);
- 
- 	ret = -EEXIST;
-@@ -7729,6 +7730,7 @@ static int instance_mkdir(const char *name)
- 	list_add(&tr->list, &ftrace_trace_arrays);
- 
- 	mutex_unlock(&trace_types_lock);
-+	mutex_unlock(&event_mutex);
- 
- 	return 0;
- 
-@@ -7740,6 +7742,7 @@ static int instance_mkdir(const char *name)
- 
-  out_unlock:
- 	mutex_unlock(&trace_types_lock);
-+	mutex_unlock(&event_mutex);
- 
- 	return ret;
- 
-@@ -7752,6 +7755,7 @@ static int instance_rmdir(const char *name)
- 	int ret;
- 	int i;
- 
-+	mutex_lock(&event_mutex);
- 	mutex_lock(&trace_types_lock);
- 
- 	ret = -ENODEV;
-@@ -7797,6 +7801,7 @@ static int instance_rmdir(const char *name)
- 
-  out_unlock:
- 	mutex_unlock(&trace_types_lock);
-+	mutex_unlock(&event_mutex);
- 
- 	return ret;
- }
-diff --git a/kernel/trace/trace_events.c b/kernel/trace/trace_events.c
-index 8746839..ec0f9aa 100644
---- a/kernel/trace/trace_events.c
-+++ b/kernel/trace/trace_events.c
-@@ -1406,8 +1406,8 @@ static int subsystem_open(struct inode *inode, struct file *filp)
- 		return -ENODEV;
- 
- 	/* Make sure the system still exists */
--	mutex_lock(&trace_types_lock);
- 	mutex_lock(&event_mutex);
-+	mutex_lock(&trace_types_lock);
- 	list_for_each_entry(tr, &ftrace_trace_arrays, list) {
- 		list_for_each_entry(dir, &tr->systems, list) {
- 			if (dir == inode->i_private) {
-@@ -1421,8 +1421,8 @@ static int subsystem_open(struct inode *inode, struct file *filp)
- 		}
- 	}
-  exit_loop:
--	mutex_unlock(&event_mutex);
- 	mutex_unlock(&trace_types_lock);
-+	mutex_unlock(&event_mutex);
- 
- 	if (!system)
- 		return -ENODEV;
-@@ -2294,15 +2294,15 @@ void trace_event_eval_update(struct trace_eval_map **map, int len)
- int trace_add_event_call(struct trace_event_call *call)
- {
- 	int ret;
--	mutex_lock(&trace_types_lock);
- 	mutex_lock(&event_mutex);
-+	mutex_lock(&trace_types_lock);
- 
- 	ret = __register_event(call, NULL);
- 	if (ret >= 0)
- 		__add_event_to_tracers(call);
- 
--	mutex_unlock(&event_mutex);
- 	mutex_unlock(&trace_types_lock);
-+	mutex_unlock(&event_mutex);
- 	return ret;
- }
- 
-@@ -2356,13 +2356,13 @@ int trace_remove_event_call(struct trace_event_call *call)
- {
- 	int ret;
- 
--	mutex_lock(&trace_types_lock);
- 	mutex_lock(&event_mutex);
-+	mutex_lock(&trace_types_lock);
- 	down_write(&trace_event_sem);
- 	ret = probe_remove_event_call(call);
- 	up_write(&trace_event_sem);
--	mutex_unlock(&event_mutex);
- 	mutex_unlock(&trace_types_lock);
-+	mutex_unlock(&event_mutex);
- 
- 	return ret;
- }
-@@ -2424,8 +2424,8 @@ static int trace_module_notify(struct notifier_block *self,
- {
- 	struct module *mod = data;
- 
--	mutex_lock(&trace_types_lock);
- 	mutex_lock(&event_mutex);
-+	mutex_lock(&trace_types_lock);
- 	switch (val) {
- 	case MODULE_STATE_COMING:
- 		trace_module_add_events(mod);
-@@ -2434,8 +2434,8 @@ static int trace_module_notify(struct notifier_block *self,
- 		trace_module_remove_events(mod);
- 		break;
- 	}
--	mutex_unlock(&event_mutex);
- 	mutex_unlock(&trace_types_lock);
-+	mutex_unlock(&event_mutex);
- 
- 	return 0;
- }
-@@ -2950,24 +2950,24 @@ static __init int setup_trace_event(char *str)
-  * creates the event hierachry in the @parent/events directory.
-  *
-  * Returns 0 on success.
-+ *
-+ * Must be called with event_mutex held.
-  */
- int event_trace_add_tracer(struct dentry *parent, struct trace_array *tr)
- {
- 	int ret;
- 
--	mutex_lock(&event_mutex);
-+	lockdep_assert_held(&event_mutex);
- 
- 	ret = create_event_toplevel_files(parent, tr);
- 	if (ret)
--		goto out_unlock;
-+		goto out;
- 
- 	down_write(&trace_event_sem);
- 	__trace_add_event_dirs(tr);
- 	up_write(&trace_event_sem);
- 
-- out_unlock:
--	mutex_unlock(&event_mutex);
--
-+ out:
- 	return ret;
- }
- 
-@@ -2996,9 +2996,10 @@ int event_trace_add_tracer(struct dentry *parent, struct trace_array *tr)
- 	return ret;
- }
- 
-+/* Must be called with event_mutex held */
- int event_trace_del_tracer(struct trace_array *tr)
- {
--	mutex_lock(&event_mutex);
-+	lockdep_assert_held(&event_mutex);
- 
- 	/* Disable any event triggers and associated soft-disabled events */
- 	clear_event_triggers(tr);
-@@ -3019,8 +3020,6 @@ int event_trace_del_tracer(struct trace_array *tr)
- 
- 	tr->event_dir = NULL;
- 
--	mutex_unlock(&event_mutex);
--
- 	return 0;
- }
- 
--- 
-1.9.3
+> Mart reported a deadlock in -RT in the call path:
+>   hci_send_monitor_ctrl_event() -> hci_send_to_channel()
+> 
+> because both functions acquire the same read lock hci_sk_list.lock.
+> This is also a mainline issue because the qrwlock implementation is
+> writer fair (the traditional rwlock implementation is reader biased).
+> 
+> To avoid the deadlock there is now __hci_send_to_channel() which
+> expects the readlock to be held.
+> 
+> Cc: Marcel Holtmann <marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org>
+> Cc: Johan Hedberg <johan.hedberg-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> Fixes: 38ceaa00d02d ("Bluetooth: Add support for sending MGMT
+> commands and events to monitor") Reported-by: Mart van de Wege
+> <mvdwege-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> Signed-off-by: Sebastian Andrzej Siewior
+> <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org> ---
+>  net/bluetooth/hci_sock.c | 17 +++++++++++------
+>  1 file changed, 11 insertions(+), 6 deletions(-)
+> 
+> diff --git a/net/bluetooth/hci_sock.c b/net/bluetooth/hci_sock.c
+> index 638bf0e1a2e3..f1ee820d871c 100644
+> --- a/net/bluetooth/hci_sock.c
+> +++ b/net/bluetooth/hci_sock.c
+> @@ -251,15 +251,13 @@ void hci_send_to_sock(struct hci_dev *hdev,
+> struct sk_buff *skb) }
+>  
+>  /* Send frame to sockets with specific channel */
+> -void hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
+> -			 int flag, struct sock *skip_sk)
+> +static void __hci_send_to_channel(unsigned short channel, struct
+> sk_buff *skb,
+> +				  int flag, struct sock *skip_sk)
+>  {
+>  	struct sock *sk;
+>  
+>  	BT_DBG("channel %u len %d", channel, skb->len);
+>  
+> -	read_lock(&hci_sk_list.lock);
+> -
+>  	sk_for_each(sk, &hci_sk_list.head) {
+>  		struct sk_buff *nskb;
+>  
+> @@ -285,6 +283,13 @@ void hci_send_to_channel(unsigned short channel,
+> struct sk_buff *skb, kfree_skb(nskb);
+>  	}
+>  
+> +}
+> +
+> +void hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
+> +			 int flag, struct sock *skip_sk)
+> +{
+> +	read_lock(&hci_sk_list.lock);
+> +	__hci_send_to_channel(channel, skb, flag, skip_sk);
+>  	read_unlock(&hci_sk_list.lock);
+>  }
+>  
+> @@ -388,8 +393,8 @@ void hci_send_monitor_ctrl_event(struct hci_dev
+> *hdev, u16 event, hdr->index = index;
+>  		hdr->len = cpu_to_le16(skb->len - HCI_MON_HDR_SIZE);
+>  
+> -		hci_send_to_channel(HCI_CHANNEL_MONITOR, skb,
+> -				    HCI_SOCK_TRUSTED, NULL);
+> +		__hci_send_to_channel(HCI_CHANNEL_MONITOR, skb,
+> +				      HCI_SOCK_TRUSTED, NULL);
+>  		kfree_skb(skb);
+>  	}
+>  
