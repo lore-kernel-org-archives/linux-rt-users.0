@@ -1,14 +1,13 @@
-From: Arnaldo Carvalho de Melo <acme@kernel.org>
+From: Julia Cartwright <julia@ni.com>
 Subject: Re: [RFC+PATCH] Infiniband hfi1 + PREEMPT_RT_FULL issues
-Date: Tue, 26 Sep 2017 15:28:00 -0300
-Message-ID: <20170926182800.GA10741@kernel.org>
+Date: Tue, 26 Sep 2017 16:00:45 -0500
+Message-ID: <20170926210045.GO29872@jcartwri.amer.corp.natinst.com>
 References: <20170925144949.GP29668@kernel.org>
- <20170925161528.52d34769@vmware.local.home>
- <20170926131529.GB25735@kernel.org>
- <32E1700B9017364D9B60AED9960492BC3441B8C5@fmsmsx120.amr.corp.intel.com>
+ <20170925211447.GL29872@jcartwri.amer.corp.natinst.com>
+ <32E1700B9017364D9B60AED9960492BC3441B3BD@fmsmsx120.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Steven Rostedt <rostedt@goodmis.org>,
+Content-Type: text/plain; charset="us-ascii"
+Cc: Arnaldo Carvalho de Melo <acme@kernel.org>,
         "Dalessandro, Dennis" <dennis.dalessandro@intel.com>,
         Thomas Gleixner <tglx@linutronix.de>,
         Clark Williams <williams@redhat.com>,
@@ -19,41 +18,82 @@ Cc: Steven Rostedt <rostedt@goodmis.org>,
         Peter Zijlstra <peterz@infradead.org>,
         Sebastian Andrzej Siewior <sebastian.siewior@linutronix.de>,
         "Sanchez, Sebastian" <sebastian.sanchez@intel.com>,
+        Steven Rostedt <rostedt@goodmis.org>,
         "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
         "linux-rdma@vger.kernel.org" <linux-rdma@vger.kernel.org>
 To: "Marciniszyn, Mike" <mike.marciniszyn@intel.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.99]:37424 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1030721AbdIZS2E (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 26 Sep 2017 14:28:04 -0400
+Received: from mx0a-00010702.pphosted.com ([148.163.156.75]:57466 "EHLO
+        mx0b-00010702.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S967016AbdIZVBa (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 26 Sep 2017 17:01:30 -0400
 Content-Disposition: inline
-In-Reply-To: <32E1700B9017364D9B60AED9960492BC3441B8C5@fmsmsx120.amr.corp.intel.com>
+In-Reply-To: <32E1700B9017364D9B60AED9960492BC3441B3BD@fmsmsx120.amr.corp.intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Em Tue, Sep 26, 2017 at 05:55:45PM +0000, Marciniszyn, Mike escreveu:
-> > > No, the correct solution is to convert the preempt_disable into a
-> > > local_lock(), which will be a preempt_disable when PREEMPT_RT is not
-> > > set. Look for other patches that convert preempt_disable() into
-> > > local_lock()s for examples.
+On Tue, Sep 26, 2017 at 02:10:52PM +0000, Marciniszyn, Mike wrote:
+> > > Hi,
+> > >
+> > > 	I'm trying to get an Infiniband test case working with the RT
+> > > kernel, and ended over tripping over this case:
+> > >
+> > > 	In drivers/infiniband/hw/hfi1/pio.c sc_buffer_alloc() disables
+> > > preemption that will be reenabled by either pio_copy() or
+> > > seg_pio_copy_end().
 > > 
-> > Thanks, I had seen a patch patch by Sebastian for random.c doing that,
-> > will continue in that direction.
+> > Perhaps it's worth revisiting why this design decision was chosen in the
+> > first place?  The introducing commit, a054374f15428cbc1
+> > ("staging/rdma/hfi1: convert buffers allocated atomic to per cpu")
+> > mentions the previous atomic as being expensive, but the usage of
+> > preempt_disable()/preempt_enable() is also expensive, albeit in a
+> > different way.
+> > 
+> > My first question would be: is disabling preemption here really
+> > necessary?
+> > 
+>
+> The motivation for the preempt manipulation has nothing to do with the counter.
+>
+> The buffer allocation returns a set of ringed write-combining 64B MMIO
+> buffers.   The allocate lock is then dropped right after allocation to
+> allow parallel allocates.
+>
+> The hardware keeps track of the buffer fill across multiple CPUs, so
+> that after the oldest buffer is copied the ring is advanced.
+>
+> The idea was to minimize the time from the drop of the allocate lock
+> to the end of the copy to insure the highest rate of copy to the ring
+> from multiple cores.
+
+Okay, so to be clear, disabling preemption here is strictly a
+performance consideration, not a correctness one?
+
+> > If that's the case, perhaps the fix is as easy as removing the
+> > preempt_disable() and preempt_enable()?
 > > 
 > 
-> I'm assuming you want to end up with common driver code base?
-> 
-> Will there eventually be a wrapper upstream to allow that?
-> 
-> Or will the rt patch handle those issues?
+> That would certainly be the easiest solution, but would compromise
+> performance if a migration occurs after the allocate lock is dropped.
 
-So what happens is that infrastructure in the rt patch eventually lands
-upstream, then this difference ceases to exist.
+Given this response, I'm assuming that to be the case.
 
-Steven, are there plans for local locks to go upstream?
+Disabling preemption to avoid "compromising performance", presumes a
+very specific definition of "performance" that does not apply _in
+general_, and certainly does not apply for RT users, who care more for
+"response time" (as Steven put it).
 
-Well, back to trying to learn about them and use in this case to see how
-it ends up...
+Instead, the kernel already directly provides tools for _users_ to make
+decisions about what the relative portions of their workloads are,
+namely scheduling parameters, CPU affinities, isolcpus, etc.  Why are
+these not sufficient in this case?
 
-- Arnaldo
+In addition, the use of local locks is a waste here, they provide more
+guarantees than is actually necessary; this driver will function fine if
+more than two threads on the same CPU are within this "critical
+section".  If you want to maintain preempt_disable()/_enable() in
+non-RT, then whatever, use the preempt_disable_nort()/_enable_nort()
+varieties.
+
+   Julia
