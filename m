@@ -1,50 +1,59 @@
-From: "Marciniszyn, Mike" <mike.marciniszyn-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: RE: [RFC+PATCH] Infiniband hfi1 + PREEMPT_RT_FULL issues
-Date: Tue, 26 Sep 2017 17:55:45 +0000
-Message-ID: <32E1700B9017364D9B60AED9960492BC3441B8C5@fmsmsx120.amr.corp.intel.com>
+From: Arnaldo Carvalho de Melo <acme@kernel.org>
+Subject: Re: [RFC+PATCH] Infiniband hfi1 + PREEMPT_RT_FULL issues
+Date: Tue, 26 Sep 2017 15:28:00 -0300
+Message-ID: <20170926182800.GA10741@kernel.org>
 References: <20170925144949.GP29668@kernel.org>
  <20170925161528.52d34769@vmware.local.home>
  <20170926131529.GB25735@kernel.org>
+ <32E1700B9017364D9B60AED9960492BC3441B8C5@fmsmsx120.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Cc: "Dalessandro, Dennis" <dennis.dalessandro-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>,
-        Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>,
-        Clark Williams <williams-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>,
-        "Luick, Dean" <dean.luick-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>,
-        Doug Ledford <dledford-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>,
-        "Wan, Kaike" <kaike.wan-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>,
-        Leon Romanovsky <leonro-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>,
-        Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>,
-        Sebastian Andrzej Siewior <sebastian.siewior-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>,
-        "Sanchez, Sebastian" <sebastian.sanchez-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>,
-        "linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
-        "linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-To: Arnaldo Carvalho de Melo <acme-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>,
-        Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Return-path: <linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20170926131529.GB25735-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Content-Language: en-US
-Sender: linux-rdma-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+        "Dalessandro, Dennis" <dennis.dalessandro@intel.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Clark Williams <williams@redhat.com>,
+        "Luick, Dean" <dean.luick@intel.com>,
+        Doug Ledford <dledford@redhat.com>,
+        "Wan, Kaike" <kaike.wan@intel.com>,
+        Leon Romanovsky <leonro@mellanox.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Sebastian Andrzej Siewior <sebastian.siewior@linutronix.de>,
+        "Sanchez, Sebastian" <sebastian.sanchez@intel.com>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        "linux-rdma@vger.kernel.org" <linux-rdma@vger.kernel.org>
+To: "Marciniszyn, Mike" <mike.marciniszyn@intel.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.99]:37424 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1030721AbdIZS2E (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 26 Sep 2017 14:28:04 -0400
+Content-Disposition: inline
+In-Reply-To: <32E1700B9017364D9B60AED9960492BC3441B8C5@fmsmsx120.amr.corp.intel.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-> > No, the correct solution is to convert the preempt_disable into a
-> > local_lock(), which will be a preempt_disable when PREEMPT_RT is not
-> > set. Look for other patches that convert preempt_disable() into
-> > local_lock()s for examples.
+Em Tue, Sep 26, 2017 at 05:55:45PM +0000, Marciniszyn, Mike escreveu:
+> > > No, the correct solution is to convert the preempt_disable into a
+> > > local_lock(), which will be a preempt_disable when PREEMPT_RT is not
+> > > set. Look for other patches that convert preempt_disable() into
+> > > local_lock()s for examples.
+> > 
+> > Thanks, I had seen a patch patch by Sebastian for random.c doing that,
+> > will continue in that direction.
+> > 
 > 
-> Thanks, I had seen a patch patch by Sebastian for random.c doing that,
-> will continue in that direction.
+> I'm assuming you want to end up with common driver code base?
 > 
+> Will there eventually be a wrapper upstream to allow that?
+> 
+> Or will the rt patch handle those issues?
 
-I'm assuming you want to end up with common driver code base?
+So what happens is that infrastructure in the rt patch eventually lands
+upstream, then this difference ceases to exist.
 
-Will there eventually be a wrapper upstream to allow that?
+Steven, are there plans for local locks to go upstream?
 
-Or will the rt patch handle those issues?
+Well, back to trying to learn about them and use in this case to see how
+it ends up...
 
-Mike
---
-To unsubscribe from this list: send the line "unsubscribe linux-rdma" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+- Arnaldo
