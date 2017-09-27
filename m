@@ -1,84 +1,82 @@
-From: Michele Dionisio <michele.dionisio@gmail.com>
-Subject: fix on rt-tests of backfire kernel module
-Date: Wed, 27 Sep 2017 09:15:11 +0200
-Message-ID: <CAFwEtmr=6rA28uUM6tHR4yH_mNShHk2zepAJ3GX-ZvvuUX8i5g@mail.gmail.com>
+From: Julia Cartwright <julia@ni.com>
+Subject: Re: fix on rt-tests of backfire kernel module
+Date: Wed, 27 Sep 2017 11:12:16 -0500
+Message-ID: <20170927161216.GQ29872@jcartwri.amer.corp.natinst.com>
+References: <CAFwEtmr=6rA28uUM6tHR4yH_mNShHk2zepAJ3GX-ZvvuUX8i5g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="f403043e2bac7d2ff3055a268d87"
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Cc: <linux-rt-users@vger.kernel.org>, John Kacur <jkacur@redhat.com>,
+        "Clark Williams" <williams@redhat.com>
+To: Michele Dionisio <michele.dionisio@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pg0-f52.google.com ([74.125.83.52]:44892 "EHLO
-        mail-pg0-f52.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1752040AbdI0HPN (ORCPT
+Received: from mx0a-00010702.pphosted.com ([148.163.156.75]:37382 "EHLO
+        mx0b-00010702.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1751713AbdI0QMV (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 27 Sep 2017 03:15:13 -0400
-Received: by mail-pg0-f52.google.com with SMTP id j16so7296692pga.1
-        for <linux-rt-users@vger.kernel.org>; Wed, 27 Sep 2017 00:15:13 -0700 (PDT)
+        Wed, 27 Sep 2017 12:12:21 -0400
+Content-Disposition: inline
+In-Reply-To: <CAFwEtmr=6rA28uUM6tHR4yH_mNShHk2zepAJ3GX-ZvvuUX8i5g@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---f403043e2bac7d2ff3055a268d87
-Content-Type: text/plain; charset="UTF-8"
+On Wed, Sep 27, 2017 at 09:15:11AM +0200, Michele Dionisio wrote:
+> Hi all,
+>
+> I'm new in this mailing list.
 
-Hi all,
-I'm new in this mailing list. I start to work/test PREEPT_RT and
-making some test I seee that there is a bug on backfire module in
-rt-tests repository.
+Welcome!
 
-I'm attaching my patch.
+> I start to work/test PREEPT_RT and making some test I seee that there
+> is a bug on backfire module in rt-tests repository.
 
-best regards.
-Michele
+At the very least, you'll want to elaborate on the bug you were seeing.
+What broke?  What did you expect to see?  What did you see instead?  Is
+this a build time problem?  A run-time problem?  How does your fix
+prevent this problem from occurring?
 
---f403043e2bac7d2ff3055a268d87
-Content-Type: text/x-patch; charset="US-ASCII"; name="backfire_copyto_from_userspace.patch"
-Content-Disposition: attachment;
-	filename="backfire_copyto_from_userspace.patch"
-Content-Transfer-Encoding: base64
-X-Attachment-Id: f_j82p1j1w0
+Also, for rt-tests patches, you'll want to ensure to CC John Kacur and
+Clark Williams, who are maintaining the project.
 
-RnJvbSBjZDk0ZWRlOGNmOWViOGMyNmExOTZlYTAxMTEyMjA5Njk0NTFjYmIyIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBNaWNoZWxlIERpb25pc2lvIDxtaWNoZWxlLmRpb25pc2lvQHBv
-d2Vyc29mdC5pdD4KRGF0ZTogVHVlLCAyNiBTZXAgMjAxNyAxNDozMjo1MSArMDIwMApTdWJqZWN0
-OiBbRklYXSBmaXggY29weSBkYXRhIHRvIGFuZCBmcm9tIHVzZXJzcGFjZQoKCmRpZmYgLS1naXQg
-YS9zcmMvYmFja2ZpcmUvYmFja2ZpcmUuYyBiL3NyYy9iYWNrZmlyZS9iYWNrZmlyZS5jCmluZGV4
-IGFhZjljNGEuLmIzODY1MWIgMTAwNjQ0Ci0tLSBhL3NyYy9iYWNrZmlyZS9iYWNrZmlyZS5jCisr
-KyBiL3NyYy9iYWNrZmlyZS9iYWNrZmlyZS5jCkBAIC0yMCwxMSArMjAsOSBAQAogICovCiAKICNp
-bmNsdWRlIDxsaW51eC9tb2R1bGUuaD4KLQogI2luY2x1ZGUgPGxpbnV4L3NjaGVkLmg+CiAjaW5j
-bHVkZSA8bGludXgvY3B1bWFzay5oPgogI2luY2x1ZGUgPGxpbnV4L3RpbWUuaD4KLSNpbmNsdWRl
-IDxsaW51eC9zbXBfbG9jay5oPgogI2luY2x1ZGUgPGxpbnV4L3R5cGVzLmg+CiAjaW5jbHVkZSA8
-bGludXgvZXJybm8uaD4KICNpbmNsdWRlIDxsaW51eC9taXNjZGV2aWNlLmg+CkBAIC0zMiwyNSAr
-MzAsMzMgQEAKICNpbmNsdWRlIDxsaW51eC9zcGlubG9jay5oPgogCiAjaW5jbHVkZSA8YXNtL3Vh
-Y2Nlc3MuaD4KLSNpbmNsdWRlIDxhc20vc3lzdGVtLmg+CiAKICNkZWZpbmUgQkFDS0ZJUkVfTUlO
-T1IgTUlTQ19EWU5BTUlDX01JTk9SCiAKLXN0YXRpYyBzcGlubG9ja190IGJhY2tmaXJlX3N0YXRl
-X2xvY2sgPSBTUElOX0xPQ0tfVU5MT0NLRUQ7CitzdGF0aWMgREVGSU5FX1NQSU5MT0NLKGJhY2tm
-aXJlX3N0YXRlX2xvY2spOwogc3RhdGljIGludCBiYWNrZmlyZV9vcGVuX2NudDsgLyogI3RpbWVz
-IG9wZW5lZCAqLwogc3RhdGljIGludCBiYWNrZmlyZV9vcGVuX21vZGU7IC8qIHNwZWNpYWwgb3Bl
-biBtb2RlcyAqLwogc3RhdGljIHN0cnVjdCB0aW1ldmFsIHNlbmR0aW1lOyAvKiB3aGVuIHRoZSBt
-b3N0IHJlY2VudCBzaWduYWwgd2FzIHNlbnQgKi8KICNkZWZpbmUgQkFDS0ZJUkVfV1JJVEUgMSAv
-KiBvcGVuZWQgZm9yIHdyaXRpbmcgKGV4Y2x1c2l2ZSkgKi8KICNkZWZpbmUgQkFDS0ZJUkVfRVhD
-TCAyIC8qIG9wZW5lZCB3aXRoIE9fRVhDTCAqLwogCisjZGVmaW5lIE1BWF9TSVpFX0RBVEFfUlcg
-NTEyCisKIC8qCiAgKiBUaGVzZSBhcmUgdGhlIGZpbGUgb3BlcmF0aW9uIGZ1bmN0aW9uIGZvciB1
-c2VyIGFjY2VzcyB0byAvZGV2L2JhY2tmaXJlCiAgKi8KIHN0YXRpYyBzc2l6ZV90CiBiYWNrZmly
-ZV9yZWFkKHN0cnVjdCBmaWxlICpmaWxlLCBjaGFyICpidWYsIHNpemVfdCBjb3VudCwgbG9mZl90
-ICpwcG9zKQogewotCXJldHVybiBzbnByaW50ZihidWYsIGNvdW50LCAiJWQsJWRcbiIsIChpbnQp
-IHNlbmR0aW1lLnR2X3NlYywKKyAgICBjaGFyIGtidWZbTUFYX1NJWkVfREFUQV9SV107CisgICAg
-c3NpemVfdCByZXM7CisgICAgaWYgKGNvdW50ID4gTUFYX1NJWkVfREFUQV9SVykgeworICAgICAg
-ICBjb3VudCA9IE1BWF9TSVpFX0RBVEFfUlc7CisgICAgfQorCXJlcyA9IHNucHJpbnRmKGtidWYs
-IGNvdW50LCAiJWQsJWRcbiIsIChpbnQpIHNlbmR0aW1lLnR2X3NlYywKIAkJKGludCkgc2VuZHRp
-bWUudHZfdXNlYyk7CisgICAgY29weV90b191c2VyKGJ1Ziwga2J1ZiwgcmVzKzEpOworICAgIHJl
-dHVybiByZXM7CiB9CiAKIHN0YXRpYyBzc2l6ZV90CkBAIC01OCwxNiArNjQsMjggQEAgYmFja2Zp
-cmVfd3JpdGUoc3RydWN0IGZpbGUgKmZpbGUsIGNvbnN0IGNoYXIgKmJ1Ziwgc2l6ZV90IGNvdW50
-LCBsb2ZmX3QgKnBwb3MpCiB7CiAJaW50IHNpZ25vOwogCXN0cnVjdCBwaWQgKnBpZDsKLQotCWlm
-IChzc2NhbmYoYnVmLCAiJWQiLCAmc2lnbm8pID49IDEpIHsKKyAgICBjaGFyIGtidWZbTUFYX1NJ
-WkVfREFUQV9SVysxXTsKKyAgICBzc2l6ZV90IHJldHZhbCA9IDA7CisgICAgCisgICAgaWYgKGNv
-dW50ID09IDApIHsKKyAgICAgICAgcmV0dXJuIDA7CisgICAgfQorICAgIGlmIChjb3VudCA+IE1B
-WF9TSVpFX0RBVEFfUlcpIHsKKyAgICAgICAgY291bnQgPSBNQVhfU0laRV9EQVRBX1JXOworICAg
-IH0KKyAgICBjb3B5X2Zyb21fdXNlcihrYnVmLCBidWYsIGNvdW50KTsKKyAgICBrYnVmW2NvdW50
-XSA9ICdcMCc7CisKKwlpZiAoc3NjYW5mKGtidWYsICIlZCIsICZzaWdubykgPj0gMSkgewogCQlp
-ZiAoc2lnbm8gPiAwICYmIHNpZ25vIDwgMzIpIHsKIAkJCXBpZCA9IGdldF9waWQodGFza19waWQo
-Y3VycmVudCkpOwogCQkJZG9fZ2V0dGltZW9mZGF5KCZzZW5kdGltZSk7CiAJCQlraWxsX3BpZChw
-aWQsIHNpZ25vLCAxKTsKKyAgICAgICAgICAgIHJldHZhbCA9IHN0cmxlbihrYnVmKTsKIAkJfSBl
-bHNlCiAJCQlwcmludGsoS0VSTl9FUlIgIkludmFsaWQgc2lnbmFsIG5vLiAlZFxuIiwgc2lnbm8p
-OwogCX0KLQlyZXR1cm4gc3RybGVuKGJ1Zik7CisJcmV0dXJuIHJldHZhbDsKIH0KIAogc3RhdGlj
-IGludAo=
---f403043e2bac7d2ff3055a268d87--
+> I'm attaching my patch.
+>
+> best regards.
+> Michele
+
+
+> From cd94ede8cf9eb8c26a196ea0111220969451cbb2 Mon Sep 17 00:00:00 2001
+> From: Michele Dionisio <michele.dionisio@powersoft.it>
+> Date: Tue, 26 Sep 2017 14:32:51 +0200
+> Subject: [FIX] fix copy data to and from userspace
+
+You'll want to include a changelog here, describing the above.  This is
+what will go into the git permanent history.
+
+> diff --git a/src/backfire/backfire.c b/src/backfire/backfire.c
+> index aaf9c4a..b38651b 100644
+> --- a/src/backfire/backfire.c
+> +++ b/src/backfire/backfire.c
+> @@ -20,11 +20,9 @@
+[..]
+> +#define MAX_SIZE_DATA_RW 512
+> +
+>  /*
+>   * These are the file operation function for user access to /dev/backfire
+>   */
+>  static ssize_t
+>  backfire_read(struct file *file, char *buf, size_t count, loff_t *ppos)
+>  {
+> -	return snprintf(buf, count, "%d,%d\n", (int) sendtime.tv_sec,
+> +    char kbuf[MAX_SIZE_DATA_RW];
+> +    ssize_t res;
+> +    if (count > MAX_SIZE_DATA_RW) {
+> +        count = MAX_SIZE_DATA_RW;
+> +    }
+> +	res = snprintf(kbuf, count, "%d,%d\n", (int) sendtime.tv_sec,
+>  		(int) sendtime.tv_usec);
+> +    copy_to_user(buf, kbuf, res+1);
+> +    return res;
+
+Your patch is also whitespace damaged.  You'll want to ensure to follow
+the kernel's CodingStyle here (which is 8-space tabstops).
+
+   Julia
