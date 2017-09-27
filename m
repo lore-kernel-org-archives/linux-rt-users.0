@@ -1,54 +1,84 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [RFC+PATCH] Infiniband hfi1 + PREEMPT_RT_FULL issues
-Date: Tue, 26 Sep 2017 17:11:56 -0400
-Message-ID: <20170926171156.6f7e3b4b@vmware.local.home>
-References: <20170925144949.GP29668@kernel.org>
-        <20170925161528.52d34769@vmware.local.home>
-        <20170926131529.GB25735@kernel.org>
-        <32E1700B9017364D9B60AED9960492BC3441B8C5@fmsmsx120.amr.corp.intel.com>
-        <20170926182800.GA10741@kernel.org>
+From: Michele Dionisio <michele.dionisio@gmail.com>
+Subject: fix on rt-tests of backfire kernel module
+Date: Wed, 27 Sep 2017 09:15:11 +0200
+Message-ID: <CAFwEtmr=6rA28uUM6tHR4yH_mNShHk2zepAJ3GX-ZvvuUX8i5g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: "Marciniszyn, Mike" <mike.marciniszyn@intel.com>,
-        "Dalessandro, Dennis" <dennis.dalessandro@intel.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Clark Williams <williams@redhat.com>,
-        "Luick, Dean" <dean.luick@intel.com>,
-        Doug Ledford <dledford@redhat.com>,
-        "Wan, Kaike" <kaike.wan@intel.com>,
-        Leon Romanovsky <leonro@mellanox.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Sebastian Andrzej Siewior <sebastian.siewior@linutronix.de>,
-        "Sanchez, Sebastian" <sebastian.sanchez@intel.com>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "linux-rdma@vger.kernel.org" <linux-rdma@vger.kernel.org>
-To: Arnaldo Carvalho de Melo <acme@kernel.org>
+Content-Type: multipart/mixed; boundary="f403043e2bac7d2ff3055a268d87"
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0243.hostedemail.com ([216.40.44.243]:43331 "EHLO
-        smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1754588AbdIZVMI (ORCPT
+Received: from mail-pg0-f52.google.com ([74.125.83.52]:44892 "EHLO
+        mail-pg0-f52.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752040AbdI0HPN (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 26 Sep 2017 17:12:08 -0400
-In-Reply-To: <20170926182800.GA10741@kernel.org>
+        Wed, 27 Sep 2017 03:15:13 -0400
+Received: by mail-pg0-f52.google.com with SMTP id j16so7296692pga.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 27 Sep 2017 00:15:13 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 26 Sep 2017 15:28:00 -0300
-Arnaldo Carvalho de Melo <acme@kernel.org> wrote:
+--f403043e2bac7d2ff3055a268d87
+Content-Type: text/plain; charset="UTF-8"
 
-> So what happens is that infrastructure in the rt patch eventually lands
-> upstream, then this difference ceases to exist.
-> 
-> Steven, are there plans for local locks to go upstream?
-> 
+Hi all,
+I'm new in this mailing list. I start to work/test PREEPT_RT and
+making some test I seee that there is a bug on backfire module in
+rt-tests repository.
 
-Yes, but they don't make sense unless we get PREEMPT_RT (sleeping
-spinlocks) upstream. Otherwise, they will just be another name for
-preempt_disable().
+I'm attaching my patch.
 
-That said, there is some rational for getting them upsteam before
-sleeping spinlocks, and that is to annotate what a preempt_disable() is
-trying to protect.
+best regards.
+Michele
 
--- Steve
+--f403043e2bac7d2ff3055a268d87
+Content-Type: text/x-patch; charset="US-ASCII"; name="backfire_copyto_from_userspace.patch"
+Content-Disposition: attachment;
+	filename="backfire_copyto_from_userspace.patch"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_j82p1j1w0
+
+RnJvbSBjZDk0ZWRlOGNmOWViOGMyNmExOTZlYTAxMTEyMjA5Njk0NTFjYmIyIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBNaWNoZWxlIERpb25pc2lvIDxtaWNoZWxlLmRpb25pc2lvQHBv
+d2Vyc29mdC5pdD4KRGF0ZTogVHVlLCAyNiBTZXAgMjAxNyAxNDozMjo1MSArMDIwMApTdWJqZWN0
+OiBbRklYXSBmaXggY29weSBkYXRhIHRvIGFuZCBmcm9tIHVzZXJzcGFjZQoKCmRpZmYgLS1naXQg
+YS9zcmMvYmFja2ZpcmUvYmFja2ZpcmUuYyBiL3NyYy9iYWNrZmlyZS9iYWNrZmlyZS5jCmluZGV4
+IGFhZjljNGEuLmIzODY1MWIgMTAwNjQ0Ci0tLSBhL3NyYy9iYWNrZmlyZS9iYWNrZmlyZS5jCisr
+KyBiL3NyYy9iYWNrZmlyZS9iYWNrZmlyZS5jCkBAIC0yMCwxMSArMjAsOSBAQAogICovCiAKICNp
+bmNsdWRlIDxsaW51eC9tb2R1bGUuaD4KLQogI2luY2x1ZGUgPGxpbnV4L3NjaGVkLmg+CiAjaW5j
+bHVkZSA8bGludXgvY3B1bWFzay5oPgogI2luY2x1ZGUgPGxpbnV4L3RpbWUuaD4KLSNpbmNsdWRl
+IDxsaW51eC9zbXBfbG9jay5oPgogI2luY2x1ZGUgPGxpbnV4L3R5cGVzLmg+CiAjaW5jbHVkZSA8
+bGludXgvZXJybm8uaD4KICNpbmNsdWRlIDxsaW51eC9taXNjZGV2aWNlLmg+CkBAIC0zMiwyNSAr
+MzAsMzMgQEAKICNpbmNsdWRlIDxsaW51eC9zcGlubG9jay5oPgogCiAjaW5jbHVkZSA8YXNtL3Vh
+Y2Nlc3MuaD4KLSNpbmNsdWRlIDxhc20vc3lzdGVtLmg+CiAKICNkZWZpbmUgQkFDS0ZJUkVfTUlO
+T1IgTUlTQ19EWU5BTUlDX01JTk9SCiAKLXN0YXRpYyBzcGlubG9ja190IGJhY2tmaXJlX3N0YXRl
+X2xvY2sgPSBTUElOX0xPQ0tfVU5MT0NLRUQ7CitzdGF0aWMgREVGSU5FX1NQSU5MT0NLKGJhY2tm
+aXJlX3N0YXRlX2xvY2spOwogc3RhdGljIGludCBiYWNrZmlyZV9vcGVuX2NudDsgLyogI3RpbWVz
+IG9wZW5lZCAqLwogc3RhdGljIGludCBiYWNrZmlyZV9vcGVuX21vZGU7IC8qIHNwZWNpYWwgb3Bl
+biBtb2RlcyAqLwogc3RhdGljIHN0cnVjdCB0aW1ldmFsIHNlbmR0aW1lOyAvKiB3aGVuIHRoZSBt
+b3N0IHJlY2VudCBzaWduYWwgd2FzIHNlbnQgKi8KICNkZWZpbmUgQkFDS0ZJUkVfV1JJVEUgMSAv
+KiBvcGVuZWQgZm9yIHdyaXRpbmcgKGV4Y2x1c2l2ZSkgKi8KICNkZWZpbmUgQkFDS0ZJUkVfRVhD
+TCAyIC8qIG9wZW5lZCB3aXRoIE9fRVhDTCAqLwogCisjZGVmaW5lIE1BWF9TSVpFX0RBVEFfUlcg
+NTEyCisKIC8qCiAgKiBUaGVzZSBhcmUgdGhlIGZpbGUgb3BlcmF0aW9uIGZ1bmN0aW9uIGZvciB1
+c2VyIGFjY2VzcyB0byAvZGV2L2JhY2tmaXJlCiAgKi8KIHN0YXRpYyBzc2l6ZV90CiBiYWNrZmly
+ZV9yZWFkKHN0cnVjdCBmaWxlICpmaWxlLCBjaGFyICpidWYsIHNpemVfdCBjb3VudCwgbG9mZl90
+ICpwcG9zKQogewotCXJldHVybiBzbnByaW50ZihidWYsIGNvdW50LCAiJWQsJWRcbiIsIChpbnQp
+IHNlbmR0aW1lLnR2X3NlYywKKyAgICBjaGFyIGtidWZbTUFYX1NJWkVfREFUQV9SV107CisgICAg
+c3NpemVfdCByZXM7CisgICAgaWYgKGNvdW50ID4gTUFYX1NJWkVfREFUQV9SVykgeworICAgICAg
+ICBjb3VudCA9IE1BWF9TSVpFX0RBVEFfUlc7CisgICAgfQorCXJlcyA9IHNucHJpbnRmKGtidWYs
+IGNvdW50LCAiJWQsJWRcbiIsIChpbnQpIHNlbmR0aW1lLnR2X3NlYywKIAkJKGludCkgc2VuZHRp
+bWUudHZfdXNlYyk7CisgICAgY29weV90b191c2VyKGJ1Ziwga2J1ZiwgcmVzKzEpOworICAgIHJl
+dHVybiByZXM7CiB9CiAKIHN0YXRpYyBzc2l6ZV90CkBAIC01OCwxNiArNjQsMjggQEAgYmFja2Zp
+cmVfd3JpdGUoc3RydWN0IGZpbGUgKmZpbGUsIGNvbnN0IGNoYXIgKmJ1Ziwgc2l6ZV90IGNvdW50
+LCBsb2ZmX3QgKnBwb3MpCiB7CiAJaW50IHNpZ25vOwogCXN0cnVjdCBwaWQgKnBpZDsKLQotCWlm
+IChzc2NhbmYoYnVmLCAiJWQiLCAmc2lnbm8pID49IDEpIHsKKyAgICBjaGFyIGtidWZbTUFYX1NJ
+WkVfREFUQV9SVysxXTsKKyAgICBzc2l6ZV90IHJldHZhbCA9IDA7CisgICAgCisgICAgaWYgKGNv
+dW50ID09IDApIHsKKyAgICAgICAgcmV0dXJuIDA7CisgICAgfQorICAgIGlmIChjb3VudCA+IE1B
+WF9TSVpFX0RBVEFfUlcpIHsKKyAgICAgICAgY291bnQgPSBNQVhfU0laRV9EQVRBX1JXOworICAg
+IH0KKyAgICBjb3B5X2Zyb21fdXNlcihrYnVmLCBidWYsIGNvdW50KTsKKyAgICBrYnVmW2NvdW50
+XSA9ICdcMCc7CisKKwlpZiAoc3NjYW5mKGtidWYsICIlZCIsICZzaWdubykgPj0gMSkgewogCQlp
+ZiAoc2lnbm8gPiAwICYmIHNpZ25vIDwgMzIpIHsKIAkJCXBpZCA9IGdldF9waWQodGFza19waWQo
+Y3VycmVudCkpOwogCQkJZG9fZ2V0dGltZW9mZGF5KCZzZW5kdGltZSk7CiAJCQlraWxsX3BpZChw
+aWQsIHNpZ25vLCAxKTsKKyAgICAgICAgICAgIHJldHZhbCA9IHN0cmxlbihrYnVmKTsKIAkJfSBl
+bHNlCiAJCQlwcmludGsoS0VSTl9FUlIgIkludmFsaWQgc2lnbmFsIG5vLiAlZFxuIiwgc2lnbm8p
+OwogCX0KLQlyZXR1cm4gc3RybGVuKGJ1Zik7CisJcmV0dXJuIHJldHZhbDsKIH0KIAogc3RhdGlj
+IGludAo=
+--f403043e2bac7d2ff3055a268d87--
