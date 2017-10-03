@@ -1,96 +1,120 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: [PATCH rt-v4.11] sched/clock: fix early boot splat on clock transition to unstable
-Date: Mon, 2 Oct 2017 23:57:19 -0400
-Message-ID: <1507003039-16583-1-git-send-email-paul.gortmaker@windriver.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <linux-rt-users@vger.kernel.org>
-To: <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:64502 "EHLO
-        mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751204AbdJCD5g (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 2 Oct 2017 23:57:36 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Arnaldo Carvalho de Melo <acme@kernel.org>
+Subject: [GIT PULL 0/2] infiniband hfi1 PREEMPT_RT_FULL changes
+Date: Tue,  3 Oct 2017 12:49:18 -0300
+Message-ID: <20171003154920.31566-1-acme@kernel.org>
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        Arnaldo Carvalho de Melo <acme@kernel.org>,
+        Arnaldo Carvalho de Melo <acme@redhat.com>,
+        Clark Williams <williams@redhat.com>,
+        Dean Luick <dean.luick@intel.com>,
+        Dennis Dalessandro <dennis.dalessandro@intel.com>,
+        Doug Ledford <dledford@redhat.com>,
+        Julia Cartwright <julia@ni.com>,
+        Kaike Wan <kaike.wan@intel.com>,
+        Leon Romanovsky <leonro@mellanox.com>,
+        linux-rdma@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>,
+        Sebastian Andrzej Siewior <sebastian.siewior@linutronix.de>,
+        Sebastian Sanchez <sebastian.sanchez@intel.com>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>
+To: bigeasy@linutronix.de
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On an older machine with a Pentium(R) Dual-Core E5300 I see the
-the following early (see time stamps) boot splat on clock transition
-due to TSC unstable (indicated in the last line):
+Hi,
 
-  [  2.487904] BUG: using smp_processor_id() in preemptible [00000000] code: swapper/0/1
-  [  2.487909] caller is debug_smp_processor_id+0x17/0x20
-  [  2.487911] CPU: 0 PID: 1 Comm: swapper/0 Not tainted 4.11.12-rt14-00451
-  [  2.487911] Hardware name: Dell Inc. OptiPlex 760                 /0M858N, BIOS A16 08/06/2013
-  [  2.487912] Call Trace:
-  [  2.487918]  dump_stack+0x4f/0x6a
-  [  2.487919]  check_preemption_disabled+0xda/0xe0
-  [  2.487921]  debug_smp_processor_id+0x17/0x20
-  [  2.487924]  clear_sched_clock_stable+0x28/0x80
-  [  2.487927]  mark_tsc_unstable+0x22/0x70
-  [  2.487930]  acpi_processor_get_power_info+0x3e3/0x6a0
-  [  2.487932]  acpi_processor_power_init+0x3a/0x1d0
-  [  2.487933]  __acpi_processor_start+0x162/0x1b0
-               ....
-  [  2.487950]  acpi_processor_driver_init+0x20/0x96
-  [  2.487951]  do_one_initcall+0x3f/0x170
-  [  2.487954]  kernel_init_freeable+0x18e/0x216
-  [  2.487955]  ? rest_init+0xd0/0xd0
-  [  2.487956]  kernel_init+0x9/0x100
-  [  2.487958]  ret_from_fork+0x22/0x30
-  [  2.487960] sched_clock: Marking unstable (2488005383, -223143)<-(2590866395, -103084155)
-  [  2.488004] tsc: Marking TSC unstable due to TSC halts in idle
+	Please consider pulling into the linux-4.11.y-rt branch,
 
-(gdb) list *clear_sched_clock_stable+0x28
-0xffffffff8108bbb8 is in clear_sched_clock_stable (kernel/sched/clock.c:114).
+	It was tested with a simple netperf script found below (that I
+intercepted from PeterZ :-)), systems with default kernel tunables, with
+the following results:
 
-[...]
+# Both machines:
+[root@opa0-qa-06 ~]# getconf _NPROCESSORS_ONLN
+40
+[root@opa0-qa-06 ~]# ./netpeterz 
+                  3.10.0-716         3.10.0-716.rt56.644.test   
+TCP_SENDFILE-1 :  Avg: 18014.7       Avg: 16443.6
+TCP_SENDFILE-10 : Avg:  1691.76      Avg:  2070.77
+TCP_SENDFILE-20 : Avg:   833.356     Avg:  1090.62
+TCP_SENDFILE-40 : Avg:   409.206     Avg:   560.65
+TCP_SENDFILE-80 : Avg:   197.961     Avg:   216.654
+TCP_STREAM-1 :    Avg: 21648.3       Avg: 18678.7  
+TCP_STREAM-10 :   Avg:  1804.94      Avg:  1683.76
+TCP_STREAM-20 :   Avg:   839.943     Avg:   857.156
+TCP_STREAM-40 :   Avg:   399.508     Avg:   428.413
+TCP_STREAM-80 :   Avg:   191.331     Avg:   203.931
+TCP_MAERTS-1 :    Avg: 21363         Avg: 21082.8
+TCP_MAERTS-10 :   Avg:  1626.78      Avg:  2145.71
+TCP_MAERTS-20 :   Avg:   699.969     Avg:   960.48
+TCP_MAERTS-40 :   Avg:   378.719     Avg:   496.143
+TCP_MAERTS-80 :   Avg:   183.864     Avg:   251.155
+TCP_RR-1 :        Avg: 37258.7       Avg: 27904.7
+TCP_RR-10 :       Avg: 14880.6       Avg: 12176.9
+TCP_RR-20 :       Avg:  7482.94      Avg:  5964.42
+TCP_RR-40 :       Avg:  3762.57      Avg:  2937.66
+TCP_RR-80 :       Avg:  1909.16      Avg:  1468.5
+UDP_RR-1 :        Avg: 40755.8       Avg: 30205
+UDP_RR-10 :       Avg: 15197.6       Avg: 13460.7
+UDP_RR-20 :       Avg:  7552.46      Avg:  6553.47
+UDP_RR-40 :       Avg:  3798.78      Avg:  3134.96
+UDP_RR-80 :       Avg:  1922.08      Avg:  1533.69
+UDP_STREAM-1 :    Avg: 18385.7       Avg: 17827.5
+UDP_STREAM-10 :   Avg: 27855.9       Avg:  1641.97
+UDP_STREAM-20 :   Avg: 11650.8       Avg:  1309.35
+UDP_STREAM-40 :   Avg:  3824.01      Avg:   669.287
+UDP_STREAM-80 :   Avg:  3465.8       Avg:   441.299
+[root@opa0-qa-06 ~]#
 
-112     static inline struct sched_clock_data *this_scd(void)
-113     {
-114             return this_cpu_ptr(&sched_clock_data);
-115     }
+[root@opa0-qa-06 ~]# cat netpeterz
+#!/bin/bash
 
-We now get this_scd with preemption disabled.  I also decided to pass
-in the scd to __clear_sched_clock_stable in the hope it made it more
-clear that the caller (currently only one) needs to get this_scd with
-preemption disabled, even though that wasn't strictly required.
+addrs="-L 172.31.20.6 -H 172.31.20.5"
 
-Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+for test in TCP_SENDFILE TCP_STREAM TCP_MAERTS ; do
+	for i in 1 10 20 40 80 ; do
+		echo -n $test-$i ": "
+		(
+		  for ((j=0; j<i; j++)) ; do
+			netperf $addrs -t $test -4 -c -C -l 60 -P0 | head -1 &
+		  done
+		  wait
+		) | awk '{ n++; v+=$5; } END { print "Avg: " v/n }'
+	done
+done
 
-diff --git a/kernel/sched/clock.c b/kernel/sched/clock.c
-index 11ad4bd995e2..32dcda23c616 100644
---- a/kernel/sched/clock.c
-+++ b/kernel/sched/clock.c
-@@ -155,9 +155,8 @@ static void __sched_clock_work(struct work_struct *work)
- 
- static DECLARE_WORK(sched_clock_work, __sched_clock_work);
- 
--static void __clear_sched_clock_stable(void)
-+static void __clear_sched_clock_stable(struct sched_clock_data *scd)
- {
--	struct sched_clock_data *scd = this_scd();
- 
- 	/*
- 	 * Attempt to make the stable->unstable transition continuous.
-@@ -186,8 +185,14 @@ void clear_sched_clock_stable(void)
- 
- 	smp_mb(); /* matches sched_clock_init_late() */
- 
--	if (sched_clock_running == 2)
--		__clear_sched_clock_stable();
-+	if (sched_clock_running == 2) {
-+		struct sched_clock_data *scd;
-+
-+		preempt_disable();
-+		scd = this_scd();
-+		preempt_enable();
-+		__clear_sched_clock_stable(scd);
-+	}
- }
- 
- void sched_clock_init_late(void)
--- 
-2.1.4
+for test in TCP_RR UDP_RR UDP_STREAM ; do
+	for i in 1 10 20 40 80 ; do
+		echo -n $test-$i ": "
+		(
+		  for ((j=0; j<i; j++)) ; do
+			netperf $addrs -t $test -4 -c -C -l 60 -P0 | head -1 &
+		  done
+		  wait
+		) | awk '{ n++; v+=$6; } END { print "Avg: " v/n }'
+	done
+done
+[root@opa0-qa-06 ~]#
 
+The following changes since commit 327e86929bbc08ddb4b9bd6d5d222ef052eaa4a8:
+
+  v4.11.12-rt14 (2017-09-22 11:12:56 +0200)
+
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/acme/linux.git infiniband-4.11.y-rt
+
+for you to fetch changes up to 3f59a2ba5bdbf28f4dfe43fe0b713c7574d2baaa:
+
+  IB/hfi1: Handle packets in the theaded handler only (2017-10-03 12:34:39 -0300)
+
+----------------------------------------------------------------
+Arnaldo Carvalho de Melo (2):
+      IB/hfi1: Use preempt_{dis,en}able_nort()
+      IB/hfi1: Handle packets in the theaded handler only
+
+ drivers/infiniband/hw/hfi1/chip.c     | 10 +++++++---
+ drivers/infiniband/hw/hfi1/pio.c      |  2 +-
+ drivers/infiniband/hw/hfi1/pio_copy.c |  4 ++--
+ 3 files changed, 10 insertions(+), 6 deletions(-)
