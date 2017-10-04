@@ -1,10 +1,11 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: Re: [PATCH v3 26/33] tracing: Add cpu field for hist triggers
-Date: Wed, 04 Oct 2017 14:21:35 -0500
-Message-ID: <1507144895.14461.18.camel@tzanussi-mobl.amr.corp.intel.com>
+Subject: Re: [PATCH v3 16/33] tracing: Generalize per-element hist trigger
+ data
+Date: Wed, 04 Oct 2017 14:22:26 -0500
+Message-ID: <1507144946.14461.19.camel@tzanussi-mobl.amr.corp.intel.com>
 References: <cover.1506105131.git.tom.zanussi@linux.intel.com>
-         <d0180521b36f25cb2c7a5aec4870125dda7764b0.1506105131.git.tom.zanussi@linux.intel.com>
-         <20171004141257.5ce2a214@gandalf.local.home>
+         <18c12e2cd12243914d9cc98909c6720da084f3bd.1506105131.git.tom.zanussi@linux.intel.com>
+         <20171004133414.4840c351@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
@@ -16,73 +17,32 @@ Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         linux-rt-users@vger.kernel.org
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171004141257.5ce2a214@gandalf.local.home>
+In-Reply-To: <20171004133414.4840c351@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Steve,
-
-On Wed, 2017-10-04 at 14:12 -0400, Steven Rostedt wrote:
-> On Fri, 22 Sep 2017 15:00:06 -0500
+On Wed, 2017-10-04 at 13:34 -0400, Steven Rostedt wrote:
+> On Fri, 22 Sep 2017 14:59:56 -0500
 > Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
 > 
-> > A common key to use in a histogram is the cpuid - add a new cpu
-> > 'synthetic' field for that purpose.  This field is named cpu rather
-> > than $cpu or $common_cpu because 'cpu' already exists as a special
-> > filter field and it makes more sense to match that rather than add
-> > another name for the same thing.
-> > 
-> > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> > ---
-> >  Documentation/trace/events.txt   | 18 ++++++++++++++++++
-> >  kernel/trace/trace_events_hist.c | 28 +++++++++++++++++++++++++++-
-> >  2 files changed, 45 insertions(+), 1 deletion(-)
-> > 
-> > diff --git a/Documentation/trace/events.txt b/Documentation/trace/events.txt
-> > index 2cc08d4..f36fa00 100644
-> > --- a/Documentation/trace/events.txt
-> > +++ b/Documentation/trace/events.txt
-> > @@ -668,6 +668,24 @@ The following commands are supported:
-> >    The examples below provide a more concrete illustration of the
-> >    concepts and typical usage patterns discussed above.
-> >  
-> > +  'special' event fields
-> > +  ------------------------
-> > +
-> > +  There are a number of 'special event fields' available for use as
-> > +  keys or values in a hist trigger.  These look like and behave as if
-> > +  they were actual event fields, but aren't really part of the event's
-> > +  field definition or format file.  They are however available for any
-> > +  event, and can be used anywhere an actual event field could be.
-> > +  'Special' field names are always prefixed with a '$' character to
-> > +  indicate that they're not normal fields (with the exception of
-> > +  'cpu', for compatibility with existing filter usage):
-> > +
-> > +    $common_timestamp      u64 - timestamp (from ring buffer) associated
-> > +                                 with the event, in nanoseconds.  May be
-> > +				 modified by .usecs to have timestamps
-> > +				 interpreted as microseconds.
-> > +    cpu                    int - the cpu on which the event occurred.
-> > +
-> >
+> > @@ -1742,7 +1746,8 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
+> >  			seq_printf(m, "%s: [%llx] %-55s", field_name,
+> >  				   uval, str);
+> >  		} else if (key_field->flags & HIST_FIELD_FL_EXECNAME) {
+> > -			char *comm = elt->private_data;
+> > +			struct hist_elt_data *elt_data = elt->private_data;
 > 
-> You were going to update this too.
+> Weren't we going to add a "if (WARN_ON_ONCE(!elt_data)) return;" here?
 > 
 
-For this one, I originally and confusingly called these 'synthetic'
-event fields even though they had nothing to do with synthetic events (I
-thought of them as 'synthetic' in a different sense, as not being actual
-fields).  So I changed that to 'special' here to avoid the confusion.
-(and I assumed your comment about moving them to the synthetic was due
-to that confusion).
-
-I took the rest of your comment as saying that these were ok together,
-and in fact it does make sense to me to keep them here as part of this
-patch - because we're now getting more examples of these kinds of
-fields, adding a new section enumerating them starting with the second
-seems to make sense here, especially considering that $common_timestamp
-is mentioned elsewhere in several places in the documentation.
+This I did miss, will update ;-)
 
 Tom
 
 > -- Steve
+> 
+> > +			char *comm = elt_data->comm;
+> >  
+> >  			uval = *(u64 *)(key + key_field->offset);
+> >  			seq_printf(m, "%s: %-16s[%10llu]", field_name,
+> > -- 
