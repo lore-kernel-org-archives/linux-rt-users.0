@@ -1,11 +1,13 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH v3 26/33] tracing: Add cpu field for hist triggers
-Date: Wed, 4 Oct 2017 14:12:57 -0400
-Message-ID: <20171004141257.5ce2a214@gandalf.local.home>
+From: Tom Zanussi <tom.zanussi@linux.intel.com>
+Subject: Re: [PATCH v3 25/33] tracing: Allow whitespace to surround hist
+ trigger filter
+Date: Wed, 04 Oct 2017 14:05:17 -0500
+Message-ID: <1507143917.14461.8.camel@tzanussi-mobl.amr.corp.intel.com>
 References: <cover.1506105131.git.tom.zanussi@linux.intel.com>
-        <d0180521b36f25cb2c7a5aec4870125dda7764b0.1506105131.git.tom.zanussi@linux.intel.com>
+         <68a176facc91c86e90862f3e719c6bf57f505340.1506105131.git.tom.zanussi@linux.intel.com>
+         <20171004141105.4f88f44f@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -13,55 +15,109 @@ Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
         rajvi.jingar@intel.com, linux-kernel@vger.kernel.org,
         linux-rt-users@vger.kernel.org
-To: Tom Zanussi <tom.zanussi@linux.intel.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <d0180521b36f25cb2c7a5aec4870125dda7764b0.1506105131.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <20171004141105.4f88f44f@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 22 Sep 2017 15:00:06 -0500
-Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
+Hi Steve,
 
-> A common key to use in a histogram is the cpuid - add a new cpu
-> 'synthetic' field for that purpose.  This field is named cpu rather
-> than $cpu or $common_cpu because 'cpu' already exists as a special
-> filter field and it makes more sense to match that rather than add
-> another name for the same thing.
+On Wed, 2017-10-04 at 14:11 -0400, Steven Rostedt wrote:
+> On Fri, 22 Sep 2017 15:00:05 -0500
+> Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
 > 
-> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> ---
->  Documentation/trace/events.txt   | 18 ++++++++++++++++++
->  kernel/trace/trace_events_hist.c | 28 +++++++++++++++++++++++++++-
->  2 files changed, 45 insertions(+), 1 deletion(-)
+> > The existing code only allows for one space before and after the 'if'
+> > specifying the filter for a hist trigger.  Add code to make that more
+> > permissive as far as whitespace goes.  Specifically, we want to allow
+> > spaces in the trigger itself now that we have additional syntax
+> > (onmatch/onmax) where spaces are more natural e.g. spaces after commas
+> > in param lists.
+> > 
+> > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> > ---
+> >  kernel/trace/trace_events_hist.c | 24 +++++++++++++++++++-----
+> >  1 file changed, 19 insertions(+), 5 deletions(-)
+> > 
+> > diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+> > index ba42fe2..431f2b2 100644
+> > --- a/kernel/trace/trace_events_hist.c
+> > +++ b/kernel/trace/trace_events_hist.c
+> > @@ -4857,7 +4857,7 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
+> >  	struct synth_event *se;
+> >  	const char *se_name;
+> >  	bool remove = false;
+> > -	char *trigger;
+> > +	char *trigger, *p;
+> >  	int ret = 0;
+> >  
+> >  	if (!param)
+> > @@ -4866,10 +4866,23 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
+> >  	if (glob[0] == '!')
+> >  		remove = true;
+> >  
+> > -	/* separate the trigger from the filter (k:v [if filter]) */
+> > -	trigger = strsep(&param, " \t");
+> > -	if (!trigger)
+> > -		return -EINVAL;
+> > +	/*
+> > +	 * separate the trigger from the filter (k:v [if filter])
+> > +	 * allowing for whitespace in the trigger
+> > +	 */
+> > +	trigger = param;
+> > +	p = strstr(param, " if");
+> > +	if (!p)
+> > +		p = strstr(param, "\tif");
+> > +	if (p) {
+> > +		if (p == trigger)
+> > +			return -EINVAL;
+> > +		param = p + 1;
+> > +		param = strstrip(param);
+> > +		*p = '\0';
+> > +		trigger = strstrip(trigger);
+> > +	} else
+> > +		param = NULL;
 > 
-> diff --git a/Documentation/trace/events.txt b/Documentation/trace/events.txt
-> index 2cc08d4..f36fa00 100644
-> --- a/Documentation/trace/events.txt
-> +++ b/Documentation/trace/events.txt
-> @@ -668,6 +668,24 @@ The following commands are supported:
->    The examples below provide a more concrete illustration of the
->    concepts and typical usage patterns discussed above.
->  
-> +  'special' event fields
-> +  ------------------------
-> +
-> +  There are a number of 'special event fields' available for use as
-> +  keys or values in a hist trigger.  These look like and behave as if
-> +  they were actual event fields, but aren't really part of the event's
-> +  field definition or format file.  They are however available for any
-> +  event, and can be used anywhere an actual event field could be.
-> +  'Special' field names are always prefixed with a '$' character to
-> +  indicate that they're not normal fields (with the exception of
-> +  'cpu', for compatibility with existing filter usage):
-> +
-> +    $common_timestamp      u64 - timestamp (from ring buffer) associated
-> +                                 with the event, in nanoseconds.  May be
-> +				 modified by .usecs to have timestamps
-> +				 interpreted as microseconds.
-> +    cpu                    int - the cpu on which the event occurred.
-> +
->
+> I think you forgot to update this:
+> 
 
-You were going to update this too.
+I was going to but on closer inspection realized the simpler form
+wouldn't accomplish the same thing - the problem this is trying to solve
+is to allow bits of whitespace within the trigger (because we now have
+function-like syntax, which should allow whitespace after commas for
+instance) and separating the trigger from the filter ('if').  So we
+explicitly search for 'if' with preceding whitespace, which strsep won't
+accomplish.
 
--- Steve
+So while it may not be pretty, it accomplishes that, while the below
+won't (it would create a truncated trigger if there were e.g. commas
+followed by spaces).
+
+Tom
+
+> > > This seems rather complex. Wouldn't the following work?
+> > > 
+> > > 	param = skip_spaces(param);
+> > > 	trigger = strsep(&param, " \t");
+> > > 	if (param)
+> > > 		param = strstrip(param);
+> > >   
+> > 
+> > Yes, much better ;-)
+> > 
+> > Tom
+> 
+> -- Steve
+> 
+> >  
+> >  	attrs = parse_hist_trigger_attrs(trigger);
+> >  	if (IS_ERR(attrs))
+> > @@ -4927,6 +4940,7 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
+> >  	}
+> >  
+> >  	ret = cmd_ops->reg(glob, trigger_ops, trigger_data, file);
+> > +
+> >  	/*
+> >  	 * The above returns on success the # of triggers registered,
+> >  	 * but if it didn't register any it returns zero.  Consider no
+> 
