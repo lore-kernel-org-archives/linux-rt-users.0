@@ -1,9 +1,10 @@
 From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [PATCH v3 12/33] tracing: Add variable support to hist triggers
-Date: Mon, 9 Oct 2017 12:27:27 +0900
-Message-ID: <20171009032727.GA6357@danjae.aot.lge.com>
+Subject: Re: [PATCH v3 19/33] tracing: Add variable reference handling to
+ hist triggers
+Date: Mon, 9 Oct 2017 21:46:35 +0900
+Message-ID: <20171009124635.GA7378@danjae.aot.lge.com>
 References: <cover.1506105131.git.tom.zanussi@linux.intel.com>
- <00ac0ead22391be1e2689d901d63684ea3823bab.1506105131.git.tom.zanussi@linux.intel.com>
+ <d92ae1de648410d7488f8787d9a2ec876d40aba6.1506105131.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
@@ -15,198 +16,249 @@ Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
 To: Tom Zanussi <tom.zanussi@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <00ac0ead22391be1e2689d901d63684ea3823bab.1506105131.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <d92ae1de648410d7488f8787d9a2ec876d40aba6.1506105131.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Tom,
-
-On Fri, Sep 22, 2017 at 02:59:52PM -0500, Tom Zanussi wrote:
-> Add support for saving the value of a current event's event field by
-> assigning it to a variable that can be read by a subsequent event.
+On Fri, Sep 22, 2017 at 02:59:59PM -0500, Tom Zanussi wrote:
+> Add the necessary infrastructure to allow the variables defined on one
+> event to be referenced in another.  This allows variables set by a
+> previous event to be referenced and used in expressions combining the
+> variable values saved by that previous event and the event fields of
+> the current event.  For example, here's how a latency can be
+> calculated and saved into yet another variable named 'wakeup_lat':
 > 
-> The basic syntax for saving a variable is to simply prefix a unique
-> variable name not corresponding to any keyword along with an '=' sign
-> to any event field.
+>     # echo 'hist:keys=pid,prio:ts0=common_timestamp ...
+>     # echo 'hist:keys=next_pid:wakeup_lat=common_timestamp-$ts0 ...
 > 
-> Both keys and values can be saved and retrieved in this way:
+> In the first event, the event's timetamp is saved into the variable
+> ts0.  In the next line, ts0 is subtracted from the second event's
+> timestamp to produce the latency.
 > 
->     # echo 'hist:keys=next_pid:vals=$ts0:ts0=common_timestamp ...
-
-The 'common_timestamp' needs a '$' prefix, right?
-
->     # echo 'hist:timer_pid=common_pid:key=$timer_pid ...'
-> 
-> If a variable isn't a key variable or prefixed with 'vals=', the
-> associated event field will be saved in a variable but won't be summed
-> as a value:
-> 
->     # echo 'hist:keys=next_pid:ts1=common_timestamp:...
-
-Ditto.
-
-> 
-> Multiple variables can be assigned at the same time:
-> 
->     # echo 'hist:keys=pid:vals=$ts0,$b,field2:ts0=common_timestamp,b=field1 ...
-> 
-> Multiple (or single) variables can also be assigned at the same time
-> using separate assignments:
-> 
->     # echo 'hist:keys=pid:vals=$ts0:ts0=common_timestamp:b=field1:c=field2 ...
-
-Same here..
-
-So you separated the variable definition and it should not be a part
-of key or value field, right?
-
-> 
-> Variables set as above can be used by being referenced from another
-> event, as described in a subsequent patch.
-
-That means, a variable should be unique (in a tracing instance at least).
-
-
+> Further users of variable references will be described in subsequent
+> patches, such as for instance how the 'wakeup_lat' variable above can
+> be displayed in a latency histogram.
 > 
 > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> Signed-off-by: Baohong Liu <baohong.liu@intel.com>
 > ---
->  kernel/trace/trace_events_hist.c | 374 ++++++++++++++++++++++++++++++++++-----
->  1 file changed, 334 insertions(+), 40 deletions(-)
+>  kernel/trace/trace.c                |   2 +
+>  kernel/trace/trace.h                |   3 +
+>  kernel/trace/trace_events_hist.c    | 613 ++++++++++++++++++++++++++++++++----
+>  kernel/trace/trace_events_trigger.c |   6 +
+>  4 files changed, 568 insertions(+), 56 deletions(-)
 > 
+> diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
+> index 19ffbe1..5eb313a 100644
+> --- a/kernel/trace/trace.c
+> +++ b/kernel/trace/trace.c
+> @@ -7753,6 +7753,7 @@ static int instance_mkdir(const char *name)
+>  
+>  	INIT_LIST_HEAD(&tr->systems);
+>  	INIT_LIST_HEAD(&tr->events);
+> +	INIT_LIST_HEAD(&tr->hist_vars);
+>  
+>  	if (allocate_trace_buffers(tr, trace_buf_size) < 0)
+>  		goto out_free_tr;
+> @@ -8500,6 +8501,7 @@ __init static int tracer_alloc_buffers(void)
+>  
+>  	INIT_LIST_HEAD(&global_trace.systems);
+>  	INIT_LIST_HEAD(&global_trace.events);
+> +	INIT_LIST_HEAD(&global_trace.hist_vars);
+>  	list_add(&global_trace.list, &ftrace_trace_arrays);
+>  
+>  	apply_trace_boot_options();
+> diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
+> index 02bfd5c..7b78762 100644
+> --- a/kernel/trace/trace.h
+> +++ b/kernel/trace/trace.h
+> @@ -273,6 +273,7 @@ struct trace_array {
+>  	int			function_enabled;
+>  #endif
+>  	int			time_stamp_abs_ref;
+> +	struct list_head	hist_vars;
+>  };
+>  
+>  enum {
+> @@ -1547,6 +1548,8 @@ extern int save_named_trigger(const char *name,
+>  extern void unpause_named_trigger(struct event_trigger_data *data);
+>  extern void set_named_trigger_data(struct event_trigger_data *data,
+>  				   struct event_trigger_data *named_data);
+> +extern struct event_trigger_data *
+> +get_named_trigger_data(struct event_trigger_data *data);
+>  extern int register_event_command(struct event_command *cmd);
+>  extern int unregister_event_command(struct event_command *cmd);
+>  extern int register_trigger_hist_enable_disable_cmds(void);
 > diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-> index c2abe41..0d99548 100644
+> index 02170df..6dcef22 100644
 > --- a/kernel/trace/trace_events_hist.c
 > +++ b/kernel/trace/trace_events_hist.c
-> @@ -30,6 +30,13 @@ typedef u64 (*hist_field_fn_t) (struct hist_field *field, void *event,
->  				struct ring_buffer_event *rbe);
->  
->  #define HIST_FIELD_OPERANDS_MAX	2
-> +#define HIST_FIELDS_MAX		(TRACING_MAP_FIELDS_MAX + TRACING_MAP_VARS_MAX)
-> +
-> +struct hist_var {
-> +	char				*name;
-> +	struct hist_trigger_data	*hist_data;
-> +	unsigned int			idx;
-> +};
->  
->  struct hist_field {
->  	struct ftrace_event_field	*field;
-> @@ -40,6 +47,7 @@ struct hist_field {
->  	unsigned int                    is_signed;
->  	struct hist_field		*operands[HIST_FIELD_OPERANDS_MAX];
->  	struct hist_trigger_data	*hist_data;
-> +	struct hist_var			var;
+> @@ -60,6 +60,9 @@ struct hist_field {
+>  	struct hist_var			var;
+>  	enum field_op_id		operator;
+>  	char				*name;
+> +	unsigned int			var_idx;
+> +	unsigned int			var_ref_idx;
+> +	bool                            read_once;
 >  };
 >  
->  static u64 hist_field_none(struct hist_field *field, void *event,
-> @@ -138,6 +146,14 @@ enum hist_field_flags {
->  	HIST_FIELD_FL_LOG2		= 1 << 9,
->  	HIST_FIELD_FL_TIMESTAMP		= 1 << 10,
->  	HIST_FIELD_FL_TIMESTAMP_USECS	= 1 << 11,
-> +	HIST_FIELD_FL_VAR		= 1 << 12,
-> +	HIST_FIELD_FL_VAR_ONLY		= 1 << 13,
-
-And then I'm not sure what _VAR_ONLY flag is for.  IIUC it's used to
-identify pure variable definition from a definition in value fields.
-But it's not possible anymore, no?
-
-
+>  static u64 hist_field_none(struct hist_field *field,
+> @@ -215,6 +218,7 @@ enum hist_field_flags {
+>  	HIST_FIELD_FL_VAR		= 1 << 12,
+>  	HIST_FIELD_FL_VAR_ONLY		= 1 << 13,
+>  	HIST_FIELD_FL_EXPR		= 1 << 14,
+> +	HIST_FIELD_FL_VAR_REF		= 1 << 15,
+>  };
+>  
+>  struct var_defs {
+> @@ -255,6 +259,8 @@ struct hist_trigger_data {
+>  	struct tracing_map		*map;
+>  	bool				enable_timestamps;
+>  	bool				remove;
+> +	struct hist_field               *var_refs[TRACING_MAP_VARS_MAX];
+> +	unsigned int			n_var_refs;
+>  };
+>  
+>  static u64 hist_field_timestamp(struct hist_field *hist_field,
+> @@ -273,10 +279,344 @@ static u64 hist_field_timestamp(struct hist_field *hist_field,
+>  	return ts;
+>  }
+>  
+> +struct hist_var_data {
+> +	struct list_head list;
+> +	struct hist_trigger_data *hist_data;
 > +};
 > +
-> +struct var_defs {
-> +	unsigned int	n_vars;
-> +	char		*name[TRACING_MAP_VARS_MAX];
-> +	char		*expr[TRACING_MAP_VARS_MAX];
->  };
->
-
-[SNIP]
-
-> +static int create_var_field(struct hist_trigger_data *hist_data,
-> +			    unsigned int val_idx,
-> +			    struct trace_event_file *file,
-> +			    char *var_name, char *expr_str)
+> +static struct hist_field *check_var_ref(struct hist_field *hist_field,
+> +					struct hist_trigger_data *var_data,
+> +					unsigned int var_idx)
 > +{
-> +	unsigned long flags = 0;
+> +	struct hist_field *found = NULL;
 > +
-> +	if (WARN_ON(val_idx >= TRACING_MAP_VALS_MAX + TRACING_MAP_VARS_MAX))
-> +		return -EINVAL;
-> +
-> +	if (find_var(file, var_name) && !hist_data->remove) {
-
-Is this for the uniqueness check?  But I think it only checks
-variables in the current event (file).
-
-
-> +		return -EINVAL;
+> +	if (hist_field && hist_field->flags & HIST_FIELD_FL_VAR_REF) {
+> +		if (hist_field->var.idx == var_idx &&
+> +		    hist_field->var.hist_data == var_data) {
+> +			found = hist_field;
+> +		}
 > +	}
 > +
-> +	flags |= HIST_FIELD_FL_VAR;
-> +	hist_data->n_vars++;
-> +	if (hist_data->n_vars > TRACING_MAP_VARS_MAX) {
-> +		return -EINVAL;
-> +	}
-> +
-> +	flags |= HIST_FIELD_FL_VAR_ONLY;
-> +
-> +	return __create_val_field(hist_data, val_idx, file, var_name, expr_str, flags);
+> +	return found;
 > +}
 > +
-
-[SNIP]
-
-> +static int parse_var_defs(struct hist_trigger_data *hist_data)
+> +static struct hist_field *find_var_ref(struct hist_trigger_data *hist_data,
+> +				       struct hist_trigger_data *var_data,
+> +				       unsigned int var_idx)
 > +{
-> +	char *s, *str, *var_name, *field_str;
-> +	unsigned int i, j, n_vars = 0;
-> +	int ret = 0;
+> +	struct hist_field *hist_field, *found = NULL;
+> +	unsigned int i, j;
 > +
-> +	for (i = 0; i < hist_data->attrs->n_assignments; i++) {
-> +		str = hist_data->attrs->assignment_str[i];
-> +		for (j = 0; j < TRACING_MAP_VARS_MAX; j++) {
-> +			field_str = strsep(&str, ",");
-> +			if (!field_str)
-> +				break;
+> +	for_each_hist_field(i, hist_data) {
+> +		hist_field = hist_data->fields[i];
+> +		found = check_var_ref(hist_field, var_data, var_idx);
+> +		if (found)
+> +			return found;
 > +
-> +			var_name = strsep(&field_str, "=");
-> +			if (!var_name || !field_str) {
-> +				ret = -EINVAL;
-> +				goto free;
-> +			}
+> +		for (j = 0; j < HIST_FIELD_OPERANDS_MAX; j++) {
+> +			struct hist_field *operand;
 > +
-> +			s = kstrdup(var_name, GFP_KERNEL);
-> +			if (!s) {
-> +				ret = -ENOMEM;
-> +				goto free;
-> +			}
-> +			hist_data->attrs->var_defs.name[n_vars] = s;
-> +
-> +			s = kstrdup(field_str, GFP_KERNEL);
-> +			if (!s) {
-> +				ret = -ENOMEM;
-> +				goto free;
+> +			operand = hist_field->operands[j];
+> +			found = check_var_ref(operand, var_data, var_idx);
+> +			if (found)
+> +				return found;
+> +		}
 
-It seems that it might leak the copy of var_name here..
+Hmm.. IIUC expression can be nested but it seems to miss var-ref at
+level 2 - something like "a + b + $c", no?
+
+
+> +	}
+> +
+> +	return found;
+> +}
+> +
+> +static struct hist_field *find_any_var_ref(struct hist_trigger_data *hist_data,
+> +					   unsigned int var_idx)
+> +{
+> +	struct trace_array *tr = hist_data->event_file->tr;
+> +	struct hist_field *found = NULL;
+> +	struct hist_var_data *var_data;
+> +
+> +	list_for_each_entry(var_data, &tr->hist_vars, list) {
+> +		found = find_var_ref(var_data->hist_data, hist_data, var_idx);
+> +		if (found)
+> +			break;
+
+Shouldn't it check self-references - i.e. ref from the same hist_data?
+
+
+> +	}
+> +
+> +	return found;
+> +}
+> +
+> +static bool check_var_refs(struct hist_trigger_data *hist_data)
+> +{
+> +	struct hist_field *field;
+> +	bool found = false;
+> +	int i;
+> +
+> +	for_each_hist_field(i, hist_data) {
+> +		field = hist_data->fields[i];
+> +		if (field && field->flags & HIST_FIELD_FL_VAR) {
+> +			if (find_any_var_ref(hist_data, field->var.idx)) {
+> +				found = true;
+> +				break;
+> +			}
+> +		}
+> +	}
+> +
+> +	return found;
+> +}
+> +
+> +static struct hist_var_data *find_hist_vars(struct hist_trigger_data *hist_data)
+> +{
+> +	struct trace_array *tr = hist_data->event_file->tr;
+> +	struct hist_var_data *var_data, *found = NULL;
+> +
+> +	list_for_each_entry(var_data, &tr->hist_vars, list) {
+> +		if (var_data->hist_data == hist_data) {
+> +			found = var_data;
+> +			break;
+> +		}
+> +	}
+> +
+> +	return found;
+> +}
+> +
+> +static bool has_hist_vars(struct hist_trigger_data *hist_data)
+> +{
+> +	struct hist_field *hist_field;
+> +	int i, j;
+> +
+> +	for_each_hist_field(i, hist_data) {
+> +		hist_field = hist_data->fields[i];
+> +		if (hist_field &&
+> +		    (hist_field->flags & HIST_FIELD_FL_VAR ||
+> +		     hist_field->flags & HIST_FIELD_FL_VAR_REF))
+> +			return true;
+> +
+> +		for (j = 0; j < HIST_FIELD_OPERANDS_MAX; j++) {
+> +			struct hist_field *operand;
+> +
+> +			operand = hist_field->operands[j];
+> +			if (operand &&
+> +			    (operand->flags & HIST_FIELD_FL_VAR ||
+> +			     operand->flags & HIST_FIELD_FL_VAR_REF))
+> +				return true;
+
+Same with the above.
 
 Thanks,
 Namhyung
 
 
-> +			}
-> +			hist_data->attrs->var_defs.expr[n_vars++] = s;
-> +
-> +			hist_data->attrs->var_defs.n_vars = n_vars;
-> +
-> +			if (n_vars == TRACING_MAP_VARS_MAX)
-> +				goto free;
 > +		}
 > +	}
 > +
-> +	return ret;
-> + free:
-> +	free_var_defs(hist_data);
-> +
-> +	return ret;
+> +	return false;
 > +}
 > +
