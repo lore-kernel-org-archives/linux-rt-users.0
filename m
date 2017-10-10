@@ -1,66 +1,33 @@
-From: Arnaldo Carvalho de Melo <acme@kernel.org>
-Subject: Re: [PATCH 2/2] IB/hfi1: Handle packets in the theaded handler only
-Date: Tue, 10 Oct 2017 16:15:29 -0300
-Message-ID: <20171010191529.GP28623@kernel.org>
-References: <20171003154920.31566-1-acme@kernel.org>
- <20171003154920.31566-3-acme@kernel.org>
- <3003fbfd-6d34-a968-1264-7c16580d5ce6@intel.com>
+From: Victor Moreno Calvo <victor.morenocal@gmail.com>
+Subject: Trace code
+Date: Tue, 10 Oct 2017 21:40:30 +0200
+Message-ID: <CANBvECE8jmVTZSEOV7SBu4X0Toq0oe_7wchXJNiOFJxtzMCn6A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: bigeasy@linutronix.de, linux-rt-users@vger.kernel.org,
-        linux-kernel@vger.kernel.org,
-        Arnaldo Carvalho de Melo <acme@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        Dean Luick <dean.luick@intel.com>,
-        Doug Ledford <dledford@redhat.com>,
-        Julia Cartwright <julia@ni.com>,
-        Kaike Wan <kaike.wan@intel.com>,
-        Leon Romanovsky <leonro@mellanox.com>,
-        linux-rdma@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>,
-        Sebastian Andrzej Siewior <sebastian.siewior@linutronix.de>,
-        Sebastian Sanchez <sebastian.sanchez@intel.com>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>
-To: Dennis Dalessandro <dennis.dalessandro@intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <3003fbfd-6d34-a968-1264-7c16580d5ce6@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wm0-f50.google.com ([74.125.82.50]:46806 "EHLO
+        mail-wm0-f50.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751858AbdJJTkb (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 10 Oct 2017 15:40:31 -0400
+Received: by mail-wm0-f50.google.com with SMTP id m72so92648wmc.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 10 Oct 2017 12:40:31 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Em Tue, Oct 10, 2017 at 03:06:00PM -0400, Dennis Dalessandro escreveu:
-> On 10/3/2017 11:49 AM, Arnaldo Carvalho de Melo wrote:
-> > Cc: Clark Williams <williams@redhat.com>
-> > Cc: Dean Luick <dean.luick@intel.com>
-> > Cc: Dennis Dalessandro <dennis.dalessandro@intel.com>
-> > Cc: Doug Ledford <dledford@redhat.com>
-> > Cc: Julia Cartwright <julia@ni.com>
-> > Cc: Kaike Wan <kaike.wan@intel.com>
-> > Cc: Leon Romanovsky <leonro@mellanox.com>
-> > Cc: linux-rdma@vger.kernel.org
-> > Cc: Peter Zijlstra <peterz@infradead.org>
-> > Cc: Sebastian Andrzej Siewior <sebastian.siewior@linutronix.de>
-> > Cc: Sebastian Sanchez <sebastian.sanchez@intel.com>
-> > Cc: Steven Rostedt <rostedt@goodmis.org>
-> > Cc: Thomas Gleixner <tglx@linutronix.de>
-> > Signed-off-by: Arnaldo Carvalho de Melo <acme@redhat.com>
-> 
-> Mike has been working with these developers off list and has provided a
-> slightly different approach. I'm going to let them drive that before I add
-> an RB/Ack here.
+Hello,
 
-This may not even be needed, i.e. Sebastian Siewior said that recent
-rt patches already identify the way this driver uses threaded interrupts
-and automagically does the right thing, Sebastian?
+My company has decided to move to Linux using the PREEMPT patch for
+some simulators.
 
-He mentioned this in this message:
+We are at the initial phase of the project, so we do not have enough
+experience and data to get the maximum performance or the right tools.
 
-https://marc.info/?l=linux-rt-users&m=150722087514307&w=2
+The purpose of this email is to get an idea or more info to know how
+it is possible to measure latency in our code (C++). Are there any
+libraries to measure times for cyclic task or should we use a discrete
+analyzer?
 
-But I replied to Mike and don't recall getting an answer to my last
-question.
 
-Meanwhile a kernel with these two patches survived the original bug
-reported at Red Hat's bugzilla.
-
-- Arnaldo
+Regards.
