@@ -1,110 +1,61 @@
-From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [PATCH v3 15/33] tracing: Add simple expression support to hist
- triggers
-Date: Mon, 9 Oct 2017 21:54:01 +0900
-Message-ID: <20171009125401.GA7788@danjae.aot.lge.com>
-References: <cover.1506105131.git.tom.zanussi@linux.intel.com>
- <6a4903ab375ffbf9d76cc2c2193efaec1c751b54.1506105131.git.tom.zanussi@linux.intel.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [ANNOUNCE] v4.11.12-rt13
+Date: Tue, 10 Oct 2017 18:24:55 +0200
+Message-ID: <20171010162455.qmvgr476j36nqev7@linutronix.de>
+References: <20170905145244.jro4jywfxugmn7eh@linutronix.de>
+ <1507133279.6934.66.camel@gmx.de>
+ <20171005155441.72mjaac5c42rjilf@linutronix.de>
+ <1507256431.6597.16.camel@gmx.de>
+ <20171006102820.ou4wpm56ed6m3ewr@linutronix.de>
+ <1507296802.6364.14.camel@gmx.de>
+ <1507311488.5480.20.camel@gmx.de>
+ <1507351853.12111.5.camel@gmx.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        rajvi.jingar@intel.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org, kernel-team@lge.com
-To: Tom Zanussi <tom.zanussi@linux.intel.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Anna-Maria Gleixner <anna-maria@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Mike Galbraith <efault@gmx.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <6a4903ab375ffbf9d76cc2c2193efaec1c751b54.1506105131.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <1507351853.12111.5.camel@gmx.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Sep 22, 2017 at 02:59:55PM -0500, Tom Zanussi wrote:
-> Add support for simple addition, subtraction, and unary expressions
-> (-(expr) and expr, where expr = b-a, a+b, a+b+c) to hist triggers, in
-> order to support a minimal set of useful inter-event calculations.
+On 2017-10-07 06:50:53 [+0200], Mike Galbraith wrote:
+> > However...
 > 
-> These operations are needed for calculating latencies between events
-> (timestamp1-timestamp0) and for combined latencies (latencies over 3
-> or more events).
+> testcases/open_posix_testsuite/conformance/interfaces/clock_settime/8-1.c:
+>  * Steps:
+>  * - get time T0
+>  * - in child:  set clock_nanosleep() to sleep for SLEEPSEC seconds
+>  * - in parent:  sleep SMALLTIME (< SLEEPSEC)
+>  * - in parent:  set time back to T0
+>  * - in child:  ensure time when clock_nanosleep() expires is within
+>  *   ACCEPTABLEDELTA of T0+(SLEEPSEC-SMALLTIME)
+> ...
+> #define SLEEPSEC 5
+> #define SMALLTIME 2
+> #define ACCEPTABLEDELTA 1
 > 
-> In the process, factor out some common code from key and value
-> parsing.
+> homer:..debug/tracing # time chrt -o 0 /usr/local/ltp/conformance/interfaces/clock_settime/clock_settime_8-1.run-test
+> Test PASSED
 > 
-> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> ---
+> real    0m5.002s
+> user    0m0.000s
+> sys     0m0.001s
+> homer:..debug/tracing # time chrt -f 1 /usr/local/ltp/conformance/interfaces/clock_settime/clock_settime_8-1.run-test
+> Ended too late.  1507351636 >> 1507351634
+> Test FAILED
+> 
+> real    0m7.002s
+> user    0m0.000s
+> sys     0m0.002s
 
-[SNIP]
-> +static struct hist_field *parse_unary(struct hist_trigger_data *hist_data,
-> +				      struct trace_event_file *file,
-> +				      char *str, unsigned long flags,
-> +				      char *var_name, unsigned int level)
-> +{
-> +	struct hist_field *operand1, *expr = NULL;
-> +	unsigned long operand_flags;
-> +	int ret = 0;
-> +	char *s;
-> +
-> +	// we support only -(xxx) i.e. explicit parens required
-> +
-> +	if (level > 2) {
-> +		ret = -EINVAL;
-> +		goto free;
-> +	}
-> +
-> +	str++; // skip leading '-'
-> +
-> +	s = strchr(str, '(');
-> +	if (s)
-> +		str++;
-> +	else {
-> +		ret = -EINVAL;
-> +		goto free;
-> +	}
-> +
-> +	s = strchr(str, ')');
-> +	if (s)
-> +		*s = '\0';
-> +	else {
-> +		ret = -EINVAL; // no closing ')'
-> +		goto free;
-> +	}
-> +
-> +	strsep(&str, "(");
-> +	if (!str) {
-> +		ret = -EINVAL;
-> +		goto free;
-> +	}
-> +
-> +	flags |= HIST_FIELD_FL_EXPR;
-> +	expr = create_hist_field(hist_data, NULL, flags, var_name);
-> +	if (!expr) {
-> +		ret = -ENOMEM;
-> +		goto free;
-> +	}
-> +
-> +	operand_flags = 0;
-> +	operand1 = parse_expr(hist_data, file, str, operand_flags, NULL, ++level);
-> +	if (IS_ERR(operand1)) {
-> +		ret = PTR_ERR(operand1);
-> +		goto free;
-> +	}
-> +
-> +	expr->fn = hist_field_unary_minus;
-> +	expr->operands[0] = operand1;
-> +	expr->operator = FIELD_OP_UNARY_MINUS;
-> +	expr->name = expr_str(expr, 0);
-> +
-> +	return expr;
-> + free:
+As per POSIX we should sleep only 5 secs despite the CLOCK_REALTIME
+change. In RT case however we sleep 7 so we somehow account it which is
+wrong.
 
-Missing destroy_hist_field(expr, 0)?
-
-Thanks,
-Namhyung
-
-
-> +	return ERR_PTR(ret);
-> +}
-> +
+Sebastian
