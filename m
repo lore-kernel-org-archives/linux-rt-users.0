@@ -1,7 +1,7 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Subject: Re: [ANNOUNCE] v4.11.12-rt13
-Date: Tue, 10 Oct 2017 18:24:55 +0200
-Message-ID: <20171010162455.qmvgr476j36nqev7@linutronix.de>
+Date: Tue, 10 Oct 2017 18:47:49 +0200
+Message-ID: <20171010164749.apnxbh5kkvkgrmwe@linutronix.de>
 References: <20170905145244.jro4jywfxugmn7eh@linutronix.de>
  <1507133279.6934.66.camel@gmx.de>
  <20171005155441.72mjaac5c42rjilf@linutronix.de>
@@ -10,6 +10,7 @@ References: <20170905145244.jro4jywfxugmn7eh@linutronix.de>
  <1507296802.6364.14.camel@gmx.de>
  <1507311488.5480.20.camel@gmx.de>
  <1507351853.12111.5.camel@gmx.de>
+ <20171010162455.qmvgr476j36nqev7@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -20,42 +21,36 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: Mike Galbraith <efault@gmx.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1507351853.12111.5.camel@gmx.de>
+In-Reply-To: <20171010162455.qmvgr476j36nqev7@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2017-10-07 06:50:53 [+0200], Mike Galbraith wrote:
-> > However...
+On 2017-10-10 18:24:55 [+0200], To Mike Galbraith wrote:
+> > homer:..debug/tracing # time chrt -f 1 /usr/local/ltp/conformance/interfaces/clock_settime/clock_settime_8-1.run-test
+> > Ended too late.  1507351636 >> 1507351634
+> > Test FAILED
+> > 
+> > real    0m7.002s
+> > user    0m0.000s
+> > sys     0m0.002s
 > 
-> testcases/open_posix_testsuite/conformance/interfaces/clock_settime/8-1.c:
->  * Steps:
->  * - get time T0
->  * - in child:  set clock_nanosleep() to sleep for SLEEPSEC seconds
->  * - in parent:  sleep SMALLTIME (< SLEEPSEC)
->  * - in parent:  set time back to T0
->  * - in child:  ensure time when clock_nanosleep() expires is within
->  *   ACCEPTABLEDELTA of T0+(SLEEPSEC-SMALLTIME)
-> ...
-> #define SLEEPSEC 5
-> #define SMALLTIME 2
-> #define ACCEPTABLEDELTA 1
-> 
-> homer:..debug/tracing # time chrt -o 0 /usr/local/ltp/conformance/interfaces/clock_settime/clock_settime_8-1.run-test
-> Test PASSED
-> 
-> real    0m5.002s
-> user    0m0.000s
-> sys     0m0.001s
-> homer:..debug/tracing # time chrt -f 1 /usr/local/ltp/conformance/interfaces/clock_settime/clock_settime_8-1.run-test
-> Ended too late.  1507351636 >> 1507351634
-> Test FAILED
-> 
-> real    0m7.002s
-> user    0m0.000s
-> sys     0m0.002s
+> As per POSIX we should sleep only 5 secs despite the CLOCK_REALTIME
+> change. In RT case however we sleep 7 so we somehow account it which is
+> wrong.
 
-As per POSIX we should sleep only 5 secs despite the CLOCK_REALTIME
-change. In RT case however we sleep 7 so we somehow account it which is
-wrong.
+This should cure it:
 
+diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+--- a/kernel/time/hrtimer.c
++++ b/kernel/time/hrtimer.c
+@@ -1258,6 +1258,8 @@ static void __hrtimer_init(struct hrtimer *timer, clockid_t clock_id,
+ 			clock_id = CLOCK_MONOTONIC;
+ 		else if (clock_id == CLOCK_REALTIME_SOFT)
+ 			clock_id = CLOCK_MONOTONIC_SOFT;
++		else if (clock_id == CLOCK_REALTIME_HARD)
++			clock_id = CLOCK_MONOTONIC;
+ 	}
+ 
+ 	base = hrtimer_clockid_to_base(clock_id);
+ 
 Sebastian
