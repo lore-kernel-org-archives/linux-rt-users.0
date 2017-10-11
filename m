@@ -1,47 +1,266 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT] locking/rtmutex: do lockdep before actual locking in
- rt_spin_lock()
-Date: Wed, 11 Oct 2017 12:48:51 -0400
-Message-ID: <20171011124851.261415f0@gandalf.local.home>
-References: <20171011161646.baxqesjqm4sip6em@linutronix.de>
+From: Gene Heskett <gheskett@shentel.net>
+Subject: Re: [ANNOUNCE] v4.11.12-rt15
+Date: Wed, 11 Oct 2017 14:57:36 -0400
+Message-ID: <201710111457.36247.gheskett@shentel.net>
+References: <20171011103530.llpmvu36bekaixzh@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        tglx@linutronix.de, Peter Zijlstra <peterz@infradead.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171011161646.baxqesjqm4sip6em@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: Text/Plain;
+  charset="utf-8"
+Content-Transfer-Encoding: 8BIT
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from barracuda.cloud.shentel.net ([204.111.1.146]:52205 "EHLO
+        barracuda.cloud.shentel.net" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1751946AbdJKS5k (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 11 Oct 2017 14:57:40 -0400
+Received: from smtp2.edbg.cloud.shentel.net (smtp2.edbg.cloud.shentel.net [204.111.2.25]) by barracuda.cloud.shentel.net with ESMTP id YqnmOQTAb3sK7HQC for <linux-rt-users@vger.kernel.org>; Wed, 11 Oct 2017 14:57:38 -0400 (EDT)
+Received: from coyote.coyote.den (unknown [204.111.64.149])
+        by smtp2.edbg.cloud.shentel.net (Postfix) with ESMTPSA id 47CA521F81
+        for <linux-rt-users@vger.kernel.org>; Wed, 11 Oct 2017 14:57:38 -0400 (EDT)
+In-Reply-To: <20171011103530.llpmvu36bekaixzh@linutronix.de>
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 11 Oct 2017 18:16:46 +0200
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+On Wednesday 11 October 2017 06:35:33 Sebastian Andrzej Siewior wrote:
 
-> rt_spin_lock() should first do the lock annotation via lockdep and then
-> do the actual locking. That way we learn about the deadlock from lockdep
-> before it happens.
-> 
-> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> ---
->  kernel/locking/rtmutex.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-> index 79f49d73e4d0..639cfdaae72f 100644
-> --- a/kernel/locking/rtmutex.c
-> +++ b/kernel/locking/rtmutex.c
-> @@ -1153,8 +1153,8 @@ void __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
->  void __lockfunc rt_spin_lock(spinlock_t *lock)
->  {
->  	migrate_disable();
-> -	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
->  	spin_acquire(&lock->dep_map, 0, 0, _RET_IP_);
-> +	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
+> Dear RT folks!
+>
+> I'm pleased to announce the v4.11.12-rt15 patch set.
+>
+> Changes since v4.11.12-rt14:
+>
+>   - Programmed wake ups (nanosleep, clock_nanosleep, …) by a task with
+>     RT priority will still be carried out in the hardirq context
+>     (nothing changes). If it is programmed by task with a normal
+>     priority then the wake up will be carried out in the softirq
+>     context via the ktimersoftd thread.
+>     The advantage is that multiple wake ups of non-RT tasks won't
+>     disturb the RT task. Reported by Gratian Crisan.
+>
+>   - Paul Gortmaker reported splat during boot when TSC (on x86)
+> becomes unstable and kernel switches to an alternative. This has been
+> fixed by cherry-picking a patch from upstream.
+>
+>   - After the hrtimer rework, certain wake ups (like those programmed
+> in the past using the softirq context) won't fire. Reported by Mike
+> Galbraith, patched by Anna-Maria Gleixner.
+>
+>   - After the hrtimer rework, wake ups using CLOCK_REALTIME and a
+>     relative delay were affected by clock_settime() (they should have
+>     not been). Reported by Mike Galbraith.
+>
+> Known issues
+> 	None
+>
+> The delta patch against v4.11.12-rt14 is appended below and can be
+> found here:
+>
+>     
+> https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.11/incr/patch-4.
+>11.12-rt14-rt15.patch.xz
+>
+> You can get this release via the git tree at:
+>
+>    
+> git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git
+> v4.11.12-rt15
+>
+> The RT patch against v4.11.12 can be found here:
+>
+>    
+> https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.11/older/patch-4
+>.11.12-rt15.patch.xz
+>
+> The split quilt queue is available at:
+>
+>    
+> https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.11/older/patches
+>-4.11.12-rt15.tar.xz
+>
+> Sebastian
+> diff --git a/kernel/sched/clock.c b/kernel/sched/clock.c
+> --- a/kernel/sched/clock.c
+> +++ b/kernel/sched/clock.c
+> @@ -124,6 +124,12 @@ int sched_clock_stable(void)
+>  	return static_branch_likely(&__sched_clock_stable);
 >  }
->  EXPORT_SYMBOL(rt_spin_lock);
->  
+>
+> +static void __scd_stamp(struct sched_clock_data *scd)
+> +{
+> +	scd->tick_gtod = ktime_get_ns();
+> +	scd->tick_raw = sched_clock();
+> +}
+> +
+>  static void __set_sched_clock_stable(void)
+>  {
+>  	struct sched_clock_data *scd;
+> @@ -148,8 +154,37 @@ static void __set_sched_clock_stable(void)
+>  	tick_dep_clear(TICK_DEP_BIT_CLOCK_UNSTABLE);
+>  }
+>
+> +/*
+> + * If we ever get here, we're screwed, because we found out --
+> typically after + * the fact -- that TSC wasn't good. This means all
+> our clocksources (including + * ktime) could have reported wrong
+> values.
+> + *
+> + * What we do here is an attempt to fix up and continue sort of where
+> we left + * off in a coherent manner.
+> + *
+> + * The only way to fully avoid random clock jumps is to boot with:
+> + * "tsc=unstable".
+> + */
+>  static void __sched_clock_work(struct work_struct *work)
+>  {
+> +	struct sched_clock_data *scd;
+> +	int cpu;
+> +
+> +	/* take a current timestamp and set 'now' */
+> +	preempt_disable();
+> +	scd = this_scd();
+> +	__scd_stamp(scd);
+> +	scd->clock = scd->tick_gtod + __gtod_offset;
+> +	preempt_enable();
+> +
+> +	/* clone to all CPUs */
+> +	for_each_possible_cpu(cpu)
+> +		per_cpu(sched_clock_data, cpu) = *scd;
+> +
+> +	printk(KERN_INFO "sched_clock: Marking unstable (%lld, %lld)<-(%lld,
+> %lld)\n", +			scd->tick_gtod, __gtod_offset,
+> +			scd->tick_raw,  __sched_clock_offset);
+> +
+>  	static_branch_disable(&__sched_clock_stable);
+>  }
+>
+> @@ -157,27 +192,11 @@ static DECLARE_WORK(sched_clock_work,
+> __sched_clock_work);
+>
+>  static void __clear_sched_clock_stable(void)
+>  {
+> -	struct sched_clock_data *scd = this_scd();
+> -
+> -	/*
+> -	 * Attempt to make the stable->unstable transition continuous.
+> -	 *
+> -	 * Trouble is, this is typically called from the TSC watchdog
+> -	 * timer, which is late per definition. This means the tick
+> -	 * values can already be screwy.
+> -	 *
+> -	 * Still do what we can.
+> -	 */
+> -	__gtod_offset = (scd->tick_raw + __sched_clock_offset) -
+> (scd->tick_gtod); -
+> -	printk(KERN_INFO "sched_clock: Marking unstable (%lld, %lld)<-(%lld,
+> %lld)\n", -			scd->tick_gtod, __gtod_offset,
+> -			scd->tick_raw,  __sched_clock_offset);
+> +	if (!sched_clock_stable())
+> +		return;
+>
+>  	tick_dep_set(TICK_DEP_BIT_CLOCK_UNSTABLE);
+> -
+> -	if (sched_clock_stable())
+> -		schedule_work(&sched_clock_work);
+> +	schedule_work(&sched_clock_work);
+>  }
+>
+>  void clear_sched_clock_stable(void)
+> @@ -364,8 +383,7 @@ void sched_clock_tick(void)
+>  	 * XXX arguably we can skip this if we expose
+> tsc_clocksource_reliable */
+>  	scd = this_scd();
+> -	scd->tick_raw  = sched_clock();
+> -	scd->tick_gtod = ktime_get_ns();
+> +	__scd_stamp(scd);
+>
+>  	if (!sched_clock_stable() && likely(sched_clock_running))
+>  		sched_clock_local(scd);
+> diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+> --- a/kernel/time/hrtimer.c
+> +++ b/kernel/time/hrtimer.c
+> @@ -562,8 +562,14 @@ static inline ktime_t hrtimer_update_base(struct
+> hrtimer_cpu_base *base) ktime_t *offs_boot =
+> &base->clock_base[HRTIMER_BASE_BOOTTIME].offset; ktime_t *offs_tai =
+> &base->clock_base[HRTIMER_BASE_TAI].offset;
+>
+> -	return ktime_get_update_offsets_now(&base->clock_was_set_seq,
+> +	ktime_t now = ktime_get_update_offsets_now(&base->clock_was_set_seq,
+>  					    offs_real, offs_boot, offs_tai);
+> +
+> +	base->clock_base[HRTIMER_BASE_REALTIME_SOFT].offset = *offs_real;
+> +	base->clock_base[HRTIMER_BASE_BOOTTIME_SOFT].offset = *offs_boot;
+> +	base->clock_base[HRTIMER_BASE_TAI_SOFT].offset = *offs_tai;
+> +
+> +	return now;
+>  }
+>
+>  /*
+> @@ -1252,6 +1258,8 @@ static void __hrtimer_init(struct hrtimer
+> *timer, clockid_t clock_id, clock_id = CLOCK_MONOTONIC;
+>  		else if (clock_id == CLOCK_REALTIME_SOFT)
+>  			clock_id = CLOCK_MONOTONIC_SOFT;
+> +		else if (clock_id == CLOCK_REALTIME_HARD)
+> +			clock_id = CLOCK_MONOTONIC_HARD;
+>  	}
+>
+>  	base = hrtimer_clockid_to_base(clock_id);
+> @@ -1622,14 +1630,31 @@ static enum hrtimer_restart
+> hrtimer_wakeup(struct hrtimer *timer) return HRTIMER_NORESTART;
+>  }
+>
+> +#ifdef CONFIG_PREEMPT_RT_FULL
+> +static bool task_is_elevated(struct task_struct *tsk)
+> +{
+> +	int policy = tsk->policy;
+> +
+> +	if (policy == SCHED_FIFO || policy == SCHED_RR)
+> +		return true;
+> +	if (policy == SCHED_DEADLINE)
+> +		return true;
+> +	return false;
+> +}
+> +#endif
+> +
+>  static void __hrtimer_init_sleeper(struct hrtimer_sleeper *sl,
+>  				   clockid_t clock_id,
+>  				   enum hrtimer_mode mode,
+>  				   struct task_struct *task)
+>  {
+>  #ifdef CONFIG_PREEMPT_RT_FULL
+> -	if (!(clock_id & HRTIMER_BASE_SOFT_MASK))
+> -		clock_id |= HRTIMER_BASE_HARD_MASK;
+> +	if (!(clock_id & (HRTIMER_BASE_HARD_MASK | HRTIMER_BASE_SOFT_MASK)))
+> { +		if (task_is_elevated(current) || system_state != SYSTEM_RUNNING)
+> +			clock_id |= HRTIMER_BASE_HARD_MASK;
+> +		else
+> +			clock_id |= HRTIMER_BASE_SOFT_MASK;
+> +	}
+>  #endif
+>  	__hrtimer_init(&sl->timer, clock_id, mode);
+>  	sl->timer.function = hrtimer_wakeup;
+> diff --git a/localversion-rt b/localversion-rt
+> --- a/localversion-rt
+> +++ b/localversion-rt
+> @@ -1 +1 @@
+> --rt14
+> +-rt15
+> --
+> To unsubscribe from this list: send the line "unsubscribe
+> linux-rt-users" in the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
-Acked-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+Neat, and newer than the kernel.org release by several steps, its 
+4.10-rc3, so where can I get the whole thing, ready for a make menu|x|g|
+config?
 
--- Steve
+I am trying to make linuxcnc run on a rock64, its so new you can still 
+smell the paint.
+
+Cheers, Gene Heskett
+-- 
+"There are four boxes to be used in defense of liberty:
+ soap, ballot, jury, and ammo. Please use in that order."
+-Ed Howdershelt (Author)
+Genes Web page <http://geneslinuxbox.net:6309/gene>
