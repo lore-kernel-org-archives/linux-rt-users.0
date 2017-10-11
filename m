@@ -1,62 +1,38 @@
-From: Arnaldo Carvalho de Melo <acme@kernel.org>
-Subject: Re: [PATCH 2/2] IB/hfi1: Handle packets in the theaded handler only
-Date: Wed, 11 Oct 2017 16:14:48 -0300
-Message-ID: <20171011191448.GG3503@kernel.org>
-References: <20171003154920.31566-1-acme@kernel.org>
- <20171003154920.31566-3-acme@kernel.org>
- <3003fbfd-6d34-a968-1264-7c16580d5ce6@intel.com>
- <20171010191529.GP28623@kernel.org>
- <20171011104456.mlewocqc6ghi3fev@linutronix.de>
- <20171011190745.GF3503@kernel.org>
+From: Gene Heskett <gheskett@shentel.net>
+Subject: Re: [ANNOUNCE] v4.11.12-rt15
+Date: Wed, 11 Oct 2017 15:16:35 -0400
+Message-ID: <201710111516.35276.gheskett@shentel.net>
+References: <20171011103530.llpmvu36bekaixzh@linutronix.de> <201710111457.36247.gheskett@shentel.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Dennis Dalessandro <dennis.dalessandro@intel.com>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        Arnaldo Carvalho de Melo <acme@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        Dean Luick <dean.luick@intel.com>,
-        Doug Ledford <dledford@redhat.com>,
-        Julia Cartwright <julia@ni.com>,
-        Kaike Wan <kaike.wan@intel.com>,
-        Leon Romanovsky <leonro@mellanox.com>,
-        linux-rdma@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>,
-        Sebastian Sanchez <sebastian.sanchez@intel.com>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: Text/Plain;
+  charset="utf-8"
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from barracuda.cloud.shentel.net ([204.111.1.144]:51641 "EHLO
+        barracuda.cloud.shentel.net" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1752587AbdJKTQr (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 11 Oct 2017 15:16:47 -0400
+Received: from smtp1.edbg.cloud.shentel.net (smtp1.edbg.cloud.shentel.net [204.111.2.17]) by barracuda.cloud.shentel.net with ESMTP id BNQUDgRpEyoVdBjW for <linux-rt-users@vger.kernel.org>; Wed, 11 Oct 2017 15:16:45 -0400 (EDT)
+Received: from coyote.coyote.den (unknown [204.111.64.149])
+        by smtp1.edbg.cloud.shentel.net (Postfix) with ESMTPSA id 153D522440
+        for <linux-rt-users@vger.kernel.org>; Wed, 11 Oct 2017 15:16:45 -0400 (EDT)
+In-Reply-To: <201710111457.36247.gheskett@shentel.net>
 Content-Disposition: inline
-In-Reply-To: <20171011190745.GF3503@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Em Wed, Oct 11, 2017 at 04:07:45PM -0300, Arnaldo Carvalho de Melo escreveu:
-> Em Wed, Oct 11, 2017 at 12:44:56PM +0200, Sebastian Andrzej Siewior escreveu:
-> > On 2017-10-10 16:15:29 [-0300], Arnaldo Carvalho de Melo wrote:
-> > > This may not even be needed, i.e. Sebastian Siewior said that recent
-> > > rt patches already identify the way this driver uses threaded interrupts
-> > > and automagically does the right thing, Sebastian?
-> > > 
-> > > He mentioned this in this message:
-> > > 
-> > > https://marc.info/?l=linux-rt-users&m=150722087514307&w=2
-> > > 
-> > > But I replied to Mike and don't recall getting an answer to my last
-> > > question.
-> > 
-> > correct, since 4.1.7-rt8
-> >   https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git/commit/?h=v4.1.7-rt8-patches&id=7461758b9e982e4ea6280ce9308492e7cceda2ed
-> 
-> Ouch, it seems I looked at the wrong place, as patches-4.11.12-rt14
-> doesn't have this one, right?
-> 
-> Off I go trying to make sense of this...
+On Wednesday 11 October 2017 14:57:36 Gene Heskett wrote:
 
-Ok, this was merged upstream on v4.4:
+git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git 
+v4.11.12-rt15
 
-[acme@jouet linux]$ git log -1 --oneline 2a1d3ab8986d1
-2a1d3ab8986d genirq: Handle force threading of irqs with primary and thread handler
+does not exist.
 
-nevermind :-)
-
-- Arnaldo
+Cheers, Gene Heskett
+-- 
+"There are four boxes to be used in defense of liberty:
+ soap, ballot, jury, and ammo. Please use in that order."
+-Ed Howdershelt (Author)
+Genes Web page <http://geneslinuxbox.net:6309/gene>
