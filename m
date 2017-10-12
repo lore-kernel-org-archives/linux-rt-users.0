@@ -1,214 +1,43 @@
-From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [PATCH v3 22/33] tracing: Add support for 'field variables'
-Date: Thu, 12 Oct 2017 11:52:11 +0900
-Message-ID: <20171012025211.GC9177@sejong>
-References: <cover.1506105131.git.tom.zanussi@linux.intel.com>
- <4f507b4fc0584f08b9a7d6abf1b8d718f8306c5c.1506105131.git.tom.zanussi@linux.intel.com>
+From: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
+Subject: Re: [ANNOUNCE] v4.11.12-rt15
+Date: Thu, 12 Oct 2017 06:42:08 +0200
+Message-ID: <20171012064208.2e6cfe22@archlinux.localdomain>
+References: <20171011103530.llpmvu36bekaixzh@linutronix.de>
+        <201710111457.36247.gheskett@shentel.net>
+        <201710111516.35276.gheskett@shentel.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        rajvi.jingar@intel.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org, kernel-team@lge.com
-To: Tom Zanussi <tom.zanussi@linux.intel.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: Gene Heskett <gheskett@shentel.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from LGEAMRELO11.lge.com ([156.147.23.51]:39199 "EHLO
-        lgeamrelo11.lge.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1752451AbdJLCwO (ORCPT
+Received: from mail226c50.megamailservers.eu ([91.136.10.236]:57164 "EHLO
+        mail36c50.megamailservers.eu" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1750774AbdJLFKF (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 11 Oct 2017 22:52:14 -0400
-Content-Disposition: inline
-In-Reply-To: <4f507b4fc0584f08b9a7d6abf1b8d718f8306c5c.1506105131.git.tom.zanussi@linux.intel.com>
+        Thu, 12 Oct 2017 01:10:05 -0400
+In-Reply-To: <201710111516.35276.gheskett@shentel.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Sep 22, 2017 at 03:00:02PM -0500, Tom Zanussi wrote:
-> Users should be able to directly specify event fields in hist trigger
-> 'actions' rather than being forced to explicitly create a variable for
-> that purpose.
-> 
-> Add support allowing fields to be used directly in actions, which
-> essentially does just that - creates 'invisible' variables for each
-> bare field specified in an action.  If a bare field refers to a field
-> on another (matching) event, it even creates a special histogram for
-> the purpose (since variables can't be defined on an existing histogram
-> after histogram creation).
-> 
-> Here's a simple example that demonstrates both.  Basically the
-> onmatch() action creates a list of variables corresponding to the
-> parameters of the synthetic event to be generated, and then uses those
-> values to generate the event.  So for the wakeup_latency synthetic
-> event 'call' below the first param, $wakeup_lat, is a variable defined
-> explicitly on sched_switch, where 'next_pid' is just a normal field on
-> sched_switch, and prio is a normal field on sched_waking.
-> 
-> Since the mechanism works on variables, those two normal fields just
-> have 'invisible' variables created internally for them.  In the case of
-> 'prio', which is on another event, we actually need to create an
-> additional hist trigger and define the invisible event on that, since
+On Wed, 11 Oct 2017 15:16:35 -0400, Gene Heskett wrote:
+>git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git 
+>v4.11.12-rt15
+>
+>does not exist.
 
-s/event/variable/ ?
+Hi Gene,
+
+I'll download and build from
+
+https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.11.tar.xz
+https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.11.tar.sign
+https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.11.12.xz
+https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.11.12.sign
+https://www.kernel.org/pub/linux/kernel/projects/rt/4.11/older/patch-4.11.12-rt15.patch.xz
+https://www.kernel.org/pub/linux/kernel/projects/rt/4.11/older/patch-4.11.12-rt15.patch.sign
+
+Regards,
+Ralf
 
 
-> once a hist trigger is defined, variables can't be added to it later.
-> 
->   echo 'wakeup_latency u64 lat; pid_t pid; int prio' >>
->        /sys/kernel/debug/tracing/synthetic_events
-> 
->   echo 'hist:keys=pid:ts0=$common_timestamp.usecs >>
->        /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
-> 
-> echo 'hist:keys=next_pid:wakeup_lat=$common_timestamp.usecs-$ts0:
->       onmatch(sched.sched_waking).wakeup_latency($wakeup_lat,next_pid,prio)
->             >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-> 
-> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> ---
-
-[SNIP]
-
-> +static bool compatible_keys(struct hist_trigger_data *target_hist_data,
-> +			    struct hist_trigger_data *hist_data,
-> +			    unsigned int n_keys)
-> +{
-> +	struct hist_field *target_hist_field, *hist_field;
-> +	unsigned int n, i, j;
-> +
-> +	if (hist_data->n_fields - hist_data->n_vals != n_keys)
-> +		return false;
-> +
-> +	i = hist_data->n_vals;
-> +	j = target_hist_data->n_vals;
-> +
-> +	for (n = 0; n < n_keys; n++) {
-> +		hist_field = hist_data->fields[i + n];
-> +		target_hist_field = hist_data->fields[j + n];
-
-s/hist_data/target_hist_data/
-
-> +
-> +		if (strcmp(hist_field->type, target_hist_field->type) != 0)
-> +			return false;
-> +		if (hist_field->size != target_hist_field->size)
-> +			return false;
-> +		if (hist_field->is_signed != target_hist_field->is_signed)
-> +			return false;
-> +	}
-> +
-> +	return true;
-> +}
-
-[SNIP]
-
-> +static struct hist_field *
-> +create_field_var_hist(struct hist_trigger_data *target_hist_data,
-> +		      char *system, char *event_name, char *field_name)
-> +{
-> +	struct trace_array *tr = target_hist_data->event_file->tr;
-> +	struct hist_field *event_var = ERR_PTR(-EINVAL);
-> +	struct hist_trigger_data *hist_data;
-> +	unsigned int i, n, first = true;
-> +	struct field_var_hist *var_hist;
-> +	struct trace_event_file *file;
-> +	struct hist_field *key_field;
-> +	char *saved_filter;
-> +	char *cmd;
-> +	int ret;
-> +
-> +	if (target_hist_data->n_field_var_hists >= SYNTH_FIELDS_MAX)
-> +		return ERR_PTR(-EINVAL);
-> +
-> +	file = event_file(tr, system, event_name);
-> +
-> +	if (IS_ERR(file)) {
-> +		ret = PTR_ERR(file);
-> +		return ERR_PTR(ret);
-> +	}
-> +
-> +	hist_data = find_compatible_hist(target_hist_data, file);
-> +	if (!hist_data)
-> +		return ERR_PTR(-EINVAL);
-> +
-> +	var_hist = kzalloc(sizeof(*var_hist), GFP_KERNEL);
-> +	if (!var_hist)
-> +		return ERR_PTR(-ENOMEM);
-> +
-> +	cmd = kzalloc(MAX_FILTER_STR_VAL, GFP_KERNEL);
-> +	if (!cmd) {
-> +		kfree(var_hist);
-> +		return ERR_PTR(-ENOMEM);
-> +	}
-> +
-> +	strcat(cmd, "keys=");
-> +
-> +	for_each_hist_key_field(i, hist_data) {
-> +		key_field = hist_data->fields[i];
-> +		if (!first)
-> +			strcat(cmd, ",");
-> +		strcat(cmd, key_field->field->name);
-> +		first = false;
-> +	}
-> +
-> +	strcat(cmd, ":synthetic_");
-> +	strcat(cmd, field_name);
-> +	strcat(cmd, "=");
-> +	strcat(cmd, field_name);
-> +
-> +	saved_filter = find_trigger_filter(hist_data, file);
-> +	if (saved_filter) {
-> +		strcat(cmd, " if ");
-> +		strcat(cmd, saved_filter);
-> +	}
-> +
-> +	var_hist->cmd = kstrdup(cmd, GFP_KERNEL);
-> +	if (!var_hist->cmd) {
-> +		kfree(cmd);
-> +		kfree(var_hist);
-> +		return ERR_PTR(-ENOMEM);
-> +	}
-> +
-> +	var_hist->hist_data = hist_data;
-
-Hmm.. so it's a compatible hist data, not the newly created one,
-right?  Might confuse someone later.. ;-)
-
-
-> +
-> +	ret = event_hist_trigger_func(&trigger_hist_cmd, file,
-> +				      "", "hist", cmd);
-> +	if (ret) {
-> +		kfree(cmd);
-> +		kfree(var_hist->cmd);
-> +		kfree(var_hist);
-> +		return ERR_PTR(ret);
-> +	}
-
-What if two different event want to create synthetic variables for a
-same field?  I suspect one failed because the variable names are same
-but it could continue since the variable is there anyway.  Probably it
-would be better to use a different error code for the case..
-
-Thanks,
-Namhyung
-
-
-> +
-> +	strcpy(cmd, "synthetic_");
-> +	strcat(cmd, field_name);
-> +
-> +	event_var = find_event_var(tr, system, event_name, cmd);
-> +	if (!event_var) {
-> +		kfree(cmd);
-> +		kfree(var_hist->cmd);
-> +		kfree(var_hist);
-> +		return ERR_PTR(-EINVAL);
-> +	}
-> +
-> +	n = target_hist_data->n_field_var_hists;
-> +	target_hist_data->field_var_hists[n] = var_hist;
-> +	target_hist_data->n_field_var_hists++;
-> +
-> +	return event_var;
-> +}
