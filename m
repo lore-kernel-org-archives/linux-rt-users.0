@@ -1,75 +1,120 @@
-From: Gene Heskett <gheskett@shentel.net>
-Subject: Re: [ANNOUNCE] v4.11.12-rt15
-Date: Thu, 12 Oct 2017 10:28:53 -0400
-Message-ID: <201710121028.53449.gheskett@shentel.net>
-References: <20171011103530.llpmvu36bekaixzh@linutronix.de> <201710111516.35276.gheskett@shentel.net> <20171012064208.2e6cfe22@archlinux.localdomain>
+From: Tom Zanussi <tom.zanussi@linux.intel.com>
+Subject: Re: [PATCH v3 12/33] tracing: Add variable support to hist triggers
+Date: Thu, 12 Oct 2017 10:51:58 -0500
+Message-ID: <1507823518.12638.2.camel@tzanussi-mobl.amr.corp.intel.com>
+References: <cover.1506105131.git.tom.zanussi@linux.intel.com>
+         <00ac0ead22391be1e2689d901d63684ea3823bab.1506105131.git.tom.zanussi@linux.intel.com>
+         <20171009032727.GA6357@danjae.aot.lge.com>
+         <1507728797.8849.16.camel@tzanussi-mobl.amr.corp.intel.com>
+         <20171011232347.GA9177@sejong>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="iso-8859-1"
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org,
-        EMC developers <emc-developers@lists.sourceforge.net>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from barracuda.cloud.shentel.net ([204.111.1.144]:53955 "EHLO
-        barracuda.cloud.shentel.net" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1751492AbdJLO25 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 12 Oct 2017 10:28:57 -0400
-In-Reply-To: <20171012064208.2e6cfe22@archlinux.localdomain>
-Content-Disposition: inline
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
+        vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel.opensrc@gmail.com, joelaf@google.com,
+        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
+        rajvi.jingar@intel.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org, kernel-team@lge.com
+To: Namhyung Kim <namhyung@kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171011232347.GA9177@sejong>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thursday 12 October 2017 00:42:08 Ralf Mardorf wrote:
+On Thu, 2017-10-12 at 08:23 +0900, Namhyung Kim wrote:
+> Hi Tom,
+> 
+> On Wed, Oct 11, 2017 at 08:33:17AM -0500, Tom Zanussi wrote:
+> > On Mon, 2017-10-09 at 12:27 +0900, Namhyung Kim wrote:
+> > > On Fri, Sep 22, 2017 at 02:59:52PM -0500, Tom Zanussi wrote:
+> > > > Variables set as above can be used by being referenced from another
+> > > > event, as described in a subsequent patch.
+> > > 
+> > > That means, a variable should be unique (in a tracing instance at least).
+> > > 
+> > 
+> > Not exactly - I thought it would be too restrictive to force users to
+> > come up with names that would be unique across an instance, so made them
+> > unique to events.  So users can use the same variable name for triggers
+> > on multiple events, and in cases where there are multiple events with
+> > the same name, use the fully-qualified subsys.event_name.variable_name
+> > name to disambiguate them.  If there is only one event with the given
+> > name, thus no ambiguity, specifying the bare variable name suffices.
+> > Again the intent is to make the common case as simple as possible, but
+> > allow for more complex cases without requiring naming gymnastics from
+> > the user.
+> 
+> Agreed.  Thanks for the explanation.
+> 
+> 
+> [SNIP]
+> 
+> > > > +static int parse_var_defs(struct hist_trigger_data *hist_data)
+> > > > +{
+> > > > +	char *s, *str, *var_name, *field_str;
+> > > > +	unsigned int i, j, n_vars = 0;
+> > > > +	int ret = 0;
+> > > > +
+> > > > +	for (i = 0; i < hist_data->attrs->n_assignments; i++) {
+> > > > +		str = hist_data->attrs->assignment_str[i];
+> > > > +		for (j = 0; j < TRACING_MAP_VARS_MAX; j++) {
+> > > > +			field_str = strsep(&str, ",");
+> > > > +			if (!field_str)
+> > > > +				break;
+> > > > +
+> > > > +			var_name = strsep(&field_str, "=");
+> > > > +			if (!var_name || !field_str) {
+> > > > +				ret = -EINVAL;
+> > > > +				goto free;
+> > > > +			}
+> > > > +
+> > > > +			s = kstrdup(var_name, GFP_KERNEL);
+> > > > +			if (!s) {
+> > > > +				ret = -ENOMEM;
+> > > > +				goto free;
+> > > > +			}
+> > > > +			hist_data->attrs->var_defs.name[n_vars] = s;
+> > > > +
+> > > > +			s = kstrdup(field_str, GFP_KERNEL);
+> > > > +			if (!s) {
+> > > > +				ret = -ENOMEM;
+> > > > +				goto free;
+> > > 
+> > > It seems that it might leak the copy of var_name here..
+> > > 
+> > 
+> > Unless I'm missing something, the free_var_defs() should handle this
+> > case too...
+> 
+> But the var_defs.n_vars was not increased at this point.
+> 
 
-> On Wed, 11 Oct 2017 15:16:35 -0400, Gene Heskett wrote:
-> >git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git
-> >v4.11.12-rt15
-> >
-> >does not exist.
->
-> Hi Gene,
->
-> I'll download and build from
->
-> https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.11.tar.xz
-> https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.11.tar.sign
-> https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.11.12.xz
-> https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.11.12.sign
-> https://www.kernel.org/pub/linux/kernel/projects/rt/4.11/older/patch-4
->.11.12-rt15.patch.xz
-> https://www.kernel.org/pub/linux/kernel/projects/rt/4.11/older/patch-4
->.11.12-rt15.patch.sign
->
-> Regards,
-> Ralf
+Yep.  Got it, thanks.
 
-All links worked.
+Tom
 
-Full rt-preempt build underway, _on_ the rock64. Thanks Ralf. Est 2 hours 
-for kernel. I note this "make help" is much more "helpfull".  Last time 
-thru I didn't understand that making the dtsb's was a separate step, so 
-of course the make install wasn't complete and the reboot was to the 
-older kernel. I might even copy all this to the pi3b, but I expect a 
-build on it will take most of a day.  They use a /boot/config.txt to 
-control which of several installed kernels to boot. I'm not 100% sure I 
-have the rock64's boot selection mechanism understood yet.
-
-Question you might know about: These logitech "unifying" keyboard/mouse 
-buttons for wireless keyboards & mice, does one button handle both 
-keyboard and mouse if dmesg reports it as unifying? I am wondering if 
-that might be my missed events problem on the pi, which is driving my 
-attempts to bring up the much faster rock64 as an lcnc controller.
-
-This is something I've not seen discussed on any of the lists I'm subbed 
-to.
-
-Thanks again.
-
-
-Cheers, Gene Heskett
--- 
-"There are four boxes to be used in defense of liberty:
- soap, ballot, jury, and ammo. Please use in that order."
--Ed Howdershelt (Author)
-Genes Web page <http://geneslinuxbox.net:6309/gene>
+> Thanks,
+> Namhyung
+> 
+> 
+> > > 
+> > > > +			}
+> > > > +			hist_data->attrs->var_defs.expr[n_vars++] = s;
+> > > > +
+> > > > +			hist_data->attrs->var_defs.n_vars = n_vars;
+> > > > +
+> > > > +			if (n_vars == TRACING_MAP_VARS_MAX)
+> > > > +				goto free;
+> > > > +		}
+> > > > +	}
+> > > > +
+> > > > +	return ret;
+> > > > + free:
+> > > > +	free_var_defs(hist_data);
+> > > > +
+> > > > +	return ret;
+> > > > +}
+> > > > +
+> > 
+> > 
