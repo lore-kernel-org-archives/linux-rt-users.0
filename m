@@ -1,62 +1,94 @@
-From: Gene Heskett <gheskett@shentel.net>
-Subject: Re: [ANNOUNCE] v4.11.12-rt15
-Date: Fri, 13 Oct 2017 13:26:59 -0400
-Message-ID: <201710131326.59859.gheskett@shentel.net>
-References: <20171011103530.llpmvu36bekaixzh@linutronix.de> <20171013132819.lgqegbqnpkr4mre7@linutronix.de> <201710131057.20802.gheskett@shentel.net>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH RT] apparmor: use a locallock instead preempt_disable()
+Date: Mon, 16 Oct 2017 20:16:28 +0200
+Message-ID: <20171016181628.7xg7fj2225mussup@linutronix.de>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Cc: linux-kernel@vger.kernel.org, tglx@linutronix.de,
+        Peter Zijlstra <peterz@infradead.org>,
+        Steven Rostedt <rostedt@goodmis.org>
 To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from barracuda.cloud.shentel.net ([204.111.1.145]:51378 "EHLO
-        barracuda.cloud.shentel.net" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1752799AbdJMR1D (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 13 Oct 2017 13:27:03 -0400
-Received: from smtp1.edbg.cloud.shentel.net (smtp1.edbg.cloud.shentel.net [204.111.2.17]) by barracuda.cloud.shentel.net with ESMTP id 0wMh2KVUbdk9LxaZ for <linux-rt-users@vger.kernel.org>; Fri, 13 Oct 2017 13:27:01 -0400 (EDT)
-Received: from coyote.coyote.den (unknown [204.111.64.149])
-        by smtp1.edbg.cloud.shentel.net (Postfix) with ESMTPSA id BA28D22440
-        for <linux-rt-users@vger.kernel.org>; Fri, 13 Oct 2017 13:27:01 -0400 (EDT)
-In-Reply-To: <201710131057.20802.gheskett@shentel.net>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Friday 13 October 2017 10:57:20 Gene Heskett wrote:
+get_buffers() disables preemption which acts as a lock for the per-CPU
+variable. Since we can't disable preemption here on RT, a local_lock is
+is used in order to remain on the same CPU and not to have more than one
+user within the critical section.
 
-> On Friday 13 October 2017 09:28:19 Sebastian Andrzej Siewior wrote:
-> > On 2017-10-11 15:16:35 [-0400], Gene Heskett wrote:
-> > > On Wednesday 11 October 2017 14:57:36 Gene Heskett wrote:
-> > >
-> > > git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.gi
-> > >t v4.11.12-rt15
-> > >
-> > > does not exist.
-> >
-> > The URL is correct, the tag exists. What is the problem?
->
-> "site does not exist"
->
-> Its moot now, Ralf sent me a recipe that worked. Built ok but not yet
-> installed, the Dell running my mill has committed suicide. So thats
-> project #1 ATM.
->
-> What I've built is 4.11.12-rt15. So its the same version.
->
-> > > Cheers, Gene Heskett
-> >
-> > Sebastian
->
-> Cheers, Gene Heskett
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ security/apparmor/include/path.h |   21 +++++++++++++++++----
+ security/apparmor/lsm.c          |    2 +-
+ 2 files changed, 18 insertions(+), 5 deletions(-)
 
-Update, the tail-less rodent on that machine died, and that killed 
-keyboard and everything. So I'm off to get a couple more mice at 
-wallies.
-
-Cheers, Gene Heskett
--- 
-"There are four boxes to be used in defense of liberty:
- soap, ballot, jury, and ammo. Please use in that order."
--Ed Howdershelt (Author)
-Genes Web page <http://geneslinuxbox.net:6309/gene>
+--- a/security/apparmor/include/path.h
++++ b/security/apparmor/include/path.h
+@@ -38,9 +38,10 @@ struct aa_buffers {
+ };
+ 
+ #include <linux/percpu.h>
+-#include <linux/preempt.h>
++#include <linux/locallock.h>
+ 
+ DECLARE_PER_CPU(struct aa_buffers, aa_buffers);
++DECLARE_LOCAL_IRQ_LOCK(aa_buffers_lock);
+ 
+ #define COUNT_ARGS(X...) COUNT_ARGS_HELPER(, ##X, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
+ #define COUNT_ARGS_HELPER(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, n, X...) n
+@@ -54,12 +55,24 @@ DECLARE_PER_CPU(struct aa_buffers, aa_bu
+ 
+ #define for_each_cpu_buffer(I) for ((I) = 0; (I) < MAX_PATH_BUFFERS; (I)++)
+ 
+-#ifdef CONFIG_DEBUG_PREEMPT
++#ifdef CONFIG_PREEMPT_RT_BASE
++
++static inline void AA_BUG_PREEMPT_ENABLED(const char *s)
++{
++	struct local_irq_lock *lv;
++
++	lv = this_cpu_ptr(&aa_buffers_lock);
++	WARN_ONCE(lv->owner != current,
++		  "__get_buffer without aa_buffers_lock\n");
++}
++
++#elif CONFIG_DEBUG_PREEMPT
+ #define AA_BUG_PREEMPT_ENABLED(X) AA_BUG(preempt_count() <= 0, X)
+ #else
+ #define AA_BUG_PREEMPT_ENABLED(X) /* nop */
+ #endif
+ 
++
+ #define __get_buffer(N) ({					\
+ 	struct aa_buffers *__cpu_var; \
+ 	AA_BUG_PREEMPT_ENABLED("__get_buffer without preempt disabled");  \
+@@ -72,14 +85,14 @@ DECLARE_PER_CPU(struct aa_buffers, aa_bu
+ 
+ #define get_buffers(X...)	\
+ do {				\
+-	preempt_disable();	\
++	local_lock(aa_buffers_lock);	\
+ 	__get_buffers(X);	\
+ } while (0)
+ 
+ #define put_buffers(X, Y...)	\
+ do {				\
+ 	__put_buffers(X, Y);	\
+-	preempt_enable();	\
++	local_unlock(aa_buffers_lock);	\
+ } while (0)
+ 
+ #endif /* __AA_PATH_H */
+--- a/security/apparmor/lsm.c
++++ b/security/apparmor/lsm.c
+@@ -42,7 +42,7 @@
+ int apparmor_initialized __initdata;
+ 
+ DEFINE_PER_CPU(struct aa_buffers, aa_buffers);
+-
++DEFINE_LOCAL_IRQ_LOCK(aa_buffers_lock);
+ 
+ /*
+  * LSM hook functions
