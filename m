@@ -1,47 +1,35 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] v4.13.7-rt1
-Date: Tue, 17 Oct 2017 17:29:52 +0200
-Message-ID: <20171017152952.6ab7qsgeqgisqci4@linutronix.de>
+Subject: Re: [PATCH rt-v4.11] sched/clock: fix early boot splat on clock
+ transition to unstable
+Date: Tue, 17 Oct 2017 17:36:20 +0200
+Message-ID: <20171017153620.knmavtulzpm6urmo@linutronix.de>
+References: <1507003039-16583-1-git-send-email-paul.gortmaker@windriver.com>
+ <20171006100929.3dgt6rb7rdq64cq5@linutronix.de>
+ <20171006123147.ejkezfjvhcycoyyo@linutronix.de>
+ <20171011133014.GG3723@windriver.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Cc: linux-rt-users@vger.kernel.org
+To: Paul Gortmaker <paul.gortmaker@windriver.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:58761 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S932642AbdJQPgX (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 17 Oct 2017 11:36:23 -0400
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <20171011133014.GG3723@windriver.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear RT folks!
+On 2017-10-11 09:30:14 [-0400], Paul Gortmaker wrote:
+> The tree patched up from scratch without any need to refresh the two newly
+> exported commits and the old trash box with the broken tsc doesn't have the
+> boot splat. Note:  I've not [yet] tested on something with a working tsc, but I
+> doubt that is a concern...
 
-I'm pleased to announce the v4.13.7-rt1 patch set. 
+I forgot to respond but I released a v4.11-RT with this included.
 
-Changes since v4.11.12-rt16:
-
-  - Rebase to v4.13.7
-
-  - We have now only the reader bias version of RWLOCK. In v4.11 it was
-    possible to choose between both implementations but since the reader
-    bias version makes no problems it is now the only implementation.
-
-  - The lockdep self test is now disabled. While it produced some false
-    positives on v4.11 it now completly locks up the system and needs
-    investigation before re-enabling.
-
-Known issues
-	None
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.13.7-rt1
-
-The RT patch against v4.13.7 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.13/older/patch-4.13.7-rt1.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.13/older/patches-4.13.7-rt1.tar.xz
+> Paul.
 
 Sebastian
