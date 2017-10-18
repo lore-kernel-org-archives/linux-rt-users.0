@@ -1,41 +1,53 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH v3 29/33] tracing: Add inter-event hist trigger
- Documentation
-Date: Tue, 17 Oct 2017 21:36:57 -0400
-Message-ID: <20171017213657.4b0b78f6@gandalf.local.home>
-References: <cover.1506105131.git.tom.zanussi@linux.intel.com>
-        <4c06d6648839b387c4df09752329a09816e09f31.1506105131.git.tom.zanussi@linux.intel.com>
+From: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
+Subject: Re: [ANNOUNCE] v4.13.7-rt1
+Date: Wed, 18 Oct 2017 04:37:24 +0200
+Message-ID: <20171018043724.51edd75a@archlinux.localdomain>
+References: <20171017152952.6ab7qsgeqgisqci4@linutronix.de>
+        <201710172047.07299.gheskett@shentel.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        rajvi.jingar@intel.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org
-To: Tom Zanussi <tom.zanussi@linux.intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <4c06d6648839b387c4df09752329a09816e09f31.1506105131.git.tom.zanussi@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail236c50.megamailservers.eu ([91.136.10.246]:41594 "EHLO
+        mail56c50.megamailservers.eu" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1751616AbdJRCh2 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 17 Oct 2017 22:37:28 -0400
+Received: from archlinux.localdomain (x5ce0d1c3.dyn.telefonica.de [92.224.209.195])
+        (authenticated bits=0)
+        by mail56c50.megamailservers.eu (8.14.9/8.13.1) with ESMTP id v9I2bOkQ001443
+        (version=TLSv1/SSLv3 cipher=AES256-GCM-SHA384 bits=256 verify=NO)
+        for <linux-rt-users@vger.kernel.org>; Wed, 18 Oct 2017 02:37:25 +0000
+In-Reply-To: <201710172047.07299.gheskett@shentel.net>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 22 Sep 2017 15:00:09 -0500
-Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
-
-> Add background and details on inter-event hist triggers, including
-> hist variables, synthetic events, and actions.
-
-One more thing. Make this a separate document. Don't add it to the
-events.txt. Have a histogram.txt or something and just have events.txt
-reference that document.
-
-Thanks!
-
--- Steve
-
-> 
-> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> Signed-off-by: Baohong Liu <baohong.liu@intel.com>
-> ---
+On Tue, 17 Oct 2017 20:47:07 -0400, Gene Heskett wrote:
+>A bit of a git noob here. Why am I getting this on an r-pi3b?
 >
+>pi@picnc:/media/slash/home/pi $
+>git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git
+>v4.13.7-rt1 -bash:
+>git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git:
+>No such file or directory
+
+git clone git://git.foo.org/bar
+cd /bar
+git pull --all
+
+or
+
+git checkout ...
+
+Instead of using git I always download from
+
+https://www.kernel.org/
+
+https://www.kernel.org/pub/linux/kernel/
+https://www.kernel.org/pub/linux/kernel/v4.x/
+
+https://www.kernel.org/pub/linux/kernel/projects/
+https://www.kernel.org/pub/linux/kernel/projects/rt/
+
+Important: https://www.kernel.org/category/signatures.html
