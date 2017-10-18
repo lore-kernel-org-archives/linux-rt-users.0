@@ -1,85 +1,41 @@
-From: Gene Heskett <gheskett@shentel.net>
-Subject: Re: [ANNOUNCE] v4.13.7-rt1
-Date: Tue, 17 Oct 2017 20:47:07 -0400
-Message-ID: <201710172047.07299.gheskett@shentel.net>
-References: <20171017152952.6ab7qsgeqgisqci4@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH v3 29/33] tracing: Add inter-event hist trigger
+ Documentation
+Date: Tue, 17 Oct 2017 21:36:57 -0400
+Message-ID: <20171017213657.4b0b78f6@gandalf.local.home>
+References: <cover.1506105131.git.tom.zanussi@linux.intel.com>
+        <4c06d6648839b387c4df09752329a09816e09f31.1506105131.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="utf-8"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from barracuda.cloud.shentel.net ([204.111.1.146]:53648 "EHLO
-        barracuda.cloud.shentel.net" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1751360AbdJRArL (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 17 Oct 2017 20:47:11 -0400
-Received: from smtp1.edbg.cloud.shentel.net (smtp1.edbg.cloud.shentel.net [204.111.2.17]) by barracuda.cloud.shentel.net with ESMTP id cf4PBVf0rerqYAmD for <linux-rt-users@vger.kernel.org>; Tue, 17 Oct 2017 20:47:09 -0400 (EDT)
-Received: from coyote.coyote.den (unknown [204.111.64.149])
-        by smtp1.edbg.cloud.shentel.net (Postfix) with ESMTPSA id 8181621F3D
-        for <linux-rt-users@vger.kernel.org>; Tue, 17 Oct 2017 20:47:09 -0400 (EDT)
-In-Reply-To: <20171017152952.6ab7qsgeqgisqci4@linutronix.de>
-Content-Disposition: inline
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
+        vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel.opensrc@gmail.com, joelaf@google.com,
+        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
+        rajvi.jingar@intel.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
+To: Tom Zanussi <tom.zanussi@linux.intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <4c06d6648839b387c4df09752329a09816e09f31.1506105131.git.tom.zanussi@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tuesday 17 October 2017 11:29:52 Sebastian Andrzej Siewior wrote:
+On Fri, 22 Sep 2017 15:00:09 -0500
+Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
 
-> Dear RT folks!
->
-> I'm pleased to announce the v4.13.7-rt1 patch set.
->
-> Changes since v4.11.12-rt16:
->
->   - Rebase to v4.13.7
->
->   - We have now only the reader bias version of RWLOCK. In v4.11 it
-> was possible to choose between both implementations but since the
-> reader bias version makes no problems it is now the only
-> implementation.
->
->   - The lockdep self test is now disabled. While it produced some
-> false positives on v4.11 it now completly locks up the system and
-> needs investigation before re-enabling.
->
-> Known issues
-> 	None
->
-> You can get this release via the git tree at:
->
->    
-> git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git
-> v4.13.7-rt1
->
-A bit of a git noob here. Why am I getting this on an r-pi3b?
+> Add background and details on inter-event hist triggers, including
+> hist variables, synthetic events, and actions.
 
-pi@picnc:/media/slash/home/pi $ git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.13.7-rt1
--bash: git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git: No such file or directory
+One more thing. Make this a separate document. Don't add it to the
+events.txt. Have a histogram.txt or something and just have events.txt
+reference that document.
 
-Thanks.
+Thanks!
 
-> The RT patch against v4.13.7 can be found here:
->
->    
-> https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.13/older/patch-4
->.13.7-rt1.patch.xz
->
-> The split quilt queue is available at:
->
->    
-> https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.13/older/patches
->-4.13.7-rt1.tar.xz
->
-> Sebastian
-> --
-> To unsubscribe from this list: send the line "unsubscribe
-> linux-rt-users" in the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-- Steve
 
-
-Cheers, Gene Heskett
--- 
-"There are four boxes to be used in defense of liberty:
- soap, ballot, jury, and ammo. Please use in that order."
--Ed Howdershelt (Author)
-Genes Web page <http://geneslinuxbox.net:6309/gene>
+> 
+> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> Signed-off-by: Baohong Liu <baohong.liu@intel.com>
+> ---
+>
