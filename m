@@ -1,46 +1,30 @@
-From: Gratian Crisan <gratian.crisan@ni.com>
+From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: [RT-SUMMIT] Prague Oct. 21st
-Date: Wed, 18 Oct 2017 04:16:16 -0500
-Message-ID: <87po9k6ckf.fsf@ni.com>
-References: <alpine.DEB.2.20.1710052139560.2398@nanos>
+Date: Wed, 18 Oct 2017 15:01:33 +0200 (CEST)
+Message-ID: <alpine.DEB.2.20.1710181500410.1925@nanos>
+References: <alpine.DEB.2.20.1710052139560.2398@nanos> <87po9k6ckf.fsf@ni.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=US-ASCII
 Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
         LKML <linux-kernel@vger.kernel.org>,
         Anna-Maria Gleixner <anna-maria@linutronix.de>
-To: Thomas Gleixner <tglx@linutronix.de>
+To: Gratian Crisan <gratian.crisan@ni.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-reply-to: <alpine.DEB.2.20.1710052139560.2398@nanos>
+In-Reply-To: <87po9k6ckf.fsf@ni.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Thomas,
+On Wed, 18 Oct 2017, Gratian Crisan wrote:
 
-Is there additional info on the address of the venue. The wiki links to
-the Czech Technical University web page, however from what I can tell
-there are multiple faculty buildings in that area of Prague.
+> Hi Thomas,
+> 
+> Is there additional info on the address of the venue. The wiki links to
+> the Czech Technical University web page, however from what I can tell
+> there are multiple faculty buildings in that area of Prague.
 
-I apologize if I missed something obvious, I'm currently working with
-crappy internet access.
+It's updated already and we'll send out a notice to all attendees with all
+the details later today.
 
 Thanks,
-        Gratian
 
-Thomas Gleixner writes:
-
-> Folks,
->
-> this is a reminder for the upcoming RT-Summit event in Prague on October
-> 21st at the Czech Technical University.
->
-> The schedule and logistics information are available from:
->
->   https://urldefense.proofpoint.com/v2/url?u=https-3A__wiki.linuxfoundation.org_realtime_events_rt-2Dsummit2017_start&d=DwIBAg&c=I_0YwoKy7z5LMTVdyO6YCiE2uzI1jjZZuIPelcSjixA&r=mokuVE37Yu4PjO25UCDfvbWMtqlc2Ei-FtAPHuBpH2s&m=KKO1frDqiZLtjMFGd0EF8S3C36P0LgYYUexqhZciMwM&s=QBwasHiI8GuHojq-lKR_2dyARJEbIlI-2LHUkb2_wNg&e= 
->
-> If you have questions or need assistance please let us know.
->
-> Looking forward to see you in Prague!
->
-> Thanks,
->
-> 	Thomas
+	tglx
