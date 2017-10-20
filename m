@@ -1,40 +1,134 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: [patch-rt] drivers/zram: pass num_pages to
- zram_meta_init_table_locks()
-Date: Thu, 19 Oct 2017 06:27:27 +0200
-Message-ID: <1508387247.12823.38.camel@gmx.de>
-References: <20171017152952.6ab7qsgeqgisqci4@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH RT] fs/dcache: disable preemption on i_dir_seq's write side
+Date: Fri, 20 Oct 2017 11:33:53 +0200
+Message-ID: <20171020093353.e3gy3c62pdvicylh@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
+Content-Type: text/plain; charset=utf-8
+Cc: linux-kernel@vger.kernel.org, tglx@linutronix.de,
+        Peter Zijlstra <peterz@infradead.org>,
         Steven Rostedt <rostedt@goodmis.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171017152952.6ab7qsgeqgisqci4@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:38086 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752023AbdJTJd4 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 20 Oct 2017 05:33:56 -0400
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+i_dir_seq is an opencoded seqcounter. Based on the code it looks like we
+could have two writers in parallel despite the fact that the d_lock is
+held. The problem is that during the write process on RT the preemption
+is still enabled and if this process is interrupted by a reader with RT
+priority then we lock up.
+To avoid that lock up I am disabling the preemption during the update.
+The rename of i_dir_seq is here to ensure to catch new write sides in
+future.
 
-zram cleanup forgot to adjust passed argument when changing
-zram_meta_init_table_locks() to expect page count instead
-of disk size.  Doing so fixes ltp inspired explosions.
-
-Signed-off-by: Mike Galbraith <efault@gmx.de>
+Cc: stable-rt@vger.kernel.org
+Reported-by: Oleg.Karfich@wago.com
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- drivers/block/zram/zram_drv.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ fs/dcache.c        |   12 +++++++-----
+ fs/inode.c         |    2 +-
+ fs/libfs.c         |    6 ++++--
+ include/linux/fs.h |    2 +-
+ 4 files changed, 13 insertions(+), 9 deletions(-)
 
---- a/drivers/block/zram/zram_drv.c
-+++ b/drivers/block/zram/zram_drv.c
-@@ -819,7 +819,7 @@ static bool zram_meta_alloc(struct zram
- 		return false;
- 	}
+--- a/fs/dcache.c
++++ b/fs/dcache.c
+@@ -2405,9 +2405,10 @@ EXPORT_SYMBOL(d_rehash);
+ static inline unsigned start_dir_add(struct inode *dir)
+ {
  
--	zram_meta_init_table_locks(zram, disksize);
-+	zram_meta_init_table_locks(zram, num_pages);
- 	return true;
++	preempt_disable_rt();
+ 	for (;;) {
+-		unsigned n = dir->i_dir_seq;
+-		if (!(n & 1) && cmpxchg(&dir->i_dir_seq, n, n + 1) == n)
++		unsigned n = dir->__i_dir_seq;
++		if (!(n & 1) && cmpxchg(&dir->__i_dir_seq, n, n + 1) == n)
+ 			return n;
+ 		cpu_relax();
+ 	}
+@@ -2415,7 +2416,8 @@ static inline unsigned start_dir_add(str
+ 
+ static inline void end_dir_add(struct inode *dir, unsigned n)
+ {
+-	smp_store_release(&dir->i_dir_seq, n + 2);
++	smp_store_release(&dir->__i_dir_seq, n + 2);
++	preempt_enable_rt();
  }
  
+ static void d_wait_lookup(struct dentry *dentry)
+@@ -2448,7 +2450,7 @@ struct dentry *d_alloc_parallel(struct d
+ 
+ retry:
+ 	rcu_read_lock();
+-	seq = smp_load_acquire(&parent->d_inode->i_dir_seq) & ~1;
++	seq = smp_load_acquire(&parent->d_inode->__i_dir_seq) & ~1;
+ 	r_seq = read_seqbegin(&rename_lock);
+ 	dentry = __d_lookup_rcu(parent, name, &d_seq);
+ 	if (unlikely(dentry)) {
+@@ -2470,7 +2472,7 @@ struct dentry *d_alloc_parallel(struct d
+ 		goto retry;
+ 	}
+ 	hlist_bl_lock(b);
+-	if (unlikely(parent->d_inode->i_dir_seq != seq)) {
++	if (unlikely(parent->d_inode->__i_dir_seq != seq)) {
+ 		hlist_bl_unlock(b);
+ 		rcu_read_unlock();
+ 		goto retry;
+--- a/fs/inode.c
++++ b/fs/inode.c
+@@ -154,7 +154,7 @@ int inode_init_always(struct super_block
+ 	inode->i_bdev = NULL;
+ 	inode->i_cdev = NULL;
+ 	inode->i_link = NULL;
+-	inode->i_dir_seq = 0;
++	inode->__i_dir_seq = 0;
+ 	inode->i_rdev = 0;
+ 	inode->dirtied_when = 0;
+ 
+--- a/fs/libfs.c
++++ b/fs/libfs.c
+@@ -90,7 +90,7 @@ static struct dentry *next_positive(stru
+ 				    struct list_head *from,
+ 				    int count)
+ {
+-	unsigned *seq = &parent->d_inode->i_dir_seq, n;
++	unsigned *seq = &parent->d_inode->__i_dir_seq, n;
+ 	struct dentry *res;
+ 	struct list_head *p;
+ 	bool skipped;
+@@ -123,8 +123,9 @@ static struct dentry *next_positive(stru
+ static void move_cursor(struct dentry *cursor, struct list_head *after)
+ {
+ 	struct dentry *parent = cursor->d_parent;
+-	unsigned n, *seq = &parent->d_inode->i_dir_seq;
++	unsigned n, *seq = &parent->d_inode->__i_dir_seq;
+ 	spin_lock(&parent->d_lock);
++	preempt_disable_rt();
+ 	for (;;) {
+ 		n = *seq;
+ 		if (!(n & 1) && cmpxchg(seq, n, n + 1) == n)
+@@ -137,6 +138,7 @@ static void move_cursor(struct dentry *c
+ 	else
+ 		list_add_tail(&cursor->d_child, &parent->d_subdirs);
+ 	smp_store_release(seq, n + 2);
++	preempt_enable_rt();
+ 	spin_unlock(&parent->d_lock);
+ }
+ 
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -651,7 +651,7 @@ struct inode {
+ 		struct block_device	*i_bdev;
+ 		struct cdev		*i_cdev;
+ 		char			*i_link;
+-		unsigned		i_dir_seq;
++		unsigned		__i_dir_seq;
+ 	};
+ 
+ 	__u32			i_generation;
