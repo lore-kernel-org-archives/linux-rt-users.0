@@ -1,41 +1,44 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [RT-SUMMIT] Prague Oct. 21st
-Date: Fri, 20 Oct 2017 20:08:18 +0200 (CEST)
-Message-ID: <alpine.DEB.2.20.1710202003560.2194@nanos>
-References: <alpine.DEB.2.20.1710052139560.2398@nanos>
+From: "Chris Caudle" <chris@chriscaudle.org>
+Subject: replacement of tasklet_hrtimer_init in RT
+Date: Tue, 24 Oct 2017 11:33:46 -0500
+Message-ID: <69d8d76f1173a449bce4a3bc3a9e1a06.squirrel@email.powweb.com>
+Reply-To: chris@chriscaudle.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        Anna-Maria Gleixner <anna-maria@linutronix.de>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.20.1710052139560.2398@nanos>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain;charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from walmailout09.yourhostingaccount.com ([65.254.253.73]:53208 "EHLO
+        walmailout09.yourhostingaccount.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1751484AbdJXREu (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 24 Oct 2017 13:04:50 -0400
+Received: from mailscan08.yourhostingaccount.com ([10.1.15.8] helo=walmailscan08.yourhostingaccount.com)
+        by walmailout09.yourhostingaccount.com with esmtp (Exim)
+        id 1e729F-0001Uu-Bc
+        for linux-rt-users@vger.kernel.org; Tue, 24 Oct 2017 12:33:49 -0400
+Received: from [10.114.3.33] (helo=walimpout13)
+        by walmailscan08.yourhostingaccount.com with esmtp (Exim)
+        id 1e729F-00013y-6D
+        for linux-rt-users@vger.kernel.org; Tue, 24 Oct 2017 12:33:49 -0400
+Received: from [127.0.0.1] (helo=email.powweb.com)
+        by walwebmail04.yourhostingaccount.com with esmtp (Exim)
+        id 1e729C-0001VV-21
+        for linux-rt-users@vger.kernel.org; Tue, 24 Oct 2017 12:33:46 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 5 Oct 2017, Thomas Gleixner wrote:
+I recently began helping someone test a new multimedia driver (network
+audio) and found that the driver would not compile on my machine running
+an RT kernel because the driver used tasklet_hrtimer_init(), but that
+function is not defined in interrupt.h in the RT  patched kernel.
 
-> Folks,
-> 
-> this is a reminder for the upcoming RT-Summit event in Prague on October
-> 21st at the Czech Technical University.
-> 
-> The schedule and logistics information are available from:
-> 
->   https://wiki.linuxfoundation.org/realtime/events/rt-summit2017/start
-> 
-> If you have questions or need assistance please let us know.
-> 
-> Looking forward to see you in Prague!
+What should be used in place of that, and where should be look for
+documentation describing any differences that need to be accomodated?
 
-For those who can't make it, we have a live stream:
+-- 
+Chris Caudle
 
-    https://www.youtube.com/watch?v=e65fzoFI8Fo
 
-We start tomorrow morning at 8AM UTC
 
-Have fun!
 
-Thanks,
-
-	Thomas
