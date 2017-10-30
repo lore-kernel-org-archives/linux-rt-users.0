@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v4 26/37] tracing: Add 'onmatch' hist trigger action support
-Date: Mon, 30 Oct 2017 15:52:08 -0500
-Message-ID: <eb8adfbb2c0e3c7ca5410f25341814305730e14c.1509395596.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v4 32/37] tracing: Add inter-event hist trigger Documentation
+Date: Mon, 30 Oct 2017 15:52:14 -0500
+Message-ID: <bdd0582139e0affdfb86862e06ded9f606eab89d.1509395596.git.tom.zanussi@linux.intel.com>
 References: <cover.1509395595.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,672 +18,404 @@ References: <cover.1509395595.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Add an 'onmatch(matching.event).<synthetic_event_name>(param list)'
-hist trigger action which is invoked with the set of variables or
-event fields named in the 'param list'.  The result is the generation
-of a synthetic event that consists of the values contained in those
-variables and/or fields at the time the invoking event was hit.
-
-As an example the below defines a simple synthetic event using a
-variable defined on the sched_wakeup_new event, and shows the event
-definition with unresolved fields, since the sched_wakeup_new event
-with the testpid variable hasn't been defined yet:
-
-    # echo 'wakeup_new_test pid_t pid; int prio' >> \
-      /sys/kernel/debug/tracing/synthetic_events
-
-    # cat /sys/kernel/debug/tracing/synthetic_events
-      wakeup_new_test pid_t pid; int prio
-
-The following hist trigger both defines a testpid variable and
-specifies an onmatch() trace action that uses that variable along with
-a non-variable field to generate a wakeup_new_test synthetic event
-whenever a sched_wakeup_new event occurs, which because of the 'if
-comm == "cyclictest"' filter only happens when the executable is
-cyclictest:
-
-    # echo 'hist:testpid=pid:keys=$testpid:\
-      onmatch(sched.sched_wakeup_new).wakeup_new_test($testpid, prio) \
-        if comm=="cyclictest"' >> \
-      /sys/kernel/debug/tracing/events/sched/sched_wakeup_new/trigger
-
-Creating and displaying a histogram based on those events is now just
-a matter of using the fields and new synthetic event in the
-tracing/events/synthetic directory, as usual:
-
-    # echo 'hist:keys=pid,prio:sort=pid,prio' >> \
-      /sys/kernel/debug/tracing/events/synthetic/wakeup_new_test/trigger
+Add background and details on inter-event hist triggers, including
+hist variables, synthetic events, and actions.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-Signed-off-by: Rajvi Jingar <rajvi.jingar@intel.com>
+Signed-off-by: Baohong Liu <baohong.liu@intel.com>
 ---
- kernel/trace/trace_events_hist.c | 475 +++++++++++++++++++++++++++++++++++++--
- 1 file changed, 460 insertions(+), 15 deletions(-)
+ Documentation/trace/histogram.txt | 382 ++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 382 insertions(+)
 
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 906c2a1..8ccebad 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -323,7 +323,18 @@ typedef void (*action_fn_t) (struct hist_trigger_data *hist_data,
- 
- struct action_data {
- 	action_fn_t		fn;
--	unsigned int		var_ref_idx;
-+	unsigned int		n_params;
-+	char			*params[SYNTH_FIELDS_MAX];
-+
-+	union {
-+		struct {
-+			unsigned int		var_ref_idx;
-+			char			*match_event;
-+			char			*match_event_system;
-+			char			*synth_event_name;
-+			struct synth_event	*synth_event;
-+		} onmatch;
-+	};
- };
- 
- static LIST_HEAD(synth_event_list);
-@@ -889,6 +900,21 @@ static struct synth_event *alloc_synth_event(char *event_name, int n_fields,
- 	return event;
- }
- 
-+static void action_trace(struct hist_trigger_data *hist_data,
-+			 struct tracing_map_elt *elt, void *rec,
-+			 struct ring_buffer_event *rbe,
-+			 struct action_data *data, u64 *var_ref_vals)
-+{
-+	struct synth_event *event = data->onmatch.synth_event;
-+
-+	trace_synth(event, var_ref_vals, data->onmatch.var_ref_idx);
-+}
-+
-+struct hist_var_data {
-+	struct list_head list;
-+	struct hist_trigger_data *hist_data;
-+};
-+
- static int create_synth_event(int argc, char **argv)
- {
- 	struct synth_field *field, *fields[SYNTH_FIELDS_MAX];
-@@ -1139,11 +1165,6 @@ static u64 hist_field_timestamp(struct hist_field *hist_field,
- 	return ts;
- }
- 
--struct hist_var_data {
--	struct list_head list;
--	struct hist_trigger_data *hist_data;
--};
--
- static struct hist_field *
- check_field_for_var_ref(struct hist_field *hist_field,
- 			struct hist_trigger_data *var_data,
-@@ -1447,6 +1468,37 @@ static struct hist_field *find_file_var(struct trace_event_file *file,
- 	return NULL;
- }
- 
-+static struct hist_field *
-+find_match_var(struct hist_trigger_data *hist_data, char *var_name)
-+{
-+	struct trace_array *tr = hist_data->event_file->tr;
-+	struct hist_field *hist_field, *found = NULL;
-+	struct trace_event_file *file;
-+	unsigned int i;
-+
-+	for (i = 0; i < hist_data->n_actions; i++) {
-+		struct action_data *data = hist_data->actions[i];
-+
-+		if (data->fn == action_trace) {
-+			char *system = data->onmatch.match_event_system;
-+			char *event_name = data->onmatch.match_event;
-+
-+			file = find_var_file(tr, system, event_name, var_name);
-+			if (!file)
-+				continue;
-+			hist_field = find_file_var(file, var_name);
-+			if (hist_field) {
-+				if (found) {
-+					return ERR_PTR(-EINVAL);
-+				}
-+
-+				found = hist_field;
-+			}
-+		}
-+	}
-+	return found;
-+}
-+
- static struct hist_field *find_event_var(struct hist_trigger_data *hist_data,
- 					 char *system,
- 					 char *event_name,
-@@ -1456,6 +1508,14 @@ static struct hist_field *find_event_var(struct hist_trigger_data *hist_data,
- 	struct hist_field *hist_field = NULL;
- 	struct trace_event_file *file;
- 
-+	if (!system || !event_name) {
-+		hist_field = find_match_var(hist_data, var_name);
-+		if (IS_ERR(hist_field))
-+			return NULL;
-+		if (hist_field)
-+			return hist_field;
-+	}
-+
- 	file = find_var_file(tr, system, event_name, var_name);
- 	if (!file)
- 		return NULL;
-@@ -1647,11 +1707,21 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
- 
- static int parse_action(char *str, struct hist_trigger_attrs *attrs)
- {
--	int ret = 0;
-+	int ret = -EINVAL;
- 
- 	if (attrs->n_actions >= HIST_ACTIONS_MAX)
- 		return ret;
- 
-+	if ((strncmp(str, "onmatch(", strlen("onmatch(")) == 0)) {
-+		attrs->action_str[attrs->n_actions] = kstrdup(str, GFP_KERNEL);
-+		if (!attrs->action_str[attrs->n_actions]) {
-+			ret = -ENOMEM;
-+			return ret;
-+		}
-+		attrs->n_actions++;
-+		ret = 0;
-+	}
-+
- 	return ret;
- }
- 
-@@ -2596,7 +2666,6 @@ static struct trace_event_file *event_file(struct trace_array *tr,
- find_synthetic_field_var(struct hist_trigger_data *target_hist_data,
- 			 char *system, char *event_name, char *field_name)
- {
--	struct trace_array *tr = target_hist_data->event_file->tr;
- 	struct hist_field *event_var;
- 	char *synthetic_name;
- 
-@@ -2607,7 +2676,7 @@ static struct trace_event_file *event_file(struct trace_array *tr,
- 	strcpy(synthetic_name, "synthetic_");
- 	strcat(synthetic_name, field_name);
- 
--	event_var = find_event_var(tr, system, event_name, synthetic_name);
-+	event_var = find_event_var(target_hist_data, system, event_name, synthetic_name);
- 
- 	kfree(synthetic_name);
- 
-@@ -2639,7 +2708,7 @@ static struct trace_event_file *event_file(struct trace_array *tr,
-  *
-  * Return: The variable created for the field.
-  */
--struct hist_field *
-+static struct hist_field *
- create_field_var_hist(struct hist_trigger_data *target_hist_data,
- 		      char *subsys_name, char *event_name, char *field_name)
- {
-@@ -2753,7 +2822,7 @@ struct hist_field *
- 	return event_var;
- }
- 
--struct hist_field *
-+static struct hist_field *
- find_target_event_var(struct hist_trigger_data *hist_data,
- 		      char *subsys_name, char *event_name, char *var_name)
- {
-@@ -2924,7 +2993,7 @@ static struct field_var *create_field_var(struct hist_trigger_data *hist_data,
-  *
-  * Return: The variable created for the field.
-  */
--struct field_var *
-+static struct field_var *
- create_target_field_var(struct hist_trigger_data *target_hist_data,
- 			char *subsys_name, char *event_name, char *var_name)
- {
-@@ -2948,6 +3017,27 @@ struct field_var *
- 	return create_field_var(target_hist_data, file, var_name);
- }
- 
-+static void onmatch_destroy(struct action_data *data)
-+{
-+	unsigned int i;
-+
-+	mutex_lock(&synth_event_mutex);
-+
-+	kfree(data->onmatch.match_event);
-+	kfree(data->onmatch.match_event_system);
-+	kfree(data->onmatch.synth_event_name);
-+
-+	for (i = 0; i < data->n_params; i++)
-+		kfree(data->params[i]);
-+
-+	if (data->onmatch.synth_event)
-+		data->onmatch.synth_event->ref--;
-+
-+	kfree(data);
-+
-+	mutex_unlock(&synth_event_mutex);
-+}
-+
- static void destroy_field_var(struct field_var *field_var)
- {
- 	if (!field_var)
-@@ -2967,8 +3057,8 @@ static void destroy_field_vars(struct hist_trigger_data *hist_data)
- 		destroy_field_var(hist_data->field_vars[i]);
- }
- 
--void save_field_var(struct hist_trigger_data *hist_data,
--		    struct field_var *field_var)
-+static void save_field_var(struct hist_trigger_data *hist_data,
-+			   struct field_var *field_var)
- {
- 	hist_data->field_vars[hist_data->n_field_vars++] = field_var;
- 
-@@ -2976,6 +3066,298 @@ void save_field_var(struct hist_trigger_data *hist_data,
- 		hist_data->n_field_var_str++;
- }
- 
-+
-+static void destroy_synth_var_refs(struct hist_trigger_data *hist_data)
-+{
-+	unsigned int i;
-+
-+	for (i = 0; i < hist_data->n_synth_var_refs; i++)
-+		destroy_hist_field(hist_data->synth_var_refs[i], 0);
-+}
-+
-+static void save_synth_var_ref(struct hist_trigger_data *hist_data,
-+			 struct hist_field *var_ref)
-+{
-+	hist_data->synth_var_refs[hist_data->n_synth_var_refs++] = var_ref;
-+
-+	hist_data->var_refs[hist_data->n_var_refs] = var_ref;
-+	var_ref->var_ref_idx = hist_data->n_var_refs++;
-+}
-+
-+static int check_synth_field(struct synth_event *event,
-+			     struct hist_field *hist_field,
-+			     unsigned int field_pos)
-+{
-+	struct synth_field *field;
-+
-+	if (field_pos >= event->n_fields)
-+		return -EINVAL;
-+
-+	field = event->fields[field_pos];
-+
-+	if (strcmp(field->type, hist_field->type) != 0)
-+		return -EINVAL;
-+
-+	return 0;
-+}
-+
-+static int parse_action_params(char *params, struct action_data *data)
-+{
-+	char *param, *saved_param;
-+	int ret = 0;
-+
-+	while (params) {
-+		if (data->n_params >= SYNTH_FIELDS_MAX)
-+			goto out;
-+
-+		param = strsep(&params, ",");
-+		if (!param) {
-+			ret = -EINVAL;
-+			goto out;
-+		}
-+
-+		param = strstrip(param);
-+		if (strlen(param) < 2) {
-+			ret = -EINVAL;
-+			goto out;
-+		}
-+
-+		saved_param = kstrdup(param, GFP_KERNEL);
-+		if (!saved_param) {
-+			ret = -ENOMEM;
-+			goto out;
-+		}
-+
-+		data->params[data->n_params++] = saved_param;
-+	}
-+ out:
-+	return ret;
-+}
-+
-+static struct hist_field *
-+onmatch_find_var(struct hist_trigger_data *hist_data, struct action_data *data,
-+		 char *system, char *event, char *var)
-+{
-+	struct hist_field *hist_field;
-+
-+	var++; /* skip '$' */
-+
-+	hist_field = find_target_event_var(hist_data, system, event, var);
-+	if (!hist_field) {
-+		if (!system) {
-+			system = data->onmatch.match_event_system;
-+			event = data->onmatch.match_event;
-+		}
-+
-+		hist_field = find_event_var(hist_data, system, event, var);
-+	}
-+
-+	return hist_field;
-+}
-+
-+static struct hist_field *
-+onmatch_create_field_var(struct hist_trigger_data *hist_data,
-+			 struct action_data *data, char *system,
-+			 char *event, char *var)
-+{
-+	struct hist_field *hist_field = NULL;
-+	struct field_var *field_var;
-+
-+	/*
-+	 * First try to create a field var on the target event (the
-+	 * currently being defined).  This will create a variable for
-+	 * unqualified fields on the target event, or if qualified,
-+	 * target fields that have qualified names matching the target.
-+	 */
-+	field_var = create_target_field_var(hist_data, system, event, var);
-+
-+	if (field_var && !IS_ERR(field_var)) {
-+		save_field_var(hist_data, field_var);
-+		hist_field = field_var->var;
-+	} else {
-+		field_var = NULL;
-+		/*
-+		 * If no explicit system.event is specfied, default to
-+		 * looking for fields on the onmatch(system.event.xxx)
-+		 * event.
-+		 */
-+		if (!system) {
-+			system = data->onmatch.match_event_system;
-+			event = data->onmatch.match_event;
-+		}
-+
-+		/*
-+		 * At this point, we're looking at a field on another
-+		 * event.  Because we can't modify a hist trigger on
-+		 * another event to add a variable for a field, we need
-+		 * to create a new trigger on that event and create the
-+		 * variable at the same time.
-+		 */
-+		hist_field = create_field_var_hist(hist_data, system, event, var);
-+		if (IS_ERR(hist_field))
-+			goto free;
-+	}
-+ out:
-+	return hist_field;
-+ free:
-+	destroy_field_var(field_var);
-+	hist_field = NULL;
-+	goto out;
-+}
-+
-+static int onmatch_create(struct hist_trigger_data *hist_data,
-+			  struct trace_event_file *file,
-+			  struct action_data *data)
-+{
-+	char *event_name, *param, *system = NULL;
-+	struct hist_field *hist_field, *var_ref;
-+	unsigned int i, var_ref_idx;
-+	unsigned int field_pos = 0;
-+	struct synth_event *event;
-+	int ret = 0;
-+
-+	mutex_lock(&synth_event_mutex);
-+	event = find_synth_event(data->onmatch.synth_event_name);
-+	if (!event) {
-+		mutex_unlock(&synth_event_mutex);
-+		return -EINVAL;
-+	}
-+	mutex_unlock(&synth_event_mutex);
-+
-+	var_ref_idx = hist_data->n_var_refs;
-+
-+	for (i = 0; i < data->n_params; i++) {
-+		char *p;
-+
-+		p = param = kstrdup(data->params[i], GFP_KERNEL);
-+		if (!param) {
-+			ret = -ENOMEM;
-+			goto out;
-+		}
-+
-+		system = strsep(&param, ".");
-+		if (!param) {
-+			param = (char *)system;
-+			system = event_name = NULL;
-+		} else {
-+			event_name = strsep(&param, ".");
-+			if (!param) {
-+				kfree(p);
-+				ret = -EINVAL;
-+				goto out;
-+			}
-+		}
-+
-+		if (param[0] == '$')
-+			hist_field = onmatch_find_var(hist_data, data, system,
-+						      event_name, param);
-+		else
-+			hist_field = onmatch_create_field_var(hist_data, data,
-+							      system,
-+							      event_name,
-+							      param);
-+
-+		if (!hist_field) {
-+			kfree(p);
-+			ret = -EINVAL;
-+			goto out;
-+		}
-+
-+		if (check_synth_field(event, hist_field, field_pos) == 0) {
-+			var_ref = create_var_ref(hist_field, system, event_name);
-+			if (!var_ref) {
-+				kfree(p);
-+				ret = -ENOMEM;
-+				goto out;
-+			}
-+
-+			save_synth_var_ref(hist_data, var_ref);
-+			field_pos++;
-+			kfree(p);
-+			continue;
-+		}
-+
-+		kfree(p);
-+		ret = -EINVAL;
-+		goto out;
-+	}
-+
-+	if (field_pos != event->n_fields) {
-+		ret = -EINVAL;
-+		goto out;
-+	}
-+
-+	data->fn = action_trace;
-+	data->onmatch.synth_event = event;
-+	data->onmatch.var_ref_idx = var_ref_idx;
-+	event->ref++;
-+ out:
-+	return ret;
-+}
-+
-+static struct action_data *onmatch_parse(struct trace_array *tr, char *str)
-+{
-+	char *match_event, *match_event_system;
-+	char *synth_event_name, *params;
-+	struct action_data *data;
-+	int ret = -EINVAL;
-+
-+	data = kzalloc(sizeof(*data), GFP_KERNEL);
-+	if (!data)
-+		return ERR_PTR(-ENOMEM);
-+
-+	match_event = strsep(&str, ")");
-+	if (!match_event || !str)
-+		goto free;
-+
-+	match_event_system = strsep(&match_event, ".");
-+	if (!match_event)
-+		goto free;
-+
-+	if (IS_ERR(event_file(tr, match_event_system, match_event)))
-+		goto free;
-+
-+	data->onmatch.match_event = kstrdup(match_event, GFP_KERNEL);
-+	if (!data->onmatch.match_event) {
-+		ret = -ENOMEM;
-+		goto free;
-+	}
-+
-+	data->onmatch.match_event_system = kstrdup(match_event_system, GFP_KERNEL);
-+	if (!data->onmatch.match_event_system) {
-+		ret = -ENOMEM;
-+		goto free;
-+	}
-+
-+	strsep(&str, ".");
-+	if (!str)
-+		goto free;
-+
-+	synth_event_name = strsep(&str, "(");
-+	if (!synth_event_name || !str)
-+		goto free;
-+
-+	data->onmatch.synth_event_name = kstrdup(synth_event_name, GFP_KERNEL);
-+	if (!data->onmatch.synth_event_name) {
-+		ret = -ENOMEM;
-+		goto free;
-+	}
-+
-+	params = strsep(&str, ")");
-+	if (!params || !str || (str && strlen(str)))
-+		goto free;
-+
-+	ret = parse_action_params(params, data);
-+	if (ret)
-+		goto free;
-+ out:
-+	return data;
-+ free:
-+	onmatch_destroy(data);
-+	data = ERR_PTR(ret);
-+	goto out;
-+}
-+
- static int create_hitcount_val(struct hist_trigger_data *hist_data)
- {
- 	hist_data->fields[HITCOUNT_IDX] =
-@@ -3400,18 +3782,39 @@ static void destroy_actions(struct hist_trigger_data *hist_data)
- 	for (i = 0; i < hist_data->n_actions; i++) {
- 		struct action_data *data = hist_data->actions[i];
- 
--		kfree(data);
-+		if (data->fn == action_trace)
-+			onmatch_destroy(data);
-+		else
-+			kfree(data);
- 	}
- }
- 
- static int parse_actions(struct hist_trigger_data *hist_data)
- {
-+	struct trace_array *tr = hist_data->event_file->tr;
-+	struct action_data *data;
- 	unsigned int i;
- 	int ret = 0;
- 	char *str;
- 
- 	for (i = 0; i < hist_data->attrs->n_actions; i++) {
- 		str = hist_data->attrs->action_str[i];
-+
-+		if (strncmp(str, "onmatch(", strlen("onmatch(")) == 0) {
-+			char *action_str = str + strlen("onmatch(");
-+
-+			data = onmatch_parse(tr, action_str);
-+			if (IS_ERR(data)) {
-+				ret = PTR_ERR(data);
-+				break;
-+			}
-+			data->fn = action_trace;
-+		} else {
-+			ret = -EINVAL;
-+			break;
-+		}
-+
-+		hist_data->actions[hist_data->n_actions++] = data;
- 	}
- 
- 	return ret;
-@@ -3426,11 +3829,50 @@ static int create_actions(struct hist_trigger_data *hist_data,
- 
- 	for (i = 0; i < hist_data->attrs->n_actions; i++) {
- 		data = hist_data->actions[i];
-+
-+		if (data->fn == action_trace) {
-+			ret = onmatch_create(hist_data, file, data);
-+			if (ret)
-+				return ret;
-+		}
- 	}
- 
- 	return ret;
- }
- 
-+static void print_onmatch_spec(struct seq_file *m,
-+			       struct hist_trigger_data *hist_data,
-+			       struct action_data *data)
-+{
-+	unsigned int i;
-+
-+	seq_printf(m, ":onmatch(%s.%s).", data->onmatch.match_event_system,
-+		   data->onmatch.match_event);
-+
-+	seq_printf(m, "%s(", data->onmatch.synth_event->name);
-+
-+	for (i = 0; i < data->n_params; i++) {
-+		if (i)
-+			seq_puts(m, ",");
-+		seq_printf(m, "%s", data->params[i]);
-+	}
-+
-+	seq_puts(m, ")");
-+}
-+
-+static void print_actions_spec(struct seq_file *m,
-+			       struct hist_trigger_data *hist_data)
-+{
-+	unsigned int i;
-+
-+	for (i = 0; i < hist_data->n_actions; i++) {
-+		struct action_data *data = hist_data->actions[i];
-+
-+		if (data->fn == action_trace)
-+			print_onmatch_spec(m, hist_data, data);
-+	}
-+}
-+
- static void destroy_field_var_hists(struct hist_trigger_data *hist_data)
- {
- 	unsigned int i;
-@@ -3453,6 +3895,7 @@ static void destroy_hist_data(struct hist_trigger_data *hist_data)
- 	destroy_actions(hist_data);
- 	destroy_field_vars(hist_data);
- 	destroy_field_var_hists(hist_data);
-+	destroy_synth_var_refs(hist_data);
- 
- 	kfree(hist_data);
- }
-@@ -4009,6 +4452,8 @@ static int event_hist_trigger_print(struct seq_file *m,
- 	}
- 	seq_printf(m, ":size=%u", (1 << hist_data->map->map_bits));
- 
-+	print_actions_spec(m, hist_data);
-+
- 	if (data->filter_str)
- 		seq_printf(m, " if %s", data->filter_str);
- 
+diff --git a/Documentation/trace/histogram.txt b/Documentation/trace/histogram.txt
+index 7ae5a39..0eea8b9 100644
+--- a/Documentation/trace/histogram.txt
++++ b/Documentation/trace/histogram.txt
+@@ -1605,3 +1605,385 @@
+         Hits: 489
+         Entries: 7
+         Dropped: 0
++
++
++2.2 Inter-event hist triggers
++-----------------------------
++
++Inter-event hist triggers are hist triggers that combine values from
++one or more other events and create a histogram using that data.  Data
++from an inter-event histogram can in turn become the source for
++further combined histograms, thus providing a chain of related
++histograms, which is important for some applications.
++
++The most important example of an inter-event quantity that can be used
++in this manner is latency, which is simply a difference in timestamps
++between two events.  Although latency is the most important
++inter-event quantity, note that because the support is completely
++general across the trace event subsystem, any event field can be used
++in an inter-event quantity.
++
++An example of a histogram that combines data from other histograms
++into a useful chain would be a 'wakeupswitch latency' histogram that
++combines a 'wakeup latency' histogram and a 'switch latency'
++histogram.
++
++Normally, a hist trigger specification consists of a (possibly
++compound) key along with one or more numeric values, which are
++continually updated sums associated with that key.  A histogram
++specification in this case consists of individual key and value
++specifications that refer to trace event fields associated with a
++single event type.
++
++The inter-event hist trigger extension allows fields from multiple
++events to be referenced and combined into a multi-event histogram
++specification.  In support of this overall goal, a few enabling
++features have been added to the hist trigger support:
++
++  - In order to compute an inter-event quantity, a value from one
++    event needs to saved and then referenced from another event.  This
++    requires the introduction of support for histogram 'variables'.
++
++  - The computation of inter-event quantities and their combination
++    require some minimal amount of support for applying simple
++    expressions to variables (+ and -).
++
++  - A histogram consisting of inter-event quantities isn't logically a
++    histogram on either event (so having the 'hist' file for either
++    event host the histogram output doesn't really make sense).  To
++    address the idea that the histogram is associated with a
++    combination of events, support is added allowing the creation of
++    'synthetic' events that are events derived from other events.
++    These synthetic events are full-fledged events just like any other
++    and can be used as such, as for instance to create the
++    'combination' histograms mentioned previously.
++
++  - A set of 'actions' can be associated with histogram entries -
++    these can be used to generate the previously mentioned synthetic
++    events, but can also be used for other purposes, such as for
++    example saving context when a 'max' latency has been hit.
++
++  - Trace events don't have a 'timestamp' associated with them, but
++    there is an implicit timestamp saved along with an event in the
++    underlying ftrace ring buffer.  This timestamp is now exposed as a
++    a synthetic field named '$common_timestamp' which can be used in
++    histograms as if it were any other event field.  Note that it has
++    a '$' prefixed to it - this is meant to indicate that it isn't an
++    actual field in the trace format but rather is a synthesized value
++    that nonetheless can be used as if it were an actual field.  By
++    default it is in units of nanoseconds; appending '.usecs' to a
++    common_timestamp field changes the units to microseconds.
++
++These features are decribed in more detail in the following sections.
++
++2.2.1 Histogram Variables
++-------------------------
++
++Variables are simply named locations used for saving and retrieving
++values between matching events.  A 'matching' event is defined as an
++event that has a matching key - if a variable is saved for a histogram
++entry corresponding to that key, any subsequent event with a matching
++key can access that variable.
++
++A variable's value is normally available to any subsequent event until
++it is set to something else by a subsequent event.  The one exception
++to that rule is that any variable used in an expression is essentially
++'read-once' - once it's used by an expression in a subsequent event,
++it's reset to its 'unset' state, which means it can't be used again
++unless it's set again.  This ensures not only that an event doesn't
++use an uninitialized variable in a calculation, but that that variable
++is used only once and not for any unrelated subsequent match.
++
++The basic syntax for saving a variable is to simply prefix a unique
++variable name not corresponding to any keyword along with an '=' sign
++to any event field.
++
++Either keys or values can be saved and retrieved in this way.  This
++creates a variable named 'ts0' for a histogram entry with the key
++'next_pid':
++
++  # echo 'hist:keys=next_pid:vals=$ts0:ts0=$common_timestamp ... >> \
++	event/trigger
++
++The ts0 variable can be accessed by any subsequent event having the
++same pid as 'next_pid'.
++
++Variable references are formed by prepending the variable name with
++the '$' sign.  Thus for example, the ts0 variable above would be
++referenced as '$ts0' in expressions.
++
++Because 'vals=' is used, the $common_timestamp variable value above
++will also be summed as a normal histogram value would (though for a
++timestamp it makes little sense).
++
++The below shows that a key value can also be saved in the same way:
++
++  # echo 'hist:timer_pid=common_pid:key=timer_pid ...' >> event/trigger
++
++If a variable isn't a key variable or prefixed with 'vals=', the
++associated event field will be saved in a variable but won't be summed
++as a value:
++
++  # echo 'hist:keys=next_pid:ts1=$common_timestamp ... >> event/trigger
++
++Multiple variables can be assigned at the same time.  The below would
++result in both ts0 and b being created as variables, with both
++common_timestamp and field1 additionally being summed as values:
++
++  # echo 'hist:keys=pid:vals=$ts0,$b:ts0=$common_timestamp,b=field1 ... >> \
++	event/trigger
++
++Note that variable assignments can appear either preceding or
++following their use.  The command below behaves identically to the
++command above:
++
++  # echo 'hist:keys=pid:ts0=$common_timestamp,b=field1:vals=$ts0,$b ... >> \
++	event/trigger
++
++Any number of variables not bound to a 'vals=' prefix can also be
++assigned by simply separating them with colons.  Below is the same
++thing but without the values being summed in the histogram:
++
++  # echo 'hist:keys=pid:ts0=$common_timestamp:b=field1 ... >> event/trigger
++
++Variables set as above can be referenced and used in expressions on
++another event.
++
++For example, here's how a latency can be calculated:
++
++  # echo 'hist:keys=pid,prio:ts0=$common_timestamp ... >> event1/trigger
++  # echo 'hist:keys=next_pid:wakeup_lat=$common_timestamp-$ts0 ... >> event2/trigger
++
++In the first line above, the event's timetamp is saved into the
++variable ts0.  In the next line, ts0 is subtracted from the second
++event's timestamp to produce the latency, which is then assigned into
++yet another variable, 'wakeup_lat'.  The hist trigger below in turn
++makes use of the wakeup_lat variable to compute a combined latency
++using the same key and variable from yet another event:
++
++  # echo 'hist:key=pid:wakeupswitch_lat=$wakeup_lat+$switchtime_lat ... >> event3/trigger
++
++2.2.2 Synthetic Events
++----------------------
++
++Synthetic events are user-defined events generated from hist trigger
++variables or fields associated with one or more other events.  Their
++purpose is to provide a mechanism for displaying data spanning
++multiple events consistent with the existing and already familiar
++usage for normal events.
++
++To define a synthetic event, the user writes a simple specification
++consisting of the name of the new event along with one or more
++variables and their types, which can be any valid field type,
++separated by semicolons, to the tracing/synthetic_events file.
++
++For instance, the following creates a new event named 'wakeup_latency'
++with 3 fields: lat, pid, and prio.  Each of those fields is simply a
++variable reference to a variable on another event:
++
++  # echo 'wakeup_latency \
++          u64 lat; \
++          pid_t pid; \
++	  int prio' >> \
++	  /sys/kernel/debug/tracing/synthetic_events
++
++Reading the tracing/synthetic_events file lists all the currently
++defined synthetic events, in this case the event defined above:
++
++  # cat /sys/kernel/debug/tracing/synthetic_events
++    wakeup_latency u64 lat; pid_t pid; int prio
++
++An existing synthetic event definition can be removed by prepending
++the command that defined it with a '!':
++
++  # echo '!wakeup_latency u64 lat pid_t pid int prio' >> \
++    /sys/kernel/debug/tracing/synthetic_events
++
++At this point, there isn't yet an actual 'wakeup_latency' event
++instantiated in the event subsytem - for this to happen, a 'hist
++trigger action' needs to be instantiated and bound to actual fields
++and variables defined on other events (see Section 6.3.3 below).
++
++Once that is done, an event instance is created, and a histogram can
++be defined using it:
++
++  # echo 'hist:keys=pid,prio,lat.log2:sort=pid,lat' >> \
++        /sys/kernel/debug/tracing/events/synthetic/wakeup_latency/trigger
++
++The new event is created under the tracing/events/synthetic/ directory
++and looks and behaves just like any other event:
++
++  # ls /sys/kernel/debug/tracing/events/synthetic/wakeup_latency
++        enable  filter  format  hist  id  trigger
++
++Like any other event, once a histogram is enabled for the event, the
++output can be displayed by reading the event's 'hist' file.
++
++2.2.3 Hist trigger 'actions'
++----------------------------
++
++A hist trigger 'action' is a function that's executed whenever a
++histogram entry is added or updated.
++
++The default 'action' if no special function is explicity specified is
++as it always has been, to simply update the set of values associated
++with an entry.  Some applications, however, may want to perform
++additional actions at that point, such as generate another event, or
++compare and save a maximum.
++
++The following additional actions are available.  To specify an action
++for a given event, simply specify the action between colons in the
++hist trigger specification.
++
++  - onmatch(matching.event).<synthetic_event_name>(param list)
++
++    The 'onmatch(matching.event).<synthetic_event_name>(params)' hist
++    trigger action is invoked whenever an event matches and the
++    histogram entry would be added or updated.  It causes the named
++    synthetic event to be generated with the values given in the
++    'param list'.  The result is the generation of a synthetic event
++    that consists of the values contained in those variables at the
++    time the invoking event was hit.
++
++    The 'param list' consists of one or more parameters which may be
++    either variables or fields defined on either the 'matching.event'
++    or the target event.  The variables or fields specified in the
++    param list may be either fully-qualified or unqualified.  If a
++    variable is specified as unqualified, it must be unique between
++    the two events.  A field name used as a param can be unqualified
++    if it refers to the target event, but must be fully qualified if
++    it refers to the matching event.  A fully-qualified name is of the
++    form 'system.event_name.$var_name' or 'system.event_name.field'.
++
++    The 'matching.event' specification is simply the fully qualified
++    event name of the event that matches the target event for the
++    onmatch() functionality, in the form 'system.event_name'.
++
++    Finally, the number and type of variables/fields in the 'param
++    list' must match the number and types of the fields in the
++    synthetic event being generated.
++
++    As an example the below defines a simple synthetic event and uses
++    a variable defined on the sched_wakeup_new event as a parameter
++    when invoking the synthetic event.  Here we define the synthetic
++    event:
++
++    # echo 'wakeup_new_test pid_t pid' >> \
++           /sys/kernel/debug/tracing/synthetic_events
++
++    # cat /sys/kernel/debug/tracing/synthetic_events
++          wakeup_new_test pid_t pid
++
++    The following hist trigger both defines the missing testpid
++    variable and specifies an onmatch() action that generates a
++    wakeup_new_test synthetic event whenever a sched_wakeup_new event
++    occurs, which because of the 'if comm == "cyclictest"' filter only
++    happens when the executable is cyclictest:
++
++    # echo 'hist:keys=$testpid:testpid=pid:onmatch(sched.sched_wakeup_new).\
++            wakeup_new_test($testpid) if comm=="cyclictest"' >> \
++            /sys/kernel/debug/tracing/events/sched/sched_wakeup_new/trigger
++
++    Creating and displaying a histogram based on those events is now
++    just a matter of using the fields and new synthetic event in the
++    tracing/events/synthetic directory, as usual:
++
++    # echo 'hist:keys=pid:sort=pid' >> \
++           /sys/kernel/debug/tracing/events/synthetic/wakeup_new_test/trigger
++
++    Running 'cyclictest' should cause wakeup_new events to generate
++    wakeup_new_test synthetic events which should result in histogram
++    output in the wakeup_new_test event's hist file:
++
++    # cat /sys/kernel/debug/tracing/events/synthetic/wakeup_new_test/hist
++
++    A more typical usage would be to use two events to calculate a
++    latency.  The following example uses a set of hist triggers to
++    produce a 'wakeup_latency' histogram:
++
++    First, we define a 'wakeup_latency' synthetic event:
++
++    # echo 'wakeup_latency u64 lat; pid_t pid; int prio' >> \
++            /sys/kernel/debug/tracing/synthetic_events
++
++    Next, we specify that whenever we see a sched_waking event for a
++    cyclictest thread, save the timestamp in a 'ts0' variable:
++
++    # echo 'hist:keys=$saved_pid:saved_pid=pid:ts0=$common_timestamp.usecs \
++            if comm=="cyclictest"' >> \
++	    /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
++
++    Then, when the corresponding thread is actually scheduled onto the
++    CPU by a sched_switch event, calculate the latency and use that
++    along with another variable and an event field to generate a
++    wakeup_latency synthetic event:
++
++    # echo 'hist:keys=next_pid:wakeup_lat=$common_timestamp.usecs-$ts0:\
++            onmatch(sched.sched_waking).wakeup_latency($wakeup_lat,\
++	            $saved_pid,next_prio) if next_comm=="cyclictest"' >> \
++	    /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
++
++    We also need to create a histogram on the wakeup_latency synthetic
++    event in order to aggregate the generated synthetic event data:
++
++    # echo 'hist:keys=pid,prio,lat:sort=pid,lat' >> \
++            /sys/kernel/debug/tracing/events/synthetic/wakeup_latency/trigger
++
++    Finally, once we've run cyclictest to actually generate some
++    events, we can see the output by looking at the wakeup_latency
++    synthetic event's hist file:
++
++    # cat /sys/kernel/debug/tracing/events/synthetic/wakeup_latency/hist
++
++  - onmax(var).save(field,..	.)
++
++    The 'onmax(var).save(field,...)' hist trigger action is invoked
++    whenever the value of 'var' associated with a histogram entry
++    exceeds the current maximum contained in that variable.
++
++    The end result is that the trace event fields specified as the
++    onmax.save() params will be saved if 'var' exceeds the current
++    maximum for that hist trigger entry.  This allows context from the
++    event that exhibited the new maximum to be saved for later
++    reference.  When the histogram is displayed, additional fields
++    displaying the saved values will be printed.
++
++    As an example the below defines a couple of hist triggers, one for
++    sched_waking and another for sched_switch, keyed on pid.  Whenever
++    a sched_waking occurs, the timestamp is saved in the entry
++    corresponding to the current pid, and when the scheduler switches
++    back to that pid, the timestamp difference is calculated.  If the
++    resulting latency, stored in wakeup_lat, exceeds the current
++    maximum latency, the values specified in the save() fields are
++    recoreded:
++
++    # echo 'hist:keys=pid:ts0=$common_timestamp.usecs \
++            if comm=="cyclictest"' >> \
++            /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
++
++    # echo 'hist:keys=next_pid:\
++            wakeup_lat=$common_timestamp.usecs-$ts0:\
++            onmax($wakeup_lat).save(next_comm,prev_pid,prev_prio,prev_comm) \
++            if next_comm=="cyclictest"' >> \
++            /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
++
++    When the histogram is displayed, the max value and the saved
++    values corresponding to the max are displayed following the rest
++    of the fields:
++
++    # cat /sys/kernel/debug/tracing/events/sched/sched_switch/hist
++      { next_pid:       2255 } hitcount:        239
++        common_timestamp-ts0:          0
++        max:         27
++	next_comm: cyclictest
++        prev_pid:          0  prev_prio:        120  prev_comm: swapper/1
++
++      { next_pid:       2256 } hitcount:       2355
++        common_timestamp-ts0: 0
++        max:         49  next_comm: cyclictest
++        prev_pid:          0  prev_prio:        120  prev_comm: swapper/0
++
++      Totals:
++          Hits: 12970
++          Entries: 2
++          Dropped: 0
 -- 
 1.9.3
