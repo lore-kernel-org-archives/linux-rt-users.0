@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v4 35/37] tracing: Increase trace_recursive_lock() limit for synthetic events
-Date: Mon, 30 Oct 2017 15:52:17 -0500
-Message-ID: <b0c2255848f22ab923550f6f19d8802cf3084e64.1509395596.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v4 33/37] tracing: Make tracing_set_clock() non-static
+Date: Mon, 30 Oct 2017 15:52:15 -0500
+Message-ID: <1772ce33e91e38d28b7fb439f21de2d9f2a5f777.1509395596.git.tom.zanussi@linux.intel.com>
 References: <cover.1509395595.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,44 +18,43 @@ References: <cover.1509395595.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Synthetic event generation needs to happen while the current event is
-still in progress, so add 1 to the trace_recursive_lock() recursion
-limit to account for that.
+Allow tracing code outside of trace.c to access tracing_set_clock().
 
-Because we also want to allow for the possibility of a synthetic event
-being generated from another synthetic event, add an additional
-increment for that as well.
+Some applications may require a particular clock in order to function
+properly, such as latency calculations.
+
+Also, add an accessor returning the current clock string.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/ring_buffer.c | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+ kernel/trace/trace.c | 2 +-
+ kernel/trace/trace.h | 1 +
+ 2 files changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
-index ab7b65d..39f1ca0 100644
---- a/kernel/trace/ring_buffer.c
-+++ b/kernel/trace/ring_buffer.c
-@@ -2589,16 +2589,16 @@ static void rb_commit(struct ring_buffer_per_cpu *cpu_buffer,
-  *  IRQ context
-  *  NMI context
-  *
-- * If for some reason the ring buffer starts to recurse, we
-- * only allow that to happen at most 4 times (one for each
-- * context). If it happens 5 times, then we consider this a
-- * recusive loop and do not let it go further.
-+ * If for some reason the ring buffer starts to recurse, we only allow
-+ * that to happen at most 6 times (one for each context, plus possibly
-+ * two levels of synthetic event generation). If it happens 7 times,
-+ * then we consider this a recusive loop and do not let it go further.
-  */
+diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
+index f667a78..16000c9 100644
+--- a/kernel/trace/trace.c
++++ b/kernel/trace/trace.c
+@@ -6230,7 +6230,7 @@ static int tracing_clock_show(struct seq_file *m, void *v)
+ 	return 0;
+ }
  
- static __always_inline int
- trace_recursive_lock(struct ring_buffer_per_cpu *cpu_buffer)
+-static int tracing_set_clock(struct trace_array *tr, const char *clockstr)
++int tracing_set_clock(struct trace_array *tr, const char *clockstr)
  {
--	if (cpu_buffer->current_context >= 4)
-+	if (cpu_buffer->current_context >= 6)
- 		return 1;
+ 	int i;
  
- 	cpu_buffer->current_context++;
+diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
+index 52667dd..68153a8 100644
+--- a/kernel/trace/trace.h
++++ b/kernel/trace/trace.h
+@@ -288,6 +288,7 @@ enum {
+ extern void trace_array_put(struct trace_array *tr);
+ 
+ extern int tracing_set_time_stamp_abs(struct trace_array *tr, bool abs);
++extern int tracing_set_clock(struct trace_array *tr, const char *clockstr);
+ 
+ extern bool trace_clock_in_ns(struct trace_array *tr);
+ 
 -- 
 1.9.3
