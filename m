@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v4 10/37] tracing: Break out hist trigger assignment parsing
-Date: Mon, 30 Oct 2017 15:51:52 -0500
-Message-ID: <ac5a7cb10536ff1d082b8461e55851b7d3f2badb.1509395595.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v4 17/37] tracing: Move get_hist_field_flags()
+Date: Mon, 30 Oct 2017 15:51:59 -0500
+Message-ID: <5c157839c9105e5ea60c655725930a3455b04a45.1509395595.git.tom.zanussi@linux.intel.com>
 References: <cover.1509395595.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,110 +18,75 @@ References: <cover.1509395595.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-This will make it easier to add variables, and makes the parsing code
-cleaner regardless.
+Move get_hist_field_flags() to make it more easily accessible for new
+code (and keep the move separate from new functionality).
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-Signed-off-by: Rajvi Jingar <rajvi.jingar@intel.com>
 ---
- kernel/trace/trace_events_hist.c | 72 ++++++++++++++++++++++++++++------------
- 1 file changed, 51 insertions(+), 21 deletions(-)
+ kernel/trace/trace_events_hist.c | 44 ++++++++++++++++++++--------------------
+ 1 file changed, 22 insertions(+), 22 deletions(-)
 
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 37f5ace..e4368bb 100644
+index 24a2b69..7fe407a 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -251,6 +251,51 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
- 	kfree(attrs);
- }
+@@ -455,6 +455,28 @@ static void hist_trigger_elt_comm_init(struct tracing_map_elt *elt)
+ 	.elt_init	= hist_trigger_elt_comm_init,
+ };
  
-+static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
++static const char *get_hist_field_flags(struct hist_field *hist_field)
 +{
-+	int ret = 0;
++	const char *flags_str = NULL;
 +
-+	if ((strncmp(str, "key=", strlen("key=")) == 0) ||
-+	    (strncmp(str, "keys=", strlen("keys=")) == 0)) {
-+		attrs->keys_str = kstrdup(str, GFP_KERNEL);
-+		if (!attrs->keys_str) {
-+			ret = -ENOMEM;
-+			goto out;
-+		}
-+	} else if ((strncmp(str, "val=", strlen("val=")) == 0) ||
-+		 (strncmp(str, "vals=", strlen("vals=")) == 0) ||
-+		 (strncmp(str, "values=", strlen("values=")) == 0)) {
-+		attrs->vals_str = kstrdup(str, GFP_KERNEL);
-+		if (!attrs->vals_str) {
-+			ret = -ENOMEM;
-+			goto out;
-+		}
-+	} else if (strncmp(str, "sort=", strlen("sort=")) == 0) {
-+		attrs->sort_key_str = kstrdup(str, GFP_KERNEL);
-+		if (!attrs->sort_key_str) {
-+			ret = -ENOMEM;
-+			goto out;
-+		}
-+	} else if (strncmp(str, "name=", strlen("name=")) == 0) {
-+		attrs->name = kstrdup(str, GFP_KERNEL);
-+		if (!attrs->name) {
-+			ret = -ENOMEM;
-+			goto out;
-+		}
-+	} else if (strncmp(str, "size=", strlen("size=")) == 0) {
-+		int map_bits = parse_map_size(str);
++	if (hist_field->flags & HIST_FIELD_FL_HEX)
++		flags_str = "hex";
++	else if (hist_field->flags & HIST_FIELD_FL_SYM)
++		flags_str = "sym";
++	else if (hist_field->flags & HIST_FIELD_FL_SYM_OFFSET)
++		flags_str = "sym-offset";
++	else if (hist_field->flags & HIST_FIELD_FL_EXECNAME)
++		flags_str = "execname";
++	else if (hist_field->flags & HIST_FIELD_FL_SYSCALL)
++		flags_str = "syscall";
++	else if (hist_field->flags & HIST_FIELD_FL_LOG2)
++		flags_str = "log2";
++	else if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP_USECS)
++		flags_str = "usecs";
 +
-+		if (map_bits < 0) {
-+			ret = map_bits;
-+			goto out;
-+		}
-+		attrs->map_bits = map_bits;
-+	} else
-+		ret = -EINVAL;
-+ out:
-+	return ret;
++	return flags_str;
 +}
 +
- static struct hist_trigger_attrs *parse_hist_trigger_attrs(char *trigger_str)
+ static void destroy_hist_field(struct hist_field *hist_field,
+ 			       unsigned int level)
  {
- 	struct hist_trigger_attrs *attrs;
-@@ -263,33 +308,18 @@ static struct hist_trigger_attrs *parse_hist_trigger_attrs(char *trigger_str)
- 	while (trigger_str) {
- 		char *str = strsep(&trigger_str, ":");
+@@ -1490,28 +1512,6 @@ static int event_hist_open(struct inode *inode, struct file *file)
+ 	.release = single_release,
+ };
  
--		if ((strncmp(str, "key=", strlen("key=")) == 0) ||
--		    (strncmp(str, "keys=", strlen("keys=")) == 0))
--			attrs->keys_str = kstrdup(str, GFP_KERNEL);
--		else if ((strncmp(str, "val=", strlen("val=")) == 0) ||
--			 (strncmp(str, "vals=", strlen("vals=")) == 0) ||
--			 (strncmp(str, "values=", strlen("values=")) == 0))
--			attrs->vals_str = kstrdup(str, GFP_KERNEL);
--		else if (strncmp(str, "sort=", strlen("sort=")) == 0)
--			attrs->sort_key_str = kstrdup(str, GFP_KERNEL);
--		else if (strncmp(str, "name=", strlen("name=")) == 0)
--			attrs->name = kstrdup(str, GFP_KERNEL);
--		else if (strcmp(str, "pause") == 0)
-+		if (strchr(str, '=')) {
-+			ret = parse_assignment(str, attrs);
-+			if (ret)
-+				goto free;
-+		} else if (strcmp(str, "pause") == 0)
- 			attrs->pause = true;
- 		else if ((strcmp(str, "cont") == 0) ||
- 			 (strcmp(str, "continue") == 0))
- 			attrs->cont = true;
- 		else if (strcmp(str, "clear") == 0)
- 			attrs->clear = true;
--		else if (strncmp(str, "size=", strlen("size=")) == 0) {
--			int map_bits = parse_map_size(str);
+-static const char *get_hist_field_flags(struct hist_field *hist_field)
+-{
+-	const char *flags_str = NULL;
 -
--			if (map_bits < 0) {
--				ret = map_bits;
--				goto free;
--			}
--			attrs->map_bits = map_bits;
--		} else {
-+		else {
- 			ret = -EINVAL;
- 			goto free;
- 		}
+-	if (hist_field->flags & HIST_FIELD_FL_HEX)
+-		flags_str = "hex";
+-	else if (hist_field->flags & HIST_FIELD_FL_SYM)
+-		flags_str = "sym";
+-	else if (hist_field->flags & HIST_FIELD_FL_SYM_OFFSET)
+-		flags_str = "sym-offset";
+-	else if (hist_field->flags & HIST_FIELD_FL_EXECNAME)
+-		flags_str = "execname";
+-	else if (hist_field->flags & HIST_FIELD_FL_SYSCALL)
+-		flags_str = "syscall";
+-	else if (hist_field->flags & HIST_FIELD_FL_LOG2)
+-		flags_str = "log2";
+-	else if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP_USECS)
+-		flags_str = "usecs";
+-
+-	return flags_str;
+-}
+-
+ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
+ {
+ 	const char *field_name = hist_field_name(hist_field, 0);
 -- 
 1.9.3
