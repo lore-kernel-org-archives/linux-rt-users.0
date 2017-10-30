@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v4 07/37] tracing: Add timestamp_mode trace file
-Date: Mon, 30 Oct 2017 15:51:49 -0500
-Message-ID: <f4e7c29d148c4d166fe09b76070f08d1cc89c88a.1509395595.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v4 06/37] ring-buffer: Redefine the unimplemented RINGBUF_TYPE_TIME_STAMP
+Date: Mon, 30 Oct 2017 15:51:48 -0500
+Message-ID: <8927a4736dc6f602079d0797b60d3bf7a5d2d9d7.1509395595.git.tom.zanussi@linux.intel.com>
 References: <cover.1509395595.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,137 +18,323 @@ References: <cover.1509395595.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Add a new option flag indicating whether or not the ring buffer is in
-'absolute timestamp' mode.
+RINGBUF_TYPE_TIME_STAMP is defined but not used, and from what I can
+gather was reserved for something like an absolute timestamp feature
+for the ring buffer, if not a complete replacement of the current
+time_delta scheme.
 
-Currently this is only set/unset by hist triggers that make use of a
-$common_timestamp.  As such, there's no reason to make this writeable
-for users - its purpose is only to allow users to determine
-unequivocally whether or not the ring buffer is in that mode (although
-absolute timestamps can coexist with the normal delta timestamps, when
-the ring buffer is in absolute mode, timestamps written while absolute
-mode is in effect take up more space in the buffer, and are not as
-efficient).
+This code redefines RINGBUF_TYPE_TIME_STAMP to implement absolute time
+stamps.  Another way to look at it is that it essentially forces
+extended time_deltas for all events.
+
+The motivation for doing this is to enable time_deltas that aren't
+dependent on previous events in the ring buffer, making it feasible to
+use the ring_buffer_event timetamps in a more random-access way, for
+purposes other than serial event printing.
+
+To set/reset this mode, use tracing_set_timestamp_abs() from the
+previous interface patch.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- Documentation/trace/ftrace.txt | 24 +++++++++++++++++++++
- kernel/trace/trace.c           | 47 ++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 71 insertions(+)
+ include/linux/ring_buffer.h |  12 ++---
+ kernel/trace/ring_buffer.c  | 106 ++++++++++++++++++++++++++++++++------------
+ 2 files changed, 84 insertions(+), 34 deletions(-)
 
-diff --git a/Documentation/trace/ftrace.txt b/Documentation/trace/ftrace.txt
-index d4601df..54213e5 100644
---- a/Documentation/trace/ftrace.txt
-+++ b/Documentation/trace/ftrace.txt
-@@ -539,6 +539,30 @@ of ftrace. Here is a list of some of the key files:
- 
- 	See events.txt for more information.
- 
-+  timestamp_mode:
-+
-+	Certain tracers may change the timestamp mode used when
-+	logging trace events into the event buffer.  Events with
-+	different modes can coexist within a buffer but the mode in
-+	effect when an event is logged determines which timestamp mode
-+	is used for that event.  The default timestamp mode is
-+	'delta'.
-+
-+	Usual timestamp modes for tracing:
-+
-+	  # cat timestamp_mode
-+	  [delta] absolute
-+
-+	  The timestamp mode with the square brackets around it is the
-+	  one in effect.
-+
-+	  delta: Default timestamp mode - timestamp is a delta against
-+	         a per-buffer timestamp.
-+
-+	  absolute: The timestamp is a full timestamp, not a delta
-+                 against some other value.  As such it takes up more
-+                 space and is less efficient.
-+
-   hwlat_detector:
- 
- 	Directory for the Hardware Latency Detector.
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index 459924f..da604fa 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -4531,6 +4531,9 @@ static int tracing_trace_options_open(struct inode *inode, struct file *file)
- #ifdef CONFIG_X86_64
- 	"     x86-tsc:   TSC cycle counter\n"
- #endif
-+	"\n  timestamp_mode\t-view the mode used to timestamp events\n"
-+	"       delta:   Delta difference against a buffer-wide timestamp\n"
-+	"    absolute:   Absolute (standalone) timestamp\n"
- 	"\n  trace_marker\t\t- Writes into this file writes into the kernel buffer\n"
- 	"\n  trace_marker_raw\t\t- Writes into this file writes binary data into the kernel buffer\n"
- 	"  tracing_cpumask\t- Limit which CPUs to trace\n"
-@@ -6298,6 +6301,40 @@ static int tracing_clock_open(struct inode *inode, struct file *file)
- 	return ret;
- }
- 
-+static int tracing_time_stamp_mode_show(struct seq_file *m, void *v)
-+{
-+	struct trace_array *tr = m->private;
-+
-+	mutex_lock(&trace_types_lock);
-+
-+	if (ring_buffer_time_stamp_abs(tr->trace_buffer.buffer))
-+		seq_puts(m, "delta [absolute]\n");
-+	else
-+		seq_puts(m, "[delta] absolute\n");
-+
-+	mutex_unlock(&trace_types_lock);
-+
-+	return 0;
-+}
-+
-+static int tracing_time_stamp_mode_open(struct inode *inode, struct file *file)
-+{
-+	struct trace_array *tr = inode->i_private;
-+	int ret;
-+
-+	if (tracing_disabled)
-+		return -ENODEV;
-+
-+	if (trace_array_get(tr))
-+		return -ENODEV;
-+
-+	ret = single_open(file, tracing_time_stamp_mode_show, inode->i_private);
-+	if (ret < 0)
-+		trace_array_put(tr);
-+
-+	return ret;
-+}
-+
- int tracing_set_time_stamp_abs(struct trace_array *tr, bool abs)
- {
- 	int ret = 0;
-@@ -6576,6 +6613,13 @@ static int snapshot_raw_open(struct inode *inode, struct file *filp)
- 	.write		= tracing_clock_write,
+diff --git a/include/linux/ring_buffer.h b/include/linux/ring_buffer.h
+index 28e3472..74bc276 100644
+--- a/include/linux/ring_buffer.h
++++ b/include/linux/ring_buffer.h
+@@ -36,10 +36,12 @@ struct ring_buffer_event {
+  *				 array[0] = time delta (28 .. 59)
+  *				 size = 8 bytes
+  *
+- * @RINGBUF_TYPE_TIME_STAMP:	Sync time stamp with external clock
+- *				 array[0]    = tv_nsec
+- *				 array[1..2] = tv_sec
+- *				 size = 16 bytes
++ * @RINGBUF_TYPE_TIME_STAMP:	Absolute timestamp
++ *				 Same format as TIME_EXTEND except that the
++ *				 value is an absolute timestamp, not a delta
++ *				 event.time_delta contains bottom 27 bits
++ *				 array[0] = top (28 .. 59) bits
++ *				 size = 8 bytes
+  *
+  * <= @RINGBUF_TYPE_DATA_TYPE_LEN_MAX:
+  *				Data record
+@@ -56,12 +58,12 @@ enum ring_buffer_type {
+ 	RINGBUF_TYPE_DATA_TYPE_LEN_MAX = 28,
+ 	RINGBUF_TYPE_PADDING,
+ 	RINGBUF_TYPE_TIME_EXTEND,
+-	/* FIXME: RINGBUF_TYPE_TIME_STAMP not implemented */
+ 	RINGBUF_TYPE_TIME_STAMP,
  };
  
-+static const struct file_operations trace_time_stamp_mode_fops = {
-+	.open		= tracing_time_stamp_mode_open,
-+	.read		= seq_read,
-+	.llseek		= seq_lseek,
-+	.release	= tracing_single_release_tr,
-+};
-+
- #ifdef CONFIG_TRACER_SNAPSHOT
- static const struct file_operations snapshot_fops = {
- 	.open		= tracing_snapshot_open,
-@@ -7903,6 +7947,9 @@ static __init void create_trace_instances(struct dentry *d_tracer)
- 	trace_create_file("tracing_on", 0644, d_tracer,
- 			  tr, &rb_simple_fops);
+ unsigned ring_buffer_event_length(struct ring_buffer_event *event);
+ void *ring_buffer_event_data(struct ring_buffer_event *event);
++u64 ring_buffer_event_time_stamp(struct ring_buffer_event *event);
  
-+	trace_create_file("timestamp_mode", 0444, d_tracer, tr,
-+			  &trace_time_stamp_mode_fops);
-+
- 	create_trace_options_dir(tr);
+ /*
+  * ring_buffer_discard_commit will remove an event that has not
+diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
+index 1e5b75a..ab7b65d 100644
+--- a/kernel/trace/ring_buffer.c
++++ b/kernel/trace/ring_buffer.c
+@@ -42,6 +42,8 @@ int ring_buffer_print_entry_header(struct trace_seq *s)
+ 			 RINGBUF_TYPE_PADDING);
+ 	trace_seq_printf(s, "\ttime_extend : type == %d\n",
+ 			 RINGBUF_TYPE_TIME_EXTEND);
++	trace_seq_printf(s, "\ttime_stamp : type == %d\n",
++			 RINGBUF_TYPE_TIME_STAMP);
+ 	trace_seq_printf(s, "\tdata max type_len  == %d\n",
+ 			 RINGBUF_TYPE_DATA_TYPE_LEN_MAX);
  
- #if defined(CONFIG_TRACER_MAX_TRACE) || defined(CONFIG_HWLAT_TRACER)
+@@ -141,12 +143,15 @@ int ring_buffer_print_entry_header(struct trace_seq *s)
+ 
+ enum {
+ 	RB_LEN_TIME_EXTEND = 8,
+-	RB_LEN_TIME_STAMP = 16,
++	RB_LEN_TIME_STAMP =  8,
+ };
+ 
+ #define skip_time_extend(event) \
+ 	((struct ring_buffer_event *)((char *)event + RB_LEN_TIME_EXTEND))
+ 
++#define extended_time(event) \
++	(event->type_len >= RINGBUF_TYPE_TIME_EXTEND)
++
+ static inline int rb_null_event(struct ring_buffer_event *event)
+ {
+ 	return event->type_len == RINGBUF_TYPE_PADDING && !event->time_delta;
+@@ -210,7 +215,7 @@ static void rb_event_set_padding(struct ring_buffer_event *event)
+ {
+ 	unsigned len = 0;
+ 
+-	if (event->type_len == RINGBUF_TYPE_TIME_EXTEND) {
++	if (extended_time(event)) {
+ 		/* time extends include the data event after it */
+ 		len = RB_LEN_TIME_EXTEND;
+ 		event = skip_time_extend(event);
+@@ -232,7 +237,7 @@ unsigned ring_buffer_event_length(struct ring_buffer_event *event)
+ {
+ 	unsigned length;
+ 
+-	if (event->type_len == RINGBUF_TYPE_TIME_EXTEND)
++	if (extended_time(event))
+ 		event = skip_time_extend(event);
+ 
+ 	length = rb_event_length(event);
+@@ -249,7 +254,7 @@ unsigned ring_buffer_event_length(struct ring_buffer_event *event)
+ static __always_inline void *
+ rb_event_data(struct ring_buffer_event *event)
+ {
+-	if (event->type_len == RINGBUF_TYPE_TIME_EXTEND)
++	if (extended_time(event))
+ 		event = skip_time_extend(event);
+ 	BUG_ON(event->type_len > RINGBUF_TYPE_DATA_TYPE_LEN_MAX);
+ 	/* If length is in len field, then array[0] has the data */
+@@ -276,6 +281,27 @@ void *ring_buffer_event_data(struct ring_buffer_event *event)
+ #define TS_MASK		((1ULL << TS_SHIFT) - 1)
+ #define TS_DELTA_TEST	(~TS_MASK)
+ 
++/**
++ * ring_buffer_event_time_stamp - return the event's extended timestamp
++ * @event: the event to get the timestamp of
++ *
++ * Returns the extended timestamp associated with a data event.
++ * An extended time_stamp is a 64-bit timestamp represented
++ * internally in a special way that makes the best use of space
++ * contained within a ring buffer event.  This function decodes
++ * it and maps it to a straight u64 value.
++ */
++u64 ring_buffer_event_time_stamp(struct ring_buffer_event *event)
++{
++	u64 ts;
++
++	ts = event->array[0];
++	ts <<= TS_SHIFT;
++	ts += event->time_delta;
++
++	return ts;
++}
++
+ /* Flag when events were overwritten */
+ #define RB_MISSED_EVENTS	(1 << 31)
+ /* Missed count stored at end */
+@@ -2220,13 +2246,16 @@ static void rb_inc_iter(struct ring_buffer_iter *iter)
+ }
+ 
+ /* Slow path, do not inline */
+-static noinline struct ring_buffer_event *
+-rb_add_time_stamp(struct ring_buffer_event *event, u64 delta)
++static struct noinline ring_buffer_event *
++rb_add_time_stamp(struct ring_buffer_event *event, u64 delta, bool abs)
+ {
+-	event->type_len = RINGBUF_TYPE_TIME_EXTEND;
++	if (abs)
++		event->type_len = RINGBUF_TYPE_TIME_STAMP;
++	else
++		event->type_len = RINGBUF_TYPE_TIME_EXTEND;
+ 
+-	/* Not the first event on the page? */
+-	if (rb_event_index(event)) {
++	/* Not the first event on the page, or not delta? */
++	if (abs || rb_event_index(event)) {
+ 		event->time_delta = delta & TS_MASK;
+ 		event->array[0] = delta >> TS_SHIFT;
+ 	} else {
+@@ -2269,7 +2298,9 @@ static inline bool rb_event_is_commit(struct ring_buffer_per_cpu *cpu_buffer,
+ 	 * add it to the start of the resevered space.
+ 	 */
+ 	if (unlikely(info->add_timestamp)) {
+-		event = rb_add_time_stamp(event, delta);
++		bool abs = ring_buffer_time_stamp_abs(cpu_buffer->buffer);
++
++		event = rb_add_time_stamp(event, info->delta, abs);
+ 		length -= RB_LEN_TIME_EXTEND;
+ 		delta = 0;
+ 	}
+@@ -2457,7 +2488,7 @@ static __always_inline void rb_end_commit(struct ring_buffer_per_cpu *cpu_buffer
+ 
+ static inline void rb_event_discard(struct ring_buffer_event *event)
+ {
+-	if (event->type_len == RINGBUF_TYPE_TIME_EXTEND)
++	if (extended_time(event))
+ 		event = skip_time_extend(event);
+ 
+ 	/* array[0] holds the actual length for the discarded event */
+@@ -2501,10 +2532,11 @@ static inline void rb_event_discard(struct ring_buffer_event *event)
+ 			cpu_buffer->write_stamp =
+ 				cpu_buffer->commit_page->page->time_stamp;
+ 		else if (event->type_len == RINGBUF_TYPE_TIME_EXTEND) {
+-			delta = event->array[0];
+-			delta <<= TS_SHIFT;
+-			delta += event->time_delta;
++			delta = ring_buffer_event_time_stamp(event);
+ 			cpu_buffer->write_stamp += delta;
++		} else if (event->type_len == RINGBUF_TYPE_TIME_STAMP) {
++			delta = ring_buffer_event_time_stamp(event);
++			cpu_buffer->write_stamp = delta;
+ 		} else
+ 			cpu_buffer->write_stamp += event->time_delta;
+ 	}
+@@ -2657,7 +2689,7 @@ int ring_buffer_unlock_commit(struct ring_buffer *buffer,
+ 	 * If this is the first commit on the page, then it has the same
+ 	 * timestamp as the page itself.
+ 	 */
+-	if (!tail)
++	if (!tail && !ring_buffer_time_stamp_abs(cpu_buffer->buffer))
+ 		info->delta = 0;
+ 
+ 	/* See if we shot pass the end of this buffer page */
+@@ -2735,8 +2767,11 @@ int ring_buffer_unlock_commit(struct ring_buffer *buffer,
+ 	/* make sure this diff is calculated here */
+ 	barrier();
+ 
+-	/* Did the write stamp get updated already? */
+-	if (likely(info.ts >= cpu_buffer->write_stamp)) {
++	if (ring_buffer_time_stamp_abs(buffer)) {
++		info.delta = info.ts;
++		rb_handle_timestamp(cpu_buffer, &info);
++	} else /* Did the write stamp get updated already? */
++		if (likely(info.ts >= cpu_buffer->write_stamp)) {
+ 		info.delta = diff;
+ 		if (unlikely(test_time_stamp(info.delta)))
+ 			rb_handle_timestamp(cpu_buffer, &info);
+@@ -3418,14 +3453,13 @@ int ring_buffer_iter_empty(struct ring_buffer_iter *iter)
+ 		return;
+ 
+ 	case RINGBUF_TYPE_TIME_EXTEND:
+-		delta = event->array[0];
+-		delta <<= TS_SHIFT;
+-		delta += event->time_delta;
++		delta = ring_buffer_event_time_stamp(event);
+ 		cpu_buffer->read_stamp += delta;
+ 		return;
+ 
+ 	case RINGBUF_TYPE_TIME_STAMP:
+-		/* FIXME: not implemented */
++		delta = ring_buffer_event_time_stamp(event);
++		cpu_buffer->read_stamp = delta;
+ 		return;
+ 
+ 	case RINGBUF_TYPE_DATA:
+@@ -3449,14 +3483,13 @@ int ring_buffer_iter_empty(struct ring_buffer_iter *iter)
+ 		return;
+ 
+ 	case RINGBUF_TYPE_TIME_EXTEND:
+-		delta = event->array[0];
+-		delta <<= TS_SHIFT;
+-		delta += event->time_delta;
++		delta = ring_buffer_event_time_stamp(event);
+ 		iter->read_stamp += delta;
+ 		return;
+ 
+ 	case RINGBUF_TYPE_TIME_STAMP:
+-		/* FIXME: not implemented */
++		delta = ring_buffer_event_time_stamp(event);
++		iter->read_stamp = delta;
+ 		return;
+ 
+ 	case RINGBUF_TYPE_DATA:
+@@ -3680,6 +3713,8 @@ static int rb_lost_events(struct ring_buffer_per_cpu *cpu_buffer)
+ 	struct buffer_page *reader;
+ 	int nr_loops = 0;
+ 
++	if (ts)
++		*ts = 0;
+  again:
+ 	/*
+ 	 * We repeat when a time extend is encountered.
+@@ -3716,12 +3751,17 @@ static int rb_lost_events(struct ring_buffer_per_cpu *cpu_buffer)
+ 		goto again;
+ 
+ 	case RINGBUF_TYPE_TIME_STAMP:
+-		/* FIXME: not implemented */
++		if (ts) {
++			*ts = ring_buffer_event_time_stamp(event);
++			ring_buffer_normalize_time_stamp(cpu_buffer->buffer,
++							 cpu_buffer->cpu, ts);
++		}
++		/* Internal data, OK to advance */
+ 		rb_advance_reader(cpu_buffer);
+ 		goto again;
+ 
+ 	case RINGBUF_TYPE_DATA:
+-		if (ts) {
++		if (ts && !(*ts)) {
+ 			*ts = cpu_buffer->read_stamp + event->time_delta;
+ 			ring_buffer_normalize_time_stamp(cpu_buffer->buffer,
+ 							 cpu_buffer->cpu, ts);
+@@ -3746,6 +3786,9 @@ static int rb_lost_events(struct ring_buffer_per_cpu *cpu_buffer)
+ 	struct ring_buffer_event *event;
+ 	int nr_loops = 0;
+ 
++	if (ts)
++		*ts = 0;
++
+ 	cpu_buffer = iter->cpu_buffer;
+ 	buffer = cpu_buffer->buffer;
+ 
+@@ -3798,12 +3841,17 @@ static int rb_lost_events(struct ring_buffer_per_cpu *cpu_buffer)
+ 		goto again;
+ 
+ 	case RINGBUF_TYPE_TIME_STAMP:
+-		/* FIXME: not implemented */
++		if (ts) {
++			*ts = ring_buffer_event_time_stamp(event);
++			ring_buffer_normalize_time_stamp(cpu_buffer->buffer,
++							 cpu_buffer->cpu, ts);
++		}
++		/* Internal data, OK to advance */
+ 		rb_advance_iter(iter);
+ 		goto again;
+ 
+ 	case RINGBUF_TYPE_DATA:
+-		if (ts) {
++		if (ts && !(*ts)) {
+ 			*ts = iter->read_stamp + event->time_delta;
+ 			ring_buffer_normalize_time_stamp(buffer,
+ 							 cpu_buffer->cpu, ts);
 -- 
 1.9.3
