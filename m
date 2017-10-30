@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v4 21/37] tracing: Add hist_field 'type' field
-Date: Mon, 30 Oct 2017 15:52:03 -0500
-Message-ID: <5cd30bad94013c4a8363c7c4f07a6c9e4e54d782.1509395596.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v4 13/37] tracing: Add hist_data member to hist_field
+Date: Mon, 30 Oct 2017 15:51:55 -0500
+Message-ID: <e88701a0e104380d6f91e2fc9f9dcdc4bfe58db5.1509395595.git.tom.zanussi@linux.intel.com>
 References: <cover.1509395595.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,115 +18,80 @@ References: <cover.1509395595.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Future support for synthetic events requires hist_field 'type'
-information, so add a field for that.
-
-Also, make other hist_field attribute usage consistent (size,
-is_signed, etc).
+Allow hist_data access via hist_field.  Some users of hist_fields
+require or will require more access to the associated hist_data.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 33 +++++++++++++++++++++++++++++++++
- 1 file changed, 33 insertions(+)
+ kernel/trace/trace_events_hist.c | 14 +++++++++-----
+ 1 file changed, 9 insertions(+), 5 deletions(-)
 
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 8c6e062..14fd84f 100644
+index 7e7428c..d0b818c 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -54,6 +54,7 @@ struct hist_field {
- 	unsigned int			size;
+@@ -39,6 +39,7 @@ struct hist_field {
  	unsigned int			offset;
  	unsigned int                    is_signed;
-+	const char			*type;
  	struct hist_field		*operands[HIST_FIELD_OPERANDS_MAX];
- 	struct hist_trigger_data	*hist_data;
- 	struct hist_var			var;
-@@ -670,6 +671,7 @@ static void destroy_hist_field(struct hist_field *hist_field,
++	struct hist_trigger_data	*hist_data;
+ };
  
- 	kfree(hist_field->var.name);
- 	kfree(hist_field->name);
-+	kfree(hist_field->type);
- 
+ static u64 hist_field_none(struct hist_field *field, void *event,
+@@ -420,7 +421,8 @@ static void destroy_hist_field(struct hist_field *hist_field,
  	kfree(hist_field);
  }
-@@ -695,6 +697,10 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
  
+-static struct hist_field *create_hist_field(struct ftrace_event_field *field,
++static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
++					    struct ftrace_event_field *field,
+ 					    unsigned long flags)
+ {
+ 	struct hist_field *hist_field;
+@@ -432,6 +434,8 @@ static struct hist_field *create_hist_field(struct ftrace_event_field *field,
+ 	if (!hist_field)
+ 		return NULL;
+ 
++	hist_field->hist_data = hist_data;
++
  	if (flags & HIST_FIELD_FL_HITCOUNT) {
  		hist_field->fn = hist_field_counter;
-+		hist_field->size = sizeof(u64);
-+		hist_field->type = kstrdup("u64", GFP_KERNEL);
-+		if (!hist_field->type)
-+			goto free;
  		goto out;
- 	}
- 
-@@ -708,12 +714,18 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
+@@ -445,7 +449,7 @@ static struct hist_field *create_hist_field(struct ftrace_event_field *field,
+ 	if (flags & HIST_FIELD_FL_LOG2) {
+ 		unsigned long fl = flags & ~HIST_FIELD_FL_LOG2;
  		hist_field->fn = hist_field_log2;
- 		hist_field->operands[0] = create_hist_field(hist_data, field, fl, NULL);
+-		hist_field->operands[0] = create_hist_field(field, fl);
++		hist_field->operands[0] = create_hist_field(hist_data, field, fl);
  		hist_field->size = hist_field->operands[0]->size;
-+		hist_field->type = kstrdup(hist_field->operands[0]->type, GFP_KERNEL);
-+		if (!hist_field->type)
-+			goto free;
  		goto out;
  	}
+@@ -498,7 +502,7 @@ static void destroy_hist_fields(struct hist_trigger_data *hist_data)
+ static int create_hitcount_val(struct hist_trigger_data *hist_data)
+ {
+ 	hist_data->fields[HITCOUNT_IDX] =
+-		create_hist_field(NULL, HIST_FIELD_FL_HITCOUNT);
++		create_hist_field(hist_data, NULL, HIST_FIELD_FL_HITCOUNT);
+ 	if (!hist_data->fields[HITCOUNT_IDX])
+ 		return -ENOMEM;
  
- 	if (flags & HIST_FIELD_FL_TIMESTAMP) {
- 		hist_field->fn = hist_field_timestamp;
- 		hist_field->size = sizeof(u64);
-+		hist_field->type = kstrdup("u64", GFP_KERNEL);
-+		if (!hist_field->type)
-+			goto free;
- 		goto out;
+@@ -544,7 +548,7 @@ static int create_val_field(struct hist_trigger_data *hist_data,
+ 		}
  	}
  
-@@ -723,6 +735,11 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
- 	if (is_string_field(field)) {
- 		flags |= HIST_FIELD_FL_STRING;
+-	hist_data->fields[val_idx] = create_hist_field(field, flags);
++	hist_data->fields[val_idx] = create_hist_field(hist_data, field, flags);
+ 	if (!hist_data->fields[val_idx]) {
+ 		ret = -ENOMEM;
+ 		goto out;
+@@ -654,7 +658,7 @@ static int create_key_field(struct hist_trigger_data *hist_data,
+ 		}
+ 	}
  
-+		hist_field->size = MAX_FILTER_STR_VAL;
-+		hist_field->type = kstrdup(field->type, GFP_KERNEL);
-+		if (!hist_field->type)
-+			goto free;
-+
- 		if (field->filter_type == FILTER_STATIC_STRING)
- 			hist_field->fn = hist_field_string;
- 		else if (field->filter_type == FILTER_DYN_STRING)
-@@ -730,6 +747,12 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
- 		else
- 			hist_field->fn = hist_field_pstring;
- 	} else {
-+		hist_field->size = field->size;
-+		hist_field->is_signed = field->is_signed;
-+		hist_field->type = kstrdup(field->type, GFP_KERNEL);
-+		if (!hist_field->type)
-+			goto free;
-+
- 		hist_field->fn = select_value_fn(field->size,
- 						 field->is_signed);
- 		if (!hist_field->fn) {
-@@ -939,6 +962,11 @@ static struct hist_field *parse_unary(struct hist_trigger_data *hist_data,
- 	expr->operands[0] = operand1;
- 	expr->operator = FIELD_OP_UNARY_MINUS;
- 	expr->name = expr_str(expr, 0);
-+	expr->type = kstrdup(operand1->type, GFP_KERNEL);
-+	if (!expr->type) {
-+		ret = -ENOMEM;
-+		goto free;
-+	}
- 
- 	return expr;
-  free:
-@@ -1028,6 +1056,11 @@ static struct hist_field *parse_expr(struct hist_trigger_data *hist_data,
- 	expr->operands[1] = operand2;
- 	expr->operator = field_op;
- 	expr->name = expr_str(expr, 0);
-+	expr->type = kstrdup(operand1->type, GFP_KERNEL);
-+	if (!expr->type) {
-+		ret = -ENOMEM;
-+		goto free;
-+	}
- 
- 	switch (field_op) {
- 	case FIELD_OP_MINUS:
+-	hist_data->fields[key_idx] = create_hist_field(field, flags);
++	hist_data->fields[key_idx] = create_hist_field(hist_data, field, flags);
+ 	if (!hist_data->fields[key_idx]) {
+ 		ret = -ENOMEM;
+ 		goto out;
 -- 
 1.9.3
