@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v4 05/37] ring-buffer: Add interface for setting absolute time stamps
-Date: Mon, 30 Oct 2017 15:51:47 -0500
-Message-ID: <8b024fd77acc6195eb764ca0af8a8e754ecbe2c0.1509395595.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v4 10/37] tracing: Break out hist trigger assignment parsing
+Date: Mon, 30 Oct 2017 15:51:52 -0500
+Message-ID: <ac5a7cb10536ff1d082b8461e55851b7d3f2badb.1509395595.git.tom.zanussi@linux.intel.com>
 References: <cover.1509395595.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,135 +18,110 @@ References: <cover.1509395595.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Define a new function, tracing_set_time_stamp_abs(), which can be used
-to enable or disable the use of absolute timestamps rather than time
-deltas for a trace array.
-
-Only the interface is added here; a subsequent patch will add the
-underlying implementation.
+This will make it easier to add variables, and makes the parsing code
+cleaner regardless.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-Signed-off-by: Baohong Liu <baohong.liu@intel.com>
+Signed-off-by: Rajvi Jingar <rajvi.jingar@intel.com>
 ---
- include/linux/ring_buffer.h |  2 ++
- kernel/trace/ring_buffer.c  | 11 +++++++++++
- kernel/trace/trace.c        | 33 ++++++++++++++++++++++++++++++++-
- kernel/trace/trace.h        |  3 +++
- 4 files changed, 48 insertions(+), 1 deletion(-)
+ kernel/trace/trace_events_hist.c | 72 ++++++++++++++++++++++++++++------------
+ 1 file changed, 51 insertions(+), 21 deletions(-)
 
-diff --git a/include/linux/ring_buffer.h b/include/linux/ring_buffer.h
-index ee9b461..28e3472 100644
---- a/include/linux/ring_buffer.h
-+++ b/include/linux/ring_buffer.h
-@@ -180,6 +180,8 @@ void ring_buffer_normalize_time_stamp(struct ring_buffer *buffer,
- 				      int cpu, u64 *ts);
- void ring_buffer_set_clock(struct ring_buffer *buffer,
- 			   u64 (*clock)(void));
-+void ring_buffer_set_time_stamp_abs(struct ring_buffer *buffer, bool abs);
-+bool ring_buffer_time_stamp_abs(struct ring_buffer *buffer);
- 
- size_t ring_buffer_page_len(void *page);
- 
-diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
-index f6ee9b1..1e5b75a 100644
---- a/kernel/trace/ring_buffer.c
-+++ b/kernel/trace/ring_buffer.c
-@@ -485,6 +485,7 @@ struct ring_buffer {
- 	u64				(*clock)(void);
- 
- 	struct rb_irq_work		irq_work;
-+	bool				time_stamp_abs;
- };
- 
- struct ring_buffer_iter {
-@@ -1379,6 +1380,16 @@ void ring_buffer_set_clock(struct ring_buffer *buffer,
- 	buffer->clock = clock;
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 37f5ace..e4368bb 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -251,6 +251,51 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
+ 	kfree(attrs);
  }
  
-+void ring_buffer_set_time_stamp_abs(struct ring_buffer *buffer, bool abs)
-+{
-+	buffer->time_stamp_abs = abs;
-+}
-+
-+bool ring_buffer_time_stamp_abs(struct ring_buffer *buffer)
-+{
-+	return buffer->time_stamp_abs;
-+}
-+
- static void rb_reset_cpu(struct ring_buffer_per_cpu *cpu_buffer);
- 
- static inline unsigned long rb_page_entries(struct buffer_page *bpage)
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index 73e67b6..459924f 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -2269,7 +2269,7 @@ struct ring_buffer_event *
- 
- 	*current_rb = trace_file->tr->trace_buffer.buffer;
- 
--	if ((trace_file->flags &
-+	if (!ring_buffer_time_stamp_abs(*current_rb) && (trace_file->flags &
- 	     (EVENT_FILE_FL_SOFT_DISABLED | EVENT_FILE_FL_FILTERED)) &&
- 	    (entry = this_cpu_read(trace_buffered_event))) {
- 		/* Try to use the per cpu buffer first */
-@@ -6298,6 +6298,37 @@ static int tracing_clock_open(struct inode *inode, struct file *file)
- 	return ret;
- }
- 
-+int tracing_set_time_stamp_abs(struct trace_array *tr, bool abs)
++static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
 +{
 +	int ret = 0;
 +
-+	mutex_lock(&trace_types_lock);
-+
-+	if (abs && tr->time_stamp_abs_ref++)
-+		goto out;
-+
-+	if (!abs) {
-+		if (WARN_ON_ONCE(!tr->time_stamp_abs_ref)) {
-+			ret = -EINVAL;
++	if ((strncmp(str, "key=", strlen("key=")) == 0) ||
++	    (strncmp(str, "keys=", strlen("keys=")) == 0)) {
++		attrs->keys_str = kstrdup(str, GFP_KERNEL);
++		if (!attrs->keys_str) {
++			ret = -ENOMEM;
 +			goto out;
 +		}
-+
-+		if (--tr->time_stamp_abs_ref)
++	} else if ((strncmp(str, "val=", strlen("val=")) == 0) ||
++		 (strncmp(str, "vals=", strlen("vals=")) == 0) ||
++		 (strncmp(str, "values=", strlen("values=")) == 0)) {
++		attrs->vals_str = kstrdup(str, GFP_KERNEL);
++		if (!attrs->vals_str) {
++			ret = -ENOMEM;
 +			goto out;
-+	}
++		}
++	} else if (strncmp(str, "sort=", strlen("sort=")) == 0) {
++		attrs->sort_key_str = kstrdup(str, GFP_KERNEL);
++		if (!attrs->sort_key_str) {
++			ret = -ENOMEM;
++			goto out;
++		}
++	} else if (strncmp(str, "name=", strlen("name=")) == 0) {
++		attrs->name = kstrdup(str, GFP_KERNEL);
++		if (!attrs->name) {
++			ret = -ENOMEM;
++			goto out;
++		}
++	} else if (strncmp(str, "size=", strlen("size=")) == 0) {
++		int map_bits = parse_map_size(str);
 +
-+	ring_buffer_set_time_stamp_abs(tr->trace_buffer.buffer, abs);
-+
-+#ifdef CONFIG_TRACER_MAX_TRACE
-+	if (tr->max_buffer.buffer)
-+		ring_buffer_set_time_stamp_abs(tr->max_buffer.buffer, abs);
-+#endif
++		if (map_bits < 0) {
++			ret = map_bits;
++			goto out;
++		}
++		attrs->map_bits = map_bits;
++	} else
++		ret = -EINVAL;
 + out:
-+	mutex_unlock(&trace_types_lock);
-+
 +	return ret;
 +}
 +
- struct ftrace_buffer_info {
- 	struct trace_iterator	iter;
- 	void			*spare;
-diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
-index f8343eb..4d8bde0 100644
---- a/kernel/trace/trace.h
-+++ b/kernel/trace/trace.h
-@@ -272,6 +272,7 @@ struct trace_array {
- 	/* function tracing enabled */
- 	int			function_enabled;
- #endif
-+	int			time_stamp_abs_ref;
- };
+ static struct hist_trigger_attrs *parse_hist_trigger_attrs(char *trigger_str)
+ {
+ 	struct hist_trigger_attrs *attrs;
+@@ -263,33 +308,18 @@ static struct hist_trigger_attrs *parse_hist_trigger_attrs(char *trigger_str)
+ 	while (trigger_str) {
+ 		char *str = strsep(&trigger_str, ":");
  
- enum {
-@@ -285,6 +286,8 @@ enum {
- extern int trace_array_get(struct trace_array *tr);
- extern void trace_array_put(struct trace_array *tr);
- 
-+extern int tracing_set_time_stamp_abs(struct trace_array *tr, bool abs);
-+
- /*
-  * The global tracer (top) should be the first trace array added,
-  * but we check the flag anyway.
+-		if ((strncmp(str, "key=", strlen("key=")) == 0) ||
+-		    (strncmp(str, "keys=", strlen("keys=")) == 0))
+-			attrs->keys_str = kstrdup(str, GFP_KERNEL);
+-		else if ((strncmp(str, "val=", strlen("val=")) == 0) ||
+-			 (strncmp(str, "vals=", strlen("vals=")) == 0) ||
+-			 (strncmp(str, "values=", strlen("values=")) == 0))
+-			attrs->vals_str = kstrdup(str, GFP_KERNEL);
+-		else if (strncmp(str, "sort=", strlen("sort=")) == 0)
+-			attrs->sort_key_str = kstrdup(str, GFP_KERNEL);
+-		else if (strncmp(str, "name=", strlen("name=")) == 0)
+-			attrs->name = kstrdup(str, GFP_KERNEL);
+-		else if (strcmp(str, "pause") == 0)
++		if (strchr(str, '=')) {
++			ret = parse_assignment(str, attrs);
++			if (ret)
++				goto free;
++		} else if (strcmp(str, "pause") == 0)
+ 			attrs->pause = true;
+ 		else if ((strcmp(str, "cont") == 0) ||
+ 			 (strcmp(str, "continue") == 0))
+ 			attrs->cont = true;
+ 		else if (strcmp(str, "clear") == 0)
+ 			attrs->clear = true;
+-		else if (strncmp(str, "size=", strlen("size=")) == 0) {
+-			int map_bits = parse_map_size(str);
+-
+-			if (map_bits < 0) {
+-				ret = map_bits;
+-				goto free;
+-			}
+-			attrs->map_bits = map_bits;
+-		} else {
++		else {
+ 			ret = -EINVAL;
+ 			goto free;
+ 		}
 -- 
 1.9.3
