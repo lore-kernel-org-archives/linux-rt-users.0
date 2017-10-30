@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v4 20/37] tracing: Pass tracing_map_elt to hist_field accessor functions
-Date: Mon, 30 Oct 2017 15:52:02 -0500
-Message-ID: <4016abfa010130bf9ab852096ea029b506d9719f.1509395596.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v4 14/37] tracing: Add usecs modifier for hist trigger timestamps
+Date: Mon, 30 Oct 2017 15:51:56 -0500
+Message-ID: <6ebf465d41d0572402a5d7e08e66d4b40dfed4f9.1509395595.git.tom.zanussi@linux.intel.com>
 References: <cover.1509395595.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,222 +18,161 @@ References: <cover.1509395595.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Some accessor functions, such as for variable references, require
-access to a corrsponding tracing_map_elt.
+Appending .usecs onto a $common_timestamp field will cause the
+timestamp value to be in microseconds instead of the default
+nanoseconds.  A typical latency histogram using usecs would look like
+this:
 
-Add a tracing_map_elt param to the function signature and update the
-accessor functions accordingly.
+   # echo 'hist:keys=pid,prio:ts0=$common_timestamp.usecs ...
+   # echo 'hist:keys=next_pid:wakeup_lat=$common_timestamp.usecs-$ts0 ...
+
+This also adds an external trace_clock_in_ns() to trace.c for the
+timestamp conversion.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 91 +++++++++++++++++++++++++---------------
- 1 file changed, 57 insertions(+), 34 deletions(-)
+ Documentation/trace/histogram.txt |  1 +
+ kernel/trace/trace.c              | 13 +++++++++++--
+ kernel/trace/trace.h              |  2 ++
+ kernel/trace/trace_events_hist.c  | 28 ++++++++++++++++++++++------
+ 4 files changed, 36 insertions(+), 8 deletions(-)
 
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 4055187..8c6e062 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -26,8 +26,10 @@
+diff --git a/Documentation/trace/histogram.txt b/Documentation/trace/histogram.txt
+index a4143f04a..d1d92ed 100644
+--- a/Documentation/trace/histogram.txt
++++ b/Documentation/trace/histogram.txt
+@@ -74,6 +74,7 @@
+ 	.syscall    display a syscall id as a system call name
+ 	.execname   display a common_pid as a program name
+ 	.log2       display log2 value rather than raw number
++	.usecs      display a $common_timestamp in microseconds
  
- struct hist_field;
- 
--typedef u64 (*hist_field_fn_t) (struct hist_field *field, void *event,
--				struct ring_buffer_event *rbe);
-+typedef u64 (*hist_field_fn_t) (struct hist_field *field,
-+				struct tracing_map_elt *elt,
-+				struct ring_buffer_event *rbe,
-+				void *event);
- 
- #define HIST_FIELD_OPERANDS_MAX	2
- #define HIST_FIELDS_MAX		(TRACING_MAP_FIELDS_MAX + TRACING_MAP_VARS_MAX)
-@@ -59,28 +61,36 @@ struct hist_field {
- 	char				*name;
+   Note that in general the semantics of a given field aren't
+   interpreted when applying a modifier to it, but there are some
+diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
+index da604fa..969e247 100644
+--- a/kernel/trace/trace.c
++++ b/kernel/trace/trace.c
+@@ -1170,6 +1170,14 @@ unsigned long nsecs_to_usecs(unsigned long nsecs)
+ 	ARCH_TRACE_CLOCKS
  };
  
--static u64 hist_field_none(struct hist_field *field, void *event,
--			   struct ring_buffer_event *rbe)
-+static u64 hist_field_none(struct hist_field *field,
-+			   struct tracing_map_elt *elt,
-+			   struct ring_buffer_event *rbe,
-+			   void *event)
- {
- 	return 0;
- }
++bool trace_clock_in_ns(struct trace_array *tr)
++{
++	if (trace_clocks[tr->clock_id].in_ns)
++		return true;
++
++	return false;
++}
++
+ /*
+  * trace_parser_get_init - gets the buffer for trace parser
+  */
+@@ -4710,8 +4718,9 @@ static int tracing_trace_options_open(struct inode *inode, struct file *file)
+ 	"\t            .sym        display an address as a symbol\n"
+ 	"\t            .sym-offset display an address as a symbol and offset\n"
+ 	"\t            .execname   display a common_pid as a program name\n"
+-	"\t            .syscall    display a syscall id as a syscall name\n\n"
+-	"\t            .log2       display log2 value rather than raw number\n\n"
++	"\t            .syscall    display a syscall id as a syscall name\n"
++	"\t            .log2       display log2 value rather than raw number\n"
++	"\t            .usecs      display a $common_timestamp in microseconds\n\n"
+ 	"\t    The 'pause' parameter can be used to pause an existing hist\n"
+ 	"\t    trigger or to start a hist trigger but not log any events\n"
+ 	"\t    until told to do so.  'continue' can be used to start or\n"
+diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
+index bbfb577..88a6fe3 100644
+--- a/kernel/trace/trace.h
++++ b/kernel/trace/trace.h
+@@ -288,6 +288,8 @@ enum {
  
--static u64 hist_field_counter(struct hist_field *field, void *event,
--			      struct ring_buffer_event *rbe)
-+static u64 hist_field_counter(struct hist_field *field,
-+			      struct tracing_map_elt *elt,
-+			      struct ring_buffer_event *rbe,
-+			      void *event)
- {
- 	return 1;
- }
+ extern int tracing_set_time_stamp_abs(struct trace_array *tr, bool abs);
  
--static u64 hist_field_string(struct hist_field *hist_field, void *event,
--			     struct ring_buffer_event *rbe)
-+static u64 hist_field_string(struct hist_field *hist_field,
-+			     struct tracing_map_elt *elt,
-+			     struct ring_buffer_event *rbe,
-+			     void *event)
- {
- 	char *addr = (char *)(event + hist_field->field->offset);
- 
- 	return (u64)(unsigned long)addr;
- }
- 
--static u64 hist_field_dynstring(struct hist_field *hist_field, void *event,
--				struct ring_buffer_event *rbe)
-+static u64 hist_field_dynstring(struct hist_field *hist_field,
-+				struct tracing_map_elt *elt,
-+				struct ring_buffer_event *rbe,
-+				void *event)
- {
- 	u32 str_item = *(u32 *)(event + hist_field->field->offset);
- 	int str_loc = str_item & 0xffff;
-@@ -89,54 +99,64 @@ static u64 hist_field_dynstring(struct hist_field *hist_field, void *event,
- 	return (u64)(unsigned long)addr;
- }
- 
--static u64 hist_field_pstring(struct hist_field *hist_field, void *event,
--			      struct ring_buffer_event *rbe)
-+static u64 hist_field_pstring(struct hist_field *hist_field,
-+			      struct tracing_map_elt *elt,
-+			      struct ring_buffer_event *rbe,
-+			      void *event)
- {
- 	char **addr = (char **)(event + hist_field->field->offset);
- 
- 	return (u64)(unsigned long)*addr;
- }
- 
--static u64 hist_field_log2(struct hist_field *hist_field, void *event,
--			   struct ring_buffer_event *rbe)
-+static u64 hist_field_log2(struct hist_field *hist_field,
-+			   struct tracing_map_elt *elt,
-+			   struct ring_buffer_event *rbe,
-+			   void *event)
- {
- 	struct hist_field *operand = hist_field->operands[0];
- 
--	u64 val = operand->fn(operand, event, rbe);
-+	u64 val = operand->fn(operand, elt, rbe, event);
- 
++extern bool trace_clock_in_ns(struct trace_array *tr);
++
+ /*
+  * The global tracer (top) should be the first trace array added,
+  * but we check the flag anyway.
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index d0b818c..ec2df88 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -90,12 +90,6 @@ static u64 hist_field_log2(struct hist_field *hist_field, void *event,
  	return (u64) ilog2(roundup_pow_of_two(val));
  }
  
--static u64 hist_field_plus(struct hist_field *hist_field, void *event,
--			   struct ring_buffer_event *rbe)
-+static u64 hist_field_plus(struct hist_field *hist_field,
-+			   struct tracing_map_elt *elt,
-+			   struct ring_buffer_event *rbe,
-+			   void *event)
- {
- 	struct hist_field *operand1 = hist_field->operands[0];
- 	struct hist_field *operand2 = hist_field->operands[1];
- 
--	u64 val1 = operand1->fn(operand1, event, rbe);
--	u64 val2 = operand2->fn(operand2, event, rbe);
-+	u64 val1 = operand1->fn(operand1, elt, rbe, event);
-+	u64 val2 = operand2->fn(operand2, elt, rbe, event);
- 
- 	return val1 + val2;
- }
- 
--static u64 hist_field_minus(struct hist_field *hist_field, void *event,
--			    struct ring_buffer_event *rbe)
-+static u64 hist_field_minus(struct hist_field *hist_field,
-+			    struct tracing_map_elt *elt,
-+			    struct ring_buffer_event *rbe,
-+			    void *event)
- {
- 	struct hist_field *operand1 = hist_field->operands[0];
- 	struct hist_field *operand2 = hist_field->operands[1];
- 
--	u64 val1 = operand1->fn(operand1, event, rbe);
--	u64 val2 = operand2->fn(operand2, event, rbe);
-+	u64 val1 = operand1->fn(operand1, elt, rbe, event);
-+	u64 val2 = operand2->fn(operand2, elt, rbe, event);
- 
- 	return val1 - val2;
- }
- 
--static u64 hist_field_unary_minus(struct hist_field *hist_field, void *event,
--				  struct ring_buffer_event *rbe)
-+static u64 hist_field_unary_minus(struct hist_field *hist_field,
-+				  struct tracing_map_elt *elt,
-+				  struct ring_buffer_event *rbe,
-+				  void *event)
- {
- 	struct hist_field *operand = hist_field->operands[0];
- 
--	s64 sval = (s64)operand->fn(operand, event, rbe);
-+	s64 sval = (s64)operand->fn(operand, elt, rbe, event);
- 	u64 val = (u64)-sval;
- 
- 	return val;
-@@ -144,8 +164,9 @@ static u64 hist_field_unary_minus(struct hist_field *hist_field, void *event,
- 
- #define DEFINE_HIST_FIELD_FN(type)					\
- 	static u64 hist_field_##type(struct hist_field *hist_field,	\
--				     void *event,			\
--				     struct ring_buffer_event *rbe)	\
-+				     struct tracing_map_elt *elt,	\
-+				     struct ring_buffer_event *rbe,	\
-+				     void *event)			\
- {									\
- 	type *addr = (type *)(event + hist_field->field->offset);	\
- 									\
-@@ -233,8 +254,10 @@ struct hist_trigger_data {
- 	bool				remove;
- };
- 
 -static u64 hist_field_timestamp(struct hist_field *hist_field, void *event,
 -				struct ring_buffer_event *rbe)
-+static u64 hist_field_timestamp(struct hist_field *hist_field,
-+				struct tracing_map_elt *elt,
-+				struct ring_buffer_event *rbe,
-+				void *event)
+-{
+-	return ring_buffer_event_time_stamp(rbe);
+-}
+-
+ #define DEFINE_HIST_FIELD_FN(type)					\
+ 	static u64 hist_field_##type(struct hist_field *hist_field,	\
+ 				     void *event,			\
+@@ -143,6 +137,7 @@ enum hist_field_flags {
+ 	HIST_FIELD_FL_STACKTRACE	= 1 << 8,
+ 	HIST_FIELD_FL_LOG2		= 1 << 9,
+ 	HIST_FIELD_FL_TIMESTAMP		= 1 << 10,
++	HIST_FIELD_FL_TIMESTAMP_USECS	= 1 << 11,
+ };
+ 
+ struct hist_trigger_attrs {
+@@ -153,6 +148,7 @@ struct hist_trigger_attrs {
+ 	bool		pause;
+ 	bool		cont;
+ 	bool		clear;
++	bool		ts_in_usecs;
+ 	unsigned int	map_bits;
+ };
+ 
+@@ -170,6 +166,20 @@ struct hist_trigger_data {
+ 	bool				enable_timestamps;
+ };
+ 
++static u64 hist_field_timestamp(struct hist_field *hist_field, void *event,
++				struct ring_buffer_event *rbe)
++{
++	struct hist_trigger_data *hist_data = hist_field->hist_data;
++	struct trace_array *tr = hist_data->event_file->tr;
++
++	u64 ts = ring_buffer_event_time_stamp(rbe);
++
++	if (hist_data->attrs->ts_in_usecs && trace_clock_in_ns(tr))
++		ts = ns2usecs(ts);
++
++	return ts;
++}
++
+ static const char *hist_field_name(struct hist_field *field,
+ 				   unsigned int level)
  {
- 	struct hist_trigger_data *hist_data = hist_field->hist_data;
- 	struct trace_array *tr = hist_data->event_file->tr;
-@@ -1593,7 +1616,7 @@ static void hist_trigger_elt_update(struct hist_trigger_data *hist_data,
- 
- 	for_each_hist_val_field(i, hist_data) {
- 		hist_field = hist_data->fields[i];
--		hist_val = hist_field->fn(hist_field, rbe, rec);
-+		hist_val = hist_field->fn(hist_field, elt, rbe, rec);
- 		if (hist_field->flags & HIST_FIELD_FL_VAR) {
- 			var_idx = hist_field->var.idx;
- 			tracing_map_set_var(elt, var_idx, hist_val);
-@@ -1605,7 +1628,7 @@ static void hist_trigger_elt_update(struct hist_trigger_data *hist_data,
- 	for_each_hist_key_field(i, hist_data) {
- 		hist_field = hist_data->fields[i];
- 		if (hist_field->flags & HIST_FIELD_FL_VAR) {
--			hist_val = hist_field->fn(hist_field, rbe, rec);
-+			hist_val = hist_field->fn(hist_field, elt, rbe, rec);
- 			var_idx = hist_field->var.idx;
- 			tracing_map_set_var(elt, var_idx, hist_val);
- 		}
-@@ -1643,9 +1666,9 @@ static void event_hist_trigger(struct event_trigger_data *data, void *rec,
- 	bool use_compound_key = (hist_data->n_keys > 1);
- 	unsigned long entries[HIST_STACKTRACE_DEPTH];
- 	char compound_key[HIST_KEY_SIZE_MAX];
-+	struct tracing_map_elt *elt = NULL;
- 	struct stack_trace stacktrace;
- 	struct hist_field *key_field;
--	struct tracing_map_elt *elt;
- 	u64 field_contents;
- 	void *key = NULL;
- 	unsigned int i;
-@@ -1666,7 +1689,7 @@ static void event_hist_trigger(struct event_trigger_data *data, void *rec,
- 
- 			key = entries;
+@@ -634,6 +644,8 @@ static int create_key_field(struct hist_trigger_data *hist_data,
+ 				flags |= HIST_FIELD_FL_SYSCALL;
+ 			else if (strcmp(field_str, "log2") == 0)
+ 				flags |= HIST_FIELD_FL_LOG2;
++			else if (strcmp(field_str, "usecs") == 0)
++				flags |= HIST_FIELD_FL_TIMESTAMP_USECS;
+ 			else {
+ 				ret = -EINVAL;
+ 				goto out;
+@@ -643,6 +655,8 @@ static int create_key_field(struct hist_trigger_data *hist_data,
+ 		if (strcmp(field_name, "$common_timestamp") == 0) {
+ 			flags |= HIST_FIELD_FL_TIMESTAMP;
+ 			hist_data->enable_timestamps = true;
++			if (flags & HIST_FIELD_FL_TIMESTAMP_USECS)
++				hist_data->attrs->ts_in_usecs = true;
+ 			key_size = sizeof(u64);
  		} else {
--			field_contents = key_field->fn(key_field, rec, rbe);
-+			field_contents = key_field->fn(key_field, elt, rbe, rec);
- 			if (key_field->flags & HIST_FIELD_FL_STRING) {
- 				key = (void *)(unsigned long)field_contents;
- 				use_compound_key = true;
+ 			field = trace_find_event_field(file->event_call, field_name);
+@@ -1241,6 +1255,8 @@ static const char *get_hist_field_flags(struct hist_field *hist_field)
+ 		flags_str = "syscall";
+ 	else if (hist_field->flags & HIST_FIELD_FL_LOG2)
+ 		flags_str = "log2";
++	else if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP_USECS)
++		flags_str = "usecs";
+ 
+ 	return flags_str;
+ }
 -- 
 1.9.3
