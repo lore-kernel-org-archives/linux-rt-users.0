@@ -1,50 +1,472 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v4 36/37] tracing: Add inter-event blurb to HIST_TRIGGERS config option
-Date: Mon, 30 Oct 2017 15:52:18 -0500
-Message-ID: <4be249b1ccbec16f94ea53c9d6ec6eb2288a5aab.1509395596.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v4 37/37] selftests: ftrace: Add inter-event hist triggers testcases
+Date: Mon, 30 Oct 2017 15:52:19 -0500
+Message-ID: <25a4c52df50f4af199d1c63acc5fe3675715148f.1509395596.git.tom.zanussi@linux.intel.com>
 References: <cover.1509395595.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
         joel.opensrc@gmail.com, joelaf@google.com,
         mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
         rajvi.jingar@intel.com, julia@ni.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org,
-        Tom Zanussi <tom.zanussi@linux.intel.com>
+        linux-rt-users@vger.kernel.org
 To: rostedt@goodmis.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga02.intel.com ([134.134.136.20]:60479 "EHLO mga02.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1752786AbdJ3Uyh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 30 Oct 2017 16:54:37 -0400
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1509395595.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1509395595.git.tom.zanussi@linux.intel.com>
 References: <cover.1509395595.git.tom.zanussi@linux.intel.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-So that users know that inter-event tracing is supported as part of
-the HIST_TRIGGERS option, include text to that effect in the help
-text.
+From: Rajvi Jingar <rajvi.jingar@intel.com>
 
-Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+This adds inter-event hist triggers testcases which covers following:
+ - create/remove synthetic event
+ - disable histogram for synthetic event
+ - extended error support
+ - field variable support
+ - histogram variables
+ - histogram trigger onmatch action
+ - histogram trigger onmax action
+ - histogram trigger onmatch-onmax action
+ - simple expression support
+ - combined histogram
+
+Here is the test result.
+=== Ftrace unit tests ===
+[1] event trigger - test extended error support [PASS]
+[2] event trigger - test field variable support [PASS]
+[3] event trigger - test inter-event combined histogram trigger [PASS]
+[4] event trigger - test inter-event histogram trigger onmatch action   [PASS]
+[5] event trigger - test inter-event histogram trigger onmatch-onmax action     [PASS]
+[6] event trigger - test inter-event histogram trigger onmax action     [PASS]
+[7] event trigger - test synthetic event create remove  [PASS]
+
+Signed-off-by: Rajvi Jingar <rajvi.jingar@intel.com>
 ---
- kernel/trace/Kconfig | 3 +++
- 1 file changed, 3 insertions(+)
+ tools/testing/selftests/ftrace/test.d/functions    |  7 +++
+ .../inter-event/trigger-extended-error-support.tc  | 39 ++++++++++++++
+ .../inter-event/trigger-field-variable-support.tc  | 54 +++++++++++++++++++
+ .../trigger-inter-event-combined-hist.tc           | 61 ++++++++++++++++++++++
+ .../inter-event/trigger-onmatch-action-hist.tc     | 50 ++++++++++++++++++
+ .../trigger-onmatch-onmax-action-hist.tc           | 50 ++++++++++++++++++
+ .../inter-event/trigger-onmax-action-hist.tc       | 48 +++++++++++++++++
+ .../trigger-synthetic-event-createremove.tc        | 46 ++++++++++++++++
+ 8 files changed, 355 insertions(+)
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-field-variable-support.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-inter-event-combined-hist.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-action-hist.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-onmax-action-hist.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmax-action-hist.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc
 
-diff --git a/kernel/trace/Kconfig b/kernel/trace/Kconfig
-index b8395a0..b01536d 100644
---- a/kernel/trace/Kconfig
-+++ b/kernel/trace/Kconfig
-@@ -596,6 +596,9 @@ config HIST_TRIGGERS
- 	  event activity as an initial guide for further investigation
- 	  using more advanced tools.
+diff --git a/tools/testing/selftests/ftrace/test.d/functions b/tools/testing/selftests/ftrace/test.d/functions
+index f2019b3..17afa65 100644
+--- a/tools/testing/selftests/ftrace/test.d/functions
++++ b/tools/testing/selftests/ftrace/test.d/functions
+@@ -55,6 +55,13 @@ disable_events() {
+     echo 0 > events/enable
+ }
  
-+	  Inter-event tracing of quantities such as latencies is also
-+	  supported using hist triggers under this option.
++clear_synthetic_events() { # reset all current synthetic events
++    grep -v ^# synthetic_events |
++    while read line; do
++        echo "!$line" >> synthetic_events
++    done
++}
 +
- 	  See Documentation/trace/events.txt.
- 	  If in doubt, say N.
- 
+ initialize_ftrace() { # Reset ftrace to initial-state
+ # As the initial state, ftrace will be set to nop tracer,
+ # no events, no triggers, no filters, no function filters,
+diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
+new file mode 100644
+index 0000000..41dbf4c
+--- /dev/null
++++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
+@@ -0,0 +1,39 @@
++#!/bin/sh
++# description: event trigger - test extended error support
++
++
++do_reset() {
++    reset_trigger
++    echo > set_event
++    clear_trace
++}
++
++fail() { #msg
++    do_reset
++    echo $1
++    exit $FAIL
++}
++
++if [ ! -f set_event ]; then
++    echo "event tracing is not supported"
++    exit_unsupported
++fi
++
++if [ ! -f synthetic_events ]; then
++    echo "synthetic event is not supported"
++    exit_unsupported
++fi
++
++reset_tracer
++do_reset
++
++echo "Test extended error support"
++echo 'hist:keys=pid:ts0=$common_timestamp.usecs if comm=="ping"' >> events/sched/sched_wakeup/trigger
++echo 'hist:keys=pid:ts0=$common_timestamp.usecs if comm=="ping"' >> events/sched/sched_wakeup/trigger &&
++if ! grep "ERROR:" events/sched/sched_wakeup/hist; then
++    fail "Failed to generate extended error in histogram"
++fi
++
++do_reset
++
++exit 0
+diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-field-variable-support.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-field-variable-support.tc
+new file mode 100644
+index 0000000..7211861
+--- /dev/null
++++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-field-variable-support.tc
+@@ -0,0 +1,54 @@
++#!/bin/sh
++# description: event trigger - test field variable support
++
++do_reset() {
++    reset_trigger
++    echo > set_event
++    clear_trace
++}
++
++fail() { #msg
++    do_reset
++    echo $1
++    exit $FAIL
++}
++
++if [ ! -f set_event ]; then
++    echo "event tracing is not supported"
++    exit_unsupported
++fi
++
++if [ ! -f synthetic_events ]; then
++    echo "synthetic event is not supported"
++    exit_unsupported
++fi
++
++clear_synthetic_events
++reset_tracer
++do_reset
++
++echo "Test field variable support"
++
++echo 'wakeup_latency u64 lat; pid_t pid; int prio; char comm[16]' > synthetic_events
++echo 'hist:keys=comm:ts0=$common_timestamp.usecs if comm=="ping"' > events/sched/sched_waking/trigger
++echo 'hist:keys=next_comm:wakeup_lat=$common_timestamp.usecs-$ts0:onmatch(sched.sched_waking).wakeup_latency($wakeup_lat,next_pid,sched.sched_waking.prio,next_comm) if next_comm=="ping"' > events/sched/sched_switch/trigger
++echo 'hist:keys=pid,prio,comm:vals=lat:sort=pid,prio' > events/synthetic/wakeup_latency/trigger
++
++ping localhost -c 3
++if ! grep "ping" events/synthetic/wakeup_latency/hist; then
++    fail "Failed to create inter-event histogram"
++fi
++
++if ! grep "synthetic_prio=prio" events/sched/sched_waking/hist; then
++    fail "Failed to create histogram with field variable"
++fi
++
++echo '!hist:keys=next_comm:wakeup_lat=$common_timestamp.usecs-$ts0:onmatch(sched.sched_waking).wakeup_latency($wakeup_lat,next_pid,sched.sched_waking.prio,next_comm) if next_comm=="ping"' >> events/sched/sched_switch/trigger
++
++if grep "synthetic_prio=prio" events/sched/sched_waking/hist; then
++    fail "Failed to remove histogram with field variable"
++fi
++
++do_reset
++
++exit 0
+diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-inter-event-combined-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-inter-event-combined-hist.tc
+new file mode 100644
+index 0000000..c1553c3
+--- /dev/null
++++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-inter-event-combined-hist.tc
+@@ -0,0 +1,61 @@
++#!/bin/sh
++# description: event trigger - test inter-event combined histogram trigger
++
++do_reset() {
++    reset_trigger
++    echo > set_event
++    clear_trace
++}
++
++fail() { #msg
++    do_reset
++    echo $1
++    exit $FAIL
++}
++
++if [ ! -f set_event ]; then
++    echo "event tracing is not supported"
++    exit_unsupported
++fi
++
++if [ ! -f synthetic_events ]; then
++    echo "synthetic event is not supported"
++    exit_unsupported
++fi
++
++reset_tracer
++do_reset
++clear_synthetic_events
++
++echo "Test create synthetic event"
++
++echo 'waking_latency  u64 lat pid_t pid' > synthetic_events
++if [ ! -d events/synthetic/waking_latency ]; then
++    fail "Failed to create waking_latency synthetic event"
++fi
++
++echo "Test combined histogram"
++
++echo 'hist:keys=pid:ts0=$common_timestamp.usecs if comm=="ping"' > events/sched/sched_waking/trigger
++echo 'hist:keys=pid:waking_lat=$common_timestamp.usecs-$ts0:onmatch(sched.sched_waking).waking_latency($waking_lat,pid) if comm=="ping"' > events/sched/sched_wakeup/trigger
++echo 'hist:keys=pid,lat:sort=pid,lat' > events/synthetic/waking_latency/trigger
++
++echo 'wakeup_latency u64 lat pid_t pid' >> synthetic_events
++echo 'hist:keys=pid:ts1=$common_timestamp.usecs if comm=="ping"' >> events/sched/sched_wakeup/trigger
++echo 'hist:keys=next_pid:wakeup_lat=$common_timestamp.usecs-$ts1:onmatch(sched.sched_wakeup).wakeup_latency($wakeup_lat,next_pid) if next_comm=="ping"' > events/sched/sched_switch/trigger
++
++echo 'waking+wakeup_latency u64 lat; pid_t pid' >> synthetic_events
++echo 'hist:keys=pid,lat:sort=pid,lat:ww_lat=$waking_lat+$wakeup_lat:onmatch(synthetic.wakeup_latency).waking+wakeup_latency($ww_lat,pid)' >> events/synthetic/wakeup_latency/trigger
++echo 'hist:keys=pid,lat:sort=pid,lat' >> events/synthetic/waking+wakeup_latency/trigger
++
++ping localhost -c 3
++if ! grep "pid:" events/synthetic/waking+wakeup_latency/hist; then
++    fail "Failed to create combined histogram"
++fi
++
++do_reset
++reset_tracer
++reset_trigger
++clear_synthetic_events
++
++exit 0
+diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-action-hist.tc
+new file mode 100644
+index 0000000..b7a0c57
+--- /dev/null
++++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-action-hist.tc
+@@ -0,0 +1,50 @@
++#!/bin/sh
++# description: event trigger - test inter-event histogram trigger onmatch action
++
++do_reset() {
++    reset_trigger
++    echo > set_event
++    clear_trace
++}
++
++fail() { #msg
++    do_reset
++    echo $1
++    exit $FAIL
++}
++
++if [ ! -f set_event ]; then
++    echo "event tracing is not supported"
++    exit_unsupported
++fi
++
++if [ ! -f synthetic_events ]; then
++    echo "synthetic event is not supported"
++    exit_unsupported
++fi
++
++clear_synthetic_events
++reset_tracer
++do_reset
++
++echo "Test create synthetic event"
++
++echo 'wakeup_latency  u64 lat pid_t pid char comm[16]' > synthetic_events
++if [ ! -d events/synthetic/wakeup_latency ]; then
++    fail "Failed to create wakeup_latency synthetic event"
++fi
++
++echo "Test create histogram for synthetic event"
++echo "Test histogram variables,simple expression support and onmatch action"
++
++echo 'hist:keys=pid:ts0=$common_timestamp.usecs if comm=="ping"' > events/sched/sched_wakeup/trigger
++echo 'hist:keys=next_pid:wakeup_lat=$common_timestamp.usecs-$ts0:onmatch(sched.sched_wakeup).wakeup_latency($wakeup_lat,next_pid,next_comm) if next_comm=="ping"' > events/sched/sched_switch/trigger
++echo 'hist:keys=comm,pid,lat:wakeup_lat=lat:sort=lat' > events/synthetic/wakeup_latency/trigger
++ping localhost -c 5
++if ! grep "ping" events/synthetic/wakeup_latency/hist; then
++    fail "Failed to create onmatch action inter-event histogram"
++fi
++
++do_reset
++
++exit 0
+diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-onmax-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-onmax-action-hist.tc
+new file mode 100644
+index 0000000..500b1fa
+--- /dev/null
++++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-onmax-action-hist.tc
+@@ -0,0 +1,50 @@
++#!/bin/sh
++# description: event trigger - test inter-event histogram trigger onmatch-onmax action
++
++do_reset() {
++    reset_trigger
++    echo > set_event
++    clear_trace
++}
++
++fail() { #msg
++    do_reset
++    echo $1
++    exit $FAIL
++}
++
++if [ ! -f set_event ]; then
++    echo "event tracing is not supported"
++    exit_unsupported
++fi
++
++if [ ! -f synthetic_events ]; then
++    echo "synthetic event is not supported"
++    exit_unsupported
++fi
++
++clear_synthetic_events
++reset_tracer
++do_reset
++
++echo "Test create synthetic event"
++
++echo 'wakeup_latency  u64 lat pid_t pid char comm[16]' > synthetic_events
++if [ ! -d events/synthetic/wakeup_latency ]; then
++    fail "Failed to create wakeup_latency synthetic event"
++fi
++
++echo "Test create histogram for synthetic event"
++echo "Test histogram variables,simple expression support and onmatch-onmax action"
++
++echo 'hist:keys=pid:ts0=$common_timestamp.usecs if comm=="ping"' > events/sched/sched_wakeup/trigger
++echo 'hist:keys=next_pid:wakeup_lat=$common_timestamp.usecs-$ts0:onmatch(sched.sched_wakeup).wakeup_latency($wakeup_lat,next_pid,next_comm):onmax($wakeup_lat).save(next_comm,prev_pid,prev_prio,prev_comm) if next_comm=="ping"' >> events/sched/sched_switch/trigger
++echo 'hist:keys=comm,pid,lat:wakeup_lat=lat:sort=lat' > events/synthetic/wakeup_latency/trigger
++ping localhost -c 5
++if [ ! grep "ping" events/synthetic/wakeup_latency/hist -o ! grep "max:" events/sched/sched_switch/hist]; then
++    fail "Failed to create onmatch-onmax action inter-event histogram"
++fi
++
++do_reset
++
++exit 0
+diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmax-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmax-action-hist.tc
+new file mode 100644
+index 0000000..d1b8a419
+--- /dev/null
++++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmax-action-hist.tc
+@@ -0,0 +1,48 @@
++#!/bin/sh
++# description: event trigger - test inter-event histogram trigger onmax action
++
++do_reset() {
++    reset_trigger
++    echo > set_event
++    clear_trace
++}
++
++fail() { #msg
++    do_reset
++    echo $1
++    exit $FAIL
++}
++
++if [ ! -f set_event ]; then
++    echo "event tracing is not supported"
++    exit_unsupported
++fi
++
++if [ ! -f synthetic_events ]; then
++    echo "synthetic event is not supported"
++    exit_unsupported
++fi
++
++clear_synthetic_events
++reset_tracer
++do_reset
++
++echo "Test create synthetic event"
++
++echo 'wakeup_latency  u64 lat pid_t pid char comm[16]' > synthetic_events
++if [ ! -d events/synthetic/wakeup_latency ]; then
++    fail "Failed to create wakeup_latency synthetic event"
++fi
++
++echo "Test onmax action"
++
++echo 'hist:keys=pid:ts0=$common_timestamp.usecs if comm=="ping"' >> events/sched/sched_waking/trigger
++echo 'hist:keys=next_pid:wakeup_lat=$common_timestamp.usecs-$ts0:onmax($wakeup_lat).save(next_comm,prev_pid,prev_prio,prev_comm) if next_comm=="ping"' >> events/sched/sched_switch/trigger
++ping localhost -c 3
++if ! grep "max:" events/sched/sched_switch/hist; then
++    fail "Failed to create onmax action inter-event histogram"
++fi
++
++do_reset
++
++exit 0
+diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc
+new file mode 100644
+index 0000000..c73e491
+--- /dev/null
++++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc
+@@ -0,0 +1,46 @@
++#!/bin/sh
++# description: event trigger - test synthetic event create remove
++do_reset() {
++    reset_trigger
++    echo > set_event
++    clear_trace
++}
++
++fail() { #msg
++    do_reset
++    echo $1
++    exit $FAIL
++}
++
++if [ ! -f set_event ]; then
++    echo "event tracing is not supported"
++    exit_unsupported
++fi
++
++if [ ! -f synthetic_events ]; then
++    echo "synthetic event is not supported"
++    exit_unsupported
++fi
++
++clear_synthetic_events
++reset_tracer
++do_reset
++
++echo "Test create synthetic event"
++
++echo 'wakeup_latency  u64 lat pid_t pid char comm[16]' > synthetic_events
++if [ ! -d events/synthetic/wakeup_latency ]; then
++    fail "Failed to create wakeup_latency synthetic event"
++fi
++
++reset_trigger
++
++echo "Test remove synthetic event"
++echo '!wakeup_latency  u64 lat; pid_t pid; char[16] comm' > synthetic_events
++if [ -d events/synthetic/wakeup_latency ]; then
++    fail "Failed to delete wakeup_latency synthetic event"
++fi
++
++do_reset
++
++exit 0
 -- 
 1.9.3
-
