@@ -1,42 +1,165 @@
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v4 02/37] tracing: Add Documentation for log2 modifier
-Date: Mon, 30 Oct 2017 15:51:44 -0500
-Message-ID: <96e876702357df6a6756b14357d980a355bffa61.1509395595.git.tom.zanussi@linux.intel.com>
+From: Masami Hiramatsu <mhiramat@kernel.org>
+Subject: Re: [PATCH v4 37/37] selftests: ftrace: Add inter-event hist
+ triggers testcases
+Date: Tue, 31 Oct 2017 23:29:04 +0900
+Message-ID: <20171031232904.0e1bfede7c685d40fd83c36f@kernel.org>
 References: <cover.1509395595.git.tom.zanussi@linux.intel.com>
-Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
+        <25a4c52df50f4af199d1c63acc5fe3675715148f.1509395596.git.tom.zanussi@linux.intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
+        namhyung@kernel.org, vedang.patel@intel.com, bigeasy@linutronix.de,
         joel.opensrc@gmail.com, joelaf@google.com,
         mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
         rajvi.jingar@intel.com, julia@ni.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org,
-        Tom Zanussi <tom.zanussi@linux.intel.com>
-To: rostedt@goodmis.org
+        linux-rt-users@vger.kernel.org
+To: Tom Zanussi <tom.zanussi@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1509395595.git.tom.zanussi@linux.intel.com>
-In-Reply-To: <cover.1509395595.git.tom.zanussi@linux.intel.com>
-References: <cover.1509395595.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <25a4c52df50f4af199d1c63acc5fe3675715148f.1509395596.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Add a line for the log2 modifier, to keep it aligned with
-tracing/README.
+On Mon, 30 Oct 2017 15:52:19 -0500
+Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
 
-Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
----
- Documentation/trace/histogram.txt | 1 +
- 1 file changed, 1 insertion(+)
+> From: Rajvi Jingar <rajvi.jingar@intel.com>
+> 
+> This adds inter-event hist triggers testcases which covers following:
+>  - create/remove synthetic event
+>  - disable histogram for synthetic event
+>  - extended error support
+>  - field variable support
+>  - histogram variables
+>  - histogram trigger onmatch action
+>  - histogram trigger onmax action
+>  - histogram trigger onmatch-onmax action
+>  - simple expression support
+>  - combined histogram
 
-diff --git a/Documentation/trace/histogram.txt b/Documentation/trace/histogram.txt
-index b2145f4..a4143f04a 100644
---- a/Documentation/trace/histogram.txt
-+++ b/Documentation/trace/histogram.txt
-@@ -73,6 +73,7 @@
- 	.sym-offset display an address as a symbol and offset
- 	.syscall    display a syscall id as a system call name
- 	.execname   display a common_pid as a program name
-+	.log2       display log2 value rather than raw number
- 
-   Note that in general the semantics of a given field aren't
-   interpreted when applying a modifier to it, but there are some
+Thank you for adding testcases :)
+That helps me to understand how to use it.
+I have some comments, see below;
+
+
+[..]
+> diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
+> new file mode 100644
+> index 0000000..41dbf4c
+> --- /dev/null
+> +++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
+> @@ -0,0 +1,39 @@
+> +#!/bin/sh
+> +# description: event trigger - test extended error support
+> +
+> +
+> +do_reset() {
+> +    reset_trigger
+> +    echo > set_event
+> +    clear_trace
+> +}
+> +
+> +fail() { #msg
+> +    do_reset
+> +    echo $1
+> +    exit $FAIL
+> +}
+> +
+> +if [ ! -f set_event ]; then
+> +    echo "event tracing is not supported"
+> +    exit_unsupported
+> +fi
+> +
+> +if [ ! -f synthetic_events ]; then
+> +    echo "synthetic event is not supported"
+> +    exit_unsupported
+> +fi
+> +
+> +reset_tracer
+> +do_reset
+> +
+> +echo "Test extended error support"
+> +echo 'hist:keys=pid:ts0=$common_timestamp.usecs if comm=="ping"' >> events/sched/sched_wakeup/trigger
+> +echo 'hist:keys=pid:ts0=$common_timestamp.usecs if comm=="ping"' >> events/sched/sched_wakeup/trigger &&
+
+What is the last "&&"? Would you expect that the second echo is fail?
+
+> +if ! grep "ERROR:" events/sched/sched_wakeup/hist; then
+
+Would you like to show the grep result? or you can use -q option for grep command.
+
+[...]
+> diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc
+> new file mode 100644
+> index 0000000..c73e491
+> --- /dev/null
+> +++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc
+> @@ -0,0 +1,46 @@
+> +#!/bin/sh
+> +# description: event trigger - test synthetic event create remove
+> +do_reset() {
+> +    reset_trigger
+> +    echo > set_event
+> +    clear_trace
+> +}
+> +
+> +fail() { #msg
+> +    do_reset
+> +    echo $1
+> +    exit $FAIL
+> +}
+> +
+> +if [ ! -f set_event ]; then
+> +    echo "event tracing is not supported"
+> +    exit_unsupported
+> +fi
+> +
+> +if [ ! -f synthetic_events ]; then
+> +    echo "synthetic event is not supported"
+> +    exit_unsupported
+> +fi
+> +
+> +clear_synthetic_events
+> +reset_tracer
+> +do_reset
+> +
+> +echo "Test create synthetic event"
+> +
+> +echo 'wakeup_latency  u64 lat pid_t pid char comm[16]' > synthetic_events
+> +if [ ! -d events/synthetic/wakeup_latency ]; then
+> +    fail "Failed to create wakeup_latency synthetic event"
+> +fi
+> +
+> +reset_trigger
+> +
+> +echo "Test remove synthetic event"
+> +echo '!wakeup_latency  u64 lat; pid_t pid; char[16] comm' > synthetic_events
+
+both char[16] and char comm[16] are acceptable?
+But I would like to see same style in creating and removing.
+
+> +if [ -d events/synthetic/wakeup_latency ]; then
+> +    fail "Failed to delete wakeup_latency synthetic event"
+> +fi
+
+There seems no expected failure test cases. Could you add such test?
+like as echoing events with invalid format etc.
+
+
+<off topic>
+BTW, $FAIL is not for expressing failure, it is a value
+for $SIG_RESULT. But it seems many test cases use it for return code.
+
+Note that any failure in this script treated as error and exit soon. 
+Which means caller can get any return code from this script, because
+the return code depends on executed command. So, any NON-ZERO code
+can be treated as FAILURE code.
+
+"exit $FAIL" is OK, but just making myself review easier, I'll
+introduce exit_pass()/exit_fail().
+<off topic>
+
+Thank you,
+
 -- 
-1.9.3
+Masami Hiramatsu <mhiramat@kernel.org>
