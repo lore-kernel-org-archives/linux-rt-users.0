@@ -1,226 +1,94 @@
-From: "Jingar, Rajvi" <rajvi.jingar@intel.com>
-Subject: RE: [PATCH v4 37/37] selftests: ftrace: Add inter-event hist
- triggers testcases
-Date: Tue, 31 Oct 2017 20:40:43 +0000
-Message-ID: <73C85D50C97D6C48A6E9F3EFFE85B49B2C6FF7FE@ORSMSX108.amr.corp.intel.com>
-References: <cover.1509395595.git.tom.zanussi@linux.intel.com>
-        <25a4c52df50f4af199d1c63acc5fe3675715148f.1509395596.git.tom.zanussi@linux.intel.com>
- <20171031232904.0e1bfede7c685d40fd83c36f@kernel.org>
+From: "Pavel V. Panteleev" <panteleev_p@mcst.ru>
+Subject: schedule under irqs_disabled in SLUB problem
+Date: Wed, 1 Nov 2017 14:31:18 +0300
+Message-ID: <59F9B086.6010202@mcst.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Cc: "rostedt@goodmis.org" <rostedt@goodmis.org>,
-        "tglx@linutronix.de" <tglx@linutronix.de>,
-        "namhyung@kernel.org" <namhyung@kernel.org>,
-        "Patel, Vedang" <vedang.patel@intel.com>,
-        "bigeasy@linutronix.de" <bigeasy@linutronix.de>,
-        "joel.opensrc@gmail.com" <joel.opensrc@gmail.com>,
-        "joelaf@google.com" <joelaf@google.com>,
-        "mathieu.desnoyers@efficios.com" <mathieu.desnoyers@efficios.com>,
-        "Liu, Baohong" <baohong.liu@intel.com>,
-        "julia@ni.com" <julia@ni.com>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Masami Hiramatsu <mhiramat@kernel.org>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>
+Content-Type: text/plain; charset=koi8-r; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga01.intel.com ([192.55.52.88]:57739 "EHLO mga01.intel.com"
+Received: from tretyak2.mcst.ru ([80.84.125.22]:41929 "EHLO tretyak2.mcst.ru"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S932570AbdJaUkp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 31 Oct 2017 16:40:45 -0400
-In-Reply-To: <20171031232904.0e1bfede7c685d40fd83c36f@kernel.org>
-Content-Language: en-US
+        id S1753593AbdKALgo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 1 Nov 2017 07:36:44 -0400
+Received: from frog.lab.sun.mcst.ru (root@frog.lab.sun.mcst.ru [172.16.4.50])
+        by tretyak2.mcst.ru (8.13.4/8.12.11) with ESMTP id vA1BVQ5F011981
+        for <linux-rt-users@vger.kernel.org>; Wed, 1 Nov 2017 14:31:34 +0300
+Received: from [192.168.1.7] (e2k7.lab.sun.mcst.ru [192.168.1.7])
+        by frog.lab.sun.mcst.ru (8.13.4/8.12.11) with ESMTP id vA1BVJkq018053
+        for <linux-rt-users@vger.kernel.org>; Wed, 1 Nov 2017 14:31:19 +0300
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hello! I have a problem on kernel 3.14.79-rt85 and I don't know, if it's 
+solved on current kernel or, may be, it's our additions problem. Could 
+you help me, please?
 
-Hi Masami,
+Kernel is broken in migrate_enable():
+         WARN_ON_ONCE(p->migrate_disable <= 0);
 
-> -----Original Message-----
-> From: linux-rt-users-owner@vger.kernel.org [mailto:linux-rt-users-
-> owner@vger.kernel.org] On Behalf Of Masami Hiramatsu
-> Sent: Tuesday, October 31, 2017 7:29 AM
-> To: Tom Zanussi <tom.zanussi@linux.intel.com>
-> Cc: rostedt@goodmis.org; tglx@linutronix.de; mhiramat@kernel.org;
-> namhyung@kernel.org; Patel, Vedang <vedang.patel@intel.com>;
-> bigeasy@linutronix.de; joel.opensrc@gmail.com; joelaf@google.com;
-> mathieu.desnoyers@efficios.com; Liu, Baohong <baohong.liu@intel.com>;
-> Jingar, Rajvi <rajvi.jingar@intel.com>; julia@ni.com; linux-
-> kernel@vger.kernel.org; linux-rt-users@vger.kernel.org
-> Subject: Re: [PATCH v4 37/37] selftests: ftrace: Add inter-event hist triggers
-> testcases
-> 
-> On Mon, 30 Oct 2017 15:52:19 -0500
-> Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
-> 
-> > From: Rajvi Jingar <rajvi.jingar@intel.com>
-> >
-> > This adds inter-event hist triggers testcases which covers following:
-> >  - create/remove synthetic event
-> >  - disable histogram for synthetic event
-> >  - extended error support
-> >  - field variable support
-> >  - histogram variables
-> >  - histogram trigger onmatch action
-> >  - histogram trigger onmax action
-> >  - histogram trigger onmatch-onmax action
-> >  - simple expression support
-> >  - combined histogram
-> 
-> Thank you for adding testcases :)
-> That helps me to understand how to use it.
-> I have some comments, see below;
-> 
-> 
-> [..]
-> > diff --git
-> > a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-ex
-> > tended-error-support.tc
-> > b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-ex
-> > tended-error-support.tc
-> > new file mode 100644
-> > index 0000000..41dbf4c
-> > --- /dev/null
-> > +++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigge
-> > +++ r-extended-error-support.tc
-> > @@ -0,0 +1,39 @@
-> > +#!/bin/sh
-> > +# description: event trigger - test extended error support
-> > +
-> > +
-> > +do_reset() {
-> > +    reset_trigger
-> > +    echo > set_event
-> > +    clear_trace
-> > +}
-> > +
-> > +fail() { #msg
-> > +    do_reset
-> > +    echo $1
-> > +    exit $FAIL
-> > +}
-> > +
-> > +if [ ! -f set_event ]; then
-> > +    echo "event tracing is not supported"
-> > +    exit_unsupported
-> > +fi
-> > +
-> > +if [ ! -f synthetic_events ]; then
-> > +    echo "synthetic event is not supported"
-> > +    exit_unsupported
-> > +fi
-> > +
-> > +reset_tracer
-> > +do_reset
-> > +
-> > +echo "Test extended error support"
-> > +echo 'hist:keys=pid:ts0=$common_timestamp.usecs if comm=="ping"' >>
-> > +events/sched/sched_wakeup/trigger echo
-> > +'hist:keys=pid:ts0=$common_timestamp.usecs if comm=="ping"' >>
-> > +events/sched/sched_wakeup/trigger &&
-> 
-> What is the last "&&"? Would you expect that the second echo is fail?
-> 
+I have a trace, where I see, that it happened, because few 
+migrate_disable() were called under irqs_disabled (migrate_disable 
+counter wasn't changed). But after schedule() call irqs were enabled and 
+the following migrate_disable() and migrate_enable() changed 
+migrate_disable counter. I suppose, that problem is schedule() call 
+under irqs_disabled. There is a stack:
+PROCESS: kworker/u8:4, PID: 744, CPU: 3, state: R oncpu (0x0), flags: 
+0x4208060
+  ---------------------------------------------------------------------
+IP (hex) FILENAME PROCEDURE
+---------------------------------------------------------------------
+e200020e0700 <kernel> __schedule+0x1b60/0x1f90
+e200020e0da8 <kernel> schedule+0x278/0x2e8
+e200020e8a68 <kernel> rt_spin_lock_slowlock+0x740/0x15c8
+e200020f5088 <kernel> rt_spin_lock+0x3b8/0x408
+e20000578290 <kernel> get_page_from_freelist+0x1528/0x1b48
+e20000579b28 <kernel> __alloc_pages_nodemask+0x270/0x1b90
+e200006ac9d8 <kernel> alloc_pages_current+0x638/0xad0
+e200006b24d8 <kernel> allocate_slab+0x210/0xa70
+e200006b9468 <kernel> __slab_alloc+0x1300/0x1d80
+e200006ba900 <kernel> kmem_cache_alloc+0xa18/0xa78
+e2000101ed78 <kernel> radix_tree_node_alloc+0x280/0x478
+e2000101f2a8 <kernel> radix_tree_extend+0x248/0x588
+e2000101f6c0 <kernel> radix_tree_insert+0xd8/0x1258
+e20000550e10 <kernel> page_cache_tree_insert+0xd0/0x498
+e200005513e8 <kernel> add_to_page_cache_locked+0x210/0x7b0
+e2000055d7f8 <kernel> __read_cache_page+0x160/0x7e8
+e2000055df00 <kernel> do_read_cache_page+0x80/0xab8
+e2000055e9c8 <kernel> read_cache_page+0x90/0xa8
+e20000fdf110 <kernel> read_dev_sector+0xa8/0x180
+e20000fe0178 <kernel> parse_extended+0x198/0x8f0
+e20000fe1288 <kernel> msdos_partition+0x7a8/0xed8
+e20000fdf790 <kernel> check_partition+0x508/0x870
+e20000fddfe8 <kernel> rescan_partitions+0x3a8/0x1128
+e20000818328 <kernel> __blkdev_get+0xcb8/0xe48
+e20000818d20 <kernel> blkdev_get+0x868/0xf90
+e20000fcd100 <kernel> register_disk+0x890/0xad0
+e20000fcda08 <kernel> add_disk+0x6c8/0xc98
+e20001801ab0 <kernel> sd_probe_async+0x328/0x648
+e200002935a8 <kernel> async_run_entry_fn+0x100/0x598
+e2000023fd28 <kernel> process_one_work+0x5a0/0x1940
+e20000241508 <kernel> worker_thread+0x440/0xff8
+e2000026c1a8 <kernel> kthread+0x4e8/0x5a0
 
-Yes, The the second echo is expected to fail on trying to add same trigger(mainly same variable name). 
-I'll change last "&&" to redirect error/output to /dev/null instead.
+As I see, in allocate_slab() kernel could be under irqs_disabled. And 
+irqs would be enabled in case of SYSTEM_RUNNING (why only in case of 
+SYSTEM_RUNNING?). But in our case system isn't running yet (it's always 
+before /sbin/init), so irqs wouldn't be enabled:
 
-> > +if ! grep "ERROR:" events/sched/sched_wakeup/hist; then
-> 
-> Would you like to show the grep result? or you can use -q option for grep
-> command.
-> 
+         enableirqs = (flags & __GFP_WAIT) != 0;
+         #ifdef CONFIG_PREEMPT_RT_FULL
+         enableirqs |= system_state == SYSTEM_RUNNING;
+         #endif
+         if (enableirqs)
+                 local_irq_enable();
 
-No, I don't need to show grep results. Will add -q option and will do so for all the places with similar case.
+So we call schedule() under irqs_disabled in 
+...->get_page_from_freelist->buffered_rmqueue->local_spin_lock_irqsave->local_lock_irqsave->__local_lock_irqsave->__local_lock_irq->spin_lock_irqsave->spin_lock->rt_spin_lock->rt_spin_lock_slowlock->schedule_rt_mutex.
 
-> [...]
-> > diff --git
-> > a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-sy
-> > nthetic-event-createremove.tc
-> > b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-sy
-> > nthetic-event-createremove.tc
-> > new file mode 100644
-> > index 0000000..c73e491
-> > --- /dev/null
-> > +++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigge
-> > +++ r-synthetic-event-createremove.tc
-> > @@ -0,0 +1,46 @@
-> > +#!/bin/sh
-> > +# description: event trigger - test synthetic event create remove
-> > +do_reset() {
-> > +    reset_trigger
-> > +    echo > set_event
-> > +    clear_trace
-> > +}
-> > +
-> > +fail() { #msg
-> > +    do_reset
-> > +    echo $1
-> > +    exit $FAIL
-> > +}
-> > +
-> > +if [ ! -f set_event ]; then
-> > +    echo "event tracing is not supported"
-> > +    exit_unsupported
-> > +fi
-> > +
-> > +if [ ! -f synthetic_events ]; then
-> > +    echo "synthetic event is not supported"
-> > +    exit_unsupported
-> > +fi
-> > +
-> > +clear_synthetic_events
-> > +reset_tracer
-> > +do_reset
-> > +
-> > +echo "Test create synthetic event"
-> > +
-> > +echo 'wakeup_latency  u64 lat pid_t pid char comm[16]' >
-> > +synthetic_events if [ ! -d events/synthetic/wakeup_latency ]; then
-> > +    fail "Failed to create wakeup_latency synthetic event"
-> > +fi
-> > +
-> > +reset_trigger
-> > +
-> > +echo "Test remove synthetic event"
-> > +echo '!wakeup_latency  u64 lat; pid_t pid; char[16] comm' >
-> > +synthetic_events
-> 
-> both char[16] and char comm[16] are acceptable?
-> But I would like to see same style in creating and removing.
-> 
+P. S.
+Today I reproduced this on 4.9.47-rt37. Try to reproduce on x86.
 
-Will change to same style in creating and removing.
 
-> > +if [ -d events/synthetic/wakeup_latency ]; then
-> > +    fail "Failed to delete wakeup_latency synthetic event"
-> > +fi
-> 
-> There seems no expected failure test cases. Could you add such test?
-> like as echoing events with invalid format etc.
->
-
-Sure, will add a case trying to add an event with wrong format.
- 
-> 
-> <off topic>
-> BTW, $FAIL is not for expressing failure, it is a value for $SIG_RESULT. But it
-> seems many test cases use it for return code.
-> 
-> Note that any failure in this script treated as error and exit soon.
-> Which means caller can get any return code from this script, because the return
-> code depends on executed command. So, any NON-ZERO code can be treated as
-> FAILURE code.
-> 
-> "exit $FAIL" is OK, but just making myself review easier, I'll introduce
-> exit_pass()/exit_fail().
-> <off topic>
-> 
-> Thank you,
-> 
-> --
-> Masami Hiramatsu <mhiramat@kernel.org>
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in the
-> body of a message to majordomo@vger.kernel.org More majordomo info at
-> http://vger.kernel.org/majordomo-info.html
+Best regards,
+Pavel V. Panteleev
