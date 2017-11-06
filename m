@@ -1,124 +1,80 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: Re: [ANNOUNCE] v4.13.10-rt3 (possible recursive locking warning)
-Date: Fri, 3 Nov 2017 10:11:47 -0700
-Message-ID: <916b113b-f743-8b3f-6f47-70ed572f76b6@ccrma.stanford.edu>
-References: <20171027222709.sna64giwxak4dxxc@linutronix.de>
+From: Namhyung Kim <namhyung@kernel.org>
+Subject: Re: [PATCH v4 06/37] ring-buffer: Redefine the unimplemented
+ RINGBUF_TYPE_TIME_STAMP
+Date: Mon, 6 Nov 2017 14:09:53 +0900
+Message-ID: <20171106050953.GA7557@sejong>
+References: <cover.1509395595.git.tom.zanussi@linux.intel.com>
+ <8927a4736dc6f602079d0797b60d3bf7a5d2d9d7.1509395595.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: nando@ccrma.Stanford.EDU, LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171027222709.sna64giwxak4dxxc@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
+        vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel.opensrc@gmail.com, joelaf@google.com,
+        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
+        rajvi.jingar@intel.com, julia@ni.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org, kernel-team@lge.com
+To: Tom Zanussi <tom.zanussi@linux.intel.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from LGEAMRELO12.lge.com ([156.147.23.52]:35429 "EHLO
+        lgeamrelo12.lge.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1750760AbdKFFJ4 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 6 Nov 2017 00:09:56 -0500
+Content-Disposition: inline
+In-Reply-To: <8927a4736dc6f602079d0797b60d3bf7a5d2d9d7.1509395595.git.tom.zanussi@linux.intel.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 10/27/2017 03:27 PM, Sebastian Andrzej Siewior wrote:
-> Dear RT folks!
->
-> I'm pleased to announce the v4.13.10-rt3 patch set.
+Hi Tom,
 
-Thanks!! Wonderful!
-I'm seeing this (old Lenovo T510 running Fedora 26):
+On Mon, Oct 30, 2017 at 03:51:48PM -0500, Tom Zanussi wrote:
+> RINGBUF_TYPE_TIME_STAMP is defined but not used, and from what I can
+> gather was reserved for something like an absolute timestamp feature
+> for the ring buffer, if not a complete replacement of the current
+> time_delta scheme.
+> 
+> This code redefines RINGBUF_TYPE_TIME_STAMP to implement absolute time
+> stamps.  Another way to look at it is that it essentially forces
+> extended time_deltas for all events.
+> 
+> The motivation for doing this is to enable time_deltas that aren't
+> dependent on previous events in the ring buffer, making it feasible to
+> use the ring_buffer_event timetamps in a more random-access way, for
+> purposes other than serial event printing.
+> 
+> To set/reset this mode, use tracing_set_timestamp_abs() from the
+> previous interface patch.
+> 
+> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> ---
 
---------
-[   54.942022] ============================================
-[   54.942023] WARNING: possible recursive locking detected
-[   54.942026] 4.13.10-200.rt3.1.fc26.ccrma.x86_64+rt #1 Not tainted
-[   54.942026] --------------------------------------------
-[   54.942028] csd-sound/1392 is trying to acquire lock:
-[   54.942029]  (&lock->wait_lock){....-.}, at: [<ffffffffb19b2a5d>] 
-rt_spin_lock_slowunlock+0x4d/0xa0
-[   54.942038]
-                but task is already holding lock:
-[   54.942039]  (&lock->wait_lock){....-.}, at: [<ffffffffb1165c79>] 
-futex_lock_pi+0x269/0x4b0
-[   54.942044]
-                other info that might help us debug this:
-[   54.942045]  Possible unsafe locking scenario:
+[SNIP]
+> @@ -2220,13 +2246,16 @@ static void rb_inc_iter(struct ring_buffer_iter *iter)
+>  }
+>  
+>  /* Slow path, do not inline */
+> -static noinline struct ring_buffer_event *
+> +static struct noinline ring_buffer_event *
 
-[   54.942045]        CPU0
-[   54.942045]        ----
-[   54.942046]   lock(&lock->wait_lock);
-[   54.942046]   lock(&lock->wait_lock);
-[   54.942047]
-                 *** DEADLOCK ***
+struct noinline?  Looks like a mistake..
 
-[   54.942047]  May be due to missing lock nesting notation
-
-[   54.942048] 1 lock held by csd-sound/1392:
-[   54.942049]  #0:  (&lock->wait_lock){....-.}, at: 
-[<ffffffffb1165c79>] futex_lock_pi+0x269/0x4b0
-[   54.942051]
-                stack backtrace:
-[   54.942053] CPU: 2 PID: 1392 Comm: csd-sound Not tainted 
-4.13.10-200.rt3.1.fc26.ccrma.x86_64+rt #1
-[   54.942054] Hardware name: LENOVO 4313CTO/4313CTO, BIOS 6MET64WW 
-(1.27 ) 07/15/2010
-[   54.942055] Call Trace:
-[   54.942059]  dump_stack+0x8e/0xd6
-[   54.942065]  __lock_acquire+0x72f/0x13b0
-[   54.942071]  ? sched_clock+0x9/0x10
-[   54.942074]  ? futex_lock_pi+0x269/0x4b0
-[   54.942076]  lock_acquire+0xa3/0x250
-[   54.942077]  ? lock_acquire+0xa3/0x250
-[   54.942079]  ? rt_spin_lock_slowunlock+0x4d/0xa0
-[   54.942080]  ? reacquire_held_locks+0xf8/0x180
-[   54.942083]  _raw_spin_lock_irqsave+0x4d/0x90
-[   54.942084]  ? rt_spin_lock_slowunlock+0x4d/0xa0
-[   54.942085]  rt_spin_lock_slowunlock+0x4d/0xa0
-[   54.942087]  rt_spin_unlock+0x2a/0x40
-[   54.942089]  futex_lock_pi+0x277/0x4b0
-[   54.942090]  ? futex_wait_queue_me+0x100/0x170
-[   54.942092]  ? futex_wait+0x227/0x250
-[   54.942096]  do_futex+0x304/0xc20
-[   54.942099]  ? wake_up_new_task+0x1ec/0x370
-[   54.942102]  ? _do_fork+0x176/0x750
-[   54.942104]  ? up_read+0x2a/0x30
-[   54.942106]  SyS_futex+0x13b/0x180
-[   54.942110]  ? trace_hardirqs_on_thunk+0x1a/0x1c
-[   54.942113]  entry_SYSCALL_64_fastpath+0x1f/0xbe
-[   54.942116] RIP: 0033:0x7fe500f2d7b2
-[   54.942116] RSP: 002b:00007ffd13017110 EFLAGS: 00000246 ORIG_RAX: 
-00000000000000ca
-[   54.942117] RAX: ffffffffffffffda RBX: 00007fe4e7df7700 RCX: 
-00007fe500f2d7b2
-[   54.942118] RDX: 0000000000000001 RSI: 0000000000000086 RDI: 
-0000557e090dd3f0
-[   54.942119] RBP: 00007ffd13017280 R08: 0000000000000000 R09: 
-0000000000000001
-[   54.942119] R10: 0000000000000000 R11: 0000000000000246 R12: 
-0000000000000000
-[   54.942120] R13: 00007ffd13017210 R14: 00007fe4e7df79c0 R15: 
-0000000000000000
---------
-
-Best,
--- Fernando
+Thanks,
+Namhyung
 
 
-> Changes since v4.13.10-rt2:
->
->   - A dcache related live lock could occur. The writer could get
->     preempted within the critical section and the reader would spin to
->     see the update completed. This update would never complete if the
->     writer was preempted by a reader with a higher priority. Reported by
->     Oleg Karfich.
->
->   - The tpm_tis driver can cause latency spikes (~400us) after multiple
->     writes to the chip is followed by a read operation. This read causes
->     a flush of all the cached writes to the chip and is blocking the CPU
->     until the operation completes. Reported and patched by Haris
->     Okanovic.
->
->   - The upgrade to v4.13-RT broke the zram driver. Patched by Mike
->     Galbraith.
->
->   - Tom Zanussi's "tracing: Inter-event (e.g. latency) support" patchset
->     has been update to v3.
->
->   - The static SRCU notifier wasn't compiling with SRCU_TINY. Reported
->     by kbuild test robot.
+> -rb_add_time_stamp(struct ring_buffer_event *event, u64 delta)
+> +rb_add_time_stamp(struct ring_buffer_event *event, u64 delta, bool abs)
+>  {
+> -	event->type_len = RINGBUF_TYPE_TIME_EXTEND;
+> +	if (abs)
+> +		event->type_len = RINGBUF_TYPE_TIME_STAMP;
+> +	else
+> +		event->type_len = RINGBUF_TYPE_TIME_EXTEND;
+>  
+> -	/* Not the first event on the page? */
+> -	if (rb_event_index(event)) {
+> +	/* Not the first event on the page, or not delta? */
+> +	if (abs || rb_event_index(event)) {
+>  		event->time_delta = delta & TS_MASK;
+>  		event->array[0] = delta >> TS_SHIFT;
+>  	} else {
