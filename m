@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v5 12/37] tracing: Add per-element variable support to tracing_map
-Date: Thu,  9 Nov 2017 14:33:43 -0600
-Message-ID: <2e644ff54257c677548912f70f967b6f772cf4ee.1510252666.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v5 16/37] tracing: Account for variables in named trigger compatibility
+Date: Thu,  9 Nov 2017 14:33:47 -0600
+Message-ID: <5115e10d52fda1f2ae443badeac901260b827182.1510252666.git.tom.zanussi@linux.intel.com>
 References: <cover.1510252666.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,223 +18,42 @@ References: <cover.1510252666.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-In order to allow information to be passed between trace events, add
-support for per-element variables to tracing_map.  This provides a
-means for histograms to associate a value or values with an entry when
-it's saved or updated, and retrieved by a subsequent event occurrences.
+Named triggers must also have the same set of variables in order to be
+considered compatible - update the trigger match test to account for
+that.
 
-Variables can be set using tracing_map_set_var() and read using
-tracing_map_read_var().  tracing_map_var_set() returns true or false
-depending on whether or not the variable has been set or not, which is
-important for event-matching applications.
-
-tracing_map_read_var_once() reads the variable and resets it to the
-'unset' state, implementing read-once variables, which are also
-important for event-matching uses.
+The reason for this requirement is that named triggers with variables
+are meant to allow one or more events to set the same variable.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/tracing_map.c | 108 +++++++++++++++++++++++++++++++++++++++++++++
- kernel/trace/tracing_map.h |  11 +++++
- 2 files changed, 119 insertions(+)
+ kernel/trace/trace_events_hist.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
 
-diff --git a/kernel/trace/tracing_map.c b/kernel/trace/tracing_map.c
-index f47a4d5..5cadb1b 100644
---- a/kernel/trace/tracing_map.c
-+++ b/kernel/trace/tracing_map.c
-@@ -66,6 +66,73 @@ u64 tracing_map_read_sum(struct tracing_map_elt *elt, unsigned int i)
- 	return (u64)atomic64_read(&elt->fields[i].sum);
- }
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index a7eb162..24a2b69 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -1605,7 +1605,7 @@ static int event_hist_trigger_print(struct seq_file *m,
+ 		sort_key = &hist_data->sort_keys[i];
+ 		idx = sort_key->field_idx;
  
-+/**
-+ * tracing_map_set_var - Assign a tracing_map_elt's variable field
-+ * @elt: The tracing_map_elt
-+ * @i: The index of the given variable associated with the tracing_map_elt
-+ * @n: The value to assign
-+ *
-+ * Assign n to variable i associated with the specified tracing_map_elt
-+ * instance.  The index i is the index returned by the call to
-+ * tracing_map_add_var() when the tracing map was set up.
-+ */
-+void tracing_map_set_var(struct tracing_map_elt *elt, unsigned int i, u64 n)
-+{
-+	atomic64_set(&elt->vars[i], n);
-+	elt->var_set[i] = true;
-+}
-+
-+/**
-+ * tracing_map_var_set - Return whether or not a variable has been set
-+ * @elt: The tracing_map_elt
-+ * @i: The index of the given variable associated with the tracing_map_elt
-+ *
-+ * Return true if the variable has been set, false otherwise.  The
-+ * index i is the index returned by the call to tracing_map_add_var()
-+ * when the tracing map was set up.
-+ */
-+bool tracing_map_var_set(struct tracing_map_elt *elt, unsigned int i)
-+{
-+	return elt->var_set[i];
-+}
-+
-+/**
-+ * tracing_map_read_var - Return the value of a tracing_map_elt's variable field
-+ * @elt: The tracing_map_elt
-+ * @i: The index of the given variable associated with the tracing_map_elt
-+ *
-+ * Retrieve the value of the variable i associated with the specified
-+ * tracing_map_elt instance.  The index i is the index returned by the
-+ * call to tracing_map_add_var() when the tracing map was set
-+ * up.
-+ *
-+ * Return: The variable value associated with field i for elt.
-+ */
-+u64 tracing_map_read_var(struct tracing_map_elt *elt, unsigned int i)
-+{
-+	return (u64)atomic64_read(&elt->vars[i]);
-+}
-+
-+/**
-+ * tracing_map_read_var_once - Return and reset a tracing_map_elt's variable field
-+ * @elt: The tracing_map_elt
-+ * @i: The index of the given variable associated with the tracing_map_elt
-+ *
-+ * Retrieve the value of the variable i associated with the specified
-+ * tracing_map_elt instance, and reset the variable to the 'not set'
-+ * state.  The index i is the index returned by the call to
-+ * tracing_map_add_var() when the tracing map was set up.  The reset
-+ * essentially makes the variable a read-once variable if it's only
-+ * accessed using this function.
-+ *
-+ * Return: The variable value associated with field i for elt.
-+ */
-+u64 tracing_map_read_var_once(struct tracing_map_elt *elt, unsigned int i)
-+{
-+	elt->var_set[i] = false;
-+	return (u64)atomic64_read(&elt->vars[i]);
-+}
-+
- int tracing_map_cmp_string(void *val_a, void *val_b)
- {
- 	char *a = val_a;
-@@ -171,6 +238,28 @@ int tracing_map_add_sum_field(struct tracing_map *map)
- }
+-		if (WARN_ON(idx >= TRACING_MAP_FIELDS_MAX))
++		if (WARN_ON(idx >= HIST_FIELDS_MAX))
+ 			return -EINVAL;
  
- /**
-+ * tracing_map_add_var - Add a field describing a tracing_map var
-+ * @map: The tracing_map
-+ *
-+ * Add a var to the map and return the index identifying it in the map
-+ * and associated tracing_map_elts.  This is the index used for
-+ * instance to update a var for a particular tracing_map_elt using
-+ * tracing_map_update_var() or reading it via tracing_map_read_var().
-+ *
-+ * Return: The index identifying the var in the map and associated
-+ * tracing_map_elts, or -EINVAL on error.
-+ */
-+int tracing_map_add_var(struct tracing_map *map)
-+{
-+	int ret = -EINVAL;
-+
-+	if (map->n_vars < TRACING_MAP_VARS_MAX)
-+		ret = map->n_vars++;
-+
-+	return ret;
-+}
-+
-+/**
-  * tracing_map_add_key_field - Add a field describing a tracing_map key
-  * @map: The tracing_map
-  * @offset: The offset within the key
-@@ -280,6 +369,11 @@ static void tracing_map_elt_clear(struct tracing_map_elt *elt)
- 		if (elt->fields[i].cmp_fn == tracing_map_cmp_atomic64)
- 			atomic64_set(&elt->fields[i].sum, 0);
- 
-+	for (i = 0; i < elt->map->n_vars; i++) {
-+		atomic64_set(&elt->vars[i], 0);
-+		elt->var_set[i] = false;
-+	}
-+
- 	if (elt->map->ops && elt->map->ops->elt_clear)
- 		elt->map->ops->elt_clear(elt);
- }
-@@ -306,6 +400,8 @@ static void tracing_map_elt_free(struct tracing_map_elt *elt)
- 	if (elt->map->ops && elt->map->ops->elt_free)
- 		elt->map->ops->elt_free(elt);
- 	kfree(elt->fields);
-+	kfree(elt->vars);
-+	kfree(elt->var_set);
- 	kfree(elt->key);
- 	kfree(elt);
- }
-@@ -333,6 +429,18 @@ static struct tracing_map_elt *tracing_map_elt_alloc(struct tracing_map *map)
- 		goto free;
+ 		if (i > 0)
+@@ -1793,6 +1793,11 @@ static bool hist_trigger_match(struct event_trigger_data *data,
+ 			return false;
+ 		if (key_field->is_signed != key_field_test->is_signed)
+ 			return false;
++		if (!!key_field->var.name != !!key_field_test->var.name)
++			return false;
++		if (key_field->var.name &&
++		    strcmp(key_field->var.name, key_field_test->var.name) != 0)
++			return false;
  	}
  
-+	elt->vars = kcalloc(map->n_vars, sizeof(*elt->vars), GFP_KERNEL);
-+	if (!elt->vars) {
-+		err = -ENOMEM;
-+		goto free;
-+	}
-+
-+	elt->var_set = kcalloc(map->n_vars, sizeof(*elt->var_set), GFP_KERNEL);
-+	if (!elt->var_set) {
-+		err = -ENOMEM;
-+		goto free;
-+	}
-+
- 	tracing_map_elt_init_fields(elt);
- 
- 	if (map->ops && map->ops->elt_alloc) {
-diff --git a/kernel/trace/tracing_map.h b/kernel/trace/tracing_map.h
-index 98ef6d6..2800a6b 100644
---- a/kernel/trace/tracing_map.h
-+++ b/kernel/trace/tracing_map.h
-@@ -9,6 +9,7 @@
- #define TRACING_MAP_VALS_MAX		3
- #define TRACING_MAP_FIELDS_MAX		(TRACING_MAP_KEYS_MAX + \
- 					 TRACING_MAP_VALS_MAX)
-+#define TRACING_MAP_VARS_MAX		16
- #define TRACING_MAP_SORT_KEYS_MAX	2
- 
- typedef int (*tracing_map_cmp_fn_t) (void *val_a, void *val_b);
-@@ -136,6 +137,8 @@ struct tracing_map_field {
- struct tracing_map_elt {
- 	struct tracing_map		*map;
- 	struct tracing_map_field	*fields;
-+	atomic64_t			*vars;
-+	bool				*var_set;
- 	void				*key;
- 	void				*private_data;
- };
-@@ -191,6 +194,7 @@ struct tracing_map {
- 	int				key_idx[TRACING_MAP_KEYS_MAX];
- 	unsigned int			n_keys;
- 	struct tracing_map_sort_key	sort_key;
-+	unsigned int			n_vars;
- 	atomic64_t			hits;
- 	atomic64_t			drops;
- };
-@@ -240,6 +244,7 @@ struct tracing_map_ops {
- extern int tracing_map_init(struct tracing_map *map);
- 
- extern int tracing_map_add_sum_field(struct tracing_map *map);
-+extern int tracing_map_add_var(struct tracing_map *map);
- extern int tracing_map_add_key_field(struct tracing_map *map,
- 				     unsigned int offset,
- 				     tracing_map_cmp_fn_t cmp_fn);
-@@ -259,7 +264,13 @@ extern tracing_map_cmp_fn_t tracing_map_cmp_num(int field_size,
- 
- extern void tracing_map_update_sum(struct tracing_map_elt *elt,
- 				   unsigned int i, u64 n);
-+extern void tracing_map_set_var(struct tracing_map_elt *elt,
-+				unsigned int i, u64 n);
-+extern bool tracing_map_var_set(struct tracing_map_elt *elt, unsigned int i);
- extern u64 tracing_map_read_sum(struct tracing_map_elt *elt, unsigned int i);
-+extern u64 tracing_map_read_var(struct tracing_map_elt *elt, unsigned int i);
-+extern u64 tracing_map_read_var_once(struct tracing_map_elt *elt, unsigned int i);
-+
- extern void tracing_map_set_field_descr(struct tracing_map *map,
- 					unsigned int i,
- 					unsigned int key_offset,
+ 	for (i = 0; i < hist_data->n_sort_keys; i++) {
 -- 
 1.9.3
