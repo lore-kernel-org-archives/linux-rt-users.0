@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v5 03/37] tracing: Add support to detect and avoid duplicates
-Date: Thu,  9 Nov 2017 14:33:34 -0600
-Message-ID: <572118543e22b53466beae1121d5b5b4279ceb06.1510252666.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v5 08/37] tracing: Give event triggers access to ring_buffer_event
+Date: Thu,  9 Nov 2017 14:33:39 -0600
+Message-ID: <6e473f3a38f6010e8b1ce605c7af2b412434d000.1510252666.git.tom.zanussi@linux.intel.com>
 References: <cover.1510252666.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,118 +18,305 @@ References: <cover.1510252666.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Vedang Patel <vedang.patel@intel.com>
+The ring_buffer event can provide a timestamp that may be useful to
+various triggers - pass it into the handlers for that purpose.
 
-A duplicate in the tracing_map hash table is when 2 different entries
-have the same key and, as a result, the key_hash. This is possible due
-to a race condition in the algorithm. This race condition is inherent to
-the algorithm and not a bug. This was fine because, until now, we were
-only interested in the sum of all the values related to a particular
-key (the duplicates are dealt with in tracing_map_sort_entries()). But,
-with the inclusion of variables[1], we are interested in individual
-values. So, it will not be clear what value to choose when
-there are duplicates. So, the duplicates need to be removed.
-
-The duplicates can occur in the code in the following scenarios:
-
-- A thread is in the process of adding a new element. It has
-successfully executed cmpxchg() and inserted the key. But, it is still
-not done acquiring the trace_map_elt struct, populating it and storing
-the pointer to the struct in the value field of tracing_map hash table.
-If another thread comes in at this time and wants to add an element with
-the same key, it will not see the current element and add a new one.
-
-- There are multiple threads trying to execute cmpxchg at the same time,
-one of the threads will succeed and the others will fail. The ones which
-fail will go ahead increment 'idx' and add a new element there creating
-a duplicate.
-
-This patch detects and avoids the first condition by asking the thread
-which detects the duplicate to loop one more time. There is also a
-possibility of infinite loop if the thread which is trying to insert
-goes to sleep indefinitely and the one which is trying to insert a new
-element detects a duplicate. Which is why, the thread loops for
-map_size iterations before returning NULL.
-
-The second scenario is avoided by preventing the threads which failed
-cmpxchg() from incrementing idx. This way, they will loop
-around and check if the thread which succeeded in executing cmpxchg()
-had the same key.
-
-[1] http://lkml.kernel.org/r/cover.1498510759.git.tom.zanussi@linux.intel.com
-
-Signed-off-by: Vedang Patel <vedang.patel@intel.com>
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/tracing_map.c | 41 ++++++++++++++++++++++++++++++++++++-----
- 1 file changed, 36 insertions(+), 5 deletions(-)
+ include/linux/trace_events.h        | 14 ++++++-----
+ kernel/trace/trace.h                |  9 +++----
+ kernel/trace/trace_events_hist.c    | 11 +++++----
+ kernel/trace/trace_events_trigger.c | 47 +++++++++++++++++++++++--------------
+ 4 files changed, 49 insertions(+), 32 deletions(-)
 
-diff --git a/kernel/trace/tracing_map.c b/kernel/trace/tracing_map.c
-index 07e7534..b30f343 100644
---- a/kernel/trace/tracing_map.c
-+++ b/kernel/trace/tracing_map.c
-@@ -414,7 +414,9 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
- __tracing_map_insert(struct tracing_map *map, void *key, bool lookup_only)
+diff --git a/include/linux/trace_events.h b/include/linux/trace_events.h
+index ca4e67e..2d1bb0f 100644
+--- a/include/linux/trace_events.h
++++ b/include/linux/trace_events.h
+@@ -406,11 +406,13 @@ enum event_trigger_type {
+ 
+ extern int filter_match_preds(struct event_filter *filter, void *rec);
+ 
+-extern enum event_trigger_type event_triggers_call(struct trace_event_file *file,
+-						   void *rec);
+-extern void event_triggers_post_call(struct trace_event_file *file,
+-				     enum event_trigger_type tt,
+-				     void *rec);
++extern enum event_trigger_type
++event_triggers_call(struct trace_event_file *file, void *rec,
++		    struct ring_buffer_event *event);
++extern void
++event_triggers_post_call(struct trace_event_file *file,
++			 enum event_trigger_type tt,
++			 void *rec, struct ring_buffer_event *event);
+ 
+ bool trace_event_ignore_this_pid(struct trace_event_file *trace_file);
+ 
+@@ -430,7 +432,7 @@ extern void event_triggers_post_call(struct trace_event_file *file,
+ 
+ 	if (!(eflags & EVENT_FILE_FL_TRIGGER_COND)) {
+ 		if (eflags & EVENT_FILE_FL_TRIGGER_MODE)
+-			event_triggers_call(file, NULL);
++			event_triggers_call(file, NULL, NULL);
+ 		if (eflags & EVENT_FILE_FL_SOFT_DISABLED)
+ 			return true;
+ 		if (eflags & EVENT_FILE_FL_PID_FILTER)
+diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
+index 4d8bde0..bbfb577 100644
+--- a/kernel/trace/trace.h
++++ b/kernel/trace/trace.h
+@@ -1293,7 +1293,7 @@ static inline void trace_buffer_unlock_commit(struct trace_array *tr,
+ 	unsigned long eflags = file->flags;
+ 
+ 	if (eflags & EVENT_FILE_FL_TRIGGER_COND)
+-		*tt = event_triggers_call(file, entry);
++		*tt = event_triggers_call(file, entry, event);
+ 
+ 	if (test_bit(EVENT_FILE_FL_SOFT_DISABLED_BIT, &file->flags) ||
+ 	    (unlikely(file->flags & EVENT_FILE_FL_FILTERED) &&
+@@ -1330,7 +1330,7 @@ static inline void trace_buffer_unlock_commit(struct trace_array *tr,
+ 		trace_buffer_unlock_commit(file->tr, buffer, event, irq_flags, pc);
+ 
+ 	if (tt)
+-		event_triggers_post_call(file, tt, entry);
++		event_triggers_post_call(file, tt, entry, event);
+ }
+ 
+ /**
+@@ -1363,7 +1363,7 @@ static inline void trace_buffer_unlock_commit(struct trace_array *tr,
+ 						irq_flags, pc, regs);
+ 
+ 	if (tt)
+-		event_triggers_post_call(file, tt, entry);
++		event_triggers_post_call(file, tt, entry, event);
+ }
+ 
+ #define FILTER_PRED_INVALID	((unsigned short)-1)
+@@ -1588,7 +1588,8 @@ extern void set_named_trigger_data(struct event_trigger_data *data,
+  */
+ struct event_trigger_ops {
+ 	void			(*func)(struct event_trigger_data *data,
+-					void *rec);
++					void *rec,
++					struct ring_buffer_event *rbe);
+ 	int			(*init)(struct event_trigger_ops *ops,
+ 					struct event_trigger_data *data);
+ 	void			(*free)(struct event_trigger_ops *ops,
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 712260e..63a1912 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -909,7 +909,8 @@ static inline void add_to_key(char *compound_key, void *key,
+ 	memcpy(compound_key + key_field->offset, key, size);
+ }
+ 
+-static void event_hist_trigger(struct event_trigger_data *data, void *rec)
++static void event_hist_trigger(struct event_trigger_data *data, void *rec,
++			       struct ring_buffer_event *event)
  {
- 	u32 idx, key_hash, test_key;
-+	int dup_try = 0;
- 	struct tracing_map_entry *entry;
-+	struct tracing_map_elt *val;
+ 	struct hist_trigger_data *hist_data = data->private_data;
+ 	bool use_compound_key = (hist_data->n_keys > 1);
+@@ -1658,7 +1659,8 @@ __init int register_trigger_hist_cmd(void)
+ }
  
- 	key_hash = jhash(key, map->key_size, 0);
- 	if (key_hash == 0)
-@@ -426,11 +428,33 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
- 		entry = TRACING_MAP_ENTRY(map->map, idx);
- 		test_key = entry->key;
+ static void
+-hist_enable_trigger(struct event_trigger_data *data, void *rec)
++hist_enable_trigger(struct event_trigger_data *data, void *rec,
++		    struct ring_buffer_event *event)
+ {
+ 	struct enable_trigger_data *enable_data = data->private_data;
+ 	struct event_trigger_data *test;
+@@ -1674,7 +1676,8 @@ __init int register_trigger_hist_cmd(void)
+ }
  
--		if (test_key && test_key == key_hash && entry->val &&
--		    keys_match(key, entry->val->key, map->key_size)) {
--			if (!lookup_only)
--				atomic64_inc(&map->hits);
--			return entry->val;
-+		if (test_key && test_key == key_hash) {
-+			val = READ_ONCE(entry->val);
-+			if (val &&
-+			    keys_match(key, val->key, map->key_size)) {
-+				if (!lookup_only)
-+					atomic64_inc(&map->hits);
-+				return val;
-+			} else if (unlikely(!val)) {
-+				/*
-+				 * The key is present. But, val (pointer to elt
-+				 * struct) is still NULL. which means some other
-+				 * thread is in the process of inserting an
-+				 * element.
-+				 *
-+				 * On top of that, it's key_hash is same as the
-+				 * one being inserted right now. So, it's
-+				 * possible that the element has the same
-+				 * key as well.
-+				 */
-+
-+				dup_try++;
-+				if (dup_try > map->map_size) {
-+					atomic64_inc(&map->drops);
-+					break;
-+				}
-+				continue;
-+			}
+ static void
+-hist_enable_count_trigger(struct event_trigger_data *data, void *rec)
++hist_enable_count_trigger(struct event_trigger_data *data, void *rec,
++			  struct ring_buffer_event *event)
+ {
+ 	if (!data->count)
+ 		return;
+@@ -1682,7 +1685,7 @@ __init int register_trigger_hist_cmd(void)
+ 	if (data->count != -1)
+ 		(data->count)--;
+ 
+-	hist_enable_trigger(data, rec);
++	hist_enable_trigger(data, rec, event);
+ }
+ 
+ static struct event_trigger_ops hist_enable_trigger_ops = {
+diff --git a/kernel/trace/trace_events_trigger.c b/kernel/trace/trace_events_trigger.c
+index f2ac9d4..9b0fe31 100644
+--- a/kernel/trace/trace_events_trigger.c
++++ b/kernel/trace/trace_events_trigger.c
+@@ -63,7 +63,8 @@ void trigger_data_free(struct event_trigger_data *data)
+  * any trigger that should be deferred, ETT_NONE if nothing to defer.
+  */
+ enum event_trigger_type
+-event_triggers_call(struct trace_event_file *file, void *rec)
++event_triggers_call(struct trace_event_file *file, void *rec,
++		    struct ring_buffer_event *event)
+ {
+ 	struct event_trigger_data *data;
+ 	enum event_trigger_type tt = ETT_NONE;
+@@ -76,7 +77,7 @@ enum event_trigger_type
+ 		if (data->paused)
+ 			continue;
+ 		if (!rec) {
+-			data->ops->func(data, rec);
++			data->ops->func(data, rec, event);
+ 			continue;
  		}
- 
- 		if (!test_key) {
-@@ -452,6 +476,13 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
- 				atomic64_inc(&map->hits);
- 
- 				return entry->val;
-+			} else {
-+				/*
-+				 * cmpxchg() failed. Loop around once
-+				 * more to check what key was inserted.
-+				 */
-+				dup_try++;
-+				continue;
- 			}
+ 		filter = rcu_dereference_sched(data->filter);
+@@ -86,7 +87,7 @@ enum event_trigger_type
+ 			tt |= data->cmd_ops->trigger_type;
+ 			continue;
  		}
+-		data->ops->func(data, rec);
++		data->ops->func(data, rec, event);
+ 	}
+ 	return tt;
+ }
+@@ -108,7 +109,7 @@ enum event_trigger_type
+ void
+ event_triggers_post_call(struct trace_event_file *file,
+ 			 enum event_trigger_type tt,
+-			 void *rec)
++			 void *rec, struct ring_buffer_event *event)
+ {
+ 	struct event_trigger_data *data;
  
+@@ -116,7 +117,7 @@ enum event_trigger_type
+ 		if (data->paused)
+ 			continue;
+ 		if (data->cmd_ops->trigger_type & tt)
+-			data->ops->func(data, rec);
++			data->ops->func(data, rec, event);
+ 	}
+ }
+ EXPORT_SYMBOL_GPL(event_triggers_post_call);
+@@ -909,7 +910,8 @@ void set_named_trigger_data(struct event_trigger_data *data,
+ }
+ 
+ static void
+-traceon_trigger(struct event_trigger_data *data, void *rec)
++traceon_trigger(struct event_trigger_data *data, void *rec,
++		struct ring_buffer_event *event)
+ {
+ 	if (tracing_is_on())
+ 		return;
+@@ -918,7 +920,8 @@ void set_named_trigger_data(struct event_trigger_data *data,
+ }
+ 
+ static void
+-traceon_count_trigger(struct event_trigger_data *data, void *rec)
++traceon_count_trigger(struct event_trigger_data *data, void *rec,
++		      struct ring_buffer_event *event)
+ {
+ 	if (tracing_is_on())
+ 		return;
+@@ -933,7 +936,8 @@ void set_named_trigger_data(struct event_trigger_data *data,
+ }
+ 
+ static void
+-traceoff_trigger(struct event_trigger_data *data, void *rec)
++traceoff_trigger(struct event_trigger_data *data, void *rec,
++		 struct ring_buffer_event *event)
+ {
+ 	if (!tracing_is_on())
+ 		return;
+@@ -942,7 +946,8 @@ void set_named_trigger_data(struct event_trigger_data *data,
+ }
+ 
+ static void
+-traceoff_count_trigger(struct event_trigger_data *data, void *rec)
++traceoff_count_trigger(struct event_trigger_data *data, void *rec,
++		       struct ring_buffer_event *event)
+ {
+ 	if (!tracing_is_on())
+ 		return;
+@@ -1039,13 +1044,15 @@ void set_named_trigger_data(struct event_trigger_data *data,
+ 
+ #ifdef CONFIG_TRACER_SNAPSHOT
+ static void
+-snapshot_trigger(struct event_trigger_data *data, void *rec)
++snapshot_trigger(struct event_trigger_data *data, void *rec,
++		 struct ring_buffer_event *event)
+ {
+ 	tracing_snapshot();
+ }
+ 
+ static void
+-snapshot_count_trigger(struct event_trigger_data *data, void *rec)
++snapshot_count_trigger(struct event_trigger_data *data, void *rec,
++		       struct ring_buffer_event *event)
+ {
+ 	if (!data->count)
+ 		return;
+@@ -1053,7 +1060,7 @@ void set_named_trigger_data(struct event_trigger_data *data,
+ 	if (data->count != -1)
+ 		(data->count)--;
+ 
+-	snapshot_trigger(data, rec);
++	snapshot_trigger(data, rec, event);
+ }
+ 
+ static int
+@@ -1132,13 +1139,15 @@ static __init int register_trigger_snapshot_cmd(void)
+ #define STACK_SKIP 3
+ 
+ static void
+-stacktrace_trigger(struct event_trigger_data *data, void *rec)
++stacktrace_trigger(struct event_trigger_data *data, void *rec,
++		   struct ring_buffer_event *event)
+ {
+ 	trace_dump_stack(STACK_SKIP);
+ }
+ 
+ static void
+-stacktrace_count_trigger(struct event_trigger_data *data, void *rec)
++stacktrace_count_trigger(struct event_trigger_data *data, void *rec,
++			 struct ring_buffer_event *event)
+ {
+ 	if (!data->count)
+ 		return;
+@@ -1146,7 +1155,7 @@ static __init int register_trigger_snapshot_cmd(void)
+ 	if (data->count != -1)
+ 		(data->count)--;
+ 
+-	stacktrace_trigger(data, rec);
++	stacktrace_trigger(data, rec, event);
+ }
+ 
+ static int
+@@ -1208,7 +1217,8 @@ static __init void unregister_trigger_traceon_traceoff_cmds(void)
+ }
+ 
+ static void
+-event_enable_trigger(struct event_trigger_data *data, void *rec)
++event_enable_trigger(struct event_trigger_data *data, void *rec,
++		     struct ring_buffer_event *event)
+ {
+ 	struct enable_trigger_data *enable_data = data->private_data;
+ 
+@@ -1219,7 +1229,8 @@ static __init void unregister_trigger_traceon_traceoff_cmds(void)
+ }
+ 
+ static void
+-event_enable_count_trigger(struct event_trigger_data *data, void *rec)
++event_enable_count_trigger(struct event_trigger_data *data, void *rec,
++			   struct ring_buffer_event *event)
+ {
+ 	struct enable_trigger_data *enable_data = data->private_data;
+ 
+@@ -1233,7 +1244,7 @@ static __init void unregister_trigger_traceon_traceoff_cmds(void)
+ 	if (data->count != -1)
+ 		(data->count)--;
+ 
+-	event_enable_trigger(data, rec);
++	event_enable_trigger(data, rec, event);
+ }
+ 
+ int event_enable_trigger_print(struct seq_file *m,
 -- 
 1.9.3
