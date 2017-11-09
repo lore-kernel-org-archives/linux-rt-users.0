@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v5 05/37] ring-buffer: Add interface for setting absolute time stamps
-Date: Thu,  9 Nov 2017 14:33:36 -0600
-Message-ID: <499478bac7ad811ac51516ac71218b40b35e8b55.1510252666.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v5 07/37] tracing: Add timestamp_mode trace file
+Date: Thu,  9 Nov 2017 14:33:38 -0600
+Message-ID: <de05f784c8e8e744b83569ee653b1be213f4ee53.1510252666.git.tom.zanussi@linux.intel.com>
 References: <cover.1510252666.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,135 +18,137 @@ References: <cover.1510252666.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Define a new function, tracing_set_time_stamp_abs(), which can be used
-to enable or disable the use of absolute timestamps rather than time
-deltas for a trace array.
+Add a new option flag indicating whether or not the ring buffer is in
+'absolute timestamp' mode.
 
-Only the interface is added here; a subsequent patch will add the
-underlying implementation.
+Currently this is only set/unset by hist triggers that make use of a
+$common_timestamp.  As such, there's no reason to make this writeable
+for users - its purpose is only to allow users to determine
+unequivocally whether or not the ring buffer is in that mode (although
+absolute timestamps can coexist with the normal delta timestamps, when
+the ring buffer is in absolute mode, timestamps written while absolute
+mode is in effect take up more space in the buffer, and are not as
+efficient).
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-Signed-off-by: Baohong Liu <baohong.liu@intel.com>
 ---
- include/linux/ring_buffer.h |  2 ++
- kernel/trace/ring_buffer.c  | 11 +++++++++++
- kernel/trace/trace.c        | 33 ++++++++++++++++++++++++++++++++-
- kernel/trace/trace.h        |  3 +++
- 4 files changed, 48 insertions(+), 1 deletion(-)
+ Documentation/trace/ftrace.txt | 24 +++++++++++++++++++++
+ kernel/trace/trace.c           | 47 ++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 71 insertions(+)
 
-diff --git a/include/linux/ring_buffer.h b/include/linux/ring_buffer.h
-index ee9b461..28e3472 100644
---- a/include/linux/ring_buffer.h
-+++ b/include/linux/ring_buffer.h
-@@ -180,6 +180,8 @@ void ring_buffer_normalize_time_stamp(struct ring_buffer *buffer,
- 				      int cpu, u64 *ts);
- void ring_buffer_set_clock(struct ring_buffer *buffer,
- 			   u64 (*clock)(void));
-+void ring_buffer_set_time_stamp_abs(struct ring_buffer *buffer, bool abs);
-+bool ring_buffer_time_stamp_abs(struct ring_buffer *buffer);
+diff --git a/Documentation/trace/ftrace.txt b/Documentation/trace/ftrace.txt
+index d4601df..54213e5 100644
+--- a/Documentation/trace/ftrace.txt
++++ b/Documentation/trace/ftrace.txt
+@@ -539,6 +539,30 @@ of ftrace. Here is a list of some of the key files:
  
- size_t ring_buffer_page_len(void *page);
+ 	See events.txt for more information.
  
-diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
-index f6ee9b1..1e5b75a 100644
---- a/kernel/trace/ring_buffer.c
-+++ b/kernel/trace/ring_buffer.c
-@@ -485,6 +485,7 @@ struct ring_buffer {
- 	u64				(*clock)(void);
- 
- 	struct rb_irq_work		irq_work;
-+	bool				time_stamp_abs;
- };
- 
- struct ring_buffer_iter {
-@@ -1379,6 +1380,16 @@ void ring_buffer_set_clock(struct ring_buffer *buffer,
- 	buffer->clock = clock;
- }
- 
-+void ring_buffer_set_time_stamp_abs(struct ring_buffer *buffer, bool abs)
-+{
-+	buffer->time_stamp_abs = abs;
-+}
++  timestamp_mode:
 +
-+bool ring_buffer_time_stamp_abs(struct ring_buffer *buffer)
-+{
-+	return buffer->time_stamp_abs;
-+}
++	Certain tracers may change the timestamp mode used when
++	logging trace events into the event buffer.  Events with
++	different modes can coexist within a buffer but the mode in
++	effect when an event is logged determines which timestamp mode
++	is used for that event.  The default timestamp mode is
++	'delta'.
 +
- static void rb_reset_cpu(struct ring_buffer_per_cpu *cpu_buffer);
++	Usual timestamp modes for tracing:
++
++	  # cat timestamp_mode
++	  [delta] absolute
++
++	  The timestamp mode with the square brackets around it is the
++	  one in effect.
++
++	  delta: Default timestamp mode - timestamp is a delta against
++	         a per-buffer timestamp.
++
++	  absolute: The timestamp is a full timestamp, not a delta
++                 against some other value.  As such it takes up more
++                 space and is less efficient.
++
+   hwlat_detector:
  
- static inline unsigned long rb_page_entries(struct buffer_page *bpage)
+ 	Directory for the Hardware Latency Detector.
 diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index 73e67b6..459924f 100644
+index 459924f..da604fa 100644
 --- a/kernel/trace/trace.c
 +++ b/kernel/trace/trace.c
-@@ -2269,7 +2269,7 @@ struct ring_buffer_event *
- 
- 	*current_rb = trace_file->tr->trace_buffer.buffer;
- 
--	if ((trace_file->flags &
-+	if (!ring_buffer_time_stamp_abs(*current_rb) && (trace_file->flags &
- 	     (EVENT_FILE_FL_SOFT_DISABLED | EVENT_FILE_FL_FILTERED)) &&
- 	    (entry = this_cpu_read(trace_buffered_event))) {
- 		/* Try to use the per cpu buffer first */
-@@ -6298,6 +6298,37 @@ static int tracing_clock_open(struct inode *inode, struct file *file)
+@@ -4531,6 +4531,9 @@ static int tracing_trace_options_open(struct inode *inode, struct file *file)
+ #ifdef CONFIG_X86_64
+ 	"     x86-tsc:   TSC cycle counter\n"
+ #endif
++	"\n  timestamp_mode\t-view the mode used to timestamp events\n"
++	"       delta:   Delta difference against a buffer-wide timestamp\n"
++	"    absolute:   Absolute (standalone) timestamp\n"
+ 	"\n  trace_marker\t\t- Writes into this file writes into the kernel buffer\n"
+ 	"\n  trace_marker_raw\t\t- Writes into this file writes binary data into the kernel buffer\n"
+ 	"  tracing_cpumask\t- Limit which CPUs to trace\n"
+@@ -6298,6 +6301,40 @@ static int tracing_clock_open(struct inode *inode, struct file *file)
  	return ret;
  }
  
-+int tracing_set_time_stamp_abs(struct trace_array *tr, bool abs)
++static int tracing_time_stamp_mode_show(struct seq_file *m, void *v)
 +{
-+	int ret = 0;
++	struct trace_array *tr = m->private;
 +
 +	mutex_lock(&trace_types_lock);
 +
-+	if (abs && tr->time_stamp_abs_ref++)
-+		goto out;
++	if (ring_buffer_time_stamp_abs(tr->trace_buffer.buffer))
++		seq_puts(m, "delta [absolute]\n");
++	else
++		seq_puts(m, "[delta] absolute\n");
 +
-+	if (!abs) {
-+		if (WARN_ON_ONCE(!tr->time_stamp_abs_ref)) {
-+			ret = -EINVAL;
-+			goto out;
-+		}
-+
-+		if (--tr->time_stamp_abs_ref)
-+			goto out;
-+	}
-+
-+	ring_buffer_set_time_stamp_abs(tr->trace_buffer.buffer, abs);
-+
-+#ifdef CONFIG_TRACER_MAX_TRACE
-+	if (tr->max_buffer.buffer)
-+		ring_buffer_set_time_stamp_abs(tr->max_buffer.buffer, abs);
-+#endif
-+ out:
 +	mutex_unlock(&trace_types_lock);
++
++	return 0;
++}
++
++static int tracing_time_stamp_mode_open(struct inode *inode, struct file *file)
++{
++	struct trace_array *tr = inode->i_private;
++	int ret;
++
++	if (tracing_disabled)
++		return -ENODEV;
++
++	if (trace_array_get(tr))
++		return -ENODEV;
++
++	ret = single_open(file, tracing_time_stamp_mode_show, inode->i_private);
++	if (ret < 0)
++		trace_array_put(tr);
 +
 +	return ret;
 +}
 +
- struct ftrace_buffer_info {
- 	struct trace_iterator	iter;
- 	void			*spare;
-diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
-index f8343eb..4d8bde0 100644
---- a/kernel/trace/trace.h
-+++ b/kernel/trace/trace.h
-@@ -272,6 +272,7 @@ struct trace_array {
- 	/* function tracing enabled */
- 	int			function_enabled;
- #endif
-+	int			time_stamp_abs_ref;
+ int tracing_set_time_stamp_abs(struct trace_array *tr, bool abs)
+ {
+ 	int ret = 0;
+@@ -6576,6 +6613,13 @@ static int snapshot_raw_open(struct inode *inode, struct file *filp)
+ 	.write		= tracing_clock_write,
  };
  
- enum {
-@@ -285,6 +286,8 @@ enum {
- extern int trace_array_get(struct trace_array *tr);
- extern void trace_array_put(struct trace_array *tr);
- 
-+extern int tracing_set_time_stamp_abs(struct trace_array *tr, bool abs);
++static const struct file_operations trace_time_stamp_mode_fops = {
++	.open		= tracing_time_stamp_mode_open,
++	.read		= seq_read,
++	.llseek		= seq_lseek,
++	.release	= tracing_single_release_tr,
++};
 +
- /*
-  * The global tracer (top) should be the first trace array added,
-  * but we check the flag anyway.
+ #ifdef CONFIG_TRACER_SNAPSHOT
+ static const struct file_operations snapshot_fops = {
+ 	.open		= tracing_snapshot_open,
+@@ -7903,6 +7947,9 @@ static __init void create_trace_instances(struct dentry *d_tracer)
+ 	trace_create_file("tracing_on", 0644, d_tracer,
+ 			  tr, &rb_simple_fops);
+ 
++	trace_create_file("timestamp_mode", 0444, d_tracer, tr,
++			  &trace_time_stamp_mode_fops);
++
+ 	create_trace_options_dir(tr);
+ 
+ #if defined(CONFIG_TRACER_MAX_TRACE) || defined(CONFIG_HWLAT_TRACER)
 -- 
 1.9.3
