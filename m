@@ -1,213 +1,114 @@
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v5 04/37] tracing: Remove code which merges duplicates
-Date: Thu,  9 Nov 2017 14:33:35 -0600
-Message-ID: <dee565ff20ef7e685eda8aa6ea233378d82137f5.1510252666.git.tom.zanussi@linux.intel.com>
+From: Namhyung Kim <namhyung@kernel.org>
+Subject: Re: [PATCH v5 15/37] tracing: Add variable support to hist triggers
+Date: Fri, 10 Nov 2017 16:28:41 +0900
+Message-ID: <20171110072841.GB1544@danjae.aot.lge.com>
 References: <cover.1510252666.git.tom.zanussi@linux.intel.com>
-Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
+ <d9fc474596939557a4db9adb92eec65bd2283131.1510252666.git.tom.zanussi@linux.intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
         joel.opensrc@gmail.com, joelaf@google.com,
         mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
         rajvi.jingar@intel.com, julia@ni.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org,
-        Tom Zanussi <tom.zanussi@linux.intel.com>
-To: rostedt@goodmis.org
+        linux-rt-users@vger.kernel.org, kernel-team@lge.com
+To: Tom Zanussi <tom.zanussi@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1510252666.git.tom.zanussi@linux.intel.com>
-In-Reply-To: <cover.1510252666.git.tom.zanussi@linux.intel.com>
-References: <cover.1510252666.git.tom.zanussi@linux.intel.com>
+Content-Disposition: inline
+In-Reply-To: <d9fc474596939557a4db9adb92eec65bd2283131.1510252666.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Vedang Patel <vedang.patel@intel.com>
+Hi Tom,
 
-We now have the logic to detect and remove duplicates in the
-tracing_map hash table. The code which merges duplicates in the
-histogram is redundant now. So, modify this code just to detect
-duplicates. The duplication detection code is still kept to ensure
-that any rare race condition which might cause duplicates does not go
-unnoticed.
+On Thu, Nov 09, 2017 at 02:33:46PM -0600, Tom Zanussi wrote:
+> Add support for saving the value of a current event's event field by
+> assigning it to a variable that can be read by a subsequent event.
+> 
+> The basic syntax for saving a variable is to simply prefix a unique
+> variable name not corresponding to any keyword along with an '=' sign
+> to any event field.
+> 
+> Both keys and values can be saved and retrieved in this way:
+> 
+>     # echo 'hist:keys=next_pid:vals=$ts0:ts0=$common_timestamp ...
+>     # echo 'hist:timer_pid=common_pid:key=$timer_pid ...'
+> 
+> If a variable isn't a key variable or prefixed with 'vals=', the
+> associated event field will be saved in a variable but won't be summed
+> as a value:
+> 
+>     # echo 'hist:keys=next_pid:ts1=$common_timestamp:...
+> 
+> Multiple variables can be assigned at the same time:
+> 
+>     # echo 'hist:keys=pid:vals=$ts0,$b,field2:ts0=$common_timestamp,b=field1 ...
+> 
+> Multiple (or single) variables can also be assigned at the same time
+> using separate assignments:
+> 
+>     # echo 'hist:keys=pid:vals=$ts0:ts0=$common_timestamp:b=field1:c=field2 ...
+> 
+> Variables set as above can be used by being referenced from another
+> event, as described in a subsequent patch.
+> 
+> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> Signed-off-by: Baohong Liu <baohong.liu@intel.com>
+> ---
 
-Signed-off-by: Vedang Patel <vedang.patel@intel.com>
-Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
----
- kernel/trace/trace_events_hist.c | 11 ------
- kernel/trace/tracing_map.c       | 83 +++-------------------------------------
- kernel/trace/tracing_map.h       |  7 ----
- 3 files changed, 6 insertions(+), 95 deletions(-)
+[SNIP]
+> +static int parse_var_defs(struct hist_trigger_data *hist_data)
+> +{
+> +	char *s, *str, *var_name, *field_str;
+> +	unsigned int i, j, n_vars = 0;
+> +	int ret = 0;
+> +
+> +	for (i = 0; i < hist_data->attrs->n_assignments; i++) {
+> +		str = hist_data->attrs->assignment_str[i];
+> +		for (j = 0; j < TRACING_MAP_VARS_MAX; j++) {
+> +			field_str = strsep(&str, ",");
+> +			if (!field_str)
+> +				break;
+> +
+> +			var_name = strsep(&field_str, "=");
+> +			if (!var_name || !field_str) {
+> +				ret = -EINVAL;
+> +				goto free;
+> +			}
+> +
+> +			s = kstrdup(var_name, GFP_KERNEL);
+> +			if (!s) {
+> +				ret = -ENOMEM;
+> +				goto free;
+> +			}
+> +			hist_data->attrs->var_defs.name[n_vars] = s;
+> +
+> +			s = kstrdup(field_str, GFP_KERNEL);
+> +			if (!s) {
+> +				kfree(hist_data->attrs->var_defs.name[n_vars]);
+> +				ret = -ENOMEM;
+> +				goto free;
+> +			}
+> +			hist_data->attrs->var_defs.expr[n_vars++] = s;
+> +
+> +			hist_data->attrs->var_defs.n_vars = n_vars;
+> +
+> +			if (n_vars == TRACING_MAP_VARS_MAX)
+> +				goto free;
 
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 1e1558c..712260e 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -340,16 +340,6 @@ static int hist_trigger_elt_comm_alloc(struct tracing_map_elt *elt)
- 	return 0;
- }
- 
--static void hist_trigger_elt_comm_copy(struct tracing_map_elt *to,
--				       struct tracing_map_elt *from)
--{
--	char *comm_from = from->private_data;
--	char *comm_to = to->private_data;
--
--	if (comm_from)
--		memcpy(comm_to, comm_from, TASK_COMM_LEN + 1);
--}
--
- static void hist_trigger_elt_comm_init(struct tracing_map_elt *elt)
- {
- 	char *comm = elt->private_data;
-@@ -360,7 +350,6 @@ static void hist_trigger_elt_comm_init(struct tracing_map_elt *elt)
- 
- static const struct tracing_map_ops hist_trigger_elt_comm_ops = {
- 	.elt_alloc	= hist_trigger_elt_comm_alloc,
--	.elt_copy	= hist_trigger_elt_comm_copy,
- 	.elt_free	= hist_trigger_elt_comm_free,
- 	.elt_init	= hist_trigger_elt_comm_init,
- };
-diff --git a/kernel/trace/tracing_map.c b/kernel/trace/tracing_map.c
-index b30f343..f47a4d5 100644
---- a/kernel/trace/tracing_map.c
-+++ b/kernel/trace/tracing_map.c
-@@ -847,67 +847,15 @@ void tracing_map_destroy_sort_entries(struct tracing_map_sort_entry **entries,
- 	return sort_entry;
- }
- 
--static struct tracing_map_elt *copy_elt(struct tracing_map_elt *elt)
--{
--	struct tracing_map_elt *dup_elt;
--	unsigned int i;
--
--	dup_elt = tracing_map_elt_alloc(elt->map);
--	if (IS_ERR(dup_elt))
--		return NULL;
--
--	if (elt->map->ops && elt->map->ops->elt_copy)
--		elt->map->ops->elt_copy(dup_elt, elt);
--
--	dup_elt->private_data = elt->private_data;
--	memcpy(dup_elt->key, elt->key, elt->map->key_size);
--
--	for (i = 0; i < elt->map->n_fields; i++) {
--		atomic64_set(&dup_elt->fields[i].sum,
--			     atomic64_read(&elt->fields[i].sum));
--		dup_elt->fields[i].cmp_fn = elt->fields[i].cmp_fn;
--	}
--
--	return dup_elt;
--}
--
--static int merge_dup(struct tracing_map_sort_entry **sort_entries,
--		     unsigned int target, unsigned int dup)
--{
--	struct tracing_map_elt *target_elt, *elt;
--	bool first_dup = (target - dup) == 1;
--	int i;
--
--	if (first_dup) {
--		elt = sort_entries[target]->elt;
--		target_elt = copy_elt(elt);
--		if (!target_elt)
--			return -ENOMEM;
--		sort_entries[target]->elt = target_elt;
--		sort_entries[target]->elt_copied = true;
--	} else
--		target_elt = sort_entries[target]->elt;
--
--	elt = sort_entries[dup]->elt;
--
--	for (i = 0; i < elt->map->n_fields; i++)
--		atomic64_add(atomic64_read(&elt->fields[i].sum),
--			     &target_elt->fields[i].sum);
--
--	sort_entries[dup]->dup = true;
--
--	return 0;
--}
--
--static int merge_dups(struct tracing_map_sort_entry **sort_entries,
-+static void detect_dups(struct tracing_map_sort_entry **sort_entries,
- 		      int n_entries, unsigned int key_size)
- {
- 	unsigned int dups = 0, total_dups = 0;
--	int err, i, j;
-+	int i;
- 	void *key;
- 
- 	if (n_entries < 2)
--		return total_dups;
-+		return;
- 
- 	sort(sort_entries, n_entries, sizeof(struct tracing_map_sort_entry *),
- 	     (int (*)(const void *, const void *))cmp_entries_dup, NULL);
-@@ -916,30 +864,14 @@ static int merge_dups(struct tracing_map_sort_entry **sort_entries,
- 	for (i = 1; i < n_entries; i++) {
- 		if (!memcmp(sort_entries[i]->key, key, key_size)) {
- 			dups++; total_dups++;
--			err = merge_dup(sort_entries, i - dups, i);
--			if (err)
--				return err;
- 			continue;
- 		}
- 		key = sort_entries[i]->key;
- 		dups = 0;
- 	}
- 
--	if (!total_dups)
--		return total_dups;
--
--	for (i = 0, j = 0; i < n_entries; i++) {
--		if (!sort_entries[i]->dup) {
--			sort_entries[j] = sort_entries[i];
--			if (j++ != i)
--				sort_entries[i] = NULL;
--		} else {
--			destroy_sort_entry(sort_entries[i]);
--			sort_entries[i] = NULL;
--		}
--	}
--
--	return total_dups;
-+	WARN_ONCE(total_dups > 0,
-+		  "Duplicates detected: %d\n", total_dups);
- }
- 
- static bool is_key(struct tracing_map *map, unsigned int field_idx)
-@@ -1065,10 +997,7 @@ int tracing_map_sort_entries(struct tracing_map *map,
- 		return 1;
- 	}
- 
--	ret = merge_dups(entries, n_entries, map->key_size);
--	if (ret < 0)
--		goto free;
--	n_entries -= ret;
-+	detect_dups(entries, n_entries, map->key_size);
- 
- 	if (is_key(map, sort_keys[0].field_idx))
- 		cmp_entries_fn = cmp_entries_key;
-diff --git a/kernel/trace/tracing_map.h b/kernel/trace/tracing_map.h
-index f097511..98ef6d6 100644
---- a/kernel/trace/tracing_map.h
-+++ b/kernel/trace/tracing_map.h
-@@ -214,11 +214,6 @@ struct tracing_map {
-  *	Element allocation occurs before tracing begins, when the
-  *	tracing_map_init() call is made by client code.
-  *
-- * @elt_copy: At certain points in the lifetime of an element, it may
-- *	need to be copied.  The copy should include a copy of the
-- *	client-allocated data, which can be copied into the 'to'
-- *	element from the 'from' element.
-- *
-  * @elt_free: When a tracing_map_elt is freed, this function is called
-  *	and allows client-allocated per-element data to be freed.
-  *
-@@ -232,8 +227,6 @@ struct tracing_map {
-  */
- struct tracing_map_ops {
- 	int			(*elt_alloc)(struct tracing_map_elt *elt);
--	void			(*elt_copy)(struct tracing_map_elt *to,
--					    struct tracing_map_elt *from);
- 	void			(*elt_free)(struct tracing_map_elt *elt);
- 	void			(*elt_clear)(struct tracing_map_elt *elt);
- 	void			(*elt_init)(struct tracing_map_elt *elt);
--- 
-1.9.3
+This will silently discard all variables.  Why not returning an error?
+Also I think it should be moved to the beginning of this block..
+
+Thanks,
+Namhyung
+
+
+> +		}
+> +	}
+> +
+> +	return ret;
+> + free:
+> +	free_var_defs(hist_data);
+> +
+> +	return ret;
+> +}
