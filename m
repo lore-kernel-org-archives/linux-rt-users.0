@@ -1,67 +1,96 @@
 From: Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 0/4] Linux 4.1.46-rt52-rc1
-Date: Fri, 10 Nov 2017 10:33:22 -0600
-Message-ID: <cover.1510269414.git.julia@ni.com>
+Subject: [PATCH RT 2/4] workqueue: fixup rcu check for RT
+Date: Fri, 10 Nov 2017 10:33:24 -0600
+Message-ID: <aa7e7818304465643e7034fcfdfc93f7d6de2a8c.1510269414.git.julia@ni.com>
+References: <cover.1510269414.git.julia@ni.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Steven Rostedt <rostedt@goodmis.org>,
         Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        "Sebastian Andrzej Siewior" <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
-        Paul Gortmaker <paul.gortmaker@windriver.com>
+        "Paul Gortmaker" <paul.gortmaker@windriver.com>
 To: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <cover.1510269414.git.julia@ni.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Dear RT Folks,
+4.1.46-rt52-rc1 stable review patch.
+If you have any objection to the inclusion of this patch, let me know.
 
-This is the RT stable review cycle of patch 4.1.46-rt52-rc1.  Please review
-the included patches, and test!
+--- 8< --- 8< --- 8< ---
+Upstream commit 5b95e1af8d17d ("workqueue: wq_pool_mutex protects the
+attrs-installation") introduced an additional assertion
+(assert_rcu_or_wq_mutex_or_pool_mutex) which contains a check ensuring
+that the caller is in a RCU-sched read-side critical section.
 
-You might ask: "Where was 4.1.46-rt51?".  The answer is: it was released
-silently, and only as a means to facilitate release-level bisection.
-Version 4.1.46-rt51 has known issues to be resolved by the pending
-release of -rt52.
+However, on RT, the locking rules are lessened to only require require
+_normal_ RCU.  Fix up this check.
 
-The -rc release will be uploaded to kernel.org and will be deleted when the
-final release is out. This is just a review release (or release candidate).
+The upstream commit was cherry-picked back into stable v4.1.19 as d3c4dd8843be.
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
+This fixes up the bogus splat triggered on boot:
 
-If all goes well, this patch will be converted to the next main release
-on 11/15/2017.
+    ===============================
+    [ INFO: suspicious RCU usage. ]
+    4.1.42-rt50
+    -------------------------------
+    kernel/workqueue.c:609 sched RCU, wq->mutex or wq_pool_mutex should be held!
 
-   Julia
+    other info that might help us debug this:
 
-----------------------------------------------------------------
-To build 4.1.46-rt52-rc1 directly, the following patches should be applied:
+    rcu_scheduler_active = 1, debug_locks = 0
+    2 locks held by swapper/0/1:
+     #0:  ((pendingb_lock).lock){+.+...}, at: queue_work_on+0x64/0x1c0
+     #1:  (rcu_read_lock){......}, at:  __queue_work+0x2a/0x880
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.1.tar.xz
+    stack backtrace:
+    CPU: 0 PID: 1 Comm: swapper/0 Not tainted 4.1.42-rt50 #4
+    Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.10.2-20170228_101828-anatol 04/01/2014
+    Call Trace:
+     dump_stack+0x70/0x9a
+     lockdep_rcu_suspicious+0xe7/0x120
+     unbound_pwq_by_node+0x92/0x100
+     __queue_work+0x28c/0x880
+     ? __queue_work+0x2a/0x880
+     queue_work_on+0xc9/0x1c0
+     call_usermodehelper_exec+0x1a7/0x200
+     kobject_uevent_env+0x4be/0x520
+     ? initcall_blacklist+0xa2/0xa2
+     kobject_uevent+0xb/0x10
+     kset_register+0x34/0x50
+     bus_register+0x100/0x2d0
+     ? ftrace_define_fields_workqueue_work+0x29/0x29
+     subsys_virtual_register+0x26/0x50
+     wq_sysfs_init+0x12/0x14
+     do_one_initcall+0x88/0x1b0
+     ? parse_args+0x190/0x410
+     kernel_init_freeable+0x204/0x299
+     ? rest_init+0x140/0x140
+     kernel_init+0x9/0xf0
+     ret_from_fork+0x42/0x70
+     ? rest_init+0x140/0x140
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.1.46.xz
+Reported-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Julia Cartwright <julia@ni.com>
+---
+ kernel/workqueue.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/patch-4.1.46-rt52-rc1.patch.xz
-
-You can also build from 4.1.46-rt51 release by applying the incremental patch:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/incr/patch-4.1.46-rt51-rt52-rc1.patch.xz
-
-Julia Cartwright (2):
-  workqueue: fixup rcu check for RT
-  Linux 4.1.46-rt52-rc1
-
-Sebastian Andrzej Siewior (2):
-  PM / CPU: replace raw_notifier with atomic_notifier (fixup)
-  kernel/hrtimer: migrate deferred timer on CPU down
-
- kernel/cpu_pm.c       | 7 +++++++
- kernel/time/hrtimer.c | 5 +++++
- kernel/workqueue.c    | 2 +-
- localversion-rt       | 2 +-
- 4 files changed, 14 insertions(+), 2 deletions(-)
-
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index 6bdcab98501c..90e261c8811e 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -363,7 +363,7 @@ static void workqueue_sysfs_unregister(struct workqueue_struct *wq);
+ 			   "RCU or wq->mutex should be held")
+ 
+ #define assert_rcu_or_wq_mutex_or_pool_mutex(wq)			\
+-	rcu_lockdep_assert(rcu_read_lock_sched_held() ||		\
++	rcu_lockdep_assert(rcu_read_lock_held() ||			\
+ 			   lockdep_is_held(&wq->mutex) ||		\
+ 			   lockdep_is_held(&wq_pool_mutex),		\
+ 			   "sched RCU, wq->mutex or wq_pool_mutex should be held")
 -- 
 2.14.2
