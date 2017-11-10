@@ -1,8 +1,7 @@
 From: Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 1/4] PM / CPU: replace raw_notifier with atomic_notifier
-Date: Fri, 10 Nov 2017 10:33:23 -0600
-Message-ID: <c50243950f97e51100f5f9ab7d9f4fd59326bf81.1510269414.git.julia@ni.com>
-References: <cover.1510269414.git.julia@ni.com>
+Subject: [PATCH RT 0/4] Linux 4.1.46-rt52-rc1
+Date: Fri, 10 Nov 2017 10:33:22 -0600
+Message-ID: <cover.1510269414.git.julia@ni.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -13,45 +12,56 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>
 To: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1510269414.git.julia@ni.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-4.1.46-rt52-rc1 stable review patch.
-If you have any objection to the inclusion of this patch, let me know.
+Dear RT Folks,
 
---- 8< --- 8< --- 8< ---
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+This is the RT stable review cycle of patch 4.1.46-rt52-rc1.  Please review
+the included patches, and test!
 
-The original patch changed betwen its posting and what finally went into
-Rafael's tree so here is the delta.
+You might ask: "Where was 4.1.46-rt51?".  The answer is: it was released
+silently, and only as a means to facilitate release-level bisection.
+Version 4.1.46-rt51 has known issues to be resolved by the pending
+release of -rt52.
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-(cherry picked from commit f648e23dac72deef07f25e05fc09dbbc209dbd33)
-Signed-off-by: Julia Cartwright <julia@ni.com>
----
- kernel/cpu_pm.c | 7 +++++++
- 1 file changed, 7 insertions(+)
+The -rc release will be uploaded to kernel.org and will be deleted when the
+final release is out. This is just a review release (or release candidate).
 
-diff --git a/kernel/cpu_pm.c b/kernel/cpu_pm.c
-index 9da42f83ee03..d1d1c3961553 100644
---- a/kernel/cpu_pm.c
-+++ b/kernel/cpu_pm.c
-@@ -28,8 +28,15 @@ static int cpu_pm_notify(enum cpu_pm_event event, int nr_to_call, int *nr_calls)
- {
- 	int ret;
- 
-+	/*
-+	 * __atomic_notifier_call_chain has a RCU read critical section, which
-+	 * could be disfunctional in cpu idle. Copy RCU_NONIDLE code to let
-+	 * RCU know this.
-+	 */
-+	rcu_irq_enter_irqson();
- 	ret = __atomic_notifier_call_chain(&cpu_pm_notifier_chain, event, NULL,
- 		nr_to_call, nr_calls);
-+	rcu_irq_exit_irqson();
- 
- 	return notifier_to_errno(ret);
- }
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 11/15/2017.
+
+   Julia
+
+----------------------------------------------------------------
+To build 4.1.46-rt52-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.1.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.1.46.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/patch-4.1.46-rt52-rc1.patch.xz
+
+You can also build from 4.1.46-rt51 release by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/incr/patch-4.1.46-rt51-rt52-rc1.patch.xz
+
+Julia Cartwright (2):
+  workqueue: fixup rcu check for RT
+  Linux 4.1.46-rt52-rc1
+
+Sebastian Andrzej Siewior (2):
+  PM / CPU: replace raw_notifier with atomic_notifier (fixup)
+  kernel/hrtimer: migrate deferred timer on CPU down
+
+ kernel/cpu_pm.c       | 7 +++++++
+ kernel/time/hrtimer.c | 5 +++++
+ kernel/workqueue.c    | 2 +-
+ localversion-rt       | 2 +-
+ 4 files changed, 14 insertions(+), 2 deletions(-)
+
 -- 
 2.14.2
