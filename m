@@ -1,7 +1,7 @@
 From: Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 2/4] workqueue: fixup rcu check for RT
-Date: Fri, 10 Nov 2017 10:33:24 -0600
-Message-ID: <aa7e7818304465643e7034fcfdfc93f7d6de2a8c.1510269414.git.julia@ni.com>
+Subject: [PATCH RT 3/4] kernel/hrtimer: migrate deferred timer on CPU down
+Date: Fri, 10 Nov 2017 10:33:25 -0600
+Message-ID: <325304ee540e3c916d6c7b15f6e860b7729d138c.1510269414.git.julia@ni.com>
 References: <cover.1510269414.git.julia@ni.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -10,7 +10,8 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         "Sebastian Andrzej Siewior" <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
-        "Paul Gortmaker" <paul.gortmaker@windriver.com>
+        "Paul Gortmaker" <paul.gortmaker@windriver.com>,
+        <stable-rt@vger.kernel.org>
 To: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1510269414.git.julia@ni.com>
@@ -21,76 +22,39 @@ List-Id: linux-rt-users.vger.kernel.org
 If you have any objection to the inclusion of this patch, let me know.
 
 --- 8< --- 8< --- 8< ---
-Upstream commit 5b95e1af8d17d ("workqueue: wq_pool_mutex protects the
-attrs-installation") introduced an additional assertion
-(assert_rcu_or_wq_mutex_or_pool_mutex) which contains a check ensuring
-that the caller is in a RCU-sched read-side critical section.
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-However, on RT, the locking rules are lessened to only require require
-_normal_ RCU.  Fix up this check.
+hrtimers, which were deferred to the softirq context, and expire between
+softirq shutdown and hrtimer migration are dangling around. If the CPU
+goes back up the list head will be initialized and this corrupts the
+timer's list. It will remain unnoticed until a hrtimer_cancel().
+This moves those timers so they will expire.
 
-The upstream commit was cherry-picked back into stable v4.1.19 as d3c4dd8843be.
-
-This fixes up the bogus splat triggered on boot:
-
-    ===============================
-    [ INFO: suspicious RCU usage. ]
-    4.1.42-rt50
-    -------------------------------
-    kernel/workqueue.c:609 sched RCU, wq->mutex or wq_pool_mutex should be held!
-
-    other info that might help us debug this:
-
-    rcu_scheduler_active = 1, debug_locks = 0
-    2 locks held by swapper/0/1:
-     #0:  ((pendingb_lock).lock){+.+...}, at: queue_work_on+0x64/0x1c0
-     #1:  (rcu_read_lock){......}, at:  __queue_work+0x2a/0x880
-
-    stack backtrace:
-    CPU: 0 PID: 1 Comm: swapper/0 Not tainted 4.1.42-rt50 #4
-    Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.10.2-20170228_101828-anatol 04/01/2014
-    Call Trace:
-     dump_stack+0x70/0x9a
-     lockdep_rcu_suspicious+0xe7/0x120
-     unbound_pwq_by_node+0x92/0x100
-     __queue_work+0x28c/0x880
-     ? __queue_work+0x2a/0x880
-     queue_work_on+0xc9/0x1c0
-     call_usermodehelper_exec+0x1a7/0x200
-     kobject_uevent_env+0x4be/0x520
-     ? initcall_blacklist+0xa2/0xa2
-     kobject_uevent+0xb/0x10
-     kset_register+0x34/0x50
-     bus_register+0x100/0x2d0
-     ? ftrace_define_fields_workqueue_work+0x29/0x29
-     subsys_virtual_register+0x26/0x50
-     wq_sysfs_init+0x12/0x14
-     do_one_initcall+0x88/0x1b0
-     ? parse_args+0x190/0x410
-     kernel_init_freeable+0x204/0x299
-     ? rest_init+0x140/0x140
-     kernel_init+0x9/0xf0
-     ret_from_fork+0x42/0x70
-     ? rest_init+0x140/0x140
-
-Reported-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: stable-rt@vger.kernel.org
+Reported-by: Mike Galbraith <efault@gmx.de>
+Tested-by: Mike Galbraith <efault@gmx.de>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+(cherry picked from commit b3c08bffdcdd23f1b3ca8d9c01e3b8a715e03d46)
 Signed-off-by: Julia Cartwright <julia@ni.com>
 ---
- kernel/workqueue.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kernel/time/hrtimer.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-index 6bdcab98501c..90e261c8811e 100644
---- a/kernel/workqueue.c
-+++ b/kernel/workqueue.c
-@@ -363,7 +363,7 @@ static void workqueue_sysfs_unregister(struct workqueue_struct *wq);
- 			   "RCU or wq->mutex should be held")
+diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+index 2c6be169bdc7..75c990b00525 100644
+--- a/kernel/time/hrtimer.c
++++ b/kernel/time/hrtimer.c
+@@ -1951,6 +1951,11 @@ static void migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
+ 		/* Clear the migration state bit */
+ 		timer->state &= ~HRTIMER_STATE_MIGRATE;
+ 	}
++#ifdef CONFIG_PREEMPT_RT_BASE
++	list_splice_tail(&old_base->expired, &new_base->expired);
++	if (!list_empty(&new_base->expired))
++		raise_softirq_irqoff(HRTIMER_SOFTIRQ);
++#endif
+ }
  
- #define assert_rcu_or_wq_mutex_or_pool_mutex(wq)			\
--	rcu_lockdep_assert(rcu_read_lock_sched_held() ||		\
-+	rcu_lockdep_assert(rcu_read_lock_held() ||			\
- 			   lockdep_is_held(&wq->mutex) ||		\
- 			   lockdep_is_held(&wq_pool_mutex),		\
- 			   "sched RCU, wq->mutex or wq_pool_mutex should be held")
+ static void migrate_hrtimers(int scpu)
 -- 
 2.14.2
