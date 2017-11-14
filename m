@@ -1,81 +1,121 @@
-From: Jonathon Fernyhough <jonathon@manjaro.org>
-Subject: Re: Security etc. status of -rt patches versus mainline
-Date: Mon, 13 Nov 2017 21:39:10 +0000
-Message-ID: <9f283e6f-a2f6-2b9d-bb84-acdd02cdf0ee@manjaro.org>
-References: <2fa58167-d2cb-989e-ca0b-2e252d32cdc8@manjaro.org>
- <20171113165546.GA30279@jcartwri.amer.corp.natinst.com>
+From: Namhyung Kim <namhyung@kernel.org>
+Subject: Re: [PATCH v5 24/37] tracing: Add support for 'synthetic' events
+Date: Tue, 14 Nov 2017 10:21:26 +0900
+Message-ID: <20171114012126.GA19630@sejong>
+References: <cover.1510252666.git.tom.zanussi@linux.intel.com>
+ <f97c1be3678794dad81ea1d523ca6da3f088e646.1510252666.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
- protocol="application/pgp-signature";
- boundary="OS1TTcxd3GPKCE6KaiCwnOHKMdL2vi8SK"
-Cc: linux-rt-users@vger.kernel.org
-To: Julia Cartwright <julia@ni.com>
+Content-Type: text/plain; charset=utf-8
+Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
+        vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel.opensrc@gmail.com, joelaf@google.com,
+        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
+        rajvi.jingar@intel.com, julia@ni.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org, kernel-team@lge.com
+To: Tom Zanussi <tom.zanussi@linux.intel.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.manjaro.org ([176.9.38.148]:32884 "EHLO manjaro.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751391AbdKMVjS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 13 Nov 2017 16:39:18 -0500
-In-Reply-To: <20171113165546.GA30279@jcartwri.amer.corp.natinst.com>
+Received: from LGEAMRELO13.lge.com ([156.147.23.53]:59253 "EHLO
+        lgeamrelo13.lge.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751161AbdKNBVe (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 13 Nov 2017 20:21:34 -0500
+Content-Disposition: inline
+In-Reply-To: <f97c1be3678794dad81ea1d523ca6da3f088e646.1510252666.git.tom.zanussi@linux.intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---OS1TTcxd3GPKCE6KaiCwnOHKMdL2vi8SK
-Content-Type: multipart/mixed; boundary="db2tSbq6VFdEDkgC3WPRue7PxgKOOo8x3";
- protected-headers="v1"
-From: Jonathon Fernyhough <jonathon@manjaro.org>
-To: Julia Cartwright <julia@ni.com>
-Cc: linux-rt-users@vger.kernel.org
-Message-ID: <9f283e6f-a2f6-2b9d-bb84-acdd02cdf0ee@manjaro.org>
-Subject: Re: Security etc. status of -rt patches versus mainline
-References: <2fa58167-d2cb-989e-ca0b-2e252d32cdc8@manjaro.org>
- <20171113165546.GA30279@jcartwri.amer.corp.natinst.com>
-In-Reply-To: <20171113165546.GA30279@jcartwri.amer.corp.natinst.com>
+Hi Tom,
 
---db2tSbq6VFdEDkgC3WPRue7PxgKOOo8x3
-Content-Type: text/plain; charset=windows-1252
-Content-Language: en-GB
-Content-Transfer-Encoding: quoted-printable
+On Thu, Nov 09, 2017 at 02:33:55PM -0600, Tom Zanussi wrote:
+> Synthetic events are user-defined events generated from hist trigger
+> variables saved from one or more other events.
+> 
+> To define a synthetic event, the user writes a simple specification
+> consisting of the name of the new event along with one or more
+> variables and their type(s), to the tracing/synthetic_events file.
+> 
+> For instance, the following creates a new event named 'wakeup_latency'
+> with 3 fields: lat, pid, and prio:
+> 
+>     # echo 'wakeup_latency u64 lat; pid_t pid; int prio' >> \
+>       /sys/kernel/debug/tracing/synthetic_events
+> 
+> Reading the tracing/synthetic_events file lists all the
+> currently-defined synthetic events, in this case the event we defined
+> above:
+> 
+>     # cat /sys/kernel/debug/tracing/synthetic_events
+>     wakeup_latency u64 lat; pid_t pid; int prio
+> 
+> At this point, the synthetic event is ready to use, and a histogram
+> can be defined using it:
+> 
+>     # echo 'hist:keys=pid,prio,lat.log2:sort=pid,lat' >> \
+>     /sys/kernel/debug/tracing/events/synthetic/wakeup_latency/trigger
+> 
+> The new event is created under the tracing/events/synthetic/ directory
+> and looks and behaves just like any other event:
+> 
+>     # ls /sys/kernel/debug/tracing/events/synthetic/wakeup_latency
+>       enable  filter  format  hist  id  trigger
+> 
+> Although a histogram can be defined for it, nothing will happen until
+> an action tracing that event via the trace_synth() function occurs.
+> The trace_synth() function is very similar to all the other trace_*
+> invocations spread throughout the kernel, except in this case the
+> trace_ function and its corresponding tracepoint isn't statically
+> generated but defined by the user at run-time.
+> 
+> How this can be automatically hooked up via a hist trigger 'action' is
+> discussed in a subsequent patch.
+> 
+> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> ---
 
-On 13/11/17 16:55, Julia Cartwright wrote:
-> As Uwe mentioned, it's possible that you can just merge in the latest
-> upstream 4.9.y release for your usecase.  Otherwise, you can wait for u=
-s
-> to kick out an updated release (hopefully soon).
->=20
+[SNIP]
+> +static const char *synth_field_fmt(char *type)
+> +{
+> +	const char *fmt = "%llu";
+> +
+> +	if (strcmp(type, "s64") == 0)
+> +		fmt = "%lld";
+> +	else if (strcmp(type, "u64") == 0)
+> +		fmt = "%llu";
+> +	else if (strcmp(type, "s32") == 0)
+> +		fmt = "%d";
+> +	else if (strcmp(type, "u32") == 0)
+> +		fmt = "%u";
+> +	else if (strcmp(type, "s16") == 0)
+> +		fmt = "%d";
+> +	else if (strcmp(type, "u16") == 0)
+> +		fmt = "%u";
+> +	else if (strcmp(type, "s8") == 0)
+> +		fmt = "%d";
+> +	else if (strcmp(type, "u8") == 0)
+> +		fmt = "%u";
+> +	else if (strcmp(type, "char") == 0)
+> +		fmt = "%d";
+> +	else if (strcmp(type, "unsigned char") == 0)
+> +		fmt = "%u";
+> +	else if (strcmp(type, "int") == 0)
+> +		fmt = "%d";
+> +	else if (strcmp(type, "unsigned int") == 0)
+> +		fmt = "%u";
+> +	else if (strcmp(type, "long") == 0)
+> +		fmt = "%ld";
+> +	else if (strcmp(type, "unsigned long") == 0)
+> +		fmt = "%lu";
+> +	else if (strcmp(type, "pid_t") == 0)
+> +		fmt = "%d";
+> +	else if (strstr(type, "[") == 0)
+> +		fmt = "%s";
 
-Ah, that's good to know.
+Is it for string?  You may want to check it with '!='..
 
-I tried applying the 4.9.47-rt37 patches against 4.9.61 and only one
-chunk fails to apply (all others succeed with offsets), so I'll give it
-a go. :)
-
-
-J
+Thanks,
+Namhyung
 
 
---db2tSbq6VFdEDkgC3WPRue7PxgKOOo8x3--
-
---OS1TTcxd3GPKCE6KaiCwnOHKMdL2vi8SK
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAEBCAAdFiEEdsbkdwQr/phcwiC9nAiiVUQvr/AFAloKEQEACgkQnAiiVUQv
-r/Bm2Q//b7fxD1HWQ8UAPC6LbsVVlTIrYU9JRWtgTUl6F5kTVmBIOwLFLXWJEjq3
-1OXImTKkYfngfV7/AWMnCMvYaCzLEf4Rfvosg5hGJ4DP2X9qc+9xw6GA8hebs4Fo
-aLSB7HcPOzF8vS5iHVbYoP1B0T4J42th2EawUB5JyTeX4XxdcoexAKKmDoyRLR/3
-RUV4LpQ1kfuRwJmcaV0T0/eGzfJ3CY6gzL0sYG4zw4RdQ4gUU0TYcY8uR/2i3JS2
-h7vRKLEfxSSAFWvUqts6K3dT0Uafz5slxjwPdaUuTtsIxjATlJJW/upaIkH0YvB1
-+jybyHgGpvzu2kmtzKMPQOxFyVa5LCE1BNXDn94+zF50rh4TcK0XcJhJ4KsUFcO4
-AMR5774mAfPVvf1bjuem61PEm5kZm+uH01BIbv85c5Dn79QCYnfISjr3vZNbgKQ8
-nHRgnuJoJl3gTa76x0ILrez7Q0qxktzj/zUNlm5B/lM4VXQDPPreAN3Sy4UVJ8MR
-a7lY53PM1l3z5pRfWCDIPEZv9P/32mMS/d01cpd5QPjEf4G89I83R3zKHTddq+Og
-051j103CINADBwZxPJxErhHgwEKFJfzo5kJbuPthBDE+G9KNXkOCllvWuil6k7sa
-Ixx7TCbjrYb0Ao5DPL99FP+e1jvhLp3jaP7+wvFnUOwNCYKSIvw=
-=O6A6
------END PGP SIGNATURE-----
-
---OS1TTcxd3GPKCE6KaiCwnOHKMdL2vi8SK--
+> +
+> +	return fmt;
+> +}
