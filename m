@@ -1,67 +1,125 @@
-From: Corey Minyard <cminyard@mvista.com>
-Subject: Re: Cyclic task issue with 4.9.47-rt37
-Date: Tue, 14 Nov 2017 16:07:15 -0600
-Message-ID: <96d1c4f2-e083-42d8-f373-16a7edeb25bd@mvista.com>
-References: <CAETxm6yGd1nM5SxJXTCGD8ANB=hB_nzWc0CyiOk5xensOBj6qw@mail.gmail.com>
+From: Juri Lelli <juri.lelli@redhat.com>
+Subject: [ANNOUNCE][CFP] Power Management and Scheduling in the Linux Kernel
+ II edition (OSPM-summit 2018)
+Date: Wed, 15 Nov 2017 14:34:09 +0100
+Message-ID: <CAFj23Bj4PvHyBKXCzeVOo_O0M4tVydK7B7fv78=yPO3WQ2+WBw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
-To: Tommaso Saudelli <tsaudelli@gmail.com>,
-        linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ot0-f182.google.com ([74.125.82.182]:50949 "EHLO
-        mail-ot0-f182.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1756292AbdKNWHR (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 14 Nov 2017 17:07:17 -0500
-Received: by mail-ot0-f182.google.com with SMTP id g104so5922243otg.7
-        for <linux-rt-users@vger.kernel.org>; Tue, 14 Nov 2017 14:07:17 -0800 (PST)
-In-Reply-To: <CAETxm6yGd1nM5SxJXTCGD8ANB=hB_nzWc0CyiOk5xensOBj6qw@mail.gmail.com>
-Content-Language: en-GB
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Cc: Peter Zijlstra <peterz@infradead.org>,
+        "Rafael J. Wysocki" <rafael@kernel.org>,
+        Vincent Guittot <vincent.guittot@linaro.org>,
+        Ulf Hansson <ulf.hansson@linaro.org>,
+        Morten Rasmussen <morten.rasmussen@arm.com>,
+        Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>,
+        Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        Luca Abeni <luca.abeni@santannapisa.it>,
+        Tommaso Cucinotta <tommaso.cucinotta@sssup.it>,
+        Sudeep Holla <sudeep.holla@arm.com>,
+        Viresh Kumar <viresh.kumar@linaro.org>,
+        Patrick Bellasi <patrick.bellasi@arm.com>,
+        Kevin Hilman <khilman@baylibre.com>,
+        Michael Turquette <mturquette@baylibre.com>,
+        Paolo Valente <paolo.valente@unimore.it>,
+        Claudio Scordino <claudio@evidence.eu.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+To: linux-pm@vger.kernel.org, linux-acpi@vger.kernel.org,
+        linux-pci@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        linux-kernel@vger.kernel.org
+Return-path: <linux-pm-owner@vger.kernel.org>
+Sender: linux-pm-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 11/14/2017 03:49 PM, Tommaso Saudelli wrote:
-> Hi,
-> I'm writing since i am experiencing some difficulties through the
-> development of an application which execute a cyclic task every 1 ms.
-> The computer where this application should run is an embedded pc with
-> an intel celeron j1900 quad core, 2G of ram and 32G of ssd. I have
-> installed debian 9.2.1 on it, from a netinst iso image, with no
-> graphical environment. I've downloaded the latest stable kernel source
-> (4.9.47) with the respective rt patch (4.9.47-rt37) and followed the
-> instructions as described in the web page "how to set up preempt_rt
-> properly".
-> I patched the kernel and then i ticked the box with the "Fully
-> Preemptible Kernel" option, and compiled it (make, make
-> modules_install, make install). Rebooted the pc, i checked that the
-> new kernel was running (uname -a) and i wrote a small cpp application
-> following the example of "how to build a simple rt application" web
-> page and "how to build a basic cyclic application" web page.
+Power Management and Scheduling in the Linux Kernel II edition
+(OSPM-summit 2018)
 
-Referencing web pages with names really isn't very helpful.  These might
-be the right sites, and they might not be.
+April 16-18, 2018
+Scuola Superiore Sant'Anna
+Pisa, Italy
 
->   Then to
-> be sure that the cycle keeps at a constant rate of 1 ms, i took the
-> time in nano seconds (clock_gettime) each time the thread finished
-> sleeping and woke up, and compared it with the previous woke up time
-> by subtraction. In theory i should get this time to be around 1000000
-> ns, but what i get is that it varies continuosly from 800000 to
-> 1100000. Sometimes when i launch the program it stays around the
-> desired cycle time, but if i stop and restart the program then it
-> starts to behave as before. I am really confused, what am i doing
-> wrong or am i missing to do? Any suggestion is appreciated. Thanks in
-> advance.
+http://retis.sssup.it/ospm-summit/
 
-Without seeing your program, it is hard to say.  It could be a lot of 
-things.
+---
 
--corey
+.:: FOCUS
 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Power management and scheduling techniques to reduce energy
+consumption while meeting performance and latency requirements are
+still receiving considerable attention from the Linux Kernel
+development community.
 
+After the success of the first edition
+(https://lwn.net/Articles/721573/), II edition of the Power Management
+and Scheduling in the Linux Kernel (OSPM) summit aims at replicating
+such focused discussions, understanding what has been achieved and
+what instead still remains to be addressed.
 
+.:: FORMAT
+
+The summit is organised to cover three days of discussions and talks.
+
+The list of topics of interest includes (but it is not limited to):
+
+* Power management techniques
+* Real-time and non real-time scheduling techniques
+* Energy awareness
+* Mobile/Server power management real-world use cases (successes and failures)
+* Power management and scheduling tooling (configuration, integration,
+testing, etc.)
+* Tracing
+* Recap lightning talks (what has been achieved w.r.t. I edition?)
+
+Presentations can cover recently developed technologies, ongoing work
+and new ideas. Please understand that this workshop is not intended
+for presenting sales and marketing pitches.
+
+.:: ATTENDING
+
+Attending the OSPM-summit is free of charge, but registration to the
+event is mandatory. The event can allow a maximum of 50 people (so, be
+sure to register early!). Registrations open on December 23rd, 2017.
+To register fill in the registration form available at
+https://goo.gl/forms/QHebUBdSWgFeSrKv2. While it is not strictly
+required to submit a topic/presentation (see below), registrations
+with a topic/presentation proposal will take precedence.
+
+.:: VENUE
+
+The workshop will take place at ReTiS Lab*, Scuola Superiore
+Sant'Anna, Pisa, Italy. Pisa is a small town, walking distance from
+the city centre to the venue is 20 minutes, walking distance from the
+airport to the city centre is 30 minutes. More details are available
+from the summit web page: http://retis.sssup.it/ospm-summit/#site
+
+* https://goo.gl/maps/2pPXG2v7Lfp
+
+.:: SUBMIT A TOPIC/PRESENTATION
+
+To submit a topic/presentation add its details to this list:
+https://docs.google.com/spreadsheets/d/1ZPfASW6zVOM3xQvOrcaDEf1c-Pxi1XnFukVYHHwGUq4/edit?usp=sharing
+
+Alternatively, simply reply (only to me :) to this email specifying:
+
+- name/surname
+- affiliation
+- short bio
+- email address
+- title
+- abstract
+- 30min or 50min slot
+
+Deadline for submitting topics/presentations is 9th of December 2017.
+Notifications for accepted topics/presentations will be sent out on
+23rd of December 2017.
+
+.:: ORGANISERS (in alphabetical order)
+
+Luca Abeni (SSSA)
+Patrick Bellasi (Arm)
+Tommaso Cucinotta (SSSA)
+Dietmar Eggemann (Arm)
+Sudeep Holla (Arm)
+Juri Lelli (Red Hat)
+Lorenzo Pieralisi (Arm)
+Morten Rasmussen (Arm)
+Claudio Scordino (Evidence SRL)
