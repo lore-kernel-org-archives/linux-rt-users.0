@@ -1,125 +1,82 @@
-From: Juri Lelli <juri.lelli@redhat.com>
-Subject: [ANNOUNCE][CFP] Power Management and Scheduling in the Linux Kernel
- II edition (OSPM-summit 2018)
-Date: Wed, 15 Nov 2017 14:34:09 +0100
-Message-ID: <CAFj23Bj4PvHyBKXCzeVOo_O0M4tVydK7B7fv78=yPO3WQ2+WBw@mail.gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH RT] fs: convert two mroe BH_Uptodate_Lock related bitspinlocks
+Date: Wed, 15 Nov 2017 17:47:24 +0100
+Message-ID: <20171115164724.y4obsvycytm4mlk7@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Cc: Peter Zijlstra <peterz@infradead.org>,
-        "Rafael J. Wysocki" <rafael@kernel.org>,
-        Vincent Guittot <vincent.guittot@linaro.org>,
-        Ulf Hansson <ulf.hansson@linaro.org>,
-        Morten Rasmussen <morten.rasmussen@arm.com>,
-        Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>,
-        Dietmar Eggemann <dietmar.eggemann@arm.com>,
-        Luca Abeni <luca.abeni@santannapisa.it>,
-        Tommaso Cucinotta <tommaso.cucinotta@sssup.it>,
-        Sudeep Holla <sudeep.holla@arm.com>,
-        Viresh Kumar <viresh.kumar@linaro.org>,
-        Patrick Bellasi <patrick.bellasi@arm.com>,
-        Kevin Hilman <khilman@baylibre.com>,
-        Michael Turquette <mturquette@baylibre.com>,
-        Paolo Valente <paolo.valente@unimore.it>,
-        Claudio Scordino <claudio@evidence.eu.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>,
-To: linux-pm@vger.kernel.org, linux-acpi@vger.kernel.org,
-        linux-pci@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        linux-kernel@vger.kernel.org
-Return-path: <linux-pm-owner@vger.kernel.org>
-Sender: linux-pm-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: linux-kernel@vger.kernel.org, tglx@linutronix.de,
+        Peter Zijlstra <peterz@infradead.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:42549 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1754028AbdKOQr0 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 15 Nov 2017 11:47:26 -0500
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Power Management and Scheduling in the Linux Kernel II edition
-(OSPM-summit 2018)
+We convert all BH_Uptodate_Lock based bit-spinlocks to use
+bh_uptodate_lock_irqsave() instead. Those two were introduced after the
+initial change in -RT and were not noticed before.
 
-April 16-18, 2018
-Scuola Superiore Sant'Anna
-Pisa, Italy
-
-http://retis.sssup.it/ospm-summit/
-
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
+ fs/ext4/page-io.c | 6 ++----
+ fs/xfs/xfs_aops.c | 6 ++----
+ 2 files changed, 4 insertions(+), 8 deletions(-)
 
-.:: FOCUS
+diff --git a/fs/ext4/page-io.c b/fs/ext4/page-io.c
+index c2fce4478cca..a8e94791990d 100644
+--- a/fs/ext4/page-io.c
++++ b/fs/ext4/page-io.c
+@@ -94,8 +94,7 @@ static void ext4_finish_bio(struct bio *bio)
+ 		 * We check all buffers in the page under BH_Uptodate_Lock
+ 		 * to avoid races with other end io clearing async_write flags
+ 		 */
+-		local_irq_save(flags);
+-		bit_spin_lock(BH_Uptodate_Lock, &head->b_state);
++		flags = bh_uptodate_lock_irqsave(head);
+ 		do {
+ 			if (bh_offset(bh) < bio_start ||
+ 			    bh_offset(bh) + bh->b_size > bio_end) {
+@@ -107,8 +106,7 @@ static void ext4_finish_bio(struct bio *bio)
+ 			if (bio->bi_status)
+ 				buffer_io_error(bh);
+ 		} while ((bh = bh->b_this_page) != head);
+-		bit_spin_unlock(BH_Uptodate_Lock, &head->b_state);
+-		local_irq_restore(flags);
++		bh_uptodate_unlock_irqrestore(head, flags);
+ 		if (!under_io) {
+ #ifdef CONFIG_EXT4_FS_ENCRYPTION
+ 			if (data_page)
+diff --git a/fs/xfs/xfs_aops.c b/fs/xfs/xfs_aops.c
+index 41b767ecfe50..e35ad09124ab 100644
+--- a/fs/xfs/xfs_aops.c
++++ b/fs/xfs/xfs_aops.c
+@@ -107,8 +107,7 @@ xfs_finish_page_writeback(
+ 	ASSERT(bvec->bv_offset + bvec->bv_len <= PAGE_SIZE);
+ 	ASSERT((bvec->bv_len & (i_blocksize(inode) - 1)) == 0);
+ 
+-	local_irq_save(flags);
+-	bit_spin_lock(BH_Uptodate_Lock, &head->b_state);
++	flags = bh_uptodate_lock_irqsave(head);
+ 	do {
+ 		if (off >= bvec->bv_offset &&
+ 		    off < bvec->bv_offset + bvec->bv_len) {
+@@ -130,8 +129,7 @@ xfs_finish_page_writeback(
+ 		}
+ 		off += bh->b_size;
+ 	} while ((bh = bh->b_this_page) != head);
+-	bit_spin_unlock(BH_Uptodate_Lock, &head->b_state);
+-	local_irq_restore(flags);
++	bh_uptodate_unlock_irqrestore(head, flags);
+ 
+ 	if (!busy)
+ 		end_page_writeback(bvec->bv_page);
+-- 
+2.15.0
 
-Power management and scheduling techniques to reduce energy
-consumption while meeting performance and latency requirements are
-still receiving considerable attention from the Linux Kernel
-development community.
-
-After the success of the first edition
-(https://lwn.net/Articles/721573/), II edition of the Power Management
-and Scheduling in the Linux Kernel (OSPM) summit aims at replicating
-such focused discussions, understanding what has been achieved and
-what instead still remains to be addressed.
-
-.:: FORMAT
-
-The summit is organised to cover three days of discussions and talks.
-
-The list of topics of interest includes (but it is not limited to):
-
-* Power management techniques
-* Real-time and non real-time scheduling techniques
-* Energy awareness
-* Mobile/Server power management real-world use cases (successes and failures)
-* Power management and scheduling tooling (configuration, integration,
-testing, etc.)
-* Tracing
-* Recap lightning talks (what has been achieved w.r.t. I edition?)
-
-Presentations can cover recently developed technologies, ongoing work
-and new ideas. Please understand that this workshop is not intended
-for presenting sales and marketing pitches.
-
-.:: ATTENDING
-
-Attending the OSPM-summit is free of charge, but registration to the
-event is mandatory. The event can allow a maximum of 50 people (so, be
-sure to register early!). Registrations open on December 23rd, 2017.
-To register fill in the registration form available at
-https://goo.gl/forms/QHebUBdSWgFeSrKv2. While it is not strictly
-required to submit a topic/presentation (see below), registrations
-with a topic/presentation proposal will take precedence.
-
-.:: VENUE
-
-The workshop will take place at ReTiS Lab*, Scuola Superiore
-Sant'Anna, Pisa, Italy. Pisa is a small town, walking distance from
-the city centre to the venue is 20 minutes, walking distance from the
-airport to the city centre is 30 minutes. More details are available
-from the summit web page: http://retis.sssup.it/ospm-summit/#site
-
-* https://goo.gl/maps/2pPXG2v7Lfp
-
-.:: SUBMIT A TOPIC/PRESENTATION
-
-To submit a topic/presentation add its details to this list:
-https://docs.google.com/spreadsheets/d/1ZPfASW6zVOM3xQvOrcaDEf1c-Pxi1XnFukVYHHwGUq4/edit?usp=sharing
-
-Alternatively, simply reply (only to me :) to this email specifying:
-
-- name/surname
-- affiliation
-- short bio
-- email address
-- title
-- abstract
-- 30min or 50min slot
-
-Deadline for submitting topics/presentations is 9th of December 2017.
-Notifications for accepted topics/presentations will be sent out on
-23rd of December 2017.
-
-.:: ORGANISERS (in alphabetical order)
-
-Luca Abeni (SSSA)
-Patrick Bellasi (Arm)
-Tommaso Cucinotta (SSSA)
-Dietmar Eggemann (Arm)
-Sudeep Holla (Arm)
-Juri Lelli (Red Hat)
-Lorenzo Pieralisi (Arm)
-Morten Rasmussen (Arm)
-Claudio Scordino (Evidence SRL)
