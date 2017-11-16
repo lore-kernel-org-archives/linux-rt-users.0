@@ -1,63 +1,43 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [ANNOUNCE] v4.13.10-rt3 (possible recursive locking warning)
-Date: Thu, 16 Nov 2017 16:39:35 +0100
-Message-ID: <20171116153935.vkspby3iw4v7wnmx@linutronix.de>
-References: <20171027222709.sna64giwxak4dxxc@linutronix.de>
- <916b113b-f743-8b3f-6f47-70ed572f76b6@ccrma.stanford.edu>
+From: Sebastian Andrzej Siewior <sebastian.siewior@linutronix.de>
+Subject: Re: schedule under irqs_disabled in SLUB problem
+Date: Thu, 16 Nov 2017 17:08:37 +0100
+Message-ID: <20171116160837.hfpnq4vb4j2osbuz@linutronix.de>
+References: <CADF-jezvVP2O++FR2KiRSSSJF7oObjy8LSP3-yj1HCmxyTzB_Q@mail.gmail.com>
+ <20171102165009.u7a7ahmmywo2qugd@linutronix.de>
+ <CADF-jexLs9vRuiuoRmcA+0L6Mp-XxW75okheWV+ipGf1b_Ua1w@mail.gmail.com>
+ <59FC4393.8030005@mcst.ru>
+ <5A01812F.7040406@mcst.ru>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
+Cc: linux-rt-users@vger.kernel.org, Julia Cartwright <julia@ni.com>,
         Steven Rostedt <rostedt@goodmis.org>
-To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+To: "Pavel V. Panteleev" <panteleev_p@mcst.ru>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:46509 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1754765AbdKPQIk (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 16 Nov 2017 11:08:40 -0500
 Content-Disposition: inline
-In-Reply-To: <916b113b-f743-8b3f-6f47-70ed572f76b6@ccrma.stanford.edu>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <5A01812F.7040406@mcst.ru>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-11-03 10:11:47 [-0700], Fernando Lopez-Lezcano wrote:
-> I'm seeing this (old Lenovo T510 running Fedora 26):
-> 
-> --------
-…
-> [   54.942023] WARNING: possible recursive locking detected
-> [   54.942026] 4.13.10-200.rt3.1.fc26.ccrma.x86_64+rt #1 Not tainted
-> [   54.942026] --------------------------------------------
-> [   54.942028] csd-sound/1392 is trying to acquire lock:
-> [   54.942029]  (&lock->wait_lock){....-.}, at: [<ffffffffb19b2a5d>]  rt_spin_lock_slowunlock+0x4d/0xa0
-> [   54.942038]
->                but task is already holding lock:
-> [   54.942039]  (&lock->wait_lock){....-.}, at: [<ffffffffb1165c79>] futex_lock_pi+0x269/0x4b0
-…
++ Steven & Julia
 
-I've been looking at the wrong spot most of the time… So that is
-harmless. After consolidation of ->wait_lock's init function it
-complains about unlocking the hash_bucket lock while holding
-pi_mutex->wait_lock which is okay because those are used in different
-"context" and we don't end up in an attempt of holding the same lock
-twice. So in order to avoid moving raw_spin_lock_init() into each caller
-of __rt_mutex_init() (like it was) I think we can go with something like
-this:
+On 2017-11-07 12:47:27 [+0300], Pavel V. Panteleev wrote:
+> Thanks, it works.
 
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -2261,6 +2261,7 @@ void rt_mutex_init_proxy_locked(struct rt_mutex *lock,
- 				struct task_struct *proxy_owner)
- {
- 	__rt_mutex_init(lock, NULL, NULL);
-+	raw_spin_lock_init(&lock->wait_lock);
- 	debug_rt_mutex_proxy_lock(lock, proxy_owner);
- 	rt_mutex_set_owner(lock, proxy_owner);
- }
+Okay, good to hear.
 
-an alternative would be to use _nested version but I think this is
-simpler.
+Steven + Julia:
+We need to decide what are going to do about this stable-wise. The bug
+was reported against 3.14.79-rt85 and the devel tree is not affected*.
+The thread starts at 
+  https://www.spinics.net/lists/linux-rt-users/msg17560.html
 
-> Best,
-> -- Fernando
+[*] probably since v4.11.5-rt1 once
+    "sched/core: Enable might_sleep() and smp_processor_id() checks
+    early" and its prerequisites appeared in the queue.
 
 Sebastian
