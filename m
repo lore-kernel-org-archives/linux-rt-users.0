@@ -1,70 +1,63 @@
-From: Gene Heskett <gheskett@shentel.net>
-Subject: trying to build rt kernel, fails quickly
-Date: Thu, 16 Nov 2017 08:28:32 -0500
-Message-ID: <201711160828.32811.gheskett@shentel.net>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [ANNOUNCE] v4.13.10-rt3 (possible recursive locking warning)
+Date: Thu, 16 Nov 2017 16:39:35 +0100
+Message-ID: <20171116153935.vkspby3iw4v7wnmx@linutronix.de>
+References: <20171027222709.sna64giwxak4dxxc@linutronix.de>
+ <916b113b-f743-8b3f-6f47-70ed572f76b6@ccrma.stanford.edu>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from barracuda.cloud.shentel.net ([204.111.1.147]:44623 "EHLO
-        barracuda.cloud.shentel.net" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1754009AbdKPN2i (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 16 Nov 2017 08:28:38 -0500
-Received: from smtp1.edbg.cloud.shentel.net (smtp1.edbg.cloud.shentel.net [204.111.2.17]) by barracuda.cloud.shentel.net with ESMTP id zehD9cT5qh4p0i4L for <linux-rt-users@vger.kernel.org>; Thu, 16 Nov 2017 08:28:36 -0500 (EST)
-Received: from coyote.coyote.den (unknown [204.111.64.149])
-        by smtp1.edbg.cloud.shentel.net (Postfix) with ESMTPSA id 1F00C20617
-        for <linux-rt-users@vger.kernel.org>; Thu, 16 Nov 2017 08:28:36 -0500 (EST)
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <916b113b-f743-8b3f-6f47-70ed572f76b6@ccrma.stanford.edu>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Greetings all;
+On 2017-11-03 10:11:47 [-0700], Fernando Lopez-Lezcano wrote:
+> I'm seeing this (old Lenovo T510 running Fedora 26):
+> 
+> --------
+…
+> [   54.942023] WARNING: possible recursive locking detected
+> [   54.942026] 4.13.10-200.rt3.1.fc26.ccrma.x86_64+rt #1 Not tainted
+> [   54.942026] --------------------------------------------
+> [   54.942028] csd-sound/1392 is trying to acquire lock:
+> [   54.942029]  (&lock->wait_lock){....-.}, at: [<ffffffffb19b2a5d>]  rt_spin_lock_slowunlock+0x4d/0xa0
+> [   54.942038]
+>                but task is already holding lock:
+> [   54.942039]  (&lock->wait_lock){....-.}, at: [<ffffffffb1165c79>] futex_lock_pi+0x269/0x4b0
+…
 
-I've had this downloaded for 2 or 3 weeks so its old.
+I've been looking at the wrong spot most of the time… So that is
+harmless. After consolidation of ->wait_lock's init function it
+complains about unlocking the hash_bucket lock while holding
+pi_mutex->wait_lock which is okay because those are used in different
+"context" and we don't end up in an attempt of holding the same lock
+twice. So in order to avoid moving raw_spin_lock_init() into each caller
+of __rt_mutex_init() (like it was) I think we can go with something like
+this:
 
-Tried to build it on a rock64 just now, and got this:
+diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -2261,6 +2261,7 @@ void rt_mutex_init_proxy_locked(struct rt_mutex *lock,
+ 				struct task_struct *proxy_owner)
+ {
+ 	__rt_mutex_init(lock, NULL, NULL);
++	raw_spin_lock_init(&lock->wait_lock);
+ 	debug_rt_mutex_proxy_lock(lock, proxy_owner);
+ 	rt_mutex_set_owner(lock, proxy_owner);
+ }
 
-rock64@rock64:/media/slash/home/rock64/4.11.12.rt15/linux-4.11$ time make
-  HOSTCC  scripts/kconfig/conf.o
-  HOSTLD  scripts/kconfig/conf
-scripts/kconfig/conf  --silentoldconfig Kconfig
-  CHK     include/config/kernel.release
-  UPD     include/config/kernel.release
-  CHK     include/generated/uapi/linux/version.h
-  CHK     include/generated/utsrelease.h
-"4.11.12-rt16--- localversion-rt +++ localversion-rt @@ -1 +1 @@ --rt15 
-+-rt16" exceeds 64 characters
-Makefile:1107: recipe for target 'include/generated/utsrelease.h' failed
-make: *** [include/generated/utsrelease.h] Error 1
+an alternative would be to use _nested version but I think this is
+simpler.
 
-real    0m7.793s
-user    0m4.585s
-sys     0m2.396s
-rock64@rock64:/media/slash/home/rock64/4.11.12.rt15/linux-4.11$ cat 
-include/generated/utsrelease.h
-#define UTS_RELEASE "4.11.12-rt16"
+> Best,
+> -- Fernando
 
-That doesn't look like 64+ chars.
-
-What might be the real problem?
-
-This is on the rock64, but is being built on a 1TB spinning rust drive 
-plugged in and mounted at /media/slash.  This did build a 4.10.0-rc3 
-just fine a month ago but its not been boot tested because I'm a 
-greenhorn at u-boot. If there is a boot updater for it, I've not found 
-it yet so its actually running an "ayufan" kernel, which is not real 
-time. Original debian stretch install.
-
-Looks like I need some help.
-
-Thank you.
-
-Cheers, Gene Heskett
--- 
-"There are four boxes to be used in defense of liberty:
- soap, ballot, jury, and ammo. Please use in that order."
--Ed Howdershelt (Author)
-Genes Web page <http://geneslinuxbox.net:6309/gene>
+Sebastian
