@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v6 03/37] tracing: Add support to detect and avoid duplicates
-Date: Fri, 17 Nov 2017 14:32:42 -0600
-Message-ID: <824898537fb3c1be3fbee67e5e7a2fce5b42c625.1510948725.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v6 07/37] tracing: Add timestamp_mode trace file
+Date: Fri, 17 Nov 2017 14:32:46 -0600
+Message-ID: <cedf02c1268067410533d7381e24ff2ca4fc62c8.1510948725.git.tom.zanussi@linux.intel.com>
 References: <cover.1510948725.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,118 +18,137 @@ References: <cover.1510948725.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Vedang Patel <vedang.patel@intel.com>
+Add a new option flag indicating whether or not the ring buffer is in
+'absolute timestamp' mode.
 
-A duplicate in the tracing_map hash table is when 2 different entries
-have the same key and, as a result, the key_hash. This is possible due
-to a race condition in the algorithm. This race condition is inherent to
-the algorithm and not a bug. This was fine because, until now, we were
-only interested in the sum of all the values related to a particular
-key (the duplicates are dealt with in tracing_map_sort_entries()). But,
-with the inclusion of variables[1], we are interested in individual
-values. So, it will not be clear what value to choose when
-there are duplicates. So, the duplicates need to be removed.
+Currently this is only set/unset by hist triggers that make use of a
+$common_timestamp.  As such, there's no reason to make this writeable
+for users - its purpose is only to allow users to determine
+unequivocally whether or not the ring buffer is in that mode (although
+absolute timestamps can coexist with the normal delta timestamps, when
+the ring buffer is in absolute mode, timestamps written while absolute
+mode is in effect take up more space in the buffer, and are not as
+efficient).
 
-The duplicates can occur in the code in the following scenarios:
-
-- A thread is in the process of adding a new element. It has
-successfully executed cmpxchg() and inserted the key. But, it is still
-not done acquiring the trace_map_elt struct, populating it and storing
-the pointer to the struct in the value field of tracing_map hash table.
-If another thread comes in at this time and wants to add an element with
-the same key, it will not see the current element and add a new one.
-
-- There are multiple threads trying to execute cmpxchg at the same time,
-one of the threads will succeed and the others will fail. The ones which
-fail will go ahead increment 'idx' and add a new element there creating
-a duplicate.
-
-This patch detects and avoids the first condition by asking the thread
-which detects the duplicate to loop one more time. There is also a
-possibility of infinite loop if the thread which is trying to insert
-goes to sleep indefinitely and the one which is trying to insert a new
-element detects a duplicate. Which is why, the thread loops for
-map_size iterations before returning NULL.
-
-The second scenario is avoided by preventing the threads which failed
-cmpxchg() from incrementing idx. This way, they will loop
-around and check if the thread which succeeded in executing cmpxchg()
-had the same key.
-
-[1] http://lkml.kernel.org/r/cover.1498510759.git.tom.zanussi@linux.intel.com
-
-Signed-off-by: Vedang Patel <vedang.patel@intel.com>
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/tracing_map.c | 41 ++++++++++++++++++++++++++++++++++++-----
- 1 file changed, 36 insertions(+), 5 deletions(-)
+ Documentation/trace/ftrace.txt | 24 +++++++++++++++++++++
+ kernel/trace/trace.c           | 47 ++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 71 insertions(+)
 
-diff --git a/kernel/trace/tracing_map.c b/kernel/trace/tracing_map.c
-index 07e7534..b30f343 100644
---- a/kernel/trace/tracing_map.c
-+++ b/kernel/trace/tracing_map.c
-@@ -414,7 +414,9 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
- __tracing_map_insert(struct tracing_map *map, void *key, bool lookup_only)
- {
- 	u32 idx, key_hash, test_key;
-+	int dup_try = 0;
- 	struct tracing_map_entry *entry;
-+	struct tracing_map_elt *val;
+diff --git a/Documentation/trace/ftrace.txt b/Documentation/trace/ftrace.txt
+index d4601df..54213e5 100644
+--- a/Documentation/trace/ftrace.txt
++++ b/Documentation/trace/ftrace.txt
+@@ -539,6 +539,30 @@ of ftrace. Here is a list of some of the key files:
  
- 	key_hash = jhash(key, map->key_size, 0);
- 	if (key_hash == 0)
-@@ -426,11 +428,33 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
- 		entry = TRACING_MAP_ENTRY(map->map, idx);
- 		test_key = entry->key;
+ 	See events.txt for more information.
  
--		if (test_key && test_key == key_hash && entry->val &&
--		    keys_match(key, entry->val->key, map->key_size)) {
--			if (!lookup_only)
--				atomic64_inc(&map->hits);
--			return entry->val;
-+		if (test_key && test_key == key_hash) {
-+			val = READ_ONCE(entry->val);
-+			if (val &&
-+			    keys_match(key, val->key, map->key_size)) {
-+				if (!lookup_only)
-+					atomic64_inc(&map->hits);
-+				return val;
-+			} else if (unlikely(!val)) {
-+				/*
-+				 * The key is present. But, val (pointer to elt
-+				 * struct) is still NULL. which means some other
-+				 * thread is in the process of inserting an
-+				 * element.
-+				 *
-+				 * On top of that, it's key_hash is same as the
-+				 * one being inserted right now. So, it's
-+				 * possible that the element has the same
-+				 * key as well.
-+				 */
++  timestamp_mode:
 +
-+				dup_try++;
-+				if (dup_try > map->map_size) {
-+					atomic64_inc(&map->drops);
-+					break;
-+				}
-+				continue;
-+			}
- 		}
++	Certain tracers may change the timestamp mode used when
++	logging trace events into the event buffer.  Events with
++	different modes can coexist within a buffer but the mode in
++	effect when an event is logged determines which timestamp mode
++	is used for that event.  The default timestamp mode is
++	'delta'.
++
++	Usual timestamp modes for tracing:
++
++	  # cat timestamp_mode
++	  [delta] absolute
++
++	  The timestamp mode with the square brackets around it is the
++	  one in effect.
++
++	  delta: Default timestamp mode - timestamp is a delta against
++	         a per-buffer timestamp.
++
++	  absolute: The timestamp is a full timestamp, not a delta
++                 against some other value.  As such it takes up more
++                 space and is less efficient.
++
+   hwlat_detector:
  
- 		if (!test_key) {
-@@ -452,6 +476,13 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
- 				atomic64_inc(&map->hits);
+ 	Directory for the Hardware Latency Detector.
+diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
+index 459924f..da604fa 100644
+--- a/kernel/trace/trace.c
++++ b/kernel/trace/trace.c
+@@ -4531,6 +4531,9 @@ static int tracing_trace_options_open(struct inode *inode, struct file *file)
+ #ifdef CONFIG_X86_64
+ 	"     x86-tsc:   TSC cycle counter\n"
+ #endif
++	"\n  timestamp_mode\t-view the mode used to timestamp events\n"
++	"       delta:   Delta difference against a buffer-wide timestamp\n"
++	"    absolute:   Absolute (standalone) timestamp\n"
+ 	"\n  trace_marker\t\t- Writes into this file writes into the kernel buffer\n"
+ 	"\n  trace_marker_raw\t\t- Writes into this file writes binary data into the kernel buffer\n"
+ 	"  tracing_cpumask\t- Limit which CPUs to trace\n"
+@@ -6298,6 +6301,40 @@ static int tracing_clock_open(struct inode *inode, struct file *file)
+ 	return ret;
+ }
  
- 				return entry->val;
-+			} else {
-+				/*
-+				 * cmpxchg() failed. Loop around once
-+				 * more to check what key was inserted.
-+				 */
-+				dup_try++;
-+				continue;
- 			}
- 		}
++static int tracing_time_stamp_mode_show(struct seq_file *m, void *v)
++{
++	struct trace_array *tr = m->private;
++
++	mutex_lock(&trace_types_lock);
++
++	if (ring_buffer_time_stamp_abs(tr->trace_buffer.buffer))
++		seq_puts(m, "delta [absolute]\n");
++	else
++		seq_puts(m, "[delta] absolute\n");
++
++	mutex_unlock(&trace_types_lock);
++
++	return 0;
++}
++
++static int tracing_time_stamp_mode_open(struct inode *inode, struct file *file)
++{
++	struct trace_array *tr = inode->i_private;
++	int ret;
++
++	if (tracing_disabled)
++		return -ENODEV;
++
++	if (trace_array_get(tr))
++		return -ENODEV;
++
++	ret = single_open(file, tracing_time_stamp_mode_show, inode->i_private);
++	if (ret < 0)
++		trace_array_put(tr);
++
++	return ret;
++}
++
+ int tracing_set_time_stamp_abs(struct trace_array *tr, bool abs)
+ {
+ 	int ret = 0;
+@@ -6576,6 +6613,13 @@ static int snapshot_raw_open(struct inode *inode, struct file *filp)
+ 	.write		= tracing_clock_write,
+ };
  
++static const struct file_operations trace_time_stamp_mode_fops = {
++	.open		= tracing_time_stamp_mode_open,
++	.read		= seq_read,
++	.llseek		= seq_lseek,
++	.release	= tracing_single_release_tr,
++};
++
+ #ifdef CONFIG_TRACER_SNAPSHOT
+ static const struct file_operations snapshot_fops = {
+ 	.open		= tracing_snapshot_open,
+@@ -7903,6 +7947,9 @@ static __init void create_trace_instances(struct dentry *d_tracer)
+ 	trace_create_file("tracing_on", 0644, d_tracer,
+ 			  tr, &rb_simple_fops);
+ 
++	trace_create_file("timestamp_mode", 0444, d_tracer, tr,
++			  &trace_time_stamp_mode_fops);
++
+ 	create_trace_options_dir(tr);
+ 
+ #if defined(CONFIG_TRACER_MAX_TRACE) || defined(CONFIG_HWLAT_TRACER)
 -- 
 1.9.3
