@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v6 16/37] tracing: Account for variables in named trigger compatibility
-Date: Fri, 17 Nov 2017 14:32:55 -0600
-Message-ID: <442588bc3313b23792fe0258ec88f7e69096c188.1510948725.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v6 17/37] tracing: Move get_hist_field_flags()
+Date: Fri, 17 Nov 2017 14:32:56 -0600
+Message-ID: <968aa5ae2d26c294d423b3128be439987806321b.1510948725.git.tom.zanussi@linux.intel.com>
 References: <cover.1510948725.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -11,49 +11,87 @@ Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         Tom Zanussi <tom.zanussi@linux.intel.com>
 To: rostedt@goodmis.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mga05.intel.com ([192.55.52.43]:2402 "EHLO mga05.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S935911AbdKQUel (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 17 Nov 2017 15:34:41 -0500
 In-Reply-To: <cover.1510948725.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1510948725.git.tom.zanussi@linux.intel.com>
 References: <cover.1510948725.git.tom.zanussi@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Named triggers must also have the same set of variables in order to be
-considered compatible - update the trigger match test to account for
-that.
-
-The reason for this requirement is that named triggers with variables
-are meant to allow one or more events to set the same variable.
+Move get_hist_field_flags() to make it more easily accessible for new
+code (and keep the move separate from new functionality).
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
+ kernel/trace/trace_events_hist.c | 44 ++++++++++++++++++++--------------------
+ 1 file changed, 22 insertions(+), 22 deletions(-)
 
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index eccfe07..0e4f829 100644
+index 0e4f829..b33c2bc 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -1610,7 +1610,7 @@ static int event_hist_trigger_print(struct seq_file *m,
- 		sort_key = &hist_data->sort_keys[i];
- 		idx = sort_key->field_idx;
+@@ -497,6 +497,28 @@ static void hist_trigger_elt_comm_init(struct tracing_map_elt *elt)
+ 	.elt_init	= hist_trigger_elt_comm_init,
+ };
  
--		if (WARN_ON(idx >= TRACING_MAP_FIELDS_MAX))
-+		if (WARN_ON(idx >= HIST_FIELDS_MAX))
- 			return -EINVAL;
++static const char *get_hist_field_flags(struct hist_field *hist_field)
++{
++	const char *flags_str = NULL;
++
++	if (hist_field->flags & HIST_FIELD_FL_HEX)
++		flags_str = "hex";
++	else if (hist_field->flags & HIST_FIELD_FL_SYM)
++		flags_str = "sym";
++	else if (hist_field->flags & HIST_FIELD_FL_SYM_OFFSET)
++		flags_str = "sym-offset";
++	else if (hist_field->flags & HIST_FIELD_FL_EXECNAME)
++		flags_str = "execname";
++	else if (hist_field->flags & HIST_FIELD_FL_SYSCALL)
++		flags_str = "syscall";
++	else if (hist_field->flags & HIST_FIELD_FL_LOG2)
++		flags_str = "log2";
++	else if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP_USECS)
++		flags_str = "usecs";
++
++	return flags_str;
++}
++
+ static void destroy_hist_field(struct hist_field *hist_field,
+ 			       unsigned int level)
+ {
+@@ -1495,28 +1517,6 @@ static int event_hist_open(struct inode *inode, struct file *file)
+ 	.release = single_release,
+ };
  
- 		if (i > 0)
-@@ -1798,6 +1798,11 @@ static bool hist_trigger_match(struct event_trigger_data *data,
- 			return false;
- 		if (key_field->is_signed != key_field_test->is_signed)
- 			return false;
-+		if (!!key_field->var.name != !!key_field_test->var.name)
-+			return false;
-+		if (key_field->var.name &&
-+		    strcmp(key_field->var.name, key_field_test->var.name) != 0)
-+			return false;
- 	}
- 
- 	for (i = 0; i < hist_data->n_sort_keys; i++) {
+-static const char *get_hist_field_flags(struct hist_field *hist_field)
+-{
+-	const char *flags_str = NULL;
+-
+-	if (hist_field->flags & HIST_FIELD_FL_HEX)
+-		flags_str = "hex";
+-	else if (hist_field->flags & HIST_FIELD_FL_SYM)
+-		flags_str = "sym";
+-	else if (hist_field->flags & HIST_FIELD_FL_SYM_OFFSET)
+-		flags_str = "sym-offset";
+-	else if (hist_field->flags & HIST_FIELD_FL_EXECNAME)
+-		flags_str = "execname";
+-	else if (hist_field->flags & HIST_FIELD_FL_SYSCALL)
+-		flags_str = "syscall";
+-	else if (hist_field->flags & HIST_FIELD_FL_LOG2)
+-		flags_str = "log2";
+-	else if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP_USECS)
+-		flags_str = "usecs";
+-
+-	return flags_str;
+-}
+-
+ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
+ {
+ 	const char *field_name = hist_field_name(hist_field, 0);
 -- 
 1.9.3
+
