@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v6 17/37] tracing: Move get_hist_field_flags()
-Date: Fri, 17 Nov 2017 14:32:56 -0600
-Message-ID: <968aa5ae2d26c294d423b3128be439987806321b.1510948725.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v6 21/37] tracing: Add hist_field 'type' field
+Date: Fri, 17 Nov 2017 14:33:00 -0600
+Message-ID: <6776041835ecafbcc3a8a37585e20c5eb5a96353.1510948725.git.tom.zanussi@linux.intel.com>
 References: <cover.1510948725.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -11,87 +11,122 @@ Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         Tom Zanussi <tom.zanussi@linux.intel.com>
 To: rostedt@goodmis.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga05.intel.com ([192.55.52.43]:2402 "EHLO mga05.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S935911AbdKQUel (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 17 Nov 2017 15:34:41 -0500
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1510948725.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1510948725.git.tom.zanussi@linux.intel.com>
 References: <cover.1510948725.git.tom.zanussi@linux.intel.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Move get_hist_field_flags() to make it more easily accessible for new
-code (and keep the move separate from new functionality).
+Future support for synthetic events requires hist_field 'type'
+information, so add a field for that.
+
+Also, make other hist_field attribute usage consistent (size,
+is_signed, etc).
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 44 ++++++++++++++++++++--------------------
- 1 file changed, 22 insertions(+), 22 deletions(-)
+ kernel/trace/trace_events_hist.c | 33 +++++++++++++++++++++++++++++++++
+ 1 file changed, 33 insertions(+)
 
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 0e4f829..b33c2bc 100644
+index db903ce..d22cdfd 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -497,6 +497,28 @@ static void hist_trigger_elt_comm_init(struct tracing_map_elt *elt)
- 	.elt_init	= hist_trigger_elt_comm_init,
- };
+@@ -54,6 +54,7 @@ struct hist_field {
+ 	unsigned int			size;
+ 	unsigned int			offset;
+ 	unsigned int                    is_signed;
++	const char			*type;
+ 	struct hist_field		*operands[HIST_FIELD_OPERANDS_MAX];
+ 	struct hist_trigger_data	*hist_data;
+ 	struct hist_var			var;
+@@ -712,6 +713,7 @@ static void destroy_hist_field(struct hist_field *hist_field,
  
-+static const char *get_hist_field_flags(struct hist_field *hist_field)
-+{
-+	const char *flags_str = NULL;
-+
-+	if (hist_field->flags & HIST_FIELD_FL_HEX)
-+		flags_str = "hex";
-+	else if (hist_field->flags & HIST_FIELD_FL_SYM)
-+		flags_str = "sym";
-+	else if (hist_field->flags & HIST_FIELD_FL_SYM_OFFSET)
-+		flags_str = "sym-offset";
-+	else if (hist_field->flags & HIST_FIELD_FL_EXECNAME)
-+		flags_str = "execname";
-+	else if (hist_field->flags & HIST_FIELD_FL_SYSCALL)
-+		flags_str = "syscall";
-+	else if (hist_field->flags & HIST_FIELD_FL_LOG2)
-+		flags_str = "log2";
-+	else if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP_USECS)
-+		flags_str = "usecs";
-+
-+	return flags_str;
-+}
-+
- static void destroy_hist_field(struct hist_field *hist_field,
- 			       unsigned int level)
- {
-@@ -1495,28 +1517,6 @@ static int event_hist_open(struct inode *inode, struct file *file)
- 	.release = single_release,
- };
+ 	kfree(hist_field->var.name);
+ 	kfree(hist_field->name);
++	kfree(hist_field->type);
  
--static const char *get_hist_field_flags(struct hist_field *hist_field)
--{
--	const char *flags_str = NULL;
--
--	if (hist_field->flags & HIST_FIELD_FL_HEX)
--		flags_str = "hex";
--	else if (hist_field->flags & HIST_FIELD_FL_SYM)
--		flags_str = "sym";
--	else if (hist_field->flags & HIST_FIELD_FL_SYM_OFFSET)
--		flags_str = "sym-offset";
--	else if (hist_field->flags & HIST_FIELD_FL_EXECNAME)
--		flags_str = "execname";
--	else if (hist_field->flags & HIST_FIELD_FL_SYSCALL)
--		flags_str = "syscall";
--	else if (hist_field->flags & HIST_FIELD_FL_LOG2)
--		flags_str = "log2";
--	else if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP_USECS)
--		flags_str = "usecs";
--
--	return flags_str;
--}
--
- static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
- {
- 	const char *field_name = hist_field_name(hist_field, 0);
+ 	kfree(hist_field);
+ }
+@@ -737,6 +739,10 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
+ 
+ 	if (flags & HIST_FIELD_FL_HITCOUNT) {
+ 		hist_field->fn = hist_field_counter;
++		hist_field->size = sizeof(u64);
++		hist_field->type = kstrdup("u64", GFP_KERNEL);
++		if (!hist_field->type)
++			goto free;
+ 		goto out;
+ 	}
+ 
+@@ -750,12 +756,18 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
+ 		hist_field->fn = hist_field_log2;
+ 		hist_field->operands[0] = create_hist_field(hist_data, field, fl, NULL);
+ 		hist_field->size = hist_field->operands[0]->size;
++		hist_field->type = kstrdup(hist_field->operands[0]->type, GFP_KERNEL);
++		if (!hist_field->type)
++			goto free;
+ 		goto out;
+ 	}
+ 
+ 	if (flags & HIST_FIELD_FL_TIMESTAMP) {
+ 		hist_field->fn = hist_field_timestamp;
+ 		hist_field->size = sizeof(u64);
++		hist_field->type = kstrdup("u64", GFP_KERNEL);
++		if (!hist_field->type)
++			goto free;
+ 		goto out;
+ 	}
+ 
+@@ -765,6 +777,11 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
+ 	if (is_string_field(field)) {
+ 		flags |= HIST_FIELD_FL_STRING;
+ 
++		hist_field->size = MAX_FILTER_STR_VAL;
++		hist_field->type = kstrdup(field->type, GFP_KERNEL);
++		if (!hist_field->type)
++			goto free;
++
+ 		if (field->filter_type == FILTER_STATIC_STRING)
+ 			hist_field->fn = hist_field_string;
+ 		else if (field->filter_type == FILTER_DYN_STRING)
+@@ -772,6 +789,12 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
+ 		else
+ 			hist_field->fn = hist_field_pstring;
+ 	} else {
++		hist_field->size = field->size;
++		hist_field->is_signed = field->is_signed;
++		hist_field->type = kstrdup(field->type, GFP_KERNEL);
++		if (!hist_field->type)
++			goto free;
++
+ 		hist_field->fn = select_value_fn(field->size,
+ 						 field->is_signed);
+ 		if (!hist_field->fn) {
+@@ -981,6 +1004,11 @@ static struct hist_field *parse_unary(struct hist_trigger_data *hist_data,
+ 	expr->operands[0] = operand1;
+ 	expr->operator = FIELD_OP_UNARY_MINUS;
+ 	expr->name = expr_str(expr, 0);
++	expr->type = kstrdup(operand1->type, GFP_KERNEL);
++	if (!expr->type) {
++		ret = -ENOMEM;
++		goto free;
++	}
+ 
+ 	return expr;
+  free:
+@@ -1070,6 +1098,11 @@ static struct hist_field *parse_expr(struct hist_trigger_data *hist_data,
+ 	expr->operands[1] = operand2;
+ 	expr->operator = field_op;
+ 	expr->name = expr_str(expr, 0);
++	expr->type = kstrdup(operand1->type, GFP_KERNEL);
++	if (!expr->type) {
++		ret = -ENOMEM;
++		goto free;
++	}
+ 
+ 	switch (field_op) {
+ 	case FIELD_OP_MINUS:
 -- 
 1.9.3
-
