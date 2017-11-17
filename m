@@ -1,798 +1,233 @@
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v6 15/37] tracing: Add variable support to hist triggers
-Date: Fri, 17 Nov 2017 14:32:54 -0600
-Message-ID: <4c21e13a239a498e199903cdcde510be708157ea.1510948725.git.tom.zanussi@linux.intel.com>
-References: <cover.1510948725.git.tom.zanussi@linux.intel.com>
-Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        Tom Zanussi <tom.zanussi@linux.intel.com>
-To: rostedt@goodmis.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1510948725.git.tom.zanussi@linux.intel.com>
-In-Reply-To: <cover.1510948725.git.tom.zanussi@linux.intel.com>
-References: <cover.1510948725.git.tom.zanussi@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [ANNOUNCE] v4.13.13-rt5
+Date: Fri, 17 Nov 2017 22:04:40 +0100
+Message-ID: <20171117210440.lxhcynkwxgyuf6pj@linutronix.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:52757 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1760902AbdKQVEn (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 17 Nov 2017 16:04:43 -0500
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Add support for saving the value of a current event's event field by
-assigning it to a variable that can be read by a subsequent event.
+Dear RT folks!
 
-The basic syntax for saving a variable is to simply prefix a unique
-variable name not corresponding to any keyword along with an '=' sign
-to any event field.
+I'm pleased to announce the v4.13.13-rt5 patch set. 
 
-Both keys and values can be saved and retrieved in this way:
+Changes since v4.13.13-rt4:
 
-    # echo 'hist:keys=next_pid:vals=$ts0:ts0=$common_timestamp ...
-    # echo 'hist:timer_pid=common_pid:key=$timer_pid ...'
+  - Correct the elif macro in the apparmor patch applied in the last
+    release.
 
-If a variable isn't a key variable or prefixed with 'vals=', the
-associated event field will be saved in a variable but won't be summed
-as a value:
+  - Update the fixup for the PCI switchtec driver. It was introduced in
+    the v4.13 cycle and was not perfect.
 
-    # echo 'hist:keys=next_pid:ts1=$common_timestamp:...
+  - Some of the bit_spin_locks were converted to proper spinlock
+    including BH_Uptodate_Lock. After that change some new users popped
+    up and were not updated. They are now.
 
-Multiple variables can be assigned at the same time:
+  - The raid5 code disabled interrupts where it should not on -RT.
+    Noticed while running the lvm test suite.
 
-    # echo 'hist:keys=pid:vals=$ts0,$b,field2:ts0=$common_timestamp,b=field1 ...
+  - The device-mapper could deadlock itself on -RT. A deadlock could
+    also happen with plain ext4. Reported and patched by Mikulas
+    Patocka.
 
-Multiple (or single) variables can also be assigned at the same time
-using separate assignments:
+  - Lockdep could report a possible double lock in during the futex
+    lock-pi opcode due to missing annotation. Reported by Fernando
+    Lopez-Lezcano.
 
-    # echo 'hist:keys=pid:vals=$ts0:ts0=$common_timestamp:b=field1:c=field2 ...
+Known issues
+	None
 
-Variables set as above can be used by being referenced from another
-event, as described in a subsequent patch.
-
-Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-Signed-off-by: Baohong Liu <baohong.liu@intel.com>
----
- kernel/trace/trace_events_hist.c | 372 ++++++++++++++++++++++++++++++++++-----
- 1 file changed, 332 insertions(+), 40 deletions(-)
-
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index ec2df88..eccfe07 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -30,6 +30,13 @@ typedef u64 (*hist_field_fn_t) (struct hist_field *field, void *event,
- 				struct ring_buffer_event *rbe);
+The delta patch against v4.13.13-rt4 is appended below and can be found here:
  
- #define HIST_FIELD_OPERANDS_MAX	2
-+#define HIST_FIELDS_MAX		(TRACING_MAP_FIELDS_MAX + TRACING_MAP_VARS_MAX)
-+
-+struct hist_var {
-+	char				*name;
-+	struct hist_trigger_data	*hist_data;
-+	unsigned int			idx;
-+};
- 
- struct hist_field {
- 	struct ftrace_event_field	*field;
-@@ -40,6 +47,7 @@ struct hist_field {
- 	unsigned int                    is_signed;
- 	struct hist_field		*operands[HIST_FIELD_OPERANDS_MAX];
- 	struct hist_trigger_data	*hist_data;
-+	struct hist_var			var;
- };
- 
- static u64 hist_field_none(struct hist_field *field, void *event,
-@@ -138,6 +146,13 @@ enum hist_field_flags {
- 	HIST_FIELD_FL_LOG2		= 1 << 9,
- 	HIST_FIELD_FL_TIMESTAMP		= 1 << 10,
- 	HIST_FIELD_FL_TIMESTAMP_USECS	= 1 << 11,
-+	HIST_FIELD_FL_VAR		= 1 << 12,
-+};
-+
-+struct var_defs {
-+	unsigned int	n_vars;
-+	char		*name[TRACING_MAP_VARS_MAX];
-+	char		*expr[TRACING_MAP_VARS_MAX];
- };
- 
- struct hist_trigger_attrs {
-@@ -150,13 +165,19 @@ struct hist_trigger_attrs {
- 	bool		clear;
- 	bool		ts_in_usecs;
- 	unsigned int	map_bits;
-+
-+	char		*assignment_str[TRACING_MAP_VARS_MAX];
-+	unsigned int	n_assignments;
-+
-+	struct var_defs	var_defs;
- };
- 
- struct hist_trigger_data {
--	struct hist_field               *fields[TRACING_MAP_FIELDS_MAX];
-+	struct hist_field               *fields[HIST_FIELDS_MAX];
- 	unsigned int			n_vals;
- 	unsigned int			n_keys;
- 	unsigned int			n_fields;
-+	unsigned int			n_vars;
- 	unsigned int			key_size;
- 	struct tracing_map_sort_key	sort_keys[TRACING_MAP_SORT_KEYS_MAX];
- 	unsigned int			n_sort_keys;
-@@ -164,6 +185,7 @@ struct hist_trigger_data {
- 	struct hist_trigger_attrs	*attrs;
- 	struct tracing_map		*map;
- 	bool				enable_timestamps;
-+	bool				remove;
- };
- 
- static u64 hist_field_timestamp(struct hist_field *hist_field, void *event,
-@@ -180,6 +202,48 @@ static u64 hist_field_timestamp(struct hist_field *hist_field, void *event,
- 	return ts;
- }
- 
-+static struct hist_field *find_var_field(struct hist_trigger_data *hist_data,
-+					 const char *var_name)
-+{
-+	struct hist_field *hist_field, *found = NULL;
-+	int i;
-+
-+	for_each_hist_field(i, hist_data) {
-+		hist_field = hist_data->fields[i];
-+		if (hist_field && hist_field->flags & HIST_FIELD_FL_VAR &&
-+		    strcmp(hist_field->var.name, var_name) == 0) {
-+			found = hist_field;
-+			break;
-+		}
-+	}
-+
-+	return found;
-+}
-+
-+static struct hist_field *find_var(struct hist_trigger_data *hist_data,
-+				   struct trace_event_file *file,
-+				   const char *var_name)
-+{
-+	struct hist_trigger_data *test_data;
-+	struct event_trigger_data *test;
-+	struct hist_field *hist_field;
-+
-+	hist_field = find_var_field(hist_data, var_name);
-+	if (hist_field)
-+		return hist_field;
-+
-+	list_for_each_entry_rcu(test, &file->triggers, list) {
-+		if (test->cmd_ops->trigger_type == ETT_EVENT_HIST) {
-+			test_data = test->private_data;
-+			hist_field = find_var_field(test_data, var_name);
-+			if (hist_field)
-+				return hist_field;
-+		}
-+	}
-+
-+	return NULL;
-+}
-+
- static const char *hist_field_name(struct hist_field *field,
- 				   unsigned int level)
- {
-@@ -262,9 +326,14 @@ static int parse_map_size(char *str)
- 
- static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
- {
-+	unsigned int i;
-+
- 	if (!attrs)
- 		return;
- 
-+	for (i = 0; i < attrs->n_assignments; i++)
-+		kfree(attrs->assignment_str[i]);
-+
- 	kfree(attrs->name);
- 	kfree(attrs->sort_key_str);
- 	kfree(attrs->keys_str);
-@@ -311,8 +380,22 @@ static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
- 			goto out;
- 		}
- 		attrs->map_bits = map_bits;
--	} else
--		ret = -EINVAL;
-+	} else {
-+		char *assignment;
-+
-+		if (attrs->n_assignments == TRACING_MAP_VARS_MAX) {
-+			ret = -EINVAL;
-+			goto out;
-+		}
-+
-+		assignment = kstrdup(str, GFP_KERNEL);
-+		if (!assignment) {
-+			ret = -ENOMEM;
-+			goto out;
-+		}
-+
-+		attrs->assignment_str[attrs->n_assignments++] = assignment;
-+	}
-  out:
- 	return ret;
- }
-@@ -428,12 +511,15 @@ static void destroy_hist_field(struct hist_field *hist_field,
- 	for (i = 0; i < HIST_FIELD_OPERANDS_MAX; i++)
- 		destroy_hist_field(hist_field->operands[i], level + 1);
- 
-+	kfree(hist_field->var.name);
-+
- 	kfree(hist_field);
- }
- 
- static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
- 					    struct ftrace_event_field *field,
--					    unsigned long flags)
-+					    unsigned long flags,
-+					    char *var_name)
- {
- 	struct hist_field *hist_field;
- 
-@@ -459,7 +545,7 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
- 	if (flags & HIST_FIELD_FL_LOG2) {
- 		unsigned long fl = flags & ~HIST_FIELD_FL_LOG2;
- 		hist_field->fn = hist_field_log2;
--		hist_field->operands[0] = create_hist_field(hist_data, field, fl);
-+		hist_field->operands[0] = create_hist_field(hist_data, field, fl, NULL);
- 		hist_field->size = hist_field->operands[0]->size;
- 		goto out;
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.13/incr/patch-4.13.13-rt4-rt5.patch.xz
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.13.13-rt5
+
+The RT patch against v4.13.13 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.13/older/patch-4.13.13-rt5.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.13/older/patches-4.13.13-rt5.tar.xz
+
+Sebastian
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -410,7 +410,7 @@ void raid5_release_stripe(struct stripe_head *sh)
+ 		md_wakeup_thread(conf->mddev->thread);
+ 	return;
+ slow_path:
+-	local_irq_save(flags);
++	local_irq_save_nort(flags);
+ 	/* we are ok here if STRIPE_ON_RELEASE_LIST is set or not */
+ 	if (atomic_dec_and_lock(&sh->count, &conf->device_lock)) {
+ 		INIT_LIST_HEAD(&list);
+@@ -419,7 +419,7 @@ void raid5_release_stripe(struct stripe_head *sh)
+ 		spin_unlock(&conf->device_lock);
+ 		release_inactive_stripe_list(conf, &list, hash);
  	}
-@@ -494,14 +580,23 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
- 	hist_field->field = field;
- 	hist_field->flags = flags;
- 
-+	if (var_name) {
-+		hist_field->var.name = kstrdup(var_name, GFP_KERNEL);
-+		if (!hist_field->var.name)
-+			goto free;
-+	}
-+
- 	return hist_field;
-+ free:
-+	destroy_hist_field(hist_field, 0);
-+	return NULL;
+-	local_irq_restore(flags);
++	local_irq_restore_nort(flags);
  }
  
- static void destroy_hist_fields(struct hist_trigger_data *hist_data)
- {
- 	unsigned int i;
+ static inline void remove_hash(struct stripe_head *sh)
+diff --git a/drivers/pci/switch/switchtec.c b/drivers/pci/switch/switchtec.c
+--- a/drivers/pci/switch/switchtec.c
++++ b/drivers/pci/switch/switchtec.c
+@@ -452,6 +452,7 @@ static void mrpc_complete_cmd(struct switchtec_dev *stdev)
+ 		      stuser->read_len);
  
--	for (i = 0; i < TRACING_MAP_FIELDS_MAX; i++) {
-+	for (i = 0; i < HIST_FIELDS_MAX; i++) {
- 		if (hist_data->fields[i]) {
- 			destroy_hist_field(hist_data->fields[i], 0);
- 			hist_data->fields[i] = NULL;
-@@ -512,11 +607,12 @@ static void destroy_hist_fields(struct hist_trigger_data *hist_data)
- static int create_hitcount_val(struct hist_trigger_data *hist_data)
- {
- 	hist_data->fields[HITCOUNT_IDX] =
--		create_hist_field(hist_data, NULL, HIST_FIELD_FL_HITCOUNT);
-+		create_hist_field(hist_data, NULL, HIST_FIELD_FL_HITCOUNT, NULL);
- 	if (!hist_data->fields[HITCOUNT_IDX])
- 		return -ENOMEM;
+ out:
++	stuser->cmd_done = true;
+ 	wake_up_interruptible(&stuser->cmd_comp);
+ 	list_del_init(&stuser->list);
+ 	stuser_put(stuser);
+@@ -722,7 +723,7 @@ static ssize_t switchtec_dev_read(struct file *filp, char __user *data,
+ 	mutex_unlock(&stdev->mrpc_mutex);
  
- 	hist_data->n_vals++;
-+	hist_data->n_fields++;
- 
- 	if (WARN_ON(hist_data->n_vals > TRACING_MAP_VALS_MAX))
- 		return -EINVAL;
-@@ -524,19 +620,16 @@ static int create_hitcount_val(struct hist_trigger_data *hist_data)
- 	return 0;
- }
- 
--static int create_val_field(struct hist_trigger_data *hist_data,
--			    unsigned int val_idx,
--			    struct trace_event_file *file,
--			    char *field_str)
-+static int __create_val_field(struct hist_trigger_data *hist_data,
-+			      unsigned int val_idx,
-+			      struct trace_event_file *file,
-+			      char *var_name, char *field_str,
-+			      unsigned long flags)
- {
- 	struct ftrace_event_field *field = NULL;
--	unsigned long flags = 0;
- 	char *field_name;
- 	int ret = 0;
- 
--	if (WARN_ON(val_idx >= TRACING_MAP_VALS_MAX))
--		return -EINVAL;
--
- 	field_name = strsep(&field_str, ".");
- 	if (field_str) {
- 		if (strcmp(field_str, "hex") == 0)
-@@ -558,25 +651,58 @@ static int create_val_field(struct hist_trigger_data *hist_data,
- 		}
- 	}
- 
--	hist_data->fields[val_idx] = create_hist_field(hist_data, field, flags);
-+	hist_data->fields[val_idx] = create_hist_field(hist_data, field, flags, var_name);
- 	if (!hist_data->fields[val_idx]) {
- 		ret = -ENOMEM;
- 		goto out;
- 	}
- 
- 	++hist_data->n_vals;
-+	++hist_data->n_fields;
- 
--	if (WARN_ON(hist_data->n_vals > TRACING_MAP_VALS_MAX))
-+	if (WARN_ON(hist_data->n_vals > TRACING_MAP_VALS_MAX + TRACING_MAP_VARS_MAX))
- 		ret = -EINVAL;
-  out:
- 	return ret;
- }
- 
-+static int create_val_field(struct hist_trigger_data *hist_data,
-+			    unsigned int val_idx,
-+			    struct trace_event_file *file,
-+			    char *field_str)
-+{
-+	if (WARN_ON(val_idx >= TRACING_MAP_VALS_MAX))
-+		return -EINVAL;
-+
-+	return __create_val_field(hist_data, val_idx, file, NULL, field_str, 0);
-+}
-+
-+static int create_var_field(struct hist_trigger_data *hist_data,
-+			    unsigned int val_idx,
-+			    struct trace_event_file *file,
-+			    char *var_name, char *expr_str)
-+{
-+	unsigned long flags = 0;
-+
-+	if (WARN_ON(val_idx >= TRACING_MAP_VALS_MAX + TRACING_MAP_VARS_MAX))
-+		return -EINVAL;
-+	if (find_var(hist_data, file, var_name) && !hist_data->remove) {
-+		return -EINVAL;
-+	}
-+
-+	flags |= HIST_FIELD_FL_VAR;
-+	hist_data->n_vars++;
-+	if (WARN_ON(hist_data->n_vars > TRACING_MAP_VARS_MAX))
-+		return -EINVAL;
-+
-+	return __create_val_field(hist_data, val_idx, file, var_name, expr_str, flags);
-+}
-+
- static int create_val_fields(struct hist_trigger_data *hist_data,
- 			     struct trace_event_file *file)
- {
- 	char *fields_str, *field_str;
--	unsigned int i, j;
-+	unsigned int i, j = 1;
- 	int ret;
- 
- 	ret = create_hitcount_val(hist_data);
-@@ -596,12 +722,15 @@ static int create_val_fields(struct hist_trigger_data *hist_data,
- 		field_str = strsep(&fields_str, ",");
- 		if (!field_str)
- 			break;
-+
- 		if (strcmp(field_str, "hitcount") == 0)
- 			continue;
-+
- 		ret = create_val_field(hist_data, j++, file, field_str);
- 		if (ret)
- 			goto out;
- 	}
-+
- 	if (fields_str && (strcmp(fields_str, "hitcount") != 0))
- 		ret = -EINVAL;
-  out:
-@@ -615,11 +744,12 @@ static int create_key_field(struct hist_trigger_data *hist_data,
- 			    char *field_str)
- {
- 	struct ftrace_event_field *field = NULL;
-+	struct hist_field *hist_field = NULL;
- 	unsigned long flags = 0;
- 	unsigned int key_size;
- 	int ret = 0;
- 
--	if (WARN_ON(key_idx >= TRACING_MAP_FIELDS_MAX))
-+	if (WARN_ON(key_idx >= HIST_FIELDS_MAX))
- 		return -EINVAL;
- 
- 	flags |= HIST_FIELD_FL_KEY;
-@@ -627,6 +757,7 @@ static int create_key_field(struct hist_trigger_data *hist_data,
- 	if (strcmp(field_str, "stacktrace") == 0) {
- 		flags |= HIST_FIELD_FL_STACKTRACE;
- 		key_size = sizeof(unsigned long) * HIST_STACKTRACE_DEPTH;
-+		hist_field = create_hist_field(hist_data, NULL, flags, NULL);
+ 	if (filp->f_flags & O_NONBLOCK) {
+-		if (!stuser->cmd_done)
++		if (!READ_ONCE(stuser->cmd_done))
+ 			return -EAGAIN;
  	} else {
- 		char *field_name = strsep(&field_str, ".");
+ 		rc = wait_event_interruptible(stuser->cmd_comp,
+@@ -782,7 +783,7 @@ static unsigned int switchtec_dev_poll(struct file *filp, poll_table *wait)
  
-@@ -672,7 +803,7 @@ static int create_key_field(struct hist_trigger_data *hist_data,
+ 	mutex_unlock(&stdev->mrpc_mutex);
+ 
+-	if (stuser->cmd_done)
++	if (READ_ONCE(stuser->cmd_done))
+ 		ret |= POLLIN | POLLRDNORM;
+ 
+ 	if (stuser->event_cnt != atomic_read(&stdev->event_cnt))
+diff --git a/fs/ext4/page-io.c b/fs/ext4/page-io.c
+--- a/fs/ext4/page-io.c
++++ b/fs/ext4/page-io.c
+@@ -94,8 +94,7 @@ static void ext4_finish_bio(struct bio *bio)
+ 		 * We check all buffers in the page under BH_Uptodate_Lock
+ 		 * to avoid races with other end io clearing async_write flags
+ 		 */
+-		local_irq_save(flags);
+-		bit_spin_lock(BH_Uptodate_Lock, &head->b_state);
++		flags = bh_uptodate_lock_irqsave(head);
+ 		do {
+ 			if (bh_offset(bh) < bio_start ||
+ 			    bh_offset(bh) + bh->b_size > bio_end) {
+@@ -107,8 +106,7 @@ static void ext4_finish_bio(struct bio *bio)
+ 			if (bio->bi_status)
+ 				buffer_io_error(bh);
+ 		} while ((bh = bh->b_this_page) != head);
+-		bit_spin_unlock(BH_Uptodate_Lock, &head->b_state);
+-		local_irq_restore(flags);
++		bh_uptodate_unlock_irqrestore(head, flags);
+ 		if (!under_io) {
+ #ifdef CONFIG_EXT4_FS_ENCRYPTION
+ 			if (data_page)
+diff --git a/fs/xfs/xfs_aops.c b/fs/xfs/xfs_aops.c
+--- a/fs/xfs/xfs_aops.c
++++ b/fs/xfs/xfs_aops.c
+@@ -107,8 +107,7 @@ xfs_finish_page_writeback(
+ 	ASSERT(bvec->bv_offset + bvec->bv_len <= PAGE_SIZE);
+ 	ASSERT((bvec->bv_len & (i_blocksize(inode) - 1)) == 0);
+ 
+-	local_irq_save(flags);
+-	bit_spin_lock(BH_Uptodate_Lock, &head->b_state);
++	flags = bh_uptodate_lock_irqsave(head);
+ 	do {
+ 		if (off >= bvec->bv_offset &&
+ 		    off < bvec->bv_offset + bvec->bv_len) {
+@@ -130,8 +129,7 @@ xfs_finish_page_writeback(
  		}
- 	}
+ 		off += bh->b_size;
+ 	} while ((bh = bh->b_this_page) != head);
+-	bit_spin_unlock(BH_Uptodate_Lock, &head->b_state);
+-	local_irq_restore(flags);
++	bh_uptodate_unlock_irqrestore(head, flags);
  
--	hist_data->fields[key_idx] = create_hist_field(hist_data, field, flags);
-+	hist_data->fields[key_idx] = create_hist_field(hist_data, field, flags, NULL);
- 	if (!hist_data->fields[key_idx]) {
- 		ret = -ENOMEM;
- 		goto out;
-@@ -688,6 +819,7 @@ static int create_key_field(struct hist_trigger_data *hist_data,
- 	}
+ 	if (!busy)
+ 		end_page_writeback(bvec->bv_page);
+diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -24,6 +24,7 @@
+ #include <linux/sched/debug.h>
+ #include <linux/timer.h>
+ #include <linux/ww_mutex.h>
++#include <linux/blkdev.h>
  
- 	hist_data->n_keys++;
-+	hist_data->n_fields++;
+ #include "rtmutex_common.h"
  
- 	if (WARN_ON(hist_data->n_keys > TRACING_MAP_KEYS_MAX))
- 		return -EINVAL;
-@@ -731,21 +863,111 @@ static int create_key_fields(struct hist_trigger_data *hist_data,
- 	return ret;
+@@ -1939,6 +1940,15 @@ rt_mutex_fastlock(struct rt_mutex *lock, int state,
+ 	if (likely(rt_mutex_cmpxchg_acquire(lock, NULL, current)))
+ 		return 0;
+ 
++	/*
++	 * If rt_mutex blocks, the function sched_submit_work will not call
++	 * blk_schedule_flush_plug (because tsk_is_pi_blocked would be true).
++	 * We must call blk_schedule_flush_plug here, if we don't call it,
++	 * a deadlock in device mapper may happen.
++	 */
++	if (unlikely(blk_needs_flush_plug(current)))
++		blk_schedule_flush_plug(current);
++
+ 	return slowfn(lock, state, NULL, RT_MUTEX_MIN_CHAINWALK, ww_ctx);
  }
  
-+static int create_var_fields(struct hist_trigger_data *hist_data,
-+			     struct trace_event_file *file)
-+{
-+	unsigned int i, j = hist_data->n_vals;
-+	int ret = 0;
-+
-+	unsigned int n_vars = hist_data->attrs->var_defs.n_vars;
-+
-+	for (i = 0; i < n_vars; i++) {
-+		char *var_name = hist_data->attrs->var_defs.name[i];
-+		char *expr = hist_data->attrs->var_defs.expr[i];
-+
-+		ret = create_var_field(hist_data, j++, file, var_name, expr);
-+		if (ret)
-+			goto out;
-+	}
-+ out:
-+	return ret;
-+}
-+
-+static void free_var_defs(struct hist_trigger_data *hist_data)
-+{
-+	unsigned int i;
-+
-+	for (i = 0; i < hist_data->attrs->var_defs.n_vars; i++) {
-+		kfree(hist_data->attrs->var_defs.name[i]);
-+		kfree(hist_data->attrs->var_defs.expr[i]);
-+	}
-+
-+	hist_data->attrs->var_defs.n_vars = 0;
-+}
-+
-+static int parse_var_defs(struct hist_trigger_data *hist_data)
-+{
-+	char *s, *str, *var_name, *field_str;
-+	unsigned int i, j, n_vars = 0;
-+	int ret = 0;
-+
-+	for (i = 0; i < hist_data->attrs->n_assignments; i++) {
-+		str = hist_data->attrs->assignment_str[i];
-+		for (j = 0; j < TRACING_MAP_VARS_MAX; j++) {
-+			field_str = strsep(&str, ",");
-+			if (!field_str)
-+				break;
-+
-+			var_name = strsep(&field_str, "=");
-+			if (!var_name || !field_str) {
-+				ret = -EINVAL;
-+				goto free;
-+			}
-+
-+			if (n_vars == TRACING_MAP_VARS_MAX) {
-+				ret = -EINVAL;
-+				goto free;
-+			}
-+
-+			s = kstrdup(var_name, GFP_KERNEL);
-+			if (!s) {
-+				ret = -ENOMEM;
-+				goto free;
-+			}
-+			hist_data->attrs->var_defs.name[n_vars] = s;
-+
-+			s = kstrdup(field_str, GFP_KERNEL);
-+			if (!s) {
-+				kfree(hist_data->attrs->var_defs.name[n_vars]);
-+				ret = -ENOMEM;
-+				goto free;
-+			}
-+			hist_data->attrs->var_defs.expr[n_vars++] = s;
-+
-+			hist_data->attrs->var_defs.n_vars = n_vars;
-+		}
-+	}
-+
-+	return ret;
-+ free:
-+	free_var_defs(hist_data);
-+
-+	return ret;
-+}
-+
- static int create_hist_fields(struct hist_trigger_data *hist_data,
- 			      struct trace_event_file *file)
- {
- 	int ret;
+@@ -1956,6 +1966,9 @@ rt_mutex_timed_fastlock(struct rt_mutex *lock, int state,
+ 	    likely(rt_mutex_cmpxchg_acquire(lock, NULL, current)))
+ 		return 0;
  
-+	ret = parse_var_defs(hist_data);
-+	if (ret)
-+		goto out;
++	if (unlikely(blk_needs_flush_plug(current)))
++		blk_schedule_flush_plug(current);
 +
- 	ret = create_val_fields(hist_data, file);
- 	if (ret)
- 		goto out;
- 
--	ret = create_key_fields(hist_data, file);
-+	ret = create_var_fields(hist_data, file);
- 	if (ret)
- 		goto out;
- 
--	hist_data->n_fields = hist_data->n_vals + hist_data->n_keys;
-+	ret = create_key_fields(hist_data, file);
-+	if (ret)
-+		goto out;
-  out:
-+	free_var_defs(hist_data);
-+
- 	return ret;
+ 	return slowfn(lock, state, timeout, chwalk, ww_ctx);
  }
  
-@@ -768,7 +990,7 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
- 	char *fields_str = hist_data->attrs->sort_key_str;
- 	struct tracing_map_sort_key *sort_key;
- 	int descending, ret = 0;
--	unsigned int i, j;
-+	unsigned int i, j, k;
- 
- 	hist_data->n_sort_keys = 1; /* we always have at least one, hitcount */
- 
-@@ -816,12 +1038,19 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
- 			continue;
- 		}
- 
--		for (j = 1; j < hist_data->n_fields; j++) {
-+		for (j = 1, k = 1; j < hist_data->n_fields; j++) {
-+			unsigned int idx;
-+
- 			hist_field = hist_data->fields[j];
-+			if (hist_field->flags & HIST_FIELD_FL_VAR)
-+				continue;
-+
-+			idx = k++;
-+
- 			test_name = hist_field_name(hist_field, 0);
- 
- 			if (strcmp(field_name, test_name) == 0) {
--				sort_key->field_idx = j;
-+				sort_key->field_idx = idx;
- 				descending = is_descending(field_str);
- 				if (descending < 0) {
- 					ret = descending;
-@@ -836,6 +1065,7 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
- 			break;
- 		}
- 	}
-+
- 	hist_data->n_sort_keys = i;
-  out:
- 	return ret;
-@@ -876,12 +1106,19 @@ static int create_tracing_map_fields(struct hist_trigger_data *hist_data)
- 			idx = tracing_map_add_key_field(map,
- 							hist_field->offset,
- 							cmp_fn);
--
--		} else
-+		} else if (!(hist_field->flags & HIST_FIELD_FL_VAR))
- 			idx = tracing_map_add_sum_field(map);
- 
- 		if (idx < 0)
- 			return idx;
-+
-+		if (hist_field->flags & HIST_FIELD_FL_VAR) {
-+			idx = tracing_map_add_var(map);
-+			if (idx < 0)
-+				return idx;
-+			hist_field->var.idx = idx;
-+			hist_field->var.hist_data = hist_data;
-+		}
- 	}
- 
- 	return 0;
-@@ -905,7 +1142,8 @@ static bool need_tracing_map_ops(struct hist_trigger_data *hist_data)
- static struct hist_trigger_data *
- create_hist_data(unsigned int map_bits,
- 		 struct hist_trigger_attrs *attrs,
--		 struct trace_event_file *file)
-+		 struct trace_event_file *file,
-+		 bool remove)
+@@ -2261,6 +2274,14 @@ void rt_mutex_init_proxy_locked(struct rt_mutex *lock,
+ 				struct task_struct *proxy_owner)
  {
- 	const struct tracing_map_ops *map_ops = NULL;
- 	struct hist_trigger_data *hist_data;
-@@ -916,6 +1154,7 @@ static bool need_tracing_map_ops(struct hist_trigger_data *hist_data)
- 		return ERR_PTR(-ENOMEM);
- 
- 	hist_data->attrs = attrs;
-+	hist_data->remove = remove;
- 
- 	ret = create_hist_fields(hist_data, file);
- 	if (ret)
-@@ -962,14 +1201,28 @@ static void hist_trigger_elt_update(struct hist_trigger_data *hist_data,
- 				    struct ring_buffer_event *rbe)
- {
- 	struct hist_field *hist_field;
--	unsigned int i;
-+	unsigned int i, var_idx;
- 	u64 hist_val;
- 
- 	for_each_hist_val_field(i, hist_data) {
- 		hist_field = hist_data->fields[i];
--		hist_val = hist_field->fn(hist_field, rec, rbe);
-+		hist_val = hist_field->fn(hist_field, rbe, rec);
-+		if (hist_field->flags & HIST_FIELD_FL_VAR) {
-+			var_idx = hist_field->var.idx;
-+			tracing_map_set_var(elt, var_idx, hist_val);
-+			continue;
-+		}
- 		tracing_map_update_sum(elt, i, hist_val);
- 	}
-+
-+	for_each_hist_key_field(i, hist_data) {
-+		hist_field = hist_data->fields[i];
-+		if (hist_field->flags & HIST_FIELD_FL_VAR) {
-+			hist_val = hist_field->fn(hist_field, rbe, rec);
-+			var_idx = hist_field->var.idx;
-+			tracing_map_set_var(elt, var_idx, hist_val);
-+		}
-+	}
+ 	__rt_mutex_init(lock, NULL, NULL);
++#ifdef CONFIG_DEBUG_SPINLOCK
++	/*
++	 * get another key class for the wait_lock. LOCK_PI and UNLOCK_PI is
++	 * holding the ->wait_lock of the proxy_lock while unlocking a sleeping
++	 * lock.
++	 */
++	raw_spin_lock_init(&lock->wait_lock);
++#endif
+ 	debug_rt_mutex_proxy_lock(lock, proxy_owner);
+ 	rt_mutex_set_owner(lock, proxy_owner);
+ }
+diff --git a/localversion-rt b/localversion-rt
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt4
++-rt5
+diff --git a/security/apparmor/include/path.h b/security/apparmor/include/path.h
+--- a/security/apparmor/include/path.h
++++ b/security/apparmor/include/path.h
+@@ -67,7 +67,7 @@ static inline void AA_BUG_PREEMPT_ENABLED(const char *s)
+ 		  "__get_buffer without aa_buffers_lock\n");
  }
  
- static inline void add_to_key(char *compound_key, void *key,
-@@ -1144,6 +1397,9 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
- 	for (i = 1; i < hist_data->n_vals; i++) {
- 		field_name = hist_field_name(hist_data->fields[i], 0);
- 
-+		if (hist_data->fields[i]->flags & HIST_FIELD_FL_VAR)
-+			continue;
-+
- 		if (hist_data->fields[i]->flags & HIST_FIELD_FL_HEX) {
- 			seq_printf(m, "  %s: %10llx", field_name,
- 				   tracing_map_read_sum(elt, i));
-@@ -1265,6 +1521,9 @@ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
- {
- 	const char *field_name = hist_field_name(hist_field, 0);
- 
-+	if (hist_field->var.name)
-+		seq_printf(m, "%s=", hist_field->var.name);
-+
- 	if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP)
- 		seq_puts(m, "$common_timestamp");
- 	else if (field_name)
-@@ -1283,7 +1542,8 @@ static int event_hist_trigger_print(struct seq_file *m,
- 				    struct event_trigger_data *data)
- {
- 	struct hist_trigger_data *hist_data = data->private_data;
--	struct hist_field *key_field;
-+	struct hist_field *field;
-+	bool have_var = false;
- 	unsigned int i;
- 
- 	seq_puts(m, "hist:");
-@@ -1294,25 +1554,47 @@ static int event_hist_trigger_print(struct seq_file *m,
- 	seq_puts(m, "keys=");
- 
- 	for_each_hist_key_field(i, hist_data) {
--		key_field = hist_data->fields[i];
-+		field = hist_data->fields[i];
- 
- 		if (i > hist_data->n_vals)
- 			seq_puts(m, ",");
- 
--		if (key_field->flags & HIST_FIELD_FL_STACKTRACE)
-+		if (field->flags & HIST_FIELD_FL_STACKTRACE)
- 			seq_puts(m, "stacktrace");
- 		else
--			hist_field_print(m, key_field);
-+			hist_field_print(m, field);
- 	}
- 
- 	seq_puts(m, ":vals=");
- 
- 	for_each_hist_val_field(i, hist_data) {
-+		field = hist_data->fields[i];
-+		if (field->flags & HIST_FIELD_FL_VAR) {
-+			have_var = true;
-+			continue;
-+		}
-+
- 		if (i == HITCOUNT_IDX)
- 			seq_puts(m, "hitcount");
- 		else {
- 			seq_puts(m, ",");
--			hist_field_print(m, hist_data->fields[i]);
-+			hist_field_print(m, field);
-+		}
-+	}
-+
-+	if (have_var) {
-+		unsigned int n = 0;
-+
-+		seq_puts(m, ":");
-+
-+		for_each_hist_val_field(i, hist_data) {
-+			field = hist_data->fields[i];
-+
-+			if (field->flags & HIST_FIELD_FL_VAR) {
-+				if (n++)
-+					seq_puts(m, ",");
-+				hist_field_print(m, field);
-+			}
- 		}
- 	}
- 
-@@ -1320,7 +1602,10 @@ static int event_hist_trigger_print(struct seq_file *m,
- 
- 	for (i = 0; i < hist_data->n_sort_keys; i++) {
- 		struct tracing_map_sort_key *sort_key;
--		unsigned int idx;
-+		unsigned int idx, first_key_idx;
-+
-+		/* skip VAR vals */
-+		first_key_idx = hist_data->n_vals - hist_data->n_vars;
- 
- 		sort_key = &hist_data->sort_keys[i];
- 		idx = sort_key->field_idx;
-@@ -1333,8 +1618,11 @@ static int event_hist_trigger_print(struct seq_file *m,
- 
- 		if (idx == HITCOUNT_IDX)
- 			seq_puts(m, "hitcount");
--		else
-+		else {
-+			if (idx >= first_key_idx)
-+				idx += hist_data->n_vars;
- 			hist_field_print(m, hist_data->fields[idx]);
-+		}
- 
- 		if (sort_key->descending)
- 			seq_puts(m, ".descending");
-@@ -1631,7 +1919,7 @@ static void hist_unregister_trigger(char *glob, struct event_trigger_ops *ops,
- 		test->ops->free(test->ops, test);
- 
- 	if (hist_data->enable_timestamps) {
--		if (unregistered)
-+		if (!hist_data->remove || unregistered)
- 			tracing_set_time_stamp_abs(file->tr, false);
- 	}
- }
-@@ -1664,12 +1952,16 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
- 	struct hist_trigger_attrs *attrs;
- 	struct event_trigger_ops *trigger_ops;
- 	struct hist_trigger_data *hist_data;
-+	bool remove = false;
- 	char *trigger;
- 	int ret = 0;
- 
- 	if (!param)
- 		return -EINVAL;
- 
-+	if (glob[0] == '!')
-+		remove = true;
-+
- 	/* separate the trigger from the filter (k:v [if filter]) */
- 	trigger = strsep(&param, " \t");
- 	if (!trigger)
-@@ -1682,7 +1974,7 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
- 	if (attrs->map_bits)
- 		hist_trigger_bits = attrs->map_bits;
- 
--	hist_data = create_hist_data(hist_trigger_bits, attrs, file);
-+	hist_data = create_hist_data(hist_trigger_bits, attrs, file, remove);
- 	if (IS_ERR(hist_data)) {
- 		destroy_hist_trigger_attrs(attrs);
- 		return PTR_ERR(hist_data);
-@@ -1711,7 +2003,7 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
- 			goto out_free;
- 	}
- 
--	if (glob[0] == '!') {
-+	if (remove) {
- 		cmd_ops->unreg(glob+1, trigger_ops, trigger_data, file);
- 		ret = 0;
- 		goto out_free;
--- 
-1.9.3
+-#elif CONFIG_DEBUG_PREEMPT
++#elif defined(CONFIG_DEBUG_PREEMPT)
+ #define AA_BUG_PREEMPT_ENABLED(X) AA_BUG(preempt_count() <= 0, X)
+ #else
+ #define AA_BUG_PREEMPT_ENABLED(X) /* nop */
