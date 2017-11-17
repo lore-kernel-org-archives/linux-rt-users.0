@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v6 07/37] tracing: Add timestamp_mode trace file
-Date: Fri, 17 Nov 2017 14:32:46 -0600
-Message-ID: <cedf02c1268067410533d7381e24ff2ca4fc62c8.1510948725.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v6 30/37] tracing: Add hist trigger support for variable reference aliases
+Date: Fri, 17 Nov 2017 14:33:09 -0600
+Message-ID: <8ce0f1a90c683dec3ab71ec608ca8fa44ede4fc1.1510948725.git.tom.zanussi@linux.intel.com>
 References: <cover.1510948725.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -11,144 +11,150 @@ Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         Tom Zanussi <tom.zanussi@linux.intel.com>
 To: rostedt@goodmis.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mga01.intel.com ([192.55.52.88]:58582 "EHLO mga01.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S936057AbdKQUfm (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 17 Nov 2017 15:35:42 -0500
 In-Reply-To: <cover.1510948725.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1510948725.git.tom.zanussi@linux.intel.com>
 References: <cover.1510948725.git.tom.zanussi@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Add a new option flag indicating whether or not the ring buffer is in
-'absolute timestamp' mode.
+Add support for alias=$somevar where alias can be used as
+onmatch.xxx($alias).
 
-Currently this is only set/unset by hist triggers that make use of a
-$common_timestamp.  As such, there's no reason to make this writeable
-for users - its purpose is only to allow users to determine
-unequivocally whether or not the ring buffer is in that mode (although
-absolute timestamps can coexist with the normal delta timestamps, when
-the ring buffer is in absolute mode, timestamps written while absolute
-mode is in effect take up more space in the buffer, and are not as
-efficient).
+Aliases are a way of creating a new name for an existing variable, for
+flexibly in making naming more clear in certain cases.  For example in
+the below the user perhaps feels that using $new_lat in the synthetic
+event invocation is opaque or doesn't fit well stylistically with
+previous triggers, so creates an alias of $new_lat named $latency and
+uses that in the call instead:
+
+  # echo 'hist:keys=next_pid:new_lat=$common_timestamp.usecs' >
+    /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+
+  # echo 'hist:keys=pid:latency=$new_lat:
+    onmatch(sched.sched_switch).wake2($latency,pid)' >
+    /sys/kernel/debug/tracing/events/synthetic/wake1/trigger
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- Documentation/trace/ftrace.txt | 24 +++++++++++++++++++++
- kernel/trace/trace.c           | 47 ++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 71 insertions(+)
+ kernel/trace/trace_events_hist.c | 58 +++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 55 insertions(+), 3 deletions(-)
 
-diff --git a/Documentation/trace/ftrace.txt b/Documentation/trace/ftrace.txt
-index d4601df..54213e5 100644
---- a/Documentation/trace/ftrace.txt
-+++ b/Documentation/trace/ftrace.txt
-@@ -539,6 +539,30 @@ of ftrace. Here is a list of some of the key files:
- 
- 	See events.txt for more information.
- 
-+  timestamp_mode:
-+
-+	Certain tracers may change the timestamp mode used when
-+	logging trace events into the event buffer.  Events with
-+	different modes can coexist within a buffer but the mode in
-+	effect when an event is logged determines which timestamp mode
-+	is used for that event.  The default timestamp mode is
-+	'delta'.
-+
-+	Usual timestamp modes for tracing:
-+
-+	  # cat timestamp_mode
-+	  [delta] absolute
-+
-+	  The timestamp mode with the square brackets around it is the
-+	  one in effect.
-+
-+	  delta: Default timestamp mode - timestamp is a delta against
-+	         a per-buffer timestamp.
-+
-+	  absolute: The timestamp is a full timestamp, not a delta
-+                 against some other value.  As such it takes up more
-+                 space and is less efficient.
-+
-   hwlat_detector:
- 
- 	Directory for the Hardware Latency Detector.
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index 459924f..da604fa 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -4531,6 +4531,9 @@ static int tracing_trace_options_open(struct inode *inode, struct file *file)
- #ifdef CONFIG_X86_64
- 	"     x86-tsc:   TSC cycle counter\n"
- #endif
-+	"\n  timestamp_mode\t-view the mode used to timestamp events\n"
-+	"       delta:   Delta difference against a buffer-wide timestamp\n"
-+	"    absolute:   Absolute (standalone) timestamp\n"
- 	"\n  trace_marker\t\t- Writes into this file writes into the kernel buffer\n"
- 	"\n  trace_marker_raw\t\t- Writes into this file writes binary data into the kernel buffer\n"
- 	"  tracing_cpumask\t- Limit which CPUs to trace\n"
-@@ -6298,6 +6301,40 @@ static int tracing_clock_open(struct inode *inode, struct file *file)
- 	return ret;
- }
- 
-+static int tracing_time_stamp_mode_show(struct seq_file *m, void *v)
-+{
-+	struct trace_array *tr = m->private;
-+
-+	mutex_lock(&trace_types_lock);
-+
-+	if (ring_buffer_time_stamp_abs(tr->trace_buffer.buffer))
-+		seq_puts(m, "delta [absolute]\n");
-+	else
-+		seq_puts(m, "[delta] absolute\n");
-+
-+	mutex_unlock(&trace_types_lock);
-+
-+	return 0;
-+}
-+
-+static int tracing_time_stamp_mode_open(struct inode *inode, struct file *file)
-+{
-+	struct trace_array *tr = inode->i_private;
-+	int ret;
-+
-+	if (tracing_disabled)
-+		return -ENODEV;
-+
-+	if (trace_array_get(tr))
-+		return -ENODEV;
-+
-+	ret = single_open(file, tracing_time_stamp_mode_show, inode->i_private);
-+	if (ret < 0)
-+		trace_array_put(tr);
-+
-+	return ret;
-+}
-+
- int tracing_set_time_stamp_abs(struct trace_array *tr, bool abs)
- {
- 	int ret = 0;
-@@ -6576,6 +6613,13 @@ static int snapshot_raw_open(struct inode *inode, struct file *filp)
- 	.write		= tracing_clock_write,
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index afbfa9c..0336f03 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -228,6 +228,7 @@ enum hist_field_flags {
+ 	HIST_FIELD_FL_EXPR		= 1 << 13,
+ 	HIST_FIELD_FL_VAR_REF		= 1 << 14,
+ 	HIST_FIELD_FL_CPU		= 1 << 15,
++	HIST_FIELD_FL_ALIAS		= 1 << 16,
  };
  
-+static const struct file_operations trace_time_stamp_mode_fops = {
-+	.open		= tracing_time_stamp_mode_open,
-+	.read		= seq_read,
-+	.llseek		= seq_lseek,
-+	.release	= tracing_single_release_tr,
-+};
-+
- #ifdef CONFIG_TRACER_SNAPSHOT
- static const struct file_operations snapshot_fops = {
- 	.open		= tracing_snapshot_open,
-@@ -7903,6 +7947,9 @@ static __init void create_trace_instances(struct dentry *d_tracer)
- 	trace_create_file("tracing_on", 0644, d_tracer,
- 			  tr, &rb_simple_fops);
+ struct var_defs {
+@@ -1629,7 +1630,8 @@ static const char *hist_field_name(struct hist_field *field,
  
-+	trace_create_file("timestamp_mode", 0444, d_tracer, tr,
-+			  &trace_time_stamp_mode_fops);
-+
- 	create_trace_options_dir(tr);
+ 	if (field->field)
+ 		field_name = field->field->name;
+-	else if (field->flags & HIST_FIELD_FL_LOG2)
++	else if (field->flags & HIST_FIELD_FL_LOG2 ||
++		 field->flags & HIST_FIELD_FL_ALIAS)
+ 		field_name = hist_field_name(field->operands[0], ++level);
+ 	else if (field->flags & HIST_FIELD_FL_TIMESTAMP)
+ 		field_name = "$common_timestamp";
+@@ -2096,7 +2098,7 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
  
- #if defined(CONFIG_TRACER_MAX_TRACE) || defined(CONFIG_HWLAT_TRACER)
+ 	hist_field->hist_data = hist_data;
+ 
+-	if (flags & HIST_FIELD_FL_EXPR)
++	if (flags & HIST_FIELD_FL_EXPR || flags & HIST_FIELD_FL_ALIAS)
+ 		goto out; /* caller will populate */
+ 
+ 	if (flags & HIST_FIELD_FL_VAR_REF) {
+@@ -2380,6 +2382,28 @@ static struct hist_field *parse_var_ref(struct hist_trigger_data *hist_data,
+ 	return field;
+ }
+ 
++static struct hist_field *create_alias(struct hist_trigger_data *hist_data,
++				       struct hist_field *var_ref,
++				       char *var_name)
++{
++	struct hist_field *alias = NULL;
++	unsigned long flags = HIST_FIELD_FL_ALIAS | HIST_FIELD_FL_VAR;
++
++	alias = create_hist_field(hist_data, NULL, flags, var_name);
++	if (!alias)
++		return NULL;
++
++	alias->fn = var_ref->fn;
++	alias->operands[0] = var_ref;
++
++	if (init_var_ref(alias, var_ref, var_ref->system, var_ref->event_name)) {
++		destroy_hist_field(alias, 0);
++		return NULL;
++	}
++
++	return alias;
++}
++
+ struct hist_field *parse_atom(struct hist_trigger_data *hist_data,
+ 			      struct trace_event_file *file, char *str,
+ 			      unsigned long *flags, char *var_name)
+@@ -2413,6 +2437,13 @@ struct hist_field *parse_atom(struct hist_trigger_data *hist_data,
+ 		if (hist_field) {
+ 			hist_data->var_refs[hist_data->n_var_refs] = hist_field;
+ 			hist_field->var_ref_idx = hist_data->n_var_refs++;
++			if (var_name) {
++				hist_field = create_alias(hist_data, hist_field, var_name);
++				if (!hist_field) {
++					ret = -ENOMEM;
++					goto out;
++				}
++			}
+ 			return hist_field;
+ 		}
+ 	} else
+@@ -2517,6 +2548,26 @@ static int check_expr_operands(struct hist_field *operand1,
+ 	unsigned long operand1_flags = operand1->flags;
+ 	unsigned long operand2_flags = operand2->flags;
+ 
++	if ((operand1_flags & HIST_FIELD_FL_VAR_REF) ||
++	    (operand1_flags & HIST_FIELD_FL_ALIAS)) {
++		struct hist_field *var;
++
++		var = find_var_field(operand1->var.hist_data, operand1->name);
++		if (!var)
++			return -EINVAL;
++		operand1_flags = var->flags;
++	}
++
++	if ((operand2_flags & HIST_FIELD_FL_VAR_REF) ||
++	    (operand2_flags & HIST_FIELD_FL_ALIAS)) {
++		struct hist_field *var;
++
++		var = find_var_field(operand2->var.hist_data, operand2->name);
++		if (!var)
++			return -EINVAL;
++		operand2_flags = var->flags;
++	}
++
+ 	if ((operand1_flags & HIST_FIELD_FL_TIMESTAMP_USECS) !=
+ 	    (operand2_flags & HIST_FIELD_FL_TIMESTAMP_USECS))
+ 		return -EINVAL;
+@@ -4639,7 +4690,8 @@ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
+ 	else if (hist_field->flags & HIST_FIELD_FL_CPU)
+ 		seq_puts(m, "cpu");
+ 	else if (field_name) {
+-		if (hist_field->flags & HIST_FIELD_FL_VAR_REF)
++		if (hist_field->flags & HIST_FIELD_FL_VAR_REF ||
++		    hist_field->flags & HIST_FIELD_FL_ALIAS)
+ 			seq_putc(m, '$');
+ 		seq_printf(m, "%s", field_name);
+ 	}
 -- 
 1.9.3
+
