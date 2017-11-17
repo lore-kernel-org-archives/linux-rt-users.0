@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v6 06/37] ring-buffer: Redefine the unimplemented RINGBUF_TYPE_TIME_STAMP
-Date: Fri, 17 Nov 2017 14:32:45 -0600
-Message-ID: <501b9cfcb4865710f0e00aa2bec397c9d68c228a.1510948725.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v6 03/37] tracing: Add support to detect and avoid duplicates
+Date: Fri, 17 Nov 2017 14:32:42 -0600
+Message-ID: <824898537fb3c1be3fbee67e5e7a2fce5b42c625.1510948725.git.tom.zanussi@linux.intel.com>
 References: <cover.1510948725.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,321 +18,118 @@ References: <cover.1510948725.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-RINGBUF_TYPE_TIME_STAMP is defined but not used, and from what I can
-gather was reserved for something like an absolute timestamp feature
-for the ring buffer, if not a complete replacement of the current
-time_delta scheme.
+From: Vedang Patel <vedang.patel@intel.com>
 
-This code redefines RINGBUF_TYPE_TIME_STAMP to implement absolute time
-stamps.  Another way to look at it is that it essentially forces
-extended time_deltas for all events.
+A duplicate in the tracing_map hash table is when 2 different entries
+have the same key and, as a result, the key_hash. This is possible due
+to a race condition in the algorithm. This race condition is inherent to
+the algorithm and not a bug. This was fine because, until now, we were
+only interested in the sum of all the values related to a particular
+key (the duplicates are dealt with in tracing_map_sort_entries()). But,
+with the inclusion of variables[1], we are interested in individual
+values. So, it will not be clear what value to choose when
+there are duplicates. So, the duplicates need to be removed.
 
-The motivation for doing this is to enable time_deltas that aren't
-dependent on previous events in the ring buffer, making it feasible to
-use the ring_buffer_event timetamps in a more random-access way, for
-purposes other than serial event printing.
+The duplicates can occur in the code in the following scenarios:
 
-To set/reset this mode, use tracing_set_timestamp_abs() from the
-previous interface patch.
+- A thread is in the process of adding a new element. It has
+successfully executed cmpxchg() and inserted the key. But, it is still
+not done acquiring the trace_map_elt struct, populating it and storing
+the pointer to the struct in the value field of tracing_map hash table.
+If another thread comes in at this time and wants to add an element with
+the same key, it will not see the current element and add a new one.
 
+- There are multiple threads trying to execute cmpxchg at the same time,
+one of the threads will succeed and the others will fail. The ones which
+fail will go ahead increment 'idx' and add a new element there creating
+a duplicate.
+
+This patch detects and avoids the first condition by asking the thread
+which detects the duplicate to loop one more time. There is also a
+possibility of infinite loop if the thread which is trying to insert
+goes to sleep indefinitely and the one which is trying to insert a new
+element detects a duplicate. Which is why, the thread loops for
+map_size iterations before returning NULL.
+
+The second scenario is avoided by preventing the threads which failed
+cmpxchg() from incrementing idx. This way, they will loop
+around and check if the thread which succeeded in executing cmpxchg()
+had the same key.
+
+[1] http://lkml.kernel.org/r/cover.1498510759.git.tom.zanussi@linux.intel.com
+
+Signed-off-by: Vedang Patel <vedang.patel@intel.com>
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- include/linux/ring_buffer.h |  12 ++---
- kernel/trace/ring_buffer.c  | 104 ++++++++++++++++++++++++++++++++------------
- 2 files changed, 83 insertions(+), 33 deletions(-)
+ kernel/trace/tracing_map.c | 41 ++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 36 insertions(+), 5 deletions(-)
 
-diff --git a/include/linux/ring_buffer.h b/include/linux/ring_buffer.h
-index 28e3472..74bc276 100644
---- a/include/linux/ring_buffer.h
-+++ b/include/linux/ring_buffer.h
-@@ -36,10 +36,12 @@ struct ring_buffer_event {
-  *				 array[0] = time delta (28 .. 59)
-  *				 size = 8 bytes
-  *
-- * @RINGBUF_TYPE_TIME_STAMP:	Sync time stamp with external clock
-- *				 array[0]    = tv_nsec
-- *				 array[1..2] = tv_sec
-- *				 size = 16 bytes
-+ * @RINGBUF_TYPE_TIME_STAMP:	Absolute timestamp
-+ *				 Same format as TIME_EXTEND except that the
-+ *				 value is an absolute timestamp, not a delta
-+ *				 event.time_delta contains bottom 27 bits
-+ *				 array[0] = top (28 .. 59) bits
-+ *				 size = 8 bytes
-  *
-  * <= @RINGBUF_TYPE_DATA_TYPE_LEN_MAX:
-  *				Data record
-@@ -56,12 +58,12 @@ enum ring_buffer_type {
- 	RINGBUF_TYPE_DATA_TYPE_LEN_MAX = 28,
- 	RINGBUF_TYPE_PADDING,
- 	RINGBUF_TYPE_TIME_EXTEND,
--	/* FIXME: RINGBUF_TYPE_TIME_STAMP not implemented */
- 	RINGBUF_TYPE_TIME_STAMP,
- };
- 
- unsigned ring_buffer_event_length(struct ring_buffer_event *event);
- void *ring_buffer_event_data(struct ring_buffer_event *event);
-+u64 ring_buffer_event_time_stamp(struct ring_buffer_event *event);
- 
- /*
-  * ring_buffer_discard_commit will remove an event that has not
-diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
-index 1e5b75a..763b3fb 100644
---- a/kernel/trace/ring_buffer.c
-+++ b/kernel/trace/ring_buffer.c
-@@ -42,6 +42,8 @@ int ring_buffer_print_entry_header(struct trace_seq *s)
- 			 RINGBUF_TYPE_PADDING);
- 	trace_seq_printf(s, "\ttime_extend : type == %d\n",
- 			 RINGBUF_TYPE_TIME_EXTEND);
-+	trace_seq_printf(s, "\ttime_stamp : type == %d\n",
-+			 RINGBUF_TYPE_TIME_STAMP);
- 	trace_seq_printf(s, "\tdata max type_len  == %d\n",
- 			 RINGBUF_TYPE_DATA_TYPE_LEN_MAX);
- 
-@@ -141,12 +143,15 @@ int ring_buffer_print_entry_header(struct trace_seq *s)
- 
- enum {
- 	RB_LEN_TIME_EXTEND = 8,
--	RB_LEN_TIME_STAMP = 16,
-+	RB_LEN_TIME_STAMP =  8,
- };
- 
- #define skip_time_extend(event) \
- 	((struct ring_buffer_event *)((char *)event + RB_LEN_TIME_EXTEND))
- 
-+#define extended_time(event) \
-+	(event->type_len >= RINGBUF_TYPE_TIME_EXTEND)
-+
- static inline int rb_null_event(struct ring_buffer_event *event)
+diff --git a/kernel/trace/tracing_map.c b/kernel/trace/tracing_map.c
+index 07e7534..b30f343 100644
+--- a/kernel/trace/tracing_map.c
++++ b/kernel/trace/tracing_map.c
+@@ -414,7 +414,9 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
+ __tracing_map_insert(struct tracing_map *map, void *key, bool lookup_only)
  {
- 	return event->type_len == RINGBUF_TYPE_PADDING && !event->time_delta;
-@@ -210,7 +215,7 @@ static void rb_event_set_padding(struct ring_buffer_event *event)
- {
- 	unsigned len = 0;
+ 	u32 idx, key_hash, test_key;
++	int dup_try = 0;
+ 	struct tracing_map_entry *entry;
++	struct tracing_map_elt *val;
  
--	if (event->type_len == RINGBUF_TYPE_TIME_EXTEND) {
-+	if (extended_time(event)) {
- 		/* time extends include the data event after it */
- 		len = RB_LEN_TIME_EXTEND;
- 		event = skip_time_extend(event);
-@@ -232,7 +237,7 @@ unsigned ring_buffer_event_length(struct ring_buffer_event *event)
- {
- 	unsigned length;
+ 	key_hash = jhash(key, map->key_size, 0);
+ 	if (key_hash == 0)
+@@ -426,11 +428,33 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
+ 		entry = TRACING_MAP_ENTRY(map->map, idx);
+ 		test_key = entry->key;
  
--	if (event->type_len == RINGBUF_TYPE_TIME_EXTEND)
-+	if (extended_time(event))
- 		event = skip_time_extend(event);
- 
- 	length = rb_event_length(event);
-@@ -249,7 +254,7 @@ unsigned ring_buffer_event_length(struct ring_buffer_event *event)
- static __always_inline void *
- rb_event_data(struct ring_buffer_event *event)
- {
--	if (event->type_len == RINGBUF_TYPE_TIME_EXTEND)
-+	if (extended_time(event))
- 		event = skip_time_extend(event);
- 	BUG_ON(event->type_len > RINGBUF_TYPE_DATA_TYPE_LEN_MAX);
- 	/* If length is in len field, then array[0] has the data */
-@@ -276,6 +281,27 @@ void *ring_buffer_event_data(struct ring_buffer_event *event)
- #define TS_MASK		((1ULL << TS_SHIFT) - 1)
- #define TS_DELTA_TEST	(~TS_MASK)
- 
-+/**
-+ * ring_buffer_event_time_stamp - return the event's extended timestamp
-+ * @event: the event to get the timestamp of
-+ *
-+ * Returns the extended timestamp associated with a data event.
-+ * An extended time_stamp is a 64-bit timestamp represented
-+ * internally in a special way that makes the best use of space
-+ * contained within a ring buffer event.  This function decodes
-+ * it and maps it to a straight u64 value.
-+ */
-+u64 ring_buffer_event_time_stamp(struct ring_buffer_event *event)
-+{
-+	u64 ts;
+-		if (test_key && test_key == key_hash && entry->val &&
+-		    keys_match(key, entry->val->key, map->key_size)) {
+-			if (!lookup_only)
+-				atomic64_inc(&map->hits);
+-			return entry->val;
++		if (test_key && test_key == key_hash) {
++			val = READ_ONCE(entry->val);
++			if (val &&
++			    keys_match(key, val->key, map->key_size)) {
++				if (!lookup_only)
++					atomic64_inc(&map->hits);
++				return val;
++			} else if (unlikely(!val)) {
++				/*
++				 * The key is present. But, val (pointer to elt
++				 * struct) is still NULL. which means some other
++				 * thread is in the process of inserting an
++				 * element.
++				 *
++				 * On top of that, it's key_hash is same as the
++				 * one being inserted right now. So, it's
++				 * possible that the element has the same
++				 * key as well.
++				 */
 +
-+	ts = event->array[0];
-+	ts <<= TS_SHIFT;
-+	ts += event->time_delta;
-+
-+	return ts;
-+}
-+
- /* Flag when events were overwritten */
- #define RB_MISSED_EVENTS	(1 << 31)
- /* Missed count stored at end */
-@@ -2221,12 +2247,15 @@ static void rb_inc_iter(struct ring_buffer_iter *iter)
++				dup_try++;
++				if (dup_try > map->map_size) {
++					atomic64_inc(&map->drops);
++					break;
++				}
++				continue;
++			}
+ 		}
  
- /* Slow path, do not inline */
- static noinline struct ring_buffer_event *
--rb_add_time_stamp(struct ring_buffer_event *event, u64 delta)
-+rb_add_time_stamp(struct ring_buffer_event *event, u64 delta, bool abs)
- {
--	event->type_len = RINGBUF_TYPE_TIME_EXTEND;
-+	if (abs)
-+		event->type_len = RINGBUF_TYPE_TIME_STAMP;
-+	else
-+		event->type_len = RINGBUF_TYPE_TIME_EXTEND;
+ 		if (!test_key) {
+@@ -452,6 +476,13 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
+ 				atomic64_inc(&map->hits);
  
--	/* Not the first event on the page? */
--	if (rb_event_index(event)) {
-+	/* Not the first event on the page, or not delta? */
-+	if (abs || rb_event_index(event)) {
- 		event->time_delta = delta & TS_MASK;
- 		event->array[0] = delta >> TS_SHIFT;
- 	} else {
-@@ -2269,7 +2298,9 @@ static inline bool rb_event_is_commit(struct ring_buffer_per_cpu *cpu_buffer,
- 	 * add it to the start of the resevered space.
- 	 */
- 	if (unlikely(info->add_timestamp)) {
--		event = rb_add_time_stamp(event, delta);
-+		bool abs = ring_buffer_time_stamp_abs(cpu_buffer->buffer);
-+
-+		event = rb_add_time_stamp(event, info->delta, abs);
- 		length -= RB_LEN_TIME_EXTEND;
- 		delta = 0;
- 	}
-@@ -2457,7 +2488,7 @@ static __always_inline void rb_end_commit(struct ring_buffer_per_cpu *cpu_buffer
+ 				return entry->val;
++			} else {
++				/*
++				 * cmpxchg() failed. Loop around once
++				 * more to check what key was inserted.
++				 */
++				dup_try++;
++				continue;
+ 			}
+ 		}
  
- static inline void rb_event_discard(struct ring_buffer_event *event)
- {
--	if (event->type_len == RINGBUF_TYPE_TIME_EXTEND)
-+	if (extended_time(event))
- 		event = skip_time_extend(event);
- 
- 	/* array[0] holds the actual length for the discarded event */
-@@ -2501,10 +2532,11 @@ static inline void rb_event_discard(struct ring_buffer_event *event)
- 			cpu_buffer->write_stamp =
- 				cpu_buffer->commit_page->page->time_stamp;
- 		else if (event->type_len == RINGBUF_TYPE_TIME_EXTEND) {
--			delta = event->array[0];
--			delta <<= TS_SHIFT;
--			delta += event->time_delta;
-+			delta = ring_buffer_event_time_stamp(event);
- 			cpu_buffer->write_stamp += delta;
-+		} else if (event->type_len == RINGBUF_TYPE_TIME_STAMP) {
-+			delta = ring_buffer_event_time_stamp(event);
-+			cpu_buffer->write_stamp = delta;
- 		} else
- 			cpu_buffer->write_stamp += event->time_delta;
- 	}
-@@ -2657,7 +2689,7 @@ int ring_buffer_unlock_commit(struct ring_buffer *buffer,
- 	 * If this is the first commit on the page, then it has the same
- 	 * timestamp as the page itself.
- 	 */
--	if (!tail)
-+	if (!tail && !ring_buffer_time_stamp_abs(cpu_buffer->buffer))
- 		info->delta = 0;
- 
- 	/* See if we shot pass the end of this buffer page */
-@@ -2735,8 +2767,11 @@ int ring_buffer_unlock_commit(struct ring_buffer *buffer,
- 	/* make sure this diff is calculated here */
- 	barrier();
- 
--	/* Did the write stamp get updated already? */
--	if (likely(info.ts >= cpu_buffer->write_stamp)) {
-+	if (ring_buffer_time_stamp_abs(buffer)) {
-+		info.delta = info.ts;
-+		rb_handle_timestamp(cpu_buffer, &info);
-+	} else /* Did the write stamp get updated already? */
-+		if (likely(info.ts >= cpu_buffer->write_stamp)) {
- 		info.delta = diff;
- 		if (unlikely(test_time_stamp(info.delta)))
- 			rb_handle_timestamp(cpu_buffer, &info);
-@@ -3418,14 +3453,13 @@ int ring_buffer_iter_empty(struct ring_buffer_iter *iter)
- 		return;
- 
- 	case RINGBUF_TYPE_TIME_EXTEND:
--		delta = event->array[0];
--		delta <<= TS_SHIFT;
--		delta += event->time_delta;
-+		delta = ring_buffer_event_time_stamp(event);
- 		cpu_buffer->read_stamp += delta;
- 		return;
- 
- 	case RINGBUF_TYPE_TIME_STAMP:
--		/* FIXME: not implemented */
-+		delta = ring_buffer_event_time_stamp(event);
-+		cpu_buffer->read_stamp = delta;
- 		return;
- 
- 	case RINGBUF_TYPE_DATA:
-@@ -3449,14 +3483,13 @@ int ring_buffer_iter_empty(struct ring_buffer_iter *iter)
- 		return;
- 
- 	case RINGBUF_TYPE_TIME_EXTEND:
--		delta = event->array[0];
--		delta <<= TS_SHIFT;
--		delta += event->time_delta;
-+		delta = ring_buffer_event_time_stamp(event);
- 		iter->read_stamp += delta;
- 		return;
- 
- 	case RINGBUF_TYPE_TIME_STAMP:
--		/* FIXME: not implemented */
-+		delta = ring_buffer_event_time_stamp(event);
-+		iter->read_stamp = delta;
- 		return;
- 
- 	case RINGBUF_TYPE_DATA:
-@@ -3680,6 +3713,8 @@ static int rb_lost_events(struct ring_buffer_per_cpu *cpu_buffer)
- 	struct buffer_page *reader;
- 	int nr_loops = 0;
- 
-+	if (ts)
-+		*ts = 0;
-  again:
- 	/*
- 	 * We repeat when a time extend is encountered.
-@@ -3716,12 +3751,17 @@ static int rb_lost_events(struct ring_buffer_per_cpu *cpu_buffer)
- 		goto again;
- 
- 	case RINGBUF_TYPE_TIME_STAMP:
--		/* FIXME: not implemented */
-+		if (ts) {
-+			*ts = ring_buffer_event_time_stamp(event);
-+			ring_buffer_normalize_time_stamp(cpu_buffer->buffer,
-+							 cpu_buffer->cpu, ts);
-+		}
-+		/* Internal data, OK to advance */
- 		rb_advance_reader(cpu_buffer);
- 		goto again;
- 
- 	case RINGBUF_TYPE_DATA:
--		if (ts) {
-+		if (ts && !(*ts)) {
- 			*ts = cpu_buffer->read_stamp + event->time_delta;
- 			ring_buffer_normalize_time_stamp(cpu_buffer->buffer,
- 							 cpu_buffer->cpu, ts);
-@@ -3746,6 +3786,9 @@ static int rb_lost_events(struct ring_buffer_per_cpu *cpu_buffer)
- 	struct ring_buffer_event *event;
- 	int nr_loops = 0;
- 
-+	if (ts)
-+		*ts = 0;
-+
- 	cpu_buffer = iter->cpu_buffer;
- 	buffer = cpu_buffer->buffer;
- 
-@@ -3798,12 +3841,17 @@ static int rb_lost_events(struct ring_buffer_per_cpu *cpu_buffer)
- 		goto again;
- 
- 	case RINGBUF_TYPE_TIME_STAMP:
--		/* FIXME: not implemented */
-+		if (ts) {
-+			*ts = ring_buffer_event_time_stamp(event);
-+			ring_buffer_normalize_time_stamp(cpu_buffer->buffer,
-+							 cpu_buffer->cpu, ts);
-+		}
-+		/* Internal data, OK to advance */
- 		rb_advance_iter(iter);
- 		goto again;
- 
- 	case RINGBUF_TYPE_DATA:
--		if (ts) {
-+		if (ts && !(*ts)) {
- 			*ts = iter->read_stamp + event->time_delta;
- 			ring_buffer_normalize_time_stamp(buffer,
- 							 cpu_buffer->cpu, ts);
 -- 
 1.9.3
