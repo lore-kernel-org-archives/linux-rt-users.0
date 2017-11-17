@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v6 12/37] tracing: Add per-element variable support to tracing_map
-Date: Fri, 17 Nov 2017 14:32:51 -0600
-Message-ID: <f3731c16d7f42bf8253b34788811d4b6b5ceeb1e.1510948725.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v6 08/37] tracing: Give event triggers access to ring_buffer_event
+Date: Fri, 17 Nov 2017 14:32:47 -0600
+Message-ID: <8d210f4c5e1ebff2e133664db318b4b6af4f20b0.1510948725.git.tom.zanussi@linux.intel.com>
 References: <cover.1510948725.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -12,234 +12,316 @@ Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         Tom Zanussi <tom.zanussi@linux.intel.com>
 To: rostedt@goodmis.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga09.intel.com ([134.134.136.24]:36159 "EHLO mga09.intel.com"
+Received: from mga07.intel.com ([134.134.136.100]:36186 "EHLO mga07.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S935859AbdKQUe0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 17 Nov 2017 15:34:26 -0500
+        id S935764AbdKQUeF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 17 Nov 2017 15:34:05 -0500
 In-Reply-To: <cover.1510948725.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1510948725.git.tom.zanussi@linux.intel.com>
 References: <cover.1510948725.git.tom.zanussi@linux.intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-In order to allow information to be passed between trace events, add
-support for per-element variables to tracing_map.  This provides a
-means for histograms to associate a value or values with an entry when
-it's saved or updated, and retrieved by a subsequent event occurrences.
-
-Variables can be set using tracing_map_set_var() and read using
-tracing_map_read_var().  tracing_map_var_set() returns true or false
-depending on whether or not the variable has been set or not, which is
-important for event-matching applications.
-
-tracing_map_read_var_once() reads the variable and resets it to the
-'unset' state, implementing read-once variables, which are also
-important for event-matching uses.
+The ring_buffer event can provide a timestamp that may be useful to
+various triggers - pass it into the handlers for that purpose.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/tracing_map.c | 108 +++++++++++++++++++++++++++++++++++++++++++++
- kernel/trace/tracing_map.h |  11 +++++
- 2 files changed, 119 insertions(+)
+ include/linux/trace_events.h        | 14 ++++++-----
+ kernel/trace/trace.h                |  9 +++----
+ kernel/trace/trace_events_hist.c    | 11 +++++----
+ kernel/trace/trace_events_trigger.c | 47 +++++++++++++++++++++++--------------
+ 4 files changed, 49 insertions(+), 32 deletions(-)
 
-diff --git a/kernel/trace/tracing_map.c b/kernel/trace/tracing_map.c
-index f47a4d5..5cadb1b 100644
---- a/kernel/trace/tracing_map.c
-+++ b/kernel/trace/tracing_map.c
-@@ -66,6 +66,73 @@ u64 tracing_map_read_sum(struct tracing_map_elt *elt, unsigned int i)
- 	return (u64)atomic64_read(&elt->fields[i].sum);
- }
+diff --git a/include/linux/trace_events.h b/include/linux/trace_events.h
+index ca4e67e..2d1bb0f 100644
+--- a/include/linux/trace_events.h
++++ b/include/linux/trace_events.h
+@@ -406,11 +406,13 @@ enum event_trigger_type {
  
-+/**
-+ * tracing_map_set_var - Assign a tracing_map_elt's variable field
-+ * @elt: The tracing_map_elt
-+ * @i: The index of the given variable associated with the tracing_map_elt
-+ * @n: The value to assign
-+ *
-+ * Assign n to variable i associated with the specified tracing_map_elt
-+ * instance.  The index i is the index returned by the call to
-+ * tracing_map_add_var() when the tracing map was set up.
-+ */
-+void tracing_map_set_var(struct tracing_map_elt *elt, unsigned int i, u64 n)
-+{
-+	atomic64_set(&elt->vars[i], n);
-+	elt->var_set[i] = true;
-+}
-+
-+/**
-+ * tracing_map_var_set - Return whether or not a variable has been set
-+ * @elt: The tracing_map_elt
-+ * @i: The index of the given variable associated with the tracing_map_elt
-+ *
-+ * Return true if the variable has been set, false otherwise.  The
-+ * index i is the index returned by the call to tracing_map_add_var()
-+ * when the tracing map was set up.
-+ */
-+bool tracing_map_var_set(struct tracing_map_elt *elt, unsigned int i)
-+{
-+	return elt->var_set[i];
-+}
-+
-+/**
-+ * tracing_map_read_var - Return the value of a tracing_map_elt's variable field
-+ * @elt: The tracing_map_elt
-+ * @i: The index of the given variable associated with the tracing_map_elt
-+ *
-+ * Retrieve the value of the variable i associated with the specified
-+ * tracing_map_elt instance.  The index i is the index returned by the
-+ * call to tracing_map_add_var() when the tracing map was set
-+ * up.
-+ *
-+ * Return: The variable value associated with field i for elt.
-+ */
-+u64 tracing_map_read_var(struct tracing_map_elt *elt, unsigned int i)
-+{
-+	return (u64)atomic64_read(&elt->vars[i]);
-+}
-+
-+/**
-+ * tracing_map_read_var_once - Return and reset a tracing_map_elt's variable field
-+ * @elt: The tracing_map_elt
-+ * @i: The index of the given variable associated with the tracing_map_elt
-+ *
-+ * Retrieve the value of the variable i associated with the specified
-+ * tracing_map_elt instance, and reset the variable to the 'not set'
-+ * state.  The index i is the index returned by the call to
-+ * tracing_map_add_var() when the tracing map was set up.  The reset
-+ * essentially makes the variable a read-once variable if it's only
-+ * accessed using this function.
-+ *
-+ * Return: The variable value associated with field i for elt.
-+ */
-+u64 tracing_map_read_var_once(struct tracing_map_elt *elt, unsigned int i)
-+{
-+	elt->var_set[i] = false;
-+	return (u64)atomic64_read(&elt->vars[i]);
-+}
-+
- int tracing_map_cmp_string(void *val_a, void *val_b)
- {
- 	char *a = val_a;
-@@ -171,6 +238,28 @@ int tracing_map_add_sum_field(struct tracing_map *map)
+ extern int filter_match_preds(struct event_filter *filter, void *rec);
+ 
+-extern enum event_trigger_type event_triggers_call(struct trace_event_file *file,
+-						   void *rec);
+-extern void event_triggers_post_call(struct trace_event_file *file,
+-				     enum event_trigger_type tt,
+-				     void *rec);
++extern enum event_trigger_type
++event_triggers_call(struct trace_event_file *file, void *rec,
++		    struct ring_buffer_event *event);
++extern void
++event_triggers_post_call(struct trace_event_file *file,
++			 enum event_trigger_type tt,
++			 void *rec, struct ring_buffer_event *event);
+ 
+ bool trace_event_ignore_this_pid(struct trace_event_file *trace_file);
+ 
+@@ -430,7 +432,7 @@ extern void event_triggers_post_call(struct trace_event_file *file,
+ 
+ 	if (!(eflags & EVENT_FILE_FL_TRIGGER_COND)) {
+ 		if (eflags & EVENT_FILE_FL_TRIGGER_MODE)
+-			event_triggers_call(file, NULL);
++			event_triggers_call(file, NULL, NULL);
+ 		if (eflags & EVENT_FILE_FL_SOFT_DISABLED)
+ 			return true;
+ 		if (eflags & EVENT_FILE_FL_PID_FILTER)
+diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
+index 4d8bde0..bbfb577 100644
+--- a/kernel/trace/trace.h
++++ b/kernel/trace/trace.h
+@@ -1293,7 +1293,7 @@ static inline void trace_buffer_unlock_commit(struct trace_array *tr,
+ 	unsigned long eflags = file->flags;
+ 
+ 	if (eflags & EVENT_FILE_FL_TRIGGER_COND)
+-		*tt = event_triggers_call(file, entry);
++		*tt = event_triggers_call(file, entry, event);
+ 
+ 	if (test_bit(EVENT_FILE_FL_SOFT_DISABLED_BIT, &file->flags) ||
+ 	    (unlikely(file->flags & EVENT_FILE_FL_FILTERED) &&
+@@ -1330,7 +1330,7 @@ static inline void trace_buffer_unlock_commit(struct trace_array *tr,
+ 		trace_buffer_unlock_commit(file->tr, buffer, event, irq_flags, pc);
+ 
+ 	if (tt)
+-		event_triggers_post_call(file, tt, entry);
++		event_triggers_post_call(file, tt, entry, event);
  }
  
  /**
-+ * tracing_map_add_var - Add a field describing a tracing_map var
-+ * @map: The tracing_map
-+ *
-+ * Add a var to the map and return the index identifying it in the map
-+ * and associated tracing_map_elts.  This is the index used for
-+ * instance to update a var for a particular tracing_map_elt using
-+ * tracing_map_update_var() or reading it via tracing_map_read_var().
-+ *
-+ * Return: The index identifying the var in the map and associated
-+ * tracing_map_elts, or -EINVAL on error.
-+ */
-+int tracing_map_add_var(struct tracing_map *map)
-+{
-+	int ret = -EINVAL;
-+
-+	if (map->n_vars < TRACING_MAP_VARS_MAX)
-+		ret = map->n_vars++;
-+
-+	return ret;
-+}
-+
-+/**
-  * tracing_map_add_key_field - Add a field describing a tracing_map key
-  * @map: The tracing_map
-  * @offset: The offset within the key
-@@ -280,6 +369,11 @@ static void tracing_map_elt_clear(struct tracing_map_elt *elt)
- 		if (elt->fields[i].cmp_fn == tracing_map_cmp_atomic64)
- 			atomic64_set(&elt->fields[i].sum, 0);
+@@ -1363,7 +1363,7 @@ static inline void trace_buffer_unlock_commit(struct trace_array *tr,
+ 						irq_flags, pc, regs);
  
-+	for (i = 0; i < elt->map->n_vars; i++) {
-+		atomic64_set(&elt->vars[i], 0);
-+		elt->var_set[i] = false;
-+	}
-+
- 	if (elt->map->ops && elt->map->ops->elt_clear)
- 		elt->map->ops->elt_clear(elt);
+ 	if (tt)
+-		event_triggers_post_call(file, tt, entry);
++		event_triggers_post_call(file, tt, entry, event);
  }
-@@ -306,6 +400,8 @@ static void tracing_map_elt_free(struct tracing_map_elt *elt)
- 	if (elt->map->ops && elt->map->ops->elt_free)
- 		elt->map->ops->elt_free(elt);
- 	kfree(elt->fields);
-+	kfree(elt->vars);
-+	kfree(elt->var_set);
- 	kfree(elt->key);
- 	kfree(elt);
+ 
+ #define FILTER_PRED_INVALID	((unsigned short)-1)
+@@ -1588,7 +1588,8 @@ extern void set_named_trigger_data(struct event_trigger_data *data,
+  */
+ struct event_trigger_ops {
+ 	void			(*func)(struct event_trigger_data *data,
+-					void *rec);
++					void *rec,
++					struct ring_buffer_event *rbe);
+ 	int			(*init)(struct event_trigger_ops *ops,
+ 					struct event_trigger_data *data);
+ 	void			(*free)(struct event_trigger_ops *ops,
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 712260e..63a1912 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -909,7 +909,8 @@ static inline void add_to_key(char *compound_key, void *key,
+ 	memcpy(compound_key + key_field->offset, key, size);
  }
-@@ -333,6 +429,18 @@ static struct tracing_map_elt *tracing_map_elt_alloc(struct tracing_map *map)
- 		goto free;
+ 
+-static void event_hist_trigger(struct event_trigger_data *data, void *rec)
++static void event_hist_trigger(struct event_trigger_data *data, void *rec,
++			       struct ring_buffer_event *event)
+ {
+ 	struct hist_trigger_data *hist_data = data->private_data;
+ 	bool use_compound_key = (hist_data->n_keys > 1);
+@@ -1658,7 +1659,8 @@ __init int register_trigger_hist_cmd(void)
+ }
+ 
+ static void
+-hist_enable_trigger(struct event_trigger_data *data, void *rec)
++hist_enable_trigger(struct event_trigger_data *data, void *rec,
++		    struct ring_buffer_event *event)
+ {
+ 	struct enable_trigger_data *enable_data = data->private_data;
+ 	struct event_trigger_data *test;
+@@ -1674,7 +1676,8 @@ __init int register_trigger_hist_cmd(void)
+ }
+ 
+ static void
+-hist_enable_count_trigger(struct event_trigger_data *data, void *rec)
++hist_enable_count_trigger(struct event_trigger_data *data, void *rec,
++			  struct ring_buffer_event *event)
+ {
+ 	if (!data->count)
+ 		return;
+@@ -1682,7 +1685,7 @@ __init int register_trigger_hist_cmd(void)
+ 	if (data->count != -1)
+ 		(data->count)--;
+ 
+-	hist_enable_trigger(data, rec);
++	hist_enable_trigger(data, rec, event);
+ }
+ 
+ static struct event_trigger_ops hist_enable_trigger_ops = {
+diff --git a/kernel/trace/trace_events_trigger.c b/kernel/trace/trace_events_trigger.c
+index f2ac9d4..9b0fe31 100644
+--- a/kernel/trace/trace_events_trigger.c
++++ b/kernel/trace/trace_events_trigger.c
+@@ -63,7 +63,8 @@ void trigger_data_free(struct event_trigger_data *data)
+  * any trigger that should be deferred, ETT_NONE if nothing to defer.
+  */
+ enum event_trigger_type
+-event_triggers_call(struct trace_event_file *file, void *rec)
++event_triggers_call(struct trace_event_file *file, void *rec,
++		    struct ring_buffer_event *event)
+ {
+ 	struct event_trigger_data *data;
+ 	enum event_trigger_type tt = ETT_NONE;
+@@ -76,7 +77,7 @@ enum event_trigger_type
+ 		if (data->paused)
+ 			continue;
+ 		if (!rec) {
+-			data->ops->func(data, rec);
++			data->ops->func(data, rec, event);
+ 			continue;
+ 		}
+ 		filter = rcu_dereference_sched(data->filter);
+@@ -86,7 +87,7 @@ enum event_trigger_type
+ 			tt |= data->cmd_ops->trigger_type;
+ 			continue;
+ 		}
+-		data->ops->func(data, rec);
++		data->ops->func(data, rec, event);
  	}
+ 	return tt;
+ }
+@@ -108,7 +109,7 @@ enum event_trigger_type
+ void
+ event_triggers_post_call(struct trace_event_file *file,
+ 			 enum event_trigger_type tt,
+-			 void *rec)
++			 void *rec, struct ring_buffer_event *event)
+ {
+ 	struct event_trigger_data *data;
  
-+	elt->vars = kcalloc(map->n_vars, sizeof(*elt->vars), GFP_KERNEL);
-+	if (!elt->vars) {
-+		err = -ENOMEM;
-+		goto free;
-+	}
-+
-+	elt->var_set = kcalloc(map->n_vars, sizeof(*elt->var_set), GFP_KERNEL);
-+	if (!elt->var_set) {
-+		err = -ENOMEM;
-+		goto free;
-+	}
-+
- 	tracing_map_elt_init_fields(elt);
+@@ -116,7 +117,7 @@ enum event_trigger_type
+ 		if (data->paused)
+ 			continue;
+ 		if (data->cmd_ops->trigger_type & tt)
+-			data->ops->func(data, rec);
++			data->ops->func(data, rec, event);
+ 	}
+ }
+ EXPORT_SYMBOL_GPL(event_triggers_post_call);
+@@ -909,7 +910,8 @@ void set_named_trigger_data(struct event_trigger_data *data,
+ }
  
- 	if (map->ops && map->ops->elt_alloc) {
-diff --git a/kernel/trace/tracing_map.h b/kernel/trace/tracing_map.h
-index 98ef6d6..2800a6b 100644
---- a/kernel/trace/tracing_map.h
-+++ b/kernel/trace/tracing_map.h
-@@ -9,6 +9,7 @@
- #define TRACING_MAP_VALS_MAX		3
- #define TRACING_MAP_FIELDS_MAX		(TRACING_MAP_KEYS_MAX + \
- 					 TRACING_MAP_VALS_MAX)
-+#define TRACING_MAP_VARS_MAX		16
- #define TRACING_MAP_SORT_KEYS_MAX	2
+ static void
+-traceon_trigger(struct event_trigger_data *data, void *rec)
++traceon_trigger(struct event_trigger_data *data, void *rec,
++		struct ring_buffer_event *event)
+ {
+ 	if (tracing_is_on())
+ 		return;
+@@ -918,7 +920,8 @@ void set_named_trigger_data(struct event_trigger_data *data,
+ }
  
- typedef int (*tracing_map_cmp_fn_t) (void *val_a, void *val_b);
-@@ -136,6 +137,8 @@ struct tracing_map_field {
- struct tracing_map_elt {
- 	struct tracing_map		*map;
- 	struct tracing_map_field	*fields;
-+	atomic64_t			*vars;
-+	bool				*var_set;
- 	void				*key;
- 	void				*private_data;
- };
-@@ -191,6 +194,7 @@ struct tracing_map {
- 	int				key_idx[TRACING_MAP_KEYS_MAX];
- 	unsigned int			n_keys;
- 	struct tracing_map_sort_key	sort_key;
-+	unsigned int			n_vars;
- 	atomic64_t			hits;
- 	atomic64_t			drops;
- };
-@@ -240,6 +244,7 @@ struct tracing_map_ops {
- extern int tracing_map_init(struct tracing_map *map);
+ static void
+-traceon_count_trigger(struct event_trigger_data *data, void *rec)
++traceon_count_trigger(struct event_trigger_data *data, void *rec,
++		      struct ring_buffer_event *event)
+ {
+ 	if (tracing_is_on())
+ 		return;
+@@ -933,7 +936,8 @@ void set_named_trigger_data(struct event_trigger_data *data,
+ }
  
- extern int tracing_map_add_sum_field(struct tracing_map *map);
-+extern int tracing_map_add_var(struct tracing_map *map);
- extern int tracing_map_add_key_field(struct tracing_map *map,
- 				     unsigned int offset,
- 				     tracing_map_cmp_fn_t cmp_fn);
-@@ -259,7 +264,13 @@ extern tracing_map_cmp_fn_t tracing_map_cmp_num(int field_size,
+ static void
+-traceoff_trigger(struct event_trigger_data *data, void *rec)
++traceoff_trigger(struct event_trigger_data *data, void *rec,
++		 struct ring_buffer_event *event)
+ {
+ 	if (!tracing_is_on())
+ 		return;
+@@ -942,7 +946,8 @@ void set_named_trigger_data(struct event_trigger_data *data,
+ }
  
- extern void tracing_map_update_sum(struct tracing_map_elt *elt,
- 				   unsigned int i, u64 n);
-+extern void tracing_map_set_var(struct tracing_map_elt *elt,
-+				unsigned int i, u64 n);
-+extern bool tracing_map_var_set(struct tracing_map_elt *elt, unsigned int i);
- extern u64 tracing_map_read_sum(struct tracing_map_elt *elt, unsigned int i);
-+extern u64 tracing_map_read_var(struct tracing_map_elt *elt, unsigned int i);
-+extern u64 tracing_map_read_var_once(struct tracing_map_elt *elt, unsigned int i);
-+
- extern void tracing_map_set_field_descr(struct tracing_map *map,
- 					unsigned int i,
- 					unsigned int key_offset,
+ static void
+-traceoff_count_trigger(struct event_trigger_data *data, void *rec)
++traceoff_count_trigger(struct event_trigger_data *data, void *rec,
++		       struct ring_buffer_event *event)
+ {
+ 	if (!tracing_is_on())
+ 		return;
+@@ -1039,13 +1044,15 @@ void set_named_trigger_data(struct event_trigger_data *data,
+ 
+ #ifdef CONFIG_TRACER_SNAPSHOT
+ static void
+-snapshot_trigger(struct event_trigger_data *data, void *rec)
++snapshot_trigger(struct event_trigger_data *data, void *rec,
++		 struct ring_buffer_event *event)
+ {
+ 	tracing_snapshot();
+ }
+ 
+ static void
+-snapshot_count_trigger(struct event_trigger_data *data, void *rec)
++snapshot_count_trigger(struct event_trigger_data *data, void *rec,
++		       struct ring_buffer_event *event)
+ {
+ 	if (!data->count)
+ 		return;
+@@ -1053,7 +1060,7 @@ void set_named_trigger_data(struct event_trigger_data *data,
+ 	if (data->count != -1)
+ 		(data->count)--;
+ 
+-	snapshot_trigger(data, rec);
++	snapshot_trigger(data, rec, event);
+ }
+ 
+ static int
+@@ -1132,13 +1139,15 @@ static __init int register_trigger_snapshot_cmd(void)
+ #define STACK_SKIP 3
+ 
+ static void
+-stacktrace_trigger(struct event_trigger_data *data, void *rec)
++stacktrace_trigger(struct event_trigger_data *data, void *rec,
++		   struct ring_buffer_event *event)
+ {
+ 	trace_dump_stack(STACK_SKIP);
+ }
+ 
+ static void
+-stacktrace_count_trigger(struct event_trigger_data *data, void *rec)
++stacktrace_count_trigger(struct event_trigger_data *data, void *rec,
++			 struct ring_buffer_event *event)
+ {
+ 	if (!data->count)
+ 		return;
+@@ -1146,7 +1155,7 @@ static __init int register_trigger_snapshot_cmd(void)
+ 	if (data->count != -1)
+ 		(data->count)--;
+ 
+-	stacktrace_trigger(data, rec);
++	stacktrace_trigger(data, rec, event);
+ }
+ 
+ static int
+@@ -1208,7 +1217,8 @@ static __init void unregister_trigger_traceon_traceoff_cmds(void)
+ }
+ 
+ static void
+-event_enable_trigger(struct event_trigger_data *data, void *rec)
++event_enable_trigger(struct event_trigger_data *data, void *rec,
++		     struct ring_buffer_event *event)
+ {
+ 	struct enable_trigger_data *enable_data = data->private_data;
+ 
+@@ -1219,7 +1229,8 @@ static __init void unregister_trigger_traceon_traceoff_cmds(void)
+ }
+ 
+ static void
+-event_enable_count_trigger(struct event_trigger_data *data, void *rec)
++event_enable_count_trigger(struct event_trigger_data *data, void *rec,
++			   struct ring_buffer_event *event)
+ {
+ 	struct enable_trigger_data *enable_data = data->private_data;
+ 
+@@ -1233,7 +1244,7 @@ static __init void unregister_trigger_traceon_traceoff_cmds(void)
+ 	if (data->count != -1)
+ 		(data->count)--;
+ 
+-	event_enable_trigger(data, rec);
++	event_enable_trigger(data, rec, event);
+ }
+ 
+ int event_enable_trigger_print(struct seq_file *m,
 -- 
 1.9.3
 
