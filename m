@@ -1,33 +1,120 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: [PATCH PREEMPT RT] rt-mutex: fix deadlock in device mapper
-Date: Mon, 20 Nov 2017 14:49:22 +0100
-Message-ID: <1511185762.11475.43.camel@gmx.de>
-References: <alpine.LRH.2.02.1711131245580.23280@file01.intranet.prod.int.rdu2.redhat.com>
-         <20171117145744.t366d2ztxj2qqnco@linutronix.de>
-         <1511030230.12841.42.camel@gmx.de>
-         <20171120105310.zsd6kotreig6nvik@linutronix.de>
-         <1511181834.11475.41.camel@gmx.de>
+From: bhargavb <bhargavaramudu@gmail.com>
+Subject: Re: Real time application programming - sched_setattr() fails if I
+ set CPU affinity using sched_setaffinity().
+Date: Mon, 20 Nov 2017 22:03:45 +0530
+Message-ID: <CA+bpL9Lm1jjSn224bCH3jdLmeBqaHVKoaku=BsiHJmU4oyHiMA@mail.gmail.com>
+References: <CA+bpL9+PrYxrBVX_CQxxqqXv07QGULJfdbCx1zoSu=Bir7hy3w@mail.gmail.com>
+ <20171120071847.hqzvqpqqth7e6rcf@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: Mikulas Patocka <mpatocka@redhat.com>,
-        linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        linux-rt-users@vger.kernel.org,
-        Peter Zijlstra <peterz@infradead.org>
-To: Sebastian Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset="UTF-8"
+Cc: linux-rt-users@vger.kernel.org
+To: Juri Lelli <juri.lelli@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mout.gmx.net ([212.227.15.15]:59491 "EHLO mout.gmx.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751086AbdKTNuD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 20 Nov 2017 08:50:03 -0500
-In-Reply-To: <1511181834.11475.41.camel@gmx.de>
+Received: from mail-lf0-f68.google.com ([209.85.215.68]:39672 "EHLO
+        mail-lf0-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751588AbdKTQdr (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 20 Nov 2017 11:33:47 -0500
+Received: by mail-lf0-f68.google.com with SMTP id x76so6168803lfb.6
+        for <linux-rt-users@vger.kernel.org>; Mon, 20 Nov 2017 08:33:46 -0800 (PST)
+In-Reply-To: <20171120071847.hqzvqpqqth7e6rcf@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2017-11-20 at 13:43 +0100, Mike Galbraith wrote:
+I have used that call/macro, CPU_SET, prior to calling
+sched_setaffinity(), I missed mentioning that in earlier post.. sorry
+for that.
+My machine is Intel(R) Core(TM)2 Duo CPU , which shows to processors 0 and 1.
 
-> The problem was converted spinlocks (and added RT locks).
+    struct sched_attr attr;
+    cpu_set_t set;
+    CPU_ZERO(&set);
+    CPU_SET(0, &set);             // It doesnt make a difference in
+output even I modify this to CPU_SET(1,&set)
+    unsigned int flags=0;
 
-But I suppose lockdep should gripe about that these days...
+          if(sched_setaffinity(0,sizeof(set), &set) < 0)
+          {
+                          //printf("\nmask= %ld\n",mask);
+                          perror("sched_setaffinity :");
+                          return 0;
+          }
+
+Note:
+Based on your reply, I tried setting CPU1 or CPU0 individually and
+also 2 cpu sets but to no use. To enable both CPUs (As I am not sure
+how to get current CPU mask, so tried all combinations, my PC is just
+dual core), tried this code, (AND of both sets one containing CPU0 and
+another CPU1) but sched_setaffinity() is failing with this:
+
+    cpu_set_t set1,set2,set3;
+    CPU_ZERO(&set1);
+    CPU_ZERO(&set2);
+    CPU_SET(0, &set1);
+    CPU_SET(1, &set2);
+    CPU_AND_S(sizeof(set1),&set3,&set1,&set2);    //set3 is the
+destination cpu set
+    unsigned int flags=0;
+
+          if(sched_setaffinity(0,sizeof(set3), &set3) < 0)
+          {
+                          //printf("\nmask= %ld\n",mask);
+                          perror("sched_setaffinity :");
+                          return 0;
+          }
+
+On Mon, Nov 20, 2017 at 12:48 PM, Juri Lelli <juri.lelli@gmail.com> wrote:
+> Hi Bhargav,
+>
+> On 20/11/17 10:09, bhargavb wrote:
+>> Hello,
+>>
+>> Working on a real time application, Getting runtime error at
+>> sched_setattr as "Operation Not permitted".Running on Ubuntu 16.04 LTS
+>> (4.4.0-97-generic kernel, x86_64 platform)
+>> C program code excerpt as below:
+>>
+>> unsigned int flags = 0;
+>> sched_getattr(0, &attr, sizeof (struct sched_attr), 0);
+>> if (ret != 0)
+>> perror("getattr failed:");
+>> attr.sched_policy = SCHED_DEADLINE;
+>> attr.sched_runtime = 5 * 100 * 1000;
+>> attr.sched_deadline = 8 * 100 * 1000;
+>> attr.sched_period = 10 * 100 * 1000;
+>> attr.size = sizeof (attr);
+>> attr.sched_flags = 0;
+>> attr.sched_nice = 0;
+>> attr.sched_priority = 0;
+>>
+>> if(sched_setaffinity(0,sizeof(set), &set) < 0)
+>> {
+>> perror("sched_setaffinity :");
+>> return 0;
+>> }
+>> ret = sched_setattr(0, &attr, flags);
+>> if(ret!=0)
+>> {
+>> perror("sched_setattr failed: ");
+>> }
+>>
+>> But, If I comment the sched_setaffinity() call, it runs without error.
+>> Also, using SCHED_FIFO by calling sched_setscheduler() doesn't give me
+>> any error after setting CPU affinity. Only the combination of
+>> sched_setaffinity with sched_setattr() generates error. I am running
+>> in sudo mode.
+>
+> Problem is that SCHED_DEADLINE tasks can't have an affinity mask smaller than
+> the root domain they are on [1]. You've got to use cpuset to achieve what you
+> want.
+>
+> Best,
+>
+> Juri
+>
+> [1] https://elixir.free-electrons.com/linux/latest/source/Documentation/scheduler/sched-deadline.txt#L620
+
+
+
+-- 
+Bhargav
