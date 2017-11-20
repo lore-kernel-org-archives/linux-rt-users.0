@@ -1,41 +1,40 @@
-From: bhargavb <bhargavaramudu@gmail.com>
-Subject: sched_deadline behaviour when a real time process is throttled, with
- setting of /proc/sys/kernel/sched_rt_runtime_us is 950000
-Date: Mon, 20 Nov 2017 22:41:17 +0530
-Message-ID: <CA+bpL9KJXCD3G790pmKhTsHZMjOM3WOxAOX-BDZ6Jzm95XjcJg@mail.gmail.com>
+From: Juri Lelli <juri.lelli@gmail.com>
+Subject: Re: Real time application programming - sched_setattr() fails if I
+ set CPU affinity using sched_setaffinity().
+Date: Mon, 20 Nov 2017 18:43:16 +0100
+Message-ID: <20171120174316.2fmwe34nljmexc7n@localhost.localdomain>
+References: <CA+bpL9+PrYxrBVX_CQxxqqXv07QGULJfdbCx1zoSu=Bir7hy3w@mail.gmail.com>
+ <20171120071847.hqzvqpqqth7e6rcf@localhost.localdomain>
+ <CA+bpL9Lm1jjSn224bCH3jdLmeBqaHVKoaku=BsiHJmU4oyHiMA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org
+To: bhargavb <bhargavaramudu@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-lf0-f46.google.com ([209.85.215.46]:34704 "EHLO
-        mail-lf0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1752195AbdKTRLU (ORCPT
+Received: from mail-wr0-f176.google.com ([209.85.128.176]:33212 "EHLO
+        mail-wr0-f176.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751726AbdKTRnV (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 20 Nov 2017 12:11:20 -0500
-Received: by mail-lf0-f46.google.com with SMTP id i14so10955318lfc.1
-        for <linux-rt-users@vger.kernel.org>; Mon, 20 Nov 2017 09:11:19 -0800 (PST)
+        Mon, 20 Nov 2017 12:43:21 -0500
+Received: by mail-wr0-f176.google.com with SMTP id 4so8845503wrt.0
+        for <linux-rt-users@vger.kernel.org>; Mon, 20 Nov 2017 09:43:20 -0800 (PST)
+Content-Disposition: inline
+In-Reply-To: <CA+bpL9Lm1jjSn224bCH3jdLmeBqaHVKoaku=BsiHJmU4oyHiMA@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+Hi,
 
-Kindly help in understanding below things related to deadline
-scheduler of linux.(HRT enabled,sched_rt_runtime_us = 950000, only 1
-process with deadline scheduler policy, linux kernel 4.4, x86_64)
+On 20/11/17 22:03, bhargavb wrote:
+> I have used that call/macro, CPU_SET, prior to calling
+> sched_setaffinity(), I missed mentioning that in earlier post.. sorry
+> for that.
 
-1)Uniprocessor case: When a real time process(deadline scheduled) is
-throttled, ie exceeds its deadline say exceeded 900000 nanosec, it
-will be throttled assuming no other real time process is running and
-would be left to run till more 50000 nanoseconds but how does
-scheduler behave beyond the sched_rt_runtime_us? Will the process
-continue to run or the remaining 50000 ns allocated for non real time
-processes?
+Sorry if I wasn't clear, but I meant that you've got to use the cpuset
+interface (not the CPU_SET macro), instead of calling setaffinity, to achieve
+what you need. You can find an example here:
+https://elixir.free-electrons.com/linux/latest/source/Documentation/scheduler/sched-deadline.txt#L627
 
-2) Does it become any complex if it is a multiprocessor (SMP)? Does
-the scheduler try to move this real time process to another processor
-if feasible?
+Best,
 
-Hope, my question is clear enough basically.
-
-Thanks in advance,
-Bhargav
+Juri
