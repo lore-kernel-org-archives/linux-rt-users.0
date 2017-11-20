@@ -1,108 +1,72 @@
-From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [PATCH v6 18/37] tracing: Add simple expression support to hist
- triggers
-Date: Mon, 20 Nov 2017 15:05:06 +0900
-Message-ID: <20171120060506.GA20701@sejong>
-References: <cover.1510948725.git.tom.zanussi@linux.intel.com>
- <9a80920fb2cc43c929341f70f9c46acde2242fd9.1510948725.git.tom.zanussi@linux.intel.com>
+From: Juri Lelli <juri.lelli@gmail.com>
+Subject: Re: Real time application programming - sched_setattr() fails if I
+ set CPU affinity using sched_setaffinity().
+Date: Mon, 20 Nov 2017 08:18:47 +0100
+Message-ID: <20171120071847.hqzvqpqqth7e6rcf@localhost.localdomain>
+References: <CA+bpL9+PrYxrBVX_CQxxqqXv07QGULJfdbCx1zoSu=Bir7hy3w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        kernel-team@lge.com
-To: Tom Zanussi <tom.zanussi@linux.intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org
+To: bhargavb <bhargavaramudu@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wm0-f65.google.com ([74.125.82.65]:33043 "EHLO
+        mail-wm0-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751070AbdKTHSw (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 20 Nov 2017 02:18:52 -0500
+Received: by mail-wm0-f65.google.com with SMTP id g130so5200351wme.0
+        for <linux-rt-users@vger.kernel.org>; Sun, 19 Nov 2017 23:18:51 -0800 (PST)
 Content-Disposition: inline
-In-Reply-To: <9a80920fb2cc43c929341f70f9c46acde2242fd9.1510948725.git.tom.zanussi@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <CA+bpL9+PrYxrBVX_CQxxqqXv07QGULJfdbCx1zoSu=Bir7hy3w@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Tom,
+Hi Bhargav,
 
-On Fri, Nov 17, 2017 at 02:32:57PM -0600, Tom Zanussi wrote:
-> Add support for simple addition, subtraction, and unary expressions
-> (-(expr) and expr, where expr = b-a, a+b, a+b+c) to hist triggers, in
-> order to support a minimal set of useful inter-event calculations.
+On 20/11/17 10:09, bhargavb wrote:
+> Hello,
 > 
-> These operations are needed for calculating latencies between events
-> (timestamp1-timestamp0) and for combined latencies (latencies over 3
-> or more events).
+> Working on a real time application, Getting runtime error at
+> sched_setattr as "Operation Not permitted".Running on Ubuntu 16.04 LTS
+> (4.4.0-97-generic kernel, x86_64 platform)
+> C program code excerpt as below:
 > 
-> In the process, factor out some common code from key and value
-> parsing.
+> unsigned int flags = 0;
+> sched_getattr(0, &attr, sizeof (struct sched_attr), 0);
+> if (ret != 0)
+> perror("getattr failed:");
+> attr.sched_policy = SCHED_DEADLINE;
+> attr.sched_runtime = 5 * 100 * 1000;
+> attr.sched_deadline = 8 * 100 * 1000;
+> attr.sched_period = 10 * 100 * 1000;
+> attr.size = sizeof (attr);
+> attr.sched_flags = 0;
+> attr.sched_nice = 0;
+> attr.sched_priority = 0;
 > 
-> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> ---
+> if(sched_setaffinity(0,sizeof(set), &set) < 0)
+> {
+> perror("sched_setaffinity :");
+> return 0;
+> }
+> ret = sched_setattr(0, &attr, flags);
+> if(ret!=0)
+> {
+> perror("sched_setattr failed: ");
+> }
+> 
+> But, If I comment the sched_setaffinity() call, it runs without error.
+> Also, using SCHED_FIFO by calling sched_setscheduler() doesn't give me
+> any error after setting CPU affinity. Only the combination of
+> sched_setaffinity with sched_setattr() generates error. I am running
+> in sudo mode.
 
-[SNIP]
-> +static char *expr_str(struct hist_field *field, unsigned int level)
-> +{
-> +	char *expr;
-> +
-> +	if (level > 1)
-> +		return NULL;
-> +
-> +	expr = kzalloc(MAX_FILTER_STR_VAL, GFP_KERNEL);
-> +	if (!expr)
-> +		return NULL;
-> +
-> +	if (field->operator == FIELD_OP_UNARY_MINUS) {
-> +		char *subexpr;
-> +
-> +		strcat(expr, "-(");
-> +		subexpr = expr_str(field->operands[0], ++level);
-> +		if (!subexpr) {
-> +			kfree(expr);
-> +			return NULL;
-> +		}
-> +		strcat(expr, subexpr);
-> +		strcat(expr, ")");
-> +
-> +		return expr;
+Problem is that SCHED_DEADLINE tasks can't have an affinity mask smaller than
+the root domain they are on [1]. You've got to use cpuset to achieve what you
+want.
 
-The subexpr was leaked.
+Best,
 
-Thanks,
-Namhyung
+Juri
 
-
-> +	}
-> +
-> +	strcat(expr, hist_field_name(field->operands[0], 0));
-> +	if (field->operands[0]->flags) {
-> +		const char *flags_str = get_hist_field_flags(field->operands[0]);
-> +
-> +		if (flags_str) {
-> +			strcat(expr, ".");
-> +			strcat(expr, flags_str);
-> +		}
-> +	}
-> +
-> +	switch (field->operator) {
-> +	case FIELD_OP_MINUS:
-> +		strcat(expr, "-");
-> +		break;
-> +	case FIELD_OP_PLUS:
-> +		strcat(expr, "+");
-> +		break;
-> +	default:
-> +		kfree(expr);
-> +		return NULL;
-> +	}
-> +
-> +	strcat(expr, hist_field_name(field->operands[1], 0));
-> +	if (field->operands[1]->flags) {
-> +		const char *flags_str = get_hist_field_flags(field->operands[1]);
-> +
-> +		if (flags_str) {
-> +			strcat(expr, ".");
-> +			strcat(expr, flags_str);
-> +		}
-> +	}
-> +
-> +	return expr;
-> +}
+[1] https://elixir.free-electrons.com/linux/latest/source/Documentation/scheduler/sched-deadline.txt#L620
