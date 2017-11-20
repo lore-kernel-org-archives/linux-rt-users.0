@@ -1,120 +1,41 @@
 From: bhargavb <bhargavaramudu@gmail.com>
-Subject: Re: Real time application programming - sched_setattr() fails if I
- set CPU affinity using sched_setaffinity().
-Date: Mon, 20 Nov 2017 22:03:45 +0530
-Message-ID: <CA+bpL9Lm1jjSn224bCH3jdLmeBqaHVKoaku=BsiHJmU4oyHiMA@mail.gmail.com>
-References: <CA+bpL9+PrYxrBVX_CQxxqqXv07QGULJfdbCx1zoSu=Bir7hy3w@mail.gmail.com>
- <20171120071847.hqzvqpqqth7e6rcf@localhost.localdomain>
+Subject: sched_deadline behaviour when a real time process is throttled, with
+ setting of /proc/sys/kernel/sched_rt_runtime_us is 950000
+Date: Mon, 20 Nov 2017 22:41:17 +0530
+Message-ID: <CA+bpL9KJXCD3G790pmKhTsHZMjOM3WOxAOX-BDZ6Jzm95XjcJg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Cc: linux-rt-users@vger.kernel.org
-To: Juri Lelli <juri.lelli@gmail.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-lf0-f68.google.com ([209.85.215.68]:39672 "EHLO
-        mail-lf0-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751588AbdKTQdr (ORCPT
+Received: from mail-lf0-f46.google.com ([209.85.215.46]:34704 "EHLO
+        mail-lf0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752195AbdKTRLU (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 20 Nov 2017 11:33:47 -0500
-Received: by mail-lf0-f68.google.com with SMTP id x76so6168803lfb.6
-        for <linux-rt-users@vger.kernel.org>; Mon, 20 Nov 2017 08:33:46 -0800 (PST)
-In-Reply-To: <20171120071847.hqzvqpqqth7e6rcf@localhost.localdomain>
+        Mon, 20 Nov 2017 12:11:20 -0500
+Received: by mail-lf0-f46.google.com with SMTP id i14so10955318lfc.1
+        for <linux-rt-users@vger.kernel.org>; Mon, 20 Nov 2017 09:11:19 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I have used that call/macro, CPU_SET, prior to calling
-sched_setaffinity(), I missed mentioning that in earlier post.. sorry
-for that.
-My machine is Intel(R) Core(TM)2 Duo CPU , which shows to processors 0 and 1.
+Hello,
 
-    struct sched_attr attr;
-    cpu_set_t set;
-    CPU_ZERO(&set);
-    CPU_SET(0, &set);             // It doesnt make a difference in
-output even I modify this to CPU_SET(1,&set)
-    unsigned int flags=0;
+Kindly help in understanding below things related to deadline
+scheduler of linux.(HRT enabled,sched_rt_runtime_us = 950000, only 1
+process with deadline scheduler policy, linux kernel 4.4, x86_64)
 
-          if(sched_setaffinity(0,sizeof(set), &set) < 0)
-          {
-                          //printf("\nmask= %ld\n",mask);
-                          perror("sched_setaffinity :");
-                          return 0;
-          }
+1)Uniprocessor case: When a real time process(deadline scheduled) is
+throttled, ie exceeds its deadline say exceeded 900000 nanosec, it
+will be throttled assuming no other real time process is running and
+would be left to run till more 50000 nanoseconds but how does
+scheduler behave beyond the sched_rt_runtime_us? Will the process
+continue to run or the remaining 50000 ns allocated for non real time
+processes?
 
-Note:
-Based on your reply, I tried setting CPU1 or CPU0 individually and
-also 2 cpu sets but to no use. To enable both CPUs (As I am not sure
-how to get current CPU mask, so tried all combinations, my PC is just
-dual core), tried this code, (AND of both sets one containing CPU0 and
-another CPU1) but sched_setaffinity() is failing with this:
+2) Does it become any complex if it is a multiprocessor (SMP)? Does
+the scheduler try to move this real time process to another processor
+if feasible?
 
-    cpu_set_t set1,set2,set3;
-    CPU_ZERO(&set1);
-    CPU_ZERO(&set2);
-    CPU_SET(0, &set1);
-    CPU_SET(1, &set2);
-    CPU_AND_S(sizeof(set1),&set3,&set1,&set2);    //set3 is the
-destination cpu set
-    unsigned int flags=0;
+Hope, my question is clear enough basically.
 
-          if(sched_setaffinity(0,sizeof(set3), &set3) < 0)
-          {
-                          //printf("\nmask= %ld\n",mask);
-                          perror("sched_setaffinity :");
-                          return 0;
-          }
-
-On Mon, Nov 20, 2017 at 12:48 PM, Juri Lelli <juri.lelli@gmail.com> wrote:
-> Hi Bhargav,
->
-> On 20/11/17 10:09, bhargavb wrote:
->> Hello,
->>
->> Working on a real time application, Getting runtime error at
->> sched_setattr as "Operation Not permitted".Running on Ubuntu 16.04 LTS
->> (4.4.0-97-generic kernel, x86_64 platform)
->> C program code excerpt as below:
->>
->> unsigned int flags = 0;
->> sched_getattr(0, &attr, sizeof (struct sched_attr), 0);
->> if (ret != 0)
->> perror("getattr failed:");
->> attr.sched_policy = SCHED_DEADLINE;
->> attr.sched_runtime = 5 * 100 * 1000;
->> attr.sched_deadline = 8 * 100 * 1000;
->> attr.sched_period = 10 * 100 * 1000;
->> attr.size = sizeof (attr);
->> attr.sched_flags = 0;
->> attr.sched_nice = 0;
->> attr.sched_priority = 0;
->>
->> if(sched_setaffinity(0,sizeof(set), &set) < 0)
->> {
->> perror("sched_setaffinity :");
->> return 0;
->> }
->> ret = sched_setattr(0, &attr, flags);
->> if(ret!=0)
->> {
->> perror("sched_setattr failed: ");
->> }
->>
->> But, If I comment the sched_setaffinity() call, it runs without error.
->> Also, using SCHED_FIFO by calling sched_setscheduler() doesn't give me
->> any error after setting CPU affinity. Only the combination of
->> sched_setaffinity with sched_setattr() generates error. I am running
->> in sudo mode.
->
-> Problem is that SCHED_DEADLINE tasks can't have an affinity mask smaller than
-> the root domain they are on [1]. You've got to use cpuset to achieve what you
-> want.
->
-> Best,
->
-> Juri
->
-> [1] https://elixir.free-electrons.com/linux/latest/source/Documentation/scheduler/sched-deadline.txt#L620
-
-
-
--- 
+Thanks in advance,
 Bhargav
