@@ -1,14 +1,16 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT 7/8] kernel/locking: use an exclusive wait_q for
- sleepers
-Date: Tue, 21 Nov 2017 11:20:24 -0500
-Message-ID: <20171121112024.491af4e8@gandalf.local.home>
+Subject: Re: [PATCH RT 5/8] sched: Remove TASK_ALL
+Date: Tue, 21 Nov 2017 11:27:32 -0500
+Message-ID: <20171121112732.503a0a32@gandalf.local.home>
 References: <20171121160654.493640386@goodmis.org>
-        <20171121160706.703915626@goodmis.org>
+        <20171121160706.405135518@goodmis.org>
+        <20171121161907.ovg4ye7czrqlqkx2@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
@@ -16,166 +18,27 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
         tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
-        Mike Galbraith <efault@gmx.de>, stable-rt@vger.kernel.org
-To: linux-kernel@vger.kernel.org,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171121160706.703915626@goodmis.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+        stable-rt@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.99]:46942 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751360AbdKUQ1f (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 21 Nov 2017 11:27:35 -0500
+In-Reply-To: <20171121161907.ovg4ye7czrqlqkx2@hirez.programming.kicks-ass.net>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 21 Nov 2017 11:07:01 -0500
-Steven Rostedt <rostedt@goodmis.org> wrote:
+On Tue, 21 Nov 2017 17:19:07 +0100
+Peter Zijlstra <peterz@infradead.org> wrote:
 
-> 4.4.97-rt111-rc1 stable review patch.
-> If anyone has any objections, please let me know.
+> On Tue, Nov 21, 2017 at 11:06:59AM -0500, Steven Rostedt wrote:
+> > 4.4.97-rt111-rc1 stable review patch.
+> > If anyone has any objections, please let me know.  
 > 
-> ------------------
-> 
-> From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> 
-> If a task is queued as a sleeper for a wakeup and never goes to
-> schedule() (because it just obtained the lock) then it will receive a
-> spurious wake up which is not "bad", it is considered. Until that wake
-> up happens this task can no be enqueued for any wake ups handled by the
-> WAKE_Q infrastructure (because a task can only be enqueued once). This
-> wouldn't be bad if we would use the same wakeup mechanism for the wake
-> up of sleepers as we do for "normal" wake ups. But we don'tâŠ
+> No real objection, just curious as to why its -stable material.
 
-Strange character's in change log, made quilt mail fail to send to list
-(bad encoding, because quilt mail can't handle this).
+Good question ;-) But it was marked with the stable-rt tag, Thomas
+said it was dangerous, and it applied nicely.
 
 -- Steve
-
-> 
-> So.
->    T1			T2		T3
->    spin_lock(x)				spin_unlock(x);
->    					wake_q_add_sleeper(q1, T1)
->    spin_unlock(x)
->    set_state(TASK_INTERRUPTIBLE)
->    if (!condition)
-> 	schedule()
-> 			condition = true
-> 			wake_q_add(q2, T1)
-> 	                // T1 not added, still enqueued
-> 			wake_up_q(q2)
-> 					wake_up_q_sleeper(q1)
-> 					// T1 not woken up, wrong task state
-> 
-> In order to solve this race this patch adds a wake_q_node for the
-> sleeper case.
-> 
-> Reported-by: Mike Galbraith <efault@gmx.de>
-> Cc: stable-rt@vger.kernel.org
-> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-> ---
->  include/linux/sched.h    | 17 +++++++++++++++--
->  kernel/fork.c            |  1 +
->  kernel/locking/rtmutex.c |  2 +-
->  kernel/sched/core.c      | 20 ++++++++++++++++----
->  4 files changed, 33 insertions(+), 7 deletions(-)
-> 
-> diff --git a/include/linux/sched.h b/include/linux/sched.h
-> index 331cdbfc6431..f37654adf12a 100644
-> --- a/include/linux/sched.h
-> +++ b/include/linux/sched.h
-> @@ -979,8 +979,20 @@ struct wake_q_head {
->  #define WAKE_Q(name)					\
->  	struct wake_q_head name = { WAKE_Q_TAIL, &name.first }
->  
-> -extern void wake_q_add(struct wake_q_head *head,
-> -			      struct task_struct *task);
-> +extern void __wake_q_add(struct wake_q_head *head,
-> +			 struct task_struct *task, bool sleeper);
-> +static inline void wake_q_add(struct wake_q_head *head,
-> +			      struct task_struct *task)
-> +{
-> +	__wake_q_add(head, task, false);
-> +}
-> +
-> +static inline void wake_q_add_sleeper(struct wake_q_head *head,
-> +				      struct task_struct *task)
-> +{
-> +	__wake_q_add(head, task, true);
-> +}
-> +
->  extern void __wake_up_q(struct wake_q_head *head, bool sleeper);
->  
->  static inline void wake_up_q(struct wake_q_head *head)
-> @@ -1640,6 +1652,7 @@ struct task_struct {
->  	raw_spinlock_t pi_lock;
->  
->  	struct wake_q_node wake_q;
-> +	struct wake_q_node wake_q_sleeper;
->  
->  #ifdef CONFIG_RT_MUTEXES
->  	/* PI waiters blocked on a rt_mutex held by this task */
-> diff --git a/kernel/fork.c b/kernel/fork.c
-> index 0a873f52999f..368e770abee6 100644
-> --- a/kernel/fork.c
-> +++ b/kernel/fork.c
-> @@ -395,6 +395,7 @@ static struct task_struct *dup_task_struct(struct task_struct *orig, int node)
->  	tsk->splice_pipe = NULL;
->  	tsk->task_frag.page = NULL;
->  	tsk->wake_q.next = NULL;
-> +	tsk->wake_q_sleeper.next = NULL;
->  
->  	account_kernel_stack(ti, 1);
->  
-> diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-> index 552dc6dd3a79..b5b89c51f27e 100644
-> --- a/kernel/locking/rtmutex.c
-> +++ b/kernel/locking/rtmutex.c
-> @@ -1557,7 +1557,7 @@ static void mark_wakeup_next_waiter(struct wake_q_head *wake_q,
->  	raw_spin_unlock(&current->pi_lock);
->  
->  	if (waiter->savestate)
-> -		wake_q_add(wake_sleeper_q, waiter->task);
-> +		wake_q_add_sleeper(wake_sleeper_q, waiter->task);
->  	else
->  		wake_q_add(wake_q, waiter->task);
->  }
-> diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-> index bea476417297..ed0f841d4d5c 100644
-> --- a/kernel/sched/core.c
-> +++ b/kernel/sched/core.c
-> @@ -523,9 +523,15 @@ static bool set_nr_if_polling(struct task_struct *p)
->  #endif
->  #endif
->  
-> -void wake_q_add(struct wake_q_head *head, struct task_struct *task)
-> +void __wake_q_add(struct wake_q_head *head, struct task_struct *task,
-> +		  bool sleeper)
->  {
-> -	struct wake_q_node *node = &task->wake_q;
-> +	struct wake_q_node *node;
-> +
-> +	if (sleeper)
-> +		node = &task->wake_q_sleeper;
-> +	else
-> +		node = &task->wake_q;
->  
->  	/*
->  	 * Atomically grab the task, if ->wake_q is !nil already it means
-> @@ -554,11 +560,17 @@ void __wake_up_q(struct wake_q_head *head, bool sleeper)
->  	while (node != WAKE_Q_TAIL) {
->  		struct task_struct *task;
->  
-> -		task = container_of(node, struct task_struct, wake_q);
-> +		if (sleeper)
-> +			task = container_of(node, struct task_struct, wake_q_sleeper);
-> +		else
-> +			task = container_of(node, struct task_struct, wake_q);
->  		BUG_ON(!task);
->  		/* task can safely be re-inserted now */
->  		node = node->next;
-> -		task->wake_q.next = NULL;
-> +		if (sleeper)
-> +			task->wake_q_sleeper.next = NULL;
-> +		else
-> +			task->wake_q.next = NULL;
->  
->  		/*
->  		 * wake_up_process() implies a wmb() to pair with the queueing
