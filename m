@@ -1,7 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/8] Linux 4.4.97-rt111-rc1
-Date: Tue, 21 Nov 2017 11:06:54 -0500
-Message-ID: <20171121160654.493640386@goodmis.org>
+Subject: [PATCH RT 8/8] Linux 4.4.97-rt111-rc1
+Date: Tue, 21 Nov 2017 11:07:02 -0500
+Message-ID: <20171121160706.875825909@goodmis.org>
+References: <20171121160654.493640386@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -12,71 +15,34 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.99]:44582 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751630AbdKUQHI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 21 Nov 2017 11:07:08 -0500
+Content-Disposition: inline; filename=0008-Linux-4.4.97-rt111-rc1.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+4.4.97-rt111-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 4.4.97-rt111-rc1.
-
-Please scream at me if I messed something up. Please test the patches too.
-
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 11/27/2017.
-
-Enjoy,
-
--- Steve
-
-
-To build 4.4.97-rt111-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.97.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.97-rt111-rc1.patch.xz
-
-You can also build from 4.4.97-rt110 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/incr/patch-4.4.97-rt110-rt111-rc1.patch.xz
-
-
-Changes from 4.4.97-rt110:
+From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
 ---
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/localversion-rt b/localversion-rt
+index b3e668a8fb94..ff68eff1428c 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt110
++-rt111-rc1
+-- 
+2.13.2
 
 
-Peter Zijlstra (1):
-      sched: Remove TASK_ALL
-
-Sebastian Andrzej Siewior (4):
-      timer/hrtimer: check properly for a running timer
-      random: avoid preempt_disable()ed section
-      sched/migrate disable: handle updated task-mask mg-dis section
-      kernel/locking: use an exclusive wait_q for sleepers
-
-Steven Rostedt (VMware) (1):
-      Linux 4.4.97-rt111-rc1
-
-Thomas Gleixner (2):
-      rtmutex: Make lock_killable work
-      sched: Prevent task state corruption by spurious lock wakeup
-
-----
- drivers/char/random.c    | 10 +++---
- include/linux/hrtimer.h  |  8 ++++-
- include/linux/sched.h    | 19 ++++++++++--
- kernel/fork.c            |  1 +
- kernel/locking/rtmutex.c | 21 +++++--------
- kernel/sched/core.c      | 81 +++++++++++++++++++++++++++++++++++++++++-------
- localversion-rt          |  2 +-
- 7 files changed, 109 insertions(+), 33 deletions(-)
