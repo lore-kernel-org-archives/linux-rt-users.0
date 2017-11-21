@@ -1,7 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/4] Linux 4.9.61-rt52-rc1
-Date: Tue, 21 Nov 2017 11:04:42 -0500
-Message-ID: <20171121160442.866038796@goodmis.org>
+Subject: [PATCH RT 4/4] Linux 4.9.61-rt52-rc1
+Date: Tue, 21 Nov 2017 11:04:46 -0500
+Message-ID: <20171121160517.628867429@goodmis.org>
+References: <20171121160442.866038796@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -12,71 +15,28 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.99]:44050 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751067AbdKUQFS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 21 Nov 2017 11:05:18 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0004-Linux-4.9.61-rt52-rc1.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
+4.9.61-rt52-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 4.9.61-rt52-rc1.
-
-Please scream at me if I messed something up. Please test the patches too.
-
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 11/27/2017.
-
-Enjoy,
-
--- Steve
-
-
-To build 4.9.61-rt52-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.9.61.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.9/patch-4.9.61-rt52-rc1.patch.xz
-
-You can also build from 4.9.61-rt51 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/4.9/incr/patch-4.9.61-rt51-rt52-rc1.patch.xz
-
-
-Changes from 4.9.61-rt51:
+From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
 ---
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-
-Haris Okanovic (1):
-      tpm_tis: fix stall after iowrite*()s
-
-Mike Galbraith (1):
-      drivers/zram: fix zcomp_stream_get() smp_processor_id() use in preemptible code
-
-Sebastian Andrzej Siewior (1):
-      fs/dcache: disable preemption on i_dir_seq's write side
-
-Steven Rostedt (VMware) (1):
-      Linux 4.9.61-rt52-rc1
-
-----
- drivers/block/zram/zcomp.c |  3 ++-
- drivers/char/tpm/tpm_tis.c | 29 +++++++++++++++++++++++++++--
- fs/dcache.c                | 12 +++++++-----
- fs/inode.c                 |  2 +-
- fs/libfs.c                 |  6 ++++--
- include/linux/fs.h         |  2 +-
- localversion-rt            |  2 +-
- 7 files changed, 43 insertions(+), 13 deletions(-)
+diff --git a/localversion-rt b/localversion-rt
+index 75493460c41f..d42746076d9b 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt51
++-rt52-rc1
+-- 
+2.13.2
