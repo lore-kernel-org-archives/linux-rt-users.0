@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE]  4.9.61-rt51
-Date: Tue, 21 Nov 2017 10:37:36 -0500
-Message-ID: <20171121103736.7998954a@gandalf.local.home>
+Subject: [ANNOUNCE] 4.4.97-rt110
+Date: Tue, 21 Nov 2017 10:38:12 -0500
+Message-ID: <20171121103812.2c16094e@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -21,10 +21,10 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 4.9.61-rt51 stable release.
+I'm pleased to announce the 4.4.97-rt110 stable release.
 
 
-This release is just an update to the new stable 4.9.61 version
+This release is just an update to the new stable 4.4.97 version
 and no RT specific changes have been made.
 
 
@@ -32,17 +32,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v4.9-rt
-  Head SHA1: d0bcb84cbec27d7eb876b6f1d1fffdb65ccefcd4
+  branch: v4.4-rt
+  Head SHA1: 5a12058bc998b9c494d58665f729e81d8ba4600e
 
 
-Or to build 4.9.61-rt51 directly, the following patches should be applied:
+Or to build 4.4.97-rt110 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.9.61.xz
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.97.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.9/patch-4.9.61-rt51.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.97-rt110.patch.xz
 
 
 
