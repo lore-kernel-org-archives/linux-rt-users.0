@@ -1,49 +1,39 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH RT 5/8] sched: Remove TASK_ALL
-Date: Tue, 21 Nov 2017 18:26:20 +0100 (CET)
-Message-ID: <alpine.DEB.2.20.1711211825430.2399@nanos>
-References: <20171121160654.493640386@goodmis.org> <20171121160706.405135518@goodmis.org> <20171121161907.ovg4ye7czrqlqkx2@hirez.programming.kicks-ass.net> <20171121112732.503a0a32@gandalf.local.home>
+From: Mike Galbraith <efault@gmx.de>
+Subject: Re: [PATCH PREEMPT RT] rt-mutex: fix deadlock in device mapper
+Date: Tue, 21 Nov 2017 18:33:39 +0100
+Message-ID: <1511285619.30074.13.camel@gmx.de>
+References: <alpine.LRH.2.02.1711131245580.23280@file01.intranet.prod.int.rdu2.redhat.com>
+           <20171117145744.t366d2ztxj2qqnco@linutronix.de>
+           <1511030230.12841.42.camel@gmx.de>
+           <alpine.LRH.2.02.1711201607230.24006@file01.intranet.prod.int.rdu2.redhat.com>
+         <1511234430.7672.26.camel@gmx.de>
+          <alpine.DEB.2.20.1711210931460.1782@nanos>
+         <1511255884.7672.49.camel@gmx.de>
+         <alpine.LRH.2.02.1711211107550.12859@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Cc: Peter Zijlstra <peterz@infradead.org>,
-        linux-kernel@vger.kernel.org,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        John Kacur <jkacur@redhat.com>,
-        Paul Gortmaker <paul.gortmaker@windriver.com>,
-        Julia Cartwright <julia@ni.com>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
-        stable-rt@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 8BIT
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Siewior <bigeasy@linutronix.de>,
+        linux-kernel@vger.kernel.org, Ingo Molnar <mingo@redhat.com>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        linux-rt-users@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:35430 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751229AbdKUR1w (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 21 Nov 2017 12:27:52 -0500
-In-Reply-To: <20171121112732.503a0a32@gandalf.local.home>
+Received: from mout.gmx.net ([212.227.17.21]:64849 "EHLO mout.gmx.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751145AbdKURdz (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 21 Nov 2017 12:33:55 -0500
+In-Reply-To: <alpine.LRH.2.02.1711211107550.12859@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 21 Nov 2017, Steven Rostedt wrote:
-
-> On Tue, 21 Nov 2017 17:19:07 +0100
-> Peter Zijlstra <peterz@infradead.org> wrote:
+On Tue, 2017-11-21 at 11:11 -0500, Mikulas Patocka wrote:
 > 
-> > On Tue, Nov 21, 2017 at 11:06:59AM -0500, Steven Rostedt wrote:
-> > > 4.4.97-rt111-rc1 stable review patch.
-> > > If anyone has any objections, please let me know.  
-> > 
-> > No real objection, just curious as to why its -stable material.
-> 
-> Good question ;-) But it was marked with the stable-rt tag, Thomas
-> said it was dangerous, and it applied nicely.
+> So, drop the spinlock unplugging and leave only mutex unplugging, 
+> reproduce the deadlock and send the stacktraces.
 
-Yes, it's dangerous and I wanted to make sure that it does not get reused
-by chance.
+Nah, I reproduced it five years ago.  Is any of that relevant today?
+ Damned if I know.  Your report was the first I've noticed since.
 
-Thanks,
-
-	tglx
+	-Mike
