@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 3/8] random: avoid preempt_disable()ed section
-Date: Tue, 21 Nov 2017 11:06:57 -0500
-Message-ID: <20171121160706.107185478@goodmis.org>
+Subject: [PATCH RT 4/8] sched: Prevent task state corruption by spurious lock wakeup
+Date: Tue, 21 Nov 2017 11:06:58 -0500
+Message-ID: <20171121160706.252279554@goodmis.org>
 References: <20171121160654.493640386@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -12,87 +12,99 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>
+        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
+        stable-rt@vger.kernel.org,
+        Mathias Koehrer <mathias.koehrer@etas.com>,
+        David Hauck <davidh@netacquire.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.99]:44490 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751606AbdKUQHH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 21 Nov 2017 11:07:07 -0500
-Content-Disposition: inline; filename=0003-random-avoid-preempt_disable-ed-section.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0004-sched-Prevent-task-state-corruption-by-spurious-lock.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 4.4.97-rt111-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-extract_crng() will use sleeping locks while in a preempt_disable()
-section due to get_cpu_var().
-Work around it with local_locks.
+Mathias and others reported GDB failures on RT.
 
-Cc: stable-rt@vger.kernel.org # where it applies to
+The following scenario leads to task state corruption:
+
+CPU0						CPU1
+
+T1->state = TASK_XXX;
+spin_lock(&lock)
+  rt_spin_lock_slowlock(&lock->rtmutex)
+    raw_spin_lock(&rtm->wait_lock);
+    T1->saved_state = current->state;
+    T1->state = TASK_UNINTERRUPTIBLE;
+						spin_unlock(&lock)
+    task_blocks_on_rt_mutex(rtm)  		  rt_spin_lock_slowunlock(&lock->rtmutex)
+      queue_waiter(rtm)				    raw_spin_lock(&rtm->wait_lock);
+      pi_chain_walk(rtm)
+        raw_spin_unlock(&rtm->wait_lock);
+						    wake_top_waiter(T1)
+
+      raw_spin_lock(&rtm->wait_lock);
+
+    for (;;) {
+      if (__try_to_take_rt_mutex())  <- Succeeds
+        break;
+      ...
+    }
+
+    T1->state = T1->saved_state;
+						     try_to_wake_up(T1)
+						       ttwu_do_wakeup(T1)
+						         T1->state = TASK_RUNNING;
+
+In most cases this is harmless because waiting for some event, which is the
+usual reason for TASK_[UN]INTERRUPTIBLE has to be safe against other forms
+of spurious wakeups anyway.
+
+But in case of TASK_TRACED this is actually fatal, because the task loses
+the TASK_TRACED state. In consequence it fails to consume SIGSTOP which was
+sent from the debugger and actually delivers SIGSTOP to the task which
+breaks the ptrace mechanics and brings the debugger into an unexpected
+state.
+
+The TASK_TRACED state should prevent getting there due to the state
+matching logic in try_to_wake_up(). But that's not true because
+wake_up_lock_sleeper() uses TASK_ALL as state mask. That's bogus because
+lock sleepers always use TASK_UNINTERRUPTIBLE, so the wakeup should use
+that as well.
+
+The cure is way simpler as figuring it out:
+
+Change the mask used in wake_up_lock_sleeper() from TASK_ALL to
+TASK_UNINTERRUPTIBLE.
+
+Cc: stable-rt@vger.kernel.org
+Reported-by: Mathias Koehrer <mathias.koehrer@etas.com>
+Reported-by: David Hauck <davidh@netacquire.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- drivers/char/random.c | 10 ++++++----
- 1 file changed, 6 insertions(+), 4 deletions(-)
+ kernel/sched/core.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/char/random.c b/drivers/char/random.c
-index fecc40a69df8..b41745c5962c 100644
---- a/drivers/char/random.c
-+++ b/drivers/char/random.c
-@@ -260,6 +260,7 @@
- #include <linux/irq.h>
- #include <linux/syscalls.h>
- #include <linux/completion.h>
-+#include <linux/locallock.h>
- 
- #include <asm/processor.h>
- #include <asm/uaccess.h>
-@@ -1796,6 +1797,7 @@ int random_int_secret_init(void)
- 
- static DEFINE_PER_CPU(__u32 [MD5_DIGEST_WORDS], get_random_int_hash)
- 		__aligned(sizeof(unsigned long));
-+static DEFINE_LOCAL_IRQ_LOCK(hash_entropy_int_lock);
- 
- /*
-  * Get a random word for internal kernel use only. Similar to urandom but
-@@ -1811,12 +1813,12 @@ unsigned int get_random_int(void)
- 	if (arch_get_random_int(&ret))
- 		return ret;
- 
--	hash = get_cpu_var(get_random_int_hash);
-+	hash = &get_locked_var(hash_entropy_int_lock, get_random_int_hash);
- 
- 	hash[0] += current->pid + jiffies + random_get_entropy();
- 	md5_transform(hash, random_int_secret);
- 	ret = hash[0];
--	put_cpu_var(get_random_int_hash);
-+	put_locked_var(hash_entropy_int_lock, get_random_int_hash);
- 
- 	return ret;
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index ed9550c87f66..970b893a1d15 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -2212,7 +2212,7 @@ EXPORT_SYMBOL(wake_up_process);
+  */
+ int wake_up_lock_sleeper(struct task_struct *p)
+ {
+-	return try_to_wake_up(p, TASK_ALL, WF_LOCK_SLEEPER);
++	return try_to_wake_up(p, TASK_UNINTERRUPTIBLE, WF_LOCK_SLEEPER);
  }
-@@ -1833,12 +1835,12 @@ unsigned long get_random_long(void)
- 	if (arch_get_random_long(&ret))
- 		return ret;
  
--	hash = get_cpu_var(get_random_int_hash);
-+	hash = &get_locked_var(hash_entropy_int_lock, get_random_int_hash);
- 
- 	hash[0] += current->pid + jiffies + random_get_entropy();
- 	md5_transform(hash, random_int_secret);
- 	ret = *(unsigned long *)hash;
--	put_cpu_var(get_random_int_hash);
-+	put_locked_var(hash_entropy_int_lock, get_random_int_hash);
- 
- 	return ret;
- }
+ int wake_up_state(struct task_struct *p, unsigned int state)
 -- 
 2.13.2
-
-
