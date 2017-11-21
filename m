@@ -1,9 +1,9 @@
 From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [PATCH v6 24/37] tracing: Add support for 'synthetic' events
-Date: Tue, 21 Nov 2017 20:32:11 +0900
-Message-ID: <20171121113211.GB17299@sejong>
+Subject: Re: [PATCH v6 25/37] tracing: Add support for 'field variables'
+Date: Tue, 21 Nov 2017 21:08:47 +0900
+Message-ID: <20171121120847.GA22114@sejong>
 References: <cover.1510948725.git.tom.zanussi@linux.intel.com>
- <2bbfcf24f73a41b9c7140d49cfc5e3874ac96432.1510948725.git.tom.zanussi@linux.intel.com>
+ <aba56805d86084cc9634ada2bd5ad4de845d4afd.1510948725.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
@@ -16,361 +16,173 @@ Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
 To: Tom Zanussi <tom.zanussi@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <2bbfcf24f73a41b9c7140d49cfc5e3874ac96432.1510948725.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <aba56805d86084cc9634ada2bd5ad4de845d4afd.1510948725.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Nov 17, 2017 at 02:33:03PM -0600, Tom Zanussi wrote:
-> Synthetic events are user-defined events generated from hist trigger
-> variables saved from one or more other events.
+On Fri, Nov 17, 2017 at 02:33:04PM -0600, Tom Zanussi wrote:
+> Users should be able to directly specify event fields in hist trigger
+> 'actions' rather than being forced to explicitly create a variable for
+> that purpose.
 > 
-> To define a synthetic event, the user writes a simple specification
-> consisting of the name of the new event along with one or more
-> variables and their type(s), to the tracing/synthetic_events file.
+> Add support allowing fields to be used directly in actions, which
+> essentially does just that - creates 'invisible' variables for each
+> bare field specified in an action.  If a bare field refers to a field
+> on another (matching) event, it even creates a special histogram for
+> the purpose (since variables can't be defined on an existing histogram
+> after histogram creation).
 > 
-> For instance, the following creates a new event named 'wakeup_latency'
-> with 3 fields: lat, pid, and prio:
+> Here's a simple example that demonstrates both.  Basically the
+> onmatch() action creates a list of variables corresponding to the
+> parameters of the synthetic event to be generated, and then uses those
+> values to generate the event.  So for the wakeup_latency synthetic
+> event 'call' below the first param, $wakeup_lat, is a variable defined
+> explicitly on sched_switch, where 'next_pid' is just a normal field on
+> sched_switch, and prio is a normal field on sched_waking.
 > 
->     # echo 'wakeup_latency u64 lat; pid_t pid; int prio' >> \
->       /sys/kernel/debug/tracing/synthetic_events
+> Since the mechanism works on variables, those two normal fields just
+> have 'invisible' variables created internally for them.  In the case of
+> 'prio', which is on another event, we actually need to create an
+> additional hist trigger and define the invisible variable on that, since
+> once a hist trigger is defined, variables can't be added to it later.
 > 
-> Reading the tracing/synthetic_events file lists all the
-> currently-defined synthetic events, in this case the event we defined
-> above:
+>   echo 'wakeup_latency u64 lat; pid_t pid; int prio' >>
+>        /sys/kernel/debug/tracing/synthetic_events
 > 
->     # cat /sys/kernel/debug/tracing/synthetic_events
->     wakeup_latency u64 lat; pid_t pid; int prio
+>   echo 'hist:keys=pid:ts0=$common_timestamp.usecs >>
+>        /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
 > 
-> At this point, the synthetic event is ready to use, and a histogram
-> can be defined using it:
-> 
->     # echo 'hist:keys=pid,prio,lat.log2:sort=pid,lat' >> \
->     /sys/kernel/debug/tracing/events/synthetic/wakeup_latency/trigger
-> 
-> The new event is created under the tracing/events/synthetic/ directory
-> and looks and behaves just like any other event:
-> 
->     # ls /sys/kernel/debug/tracing/events/synthetic/wakeup_latency
->       enable  filter  format  hist  id  trigger
-> 
-> Although a histogram can be defined for it, nothing will happen until
-> an action tracing that event via the trace_synth() function occurs.
-> The trace_synth() function is very similar to all the other trace_*
-> invocations spread throughout the kernel, except in this case the
-> trace_ function and its corresponding tracepoint isn't statically
-> generated but defined by the user at run-time.
-> 
-> How this can be automatically hooked up via a hist trigger 'action' is
-> discussed in a subsequent patch.
+> echo 'hist:keys=next_pid:wakeup_lat=$common_timestamp.usecs-$ts0:
+>       onmatch(sched.sched_waking).wakeup_latency($wakeup_lat,next_pid,prio)
+>             >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
 > 
 > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> [fix noderef.cocci warnings, sizeof pointer for kcalloc of event->fields]
-> Signed-off-by: Fengguang Wu <fengguang.wu@intel.com>
 > ---
 
 [SNIP]
-> +static int synth_field_size(char *type)
+> +struct hist_field *
+> +create_field_var_hist(struct hist_trigger_data *target_hist_data,
+> +		      char *subsys_name, char *event_name, char *field_name)
 > +{
-> +	int size = 0;
+> +	struct trace_array *tr = target_hist_data->event_file->tr;
+> +	struct hist_field *event_var = ERR_PTR(-EINVAL);
+> +	struct hist_trigger_data *hist_data;
+> +	unsigned int i, n, first = true;
+> +	struct field_var_hist *var_hist;
+> +	struct trace_event_file *file;
+> +	struct hist_field *key_field;
+> +	char *saved_filter;
+> +	char *cmd;
+> +	int ret;
 > +
-> +	if (strcmp(type, "s64") == 0)
-> +		size = sizeof(s64);
-> +	else if (strcmp(type, "u64") == 0)
-> +		size = sizeof(u64);
-> +	else if (strcmp(type, "s32") == 0)
-> +		size = sizeof(s32);
-> +	else if (strcmp(type, "u32") == 0)
-> +		size = sizeof(u32);
-> +	else if (strcmp(type, "s16") == 0)
-> +		size = sizeof(s16);
-> +	else if (strcmp(type, "u16") == 0)
-> +		size = sizeof(u16);
-> +	else if (strcmp(type, "s8") == 0)
-> +		size = sizeof(s8);
-> +	else if (strcmp(type, "u8") == 0)
-> +		size = sizeof(u8);
-> +	else if (strcmp(type, "char") == 0)
-> +		size = sizeof(char);
-> +	else if (strcmp(type, "unsigned char") == 0)
-> +		size = sizeof(unsigned char);
-> +	else if (strcmp(type, "int") == 0)
-> +		size = sizeof(int);
-> +	else if (strcmp(type, "unsigned int") == 0)
-> +		size = sizeof(unsigned int);
-> +	else if (strcmp(type, "long") == 0)
-> +		size = sizeof(long);
-> +	else if (strcmp(type, "unsigned long") == 0)
-> +		size = sizeof(unsigned long);
-> +	else if (strcmp(type, "pid_t") == 0)
-> +		size = sizeof(pid_t);
-> +	else if (synth_field_is_string(type))
-> +		size = synth_field_string_size(type);
+> +	if (target_hist_data->n_field_var_hists >= SYNTH_FIELDS_MAX)
+> +		return ERR_PTR(-EINVAL);
 > +
-> +	return size;
-> +}
+> +	file = event_file(tr, subsys_name, event_name);
 > +
-> +static const char *synth_field_fmt(char *type)
-> +{
-> +	const char *fmt = "%llu";
-> +
-> +	if (strcmp(type, "s64") == 0)
-> +		fmt = "%lld";
-> +	else if (strcmp(type, "u64") == 0)
-> +		fmt = "%llu";
-> +	else if (strcmp(type, "s32") == 0)
-> +		fmt = "%d";
-> +	else if (strcmp(type, "u32") == 0)
-> +		fmt = "%u";
-> +	else if (strcmp(type, "s16") == 0)
-> +		fmt = "%d";
-> +	else if (strcmp(type, "u16") == 0)
-> +		fmt = "%u";
-> +	else if (strcmp(type, "s8") == 0)
-> +		fmt = "%d";
-> +	else if (strcmp(type, "u8") == 0)
-> +		fmt = "%u";
-> +	else if (strcmp(type, "char") == 0)
-> +		fmt = "%d";
-> +	else if (strcmp(type, "unsigned char") == 0)
-> +		fmt = "%u";
-> +	else if (strcmp(type, "int") == 0)
-> +		fmt = "%d";
-> +	else if (strcmp(type, "unsigned int") == 0)
-> +		fmt = "%u";
-> +	else if (strcmp(type, "long") == 0)
-> +		fmt = "%ld";
-> +	else if (strcmp(type, "unsigned long") == 0)
-> +		fmt = "%lu";
-> +	else if (strcmp(type, "pid_t") == 0)
-> +		fmt = "%d";
-> +	else if (strchr(type, '[') != NULL)
-
-Why not using the same function here?
-
-	else if (synth_field_is_string(type))
-
-> +		fmt = "%s";
-> +
-> +	return fmt;
-> +}
-> +
-
-[SNIP]
-> +static notrace void trace_event_raw_event_synth(void *__data,
-> +						u64 *var_ref_vals,
-> +						unsigned int var_ref_idx)
-> +{
-> +	struct trace_event_file *trace_file = __data;
-> +	struct synth_trace_event *entry;
-> +	struct trace_event_buffer fbuffer;
-> +	struct synth_event *event;
-> +	unsigned int i, n_u64;
-> +	int fields_size = 0;
-> +
-> +	event = trace_file->event_call->data;
-> +
-> +	if (trace_trigger_soft_disabled(trace_file))
-> +		return;
-> +
-> +	fields_size = event->n_u64 * sizeof(u64);
-> +
-> +	entry = trace_event_buffer_reserve(&fbuffer, trace_file,
-> +					   sizeof(*entry) + fields_size);
-> +	if (!entry)
-> +		return;
-> +
-> +	for (i = 0, n_u64 = 0; i < event->n_fields; i++) {
-> +		if (event->fields[i]->is_string) {
-> +			char *str_val = (char *)(long)var_ref_vals[var_ref_idx + i];
-> +			char *str_field = (char *)&entry->fields[n_u64];
-> +
-> +			strncpy(str_field, str_val, STR_VAR_LEN_MAX);
-> +			n_u64 += STR_VAR_LEN_MAX / sizeof(u64);
-> +		} else {
-> +			entry->fields[i] = var_ref_vals[var_ref_idx + i];
-
-I think it should be 'entry->fields[n_u64]' like for string.
-
-
-> +			n_u64++;
-> +		}
+> +	if (IS_ERR(file)) {
+> +		ret = PTR_ERR(file);
+> +		return ERR_PTR(ret);
 > +	}
-> +
-> +	trace_event_buffer_commit(&fbuffer);
-> +}
-> +
-
-[SNIP]
-> +static int create_synth_event(int argc, char **argv)
-> +{
-> +	struct synth_field *field, *fields[SYNTH_FIELDS_MAX];
-> +	struct synth_event *event = NULL;
-> +	bool delete_event = false;
-> +	int i, n_fields = 0, ret = 0;
-> +	char *name;
-> +
-> +	mutex_lock(&synth_event_mutex);
 > +
 > +	/*
-> +	 * Argument syntax:
-> +	 *  - Add synthetic event: <event_name> field[;field] ...
-> +	 *  - Remove synthetic event: !<event_name> field[;field] ...
-> +	 *      where 'field' = type field_name
+> +	 * Look for a histogram compatible with target.  We'll use the
+> +	 * found histogram specification to create a new matching
+> +	 * histogram with our variable on it.  target_hist_data is not
+> +	 * yet a registered histogram so we can't use that.
 > +	 */
-> +	if (argc < 1) {
-> +		ret = -EINVAL;
-> +		goto out;
-> +	}
+> +	hist_data = find_compatible_hist(target_hist_data, file);
+> +	if (!hist_data)
+> +		return ERR_PTR(-EINVAL);
 > +
-> +	name = argv[0];
-> +	if (name[0] == '!') {
-> +		delete_event = true;
-> +		name++;
-> +	}
-> +
-> +	event = find_synth_event(name);
-> +	if (event) {
-> +		if (delete_event) {
-> +			if (event->ref) {
-> +				event = NULL;
-> +				ret = -EBUSY;
-> +				goto out;
-> +			}
-> +			list_del(&event->list);
-> +			goto out;
-> +		}
-> +		event = NULL;
-> +		ret = -EEXIST;
-> +		goto out;
-> +	} else if (delete_event)
-> +		goto out;
-> +
-> +	if (argc < 2) {
-> +		ret = -EINVAL;
-> +		goto out;
-> +	}
-> +
-> +	for (i = 1; i < argc - 1; i++) {
-> +		if (strcmp(argv[i], ";") == 0)
-> +			continue;
-> +		if (n_fields == SYNTH_FIELDS_MAX) {
-> +			ret = -EINVAL;
-> +			goto err;
-> +		}
-> +
-> +		field = parse_synth_field(argv[i], argv[i + 1]);
-> +		if (IS_ERR(field)) {
-> +			ret = PTR_ERR(field);
-> +			goto err;
-> +		}
-> +		fields[n_fields] = field;
-> +		i++; n_fields++;
-> +	}
-> +
-> +	if (i < argc) {
-> +		ret = -EINVAL;
-> +		goto err;
-> +	}
-> +
-> +	event = alloc_synth_event(name, n_fields, fields);
-> +	if (IS_ERR(event)) {
-> +		ret = PTR_ERR(event);
-> +		event = NULL;
-> +		goto err;
-> +	}
-> + out:
-> +	mutex_unlock(&synth_event_mutex);
-> +
-> +	if (event) {
-> +		if (delete_event) {
-> +			ret = unregister_synth_event(event);
-> +			if (!ret)
-> +				free_synth_event(event);
-> +			else {
-> +				mutex_lock(&synth_event_mutex);
-> +				if (!find_synth_event(event->name))
-> +					list_add(&event->list, &synth_event_list);
-> +				mutex_unlock(&synth_event_mutex);
-> +			}
-> +		} else {
-> +			ret = register_synth_event(event);
-> +			if (!ret) {
-> +				mutex_lock(&synth_event_mutex);
-> +				if (!find_synth_event(event->name))
-> +					list_add(&event->list, &synth_event_list);
-> +				mutex_unlock(&synth_event_mutex);
-> +			} else
-> +				free_synth_event(event);
+> +	/* See if a synthetic field variable has already been created */
+> +	event_var = find_synthetic_field_var(target_hist_data, subsys_name,
+> +					     event_name, field_name);
+> +	if (event_var && !IS_ERR(event_var))
 
-Hmm.. this code is repeated 3 times (see below).  How about making a
-separate function like free_or_add_back_event()?
+You can use IS_ERR_OR_NULL().
 
-
-> +		}
+> +		return event_var;
+> +
+> +	var_hist = kzalloc(sizeof(*var_hist), GFP_KERNEL);
+> +	if (!var_hist)
+> +		return ERR_PTR(-ENOMEM);
+> +
+> +	cmd = kzalloc(MAX_FILTER_STR_VAL, GFP_KERNEL);
+> +	if (!cmd) {
+> +		kfree(var_hist);
+> +		return ERR_PTR(-ENOMEM);
 > +	}
 > +
-> +	return ret;
-> + err:
-> +	mutex_unlock(&synth_event_mutex);
+> +	/* Use the same keys as the compatible histogram */
+> +	strcat(cmd, "keys=");
 > +
-> +	for (i = 0; i < n_fields; i++)
-> +		free_synth_field(fields[i]);
-> +	free_synth_event(event);
-> +
-> +	return ret;
-> +}
-> +
-> +static int release_all_synth_events(void)
-> +{
-> +	struct list_head release_events;
-> +	struct synth_event *event, *e;
-> +	int ret = 0, err = 0;
-> +
-> +	INIT_LIST_HEAD(&release_events);
-> +
-> +	mutex_lock(&synth_event_mutex);
-> +
-> +	list_for_each_entry(event, &synth_event_list, list) {
-> +		if (event->ref) {
-> +			mutex_unlock(&synth_event_mutex);
-> +			return -EBUSY;
-> +		}
+> +	for_each_hist_key_field(i, hist_data) {
+> +		key_field = hist_data->fields[i];
+> +		if (!first)
+> +			strcat(cmd, ",");
+> +		strcat(cmd, key_field->field->name);
+> +		first = false;
 > +	}
 > +
-> +	list_for_each_entry_safe(event, e, &synth_event_list, list) {
-> +		list_del(&event->list);
-> +		list_add(&event->list, &release_events);
-
-list_move() ?
-
+> +	/* Create the synthetic field variable specification */
+> +	strcat(cmd, ":synthetic_");
+> +	strcat(cmd, field_name);
+> +	strcat(cmd, "=");
+> +	strcat(cmd, field_name);
+> +
+> +	/* Use the same filter as the compatible histogram */
+> +	saved_filter = find_trigger_filter(hist_data, file);
+> +	if (saved_filter) {
+> +		strcat(cmd, " if ");
+> +		strcat(cmd, saved_filter);
 > +	}
 > +
-> +	mutex_unlock(&synth_event_mutex);
+> +	var_hist->cmd = kstrdup(cmd, GFP_KERNEL);
+> +	if (!var_hist->cmd) {
+> +		kfree(cmd);
+> +		kfree(var_hist);
+> +		return ERR_PTR(-ENOMEM);
+> +	}
 > +
-> +	list_for_each_entry_safe(event, e, &release_events, list) {
-> +		list_del(&event->list);
+> +	/* Save the compatible histogram information */
+> +	var_hist->hist_data = hist_data;
 > +
-> +		ret = unregister_synth_event(event);
-> +		if (ret == 0)
-> +			free_synth_event(event);
-> +		else {
-> +			err = ret;
-> +			mutex_lock(&synth_event_mutex);
-> +			if (!find_synth_event(event->name))
-> +				list_add(&event->list, &synth_event_list);
-> +			mutex_unlock(&synth_event_mutex);
-> +		}
+> +	/* Create the new histogram with our variable */
+> +	ret = event_hist_trigger_func(&trigger_hist_cmd, file,
+> +				      "", "hist", cmd);
+> +	if (ret) {
+> +		kfree(cmd);
+> +		kfree(var_hist->cmd);
+> +		kfree(var_hist);
+> +		return ERR_PTR(ret);
+> +	}
+> +
+> +	kfree(cmd);
+> +
+> +	/* If we can't find the variable, something went wrong */
+> +	event_var = find_synthetic_field_var(target_hist_data, subsys_name,
+> +					     event_name, field_name);
+> +	if (!event_var || IS_ERR(event_var)) {
 
-Also repeated here..
+Again, IS_ERR_OR_NULL could be used.
+
+> +		kfree(cmd);
+
+It seems like a double-free.
 
 Thanks,
 Namhyung
 
 
+> +		kfree(var_hist->cmd);
+> +		kfree(var_hist);
+> +		return ERR_PTR(-EINVAL);
 > +	}
 > +
-> +	if (err)
-> +		ret = err;
+> +	n = target_hist_data->n_field_var_hists;
+> +	target_hist_data->field_var_hists[n] = var_hist;
+> +	target_hist_data->n_field_var_hists++;
 > +
-> +	return ret;
+> +	return event_var;
 > +}
