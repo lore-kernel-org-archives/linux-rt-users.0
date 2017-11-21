@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/4] fs/dcache: disable preemption on i_dir_seqs write side
-Date: Tue, 21 Nov 2017 11:04:44 -0500
-Message-ID: <20171121160517.340822152@goodmis.org>
+Subject: [PATCH RT 1/4] drivers/zram: fix zcomp_stream_get() smp_processor_id() use in
+ preemptible code
+Date: Tue, 21 Nov 2017 11:04:43 -0500
+Message-ID: <20171121160517.195093772@goodmis.org>
 References: <20171121160442.866038796@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -13,11 +14,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
         tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
-        stable-rt@vger.kernel.org, Oleg.Karfich@wago.com
+        stable-rt@vger.kernel.org, Mike Galbraith <efault@gmx.de>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-fs-dcache-disable-preemption-on-i_dir_seq-s-write-si.patch
+Content-Disposition: inline; filename=0001-drivers-zram-fix-zcomp_stream_get-smp_processor_id-u.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -26,130 +27,42 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Mike Galbraith <efault@gmx.de>
 
-i_dir_seq is an opencoded seqcounter. Based on the code it looks like we
-could have two writers in parallel despite the fact that the d_lock is
-held. The problem is that during the write process on RT the preemption
-is still enabled and if this process is interrupted by a reader with RT
-priority then we lock up.
-To avoid that lock up I am disabling the preemption during the update.
-The rename of i_dir_seq is here to ensure to catch new write sides in
-future.
+Use get_local_ptr() instead this_cpu_ptr() to avoid a warning regarding
+smp_processor_id() in preemptible code.
+raw_cpu_ptr() would be fine, too because the per-CPU data structure is
+protected with a spin lock so it does not matter much if we take the
+other one.
 
 Cc: stable-rt@vger.kernel.org
-Reported-by: Oleg.Karfich@wago.com
+Signed-off-by: Mike Galbraith <efault@gmx.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- fs/dcache.c        | 12 +++++++-----
- fs/inode.c         |  2 +-
- fs/libfs.c         |  6 ++++--
- include/linux/fs.h |  2 +-
- 4 files changed, 13 insertions(+), 9 deletions(-)
+ drivers/block/zram/zcomp.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/fs/dcache.c b/fs/dcache.c
-index 37948da28742..f0719b2f1be5 100644
---- a/fs/dcache.c
-+++ b/fs/dcache.c
-@@ -2409,9 +2409,10 @@ EXPORT_SYMBOL(d_rehash);
- static inline unsigned start_dir_add(struct inode *dir)
+diff --git a/drivers/block/zram/zcomp.c b/drivers/block/zram/zcomp.c
+index fa8329ad79fd..8c93ee150ee8 100644
+--- a/drivers/block/zram/zcomp.c
++++ b/drivers/block/zram/zcomp.c
+@@ -120,7 +120,7 @@ struct zcomp_strm *zcomp_stream_get(struct zcomp *comp)
  {
+ 	struct zcomp_strm *zstrm;
  
-+	preempt_disable_rt();
- 	for (;;) {
--		unsigned n = dir->i_dir_seq;
--		if (!(n & 1) && cmpxchg(&dir->i_dir_seq, n, n + 1) == n)
-+		unsigned n = dir->__i_dir_seq;
-+		if (!(n & 1) && cmpxchg(&dir->__i_dir_seq, n, n + 1) == n)
- 			return n;
- 		cpu_relax();
- 	}
-@@ -2419,7 +2420,8 @@ static inline unsigned start_dir_add(struct inode *dir)
+-	zstrm = *this_cpu_ptr(comp->stream);
++	zstrm = *get_local_ptr(comp->stream);
+ 	spin_lock(&zstrm->zcomp_lock);
+ 	return zstrm;
+ }
+@@ -131,6 +131,7 @@ void zcomp_stream_put(struct zcomp *comp)
  
- static inline void end_dir_add(struct inode *dir, unsigned n)
- {
--	smp_store_release(&dir->i_dir_seq, n + 2);
-+	smp_store_release(&dir->__i_dir_seq, n + 2);
-+	preempt_enable_rt();
+ 	zstrm = *this_cpu_ptr(comp->stream);
+ 	spin_unlock(&zstrm->zcomp_lock);
++	put_local_ptr(zstrm);
  }
  
- static void d_wait_lookup(struct dentry *dentry)
-@@ -2455,7 +2457,7 @@ struct dentry *d_alloc_parallel(struct dentry *parent,
- 
- retry:
- 	rcu_read_lock();
--	seq = smp_load_acquire(&parent->d_inode->i_dir_seq) & ~1;
-+	seq = smp_load_acquire(&parent->d_inode->__i_dir_seq) & ~1;
- 	r_seq = read_seqbegin(&rename_lock);
- 	dentry = __d_lookup_rcu(parent, name, &d_seq);
- 	if (unlikely(dentry)) {
-@@ -2477,7 +2479,7 @@ struct dentry *d_alloc_parallel(struct dentry *parent,
- 		goto retry;
- 	}
- 	hlist_bl_lock(b);
--	if (unlikely(parent->d_inode->i_dir_seq != seq)) {
-+	if (unlikely(parent->d_inode->__i_dir_seq != seq)) {
- 		hlist_bl_unlock(b);
- 		rcu_read_unlock();
- 		goto retry;
-diff --git a/fs/inode.c b/fs/inode.c
-index 920aa0b1c6b0..3d6b5fd1bf06 100644
---- a/fs/inode.c
-+++ b/fs/inode.c
-@@ -153,7 +153,7 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
- 	inode->i_bdev = NULL;
- 	inode->i_cdev = NULL;
- 	inode->i_link = NULL;
--	inode->i_dir_seq = 0;
-+	inode->__i_dir_seq = 0;
- 	inode->i_rdev = 0;
- 	inode->dirtied_when = 0;
- 
-diff --git a/fs/libfs.c b/fs/libfs.c
-index 48826d4da189..3ea54d1fc431 100644
---- a/fs/libfs.c
-+++ b/fs/libfs.c
-@@ -89,7 +89,7 @@ static struct dentry *next_positive(struct dentry *parent,
- 				    struct list_head *from,
- 				    int count)
- {
--	unsigned *seq = &parent->d_inode->i_dir_seq, n;
-+	unsigned *seq = &parent->d_inode->__i_dir_seq, n;
- 	struct dentry *res;
- 	struct list_head *p;
- 	bool skipped;
-@@ -122,8 +122,9 @@ static struct dentry *next_positive(struct dentry *parent,
- static void move_cursor(struct dentry *cursor, struct list_head *after)
- {
- 	struct dentry *parent = cursor->d_parent;
--	unsigned n, *seq = &parent->d_inode->i_dir_seq;
-+	unsigned n, *seq = &parent->d_inode->__i_dir_seq;
- 	spin_lock(&parent->d_lock);
-+	preempt_disable_rt();
- 	for (;;) {
- 		n = *seq;
- 		if (!(n & 1) && cmpxchg(seq, n, n + 1) == n)
-@@ -136,6 +137,7 @@ static void move_cursor(struct dentry *cursor, struct list_head *after)
- 	else
- 		list_add_tail(&cursor->d_child, &parent->d_subdirs);
- 	smp_store_release(seq, n + 2);
-+	preempt_enable_rt();
- 	spin_unlock(&parent->d_lock);
- }
- 
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index d705ae084edd..ab1946f4a729 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -688,7 +688,7 @@ struct inode {
- 		struct block_device	*i_bdev;
- 		struct cdev		*i_cdev;
- 		char			*i_link;
--		unsigned		i_dir_seq;
-+		unsigned		__i_dir_seq;
- 	};
- 
- 	__u32			i_generation;
+ int zcomp_compress(struct zcomp_strm *zstrm,
 -- 
 2.13.2
