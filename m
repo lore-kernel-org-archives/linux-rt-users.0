@@ -1,165 +1,114 @@
-From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [PATCH v6 26/37] tracing: Add 'onmatch' hist trigger action
- support
-Date: Wed, 22 Nov 2017 18:49:56 +0900
-Message-ID: <20171122094955.GA2221@danjae.aot.lge.com>
-References: <cover.1510948725.git.tom.zanussi@linux.intel.com>
- <cb8329d8ff410082472191be48bfb99e7aafc6a2.1510948725.git.tom.zanussi@linux.intel.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [BUG] 4.4.x-rt - memcg: refill_stock() use get_cpu_light() has
+ data corruption issue
+Date: Wed, 22 Nov 2017 06:59:55 -0500
+Message-ID: <20171122065955.15ac5039@gandalf.local.home>
+References: <05AA4EC5C6EC1D48BE2CDCFF3AE0B8A637F78A15@CNMAILEX04.lenovo.com>
+        <20171121225002.0704d679@vmware.local.home>
+        <1511329005.8762.0.camel@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        kernel-team@lge.com
-To: Tom Zanussi <tom.zanussi@linux.intel.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+Cc: Haiyang HY1 Tan <tanhy1@lenovo.com>,
+        "'bigeasy@linutronix.de'" <bigeasy@linutronix.de>,
+        "'linux-rt-users@vger.kernel.org'" <linux-rt-users@vger.kernel.org>,
+        "'linux-kernel@vger.kernel.org'" <linux-kernel@vger.kernel.org>,
+        Tong Tong3 Li <litong3@lenovo.com>,
+        Feng Feng24 Liu <liufeng24@lenovo.com>,
+        Jianqiang1 Lu <lujq1@lenovo.com>,
+        Hongyong HY2 Zang <zanghy2@lenovo.com>
+To: Mike Galbraith <efault@gmx.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <cb8329d8ff410082472191be48bfb99e7aafc6a2.1510948725.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <1511329005.8762.0.camel@gmx.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Nov 17, 2017 at 02:33:05PM -0600, Tom Zanussi wrote:
-> Add an 'onmatch(matching.event).<synthetic_event_name>(param list)'
-> hist trigger action which is invoked with the set of variables or
-> event fields named in the 'param list'.  The result is the generation
-> of a synthetic event that consists of the values contained in those
-> variables and/or fields at the time the invoking event was hit.
-> 
-> As an example the below defines a simple synthetic event using a
-> variable defined on the sched_wakeup_new event, and shows the event
-> definition with unresolved fields, since the sched_wakeup_new event
-> with the testpid variable hasn't been defined yet:
-> 
->     # echo 'wakeup_new_test pid_t pid; int prio' >> \
->       /sys/kernel/debug/tracing/synthetic_events
-> 
->     # cat /sys/kernel/debug/tracing/synthetic_events
->       wakeup_new_test pid_t pid; int prio
-> 
-> The following hist trigger both defines a testpid variable and
-> specifies an onmatch() trace action that uses that variable along with
-> a non-variable field to generate a wakeup_new_test synthetic event
-> whenever a sched_wakeup_new event occurs, which because of the 'if
-> comm == "cyclictest"' filter only happens when the executable is
-> cyclictest:
-> 
->     # echo 'hist:testpid=pid:keys=$testpid:\
->       onmatch(sched.sched_wakeup_new).wakeup_new_test($testpid, prio) \
->         if comm=="cyclictest"' >> \
->       /sys/kernel/debug/tracing/events/sched/sched_wakeup_new/trigger
-> 
-> Creating and displaying a histogram based on those events is now just
-> a matter of using the fields and new synthetic event in the
-> tracing/events/synthetic directory, as usual:
-> 
->     # echo 'hist:keys=pid,prio:sort=pid,prio' >> \
->       /sys/kernel/debug/tracing/events/synthetic/wakeup_new_test/trigger
-> 
-> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> Signed-off-by: Rajvi Jingar <rajvi.jingar@intel.com>
-> ---
+On Wed, 22 Nov 2017 06:36:45 +0100
+Mike Galbraith <efault@gmx.de> wrote:
 
-[SNIP]
-> +static int onmatch_create(struct hist_trigger_data *hist_data,
-> +			  struct trace_event_file *file,
-> +			  struct action_data *data)
-> +{
-> +	char *event_name, *param, *system = NULL;
-> +	struct hist_field *hist_field, *var_ref;
-> +	unsigned int i, var_ref_idx;
-> +	unsigned int field_pos = 0;
-> +	struct synth_event *event;
-> +	int ret = 0;
-> +
-> +	mutex_lock(&synth_event_mutex);
-> +	event = find_synth_event(data->onmatch.synth_event_name);
-> +	if (!event) {
-> +		mutex_unlock(&synth_event_mutex);
-> +		return -EINVAL;
-> +	}
-> +	mutex_unlock(&synth_event_mutex);
-> +
-> +	var_ref_idx = hist_data->n_var_refs;
-> +
-> +	for (i = 0; i < data->n_params; i++) {
-> +		char *p;
-> +
-> +		p = param = kstrdup(data->params[i], GFP_KERNEL);
-> +		if (!param) {
-> +			ret = -ENOMEM;
-> +			goto out;
-> +		}
-> +
-> +		system = strsep(&param, ".");
-> +		if (!param) {
-> +			param = (char *)system;
-> +			system = event_name = NULL;
-> +		} else {
-> +			event_name = strsep(&param, ".");
-> +			if (!param) {
-> +				kfree(p);
-> +				ret = -EINVAL;
-> +				goto out;
-> +			}
-> +		}
-> +
-> +		if (param[0] == '$')
+> On Tue, 2017-11-21 at 22:50 -0500, Steven Rostedt wrote:
+> > 
+> > Does it work if you revert the patch?  
+> 
+> That would restore the gripe.  How about this..
 
-What about $common_timestamp ?
+Would it?
+
+The gripe you report is:
+
+       refill_stock()
+          get_cpu_var()
+          drain_stock()
+             res_counter_uncharge()
+                res_counter_uncharge_until()
+                   spin_lock() <== boom
 
 
-> +			hist_field = onmatch_find_var(hist_data, data, system,
-> +						      event_name, param);
-> +		else
-> +			hist_field = onmatch_create_field_var(hist_data, data,
-> +							      system,
-> +							      event_name,
-> +							      param);
-> +
-> +		if (!hist_field) {
-> +			kfree(p);
-> +			ret = -EINVAL;
-> +			goto out;
-> +		}
-> +
-> +		if (check_synth_field(event, hist_field, field_pos) == 0) {
-> +			var_ref = create_var_ref(hist_field, system, event_name);
-> +			if (!var_ref) {
-> +				kfree(p);
-> +				ret = -ENOMEM;
-> +				goto out;
-> +			}
-> +
-> +			save_synth_var_ref(hist_data, var_ref);
-> +			field_pos++;
-> +			kfree(p);
-> +			continue;
-> +		}
-> +
-> +		kfree(p);
-> +		ret = -EINVAL;
-> +		goto out;
-> +	}
-> +
-> +	if (field_pos != event->n_fields) {
-> +		ret = -EINVAL;
-> +		goto out;
-> +	}
-> +
-> +	data->fn = action_trace;
-> +	data->onmatch.synth_event = event;
-> +	data->onmatch.var_ref_idx = var_ref_idx;
-> +	event->ref++;
+But commit 3e32cb2e0a1 ("mm: memcontrol: lockless page counters")
+changed that code to this:
 
-Is it safe to update the refcount without synth_event_mutex?
+ static void drain_stock(struct memcg_stock_pcp *stock)
+ {
+        struct mem_cgroup *old = stock->cached;
+ 
+        if (stock->nr_pages) {
+-               unsigned long bytes = stock->nr_pages * PAGE_SIZE;
+-
+-               res_counter_uncharge(&old->res, bytes);
++               page_counter_uncharge(&old->memory, stock->nr_pages);
+                if (do_swap_account)
+-                       res_counter_uncharge(&old->memsw, bytes);
++                       page_counter_uncharge(&old->memsw, stock->nr_pages);
+                stock->nr_pages = 0;
+        }
 
-Thanks,
-Namhyung
+Where we replaced res_counter_uncharge() which is this:
 
+u64 res_counter_uncharge_until(struct res_counter *counter,
+                               struct res_counter *top,
+                               unsigned long val)
+{
+        unsigned long flags;
+        struct res_counter *c;
+        u64 ret = 0;
 
-> + out:
-> +	return ret;
-> +}
+        local_irq_save(flags);
+        for (c = counter; c != top; c = c->parent) {
+                u64 r;
+                spin_lock(&c->lock);
+                r = res_counter_uncharge_locked(c, val);
+                if (c == counter)
+                        ret = r;
+                spin_unlock(&c->lock);
+        }
+        local_irq_restore(flags);
+        return ret;
+}
+
+u64 res_counter_uncharge(struct res_counter *counter, unsigned long val)
+{
+        return res_counter_uncharge_until(counter, NULL, val);
+}
+
+and has that spin lock, to this:
+
+void page_counter_cancel(struct page_counter *counter, unsigned long nr_pages)
+{
+	long new;
+
+	new = atomic_long_sub_return(nr_pages, &counter->count);
+	/* More uncharges than charges? */
+	WARN_ON_ONCE(new < 0);
+}
+
+void page_counter_uncharge(struct page_counter *counter, unsigned long nr_pages)
+{
+	struct page_counter *c;
+
+	for (c = counter; c; c = c->parent)
+		page_counter_cancel(c, nr_pages);
+}
+
+You see. No more spin lock to gripe about. No boom in your scenario.
+
+-- Steve
