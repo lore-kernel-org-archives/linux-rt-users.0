@@ -1,171 +1,168 @@
-From: Haiyang HY1 Tan <tanhy1@lenovo.com>
-Subject: [BUG] 4.4.x-rt - memcg: refill_stock() use get_cpu_light() has data
- corruption issue
-Date: Wed, 22 Nov 2017 03:18:45 +0000
-Message-ID: <05AA4EC5C6EC1D48BE2CDCFF3AE0B8A637F78A15@CNMAILEX04.lenovo.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [BUG] 4.4.x-rt - memcg: refill_stock() use get_cpu_light() has
+ data corruption issue
+Date: Tue, 21 Nov 2017 22:50:02 -0500
+Message-ID: <20171121225002.0704d679@vmware.local.home>
+References: <05AA4EC5C6EC1D48BE2CDCFF3AE0B8A637F78A15@CNMAILEX04.lenovo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="gb2312"
-Content-Transfer-Encoding: base64
-Cc: Tong Tong3 Li <litong3@lenovo.com>,
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+Cc: "'umgwanakikbuti@gmail.com'" <umgwanakikbuti@gmail.com>,
+        "'bigeasy@linutronix.de'" <bigeasy@linutronix.de>,
+        "'linux-rt-users@vger.kernel.org'" <linux-rt-users@vger.kernel.org>,
+        "'linux-kernel@vger.kernel.org'" <linux-kernel@vger.kernel.org>,
+        Tong Tong3 Li <litong3@lenovo.com>,
         Feng Feng24 Liu <liufeng24@lenovo.com>,
         Jianqiang1 Lu <lujq1@lenovo.com>,
         Hongyong HY2 Zang <zanghy2@lenovo.com>
-To: "'umgwanakikbuti@gmail.com'" <umgwanakikbuti@gmail.com>,
-        "'bigeasy@linutronix.de'" <bigeasy@linutronix.de>,
-        "'rostedt@goodmis.org'" <rostedt@goodmis.org>,
-        "'linux-rt-users@vger.kernel.org'" <linux-rt-users@vger.kernel.org>,
-        "'linux-kernel@vger.kernel.org'" <linux-kernel@vger.kernel.org>
+To: Haiyang HY1 Tan <tanhy1@lenovo.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Language: zh-CN
+In-Reply-To: <05AA4EC5C6EC1D48BE2CDCFF3AE0B8A637F78A15@CNMAILEX04.lenovo.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-RGVhciBSVCBleHBlcnRzLA0KDQpJIGhhdmUgYSB4ODYgc2VydmVyIG1haW5seSB1c2VkIGFzIHFl
-bXUta3ZtIGh5cGVydmlzb3IgdGhhdCBpcyBpbnN0YWxsZWQgd2l0aCBsaW51eC1SVCBrZXJuZWws
-IHRoZSBsaW51eCBrZXJuZWwgYW5kIFJUIHBhdGNoIHNldCBhcmUgcmVzcGVjdGl2ZWx5IGdldCBm
-cm9tOg0KTGludXgga2VybmVsOiBodHRwczovL3d3dy5rZXJuZWwub3JnL3B1Yi9saW51eC9rZXJu
-ZWwvdjQueC9saW51eC00LjQuOTcudGFyLnh6DQpSVCBwYXRjaCBzZXQ6IGh0dHBzOi8vd3d3Lmtl
-cm5lbC5vcmcvcHViL2xpbnV4L2tlcm5lbC9wcm9qZWN0cy9ydC80LjQvcGF0Y2hlcy00LjQuOTct
-cnQxMTAudGFyLmd6DQoNCmtlcm5lbCBjcmFzaCBvciBodW5nIG9jY3VyIG9jY2FzaW9uYWxseSBv
-biB0aGlzIHNlcnZlciwgYSB0eXBpY2FsIGJhY2t0cmFjZSBpcyBzaG93biBibG93Og0KDQqjqDEz
-OjU1OjIzo6lbMTY3MTEyLjM3MTkwOV0gQlVHOiB1bmFibGUgdG8gaGFuZGxlIGtlcm5lbCBOVUxM
-IHBvaW50ZXIgZGVyZWZlcmVuY2UgYXQgMDAwMDAwMDAwMDAwMDNiMA0Ko6gxMzo1NToyM6OpWzE2
-NzExMi4zNzE5MTRdIElQOiBbPGZmZmZmZmZmODExYTZhMzc+XSBtZW1fY2dyb3VwX3BhZ2VfbHJ1
-dmVjKzB4NDcvMHg2MA0Ko6gxMzo1NToyM6OpWzE2NzExMi4zNzE5MTVdIFBHRCAwIA0Ko6gxMzo1
-NToyM6OpWzE2NzExMi4zNzE5MTZdIE9vcHM6IDAwMDAgWyMxXSBQUkVFTVBUIFNNUCANCqOoMTM6
-NTU6MjOjqVsxNjcxMTIuMzcxOTM4XSBNb2R1bGVzIGxpbmtlZCBpbjogeHRfbWFjIHh0X3BoeXNk
-ZXYgeHRfc2V0IGlwX3NldF9oYXNoX25ldCBpcF9zZXQgdmZpb19wY2kgdmZpb192aXJxZmQgaXA2
-dGFibGVfcmF3IGlwNnRhYmxlX21hbmdsZSBpcHRhYmxlX25hdCBuZl9uYXRfaXB2NCBuZl9uYXQg
-eHRfY29ubm1hcmsgaXB0YWJsZV9tYW5nbGUgODAyMXEgZ2FycCBtcnAgZWJ0YWJsZV9maWx0ZXIg
-ZWJ0YWJsZXMgaXA2dGFibGVfZmlsdGVyIGlwNl90YWJsZXMgb3BlbnZzd2l0Y2ggeHRfdGNwdWRw
-IHh0X211bHRpcG9ydCB4dF9jb25udHJhY2sgaXB0YWJsZV9maWx0ZXIgeHRfY29tbWVudCB4dF9D
-VCBpcHRhYmxlX3JhdyBpZ2JfdWlvKE8pIHVpbyBpbnRlbF9yYXBsIGlvc2ZfbWJpIGludGVsX3Bv
-d2VyY2xhbXAgY29yZXRlbXAga3ZtX2ludGVsIGt2bSBpcnFieXBhc3MgY3JjdDEwZGlmX3BjbG11
-bCBjcmMzMl9wY2xtdWwgZ2hhc2hfY2xtdWxuaV9pbnRlbCBteG1fd21pIG1laV9tZSBhZXNuaV9p
-bnRlbCBhZXNfeDg2XzY0IGdsdWVfaGVscGVyIGxydyBhYmxrX2hlbHBlciBpcG1pX2RldmludGYg
-bWVpIGxwY19pY2ggbWZkX2NvcmUgY3J5cHRkIHNiX2VkYWMgZWRhY19jb3JlIGlwbWlfc2kgaXBt
-aV9tc2doYW5kbGVyIGFjcGlfcGFkIHNocGNocCBhY3BpX3Bvd2VyX21ldGVyIHdtaSB0cG1fdGlz
-IHZob3N0X25ldCB2aG9zdCBtYWN2dGFwIG1hY3ZsYW4gbmZfY29ubnRyYWNrX2lwdjYgbmZfZGVm
-cmFnX2lwdjYgbmZfY29ubnRyYWNrX2lwdjQgbmZfZGVmcmFnX2lwdjQgaXBfdGFibGVzIHhfdGFi
-bGVzIHJhaWQxIG1lZ2FyYWlkX3Nhcw0Ko6gxMzo1NToyM6OpWzE2NzExMi4zNzE5NDJdIENQVTog
-NSBQSUQ6IDc3NTk2MyBDb21tOiBxZW11LWt2bSBUYWludGVkOiBHICAgICAgICAgICBPICAgIDQu
-NC43MC10aGlua2Nsb3VkLW5mdiAjMQ0Ko6gxMzo1NToyM6OpWzE2NzExMi4zNzE5NDNdIEhhcmR3
-YXJlIG5hbWU6IExFTk9WTyBTeXN0ZW0geDM2NTAgTTU6IC1bODg3MUFDMV0tLzAxR1IxNzQsIEJJ
-T1MgLVtUQ0UxMjRNLTIuMTBdLSAwNi8yMy8yMDE2DQqjqDEzOjU1OjIzo6lbMTY3MTEyLjM3MTk0
-NF0gdGFzazogZmZmZjg4MDIyZDI0NmEwMCB0aTogZmZmZjg4MDIyZDNiMDAwMCB0YXNrLnRpOiBm
-ZmZmODgwMjJkM2IwMDAwDQqjqDEzOjU1OjIzo6lbMTY3MTEyLjM3MTk0Nl0gUklQOiAwMDEwOls8
-ZmZmZmZmZmY4MTFhNmEzNz5dICBbPGZmZmZmZmZmODExYTZhMzc+XSBtZW1fY2dyb3VwX3BhZ2Vf
-bHJ1dmVjKzB4NDcvMHg2MA0Ko6gxMzo1NToyM6OpWzE2NzExMi4zNzE5NDddIFJTUDogMDAxODpm
-ZmZmODgwMjJkM2IzYmMwICBFRkxBR1M6IDAwMDEwMjAyDQqjqDEzOjU1OjIzo6lbMTY3MTEyLjM3
-MTk0N10gUkFYOiAwMDAwMDAwMDAwMDAwMzQwIFJCWDogMDAwMDAwMDAwMDAwMDAwMSBSQ1g6IDAw
-MDAwMDAwMDAwMDAwMDANCqOoMTM6NTU6MjOjqVsxNjcxMTIuMzcxOTQ4XSBSRFg6IGZmZmY4ODEx
-NGFjMDI0MDAgUlNJOiBmZmZmODgxMDdmZmZjMDAwIFJESTogMDAwMDAwMDAwMDAwMDAwNg0Ko6gx
-Mzo1NToyM6OpWzE2NzExMi4zNzE5NDhdIFJCUDogZmZmZjg4MDIyZDNiM2JjMCBSMDg6IDAwMDAw
-MDAwMDAwMDAwMDEgUjA5OiAwMDAwMDAwMDAwMDAwMDAwDQqjqDEzOjU1OjIzo6lbMTY3MTEyLjM3
-MTk0OV0gUjEwOiBmZmZmZWEwMDQwNWRlODAwIFIxMTogMDAwMDAwMDAwMDAwMDAwMCBSMTI6IGZm
-ZmZlYTAwMDRjMTQ5MDANCqOoMTM6NTU6MjOjqVsxNjcxMTIuMzcxOTQ5XSBSMTM6IGZmZmY4ODEw
-M2ZiNTAzMjAgUjE0OiBmZmZmODgxMDdmZmZjMDAwIFIxNTogZmZmZjg4MTA3ZmZmYzAwMA0Ko6gx
-Mzo1NToyM6OpWzE2NzExMi4zNzE5NTBdIEZTOiAgMDAwMDdmZTI0NDA0YWM4MCgwMDAwKSBHUzpm
-ZmZmODgxMDNmYjQwMDAwKDAwMDApIGtubEdTOjAwMDAwMDAwMDAwMDAwMDANCqOoMTM6NTU6MjOj
-qVsxNjcxMTIuMzcxOTUxXSBDUzogIDAwMTAgRFM6IDAwMDAgRVM6IDAwMDAgQ1IwOiAwMDAwMDAw
-MDgwMDUwMDMzDQqjqDEzOjU1OjIzo6lbMTY3MTEyLjM3MTk1MV0gQ1IyOiAwMDAwMDAwMDAwMDAw
-M2IwIENSMzogMDAwMDAwMDAwMWRmMTAwMCBDUjQ6IDAwMDAwMDAwMDAzNDI2ZTANCqOoMTM6NTU6
-MjOjqVsxNjcxMTIuMzcxOTUyXSBTdGFjazoNCqOoMTM6NTU6MjOjqVsxNjcxMTIuMzcxOTUzXSAg
-ZmZmZjg4MDIyZDNiM2MwOCBmZmZmZmZmZjgxMTU2ZmVkIDAwMDAwMDAwMDAwMDAwMDAgZmZmZmZm
-ZmY4MTE1Nzc2MA0Ko6gxMzo1NToyM6OpWzE2NzExMi4zNzE5NTRdICAwMDAwMDAwMDAwMDAwMDA1
-IGZmZmY4ODEwM2ZiNTA1MjAgZmZmZjg4MDIyZDI0NmEwMCAwMDAwN2ZlMjNlZDlhMDAwDQqjqDEz
-OjU1OjI0o6lbMTY3MTEyLjM3MTk1NV0gIDAwMDAwMDAwMDAwMDAwMDggZmZmZjg4MDIyZDNiM2M0
-MCBmZmZmZmZmZjgxMTU4MWNhIDAwMDAwMDAwMDAwMTAzYTANCqOoMTM6NTU6MjSjqVsxNjcxMTIu
-MzcxOTU1XSBDYWxsIFRyYWNlOg0Ko6gxMzo1NToyNKOpWzE2NzExMi4zNzE5NjRdICBbPGZmZmZm
-ZmZmODExNTZmZWQ+XSBwYWdldmVjX2xydV9tb3ZlX2ZuKzB4OGQvMHhmMA0Ko6gxMzo1NToyNKOp
-WzE2NzExMi4zNzE5NjZdICBbPGZmZmZmZmZmODExNTc3NjA+XSA/IF9fcGFnZXZlY19scnVfYWRk
-X2ZuKzB4MTkwLzB4MTkwDQqjqDEzOjU1OjI0o6lbMTY3MTEyLjM3MTk2N10gIFs8ZmZmZmZmZmY4
-MTE1ODFjYT5dIGxydV9hZGRfZHJhaW5fY3B1KzB4OGEvMHgxMzANCqOoMTM6NTU6MjSjqVsxNjcx
-MTIuMzcxOTY5XSAgWzxmZmZmZmZmZjgxMTU4M2VhPl0gbHJ1X2FkZF9kcmFpbisweDVhLzB4OTAN
-CqOoMTM6NTU6MjSjqVsxNjcxMTIuMzcxOTcxXSAgWzxmZmZmZmZmZjgxMTg4YmRkPl0gZnJlZV9w
-YWdlc19hbmRfc3dhcF9jYWNoZSsweDFkLzB4OTANCqOoMTM6NTU6MjSjqVsxNjcxMTIuMzcxOTcz
-XSAgWzxmZmZmZmZmZjgxMTczYjY2Pl0gdGxiX2ZsdXNoX21tdV9mcmVlKzB4MzYvMHg2MA0Ko6gx
-Mzo1NToyNKOpWzE2NzExMi4zNzE5NzRdICBbPGZmZmZmZmZmODExNzVkOGQ+XSB1bm1hcF9zaW5n
-bGVfdm1hKzB4NzBkLzB4N2MwDQqjqDEzOjU1OjI0o6lbMTY3MTEyLjM3MTk3Nl0gIFs8ZmZmZmZm
-ZmY4MTE3NjUwNz5dIHVubWFwX3ZtYXMrMHg0Ny8weDkwDQqjqDEzOjU1OjI0o6lbMTY3MTEyLjM3
-MTk3OF0gIFs8ZmZmZmZmZmY4MTE3ZWE4OD5dIGV4aXRfbW1hcCsweDk4LzB4MTUwDQqjqDEzOjU1
-OjI0o6lbMTY3MTEyLjM3MTk4Ml0gIFs8ZmZmZmZmZmY4MTA1ZWE0Mz5dIG1tcHV0KzB4MjMvMHhj
-MA0Ko6gxMzo1NToyNKOpWzE2NzExMi4zNzE5ODRdICBbPGZmZmZmZmZmODEwNjQ5OTA+XSBkb19l
-eGl0KzB4MjQwLzB4YmIwDQqjqDEzOjU1OjI0o6lbMTY3MTEyLjM3MTk4N10gIFs8ZmZmZmZmZmY4
-MTQyNGViNz5dID8gZGVidWdfc21wX3Byb2Nlc3Nvcl9pZCsweDE3LzB4MjANCqOoMTM6NTU6MjSj
-qVsxNjcxMTIuMzcxOTg5XSAgWzxmZmZmZmZmZjgxMDYyMGE2Pl0gPyB1bnBpbl9jdXJyZW50X2Nw
-dSsweDE2LzB4NzANCqOoMTM6NTU6MjSjqVsxNjcxMTIuMzcxOTkwXSAgWzxmZmZmZmZmZjgxMDY1
-MzhjPl0gZG9fZ3JvdXBfZXhpdCsweDRjLzB4YzANCqOoMTM6NTU6MjSjqVsxNjcxMTIuMzcxOTkx
-XSAgWzxmZmZmZmZmZjgxMDY1NDE0Pl0gU3lTX2V4aXRfZ3JvdXArMHgxNC8weDIwDQqjqDEzOjU1
-OjI0o6lbMTY3MTEyLjM3MTk5NV0gIFs8ZmZmZmZmZmY4MWE5YWIyZT5dIGVudHJ5X1NZU0NBTExf
-NjRfZmFzdHBhdGgrMHgxMi8weDcxDQqjqDEzOjU1OjI0o6lbMTY3MTEyLjM3MjAwN10gQ29kZTog
-ZDIgNDggODkgYzEgNDggMGYgNDQgMTUgNTAgNmIgZGEgMDAgNDggYzEgZTggMzggNDggYzEgZTkg
-M2EgODMgZTAgMDMgNDggOGQgM2MgNDAgNDggOGQgMDQgYjggNDggYzEgZTAgMDUgNDggMDMgODQg
-Y2EgZDAgMDMgMDAgMDAgPDQ4PiAzYiA3MCA3MCA3NSAwMiA1ZCBjMyA0OCA4OSA3MCA3MCA1ZCBj
-MyA0OCA4ZCA4NiAxMCAwNiAwMCAwMCANCqOoMTM6NTU6MjSjqVsxNjcxMTIuMzcyMDA4XSBSSVAg
-IFs8ZmZmZmZmZmY4MTFhNmEzNz5dIG1lbV9jZ3JvdXBfcGFnZV9scnV2ZWMrMHg0Ny8weDYwDQqj
-qDEzOjU1OjI0o6lbMTY3MTEyLjM3MjAwOF0gIFJTUCA8ZmZmZjg4MDIyZDNiM2JjMD4NCqOoMTM6
-NTU6MjSjqVsxNjcxMTIuMzcyMDA4XSBDUjI6IDAwMDAwMDAwMDAwMDAzYjANCqOoMTQ6MDU6MjSj
-qVsxNjcxMTIuNzc3MzQ5XSAtLS1bIGVuZCB0cmFjZSAwMDAwMDAwMDAwMDAwMDAyIF0tLS0NCg0K
-DQoNCkkgaGF2ZSByZXZpZXcgdGhlIFJUIHBhdGNoIHNldCBhbmQgSSB0aGluayB0aGUgZm9sbG93
-aW5nIHBhdGNoIGhhcyBhIGJ1Zy4gSXQgaXMgc2hvd24gYXMgYmxvdzoNCg0KUGF0Y2g6IDAyNTAt
-bWVtY29udHJvbC1QcmV2ZW50LXNjaGVkdWxpbmctd2hpbGUtYXRvbWljLWluLWNncm91cA0KDQpG
-cm9tIDlmYTkyN2E4MjA0YmJiNDFjODg3YWJmZjczNTVjMjA1YWEzMmZiMjAgTW9uIFNlcCAxNyAw
-MDowMDowMCAyMDAxDQpGcm9tOiBNaWtlIEdhbGJyYWl0aCA8dW1nd2FuYWtpa2J1dGlAZ21haWwu
-Y29tPg0KRGF0ZTogU2F0LCAyMSBKdW4gMjAxNCAxMDowOTo0OCArMDIwMA0KU3ViamVjdDogW1BB
-VENIIDI1MC8zNzZdIG1lbWNvbnRyb2w6IFByZXZlbnQgc2NoZWR1bGluZyB3aGlsZSBhdG9taWMg
-aW4gY2dyb3VwDQpjb2RlDQoNCm1tLCBtZW1jZzogbWFrZSByZWZpbGxfc3RvY2soKSB1c2UgZ2V0
-X2NwdV9saWdodCgpDQoNCk5pa2l0YSByZXBvcnRlZCB0aGUgZm9sbG93aW5nIG1lbWNnIHNjaGVk
-dWxpbmcgd2hpbGUgYXRvbWljIGJ1ZzoNCg0KQ2FsbCBUcmFjZToNCltlMjJkNWE5MF0gW2MwMDA3
-ZWE4XSBzaG93X3N0YWNrKzB4NGMvMHgxNjggKHVucmVsaWFibGUpDQpbZTIyZDVhZDBdIFtjMDYx
-OGMwNF0gX19zY2hlZHVsZV9idWcrMHg5NC8weGIwDQpbZTIyZDVhZTBdIFtjMDYwYjllY10gX19z
-Y2hlZHVsZSsweDUzMC8weDU1MA0KW2UyMmQ1YmYwXSBbYzA2MGJhY2NdIHNjaGVkdWxlKzB4MzAv
-MHhiYw0KW2UyMmQ1YzAwXSBbYzA2MGNhMjRdIHJ0X3NwaW5fbG9ja19zbG93bG9jaysweDE4MC8w
-eDI3Yw0KW2UyMmQ1YzcwXSBbYzAwYjM5ZGNdIHJlc19jb3VudGVyX3VuY2hhcmdlX3VudGlsKzB4
-NDAvMHhjNA0KW2UyMmQ1Y2EwXSBbYzAxM2NhODhdIGRyYWluX3N0b2NrLmlzcmEuMjArMHg1NC8w
-eDk4DQpbZTIyZDVjYzBdIFtjMDE0MDJhY10gX19tZW1fY2dyb3VwX3RyeV9jaGFyZ2UrMHgyZTgv
-MHhiYWMNCltlMjJkNWQ3MF0gW2MwMTQxMGQ0XSBtZW1fY2dyb3VwX2NoYXJnZV9jb21tb24rMHgz
-Yy8weDcwDQpbZTIyZDVkOTBdIFtjMDExNzI4NF0gX19kb19mYXVsdCsweDM4Yy8weDUxMA0KW2Uy
-MmQ1ZGYwXSBbYzAxMWE1ZjRdIGhhbmRsZV9wdGVfZmF1bHQrMHg5OC8weDg1OA0KW2UyMmQ1ZTUw
-XSBbYzA2MGVkMDhdIGRvX3BhZ2VfZmF1bHQrMHg0MmMvMHg2ZmMNCltlMjJkNWY0MF0gW2MwMDBm
-NWI0XSBoYW5kbGVfcGFnZV9mYXVsdCsweGMvMHg4MA0KDQpXaGF0IGhhcHBlbnM6DQoNCiAgIHJl
-ZmlsbF9zdG9jaygpDQogICAgICBnZXRfY3B1X3ZhcigpDQogICAgICBkcmFpbl9zdG9jaygpDQog
-ICAgICAgICByZXNfY291bnRlcl91bmNoYXJnZSgpDQogICAgICAgICAgICByZXNfY291bnRlcl91
-bmNoYXJnZV91bnRpbCgpDQogICAgICAgICAgICAgICBzcGluX2xvY2soKSA8PT0gYm9vbQ0KDQpG
-aXggaXQgYnkgcmVwbGFjaW5nIGdldC9wdXRfY3B1X3ZhcigpIHdpdGggZ2V0L3B1dF9jcHVfbGln
-aHQoKS4NCg0KDQpSZXBvcnRlZC1ieTogTmlraXRhIFl1c2hjaGVua28gPG55dXNoY2hlbmtvQGRl
-di5ydHNvZnQucnU+DQpTaWduZWQtb2ZmLWJ5OiBNaWtlIEdhbGJyYWl0aCA8dW1nd2FuYWtpa2J1
-dGlAZ21haWwuY29tPg0KU2lnbmVkLW9mZi1ieTogU2ViYXN0aWFuIEFuZHJ6ZWogU2lld2lvciA8
-YmlnZWFzeUBsaW51dHJvbml4LmRlPg0KLS0tDQptbS9tZW1jb250cm9sLmMgfCA3ICsrKysrLS0N
-CjEgZmlsZSBjaGFuZ2VkLCA1IGluc2VydGlvbnMoKyksIDIgZGVsZXRpb25zKC0pDQoNCmRpZmYg
-LS1naXQgYS9tbS9tZW1jb250cm9sLmMgYi9tbS9tZW1jb250cm9sLmMNCmluZGV4IGU0YTAyMDQ5
-NzU2MS4uMWM2MTkyNjdkOWRhIDEwMDY0NA0KLS0tIGEvbW0vbWVtY29udHJvbC5jDQorKysgYi9t
-bS9tZW1jb250cm9sLmMNCkBAIC0xOTI1LDE0ICsxOTI1LDE3IEBAIHN0YXRpYyB2b2lkIGRyYWlu
-X2xvY2FsX3N0b2NrKHN0cnVjdCB3b3JrX3N0cnVjdCAqZHVtbXkpDQogICovDQpzdGF0aWMgdm9p
-ZCByZWZpbGxfc3RvY2soc3RydWN0IG1lbV9jZ3JvdXAgKm1lbWNnLCB1bnNpZ25lZCBpbnQgbnJf
-cGFnZXMpDQp7DQotICAgICAgICAgICAgICAgICAgc3RydWN0IG1lbWNnX3N0b2NrX3BjcCAqc3Rv
-Y2sgPSAmZ2V0X2NwdV92YXIobWVtY2dfc3RvY2spOw0KKyAgICAgICAgICAgICAgICAgIHN0cnVj
-dCBtZW1jZ19zdG9ja19wY3AgKnN0b2NrOw0KKyAgICAgICAgICAgICAgICAgIGludCBjcHUgPSBn
-ZXRfY3B1X2xpZ2h0KCk7DQorDQorICAgICAgICAgICAgICAgICAgc3RvY2sgPSAmcGVyX2NwdSht
-ZW1jZ19zdG9jaywgY3B1KTsNCg0KICAgICAgICAgICAgICAgICAgIGlmIChzdG9jay0+Y2FjaGVk
-ICE9IG1lbWNnKSB7IC8qIHJlc2V0IGlmIG5lY2Vzc2FyeSAqLw0KICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgZHJhaW5fc3RvY2soc3RvY2spOw0KICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgc3RvY2stPmNhY2hlZCA9IG1lbWNnOw0KICAgICAgICAg
-ICAgICAgICAgfQ0KICAgICAgICAgICAgICAgICAgc3RvY2stPm5yX3BhZ2VzICs9IG5yX3BhZ2Vz
-Ow0KLSAgICAgICAgICAgICAgICAgIHB1dF9jcHVfdmFyKG1lbWNnX3N0b2NrKTsNCisgICAgICAg
-ICAgICAgICAgICBwdXRfY3B1X2xpZ2h0KCk7DQp9DQoNCiAvKg0KLS0gDQoyLjEzLjINCg0KDQpA
-IE1pa2UgR2FsYnJhaXRoOg0KQCBTZWJhc3RpYW4gQW5kcnplaiBTaWV3aW9yDQoNClRoaXMgcGF0
-Y2ggcmVwbGFjZXMgobBnZXRfY3B1X3ZhcigpobEgd2l0aCChsGdldF9jcHVfbGlnaHQoKStwZXJf
-Y3B1KCmhsS4gQXMgd2Uga25vdywgdGhlIKGwZ2V0X2NwdV9saWdodCgpobEganVzdCBkaXNhYmxl
-cyBtaWdyYXRlLCBidXQgdGhlIHByZWVtcHRpb24gaXMgc3RpbGwgb24sIA0KdGhhdCBtZWFucyBh
-IGhpZ2hlciBwcmlvcml0eSB0YXNrLUEgaGFzIGNoYW5jZSB0byBpbnRlcnJ1cHQgYSBsb3dlciBw
-cmlvcml0eSB0YXNrLUIgb24gdGhlIHNhbWUgY3B1IHdoaWNoIGlzIGdldHRpbmcgcmVhZHkgdG8g
-ZG8gobBkcmFpbl9zdG9ja6GxLCBpZiB0aGUgdGFzay1BDQppbnZva2VzIHJlZmlsbF9zdG9jaygp
-IGJ5IGNoYW5jZSwgaXQgd2lsbCBhY2Nlc3MgdGhlIHNhbWUgobBzdG9ja6GxIHdoaWNoIHRhc2st
-QiBpcyBtYW5pcHVsYXRpbmcsIHNvIGFmdGVyIHRhc2stQiByZXN1bWUsIGl0IHdpbGwgZHJhaW4g
-dGhlIGNhY2hlZCBtZW1jZyB0aGF0IHRhc2stQQ0KYXNzaWduZWQganVzdCBub3cuDQoNCkkgcGxh
-biB0byByZW1vdmUgdGhlIHBhdGNoOiChsDAyNTAtbWVtY29udHJvbC1QcmV2ZW50LXNjaGVkdWxp
-bmctd2hpbGUtYXRvbWljLWluLWNncm91cKGxIGluIG15IFJUIGVudmlyb25tZW50LCBXaGV0aGVy
-IGl0IHdpbGwgaW50cm9kdWNlIHBvdGVudGlhbCBpc3N1ZT8gDQpEbyB5b3UgaGF2ZSBhbnkgc3Vn
-Z2VzdGlvbnMgb3Igc3RvcnkgYmVoaW5kIHRoaXMgcGF0Y2g/DQoNClRoYW5rcyENCg0KaGFpeWFu
-Zw0KDQo=
+On Wed, 22 Nov 2017 03:18:45 +0000
+Haiyang HY1 Tan <tanhy1@lenovo.com> wrote:
+
+> Dear RT experts,
+> 
+> I have a x86 server mainly used as qemu-kvm hypervisor that is installed with linux-RT kernel, the linux kernel and RT patch set are respectively get from:
+> Linux kernel: https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.97.tar.xz
+> RT patch set: https://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patches-4.4.97-rt110.tar.gz
+
+Thanks for the report.
+
+> 
+> kernel crash or hung occur occasionally on this server, a typical backtrace is shown blow:
+> 
+> （13:55:23）[167112.371909] BUG: unable to handle kernel NULL pointer dereference at 00000000000003b0
+> （13:55:23）[167112.371914] IP: [<ffffffff811a6a37>] mem_cgroup_page_lruvec+0x47/0x60
+> （13:55:23）[167112.371915] PGD 0 
+> （13:55:23）[167112.371916] Oops: 0000 [#1] PREEMPT SMP 
+> （13:55:23）[167112.371938] Modules linked in: xt_mac xt_physdev xt_set ip_set_hash_net ip_set vfio_pci vfio_virqfd ip6table_raw ip6table_mangle iptable_nat nf_nat_ipv4 nf_nat xt_connmark iptable_mangle 8021q garp mrp ebtable_filter ebtables ip6table_filter ip6_tables openvswitch xt_tcpudp xt_multiport xt_conntrack iptable_filter xt_comment xt_CT iptable_raw igb_uio(O) uio intel_rapl iosf_mbi intel_powerclamp coretemp kvm_intel kvm irqbypass crct10dif_pclmul crc32_pclmul ghash_clmulni_intel mxm_wmi mei_me aesni_intel aes_x86_64 glue_helper lrw ablk_helper ipmi_devintf mei lpc_ich mfd_core cryptd sb_edac edac_core ipmi_si ipmi_msghandler acpi_pad shpchp acpi_power_meter wmi tpm_tis vhost_net vhost macvtap macvlan nf_conntrack_ipv6 nf_defrag_ipv6 nf_conntrack_ipv4 nf_defrag_ipv4 ip_table
+ s x_tables raid1 megaraid_sas
+> （13:55:23）[167112.371942] CPU: 5 PID: 775963 Comm: qemu-kvm Tainted: G           O    4.4.70-thinkcloud-nfv #1
+> （13:55:23）[167112.371943] Hardware name: LENOVO System x3650 M5: -[8871AC1]-/01GR174, BIOS -[TCE124M-2.10]- 06/23/2016
+> （13:55:23）[167112.371944] task: ffff88022d246a00 ti: ffff88022d3b0000 task.ti: ffff88022d3b0000
+> （13:55:23）[167112.371946] RIP: 0010:[<ffffffff811a6a37>]  [<ffffffff811a6a37>] mem_cgroup_page_lruvec+0x47/0x60
+> （13:55:23）[167112.371947] RSP: 0018:ffff88022d3b3bc0  EFLAGS: 00010202
+> （13:55:23）[167112.371947] RAX: 0000000000000340 RBX: 0000000000000001 RCX: 0000000000000000
+> （13:55:23）[167112.371948] RDX: ffff88114ac02400 RSI: ffff88107fffc000 RDI: 0000000000000006
+> （13:55:23）[167112.371948] RBP: ffff88022d3b3bc0 R08: 0000000000000001 R09: 0000000000000000
+> （13:55:23）[167112.371949] R10: ffffea00405de800 R11: 0000000000000000 R12: ffffea0004c14900
+> （13:55:23）[167112.371949] R13: ffff88103fb50320 R14: ffff88107fffc000 R15: ffff88107fffc000
+> （13:55:23）[167112.371950] FS:  00007fe24404ac80(0000) GS:ffff88103fb40000(0000) knlGS:0000000000000000
+> （13:55:23）[167112.371951] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+> （13:55:23）[167112.371951] CR2: 00000000000003b0 CR3: 0000000001df1000 CR4: 00000000003426e0
+> （13:55:23）[167112.371952] Stack:
+> （13:55:23）[167112.371953]  ffff88022d3b3c08 ffffffff81156fed 0000000000000000 ffffffff81157760
+> （13:55:23）[167112.371954]  0000000000000005 ffff88103fb50520 ffff88022d246a00 00007fe23ed9a000
+> （13:55:24）[167112.371955]  0000000000000008 ffff88022d3b3c40 ffffffff811581ca 00000000000103a0
+> （13:55:24）[167112.371955] Call Trace:
+> （13:55:24）[167112.371964]  [<ffffffff81156fed>] pagevec_lru_move_fn+0x8d/0xf0
+> （13:55:24）[167112.371966]  [<ffffffff81157760>] ? __pagevec_lru_add_fn+0x190/0x190
+> （13:55:24）[167112.371967]  [<ffffffff811581ca>] lru_add_drain_cpu+0x8a/0x130
+> （13:55:24）[167112.371969]  [<ffffffff811583ea>] lru_add_drain+0x5a/0x90
+> （13:55:24）[167112.371971]  [<ffffffff81188bdd>] free_pages_and_swap_cache+0x1d/0x90
+> （13:55:24）[167112.371973]  [<ffffffff81173b66>] tlb_flush_mmu_free+0x36/0x60
+> （13:55:24）[167112.371974]  [<ffffffff81175d8d>] unmap_single_vma+0x70d/0x7c0
+> （13:55:24）[167112.371976]  [<ffffffff81176507>] unmap_vmas+0x47/0x90
+> （13:55:24）[167112.371978]  [<ffffffff8117ea88>] exit_mmap+0x98/0x150
+> （13:55:24）[167112.371982]  [<ffffffff8105ea43>] mmput+0x23/0xc0
+> （13:55:24）[167112.371984]  [<ffffffff81064990>] do_exit+0x240/0xbb0
+> （13:55:24）[167112.371987]  [<ffffffff81424eb7>] ? debug_smp_processor_id+0x17/0x20
+> （13:55:24）[167112.371989]  [<ffffffff810620a6>] ? unpin_current_cpu+0x16/0x70
+> （13:55:24）[167112.371990]  [<ffffffff8106538c>] do_group_exit+0x4c/0xc0
+> （13:55:24）[167112.371991]  [<ffffffff81065414>] SyS_exit_group+0x14/0x20
+> （13:55:24）[167112.371995]  [<ffffffff81a9ab2e>] entry_SYSCALL_64_fastpath+0x12/0x71
+> （13:55:24）[167112.372007] Code: d2 48 89 c1 48 0f 44 15 50 6b da 00 48 c1 e8 38 48 c1 e9 3a 83 e0 03 48 8d 3c 40 48 8d 04 b8 48 c1 e0 05 48 03 84 ca d0 03 00 00 <48> 3b 70 70 75 02 5d c3 48 89 70 70 5d c3 48 8d 86 10 06 00 00 
+> （13:55:24）[167112.372008] RIP  [<ffffffff811a6a37>] mem_cgroup_page_lruvec+0x47/0x60
+> （13:55:24）[167112.372008]  RSP <ffff88022d3b3bc0>
+> （13:55:24）[167112.372008] CR2: 00000000000003b0
+> （14:05:24）[167112.777349] ---[ end trace 0000000000000002 ]---
+> 
+> 
+> 
+> I have review the RT patch set and I think the following patch has a bug. It is shown as blow:
+
+What's the bug?
+
+Does it work if you revert the patch?
+
+Anyway, this patch should be reverted (for 4.9-rt as well) as the
+upstream stable code merged in makes the problem it was fixing go away
+anyway.
+
+-- Steve
+
+> 
+> Patch: 0250-memcontrol-Prevent-scheduling-while-atomic-in-cgroup
+> 
+> From 9fa927a8204bbb41c887abff7355c205aa32fb20 Mon Sep 17 00:00:00 2001
+> From: Mike Galbraith <umgwanakikbuti@gmail.com>
+> Date: Sat, 21 Jun 2014 10:09:48 +0200
+> Subject: [PATCH 250/376] memcontrol: Prevent scheduling while atomic in cgroup
+> code
+> 
+> mm, memcg: make refill_stock() use get_cpu_light()
+> 
+> Nikita reported the following memcg scheduling while atomic bug:
+> 
+> Call Trace:
+> [e22d5a90] [c0007ea8] show_stack+0x4c/0x168 (unreliable)
+> [e22d5ad0] [c0618c04] __schedule_bug+0x94/0xb0
+> [e22d5ae0] [c060b9ec] __schedule+0x530/0x550
+> [e22d5bf0] [c060bacc] schedule+0x30/0xbc
+> [e22d5c00] [c060ca24] rt_spin_lock_slowlock+0x180/0x27c
+> [e22d5c70] [c00b39dc] res_counter_uncharge_until+0x40/0xc4
+> [e22d5ca0] [c013ca88] drain_stock.isra.20+0x54/0x98
+> [e22d5cc0] [c01402ac] __mem_cgroup_try_charge+0x2e8/0xbac
+> [e22d5d70] [c01410d4] mem_cgroup_charge_common+0x3c/0x70
+> [e22d5d90] [c0117284] __do_fault+0x38c/0x510
+> [e22d5df0] [c011a5f4] handle_pte_fault+0x98/0x858
+> [e22d5e50] [c060ed08] do_page_fault+0x42c/0x6fc
+> [e22d5f40] [c000f5b4] handle_page_fault+0xc/0x80
+> 
+> What happens:
+> 
+>    refill_stock()
+>       get_cpu_var()
+>       drain_stock()
+>          res_counter_uncharge()
+>             res_counter_uncharge_until()
+>                spin_lock() <== boom
+> 
+> Fix it by replacing get/put_cpu_var() with get/put_cpu_light().
+> 
+> 
+> Reported-by: Nikita Yushchenko <nyushchenko@dev.rtsoft.ru>
+> Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> ---
+> mm/memcontrol.c | 7 +++++--
+> 1 file changed, 5 insertions(+), 2 deletions(-)
+> 
+> diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+> index e4a020497561..1c619267d9da 100644
+> --- a/mm/memcontrol.c
+> +++ b/mm/memcontrol.c
+> @@ -1925,14 +1925,17 @@ static void drain_local_stock(struct work_struct *dummy)
+>   */
+> static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
+> {
+> -                  struct memcg_stock_pcp *stock = &get_cpu_var(memcg_stock);
+> +                  struct memcg_stock_pcp *stock;
+> +                  int cpu = get_cpu_light();
+> +
+> +                  stock = &per_cpu(memcg_stock, cpu);
+> 
+>                    if (stock->cached != memcg) { /* reset if necessary */
+>                                        drain_stock(stock);
+>                                        stock->cached = memcg;
+>                   }
+>                   stock->nr_pages += nr_pages;
+> -                  put_cpu_var(memcg_stock);
+> +                  put_cpu_light();
+> }
+> 
+>  /*
