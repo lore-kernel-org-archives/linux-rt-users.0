@@ -1,66 +1,80 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [dm-devel] [PATCH 1/2] swait: export the symbols
- __prepare_to_swait and __finish_swait
-Date: Thu, 23 Nov 2017 00:28:57 -0800
-Message-ID: <20171123082857.GA17859@infradead.org>
-References: <alpine.LRH.2.02.1711222134370.2330@file01.intranet.prod.int.rdu2.redhat.com>
+From: linux-rt-users-owner@vger.kernel.org
+Subject: =?utf-8?B?4piFIExpbnVzODkgLS3igJwyMDE45LiW55WM5aSN?=
+        =?utf-8?B?5ZCI5p2Q5paZ5bGV6KeI5Y+K5Lya6K6u4oCd5bCG5LqO4oCcM+aciOKAneWcqOKAnOazleWbveW3tA==?=
+        =?utf-8?B?6buO4oCd5Li+6KGMICAgIO+8iOWcsOWPs1AxLUwtTWXvvIk=?=
+Date: Thu, 23 Nov 2017 16:42:36 +0800
+Message-ID: <20171123164250132237@boyayingjie.com>
+Reply-To: <EMAILQUNFA@163.COM>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: dm-devel@redhat.com, Mike Snitzer <msnitzer@redhat.com>,
-        Daniel Wagner <daniel.wagner@bmw-carit.de>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Peter Zijlstra <peterz@infradead.org>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1711222134370.2330@file01.intranet.prod.int.rdu2.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain;
+        charset="utf-8"
+Content-Transfer-Encoding: base64
+To: unlisted-recipients:; (no To-header on input)
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from [210.51.190.175] ([210.51.190.175]:4128 "HELO boyayingjie.com"
+        rhost-flags-FAIL-FAIL-OK-OK) by vger.kernel.org with SMTP
+        id S1751630AbdKWJGc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 23 Nov 2017 04:06:32 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Please run this past the swait authors.  It is supposed to be a simple
-and self-contained API so I'd expect this patch to be seen critical.
+5bCK5pWs55qEIExpbnVzODlAaG90bWFpbC5jb20g5LyB5Lia6aKG5a+8L+WFrOWPuOi0n+i0o+S6
+ui/kuJrnlYzkuJPlrrbvvIzmgqjlpb3vvJoNCuOAgOOAgA0K44CA44CA5paw5p2Q5paZ5Li6MjHk
+uJbnuqrkuInlpKflhbHmgKflhbPplK7mioDmnK/kuYvkuIDvvIzlt7LmiJDkuLrlhajnkIPnu4/m
+tY7ov4XpgJ/lop7plb/nmoTmupDliqjlipvlkozmj5DljYfmoLjlv4Pnq57kuonlipvnmoTmiJjn
+laXnhKbngrnjgILmnZDmlpnkvZzkuLrliLbpgKDkuJrnmoTln7rnoYDvvIznibnliKvmmK/mlrDm
+nZDmlpnnoJTnqbblkozkuqfkuJrlj5HlsZXnmoTmsLTlubPkuI7op4TmqKHvvIzlt7Lnu4/miJDk
+uLrooaHph4/kuIDkuKrlm73lrrbnp5HmioDov5vmraXlkoznu7zlkIjlrp7lipvnmoTph43opoHm
+oIflv5fjgILlnKjmlrDmnZDmlpnlj5HlsZXkuI7lupTnlKjkuK3vvIzlpI3lkIjmnZDmlpnljaDm
+nInnm7jlvZPph43opoHnmoTlnLDkvY3vvIznibnliKvlub/ms5vnmoTlupTnlKjlnKjmsb3ovabj
+gIHkuqTpgJrjgIHpo47og73jgIHoiKrnqbrjgIHoiKrlpKnjgIHlhbXlmajjgIHoiLnoiLbjgIHl
+m73pmLLjgIHmnLrmorDjgIHnlLXlrZDjgIHljJblt6XjgIHlu7rnrZHjgIHlhpzkuJrjgIHmuJTk
+uJrjgIHnurrnu4fjgIHov5DliqjlmajmnZDnrYnpoobln5/vvIzkuIDnm7TmmK/kuJbnlYzlkITl
+m73kvJjlhYjlj5HlsZXlkoznq57kuonmv4Dng4jnmoTph43opoHooYzkuJrjgIINCuOAgOOAgA0K
+44CA44CA4oCcSkVD5LiW55WM5aSN5ZCI5p2Q5paZ5bGV6KeI5Y+K5Lya6K6u4oCd77yISkVDIHdv
+cmxkIENvbXBvc2l0ZXMgU2hvdyAmIENvbmZlcmVuY2Vz77yJ5Yib5Yqe5LqOMTk2M+W5tO+8jOav
+j+W5tOS4vuWKnuS4gOWxiu+8jOiHszIwMTflubTmgLvlhbHkuL7lip7kuoY1MuWxiu+8jOS4u+WK
+nuWNleS9jeaYr+azleWbvUpFQ+WkjeWQiOadkOaWmeWPkeWxleS/g+i/m+S8mi9KRUPpm4blm6Lv
+vIzkuK3lm73mgLvlsZXlm6LlsZXllYbnu4Tnu4fljZXkvY3kuLrmmKDlvrflm73pmYXkvJrlsZXp
+m4blm6LkuK3lm73ku6PooajlpITvvIzlnKjljJfkuqzjgIHkuIrmtbfnrYnlnLDorr7mnInliIbm
+lK/mnLrmnoTvvIzotJ/otKPor6XlsZXkvJrlnKjkuK3lm73nmoTmjqjlub/lkozmi5vllYblt6Xk
+vZzvvIhKRUPkuK3lm73mgLvlsZXlm6LmiqXlkI3ng63nur/vvJo0MDAwLTY4MC04NjDovaw4MTQ0
+44CBNTIyMO+8ieOAgkpFQ+WkjeWQiOadkOaWmeWxleW3suaIkOS4uuS4lueVjOS4iuWOhuWPsuac
+gOaCoOS5heOAgeinhOaooeacgOWkp+eahOWkjeWQiOadkOaWmeihjOS4muS4k+S4muWxleiniOS8
+mu+8jOWxleekuuWSjOWPjeaYoOS6huW9k+WJjeWkjeWQiOadkOaWmeihjOS4mueahOacgOaWsOaK
+gOacr+WSjOW6lOeUqOaIkOaenOOAgg0K44CA44CADQrjgIDjgIDkuLrkuoblop7ov5vlm73lhoXl
+pJblpI3lkIjmnZDmlpnooYzkuJrnmoTkuqTmtYHkuI7lkIjkvZzvvIzlkIzml7blsZXnpLrmiJHl
+m73lpI3lkIjmnZDmlpnkuqfkuJrnmoTlj5HlsZXkuI7miJDlsLHvvIzluK7liqnlooPlhoXkvIHk
+uJrlvIDmi5Plm73lhoXlpJbluILlnLrvvIzkuK3lm73lm73pmYXlpI3mnZDljY/kvJrjgIHmmKDl
+vrflm73pmYXkvJrlsZXpm4blm6LvvIhZT05EIEVYUE/vvInkuK3lm73ku6PooajlpITlt7Lov5Hl
+jYHlubTnu4Tnu4fkuK3lm73kvIHkuJrlj4LkuI7or6XlsZXkvJrvvIzkuLrkuK3lm73lpI3lkIjm
+nZDmlpnpm4blm6LjgIHkuK3mnZDnp5HmioDjgIHkuK3pkqLpm4blm6LjgIHkuK3lm73lu7rmnZDp
+m4blm6LjgIHkuK3lm73llYbpo57jgIHljJfkuqznjrvpkqLpmaLjgIHkuIrmtbfmnbDkuovmnbDm
+lrDmnZDmlpnpm4blm6LjgIHph43luoblm73pmYXlpI3lkIjmnZDmlpnjgIHkuK3ljZfmjqfogqHp
+m4blm6LjgIHnp6bnmoflspvogIDljY7njrvnkoPpkqLjgIHng5/lj7DmsKjnurbjgIHlpKnpqazp
+m4blm6LjgIHljY7kuJznkIblt6XlpKflrabjgIHlk4jlsJTmu6jlt6XkuJrlpKflrabjgIHlt6jn
+n7Ppm4blm6LjgIHkuK3lhrbpm4blm6LjgIHph5HlhYnpm4blm6LjgIHmsZ/oi4/mgZLnpZ7nuqTn
+u7TmnZDmlpnjgIHph43luoblpKflrabjgIHkuIrmtbfnjrvnkoPpkqLnoJTnqbbpmaLjgIHkuK3l
+jZflpKflrabjgIHlk4jlsJTmu6jnjrvnkoPpkqLnoJTnqbbpmaLnrYnkvJflpJrooYzkuJrlt6jl
+pLTlkoznn6XlkI3mnLrmnoTmj5DkvpvkuobkvJjotKjpq5jmlYjnmoTlooPlpJblsZXotLjmnI3l
+iqHjgIINCuOAgOOAgA0K44CA44CA4oCcSkVDIHdvcmxkIDIwMTgg56ys5LqU5Y2B5LiJ5LiW55WM
+5aSN5ZCI5p2Q5paZ5bGV6KeI5Y+K5Lya6K6u4oCd5bCG5LqO4oCcM+aciDA2LTA45pel4oCd5Zyo
+4oCc5rOV5Zu95be06buO5bGV6KeI5Lya6K6u5Lit5b+D4oCd5YaN5bqm5Li+6KGM77yM5oiR5Lus
+6K+a6YKA5YWo5Zu95ZCE5Zyw5aSN5ZCI5p2Q5paZ5Y+K5paw5p2Q5paZ55u45YWz5Y2V5L2N5LiO
+5Lia55WM5Lq65aOr5Yqg5YWl5ZKx5Lus55qE5Lit5Zu95oC75bGV5Zui5YmN5b6A5Y+C5bGV5Y+C
+6KeC44CC44CA44CADQrjgIDjgIANCuOAgOOAgOacieWFs+WPguWxleWPguinguKAnEpFQ+S4lueV
+jOWkjeWQiOadkOaWmeWxleKAneS6i+WunO+8jOivt+iBlOe7nOOAkOS4reWbveaAu+WxleWbouOA
+kee7hOWKnuaWueKAlOKAlCDlhajlm73nu5/kuIDlrqLmnI3ng63nur/vvJo0MDAwLTU4MC04NTDv
+vIjovaw1MjIw44CBODE0NOOAgTg4ODjvvInjgIEwMTDigJQ2OTIzLTY5NDTvvJsg6YKu566xL1FR
+77yaMTI4MDkzOTUjcXEuY29t77ybIOW+ruS/oe+8miBDYW5aaGFuWGlhb1hp77yI5Y+C5bGV5raI
+5oGv77yJ44CBWmhhblNoYW5nWmhpSmlh77yI5bGV5ZWG5LmL5a6277yJ77ybIOW+ruWNmu+8mmh0
+dHA6Ly93ZWliby5jb20vamVjc2hvd++8iOWxleS8mu+8ieOAgWh0dHA6Ly93ZWliby5jb20veWlu
+Z2RlaHVpemhhbu+8iOWFrOWPuO+8ieOAgg0K44CA44CADQrjgIDjgIDlj4LliqBKRUPlsZXkvJrm
+mK/kuIDkuKrlpI3lkIjmnZDmlpnlj4rmlrDmnZDmlpnkvIHkuJrotbDlkJHlm73pmYXljJbnmoTm
+oIflv5flkozpgJTlvoTvvIENCuOAgOOAgA0K44CA44CADQrjgIDjgIANCuOAgOOAgA0KX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX+OAgOOAgA0K77yI55m+5LiH576k5Y+R57O757uffOS4uuaCqOWP
+kemAgXzlpoLkuI3luIzmnJvlho3mlLbliLDmraTooYzkuJrotYTorq986K+35Zue5aSN4oCcVEQr
+SkVD4oCd6Iez6YKu566xMTA1NTgwMDgxMkBxcS5jb23vvIkNCg==
 
-You might be better off to just use the normal complex waitqueues if
-you want to micro-optimize like this.
 
-On Wed, Nov 22, 2017 at 09:35:36PM -0500, Mikulas Patocka wrote:
-> In order to reduce locking overhead, I use the spinlock in
-> swait_queue_head to protect not only the wait queue, but also the list of
-> events. Consequently, I need to use unlocked functions __prepare_to_swait
-> and __finish_swait. These functions are declared in the file
-> include/linux/swait.h, but they are not exported, and so they are not
-> useable from kernel modules.
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> 
-> ---
->  kernel/sched/swait.c |    2 ++
->  1 file changed, 2 insertions(+)
-> 
-> Index: linux-2.6/kernel/sched/swait.c
-> ===================================================================
-> --- linux-2.6.orig/kernel/sched/swait.c
-> +++ linux-2.6/kernel/sched/swait.c
-> @@ -73,6 +73,7 @@ void __prepare_to_swait(struct swait_que
->  	if (list_empty(&wait->task_list))
->  		list_add(&wait->task_list, &q->task_list);
->  }
-> +EXPORT_SYMBOL(__prepare_to_swait);
->  
->  void prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait, int state)
->  {
-> @@ -102,6 +103,7 @@ void __finish_swait(struct swait_queue_h
->  	if (!list_empty(&wait->task_list))
->  		list_del_init(&wait->task_list);
->  }
-> +EXPORT_SYMBOL(__finish_swait);
->  
->  void finish_swait(struct swait_queue_head *q, struct swait_queue *wait)
->  {
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
----end quoted text---
