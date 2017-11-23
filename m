@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 09/10] md/raid5: do not disable interrupts
-Date: Thu, 23 Nov 2017 00:33:50 -0500
-Message-ID: <20171123053434.550114052@goodmis.org>
+Subject: [PATCH RT 04/10] sched: Prevent task state corruption by spurious lock wakeup
+Date: Thu, 23 Nov 2017 00:33:45 -0500
+Message-ID: <20171123053433.742369630@goodmis.org>
 References: <20171123053341.174002403@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -13,11 +13,13 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
         tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
-        stable-rt@vger.kernel.org
+        stable-rt@vger.kernel.org,
+        Mathias Koehrer <mathias.koehrer@etas.com>,
+        David Hauck <davidh@netacquire.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0009-md-raid5-do-not-disable-interrupts.patch
+Content-Disposition: inline; filename=0004-sched-Prevent-task-state-corruption-by-spurious-lock.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -26,60 +28,83 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-|BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:974
-|in_atomic(): 0, irqs_disabled(): 1, pid: 2992, name: lvm
-|CPU: 2 PID: 2992 Comm: lvm Not tainted 4.13.10-rt3+ #54
-|Call Trace:
-| dump_stack+0x4f/0x65
-| ___might_sleep+0xfc/0x150
-| atomic_dec_and_spin_lock+0x3c/0x80
-| raid5_release_stripe+0x73/0x110
-| grow_one_stripe+0xce/0xf0
-| setup_conf+0x841/0xaa0
-| raid5_run+0x7e7/0xa40
-| md_run+0x515/0xaf0
-| raid_ctr+0x147d/0x25e0
-| dm_table_add_target+0x155/0x320
-| table_load+0x103/0x320
-| ctl_ioctl+0x1d9/0x510
-| dm_ctl_ioctl+0x9/0x10
-| do_vfs_ioctl+0x8e/0x670
-| SyS_ioctl+0x3c/0x70
-| entry_SYSCALL_64_fastpath+0x17/0x98
+Mathias and others reported GDB failures on RT.
 
-The interrupts were disabled because ->device_lock is taken with
-interrupts disabled.
+The following scenario leads to task state corruption:
+
+CPU0						CPU1
+
+T1->state = TASK_XXX;
+spin_lock(&lock)
+  rt_spin_lock_slowlock(&lock->rtmutex)
+    raw_spin_lock(&rtm->wait_lock);
+    T1->saved_state = current->state;
+    T1->state = TASK_UNINTERRUPTIBLE;
+						spin_unlock(&lock)
+    task_blocks_on_rt_mutex(rtm)  		  rt_spin_lock_slowunlock(&lock->rtmutex)
+      queue_waiter(rtm)				    raw_spin_lock(&rtm->wait_lock);
+      pi_chain_walk(rtm)
+        raw_spin_unlock(&rtm->wait_lock);
+						    wake_top_waiter(T1)
+
+      raw_spin_lock(&rtm->wait_lock);
+
+    for (;;) {
+      if (__try_to_take_rt_mutex())  <- Succeeds
+        break;
+      ...
+    }
+
+    T1->state = T1->saved_state;
+						     try_to_wake_up(T1)
+						       ttwu_do_wakeup(T1)
+						         T1->state = TASK_RUNNING;
+
+In most cases this is harmless because waiting for some event, which is the
+usual reason for TASK_[UN]INTERRUPTIBLE has to be safe against other forms
+of spurious wakeups anyway.
+
+But in case of TASK_TRACED this is actually fatal, because the task loses
+the TASK_TRACED state. In consequence it fails to consume SIGSTOP which was
+sent from the debugger and actually delivers SIGSTOP to the task which
+breaks the ptrace mechanics and brings the debugger into an unexpected
+state.
+
+The TASK_TRACED state should prevent getting there due to the state
+matching logic in try_to_wake_up(). But that's not true because
+wake_up_lock_sleeper() uses TASK_ALL as state mask. That's bogus because
+lock sleepers always use TASK_UNINTERRUPTIBLE, so the wakeup should use
+that as well.
+
+The cure is way simpler as figuring it out:
+
+Change the mask used in wake_up_lock_sleeper() from TASK_ALL to
+TASK_UNINTERRUPTIBLE.
 
 Cc: stable-rt@vger.kernel.org
+Reported-by: Mathias Koehrer <mathias.koehrer@etas.com>
+Reported-by: David Hauck <davidh@netacquire.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- drivers/md/raid5.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ kernel/sched/core.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 9b1aedb8e5df..8b236d622889 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -429,7 +429,7 @@ void raid5_release_stripe(struct stripe_head *sh)
- 		md_wakeup_thread(conf->mddev->thread);
- 	return;
- slow_path:
--	local_irq_save(flags);
-+	local_irq_save_nort(flags);
- 	/* we are ok here if STRIPE_ON_RELEASE_LIST is set or not */
- 	if (atomic_dec_and_lock(&sh->count, &conf->device_lock)) {
- 		INIT_LIST_HEAD(&list);
-@@ -438,7 +438,7 @@ slow_path:
- 		spin_unlock(&conf->device_lock);
- 		release_inactive_stripe_list(conf, &list, hash);
- 	}
--	local_irq_restore(flags);
-+	local_irq_restore_nort(flags);
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index ed9550c87f66..970b893a1d15 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -2212,7 +2212,7 @@ EXPORT_SYMBOL(wake_up_process);
+  */
+ int wake_up_lock_sleeper(struct task_struct *p)
+ {
+-	return try_to_wake_up(p, TASK_ALL, WF_LOCK_SLEEPER);
++	return try_to_wake_up(p, TASK_UNINTERRUPTIBLE, WF_LOCK_SLEEPER);
  }
  
- static inline void remove_hash(struct stripe_head *sh)
+ int wake_up_state(struct task_struct *p, unsigned int state)
 -- 
 2.13.2
