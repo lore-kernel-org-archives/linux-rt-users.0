@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 6/7] md/raid5: do not disable interrupts
-Date: Thu, 23 Nov 2017 00:23:23 -0500
-Message-ID: <20171123052630.481661788@goodmis.org>
+Subject: [PATCH RT 2/7] fs/dcache: disable preemption on i_dir_seqs write side
+Date: Thu, 23 Nov 2017 00:23:19 -0500
+Message-ID: <20171123052629.748060708@goodmis.org>
 References: <20171123052317.319740795@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -13,11 +13,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
         tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
-        stable-rt@vger.kernel.org
+        stable-rt@vger.kernel.org, Oleg.Karfich@wago.com
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0006-md-raid5-do-not-disable-interrupts.patch
+Content-Disposition: inline; filename=0002-fs-dcache-disable-preemption-on-i_dir_seq-s-write-si.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -28,58 +28,128 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-|BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:974
-|in_atomic(): 0, irqs_disabled(): 1, pid: 2992, name: lvm
-|CPU: 2 PID: 2992 Comm: lvm Not tainted 4.13.10-rt3+ #54
-|Call Trace:
-| dump_stack+0x4f/0x65
-| ___might_sleep+0xfc/0x150
-| atomic_dec_and_spin_lock+0x3c/0x80
-| raid5_release_stripe+0x73/0x110
-| grow_one_stripe+0xce/0xf0
-| setup_conf+0x841/0xaa0
-| raid5_run+0x7e7/0xa40
-| md_run+0x515/0xaf0
-| raid_ctr+0x147d/0x25e0
-| dm_table_add_target+0x155/0x320
-| table_load+0x103/0x320
-| ctl_ioctl+0x1d9/0x510
-| dm_ctl_ioctl+0x9/0x10
-| do_vfs_ioctl+0x8e/0x670
-| SyS_ioctl+0x3c/0x70
-| entry_SYSCALL_64_fastpath+0x17/0x98
-
-The interrupts were disabled because ->device_lock is taken with
-interrupts disabled.
+i_dir_seq is an opencoded seqcounter. Based on the code it looks like we
+could have two writers in parallel despite the fact that the d_lock is
+held. The problem is that during the write process on RT the preemption
+is still enabled and if this process is interrupted by a reader with RT
+priority then we lock up.
+To avoid that lock up I am disabling the preemption during the update.
+The rename of i_dir_seq is here to ensure to catch new write sides in
+future.
 
 Cc: stable-rt@vger.kernel.org
+Reported-by: Oleg.Karfich@wago.com
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- drivers/md/raid5.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ fs/dcache.c        | 12 +++++++-----
+ fs/inode.c         |  2 +-
+ fs/libfs.c         |  6 ++++--
+ include/linux/fs.h |  2 +-
+ 4 files changed, 13 insertions(+), 9 deletions(-)
 
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 4d8cfce1de86..4dde911925dc 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -429,7 +429,7 @@ void raid5_release_stripe(struct stripe_head *sh)
- 		md_wakeup_thread(conf->mddev->thread);
- 	return;
- slow_path:
--	local_irq_save(flags);
-+	local_irq_save_nort(flags);
- 	/* we are ok here if STRIPE_ON_RELEASE_LIST is set or not */
- 	if (atomic_dec_and_lock(&sh->count, &conf->device_lock)) {
- 		INIT_LIST_HEAD(&list);
-@@ -438,7 +438,7 @@ void raid5_release_stripe(struct stripe_head *sh)
- 		spin_unlock(&conf->device_lock);
- 		release_inactive_stripe_list(conf, &list, hash);
+diff --git a/fs/dcache.c b/fs/dcache.c
+index 37948da28742..f0719b2f1be5 100644
+--- a/fs/dcache.c
++++ b/fs/dcache.c
+@@ -2409,9 +2409,10 @@ EXPORT_SYMBOL(d_rehash);
+ static inline unsigned start_dir_add(struct inode *dir)
+ {
+ 
++	preempt_disable_rt();
+ 	for (;;) {
+-		unsigned n = dir->i_dir_seq;
+-		if (!(n & 1) && cmpxchg(&dir->i_dir_seq, n, n + 1) == n)
++		unsigned n = dir->__i_dir_seq;
++		if (!(n & 1) && cmpxchg(&dir->__i_dir_seq, n, n + 1) == n)
+ 			return n;
+ 		cpu_relax();
  	}
--	local_irq_restore(flags);
-+	local_irq_restore_nort(flags);
+@@ -2419,7 +2420,8 @@ static inline unsigned start_dir_add(struct inode *dir)
+ 
+ static inline void end_dir_add(struct inode *dir, unsigned n)
+ {
+-	smp_store_release(&dir->i_dir_seq, n + 2);
++	smp_store_release(&dir->__i_dir_seq, n + 2);
++	preempt_enable_rt();
  }
  
- static inline void remove_hash(struct stripe_head *sh)
+ static void d_wait_lookup(struct dentry *dentry)
+@@ -2455,7 +2457,7 @@ struct dentry *d_alloc_parallel(struct dentry *parent,
+ 
+ retry:
+ 	rcu_read_lock();
+-	seq = smp_load_acquire(&parent->d_inode->i_dir_seq) & ~1;
++	seq = smp_load_acquire(&parent->d_inode->__i_dir_seq) & ~1;
+ 	r_seq = read_seqbegin(&rename_lock);
+ 	dentry = __d_lookup_rcu(parent, name, &d_seq);
+ 	if (unlikely(dentry)) {
+@@ -2477,7 +2479,7 @@ struct dentry *d_alloc_parallel(struct dentry *parent,
+ 		goto retry;
+ 	}
+ 	hlist_bl_lock(b);
+-	if (unlikely(parent->d_inode->i_dir_seq != seq)) {
++	if (unlikely(parent->d_inode->__i_dir_seq != seq)) {
+ 		hlist_bl_unlock(b);
+ 		rcu_read_unlock();
+ 		goto retry;
+diff --git a/fs/inode.c b/fs/inode.c
+index 920aa0b1c6b0..3d6b5fd1bf06 100644
+--- a/fs/inode.c
++++ b/fs/inode.c
+@@ -153,7 +153,7 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
+ 	inode->i_bdev = NULL;
+ 	inode->i_cdev = NULL;
+ 	inode->i_link = NULL;
+-	inode->i_dir_seq = 0;
++	inode->__i_dir_seq = 0;
+ 	inode->i_rdev = 0;
+ 	inode->dirtied_when = 0;
+ 
+diff --git a/fs/libfs.c b/fs/libfs.c
+index 48826d4da189..3ea54d1fc431 100644
+--- a/fs/libfs.c
++++ b/fs/libfs.c
+@@ -89,7 +89,7 @@ static struct dentry *next_positive(struct dentry *parent,
+ 				    struct list_head *from,
+ 				    int count)
+ {
+-	unsigned *seq = &parent->d_inode->i_dir_seq, n;
++	unsigned *seq = &parent->d_inode->__i_dir_seq, n;
+ 	struct dentry *res;
+ 	struct list_head *p;
+ 	bool skipped;
+@@ -122,8 +122,9 @@ static struct dentry *next_positive(struct dentry *parent,
+ static void move_cursor(struct dentry *cursor, struct list_head *after)
+ {
+ 	struct dentry *parent = cursor->d_parent;
+-	unsigned n, *seq = &parent->d_inode->i_dir_seq;
++	unsigned n, *seq = &parent->d_inode->__i_dir_seq;
+ 	spin_lock(&parent->d_lock);
++	preempt_disable_rt();
+ 	for (;;) {
+ 		n = *seq;
+ 		if (!(n & 1) && cmpxchg(seq, n, n + 1) == n)
+@@ -136,6 +137,7 @@ static void move_cursor(struct dentry *cursor, struct list_head *after)
+ 	else
+ 		list_add_tail(&cursor->d_child, &parent->d_subdirs);
+ 	smp_store_release(seq, n + 2);
++	preempt_enable_rt();
+ 	spin_unlock(&parent->d_lock);
+ }
+ 
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index d705ae084edd..ab1946f4a729 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -688,7 +688,7 @@ struct inode {
+ 		struct block_device	*i_bdev;
+ 		struct cdev		*i_cdev;
+ 		char			*i_link;
+-		unsigned		i_dir_seq;
++		unsigned		__i_dir_seq;
+ 	};
+ 
+ 	__u32			i_generation;
 -- 
 2.13.2
