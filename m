@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.18.82-rt88
-Date: Thu, 23 Nov 2017 00:40:48 -0500
-Message-ID: <20171123004048.456a1242@gandalf.local.home>
+Subject: [ANNOUNCE] 3.10.108-rt123
+Date: Thu, 23 Nov 2017 00:44:41 -0500
+Message-ID: <20171123004441.4e02ef93@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -21,10 +21,10 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.18.82-rt88 stable release.
+I'm pleased to announce the 3.10.108-rt123 stable release.
 
 
-This release is just an update to the new stable 3.18.82 version
+This release is just an update to the new stable 3.10.108 version
 and no RT specific changes have been made.
 
 
@@ -32,17 +32,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.18-rt
-  Head SHA1: c3c324a4e15b687b3cfbc2d28ca0aa37bb747448
+  branch: v3.10-rt
+  Head SHA1: 5709dbd5bedd92382c8a63f2cdcff76b9e220b75
 
 
-Or to build 3.18.82-rt88 directly, the following patches should be applied:
+Or to build 3.10.108-rt123 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.82.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.108.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.82-rt88.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.108-rt123.patch.xz
 
 
 
