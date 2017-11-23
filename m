@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/7] fs/dcache: disable preemption on i_dir_seqs write side
-Date: Thu, 23 Nov 2017 00:23:19 -0500
-Message-ID: <20171123052629.748060708@goodmis.org>
+Subject: [PATCH RT 5/7] locking/rt-mutex: fix deadlock in device mapper / block-IO
+Date: Thu, 23 Nov 2017 00:23:22 -0500
+Message-ID: <20171123052630.205871591@goodmis.org>
 References: <20171123052317.319740795@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -13,11 +13,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
         tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
-        stable-rt@vger.kernel.org, Oleg.Karfich@wago.com
+        stable-rt@vger.kernel.org, Mikulas Patocka <mpatocka@redhat.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-fs-dcache-disable-preemption-on-i_dir_seq-s-write-si.patch
+Content-Disposition: inline; filename=0005-locking-rt-mutex-fix-deadlock-in-device-mapper-block.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -26,130 +26,79 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Mikulas Patocka <mpatocka@redhat.com>
 
-i_dir_seq is an opencoded seqcounter. Based on the code it looks like we
-could have two writers in parallel despite the fact that the d_lock is
-held. The problem is that during the write process on RT the preemption
-is still enabled and if this process is interrupted by a reader with RT
-priority then we lock up.
-To avoid that lock up I am disabling the preemption during the update.
-The rename of i_dir_seq is here to ensure to catch new write sides in
-future.
+When some block device driver creates a bio and submits it to another
+block device driver, the bio is added to current->bio_list (in order to
+avoid unbounded recursion).
 
-Cc: stable-rt@vger.kernel.org
-Reported-by: Oleg.Karfich@wago.com
+However, this queuing of bios can cause deadlocks, in order to avoid them,
+device mapper registers a function flush_current_bio_list. This function
+is called when device mapper driver blocks. It redirects bios queued on
+current->bio_list to helper workqueues, so that these bios can proceed
+even if the driver is blocked.
+
+The problem with CONFIG_PREEMPT_RT_FULL is that when the device mapper
+driver blocks, it won't call flush_current_bio_list (because
+tsk_is_pi_blocked returns true in sched_submit_work), so deadlocks in
+block device stack can happen.
+
+Note that we can't call blk_schedule_flush_plug if tsk_is_pi_blocked
+returns true - that would cause
+BUG_ON(rt_mutex_real_waiter(task->pi_blocked_on)) in
+task_blocks_on_rt_mutex when flush_current_bio_list attempts to take a
+spinlock.
+
+So the proper fix is to call blk_schedule_flush_plug in rt_mutex_fastlock,
+when fast acquire failed and when the task is about to block.
+
+CC: stable-rt@vger.kernel.org
+[bigeasy: The deadlock is not device-mapper specific, it can also occur
+          in plain EXT4]
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- fs/dcache.c        | 12 +++++++-----
- fs/inode.c         |  2 +-
- fs/libfs.c         |  6 ++++--
- include/linux/fs.h |  2 +-
- 4 files changed, 13 insertions(+), 9 deletions(-)
+ kernel/locking/rtmutex.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
-diff --git a/fs/dcache.c b/fs/dcache.c
-index 37948da28742..f0719b2f1be5 100644
---- a/fs/dcache.c
-+++ b/fs/dcache.c
-@@ -2409,9 +2409,10 @@ EXPORT_SYMBOL(d_rehash);
- static inline unsigned start_dir_add(struct inode *dir)
- {
+diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+index 78a6c4a223c1..b73cd7c87551 100644
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -22,6 +22,7 @@
+ #include <linux/sched/deadline.h>
+ #include <linux/timer.h>
+ #include <linux/ww_mutex.h>
++#include <linux/blkdev.h>
  
-+	preempt_disable_rt();
- 	for (;;) {
--		unsigned n = dir->i_dir_seq;
--		if (!(n & 1) && cmpxchg(&dir->i_dir_seq, n, n + 1) == n)
-+		unsigned n = dir->__i_dir_seq;
-+		if (!(n & 1) && cmpxchg(&dir->__i_dir_seq, n, n + 1) == n)
- 			return n;
- 		cpu_relax();
- 	}
-@@ -2419,7 +2420,8 @@ static inline unsigned start_dir_add(struct inode *dir)
+ #include "rtmutex_common.h"
  
- static inline void end_dir_add(struct inode *dir, unsigned n)
- {
--	smp_store_release(&dir->i_dir_seq, n + 2);
-+	smp_store_release(&dir->__i_dir_seq, n + 2);
-+	preempt_enable_rt();
+@@ -1968,6 +1969,15 @@ rt_mutex_fastlock(struct rt_mutex *lock, int state,
+ 	if (likely(rt_mutex_cmpxchg_acquire(lock, NULL, current)))
+ 		return 0;
+ 
++	/*
++	 * If rt_mutex blocks, the function sched_submit_work will not call
++	 * blk_schedule_flush_plug (because tsk_is_pi_blocked would be true).
++	 * We must call blk_schedule_flush_plug here, if we don't call it,
++	 * a deadlock in device mapper may happen.
++	 */
++	if (unlikely(blk_needs_flush_plug(current)))
++		blk_schedule_flush_plug(current);
++
+ 	return slowfn(lock, state, NULL, RT_MUTEX_MIN_CHAINWALK, ww_ctx);
  }
  
- static void d_wait_lookup(struct dentry *dentry)
-@@ -2455,7 +2457,7 @@ struct dentry *d_alloc_parallel(struct dentry *parent,
+@@ -1985,6 +1995,9 @@ rt_mutex_timed_fastlock(struct rt_mutex *lock, int state,
+ 	    likely(rt_mutex_cmpxchg_acquire(lock, NULL, current)))
+ 		return 0;
  
- retry:
- 	rcu_read_lock();
--	seq = smp_load_acquire(&parent->d_inode->i_dir_seq) & ~1;
-+	seq = smp_load_acquire(&parent->d_inode->__i_dir_seq) & ~1;
- 	r_seq = read_seqbegin(&rename_lock);
- 	dentry = __d_lookup_rcu(parent, name, &d_seq);
- 	if (unlikely(dentry)) {
-@@ -2477,7 +2479,7 @@ struct dentry *d_alloc_parallel(struct dentry *parent,
- 		goto retry;
- 	}
- 	hlist_bl_lock(b);
--	if (unlikely(parent->d_inode->i_dir_seq != seq)) {
-+	if (unlikely(parent->d_inode->__i_dir_seq != seq)) {
- 		hlist_bl_unlock(b);
- 		rcu_read_unlock();
- 		goto retry;
-diff --git a/fs/inode.c b/fs/inode.c
-index 920aa0b1c6b0..3d6b5fd1bf06 100644
---- a/fs/inode.c
-+++ b/fs/inode.c
-@@ -153,7 +153,7 @@ int inode_init_always(struct super_block *sb, struct inode *inode)
- 	inode->i_bdev = NULL;
- 	inode->i_cdev = NULL;
- 	inode->i_link = NULL;
--	inode->i_dir_seq = 0;
-+	inode->__i_dir_seq = 0;
- 	inode->i_rdev = 0;
- 	inode->dirtied_when = 0;
- 
-diff --git a/fs/libfs.c b/fs/libfs.c
-index 48826d4da189..3ea54d1fc431 100644
---- a/fs/libfs.c
-+++ b/fs/libfs.c
-@@ -89,7 +89,7 @@ static struct dentry *next_positive(struct dentry *parent,
- 				    struct list_head *from,
- 				    int count)
- {
--	unsigned *seq = &parent->d_inode->i_dir_seq, n;
-+	unsigned *seq = &parent->d_inode->__i_dir_seq, n;
- 	struct dentry *res;
- 	struct list_head *p;
- 	bool skipped;
-@@ -122,8 +122,9 @@ static struct dentry *next_positive(struct dentry *parent,
- static void move_cursor(struct dentry *cursor, struct list_head *after)
- {
- 	struct dentry *parent = cursor->d_parent;
--	unsigned n, *seq = &parent->d_inode->i_dir_seq;
-+	unsigned n, *seq = &parent->d_inode->__i_dir_seq;
- 	spin_lock(&parent->d_lock);
-+	preempt_disable_rt();
- 	for (;;) {
- 		n = *seq;
- 		if (!(n & 1) && cmpxchg(seq, n, n + 1) == n)
-@@ -136,6 +137,7 @@ static void move_cursor(struct dentry *cursor, struct list_head *after)
- 	else
- 		list_add_tail(&cursor->d_child, &parent->d_subdirs);
- 	smp_store_release(seq, n + 2);
-+	preempt_enable_rt();
- 	spin_unlock(&parent->d_lock);
++	if (unlikely(blk_needs_flush_plug(current)))
++		blk_schedule_flush_plug(current);
++
+ 	return slowfn(lock, state, timeout, chwalk, ww_ctx);
  }
  
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index d705ae084edd..ab1946f4a729 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -688,7 +688,7 @@ struct inode {
- 		struct block_device	*i_bdev;
- 		struct cdev		*i_cdev;
- 		char			*i_link;
--		unsigned		i_dir_seq;
-+		unsigned		__i_dir_seq;
- 	};
- 
- 	__u32			i_generation;
 -- 
 2.13.2
