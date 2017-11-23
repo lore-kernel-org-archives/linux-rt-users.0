@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 02/10] rtmutex: Make lock_killable work
-Date: Thu, 23 Nov 2017 00:33:43 -0500
-Message-ID: <20171123053433.456302430@goodmis.org>
+Subject: [PATCH RT 01/10] timer/hrtimer: check properly for a running timer
+Date: Thu, 23 Nov 2017 00:33:42 -0500
+Message-ID: <20171123053433.323395685@goodmis.org>
 References: <20171123053341.174002403@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -13,11 +13,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
         tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
-        rt-stable@vger.kernel.org
+        stable-rt@vger.kernel.org, Alexander Gerasiov <gq@cs.msu.su>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-rtmutex-Make-lock_killable-work.patch
+Content-Disposition: inline; filename=0001-timer-hrtimer-check-properly-for-a-running-timer.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -26,50 +26,39 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Locking an rt mutex killable does not work because signal handling is
-restricted to TASK_INTERRUPTIBLE.
+hrtimer_callback_running() checks only whether a timmer is running on a
+CPU in hardirq-context. This is okay for !RT. For RT environment we move
+most timers to the timer-softirq and therefore we therefore need to
+check if the timer is running in the softirq context.
 
-Use signal_pending_state() unconditionaly.
-
-Cc: rt-stable@vger.kernel.org
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: stable-rt@vger.kernel.org
+Reported-by: Alexander Gerasiov <gq@cs.msu.su>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/locking/rtmutex.c | 19 +++++++------------
- 1 file changed, 7 insertions(+), 12 deletions(-)
+ include/linux/hrtimer.h | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
 
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index 0e9a6260441d..552dc6dd3a79 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -1672,18 +1672,13 @@ __rt_mutex_slowlock(struct rt_mutex *lock, int state,
- 		if (try_to_take_rt_mutex(lock, current, waiter))
- 			break;
+diff --git a/include/linux/hrtimer.h b/include/linux/hrtimer.h
+index 8fbcdfa5dc77..ff317006d3e8 100644
+--- a/include/linux/hrtimer.h
++++ b/include/linux/hrtimer.h
+@@ -455,7 +455,13 @@ static inline int hrtimer_is_queued(struct hrtimer *timer)
+  */
+ static inline int hrtimer_callback_running(const struct hrtimer *timer)
+ {
+-	return timer->base->cpu_base->running == timer;
++	if (timer->base->cpu_base->running == timer)
++		return 1;
++#ifdef CONFIG_PREEMPT_RT_BASE
++	if (timer->base->cpu_base->running_soft == timer)
++		return 1;
++#endif
++	return 0;
+ }
  
--		/*
--		 * TASK_INTERRUPTIBLE checks for signals and
--		 * timeout. Ignored otherwise.
--		 */
--		if (unlikely(state == TASK_INTERRUPTIBLE)) {
--			/* Signal pending? */
--			if (signal_pending(current))
--				ret = -EINTR;
--			if (timeout && !timeout->task)
--				ret = -ETIMEDOUT;
--			if (ret)
--				break;
-+		if (timeout && !timeout->task) {
-+			ret = -ETIMEDOUT;
-+			break;
-+		}
-+		if (signal_pending_state(state, current)) {
-+			ret = -EINTR;
-+			break;
- 		}
- 
- 		if (ww_ctx && ww_ctx->acquired > 0) {
+ /* Forward a hrtimer so it expires after now: */
 -- 
 2.13.2
