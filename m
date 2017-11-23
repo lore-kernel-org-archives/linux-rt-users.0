@@ -1,57 +1,43 @@
-From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [PATCH v6 36/37] tracing: Add inter-event blurb to HIST_TRIGGERS
- config option
-Date: Thu, 23 Nov 2017 15:57:48 +0900
-Message-ID: <20171123065748.GD25472@sejong>
-References: <cover.1510948725.git.tom.zanussi@linux.intel.com>
- <7fd8c67013ed0ed1c7fced4ba6e161e76f421ab6.1510948725.git.tom.zanussi@linux.intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        kernel-team@lge.com
-To: Tom Zanussi <tom.zanussi@linux.intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <7fd8c67013ed0ed1c7fced4ba6e161e76f421ab6.1510948725.git.tom.zanussi@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Alexander Dahl <ada@thorsis.com>
+Subject: Re: [ANNOUNCE]  4.9.61-rt51
+Date: Thu, 23 Nov 2017 09:09:43 +0100
+Message-ID: <1514845.ahB3SCdmRW@ada>
+References: <20171121103736.7998954a@gandalf.local.home>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.thorsis.com ([213.211.200.15]:52670 "EHLO mail.thorsis.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751437AbdKWIT3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 23 Nov 2017 03:19:29 -0500
+Received: from localhost (localhost [127.0.0.1])
+        by mail.thorsis.com (Postfix) with ESMTP id 05A843A350F
+        for <linux-rt-users@vger.kernel.org>; Thu, 23 Nov 2017 09:10:43 +0100 (CET)
+Received: from mail.thorsis.com ([127.0.0.1])
+        by localhost (mail.thorsis.com [127.0.0.1]) (amavisd-new, port 10024)
+        with ESMTP id Pi22zPjt5nCD for <linux-rt-users@vger.kernel.org>;
+        Thu, 23 Nov 2017 09:10:41 +0100 (CET)
+In-Reply-To: <20171121103736.7998954a@gandalf.local.home>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Nov 17, 2017 at 02:33:15PM -0600, Tom Zanussi wrote:
-> So that users know that inter-event tracing is supported as part of
-> the HIST_TRIGGERS option, include text to that effect in the help
-> text.
+Hello Steven,
+
+Am Dienstag, 21. November 2017, 10:37:36 CET schrieb Steven Rostedt:
+> You can get this release via the git tree at:
 > 
-> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> ---
->  kernel/trace/Kconfig | 3 +++
->  1 file changed, 3 insertions(+)
+>   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 > 
-> diff --git a/kernel/trace/Kconfig b/kernel/trace/Kconfig
-> index b8395a0..b01536d 100644
-> --- a/kernel/trace/Kconfig
-> +++ b/kernel/trace/Kconfig
-> @@ -596,6 +596,9 @@ config HIST_TRIGGERS
->  	  event activity as an initial guide for further investigation
->  	  using more advanced tools.
->  
-> +	  Inter-event tracing of quantities such as latencies is also
-> +	  supported using hist triggers under this option.
-> +
->  	  See Documentation/trace/events.txt.
+>   branch: v4.9-rt
+>   Head SHA1: d0bcb84cbec27d7eb876b6f1d1fffdb65ccefcd4
 
-Unrelated, but the doc was renamed. :)
+The last tag on the branch 'v4.9-rt' is 'v4.9.61-rt51'. The last tag on the 
+branch 'v4.9-rt-rebase' however is 'v4.9.61-rt61-rebase'. In both cases the 
+localversion is set to '-rt51'. So I guess just that's just a typo in one of 
+the tags and the next localversion will be -rt52 as written in the rc2 for 
+that you posted today?
 
-Thanks,
-Namhyung
+Greets
+Alex
 
-
->  	  If in doubt, say N.
->  
-> -- 
-> 1.9.3
-> 
