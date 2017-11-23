@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 3/7] tpm_tis: fix stall after iowrite*()s
-Date: Thu, 23 Nov 2017 00:23:20 -0500
-Message-ID: <20171123052629.883196481@goodmis.org>
+Subject: [PATCH RT 4/7] fs: convert two more BH_Uptodate_Lock related bitspinlocks
+Date: Thu, 23 Nov 2017 00:23:21 -0500
+Message-ID: <20171123052630.020954419@goodmis.org>
 References: <20171123052317.319740795@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -13,11 +13,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
         tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
-        Haris Okanovic <haris.okanovic@ni.com>
+        stable-rt@vger.kernel.org
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-tpm_tis-fix-stall-after-iowrite-s.patch
+Content-Disposition: inline; filename=0004-fs-convert-two-more-BH_Uptodate_Lock-related-bitspin.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -26,83 +26,67 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Haris Okanovic <haris.okanovic@ni.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-ioread8() operations to TPM MMIO addresses can stall the cpu when
-immediately following a sequence of iowrite*()'s to the same region.
+We convert all BH_Uptodate_Lock based bit-spinlocks to use
+bh_uptodate_lock_irqsave() instead. Those two were introduced after the
+initial change in -RT and were not noticed before.
 
-For example, cyclitest measures ~400us latency spikes when a non-RT
-usermode application communicates with an SPI-based TPM chip (Intel Atom
-E3940 system, PREEMPT_RT_FULL kernel). The spikes are caused by a
-stalling ioread8() operation following a sequence of 30+ iowrite8()s to
-the same address. I believe this happens because the write sequence is
-buffered (in cpu or somewhere along the bus), and gets flushed on the
-first LOAD instruction (ioread*()) that follows.
-
-The enclosed change appears to fix this issue: read the TPM chip's
-access register (status code) after every iowrite*() operation to
-amortize the cost of flushing data to chip across multiple instructions.
-
-Signed-off-by: Haris Okanovic <haris.okanovic@ni.com>
+Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- drivers/char/tpm/tpm_tis.c | 29 +++++++++++++++++++++++++++--
- 1 file changed, 27 insertions(+), 2 deletions(-)
+ fs/ext4/page-io.c | 6 ++----
+ fs/xfs/xfs_aops.c | 6 ++----
+ 2 files changed, 4 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/char/tpm/tpm_tis.c b/drivers/char/tpm/tpm_tis.c
-index 8022bea27fed..247330efd310 100644
---- a/drivers/char/tpm/tpm_tis.c
-+++ b/drivers/char/tpm/tpm_tis.c
-@@ -50,6 +50,31 @@ static inline struct tpm_tis_tcg_phy *to_tpm_tis_tcg_phy(struct tpm_tis_data *da
- 	return container_of(data, struct tpm_tis_tcg_phy, priv);
- }
+diff --git a/fs/ext4/page-io.c b/fs/ext4/page-io.c
+index 0094923e5ebf..37fa06ef5417 100644
+--- a/fs/ext4/page-io.c
++++ b/fs/ext4/page-io.c
+@@ -95,8 +95,7 @@ static void ext4_finish_bio(struct bio *bio)
+ 		 * We check all buffers in the page under BH_Uptodate_Lock
+ 		 * to avoid races with other end io clearing async_write flags
+ 		 */
+-		local_irq_save(flags);
+-		bit_spin_lock(BH_Uptodate_Lock, &head->b_state);
++		flags = bh_uptodate_lock_irqsave(head);
+ 		do {
+ 			if (bh_offset(bh) < bio_start ||
+ 			    bh_offset(bh) + bh->b_size > bio_end) {
+@@ -108,8 +107,7 @@ static void ext4_finish_bio(struct bio *bio)
+ 			if (bio->bi_error)
+ 				buffer_io_error(bh);
+ 		} while ((bh = bh->b_this_page) != head);
+-		bit_spin_unlock(BH_Uptodate_Lock, &head->b_state);
+-		local_irq_restore(flags);
++		bh_uptodate_unlock_irqrestore(head, flags);
+ 		if (!under_io) {
+ #ifdef CONFIG_EXT4_FS_ENCRYPTION
+ 			if (data_page)
+diff --git a/fs/xfs/xfs_aops.c b/fs/xfs/xfs_aops.c
+index d31cd1ebd8e9..5ea3f933a52a 100644
+--- a/fs/xfs/xfs_aops.c
++++ b/fs/xfs/xfs_aops.c
+@@ -112,8 +112,7 @@ xfs_finish_page_writeback(
+ 	ASSERT(bvec->bv_offset + bvec->bv_len <= PAGE_SIZE);
+ 	ASSERT((bvec->bv_len & (i_blocksize(inode) - 1)) == 0);
  
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+/*
-+ * Flushes previous write operations to chip so that a subsequent
-+ * ioread*()s won't stall a cpu.
-+ */
-+static inline void tpm_tis_flush(void __iomem *iobase)
-+{
-+	ioread8(iobase + TPM_ACCESS(0));
-+}
-+#else
-+#define tpm_tis_flush(iobase) do { } while (0)
-+#endif
-+
-+static inline void tpm_tis_iowrite8(u8 b, void __iomem *iobase, u32 addr)
-+{
-+	iowrite8(b, iobase + addr);
-+	tpm_tis_flush(iobase);
-+}
-+
-+static inline void tpm_tis_iowrite32(u32 b, void __iomem *iobase, u32 addr)
-+{
-+	iowrite32(b, iobase + addr);
-+	tpm_tis_flush(iobase);
-+}
-+
- static bool interrupts = true;
- module_param(interrupts, bool, 0444);
- MODULE_PARM_DESC(interrupts, "Enable interrupts");
-@@ -103,7 +128,7 @@ static int tpm_tcg_write_bytes(struct tpm_tis_data *data, u32 addr, u16 len,
- 	struct tpm_tis_tcg_phy *phy = to_tpm_tis_tcg_phy(data);
+-	local_irq_save(flags);
+-	bit_spin_lock(BH_Uptodate_Lock, &head->b_state);
++	flags = bh_uptodate_lock_irqsave(head);
+ 	do {
+ 		if (off >= bvec->bv_offset &&
+ 		    off < bvec->bv_offset + bvec->bv_len) {
+@@ -136,8 +135,7 @@ xfs_finish_page_writeback(
+ 		}
+ 		off += bh->b_size;
+ 	} while ((bh = bh->b_this_page) != head);
+-	bit_spin_unlock(BH_Uptodate_Lock, &head->b_state);
+-	local_irq_restore(flags);
++	bh_uptodate_unlock_irqrestore(head, flags);
  
- 	while (len--)
--		iowrite8(*value++, phy->iobase + addr);
-+		tpm_tis_iowrite8(*value++, phy->iobase, addr);
- 	return 0;
- }
- 
-@@ -127,7 +152,7 @@ static int tpm_tcg_write32(struct tpm_tis_data *data, u32 addr, u32 value)
- {
- 	struct tpm_tis_tcg_phy *phy = to_tpm_tis_tcg_phy(data);
- 
--	iowrite32(value, phy->iobase + addr);
-+	tpm_tis_iowrite32(value, phy->iobase, addr);
- 	return 0;
- }
- 
+ 	if (!busy)
+ 		end_page_writeback(bvec->bv_page);
 -- 
 2.13.2
