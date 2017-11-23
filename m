@@ -1,152 +1,68 @@
-From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [PATCH v6 29/37] tracing: Add cpu field for hist triggers
-Date: Thu, 23 Nov 2017 14:25:56 +0900
-Message-ID: <20171123052556.GB25472@sejong>
-References: <cover.1510948725.git.tom.zanussi@linux.intel.com>
- <c38607534f49a169c0a979c2c716c77d943fb283.1510948725.git.tom.zanussi@linux.intel.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 1/7] drivers/zram: fix zcomp_stream_get() smp_processor_id() use in
+ preemptible code
+Date: Thu, 23 Nov 2017 00:23:18 -0500
+Message-ID: <20171123052629.606402690@goodmis.org>
+References: <20171123052317.319740795@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        kernel-team@lge.com
-To: Tom Zanussi <tom.zanussi@linux.intel.com>
+Content-Type: text/plain; charset=UTF-8
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        John Kacur <jkacur@redhat.com>,
+        Paul Gortmaker <paul.gortmaker@windriver.com>,
+        Julia Cartwright <julia@ni.com>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
+        stable-rt@vger.kernel.org, Mike Galbraith <efault@gmx.de>
+To: linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <c38607534f49a169c0a979c2c716c77d943fb283.1510948725.git.tom.zanussi@linux.intel.com>
+Content-Disposition: inline; filename=0001-drivers-zram-fix-zcomp_stream_get-smp_processor_id-u.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Nov 17, 2017 at 02:33:08PM -0600, Tom Zanussi wrote:
-> A common key to use in a histogram is the cpuid - add a new cpu
-> 'synthetic' field for that purpose.  This field is named cpu rather
-> than $cpu or $common_cpu because 'cpu' already exists as a special
-> filter field and it makes more sense to match that rather than add
-> another name for the same thing.
-> 
-> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> ---
->  Documentation/trace/histogram.txt | 17 +++++++++++++++++
->  kernel/trace/trace_events_hist.c  | 28 +++++++++++++++++++++++++++-
->  2 files changed, 44 insertions(+), 1 deletion(-)
-> 
-> diff --git a/Documentation/trace/histogram.txt b/Documentation/trace/histogram.txt
-> index d1d92ed..cd3ec00 100644
-> --- a/Documentation/trace/histogram.txt
-> +++ b/Documentation/trace/histogram.txt
-> @@ -172,6 +172,23 @@
->    The examples below provide a more concrete illustration of the
->    concepts and typical usage patterns discussed above.
->  
-> +  'special' event fields
-> +  ------------------------
-> +
-> +  There are a number of 'special event fields' available for use as
-> +  keys or values in a hist trigger.  These look like and behave as if
-> +  they were actual event fields, but aren't really part of the event's
-> +  field definition or format file.  They are however available for any
-> +  event, and can be used anywhere an actual event field could be.
-> +  'Special' field names are always prefixed with a '$' character to
-> +  indicate that they're not normal fields (with the exception of
-> +  'cpu', for compatibility with existing filter usage):
+4.9.61-rt52-rc2 stable review patch.
+If anyone has any objections, please let me know.
 
-But it also could make a confusion to variables.  How about removing
-'$' character at all?
+------------------
 
+From: Mike Galbraith <efault@gmx.de>
 
-> +
-> +    $common_timestamp      u64 - timestamp (from ring buffer) associated
-> +                                 with the event, in nanoseconds.  May be
-> +				 modified by .usecs to have timestamps
-> +				 interpreted as microseconds.
-> +    cpu                    int - the cpu on which the event occurred.
->  
->  6.2 'hist' trigger examples
->  ---------------------------
-> diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-> index 121f7ef..afbfa9c 100644
-> --- a/kernel/trace/trace_events_hist.c
-> +++ b/kernel/trace/trace_events_hist.c
-> @@ -227,6 +227,7 @@ enum hist_field_flags {
->  	HIST_FIELD_FL_VAR		= 1 << 12,
->  	HIST_FIELD_FL_EXPR		= 1 << 13,
->  	HIST_FIELD_FL_VAR_REF		= 1 << 14,
-> +	HIST_FIELD_FL_CPU		= 1 << 15,
->  };
->  
->  struct var_defs {
-> @@ -1177,6 +1178,16 @@ static u64 hist_field_timestamp(struct hist_field *hist_field,
->  	return ts;
->  }
->  
-> +static u64 hist_field_cpu(struct hist_field *hist_field,
-> +			  struct tracing_map_elt *elt,
-> +			  struct ring_buffer_event *rbe,
-> +			  void *event)
-> +{
-> +	int cpu = smp_processor_id();
-> +
-> +	return cpu;
-> +}
-> +
->  static struct hist_field *
->  check_field_for_var_ref(struct hist_field *hist_field,
->  			struct hist_trigger_data *var_data,
-> @@ -1622,6 +1633,8 @@ static const char *hist_field_name(struct hist_field *field,
->  		field_name = hist_field_name(field->operands[0], ++level);
->  	else if (field->flags & HIST_FIELD_FL_TIMESTAMP)
->  		field_name = "$common_timestamp";
-> +	else if (field->flags & HIST_FIELD_FL_CPU)
-> +		field_name = "cpu";
->  	else if (field->flags & HIST_FIELD_FL_EXPR ||
->  		 field->flags & HIST_FIELD_FL_VAR_REF) {
->  		if (field->system) {
-> @@ -2125,6 +2138,15 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
->  		goto out;
->  	}
->  
-> +	if (flags & HIST_FIELD_FL_CPU) {
-> +		hist_field->fn = hist_field_cpu;
-> +		hist_field->size = sizeof(int);
-> +		hist_field->type = kstrdup("int", GFP_KERNEL);
+Use get_local_ptr() instead this_cpu_ptr() to avoid a warning regarding
+smp_processor_id() in preemptible code.
+raw_cpu_ptr() would be fine, too because the per-CPU data structure is
+protected with a spin lock so it does not matter much if we take the
+other one.
 
-Is it unsigned?
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+---
+ drivers/block/zram/zcomp.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-Thanks,
-Namhyung
-
-
-> +		if (!hist_field->type)
-> +			goto free;
-> +		goto out;
-> +	}
-> +
->  	if (WARN_ON_ONCE(!field))
->  		goto out;
->  
-> @@ -2343,7 +2365,9 @@ static struct hist_field *parse_var_ref(struct hist_trigger_data *hist_data,
->  		hist_data->enable_timestamps = true;
->  		if (*flags & HIST_FIELD_FL_TIMESTAMP_USECS)
->  			hist_data->attrs->ts_in_usecs = true;
-> -	} else {
-> +	} else if (strcmp(field_name, "cpu") == 0)
-> +		*flags |= HIST_FIELD_FL_CPU;
-> +	else {
->  		field = trace_find_event_field(file->event_call, field_name);
->  		if (!field || !field->size) {
->  			field = ERR_PTR(-EINVAL);
-> @@ -4612,6 +4636,8 @@ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
->  
->  	if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP)
->  		seq_puts(m, "$common_timestamp");
-> +	else if (hist_field->flags & HIST_FIELD_FL_CPU)
-> +		seq_puts(m, "cpu");
->  	else if (field_name) {
->  		if (hist_field->flags & HIST_FIELD_FL_VAR_REF)
->  			seq_putc(m, '$');
-> -- 
-> 1.9.3
-> 
+diff --git a/drivers/block/zram/zcomp.c b/drivers/block/zram/zcomp.c
+index fa8329ad79fd..8c93ee150ee8 100644
+--- a/drivers/block/zram/zcomp.c
++++ b/drivers/block/zram/zcomp.c
+@@ -120,7 +120,7 @@ struct zcomp_strm *zcomp_stream_get(struct zcomp *comp)
+ {
+ 	struct zcomp_strm *zstrm;
+ 
+-	zstrm = *this_cpu_ptr(comp->stream);
++	zstrm = *get_local_ptr(comp->stream);
+ 	spin_lock(&zstrm->zcomp_lock);
+ 	return zstrm;
+ }
+@@ -131,6 +131,7 @@ void zcomp_stream_put(struct zcomp *comp)
+ 
+ 	zstrm = *this_cpu_ptr(comp->stream);
+ 	spin_unlock(&zstrm->zcomp_lock);
++	put_local_ptr(zstrm);
+ }
+ 
+ int zcomp_compress(struct zcomp_strm *zstrm,
+-- 
+2.13.2
