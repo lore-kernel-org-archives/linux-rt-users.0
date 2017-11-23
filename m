@@ -1,60 +1,52 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: [PATCH PREEMPT RT] rt-mutex: fix deadlock in device mapper
-Date: Thu, 23 Nov 2017 15:50:40 +0100
-Message-ID: <1511448640.6505.30.camel@gmx.de>
-References: <20171117145744.t366d2ztxj2qqnco@linutronix.de>
-         <1511030230.12841.42.camel@gmx.de>
-         <alpine.LRH.2.02.1711201607230.24006@file01.intranet.prod.int.rdu2.redhat.com>
-         <1511234430.7672.26.camel@gmx.de>
-         <alpine.DEB.2.20.1711210931460.1782@nanos>
-         <1511255884.7672.49.camel@gmx.de>
-         <alpine.LRH.2.02.1711211107550.12859@file01.intranet.prod.int.rdu2.redhat.com>
-         <1511285619.30074.13.camel@gmx.de>
-         <alpine.LRH.2.02.1711211450410.10766@file01.intranet.prod.int.rdu2.redhat.com>
-         <1511299251.30074.72.camel@gmx.de> <20171123144231.GD2384@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH RT] Revert "memcontrol: Prevent scheduling while atomic
+ in cgroup code"
+Date: Thu, 23 Nov 2017 17:22:54 +0100
+Message-ID: <20171123162254.GA32454@linutronix.de>
+References: <20171122073119.31837a3f@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 8BIT
-Cc: Mikulas Patocka <mpatocka@redhat.com>,
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        linux-kernel@vger.kernel.org, Ingo Molnar <mingo@redhat.com>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        linux-rt-users@vger.kernel.org
-To: Sebastian Siewior <bigeasy@linutronix.de>
+        Mike Galbraith <efault@gmx.de>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171123144231.GD2384@linutronix.de>
+Content-Disposition: inline
+In-Reply-To: <20171122073119.31837a3f@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2017-11-23 at 15:42 +0100, Sebastian Siewior wrote:
-> On 2017-11-21 22:20:51 [+0100], Mike Galbraith wrote:
-> > On Tue, 2017-11-21 at 14:56 -0500, Mikulas Patocka wrote:
-> > > 
-> > > If we don't have any reason why it is needed to unplug block requests when 
-> > > a spinlock is taken - so let's not do this.
-> > 
-> > That's perfectly fine.  I guess I shouldn't have even mentioned having
-> > encountered unplug at mutex being insufficient.
+On 2017-11-22 07:31:19 [-0500], Steven Rostedt wrote:
+> From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 > 
-> While at it, I intend to drop
-> fs-jbd2-pull-your-plug-when-waiting-for-space.patch from the -RT queue
-> for v4.14 which does
+> The commit "memcontrol: Prevent scheduling while atomic in cgroup code"
+> fixed this issue:
 > 
-> --- a/fs/jbd2/checkpoint.c
-> +++ b/fs/jbd2/checkpoint.c
-> @@ -116,6 +116,8 @@ void __jbd2_log_wait_for_space(journal_t
->  	nblocks = jbd2_space_needed(journal);
->  	while (jbd2_log_space_left(journal) < nblocks) {
->  		write_unlock(&journal->j_state_lock);
-> +		if (current->plug)
-> +			io_schedule();
->  		mutex_lock(&journal->j_checkpoint_mutex);
->  
->  		/*
+>        refill_stock()
+>           get_cpu_var()
+>           drain_stock()
+>              res_counter_uncharge()
+>                 res_counter_uncharge_until()
+>                    spin_lock() <== boom
 > 
-> and is/was probably a workaround for the missing schedule while blocking
-> on mutex/rwsem.
+> But commit 3e32cb2e0a12b ("mm: memcontrol: lockless page counters") replaced
+> the calls to res_counter_uncharge() in drain_stock() to the lockless
+> function page_counter_uncharge(). There is no more spin lock there and no
+> more reason to have that local lock.
 
-Yeah, that's now code without a meaningful job.
+as per v4.9+ the reported issue should not have occur due to the
+locallocks. I am not sure why those were not used in first place.
 
-	-Mike
+The loop in page_counter_uncharge() does not look like it would take
+many iterations and in worst case we could have two invocations with
+interrupts off. So okay, lets revert that.
+
+That upstream commit appeared in v3.19 and the patch in question in
+v3.18.7-rt2 and v3.18 seems still to be maintained. So I guess that
+v3.18 would need the locallocks that we are about to remove here. I am
+not sure if any earlier versions have the patch backported.
+
+> Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+
+Sebastian
