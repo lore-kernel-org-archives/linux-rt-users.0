@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 06/10] sched/migrate disable: handle updated task-mask mg-dis section
-Date: Thu, 23 Nov 2017 00:33:47 -0500
-Message-ID: <20171123053434.029425273@goodmis.org>
+Subject: [PATCH RT 08/10] fs: convert two more BH_Uptodate_Lock related bitspinlocks
+Date: Thu, 23 Nov 2017 00:33:49 -0500
+Message-ID: <20171123053434.323019871@goodmis.org>
 References: <20171123053341.174002403@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -17,7 +17,7 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0006-sched-migrate-disable-handle-updated-task-mask-mg-di.patch
+Content-Disposition: inline; filename=0008-fs-convert-two-more-BH_Uptodate_Lock-related-bitspin.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -28,125 +28,40 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-If task's cpumask changes while in the task is in a migrate_disable()
-section then we don't react on it after a migrate_enable(). It matters
-however if current CPU is no longer part of the cpumask. We also miss
-the ->set_cpus_allowed() callback.
-This patch fixes it by setting task->migrate_disable_update once we this
-"delayed" hook.
-This bug was introduced while fixing unrelated issue in
-migrate_disable() in v4.4-rt3 (update_migrate_disable() got removed
-during that).
+We convert all BH_Uptodate_Lock based bit-spinlocks to use
+bh_uptodate_lock_irqsave() instead. Those two were introduced after the
+initial change in -RT and were not noticed before.
 
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- include/linux/sched.h |  1 +
- kernel/sched/core.c   | 59 +++++++++++++++++++++++++++++++++++++++++++++------
- 2 files changed, 54 insertions(+), 6 deletions(-)
+ fs/ext4/page-io.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
 
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 56ccd0a3dd49..331cdbfc6431 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -1438,6 +1438,7 @@ struct task_struct {
- 	unsigned int policy;
- #ifdef CONFIG_PREEMPT_RT_FULL
- 	int migrate_disable;
-+	int migrate_disable_update;
- # ifdef CONFIG_SCHED_DEBUG
- 	int migrate_disable_atomic;
- # endif
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 970b893a1d15..bea476417297 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -1212,18 +1212,14 @@ void set_cpus_allowed_common(struct task_struct *p, const struct cpumask *new_ma
- 	p->nr_cpus_allowed = cpumask_weight(new_mask);
- }
- 
--void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
-+static void __do_set_cpus_allowed_tail(struct task_struct *p,
-+				       const struct cpumask *new_mask)
- {
- 	struct rq *rq = task_rq(p);
- 	bool queued, running;
- 
- 	lockdep_assert_held(&p->pi_lock);
- 
--	if (__migrate_disabled(p)) {
--		cpumask_copy(&p->cpus_allowed, new_mask);
--		return;
--	}
--
- 	queued = task_on_rq_queued(p);
- 	running = task_current(rq, p);
- 
-@@ -1246,6 +1242,20 @@ void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
- 		enqueue_task(rq, p, ENQUEUE_RESTORE);
- }
- 
-+void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
-+{
-+	if (__migrate_disabled(p)) {
-+		lockdep_assert_held(&p->pi_lock);
-+
-+		cpumask_copy(&p->cpus_allowed, new_mask);
-+#if defined(CONFIG_PREEMPT_RT_FULL) && defined(CONFIG_SMP)
-+		p->migrate_disable_update = 1;
-+#endif
-+		return;
-+	}
-+	__do_set_cpus_allowed_tail(p, new_mask);
-+}
-+
- static DEFINE_PER_CPU(struct cpumask, sched_cpumasks);
- static DEFINE_MUTEX(sched_down_mutex);
- static cpumask_t sched_down_cpumask;
-@@ -3231,6 +3241,43 @@ void migrate_enable(void)
- 	 */
- 	p->migrate_disable = 0;
- 
-+	if (p->migrate_disable_update) {
-+		unsigned long flags;
-+		struct rq *rq;
-+
-+		rq = task_rq_lock(p, &flags);
-+		update_rq_clock(rq);
-+
-+		__do_set_cpus_allowed_tail(p, &p->cpus_allowed);
-+		task_rq_unlock(rq, p, &flags);
-+
-+		p->migrate_disable_update = 0;
-+
-+		WARN_ON(smp_processor_id() != task_cpu(p));
-+		if (!cpumask_test_cpu(task_cpu(p), &p->cpus_allowed)) {
-+			const struct cpumask *cpu_valid_mask = cpu_active_mask;
-+			struct migration_arg arg;
-+			unsigned int dest_cpu;
-+
-+			if (p->flags & PF_KTHREAD) {
-+				/*
-+				 * Kernel threads are allowed on online && !active CPUs
-+				 */
-+				cpu_valid_mask = cpu_online_mask;
-+			}
-+			dest_cpu = cpumask_any_and(cpu_valid_mask, &p->cpus_allowed);
-+			arg.task = p;
-+			arg.dest_cpu = dest_cpu;
-+
-+			unpin_current_cpu();
-+			preempt_lazy_enable();
-+			preempt_enable();
-+			stop_one_cpu(task_cpu(p), migration_cpu_stop, &arg);
-+			tlb_migrate_finish(p->mm);
-+			return;
-+		}
-+	}
-+
- 	unpin_current_cpu();
- 	preempt_enable();
- 	preempt_lazy_enable();
+diff --git a/fs/ext4/page-io.c b/fs/ext4/page-io.c
+index 6ca56f5f72b5..9e145fe7cae0 100644
+--- a/fs/ext4/page-io.c
++++ b/fs/ext4/page-io.c
+@@ -97,8 +97,7 @@ static void ext4_finish_bio(struct bio *bio)
+ 		 * We check all buffers in the page under BH_Uptodate_Lock
+ 		 * to avoid races with other end io clearing async_write flags
+ 		 */
+-		local_irq_save(flags);
+-		bit_spin_lock(BH_Uptodate_Lock, &head->b_state);
++		flags = bh_uptodate_lock_irqsave(head);
+ 		do {
+ 			if (bh_offset(bh) < bio_start ||
+ 			    bh_offset(bh) + bh->b_size > bio_end) {
+@@ -110,8 +109,7 @@ static void ext4_finish_bio(struct bio *bio)
+ 			if (bio->bi_error)
+ 				buffer_io_error(bh);
+ 		} while ((bh = bh->b_this_page) != head);
+-		bit_spin_unlock(BH_Uptodate_Lock, &head->b_state);
+-		local_irq_restore(flags);
++		bh_uptodate_unlock_irqrestore(head, flags);
+ 		if (!under_io) {
+ #ifdef CONFIG_EXT4_FS_ENCRYPTION
+ 			if (ctx)
 -- 
 2.13.2
