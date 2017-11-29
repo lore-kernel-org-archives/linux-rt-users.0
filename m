@@ -1,184 +1,125 @@
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: Re: [PATCH v6 29/37] tracing: Add cpu field for hist triggers
-Date: Wed, 29 Nov 2017 15:02:54 -0600
-Message-ID: <1511989374.31570.22.camel@tzanussi-mobl.amr.corp.intel.com>
-References: <cover.1510948725.git.tom.zanussi@linux.intel.com>
-         <c38607534f49a169c0a979c2c716c77d943fb283.1510948725.git.tom.zanussi@linux.intel.com>
-         <20171123052556.GB25472@sejong>
+From: Julia Cartwright <julia@ni.com>
+Subject: [ANNOUNCE] 4.1.46-rt52
+Date: Wed, 29 Nov 2017 17:13:17 -0600
+Message-ID: <20171129231317.GB1361@jcartwri.amer.corp.natinst.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        kernel-team@lge.com
-To: Namhyung Kim <namhyung@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171123052556.GB25472@sejong>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+To: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        "John Kacur" <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        <tom.zanussi@linux.intel.com>, Alex Shi <alex.shi@linaro.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx0a-00010702.pphosted.com ([148.163.156.75]:46130 "EHLO
+        mx0b-00010702.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1751354AbdK2XTk (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 29 Nov 2017 18:19:40 -0500
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Namhyung,
+Hello RT Folks!
 
-On Thu, 2017-11-23 at 14:25 +0900, Namhyung Kim wrote:
-> On Fri, Nov 17, 2017 at 02:33:08PM -0600, Tom Zanussi wrote:
-> > A common key to use in a histogram is the cpuid - add a new cpu
-> > 'synthetic' field for that purpose.  This field is named cpu rather
-> > than $cpu or $common_cpu because 'cpu' already exists as a special
-> > filter field and it makes more sense to match that rather than add
-> > another name for the same thing.
-> > 
-> > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> > ---
-> >  Documentation/trace/histogram.txt | 17 +++++++++++++++++
-> >  kernel/trace/trace_events_hist.c  | 28 +++++++++++++++++++++++++++-
-> >  2 files changed, 44 insertions(+), 1 deletion(-)
-> > 
-> > diff --git a/Documentation/trace/histogram.txt b/Documentation/trace/histogram.txt
-> > index d1d92ed..cd3ec00 100644
-> > --- a/Documentation/trace/histogram.txt
-> > +++ b/Documentation/trace/histogram.txt
-> > @@ -172,6 +172,23 @@
-> >    The examples below provide a more concrete illustration of the
-> >    concepts and typical usage patterns discussed above.
-> >  
-> > +  'special' event fields
-> > +  ------------------------
-> > +
-> > +  There are a number of 'special event fields' available for use as
-> > +  keys or values in a hist trigger.  These look like and behave as if
-> > +  they were actual event fields, but aren't really part of the event's
-> > +  field definition or format file.  They are however available for any
-> > +  event, and can be used anywhere an actual event field could be.
-> > +  'Special' field names are always prefixed with a '$' character to
-> > +  indicate that they're not normal fields (with the exception of
-> > +  'cpu', for compatibility with existing filter usage):
-> 
-> But it also could make a confusion to variables.  How about removing
-> '$' character at all?
-> 
+I'm pleased to announce the 4.1.46-rt52 stable release.
 
-I think those are good points - it would be more consistent with the
-existing cpu, cause less confusion with variable references, and there's
-only the $common_timestamp so far.
+You can get this release via the git tree at:
 
-The downside would be that users might get confused not finding these
-fields in the event descriptions, and would basically have to know to
-look in the documentation to confirm that these are special fields.
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-So unless there are any objections, I'll remove this $special syntax for
-these.  So $common_timestamp will become just common_timestamp and the
-expression syntax will look like this now, for example:
+  branch: v4.1-rt
+  Head SHA1: 6e737a91c1ce923d4e10db831e14cfef9a2459cc
 
-    wakeup_lat=common_timestamp.usecs-$ts0:onmax($wakeup_lat).save(...)
+Or to build 4.1.46-rt52 directly, the following patches should be applied:
 
-instead of:
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.1.tar.xz
 
-    wakeup_lat=$common_timestamp.usecs-$ts0:onmax($wakeup_lat).save(...)
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.1.46.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/patch-4.1.46-rt52.patch.xz
 
 
-Also, I've gone through all your other v6 comments and agree with those
-and have made the suggested changes, so won't comment on the rest of the
-individual patches.
+You can also build from 4.1.46-rt51 by applying the incremental patch:
 
-Thanks for the thorough reviews!
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/incr/patch-4.1.46-rt51-rt52.patch.xz
 
-Tom
+Enjoy!
+   Julia
 
-> 
-> > +
-> > +    $common_timestamp      u64 - timestamp (from ring buffer) associated
-> > +                                 with the event, in nanoseconds.  May be
-> > +				 modified by .usecs to have timestamps
-> > +				 interpreted as microseconds.
-> > +    cpu                    int - the cpu on which the event occurred.
-> >  
-> >  6.2 'hist' trigger examples
-> >  ---------------------------
-> > diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-> > index 121f7ef..afbfa9c 100644
-> > --- a/kernel/trace/trace_events_hist.c
-> > +++ b/kernel/trace/trace_events_hist.c
-> > @@ -227,6 +227,7 @@ enum hist_field_flags {
-> >  	HIST_FIELD_FL_VAR		= 1 << 12,
-> >  	HIST_FIELD_FL_EXPR		= 1 << 13,
-> >  	HIST_FIELD_FL_VAR_REF		= 1 << 14,
-> > +	HIST_FIELD_FL_CPU		= 1 << 15,
-> >  };
-> >  
-> >  struct var_defs {
-> > @@ -1177,6 +1178,16 @@ static u64 hist_field_timestamp(struct hist_field *hist_field,
-> >  	return ts;
-> >  }
-> >  
-> > +static u64 hist_field_cpu(struct hist_field *hist_field,
-> > +			  struct tracing_map_elt *elt,
-> > +			  struct ring_buffer_event *rbe,
-> > +			  void *event)
-> > +{
-> > +	int cpu = smp_processor_id();
-> > +
-> > +	return cpu;
-> > +}
-> > +
-> >  static struct hist_field *
-> >  check_field_for_var_ref(struct hist_field *hist_field,
-> >  			struct hist_trigger_data *var_data,
-> > @@ -1622,6 +1633,8 @@ static const char *hist_field_name(struct hist_field *field,
-> >  		field_name = hist_field_name(field->operands[0], ++level);
-> >  	else if (field->flags & HIST_FIELD_FL_TIMESTAMP)
-> >  		field_name = "$common_timestamp";
-> > +	else if (field->flags & HIST_FIELD_FL_CPU)
-> > +		field_name = "cpu";
-> >  	else if (field->flags & HIST_FIELD_FL_EXPR ||
-> >  		 field->flags & HIST_FIELD_FL_VAR_REF) {
-> >  		if (field->system) {
-> > @@ -2125,6 +2138,15 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
-> >  		goto out;
-> >  	}
-> >  
-> > +	if (flags & HIST_FIELD_FL_CPU) {
-> > +		hist_field->fn = hist_field_cpu;
-> > +		hist_field->size = sizeof(int);
-> > +		hist_field->type = kstrdup("int", GFP_KERNEL);
-> 
-> Is it unsigned?
-> 
-> Thanks,
-> Namhyung
-> 
-> 
-> > +		if (!hist_field->type)
-> > +			goto free;
-> > +		goto out;
-> > +	}
-> > +
-> >  	if (WARN_ON_ONCE(!field))
-> >  		goto out;
-> >  
-> > @@ -2343,7 +2365,9 @@ static struct hist_field *parse_var_ref(struct hist_trigger_data *hist_data,
-> >  		hist_data->enable_timestamps = true;
-> >  		if (*flags & HIST_FIELD_FL_TIMESTAMP_USECS)
-> >  			hist_data->attrs->ts_in_usecs = true;
-> > -	} else {
-> > +	} else if (strcmp(field_name, "cpu") == 0)
-> > +		*flags |= HIST_FIELD_FL_CPU;
-> > +	else {
-> >  		field = trace_find_event_field(file->event_call, field_name);
-> >  		if (!field || !field->size) {
-> >  			field = ERR_PTR(-EINVAL);
-> > @@ -4612,6 +4636,8 @@ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
-> >  
-> >  	if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP)
-> >  		seq_puts(m, "$common_timestamp");
-> > +	else if (hist_field->flags & HIST_FIELD_FL_CPU)
-> > +		seq_puts(m, "cpu");
-> >  	else if (field_name) {
-> >  		if (hist_field->flags & HIST_FIELD_FL_VAR_REF)
-> >  			seq_putc(m, '$');
-> > -- 
-> > 1.9.3
-> > 
+Changes from v4.1.46-rt51:
+---
+Julia Cartwright (2):
+      workqueue: fixup rcu check for RT
+      Linux 4.1.46-rt52
+
+Sebastian Andrzej Siewior (2):
+      PM / CPU: replace raw_notifier with atomic_notifier (fixup)
+      kernel/hrtimer: migrate deferred timer on CPU down
+
+---
+ kernel/cpu_pm.c       | 7 +++++++
+ kernel/time/hrtimer.c | 5 +++++
+ kernel/workqueue.c    | 2 +-
+ localversion-rt       | 2 +-
+ 4 files changed, 14 insertions(+), 2 deletions(-)
+---
+diff --git a/kernel/cpu_pm.c b/kernel/cpu_pm.c
+index 9da42f83ee03..d1d1c3961553 100644
+--- a/kernel/cpu_pm.c
++++ b/kernel/cpu_pm.c
+@@ -28,8 +28,15 @@ static int cpu_pm_notify(enum cpu_pm_event event, int nr_to_call, int *nr_calls)
+ {
+ 	int ret;
+ 
++	/*
++	 * __atomic_notifier_call_chain has a RCU read critical section, which
++	 * could be disfunctional in cpu idle. Copy RCU_NONIDLE code to let
++	 * RCU know this.
++	 */
++	rcu_irq_enter_irqson();
+ 	ret = __atomic_notifier_call_chain(&cpu_pm_notifier_chain, event, NULL,
+ 		nr_to_call, nr_calls);
++	rcu_irq_exit_irqson();
+ 
+ 	return notifier_to_errno(ret);
+ }
+diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+index 2c6be169bdc7..75c990b00525 100644
+--- a/kernel/time/hrtimer.c
++++ b/kernel/time/hrtimer.c
+@@ -1951,6 +1951,11 @@ static void migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
+ 		/* Clear the migration state bit */
+ 		timer->state &= ~HRTIMER_STATE_MIGRATE;
+ 	}
++#ifdef CONFIG_PREEMPT_RT_BASE
++	list_splice_tail(&old_base->expired, &new_base->expired);
++	if (!list_empty(&new_base->expired))
++		raise_softirq_irqoff(HRTIMER_SOFTIRQ);
++#endif
+ }
+ 
+ static void migrate_hrtimers(int scpu)
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index 6bdcab98501c..90e261c8811e 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -363,7 +363,7 @@ static void workqueue_sysfs_unregister(struct workqueue_struct *wq);
+ 			   "RCU or wq->mutex should be held")
+ 
+ #define assert_rcu_or_wq_mutex_or_pool_mutex(wq)			\
+-	rcu_lockdep_assert(rcu_read_lock_sched_held() ||		\
++	rcu_lockdep_assert(rcu_read_lock_held() ||			\
+ 			   lockdep_is_held(&wq->mutex) ||		\
+ 			   lockdep_is_held(&wq_pool_mutex),		\
+ 			   "sched RCU, wq->mutex or wq_pool_mutex should be held")
+diff --git a/localversion-rt b/localversion-rt
+index 75493460c41f..66a5ed8bf3d7 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt51
++-rt52
