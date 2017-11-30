@@ -1,50 +1,50 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Null pointer 4.14.1-rt3
-Date: Thu, 30 Nov 2017 11:22:32 -0500
-Message-ID: <20171130112232.4c0cb600@gandalf.local.home>
-References: <80ce7c3e-2d01-f082-9c21-fc1084a836c8@monom.org>
-        <8c913cc2-b2e3-8c2e-e503-aff1428f8ff5@monom.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: Warning: tree_plugin.h:310 rcu_note_context_switch
+Date: Thu, 30 Nov 2017 17:23:42 +0100
+Message-ID: <20171130162342.GF11362@linutronix.de>
+References: <ec8b4367-ef5b-5446-2cd0-9f8f7fd6954f@monom.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+Cc: linux-rt-users@vger.kernel.org
 To: Daniel Wagner <wagi@monom.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.99]:43824 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1752564AbdK3QWf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 30 Nov 2017 11:22:35 -0500
-In-Reply-To: <8c913cc2-b2e3-8c2e-e503-aff1428f8ff5@monom.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:45897 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1750742AbdK3QXo (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 30 Nov 2017 11:23:44 -0500
+Content-Disposition: inline
+In-Reply-To: <ec8b4367-ef5b-5446-2cd0-9f8f7fd6954f@monom.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 30 Nov 2017 16:11:22 +0100
-Daniel Wagner <wagi@monom.org> wrote:
+On 2017-11-29 17:29:59 [+0100], Daniel Wagner wrote:
+> Hi,
+Hi.
 
-> > Fresh after a boot I just got this:  
+> I was playing with cyclictest and pi_stress on x86_64 with v4.14-rt1 and got 
+> a greeting.
 > 
-> v4.14.1-rt2 doesn't crash. I suspect that Steven's recent 
-> change 073371b12467 ("sched/rt: Simplify the IPI based RT balancing logic") 
-> is the root of the problem.
+> Unfortunately, I can't remember the exact the cyclictest arguments but it was either
 > 
-> [   46.748234] [<c010f15c>] (smp_cross_call) from [<c010f990>] (arch_send_call_function_single_ipi+0x38/0x40)
-> [   46.748253] [<c010f990>] (arch_send_call_function_single_ipi) from [<c024c1b8>] (irq_work_queue_on+0xa4/0x114)
-> [   46.748277] [<c024c1b8>] (irq_work_queue_on) from [<c0183550>] (pull_rt_task+0x334/0x354)
-> [   46.748290] [<c0183550>] (pull_rt_task) from [<c01849dc>] (pick_next_task_rt+0x58/0x2bc)
-> [   46.748311] [<c01849dc>] (pick_next_task_rt) from [<c0880ff0>] (__schedule+0x5b0/0x91c)
-> [   46.748322] [<c0880ff0>] (__schedule) from [<c08813b8>] (schedule+0x5c/0xfc)
-> [   46.748334] [<c08813b8>] (schedule) from [<c0884864>] (do_nanosleep+0xf4/0x20c)
-> [   46.748350] [<c0884864>] (do_nanosleep) from [<c01cd350>] (__hrtimer_nanosleep+0x108/0x184)
-> [   46.748361] [<c01cd350>] (__hrtimer_nanosleep) from [<c01cd478>] (hrtimer_nanosleep+0x1c/0x20)
-> [   46.748372] [<c01cd478>] (hrtimer_nanosleep) from [<c01d6c6c>] (common_nsleep+0x2c/0x30)
-> [   46.748383] [<c01d6c6c>] (common_nsleep) from [<c01d87bc>] (SyS_clock_nanosleep+0xc4/0x110)
-> [   46.748400] [<c01d87bc>] (SyS_clock_nanosleep) from [<c01083a0>] (ret_fast_syscall+0x0/0x28)
+> "cyclictest -S -p 80" or "cyclictest -t -p 80"
 > 
-> Obviously, the beaglebone black has just one CPU, maybe this confused
-> the rt balancing logic?
->
+> [  142.205742] ------------[ cut here ]------------
+> [  142.205754] WARNING: CPU: 0 PID: 1552 at /home/wagi/work/rt/linux-rt/kernel/rcu/tree_plugin.h:310 rcu_note_context_switch+0x2c7/0x560
+> [  142.205790] Call Trace:
+> [  142.205798]  __schedule+0x72/0x550
+> [  142.205803]  schedule+0x38/0xd0
+> [  142.205807]  hrtimer_wait_for_timer+0x44/0x80
+> [  142.205812]  ? wait_woken+0x80/0x80
+> [  142.205816]  SyS_timer_delete+0xb1/0x160
+> [  142.205821]  entry_SYSCALL_64_fastpath+0x13/0x94
 
-Is it compiled for non SMP? That push pull logic shouldn't be called.
+This isn't "new". Paul added a warning recently to check if we schedule
+out within a rcu_read() section. We do this here while waiting for the
+timer to complete…
 
--- Steve
+> Thanks,
+> Daniel
+
+Sebastian
