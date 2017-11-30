@@ -1,74 +1,61 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT] crypto: limit more FPU-enabled sections
-Date: Thu, 30 Nov 2017 16:41:08 +0100
-Message-ID: <20171130154108.GC11362@linutronix.de>
-References: <20171130142216.GB12606@linutronix.de>
- <20171130102948.22d451cd@gandalf.local.home>
+Subject: Re: Null pointer 4.14.1-rt3
+Date: Thu, 30 Nov 2017 16:42:51 +0100
+Message-ID: <20171130154251.GD11362@linutronix.de>
+References: <80ce7c3e-2d01-f082-9c21-fc1084a836c8@monom.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        tglx@linutronix.de, Peter Zijlstra <peterz@infradead.org>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Transfer-Encoding: 8BIT
+Cc: linux-rt-users@vger.kernel.org
+To: Daniel Wagner <wagi@monom.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:45694 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752337AbdK3Pmw (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 30 Nov 2017 10:42:52 -0500
 Content-Disposition: inline
-In-Reply-To: <20171130102948.22d451cd@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <80ce7c3e-2d01-f082-9c21-fc1084a836c8@monom.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-11-30 10:29:48 [-0500], Steven Rostedt wrote:
-> > +static void camellia_fpu_end_rt(struct crypt_priv *ctx)
-> > +{
-> > +#if CONFIG_PREEMPT_RT_FULL
-> > +	bool fpu_enabled = ctx->fpu_enabled;
-> > +
-> > +	if (!fpu_enabled)
-> > +		return;
-> > +	camellia_fpu_end(fpu_enabled);
-> > +	ctx->fpu_enabled = false;
-> > +#endif
-> > +}
-> > +
-> > +static void camellia_fpu_sched_rt(struct crypt_priv *ctx)
-> > +{
-> > +#if CONFIG_PREEMPT_RT_FULL
-> > +	bool fpu_enabled = ctx->fpu_enabled;
-> > +
-> > +	if (!fpu_enabled || !tif_need_resched_now())
-> > +		return;
-> > +	camellia_fpu_end(fpu_enabled);
+On 2017-11-30 15:42:06 [+0100], Daniel Wagner wrote:
+> Hi,
+Hi,
+
+> Fresh after a boot I just got this:
 > 
-> I haven't looked deeply, but why does this call the camellia_fpu_end()
-> but other *_fpu_sched_rt() do not call the equivalent?
-
-There is lrw_encrypt() which as "end" function after the end of the full
-operation. So encrypt_callback() might be invoked multiple times but
-only the first invocation does the fpu-enable part.
-
-#1 We need to disable-FTP after one invocation of encrypt_callback()
-   because blkcipher_walk_done() might alloc/free/map memory.
-
-#2 That camellia_fpu_sched_rt() is only RT specific in order to enable
-   preempt if need-resched is set for a RT task. For !RT we continue.
-
-> > +	kernel_fpu_end();
-> > +	/* schedule due to preemptible */
-> > +	kernel_fpu_begin();
-> > +#endif
-> > +}
-> > +
 > 
-> These are duplicate functions. Shouldn't they go into a header file?
+> root@beaglebone:~# cyclictest -p 80 -n -m 
+> # /dev/cpu_dma_latency set to 0us
+> policy: fifo: loadavg: 0.62 0.19 0.07 1/65 361          
 > 
-> Also, they are very similar:
+> [   46.747855] Unable to handle kernel NULL pointer dereference at virtual address 00000000
+> [   46.747863] pgd = db048000
+> [   46.747869] [00000000] *pgd=9b0a0831, *pte=00000000, *ppte=00000000
+> [   46.747901] Internal error: Oops: 80000007 [#1] PREEMPT SMP ARM
+> [   46.747911] Modules linked in:
+> [   46.747927] CPU: 0 PID: 361 Comm: cyclictest Not tainted 4.14.1-rt3 #9
+> [   46.747930] Hardware name: Generic AM33XX (Flattened Device Tree)
+> [   46.747935] task: db225d00 task.stack: db164000
+> [   46.747944] PC is at 0x0
+> [   46.747960] LR is at smp_cross_call+0x40/0x160
+…
+> [   46.748234] [<c010f15c>] (smp_cross_call) from [<c010f990>] (arch_send_call_function_single_ipi+0x38/0x40)
+> [   46.748253] [<c010f990>] (arch_send_call_function_single_ipi) from [<c024c1b8>] (irq_work_queue_on+0xa4/0x114)
+> [   46.748277] [<c024c1b8>] (irq_work_queue_on) from [<c0183550>] (pull_rt_task+0x334/0x354)
+> [   46.748290] [<c0183550>] (pull_rt_task) from [<c01849dc>] (pick_next_task_rt+0x58/0x2bc)
+> [   46.748311] [<c01849dc>] (pick_next_task_rt) from [<c0880ff0>] (__schedule+0x5b0/0x91c)
+> [   46.748322] [<c0880ff0>] (__schedule) from [<c08813b8>] (schedule+0x5c/0xfc)
+> [   46.748334] [<c08813b8>] (schedule) from [<c0884864>] (do_nanosleep+0xf4/0x20c)
+> [   46.748350] [<c0884864>] (do_nanosleep) from [<c01cd350>] (__hrtimer_nanosleep+0x108/0x184)
+> [   46.748361] [<c01cd350>] (__hrtimer_nanosleep) from [<c01cd478>] (hrtimer_nanosleep+0x1c/0x20)
+> [   46.748372] [<c01cd478>] (hrtimer_nanosleep) from [<c01d6c6c>] (common_nsleep+0x2c/0x30)
+> [   46.748383] [<c01d6c6c>] (common_nsleep) from [<c01d87bc>] (SyS_clock_nanosleep+0xc4/0x110)
+> [   46.748400] [<c01d87bc>] (SyS_clock_nanosleep) from [<c01083a0>] (ret_fast_syscall+0x0/0x28)
+> [   46.748410] Code: bad PC value
 
-That whole thing is kind of ugly, yes. That *_fpu_end_rt() use a struct
-crypt_priv but this is defined in each cipher file.
-
-I would keep it for now until we decide if we keep fixing those things
-are disable for RT because it is not worth it. As I said, this is only
-x86 specific and we have something similar on ARM with NEON.
-But I guess the decision here will be postponed until someone posts
-numbers with SW and with this workaround and cyclictest with a cycle of
-1 - 10 ms.
+ach. The other part of the email. Would you mind trying v4.15-rc1? This
+should blow up the same way.
 
 Sebastian
