@@ -1,45 +1,88 @@
-From: Daniel Wagner <wagi@monom.org>
-Subject: Re: Null pointer 4.14.1-rt3
-Date: Thu, 30 Nov 2017 16:11:22 +0100
-Message-ID: <8c913cc2-b2e3-8c2e-e503-aff1428f8ff5@monom.org>
-References: <80ce7c3e-2d01-f082-9c21-fc1084a836c8@monom.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH RT] crypto: limit more FPU-enabled sections
+Date: Thu, 30 Nov 2017 10:19:43 -0500
+Message-ID: <20171130101943.15f7ade4@gandalf.local.home>
+References: <20171130142216.GB12606@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org,
-        Steven Rostedt <rostedt@goodmis.org>
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        tglx@linutronix.de, Peter Zijlstra <peterz@infradead.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.monom.org ([188.138.9.77]:38318 "EHLO mail.monom.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1753082AbdK3PLX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 30 Nov 2017 10:11:23 -0500
-In-Reply-To: <80ce7c3e-2d01-f082-9c21-fc1084a836c8@monom.org>
-Content-Language: en-US
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171130142216.GB12606@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-> Fresh after a boot I just got this:
+On Thu, 30 Nov 2017 15:22:17 +0100
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 
-v4.14.1-rt2 doesn't crash. I suspect that Steven's recent 
-change 073371b12467 ("sched/rt: Simplify the IPI based RT balancing logic") 
-is the root of the problem.
+> diff --git a/arch/x86/crypto/camellia_aesni_avx2_glue.c b/arch/x86/crypto/camellia_aesni_avx2_glue.c
+> index 60907c139c4e..d7502c023475 100644
+> --- a/arch/x86/crypto/camellia_aesni_avx2_glue.c
+> +++ b/arch/x86/crypto/camellia_aesni_avx2_glue.c
+> @@ -206,6 +206,32 @@ struct crypt_priv {
+>  	bool fpu_enabled;
+>  };
+>  
+> +static void camellia_fpu_end_rt(struct crypt_priv *ctx)
+> +{
+> +#if CONFIG_PREEMPT_RT_FULL
+> +       bool fpu_enabled = ctx->fpu_enabled;
+> +
+> +       if (!fpu_enabled)
+> +               return;
+> +       camellia_fpu_end(fpu_enabled);
+> +       ctx->fpu_enabled = false;
+> +#endif
+> +}
+> +
+> +static void camellia_fpu_sched_rt(struct crypt_priv *ctx)
+> +{
+> +#if CONFIG_PREEMPT_RT_FULL
+> +       bool fpu_enabled = ctx->fpu_enabled;
+> +
+> +       if (!fpu_enabled || !tif_need_resched_now())
+> +               return;
+> +       camellia_fpu_end(fpu_enabled);
+> +       kernel_fpu_end();
+> +       /* schedule due to preemptible */
+> +       kernel_fpu_begin();
+> +#endif
+> +}
 
-[   46.748234] [<c010f15c>] (smp_cross_call) from [<c010f990>] (arch_send_call_function_single_ipi+0x38/0x40)
-[   46.748253] [<c010f990>] (arch_send_call_function_single_ipi) from [<c024c1b8>] (irq_work_queue_on+0xa4/0x114)
-[   46.748277] [<c024c1b8>] (irq_work_queue_on) from [<c0183550>] (pull_rt_task+0x334/0x354)
-[   46.748290] [<c0183550>] (pull_rt_task) from [<c01849dc>] (pick_next_task_rt+0x58/0x2bc)
-[   46.748311] [<c01849dc>] (pick_next_task_rt) from [<c0880ff0>] (__schedule+0x5b0/0x91c)
-[   46.748322] [<c0880ff0>] (__schedule) from [<c08813b8>] (schedule+0x5c/0xfc)
-[   46.748334] [<c08813b8>] (schedule) from [<c0884864>] (do_nanosleep+0xf4/0x20c)
-[   46.748350] [<c0884864>] (do_nanosleep) from [<c01cd350>] (__hrtimer_nanosleep+0x108/0x184)
-[   46.748361] [<c01cd350>] (__hrtimer_nanosleep) from [<c01cd478>] (hrtimer_nanosleep+0x1c/0x20)
-[   46.748372] [<c01cd478>] (hrtimer_nanosleep) from [<c01d6c6c>] (common_nsleep+0x2c/0x30)
-[   46.748383] [<c01d6c6c>] (common_nsleep) from [<c01d87bc>] (SyS_clock_nanosleep+0xc4/0x110)
-[   46.748400] [<c01d87bc>] (SyS_clock_nanosleep) from [<c01083a0>] (ret_fast_syscall+0x0/0x28)
+I think it would be cleaner to do:
 
-Obviously, the beaglebone black has just one CPU, maybe this confused
-the rt balancing logic?
+#ifdef CONFIG_PREEMPT_RT_FULL
+static void camellia_fpu_end_rt(struct crypt_priv *ctx)
+{
+       bool fpu_enabled = ctx->fpu_enabled;
 
-Cheers,
-Daniel
+       if (!fpu_enabled)
+               return;
+       camellia_fpu_end(fpu_enabled);
+       ctx->fpu_enabled = false;
+}
+
+static void camellia_fpu_sched_rt(struct crypt_priv *ctx)
+{
+       bool fpu_enabled = ctx->fpu_enabled;
+
+       if (!fpu_enabled || !tif_need_resched_now())
+               return;
+       camellia_fpu_end(fpu_enabled);
+       kernel_fpu_end();
+       /* schedule due to preemptible */
+       kernel_fpu_begin();
+}
+#else
+static inline void camellia_fpu_end_rt(struct crypt_priv *ctx) { }
+static void camellia_fpu_sched_rt(struct crypt_priv *ctx) { }
+#endif
+
+It really shows that these functions are only used by RT. IMO it's bad
+taste to have functions with the entire body encapsulated in #ifdefs.
+
+And the same goes for the other functions in this patch.
+
+-- Steve
