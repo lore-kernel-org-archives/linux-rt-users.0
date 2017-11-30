@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 4.9.65-rt56
-Date: Wed, 29 Nov 2017 19:48:56 -0500
-Message-ID: <20171129194856.6456b458@gandalf.local.home>
+Subject: [ANNOUNCE] 4.4.102-rt116
+Date: Wed, 29 Nov 2017 19:49:20 -0500
+Message-ID: <20171129194920.49a1dab0@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -21,10 +21,10 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 4.9.65-rt56 stable release.
+I'm pleased to announce the 4.4.102-rt116 stable release.
 
 
-This release is just an update to the new stable 4.9.65 version
+This release is just an update to the new stable 4.4.102 version
 and no RT specific changes have been made.
 
 
@@ -32,17 +32,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v4.9-rt
-  Head SHA1: 4e22accddef27103c4fba20b9613b7bf52129be6
+  branch: v4.4-rt
+  Head SHA1: eddc563b9850ce692c6040ef0f4575aea2396d33
 
 
-Or to build 4.9.65-rt56 directly, the following patches should be applied:
+Or to build 4.4.102-rt116 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.9.65.xz
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.102.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.9/patch-4.9.65-rt56.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.102-rt116.patch.xz
 
 
 
