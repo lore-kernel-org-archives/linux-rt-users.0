@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 11/15] Bluetooth: avoid recursive locking in hci_send_to_channel()
-Date: Fri, 01 Dec 2017 10:48:48 -0500
-Message-ID: <20171201154913.068882637@goodmis.org>
-References: <20171201154837.379265211@goodmis.org>
+Subject: [PATCH RT 08/15] net: take the tcp_sk_lock lock with BH disabled
+Date: Fri, 01 Dec 2017 10:50:07 -0500
+Message-ID: <20171201155029.296268299@goodmis.org>
+References: <20171201154959.375846909@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -13,15 +13,17 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
         tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
-        Marcel Holtmann <marcel@holtmann.org>,
-        Johan Hedberg <johan.hedberg@intel.com>,
-        rt-stable@vger.kernel.org, Mart van de Wege <mvdwege@gmail.com>
+        Jacek Konieczny <jajcus@jajcus.net>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0011-Bluetooth-avoid-recursive-locking-in-hci_send_to_cha.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.99]:57352 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1752593AbdLAPua (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 1 Dec 2017 10:50:30 -0500
+Content-Disposition: inline; filename=0008-net-take-the-tcp_sk_lock-lock-with-BH-disabled.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 4.9.65-rt57-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -30,72 +32,72 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Mart reported a deadlock in -RT in the call path:
-  hci_send_monitor_ctrl_event() -> hci_send_to_channel()
+Lockdep may complain about an unsafe locking scenario:
+|      CPU0                    CPU1
+|      ----                    ----
+| lock((tcp_sk_lock).lock);
+|                              lock(&per_cpu(local_softirq_locks[i], __cpu).lock);
+|                              lock((tcp_sk_lock).lock);
+| lock(&per_cpu(local_softirq_locks[i], __cpu).lock);
 
-because both functions acquire the same read lock hci_sk_list.lock. This
-is also a mainline issue because the qrwlock implementation is writer
-fair (the traditional rwlock implementation is reader biased).
+in the call paths:
+	do_current_softirqs -> tcp_v4_send_ack()
+vs
+	tcp_v4_send_reset -> do_current_softirqs().
 
-To avoid the deadlock there is now __hci_send_to_channel() which expects
-the readlock to be held.
+This should not happen since local_softirq_locks is per CPU. Reversing
+the order makes lockdep happy.
 
-Cc: Marcel Holtmann <marcel@holtmann.org>
-Cc: Johan Hedberg <johan.hedberg@intel.com>
-Cc: rt-stable@vger.kernel.org
-Fixes: 38ceaa00d02d ("Bluetooth: Add support for sending MGMT commands and events to monitor")
-Reported-by: Mart van de Wege <mvdwege@gmail.com>
+Reported-by: Jacek Konieczny <jajcus@jajcus.net>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- net/bluetooth/hci_sock.c | 17 +++++++++++------
- 1 file changed, 11 insertions(+), 6 deletions(-)
+ net/ipv4/tcp_ipv4.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/net/bluetooth/hci_sock.c b/net/bluetooth/hci_sock.c
-index c88a6007e643..5de85b55a821 100644
---- a/net/bluetooth/hci_sock.c
-+++ b/net/bluetooth/hci_sock.c
-@@ -251,15 +251,13 @@ void hci_send_to_sock(struct hci_dev *hdev, struct sk_buff *skb)
+diff --git a/net/ipv4/tcp_ipv4.c b/net/ipv4/tcp_ipv4.c
+index 3336e1534bc5..3b7298459c87 100644
+--- a/net/ipv4/tcp_ipv4.c
++++ b/net/ipv4/tcp_ipv4.c
+@@ -698,8 +698,8 @@ static void tcp_v4_send_reset(const struct sock *sk, struct sk_buff *skb)
+ 
+ 	arg.tos = ip_hdr(skb)->tos;
+ 
+-	local_lock(tcp_sk_lock);
+ 	local_bh_disable();
++	local_lock(tcp_sk_lock);
+ 	ip_send_unicast_reply(*this_cpu_ptr(net->ipv4.tcp_sk),
+ 			      skb, &TCP_SKB_CB(skb)->header.h4.opt,
+ 			      ip_hdr(skb)->saddr, ip_hdr(skb)->daddr,
+@@ -707,8 +707,8 @@ static void tcp_v4_send_reset(const struct sock *sk, struct sk_buff *skb)
+ 
+ 	__TCP_INC_STATS(net, TCP_MIB_OUTSEGS);
+ 	__TCP_INC_STATS(net, TCP_MIB_OUTRSTS);
+-	local_bh_enable();
+ 	local_unlock(tcp_sk_lock);
++	local_bh_enable();
+ 
+ #ifdef CONFIG_TCP_MD5SIG
+ out:
+@@ -784,16 +784,16 @@ static void tcp_v4_send_ack(struct net *net,
+ 	if (oif)
+ 		arg.bound_dev_if = oif;
+ 	arg.tos = tos;
+-	local_lock(tcp_sk_lock);
+ 	local_bh_disable();
++	local_lock(tcp_sk_lock);
+ 	ip_send_unicast_reply(*this_cpu_ptr(net->ipv4.tcp_sk),
+ 			      skb, &TCP_SKB_CB(skb)->header.h4.opt,
+ 			      ip_hdr(skb)->saddr, ip_hdr(skb)->daddr,
+ 			      &arg, arg.iov[0].iov_len);
+ 
+ 	__TCP_INC_STATS(net, TCP_MIB_OUTSEGS);
+-	local_bh_enable();
+ 	local_unlock(tcp_sk_lock);
++	local_bh_enable();
  }
  
- /* Send frame to sockets with specific channel */
--void hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
--			 int flag, struct sock *skip_sk)
-+static void __hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
-+				  int flag, struct sock *skip_sk)
- {
- 	struct sock *sk;
- 
- 	BT_DBG("channel %u len %d", channel, skb->len);
- 
--	read_lock(&hci_sk_list.lock);
--
- 	sk_for_each(sk, &hci_sk_list.head) {
- 		struct sk_buff *nskb;
- 
-@@ -285,6 +283,13 @@ void hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
- 			kfree_skb(nskb);
- 	}
- 
-+}
-+
-+void hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
-+			 int flag, struct sock *skip_sk)
-+{
-+	read_lock(&hci_sk_list.lock);
-+	__hci_send_to_channel(channel, skb, flag, skip_sk);
- 	read_unlock(&hci_sk_list.lock);
- }
- 
-@@ -388,8 +393,8 @@ void hci_send_monitor_ctrl_event(struct hci_dev *hdev, u16 event,
- 		hdr->index = index;
- 		hdr->len = cpu_to_le16(skb->len - HCI_MON_HDR_SIZE);
- 
--		hci_send_to_channel(HCI_CHANNEL_MONITOR, skb,
--				    HCI_SOCK_TRUSTED, NULL);
-+		__hci_send_to_channel(HCI_CHANNEL_MONITOR, skb,
-+				      HCI_SOCK_TRUSTED, NULL);
- 		kfree_skb(skb);
- 	}
- 
+ static void tcp_v4_timewait_ack(struct sock *sk, struct sk_buff *skb)
 -- 
 2.13.2
+
+
