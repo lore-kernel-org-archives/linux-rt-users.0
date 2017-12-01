@@ -1,493 +1,176 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH RT v3] crypto: limit more FPU-enabled sections
-Date: Fri, 1 Dec 2017 15:03:01 +0100
-Message-ID: <20171201140301.GH1612@linutronix.de>
+From: Mark Rutland <mark.rutland@arm.com>
+Subject: Re: [PATCH RT] arm*: disable NEON in kernel mode
+Date: Fri, 1 Dec 2017 14:18:28 +0000
+Message-ID: <20171201141827.yip6pl3tt7kxzek7@lakrids.cambridge.arm.com>
 References: <20171130142216.GB12606@linutronix.de>
- <20171130101943.15f7ade4@gandalf.local.home>
- <20171130152236.GA11362@linutronix.de>
- <20171201104422.GC1612@linutronix.de>
- <20171201113235.6tmkwtov5cg2locv@hirez.programming.kicks-ass.net>
- <20171201133256.GE1612@linutronix.de>
- <20171201134454.rgiy5cfh72imqqcl@hirez.programming.kicks-ass.net>
- <20171201134959.GG1612@linutronix.de>
+ <20171130143028.GA1351@linutronix.de>
+ <20171201104331.GB1612@linutronix.de>
+ <20171201134506.GF1612@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        tglx@linutronix.de
-To: Peter Zijlstra <peterz@infradead.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org,
+        Peter Zijlstra <peterz@infradead.org>,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Will Deacon <will.deacon@arm.com>,
+        linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
+        tglx@linutronix.de, linux-arm-kernel@lists.infradead.org,
+        ard.biesheuvel@linaro.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20171201134959.GG1612@linutronix.de>
+In-Reply-To: <20171201134506.GF1612@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Those crypto drivers use SSE/AVX/… for their crypto work and in order to
-do so in kernel they need to enable the "FPU" in kernel mode which
-disables preemption.
-There are two problems with the way they are used:
-- the while loop which processes X bytes may create latency spikes and
-  should be avoided or limited.
-- the cipher-walk-next part may allocate/free memory and may use
-  kmap_atomic().
+[Adding Ard, who wrote the NEON crypto code]
 
-The whole kernel_fpu_begin()/end() processing isn't probably that cheap.
-It most likely makes sense to process as much of those as possible in one
-go. The new *_fpu_sched_rt() schedules only if a RT task is pending.
+On Fri, Dec 01, 2017 at 02:45:06PM +0100, Sebastian Andrzej Siewior wrote:
+> +arm folks, to let you know
+> 
+> On 2017-12-01 11:43:32 [+0100], To linux-rt-users@vger.kernel.org wrote:
+> > NEON in kernel mode is used by the crypto algorithms and raid6 code.
+> > While the raid6 code looks okay, the crypto algorithms do not: NEON
+> > is enabled on first invocation and may allocate/free/map memory before
+> > the NEON mode is disabled again.
 
-Probably we should measure the performance those ciphers in pure SW
-mode and with this optimisations to see if it makes sense to keep them
-for RT.
+Could you elaborate on why this is a problem?
 
-This kernel_fpu_resched() makes the code more preemptible which might hurt
-performance.
+I guess this is because kernel_neon_{begin,end}() disable preemption?
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- arch/x86/crypto/camellia_aesni_avx2_glue.c |   20 ++++++++++++++++++++
- arch/x86/crypto/camellia_aesni_avx_glue.c  |   19 +++++++++++++++++++
- arch/x86/crypto/cast6_avx_glue.c           |   24 +++++++++++++++++++-----
- arch/x86/crypto/chacha20_glue.c            |    9 +++++----
- arch/x86/crypto/serpent_avx2_glue.c        |   19 +++++++++++++++++++
- arch/x86/crypto/serpent_avx_glue.c         |   23 +++++++++++++++++++----
- arch/x86/crypto/serpent_sse2_glue.c        |   23 +++++++++++++++++++----
- arch/x86/crypto/twofish_avx_glue.c         |   27 +++++++++++++++++++++++++--
- arch/x86/include/asm/fpu/api.h             |    1 +
- arch/x86/kernel/fpu/core.c                 |   12 ++++++++++++
- 10 files changed, 158 insertions(+), 19 deletions(-)
+... is this specific to RT?
 
---- a/arch/x86/crypto/camellia_aesni_avx2_glue.c
-+++ b/arch/x86/crypto/camellia_aesni_avx2_glue.c
-@@ -206,6 +206,20 @@ struct crypt_priv {
- 	bool fpu_enabled;
- };
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static void camellia_fpu_end_rt(struct crypt_priv *ctx)
-+{
-+       bool fpu_enabled = ctx->fpu_enabled;
-+
-+       if (!fpu_enabled)
-+               return;
-+       camellia_fpu_end(fpu_enabled);
-+       ctx->fpu_enabled = false;
-+}
-+#else
-+static void camellia_fpu_end_rt(struct crypt_priv *ctx) { }
-+#endif
-+
- static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- {
- 	const unsigned int bsize = CAMELLIA_BLOCK_SIZE;
-@@ -221,16 +235,19 @@ static void encrypt_callback(void *priv,
- 	}
- 
- 	if (nbytes >= CAMELLIA_AESNI_PARALLEL_BLOCKS * bsize) {
-+		kernel_fpu_resched();
- 		camellia_ecb_enc_16way(ctx->ctx, srcdst, srcdst);
- 		srcdst += bsize * CAMELLIA_AESNI_PARALLEL_BLOCKS;
- 		nbytes -= bsize * CAMELLIA_AESNI_PARALLEL_BLOCKS;
- 	}
- 
- 	while (nbytes >= CAMELLIA_PARALLEL_BLOCKS * bsize) {
-+		kernel_fpu_resched();
- 		camellia_enc_blk_2way(ctx->ctx, srcdst, srcdst);
- 		srcdst += bsize * CAMELLIA_PARALLEL_BLOCKS;
- 		nbytes -= bsize * CAMELLIA_PARALLEL_BLOCKS;
- 	}
-+	camellia_fpu_end_rt(ctx);
- 
- 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
- 		camellia_enc_blk(ctx->ctx, srcdst, srcdst);
-@@ -251,16 +268,19 @@ static void decrypt_callback(void *priv,
- 	}
- 
- 	if (nbytes >= CAMELLIA_AESNI_PARALLEL_BLOCKS * bsize) {
-+		kernel_fpu_resched();
- 		camellia_ecb_dec_16way(ctx->ctx, srcdst, srcdst);
- 		srcdst += bsize * CAMELLIA_AESNI_PARALLEL_BLOCKS;
- 		nbytes -= bsize * CAMELLIA_AESNI_PARALLEL_BLOCKS;
- 	}
- 
- 	while (nbytes >= CAMELLIA_PARALLEL_BLOCKS * bsize) {
-+		kernel_fpu_resched();
- 		camellia_dec_blk_2way(ctx->ctx, srcdst, srcdst);
- 		srcdst += bsize * CAMELLIA_PARALLEL_BLOCKS;
- 		nbytes -= bsize * CAMELLIA_PARALLEL_BLOCKS;
- 	}
-+	camellia_fpu_end_rt(ctx);
- 
- 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
- 		camellia_dec_blk(ctx->ctx, srcdst, srcdst);
---- a/arch/x86/crypto/camellia_aesni_avx_glue.c
-+++ b/arch/x86/crypto/camellia_aesni_avx_glue.c
-@@ -210,6 +210,21 @@ struct crypt_priv {
- 	bool fpu_enabled;
- };
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static void camellia_fpu_end_rt(struct crypt_priv *ctx)
-+{
-+	bool fpu_enabled = ctx->fpu_enabled;
-+
-+	if (!fpu_enabled)
-+		return;
-+	camellia_fpu_end(fpu_enabled);
-+	ctx->fpu_enabled = false;
-+}
-+
-+#else
-+static void camellia_fpu_end_rt(struct crypt_priv *ctx) { }
-+#endif
-+
- static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- {
- 	const unsigned int bsize = CAMELLIA_BLOCK_SIZE;
-@@ -225,10 +240,12 @@ static void encrypt_callback(void *priv,
- 	}
- 
- 	while (nbytes >= CAMELLIA_PARALLEL_BLOCKS * bsize) {
-+		kernel_fpu_resched();
- 		camellia_enc_blk_2way(ctx->ctx, srcdst, srcdst);
- 		srcdst += bsize * CAMELLIA_PARALLEL_BLOCKS;
- 		nbytes -= bsize * CAMELLIA_PARALLEL_BLOCKS;
- 	}
-+	camellia_fpu_end_rt(ctx);
- 
- 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
- 		camellia_enc_blk(ctx->ctx, srcdst, srcdst);
-@@ -249,10 +266,12 @@ static void decrypt_callback(void *priv,
- 	}
- 
- 	while (nbytes >= CAMELLIA_PARALLEL_BLOCKS * bsize) {
-+		kernel_fpu_resched();
- 		camellia_dec_blk_2way(ctx->ctx, srcdst, srcdst);
- 		srcdst += bsize * CAMELLIA_PARALLEL_BLOCKS;
- 		nbytes -= bsize * CAMELLIA_PARALLEL_BLOCKS;
- 	}
-+	camellia_fpu_end_rt(ctx);
- 
- 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
- 		camellia_dec_blk(ctx->ctx, srcdst, srcdst);
---- a/arch/x86/crypto/cast6_avx_glue.c
-+++ b/arch/x86/crypto/cast6_avx_glue.c
-@@ -205,19 +205,33 @@ struct crypt_priv {
- 	bool fpu_enabled;
- };
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static void cast6_fpu_end_rt(struct crypt_priv *ctx)
-+{
-+	bool fpu_enabled = ctx->fpu_enabled;
-+
-+	if (!fpu_enabled)
-+		return;
-+	cast6_fpu_end(fpu_enabled);
-+	ctx->fpu_enabled = false;
-+}
-+
-+#else
-+static void cast6_fpu_end_rt(struct crypt_priv *ctx) { }
-+#endif
-+
- static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- {
- 	const unsigned int bsize = CAST6_BLOCK_SIZE;
- 	struct crypt_priv *ctx = priv;
- 	int i;
- 
--	ctx->fpu_enabled = cast6_fpu_begin(ctx->fpu_enabled, nbytes);
--
- 	if (nbytes == bsize * CAST6_PARALLEL_BLOCKS) {
-+		ctx->fpu_enabled = cast6_fpu_begin(ctx->fpu_enabled, nbytes);
- 		cast6_ecb_enc_8way(ctx->ctx, srcdst, srcdst);
-+		cast6_fpu_end_rt(ctx);
- 		return;
- 	}
--
- 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
- 		__cast6_encrypt(ctx->ctx, srcdst, srcdst);
- }
-@@ -228,10 +242,10 @@ static void decrypt_callback(void *priv,
- 	struct crypt_priv *ctx = priv;
- 	int i;
- 
--	ctx->fpu_enabled = cast6_fpu_begin(ctx->fpu_enabled, nbytes);
--
- 	if (nbytes == bsize * CAST6_PARALLEL_BLOCKS) {
-+		ctx->fpu_enabled = cast6_fpu_begin(ctx->fpu_enabled, nbytes);
- 		cast6_ecb_dec_8way(ctx->ctx, srcdst, srcdst);
-+		cast6_fpu_end_rt(ctx);
- 		return;
- 	}
- 
---- a/arch/x86/crypto/chacha20_glue.c
-+++ b/arch/x86/crypto/chacha20_glue.c
-@@ -81,23 +81,24 @@ static int chacha20_simd(struct skcipher
- 
- 	crypto_chacha20_init(state, ctx, walk.iv);
- 
--	kernel_fpu_begin();
--
- 	while (walk.nbytes >= CHACHA20_BLOCK_SIZE) {
-+		kernel_fpu_begin();
-+
- 		chacha20_dosimd(state, walk.dst.virt.addr, walk.src.virt.addr,
- 				rounddown(walk.nbytes, CHACHA20_BLOCK_SIZE));
-+		kernel_fpu_end();
- 		err = skcipher_walk_done(&walk,
- 					 walk.nbytes % CHACHA20_BLOCK_SIZE);
- 	}
- 
- 	if (walk.nbytes) {
-+		kernel_fpu_begin();
- 		chacha20_dosimd(state, walk.dst.virt.addr, walk.src.virt.addr,
- 				walk.nbytes);
-+		kernel_fpu_end();
- 		err = skcipher_walk_done(&walk, 0);
- 	}
- 
--	kernel_fpu_end();
--
- 	return err;
- }
- 
---- a/arch/x86/crypto/serpent_avx2_glue.c
-+++ b/arch/x86/crypto/serpent_avx2_glue.c
-@@ -184,6 +184,21 @@ struct crypt_priv {
- 	bool fpu_enabled;
- };
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static void serpent_fpu_end_rt(struct crypt_priv *ctx)
-+{
-+       bool fpu_enabled = ctx->fpu_enabled;
-+
-+       if (!fpu_enabled)
-+               return;
-+       serpent_fpu_end(fpu_enabled);
-+       ctx->fpu_enabled = false;
-+}
-+
-+#else
-+static void serpent_fpu_end_rt(struct crypt_priv *ctx) { }
-+#endif
-+
- static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- {
- 	const unsigned int bsize = SERPENT_BLOCK_SIZE;
-@@ -199,10 +214,12 @@ static void encrypt_callback(void *priv,
- 	}
- 
- 	while (nbytes >= SERPENT_PARALLEL_BLOCKS * bsize) {
-+		kernel_fpu_resched();
- 		serpent_ecb_enc_8way_avx(ctx->ctx, srcdst, srcdst);
- 		srcdst += bsize * SERPENT_PARALLEL_BLOCKS;
- 		nbytes -= bsize * SERPENT_PARALLEL_BLOCKS;
- 	}
-+	serpent_fpu_end_rt(ctx);
- 
- 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
- 		__serpent_encrypt(ctx->ctx, srcdst, srcdst);
-@@ -223,10 +240,12 @@ static void decrypt_callback(void *priv,
- 	}
- 
- 	while (nbytes >= SERPENT_PARALLEL_BLOCKS * bsize) {
-+		kernel_fpu_resched();
- 		serpent_ecb_dec_8way_avx(ctx->ctx, srcdst, srcdst);
- 		srcdst += bsize * SERPENT_PARALLEL_BLOCKS;
- 		nbytes -= bsize * SERPENT_PARALLEL_BLOCKS;
- 	}
-+	serpent_fpu_end_rt(ctx);
- 
- 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
- 		__serpent_decrypt(ctx->ctx, srcdst, srcdst);
---- a/arch/x86/crypto/serpent_avx_glue.c
-+++ b/arch/x86/crypto/serpent_avx_glue.c
-@@ -218,16 +218,31 @@ struct crypt_priv {
- 	bool fpu_enabled;
- };
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static void serpent_fpu_end_rt(struct crypt_priv *ctx)
-+{
-+	bool fpu_enabled = ctx->fpu_enabled;
-+
-+	if (!fpu_enabled)
-+		return;
-+	serpent_fpu_end(fpu_enabled);
-+	ctx->fpu_enabled = false;
-+}
-+
-+#else
-+static void serpent_fpu_end_rt(struct crypt_priv *ctx) { }
-+#endif
-+
- static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- {
- 	const unsigned int bsize = SERPENT_BLOCK_SIZE;
- 	struct crypt_priv *ctx = priv;
- 	int i;
- 
--	ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
--
- 	if (nbytes == bsize * SERPENT_PARALLEL_BLOCKS) {
-+		ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
- 		serpent_ecb_enc_8way_avx(ctx->ctx, srcdst, srcdst);
-+		serpent_fpu_end_rt(ctx);
- 		return;
- 	}
- 
-@@ -241,10 +256,10 @@ static void decrypt_callback(void *priv,
- 	struct crypt_priv *ctx = priv;
- 	int i;
- 
--	ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
--
- 	if (nbytes == bsize * SERPENT_PARALLEL_BLOCKS) {
-+		ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
- 		serpent_ecb_dec_8way_avx(ctx->ctx, srcdst, srcdst);
-+		serpent_fpu_end_rt(ctx);
- 		return;
- 	}
- 
---- a/arch/x86/crypto/serpent_sse2_glue.c
-+++ b/arch/x86/crypto/serpent_sse2_glue.c
-@@ -187,16 +187,31 @@ struct crypt_priv {
- 	bool fpu_enabled;
- };
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static void serpent_fpu_end_rt(struct crypt_priv *ctx)
-+{
-+	bool fpu_enabled = ctx->fpu_enabled;
-+
-+	if (!fpu_enabled)
-+		return;
-+	serpent_fpu_end(fpu_enabled);
-+	ctx->fpu_enabled = false;
-+}
-+
-+#else
-+static void serpent_fpu_end_rt(struct crypt_priv *ctx) { }
-+#endif
-+
- static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- {
- 	const unsigned int bsize = SERPENT_BLOCK_SIZE;
- 	struct crypt_priv *ctx = priv;
- 	int i;
- 
--	ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
--
- 	if (nbytes == bsize * SERPENT_PARALLEL_BLOCKS) {
-+		ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
- 		serpent_enc_blk_xway(ctx->ctx, srcdst, srcdst);
-+		serpent_fpu_end_rt(ctx);
- 		return;
- 	}
- 
-@@ -210,10 +225,10 @@ static void decrypt_callback(void *priv,
- 	struct crypt_priv *ctx = priv;
- 	int i;
- 
--	ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
--
- 	if (nbytes == bsize * SERPENT_PARALLEL_BLOCKS) {
-+		ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
- 		serpent_dec_blk_xway(ctx->ctx, srcdst, srcdst);
-+		serpent_fpu_end_rt(ctx);
- 		return;
- 	}
- 
---- a/arch/x86/crypto/twofish_avx_glue.c
-+++ b/arch/x86/crypto/twofish_avx_glue.c
-@@ -218,6 +218,21 @@ struct crypt_priv {
- 	bool fpu_enabled;
- };
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static void twofish_fpu_end_rt(struct crypt_priv *ctx)
-+{
-+	bool fpu_enabled = ctx->fpu_enabled;
-+
-+	if (!fpu_enabled)
-+		return;
-+	twofish_fpu_end(fpu_enabled);
-+	ctx->fpu_enabled = false;
-+}
-+
-+#else
-+static void twofish_fpu_end_rt(struct crypt_priv *ctx) { }
-+#endif
-+
- static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- {
- 	const unsigned int bsize = TF_BLOCK_SIZE;
-@@ -228,12 +243,16 @@ static void encrypt_callback(void *priv,
- 
- 	if (nbytes == bsize * TWOFISH_PARALLEL_BLOCKS) {
- 		twofish_ecb_enc_8way(ctx->ctx, srcdst, srcdst);
-+		twofish_fpu_end_rt(ctx);
- 		return;
- 	}
- 
--	for (i = 0; i < nbytes / (bsize * 3); i++, srcdst += bsize * 3)
-+	for (i = 0; i < nbytes / (bsize * 3); i++, srcdst += bsize * 3) {
-+		kernel_fpu_resched();
- 		twofish_enc_blk_3way(ctx->ctx, srcdst, srcdst);
-+	}
- 
-+	twofish_fpu_end_rt(ctx);
- 	nbytes %= bsize * 3;
- 
- 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
-@@ -250,11 +269,15 @@ static void decrypt_callback(void *priv,
- 
- 	if (nbytes == bsize * TWOFISH_PARALLEL_BLOCKS) {
- 		twofish_ecb_dec_8way(ctx->ctx, srcdst, srcdst);
-+		twofish_fpu_end_rt(ctx);
- 		return;
- 	}
- 
--	for (i = 0; i < nbytes / (bsize * 3); i++, srcdst += bsize * 3)
-+	for (i = 0; i < nbytes / (bsize * 3); i++, srcdst += bsize * 3) {
-+		kernel_fpu_resched();
- 		twofish_dec_blk_3way(ctx->ctx, srcdst, srcdst);
-+	}
-+	twofish_fpu_end_rt(ctx);
- 
- 	nbytes %= bsize * 3;
- 
---- a/arch/x86/include/asm/fpu/api.h
-+++ b/arch/x86/include/asm/fpu/api.h
-@@ -25,6 +25,7 @@ extern void __kernel_fpu_begin(void);
- extern void __kernel_fpu_end(void);
- extern void kernel_fpu_begin(void);
- extern void kernel_fpu_end(void);
-+extern void kernel_fpu_resched(void);
- extern bool irq_fpu_usable(void);
- 
- /*
---- a/arch/x86/kernel/fpu/core.c
-+++ b/arch/x86/kernel/fpu/core.c
-@@ -137,6 +137,18 @@ void kernel_fpu_end(void)
- }
- EXPORT_SYMBOL_GPL(kernel_fpu_end);
- 
-+void kernel_fpu_resched(void)
-+{
-+	WARN_ON_FPU(!this_cpu_read(in_kernel_fpu));
-+
-+	if (should_resched(PREEMPT_OFFSET)) {
-+		kernel_fpu_end();
-+		cond_resched();
-+		kernel_fpu_begin();
-+	}
-+}
-+EXPORT_SYMBOL_GPL(kernel_fpu_resched);
-+
- /*
-  * Save the FPU state (mark it for reload if necessary):
-  *
+Thanks,
+Mark.
+
+> > This needs to be changed until it can be enabled.
+> > On ARM NEON in kernel mode can be simply disabled. on ARM64 it needs to
+> > stay on due to possible EFI callbacks so here I disable each algorithm.
+> > 
+> > Cc: stable-rt@vger.kernel.org
+> > Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> > ---
+> >  arch/arm/Kconfig                  |  2 +-
+> >  arch/arm64/crypto/Kconfig         | 20 ++++++++++----------
+> >  arch/arm64/crypto/crc32-ce-glue.c |  3 ++-
+> >  3 files changed, 13 insertions(+), 12 deletions(-)
+> > 
+> > diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+> > index d1346a160760..914fecb088a8 100644
+> > --- a/arch/arm/Kconfig
+> > +++ b/arch/arm/Kconfig
+> > @@ -2164,7 +2164,7 @@ config NEON
+> >  
+> >  config KERNEL_MODE_NEON
+> >  	bool "Support for NEON in kernel mode"
+> > -	depends on NEON && AEABI
+> > +	depends on NEON && AEABI && !PREEMPT_RT_BASE
+> >  	help
+> >  	  Say Y to include support for NEON in kernel mode.
+> >  
+> > diff --git a/arch/arm64/crypto/Kconfig b/arch/arm64/crypto/Kconfig
+> > index 70c517aa4501..2a5f05b5a19a 100644
+> > --- a/arch/arm64/crypto/Kconfig
+> > +++ b/arch/arm64/crypto/Kconfig
+> > @@ -19,19 +19,19 @@ config CRYPTO_SHA512_ARM64
+> >  
+> >  config CRYPTO_SHA1_ARM64_CE
+> >  	tristate "SHA-1 digest algorithm (ARMv8 Crypto Extensions)"
+> > -	depends on KERNEL_MODE_NEON
+> > +	depends on KERNEL_MODE_NEON && !PREEMPT_RT_BASE
+> >  	select CRYPTO_HASH
+> >  	select CRYPTO_SHA1
+> >  
+> >  config CRYPTO_SHA2_ARM64_CE
+> >  	tristate "SHA-224/SHA-256 digest algorithm (ARMv8 Crypto Extensions)"
+> > -	depends on KERNEL_MODE_NEON
+> > +	depends on KERNEL_MODE_NEON && !PREEMPT_RT_BASE
+> >  	select CRYPTO_HASH
+> >  	select CRYPTO_SHA256_ARM64
+> >  
+> >  config CRYPTO_GHASH_ARM64_CE
+> >  	tristate "GHASH/AES-GCM using ARMv8 Crypto Extensions"
+> > -	depends on KERNEL_MODE_NEON
+> > +	depends on KERNEL_MODE_NEON && !PREEMPT_RT_BASE
+> >  	select CRYPTO_HASH
+> >  	select CRYPTO_GF128MUL
+> >  	select CRYPTO_AES
+> > @@ -39,7 +39,7 @@ config CRYPTO_GHASH_ARM64_CE
+> >  
+> >  config CRYPTO_CRCT10DIF_ARM64_CE
+> >  	tristate "CRCT10DIF digest algorithm using PMULL instructions"
+> > -	depends on KERNEL_MODE_NEON && CRC_T10DIF
+> > +	depends on KERNEL_MODE_NEON && CRC_T10DIF && !PREEMPT_RT_BASE
+> >  	select CRYPTO_HASH
+> >  
+> >  config CRYPTO_CRC32_ARM64_CE
+> > @@ -53,13 +53,13 @@ config CRYPTO_AES_ARM64
+> >  
+> >  config CRYPTO_AES_ARM64_CE
+> >  	tristate "AES core cipher using ARMv8 Crypto Extensions"
+> > -	depends on ARM64 && KERNEL_MODE_NEON
+> > +	depends on ARM64 && KERNEL_MODE_NEON && !PREEMPT_RT_BASE
+> >  	select CRYPTO_ALGAPI
+> >  	select CRYPTO_AES_ARM64
+> >  
+> >  config CRYPTO_AES_ARM64_CE_CCM
+> >  	tristate "AES in CCM mode using ARMv8 Crypto Extensions"
+> > -	depends on ARM64 && KERNEL_MODE_NEON
+> > +	depends on ARM64 && KERNEL_MODE_NEON && !PREEMPT_RT_BASE
+> >  	select CRYPTO_ALGAPI
+> >  	select CRYPTO_AES_ARM64_CE
+> >  	select CRYPTO_AES_ARM64
+> > @@ -67,7 +67,7 @@ config CRYPTO_AES_ARM64_CE_CCM
+> >  
+> >  config CRYPTO_AES_ARM64_CE_BLK
+> >  	tristate "AES in ECB/CBC/CTR/XTS modes using ARMv8 Crypto Extensions"
+> > -	depends on KERNEL_MODE_NEON
+> > +	depends on KERNEL_MODE_NEON && !PREEMPT_RT_BASE
+> >  	select CRYPTO_BLKCIPHER
+> >  	select CRYPTO_AES_ARM64_CE
+> >  	select CRYPTO_AES_ARM64
+> > @@ -75,7 +75,7 @@ config CRYPTO_AES_ARM64_CE_BLK
+> >  
+> >  config CRYPTO_AES_ARM64_NEON_BLK
+> >  	tristate "AES in ECB/CBC/CTR/XTS modes using NEON instructions"
+> > -	depends on KERNEL_MODE_NEON
+> > +	depends on KERNEL_MODE_NEON && !PREEMPT_RT_BASE
+> >  	select CRYPTO_BLKCIPHER
+> >  	select CRYPTO_AES_ARM64
+> >  	select CRYPTO_AES
+> > @@ -83,13 +83,13 @@ config CRYPTO_AES_ARM64_NEON_BLK
+> >  
+> >  config CRYPTO_CHACHA20_NEON
+> >  	tristate "NEON accelerated ChaCha20 symmetric cipher"
+> > -	depends on KERNEL_MODE_NEON
+> > +	depends on KERNEL_MODE_NEON && !PREEMPT_RT_BASE
+> >  	select CRYPTO_BLKCIPHER
+> >  	select CRYPTO_CHACHA20
+> >  
+> >  config CRYPTO_AES_ARM64_BS
+> >  	tristate "AES in ECB/CBC/CTR/XTS modes using bit-sliced NEON algorithm"
+> > -	depends on KERNEL_MODE_NEON
+> > +	depends on KERNEL_MODE_NEON && !PREEMPT_RT_BASE
+> >  	select CRYPTO_BLKCIPHER
+> >  	select CRYPTO_AES_ARM64_NEON_BLK
+> >  	select CRYPTO_AES_ARM64
+> > diff --git a/arch/arm64/crypto/crc32-ce-glue.c b/arch/arm64/crypto/crc32-ce-glue.c
+> > index 624f4137918c..599de95cd86d 100644
+> > --- a/arch/arm64/crypto/crc32-ce-glue.c
+> > +++ b/arch/arm64/crypto/crc32-ce-glue.c
+> > @@ -206,7 +206,8 @@ static struct shash_alg crc32_pmull_algs[] = { {
+> >  
+> >  static int __init crc32_pmull_mod_init(void)
+> >  {
+> > -	if (IS_ENABLED(CONFIG_KERNEL_MODE_NEON) && (elf_hwcap & HWCAP_PMULL)) {
+> > +	if (IS_ENABLED(CONFIG_KERNEL_MODE_NEON) &&
+> > +	    !IS_ENABLED(CONFIG_PREEMPT_RT_BASE) && (elf_hwcap & HWCAP_PMULL)) {
+> >  		crc32_pmull_algs[0].update = crc32_pmull_update;
+> >  		crc32_pmull_algs[1].update = crc32c_pmull_update;
+> >  
+> > -- 
+> > 2.15.0
+> 
+> _______________________________________________
+> linux-arm-kernel mailing list
+> linux-arm-kernel@lists.infradead.org
+> http://lists.infradead.org/mailman/listinfo/linux-arm-kernel
