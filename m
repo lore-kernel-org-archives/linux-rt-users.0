@@ -1,103 +1,82 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 08/15] net: take the tcp_sk_lock lock with BH disabled
-Date: Fri, 01 Dec 2017 10:50:07 -0500
-Message-ID: <20171201155029.296268299@goodmis.org>
+From: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+Subject: [PATCH RT 12/15] iommu/amd: Use raw_cpu_ptr() instead of
+	get_cpu_ptr() for ->flush_queue
+Date: Fri, 01 Dec 2017 10:50:11 -0500
+Message-ID: <20171201155029.951684562@goodmis.org>
 References: <20171201154959.375846909@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        John Kacur <jkacur@redhat.com>,
-        Paul Gortmaker <paul.gortmaker@windriver.com>,
-        Julia Cartwright <julia@ni.com>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
-        Jacek Konieczny <jajcus@jajcus.net>
-To: linux-kernel@vger.kernel.org,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.99]:57352 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1752593AbdLAPua (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 1 Dec 2017 10:50:30 -0500
-Content-Disposition: inline; filename=0008-net-take-the-tcp_sk_lock-lock-with-BH-disabled.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: tom.zanussi-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, Daniel Wagner <daniel.wagner-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>,
+	Julia Cartwright <julia-acOepvfBmUk@public.gmane.org>,
+	Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>,
+	Vinod Adhikary <vinadhy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Carsten Emde <C.Emde-Q945KHDl0DbYtjvyW6yDsg@public.gmane.org>,
+	Paul Gortmaker <paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org>,
+	iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Alex Shi <alex.shi-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>,
+	rt-stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, John Kacur <jkacur-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>,
+	Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
+	linux-rt-users <linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Disposition: inline;
+	filename=0012-iommu-amd-Use-raw_cpu_ptr-instead-of-get_cpu_ptr-for.patch
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
+List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
+	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+List-Id: linux-rt-users.vger.kernel.org
 
 4.9.65-rt57-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
 
-Lockdep may complain about an unsafe locking scenario:
-|      CPU0                    CPU1
-|      ----                    ----
-| lock((tcp_sk_lock).lock);
-|                              lock(&per_cpu(local_softirq_locks[i], __cpu).lock);
-|                              lock((tcp_sk_lock).lock);
-| lock(&per_cpu(local_softirq_locks[i], __cpu).lock);
+get_cpu_ptr() disabled preemption and returns the ->flush_queue object
+of the current CPU. raw_cpu_ptr() does the same except that it not
+disable preemption which means the scheduler can move it to another CPU
+after it obtained the per-CPU object.
+In this case this is not bad because the data structure itself is
+protected with a spin_lock. This change shouldn't matter however on RT
+it does because the sleeping lock can't be accessed with disabled
+preemption.
 
-in the call paths:
-	do_current_softirqs -> tcp_v4_send_ack()
-vs
-	tcp_v4_send_reset -> do_current_softirqs().
-
-This should not happen since local_softirq_locks is per CPU. Reversing
-the order makes lockdep happy.
-
-Reported-by: Jacek Konieczny <jajcus@jajcus.net>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: rt-stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>
+Cc: iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Reported-by: Vinod Adhikary <vinadhy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
 ---
- net/ipv4/tcp_ipv4.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ drivers/iommu/amd_iommu.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
 
-diff --git a/net/ipv4/tcp_ipv4.c b/net/ipv4/tcp_ipv4.c
-index 3336e1534bc5..3b7298459c87 100644
---- a/net/ipv4/tcp_ipv4.c
-+++ b/net/ipv4/tcp_ipv4.c
-@@ -698,8 +698,8 @@ static void tcp_v4_send_reset(const struct sock *sk, struct sk_buff *skb)
+diff --git a/drivers/iommu/amd_iommu.c b/drivers/iommu/amd_iommu.c
+index a88595b21111..ff5c2424eb9e 100644
+--- a/drivers/iommu/amd_iommu.c
++++ b/drivers/iommu/amd_iommu.c
+@@ -2283,7 +2283,7 @@ static void queue_add(struct dma_ops_domain *dma_dom,
+ 	pages     = __roundup_pow_of_two(pages);
+ 	address >>= PAGE_SHIFT;
  
- 	arg.tos = ip_hdr(skb)->tos;
+-	queue = get_cpu_ptr(&flush_queue);
++	queue = raw_cpu_ptr(&flush_queue);
+ 	spin_lock_irqsave(&queue->lock, flags);
  
--	local_lock(tcp_sk_lock);
- 	local_bh_disable();
-+	local_lock(tcp_sk_lock);
- 	ip_send_unicast_reply(*this_cpu_ptr(net->ipv4.tcp_sk),
- 			      skb, &TCP_SKB_CB(skb)->header.h4.opt,
- 			      ip_hdr(skb)->saddr, ip_hdr(skb)->daddr,
-@@ -707,8 +707,8 @@ static void tcp_v4_send_reset(const struct sock *sk, struct sk_buff *skb)
+ 	if (queue->next == FLUSH_QUEUE_SIZE)
+@@ -2300,8 +2300,6 @@ static void queue_add(struct dma_ops_domain *dma_dom,
  
- 	__TCP_INC_STATS(net, TCP_MIB_OUTSEGS);
- 	__TCP_INC_STATS(net, TCP_MIB_OUTRSTS);
--	local_bh_enable();
- 	local_unlock(tcp_sk_lock);
-+	local_bh_enable();
- 
- #ifdef CONFIG_TCP_MD5SIG
- out:
-@@ -784,16 +784,16 @@ static void tcp_v4_send_ack(struct net *net,
- 	if (oif)
- 		arg.bound_dev_if = oif;
- 	arg.tos = tos;
--	local_lock(tcp_sk_lock);
- 	local_bh_disable();
-+	local_lock(tcp_sk_lock);
- 	ip_send_unicast_reply(*this_cpu_ptr(net->ipv4.tcp_sk),
- 			      skb, &TCP_SKB_CB(skb)->header.h4.opt,
- 			      ip_hdr(skb)->saddr, ip_hdr(skb)->daddr,
- 			      &arg, arg.iov[0].iov_len);
- 
- 	__TCP_INC_STATS(net, TCP_MIB_OUTSEGS);
--	local_bh_enable();
- 	local_unlock(tcp_sk_lock);
-+	local_bh_enable();
+ 	if (atomic_cmpxchg(&queue_timer_on, 0, 1) == 0)
+ 		mod_timer(&queue_timer, jiffies + msecs_to_jiffies(10));
+-
+-	put_cpu_ptr(&flush_queue);
  }
  
- static void tcp_v4_timewait_ack(struct sock *sk, struct sk_buff *skb)
+ 
 -- 
 2.13.2
-
-
