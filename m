@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 03/15] rtmutex: Fix lock stealing logic
-Date: Fri, 01 Dec 2017 10:48:40 -0500
-Message-ID: <20171201154911.877916081@goodmis.org>
+Subject: [PATCH RT 11/15] Bluetooth: avoid recursive locking in hci_send_to_channel()
+Date: Fri, 01 Dec 2017 10:48:48 -0500
+Message-ID: <20171201154913.068882637@goodmis.org>
 References: <20171201154837.379265211@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -13,11 +13,13 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
         tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
-        Mike Galbraith <efault@gmx.de>
+        Marcel Holtmann <marcel@holtmann.org>,
+        Johan Hedberg <johan.hedberg@intel.com>,
+        rt-stable@vger.kernel.org, Mart van de Wege <mvdwege@gmail.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-rtmutex-Fix-lock-stealing-logic.patch
+Content-Disposition: inline; filename=0011-Bluetooth-avoid-recursive-locking-in-hci_send_to_cha.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -26,164 +28,74 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mike Galbraith <efault@gmx.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-1. When trying to acquire an rtmutex, we first try to grab it without
-queueing the waiter, and explicitly check for that initial attempt
-in the !waiter path of __try_to_take_rt_mutex().  Checking whether
-the lock taker is top waiter before allowing a steal attempt in that
-path is a thinko: the lock taker has not yet blocked.
+Mart reported a deadlock in -RT in the call path:
+  hci_send_monitor_ctrl_event() -> hci_send_to_channel()
 
-2. It seems wrong to change the definition of rt_mutex_waiter_less()
-to mean less or perhaps equal when we have an rt_mutex_waiter_equal().
+because both functions acquire the same read lock hci_sk_list.lock. This
+is also a mainline issue because the qrwlock implementation is writer
+fair (the traditional rwlock implementation is reader biased).
 
-Remove the thinko, restore rt_mutex_waiter_less(), implement and use
-rt_mutex_steal() based upon rt_mutex_waiter_less/equal(), moving all
-qualification criteria into the function itself.
+To avoid the deadlock there is now __hci_send_to_channel() which expects
+the readlock to be held.
 
-Reviewed-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-Signed-off-by: Mike Galbraith <efault@gmx.de>
+Cc: Marcel Holtmann <marcel@holtmann.org>
+Cc: Johan Hedberg <johan.hedberg@intel.com>
+Cc: rt-stable@vger.kernel.org
+Fixes: 38ceaa00d02d ("Bluetooth: Add support for sending MGMT commands and events to monitor")
+Reported-by: Mart van de Wege <mvdwege@gmail.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/locking/rtmutex.c | 73 ++++++++++++++++++++++++------------------------
- 1 file changed, 36 insertions(+), 37 deletions(-)
+ net/bluetooth/hci_sock.c | 17 +++++++++++------
+ 1 file changed, 11 insertions(+), 6 deletions(-)
 
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index b73cd7c87551..5dbf6789383b 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -235,25 +235,18 @@ static inline bool unlock_rt_mutex_safe(struct rt_mutex *lock,
+diff --git a/net/bluetooth/hci_sock.c b/net/bluetooth/hci_sock.c
+index c88a6007e643..5de85b55a821 100644
+--- a/net/bluetooth/hci_sock.c
++++ b/net/bluetooth/hci_sock.c
+@@ -251,15 +251,13 @@ void hci_send_to_sock(struct hci_dev *hdev, struct sk_buff *skb)
  }
- #endif
  
--#define STEAL_NORMAL  0
--#define STEAL_LATERAL 1
- /*
-  * Only use with rt_mutex_waiter_{less,equal}()
-  */
--#define task_to_waiter(p)	\
--	&(struct rt_mutex_waiter){ .prio = (p)->prio, .deadline = (p)->dl.deadline }
-+#define task_to_waiter(p) &(struct rt_mutex_waiter) \
-+	{ .prio = (p)->prio, .deadline = (p)->dl.deadline, .task = (p) }
- 
- static inline int
- rt_mutex_waiter_less(struct rt_mutex_waiter *left,
--		     struct rt_mutex_waiter *right, int mode)
-+		     struct rt_mutex_waiter *right)
+ /* Send frame to sockets with specific channel */
+-void hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
+-			 int flag, struct sock *skip_sk)
++static void __hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
++				  int flag, struct sock *skip_sk)
  {
--	if (mode == STEAL_NORMAL) {
--		if (left->prio < right->prio)
--			return 1;
--	} else {
--		if (left->prio <= right->prio)
--			return 1;
--	}
-+	if (left->prio < right->prio)
-+		return 1;
+ 	struct sock *sk;
  
- 	/*
- 	 * If both waiters have dl_prio(), we check the deadlines of the
-@@ -286,6 +279,27 @@ rt_mutex_waiter_equal(struct rt_mutex_waiter *left,
- 	return 1;
- }
+ 	BT_DBG("channel %u len %d", channel, skb->len);
  
-+#define STEAL_NORMAL  0
-+#define STEAL_LATERAL 1
-+
-+static inline int
-+rt_mutex_steal(struct rt_mutex *lock, struct rt_mutex_waiter *waiter, int mode)
-+{
-+	struct rt_mutex_waiter *top_waiter = rt_mutex_top_waiter(lock);
-+
-+	if (waiter == top_waiter || rt_mutex_waiter_less(waiter, top_waiter))
-+		return 1;
-+
-+	/*
-+	 * Note that RT tasks are excluded from lateral-steals
-+	 * to prevent the introduction of an unbounded latency.
-+	 */
-+	if (mode == STEAL_NORMAL || rt_task(waiter->task))
-+		return 0;
-+
-+	return rt_mutex_waiter_equal(waiter, top_waiter);
+-	read_lock(&hci_sk_list.lock);
+-
+ 	sk_for_each(sk, &hci_sk_list.head) {
+ 		struct sk_buff *nskb;
+ 
+@@ -285,6 +283,13 @@ void hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
+ 			kfree_skb(nskb);
+ 	}
+ 
 +}
 +
- static void
- rt_mutex_enqueue(struct rt_mutex *lock, struct rt_mutex_waiter *waiter)
- {
-@@ -297,7 +311,7 @@ rt_mutex_enqueue(struct rt_mutex *lock, struct rt_mutex_waiter *waiter)
- 	while (*link) {
- 		parent = *link;
- 		entry = rb_entry(parent, struct rt_mutex_waiter, tree_entry);
--		if (rt_mutex_waiter_less(waiter, entry, STEAL_NORMAL)) {
-+		if (rt_mutex_waiter_less(waiter, entry)) {
- 			link = &parent->rb_left;
- 		} else {
- 			link = &parent->rb_right;
-@@ -336,7 +350,7 @@ rt_mutex_enqueue_pi(struct task_struct *task, struct rt_mutex_waiter *waiter)
- 	while (*link) {
- 		parent = *link;
- 		entry = rb_entry(parent, struct rt_mutex_waiter, pi_tree_entry);
--		if (rt_mutex_waiter_less(waiter, entry, STEAL_NORMAL)) {
-+		if (rt_mutex_waiter_less(waiter, entry)) {
- 			link = &parent->rb_left;
- 		} else {
- 			link = &parent->rb_right;
-@@ -847,6 +861,7 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
-  * @task:   The task which wants to acquire the lock
-  * @waiter: The waiter that is queued to the lock's wait tree if the
-  *	    callsite called task_blocked_on_lock(), otherwise NULL
-+ * @mode:   Lock steal mode (STEAL_NORMAL, STEAL_LATERAL)
-  */
- static int __try_to_take_rt_mutex(struct rt_mutex *lock,
- 				  struct task_struct *task,
-@@ -886,14 +901,11 @@ static int __try_to_take_rt_mutex(struct rt_mutex *lock,
- 	 */
- 	if (waiter) {
- 		/*
--		 * If waiter is not the highest priority waiter of
--		 * @lock, give up.
-+		 * If waiter is not the highest priority waiter of @lock,
-+		 * or its peer when lateral steal is allowed, give up.
- 		 */
--		if (waiter != rt_mutex_top_waiter(lock)) {
--			/* XXX rt_mutex_waiter_less() ? */
-+		if (!rt_mutex_steal(lock, waiter, mode))
- 			return 0;
--		}
--
- 		/*
- 		 * We can acquire the lock. Remove the waiter from the
- 		 * lock waiters tree.
-@@ -910,25 +922,12 @@ static int __try_to_take_rt_mutex(struct rt_mutex *lock,
- 		 * not need to be dequeued.
- 		 */
- 		if (rt_mutex_has_waiters(lock)) {
--			struct task_struct *pown = rt_mutex_top_waiter(lock)->task;
--
--			if (task != pown)
--				return 0;
--
--			/*
--			 * Note that RT tasks are excluded from lateral-steals
--			 * to prevent the introduction of an unbounded latency.
--			 */
--			if (rt_task(task))
--				mode = STEAL_NORMAL;
- 			/*
--			 * If @task->prio is greater than or equal to
--			 * the top waiter priority (kernel view),
--			 * @task lost.
-+			 * If @task->prio is greater than the top waiter
-+			 * priority (kernel view), or equal to it when a
-+			 * lateral steal is forbidden, @task lost.
- 			 */
--			if (!rt_mutex_waiter_less(task_to_waiter(task),
--						  rt_mutex_top_waiter(lock),
--						  mode))
-+			if (!rt_mutex_steal(lock, task_to_waiter(task), mode))
- 				return 0;
- 			/*
- 			 * The current top waiter stays enqueued. We
++void hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
++			 int flag, struct sock *skip_sk)
++{
++	read_lock(&hci_sk_list.lock);
++	__hci_send_to_channel(channel, skb, flag, skip_sk);
+ 	read_unlock(&hci_sk_list.lock);
+ }
+ 
+@@ -388,8 +393,8 @@ void hci_send_monitor_ctrl_event(struct hci_dev *hdev, u16 event,
+ 		hdr->index = index;
+ 		hdr->len = cpu_to_le16(skb->len - HCI_MON_HDR_SIZE);
+ 
+-		hci_send_to_channel(HCI_CHANNEL_MONITOR, skb,
+-				    HCI_SOCK_TRUSTED, NULL);
++		__hci_send_to_channel(HCI_CHANNEL_MONITOR, skb,
++				      HCI_SOCK_TRUSTED, NULL);
+ 		kfree_skb(skb);
+ 	}
+ 
 -- 
 2.13.2
