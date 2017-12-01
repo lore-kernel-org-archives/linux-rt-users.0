@@ -1,66 +1,63 @@
-From: Russell King - ARM Linux <linux@armlinux.org.uk>
-Subject: Re: [PATCH RT] arm*: disable NEON in kernel mode
-Date: Fri, 1 Dec 2017 17:31:20 +0000
-Message-ID: <20171201173120.GL10595@n2100.armlinux.org.uk>
-References: <20171130142216.GB12606@linutronix.de>
- <20171130143028.GA1351@linutronix.de>
- <20171201104331.GB1612@linutronix.de>
- <20171201134506.GF1612@linutronix.de>
- <20171201141827.yip6pl3tt7kxzek7@lakrids.cambridge.arm.com>
- <20171201143648.GK1612@linutronix.de>
- <20171201171458.3a2acsltiq54gvuu@hirez.programming.kicks-ass.net>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH RT 04/15] posixtimer: init timer only with
+ CONFIG_POSIX_TIMERS enabled
+Date: Fri, 1 Dec 2017 12:35:28 -0500
+Message-ID: <20171201123528.07eb8091@gandalf.local.home>
+References: <20171201154959.375846909@goodmis.org>
+        <20171201155028.664412746@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Mark Rutland <mark.rutland@arm.com>,
-        linux-rt-users@vger.kernel.org, ard.biesheuvel@linaro.org,
-        Catalin Marinas <catalin.marinas@arm.com>,
-        Will Deacon <will.deacon@arm.com>,
-        linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
-        tglx@linutronix.de, linux-arm-kernel@lists.infradead.org
-To: Peter Zijlstra <peterz@infradead.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        John Kacur <jkacur@redhat.com>,
+        Paul Gortmaker <paul.gortmaker@windriver.com>,
+        Julia Cartwright <julia@ni.com>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>
+To: linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20171201171458.3a2acsltiq54gvuu@hirez.programming.kicks-ass.net>
+In-Reply-To: <20171201155028.664412746@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Dec 01, 2017 at 06:14:58PM +0100, Peter Zijlstra wrote:
-> On Fri, Dec 01, 2017 at 03:36:48PM +0100, Sebastian Andrzej Siewior wrote:
-> > On 2017-12-01 14:18:28 [+0000], Mark Rutland wrote:
-> > > [Adding Ard, who wrote the NEON crypto code]
-> > > 
-> > > On Fri, Dec 01, 2017 at 02:45:06PM +0100, Sebastian Andrzej Siewior wrote:
-> > > > +arm folks, to let you know
-> > > > 
-> > > > On 2017-12-01 11:43:32 [+0100], To linux-rt-users@vger.kernel.org wrote:
-> > > > > NEON in kernel mode is used by the crypto algorithms and raid6 code.
-> > > > > While the raid6 code looks okay, the crypto algorithms do not: NEON
-> > > > > is enabled on first invocation and may allocate/free/map memory before
-> > > > > the NEON mode is disabled again.
-> > > 
-> > > Could you elaborate on why this is a problem?
-> > > 
-> > > I guess this is because kernel_neon_{begin,end}() disable preemption?
-> > > 
-> > > ... is this specific to RT?
-> > 
-> > It is RT specific, yes. One thing are the unbounded latencies since
-> > everything in this preempt_disable section can take time depending on
-> > the size of the request.
+On Fri, 01 Dec 2017 10:50:03 -0500
+Steven Rostedt <rostedt@goodmis.org> wrote:
+
+> 4.9.65-rt57-rc1 stable review patch.
+> If anyone has any objections, please let me know.
 > 
-> Well, PREEMPT cares about that too.
+> ------------------
+> 
+> From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> 
+> In v4.11 it is possible to disable the posix timers and so we must not
+> attempt to initialize the task_struct on RT with !POSIX_TIMERS.
+> This patch does so.
 
-Preempt may care, but it's the hit you take to use neon in the kernel.
-The neon register set shares with the FPU, so preempting during that
-path means that the normal FPU register saving would corrupt the
-already saved user FPU context - and even worse would result in the
-kernel's crypto function register contents being leaked to userspace.
+Hmm, I may have been too greedy in pulling in this patch. I'm going to
+remove it from the list, and post a -rc2.
 
-If you care about preempt deeply, the only solution is to avoid using
-kernel mode neon.
+-- Steve
 
--- 
-RMK's Patch system: http://www.armlinux.org.uk/developer/patches/
-FTTC broadband for 0.8mile line in suburbia: sync at 8.8Mbps down 630kbps up
-According to speedtest.net: 8.21Mbps down 510kbps up
+> 
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> ---
+>  include/linux/init_task.h | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/include/linux/init_task.h b/include/linux/init_task.h
+> index a56e263f5005..526ecfc58909 100644
+> --- a/include/linux/init_task.h
+> +++ b/include/linux/init_task.h
+> @@ -150,7 +150,7 @@ extern struct task_group root_task_group;
+>  # define INIT_PERF_EVENTS(tsk)
+>  #endif
+>  
+> -#ifdef CONFIG_PREEMPT_RT_BASE
+> +#if defined(CONFIG_POSIX_TIMERS) && defined(CONFIG_PREEMPT_RT_BASE)
+>  # define INIT_TIMER_LIST		.posix_timer_list = NULL,
+>  #else
+>  # define INIT_TIMER_LIST
