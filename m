@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 02/15] Revert "fs: jbd2: pull your plug when waiting for space"
-Date: Fri, 01 Dec 2017 10:48:39 -0500
-Message-ID: <20171201154911.739809510@goodmis.org>
+Subject: [PATCH RT 03/15] rtmutex: Fix lock stealing logic
+Date: Fri, 01 Dec 2017 10:48:40 -0500
+Message-ID: <20171201154911.877916081@goodmis.org>
 References: <20171201154837.379265211@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -13,11 +13,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
         tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
-        stable@vger.kernel.org
+        Mike Galbraith <efault@gmx.de>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-Revert-fs-jbd2-pull-your-plug-when-waiting-for-space.patch
+Content-Disposition: inline; filename=0003-rtmutex-Fix-lock-stealing-logic.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -26,31 +26,164 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Mike Galbraith <efault@gmx.de>
 
-This reverts commit "fs: jbd2: pull your plug when waiting for space".
-This was a duct-tape fix which shouldn't be needed since commit
-"locking/rt-mutex: fix deadlock in device mapper / block-IO".
+1. When trying to acquire an rtmutex, we first try to grab it without
+queueing the waiter, and explicitly check for that initial attempt
+in the !waiter path of __try_to_take_rt_mutex().  Checking whether
+the lock taker is top waiter before allowing a steal attempt in that
+path is a thinko: the lock taker has not yet blocked.
 
-Cc: stable@vger.kernel.org
+2. It seems wrong to change the definition of rt_mutex_waiter_less()
+to mean less or perhaps equal when we have an rt_mutex_waiter_equal().
+
+Remove the thinko, restore rt_mutex_waiter_less(), implement and use
+rt_mutex_steal() based upon rt_mutex_waiter_less/equal(), moving all
+qualification criteria into the function itself.
+
+Reviewed-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+Signed-off-by: Mike Galbraith <efault@gmx.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- fs/jbd2/checkpoint.c | 2 --
- 1 file changed, 2 deletions(-)
+ kernel/locking/rtmutex.c | 73 ++++++++++++++++++++++++------------------------
+ 1 file changed, 36 insertions(+), 37 deletions(-)
 
-diff --git a/fs/jbd2/checkpoint.c b/fs/jbd2/checkpoint.c
-index 6e18a06aaabe..684996c8a3a4 100644
---- a/fs/jbd2/checkpoint.c
-+++ b/fs/jbd2/checkpoint.c
-@@ -116,8 +116,6 @@ void __jbd2_log_wait_for_space(journal_t *journal)
- 	nblocks = jbd2_space_needed(journal);
- 	while (jbd2_log_space_left(journal) < nblocks) {
- 		write_unlock(&journal->j_state_lock);
--		if (current->plug)
--			io_schedule();
- 		mutex_lock(&journal->j_checkpoint_mutex);
+diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+index b73cd7c87551..5dbf6789383b 100644
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -235,25 +235,18 @@ static inline bool unlock_rt_mutex_safe(struct rt_mutex *lock,
+ }
+ #endif
  
+-#define STEAL_NORMAL  0
+-#define STEAL_LATERAL 1
+ /*
+  * Only use with rt_mutex_waiter_{less,equal}()
+  */
+-#define task_to_waiter(p)	\
+-	&(struct rt_mutex_waiter){ .prio = (p)->prio, .deadline = (p)->dl.deadline }
++#define task_to_waiter(p) &(struct rt_mutex_waiter) \
++	{ .prio = (p)->prio, .deadline = (p)->dl.deadline, .task = (p) }
+ 
+ static inline int
+ rt_mutex_waiter_less(struct rt_mutex_waiter *left,
+-		     struct rt_mutex_waiter *right, int mode)
++		     struct rt_mutex_waiter *right)
+ {
+-	if (mode == STEAL_NORMAL) {
+-		if (left->prio < right->prio)
+-			return 1;
+-	} else {
+-		if (left->prio <= right->prio)
+-			return 1;
+-	}
++	if (left->prio < right->prio)
++		return 1;
+ 
+ 	/*
+ 	 * If both waiters have dl_prio(), we check the deadlines of the
+@@ -286,6 +279,27 @@ rt_mutex_waiter_equal(struct rt_mutex_waiter *left,
+ 	return 1;
+ }
+ 
++#define STEAL_NORMAL  0
++#define STEAL_LATERAL 1
++
++static inline int
++rt_mutex_steal(struct rt_mutex *lock, struct rt_mutex_waiter *waiter, int mode)
++{
++	struct rt_mutex_waiter *top_waiter = rt_mutex_top_waiter(lock);
++
++	if (waiter == top_waiter || rt_mutex_waiter_less(waiter, top_waiter))
++		return 1;
++
++	/*
++	 * Note that RT tasks are excluded from lateral-steals
++	 * to prevent the introduction of an unbounded latency.
++	 */
++	if (mode == STEAL_NORMAL || rt_task(waiter->task))
++		return 0;
++
++	return rt_mutex_waiter_equal(waiter, top_waiter);
++}
++
+ static void
+ rt_mutex_enqueue(struct rt_mutex *lock, struct rt_mutex_waiter *waiter)
+ {
+@@ -297,7 +311,7 @@ rt_mutex_enqueue(struct rt_mutex *lock, struct rt_mutex_waiter *waiter)
+ 	while (*link) {
+ 		parent = *link;
+ 		entry = rb_entry(parent, struct rt_mutex_waiter, tree_entry);
+-		if (rt_mutex_waiter_less(waiter, entry, STEAL_NORMAL)) {
++		if (rt_mutex_waiter_less(waiter, entry)) {
+ 			link = &parent->rb_left;
+ 		} else {
+ 			link = &parent->rb_right;
+@@ -336,7 +350,7 @@ rt_mutex_enqueue_pi(struct task_struct *task, struct rt_mutex_waiter *waiter)
+ 	while (*link) {
+ 		parent = *link;
+ 		entry = rb_entry(parent, struct rt_mutex_waiter, pi_tree_entry);
+-		if (rt_mutex_waiter_less(waiter, entry, STEAL_NORMAL)) {
++		if (rt_mutex_waiter_less(waiter, entry)) {
+ 			link = &parent->rb_left;
+ 		} else {
+ 			link = &parent->rb_right;
+@@ -847,6 +861,7 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+  * @task:   The task which wants to acquire the lock
+  * @waiter: The waiter that is queued to the lock's wait tree if the
+  *	    callsite called task_blocked_on_lock(), otherwise NULL
++ * @mode:   Lock steal mode (STEAL_NORMAL, STEAL_LATERAL)
+  */
+ static int __try_to_take_rt_mutex(struct rt_mutex *lock,
+ 				  struct task_struct *task,
+@@ -886,14 +901,11 @@ static int __try_to_take_rt_mutex(struct rt_mutex *lock,
+ 	 */
+ 	if (waiter) {
  		/*
+-		 * If waiter is not the highest priority waiter of
+-		 * @lock, give up.
++		 * If waiter is not the highest priority waiter of @lock,
++		 * or its peer when lateral steal is allowed, give up.
+ 		 */
+-		if (waiter != rt_mutex_top_waiter(lock)) {
+-			/* XXX rt_mutex_waiter_less() ? */
++		if (!rt_mutex_steal(lock, waiter, mode))
+ 			return 0;
+-		}
+-
+ 		/*
+ 		 * We can acquire the lock. Remove the waiter from the
+ 		 * lock waiters tree.
+@@ -910,25 +922,12 @@ static int __try_to_take_rt_mutex(struct rt_mutex *lock,
+ 		 * not need to be dequeued.
+ 		 */
+ 		if (rt_mutex_has_waiters(lock)) {
+-			struct task_struct *pown = rt_mutex_top_waiter(lock)->task;
+-
+-			if (task != pown)
+-				return 0;
+-
+-			/*
+-			 * Note that RT tasks are excluded from lateral-steals
+-			 * to prevent the introduction of an unbounded latency.
+-			 */
+-			if (rt_task(task))
+-				mode = STEAL_NORMAL;
+ 			/*
+-			 * If @task->prio is greater than or equal to
+-			 * the top waiter priority (kernel view),
+-			 * @task lost.
++			 * If @task->prio is greater than the top waiter
++			 * priority (kernel view), or equal to it when a
++			 * lateral steal is forbidden, @task lost.
+ 			 */
+-			if (!rt_mutex_waiter_less(task_to_waiter(task),
+-						  rt_mutex_top_waiter(lock),
+-						  mode))
++			if (!rt_mutex_steal(lock, task_to_waiter(task), mode))
+ 				return 0;
+ 			/*
+ 			 * The current top waiter stays enqueued. We
 -- 
 2.13.2
