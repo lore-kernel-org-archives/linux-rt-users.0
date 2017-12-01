@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 04/15] posixtimer: init timer only with CONFIG_POSIX_TIMERS enabled
-Date: Fri, 01 Dec 2017 10:48:41 -0500
-Message-ID: <20171201154912.020530885@goodmis.org>
+Subject: [PATCH RT 06/15] PM / CPU: replace raw_notifier with atomic_notifier (fixup)
+Date: Fri, 01 Dec 2017 10:48:43 -0500
+Message-ID: <20171201154912.315922141@goodmis.org>
 References: <20171201154837.379265211@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -15,10 +15,14 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-posixtimer-init-timer-only-with-CONFIG_POSIX_TIMERS-.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.99]:56630 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751352AbdLAPtN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 1 Dec 2017 10:49:13 -0500
+Content-Disposition: inline; filename=0006-PM-CPU-replace-raw_notifier-with-atomic_notifier-fix.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 4.9.65-rt57-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -27,27 +31,35 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-In v4.11 it is possible to disable the posix timers and so we must not
-attempt to initialize the task_struct on RT with !POSIX_TIMERS.
-This patch does so.
+The original patch changed betwen its posting and what finally went into
+Rafael's tree so here is the delta.
 
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- include/linux/init_task.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kernel/cpu_pm.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-diff --git a/include/linux/init_task.h b/include/linux/init_task.h
-index a56e263f5005..526ecfc58909 100644
---- a/include/linux/init_task.h
-+++ b/include/linux/init_task.h
-@@ -150,7 +150,7 @@ extern struct task_group root_task_group;
- # define INIT_PERF_EVENTS(tsk)
- #endif
+diff --git a/kernel/cpu_pm.c b/kernel/cpu_pm.c
+index 10f4640f991e..67b02e138a47 100644
+--- a/kernel/cpu_pm.c
++++ b/kernel/cpu_pm.c
+@@ -28,8 +28,15 @@ static int cpu_pm_notify(enum cpu_pm_event event, int nr_to_call, int *nr_calls)
+ {
+ 	int ret;
  
--#ifdef CONFIG_PREEMPT_RT_BASE
-+#if defined(CONFIG_POSIX_TIMERS) && defined(CONFIG_PREEMPT_RT_BASE)
- # define INIT_TIMER_LIST		.posix_timer_list = NULL,
- #else
- # define INIT_TIMER_LIST
++	/*
++	 * __atomic_notifier_call_chain has a RCU read critical section, which
++	 * could be disfunctional in cpu idle. Copy RCU_NONIDLE code to let
++	 * RCU know this.
++	 */
++	rcu_irq_enter_irqson();
+ 	ret = __atomic_notifier_call_chain(&cpu_pm_notifier_chain, event, NULL,
+ 		nr_to_call, nr_calls);
++	rcu_irq_exit_irqson();
+ 
+ 	return notifier_to_errno(ret);
+ }
 -- 
 2.13.2
+
+
