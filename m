@@ -1,65 +1,31 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 06/15] PM / CPU: replace raw_notifier with atomic_notifier (fixup)
-Date: Fri, 01 Dec 2017 10:48:43 -0500
-Message-ID: <20171201154912.315922141@goodmis.org>
-References: <20171201154837.379265211@goodmis.org>
+Subject: Re: Null pointer 4.14.1-rt3
+Date: Fri, 1 Dec 2017 11:03:15 -0500
+Message-ID: <20171201110315.48d5c984@gandalf.local.home>
+References: <80ce7c3e-2d01-f082-9c21-fc1084a836c8@monom.org>
+        <8c913cc2-b2e3-8c2e-e503-aff1428f8ff5@monom.org>
+        <20171130112232.4c0cb600@gandalf.local.home>
+        <20171130162433.GG11362@linutronix.de>
+        <20171130113533.4485d894@gandalf.local.home>
+        <20171201122605.GD1612@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        John Kacur <jkacur@redhat.com>,
-        Paul Gortmaker <paul.gortmaker@windriver.com>,
-        Julia Cartwright <julia@ni.com>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>
-To: linux-kernel@vger.kernel.org,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.99]:56630 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751352AbdLAPtN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 1 Dec 2017 10:49:13 -0500
-Content-Disposition: inline; filename=0006-PM-CPU-replace-raw_notifier-with-atomic_notifier-fix.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Peter Zijlstra <peterz@infradead.org>,
+        Ingo Molnar <mingo@kernel.org>, Daniel Wagner <wagi@monom.org>,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171201122605.GD1612@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-4.9.65-rt57-rc1 stable review patch.
-If anyone has any objections, please let me know.
+On Fri, 1 Dec 2017 13:26:05 +0100
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 
-------------------
+> - disable RT_PUSH_IPI if booted on UP. After all there is not much
+>   benefit here, is there?
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+This is what I would suggest. Maybe I'll look at adding a patch.
 
-The original patch changed betwen its posting and what finally went into
-Rafael's tree so here is the delta.
-
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- kernel/cpu_pm.c | 7 +++++++
- 1 file changed, 7 insertions(+)
-
-diff --git a/kernel/cpu_pm.c b/kernel/cpu_pm.c
-index 10f4640f991e..67b02e138a47 100644
---- a/kernel/cpu_pm.c
-+++ b/kernel/cpu_pm.c
-@@ -28,8 +28,15 @@ static int cpu_pm_notify(enum cpu_pm_event event, int nr_to_call, int *nr_calls)
- {
- 	int ret;
- 
-+	/*
-+	 * __atomic_notifier_call_chain has a RCU read critical section, which
-+	 * could be disfunctional in cpu idle. Copy RCU_NONIDLE code to let
-+	 * RCU know this.
-+	 */
-+	rcu_irq_enter_irqson();
- 	ret = __atomic_notifier_call_chain(&cpu_pm_notifier_chain, event, NULL,
- 		nr_to_call, nr_calls);
-+	rcu_irq_exit_irqson();
- 
- 	return notifier_to_errno(ret);
- }
--- 
-2.13.2
-
-
+-- Steve
