@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 08/15] net: take the tcp_sk_lock lock with BH disabled
-Date: Fri, 01 Dec 2017 10:48:45 -0500
-Message-ID: <20171201154912.631375175@goodmis.org>
+Subject: [PATCH RT 01/15] Revert "memcontrol: Prevent scheduling while atomic in cgroup code"
+Date: Fri, 01 Dec 2017 10:48:38 -0500
+Message-ID: <20171201154911.602773549@goodmis.org>
 References: <20171201154837.379265211@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -13,11 +13,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
         tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
-        Jacek Konieczny <jajcus@jajcus.net>
+        <stable@vger.kernel.org>, Haiyang HY1 Tan <tanhy1@lenovo.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0008-net-take-the-tcp_sk_lock-lock-with-BH-disabled.patch
+Content-Disposition: inline; filename=0001-Revert-memcontrol-Prevent-scheduling-while-atomic-in.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -26,72 +26,104 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-Lockdep may complain about an unsafe locking scenario:
-|      CPU0                    CPU1
-|      ----                    ----
-| lock((tcp_sk_lock).lock);
-|                              lock(&per_cpu(local_softirq_locks[i], __cpu).lock);
-|                              lock((tcp_sk_lock).lock);
-| lock(&per_cpu(local_softirq_locks[i], __cpu).lock);
+The commit "memcontrol: Prevent scheduling while atomic in cgroup code"
+fixed this issue:
 
-in the call paths:
-	do_current_softirqs -> tcp_v4_send_ack()
-vs
-	tcp_v4_send_reset -> do_current_softirqs().
+       refill_stock()
+          get_cpu_var()
+          drain_stock()
+             res_counter_uncharge()
+                res_counter_uncharge_until()
+                   spin_lock() <== boom
 
-This should not happen since local_softirq_locks is per CPU. Reversing
-the order makes lockdep happy.
+But commit 3e32cb2e0a12b ("mm: memcontrol: lockless page counters") replaced
+the calls to res_counter_uncharge() in drain_stock() to the lockless
+function page_counter_uncharge(). There is no more spin lock there and no
+more reason to have that local lock.
 
-Reported-by: Jacek Konieczny <jajcus@jajcus.net>
+Cc: <stable@vger.kernel.org>
+Reported-by: Haiyang HY1 Tan <tanhy1@lenovo.com>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+[bigeasy: That upstream commit appeared in v3.19 and the patch in
+  question in v3.18.7-rt2 and v3.18 seems still to be maintained. So I
+  guess that v3.18 would need the locallocks that we are about to remove
+  here. I am not sure if any earlier versions have the patch
+  backported.
+  The stable tag here is because Haiyang reported (and debugged) a crash
+  in 4.4-RT with this patch applied (which has get_cpu_light() instead
+  the locallocks it gained in v4.9-RT).
+  https://lkml.kernel.org/r/05AA4EC5C6EC1D48BE2CDCFF3AE0B8A637F78A15@CNMAILEX04.lenovo.com
+]
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- net/ipv4/tcp_ipv4.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ mm/memcontrol.c | 13 ++++++-------
+ 1 file changed, 6 insertions(+), 7 deletions(-)
 
-diff --git a/net/ipv4/tcp_ipv4.c b/net/ipv4/tcp_ipv4.c
-index 3336e1534bc5..3b7298459c87 100644
---- a/net/ipv4/tcp_ipv4.c
-+++ b/net/ipv4/tcp_ipv4.c
-@@ -698,8 +698,8 @@ static void tcp_v4_send_reset(const struct sock *sk, struct sk_buff *skb)
+diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+index 12b94909ba7b..c04403033aec 100644
+--- a/mm/memcontrol.c
++++ b/mm/memcontrol.c
+@@ -1698,7 +1698,6 @@ struct memcg_stock_pcp {
+ #define FLUSHING_CACHED_CHARGE	0
+ };
+ static DEFINE_PER_CPU(struct memcg_stock_pcp, memcg_stock);
+-static DEFINE_LOCAL_IRQ_LOCK(memcg_stock_ll);
+ static DEFINE_MUTEX(percpu_charge_mutex);
  
- 	arg.tos = ip_hdr(skb)->tos;
+ /**
+@@ -1721,7 +1720,7 @@ static bool consume_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
+ 	if (nr_pages > CHARGE_BATCH)
+ 		return ret;
  
--	local_lock(tcp_sk_lock);
- 	local_bh_disable();
-+	local_lock(tcp_sk_lock);
- 	ip_send_unicast_reply(*this_cpu_ptr(net->ipv4.tcp_sk),
- 			      skb, &TCP_SKB_CB(skb)->header.h4.opt,
- 			      ip_hdr(skb)->saddr, ip_hdr(skb)->daddr,
-@@ -707,8 +707,8 @@ static void tcp_v4_send_reset(const struct sock *sk, struct sk_buff *skb)
+-	local_lock_irqsave(memcg_stock_ll, flags);
++	local_irq_save(flags);
  
- 	__TCP_INC_STATS(net, TCP_MIB_OUTSEGS);
- 	__TCP_INC_STATS(net, TCP_MIB_OUTRSTS);
--	local_bh_enable();
- 	local_unlock(tcp_sk_lock);
-+	local_bh_enable();
+ 	stock = this_cpu_ptr(&memcg_stock);
+ 	if (memcg == stock->cached && stock->nr_pages >= nr_pages) {
+@@ -1729,7 +1728,7 @@ static bool consume_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
+ 		ret = true;
+ 	}
  
- #ifdef CONFIG_TCP_MD5SIG
- out:
-@@ -784,16 +784,16 @@ static void tcp_v4_send_ack(struct net *net,
- 	if (oif)
- 		arg.bound_dev_if = oif;
- 	arg.tos = tos;
--	local_lock(tcp_sk_lock);
- 	local_bh_disable();
-+	local_lock(tcp_sk_lock);
- 	ip_send_unicast_reply(*this_cpu_ptr(net->ipv4.tcp_sk),
- 			      skb, &TCP_SKB_CB(skb)->header.h4.opt,
- 			      ip_hdr(skb)->saddr, ip_hdr(skb)->daddr,
- 			      &arg, arg.iov[0].iov_len);
+-	local_unlock_irqrestore(memcg_stock_ll, flags);
++	local_irq_restore(flags);
  
- 	__TCP_INC_STATS(net, TCP_MIB_OUTSEGS);
--	local_bh_enable();
- 	local_unlock(tcp_sk_lock);
-+	local_bh_enable();
+ 	return ret;
+ }
+@@ -1756,13 +1755,13 @@ static void drain_local_stock(struct work_struct *dummy)
+ 	struct memcg_stock_pcp *stock;
+ 	unsigned long flags;
+ 
+-	local_lock_irqsave(memcg_stock_ll, flags);
++	local_irq_save(flags);
+ 
+ 	stock = this_cpu_ptr(&memcg_stock);
+ 	drain_stock(stock);
+ 	clear_bit(FLUSHING_CACHED_CHARGE, &stock->flags);
+ 
+-	local_unlock_irqrestore(memcg_stock_ll, flags);
++	local_irq_restore(flags);
  }
  
- static void tcp_v4_timewait_ack(struct sock *sk, struct sk_buff *skb)
+ /*
+@@ -1774,7 +1773,7 @@ static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
+ 	struct memcg_stock_pcp *stock;
+ 	unsigned long flags;
+ 
+-	local_lock_irqsave(memcg_stock_ll, flags);
++	local_irq_save(flags);
+ 
+ 	stock = this_cpu_ptr(&memcg_stock);
+ 	if (stock->cached != memcg) { /* reset if necessary */
+@@ -1783,7 +1782,7 @@ static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
+ 	}
+ 	stock->nr_pages += nr_pages;
+ 
+-	local_unlock_irqrestore(memcg_stock_ll, flags);
++	local_irq_restore(flags);
+ }
+ 
+ /*
 -- 
 2.13.2
