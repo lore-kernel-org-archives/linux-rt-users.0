@@ -1,10 +1,11 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 04/15] posixtimer: init timer only with CONFIG_POSIX_TIMERS enabled
-Date: Fri, 01 Dec 2017 10:50:03 -0500
-Message-ID: <20171201155028.664412746@goodmis.org>
-References: <20171201154959.375846909@goodmis.org>
+Subject: Re: [PATCH RT 00/15] Linux
+Date: Fri, 1 Dec 2017 10:51:45 -0500
+Message-ID: <20171201105145.607d8da3@gandalf.local.home>
+References: <20171201154837.379265211@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -16,38 +17,14 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-posixtimer-init-timer-only-with-CONFIG_POSIX_TIMERS-.patch
+In-Reply-To: <20171201154837.379265211@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-4.9.65-rt57-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Sorry for this spam. I tried to cancel, because I needed to check
+something. But quilt decided to send anyway.
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+The patch set with a real subject is the real deal.
 
-In v4.11 it is possible to disable the posix timers and so we must not
-attempt to initialize the task_struct on RT with !POSIX_TIMERS.
-This patch does so.
-
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- include/linux/init_task.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/include/linux/init_task.h b/include/linux/init_task.h
-index a56e263f5005..526ecfc58909 100644
---- a/include/linux/init_task.h
-+++ b/include/linux/init_task.h
-@@ -150,7 +150,7 @@ extern struct task_group root_task_group;
- # define INIT_PERF_EVENTS(tsk)
- #endif
- 
--#ifdef CONFIG_PREEMPT_RT_BASE
-+#if defined(CONFIG_POSIX_TIMERS) && defined(CONFIG_PREEMPT_RT_BASE)
- # define INIT_TIMER_LIST		.posix_timer_list = NULL,
- #else
- # define INIT_TIMER_LIST
--- 
-2.13.2
+-- Steve
