@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 10/15] Bluetooth: avoid recursive locking in hci_send_to_channel()
-Date: Fri, 01 Dec 2017 19:01:59 -0500
-Message-ID: <20171202000428.179357709@goodmis.org>
+Subject: [PATCH RT 08/15] kernel/hrtimer: dont wakeup a process while holding the hrtimer base
+ lock
+Date: Fri, 01 Dec 2017 19:01:57 -0500
+Message-ID: <20171202000427.883405532@goodmis.org>
 References: <20171202000149.842718953@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -13,13 +14,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
         tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
-        Marcel Holtmann <marcel@holtmann.org>,
-        Johan Hedberg <johan.hedberg@intel.com>,
-        stable-rt@vger.kernel.org, Mart van de Wege <mvdwege@gmail.com>
+        Mike Galbraith <efault@gmx.de>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0010-Bluetooth-avoid-recursive-locking-in-hci_send_to_cha.patch
+Content-Disposition: inline; filename=0008-kernel-hrtimer-don-t-wakeup-a-process-while-holding-.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -30,72 +29,87 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Mart reported a deadlock in -RT in the call path:
-  hci_send_monitor_ctrl_event() -> hci_send_to_channel()
+We must not wake any process (and thus acquire the pi->lock) while
+holding the hrtimer's base lock. This does not happen usually because
+the hrtimer-callback is invoked in IRQ-context and so
+raise_softirq_irqoff() does not wakeup a process.
+However during CPU-hotplug it might get called from hrtimers_dead_cpu()
+which would wakeup the thread immediately.
 
-because both functions acquire the same read lock hci_sk_list.lock. This
-is also a mainline issue because the qrwlock implementation is writer
-fair (the traditional rwlock implementation is reader biased).
-
-To avoid the deadlock there is now __hci_send_to_channel() which expects
-the readlock to be held.
-
-Cc: Marcel Holtmann <marcel@holtmann.org>
-Cc: Johan Hedberg <johan.hedberg@intel.com>
-Cc: stable-rt@vger.kernel.org
-Fixes: 38ceaa00d02d ("Bluetooth: Add support for sending MGMT commands and events to monitor")
-Reported-by: Mart van de Wege <mvdwege@gmail.com>
+Reported-by: Mike Galbraith <efault@gmx.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- net/bluetooth/hci_sock.c | 17 +++++++++++------
- 1 file changed, 11 insertions(+), 6 deletions(-)
+ kernel/time/hrtimer.c | 15 ++++++++++-----
+ 1 file changed, 10 insertions(+), 5 deletions(-)
 
-diff --git a/net/bluetooth/hci_sock.c b/net/bluetooth/hci_sock.c
-index c88a6007e643..5de85b55a821 100644
---- a/net/bluetooth/hci_sock.c
-+++ b/net/bluetooth/hci_sock.c
-@@ -251,15 +251,13 @@ void hci_send_to_sock(struct hci_dev *hdev, struct sk_buff *skb)
- }
+diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+index 39e4435b8451..8a20ef6919d9 100644
+--- a/kernel/time/hrtimer.c
++++ b/kernel/time/hrtimer.c
+@@ -1440,7 +1440,7 @@ static inline int hrtimer_rt_defer(struct hrtimer *timer) { return 0; }
  
- /* Send frame to sockets with specific channel */
--void hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
--			 int flag, struct sock *skip_sk)
-+static void __hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
-+				  int flag, struct sock *skip_sk)
+ static enum hrtimer_restart hrtimer_wakeup(struct hrtimer *timer);
+ 
+-static void __hrtimer_run_queues(struct hrtimer_cpu_base *cpu_base, ktime_t now)
++static int __hrtimer_run_queues(struct hrtimer_cpu_base *cpu_base, ktime_t now)
  {
- 	struct sock *sk;
- 
- 	BT_DBG("channel %u len %d", channel, skb->len);
- 
--	read_lock(&hci_sk_list.lock);
--
- 	sk_for_each(sk, &hci_sk_list.head) {
- 		struct sk_buff *nskb;
- 
-@@ -285,6 +283,13 @@ void hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
- 			kfree_skb(nskb);
+ 	struct hrtimer_clock_base *base = cpu_base->clock_base;
+ 	unsigned int active = cpu_base->active_bases;
+@@ -1490,8 +1490,7 @@ static void __hrtimer_run_queues(struct hrtimer_cpu_base *cpu_base, ktime_t now)
+ 				raise = 1;
+ 		}
  	}
- 
-+}
-+
-+void hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
-+			 int flag, struct sock *skip_sk)
-+{
-+	read_lock(&hci_sk_list.lock);
-+	__hci_send_to_channel(channel, skb, flag, skip_sk);
- 	read_unlock(&hci_sk_list.lock);
+-	if (raise)
+-		raise_softirq_irqoff(HRTIMER_SOFTIRQ);
++	return raise;
  }
  
-@@ -388,8 +393,8 @@ void hci_send_monitor_ctrl_event(struct hci_dev *hdev, u16 event,
- 		hdr->index = index;
- 		hdr->len = cpu_to_le16(skb->len - HCI_MON_HDR_SIZE);
+ #ifdef CONFIG_HIGH_RES_TIMERS
+@@ -1505,6 +1504,7 @@ void hrtimer_interrupt(struct clock_event_device *dev)
+ 	struct hrtimer_cpu_base *cpu_base = this_cpu_ptr(&hrtimer_bases);
+ 	ktime_t expires_next, now, entry_time, delta;
+ 	int retries = 0;
++	int raise;
  
--		hci_send_to_channel(HCI_CHANNEL_MONITOR, skb,
--				    HCI_SOCK_TRUSTED, NULL);
-+		__hci_send_to_channel(HCI_CHANNEL_MONITOR, skb,
-+				      HCI_SOCK_TRUSTED, NULL);
- 		kfree_skb(skb);
- 	}
+ 	BUG_ON(!cpu_base->hres_active);
+ 	cpu_base->nr_events++;
+@@ -1523,7 +1523,7 @@ void hrtimer_interrupt(struct clock_event_device *dev)
+ 	 */
+ 	cpu_base->expires_next.tv64 = KTIME_MAX;
  
+-	__hrtimer_run_queues(cpu_base, now);
++	raise = __hrtimer_run_queues(cpu_base, now);
+ 
+ 	/* Reevaluate the clock bases for the next expiry */
+ 	expires_next = __hrtimer_get_next_event(cpu_base);
+@@ -1534,6 +1534,8 @@ void hrtimer_interrupt(struct clock_event_device *dev)
+ 	cpu_base->expires_next = expires_next;
+ 	cpu_base->in_hrtirq = 0;
+ 	raw_spin_unlock(&cpu_base->lock);
++	if (raise)
++		raise_softirq_irqoff(HRTIMER_SOFTIRQ);
+ 
+ 	/* Reprogramming necessary ? */
+ 	if (!tick_program_event(expires_next, 0)) {
+@@ -1613,6 +1615,7 @@ void hrtimer_run_queues(void)
+ {
+ 	struct hrtimer_cpu_base *cpu_base = this_cpu_ptr(&hrtimer_bases);
+ 	ktime_t now;
++	int raise;
+ 
+ 	if (__hrtimer_hres_active(cpu_base))
+ 		return;
+@@ -1631,8 +1634,10 @@ void hrtimer_run_queues(void)
+ 
+ 	raw_spin_lock(&cpu_base->lock);
+ 	now = hrtimer_update_base(cpu_base);
+-	__hrtimer_run_queues(cpu_base, now);
++	raise = __hrtimer_run_queues(cpu_base, now);
+ 	raw_spin_unlock(&cpu_base->lock);
++	if (raise)
++		raise_softirq_irqoff(HRTIMER_SOFTIRQ);
+ }
+ 
+ /*
 -- 
 2.13.2
