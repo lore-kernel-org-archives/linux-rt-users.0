@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/9] cpu_pm: replace raw_notifier to atomic_notifier
-Date: Fri, 01 Dec 2017 20:37:00 -0500
-Message-ID: <20171202013711.563061763@goodmis.org>
+Subject: [PATCH RT 3/9] kernel/hrtimer: migrate deferred timer on CPU down
+Date: Fri, 01 Dec 2017 20:37:01 -0500
+Message-ID: <20171202013711.705546858@goodmis.org>
 References: <20171202013658.149533964@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -13,14 +13,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
         tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
-        Anders Roxell <anders.roxell@linaro.org>,
-        Rik van Riel <riel@redhat.com>,
-        "Rafael J. Wysocki" <rafael.j.wysocki@intel.com>,
-        Daniel Lezcano <daniel.lezcano@linaro.org>
+        stable-rt@vger.kernel.org, Mike Galbraith <efault@gmx.de>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-cpu_pm-replace-raw_notifier-to-atomic_notifier.patch
+Content-Disposition: inline; filename=0003-kernel-hrtimer-migrate-deferred-timer-on-CPU-down.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -29,177 +26,37 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Alex Shi <alex.shi@linaro.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-This patch replace a rwlock and raw notifier by atomic notifier which
-protected by spin_lock and rcu.
+hrtimers, which were deferred to the softirq context, and expire between
+softirq shutdown and hrtimer migration are dangling around. If the CPU
+goes back up the list head will be initialized and this corrupts the
+timer's list. It will remain unnoticed until a hrtimer_cancel().
+This moves those timers so they will expire.
 
-The first to reason to have this replace is due to a 'scheduling while
- atomic' bug of RT kernel on arm/arm64 platform. On arm/arm64, rwlock
-cpu_pm_notifier_lock in cpu_pm cause a potential schedule after irq
-disable in idle call chain:
-
-cpu_startup_entry
-  cpu_idle_loop
-    local_irq_disable()
-    cpuidle_idle_call
-      call_cpuidle
-        cpuidle_enter
-          cpuidle_enter_state
-            ->enter :arm_enter_idle_state
-              cpu_pm_enter/exit
-                CPU_PM_CPU_IDLE_ENTER
-                  read_lock(&cpu_pm_notifier_lock); <-- sleep in idle
-                     __rt_spin_lock();
-                        schedule();
-
-The kernel panic is here:
-[    4.609601] BUG: scheduling while atomic: swapper/1/0/0x00000002
-[    4.609608] [<ffff0000086fae70>] arm_enter_idle_state+0x18/0x70
-[    4.609614] Modules linked in:
-[    4.609615] [<ffff0000086f9298>] cpuidle_enter_state+0xf0/0x218
-[    4.609620] [<ffff0000086f93f8>] cpuidle_enter+0x18/0x20
-[    4.609626] Preemption disabled at:
-[    4.609627] [<ffff0000080fa234>] call_cpuidle+0x24/0x40
-[    4.609635] [<ffff000008882fa4>] schedule_preempt_disabled+0x1c/0x28
-[    4.609639] [<ffff0000080fa49c>] cpu_startup_entry+0x154/0x1f8
-[    4.609645] [<ffff00000808e004>] secondary_start_kernel+0x15c/0x1a0
-
-Daniel Lezcano said this notification is needed on arm/arm64 platforms.
-Sebastian suggested using atomic_notifier instead of rwlock, which is not
-only removing the sleeping in idle, but also getting better latency
-improvement.
-
-This patch passed Fengguang's 0day testing.
-
-Signed-off-by: Alex Shi <alex.shi@linaro.org>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Anders Roxell <anders.roxell@linaro.org>
-Cc: Rik van Riel <riel@redhat.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
-Cc: Daniel Lezcano <daniel.lezcano@linaro.org>
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: stable-rt@vger.kernel.org
+Reported-by: Mike Galbraith <efault@gmx.de>
+Tested-by: Mike Galbraith <efault@gmx.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/cpu_pm.c | 43 ++++++-------------------------------------
- 1 file changed, 6 insertions(+), 37 deletions(-)
+ kernel/time/hrtimer.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/kernel/cpu_pm.c b/kernel/cpu_pm.c
-index 009cc9a17d95..10f4640f991e 100644
---- a/kernel/cpu_pm.c
-+++ b/kernel/cpu_pm.c
-@@ -22,14 +22,13 @@
- #include <linux/spinlock.h>
- #include <linux/syscore_ops.h>
- 
--static DEFINE_RWLOCK(cpu_pm_notifier_lock);
--static RAW_NOTIFIER_HEAD(cpu_pm_notifier_chain);
-+static ATOMIC_NOTIFIER_HEAD(cpu_pm_notifier_chain);
- 
- static int cpu_pm_notify(enum cpu_pm_event event, int nr_to_call, int *nr_calls)
- {
- 	int ret;
- 
--	ret = __raw_notifier_call_chain(&cpu_pm_notifier_chain, event, NULL,
-+	ret = __atomic_notifier_call_chain(&cpu_pm_notifier_chain, event, NULL,
- 		nr_to_call, nr_calls);
- 
- 	return notifier_to_errno(ret);
-@@ -47,14 +46,7 @@ static int cpu_pm_notify(enum cpu_pm_event event, int nr_to_call, int *nr_calls)
-  */
- int cpu_pm_register_notifier(struct notifier_block *nb)
- {
--	unsigned long flags;
--	int ret;
--
--	write_lock_irqsave(&cpu_pm_notifier_lock, flags);
--	ret = raw_notifier_chain_register(&cpu_pm_notifier_chain, nb);
--	write_unlock_irqrestore(&cpu_pm_notifier_lock, flags);
--
--	return ret;
-+	return atomic_notifier_chain_register(&cpu_pm_notifier_chain, nb);
- }
- EXPORT_SYMBOL_GPL(cpu_pm_register_notifier);
- 
-@@ -69,14 +61,7 @@ EXPORT_SYMBOL_GPL(cpu_pm_register_notifier);
-  */
- int cpu_pm_unregister_notifier(struct notifier_block *nb)
- {
--	unsigned long flags;
--	int ret;
--
--	write_lock_irqsave(&cpu_pm_notifier_lock, flags);
--	ret = raw_notifier_chain_unregister(&cpu_pm_notifier_chain, nb);
--	write_unlock_irqrestore(&cpu_pm_notifier_lock, flags);
--
--	return ret;
-+	return atomic_notifier_chain_unregister(&cpu_pm_notifier_chain, nb);
- }
- EXPORT_SYMBOL_GPL(cpu_pm_unregister_notifier);
- 
-@@ -100,7 +85,6 @@ int cpu_pm_enter(void)
- 	int nr_calls;
- 	int ret = 0;
- 
--	read_lock(&cpu_pm_notifier_lock);
- 	ret = cpu_pm_notify(CPU_PM_ENTER, -1, &nr_calls);
- 	if (ret)
- 		/*
-@@ -108,7 +92,6 @@ int cpu_pm_enter(void)
- 		 * PM entry who are notified earlier to prepare for it.
+diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+index ba3d60144838..759913626eec 100644
+--- a/kernel/time/hrtimer.c
++++ b/kernel/time/hrtimer.c
+@@ -1880,6 +1880,11 @@ static void migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
  		 */
- 		cpu_pm_notify(CPU_PM_ENTER_FAILED, nr_calls - 1, NULL);
--	read_unlock(&cpu_pm_notifier_lock);
- 
- 	return ret;
+ 		enqueue_hrtimer(timer, new_base);
+ 	}
++#ifdef CONFIG_PREEMPT_RT_BASE
++	list_splice_tail(&old_base->expired, &new_base->expired);
++	if (!list_empty(&new_base->expired))
++		raise_softirq_irqoff(HRTIMER_SOFTIRQ);
++#endif
  }
-@@ -128,13 +111,7 @@ EXPORT_SYMBOL_GPL(cpu_pm_enter);
-  */
- int cpu_pm_exit(void)
- {
--	int ret;
--
--	read_lock(&cpu_pm_notifier_lock);
--	ret = cpu_pm_notify(CPU_PM_EXIT, -1, NULL);
--	read_unlock(&cpu_pm_notifier_lock);
--
--	return ret;
-+	return cpu_pm_notify(CPU_PM_EXIT, -1, NULL);
- }
- EXPORT_SYMBOL_GPL(cpu_pm_exit);
  
-@@ -159,7 +136,6 @@ int cpu_cluster_pm_enter(void)
- 	int nr_calls;
- 	int ret = 0;
- 
--	read_lock(&cpu_pm_notifier_lock);
- 	ret = cpu_pm_notify(CPU_CLUSTER_PM_ENTER, -1, &nr_calls);
- 	if (ret)
- 		/*
-@@ -167,7 +143,6 @@ int cpu_cluster_pm_enter(void)
- 		 * PM entry who are notified earlier to prepare for it.
- 		 */
- 		cpu_pm_notify(CPU_CLUSTER_PM_ENTER_FAILED, nr_calls - 1, NULL);
--	read_unlock(&cpu_pm_notifier_lock);
- 
- 	return ret;
- }
-@@ -190,13 +165,7 @@ EXPORT_SYMBOL_GPL(cpu_cluster_pm_enter);
-  */
- int cpu_cluster_pm_exit(void)
- {
--	int ret;
--
--	read_lock(&cpu_pm_notifier_lock);
--	ret = cpu_pm_notify(CPU_CLUSTER_PM_EXIT, -1, NULL);
--	read_unlock(&cpu_pm_notifier_lock);
--
--	return ret;
-+	return cpu_pm_notify(CPU_CLUSTER_PM_EXIT, -1, NULL);
- }
- EXPORT_SYMBOL_GPL(cpu_cluster_pm_exit);
- 
+ static void migrate_hrtimers(int scpu)
 -- 
 2.13.2
