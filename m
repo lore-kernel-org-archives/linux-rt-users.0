@@ -1,81 +1,65 @@
-From: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-Subject: [PATCH RT 11/15] iommu/amd: Use raw_cpu_ptr() instead of
-	get_cpu_ptr() for ->flush_queue
-Date: Fri, 01 Dec 2017 19:02:00 -0500
-Message-ID: <20171202000428.386884117@goodmis.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 05/15] PM / CPU: replace raw_notifier with atomic_notifier (fixup)
+Date: Fri, 01 Dec 2017 19:01:54 -0500
+Message-ID: <20171202000427.438847949@goodmis.org>
 References: <20171202000149.842718953@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Cc: tom.zanussi-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, Daniel Wagner <daniel.wagner-kv7WeFo6aLtBDgjK7y7TUQ@public.gmane.org>,
-	Julia Cartwright <julia-acOepvfBmUk@public.gmane.org>, stable-rt-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-	Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>,
-	Vinod Adhikary <vinadhy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Carsten Emde <C.Emde-Q945KHDl0DbYtjvyW6yDsg@public.gmane.org>,
-	Paul Gortmaker <paul.gortmaker-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org>,
-	iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Alex Shi <alex.shi-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>,
-	John Kacur <jkacur-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-	linux-rt-users <linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Return-path: <iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-Content-Disposition: inline;
-	filename=0011-iommu-amd-Use-raw_cpu_ptr-instead-of-get_cpu_ptr-for.patch
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/iommu/>
-List-Post: <mailto:iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/iommu>,
-	<mailto:iommu-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: iommu-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-15
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        John Kacur <jkacur@redhat.com>,
+        Paul Gortmaker <paul.gortmaker@windriver.com>,
+        Julia Cartwright <julia@ni.com>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>
+To: linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.99]:44246 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1752070AbdLBAE3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 1 Dec 2017 19:04:29 -0500
+Content-Disposition: inline; filename=0005-PM-CPU-replace-raw_notifier-with-atomic_notifier-fix.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 4.9.65-rt57-rc2 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-get_cpu_ptr() disabled preemption and returns the ->flush_queue object
-of the current CPU. raw_cpu_ptr() does the same except that it not
-disable preemption which means the scheduler can move it to another CPU
-after it obtained the per-CPU object.
-In this case this is not bad because the data structure itself is
-protected with a spin_lock. This change shouldn't matter however on RT
-it does because the sleeping lock can't be accessed with disabled
-preemption.
+The original patch changed betwen its posting and what finally went into
+Rafael's tree so here is the delta.
 
-Cc: stable-rt-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Joerg Roedel <joro-zLv9SwRftAIdnm+yROfE0A@public.gmane.org>
-Cc: iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Reported-by: Vinod Adhikary <vinadhy-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- drivers/iommu/amd_iommu.c | 4 +---
- 1 file changed, 1 insertion(+), 3 deletions(-)
+ kernel/cpu_pm.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-diff --git a/drivers/iommu/amd_iommu.c b/drivers/iommu/amd_iommu.c
-index a88595b21111..ff5c2424eb9e 100644
---- a/drivers/iommu/amd_iommu.c
-+++ b/drivers/iommu/amd_iommu.c
-@@ -2283,7 +2283,7 @@ static void queue_add(struct dma_ops_domain *dma_dom,
- 	pages     = __roundup_pow_of_two(pages);
- 	address >>= PAGE_SHIFT;
+diff --git a/kernel/cpu_pm.c b/kernel/cpu_pm.c
+index 10f4640f991e..67b02e138a47 100644
+--- a/kernel/cpu_pm.c
++++ b/kernel/cpu_pm.c
+@@ -28,8 +28,15 @@ static int cpu_pm_notify(enum cpu_pm_event event, int nr_to_call, int *nr_calls)
+ {
+ 	int ret;
  
--	queue = get_cpu_ptr(&flush_queue);
-+	queue = raw_cpu_ptr(&flush_queue);
- 	spin_lock_irqsave(&queue->lock, flags);
++	/*
++	 * __atomic_notifier_call_chain has a RCU read critical section, which
++	 * could be disfunctional in cpu idle. Copy RCU_NONIDLE code to let
++	 * RCU know this.
++	 */
++	rcu_irq_enter_irqson();
+ 	ret = __atomic_notifier_call_chain(&cpu_pm_notifier_chain, event, NULL,
+ 		nr_to_call, nr_calls);
++	rcu_irq_exit_irqson();
  
- 	if (queue->next == FLUSH_QUEUE_SIZE)
-@@ -2300,8 +2300,6 @@ static void queue_add(struct dma_ops_domain *dma_dom,
- 
- 	if (atomic_cmpxchg(&queue_timer_on, 0, 1) == 0)
- 		mod_timer(&queue_timer, jiffies + msecs_to_jiffies(10));
--
--	put_cpu_ptr(&flush_queue);
+ 	return notifier_to_errno(ret);
  }
- 
- 
 -- 
 2.13.2
+
+
