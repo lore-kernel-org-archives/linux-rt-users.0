@@ -1,8 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 09/15] kernel/hrtimer/hotplug: dont wake ktimersoftd while holding the
- hrtimer base lock
-Date: Fri, 01 Dec 2017 19:01:58 -0500
-Message-ID: <20171202000428.043767679@goodmis.org>
+Subject: [PATCH RT 10/15] Bluetooth: avoid recursive locking in hci_send_to_channel()
+Date: Fri, 01 Dec 2017 19:01:59 -0500
+Message-ID: <20171202000428.179357709@goodmis.org>
 References: <20171202000149.842718953@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -14,11 +13,13 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
         tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
-        Mike Galbraith <efault@gmx.de>
+        Marcel Holtmann <marcel@holtmann.org>,
+        Johan Hedberg <johan.hedberg@intel.com>,
+        stable-rt@vger.kernel.org, Mart van de Wege <mvdwege@gmail.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0009-kernel-hrtimer-hotplug-don-t-wake-ktimersoftd-while-.patch
+Content-Disposition: inline; filename=0010-Bluetooth-avoid-recursive-locking-in-hci_send_to_cha.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -27,72 +28,74 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mike Galbraith <efault@gmx.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-kernel/hrtimer: don't wakeup a process while holding the hrtimer base lock
-missed a path, namely hrtimers_dead_cpu() -> migrate_hrtimer_list().  Defer
-raising softirq until after base lock has been released there as well.
+Mart reported a deadlock in -RT in the call path:
+  hci_send_monitor_ctrl_event() -> hci_send_to_channel()
 
-Signed-off-by: Mike Galbraith <efault@gmx.de>
+because both functions acquire the same read lock hci_sk_list.lock. This
+is also a mainline issue because the qrwlock implementation is writer
+fair (the traditional rwlock implementation is reader biased).
+
+To avoid the deadlock there is now __hci_send_to_channel() which expects
+the readlock to be held.
+
+Cc: Marcel Holtmann <marcel@holtmann.org>
+Cc: Johan Hedberg <johan.hedberg@intel.com>
+Cc: stable-rt@vger.kernel.org
+Fixes: 38ceaa00d02d ("Bluetooth: Add support for sending MGMT commands and events to monitor")
+Reported-by: Mart van de Wege <mvdwege@gmail.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/time/hrtimer.c | 19 +++++++++++++------
- 1 file changed, 13 insertions(+), 6 deletions(-)
+ net/bluetooth/hci_sock.c | 17 +++++++++++------
+ 1 file changed, 11 insertions(+), 6 deletions(-)
 
-diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
-index 8a20ef6919d9..369203af6406 100644
---- a/kernel/time/hrtimer.c
-+++ b/kernel/time/hrtimer.c
-@@ -1837,7 +1837,7 @@ int hrtimers_prepare_cpu(unsigned int cpu)
- 
- #ifdef CONFIG_HOTPLUG_CPU
- 
--static void migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
-+static int migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
- 				struct hrtimer_clock_base *new_base)
- {
- 	struct hrtimer *timer;
-@@ -1867,15 +1867,19 @@ static void migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
- 	}
- #ifdef CONFIG_PREEMPT_RT_BASE
- 	list_splice_tail(&old_base->expired, &new_base->expired);
--	if (!list_empty(&new_base->expired))
--		raise_softirq_irqoff(HRTIMER_SOFTIRQ);
-+	/*
-+	 * Tell the caller to raise HRTIMER_SOFTIRQ.  We can't safely
-+	 * acquire ktimersoftd->pi_lock while the base lock is held.
-+	 */
-+	return !list_empty(&new_base->expired);
- #endif
-+	return 0;
+diff --git a/net/bluetooth/hci_sock.c b/net/bluetooth/hci_sock.c
+index c88a6007e643..5de85b55a821 100644
+--- a/net/bluetooth/hci_sock.c
++++ b/net/bluetooth/hci_sock.c
+@@ -251,15 +251,13 @@ void hci_send_to_sock(struct hci_dev *hdev, struct sk_buff *skb)
  }
  
- int hrtimers_dead_cpu(unsigned int scpu)
+ /* Send frame to sockets with specific channel */
+-void hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
+-			 int flag, struct sock *skip_sk)
++static void __hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
++				  int flag, struct sock *skip_sk)
  {
- 	struct hrtimer_cpu_base *old_base, *new_base;
--	int i;
-+	int i, raise = 0;
+ 	struct sock *sk;
  
- 	BUG_ON(cpu_online(scpu));
- 	tick_cancel_sched_timer(scpu);
-@@ -1891,13 +1895,16 @@ int hrtimers_dead_cpu(unsigned int scpu)
- 	raw_spin_lock_nested(&old_base->lock, SINGLE_DEPTH_NESTING);
+ 	BT_DBG("channel %u len %d", channel, skb->len);
  
- 	for (i = 0; i < HRTIMER_MAX_CLOCK_BASES; i++) {
--		migrate_hrtimer_list(&old_base->clock_base[i],
--				     &new_base->clock_base[i]);
-+		raise |= migrate_hrtimer_list(&old_base->clock_base[i],
-+					      &new_base->clock_base[i]);
+-	read_lock(&hci_sk_list.lock);
+-
+ 	sk_for_each(sk, &hci_sk_list.head) {
+ 		struct sk_buff *nskb;
+ 
+@@ -285,6 +283,13 @@ void hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
+ 			kfree_skb(nskb);
  	}
  
- 	raw_spin_unlock(&old_base->lock);
- 	raw_spin_unlock(&new_base->lock);
- 
-+	if (raise)
-+		raise_softirq_irqoff(HRTIMER_SOFTIRQ);
++}
 +
- 	/* Check, if we got expired work to do */
- 	__hrtimer_peek_ahead_timers();
- 	local_irq_enable();
++void hci_send_to_channel(unsigned short channel, struct sk_buff *skb,
++			 int flag, struct sock *skip_sk)
++{
++	read_lock(&hci_sk_list.lock);
++	__hci_send_to_channel(channel, skb, flag, skip_sk);
+ 	read_unlock(&hci_sk_list.lock);
+ }
+ 
+@@ -388,8 +393,8 @@ void hci_send_monitor_ctrl_event(struct hci_dev *hdev, u16 event,
+ 		hdr->index = index;
+ 		hdr->len = cpu_to_le16(skb->len - HCI_MON_HDR_SIZE);
+ 
+-		hci_send_to_channel(HCI_CHANNEL_MONITOR, skb,
+-				    HCI_SOCK_TRUSTED, NULL);
++		__hci_send_to_channel(HCI_CHANNEL_MONITOR, skb,
++				      HCI_SOCK_TRUSTED, NULL);
+ 		kfree_skb(skb);
+ 	}
+ 
 -- 
 2.13.2
