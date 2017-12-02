@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 15/15] Linux 4.9.65-rt57-rc2
-Date: Fri, 01 Dec 2017 19:02:04 -0500
-Message-ID: <20171202000429.120921135@goodmis.org>
+Subject: [PATCH RT 02/15] Revert "fs: jbd2: pull your plug when waiting for space"
+Date: Fri, 01 Dec 2017 19:01:51 -0500
+Message-ID: <20171202000427.022777641@goodmis.org>
 References: <20171202000149.842718953@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -12,11 +12,12 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>
+        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
+        stable-rt@vger.kernel.org
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0015-Linux-4.9.65-rt57-rc2.patch
+Content-Disposition: inline; filename=0002-Revert-fs-jbd2-pull-your-plug-when-waiting-for-space.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -25,18 +26,31 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
+This reverts commit "fs: jbd2: pull your plug when waiting for space".
+This was a duct-tape fix which shouldn't be needed since commit
+"locking/rt-mutex: fix deadlock in device mapper / block-IO".
+
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ fs/jbd2/checkpoint.c | 2 --
+ 1 file changed, 2 deletions(-)
 
-diff --git a/localversion-rt b/localversion-rt
-index fdb0f880c7e9..8a88d43294aa 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt56
-+-rt57-rc2
+diff --git a/fs/jbd2/checkpoint.c b/fs/jbd2/checkpoint.c
+index 6e18a06aaabe..684996c8a3a4 100644
+--- a/fs/jbd2/checkpoint.c
++++ b/fs/jbd2/checkpoint.c
+@@ -116,8 +116,6 @@ void __jbd2_log_wait_for_space(journal_t *journal)
+ 	nblocks = jbd2_space_needed(journal);
+ 	while (jbd2_log_space_left(journal) < nblocks) {
+ 		write_unlock(&journal->j_state_lock);
+-		if (current->plug)
+-			io_schedule();
+ 		mutex_lock(&journal->j_checkpoint_mutex);
+ 
+ 		/*
 -- 
 2.13.2
