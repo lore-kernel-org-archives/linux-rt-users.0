@@ -1,68 +1,119 @@
-From: Daniel Wagner <wagi@monom.org>
-Subject: Re: [PATCH] sched/rt: Do not pull from current CPU if only one cpu to
- pull
-Date: Mon, 4 Dec 2017 11:29:17 +0100
-Message-ID: <6564b433-f820-67b7-76fc-bdb442979a7d@monom.org>
-References: <20171202130454.4cbbfe8d@vmware.local.home>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@kernel.org>,
-        Peter Zijlstra <peterz@infradead.org>,
+From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Subject: [PATCH v2 00/19] crypto: arm64 - play nice with CONFIG_PREEMPT
+Date: Mon,  4 Dec 2017 12:26:26 +0000
+Message-ID: <20171204122645.31535-1-ard.biesheuvel@linaro.org>
+Cc: herbert@gondor.apana.org.au, linux-arm-kernel@lists.infradead.org,
+        Ard Biesheuvel <ard.biesheuvel@linaro.org>,
+        Dave Martin <Dave.Martin@arm.com>,
+        Russell King - ARM Linux <linux@armlinux.org.uk>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Mark Rutland <mark.rutland@arm.com>,
+        linux-rt-users@vger.kernel.org,
+        Peter Zijlstra <peterz@infradead.org>,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Will Deacon <will.deacon@arm.com>,
+        Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.monom.org ([188.138.9.77]:50538 "EHLO mail.monom.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1752084AbdLDK3Z (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 4 Dec 2017 05:29:25 -0500
-In-Reply-To: <20171202130454.4cbbfe8d@vmware.local.home>
-Content-Language: en-US
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: linux-crypto@vger.kernel.org
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Sender: linux-crypto-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi Steven,
+This is a followup 'crypto: arm64 - disable NEON across scatterwalk API
+calls' sent out last Friday.
 
-On 12/02/2017 07:04 PM, Steven Rostedt wrote:
-> Daniel Wagner reported a crash on the beaglebone black. This is a
-> single CPU architecture, and does not have a functional:
-> arch_send_call_function_single_ipi() and can crash if that is called.
-> 
-> As it only has one CPU, it shouldn't be called, but if the kernel is
-> compiled for SMP, the push/pull RT scheduling logic now calls it for
-> irq_work if the one CPU is overloaded, it can use that function to call
-> itself and crash the kernel.
-> 
-> Ideally, we should disable the SCHED_FEAT(RT_PUSH_IPI) if the system
-> only has a single CPU. But SCHED_FEAT is a constant if sched debugging
-> is turned off. Another fix can also be used, and this should also help
-> with normal SMP machines. That is, do not initiate the pull code if
-> there's only one RT overloaded CPU, and that CPU happens to be the
-> current CPU that is scheduling in a lower priority task.
-> 
-> Even on a system with many CPUs, if there's many RT tasks waiting to
-> run on a single CPU, and that CPU schedules in another RT task of lower
-> priority, it will initiate the PULL logic in case there's a higher
-> priority RT task on another CPU that is waiting to run. But if there is
-> no other CPU with waiting RT tasks, it will initiate the RT pull logic
-> on itself (as it still has RT tasks waiting to run). This is a wasted
-> effort.
-> 
-> Not only does this help with SMP code where the current CPU is the only
-> one with RT overloaded tasks, it should also solve the issue that
-> Daniel encountered, because it will prevent the PULL logic from
-> executing, as there's only one CPU on the system, and the check added
-> here will cause it to exit the RT pull code.
-> 
-> Link: http://lkml.kernel.org/r/8c913cc2-b2e3-8c2e-e503-aff1428f8ff5@monom.org
-> Fixes: 4bdced5c9 ("sched/rt: Simplify the IPI based RT balancing logic")
-> Cc: stable@vger.kernel.org
-> Reported-by: Daniel Wagner <wagi@monom.org>
+As reported by Sebastian, the way the arm64 NEON crypto code currently
+keeps kernel mode NEON enabled across calls into skcipher_walk_xxx() is
+causing problems with RT builds, given that the skcipher walk API may
+allocate and free temporary buffers it uses to present the input and
+output arrays to the crypto algorithm in blocksize sized chunks (where
+blocksize is the natural blocksize of the crypto algorithm), and doing
+so with NEON enabled means we're alloc/free'ing memory with preemption
+disabled.
 
-Tested-by: Daniel Wagner <wagi@monom.org>
+This was deliberate: when this code was introduced, each kernel_neon_begin()
+and kernel_neon_end() call incurred a fixed penalty of storing resp.
+loading the contents of all NEON registers to/from memory, and so doing
+it less often had an obvious performance benefit. However, in the mean time,
+we have refactored the core kernel mode NEON code, and now kernel_neon_begin()
+only incurs this penalty the first time it is called after entering the kernel,
+and the NEON register restore is deferred until returning to userland. This
+means pulling those calls into the loops that iterate over the input/output
+of the crypto algorithm is not a big deal anymore (although there are some
+places in the code where we relied on the NEON registers retaining their
+values between calls)
 
-Thanks,
-Daniel
+So let's clean this up for arm64: update the NEON based skcipher drivers to
+no longer keep the NEON enabled when calling into the skcipher walk API.
+
+As pointed out by Peter, this only solves part of the problem. So let's
+tackle it more thoroughly, and update the algorithms to test the NEED_RESCHED
+flag each time after processing a fixed chunk of input. An attempt was made
+to align the different algorithms with regards to how much work such a fixed
+chunk entails, i.e., yielding every block for an algorithm that operates on
+16 byte blocks at < 1 cycles per byte seems rather pointless.
+
+Changes since v1:
+- add CRC-T10DIF test vector (#1)
+- stop using GFP_ATOMIC in scatterwalk API calls, now that they are executed
+  with preemption enabled (#2 - #6)
+- do some preparatory refactoring on the AES block mode code (#7 - #9)
+- add yield patches (#10 - #18)
+- add test patch (#19) - DO NOT MERGE
+
+Cc: Dave Martin <Dave.Martin@arm.com>
+Cc: Russell King - ARM Linux <linux@armlinux.org.uk>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Mark Rutland <mark.rutland@arm.com>
+Cc: linux-rt-users@vger.kernel.org
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Catalin Marinas <catalin.marinas@arm.com>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+
+Ard Biesheuvel (19):
+  crypto: testmgr - add a new test case for CRC-T10DIF
+  crypto: arm64/aes-ce-ccm - move kernel mode neon en/disable into loop
+  crypto: arm64/aes-blk - move kernel mode neon en/disable into loop
+  crypto: arm64/aes-bs - move kernel mode neon en/disable into loop
+  crypto: arm64/chacha20 - move kernel mode neon en/disable into loop
+  crypto: arm64/ghash - move kernel mode neon en/disable into loop
+  crypto: arm64/aes-blk - remove configurable interleave
+  crypto: arm64/aes-blk - add 4 way interleave to CBC encrypt path
+  crypto: arm64/aes-blk - add 4 way interleave to CBC-MAC encrypt path
+  crypto: arm64/sha256-neon - play nice with CONFIG_PREEMPT kernels
+  arm64: assembler: add macro to conditionally yield the NEON under
+    PREEMPT
+  crypto: arm64/sha1-ce - yield every 8 blocks of input
+  crypto: arm64/sha2-ce - yield every 8 blocks of input
+  crypto: arm64/aes-blk - yield after processing each 64 bytes of input
+  crypto: arm64/aes-bs - yield after processing each 128 bytes of input
+  crypto: arm64/aes-ghash - yield after processing fixed number of
+    blocks
+  crypto: arm64/crc32-ce - yield NEON every 16 blocks of input
+  crypto: arm64/crct10dif-ce - yield NEON every 8 blocks of input
+  DO NOT MERGE
+
+ arch/arm64/crypto/Makefile             |   3 -
+ arch/arm64/crypto/aes-ce-ccm-glue.c    |  47 +-
+ arch/arm64/crypto/aes-ce.S             |  17 +-
+ arch/arm64/crypto/aes-glue.c           |  95 ++-
+ arch/arm64/crypto/aes-modes.S          | 624 ++++++++++----------
+ arch/arm64/crypto/aes-neon.S           |   2 +
+ arch/arm64/crypto/aes-neonbs-core.S    | 317 ++++++----
+ arch/arm64/crypto/aes-neonbs-glue.c    |  48 +-
+ arch/arm64/crypto/chacha20-neon-glue.c |  12 +-
+ arch/arm64/crypto/crc32-ce-core.S      |  55 +-
+ arch/arm64/crypto/crct10dif-ce-core.S  |  39 +-
+ arch/arm64/crypto/ghash-ce-core.S      | 128 ++--
+ arch/arm64/crypto/ghash-ce-glue.c      |  17 +-
+ arch/arm64/crypto/sha1-ce-core.S       |  45 +-
+ arch/arm64/crypto/sha2-ce-core.S       |  40 +-
+ arch/arm64/crypto/sha256-glue.c        |  36 +-
+ arch/arm64/include/asm/assembler.h     |  83 +++
+ crypto/testmgr.h                       | 259 ++++++++
+ 18 files changed, 1231 insertions(+), 636 deletions(-)
+
+-- 
+2.11.0
