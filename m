@@ -1,76 +1,68 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: schedule under irqs_disabled in SLUB problem
-Date: Mon, 4 Dec 2017 10:59:13 +0100
-Message-ID: <20171204095912.GH2255@linutronix.de>
-References: <CADF-jezvVP2O++FR2KiRSSSJF7oObjy8LSP3-yj1HCmxyTzB_Q@mail.gmail.com>
- <20171102165009.u7a7ahmmywo2qugd@linutronix.de>
- <CADF-jexLs9vRuiuoRmcA+0L6Mp-XxW75okheWV+ipGf1b_Ua1w@mail.gmail.com>
- <59FC4393.8030005@mcst.ru>
- <5A01812F.7040406@mcst.ru>
- <20171116160837.hfpnq4vb4j2osbuz@linutronix.de>
- <20171117173820.GM872@jcartwri.amer.corp.natinst.com>
- <CAJ9FNxsfHRuc+UZCPKGDJDtk5neApOb3i6thpGTy9c-oP8T4JA@mail.gmail.com>
- <20171124093724.GB2564@linutronix.de>
- <CAJ9FNxtpTqjLevwN1w037=g1eqRPf-Fht+SFqSqJS0jVhFXkLg@mail.gmail.com>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Re: [PATCH] sched/rt: Do not pull from current CPU if only one cpu to
+ pull
+Date: Mon, 4 Dec 2017 11:29:17 +0100
+Message-ID: <6564b433-f820-67b7-76fc-bdb442979a7d@monom.org>
+References: <20171202130454.4cbbfe8d@vmware.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Cc: linux-rt-users@vger.kernel.org
-To: Sam Kappen <skappen@mvista.com>
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@kernel.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>
+To: Steven Rostedt <rostedt@goodmis.org>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:57529 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1752797AbdLDJ7O (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 4 Dec 2017 04:59:14 -0500
-Content-Disposition: inline
-In-Reply-To: <CAJ9FNxtpTqjLevwN1w037=g1eqRPf-Fht+SFqSqJS0jVhFXkLg@mail.gmail.com>
+Received: from mail.monom.org ([188.138.9.77]:50538 "EHLO mail.monom.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1752084AbdLDK3Z (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 4 Dec 2017 05:29:25 -0500
+In-Reply-To: <20171202130454.4cbbfe8d@vmware.local.home>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2017-11-27 12:16:36 [+0530], Sam Kappen wrote:
-> Hi,
-Hi,
+Hi Steven,
 
-> 1.)
-> I had derived and tried a patch based on the below analysis.
-> ( I referred below open source commit, to derive on this patch.
-> https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git/commit/?h=v4.9.47-rt37-rebase&id=7a347757f027190c95a363a491c18156a926a370
-> )
+On 12/02/2017 07:04 PM, Steven Rostedt wrote:
+> Daniel Wagner reported a crash on the beaglebone black. This is a
+> single CPU architecture, and does not have a functional:
+> arch_send_call_function_single_ipi() and can crash if that is called.
 > 
-> In some cases pi_lock in rt_spin_lock_slowlock does not retain the
-> irqs state while exiting function, this causes
-> issue in migrate_disable() + enable as they are not symmetrical in
-> regard to the status of interrupts.
-> To fix pi_lock & pi_unlock in rt_spin_lock_slowlock, it has been
-> modified to retain irq state by using
-> raw_spin_lock and raw_spin_unlock and also modified wait_lock in
-> rt_spin_lock_slowlock with raw_spin_lock_irqsave & *_restore.
-
-Can you provide more informations on this? Like a stack strace that
-shows that this happens and when it happens? It should not happen.
-
-…
-> We were testing above patch on multiple targets we could experience
-> some stuck issue on some remote target after 2 days. I am not
-> sure what really happens there, may be the issue when try for
-> scheduling with irq in disabled state.
-> The systems I have tested found to be worked 7 days after that I
-> stopped the test.
-
-Which patch? The patch I've sent and ask you for testing or the patch
-you had in this email?
-
+> As it only has one CPU, it shouldn't be called, but if the kernel is
+> compiled for SMP, the push/pull RT scheduling logic now calls it for
+> irq_work if the one CPU is overloaded, it can use that function to call
+> itself and crash the kernel.
 > 
-> 2.) With your patch during the slab allocations irqs will be in enabled state.
-> So if we enable irqs in early stage will there be any side effects? I
-> am sorry if my question doesn't seem
-> to be logical.
+> Ideally, we should disable the SCHED_FEAT(RT_PUSH_IPI) if the system
+> only has a single CPU. But SCHED_FEAT is a constant if sched debugging
+> is turned off. Another fix can also be used, and this should also help
+> with normal SMP machines. That is, do not initiate the pull code if
+> there's only one RT overloaded CPU, and that CPU happens to be the
+> current CPU that is scheduling in a lower priority task.
+> 
+> Even on a system with many CPUs, if there's many RT tasks waiting to
+> run on a single CPU, and that CPU schedules in another RT task of lower
+> priority, it will initiate the PULL logic in case there's a higher
+> priority RT task on another CPU that is waiting to run. But if there is
+> no other CPU with waiting RT tasks, it will initiate the RT pull logic
+> on itself (as it still has RT tasks waiting to run). This is a wasted
+> effort.
+> 
+> Not only does this help with SMP code where the current CPU is the only
+> one with RT overloaded tasks, it should also solve the issue that
+> Daniel encountered, because it will prevent the PULL logic from
+> executing, as there's only one CPU on the system, and the check added
+> here will cause it to exit the RT pull code.
+> 
+> Link: http://lkml.kernel.org/r/8c913cc2-b2e3-8c2e-e503-aff1428f8ff5@monom.org
+> Fixes: 4bdced5c9 ("sched/rt: Simplify the IPI based RT balancing logic")
+> Cc: stable@vger.kernel.org
+> Reported-by: Daniel Wagner <wagi@monom.org>
 
-You must not enable the interrupts too early. At the time of scheduling
-it is okay.
+Tested-by: Daniel Wagner <wagi@monom.org>
 
-> Regards,
-> Sam
-
-Sebastian
+Thanks,
+Daniel
