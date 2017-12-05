@@ -1,7 +1,7 @@
 From: Masami Hiramatsu <mhiramat@kernel.org>
 Subject: Re: uprobes enable condition (user space) - sysfs interface
-Date: Tue, 5 Dec 2017 15:53:11 +0900
-Message-ID: <20171205155311.b4b91fe9332c854a48ba4636@kernel.org>
+Date: Tue, 5 Dec 2017 16:45:47 +0900
+Message-ID: <20171205164547.144c51e493a05b61907dda01@kernel.org>
 References: <CA+bpL9+McSzeKW+eXHfMJMFRm-EenC9_0pGZkGpSdFzOVozKiw@mail.gmail.com>
         <20171201164039.GC3298@kernel.org>
         <20171204213619.973d74567a7de0af15876aac@kernel.org>
@@ -14,10 +14,14 @@ Cc: Arnaldo Carvalho de Melo <acme@kernel.org>,
         bhargavb <bhargavaramudu@gmail.com>,
         linux-rt-users@vger.kernel.org, linux-perf-users@vger.kernel.org
 To: Paul Clarke <pc@us.ibm.com>
-Return-path: <linux-perf-users-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.99]:35488 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1752334AbdLEHpu (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 5 Dec 2017 02:45:50 -0500
 In-Reply-To: <5246be84-1fb5-c1d7-130f-b990b3bac471@us.ibm.com>
-Sender: linux-perf-users-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 On Mon, 4 Dec 2017 09:23:16 -0600
 Paul Clarke <pc@us.ibm.com> wrote:
@@ -50,9 +54,12 @@ Paul Clarke <pc@us.ibm.com> wrote:
 > 
 > # perf probe -x /usr/lib64/libc-2.25.so malloc_get_state
 
-Would there be no chance that single binary has different versioned symbols?
+No, it doesn't, the above commit improves *find_symbol_by_name(),
+but perf probe uses its own lookup function, because it has to
+support glob pattern matching.
+Let me see, how I can improve that...
 
-Thank you,
+Thanks,
 
 > 
 > PC
