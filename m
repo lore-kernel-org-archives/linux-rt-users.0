@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v7 25/37] tracing: Add support for 'field variables'
-Date: Wed,  6 Dec 2017 16:38:06 -0600
-Message-ID: <0c54471b3933dee3c83d33e764b855dab34306b3.1512593081.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v7 23/37] tracing: Add hist trigger action hook
+Date: Wed,  6 Dec 2017 16:38:04 -0600
+Message-ID: <3d49ad4ecbf9becca01c2e82bf943b6397e360fb.1512593081.git.tom.zanussi@linux.intel.com>
 References: <cover.1512593081.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,664 +18,213 @@ References: <cover.1512593081.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Users should be able to directly specify event fields in hist trigger
-'actions' rather than being forced to explicitly create a variable for
-that purpose.
+Add a hook for executing extra actions whenever a histogram entry is
+added or updated.
 
-Add support allowing fields to be used directly in actions, which
-essentially does just that - creates 'invisible' variables for each
-bare field specified in an action.  If a bare field refers to a field
-on another (matching) event, it even creates a special histogram for
-the purpose (since variables can't be defined on an existing histogram
-after histogram creation).
+The default 'action' when a hist entry is added to a histogram is to
+update the set of values associated with it.  Some applications may
+want to perform additional actions at that point, such as generate
+another event, or compare and save a maximum.
 
-Here's a simple example that demonstrates both.  Basically the
-onmatch() action creates a list of variables corresponding to the
-parameters of the synthetic event to be generated, and then uses those
-values to generate the event.  So for the wakeup_latency synthetic
-event 'call' below the first param, $wakeup_lat, is a variable defined
-explicitly on sched_switch, where 'next_pid' is just a normal field on
-sched_switch, and prio is a normal field on sched_waking.
-
-Since the mechanism works on variables, those two normal fields just
-have 'invisible' variables created internally for them.  In the case of
-'prio', which is on another event, we actually need to create an
-additional hist trigger and define the invisible variable on that, since
-once a hist trigger is defined, variables can't be added to it later.
-
-  echo 'wakeup_latency u64 lat; pid_t pid; int prio' >>
-       /sys/kernel/debug/tracing/synthetic_events
-
-  echo 'hist:keys=pid:ts0=common_timestamp.usecs >>
-       /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
-
-echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0:
-      onmatch(sched.sched_waking).wakeup_latency($wakeup_lat,next_pid,prio)
-            >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+Add a simple framework for doing that; specific actions will be
+implemented on top of it in later patches.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 531 ++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 530 insertions(+), 1 deletion(-)
+ kernel/trace/trace_events_hist.c | 106 ++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 104 insertions(+), 2 deletions(-)
 
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 7de2fed..7af25fd 100644
+index 50d8c1e..ef474b8 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -255,6 +255,16 @@ struct hist_trigger_attrs {
+@@ -33,6 +33,7 @@ typedef u64 (*hist_field_fn_t) (struct hist_field *field,
+ 
+ #define HIST_FIELD_OPERANDS_MAX	2
+ #define HIST_FIELDS_MAX		(TRACING_MAP_FIELDS_MAX + TRACING_MAP_VARS_MAX)
++#define HIST_ACTIONS_MAX	8
+ 
+ enum field_op_id {
+ 	FIELD_OP_NONE,
+@@ -242,6 +243,9 @@ struct hist_trigger_attrs {
+ 	char		*assignment_str[TRACING_MAP_VARS_MAX];
+ 	unsigned int	n_assignments;
+ 
++	char		*action_str[HIST_ACTIONS_MAX];
++	unsigned int	n_actions;
++
  	struct var_defs	var_defs;
  };
  
-+struct field_var {
-+	struct hist_field	*var;
-+	struct hist_field	*val;
+@@ -261,6 +265,21 @@ struct hist_trigger_data {
+ 	bool				remove;
+ 	struct hist_field               *var_refs[TRACING_MAP_VARS_MAX];
+ 	unsigned int			n_var_refs;
++
++	struct action_data		*actions[HIST_ACTIONS_MAX];
++	unsigned int			n_actions;
 +};
 +
-+struct field_var_hist {
-+	struct hist_trigger_data	*hist_data;
-+	char				*cmd;
-+};
++struct action_data;
 +
- struct hist_trigger_data {
- 	struct hist_field               *fields[HIST_FIELDS_MAX];
- 	unsigned int			n_vals;
-@@ -274,6 +284,12 @@ struct hist_trigger_data {
- 
- 	struct action_data		*actions[HIST_ACTIONS_MAX];
- 	unsigned int			n_actions;
++typedef void (*action_fn_t) (struct hist_trigger_data *hist_data,
++			     struct tracing_map_elt *elt, void *rec,
++			     struct ring_buffer_event *rbe,
++			     struct action_data *data, u64 *var_ref_vals);
 +
-+	struct field_var		*field_vars[SYNTH_FIELDS_MAX];
-+	unsigned int			n_field_vars;
-+	unsigned int			n_field_var_str;
-+	struct field_var_hist		*field_var_hists[SYNTH_FIELDS_MAX];
-+	unsigned int			n_field_var_hists;
++struct action_data {
++	action_fn_t		fn;
++	unsigned int		var_ref_idx;
  };
  
- struct synth_field {
-@@ -1444,6 +1460,7 @@ static struct hist_field *find_event_var(struct hist_trigger_data *hist_data,
- struct hist_elt_data {
- 	char *comm;
- 	u64 *var_ref_vals;
-+	char *field_var_str[SYNTH_FIELDS_MAX];
- };
+ static u64 hist_field_timestamp(struct hist_field *hist_field,
+@@ -777,6 +796,9 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
+ 	for (i = 0; i < attrs->n_assignments; i++)
+ 		kfree(attrs->assignment_str[i]);
  
- static u64 hist_field_var_ref(struct hist_field *hist_field,
-@@ -1748,6 +1765,11 @@ static inline void save_comm(char *comm, struct task_struct *task)
- 
- static void hist_elt_data_free(struct hist_elt_data *elt_data)
- {
-+	unsigned int i;
++	for (i = 0; i < attrs->n_actions; i++)
++		kfree(attrs->action_str[i]);
 +
-+	for (i = 0; i < SYNTH_FIELDS_MAX; i++)
-+		kfree(elt_data->field_var_str[i]);
-+
- 	kfree(elt_data->comm);
- 	kfree(elt_data);
+ 	kfree(attrs->name);
+ 	kfree(attrs->sort_key_str);
+ 	kfree(attrs->keys_str);
+@@ -784,6 +806,16 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
+ 	kfree(attrs);
  }
-@@ -1765,7 +1787,7 @@ static int hist_trigger_elt_data_alloc(struct tracing_map_elt *elt)
- 	unsigned int size = TASK_COMM_LEN + 1;
- 	struct hist_elt_data *elt_data;
- 	struct hist_field *key_field;
--	unsigned int i;
-+	unsigned int i, n_str;
  
- 	elt_data = kzalloc(sizeof(*elt_data), GFP_KERNEL);
- 	if (!elt_data)
-@@ -1784,6 +1806,18 @@ static int hist_trigger_elt_data_alloc(struct tracing_map_elt *elt)
++static int parse_action(char *str, struct hist_trigger_attrs *attrs)
++{
++	int ret = 0;
++
++	if (attrs->n_actions >= HIST_ACTIONS_MAX)
++		return ret;
++
++	return ret;
++}
++
+ static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
+ {
+ 	int ret = 0;
+@@ -867,8 +899,9 @@ static struct hist_trigger_attrs *parse_hist_trigger_attrs(char *trigger_str)
+ 		else if (strcmp(str, "clear") == 0)
+ 			attrs->clear = true;
+ 		else {
+-			ret = -EINVAL;
+-			goto free;
++			ret = parse_action(str, attrs);
++			if (ret)
++				goto free;
  		}
  	}
  
-+	n_str = hist_data->n_field_var_str;
-+
-+	size = STR_VAR_LEN_MAX;
-+
-+	for (i = 0; i < n_str; i++) {
-+		elt_data->field_var_str[i] = kzalloc(size, GFP_KERNEL);
-+		if (!elt_data->field_var_str[i]) {
-+			hist_elt_data_free(elt_data);
-+			return -ENOMEM;
-+		}
-+	}
-+
- 	elt->private_data = elt_data;
- 
- 	return 0;
-@@ -2486,6 +2520,470 @@ static struct hist_field *parse_expr(struct hist_trigger_data *hist_data,
- 	return ERR_PTR(ret);
- }
- 
-+static char *find_trigger_filter(struct hist_trigger_data *hist_data,
-+				 struct trace_event_file *file)
-+{
-+	struct event_trigger_data *test;
-+
-+	list_for_each_entry_rcu(test, &file->triggers, list) {
-+		if (test->cmd_ops->trigger_type == ETT_EVENT_HIST) {
-+			if (test->private_data == hist_data)
-+				return test->filter_str;
-+		}
-+	}
-+
-+	return NULL;
-+}
-+
-+static struct event_command trigger_hist_cmd;
-+static int event_hist_trigger_func(struct event_command *cmd_ops,
-+				   struct trace_event_file *file,
-+				   char *glob, char *cmd, char *param);
-+
-+static bool compatible_keys(struct hist_trigger_data *target_hist_data,
-+			    struct hist_trigger_data *hist_data,
-+			    unsigned int n_keys)
-+{
-+	struct hist_field *target_hist_field, *hist_field;
-+	unsigned int n, i, j;
-+
-+	if (hist_data->n_fields - hist_data->n_vals != n_keys)
-+		return false;
-+
-+	i = hist_data->n_vals;
-+	j = target_hist_data->n_vals;
-+
-+	for (n = 0; n < n_keys; n++) {
-+		hist_field = hist_data->fields[i + n];
-+		target_hist_field = target_hist_data->fields[j + n];
-+
-+		if (strcmp(hist_field->type, target_hist_field->type) != 0)
-+			return false;
-+		if (hist_field->size != target_hist_field->size)
-+			return false;
-+		if (hist_field->is_signed != target_hist_field->is_signed)
-+			return false;
-+	}
-+
-+	return true;
-+}
-+
-+static struct hist_trigger_data *
-+find_compatible_hist(struct hist_trigger_data *target_hist_data,
-+		     struct trace_event_file *file)
-+{
-+	struct hist_trigger_data *hist_data;
-+	struct event_trigger_data *test;
-+	unsigned int n_keys;
-+
-+	n_keys = target_hist_data->n_fields - target_hist_data->n_vals;
-+
-+	list_for_each_entry_rcu(test, &file->triggers, list) {
-+		if (test->cmd_ops->trigger_type == ETT_EVENT_HIST) {
-+			hist_data = test->private_data;
-+
-+			if (compatible_keys(target_hist_data, hist_data, n_keys))
-+				return hist_data;
-+		}
-+	}
-+
-+	return NULL;
-+}
-+
-+static struct trace_event_file *event_file(struct trace_array *tr,
-+					   char *system, char *event_name)
-+{
-+	struct trace_event_file *file;
-+
-+	file = find_event_file(tr, system, event_name);
-+	if (!file)
-+		return ERR_PTR(-EINVAL);
-+
-+	return file;
-+}
-+
-+static struct hist_field *
-+find_synthetic_field_var(struct hist_trigger_data *target_hist_data,
-+			 char *system, char *event_name, char *field_name)
-+{
-+	struct hist_field *event_var;
-+	char *synthetic_name;
-+
-+	synthetic_name = kzalloc(MAX_FILTER_STR_VAL, GFP_KERNEL);
-+	if (!synthetic_name)
-+		return ERR_PTR(-ENOMEM);
-+
-+	strcpy(synthetic_name, "synthetic_");
-+	strcat(synthetic_name, field_name);
-+
-+	event_var = find_event_var(target_hist_data, system, event_name, synthetic_name);
-+
-+	kfree(synthetic_name);
-+
-+	return event_var;
-+}
-+
-+/**
-+ * create_field_var_hist - Automatically create a histogram and var for a field
-+ * @target_hist_data: The target hist trigger
-+ * @subsys_name: Optional subsystem name
-+ * @event_name: Optional event name
-+ * @field_name: The name of the field (and the resulting variable)
-+ *
-+ * Hist trigger actions fetch data from variables, not directly from
-+ * events.  However, for convenience, users are allowed to directly
-+ * specify an event field in an action, which will be automatically
-+ * converted into a variable on their behalf.
-+
-+ * If a user specifies a field on an event that isn't the event the
-+ * histogram currently being defined (the target event histogram), the
-+ * only way that can be accomplished is if a new hist trigger is
-+ * created and the field variable defined on that.
-+ *
-+ * This function creates a new histogram compatible with the target
-+ * event (meaning a histogram with the same key as the target
-+ * histogram), and creates a variable for the specified field, but
-+ * with 'synthetic_' prepended to the variable name in order to avoid
-+ * collision with normal field variables.
-+ *
-+ * Return: The variable created for the field.
-+ */
-+struct hist_field *
-+create_field_var_hist(struct hist_trigger_data *target_hist_data,
-+		      char *subsys_name, char *event_name, char *field_name)
-+{
-+	struct trace_array *tr = target_hist_data->event_file->tr;
-+	struct hist_field *event_var = ERR_PTR(-EINVAL);
-+	struct hist_trigger_data *hist_data;
-+	unsigned int i, n, first = true;
-+	struct field_var_hist *var_hist;
-+	struct trace_event_file *file;
-+	struct hist_field *key_field;
-+	char *saved_filter;
-+	char *cmd;
-+	int ret;
-+
-+	if (target_hist_data->n_field_var_hists >= SYNTH_FIELDS_MAX)
-+		return ERR_PTR(-EINVAL);
-+
-+	file = event_file(tr, subsys_name, event_name);
-+
-+	if (IS_ERR(file)) {
-+		ret = PTR_ERR(file);
-+		return ERR_PTR(ret);
-+	}
-+
-+	/*
-+	 * Look for a histogram compatible with target.  We'll use the
-+	 * found histogram specification to create a new matching
-+	 * histogram with our variable on it.  target_hist_data is not
-+	 * yet a registered histogram so we can't use that.
-+	 */
-+	hist_data = find_compatible_hist(target_hist_data, file);
-+	if (!hist_data)
-+		return ERR_PTR(-EINVAL);
-+
-+	/* See if a synthetic field variable has already been created */
-+	event_var = find_synthetic_field_var(target_hist_data, subsys_name,
-+					     event_name, field_name);
-+	if (!IS_ERR_OR_NULL(event_var))
-+		return event_var;
-+
-+	var_hist = kzalloc(sizeof(*var_hist), GFP_KERNEL);
-+	if (!var_hist)
-+		return ERR_PTR(-ENOMEM);
-+
-+	cmd = kzalloc(MAX_FILTER_STR_VAL, GFP_KERNEL);
-+	if (!cmd) {
-+		kfree(var_hist);
-+		return ERR_PTR(-ENOMEM);
-+	}
-+
-+	/* Use the same keys as the compatible histogram */
-+	strcat(cmd, "keys=");
-+
-+	for_each_hist_key_field(i, hist_data) {
-+		key_field = hist_data->fields[i];
-+		if (!first)
-+			strcat(cmd, ",");
-+		strcat(cmd, key_field->field->name);
-+		first = false;
-+	}
-+
-+	/* Create the synthetic field variable specification */
-+	strcat(cmd, ":synthetic_");
-+	strcat(cmd, field_name);
-+	strcat(cmd, "=");
-+	strcat(cmd, field_name);
-+
-+	/* Use the same filter as the compatible histogram */
-+	saved_filter = find_trigger_filter(hist_data, file);
-+	if (saved_filter) {
-+		strcat(cmd, " if ");
-+		strcat(cmd, saved_filter);
-+	}
-+
-+	var_hist->cmd = kstrdup(cmd, GFP_KERNEL);
-+	if (!var_hist->cmd) {
-+		kfree(cmd);
-+		kfree(var_hist);
-+		return ERR_PTR(-ENOMEM);
-+	}
-+
-+	/* Save the compatible histogram information */
-+	var_hist->hist_data = hist_data;
-+
-+	/* Create the new histogram with our variable */
-+	ret = event_hist_trigger_func(&trigger_hist_cmd, file,
-+				      "", "hist", cmd);
-+	if (ret) {
-+		kfree(cmd);
-+		kfree(var_hist->cmd);
-+		kfree(var_hist);
-+		return ERR_PTR(ret);
-+	}
-+
-+	kfree(cmd);
-+
-+	/* If we can't find the variable, something went wrong */
-+	event_var = find_synthetic_field_var(target_hist_data, subsys_name,
-+					     event_name, field_name);
-+	if (IS_ERR_OR_NULL(event_var)) {
-+		kfree(var_hist->cmd);
-+		kfree(var_hist);
-+		return ERR_PTR(-EINVAL);
-+	}
-+
-+	n = target_hist_data->n_field_var_hists;
-+	target_hist_data->field_var_hists[n] = var_hist;
-+	target_hist_data->n_field_var_hists++;
-+
-+	return event_var;
-+}
-+
-+struct hist_field *
-+find_target_event_var(struct hist_trigger_data *hist_data,
-+		      char *subsys_name, char *event_name, char *var_name)
-+{
-+	struct trace_event_file *file = hist_data->event_file;
-+	struct hist_field *hist_field = NULL;
-+
-+	if (subsys_name) {
-+		struct trace_event_call *call;
-+
-+		if (!event_name)
-+			return NULL;
-+
-+		call = file->event_call;
-+
-+		if (strcmp(subsys_name, call->class->system) != 0)
-+			return NULL;
-+
-+		if (strcmp(event_name, trace_event_name(call)) != 0)
-+			return NULL;
-+	}
-+
-+	hist_field = find_var_field(hist_data, var_name);
-+
-+	return hist_field;
-+}
-+
-+static inline void __update_field_vars(struct tracing_map_elt *elt,
-+				       struct ring_buffer_event *rbe,
-+				       void *rec,
-+				       struct field_var **field_vars,
-+				       unsigned int n_field_vars,
-+				       unsigned int field_var_str_start)
-+{
-+	struct hist_elt_data *elt_data = elt->private_data;
-+	unsigned int i, j, var_idx;
-+	u64 var_val;
-+
-+	for (i = 0, j = field_var_str_start; i < n_field_vars; i++) {
-+		struct field_var *field_var = field_vars[i];
-+		struct hist_field *var = field_var->var;
-+		struct hist_field *val = field_var->val;
-+
-+		var_val = val->fn(val, elt, rbe, rec);
-+		var_idx = var->var.idx;
-+
-+		if (val->flags & HIST_FIELD_FL_STRING) {
-+			char *str = elt_data->field_var_str[j++];
-+			char *val_str = (char *)(uintptr_t)var_val;
-+
-+			strncpy(str, val_str, STR_VAR_LEN_MAX);
-+			var_val = (u64)(uintptr_t)str;
-+		}
-+		tracing_map_set_var(elt, var_idx, var_val);
-+	}
-+}
-+
-+static void update_field_vars(struct hist_trigger_data *hist_data,
-+			      struct tracing_map_elt *elt,
-+			      struct ring_buffer_event *rbe,
-+			      void *rec)
-+{
-+	__update_field_vars(elt, rbe, rec, hist_data->field_vars,
-+			    hist_data->n_field_vars, 0);
-+}
-+
-+static struct hist_field *create_var(struct hist_trigger_data *hist_data,
-+				     struct trace_event_file *file,
-+				     char *name, int size, const char *type)
-+{
-+	struct hist_field *var;
-+	int idx;
-+
-+	if (find_var(hist_data, file, name) && !hist_data->remove) {
-+		var = ERR_PTR(-EINVAL);
-+		goto out;
-+	}
-+
-+	var = kzalloc(sizeof(struct hist_field), GFP_KERNEL);
-+	if (!var) {
-+		var = ERR_PTR(-ENOMEM);
-+		goto out;
-+	}
-+
-+	idx = tracing_map_add_var(hist_data->map);
-+	if (idx < 0) {
-+		kfree(var);
-+		var = ERR_PTR(-EINVAL);
-+		goto out;
-+	}
-+
-+	var->flags = HIST_FIELD_FL_VAR;
-+	var->var.idx = idx;
-+	var->var.hist_data = var->hist_data = hist_data;
-+	var->size = size;
-+	var->var.name = kstrdup(name, GFP_KERNEL);
-+	var->type = kstrdup(type, GFP_KERNEL);
-+	if (!var->var.name || !var->type) {
-+		kfree(var->var.name);
-+		kfree(var->type);
-+		kfree(var);
-+		var = ERR_PTR(-ENOMEM);
-+	}
-+ out:
-+	return var;
-+}
-+
-+static struct field_var *create_field_var(struct hist_trigger_data *hist_data,
-+					  struct trace_event_file *file,
-+					  char *field_name)
-+{
-+	struct hist_field *val = NULL, *var = NULL;
-+	unsigned long flags = HIST_FIELD_FL_VAR;
-+	struct field_var *field_var;
-+	int ret = 0;
-+
-+	if (hist_data->n_field_vars >= SYNTH_FIELDS_MAX) {
-+		ret = -EINVAL;
-+		goto err;
-+	}
-+
-+	val = parse_atom(hist_data, file, field_name, &flags, NULL);
-+	if (IS_ERR(val)) {
-+		ret = PTR_ERR(val);
-+		goto err;
-+	}
-+
-+	var = create_var(hist_data, file, field_name, val->size, val->type);
-+	if (IS_ERR(var)) {
-+		kfree(val);
-+		ret = PTR_ERR(var);
-+		goto err;
-+	}
-+
-+	field_var = kzalloc(sizeof(struct field_var), GFP_KERNEL);
-+	if (!field_var) {
-+		kfree(val);
-+		kfree(var);
-+		ret =  -ENOMEM;
-+		goto err;
-+	}
-+
-+	field_var->var = var;
-+	field_var->val = val;
-+ out:
-+	return field_var;
-+ err:
-+	field_var = ERR_PTR(ret);
-+	goto out;
-+}
-+
-+/**
-+ * create_target_field_var - Automatically create a variable for a field
-+ * @target_hist_data: The target hist trigger
-+ * @subsys_name: Optional subsystem name
-+ * @event_name: Optional event name
-+ * @var_name: The name of the field (and the resulting variable)
-+ *
-+ * Hist trigger actions fetch data from variables, not directly from
-+ * events.  However, for convenience, users are allowed to directly
-+ * specify an event field in an action, which will be automatically
-+ * converted into a variable on their behalf.
-+
-+ * This function creates a field variable with the name var_name on
-+ * the hist trigger currently being defined on the target event.  If
-+ * subsys_name and event_name are specified, this function simply
-+ * verifies that they do in fact match the target event subsystem and
-+ * event name.
-+ *
-+ * Return: The variable created for the field.
-+ */
-+struct field_var *
-+create_target_field_var(struct hist_trigger_data *target_hist_data,
-+			char *subsys_name, char *event_name, char *var_name)
-+{
-+	struct trace_event_file *file = target_hist_data->event_file;
-+
-+	if (subsys_name) {
-+		struct trace_event_call *call;
-+
-+		if (!event_name)
-+			return NULL;
-+
-+		call = file->event_call;
-+
-+		if (strcmp(subsys_name, call->class->system) != 0)
-+			return NULL;
-+
-+		if (strcmp(event_name, trace_event_name(call)) != 0)
-+			return NULL;
-+	}
-+
-+	return create_field_var(target_hist_data, file, var_name);
-+}
-+
-+static void destroy_field_var(struct field_var *field_var)
-+{
-+	if (!field_var)
-+		return;
-+
-+	destroy_hist_field(field_var->var, 0);
-+	destroy_hist_field(field_var->val, 0);
-+
-+	kfree(field_var);
-+}
-+
-+static void destroy_field_vars(struct hist_trigger_data *hist_data)
-+{
-+	unsigned int i;
-+
-+	for (i = 0; i < hist_data->n_field_vars; i++)
-+		destroy_field_var(hist_data->field_vars[i]);
-+}
-+
-+void save_field_var(struct hist_trigger_data *hist_data,
-+		    struct field_var *field_var)
-+{
-+	hist_data->field_vars[hist_data->n_field_vars++] = field_var;
-+
-+	if (field_var->val->flags & HIST_FIELD_FL_STRING)
-+		hist_data->n_field_var_str++;
-+}
-+
- static int create_hitcount_val(struct hist_trigger_data *hist_data)
- {
- 	hist_data->fields[HITCOUNT_IDX] =
-@@ -2941,6 +3439,16 @@ static int create_actions(struct hist_trigger_data *hist_data,
+@@ -2056,11 +2089,55 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
  	return ret;
  }
  
-+static void destroy_field_var_hists(struct hist_trigger_data *hist_data)
++static void destroy_actions(struct hist_trigger_data *hist_data)
 +{
 +	unsigned int i;
 +
-+	for (i = 0; i < hist_data->n_field_var_hists; i++) {
-+		kfree(hist_data->field_var_hists[i]->cmd);
-+		kfree(hist_data->field_var_hists[i]);
++	for (i = 0; i < hist_data->n_actions; i++) {
++		struct action_data *data = hist_data->actions[i];
++
++		kfree(data);
 +	}
++}
++
++static int parse_actions(struct hist_trigger_data *hist_data)
++{
++	unsigned int i;
++	int ret = 0;
++	char *str;
++
++	for (i = 0; i < hist_data->attrs->n_actions; i++) {
++		str = hist_data->attrs->action_str[i];
++	}
++
++	return ret;
++}
++
++static int create_actions(struct hist_trigger_data *hist_data,
++			  struct trace_event_file *file)
++{
++	struct action_data *data;
++	unsigned int i;
++	int ret = 0;
++
++	for (i = 0; i < hist_data->attrs->n_actions; i++) {
++		data = hist_data->actions[i];
++	}
++
++	return ret;
 +}
 +
  static void destroy_hist_data(struct hist_trigger_data *hist_data)
  {
- 	if (!hist_data)
-@@ -2951,6 +3459,8 @@ static void destroy_hist_data(struct hist_trigger_data *hist_data)
++	if (!hist_data)
++		return;
++
+ 	destroy_hist_trigger_attrs(hist_data->attrs);
+ 	destroy_hist_fields(hist_data);
  	tracing_map_destroy(hist_data->map);
- 
- 	destroy_actions(hist_data);
-+	destroy_field_vars(hist_data);
-+	destroy_field_var_hists(hist_data);
- 
++
++	destroy_actions(hist_data);
++
  	kfree(hist_data);
  }
-@@ -3087,6 +3597,8 @@ static void hist_trigger_elt_update(struct hist_trigger_data *hist_data,
- 			tracing_map_set_var(elt, var_idx, hist_val);
- 		}
- 	}
+ 
+@@ -2127,6 +2204,10 @@ static int create_tracing_map_fields(struct hist_trigger_data *hist_data)
+ 	hist_data->remove = remove;
+ 	hist_data->event_file = file;
+ 
++	ret = parse_actions(hist_data);
++	if (ret)
++		goto free;
 +
-+	update_field_vars(hist_data, elt, rbe, rec);
+ 	ret = create_hist_fields(hist_data, file);
+ 	if (ret)
+ 		goto free;
+@@ -2218,6 +2299,20 @@ static inline void add_to_key(char *compound_key, void *key,
+ 	memcpy(compound_key + key_field->offset, key, size);
  }
  
- static inline void add_to_key(char *compound_key, void *key,
-@@ -3531,6 +4043,21 @@ static int event_hist_trigger_init(struct event_trigger_ops *ops,
- 	return 0;
- }
- 
-+static void unregister_field_var_hists(struct hist_trigger_data *hist_data)
++static void
++hist_trigger_actions(struct hist_trigger_data *hist_data,
++		     struct tracing_map_elt *elt, void *rec,
++		     struct ring_buffer_event *rbe, u64 *var_ref_vals)
 +{
-+	struct trace_event_file *file;
++	struct action_data *data;
 +	unsigned int i;
-+	char *cmd;
-+	int ret;
 +
-+	for (i = 0; i < hist_data->n_field_var_hists; i++) {
-+		file = hist_data->field_var_hists[i]->hist_data->event_file;
-+		cmd = hist_data->field_var_hists[i]->cmd;
-+		ret = event_hist_trigger_func(&trigger_hist_cmd, file,
-+					      "!hist", "hist", cmd);
++	for (i = 0; i < hist_data->n_actions; i++) {
++		data = hist_data->actions[i];
++		data->fn(hist_data, elt, rec, rbe, data, var_ref_vals);
 +	}
 +}
 +
- static void event_hist_trigger_free(struct event_trigger_ops *ops,
- 				    struct event_trigger_data *data)
+ static void event_hist_trigger(struct event_trigger_data *data, void *rec,
+ 			       struct ring_buffer_event *rbe)
  {
-@@ -3548,6 +4075,8 @@ static void event_hist_trigger_free(struct event_trigger_ops *ops,
+@@ -2273,6 +2368,9 @@ static void event_hist_trigger(struct event_trigger_data *data, void *rec,
+ 		return;
  
- 		remove_hist_vars(hist_data);
- 
-+		unregister_field_var_hists(hist_data);
+ 	hist_trigger_elt_update(hist_data, elt, rec, rbe, var_ref_vals);
 +
- 		destroy_hist_data(hist_data);
- 	}
++	if (resolve_var_refs(hist_data, key, var_ref_vals, true))
++		hist_trigger_actions(hist_data, elt, rec, rbe, var_ref_vals);
  }
+ 
+ static void hist_trigger_stacktrace_print(struct seq_file *m,
+@@ -3057,6 +3155,10 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
+ 	if (has_hist_vars(hist_data))
+ 		save_hist_vars(hist_data);
+ 
++	ret = create_actions(hist_data, file);
++	if (ret)
++		goto out_unreg;
++
+ 	ret = tracing_map_init(hist_data->map);
+ 	if (ret)
+ 		goto out_unreg;
 -- 
 1.9.3
