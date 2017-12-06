@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v7 33/37] tracing: Make tracing_set_clock() non-static
-Date: Wed,  6 Dec 2017 16:38:14 -0600
-Message-ID: <bcdff094551f84dacc32c443873682bd97eb6290.1512593081.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v7 36/37] tracing: Add inter-event blurb to HIST_TRIGGERS config option
+Date: Wed,  6 Dec 2017 16:38:17 -0600
+Message-ID: <4acf04b6c3f8ed0b05e0be24f3b3795f51b2f70a.1512593081.git.tom.zanussi@linux.intel.com>
 References: <cover.1512593081.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,43 +18,30 @@ References: <cover.1512593081.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Allow tracing code outside of trace.c to access tracing_set_clock().
-
-Some applications may require a particular clock in order to function
-properly, such as latency calculations.
-
-Also, add an accessor returning the current clock string.
+So that users know that inter-event tracing is supported as part of
+the HIST_TRIGGERS option, include text to that effect in the help
+text.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace.c | 2 +-
- kernel/trace/trace.h | 1 +
- 2 files changed, 2 insertions(+), 1 deletion(-)
+ kernel/trace/Kconfig | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index 3a14b70..660763e 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -6230,7 +6230,7 @@ static int tracing_clock_show(struct seq_file *m, void *v)
- 	return 0;
- }
+diff --git a/kernel/trace/Kconfig b/kernel/trace/Kconfig
+index b8395a0..bb7cb8d 100644
+--- a/kernel/trace/Kconfig
++++ b/kernel/trace/Kconfig
+@@ -596,7 +596,10 @@ config HIST_TRIGGERS
+ 	  event activity as an initial guide for further investigation
+ 	  using more advanced tools.
  
--static int tracing_set_clock(struct trace_array *tr, const char *clockstr)
-+int tracing_set_clock(struct trace_array *tr, const char *clockstr)
- {
- 	int i;
+-	  See Documentation/trace/events.txt.
++	  Inter-event tracing of quantities such as latencies is also
++	  supported using hist triggers under this option.
++
++	  See Documentation/trace/histogram.txt.
+ 	  If in doubt, say N.
  
-diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
-index 52667dd..68153a8 100644
---- a/kernel/trace/trace.h
-+++ b/kernel/trace/trace.h
-@@ -288,6 +288,7 @@ enum {
- extern void trace_array_put(struct trace_array *tr);
- 
- extern int tracing_set_time_stamp_abs(struct trace_array *tr, bool abs);
-+extern int tracing_set_clock(struct trace_array *tr, const char *clockstr);
- 
- extern bool trace_clock_in_ns(struct trace_array *tr);
- 
+ config MMIOTRACE_TEST
 -- 
 1.9.3
