@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v7 36/37] tracing: Add inter-event blurb to HIST_TRIGGERS config option
-Date: Wed,  6 Dec 2017 16:38:17 -0600
-Message-ID: <4acf04b6c3f8ed0b05e0be24f3b3795f51b2f70a.1512593081.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v7 34/37] tracing: Add a clock attribute for hist triggers
+Date: Wed,  6 Dec 2017 16:38:15 -0600
+Message-ID: <85eadef67603d5e8e72581dbbb49ff4702edb7f8.1512593081.git.tom.zanussi@linux.intel.com>
 References: <cover.1512593081.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,30 +18,137 @@ References: <cover.1512593081.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-So that users know that inter-event tracing is supported as part of
-the HIST_TRIGGERS option, include text to that effect in the help
-text.
+The default clock if timestamps are used in a histogram is "global".
+If timestamps aren't used, the clock is irrelevant.
+
+Use the "clock=" param only if you want to override the default
+"global" clock for a histogram with timestamps.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+Signed-off-by: Rajvi Jingar <rajvi.jingar@intel.com>
 ---
- kernel/trace/Kconfig | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ Documentation/trace/histogram.txt | 11 +++++++++-
+ kernel/trace/trace_events_hist.c  | 42 ++++++++++++++++++++++++++++++++++++---
+ 2 files changed, 49 insertions(+), 4 deletions(-)
 
-diff --git a/kernel/trace/Kconfig b/kernel/trace/Kconfig
-index b8395a0..bb7cb8d 100644
---- a/kernel/trace/Kconfig
-+++ b/kernel/trace/Kconfig
-@@ -596,7 +596,10 @@ config HIST_TRIGGERS
- 	  event activity as an initial guide for further investigation
- 	  using more advanced tools.
+diff --git a/Documentation/trace/histogram.txt b/Documentation/trace/histogram.txt
+index df08882..6e05510 100644
+--- a/Documentation/trace/histogram.txt
++++ b/Documentation/trace/histogram.txt
+@@ -1671,7 +1671,16 @@ features have been added to the hist trigger support:
+     it is in units of nanoseconds; appending '.usecs' to a
+     common_timestamp field changes the units to microseconds.
  
--	  See Documentation/trace/events.txt.
-+	  Inter-event tracing of quantities such as latencies is also
-+	  supported using hist triggers under this option.
+-These features are decribed in more detail in the following sections.
++A note on inter-event timestamps: If common_timestamp is used in a
++histogram, the trace buffer is automatically switched over to using
++absolute timestamps and the "global" trace clock, in order to avoid
++bogus timestamp differences with other clocks that aren't coherent
++across CPUs.  This can be overridden by specifying one of the other
++trace clocks instead, using the "clock=XXX" hist trigger attribute,
++where XXX is any of the clocks listed in the tracing/trace_clock
++pseudo-file.
 +
-+	  See Documentation/trace/histogram.txt.
- 	  If in doubt, say N.
++These features are described in more detail in the following sections.
  
- config MMIOTRACE_TEST
+ 2.2.1 Histogram Variables
+ -------------------------
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 1309a8f..b0b10f3 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -242,6 +242,7 @@ struct hist_trigger_attrs {
+ 	char		*vals_str;
+ 	char		*sort_key_str;
+ 	char		*name;
++	char		*clock;
+ 	bool		pause;
+ 	bool		cont;
+ 	bool		clear;
+@@ -1792,6 +1793,7 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
+ 	kfree(attrs->sort_key_str);
+ 	kfree(attrs->keys_str);
+ 	kfree(attrs->vals_str);
++	kfree(attrs->clock);
+ 	kfree(attrs);
+ }
+ 
+@@ -1847,6 +1849,19 @@ static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
+ 			ret = -ENOMEM;
+ 			goto out;
+ 		}
++	} else if (strncmp(str, "clock=", strlen("clock=")) == 0) {
++		strsep(&str, "=");
++		if (!str) {
++			ret = -EINVAL;
++			goto out;
++		}
++
++		str = strstrip(str);
++		attrs->clock = kstrdup(str, GFP_KERNEL);
++		if (!attrs->clock) {
++			ret = -ENOMEM;
++			goto out;
++		}
+ 	} else if (strncmp(str, "size=", strlen("size=")) == 0) {
+ 		int map_bits = parse_map_size(str);
+ 
+@@ -1911,6 +1926,14 @@ static struct hist_trigger_attrs *parse_hist_trigger_attrs(char *trigger_str)
+ 		goto free;
+ 	}
+ 
++	if (!attrs->clock) {
++		attrs->clock = kstrdup("global", GFP_KERNEL);
++		if (!attrs->clock) {
++			ret = -ENOMEM;
++			goto free;
++		}
++	}
++
+ 	return attrs;
+  free:
+ 	destroy_hist_trigger_attrs(attrs);
+@@ -4935,6 +4958,8 @@ static int event_hist_trigger_print(struct seq_file *m,
+ 			seq_puts(m, ".descending");
+ 	}
+ 	seq_printf(m, ":size=%u", (1 << hist_data->map->map_bits));
++	if (hist_data->enable_timestamps)
++		seq_printf(m, ":clock=%s", hist_data->attrs->clock);
+ 
+ 	print_actions_spec(m, hist_data);
+ 
+@@ -5202,7 +5227,6 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
+ 		data->paused = true;
+ 
+ 	if (named_data) {
+-		destroy_hist_data(data->private_data);
+ 		data->private_data = named_data->private_data;
+ 		set_named_trigger_data(data, named_data);
+ 		data->ops = &event_hist_trigger_named_ops;
+@@ -5214,10 +5238,22 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
+ 			goto out;
+ 	}
+ 
+-	ret++;
++	if (hist_data->enable_timestamps) {
++		char *clock = hist_data->attrs->clock;
++
++		ret = tracing_set_clock(file->tr, hist_data->attrs->clock);
++		if (ret) {
++			hist_err("Couldn't set trace_clock: ", clock);
++			goto out;
++		}
+ 
+-	if (hist_data->enable_timestamps)
+ 		tracing_set_time_stamp_abs(file->tr, true);
++	}
++
++	if (named_data)
++		destroy_hist_data(hist_data);
++
++	ret++;
+  out:
+ 	return ret;
+ }
 -- 
 1.9.3
