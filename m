@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v7 07/37] tracing: Add timestamp_mode trace file
-Date: Wed,  6 Dec 2017 16:37:48 -0600
-Message-ID: <e8e375238bcca16dc806a3ab9537dc9a8436706a.1512593081.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v7 09/37] tracing: Add ring buffer event param to hist field functions
+Date: Wed,  6 Dec 2017 16:37:50 -0600
+Message-ID: <bd36b459ae000dc4b627748cb4bf47a6a52a80c6.1512593081.git.tom.zanussi@linux.intel.com>
 References: <cover.1512593081.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -11,149 +11,147 @@ Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         Tom Zanussi <tom.zanussi@linux.intel.com>
 To: rostedt@goodmis.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga01.intel.com ([192.55.52.88]:42834 "EHLO mga01.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1752415AbdLFWiu (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 6 Dec 2017 17:38:50 -0500
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1512593081.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1512593081.git.tom.zanussi@linux.intel.com>
 References: <cover.1512593081.git.tom.zanussi@linux.intel.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Add a new option flag indicating whether or not the ring buffer is in
-'absolute timestamp' mode.
-
-Currently this is only set/unset by hist triggers that make use of a
-common_timestamp.  As such, there's no reason to make this writeable
-for users - its purpose is only to allow users to determine
-unequivocally whether or not the ring buffer is in that mode (although
-absolute timestamps can coexist with the normal delta timestamps, when
-the ring buffer is in absolute mode, timestamps written while absolute
-mode is in effect take up more space in the buffer, and are not as
-efficient).
+Some events such as timestamps require access to a ring_buffer_event
+struct; add a param so that hist field functions can access that.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- Documentation/trace/ftrace.txt | 24 +++++++++++++++++++++
- kernel/trace/trace.c           | 47 ++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 71 insertions(+)
+ kernel/trace/trace_events_hist.c | 39 ++++++++++++++++++++++++---------------
+ 1 file changed, 24 insertions(+), 15 deletions(-)
 
-diff --git a/Documentation/trace/ftrace.txt b/Documentation/trace/ftrace.txt
-index d4601df..54213e5 100644
---- a/Documentation/trace/ftrace.txt
-+++ b/Documentation/trace/ftrace.txt
-@@ -539,6 +539,30 @@ of ftrace. Here is a list of some of the key files:
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 63a1912..37f5ace 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -26,7 +26,8 @@
  
- 	See events.txt for more information.
+ struct hist_field;
  
-+  timestamp_mode:
-+
-+	Certain tracers may change the timestamp mode used when
-+	logging trace events into the event buffer.  Events with
-+	different modes can coexist within a buffer but the mode in
-+	effect when an event is logged determines which timestamp mode
-+	is used for that event.  The default timestamp mode is
-+	'delta'.
-+
-+	Usual timestamp modes for tracing:
-+
-+	  # cat timestamp_mode
-+	  [delta] absolute
-+
-+	  The timestamp mode with the square brackets around it is the
-+	  one in effect.
-+
-+	  delta: Default timestamp mode - timestamp is a delta against
-+	         a per-buffer timestamp.
-+
-+	  absolute: The timestamp is a full timestamp, not a delta
-+                 against some other value.  As such it takes up more
-+                 space and is less efficient.
-+
-   hwlat_detector:
+-typedef u64 (*hist_field_fn_t) (struct hist_field *field, void *event);
++typedef u64 (*hist_field_fn_t) (struct hist_field *field, void *event,
++				struct ring_buffer_event *rbe);
  
- 	Directory for the Hardware Latency Detector.
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index 459924f..da604fa 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -4531,6 +4531,9 @@ static int tracing_trace_options_open(struct inode *inode, struct file *file)
- #ifdef CONFIG_X86_64
- 	"     x86-tsc:   TSC cycle counter\n"
- #endif
-+	"\n  timestamp_mode\t-view the mode used to timestamp events\n"
-+	"       delta:   Delta difference against a buffer-wide timestamp\n"
-+	"    absolute:   Absolute (standalone) timestamp\n"
- 	"\n  trace_marker\t\t- Writes into this file writes into the kernel buffer\n"
- 	"\n  trace_marker_raw\t\t- Writes into this file writes binary data into the kernel buffer\n"
- 	"  tracing_cpumask\t- Limit which CPUs to trace\n"
-@@ -6298,6 +6301,40 @@ static int tracing_clock_open(struct inode *inode, struct file *file)
- 	return ret;
- }
+ #define HIST_FIELD_OPERANDS_MAX	2
  
-+static int tracing_time_stamp_mode_show(struct seq_file *m, void *v)
-+{
-+	struct trace_array *tr = m->private;
-+
-+	mutex_lock(&trace_types_lock);
-+
-+	if (ring_buffer_time_stamp_abs(tr->trace_buffer.buffer))
-+		seq_puts(m, "delta [absolute]\n");
-+	else
-+		seq_puts(m, "[delta] absolute\n");
-+
-+	mutex_unlock(&trace_types_lock);
-+
-+	return 0;
-+}
-+
-+static int tracing_time_stamp_mode_open(struct inode *inode, struct file *file)
-+{
-+	struct trace_array *tr = inode->i_private;
-+	int ret;
-+
-+	if (tracing_disabled)
-+		return -ENODEV;
-+
-+	if (trace_array_get(tr))
-+		return -ENODEV;
-+
-+	ret = single_open(file, tracing_time_stamp_mode_show, inode->i_private);
-+	if (ret < 0)
-+		trace_array_put(tr);
-+
-+	return ret;
-+}
-+
- int tracing_set_time_stamp_abs(struct trace_array *tr, bool abs)
- {
- 	int ret = 0;
-@@ -6576,6 +6613,13 @@ static int snapshot_raw_open(struct inode *inode, struct file *filp)
- 	.write		= tracing_clock_write,
+@@ -40,24 +41,28 @@ struct hist_field {
+ 	struct hist_field		*operands[HIST_FIELD_OPERANDS_MAX];
  };
  
-+static const struct file_operations trace_time_stamp_mode_fops = {
-+	.open		= tracing_time_stamp_mode_open,
-+	.read		= seq_read,
-+	.llseek		= seq_lseek,
-+	.release	= tracing_single_release_tr,
-+};
-+
- #ifdef CONFIG_TRACER_SNAPSHOT
- static const struct file_operations snapshot_fops = {
- 	.open		= tracing_snapshot_open,
-@@ -7903,6 +7947,9 @@ static __init void create_trace_instances(struct dentry *d_tracer)
- 	trace_create_file("tracing_on", 0644, d_tracer,
- 			  tr, &rb_simple_fops);
+-static u64 hist_field_none(struct hist_field *field, void *event)
++static u64 hist_field_none(struct hist_field *field, void *event,
++			   struct ring_buffer_event *rbe)
+ {
+ 	return 0;
+ }
  
-+	trace_create_file("timestamp_mode", 0444, d_tracer, tr,
-+			  &trace_time_stamp_mode_fops);
-+
- 	create_trace_options_dir(tr);
+-static u64 hist_field_counter(struct hist_field *field, void *event)
++static u64 hist_field_counter(struct hist_field *field, void *event,
++			      struct ring_buffer_event *rbe)
+ {
+ 	return 1;
+ }
  
- #if defined(CONFIG_TRACER_MAX_TRACE) || defined(CONFIG_HWLAT_TRACER)
+-static u64 hist_field_string(struct hist_field *hist_field, void *event)
++static u64 hist_field_string(struct hist_field *hist_field, void *event,
++			     struct ring_buffer_event *rbe)
+ {
+ 	char *addr = (char *)(event + hist_field->field->offset);
+ 
+ 	return (u64)(unsigned long)addr;
+ }
+ 
+-static u64 hist_field_dynstring(struct hist_field *hist_field, void *event)
++static u64 hist_field_dynstring(struct hist_field *hist_field, void *event,
++				struct ring_buffer_event *rbe)
+ {
+ 	u32 str_item = *(u32 *)(event + hist_field->field->offset);
+ 	int str_loc = str_item & 0xffff;
+@@ -66,24 +71,28 @@ static u64 hist_field_dynstring(struct hist_field *hist_field, void *event)
+ 	return (u64)(unsigned long)addr;
+ }
+ 
+-static u64 hist_field_pstring(struct hist_field *hist_field, void *event)
++static u64 hist_field_pstring(struct hist_field *hist_field, void *event,
++			      struct ring_buffer_event *rbe)
+ {
+ 	char **addr = (char **)(event + hist_field->field->offset);
+ 
+ 	return (u64)(unsigned long)*addr;
+ }
+ 
+-static u64 hist_field_log2(struct hist_field *hist_field, void *event)
++static u64 hist_field_log2(struct hist_field *hist_field, void *event,
++			   struct ring_buffer_event *rbe)
+ {
+ 	struct hist_field *operand = hist_field->operands[0];
+ 
+-	u64 val = operand->fn(operand, event);
++	u64 val = operand->fn(operand, event, rbe);
+ 
+ 	return (u64) ilog2(roundup_pow_of_two(val));
+ }
+ 
+ #define DEFINE_HIST_FIELD_FN(type)					\
+-static u64 hist_field_##type(struct hist_field *hist_field, void *event)\
++	static u64 hist_field_##type(struct hist_field *hist_field,	\
++				     void *event,			\
++				     struct ring_buffer_event *rbe)	\
+ {									\
+ 	type *addr = (type *)(event + hist_field->field->offset);	\
+ 									\
+@@ -871,8 +880,8 @@ static bool need_tracing_map_ops(struct hist_trigger_data *hist_data)
+ }
+ 
+ static void hist_trigger_elt_update(struct hist_trigger_data *hist_data,
+-				    struct tracing_map_elt *elt,
+-				    void *rec)
++				    struct tracing_map_elt *elt, void *rec,
++				    struct ring_buffer_event *rbe)
+ {
+ 	struct hist_field *hist_field;
+ 	unsigned int i;
+@@ -880,7 +889,7 @@ static void hist_trigger_elt_update(struct hist_trigger_data *hist_data,
+ 
+ 	for_each_hist_val_field(i, hist_data) {
+ 		hist_field = hist_data->fields[i];
+-		hist_val = hist_field->fn(hist_field, rec);
++		hist_val = hist_field->fn(hist_field, rec, rbe);
+ 		tracing_map_update_sum(elt, i, hist_val);
+ 	}
+ }
+@@ -910,7 +919,7 @@ static inline void add_to_key(char *compound_key, void *key,
+ }
+ 
+ static void event_hist_trigger(struct event_trigger_data *data, void *rec,
+-			       struct ring_buffer_event *event)
++			       struct ring_buffer_event *rbe)
+ {
+ 	struct hist_trigger_data *hist_data = data->private_data;
+ 	bool use_compound_key = (hist_data->n_keys > 1);
+@@ -939,7 +948,7 @@ static void event_hist_trigger(struct event_trigger_data *data, void *rec,
+ 
+ 			key = entries;
+ 		} else {
+-			field_contents = key_field->fn(key_field, rec);
++			field_contents = key_field->fn(key_field, rec, rbe);
+ 			if (key_field->flags & HIST_FIELD_FL_STRING) {
+ 				key = (void *)(unsigned long)field_contents;
+ 				use_compound_key = true;
+@@ -956,7 +965,7 @@ static void event_hist_trigger(struct event_trigger_data *data, void *rec,
+ 
+ 	elt = tracing_map_insert(hist_data->map, key);
+ 	if (elt)
+-		hist_trigger_elt_update(hist_data, elt, rec);
++		hist_trigger_elt_update(hist_data, elt, rec, rbe);
+ }
+ 
+ static void hist_trigger_stacktrace_print(struct seq_file *m,
 -- 
 1.9.3
-
