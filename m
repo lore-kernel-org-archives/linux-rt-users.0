@@ -1,8 +1,7 @@
 From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: [PATCH 2/5] perf-probe: Cut off the version suffix from event name
-Date: Wed,  6 Dec 2017 12:07:18 +0900
-Message-ID: <151252963870.12861.2422947542786652399.stgit@devbox>
-References: <151252958056.12861.954203514347167563.stgit@devbox>
+Subject: [PATCH 0/5] perf-probe: Improve probing on versioned symbols
+Date: Wed,  6 Dec 2017 12:06:20 +0900
+Message-ID: <151252958056.12861.954203514347167563.stgit@devbox>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
@@ -11,66 +10,56 @@ Cc: Masami Hiramatsu <mhiramat@kernel.org>,
         linux-kernel@vger.kernel.org, Paul Clarke <pc@us.ibm.com>,
         linux-rt-users@vger.kernel.org, linux-perf-users@vger.kernel.org
 To: Arnaldo Carvalho de Melo <acme@kernel.org>
-Return-path: <linux-perf-users-owner@vger.kernel.org>
-In-Reply-To: <151252958056.12861.954203514347167563.stgit@devbox>
-Sender: linux-perf-users-owner@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Cut off the version suffix (e.g. @GLIBC_2.2.5 etc.) from
-automatic generated event name. This fixes wildcard event
-adding like below case;
+Hi,
 
-  =====
-  # perf probe -x /lib64/libc-2.25.so malloc*
-  Internal error: "malloc_get_state@GLIBC_2" is wrong event name.
-    Error: Failed to add events.
-  =====
+Here is the series for probing on versioned symbols
+in libraries. This includes 5 patches to fix the
+issues discussed on perf-users ML 
+(https://www.spinics.net/lists/linux-perf-users/msg04637.html)
 
-This failure was caused by a versioned suffix symbol.
-With this fix, perf probe automatically cuts the
-suffix after @ as below.
+[1/5] Warn if the event name is invalid. This notices
+   user that there is internal error which caused by
+   unexpected input.
+[2/5] Cut off the version suffix when making event name
+   from symbol name. This fixes a issue when a wildcard
+   hits versioned symbol.
+[3/5] Add "__return" suffix to the event name 
+   automatically for the return probe, so that user
+   can easily identify which event is on function
+   return.
+[4/5] Find versioned symbol from map without wildcard.
+   This allows user to specify a symbol without version
+   suffix nor wildcard. Anyway, at this point we have
+   no way to specify version suffix, because parser
+   recognizes "@" is a separator of "function@file"
+   syntax. This is fixed in next patch.
+[5/5] Allow user to use backslash-escaped characters
+   on command line. This has 2 effects, user can specify
+   version suffix directly, and we can use special
+   characters in source file.
 
-  =====
-  # ./perf probe -x /lib64/libc-2.25.so malloc*
-  Added new events:
-    probe_libc:malloc_printerr (on malloc* in /usr/lib64/libc-2.25.so)
-    probe_libc:malloc_consolidate (on malloc* in /usr/lib64/libc-2.25.so)
-    probe_libc:malloc_check (on malloc* in /usr/lib64/libc-2.25.so)
-    probe_libc:malloc_hook_ini (on malloc* in /usr/lib64/libc-2.25.so)
-    probe_libc:malloc    (on malloc* in /usr/lib64/libc-2.25.so)
-    probe_libc:malloc_trim (on malloc* in /usr/lib64/libc-2.25.so)
-    probe_libc:malloc_usable_size (on malloc* in /usr/lib64/libc-2.25.so)
-    probe_libc:malloc_stats (on malloc* in /usr/lib64/libc-2.25.so)
-    probe_libc:malloc_info (on malloc* in /usr/lib64/libc-2.25.so)
-    probe_libc:mallochook (on malloc* in /usr/lib64/libc-2.25.so)
-    probe_libc:malloc_get_state (on malloc* in /usr/lib64/libc-2.25.so)
-    probe_libc:malloc_set_state (on malloc* in /usr/lib64/libc-2.25.so)
-
-  You can now use it in all perf tools, such as:
-
-	  perf record -e probe_libc:malloc_set_state -aR sleep 1
-
-  =====
-
-Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
-Reported-by: Arnaldo Carvalho de Melo <acme@kernel.org>
-Reported-by: bhargavb <bhargavaramudu@gmail.com>
+Thanks,
 ---
- tools/perf/util/probe-event.c |    4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/tools/perf/util/probe-event.c b/tools/perf/util/probe-event.c
-index c0067950e56f..74435fb7ab7f 100644
---- a/tools/perf/util/probe-event.c
-+++ b/tools/perf/util/probe-event.c
-@@ -2584,8 +2584,8 @@ static int get_new_event_name(char *buf, size_t len, const char *base,
- 	if (!nbase)
- 		return -ENOMEM;
- 
--	/* Cut off the dot suffixes (e.g. .const, .isra)*/
--	p = strchr(nbase, '.');
-+	/* Cut off the dot suffixes (e.g. .const, .isra) and version suffixes */
-+	p = strpbrk(nbase, ".@");
- 	if (p && p != nbase)
- 		*p = '\0';
- 
+Masami Hiramatsu (5):
+      perf-probe: Add warning message if there is unexpected event name
+      perf-probe: Cut off the version suffix from event name
+      perf-probe: Add __return suffix for return events
+      perf-probe: Find versioned symbols from map
+      perf-probe: Support escaped character in parser
+
+
+ tools/perf/arch/powerpc/util/sym-handling.c |    8 +++
+ tools/perf/util/probe-event.c               |   81 +++++++++++++++++++--------
+ tools/perf/util/string.c                    |   46 +++++++++++++++
+ tools/perf/util/string2.h                   |    2 +
+ tools/perf/util/symbol.c                    |    5 ++
+ tools/perf/util/symbol.h                    |    1 
+ 6 files changed, 120 insertions(+), 23 deletions(-)
+
+--
+Masami Hiramatsu (Linaro Ltd.) <mhiramat@kernel.org>
