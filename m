@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v7 08/37] tracing: Give event triggers access to ring_buffer_event
-Date: Wed,  6 Dec 2017 16:37:49 -0600
-Message-ID: <41d80738c80ee144acd49109235e8ce7daa75fa2.1512593081.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v7 06/37] ring-buffer: Redefine the unimplemented RINGBUF_TYPE_TIME_STAMP
+Date: Wed,  6 Dec 2017 16:37:47 -0600
+Message-ID: <53b06993e5436d91da5f0d0b412c0e07b54ca040.1512593081.git.tom.zanussi@linux.intel.com>
 References: <cover.1512593081.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,305 +18,321 @@ References: <cover.1512593081.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-The ring_buffer event can provide a timestamp that may be useful to
-various triggers - pass it into the handlers for that purpose.
+RINGBUF_TYPE_TIME_STAMP is defined but not used, and from what I can
+gather was reserved for something like an absolute timestamp feature
+for the ring buffer, if not a complete replacement of the current
+time_delta scheme.
+
+This code redefines RINGBUF_TYPE_TIME_STAMP to implement absolute time
+stamps.  Another way to look at it is that it essentially forces
+extended time_deltas for all events.
+
+The motivation for doing this is to enable time_deltas that aren't
+dependent on previous events in the ring buffer, making it feasible to
+use the ring_buffer_event timetamps in a more random-access way, for
+purposes other than serial event printing.
+
+To set/reset this mode, use tracing_set_timestamp_abs() from the
+previous interface patch.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- include/linux/trace_events.h        | 14 ++++++-----
- kernel/trace/trace.h                |  9 +++----
- kernel/trace/trace_events_hist.c    | 11 +++++----
- kernel/trace/trace_events_trigger.c | 47 +++++++++++++++++++++++--------------
- 4 files changed, 49 insertions(+), 32 deletions(-)
+ include/linux/ring_buffer.h |  12 ++---
+ kernel/trace/ring_buffer.c  | 104 ++++++++++++++++++++++++++++++++------------
+ 2 files changed, 83 insertions(+), 33 deletions(-)
 
-diff --git a/include/linux/trace_events.h b/include/linux/trace_events.h
-index ca4e67e..2d1bb0f 100644
---- a/include/linux/trace_events.h
-+++ b/include/linux/trace_events.h
-@@ -406,11 +406,13 @@ enum event_trigger_type {
+diff --git a/include/linux/ring_buffer.h b/include/linux/ring_buffer.h
+index 28e3472..74bc276 100644
+--- a/include/linux/ring_buffer.h
++++ b/include/linux/ring_buffer.h
+@@ -36,10 +36,12 @@ struct ring_buffer_event {
+  *				 array[0] = time delta (28 .. 59)
+  *				 size = 8 bytes
+  *
+- * @RINGBUF_TYPE_TIME_STAMP:	Sync time stamp with external clock
+- *				 array[0]    = tv_nsec
+- *				 array[1..2] = tv_sec
+- *				 size = 16 bytes
++ * @RINGBUF_TYPE_TIME_STAMP:	Absolute timestamp
++ *				 Same format as TIME_EXTEND except that the
++ *				 value is an absolute timestamp, not a delta
++ *				 event.time_delta contains bottom 27 bits
++ *				 array[0] = top (28 .. 59) bits
++ *				 size = 8 bytes
+  *
+  * <= @RINGBUF_TYPE_DATA_TYPE_LEN_MAX:
+  *				Data record
+@@ -56,12 +58,12 @@ enum ring_buffer_type {
+ 	RINGBUF_TYPE_DATA_TYPE_LEN_MAX = 28,
+ 	RINGBUF_TYPE_PADDING,
+ 	RINGBUF_TYPE_TIME_EXTEND,
+-	/* FIXME: RINGBUF_TYPE_TIME_STAMP not implemented */
+ 	RINGBUF_TYPE_TIME_STAMP,
+ };
  
- extern int filter_match_preds(struct event_filter *filter, void *rec);
+ unsigned ring_buffer_event_length(struct ring_buffer_event *event);
+ void *ring_buffer_event_data(struct ring_buffer_event *event);
++u64 ring_buffer_event_time_stamp(struct ring_buffer_event *event);
  
--extern enum event_trigger_type event_triggers_call(struct trace_event_file *file,
--						   void *rec);
--extern void event_triggers_post_call(struct trace_event_file *file,
--				     enum event_trigger_type tt,
--				     void *rec);
-+extern enum event_trigger_type
-+event_triggers_call(struct trace_event_file *file, void *rec,
-+		    struct ring_buffer_event *event);
-+extern void
-+event_triggers_post_call(struct trace_event_file *file,
-+			 enum event_trigger_type tt,
-+			 void *rec, struct ring_buffer_event *event);
+ /*
+  * ring_buffer_discard_commit will remove an event that has not
+diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
+index 1e5b75a..763b3fb 100644
+--- a/kernel/trace/ring_buffer.c
++++ b/kernel/trace/ring_buffer.c
+@@ -42,6 +42,8 @@ int ring_buffer_print_entry_header(struct trace_seq *s)
+ 			 RINGBUF_TYPE_PADDING);
+ 	trace_seq_printf(s, "\ttime_extend : type == %d\n",
+ 			 RINGBUF_TYPE_TIME_EXTEND);
++	trace_seq_printf(s, "\ttime_stamp : type == %d\n",
++			 RINGBUF_TYPE_TIME_STAMP);
+ 	trace_seq_printf(s, "\tdata max type_len  == %d\n",
+ 			 RINGBUF_TYPE_DATA_TYPE_LEN_MAX);
  
- bool trace_event_ignore_this_pid(struct trace_event_file *trace_file);
+@@ -141,12 +143,15 @@ int ring_buffer_print_entry_header(struct trace_seq *s)
  
-@@ -430,7 +432,7 @@ extern void event_triggers_post_call(struct trace_event_file *file,
+ enum {
+ 	RB_LEN_TIME_EXTEND = 8,
+-	RB_LEN_TIME_STAMP = 16,
++	RB_LEN_TIME_STAMP =  8,
+ };
  
- 	if (!(eflags & EVENT_FILE_FL_TRIGGER_COND)) {
- 		if (eflags & EVENT_FILE_FL_TRIGGER_MODE)
--			event_triggers_call(file, NULL);
-+			event_triggers_call(file, NULL, NULL);
- 		if (eflags & EVENT_FILE_FL_SOFT_DISABLED)
- 			return true;
- 		if (eflags & EVENT_FILE_FL_PID_FILTER)
-diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
-index 4d8bde0..bbfb577 100644
---- a/kernel/trace/trace.h
-+++ b/kernel/trace/trace.h
-@@ -1293,7 +1293,7 @@ static inline void trace_buffer_unlock_commit(struct trace_array *tr,
- 	unsigned long eflags = file->flags;
+ #define skip_time_extend(event) \
+ 	((struct ring_buffer_event *)((char *)event + RB_LEN_TIME_EXTEND))
  
- 	if (eflags & EVENT_FILE_FL_TRIGGER_COND)
--		*tt = event_triggers_call(file, entry);
-+		*tt = event_triggers_call(file, entry, event);
- 
- 	if (test_bit(EVENT_FILE_FL_SOFT_DISABLED_BIT, &file->flags) ||
- 	    (unlikely(file->flags & EVENT_FILE_FL_FILTERED) &&
-@@ -1330,7 +1330,7 @@ static inline void trace_buffer_unlock_commit(struct trace_array *tr,
- 		trace_buffer_unlock_commit(file->tr, buffer, event, irq_flags, pc);
- 
- 	if (tt)
--		event_triggers_post_call(file, tt, entry);
-+		event_triggers_post_call(file, tt, entry, event);
- }
- 
- /**
-@@ -1363,7 +1363,7 @@ static inline void trace_buffer_unlock_commit(struct trace_array *tr,
- 						irq_flags, pc, regs);
- 
- 	if (tt)
--		event_triggers_post_call(file, tt, entry);
-+		event_triggers_post_call(file, tt, entry, event);
- }
- 
- #define FILTER_PRED_INVALID	((unsigned short)-1)
-@@ -1588,7 +1588,8 @@ extern void set_named_trigger_data(struct event_trigger_data *data,
-  */
- struct event_trigger_ops {
- 	void			(*func)(struct event_trigger_data *data,
--					void *rec);
-+					void *rec,
-+					struct ring_buffer_event *rbe);
- 	int			(*init)(struct event_trigger_ops *ops,
- 					struct event_trigger_data *data);
- 	void			(*free)(struct event_trigger_ops *ops,
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 712260e..63a1912 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -909,7 +909,8 @@ static inline void add_to_key(char *compound_key, void *key,
- 	memcpy(compound_key + key_field->offset, key, size);
- }
- 
--static void event_hist_trigger(struct event_trigger_data *data, void *rec)
-+static void event_hist_trigger(struct event_trigger_data *data, void *rec,
-+			       struct ring_buffer_event *event)
++#define extended_time(event) \
++	(event->type_len >= RINGBUF_TYPE_TIME_EXTEND)
++
+ static inline int rb_null_event(struct ring_buffer_event *event)
  {
- 	struct hist_trigger_data *hist_data = data->private_data;
- 	bool use_compound_key = (hist_data->n_keys > 1);
-@@ -1658,7 +1659,8 @@ __init int register_trigger_hist_cmd(void)
- }
- 
- static void
--hist_enable_trigger(struct event_trigger_data *data, void *rec)
-+hist_enable_trigger(struct event_trigger_data *data, void *rec,
-+		    struct ring_buffer_event *event)
+ 	return event->type_len == RINGBUF_TYPE_PADDING && !event->time_delta;
+@@ -210,7 +215,7 @@ static void rb_event_set_padding(struct ring_buffer_event *event)
  {
- 	struct enable_trigger_data *enable_data = data->private_data;
- 	struct event_trigger_data *test;
-@@ -1674,7 +1676,8 @@ __init int register_trigger_hist_cmd(void)
- }
+ 	unsigned len = 0;
  
- static void
--hist_enable_count_trigger(struct event_trigger_data *data, void *rec)
-+hist_enable_count_trigger(struct event_trigger_data *data, void *rec,
-+			  struct ring_buffer_event *event)
+-	if (event->type_len == RINGBUF_TYPE_TIME_EXTEND) {
++	if (extended_time(event)) {
+ 		/* time extends include the data event after it */
+ 		len = RB_LEN_TIME_EXTEND;
+ 		event = skip_time_extend(event);
+@@ -232,7 +237,7 @@ unsigned ring_buffer_event_length(struct ring_buffer_event *event)
  {
- 	if (!data->count)
- 		return;
-@@ -1682,7 +1685,7 @@ __init int register_trigger_hist_cmd(void)
- 	if (data->count != -1)
- 		(data->count)--;
+ 	unsigned length;
  
--	hist_enable_trigger(data, rec);
-+	hist_enable_trigger(data, rec, event);
- }
+-	if (event->type_len == RINGBUF_TYPE_TIME_EXTEND)
++	if (extended_time(event))
+ 		event = skip_time_extend(event);
  
- static struct event_trigger_ops hist_enable_trigger_ops = {
-diff --git a/kernel/trace/trace_events_trigger.c b/kernel/trace/trace_events_trigger.c
-index f2ac9d4..9b0fe31 100644
---- a/kernel/trace/trace_events_trigger.c
-+++ b/kernel/trace/trace_events_trigger.c
-@@ -63,7 +63,8 @@ void trigger_data_free(struct event_trigger_data *data)
-  * any trigger that should be deferred, ETT_NONE if nothing to defer.
-  */
- enum event_trigger_type
--event_triggers_call(struct trace_event_file *file, void *rec)
-+event_triggers_call(struct trace_event_file *file, void *rec,
-+		    struct ring_buffer_event *event)
+ 	length = rb_event_length(event);
+@@ -249,7 +254,7 @@ unsigned ring_buffer_event_length(struct ring_buffer_event *event)
+ static __always_inline void *
+ rb_event_data(struct ring_buffer_event *event)
  {
- 	struct event_trigger_data *data;
- 	enum event_trigger_type tt = ETT_NONE;
-@@ -76,7 +77,7 @@ enum event_trigger_type
- 		if (data->paused)
- 			continue;
- 		if (!rec) {
--			data->ops->func(data, rec);
-+			data->ops->func(data, rec, event);
- 			continue;
- 		}
- 		filter = rcu_dereference_sched(data->filter);
-@@ -86,7 +87,7 @@ enum event_trigger_type
- 			tt |= data->cmd_ops->trigger_type;
- 			continue;
- 		}
--		data->ops->func(data, rec);
-+		data->ops->func(data, rec, event);
+-	if (event->type_len == RINGBUF_TYPE_TIME_EXTEND)
++	if (extended_time(event))
+ 		event = skip_time_extend(event);
+ 	BUG_ON(event->type_len > RINGBUF_TYPE_DATA_TYPE_LEN_MAX);
+ 	/* If length is in len field, then array[0] has the data */
+@@ -276,6 +281,27 @@ void *ring_buffer_event_data(struct ring_buffer_event *event)
+ #define TS_MASK		((1ULL << TS_SHIFT) - 1)
+ #define TS_DELTA_TEST	(~TS_MASK)
+ 
++/**
++ * ring_buffer_event_time_stamp - return the event's extended timestamp
++ * @event: the event to get the timestamp of
++ *
++ * Returns the extended timestamp associated with a data event.
++ * An extended time_stamp is a 64-bit timestamp represented
++ * internally in a special way that makes the best use of space
++ * contained within a ring buffer event.  This function decodes
++ * it and maps it to a straight u64 value.
++ */
++u64 ring_buffer_event_time_stamp(struct ring_buffer_event *event)
++{
++	u64 ts;
++
++	ts = event->array[0];
++	ts <<= TS_SHIFT;
++	ts += event->time_delta;
++
++	return ts;
++}
++
+ /* Flag when events were overwritten */
+ #define RB_MISSED_EVENTS	(1 << 31)
+ /* Missed count stored at end */
+@@ -2221,12 +2247,15 @@ static void rb_inc_iter(struct ring_buffer_iter *iter)
+ 
+ /* Slow path, do not inline */
+ static noinline struct ring_buffer_event *
+-rb_add_time_stamp(struct ring_buffer_event *event, u64 delta)
++rb_add_time_stamp(struct ring_buffer_event *event, u64 delta, bool abs)
+ {
+-	event->type_len = RINGBUF_TYPE_TIME_EXTEND;
++	if (abs)
++		event->type_len = RINGBUF_TYPE_TIME_STAMP;
++	else
++		event->type_len = RINGBUF_TYPE_TIME_EXTEND;
+ 
+-	/* Not the first event on the page? */
+-	if (rb_event_index(event)) {
++	/* Not the first event on the page, or not delta? */
++	if (abs || rb_event_index(event)) {
+ 		event->time_delta = delta & TS_MASK;
+ 		event->array[0] = delta >> TS_SHIFT;
+ 	} else {
+@@ -2269,7 +2298,9 @@ static inline bool rb_event_is_commit(struct ring_buffer_per_cpu *cpu_buffer,
+ 	 * add it to the start of the resevered space.
+ 	 */
+ 	if (unlikely(info->add_timestamp)) {
+-		event = rb_add_time_stamp(event, delta);
++		bool abs = ring_buffer_time_stamp_abs(cpu_buffer->buffer);
++
++		event = rb_add_time_stamp(event, info->delta, abs);
+ 		length -= RB_LEN_TIME_EXTEND;
+ 		delta = 0;
  	}
- 	return tt;
- }
-@@ -108,7 +109,7 @@ enum event_trigger_type
- void
- event_triggers_post_call(struct trace_event_file *file,
- 			 enum event_trigger_type tt,
--			 void *rec)
-+			 void *rec, struct ring_buffer_event *event)
- {
- 	struct event_trigger_data *data;
+@@ -2457,7 +2488,7 @@ static __always_inline void rb_end_commit(struct ring_buffer_per_cpu *cpu_buffer
  
-@@ -116,7 +117,7 @@ enum event_trigger_type
- 		if (data->paused)
- 			continue;
- 		if (data->cmd_ops->trigger_type & tt)
--			data->ops->func(data, rec);
-+			data->ops->func(data, rec, event);
+ static inline void rb_event_discard(struct ring_buffer_event *event)
+ {
+-	if (event->type_len == RINGBUF_TYPE_TIME_EXTEND)
++	if (extended_time(event))
+ 		event = skip_time_extend(event);
+ 
+ 	/* array[0] holds the actual length for the discarded event */
+@@ -2501,10 +2532,11 @@ static inline void rb_event_discard(struct ring_buffer_event *event)
+ 			cpu_buffer->write_stamp =
+ 				cpu_buffer->commit_page->page->time_stamp;
+ 		else if (event->type_len == RINGBUF_TYPE_TIME_EXTEND) {
+-			delta = event->array[0];
+-			delta <<= TS_SHIFT;
+-			delta += event->time_delta;
++			delta = ring_buffer_event_time_stamp(event);
+ 			cpu_buffer->write_stamp += delta;
++		} else if (event->type_len == RINGBUF_TYPE_TIME_STAMP) {
++			delta = ring_buffer_event_time_stamp(event);
++			cpu_buffer->write_stamp = delta;
+ 		} else
+ 			cpu_buffer->write_stamp += event->time_delta;
  	}
- }
- EXPORT_SYMBOL_GPL(event_triggers_post_call);
-@@ -909,7 +910,8 @@ void set_named_trigger_data(struct event_trigger_data *data,
- }
+@@ -2657,7 +2689,7 @@ int ring_buffer_unlock_commit(struct ring_buffer *buffer,
+ 	 * If this is the first commit on the page, then it has the same
+ 	 * timestamp as the page itself.
+ 	 */
+-	if (!tail)
++	if (!tail && !ring_buffer_time_stamp_abs(cpu_buffer->buffer))
+ 		info->delta = 0;
  
- static void
--traceon_trigger(struct event_trigger_data *data, void *rec)
-+traceon_trigger(struct event_trigger_data *data, void *rec,
-+		struct ring_buffer_event *event)
- {
- 	if (tracing_is_on())
+ 	/* See if we shot pass the end of this buffer page */
+@@ -2735,8 +2767,11 @@ int ring_buffer_unlock_commit(struct ring_buffer *buffer,
+ 	/* make sure this diff is calculated here */
+ 	barrier();
+ 
+-	/* Did the write stamp get updated already? */
+-	if (likely(info.ts >= cpu_buffer->write_stamp)) {
++	if (ring_buffer_time_stamp_abs(buffer)) {
++		info.delta = info.ts;
++		rb_handle_timestamp(cpu_buffer, &info);
++	} else /* Did the write stamp get updated already? */
++		if (likely(info.ts >= cpu_buffer->write_stamp)) {
+ 		info.delta = diff;
+ 		if (unlikely(test_time_stamp(info.delta)))
+ 			rb_handle_timestamp(cpu_buffer, &info);
+@@ -3418,14 +3453,13 @@ int ring_buffer_iter_empty(struct ring_buffer_iter *iter)
  		return;
-@@ -918,7 +920,8 @@ void set_named_trigger_data(struct event_trigger_data *data,
- }
  
- static void
--traceon_count_trigger(struct event_trigger_data *data, void *rec)
-+traceon_count_trigger(struct event_trigger_data *data, void *rec,
-+		      struct ring_buffer_event *event)
- {
- 	if (tracing_is_on())
+ 	case RINGBUF_TYPE_TIME_EXTEND:
+-		delta = event->array[0];
+-		delta <<= TS_SHIFT;
+-		delta += event->time_delta;
++		delta = ring_buffer_event_time_stamp(event);
+ 		cpu_buffer->read_stamp += delta;
  		return;
-@@ -933,7 +936,8 @@ void set_named_trigger_data(struct event_trigger_data *data,
- }
  
- static void
--traceoff_trigger(struct event_trigger_data *data, void *rec)
-+traceoff_trigger(struct event_trigger_data *data, void *rec,
-+		 struct ring_buffer_event *event)
- {
- 	if (!tracing_is_on())
+ 	case RINGBUF_TYPE_TIME_STAMP:
+-		/* FIXME: not implemented */
++		delta = ring_buffer_event_time_stamp(event);
++		cpu_buffer->read_stamp = delta;
  		return;
-@@ -942,7 +946,8 @@ void set_named_trigger_data(struct event_trigger_data *data,
- }
  
- static void
--traceoff_count_trigger(struct event_trigger_data *data, void *rec)
-+traceoff_count_trigger(struct event_trigger_data *data, void *rec,
-+		       struct ring_buffer_event *event)
- {
- 	if (!tracing_is_on())
+ 	case RINGBUF_TYPE_DATA:
+@@ -3449,14 +3483,13 @@ int ring_buffer_iter_empty(struct ring_buffer_iter *iter)
  		return;
-@@ -1039,13 +1044,15 @@ void set_named_trigger_data(struct event_trigger_data *data,
  
- #ifdef CONFIG_TRACER_SNAPSHOT
- static void
--snapshot_trigger(struct event_trigger_data *data, void *rec)
-+snapshot_trigger(struct event_trigger_data *data, void *rec,
-+		 struct ring_buffer_event *event)
- {
- 	tracing_snapshot();
- }
- 
- static void
--snapshot_count_trigger(struct event_trigger_data *data, void *rec)
-+snapshot_count_trigger(struct event_trigger_data *data, void *rec,
-+		       struct ring_buffer_event *event)
- {
- 	if (!data->count)
+ 	case RINGBUF_TYPE_TIME_EXTEND:
+-		delta = event->array[0];
+-		delta <<= TS_SHIFT;
+-		delta += event->time_delta;
++		delta = ring_buffer_event_time_stamp(event);
+ 		iter->read_stamp += delta;
  		return;
-@@ -1053,7 +1060,7 @@ void set_named_trigger_data(struct event_trigger_data *data,
- 	if (data->count != -1)
- 		(data->count)--;
  
--	snapshot_trigger(data, rec);
-+	snapshot_trigger(data, rec, event);
- }
- 
- static int
-@@ -1132,13 +1139,15 @@ static __init int register_trigger_snapshot_cmd(void)
- #define STACK_SKIP 3
- 
- static void
--stacktrace_trigger(struct event_trigger_data *data, void *rec)
-+stacktrace_trigger(struct event_trigger_data *data, void *rec,
-+		   struct ring_buffer_event *event)
- {
- 	trace_dump_stack(STACK_SKIP);
- }
- 
- static void
--stacktrace_count_trigger(struct event_trigger_data *data, void *rec)
-+stacktrace_count_trigger(struct event_trigger_data *data, void *rec,
-+			 struct ring_buffer_event *event)
- {
- 	if (!data->count)
+ 	case RINGBUF_TYPE_TIME_STAMP:
+-		/* FIXME: not implemented */
++		delta = ring_buffer_event_time_stamp(event);
++		iter->read_stamp = delta;
  		return;
-@@ -1146,7 +1155,7 @@ static __init int register_trigger_snapshot_cmd(void)
- 	if (data->count != -1)
- 		(data->count)--;
  
--	stacktrace_trigger(data, rec);
-+	stacktrace_trigger(data, rec, event);
- }
+ 	case RINGBUF_TYPE_DATA:
+@@ -3680,6 +3713,8 @@ static int rb_lost_events(struct ring_buffer_per_cpu *cpu_buffer)
+ 	struct buffer_page *reader;
+ 	int nr_loops = 0;
  
- static int
-@@ -1208,7 +1217,8 @@ static __init void unregister_trigger_traceon_traceoff_cmds(void)
- }
++	if (ts)
++		*ts = 0;
+  again:
+ 	/*
+ 	 * We repeat when a time extend is encountered.
+@@ -3716,12 +3751,17 @@ static int rb_lost_events(struct ring_buffer_per_cpu *cpu_buffer)
+ 		goto again;
  
- static void
--event_enable_trigger(struct event_trigger_data *data, void *rec)
-+event_enable_trigger(struct event_trigger_data *data, void *rec,
-+		     struct ring_buffer_event *event)
- {
- 	struct enable_trigger_data *enable_data = data->private_data;
+ 	case RINGBUF_TYPE_TIME_STAMP:
+-		/* FIXME: not implemented */
++		if (ts) {
++			*ts = ring_buffer_event_time_stamp(event);
++			ring_buffer_normalize_time_stamp(cpu_buffer->buffer,
++							 cpu_buffer->cpu, ts);
++		}
++		/* Internal data, OK to advance */
+ 		rb_advance_reader(cpu_buffer);
+ 		goto again;
  
-@@ -1219,7 +1229,8 @@ static __init void unregister_trigger_traceon_traceoff_cmds(void)
- }
+ 	case RINGBUF_TYPE_DATA:
+-		if (ts) {
++		if (ts && !(*ts)) {
+ 			*ts = cpu_buffer->read_stamp + event->time_delta;
+ 			ring_buffer_normalize_time_stamp(cpu_buffer->buffer,
+ 							 cpu_buffer->cpu, ts);
+@@ -3746,6 +3786,9 @@ static int rb_lost_events(struct ring_buffer_per_cpu *cpu_buffer)
+ 	struct ring_buffer_event *event;
+ 	int nr_loops = 0;
  
- static void
--event_enable_count_trigger(struct event_trigger_data *data, void *rec)
-+event_enable_count_trigger(struct event_trigger_data *data, void *rec,
-+			   struct ring_buffer_event *event)
- {
- 	struct enable_trigger_data *enable_data = data->private_data;
++	if (ts)
++		*ts = 0;
++
+ 	cpu_buffer = iter->cpu_buffer;
+ 	buffer = cpu_buffer->buffer;
  
-@@ -1233,7 +1244,7 @@ static __init void unregister_trigger_traceon_traceoff_cmds(void)
- 	if (data->count != -1)
- 		(data->count)--;
+@@ -3798,12 +3841,17 @@ static int rb_lost_events(struct ring_buffer_per_cpu *cpu_buffer)
+ 		goto again;
  
--	event_enable_trigger(data, rec);
-+	event_enable_trigger(data, rec, event);
- }
+ 	case RINGBUF_TYPE_TIME_STAMP:
+-		/* FIXME: not implemented */
++		if (ts) {
++			*ts = ring_buffer_event_time_stamp(event);
++			ring_buffer_normalize_time_stamp(cpu_buffer->buffer,
++							 cpu_buffer->cpu, ts);
++		}
++		/* Internal data, OK to advance */
+ 		rb_advance_iter(iter);
+ 		goto again;
  
- int event_enable_trigger_print(struct seq_file *m,
+ 	case RINGBUF_TYPE_DATA:
+-		if (ts) {
++		if (ts && !(*ts)) {
+ 			*ts = iter->read_stamp + event->time_delta;
+ 			ring_buffer_normalize_time_stamp(buffer,
+ 							 cpu_buffer->cpu, ts);
 -- 
 1.9.3
