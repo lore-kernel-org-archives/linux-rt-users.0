@@ -1,7 +1,7 @@
 From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: [PATCH v3 04/20] crypto: arm64/aes-bs - move kernel mode neon en/disable into loop
-Date: Wed,  6 Dec 2017 19:43:30 +0000
-Message-ID: <20171206194346.24393-5-ard.biesheuvel@linaro.org>
+Subject: [PATCH v3 05/20] crypto: arm64/chacha20 - move kernel mode neon en/disable into loop
+Date: Wed,  6 Dec 2017 19:43:31 +0000
+Message-ID: <20171206194346.24393-6-ard.biesheuvel@linaro.org>
 References: <20171206194346.24393-1-ard.biesheuvel@linaro.org>
 Cc: herbert@gondor.apana.org.au, linux-arm-kernel@lists.infradead.org,
         Ard Biesheuvel <ard.biesheuvel@linaro.org>,
@@ -41,151 +41,61 @@ the code with kernel mode NEON disabled (and preemption enabled)
 
 Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 ---
- arch/arm64/crypto/aes-neonbs-glue.c | 36 +++++++++-----------
- 1 file changed, 17 insertions(+), 19 deletions(-)
+ arch/arm64/crypto/chacha20-neon-glue.c | 12 +++++++++---
+ 1 file changed, 9 insertions(+), 3 deletions(-)
 
-diff --git a/arch/arm64/crypto/aes-neonbs-glue.c b/arch/arm64/crypto/aes-neonbs-glue.c
-index 9d823c77ec84..e7a95a566462 100644
---- a/arch/arm64/crypto/aes-neonbs-glue.c
-+++ b/arch/arm64/crypto/aes-neonbs-glue.c
-@@ -99,9 +99,8 @@ static int __ecb_crypt(struct skcipher_request *req,
- 	struct skcipher_walk walk;
- 	int err;
+diff --git a/arch/arm64/crypto/chacha20-neon-glue.c b/arch/arm64/crypto/chacha20-neon-glue.c
+index cbdb75d15cd0..727579c93ded 100644
+--- a/arch/arm64/crypto/chacha20-neon-glue.c
++++ b/arch/arm64/crypto/chacha20-neon-glue.c
+@@ -37,12 +37,19 @@ static void chacha20_doneon(u32 *state, u8 *dst, const u8 *src,
+ 	u8 buf[CHACHA20_BLOCK_SIZE];
  
--	err = skcipher_walk_virt(&walk, req, true);
-+	err = skcipher_walk_virt(&walk, req, false);
- 
--	kernel_neon_begin();
- 	while (walk.nbytes >= AES_BLOCK_SIZE) {
- 		unsigned int blocks = walk.nbytes / AES_BLOCK_SIZE;
- 
-@@ -109,12 +108,13 @@ static int __ecb_crypt(struct skcipher_request *req,
- 			blocks = round_down(blocks,
- 					    walk.stride / AES_BLOCK_SIZE);
- 
+ 	while (bytes >= CHACHA20_BLOCK_SIZE * 4) {
 +		kernel_neon_begin();
- 		fn(walk.dst.virt.addr, walk.src.virt.addr, ctx->rk,
- 		   ctx->rounds, blocks);
+ 		chacha20_4block_xor_neon(state, dst, src);
 +		kernel_neon_end();
- 		err = skcipher_walk_done(&walk,
- 					 walk.nbytes - blocks * AES_BLOCK_SIZE);
+ 		bytes -= CHACHA20_BLOCK_SIZE * 4;
+ 		src += CHACHA20_BLOCK_SIZE * 4;
+ 		dst += CHACHA20_BLOCK_SIZE * 4;
+ 		state[12] += 4;
  	}
--	kernel_neon_end();
- 
- 	return err;
- }
-@@ -158,19 +158,19 @@ static int cbc_encrypt(struct skcipher_request *req)
- 	struct skcipher_walk walk;
- 	int err;
- 
--	err = skcipher_walk_virt(&walk, req, true);
-+	err = skcipher_walk_virt(&walk, req, false);
- 
--	kernel_neon_begin();
- 	while (walk.nbytes >= AES_BLOCK_SIZE) {
- 		unsigned int blocks = walk.nbytes / AES_BLOCK_SIZE;
- 
- 		/* fall back to the non-bitsliced NEON implementation */
-+		kernel_neon_begin();
- 		neon_aes_cbc_encrypt(walk.dst.virt.addr, walk.src.virt.addr,
- 				     ctx->enc, ctx->key.rounds, blocks,
- 				     walk.iv);
-+		kernel_neon_end();
- 		err = skcipher_walk_done(&walk, walk.nbytes % AES_BLOCK_SIZE);
++
++	if (!bytes)
++		return;
++
++	kernel_neon_begin();
+ 	while (bytes >= CHACHA20_BLOCK_SIZE) {
+ 		chacha20_block_xor_neon(state, dst, src);
+ 		bytes -= CHACHA20_BLOCK_SIZE;
+@@ -55,6 +62,7 @@ static void chacha20_doneon(u32 *state, u8 *dst, const u8 *src,
+ 		chacha20_block_xor_neon(state, buf, buf);
+ 		memcpy(dst, buf, bytes);
  	}
--	kernel_neon_end();
- 	return err;
++	kernel_neon_end();
  }
  
-@@ -181,9 +181,8 @@ static int cbc_decrypt(struct skcipher_request *req)
- 	struct skcipher_walk walk;
- 	int err;
+ static int chacha20_neon(struct skcipher_request *req)
+@@ -68,11 +76,10 @@ static int chacha20_neon(struct skcipher_request *req)
+ 	if (!may_use_simd() || req->cryptlen <= CHACHA20_BLOCK_SIZE)
+ 		return crypto_chacha20_crypt(req);
  
 -	err = skcipher_walk_virt(&walk, req, true);
 +	err = skcipher_walk_virt(&walk, req, false);
  
--	kernel_neon_begin();
- 	while (walk.nbytes >= AES_BLOCK_SIZE) {
- 		unsigned int blocks = walk.nbytes / AES_BLOCK_SIZE;
- 
-@@ -191,13 +190,14 @@ static int cbc_decrypt(struct skcipher_request *req)
- 			blocks = round_down(blocks,
- 					    walk.stride / AES_BLOCK_SIZE);
- 
-+		kernel_neon_begin();
- 		aesbs_cbc_decrypt(walk.dst.virt.addr, walk.src.virt.addr,
- 				  ctx->key.rk, ctx->key.rounds, blocks,
- 				  walk.iv);
-+		kernel_neon_end();
- 		err = skcipher_walk_done(&walk,
- 					 walk.nbytes - blocks * AES_BLOCK_SIZE);
- 	}
--	kernel_neon_end();
- 
- 	return err;
- }
-@@ -229,9 +229,8 @@ static int ctr_encrypt(struct skcipher_request *req)
- 	u8 buf[AES_BLOCK_SIZE];
- 	int err;
- 
--	err = skcipher_walk_virt(&walk, req, true);
-+	err = skcipher_walk_virt(&walk, req, false);
+ 	crypto_chacha20_init(state, ctx, walk.iv);
  
 -	kernel_neon_begin();
  	while (walk.nbytes > 0) {
- 		unsigned int blocks = walk.nbytes / AES_BLOCK_SIZE;
- 		u8 *final = (walk.total % AES_BLOCK_SIZE) ? buf : NULL;
-@@ -242,8 +241,10 @@ static int ctr_encrypt(struct skcipher_request *req)
- 			final = NULL;
- 		}
+ 		unsigned int nbytes = walk.nbytes;
  
-+		kernel_neon_begin();
- 		aesbs_ctr_encrypt(walk.dst.virt.addr, walk.src.virt.addr,
- 				  ctx->rk, ctx->rounds, blocks, walk.iv, final);
-+		kernel_neon_end();
- 
- 		if (final) {
- 			u8 *dst = walk.dst.virt.addr + blocks * AES_BLOCK_SIZE;
-@@ -258,8 +259,6 @@ static int ctr_encrypt(struct skcipher_request *req)
- 		err = skcipher_walk_done(&walk,
- 					 walk.nbytes - blocks * AES_BLOCK_SIZE);
+@@ -83,7 +90,6 @@ static int chacha20_neon(struct skcipher_request *req)
+ 				nbytes);
+ 		err = skcipher_walk_done(&walk, walk.nbytes - nbytes);
  	}
 -	kernel_neon_end();
--
+ 
  	return err;
  }
- 
-@@ -304,12 +303,11 @@ static int __xts_crypt(struct skcipher_request *req,
- 	struct skcipher_walk walk;
- 	int err;
- 
--	err = skcipher_walk_virt(&walk, req, true);
-+	err = skcipher_walk_virt(&walk, req, false);
- 
- 	kernel_neon_begin();
--
--	neon_aes_ecb_encrypt(walk.iv, walk.iv, ctx->twkey,
--			     ctx->key.rounds, 1);
-+	neon_aes_ecb_encrypt(walk.iv, walk.iv, ctx->twkey, ctx->key.rounds, 1);
-+	kernel_neon_end();
- 
- 	while (walk.nbytes >= AES_BLOCK_SIZE) {
- 		unsigned int blocks = walk.nbytes / AES_BLOCK_SIZE;
-@@ -318,13 +316,13 @@ static int __xts_crypt(struct skcipher_request *req,
- 			blocks = round_down(blocks,
- 					    walk.stride / AES_BLOCK_SIZE);
- 
-+		kernel_neon_begin();
- 		fn(walk.dst.virt.addr, walk.src.virt.addr, ctx->key.rk,
- 		   ctx->key.rounds, blocks, walk.iv);
-+		kernel_neon_end();
- 		err = skcipher_walk_done(&walk,
- 					 walk.nbytes - blocks * AES_BLOCK_SIZE);
- 	}
--	kernel_neon_end();
--
- 	return err;
- }
- 
 -- 
 2.11.0
