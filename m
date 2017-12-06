@@ -1,10 +1,8 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v7 00/37] tracing: Inter-event (e.g. latency) support
-Date: Wed,  6 Dec 2017 16:37:41 -0600
-Message-ID: <cover.1512593081.git.tom.zanussi@linux.intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Subject: [PATCH v7 01/37] tracing: Move hist trigger Documentation to histogram.txt
+Date: Wed,  6 Dec 2017 16:37:42 -0600
+Message-ID: <132927e33eb55efc15cd060831df190162b9be06.1512593081.git.tom.zanussi@linux.intel.com>
+References: <cover.1512593081.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
         joel.opensrc@gmail.com, joelaf@google.com,
@@ -14,1007 +12,3151 @@ Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         Tom Zanussi <tom.zanussi@linux.intel.com>
 To: rostedt@goodmis.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <cover.1512593081.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <cover.1512593081.git.tom.zanussi@linux.intel.com>
+References: <cover.1512593081.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
-
-This is V7 of the inter-event tracing patchset, addressing input from
-V6.
-
-This is the set of changes addressing Namhyung's most recent set of
-comments (thanks, Namhyung!) in addition to a couple problems found by
-Vedang (thanks, Vedang!) when using kasan, as well as fixes for a
-couple problems I noted while testing:
-
-  - moved several hunks to more appropriate patches
-  - fixed some memory leaks in simple expression support, onmax_parse()
-  - added sys/event checks for local_field_var_ref()
-  - used synth_field_is_string() in synth_field_fmt()
-  - replaced i with n_u64 in trace_event_raw_event_synth()
-  - created and use add_or_delete_synth_event()
-  - used list_move in release_all_synth_events()
-  - replaced event_var and IS_ERR() checks with IS_ERR_OR_NULL()
-  - fixed double-free of cmd in create_field_var_hist()
-  - fixed bare synthetic event reference increment and related code
-  - removed unused event_name and related code in onmax_create()
-  - updated config text to point to histogram.txt instead of events.txt
-  - changed cpu type to unsigned int
-  - changed $common_timestamp to common_timestamp throughout
-  - merged Vedang's timestamp kasan fix in hist_unreg_all()
-  - fixed hist_register_trigger() kasan double-free reported by Vedang
-  - after responding to Namhyung's comment about variable references
-    in onmax triggers, realized that there actually was a problem with
-    onmatch params and variable references.  Added code to check these
-    references when removing triggers, and moved
-    unregister_field_var_hists() calls into event_hist_trigger_free()
-    so it happens after the synthetic variable dependency is removed.
-  - after fixing the onmatch param variable references problem,
-    realized that the code added to find_any_var_ref() to check for
-    self-references was incorrect - if a variable is referenced by
-    only the trigger that created it, it shouldn't prevent the trigger
-    from removal.
-
-Changes from V5:
-
-  - fixed parse_var_defs() again, moving the VARS_MAX check up to the
-    proper place.  Also added a hist_err message to parse_assignment()
-    and removed the hist_err message from create_var_field(), since
-    it's no longer necessary given the above.
-  - fixed a bogus format string check in synth_field_fmt()
-  - merged in a fix from Fengguang Wu for a 0day bot-flagged sizeof
-    pointer problem (to 24/37, Add support for synthetic events)
-  - noticed that duplicate variables on the same trigger weren't being
-    detected and added a fix for that
-
-Changes from V4:
-
-  - fixed struct noinline typo
-  - for the selftests, the following changes were made [from Rajvi Jingar]
-    - In extended error support test, changed last "&&" to redirect
-      error/output to /dev/null instead.
-    - In synthetic event create remove test, changed to same event
-      style in creating and removing and added a case to check adding
-      an event with wrong format
-    - Added -q option in grep since don’t need to show grep results.
-    - Changes to use newly added exit_pass()/exit_fail().
-  - in the variable reference handling patch, changed list_add_rcu to
-    list_add_tail_rcu when adding hist triggers.  Using list_add_rcu
-    causes the triggers to be executed in reverse order to how they
-    were added, which in the case of multiple triggers with variables
-    on the same event can lead to variables being accessed before they
-    were set. [thanks to Rajvi for the bug report]
-  - noticed and fixed a couple problems with synthetic event refcounting
-
-Changes from V3:
-
-These mainly directly address the input from V3, but there are a
-couple new things too - a new set of selftests (thanks to Rajvi Jingar
-for those), and a new 'timestamp_mode' ftrace file making it easy to
-see exactly what mode the ring buffer timestamping is in at any given
-time (delta or absolute).  The detailed list:
-
-  - fixed up 'if' parsing to also handle variables starting with 'if'
-  - added lots of comments to the field variable code
-  - added code to check and not fail if a field variable was already created
-  - fixed various typos,etc in commit messages
-  - moved target_hist_data fix from onmatch patch to field var patch
-  - fixed var_name leak in parse_var_defs()
-  - changed common_timestamp -> $common_timestamp in commit messages
-  - discovered and fixed a bug where variable references were not guaranteed unique
-  - added missing destroy_hist_field() in expression code
-  - separated synth event list management from synth event de/registration
-  - added missing 2nd-level variable reference checking in expressions
-  - added self-reference check to find_any_var_ref()
-  - removed HIST_FIELD_FL_VAR_ONLY and related code
-  - added WARN_ON_ONCE to hist_trigger_entry_print()
-  - changed absolute timestamps to allow coexistence with normal (delta) timestamps
-  - added a new read-only 'timestamp_mode' file to show current timestamp mode
-  - moved hist trigger Documentation into standalone histogram.txt file
-  - added new inter-event Documentation to histogram.txt
-  - removed redundant description of $common_timestamp usage from Documentation
-  - added missing .log2 line to Documentation
-  - added missing .usecs line to README pseudo-file
-  - added new set of selftests for various inter-event features [Rajvi Jingar]
-
-Changes from V2:
-
-  - split out standalone bugfixes and cleanups to a separate patchset
-  - moved hunks around and merged patches as suggested
-  - added inter-event note in config option
-  - updates to duplicates patch [Vedang Patel]
-  - various memory allocation checks and use-after-free bugfix [Rajvi Jingar]
-  - various code improvements as suggested by Steve
-  - switched hist_field_flags over to using shifts
-  - added comments about synth_event mutex usage
-  - added example and explanation of field variables
-  - fixed field variable synth_event_mutex bug
-  - commented the whitespace handling in hist_trigger_func()
-    (the extra complexity is needed to allow spaces in actions)
-  - use smp_processor_id() instead of raw_ for cpu field
-  - added better description of aliases
-  - use static arrays instead of kmalloc for hist_err code, along with
-    various other cleanups
-  - removed 'tracing: Add support for dynamic tracepoints' since I was
-    mistaken about the need for this
-
-Changes from V1:
-
-There are too many changes to list in detail, most of them directly
-addressing input from V1, but here are the major changes from V1
-(thanks to everyone who reviewed V1 and thanks to both Vedang Patel
-and Baohong Liu for their contributions and included patches):
-
-  - cleaned up the event format
-  - add types to synthetic event fields
-  - change to mutex ordering to avoid splat
-  - suppress output of the contributing trace events into the trace
-    buffer, unless explicitly enabled
-  - changed from sched_wakeup to sched_waking in the examples
-  - extended timestamp updates
-  - use a flag to signify dynamic tracepoints, rather than via api changes
-  - recursion level fixes
-  - removal of the possibility of tracing_map duplicates (Vedang)
-  - removal of duplicate-merging code (Vedang)
-  - max buffer absolute timestamp fix (Baohong)
-  - separate variable definition and assignment (Baohong) 
-  - make variables instance-safe
-  - split a couple larger patches into smaller, various refactoring
-  - string handling fixes
-  - use function pointer for synthetic tracepoint func
-  - use union for actions
-  - various clean-ups as mentioned in review
-  - Documentation updates
-  - special-case recursion allowance for synthetic event generation
-
-NOTE: The first patch in the series, 'tracing: Exclude 'generic
-fields' from histograms' should go in regardless of the rest, since it
-fixes a bug in existing code.
-
-Thanks,
-
-Tom
-
-
-This patchset adds support for 'inter-event' quantities to the trace
-event subsystem.  The most important example of inter-event quantities
-are latencies, or the time differences between two events.
-
-One of the main motivations for adding this capability is to provide a
-general-purpose base that existing existing tools such as the -RT
-latency_hist patchset can be built upon, while at the same time
-providing a simple way for users to track latencies (or any
-inter-event quantity) generically between any two events.
-
-Previous -RT latency_hist patchsets that take advantage of the trace
-event subsystem have been submitted, but they essentially hard-code
-special-case tracepoints and application logic in ways that can't be
-reused.  It seemed to me that rather than providing a one-off patchset
-devoted specifically to generating the specific histograms in the
-latency_hist patchset, it should be possible to build the same
-functionality on top of a generic layer allowing users to do similar
-things for other non-latency_hist applications.
-
-In addition to preliminary patches that add some basic missing
-functionality such as a common ringbuffer-derived timestamp and
-dynamically-creatable tracepoints, the overall patchset is divided up
-into a few different areas that combine to produce the overall goal
-(The Documentation patch explains all the details):
-
-  - variables and simple expressions required to calculate a latency
-
-    In order to calculate a latency or any inter-event value,
-    something from one event needs to be saved and later retrieved,
-    and some operation such as subtraction or addition is performed on
-    it.  This means some minimal form of variables and expressions,
-    which the first set of patches implements.  Saving and retrieving
-    events to use in a latency calculation is normally done using a
-    hash table, and that's exactly what we have with trace event hist
-    triggers, so that's where variables are instantiated, set, and
-    retrieved.  Basically, variables are set on one entry and
-    retrieved and used by a 'matching' event.
-
-  - 'synthetic' events, combining variables from other events
-
-    The trace event interface is based on pseudo-files associated with
-    individual events, so it wouldn't really make sense to have
-    quantities derived from multiple events attached to any one of
-    those events.  For that reason, the patchset implements a means of
-    combining variables from other events into a separate 'synthetic'
-    event, which can be treated as if it were just like any other
-    trace event in the system.
-
-  - 'actions' generating synthetic events, among other things
-
-    Variables and synthetic events provide the data and data structure
-    for new events, but something still needs to actually generate an
-    event using that data.  'Actions' are expanded to provide that
-    capability.  Though it hasn't been explicitly called as much
-    before, the default 'action' currently for a hist trigger is to
-    update the matching histogram entry's sum values.  This patchset
-    essentially expands that to provide a new 'onmatch.trace(event)'
-    action that can be used to have one event generate another.  The
-    mechanism is extensible to other actions, and in fact the patchset
-    also includes another, 'onmax(var).save(field,...)' that can be
-    used to save context whenever a value exceeds the previous maximum
-    (something also needed by latency_hist).
-
-I'm submitting the patchset (based on tracing/for-next) as an RFC not
-only to get comments, but because there are still some problems I
-haven't fixed yet...
-
-Here are some examples that should make things less abstract.
-
-  ====
-  Example - wakeup latency
-  ====
-
-  This basically implements the -RT latency_hist 'wakeup_latency'
-  histogram using the synthetic events, variables, and actions
-  described.  The output below is from a run of cyclictest using the
-  following command:
-
-    # rt-tests/cyclictest -p 80 -n -s -t 2
-
-  What we're measuring the latency of is the time between when a
-  thread (of cyclictest) is awakened and when it's scheduled in.  To
-  do that we add triggers to sched_waking and sched_switch with the
-  appropriate variables, and on a matching sched_switch event,
-  generate a synthetic 'wakeup_latency' event.  Since it's just
-  another trace event like any other, we can also define a histogram
-  on that event, the output of which is what we see displayed when
-  reading the wakeup_latency 'hist' file.
-
-  First, we create a synthetic event called wakeup_latency, that
-  creates 3 fields which will reference variables from other events:
-
-    # echo 'wakeup_latency u64 lat; pid_t pid; int prio' >> \
-        /sys/kernel/debug/tracing/synthetic_events
-
-  Next we add a trigger to sched_waking, which saves the value of the
-  'common_timestamp' when that event is hit in a variable, ts0.  Note
-  that this happens only when 'comm==cyclictest'.
-
-  Also, 'common_timestamp' is a new field defined on every event (if
-  needed - if there are no users of timestamps in a trace, timestamps
-  won't be saved and there's no additional overhead from that).
-
-    # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> \
-        /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
-
-  Next, we add a trigger to sched_switch.  When the pid being switched
-  to matches the pid woken up by a previous sched_waking event, this
-  event grabs the ts0 variable saved on that event, takes the
-  difference between it and the current sched_switch's
-  common_timestamp, and assigns it to a new 'wakeup_lat' variable.
-  It then generates the wakeup_latency synthetic event defined earlier
-  by 'invoking' it as a function using as parameters the wakeup_lat
-  variable and two sched_switch event fields directly:
-
-    # echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0: \
-        onmatch(sched.sched_waking).wakeup_latency($wakeup_lat,next_pid,next_prio) \
-        if next_comm=="cyclictest"' >> \
-        /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-
-  Finally, all we have left to do is create a standard histogram
-  simply naming the fields of the wakeup_latency synthetic event:
-
-    # echo 'hist:keys=pid,prio,lat:sort=pid,lat' >> \
-        /sys/kernel/debug/tracing/events/synthetic/wakeup_latency/trigger
-
-  At any time, we can see the histogram output by simply reading the
-  synthetic/wakeup_latency/hist file:
-
-    # cat /sys/kernel/debug/tracing/events/synthetic/wakeup_latency/hist
-
-    # event histogram
-    #
-    # trigger info: hist:keys=pid,prio,lat:vals=hitcount:sort=pid,lat:size=2048 [active]
-    #
-
-    { pid:       2418, prio:        120, lat:          6 } hitcount:         21
-    { pid:       2418, prio:        120, lat:          7 } hitcount:         62
-    { pid:       2418, prio:        120, lat:          8 } hitcount:         44
-    { pid:       2418, prio:        120, lat:          9 } hitcount:         34
-    { pid:       2418, prio:        120, lat:         10 } hitcount:         16
-    { pid:       2418, prio:        120, lat:         11 } hitcount:          5
-    { pid:       2418, prio:        120, lat:         12 } hitcount:          2
-    { pid:       2418, prio:        120, lat:         13 } hitcount:          2
-    { pid:       2418, prio:        120, lat:         14 } hitcount:          1
-    { pid:       2418, prio:        120, lat:         15 } hitcount:          1
-    { pid:       2418, prio:        120, lat:         16 } hitcount:          1
-    { pid:       2418, prio:        120, lat:         18 } hitcount:          2
-    { pid:       2418, prio:        120, lat:         19 } hitcount:          1
-    { pid:       2418, prio:        120, lat:         20 } hitcount:          1
-    { pid:       2418, prio:        120, lat:         21 } hitcount:          1
-    { pid:       2418, prio:        120, lat:         22 } hitcount:          1
-    { pid:       2418, prio:        120, lat:         23 } hitcount:          1
-    { pid:       2418, prio:        120, lat:         56 } hitcount:          1
-    { pid:       2418, prio:        120, lat:         60 } hitcount:          1
-    { pid:       2418, prio:        120, lat:        123 } hitcount:          1
-    { pid:       2419, prio:         19, lat:          4 } hitcount:         12
-    { pid:       2419, prio:         19, lat:          5 } hitcount:        230
-    { pid:       2419, prio:         19, lat:          6 } hitcount:        343
-    { pid:       2419, prio:         19, lat:          7 } hitcount:        485
-    { pid:       2419, prio:         19, lat:          8 } hitcount:        574
-    { pid:       2419, prio:         19, lat:          9 } hitcount:        164
-    { pid:       2419, prio:         19, lat:         10 } hitcount:         51
-    { pid:       2419, prio:         19, lat:         11 } hitcount:         36
-    { pid:       2419, prio:         19, lat:         12 } hitcount:         23
-    { pid:       2419, prio:         19, lat:         13 } hitcount:         16
-    { pid:       2419, prio:         19, lat:         14 } hitcount:         13
-    { pid:       2419, prio:         19, lat:         15 } hitcount:          5
-    { pid:       2419, prio:         19, lat:         16 } hitcount:          6
-    { pid:       2419, prio:         19, lat:         17 } hitcount:          5
-    { pid:       2419, prio:         19, lat:         18 } hitcount:          1
-    { pid:       2419, prio:         19, lat:         19 } hitcount:          2
-    { pid:       2419, prio:         19, lat:         26 } hitcount:          1
-    { pid:       2419, prio:         19, lat:         29 } hitcount:          1
-    { pid:       2419, prio:         19, lat:         37 } hitcount:          1
-    { pid:       2419, prio:         19, lat:         38 } hitcount:          1
-    { pid:       2420, prio:         19, lat:          4 } hitcount:          1
-    { pid:       2420, prio:         19, lat:          5 } hitcount:         45
-    { pid:       2420, prio:         19, lat:          6 } hitcount:         96
-    { pid:       2420, prio:         19, lat:          7 } hitcount:        227
-    { pid:       2420, prio:         19, lat:          8 } hitcount:        558
-    { pid:       2420, prio:         19, lat:          9 } hitcount:        236
-    { pid:       2420, prio:         19, lat:         10 } hitcount:         67
-    { pid:       2420, prio:         19, lat:         11 } hitcount:         27
-    { pid:       2420, prio:         19, lat:         12 } hitcount:         17
-    { pid:       2420, prio:         19, lat:         13 } hitcount:         12
-    { pid:       2420, prio:         19, lat:         14 } hitcount:         11
-    { pid:       2420, prio:         19, lat:         15 } hitcount:          8
-    { pid:       2420, prio:         19, lat:         16 } hitcount:          6
-    { pid:       2420, prio:         19, lat:         17 } hitcount:          3
-    { pid:       2420, prio:         19, lat:         18 } hitcount:          1
-    { pid:       2420, prio:         19, lat:         23 } hitcount:          1
-    { pid:       2420, prio:         19, lat:         25 } hitcount:          1
-    { pid:       2420, prio:         19, lat:         26 } hitcount:          1
-    { pid:       2420, prio:         19, lat:        434 } hitcount:          1
-
-    Totals:
-        Hits: 3488
-        Entries: 59
-        Dropped: 0
-
-  The above output uses the .usecs modifier to common_timestamp, so
-  the latencies are reported in microseconds.  The default, without
-  the modifier, is nanoseconds, but that's too fine-grained to put
-  directly into a histogram - for that however we can use the .log2
-  modifier on the 'lat' key.  Otherwise the rest is the same:
-
-    # echo 'wakeup_latency u64 lat; pid_t pid; int prio' >> \
-        /sys/kernel/debug/tracing/synthetic_events
-
-    # echo 'hist:keys=pid:ts0=common_timestamp if comm=="cyclictest"' >> \
-        /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
-
-    # echo 'hist:keys=next_pid:wakeup_lat=common_timestamp-$ts0: \
-        onmatch(sched.sched_waking).wakeup_latency($wakeup_lat,next_pid,next_prio) \
-        if next_comm=="cyclictest"' >> \
-        /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-
-    # echo 'hist:keys=pid,prio,lat.log2:sort=pid,lat' >> \
-        /sys/kernel/debug/tracing/events/synthetic/wakeup_latency/trigger
-
-    # cat /sys/kernel/debug/tracing/events/synthetic/wakeup_latency/hist
-
-    # event histogram
-    #
-    # trigger info: hist:keys=pid,prio,lat.log2:vals=hitcount:sort=pid,lat.log2:size=2048 [active]
-    #
-
-    { pid:       2457, prio:        120, lat: ~ 2^13 } hitcount:         99
-    { pid:       2457, prio:        120, lat: ~ 2^14 } hitcount:         91
-    { pid:       2457, prio:        120, lat: ~ 2^15 } hitcount:          8
-    { pid:       2458, prio:         19, lat: ~ 2^13 } hitcount:       1437
-    { pid:       2458, prio:         19, lat: ~ 2^14 } hitcount:        519
-    { pid:       2458, prio:         19, lat: ~ 2^15 } hitcount:         11
-    { pid:       2458, prio:         19, lat: ~ 2^16 } hitcount:          2
-    { pid:       2458, prio:         19, lat: ~ 2^18 } hitcount:          1
-    { pid:       2459, prio:         19, lat: ~ 2^13 } hitcount:        874
-    { pid:       2459, prio:         19, lat: ~ 2^14 } hitcount:        442
-    { pid:       2459, prio:         19, lat: ~ 2^15 } hitcount:          4
-
-    Totals:
-        Hits: 3488
-        Entries: 11
-        Dropped: 0
-
-  ====
-  Example - wakeup latency with onmax()
-  ====
-
-  This example is the same as the previous ones, but here we're
-  additionally using the onmax() action to save some context (several
-  fields of the sched_switch event) whenever the latency (wakeup_lat)
-  exceeds the previous maximum.
-
-  As with the similar functionality of the -RT latency_hist
-  histograms, it's useful to be able to capture information about the
-  previous process, which potentially could have contributed to the
-  maximum latency that was saved.
-
-    # echo 'wakeup_latency u64 lat; pid_t pid; int prio' >> \
-        /sys/kernel/debug/tracing/synthetic_events
-
-    # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> \
-        /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
-
-  Here we add an onmax() action that saves some important fields of
-  the sched_switch event along with the maximum, in addition to
-  sending some of the same data to the synthetic event:
-
-    # echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0: \
-        onmax($wakeup_lat).save(next_comm,prev_pid,prev_prio,prev_comm): \
-	onmatch(sched.sched_waking).wakeup_latency($wakeup_lat,next_pid,next_prio) \
-	if next_comm=="cyclictest"' >> \
-	/sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-
-    # echo 'hist:keys=pid,prio,lat:sort=pid,lat' >> \
-        /sys/kernel/debug/tracing/events/synthetic/wakeup_latency/trigger
-
-  To see the maximums and associated data for each pid, cat the
-  sched_switch event, as that's the event the onmax() action is
-  associated with:
-
-
-    # cat /sys/kernel/debug/tracing/events/sched/sched_switch/hist
-
-    # event histogram
-    #
-    # trigger info: hist:keys=next_pid:vals=hitcount:wakeup_lat=common_timestamp.usecs-$ts0:sort=hitcount:size=2048:clock=global:onmax($wakeup_lat).save(next_comm,prev_pid,prev_prio,prev_comm):onmatch(sched.sched_waking).wakeup_latency($wakeup_lat,next_pid,next_prio) if next_comm=="cyclictest" [active]
-    #
-
-    { next_pid:       2803 } hitcount:        198
-      max:         55  next_comm: cyclictest           prev_pid:          0
-      prev_prio:        120  prev_comm: swapper/2
-
-    { next_pid:       2805 } hitcount:       1319
-      max:         53  next_comm: cyclictest           prev_pid:          0
-      prev_prio:        120  prev_comm: swapper/1
-
-    { next_pid:       2804 } hitcount:       1970
-      max:         79  next_comm: cyclictest           prev_pid:          0
-      prev_prio:        120  prev_comm: swapper/0
-
-    Totals:
-        Hits: 3487
-        Entries: 3
-        Dropped: 0
-
-  And, verifying, we can see that the max latencies captured above
-  match the highest latencies for each thread in the wakeup_latency
-  histogram:
-
-    # cat /sys/kernel/debug/tracing/events/synthetic/wakeup_latency/hist
-    # event histogram
-    #
-    # trigger info: hist:keys=pid,prio,lat:vals=hitcount:sort=pid,lat:size=2048 [active]
-    #
-
-    { pid:       2803, prio:        120, lat:          6 } hitcount:         12
-    { pid:       2803, prio:        120, lat:          7 } hitcount:         42
-    ...
-    { pid:       2803, prio:        120, lat:         22 } hitcount:          2
-    { pid:       2803, prio:        120, lat:         55 } hitcount:          1
-    { pid:       2804, prio:         19, lat:          4 } hitcount:          5
-    { pid:       2804, prio:         19, lat:          5 } hitcount:        188
-    ...
-    { pid:       2804, prio:         19, lat:         30 } hitcount:          1
-    { pid:       2804, prio:         19, lat:         79 } hitcount:          1
-    { pid:       2805, prio:         19, lat:          5 } hitcount:         19
-    { pid:       2805, prio:         19, lat:          6 } hitcount:         73
-    ...
-    { pid:       2805, prio:         19, lat:         44 } hitcount:          1
-    { pid:       2805, prio:         19, lat:         53 } hitcount:          1
-
-    Totals:
-        Hits: 3487
-        Entries: 57
-        Dropped: 0
-
-  ====
-  Example - combined wakeup and switchtime (wakeupswitch) latency
-  ====
-
-  Finally, this example is quite a bit more involved, but that's
-  because it implements 3 latencies, one which is a combination of the
-  other two.  This also, is something that the -RT latency_hist
-  patchset does and which this patchset adds generic support for.
-
-  The latency_hist patchset creates a few individual latency
-  histograms but also combines them into larger overall combined
-  histograms.  For example, the time between when a thread is awakened
-  and when it actually continues executing in userspace is something
-  covered by a histogram, but it's also broken down into two
-  sub-histograms, one covering the time between sched_waking and the
-  time the thread is scheduled in (wakeup_latency as above), and the
-  time between when the thread is scheduled in and the time it
-  actually begins executing again (return from sys_nanosleep), covered
-  by a separate switchtime_latency histogram.
-
-  The below combines the wakeup_latency histogram from before, adds a
-  new switchtime_latency histogram, and another, wakeupswitch_latency,
-  that's a combination of the other two.
-
-  There isn't anything really new here, other than that the use of the
-  addition operator to add two latencies to produce the
-  wakeupswitch_latency.
-
-  First, we create the familiar wakeup_latency histogram:
-
-    # echo 'wakeup_latency u64 lat; pid_t pid' >> \
-        /sys/kernel/debug/tracing/synthetic_events
-
-    # echo 'hist:keys=pid:ts0=common_timestamp.usecs \
-        if comm=="cyclictest"' >> \
-	/sys/kernel/debug/tracing/events/sched/sched_waking/trigger
-
-    # echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0:\
-        onmatch(sched.sched_waking).wakeup_latency($wakeup_lat,next_pid) \
-	if next_comm=="cyclictest"' >> \
-	/sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-
-  Here we save the wakeup_latency lat value as wakeup_lat for use
-  later in the combined latency:
-
-    # echo 'hist:keys=pid,lat:wakeup_lat=lat:sort=pid,lat' \
-        >> /sys/kernel/debug/tracing/events/synthetic/wakeup_latency/trigger
-
-  Next, we create the switchtime_latency histogram:
-
-    # echo 'switchtime_latency u64 lat; pid_t pid' >> \
-        /sys/kernel/debug/tracing/synthetic_events
-
-  Here we save the sched_switch next_pid field as 'pid'.  This is so
-  we can access the next_pid in the matching sys_exit_nanosleep event.
-
-    # echo 'hist:keys=next_pid:pid=next_pid:ts0=common_timestamp.usecs \
-        if next_comm=="cyclictest"' >> \
-	/sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-
-    # echo 'hist:keys=common_pid:switchtime_lat=common_timestamp.usecs-$ts0: \
-        onmatch(sched.sched_switch).switchtime_latency($switchtime_lat,$pid)' \
-	>> /sys/kernel/debug/tracing/events/syscalls/sys_exit_nanosleep/trigger
-
-    # echo 'hist:keys=pid,lat:sort=pid,lat' \
-        >> /sys/kernel/debug/tracing/events/synthetic/switchtime_latency/trigger
-
-  Finally, we create the combined wakeupswitch_latency:
-
-    # echo 'wakeupswitch_latency u64 lat; pid_t pid' >> \
-        /sys/kernel/debug/tracing/synthetic_events
-
-  Here we calculate the combined latency using the saved $wakeup_lat
-  variable from the wakeup_latency histogram and the lat value of the
-  switchtime_latency, save it as ws_lat and then use it to generate
-  the combined wakeupswitch latency:
-
-    # echo 'hist:keys=pid,lat:sort=pid,lat:ws_lat=$wakeup_lat+lat: \
-        onmatch(synthetic.wakeup_latency).wakeupswitch_latency($ws_lat,pid)' \
-	>> /sys/kernel/debug/tracing/events/synthetic/switchtime_latency/trigger
-
-    # echo 'hist:keys=pid,lat:sort=pid,lat' >> \
-    /sys/kernel/debug/tracing/events/synthetic/wakeupswitch_latency/trigger
-
-
-  After running our cyclictest workload, we can now look at each
-  histogram, starting with wakeup_latency:
-
-    # cat /sys/kernel/debug/tracing/events/synthetic/wakeup_latency/hist
-
-    # event histogram
-    #
-    # trigger info: hist:keys=pid,lat:vals=hitcount:wakeup_lat=lat:sort=pid,lat:size=2048 [active]
-    #
-
-    { pid:       4146, lat:          6 } hitcount:          8
-    { pid:       4146, lat:          7 } hitcount:         50
-    { pid:       4146, lat:          8 } hitcount:         53
-    { pid:       4146, lat:          9 } hitcount:         34
-    { pid:       4146, lat:         10 } hitcount:         22
-    { pid:       4146, lat:         11 } hitcount:          6
-    { pid:       4146, lat:         12 } hitcount:          4
-    { pid:       4146, lat:         13 } hitcount:          1
-    { pid:       4146, lat:         14 } hitcount:          4
-    { pid:       4146, lat:         15 } hitcount:          2
-    { pid:       4146, lat:         16 } hitcount:          2
-    { pid:       4146, lat:         17 } hitcount:          3
-    { pid:       4146, lat:         19 } hitcount:          1
-    { pid:       4146, lat:         20 } hitcount:          2
-    { pid:       4146, lat:         21 } hitcount:          4
-    { pid:       4146, lat:         24 } hitcount:          1
-    { pid:       4146, lat:         53 } hitcount:          1
-    { pid:       4147, lat:          4 } hitcount:          1
-    { pid:       4147, lat:          5 } hitcount:        156
-    { pid:       4147, lat:          6 } hitcount:        344
-    { pid:       4147, lat:          7 } hitcount:        560
-    { pid:       4147, lat:          8 } hitcount:        540
-    { pid:       4147, lat:          9 } hitcount:        195
-    { pid:       4147, lat:         10 } hitcount:         50
-    { pid:       4147, lat:         11 } hitcount:         38
-    { pid:       4147, lat:         12 } hitcount:         26
-    { pid:       4147, lat:         13 } hitcount:         13
-    { pid:       4147, lat:         14 } hitcount:         12
-    { pid:       4147, lat:         15 } hitcount:         10
-    { pid:       4147, lat:         16 } hitcount:          3
-    { pid:       4147, lat:         17 } hitcount:          2
-    { pid:       4147, lat:         18 } hitcount:          4
-    { pid:       4147, lat:         19 } hitcount:          2
-    { pid:       4147, lat:         20 } hitcount:          1
-    { pid:       4147, lat:         21 } hitcount:          1
-    { pid:       4147, lat:         26 } hitcount:          1
-    { pid:       4147, lat:         35 } hitcount:          1
-    { pid:       4147, lat:         59 } hitcount:          1
-    { pid:       4148, lat:          5 } hitcount:         38
-    { pid:       4148, lat:          6 } hitcount:        229
-    { pid:       4148, lat:          7 } hitcount:        219
-    { pid:       4148, lat:          8 } hitcount:        486
-    { pid:       4148, lat:          9 } hitcount:        181
-    { pid:       4148, lat:         10 } hitcount:         59
-    { pid:       4148, lat:         11 } hitcount:         27
-    { pid:       4148, lat:         12 } hitcount:         23
-    { pid:       4148, lat:         13 } hitcount:         16
-    { pid:       4148, lat:         14 } hitcount:          7
-    { pid:       4148, lat:         15 } hitcount:          7
-    { pid:       4148, lat:         16 } hitcount:          6
-    { pid:       4148, lat:         17 } hitcount:          2
-    { pid:       4148, lat:         18 } hitcount:          2
-    { pid:       4148, lat:         19 } hitcount:          4
-    { pid:       4148, lat:         20 } hitcount:          3
-    { pid:       4148, lat:         25 } hitcount:          1
-    { pid:       4148, lat:         26 } hitcount:          1
-    { pid:       4148, lat:         27 } hitcount:          1
-    { pid:       4148, lat:         29 } hitcount:          2
-    { pid:       4148, lat:         47 } hitcount:          1
-
-    Totals:
-        Hits: 3474
-        Entries: 59
-        Dropped: 0
-
-  Here's the switchtime histogram:
-
-    # cat /sys/kernel/debug/tracing/events/synthetic/switchtime_latency/hist
-
-    # event histogram
-    #
-    # trigger info: hist:keys=pid,lat:vals=hitcount:sort=pid,lat:size=2048 [active]
-    #
-
-    { pid:       4146, lat:          3 } hitcount:         11
-    { pid:       4146, lat:          4 } hitcount:         32
-    { pid:       4146, lat:          5 } hitcount:         65
-    { pid:       4146, lat:          6 } hitcount:         37
-    { pid:       4146, lat:          7 } hitcount:         35
-    { pid:       4146, lat:          8 } hitcount:          5
-    { pid:       4146, lat:         10 } hitcount:          1
-    { pid:       4146, lat:         11 } hitcount:          1
-    { pid:       4146, lat:         12 } hitcount:          1
-    { pid:       4146, lat:         13 } hitcount:          1
-    { pid:       4146, lat:         14 } hitcount:          1
-    { pid:       4146, lat:         15 } hitcount:          1
-    { pid:       4146, lat:         16 } hitcount:          2
-    { pid:       4146, lat:         17 } hitcount:          1
-    { pid:       4146, lat:         18 } hitcount:          1
-    { pid:       4146, lat:         20 } hitcount:          1
-    { pid:       4146, lat:         22 } hitcount:          1
-    { pid:       4146, lat:         55 } hitcount:          1
-    { pid:       4147, lat:          3 } hitcount:        554
-    { pid:       4147, lat:          4 } hitcount:        999
-    { pid:       4147, lat:          5 } hitcount:        193
-    { pid:       4147, lat:          6 } hitcount:        102
-    { pid:       4147, lat:          7 } hitcount:         38
-    { pid:       4147, lat:          8 } hitcount:         21
-    { pid:       4147, lat:          9 } hitcount:          8
-    { pid:       4147, lat:         10 } hitcount:         10
-    { pid:       4147, lat:         11 } hitcount:         11
-    { pid:       4147, lat:         12 } hitcount:          7
-    { pid:       4147, lat:         13 } hitcount:          2
-    { pid:       4147, lat:         14 } hitcount:          2
-    { pid:       4147, lat:         15 } hitcount:          5
-    { pid:       4147, lat:         16 } hitcount:          2
-    { pid:       4147, lat:         17 } hitcount:          3
-    { pid:       4147, lat:         18 } hitcount:          2
-    { pid:       4147, lat:         23 } hitcount:          2
-    { pid:       4148, lat:          3 } hitcount:        245
-    { pid:       4148, lat:          4 } hitcount:        761
-    { pid:       4148, lat:          5 } hitcount:        152
-    { pid:       4148, lat:          6 } hitcount:         64
-    { pid:       4148, lat:          7 } hitcount:         25
-    { pid:       4148, lat:          8 } hitcount:          7
-    { pid:       4148, lat:          9 } hitcount:         14
-    { pid:       4148, lat:         10 } hitcount:         11
-    { pid:       4148, lat:         11 } hitcount:         12
-    { pid:       4148, lat:         12 } hitcount:          6
-    { pid:       4148, lat:         13 } hitcount:          2
-    { pid:       4148, lat:         14 } hitcount:          7
-    { pid:       4148, lat:         15 } hitcount:          2
-    { pid:       4148, lat:         17 } hitcount:          2
-    { pid:       4148, lat:         18 } hitcount:          1
-    { pid:       4148, lat:         19 } hitcount:          1
-    { pid:       4148, lat:         24 } hitcount:          1
-    { pid:       4148, lat:         25 } hitcount:          1
-    { pid:       4148, lat:         42 } hitcount:          1
-
-    Totals:
-        Hits: 3474
-        Entries: 54
-        Dropped: 0
-
-  And here's the combined wakeupswitch latency histogram:
-
-    # cat /sys/kernel/debug/tracing/events/synthetic/wakeupswitch_latency/hist
-
-    # event histogram
-    #
-    # trigger info: hist:keys=pid,lat:vals=hitcount:sort=pid,lat:size=2048 [active]
-    #
-
-    { pid:       4146, lat:         10 } hitcount:         16
-    { pid:       4146, lat:         11 } hitcount:         18
-    { pid:       4146, lat:         12 } hitcount:         25
-    { pid:       4146, lat:         13 } hitcount:         38
-    { pid:       4146, lat:         14 } hitcount:         25
-    { pid:       4146, lat:         15 } hitcount:         14
-    { pid:       4146, lat:         16 } hitcount:         17
-    { pid:       4146, lat:         17 } hitcount:         14
-    { pid:       4146, lat:         18 } hitcount:          7
-    { pid:       4146, lat:         19 } hitcount:          1
-    { pid:       4146, lat:         20 } hitcount:          3
-    { pid:       4146, lat:         21 } hitcount:          2
-    { pid:       4146, lat:         22 } hitcount:          1
-    { pid:       4146, lat:         23 } hitcount:          1
-    { pid:       4146, lat:         24 } hitcount:          1
-    { pid:       4146, lat:         25 } hitcount:          2
-    { pid:       4146, lat:         26 } hitcount:          2
-    { pid:       4146, lat:         29 } hitcount:          1
-    { pid:       4146, lat:         30 } hitcount:          1
-    { pid:       4146, lat:         32 } hitcount:          1
-    { pid:       4146, lat:         33 } hitcount:          2
-    { pid:       4146, lat:         36 } hitcount:          1
-    { pid:       4146, lat:         37 } hitcount:          1
-    { pid:       4146, lat:         38 } hitcount:          1
-    { pid:       4146, lat:         39 } hitcount:          1
-    { pid:       4146, lat:         73 } hitcount:          1
-    { pid:       4146, lat:         76 } hitcount:          1
-    { pid:       4147, lat:          8 } hitcount:         54
-    { pid:       4147, lat:          9 } hitcount:        205
-    { pid:       4147, lat:         10 } hitcount:        391
-    { pid:       4147, lat:         11 } hitcount:        544
-    { pid:       4147, lat:         12 } hitcount:        342
-    { pid:       4147, lat:         13 } hitcount:        141
-    { pid:       4147, lat:         14 } hitcount:         68
-    { pid:       4147, lat:         15 } hitcount:         46
-    { pid:       4147, lat:         16 } hitcount:         42
-    { pid:       4147, lat:         17 } hitcount:         23
-    { pid:       4147, lat:         18 } hitcount:         23
-    { pid:       4147, lat:         19 } hitcount:         17
-    { pid:       4147, lat:         20 } hitcount:          8
-    { pid:       4147, lat:         21 } hitcount:          7
-    { pid:       4147, lat:         22 } hitcount:          7
-    { pid:       4147, lat:         23 } hitcount:          8
-    { pid:       4147, lat:         24 } hitcount:          4
-    { pid:       4147, lat:         25 } hitcount:          6
-    { pid:       4147, lat:         26 } hitcount:          4
-    { pid:       4147, lat:         27 } hitcount:          1
-    { pid:       4147, lat:         28 } hitcount:          4
-    { pid:       4147, lat:         29 } hitcount:          2
-    { pid:       4147, lat:         30 } hitcount:          3
-    { pid:       4147, lat:         31 } hitcount:          3
-    { pid:       4147, lat:         32 } hitcount:          1
-    { pid:       4147, lat:         34 } hitcount:          1
-    { pid:       4147, lat:         35 } hitcount:          3
-    { pid:       4147, lat:         36 } hitcount:          1
-    { pid:       4147, lat:         50 } hitcount:          1
-    { pid:       4147, lat:         71 } hitcount:          1
-    { pid:       4148, lat:          8 } hitcount:          2
-    { pid:       4148, lat:          9 } hitcount:        100
-    { pid:       4148, lat:         10 } hitcount:        156
-    { pid:       4148, lat:         11 } hitcount:        340
-    { pid:       4148, lat:         12 } hitcount:        341
-    { pid:       4148, lat:         13 } hitcount:        139
-    { pid:       4148, lat:         14 } hitcount:         55
-    { pid:       4148, lat:         15 } hitcount:         42
-    { pid:       4148, lat:         16 } hitcount:         24
-    { pid:       4148, lat:         17 } hitcount:         17
-    { pid:       4148, lat:         18 } hitcount:         18
-    { pid:       4148, lat:         19 } hitcount:         17
-    { pid:       4148, lat:         20 } hitcount:          7
-    { pid:       4148, lat:         21 } hitcount:          4
-    { pid:       4148, lat:         22 } hitcount:          7
-    { pid:       4148, lat:         23 } hitcount:          6
-    { pid:       4148, lat:         24 } hitcount:          3
-    { pid:       4148, lat:         25 } hitcount:          7
-    { pid:       4148, lat:         26 } hitcount:          5
-    { pid:       4148, lat:         27 } hitcount:          3
-    { pid:       4148, lat:         28 } hitcount:          3
-    { pid:       4148, lat:         29 } hitcount:          1
-    { pid:       4148, lat:         30 } hitcount:          4
-    { pid:       4148, lat:         31 } hitcount:          1
-    { pid:       4148, lat:         32 } hitcount:          2
-    { pid:       4148, lat:         33 } hitcount:          3
-    { pid:       4148, lat:         34 } hitcount:          1
-    { pid:       4148, lat:         36 } hitcount:          1
-    { pid:       4148, lat:         37 } hitcount:          2
-    { pid:       4148, lat:         38 } hitcount:          1
-    { pid:       4148, lat:         41 } hitcount:          1
-    { pid:       4148, lat:         53 } hitcount:          1
-    { pid:       4148, lat:         71 } hitcount:          1
-
-    Totals:
-        Hits: 3474
-        Entries: 90
-        Dropped: 0
-
-  Finally, just to show that synthetic events are indeed just like any
-  other event as far as the event subsystem is concerned, we can
-  enable the synthetic events and see the events appear in the trace
-  buffer:
-
-    # echo 1 > /sys/kernel/debug/tracing/events/synthetic/wakeup_latency/enable
-    # echo 1 > /sys/kernel/debug/tracing/events/synthetic/switchtime_latency/enable
-    # echo 1 > /sys/kernel/debug/tracing/events/synthetic/wakeupswitch_latency/enable
-
-  Below is a snippet of the contents of the trace file produced when
-  the above histograms were generated:
-
-    # cat /sys/kernel/debug/tracing/trace
-
-    # tracer: nop
-    #
-    # entries-in-buffer/entries-written: 10503/10503   #P:4
-    #
-    #                              _-----=> irqs-off
-    #                             / _----=> need-resched
-    #                            | / _---=> hardirq/softirq
-    #                            || / _--=> preempt-depth
-    #                            ||| /     delay
-    #           TASK-PID   CPU#  ||||    TIMESTAMP  FUNCTION
-    #              | |       |   ||||       |         |
-              <idle>-0     [001] d..2 23532.240146: wakeup_latency: lat=4, pid=6853
-          cyclictest-6853  [001] .... 23532.240153: switchtime_latency: lat=7, pid=6853
-          cyclictest-6853  [001] .... 23532.240157: wakeupswitch_latency: lat=11, pid=6853
-     gnome-terminal--2500  [001] d..2 23532.240672: wakeup_latency: lat=5, pid=6854
-          cyclictest-6854  [001] .... 23532.240676: switchtime_latency: lat=4, pid=6854
-          cyclictest-6854  [001] .... 23532.240677: wakeupswitch_latency: lat=9, pid=6854
-     gnome-terminal--2500  [001] d..2 23532.241169: wakeup_latency: lat=4, pid=6853
-          cyclictest-6853  [001] .... 23532.241172: switchtime_latency: lat=3, pid=6853
-          cyclictest-6853  [001] .... 23532.241174: wakeupswitch_latency: lat=7, pid=6853
-              <idle>-0     [001] d..2 23532.242189: wakeup_latency: lat=6, pid=6853
-          cyclictest-6853  [001] .... 23532.242195: switchtime_latency: lat=8, pid=6853
-              <idle>-0     [000] d..2 23532.242196: wakeup_latency: lat=12, pid=6854
-          cyclictest-6853  [001] .... 23532.240146: wakeupswitch_latency: lat=14, pid=6853
-          cyclictest-6854  [000] .... 23532.242196: switchtime_latency: lat=4, pid=6854
-              <idle>-0     [001] d..2 23532.240146: wakeup_latency: lat=2, pid=6853
-          cyclictest-6854  [000] .... 23532.242196: wakeupswitch_latency: lat=16, pid=6854
-          cyclictest-6853  [001] .... 23532.240146: switchtime_latency: lat=3, pid=6853
-    ...
-
-  One quick note about usage - the introduction of variables and
-  actions obviously makes it harder to determine the cause of a hist
-  trigger command failure - 'Invalid argument' is no longer sufficient
-  in many cases.
-
-  For that reason, a new 'extended error' mechanism has been added to
-  hist triggers, initially focused on variable and action-related
-  errors, but something that could possibly expanded to other error
-  conditions later.
-
-  To make use of it, simply read the 'hist' file of the event that was
-  the target of the command.
-
-  In this example, we've entered the same command twice, resulting in
-  an attempt to define the same variable (ts0) twice.  After seeing
-  the 'Invalid argument' error for the command, we read the same
-  event's hist file and see a message to that effect at the bottom of
-  the file:
-
-    # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> \
-        /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
-
-    # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> \
-        /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
-
-    -su: echo: write error: Invalid argument
-
-    # cat /sys/kernel/debug/tracing/events/sched/sched_waking/hist
-    # event histogram
-    #
-    #
-
-    Totals:
-    Hits: 0
-    Entries: 0
-    Dropped: 0
-
-    ERROR: Variable already defined: ts0
-      Last command: keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"
-
-
-The following changes since commit a96a5037ed0f52e2d86739f4a1ef985bd036e575:
-
-  tracing, thermal: Hide cpu cooling trace events when not in use (2017-10-17 19:03:09 -0400)
-
-are available in the git repository at:
-
-  https://github.com/tzanussi/linux-trace-inter-event.git tzanussi/inter-event-v7
-  https://github.com/tzanussi/linux-trace-inter-event/tree/tzanussi/inter-event-v7
-
-Rajvi Jingar (1):
-  selftests: ftrace: Add inter-event hist triggers testcases
-
-Tom Zanussi (34):
-  tracing: Move hist trigger Documentation to histogram.txt
-  tracing: Add Documentation for log2 modifier
-  ring-buffer: Add interface for setting absolute time stamps
-  ring-buffer: Redefine the unimplemented RINGBUF_TYPE_TIME_STAMP
-  tracing: Add timestamp_mode trace file
-  tracing: Give event triggers access to ring_buffer_event
-  tracing: Add ring buffer event param to hist field functions
-  tracing: Break out hist trigger assignment parsing
-  tracing: Add hist trigger timestamp support
-  tracing: Add per-element variable support to tracing_map
-  tracing: Add hist_data member to hist_field
-  tracing: Add usecs modifier for hist trigger timestamps
-  tracing: Add variable support to hist triggers
-  tracing: Account for variables in named trigger compatibility
-  tracing: Move get_hist_field_flags()
-  tracing: Add simple expression support to hist triggers
-  tracing: Generalize per-element hist trigger data
-  tracing: Pass tracing_map_elt to hist_field accessor functions
-  tracing: Add hist_field 'type' field
-  tracing: Add variable reference handling to hist triggers
-  tracing: Add hist trigger action hook
-  tracing: Add support for 'synthetic' events
-  tracing: Add support for 'field variables'
-  tracing: Add 'onmatch' hist trigger action support
-  tracing: Add 'onmax' hist trigger action support
-  tracing: Allow whitespace to surround hist trigger filter
-  tracing: Add cpu field for hist triggers
-  tracing: Add hist trigger support for variable reference aliases
-  tracing: Add 'last error' error facility for hist triggers
-  tracing: Add inter-event hist trigger Documentation
-  tracing: Make tracing_set_clock() non-static
-  tracing: Add a clock attribute for hist triggers
-  tracing: Increase trace_recursive_lock() limit for synthetic events
-  tracing: Add inter-event blurb to HIST_TRIGGERS config option
-
-Vedang Patel (2):
-  tracing: Add support to detect and avoid duplicates
-  tracing: Remove code which merges duplicates
-
- Documentation/trace/events.txt                     | 1548 +------
- Documentation/trace/ftrace.txt                     |   24 +
- Documentation/trace/histogram.txt                  | 1995 ++++++++
- include/linux/ring_buffer.h                        |   14 +-
- include/linux/trace_events.h                       |   14 +-
- kernel/trace/Kconfig                               |    5 +-
- kernel/trace/ring_buffer.c                         |  125 +-
- kernel/trace/trace.c                               |   97 +-
- kernel/trace/trace.h                               |   18 +-
- kernel/trace/trace_events_hist.c                   | 4761 ++++++++++++++++++--
- kernel/trace/trace_events_trigger.c                |   53 +-
- kernel/trace/tracing_map.c                         |  232 +-
- kernel/trace/tracing_map.h                         |   18 +-
- tools/testing/selftests/ftrace/test.d/functions    |    7 +
- .../inter-event/trigger-extended-error-support.tc  |   39 +
- .../inter-event/trigger-field-variable-support.tc  |   54 +
- .../trigger-inter-event-combined-hist.tc           |   58 +
- .../inter-event/trigger-onmatch-action-hist.tc     |   50 +
- .../trigger-onmatch-onmax-action-hist.tc           |   50 +
- .../inter-event/trigger-onmax-action-hist.tc       |   48 +
- .../trigger-synthetic-event-createremove.tc        |   54 +
- 21 files changed, 7157 insertions(+), 2107 deletions(-)
+The hist trigger Documentation takes up a large part of events.txt -
+since it will be getting even larger, move it to a separate file.
+
+Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+---
+ Documentation/trace/events.txt    | 1548 +-----------------------------------
+ Documentation/trace/histogram.txt | 1568 +++++++++++++++++++++++++++++++++++++
+ 2 files changed, 1569 insertions(+), 1547 deletions(-)
  create mode 100644 Documentation/trace/histogram.txt
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-field-variable-support.tc
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-inter-event-combined-hist.tc
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-action-hist.tc
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-onmax-action-hist.tc
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmax-action-hist.tc
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc
 
+diff --git a/Documentation/trace/events.txt b/Documentation/trace/events.txt
+index 2cc08d4..e28f7f2 100644
+--- a/Documentation/trace/events.txt
++++ b/Documentation/trace/events.txt
+@@ -517,1550 +517,4 @@ The following commands are supported:
+   totals derived from one or more trace event format fields and/or
+   event counts (hitcount).
+ 
+-  The format of a hist trigger is as follows:
+-
+-        hist:keys=<field1[,field2,...]>[:values=<field1[,field2,...]>]
+-          [:sort=<field1[,field2,...]>][:size=#entries][:pause][:continue]
+-          [:clear][:name=histname1] [if <filter>]
+-
+-  When a matching event is hit, an entry is added to a hash table
+-  using the key(s) and value(s) named.  Keys and values correspond to
+-  fields in the event's format description.  Values must correspond to
+-  numeric fields - on an event hit, the value(s) will be added to a
+-  sum kept for that field.  The special string 'hitcount' can be used
+-  in place of an explicit value field - this is simply a count of
+-  event hits.  If 'values' isn't specified, an implicit 'hitcount'
+-  value will be automatically created and used as the only value.
+-  Keys can be any field, or the special string 'stacktrace', which
+-  will use the event's kernel stacktrace as the key.  The keywords
+-  'keys' or 'key' can be used to specify keys, and the keywords
+-  'values', 'vals', or 'val' can be used to specify values.  Compound
+-  keys consisting of up to two fields can be specified by the 'keys'
+-  keyword.  Hashing a compound key produces a unique entry in the
+-  table for each unique combination of component keys, and can be
+-  useful for providing more fine-grained summaries of event data.
+-  Additionally, sort keys consisting of up to two fields can be
+-  specified by the 'sort' keyword.  If more than one field is
+-  specified, the result will be a 'sort within a sort': the first key
+-  is taken to be the primary sort key and the second the secondary
+-  key.  If a hist trigger is given a name using the 'name' parameter,
+-  its histogram data will be shared with other triggers of the same
+-  name, and trigger hits will update this common data.  Only triggers
+-  with 'compatible' fields can be combined in this way; triggers are
+-  'compatible' if the fields named in the trigger share the same
+-  number and type of fields and those fields also have the same names.
+-  Note that any two events always share the compatible 'hitcount' and
+-  'stacktrace' fields and can therefore be combined using those
+-  fields, however pointless that may be.
+-
+-  'hist' triggers add a 'hist' file to each event's subdirectory.
+-  Reading the 'hist' file for the event will dump the hash table in
+-  its entirety to stdout.  If there are multiple hist triggers
+-  attached to an event, there will be a table for each trigger in the
+-  output.  The table displayed for a named trigger will be the same as
+-  any other instance having the same name. Each printed hash table
+-  entry is a simple list of the keys and values comprising the entry;
+-  keys are printed first and are delineated by curly braces, and are
+-  followed by the set of value fields for the entry.  By default,
+-  numeric fields are displayed as base-10 integers.  This can be
+-  modified by appending any of the following modifiers to the field
+-  name:
+-
+-        .hex        display a number as a hex value
+-	.sym        display an address as a symbol
+-	.sym-offset display an address as a symbol and offset
+-	.syscall    display a syscall id as a system call name
+-	.execname   display a common_pid as a program name
+-
+-  Note that in general the semantics of a given field aren't
+-  interpreted when applying a modifier to it, but there are some
+-  restrictions to be aware of in this regard:
+-
+-    - only the 'hex' modifier can be used for values (because values
+-      are essentially sums, and the other modifiers don't make sense
+-      in that context).
+-    - the 'execname' modifier can only be used on a 'common_pid'.  The
+-      reason for this is that the execname is simply the 'comm' value
+-      saved for the 'current' process when an event was triggered,
+-      which is the same as the common_pid value saved by the event
+-      tracing code.  Trying to apply that comm value to other pid
+-      values wouldn't be correct, and typically events that care save
+-      pid-specific comm fields in the event itself.
+-
+-  A typical usage scenario would be the following to enable a hist
+-  trigger, read its current contents, and then turn it off:
+-
+-  # echo 'hist:keys=skbaddr.hex:vals=len' > \
+-    /sys/kernel/debug/tracing/events/net/netif_rx/trigger
+-
+-  # cat /sys/kernel/debug/tracing/events/net/netif_rx/hist
+-
+-  # echo '!hist:keys=skbaddr.hex:vals=len' > \
+-    /sys/kernel/debug/tracing/events/net/netif_rx/trigger
+-
+-  The trigger file itself can be read to show the details of the
+-  currently attached hist trigger.  This information is also displayed
+-  at the top of the 'hist' file when read.
+-
+-  By default, the size of the hash table is 2048 entries.  The 'size'
+-  parameter can be used to specify more or fewer than that.  The units
+-  are in terms of hashtable entries - if a run uses more entries than
+-  specified, the results will show the number of 'drops', the number
+-  of hits that were ignored.  The size should be a power of 2 between
+-  128 and 131072 (any non- power-of-2 number specified will be rounded
+-  up).
+-
+-  The 'sort' parameter can be used to specify a value field to sort
+-  on.  The default if unspecified is 'hitcount' and the default sort
+-  order is 'ascending'.  To sort in the opposite direction, append
+-  .descending' to the sort key.
+-
+-  The 'pause' parameter can be used to pause an existing hist trigger
+-  or to start a hist trigger but not log any events until told to do
+-  so.  'continue' or 'cont' can be used to start or restart a paused
+-  hist trigger.
+-
+-  The 'clear' parameter will clear the contents of a running hist
+-  trigger and leave its current paused/active state.
+-
+-  Note that the 'pause', 'cont', and 'clear' parameters should be
+-  applied using 'append' shell operator ('>>') if applied to an
+-  existing trigger, rather than via the '>' operator, which will cause
+-  the trigger to be removed through truncation.
+-
+-- enable_hist/disable_hist
+-
+-  The enable_hist and disable_hist triggers can be used to have one
+-  event conditionally start and stop another event's already-attached
+-  hist trigger.  Any number of enable_hist and disable_hist triggers
+-  can be attached to a given event, allowing that event to kick off
+-  and stop aggregations on a host of other events.
+-
+-  The format is very similar to the enable/disable_event triggers:
+-
+-      enable_hist:<system>:<event>[:count]
+-      disable_hist:<system>:<event>[:count]
+-
+-  Instead of enabling or disabling the tracing of the target event
+-  into the trace buffer as the enable/disable_event triggers do, the
+-  enable/disable_hist triggers enable or disable the aggregation of
+-  the target event into a hash table.
+-
+-  A typical usage scenario for the enable_hist/disable_hist triggers
+-  would be to first set up a paused hist trigger on some event,
+-  followed by an enable_hist/disable_hist pair that turns the hist
+-  aggregation on and off when conditions of interest are hit:
+-
+-  # echo 'hist:keys=skbaddr.hex:vals=len:pause' > \
+-    /sys/kernel/debug/tracing/events/net/netif_receive_skb/trigger
+-
+-  # echo 'enable_hist:net:netif_receive_skb if filename==/usr/bin/wget' > \
+-    /sys/kernel/debug/tracing/events/sched/sched_process_exec/trigger
+-
+-  # echo 'disable_hist:net:netif_receive_skb if comm==wget' > \
+-    /sys/kernel/debug/tracing/events/sched/sched_process_exit/trigger
+-
+-  The above sets up an initially paused hist trigger which is unpaused
+-  and starts aggregating events when a given program is executed, and
+-  which stops aggregating when the process exits and the hist trigger
+-  is paused again.
+-
+-  The examples below provide a more concrete illustration of the
+-  concepts and typical usage patterns discussed above.
+-
+-
+-6.2 'hist' trigger examples
+----------------------------
+-
+-  The first set of examples creates aggregations using the kmalloc
+-  event.  The fields that can be used for the hist trigger are listed
+-  in the kmalloc event's format file:
+-
+-    # cat /sys/kernel/debug/tracing/events/kmem/kmalloc/format
+-    name: kmalloc
+-    ID: 374
+-    format:
+-	field:unsigned short common_type;	offset:0;	size:2;	signed:0;
+-	field:unsigned char common_flags;	offset:2;	size:1;	signed:0;
+-	field:unsigned char common_preempt_count;		offset:3;	size:1;	signed:0;
+-	field:int common_pid;					offset:4;	size:4;	signed:1;
+-
+-	field:unsigned long call_site;				offset:8;	size:8;	signed:0;
+-	field:const void * ptr;					offset:16;	size:8;	signed:0;
+-	field:size_t bytes_req;					offset:24;	size:8;	signed:0;
+-	field:size_t bytes_alloc;				offset:32;	size:8;	signed:0;
+-	field:gfp_t gfp_flags;					offset:40;	size:4;	signed:0;
+-
+-  We'll start by creating a hist trigger that generates a simple table
+-  that lists the total number of bytes requested for each function in
+-  the kernel that made one or more calls to kmalloc:
+-
+-    # echo 'hist:key=call_site:val=bytes_req' > \
+-            /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
+-
+-  This tells the tracing system to create a 'hist' trigger using the
+-  call_site field of the kmalloc event as the key for the table, which
+-  just means that each unique call_site address will have an entry
+-  created for it in the table.  The 'val=bytes_req' parameter tells
+-  the hist trigger that for each unique entry (call_site) in the
+-  table, it should keep a running total of the number of bytes
+-  requested by that call_site.
+-
+-  We'll let it run for awhile and then dump the contents of the 'hist'
+-  file in the kmalloc event's subdirectory (for readability, a number
+-  of entries have been omitted):
+-
+-    # cat /sys/kernel/debug/tracing/events/kmem/kmalloc/hist
+-    # trigger info: hist:keys=call_site:vals=bytes_req:sort=hitcount:size=2048 [active]
+-
+-    { call_site: 18446744072106379007 } hitcount:          1  bytes_req:        176
+-    { call_site: 18446744071579557049 } hitcount:          1  bytes_req:       1024
+-    { call_site: 18446744071580608289 } hitcount:          1  bytes_req:      16384
+-    { call_site: 18446744071581827654 } hitcount:          1  bytes_req:         24
+-    { call_site: 18446744071580700980 } hitcount:          1  bytes_req:          8
+-    { call_site: 18446744071579359876 } hitcount:          1  bytes_req:        152
+-    { call_site: 18446744071580795365 } hitcount:          3  bytes_req:        144
+-    { call_site: 18446744071581303129 } hitcount:          3  bytes_req:        144
+-    { call_site: 18446744071580713234 } hitcount:          4  bytes_req:       2560
+-    { call_site: 18446744071580933750 } hitcount:          4  bytes_req:        736
+-    .
+-    .
+-    .
+-    { call_site: 18446744072106047046 } hitcount:         69  bytes_req:       5576
+-    { call_site: 18446744071582116407 } hitcount:         73  bytes_req:       2336
+-    { call_site: 18446744072106054684 } hitcount:        136  bytes_req:     140504
+-    { call_site: 18446744072106224230 } hitcount:        136  bytes_req:      19584
+-    { call_site: 18446744072106078074 } hitcount:        153  bytes_req:       2448
+-    { call_site: 18446744072106062406 } hitcount:        153  bytes_req:      36720
+-    { call_site: 18446744071582507929 } hitcount:        153  bytes_req:      37088
+-    { call_site: 18446744072102520590 } hitcount:        273  bytes_req:      10920
+-    { call_site: 18446744071582143559 } hitcount:        358  bytes_req:        716
+-    { call_site: 18446744072106465852 } hitcount:        417  bytes_req:      56712
+-    { call_site: 18446744072102523378 } hitcount:        485  bytes_req:      27160
+-    { call_site: 18446744072099568646 } hitcount:       1676  bytes_req:      33520
+-
+-    Totals:
+-        Hits: 4610
+-        Entries: 45
+-        Dropped: 0
+-
+-  The output displays a line for each entry, beginning with the key
+-  specified in the trigger, followed by the value(s) also specified in
+-  the trigger.  At the beginning of the output is a line that displays
+-  the trigger info, which can also be displayed by reading the
+-  'trigger' file:
+-
+-    # cat /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
+-    hist:keys=call_site:vals=bytes_req:sort=hitcount:size=2048 [active]
+-
+-  At the end of the output are a few lines that display the overall
+-  totals for the run.  The 'Hits' field shows the total number of
+-  times the event trigger was hit, the 'Entries' field shows the total
+-  number of used entries in the hash table, and the 'Dropped' field
+-  shows the number of hits that were dropped because the number of
+-  used entries for the run exceeded the maximum number of entries
+-  allowed for the table (normally 0, but if not a hint that you may
+-  want to increase the size of the table using the 'size' parameter).
+-
+-  Notice in the above output that there's an extra field, 'hitcount',
+-  which wasn't specified in the trigger.  Also notice that in the
+-  trigger info output, there's a parameter, 'sort=hitcount', which
+-  wasn't specified in the trigger either.  The reason for that is that
+-  every trigger implicitly keeps a count of the total number of hits
+-  attributed to a given entry, called the 'hitcount'.  That hitcount
+-  information is explicitly displayed in the output, and in the
+-  absence of a user-specified sort parameter, is used as the default
+-  sort field.
+-
+-  The value 'hitcount' can be used in place of an explicit value in
+-  the 'values' parameter if you don't really need to have any
+-  particular field summed and are mainly interested in hit
+-  frequencies.
+-
+-  To turn the hist trigger off, simply call up the trigger in the
+-  command history and re-execute it with a '!' prepended:
+-
+-    # echo '!hist:key=call_site:val=bytes_req' > \
+-           /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
+-
+-  Finally, notice that the call_site as displayed in the output above
+-  isn't really very useful.  It's an address, but normally addresses
+-  are displayed in hex.  To have a numeric field displayed as a hex
+-  value, simply append '.hex' to the field name in the trigger:
+-
+-    # echo 'hist:key=call_site.hex:val=bytes_req' > \
+-           /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
+-
+-    # cat /sys/kernel/debug/tracing/events/kmem/kmalloc/hist
+-    # trigger info: hist:keys=call_site.hex:vals=bytes_req:sort=hitcount:size=2048 [active]
+-
+-    { call_site: ffffffffa026b291 } hitcount:          1  bytes_req:        433
+-    { call_site: ffffffffa07186ff } hitcount:          1  bytes_req:        176
+-    { call_site: ffffffff811ae721 } hitcount:          1  bytes_req:      16384
+-    { call_site: ffffffff811c5134 } hitcount:          1  bytes_req:          8
+-    { call_site: ffffffffa04a9ebb } hitcount:          1  bytes_req:        511
+-    { call_site: ffffffff8122e0a6 } hitcount:          1  bytes_req:         12
+-    { call_site: ffffffff8107da84 } hitcount:          1  bytes_req:        152
+-    { call_site: ffffffff812d8246 } hitcount:          1  bytes_req:         24
+-    { call_site: ffffffff811dc1e5 } hitcount:          3  bytes_req:        144
+-    { call_site: ffffffffa02515e8 } hitcount:          3  bytes_req:        648
+-    { call_site: ffffffff81258159 } hitcount:          3  bytes_req:        144
+-    { call_site: ffffffff811c80f4 } hitcount:          4  bytes_req:        544
+-    .
+-    .
+-    .
+-    { call_site: ffffffffa06c7646 } hitcount:        106  bytes_req:       8024
+-    { call_site: ffffffffa06cb246 } hitcount:        132  bytes_req:      31680
+-    { call_site: ffffffffa06cef7a } hitcount:        132  bytes_req:       2112
+-    { call_site: ffffffff8137e399 } hitcount:        132  bytes_req:      23232
+-    { call_site: ffffffffa06c941c } hitcount:        185  bytes_req:     171360
+-    { call_site: ffffffffa06f2a66 } hitcount:        185  bytes_req:      26640
+-    { call_site: ffffffffa036a70e } hitcount:        265  bytes_req:      10600
+-    { call_site: ffffffff81325447 } hitcount:        292  bytes_req:        584
+-    { call_site: ffffffffa072da3c } hitcount:        446  bytes_req:      60656
+-    { call_site: ffffffffa036b1f2 } hitcount:        526  bytes_req:      29456
+-    { call_site: ffffffffa0099c06 } hitcount:       1780  bytes_req:      35600
+-
+-    Totals:
+-        Hits: 4775
+-        Entries: 46
+-        Dropped: 0
+-
+-  Even that's only marginally more useful - while hex values do look
+-  more like addresses, what users are typically more interested in
+-  when looking at text addresses are the corresponding symbols
+-  instead.  To have an address displayed as symbolic value instead,
+-  simply append '.sym' or '.sym-offset' to the field name in the
+-  trigger:
+-
+-    # echo 'hist:key=call_site.sym:val=bytes_req' > \
+-           /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
+-
+-    # cat /sys/kernel/debug/tracing/events/kmem/kmalloc/hist
+-    # trigger info: hist:keys=call_site.sym:vals=bytes_req:sort=hitcount:size=2048 [active]
+-
+-    { call_site: [ffffffff810adcb9] syslog_print_all                              } hitcount:          1  bytes_req:       1024
+-    { call_site: [ffffffff8154bc62] usb_control_msg                               } hitcount:          1  bytes_req:          8
+-    { call_site: [ffffffffa00bf6fe] hidraw_send_report [hid]                      } hitcount:          1  bytes_req:          7
+-    { call_site: [ffffffff8154acbe] usb_alloc_urb                                 } hitcount:          1  bytes_req:        192
+-    { call_site: [ffffffffa00bf1ca] hidraw_report_event [hid]                     } hitcount:          1  bytes_req:          7
+-    { call_site: [ffffffff811e3a25] __seq_open_private                            } hitcount:          1  bytes_req:         40
+-    { call_site: [ffffffff8109524a] alloc_fair_sched_group                        } hitcount:          2  bytes_req:        128
+-    { call_site: [ffffffff811febd5] fsnotify_alloc_group                          } hitcount:          2  bytes_req:        528
+-    { call_site: [ffffffff81440f58] __tty_buffer_request_room                     } hitcount:          2  bytes_req:       2624
+-    { call_site: [ffffffff81200ba6] inotify_new_group                             } hitcount:          2  bytes_req:         96
+-    { call_site: [ffffffffa05e19af] ieee80211_start_tx_ba_session [mac80211]      } hitcount:          2  bytes_req:        464
+-    { call_site: [ffffffff81672406] tcp_get_metrics                               } hitcount:          2  bytes_req:        304
+-    { call_site: [ffffffff81097ec2] alloc_rt_sched_group                          } hitcount:          2  bytes_req:        128
+-    { call_site: [ffffffff81089b05] sched_create_group                            } hitcount:          2  bytes_req:       1424
+-    .
+-    .
+-    .
+-    { call_site: [ffffffffa04a580c] intel_crtc_page_flip [i915]                   } hitcount:       1185  bytes_req:     123240
+-    { call_site: [ffffffffa0287592] drm_mode_page_flip_ioctl [drm]                } hitcount:       1185  bytes_req:     104280
+-    { call_site: [ffffffffa04c4a3c] intel_plane_duplicate_state [i915]            } hitcount:       1402  bytes_req:     190672
+-    { call_site: [ffffffff812891ca] ext4_find_extent                              } hitcount:       1518  bytes_req:     146208
+-    { call_site: [ffffffffa029070e] drm_vma_node_allow [drm]                      } hitcount:       1746  bytes_req:      69840
+-    { call_site: [ffffffffa045e7c4] i915_gem_do_execbuffer.isra.23 [i915]         } hitcount:       2021  bytes_req:     792312
+-    { call_site: [ffffffffa02911f2] drm_modeset_lock_crtc [drm]                   } hitcount:       2592  bytes_req:     145152
+-    { call_site: [ffffffffa0489a66] intel_ring_begin [i915]                       } hitcount:       2629  bytes_req:     378576
+-    { call_site: [ffffffffa046041c] i915_gem_execbuffer2 [i915]                   } hitcount:       2629  bytes_req:    3783248
+-    { call_site: [ffffffff81325607] apparmor_file_alloc_security                  } hitcount:       5192  bytes_req:      10384
+-    { call_site: [ffffffffa00b7c06] hid_report_raw_event [hid]                    } hitcount:       5529  bytes_req:     110584
+-    { call_site: [ffffffff8131ebf7] aa_alloc_task_context                         } hitcount:      21943  bytes_req:     702176
+-    { call_site: [ffffffff8125847d] ext4_htree_store_dirent                       } hitcount:      55759  bytes_req:    5074265
+-
+-    Totals:
+-        Hits: 109928
+-        Entries: 71
+-        Dropped: 0
+-
+-  Because the default sort key above is 'hitcount', the above shows a
+-  the list of call_sites by increasing hitcount, so that at the bottom
+-  we see the functions that made the most kmalloc calls during the
+-  run.  If instead we we wanted to see the top kmalloc callers in
+-  terms of the number of bytes requested rather than the number of
+-  calls, and we wanted the top caller to appear at the top, we can use
+-  the 'sort' parameter, along with the 'descending' modifier:
+-
+-    # echo 'hist:key=call_site.sym:val=bytes_req:sort=bytes_req.descending' > \
+-           /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
+-
+-    # cat /sys/kernel/debug/tracing/events/kmem/kmalloc/hist
+-    # trigger info: hist:keys=call_site.sym:vals=bytes_req:sort=bytes_req.descending:size=2048 [active]
+-
+-    { call_site: [ffffffffa046041c] i915_gem_execbuffer2 [i915]                   } hitcount:       2186  bytes_req:    3397464
+-    { call_site: [ffffffffa045e7c4] i915_gem_do_execbuffer.isra.23 [i915]         } hitcount:       1790  bytes_req:     712176
+-    { call_site: [ffffffff8125847d] ext4_htree_store_dirent                       } hitcount:       8132  bytes_req:     513135
+-    { call_site: [ffffffff811e2a1b] seq_buf_alloc                                 } hitcount:        106  bytes_req:     440128
+-    { call_site: [ffffffffa0489a66] intel_ring_begin [i915]                       } hitcount:       2186  bytes_req:     314784
+-    { call_site: [ffffffff812891ca] ext4_find_extent                              } hitcount:       2174  bytes_req:     208992
+-    { call_site: [ffffffff811ae8e1] __kmalloc                                     } hitcount:          8  bytes_req:     131072
+-    { call_site: [ffffffffa04c4a3c] intel_plane_duplicate_state [i915]            } hitcount:        859  bytes_req:     116824
+-    { call_site: [ffffffffa02911f2] drm_modeset_lock_crtc [drm]                   } hitcount:       1834  bytes_req:     102704
+-    { call_site: [ffffffffa04a580c] intel_crtc_page_flip [i915]                   } hitcount:        972  bytes_req:     101088
+-    { call_site: [ffffffffa0287592] drm_mode_page_flip_ioctl [drm]                } hitcount:        972  bytes_req:      85536
+-    { call_site: [ffffffffa00b7c06] hid_report_raw_event [hid]                    } hitcount:       3333  bytes_req:      66664
+-    { call_site: [ffffffff8137e559] sg_kmalloc                                    } hitcount:        209  bytes_req:      61632
+-    .
+-    .
+-    .
+-    { call_site: [ffffffff81095225] alloc_fair_sched_group                        } hitcount:          2  bytes_req:        128
+-    { call_site: [ffffffff81097ec2] alloc_rt_sched_group                          } hitcount:          2  bytes_req:        128
+-    { call_site: [ffffffff812d8406] copy_semundo                                  } hitcount:          2  bytes_req:         48
+-    { call_site: [ffffffff81200ba6] inotify_new_group                             } hitcount:          1  bytes_req:         48
+-    { call_site: [ffffffffa027121a] drm_getmagic [drm]                            } hitcount:          1  bytes_req:         48
+-    { call_site: [ffffffff811e3a25] __seq_open_private                            } hitcount:          1  bytes_req:         40
+-    { call_site: [ffffffff811c52f4] bprm_change_interp                            } hitcount:          2  bytes_req:         16
+-    { call_site: [ffffffff8154bc62] usb_control_msg                               } hitcount:          1  bytes_req:          8
+-    { call_site: [ffffffffa00bf1ca] hidraw_report_event [hid]                     } hitcount:          1  bytes_req:          7
+-    { call_site: [ffffffffa00bf6fe] hidraw_send_report [hid]                      } hitcount:          1  bytes_req:          7
+-
+-    Totals:
+-        Hits: 32133
+-        Entries: 81
+-        Dropped: 0
+-
+-  To display the offset and size information in addition to the symbol
+-  name, just use 'sym-offset' instead:
+-
+-    # echo 'hist:key=call_site.sym-offset:val=bytes_req:sort=bytes_req.descending' > \
+-           /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
+-
+-    # cat /sys/kernel/debug/tracing/events/kmem/kmalloc/hist
+-    # trigger info: hist:keys=call_site.sym-offset:vals=bytes_req:sort=bytes_req.descending:size=2048 [active]
+-
+-    { call_site: [ffffffffa046041c] i915_gem_execbuffer2+0x6c/0x2c0 [i915]                  } hitcount:       4569  bytes_req:    3163720
+-    { call_site: [ffffffffa0489a66] intel_ring_begin+0xc6/0x1f0 [i915]                      } hitcount:       4569  bytes_req:     657936
+-    { call_site: [ffffffffa045e7c4] i915_gem_do_execbuffer.isra.23+0x694/0x1020 [i915]      } hitcount:       1519  bytes_req:     472936
+-    { call_site: [ffffffffa045e646] i915_gem_do_execbuffer.isra.23+0x516/0x1020 [i915]      } hitcount:       3050  bytes_req:     211832
+-    { call_site: [ffffffff811e2a1b] seq_buf_alloc+0x1b/0x50                                 } hitcount:         34  bytes_req:     148384
+-    { call_site: [ffffffffa04a580c] intel_crtc_page_flip+0xbc/0x870 [i915]                  } hitcount:       1385  bytes_req:     144040
+-    { call_site: [ffffffff811ae8e1] __kmalloc+0x191/0x1b0                                   } hitcount:          8  bytes_req:     131072
+-    { call_site: [ffffffffa0287592] drm_mode_page_flip_ioctl+0x282/0x360 [drm]              } hitcount:       1385  bytes_req:     121880
+-    { call_site: [ffffffffa02911f2] drm_modeset_lock_crtc+0x32/0x100 [drm]                  } hitcount:       1848  bytes_req:     103488
+-    { call_site: [ffffffffa04c4a3c] intel_plane_duplicate_state+0x2c/0xa0 [i915]            } hitcount:        461  bytes_req:      62696
+-    { call_site: [ffffffffa029070e] drm_vma_node_allow+0x2e/0xd0 [drm]                      } hitcount:       1541  bytes_req:      61640
+-    { call_site: [ffffffff815f8d7b] sk_prot_alloc+0xcb/0x1b0                                } hitcount:         57  bytes_req:      57456
+-    .
+-    .
+-    .
+-    { call_site: [ffffffff8109524a] alloc_fair_sched_group+0x5a/0x1a0                       } hitcount:          2  bytes_req:        128
+-    { call_site: [ffffffffa027b921] drm_vm_open_locked+0x31/0xa0 [drm]                      } hitcount:          3  bytes_req:         96
+-    { call_site: [ffffffff8122e266] proc_self_follow_link+0x76/0xb0                         } hitcount:          8  bytes_req:         96
+-    { call_site: [ffffffff81213e80] load_elf_binary+0x240/0x1650                            } hitcount:          3  bytes_req:         84
+-    { call_site: [ffffffff8154bc62] usb_control_msg+0x42/0x110                              } hitcount:          1  bytes_req:          8
+-    { call_site: [ffffffffa00bf6fe] hidraw_send_report+0x7e/0x1a0 [hid]                     } hitcount:          1  bytes_req:          7
+-    { call_site: [ffffffffa00bf1ca] hidraw_report_event+0x8a/0x120 [hid]                    } hitcount:          1  bytes_req:          7
+-
+-    Totals:
+-        Hits: 26098
+-        Entries: 64
+-        Dropped: 0
+-
+-  We can also add multiple fields to the 'values' parameter.  For
+-  example, we might want to see the total number of bytes allocated
+-  alongside bytes requested, and display the result sorted by bytes
+-  allocated in a descending order:
+-
+-    # echo 'hist:keys=call_site.sym:values=bytes_req,bytes_alloc:sort=bytes_alloc.descending' > \
+-           /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
+-
+-    # cat /sys/kernel/debug/tracing/events/kmem/kmalloc/hist
+-    # trigger info: hist:keys=call_site.sym:vals=bytes_req,bytes_alloc:sort=bytes_alloc.descending:size=2048 [active]
+-
+-    { call_site: [ffffffffa046041c] i915_gem_execbuffer2 [i915]                   } hitcount:       7403  bytes_req:    4084360  bytes_alloc:    5958016
+-    { call_site: [ffffffff811e2a1b] seq_buf_alloc                                 } hitcount:        541  bytes_req:    2213968  bytes_alloc:    2228224
+-    { call_site: [ffffffffa0489a66] intel_ring_begin [i915]                       } hitcount:       7404  bytes_req:    1066176  bytes_alloc:    1421568
+-    { call_site: [ffffffffa045e7c4] i915_gem_do_execbuffer.isra.23 [i915]         } hitcount:       1565  bytes_req:     557368  bytes_alloc:    1037760
+-    { call_site: [ffffffff8125847d] ext4_htree_store_dirent                       } hitcount:       9557  bytes_req:     595778  bytes_alloc:     695744
+-    { call_site: [ffffffffa045e646] i915_gem_do_execbuffer.isra.23 [i915]         } hitcount:       5839  bytes_req:     430680  bytes_alloc:     470400
+-    { call_site: [ffffffffa04c4a3c] intel_plane_duplicate_state [i915]            } hitcount:       2388  bytes_req:     324768  bytes_alloc:     458496
+-    { call_site: [ffffffffa02911f2] drm_modeset_lock_crtc [drm]                   } hitcount:       3911  bytes_req:     219016  bytes_alloc:     250304
+-    { call_site: [ffffffff815f8d7b] sk_prot_alloc                                 } hitcount:        235  bytes_req:     236880  bytes_alloc:     240640
+-    { call_site: [ffffffff8137e559] sg_kmalloc                                    } hitcount:        557  bytes_req:     169024  bytes_alloc:     221760
+-    { call_site: [ffffffffa00b7c06] hid_report_raw_event [hid]                    } hitcount:       9378  bytes_req:     187548  bytes_alloc:     206312
+-    { call_site: [ffffffffa04a580c] intel_crtc_page_flip [i915]                   } hitcount:       1519  bytes_req:     157976  bytes_alloc:     194432
+-    .
+-    .
+-    .
+-    { call_site: [ffffffff8109bd3b] sched_autogroup_create_attach                 } hitcount:          2  bytes_req:        144  bytes_alloc:        192
+-    { call_site: [ffffffff81097ee8] alloc_rt_sched_group                          } hitcount:          2  bytes_req:        128  bytes_alloc:        128
+-    { call_site: [ffffffff8109524a] alloc_fair_sched_group                        } hitcount:          2  bytes_req:        128  bytes_alloc:        128
+-    { call_site: [ffffffff81095225] alloc_fair_sched_group                        } hitcount:          2  bytes_req:        128  bytes_alloc:        128
+-    { call_site: [ffffffff81097ec2] alloc_rt_sched_group                          } hitcount:          2  bytes_req:        128  bytes_alloc:        128
+-    { call_site: [ffffffff81213e80] load_elf_binary                               } hitcount:          3  bytes_req:         84  bytes_alloc:         96
+-    { call_site: [ffffffff81079a2e] kthread_create_on_node                        } hitcount:          1  bytes_req:         56  bytes_alloc:         64
+-    { call_site: [ffffffffa00bf6fe] hidraw_send_report [hid]                      } hitcount:          1  bytes_req:          7  bytes_alloc:          8
+-    { call_site: [ffffffff8154bc62] usb_control_msg                               } hitcount:          1  bytes_req:          8  bytes_alloc:          8
+-    { call_site: [ffffffffa00bf1ca] hidraw_report_event [hid]                     } hitcount:          1  bytes_req:          7  bytes_alloc:          8
+-
+-    Totals:
+-        Hits: 66598
+-        Entries: 65
+-        Dropped: 0
+-
+-  Finally, to finish off our kmalloc example, instead of simply having
+-  the hist trigger display symbolic call_sites, we can have the hist
+-  trigger additionally display the complete set of kernel stack traces
+-  that led to each call_site.  To do that, we simply use the special
+-  value 'stacktrace' for the key parameter:
+-
+-    # echo 'hist:keys=stacktrace:values=bytes_req,bytes_alloc:sort=bytes_alloc' > \
+-           /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
+-
+-  The above trigger will use the kernel stack trace in effect when an
+-  event is triggered as the key for the hash table.  This allows the
+-  enumeration of every kernel callpath that led up to a particular
+-  event, along with a running total of any of the event fields for
+-  that event.  Here we tally bytes requested and bytes allocated for
+-  every callpath in the system that led up to a kmalloc (in this case
+-  every callpath to a kmalloc for a kernel compile):
+-
+-    # cat /sys/kernel/debug/tracing/events/kmem/kmalloc/hist
+-    # trigger info: hist:keys=stacktrace:vals=bytes_req,bytes_alloc:sort=bytes_alloc:size=2048 [active]
+-
+-    { stacktrace:
+-         __kmalloc_track_caller+0x10b/0x1a0
+-         kmemdup+0x20/0x50
+-         hidraw_report_event+0x8a/0x120 [hid]
+-         hid_report_raw_event+0x3ea/0x440 [hid]
+-         hid_input_report+0x112/0x190 [hid]
+-         hid_irq_in+0xc2/0x260 [usbhid]
+-         __usb_hcd_giveback_urb+0x72/0x120
+-         usb_giveback_urb_bh+0x9e/0xe0
+-         tasklet_hi_action+0xf8/0x100
+-         __do_softirq+0x114/0x2c0
+-         irq_exit+0xa5/0xb0
+-         do_IRQ+0x5a/0xf0
+-         ret_from_intr+0x0/0x30
+-         cpuidle_enter+0x17/0x20
+-         cpu_startup_entry+0x315/0x3e0
+-         rest_init+0x7c/0x80
+-    } hitcount:          3  bytes_req:         21  bytes_alloc:         24
+-    { stacktrace:
+-         __kmalloc_track_caller+0x10b/0x1a0
+-         kmemdup+0x20/0x50
+-         hidraw_report_event+0x8a/0x120 [hid]
+-         hid_report_raw_event+0x3ea/0x440 [hid]
+-         hid_input_report+0x112/0x190 [hid]
+-         hid_irq_in+0xc2/0x260 [usbhid]
+-         __usb_hcd_giveback_urb+0x72/0x120
+-         usb_giveback_urb_bh+0x9e/0xe0
+-         tasklet_hi_action+0xf8/0x100
+-         __do_softirq+0x114/0x2c0
+-         irq_exit+0xa5/0xb0
+-         do_IRQ+0x5a/0xf0
+-         ret_from_intr+0x0/0x30
+-    } hitcount:          3  bytes_req:         21  bytes_alloc:         24
+-    { stacktrace:
+-         kmem_cache_alloc_trace+0xeb/0x150
+-         aa_alloc_task_context+0x27/0x40
+-         apparmor_cred_prepare+0x1f/0x50
+-         security_prepare_creds+0x16/0x20
+-         prepare_creds+0xdf/0x1a0
+-         SyS_capset+0xb5/0x200
+-         system_call_fastpath+0x12/0x6a
+-    } hitcount:          1  bytes_req:         32  bytes_alloc:         32
+-    .
+-    .
+-    .
+-    { stacktrace:
+-         __kmalloc+0x11b/0x1b0
+-         i915_gem_execbuffer2+0x6c/0x2c0 [i915]
+-         drm_ioctl+0x349/0x670 [drm]
+-         do_vfs_ioctl+0x2f0/0x4f0
+-         SyS_ioctl+0x81/0xa0
+-         system_call_fastpath+0x12/0x6a
+-    } hitcount:      17726  bytes_req:   13944120  bytes_alloc:   19593808
+-    { stacktrace:
+-         __kmalloc+0x11b/0x1b0
+-         load_elf_phdrs+0x76/0xa0
+-         load_elf_binary+0x102/0x1650
+-         search_binary_handler+0x97/0x1d0
+-         do_execveat_common.isra.34+0x551/0x6e0
+-         SyS_execve+0x3a/0x50
+-         return_from_execve+0x0/0x23
+-    } hitcount:      33348  bytes_req:   17152128  bytes_alloc:   20226048
+-    { stacktrace:
+-         kmem_cache_alloc_trace+0xeb/0x150
+-         apparmor_file_alloc_security+0x27/0x40
+-         security_file_alloc+0x16/0x20
+-         get_empty_filp+0x93/0x1c0
+-         path_openat+0x31/0x5f0
+-         do_filp_open+0x3a/0x90
+-         do_sys_open+0x128/0x220
+-         SyS_open+0x1e/0x20
+-         system_call_fastpath+0x12/0x6a
+-    } hitcount:    4766422  bytes_req:    9532844  bytes_alloc:   38131376
+-    { stacktrace:
+-         __kmalloc+0x11b/0x1b0
+-         seq_buf_alloc+0x1b/0x50
+-         seq_read+0x2cc/0x370
+-         proc_reg_read+0x3d/0x80
+-         __vfs_read+0x28/0xe0
+-         vfs_read+0x86/0x140
+-         SyS_read+0x46/0xb0
+-         system_call_fastpath+0x12/0x6a
+-    } hitcount:      19133  bytes_req:   78368768  bytes_alloc:   78368768
+-
+-    Totals:
+-        Hits: 6085872
+-        Entries: 253
+-        Dropped: 0
+-
+-  If you key a hist trigger on common_pid, in order for example to
+-  gather and display sorted totals for each process, you can use the
+-  special .execname modifier to display the executable names for the
+-  processes in the table rather than raw pids.  The example below
+-  keeps a per-process sum of total bytes read:
+-
+-    # echo 'hist:key=common_pid.execname:val=count:sort=count.descending' > \
+-           /sys/kernel/debug/tracing/events/syscalls/sys_enter_read/trigger
+-
+-    # cat /sys/kernel/debug/tracing/events/syscalls/sys_enter_read/hist
+-    # trigger info: hist:keys=common_pid.execname:vals=count:sort=count.descending:size=2048 [active]
+-
+-    { common_pid: gnome-terminal  [      3196] } hitcount:        280  count:    1093512
+-    { common_pid: Xorg            [      1309] } hitcount:        525  count:     256640
+-    { common_pid: compiz          [      2889] } hitcount:         59  count:     254400
+-    { common_pid: bash            [      8710] } hitcount:          3  count:      66369
+-    { common_pid: dbus-daemon-lau [      8703] } hitcount:         49  count:      47739
+-    { common_pid: irqbalance      [      1252] } hitcount:         27  count:      27648
+-    { common_pid: 01ifupdown      [      8705] } hitcount:          3  count:      17216
+-    { common_pid: dbus-daemon     [       772] } hitcount:         10  count:      12396
+-    { common_pid: Socket Thread   [      8342] } hitcount:         11  count:      11264
+-    { common_pid: nm-dhcp-client. [      8701] } hitcount:          6  count:       7424
+-    { common_pid: gmain           [      1315] } hitcount:         18  count:       6336
+-    .
+-    .
+-    .
+-    { common_pid: postgres        [      1892] } hitcount:          2  count:         32
+-    { common_pid: postgres        [      1891] } hitcount:          2  count:         32
+-    { common_pid: gmain           [      8704] } hitcount:          2  count:         32
+-    { common_pid: upstart-dbus-br [      2740] } hitcount:         21  count:         21
+-    { common_pid: nm-dispatcher.a [      8696] } hitcount:          1  count:         16
+-    { common_pid: indicator-datet [      2904] } hitcount:          1  count:         16
+-    { common_pid: gdbus           [      2998] } hitcount:          1  count:         16
+-    { common_pid: rtkit-daemon    [      2052] } hitcount:          1  count:          8
+-    { common_pid: init            [         1] } hitcount:          2  count:          2
+-
+-    Totals:
+-        Hits: 2116
+-        Entries: 51
+-        Dropped: 0
+-
+-  Similarly, if you key a hist trigger on syscall id, for example to
+-  gather and display a list of systemwide syscall hits, you can use
+-  the special .syscall modifier to display the syscall names rather
+-  than raw ids.  The example below keeps a running total of syscall
+-  counts for the system during the run:
+-
+-    # echo 'hist:key=id.syscall:val=hitcount' > \
+-           /sys/kernel/debug/tracing/events/raw_syscalls/sys_enter/trigger
+-
+-    # cat /sys/kernel/debug/tracing/events/raw_syscalls/sys_enter/hist
+-    # trigger info: hist:keys=id.syscall:vals=hitcount:sort=hitcount:size=2048 [active]
+-
+-    { id: sys_fsync                     [ 74] } hitcount:          1
+-    { id: sys_newuname                  [ 63] } hitcount:          1
+-    { id: sys_prctl                     [157] } hitcount:          1
+-    { id: sys_statfs                    [137] } hitcount:          1
+-    { id: sys_symlink                   [ 88] } hitcount:          1
+-    { id: sys_sendmmsg                  [307] } hitcount:          1
+-    { id: sys_semctl                    [ 66] } hitcount:          1
+-    { id: sys_readlink                  [ 89] } hitcount:          3
+-    { id: sys_bind                      [ 49] } hitcount:          3
+-    { id: sys_getsockname               [ 51] } hitcount:          3
+-    { id: sys_unlink                    [ 87] } hitcount:          3
+-    { id: sys_rename                    [ 82] } hitcount:          4
+-    { id: unknown_syscall               [ 58] } hitcount:          4
+-    { id: sys_connect                   [ 42] } hitcount:          4
+-    { id: sys_getpid                    [ 39] } hitcount:          4
+-    .
+-    .
+-    .
+-    { id: sys_rt_sigprocmask            [ 14] } hitcount:        952
+-    { id: sys_futex                     [202] } hitcount:       1534
+-    { id: sys_write                     [  1] } hitcount:       2689
+-    { id: sys_setitimer                 [ 38] } hitcount:       2797
+-    { id: sys_read                      [  0] } hitcount:       3202
+-    { id: sys_select                    [ 23] } hitcount:       3773
+-    { id: sys_writev                    [ 20] } hitcount:       4531
+-    { id: sys_poll                      [  7] } hitcount:       8314
+-    { id: sys_recvmsg                   [ 47] } hitcount:      13738
+-    { id: sys_ioctl                     [ 16] } hitcount:      21843
+-
+-    Totals:
+-        Hits: 67612
+-        Entries: 72
+-        Dropped: 0
+-
+-    The syscall counts above provide a rough overall picture of system
+-    call activity on the system; we can see for example that the most
+-    popular system call on this system was the 'sys_ioctl' system call.
+-
+-    We can use 'compound' keys to refine that number and provide some
+-    further insight as to which processes exactly contribute to the
+-    overall ioctl count.
+-
+-    The command below keeps a hitcount for every unique combination of
+-    system call id and pid - the end result is essentially a table
+-    that keeps a per-pid sum of system call hits.  The results are
+-    sorted using the system call id as the primary key, and the
+-    hitcount sum as the secondary key:
+-
+-    # echo 'hist:key=id.syscall,common_pid.execname:val=hitcount:sort=id,hitcount' > \
+-           /sys/kernel/debug/tracing/events/raw_syscalls/sys_enter/trigger
+-
+-    # cat /sys/kernel/debug/tracing/events/raw_syscalls/sys_enter/hist
+-    # trigger info: hist:keys=id.syscall,common_pid.execname:vals=hitcount:sort=id.syscall,hitcount:size=2048 [active]
+-
+-    { id: sys_read                      [  0], common_pid: rtkit-daemon    [      1877] } hitcount:          1
+-    { id: sys_read                      [  0], common_pid: gdbus           [      2976] } hitcount:          1
+-    { id: sys_read                      [  0], common_pid: console-kit-dae [      3400] } hitcount:          1
+-    { id: sys_read                      [  0], common_pid: postgres        [      1865] } hitcount:          1
+-    { id: sys_read                      [  0], common_pid: deja-dup-monito [      3543] } hitcount:          2
+-    { id: sys_read                      [  0], common_pid: NetworkManager  [       890] } hitcount:          2
+-    { id: sys_read                      [  0], common_pid: evolution-calen [      3048] } hitcount:          2
+-    { id: sys_read                      [  0], common_pid: postgres        [      1864] } hitcount:          2
+-    { id: sys_read                      [  0], common_pid: nm-applet       [      3022] } hitcount:          2
+-    { id: sys_read                      [  0], common_pid: whoopsie        [      1212] } hitcount:          2
+-    .
+-    .
+-    .
+-    { id: sys_ioctl                     [ 16], common_pid: bash            [      8479] } hitcount:          1
+-    { id: sys_ioctl                     [ 16], common_pid: bash            [      3472] } hitcount:         12
+-    { id: sys_ioctl                     [ 16], common_pid: gnome-terminal  [      3199] } hitcount:         16
+-    { id: sys_ioctl                     [ 16], common_pid: Xorg            [      1267] } hitcount:       1808
+-    { id: sys_ioctl                     [ 16], common_pid: compiz          [      2994] } hitcount:       5580
+-    .
+-    .
+-    .
+-    { id: sys_waitid                    [247], common_pid: upstart-dbus-br [      2690] } hitcount:          3
+-    { id: sys_waitid                    [247], common_pid: upstart-dbus-br [      2688] } hitcount:         16
+-    { id: sys_inotify_add_watch         [254], common_pid: gmain           [       975] } hitcount:          2
+-    { id: sys_inotify_add_watch         [254], common_pid: gmain           [      3204] } hitcount:          4
+-    { id: sys_inotify_add_watch         [254], common_pid: gmain           [      2888] } hitcount:          4
+-    { id: sys_inotify_add_watch         [254], common_pid: gmain           [      3003] } hitcount:          4
+-    { id: sys_inotify_add_watch         [254], common_pid: gmain           [      2873] } hitcount:          4
+-    { id: sys_inotify_add_watch         [254], common_pid: gmain           [      3196] } hitcount:          6
+-    { id: sys_openat                    [257], common_pid: java            [      2623] } hitcount:          2
+-    { id: sys_eventfd2                  [290], common_pid: ibus-ui-gtk3    [      2760] } hitcount:          4
+-    { id: sys_eventfd2                  [290], common_pid: compiz          [      2994] } hitcount:          6
+-
+-    Totals:
+-        Hits: 31536
+-        Entries: 323
+-        Dropped: 0
+-
+-    The above list does give us a breakdown of the ioctl syscall by
+-    pid, but it also gives us quite a bit more than that, which we
+-    don't really care about at the moment.  Since we know the syscall
+-    id for sys_ioctl (16, displayed next to the sys_ioctl name), we
+-    can use that to filter out all the other syscalls:
+-
+-    # echo 'hist:key=id.syscall,common_pid.execname:val=hitcount:sort=id,hitcount if id == 16' > \
+-           /sys/kernel/debug/tracing/events/raw_syscalls/sys_enter/trigger
+-
+-    # cat /sys/kernel/debug/tracing/events/raw_syscalls/sys_enter/hist
+-    # trigger info: hist:keys=id.syscall,common_pid.execname:vals=hitcount:sort=id.syscall,hitcount:size=2048 if id == 16 [active]
+-
+-    { id: sys_ioctl                     [ 16], common_pid: gmain           [      2769] } hitcount:          1
+-    { id: sys_ioctl                     [ 16], common_pid: evolution-addre [      8571] } hitcount:          1
+-    { id: sys_ioctl                     [ 16], common_pid: gmain           [      3003] } hitcount:          1
+-    { id: sys_ioctl                     [ 16], common_pid: gmain           [      2781] } hitcount:          1
+-    { id: sys_ioctl                     [ 16], common_pid: gmain           [      2829] } hitcount:          1
+-    { id: sys_ioctl                     [ 16], common_pid: bash            [      8726] } hitcount:          1
+-    { id: sys_ioctl                     [ 16], common_pid: bash            [      8508] } hitcount:          1
+-    { id: sys_ioctl                     [ 16], common_pid: gmain           [      2970] } hitcount:          1
+-    { id: sys_ioctl                     [ 16], common_pid: gmain           [      2768] } hitcount:          1
+-    .
+-    .
+-    .
+-    { id: sys_ioctl                     [ 16], common_pid: pool            [      8559] } hitcount:         45
+-    { id: sys_ioctl                     [ 16], common_pid: pool            [      8555] } hitcount:         48
+-    { id: sys_ioctl                     [ 16], common_pid: pool            [      8551] } hitcount:         48
+-    { id: sys_ioctl                     [ 16], common_pid: avahi-daemon    [       896] } hitcount:         66
+-    { id: sys_ioctl                     [ 16], common_pid: Xorg            [      1267] } hitcount:      26674
+-    { id: sys_ioctl                     [ 16], common_pid: compiz          [      2994] } hitcount:      73443
+-
+-    Totals:
+-        Hits: 101162
+-        Entries: 103
+-        Dropped: 0
+-
+-    The above output shows that 'compiz' and 'Xorg' are far and away
+-    the heaviest ioctl callers (which might lead to questions about
+-    whether they really need to be making all those calls and to
+-    possible avenues for further investigation.)
+-
+-    The compound key examples used a key and a sum value (hitcount) to
+-    sort the output, but we can just as easily use two keys instead.
+-    Here's an example where we use a compound key composed of the the
+-    common_pid and size event fields.  Sorting with pid as the primary
+-    key and 'size' as the secondary key allows us to display an
+-    ordered summary of the recvfrom sizes, with counts, received by
+-    each process:
+-
+-    # echo 'hist:key=common_pid.execname,size:val=hitcount:sort=common_pid,size' > \
+-           /sys/kernel/debug/tracing/events/syscalls/sys_enter_recvfrom/trigger
+-
+-    # cat /sys/kernel/debug/tracing/events/syscalls/sys_enter_recvfrom/hist
+-    # trigger info: hist:keys=common_pid.execname,size:vals=hitcount:sort=common_pid.execname,size:size=2048 [active]
+-
+-    { common_pid: smbd            [       784], size:          4 } hitcount:          1
+-    { common_pid: dnsmasq         [      1412], size:       4096 } hitcount:        672
+-    { common_pid: postgres        [      1796], size:       1000 } hitcount:          6
+-    { common_pid: postgres        [      1867], size:       1000 } hitcount:         10
+-    { common_pid: bamfdaemon      [      2787], size:         28 } hitcount:          2
+-    { common_pid: bamfdaemon      [      2787], size:      14360 } hitcount:          1
+-    { common_pid: compiz          [      2994], size:          8 } hitcount:          1
+-    { common_pid: compiz          [      2994], size:         20 } hitcount:         11
+-    { common_pid: gnome-terminal  [      3199], size:          4 } hitcount:          2
+-    { common_pid: firefox         [      8817], size:          4 } hitcount:          1
+-    { common_pid: firefox         [      8817], size:          8 } hitcount:          5
+-    { common_pid: firefox         [      8817], size:        588 } hitcount:          2
+-    { common_pid: firefox         [      8817], size:        628 } hitcount:          1
+-    { common_pid: firefox         [      8817], size:       6944 } hitcount:          1
+-    { common_pid: firefox         [      8817], size:     408880 } hitcount:          2
+-    { common_pid: firefox         [      8822], size:          8 } hitcount:          2
+-    { common_pid: firefox         [      8822], size:        160 } hitcount:          2
+-    { common_pid: firefox         [      8822], size:        320 } hitcount:          2
+-    { common_pid: firefox         [      8822], size:        352 } hitcount:          1
+-    .
+-    .
+-    .
+-    { common_pid: pool            [      8923], size:       1960 } hitcount:         10
+-    { common_pid: pool            [      8923], size:       2048 } hitcount:         10
+-    { common_pid: pool            [      8924], size:       1960 } hitcount:         10
+-    { common_pid: pool            [      8924], size:       2048 } hitcount:         10
+-    { common_pid: pool            [      8928], size:       1964 } hitcount:          4
+-    { common_pid: pool            [      8928], size:       1965 } hitcount:          2
+-    { common_pid: pool            [      8928], size:       2048 } hitcount:          6
+-    { common_pid: pool            [      8929], size:       1982 } hitcount:          1
+-    { common_pid: pool            [      8929], size:       2048 } hitcount:          1
+-
+-    Totals:
+-        Hits: 2016
+-        Entries: 224
+-        Dropped: 0
+-
+-  The above example also illustrates the fact that although a compound
+-  key is treated as a single entity for hashing purposes, the sub-keys
+-  it's composed of can be accessed independently.
+-
+-  The next example uses a string field as the hash key and
+-  demonstrates how you can manually pause and continue a hist trigger.
+-  In this example, we'll aggregate fork counts and don't expect a
+-  large number of entries in the hash table, so we'll drop it to a
+-  much smaller number, say 256:
+-
+-    # echo 'hist:key=child_comm:val=hitcount:size=256' > \
+-           /sys/kernel/debug/tracing/events/sched/sched_process_fork/trigger
+-
+-    # cat /sys/kernel/debug/tracing/events/sched/sched_process_fork/hist
+-    # trigger info: hist:keys=child_comm:vals=hitcount:sort=hitcount:size=256 [active]
+-
+-    { child_comm: dconf worker                        } hitcount:          1
+-    { child_comm: ibus-daemon                         } hitcount:          1
+-    { child_comm: whoopsie                            } hitcount:          1
+-    { child_comm: smbd                                } hitcount:          1
+-    { child_comm: gdbus                               } hitcount:          1
+-    { child_comm: kthreadd                            } hitcount:          1
+-    { child_comm: dconf worker                        } hitcount:          1
+-    { child_comm: evolution-alarm                     } hitcount:          2
+-    { child_comm: Socket Thread                       } hitcount:          2
+-    { child_comm: postgres                            } hitcount:          2
+-    { child_comm: bash                                } hitcount:          3
+-    { child_comm: compiz                              } hitcount:          3
+-    { child_comm: evolution-sourc                     } hitcount:          4
+-    { child_comm: dhclient                            } hitcount:          4
+-    { child_comm: pool                                } hitcount:          5
+-    { child_comm: nm-dispatcher.a                     } hitcount:          8
+-    { child_comm: firefox                             } hitcount:          8
+-    { child_comm: dbus-daemon                         } hitcount:          8
+-    { child_comm: glib-pacrunner                      } hitcount:         10
+-    { child_comm: evolution                           } hitcount:         23
+-
+-    Totals:
+-        Hits: 89
+-        Entries: 20
+-        Dropped: 0
+-
+-  If we want to pause the hist trigger, we can simply append :pause to
+-  the command that started the trigger.  Notice that the trigger info
+-  displays as [paused]:
+-
+-    # echo 'hist:key=child_comm:val=hitcount:size=256:pause' >> \
+-           /sys/kernel/debug/tracing/events/sched/sched_process_fork/trigger
+-
+-    # cat /sys/kernel/debug/tracing/events/sched/sched_process_fork/hist
+-    # trigger info: hist:keys=child_comm:vals=hitcount:sort=hitcount:size=256 [paused]
+-
+-    { child_comm: dconf worker                        } hitcount:          1
+-    { child_comm: kthreadd                            } hitcount:          1
+-    { child_comm: dconf worker                        } hitcount:          1
+-    { child_comm: gdbus                               } hitcount:          1
+-    { child_comm: ibus-daemon                         } hitcount:          1
+-    { child_comm: Socket Thread                       } hitcount:          2
+-    { child_comm: evolution-alarm                     } hitcount:          2
+-    { child_comm: smbd                                } hitcount:          2
+-    { child_comm: bash                                } hitcount:          3
+-    { child_comm: whoopsie                            } hitcount:          3
+-    { child_comm: compiz                              } hitcount:          3
+-    { child_comm: evolution-sourc                     } hitcount:          4
+-    { child_comm: pool                                } hitcount:          5
+-    { child_comm: postgres                            } hitcount:          6
+-    { child_comm: firefox                             } hitcount:          8
+-    { child_comm: dhclient                            } hitcount:         10
+-    { child_comm: emacs                               } hitcount:         12
+-    { child_comm: dbus-daemon                         } hitcount:         20
+-    { child_comm: nm-dispatcher.a                     } hitcount:         20
+-    { child_comm: evolution                           } hitcount:         35
+-    { child_comm: glib-pacrunner                      } hitcount:         59
+-
+-    Totals:
+-        Hits: 199
+-        Entries: 21
+-        Dropped: 0
+-
+-  To manually continue having the trigger aggregate events, append
+-  :cont instead.  Notice that the trigger info displays as [active]
+-  again, and the data has changed:
+-
+-    # echo 'hist:key=child_comm:val=hitcount:size=256:cont' >> \
+-           /sys/kernel/debug/tracing/events/sched/sched_process_fork/trigger
+-
+-    # cat /sys/kernel/debug/tracing/events/sched/sched_process_fork/hist
+-    # trigger info: hist:keys=child_comm:vals=hitcount:sort=hitcount:size=256 [active]
+-
+-    { child_comm: dconf worker                        } hitcount:          1
+-    { child_comm: dconf worker                        } hitcount:          1
+-    { child_comm: kthreadd                            } hitcount:          1
+-    { child_comm: gdbus                               } hitcount:          1
+-    { child_comm: ibus-daemon                         } hitcount:          1
+-    { child_comm: Socket Thread                       } hitcount:          2
+-    { child_comm: evolution-alarm                     } hitcount:          2
+-    { child_comm: smbd                                } hitcount:          2
+-    { child_comm: whoopsie                            } hitcount:          3
+-    { child_comm: compiz                              } hitcount:          3
+-    { child_comm: evolution-sourc                     } hitcount:          4
+-    { child_comm: bash                                } hitcount:          5
+-    { child_comm: pool                                } hitcount:          5
+-    { child_comm: postgres                            } hitcount:          6
+-    { child_comm: firefox                             } hitcount:          8
+-    { child_comm: dhclient                            } hitcount:         11
+-    { child_comm: emacs                               } hitcount:         12
+-    { child_comm: dbus-daemon                         } hitcount:         22
+-    { child_comm: nm-dispatcher.a                     } hitcount:         22
+-    { child_comm: evolution                           } hitcount:         35
+-    { child_comm: glib-pacrunner                      } hitcount:         59
+-
+-    Totals:
+-        Hits: 206
+-        Entries: 21
+-        Dropped: 0
+-
+-  The previous example showed how to start and stop a hist trigger by
+-  appending 'pause' and 'continue' to the hist trigger command.  A
+-  hist trigger can also be started in a paused state by initially
+-  starting the trigger with ':pause' appended.  This allows you to
+-  start the trigger only when you're ready to start collecting data
+-  and not before.  For example, you could start the trigger in a
+-  paused state, then unpause it and do something you want to measure,
+-  then pause the trigger again when done.
+-
+-  Of course, doing this manually can be difficult and error-prone, but
+-  it is possible to automatically start and stop a hist trigger based
+-  on some condition, via the enable_hist and disable_hist triggers.
+-
+-  For example, suppose we wanted to take a look at the relative
+-  weights in terms of skb length for each callpath that leads to a
+-  netif_receieve_skb event when downloading a decent-sized file using
+-  wget.
+-
+-  First we set up an initially paused stacktrace trigger on the
+-  netif_receive_skb event:
+-
+-    # echo 'hist:key=stacktrace:vals=len:pause' > \
+-           /sys/kernel/debug/tracing/events/net/netif_receive_skb/trigger
+-
+-  Next, we set up an 'enable_hist' trigger on the sched_process_exec
+-  event, with an 'if filename==/usr/bin/wget' filter.  The effect of
+-  this new trigger is that it will 'unpause' the hist trigger we just
+-  set up on netif_receive_skb if and only if it sees a
+-  sched_process_exec event with a filename of '/usr/bin/wget'.  When
+-  that happens, all netif_receive_skb events are aggregated into a
+-  hash table keyed on stacktrace:
+-
+-    # echo 'enable_hist:net:netif_receive_skb if filename==/usr/bin/wget' > \
+-           /sys/kernel/debug/tracing/events/sched/sched_process_exec/trigger
+-
+-  The aggregation continues until the netif_receive_skb is paused
+-  again, which is what the following disable_hist event does by
+-  creating a similar setup on the sched_process_exit event, using the
+-  filter 'comm==wget':
+-
+-    # echo 'disable_hist:net:netif_receive_skb if comm==wget' > \
+-           /sys/kernel/debug/tracing/events/sched/sched_process_exit/trigger
+-
+-  Whenever a process exits and the comm field of the disable_hist
+-  trigger filter matches 'comm==wget', the netif_receive_skb hist
+-  trigger is disabled.
+-
+-  The overall effect is that netif_receive_skb events are aggregated
+-  into the hash table for only the duration of the wget.  Executing a
+-  wget command and then listing the 'hist' file will display the
+-  output generated by the wget command:
+-
+-    $ wget https://www.kernel.org/pub/linux/kernel/v3.x/patch-3.19.xz
+-
+-    # cat /sys/kernel/debug/tracing/events/net/netif_receive_skb/hist
+-    # trigger info: hist:keys=stacktrace:vals=len:sort=hitcount:size=2048 [paused]
+-
+-    { stacktrace:
+-         __netif_receive_skb_core+0x46d/0x990
+-         __netif_receive_skb+0x18/0x60
+-         netif_receive_skb_internal+0x23/0x90
+-         napi_gro_receive+0xc8/0x100
+-         ieee80211_deliver_skb+0xd6/0x270 [mac80211]
+-         ieee80211_rx_handlers+0xccf/0x22f0 [mac80211]
+-         ieee80211_prepare_and_rx_handle+0x4e7/0xc40 [mac80211]
+-         ieee80211_rx+0x31d/0x900 [mac80211]
+-         iwlagn_rx_reply_rx+0x3db/0x6f0 [iwldvm]
+-         iwl_rx_dispatch+0x8e/0xf0 [iwldvm]
+-         iwl_pcie_irq_handler+0xe3c/0x12f0 [iwlwifi]
+-         irq_thread_fn+0x20/0x50
+-         irq_thread+0x11f/0x150
+-         kthread+0xd2/0xf0
+-         ret_from_fork+0x42/0x70
+-    } hitcount:         85  len:      28884
+-    { stacktrace:
+-         __netif_receive_skb_core+0x46d/0x990
+-         __netif_receive_skb+0x18/0x60
+-         netif_receive_skb_internal+0x23/0x90
+-         napi_gro_complete+0xa4/0xe0
+-         dev_gro_receive+0x23a/0x360
+-         napi_gro_receive+0x30/0x100
+-         ieee80211_deliver_skb+0xd6/0x270 [mac80211]
+-         ieee80211_rx_handlers+0xccf/0x22f0 [mac80211]
+-         ieee80211_prepare_and_rx_handle+0x4e7/0xc40 [mac80211]
+-         ieee80211_rx+0x31d/0x900 [mac80211]
+-         iwlagn_rx_reply_rx+0x3db/0x6f0 [iwldvm]
+-         iwl_rx_dispatch+0x8e/0xf0 [iwldvm]
+-         iwl_pcie_irq_handler+0xe3c/0x12f0 [iwlwifi]
+-         irq_thread_fn+0x20/0x50
+-         irq_thread+0x11f/0x150
+-         kthread+0xd2/0xf0
+-    } hitcount:         98  len:     664329
+-    { stacktrace:
+-         __netif_receive_skb_core+0x46d/0x990
+-         __netif_receive_skb+0x18/0x60
+-         process_backlog+0xa8/0x150
+-         net_rx_action+0x15d/0x340
+-         __do_softirq+0x114/0x2c0
+-         do_softirq_own_stack+0x1c/0x30
+-         do_softirq+0x65/0x70
+-         __local_bh_enable_ip+0xb5/0xc0
+-         ip_finish_output+0x1f4/0x840
+-         ip_output+0x6b/0xc0
+-         ip_local_out_sk+0x31/0x40
+-         ip_send_skb+0x1a/0x50
+-         udp_send_skb+0x173/0x2a0
+-         udp_sendmsg+0x2bf/0x9f0
+-         inet_sendmsg+0x64/0xa0
+-         sock_sendmsg+0x3d/0x50
+-    } hitcount:        115  len:      13030
+-    { stacktrace:
+-         __netif_receive_skb_core+0x46d/0x990
+-         __netif_receive_skb+0x18/0x60
+-         netif_receive_skb_internal+0x23/0x90
+-         napi_gro_complete+0xa4/0xe0
+-         napi_gro_flush+0x6d/0x90
+-         iwl_pcie_irq_handler+0x92a/0x12f0 [iwlwifi]
+-         irq_thread_fn+0x20/0x50
+-         irq_thread+0x11f/0x150
+-         kthread+0xd2/0xf0
+-         ret_from_fork+0x42/0x70
+-    } hitcount:        934  len:    5512212
+-
+-    Totals:
+-        Hits: 1232
+-        Entries: 4
+-        Dropped: 0
+-
+-  The above shows all the netif_receive_skb callpaths and their total
+-  lengths for the duration of the wget command.
+-
+-  The 'clear' hist trigger param can be used to clear the hash table.
+-  Suppose we wanted to try another run of the previous example but
+-  this time also wanted to see the complete list of events that went
+-  into the histogram.  In order to avoid having to set everything up
+-  again, we can just clear the histogram first:
+-
+-    # echo 'hist:key=stacktrace:vals=len:clear' >> \
+-           /sys/kernel/debug/tracing/events/net/netif_receive_skb/trigger
+-
+-  Just to verify that it is in fact cleared, here's what we now see in
+-  the hist file:
+-
+-    # cat /sys/kernel/debug/tracing/events/net/netif_receive_skb/hist
+-    # trigger info: hist:keys=stacktrace:vals=len:sort=hitcount:size=2048 [paused]
+-
+-    Totals:
+-        Hits: 0
+-        Entries: 0
+-        Dropped: 0
+-
+-  Since we want to see the detailed list of every netif_receive_skb
+-  event occurring during the new run, which are in fact the same
+-  events being aggregated into the hash table, we add some additional
+-  'enable_event' events to the triggering sched_process_exec and
+-  sched_process_exit events as such:
+-
+-    # echo 'enable_event:net:netif_receive_skb if filename==/usr/bin/wget' > \
+-           /sys/kernel/debug/tracing/events/sched/sched_process_exec/trigger
+-
+-    # echo 'disable_event:net:netif_receive_skb if comm==wget' > \
+-           /sys/kernel/debug/tracing/events/sched/sched_process_exit/trigger
+-
+-  If you read the trigger files for the sched_process_exec and
+-  sched_process_exit triggers, you should see two triggers for each:
+-  one enabling/disabling the hist aggregation and the other
+-  enabling/disabling the logging of events:
+-
+-    # cat /sys/kernel/debug/tracing/events/sched/sched_process_exec/trigger
+-    enable_event:net:netif_receive_skb:unlimited if filename==/usr/bin/wget
+-    enable_hist:net:netif_receive_skb:unlimited if filename==/usr/bin/wget
+-
+-    # cat /sys/kernel/debug/tracing/events/sched/sched_process_exit/trigger
+-    enable_event:net:netif_receive_skb:unlimited if comm==wget
+-    disable_hist:net:netif_receive_skb:unlimited if comm==wget
+-
+-  In other words, whenever either of the sched_process_exec or
+-  sched_process_exit events is hit and matches 'wget', it enables or
+-  disables both the histogram and the event log, and what you end up
+-  with is a hash table and set of events just covering the specified
+-  duration.  Run the wget command again:
+-
+-    $ wget https://www.kernel.org/pub/linux/kernel/v3.x/patch-3.19.xz
+-
+-  Displaying the 'hist' file should show something similar to what you
+-  saw in the last run, but this time you should also see the
+-  individual events in the trace file:
+-
+-    # cat /sys/kernel/debug/tracing/trace
+-
+-    # tracer: nop
+-    #
+-    # entries-in-buffer/entries-written: 183/1426   #P:4
+-    #
+-    #                              _-----=> irqs-off
+-    #                             / _----=> need-resched
+-    #                            | / _---=> hardirq/softirq
+-    #                            || / _--=> preempt-depth
+-    #                            ||| /     delay
+-    #           TASK-PID   CPU#  ||||    TIMESTAMP  FUNCTION
+-    #              | |       |   ||||       |         |
+-                wget-15108 [000] ..s1 31769.606929: netif_receive_skb: dev=lo skbaddr=ffff88009c353100 len=60
+-                wget-15108 [000] ..s1 31769.606999: netif_receive_skb: dev=lo skbaddr=ffff88009c353200 len=60
+-             dnsmasq-1382  [000] ..s1 31769.677652: netif_receive_skb: dev=lo skbaddr=ffff88009c352b00 len=130
+-             dnsmasq-1382  [000] ..s1 31769.685917: netif_receive_skb: dev=lo skbaddr=ffff88009c352200 len=138
+-    ##### CPU 2 buffer started ####
+-      irq/29-iwlwifi-559   [002] ..s. 31772.031529: netif_receive_skb: dev=wlan0 skbaddr=ffff88009d433d00 len=2948
+-      irq/29-iwlwifi-559   [002] ..s. 31772.031572: netif_receive_skb: dev=wlan0 skbaddr=ffff88009d432200 len=1500
+-      irq/29-iwlwifi-559   [002] ..s. 31772.032196: netif_receive_skb: dev=wlan0 skbaddr=ffff88009d433100 len=2948
+-      irq/29-iwlwifi-559   [002] ..s. 31772.032761: netif_receive_skb: dev=wlan0 skbaddr=ffff88009d433000 len=2948
+-      irq/29-iwlwifi-559   [002] ..s. 31772.033220: netif_receive_skb: dev=wlan0 skbaddr=ffff88009d432e00 len=1500
+-    .
+-    .
+-    .
+-
+-  The following example demonstrates how multiple hist triggers can be
+-  attached to a given event.  This capability can be useful for
+-  creating a set of different summaries derived from the same set of
+-  events, or for comparing the effects of different filters, among
+-  other things.
+-
+-    # echo 'hist:keys=skbaddr.hex:vals=len if len < 0' >> \
+-           /sys/kernel/debug/tracing/events/net/netif_receive_skb/trigger
+-    # echo 'hist:keys=skbaddr.hex:vals=len if len > 4096' >> \
+-           /sys/kernel/debug/tracing/events/net/netif_receive_skb/trigger
+-    # echo 'hist:keys=skbaddr.hex:vals=len if len == 256' >> \
+-           /sys/kernel/debug/tracing/events/net/netif_receive_skb/trigger
+-    # echo 'hist:keys=skbaddr.hex:vals=len' >> \
+-           /sys/kernel/debug/tracing/events/net/netif_receive_skb/trigger
+-    # echo 'hist:keys=len:vals=common_preempt_count' >> \
+-           /sys/kernel/debug/tracing/events/net/netif_receive_skb/trigger
+-
+-  The above set of commands create four triggers differing only in
+-  their filters, along with a completely different though fairly
+-  nonsensical trigger.  Note that in order to append multiple hist
+-  triggers to the same file, you should use the '>>' operator to
+-  append them ('>' will also add the new hist trigger, but will remove
+-  any existing hist triggers beforehand).
+-
+-  Displaying the contents of the 'hist' file for the event shows the
+-  contents of all five histograms:
+-
+-    # cat /sys/kernel/debug/tracing/events/net/netif_receive_skb/hist
+-
+-    # event histogram
+-    #
+-    # trigger info: hist:keys=len:vals=hitcount,common_preempt_count:sort=hitcount:size=2048 [active]
+-    #
+-
+-    { len:        176 } hitcount:          1  common_preempt_count:          0
+-    { len:        223 } hitcount:          1  common_preempt_count:          0
+-    { len:       4854 } hitcount:          1  common_preempt_count:          0
+-    { len:        395 } hitcount:          1  common_preempt_count:          0
+-    { len:        177 } hitcount:          1  common_preempt_count:          0
+-    { len:        446 } hitcount:          1  common_preempt_count:          0
+-    { len:       1601 } hitcount:          1  common_preempt_count:          0
+-    .
+-    .
+-    .
+-    { len:       1280 } hitcount:         66  common_preempt_count:          0
+-    { len:        116 } hitcount:         81  common_preempt_count:         40
+-    { len:        708 } hitcount:        112  common_preempt_count:          0
+-    { len:         46 } hitcount:        221  common_preempt_count:          0
+-    { len:       1264 } hitcount:        458  common_preempt_count:          0
+-
+-    Totals:
+-        Hits: 1428
+-        Entries: 147
+-        Dropped: 0
+-
+-
+-    # event histogram
+-    #
+-    # trigger info: hist:keys=skbaddr.hex:vals=hitcount,len:sort=hitcount:size=2048 [active]
+-    #
+-
+-    { skbaddr: ffff8800baee5e00 } hitcount:          1  len:        130
+-    { skbaddr: ffff88005f3d5600 } hitcount:          1  len:       1280
+-    { skbaddr: ffff88005f3d4900 } hitcount:          1  len:       1280
+-    { skbaddr: ffff88009fed6300 } hitcount:          1  len:        115
+-    { skbaddr: ffff88009fe0ad00 } hitcount:          1  len:        115
+-    { skbaddr: ffff88008cdb1900 } hitcount:          1  len:         46
+-    { skbaddr: ffff880064b5ef00 } hitcount:          1  len:        118
+-    { skbaddr: ffff880044e3c700 } hitcount:          1  len:         60
+-    { skbaddr: ffff880100065900 } hitcount:          1  len:         46
+-    { skbaddr: ffff8800d46bd500 } hitcount:          1  len:        116
+-    { skbaddr: ffff88005f3d5f00 } hitcount:          1  len:       1280
+-    { skbaddr: ffff880100064700 } hitcount:          1  len:        365
+-    { skbaddr: ffff8800badb6f00 } hitcount:          1  len:         60
+-    .
+-    .
+-    .
+-    { skbaddr: ffff88009fe0be00 } hitcount:         27  len:      24677
+-    { skbaddr: ffff88009fe0a400 } hitcount:         27  len:      23052
+-    { skbaddr: ffff88009fe0b700 } hitcount:         31  len:      25589
+-    { skbaddr: ffff88009fe0b600 } hitcount:         32  len:      27326
+-    { skbaddr: ffff88006a462800 } hitcount:         68  len:      71678
+-    { skbaddr: ffff88006a463700 } hitcount:         70  len:      72678
+-    { skbaddr: ffff88006a462b00 } hitcount:         71  len:      77589
+-    { skbaddr: ffff88006a463600 } hitcount:         73  len:      71307
+-    { skbaddr: ffff88006a462200 } hitcount:         81  len:      81032
+-
+-    Totals:
+-        Hits: 1451
+-        Entries: 318
+-        Dropped: 0
+-
+-
+-    # event histogram
+-    #
+-    # trigger info: hist:keys=skbaddr.hex:vals=hitcount,len:sort=hitcount:size=2048 if len == 256 [active]
+-    #
+-
+-
+-    Totals:
+-        Hits: 0
+-        Entries: 0
+-        Dropped: 0
+-
+-
+-    # event histogram
+-    #
+-    # trigger info: hist:keys=skbaddr.hex:vals=hitcount,len:sort=hitcount:size=2048 if len > 4096 [active]
+-    #
+-
+-    { skbaddr: ffff88009fd2c300 } hitcount:          1  len:       7212
+-    { skbaddr: ffff8800d2bcce00 } hitcount:          1  len:       7212
+-    { skbaddr: ffff8800d2bcd700 } hitcount:          1  len:       7212
+-    { skbaddr: ffff8800d2bcda00 } hitcount:          1  len:      21492
+-    { skbaddr: ffff8800ae2e2d00 } hitcount:          1  len:       7212
+-    { skbaddr: ffff8800d2bcdb00 } hitcount:          1  len:       7212
+-    { skbaddr: ffff88006a4df500 } hitcount:          1  len:       4854
+-    { skbaddr: ffff88008ce47b00 } hitcount:          1  len:      18636
+-    { skbaddr: ffff8800ae2e2200 } hitcount:          1  len:      12924
+-    { skbaddr: ffff88005f3e1000 } hitcount:          1  len:       4356
+-    { skbaddr: ffff8800d2bcdc00 } hitcount:          2  len:      24420
+-    { skbaddr: ffff8800d2bcc200 } hitcount:          2  len:      12996
+-
+-    Totals:
+-        Hits: 14
+-        Entries: 12
+-        Dropped: 0
+-
+-
+-    # event histogram
+-    #
+-    # trigger info: hist:keys=skbaddr.hex:vals=hitcount,len:sort=hitcount:size=2048 if len < 0 [active]
+-    #
+-
+-
+-    Totals:
+-        Hits: 0
+-        Entries: 0
+-        Dropped: 0
+-
+-  Named triggers can be used to have triggers share a common set of
+-  histogram data.  This capability is mostly useful for combining the
+-  output of events generated by tracepoints contained inside inline
+-  functions, but names can be used in a hist trigger on any event.
+-  For example, these two triggers when hit will update the same 'len'
+-  field in the shared 'foo' histogram data:
+-
+-    # echo 'hist:name=foo:keys=skbaddr.hex:vals=len' > \
+-           /sys/kernel/debug/tracing/events/net/netif_receive_skb/trigger
+-    # echo 'hist:name=foo:keys=skbaddr.hex:vals=len' > \
+-           /sys/kernel/debug/tracing/events/net/netif_rx/trigger
+-
+-  You can see that they're updating common histogram data by reading
+-  each event's hist files at the same time:
+-
+-    # cat /sys/kernel/debug/tracing/events/net/netif_receive_skb/hist;
+-      cat /sys/kernel/debug/tracing/events/net/netif_rx/hist
+-
+-    # event histogram
+-    #
+-    # trigger info: hist:name=foo:keys=skbaddr.hex:vals=hitcount,len:sort=hitcount:size=2048 [active]
+-    #
+-
+-    { skbaddr: ffff88000ad53500 } hitcount:          1  len:         46
+-    { skbaddr: ffff8800af5a1500 } hitcount:          1  len:         76
+-    { skbaddr: ffff8800d62a1900 } hitcount:          1  len:         46
+-    { skbaddr: ffff8800d2bccb00 } hitcount:          1  len:        468
+-    { skbaddr: ffff8800d3c69900 } hitcount:          1  len:         46
+-    { skbaddr: ffff88009ff09100 } hitcount:          1  len:         52
+-    { skbaddr: ffff88010f13ab00 } hitcount:          1  len:        168
+-    { skbaddr: ffff88006a54f400 } hitcount:          1  len:         46
+-    { skbaddr: ffff8800d2bcc500 } hitcount:          1  len:        260
+-    { skbaddr: ffff880064505000 } hitcount:          1  len:         46
+-    { skbaddr: ffff8800baf24e00 } hitcount:          1  len:         32
+-    { skbaddr: ffff88009fe0ad00 } hitcount:          1  len:         46
+-    { skbaddr: ffff8800d3edff00 } hitcount:          1  len:         44
+-    { skbaddr: ffff88009fe0b400 } hitcount:          1  len:        168
+-    { skbaddr: ffff8800a1c55a00 } hitcount:          1  len:         40
+-    { skbaddr: ffff8800d2bcd100 } hitcount:          1  len:         40
+-    { skbaddr: ffff880064505f00 } hitcount:          1  len:        174
+-    { skbaddr: ffff8800a8bff200 } hitcount:          1  len:        160
+-    { skbaddr: ffff880044e3cc00 } hitcount:          1  len:         76
+-    { skbaddr: ffff8800a8bfe700 } hitcount:          1  len:         46
+-    { skbaddr: ffff8800d2bcdc00 } hitcount:          1  len:         32
+-    { skbaddr: ffff8800a1f64800 } hitcount:          1  len:         46
+-    { skbaddr: ffff8800d2bcde00 } hitcount:          1  len:        988
+-    { skbaddr: ffff88006a5dea00 } hitcount:          1  len:         46
+-    { skbaddr: ffff88002e37a200 } hitcount:          1  len:         44
+-    { skbaddr: ffff8800a1f32c00 } hitcount:          2  len:        676
+-    { skbaddr: ffff88000ad52600 } hitcount:          2  len:        107
+-    { skbaddr: ffff8800a1f91e00 } hitcount:          2  len:         92
+-    { skbaddr: ffff8800af5a0200 } hitcount:          2  len:        142
+-    { skbaddr: ffff8800d2bcc600 } hitcount:          2  len:        220
+-    { skbaddr: ffff8800ba36f500 } hitcount:          2  len:         92
+-    { skbaddr: ffff8800d021f800 } hitcount:          2  len:         92
+-    { skbaddr: ffff8800a1f33600 } hitcount:          2  len:        675
+-    { skbaddr: ffff8800a8bfff00 } hitcount:          3  len:        138
+-    { skbaddr: ffff8800d62a1300 } hitcount:          3  len:        138
+-    { skbaddr: ffff88002e37a100 } hitcount:          4  len:        184
+-    { skbaddr: ffff880064504400 } hitcount:          4  len:        184
+-    { skbaddr: ffff8800a8bfec00 } hitcount:          4  len:        184
+-    { skbaddr: ffff88000ad53700 } hitcount:          5  len:        230
+-    { skbaddr: ffff8800d2bcdb00 } hitcount:          5  len:        196
+-    { skbaddr: ffff8800a1f90000 } hitcount:          6  len:        276
+-    { skbaddr: ffff88006a54f900 } hitcount:          6  len:        276
+-
+-    Totals:
+-        Hits: 81
+-        Entries: 42
+-        Dropped: 0
+-    # event histogram
+-    #
+-    # trigger info: hist:name=foo:keys=skbaddr.hex:vals=hitcount,len:sort=hitcount:size=2048 [active]
+-    #
+-
+-    { skbaddr: ffff88000ad53500 } hitcount:          1  len:         46
+-    { skbaddr: ffff8800af5a1500 } hitcount:          1  len:         76
+-    { skbaddr: ffff8800d62a1900 } hitcount:          1  len:         46
+-    { skbaddr: ffff8800d2bccb00 } hitcount:          1  len:        468
+-    { skbaddr: ffff8800d3c69900 } hitcount:          1  len:         46
+-    { skbaddr: ffff88009ff09100 } hitcount:          1  len:         52
+-    { skbaddr: ffff88010f13ab00 } hitcount:          1  len:        168
+-    { skbaddr: ffff88006a54f400 } hitcount:          1  len:         46
+-    { skbaddr: ffff8800d2bcc500 } hitcount:          1  len:        260
+-    { skbaddr: ffff880064505000 } hitcount:          1  len:         46
+-    { skbaddr: ffff8800baf24e00 } hitcount:          1  len:         32
+-    { skbaddr: ffff88009fe0ad00 } hitcount:          1  len:         46
+-    { skbaddr: ffff8800d3edff00 } hitcount:          1  len:         44
+-    { skbaddr: ffff88009fe0b400 } hitcount:          1  len:        168
+-    { skbaddr: ffff8800a1c55a00 } hitcount:          1  len:         40
+-    { skbaddr: ffff8800d2bcd100 } hitcount:          1  len:         40
+-    { skbaddr: ffff880064505f00 } hitcount:          1  len:        174
+-    { skbaddr: ffff8800a8bff200 } hitcount:          1  len:        160
+-    { skbaddr: ffff880044e3cc00 } hitcount:          1  len:         76
+-    { skbaddr: ffff8800a8bfe700 } hitcount:          1  len:         46
+-    { skbaddr: ffff8800d2bcdc00 } hitcount:          1  len:         32
+-    { skbaddr: ffff8800a1f64800 } hitcount:          1  len:         46
+-    { skbaddr: ffff8800d2bcde00 } hitcount:          1  len:        988
+-    { skbaddr: ffff88006a5dea00 } hitcount:          1  len:         46
+-    { skbaddr: ffff88002e37a200 } hitcount:          1  len:         44
+-    { skbaddr: ffff8800a1f32c00 } hitcount:          2  len:        676
+-    { skbaddr: ffff88000ad52600 } hitcount:          2  len:        107
+-    { skbaddr: ffff8800a1f91e00 } hitcount:          2  len:         92
+-    { skbaddr: ffff8800af5a0200 } hitcount:          2  len:        142
+-    { skbaddr: ffff8800d2bcc600 } hitcount:          2  len:        220
+-    { skbaddr: ffff8800ba36f500 } hitcount:          2  len:         92
+-    { skbaddr: ffff8800d021f800 } hitcount:          2  len:         92
+-    { skbaddr: ffff8800a1f33600 } hitcount:          2  len:        675
+-    { skbaddr: ffff8800a8bfff00 } hitcount:          3  len:        138
+-    { skbaddr: ffff8800d62a1300 } hitcount:          3  len:        138
+-    { skbaddr: ffff88002e37a100 } hitcount:          4  len:        184
+-    { skbaddr: ffff880064504400 } hitcount:          4  len:        184
+-    { skbaddr: ffff8800a8bfec00 } hitcount:          4  len:        184
+-    { skbaddr: ffff88000ad53700 } hitcount:          5  len:        230
+-    { skbaddr: ffff8800d2bcdb00 } hitcount:          5  len:        196
+-    { skbaddr: ffff8800a1f90000 } hitcount:          6  len:        276
+-    { skbaddr: ffff88006a54f900 } hitcount:          6  len:        276
+-
+-    Totals:
+-        Hits: 81
+-        Entries: 42
+-        Dropped: 0
+-
+-  And here's an example that shows how to combine histogram data from
+-  any two events even if they don't share any 'compatible' fields
+-  other than 'hitcount' and 'stacktrace'.  These commands create a
+-  couple of triggers named 'bar' using those fields:
+-
+-    # echo 'hist:name=bar:key=stacktrace:val=hitcount' > \
+-           /sys/kernel/debug/tracing/events/sched/sched_process_fork/trigger
+-    # echo 'hist:name=bar:key=stacktrace:val=hitcount' > \
+-          /sys/kernel/debug/tracing/events/net/netif_rx/trigger
+-
+-  And displaying the output of either shows some interesting if
+-  somewhat confusing output:
+-
+-    # cat /sys/kernel/debug/tracing/events/sched/sched_process_fork/hist
+-    # cat /sys/kernel/debug/tracing/events/net/netif_rx/hist
+-
+-    # event histogram
+-    #
+-    # trigger info: hist:name=bar:keys=stacktrace:vals=hitcount:sort=hitcount:size=2048 [active]
+-    #
+-
+-    { stacktrace:
+-             _do_fork+0x18e/0x330
+-             kernel_thread+0x29/0x30
+-             kthreadd+0x154/0x1b0
+-             ret_from_fork+0x3f/0x70
+-    } hitcount:          1
+-    { stacktrace:
+-             netif_rx_internal+0xb2/0xd0
+-             netif_rx_ni+0x20/0x70
+-             dev_loopback_xmit+0xaa/0xd0
+-             ip_mc_output+0x126/0x240
+-             ip_local_out_sk+0x31/0x40
+-             igmp_send_report+0x1e9/0x230
+-             igmp_timer_expire+0xe9/0x120
+-             call_timer_fn+0x39/0xf0
+-             run_timer_softirq+0x1e1/0x290
+-             __do_softirq+0xfd/0x290
+-             irq_exit+0x98/0xb0
+-             smp_apic_timer_interrupt+0x4a/0x60
+-             apic_timer_interrupt+0x6d/0x80
+-             cpuidle_enter+0x17/0x20
+-             call_cpuidle+0x3b/0x60
+-             cpu_startup_entry+0x22d/0x310
+-    } hitcount:          1
+-    { stacktrace:
+-             netif_rx_internal+0xb2/0xd0
+-             netif_rx_ni+0x20/0x70
+-             dev_loopback_xmit+0xaa/0xd0
+-             ip_mc_output+0x17f/0x240
+-             ip_local_out_sk+0x31/0x40
+-             ip_send_skb+0x1a/0x50
+-             udp_send_skb+0x13e/0x270
+-             udp_sendmsg+0x2bf/0x980
+-             inet_sendmsg+0x67/0xa0
+-             sock_sendmsg+0x38/0x50
+-             SYSC_sendto+0xef/0x170
+-             SyS_sendto+0xe/0x10
+-             entry_SYSCALL_64_fastpath+0x12/0x6a
+-    } hitcount:          2
+-    { stacktrace:
+-             netif_rx_internal+0xb2/0xd0
+-             netif_rx+0x1c/0x60
+-             loopback_xmit+0x6c/0xb0
+-             dev_hard_start_xmit+0x219/0x3a0
+-             __dev_queue_xmit+0x415/0x4f0
+-             dev_queue_xmit_sk+0x13/0x20
+-             ip_finish_output2+0x237/0x340
+-             ip_finish_output+0x113/0x1d0
+-             ip_output+0x66/0xc0
+-             ip_local_out_sk+0x31/0x40
+-             ip_send_skb+0x1a/0x50
+-             udp_send_skb+0x16d/0x270
+-             udp_sendmsg+0x2bf/0x980
+-             inet_sendmsg+0x67/0xa0
+-             sock_sendmsg+0x38/0x50
+-             ___sys_sendmsg+0x14e/0x270
+-    } hitcount:         76
+-    { stacktrace:
+-             netif_rx_internal+0xb2/0xd0
+-             netif_rx+0x1c/0x60
+-             loopback_xmit+0x6c/0xb0
+-             dev_hard_start_xmit+0x219/0x3a0
+-             __dev_queue_xmit+0x415/0x4f0
+-             dev_queue_xmit_sk+0x13/0x20
+-             ip_finish_output2+0x237/0x340
+-             ip_finish_output+0x113/0x1d0
+-             ip_output+0x66/0xc0
+-             ip_local_out_sk+0x31/0x40
+-             ip_send_skb+0x1a/0x50
+-             udp_send_skb+0x16d/0x270
+-             udp_sendmsg+0x2bf/0x980
+-             inet_sendmsg+0x67/0xa0
+-             sock_sendmsg+0x38/0x50
+-             ___sys_sendmsg+0x269/0x270
+-    } hitcount:         77
+-    { stacktrace:
+-             netif_rx_internal+0xb2/0xd0
+-             netif_rx+0x1c/0x60
+-             loopback_xmit+0x6c/0xb0
+-             dev_hard_start_xmit+0x219/0x3a0
+-             __dev_queue_xmit+0x415/0x4f0
+-             dev_queue_xmit_sk+0x13/0x20
+-             ip_finish_output2+0x237/0x340
+-             ip_finish_output+0x113/0x1d0
+-             ip_output+0x66/0xc0
+-             ip_local_out_sk+0x31/0x40
+-             ip_send_skb+0x1a/0x50
+-             udp_send_skb+0x16d/0x270
+-             udp_sendmsg+0x2bf/0x980
+-             inet_sendmsg+0x67/0xa0
+-             sock_sendmsg+0x38/0x50
+-             SYSC_sendto+0xef/0x170
+-    } hitcount:         88
+-    { stacktrace:
+-             _do_fork+0x18e/0x330
+-             SyS_clone+0x19/0x20
+-             entry_SYSCALL_64_fastpath+0x12/0x6a
+-    } hitcount:        244
+-
+-    Totals:
+-        Hits: 489
+-        Entries: 7
+-        Dropped: 0
++  See Documentation/trace/histogram.txt for details and examples.
+diff --git a/Documentation/trace/histogram.txt b/Documentation/trace/histogram.txt
+new file mode 100644
+index 0000000..b2145f4
+--- /dev/null
++++ b/Documentation/trace/histogram.txt
+@@ -0,0 +1,1568 @@
++			     Event Histograms
++
++		    Documentation written by Tom Zanussi
++
++1. Introduction
++===============
++
++  Histogram triggers are special event triggers that can be used to
++  aggregate trace event data into histograms.  For information on
++  trace events and event triggers, see Documentation/trace/events.txt.
++
++
++2. Histogram Trigger Command
++============================
++
++  A histogram trigger command is an event trigger command that
++  aggregates event hits into a hash table keyed on one or more trace
++  event format fields (or stacktrace) and a set of running totals
++  derived from one or more trace event format fields and/or event
++  counts (hitcount).
++
++  The format of a hist trigger is as follows:
++
++        hist:keys=<field1[,field2,...]>[:values=<field1[,field2,...]>]
++          [:sort=<field1[,field2,...]>][:size=#entries][:pause][:continue]
++          [:clear][:name=histname1] [if <filter>]
++
++  When a matching event is hit, an entry is added to a hash table
++  using the key(s) and value(s) named.  Keys and values correspond to
++  fields in the event's format description.  Values must correspond to
++  numeric fields - on an event hit, the value(s) will be added to a
++  sum kept for that field.  The special string 'hitcount' can be used
++  in place of an explicit value field - this is simply a count of
++  event hits.  If 'values' isn't specified, an implicit 'hitcount'
++  value will be automatically created and used as the only value.
++  Keys can be any field, or the special string 'stacktrace', which
++  will use the event's kernel stacktrace as the key.  The keywords
++  'keys' or 'key' can be used to specify keys, and the keywords
++  'values', 'vals', or 'val' can be used to specify values.  Compound
++  keys consisting of up to two fields can be specified by the 'keys'
++  keyword.  Hashing a compound key produces a unique entry in the
++  table for each unique combination of component keys, and can be
++  useful for providing more fine-grained summaries of event data.
++  Additionally, sort keys consisting of up to two fields can be
++  specified by the 'sort' keyword.  If more than one field is
++  specified, the result will be a 'sort within a sort': the first key
++  is taken to be the primary sort key and the second the secondary
++  key.  If a hist trigger is given a name using the 'name' parameter,
++  its histogram data will be shared with other triggers of the same
++  name, and trigger hits will update this common data.  Only triggers
++  with 'compatible' fields can be combined in this way; triggers are
++  'compatible' if the fields named in the trigger share the same
++  number and type of fields and those fields also have the same names.
++  Note that any two events always share the compatible 'hitcount' and
++  'stacktrace' fields and can therefore be combined using those
++  fields, however pointless that may be.
++
++  'hist' triggers add a 'hist' file to each event's subdirectory.
++  Reading the 'hist' file for the event will dump the hash table in
++  its entirety to stdout.  If there are multiple hist triggers
++  attached to an event, there will be a table for each trigger in the
++  output.  The table displayed for a named trigger will be the same as
++  any other instance having the same name. Each printed hash table
++  entry is a simple list of the keys and values comprising the entry;
++  keys are printed first and are delineated by curly braces, and are
++  followed by the set of value fields for the entry.  By default,
++  numeric fields are displayed as base-10 integers.  This can be
++  modified by appending any of the following modifiers to the field
++  name:
++
++        .hex        display a number as a hex value
++	.sym        display an address as a symbol
++	.sym-offset display an address as a symbol and offset
++	.syscall    display a syscall id as a system call name
++	.execname   display a common_pid as a program name
++
++  Note that in general the semantics of a given field aren't
++  interpreted when applying a modifier to it, but there are some
++  restrictions to be aware of in this regard:
++
++    - only the 'hex' modifier can be used for values (because values
++      are essentially sums, and the other modifiers don't make sense
++      in that context).
++    - the 'execname' modifier can only be used on a 'common_pid'.  The
++      reason for this is that the execname is simply the 'comm' value
++      saved for the 'current' process when an event was triggered,
++      which is the same as the common_pid value saved by the event
++      tracing code.  Trying to apply that comm value to other pid
++      values wouldn't be correct, and typically events that care save
++      pid-specific comm fields in the event itself.
++
++  A typical usage scenario would be the following to enable a hist
++  trigger, read its current contents, and then turn it off:
++
++  # echo 'hist:keys=skbaddr.hex:vals=len' > \
++    /sys/kernel/debug/tracing/events/net/netif_rx/trigger
++
++  # cat /sys/kernel/debug/tracing/events/net/netif_rx/hist
++
++  # echo '!hist:keys=skbaddr.hex:vals=len' > \
++    /sys/kernel/debug/tracing/events/net/netif_rx/trigger
++
++  The trigger file itself can be read to show the details of the
++  currently attached hist trigger.  This information is also displayed
++  at the top of the 'hist' file when read.
++
++  By default, the size of the hash table is 2048 entries.  The 'size'
++  parameter can be used to specify more or fewer than that.  The units
++  are in terms of hashtable entries - if a run uses more entries than
++  specified, the results will show the number of 'drops', the number
++  of hits that were ignored.  The size should be a power of 2 between
++  128 and 131072 (any non- power-of-2 number specified will be rounded
++  up).
++
++  The 'sort' parameter can be used to specify a value field to sort
++  on.  The default if unspecified is 'hitcount' and the default sort
++  order is 'ascending'.  To sort in the opposite direction, append
++  .descending' to the sort key.
++
++  The 'pause' parameter can be used to pause an existing hist trigger
++  or to start a hist trigger but not log any events until told to do
++  so.  'continue' or 'cont' can be used to start or restart a paused
++  hist trigger.
++
++  The 'clear' parameter will clear the contents of a running hist
++  trigger and leave its current paused/active state.
++
++  Note that the 'pause', 'cont', and 'clear' parameters should be
++  applied using 'append' shell operator ('>>') if applied to an
++  existing trigger, rather than via the '>' operator, which will cause
++  the trigger to be removed through truncation.
++
++- enable_hist/disable_hist
++
++  The enable_hist and disable_hist triggers can be used to have one
++  event conditionally start and stop another event's already-attached
++  hist trigger.  Any number of enable_hist and disable_hist triggers
++  can be attached to a given event, allowing that event to kick off
++  and stop aggregations on a host of other events.
++
++  The format is very similar to the enable/disable_event triggers:
++
++      enable_hist:<system>:<event>[:count]
++      disable_hist:<system>:<event>[:count]
++
++  Instead of enabling or disabling the tracing of the target event
++  into the trace buffer as the enable/disable_event triggers do, the
++  enable/disable_hist triggers enable or disable the aggregation of
++  the target event into a hash table.
++
++  A typical usage scenario for the enable_hist/disable_hist triggers
++  would be to first set up a paused hist trigger on some event,
++  followed by an enable_hist/disable_hist pair that turns the hist
++  aggregation on and off when conditions of interest are hit:
++
++  # echo 'hist:keys=skbaddr.hex:vals=len:pause' > \
++    /sys/kernel/debug/tracing/events/net/netif_receive_skb/trigger
++
++  # echo 'enable_hist:net:netif_receive_skb if filename==/usr/bin/wget' > \
++    /sys/kernel/debug/tracing/events/sched/sched_process_exec/trigger
++
++  # echo 'disable_hist:net:netif_receive_skb if comm==wget' > \
++    /sys/kernel/debug/tracing/events/sched/sched_process_exit/trigger
++
++  The above sets up an initially paused hist trigger which is unpaused
++  and starts aggregating events when a given program is executed, and
++  which stops aggregating when the process exits and the hist trigger
++  is paused again.
++
++  The examples below provide a more concrete illustration of the
++  concepts and typical usage patterns discussed above.
++
++
++6.2 'hist' trigger examples
++---------------------------
++
++  The first set of examples creates aggregations using the kmalloc
++  event.  The fields that can be used for the hist trigger are listed
++  in the kmalloc event's format file:
++
++    # cat /sys/kernel/debug/tracing/events/kmem/kmalloc/format
++    name: kmalloc
++    ID: 374
++    format:
++	field:unsigned short common_type;	offset:0;	size:2;	signed:0;
++	field:unsigned char common_flags;	offset:2;	size:1;	signed:0;
++	field:unsigned char common_preempt_count;		offset:3;	size:1;	signed:0;
++	field:int common_pid;					offset:4;	size:4;	signed:1;
++
++	field:unsigned long call_site;				offset:8;	size:8;	signed:0;
++	field:const void * ptr;					offset:16;	size:8;	signed:0;
++	field:size_t bytes_req;					offset:24;	size:8;	signed:0;
++	field:size_t bytes_alloc;				offset:32;	size:8;	signed:0;
++	field:gfp_t gfp_flags;					offset:40;	size:4;	signed:0;
++
++  We'll start by creating a hist trigger that generates a simple table
++  that lists the total number of bytes requested for each function in
++  the kernel that made one or more calls to kmalloc:
++
++    # echo 'hist:key=call_site:val=bytes_req' > \
++            /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
++
++  This tells the tracing system to create a 'hist' trigger using the
++  call_site field of the kmalloc event as the key for the table, which
++  just means that each unique call_site address will have an entry
++  created for it in the table.  The 'val=bytes_req' parameter tells
++  the hist trigger that for each unique entry (call_site) in the
++  table, it should keep a running total of the number of bytes
++  requested by that call_site.
++
++  We'll let it run for awhile and then dump the contents of the 'hist'
++  file in the kmalloc event's subdirectory (for readability, a number
++  of entries have been omitted):
++
++    # cat /sys/kernel/debug/tracing/events/kmem/kmalloc/hist
++    # trigger info: hist:keys=call_site:vals=bytes_req:sort=hitcount:size=2048 [active]
++
++    { call_site: 18446744072106379007 } hitcount:          1  bytes_req:        176
++    { call_site: 18446744071579557049 } hitcount:          1  bytes_req:       1024
++    { call_site: 18446744071580608289 } hitcount:          1  bytes_req:      16384
++    { call_site: 18446744071581827654 } hitcount:          1  bytes_req:         24
++    { call_site: 18446744071580700980 } hitcount:          1  bytes_req:          8
++    { call_site: 18446744071579359876 } hitcount:          1  bytes_req:        152
++    { call_site: 18446744071580795365 } hitcount:          3  bytes_req:        144
++    { call_site: 18446744071581303129 } hitcount:          3  bytes_req:        144
++    { call_site: 18446744071580713234 } hitcount:          4  bytes_req:       2560
++    { call_site: 18446744071580933750 } hitcount:          4  bytes_req:        736
++    .
++    .
++    .
++    { call_site: 18446744072106047046 } hitcount:         69  bytes_req:       5576
++    { call_site: 18446744071582116407 } hitcount:         73  bytes_req:       2336
++    { call_site: 18446744072106054684 } hitcount:        136  bytes_req:     140504
++    { call_site: 18446744072106224230 } hitcount:        136  bytes_req:      19584
++    { call_site: 18446744072106078074 } hitcount:        153  bytes_req:       2448
++    { call_site: 18446744072106062406 } hitcount:        153  bytes_req:      36720
++    { call_site: 18446744071582507929 } hitcount:        153  bytes_req:      37088
++    { call_site: 18446744072102520590 } hitcount:        273  bytes_req:      10920
++    { call_site: 18446744071582143559 } hitcount:        358  bytes_req:        716
++    { call_site: 18446744072106465852 } hitcount:        417  bytes_req:      56712
++    { call_site: 18446744072102523378 } hitcount:        485  bytes_req:      27160
++    { call_site: 18446744072099568646 } hitcount:       1676  bytes_req:      33520
++
++    Totals:
++        Hits: 4610
++        Entries: 45
++        Dropped: 0
++
++  The output displays a line for each entry, beginning with the key
++  specified in the trigger, followed by the value(s) also specified in
++  the trigger.  At the beginning of the output is a line that displays
++  the trigger info, which can also be displayed by reading the
++  'trigger' file:
++
++    # cat /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
++    hist:keys=call_site:vals=bytes_req:sort=hitcount:size=2048 [active]
++
++  At the end of the output are a few lines that display the overall
++  totals for the run.  The 'Hits' field shows the total number of
++  times the event trigger was hit, the 'Entries' field shows the total
++  number of used entries in the hash table, and the 'Dropped' field
++  shows the number of hits that were dropped because the number of
++  used entries for the run exceeded the maximum number of entries
++  allowed for the table (normally 0, but if not a hint that you may
++  want to increase the size of the table using the 'size' parameter).
++
++  Notice in the above output that there's an extra field, 'hitcount',
++  which wasn't specified in the trigger.  Also notice that in the
++  trigger info output, there's a parameter, 'sort=hitcount', which
++  wasn't specified in the trigger either.  The reason for that is that
++  every trigger implicitly keeps a count of the total number of hits
++  attributed to a given entry, called the 'hitcount'.  That hitcount
++  information is explicitly displayed in the output, and in the
++  absence of a user-specified sort parameter, is used as the default
++  sort field.
++
++  The value 'hitcount' can be used in place of an explicit value in
++  the 'values' parameter if you don't really need to have any
++  particular field summed and are mainly interested in hit
++  frequencies.
++
++  To turn the hist trigger off, simply call up the trigger in the
++  command history and re-execute it with a '!' prepended:
++
++    # echo '!hist:key=call_site:val=bytes_req' > \
++           /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
++
++  Finally, notice that the call_site as displayed in the output above
++  isn't really very useful.  It's an address, but normally addresses
++  are displayed in hex.  To have a numeric field displayed as a hex
++  value, simply append '.hex' to the field name in the trigger:
++
++    # echo 'hist:key=call_site.hex:val=bytes_req' > \
++           /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
++
++    # cat /sys/kernel/debug/tracing/events/kmem/kmalloc/hist
++    # trigger info: hist:keys=call_site.hex:vals=bytes_req:sort=hitcount:size=2048 [active]
++
++    { call_site: ffffffffa026b291 } hitcount:          1  bytes_req:        433
++    { call_site: ffffffffa07186ff } hitcount:          1  bytes_req:        176
++    { call_site: ffffffff811ae721 } hitcount:          1  bytes_req:      16384
++    { call_site: ffffffff811c5134 } hitcount:          1  bytes_req:          8
++    { call_site: ffffffffa04a9ebb } hitcount:          1  bytes_req:        511
++    { call_site: ffffffff8122e0a6 } hitcount:          1  bytes_req:         12
++    { call_site: ffffffff8107da84 } hitcount:          1  bytes_req:        152
++    { call_site: ffffffff812d8246 } hitcount:          1  bytes_req:         24
++    { call_site: ffffffff811dc1e5 } hitcount:          3  bytes_req:        144
++    { call_site: ffffffffa02515e8 } hitcount:          3  bytes_req:        648
++    { call_site: ffffffff81258159 } hitcount:          3  bytes_req:        144
++    { call_site: ffffffff811c80f4 } hitcount:          4  bytes_req:        544
++    .
++    .
++    .
++    { call_site: ffffffffa06c7646 } hitcount:        106  bytes_req:       8024
++    { call_site: ffffffffa06cb246 } hitcount:        132  bytes_req:      31680
++    { call_site: ffffffffa06cef7a } hitcount:        132  bytes_req:       2112
++    { call_site: ffffffff8137e399 } hitcount:        132  bytes_req:      23232
++    { call_site: ffffffffa06c941c } hitcount:        185  bytes_req:     171360
++    { call_site: ffffffffa06f2a66 } hitcount:        185  bytes_req:      26640
++    { call_site: ffffffffa036a70e } hitcount:        265  bytes_req:      10600
++    { call_site: ffffffff81325447 } hitcount:        292  bytes_req:        584
++    { call_site: ffffffffa072da3c } hitcount:        446  bytes_req:      60656
++    { call_site: ffffffffa036b1f2 } hitcount:        526  bytes_req:      29456
++    { call_site: ffffffffa0099c06 } hitcount:       1780  bytes_req:      35600
++
++    Totals:
++        Hits: 4775
++        Entries: 46
++        Dropped: 0
++
++  Even that's only marginally more useful - while hex values do look
++  more like addresses, what users are typically more interested in
++  when looking at text addresses are the corresponding symbols
++  instead.  To have an address displayed as symbolic value instead,
++  simply append '.sym' or '.sym-offset' to the field name in the
++  trigger:
++
++    # echo 'hist:key=call_site.sym:val=bytes_req' > \
++           /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
++
++    # cat /sys/kernel/debug/tracing/events/kmem/kmalloc/hist
++    # trigger info: hist:keys=call_site.sym:vals=bytes_req:sort=hitcount:size=2048 [active]
++
++    { call_site: [ffffffff810adcb9] syslog_print_all                              } hitcount:          1  bytes_req:       1024
++    { call_site: [ffffffff8154bc62] usb_control_msg                               } hitcount:          1  bytes_req:          8
++    { call_site: [ffffffffa00bf6fe] hidraw_send_report [hid]                      } hitcount:          1  bytes_req:          7
++    { call_site: [ffffffff8154acbe] usb_alloc_urb                                 } hitcount:          1  bytes_req:        192
++    { call_site: [ffffffffa00bf1ca] hidraw_report_event [hid]                     } hitcount:          1  bytes_req:          7
++    { call_site: [ffffffff811e3a25] __seq_open_private                            } hitcount:          1  bytes_req:         40
++    { call_site: [ffffffff8109524a] alloc_fair_sched_group                        } hitcount:          2  bytes_req:        128
++    { call_site: [ffffffff811febd5] fsnotify_alloc_group                          } hitcount:          2  bytes_req:        528
++    { call_site: [ffffffff81440f58] __tty_buffer_request_room                     } hitcount:          2  bytes_req:       2624
++    { call_site: [ffffffff81200ba6] inotify_new_group                             } hitcount:          2  bytes_req:         96
++    { call_site: [ffffffffa05e19af] ieee80211_start_tx_ba_session [mac80211]      } hitcount:          2  bytes_req:        464
++    { call_site: [ffffffff81672406] tcp_get_metrics                               } hitcount:          2  bytes_req:        304
++    { call_site: [ffffffff81097ec2] alloc_rt_sched_group                          } hitcount:          2  bytes_req:        128
++    { call_site: [ffffffff81089b05] sched_create_group                            } hitcount:          2  bytes_req:       1424
++    .
++    .
++    .
++    { call_site: [ffffffffa04a580c] intel_crtc_page_flip [i915]                   } hitcount:       1185  bytes_req:     123240
++    { call_site: [ffffffffa0287592] drm_mode_page_flip_ioctl [drm]                } hitcount:       1185  bytes_req:     104280
++    { call_site: [ffffffffa04c4a3c] intel_plane_duplicate_state [i915]            } hitcount:       1402  bytes_req:     190672
++    { call_site: [ffffffff812891ca] ext4_find_extent                              } hitcount:       1518  bytes_req:     146208
++    { call_site: [ffffffffa029070e] drm_vma_node_allow [drm]                      } hitcount:       1746  bytes_req:      69840
++    { call_site: [ffffffffa045e7c4] i915_gem_do_execbuffer.isra.23 [i915]         } hitcount:       2021  bytes_req:     792312
++    { call_site: [ffffffffa02911f2] drm_modeset_lock_crtc [drm]                   } hitcount:       2592  bytes_req:     145152
++    { call_site: [ffffffffa0489a66] intel_ring_begin [i915]                       } hitcount:       2629  bytes_req:     378576
++    { call_site: [ffffffffa046041c] i915_gem_execbuffer2 [i915]                   } hitcount:       2629  bytes_req:    3783248
++    { call_site: [ffffffff81325607] apparmor_file_alloc_security                  } hitcount:       5192  bytes_req:      10384
++    { call_site: [ffffffffa00b7c06] hid_report_raw_event [hid]                    } hitcount:       5529  bytes_req:     110584
++    { call_site: [ffffffff8131ebf7] aa_alloc_task_context                         } hitcount:      21943  bytes_req:     702176
++    { call_site: [ffffffff8125847d] ext4_htree_store_dirent                       } hitcount:      55759  bytes_req:    5074265
++
++    Totals:
++        Hits: 109928
++        Entries: 71
++        Dropped: 0
++
++  Because the default sort key above is 'hitcount', the above shows a
++  the list of call_sites by increasing hitcount, so that at the bottom
++  we see the functions that made the most kmalloc calls during the
++  run.  If instead we we wanted to see the top kmalloc callers in
++  terms of the number of bytes requested rather than the number of
++  calls, and we wanted the top caller to appear at the top, we can use
++  the 'sort' parameter, along with the 'descending' modifier:
++
++    # echo 'hist:key=call_site.sym:val=bytes_req:sort=bytes_req.descending' > \
++           /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
++
++    # cat /sys/kernel/debug/tracing/events/kmem/kmalloc/hist
++    # trigger info: hist:keys=call_site.sym:vals=bytes_req:sort=bytes_req.descending:size=2048 [active]
++
++    { call_site: [ffffffffa046041c] i915_gem_execbuffer2 [i915]                   } hitcount:       2186  bytes_req:    3397464
++    { call_site: [ffffffffa045e7c4] i915_gem_do_execbuffer.isra.23 [i915]         } hitcount:       1790  bytes_req:     712176
++    { call_site: [ffffffff8125847d] ext4_htree_store_dirent                       } hitcount:       8132  bytes_req:     513135
++    { call_site: [ffffffff811e2a1b] seq_buf_alloc                                 } hitcount:        106  bytes_req:     440128
++    { call_site: [ffffffffa0489a66] intel_ring_begin [i915]                       } hitcount:       2186  bytes_req:     314784
++    { call_site: [ffffffff812891ca] ext4_find_extent                              } hitcount:       2174  bytes_req:     208992
++    { call_site: [ffffffff811ae8e1] __kmalloc                                     } hitcount:          8  bytes_req:     131072
++    { call_site: [ffffffffa04c4a3c] intel_plane_duplicate_state [i915]            } hitcount:        859  bytes_req:     116824
++    { call_site: [ffffffffa02911f2] drm_modeset_lock_crtc [drm]                   } hitcount:       1834  bytes_req:     102704
++    { call_site: [ffffffffa04a580c] intel_crtc_page_flip [i915]                   } hitcount:        972  bytes_req:     101088
++    { call_site: [ffffffffa0287592] drm_mode_page_flip_ioctl [drm]                } hitcount:        972  bytes_req:      85536
++    { call_site: [ffffffffa00b7c06] hid_report_raw_event [hid]                    } hitcount:       3333  bytes_req:      66664
++    { call_site: [ffffffff8137e559] sg_kmalloc                                    } hitcount:        209  bytes_req:      61632
++    .
++    .
++    .
++    { call_site: [ffffffff81095225] alloc_fair_sched_group                        } hitcount:          2  bytes_req:        128
++    { call_site: [ffffffff81097ec2] alloc_rt_sched_group                          } hitcount:          2  bytes_req:        128
++    { call_site: [ffffffff812d8406] copy_semundo                                  } hitcount:          2  bytes_req:         48
++    { call_site: [ffffffff81200ba6] inotify_new_group                             } hitcount:          1  bytes_req:         48
++    { call_site: [ffffffffa027121a] drm_getmagic [drm]                            } hitcount:          1  bytes_req:         48
++    { call_site: [ffffffff811e3a25] __seq_open_private                            } hitcount:          1  bytes_req:         40
++    { call_site: [ffffffff811c52f4] bprm_change_interp                            } hitcount:          2  bytes_req:         16
++    { call_site: [ffffffff8154bc62] usb_control_msg                               } hitcount:          1  bytes_req:          8
++    { call_site: [ffffffffa00bf1ca] hidraw_report_event [hid]                     } hitcount:          1  bytes_req:          7
++    { call_site: [ffffffffa00bf6fe] hidraw_send_report [hid]                      } hitcount:          1  bytes_req:          7
++
++    Totals:
++        Hits: 32133
++        Entries: 81
++        Dropped: 0
++
++  To display the offset and size information in addition to the symbol
++  name, just use 'sym-offset' instead:
++
++    # echo 'hist:key=call_site.sym-offset:val=bytes_req:sort=bytes_req.descending' > \
++           /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
++
++    # cat /sys/kernel/debug/tracing/events/kmem/kmalloc/hist
++    # trigger info: hist:keys=call_site.sym-offset:vals=bytes_req:sort=bytes_req.descending:size=2048 [active]
++
++    { call_site: [ffffffffa046041c] i915_gem_execbuffer2+0x6c/0x2c0 [i915]                  } hitcount:       4569  bytes_req:    3163720
++    { call_site: [ffffffffa0489a66] intel_ring_begin+0xc6/0x1f0 [i915]                      } hitcount:       4569  bytes_req:     657936
++    { call_site: [ffffffffa045e7c4] i915_gem_do_execbuffer.isra.23+0x694/0x1020 [i915]      } hitcount:       1519  bytes_req:     472936
++    { call_site: [ffffffffa045e646] i915_gem_do_execbuffer.isra.23+0x516/0x1020 [i915]      } hitcount:       3050  bytes_req:     211832
++    { call_site: [ffffffff811e2a1b] seq_buf_alloc+0x1b/0x50                                 } hitcount:         34  bytes_req:     148384
++    { call_site: [ffffffffa04a580c] intel_crtc_page_flip+0xbc/0x870 [i915]                  } hitcount:       1385  bytes_req:     144040
++    { call_site: [ffffffff811ae8e1] __kmalloc+0x191/0x1b0                                   } hitcount:          8  bytes_req:     131072
++    { call_site: [ffffffffa0287592] drm_mode_page_flip_ioctl+0x282/0x360 [drm]              } hitcount:       1385  bytes_req:     121880
++    { call_site: [ffffffffa02911f2] drm_modeset_lock_crtc+0x32/0x100 [drm]                  } hitcount:       1848  bytes_req:     103488
++    { call_site: [ffffffffa04c4a3c] intel_plane_duplicate_state+0x2c/0xa0 [i915]            } hitcount:        461  bytes_req:      62696
++    { call_site: [ffffffffa029070e] drm_vma_node_allow+0x2e/0xd0 [drm]                      } hitcount:       1541  bytes_req:      61640
++    { call_site: [ffffffff815f8d7b] sk_prot_alloc+0xcb/0x1b0                                } hitcount:         57  bytes_req:      57456
++    .
++    .
++    .
++    { call_site: [ffffffff8109524a] alloc_fair_sched_group+0x5a/0x1a0                       } hitcount:          2  bytes_req:        128
++    { call_site: [ffffffffa027b921] drm_vm_open_locked+0x31/0xa0 [drm]                      } hitcount:          3  bytes_req:         96
++    { call_site: [ffffffff8122e266] proc_self_follow_link+0x76/0xb0                         } hitcount:          8  bytes_req:         96
++    { call_site: [ffffffff81213e80] load_elf_binary+0x240/0x1650                            } hitcount:          3  bytes_req:         84
++    { call_site: [ffffffff8154bc62] usb_control_msg+0x42/0x110                              } hitcount:          1  bytes_req:          8
++    { call_site: [ffffffffa00bf6fe] hidraw_send_report+0x7e/0x1a0 [hid]                     } hitcount:          1  bytes_req:          7
++    { call_site: [ffffffffa00bf1ca] hidraw_report_event+0x8a/0x120 [hid]                    } hitcount:          1  bytes_req:          7
++
++    Totals:
++        Hits: 26098
++        Entries: 64
++        Dropped: 0
++
++  We can also add multiple fields to the 'values' parameter.  For
++  example, we might want to see the total number of bytes allocated
++  alongside bytes requested, and display the result sorted by bytes
++  allocated in a descending order:
++
++    # echo 'hist:keys=call_site.sym:values=bytes_req,bytes_alloc:sort=bytes_alloc.descending' > \
++           /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
++
++    # cat /sys/kernel/debug/tracing/events/kmem/kmalloc/hist
++    # trigger info: hist:keys=call_site.sym:vals=bytes_req,bytes_alloc:sort=bytes_alloc.descending:size=2048 [active]
++
++    { call_site: [ffffffffa046041c] i915_gem_execbuffer2 [i915]                   } hitcount:       7403  bytes_req:    4084360  bytes_alloc:    5958016
++    { call_site: [ffffffff811e2a1b] seq_buf_alloc                                 } hitcount:        541  bytes_req:    2213968  bytes_alloc:    2228224
++    { call_site: [ffffffffa0489a66] intel_ring_begin [i915]                       } hitcount:       7404  bytes_req:    1066176  bytes_alloc:    1421568
++    { call_site: [ffffffffa045e7c4] i915_gem_do_execbuffer.isra.23 [i915]         } hitcount:       1565  bytes_req:     557368  bytes_alloc:    1037760
++    { call_site: [ffffffff8125847d] ext4_htree_store_dirent                       } hitcount:       9557  bytes_req:     595778  bytes_alloc:     695744
++    { call_site: [ffffffffa045e646] i915_gem_do_execbuffer.isra.23 [i915]         } hitcount:       5839  bytes_req:     430680  bytes_alloc:     470400
++    { call_site: [ffffffffa04c4a3c] intel_plane_duplicate_state [i915]            } hitcount:       2388  bytes_req:     324768  bytes_alloc:     458496
++    { call_site: [ffffffffa02911f2] drm_modeset_lock_crtc [drm]                   } hitcount:       3911  bytes_req:     219016  bytes_alloc:     250304
++    { call_site: [ffffffff815f8d7b] sk_prot_alloc                                 } hitcount:        235  bytes_req:     236880  bytes_alloc:     240640
++    { call_site: [ffffffff8137e559] sg_kmalloc                                    } hitcount:        557  bytes_req:     169024  bytes_alloc:     221760
++    { call_site: [ffffffffa00b7c06] hid_report_raw_event [hid]                    } hitcount:       9378  bytes_req:     187548  bytes_alloc:     206312
++    { call_site: [ffffffffa04a580c] intel_crtc_page_flip [i915]                   } hitcount:       1519  bytes_req:     157976  bytes_alloc:     194432
++    .
++    .
++    .
++    { call_site: [ffffffff8109bd3b] sched_autogroup_create_attach                 } hitcount:          2  bytes_req:        144  bytes_alloc:        192
++    { call_site: [ffffffff81097ee8] alloc_rt_sched_group                          } hitcount:          2  bytes_req:        128  bytes_alloc:        128
++    { call_site: [ffffffff8109524a] alloc_fair_sched_group                        } hitcount:          2  bytes_req:        128  bytes_alloc:        128
++    { call_site: [ffffffff81095225] alloc_fair_sched_group                        } hitcount:          2  bytes_req:        128  bytes_alloc:        128
++    { call_site: [ffffffff81097ec2] alloc_rt_sched_group                          } hitcount:          2  bytes_req:        128  bytes_alloc:        128
++    { call_site: [ffffffff81213e80] load_elf_binary                               } hitcount:          3  bytes_req:         84  bytes_alloc:         96
++    { call_site: [ffffffff81079a2e] kthread_create_on_node                        } hitcount:          1  bytes_req:         56  bytes_alloc:         64
++    { call_site: [ffffffffa00bf6fe] hidraw_send_report [hid]                      } hitcount:          1  bytes_req:          7  bytes_alloc:          8
++    { call_site: [ffffffff8154bc62] usb_control_msg                               } hitcount:          1  bytes_req:          8  bytes_alloc:          8
++    { call_site: [ffffffffa00bf1ca] hidraw_report_event [hid]                     } hitcount:          1  bytes_req:          7  bytes_alloc:          8
++
++    Totals:
++        Hits: 66598
++        Entries: 65
++        Dropped: 0
++
++  Finally, to finish off our kmalloc example, instead of simply having
++  the hist trigger display symbolic call_sites, we can have the hist
++  trigger additionally display the complete set of kernel stack traces
++  that led to each call_site.  To do that, we simply use the special
++  value 'stacktrace' for the key parameter:
++
++    # echo 'hist:keys=stacktrace:values=bytes_req,bytes_alloc:sort=bytes_alloc' > \
++           /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
++
++  The above trigger will use the kernel stack trace in effect when an
++  event is triggered as the key for the hash table.  This allows the
++  enumeration of every kernel callpath that led up to a particular
++  event, along with a running total of any of the event fields for
++  that event.  Here we tally bytes requested and bytes allocated for
++  every callpath in the system that led up to a kmalloc (in this case
++  every callpath to a kmalloc for a kernel compile):
++
++    # cat /sys/kernel/debug/tracing/events/kmem/kmalloc/hist
++    # trigger info: hist:keys=stacktrace:vals=bytes_req,bytes_alloc:sort=bytes_alloc:size=2048 [active]
++
++    { stacktrace:
++         __kmalloc_track_caller+0x10b/0x1a0
++         kmemdup+0x20/0x50
++         hidraw_report_event+0x8a/0x120 [hid]
++         hid_report_raw_event+0x3ea/0x440 [hid]
++         hid_input_report+0x112/0x190 [hid]
++         hid_irq_in+0xc2/0x260 [usbhid]
++         __usb_hcd_giveback_urb+0x72/0x120
++         usb_giveback_urb_bh+0x9e/0xe0
++         tasklet_hi_action+0xf8/0x100
++         __do_softirq+0x114/0x2c0
++         irq_exit+0xa5/0xb0
++         do_IRQ+0x5a/0xf0
++         ret_from_intr+0x0/0x30
++         cpuidle_enter+0x17/0x20
++         cpu_startup_entry+0x315/0x3e0
++         rest_init+0x7c/0x80
++    } hitcount:          3  bytes_req:         21  bytes_alloc:         24
++    { stacktrace:
++         __kmalloc_track_caller+0x10b/0x1a0
++         kmemdup+0x20/0x50
++         hidraw_report_event+0x8a/0x120 [hid]
++         hid_report_raw_event+0x3ea/0x440 [hid]
++         hid_input_report+0x112/0x190 [hid]
++         hid_irq_in+0xc2/0x260 [usbhid]
++         __usb_hcd_giveback_urb+0x72/0x120
++         usb_giveback_urb_bh+0x9e/0xe0
++         tasklet_hi_action+0xf8/0x100
++         __do_softirq+0x114/0x2c0
++         irq_exit+0xa5/0xb0
++         do_IRQ+0x5a/0xf0
++         ret_from_intr+0x0/0x30
++    } hitcount:          3  bytes_req:         21  bytes_alloc:         24
++    { stacktrace:
++         kmem_cache_alloc_trace+0xeb/0x150
++         aa_alloc_task_context+0x27/0x40
++         apparmor_cred_prepare+0x1f/0x50
++         security_prepare_creds+0x16/0x20
++         prepare_creds+0xdf/0x1a0
++         SyS_capset+0xb5/0x200
++         system_call_fastpath+0x12/0x6a
++    } hitcount:          1  bytes_req:         32  bytes_alloc:         32
++    .
++    .
++    .
++    { stacktrace:
++         __kmalloc+0x11b/0x1b0
++         i915_gem_execbuffer2+0x6c/0x2c0 [i915]
++         drm_ioctl+0x349/0x670 [drm]
++         do_vfs_ioctl+0x2f0/0x4f0
++         SyS_ioctl+0x81/0xa0
++         system_call_fastpath+0x12/0x6a
++    } hitcount:      17726  bytes_req:   13944120  bytes_alloc:   19593808
++    { stacktrace:
++         __kmalloc+0x11b/0x1b0
++         load_elf_phdrs+0x76/0xa0
++         load_elf_binary+0x102/0x1650
++         search_binary_handler+0x97/0x1d0
++         do_execveat_common.isra.34+0x551/0x6e0
++         SyS_execve+0x3a/0x50
++         return_from_execve+0x0/0x23
++    } hitcount:      33348  bytes_req:   17152128  bytes_alloc:   20226048
++    { stacktrace:
++         kmem_cache_alloc_trace+0xeb/0x150
++         apparmor_file_alloc_security+0x27/0x40
++         security_file_alloc+0x16/0x20
++         get_empty_filp+0x93/0x1c0
++         path_openat+0x31/0x5f0
++         do_filp_open+0x3a/0x90
++         do_sys_open+0x128/0x220
++         SyS_open+0x1e/0x20
++         system_call_fastpath+0x12/0x6a
++    } hitcount:    4766422  bytes_req:    9532844  bytes_alloc:   38131376
++    { stacktrace:
++         __kmalloc+0x11b/0x1b0
++         seq_buf_alloc+0x1b/0x50
++         seq_read+0x2cc/0x370
++         proc_reg_read+0x3d/0x80
++         __vfs_read+0x28/0xe0
++         vfs_read+0x86/0x140
++         SyS_read+0x46/0xb0
++         system_call_fastpath+0x12/0x6a
++    } hitcount:      19133  bytes_req:   78368768  bytes_alloc:   78368768
++
++    Totals:
++        Hits: 6085872
++        Entries: 253
++        Dropped: 0
++
++  If you key a hist trigger on common_pid, in order for example to
++  gather and display sorted totals for each process, you can use the
++  special .execname modifier to display the executable names for the
++  processes in the table rather than raw pids.  The example below
++  keeps a per-process sum of total bytes read:
++
++    # echo 'hist:key=common_pid.execname:val=count:sort=count.descending' > \
++           /sys/kernel/debug/tracing/events/syscalls/sys_enter_read/trigger
++
++    # cat /sys/kernel/debug/tracing/events/syscalls/sys_enter_read/hist
++    # trigger info: hist:keys=common_pid.execname:vals=count:sort=count.descending:size=2048 [active]
++
++    { common_pid: gnome-terminal  [      3196] } hitcount:        280  count:    1093512
++    { common_pid: Xorg            [      1309] } hitcount:        525  count:     256640
++    { common_pid: compiz          [      2889] } hitcount:         59  count:     254400
++    { common_pid: bash            [      8710] } hitcount:          3  count:      66369
++    { common_pid: dbus-daemon-lau [      8703] } hitcount:         49  count:      47739
++    { common_pid: irqbalance      [      1252] } hitcount:         27  count:      27648
++    { common_pid: 01ifupdown      [      8705] } hitcount:          3  count:      17216
++    { common_pid: dbus-daemon     [       772] } hitcount:         10  count:      12396
++    { common_pid: Socket Thread   [      8342] } hitcount:         11  count:      11264
++    { common_pid: nm-dhcp-client. [      8701] } hitcount:          6  count:       7424
++    { common_pid: gmain           [      1315] } hitcount:         18  count:       6336
++    .
++    .
++    .
++    { common_pid: postgres        [      1892] } hitcount:          2  count:         32
++    { common_pid: postgres        [      1891] } hitcount:          2  count:         32
++    { common_pid: gmain           [      8704] } hitcount:          2  count:         32
++    { common_pid: upstart-dbus-br [      2740] } hitcount:         21  count:         21
++    { common_pid: nm-dispatcher.a [      8696] } hitcount:          1  count:         16
++    { common_pid: indicator-datet [      2904] } hitcount:          1  count:         16
++    { common_pid: gdbus           [      2998] } hitcount:          1  count:         16
++    { common_pid: rtkit-daemon    [      2052] } hitcount:          1  count:          8
++    { common_pid: init            [         1] } hitcount:          2  count:          2
++
++    Totals:
++        Hits: 2116
++        Entries: 51
++        Dropped: 0
++
++  Similarly, if you key a hist trigger on syscall id, for example to
++  gather and display a list of systemwide syscall hits, you can use
++  the special .syscall modifier to display the syscall names rather
++  than raw ids.  The example below keeps a running total of syscall
++  counts for the system during the run:
++
++    # echo 'hist:key=id.syscall:val=hitcount' > \
++           /sys/kernel/debug/tracing/events/raw_syscalls/sys_enter/trigger
++
++    # cat /sys/kernel/debug/tracing/events/raw_syscalls/sys_enter/hist
++    # trigger info: hist:keys=id.syscall:vals=hitcount:sort=hitcount:size=2048 [active]
++
++    { id: sys_fsync                     [ 74] } hitcount:          1
++    { id: sys_newuname                  [ 63] } hitcount:          1
++    { id: sys_prctl                     [157] } hitcount:          1
++    { id: sys_statfs                    [137] } hitcount:          1
++    { id: sys_symlink                   [ 88] } hitcount:          1
++    { id: sys_sendmmsg                  [307] } hitcount:          1
++    { id: sys_semctl                    [ 66] } hitcount:          1
++    { id: sys_readlink                  [ 89] } hitcount:          3
++    { id: sys_bind                      [ 49] } hitcount:          3
++    { id: sys_getsockname               [ 51] } hitcount:          3
++    { id: sys_unlink                    [ 87] } hitcount:          3
++    { id: sys_rename                    [ 82] } hitcount:          4
++    { id: unknown_syscall               [ 58] } hitcount:          4
++    { id: sys_connect                   [ 42] } hitcount:          4
++    { id: sys_getpid                    [ 39] } hitcount:          4
++    .
++    .
++    .
++    { id: sys_rt_sigprocmask            [ 14] } hitcount:        952
++    { id: sys_futex                     [202] } hitcount:       1534
++    { id: sys_write                     [  1] } hitcount:       2689
++    { id: sys_setitimer                 [ 38] } hitcount:       2797
++    { id: sys_read                      [  0] } hitcount:       3202
++    { id: sys_select                    [ 23] } hitcount:       3773
++    { id: sys_writev                    [ 20] } hitcount:       4531
++    { id: sys_poll                      [  7] } hitcount:       8314
++    { id: sys_recvmsg                   [ 47] } hitcount:      13738
++    { id: sys_ioctl                     [ 16] } hitcount:      21843
++
++    Totals:
++        Hits: 67612
++        Entries: 72
++        Dropped: 0
++
++    The syscall counts above provide a rough overall picture of system
++    call activity on the system; we can see for example that the most
++    popular system call on this system was the 'sys_ioctl' system call.
++
++    We can use 'compound' keys to refine that number and provide some
++    further insight as to which processes exactly contribute to the
++    overall ioctl count.
++
++    The command below keeps a hitcount for every unique combination of
++    system call id and pid - the end result is essentially a table
++    that keeps a per-pid sum of system call hits.  The results are
++    sorted using the system call id as the primary key, and the
++    hitcount sum as the secondary key:
++
++    # echo 'hist:key=id.syscall,common_pid.execname:val=hitcount:sort=id,hitcount' > \
++           /sys/kernel/debug/tracing/events/raw_syscalls/sys_enter/trigger
++
++    # cat /sys/kernel/debug/tracing/events/raw_syscalls/sys_enter/hist
++    # trigger info: hist:keys=id.syscall,common_pid.execname:vals=hitcount:sort=id.syscall,hitcount:size=2048 [active]
++
++    { id: sys_read                      [  0], common_pid: rtkit-daemon    [      1877] } hitcount:          1
++    { id: sys_read                      [  0], common_pid: gdbus           [      2976] } hitcount:          1
++    { id: sys_read                      [  0], common_pid: console-kit-dae [      3400] } hitcount:          1
++    { id: sys_read                      [  0], common_pid: postgres        [      1865] } hitcount:          1
++    { id: sys_read                      [  0], common_pid: deja-dup-monito [      3543] } hitcount:          2
++    { id: sys_read                      [  0], common_pid: NetworkManager  [       890] } hitcount:          2
++    { id: sys_read                      [  0], common_pid: evolution-calen [      3048] } hitcount:          2
++    { id: sys_read                      [  0], common_pid: postgres        [      1864] } hitcount:          2
++    { id: sys_read                      [  0], common_pid: nm-applet       [      3022] } hitcount:          2
++    { id: sys_read                      [  0], common_pid: whoopsie        [      1212] } hitcount:          2
++    .
++    .
++    .
++    { id: sys_ioctl                     [ 16], common_pid: bash            [      8479] } hitcount:          1
++    { id: sys_ioctl                     [ 16], common_pid: bash            [      3472] } hitcount:         12
++    { id: sys_ioctl                     [ 16], common_pid: gnome-terminal  [      3199] } hitcount:         16
++    { id: sys_ioctl                     [ 16], common_pid: Xorg            [      1267] } hitcount:       1808
++    { id: sys_ioctl                     [ 16], common_pid: compiz          [      2994] } hitcount:       5580
++    .
++    .
++    .
++    { id: sys_waitid                    [247], common_pid: upstart-dbus-br [      2690] } hitcount:          3
++    { id: sys_waitid                    [247], common_pid: upstart-dbus-br [      2688] } hitcount:         16
++    { id: sys_inotify_add_watch         [254], common_pid: gmain           [       975] } hitcount:          2
++    { id: sys_inotify_add_watch         [254], common_pid: gmain           [      3204] } hitcount:          4
++    { id: sys_inotify_add_watch         [254], common_pid: gmain           [      2888] } hitcount:          4
++    { id: sys_inotify_add_watch         [254], common_pid: gmain           [      3003] } hitcount:          4
++    { id: sys_inotify_add_watch         [254], common_pid: gmain           [      2873] } hitcount:          4
++    { id: sys_inotify_add_watch         [254], common_pid: gmain           [      3196] } hitcount:          6
++    { id: sys_openat                    [257], common_pid: java            [      2623] } hitcount:          2
++    { id: sys_eventfd2                  [290], common_pid: ibus-ui-gtk3    [      2760] } hitcount:          4
++    { id: sys_eventfd2                  [290], common_pid: compiz          [      2994] } hitcount:          6
++
++    Totals:
++        Hits: 31536
++        Entries: 323
++        Dropped: 0
++
++    The above list does give us a breakdown of the ioctl syscall by
++    pid, but it also gives us quite a bit more than that, which we
++    don't really care about at the moment.  Since we know the syscall
++    id for sys_ioctl (16, displayed next to the sys_ioctl name), we
++    can use that to filter out all the other syscalls:
++
++    # echo 'hist:key=id.syscall,common_pid.execname:val=hitcount:sort=id,hitcount if id == 16' > \
++           /sys/kernel/debug/tracing/events/raw_syscalls/sys_enter/trigger
++
++    # cat /sys/kernel/debug/tracing/events/raw_syscalls/sys_enter/hist
++    # trigger info: hist:keys=id.syscall,common_pid.execname:vals=hitcount:sort=id.syscall,hitcount:size=2048 if id == 16 [active]
++
++    { id: sys_ioctl                     [ 16], common_pid: gmain           [      2769] } hitcount:          1
++    { id: sys_ioctl                     [ 16], common_pid: evolution-addre [      8571] } hitcount:          1
++    { id: sys_ioctl                     [ 16], common_pid: gmain           [      3003] } hitcount:          1
++    { id: sys_ioctl                     [ 16], common_pid: gmain           [      2781] } hitcount:          1
++    { id: sys_ioctl                     [ 16], common_pid: gmain           [      2829] } hitcount:          1
++    { id: sys_ioctl                     [ 16], common_pid: bash            [      8726] } hitcount:          1
++    { id: sys_ioctl                     [ 16], common_pid: bash            [      8508] } hitcount:          1
++    { id: sys_ioctl                     [ 16], common_pid: gmain           [      2970] } hitcount:          1
++    { id: sys_ioctl                     [ 16], common_pid: gmain           [      2768] } hitcount:          1
++    .
++    .
++    .
++    { id: sys_ioctl                     [ 16], common_pid: pool            [      8559] } hitcount:         45
++    { id: sys_ioctl                     [ 16], common_pid: pool            [      8555] } hitcount:         48
++    { id: sys_ioctl                     [ 16], common_pid: pool            [      8551] } hitcount:         48
++    { id: sys_ioctl                     [ 16], common_pid: avahi-daemon    [       896] } hitcount:         66
++    { id: sys_ioctl                     [ 16], common_pid: Xorg            [      1267] } hitcount:      26674
++    { id: sys_ioctl                     [ 16], common_pid: compiz          [      2994] } hitcount:      73443
++
++    Totals:
++        Hits: 101162
++        Entries: 103
++        Dropped: 0
++
++    The above output shows that 'compiz' and 'Xorg' are far and away
++    the heaviest ioctl callers (which might lead to questions about
++    whether they really need to be making all those calls and to
++    possible avenues for further investigation.)
++
++    The compound key examples used a key and a sum value (hitcount) to
++    sort the output, but we can just as easily use two keys instead.
++    Here's an example where we use a compound key composed of the the
++    common_pid and size event fields.  Sorting with pid as the primary
++    key and 'size' as the secondary key allows us to display an
++    ordered summary of the recvfrom sizes, with counts, received by
++    each process:
++
++    # echo 'hist:key=common_pid.execname,size:val=hitcount:sort=common_pid,size' > \
++           /sys/kernel/debug/tracing/events/syscalls/sys_enter_recvfrom/trigger
++
++    # cat /sys/kernel/debug/tracing/events/syscalls/sys_enter_recvfrom/hist
++    # trigger info: hist:keys=common_pid.execname,size:vals=hitcount:sort=common_pid.execname,size:size=2048 [active]
++
++    { common_pid: smbd            [       784], size:          4 } hitcount:          1
++    { common_pid: dnsmasq         [      1412], size:       4096 } hitcount:        672
++    { common_pid: postgres        [      1796], size:       1000 } hitcount:          6
++    { common_pid: postgres        [      1867], size:       1000 } hitcount:         10
++    { common_pid: bamfdaemon      [      2787], size:         28 } hitcount:          2
++    { common_pid: bamfdaemon      [      2787], size:      14360 } hitcount:          1
++    { common_pid: compiz          [      2994], size:          8 } hitcount:          1
++    { common_pid: compiz          [      2994], size:         20 } hitcount:         11
++    { common_pid: gnome-terminal  [      3199], size:          4 } hitcount:          2
++    { common_pid: firefox         [      8817], size:          4 } hitcount:          1
++    { common_pid: firefox         [      8817], size:          8 } hitcount:          5
++    { common_pid: firefox         [      8817], size:        588 } hitcount:          2
++    { common_pid: firefox         [      8817], size:        628 } hitcount:          1
++    { common_pid: firefox         [      8817], size:       6944 } hitcount:          1
++    { common_pid: firefox         [      8817], size:     408880 } hitcount:          2
++    { common_pid: firefox         [      8822], size:          8 } hitcount:          2
++    { common_pid: firefox         [      8822], size:        160 } hitcount:          2
++    { common_pid: firefox         [      8822], size:        320 } hitcount:          2
++    { common_pid: firefox         [      8822], size:        352 } hitcount:          1
++    .
++    .
++    .
++    { common_pid: pool            [      8923], size:       1960 } hitcount:         10
++    { common_pid: pool            [      8923], size:       2048 } hitcount:         10
++    { common_pid: pool            [      8924], size:       1960 } hitcount:         10
++    { common_pid: pool            [      8924], size:       2048 } hitcount:         10
++    { common_pid: pool            [      8928], size:       1964 } hitcount:          4
++    { common_pid: pool            [      8928], size:       1965 } hitcount:          2
++    { common_pid: pool            [      8928], size:       2048 } hitcount:          6
++    { common_pid: pool            [      8929], size:       1982 } hitcount:          1
++    { common_pid: pool            [      8929], size:       2048 } hitcount:          1
++
++    Totals:
++        Hits: 2016
++        Entries: 224
++        Dropped: 0
++
++  The above example also illustrates the fact that although a compound
++  key is treated as a single entity for hashing purposes, the sub-keys
++  it's composed of can be accessed independently.
++
++  The next example uses a string field as the hash key and
++  demonstrates how you can manually pause and continue a hist trigger.
++  In this example, we'll aggregate fork counts and don't expect a
++  large number of entries in the hash table, so we'll drop it to a
++  much smaller number, say 256:
++
++    # echo 'hist:key=child_comm:val=hitcount:size=256' > \
++           /sys/kernel/debug/tracing/events/sched/sched_process_fork/trigger
++
++    # cat /sys/kernel/debug/tracing/events/sched/sched_process_fork/hist
++    # trigger info: hist:keys=child_comm:vals=hitcount:sort=hitcount:size=256 [active]
++
++    { child_comm: dconf worker                        } hitcount:          1
++    { child_comm: ibus-daemon                         } hitcount:          1
++    { child_comm: whoopsie                            } hitcount:          1
++    { child_comm: smbd                                } hitcount:          1
++    { child_comm: gdbus                               } hitcount:          1
++    { child_comm: kthreadd                            } hitcount:          1
++    { child_comm: dconf worker                        } hitcount:          1
++    { child_comm: evolution-alarm                     } hitcount:          2
++    { child_comm: Socket Thread                       } hitcount:          2
++    { child_comm: postgres                            } hitcount:          2
++    { child_comm: bash                                } hitcount:          3
++    { child_comm: compiz                              } hitcount:          3
++    { child_comm: evolution-sourc                     } hitcount:          4
++    { child_comm: dhclient                            } hitcount:          4
++    { child_comm: pool                                } hitcount:          5
++    { child_comm: nm-dispatcher.a                     } hitcount:          8
++    { child_comm: firefox                             } hitcount:          8
++    { child_comm: dbus-daemon                         } hitcount:          8
++    { child_comm: glib-pacrunner                      } hitcount:         10
++    { child_comm: evolution                           } hitcount:         23
++
++    Totals:
++        Hits: 89
++        Entries: 20
++        Dropped: 0
++
++  If we want to pause the hist trigger, we can simply append :pause to
++  the command that started the trigger.  Notice that the trigger info
++  displays as [paused]:
++
++    # echo 'hist:key=child_comm:val=hitcount:size=256:pause' >> \
++           /sys/kernel/debug/tracing/events/sched/sched_process_fork/trigger
++
++    # cat /sys/kernel/debug/tracing/events/sched/sched_process_fork/hist
++    # trigger info: hist:keys=child_comm:vals=hitcount:sort=hitcount:size=256 [paused]
++
++    { child_comm: dconf worker                        } hitcount:          1
++    { child_comm: kthreadd                            } hitcount:          1
++    { child_comm: dconf worker                        } hitcount:          1
++    { child_comm: gdbus                               } hitcount:          1
++    { child_comm: ibus-daemon                         } hitcount:          1
++    { child_comm: Socket Thread                       } hitcount:          2
++    { child_comm: evolution-alarm                     } hitcount:          2
++    { child_comm: smbd                                } hitcount:          2
++    { child_comm: bash                                } hitcount:          3
++    { child_comm: whoopsie                            } hitcount:          3
++    { child_comm: compiz                              } hitcount:          3
++    { child_comm: evolution-sourc                     } hitcount:          4
++    { child_comm: pool                                } hitcount:          5
++    { child_comm: postgres                            } hitcount:          6
++    { child_comm: firefox                             } hitcount:          8
++    { child_comm: dhclient                            } hitcount:         10
++    { child_comm: emacs                               } hitcount:         12
++    { child_comm: dbus-daemon                         } hitcount:         20
++    { child_comm: nm-dispatcher.a                     } hitcount:         20
++    { child_comm: evolution                           } hitcount:         35
++    { child_comm: glib-pacrunner                      } hitcount:         59
++
++    Totals:
++        Hits: 199
++        Entries: 21
++        Dropped: 0
++
++  To manually continue having the trigger aggregate events, append
++  :cont instead.  Notice that the trigger info displays as [active]
++  again, and the data has changed:
++
++    # echo 'hist:key=child_comm:val=hitcount:size=256:cont' >> \
++           /sys/kernel/debug/tracing/events/sched/sched_process_fork/trigger
++
++    # cat /sys/kernel/debug/tracing/events/sched/sched_process_fork/hist
++    # trigger info: hist:keys=child_comm:vals=hitcount:sort=hitcount:size=256 [active]
++
++    { child_comm: dconf worker                        } hitcount:          1
++    { child_comm: dconf worker                        } hitcount:          1
++    { child_comm: kthreadd                            } hitcount:          1
++    { child_comm: gdbus                               } hitcount:          1
++    { child_comm: ibus-daemon                         } hitcount:          1
++    { child_comm: Socket Thread                       } hitcount:          2
++    { child_comm: evolution-alarm                     } hitcount:          2
++    { child_comm: smbd                                } hitcount:          2
++    { child_comm: whoopsie                            } hitcount:          3
++    { child_comm: compiz                              } hitcount:          3
++    { child_comm: evolution-sourc                     } hitcount:          4
++    { child_comm: bash                                } hitcount:          5
++    { child_comm: pool                                } hitcount:          5
++    { child_comm: postgres                            } hitcount:          6
++    { child_comm: firefox                             } hitcount:          8
++    { child_comm: dhclient                            } hitcount:         11
++    { child_comm: emacs                               } hitcount:         12
++    { child_comm: dbus-daemon                         } hitcount:         22
++    { child_comm: nm-dispatcher.a                     } hitcount:         22
++    { child_comm: evolution                           } hitcount:         35
++    { child_comm: glib-pacrunner                      } hitcount:         59
++
++    Totals:
++        Hits: 206
++        Entries: 21
++        Dropped: 0
++
++  The previous example showed how to start and stop a hist trigger by
++  appending 'pause' and 'continue' to the hist trigger command.  A
++  hist trigger can also be started in a paused state by initially
++  starting the trigger with ':pause' appended.  This allows you to
++  start the trigger only when you're ready to start collecting data
++  and not before.  For example, you could start the trigger in a
++  paused state, then unpause it and do something you want to measure,
++  then pause the trigger again when done.
++
++  Of course, doing this manually can be difficult and error-prone, but
++  it is possible to automatically start and stop a hist trigger based
++  on some condition, via the enable_hist and disable_hist triggers.
++
++  For example, suppose we wanted to take a look at the relative
++  weights in terms of skb length for each callpath that leads to a
++  netif_receieve_skb event when downloading a decent-sized file using
++  wget.
++
++  First we set up an initially paused stacktrace trigger on the
++  netif_receive_skb event:
++
++    # echo 'hist:key=stacktrace:vals=len:pause' > \
++           /sys/kernel/debug/tracing/events/net/netif_receive_skb/trigger
++
++  Next, we set up an 'enable_hist' trigger on the sched_process_exec
++  event, with an 'if filename==/usr/bin/wget' filter.  The effect of
++  this new trigger is that it will 'unpause' the hist trigger we just
++  set up on netif_receive_skb if and only if it sees a
++  sched_process_exec event with a filename of '/usr/bin/wget'.  When
++  that happens, all netif_receive_skb events are aggregated into a
++  hash table keyed on stacktrace:
++
++    # echo 'enable_hist:net:netif_receive_skb if filename==/usr/bin/wget' > \
++           /sys/kernel/debug/tracing/events/sched/sched_process_exec/trigger
++
++  The aggregation continues until the netif_receive_skb is paused
++  again, which is what the following disable_hist event does by
++  creating a similar setup on the sched_process_exit event, using the
++  filter 'comm==wget':
++
++    # echo 'disable_hist:net:netif_receive_skb if comm==wget' > \
++           /sys/kernel/debug/tracing/events/sched/sched_process_exit/trigger
++
++  Whenever a process exits and the comm field of the disable_hist
++  trigger filter matches 'comm==wget', the netif_receive_skb hist
++  trigger is disabled.
++
++  The overall effect is that netif_receive_skb events are aggregated
++  into the hash table for only the duration of the wget.  Executing a
++  wget command and then listing the 'hist' file will display the
++  output generated by the wget command:
++
++    $ wget https://www.kernel.org/pub/linux/kernel/v3.x/patch-3.19.xz
++
++    # cat /sys/kernel/debug/tracing/events/net/netif_receive_skb/hist
++    # trigger info: hist:keys=stacktrace:vals=len:sort=hitcount:size=2048 [paused]
++
++    { stacktrace:
++         __netif_receive_skb_core+0x46d/0x990
++         __netif_receive_skb+0x18/0x60
++         netif_receive_skb_internal+0x23/0x90
++         napi_gro_receive+0xc8/0x100
++         ieee80211_deliver_skb+0xd6/0x270 [mac80211]
++         ieee80211_rx_handlers+0xccf/0x22f0 [mac80211]
++         ieee80211_prepare_and_rx_handle+0x4e7/0xc40 [mac80211]
++         ieee80211_rx+0x31d/0x900 [mac80211]
++         iwlagn_rx_reply_rx+0x3db/0x6f0 [iwldvm]
++         iwl_rx_dispatch+0x8e/0xf0 [iwldvm]
++         iwl_pcie_irq_handler+0xe3c/0x12f0 [iwlwifi]
++         irq_thread_fn+0x20/0x50
++         irq_thread+0x11f/0x150
++         kthread+0xd2/0xf0
++         ret_from_fork+0x42/0x70
++    } hitcount:         85  len:      28884
++    { stacktrace:
++         __netif_receive_skb_core+0x46d/0x990
++         __netif_receive_skb+0x18/0x60
++         netif_receive_skb_internal+0x23/0x90
++         napi_gro_complete+0xa4/0xe0
++         dev_gro_receive+0x23a/0x360
++         napi_gro_receive+0x30/0x100
++         ieee80211_deliver_skb+0xd6/0x270 [mac80211]
++         ieee80211_rx_handlers+0xccf/0x22f0 [mac80211]
++         ieee80211_prepare_and_rx_handle+0x4e7/0xc40 [mac80211]
++         ieee80211_rx+0x31d/0x900 [mac80211]
++         iwlagn_rx_reply_rx+0x3db/0x6f0 [iwldvm]
++         iwl_rx_dispatch+0x8e/0xf0 [iwldvm]
++         iwl_pcie_irq_handler+0xe3c/0x12f0 [iwlwifi]
++         irq_thread_fn+0x20/0x50
++         irq_thread+0x11f/0x150
++         kthread+0xd2/0xf0
++    } hitcount:         98  len:     664329
++    { stacktrace:
++         __netif_receive_skb_core+0x46d/0x990
++         __netif_receive_skb+0x18/0x60
++         process_backlog+0xa8/0x150
++         net_rx_action+0x15d/0x340
++         __do_softirq+0x114/0x2c0
++         do_softirq_own_stack+0x1c/0x30
++         do_softirq+0x65/0x70
++         __local_bh_enable_ip+0xb5/0xc0
++         ip_finish_output+0x1f4/0x840
++         ip_output+0x6b/0xc0
++         ip_local_out_sk+0x31/0x40
++         ip_send_skb+0x1a/0x50
++         udp_send_skb+0x173/0x2a0
++         udp_sendmsg+0x2bf/0x9f0
++         inet_sendmsg+0x64/0xa0
++         sock_sendmsg+0x3d/0x50
++    } hitcount:        115  len:      13030
++    { stacktrace:
++         __netif_receive_skb_core+0x46d/0x990
++         __netif_receive_skb+0x18/0x60
++         netif_receive_skb_internal+0x23/0x90
++         napi_gro_complete+0xa4/0xe0
++         napi_gro_flush+0x6d/0x90
++         iwl_pcie_irq_handler+0x92a/0x12f0 [iwlwifi]
++         irq_thread_fn+0x20/0x50
++         irq_thread+0x11f/0x150
++         kthread+0xd2/0xf0
++         ret_from_fork+0x42/0x70
++    } hitcount:        934  len:    5512212
++
++    Totals:
++        Hits: 1232
++        Entries: 4
++        Dropped: 0
++
++  The above shows all the netif_receive_skb callpaths and their total
++  lengths for the duration of the wget command.
++
++  The 'clear' hist trigger param can be used to clear the hash table.
++  Suppose we wanted to try another run of the previous example but
++  this time also wanted to see the complete list of events that went
++  into the histogram.  In order to avoid having to set everything up
++  again, we can just clear the histogram first:
++
++    # echo 'hist:key=stacktrace:vals=len:clear' >> \
++           /sys/kernel/debug/tracing/events/net/netif_receive_skb/trigger
++
++  Just to verify that it is in fact cleared, here's what we now see in
++  the hist file:
++
++    # cat /sys/kernel/debug/tracing/events/net/netif_receive_skb/hist
++    # trigger info: hist:keys=stacktrace:vals=len:sort=hitcount:size=2048 [paused]
++
++    Totals:
++        Hits: 0
++        Entries: 0
++        Dropped: 0
++
++  Since we want to see the detailed list of every netif_receive_skb
++  event occurring during the new run, which are in fact the same
++  events being aggregated into the hash table, we add some additional
++  'enable_event' events to the triggering sched_process_exec and
++  sched_process_exit events as such:
++
++    # echo 'enable_event:net:netif_receive_skb if filename==/usr/bin/wget' > \
++           /sys/kernel/debug/tracing/events/sched/sched_process_exec/trigger
++
++    # echo 'disable_event:net:netif_receive_skb if comm==wget' > \
++           /sys/kernel/debug/tracing/events/sched/sched_process_exit/trigger
++
++  If you read the trigger files for the sched_process_exec and
++  sched_process_exit triggers, you should see two triggers for each:
++  one enabling/disabling the hist aggregation and the other
++  enabling/disabling the logging of events:
++
++    # cat /sys/kernel/debug/tracing/events/sched/sched_process_exec/trigger
++    enable_event:net:netif_receive_skb:unlimited if filename==/usr/bin/wget
++    enable_hist:net:netif_receive_skb:unlimited if filename==/usr/bin/wget
++
++    # cat /sys/kernel/debug/tracing/events/sched/sched_process_exit/trigger
++    enable_event:net:netif_receive_skb:unlimited if comm==wget
++    disable_hist:net:netif_receive_skb:unlimited if comm==wget
++
++  In other words, whenever either of the sched_process_exec or
++  sched_process_exit events is hit and matches 'wget', it enables or
++  disables both the histogram and the event log, and what you end up
++  with is a hash table and set of events just covering the specified
++  duration.  Run the wget command again:
++
++    $ wget https://www.kernel.org/pub/linux/kernel/v3.x/patch-3.19.xz
++
++  Displaying the 'hist' file should show something similar to what you
++  saw in the last run, but this time you should also see the
++  individual events in the trace file:
++
++    # cat /sys/kernel/debug/tracing/trace
++
++    # tracer: nop
++    #
++    # entries-in-buffer/entries-written: 183/1426   #P:4
++    #
++    #                              _-----=> irqs-off
++    #                             / _----=> need-resched
++    #                            | / _---=> hardirq/softirq
++    #                            || / _--=> preempt-depth
++    #                            ||| /     delay
++    #           TASK-PID   CPU#  ||||    TIMESTAMP  FUNCTION
++    #              | |       |   ||||       |         |
++                wget-15108 [000] ..s1 31769.606929: netif_receive_skb: dev=lo skbaddr=ffff88009c353100 len=60
++                wget-15108 [000] ..s1 31769.606999: netif_receive_skb: dev=lo skbaddr=ffff88009c353200 len=60
++             dnsmasq-1382  [000] ..s1 31769.677652: netif_receive_skb: dev=lo skbaddr=ffff88009c352b00 len=130
++             dnsmasq-1382  [000] ..s1 31769.685917: netif_receive_skb: dev=lo skbaddr=ffff88009c352200 len=138
++    ##### CPU 2 buffer started ####
++      irq/29-iwlwifi-559   [002] ..s. 31772.031529: netif_receive_skb: dev=wlan0 skbaddr=ffff88009d433d00 len=2948
++      irq/29-iwlwifi-559   [002] ..s. 31772.031572: netif_receive_skb: dev=wlan0 skbaddr=ffff88009d432200 len=1500
++      irq/29-iwlwifi-559   [002] ..s. 31772.032196: netif_receive_skb: dev=wlan0 skbaddr=ffff88009d433100 len=2948
++      irq/29-iwlwifi-559   [002] ..s. 31772.032761: netif_receive_skb: dev=wlan0 skbaddr=ffff88009d433000 len=2948
++      irq/29-iwlwifi-559   [002] ..s. 31772.033220: netif_receive_skb: dev=wlan0 skbaddr=ffff88009d432e00 len=1500
++    .
++    .
++    .
++
++  The following example demonstrates how multiple hist triggers can be
++  attached to a given event.  This capability can be useful for
++  creating a set of different summaries derived from the same set of
++  events, or for comparing the effects of different filters, among
++  other things.
++
++    # echo 'hist:keys=skbaddr.hex:vals=len if len < 0' >> \
++           /sys/kernel/debug/tracing/events/net/netif_receive_skb/trigger
++    # echo 'hist:keys=skbaddr.hex:vals=len if len > 4096' >> \
++           /sys/kernel/debug/tracing/events/net/netif_receive_skb/trigger
++    # echo 'hist:keys=skbaddr.hex:vals=len if len == 256' >> \
++           /sys/kernel/debug/tracing/events/net/netif_receive_skb/trigger
++    # echo 'hist:keys=skbaddr.hex:vals=len' >> \
++           /sys/kernel/debug/tracing/events/net/netif_receive_skb/trigger
++    # echo 'hist:keys=len:vals=common_preempt_count' >> \
++           /sys/kernel/debug/tracing/events/net/netif_receive_skb/trigger
++
++  The above set of commands create four triggers differing only in
++  their filters, along with a completely different though fairly
++  nonsensical trigger.  Note that in order to append multiple hist
++  triggers to the same file, you should use the '>>' operator to
++  append them ('>' will also add the new hist trigger, but will remove
++  any existing hist triggers beforehand).
++
++  Displaying the contents of the 'hist' file for the event shows the
++  contents of all five histograms:
++
++    # cat /sys/kernel/debug/tracing/events/net/netif_receive_skb/hist
++
++    # event histogram
++    #
++    # trigger info: hist:keys=len:vals=hitcount,common_preempt_count:sort=hitcount:size=2048 [active]
++    #
++
++    { len:        176 } hitcount:          1  common_preempt_count:          0
++    { len:        223 } hitcount:          1  common_preempt_count:          0
++    { len:       4854 } hitcount:          1  common_preempt_count:          0
++    { len:        395 } hitcount:          1  common_preempt_count:          0
++    { len:        177 } hitcount:          1  common_preempt_count:          0
++    { len:        446 } hitcount:          1  common_preempt_count:          0
++    { len:       1601 } hitcount:          1  common_preempt_count:          0
++    .
++    .
++    .
++    { len:       1280 } hitcount:         66  common_preempt_count:          0
++    { len:        116 } hitcount:         81  common_preempt_count:         40
++    { len:        708 } hitcount:        112  common_preempt_count:          0
++    { len:         46 } hitcount:        221  common_preempt_count:          0
++    { len:       1264 } hitcount:        458  common_preempt_count:          0
++
++    Totals:
++        Hits: 1428
++        Entries: 147
++        Dropped: 0
++
++
++    # event histogram
++    #
++    # trigger info: hist:keys=skbaddr.hex:vals=hitcount,len:sort=hitcount:size=2048 [active]
++    #
++
++    { skbaddr: ffff8800baee5e00 } hitcount:          1  len:        130
++    { skbaddr: ffff88005f3d5600 } hitcount:          1  len:       1280
++    { skbaddr: ffff88005f3d4900 } hitcount:          1  len:       1280
++    { skbaddr: ffff88009fed6300 } hitcount:          1  len:        115
++    { skbaddr: ffff88009fe0ad00 } hitcount:          1  len:        115
++    { skbaddr: ffff88008cdb1900 } hitcount:          1  len:         46
++    { skbaddr: ffff880064b5ef00 } hitcount:          1  len:        118
++    { skbaddr: ffff880044e3c700 } hitcount:          1  len:         60
++    { skbaddr: ffff880100065900 } hitcount:          1  len:         46
++    { skbaddr: ffff8800d46bd500 } hitcount:          1  len:        116
++    { skbaddr: ffff88005f3d5f00 } hitcount:          1  len:       1280
++    { skbaddr: ffff880100064700 } hitcount:          1  len:        365
++    { skbaddr: ffff8800badb6f00 } hitcount:          1  len:         60
++    .
++    .
++    .
++    { skbaddr: ffff88009fe0be00 } hitcount:         27  len:      24677
++    { skbaddr: ffff88009fe0a400 } hitcount:         27  len:      23052
++    { skbaddr: ffff88009fe0b700 } hitcount:         31  len:      25589
++    { skbaddr: ffff88009fe0b600 } hitcount:         32  len:      27326
++    { skbaddr: ffff88006a462800 } hitcount:         68  len:      71678
++    { skbaddr: ffff88006a463700 } hitcount:         70  len:      72678
++    { skbaddr: ffff88006a462b00 } hitcount:         71  len:      77589
++    { skbaddr: ffff88006a463600 } hitcount:         73  len:      71307
++    { skbaddr: ffff88006a462200 } hitcount:         81  len:      81032
++
++    Totals:
++        Hits: 1451
++        Entries: 318
++        Dropped: 0
++
++
++    # event histogram
++    #
++    # trigger info: hist:keys=skbaddr.hex:vals=hitcount,len:sort=hitcount:size=2048 if len == 256 [active]
++    #
++
++
++    Totals:
++        Hits: 0
++        Entries: 0
++        Dropped: 0
++
++
++    # event histogram
++    #
++    # trigger info: hist:keys=skbaddr.hex:vals=hitcount,len:sort=hitcount:size=2048 if len > 4096 [active]
++    #
++
++    { skbaddr: ffff88009fd2c300 } hitcount:          1  len:       7212
++    { skbaddr: ffff8800d2bcce00 } hitcount:          1  len:       7212
++    { skbaddr: ffff8800d2bcd700 } hitcount:          1  len:       7212
++    { skbaddr: ffff8800d2bcda00 } hitcount:          1  len:      21492
++    { skbaddr: ffff8800ae2e2d00 } hitcount:          1  len:       7212
++    { skbaddr: ffff8800d2bcdb00 } hitcount:          1  len:       7212
++    { skbaddr: ffff88006a4df500 } hitcount:          1  len:       4854
++    { skbaddr: ffff88008ce47b00 } hitcount:          1  len:      18636
++    { skbaddr: ffff8800ae2e2200 } hitcount:          1  len:      12924
++    { skbaddr: ffff88005f3e1000 } hitcount:          1  len:       4356
++    { skbaddr: ffff8800d2bcdc00 } hitcount:          2  len:      24420
++    { skbaddr: ffff8800d2bcc200 } hitcount:          2  len:      12996
++
++    Totals:
++        Hits: 14
++        Entries: 12
++        Dropped: 0
++
++
++    # event histogram
++    #
++    # trigger info: hist:keys=skbaddr.hex:vals=hitcount,len:sort=hitcount:size=2048 if len < 0 [active]
++    #
++
++
++    Totals:
++        Hits: 0
++        Entries: 0
++        Dropped: 0
++
++  Named triggers can be used to have triggers share a common set of
++  histogram data.  This capability is mostly useful for combining the
++  output of events generated by tracepoints contained inside inline
++  functions, but names can be used in a hist trigger on any event.
++  For example, these two triggers when hit will update the same 'len'
++  field in the shared 'foo' histogram data:
++
++    # echo 'hist:name=foo:keys=skbaddr.hex:vals=len' > \
++           /sys/kernel/debug/tracing/events/net/netif_receive_skb/trigger
++    # echo 'hist:name=foo:keys=skbaddr.hex:vals=len' > \
++           /sys/kernel/debug/tracing/events/net/netif_rx/trigger
++
++  You can see that they're updating common histogram data by reading
++  each event's hist files at the same time:
++
++    # cat /sys/kernel/debug/tracing/events/net/netif_receive_skb/hist;
++      cat /sys/kernel/debug/tracing/events/net/netif_rx/hist
++
++    # event histogram
++    #
++    # trigger info: hist:name=foo:keys=skbaddr.hex:vals=hitcount,len:sort=hitcount:size=2048 [active]
++    #
++
++    { skbaddr: ffff88000ad53500 } hitcount:          1  len:         46
++    { skbaddr: ffff8800af5a1500 } hitcount:          1  len:         76
++    { skbaddr: ffff8800d62a1900 } hitcount:          1  len:         46
++    { skbaddr: ffff8800d2bccb00 } hitcount:          1  len:        468
++    { skbaddr: ffff8800d3c69900 } hitcount:          1  len:         46
++    { skbaddr: ffff88009ff09100 } hitcount:          1  len:         52
++    { skbaddr: ffff88010f13ab00 } hitcount:          1  len:        168
++    { skbaddr: ffff88006a54f400 } hitcount:          1  len:         46
++    { skbaddr: ffff8800d2bcc500 } hitcount:          1  len:        260
++    { skbaddr: ffff880064505000 } hitcount:          1  len:         46
++    { skbaddr: ffff8800baf24e00 } hitcount:          1  len:         32
++    { skbaddr: ffff88009fe0ad00 } hitcount:          1  len:         46
++    { skbaddr: ffff8800d3edff00 } hitcount:          1  len:         44
++    { skbaddr: ffff88009fe0b400 } hitcount:          1  len:        168
++    { skbaddr: ffff8800a1c55a00 } hitcount:          1  len:         40
++    { skbaddr: ffff8800d2bcd100 } hitcount:          1  len:         40
++    { skbaddr: ffff880064505f00 } hitcount:          1  len:        174
++    { skbaddr: ffff8800a8bff200 } hitcount:          1  len:        160
++    { skbaddr: ffff880044e3cc00 } hitcount:          1  len:         76
++    { skbaddr: ffff8800a8bfe700 } hitcount:          1  len:         46
++    { skbaddr: ffff8800d2bcdc00 } hitcount:          1  len:         32
++    { skbaddr: ffff8800a1f64800 } hitcount:          1  len:         46
++    { skbaddr: ffff8800d2bcde00 } hitcount:          1  len:        988
++    { skbaddr: ffff88006a5dea00 } hitcount:          1  len:         46
++    { skbaddr: ffff88002e37a200 } hitcount:          1  len:         44
++    { skbaddr: ffff8800a1f32c00 } hitcount:          2  len:        676
++    { skbaddr: ffff88000ad52600 } hitcount:          2  len:        107
++    { skbaddr: ffff8800a1f91e00 } hitcount:          2  len:         92
++    { skbaddr: ffff8800af5a0200 } hitcount:          2  len:        142
++    { skbaddr: ffff8800d2bcc600 } hitcount:          2  len:        220
++    { skbaddr: ffff8800ba36f500 } hitcount:          2  len:         92
++    { skbaddr: ffff8800d021f800 } hitcount:          2  len:         92
++    { skbaddr: ffff8800a1f33600 } hitcount:          2  len:        675
++    { skbaddr: ffff8800a8bfff00 } hitcount:          3  len:        138
++    { skbaddr: ffff8800d62a1300 } hitcount:          3  len:        138
++    { skbaddr: ffff88002e37a100 } hitcount:          4  len:        184
++    { skbaddr: ffff880064504400 } hitcount:          4  len:        184
++    { skbaddr: ffff8800a8bfec00 } hitcount:          4  len:        184
++    { skbaddr: ffff88000ad53700 } hitcount:          5  len:        230
++    { skbaddr: ffff8800d2bcdb00 } hitcount:          5  len:        196
++    { skbaddr: ffff8800a1f90000 } hitcount:          6  len:        276
++    { skbaddr: ffff88006a54f900 } hitcount:          6  len:        276
++
++    Totals:
++        Hits: 81
++        Entries: 42
++        Dropped: 0
++    # event histogram
++    #
++    # trigger info: hist:name=foo:keys=skbaddr.hex:vals=hitcount,len:sort=hitcount:size=2048 [active]
++    #
++
++    { skbaddr: ffff88000ad53500 } hitcount:          1  len:         46
++    { skbaddr: ffff8800af5a1500 } hitcount:          1  len:         76
++    { skbaddr: ffff8800d62a1900 } hitcount:          1  len:         46
++    { skbaddr: ffff8800d2bccb00 } hitcount:          1  len:        468
++    { skbaddr: ffff8800d3c69900 } hitcount:          1  len:         46
++    { skbaddr: ffff88009ff09100 } hitcount:          1  len:         52
++    { skbaddr: ffff88010f13ab00 } hitcount:          1  len:        168
++    { skbaddr: ffff88006a54f400 } hitcount:          1  len:         46
++    { skbaddr: ffff8800d2bcc500 } hitcount:          1  len:        260
++    { skbaddr: ffff880064505000 } hitcount:          1  len:         46
++    { skbaddr: ffff8800baf24e00 } hitcount:          1  len:         32
++    { skbaddr: ffff88009fe0ad00 } hitcount:          1  len:         46
++    { skbaddr: ffff8800d3edff00 } hitcount:          1  len:         44
++    { skbaddr: ffff88009fe0b400 } hitcount:          1  len:        168
++    { skbaddr: ffff8800a1c55a00 } hitcount:          1  len:         40
++    { skbaddr: ffff8800d2bcd100 } hitcount:          1  len:         40
++    { skbaddr: ffff880064505f00 } hitcount:          1  len:        174
++    { skbaddr: ffff8800a8bff200 } hitcount:          1  len:        160
++    { skbaddr: ffff880044e3cc00 } hitcount:          1  len:         76
++    { skbaddr: ffff8800a8bfe700 } hitcount:          1  len:         46
++    { skbaddr: ffff8800d2bcdc00 } hitcount:          1  len:         32
++    { skbaddr: ffff8800a1f64800 } hitcount:          1  len:         46
++    { skbaddr: ffff8800d2bcde00 } hitcount:          1  len:        988
++    { skbaddr: ffff88006a5dea00 } hitcount:          1  len:         46
++    { skbaddr: ffff88002e37a200 } hitcount:          1  len:         44
++    { skbaddr: ffff8800a1f32c00 } hitcount:          2  len:        676
++    { skbaddr: ffff88000ad52600 } hitcount:          2  len:        107
++    { skbaddr: ffff8800a1f91e00 } hitcount:          2  len:         92
++    { skbaddr: ffff8800af5a0200 } hitcount:          2  len:        142
++    { skbaddr: ffff8800d2bcc600 } hitcount:          2  len:        220
++    { skbaddr: ffff8800ba36f500 } hitcount:          2  len:         92
++    { skbaddr: ffff8800d021f800 } hitcount:          2  len:         92
++    { skbaddr: ffff8800a1f33600 } hitcount:          2  len:        675
++    { skbaddr: ffff8800a8bfff00 } hitcount:          3  len:        138
++    { skbaddr: ffff8800d62a1300 } hitcount:          3  len:        138
++    { skbaddr: ffff88002e37a100 } hitcount:          4  len:        184
++    { skbaddr: ffff880064504400 } hitcount:          4  len:        184
++    { skbaddr: ffff8800a8bfec00 } hitcount:          4  len:        184
++    { skbaddr: ffff88000ad53700 } hitcount:          5  len:        230
++    { skbaddr: ffff8800d2bcdb00 } hitcount:          5  len:        196
++    { skbaddr: ffff8800a1f90000 } hitcount:          6  len:        276
++    { skbaddr: ffff88006a54f900 } hitcount:          6  len:        276
++
++    Totals:
++        Hits: 81
++        Entries: 42
++        Dropped: 0
++
++  And here's an example that shows how to combine histogram data from
++  any two events even if they don't share any 'compatible' fields
++  other than 'hitcount' and 'stacktrace'.  These commands create a
++  couple of triggers named 'bar' using those fields:
++
++    # echo 'hist:name=bar:key=stacktrace:val=hitcount' > \
++           /sys/kernel/debug/tracing/events/sched/sched_process_fork/trigger
++    # echo 'hist:name=bar:key=stacktrace:val=hitcount' > \
++          /sys/kernel/debug/tracing/events/net/netif_rx/trigger
++
++  And displaying the output of either shows some interesting if
++  somewhat confusing output:
++
++    # cat /sys/kernel/debug/tracing/events/sched/sched_process_fork/hist
++    # cat /sys/kernel/debug/tracing/events/net/netif_rx/hist
++
++    # event histogram
++    #
++    # trigger info: hist:name=bar:keys=stacktrace:vals=hitcount:sort=hitcount:size=2048 [active]
++    #
++
++    { stacktrace:
++             _do_fork+0x18e/0x330
++             kernel_thread+0x29/0x30
++             kthreadd+0x154/0x1b0
++             ret_from_fork+0x3f/0x70
++    } hitcount:          1
++    { stacktrace:
++             netif_rx_internal+0xb2/0xd0
++             netif_rx_ni+0x20/0x70
++             dev_loopback_xmit+0xaa/0xd0
++             ip_mc_output+0x126/0x240
++             ip_local_out_sk+0x31/0x40
++             igmp_send_report+0x1e9/0x230
++             igmp_timer_expire+0xe9/0x120
++             call_timer_fn+0x39/0xf0
++             run_timer_softirq+0x1e1/0x290
++             __do_softirq+0xfd/0x290
++             irq_exit+0x98/0xb0
++             smp_apic_timer_interrupt+0x4a/0x60
++             apic_timer_interrupt+0x6d/0x80
++             cpuidle_enter+0x17/0x20
++             call_cpuidle+0x3b/0x60
++             cpu_startup_entry+0x22d/0x310
++    } hitcount:          1
++    { stacktrace:
++             netif_rx_internal+0xb2/0xd0
++             netif_rx_ni+0x20/0x70
++             dev_loopback_xmit+0xaa/0xd0
++             ip_mc_output+0x17f/0x240
++             ip_local_out_sk+0x31/0x40
++             ip_send_skb+0x1a/0x50
++             udp_send_skb+0x13e/0x270
++             udp_sendmsg+0x2bf/0x980
++             inet_sendmsg+0x67/0xa0
++             sock_sendmsg+0x38/0x50
++             SYSC_sendto+0xef/0x170
++             SyS_sendto+0xe/0x10
++             entry_SYSCALL_64_fastpath+0x12/0x6a
++    } hitcount:          2
++    { stacktrace:
++             netif_rx_internal+0xb2/0xd0
++             netif_rx+0x1c/0x60
++             loopback_xmit+0x6c/0xb0
++             dev_hard_start_xmit+0x219/0x3a0
++             __dev_queue_xmit+0x415/0x4f0
++             dev_queue_xmit_sk+0x13/0x20
++             ip_finish_output2+0x237/0x340
++             ip_finish_output+0x113/0x1d0
++             ip_output+0x66/0xc0
++             ip_local_out_sk+0x31/0x40
++             ip_send_skb+0x1a/0x50
++             udp_send_skb+0x16d/0x270
++             udp_sendmsg+0x2bf/0x980
++             inet_sendmsg+0x67/0xa0
++             sock_sendmsg+0x38/0x50
++             ___sys_sendmsg+0x14e/0x270
++    } hitcount:         76
++    { stacktrace:
++             netif_rx_internal+0xb2/0xd0
++             netif_rx+0x1c/0x60
++             loopback_xmit+0x6c/0xb0
++             dev_hard_start_xmit+0x219/0x3a0
++             __dev_queue_xmit+0x415/0x4f0
++             dev_queue_xmit_sk+0x13/0x20
++             ip_finish_output2+0x237/0x340
++             ip_finish_output+0x113/0x1d0
++             ip_output+0x66/0xc0
++             ip_local_out_sk+0x31/0x40
++             ip_send_skb+0x1a/0x50
++             udp_send_skb+0x16d/0x270
++             udp_sendmsg+0x2bf/0x980
++             inet_sendmsg+0x67/0xa0
++             sock_sendmsg+0x38/0x50
++             ___sys_sendmsg+0x269/0x270
++    } hitcount:         77
++    { stacktrace:
++             netif_rx_internal+0xb2/0xd0
++             netif_rx+0x1c/0x60
++             loopback_xmit+0x6c/0xb0
++             dev_hard_start_xmit+0x219/0x3a0
++             __dev_queue_xmit+0x415/0x4f0
++             dev_queue_xmit_sk+0x13/0x20
++             ip_finish_output2+0x237/0x340
++             ip_finish_output+0x113/0x1d0
++             ip_output+0x66/0xc0
++             ip_local_out_sk+0x31/0x40
++             ip_send_skb+0x1a/0x50
++             udp_send_skb+0x16d/0x270
++             udp_sendmsg+0x2bf/0x980
++             inet_sendmsg+0x67/0xa0
++             sock_sendmsg+0x38/0x50
++             SYSC_sendto+0xef/0x170
++    } hitcount:         88
++    { stacktrace:
++             _do_fork+0x18e/0x330
++             SyS_clone+0x19/0x20
++             entry_SYSCALL_64_fastpath+0x12/0x6a
++    } hitcount:        244
++
++    Totals:
++        Hits: 489
++        Entries: 7
++        Dropped: 0
 -- 
 1.9.3
