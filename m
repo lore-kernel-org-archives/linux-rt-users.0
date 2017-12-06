@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v7 02/37] tracing: Add Documentation for log2 modifier
-Date: Wed,  6 Dec 2017 16:37:43 -0600
-Message-ID: <6f86828b9cd266494d44cb690c97de6b5bbb4dc6.1512593081.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v7 04/37] tracing: Remove code which merges duplicates
+Date: Wed,  6 Dec 2017 16:37:45 -0600
+Message-ID: <c7155f6fed926f851435389dfa9a780e46da0a65.1512593081.git.tom.zanussi@linux.intel.com>
 References: <cover.1512593081.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,25 +18,196 @@ References: <cover.1512593081.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Add a line for the log2 modifier, to keep it aligned with
-tracing/README.
+From: Vedang Patel <vedang.patel@intel.com>
 
+We now have the logic to detect and remove duplicates in the
+tracing_map hash table. The code which merges duplicates in the
+histogram is redundant now. So, modify this code just to detect
+duplicates. The duplication detection code is still kept to ensure
+that any rare race condition which might cause duplicates does not go
+unnoticed.
+
+Signed-off-by: Vedang Patel <vedang.patel@intel.com>
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- Documentation/trace/histogram.txt | 1 +
- 1 file changed, 1 insertion(+)
+ kernel/trace/trace_events_hist.c | 11 ------
+ kernel/trace/tracing_map.c       | 83 +++-------------------------------------
+ kernel/trace/tracing_map.h       |  7 ----
+ 3 files changed, 6 insertions(+), 95 deletions(-)
 
-diff --git a/Documentation/trace/histogram.txt b/Documentation/trace/histogram.txt
-index b2145f4..a4143f04a 100644
---- a/Documentation/trace/histogram.txt
-+++ b/Documentation/trace/histogram.txt
-@@ -73,6 +73,7 @@
- 	.sym-offset display an address as a symbol and offset
- 	.syscall    display a syscall id as a system call name
- 	.execname   display a common_pid as a program name
-+	.log2       display log2 value rather than raw number
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 1e1558c..712260e 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -340,16 +340,6 @@ static int hist_trigger_elt_comm_alloc(struct tracing_map_elt *elt)
+ 	return 0;
+ }
  
-   Note that in general the semantics of a given field aren't
-   interpreted when applying a modifier to it, but there are some
+-static void hist_trigger_elt_comm_copy(struct tracing_map_elt *to,
+-				       struct tracing_map_elt *from)
+-{
+-	char *comm_from = from->private_data;
+-	char *comm_to = to->private_data;
+-
+-	if (comm_from)
+-		memcpy(comm_to, comm_from, TASK_COMM_LEN + 1);
+-}
+-
+ static void hist_trigger_elt_comm_init(struct tracing_map_elt *elt)
+ {
+ 	char *comm = elt->private_data;
+@@ -360,7 +350,6 @@ static void hist_trigger_elt_comm_init(struct tracing_map_elt *elt)
+ 
+ static const struct tracing_map_ops hist_trigger_elt_comm_ops = {
+ 	.elt_alloc	= hist_trigger_elt_comm_alloc,
+-	.elt_copy	= hist_trigger_elt_comm_copy,
+ 	.elt_free	= hist_trigger_elt_comm_free,
+ 	.elt_init	= hist_trigger_elt_comm_init,
+ };
+diff --git a/kernel/trace/tracing_map.c b/kernel/trace/tracing_map.c
+index b30f343..f47a4d5 100644
+--- a/kernel/trace/tracing_map.c
++++ b/kernel/trace/tracing_map.c
+@@ -847,67 +847,15 @@ void tracing_map_destroy_sort_entries(struct tracing_map_sort_entry **entries,
+ 	return sort_entry;
+ }
+ 
+-static struct tracing_map_elt *copy_elt(struct tracing_map_elt *elt)
+-{
+-	struct tracing_map_elt *dup_elt;
+-	unsigned int i;
+-
+-	dup_elt = tracing_map_elt_alloc(elt->map);
+-	if (IS_ERR(dup_elt))
+-		return NULL;
+-
+-	if (elt->map->ops && elt->map->ops->elt_copy)
+-		elt->map->ops->elt_copy(dup_elt, elt);
+-
+-	dup_elt->private_data = elt->private_data;
+-	memcpy(dup_elt->key, elt->key, elt->map->key_size);
+-
+-	for (i = 0; i < elt->map->n_fields; i++) {
+-		atomic64_set(&dup_elt->fields[i].sum,
+-			     atomic64_read(&elt->fields[i].sum));
+-		dup_elt->fields[i].cmp_fn = elt->fields[i].cmp_fn;
+-	}
+-
+-	return dup_elt;
+-}
+-
+-static int merge_dup(struct tracing_map_sort_entry **sort_entries,
+-		     unsigned int target, unsigned int dup)
+-{
+-	struct tracing_map_elt *target_elt, *elt;
+-	bool first_dup = (target - dup) == 1;
+-	int i;
+-
+-	if (first_dup) {
+-		elt = sort_entries[target]->elt;
+-		target_elt = copy_elt(elt);
+-		if (!target_elt)
+-			return -ENOMEM;
+-		sort_entries[target]->elt = target_elt;
+-		sort_entries[target]->elt_copied = true;
+-	} else
+-		target_elt = sort_entries[target]->elt;
+-
+-	elt = sort_entries[dup]->elt;
+-
+-	for (i = 0; i < elt->map->n_fields; i++)
+-		atomic64_add(atomic64_read(&elt->fields[i].sum),
+-			     &target_elt->fields[i].sum);
+-
+-	sort_entries[dup]->dup = true;
+-
+-	return 0;
+-}
+-
+-static int merge_dups(struct tracing_map_sort_entry **sort_entries,
++static void detect_dups(struct tracing_map_sort_entry **sort_entries,
+ 		      int n_entries, unsigned int key_size)
+ {
+ 	unsigned int dups = 0, total_dups = 0;
+-	int err, i, j;
++	int i;
+ 	void *key;
+ 
+ 	if (n_entries < 2)
+-		return total_dups;
++		return;
+ 
+ 	sort(sort_entries, n_entries, sizeof(struct tracing_map_sort_entry *),
+ 	     (int (*)(const void *, const void *))cmp_entries_dup, NULL);
+@@ -916,30 +864,14 @@ static int merge_dups(struct tracing_map_sort_entry **sort_entries,
+ 	for (i = 1; i < n_entries; i++) {
+ 		if (!memcmp(sort_entries[i]->key, key, key_size)) {
+ 			dups++; total_dups++;
+-			err = merge_dup(sort_entries, i - dups, i);
+-			if (err)
+-				return err;
+ 			continue;
+ 		}
+ 		key = sort_entries[i]->key;
+ 		dups = 0;
+ 	}
+ 
+-	if (!total_dups)
+-		return total_dups;
+-
+-	for (i = 0, j = 0; i < n_entries; i++) {
+-		if (!sort_entries[i]->dup) {
+-			sort_entries[j] = sort_entries[i];
+-			if (j++ != i)
+-				sort_entries[i] = NULL;
+-		} else {
+-			destroy_sort_entry(sort_entries[i]);
+-			sort_entries[i] = NULL;
+-		}
+-	}
+-
+-	return total_dups;
++	WARN_ONCE(total_dups > 0,
++		  "Duplicates detected: %d\n", total_dups);
+ }
+ 
+ static bool is_key(struct tracing_map *map, unsigned int field_idx)
+@@ -1065,10 +997,7 @@ int tracing_map_sort_entries(struct tracing_map *map,
+ 		return 1;
+ 	}
+ 
+-	ret = merge_dups(entries, n_entries, map->key_size);
+-	if (ret < 0)
+-		goto free;
+-	n_entries -= ret;
++	detect_dups(entries, n_entries, map->key_size);
+ 
+ 	if (is_key(map, sort_keys[0].field_idx))
+ 		cmp_entries_fn = cmp_entries_key;
+diff --git a/kernel/trace/tracing_map.h b/kernel/trace/tracing_map.h
+index f097511..98ef6d6 100644
+--- a/kernel/trace/tracing_map.h
++++ b/kernel/trace/tracing_map.h
+@@ -214,11 +214,6 @@ struct tracing_map {
+  *	Element allocation occurs before tracing begins, when the
+  *	tracing_map_init() call is made by client code.
+  *
+- * @elt_copy: At certain points in the lifetime of an element, it may
+- *	need to be copied.  The copy should include a copy of the
+- *	client-allocated data, which can be copied into the 'to'
+- *	element from the 'from' element.
+- *
+  * @elt_free: When a tracing_map_elt is freed, this function is called
+  *	and allows client-allocated per-element data to be freed.
+  *
+@@ -232,8 +227,6 @@ struct tracing_map {
+  */
+ struct tracing_map_ops {
+ 	int			(*elt_alloc)(struct tracing_map_elt *elt);
+-	void			(*elt_copy)(struct tracing_map_elt *to,
+-					    struct tracing_map_elt *from);
+ 	void			(*elt_free)(struct tracing_map_elt *elt);
+ 	void			(*elt_clear)(struct tracing_map_elt *elt);
+ 	void			(*elt_init)(struct tracing_map_elt *elt);
 -- 
 1.9.3
