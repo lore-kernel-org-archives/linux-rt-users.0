@@ -1,7 +1,8 @@
 From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: [PATCH 0/5] perf-probe: Improve probing on versioned symbols
-Date: Wed,  6 Dec 2017 12:06:20 +0900
-Message-ID: <151252958056.12861.954203514347167563.stgit@devbox>
+Subject: [PATCH 3/5] perf-probe: Add __return suffix for return events
+Date: Wed,  6 Dec 2017 12:07:47 +0900
+Message-ID: <151252966696.12861.2029938184115662263.stgit@devbox>
+References: <151252958056.12861.954203514347167563.stgit@devbox>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
@@ -10,56 +11,82 @@ Cc: Masami Hiramatsu <mhiramat@kernel.org>,
         linux-kernel@vger.kernel.org, Paul Clarke <pc@us.ibm.com>,
         linux-rt-users@vger.kernel.org, linux-perf-users@vger.kernel.org
 To: Arnaldo Carvalho de Melo <acme@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.99]:36302 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1754350AbdLFDIK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 5 Dec 2017 22:08:10 -0500
+In-Reply-To: <151252958056.12861.954203514347167563.stgit@devbox>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+Add __return suffix for function return events
+automatically. Without this, user have to give --force
+option and will see the number suffix for each event
+like "function_1", which is not easy to recognize.
+Instead, this adds __return suffix to it automatically.
+E.g.
 
-Here is the series for probing on versioned symbols
-in libraries. This includes 5 patches to fix the
-issues discussed on perf-users ML 
-(https://www.spinics.net/lists/linux-perf-users/msg04637.html)
+  =====
+  # ./perf probe -x /lib64/libc-2.25.so 'malloc*%return'
+  Added new events:
+    probe_libc:malloc_printerr__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_consolidate__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_check__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_hook_ini__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_trim__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_usable_size__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_stats__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_info__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:mallochook__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_get_state__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_set_state__return (on malloc*%return in /usr/lib64/libc-2.25.so)
 
-[1/5] Warn if the event name is invalid. This notices
-   user that there is internal error which caused by
-   unexpected input.
-[2/5] Cut off the version suffix when making event name
-   from symbol name. This fixes a issue when a wildcard
-   hits versioned symbol.
-[3/5] Add "__return" suffix to the event name 
-   automatically for the return probe, so that user
-   can easily identify which event is on function
-   return.
-[4/5] Find versioned symbol from map without wildcard.
-   This allows user to specify a symbol without version
-   suffix nor wildcard. Anyway, at this point we have
-   no way to specify version suffix, because parser
-   recognizes "@" is a separator of "function@file"
-   syntax. This is fixed in next patch.
-[5/5] Allow user to use backslash-escaped characters
-   on command line. This has 2 effects, user can specify
-   version suffix directly, and we can use special
-   characters in source file.
+  You can now use it in all perf tools, such as:
 
-Thanks,
+	  perf record -e probe_libc:malloc_set_state__return -aR sleep 1
+
+  =====
+
+Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
+Reported-by: Arnaldo Carvalho de Melo <acme@kernel.org>
 ---
+ tools/perf/util/probe-event.c |    9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
 
-Masami Hiramatsu (5):
-      perf-probe: Add warning message if there is unexpected event name
-      perf-probe: Cut off the version suffix from event name
-      perf-probe: Add __return suffix for return events
-      perf-probe: Find versioned symbols from map
-      perf-probe: Support escaped character in parser
+diff --git a/tools/perf/util/probe-event.c b/tools/perf/util/probe-event.c
+index 74435fb7ab7f..959c4d2ef455 100644
+--- a/tools/perf/util/probe-event.c
++++ b/tools/perf/util/probe-event.c
+@@ -2573,7 +2573,8 @@ int show_perf_probe_events(struct strfilter *filter)
+ }
+ 
+ static int get_new_event_name(char *buf, size_t len, const char *base,
+-			      struct strlist *namelist, bool allow_suffix)
++			      struct strlist *namelist, bool ret_event,
++			      bool allow_suffix)
+ {
+ 	int i, ret;
+ 	char *p, *nbase;
+@@ -2590,7 +2591,7 @@ static int get_new_event_name(char *buf, size_t len, const char *base,
+ 		*p = '\0';
+ 
+ 	/* Try no suffix number */
+-	ret = e_snprintf(buf, len, "%s", nbase);
++	ret = e_snprintf(buf, len, "%s%s", nbase, ret_event ? "__return" : "");
+ 	if (ret < 0) {
+ 		pr_debug("snprintf() failed: %d\n", ret);
+ 		goto out;
+@@ -2689,8 +2690,8 @@ static int probe_trace_event__set_name(struct probe_trace_event *tev,
+ 		group = PERFPROBE_GROUP;
+ 
+ 	/* Get an unused new event name */
+-	ret = get_new_event_name(buf, 64, event,
+-				 namelist, allow_suffix);
++	ret = get_new_event_name(buf, 64, event, namelist,
++				 tev->point.retprobe, allow_suffix);
+ 	if (ret < 0)
+ 		return ret;
+ 
 
-
- tools/perf/arch/powerpc/util/sym-handling.c |    8 +++
- tools/perf/util/probe-event.c               |   81 +++++++++++++++++++--------
- tools/perf/util/string.c                    |   46 +++++++++++++++
- tools/perf/util/string2.h                   |    2 +
- tools/perf/util/symbol.c                    |    5 ++
- tools/perf/util/symbol.h                    |    1 
- 6 files changed, 120 insertions(+), 23 deletions(-)
-
---
-Masami Hiramatsu (Linaro Ltd.) <mhiramat@kernel.org>
