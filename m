@@ -1,10 +1,10 @@
 From: Arnaldo Carvalho de Melo <acme@kernel.org>
-Subject: Re: [PATCH v2 1/5] perf-probe: Add warning message if there is
- unexpected event name
-Date: Thu, 7 Dec 2017 12:53:43 -0300
-Message-ID: <20171207155343.GC3173@kernel.org>
+Subject: Re: [PATCH v2 2/5] perf-probe: Cut off the version suffix from event
+ name
+Date: Thu, 7 Dec 2017 13:56:59 -0300
+Message-ID: <20171207165659.GD3173@kernel.org>
 References: <151263115609.13843.6362262297053841418.stgit@devbox>
- <151263118520.13843.9962959734014217698.stgit@devbox>
+ <151263122864.13843.10998234736675352577.stgit@devbox>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: bhargavb <bhargavaramudu@gmail.com>, linux-kernel@vger.kernel.org,
@@ -14,52 +14,83 @@ Cc: bhargavb <bhargavaramudu@gmail.com>, linux-kernel@vger.kernel.org,
 To: Masami Hiramatsu <mhiramat@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <151263118520.13843.9962959734014217698.stgit@devbox>
+In-Reply-To: <151263122864.13843.10998234736675352577.stgit@devbox>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Em Thu, Dec 07, 2017 at 04:19:45PM +0900, Masami Hiramatsu escreveu:
-> This improve the error message so that user can know
-> event-name error before writing new events to
-> kprobe-events interface.
+Em Thu, Dec 07, 2017 at 04:20:28PM +0900, Masami Hiramatsu escreveu:
+> Cut off the version suffix (e.g. @GLIBC_2.2.5 etc.) from
+> automatic generated event name. This fixes wildcard event
+> adding like below case;
 > 
-> E.g.
->    ======
->    #./perf probe -x /lib64/libc-2.25.so malloc_get_state*
->    Internal error: "malloc_get_state@GLIBC_2" is wrong event name.
+>   =====
+>   # perf probe -x /lib64/libc-2.25.so malloc*
+>   Internal error: "malloc_get_state@GLIBC_2" is wrong event name.
+>     Error: Failed to add events.
+>   =====
+> 
+> This failure was caused by a versioned suffix symbol.
+> With this fix, perf probe automatically cuts the
+> suffix after @ as below.
+> 
+>   =====
+>   # ./perf probe -x /lib64/libc-2.25.so malloc*
+>   Added new events:
+>     probe_libc:malloc_printerr (on malloc* in /usr/lib64/libc-2.25.so)
+>     probe_libc:malloc_consolidate (on malloc* in /usr/lib64/libc-2.25.so)
+>     probe_libc:malloc_check (on malloc* in /usr/lib64/libc-2.25.so)
+>     probe_libc:malloc_hook_ini (on malloc* in /usr/lib64/libc-2.25.so)
+>     probe_libc:malloc    (on malloc* in /usr/lib64/libc-2.25.so)
+>     probe_libc:malloc_trim (on malloc* in /usr/lib64/libc-2.25.so)
+>     probe_libc:malloc_usable_size (on malloc* in /usr/lib64/libc-2.25.so)
+>     probe_libc:malloc_stats (on malloc* in /usr/lib64/libc-2.25.so)
+>     probe_libc:malloc_info (on malloc* in /usr/lib64/libc-2.25.so)
+>     probe_libc:mallochook (on malloc* in /usr/lib64/libc-2.25.so)
+>     probe_libc:malloc_get_state (on malloc* in /usr/lib64/libc-2.25.so)
+>     probe_libc:malloc_set_state (on malloc* in /usr/lib64/libc-2.25.so)
 
-I'm changing this to:
+Thanks for working on this! I'm now going over it, and one thing I
+noticed was that the (on malloc*) on all the entries matched by that
+wildcard, can I suggest that you expand it there as well? I.e.
 
-Internal error: "malloc_get_state@GLIBC_2" is an invalid event name for the /sys/kernel/debug/tracing/kprobe_events interface.
+     probe_libc:malloc_set_state (on malloc_set_state in /usr/lib64/libc-2.25.so)
 
-Ok?
+This way we'll now when aliases are used, and also for the versioning
+case, i.e. to which version is a probe pointing?
+
+See also Paul Clarke's question and suggestion, which I agree, i.e.
+instead of chopping off the version, just replace the chars with valid
+ones or better, do what Paul suggests, be more flexible in interpreting
+@, i.e. if it is a number and/or fails to point to any file, interpret
+it as versioning.
 
 - Arnaldo
 
->      Error: Failed to add events.
->    ======
+>   You can now use it in all perf tools, such as:
+> 
+> 	  perf record -e probe_libc:malloc_set_state -aR sleep 1
+> 
+>   =====
 > 
 > Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
+> Reported-by: Arnaldo Carvalho de Melo <acme@kernel.org>
+> Reported-by: bhargavb <bhargavaramudu@gmail.com>
 > ---
->  tools/perf/util/probe-event.c |    8 ++++++++
->  1 file changed, 8 insertions(+)
+>  tools/perf/util/probe-event.c |    4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
 > 
 > diff --git a/tools/perf/util/probe-event.c b/tools/perf/util/probe-event.c
-> index b7aaf9b2294d..c0067950e56f 100644
+> index c0067950e56f..74435fb7ab7f 100644
 > --- a/tools/perf/util/probe-event.c
 > +++ b/tools/perf/util/probe-event.c
-> @@ -2625,6 +2625,14 @@ static int get_new_event_name(char *buf, size_t len, const char *base,
+> @@ -2584,8 +2584,8 @@ static int get_new_event_name(char *buf, size_t len, const char *base,
+>  	if (!nbase)
+>  		return -ENOMEM;
 >  
->  out:
->  	free(nbase);
-> +
-> +	/* Final validation */
-> +	if (ret >= 0 && !is_c_func_name(buf)) {
-> +		pr_warning("Internal error: \"%s\" is wrong event name.\n",
-> +			   buf);
-> +		ret = -EINVAL;
-> +	}
-> +
->  	return ret;
->  }
+> -	/* Cut off the dot suffixes (e.g. .const, .isra)*/
+> -	p = strchr(nbase, '.');
+> +	/* Cut off the dot suffixes (e.g. .const, .isra) and version suffixes */
+> +	p = strpbrk(nbase, ".@");
+>  	if (p && p != nbase)
+>  		*p = '\0';
 >  
