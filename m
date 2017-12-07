@@ -1,183 +1,195 @@
 From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: Re: [PATCH v3 10/20] arm64: assembler: add utility macros to push/pop
- stack frames
-Date: Thu, 7 Dec 2017 14:58:43 +0000
-Message-ID: <CAKv+Gu_CjvvBuCpkCDNadAo0vZv4qJmNM7=EQXMM06DWecFcvg@mail.gmail.com>
+Subject: Re: [PATCH v3 11/20] arm64: assembler: add macros to conditionally
+ yield the NEON under PREEMPT
+Date: Thu, 7 Dec 2017 15:47:43 +0000
+Message-ID: <CAKv+Gu-Otcg4UxhJA44PbbYamBJd26Be+YsSUQUaB+qy9owzvQ@mail.gmail.com>
 References: <20171206194346.24393-1-ard.biesheuvel@linaro.org>
- <20171206194346.24393-11-ard.biesheuvel@linaro.org> <20171207141104.GE22781@e103592.cambridge.arm.com>
- <CAKv+Gu_82v_L9dZczQZbkmksc1wvOBsa28URP4Q7MEcvAwxhmw@mail.gmail.com> <20171207145309.GG22781@e103592.cambridge.arm.com>
+ <20171206194346.24393-12-ard.biesheuvel@linaro.org>
+ <20171207143934.GF22781@e103592.cambridge.arm.com>
+ <CAKv+Gu8N6w3+VFpF3kq-qg9Gij=4VbtQqu+yfvfA67p2kWaRLg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Cc: Mark Rutland <mark.rutland@arm.com>,
-        Herbert Xu <herbert@gondor.apana.org.au>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Catalin Marinas <catalin.marinas@arm.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Will Deacon <will.deacon@arm.com>,
-        Russell King - ARM Linux <linux@armlinux.org.uk>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        "linux-arm-kernel@lists.infradead.org"
-        <linux-arm-kernel@lists.infradead.org>,
-        linux-rt-users@vger.kernel.org
+ Herbert Xu <herbert@gondor.apana.org.au>,
+ Peter Zijlstra <peterz@infradead.org>,
+ Catalin Marinas <catalin.marinas@arm.com>,
+ Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+ Will Deacon <will.deacon@arm.com>,
+ Russell King - ARM Linux <linux@armlinux.org.uk>,
+ Steven Rostedt <rostedt@goodmis.org>,
+ "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>,
+ Thomas Gleixner <tglx@linutronix.de>,
+ "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>,
+ linux-rt-users@vger.kernel.org
 To: Dave Martin <Dave.Martin@arm.com>
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <20171207145309.GG22781@e103592.cambridge.arm.com>
-Sender: linux-crypto-owner@vger.kernel.org
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-Reply-To: <CAKv+Gu8N6w3+VFpF3kq-qg9Gij=4VbtQqu+yfvfA67p2kWaRLg@mail.gmail.com>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 7 December 2017 at 14:53, Dave Martin <Dave.Martin@arm.com> wrote:
-> On Thu, Dec 07, 2017 at 02:21:17PM +0000, Ard Biesheuvel wrote:
->> On 7 December 2017 at 14:11, Dave Martin <Dave.Martin@arm.com> wrote:
->> > On Wed, Dec 06, 2017 at 07:43:36PM +0000, Ard Biesheuvel wrote:
->> >> We are going to add code to all the NEON crypto routines that will
->> >> turn them into non-leaf functions, so we need to manage the stack
->> >> frames. To make this less tedious and error prone, add some macros
->> >> that take the number of callee saved registers to preserve and the
->> >> extra size to allocate in the stack frame (for locals) and emit
->> >> the ldp/stp sequences.
->> >>
->> >> Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
->> >> ---
->> >>  arch/arm64/include/asm/assembler.h | 60 ++++++++++++++++++++
->> >>  1 file changed, 60 insertions(+)
->> >>
->> >> diff --git a/arch/arm64/include/asm/assembler.h b/arch/arm64/include/asm/assembler.h
->> >> index aef72d886677..5f61487e9f93 100644
->> >> --- a/arch/arm64/include/asm/assembler.h
->> >> +++ b/arch/arm64/include/asm/assembler.h
->> >> @@ -499,6 +499,66 @@ alternative_else_nop_endif
->> >>  #endif
->> >>       .endm
->> >>
->> >> +     /*
->> >> +      * frame_push - Push @regcount callee saved registers to the stack,
->> >> +      *              starting at x19, as well as x29/x30, and set x29 to
->> >> +      *              the new value of sp. Add @extra bytes of stack space
->> >> +      *              for locals.
->> >> +      */
->> >> +     .macro          frame_push, regcount:req, extra
->> >> +     __frame         st, \regcount, \extra
->> >> +     .endm
->> >> +
->> >> +     /*
->> >> +      * frame_pop  - Pop @regcount callee saved registers from the stack,
->> >> +      *              starting at x19, as well as x29/x30. Also pop @extra
->> >> +      *              bytes of stack space for locals.
->> >> +      */
->> >> +     .macro          frame_pop, regcount:req, extra
->> >> +     __frame         ld, \regcount, \extra
->> >> +     .endm
->> >> +
->> >> +     .macro          __frame, op, regcount:req, extra=0
->> >> +     .ifc            \op, st
->> >> +     stp             x29, x30, [sp, #-((\regcount + 3) / 2) * 16 - \extra]!
->> >> +     mov             x29, sp
->> >> +     .endif
->> >> +     .if             \regcount < 0 || \regcount > 10
->> >> +     .error          "regcount should be in the range [0 ... 10]"
->> >> +     .endif
->> >> +     .if             (\extra % 16) != 0
->> >> +     .error          "extra should be a multiple of 16 bytes"
->> >> +     .endif
->> >> +     .if             \regcount > 1
->> >> +     \op\()p         x19, x20, [sp, #16]
->> >> +     .if             \regcount > 3
->> >> +     \op\()p         x21, x22, [sp, #32]
->> >> +     .if             \regcount > 5
->> >> +     \op\()p         x23, x24, [sp, #48]
->> >> +     .if             \regcount > 7
->> >> +     \op\()p         x25, x26, [sp, #64]
->> >> +     .if             \regcount > 9
->> >> +     \op\()p         x27, x28, [sp, #80]
->> >
->> > Can the _for thing I introduced in fpsimdmacros.h be any use here?
->> > Alternatively, the following could replace that .if-slide,
->> > providing the calling macro does .altmacro .. .noaltmacro somewhere.
->> >
->> > .macro _pushpop2 op, n1, n2, offset
->> >         \op     x\n1, x\n2, [sp, #\offset]
->> > .endm
->> >
->> > .macro _pushpop op, first, last, offset
->> >         .if \first < \last
->> >         _pushpop2 \op\()p, \first, %\first + 1, \offset
->> >         _pushpop \op, %\first + 2, \last, %\offset + 16
->> >         .elseif \first == \last
->> >         \op\()r x\first, [sp, #\offset]
->> >         .endif
->> > .endm
->> >
+On 7 December 2017 at 14:50, Ard Biesheuvel <ard.biesheuvel@linaro.org> wrote:
+> On 7 December 2017 at 14:39, Dave Martin <Dave.Martin@arm.com> wrote:
+>> On Wed, Dec 06, 2017 at 07:43:37PM +0000, Ard Biesheuvel wrote:
+>>> Add support macros to conditionally yield the NEON (and thus the CPU)
+>>> that may be called from the assembler code.
+>>>
+>>> In some cases, yielding the NEON involves saving and restoring a non
+>>> trivial amount of context (especially in the CRC folding algorithms),
+>>> and so the macro is split into three, and the code in between is only
+>>> executed when the yield path is taken, allowing the context to be preserved.
+>>> The third macro takes an optional label argument that marks the resume
+>>> path after a yield has been performed.
+>>>
+>>> Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+>>> ---
+>>>  arch/arm64/include/asm/assembler.h | 51 ++++++++++++++++++++
+>>>  1 file changed, 51 insertions(+)
+>>>
+>>> diff --git a/arch/arm64/include/asm/assembler.h b/arch/arm64/include/asm/assembler.h
+>>> index 5f61487e9f93..c54e408fd5a7 100644
+>>> --- a/arch/arm64/include/asm/assembler.h
+>>> +++ b/arch/arm64/include/asm/assembler.h
+>>> @@ -572,4 +572,55 @@ alternative_else_nop_endif
+>>>  #endif
+>>>       .endm
+>>>
+>>> +/*
+>>> + * Check whether to yield to another runnable task from kernel mode NEON code
+>>> + * (which runs with preemption disabled).
+>>> + *
+>>> + * if_will_cond_yield_neon
+>>> + *        // pre-yield patchup code
+>>> + * do_cond_yield_neon
+>>> + *        // post-yield patchup code
+>>> + * endif_yield_neon
 >>
->> I'd prefer not to rely on altmacro, for reasons you pointed out
->> yourself a while ago IIRC.
+>> ^ Mention the lbl argument?
 >>
->> I agree your version is more compact, but for a write once thing, I'm
->> not sure if it matters.
+>
+> Yep will do
+>
+>>> + *
+>>> + * - Check whether the preempt count is exactly 1, in which case disabling
 >>
->> > Also, I wonder whether it would be more readable at the call site
->> > to specify the first and last reg numbers instead of the reg count,
->> > e.g.:
->> >
->> >         frame_push first_reg=19, last_reg=23
->> >
->> > (or whatever).  Just syntactic sugar though.
->> >
+>>                                                            enabling ^
 >>
->> Again, this will involve arithmetic on macro arguments, which implies
->> altmacro. Relying on altmacro being set is dodgy, and unfortunately,
->> we can't enable it in the macro without keeping it enabled (or we may
->> disable it on behalf of the caller. I guess we could try to come up
->> with a smart way to infer whether altmacro was enabled, and only
->> disable it afterwards if it wasn't, using some directives that get
->> interpreted differently, but to be honest, I factored out this
->> sequence so I could think about more important things :-)
+>>> + *   preemption once will make the task preemptible. If this is not the case,
+>>> + *   yielding is pointless.
+>>> + * - Check whether TIF_NEED_RESCHED is set, and if so, disable and re-enable
+>>> + *   kernel mode NEON (which will trigger a reschedule), and branch to the
+>>> + *   yield fixup code.
+>>
+>> Mention that neither patchup sequence is allowed to use section-changing
+>> directives?
+>>
+>> For example:
+>>
+>>         if_will_cond_yield_neon
+>>                 // some code
+>>
+>>                 .pushsection .rodata, "a"
+>> foo:                    .quad // some literal data for some reason
+>>                 .popsection
+>>
+>>                 // some code
+>>         do_cond_yield_neon
+>>
+>> is not safe, because .previous is now .rodata.
+>>
 >
-> Sure, no worries.
+> Are you sure this is true?
 >
-> I've changed my mind a bit about .altmacro, in that it is not really
-> usable at all unless turned on explicitly, and then off again, only
-> where it's needed.  So if you just assume it's always off, things are
-> sane (and that's what happens in practice).
+> The gas info page for .previous tells me
 >
-> But it's not really needed here -- my main confusion was with the
-> deeply nested .ifs, but perhaps that could be avoided more
-> straightforwardly:
+>    In terms of the section stack, this directive swaps the current
+> section with the top section on the section stack.
 >
->         .if     \regcount > 1
->         \op\()p x19, x20, [sp, #16]
->         .endif
->         .if     \regcount > 3
->         \op\()p x21, x22, [sp, #32]
->         .endif
->         // ...
->         .if     \regcount > 9
->         \op\()p x27, x28, [sp, #80]
->         .endif
+> and it seems to me that .rodata is no longer on the section stack
+> after .popsection. In that sense, push/pop should be safe, but
+> section/subsection/previous is not (I think). So yes, let's put a note
+> in to mention that section directives are unsupported.
 >
->         .if     \regcount == 1
->         \op\()r x19, [sp, #20]
->         .endif
->         .if     \regcount == 3
->         \op\()r x21, [sp, #22]
->         .endif
->         // ...
->         .if     \regcount == 9
->         \op\()r x27, [sp, #28]
->         .endif
+>> (You could protect against this with
+>>         .pushsection .text; .previous; .subsection 1; // ...
+>>         .popsection
+>> but it may be overkill.)
+>>
+>>> + *
+>>> + * This macro sequence clobbers x0, x1 and the flags register unconditionally,
+>>> + * and may clobber x2 .. x18 if the yield path is taken.
+>>> + */
+>>> +
+>>> +     .macro          cond_yield_neon, lbl
+>>> +     if_will_cond_yield_neon
+>>> +     do_cond_yield_neon
+>>> +     endif_yield_neon        \lbl
+>>> +     .endm
+>>> +
+>>> +     .macro          if_will_cond_yield_neon
+>>> +#ifdef CONFIG_PREEMPT
+>>> +     get_thread_info x0
+>>> +     ldr             w1, [x0, #TSK_TI_PREEMPT]
+>>> +     ldr             x0, [x0, #TSK_TI_FLAGS]
+>>> +     cmp             w1, #1 // == PREEMPT_OFFSET
+>>
+>> Can we at least drop a BUILD_BUG_ON() somewhere to check this?
+>>
+>> Maybe in kernel_neon_begin() since this is intimately kernel-mode NEON
+>> related.
+>>
+>
+> Sure.
 >
 
-Yes, that does look better.
+I only just understood your asm-offsets remark earlier. I wasn't aware
+that it allows exposing random constants as well (although it is
+fairly obvious now that I do). So I will expose PREEMPT_OFFSET rather
+than open code it
 
+>>> +     csel            x0, x0, xzr, eq
+>>> +     tbnz            x0, #TIF_NEED_RESCHED, 5555f    // needs rescheduling?
+>>> +#endif
+>>
+>> A comment that we will fall through to 6666f here may be helpful.
+>>
 >
-> One other thing, should you be protecting the macro args with ()?
+> Indeed. Will add that.
 >
-> It seems unlikely that an expression would be passed for regcount,
-> but for extra it's a bit more plausible.
+>>> +     .subsection     1
+>>> +5555:
+>>> +     .endm
+>>> +
+>>> +     .macro          do_cond_yield_neon
+>>> +     bl              kernel_neon_end
+>>> +     bl              kernel_neon_begin
+>>> +     .endm
+>>> +
+>>> +     .macro          endif_yield_neon, lbl=6666f
+>>> +     b               \lbl
+>>> +     .previous
+>>> +6666:
+>>
+>> Could have slightly more random "random" labels here, but otherwise
+>> it looks ok to me.
+>>
 >
-
-Good point, given that I subtract \extra from the frame size in the ldp case.
-
-> Cheers
-> ---Dave
+> Which number did you have in mind that is more random than 6666? :-)
+>
+>> I might go through and replace all the random labels with something
+>> more robust sometime, but I've never been sure it was worth the
+>> effort...
+>>
+>
+> I guess we could invent all kinds of elaborate schemes but as you say,
+> having 4 digit numbers and grep'ing the source before you add a new
+> one has been working fine so far, so I don't think it should be a
+> priority.
