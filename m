@@ -1,53 +1,53 @@
 From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: Re: [PATCH 0/5] perf-probe: Improve probing on versioned symbols
-Date: Thu, 7 Dec 2017 15:11:03 +0900
-Message-ID: <20171207151103.38554540d085bf76fb5a6b7c@kernel.org>
-References: <151252958056.12861.954203514347167563.stgit@devbox>
-        <0db660f7-2211-39b0-7491-7fb3cc4fbb8f@linux.vnet.ibm.com>
+Subject: [PATCH v2 0/5] perf-probe: Improve probing on versioned symbols
+Date: Thu,  7 Dec 2017 16:19:16 +0900
+Message-ID: <151263115609.13843.6362262297053841418.stgit@devbox>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Cc: Arnaldo Carvalho de Melo <acme@kernel.org>,
+Cc: Masami Hiramatsu <mhiramat@kernel.org>,
         bhargavb <bhargavaramudu@gmail.com>,
         linux-kernel@vger.kernel.org, Paul Clarke <pc@us.ibm.com>,
+        Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>,
         linux-rt-users@vger.kernel.org, linux-perf-users@vger.kernel.org
-To: Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>
+To: Arnaldo Carvalho de Melo <acme@kernel.org>
 Return-path: <linux-perf-users-owner@vger.kernel.org>
-In-Reply-To: <0db660f7-2211-39b0-7491-7fb3cc4fbb8f@linux.vnet.ibm.com>
 Sender: linux-perf-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 7 Dec 2017 10:13:28 +0530
-Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com> wrote:
+Hi,
 
-> Hi Masami,
-> 
-> 
-> On 12/06/2017 08:36 AM, Masami Hiramatsu wrote:
-> > [4/5] Find versioned symbol from map without wildcard.
-> >    This allows user to specify a symbol without version
-> >    suffix nor wildcard. Anyway, at this point we have
-> >    no way to specify version suffix, because parser
-> >    recognizes "@" is a separator of "function@file"
-> >    syntax. This is fixed in next patch.
-> > [5/5] Allow user to use backslash-escaped characters
-> >    on command line. This has 2 effects, user can specify
-> >    version suffix directly, and we can use special
-> >    characters in source file.
-> 
-> Just a thought. Will it be good to describe / illustrate this
-> in man page as well?
+Here is the 2nd version of the series for probing on
+versioned symbols in libraries. This includes 5 patches
+to fix the issues discussed on perf-users ML 
+(https://www.spinics.net/lists/linux-perf-users/msg04637.html)
 
-Good catch! I forgot that...
+The first version is here; https://lkml.org/lkml/2017/12/5/1124
 
-Thanks!
+Here is the updates;
 
+[3/5] Add a description in Documentation/perf-probe.txt
+[5/5] Add a description and examples in Documentation/perf-probe.txt
 
-> 
-> Thanks,
-> Ravi
-> 
+Thank you,
+---
+
+Masami Hiramatsu (5):
+      perf-probe: Add warning message if there is unexpected event name
+      perf-probe: Cut off the version suffix from event name
+      perf-probe: Add __return suffix for return events
+      perf-probe: Find versioned symbols from map
+      perf-probe: Support escaped character in parser
 
 
--- 
-Masami Hiramatsu <mhiramat@kernel.org>
+ tools/perf/Documentation/perf-probe.txt     |   18 ++++++
+ tools/perf/arch/powerpc/util/sym-handling.c |    8 +++
+ tools/perf/util/probe-event.c               |   81 +++++++++++++++++++--------
+ tools/perf/util/string.c                    |   46 +++++++++++++++
+ tools/perf/util/string2.h                   |    2 +
+ tools/perf/util/symbol.c                    |    5 ++
+ tools/perf/util/symbol.h                    |    1 
+ 7 files changed, 137 insertions(+), 24 deletions(-)
+
+--
+Masami Hiramatsu (Linaro Ltd.) <mhiramat@kernel.org>
