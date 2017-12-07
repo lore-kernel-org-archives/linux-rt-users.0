@@ -1,7 +1,8 @@
 From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: [PATCH v2 0/5] perf-probe: Improve probing on versioned symbols
-Date: Thu,  7 Dec 2017 16:19:16 +0900
-Message-ID: <151263115609.13843.6362262297053841418.stgit@devbox>
+Subject: [PATCH v2 1/5] perf-probe: Add warning message if there is unexpected event name
+Date: Thu,  7 Dec 2017 16:19:45 +0900
+Message-ID: <151263118520.13843.9962959734014217698.stgit@devbox>
+References: <151263115609.13843.6362262297053841418.stgit@devbox>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
@@ -12,42 +13,42 @@ Cc: Masami Hiramatsu <mhiramat@kernel.org>,
         linux-rt-users@vger.kernel.org, linux-perf-users@vger.kernel.org
 To: Arnaldo Carvalho de Melo <acme@kernel.org>
 Return-path: <linux-perf-users-owner@vger.kernel.org>
+In-Reply-To: <151263115609.13843.6362262297053841418.stgit@devbox>
 Sender: linux-perf-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
+This improve the error message so that user can know
+event-name error before writing new events to
+kprobe-events interface.
 
-Here is the 2nd version of the series for probing on
-versioned symbols in libraries. This includes 5 patches
-to fix the issues discussed on perf-users ML 
-(https://www.spinics.net/lists/linux-perf-users/msg04637.html)
+E.g.
+   ======
+   #./perf probe -x /lib64/libc-2.25.so malloc_get_state*
+   Internal error: "malloc_get_state@GLIBC_2" is wrong event name.
+     Error: Failed to add events.
+   ======
 
-The first version is here; https://lkml.org/lkml/2017/12/5/1124
-
-Here is the updates;
-
-[3/5] Add a description in Documentation/perf-probe.txt
-[5/5] Add a description and examples in Documentation/perf-probe.txt
-
-Thank you,
+Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
 ---
+ tools/perf/util/probe-event.c |    8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-Masami Hiramatsu (5):
-      perf-probe: Add warning message if there is unexpected event name
-      perf-probe: Cut off the version suffix from event name
-      perf-probe: Add __return suffix for return events
-      perf-probe: Find versioned symbols from map
-      perf-probe: Support escaped character in parser
-
-
- tools/perf/Documentation/perf-probe.txt     |   18 ++++++
- tools/perf/arch/powerpc/util/sym-handling.c |    8 +++
- tools/perf/util/probe-event.c               |   81 +++++++++++++++++++--------
- tools/perf/util/string.c                    |   46 +++++++++++++++
- tools/perf/util/string2.h                   |    2 +
- tools/perf/util/symbol.c                    |    5 ++
- tools/perf/util/symbol.h                    |    1 
- 7 files changed, 137 insertions(+), 24 deletions(-)
-
---
-Masami Hiramatsu (Linaro Ltd.) <mhiramat@kernel.org>
+diff --git a/tools/perf/util/probe-event.c b/tools/perf/util/probe-event.c
+index b7aaf9b2294d..c0067950e56f 100644
+--- a/tools/perf/util/probe-event.c
++++ b/tools/perf/util/probe-event.c
+@@ -2625,6 +2625,14 @@ static int get_new_event_name(char *buf, size_t len, const char *base,
+ 
+ out:
+ 	free(nbase);
++
++	/* Final validation */
++	if (ret >= 0 && !is_c_func_name(buf)) {
++		pr_warning("Internal error: \"%s\" is wrong event name.\n",
++			   buf);
++		ret = -EINVAL;
++	}
++
+ 	return ret;
+ }
+ 
