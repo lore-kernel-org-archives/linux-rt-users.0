@@ -1,135 +1,57 @@
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v7 03/37] tracing: Add support to detect and avoid duplicates
-Date: Wed,  6 Dec 2017 16:37:44 -0600
-Message-ID: <0f85cb41c81c7b8e58315424ddfb79ac2645ab44.1512593081.git.tom.zanussi@linux.intel.com>
-References: <cover.1512593081.git.tom.zanussi@linux.intel.com>
-Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        Tom Zanussi <tom.zanussi@linux.intel.com>
-To: rostedt@goodmis.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1512593081.git.tom.zanussi@linux.intel.com>
-In-Reply-To: <cover.1512593081.git.tom.zanussi@linux.intel.com>
-References: <cover.1512593081.git.tom.zanussi@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>
+Subject: Re: [PATCH 0/5] perf-probe: Improve probing on versioned symbols
+Date: Thu, 7 Dec 2017 10:13:28 +0530
+Message-ID: <0db660f7-2211-39b0-7491-7fb3cc4fbb8f@linux.vnet.ibm.com>
+References: <151252958056.12861.954203514347167563.stgit@devbox>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Cc: Arnaldo Carvalho de Melo <acme@kernel.org>,
+        bhargavb <bhargavaramudu@gmail.com>,
+        linux-kernel@vger.kernel.org, Paul Clarke <pc@us.ibm.com>,
+        linux-rt-users@vger.kernel.org, linux-perf-users@vger.kernel.org,
+        Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>
+To: Masami Hiramatsu <mhiramat@kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx0b-001b2d01.pphosted.com ([148.163.158.5]:34216 "EHLO
+        mx0a-001b2d01.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1752498AbdLGEmx (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 6 Dec 2017 23:42:53 -0500
+Received: from pps.filterd (m0098420.ppops.net [127.0.0.1])
+        by mx0b-001b2d01.pphosted.com (8.16.0.21/8.16.0.21) with SMTP id vB74eQIW079233
+        for <linux-rt-users@vger.kernel.org>; Wed, 6 Dec 2017 23:42:52 -0500
+Received: from e06smtp11.uk.ibm.com (e06smtp11.uk.ibm.com [195.75.94.107])
+        by mx0b-001b2d01.pphosted.com with ESMTP id 2epvrmm40k-1
+        (version=TLSv1.2 cipher=AES256-SHA bits=256 verify=NOT)
+        for <linux-rt-users@vger.kernel.org>; Wed, 06 Dec 2017 23:42:52 -0500
+Received: from localhost
+        by e06smtp11.uk.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
+        for <linux-rt-users@vger.kernel.org> from <ravi.bangoria@linux.vnet.ibm.com>;
+        Thu, 7 Dec 2017 04:42:51 -0000
+In-Reply-To: <151252958056.12861.954203514347167563.stgit@devbox>
+Content-Language: en-US
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Vedang Patel <vedang.patel@intel.com>
+Hi Masami,
 
-A duplicate in the tracing_map hash table is when 2 different entries
-have the same key and, as a result, the key_hash. This is possible due
-to a race condition in the algorithm. This race condition is inherent to
-the algorithm and not a bug. This was fine because, until now, we were
-only interested in the sum of all the values related to a particular
-key (the duplicates are dealt with in tracing_map_sort_entries()). But,
-with the inclusion of variables[1], we are interested in individual
-values. So, it will not be clear what value to choose when
-there are duplicates. So, the duplicates need to be removed.
 
-The duplicates can occur in the code in the following scenarios:
+On 12/06/2017 08:36 AM, Masami Hiramatsu wrote:
+> [4/5] Find versioned symbol from map without wildcard.
+>    This allows user to specify a symbol without version
+>    suffix nor wildcard. Anyway, at this point we have
+>    no way to specify version suffix, because parser
+>    recognizes "@" is a separator of "function@file"
+>    syntax. This is fixed in next patch.
+> [5/5] Allow user to use backslash-escaped characters
+>    on command line. This has 2 effects, user can specify
+>    version suffix directly, and we can use special
+>    characters in source file.
 
-- A thread is in the process of adding a new element. It has
-successfully executed cmpxchg() and inserted the key. But, it is still
-not done acquiring the trace_map_elt struct, populating it and storing
-the pointer to the struct in the value field of tracing_map hash table.
-If another thread comes in at this time and wants to add an element with
-the same key, it will not see the current element and add a new one.
+Just a thought. Will it be good to describe / illustrate this
+in man page as well?
 
-- There are multiple threads trying to execute cmpxchg at the same time,
-one of the threads will succeed and the others will fail. The ones which
-fail will go ahead increment 'idx' and add a new element there creating
-a duplicate.
+Thanks,
+Ravi
 
-This patch detects and avoids the first condition by asking the thread
-which detects the duplicate to loop one more time. There is also a
-possibility of infinite loop if the thread which is trying to insert
-goes to sleep indefinitely and the one which is trying to insert a new
-element detects a duplicate. Which is why, the thread loops for
-map_size iterations before returning NULL.
-
-The second scenario is avoided by preventing the threads which failed
-cmpxchg() from incrementing idx. This way, they will loop
-around and check if the thread which succeeded in executing cmpxchg()
-had the same key.
-
-[1] http://lkml.kernel.org/r/cover.1498510759.git.tom.zanussi@linux.intel.com
-
-Signed-off-by: Vedang Patel <vedang.patel@intel.com>
-Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
----
- kernel/trace/tracing_map.c | 41 ++++++++++++++++++++++++++++++++++++-----
- 1 file changed, 36 insertions(+), 5 deletions(-)
-
-diff --git a/kernel/trace/tracing_map.c b/kernel/trace/tracing_map.c
-index 07e7534..b30f343 100644
---- a/kernel/trace/tracing_map.c
-+++ b/kernel/trace/tracing_map.c
-@@ -414,7 +414,9 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
- __tracing_map_insert(struct tracing_map *map, void *key, bool lookup_only)
- {
- 	u32 idx, key_hash, test_key;
-+	int dup_try = 0;
- 	struct tracing_map_entry *entry;
-+	struct tracing_map_elt *val;
- 
- 	key_hash = jhash(key, map->key_size, 0);
- 	if (key_hash == 0)
-@@ -426,11 +428,33 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
- 		entry = TRACING_MAP_ENTRY(map->map, idx);
- 		test_key = entry->key;
- 
--		if (test_key && test_key == key_hash && entry->val &&
--		    keys_match(key, entry->val->key, map->key_size)) {
--			if (!lookup_only)
--				atomic64_inc(&map->hits);
--			return entry->val;
-+		if (test_key && test_key == key_hash) {
-+			val = READ_ONCE(entry->val);
-+			if (val &&
-+			    keys_match(key, val->key, map->key_size)) {
-+				if (!lookup_only)
-+					atomic64_inc(&map->hits);
-+				return val;
-+			} else if (unlikely(!val)) {
-+				/*
-+				 * The key is present. But, val (pointer to elt
-+				 * struct) is still NULL. which means some other
-+				 * thread is in the process of inserting an
-+				 * element.
-+				 *
-+				 * On top of that, it's key_hash is same as the
-+				 * one being inserted right now. So, it's
-+				 * possible that the element has the same
-+				 * key as well.
-+				 */
-+
-+				dup_try++;
-+				if (dup_try > map->map_size) {
-+					atomic64_inc(&map->drops);
-+					break;
-+				}
-+				continue;
-+			}
- 		}
- 
- 		if (!test_key) {
-@@ -452,6 +476,13 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
- 				atomic64_inc(&map->hits);
- 
- 				return entry->val;
-+			} else {
-+				/*
-+				 * cmpxchg() failed. Loop around once
-+				 * more to check what key was inserted.
-+				 */
-+				dup_try++;
-+				continue;
- 			}
- 		}
- 
--- 
-1.9.3
