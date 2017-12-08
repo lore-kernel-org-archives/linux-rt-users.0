@@ -1,9 +1,10 @@
 From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [PATCH v7 15/37] tracing: Add variable support to hist triggers
-Date: Fri, 8 Dec 2017 22:02:24 +0900
-Message-ID: <20171208130224.GA7312@danjae.aot.lge.com>
+Subject: Re: [PATCH v7 19/37] tracing: Generalize per-element hist trigger
+ data
+Date: Fri, 8 Dec 2017 22:06:29 +0900
+Message-ID: <20171208130629.GB7312@danjae.aot.lge.com>
 References: <cover.1512593081.git.tom.zanussi@linux.intel.com>
- <04af0ae029bd09e4f7b163d7793e094fe4b1163a.1512593081.git.tom.zanussi@linux.intel.com>
+ <28c717b25a6440648171c99fc2fc94f63164096a.1512593081.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
@@ -16,85 +17,170 @@ Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
 To: Tom Zanussi <tom.zanussi@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <04af0ae029bd09e4f7b163d7793e094fe4b1163a.1512593081.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <28c717b25a6440648171c99fc2fc94f63164096a.1512593081.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Tom,
-
-On Wed, Dec 06, 2017 at 04:37:56PM -0600, Tom Zanussi wrote:
-> Add support for saving the value of a current event's event field by
-> assigning it to a variable that can be read by a subsequent event.
+On Wed, Dec 06, 2017 at 04:38:00PM -0600, Tom Zanussi wrote:
+> Up until now, hist triggers only needed per-element support for saving
+> 'comm' data, which was saved directly as a private data pointer.
 > 
-> The basic syntax for saving a variable is to simply prefix a unique
-> variable name not corresponding to any keyword along with an '=' sign
-> to any event field.
-> 
-> Both keys and values can be saved and retrieved in this way:
-> 
->     # echo 'hist:keys=next_pid:vals=$ts0:ts0=common_timestamp ...
->     # echo 'hist:timer_pid=common_pid:key=$timer_pid ...'
-> 
-> If a variable isn't a key variable or prefixed with 'vals=', the
-> associated event field will be saved in a variable but won't be summed
-> as a value:
-> 
->     # echo 'hist:keys=next_pid:ts1=common_timestamp:...
-> 
-> Multiple variables can be assigned at the same time:
-> 
->     # echo 'hist:keys=pid:vals=$ts0,$b,field2:ts0=common_timestamp,b=field1 ...
-> 
-> Multiple (or single) variables can also be assigned at the same time
-> using separate assignments:
-> 
->     # echo 'hist:keys=pid:vals=$ts0:ts0=common_timestamp:b=field1:c=field2 ...
-> 
-> Variables set as above can be used by being referenced from another
-> event, as described in a subsequent patch.
+> In anticipation of the need to save other data besides 'comm', add a
+> new hist_elt_data struct for the purpose, and switch the current
+> 'comm'-related code over to that.
 > 
 > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> Signed-off-by: Baohong Liu <baohong.liu@intel.com>
 > ---
-
-[SNIP]
-> @@ -962,14 +1201,28 @@ static void hist_trigger_elt_update(struct hist_trigger_data *hist_data,
->  				    struct ring_buffer_event *rbe)
->  {
->  	struct hist_field *hist_field;
-> -	unsigned int i;
-> +	unsigned int i, var_idx;
->  	u64 hist_val;
+>  kernel/trace/trace_events_hist.c | 76 +++++++++++++++++++++++-----------------
+>  1 file changed, 43 insertions(+), 33 deletions(-)
+> 
+> diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+> index f75f7bc..3aeab8e 100644
+> --- a/kernel/trace/trace_events_hist.c
+> +++ b/kernel/trace/trace_events_hist.c
+> @@ -289,6 +289,10 @@ static struct hist_field *find_var(struct hist_trigger_data *hist_data,
+>  	return NULL;
+>  }
 >  
->  	for_each_hist_val_field(i, hist_data) {
->  		hist_field = hist_data->fields[i];
-> -		hist_val = hist_field->fn(hist_field, rec, rbe);
-> +		hist_val = hist_field->fn(hist_field, rbe, rec);
-
-Why is this changed?
-
-
-> +		if (hist_field->flags & HIST_FIELD_FL_VAR) {
-> +			var_idx = hist_field->var.idx;
-> +			tracing_map_set_var(elt, var_idx, hist_val);
-> +			continue;
-> +		}
->  		tracing_map_update_sum(elt, i, hist_val);
->  	}
+> +struct hist_elt_data {
+> +	char *comm;
+> +};
 > +
-> +	for_each_hist_key_field(i, hist_data) {
-> +		hist_field = hist_data->fields[i];
-> +		if (hist_field->flags & HIST_FIELD_FL_VAR) {
-> +			hist_val = hist_field->fn(hist_field, rbe, rec);
+>  static const char *hist_field_name(struct hist_field *field,
+>  				   unsigned int level)
+>  {
+> @@ -503,45 +507,61 @@ static inline void save_comm(char *comm, struct task_struct *task)
+>  	memcpy(comm, task->comm, TASK_COMM_LEN);
+>  }
+>  
+> -static void hist_trigger_elt_comm_free(struct tracing_map_elt *elt)
+> +static void hist_elt_data_free(struct hist_elt_data *elt_data)
+> +{
+> +	kfree(elt_data->comm);
+> +	kfree(elt_data);
+> +}
+> +
+> +static void hist_trigger_elt_data_free(struct tracing_map_elt *elt)
+>  {
+> -	kfree((char *)elt->private_data);
+> +	struct hist_elt_data *elt_data = elt->private_data;
+> +
+> +	hist_elt_data_free(elt_data);
+>  }
+>  
+> -static int hist_trigger_elt_comm_alloc(struct tracing_map_elt *elt)
+> +static int hist_trigger_elt_data_alloc(struct tracing_map_elt *elt)
+>  {
+>  	struct hist_trigger_data *hist_data = elt->map->private_data;
+> +	unsigned int size = TASK_COMM_LEN + 1;
 
-Also it seems to have a wrong argument order.
+AFAIK you don't need to do '+ 1' since task->comm is always terminated
+by a NUL character using strlcpy().
 
 Thanks,
 Namhyung
 
 
-> +			var_idx = hist_field->var.idx;
-> +			tracing_map_set_var(elt, var_idx, hist_val);
-> +		}
-> +	}
+> +	struct hist_elt_data *elt_data;
+>  	struct hist_field *key_field;
+>  	unsigned int i;
+>  
+> +	elt_data = kzalloc(sizeof(*elt_data), GFP_KERNEL);
+> +	if (!elt_data)
+> +		return -ENOMEM;
+> +
+>  	for_each_hist_key_field(i, hist_data) {
+>  		key_field = hist_data->fields[i];
+>  
+>  		if (key_field->flags & HIST_FIELD_FL_EXECNAME) {
+> -			unsigned int size = TASK_COMM_LEN + 1;
+> -
+> -			elt->private_data = kzalloc(size, GFP_KERNEL);
+> -			if (!elt->private_data)
+> +			elt_data->comm = kzalloc(size, GFP_KERNEL);
+> +			if (!elt_data->comm) {
+> +				kfree(elt_data);
+>  				return -ENOMEM;
+> +			}
+>  			break;
+>  		}
+>  	}
+>  
+> +	elt->private_data = elt_data;
+> +
+>  	return 0;
 >  }
+>  
+> -static void hist_trigger_elt_comm_init(struct tracing_map_elt *elt)
+> +static void hist_trigger_elt_data_init(struct tracing_map_elt *elt)
+>  {
+> -	char *comm = elt->private_data;
+> +	struct hist_elt_data *elt_data = elt->private_data;
+>  
+> -	if (comm)
+> -		save_comm(comm, current);
+> +	if (elt_data->comm)
+> +		save_comm(elt_data->comm, current);
+>  }
+>  
+> -static const struct tracing_map_ops hist_trigger_elt_comm_ops = {
+> -	.elt_alloc	= hist_trigger_elt_comm_alloc,
+> -	.elt_free	= hist_trigger_elt_comm_free,
+> -	.elt_init	= hist_trigger_elt_comm_init,
+> +static const struct tracing_map_ops hist_trigger_elt_data_ops = {
+> +	.elt_alloc	= hist_trigger_elt_data_alloc,
+> +	.elt_free	= hist_trigger_elt_data_free,
+> +	.elt_init	= hist_trigger_elt_data_init,
+>  };
+>  
+>  static const char *get_hist_field_flags(struct hist_field *hist_field)
+> @@ -1481,21 +1501,6 @@ static int create_tracing_map_fields(struct hist_trigger_data *hist_data)
+>  	return 0;
+>  }
+>  
+> -static bool need_tracing_map_ops(struct hist_trigger_data *hist_data)
+> -{
+> -	struct hist_field *key_field;
+> -	unsigned int i;
+> -
+> -	for_each_hist_key_field(i, hist_data) {
+> -		key_field = hist_data->fields[i];
+> -
+> -		if (key_field->flags & HIST_FIELD_FL_EXECNAME)
+> -			return true;
+> -	}
+> -
+> -	return false;
+> -}
+> -
+>  static struct hist_trigger_data *
+>  create_hist_data(unsigned int map_bits,
+>  		 struct hist_trigger_attrs *attrs,
+> @@ -1521,8 +1526,7 @@ static bool need_tracing_map_ops(struct hist_trigger_data *hist_data)
+>  	if (ret)
+>  		goto free;
+>  
+> -	if (need_tracing_map_ops(hist_data))
+> -		map_ops = &hist_trigger_elt_comm_ops;
+> +	map_ops = &hist_trigger_elt_data_ops;
+>  
+>  	hist_data->map = tracing_map_create(map_bits, hist_data->key_size,
+>  					    map_ops, hist_data);
+> @@ -1710,7 +1714,13 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
+>  			seq_printf(m, "%s: [%llx] %-55s", field_name,
+>  				   uval, str);
+>  		} else if (key_field->flags & HIST_FIELD_FL_EXECNAME) {
+> -			char *comm = elt->private_data;
+> +			struct hist_elt_data *elt_data = elt->private_data;
+> +			char *comm;
+> +
+> +			if (WARN_ON_ONCE(!elt_data))
+> +				return;
+> +
+> +			comm = elt_data->comm;
+>  
+>  			uval = *(u64 *)(key + key_field->offset);
+>  			seq_printf(m, "%s: %-16s[%10llu]", field_name,
+> -- 
+> 1.9.3
+> 
