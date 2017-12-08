@@ -1,42 +1,79 @@
-From: Arnaldo Carvalho de Melo <acme@kernel.org>
-Subject: Re: [PATCH v2 2/5] perf-probe: Cut off the version suffix from event
- name
-Date: Thu, 7 Dec 2017 14:55:29 -0300
-Message-ID: <20171207175529.GI3173@kernel.org>
+From: Masami Hiramatsu <mhiramat@kernel.org>
+Subject: Re: [PATCH v2 1/5] perf-probe: Add warning message if there is
+ unexpected event name
+Date: Fri, 8 Dec 2017 11:48:48 +0900
+Message-ID: <20171208114848.1a0e77e423e1ca14b9552bf7@kernel.org>
 References: <151263115609.13843.6362262297053841418.stgit@devbox>
- <151263122864.13843.10998234736675352577.stgit@devbox>
- <20171207165659.GD3173@kernel.org>
- <8f1f552c-c5d0-40e3-14d9-96a4a38b33c6@us.ibm.com>
+        <151263118520.13843.9962959734014217698.stgit@devbox>
+        <20171207155343.GC3173@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Masami Hiramatsu <mhiramat@kernel.org>,
-        bhargavb <bhargavaramudu@gmail.com>,
-        linux-kernel@vger.kernel.org,
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: bhargavb <bhargavaramudu@gmail.com>, linux-kernel@vger.kernel.org,
+        Paul Clarke <pc@us.ibm.com>,
         Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>,
         linux-rt-users@vger.kernel.org, linux-perf-users@vger.kernel.org
-To: Paul Clarke <pc@us.ibm.com>
+To: Arnaldo Carvalho de Melo <acme@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <8f1f552c-c5d0-40e3-14d9-96a4a38b33c6@us.ibm.com>
+In-Reply-To: <20171207155343.GC3173@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Em Thu, Dec 07, 2017 at 11:24:47AM -0600, Paul Clarke escreveu:
-> On 12/07/2017 10:56 AM, Arnaldo Carvalho de Melo wrote:
-> > Em Thu, Dec 07, 2017 at 04:20:28PM +0900, Masami Hiramatsu escreveu:
-> > See also Paul Clarke's question and suggestion, which I agree, i.e.
-> > instead of chopping off the version, just replace the chars with valid
-> > ones or better, do what Paul suggests, be more flexible in interpreting
-> > @, i.e. if it is a number and/or fails to point to any file, interpret
-> > it as versioning.
- 
-> It's a nit, and subjective, but I'd favor checking for versioning
-> first, then file.  The namespaces are very unlikely to intersect, but
-> I could foresee symbols like "sym@implA.c" and "sym@implB.c" more
-> likely than a symbol in a file "GLIBC_2.2.5".
- 
-> Perhaps straying toward bikeshedding...
+On Thu, 7 Dec 2017 12:53:43 -0300
+Arnaldo Carvalho de Melo <acme@kernel.org> wrote:
 
-Nah, those are valid concerns, and I share them.
+> Em Thu, Dec 07, 2017 at 04:19:45PM +0900, Masami Hiramatsu escreveu:
+> > This improve the error message so that user can know
+> > event-name error before writing new events to
+> > kprobe-events interface.
+> > 
+> > E.g.
+> >    ======
+> >    #./perf probe -x /lib64/libc-2.25.so malloc_get_state*
+> >    Internal error: "malloc_get_state@GLIBC_2" is wrong event name.
+> 
+> I'm changing this to:
+> 
+> Internal error: "malloc_get_state@GLIBC_2" is an invalid event name for the /sys/kernel/debug/tracing/kprobe_events interface.
+> 
+> Ok?
 
-- Arnaldo
+Hmm, it is a kernel limitation (or spec). Would you think we really need it?
+(are there any chance to allow '@' for event name?)
+
+Thank you,
+
+> 
+> - Arnaldo
+> 
+> >      Error: Failed to add events.
+> >    ======
+> > 
+> > Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
+> > ---
+> >  tools/perf/util/probe-event.c |    8 ++++++++
+> >  1 file changed, 8 insertions(+)
+> > 
+> > diff --git a/tools/perf/util/probe-event.c b/tools/perf/util/probe-event.c
+> > index b7aaf9b2294d..c0067950e56f 100644
+> > --- a/tools/perf/util/probe-event.c
+> > +++ b/tools/perf/util/probe-event.c
+> > @@ -2625,6 +2625,14 @@ static int get_new_event_name(char *buf, size_t len, const char *base,
+> >  
+> >  out:
+> >  	free(nbase);
+> > +
+> > +	/* Final validation */
+> > +	if (ret >= 0 && !is_c_func_name(buf)) {
+> > +		pr_warning("Internal error: \"%s\" is wrong event name.\n",
+> > +			   buf);
+> > +		ret = -EINVAL;
+> > +	}
+> > +
+> >  	return ret;
+> >  }
+> >  
+
+
+-- 
+Masami Hiramatsu <mhiramat@kernel.org>
