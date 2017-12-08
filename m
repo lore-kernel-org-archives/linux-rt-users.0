@@ -1,31 +1,28 @@
 From: Masami Hiramatsu <mhiramat@kernel.org>
 Subject: Re: [PATCH v2 2/5] perf-probe: Cut off the version suffix from
  event name
-Date: Fri, 8 Dec 2017 12:01:48 +0900
-Message-ID: <20171208120148.63dcf5fb271cb8654e70b5cf@kernel.org>
+Date: Fri, 8 Dec 2017 12:15:38 +0900
+Message-ID: <20171208121538.4b50a1555cd15e19e72c1af0@kernel.org>
 References: <151263115609.13843.6362262297053841418.stgit@devbox>
         <151263122864.13843.10998234736675352577.stgit@devbox>
-        <dd7ab590-f5bc-e7bb-6807-210c099072fe@us.ibm.com>
+        <20171207165659.GD3173@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Arnaldo Carvalho de Melo <acme@kernel.org>,
-        bhargavb <bhargavaramudu@gmail.com>,
-        linux-kernel@vger.kernel.org,
+Cc: bhargavb <bhargavaramudu@gmail.com>, linux-kernel@vger.kernel.org,
+        Paul Clarke <pc@us.ibm.com>,
         Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>,
         linux-rt-users@vger.kernel.org, linux-perf-users@vger.kernel.org
-To: Paul Clarke <pc@us.ibm.com>
+To: Arnaldo Carvalho de Melo <acme@kernel.org>
 Return-path: <linux-perf-users-owner@vger.kernel.org>
-In-Reply-To: <dd7ab590-f5bc-e7bb-6807-210c099072fe@us.ibm.com>
+In-Reply-To: <20171207165659.GD3173@kernel.org>
 Sender: linux-perf-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 7 Dec 2017 10:34:51 -0600
-Paul Clarke <pc@us.ibm.com> wrote:
+On Thu, 7 Dec 2017 13:56:59 -0300
+Arnaldo Carvalho de Melo <acme@kernel.org> wrote:
 
-> 
-> 
-> On 12/07/2017 01:20 AM, Masami Hiramatsu wrote:
+> Em Thu, Dec 07, 2017 at 04:20:28PM +0900, Masami Hiramatsu escreveu:
 > > Cut off the version suffix (e.g. @GLIBC_2.2.5 etc.) from
 > > automatic generated event name. This fixes wildcard event
 > > adding like below case;
@@ -55,31 +52,69 @@ Paul Clarke <pc@us.ibm.com> wrote:
 > >     probe_libc:mallochook (on malloc* in /usr/lib64/libc-2.25.so)
 > >     probe_libc:malloc_get_state (on malloc* in /usr/lib64/libc-2.25.so)
 > >     probe_libc:malloc_set_state (on malloc* in /usr/lib64/libc-2.25.so)
-> > 
+> 
+> Thanks for working on this! I'm now going over it, and one thing I
+> noticed was that the (on malloc*) on all the entries matched by that
+> wildcard, can I suggest that you expand it there as well? I.e.
+> 
+>      probe_libc:malloc_set_state (on malloc_set_state in /usr/lib64/libc-2.25.so)
+> 
+
+Hmm, the reason why I chose it was perf probe accepted multiple
+probe points at once. e.g.
+
+./perf probe -x /lib64/libc-2.25.so -a malloc* -a free* 
+
+So, if we specify several probe points, I guess user will like to
+see which events come from which one. 
+
+
+> This way we'll now when aliases are used, and also for the versioning
+> case, i.e. to which version is a probe pointing?
+
+Currently we can know that by perf probe -l. I would recommend this way,
+since -l can show you more precise information (and if it take a time
+to read/analyze debuginfo, user can understand the reason why).
+
+Thank you,
+
+> 
+> See also Paul Clarke's question and suggestion, which I agree, i.e.
+> instead of chopping off the version, just replace the chars with valid
+> ones or better, do what Paul suggests, be more flexible in interpreting
+> @, i.e. if it is a number and/or fails to point to any file, interpret
+> it as versioning.
+> 
+> - Arnaldo
+> 
 > >   You can now use it in all perf tools, such as:
 > > 
 > > 	  perf record -e probe_libc:malloc_set_state -aR sleep 1
 > > 
 > >   =====
-> 
-> I think this will still fall over for a case where there are multiple versions of the same base symbol, like:
-> 
-> $ nm /lib64/libc.so.6 | egrep ' sched_getaffinity'
-> 0000000000134430 T sched_getaffinity@GLIBC_2.3.3
-> 00000000000dcf00 T sched_getaffinity@@GLIBC_2.3.4
-
-No, in that case perf probe adds number suffix (_1, _2...) for new events :)
-
-This feature (number suffix) is anyway required for the case that inlined
-function is spreaded in multiple places. I think this is natural for perf probe.
-
-Thank you,
-
-> 
-> Should we retain the versioning string in some form?  "sched_getaffinity--GLIBC_2.3.4"?  Should we instead interpret the '@' symbol more flexibly, so maybe first assume it is a version string, and if not found, try to see if it's a valid "@SRC" specification?
-> 
-> PC
-> 
+> > 
+> > Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
+> > Reported-by: Arnaldo Carvalho de Melo <acme@kernel.org>
+> > Reported-by: bhargavb <bhargavaramudu@gmail.com>
+> > ---
+> >  tools/perf/util/probe-event.c |    4 ++--
+> >  1 file changed, 2 insertions(+), 2 deletions(-)
+> > 
+> > diff --git a/tools/perf/util/probe-event.c b/tools/perf/util/probe-event.c
+> > index c0067950e56f..74435fb7ab7f 100644
+> > --- a/tools/perf/util/probe-event.c
+> > +++ b/tools/perf/util/probe-event.c
+> > @@ -2584,8 +2584,8 @@ static int get_new_event_name(char *buf, size_t len, const char *base,
+> >  	if (!nbase)
+> >  		return -ENOMEM;
+> >  
+> > -	/* Cut off the dot suffixes (e.g. .const, .isra)*/
+> > -	p = strchr(nbase, '.');
+> > +	/* Cut off the dot suffixes (e.g. .const, .isra) and version suffixes */
+> > +	p = strpbrk(nbase, ".@");
+> >  	if (p && p != nbase)
+> >  		*p = '\0';
+> >  
 
 
 -- 
