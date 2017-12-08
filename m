@@ -1,54 +1,46 @@
-From: Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>
-Subject: Re: [PATCH v2 0/5] perf-probe: Improve probing on versioned symbols
-Date: Fri, 8 Dec 2017 22:43:43 +0530
-Message-ID: <16d9f5f8-d605-7ea5-3e22-ca6193ddfae9@linux.vnet.ibm.com>
-References: <151263115609.13843.6362262297053841418.stgit@devbox>
- <15c9f3d9-e1c0-72eb-6ba6-28b8355f457b@linux.vnet.ibm.com>
- <20171209012408.d383f5f299621b10fd9e6bc3@kernel.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH RT 02/15] Revert "fs: jbd2: pull your plug when waiting
+ for space"
+Date: Fri, 8 Dec 2017 13:13:17 -0500
+Message-ID: <20171208131317.0b771bd4@vmware.local.home>
+References: <20171202000149.842718953@goodmis.org>
+        <20171202000427.022777641@goodmis.org>
+        <20171204083752.GA2255@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: bhargavb <bhargavaramudu@gmail.com>, linux-kernel@vger.kernel.org,
-        Paul Clarke <pc@us.ibm.com>, linux-rt-users@vger.kernel.org,
-        linux-perf-users@vger.kernel.org,
-        Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>
-To: Masami Hiramatsu <mhiramat@kernel.org>,
-        Arnaldo Carvalho de Melo <acme@kernel.org>
+Cc: linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Paul Gortmaker <paul.gortmaker@windriver.com>,
+        Julia Cartwright <julia@ni.com>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
+        stable-rt@vger.kernel.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171209012408.d383f5f299621b10fd9e6bc3@kernel.org>
-Content-Language: en-US
+In-Reply-To: <20171204083752.GA2255@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Mon, 4 Dec 2017 09:37:53 +0100
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 
+> On 2017-12-01 19:01:51 [-0500], Steven Rostedt wrote:
+> > 4.9.65-rt57-rc2 stable review patch.
+> > If anyone has any objections, please let me know.  
+> 
+> I don't see that you pulled in
+> locking-rt-mutex-fix-deadlock-in-device-mapper-block.patch
+> |Subject: [PATCH] locking/rt-mutex: fix deadlock in device mapper / block-IO
+> 
+> which is needed before this can go in.
+> 
 
-On 12/08/2017 09:54 PM, Masami Hiramatsu wrote:
-> On Thu, 7 Dec 2017 18:17:51 +0530
-> Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com> wrote:
->
->>
->> On 12/07/2017 12:49 PM, Masami Hiramatsu wrote:
->>> Hi,
->>>
->>> Here is the 2nd version of the series for probing on
->>> versioned symbols in libraries. This includes 5 patches
->>> to fix the issues discussed on perf-users ML 
->>> (https://www.spinics.net/lists/linux-perf-users/msg04637.html)
->>>
->>> The first version is here; https://lkml.org/lkml/2017/12/5/1124
->>>
->>> Here is the updates;
->>>
->>> [3/5] Add a description in Documentation/perf-probe.txt
->>> [5/5] Add a description and examples in Documentation/perf-probe.txt
->>>
->>> Thank you,
->> Ack-by: Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>
-> Thanks!, is that OK for series? and Acked-by ? B-)
+That's because I pulled it into v4.9.61-rt52.
 
-Yes Masami, Acked for the series.
+See http://lkml.kernel.org/r/20171123052630.205871591@goodmis.org
 
-( Sorry, I just forgot to add 'ed' in Acked-by :) )
-
-Thanks,
-Ravi
+-- Steve
