@@ -1,158 +1,54 @@
-From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: [PATCH v3 4/5] perf-probe: Find versioned symbols from map
-Date: Sat,  9 Dec 2017 01:28:12 +0900
-Message-ID: <151275049269.24652.1639103455496216255.stgit@devbox>
-References: <151275037752.24652.5169845651138876257.stgit@devbox>
+From: Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>
+Subject: Re: [PATCH v2 0/5] perf-probe: Improve probing on versioned symbols
+Date: Fri, 8 Dec 2017 22:43:43 +0530
+Message-ID: <16d9f5f8-d605-7ea5-3e22-ca6193ddfae9@linux.vnet.ibm.com>
+References: <151263115609.13843.6362262297053841418.stgit@devbox>
+ <15c9f3d9-e1c0-72eb-6ba6-28b8355f457b@linux.vnet.ibm.com>
+ <20171209012408.d383f5f299621b10fd9e6bc3@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Cc: Masami Hiramatsu <mhiramat@kernel.org>,
-        bhargavb <bhargavaramudu@gmail.com>,
-        linux-kernel@vger.kernel.org, Paul Clarke <pc@us.ibm.com>,
-        Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>,
-        Thomas Richter <tmricht@linux.vnet.ibm.com>,
-        linux-rt-users@vger.kernel.org, linux-perf-users@vger.kernel.org
-To: Arnaldo Carvalho de Melo <acme@kernel.org>
+Cc: bhargavb <bhargavaramudu@gmail.com>, linux-kernel@vger.kernel.org,
+        Paul Clarke <pc@us.ibm.com>, linux-rt-users@vger.kernel.org,
+        linux-perf-users@vger.kernel.org,
+        Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>
+To: Masami Hiramatsu <mhiramat@kernel.org>,
+        Arnaldo Carvalho de Melo <acme@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <151275037752.24652.5169845651138876257.stgit@devbox>
+In-Reply-To: <20171209012408.d383f5f299621b10fd9e6bc3@kernel.org>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Find versioned symbols correctly from map.
-Commit d80406453ad4 ("perf symbols: Allow user probes on
-versioned symbols") allows user to find default versioned
-symbols (with "@@") in map. However, it did not enable
-normal versioned symbol (with "@") for perf-probe.
-E.g.
 
-  =====
-  # ./perf probe -x /lib64/libc-2.25.so malloc_get_state
-  Failed to find symbol malloc_get_state in /usr/lib64/libc-2.25.so
-    Error: Failed to add events.
-  =====
 
-This solves above issue by improving perf-probe symbol
-search function, as below.
+On 12/08/2017 09:54 PM, Masami Hiramatsu wrote:
+> On Thu, 7 Dec 2017 18:17:51 +0530
+> Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com> wrote:
+>
+>>
+>> On 12/07/2017 12:49 PM, Masami Hiramatsu wrote:
+>>> Hi,
+>>>
+>>> Here is the 2nd version of the series for probing on
+>>> versioned symbols in libraries. This includes 5 patches
+>>> to fix the issues discussed on perf-users ML 
+>>> (https://www.spinics.net/lists/linux-perf-users/msg04637.html)
+>>>
+>>> The first version is here; https://lkml.org/lkml/2017/12/5/1124
+>>>
+>>> Here is the updates;
+>>>
+>>> [3/5] Add a description in Documentation/perf-probe.txt
+>>> [5/5] Add a description and examples in Documentation/perf-probe.txt
+>>>
+>>> Thank you,
+>> Ack-by: Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>
+> Thanks!, is that OK for series? and Acked-by ? B-)
 
-  =====
-  # ./perf probe -x /lib64/libc-2.25.so malloc_get_state
-  Added new event:
-    probe_libc:malloc_get_state (on malloc_get_state in /usr/lib64/libc-2.25.so)
+Yes Masami, Acked for the series.
 
-  You can now use it in all perf tools, such as:
+( Sorry, I just forgot to add 'ed' in Acked-by :) )
 
-	  perf record -e probe_libc:malloc_get_state -aR sleep 1
-
-  # ./perf probe -l
-    probe_libc:malloc_get_state (on malloc_get_state@GLIBC_2.2.5 in /usr/lib64/libc-2.25.so)
-  =====
-
-Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
-Reviewed-by: Thomas Richter <tmricht@linux.vnet.ibm.com>
-Acked-by: Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>
----
-  Changes in v3:
-   - Fix to return -ENOMEM if strndup fails.
-   - Fix to check name != NULL before refering it in
-     arch__normalize_symbol_name() for ppc.
----
- tools/perf/arch/powerpc/util/sym-handling.c |    8 ++++++++
- tools/perf/util/probe-event.c               |   20 ++++++++++++++++++--
- tools/perf/util/symbol.c                    |    5 +++++
- tools/perf/util/symbol.h                    |    1 +
- 4 files changed, 32 insertions(+), 2 deletions(-)
-
-diff --git a/tools/perf/arch/powerpc/util/sym-handling.c b/tools/perf/arch/powerpc/util/sym-handling.c
-index 9c4e23d8c8ce..53d83d7e6a09 100644
---- a/tools/perf/arch/powerpc/util/sym-handling.c
-+++ b/tools/perf/arch/powerpc/util/sym-handling.c
-@@ -64,6 +64,14 @@ int arch__compare_symbol_names_n(const char *namea, const char *nameb,
- 
- 	return strncmp(namea, nameb, n);
- }
-+
-+const char *arch__normalize_symbol_name(const char *name)
-+{
-+	/* Skip over initial dot */
-+	if (name && *name == '.')
-+		name++;
-+	return name;
-+}
- #endif
- 
- #if defined(_CALL_ELF) && _CALL_ELF == 2
-diff --git a/tools/perf/util/probe-event.c b/tools/perf/util/probe-event.c
-index a68141d360b0..0d6c66d51939 100644
---- a/tools/perf/util/probe-event.c
-+++ b/tools/perf/util/probe-event.c
-@@ -2801,16 +2801,32 @@ static int find_probe_functions(struct map *map, char *name,
- 	int found = 0;
- 	struct symbol *sym;
- 	struct rb_node *tmp;
-+	const char *norm, *ver;
-+	char *buf = NULL;
- 
- 	if (map__load(map) < 0)
- 		return 0;
- 
- 	map__for_each_symbol(map, sym, tmp) {
--		if (strglobmatch(sym->name, name)) {
-+		norm = arch__normalize_symbol_name(sym->name);
-+		if (!norm)
-+			continue;
-+
-+		/* We don't care about default symbol or not */
-+		ver = strchr(norm, '@');
-+		if (ver) {
-+			buf = strndup(norm, ver - norm);
-+			if (!buf)
-+				return -ENOMEM;
-+			norm = buf;
-+		}
-+		if (strglobmatch(norm, name)) {
- 			found++;
- 			if (syms && found < probe_conf.max_probes)
- 				syms[found - 1] = sym;
- 		}
-+		if (buf)
-+			zfree(&buf);
- 	}
- 
- 	return found;
-@@ -2856,7 +2872,7 @@ static int find_probe_trace_events_from_map(struct perf_probe_event *pev,
- 	 * same name but different addresses, this lists all the symbols.
- 	 */
- 	num_matched_functions = find_probe_functions(map, pp->function, syms);
--	if (num_matched_functions == 0) {
-+	if (num_matched_functions <= 0) {
- 		pr_err("Failed to find symbol %s in %s\n", pp->function,
- 			pev->target ? : "kernel");
- 		ret = -ENOENT;
-diff --git a/tools/perf/util/symbol.c b/tools/perf/util/symbol.c
-index 1b67a8639dfe..cc065d4bfafc 100644
---- a/tools/perf/util/symbol.c
-+++ b/tools/perf/util/symbol.c
-@@ -94,6 +94,11 @@ static int prefix_underscores_count(const char *str)
- 	return tail - str;
- }
- 
-+const char * __weak arch__normalize_symbol_name(const char *name)
-+{
-+	return name;
-+}
-+
- int __weak arch__compare_symbol_names(const char *namea, const char *nameb)
- {
- 	return strcmp(namea, nameb);
-diff --git a/tools/perf/util/symbol.h b/tools/perf/util/symbol.h
-index a4f0075b4e5c..0563f33c1eb3 100644
---- a/tools/perf/util/symbol.h
-+++ b/tools/perf/util/symbol.h
-@@ -349,6 +349,7 @@ bool elf__needs_adjust_symbols(GElf_Ehdr ehdr);
- void arch__sym_update(struct symbol *s, GElf_Sym *sym);
- #endif
- 
-+const char *arch__normalize_symbol_name(const char *name);
- #define SYMBOL_A 0
- #define SYMBOL_B 1
- 
+Thanks,
+Ravi
