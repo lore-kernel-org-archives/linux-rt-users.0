@@ -1,107 +1,74 @@
 From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: Re: [PATCH v2 2/5] perf-probe: Cut off the version suffix from
- event name
-Date: Sat, 9 Dec 2017 01:12:06 +0900
-Message-ID: <20171209011206.fa1597845cbd4a495e74cb52@kernel.org>
+Subject: Re: [PATCH v2 0/5] perf-probe: Improve probing on versioned symbols
+Date: Sat, 9 Dec 2017 01:12:40 +0900
+Message-ID: <20171209011240.c16b22ba4a53fa06ba32b7f8@kernel.org>
 References: <151263115609.13843.6362262297053841418.stgit@devbox>
-        <151263122864.13843.10998234736675352577.stgit@devbox>
-        <dd7ab590-f5bc-e7bb-6807-210c099072fe@us.ibm.com>
-        <20171208120148.63dcf5fb271cb8654e70b5cf@kernel.org>
-        <3cfc7d95-0956-3e7b-9d36-db5bda9dc753@us.ibm.com>
+        <bbe6b71a-86ac-bc1c-7895-d3bcbe35b782@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Cc: Arnaldo Carvalho de Melo <acme@kernel.org>,
         bhargavb <bhargavaramudu@gmail.com>,
-        linux-kernel@vger.kernel.org,
+        linux-kernel@vger.kernel.org, Paul Clarke <pc@us.ibm.com>,
         Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>,
         linux-rt-users@vger.kernel.org, linux-perf-users@vger.kernel.org
-To: Paul Clarke <pc@us.ibm.com>
+To: Thomas-Mich Richter <tmricht@linux.vnet.ibm.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <3cfc7d95-0956-3e7b-9d36-db5bda9dc753@us.ibm.com>
+In-Reply-To: <bbe6b71a-86ac-bc1c-7895-d3bcbe35b782@linux.vnet.ibm.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 8 Dec 2017 08:49:46 -0600
-Paul Clarke <pc@us.ibm.com> wrote:
+On Fri, 8 Dec 2017 12:56:06 +0100
+Thomas-Mich Richter <tmricht@linux.vnet.ibm.com> wrote:
 
-> 
-> 
-> On 12/07/2017 09:01 PM, Masami Hiramatsu wrote:
-> > On Thu, 7 Dec 2017 10:34:51 -0600
-> > Paul Clarke <pc@us.ibm.com> wrote:
-> >> On 12/07/2017 01:20 AM, Masami Hiramatsu wrote:
-> >>> Cut off the version suffix (e.g. @GLIBC_2.2.5 etc.) from
-> >>> automatic generated event name. This fixes wildcard event
-> >>> adding like below case;
-> >>>
-> >>>   =====
-> >>>   # perf probe -x /lib64/libc-2.25.so malloc*
-> >>>   Internal error: "malloc_get_state@GLIBC_2" is wrong event name.
-> >>>     Error: Failed to add events.
-> >>>   =====
-> >>>
-> >>> This failure was caused by a versioned suffix symbol.
-> >>> With this fix, perf probe automatically cuts the
-> >>> suffix after @ as below.
-> >>>
-> >>>   =====
-> >>>   # ./perf probe -x /lib64/libc-2.25.so malloc*
-> >>>   Added new events:
-> >>>     probe_libc:malloc_printerr (on malloc* in /usr/lib64/libc-2.25.so)
-> >>>     probe_libc:malloc_consolidate (on malloc* in /usr/lib64/libc-2.25.so)
-> >>>     probe_libc:malloc_check (on malloc* in /usr/lib64/libc-2.25.so)
-> >>>     probe_libc:malloc_hook_ini (on malloc* in /usr/lib64/libc-2.25.so)
-> >>>     probe_libc:malloc    (on malloc* in /usr/lib64/libc-2.25.so)
-> >>>     probe_libc:malloc_trim (on malloc* in /usr/lib64/libc-2.25.so)
-> >>>     probe_libc:malloc_usable_size (on malloc* in /usr/lib64/libc-2.25.so)
-> >>>     probe_libc:malloc_stats (on malloc* in /usr/lib64/libc-2.25.so)
-> >>>     probe_libc:malloc_info (on malloc* in /usr/lib64/libc-2.25.so)
-> >>>     probe_libc:mallochook (on malloc* in /usr/lib64/libc-2.25.so)
-> >>>     probe_libc:malloc_get_state (on malloc* in /usr/lib64/libc-2.25.so)
-> >>>     probe_libc:malloc_set_state (on malloc* in /usr/lib64/libc-2.25.so)
-> >>>
-> >>>   You can now use it in all perf tools, such as:
-> >>>
-> >>> 	  perf record -e probe_libc:malloc_set_state -aR sleep 1
-> >>>
-> >>>   =====
-> >>
-> >> I think this will still fall over for a case where there are multiple versions of the same base symbol, like:
-> >>
-> >> $ nm /lib64/libc.so.6 | egrep ' sched_getaffinity'
-> >> 0000000000134430 T sched_getaffinity@GLIBC_2.3.3
-> >> 00000000000dcf00 T sched_getaffinity@@GLIBC_2.3.4
+> On 12/07/2017 08:19 AM, Masami Hiramatsu wrote:
+> > Hi,
 > > 
-> > No, in that case perf probe adds number suffix (_1, _2...) for new events :)
+> > Here is the 2nd version of the series for probing on
+> > versioned symbols in libraries. This includes 5 patches
+> > to fix the issues discussed on perf-users ML 
+> > (https://www.spinics.net/lists/linux-perf-users/msg04637.html)
 > > 
-> > This feature (number suffix) is anyway required for the case that inlined
-> > function is spreaded in multiple places. I think this is natural for perf probe.
+> > The first version is here; https://lkml.org/lkml/2017/12/5/1124
+> > 
+> > Here is the updates;
+> > 
+> > [3/5] Add a description in Documentation/perf-probe.txt
+> > [5/5] Add a description and examples in Documentation/perf-probe.txt
+> > 
+> > Thank you,
+> > ---
+> > 
+> > Masami Hiramatsu (5):
+> >       perf-probe: Add warning message if there is unexpected event name
+> >       perf-probe: Cut off the version suffix from event name
+> >       perf-probe: Add __return suffix for return events
+> >       perf-probe: Find versioned symbols from map
+> >       perf-probe: Support escaped character in parser
+> > 
+> > 
+> >  tools/perf/Documentation/perf-probe.txt     |   18 ++++++
+> >  tools/perf/arch/powerpc/util/sym-handling.c |    8 +++
+> >  tools/perf/util/probe-event.c               |   81 +++++++++++++++++++--------
+> >  tools/perf/util/string.c                    |   46 +++++++++++++++
+> >  tools/perf/util/string2.h                   |    2 +
+> >  tools/perf/util/symbol.c                    |    5 ++
+> >  tools/perf/util/symbol.h                    |    1 
+> >  7 files changed, 137 insertions(+), 24 deletions(-)
+> > 
+> > --
+> > Masami Hiramatsu (Linaro Ltd.) <mhiramat@kernel.org>
+> > --
+> > To unsubscribe from this list: send the line "unsubscribe linux-perf-users" in
+> > the body of a message to majordomo@vger.kernel.org
+> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> > 
 > 
-> I can live with that.
+> If you fix the findings for patch 4 and 5 you have my 
 > 
-> Is the versioning tag retained for display with "perf probe -l" display, so the probe points can be distinguished?
-> 
-> In other words, will one see:
-> # perf probe -l
->   probe_libc:sched_getaffinity (on sched_getaffinity@GLIBC_2.3.3 in /usr/lib64/libc-2.17.so)
->   probe_libc:sched_getaffinity_1 (on sched_getaffinity@@GLIBC_2.3.4 in /usr/lib64/libc-2.17.so)
+> Reviewed-by: Thomas Richter <tmricht@linux.vnet.ibm.com>
 
-Yes, this style, since the symbols are recorded with version suffixes.
-
-Thank you,
-
-> or
-> # perf probe -l
->   probe_libc:sched_getaffinity (on sched_getaffinity in /usr/lib64/libc-2.17.so)
->   probe_libc:sched_getaffinity_1 (on sched_getaffinity in /usr/lib64/libc-2.17.so)
-> 
-> PC
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-perf-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+OK, Thanks!
 
 
 -- 
