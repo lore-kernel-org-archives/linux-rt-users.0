@@ -1,46 +1,83 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH] sched/rt: Do not pull from current CPU if only one cpu
- to pull
-Date: Mon, 11 Dec 2017 14:34:42 -0500
-Message-ID: <20171211143442.3beb2ff8@gandalf.local.home>
-References: <20171202130454.4cbbfe8d@vmware.local.home>
-        <20171211164732.b5axwxwzenlerd7n@gmail.com>
+From: Jonathan Haws <jhaws@sdl.usu.edu>
+Subject: Re: [RFC][PATCH] ipc: mqueue: wq_add priority changed to dynamic
+ priority
+Date: Mon, 11 Dec 2017 19:54:33 +0000
+Message-ID: <1513022070.2797.13.camel@sdl.usu.edu>
+References: <1513006652-7014-1-git-send-email-jhaws@sdl.usu.edu>
+         <1513012323038.16494@sdl.usu.edu>
+         <20171211143241.6b5e627d@gandalf.local.home>
+Reply-To: Jonathan Haws <jhaws@sdl.usu.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
-        Thomas Gleixner <tglx@linutronix.de>
-To: Ingo Molnar <mingo@kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.99]:54580 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1752595AbdLKTep (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 11 Dec 2017 14:34:45 -0500
-In-Reply-To: <20171211164732.b5axwxwzenlerd7n@gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: "bigeasy@linutronix.de" <bigeasy@linutronix.de>,
+        "mingo@kernel.org" <mingo@kernel.org>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "tglx@linutronix.de" <tglx@linutronix.de>,
+        "deepa.kernel@gmail.com" <deepa.kernel@gmail.com>,
+        "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>,
+        "akpm@linux-foundation.org" <akpm@linux-foundation.org>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        "arnd@arndb.de" <arnd@arndb.de>
+To: "rostedt@goodmis.org" <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171211143241.6b5e627d@gandalf.local.home>
+Content-Language: en-US
+Content-ID: <45FE5700E6458F4A82E3649F5B9FB107@sdl.usu.edu>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 11 Dec 2017 17:47:32 +0100
-Ingo Molnar <mingo@kernel.org> wrote:
-
-> > Link: http://lkml.kernel.org/r/8c913cc2-b2e3-8c2e-e503-aff1428f8ff5@monom.org
-> > Fixes: 4bdced5c9 ("sched/rt: Simplify the IPI based RT balancing logic")
-> > Cc: stable@vger.kernel.org
-> > Reported-by: Daniel Wagner <wagi@monom.org>  
-> 
-> I've added:
-> 
->   Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-> 
-> Which I suspect you just forgot to add?
-
-Ug, not sure how that happened, but yes, I simply forgot to add that
-(probably did it using quilt and expected to use git commit -s)
-
-Thanks Ingo!
-
--- Steve
+T24gTW9uLCAyMDE3LTEyLTExIGF0IDE0OjMyIC0wNTAwLCBTdGV2ZW4gUm9zdGVkdCB3cm90ZToN
+Cj4gT24gTW9uLCAxMSBEZWMgMjAxNyAxNzoxMjowNSArMDAwMA0KPiBKb25hdGhhbiBIYXdzIDxq
+aGF3c0BzZGwudXN1LmVkdT4gd3JvdGU6DQo+IA0KPiA+IA0KPiA+IEFkZGluZyBsaW51eC1ydC11
+c2VycyBncm91cCB0byB0aHJlYWQuDQo+ID4gX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fXw0KPiA+IEZyb206IEpvbmF0aGFuIEhhd3MgPGpoYXdzQHNkbC51c3UuZWR1Pg0K
+PiA+IFNlbnQ6IE1vbmRheSwgRGVjZW1iZXIgMTEsIDIwMTcgMDg6MzcNCj4gPiBUbzogbWluZ29A
+a2VybmVsLm9yZzsgdmlyb0B6ZW5pdi5saW51eC5vcmcudWs7IGFybmRAYXJuZGIuZGU7IGFrcG1A
+DQo+ID4gbGludXgtZm91bmRhdGlvbi5vcmc7IGRlZXBhLmtlcm5lbEBnbWFpbC5jb20NCj4gPiBD
+YzogbGludXgta2VybmVsQHZnZXIua2VybmVsLm9yZzsgdGdseEBsaW51dHJvbml4LmRlOyBiaWdl
+YXN5QGxpbnV0DQo+ID4gcm9uaXguZGU7IHJvc3RlZHRAZ29vZG1pcy5vcmc7IEpvbmF0aGFuIEhh
+d3MNCj4gPiBTdWJqZWN0OiBbUkZDXVtQQVRDSF0gaXBjOiBtcXVldWU6IHdxX2FkZCBwcmlvcml0
+eSBjaGFuZ2VkIHRvDQo+ID4gZHluYW1pYyBwcmlvcml0eQ0KPiA+IA0KPiA+IFByZXZpb3VzIGJl
+aGF2aW9yIGFkZGVkIHRhc2tzIHRvIHRoZSB3b3JrIHF1ZXVlIHVzaW5nIHRoZQ0KPiA+IHN0YXRp
+Y19wcmlvIHZhbHVlDQo+ID4gaW5zdGVhZCBvZiB0aGUgZHluYW1pYyBwcmlvcml0eSB2YWx1ZSBp
+biBwcmlvLiBUaGlzIGNhdXNlZCBSVCB0YXNrcw0KPiA+IHRvIGJlDQo+ID4gYWRkZWQgdG8gdGhl
+IHdvcmsgcXVldWUgaW4gYSBGSUZPIG1hbm5lciByYXRoZXIgdGhhbiBieSBwcmlvcml0eS4NCj4g
+PiBOb3JtYWwNCj4gPiB0YXNrcyB3ZXJlIGhhbmRsZWQgYnkgcHJpb3JpdHkuDQo+ID4gDQo+ID4g
+VGhpcyBmaXggdXRpbGl6ZXMgdGhlIGR5bmFtaWMgcHJpb3JpdHkgb2YgdGhlIHRhc2sgdG8gZW5z
+dXJlIHRoYXQNCj4gPiBib3RoIFJUDQo+ID4gYW5kIG5vcm1hbCB0YXNrcyBhcmUgYWRkZWQgdG8g
+dGhlIHdvcmsgcXVldWUgaW4gcHJpb3JpdHkgb3JkZXIuDQo+ID4gVXRpbGl6aW5nDQo+ID4gdGhl
+IGR5bmFtaWMgcHJpb3JpdHkgKHByaW8pIHJhdGhlciB0aGFuIHRoZSBiYXNlIHByaW9yaXR5DQo+
+ID4gKG5vcm1hbF9wcmlvKSB3YXMNCj4gPiBjaG9zZW4gdG8gZW5zdXJlIHRoYXQgaWYgYSB0YXNr
+IGhhZCBhIGJvb3N0ZWQgcHJpb3JpdHkgd2hlbiBpdCB3YXMNCj4gPiBhZGRlZCB0bw0KPiA+IHRo
+ZSB3b3JrIHF1ZXVlLCBpdCB3b3VsZCBiZSB3b2tlbiBzb29uZXIgdG8gdG8gZW5zdXJlIHRoYXQg
+aXQNCj4gPiByZWxlYXNlcyBhbnkNCj4gPiBvdGhlciBsb2NrcyBpdCBtYXkgYmUgaG9sZGluZyBp
+biBhIG1vcmUgdGltZWx5IG1hbm5lci4gSXQgaXMNCj4gPiB1bmRlcnN0b29kIHRoYXQNCj4gPiB0
+aGUgdGFzayBjb3VsZCBoYXZlIGEgbG93ZXIgcHJpb3JpdHkgd2hlbiBpdCB3YWtlcyB0aGFuIHdo
+ZW4gaXQgd2FzDQo+ID4gYWRkZWQgdG8NCj4gPiB0aGUgcXVldWUgaW4gdGhpcyAodW5saWtlbHkp
+IGNhc2UuDQo+IFByb2JhYmx5IGEgYmV0dGVyIHN1YmplY3Qgd291bGQgYmU6DQo+IA0KPiDCoGlw
+YzogbXF1ZXVlOiBIYXZlIFJUIHRhc2tzIHF1ZXVlIGluIGJ5IHByaW9yaXR5IGluIHdxX2FkZCgp
+DQoNCklzIHRoZSBiZXN0IHdheSB0byBjaGFuZ2UgdGhhdCBqdXN0IHRvIGNoYW5nZSBpdCBpbiB0
+aGUgZW1haWwgdGhyZWFkIG9yDQpyZXN1Ym1pdCB0aGUgcGF0Y2ggYXMgdjI/DQoNCj4gDQo+IE90
+aGVyIHRoYW4gdGhhdCAoYW5kIHRoYXQgdGhpcyBkb2Vzbid0IGhhbmRsZSBETCB0YXNrcyksDQo+
+IA0KPiBSZXZpZXdlZC1ieTogU3RldmVuIFJvc3RlZHQgKFZNd2FyZSkgPHJvc3RlZHRAZ29vZG1p
+cy5vcmc+DQo+IA0KPiAtLSBTdGV2ZQ0KPiANCg0KSSdtIHN0aWxsIG5ldyB0byBrZXJuZWwgc2No
+ZWR1bGluZyBkZXRhaWxzIC0gY2FuIHlvdSBlbGFib3JhdGUgb24gd2hhdA0KYSBETCB0YXNrIGlz
+P8KgwqBJJ20gaGFwcHkgdG8gdXBkYXRlIHRoZSBwYXRjaCB0byBoYW5kbGUgREwgdGFza3MgYXMg
+d2VsbA0KaWYgaXQgbWFrZXMgc2Vuc2UgdG8gZG8gc28uDQoNClRoYW5rcyENCkpvbg0KDQo+ID4g
+DQo+ID4gDQo+ID4gU2lnbmVkLW9mZi1ieTogSm9uYXRoYW4gSGF3cyA8amhhd3NAc2RsLnVzdS5l
+ZHU+DQo+ID4gLS0tDQo+ID4gwqBpcGMvbXF1ZXVlLmMgfCAyICstDQo+ID4gwqAxIGZpbGUgY2hh
+bmdlZCwgMSBpbnNlcnRpb24oKyksIDEgZGVsZXRpb24oLSkNCj4gPiANCj4gPiBkaWZmIC0tZ2l0
+IGEvaXBjL21xdWV1ZS5jIGIvaXBjL21xdWV1ZS5jDQo+ID4gaW5kZXggOTY0OWVjZC4uY2I5NmRi
+OSAxMDA2NDQNCj4gPiAtLS0gYS9pcGMvbXF1ZXVlLmMNCj4gPiArKysgYi9pcGMvbXF1ZXVlLmMN
+Cj4gPiBAQCAtNTQ2LDcgKzU0Niw3IEBAIHN0YXRpYyB2b2lkIHdxX2FkZChzdHJ1Y3QgbXF1ZXVl
+X2lub2RlX2luZm8NCj4gPiAqaW5mbywgaW50IHNyLA0KPiA+IMKgwqDCoMKgwqDCoMKgwqBld3At
+PnRhc2sgPSBjdXJyZW50Ow0KPiA+IA0KPiA+IMKgwqDCoMKgwqDCoMKgwqBsaXN0X2Zvcl9lYWNo
+X2VudHJ5KHdhbGssICZpbmZvLT5lX3dhaXRfcVtzcl0ubGlzdCwgbGlzdCkgew0KPiA+IC3CoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqBpZiAod2Fsay0+dGFzay0+c3RhdGljX3ByaW8gPD0g
+Y3VycmVudC0NCj4gPiA+c3RhdGljX3ByaW8pIHsNCj4gPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgaWYgKHdhbGstPnRhc2stPnByaW8gPD0gY3VycmVudC0+cHJpbykgew0KPiA+IMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoGxpc3RfYWRkX3Rh
+aWwoJmV3cC0+bGlzdCwgJndhbGstPmxpc3QpOw0KPiA+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoHJldHVybjsNCj4gPiDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoH0NCj4gPiAtLQ0KPiA+IDIuNy40DQo+ID4g
