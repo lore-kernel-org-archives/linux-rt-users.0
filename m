@@ -1,73 +1,45 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [PATCH] sched/rt: Do not pull from current CPU if only one cpu
- to pull
-Date: Mon, 11 Dec 2017 17:47:32 +0100
-Message-ID: <20171211164732.b5axwxwzenlerd7n@gmail.com>
-References: <20171202130454.4cbbfe8d@vmware.local.home>
+From: Ran Shalit <ranshalit@gmail.com>
+Subject: Optimizing performance - i5
+Date: Mon, 11 Dec 2017 18:59:26 +0200
+Message-ID: <CAJ2oMh+S-C6+TrHMZxd6o0+c8PgE7j93WEngT71mgUMxngQ9xQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
-        Thomas Gleixner <tglx@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset="UTF-8"
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f67.google.com ([74.125.82.67]:34375 "EHLO
-        mail-wm0-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1752405AbdLKQrg (ORCPT
+Received: from mail-wm0-f44.google.com ([74.125.82.44]:37228 "EHLO
+        mail-wm0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1750707AbdLKQ72 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 11 Dec 2017 11:47:36 -0500
-Content-Disposition: inline
-In-Reply-To: <20171202130454.4cbbfe8d@vmware.local.home>
+        Mon, 11 Dec 2017 11:59:28 -0500
+Received: by mail-wm0-f44.google.com with SMTP id f140so15432872wmd.2
+        for <linux-rt-users@vger.kernel.org>; Mon, 11 Dec 2017 08:59:27 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hello,
 
-* Steven Rostedt <rostedt@goodmis.org> wrote:
+We are trying to optimize performance with  i5 , 4 cores.
+We saw some strange behavior when using stress on all cores:
+"Sometimes" when testing performance with cyclictest we see that
+average on each core to ~20usec.
+Then, when we start stress on all 4 cores, it gets down to ~2usec.
+The weird thing is that it is not consistent.
+Most of the time, we see same behavior in both stress and without
+stress, of 2usec average.
+And suddenly in next boot it gets the "weird" performance.
+We are not yet sure, what happens in boot that gets this behavior.
+The maximum is kept the same all the time:  ~35usec
 
-> Daniel Wagner reported a crash on the beaglebone black. This is a
-> single CPU architecture, and does not have a functional:
-> arch_send_call_function_single_ipi() and can crash if that is called.
-> 
-> As it only has one CPU, it shouldn't be called, but if the kernel is
-> compiled for SMP, the push/pull RT scheduling logic now calls it for
-> irq_work if the one CPU is overloaded, it can use that function to call
-> itself and crash the kernel.
-> 
-> Ideally, we should disable the SCHED_FEAT(RT_PUSH_IPI) if the system
-> only has a single CPU. But SCHED_FEAT is a constant if sched debugging
-> is turned off. Another fix can also be used, and this should also help
-> with normal SMP machines. That is, do not initiate the pull code if
-> there's only one RT overloaded CPU, and that CPU happens to be the
-> current CPU that is scheduling in a lower priority task.
-> 
-> Even on a system with many CPUs, if there's many RT tasks waiting to
-> run on a single CPU, and that CPU schedules in another RT task of lower
-> priority, it will initiate the PULL logic in case there's a higher
-> priority RT task on another CPU that is waiting to run. But if there is
-> no other CPU with waiting RT tasks, it will initiate the RT pull logic
-> on itself (as it still has RT tasks waiting to run). This is a wasted
-> effort.
-> 
-> Not only does this help with SMP code where the current CPU is the only
-> one with RT overloaded tasks, it should also solve the issue that
-> Daniel encountered, because it will prevent the PULL logic from
-> executing, as there's only one CPU on the system, and the check added
-> here will cause it to exit the RT pull code.
-> 
-> Link: http://lkml.kernel.org/r/8c913cc2-b2e3-8c2e-e503-aff1428f8ff5@monom.org
-> Fixes: 4bdced5c9 ("sched/rt: Simplify the IPI based RT balancing logic")
-> Cc: stable@vger.kernel.org
-> Reported-by: Daniel Wagner <wagi@monom.org>
+We are also trying to optimize the jitter, below 35usec.
+We tried the following:
+1. use only idle mode (disable power states)
+2. disable frequency save
+3. isolating cpu.
 
-I've added:
+Yet, we still get the same ~35usec, using all this trials.
 
-  Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+Do you think it worth to try to use the latest rt kernel (4.9) ?
+Currently we use kernel 4.4 (with ubuntu 16.04).
 
-Which I suspect you just forgot to add?
-
-Thanks,
-
-	Ingo
+Best Regards,
+Ran
