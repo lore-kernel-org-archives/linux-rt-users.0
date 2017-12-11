@@ -1,73 +1,142 @@
-From: Jonathan Haws <jhaws@sdl.usu.edu>
-Subject: Re: [RFC][PATCH] ipc: mqueue: wq_add priority changed to dynamic
- priority
-Date: Mon, 11 Dec 2017 17:12:05 +0000
-Message-ID: <1513012323038.16494@sdl.usu.edu>
-References: <1513006652-7014-1-git-send-email-jhaws@sdl.usu.edu>
+From: Tom Zanussi <tom.zanussi@linux.intel.com>
+Subject: Re: [PATCH v7 22/37] tracing: Add variable reference handling to
+ hist triggers
+Date: Mon, 11 Dec 2017 11:53:10 -0600
+Message-ID: <1513014790.4353.7.camel@tzanussi-mobl.amr.corp.intel.com>
+References: <cover.1512593081.git.tom.zanussi@linux.intel.com>
+         <7b23f5933ef730ffea398f97c00b675179609b9f.1512593081.git.tom.zanussi@linux.intel.com>
+         <20171211151712.GA20788@danjae.aot.lge.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: 8BIT
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "tglx@linutronix.de" <tglx@linutronix.de>,
-        "bigeasy@linutronix.de" <bigeasy@linutronix.de>,
-        "rostedt@goodmis.org" <rostedt@goodmis.org>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: "mingo@kernel.org" <mingo@kernel.org>,
-        "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>,
-        "arnd@arndb.de" <arnd@arndb.de>,
-        "akpm@linux-foundation.org" <akpm@linux-foundation.org>,
-        "deepa.kernel@gmail.com" <deepa.kernel@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
+        vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel.opensrc@gmail.com, joelaf@google.com,
+        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
+        rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        kernel-team@lge.com
+To: Namhyung Kim <namhyung@kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from perses.usurf.usu.edu ([129.123.197.145]:56094 "EHLO
-        Perses.usurf.usu.edu" rhost-flags-OK-FAIL-OK-FAIL) by vger.kernel.org
-        with ESMTP id S1750707AbdLKRMH (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 11 Dec 2017 12:12:07 -0500
-In-Reply-To: <1513006652-7014-1-git-send-email-jhaws@sdl.usu.edu>
-Content-Language: en-US
+Received: from mga03.intel.com ([134.134.136.65]:15046 "EHLO mga03.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1750707AbdLKRxO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 11 Dec 2017 12:53:14 -0500
+In-Reply-To: <20171211151712.GA20788@danjae.aot.lge.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Adding linux-rt-users group to thread.
-________________________________________
-From: Jonathan Haws <jhaws@sdl.usu.edu>
-Sent: Monday, December 11, 2017 08:37
-To: mingo@kernel.org; viro@zeniv.linux.org.uk; arnd@arndb.de; akpm@linux-foundation.org; deepa.kernel@gmail.com
-Cc: linux-kernel@vger.kernel.org; tglx@linutronix.de; bigeasy@linutronix.de; rostedt@goodmis.org; Jonathan Haws
-Subject: [RFC][PATCH] ipc: mqueue: wq_add priority changed to dynamic priority
+Hi Namhyung,
 
-Previous behavior added tasks to the work queue using the static_prio value
-instead of the dynamic priority value in prio. This caused RT tasks to be
-added to the work queue in a FIFO manner rather than by priority. Normal
-tasks were handled by priority.
+On Tue, 2017-12-12 at 00:17 +0900, Namhyung Kim wrote:
+> Hi Tom,
+> 
+> On Wed, Dec 06, 2017 at 04:38:03PM -0600, Tom Zanussi wrote:
+> > Add the necessary infrastructure to allow the variables defined on one
+> > event to be referenced in another.  This allows variables set by a
+> > previous event to be referenced and used in expressions combining the
+> > variable values saved by that previous event and the event fields of
+> > the current event.  For example, here's how a latency can be
+> > calculated and saved into yet another variable named 'wakeup_lat':
+> > 
+> >     # echo 'hist:keys=pid,prio:ts0=common_timestamp ...
+> >     # echo 'hist:keys=next_pid:wakeup_lat=common_timestamp-$ts0 ...
+> > 
+> > In the first event, the event's timetamp is saved into the variable
+> > ts0.  In the next line, ts0 is subtracted from the second event's
+> > timestamp to produce the latency.
+> > 
+> > Further users of variable references will be described in subsequent
+> > patches, such as for instance how the 'wakeup_lat' variable above can
+> > be displayed in a latency histogram.
+> > 
+> > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> > ---
+> 
+> [SNIP]
+> > @@ -313,10 +529,150 @@ static struct hist_field *find_var(struct hist_trigger_data *hist_data,
+> >  	return NULL;
+> >  }
+> >  
+> > +static struct trace_event_file *find_var_file(struct trace_array *tr,
+> > +					      char *system,
+> > +					      char *event_name,
+> > +					      char *var_name)
+> > +{
+> > +	struct hist_trigger_data *var_hist_data;
+> > +	struct hist_var_data *var_data;
+> > +	struct trace_event_call *call;
+> > +	struct trace_event_file *file, *found = NULL;
+> > +	const char *name;
+> > +
+> > +	list_for_each_entry(var_data, &tr->hist_vars, list) {
+> > +		var_hist_data = var_data->hist_data;
+> > +		file = var_hist_data->event_file;
+> > +		if (file == found)
+> > +			continue;
+> > +		call = file->event_call;
+> > +		name = trace_event_name(call);
+> > +
+> > +		if (!system || !event_name) {
+> > +			if (find_var(var_hist_data, file, var_name)) {
+> 
+> Is find_var() really needed?  I guess find_var_field() could do the
+> job with lower overhead..
+> 
+> > +				if (found) {
+> > +					return NULL;
+> > +				}
+> > +
+> > +				found = file;
+> > +			}
+> > +			continue;
+> > +		}
+> > +
+> > +		if (strcmp(event_name, name) != 0)
+> > +			continue;
+> > +		if (strcmp(system, call->class->system) != 0)
+> > +			continue;
+> 
+> Also it doesn't need to iterate the loop when system and event name is
+> given.  Please see below
+> 
+> 
+> > +
+> > +		found = file;
+> > +		break;
+> > +	}
+> > +
+> > +	return found;
+> > +}
+> 
+> 
+> How about this?
+> 
+> find_var_file()
+> {
+> 	if (system)
+> 		return find_event_file(tr, system, event);
+> 
+> 	list_for_each_entry(var_data, &tr->hist_vars, list) {
+> 		var_hist_data = var_data->hist_data;
+> 		file = var_hist_data->event_file;
+> 		if (file == found)
+> 			continue;
+> 
+> 		if (find_var_field(var_hist_data, var_name)) {
+> 			if (found)
+> 				return NULL;
+> 			
+> 			found = file;
+> 		}
+> 	}
+> }
+> 
+> 
 
-This fix utilizes the dynamic priority of the task to ensure that both RT
-and normal tasks are added to the work queue in priority order. Utilizing
-the dynamic priority (prio) rather than the base priority (normal_prio) was
-chosen to ensure that if a task had a boosted priority when it was added to
-the work queue, it would be woken sooner to to ensure that it releases any
-other locks it may be holding in a more timely manner. It is understood that
-the task could have a lower priority when it wakes than when it was added to
-the queue in this (unlikely) case.
+Nice improvement, have incorporated it, thanks!
 
-Signed-off-by: Jonathan Haws <jhaws@sdl.usu.edu>
----
- ipc/mqueue.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Tom
 
-diff --git a/ipc/mqueue.c b/ipc/mqueue.c
-index 9649ecd..cb96db9 100644
---- a/ipc/mqueue.c
-+++ b/ipc/mqueue.c
-@@ -546,7 +546,7 @@ static void wq_add(struct mqueue_inode_info *info, int sr,
-        ewp->task = current;
 
-        list_for_each_entry(walk, &info->e_wait_q[sr].list, list) {
--               if (walk->task->static_prio <= current->static_prio) {
-+               if (walk->task->prio <= current->prio) {
-                        list_add_tail(&ewp->list, &walk->list);
-                        return;
-                }
---
-2.7.4
 
