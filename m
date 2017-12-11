@@ -1,129 +1,55 @@
-From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [PATCH v7 22/37] tracing: Add variable reference handling to
- hist triggers
-Date: Tue, 12 Dec 2017 00:17:12 +0900
-Message-ID: <20171211151712.GA20788@danjae.aot.lge.com>
-References: <cover.1512593081.git.tom.zanussi@linux.intel.com>
- <7b23f5933ef730ffea398f97c00b675179609b9f.1512593081.git.tom.zanussi@linux.intel.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH RT 1/9] Revert "fs: jbd2: pull your plug when waiting for
+ space"
+Date: Mon, 11 Dec 2017 16:37:09 +0100
+Message-ID: <20171211153709.sa2tdk6xro6ccaxy@linutronix.de>
+References: <20171202013658.149533964@goodmis.org>
+ <20171202013711.424595897@goodmis.org>
+ <20171204084545.GB2255@linutronix.de>
+ <20171208131524.2099b1fd@vmware.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        kernel-team@lge.com
-To: Tom Zanussi <tom.zanussi@linux.intel.com>
+Cc: linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Paul Gortmaker <paul.gortmaker@windriver.com>,
+        Julia Cartwright <julia@ni.com>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
+        stable-rt@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <7b23f5933ef730ffea398f97c00b675179609b9f.1512593081.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <20171208131524.2099b1fd@vmware.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Tom,
-
-On Wed, Dec 06, 2017 at 04:38:03PM -0600, Tom Zanussi wrote:
-> Add the necessary infrastructure to allow the variables defined on one
-> event to be referenced in another.  This allows variables set by a
-> previous event to be referenced and used in expressions combining the
-> variable values saved by that previous event and the event fields of
-> the current event.  For example, here's how a latency can be
-> calculated and saved into yet another variable named 'wakeup_lat':
+On 2017-12-08 13:15:24 [-0500], Steven Rostedt wrote:
+> On Mon, 4 Dec 2017 09:45:45 +0100
+> Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 > 
->     # echo 'hist:keys=pid,prio:ts0=common_timestamp ...
->     # echo 'hist:keys=next_pid:wakeup_lat=common_timestamp-$ts0 ...
+> > On 2017-12-01 20:36:59 [-0500], Steven Rostedt wrote:
+> > > 4.4.102-rt117-rc1 stable review patch.
+> > > If anyone has any objections, please let me know.  
+> > 
+> > Same comment as in the 4.9.65-rt57-rc2 review (that you might need
+> > locking-rt-mutex-fix-deadlock-in-device-mapper-block.patch).
 > 
-> In the first event, the event's timetamp is saved into the variable
-> ts0.  In the next line, ts0 is subtracted from the second event's
-> timestamp to produce the latency.
+> Now it does appear I'm missing that for 4.4. I wonder why I didn't pull
+> it in there. Perhaps it wasn't needed, which means this isn't needed
+> either.
+
+I strongly suggest to include "locking/rt-mutex: fix deadlock in device
+mapper / block-IO". We had a workaround in the jbd/ext3 code which then
+moved into jbd2/ext4 after people complained about the same problem. I
+wasn't sure about the root-cause back then but now with explanation we
+have in the fix patch I'm sure this is one of the bugs we have since day
+one.
+
+> Thanks!
 > 
-> Further users of variable references will be described in subsequent
-> patches, such as for instance how the 'wakeup_lat' variable above can
-> be displayed in a latency histogram.
-> 
-> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> ---
+> -- Steve
 
-[SNIP]
-> @@ -313,10 +529,150 @@ static struct hist_field *find_var(struct hist_trigger_data *hist_data,
->  	return NULL;
->  }
->  
-> +static struct trace_event_file *find_var_file(struct trace_array *tr,
-> +					      char *system,
-> +					      char *event_name,
-> +					      char *var_name)
-> +{
-> +	struct hist_trigger_data *var_hist_data;
-> +	struct hist_var_data *var_data;
-> +	struct trace_event_call *call;
-> +	struct trace_event_file *file, *found = NULL;
-> +	const char *name;
-> +
-> +	list_for_each_entry(var_data, &tr->hist_vars, list) {
-> +		var_hist_data = var_data->hist_data;
-> +		file = var_hist_data->event_file;
-> +		if (file == found)
-> +			continue;
-> +		call = file->event_call;
-> +		name = trace_event_name(call);
-> +
-> +		if (!system || !event_name) {
-> +			if (find_var(var_hist_data, file, var_name)) {
-
-Is find_var() really needed?  I guess find_var_field() could do the
-job with lower overhead..
-
-> +				if (found) {
-> +					return NULL;
-> +				}
-> +
-> +				found = file;
-> +			}
-> +			continue;
-> +		}
-> +
-> +		if (strcmp(event_name, name) != 0)
-> +			continue;
-> +		if (strcmp(system, call->class->system) != 0)
-> +			continue;
-
-Also it doesn't need to iterate the loop when system and event name is
-given.  Please see below
-
-
-> +
-> +		found = file;
-> +		break;
-> +	}
-> +
-> +	return found;
-> +}
-
-
-How about this?
-
-find_var_file()
-{
-	if (system)
-		return find_event_file(tr, system, event);
-
-	list_for_each_entry(var_data, &tr->hist_vars, list) {
-		var_hist_data = var_data->hist_data;
-		file = var_hist_data->event_file;
-		if (file == found)
-			continue;
-
-		if (find_var_field(var_hist_data, var_name)) {
-			if (found)
-				return NULL;
-			
-			found = file;
-		}
-	}
-}
-
-
-Thanks,
-Namhyung
+Sebastian
