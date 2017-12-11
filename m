@@ -1,83 +1,365 @@
-From: Jonathan Haws <jhaws@sdl.usu.edu>
-Subject: Re: [RFC][PATCH] ipc: mqueue: wq_add priority changed to dynamic
- priority
-Date: Mon, 11 Dec 2017 19:54:33 +0000
-Message-ID: <1513022070.2797.13.camel@sdl.usu.edu>
-References: <1513006652-7014-1-git-send-email-jhaws@sdl.usu.edu>
-         <1513012323038.16494@sdl.usu.edu>
-         <20171211143241.6b5e627d@gandalf.local.home>
-Reply-To: Jonathan Haws <jhaws@sdl.usu.edu>
+From: Arnaldo Carvalho de Melo <acme@kernel.org>
+Subject: Re: [PATCH v3 5/5] perf-probe: Support escaped character in parser
+Date: Mon, 11 Dec 2017 17:03:30 -0300
+Message-ID: <20171211200330.GI3958@kernel.org>
+References: <151275037752.24652.5169845651138876257.stgit@devbox>
+ <151275052163.24652.18205979384585484358.stgit@devbox>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: "bigeasy@linutronix.de" <bigeasy@linutronix.de>,
-        "mingo@kernel.org" <mingo@kernel.org>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "tglx@linutronix.de" <tglx@linutronix.de>,
-        "deepa.kernel@gmail.com" <deepa.kernel@gmail.com>,
-        "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>,
-        "akpm@linux-foundation.org" <akpm@linux-foundation.org>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "arnd@arndb.de" <arnd@arndb.de>
-To: "rostedt@goodmis.org" <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171211143241.6b5e627d@gandalf.local.home>
-Content-Language: en-US
-Content-ID: <45FE5700E6458F4A82E3649F5B9FB107@sdl.usu.edu>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Cc: bhargavb <bhargavaramudu@gmail.com>, linux-kernel@vger.kernel.org,
+        Paul Clarke <pc@us.ibm.com>,
+        Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>,
+        Thomas Richter <tmricht@linux.vnet.ibm.com>,
+        linux-rt-users@vger.kernel.org, linux-perf-users@vger.kernel.org
+To: Masami Hiramatsu <mhiramat@kernel.org>
+Return-path: <linux-perf-users-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <151275052163.24652.18205979384585484358.stgit@devbox>
+Sender: linux-perf-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-T24gTW9uLCAyMDE3LTEyLTExIGF0IDE0OjMyIC0wNTAwLCBTdGV2ZW4gUm9zdGVkdCB3cm90ZToN
-Cj4gT24gTW9uLCAxMSBEZWMgMjAxNyAxNzoxMjowNSArMDAwMA0KPiBKb25hdGhhbiBIYXdzIDxq
-aGF3c0BzZGwudXN1LmVkdT4gd3JvdGU6DQo+IA0KPiA+IA0KPiA+IEFkZGluZyBsaW51eC1ydC11
-c2VycyBncm91cCB0byB0aHJlYWQuDQo+ID4gX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fXw0KPiA+IEZyb206IEpvbmF0aGFuIEhhd3MgPGpoYXdzQHNkbC51c3UuZWR1Pg0K
-PiA+IFNlbnQ6IE1vbmRheSwgRGVjZW1iZXIgMTEsIDIwMTcgMDg6MzcNCj4gPiBUbzogbWluZ29A
-a2VybmVsLm9yZzsgdmlyb0B6ZW5pdi5saW51eC5vcmcudWs7IGFybmRAYXJuZGIuZGU7IGFrcG1A
-DQo+ID4gbGludXgtZm91bmRhdGlvbi5vcmc7IGRlZXBhLmtlcm5lbEBnbWFpbC5jb20NCj4gPiBD
-YzogbGludXgta2VybmVsQHZnZXIua2VybmVsLm9yZzsgdGdseEBsaW51dHJvbml4LmRlOyBiaWdl
-YXN5QGxpbnV0DQo+ID4gcm9uaXguZGU7IHJvc3RlZHRAZ29vZG1pcy5vcmc7IEpvbmF0aGFuIEhh
-d3MNCj4gPiBTdWJqZWN0OiBbUkZDXVtQQVRDSF0gaXBjOiBtcXVldWU6IHdxX2FkZCBwcmlvcml0
-eSBjaGFuZ2VkIHRvDQo+ID4gZHluYW1pYyBwcmlvcml0eQ0KPiA+IA0KPiA+IFByZXZpb3VzIGJl
-aGF2aW9yIGFkZGVkIHRhc2tzIHRvIHRoZSB3b3JrIHF1ZXVlIHVzaW5nIHRoZQ0KPiA+IHN0YXRp
-Y19wcmlvIHZhbHVlDQo+ID4gaW5zdGVhZCBvZiB0aGUgZHluYW1pYyBwcmlvcml0eSB2YWx1ZSBp
-biBwcmlvLiBUaGlzIGNhdXNlZCBSVCB0YXNrcw0KPiA+IHRvIGJlDQo+ID4gYWRkZWQgdG8gdGhl
-IHdvcmsgcXVldWUgaW4gYSBGSUZPIG1hbm5lciByYXRoZXIgdGhhbiBieSBwcmlvcml0eS4NCj4g
-PiBOb3JtYWwNCj4gPiB0YXNrcyB3ZXJlIGhhbmRsZWQgYnkgcHJpb3JpdHkuDQo+ID4gDQo+ID4g
-VGhpcyBmaXggdXRpbGl6ZXMgdGhlIGR5bmFtaWMgcHJpb3JpdHkgb2YgdGhlIHRhc2sgdG8gZW5z
-dXJlIHRoYXQNCj4gPiBib3RoIFJUDQo+ID4gYW5kIG5vcm1hbCB0YXNrcyBhcmUgYWRkZWQgdG8g
-dGhlIHdvcmsgcXVldWUgaW4gcHJpb3JpdHkgb3JkZXIuDQo+ID4gVXRpbGl6aW5nDQo+ID4gdGhl
-IGR5bmFtaWMgcHJpb3JpdHkgKHByaW8pIHJhdGhlciB0aGFuIHRoZSBiYXNlIHByaW9yaXR5DQo+
-ID4gKG5vcm1hbF9wcmlvKSB3YXMNCj4gPiBjaG9zZW4gdG8gZW5zdXJlIHRoYXQgaWYgYSB0YXNr
-IGhhZCBhIGJvb3N0ZWQgcHJpb3JpdHkgd2hlbiBpdCB3YXMNCj4gPiBhZGRlZCB0bw0KPiA+IHRo
-ZSB3b3JrIHF1ZXVlLCBpdCB3b3VsZCBiZSB3b2tlbiBzb29uZXIgdG8gdG8gZW5zdXJlIHRoYXQg
-aXQNCj4gPiByZWxlYXNlcyBhbnkNCj4gPiBvdGhlciBsb2NrcyBpdCBtYXkgYmUgaG9sZGluZyBp
-biBhIG1vcmUgdGltZWx5IG1hbm5lci4gSXQgaXMNCj4gPiB1bmRlcnN0b29kIHRoYXQNCj4gPiB0
-aGUgdGFzayBjb3VsZCBoYXZlIGEgbG93ZXIgcHJpb3JpdHkgd2hlbiBpdCB3YWtlcyB0aGFuIHdo
-ZW4gaXQgd2FzDQo+ID4gYWRkZWQgdG8NCj4gPiB0aGUgcXVldWUgaW4gdGhpcyAodW5saWtlbHkp
-IGNhc2UuDQo+IFByb2JhYmx5IGEgYmV0dGVyIHN1YmplY3Qgd291bGQgYmU6DQo+IA0KPiDCoGlw
-YzogbXF1ZXVlOiBIYXZlIFJUIHRhc2tzIHF1ZXVlIGluIGJ5IHByaW9yaXR5IGluIHdxX2FkZCgp
-DQoNCklzIHRoZSBiZXN0IHdheSB0byBjaGFuZ2UgdGhhdCBqdXN0IHRvIGNoYW5nZSBpdCBpbiB0
-aGUgZW1haWwgdGhyZWFkIG9yDQpyZXN1Ym1pdCB0aGUgcGF0Y2ggYXMgdjI/DQoNCj4gDQo+IE90
-aGVyIHRoYW4gdGhhdCAoYW5kIHRoYXQgdGhpcyBkb2Vzbid0IGhhbmRsZSBETCB0YXNrcyksDQo+
-IA0KPiBSZXZpZXdlZC1ieTogU3RldmVuIFJvc3RlZHQgKFZNd2FyZSkgPHJvc3RlZHRAZ29vZG1p
-cy5vcmc+DQo+IA0KPiAtLSBTdGV2ZQ0KPiANCg0KSSdtIHN0aWxsIG5ldyB0byBrZXJuZWwgc2No
-ZWR1bGluZyBkZXRhaWxzIC0gY2FuIHlvdSBlbGFib3JhdGUgb24gd2hhdA0KYSBETCB0YXNrIGlz
-P8KgwqBJJ20gaGFwcHkgdG8gdXBkYXRlIHRoZSBwYXRjaCB0byBoYW5kbGUgREwgdGFza3MgYXMg
-d2VsbA0KaWYgaXQgbWFrZXMgc2Vuc2UgdG8gZG8gc28uDQoNClRoYW5rcyENCkpvbg0KDQo+ID4g
-DQo+ID4gDQo+ID4gU2lnbmVkLW9mZi1ieTogSm9uYXRoYW4gSGF3cyA8amhhd3NAc2RsLnVzdS5l
-ZHU+DQo+ID4gLS0tDQo+ID4gwqBpcGMvbXF1ZXVlLmMgfCAyICstDQo+ID4gwqAxIGZpbGUgY2hh
-bmdlZCwgMSBpbnNlcnRpb24oKyksIDEgZGVsZXRpb24oLSkNCj4gPiANCj4gPiBkaWZmIC0tZ2l0
-IGEvaXBjL21xdWV1ZS5jIGIvaXBjL21xdWV1ZS5jDQo+ID4gaW5kZXggOTY0OWVjZC4uY2I5NmRi
-OSAxMDA2NDQNCj4gPiAtLS0gYS9pcGMvbXF1ZXVlLmMNCj4gPiArKysgYi9pcGMvbXF1ZXVlLmMN
-Cj4gPiBAQCAtNTQ2LDcgKzU0Niw3IEBAIHN0YXRpYyB2b2lkIHdxX2FkZChzdHJ1Y3QgbXF1ZXVl
-X2lub2RlX2luZm8NCj4gPiAqaW5mbywgaW50IHNyLA0KPiA+IMKgwqDCoMKgwqDCoMKgwqBld3At
-PnRhc2sgPSBjdXJyZW50Ow0KPiA+IA0KPiA+IMKgwqDCoMKgwqDCoMKgwqBsaXN0X2Zvcl9lYWNo
-X2VudHJ5KHdhbGssICZpbmZvLT5lX3dhaXRfcVtzcl0ubGlzdCwgbGlzdCkgew0KPiA+IC3CoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqBpZiAod2Fsay0+dGFzay0+c3RhdGljX3ByaW8gPD0g
-Y3VycmVudC0NCj4gPiA+c3RhdGljX3ByaW8pIHsNCj4gPiArwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgaWYgKHdhbGstPnRhc2stPnByaW8gPD0gY3VycmVudC0+cHJpbykgew0KPiA+IMKg
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoGxpc3RfYWRkX3Rh
-aWwoJmV3cC0+bGlzdCwgJndhbGstPmxpc3QpOw0KPiA+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoHJldHVybjsNCj4gPiDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoH0NCj4gPiAtLQ0KPiA+IDIuNy40DQo+ID4g
+Em Sat, Dec 09, 2017 at 01:28:41AM +0900, Masami Hiramatsu escreveu:
+> Support the special characters escaped by '\' in parser.
+> This allows user to specify versions directly like below.
+> 
+>   =====
+>   # ./perf probe -x /lib64/libc-2.25.so malloc_get_state\\@GLIBC_2.2.5
+>   Added new event:
+>     probe_libc:malloc_get_state (on malloc_get_state@GLIBC_2.2.5 in /usr/lib64/libc-2.25.so)
+> 
+>   You can now use it in all perf tools, such as:
+> 
+> 	  perf record -e probe_libc:malloc_get_state -aR sleep 1
+> 
+>   =====
+> 
+> Or, you can use separators in source filename, e.g.
+> 
+>   =====
+>   # ./perf probe -x /opt/test/a.out foo+bar.c:3
+>   Semantic error :There is non-digit character in offset.
+>     Error: Command Parse Error.
+>   =====
+> 
+> Usually "+" in source file cause parser error, but
+> 
+>   =====
+>   # ./perf probe -x /opt/test/a.out foo\\+bar.c:4
+>   Added new event:
+>     probe_a:main         (on @foo+bar.c:4 in /opt/test/a.out)
+> 
+>   You can now use it in all perf tools, such as:
+> 
+> 	  perf record -e probe_a:main -aR sleep 1
+>   =====
+> 
+> escaped "\+" allows you to specify that.
+> 
+> Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
+> Reviewed-by: Thomas Richter <tmricht@linux.vnet.ibm.com>
+> Acked-by: Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>
+> ---
+>  Changes in v2:
+>   - Add a description and samples in Documentation/perf-probe.txt
+>  Changes in v3:
+>   - Update for new series.
+> ---
+>  tools/perf/Documentation/perf-probe.txt |   16 +++++++++
+>  tools/perf/util/probe-event.c           |   57 ++++++++++++++++++-------------
+>  tools/perf/util/string.c                |   46 +++++++++++++++++++++++++
+>  tools/perf/util/string2.h               |    2 +
+>  4 files changed, 98 insertions(+), 23 deletions(-)
+> 
+> diff --git a/tools/perf/Documentation/perf-probe.txt b/tools/perf/Documentation/perf-probe.txt
+> index f96382692f42..b6866a05edd2 100644
+> --- a/tools/perf/Documentation/perf-probe.txt
+> +++ b/tools/perf/Documentation/perf-probe.txt
+> @@ -182,6 +182,14 @@ Note that before using the SDT event, the target binary (on which SDT events are
+>  For details of the SDT, see below.
+>  https://sourceware.org/gdb/onlinedocs/gdb/Static-Probe-Points.html
+>  
+> +ESCAPED CHARACTER
+> +-----------------
+> +
+> +In the probe syntax, '=', '@', '+', ':' and ';' are treated as a special character. You can use a backslash ('\') to escape the special characters.
+> +This is useful if you need to probe on a specific versioned symbols, like @GLIBC_... suffixes, or also you need to specify a source file which includes the special characters.
+> +Note that usually single backslash is consumed by shell, so you might need to pass double backslash (\\) or wrapping with single quotes (\'AAA\@BBB').
+> +See EXAMPLES how it is used.
+> +
+>  PROBE ARGUMENT
+>  --------------
+>  Each probe argument follows below syntax.
+> @@ -277,6 +285,14 @@ Add a USDT probe to a target process running in a different mount namespace
+>  
+>   ./perf probe --target-ns <target pid> -x /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.121-0.b13.el7_3.x86_64/jre/lib/amd64/server/libjvm.so %sdt_hotspot:thread__sleep__end
+>  
+> +Add a probe on specific versioned symbol by backslash escape
+> +
+> + ./perf probe -x /lib64/libc-2.25.so 'malloc_get_state\@GLIBC_2.2.5'
+> +
+> +Add a probe in a source file using special characters by backslash escape
+> +
+> + ./perf probe -x /opt/test/a.out 'foo\+bar.c:4'
+> +
+>  
+>  SEE ALSO
+>  --------
+> diff --git a/tools/perf/util/probe-event.c b/tools/perf/util/probe-event.c
+> index 0d6c66d51939..735972e7bc6b 100644
+> --- a/tools/perf/util/probe-event.c
+> +++ b/tools/perf/util/probe-event.c
+> @@ -1325,27 +1325,30 @@ static int parse_perf_probe_event_name(char **arg, struct perf_probe_event *pev)
+>  {
+>  	char *ptr;
+>  
+> -	ptr = strchr(*arg, ':');
+> +	ptr = strpbrk_esc(*arg, ":");
+>  	if (ptr) {
+>  		*ptr = '\0';
+>  		if (!pev->sdt && !is_c_func_name(*arg))
+>  			goto ng_name;
+> -		pev->group = strdup(*arg);
+> +		pev->group = strdup_esc(*arg);
+>  		if (!pev->group)
+>  			return -ENOMEM;
+>  		*arg = ptr + 1;
+>  	} else
+>  		pev->group = NULL;
+> -	if (!pev->sdt && !is_c_func_name(*arg)) {
+> +
+> +	pev->event = strdup_esc(*arg);
+> +	if (pev->event == NULL)
+> +		return -ENOMEM;
+> +
+> +	if (!pev->sdt && !is_c_func_name(pev->event)) {
+> +		zfree(&pev->event);
+>  ng_name:
+> +		zfree(&pev->group);
+>  		semantic_error("%s is bad for event name -it must "
+>  			       "follow C symbol-naming rule.\n", *arg);
+>  		return -EINVAL;
+>  	}
+> -	pev->event = strdup(*arg);
+> -	if (pev->event == NULL)
+> -		return -ENOMEM;
+> -
+>  	return 0;
+>  }
+>  
+> @@ -1373,7 +1376,7 @@ static int parse_perf_probe_point(char *arg, struct perf_probe_event *pev)
+>  			arg++;
+>  	}
+>  
+> -	ptr = strpbrk(arg, ";=@+%");
+> +	ptr = strpbrk_esc(arg, ";=@+%");
+>  	if (pev->sdt) {
+>  		if (ptr) {
+>  			if (*ptr != '@') {
+> @@ -1387,7 +1390,7 @@ static int parse_perf_probe_point(char *arg, struct perf_probe_event *pev)
+>  				pev->target = build_id_cache__origname(tmp);
+>  				free(tmp);
+>  			} else
+> -				pev->target = strdup(ptr + 1);
+> +				pev->target = strdup_esc(ptr + 1);
+>  			if (!pev->target)
+>  				return -ENOMEM;
+>  			*ptr = '\0';
+> @@ -1421,13 +1424,14 @@ static int parse_perf_probe_point(char *arg, struct perf_probe_event *pev)
+>  	 *
+>  	 * Otherwise, we consider arg to be a function specification.
+>  	 */
+> -	if (!strpbrk(arg, "+@%") && (ptr = strpbrk(arg, ";:")) != NULL) {
+> +	if (!strpbrk_esc(arg, "+@%")) {
+> +		ptr = strpbrk_esc(arg, ";:");
+>  		/* This is a file spec if it includes a '.' before ; or : */
+> -		if (memchr(arg, '.', ptr - arg))
+> +		if (ptr && memchr(arg, '.', ptr - arg))
+>  			file_spec = true;
+>  	}
+>  
+> -	ptr = strpbrk(arg, ";:+@%");
+> +	ptr = strpbrk_esc(arg, ";:+@%");
+>  	if (ptr) {
+>  		nc = *ptr;
+>  		*ptr++ = '\0';
+> @@ -1436,7 +1440,7 @@ static int parse_perf_probe_point(char *arg, struct perf_probe_event *pev)
+>  	if (arg[0] == '\0')
+>  		tmp = NULL;
+>  	else {
+> -		tmp = strdup(arg);
+> +		tmp = strdup_esc(arg);
+>  		if (tmp == NULL)
+>  			return -ENOMEM;
+>  	}
+> @@ -1469,12 +1473,12 @@ static int parse_perf_probe_point(char *arg, struct perf_probe_event *pev)
+>  		arg = ptr;
+>  		c = nc;
+>  		if (c == ';') {	/* Lazy pattern must be the last part */
+> -			pp->lazy_line = strdup(arg);
+> +			pp->lazy_line = strdup(arg); /* let leave escapes */
+>  			if (pp->lazy_line == NULL)
+>  				return -ENOMEM;
+>  			break;
+>  		}
+> -		ptr = strpbrk(arg, ";:+@%");
+> +		ptr = strpbrk_esc(arg, ";:+@%");
+>  		if (ptr) {
+>  			nc = *ptr;
+>  			*ptr++ = '\0';
+> @@ -1501,7 +1505,7 @@ static int parse_perf_probe_point(char *arg, struct perf_probe_event *pev)
+>  				semantic_error("SRC@SRC is not allowed.\n");
+>  				return -EINVAL;
+>  			}
+> -			pp->file = strdup(arg);
+> +			pp->file = strdup_esc(arg);
+>  			if (pp->file == NULL)
+>  				return -ENOMEM;
+>  			break;
+> @@ -2803,23 +2807,30 @@ static int find_probe_functions(struct map *map, char *name,
+>  	struct rb_node *tmp;
+>  	const char *norm, *ver;
+>  	char *buf = NULL;
+> +	bool cut_version = true;
+>  
+>  	if (map__load(map) < 0)
+>  		return 0;
+>  
+> +	/* If user gives a version, don't cut off the version from symbols */
+> +	if (strchr(name, '@'))
+> +		cut_version = false;
+> +
+>  	map__for_each_symbol(map, sym, tmp) {
+>  		norm = arch__normalize_symbol_name(sym->name);
+>  		if (!norm)
+>  			continue;
+>  
+> -		/* We don't care about default symbol or not */
+> -		ver = strchr(norm, '@');
+> -		if (ver) {
+> -			buf = strndup(norm, ver - norm);
+> -			if (!buf)
+> -				return -ENOMEM;
+> -			norm = buf;
+> +		if (cut_version) {
+> +			/* We don't care about default symbol or not */
+> +			ver = strchr(norm, '@');
+> +			if (ver) {
+> +				buf = strndup(norm, ver - norm);
+> +				if (!buf)
+> +					return -ENOMEM;
+> +				norm = buf;
+
+You forgot a } here, please check this logic and resubmit just this last
+patch, without the string.c and string2.h part, that I already split
+from this one and applied.
+
+gcc diagnostics:
+
+  LD       /tmp/build/perf/perf-in.o
+util/probe-event.c: In function ‘find_probe_functions’:
+util/probe-event.c:2848:17: error: declaration of ‘map’ shadows a parameter [-Werror=shadow]
+     struct map *map __maybe_unused,
+                 ^~~
+util/probe-event.c:2802:45: note: shadowed declaration is here
+ static int find_probe_functions(struct map *map, char *name,
+                                             ^~~
+util/probe-event.c:2849:20: error: declaration of ‘sym’ shadows a previous local [-Werror=shadow]
+     struct symbol *sym __maybe_unused) { }
+
+------------------------
+
+clang's:
+
+  CC       /tmp/build/perf/util/probe-event.o
+util/probe-event.c:2849:40: error: function definition is not allowed here
+                                struct symbol *sym __maybe_unused) { }
+                                                                   ^
+util/probe-event.c:2857:1: error: function definition is not allowed here
+{
+^
+util/probe-event.c:3009:1: error: function definition is not allowed here
+{
+^
+util/probe-event.c:3098:1: error: function definition is not allowed here
+{
+^
+util/probe-event.c:3112:1: error: function definition is not allowed here
+
+------------------------
+
+Neither are that informative... ;-\
+
+- Arnaldo
+
+>  		}
+> +
+>  		if (strglobmatch(norm, name)) {
+>  			found++;
+>  			if (syms && found < probe_conf.max_probes)
+> diff --git a/tools/perf/util/string.c b/tools/perf/util/string.c
+> index aaa08ee8c717..d8bfd0c4d2cb 100644
+> --- a/tools/perf/util/string.c
+> +++ b/tools/perf/util/string.c
+> @@ -396,3 +396,49 @@ char *asprintf_expr_inout_ints(const char *var, bool in, size_t nints, int *ints
+>  	free(expr);
+>  	return NULL;
+>  }
+> +
+> +/* Like strpbrk(), but not break if it is right after a backslash (escaped) */
+> +char *strpbrk_esc(char *str, const char *stopset)
+> +{
+> +	char *ptr;
+> +
+> +	do {
+> +		ptr = strpbrk(str, stopset);
+> +		if (ptr == str ||
+> +		    (ptr == str + 1 && *(ptr - 1) != '\\'))
+> +			break;
+> +		str = ptr + 1;
+> +	} while (ptr && *(ptr - 1) == '\\' && *(ptr - 2) != '\\');
+> +
+> +	return ptr;
+> +}
+> +
+> +/* Like strdup, but do not copy a single backslash */
+> +char *strdup_esc(const char *str)
+> +{
+> +	char *s, *d, *p, *ret = strdup(str);
+> +
+> +	if (!ret)
+> +		return NULL;
+> +
+> +	d = strchr(ret, '\\');
+> +	if (!d)
+> +		return ret;
+> +
+> +	s = d + 1;
+> +	do {
+> +		if (*s == '\0') {
+> +			*d = '\0';
+> +			break;
+> +		}
+> +		p = strchr(s + 1, '\\');
+> +		if (p) {
+> +			memmove(d, s, p - s);
+> +			d += p - s;
+> +			s = p + 1;
+> +		} else
+> +			memmove(d, s, strlen(s) + 1);
+> +	} while (p);
+> +
+> +	return ret;
+> +}
+> diff --git a/tools/perf/util/string2.h b/tools/perf/util/string2.h
+> index ee14ca5451ab..4c68a09b97e8 100644
+> --- a/tools/perf/util/string2.h
+> +++ b/tools/perf/util/string2.h
+> @@ -39,5 +39,7 @@ static inline char *asprintf_expr_not_in_ints(const char *var, size_t nints, int
+>  	return asprintf_expr_inout_ints(var, false, nints, ints);
+>  }
+>  
+> +char *strpbrk_esc(char *str, const char *stopset);
+> +char *strdup_esc(const char *str);
+>  
+>  #endif /* PERF_STRING_H */
