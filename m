@@ -1,136 +1,101 @@
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: Re: [PATCH v7 24/37] tracing: Add support for 'synthetic' events
-Date: Tue, 12 Dec 2017 10:07:19 -0600
-Message-ID: <1513094839.18728.13.camel@tzanussi-mobl.amr.corp.intel.com>
-References: <cover.1512593081.git.tom.zanussi@linux.intel.com>
-         <f684af3c12a6fbdbed67df6142dc21fd728db808.1512593081.git.tom.zanussi@linux.intel.com>
-         <20171212144201.GA21538@danjae.aot.lge.com>
+From: bert schulze <spambemyguest@googlemail.com>
+Subject: 4.14-rt timer issues using PREEMPT_RT_FULL=y and NO_HZ_FULL_ALL=y
+Date: Tue, 12 Dec 2017 22:58:18 +0100
+Message-ID: <20171212215818.GA18168@a.fritz.box>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        kernel-team@lge.com
-To: Namhyung Kim <namhyung@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171212144201.GA21538@danjae.aot.lge.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wm0-f65.google.com ([74.125.82.65]:46435 "EHLO
+        mail-wm0-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752564AbdLLV6b (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 12 Dec 2017 16:58:31 -0500
+Received: by mail-wm0-f65.google.com with SMTP id r78so1401513wme.5
+        for <linux-rt-users@vger.kernel.org>; Tue, 12 Dec 2017 13:58:31 -0800 (PST)
+Received: from a.fritz.box (i59F743C9.versanet.de. [89.247.67.201])
+        by smtp.gmail.com with ESMTPSA id 38sm283581wry.34.2017.12.12.13.58.28
+        for <linux-rt-users@vger.kernel.org>
+        (version=TLS1_2 cipher=ECDHE-RSA-CHACHA20-POLY1305 bits=256/256);
+        Tue, 12 Dec 2017 13:58:29 -0800 (PST)
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi  Namhyung,
+Hi folks,
 
-On Tue, 2017-12-12 at 23:42 +0900, Namhyung Kim wrote:
-> On Wed, Dec 06, 2017 at 04:38:05PM -0600, Tom Zanussi wrote:
-> > Synthetic events are user-defined events generated from hist trigger
-> > variables saved from one or more other events.
-> > 
-> > To define a synthetic event, the user writes a simple specification
-> > consisting of the name of the new event along with one or more
-> > variables and their type(s), to the tracing/synthetic_events file.
-> > 
-> > For instance, the following creates a new event named 'wakeup_latency'
-> > with 3 fields: lat, pid, and prio:
-> > 
-> >     # echo 'wakeup_latency u64 lat; pid_t pid; int prio' >> \
-> >       /sys/kernel/debug/tracing/synthetic_events
-> > 
-> > Reading the tracing/synthetic_events file lists all the
-> > currently-defined synthetic events, in this case the event we defined
-> > above:
-> > 
-> >     # cat /sys/kernel/debug/tracing/synthetic_events
-> >     wakeup_latency u64 lat; pid_t pid; int prio
-> > 
-> > At this point, the synthetic event is ready to use, and a histogram
-> > can be defined using it:
-> > 
-> >     # echo 'hist:keys=pid,prio,lat.log2:sort=pid,lat' >> \
-> >     /sys/kernel/debug/tracing/events/synthetic/wakeup_latency/trigger
-> > 
-> > The new event is created under the tracing/events/synthetic/ directory
-> > and looks and behaves just like any other event:
-> > 
-> >     # ls /sys/kernel/debug/tracing/events/synthetic/wakeup_latency
-> >       enable  filter  format  hist  id  trigger
-> > 
-> > Although a histogram can be defined for it, nothing will happen until
-> > an action tracing that event via the trace_synth() function occurs.
-> > The trace_synth() function is very similar to all the other trace_*
-> > invocations spread throughout the kernel, except in this case the
-> > trace_ function and its corresponding tracepoint isn't statically
-> > generated but defined by the user at run-time.
-> > 
-> > How this can be automatically hooked up via a hist trigger 'action' is
-> > discussed in a subsequent patch.
-> > 
-> > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> > [fix noderef.cocci warnings, sizeof pointer for kcalloc of event->fields]
-> > Signed-off-by: Fengguang Wu <fengguang.wu@intel.com>
-> > ---
-> 
-> [SNIP]
-> > +static enum print_line_t print_synth_event(struct trace_iterator *iter,
-> > +					   int flags,
-> > +					   struct trace_event *event)
-> > +{
-> > +	struct trace_array *tr = iter->tr;
-> > +	struct trace_seq *s = &iter->seq;
-> > +	struct synth_trace_event *entry;
-> > +	struct synth_event *se;
-> > +	unsigned int i, n_u64;
-> > +	char print_fmt[32];
-> > +	const char *fmt;
-> > +
-> > +	entry = (struct synth_trace_event *)iter->ent;
-> > +	se = container_of(event, struct synth_event, call.event);
-> > +
-> > +	trace_seq_printf(s, "%s: ", se->name);
-> > +
-> > +	for (i = 0, n_u64 = 0; i < se->n_fields; i++) {
-> > +		if (trace_seq_has_overflowed(s))
-> > +			goto end;
-> > +
-> > +		fmt = synth_field_fmt(se->fields[i]->type);
-> > +
-> > +		/* parameter types */
-> > +		if (tr->trace_flags & TRACE_ITER_VERBOSE)
-> > +			trace_seq_printf(s, "%s ", fmt);
-> > +
-> > +		snprintf(print_fmt, sizeof(print_fmt), "%%s=%s%%s", fmt);
-> > +
-> > +		/* parameter values */
-> > +		if (se->fields[i]->is_string) {
-> > +			trace_seq_printf(s, print_fmt, se->fields[i]->name,
-> > +					 (char *)(long)entry->fields[n_u64],
-> 
-> Hmm.. shouldn't it be (char *)&entry->fields[n_u64] ?
-> 
+I'm having issues with v4.14-rt1 to v4.14.3-rt5 using NO_HZ_FULL_ALL=y
+with PREEMPT_RT_FULL=y and kernel.timer_migration enabled (which seems
+to be enabled by default).
 
-Yes, thanks for pointing this out - looks like I need to add something
-that enables string-containing synthetic events and looks at the trace
-file display to my testing..
+Full config used: http://paste.debian.net/hidden/eb51a120/
 
-Tom
+The kernel either boots fine or may lock up on boot already (sysrq is
+working still and boot continues after some seconds upto minutes).
 
-> Thanks,
-> Namhyung
-> 
-> 
-> > +					 i == se->n_fields - 1 ? "" : " ");
-> > +			n_u64 += STR_VAR_LEN_MAX / sizeof(u64);
-> > +		} else {
-> > +			trace_seq_printf(s, print_fmt, se->fields[i]->name,
-> > +					 entry->fields[n_u64],
-> > +					 i == se->n_fields - 1 ? "" : " ");
-> > +			n_u64++;
-> > +		}
-> > +	}
-> > +end:
-> > +	trace_seq_putc(s, '\n');
-> > +
-> > +	return trace_handle_return(s);
-> > +}
+If any hang occurred on boot dmesg will contain:
+root@deb9:~# dmesg | grep hrtimer
+[    1.507207] hrtimer: interrupt took 28740 ns
+
+If the system booted up fine (-> no "interrupt took #### ns" message)
+it behaves as expected as long as timer migration was disabled.
+
+root@deb9:~# echo 0 > /proc/sys/kernel/timer_migration 
+
+A simple sleep (or anything else using nanosleep() is sufficient to
+reproduce this.
+
+
+The expected behaviour with kernel.timer_migration = 0
+
+root@deb9:~# grep LOC: /proc/interrupts 
+LOC:     91968       801       775       590   Local timer interrupts
+
+root@deb9:~# for cpu in {0..3} ;do time taskset -ac $cpu sleep 0.1 ;done 
+real    0m0.104s  // CPU0 ok
+real    0m0.104s  // CPU1 ok
+real    0m0.104s  // CPU2 ok
+real    0m0.105s  // CPU3 ok
+
+root@deb9:~# grep LOC: /proc/interrupts 
+LOC:    101069       824       782       599   Local timer interrupts
+
+Roughly 10 seconds passed and the housekeeping cpu shows ~10.000 timer
+interrupts (which matches up with CONFIG_HZ=1000).
+
+
+Doing the same with kernel.timer_migration = 1
+
+root@deb9:~# for cpu in {0..3} ;do time taskset -ac $cpu sleep 0.1 ;done 
+real    0m0.104s  // CPU0 ok
+[  125.282455] hrtimer: interrupt took 2230 ns  <-- 
+real    0m28.023s // CPU1 not ok
+real    0m9.129s  // CPU2 not ok
+real    0m10.000s // CPU3 not ok
+
+The hrtimer: "interrupt took #### ns" message appeared any sleep on the
+adaptive-tick cpu are completely off and …
+
+root@deb9:~# grep LOC: /proc/interrupts 
+LOC:  12544410       874       828       638   Local timer interrupts
+
+… timer interrupts on the housekeeping cpu advanced by ~12400000 after
+roughly 60 seconds even though the system is up for 2 minutes.
+
+root@deb9:~# uptime 
+ 21:37:14 up 2 min,  1 user,  load average: 0.17, 0.15, 0.06
+
+
+To rule out my hardware I've successfully reproduced this on i7-6700,
+i7-3517u, i7-2xxxHQ hardware as well as in QEMU itself.
+
+Everything is back to normal by passing "nohz_full=" to the kernel to
+disable adaptive-tick cpus.
+
+I've furthermore tested v4.13.13-rt5 and WIP.timers branch of tip.git
+and both of them are working as expected.
+
+
+Thanks,
+Bert
