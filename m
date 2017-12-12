@@ -1,65 +1,95 @@
-From: Julia Cartwright <julia@ni.com>
-Subject: Re: [ANNOUNCE] 4.1.46-rt52
-Date: Mon, 11 Dec 2017 15:23:33 -0600
-Message-ID: <20171211212333.GB19068@jcartwri.amer.corp.natinst.com>
-References: <20171129231317.GB1361@jcartwri.amer.corp.natinst.com>
- <7b0d39d5-91ab-c8f0-bfec-7e26e71395bd@mvista.com>
- <20171211202017.GA19068@jcartwri.amer.corp.natinst.com>
- <ac092a6e-baaa-9f2f-3655-fc6942d676af@mvista.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: schedule under irqs_disabled in SLUB problem
+Date: Tue, 12 Dec 2017 11:18:16 +0100
+Message-ID: <20171212101816.ux24jdai4fftd7ro@linutronix.de>
+References: <CADF-jexLs9vRuiuoRmcA+0L6Mp-XxW75okheWV+ipGf1b_Ua1w@mail.gmail.com>
+ <59FC4393.8030005@mcst.ru>
+ <5A01812F.7040406@mcst.ru>
+ <20171116160837.hfpnq4vb4j2osbuz@linutronix.de>
+ <20171117173820.GM872@jcartwri.amer.corp.natinst.com>
+ <CAJ9FNxsfHRuc+UZCPKGDJDtk5neApOb3i6thpGTy9c-oP8T4JA@mail.gmail.com>
+ <20171124093724.GB2564@linutronix.de>
+ <CAJ9FNxtpTqjLevwN1w037=g1eqRPf-Fht+SFqSqJS0jVhFXkLg@mail.gmail.com>
+ <20171204095912.GH2255@linutronix.de>
+ <CAJ9FNxsqcLjq8=jcOJz+3mwbkzuXyXCp59XVhj-xamsv6Ux0nA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: 8bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        <tom.zanussi@linux.intel.com>, Alex Shi <alex.shi@linaro.org>
-To: Corey Minyard <cminyard@mvista.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+Cc: linux-rt-users@vger.kernel.org
+To: Sam Kappen <skappen@mvista.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx0a-00010702.pphosted.com ([148.163.156.75]:42368 "EHLO
-        mx0b-00010702.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1751274AbdLKVYX (ORCPT
+Received: from Galois.linutronix.de ([146.0.238.70]:32888 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752316AbdLLKSS (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 11 Dec 2017 16:24:23 -0500
+        Tue, 12 Dec 2017 05:18:18 -0500
 Content-Disposition: inline
-In-Reply-To: <ac092a6e-baaa-9f2f-3655-fc6942d676af@mvista.com>
+In-Reply-To: <CAJ9FNxsqcLjq8=jcOJz+3mwbkzuXyXCp59XVhj-xamsv6Ux0nA@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Dec 11, 2017 at 03:01:39PM -0600, Corey Minyard wrote:
-> On 12/11/2017 02:20 PM, Julia Cartwright wrote:
-> > On Mon, Dec 11, 2017 at 01:04:58PM -0600, Corey Minyard wrote:
-[..]
-> > > > 
-> > > > Sebastian Andrzej Siewior (2):
-> > > >         PM / CPU: replace raw_notifier with atomic_notifier (fixup)
-> > > This change breaks the compile of 4.1 on ARM (and other things using
-> > > kernel/cpu_pm.c).
-> > > 
-> > > rcu_irq_enter_irqson() and friends doesn't exist in 4.1.  In fact,
-> > > rcu_irq_enter() doesn't even exist.
-> > > 
-> > > Sorry I didn't get to testing this earlier, I've been focused on other things.
-> > Thanks!  My current builds apparently don't currently cover CPU_PM
-> > builds, so I didn't see this :(.  Thanks for the report.
-> > 
-> > v4.1 does contain rcu_irq_enter(), and it looks like what we should be
-> > using in 4.1 instead.
-> 
-> Ah, it does, I looked in the wrong place.
-> 
-> > I'm thinking the below should be okay; I'll be standing up a proper cpu
-> > hotplugging test to give it some runtime.
-> 
-> The below should work.� You'll need an ARM64, ARM or MIPS system with
-> the proper config settings to exercise this code, though.
+On 2017-12-05 22:01:19 [+0530], Sam Kappen wrote:
+> Hi,
+Hi,
 
-Shouldn't be a problem, I've got an ARM64 board that I've been meaning
-to integrate into my testing anyway.
+> Thanks for looking at my queries. Please see my answers inline.
+please don't top-post. Please use a client which adds proper indention
+while quoting the email.
 
-Thanks,
-   Julia
+>  1.)
+> > I had derived and tried a patch based on the below analysis.
+> > ( I referred below open source commit, to derive on this patch.
+> > https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git/commit/?h=v4.9.47-rt37-rebase&id=7a347757f027190c95a363a491c18156a926a370
+> > )
+> >
+> We see this issue when there is a state change for irqs from disabled
+> to enabled. During slab allocations for SCSI on bootup
+> the irqs are found to be in disabled state since the system state is
+> not yet in "RUNNING".
+> 
+> So we have added instrument code throughout the call trace and
+> confirmed culprit as pi_lock()/pi_unlock for changing the irqs state.
+> Basically it happens when it acquires the lock with irqs in disabled state.
+
+but by pi_lock/pi_unlock you don't mean the futex operation, do you?
+
+based on the fact that the system is not in state "running" yet and this
+trace here:
+> ------------[ cut here ]------------
+> WARNING: at kernel/sched/core.c:3052 migrate_disable+0x10b/0x120()
+> Modules linked in:
+> CPU: 1 PID: 7 Comm: kworker/u8:0 Not tainted 3.10.107-rt120+ #49
+> Hardware name: To be filled by O.E.M. To be filled by
+…
+> Call Trace:
+…
+>  [<ffffffff8105fcd5>] warn_slowpath_null+0x15/0x20
+>  [<ffffffff8109569c>] migrate_enable+0x14c/0x200
+>  [<ffffffff81100fb1>] get_page_from_freelist+0x9a1/0xbc0
+>  [<ffffffff81101f89>] __alloc_pages_nodemask+0x179/0xa50
+>  [<ffffffff81138ab1>] alloc_pages_current+0x101/0x1f0
+>  [<ffffffff8113cf95>] new_slab+0x265/0x310
+>  [<ffffffff816b386e>] __slab_alloc.isra.62+0x4e0/0x6ca
+>  [<ffffffff8113f5d0>] kmem_cache_alloc+0x170/0x190
+>  [<ffffffff810fbd0a>] mempool_alloc_slab+0x3a/0x70
+>  [<ffffffff810fc0be>] mempool_alloc+0xae/0x210
+>  [<ffffffff812d5ce8>] get_request+0x3a8/0x7c0
+>  [<ffffffff812d619a>] blk_get_request+0x9a/0x140
+>  [<ffffffff813ef02a>] scsi_execute+0x4a/0x170
+…
+> ---[ end trace 0000000000000001 ]---
+
+I would that this is the same issue and the patch I posted should help.
+
+> > 2.) With your patch during the slab allocations irqs will be in enabled state.
+> 
+> Thanks. I have been testing your patch, I will update once I finish the long
+> run test.
+
+Okay, so a note to myself, there is nothing outstanding for me to do so
+far.
+
+> Regards,
+> Sam
+
+Sebastian
