@@ -1,192 +1,254 @@
 From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: Re: [PATCH v2 2/5] perf-probe: Cut off the version suffix from
- event name
-Date: Wed, 13 Dec 2017 00:02:55 +0900
-Message-ID: <20171213000255.8cc0e9a698eb97d6f7b0c579@kernel.org>
-References: <151263115609.13843.6362262297053841418.stgit@devbox>
-        <151263122864.13843.10998234736675352577.stgit@devbox>
-        <dd7ab590-f5bc-e7bb-6807-210c099072fe@us.ibm.com>
-        <20171208120148.63dcf5fb271cb8654e70b5cf@kernel.org>
-        <3cfc7d95-0956-3e7b-9d36-db5bda9dc753@us.ibm.com>
-        <20171211182547.GH3958@kernel.org>
+Subject: [PATCH v4] perf-probe: Support escaped character in parser
+Date: Wed, 13 Dec 2017 00:05:12 +0900
+Message-ID: <151309111236.18107.5634753157435343410.stgit@devbox>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Cc: Paul Clarke <pc@us.ibm.com>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
+Cc: Masami Hiramatsu <mhiramat@kernel.org>,
         bhargavb <bhargavaramudu@gmail.com>,
-        linux-kernel@vger.kernel.org,
+        linux-kernel@vger.kernel.org, Paul Clarke <pc@us.ibm.com>,
         Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>,
+        Thomas Richter <tmricht@linux.vnet.ibm.com>,
         linux-rt-users@vger.kernel.org, linux-perf-users@vger.kernel.org
 To: Arnaldo Carvalho de Melo <acme@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171211182547.GH3958@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Return-path: <linux-perf-users-owner@vger.kernel.org>
+Sender: linux-perf-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 11 Dec 2017 15:25:47 -0300
-Arnaldo Carvalho de Melo <acme@kernel.org> wrote:
+Support the special characters escaped by '\' in parser.
+This allows user to specify versions directly like below.
 
-> Em Fri, Dec 08, 2017 at 08:49:46AM -0600, Paul Clarke escreveu:
-> > 
-> > 
-> > On 12/07/2017 09:01 PM, Masami Hiramatsu wrote:
-> > > On Thu, 7 Dec 2017 10:34:51 -0600
-> > > Paul Clarke <pc@us.ibm.com> wrote:
-> > >> On 12/07/2017 01:20 AM, Masami Hiramatsu wrote:
-> > >>> Cut off the version suffix (e.g. @GLIBC_2.2.5 etc.) from
-> > >>> automatic generated event name. This fixes wildcard event
-> > >>> adding like below case;
-> > >>>
-> > >>>   =====
-> > >>>   # perf probe -x /lib64/libc-2.25.so malloc*
-> > >>>   Internal error: "malloc_get_state@GLIBC_2" is wrong event name.
-> > >>>     Error: Failed to add events.
-> > >>>   =====
-> > >>>
-> > >>> This failure was caused by a versioned suffix symbol.
-> > >>> With this fix, perf probe automatically cuts the
-> > >>> suffix after @ as below.
-> > >>>
-> > >>>   =====
-> > >>>   # ./perf probe -x /lib64/libc-2.25.so malloc*
-> > >>>   Added new events:
-> > >>>     probe_libc:malloc_printerr (on malloc* in /usr/lib64/libc-2.25.so)
-> > >>>     probe_libc:malloc_consolidate (on malloc* in /usr/lib64/libc-2.25.so)
-> > >>>     probe_libc:malloc_check (on malloc* in /usr/lib64/libc-2.25.so)
-> > >>>     probe_libc:malloc_hook_ini (on malloc* in /usr/lib64/libc-2.25.so)
-> > >>>     probe_libc:malloc    (on malloc* in /usr/lib64/libc-2.25.so)
-> > >>>     probe_libc:malloc_trim (on malloc* in /usr/lib64/libc-2.25.so)
-> > >>>     probe_libc:malloc_usable_size (on malloc* in /usr/lib64/libc-2.25.so)
-> > >>>     probe_libc:malloc_stats (on malloc* in /usr/lib64/libc-2.25.so)
-> > >>>     probe_libc:malloc_info (on malloc* in /usr/lib64/libc-2.25.so)
-> > >>>     probe_libc:mallochook (on malloc* in /usr/lib64/libc-2.25.so)
-> > >>>     probe_libc:malloc_get_state (on malloc* in /usr/lib64/libc-2.25.so)
-> > >>>     probe_libc:malloc_set_state (on malloc* in /usr/lib64/libc-2.25.so)
-> > >>>
-> > >>>   You can now use it in all perf tools, such as:
-> > >>>
-> > >>> 	  perf record -e probe_libc:malloc_set_state -aR sleep 1
-> > >>>
-> > >>>   =====
-> > >>
-> > >> I think this will still fall over for a case where there are multiple versions of the same base symbol, like:
-> > >>
-> > >> $ nm /lib64/libc.so.6 | egrep ' sched_getaffinity'
-> > >> 0000000000134430 T sched_getaffinity@GLIBC_2.3.3
-> > >> 00000000000dcf00 T sched_getaffinity@@GLIBC_2.3.4
-> > > 
-> > > No, in that case perf probe adds number suffix (_1, _2...) for new events :)
-> > > 
-> > > This feature (number suffix) is anyway required for the case that inlined
-> > > function is spreaded in multiple places. I think this is natural for perf probe.
-> > 
-> > I can live with that.
-> > 
-> > Is the versioning tag retained for display with "perf probe -l" display, so the probe points can be distinguished?
-> > 
-> > In other words, will one see:
-> > # perf probe -l
-> >   probe_libc:sched_getaffinity (on sched_getaffinity@GLIBC_2.3.3 in /usr/lib64/libc-2.17.so)
-> >   probe_libc:sched_getaffinity_1 (on sched_getaffinity@@GLIBC_2.3.4 in /usr/lib64/libc-2.17.so)
-> > or
-> > # perf probe -l
-> >   probe_libc:sched_getaffinity (on sched_getaffinity in /usr/lib64/libc-2.17.so)
-> >   probe_libc:sched_getaffinity_1 (on sched_getaffinity in /usr/lib64/libc-2.17.so)
-> 
-> [root@jouet ~]# perf probe -x /lib64/libc-2.25.so malloc*
-> Added new events:
->   probe_libc:malloc_printerr (on malloc* in /usr/lib64/libc-2.25.so)
->   probe_libc:malloc_consolidate (on malloc* in /usr/lib64/libc-2.25.so)
->   probe_libc:malloc_check (on malloc* in /usr/lib64/libc-2.25.so)
->   probe_libc:malloc_hook_ini (on malloc* in /usr/lib64/libc-2.25.so)
->   probe_libc:malloc    (on malloc* in /usr/lib64/libc-2.25.so)
->   probe_libc:malloc_trim (on malloc* in /usr/lib64/libc-2.25.so)
->   probe_libc:malloc_usable_size (on malloc* in /usr/lib64/libc-2.25.so)
->   probe_libc:malloc_stats (on malloc* in /usr/lib64/libc-2.25.so)
->   probe_libc:malloc_info (on malloc* in /usr/lib64/libc-2.25.so)
->   probe_libc:mallochook (on malloc* in /usr/lib64/libc-2.25.so)
->   probe_libc:malloc_get_state (on malloc* in /usr/lib64/libc-2.25.so)
->   probe_libc:malloc_set_state (on malloc* in /usr/lib64/libc-2.25.so)
-> 
-> You can now use it in all perf tools, such as:
-> 
-> 	perf record -e probe_libc:malloc_set_state -aR sleep 1
-> 
-> [root@jouet ~]# perf probe -l
->   probe_libc:malloc    (on 0xd22a6973 in /usr/lib64/libc-2.25.so)
->   probe_libc:malloc_check (on 0x25db6f5a in /usr/lib64/libc-2.25.so)
->   probe_libc:malloc_consolidate (on 0x88f7c44a in /usr/lib64/libc-2.25.so)
->   probe_libc:malloc_get_state (on 0xdd38eca7 in /usr/lib64/libc-2.25.so)
->   probe_libc:malloc_hook_ini (on 0x8de2b533 in /usr/lib64/libc-2.25.so)
->   probe_libc:malloc_info (on 0x8b327bde in /usr/lib64/libc-2.25.so)
->   probe_libc:malloc_printerr (on 0x8fff087c in /usr/lib64/libc-2.25.so)
->   probe_libc:malloc_set_state (on 0x861940e6 in /usr/lib64/libc-2.25.so)
->   probe_libc:malloc_stats (on 0x51fa3cdc in /usr/lib64/libc-2.25.so)
->   probe_libc:malloc_trim (on 0xa9fa4e43 in /usr/lib64/libc-2.25.so)
->   probe_libc:malloc_usable_size (on 0xceb5e090 in /usr/lib64/libc-2.25.so)
->   probe_libc:mallochook (on 0x6ebc00f5 in /usr/lib64/libc-2.25.so)
+  =====
+  # ./perf probe -x /lib64/libc-2.25.so malloc_get_state\\@GLIBC_2.2.5
+  Added new event:
+    probe_libc:malloc_get_state (on malloc_get_state@GLIBC_2.2.5 in /usr/lib64/libc-2.25.so)
 
-This looks something wrong. perf-probe should try to get symbol
-at least. What happened on that ? Could you run perf probe -l with -vv ?
+  You can now use it in all perf tools, such as:
 
-On my Fedora26, 
+	  perf record -e probe_libc:malloc_get_state -aR sleep 1
 
-$ sudo ./perf probe -l
-  probe_libc:malloc    (on __malloc in /usr/lib64/libc-2.25.so)
-  probe_libc:malloc_check (on malloc_check in /usr/lib64/libc-2.25.so)
-  probe_libc:malloc_consolidate (on malloc_consolidate.part.1 in /usr/lib64/libc-2.25.so)
-  probe_libc:malloc_get_state (on malloc_get_state@GLIBC_2.2.5 in /usr/lib64/libc-2.25.so)
-  probe_libc:malloc_hook_ini (on malloc_hook_ini in /usr/lib64/libc-2.25.so)
-  probe_libc:malloc_info (on __malloc_info in /usr/lib64/libc-2.25.so)
-  probe_libc:malloc_printerr (on malloc_printerr in /usr/lib64/libc-2.25.so)
-  probe_libc:malloc_set_state (on malloc_set_state@GLIBC_2.2.5 in /usr/lib64/libc-2.25.so)
-  probe_libc:malloc_stats (on __malloc_stats in /usr/lib64/libc-2.25.so)
-  probe_libc:malloc_trim (on __malloc_trim in /usr/lib64/libc-2.25.so)
-  probe_libc:malloc_usable_size (on __malloc_usable_size in /usr/lib64/libc-2.25.so)
-  probe_libc:mallochook (on mallochook in /usr/lib64/libc-2.25.so)
+  =====
 
-I can see the symbols with version suffixes.
+Or, you can use separators in source filename, e.g.
 
+  =====
+  # ./perf probe -x /opt/test/a.out foo+bar.c:3
+  Semantic error :There is non-digit character in offset.
+    Error: Command Parse Error.
+  =====
 
-> [root@jouet ~]#
-> 
-> [acme@jouet perf]$ nm /lib64/libc-2.25.so | grep malloc_get_state
-> 0000000000151ba0 T malloc_get_state@GLIBC_2.2.5
-> [acme@jouet perf]$
-> 
-> For your example it finds two symbols, adds two but I couldn't find a
-> simple way of mapping one to the other, would be nice if 'perf probe -l'
-> showed them like 'nm' does.
-> 
-> [root@jouet ~]# nm /lib64/libc-2.25.so | grep ' sched_getaffinity'
-> 0000000000151cd0 T sched_getaffinity@GLIBC_2.3.3
-> 00000000000f3c10 T sched_getaffinity@@GLIBC_2.3.4
-> [root@jouet ~]#
-> 
-> [root@jouet ~]# perf probe -x /lib64/libc-2.25.so sched_getaffinity*
-> Added new events:
->   probe_libc:sched_getaffinity (on sched_getaffinity* in /usr/lib64/libc-2.25.so)
->   probe_libc:sched_getaffinity_1 (on sched_getaffinity* in /usr/lib64/libc-2.25.so)
-> 
-> You can now use it in all perf tools, such as:
-> 
-> 	perf record -e probe_libc:sched_getaffinity_1 -aR sleep 1
-> 
-> [root@jouet ~]# perf probe -l
->   probe_libc:sched_getaffinity (on 0x5fd95e7c in /usr/lib64/libc-2.25.so)
->   probe_libc:sched_getaffinity_1 (on 0xd8d51601 in /usr/lib64/libc-2.25.so)
-> [root@jouet ~]#
+Usually "+" in source file cause parser error, but
 
-This case also shows
+  =====
+  # ./perf probe -x /opt/test/a.out foo\\+bar.c:4
+  Added new event:
+    probe_a:main         (on @foo+bar.c:4 in /opt/test/a.out)
 
-$ sudo ./perf probe -l
-  probe_libc:sched_getaffinity (on __sched_getaffinity_new in /usr/lib64/libc-2.25.so)
-  probe_libc:sched_getaffinity_1 (on sched_getaffinity@GLIBC_2.3.3 in /usr/lib64/libc-2.25.so)
+  You can now use it in all perf tools, such as:
 
-(but the first one seems a bit different, maybe it is an alias of sched_getaffinity@<some new version>.)
+	  perf record -e probe_a:main -aR sleep 1
+  =====
 
-Thank you,
+escaped "\+" allows you to specify that.
 
--- 
-Masami Hiramatsu <mhiramat@kernel.org>
+Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
+Reviewed-by: Thomas Richter <tmricht@linux.vnet.ibm.com>
+Acked-by: Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>
+---
+ Changes in v2:
+  - Add a description and samples in Documentation/perf-probe.txt
+ Changes in v3:
+  - Update for new series.
+ Changes in v4:
+  - Fix a build error (Thanks for Arnaldo!)
+    This time, I ensured that I ran "make build-test" and it passed.
+---
+ tools/perf/Documentation/perf-probe.txt |   16 +++++++++
+ tools/perf/util/probe-event.c           |   58 +++++++++++++++++++------------
+ 2 files changed, 51 insertions(+), 23 deletions(-)
+
+diff --git a/tools/perf/Documentation/perf-probe.txt b/tools/perf/Documentation/perf-probe.txt
+index f96382692f42..b6866a05edd2 100644
+--- a/tools/perf/Documentation/perf-probe.txt
++++ b/tools/perf/Documentation/perf-probe.txt
+@@ -182,6 +182,14 @@ Note that before using the SDT event, the target binary (on which SDT events are
+ For details of the SDT, see below.
+ https://sourceware.org/gdb/onlinedocs/gdb/Static-Probe-Points.html
+ 
++ESCAPED CHARACTER
++-----------------
++
++In the probe syntax, '=', '@', '+', ':' and ';' are treated as a special character. You can use a backslash ('\') to escape the special characters.
++This is useful if you need to probe on a specific versioned symbols, like @GLIBC_... suffixes, or also you need to specify a source file which includes the special characters.
++Note that usually single backslash is consumed by shell, so you might need to pass double backslash (\\) or wrapping with single quotes (\'AAA\@BBB').
++See EXAMPLES how it is used.
++
+ PROBE ARGUMENT
+ --------------
+ Each probe argument follows below syntax.
+@@ -277,6 +285,14 @@ Add a USDT probe to a target process running in a different mount namespace
+ 
+  ./perf probe --target-ns <target pid> -x /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.121-0.b13.el7_3.x86_64/jre/lib/amd64/server/libjvm.so %sdt_hotspot:thread__sleep__end
+ 
++Add a probe on specific versioned symbol by backslash escape
++
++ ./perf probe -x /lib64/libc-2.25.so 'malloc_get_state\@GLIBC_2.2.5'
++
++Add a probe in a source file using special characters by backslash escape
++
++ ./perf probe -x /opt/test/a.out 'foo\+bar.c:4'
++
+ 
+ SEE ALSO
+ --------
+diff --git a/tools/perf/util/probe-event.c b/tools/perf/util/probe-event.c
+index 0d6c66d51939..e1dbc9821617 100644
+--- a/tools/perf/util/probe-event.c
++++ b/tools/perf/util/probe-event.c
+@@ -1325,27 +1325,30 @@ static int parse_perf_probe_event_name(char **arg, struct perf_probe_event *pev)
+ {
+ 	char *ptr;
+ 
+-	ptr = strchr(*arg, ':');
++	ptr = strpbrk_esc(*arg, ":");
+ 	if (ptr) {
+ 		*ptr = '\0';
+ 		if (!pev->sdt && !is_c_func_name(*arg))
+ 			goto ng_name;
+-		pev->group = strdup(*arg);
++		pev->group = strdup_esc(*arg);
+ 		if (!pev->group)
+ 			return -ENOMEM;
+ 		*arg = ptr + 1;
+ 	} else
+ 		pev->group = NULL;
+-	if (!pev->sdt && !is_c_func_name(*arg)) {
++
++	pev->event = strdup_esc(*arg);
++	if (pev->event == NULL)
++		return -ENOMEM;
++
++	if (!pev->sdt && !is_c_func_name(pev->event)) {
++		zfree(&pev->event);
+ ng_name:
++		zfree(&pev->group);
+ 		semantic_error("%s is bad for event name -it must "
+ 			       "follow C symbol-naming rule.\n", *arg);
+ 		return -EINVAL;
+ 	}
+-	pev->event = strdup(*arg);
+-	if (pev->event == NULL)
+-		return -ENOMEM;
+-
+ 	return 0;
+ }
+ 
+@@ -1373,7 +1376,7 @@ static int parse_perf_probe_point(char *arg, struct perf_probe_event *pev)
+ 			arg++;
+ 	}
+ 
+-	ptr = strpbrk(arg, ";=@+%");
++	ptr = strpbrk_esc(arg, ";=@+%");
+ 	if (pev->sdt) {
+ 		if (ptr) {
+ 			if (*ptr != '@') {
+@@ -1387,7 +1390,7 @@ static int parse_perf_probe_point(char *arg, struct perf_probe_event *pev)
+ 				pev->target = build_id_cache__origname(tmp);
+ 				free(tmp);
+ 			} else
+-				pev->target = strdup(ptr + 1);
++				pev->target = strdup_esc(ptr + 1);
+ 			if (!pev->target)
+ 				return -ENOMEM;
+ 			*ptr = '\0';
+@@ -1421,13 +1424,14 @@ static int parse_perf_probe_point(char *arg, struct perf_probe_event *pev)
+ 	 *
+ 	 * Otherwise, we consider arg to be a function specification.
+ 	 */
+-	if (!strpbrk(arg, "+@%") && (ptr = strpbrk(arg, ";:")) != NULL) {
++	if (!strpbrk_esc(arg, "+@%")) {
++		ptr = strpbrk_esc(arg, ";:");
+ 		/* This is a file spec if it includes a '.' before ; or : */
+-		if (memchr(arg, '.', ptr - arg))
++		if (ptr && memchr(arg, '.', ptr - arg))
+ 			file_spec = true;
+ 	}
+ 
+-	ptr = strpbrk(arg, ";:+@%");
++	ptr = strpbrk_esc(arg, ";:+@%");
+ 	if (ptr) {
+ 		nc = *ptr;
+ 		*ptr++ = '\0';
+@@ -1436,7 +1440,7 @@ static int parse_perf_probe_point(char *arg, struct perf_probe_event *pev)
+ 	if (arg[0] == '\0')
+ 		tmp = NULL;
+ 	else {
+-		tmp = strdup(arg);
++		tmp = strdup_esc(arg);
+ 		if (tmp == NULL)
+ 			return -ENOMEM;
+ 	}
+@@ -1469,12 +1473,12 @@ static int parse_perf_probe_point(char *arg, struct perf_probe_event *pev)
+ 		arg = ptr;
+ 		c = nc;
+ 		if (c == ';') {	/* Lazy pattern must be the last part */
+-			pp->lazy_line = strdup(arg);
++			pp->lazy_line = strdup(arg); /* let leave escapes */
+ 			if (pp->lazy_line == NULL)
+ 				return -ENOMEM;
+ 			break;
+ 		}
+-		ptr = strpbrk(arg, ";:+@%");
++		ptr = strpbrk_esc(arg, ";:+@%");
+ 		if (ptr) {
+ 			nc = *ptr;
+ 			*ptr++ = '\0';
+@@ -1501,7 +1505,7 @@ static int parse_perf_probe_point(char *arg, struct perf_probe_event *pev)
+ 				semantic_error("SRC@SRC is not allowed.\n");
+ 				return -EINVAL;
+ 			}
+-			pp->file = strdup(arg);
++			pp->file = strdup_esc(arg);
+ 			if (pp->file == NULL)
+ 				return -ENOMEM;
+ 			break;
+@@ -2803,23 +2807,31 @@ static int find_probe_functions(struct map *map, char *name,
+ 	struct rb_node *tmp;
+ 	const char *norm, *ver;
+ 	char *buf = NULL;
++	bool cut_version = true;
+ 
+ 	if (map__load(map) < 0)
+ 		return 0;
+ 
++	/* If user gives a version, don't cut off the version from symbols */
++	if (strchr(name, '@'))
++		cut_version = false;
++
+ 	map__for_each_symbol(map, sym, tmp) {
+ 		norm = arch__normalize_symbol_name(sym->name);
+ 		if (!norm)
+ 			continue;
+ 
+-		/* We don't care about default symbol or not */
+-		ver = strchr(norm, '@');
+-		if (ver) {
+-			buf = strndup(norm, ver - norm);
+-			if (!buf)
+-				return -ENOMEM;
+-			norm = buf;
++		if (cut_version) {
++			/* We don't care about default symbol or not */
++			ver = strchr(norm, '@');
++			if (ver) {
++				buf = strndup(norm, ver - norm);
++				if (!buf)
++					return -ENOMEM;
++				norm = buf;
++			}
+ 		}
++
+ 		if (strglobmatch(norm, name)) {
+ 			found++;
+ 			if (syms && found < probe_conf.max_probes)
