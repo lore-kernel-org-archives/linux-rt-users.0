@@ -1,101 +1,140 @@
-From: bert schulze <spambemyguest@googlemail.com>
-Subject: 4.14-rt timer issues using PREEMPT_RT_FULL=y and NO_HZ_FULL_ALL=y
-Date: Tue, 12 Dec 2017 22:58:18 +0100
-Message-ID: <20171212215818.GA18168@a.fritz.box>
+From: Masami Hiramatsu <mhiramat@kernel.org>
+Subject: Re: [PATCH v4] perf-probe: Support escaped character in parser
+Date: Wed, 13 Dec 2017 22:40:24 +0900
+Message-ID: <20171213224024.f4d4e5dde81582f80b132be3@kernel.org>
+References: <151309111236.18107.5634753157435343410.stgit@devbox>
+        <20171212152724.GO3958@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f65.google.com ([74.125.82.65]:46435 "EHLO
-        mail-wm0-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1752564AbdLLV6b (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 12 Dec 2017 16:58:31 -0500
-Received: by mail-wm0-f65.google.com with SMTP id r78so1401513wme.5
-        for <linux-rt-users@vger.kernel.org>; Tue, 12 Dec 2017 13:58:31 -0800 (PST)
-Received: from a.fritz.box (i59F743C9.versanet.de. [89.247.67.201])
-        by smtp.gmail.com with ESMTPSA id 38sm283581wry.34.2017.12.12.13.58.28
-        for <linux-rt-users@vger.kernel.org>
-        (version=TLS1_2 cipher=ECDHE-RSA-CHACHA20-POLY1305 bits=256/256);
-        Tue, 12 Dec 2017 13:58:29 -0800 (PST)
-Content-Disposition: inline
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: bhargavb <bhargavaramudu@gmail.com>, linux-kernel@vger.kernel.org,
+        Paul Clarke <pc@us.ibm.com>,
+        Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>,
+        Thomas Richter <tmricht@linux.vnet.ibm.com>,
+        linux-rt-users@vger.kernel.org, linux-perf-users@vger.kernel.org
+To: Arnaldo Carvalho de Melo <acme@kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171212152724.GO3958@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi folks,
+On Tue, 12 Dec 2017 12:27:24 -0300
+Arnaldo Carvalho de Melo <acme@kernel.org> wrote:
 
-I'm having issues with v4.14-rt1 to v4.14.3-rt5 using NO_HZ_FULL_ALL=y
-with PREEMPT_RT_FULL=y and kernel.timer_migration enabled (which seems
-to be enabled by default).
+> Em Wed, Dec 13, 2017 at 12:05:12AM +0900, Masami Hiramatsu escreveu:
+> > Support the special characters escaped by '\' in parser.
+> > This allows user to specify versions directly like below.
+> > 
+> >   =====
+> >   # ./perf probe -x /lib64/libc-2.25.so malloc_get_state\\@GLIBC_2.2.5
+> >   Added new event:
+> >     probe_libc:malloc_get_state (on malloc_get_state@GLIBC_2.2.5 in /usr/lib64/libc-2.25.so)
+> > 
+> >   You can now use it in all perf tools, such as:
+> > 
+> > 	  perf record -e probe_libc:malloc_get_state -aR sleep 1
+> > 
+> >   =====
+> > 
+> > Or, you can use separators in source filename, e.g.
+> > 
+> >   =====
+> >   # ./perf probe -x /opt/test/a.out foo+bar.c:3
+> >   Semantic error :There is non-digit character in offset.
+> >     Error: Command Parse Error.
+> >   =====
+> > 
+> > Usually "+" in source file cause parser error, but
+> > 
+> >   =====
+> >   # ./perf probe -x /opt/test/a.out foo\\+bar.c:4
+> >   Added new event:
+> >     probe_a:main         (on @foo+bar.c:4 in /opt/test/a.out)
+> > 
+> >   You can now use it in all perf tools, such as:
+> > 
+> > 	  perf record -e probe_a:main -aR sleep 1
+> >   =====
+> > 
+> > escaped "\+" allows you to specify that.
+> 
+> <SNIP>
+>  
+> >  Changes in v4:
+> >   - Fix a build error (Thanks for Arnaldo!)
+> >     This time, I ensured that I ran "make build-test" and it passed.
+> 
+> Thanks, testing it I still have that artifact:
+> 
+>  ---------------------------------------
+> 
+> [root@jouet perf]# perf probe -x /lib64/libc-2.25.so malloc_get_state\\@GLIBC_2.2.5
+> Added new event:
+>   probe_libc:malloc_get_state (on malloc_get_state@GLIBC_2.2.5 in /usr/lib64/libc-2.25.so)
+> 
+> You can now use it in all perf tools, such as:
+> 
+> 	perf record -e probe_libc:malloc_get_state -aR sleep 1
+> 
+> [root@jouet perf]# perf probe -l
+> Failed to find debug information for address dd38eca7
+>   probe_libc:malloc_get_state (on 0xdd38eca7 in /usr/lib64/libc-2.25.so)
+> [root@jouet perf]#
+> 
+>  ---------------------------------------
+> 
+> I mean the "on 0xdd38eca7" part:
+> 
+> 
+> That failed to find debug information part:
+> 
+> [root@jouet perf]# perf probe -vv -l
+> Add filter: *
+> Opening /sys/kernel/debug/tracing//kprobe_events write=0
+> Opening /sys/kernel/debug/tracing//uprobe_events write=0
+> Parsing probe_events: p:probe_libc/malloc_get_state /usr/lib64/libc-2.25.so:0x00000000dd38eca7
+> Group:probe_libc Event:malloc_get_state probe:p
+> try to find information at dd38eca7 in /usr/lib64/libc-2.25.so
+> Open Debuginfo file: /usr/lib/debug/usr/lib64/libc-2.25.so.debug
+> Failed to find debug information for address dd38eca7
+> Failed to find corresponding probes from debuginfo.
+> symsrc__init: build id mismatch for /usr/lib/debug/usr/lib64/libc-2.25.so.debug.
+> Failed to find probe point from both of dwarf and map.
+>   probe_libc:malloc_get_state (on 0xdd38eca7 in /usr/lib64/libc-2.25.so)
+> [root@jouet perf]#
 
-Full config used: http://paste.debian.net/hidden/eb51a120/
+Ah, I got it. So symsrc__init checks debugfile to get symbols,
+but failed.
 
-The kernel either boots fine or may lock up on boot already (sysrq is
-working still and boot continues after some seconds upto minutes).
+> 
+> Ok, so build-id mismatch, lets see:
+> 
+> [root@jouet perf]# rpm -q glibc glibc-debuginfo
+> glibc-2.25-10.fc26.x86_64
+> glibc-2.25-10.fc26.i686
+> glibc-debuginfo-2.25-12.fc26.x86_64
+> [root@jouet perf]#
+> 
+> Ok, the debuginfo file is newer than the glibc installed, updating glibc
+> now...
+> 
+> We could have a more informative message in this case, right? I.e.
+> something like:
+> 
+> [root@jouet perf]# perf probe -l
+> There was a build-id mismatch while trying to resolve 0xdd38eca7, please
+> check your system's debuginfo files for mismatches, e.g. check the
+> versions for glibc and glibc-debuginfo.
+>   probe_libc:malloc_get_state (on 0xdd38eca7 in /usr/lib64/libc-2.25.so)
 
-If any hang occurred on boot dmesg will contain:
-root@deb9:~# dmesg | grep hrtimer
-[    1.507207] hrtimer: interrupt took 28740 ns
+OK, I'll try to check how debuginfo is searched in such environment.
 
-If the system booted up fine (-> no "interrupt took #### ns" message)
-it behaves as expected as long as timer migration was disabled.
+Thank you,
 
-root@deb9:~# echo 0 > /proc/sys/kernel/timer_migration 
-
-A simple sleep (or anything else using nanosleep() is sufficient to
-reproduce this.
-
-
-The expected behaviour with kernel.timer_migration = 0
-
-root@deb9:~# grep LOC: /proc/interrupts 
-LOC:     91968       801       775       590   Local timer interrupts
-
-root@deb9:~# for cpu in {0..3} ;do time taskset -ac $cpu sleep 0.1 ;done 
-real    0m0.104s  // CPU0 ok
-real    0m0.104s  // CPU1 ok
-real    0m0.104s  // CPU2 ok
-real    0m0.105s  // CPU3 ok
-
-root@deb9:~# grep LOC: /proc/interrupts 
-LOC:    101069       824       782       599   Local timer interrupts
-
-Roughly 10 seconds passed and the housekeeping cpu shows ~10.000 timer
-interrupts (which matches up with CONFIG_HZ=1000).
+> [root@jouet perf]#
+> 
+> - Arnaldo
 
 
-Doing the same with kernel.timer_migration = 1
-
-root@deb9:~# for cpu in {0..3} ;do time taskset -ac $cpu sleep 0.1 ;done 
-real    0m0.104s  // CPU0 ok
-[  125.282455] hrtimer: interrupt took 2230 ns  <-- 
-real    0m28.023s // CPU1 not ok
-real    0m9.129s  // CPU2 not ok
-real    0m10.000s // CPU3 not ok
-
-The hrtimer: "interrupt took #### ns" message appeared any sleep on the
-adaptive-tick cpu are completely off and …
-
-root@deb9:~# grep LOC: /proc/interrupts 
-LOC:  12544410       874       828       638   Local timer interrupts
-
-… timer interrupts on the housekeeping cpu advanced by ~12400000 after
-roughly 60 seconds even though the system is up for 2 minutes.
-
-root@deb9:~# uptime 
- 21:37:14 up 2 min,  1 user,  load average: 0.17, 0.15, 0.06
-
-
-To rule out my hardware I've successfully reproduced this on i7-6700,
-i7-3517u, i7-2xxxHQ hardware as well as in QEMU itself.
-
-Everything is back to normal by passing "nohz_full=" to the kernel to
-disable adaptive-tick cpus.
-
-I've furthermore tested v4.13.13-rt5 and WIP.timers branch of tip.git
-and both of them are working as expected.
-
-
-Thanks,
-Bert
+-- 
+Masami Hiramatsu <mhiramat@kernel.org>
