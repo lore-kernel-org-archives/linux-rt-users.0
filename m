@@ -1,33 +1,73 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT] time/hrtimer: disable that mode check
-Date: Wed, 13 Dec 2017 15:22:57 +0100
-Message-ID: <20171213142257.ok7xdag5p4wp4mfo@linutronix.de>
-References: <20171213135835.rwtcf7kj45a6x4tt@linutronix.de>
- <20171213141919.ouizpou5erye4fgz@hirez.programming.kicks-ass.net>
+From: Jesper Dangaard Brouer <brouer@redhat.com>
+Subject: Re: [PATCH RT] mm/slub: close possible memory-leak in
+ kmem_cache_alloc_bulk()
+Date: Wed, 13 Dec 2017 15:46:54 +0100
+Message-ID: <20171213154654.2971ef2a@redhat.com>
+References: <20171213140555.s4hzg3igtjfgaueh@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        tglx@linutronix.de, Steven Rostedt <rostedt@goodmis.org>
-To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:35718 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1753041AbdLMOW7 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 13 Dec 2017 09:22:59 -0500
-Content-Disposition: inline
-In-Reply-To: <20171213141919.ouizpou5erye4fgz@hirez.programming.kicks-ass.net>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+ tglx@linutronix.de, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt
+ <rostedt@goodmis.org>, Vladimir Davydov <vdavydov@virtuozzo.com>,
+ linux-mm@kvack.org, brouer@redhat.com, Rao Shoaib <rao.shoaib@oracle.com>,
+ "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20171213140555.s4hzg3igtjfgaueh@linutronix.de>
+Sender: owner-linux-mm@kvack.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 2017-12-13 15:19:19 [+0100], Peter Zijlstra wrote:
-> On Wed, Dec 13, 2017 at 02:58:35PM +0100, Sebastian Andrzej Siewior wrote:
-> > On -RT we push all timers by default into the soft-mode. The
-> > "start/update" code does not use that SOFT bit so we always see that
-> > warning.
+On Wed, 13 Dec 2017 15:05:55 +0100
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+
+> Under certain circumstances we could leak elements which were moved to
+> the local "to_free" list. The damage is limited since I can't find any
+> users here.
 > 
-> Not _all_ timers I hope? There's a few the scheduler and perf use that
-> really should stay in hardirq context.
-That is correct, a few ones remain in the hardirq context.
+> Cc: stable-rt@vger.kernel.org
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> ---
+> Jesper: There are no users of kmem_cache_alloc_bulk() and kfree_bulk().
+> Only kmem_cache_free_bulk() is used since it was introduced. Do you
+> think that it would make sense to remove those?
 
-Sebastian
+I would like to keep them.
+
+Rao Shoaib (Cc'ed) is/was working on a patchset for RCU-bulk-free that
+used the kfree_bulk() API.
+
+I plan to use kmem_cache_alloc_bulk() in the bpf-map "cpumap", for bulk
+allocating SKBs during dequeue of XDP frames.  (My original bulk alloc
+SKBs use-case during NAPI/softirq was never merged).
+
+
+>  mm/slub.c | 1 +
+>  1 file changed, 1 insertion(+)
+> 
+> diff --git a/mm/slub.c b/mm/slub.c
+> index ffd2fa0f415e..9053e929ce9d 100644
+> --- a/mm/slub.c
+> +++ b/mm/slub.c
+> @@ -3240,6 +3240,7 @@ int kmem_cache_alloc_bulk(struct kmem_cache *s, gfp_t flags, size_t size,
+>  	return i;
+>  error:
+>  	local_irq_enable();
+> +	free_delayed(&to_free);
+>  	slab_post_alloc_hook(s, flags, i, p);
+>  	__kmem_cache_free_bulk(s, i, p);
+>  	return 0;
+
+I've not seen free_delayed() before... and my cscope cannot find it...
+
+-- 
+Best regards,
+  Jesper Dangaard Brouer
+  MSc.CS, Principal Kernel Engineer at Red Hat
+  LinkedIn: http://www.linkedin.com/in/brouer
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
