@@ -1,7 +1,7 @@
 From: Arnaldo Carvalho de Melo <acme@kernel.org>
-Subject: [PATCH 24/34] perf probe: Find versioned symbols from map
-Date: Thu, 14 Dec 2017 14:42:37 -0300
-Message-ID: <20171214174247.16841-25-acme@kernel.org>
+Subject: [PATCH 23/34] perf probe: Add __return suffix for return events
+Date: Thu, 14 Dec 2017 14:42:36 -0300
+Message-ID: <20171214174247.16841-24-acme@kernel.org>
 References: <20171214174247.16841-1-acme@kernel.org>
 Cc: linux-kernel@vger.kernel.org, linux-perf-users@vger.kernel.org,
         Masami Hiramatsu <mhiramat@kernel.org>,
@@ -17,142 +17,94 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Masami Hiramatsu <mhiramat@kernel.org>
 
-Commit d80406453ad4 ("perf symbols: Allow user probes on versioned
-symbols") allows user to find default versioned symbols (with "@@") in
-map. However, it did not enable normal versioned symbol (with "@") for
-perf-probe.  E.g.
+Add __return suffix for function return events automatically. Without
+this, user have to give --force option and will see the number suffix
+for each event like "function_1", which is not easy to recognize.
+Instead, this adds __return suffix to it automatically.  E.g.
 
   =====
-  # ./perf probe -x /lib64/libc-2.25.so malloc_get_state
-  Failed to find symbol malloc_get_state in /usr/lib64/libc-2.25.so
-    Error: Failed to add events.
-  =====
-
-This solves above issue by improving perf-probe symbol search function,
-as below.
-
-  =====
-  # ./perf probe -x /lib64/libc-2.25.so malloc_get_state
-  Added new event:
-    probe_libc:malloc_get_state (on malloc_get_state in /usr/lib64/libc-2.25.so)
+  # ./perf probe -x /lib64/libc-2.25.so 'malloc*%return'
+  Added new events:
+    probe_libc:malloc_printerr__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_consolidate__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_check__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_hook_ini__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_trim__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_usable_size__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_stats__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_info__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:mallochook__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_get_state__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_set_state__return (on malloc*%return in /usr/lib64/libc-2.25.so)
 
   You can now use it in all perf tools, such as:
 
-	  perf record -e probe_libc:malloc_get_state -aR sleep 1
+	  perf record -e probe_libc:malloc_set_state__return -aR sleep 1
 
-  # ./perf probe -l
-    probe_libc:malloc_get_state (on malloc_get_state@GLIBC_2.2.5 in /usr/lib64/libc-2.25.so)
   =====
 
+Reported-by: Arnaldo Carvalho de Melo <acme@kernel.org>
 Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
-Reviewed-by: Thomas Richter <tmricht@linux.vnet.ibm.com>
 Acked-by: Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>
+Reviewed-by: Thomas Richter <tmricht@linux.vnet.ibm.com>
 Tested-by: Arnaldo Carvalho de Melo <acme@redhat.com>
 Cc: Paul Clarke <pc@us.ibm.com>
 Cc: bhargavb <bhargavaramudu@gmail.com>
 Cc: linux-rt-users@vger.kernel.org
-Link: http://lkml.kernel.org/r/151275049269.24652.1639103455496216255.stgit@devbox
+Link: http://lkml.kernel.org/r/151275046418.24652.6696011972866498489.stgit@devbox
 Signed-off-by: Arnaldo Carvalho de Melo <acme@redhat.com>
 ---
- tools/perf/arch/powerpc/util/sym-handling.c |  8 ++++++++
- tools/perf/util/probe-event.c               | 20 ++++++++++++++++++--
- tools/perf/util/symbol.c                    |  5 +++++
- tools/perf/util/symbol.h                    |  1 +
- 4 files changed, 32 insertions(+), 2 deletions(-)
+ tools/perf/Documentation/perf-probe.txt | 2 +-
+ tools/perf/util/probe-event.c           | 9 +++++----
+ 2 files changed, 6 insertions(+), 5 deletions(-)
 
-diff --git a/tools/perf/arch/powerpc/util/sym-handling.c b/tools/perf/arch/powerpc/util/sym-handling.c
-index 9c4e23d8c8ce..53d83d7e6a09 100644
---- a/tools/perf/arch/powerpc/util/sym-handling.c
-+++ b/tools/perf/arch/powerpc/util/sym-handling.c
-@@ -64,6 +64,14 @@ int arch__compare_symbol_names_n(const char *namea, const char *nameb,
+diff --git a/tools/perf/Documentation/perf-probe.txt b/tools/perf/Documentation/perf-probe.txt
+index d7e4869905f1..f96382692f42 100644
+--- a/tools/perf/Documentation/perf-probe.txt
++++ b/tools/perf/Documentation/perf-probe.txt
+@@ -170,7 +170,7 @@ Probe points are defined by following syntax.
+      or,
+      sdt_PROVIDER:SDTEVENT
  
- 	return strncmp(namea, nameb, n);
- }
-+
-+const char *arch__normalize_symbol_name(const char *name)
-+{
-+	/* Skip over initial dot */
-+	if (name && *name == '.')
-+		name++;
-+	return name;
-+}
- #endif
- 
- #if defined(_CALL_ELF) && _CALL_ELF == 2
+-'EVENT' specifies the name of new event, if omitted, it will be set the name of the probed function. You can also specify a group name by 'GROUP', if omitted, set 'probe' is used for kprobe and 'probe_<bin>' is used for uprobe.
++'EVENT' specifies the name of new event, if omitted, it will be set the name of the probed function, and for return probes, a "\_\_return" suffix is automatically added to the function name. You can also specify a group name by 'GROUP', if omitted, set 'probe' is used for kprobe and 'probe_<bin>' is used for uprobe.
+ Note that using existing group name can conflict with other events. Especially, using the group name reserved for kernel modules can hide embedded events in the
+ modules.
+ 'FUNC' specifies a probed function name, and it may have one of the following options; '+OFFS' is the offset from function entry address in bytes, ':RLN' is the relative-line number from function entry line, and '%return' means that it probes function return. And ';PTN' means lazy matching pattern (see LAZY MATCHING). Note that ';PTN' must be the end of the probe point definition.  In addition, '@SRC' specifies a source file which has that function.
 diff --git a/tools/perf/util/probe-event.c b/tools/perf/util/probe-event.c
-index a68141d360b0..0d6c66d51939 100644
+index 7e582547ac07..a68141d360b0 100644
 --- a/tools/perf/util/probe-event.c
 +++ b/tools/perf/util/probe-event.c
-@@ -2801,16 +2801,32 @@ static int find_probe_functions(struct map *map, char *name,
- 	int found = 0;
- 	struct symbol *sym;
- 	struct rb_node *tmp;
-+	const char *norm, *ver;
-+	char *buf = NULL;
- 
- 	if (map__load(map) < 0)
- 		return 0;
- 
- 	map__for_each_symbol(map, sym, tmp) {
--		if (strglobmatch(sym->name, name)) {
-+		norm = arch__normalize_symbol_name(sym->name);
-+		if (!norm)
-+			continue;
-+
-+		/* We don't care about default symbol or not */
-+		ver = strchr(norm, '@');
-+		if (ver) {
-+			buf = strndup(norm, ver - norm);
-+			if (!buf)
-+				return -ENOMEM;
-+			norm = buf;
-+		}
-+		if (strglobmatch(norm, name)) {
- 			found++;
- 			if (syms && found < probe_conf.max_probes)
- 				syms[found - 1] = sym;
- 		}
-+		if (buf)
-+			zfree(&buf);
- 	}
- 
- 	return found;
-@@ -2856,7 +2872,7 @@ static int find_probe_trace_events_from_map(struct perf_probe_event *pev,
- 	 * same name but different addresses, this lists all the symbols.
- 	 */
- 	num_matched_functions = find_probe_functions(map, pp->function, syms);
--	if (num_matched_functions == 0) {
-+	if (num_matched_functions <= 0) {
- 		pr_err("Failed to find symbol %s in %s\n", pp->function,
- 			pev->target ? : "kernel");
- 		ret = -ENOENT;
-diff --git a/tools/perf/util/symbol.c b/tools/perf/util/symbol.c
-index 1b67a8639dfe..cc065d4bfafc 100644
---- a/tools/perf/util/symbol.c
-+++ b/tools/perf/util/symbol.c
-@@ -94,6 +94,11 @@ static int prefix_underscores_count(const char *str)
- 	return tail - str;
+@@ -2573,7 +2573,8 @@ int show_perf_probe_events(struct strfilter *filter)
  }
  
-+const char * __weak arch__normalize_symbol_name(const char *name)
-+{
-+	return name;
-+}
-+
- int __weak arch__compare_symbol_names(const char *namea, const char *nameb)
+ static int get_new_event_name(char *buf, size_t len, const char *base,
+-			      struct strlist *namelist, bool allow_suffix)
++			      struct strlist *namelist, bool ret_event,
++			      bool allow_suffix)
  {
- 	return strcmp(namea, nameb);
-diff --git a/tools/perf/util/symbol.h b/tools/perf/util/symbol.h
-index a4f0075b4e5c..0563f33c1eb3 100644
---- a/tools/perf/util/symbol.h
-+++ b/tools/perf/util/symbol.h
-@@ -349,6 +349,7 @@ bool elf__needs_adjust_symbols(GElf_Ehdr ehdr);
- void arch__sym_update(struct symbol *s, GElf_Sym *sym);
- #endif
+ 	int i, ret;
+ 	char *p, *nbase;
+@@ -2590,7 +2591,7 @@ static int get_new_event_name(char *buf, size_t len, const char *base,
+ 		*p = '\0';
  
-+const char *arch__normalize_symbol_name(const char *name);
- #define SYMBOL_A 0
- #define SYMBOL_B 1
+ 	/* Try no suffix number */
+-	ret = e_snprintf(buf, len, "%s", nbase);
++	ret = e_snprintf(buf, len, "%s%s", nbase, ret_event ? "__return" : "");
+ 	if (ret < 0) {
+ 		pr_debug("snprintf() failed: %d\n", ret);
+ 		goto out;
+@@ -2689,8 +2690,8 @@ static int probe_trace_event__set_name(struct probe_trace_event *tev,
+ 		group = PERFPROBE_GROUP;
+ 
+ 	/* Get an unused new event name */
+-	ret = get_new_event_name(buf, 64, event,
+-				 namelist, allow_suffix);
++	ret = get_new_event_name(buf, 64, event, namelist,
++				 tev->point.retprobe, allow_suffix);
+ 	if (ret < 0)
+ 		return ret;
  
 -- 
 2.13.6
