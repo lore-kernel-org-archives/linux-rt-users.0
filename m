@@ -1,108 +1,33 @@
-From: tip-bot for Steven Rostedt <tipbot@zytor.com>
-Subject: [tip:sched/urgent] sched/rt: Do not pull from current CPU if only
- one CPU to pull
-Date: Fri, 15 Dec 2017 07:39:06 -0800
-Message-ID: <tip-f73c52a5bcd1710994e53fbccc378c42b97a06b6@git.kernel.org>
-References: <20171202130454.4cbbfe8d@vmware.local.home>
-Reply-To: bigeasy@linutronix.de, mingo@kernel.org,
-          linux-rt-users@vger.kernel.org, wagi@monom.org,
-          peterz@infradead.org, rostedt@goodmis.org,
-          torvalds@linux-foundation.org, linux-kernel@vger.kernel.org,
-          tglx@linutronix.de, hpa@zytor.com
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: 4.14-rt timer issues using PREEMPT_RT_FULL=y and NO_HZ_FULL_ALL=y
+Date: Fri, 15 Dec 2017 19:22:49 +0100
+Message-ID: <20171215182248.afzsdu2ng2kmlbvx@linutronix.de>
+References: <20171212215818.GA18168@a.fritz.box>
+ <20171213175339.udcexwcmscotipwc@linutronix.de>
+ <20171213191454.GA17027@a.fritz.box>
+ <20171214162503.wjyko5jnisjgaq5e@linutronix.de>
+ <20171214180150.GA18502@a.fritz.box>
+ <20171214182736.b5d33naqsuaw5sz2@linutronix.de>
+ <20171214205750.GA6801@a.fritz.box>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-Cc: wagi@monom.org, torvalds@linux-foundation.org,
-        peterz@infradead.org, rostedt@goodmis.org, tglx@linutronix.de,
-        linux-kernel@vger.kernel.org, hpa@zytor.com, mingo@kernel.org,
-        bigeasy@linutronix.de, linux-rt-users@vger.kernel.org
-To: linux-tip-commits@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171202130454.4cbbfe8d@vmware.local.home>
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users@vger.kernel.org
+To: bert schulze <spambemyguest@googlemail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:40886 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1755409AbdLOSWu (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 15 Dec 2017 13:22:50 -0500
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <20171214205750.GA6801@a.fritz.box>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Commit-ID:  f73c52a5bcd1710994e53fbccc378c42b97a06b6
-Gitweb:     https://git.kernel.org/tip/f73c52a5bcd1710994e53fbccc378c42b97a06b6
-Author:     Steven Rostedt <rostedt@goodmis.org>
-AuthorDate: Sat, 2 Dec 2017 13:04:54 -0500
-Committer:  Ingo Molnar <mingo@kernel.org>
-CommitDate: Fri, 15 Dec 2017 16:28:02 +0100
+On 2017-12-14 21:57:50 [+0100], bert schulze wrote:
+> Running disk I/O and cpu workloads alongside cyclictest, no freeze
+> observed at all so far.
 
-sched/rt: Do not pull from current CPU if only one CPU to pull
+good. Case closed then.
 
-Daniel Wagner reported a crash on the BeagleBone Black SoC.
-
-This is a single CPU architecture, and does not have a functional
-arch_send_call_function_single_ipi() implementation which can crash
-the kernel if that is called.
-
-As it only has one CPU, it shouldn't be called, but if the kernel is
-compiled for SMP, the push/pull RT scheduling logic now calls it for
-irq_work if the one CPU is overloaded, it can use that function to call
-itself and crash the kernel.
-
-Ideally, we should disable the SCHED_FEAT(RT_PUSH_IPI) if the system
-only has a single CPU. But SCHED_FEAT is a constant if sched debugging
-is turned off. Another fix can also be used, and this should also help
-with normal SMP machines. That is, do not initiate the pull code if
-there's only one RT overloaded CPU, and that CPU happens to be the
-current CPU that is scheduling in a lower priority task.
-
-Even on a system with many CPUs, if there's many RT tasks waiting to
-run on a single CPU, and that CPU schedules in another RT task of lower
-priority, it will initiate the PULL logic in case there's a higher
-priority RT task on another CPU that is waiting to run. But if there is
-no other CPU with waiting RT tasks, it will initiate the RT pull logic
-on itself (as it still has RT tasks waiting to run). This is a wasted
-effort.
-
-Not only does this help with SMP code where the current CPU is the only
-one with RT overloaded tasks, it should also solve the issue that
-Daniel encountered, because it will prevent the PULL logic from
-executing, as there's only one CPU on the system, and the check added
-here will cause it to exit the RT pull code.
-
-Reported-by: Daniel Wagner <wagi@monom.org>
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-Acked-by: Peter Zijlstra <peterz@infradead.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc: stable@vger.kernel.org
-Fixes: 4bdced5c9 ("sched/rt: Simplify the IPI based RT balancing logic")
-Link: http://lkml.kernel.org/r/20171202130454.4cbbfe8d@vmware.local.home
-Signed-off-by: Ingo Molnar <mingo@kernel.org>
----
- kernel/sched/rt.c | 8 +++++++-
- 1 file changed, 7 insertions(+), 1 deletion(-)
-
-diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
-index 4056c19..665ace2 100644
---- a/kernel/sched/rt.c
-+++ b/kernel/sched/rt.c
-@@ -2034,8 +2034,9 @@ static void pull_rt_task(struct rq *this_rq)
- 	bool resched = false;
- 	struct task_struct *p;
- 	struct rq *src_rq;
-+	int rt_overload_count = rt_overloaded(this_rq);
- 
--	if (likely(!rt_overloaded(this_rq)))
-+	if (likely(!rt_overload_count))
- 		return;
- 
- 	/*
-@@ -2044,6 +2045,11 @@ static void pull_rt_task(struct rq *this_rq)
- 	 */
- 	smp_rmb();
- 
-+	/* If we are the only overloaded CPU do nothing */
-+	if (rt_overload_count == 1 &&
-+	    cpumask_test_cpu(this_rq->cpu, this_rq->rd->rto_mask))
-+		return;
-+
- #ifdef HAVE_RT_PUSH_IPI
- 	if (sched_feat(RT_PUSH_IPI)) {
- 		tell_cpu_to_push(this_rq);
+Sebastian
