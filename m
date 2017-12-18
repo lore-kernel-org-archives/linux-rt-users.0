@@ -1,52 +1,125 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 4.9.68-rt60
-Date: Sat, 16 Dec 2017 14:56:14 -0500
-Message-ID: <20171216145614.287fc026@gandalf.local.home>
+From: <gregkh@linuxfoundation.org>
+Subject: Patch "sched/rt: Do not pull from current CPU if only one CPU to pull" has been added to the 4.14-stable tree
+Date: Mon, 18 Dec 2017 13:01:17 +0100
+Message-ID: <151359847714933@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Julia Cartwright <julia@ni.com>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ANSI_X3.4-1968
+Content-Transfer-Encoding: 8bit
+Cc: <stable@vger.kernel.org>, <stable-commits@vger.kernel.org>
+To: rostedt@goodmis.org, bigeasy@linutronix.de,
+        gregkh@linuxfoundation.org, linux-rt-users@vger.kernel.org,
+        mingo@kernel.org, peterz@infradead.org, tglx@linutronix.de,
+        torvalds@linux-foundation.org, wagi@monom.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.linuxfoundation.org ([140.211.169.12]:49426 "EHLO
+        mail.linuxfoundation.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S933230AbdLRMBu (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 18 Dec 2017 07:01:50 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 
-Dear RT Folks,
+This is a note to let you know that I've just added the patch titled
 
-I'm pleased to announce the 4.9.68-rt60 stable release.
+    sched/rt: Do not pull from current CPU if only one CPU to pull
 
+to the 4.14-stable tree which can be found at:
+    http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
 
-This release is just an update to the new stable 4.9.68 version
-and no RT specific changes have been made.
+The filename of the patch is:
+     sched-rt-do-not-pull-from-current-cpu-if-only-one-cpu-to-pull.patch
+and it can be found in the queue-4.14 subdirectory.
 
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.9-rt
-  Head SHA1: 0c37397b6b8708f3cae24a8faeed2d1c84760892
+If you, or anyone else, feels it should not be added to the stable tree,
+please let <stable@vger.kernel.org> know about it.
 
 
-Or to build 4.9.68-rt60 directly, the following patches should be applied:
+>From f73c52a5bcd1710994e53fbccc378c42b97a06b6 Mon Sep 17 00:00:00 2001
+From: Steven Rostedt <rostedt@goodmis.org>
+Date: Sat, 2 Dec 2017 13:04:54 -0500
+Subject: sched/rt: Do not pull from current CPU if only one CPU to pull
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.tar.xz
+From: Steven Rostedt <rostedt@goodmis.org>
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.9.68.xz
+commit f73c52a5bcd1710994e53fbccc378c42b97a06b6 upstream.
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.9/patch-4.9.68-rt60.patch.xz
+Daniel Wagner reported a crash on the BeagleBone Black SoC.
+
+This is a single CPU architecture, and does not have a functional
+arch_send_call_function_single_ipi() implementation which can crash
+the kernel if that is called.
+
+As it only has one CPU, it shouldn't be called, but if the kernel is
+compiled for SMP, the push/pull RT scheduling logic now calls it for
+irq_work if the one CPU is overloaded, it can use that function to call
+itself and crash the kernel.
+
+Ideally, we should disable the SCHED_FEAT(RT_PUSH_IPI) if the system
+only has a single CPU. But SCHED_FEAT is a constant if sched debugging
+is turned off. Another fix can also be used, and this should also help
+with normal SMP machines. That is, do not initiate the pull code if
+there's only one RT overloaded CPU, and that CPU happens to be the
+current CPU that is scheduling in a lower priority task.
+
+Even on a system with many CPUs, if there's many RT tasks waiting to
+run on a single CPU, and that CPU schedules in another RT task of lower
+priority, it will initiate the PULL logic in case there's a higher
+priority RT task on another CPU that is waiting to run. But if there is
+no other CPU with waiting RT tasks, it will initiate the RT pull logic
+on itself (as it still has RT tasks waiting to run). This is a wasted
+effort.
+
+Not only does this help with SMP code where the current CPU is the only
+one with RT overloaded tasks, it should also solve the issue that
+Daniel encountered, because it will prevent the PULL logic from
+executing, as there's only one CPU on the system, and the check added
+here will cause it to exit the RT pull code.
+
+Reported-by: Daniel Wagner <wagi@monom.org>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+Acked-by: Peter Zijlstra <peterz@infradead.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+Fixes: 4bdced5c9 ("sched/rt: Simplify the IPI based RT balancing logic")
+Link: http://lkml.kernel.org/r/20171202130454.4cbbfe8d@vmware.local.home
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+---
+ kernel/sched/rt.c |    8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+--- a/kernel/sched/rt.c
++++ b/kernel/sched/rt.c
+@@ -2034,8 +2034,9 @@ static void pull_rt_task(struct rq *this
+ 	bool resched = false;
+ 	struct task_struct *p;
+ 	struct rq *src_rq;
++	int rt_overload_count = rt_overloaded(this_rq);
+ 
+-	if (likely(!rt_overloaded(this_rq)))
++	if (likely(!rt_overload_count))
+ 		return;
+ 
+ 	/*
+@@ -2044,6 +2045,11 @@ static void pull_rt_task(struct rq *this
+ 	 */
+ 	smp_rmb();
+ 
++	/* If we are the only overloaded CPU do nothing */
++	if (rt_overload_count == 1 &&
++	    cpumask_test_cpu(this_rq->cpu, this_rq->rd->rto_mask))
++		return;
++
+ #ifdef HAVE_RT_PUSH_IPI
+ 	if (sched_feat(RT_PUSH_IPI)) {
+ 		tell_cpu_to_push(this_rq);
 
 
+Patches currently in stable-queue which might be from rostedt@goodmis.org are
 
-
-Enjoy,
-
--- Steve
+queue-4.14/sched-rt-do-not-pull-from-current-cpu-if-only-one-cpu-to-pull.patch
+queue-4.14/tracing-allocate-mask_str-buffer-dynamically.patch
