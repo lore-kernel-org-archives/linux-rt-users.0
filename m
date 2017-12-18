@@ -1,39 +1,28 @@
-From: <gregkh@linuxfoundation.org>
-Subject: Patch "sched/rt: Do not pull from current CPU if only one CPU to pull" has been added to the 4.4-stable tree
-Date: Mon, 18 Dec 2017 13:01:45 +0100
-Message-ID: <15135985053116@kroah.com>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: [PATCH 4.9 018/177] sched/rt: Do not pull from current CPU if only one CPU to pull
+Date: Mon, 18 Dec 2017 16:47:21 +0100
+Message-ID: <20171218152910.786163409@linuxfoundation.org>
+References: <20171218152909.823644066@linuxfoundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ANSI_X3.4-1968
-Content-Transfer-Encoding: 8bit
-Cc: <stable@vger.kernel.org>, <stable-commits@vger.kernel.org>
-To: rostedt@goodmis.org, bigeasy@linutronix.de,
-        gregkh@linuxfoundation.org, linux-rt-users@vger.kernel.org,
-        mingo@kernel.org, peterz@infradead.org, tglx@linutronix.de,
-        torvalds@linux-foundation.org, wagi@monom.org
-Return-path: <stable-owner@vger.kernel.org>
-Sender: stable-owner@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        stable@vger.kernel.org, Daniel Wagner <wagi@monom.org>,
+        "Steven Rostedt (VMware)" <rostedt@goodmis.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Ingo Molnar <mingo@kernel.org>
+To: linux-kernel@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171218152909.823644066@linuxfoundation.org>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+4.9-stable review patch.  If anyone has any objections, please let me know.
 
-This is a note to let you know that I've just added the patch titled
-
-    sched/rt: Do not pull from current CPU if only one CPU to pull
-
-to the 4.4-stable tree which can be found at:
-    http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
-
-The filename of the patch is:
-     sched-rt-do-not-pull-from-current-cpu-if-only-one-cpu-to-pull.patch
-and it can be found in the queue-4.4 subdirectory.
-
-If you, or anyone else, feels it should not be added to the stable tree,
-please let <stable@vger.kernel.org> know about it.
-
-
->From f73c52a5bcd1710994e53fbccc378c42b97a06b6 Mon Sep 17 00:00:00 2001
-From: Steven Rostedt <rostedt@goodmis.org>
-Date: Sat, 2 Dec 2017 13:04:54 -0500
-Subject: sched/rt: Do not pull from current CPU if only one CPU to pull
+------------------
 
 From: Steven Rostedt <rostedt@goodmis.org>
 
@@ -89,7 +78,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 
 --- a/kernel/sched/rt.c
 +++ b/kernel/sched/rt.c
-@@ -1960,8 +1960,9 @@ static void pull_rt_task(struct rq *this
+@@ -2022,8 +2022,9 @@ static void pull_rt_task(struct rq *this
  	bool resched = false;
  	struct task_struct *p;
  	struct rq *src_rq;
@@ -100,7 +89,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
  		return;
  
  	/*
-@@ -1970,6 +1971,11 @@ static void pull_rt_task(struct rq *this
+@@ -2032,6 +2033,11 @@ static void pull_rt_task(struct rq *this
  	 */
  	smp_rmb();
  
@@ -112,9 +101,3 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
  #ifdef HAVE_RT_PUSH_IPI
  	if (sched_feat(RT_PUSH_IPI)) {
  		tell_cpu_to_push(this_rq);
-
-
-Patches currently in stable-queue which might be from rostedt@goodmis.org are
-
-queue-4.4/sched-rt-do-not-pull-from-current-cpu-if-only-one-cpu-to-pull.patch
-queue-4.4/tracing-allocate-mask_str-buffer-dynamically.patch
