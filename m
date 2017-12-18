@@ -1,8 +1,8 @@
 From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: [PATCH 4.9 018/177] sched/rt: Do not pull from current CPU if only one CPU to pull
-Date: Mon, 18 Dec 2017 16:47:21 +0100
-Message-ID: <20171218152910.786163409@linuxfoundation.org>
-References: <20171218152909.823644066@linuxfoundation.org>
+Subject: [PATCH 4.14 033/178] sched/rt: Do not pull from current CPU if only one CPU to pull
+Date: Mon, 18 Dec 2017 16:47:49 +0100
+Message-ID: <20171218152921.929606553@linuxfoundation.org>
+References: <20171218152920.567991776@linuxfoundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
@@ -15,12 +15,12 @@ Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Ingo Molnar <mingo@kernel.org>
 To: linux-kernel@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171218152909.823644066@linuxfoundation.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <20171218152920.567991776@linuxfoundation.org>
+Sender: stable-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-4.9-stable review patch.  If anyone has any objections, please let me know.
+4.14-stable review patch.  If anyone has any objections, please let me know.
 
 ------------------
 
@@ -78,7 +78,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 
 --- a/kernel/sched/rt.c
 +++ b/kernel/sched/rt.c
-@@ -2022,8 +2022,9 @@ static void pull_rt_task(struct rq *this
+@@ -2034,8 +2034,9 @@ static void pull_rt_task(struct rq *this
  	bool resched = false;
  	struct task_struct *p;
  	struct rq *src_rq;
@@ -89,7 +89,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
  		return;
  
  	/*
-@@ -2032,6 +2033,11 @@ static void pull_rt_task(struct rq *this
+@@ -2044,6 +2045,11 @@ static void pull_rt_task(struct rq *this
  	 */
  	smp_rmb();
  
