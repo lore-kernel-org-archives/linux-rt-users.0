@@ -1,50 +1,47 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [v4.14-rt][report] arm: run: stress-ng --class os --all 0 -t 5m
-Date: Tue, 19 Dec 2017 11:43:00 -0500
-Message-ID: <20171219114300.2156577d@gandalf.local.home>
-References: <e421665a-8438-a1c0-4516-1b23dc758fc8@ti.com>
-        <20171219082739.d6oxzkjkdicfu3hq@linutronix.de>
-        <20171219100202.3017a79f@gandalf.local.home>
-        <20171219150418.vz6hkpf4uuangb4q@linutronix.de>
-        <20171219102839.367fa92d@gandalf.local.home>
-        <20171219153310.aq2rxw6umgyyku3p@linutronix.de>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH v3] sched/deadline: runtime overrun signal
+Date: Tue, 19 Dec 2017 20:32:32 +0100
+Message-ID: <20171219193232.gxkwvtz7f4gj7ffz@hirez.programming.kicks-ass.net>
+References: <1513077024-25461-1-git-send-email-claudio@evidence.eu.com>
+ <20171212115040.iffj4plu3iow7qoi@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Grygorii Strashko <grygorii.strashko@ti.com>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=us-ascii
+Cc: Claudio Scordino <claudio@evidence.eu.com>,
+        Juri Lelli <juri.lelli@gmail.com>,
+        Luca Abeni <luca.abeni@santannapisa.it>,
+        Tommaso Cucinotta <tommaso.cucinotta@sssup.it>,
+        Ingo Molnar <mingo@redhat.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Ingo Molnar <mingo@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171219153310.aq2rxw6umgyyku3p@linutronix.de>
+Content-Disposition: inline
+In-Reply-To: <20171212115040.iffj4plu3iow7qoi@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 19 Dec 2017 16:33:10 +0100
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
-
-> On 2017-12-19 10:28:39 [-0500], Steven Rostedt wrote:
-> > On Tue, 19 Dec 2017 16:04:18 +0100
-> > Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
-> >   
-> > > > 
-> > > > The above just seems wrong. local_irq_disable() should imply
-> > > > local_bh_disable(), as it doesn't let softirqs run either.    
-> > > 
-> > > Where does local_irq_disable() imply this?  
-> > 
-> > If it doesn't explicitly do so, it probably should. How can we have a
-> > softirq execute when irqs are disabled?  
+On Tue, Dec 12, 2017 at 12:50:40PM +0100, Ingo Molnar wrote:
 > 
-> There are not. With local_bh_disable() the softirq will run on
-> local_bh_enable(). Without it (and with or without local_irq_disable())
-> the softirq won't run but wakeup the ksoftirq thread. We can't do the
-> wake while holding the hrtimer lock. This is not RT specific.
+> * Claudio Scordino <claudio@evidence.eu.com> wrote:
 > 
+> > From: Juri Lelli <juri.lelli@gmail.com>
+> 
+> > -		~(SCHED_FLAG_RESET_ON_FORK | SCHED_FLAG_RECLAIM))
+> > +		~(SCHED_FLAG_RESET_ON_FORK | SCHED_FLAG_RECLAIM |
+> > +			SCHED_FLAG_DL_OVERRUN))
 
-Then there should be a comment there, as it is way too subtle. As
-local_bh_disable() is usually used only to prevent softirq from running
-on the current CPU during a critical period. Where, here we are using
-it to avoid a wake up of ksoftirqd.
+Introduced SCHED_FLAG_ALL for this
 
--- Steve
+> 
+> > +		if (dl_runtime_exceeded(dl_se) &&
+> > +				(dl_se->flags & SCHED_FLAG_DL_OVERRUN))
+
+realigned this one
+
+> 
+> > +		pr_info("runtime overrun: %s[%d]\n",
+> > +				tsk->comm, task_pid_nr(tsk));
+
+And simply took this out, you asked for it, no reason to tell world
+about getting one.
