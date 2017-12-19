@@ -1,47 +1,45 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [v4.9-rt][report] stress-ng: possible circular locking
- dependency detected
-Date: Tue, 19 Dec 2017 09:39:49 +0100
-Message-ID: <20171219083949.y5l6um5vohfait3g@linutronix.de>
-References: <e27d043e-9565-f9fd-0b00-8fa5e123f147@ti.com>
- <20171218200612.7dce6787@gandalf.local.home>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [v4.14-rt][report] arm: run: stress-ng --class os --all 0 -t 5m
+Date: Tue, 19 Dec 2017 10:02:02 -0500
+Message-ID: <20171219100202.3017a79f@gandalf.local.home>
+References: <e421665a-8438-a1c0-4516-1b23dc758fc8@ti.com>
+        <20171219082739.d6oxzkjkdicfu3hq@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Cc: Grygorii Strashko <grygorii.strashko@ti.com>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>, Sekhar Nori <nsekhar@ti.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+        LKML <linux-kernel@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20171218200612.7dce6787@gandalf.local.home>
+In-Reply-To: <20171219082739.d6oxzkjkdicfu3hq@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2017-12-18 20:06:12 [-0500], Steven Rostedt wrote:
-> On Mon, 18 Dec 2017 18:55:24 -0600
-> Grygorii Strashko <grygorii.strashko@ti.com> wrote:
-> 
-> > Hi All,
-> > 
-> > I've tried to run stress-ng on TI am57xx-evm (SMP, 2 cpu) and caught 2  "INFO: possible circular locking dependency detected"
-> > 
-> > Command 1 (log 1):
-> > ## stress-ng --class cpu --all 0 -t 5m &   stress-ng --class memory --all 0 --vm-bytes 90% -t 5m
-> > 
-> > Command 2 (log 2):
-> > ## stress-ng --class os --all 0 -t 5m
-> > 
-> > actually command 2 often stuck or crushes (Log3 - I've collected 3 different dumps)
-> > 
-> 
-> I hate to tell you but CPU hotplug is known to be broken on 4.9-rt and
-> earlier. Hopefully the v4.14-rt code with the redesigned hotplug work
-> fixes all this.
+On Tue, 19 Dec 2017 09:27:40 +0100
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 
-Yes, the v4.9-RT hotplug is not perfect. It works in general but can
-fall apart with some load or "just" deadlock during CPU-down.
-The v4.14-RT should not suffer from this and work.
+> diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+> index c2c344fda487..3971fa0c7194 100644
+> --- a/kernel/time/hrtimer.c
+> +++ b/kernel/time/hrtimer.c
+> @@ -1952,6 +1952,7 @@ int hrtimers_dead_cpu(unsigned int scpu)
+>  	BUG_ON(cpu_online(scpu));
+>  	tick_cancel_sched_timer(scpu);
+>  
+> +	local_bh_disable();
+>  	local_irq_disable();
+>  	old_base = &per_cpu(hrtimer_bases, scpu);
+>  	new_base = this_cpu_ptr(&hrtimer_bases);
+> @@ -1979,6 +1980,7 @@ int hrtimers_dead_cpu(unsigned int scpu)
+>  	/* Check, if we got expired work to do */
+>  	__hrtimer_peek_ahead_timers();
+>  	local_irq_enable();
+> +	local_bh_enable();
+>  	return 0;
+>  }
 
-> -- Steve
+The above just seems wrong. local_irq_disable() should imply
+local_bh_disable(), as it doesn't let softirqs run either.
 
-Sebastian
+-- Steve
