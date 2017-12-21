@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v8 23/37] tracing: Add hist trigger action hook
-Date: Thu, 21 Dec 2017 10:02:45 -0600
-Message-ID: <5362227cb0730fc8e97857208f16e16c832b257a.1513802700.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v8 34/37] tracing: Add a clock attribute for hist triggers
+Date: Thu, 21 Dec 2017 10:02:56 -0600
+Message-ID: <4b1e261acec67e79f98d4e132e77a8ad25f25905.1513802700.git.tom.zanussi@linux.intel.com>
 References: <cover.1513802700.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -12,224 +12,148 @@ Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         Tom Zanussi <tom.zanussi@linux.intel.com>
 To: rostedt@goodmis.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga07.intel.com ([134.134.136.100]:35824 "EHLO mga07.intel.com"
+Received: from mga09.intel.com ([134.134.136.24]:7472 "EHLO mga09.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1755002AbdLUQEv (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 21 Dec 2017 11:04:51 -0500
+        id S1755002AbdLUQFI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 21 Dec 2017 11:05:08 -0500
 In-Reply-To: <cover.1513802700.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1513802700.git.tom.zanussi@linux.intel.com>
 References: <cover.1513802700.git.tom.zanussi@linux.intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Add a hook for executing extra actions whenever a histogram entry is
-added or updated.
+The default clock if timestamps are used in a histogram is "global".
+If timestamps aren't used, the clock is irrelevant.
 
-The default 'action' when a hist entry is added to a histogram is to
-update the set of values associated with it.  Some applications may
-want to perform additional actions at that point, such as generate
-another event, or compare and save a maximum.
-
-Add a simple framework for doing that; specific actions will be
-implemented on top of it in later patches.
+Use the "clock=" param only if you want to override the default
+"global" clock for a histogram with timestamps.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+Signed-off-by: Rajvi Jingar <rajvi.jingar@intel.com>
 ---
- kernel/trace/trace_events_hist.c | 106 ++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 104 insertions(+), 2 deletions(-)
+ Documentation/trace/histogram.txt | 11 +++++++++-
+ kernel/trace/trace_events_hist.c  | 42 ++++++++++++++++++++++++++++++++++++---
+ 2 files changed, 49 insertions(+), 4 deletions(-)
 
+diff --git a/Documentation/trace/histogram.txt b/Documentation/trace/histogram.txt
+index df08882..6e05510 100644
+--- a/Documentation/trace/histogram.txt
++++ b/Documentation/trace/histogram.txt
+@@ -1671,7 +1671,16 @@ features have been added to the hist trigger support:
+     it is in units of nanoseconds; appending '.usecs' to a
+     common_timestamp field changes the units to microseconds.
+ 
+-These features are decribed in more detail in the following sections.
++A note on inter-event timestamps: If common_timestamp is used in a
++histogram, the trace buffer is automatically switched over to using
++absolute timestamps and the "global" trace clock, in order to avoid
++bogus timestamp differences with other clocks that aren't coherent
++across CPUs.  This can be overridden by specifying one of the other
++trace clocks instead, using the "clock=XXX" hist trigger attribute,
++where XXX is any of the clocks listed in the tracing/trace_clock
++pseudo-file.
++
++These features are described in more detail in the following sections.
+ 
+ 2.2.1 Histogram Variables
+ -------------------------
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index b0e6d87..20f5b81 100644
+index 2481cce..9a462a9 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -33,6 +33,7 @@ typedef u64 (*hist_field_fn_t) (struct hist_field *field,
- 
- #define HIST_FIELD_OPERANDS_MAX	2
- #define HIST_FIELDS_MAX		(TRACING_MAP_FIELDS_MAX + TRACING_MAP_VARS_MAX)
-+#define HIST_ACTIONS_MAX	8
- 
- enum field_op_id {
- 	FIELD_OP_NONE,
-@@ -242,6 +243,9 @@ struct hist_trigger_attrs {
- 	char		*assignment_str[TRACING_MAP_VARS_MAX];
- 	unsigned int	n_assignments;
- 
-+	char		*action_str[HIST_ACTIONS_MAX];
-+	unsigned int	n_actions;
-+
- 	struct var_defs	var_defs;
- };
- 
-@@ -261,6 +265,21 @@ struct hist_trigger_data {
- 	bool				remove;
- 	struct hist_field               *var_refs[TRACING_MAP_VARS_MAX];
- 	unsigned int			n_var_refs;
-+
-+	struct action_data		*actions[HIST_ACTIONS_MAX];
-+	unsigned int			n_actions;
-+};
-+
-+struct action_data;
-+
-+typedef void (*action_fn_t) (struct hist_trigger_data *hist_data,
-+			     struct tracing_map_elt *elt, void *rec,
-+			     struct ring_buffer_event *rbe,
-+			     struct action_data *data, u64 *var_ref_vals);
-+
-+struct action_data {
-+	action_fn_t		fn;
-+	unsigned int		var_ref_idx;
- };
- 
- static u64 hist_field_timestamp(struct hist_field *hist_field,
-@@ -764,6 +783,9 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
- 	for (i = 0; i < attrs->n_assignments; i++)
- 		kfree(attrs->assignment_str[i]);
- 
-+	for (i = 0; i < attrs->n_actions; i++)
-+		kfree(attrs->action_str[i]);
-+
- 	kfree(attrs->name);
+@@ -242,6 +242,7 @@ struct hist_trigger_attrs {
+ 	char		*vals_str;
+ 	char		*sort_key_str;
+ 	char		*name;
++	char		*clock;
+ 	bool		pause;
+ 	bool		cont;
+ 	bool		clear;
+@@ -1780,6 +1781,7 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
  	kfree(attrs->sort_key_str);
  	kfree(attrs->keys_str);
-@@ -771,6 +793,16 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
+ 	kfree(attrs->vals_str);
++	kfree(attrs->clock);
  	kfree(attrs);
  }
  
-+static int parse_action(char *str, struct hist_trigger_attrs *attrs)
-+{
-+	int ret = 0;
-+
-+	if (attrs->n_actions >= HIST_ACTIONS_MAX)
-+		return ret;
-+
-+	return ret;
-+}
-+
- static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
- {
- 	int ret = 0;
-@@ -854,8 +886,9 @@ static struct hist_trigger_attrs *parse_hist_trigger_attrs(char *trigger_str)
- 		else if (strcmp(str, "clear") == 0)
- 			attrs->clear = true;
- 		else {
--			ret = -EINVAL;
--			goto free;
-+			ret = parse_action(str, attrs);
-+			if (ret)
-+				goto free;
+@@ -1835,6 +1837,19 @@ static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
+ 			ret = -ENOMEM;
+ 			goto out;
  		}
++	} else if (strncmp(str, "clock=", strlen("clock=")) == 0) {
++		strsep(&str, "=");
++		if (!str) {
++			ret = -EINVAL;
++			goto out;
++		}
++
++		str = strstrip(str);
++		attrs->clock = kstrdup(str, GFP_KERNEL);
++		if (!attrs->clock) {
++			ret = -ENOMEM;
++			goto out;
++		}
+ 	} else if (strncmp(str, "size=", strlen("size=")) == 0) {
+ 		int map_bits = parse_map_size(str);
+ 
+@@ -1899,6 +1914,14 @@ static struct hist_trigger_attrs *parse_hist_trigger_attrs(char *trigger_str)
+ 		goto free;
  	}
  
-@@ -2043,11 +2076,55 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
++	if (!attrs->clock) {
++		attrs->clock = kstrdup("global", GFP_KERNEL);
++		if (!attrs->clock) {
++			ret = -ENOMEM;
++			goto free;
++		}
++	}
++
+ 	return attrs;
+  free:
+ 	destroy_hist_trigger_attrs(attrs);
+@@ -4923,6 +4946,8 @@ static int event_hist_trigger_print(struct seq_file *m,
+ 			seq_puts(m, ".descending");
+ 	}
+ 	seq_printf(m, ":size=%u", (1 << hist_data->map->map_bits));
++	if (hist_data->enable_timestamps)
++		seq_printf(m, ":clock=%s", hist_data->attrs->clock);
+ 
+ 	print_actions_spec(m, hist_data);
+ 
+@@ -5190,7 +5215,6 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
+ 		data->paused = true;
+ 
+ 	if (named_data) {
+-		destroy_hist_data(data->private_data);
+ 		data->private_data = named_data->private_data;
+ 		set_named_trigger_data(data, named_data);
+ 		data->ops = &event_hist_trigger_named_ops;
+@@ -5202,10 +5226,22 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
+ 			goto out;
+ 	}
+ 
+-	ret++;
++	if (hist_data->enable_timestamps) {
++		char *clock = hist_data->attrs->clock;
++
++		ret = tracing_set_clock(file->tr, hist_data->attrs->clock);
++		if (ret) {
++			hist_err("Couldn't set trace_clock: ", clock);
++			goto out;
++		}
+ 
+-	if (hist_data->enable_timestamps)
+ 		tracing_set_time_stamp_abs(file->tr, true);
++	}
++
++	if (named_data)
++		destroy_hist_data(hist_data);
++
++	ret++;
+  out:
  	return ret;
  }
- 
-+static void destroy_actions(struct hist_trigger_data *hist_data)
-+{
-+	unsigned int i;
-+
-+	for (i = 0; i < hist_data->n_actions; i++) {
-+		struct action_data *data = hist_data->actions[i];
-+
-+		kfree(data);
-+	}
-+}
-+
-+static int parse_actions(struct hist_trigger_data *hist_data)
-+{
-+	unsigned int i;
-+	int ret = 0;
-+	char *str;
-+
-+	for (i = 0; i < hist_data->attrs->n_actions; i++) {
-+		str = hist_data->attrs->action_str[i];
-+	}
-+
-+	return ret;
-+}
-+
-+static int create_actions(struct hist_trigger_data *hist_data,
-+			  struct trace_event_file *file)
-+{
-+	struct action_data *data;
-+	unsigned int i;
-+	int ret = 0;
-+
-+	for (i = 0; i < hist_data->attrs->n_actions; i++) {
-+		data = hist_data->actions[i];
-+	}
-+
-+	return ret;
-+}
-+
- static void destroy_hist_data(struct hist_trigger_data *hist_data)
- {
-+	if (!hist_data)
-+		return;
-+
- 	destroy_hist_trigger_attrs(hist_data->attrs);
- 	destroy_hist_fields(hist_data);
- 	tracing_map_destroy(hist_data->map);
-+
-+	destroy_actions(hist_data);
-+
- 	kfree(hist_data);
- }
- 
-@@ -2114,6 +2191,10 @@ static int create_tracing_map_fields(struct hist_trigger_data *hist_data)
- 	hist_data->remove = remove;
- 	hist_data->event_file = file;
- 
-+	ret = parse_actions(hist_data);
-+	if (ret)
-+		goto free;
-+
- 	ret = create_hist_fields(hist_data, file);
- 	if (ret)
- 		goto free;
-@@ -2205,6 +2286,20 @@ static inline void add_to_key(char *compound_key, void *key,
- 	memcpy(compound_key + key_field->offset, key, size);
- }
- 
-+static void
-+hist_trigger_actions(struct hist_trigger_data *hist_data,
-+		     struct tracing_map_elt *elt, void *rec,
-+		     struct ring_buffer_event *rbe, u64 *var_ref_vals)
-+{
-+	struct action_data *data;
-+	unsigned int i;
-+
-+	for (i = 0; i < hist_data->n_actions; i++) {
-+		data = hist_data->actions[i];
-+		data->fn(hist_data, elt, rec, rbe, data, var_ref_vals);
-+	}
-+}
-+
- static void event_hist_trigger(struct event_trigger_data *data, void *rec,
- 			       struct ring_buffer_event *rbe)
- {
-@@ -2260,6 +2355,9 @@ static void event_hist_trigger(struct event_trigger_data *data, void *rec,
- 		return;
- 
- 	hist_trigger_elt_update(hist_data, elt, rec, rbe, var_ref_vals);
-+
-+	if (resolve_var_refs(hist_data, key, var_ref_vals, true))
-+		hist_trigger_actions(hist_data, elt, rec, rbe, var_ref_vals);
- }
- 
- static void hist_trigger_stacktrace_print(struct seq_file *m,
-@@ -3044,6 +3142,10 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
- 	if (has_hist_vars(hist_data))
- 		save_hist_vars(hist_data);
- 
-+	ret = create_actions(hist_data, file);
-+	if (ret)
-+		goto out_unreg;
-+
- 	ret = tracing_map_init(hist_data->map);
- 	if (ret)
- 		goto out_unreg;
 -- 
 1.9.3
 
