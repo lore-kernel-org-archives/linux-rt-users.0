@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v8 07/37] tracing: Add timestamp_mode trace file
-Date: Thu, 21 Dec 2017 10:02:29 -0600
-Message-ID: <a9d94a587756ca6e76b62870db16af6df4bb499c.1513802700.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v8 10/37] tracing: Break out hist trigger assignment parsing
+Date: Thu, 21 Dec 2017 10:02:32 -0600
+Message-ID: <9262b44b0b35ce232151a5a3fff7be2418a40870.1513802700.git.tom.zanussi@linux.intel.com>
 References: <cover.1513802700.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -11,149 +11,117 @@ Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         Tom Zanussi <tom.zanussi@linux.intel.com>
 To: rostedt@goodmis.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga11.intel.com ([192.55.52.93]:5172 "EHLO mga11.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1752758AbdLUQDZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 21 Dec 2017 11:03:25 -0500
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1513802700.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1513802700.git.tom.zanussi@linux.intel.com>
 References: <cover.1513802700.git.tom.zanussi@linux.intel.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Add a new option flag indicating whether or not the ring buffer is in
-'absolute timestamp' mode.
-
-Currently this is only set/unset by hist triggers that make use of a
-common_timestamp.  As such, there's no reason to make this writeable
-for users - its purpose is only to allow users to determine
-unequivocally whether or not the ring buffer is in that mode (although
-absolute timestamps can coexist with the normal delta timestamps, when
-the ring buffer is in absolute mode, timestamps written while absolute
-mode is in effect take up more space in the buffer, and are not as
-efficient).
+This will make it easier to add variables, and makes the parsing code
+cleaner regardless.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+Signed-off-by: Rajvi Jingar <rajvi.jingar@intel.com>
 ---
- Documentation/trace/ftrace.txt | 24 +++++++++++++++++++++
- kernel/trace/trace.c           | 47 ++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 71 insertions(+)
+ kernel/trace/trace_events_hist.c | 72 ++++++++++++++++++++++++++++------------
+ 1 file changed, 51 insertions(+), 21 deletions(-)
 
-diff --git a/Documentation/trace/ftrace.txt b/Documentation/trace/ftrace.txt
-index d4601df..54213e5 100644
---- a/Documentation/trace/ftrace.txt
-+++ b/Documentation/trace/ftrace.txt
-@@ -539,6 +539,30 @@ of ftrace. Here is a list of some of the key files:
- 
- 	See events.txt for more information.
- 
-+  timestamp_mode:
-+
-+	Certain tracers may change the timestamp mode used when
-+	logging trace events into the event buffer.  Events with
-+	different modes can coexist within a buffer but the mode in
-+	effect when an event is logged determines which timestamp mode
-+	is used for that event.  The default timestamp mode is
-+	'delta'.
-+
-+	Usual timestamp modes for tracing:
-+
-+	  # cat timestamp_mode
-+	  [delta] absolute
-+
-+	  The timestamp mode with the square brackets around it is the
-+	  one in effect.
-+
-+	  delta: Default timestamp mode - timestamp is a delta against
-+	         a per-buffer timestamp.
-+
-+	  absolute: The timestamp is a full timestamp, not a delta
-+                 against some other value.  As such it takes up more
-+                 space and is less efficient.
-+
-   hwlat_detector:
- 
- 	Directory for the Hardware Latency Detector.
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index 0dc4b81..f5001e6 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -4520,6 +4520,9 @@ static int tracing_trace_options_open(struct inode *inode, struct file *file)
- #ifdef CONFIG_X86_64
- 	"     x86-tsc:   TSC cycle counter\n"
- #endif
-+	"\n  timestamp_mode\t-view the mode used to timestamp events\n"
-+	"       delta:   Delta difference against a buffer-wide timestamp\n"
-+	"    absolute:   Absolute (standalone) timestamp\n"
- 	"\n  trace_marker\t\t- Writes into this file writes into the kernel buffer\n"
- 	"\n  trace_marker_raw\t\t- Writes into this file writes binary data into the kernel buffer\n"
- 	"  tracing_cpumask\t- Limit which CPUs to trace\n"
-@@ -6287,6 +6290,40 @@ static int tracing_clock_open(struct inode *inode, struct file *file)
- 	return ret;
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 37f5ace..e4368bb 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -251,6 +251,51 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
+ 	kfree(attrs);
  }
  
-+static int tracing_time_stamp_mode_show(struct seq_file *m, void *v)
++static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
 +{
-+	struct trace_array *tr = m->private;
++	int ret = 0;
 +
-+	mutex_lock(&trace_types_lock);
++	if ((strncmp(str, "key=", strlen("key=")) == 0) ||
++	    (strncmp(str, "keys=", strlen("keys=")) == 0)) {
++		attrs->keys_str = kstrdup(str, GFP_KERNEL);
++		if (!attrs->keys_str) {
++			ret = -ENOMEM;
++			goto out;
++		}
++	} else if ((strncmp(str, "val=", strlen("val=")) == 0) ||
++		 (strncmp(str, "vals=", strlen("vals=")) == 0) ||
++		 (strncmp(str, "values=", strlen("values=")) == 0)) {
++		attrs->vals_str = kstrdup(str, GFP_KERNEL);
++		if (!attrs->vals_str) {
++			ret = -ENOMEM;
++			goto out;
++		}
++	} else if (strncmp(str, "sort=", strlen("sort=")) == 0) {
++		attrs->sort_key_str = kstrdup(str, GFP_KERNEL);
++		if (!attrs->sort_key_str) {
++			ret = -ENOMEM;
++			goto out;
++		}
++	} else if (strncmp(str, "name=", strlen("name=")) == 0) {
++		attrs->name = kstrdup(str, GFP_KERNEL);
++		if (!attrs->name) {
++			ret = -ENOMEM;
++			goto out;
++		}
++	} else if (strncmp(str, "size=", strlen("size=")) == 0) {
++		int map_bits = parse_map_size(str);
 +
-+	if (ring_buffer_time_stamp_abs(tr->trace_buffer.buffer))
-+		seq_puts(m, "delta [absolute]\n");
-+	else
-+		seq_puts(m, "[delta] absolute\n");
-+
-+	mutex_unlock(&trace_types_lock);
-+
-+	return 0;
-+}
-+
-+static int tracing_time_stamp_mode_open(struct inode *inode, struct file *file)
-+{
-+	struct trace_array *tr = inode->i_private;
-+	int ret;
-+
-+	if (tracing_disabled)
-+		return -ENODEV;
-+
-+	if (trace_array_get(tr))
-+		return -ENODEV;
-+
-+	ret = single_open(file, tracing_time_stamp_mode_show, inode->i_private);
-+	if (ret < 0)
-+		trace_array_put(tr);
-+
++		if (map_bits < 0) {
++			ret = map_bits;
++			goto out;
++		}
++		attrs->map_bits = map_bits;
++	} else
++		ret = -EINVAL;
++ out:
 +	return ret;
 +}
 +
- int tracing_set_time_stamp_abs(struct trace_array *tr, bool abs)
+ static struct hist_trigger_attrs *parse_hist_trigger_attrs(char *trigger_str)
  {
- 	int ret = 0;
-@@ -6565,6 +6602,13 @@ static int snapshot_raw_open(struct inode *inode, struct file *filp)
- 	.write		= tracing_clock_write,
- };
+ 	struct hist_trigger_attrs *attrs;
+@@ -263,33 +308,18 @@ static struct hist_trigger_attrs *parse_hist_trigger_attrs(char *trigger_str)
+ 	while (trigger_str) {
+ 		char *str = strsep(&trigger_str, ":");
  
-+static const struct file_operations trace_time_stamp_mode_fops = {
-+	.open		= tracing_time_stamp_mode_open,
-+	.read		= seq_read,
-+	.llseek		= seq_lseek,
-+	.release	= tracing_single_release_tr,
-+};
-+
- #ifdef CONFIG_TRACER_SNAPSHOT
- static const struct file_operations snapshot_fops = {
- 	.open		= tracing_snapshot_open,
-@@ -7892,6 +7936,9 @@ static __init void create_trace_instances(struct dentry *d_tracer)
- 	trace_create_file("tracing_on", 0644, d_tracer,
- 			  tr, &rb_simple_fops);
- 
-+	trace_create_file("timestamp_mode", 0444, d_tracer, tr,
-+			  &trace_time_stamp_mode_fops);
-+
- 	create_trace_options_dir(tr);
- 
- #if defined(CONFIG_TRACER_MAX_TRACE) || defined(CONFIG_HWLAT_TRACER)
+-		if ((strncmp(str, "key=", strlen("key=")) == 0) ||
+-		    (strncmp(str, "keys=", strlen("keys=")) == 0))
+-			attrs->keys_str = kstrdup(str, GFP_KERNEL);
+-		else if ((strncmp(str, "val=", strlen("val=")) == 0) ||
+-			 (strncmp(str, "vals=", strlen("vals=")) == 0) ||
+-			 (strncmp(str, "values=", strlen("values=")) == 0))
+-			attrs->vals_str = kstrdup(str, GFP_KERNEL);
+-		else if (strncmp(str, "sort=", strlen("sort=")) == 0)
+-			attrs->sort_key_str = kstrdup(str, GFP_KERNEL);
+-		else if (strncmp(str, "name=", strlen("name=")) == 0)
+-			attrs->name = kstrdup(str, GFP_KERNEL);
+-		else if (strcmp(str, "pause") == 0)
++		if (strchr(str, '=')) {
++			ret = parse_assignment(str, attrs);
++			if (ret)
++				goto free;
++		} else if (strcmp(str, "pause") == 0)
+ 			attrs->pause = true;
+ 		else if ((strcmp(str, "cont") == 0) ||
+ 			 (strcmp(str, "continue") == 0))
+ 			attrs->cont = true;
+ 		else if (strcmp(str, "clear") == 0)
+ 			attrs->clear = true;
+-		else if (strncmp(str, "size=", strlen("size=")) == 0) {
+-			int map_bits = parse_map_size(str);
+-
+-			if (map_bits < 0) {
+-				ret = map_bits;
+-				goto free;
+-			}
+-			attrs->map_bits = map_bits;
+-		} else {
++		else {
+ 			ret = -EINVAL;
+ 			goto free;
+ 		}
 -- 
 1.9.3
-
