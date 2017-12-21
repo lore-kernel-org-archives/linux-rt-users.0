@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v8 35/37] tracing: Increase trace_recursive_lock() limit for synthetic events
-Date: Thu, 21 Dec 2017 10:02:57 -0600
-Message-ID: <57209368fe27e8b76e429d12c9e6c303e8c7bcb8.1513802700.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v8 29/37] tracing: Add cpu field for hist triggers
+Date: Thu, 21 Dec 2017 10:02:51 -0600
+Message-ID: <908b402d580ad72f73c130af7347361730b8d256.1513802700.git.tom.zanussi@linux.intel.com>
 References: <cover.1513802700.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,44 +18,114 @@ References: <cover.1513802700.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Synthetic event generation needs to happen while the current event is
-still in progress, so add 1 to the trace_recursive_lock() recursion
-limit to account for that.
-
-Because we also want to allow for the possibility of a synthetic event
-being generated from another synthetic event, add an additional
-increment for that as well.
+A common key to use in a histogram is the cpuid - add a new cpu
+'synthetic' field named 'cpu' for that purpose.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/ring_buffer.c | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+ Documentation/trace/histogram.txt | 15 +++++++++++++++
+ kernel/trace/trace_events_hist.c  | 28 +++++++++++++++++++++++++++-
+ 2 files changed, 42 insertions(+), 1 deletion(-)
 
-diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
-index dd35424..2375c5c 100644
---- a/kernel/trace/ring_buffer.c
-+++ b/kernel/trace/ring_buffer.c
-@@ -2581,16 +2581,16 @@ static void rb_commit(struct ring_buffer_per_cpu *cpu_buffer,
-  *  IRQ context
-  *  NMI context
-  *
-- * If for some reason the ring buffer starts to recurse, we
-- * only allow that to happen at most 4 times (one for each
-- * context). If it happens 5 times, then we consider this a
-- * recusive loop and do not let it go further.
-+ * If for some reason the ring buffer starts to recurse, we only allow
-+ * that to happen at most 6 times (one for each context, plus possibly
-+ * two levels of synthetic event generation). If it happens 7 times,
-+ * then we consider this a recusive loop and do not let it go further.
-  */
+diff --git a/Documentation/trace/histogram.txt b/Documentation/trace/histogram.txt
+index 25c9473..be612ca 100644
+--- a/Documentation/trace/histogram.txt
++++ b/Documentation/trace/histogram.txt
+@@ -172,6 +172,21 @@
+   The examples below provide a more concrete illustration of the
+   concepts and typical usage patterns discussed above.
  
- static __always_inline int
- trace_recursive_lock(struct ring_buffer_per_cpu *cpu_buffer)
- {
--	if (cpu_buffer->current_context >= 4)
-+	if (cpu_buffer->current_context >= 6)
- 		return 1;
++  'special' event fields
++  ------------------------
++
++  There are a number of 'special event fields' available for use as
++  keys or values in a hist trigger.  These look like and behave as if
++  they were actual event fields, but aren't really part of the event's
++  field definition or format file.  They are however available for any
++  event, and can be used anywhere an actual event field could be.
++  They are:
++
++    common_timestamp       u64 - timestamp (from ring buffer) associated
++                                 with the event, in nanoseconds.  May be
++				 modified by .usecs to have timestamps
++				 interpreted as microseconds.
++    cpu                    int - the cpu on which the event occurred.
  
- 	cpu_buffer->current_context++;
+ 6.2 'hist' trigger examples
+ ---------------------------
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 7d25954..8fd1d8b 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -227,6 +227,7 @@ enum hist_field_flags {
+ 	HIST_FIELD_FL_VAR		= 1 << 12,
+ 	HIST_FIELD_FL_EXPR		= 1 << 13,
+ 	HIST_FIELD_FL_VAR_REF		= 1 << 14,
++	HIST_FIELD_FL_CPU		= 1 << 15,
+ };
+ 
+ struct var_defs {
+@@ -1168,6 +1169,16 @@ static u64 hist_field_timestamp(struct hist_field *hist_field,
+ 	return ts;
+ }
+ 
++static u64 hist_field_cpu(struct hist_field *hist_field,
++			  struct tracing_map_elt *elt,
++			  struct ring_buffer_event *rbe,
++			  void *event)
++{
++	int cpu = smp_processor_id();
++
++	return cpu;
++}
++
+ static struct hist_field *
+ check_field_for_var_ref(struct hist_field *hist_field,
+ 			struct hist_trigger_data *var_data,
+@@ -1606,6 +1617,8 @@ static const char *hist_field_name(struct hist_field *field,
+ 		field_name = hist_field_name(field->operands[0], ++level);
+ 	else if (field->flags & HIST_FIELD_FL_TIMESTAMP)
+ 		field_name = "common_timestamp";
++	else if (field->flags & HIST_FIELD_FL_CPU)
++		field_name = "cpu";
+ 	else if (field->flags & HIST_FIELD_FL_EXPR ||
+ 		 field->flags & HIST_FIELD_FL_VAR_REF) {
+ 		if (field->system) {
+@@ -2111,6 +2124,15 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
+ 		goto out;
+ 	}
+ 
++	if (flags & HIST_FIELD_FL_CPU) {
++		hist_field->fn = hist_field_cpu;
++		hist_field->size = sizeof(int);
++		hist_field->type = kstrdup("unsigned int", GFP_KERNEL);
++		if (!hist_field->type)
++			goto free;
++		goto out;
++	}
++
+ 	if (WARN_ON_ONCE(!field))
+ 		goto out;
+ 
+@@ -2345,7 +2367,9 @@ static struct hist_field *parse_var_ref(struct hist_trigger_data *hist_data,
+ 		hist_data->enable_timestamps = true;
+ 		if (*flags & HIST_FIELD_FL_TIMESTAMP_USECS)
+ 			hist_data->attrs->ts_in_usecs = true;
+-	} else {
++	} else if (strcmp(field_name, "cpu") == 0)
++		*flags |= HIST_FIELD_FL_CPU;
++	else {
+ 		field = trace_find_event_field(file->event_call, field_name);
+ 		if (!field || !field->size) {
+ 			field = ERR_PTR(-EINVAL);
+@@ -4619,6 +4643,8 @@ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
+ 
+ 	if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP)
+ 		seq_puts(m, "common_timestamp");
++	else if (hist_field->flags & HIST_FIELD_FL_CPU)
++		seq_puts(m, "cpu");
+ 	else if (field_name) {
+ 		if (hist_field->flags & HIST_FIELD_FL_VAR_REF)
+ 			seq_putc(m, '$');
 -- 
 1.9.3
