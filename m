@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v8 33/37] tracing: Make tracing_set_clock() non-static
-Date: Thu, 21 Dec 2017 10:02:55 -0600
-Message-ID: <7e1220738f8a35a319577b2daa1dc6d2193a0dc9.1513802700.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v8 35/37] tracing: Increase trace_recursive_lock() limit for synthetic events
+Date: Thu, 21 Dec 2017 10:02:57 -0600
+Message-ID: <57209368fe27e8b76e429d12c9e6c303e8c7bcb8.1513802700.git.tom.zanussi@linux.intel.com>
 References: <cover.1513802700.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -11,55 +11,51 @@ Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         Tom Zanussi <tom.zanussi@linux.intel.com>
 To: rostedt@goodmis.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga11.intel.com ([192.55.52.93]:5304 "EHLO mga11.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1752118AbdLUQFG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 21 Dec 2017 11:05:06 -0500
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1513802700.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1513802700.git.tom.zanussi@linux.intel.com>
 References: <cover.1513802700.git.tom.zanussi@linux.intel.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Allow tracing code outside of trace.c to access tracing_set_clock().
+Synthetic event generation needs to happen while the current event is
+still in progress, so add 1 to the trace_recursive_lock() recursion
+limit to account for that.
 
-Some applications may require a particular clock in order to function
-properly, such as latency calculations.
-
-Also, add an accessor returning the current clock string.
+Because we also want to allow for the possibility of a synthetic event
+being generated from another synthetic event, add an additional
+increment for that as well.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace.c | 2 +-
- kernel/trace/trace.h | 1 +
- 2 files changed, 2 insertions(+), 1 deletion(-)
+ kernel/trace/ring_buffer.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index b60d3a7..02c633c 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -6219,7 +6219,7 @@ static int tracing_clock_show(struct seq_file *m, void *v)
- 	return 0;
- }
+diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
+index dd35424..2375c5c 100644
+--- a/kernel/trace/ring_buffer.c
++++ b/kernel/trace/ring_buffer.c
+@@ -2581,16 +2581,16 @@ static void rb_commit(struct ring_buffer_per_cpu *cpu_buffer,
+  *  IRQ context
+  *  NMI context
+  *
+- * If for some reason the ring buffer starts to recurse, we
+- * only allow that to happen at most 4 times (one for each
+- * context). If it happens 5 times, then we consider this a
+- * recusive loop and do not let it go further.
++ * If for some reason the ring buffer starts to recurse, we only allow
++ * that to happen at most 6 times (one for each context, plus possibly
++ * two levels of synthetic event generation). If it happens 7 times,
++ * then we consider this a recusive loop and do not let it go further.
+  */
  
--static int tracing_set_clock(struct trace_array *tr, const char *clockstr)
-+int tracing_set_clock(struct trace_array *tr, const char *clockstr)
+ static __always_inline int
+ trace_recursive_lock(struct ring_buffer_per_cpu *cpu_buffer)
  {
- 	int i;
+-	if (cpu_buffer->current_context >= 4)
++	if (cpu_buffer->current_context >= 6)
+ 		return 1;
  
-diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
-index 99b7ee7..9de3e2a 100644
---- a/kernel/trace/trace.h
-+++ b/kernel/trace/trace.h
-@@ -289,6 +289,7 @@ enum {
- extern void trace_array_put(struct trace_array *tr);
- 
- extern int tracing_set_time_stamp_abs(struct trace_array *tr, bool abs);
-+extern int tracing_set_clock(struct trace_array *tr, const char *clockstr);
- 
- extern bool trace_clock_in_ns(struct trace_array *tr);
- 
+ 	cpu_buffer->current_context++;
 -- 
 1.9.3
-
