@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v8 14/37] tracing: Add usecs modifier for hist trigger timestamps
-Date: Thu, 21 Dec 2017 10:02:36 -0600
-Message-ID: <c2f6d6c9a893c293c29e28ee826d55268e6cb905.1513802700.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v8 17/37] tracing: Move get_hist_field_flags()
+Date: Thu, 21 Dec 2017 10:02:39 -0600
+Message-ID: <8d3ef539ae44e0c2eac09f1af0478e372104b828.1513802700.git.tom.zanussi@linux.intel.com>
 References: <cover.1513802700.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,161 +18,75 @@ References: <cover.1513802700.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Appending .usecs onto a common_timestamp field will cause the
-timestamp value to be in microseconds instead of the default
-nanoseconds.  A typical latency histogram using usecs would look like
-this:
-
-   # echo 'hist:keys=pid,prio:ts0=common_timestamp.usecs ...
-   # echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0 ...
-
-This also adds an external trace_clock_in_ns() to trace.c for the
-timestamp conversion.
+Move get_hist_field_flags() to make it more easily accessible for new
+code (and keep the move separate from new functionality).
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- Documentation/trace/histogram.txt |  1 +
- kernel/trace/trace.c              | 13 +++++++++++--
- kernel/trace/trace.h              |  2 ++
- kernel/trace/trace_events_hist.c  | 28 ++++++++++++++++++++++------
- 4 files changed, 36 insertions(+), 8 deletions(-)
+ kernel/trace/trace_events_hist.c | 44 ++++++++++++++++++++--------------------
+ 1 file changed, 22 insertions(+), 22 deletions(-)
 
-diff --git a/Documentation/trace/histogram.txt b/Documentation/trace/histogram.txt
-index a4143f04a..25c9473 100644
---- a/Documentation/trace/histogram.txt
-+++ b/Documentation/trace/histogram.txt
-@@ -74,6 +74,7 @@
- 	.syscall    display a syscall id as a system call name
- 	.execname   display a common_pid as a program name
- 	.log2       display log2 value rather than raw number
-+	.usecs      display a common_timestamp in microseconds
- 
-   Note that in general the semantics of a given field aren't
-   interpreted when applying a modifier to it, but there are some
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index f5001e6..f72ecf3 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -1170,6 +1170,14 @@ unsigned long nsecs_to_usecs(unsigned long nsecs)
- 	ARCH_TRACE_CLOCKS
- };
- 
-+bool trace_clock_in_ns(struct trace_array *tr)
-+{
-+	if (trace_clocks[tr->clock_id].in_ns)
-+		return true;
-+
-+	return false;
-+}
-+
- /*
-  * trace_parser_get_init - gets the buffer for trace parser
-  */
-@@ -4699,8 +4707,9 @@ static int tracing_trace_options_open(struct inode *inode, struct file *file)
- 	"\t            .sym        display an address as a symbol\n"
- 	"\t            .sym-offset display an address as a symbol and offset\n"
- 	"\t            .execname   display a common_pid as a program name\n"
--	"\t            .syscall    display a syscall id as a syscall name\n\n"
--	"\t            .log2       display log2 value rather than raw number\n\n"
-+	"\t            .syscall    display a syscall id as a syscall name\n"
-+	"\t            .log2       display log2 value rather than raw number\n"
-+	"\t            .usecs      display a common_timestamp in microseconds\n\n"
- 	"\t    The 'pause' parameter can be used to pause an existing hist\n"
- 	"\t    trigger or to start a hist trigger but not log any events\n"
- 	"\t    until told to do so.  'continue' can be used to start or\n"
-diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
-index 99060f7..89771b4 100644
---- a/kernel/trace/trace.h
-+++ b/kernel/trace/trace.h
-@@ -289,6 +289,8 @@ enum {
- 
- extern int tracing_set_time_stamp_abs(struct trace_array *tr, bool abs);
- 
-+extern bool trace_clock_in_ns(struct trace_array *tr);
-+
- /*
-  * The global tracer (top) should be the first trace array added,
-  * but we check the flag anyway.
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 77ebe6b..7f5f0b8 100644
+index ba32626..a81a709 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -90,12 +90,6 @@ static u64 hist_field_log2(struct hist_field *hist_field, void *event,
- 	return (u64) ilog2(roundup_pow_of_two(val));
- }
- 
--static u64 hist_field_timestamp(struct hist_field *hist_field, void *event,
--				struct ring_buffer_event *rbe)
--{
--	return ring_buffer_event_time_stamp(rbe);
--}
--
- #define DEFINE_HIST_FIELD_FN(type)					\
- 	static u64 hist_field_##type(struct hist_field *hist_field,	\
- 				     void *event,			\
-@@ -143,6 +137,7 @@ enum hist_field_flags {
- 	HIST_FIELD_FL_STACKTRACE	= 1 << 8,
- 	HIST_FIELD_FL_LOG2		= 1 << 9,
- 	HIST_FIELD_FL_TIMESTAMP		= 1 << 10,
-+	HIST_FIELD_FL_TIMESTAMP_USECS	= 1 << 11,
+@@ -497,6 +497,28 @@ static void hist_trigger_elt_comm_init(struct tracing_map_elt *elt)
+ 	.elt_init	= hist_trigger_elt_comm_init,
  };
  
- struct hist_trigger_attrs {
-@@ -153,6 +148,7 @@ struct hist_trigger_attrs {
- 	bool		pause;
- 	bool		cont;
- 	bool		clear;
-+	bool		ts_in_usecs;
- 	unsigned int	map_bits;
- };
- 
-@@ -170,6 +166,20 @@ struct hist_trigger_data {
- 	bool				enable_timestamps;
- };
- 
-+static u64 hist_field_timestamp(struct hist_field *hist_field, void *event,
-+				struct ring_buffer_event *rbe)
++static const char *get_hist_field_flags(struct hist_field *hist_field)
 +{
-+	struct hist_trigger_data *hist_data = hist_field->hist_data;
-+	struct trace_array *tr = hist_data->event_file->tr;
++	const char *flags_str = NULL;
 +
-+	u64 ts = ring_buffer_event_time_stamp(rbe);
-+
-+	if (hist_data->attrs->ts_in_usecs && trace_clock_in_ns(tr))
-+		ts = ns2usecs(ts);
-+
-+	return ts;
-+}
-+
- static const char *hist_field_name(struct hist_field *field,
- 				   unsigned int level)
- {
-@@ -634,6 +644,8 @@ static int create_key_field(struct hist_trigger_data *hist_data,
- 				flags |= HIST_FIELD_FL_SYSCALL;
- 			else if (strcmp(field_str, "log2") == 0)
- 				flags |= HIST_FIELD_FL_LOG2;
-+			else if (strcmp(field_str, "usecs") == 0)
-+				flags |= HIST_FIELD_FL_TIMESTAMP_USECS;
- 			else {
- 				ret = -EINVAL;
- 				goto out;
-@@ -643,6 +655,8 @@ static int create_key_field(struct hist_trigger_data *hist_data,
- 		if (strcmp(field_name, "common_timestamp") == 0) {
- 			flags |= HIST_FIELD_FL_TIMESTAMP;
- 			hist_data->enable_timestamps = true;
-+			if (flags & HIST_FIELD_FL_TIMESTAMP_USECS)
-+				hist_data->attrs->ts_in_usecs = true;
- 			key_size = sizeof(u64);
- 		} else {
- 			field = trace_find_event_field(file->event_call, field_name);
-@@ -1241,6 +1255,8 @@ static const char *get_hist_field_flags(struct hist_field *hist_field)
- 		flags_str = "syscall";
- 	else if (hist_field->flags & HIST_FIELD_FL_LOG2)
- 		flags_str = "log2";
++	if (hist_field->flags & HIST_FIELD_FL_HEX)
++		flags_str = "hex";
++	else if (hist_field->flags & HIST_FIELD_FL_SYM)
++		flags_str = "sym";
++	else if (hist_field->flags & HIST_FIELD_FL_SYM_OFFSET)
++		flags_str = "sym-offset";
++	else if (hist_field->flags & HIST_FIELD_FL_EXECNAME)
++		flags_str = "execname";
++	else if (hist_field->flags & HIST_FIELD_FL_SYSCALL)
++		flags_str = "syscall";
++	else if (hist_field->flags & HIST_FIELD_FL_LOG2)
++		flags_str = "log2";
 +	else if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP_USECS)
 +		flags_str = "usecs";
++
++	return flags_str;
++}
++
+ static void destroy_hist_field(struct hist_field *hist_field,
+ 			       unsigned int level)
+ {
+@@ -1495,28 +1517,6 @@ static int event_hist_open(struct inode *inode, struct file *file)
+ 	.release = single_release,
+ };
  
- 	return flags_str;
- }
+-static const char *get_hist_field_flags(struct hist_field *hist_field)
+-{
+-	const char *flags_str = NULL;
+-
+-	if (hist_field->flags & HIST_FIELD_FL_HEX)
+-		flags_str = "hex";
+-	else if (hist_field->flags & HIST_FIELD_FL_SYM)
+-		flags_str = "sym";
+-	else if (hist_field->flags & HIST_FIELD_FL_SYM_OFFSET)
+-		flags_str = "sym-offset";
+-	else if (hist_field->flags & HIST_FIELD_FL_EXECNAME)
+-		flags_str = "execname";
+-	else if (hist_field->flags & HIST_FIELD_FL_SYSCALL)
+-		flags_str = "syscall";
+-	else if (hist_field->flags & HIST_FIELD_FL_LOG2)
+-		flags_str = "log2";
+-	else if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP_USECS)
+-		flags_str = "usecs";
+-
+-	return flags_str;
+-}
+-
+ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
+ {
+ 	const char *field_name = hist_field_name(hist_field, 0);
 -- 
 1.9.3
