@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v8 17/37] tracing: Move get_hist_field_flags()
-Date: Thu, 21 Dec 2017 10:02:39 -0600
-Message-ID: <8d3ef539ae44e0c2eac09f1af0478e372104b828.1513802700.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v8 13/37] tracing: Add hist_data member to hist_field
+Date: Thu, 21 Dec 2017 10:02:35 -0600
+Message-ID: <0d78f5f87496c6cefe0903bc1b7a407d7c654780.1513802700.git.tom.zanussi@linux.intel.com>
 References: <cover.1513802700.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,75 +18,80 @@ References: <cover.1513802700.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Move get_hist_field_flags() to make it more easily accessible for new
-code (and keep the move separate from new functionality).
+Allow hist_data access via hist_field.  Some users of hist_fields
+require or will require more access to the associated hist_data.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 44 ++++++++++++++++++++--------------------
- 1 file changed, 22 insertions(+), 22 deletions(-)
+ kernel/trace/trace_events_hist.c | 14 +++++++++-----
+ 1 file changed, 9 insertions(+), 5 deletions(-)
 
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index ba32626..a81a709 100644
+index a793f8c..77ebe6b 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -497,6 +497,28 @@ static void hist_trigger_elt_comm_init(struct tracing_map_elt *elt)
- 	.elt_init	= hist_trigger_elt_comm_init,
+@@ -39,6 +39,7 @@ struct hist_field {
+ 	unsigned int			offset;
+ 	unsigned int                    is_signed;
+ 	struct hist_field		*operands[HIST_FIELD_OPERANDS_MAX];
++	struct hist_trigger_data	*hist_data;
  };
  
-+static const char *get_hist_field_flags(struct hist_field *hist_field)
-+{
-+	const char *flags_str = NULL;
-+
-+	if (hist_field->flags & HIST_FIELD_FL_HEX)
-+		flags_str = "hex";
-+	else if (hist_field->flags & HIST_FIELD_FL_SYM)
-+		flags_str = "sym";
-+	else if (hist_field->flags & HIST_FIELD_FL_SYM_OFFSET)
-+		flags_str = "sym-offset";
-+	else if (hist_field->flags & HIST_FIELD_FL_EXECNAME)
-+		flags_str = "execname";
-+	else if (hist_field->flags & HIST_FIELD_FL_SYSCALL)
-+		flags_str = "syscall";
-+	else if (hist_field->flags & HIST_FIELD_FL_LOG2)
-+		flags_str = "log2";
-+	else if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP_USECS)
-+		flags_str = "usecs";
-+
-+	return flags_str;
-+}
-+
- static void destroy_hist_field(struct hist_field *hist_field,
- 			       unsigned int level)
- {
-@@ -1495,28 +1517,6 @@ static int event_hist_open(struct inode *inode, struct file *file)
- 	.release = single_release,
- };
+ static u64 hist_field_none(struct hist_field *field, void *event,
+@@ -420,7 +421,8 @@ static void destroy_hist_field(struct hist_field *hist_field,
+ 	kfree(hist_field);
+ }
  
--static const char *get_hist_field_flags(struct hist_field *hist_field)
--{
--	const char *flags_str = NULL;
--
--	if (hist_field->flags & HIST_FIELD_FL_HEX)
--		flags_str = "hex";
--	else if (hist_field->flags & HIST_FIELD_FL_SYM)
--		flags_str = "sym";
--	else if (hist_field->flags & HIST_FIELD_FL_SYM_OFFSET)
--		flags_str = "sym-offset";
--	else if (hist_field->flags & HIST_FIELD_FL_EXECNAME)
--		flags_str = "execname";
--	else if (hist_field->flags & HIST_FIELD_FL_SYSCALL)
--		flags_str = "syscall";
--	else if (hist_field->flags & HIST_FIELD_FL_LOG2)
--		flags_str = "log2";
--	else if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP_USECS)
--		flags_str = "usecs";
--
--	return flags_str;
--}
--
- static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
+-static struct hist_field *create_hist_field(struct ftrace_event_field *field,
++static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
++					    struct ftrace_event_field *field,
+ 					    unsigned long flags)
  {
- 	const char *field_name = hist_field_name(hist_field, 0);
+ 	struct hist_field *hist_field;
+@@ -432,6 +434,8 @@ static struct hist_field *create_hist_field(struct ftrace_event_field *field,
+ 	if (!hist_field)
+ 		return NULL;
+ 
++	hist_field->hist_data = hist_data;
++
+ 	if (flags & HIST_FIELD_FL_HITCOUNT) {
+ 		hist_field->fn = hist_field_counter;
+ 		goto out;
+@@ -445,7 +449,7 @@ static struct hist_field *create_hist_field(struct ftrace_event_field *field,
+ 	if (flags & HIST_FIELD_FL_LOG2) {
+ 		unsigned long fl = flags & ~HIST_FIELD_FL_LOG2;
+ 		hist_field->fn = hist_field_log2;
+-		hist_field->operands[0] = create_hist_field(field, fl);
++		hist_field->operands[0] = create_hist_field(hist_data, field, fl);
+ 		hist_field->size = hist_field->operands[0]->size;
+ 		goto out;
+ 	}
+@@ -498,7 +502,7 @@ static void destroy_hist_fields(struct hist_trigger_data *hist_data)
+ static int create_hitcount_val(struct hist_trigger_data *hist_data)
+ {
+ 	hist_data->fields[HITCOUNT_IDX] =
+-		create_hist_field(NULL, HIST_FIELD_FL_HITCOUNT);
++		create_hist_field(hist_data, NULL, HIST_FIELD_FL_HITCOUNT);
+ 	if (!hist_data->fields[HITCOUNT_IDX])
+ 		return -ENOMEM;
+ 
+@@ -544,7 +548,7 @@ static int create_val_field(struct hist_trigger_data *hist_data,
+ 		}
+ 	}
+ 
+-	hist_data->fields[val_idx] = create_hist_field(field, flags);
++	hist_data->fields[val_idx] = create_hist_field(hist_data, field, flags);
+ 	if (!hist_data->fields[val_idx]) {
+ 		ret = -ENOMEM;
+ 		goto out;
+@@ -654,7 +658,7 @@ static int create_key_field(struct hist_trigger_data *hist_data,
+ 		}
+ 	}
+ 
+-	hist_data->fields[key_idx] = create_hist_field(field, flags);
++	hist_data->fields[key_idx] = create_hist_field(hist_data, field, flags);
+ 	if (!hist_data->fields[key_idx]) {
+ 		ret = -ENOMEM;
+ 		goto out;
 -- 
 1.9.3
