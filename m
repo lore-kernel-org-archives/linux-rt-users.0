@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v8 27/37] tracing: Add 'onmax' hist trigger action support
-Date: Thu, 21 Dec 2017 10:02:49 -0600
-Message-ID: <3305fb3c015c3127e2843cd17c6cdabb18da7849.1513802700.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v8 26/37] tracing: Add 'onmatch' hist trigger action support
+Date: Thu, 21 Dec 2017 10:02:48 -0600
+Message-ID: <24f677cca1a0bfb8bedb0c64bc865f61e3adad72.1513802700.git.tom.zanussi@linux.intel.com>
 References: <cover.1513802700.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -11,265 +11,320 @@ Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         Tom Zanussi <tom.zanussi@linux.intel.com>
 To: rostedt@goodmis.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mga11.intel.com ([192.55.52.93]:5268 "EHLO mga11.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1754544AbdLUQEm (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 21 Dec 2017 11:04:42 -0500
 In-Reply-To: <cover.1513802700.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1513802700.git.tom.zanussi@linux.intel.com>
 References: <cover.1513802700.git.tom.zanussi@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Add an 'onmax(var).save(field,...)' hist trigger action which is
-invoked whenever an event exceeds the current maximum.
+Add an 'onmatch(matching.event).<synthetic_event_name>(param list)'
+hist trigger action which is invoked with the set of variables or
+event fields named in the 'param list'.  The result is the generation
+of a synthetic event that consists of the values contained in those
+variables and/or fields at the time the invoking event was hit.
 
-The end result is that the trace event fields or variables specified
-as the onmax.save() params will be saved if 'var' exceeds the current
-maximum for that hist trigger entry.  This allows context from the
-event that exhibited the new maximum to be saved for later reference.
-When the histogram is displayed, additional fields displaying the
-saved values will be printed.
+As an example the below defines a simple synthetic event using a
+variable defined on the sched_wakeup_new event, and shows the event
+definition with unresolved fields, since the sched_wakeup_new event
+with the testpid variable hasn't been defined yet:
 
-As an example the below defines a couple of hist triggers, one for
-sched_wakeup and another for sched_switch, keyed on pid.  Whenever a
-sched_wakeup occurs, the timestamp is saved in the entry corresponding
-to the current pid, and when the scheduler switches back to that pid,
-the timestamp difference is calculated.  If the resulting latency
-exceeds the current maximum latency, the specified save() values are
-saved:
+    # echo 'wakeup_new_test pid_t pid; int prio' >> \
+      /sys/kernel/debug/tracing/synthetic_events
 
-    # echo 'hist:keys=pid:ts0=common_timestamp.usecs \
+    # cat /sys/kernel/debug/tracing/synthetic_events
+      wakeup_new_test pid_t pid; int prio
+
+The following hist trigger both defines a testpid variable and
+specifies an onmatch() trace action that uses that variable along with
+a non-variable field to generate a wakeup_new_test synthetic event
+whenever a sched_wakeup_new event occurs, which because of the 'if
+comm == "cyclictest"' filter only happens when the executable is
+cyclictest:
+
+    # echo 'hist:testpid=pid:keys=$testpid:\
+      onmatch(sched.sched_wakeup_new).wakeup_new_test($testpid, prio) \
         if comm=="cyclictest"' >> \
-      /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+      /sys/kernel/debug/tracing/events/sched/sched_wakeup_new/trigger
 
-    # echo 'hist:keys=next_pid:\
-      wakeup_lat=common_timestamp.usecs-$ts0:\
-      onmax($wakeup_lat).save(next_comm,prev_pid,prev_prio,prev_comm) \
-        if next_comm=="cyclictest"' >> \
-      /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+Creating and displaying a histogram based on those events is now just
+a matter of using the fields and new synthetic event in the
+tracing/events/synthetic directory, as usual:
 
-When the histogram is displayed, the max value and the saved values
-corresponding to the max are displayed following the rest of the
-fields:
-
-    # cat /sys/kernel/debug/tracing/events/sched/sched_switch/hist
-
-      { next_pid:       3728 } hitcount:        199 \
-        max:        123  next_comm: cyclictest  prev_pid:          0 \
-	prev_prio:        120  prev_comm: swapper/3
-      { next_pid:       3730 } hitcount:       1321 \
-        max:         15  next_comm: cyclictest  prev_pid:          0 \
-	prev_prio:        120  prev_comm: swapper/1
-      { next_pid:       3729 } hitcount:       1973\
-        max:         25  next_comm: cyclictest  prev_pid:          0  \
-	prev_prio:        120  prev_comm: swapper/0
-
-    Totals:
-        Hits: 3493
-        Entries: 3
-	Dropped: 0
+    # echo 'hist:keys=pid,prio:sort=pid,prio' >> \
+      /sys/kernel/debug/tracing/events/synthetic/wakeup_new_test/trigger
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+Signed-off-by: Rajvi Jingar <rajvi.jingar@intel.com>
 ---
- kernel/trace/trace_events_hist.c | 331 ++++++++++++++++++++++++++++++++++-----
- 1 file changed, 296 insertions(+), 35 deletions(-)
+ kernel/trace/trace_events_hist.c | 488 +++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 475 insertions(+), 13 deletions(-)
 
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index fb6514a..8d90513 100644
+index 6a07959..fb6514a 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -292,6 +292,10 @@ struct hist_trigger_data {
+@@ -285,6 +285,8 @@ struct hist_trigger_data {
+ 	struct action_data		*actions[HIST_ACTIONS_MAX];
+ 	unsigned int			n_actions;
+ 
++	struct hist_field               *synth_var_refs[SYNTH_FIELDS_MAX];
++	unsigned int                    n_synth_var_refs;
+ 	struct field_var		*field_vars[SYNTH_FIELDS_MAX];
+ 	unsigned int			n_field_vars;
  	unsigned int			n_field_var_str;
- 	struct field_var_hist		*field_var_hists[SYNTH_FIELDS_MAX];
- 	unsigned int			n_field_var_hists;
-+
-+	struct field_var		*max_vars[SYNTH_FIELDS_MAX];
-+	unsigned int			n_max_vars;
-+	unsigned int			n_max_var_str;
- };
+@@ -321,7 +323,18 @@ typedef void (*action_fn_t) (struct hist_trigger_data *hist_data,
  
- struct synth_field {
-@@ -334,6 +338,14 @@ struct action_data {
- 			char			*synth_event_name;
- 			struct synth_event	*synth_event;
- 		} onmatch;
+ struct action_data {
+ 	action_fn_t		fn;
+-	unsigned int		var_ref_idx;
++	unsigned int		n_params;
++	char			*params[SYNTH_FIELDS_MAX];
 +
++	union {
 +		struct {
-+			char			*var_str;
-+			char			*fn_name;
-+			unsigned int		max_var_ref_idx;
-+			struct hist_field	*max_var;
-+			struct hist_field	*var;
-+		} onmax;
- 	};
++			unsigned int		var_ref_idx;
++			char			*match_event;
++			char			*match_event_system;
++			char			*synth_event_name;
++			struct synth_event	*synth_event;
++		} onmatch;
++	};
  };
  
-@@ -1701,7 +1713,8 @@ static int parse_action(char *str, struct hist_trigger_attrs *attrs)
+ static LIST_HEAD(synth_event_list);
+@@ -887,6 +900,21 @@ static struct synth_event *alloc_synth_event(char *event_name, int n_fields,
+ 	return event;
+ }
+ 
++static void action_trace(struct hist_trigger_data *hist_data,
++			 struct tracing_map_elt *elt, void *rec,
++			 struct ring_buffer_event *rbe,
++			 struct action_data *data, u64 *var_ref_vals)
++{
++	struct synth_event *event = data->onmatch.synth_event;
++
++	trace_synth(event, var_ref_vals, data->onmatch.var_ref_idx);
++}
++
++struct hist_var_data {
++	struct list_head list;
++	struct hist_trigger_data *hist_data;
++};
++
+ static void add_or_delete_synth_event(struct synth_event *event, int delete)
+ {
+ 	if (delete)
+@@ -1128,11 +1156,6 @@ static u64 hist_field_timestamp(struct hist_field *hist_field,
+ 	return ts;
+ }
+ 
+-struct hist_var_data {
+-	struct list_head list;
+-	struct hist_trigger_data *hist_data;
+-};
+-
+ static struct hist_field *
+ check_field_for_var_ref(struct hist_field *hist_field,
+ 			struct hist_trigger_data *var_data,
+@@ -1198,6 +1221,14 @@ static struct hist_field *find_var_ref(struct hist_trigger_data *hist_data,
+ 			return found;
+ 	}
+ 
++	for (i = 0; i < hist_data->n_synth_var_refs; i++) {
++		hist_field = hist_data->synth_var_refs[i];
++		found = check_field_for_var_refs(hist_data, hist_field,
++						 var_data, var_idx, 0);
++		if (found)
++			return found;
++	}
++
+ 	return found;
+ }
+ 
+@@ -1426,6 +1457,37 @@ static struct hist_field *find_file_var(struct trace_event_file *file,
+ 	return NULL;
+ }
+ 
++static struct hist_field *
++find_match_var(struct hist_trigger_data *hist_data, char *var_name)
++{
++	struct trace_array *tr = hist_data->event_file->tr;
++	struct hist_field *hist_field, *found = NULL;
++	struct trace_event_file *file;
++	unsigned int i;
++
++	for (i = 0; i < hist_data->n_actions; i++) {
++		struct action_data *data = hist_data->actions[i];
++
++		if (data->fn == action_trace) {
++			char *system = data->onmatch.match_event_system;
++			char *event_name = data->onmatch.match_event;
++
++			file = find_var_file(tr, system, event_name, var_name);
++			if (!file)
++				continue;
++			hist_field = find_file_var(file, var_name);
++			if (hist_field) {
++				if (found) {
++					return ERR_PTR(-EINVAL);
++				}
++
++				found = hist_field;
++			}
++		}
++	}
++	return found;
++}
++
+ static struct hist_field *find_event_var(struct hist_trigger_data *hist_data,
+ 					 char *system,
+ 					 char *event_name,
+@@ -1435,6 +1497,14 @@ static struct hist_field *find_event_var(struct hist_trigger_data *hist_data,
+ 	struct hist_field *hist_field = NULL;
+ 	struct trace_event_file *file;
+ 
++	if (!system || !event_name) {
++		hist_field = find_match_var(hist_data, var_name);
++		if (IS_ERR(hist_field))
++			return NULL;
++		if (hist_field)
++			return hist_field;
++	}
++
+ 	file = find_var_file(tr, system, event_name, var_name);
+ 	if (!file)
+ 		return NULL;
+@@ -1626,11 +1696,21 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
+ 
+ static int parse_action(char *str, struct hist_trigger_attrs *attrs)
+ {
+-	int ret = 0;
++	int ret = -EINVAL;
+ 
  	if (attrs->n_actions >= HIST_ACTIONS_MAX)
  		return ret;
  
--	if ((strncmp(str, "onmatch(", strlen("onmatch(")) == 0)) {
-+	if ((strncmp(str, "onmatch(", strlen("onmatch(")) == 0) ||
-+	    (strncmp(str, "onmax(", strlen("onmax(")) == 0)) {
- 		attrs->action_str[attrs->n_actions] = kstrdup(str, GFP_KERNEL);
- 		if (!attrs->action_str[attrs->n_actions]) {
- 			ret = -ENOMEM;
-@@ -1873,7 +1886,7 @@ static int hist_trigger_elt_data_alloc(struct tracing_map_elt *elt)
- 		}
- 	}
- 
--	n_str = hist_data->n_field_var_str;
-+	n_str = hist_data->n_field_var_str + hist_data->n_max_var_str;
- 
- 	size = STR_VAR_LEN_MAX;
- 
-@@ -2894,6 +2907,15 @@ static void update_field_vars(struct hist_trigger_data *hist_data,
- 			    hist_data->n_field_vars, 0);
++	if ((strncmp(str, "onmatch(", strlen("onmatch(")) == 0)) {
++		attrs->action_str[attrs->n_actions] = kstrdup(str, GFP_KERNEL);
++		if (!attrs->action_str[attrs->n_actions]) {
++			ret = -ENOMEM;
++			return ret;
++		}
++		attrs->n_actions++;
++		ret = 0;
++	}
++
+ 	return ret;
  }
  
-+static void update_max_vars(struct hist_trigger_data *hist_data,
-+			    struct tracing_map_elt *elt,
-+			    struct ring_buffer_event *rbe,
-+			    void *rec)
-+{
-+	__update_field_vars(elt, rbe, rec, hist_data->max_vars,
-+			    hist_data->n_max_vars, hist_data->n_field_var_str);
-+}
-+
- static struct hist_field *create_var(struct hist_trigger_data *hist_data,
- 				     struct trace_event_file *file,
- 				     char *name, int size, const char *type)
-@@ -3023,6 +3045,227 @@ static struct field_var *create_field_var(struct hist_trigger_data *hist_data,
+@@ -2635,7 +2715,7 @@ static struct trace_event_file *event_file(struct trace_array *tr,
+  *
+  * Return: The variable created for the field.
+  */
+-struct hist_field *
++static struct hist_field *
+ create_field_var_hist(struct hist_trigger_data *target_hist_data,
+ 		      char *subsys_name, char *event_name, char *field_name)
+ {
+@@ -2748,7 +2828,7 @@ struct hist_field *
+ 	return event_var;
+ }
+ 
+-struct hist_field *
++static struct hist_field *
+ find_target_event_var(struct hist_trigger_data *hist_data,
+ 		      char *subsys_name, char *event_name, char *var_name)
+ {
+@@ -2919,7 +2999,7 @@ static struct field_var *create_field_var(struct hist_trigger_data *hist_data,
+  *
+  * Return: The variable created for the field.
+  */
+-struct field_var *
++static struct field_var *
+ create_target_field_var(struct hist_trigger_data *target_hist_data,
+ 			char *subsys_name, char *event_name, char *var_name)
+ {
+@@ -2943,6 +3023,27 @@ struct field_var *
  	return create_field_var(target_hist_data, file, var_name);
  }
  
-+static void onmax_print(struct seq_file *m,
-+			struct hist_trigger_data *hist_data,
-+			struct tracing_map_elt *elt,
-+			struct action_data *data)
-+{
-+	unsigned int i, save_var_idx, max_idx = data->onmax.max_var->var.idx;
-+
-+	seq_printf(m, "\n\tmax: %10llu", tracing_map_read_var(elt, max_idx));
-+
-+	for (i = 0; i < hist_data->n_max_vars; i++) {
-+		struct hist_field *save_val = hist_data->max_vars[i]->val;
-+		struct hist_field *save_var = hist_data->max_vars[i]->var;
-+		u64 val;
-+
-+		save_var_idx = save_var->var.idx;
-+
-+		val = tracing_map_read_var(elt, save_var_idx);
-+
-+		if (save_val->flags & HIST_FIELD_FL_STRING) {
-+			seq_printf(m, "  %s: %-32s", save_var->var.name,
-+				   (char *)(uintptr_t)(val));
-+		} else
-+			seq_printf(m, "  %s: %10llu", save_var->var.name, val);
-+	}
-+}
-+
-+static void onmax_save(struct hist_trigger_data *hist_data,
-+		       struct tracing_map_elt *elt, void *rec,
-+		       struct ring_buffer_event *rbe,
-+		       struct action_data *data, u64 *var_ref_vals)
-+{
-+	unsigned int max_idx = data->onmax.max_var->var.idx;
-+	unsigned int max_var_ref_idx = data->onmax.max_var_ref_idx;
-+
-+	u64 var_val, max_val;
-+
-+	var_val = var_ref_vals[max_var_ref_idx];
-+	max_val = tracing_map_read_var(elt, max_idx);
-+
-+	if (var_val <= max_val)
-+		return;
-+
-+	tracing_map_set_var(elt, max_idx, var_val);
-+
-+	update_max_vars(hist_data, elt, rbe, rec);
-+}
-+
-+static void onmax_destroy(struct action_data *data)
++static void onmatch_destroy(struct action_data *data)
 +{
 +	unsigned int i;
 +
-+	destroy_hist_field(data->onmax.max_var, 0);
-+	destroy_hist_field(data->onmax.var, 0);
++	mutex_lock(&synth_event_mutex);
 +
-+	kfree(data->onmax.var_str);
-+	kfree(data->onmax.fn_name);
++	kfree(data->onmatch.match_event);
++	kfree(data->onmatch.match_event_system);
++	kfree(data->onmatch.synth_event_name);
 +
 +	for (i = 0; i < data->n_params; i++)
 +		kfree(data->params[i]);
 +
++	if (data->onmatch.synth_event)
++		data->onmatch.synth_event->ref--;
++
 +	kfree(data);
++
++	mutex_unlock(&synth_event_mutex);
 +}
 +
-+static int onmax_create(struct hist_trigger_data *hist_data,
-+			struct action_data *data)
+ static void destroy_field_var(struct field_var *field_var)
+ {
+ 	if (!field_var)
+@@ -2962,8 +3063,8 @@ static void destroy_field_vars(struct hist_trigger_data *hist_data)
+ 		destroy_field_var(hist_data->field_vars[i]);
+ }
+ 
+-void save_field_var(struct hist_trigger_data *hist_data,
+-		    struct field_var *field_var)
++static void save_field_var(struct hist_trigger_data *hist_data,
++			   struct field_var *field_var)
+ {
+ 	hist_data->field_vars[hist_data->n_field_vars++] = field_var;
+ 
+@@ -2971,6 +3072,304 @@ void save_field_var(struct hist_trigger_data *hist_data,
+ 		hist_data->n_field_var_str++;
+ }
+ 
++
++static void destroy_synth_var_refs(struct hist_trigger_data *hist_data)
 +{
-+	struct trace_event_file *file = hist_data->event_file;
-+	struct hist_field *var_field, *ref_field, *max_var;
-+	unsigned int var_ref_idx = hist_data->n_var_refs;
-+	struct field_var *field_var;
-+	char *onmax_var_str, *param;
-+	unsigned long flags;
 +	unsigned int i;
-+	int ret = 0;
 +
-+	onmax_var_str = data->onmax.var_str;
-+	if (onmax_var_str[0] != '$')
++	for (i = 0; i < hist_data->n_synth_var_refs; i++)
++		destroy_hist_field(hist_data->synth_var_refs[i], 0);
++}
++
++static void save_synth_var_ref(struct hist_trigger_data *hist_data,
++			 struct hist_field *var_ref)
++{
++	hist_data->synth_var_refs[hist_data->n_synth_var_refs++] = var_ref;
++
++	hist_data->var_refs[hist_data->n_var_refs] = var_ref;
++	var_ref->var_ref_idx = hist_data->n_var_refs++;
++}
++
++static int check_synth_field(struct synth_event *event,
++			     struct hist_field *hist_field,
++			     unsigned int field_pos)
++{
++	struct synth_field *field;
++
++	if (field_pos >= event->n_fields)
 +		return -EINVAL;
-+	onmax_var_str++;
 +
-+	var_field = find_target_event_var(hist_data, NULL, NULL, onmax_var_str);
-+	if (!var_field)
++	field = event->fields[field_pos];
++
++	if (strcmp(field->type, hist_field->type) != 0)
 +		return -EINVAL;
 +
-+	flags = HIST_FIELD_FL_VAR_REF;
-+	ref_field = create_hist_field(hist_data, NULL, flags, NULL);
-+	if (!ref_field)
-+		return -ENOMEM;
-+
-+	if (init_var_ref(ref_field, var_field, NULL, NULL)) {
-+		destroy_hist_field(ref_field, 0);
-+		ret = -ENOMEM;
-+		goto out;
-+	}
-+	hist_data->var_refs[hist_data->n_var_refs] = ref_field;
-+	ref_field->var_ref_idx = hist_data->n_var_refs++;
-+	data->onmax.var = ref_field;
-+
-+	data->fn = onmax_save;
-+	data->onmax.max_var_ref_idx = var_ref_idx;
-+	max_var = create_var(hist_data, file, "max", sizeof(u64), "u64");
-+	if (IS_ERR(max_var)) {
-+		ret = PTR_ERR(max_var);
-+		goto out;
-+	}
-+	data->onmax.max_var = max_var;
-+
-+	for (i = 0; i < data->n_params; i++) {
-+		param = kstrdup(data->params[i], GFP_KERNEL);
-+		if (!param) {
-+			ret = -ENOMEM;
-+			goto out;
-+		}
-+
-+		field_var = create_target_field_var(hist_data, NULL, NULL, param);
-+		if (IS_ERR(field_var)) {
-+			ret = PTR_ERR(field_var);
-+			kfree(param);
-+			goto out;
-+		}
-+
-+		hist_data->max_vars[hist_data->n_max_vars++] = field_var;
-+		if (field_var->val->flags & HIST_FIELD_FL_STRING)
-+			hist_data->n_max_var_str++;
-+
-+		kfree(param);
-+	}
-+ out:
-+	return ret;
++	return 0;
 +}
 +
 +static int parse_action_params(char *params, struct action_data *data)
@@ -305,9 +360,177 @@ index fb6514a..8d90513 100644
 +	return ret;
 +}
 +
-+static struct action_data *onmax_parse(char *str)
++static struct hist_field *
++onmatch_find_var(struct hist_trigger_data *hist_data, struct action_data *data,
++		 char *system, char *event, char *var)
 +{
-+	char *onmax_fn_name, *onmax_var_str;
++	struct hist_field *hist_field;
++
++	var++; /* skip '$' */
++
++	hist_field = find_target_event_var(hist_data, system, event, var);
++	if (!hist_field) {
++		if (!system) {
++			system = data->onmatch.match_event_system;
++			event = data->onmatch.match_event;
++		}
++
++		hist_field = find_event_var(hist_data, system, event, var);
++	}
++
++	return hist_field;
++}
++
++static struct hist_field *
++onmatch_create_field_var(struct hist_trigger_data *hist_data,
++			 struct action_data *data, char *system,
++			 char *event, char *var)
++{
++	struct hist_field *hist_field = NULL;
++	struct field_var *field_var;
++
++	/*
++	 * First try to create a field var on the target event (the
++	 * currently being defined).  This will create a variable for
++	 * unqualified fields on the target event, or if qualified,
++	 * target fields that have qualified names matching the target.
++	 */
++	field_var = create_target_field_var(hist_data, system, event, var);
++
++	if (field_var && !IS_ERR(field_var)) {
++		save_field_var(hist_data, field_var);
++		hist_field = field_var->var;
++	} else {
++		field_var = NULL;
++		/*
++		 * If no explicit system.event is specfied, default to
++		 * looking for fields on the onmatch(system.event.xxx)
++		 * event.
++		 */
++		if (!system) {
++			system = data->onmatch.match_event_system;
++			event = data->onmatch.match_event;
++		}
++
++		/*
++		 * At this point, we're looking at a field on another
++		 * event.  Because we can't modify a hist trigger on
++		 * another event to add a variable for a field, we need
++		 * to create a new trigger on that event and create the
++		 * variable at the same time.
++		 */
++		hist_field = create_field_var_hist(hist_data, system, event, var);
++		if (IS_ERR(hist_field))
++			goto free;
++	}
++ out:
++	return hist_field;
++ free:
++	destroy_field_var(field_var);
++	hist_field = NULL;
++	goto out;
++}
++
++static int onmatch_create(struct hist_trigger_data *hist_data,
++			  struct trace_event_file *file,
++			  struct action_data *data)
++{
++	char *event_name, *param, *system = NULL;
++	struct hist_field *hist_field, *var_ref;
++	unsigned int i, var_ref_idx;
++	unsigned int field_pos = 0;
++	struct synth_event *event;
++	int ret = 0;
++
++	mutex_lock(&synth_event_mutex);
++	event = find_synth_event(data->onmatch.synth_event_name);
++	if (!event) {
++		mutex_unlock(&synth_event_mutex);
++		return -EINVAL;
++	}
++	event->ref++;
++	mutex_unlock(&synth_event_mutex);
++
++	var_ref_idx = hist_data->n_var_refs;
++
++	for (i = 0; i < data->n_params; i++) {
++		char *p;
++
++		p = param = kstrdup(data->params[i], GFP_KERNEL);
++		if (!param) {
++			ret = -ENOMEM;
++			goto err;
++		}
++
++		system = strsep(&param, ".");
++		if (!param) {
++			param = (char *)system;
++			system = event_name = NULL;
++		} else {
++			event_name = strsep(&param, ".");
++			if (!param) {
++				kfree(p);
++				ret = -EINVAL;
++				goto err;
++			}
++		}
++
++		if (param[0] == '$')
++			hist_field = onmatch_find_var(hist_data, data, system,
++						      event_name, param);
++		else
++			hist_field = onmatch_create_field_var(hist_data, data,
++							      system,
++							      event_name,
++							      param);
++
++		if (!hist_field) {
++			kfree(p);
++			ret = -EINVAL;
++			goto err;
++		}
++
++		if (check_synth_field(event, hist_field, field_pos) == 0) {
++			var_ref = create_var_ref(hist_field, system, event_name);
++			if (!var_ref) {
++				kfree(p);
++				ret = -ENOMEM;
++				goto err;
++			}
++
++			save_synth_var_ref(hist_data, var_ref);
++			field_pos++;
++			kfree(p);
++			continue;
++		}
++
++		kfree(p);
++		ret = -EINVAL;
++		goto err;
++	}
++
++	if (field_pos != event->n_fields) {
++		ret = -EINVAL;
++		goto err;
++	}
++
++	data->fn = action_trace;
++	data->onmatch.synth_event = event;
++	data->onmatch.var_ref_idx = var_ref_idx;
++ out:
++	return ret;
++ err:
++	mutex_lock(&synth_event_mutex);
++	event->ref--;
++	mutex_unlock(&synth_event_mutex);
++
++	goto out;
++}
++
++static struct action_data *onmatch_parse(struct trace_array *tr, char *str)
++{
++	char *match_event, *match_event_system;
++	char *synth_event_name, *params;
 +	struct action_data *data;
 +	int ret = -EINVAL;
 +
@@ -315,14 +538,25 @@ index fb6514a..8d90513 100644
 +	if (!data)
 +		return ERR_PTR(-ENOMEM);
 +
-+	onmax_var_str = strsep(&str, ")");
-+	if (!onmax_var_str || !str) {
-+		ret = -EINVAL;
++	match_event = strsep(&str, ")");
++	if (!match_event || !str)
++		goto free;
++
++	match_event_system = strsep(&match_event, ".");
++	if (!match_event)
++		goto free;
++
++	if (IS_ERR(event_file(tr, match_event_system, match_event)))
++		goto free;
++
++	data->onmatch.match_event = kstrdup(match_event, GFP_KERNEL);
++	if (!data->onmatch.match_event) {
++		ret = -ENOMEM;
 +		goto free;
 +	}
 +
-+	data->onmax.var_str = kstrdup(onmax_var_str, GFP_KERNEL);
-+	if (!data->onmax.var_str) {
++	data->onmatch.match_event_system = kstrdup(match_event_system, GFP_KERNEL);
++	if (!data->onmatch.match_event_system) {
 +		ret = -ENOMEM;
 +		goto free;
 +	}
@@ -331,171 +565,143 @@ index fb6514a..8d90513 100644
 +	if (!str)
 +		goto free;
 +
-+	onmax_fn_name = strsep(&str, "(");
-+	if (!onmax_fn_name || !str)
++	synth_event_name = strsep(&str, "(");
++	if (!synth_event_name || !str)
 +		goto free;
 +
-+	if (strncmp(onmax_fn_name, "save", strlen("save")) == 0) {
-+		char *params = strsep(&str, ")");
-+
-+		if (!params) {
-+			ret = -EINVAL;
-+			goto free;
-+		}
-+
-+		ret = parse_action_params(params, data);
-+		if (ret)
-+			goto free;
-+	} else
-+		goto free;
-+
-+	data->onmax.fn_name = kstrdup(onmax_fn_name, GFP_KERNEL);
-+	if (!data->onmax.fn_name) {
++	data->onmatch.synth_event_name = kstrdup(synth_event_name, GFP_KERNEL);
++	if (!data->onmatch.synth_event_name) {
 +		ret = -ENOMEM;
 +		goto free;
 +	}
++
++	params = strsep(&str, ")");
++	if (!params || !str || (str && strlen(str)))
++		goto free;
++
++	ret = parse_action_params(params, data);
++	if (ret)
++		goto free;
 + out:
 +	return data;
 + free:
-+	onmax_destroy(data);
++	onmatch_destroy(data);
 +	data = ERR_PTR(ret);
 +	goto out;
 +}
 +
- static void onmatch_destroy(struct action_data *data)
+ static int create_hitcount_val(struct hist_trigger_data *hist_data)
  {
- 	unsigned int i;
-@@ -3107,39 +3350,6 @@ static int check_synth_field(struct synth_event *event,
- 	return 0;
+ 	hist_data->fields[HITCOUNT_IDX] =
+@@ -3395,18 +3794,39 @@ static void destroy_actions(struct hist_trigger_data *hist_data)
+ 	for (i = 0; i < hist_data->n_actions; i++) {
+ 		struct action_data *data = hist_data->actions[i];
+ 
+-		kfree(data);
++		if (data->fn == action_trace)
++			onmatch_destroy(data);
++		else
++			kfree(data);
+ 	}
  }
  
--static int parse_action_params(char *params, struct action_data *data)
--{
--	char *param, *saved_param;
--	int ret = 0;
--
--	while (params) {
--		if (data->n_params >= SYNTH_FIELDS_MAX)
--			goto out;
--
--		param = strsep(&params, ",");
--		if (!param) {
--			ret = -EINVAL;
--			goto out;
--		}
--
--		param = strstrip(param);
--		if (strlen(param) < 2) {
--			ret = -EINVAL;
--			goto out;
--		}
--
--		saved_param = kstrdup(param, GFP_KERNEL);
--		if (!saved_param) {
--			ret = -ENOMEM;
--			goto out;
--		}
--
--		data->params[data->n_params++] = saved_param;
--	}
-- out:
--	return ret;
--}
--
- static struct hist_field *
- onmatch_find_var(struct hist_trigger_data *hist_data, struct action_data *data,
- 		 char *system, char *event, char *var)
-@@ -3796,6 +4006,8 @@ static void destroy_actions(struct hist_trigger_data *hist_data)
+ static int parse_actions(struct hist_trigger_data *hist_data)
+ {
++	struct trace_array *tr = hist_data->event_file->tr;
++	struct action_data *data;
+ 	unsigned int i;
+ 	int ret = 0;
+ 	char *str;
  
- 		if (data->fn == action_trace)
- 			onmatch_destroy(data);
-+		else if (data->fn == onmax_save)
-+			onmax_destroy(data);
- 		else
- 			kfree(data);
- 	}
-@@ -3821,6 +4033,15 @@ static int parse_actions(struct hist_trigger_data *hist_data)
- 				break;
- 			}
- 			data->fn = action_trace;
-+		} else if (strncmp(str, "onmax(", strlen("onmax(")) == 0) {
-+			char *action_str = str + strlen("onmax(");
+ 	for (i = 0; i < hist_data->attrs->n_actions; i++) {
+ 		str = hist_data->attrs->action_str[i];
 +
-+			data = onmax_parse(action_str);
++		if (strncmp(str, "onmatch(", strlen("onmatch(")) == 0) {
++			char *action_str = str + strlen("onmatch(");
++
++			data = onmatch_parse(tr, action_str);
 +			if (IS_ERR(data)) {
 +				ret = PTR_ERR(data);
 +				break;
 +			}
-+			data->fn = onmax_save;
- 		} else {
- 			ret = -EINVAL;
- 			break;
-@@ -3846,12 +4067,48 @@ static int create_actions(struct hist_trigger_data *hist_data,
- 			ret = onmatch_create(hist_data, file, data);
- 			if (ret)
- 				return ret;
-+		} else if (data->fn == onmax_save) {
-+			ret = onmax_create(hist_data, data);
++			data->fn = action_trace;
++		} else {
++			ret = -EINVAL;
++			break;
++		}
++
++		hist_data->actions[hist_data->n_actions++] = data;
+ 	}
+ 
+ 	return ret;
+@@ -3421,11 +3841,50 @@ static int create_actions(struct hist_trigger_data *hist_data,
+ 
+ 	for (i = 0; i < hist_data->attrs->n_actions; i++) {
+ 		data = hist_data->actions[i];
++
++		if (data->fn == action_trace) {
++			ret = onmatch_create(hist_data, file, data);
 +			if (ret)
 +				return ret;
- 		}
++		}
  	}
  
  	return ret;
  }
  
-+static void print_actions(struct seq_file *m,
-+			  struct hist_trigger_data *hist_data,
-+			  struct tracing_map_elt *elt)
++static void print_onmatch_spec(struct seq_file *m,
++			       struct hist_trigger_data *hist_data,
++			       struct action_data *data)
++{
++	unsigned int i;
++
++	seq_printf(m, ":onmatch(%s.%s).", data->onmatch.match_event_system,
++		   data->onmatch.match_event);
++
++	seq_printf(m, "%s(", data->onmatch.synth_event->name);
++
++	for (i = 0; i < data->n_params; i++) {
++		if (i)
++			seq_puts(m, ",");
++		seq_printf(m, "%s", data->params[i]);
++	}
++
++	seq_puts(m, ")");
++}
++
++static void print_actions_spec(struct seq_file *m,
++			       struct hist_trigger_data *hist_data)
 +{
 +	unsigned int i;
 +
 +	for (i = 0; i < hist_data->n_actions; i++) {
 +		struct action_data *data = hist_data->actions[i];
 +
-+		if (data->fn == onmax_save)
-+			onmax_print(m, hist_data, elt, data);
++		if (data->fn == action_trace)
++			print_onmatch_spec(m, hist_data, data);
 +	}
 +}
 +
-+static void print_onmax_spec(struct seq_file *m,
-+			     struct hist_trigger_data *hist_data,
-+			     struct action_data *data)
-+{
-+	unsigned int i;
-+
-+	seq_puts(m, ":onmax(");
-+	seq_printf(m, "%s", data->onmax.var_str);
-+	seq_printf(m, ").%s(", data->onmax.fn_name);
-+
-+	for (i = 0; i < hist_data->n_max_vars; i++) {
-+		seq_printf(m, "%s", hist_data->max_vars[i]->var->var.name);
-+		if (i < hist_data->n_max_vars - 1)
-+			seq_puts(m, ",");
-+	}
-+	seq_puts(m, ")");
-+}
-+
- static void print_onmatch_spec(struct seq_file *m,
- 			       struct hist_trigger_data *hist_data,
- 			       struct action_data *data)
-@@ -3882,6 +4139,8 @@ static void print_actions_spec(struct seq_file *m,
+ static void destroy_field_var_hists(struct hist_trigger_data *hist_data)
+ {
+ 	unsigned int i;
+@@ -3448,6 +3907,7 @@ static void destroy_hist_data(struct hist_trigger_data *hist_data)
+ 	destroy_actions(hist_data);
+ 	destroy_field_vars(hist_data);
+ 	destroy_field_var_hists(hist_data);
++	destroy_synth_var_refs(hist_data);
  
- 		if (data->fn == action_trace)
- 			print_onmatch_spec(m, hist_data, data);
-+		else if (data->fn == onmax_save)
-+			print_onmax_spec(m, hist_data, data);
- 	}
+ 	kfree(hist_data);
  }
- 
-@@ -4263,6 +4522,8 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
- 		}
+@@ -4004,6 +4464,8 @@ static int event_hist_trigger_print(struct seq_file *m,
  	}
+ 	seq_printf(m, ":size=%u", (1 << hist_data->map->map_bits));
  
-+	print_actions(m, hist_data, elt);
++	print_actions_spec(m, hist_data);
 +
- 	seq_puts(m, "\n");
- }
+ 	if (data->filter_str)
+ 		seq_printf(m, " if %s", data->filter_str);
  
 -- 
 1.9.3
+
