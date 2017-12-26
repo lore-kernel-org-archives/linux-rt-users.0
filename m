@@ -1,7 +1,7 @@
 From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: [PATCH v4 10/20] arm64: assembler: add utility macros to push/pop stack frames
-Date: Tue, 26 Dec 2017 10:29:30 +0000
-Message-ID: <20171226102940.26908-11-ard.biesheuvel@linaro.org>
+Subject: [PATCH v4 07/20] crypto: arm64/aes-blk - add 4 way interleave to CBC encrypt path
+Date: Tue, 26 Dec 2017 10:29:27 +0000
+Message-ID: <20171226102940.26908-8-ard.biesheuvel@linaro.org>
 References: <20171226102940.26908-1-ard.biesheuvel@linaro.org>
 Cc: Ard Biesheuvel <ard.biesheuvel@linaro.org>,
         Dave Martin <Dave.Martin@arm.com>,
@@ -20,85 +20,67 @@ In-Reply-To: <20171226102940.26908-1-ard.biesheuvel@linaro.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-We are going to add code to all the NEON crypto routines that will
-turn them into non-leaf functions, so we need to manage the stack
-frames. To make this less tedious and error prone, add some macros
-that take the number of callee saved registers to preserve and the
-extra size to allocate in the stack frame (for locals) and emit
-the ldp/stp sequences.
+CBC encryption is strictly sequential, and so the current AES code
+simply processes the input one block at a time. However, we are
+about to add yield support, which adds a bit of overhead, and which
+we prefer to align with other modes in terms of granularity (i.e.,
+it is better to have all routines yield every 64 bytes and not have
+an exception for CBC encrypt which yields every 16 bytes)
+
+So unroll the loop by 4. We still cannot perform the AES algorithm in
+parallel, but we can at least merge the loads and stores.
 
 Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 ---
- arch/arm64/include/asm/assembler.h | 57 ++++++++++++++++++++
- 1 file changed, 57 insertions(+)
+ arch/arm64/crypto/aes-modes.S | 31 ++++++++++++++++----
+ 1 file changed, 25 insertions(+), 6 deletions(-)
 
-diff --git a/arch/arm64/include/asm/assembler.h b/arch/arm64/include/asm/assembler.h
-index 8b168280976f..9130be742a32 100644
---- a/arch/arm64/include/asm/assembler.h
-+++ b/arch/arm64/include/asm/assembler.h
-@@ -499,6 +499,63 @@ alternative_else_nop_endif
- #endif
- 	.endm
+diff --git a/arch/arm64/crypto/aes-modes.S b/arch/arm64/crypto/aes-modes.S
+index 27a235b2ddee..e86535a1329d 100644
+--- a/arch/arm64/crypto/aes-modes.S
++++ b/arch/arm64/crypto/aes-modes.S
+@@ -94,17 +94,36 @@ AES_ENDPROC(aes_ecb_decrypt)
+ 	 */
  
-+	/*
-+	 * frame_push - Push @regcount callee saved registers to the stack,
-+	 *              starting at x19, as well as x29/x30, and set x29 to
-+	 *              the new value of sp. Add @extra bytes of stack space
-+	 *              for locals.
-+	 */
-+	.macro		frame_push, regcount:req, extra
-+	__frame		st, \regcount, \extra
-+	.endm
-+
-+	/*
-+	 * frame_pop  - Pop the callee saved registers from the stack that were
-+	 *              pushed in the most recent call to frame_push, as well
-+	 *              as x29/x30 and any extra stack space that may have been
-+	 *              allocated.
-+	 */
-+	.macro		frame_pop
-+	__frame		ld
-+	.endm
-+
-+	.macro		__frame_regs, reg1, reg2, op, num
-+	.if		.Lframe_regcount == \num
-+	\op\()r		\reg1, [sp, #(\num + 1) * 8]
-+	.elseif		.Lframe_regcount > \num
-+	\op\()p		\reg1, \reg2, [sp, #(\num + 1) * 8]
-+	.endif
-+	.endm
-+
-+	.macro		__frame, op, regcount, extra=0
-+	.ifc		\op, st
-+	.if		(\regcount) < 0 || (\regcount) > 10
-+	.error		"regcount should be in the range [0 ... 10]"
-+	.endif
-+	.if		((\extra) % 16) != 0
-+	.error		"extra should be a multiple of 16 bytes"
-+	.endif
-+	.set		.Lframe_regcount, \regcount
-+	.set		.Lframe_extra, \extra
-+	.set		.Lframe_local_offset, ((\regcount + 3) / 2) * 16
-+	stp		x29, x30, [sp, #-.Lframe_local_offset - .Lframe_extra]!
-+	mov		x29, sp
-+	.elseif		.Lframe_regcount == -1 // && op == 'ld'
-+	.error		"frame_push/frame_pop may not be nested"
-+	.endif
-+
-+	__frame_regs	x19, x20, \op, 1
-+	__frame_regs	x21, x22, \op, 3
-+	__frame_regs	x23, x24, \op, 5
-+	__frame_regs	x25, x26, \op, 7
-+	__frame_regs	x27, x28, \op, 9
-+
-+	.ifc		\op, ld
-+	ldp		x29, x30, [sp], #.Lframe_local_offset + .Lframe_extra
-+	.set		.Lframe_regcount, -1
-+	.endif
-+	.endm
-+
- /*
-  * Errata workaround post TTBR0_EL1 update.
-  */
+ AES_ENTRY(aes_cbc_encrypt)
+-	ld1		{v0.16b}, [x5]			/* get iv */
++	ld1		{v4.16b}, [x5]			/* get iv */
+ 	enc_prepare	w3, x2, x6
+ 
+-.Lcbcencloop:
+-	ld1		{v1.16b}, [x1], #16		/* get next pt block */
+-	eor		v0.16b, v0.16b, v1.16b		/* ..and xor with iv */
++.Lcbcencloop4x:
++	subs		w4, w4, #4
++	bmi		.Lcbcenc1x
++	ld1		{v0.16b-v3.16b}, [x1], #64	/* get 4 pt blocks */
++	eor		v0.16b, v0.16b, v4.16b		/* ..and xor with iv */
+ 	encrypt_block	v0, w3, x2, x6, w7
+-	st1		{v0.16b}, [x0], #16
++	eor		v1.16b, v1.16b, v0.16b
++	encrypt_block	v1, w3, x2, x6, w7
++	eor		v2.16b, v2.16b, v1.16b
++	encrypt_block	v2, w3, x2, x6, w7
++	eor		v3.16b, v3.16b, v2.16b
++	encrypt_block	v3, w3, x2, x6, w7
++	st1		{v0.16b-v3.16b}, [x0], #64
++	mov		v4.16b, v3.16b
++	b		.Lcbcencloop4x
++.Lcbcenc1x:
++	adds		w4, w4, #4
++	beq		.Lcbcencout
++.Lcbcencloop:
++	ld1		{v0.16b}, [x1], #16		/* get next pt block */
++	eor		v4.16b, v4.16b, v0.16b		/* ..and xor with iv */
++	encrypt_block	v4, w3, x2, x6, w7
++	st1		{v4.16b}, [x0], #16
+ 	subs		w4, w4, #1
+ 	bne		.Lcbcencloop
+-	st1		{v0.16b}, [x5]			/* return iv */
++.Lcbcencout:
++	st1		{v4.16b}, [x5]			/* return iv */
+ 	ret
+ AES_ENDPROC(aes_cbc_encrypt)
+ 
 -- 
 2.11.0
