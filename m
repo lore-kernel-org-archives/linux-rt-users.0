@@ -1,7 +1,7 @@
 From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: [PATCH v4 18/20] crypto: arm64/crc32-ce - yield NEON after every block of input
-Date: Tue, 26 Dec 2017 10:29:38 +0000
-Message-ID: <20171226102940.26908-19-ard.biesheuvel@linaro.org>
+Subject: [PATCH v4 20/20] DO NOT MERGE
+Date: Tue, 26 Dec 2017 10:29:40 +0000
+Message-ID: <20171226102940.26908-21-ard.biesheuvel@linaro.org>
 References: <20171226102940.26908-1-ard.biesheuvel@linaro.org>
 Cc: Ard Biesheuvel <ard.biesheuvel@linaro.org>,
         Dave Martin <Dave.Martin@arm.com>,
@@ -15,113 +15,75 @@ Cc: Ard Biesheuvel <ard.biesheuvel@linaro.org>,
         Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>
 To: linux-kernel@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wr0-f194.google.com ([209.85.128.194]:39339 "EHLO
+        mail-wr0-f194.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751389AbdLZKbg (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 26 Dec 2017 05:31:36 -0500
+Received: by mail-wr0-f194.google.com with SMTP id o101so5667078wrb.6
+        for <linux-rt-users@vger.kernel.org>; Tue, 26 Dec 2017 02:31:36 -0800 (PST)
 In-Reply-To: <20171226102940.26908-1-ard.biesheuvel@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Avoid excessive scheduling delays under a preemptible kernel by
-yielding the NEON after every block of input.
-
-Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Test code to force a kernel_neon_end+begin sequence at every yield point,
+and wipe the entire NEON state before resuming the algorithm.
 ---
- arch/arm64/crypto/crc32-ce-core.S | 40 +++++++++++++++-----
- 1 file changed, 30 insertions(+), 10 deletions(-)
+ arch/arm64/include/asm/assembler.h | 33 ++++++++++++++++++++
+ 1 file changed, 33 insertions(+)
 
-diff --git a/arch/arm64/crypto/crc32-ce-core.S b/arch/arm64/crypto/crc32-ce-core.S
-index 18f5a8442276..29a601bb810e 100644
---- a/arch/arm64/crypto/crc32-ce-core.S
-+++ b/arch/arm64/crypto/crc32-ce-core.S
-@@ -100,9 +100,10 @@
- 	dCONSTANT	.req	d0
- 	qCONSTANT	.req	q0
+diff --git a/arch/arm64/include/asm/assembler.h b/arch/arm64/include/asm/assembler.h
+index 575d0f065d28..295937b2f39b 100644
+--- a/arch/arm64/include/asm/assembler.h
++++ b/arch/arm64/include/asm/assembler.h
+@@ -622,6 +622,7 @@ alternative_else_nop_endif
+ 	cmp		w1, #PREEMPT_DISABLE_OFFSET
+ 	csel		x0, x0, xzr, eq
+ 	tbnz		x0, #TIF_NEED_RESCHED, .Lyield_\@	// needs rescheduling?
++	b		.Lyield_\@
+ #endif
+ 	/* fall through to endif_yield_neon */
+ 	.subsection	1
+@@ -631,6 +632,38 @@ alternative_else_nop_endif
+ 	.macro		do_cond_yield_neon
+ 	bl		kernel_neon_end
+ 	bl		kernel_neon_begin
++	movi		v0.16b, #0x55
++	movi		v1.16b, #0x55
++	movi		v2.16b, #0x55
++	movi		v3.16b, #0x55
++	movi		v4.16b, #0x55
++	movi		v5.16b, #0x55
++	movi		v6.16b, #0x55
++	movi		v7.16b, #0x55
++	movi		v8.16b, #0x55
++	movi		v9.16b, #0x55
++	movi		v10.16b, #0x55
++	movi		v11.16b, #0x55
++	movi		v12.16b, #0x55
++	movi		v13.16b, #0x55
++	movi		v14.16b, #0x55
++	movi		v15.16b, #0x55
++	movi		v16.16b, #0x55
++	movi		v17.16b, #0x55
++	movi		v18.16b, #0x55
++	movi		v19.16b, #0x55
++	movi		v20.16b, #0x55
++	movi		v21.16b, #0x55
++	movi		v22.16b, #0x55
++	movi		v23.16b, #0x55
++	movi		v24.16b, #0x55
++	movi		v25.16b, #0x55
++	movi		v26.16b, #0x55
++	movi		v27.16b, #0x55
++	movi		v28.16b, #0x55
++	movi		v29.16b, #0x55
++	movi		v30.16b, #0x55
++	movi		v31.16b, #0x55
+ 	.endm
  
--	BUF		.req	x0
--	LEN		.req	x1
--	CRC		.req	x2
-+	BUF		.req	x19
-+	LEN		.req	x20
-+	CRC		.req	x21
-+	CONST		.req	x22
- 
- 	vzr		.req	v9
- 
-@@ -122,7 +123,14 @@ ENTRY(crc32_pmull_le)
- ENTRY(crc32c_pmull_le)
- 	adr		x3, .Lcrc32c_constants
- 
--0:	bic		LEN, LEN, #15
-+0:	frame_push	4, 64
-+
-+	mov		BUF, x0
-+	mov		LEN, x1
-+	mov		CRC, x2
-+	mov		CONST, x3
-+
-+	bic		LEN, LEN, #15
- 	ld1		{v1.16b-v4.16b}, [BUF], #0x40
- 	movi		vzr.16b, #0
- 	fmov		dCONSTANT, CRC
-@@ -131,7 +139,7 @@ ENTRY(crc32c_pmull_le)
- 	cmp		LEN, #0x40
- 	b.lt		less_64
- 
--	ldr		qCONSTANT, [x3]
-+	ldr		qCONSTANT, [CONST]
- 
- loop_64:		/* 64 bytes Full cache line folding */
- 	sub		LEN, LEN, #0x40
-@@ -161,10 +169,21 @@ loop_64:		/* 64 bytes Full cache line folding */
- 	eor		v4.16b, v4.16b, v8.16b
- 
- 	cmp		LEN, #0x40
--	b.ge		loop_64
-+	b.lt		less_64
-+
-+	if_will_cond_yield_neon
-+	stp		q1, q2, [sp, #.Lframe_local_offset]
-+	stp		q3, q4, [sp, #.Lframe_local_offset + 32]
-+	do_cond_yield_neon
-+	ldp		q1, q2, [sp, #.Lframe_local_offset]
-+	ldp		q3, q4, [sp, #.Lframe_local_offset + 32]
-+	ldr		qCONSTANT, [CONST]
-+	movi		vzr.16b, #0
-+	endif_yield_neon
-+	b		loop_64
- 
- less_64:		/* Folding cache line into 128bit */
--	ldr		qCONSTANT, [x3, #16]
-+	ldr		qCONSTANT, [CONST, #16]
- 
- 	pmull2		v5.1q, v1.2d, vCONSTANT.2d
- 	pmull		v1.1q, v1.1d, vCONSTANT.1d
-@@ -203,8 +222,8 @@ fold_64:
- 	eor		v1.16b, v1.16b, v2.16b
- 
- 	/* final 32-bit fold */
--	ldr		dCONSTANT, [x3, #32]
--	ldr		d3, [x3, #40]
-+	ldr		dCONSTANT, [CONST, #32]
-+	ldr		d3, [CONST, #40]
- 
- 	ext		v2.16b, v1.16b, vzr.16b, #4
- 	and		v1.16b, v1.16b, v3.16b
-@@ -212,7 +231,7 @@ fold_64:
- 	eor		v1.16b, v1.16b, v2.16b
- 
- 	/* Finish up with the bit-reversed barrett reduction 64 ==> 32 bits */
--	ldr		qCONSTANT, [x3, #48]
-+	ldr		qCONSTANT, [CONST, #48]
- 
- 	and		v2.16b, v1.16b, v3.16b
- 	ext		v2.16b, vzr.16b, v2.16b, #8
-@@ -222,6 +241,7 @@ fold_64:
- 	eor		v1.16b, v1.16b, v2.16b
- 	mov		w0, v1.s[1]
- 
-+	frame_pop
- 	ret
- ENDPROC(crc32_pmull_le)
- ENDPROC(crc32c_pmull_le)
+ 	.macro		endif_yield_neon, lbl
 -- 
 2.11.0
+
