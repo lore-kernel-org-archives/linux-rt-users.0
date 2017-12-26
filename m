@@ -1,7 +1,7 @@
 From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: [PATCH v4 11/20] arm64: assembler: add macros to conditionally yield the NEON under PREEMPT
-Date: Tue, 26 Dec 2017 10:29:31 +0000
-Message-ID: <20171226102940.26908-12-ard.biesheuvel@linaro.org>
+Subject: [PATCH v4 14/20] crypto: arm64/aes-ccm - yield NEON after every block of input
+Date: Tue, 26 Dec 2017 10:29:34 +0000
+Message-ID: <20171226102940.26908-15-ard.biesheuvel@linaro.org>
 References: <20171226102940.26908-1-ard.biesheuvel@linaro.org>
 Cc: Ard Biesheuvel <ard.biesheuvel@linaro.org>,
         Dave Martin <Dave.Martin@arm.com>,
@@ -15,112 +15,247 @@ Cc: Ard Biesheuvel <ard.biesheuvel@linaro.org>,
         Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>
 To: linux-kernel@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wr0-f196.google.com ([209.85.128.196]:39324 "EHLO
+        mail-wr0-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1750949AbdLZKbT (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 26 Dec 2017 05:31:19 -0500
+Received: by mail-wr0-f196.google.com with SMTP id o101so5666642wrb.6
+        for <linux-rt-users@vger.kernel.org>; Tue, 26 Dec 2017 02:31:18 -0800 (PST)
 In-Reply-To: <20171226102940.26908-1-ard.biesheuvel@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Add support macros to conditionally yield the NEON (and thus the CPU)
-that may be called from the assembler code.
-
-In some cases, yielding the NEON involves saving and restoring a non
-trivial amount of context (especially in the CRC folding algorithms),
-and so the macro is split into three, and the code in between is only
-executed when the yield path is taken, allowing the context to be preserved.
-The third macro takes an optional label argument that marks the resume
-path after a yield has been performed.
+Avoid excessive scheduling delays under a preemptible kernel by
+yielding the NEON after every block of input.
 
 Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 ---
- arch/arm64/include/asm/assembler.h | 64 ++++++++++++++++++++
- arch/arm64/kernel/asm-offsets.c    |  2 +
- 2 files changed, 66 insertions(+)
+ arch/arm64/crypto/aes-ce-ccm-core.S | 150 +++++++++++++-------
+ 1 file changed, 95 insertions(+), 55 deletions(-)
 
-diff --git a/arch/arm64/include/asm/assembler.h b/arch/arm64/include/asm/assembler.h
-index 9130be742a32..575d0f065d28 100644
---- a/arch/arm64/include/asm/assembler.h
-+++ b/arch/arm64/include/asm/assembler.h
-@@ -579,4 +579,68 @@ alternative_else_nop_endif
- #endif
+diff --git a/arch/arm64/crypto/aes-ce-ccm-core.S b/arch/arm64/crypto/aes-ce-ccm-core.S
+index e3a375c4cb83..88f5aef7934c 100644
+--- a/arch/arm64/crypto/aes-ce-ccm-core.S
++++ b/arch/arm64/crypto/aes-ce-ccm-core.S
+@@ -19,24 +19,33 @@
+ 	 *			     u32 *macp, u8 const rk[], u32 rounds);
+ 	 */
+ ENTRY(ce_aes_ccm_auth_data)
+-	ldr	w8, [x3]			/* leftover from prev round? */
++	frame_push	7
++
++	mov	x19, x0
++	mov	x20, x1
++	mov	x21, x2
++	mov	x22, x3
++	mov	x23, x4
++	mov	x24, x5
++
++	ldr	w25, [x22]			/* leftover from prev round? */
+ 	ld1	{v0.16b}, [x0]			/* load mac */
+-	cbz	w8, 1f
+-	sub	w8, w8, #16
++	cbz	w25, 1f
++	sub	w25, w25, #16
+ 	eor	v1.16b, v1.16b, v1.16b
+-0:	ldrb	w7, [x1], #1			/* get 1 byte of input */
+-	subs	w2, w2, #1
+-	add	w8, w8, #1
++0:	ldrb	w7, [x20], #1			/* get 1 byte of input */
++	subs	w21, w21, #1
++	add	w25, w25, #1
+ 	ins	v1.b[0], w7
+ 	ext	v1.16b, v1.16b, v1.16b, #1	/* rotate in the input bytes */
+ 	beq	8f				/* out of input? */
+-	cbnz	w8, 0b
++	cbnz	w25, 0b
+ 	eor	v0.16b, v0.16b, v1.16b
+-1:	ld1	{v3.4s}, [x4]			/* load first round key */
+-	prfm	pldl1strm, [x1]
+-	cmp	w5, #12				/* which key size? */
+-	add	x6, x4, #16
+-	sub	w7, w5, #2			/* modified # of rounds */
++1:	ld1	{v3.4s}, [x23]			/* load first round key */
++	prfm	pldl1strm, [x20]
++	cmp	w24, #12			/* which key size? */
++	add	x6, x23, #16
++	sub	w7, w24, #2			/* modified # of rounds */
+ 	bmi	2f
+ 	bne	5f
+ 	mov	v5.16b, v3.16b
+@@ -55,33 +64,43 @@ ENTRY(ce_aes_ccm_auth_data)
+ 	ld1	{v5.4s}, [x6], #16		/* load next round key */
+ 	bpl	3b
+ 	aese	v0.16b, v4.16b
+-	subs	w2, w2, #16			/* last data? */
++	subs	w21, w21, #16			/* last data? */
+ 	eor	v0.16b, v0.16b, v5.16b		/* final round */
+ 	bmi	6f
+-	ld1	{v1.16b}, [x1], #16		/* load next input block */
++	ld1	{v1.16b}, [x20], #16		/* load next input block */
+ 	eor	v0.16b, v0.16b, v1.16b		/* xor with mac */
+-	bne	1b
+-6:	st1	{v0.16b}, [x0]			/* store mac */
++	beq	6f
++
++	if_will_cond_yield_neon
++	st1	{v0.16b}, [x19]			/* store mac */
++	do_cond_yield_neon
++	ld1	{v0.16b}, [x19]			/* reload mac */
++	endif_yield_neon
++
++	b	1b
++6:	st1	{v0.16b}, [x19]			/* store mac */
+ 	beq	10f
+-	adds	w2, w2, #16
++	adds	w21, w21, #16
+ 	beq	10f
+-	mov	w8, w2
+-7:	ldrb	w7, [x1], #1
++	mov	w25, w21
++7:	ldrb	w7, [x20], #1
+ 	umov	w6, v0.b[0]
+ 	eor	w6, w6, w7
+-	strb	w6, [x0], #1
+-	subs	w2, w2, #1
++	strb	w6, [x19], #1
++	subs	w21, w21, #1
+ 	beq	10f
+ 	ext	v0.16b, v0.16b, v0.16b, #1	/* rotate out the mac bytes */
+ 	b	7b
+-8:	mov	w7, w8
+-	add	w8, w8, #16
++8:	mov	w7, w25
++	add	w25, w25, #16
+ 9:	ext	v1.16b, v1.16b, v1.16b, #1
+ 	adds	w7, w7, #1
+ 	bne	9b
+ 	eor	v0.16b, v0.16b, v1.16b
+-	st1	{v0.16b}, [x0]
+-10:	str	w8, [x3]
++	st1	{v0.16b}, [x19]
++10:	str	w25, [x22]
++
++	frame_pop
+ 	ret
+ ENDPROC(ce_aes_ccm_auth_data)
+ 
+@@ -126,19 +145,29 @@ ENTRY(ce_aes_ccm_final)
+ ENDPROC(ce_aes_ccm_final)
+ 
+ 	.macro	aes_ccm_do_crypt,enc
+-	ldr	x8, [x6, #8]			/* load lower ctr */
+-	ld1	{v0.16b}, [x5]			/* load mac */
+-CPU_LE(	rev	x8, x8			)	/* keep swabbed ctr in reg */
++	frame_push	8
++
++	mov	x19, x0
++	mov	x20, x1
++	mov	x21, x2
++	mov	x22, x3
++	mov	x23, x4
++	mov	x24, x5
++	mov	x25, x6
++
++	ldr	x26, [x25, #8]			/* load lower ctr */
++	ld1	{v0.16b}, [x24]			/* load mac */
++CPU_LE(	rev	x26, x26		)	/* keep swabbed ctr in reg */
+ 0:	/* outer loop */
+-	ld1	{v1.8b}, [x6]			/* load upper ctr */
+-	prfm	pldl1strm, [x1]
+-	add	x8, x8, #1
+-	rev	x9, x8
+-	cmp	w4, #12				/* which key size? */
+-	sub	w7, w4, #2			/* get modified # of rounds */
++	ld1	{v1.8b}, [x25]			/* load upper ctr */
++	prfm	pldl1strm, [x20]
++	add	x26, x26, #1
++	rev	x9, x26
++	cmp	w23, #12			/* which key size? */
++	sub	w7, w23, #2			/* get modified # of rounds */
+ 	ins	v1.d[1], x9			/* no carry in lower ctr */
+-	ld1	{v3.4s}, [x3]			/* load first round key */
+-	add	x10, x3, #16
++	ld1	{v3.4s}, [x22]			/* load first round key */
++	add	x10, x22, #16
+ 	bmi	1f
+ 	bne	4f
+ 	mov	v5.16b, v3.16b
+@@ -165,9 +194,9 @@ CPU_LE(	rev	x8, x8			)	/* keep swabbed ctr in reg */
+ 	bpl	2b
+ 	aese	v0.16b, v4.16b
+ 	aese	v1.16b, v4.16b
+-	subs	w2, w2, #16
+-	bmi	6f				/* partial block? */
+-	ld1	{v2.16b}, [x1], #16		/* load next input block */
++	subs	w21, w21, #16
++	bmi	7f				/* partial block? */
++	ld1	{v2.16b}, [x20], #16		/* load next input block */
+ 	.if	\enc == 1
+ 	eor	v2.16b, v2.16b, v5.16b		/* final round enc+mac */
+ 	eor	v1.16b, v1.16b, v2.16b		/* xor with crypted ctr */
+@@ -176,18 +205,29 @@ CPU_LE(	rev	x8, x8			)	/* keep swabbed ctr in reg */
+ 	eor	v1.16b, v2.16b, v5.16b		/* final round enc */
+ 	.endif
+ 	eor	v0.16b, v0.16b, v2.16b		/* xor mac with pt ^ rk[last] */
+-	st1	{v1.16b}, [x0], #16		/* write output block */
+-	bne	0b
+-CPU_LE(	rev	x8, x8			)
+-	st1	{v0.16b}, [x5]			/* store mac */
+-	str	x8, [x6, #8]			/* store lsb end of ctr (BE) */
+-5:	ret
+-
+-6:	eor	v0.16b, v0.16b, v5.16b		/* final round mac */
++	st1	{v1.16b}, [x19], #16		/* write output block */
++	beq	5f
++
++	if_will_cond_yield_neon
++	st1	{v0.16b}, [x24]			/* store mac */
++	do_cond_yield_neon
++	ld1	{v0.16b}, [x24]			/* reload mac */
++	endif_yield_neon
++
++	b	0b
++5:
++CPU_LE(	rev	x26, x26			)
++	st1	{v0.16b}, [x24]			/* store mac */
++	str	x26, [x25, #8]			/* store lsb end of ctr (BE) */
++
++6:	frame_pop
++	ret
++
++7:	eor	v0.16b, v0.16b, v5.16b		/* final round mac */
+ 	eor	v1.16b, v1.16b, v5.16b		/* final round enc */
+-	st1	{v0.16b}, [x5]			/* store mac */
+-	add	w2, w2, #16			/* process partial tail block */
+-7:	ldrb	w9, [x1], #1			/* get 1 byte of input */
++	st1	{v0.16b}, [x24]			/* store mac */
++	add	w21, w21, #16			/* process partial tail block */
++8:	ldrb	w9, [x20], #1			/* get 1 byte of input */
+ 	umov	w6, v1.b[0]			/* get top crypted ctr byte */
+ 	umov	w7, v0.b[0]			/* get top mac byte */
+ 	.if	\enc == 1
+@@ -197,13 +237,13 @@ CPU_LE(	rev	x8, x8			)
+ 	eor	w9, w9, w6
+ 	eor	w7, w7, w9
+ 	.endif
+-	strb	w9, [x0], #1			/* store out byte */
+-	strb	w7, [x5], #1			/* store mac byte */
+-	subs	w2, w2, #1
+-	beq	5b
++	strb	w9, [x19], #1			/* store out byte */
++	strb	w7, [x24], #1			/* store mac byte */
++	subs	w21, w21, #1
++	beq	6b
+ 	ext	v0.16b, v0.16b, v0.16b, #1	/* shift out mac byte */
+ 	ext	v1.16b, v1.16b, v1.16b, #1	/* shift out ctr byte */
+-	b	7b
++	b	8b
  	.endm
  
-+/*
-+ * Check whether to yield to another runnable task from kernel mode NEON code
-+ * (which runs with preemption disabled).
-+ *
-+ * if_will_cond_yield_neon
-+ *        // pre-yield patchup code
-+ * do_cond_yield_neon
-+ *        // post-yield patchup code
-+ * endif_yield_neon    <label>
-+ *
-+ * where <label> is optional, and marks the point where execution will resume
-+ * after a yield has been performed. If omitted, execution resumes right after
-+ * the endif_yield_neon invocation.
-+ *
-+ * Note that the patchup code does not support assembler directives that change
-+ * the output section, any use of such directives is undefined.
-+ *
-+ * The yield itself consists of the following:
-+ * - Check whether the preempt count is exactly 1, in which case disabling
-+ *   preemption once will make the task preemptible. If this is not the case,
-+ *   yielding is pointless.
-+ * - Check whether TIF_NEED_RESCHED is set, and if so, disable and re-enable
-+ *   kernel mode NEON (which will trigger a reschedule), and branch to the
-+ *   yield fixup code.
-+ *
-+ * This macro sequence clobbers x0, x1 and the flags register unconditionally,
-+ * and may clobber x2 .. x18 if the yield path is taken.
-+ */
-+
-+	.macro		cond_yield_neon, lbl
-+	if_will_cond_yield_neon
-+	do_cond_yield_neon
-+	endif_yield_neon	\lbl
-+	.endm
-+
-+	.macro		if_will_cond_yield_neon
-+#ifdef CONFIG_PREEMPT
-+	get_thread_info	x0
-+	ldr		w1, [x0, #TSK_TI_PREEMPT]
-+	ldr		x0, [x0, #TSK_TI_FLAGS]
-+	cmp		w1, #PREEMPT_DISABLE_OFFSET
-+	csel		x0, x0, xzr, eq
-+	tbnz		x0, #TIF_NEED_RESCHED, .Lyield_\@	// needs rescheduling?
-+#endif
-+	/* fall through to .Lyield_out_### below */
-+	.subsection	1
-+.Lyield_\@ :
-+	.endm
-+
-+	.macro		do_cond_yield_neon
-+	bl		kernel_neon_end
-+	bl		kernel_neon_begin
-+	.endm
-+
-+	.macro		endif_yield_neon, lbl
-+	.ifnb		\lbl
-+	b		\lbl
-+	.else
-+	b		.Lyield_out_\@
-+	.endif
-+	.previous
-+.Lyield_out_\@ :
-+	.endm
-+
- #endif	/* __ASM_ASSEMBLER_H */
-diff --git a/arch/arm64/kernel/asm-offsets.c b/arch/arm64/kernel/asm-offsets.c
-index 71bf088f1e4b..1e433ac2ef9c 100644
---- a/arch/arm64/kernel/asm-offsets.c
-+++ b/arch/arm64/kernel/asm-offsets.c
-@@ -91,6 +91,8 @@ int main(void)
-   DEFINE(DMA_TO_DEVICE,		DMA_TO_DEVICE);
-   DEFINE(DMA_FROM_DEVICE,	DMA_FROM_DEVICE);
-   BLANK();
-+  DEFINE(PREEMPT_DISABLE_OFFSET, PREEMPT_DISABLE_OFFSET);
-+  BLANK();
-   DEFINE(CLOCK_REALTIME,	CLOCK_REALTIME);
-   DEFINE(CLOCK_MONOTONIC,	CLOCK_MONOTONIC);
-   DEFINE(CLOCK_MONOTONIC_RAW,	CLOCK_MONOTONIC_RAW);
+ 	/*
 -- 
 2.11.0
+
