@@ -1,7 +1,7 @@
 From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-Subject: [PATCH v4 13/20] crypto: arm64/sha2-ce - yield NEON after every block of input
-Date: Tue, 26 Dec 2017 10:29:33 +0000
-Message-ID: <20171226102940.26908-14-ard.biesheuvel@linaro.org>
+Subject: [PATCH v4 10/20] arm64: assembler: add utility macros to push/pop stack frames
+Date: Tue, 26 Dec 2017 10:29:30 +0000
+Message-ID: <20171226102940.26908-11-ard.biesheuvel@linaro.org>
 References: <20171226102940.26908-1-ard.biesheuvel@linaro.org>
 Cc: Ard Biesheuvel <ard.biesheuvel@linaro.org>,
         Dave Martin <Dave.Martin@arm.com>,
@@ -20,101 +20,85 @@ In-Reply-To: <20171226102940.26908-1-ard.biesheuvel@linaro.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Avoid excessive scheduling delays under a preemptible kernel by
-yielding the NEON after every block of input.
+We are going to add code to all the NEON crypto routines that will
+turn them into non-leaf functions, so we need to manage the stack
+frames. To make this less tedious and error prone, add some macros
+that take the number of callee saved registers to preserve and the
+extra size to allocate in the stack frame (for locals) and emit
+the ldp/stp sequences.
 
 Signed-off-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 ---
- arch/arm64/crypto/sha2-ce-core.S | 37 ++++++++++++++------
- 1 file changed, 26 insertions(+), 11 deletions(-)
+ arch/arm64/include/asm/assembler.h | 57 ++++++++++++++++++++
+ 1 file changed, 57 insertions(+)
 
-diff --git a/arch/arm64/crypto/sha2-ce-core.S b/arch/arm64/crypto/sha2-ce-core.S
-index 679c6c002f4f..e955a42345c0 100644
---- a/arch/arm64/crypto/sha2-ce-core.S
-+++ b/arch/arm64/crypto/sha2-ce-core.S
-@@ -77,30 +77,36 @@
- 	 *			  int blocks)
- 	 */
- ENTRY(sha2_ce_transform)
-+	frame_push	3
+diff --git a/arch/arm64/include/asm/assembler.h b/arch/arm64/include/asm/assembler.h
+index 8b168280976f..9130be742a32 100644
+--- a/arch/arm64/include/asm/assembler.h
++++ b/arch/arm64/include/asm/assembler.h
+@@ -499,6 +499,63 @@ alternative_else_nop_endif
+ #endif
+ 	.endm
+ 
++	/*
++	 * frame_push - Push @regcount callee saved registers to the stack,
++	 *              starting at x19, as well as x29/x30, and set x29 to
++	 *              the new value of sp. Add @extra bytes of stack space
++	 *              for locals.
++	 */
++	.macro		frame_push, regcount:req, extra
++	__frame		st, \regcount, \extra
++	.endm
 +
-+	mov		x19, x0
-+	mov		x20, x1
-+	mov		x21, x2
++	/*
++	 * frame_pop  - Pop the callee saved registers from the stack that were
++	 *              pushed in the most recent call to frame_push, as well
++	 *              as x29/x30 and any extra stack space that may have been
++	 *              allocated.
++	 */
++	.macro		frame_pop
++	__frame		ld
++	.endm
 +
- 	/* load round constants */
--	adr		x8, .Lsha2_rcon
-+0:	adr		x8, .Lsha2_rcon
- 	ld1		{ v0.4s- v3.4s}, [x8], #64
- 	ld1		{ v4.4s- v7.4s}, [x8], #64
- 	ld1		{ v8.4s-v11.4s}, [x8], #64
- 	ld1		{v12.4s-v15.4s}, [x8]
- 
- 	/* load state */
--	ld1		{dgav.4s, dgbv.4s}, [x0]
-+	ld1		{dgav.4s, dgbv.4s}, [x19]
- 
- 	/* load sha256_ce_state::finalize */
- 	ldr_l		w4, sha256_ce_offsetof_finalize, x4
--	ldr		w4, [x0, x4]
-+	ldr		w4, [x19, x4]
- 
- 	/* load input */
--0:	ld1		{v16.4s-v19.4s}, [x1], #64
--	sub		w2, w2, #1
-+1:	ld1		{v16.4s-v19.4s}, [x20], #64
-+	sub		w21, w21, #1
- 
- CPU_LE(	rev32		v16.16b, v16.16b	)
- CPU_LE(	rev32		v17.16b, v17.16b	)
- CPU_LE(	rev32		v18.16b, v18.16b	)
- CPU_LE(	rev32		v19.16b, v19.16b	)
- 
--1:	add		t0.4s, v16.4s, v0.4s
-+2:	add		t0.4s, v16.4s, v0.4s
- 	mov		dg0v.16b, dgav.16b
- 	mov		dg1v.16b, dgbv.16b
- 
-@@ -129,16 +135,24 @@ CPU_LE(	rev32		v19.16b, v19.16b	)
- 	add		dgbv.4s, dgbv.4s, dg1v.4s
- 
- 	/* handled all input blocks? */
--	cbnz		w2, 0b
-+	cbz		w21, 3f
++	.macro		__frame_regs, reg1, reg2, op, num
++	.if		.Lframe_regcount == \num
++	\op\()r		\reg1, [sp, #(\num + 1) * 8]
++	.elseif		.Lframe_regcount > \num
++	\op\()p		\reg1, \reg2, [sp, #(\num + 1) * 8]
++	.endif
++	.endm
 +
-+	if_will_cond_yield_neon
-+	st1		{dgav.4s, dgbv.4s}, [x19]
-+	do_cond_yield_neon
-+	b		0b
-+	endif_yield_neon
++	.macro		__frame, op, regcount, extra=0
++	.ifc		\op, st
++	.if		(\regcount) < 0 || (\regcount) > 10
++	.error		"regcount should be in the range [0 ... 10]"
++	.endif
++	.if		((\extra) % 16) != 0
++	.error		"extra should be a multiple of 16 bytes"
++	.endif
++	.set		.Lframe_regcount, \regcount
++	.set		.Lframe_extra, \extra
++	.set		.Lframe_local_offset, ((\regcount + 3) / 2) * 16
++	stp		x29, x30, [sp, #-.Lframe_local_offset - .Lframe_extra]!
++	mov		x29, sp
++	.elseif		.Lframe_regcount == -1 // && op == 'ld'
++	.error		"frame_push/frame_pop may not be nested"
++	.endif
 +
-+	b		1b
- 
- 	/*
- 	 * Final block: add padding and total bit count.
- 	 * Skip if the input size was not a round multiple of the block size,
- 	 * the padding is handled by the C code in that case.
- 	 */
--	cbz		x4, 3f
-+3:	cbz		x4, 4f
- 	ldr_l		w4, sha256_ce_offsetof_count, x4
--	ldr		x4, [x0, x4]
-+	ldr		x4, [x19, x4]
- 	movi		v17.2d, #0
- 	mov		x8, #0x80000000
- 	movi		v18.2d, #0
-@@ -147,9 +161,10 @@ CPU_LE(	rev32		v19.16b, v19.16b	)
- 	mov		x4, #0
- 	mov		v19.d[0], xzr
- 	mov		v19.d[1], x7
--	b		1b
-+	b		2b
- 
- 	/* store new state */
--3:	st1		{dgav.4s, dgbv.4s}, [x0]
-+4:	st1		{dgav.4s, dgbv.4s}, [x19]
-+	frame_pop
- 	ret
- ENDPROC(sha2_ce_transform)
++	__frame_regs	x19, x20, \op, 1
++	__frame_regs	x21, x22, \op, 3
++	__frame_regs	x23, x24, \op, 5
++	__frame_regs	x25, x26, \op, 7
++	__frame_regs	x27, x28, \op, 9
++
++	.ifc		\op, ld
++	ldp		x29, x30, [sp], #.Lframe_local_offset + .Lframe_extra
++	.set		.Lframe_regcount, -1
++	.endif
++	.endm
++
+ /*
+  * Errata workaround post TTBR0_EL1 update.
+  */
 -- 
 2.11.0
