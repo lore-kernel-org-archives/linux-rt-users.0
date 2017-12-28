@@ -1,7 +1,7 @@
 From: Arnaldo Carvalho de Melo <acme@kernel.org>
-Subject: [PATCH 25/35] perf string: Add {strdup,strpbrk}_esc()
-Date: Thu, 28 Dec 2017 11:30:17 -0300
-Message-ID: <20171228143027.30547-26-acme@kernel.org>
+Subject: [PATCH 23/35] perf probe: Add __return suffix for return events
+Date: Thu, 28 Dec 2017 11:30:15 -0300
+Message-ID: <20171228143027.30547-24-acme@kernel.org>
 References: <20171228143027.30547-1-acme@kernel.org>
 Cc: linux-kernel@vger.kernel.org, linux-perf-users@vger.kernel.org,
         Masami Hiramatsu <mhiramat@kernel.org>,
@@ -10,94 +10,101 @@ Cc: linux-kernel@vger.kernel.org, linux-perf-users@vger.kernel.org,
         linux-rt-users@vger.kernel.org,
         Arnaldo Carvalho de Melo <acme@redhat.com>
 To: Ingo Molnar <mingo@kernel.org>
-Return-path: <linux-perf-users-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20171228143027.30547-1-acme@kernel.org>
-Sender: linux-perf-users-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: Masami Hiramatsu <mhiramat@kernel.org>
 
-To support the special characters escaped by '\' in 'perf probe' event parser.
+Add __return suffix for function return events automatically. Without
+this, user have to give --force option and will see the number suffix
+for each event like "function_1", which is not easy to recognize.
+Instead, this adds __return suffix to it automatically.  E.g.
 
+  =====
+  # ./perf probe -x /lib64/libc-2.25.so 'malloc*%return'
+  Added new events:
+    probe_libc:malloc_printerr__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_consolidate__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_check__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_hook_ini__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_trim__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_usable_size__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_stats__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_info__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:mallochook__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_get_state__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+    probe_libc:malloc_set_state__return (on malloc*%return in /usr/lib64/libc-2.25.so)
+
+  You can now use it in all perf tools, such as:
+
+	  perf record -e probe_libc:malloc_set_state__return -aR sleep 1
+
+  =====
+
+Reported-by: Arnaldo Carvalho de Melo <acme@kernel.org>
 Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
-Reviewed-by: Thomas Richter <tmricht@linux.vnet.ibm.com>
 Acked-by: Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>
+Reviewed-by: Thomas Richter <tmricht@linux.vnet.ibm.com>
+Tested-by: Arnaldo Carvalho de Melo <acme@redhat.com>
 Cc: Paul Clarke <pc@us.ibm.com>
 Cc: bhargavb <bhargavaramudu@gmail.com>
 Cc: linux-rt-users@vger.kernel.org
-Link: http://lkml.kernel.org/r/151275052163.24652.18205979384585484358.stgit@devbox
-[ Split from a larger patch ]
+Link: http://lkml.kernel.org/r/151275046418.24652.6696011972866498489.stgit@devbox
 Signed-off-by: Arnaldo Carvalho de Melo <acme@redhat.com>
 ---
- tools/perf/util/string.c  | 46 ++++++++++++++++++++++++++++++++++++++++++++++
- tools/perf/util/string2.h |  2 ++
- 2 files changed, 48 insertions(+)
+ tools/perf/Documentation/perf-probe.txt | 2 +-
+ tools/perf/util/probe-event.c           | 9 +++++----
+ 2 files changed, 6 insertions(+), 5 deletions(-)
 
-diff --git a/tools/perf/util/string.c b/tools/perf/util/string.c
-index aaa08ee8c717..d8bfd0c4d2cb 100644
---- a/tools/perf/util/string.c
-+++ b/tools/perf/util/string.c
-@@ -396,3 +396,49 @@ char *asprintf_expr_inout_ints(const char *var, bool in, size_t nints, int *ints
- 	free(expr);
- 	return NULL;
- }
-+
-+/* Like strpbrk(), but not break if it is right after a backslash (escaped) */
-+char *strpbrk_esc(char *str, const char *stopset)
-+{
-+	char *ptr;
-+
-+	do {
-+		ptr = strpbrk(str, stopset);
-+		if (ptr == str ||
-+		    (ptr == str + 1 && *(ptr - 1) != '\\'))
-+			break;
-+		str = ptr + 1;
-+	} while (ptr && *(ptr - 1) == '\\' && *(ptr - 2) != '\\');
-+
-+	return ptr;
-+}
-+
-+/* Like strdup, but do not copy a single backslash */
-+char *strdup_esc(const char *str)
-+{
-+	char *s, *d, *p, *ret = strdup(str);
-+
-+	if (!ret)
-+		return NULL;
-+
-+	d = strchr(ret, '\\');
-+	if (!d)
-+		return ret;
-+
-+	s = d + 1;
-+	do {
-+		if (*s == '\0') {
-+			*d = '\0';
-+			break;
-+		}
-+		p = strchr(s + 1, '\\');
-+		if (p) {
-+			memmove(d, s, p - s);
-+			d += p - s;
-+			s = p + 1;
-+		} else
-+			memmove(d, s, strlen(s) + 1);
-+	} while (p);
-+
-+	return ret;
-+}
-diff --git a/tools/perf/util/string2.h b/tools/perf/util/string2.h
-index ee14ca5451ab..4c68a09b97e8 100644
---- a/tools/perf/util/string2.h
-+++ b/tools/perf/util/string2.h
-@@ -39,5 +39,7 @@ static inline char *asprintf_expr_not_in_ints(const char *var, size_t nints, int
- 	return asprintf_expr_inout_ints(var, false, nints, ints);
+diff --git a/tools/perf/Documentation/perf-probe.txt b/tools/perf/Documentation/perf-probe.txt
+index d7e4869905f1..f96382692f42 100644
+--- a/tools/perf/Documentation/perf-probe.txt
++++ b/tools/perf/Documentation/perf-probe.txt
+@@ -170,7 +170,7 @@ Probe points are defined by following syntax.
+      or,
+      sdt_PROVIDER:SDTEVENT
+ 
+-'EVENT' specifies the name of new event, if omitted, it will be set the name of the probed function. You can also specify a group name by 'GROUP', if omitted, set 'probe' is used for kprobe and 'probe_<bin>' is used for uprobe.
++'EVENT' specifies the name of new event, if omitted, it will be set the name of the probed function, and for return probes, a "\_\_return" suffix is automatically added to the function name. You can also specify a group name by 'GROUP', if omitted, set 'probe' is used for kprobe and 'probe_<bin>' is used for uprobe.
+ Note that using existing group name can conflict with other events. Especially, using the group name reserved for kernel modules can hide embedded events in the
+ modules.
+ 'FUNC' specifies a probed function name, and it may have one of the following options; '+OFFS' is the offset from function entry address in bytes, ':RLN' is the relative-line number from function entry line, and '%return' means that it probes function return. And ';PTN' means lazy matching pattern (see LAZY MATCHING). Note that ';PTN' must be the end of the probe point definition.  In addition, '@SRC' specifies a source file which has that function.
+diff --git a/tools/perf/util/probe-event.c b/tools/perf/util/probe-event.c
+index 7e582547ac07..a68141d360b0 100644
+--- a/tools/perf/util/probe-event.c
++++ b/tools/perf/util/probe-event.c
+@@ -2573,7 +2573,8 @@ int show_perf_probe_events(struct strfilter *filter)
  }
  
-+char *strpbrk_esc(char *str, const char *stopset);
-+char *strdup_esc(const char *str);
+ static int get_new_event_name(char *buf, size_t len, const char *base,
+-			      struct strlist *namelist, bool allow_suffix)
++			      struct strlist *namelist, bool ret_event,
++			      bool allow_suffix)
+ {
+ 	int i, ret;
+ 	char *p, *nbase;
+@@ -2590,7 +2591,7 @@ static int get_new_event_name(char *buf, size_t len, const char *base,
+ 		*p = '\0';
  
- #endif /* PERF_STRING_H */
+ 	/* Try no suffix number */
+-	ret = e_snprintf(buf, len, "%s", nbase);
++	ret = e_snprintf(buf, len, "%s%s", nbase, ret_event ? "__return" : "");
+ 	if (ret < 0) {
+ 		pr_debug("snprintf() failed: %d\n", ret);
+ 		goto out;
+@@ -2689,8 +2690,8 @@ static int probe_trace_event__set_name(struct probe_trace_event *tev,
+ 		group = PERFPROBE_GROUP;
+ 
+ 	/* Get an unused new event name */
+-	ret = get_new_event_name(buf, 64, event,
+-				 namelist, allow_suffix);
++	ret = get_new_event_name(buf, 64, event, namelist,
++				 tev->point.retprobe, allow_suffix);
+ 	if (ret < 0)
+ 		return ret;
+ 
 -- 
 2.13.6
