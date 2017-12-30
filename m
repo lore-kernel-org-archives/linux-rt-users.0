@@ -1,59 +1,32 @@
-From: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
+From: Arve Barsnes <arve.barsnes@gmail.com>
 Subject: Re: RT patchset naming convention
-Date: Sat, 30 Dec 2017 06:07:28 +0100
-Message-ID: <20171230060728.398d1845@archlinux.localdomain>
+Date: Sat, 30 Dec 2017 11:21:56 +0000
+Message-ID: <CAJjrzcX21K54qnTA0iRpJsnvwvkceWus1wffSjSHHAhXkSgjMg@mail.gmail.com>
 References: <CAF_dkJDQy-ONu59RG4HbiuYPEm+DA1zqME8pQp7VdUspcsptVA@mail.gmail.com>
+ <20171230060728.398d1845@archlinux.localdomain> <20171230061848.1918cd85@archlinux.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail56c50.megamailservers.eu ([91.136.10.66]:51206 "EHLO
-        mail56c50.megamailservers.eu" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1750731AbdL3FkE (ORCPT
+Received: from mail-io0-f181.google.com ([209.85.223.181]:35409 "EHLO
+        mail-io0-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1750886AbdL3LWR (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 30 Dec 2017 00:40:04 -0500
-Received: from archlinux.localdomain (x4e3215f7.dyn.telefonica.de [78.50.21.247])
-        (authenticated bits=0)
-        by mail56c50.megamailservers.eu (8.14.9/8.13.1) with ESMTP id vBU57Pfs008973
-        (version=TLSv1/SSLv3 cipher=AES256-GCM-SHA384 bits=256 verify=NO)
-        for <linux-rt-users@vger.kernel.org>; Sat, 30 Dec 2017 05:07:27 +0000
-In-Reply-To: <CAF_dkJDQy-ONu59RG4HbiuYPEm+DA1zqME8pQp7VdUspcsptVA@mail.gmail.com>
+        Sat, 30 Dec 2017 06:22:17 -0500
+Received: by mail-io0-f181.google.com with SMTP id 14so36798629iou.2
+        for <linux-rt-users@vger.kernel.org>; Sat, 30 Dec 2017 03:22:17 -0800 (PST)
+In-Reply-To: <20171230061848.1918cd85@archlinux.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 29 Dec 2017 19:34:43 -0500, Patrick Doyle wrote:
->Is there documentation as to the naming convention?
->patches-4.9.61-rt61.tar.gz
-         ^^^^^^ ^^^^rt patch version
-         ^^^^^^kernel version
+On 30 December 2017 at 05:18, Ralf Mardorf <ralf.mardorf@alice-dsl.net> wrote:
+>
+> 4.9.61-rt61
+> 4.9.68-rt60
+>
+> It's somewhat unusual that the kernel version does increases and the rt
+> patch version decreases, usually it's vice versa ;).
 
-https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.tar.gz
-+
-https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.9.61.gz
-or
-https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.61.tar.gz
-
-Rt patches that fit to kernel 4.9.61 are all patches
-                              4.9.61-rt*
-
-See also https://cdn.kernel.org/category/releases.html .
-
->Sadly, I don't see any patches for any 4.9.5? releases.  So is there
->any advice as to which patch set I should apply to my kernel?
-
-Is there a good reason that has to be exactly 4.9.5?
-
-Why don't you follow the 4.9 LTS as close a s possible by upgrading to
-a kernel version close to an available rt patch.
-
-4.9.73 is from 2017-12-29, see https://cdn.kernel.org/ ,
-IOW I would go with kernel 4.9.68 and patch-4.9.68-rt60
-
-If you really want 4.9.5 you could try to do it as Fernando from CCRMA
-does:
-
-https://lists.linuxaudio.org/pipermail/linux-audio-user/2017-December/109022.html
-
-That way a patch might apply automatically with an offset or you
-perhaps need to fix it manually.
+That's probably a spelling error in some way, 4.9.61 had the -rt51
+patch set, and no -rt61 patch set has been announced as far as I could
+find. Meaning -rt60 is the latest one :)
