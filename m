@@ -1,36 +1,33 @@
-From: Patrick Doyle <wpdster@gmail.com>
-Subject: RT patchset naming convention
-Date: Fri, 29 Dec 2017 19:34:43 -0500
-Message-ID: <CAF_dkJDQy-ONu59RG4HbiuYPEm+DA1zqME8pQp7VdUspcsptVA@mail.gmail.com>
+From: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
+Subject: Re: RT patchset naming convention
+Date: Sat, 30 Dec 2017 06:18:48 +0100
+Message-ID: <20171230061848.1918cd85@archlinux.localdomain>
+References: <CAF_dkJDQy-ONu59RG4HbiuYPEm+DA1zqME8pQp7VdUspcsptVA@mail.gmail.com>
+        <20171230060728.398d1845@archlinux.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ot0-f174.google.com ([74.125.82.174]:36940 "EHLO
-        mail-ot0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1750882AbdL3AfO (ORCPT
+Received: from mail232c50.megamailservers.eu ([91.136.10.242]:51220 "EHLO
+        mail37c50.megamailservers.eu" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1750731AbdL3FSt (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 29 Dec 2017 19:35:14 -0500
-Received: by mail-ot0-f174.google.com with SMTP id p31so32086332ota.4
-        for <linux-rt-users@vger.kernel.org>; Fri, 29 Dec 2017 16:35:14 -0800 (PST)
+        Sat, 30 Dec 2017 00:18:49 -0500
+Received: from archlinux.localdomain (x4e3215f7.dyn.telefonica.de [78.50.21.247])
+        (authenticated bits=0)
+        by mail37c50.megamailservers.eu (8.14.9/8.13.1) with ESMTP id vBU5IjaQ012514
+        (version=TLSv1/SSLv3 cipher=AES256-GCM-SHA384 bits=256 verify=NO)
+        for <linux-rt-users@vger.kernel.org>; Sat, 30 Dec 2017 05:18:46 +0000
+In-Reply-To: <20171230060728.398d1845@archlinux.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I would like to apply the RT patch set to my 4.9.52 kernel, but I am
-confused by the naming convention of the patches available at
-https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.9/.  I am also
-somewhat distressed by the lack of a patch set for my 4.9.52 kernel.
+4.9.61-rt61
+4.9.68-rt60
 
-Is there documentation as to the naming convention?  I see patches such as:
+It's somewhat unusual that the kernel version does increases and the rt
+patch version decreases, usually it's vice versa ;).
 
-patch-4.9.61-rt51-rt52-rc1.patch
-patch-4.9.65-rt56.patch
-and
-patches-4.9.61-rt61.tar.gz
-
-Sadly, I don't see any patches for any 4.9.5? releases.  So is there
-any advice as to which patch set I should apply to my kernel?
-
-Thank you.
-
---wpd
+4.14.6-rt7
+4.14.8-rt9
