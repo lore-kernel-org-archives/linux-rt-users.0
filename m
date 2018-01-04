@@ -1,26 +1,30 @@
-From: Daniel Wagner <wagi@monom.org>
-Subject: Re: [cip-dev] [ANNOUNCE] Linux 4.4.15-cip15-rt10
-Date: Tue, 2 Jan 2018 13:29:53 +0100
-Message-ID: <2e1f1151-dc3a-29a1-5f17-fe3f6196b3e2@monom.org>
-References: <b4cf2728-0d0c-5128-d007-818e66da5613@siemens.com>
+From: "Peter Deng" <peterddeng2000@securemailer.com>
+Subject: Business Possibility
+Date: Thu, 4 Jan 2018 16:14:00 +0000
+Message-ID: <25324064617521006718864@nadneaa2>
+Reply-To: peterddeng2000@secsuremailer.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: "cip-dev@lists.cip-project.org" <cip-dev@lists.cip-project.org>
+Content-Type: text/plain
+Content-Transfer-Encoding: 8BIT
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.monom.org ([188.138.9.77]:48650 "EHLO mail.monom.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751216AbeABM35 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 2 Jan 2018 07:29:57 -0500
-In-Reply-To: <b4cf2728-0d0c-5128-d007-818e66da5613@siemens.com>
-Content-Language: en-US
+Received: from host116-16-237-212.serverdedicati.aruba.it ([212.237.16.116]:43238
+        "EHLO host.arubacloud.com" rhost-flags-OK-FAIL-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1753423AbeADQTb (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 4 Jan 2018 11:19:31 -0500
+Received: from slsourcinggroup.com (nadneaa2.miniserver.com [78.31.108.146])
+        by host.arubacloud.com (Postfix) with ESMTPA id 85222756AD
+        for <linux-rt-users@vger.kernel.org>; Thu,  4 Jan 2018 17:13:32 +0100 (CET)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 01/02/2018 12:56 PM, Daniel Wagner wrote:
-> Hello CIP RT Folks!
-> 	
-> I'm pleased to announce the Linux 4.4.15-cip15-rt10 stable release.
+Hello there, My name is Peter Deng a South African citizen and a friend to Mrs Mugabe sister . I got your contact through Korean business online directory. I represent the interest of Mrs Mugabe who wishes to move a total amount of $19 million  into a safe account owns by a trusted business man who is capable of accommodating such volume of funds with absolute trust & confidentiality.
 
-Damn, not awake yet, it should read 4.4.105-cip15-rt10
+We are willing to give 5-10 percent of the total money for this efforts . A non disclosure non circumvent agreement will be signed before the eventual transfer of funds. It is important for to know that the fund owner is going through a period of political turmoil and she is in a precarious position, so this transaction has to be highly secretive & very confidential.
+
+Kindly respond back to me if this is what you can handle .
+
+Regards,
+
+Peter.
