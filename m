@@ -1,36 +1,85 @@
-From: Nicholas Mc Guire <der.herr@hofr.at>
+From: Tim Sander <tim.sander@hbm.com>
 Subject: Re: Kernel config options that impact latency
-Date: Thu, 4 Jan 2018 19:37:36 +0000
-Message-ID: <20180104193736.GA5394@osadl.at>
-References: <D5D6254030DBC644B6EE58B333BFBB1E9D96DC30@ORSMSX101.amr.corp.intel.com>
+Date: Fri, 5 Jan 2018 11:09:00 +0100
+Message-ID: <5088098.7Ckg0tM8a2@dabox>
+References: <D5D6254030DBC644B6EE58B333BFBB1E9D96DC30@ORSMSX101.amr.corp.intel.com> <CANGgnMb_EdRP7pUFktSMEC5n4MYbMytMoruR-dTrVAJ7a0dbyA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: "Hindman, Gavin" <gavin.hindman@intel.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Cc: "Hindman, Gavin" <gavin.hindman@intel.com>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 178.115.242.59.static.drei.at ([178.115.242.59]:39810 "EHLO
-        mail.osadl.at" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
-        with ESMTP id S1752463AbeADThw (ORCPT
+Received: from mx-relay08-hz1.antispameurope.com ([94.100.132.208]:34560 "EHLO
+        mx-relay08-hz1.antispameurope.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1750787AbeAEKOE (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 4 Jan 2018 14:37:52 -0500
-Content-Disposition: inline
-In-Reply-To: <D5D6254030DBC644B6EE58B333BFBB1E9D96DC30@ORSMSX101.amr.corp.intel.com>
+        Fri, 5 Jan 2018 05:14:04 -0500
+In-Reply-To: <CANGgnMb_EdRP7pUFktSMEC5n4MYbMytMoruR-dTrVAJ7a0dbyA@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Jan 04, 2018 at 06:29:37PM +0000, Hindman, Gavin wrote:
-> Since we seem to be in knowledge-sharing mode, is there an existing list of kernel config parameters, outside of those required to enable preempt_rt, known to impact or improve general system latency?  I didn't find anything prowling the various wikis.
->
+Hi
 
-Depending on what you mean with general system latency -
-isolation related config items will allow you to improve the effectiveness
-of pinning rt tasks to specific cores (e.g. cgroups) further
-physical isolation like PALLOC (out of tree patch at
-https://github.com/heechul/palloc) allow reducing cache side-effects
-and L2/L3 sharing which can be a significant latency source.
-of course these config items have no effect just by turning them on
-but they allow to configure system software architectures that are
-more suitable/robust for mixed rt/non-rt workloads.
+Am Donnerstag, 4. Januar 2018, 11:24:37 CET schrieben Sie:
+> On Thu, Jan 4, 2018 at 10:29 AM, Hindman, Gavin <gavin.hindman@intel.com> wrote:
+> For ARM platforms, we've found turning off power management helps.
+> The book-keeping was costing a lot of time in latency critical spots.
+Its not only the book-keeping. I also patched out wfi on i.mx3x since waking
+up from sleeping took some considerable delays. But that depends on your latency
+requirements and your actual cpu.
 
-thx!
-hofrat
+The patch below is for an older 3.4.x kernel as example for further tuning power vs. latency.
+
+Best regards
+Tim
+
+diff --git a/arch/arm/mach-imx/mm-imx3.c b/arch/arm/mach-imx/mm-imx3.c
+index 7412738..7b3d312 100644
+--- a/arch/arm/mach-imx/mm-imx3.c
++++ b/arch/arm/mach-imx/mm-imx3.c
+@@ -33,33 +33,6 @@
+ 
+ static void imx3_idle(void)
+ {
+-       unsigned long reg = 0;
+-
+-       mx3_cpu_lp_set(MX3_WAIT);
+-
+-       __asm__ __volatile__(
+-               /* disable I and D cache */
+-               "mrc p15, 0, %0, c1, c0, 0\n"
+-               "bic %0, %0, #0x00001000\n"
+-               "bic %0, %0, #0x00000004\n"
+-               "mcr p15, 0, %0, c1, c0, 0\n"
+-               /* invalidate I cache */
+-               "mov %0, #0\n"
+-               "mcr p15, 0, %0, c7, c5, 0\n"
+-               /* clear and invalidate D cache */
+-               "mov %0, #0\n"
+-               "mcr p15, 0, %0, c7, c14, 0\n"
+-               /* WFI */
+-               "mov %0, #0\n"
+-               "mcr p15, 0, %0, c7, c0, 4\n"
+-               "nop\n" "nop\n" "nop\n" "nop\n"
+-               "nop\n" "nop\n" "nop\n"
+-               /* enable I and D cache */
+-               "mrc p15, 0, %0, c1, c0, 0\n"
+-               "orr %0, %0, #0x00001000\n"
+-               "orr %0, %0, #0x00000004\n"
+-               "mcr p15, 0, %0, c1, c0, 0\n"
+-               : "=r" (reg));
+ }
+ 
+ static void __iomem *imx3_ioremap_caller(unsigned long phys_addr, size_t size,
+
+Hottinger Baldwin Messtechnik GmbH, Im Tiefen See 45, 64293 Darmstadt, Germany | www.hbm.com 
+
+Registered as GmbH (German limited liability corporation) in the commercial register at the local court of Darmstadt, HRB 1147  
+Company domiciled in Darmstadt | Managing Director: Andreas Huellhorst | Chairman of the board: Eoghan O?Lionaird
+
+Als Gesellschaft mit beschraenkter Haftung eingetragen im Handelsregister des Amtsgerichts Darmstadt unter HRB 1147 
+Sitz der Gesellschaft: Darmstadt | Geschaeftsfuehrung: Andreas Huellhorst | Aufsichtsratsvorsitzender: Eoghan O?Lionaird
+
+The information in this email is confidential. It is intended solely for the addressee. If you are not the intended recipient, please let me know and delete this email.
+
+Die in dieser E-Mail enthaltene Information ist vertraulich und lediglich fuer den Empfaenger bestimmt. Sollten Sie nicht der eigentliche Empfaenger sein, informieren Sie mich bitte kurz und loeschen diese E-Mail.
