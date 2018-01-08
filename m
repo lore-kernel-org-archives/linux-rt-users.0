@@ -1,53 +1,44 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 4.4.110-rt125
-Date: Sat, 6 Jan 2018 10:13:57 -0500
-Message-ID: <20180106101357.79f43c6d@gandalf.local.home>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [ANNOUNCE] Linux 4.4.15-cip15-rt10
+Date: Mon, 8 Jan 2018 10:33:50 +0100
+Message-ID: <20180108093350.lxjocaxlvrmjwpav@linutronix.de>
+References: <b4cf2728-0d0c-5128-d007-818e66da5613@siemens.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Julia Cartwright <julia@ni.com>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>
-To: LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+Cc: "cip-dev@lists.cip-project.org" <cip-dev@lists.cip-project.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Daniel Wagner <daniel.wagner@siemens.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:48921 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1756073AbeAHJdy (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 8 Jan 2018 04:33:54 -0500
+Content-Disposition: inline
+In-Reply-To: <b4cf2728-0d0c-5128-d007-818e66da5613@siemens.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+On 2018-01-02 12:56:11 [+0100], Daniel Wagner wrote:
+> The release is based on the Linux 4.4.75-rt88 version. That is I
+> applied the -rt88 patch on the 4.4.75-cip6 kernel and merged in all
+> CIP releases.
+what is cip6?
 
-Dear RT Folks,
+>   https://ci-rt.linutronix.de/RT-Test/kbuild.jsp?id=112
+> 
+> Some of the builds are failing (allmodconfig), though it
+> doesn't look cip-rt specific, eg:
+> 
+>     kernel/utilities/compiletest-runner@2/build/../include/linux/compiler.h:484 call to ‘__compiletime_assert_150’ declared with attribute error: BUILD_BUG_ON failed: hw_flag_names[NUM_IEEE80211_HW_FLAGS] != (void *)0x1
+> 
+> Not sure how to handle those. IIRC, we don't support allmodconfig.
 
-I'm pleased to announce the 4.4.110-rt125 stable release.
+yes but adding
+  68920c973254 ("net/mac80211/debugfs.c: prevent build failure with
+  CONFIG_UBSAN=y")
 
+could solve the issue.
 
-This release is just an update to the new stable 4.4.110 version
-and no RT specific changes have been made.
-
-Yes, it includes the latest KPTI patch series that was backported to 4.4.
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.4-rt
-  Head SHA1: d79e4dc11891d315311133bc56b7275cf155a304
-
-
-Or to build 4.4.110-rt125 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.110.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.110-rt125.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
+Sebastian
