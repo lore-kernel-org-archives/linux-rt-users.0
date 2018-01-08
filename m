@@ -1,53 +1,65 @@
-From: Jan Kiszka <jan.kiszka@siemens.com>
-Subject: Re: [cip-dev] [ANNOUNCE] Linux 4.4.15-cip15-rt10
-Date: Mon, 8 Jan 2018 15:06:36 +0100
-Message-ID: <66ceaf7a-1fd4-8902-ceac-42fff25fc646@siemens.com>
-References: <b4cf2728-0d0c-5128-d007-818e66da5613@siemens.com>
- <20180108093350.lxjocaxlvrmjwpav@linutronix.de>
- <94212c58-73c7-7356-b325-9e7f18c9bfbc@siemens.com>
- <20180108105621.osnfazlumesxkwv3@linutronix.de>
+From: Tim Sander <tim@krieglstein.org>
+Subject: problems with 4.14.6-rt7
+Date: Mon, 08 Jan 2018 15:56:17 +0100
+Message-ID: <2644174.vLadu3AOG5@dabox>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-        "cip-dev@lists.cip-project.org" <cip-dev@lists.cip-project.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@siemens.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from goliath.siemens.de ([192.35.17.28]:48242 "EHLO
-        goliath.siemens.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1757153AbeAHOVs (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 8 Jan 2018 09:21:48 -0500
-In-Reply-To: <20180108105621.osnfazlumesxkwv3@linutronix.de>
-Content-Language: en-US
+Received: from krieglstein.org ([176.28.13.145]:56956 "EHLO krieglstein.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1756186AbeAHPGh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 8 Jan 2018 10:06:37 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2018-01-08 11:56, Sebastian Andrzej Siewior wrote:
-> On 2018-01-08 11:13:12 [+0100], Daniel Wagner wrote:
->> Hi Sebastian,
-> Hi Daniel,
-> 
->> On 01/08/2018 10:33 AM, Sebastian Andrzej Siewior wrote:
->>> On 2018-01-02 12:56:11 [+0100], Daniel Wagner wrote:
->>>> The release is based on the Linux 4.4.75-rt88 version. That is I
->>>> applied the -rt88 patch on the 4.4.75-cip6 kernel and merged in all
->>>> CIP releases.
->>> what is cip6?
->>
->> CIP stands for Civil Infrastructure Platform [1]. Ben Hutchings maintains
->> the 4.4.x-cip kernel tree which is a super long stable tree [2].
-> 
-> So 4.4.x is maintained until Feb, 2022. I assumed that `cip' will take
-> over / help Greg with the v4.4 tree and won't include its "own" things.
+Hi
 
-CIP includes a number of additional mainline backports (mostly around
-SoC/board support and security), so it already deviates from vanilla
-LTS. It's also aiming at a stricter QA than LTS.
+I am currently using 4.14.6-rt7 on an De0-Nano-Soc (intel/altera arm v7 dual core)
+board. I have added a small driver which adds some functionality like iio. As soon
+as i have some realtime load on one core i see messages like:
 
-Jan
+Showing busy workqueues and worker pools:
+workqueue events_freezable: flags=0x4
+  pwq 0: cpus=0 node=0 flags=0x0 nice=0 active=1/256
+    pending: mmc_rescan
+workqueue events_power_efficient: flags=0x80
+  pwq 0: cpus=0 node=0 flags=0x0 nice=0 active=2/256
+    pending: phy_state_machine, neigh_periodic_work
+workqueue mm_percpu_wq: flags=0x8
+  pwq 2: cpus=1 node=0 flags=0x0 nice=0 active=1/256
+    pending: vmstat_update
+BUG: workqueue lockup - pool cpus=1 node=0 flags=0x0 nice=0 stuck for 68s!
+Showing busy workqueues and worker pools:
+workqueue mm_percpu_wq: flags=0x8
+  pwq 2: cpus=1 node=0 flags=0x0 nice=0 active=1/256
+    pending: vmstat_update
+BUG: workqueue lockup - pool cpus=1 node=0 flags=0x0 nice=0 stuck for 98s!
+Showing busy workqueues and worker pools:
+workqueue mm_percpu_wq: flags=0x8
+  pwq 2: cpus=1 node=0 flags=0x0 nice=0 active=1/256
+    pending: vmstat_update
 
--- 
-Siemens AG, Corporate Technology, CT RDA IOT SES-DE
-Corporate Competence Center Embedded Linux
+In other occasions i have seen complete system lockups where the only message i get is:
+INFO: task systemd:1 blocked for more than 120 seconds.
+      Tainted: G           O    4.14.6-rt7 #1
+"echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+systemd         D    0     1      0 0x00001000
+[<80793c70>] (__schedule) from [<80793f30>] (schedule+0x64/0xfc)
+[<80793f30>] (schedule) from [<80796940>] (__write_rt_lock+0x13c/0x214)
+[<80796940>] (__write_rt_lock) from [<80798464>] (rt_write_lock+0x24/0x28)
+[<80798464>] (rt_write_lock) from [<8011f4b4>] (copy_process.part.5+0xfc4/0x17d8)
+[<8011f4b4>] (copy_process.part.5) from [<8011fe58>] (_do_fork+0xc8/0x474)
+[<8011fe58>] (_do_fork) from [<80120320>] (SyS_clone+0x30/0x38)
+[<80120320>] (SyS_clone) from [<80107e60>] (ret_fast_syscall+0x0/0x28)
+INFO: task systemd:1 blocked for more than 120 seconds.
+
+I know that i am really using up all realtime budget on this system for one core 
+but i would expect that rt-throttling kicks in and gets some time for these
+starving processes?
+
+Best regards
+Tim
+
