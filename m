@@ -1,65 +1,87 @@
-From: Tim Sander <tim@krieglstein.org>
-Subject: problems with 4.14.6-rt7
-Date: Mon, 08 Jan 2018 15:56:17 +0100
-Message-ID: <2644174.vLadu3AOG5@dabox>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [ANNOUNCE] v4.14.12-rt10
+Date: Tue, 9 Jan 2018 13:34:33 +0100
+Message-ID: <20180109123433.u3dh7e2zbr5kgzub@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from krieglstein.org ([176.28.13.145]:56956 "EHLO krieglstein.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1756186AbeAHPGh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 8 Jan 2018 10:06:37 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi
+Dear RT folks!
 
-I am currently using 4.14.6-rt7 on an De0-Nano-Soc (intel/altera arm v7 dual core)
-board. I have added a small driver which adds some functionality like iio. As soon
-as i have some realtime load on one core i see messages like:
+I'm pleased to announce the v4.14.12-rt10 patch set. 
 
-Showing busy workqueues and worker pools:
-workqueue events_freezable: flags=0x4
-  pwq 0: cpus=0 node=0 flags=0x0 nice=0 active=1/256
-    pending: mmc_rescan
-workqueue events_power_efficient: flags=0x80
-  pwq 0: cpus=0 node=0 flags=0x0 nice=0 active=2/256
-    pending: phy_state_machine, neigh_periodic_work
-workqueue mm_percpu_wq: flags=0x8
-  pwq 2: cpus=1 node=0 flags=0x0 nice=0 active=1/256
-    pending: vmstat_update
-BUG: workqueue lockup - pool cpus=1 node=0 flags=0x0 nice=0 stuck for 68s!
-Showing busy workqueues and worker pools:
-workqueue mm_percpu_wq: flags=0x8
-  pwq 2: cpus=1 node=0 flags=0x0 nice=0 active=1/256
-    pending: vmstat_update
-BUG: workqueue lockup - pool cpus=1 node=0 flags=0x0 nice=0 stuck for 98s!
-Showing busy workqueues and worker pools:
-workqueue mm_percpu_wq: flags=0x8
-  pwq 2: cpus=1 node=0 flags=0x0 nice=0 active=1/256
-    pending: vmstat_update
+Changes since v4.14.8-rt9:
 
-In other occasions i have seen complete system lockups where the only message i get is:
-INFO: task systemd:1 blocked for more than 120 seconds.
-      Tainted: G           O    4.14.6-rt7 #1
-"echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
-systemd         D    0     1      0 0x00001000
-[<80793c70>] (__schedule) from [<80793f30>] (schedule+0x64/0xfc)
-[<80793f30>] (schedule) from [<80796940>] (__write_rt_lock+0x13c/0x214)
-[<80796940>] (__write_rt_lock) from [<80798464>] (rt_write_lock+0x24/0x28)
-[<80798464>] (rt_write_lock) from [<8011f4b4>] (copy_process.part.5+0xfc4/0x17d8)
-[<8011f4b4>] (copy_process.part.5) from [<8011fe58>] (_do_fork+0xc8/0x474)
-[<8011fe58>] (_do_fork) from [<80120320>] (SyS_clone+0x30/0x38)
-[<80120320>] (SyS_clone) from [<80107e60>] (ret_fast_syscall+0x0/0x28)
-INFO: task systemd:1 blocked for more than 120 seconds.
+  - updated to v4.14.12
 
-I know that i am really using up all realtime budget on this system for one core 
-but i would expect that rt-throttling kicks in and gets some time for these
-starving processes?
+  - An additional include to avoid a build failure on ARM after a header
+    disappeared somewhere during the stable update.
 
-Best regards
-Tim
+  - The patch "nohz: Prevent erroneous tick stop invocations" was merged
+    differently upstream. The original issue where a slow box could lock up
+    with a pending timer remained. I currently assume that this is a RT only
+    issue and keep the patch as RT only.
 
+Known issues
+     - A warning triggered in "rcu_note_context_switch" originated from
+       SyS_timer_gettime(). The issue was always there, it is now
+       visible. Reported by Grygorii Strashko and Daniel Wagner.
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.14.12-rt10
+
+The RT patch against v4.14.12 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patch-4.14.12-rt10.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patches-4.14.12-rt10.tar.xz
+
+The RT-specific delta is appended below.
+
+Sebastian
+diff --git a/include/linux/spinlock_types_raw.h b/include/linux/spinlock_types_raw.h
+--- a/include/linux/spinlock_types_raw.h
++++ b/include/linux/spinlock_types_raw.h
+@@ -1,6 +1,8 @@
+ #ifndef __LINUX_SPINLOCK_TYPES_RAW_H
+ #define __LINUX_SPINLOCK_TYPES_RAW_H
+ 
++#include <linux/types.h>
++
+ #if defined(CONFIG_SMP)
+ # include <asm/spinlock_types.h>
+ #else
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -838,8 +838,13 @@ static inline void tick_irq_exit(void)
+ 	int cpu = smp_processor_id();
+ 
+ 	/* Make sure that timer wheel updates are propagated */
++#ifdef CONFIG_PREEMPT_RT_BASE
+ 	if ((idle_cpu(cpu) || tick_nohz_full_cpu(cpu)) &&
+-	    !need_resched() && !local_softirq_pending()) {
++	    !need_resched() && !local_softirq_pending())
++#else
++	if ((idle_cpu(cpu) && !need_resched()) || tick_nohz_full_cpu(cpu))
++#endif
++	{
+ 		if (!in_interrupt())
+ 			tick_nohz_irq_exit();
+ 	}
+diff --git a/localversion-rt b/localversion-rt
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt9
++-rt10
