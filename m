@@ -1,121 +1,82 @@
-From: Gene Heskett <gheskett@shentel.net>
-Subject: Re: [ANNOUNCE] v4.14.12-rt10
-Date: Tue, 9 Jan 2018 09:29:19 -0500
-Message-ID: <201801090929.19444.gheskett@shentel.net>
-References: <20180109123433.u3dh7e2zbr5kgzub@linutronix.de>
+From: Ben Hutchings <ben.hutchings@codethink.co.uk>
+Subject: Re: [ANNOUNCE] Linux 4.4.15-cip15-rt10
+Date: Tue, 09 Jan 2018 21:05:37 +0000
+Message-ID: <1515531937.12097.1.camel@codethink.co.uk>
+References: <b4cf2728-0d0c-5128-d007-818e66da5613@siemens.com>
+         <20180108093350.lxjocaxlvrmjwpav@linutronix.de>
+         <94212c58-73c7-7356-b325-9e7f18c9bfbc@siemens.com>
+         <20180108105621.osnfazlumesxkwv3@linutronix.de>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="utf-8"
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+Cc: "cip-dev@lists.cip-project.org" <cip-dev@lists.cip-project.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@siemens.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from barracuda1.shentel.net ([204.111.1.144]:36894 "EHLO
-        barracuda3.shentel.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-        with ESMTP id S1753201AbeAIO3h (ORCPT
+Received: from imap1.codethink.co.uk ([176.9.8.82]:44645 "EHLO
+        imap1.codethink.co.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1753400AbeAIVFo (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 9 Jan 2018 09:29:37 -0500
-Received: from smtp2.edbg.cloud.shentel.net (smtp2.edbg.cloud.shentel.net [204.111.2.25]) by barracuda3.shentel.net with ESMTP id hnRnHh6ygZEIhX3X for <linux-rt-users@vger.kernel.org>; Tue, 09 Jan 2018 09:29:23 -0500 (EST)
-Received: from coyote.coyote.den (unknown [204.111.64.149])
-        by smtp2.edbg.cloud.shentel.net (Postfix) with ESMTPSA id 2479A21B8D
-        for <linux-rt-users@vger.kernel.org>; Tue,  9 Jan 2018 09:29:23 -0500 (EST)
-In-Reply-To: <20180109123433.u3dh7e2zbr5kgzub@linutronix.de>
-Content-Disposition: inline
+        Tue, 9 Jan 2018 16:05:44 -0500
+In-Reply-To: <20180108105621.osnfazlumesxkwv3@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tuesday 09 January 2018 07:34:33 Sebastian Andrzej Siewior wrote:
+On Mon, 2018-01-08 at 11:56 +0100, Sebastian Andrzej Siewior wrote:
+> On 2018-01-08 11:13:12 [+0100], Daniel Wagner wrote:
+> > Hi Sebastian,
+> 
+> Hi Daniel,
+> 
+> > On 01/08/2018 10:33 AM, Sebastian Andrzej Siewior wrote:
+> > > On 2018-01-02 12:56:11 [+0100], Daniel Wagner wrote:
+> > > > The release is based on the Linux 4.4.75-rt88 version. That is I
+> > > > applied the -rt88 patch on the 4.4.75-cip6 kernel and merged in all
+> > > > CIP releases.
+> > > 
+> > > what is cip6?
+> > 
+> > CIP stands for Civil Infrastructure Platform [1]. Ben Hutchings maintains
+> > the 4.4.x-cip kernel tree which is a super long stable tree [2].
+> 
+> So 4.4.x is maintained until Feb, 2022. I assumed that `cip' will take
+> over / help Greg with the v4.4 tree and won't include its "own" things.
 
-> Dear RT folks!
->
-> I'm pleased to announce the v4.14.12-rt10 patch set.
->
-> Changes since v4.14.8-rt9:
->
->   - updated to v4.14.12
->
->   - An additional include to avoid a build failure on ARM after a
-> header disappeared somewhere during the stable update.
->
->   - The patch "nohz: Prevent erroneous tick stop invocations" was
-> merged differently upstream. The original issue where a slow box could
-> lock up with a pending timer remained. I currently assume that this is
-> a RT only issue and keep the patch as RT only.
->
-> Known issues
->      - A warning triggered in "rcu_note_context_switch" originated
-> from SyS_timer_gettime(). The issue was always there, it is now
-> visible. Reported by Grygorii Strashko and Daniel Wagner.
->
-> You can get this release via the git tree at:
->
->    
-> git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git
-> v4.14.12-rt10
+The 4.4-cip branch is not a regular stable branch.  It includes some
+backported hardware enablement and other minor features that aren't
+suitable for stable.  I am helping with review for 4.4-stable and
+regularly merge it into 4.4-cip, but it's *not* planned for CIP to take
+over maintenance of stable branches.  After EOL for 4.4-stable, 4.4-cip 
+will get fixes for only the kernel components that CIP members use.
 
-No such file or directory. Browsing the site, I am pulling 
-v4.14.y.rt10.tar.gz. Is this the correct file?
+> > > >   https://ci-rt.linutronix.de/RT-Test/kbuild.jsp?id=112
+> > > > 
+> > > > Some of the builds are failing (allmodconfig), though it
+> > > > doesn't look cip-rt specific, eg:
+> > > > 
+> > > > > > > >     kernel/utilities/compiletest-runner@2/build/../include/linux/compiler.h:484 call to ‘__compiletime_assert_150’ declared with attribute error: BUILD_BUG_ON failed: hw_flag_names[NUM_IEEE80211_HW_FLAGS] != (void *)0x1
+> > > > 
+> > > > Not sure how to handle those. IIRC, we don't support allmodconfig.
+> > > 
+> > > yes but adding
+> > >   68920c973254 ("net/mac80211/debugfs.c: prevent build failure with
+> > >   CONFIG_UBSAN=y")
+> > > 
+> > > could solve the issue.
+> > 
+> > Okay, I just don't know if Ben wants to add the patch to his tree though.
+> 
+> If the patch solves the issue then please forward the patch upstream.
+> The "normal" v4.4 stable tree is affected by this, too.
 
-> The RT patch against v4.14.12 can be found here:
->
->    
-> https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patch-4
->.14.12-rt10.patch.xz
->
-> The split quilt queue is available at:
->
->    
-> https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patches
->-4.14.12-rt10.tar.xz
->
-> The RT-specific delta is appended below.
->
-> Sebastian
-> diff --git a/include/linux/spinlock_types_raw.h
-> b/include/linux/spinlock_types_raw.h ---
-> a/include/linux/spinlock_types_raw.h
-> +++ b/include/linux/spinlock_types_raw.h
-> @@ -1,6 +1,8 @@
->  #ifndef __LINUX_SPINLOCK_TYPES_RAW_H
->  #define __LINUX_SPINLOCK_TYPES_RAW_H
->
-> +#include <linux/types.h>
-> +
->  #if defined(CONFIG_SMP)
->  # include <asm/spinlock_types.h>
->  #else
-> diff --git a/kernel/softirq.c b/kernel/softirq.c
-> --- a/kernel/softirq.c
-> +++ b/kernel/softirq.c
-> @@ -838,8 +838,13 @@ static inline void tick_irq_exit(void)
->  	int cpu = smp_processor_id();
->
->  	/* Make sure that timer wheel updates are propagated */
-> +#ifdef CONFIG_PREEMPT_RT_BASE
->  	if ((idle_cpu(cpu) || tick_nohz_full_cpu(cpu)) &&
-> -	    !need_resched() && !local_softirq_pending()) {
-> +	    !need_resched() && !local_softirq_pending())
-> +#else
-> +	if ((idle_cpu(cpu) && !need_resched()) || tick_nohz_full_cpu(cpu))
-> +#endif
-> +	{
->  		if (!in_interrupt())
->  			tick_nohz_irq_exit();
->  	}
-> diff --git a/localversion-rt b/localversion-rt
-> --- a/localversion-rt
-> +++ b/localversion-rt
-> @@ -1 +1 @@
-> --rt9
-> +-rt10
-> --
-> To unsubscribe from this list: send the line "unsubscribe
-> linux-rt-users" in the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+4.4-stable doesn't have UBSAN.  Are some other configurations (or
+compiler versions) where this code fails to build?  (I'm a bit
+surprised that it ever compiled!)
 
+Ben.
 
-Cheers, Gene Heskett
 -- 
-"There are four boxes to be used in defense of liberty:
- soap, ballot, jury, and ammo. Please use in that order."
--Ed Howdershelt (Author)
-Genes Web page <http://geneslinuxbox.net:6309/gene>
+Ben Hutchings
+Software Developer, Codethink Ltd.
+
