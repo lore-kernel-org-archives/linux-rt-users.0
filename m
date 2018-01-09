@@ -1,82 +1,92 @@
-From: Ben Hutchings <ben.hutchings@codethink.co.uk>
-Subject: Re: [ANNOUNCE] Linux 4.4.15-cip15-rt10
-Date: Tue, 09 Jan 2018 21:05:37 +0000
-Message-ID: <1515531937.12097.1.camel@codethink.co.uk>
+From: "Hindman, Gavin" <gavin.hindman@intel.com>
+Subject: RE: [ANNOUNCE] Linux 4.4.15-cip15-rt10
+Date: Tue, 9 Jan 2018 21:31:34 +0000
+Message-ID: <D5D6254030DBC644B6EE58B333BFBB1E9D97B5AF@ORSMSX101.amr.corp.intel.com>
 References: <b4cf2728-0d0c-5128-d007-818e66da5613@siemens.com>
          <20180108093350.lxjocaxlvrmjwpav@linutronix.de>
          <94212c58-73c7-7356-b325-9e7f18c9bfbc@siemens.com>
          <20180108105621.osnfazlumesxkwv3@linutronix.de>
+ <1515531937.12097.1.camel@codethink.co.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Cc: "cip-dev@lists.cip-project.org" <cip-dev@lists.cip-project.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+To: Ben Hutchings <ben.hutchings@codethink.co.uk>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Daniel Wagner <daniel.wagner@siemens.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from imap1.codethink.co.uk ([176.9.8.82]:44645 "EHLO
-        imap1.codethink.co.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1753400AbeAIVFo (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 9 Jan 2018 16:05:44 -0500
-In-Reply-To: <20180108105621.osnfazlumesxkwv3@linutronix.de>
+Received: from mga03.intel.com ([134.134.136.65]:37551 "EHLO mga03.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751569AbeAIVbg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 9 Jan 2018 16:31:36 -0500
+In-Reply-To: <1515531937.12097.1.camel@codethink.co.uk>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2018-01-08 at 11:56 +0100, Sebastian Andrzej Siewior wrote:
-> On 2018-01-08 11:13:12 [+0100], Daniel Wagner wrote:
-> > Hi Sebastian,
-> 
-> Hi Daniel,
-> 
-> > On 01/08/2018 10:33 AM, Sebastian Andrzej Siewior wrote:
-> > > On 2018-01-02 12:56:11 [+0100], Daniel Wagner wrote:
-> > > > The release is based on the Linux 4.4.75-rt88 version. That is I
-> > > > applied the -rt88 patch on the 4.4.75-cip6 kernel and merged in all
-> > > > CIP releases.
-> > > 
-> > > what is cip6?
-> > 
-> > CIP stands for Civil Infrastructure Platform [1]. Ben Hutchings maintains
-> > the 4.4.x-cip kernel tree which is a super long stable tree [2].
-> 
-> So 4.4.x is maintained until Feb, 2022. I assumed that `cip' will take
-> over / help Greg with the v4.4 tree and won't include its "own" things.
-
-The 4.4-cip branch is not a regular stable branch.  It includes some
-backported hardware enablement and other minor features that aren't
-suitable for stable.  I am helping with review for 4.4-stable and
-regularly merge it into 4.4-cip, but it's *not* planned for CIP to take
-over maintenance of stable branches.  After EOL for 4.4-stable, 4.4-cip 
-will get fixes for only the kernel components that CIP members use.
-
-> > > >   https://ci-rt.linutronix.de/RT-Test/kbuild.jsp?id=112
-> > > > 
-> > > > Some of the builds are failing (allmodconfig), though it
-> > > > doesn't look cip-rt specific, eg:
-> > > > 
-> > > > > > > >     kernel/utilities/compiletest-runner@2/build/../include/linux/compiler.h:484 call to ‘__compiletime_assert_150’ declared with attribute error: BUILD_BUG_ON failed: hw_flag_names[NUM_IEEE80211_HW_FLAGS] != (void *)0x1
-> > > > 
-> > > > Not sure how to handle those. IIRC, we don't support allmodconfig.
-> > > 
-> > > yes but adding
-> > >   68920c973254 ("net/mac80211/debugfs.c: prevent build failure with
-> > >   CONFIG_UBSAN=y")
-> > > 
-> > > could solve the issue.
-> > 
-> > Okay, I just don't know if Ben wants to add the patch to his tree though.
-> 
-> If the patch solves the issue then please forward the patch upstream.
-> The "normal" v4.4 stable tree is affected by this, too.
-
-4.4-stable doesn't have UBSAN.  Are some other configurations (or
-compiler versions) where this code fails to build?  (I'm a bit
-surprised that it ever compiled!)
-
-Ben.
-
--- 
-Ben Hutchings
-Software Developer, Codethink Ltd.
-
+U29ycnkgZm9yIHRoZSB0b3AtcG9zdC4gIFNlZW1zIGxpa2UgbWF5YmUgd2UgYXJlIGNhdXNpbmcg
+Y29uZnVzaW9uIGJ5IHJlZ3VsYXJseSBhbm5vdW5jaW5nIENJUCByZWxlYXNlcyBvbiBydC11c2Vy
+cy4gIFdvdWxkbid0IGFueW9uZSBpbnRlcmVzdGVkIGluIENJUCBhbHJlYWR5IGJlIHN1YnNjcmli
+ZWQgdG8gdGhhdCBtYWlsaW5nIGxpc3QgYW5kIGdldHRpbmcgYW5ub3VuY2VtZW50cyB0aGF0IHdh
+eT8gICBNYXliZSBpdCBqdXN0IG5lZWRzIGEgY2xlYXJlciBoZWFkZXIsIGlmIHdlIHRoaW5rIGl0
+IHNob3VsZCBzdGF5IG9uIHJ0LXVzZXJzPw0KDQpNYXliZSBhICJyZWxhdGVkIHByb2plY3RzIiBz
+ZWN0aW9uIHNob3VsZCBiZSBjcmVhdGVkIGF0IGh0dHBzOi8vd2lraS5saW51eGZvdW5kYXRpb24u
+b3JnL3JlYWx0aW1lL3ByZWVtcHRfcnRfdmVyc2lvbnMgPyAgDQoNCi1nYXZpbg0KDQo+IC0tLS0t
+T3JpZ2luYWwgTWVzc2FnZS0tLS0tDQo+IEZyb206IGxpbnV4LXJ0LXVzZXJzLW93bmVyQHZnZXIu
+a2VybmVsLm9yZyBbbWFpbHRvOmxpbnV4LXJ0LXVzZXJzLQ0KPiBvd25lckB2Z2VyLmtlcm5lbC5v
+cmddIE9uIEJlaGFsZiBPZiBCZW4gSHV0Y2hpbmdzDQo+IFNlbnQ6IFR1ZXNkYXksIEphbnVhcnkg
+MDksIDIwMTggMTowNiBQTQ0KPiBUbzogU2ViYXN0aWFuIEFuZHJ6ZWogU2lld2lvciA8YmlnZWFz
+eUBsaW51dHJvbml4LmRlPjsgRGFuaWVsIFdhZ25lcg0KPiA8ZGFuaWVsLndhZ25lckBzaWVtZW5z
+LmNvbT4NCj4gQ2M6IGNpcC1kZXZAbGlzdHMuY2lwLXByb2plY3Qub3JnOyBsaW51eC1ydC11c2Vy
+cyA8bGludXgtcnQtDQo+IHVzZXJzQHZnZXIua2VybmVsLm9yZz4NCj4gU3ViamVjdDogUmU6IFtB
+Tk5PVU5DRV0gTGludXggNC40LjE1LWNpcDE1LXJ0MTANCj4gDQo+IE9uIE1vbiwgMjAxOC0wMS0w
+OCBhdCAxMTo1NiArMDEwMCwgU2ViYXN0aWFuIEFuZHJ6ZWogU2lld2lvciB3cm90ZToNCj4gPiBP
+biAyMDE4LTAxLTA4IDExOjEzOjEyIFsrMDEwMF0sIERhbmllbCBXYWduZXIgd3JvdGU6DQo+ID4g
+PiBIaSBTZWJhc3RpYW4sDQo+ID4NCj4gPiBIaSBEYW5pZWwsDQo+ID4NCj4gPiA+IE9uIDAxLzA4
+LzIwMTggMTA6MzMgQU0sIFNlYmFzdGlhbiBBbmRyemVqIFNpZXdpb3Igd3JvdGU6DQo+ID4gPiA+
+IE9uIDIwMTgtMDEtMDIgMTI6NTY6MTEgWyswMTAwXSwgRGFuaWVsIFdhZ25lciB3cm90ZToNCj4g
+PiA+ID4gPiBUaGUgcmVsZWFzZSBpcyBiYXNlZCBvbiB0aGUgTGludXggNC40Ljc1LXJ0ODggdmVy
+c2lvbi4gVGhhdCBpcyBJDQo+ID4gPiA+ID4gYXBwbGllZCB0aGUgLXJ0ODggcGF0Y2ggb24gdGhl
+IDQuNC43NS1jaXA2IGtlcm5lbCBhbmQgbWVyZ2VkIGluDQo+ID4gPiA+ID4gYWxsIENJUCByZWxl
+YXNlcy4NCj4gPiA+ID4NCj4gPiA+ID4gd2hhdCBpcyBjaXA2Pw0KPiA+ID4NCj4gPiA+IENJUCBz
+dGFuZHMgZm9yIENpdmlsIEluZnJhc3RydWN0dXJlIFBsYXRmb3JtIFsxXS4gQmVuIEh1dGNoaW5n
+cw0KPiA+ID4gbWFpbnRhaW5zIHRoZSA0LjQueC1jaXAga2VybmVsIHRyZWUgd2hpY2ggaXMgYSBz
+dXBlciBsb25nIHN0YWJsZSB0cmVlIFsyXS4NCj4gPg0KPiA+IFNvIDQuNC54IGlzIG1haW50YWlu
+ZWQgdW50aWwgRmViLCAyMDIyLiBJIGFzc3VtZWQgdGhhdCBgY2lwJyB3aWxsIHRha2UNCj4gPiBv
+dmVyIC8gaGVscCBHcmVnIHdpdGggdGhlIHY0LjQgdHJlZSBhbmQgd29uJ3QgaW5jbHVkZSBpdHMg
+Im93biIgdGhpbmdzLg0KPiANCj4gVGhlIDQuNC1jaXAgYnJhbmNoIGlzIG5vdCBhIHJlZ3VsYXIg
+c3RhYmxlIGJyYW5jaC4gIEl0IGluY2x1ZGVzIHNvbWUgYmFja3BvcnRlZA0KPiBoYXJkd2FyZSBl
+bmFibGVtZW50IGFuZCBvdGhlciBtaW5vciBmZWF0dXJlcyB0aGF0IGFyZW4ndCBzdWl0YWJsZSBm
+b3INCj4gc3RhYmxlLiAgSSBhbSBoZWxwaW5nIHdpdGggcmV2aWV3IGZvciA0LjQtc3RhYmxlIGFu
+ZCByZWd1bGFybHkgbWVyZ2UgaXQgaW50byA0LjQtDQo+IGNpcCwgYnV0IGl0J3MgKm5vdCogcGxh
+bm5lZCBmb3IgQ0lQIHRvIHRha2Ugb3ZlciBtYWludGVuYW5jZSBvZiBzdGFibGUNCj4gYnJhbmNo
+ZXMuICBBZnRlciBFT0wgZm9yIDQuNC1zdGFibGUsIDQuNC1jaXAgd2lsbCBnZXQgZml4ZXMgZm9y
+IG9ubHkgdGhlIGtlcm5lbA0KPiBjb21wb25lbnRzIHRoYXQgQ0lQIG1lbWJlcnMgdXNlLg0KPiAN
+Cj4gPiA+ID4gPiDCoCBodHRwczovL2NpLXJ0LmxpbnV0cm9uaXguZGUvUlQtVGVzdC9rYnVpbGQu
+anNwP2lkPTExMg0KPiA+ID4gPiA+DQo+ID4gPiA+ID4gU29tZSBvZiB0aGUgYnVpbGRzIGFyZSBm
+YWlsaW5nIChhbGxtb2Rjb25maWcpLCB0aG91Z2ggaXQgZG9lc24ndA0KPiA+ID4gPiA+IGxvb2sg
+Y2lwLXJ0IHNwZWNpZmljLCBlZzoNCj4gPiA+ID4gPg0KPiA+ID4gPiA+ID4gPiA+ID4NCj4gPiA+
+ID4gPiA+ID4gPiA+IGtlcm5lbC91dGlsaXRpZXMvY29tcGlsZXRlc3QtcnVubmVyQDIvYnVpbGQv
+Li4vaW5jbHVkZS9sDQo+ID4gPiA+ID4gPiA+ID4gPiBpbnV4L2NvbXBpbGVyLmg6NDg0IGNhbGwg
+dG8g4oCYX19jb21waWxldGltZV9hc3NlcnRfMTUw4oCZDQo+ID4gPiA+ID4gPiA+ID4gPiBkZWNs
+YXJlZCB3aXRoIGF0dHJpYnV0ZSBlcnJvcjogQlVJTERfQlVHX09OIGZhaWxlZDoNCj4gPiA+ID4g
+PiA+ID4gPiA+IGh3X2ZsYWdfbmFtZXNbTlVNX0lFRUU4MDIxMV9IV19GTEFHU10gIT0gKHZvaWQg
+KikweDENCj4gPiA+ID4gPg0KPiA+ID4gPiA+IE5vdCBzdXJlIGhvdyB0byBoYW5kbGUgdGhvc2Uu
+IElJUkMsIHdlIGRvbid0IHN1cHBvcnQgYWxsbW9kY29uZmlnLg0KPiA+ID4gPg0KPiA+ID4gPiB5
+ZXMgYnV0IGFkZGluZw0KPiA+ID4gPiDCoCA2ODkyMGM5NzMyNTQgKCJuZXQvbWFjODAyMTEvZGVi
+dWdmcy5jOiBwcmV2ZW50IGJ1aWxkIGZhaWx1cmUNCj4gPiA+ID4gd2l0aA0KPiA+ID4gPiDCoCBD
+T05GSUdfVUJTQU49eSIpDQo+ID4gPiA+DQo+ID4gPiA+IGNvdWxkIHNvbHZlIHRoZSBpc3N1ZS4N
+Cj4gPiA+DQo+ID4gPiBPa2F5LCBJIGp1c3QgZG9uJ3Qga25vdyBpZiBCZW4gd2FudHMgdG8gYWRk
+IHRoZSBwYXRjaCB0byBoaXMgdHJlZSB0aG91Z2guDQo+ID4NCj4gPiBJZiB0aGUgcGF0Y2ggc29s
+dmVzIHRoZSBpc3N1ZSB0aGVuIHBsZWFzZSBmb3J3YXJkIHRoZSBwYXRjaCB1cHN0cmVhbS4NCj4g
+PiBUaGUgIm5vcm1hbCIgdjQuNCBzdGFibGUgdHJlZSBpcyBhZmZlY3RlZCBieSB0aGlzLCB0b28u
+DQo+IA0KPiA0LjQtc3RhYmxlIGRvZXNuJ3QgaGF2ZSBVQlNBTi4gIEFyZSBzb21lIG90aGVyIGNv
+bmZpZ3VyYXRpb25zIChvciBjb21waWxlcg0KPiB2ZXJzaW9ucykgd2hlcmUgdGhpcyBjb2RlIGZh
+aWxzIHRvIGJ1aWxkPyAgKEknbSBhIGJpdCBzdXJwcmlzZWQgdGhhdCBpdCBldmVyDQo+IGNvbXBp
+bGVkISkNCj4gDQo+IEJlbi4NCj4gDQo+IC0tDQo+IEJlbiBIdXRjaGluZ3MNCj4gU29mdHdhcmUg
+RGV2ZWxvcGVyLCBDb2RldGhpbmsgTHRkLg0KPiANCj4gLS0NCj4gVG8gdW5zdWJzY3JpYmUgZnJv
+bSB0aGlzIGxpc3Q6IHNlbmQgdGhlIGxpbmUgInVuc3Vic2NyaWJlIGxpbnV4LXJ0LXVzZXJzIiBp
+biB0aGUNCj4gYm9keSBvZiBhIG1lc3NhZ2UgdG8gbWFqb3Jkb21vQHZnZXIua2VybmVsLm9yZyBN
+b3JlIG1ham9yZG9tbyBpbmZvIGF0DQo+IGh0dHA6Ly92Z2VyLmtlcm5lbC5vcmcvbWFqb3Jkb21v
+LWluZm8uaHRtbA0K
