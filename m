@@ -1,78 +1,56 @@
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: Re: [PATCH v8 00/37] tracing: Inter-event (e.g. latency) support
-Date: Wed, 10 Jan 2018 09:18:30 -0600
-Message-ID: <1515597510.3496.20.camel@tzanussi-mobl.amr.corp.intel.com>
-References: <cover.1513802700.git.tom.zanussi@linux.intel.com>
-         <20180110054507.GB2575@danjae.aot.lge.com>
-         <20180110022054.1086b477@vmware.local.home>
-         <20180110081607.GC2575@danjae.aot.lge.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [ANNOUNCE] Linux 4.4.15-cip15-rt10
+Date: Wed, 10 Jan 2018 18:32:32 +0100
+Message-ID: <20180110173232.krwpnlfeijdseinv@linutronix.de>
+References: <b4cf2728-0d0c-5128-d007-818e66da5613@siemens.com>
+ <20180108093350.lxjocaxlvrmjwpav@linutronix.de>
+ <94212c58-73c7-7356-b325-9e7f18c9bfbc@siemens.com>
+ <20180108105621.osnfazlumesxkwv3@linutronix.de>
+ <1515531937.12097.1.camel@codethink.co.uk>
+ <D5D6254030DBC644B6EE58B333BFBB1E9D97B5AF@ORSMSX101.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>, tglx@linutronix.de,
-        mhiramat@kernel.org, vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        kernel-team@lge.com
-To: Namhyung Kim <namhyung@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180110081607.GC2575@danjae.aot.lge.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: Ben Hutchings <ben.hutchings@codethink.co.uk>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        "cip-dev@lists.cip-project.org" <cip-dev@lists.cip-project.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+To: "Hindman, Gavin" <gavin.hindman@intel.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:56505 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752678AbeAJRcm (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 10 Jan 2018 12:32:42 -0500
+Content-Disposition: inline
+In-Reply-To: <D5D6254030DBC644B6EE58B333BFBB1E9D97B5AF@ORSMSX101.amr.corp.intel.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2018-01-10 at 17:16 +0900, Namhyung Kim wrote:
-> Hi Steve,
-> 
-> On Wed, Jan 10, 2018 at 02:20:54AM -0500, Steven Rostedt wrote:
-> > On Wed, 10 Jan 2018 14:45:07 +0900
-> > Namhyung Kim <namhyung@kernel.org> wrote:
-> > 
-> > > On Thu, Dec 21, 2017 at 10:02:22AM -0600, Tom Zanussi wrote:
-> > > > Hi,
-> > > > 
-> > > > This is V8 of the inter-event tracing patchset, addressing input from
-> > > > V7.
-> > > > 
-> > > > These changes address Namhyung's most recent comments (thanks,
-> > > > Namhyung!) and move everything to the latest tracing/for-next:
-> > > > 
-> > > >   - moved a couple hunks switching hist_field_fn_t params from 15/37
-> > > >     (add variable support) to 20/37 (Pass tracing_map_elt to
-> > > >     hist_field_accessor)
-> > > >   - in hist_trigger_elt_data_alloc(), remove the unnecessary '+1' from
-> > > >     TASK_COMM_LEN size.
-> > > >   - simplified find_var_file() code according to Namhyung's
-> > > >     suggestions.
-> > > >   - fixed bug in print_synth_event() where entry->fields was being
-> > > >     used instead of the address as it should have been  
-> > > 
-> > > I only have a nitpick in the patch 24 but otherwise cannot find an
-> > > issue anymore, so
-> > > 
-> > > Reviewed-by: Namhyung Kim <namhyung@kernel.org>
-> > 
-> > Thanks for reviewing this Namhyung.
-> 
-> You're very welcome.
-> 
+On 2018-01-09 21:31:34 [+0000], Hindman, Gavin wrote:
+> Sorry for the top-post.  Seems like maybe we are causing confusion by regularly announcing CIP releases on rt-users.  Wouldn't anyone interested in CIP already be subscribed to that mailing list and getting announcements that way?   Maybe it just needs a clearer header, if we think it should stay on rt-users?
 
-Yes, thanks for the very thorough review, Namhyung.
+I think the announcement was just fine. Now I do know what it does and
+what will happen after Greg decides to put 4.4 EOL.
 
-> > 
-> > I'm currently traveling (what else is new?), and I want to start
-> > pulling this in. It wont be ready for the next merge window as it's too
-> > close, but I want to get it in by the one after that. I need to
-> > allocate some time to pull these patches in and review them as well.
-> 
-> Yeah, I also would like to see it merged in v4.17.  Have a nice travel
-> and take care.
-> 
+A pointer to [0] as part of the announcement might be help full. In the
+end I think it should remain on rt-users since Steven won't continue
+doing 4.4 stable. So Daniel's 4.4-RT on top of the CIP tree will be the
+only source of a maintained 4.4-RT tree.
 
-I'll add these changes to a v9 along with another small nit found by the
-kbuild bot (parse_atom() can be static) and repost soon.
+[0] wiki.linuxfoundation.org/civilinfrastructureplatform/cipkernelmaintenance
 
-Thanks,
+> Maybe a "related projects" section should be created at https://wiki.linuxfoundation.org/realtime/preempt_rt_versions ?  
 
-Tom
+So what do have in mind? Moving v4.4-RT over to the "No longer
+maintained PREEMPT_RT versions" section and adding a new one with
+"related projects" where we add the 4.4-cip-rt tree?
+Daniel: you have the release currently in a git tree within his "user"
+namespace and did not upload it to k.o. Do you plan upload it to the
+stable-rt tree like Julia does and upload it to the "projects/rt/4.4"
+folder on k.o.? If so we might just add a link to the cip wiki next to
+4.4 and be done with it.
+Other suggestions?
+
+> -gavin
+
+Sebastian
