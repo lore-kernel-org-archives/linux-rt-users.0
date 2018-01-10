@@ -1,66 +1,78 @@
-From: Daniel Wagner <daniel.wagner@siemens.com>
-Subject: Re: [ANNOUNCE] Linux 4.4.15-cip15-rt10
-Date: Wed, 10 Jan 2018 10:04:44 +0100
-Message-ID: <b755c1e1-1246-b230-b8ab-2154d8ce37ad@siemens.com>
-References: <b4cf2728-0d0c-5128-d007-818e66da5613@siemens.com>
- <20180108093350.lxjocaxlvrmjwpav@linutronix.de>
- <94212c58-73c7-7356-b325-9e7f18c9bfbc@siemens.com>
- <20180108105621.osnfazlumesxkwv3@linutronix.de>
- <1515531937.12097.1.camel@codethink.co.uk>
+From: Tom Zanussi <tom.zanussi@linux.intel.com>
+Subject: Re: [PATCH v8 00/37] tracing: Inter-event (e.g. latency) support
+Date: Wed, 10 Jan 2018 09:18:30 -0600
+Message-ID: <1515597510.3496.20.camel@tzanussi-mobl.amr.corp.intel.com>
+References: <cover.1513802700.git.tom.zanussi@linux.intel.com>
+         <20180110054507.GB2575@danjae.aot.lge.com>
+         <20180110022054.1086b477@vmware.local.home>
+         <20180110081607.GC2575@danjae.aot.lge.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        "cip-dev@lists.cip-project.org" <cip-dev@lists.cip-project.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Ben Hutchings <ben.hutchings@codethink.co.uk>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lizzard.sbs.de ([194.138.37.39]:56573 "EHLO lizzard.sbs.de"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1752987AbeAJJFH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 10 Jan 2018 04:05:07 -0500
-In-Reply-To: <1515531937.12097.1.camel@codethink.co.uk>
-Content-Language: en-US
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>, tglx@linutronix.de,
+        mhiramat@kernel.org, vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel.opensrc@gmail.com, joelaf@google.com,
+        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
+        rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        kernel-team@lge.com
+To: Namhyung Kim <namhyung@kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180110081607.GC2575@danjae.aot.lge.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi Ben,
-
->>>>>   https://ci-rt.linutronix.de/RT-Test/kbuild.jsp?id=112
->>>>>
->>>>> Some of the builds are failing (allmodconfig), though it
->>>>> doesn't look cip-rt specific, eg:
->>>>>
->>>>>>>>>     kernel/utilities/compiletest-runner@2/build/../include/linux/compiler.h:484 call to ‘__compiletime_assert_150’ declared with attribute error: BUILD_BUG_ON failed: hw_flag_names[NUM_IEEE80211_HW_FLAGS] != (void *)0x1
->>>>>
->>>>> Not sure how to handle those. IIRC, we don't support allmodconfig.
->>>>
->>>> yes but adding
->>>>   68920c973254 ("net/mac80211/debugfs.c: prevent build failure with
->>>>   CONFIG_UBSAN=y")
->>>>
->>>> could solve the issue.
->>>
->>> Okay, I just don't know if Ben wants to add the patch to his tree though.
->>
->> If the patch solves the issue then please forward the patch upstream.
->> The "normal" v4.4 stable tree is affected by this, too.
+On Wed, 2018-01-10 at 17:16 +0900, Namhyung Kim wrote:
+> Hi Steve,
 > 
-> 4.4-stable doesn't have UBSAN.  Are some other configurations (or
-> compiler versions) where this code fails to build?  (I'm a bit
-> surprised that it ever compiled!)
+> On Wed, Jan 10, 2018 at 02:20:54AM -0500, Steven Rostedt wrote:
+> > On Wed, 10 Jan 2018 14:45:07 +0900
+> > Namhyung Kim <namhyung@kernel.org> wrote:
+> > 
+> > > On Thu, Dec 21, 2017 at 10:02:22AM -0600, Tom Zanussi wrote:
+> > > > Hi,
+> > > > 
+> > > > This is V8 of the inter-event tracing patchset, addressing input from
+> > > > V7.
+> > > > 
+> > > > These changes address Namhyung's most recent comments (thanks,
+> > > > Namhyung!) and move everything to the latest tracing/for-next:
+> > > > 
+> > > >   - moved a couple hunks switching hist_field_fn_t params from 15/37
+> > > >     (add variable support) to 20/37 (Pass tracing_map_elt to
+> > > >     hist_field_accessor)
+> > > >   - in hist_trigger_elt_data_alloc(), remove the unnecessary '+1' from
+> > > >     TASK_COMM_LEN size.
+> > > >   - simplified find_var_file() code according to Namhyung's
+> > > >     suggestions.
+> > > >   - fixed bug in print_synth_event() where entry->fields was being
+> > > >     used instead of the address as it should have been  
+> > > 
+> > > I only have a nitpick in the patch 24 but otherwise cannot find an
+> > > issue anymore, so
+> > > 
+> > > Reviewed-by: Namhyung Kim <namhyung@kernel.org>
+> > 
+> > Thanks for reviewing this Namhyung.
+> 
+> You're very welcome.
+> 
 
-The problem was introduced by 30686bf7f5b3 ("mac80211: convert HW flags
-to unsigned long bitmap"). The only LTS kernel which is missing the
-68920c973254 ("net/mac80211/debugfs.c: prevent build failure with
-CONFIG_UBSAN=y") fix is the 4.4. The other don't have 30686bf7f5b3, e.g.
-4.1, or have 30686bf7f5b3 and 68920c973254, e.g. 4.9.
+Yes, thanks for the very thorough review, Namhyung.
 
-I've sent 68920c973254 to stable for inclusion into 4.4.
+> > 
+> > I'm currently traveling (what else is new?), and I want to start
+> > pulling this in. It wont be ready for the next merge window as it's too
+> > close, but I want to get it in by the one after that. I need to
+> > allocate some time to pull these patches in and review them as well.
+> 
+> Yeah, I also would like to see it merged in v4.17.  Have a nice travel
+> and take care.
+> 
 
-	https://www.spinics.net/lists/stable/msg209228.html
+I'll add these changes to a v9 along with another small nit found by the
+kbuild bot (parse_atom() can be static) and repost soon.
 
 Thanks,
-Daniel
 
-
+Tom
