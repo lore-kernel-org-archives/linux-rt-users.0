@@ -1,92 +1,113 @@
-From: "Hindman, Gavin" <gavin.hindman@intel.com>
-Subject: RE: [ANNOUNCE] Linux 4.4.15-cip15-rt10
-Date: Tue, 9 Jan 2018 21:31:34 +0000
-Message-ID: <D5D6254030DBC644B6EE58B333BFBB1E9D97B5AF@ORSMSX101.amr.corp.intel.com>
-References: <b4cf2728-0d0c-5128-d007-818e66da5613@siemens.com>
-         <20180108093350.lxjocaxlvrmjwpav@linutronix.de>
-         <94212c58-73c7-7356-b325-9e7f18c9bfbc@siemens.com>
-         <20180108105621.osnfazlumesxkwv3@linutronix.de>
- <1515531937.12097.1.camel@codethink.co.uk>
+From: Namhyung Kim <namhyung@kernel.org>
+Subject: Re: [PATCH v8 24/37] tracing: Add support for 'synthetic' events
+Date: Wed, 10 Jan 2018 14:41:24 +0900
+Message-ID: <20180110054124.GA2575@danjae.aot.lge.com>
+References: <cover.1513802700.git.tom.zanussi@linux.intel.com>
+ <c8c526d55c308b108d1a1129cdd44af988581937.1513802700.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: "cip-dev@lists.cip-project.org" <cip-dev@lists.cip-project.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Ben Hutchings <ben.hutchings@codethink.co.uk>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@siemens.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga03.intel.com ([134.134.136.65]:37551 "EHLO mga03.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751569AbeAIVbg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 9 Jan 2018 16:31:36 -0500
-In-Reply-To: <1515531937.12097.1.camel@codethink.co.uk>
-Content-Language: en-US
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
+        vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel.opensrc@gmail.com, joelaf@google.com,
+        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
+        rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        kernel-team@lge.com
+To: Tom Zanussi <tom.zanussi@linux.intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <c8c526d55c308b108d1a1129cdd44af988581937.1513802700.git.tom.zanussi@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-U29ycnkgZm9yIHRoZSB0b3AtcG9zdC4gIFNlZW1zIGxpa2UgbWF5YmUgd2UgYXJlIGNhdXNpbmcg
-Y29uZnVzaW9uIGJ5IHJlZ3VsYXJseSBhbm5vdW5jaW5nIENJUCByZWxlYXNlcyBvbiBydC11c2Vy
-cy4gIFdvdWxkbid0IGFueW9uZSBpbnRlcmVzdGVkIGluIENJUCBhbHJlYWR5IGJlIHN1YnNjcmli
-ZWQgdG8gdGhhdCBtYWlsaW5nIGxpc3QgYW5kIGdldHRpbmcgYW5ub3VuY2VtZW50cyB0aGF0IHdh
-eT8gICBNYXliZSBpdCBqdXN0IG5lZWRzIGEgY2xlYXJlciBoZWFkZXIsIGlmIHdlIHRoaW5rIGl0
-IHNob3VsZCBzdGF5IG9uIHJ0LXVzZXJzPw0KDQpNYXliZSBhICJyZWxhdGVkIHByb2plY3RzIiBz
-ZWN0aW9uIHNob3VsZCBiZSBjcmVhdGVkIGF0IGh0dHBzOi8vd2lraS5saW51eGZvdW5kYXRpb24u
-b3JnL3JlYWx0aW1lL3ByZWVtcHRfcnRfdmVyc2lvbnMgPyAgDQoNCi1nYXZpbg0KDQo+IC0tLS0t
-T3JpZ2luYWwgTWVzc2FnZS0tLS0tDQo+IEZyb206IGxpbnV4LXJ0LXVzZXJzLW93bmVyQHZnZXIu
-a2VybmVsLm9yZyBbbWFpbHRvOmxpbnV4LXJ0LXVzZXJzLQ0KPiBvd25lckB2Z2VyLmtlcm5lbC5v
-cmddIE9uIEJlaGFsZiBPZiBCZW4gSHV0Y2hpbmdzDQo+IFNlbnQ6IFR1ZXNkYXksIEphbnVhcnkg
-MDksIDIwMTggMTowNiBQTQ0KPiBUbzogU2ViYXN0aWFuIEFuZHJ6ZWogU2lld2lvciA8YmlnZWFz
-eUBsaW51dHJvbml4LmRlPjsgRGFuaWVsIFdhZ25lcg0KPiA8ZGFuaWVsLndhZ25lckBzaWVtZW5z
-LmNvbT4NCj4gQ2M6IGNpcC1kZXZAbGlzdHMuY2lwLXByb2plY3Qub3JnOyBsaW51eC1ydC11c2Vy
-cyA8bGludXgtcnQtDQo+IHVzZXJzQHZnZXIua2VybmVsLm9yZz4NCj4gU3ViamVjdDogUmU6IFtB
-Tk5PVU5DRV0gTGludXggNC40LjE1LWNpcDE1LXJ0MTANCj4gDQo+IE9uIE1vbiwgMjAxOC0wMS0w
-OCBhdCAxMTo1NiArMDEwMCwgU2ViYXN0aWFuIEFuZHJ6ZWogU2lld2lvciB3cm90ZToNCj4gPiBP
-biAyMDE4LTAxLTA4IDExOjEzOjEyIFsrMDEwMF0sIERhbmllbCBXYWduZXIgd3JvdGU6DQo+ID4g
-PiBIaSBTZWJhc3RpYW4sDQo+ID4NCj4gPiBIaSBEYW5pZWwsDQo+ID4NCj4gPiA+IE9uIDAxLzA4
-LzIwMTggMTA6MzMgQU0sIFNlYmFzdGlhbiBBbmRyemVqIFNpZXdpb3Igd3JvdGU6DQo+ID4gPiA+
-IE9uIDIwMTgtMDEtMDIgMTI6NTY6MTEgWyswMTAwXSwgRGFuaWVsIFdhZ25lciB3cm90ZToNCj4g
-PiA+ID4gPiBUaGUgcmVsZWFzZSBpcyBiYXNlZCBvbiB0aGUgTGludXggNC40Ljc1LXJ0ODggdmVy
-c2lvbi4gVGhhdCBpcyBJDQo+ID4gPiA+ID4gYXBwbGllZCB0aGUgLXJ0ODggcGF0Y2ggb24gdGhl
-IDQuNC43NS1jaXA2IGtlcm5lbCBhbmQgbWVyZ2VkIGluDQo+ID4gPiA+ID4gYWxsIENJUCByZWxl
-YXNlcy4NCj4gPiA+ID4NCj4gPiA+ID4gd2hhdCBpcyBjaXA2Pw0KPiA+ID4NCj4gPiA+IENJUCBz
-dGFuZHMgZm9yIENpdmlsIEluZnJhc3RydWN0dXJlIFBsYXRmb3JtIFsxXS4gQmVuIEh1dGNoaW5n
-cw0KPiA+ID4gbWFpbnRhaW5zIHRoZSA0LjQueC1jaXAga2VybmVsIHRyZWUgd2hpY2ggaXMgYSBz
-dXBlciBsb25nIHN0YWJsZSB0cmVlIFsyXS4NCj4gPg0KPiA+IFNvIDQuNC54IGlzIG1haW50YWlu
-ZWQgdW50aWwgRmViLCAyMDIyLiBJIGFzc3VtZWQgdGhhdCBgY2lwJyB3aWxsIHRha2UNCj4gPiBv
-dmVyIC8gaGVscCBHcmVnIHdpdGggdGhlIHY0LjQgdHJlZSBhbmQgd29uJ3QgaW5jbHVkZSBpdHMg
-Im93biIgdGhpbmdzLg0KPiANCj4gVGhlIDQuNC1jaXAgYnJhbmNoIGlzIG5vdCBhIHJlZ3VsYXIg
-c3RhYmxlIGJyYW5jaC4gIEl0IGluY2x1ZGVzIHNvbWUgYmFja3BvcnRlZA0KPiBoYXJkd2FyZSBl
-bmFibGVtZW50IGFuZCBvdGhlciBtaW5vciBmZWF0dXJlcyB0aGF0IGFyZW4ndCBzdWl0YWJsZSBm
-b3INCj4gc3RhYmxlLiAgSSBhbSBoZWxwaW5nIHdpdGggcmV2aWV3IGZvciA0LjQtc3RhYmxlIGFu
-ZCByZWd1bGFybHkgbWVyZ2UgaXQgaW50byA0LjQtDQo+IGNpcCwgYnV0IGl0J3MgKm5vdCogcGxh
-bm5lZCBmb3IgQ0lQIHRvIHRha2Ugb3ZlciBtYWludGVuYW5jZSBvZiBzdGFibGUNCj4gYnJhbmNo
-ZXMuICBBZnRlciBFT0wgZm9yIDQuNC1zdGFibGUsIDQuNC1jaXAgd2lsbCBnZXQgZml4ZXMgZm9y
-IG9ubHkgdGhlIGtlcm5lbA0KPiBjb21wb25lbnRzIHRoYXQgQ0lQIG1lbWJlcnMgdXNlLg0KPiAN
-Cj4gPiA+ID4gPiDCoCBodHRwczovL2NpLXJ0LmxpbnV0cm9uaXguZGUvUlQtVGVzdC9rYnVpbGQu
-anNwP2lkPTExMg0KPiA+ID4gPiA+DQo+ID4gPiA+ID4gU29tZSBvZiB0aGUgYnVpbGRzIGFyZSBm
-YWlsaW5nIChhbGxtb2Rjb25maWcpLCB0aG91Z2ggaXQgZG9lc24ndA0KPiA+ID4gPiA+IGxvb2sg
-Y2lwLXJ0IHNwZWNpZmljLCBlZzoNCj4gPiA+ID4gPg0KPiA+ID4gPiA+ID4gPiA+ID4NCj4gPiA+
-ID4gPiA+ID4gPiA+IGtlcm5lbC91dGlsaXRpZXMvY29tcGlsZXRlc3QtcnVubmVyQDIvYnVpbGQv
-Li4vaW5jbHVkZS9sDQo+ID4gPiA+ID4gPiA+ID4gPiBpbnV4L2NvbXBpbGVyLmg6NDg0IGNhbGwg
-dG8g4oCYX19jb21waWxldGltZV9hc3NlcnRfMTUw4oCZDQo+ID4gPiA+ID4gPiA+ID4gPiBkZWNs
-YXJlZCB3aXRoIGF0dHJpYnV0ZSBlcnJvcjogQlVJTERfQlVHX09OIGZhaWxlZDoNCj4gPiA+ID4g
-PiA+ID4gPiA+IGh3X2ZsYWdfbmFtZXNbTlVNX0lFRUU4MDIxMV9IV19GTEFHU10gIT0gKHZvaWQg
-KikweDENCj4gPiA+ID4gPg0KPiA+ID4gPiA+IE5vdCBzdXJlIGhvdyB0byBoYW5kbGUgdGhvc2Uu
-IElJUkMsIHdlIGRvbid0IHN1cHBvcnQgYWxsbW9kY29uZmlnLg0KPiA+ID4gPg0KPiA+ID4gPiB5
-ZXMgYnV0IGFkZGluZw0KPiA+ID4gPiDCoCA2ODkyMGM5NzMyNTQgKCJuZXQvbWFjODAyMTEvZGVi
-dWdmcy5jOiBwcmV2ZW50IGJ1aWxkIGZhaWx1cmUNCj4gPiA+ID4gd2l0aA0KPiA+ID4gPiDCoCBD
-T05GSUdfVUJTQU49eSIpDQo+ID4gPiA+DQo+ID4gPiA+IGNvdWxkIHNvbHZlIHRoZSBpc3N1ZS4N
-Cj4gPiA+DQo+ID4gPiBPa2F5LCBJIGp1c3QgZG9uJ3Qga25vdyBpZiBCZW4gd2FudHMgdG8gYWRk
-IHRoZSBwYXRjaCB0byBoaXMgdHJlZSB0aG91Z2guDQo+ID4NCj4gPiBJZiB0aGUgcGF0Y2ggc29s
-dmVzIHRoZSBpc3N1ZSB0aGVuIHBsZWFzZSBmb3J3YXJkIHRoZSBwYXRjaCB1cHN0cmVhbS4NCj4g
-PiBUaGUgIm5vcm1hbCIgdjQuNCBzdGFibGUgdHJlZSBpcyBhZmZlY3RlZCBieSB0aGlzLCB0b28u
-DQo+IA0KPiA0LjQtc3RhYmxlIGRvZXNuJ3QgaGF2ZSBVQlNBTi4gIEFyZSBzb21lIG90aGVyIGNv
-bmZpZ3VyYXRpb25zIChvciBjb21waWxlcg0KPiB2ZXJzaW9ucykgd2hlcmUgdGhpcyBjb2RlIGZh
-aWxzIHRvIGJ1aWxkPyAgKEknbSBhIGJpdCBzdXJwcmlzZWQgdGhhdCBpdCBldmVyDQo+IGNvbXBp
-bGVkISkNCj4gDQo+IEJlbi4NCj4gDQo+IC0tDQo+IEJlbiBIdXRjaGluZ3MNCj4gU29mdHdhcmUg
-RGV2ZWxvcGVyLCBDb2RldGhpbmsgTHRkLg0KPiANCj4gLS0NCj4gVG8gdW5zdWJzY3JpYmUgZnJv
-bSB0aGlzIGxpc3Q6IHNlbmQgdGhlIGxpbmUgInVuc3Vic2NyaWJlIGxpbnV4LXJ0LXVzZXJzIiBp
-biB0aGUNCj4gYm9keSBvZiBhIG1lc3NhZ2UgdG8gbWFqb3Jkb21vQHZnZXIua2VybmVsLm9yZyBN
-b3JlIG1ham9yZG9tbyBpbmZvIGF0DQo+IGh0dHA6Ly92Z2VyLmtlcm5lbC5vcmcvbWFqb3Jkb21v
-LWluZm8uaHRtbA0K
+Hi Tom,
+
+On Thu, Dec 21, 2017 at 10:02:46AM -0600, Tom Zanussi wrote:
+> Synthetic events are user-defined events generated from hist trigger
+> variables saved from one or more other events.
+> 
+> To define a synthetic event, the user writes a simple specification
+> consisting of the name of the new event along with one or more
+> variables and their type(s), to the tracing/synthetic_events file.
+> 
+> For instance, the following creates a new event named 'wakeup_latency'
+> with 3 fields: lat, pid, and prio:
+> 
+>     # echo 'wakeup_latency u64 lat; pid_t pid; int prio' >> \
+>       /sys/kernel/debug/tracing/synthetic_events
+> 
+> Reading the tracing/synthetic_events file lists all the
+> currently-defined synthetic events, in this case the event we defined
+> above:
+> 
+>     # cat /sys/kernel/debug/tracing/synthetic_events
+>     wakeup_latency u64 lat; pid_t pid; int prio
+> 
+> At this point, the synthetic event is ready to use, and a histogram
+> can be defined using it:
+> 
+>     # echo 'hist:keys=pid,prio,lat.log2:sort=pid,lat' >> \
+>     /sys/kernel/debug/tracing/events/synthetic/wakeup_latency/trigger
+> 
+> The new event is created under the tracing/events/synthetic/ directory
+> and looks and behaves just like any other event:
+> 
+>     # ls /sys/kernel/debug/tracing/events/synthetic/wakeup_latency
+>       enable  filter  format  hist  id  trigger
+> 
+> Although a histogram can be defined for it, nothing will happen until
+> an action tracing that event via the trace_synth() function occurs.
+> The trace_synth() function is very similar to all the other trace_*
+> invocations spread throughout the kernel, except in this case the
+> trace_ function and its corresponding tracepoint isn't statically
+> generated but defined by the user at run-time.
+> 
+> How this can be automatically hooked up via a hist trigger 'action' is
+> discussed in a subsequent patch.
+> 
+> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> [fix noderef.cocci warnings, sizeof pointer for kcalloc of event->fields]
+> Signed-off-by: Fengguang Wu <fengguang.wu@intel.com>
+> ---
+
+[SNIP]
+> +static int release_all_synth_events(void)
+> +{
+> +	struct list_head release_events;
+> +	struct synth_event *event, *e;
+> +	int ret = 0, err = 0;
+> +
+> +	INIT_LIST_HEAD(&release_events);
+> +
+> +	mutex_lock(&synth_event_mutex);
+> +
+> +	list_for_each_entry(event, &synth_event_list, list) {
+> +		if (event->ref) {
+> +			mutex_unlock(&synth_event_mutex);
+> +			return -EBUSY;
+> +		}
+> +	}
+> +
+> +	list_for_each_entry_safe(event, e, &synth_event_list, list)
+> +		list_move(&event->list, &release_events);
+
+list_splice_init() ?
+
+> +
+> +	mutex_unlock(&synth_event_mutex);
+> +
+> +	list_for_each_entry_safe(event, e, &release_events, list) {
+> +		list_del(&event->list);
+> +
+> +		ret = unregister_synth_event(event);
+> +		add_or_delete_synth_event(event, !ret);
+> +	}
+> +
+> +	if (err)
+> +		ret = err;
+
+The err was never used.
+
+> +
+> +	return ret;
+> +}
