@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v9 28/37] tracing: Allow whitespace to surround hist trigger filter
-Date: Mon, 15 Jan 2018 20:52:02 -0600
-Message-ID: <1053090c3c308d4f431accdeb59dff4b511d4554.1516069914.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v9 29/37] tracing: Add cpu field for hist triggers
+Date: Mon, 15 Jan 2018 20:52:03 -0600
+Message-ID: <89537645bfc957e0d76e2cacf5f0ada88691a6cc.1516069914.git.tom.zanussi@linux.intel.com>
 References: <cover.1516069914.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,72 +18,114 @@ References: <cover.1516069914.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-The existing code only allows for one space before and after the 'if'
-specifying the filter for a hist trigger.  Add code to make that more
-permissive as far as whitespace goes.  Specifically, we want to allow
-spaces in the trigger itself now that we have additional syntax
-(onmatch/onmax) where spaces are more natural e.g. spaces after commas
-in param lists.
+A common key to use in a histogram is the cpuid - add a new cpu
+'synthetic' field named 'cpu' for that purpose.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 37 ++++++++++++++++++++++++++++++++-----
- 1 file changed, 32 insertions(+), 5 deletions(-)
+ Documentation/trace/histogram.txt | 15 +++++++++++++++
+ kernel/trace/trace_events_hist.c  | 28 +++++++++++++++++++++++++++-
+ 2 files changed, 42 insertions(+), 1 deletion(-)
 
+diff --git a/Documentation/trace/histogram.txt b/Documentation/trace/histogram.txt
+index 25c9473..be612ca 100644
+--- a/Documentation/trace/histogram.txt
++++ b/Documentation/trace/histogram.txt
+@@ -172,6 +172,21 @@
+   The examples below provide a more concrete illustration of the
+   concepts and typical usage patterns discussed above.
+ 
++  'special' event fields
++  ------------------------
++
++  There are a number of 'special event fields' available for use as
++  keys or values in a hist trigger.  These look like and behave as if
++  they were actual event fields, but aren't really part of the event's
++  field definition or format file.  They are however available for any
++  event, and can be used anywhere an actual event field could be.
++  They are:
++
++    common_timestamp       u64 - timestamp (from ring buffer) associated
++                                 with the event, in nanoseconds.  May be
++				 modified by .usecs to have timestamps
++				 interpreted as microseconds.
++    cpu                    int - the cpu on which the event occurred.
+ 
+ 6.2 'hist' trigger examples
+ ---------------------------
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index c5a5206..9f8308f 100644
+index 9f8308f..43784c3 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -5162,7 +5162,7 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
- 	struct synth_event *se;
- 	const char *se_name;
- 	bool remove = false;
--	char *trigger;
-+	char *trigger, *p;
- 	int ret = 0;
+@@ -227,6 +227,7 @@ enum hist_field_flags {
+ 	HIST_FIELD_FL_VAR		= 1 << 12,
+ 	HIST_FIELD_FL_EXPR		= 1 << 13,
+ 	HIST_FIELD_FL_VAR_REF		= 1 << 14,
++	HIST_FIELD_FL_CPU		= 1 << 15,
+ };
  
- 	if (!param)
-@@ -5171,10 +5171,37 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
- 	if (glob[0] == '!')
- 		remove = true;
+ struct var_defs {
+@@ -1164,6 +1165,16 @@ static u64 hist_field_timestamp(struct hist_field *hist_field,
+ 	return ts;
+ }
  
--	/* separate the trigger from the filter (k:v [if filter]) */
--	trigger = strsep(&param, " \t");
--	if (!trigger)
--		return -EINVAL;
-+	/*
-+	 * separate the trigger from the filter (k:v [if filter])
-+	 * allowing for whitespace in the trigger
-+	 */
-+	p = trigger = param;
-+	do {
-+		p = strstr(p, "if");
-+		if (!p)
-+			break;
-+		if (p == param)
-+			return -EINVAL;
-+		if (*(p - 1) != ' ' && *(p - 1) != '\t') {
-+			p++;
-+			continue;
-+		}
-+		if (p >= param + strlen(param) - strlen("if") - 1)
-+			return -EINVAL;
-+		if (*(p + strlen("if")) != ' ' && *(p + strlen("if")) != '\t') {
-+			p++;
-+			continue;
-+		}
-+		break;
-+	} while (p);
++static u64 hist_field_cpu(struct hist_field *hist_field,
++			  struct tracing_map_elt *elt,
++			  struct ring_buffer_event *rbe,
++			  void *event)
++{
++	int cpu = smp_processor_id();
 +
-+	if (!p)
-+		param = NULL;
-+	else {
-+		*(p - 1) = '\0';
-+		param = strstrip(p);
-+		trigger = strstrip(trigger);
-+	}
++	return cpu;
++}
++
+ static struct hist_field *
+ check_field_for_var_ref(struct hist_field *hist_field,
+ 			struct hist_trigger_data *var_data,
+@@ -1602,6 +1613,8 @@ static const char *hist_field_name(struct hist_field *field,
+ 		field_name = hist_field_name(field->operands[0], ++level);
+ 	else if (field->flags & HIST_FIELD_FL_TIMESTAMP)
+ 		field_name = "common_timestamp";
++	else if (field->flags & HIST_FIELD_FL_CPU)
++		field_name = "cpu";
+ 	else if (field->flags & HIST_FIELD_FL_EXPR ||
+ 		 field->flags & HIST_FIELD_FL_VAR_REF) {
+ 		if (field->system) {
+@@ -2109,6 +2122,15 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
+ 		goto out;
+ 	}
  
- 	attrs = parse_hist_trigger_attrs(trigger);
- 	if (IS_ERR(attrs))
++	if (flags & HIST_FIELD_FL_CPU) {
++		hist_field->fn = hist_field_cpu;
++		hist_field->size = sizeof(int);
++		hist_field->type = kstrdup("unsigned int", GFP_KERNEL);
++		if (!hist_field->type)
++			goto free;
++		goto out;
++	}
++
+ 	if (WARN_ON_ONCE(!field))
+ 		goto out;
+ 
+@@ -2345,7 +2367,9 @@ static struct hist_field *parse_var_ref(struct hist_trigger_data *hist_data,
+ 		hist_data->enable_timestamps = true;
+ 		if (*flags & HIST_FIELD_FL_TIMESTAMP_USECS)
+ 			hist_data->attrs->ts_in_usecs = true;
+-	} else {
++	} else if (strcmp(field_name, "cpu") == 0)
++		*flags |= HIST_FIELD_FL_CPU;
++	else {
+ 		field = trace_find_event_field(file->event_call, field_name);
+ 		if (!field || !field->size) {
+ 			field = ERR_PTR(-EINVAL);
+@@ -4619,6 +4643,8 @@ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
+ 
+ 	if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP)
+ 		seq_puts(m, "common_timestamp");
++	else if (hist_field->flags & HIST_FIELD_FL_CPU)
++		seq_puts(m, "cpu");
+ 	else if (field_name) {
+ 		if (hist_field->flags & HIST_FIELD_FL_VAR_REF)
+ 			seq_putc(m, '$');
 -- 
 1.9.3
