@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v9 03/37] tracing: Add support to detect and avoid duplicates
-Date: Mon, 15 Jan 2018 20:51:37 -0600
-Message-ID: <e178e89ec399240331d383bd5913d649713110f4.1516069914.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v9 04/37] tracing: Remove code which merges duplicates
+Date: Mon, 15 Jan 2018 20:51:38 -0600
+Message-ID: <55215cf59e2674391bdaf772fdafc4c393352b03.1516069914.git.tom.zanussi@linux.intel.com>
 References: <cover.1516069914.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -20,116 +20,194 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Vedang Patel <vedang.patel@intel.com>
 
-A duplicate in the tracing_map hash table is when 2 different entries
-have the same key and, as a result, the key_hash. This is possible due
-to a race condition in the algorithm. This race condition is inherent to
-the algorithm and not a bug. This was fine because, until now, we were
-only interested in the sum of all the values related to a particular
-key (the duplicates are dealt with in tracing_map_sort_entries()). But,
-with the inclusion of variables[1], we are interested in individual
-values. So, it will not be clear what value to choose when
-there are duplicates. So, the duplicates need to be removed.
-
-The duplicates can occur in the code in the following scenarios:
-
-- A thread is in the process of adding a new element. It has
-successfully executed cmpxchg() and inserted the key. But, it is still
-not done acquiring the trace_map_elt struct, populating it and storing
-the pointer to the struct in the value field of tracing_map hash table.
-If another thread comes in at this time and wants to add an element with
-the same key, it will not see the current element and add a new one.
-
-- There are multiple threads trying to execute cmpxchg at the same time,
-one of the threads will succeed and the others will fail. The ones which
-fail will go ahead increment 'idx' and add a new element there creating
-a duplicate.
-
-This patch detects and avoids the first condition by asking the thread
-which detects the duplicate to loop one more time. There is also a
-possibility of infinite loop if the thread which is trying to insert
-goes to sleep indefinitely and the one which is trying to insert a new
-element detects a duplicate. Which is why, the thread loops for
-map_size iterations before returning NULL.
-
-The second scenario is avoided by preventing the threads which failed
-cmpxchg() from incrementing idx. This way, they will loop
-around and check if the thread which succeeded in executing cmpxchg()
-had the same key.
-
-[1] http://lkml.kernel.org/r/cover.1498510759.git.tom.zanussi@linux.intel.com
+We now have the logic to detect and remove duplicates in the
+tracing_map hash table. The code which merges duplicates in the
+histogram is redundant now. So, modify this code just to detect
+duplicates. The duplication detection code is still kept to ensure
+that any rare race condition which might cause duplicates does not go
+unnoticed.
 
 Signed-off-by: Vedang Patel <vedang.patel@intel.com>
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/tracing_map.c | 41 ++++++++++++++++++++++++++++++++++++-----
- 1 file changed, 36 insertions(+), 5 deletions(-)
+ kernel/trace/trace_events_hist.c | 11 ------
+ kernel/trace/tracing_map.c       | 83 +++-------------------------------------
+ kernel/trace/tracing_map.h       |  7 ----
+ 3 files changed, 6 insertions(+), 95 deletions(-)
 
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 1e1558c..712260e 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -340,16 +340,6 @@ static int hist_trigger_elt_comm_alloc(struct tracing_map_elt *elt)
+ 	return 0;
+ }
+ 
+-static void hist_trigger_elt_comm_copy(struct tracing_map_elt *to,
+-				       struct tracing_map_elt *from)
+-{
+-	char *comm_from = from->private_data;
+-	char *comm_to = to->private_data;
+-
+-	if (comm_from)
+-		memcpy(comm_to, comm_from, TASK_COMM_LEN + 1);
+-}
+-
+ static void hist_trigger_elt_comm_init(struct tracing_map_elt *elt)
+ {
+ 	char *comm = elt->private_data;
+@@ -360,7 +350,6 @@ static void hist_trigger_elt_comm_init(struct tracing_map_elt *elt)
+ 
+ static const struct tracing_map_ops hist_trigger_elt_comm_ops = {
+ 	.elt_alloc	= hist_trigger_elt_comm_alloc,
+-	.elt_copy	= hist_trigger_elt_comm_copy,
+ 	.elt_free	= hist_trigger_elt_comm_free,
+ 	.elt_init	= hist_trigger_elt_comm_init,
+ };
 diff --git a/kernel/trace/tracing_map.c b/kernel/trace/tracing_map.c
-index 07e7534..b30f343 100644
+index b30f343..f47a4d5 100644
 --- a/kernel/trace/tracing_map.c
 +++ b/kernel/trace/tracing_map.c
-@@ -414,7 +414,9 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
- __tracing_map_insert(struct tracing_map *map, void *key, bool lookup_only)
+@@ -847,67 +847,15 @@ void tracing_map_destroy_sort_entries(struct tracing_map_sort_entry **entries,
+ 	return sort_entry;
+ }
+ 
+-static struct tracing_map_elt *copy_elt(struct tracing_map_elt *elt)
+-{
+-	struct tracing_map_elt *dup_elt;
+-	unsigned int i;
+-
+-	dup_elt = tracing_map_elt_alloc(elt->map);
+-	if (IS_ERR(dup_elt))
+-		return NULL;
+-
+-	if (elt->map->ops && elt->map->ops->elt_copy)
+-		elt->map->ops->elt_copy(dup_elt, elt);
+-
+-	dup_elt->private_data = elt->private_data;
+-	memcpy(dup_elt->key, elt->key, elt->map->key_size);
+-
+-	for (i = 0; i < elt->map->n_fields; i++) {
+-		atomic64_set(&dup_elt->fields[i].sum,
+-			     atomic64_read(&elt->fields[i].sum));
+-		dup_elt->fields[i].cmp_fn = elt->fields[i].cmp_fn;
+-	}
+-
+-	return dup_elt;
+-}
+-
+-static int merge_dup(struct tracing_map_sort_entry **sort_entries,
+-		     unsigned int target, unsigned int dup)
+-{
+-	struct tracing_map_elt *target_elt, *elt;
+-	bool first_dup = (target - dup) == 1;
+-	int i;
+-
+-	if (first_dup) {
+-		elt = sort_entries[target]->elt;
+-		target_elt = copy_elt(elt);
+-		if (!target_elt)
+-			return -ENOMEM;
+-		sort_entries[target]->elt = target_elt;
+-		sort_entries[target]->elt_copied = true;
+-	} else
+-		target_elt = sort_entries[target]->elt;
+-
+-	elt = sort_entries[dup]->elt;
+-
+-	for (i = 0; i < elt->map->n_fields; i++)
+-		atomic64_add(atomic64_read(&elt->fields[i].sum),
+-			     &target_elt->fields[i].sum);
+-
+-	sort_entries[dup]->dup = true;
+-
+-	return 0;
+-}
+-
+-static int merge_dups(struct tracing_map_sort_entry **sort_entries,
++static void detect_dups(struct tracing_map_sort_entry **sort_entries,
+ 		      int n_entries, unsigned int key_size)
  {
- 	u32 idx, key_hash, test_key;
-+	int dup_try = 0;
- 	struct tracing_map_entry *entry;
-+	struct tracing_map_elt *val;
+ 	unsigned int dups = 0, total_dups = 0;
+-	int err, i, j;
++	int i;
+ 	void *key;
  
- 	key_hash = jhash(key, map->key_size, 0);
- 	if (key_hash == 0)
-@@ -426,11 +428,33 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
- 		entry = TRACING_MAP_ENTRY(map->map, idx);
- 		test_key = entry->key;
+ 	if (n_entries < 2)
+-		return total_dups;
++		return;
  
--		if (test_key && test_key == key_hash && entry->val &&
--		    keys_match(key, entry->val->key, map->key_size)) {
--			if (!lookup_only)
--				atomic64_inc(&map->hits);
--			return entry->val;
-+		if (test_key && test_key == key_hash) {
-+			val = READ_ONCE(entry->val);
-+			if (val &&
-+			    keys_match(key, val->key, map->key_size)) {
-+				if (!lookup_only)
-+					atomic64_inc(&map->hits);
-+				return val;
-+			} else if (unlikely(!val)) {
-+				/*
-+				 * The key is present. But, val (pointer to elt
-+				 * struct) is still NULL. which means some other
-+				 * thread is in the process of inserting an
-+				 * element.
-+				 *
-+				 * On top of that, it's key_hash is same as the
-+				 * one being inserted right now. So, it's
-+				 * possible that the element has the same
-+				 * key as well.
-+				 */
-+
-+				dup_try++;
-+				if (dup_try > map->map_size) {
-+					atomic64_inc(&map->drops);
-+					break;
-+				}
-+				continue;
-+			}
+ 	sort(sort_entries, n_entries, sizeof(struct tracing_map_sort_entry *),
+ 	     (int (*)(const void *, const void *))cmp_entries_dup, NULL);
+@@ -916,30 +864,14 @@ static int merge_dups(struct tracing_map_sort_entry **sort_entries,
+ 	for (i = 1; i < n_entries; i++) {
+ 		if (!memcmp(sort_entries[i]->key, key, key_size)) {
+ 			dups++; total_dups++;
+-			err = merge_dup(sort_entries, i - dups, i);
+-			if (err)
+-				return err;
+ 			continue;
  		}
+ 		key = sort_entries[i]->key;
+ 		dups = 0;
+ 	}
  
- 		if (!test_key) {
-@@ -452,6 +476,13 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
- 				atomic64_inc(&map->hits);
+-	if (!total_dups)
+-		return total_dups;
+-
+-	for (i = 0, j = 0; i < n_entries; i++) {
+-		if (!sort_entries[i]->dup) {
+-			sort_entries[j] = sort_entries[i];
+-			if (j++ != i)
+-				sort_entries[i] = NULL;
+-		} else {
+-			destroy_sort_entry(sort_entries[i]);
+-			sort_entries[i] = NULL;
+-		}
+-	}
+-
+-	return total_dups;
++	WARN_ONCE(total_dups > 0,
++		  "Duplicates detected: %d\n", total_dups);
+ }
  
- 				return entry->val;
-+			} else {
-+				/*
-+				 * cmpxchg() failed. Loop around once
-+				 * more to check what key was inserted.
-+				 */
-+				dup_try++;
-+				continue;
- 			}
- 		}
+ static bool is_key(struct tracing_map *map, unsigned int field_idx)
+@@ -1065,10 +997,7 @@ int tracing_map_sort_entries(struct tracing_map *map,
+ 		return 1;
+ 	}
  
+-	ret = merge_dups(entries, n_entries, map->key_size);
+-	if (ret < 0)
+-		goto free;
+-	n_entries -= ret;
++	detect_dups(entries, n_entries, map->key_size);
+ 
+ 	if (is_key(map, sort_keys[0].field_idx))
+ 		cmp_entries_fn = cmp_entries_key;
+diff --git a/kernel/trace/tracing_map.h b/kernel/trace/tracing_map.h
+index 5b5bbf8..de57887 100644
+--- a/kernel/trace/tracing_map.h
++++ b/kernel/trace/tracing_map.h
+@@ -215,11 +215,6 @@ struct tracing_map {
+  *	Element allocation occurs before tracing begins, when the
+  *	tracing_map_init() call is made by client code.
+  *
+- * @elt_copy: At certain points in the lifetime of an element, it may
+- *	need to be copied.  The copy should include a copy of the
+- *	client-allocated data, which can be copied into the 'to'
+- *	element from the 'from' element.
+- *
+  * @elt_free: When a tracing_map_elt is freed, this function is called
+  *	and allows client-allocated per-element data to be freed.
+  *
+@@ -233,8 +228,6 @@ struct tracing_map {
+  */
+ struct tracing_map_ops {
+ 	int			(*elt_alloc)(struct tracing_map_elt *elt);
+-	void			(*elt_copy)(struct tracing_map_elt *to,
+-					    struct tracing_map_elt *from);
+ 	void			(*elt_free)(struct tracing_map_elt *elt);
+ 	void			(*elt_clear)(struct tracing_map_elt *elt);
+ 	void			(*elt_init)(struct tracing_map_elt *elt);
 -- 
 1.9.3
