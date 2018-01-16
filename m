@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v9 02/37] tracing: Add Documentation for log2 modifier
-Date: Mon, 15 Jan 2018 20:51:36 -0600
-Message-ID: <a419028bccab155749a4b8702d5b97af75f1578f.1516069914.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v9 03/37] tracing: Add support to detect and avoid duplicates
+Date: Mon, 15 Jan 2018 20:51:37 -0600
+Message-ID: <e178e89ec399240331d383bd5913d649713110f4.1516069914.git.tom.zanussi@linux.intel.com>
 References: <cover.1516069914.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,25 +18,118 @@ References: <cover.1516069914.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Add a line for the log2 modifier, to keep it aligned with
-tracing/README.
+From: Vedang Patel <vedang.patel@intel.com>
 
+A duplicate in the tracing_map hash table is when 2 different entries
+have the same key and, as a result, the key_hash. This is possible due
+to a race condition in the algorithm. This race condition is inherent to
+the algorithm and not a bug. This was fine because, until now, we were
+only interested in the sum of all the values related to a particular
+key (the duplicates are dealt with in tracing_map_sort_entries()). But,
+with the inclusion of variables[1], we are interested in individual
+values. So, it will not be clear what value to choose when
+there are duplicates. So, the duplicates need to be removed.
+
+The duplicates can occur in the code in the following scenarios:
+
+- A thread is in the process of adding a new element. It has
+successfully executed cmpxchg() and inserted the key. But, it is still
+not done acquiring the trace_map_elt struct, populating it and storing
+the pointer to the struct in the value field of tracing_map hash table.
+If another thread comes in at this time and wants to add an element with
+the same key, it will not see the current element and add a new one.
+
+- There are multiple threads trying to execute cmpxchg at the same time,
+one of the threads will succeed and the others will fail. The ones which
+fail will go ahead increment 'idx' and add a new element there creating
+a duplicate.
+
+This patch detects and avoids the first condition by asking the thread
+which detects the duplicate to loop one more time. There is also a
+possibility of infinite loop if the thread which is trying to insert
+goes to sleep indefinitely and the one which is trying to insert a new
+element detects a duplicate. Which is why, the thread loops for
+map_size iterations before returning NULL.
+
+The second scenario is avoided by preventing the threads which failed
+cmpxchg() from incrementing idx. This way, they will loop
+around and check if the thread which succeeded in executing cmpxchg()
+had the same key.
+
+[1] http://lkml.kernel.org/r/cover.1498510759.git.tom.zanussi@linux.intel.com
+
+Signed-off-by: Vedang Patel <vedang.patel@intel.com>
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- Documentation/trace/histogram.txt | 1 +
- 1 file changed, 1 insertion(+)
+ kernel/trace/tracing_map.c | 41 ++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 36 insertions(+), 5 deletions(-)
 
-diff --git a/Documentation/trace/histogram.txt b/Documentation/trace/histogram.txt
-index b2145f4..a4143f04a 100644
---- a/Documentation/trace/histogram.txt
-+++ b/Documentation/trace/histogram.txt
-@@ -73,6 +73,7 @@
- 	.sym-offset display an address as a symbol and offset
- 	.syscall    display a syscall id as a system call name
- 	.execname   display a common_pid as a program name
-+	.log2       display log2 value rather than raw number
+diff --git a/kernel/trace/tracing_map.c b/kernel/trace/tracing_map.c
+index 07e7534..b30f343 100644
+--- a/kernel/trace/tracing_map.c
++++ b/kernel/trace/tracing_map.c
+@@ -414,7 +414,9 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
+ __tracing_map_insert(struct tracing_map *map, void *key, bool lookup_only)
+ {
+ 	u32 idx, key_hash, test_key;
++	int dup_try = 0;
+ 	struct tracing_map_entry *entry;
++	struct tracing_map_elt *val;
  
-   Note that in general the semantics of a given field aren't
-   interpreted when applying a modifier to it, but there are some
+ 	key_hash = jhash(key, map->key_size, 0);
+ 	if (key_hash == 0)
+@@ -426,11 +428,33 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
+ 		entry = TRACING_MAP_ENTRY(map->map, idx);
+ 		test_key = entry->key;
+ 
+-		if (test_key && test_key == key_hash && entry->val &&
+-		    keys_match(key, entry->val->key, map->key_size)) {
+-			if (!lookup_only)
+-				atomic64_inc(&map->hits);
+-			return entry->val;
++		if (test_key && test_key == key_hash) {
++			val = READ_ONCE(entry->val);
++			if (val &&
++			    keys_match(key, val->key, map->key_size)) {
++				if (!lookup_only)
++					atomic64_inc(&map->hits);
++				return val;
++			} else if (unlikely(!val)) {
++				/*
++				 * The key is present. But, val (pointer to elt
++				 * struct) is still NULL. which means some other
++				 * thread is in the process of inserting an
++				 * element.
++				 *
++				 * On top of that, it's key_hash is same as the
++				 * one being inserted right now. So, it's
++				 * possible that the element has the same
++				 * key as well.
++				 */
++
++				dup_try++;
++				if (dup_try > map->map_size) {
++					atomic64_inc(&map->drops);
++					break;
++				}
++				continue;
++			}
+ 		}
+ 
+ 		if (!test_key) {
+@@ -452,6 +476,13 @@ static inline bool keys_match(void *key, void *test_key, unsigned key_size)
+ 				atomic64_inc(&map->hits);
+ 
+ 				return entry->val;
++			} else {
++				/*
++				 * cmpxchg() failed. Loop around once
++				 * more to check what key was inserted.
++				 */
++				dup_try++;
++				continue;
+ 			}
+ 		}
+ 
 -- 
 1.9.3
