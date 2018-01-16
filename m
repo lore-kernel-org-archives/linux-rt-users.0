@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v9 34/37] tracing: Add a clock attribute for hist triggers
-Date: Mon, 15 Jan 2018 20:52:08 -0600
-Message-ID: <427bed1389c5d22aa40c3e0683e30cc3d151e260.1516069914.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v9 35/37] tracing: Increase trace_recursive_lock() limit for synthetic events
+Date: Mon, 15 Jan 2018 20:52:09 -0600
+Message-ID: <827fcc7a6840db06d196fc18905033d519681eff.1516069914.git.tom.zanussi@linux.intel.com>
 References: <cover.1516069914.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,137 +18,44 @@ References: <cover.1516069914.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-The default clock if timestamps are used in a histogram is "global".
-If timestamps aren't used, the clock is irrelevant.
+Synthetic event generation needs to happen while the current event is
+still in progress, so add 1 to the trace_recursive_lock() recursion
+limit to account for that.
 
-Use the "clock=" param only if you want to override the default
-"global" clock for a histogram with timestamps.
+Because we also want to allow for the possibility of a synthetic event
+being generated from another synthetic event, add an additional
+increment for that as well.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-Signed-off-by: Rajvi Jingar <rajvi.jingar@intel.com>
 ---
- Documentation/trace/histogram.txt | 11 +++++++++-
- kernel/trace/trace_events_hist.c  | 42 ++++++++++++++++++++++++++++++++++++---
- 2 files changed, 49 insertions(+), 4 deletions(-)
+ kernel/trace/ring_buffer.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/Documentation/trace/histogram.txt b/Documentation/trace/histogram.txt
-index df08882..6e05510 100644
---- a/Documentation/trace/histogram.txt
-+++ b/Documentation/trace/histogram.txt
-@@ -1671,7 +1671,16 @@ features have been added to the hist trigger support:
-     it is in units of nanoseconds; appending '.usecs' to a
-     common_timestamp field changes the units to microseconds.
+diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
+index 48c0619..ca2ffc9 100644
+--- a/kernel/trace/ring_buffer.c
++++ b/kernel/trace/ring_buffer.c
+@@ -2585,16 +2585,16 @@ static void rb_commit(struct ring_buffer_per_cpu *cpu_buffer,
+  *  IRQ context
+  *  NMI context
+  *
+- * If for some reason the ring buffer starts to recurse, we
+- * only allow that to happen at most 4 times (one for each
+- * context). If it happens 5 times, then we consider this a
+- * recusive loop and do not let it go further.
++ * If for some reason the ring buffer starts to recurse, we only allow
++ * that to happen at most 6 times (one for each context, plus possibly
++ * two levels of synthetic event generation). If it happens 7 times,
++ * then we consider this a recusive loop and do not let it go further.
+  */
  
--These features are decribed in more detail in the following sections.
-+A note on inter-event timestamps: If common_timestamp is used in a
-+histogram, the trace buffer is automatically switched over to using
-+absolute timestamps and the "global" trace clock, in order to avoid
-+bogus timestamp differences with other clocks that aren't coherent
-+across CPUs.  This can be overridden by specifying one of the other
-+trace clocks instead, using the "clock=XXX" hist trigger attribute,
-+where XXX is any of the clocks listed in the tracing/trace_clock
-+pseudo-file.
-+
-+These features are described in more detail in the following sections.
+ static __always_inline int
+ trace_recursive_lock(struct ring_buffer_per_cpu *cpu_buffer)
+ {
+-	if (cpu_buffer->current_context >= 4)
++	if (cpu_buffer->current_context >= 6)
+ 		return 1;
  
- 2.2.1 Histogram Variables
- -------------------------
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 4d42a5f..fdd5c64 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -242,6 +242,7 @@ struct hist_trigger_attrs {
- 	char		*vals_str;
- 	char		*sort_key_str;
- 	char		*name;
-+	char		*clock;
- 	bool		pause;
- 	bool		cont;
- 	bool		clear;
-@@ -1776,6 +1777,7 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
- 	kfree(attrs->sort_key_str);
- 	kfree(attrs->keys_str);
- 	kfree(attrs->vals_str);
-+	kfree(attrs->clock);
- 	kfree(attrs);
- }
- 
-@@ -1831,6 +1833,19 @@ static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
- 			ret = -ENOMEM;
- 			goto out;
- 		}
-+	} else if (strncmp(str, "clock=", strlen("clock=")) == 0) {
-+		strsep(&str, "=");
-+		if (!str) {
-+			ret = -EINVAL;
-+			goto out;
-+		}
-+
-+		str = strstrip(str);
-+		attrs->clock = kstrdup(str, GFP_KERNEL);
-+		if (!attrs->clock) {
-+			ret = -ENOMEM;
-+			goto out;
-+		}
- 	} else if (strncmp(str, "size=", strlen("size=")) == 0) {
- 		int map_bits = parse_map_size(str);
- 
-@@ -1895,6 +1910,14 @@ static struct hist_trigger_attrs *parse_hist_trigger_attrs(char *trigger_str)
- 		goto free;
- 	}
- 
-+	if (!attrs->clock) {
-+		attrs->clock = kstrdup("global", GFP_KERNEL);
-+		if (!attrs->clock) {
-+			ret = -ENOMEM;
-+			goto free;
-+		}
-+	}
-+
- 	return attrs;
-  free:
- 	destroy_hist_trigger_attrs(attrs);
-@@ -4934,6 +4957,8 @@ static int event_hist_trigger_print(struct seq_file *m,
- 			seq_puts(m, ".descending");
- 	}
- 	seq_printf(m, ":size=%u", (1 << hist_data->map->map_bits));
-+	if (hist_data->enable_timestamps)
-+		seq_printf(m, ":clock=%s", hist_data->attrs->clock);
- 
- 	print_actions_spec(m, hist_data);
- 
-@@ -5201,7 +5226,6 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
- 		data->paused = true;
- 
- 	if (named_data) {
--		destroy_hist_data(data->private_data);
- 		data->private_data = named_data->private_data;
- 		set_named_trigger_data(data, named_data);
- 		data->ops = &event_hist_trigger_named_ops;
-@@ -5213,10 +5237,22 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
- 			goto out;
- 	}
- 
--	ret++;
-+	if (hist_data->enable_timestamps) {
-+		char *clock = hist_data->attrs->clock;
-+
-+		ret = tracing_set_clock(file->tr, hist_data->attrs->clock);
-+		if (ret) {
-+			hist_err("Couldn't set trace_clock: ", clock);
-+			goto out;
-+		}
- 
--	if (hist_data->enable_timestamps)
- 		tracing_set_time_stamp_abs(file->tr, true);
-+	}
-+
-+	if (named_data)
-+		destroy_hist_data(hist_data);
-+
-+	ret++;
-  out:
- 	return ret;
- }
+ 	cpu_buffer->current_context++;
 -- 
 1.9.3
