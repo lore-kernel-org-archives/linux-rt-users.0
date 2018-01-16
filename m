@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v9 17/37] tracing: Move get_hist_field_flags()
-Date: Mon, 15 Jan 2018 20:51:51 -0600
-Message-ID: <32470f0a7047ec7a6e84ba5ec89d6142cc6ede7d.1516069914.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v9 16/37] tracing: Account for variables in named trigger compatibility
+Date: Mon, 15 Jan 2018 20:51:50 -0600
+Message-ID: <a17eae6328a99917f9d5c66129c9fcd355279ee9.1516069914.git.tom.zanussi@linux.intel.com>
 References: <cover.1516069914.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,75 +18,42 @@ References: <cover.1516069914.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Move get_hist_field_flags() to make it more easily accessible for new
-code (and keep the move separate from new functionality).
+Named triggers must also have the same set of variables in order to be
+considered compatible - update the trigger match test to account for
+that.
+
+The reason for this requirement is that named triggers with variables
+are meant to allow one or more events to set the same variable.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 44 ++++++++++++++++++++--------------------
- 1 file changed, 22 insertions(+), 22 deletions(-)
+ kernel/trace/trace_events_hist.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
 
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index ba32626..a81a709 100644
+index 8f43f24..ba32626 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -497,6 +497,28 @@ static void hist_trigger_elt_comm_init(struct tracing_map_elt *elt)
- 	.elt_init	= hist_trigger_elt_comm_init,
- };
+@@ -1610,7 +1610,7 @@ static int event_hist_trigger_print(struct seq_file *m,
+ 		sort_key = &hist_data->sort_keys[i];
+ 		idx = sort_key->field_idx;
  
-+static const char *get_hist_field_flags(struct hist_field *hist_field)
-+{
-+	const char *flags_str = NULL;
-+
-+	if (hist_field->flags & HIST_FIELD_FL_HEX)
-+		flags_str = "hex";
-+	else if (hist_field->flags & HIST_FIELD_FL_SYM)
-+		flags_str = "sym";
-+	else if (hist_field->flags & HIST_FIELD_FL_SYM_OFFSET)
-+		flags_str = "sym-offset";
-+	else if (hist_field->flags & HIST_FIELD_FL_EXECNAME)
-+		flags_str = "execname";
-+	else if (hist_field->flags & HIST_FIELD_FL_SYSCALL)
-+		flags_str = "syscall";
-+	else if (hist_field->flags & HIST_FIELD_FL_LOG2)
-+		flags_str = "log2";
-+	else if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP_USECS)
-+		flags_str = "usecs";
-+
-+	return flags_str;
-+}
-+
- static void destroy_hist_field(struct hist_field *hist_field,
- 			       unsigned int level)
- {
-@@ -1495,28 +1517,6 @@ static int event_hist_open(struct inode *inode, struct file *file)
- 	.release = single_release,
- };
+-		if (WARN_ON(idx >= TRACING_MAP_FIELDS_MAX))
++		if (WARN_ON(idx >= HIST_FIELDS_MAX))
+ 			return -EINVAL;
  
--static const char *get_hist_field_flags(struct hist_field *hist_field)
--{
--	const char *flags_str = NULL;
--
--	if (hist_field->flags & HIST_FIELD_FL_HEX)
--		flags_str = "hex";
--	else if (hist_field->flags & HIST_FIELD_FL_SYM)
--		flags_str = "sym";
--	else if (hist_field->flags & HIST_FIELD_FL_SYM_OFFSET)
--		flags_str = "sym-offset";
--	else if (hist_field->flags & HIST_FIELD_FL_EXECNAME)
--		flags_str = "execname";
--	else if (hist_field->flags & HIST_FIELD_FL_SYSCALL)
--		flags_str = "syscall";
--	else if (hist_field->flags & HIST_FIELD_FL_LOG2)
--		flags_str = "log2";
--	else if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP_USECS)
--		flags_str = "usecs";
--
--	return flags_str;
--}
--
- static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
- {
- 	const char *field_name = hist_field_name(hist_field, 0);
+ 		if (i > 0)
+@@ -1798,6 +1798,11 @@ static bool hist_trigger_match(struct event_trigger_data *data,
+ 			return false;
+ 		if (key_field->is_signed != key_field_test->is_signed)
+ 			return false;
++		if (!!key_field->var.name != !!key_field_test->var.name)
++			return false;
++		if (key_field->var.name &&
++		    strcmp(key_field->var.name, key_field_test->var.name) != 0)
++			return false;
+ 	}
+ 
+ 	for (i = 0; i < hist_data->n_sort_keys; i++) {
 -- 
 1.9.3
