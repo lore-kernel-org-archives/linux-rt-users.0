@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v9 37/37] selftests: ftrace: Add inter-event hist triggers testcases
-Date: Mon, 15 Jan 2018 20:52:11 -0600
-Message-ID: <e07ef1e72f7bf0f84dc87c9b736d6dc91b4b0b49.1516069914.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v9 26/37] tracing: Add 'onmatch' hist trigger action support
+Date: Mon, 15 Jan 2018 20:52:00 -0600
+Message-ID: <8c2a574bcb7530c876629c901ecd23911b14afe8.1516069914.git.tom.zanussi@linux.intel.com>
 References: <cover.1516069914.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,462 +18,685 @@ References: <cover.1516069914.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Rajvi Jingar <rajvi.jingar@intel.com>
+Add an 'onmatch(matching.event).<synthetic_event_name>(param list)'
+hist trigger action which is invoked with the set of variables or
+event fields named in the 'param list'.  The result is the generation
+of a synthetic event that consists of the values contained in those
+variables and/or fields at the time the invoking event was hit.
 
-    This adds inter-event hist triggers testcases which covers following:
-     - create/remove synthetic event
-     - disable histogram for synthetic event
-     - extended error support
-     - field variable support
-     - histogram variables
-     - histogram trigger onmatch action
-     - histogram trigger onmax action
-     - histogram trigger onmatch-onmax action
-     - simple expression support
-     - combined histogram
+As an example the below defines a simple synthetic event using a
+variable defined on the sched_wakeup_new event, and shows the event
+definition with unresolved fields, since the sched_wakeup_new event
+with the testpid variable hasn't been defined yet:
 
-    Here is the test result.
-    === Ftrace unit tests ===
-    [1] event trigger - test extended error support [PASS]
-    [2] event trigger - test field variable support [PASS]
-    [3] event trigger - test inter-event combined histogram trigger [PASS]
-    [4] event trigger - test inter-event histogram trigger onmatch action   [PASS]
-    [5] event trigger - test inter-event histogram trigger onmatch-onmax action     [PASS]
-    [6] event trigger - test inter-event histogram trigger onmax action     [PASS]
-    [7] event trigger - test synthetic event create remove  [PASS]
+    # echo 'wakeup_new_test pid_t pid; int prio' >> \
+      /sys/kernel/debug/tracing/synthetic_events
 
-Signed-off-by: Rajvi Jingar <rajvi.jingar@intel.com>
+    # cat /sys/kernel/debug/tracing/synthetic_events
+      wakeup_new_test pid_t pid; int prio
+
+The following hist trigger both defines a testpid variable and
+specifies an onmatch() trace action that uses that variable along with
+a non-variable field to generate a wakeup_new_test synthetic event
+whenever a sched_wakeup_new event occurs, which because of the 'if
+comm == "cyclictest"' filter only happens when the executable is
+cyclictest:
+
+    # echo 'hist:testpid=pid:keys=$testpid:\
+      onmatch(sched.sched_wakeup_new).wakeup_new_test($testpid, prio) \
+        if comm=="cyclictest"' >> \
+      /sys/kernel/debug/tracing/events/sched/sched_wakeup_new/trigger
+
+Creating and displaying a histogram based on those events is now just
+a matter of using the fields and new synthetic event in the
+tracing/events/synthetic directory, as usual:
+
+    # echo 'hist:keys=pid,prio:sort=pid,prio' >> \
+      /sys/kernel/debug/tracing/events/synthetic/wakeup_new_test/trigger
+
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+Signed-off-by: Rajvi Jingar <rajvi.jingar@intel.com>
 ---
- tools/testing/selftests/ftrace/test.d/functions    |  7 +++
- .../inter-event/trigger-extended-error-support.tc  | 39 +++++++++++++++
- .../inter-event/trigger-field-variable-support.tc  | 54 ++++++++++++++++++++
- .../trigger-inter-event-combined-hist.tc           | 58 ++++++++++++++++++++++
- .../inter-event/trigger-onmatch-action-hist.tc     | 50 +++++++++++++++++++
- .../trigger-onmatch-onmax-action-hist.tc           | 50 +++++++++++++++++++
- .../inter-event/trigger-onmax-action-hist.tc       | 48 ++++++++++++++++++
- .../trigger-synthetic-event-createremove.tc        | 54 ++++++++++++++++++++
- 8 files changed, 360 insertions(+)
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-field-variable-support.tc
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-inter-event-combined-hist.tc
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-action-hist.tc
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-onmax-action-hist.tc
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmax-action-hist.tc
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc
+ kernel/trace/trace_events_hist.c | 488 +++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 475 insertions(+), 13 deletions(-)
 
-diff --git a/tools/testing/selftests/ftrace/test.d/functions b/tools/testing/selftests/ftrace/test.d/functions
-index f2019b3..17afa65 100644
---- a/tools/testing/selftests/ftrace/test.d/functions
-+++ b/tools/testing/selftests/ftrace/test.d/functions
-@@ -55,6 +55,13 @@ disable_events() {
-     echo 0 > events/enable
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index ecb2c9a..67f1f0f 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -285,6 +285,8 @@ struct hist_trigger_data {
+ 	struct action_data		*actions[HIST_ACTIONS_MAX];
+ 	unsigned int			n_actions;
+ 
++	struct hist_field               *synth_var_refs[SYNTH_FIELDS_MAX];
++	unsigned int                    n_synth_var_refs;
+ 	struct field_var		*field_vars[SYNTH_FIELDS_MAX];
+ 	unsigned int			n_field_vars;
+ 	unsigned int			n_field_var_str;
+@@ -321,7 +323,18 @@ typedef void (*action_fn_t) (struct hist_trigger_data *hist_data,
+ 
+ struct action_data {
+ 	action_fn_t		fn;
+-	unsigned int		var_ref_idx;
++	unsigned int		n_params;
++	char			*params[SYNTH_FIELDS_MAX];
++
++	union {
++		struct {
++			unsigned int		var_ref_idx;
++			char			*match_event;
++			char			*match_event_system;
++			char			*synth_event_name;
++			struct synth_event	*synth_event;
++		} onmatch;
++	};
+ };
+ 
+ static LIST_HEAD(synth_event_list);
+@@ -887,6 +900,21 @@ static struct synth_event *alloc_synth_event(char *event_name, int n_fields,
+ 	return event;
  }
  
-+clear_synthetic_events() { # reset all current synthetic events
-+    grep -v ^# synthetic_events |
-+    while read line; do
-+        echo "!$line" >> synthetic_events
-+    done
++static void action_trace(struct hist_trigger_data *hist_data,
++			 struct tracing_map_elt *elt, void *rec,
++			 struct ring_buffer_event *rbe,
++			 struct action_data *data, u64 *var_ref_vals)
++{
++	struct synth_event *event = data->onmatch.synth_event;
++
++	trace_synth(event, var_ref_vals, data->onmatch.var_ref_idx);
 +}
 +
- initialize_ftrace() { # Reset ftrace to initial-state
- # As the initial state, ftrace will be set to nop tracer,
- # no events, no triggers, no filters, no function filters,
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
-new file mode 100644
-index 0000000..786dce7
---- /dev/null
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
-@@ -0,0 +1,39 @@
-+#!/bin/sh
-+# description: event trigger - test extended error support
++struct hist_var_data {
++	struct list_head list;
++	struct hist_trigger_data *hist_data;
++};
 +
+ static void add_or_delete_synth_event(struct synth_event *event, int delete)
+ {
+ 	if (delete)
+@@ -1124,11 +1152,6 @@ static u64 hist_field_timestamp(struct hist_field *hist_field,
+ 	return ts;
+ }
+ 
+-struct hist_var_data {
+-	struct list_head list;
+-	struct hist_trigger_data *hist_data;
+-};
+-
+ static struct hist_field *
+ check_field_for_var_ref(struct hist_field *hist_field,
+ 			struct hist_trigger_data *var_data,
+@@ -1194,6 +1217,14 @@ static struct hist_field *find_var_ref(struct hist_trigger_data *hist_data,
+ 			return found;
+ 	}
+ 
++	for (i = 0; i < hist_data->n_synth_var_refs; i++) {
++		hist_field = hist_data->synth_var_refs[i];
++		found = check_field_for_var_refs(hist_data, hist_field,
++						 var_data, var_idx, 0);
++		if (found)
++			return found;
++	}
 +
-+do_reset() {
-+    reset_trigger
-+    echo > set_event
-+    clear_trace
+ 	return found;
+ }
+ 
+@@ -1422,6 +1453,37 @@ static struct hist_field *find_file_var(struct trace_event_file *file,
+ 	return NULL;
+ }
+ 
++static struct hist_field *
++find_match_var(struct hist_trigger_data *hist_data, char *var_name)
++{
++	struct trace_array *tr = hist_data->event_file->tr;
++	struct hist_field *hist_field, *found = NULL;
++	struct trace_event_file *file;
++	unsigned int i;
++
++	for (i = 0; i < hist_data->n_actions; i++) {
++		struct action_data *data = hist_data->actions[i];
++
++		if (data->fn == action_trace) {
++			char *system = data->onmatch.match_event_system;
++			char *event_name = data->onmatch.match_event;
++
++			file = find_var_file(tr, system, event_name, var_name);
++			if (!file)
++				continue;
++			hist_field = find_file_var(file, var_name);
++			if (hist_field) {
++				if (found) {
++					return ERR_PTR(-EINVAL);
++				}
++
++				found = hist_field;
++			}
++		}
++	}
++	return found;
 +}
 +
-+fail() { #msg
-+    do_reset
-+    echo $1
-+    exit_fail
+ static struct hist_field *find_event_var(struct hist_trigger_data *hist_data,
+ 					 char *system,
+ 					 char *event_name,
+@@ -1431,6 +1493,14 @@ static struct hist_field *find_event_var(struct hist_trigger_data *hist_data,
+ 	struct hist_field *hist_field = NULL;
+ 	struct trace_event_file *file;
+ 
++	if (!system || !event_name) {
++		hist_field = find_match_var(hist_data, var_name);
++		if (IS_ERR(hist_field))
++			return NULL;
++		if (hist_field)
++			return hist_field;
++	}
++
+ 	file = find_var_file(tr, system, event_name, var_name);
+ 	if (!file)
+ 		return NULL;
+@@ -1622,11 +1692,21 @@ static void destroy_hist_trigger_attrs(struct hist_trigger_attrs *attrs)
+ 
+ static int parse_action(char *str, struct hist_trigger_attrs *attrs)
+ {
+-	int ret = 0;
++	int ret = -EINVAL;
+ 
+ 	if (attrs->n_actions >= HIST_ACTIONS_MAX)
+ 		return ret;
+ 
++	if ((strncmp(str, "onmatch(", strlen("onmatch(")) == 0)) {
++		attrs->action_str[attrs->n_actions] = kstrdup(str, GFP_KERNEL);
++		if (!attrs->action_str[attrs->n_actions]) {
++			ret = -ENOMEM;
++			return ret;
++		}
++		attrs->n_actions++;
++		ret = 0;
++	}
++
+ 	return ret;
+ }
+ 
+@@ -2635,7 +2715,7 @@ static struct trace_event_file *event_file(struct trace_array *tr,
+  *
+  * Return: The variable created for the field.
+  */
+-struct hist_field *
++static struct hist_field *
+ create_field_var_hist(struct hist_trigger_data *target_hist_data,
+ 		      char *subsys_name, char *event_name, char *field_name)
+ {
+@@ -2748,7 +2828,7 @@ struct hist_field *
+ 	return event_var;
+ }
+ 
+-struct hist_field *
++static struct hist_field *
+ find_target_event_var(struct hist_trigger_data *hist_data,
+ 		      char *subsys_name, char *event_name, char *var_name)
+ {
+@@ -2919,7 +2999,7 @@ static struct field_var *create_field_var(struct hist_trigger_data *hist_data,
+  *
+  * Return: The variable created for the field.
+  */
+-struct field_var *
++static struct field_var *
+ create_target_field_var(struct hist_trigger_data *target_hist_data,
+ 			char *subsys_name, char *event_name, char *var_name)
+ {
+@@ -2943,6 +3023,27 @@ struct field_var *
+ 	return create_field_var(target_hist_data, file, var_name);
+ }
+ 
++static void onmatch_destroy(struct action_data *data)
++{
++	unsigned int i;
++
++	mutex_lock(&synth_event_mutex);
++
++	kfree(data->onmatch.match_event);
++	kfree(data->onmatch.match_event_system);
++	kfree(data->onmatch.synth_event_name);
++
++	for (i = 0; i < data->n_params; i++)
++		kfree(data->params[i]);
++
++	if (data->onmatch.synth_event)
++		data->onmatch.synth_event->ref--;
++
++	kfree(data);
++
++	mutex_unlock(&synth_event_mutex);
 +}
 +
-+if [ ! -f set_event ]; then
-+    echo "event tracing is not supported"
-+    exit_unsupported
-+fi
+ static void destroy_field_var(struct field_var *field_var)
+ {
+ 	if (!field_var)
+@@ -2962,8 +3063,8 @@ static void destroy_field_vars(struct hist_trigger_data *hist_data)
+ 		destroy_field_var(hist_data->field_vars[i]);
+ }
+ 
+-void save_field_var(struct hist_trigger_data *hist_data,
+-		    struct field_var *field_var)
++static void save_field_var(struct hist_trigger_data *hist_data,
++			   struct field_var *field_var)
+ {
+ 	hist_data->field_vars[hist_data->n_field_vars++] = field_var;
+ 
+@@ -2971,6 +3072,304 @@ void save_field_var(struct hist_trigger_data *hist_data,
+ 		hist_data->n_field_var_str++;
+ }
+ 
 +
-+if [ ! -f synthetic_events ]; then
-+    echo "synthetic event is not supported"
-+    exit_unsupported
-+fi
++static void destroy_synth_var_refs(struct hist_trigger_data *hist_data)
++{
++	unsigned int i;
 +
-+reset_tracer
-+do_reset
-+
-+echo "Test extended error support"
-+echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="ping"' > events/sched/sched_wakeup/trigger
-+echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="ping"' >> events/sched/sched_wakeup/trigger &>/dev/null
-+if ! grep -q "ERROR:" events/sched/sched_wakeup/hist; then
-+    fail "Failed to generate extended error in histogram"
-+fi
-+
-+do_reset
-+
-+exit 0
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-field-variable-support.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-field-variable-support.tc
-new file mode 100644
-index 0000000..7fd5b4a
---- /dev/null
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-field-variable-support.tc
-@@ -0,0 +1,54 @@
-+#!/bin/sh
-+# description: event trigger - test field variable support
-+
-+do_reset() {
-+    reset_trigger
-+    echo > set_event
-+    clear_trace
++	for (i = 0; i < hist_data->n_synth_var_refs; i++)
++		destroy_hist_field(hist_data->synth_var_refs[i], 0);
 +}
 +
-+fail() { #msg
-+    do_reset
-+    echo $1
-+    exit_fail
++static void save_synth_var_ref(struct hist_trigger_data *hist_data,
++			 struct hist_field *var_ref)
++{
++	hist_data->synth_var_refs[hist_data->n_synth_var_refs++] = var_ref;
++
++	hist_data->var_refs[hist_data->n_var_refs] = var_ref;
++	var_ref->var_ref_idx = hist_data->n_var_refs++;
 +}
 +
-+if [ ! -f set_event ]; then
-+    echo "event tracing is not supported"
-+    exit_unsupported
-+fi
++static int check_synth_field(struct synth_event *event,
++			     struct hist_field *hist_field,
++			     unsigned int field_pos)
++{
++	struct synth_field *field;
 +
-+if [ ! -f synthetic_events ]; then
-+    echo "synthetic event is not supported"
-+    exit_unsupported
-+fi
++	if (field_pos >= event->n_fields)
++		return -EINVAL;
 +
-+clear_synthetic_events
-+reset_tracer
-+do_reset
++	field = event->fields[field_pos];
 +
-+echo "Test field variable support"
++	if (strcmp(field->type, hist_field->type) != 0)
++		return -EINVAL;
 +
-+echo 'wakeup_latency u64 lat; pid_t pid; int prio; char comm[16]' > synthetic_events
-+echo 'hist:keys=comm:ts0=common_timestamp.usecs if comm=="ping"' > events/sched/sched_waking/trigger
-+echo 'hist:keys=next_comm:wakeup_lat=common_timestamp.usecs-$ts0:onmatch(sched.sched_waking).wakeup_latency($wakeup_lat,next_pid,sched.sched_waking.prio,next_comm) if next_comm=="ping"' > events/sched/sched_switch/trigger
-+echo 'hist:keys=pid,prio,comm:vals=lat:sort=pid,prio' > events/synthetic/wakeup_latency/trigger
-+
-+ping localhost -c 3
-+if ! grep -q "ping" events/synthetic/wakeup_latency/hist; then
-+    fail "Failed to create inter-event histogram"
-+fi
-+
-+if ! grep -q "synthetic_prio=prio" events/sched/sched_waking/hist; then
-+    fail "Failed to create histogram with field variable"
-+fi
-+
-+echo '!hist:keys=next_comm:wakeup_lat=common_timestamp.usecs-$ts0:onmatch(sched.sched_waking).wakeup_latency($wakeup_lat,next_pid,sched.sched_waking.prio,next_comm) if next_comm=="ping"' >> events/sched/sched_switch/trigger
-+
-+if grep -q "synthetic_prio=prio" events/sched/sched_waking/hist; then
-+    fail "Failed to remove histogram with field variable"
-+fi
-+
-+do_reset
-+
-+exit 0
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-inter-event-combined-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-inter-event-combined-hist.tc
-new file mode 100644
-index 0000000..c93dbe3
---- /dev/null
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-inter-event-combined-hist.tc
-@@ -0,0 +1,58 @@
-+#!/bin/sh
-+# description: event trigger - test inter-event combined histogram trigger
-+
-+do_reset() {
-+    reset_trigger
-+    echo > set_event
-+    clear_trace
++	return 0;
 +}
 +
-+fail() { #msg
-+    do_reset
-+    echo $1
-+    exit_fail
++static int parse_action_params(char *params, struct action_data *data)
++{
++	char *param, *saved_param;
++	int ret = 0;
++
++	while (params) {
++		if (data->n_params >= SYNTH_FIELDS_MAX)
++			goto out;
++
++		param = strsep(&params, ",");
++		if (!param) {
++			ret = -EINVAL;
++			goto out;
++		}
++
++		param = strstrip(param);
++		if (strlen(param) < 2) {
++			ret = -EINVAL;
++			goto out;
++		}
++
++		saved_param = kstrdup(param, GFP_KERNEL);
++		if (!saved_param) {
++			ret = -ENOMEM;
++			goto out;
++		}
++
++		data->params[data->n_params++] = saved_param;
++	}
++ out:
++	return ret;
 +}
 +
-+if [ ! -f set_event ]; then
-+    echo "event tracing is not supported"
-+    exit_unsupported
-+fi
++static struct hist_field *
++onmatch_find_var(struct hist_trigger_data *hist_data, struct action_data *data,
++		 char *system, char *event, char *var)
++{
++	struct hist_field *hist_field;
 +
-+if [ ! -f synthetic_events ]; then
-+    echo "synthetic event is not supported"
-+    exit_unsupported
-+fi
++	var++; /* skip '$' */
 +
-+reset_tracer
-+do_reset
-+clear_synthetic_events
++	hist_field = find_target_event_var(hist_data, system, event, var);
++	if (!hist_field) {
++		if (!system) {
++			system = data->onmatch.match_event_system;
++			event = data->onmatch.match_event;
++		}
 +
-+echo "Test create synthetic event"
++		hist_field = find_event_var(hist_data, system, event, var);
++	}
 +
-+echo 'waking_latency  u64 lat pid_t pid' > synthetic_events
-+if [ ! -d events/synthetic/waking_latency ]; then
-+    fail "Failed to create waking_latency synthetic event"
-+fi
-+
-+echo "Test combined histogram"
-+
-+echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="ping"' > events/sched/sched_waking/trigger
-+echo 'hist:keys=pid:waking_lat=common_timestamp.usecs-$ts0:onmatch(sched.sched_waking).waking_latency($waking_lat,pid) if comm=="ping"' > events/sched/sched_wakeup/trigger
-+echo 'hist:keys=pid,lat:sort=pid,lat' > events/synthetic/waking_latency/trigger
-+
-+echo 'wakeup_latency u64 lat pid_t pid' >> synthetic_events
-+echo 'hist:keys=pid:ts1=common_timestamp.usecs if comm=="ping"' >> events/sched/sched_wakeup/trigger
-+echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts1:onmatch(sched.sched_wakeup).wakeup_latency($wakeup_lat,next_pid) if next_comm=="ping"' > events/sched/sched_switch/trigger
-+
-+echo 'waking+wakeup_latency u64 lat; pid_t pid' >> synthetic_events
-+echo 'hist:keys=pid,lat:sort=pid,lat:ww_lat=$waking_lat+$wakeup_lat:onmatch(synthetic.wakeup_latency).waking+wakeup_latency($ww_lat,pid)' >> events/synthetic/wakeup_latency/trigger
-+echo 'hist:keys=pid,lat:sort=pid,lat' >> events/synthetic/waking+wakeup_latency/trigger
-+
-+ping localhost -c 3
-+if ! grep -q "pid:" events/synthetic/waking+wakeup_latency/hist; then
-+    fail "Failed to create combined histogram"
-+fi
-+
-+do_reset
-+
-+exit 0
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-action-hist.tc
-new file mode 100644
-index 0000000..e84e7d0
---- /dev/null
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-action-hist.tc
-@@ -0,0 +1,50 @@
-+#!/bin/sh
-+# description: event trigger - test inter-event histogram trigger onmatch action
-+
-+do_reset() {
-+    reset_trigger
-+    echo > set_event
-+    clear_trace
++	return hist_field;
 +}
 +
-+fail() { #msg
-+    do_reset
-+    echo $1
-+    exit_fail
++static struct hist_field *
++onmatch_create_field_var(struct hist_trigger_data *hist_data,
++			 struct action_data *data, char *system,
++			 char *event, char *var)
++{
++	struct hist_field *hist_field = NULL;
++	struct field_var *field_var;
++
++	/*
++	 * First try to create a field var on the target event (the
++	 * currently being defined).  This will create a variable for
++	 * unqualified fields on the target event, or if qualified,
++	 * target fields that have qualified names matching the target.
++	 */
++	field_var = create_target_field_var(hist_data, system, event, var);
++
++	if (field_var && !IS_ERR(field_var)) {
++		save_field_var(hist_data, field_var);
++		hist_field = field_var->var;
++	} else {
++		field_var = NULL;
++		/*
++		 * If no explicit system.event is specfied, default to
++		 * looking for fields on the onmatch(system.event.xxx)
++		 * event.
++		 */
++		if (!system) {
++			system = data->onmatch.match_event_system;
++			event = data->onmatch.match_event;
++		}
++
++		/*
++		 * At this point, we're looking at a field on another
++		 * event.  Because we can't modify a hist trigger on
++		 * another event to add a variable for a field, we need
++		 * to create a new trigger on that event and create the
++		 * variable at the same time.
++		 */
++		hist_field = create_field_var_hist(hist_data, system, event, var);
++		if (IS_ERR(hist_field))
++			goto free;
++	}
++ out:
++	return hist_field;
++ free:
++	destroy_field_var(field_var);
++	hist_field = NULL;
++	goto out;
 +}
 +
-+if [ ! -f set_event ]; then
-+    echo "event tracing is not supported"
-+    exit_unsupported
-+fi
++static int onmatch_create(struct hist_trigger_data *hist_data,
++			  struct trace_event_file *file,
++			  struct action_data *data)
++{
++	char *event_name, *param, *system = NULL;
++	struct hist_field *hist_field, *var_ref;
++	unsigned int i, var_ref_idx;
++	unsigned int field_pos = 0;
++	struct synth_event *event;
++	int ret = 0;
 +
-+if [ ! -f synthetic_events ]; then
-+    echo "synthetic event is not supported"
-+    exit_unsupported
-+fi
++	mutex_lock(&synth_event_mutex);
++	event = find_synth_event(data->onmatch.synth_event_name);
++	if (!event) {
++		mutex_unlock(&synth_event_mutex);
++		return -EINVAL;
++	}
++	event->ref++;
++	mutex_unlock(&synth_event_mutex);
 +
-+clear_synthetic_events
-+reset_tracer
-+do_reset
++	var_ref_idx = hist_data->n_var_refs;
 +
-+echo "Test create synthetic event"
++	for (i = 0; i < data->n_params; i++) {
++		char *p;
 +
-+echo 'wakeup_latency  u64 lat pid_t pid char comm[16]' > synthetic_events
-+if [ ! -d events/synthetic/wakeup_latency ]; then
-+    fail "Failed to create wakeup_latency synthetic event"
-+fi
++		p = param = kstrdup(data->params[i], GFP_KERNEL);
++		if (!param) {
++			ret = -ENOMEM;
++			goto err;
++		}
 +
-+echo "Test create histogram for synthetic event"
-+echo "Test histogram variables,simple expression support and onmatch action"
++		system = strsep(&param, ".");
++		if (!param) {
++			param = (char *)system;
++			system = event_name = NULL;
++		} else {
++			event_name = strsep(&param, ".");
++			if (!param) {
++				kfree(p);
++				ret = -EINVAL;
++				goto err;
++			}
++		}
 +
-+echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="ping"' > events/sched/sched_wakeup/trigger
-+echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0:onmatch(sched.sched_wakeup).wakeup_latency($wakeup_lat,next_pid,next_comm) if next_comm=="ping"' > events/sched/sched_switch/trigger
-+echo 'hist:keys=comm,pid,lat:wakeup_lat=lat:sort=lat' > events/synthetic/wakeup_latency/trigger
-+ping localhost -c 5
-+if ! grep -q "ping" events/synthetic/wakeup_latency/hist; then
-+    fail "Failed to create onmatch action inter-event histogram"
-+fi
++		if (param[0] == '$')
++			hist_field = onmatch_find_var(hist_data, data, system,
++						      event_name, param);
++		else
++			hist_field = onmatch_create_field_var(hist_data, data,
++							      system,
++							      event_name,
++							      param);
 +
-+do_reset
++		if (!hist_field) {
++			kfree(p);
++			ret = -EINVAL;
++			goto err;
++		}
 +
-+exit 0
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-onmax-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-onmax-action-hist.tc
-new file mode 100644
-index 0000000..7907d8a
---- /dev/null
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-onmax-action-hist.tc
-@@ -0,0 +1,50 @@
-+#!/bin/sh
-+# description: event trigger - test inter-event histogram trigger onmatch-onmax action
++		if (check_synth_field(event, hist_field, field_pos) == 0) {
++			var_ref = create_var_ref(hist_field, system, event_name);
++			if (!var_ref) {
++				kfree(p);
++				ret = -ENOMEM;
++				goto err;
++			}
 +
-+do_reset() {
-+    reset_trigger
-+    echo > set_event
-+    clear_trace
++			save_synth_var_ref(hist_data, var_ref);
++			field_pos++;
++			kfree(p);
++			continue;
++		}
++
++		kfree(p);
++		ret = -EINVAL;
++		goto err;
++	}
++
++	if (field_pos != event->n_fields) {
++		ret = -EINVAL;
++		goto err;
++	}
++
++	data->fn = action_trace;
++	data->onmatch.synth_event = event;
++	data->onmatch.var_ref_idx = var_ref_idx;
++ out:
++	return ret;
++ err:
++	mutex_lock(&synth_event_mutex);
++	event->ref--;
++	mutex_unlock(&synth_event_mutex);
++
++	goto out;
 +}
 +
-+fail() { #msg
-+    do_reset
-+    echo $1
-+    exit_fail
++static struct action_data *onmatch_parse(struct trace_array *tr, char *str)
++{
++	char *match_event, *match_event_system;
++	char *synth_event_name, *params;
++	struct action_data *data;
++	int ret = -EINVAL;
++
++	data = kzalloc(sizeof(*data), GFP_KERNEL);
++	if (!data)
++		return ERR_PTR(-ENOMEM);
++
++	match_event = strsep(&str, ")");
++	if (!match_event || !str)
++		goto free;
++
++	match_event_system = strsep(&match_event, ".");
++	if (!match_event)
++		goto free;
++
++	if (IS_ERR(event_file(tr, match_event_system, match_event)))
++		goto free;
++
++	data->onmatch.match_event = kstrdup(match_event, GFP_KERNEL);
++	if (!data->onmatch.match_event) {
++		ret = -ENOMEM;
++		goto free;
++	}
++
++	data->onmatch.match_event_system = kstrdup(match_event_system, GFP_KERNEL);
++	if (!data->onmatch.match_event_system) {
++		ret = -ENOMEM;
++		goto free;
++	}
++
++	strsep(&str, ".");
++	if (!str)
++		goto free;
++
++	synth_event_name = strsep(&str, "(");
++	if (!synth_event_name || !str)
++		goto free;
++
++	data->onmatch.synth_event_name = kstrdup(synth_event_name, GFP_KERNEL);
++	if (!data->onmatch.synth_event_name) {
++		ret = -ENOMEM;
++		goto free;
++	}
++
++	params = strsep(&str, ")");
++	if (!params || !str || (str && strlen(str)))
++		goto free;
++
++	ret = parse_action_params(params, data);
++	if (ret)
++		goto free;
++ out:
++	return data;
++ free:
++	onmatch_destroy(data);
++	data = ERR_PTR(ret);
++	goto out;
 +}
 +
-+if [ ! -f set_event ]; then
-+    echo "event tracing is not supported"
-+    exit_unsupported
-+fi
+ static int create_hitcount_val(struct hist_trigger_data *hist_data)
+ {
+ 	hist_data->fields[HITCOUNT_IDX] =
+@@ -3395,18 +3794,39 @@ static void destroy_actions(struct hist_trigger_data *hist_data)
+ 	for (i = 0; i < hist_data->n_actions; i++) {
+ 		struct action_data *data = hist_data->actions[i];
+ 
+-		kfree(data);
++		if (data->fn == action_trace)
++			onmatch_destroy(data);
++		else
++			kfree(data);
+ 	}
+ }
+ 
+ static int parse_actions(struct hist_trigger_data *hist_data)
+ {
++	struct trace_array *tr = hist_data->event_file->tr;
++	struct action_data *data;
+ 	unsigned int i;
+ 	int ret = 0;
+ 	char *str;
+ 
+ 	for (i = 0; i < hist_data->attrs->n_actions; i++) {
+ 		str = hist_data->attrs->action_str[i];
 +
-+if [ ! -f synthetic_events ]; then
-+    echo "synthetic event is not supported"
-+    exit_unsupported
-+fi
++		if (strncmp(str, "onmatch(", strlen("onmatch(")) == 0) {
++			char *action_str = str + strlen("onmatch(");
 +
-+clear_synthetic_events
-+reset_tracer
-+do_reset
++			data = onmatch_parse(tr, action_str);
++			if (IS_ERR(data)) {
++				ret = PTR_ERR(data);
++				break;
++			}
++			data->fn = action_trace;
++		} else {
++			ret = -EINVAL;
++			break;
++		}
 +
-+echo "Test create synthetic event"
++		hist_data->actions[hist_data->n_actions++] = data;
+ 	}
+ 
+ 	return ret;
+@@ -3421,11 +3841,50 @@ static int create_actions(struct hist_trigger_data *hist_data,
+ 
+ 	for (i = 0; i < hist_data->attrs->n_actions; i++) {
+ 		data = hist_data->actions[i];
 +
-+echo 'wakeup_latency  u64 lat pid_t pid char comm[16]' > synthetic_events
-+if [ ! -d events/synthetic/wakeup_latency ]; then
-+    fail "Failed to create wakeup_latency synthetic event"
-+fi
++		if (data->fn == action_trace) {
++			ret = onmatch_create(hist_data, file, data);
++			if (ret)
++				return ret;
++		}
+ 	}
+ 
+ 	return ret;
+ }
+ 
++static void print_onmatch_spec(struct seq_file *m,
++			       struct hist_trigger_data *hist_data,
++			       struct action_data *data)
++{
++	unsigned int i;
 +
-+echo "Test create histogram for synthetic event"
-+echo "Test histogram variables,simple expression support and onmatch-onmax action"
++	seq_printf(m, ":onmatch(%s.%s).", data->onmatch.match_event_system,
++		   data->onmatch.match_event);
 +
-+echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="ping"' > events/sched/sched_wakeup/trigger
-+echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0:onmatch(sched.sched_wakeup).wakeup_latency($wakeup_lat,next_pid,next_comm):onmax($wakeup_lat).save(next_comm,prev_pid,prev_prio,prev_comm) if next_comm=="ping"' >> events/sched/sched_switch/trigger
-+echo 'hist:keys=comm,pid,lat:wakeup_lat=lat:sort=lat' > events/synthetic/wakeup_latency/trigger
-+ping localhost -c 5
-+if [ ! grep -q "ping" events/synthetic/wakeup_latency/hist -o ! grep -q "max:" events/sched/sched_switch/hist]; then
-+    fail "Failed to create onmatch-onmax action inter-event histogram"
-+fi
++	seq_printf(m, "%s(", data->onmatch.synth_event->name);
 +
-+do_reset
++	for (i = 0; i < data->n_params; i++) {
++		if (i)
++			seq_puts(m, ",");
++		seq_printf(m, "%s", data->params[i]);
++	}
 +
-+exit 0
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmax-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmax-action-hist.tc
-new file mode 100644
-index 0000000..38b7ed6
---- /dev/null
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmax-action-hist.tc
-@@ -0,0 +1,48 @@
-+#!/bin/sh
-+# description: event trigger - test inter-event histogram trigger onmax action
-+
-+do_reset() {
-+    reset_trigger
-+    echo > set_event
-+    clear_trace
++	seq_puts(m, ")");
 +}
 +
-+fail() { #msg
-+    do_reset
-+    echo $1
-+    exit_fail
++static void print_actions_spec(struct seq_file *m,
++			       struct hist_trigger_data *hist_data)
++{
++	unsigned int i;
++
++	for (i = 0; i < hist_data->n_actions; i++) {
++		struct action_data *data = hist_data->actions[i];
++
++		if (data->fn == action_trace)
++			print_onmatch_spec(m, hist_data, data);
++	}
 +}
 +
-+if [ ! -f set_event ]; then
-+    echo "event tracing is not supported"
-+    exit_unsupported
-+fi
+ static void destroy_field_var_hists(struct hist_trigger_data *hist_data)
+ {
+ 	unsigned int i;
+@@ -3448,6 +3907,7 @@ static void destroy_hist_data(struct hist_trigger_data *hist_data)
+ 	destroy_actions(hist_data);
+ 	destroy_field_vars(hist_data);
+ 	destroy_field_var_hists(hist_data);
++	destroy_synth_var_refs(hist_data);
+ 
+ 	kfree(hist_data);
+ }
+@@ -4004,6 +4464,8 @@ static int event_hist_trigger_print(struct seq_file *m,
+ 	}
+ 	seq_printf(m, ":size=%u", (1 << hist_data->map->map_bits));
+ 
++	print_actions_spec(m, hist_data);
 +
-+if [ ! -f synthetic_events ]; then
-+    echo "synthetic event is not supported"
-+    exit_unsupported
-+fi
-+
-+clear_synthetic_events
-+reset_tracer
-+do_reset
-+
-+echo "Test create synthetic event"
-+
-+echo 'wakeup_latency  u64 lat pid_t pid char comm[16]' > synthetic_events
-+if [ ! -d events/synthetic/wakeup_latency ]; then
-+    fail "Failed to create wakeup_latency synthetic event"
-+fi
-+
-+echo "Test onmax action"
-+
-+echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="ping"' >> events/sched/sched_waking/trigger
-+echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0:onmax($wakeup_lat).save(next_comm,prev_pid,prev_prio,prev_comm) if next_comm=="ping"' >> events/sched/sched_switch/trigger
-+ping localhost -c 3
-+if ! grep -q "max:" events/sched/sched_switch/hist; then
-+    fail "Failed to create onmax action inter-event histogram"
-+fi
-+
-+do_reset
-+
-+exit 0
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc
-new file mode 100644
-index 0000000..cef1137
---- /dev/null
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc
-@@ -0,0 +1,54 @@
-+#!/bin/sh
-+# description: event trigger - test synthetic event create remove
-+do_reset() {
-+    reset_trigger
-+    echo > set_event
-+    clear_trace
-+}
-+
-+fail() { #msg
-+    do_reset
-+    echo $1
-+    exit_fail
-+}
-+
-+if [ ! -f set_event ]; then
-+    echo "event tracing is not supported"
-+    exit_unsupported
-+fi
-+
-+if [ ! -f synthetic_events ]; then
-+    echo "synthetic event is not supported"
-+    exit_unsupported
-+fi
-+
-+clear_synthetic_events
-+reset_tracer
-+do_reset
-+
-+echo "Test create synthetic event"
-+
-+echo 'wakeup_latency  u64 lat pid_t pid char comm[16]' > synthetic_events
-+if [ ! -d events/synthetic/wakeup_latency ]; then
-+    fail "Failed to create wakeup_latency synthetic event"
-+fi
-+
-+reset_trigger
-+
-+echo "Test create synthetic event with an error"
-+echo 'wakeup_latency  u64 lat pid_t pid char' > synthetic_events > /dev/null
-+if [ -d events/synthetic/wakeup_latency ]; then
-+    fail "Created wakeup_latency synthetic event with an invalid format"
-+fi
-+
-+reset_trigger
-+
-+echo "Test remove synthetic event"
-+echo '!wakeup_latency  u64 lat pid_t pid char comm[16]' > synthetic_events
-+if [ -d events/synthetic/wakeup_latency ]; then
-+    fail "Failed to delete wakeup_latency synthetic event"
-+fi
-+
-+do_reset
-+
-+exit 0
+ 	if (data->filter_str)
+ 		seq_printf(m, " if %s", data->filter_str);
+ 
 -- 
 1.9.3
