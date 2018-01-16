@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v9 35/37] tracing: Increase trace_recursive_lock() limit for synthetic events
-Date: Mon, 15 Jan 2018 20:52:09 -0600
-Message-ID: <827fcc7a6840db06d196fc18905033d519681eff.1516069914.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v9 36/37] tracing: Add inter-event blurb to HIST_TRIGGERS config option
+Date: Mon, 15 Jan 2018 20:52:10 -0600
+Message-ID: <a38e24231d8d980be636b56d35814570acfd167a.1516069914.git.tom.zanussi@linux.intel.com>
 References: <cover.1516069914.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,44 +18,30 @@ References: <cover.1516069914.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Synthetic event generation needs to happen while the current event is
-still in progress, so add 1 to the trace_recursive_lock() recursion
-limit to account for that.
-
-Because we also want to allow for the possibility of a synthetic event
-being generated from another synthetic event, add an additional
-increment for that as well.
+So that users know that inter-event tracing is supported as part of
+the HIST_TRIGGERS option, include text to that effect in the help
+text.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/ring_buffer.c | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+ kernel/trace/Kconfig | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
-index 48c0619..ca2ffc9 100644
---- a/kernel/trace/ring_buffer.c
-+++ b/kernel/trace/ring_buffer.c
-@@ -2585,16 +2585,16 @@ static void rb_commit(struct ring_buffer_per_cpu *cpu_buffer,
-  *  IRQ context
-  *  NMI context
-  *
-- * If for some reason the ring buffer starts to recurse, we
-- * only allow that to happen at most 4 times (one for each
-- * context). If it happens 5 times, then we consider this a
-- * recusive loop and do not let it go further.
-+ * If for some reason the ring buffer starts to recurse, we only allow
-+ * that to happen at most 6 times (one for each context, plus possibly
-+ * two levels of synthetic event generation). If it happens 7 times,
-+ * then we consider this a recusive loop and do not let it go further.
-  */
+diff --git a/kernel/trace/Kconfig b/kernel/trace/Kconfig
+index 904c952..4ec8cd2 100644
+--- a/kernel/trace/Kconfig
++++ b/kernel/trace/Kconfig
+@@ -597,7 +597,10 @@ config HIST_TRIGGERS
+ 	  event activity as an initial guide for further investigation
+ 	  using more advanced tools.
  
- static __always_inline int
- trace_recursive_lock(struct ring_buffer_per_cpu *cpu_buffer)
- {
--	if (cpu_buffer->current_context >= 4)
-+	if (cpu_buffer->current_context >= 6)
- 		return 1;
+-	  See Documentation/trace/events.txt.
++	  Inter-event tracing of quantities such as latencies is also
++	  supported using hist triggers under this option.
++
++	  See Documentation/trace/histogram.txt.
+ 	  If in doubt, say N.
  
- 	cpu_buffer->current_context++;
+ config MMIOTRACE_TEST
 -- 
 1.9.3
