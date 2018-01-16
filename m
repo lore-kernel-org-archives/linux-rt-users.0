@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH v9 29/37] tracing: Add cpu field for hist triggers
-Date: Mon, 15 Jan 2018 20:52:03 -0600
-Message-ID: <89537645bfc957e0d76e2cacf5f0ada88691a6cc.1516069914.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v9 30/37] tracing: Add hist trigger support for variable reference aliases
+Date: Mon, 15 Jan 2018 20:52:04 -0600
+Message-ID: <ef20a65d921af3a873a6f1e8c71407c926d5586f.1516069914.git.tom.zanussi@linux.intel.com>
 References: <cover.1516069914.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,114 +18,161 @@ References: <cover.1516069914.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-A common key to use in a histogram is the cpuid - add a new cpu
-'synthetic' field named 'cpu' for that purpose.
+Add support for alias=$somevar where alias can be used as
+onmatch.xxx($alias).
+
+Aliases are a way of creating a new name for an existing variable, for
+flexibly in making naming more clear in certain cases.  For example in
+the below the user perhaps feels that using $new_lat in the synthetic
+event invocation is opaque or doesn't fit well stylistically with
+previous triggers, so creates an alias of $new_lat named $latency and
+uses that in the call instead:
+
+  # echo 'hist:keys=next_pid:new_lat=common_timestamp.usecs' >
+    /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+
+  # echo 'hist:keys=pid:latency=$new_lat:
+    onmatch(sched.sched_switch).wake2($latency,pid)' >
+    /sys/kernel/debug/tracing/events/synthetic/wake1/trigger
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- Documentation/trace/histogram.txt | 15 +++++++++++++++
- kernel/trace/trace_events_hist.c  | 28 +++++++++++++++++++++++++++-
- 2 files changed, 42 insertions(+), 1 deletion(-)
+ kernel/trace/trace_events_hist.c | 74 ++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 67 insertions(+), 7 deletions(-)
 
-diff --git a/Documentation/trace/histogram.txt b/Documentation/trace/histogram.txt
-index 25c9473..be612ca 100644
---- a/Documentation/trace/histogram.txt
-+++ b/Documentation/trace/histogram.txt
-@@ -172,6 +172,21 @@
-   The examples below provide a more concrete illustration of the
-   concepts and typical usage patterns discussed above.
- 
-+  'special' event fields
-+  ------------------------
-+
-+  There are a number of 'special event fields' available for use as
-+  keys or values in a hist trigger.  These look like and behave as if
-+  they were actual event fields, but aren't really part of the event's
-+  field definition or format file.  They are however available for any
-+  event, and can be used anywhere an actual event field could be.
-+  They are:
-+
-+    common_timestamp       u64 - timestamp (from ring buffer) associated
-+                                 with the event, in nanoseconds.  May be
-+				 modified by .usecs to have timestamps
-+				 interpreted as microseconds.
-+    cpu                    int - the cpu on which the event occurred.
- 
- 6.2 'hist' trigger examples
- ---------------------------
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 9f8308f..43784c3 100644
+index 43784c3..2214197 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -227,6 +227,7 @@ enum hist_field_flags {
- 	HIST_FIELD_FL_VAR		= 1 << 12,
+@@ -228,6 +228,7 @@ enum hist_field_flags {
  	HIST_FIELD_FL_EXPR		= 1 << 13,
  	HIST_FIELD_FL_VAR_REF		= 1 << 14,
-+	HIST_FIELD_FL_CPU		= 1 << 15,
+ 	HIST_FIELD_FL_CPU		= 1 << 15,
++	HIST_FIELD_FL_ALIAS		= 1 << 16,
  };
  
  struct var_defs {
-@@ -1164,6 +1165,16 @@ static u64 hist_field_timestamp(struct hist_field *hist_field,
- 	return ts;
- }
+@@ -1609,7 +1610,8 @@ static const char *hist_field_name(struct hist_field *field,
  
-+static u64 hist_field_cpu(struct hist_field *hist_field,
-+			  struct tracing_map_elt *elt,
-+			  struct ring_buffer_event *rbe,
-+			  void *event)
-+{
-+	int cpu = smp_processor_id();
-+
-+	return cpu;
-+}
-+
- static struct hist_field *
- check_field_for_var_ref(struct hist_field *hist_field,
- 			struct hist_trigger_data *var_data,
-@@ -1602,6 +1613,8 @@ static const char *hist_field_name(struct hist_field *field,
+ 	if (field->field)
+ 		field_name = field->field->name;
+-	else if (field->flags & HIST_FIELD_FL_LOG2)
++	else if (field->flags & HIST_FIELD_FL_LOG2 ||
++		 field->flags & HIST_FIELD_FL_ALIAS)
  		field_name = hist_field_name(field->operands[0], ++level);
  	else if (field->flags & HIST_FIELD_FL_TIMESTAMP)
  		field_name = "common_timestamp";
-+	else if (field->flags & HIST_FIELD_FL_CPU)
-+		field_name = "cpu";
- 	else if (field->flags & HIST_FIELD_FL_EXPR ||
- 		 field->flags & HIST_FIELD_FL_VAR_REF) {
- 		if (field->system) {
-@@ -2109,6 +2122,15 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
- 		goto out;
+@@ -2080,7 +2082,7 @@ static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
+ 
+ 	hist_field->hist_data = hist_data;
+ 
+-	if (flags & HIST_FIELD_FL_EXPR)
++	if (flags & HIST_FIELD_FL_EXPR || flags & HIST_FIELD_FL_ALIAS)
+ 		goto out; /* caller will populate */
+ 
+ 	if (flags & HIST_FIELD_FL_VAR_REF) {
+@@ -2217,10 +2219,18 @@ static int init_var_ref(struct hist_field *ref_field,
+ 		}
  	}
  
-+	if (flags & HIST_FIELD_FL_CPU) {
-+		hist_field->fn = hist_field_cpu;
-+		hist_field->size = sizeof(int);
-+		hist_field->type = kstrdup("unsigned int", GFP_KERNEL);
-+		if (!hist_field->type)
+-	ref_field->name = kstrdup(var_field->var.name, GFP_KERNEL);
+-	if (!ref_field->name) {
+-		err = -ENOMEM;
+-		goto free;
++	if (var_field->var.name) {
++		ref_field->name = kstrdup(var_field->var.name, GFP_KERNEL);
++		if (!ref_field->name) {
++			err = -ENOMEM;
 +			goto free;
-+		goto out;
++		}
++	} else if (var_field->name) {
++		ref_field->name = kstrdup(var_field->name, GFP_KERNEL);
++		if (!ref_field->name) {
++			err = -ENOMEM;
++			goto free;
++		}
+ 	}
+ 
+ 	ref_field->type = kstrdup(var_field->type, GFP_KERNEL);
+@@ -2382,6 +2392,28 @@ static struct hist_field *parse_var_ref(struct hist_trigger_data *hist_data,
+ 	return field;
+ }
+ 
++static struct hist_field *create_alias(struct hist_trigger_data *hist_data,
++				       struct hist_field *var_ref,
++				       char *var_name)
++{
++	struct hist_field *alias = NULL;
++	unsigned long flags = HIST_FIELD_FL_ALIAS | HIST_FIELD_FL_VAR;
++
++	alias = create_hist_field(hist_data, NULL, flags, var_name);
++	if (!alias)
++		return NULL;
++
++	alias->fn = var_ref->fn;
++	alias->operands[0] = var_ref;
++
++	if (init_var_ref(alias, var_ref, var_ref->system, var_ref->event_name)) {
++		destroy_hist_field(alias, 0);
++		return NULL;
 +	}
 +
- 	if (WARN_ON_ONCE(!field))
- 		goto out;
++	return alias;
++}
++
+ static struct hist_field *parse_atom(struct hist_trigger_data *hist_data,
+ 				     struct trace_event_file *file, char *str,
+ 				     unsigned long *flags, char *var_name)
+@@ -2415,6 +2447,13 @@ static struct hist_field *parse_atom(struct hist_trigger_data *hist_data,
+ 		if (hist_field) {
+ 			hist_data->var_refs[hist_data->n_var_refs] = hist_field;
+ 			hist_field->var_ref_idx = hist_data->n_var_refs++;
++			if (var_name) {
++				hist_field = create_alias(hist_data, hist_field, var_name);
++				if (!hist_field) {
++					ret = -ENOMEM;
++					goto out;
++				}
++			}
+ 			return hist_field;
+ 		}
+ 	} else
+@@ -2515,6 +2554,26 @@ static int check_expr_operands(struct hist_field *operand1,
+ 	unsigned long operand1_flags = operand1->flags;
+ 	unsigned long operand2_flags = operand2->flags;
  
-@@ -2345,7 +2367,9 @@ static struct hist_field *parse_var_ref(struct hist_trigger_data *hist_data,
- 		hist_data->enable_timestamps = true;
- 		if (*flags & HIST_FIELD_FL_TIMESTAMP_USECS)
- 			hist_data->attrs->ts_in_usecs = true;
--	} else {
-+	} else if (strcmp(field_name, "cpu") == 0)
-+		*flags |= HIST_FIELD_FL_CPU;
-+	else {
- 		field = trace_find_event_field(file->event_call, field_name);
- 		if (!field || !field->size) {
- 			field = ERR_PTR(-EINVAL);
-@@ -4619,6 +4643,8 @@ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
- 
- 	if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP)
- 		seq_puts(m, "common_timestamp");
-+	else if (hist_field->flags & HIST_FIELD_FL_CPU)
-+		seq_puts(m, "cpu");
++	if ((operand1_flags & HIST_FIELD_FL_VAR_REF) ||
++	    (operand1_flags & HIST_FIELD_FL_ALIAS)) {
++		struct hist_field *var;
++
++		var = find_var_field(operand1->var.hist_data, operand1->name);
++		if (!var)
++			return -EINVAL;
++		operand1_flags = var->flags;
++	}
++
++	if ((operand2_flags & HIST_FIELD_FL_VAR_REF) ||
++	    (operand2_flags & HIST_FIELD_FL_ALIAS)) {
++		struct hist_field *var;
++
++		var = find_var_field(operand2->var.hist_data, operand2->name);
++		if (!var)
++			return -EINVAL;
++		operand2_flags = var->flags;
++	}
++
+ 	if ((operand1_flags & HIST_FIELD_FL_TIMESTAMP_USECS) !=
+ 	    (operand2_flags & HIST_FIELD_FL_TIMESTAMP_USECS))
+ 		return -EINVAL;
+@@ -4646,7 +4705,8 @@ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
+ 	else if (hist_field->flags & HIST_FIELD_FL_CPU)
+ 		seq_puts(m, "cpu");
  	else if (field_name) {
- 		if (hist_field->flags & HIST_FIELD_FL_VAR_REF)
+-		if (hist_field->flags & HIST_FIELD_FL_VAR_REF)
++		if (hist_field->flags & HIST_FIELD_FL_VAR_REF ||
++		    hist_field->flags & HIST_FIELD_FL_ALIAS)
  			seq_putc(m, '$');
+ 		seq_printf(m, "%s", field_name);
+ 	}
 -- 
 1.9.3
