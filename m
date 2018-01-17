@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 02/13] random: avoid preempt_disable()ed section
-Date: Wed, 17 Jan 2018 10:14:06 -0500
-Message-ID: <20180117151430.804706484@goodmis.org>
+Subject: [PATCH RT 01/13] rtmutex: Make lock_killable work
+Date: Wed, 17 Jan 2018 10:14:05 -0500
+Message-ID: <20180117151430.638373783@goodmis.org>
 References: <20180117151404.093229667@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -12,11 +12,12 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>
+        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
+        rt-stable@vger.kernel.org
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-random-avoid-preempt_disable-ed-section.patch
+Content-Disposition: inline; filename=0001-rtmutex-Make-lock_killable-work.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -25,68 +26,50 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-extract_crng() will use sleeping locks while in a preempt_disable()
-section due to get_cpu_var().
-Work around it with local_locks.
+Locking an rt mutex killable does not work because signal handling is
+restricted to TASK_INTERRUPTIBLE.
 
-Cc: stable-rt@vger.kernel.org # where it applies to
+Use signal_pending_state() unconditionaly.
+
+Cc: rt-stable@vger.kernel.org
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- drivers/char/random.c | 10 ++++++----
- 1 file changed, 6 insertions(+), 4 deletions(-)
+ kernel/locking/rtmutex.c | 19 +++++++------------
+ 1 file changed, 7 insertions(+), 12 deletions(-)
 
-diff --git a/drivers/char/random.c b/drivers/char/random.c
-index acb8e7c218d1..06c4b06fcea0 100644
---- a/drivers/char/random.c
-+++ b/drivers/char/random.c
-@@ -260,6 +260,7 @@
- #include <linux/irq.h>
- #include <linux/syscalls.h>
- #include <linux/completion.h>
-+#include <linux/locallock.h>
+diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+index 8d950b4521fc..da35f7ef5324 100644
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -1532,18 +1532,13 @@ __rt_mutex_slowlock(struct rt_mutex *lock, int state,
+ 		if (try_to_take_rt_mutex(lock, current, waiter))
+ 			break;
  
- #include <asm/processor.h>
- #include <asm/uaccess.h>
-@@ -1712,6 +1713,7 @@ int random_int_secret_init(void)
+-		/*
+-		 * TASK_INTERRUPTIBLE checks for signals and
+-		 * timeout. Ignored otherwise.
+-		 */
+-		if (unlikely(state == TASK_INTERRUPTIBLE)) {
+-			/* Signal pending? */
+-			if (signal_pending(current))
+-				ret = -EINTR;
+-			if (timeout && !timeout->task)
+-				ret = -ETIMEDOUT;
+-			if (ret)
+-				break;
++		if (timeout && !timeout->task) {
++			ret = -ETIMEDOUT;
++			break;
++		}
++		if (signal_pending_state(state, current)) {
++			ret = -EINTR;
++			break;
+ 		}
  
- static DEFINE_PER_CPU(__u32 [MD5_DIGEST_WORDS], get_random_int_hash)
- 		__aligned(sizeof(unsigned long));
-+static DEFINE_LOCAL_IRQ_LOCK(hash_entropy_int_lock);
- 
- /*
-  * Get a random word for internal kernel use only. Similar to urandom but
-@@ -1727,12 +1729,12 @@ unsigned int get_random_int(void)
- 	if (arch_get_random_int(&ret))
- 		return ret;
- 
--	hash = get_cpu_var(get_random_int_hash);
-+	hash = get_locked_var(hash_entropy_int_lock, get_random_int_hash);
- 
- 	hash[0] += current->pid + jiffies + random_get_entropy();
- 	md5_transform(hash, random_int_secret);
- 	ret = hash[0];
--	put_cpu_var(get_random_int_hash);
-+	put_locked_var(hash_entropy_int_lock, get_random_int_hash);
- 
- 	return ret;
- }
-@@ -1749,12 +1751,12 @@ unsigned long get_random_long(void)
- 	if (arch_get_random_long(&ret))
- 		return ret;
- 
--	hash = get_cpu_var(get_random_int_hash);
-+	hash = get_locked_var(hash_entropy_int_lock, get_random_int_hash);
- 
- 	hash[0] += current->pid + jiffies + random_get_entropy();
- 	md5_transform(hash, random_int_secret);
- 	ret = *(unsigned long *)hash;
--	put_cpu_var(get_random_int_hash);
-+	put_locked_var(hash_entropy_int_lock, get_random_int_hash);
- 
- 	return ret;
- }
+ 		if (ww_ctx && ww_ctx->acquired > 0) {
 -- 
 2.13.2
