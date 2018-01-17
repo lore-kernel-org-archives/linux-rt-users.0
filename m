@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 03/13] sched: Prevent task state corruption by spurious lock wakeup
-Date: Wed, 17 Jan 2018 10:14:07 -0500
-Message-ID: <20180117151430.956597206@goodmis.org>
+Subject: [PATCH RT 04/13] fs: convert two more BH_Uptodate_Lock related bitspinlocks
+Date: Wed, 17 Jan 2018 10:14:08 -0500
+Message-ID: <20180117151431.119208637@goodmis.org>
 References: <20180117151404.093229667@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -13,13 +13,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
         tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
-        stable-rt@vger.kernel.org,
-        Mathias Koehrer <mathias.koehrer@etas.com>,
-        David Hauck <davidh@netacquire.com>
+        stable-rt@vger.kernel.org
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-sched-Prevent-task-state-corruption-by-spurious-lock.patch
+Content-Disposition: inline; filename=0004-fs-convert-two-more-BH_Uptodate_Lock-related-bitspin.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -28,83 +26,42 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Mathias and others reported GDB failures on RT.
-
-The following scenario leads to task state corruption:
-
-CPU0						CPU1
-
-T1->state = TASK_XXX;
-spin_lock(&lock)
-  rt_spin_lock_slowlock(&lock->rtmutex)
-    raw_spin_lock(&rtm->wait_lock);
-    T1->saved_state = current->state;
-    T1->state = TASK_UNINTERRUPTIBLE;
-						spin_unlock(&lock)
-    task_blocks_on_rt_mutex(rtm)  		  rt_spin_lock_slowunlock(&lock->rtmutex)
-      queue_waiter(rtm)				    raw_spin_lock(&rtm->wait_lock);
-      pi_chain_walk(rtm)
-        raw_spin_unlock(&rtm->wait_lock);
-						    wake_top_waiter(T1)
-
-      raw_spin_lock(&rtm->wait_lock);
-
-    for (;;) {
-      if (__try_to_take_rt_mutex())  <- Succeeds
-        break;
-      ...
-    }
-
-    T1->state = T1->saved_state;
-						     try_to_wake_up(T1)
-						       ttwu_do_wakeup(T1)
-						         T1->state = TASK_RUNNING;
-
-In most cases this is harmless because waiting for some event, which is the
-usual reason for TASK_[UN]INTERRUPTIBLE has to be safe against other forms
-of spurious wakeups anyway.
-
-But in case of TASK_TRACED this is actually fatal, because the task loses
-the TASK_TRACED state. In consequence it fails to consume SIGSTOP which was
-sent from the debugger and actually delivers SIGSTOP to the task which
-breaks the ptrace mechanics and brings the debugger into an unexpected
-state.
-
-The TASK_TRACED state should prevent getting there due to the state
-matching logic in try_to_wake_up(). But that's not true because
-wake_up_lock_sleeper() uses TASK_ALL as state mask. That's bogus because
-lock sleepers always use TASK_UNINTERRUPTIBLE, so the wakeup should use
-that as well.
-
-The cure is way simpler as figuring it out:
-
-Change the mask used in wake_up_lock_sleeper() from TASK_ALL to
-TASK_UNINTERRUPTIBLE.
+We convert all BH_Uptodate_Lock based bit-spinlocks to use
+bh_uptodate_lock_irqsave() instead. Those two were introduced after the
+initial change in -RT and were not noticed before.
 
 Cc: stable-rt@vger.kernel.org
-Reported-by: Mathias Koehrer <mathias.koehrer@etas.com>
-Reported-by: David Hauck <davidh@netacquire.com>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/sched/core.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ fs/ext4/page-io.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 2532e4f2d075..b606f31e5034 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -1923,7 +1923,7 @@ EXPORT_SYMBOL(wake_up_process);
-  */
- int wake_up_lock_sleeper(struct task_struct *p)
- {
--	return try_to_wake_up(p, TASK_ALL, WF_LOCK_SLEEPER);
-+	return try_to_wake_up(p, TASK_UNINTERRUPTIBLE, WF_LOCK_SLEEPER);
- }
- 
- int wake_up_state(struct task_struct *p, unsigned int state)
+diff --git a/fs/ext4/page-io.c b/fs/ext4/page-io.c
+index b24a2541a9ba..662c027417ff 100644
+--- a/fs/ext4/page-io.c
++++ b/fs/ext4/page-io.c
+@@ -87,8 +87,7 @@ static void ext4_finish_bio(struct bio *bio)
+ 		 * We check all buffers in the page under BH_Uptodate_Lock
+ 		 * to avoid races with other end io clearing async_write flags
+ 		 */
+-		local_irq_save(flags);
+-		bit_spin_lock(BH_Uptodate_Lock, &head->b_state);
++		flags = bh_uptodate_lock_irqsave(head);
+ 		do {
+ 			if (bh_offset(bh) < bio_start ||
+ 			    bh_offset(bh) + bh->b_size > bio_end) {
+@@ -100,8 +99,7 @@ static void ext4_finish_bio(struct bio *bio)
+ 			if (error)
+ 				buffer_io_error(bh);
+ 		} while ((bh = bh->b_this_page) != head);
+-		bit_spin_unlock(BH_Uptodate_Lock, &head->b_state);
+-		local_irq_restore(flags);
++		bh_uptodate_unlock_irqrestore(head, flags);
+ 		if (!under_io)
+ 			end_page_writeback(page);
+ 	}
 -- 
 2.13.2
