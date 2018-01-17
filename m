@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 06/13] locking/rt-mutex: fix deadlock in device mapper / block-IO
-Date: Wed, 17 Jan 2018 10:14:10 -0500
-Message-ID: <20180117151431.425437643@goodmis.org>
+Subject: [PATCH RT 05/13] md/raid5: do not disable interrupts
+Date: Wed, 17 Jan 2018 10:14:09 -0500
+Message-ID: <20180117151431.274748142@goodmis.org>
 References: <20180117151404.093229667@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -13,15 +13,15 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
         tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
-        stable-rt@vger.kernel.org, Mikulas Patocka <mpatocka@redhat.com>
+        stable-rt@vger.kernel.org
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.99]:43806 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.99]:43782 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1753016AbeAQPOd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 17 Jan 2018 10:14:33 -0500
-Content-Disposition: inline; filename=0006-locking-rt-mutex-fix-deadlock-in-device-mapper-block.patch
+        id S1752975AbeAQPOc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 17 Jan 2018 10:14:32 -0500
+Content-Disposition: inline; filename=0005-md-raid5-do-not-disable-interrupts.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -30,92 +30,61 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mikulas Patocka <mpatocka@redhat.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-When some block device driver creates a bio and submits it to another
-block device driver, the bio is added to current->bio_list (in order to
-avoid unbounded recursion).
+|BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:974
+|in_atomic(): 0, irqs_disabled(): 1, pid: 2992, name: lvm
+|CPU: 2 PID: 2992 Comm: lvm Not tainted 4.13.10-rt3+ #54
+|Call Trace:
+| dump_stack+0x4f/0x65
+| ___might_sleep+0xfc/0x150
+| atomic_dec_and_spin_lock+0x3c/0x80
+| raid5_release_stripe+0x73/0x110
+| grow_one_stripe+0xce/0xf0
+| setup_conf+0x841/0xaa0
+| raid5_run+0x7e7/0xa40
+| md_run+0x515/0xaf0
+| raid_ctr+0x147d/0x25e0
+| dm_table_add_target+0x155/0x320
+| table_load+0x103/0x320
+| ctl_ioctl+0x1d9/0x510
+| dm_ctl_ioctl+0x9/0x10
+| do_vfs_ioctl+0x8e/0x670
+| SyS_ioctl+0x3c/0x70
+| entry_SYSCALL_64_fastpath+0x17/0x98
 
-However, this queuing of bios can cause deadlocks, in order to avoid them,
-device mapper registers a function flush_current_bio_list. This function
-is called when device mapper driver blocks. It redirects bios queued on
-current->bio_list to helper workqueues, so that these bios can proceed
-even if the driver is blocked.
+The interrupts were disabled because ->device_lock is taken with
+interrupts disabled.
 
-The problem with CONFIG_PREEMPT_RT_FULL is that when the device mapper
-driver blocks, it won't call flush_current_bio_list (because
-tsk_is_pi_blocked returns true in sched_submit_work), so deadlocks in
-block device stack can happen.
-
-Note that we can't call blk_schedule_flush_plug if tsk_is_pi_blocked
-returns true - that would cause
-BUG_ON(rt_mutex_real_waiter(task->pi_blocked_on)) in
-task_blocks_on_rt_mutex when flush_current_bio_list attempts to take a
-spinlock.
-
-So the proper fix is to call blk_schedule_flush_plug in rt_mutex_fastlock,
-when fast acquire failed and when the task is about to block.
-
-CC: stable-rt@vger.kernel.org
-[bigeasy: The deadlock is not device-mapper specific, it can also occur
-          in plain EXT4]
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/locking/rtmutex.c | 25 ++++++++++++++++++++-----
- 1 file changed, 20 insertions(+), 5 deletions(-)
+ drivers/md/raid5.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index da35f7ef5324..d58780b59583 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -22,6 +22,7 @@
- #include <linux/sched/deadline.h>
- #include <linux/timer.h>
- #include <linux/ww_mutex.h>
-+#include <linux/blkdev.h>
- 
- #include "rtmutex_common.h"
- 
-@@ -1843,9 +1844,19 @@ rt_mutex_fastlock(struct rt_mutex *lock, int state,
- 	if (likely(rt_mutex_cmpxchg(lock, NULL, current))) {
- 		rt_mutex_deadlock_account_lock(lock, current);
- 		return 0;
--	} else
--		return slowfn(lock, state, NULL, RT_MUTEX_MIN_CHAINWALK,
--			      ww_ctx);
-+	}
-+
-+	/*
-+	 * If rt_mutex blocks, the function sched_submit_work will not call
-+	 * blk_schedule_flush_plug (because tsk_is_pi_blocked would be true).
-+	 * We must call blk_schedule_flush_plug here, if we don't call it,
-+	 * a deadlock in device mapper may happen.
-+	 */
-+	if (unlikely(blk_needs_flush_plug(current)))
-+		blk_schedule_flush_plug(current);
-+
-+	return slowfn(lock, state, NULL, RT_MUTEX_MIN_CHAINWALK,
-+		      ww_ctx);
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index 6a97d9e930c8..c206ed033542 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -433,7 +433,7 @@ static void release_stripe(struct stripe_head *sh)
+ 		md_wakeup_thread(conf->mddev->thread);
+ 	return;
+ slow_path:
+-	local_irq_save(flags);
++	local_irq_save_nort(flags);
+ 	/* we are ok here if STRIPE_ON_RELEASE_LIST is set or not */
+ 	if (atomic_dec_and_lock(&sh->count, &conf->device_lock)) {
+ 		INIT_LIST_HEAD(&list);
+@@ -442,7 +442,7 @@ slow_path:
+ 		spin_unlock(&conf->device_lock);
+ 		release_inactive_stripe_list(conf, &list, hash);
+ 	}
+-	local_irq_restore(flags);
++	local_irq_restore_nort(flags);
  }
  
- static inline int
-@@ -1862,8 +1873,12 @@ rt_mutex_timed_fastlock(struct rt_mutex *lock, int state,
- 	    likely(rt_mutex_cmpxchg(lock, NULL, current))) {
- 		rt_mutex_deadlock_account_lock(lock, current);
- 		return 0;
--	} else
--		return slowfn(lock, state, timeout, chwalk, ww_ctx);
-+	}
-+
-+	if (unlikely(blk_needs_flush_plug(current)))
-+		blk_schedule_flush_plug(current);
-+
-+	return slowfn(lock, state, timeout, chwalk, ww_ctx);
- }
- 
- static inline int
+ static inline void remove_hash(struct stripe_head *sh)
 -- 
 2.13.2
 
