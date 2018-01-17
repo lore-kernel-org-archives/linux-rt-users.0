@@ -1,7 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 00/13] Linux 3.18.91-rt98-rc1
-Date: Wed, 17 Jan 2018 10:14:04 -0500
-Message-ID: <20180117151404.093229667@goodmis.org>
+Subject: [PATCH RT 12/13] net: use trylock in icmp_sk
+Date: Wed, 17 Jan 2018 10:14:16 -0500
+Message-ID: <20180117151432.549401282@goodmis.org>
+References: <20180117151404.093229667@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -9,87 +12,54 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>
+        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
+        stable-rt@vger.kernel.org
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.99]:43946 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1753386AbeAQPOe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 17 Jan 2018 10:14:34 -0500
+Content-Disposition: inline; filename=0012-net-use-trylock-in-icmp_sk.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+3.18.91-rt98-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.18.91-rt98-rc1.
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Please scream at me if I messed something up. Please test the patches too.
+The locking path can be recursive (same as for sk->sk_lock.slock) and
+therefore we need a trylock version for the locallock, too.
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 1/19/2018.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.18.91-rt98-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.91.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.91-rt98-rc1.patch.xz
-
-You can also build from 3.18.91-rt97 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/incr/patch-3.18.91-rt97-rt98-rc1.patch.xz
-
-
-Changes from 3.18.91-rt97:
-
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
+ net/ipv4/icmp.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/net/ipv4/icmp.c b/net/ipv4/icmp.c
+index 76b11e3e2b95..434eef536092 100644
+--- a/net/ipv4/icmp.c
++++ b/net/ipv4/icmp.c
+@@ -218,7 +218,11 @@ static inline struct sock *icmp_xmit_lock(struct net *net)
+ 
+ 	local_bh_disable();
+ 
+-	local_lock(icmp_sk_lock);
++	if (!local_trylock(icmp_sk_lock)) {
++		local_bh_enable();
++		return NULL;
++	}
++
+ 	sk = icmp_sk(net);
+ 
+ 	if (unlikely(!spin_trylock(&sk->sk_lock.slock))) {
+-- 
+2.13.2
 
 
-Alex Shi (1):
-      cpu_pm: replace raw_notifier to atomic_notifier
-
-Mike Galbraith (1):
-      kernel/hrtimer/hotplug: don't wake ktimersoftd while holding the hrtimer base lock
-
-Mikulas Patocka (1):
-      locking/rt-mutex: fix deadlock in device mapper / block-IO
-
-Sebastian Andrzej Siewior (7):
-      random: avoid preempt_disable()ed section
-      fs: convert two more BH_Uptodate_Lock related bitspinlocks
-      md/raid5: do not disable interrupts
-      Revert "fs: jbd2: pull your plug when waiting for space"
-      kernel/hrtimer: migrate deferred timer on CPU down
-      rt/locking: allow recursive local_trylock()
-      net: use trylock in icmp_sk
-
-Steven Rostedt (VMware) (1):
-      Linux 3.18.91-rt98-rc1
-
-Thomas Gleixner (2):
-      rtmutex: Make lock_killable work
-      sched: Prevent task state corruption by spurious lock wakeup
-
-----
- drivers/char/random.c     | 10 ++++++----
- drivers/md/raid5.c        |  4 ++--
- fs/ext4/page-io.c         |  6 ++----
- fs/jbd2/checkpoint.c      |  2 --
- include/linux/locallock.h |  9 +++++++++
- kernel/cpu_pm.c           | 43 ++++++-------------------------------------
- kernel/locking/rtmutex.c  | 44 +++++++++++++++++++++++++++-----------------
- kernel/sched/core.c       |  2 +-
- kernel/time/hrtimer.c     | 20 ++++++++++++++++----
- localversion-rt           |  2 +-
- net/ipv4/icmp.c           |  6 +++++-
- 11 files changed, 75 insertions(+), 73 deletions(-)
