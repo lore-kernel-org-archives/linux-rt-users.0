@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 12/13] net: use trylock in icmp_sk
-Date: Wed, 17 Jan 2018 10:14:16 -0500
-Message-ID: <20180117151432.549401282@goodmis.org>
+Subject: [PATCH RT 11/13] rt/locking: allow recursive local_trylock()
+Date: Wed, 17 Jan 2018 10:14:15 -0500
+Message-ID: <20180117151432.344452068@goodmis.org>
 References: <20180117151404.093229667@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -16,14 +16,10 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         stable-rt@vger.kernel.org
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.99]:43946 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1753386AbeAQPOe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 17 Jan 2018 10:14:34 -0500
-Content-Disposition: inline; filename=0012-net-use-trylock-in-icmp_sk.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0011-rt-locking-allow-recursive-local_trylock.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 3.18.91-rt98-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -32,34 +28,42 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-The locking path can be recursive (same as for sk->sk_lock.slock) and
-therefore we need a trylock version for the locallock, too.
+required for following networking patch which does recursive try-lock.
+While at it, add the !RT version of it because it did not yet exist.
 
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- net/ipv4/icmp.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+ include/linux/locallock.h | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-diff --git a/net/ipv4/icmp.c b/net/ipv4/icmp.c
-index 76b11e3e2b95..434eef536092 100644
---- a/net/ipv4/icmp.c
-+++ b/net/ipv4/icmp.c
-@@ -218,7 +218,11 @@ static inline struct sock *icmp_xmit_lock(struct net *net)
+diff --git a/include/linux/locallock.h b/include/linux/locallock.h
+index 015271ff8ec8..930ec941c2c0 100644
+--- a/include/linux/locallock.h
++++ b/include/linux/locallock.h
+@@ -77,6 +77,9 @@ static inline int __local_trylock(struct local_irq_lock *lv)
+ 		lv->owner = current;
+ 		lv->nestcnt = 1;
+ 		return 1;
++	} else if (lv->owner == current) {
++		lv->nestcnt++;
++		return 1;
+ 	}
+ 	return 0;
+ }
+@@ -250,6 +253,12 @@ static inline int __local_unlock_irqrestore(struct local_irq_lock *lv,
  
- 	local_bh_disable();
+ static inline void local_irq_lock_init(int lvar) { }
  
--	local_lock(icmp_sk_lock);
-+	if (!local_trylock(icmp_sk_lock)) {
-+		local_bh_enable();
-+		return NULL;
-+	}
++#define local_trylock(lvar)					\
++	({							\
++		preempt_disable();				\
++		1;						\
++	})
 +
- 	sk = icmp_sk(net);
- 
- 	if (unlikely(!spin_trylock(&sk->sk_lock.slock))) {
+ #define local_lock(lvar)			preempt_disable()
+ #define local_unlock(lvar)			preempt_enable()
+ #define local_lock_irq(lvar)			local_irq_disable()
 -- 
 2.13.2
-
-
