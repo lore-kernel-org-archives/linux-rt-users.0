@@ -1,59 +1,92 @@
-From: Daniel Wagner <daniel.wagner@siemens.com>
-Subject: Re: [ANNOUNCE] Linux 4.4.15-cip15-rt10
-Date: Wed, 17 Jan 2018 10:18:48 +0100
-Message-ID: <3524be1e-4935-8941-89be-51e51d180af3@siemens.com>
-References: <b4cf2728-0d0c-5128-d007-818e66da5613@siemens.com>
- <20180108093350.lxjocaxlvrmjwpav@linutronix.de>
- <94212c58-73c7-7356-b325-9e7f18c9bfbc@siemens.com>
- <20180108105621.osnfazlumesxkwv3@linutronix.de>
- <1515531937.12097.1.camel@codethink.co.uk>
- <D5D6254030DBC644B6EE58B333BFBB1E9D97B5AF@ORSMSX101.amr.corp.intel.com>
- <20180110173232.krwpnlfeijdseinv@linutronix.de>
- <09576c61-f200-2465-b181-76e2d47b08ec@siemens.com>
- <1515689503.12097.16.camel@codethink.co.uk>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 02/13] random: avoid preempt_disable()ed section
+Date: Wed, 17 Jan 2018 10:14:06 -0500
+Message-ID: <20180117151430.804706484@goodmis.org>
+References: <20180117151404.093229667@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        "Hindman, Gavin" <gavin.hindman@intel.com>,
-        "cip-dev@lists.cip-project.org" <cip-dev@lists.cip-project.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Ben Hutchings <ben.hutchings@codethink.co.uk>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from goliath.siemens.de ([192.35.17.28]:36340 "EHLO
-        goliath.siemens.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751182AbeAQJTM (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 17 Jan 2018 04:19:12 -0500
-In-Reply-To: <1515689503.12097.16.camel@codethink.co.uk>
-Content-Language: en-US
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-15
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        John Kacur <jkacur@redhat.com>,
+        Paul Gortmaker <paul.gortmaker@windriver.com>,
+        Julia Cartwright <julia@ni.com>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>
+To: linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0002-random-avoid-preempt_disable-ed-section.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 01/11/2018 05:51 PM, Ben Hutchings wrote:
-> On Thu, 2018-01-11 at 09:07 +0100, Daniel Wagner wrote:
->> Good morning everyone,
->>
->> On 01/10/2018 06:32 PM, Sebastian Andrzej Siewior wrote:
-> [...]
->>> Daniel: you have the release currently in a git tree within his "user"
->>> namespace and did not upload it to k.o. Do you plan upload it to the
->>> stable-rt tree like Julia does and upload it to the "projects/rt/4.4"
->>> folder on k.o.? If so we might just add a link to the cip wiki next to
->>> 4.4 and be done with it.
->>
->> Steven will ask the k.o folks to give me permission to upload to
->> projects/rt/4.4. In short nothing should change for 4.4-rt support as
->> long Greg is releasing 4.4.
->>
->> As for 4.4-cip(-rt), it might make sense to have a project/cip shared
->> folder with the 4.4-cip and 4.4-cip-rt tree.
->>
->> Ben, what's your stand on this?
-> 
-> No-one's asked for tarballs and patches, so I don't really want to add
-> that step to the release process.
+3.18.91-rt98-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Fair enough ;)
+------------------
 
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+
+extract_crng() will use sleeping locks while in a preempt_disable()
+section due to get_cpu_var().
+Work around it with local_locks.
+
+Cc: stable-rt@vger.kernel.org # where it applies to
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+---
+ drivers/char/random.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/char/random.c b/drivers/char/random.c
+index acb8e7c218d1..06c4b06fcea0 100644
+--- a/drivers/char/random.c
++++ b/drivers/char/random.c
+@@ -260,6 +260,7 @@
+ #include <linux/irq.h>
+ #include <linux/syscalls.h>
+ #include <linux/completion.h>
++#include <linux/locallock.h>
+ 
+ #include <asm/processor.h>
+ #include <asm/uaccess.h>
+@@ -1712,6 +1713,7 @@ int random_int_secret_init(void)
+ 
+ static DEFINE_PER_CPU(__u32 [MD5_DIGEST_WORDS], get_random_int_hash)
+ 		__aligned(sizeof(unsigned long));
++static DEFINE_LOCAL_IRQ_LOCK(hash_entropy_int_lock);
+ 
+ /*
+  * Get a random word for internal kernel use only. Similar to urandom but
+@@ -1727,12 +1729,12 @@ unsigned int get_random_int(void)
+ 	if (arch_get_random_int(&ret))
+ 		return ret;
+ 
+-	hash = get_cpu_var(get_random_int_hash);
++	hash = get_locked_var(hash_entropy_int_lock, get_random_int_hash);
+ 
+ 	hash[0] += current->pid + jiffies + random_get_entropy();
+ 	md5_transform(hash, random_int_secret);
+ 	ret = hash[0];
+-	put_cpu_var(get_random_int_hash);
++	put_locked_var(hash_entropy_int_lock, get_random_int_hash);
+ 
+ 	return ret;
+ }
+@@ -1749,12 +1751,12 @@ unsigned long get_random_long(void)
+ 	if (arch_get_random_long(&ret))
+ 		return ret;
+ 
+-	hash = get_cpu_var(get_random_int_hash);
++	hash = get_locked_var(hash_entropy_int_lock, get_random_int_hash);
+ 
+ 	hash[0] += current->pid + jiffies + random_get_entropy();
+ 	md5_transform(hash, random_int_secret);
+ 	ret = *(unsigned long *)hash;
+-	put_cpu_var(get_random_int_hash);
++	put_locked_var(hash_entropy_int_lock, get_random_int_hash);
+ 
+ 	return ret;
+ }
+-- 
+2.13.2
