@@ -1,10 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 01/13] rtmutex: Make lock_killable work
-Date: Wed, 17 Jan 2018 10:14:05 -0500
-Message-ID: <20180117151430.638373783@goodmis.org>
-References: <20180117151404.093229667@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Subject: [PATCH RT 00/13] Linux 3.18.91-rt98-rc1
+Date: Wed, 17 Jan 2018 10:14:04 -0500
+Message-ID: <20180117151404.093229667@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -12,64 +9,87 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>,
-        rt-stable@vger.kernel.org
+        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-rtmutex-Make-lock_killable-work.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.18.91-rt98-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: Thomas Gleixner <tglx@linutronix.de>
+This is the RT stable review cycle of patch 3.18.91-rt98-rc1.
 
-Locking an rt mutex killable does not work because signal handling is
-restricted to TASK_INTERRUPTIBLE.
+Please scream at me if I messed something up. Please test the patches too.
 
-Use signal_pending_state() unconditionaly.
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
 
-Cc: rt-stable@vger.kernel.org
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 1/19/2018.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.18.91-rt98-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.91.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.91-rt98-rc1.patch.xz
+
+You can also build from 3.18.91-rt97 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/incr/patch-3.18.91-rt97-rt98-rc1.patch.xz
+
+
+Changes from 3.18.91-rt97:
+
 ---
- kernel/locking/rtmutex.c | 19 +++++++------------
- 1 file changed, 7 insertions(+), 12 deletions(-)
 
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index 8d950b4521fc..da35f7ef5324 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -1532,18 +1532,13 @@ __rt_mutex_slowlock(struct rt_mutex *lock, int state,
- 		if (try_to_take_rt_mutex(lock, current, waiter))
- 			break;
- 
--		/*
--		 * TASK_INTERRUPTIBLE checks for signals and
--		 * timeout. Ignored otherwise.
--		 */
--		if (unlikely(state == TASK_INTERRUPTIBLE)) {
--			/* Signal pending? */
--			if (signal_pending(current))
--				ret = -EINTR;
--			if (timeout && !timeout->task)
--				ret = -ETIMEDOUT;
--			if (ret)
--				break;
-+		if (timeout && !timeout->task) {
-+			ret = -ETIMEDOUT;
-+			break;
-+		}
-+		if (signal_pending_state(state, current)) {
-+			ret = -EINTR;
-+			break;
- 		}
- 
- 		if (ww_ctx && ww_ctx->acquired > 0) {
--- 
-2.13.2
+
+Alex Shi (1):
+      cpu_pm: replace raw_notifier to atomic_notifier
+
+Mike Galbraith (1):
+      kernel/hrtimer/hotplug: don't wake ktimersoftd while holding the hrtimer base lock
+
+Mikulas Patocka (1):
+      locking/rt-mutex: fix deadlock in device mapper / block-IO
+
+Sebastian Andrzej Siewior (7):
+      random: avoid preempt_disable()ed section
+      fs: convert two more BH_Uptodate_Lock related bitspinlocks
+      md/raid5: do not disable interrupts
+      Revert "fs: jbd2: pull your plug when waiting for space"
+      kernel/hrtimer: migrate deferred timer on CPU down
+      rt/locking: allow recursive local_trylock()
+      net: use trylock in icmp_sk
+
+Steven Rostedt (VMware) (1):
+      Linux 3.18.91-rt98-rc1
+
+Thomas Gleixner (2):
+      rtmutex: Make lock_killable work
+      sched: Prevent task state corruption by spurious lock wakeup
+
+----
+ drivers/char/random.c     | 10 ++++++----
+ drivers/md/raid5.c        |  4 ++--
+ fs/ext4/page-io.c         |  6 ++----
+ fs/jbd2/checkpoint.c      |  2 --
+ include/linux/locallock.h |  9 +++++++++
+ kernel/cpu_pm.c           | 43 ++++++-------------------------------------
+ kernel/locking/rtmutex.c  | 44 +++++++++++++++++++++++++++-----------------
+ kernel/sched/core.c       |  2 +-
+ kernel/time/hrtimer.c     | 20 ++++++++++++++++----
+ localversion-rt           |  2 +-
+ net/ipv4/icmp.c           |  6 +++++-
+ 11 files changed, 75 insertions(+), 73 deletions(-)
