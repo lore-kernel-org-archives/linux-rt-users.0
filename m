@@ -1,54 +1,43 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.8.13.13-rt24
-Date: Fri, 19 Jan 2018 10:51:01 -0500
-Message-ID: <20180119105101.54aa0dca@gandalf.local.home>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+From: Daniel Wagner <wagi@monom.org>
+Subject: [ANNOUNCE] 4.4.112-rt127
+Date: Sun, 21 Jan 2018 12:14:32 +0100
+Message-ID: <20180121114518.97BF650096A@mail.monom.org>
+To: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
         tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hello CIP RT Folks!
 
-Dear RT Folks,
+I'm pleased to announce the 4.4.112-rt127 stable release.
 
-I'm pleased to announce the 3.8.13.13-rt24 stable release.
-
-
-This release is just an update to the new stable 3.8.13.13 version
-and no RT specific changes have been made.
-
+This is my first release as new co-maintainer of the stable-rt
+trees. I hope this is not a brown paper bag release. If I screw
+it up, please scream. 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.8-rt
-  Head SHA1: 52ab3966a3010a6c08c2f0298b1e7c0eca06a671
+  branch: v4.4-rt
+  Head SHA1: 2f15316c0075bbe84e4e7897827860f52523eae1
+
+Or to build 4.4.112-rt127 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.112.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.112-rt127.patch.xz
 
 
-Or to build 3.8.13.13-rt24 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.8.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.8.13.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/stable/patch-3.8.13.13.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patch-3.8.13.13-rt24.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
+Enjoy!
+   Daniel
