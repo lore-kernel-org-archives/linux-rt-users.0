@@ -1,42 +1,138 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: problems with 4.14.6-rt7
-Date: Wed, 24 Jan 2018 15:18:50 +0100
-Message-ID: <20180124141849.hsikgyqgymbd2qe5@linutronix.de>
-References: <2644174.vLadu3AOG5@dabox>
+Subject: [PATCH RT] Revert "net: sysrq via icmp"
+Date: Wed, 24 Jan 2018 17:12:44 +0100
+Message-ID: <20180124161243.wzxwjcq7euebimvo@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Tim Sander <tim@krieglstein.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:60717 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S933648AbeAXOSv (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 24 Jan 2018 09:18:51 -0500
+Cc: linux-kernel@vger.kernel.org, tglx@linutronix.de,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Carsten Emde <C.Emde@osadl.org>
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <2644174.vLadu3AOG5@dabox>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 2018-01-08 15:56:17 [+0100], Tim Sander wrote:
-> Hi
-Hi,
+This reverts commit c3be7bd61d19 ("net: sysrq via icmp").
+Carsten suggested to remove it from the queue since probably won't reach
+mainline.
 
-> I am currently using 4.14.6-rt7 on an De0-Nano-Soc (intel/altera arm v7 dual core)
-> board. I have added a small driver which adds some functionality like iio. As soon
-> as i have some realtime load on one core i see messages like:
-…
-> I know that i am really using up all realtime budget on this system for one core 
-> but i would expect that rt-throttling kicks in and gets some time for these
-> starving processes?
+Cc: Carsten Emde <C.Emde@osadl.org>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ Documentation/admin-guide/sysrq.rst | 12 ------------
+ include/net/netns/ipv4.h            |  1 -
+ net/ipv4/icmp.c                     | 30 ------------------------------
+ net/ipv4/sysctl_net_ipv4.c          |  7 -------
+ 4 files changed, 50 deletions(-)
 
-You should see something like
-	sched: RT throttling activated
-
-once the RT tasks are throttled. Do you?
-
-> Best regards
-> Tim
-
-Sebastian
+diff --git a/Documentation/admin-guide/sysrq.rst b/Documentation/admin-guide/sysrq.rst
+index 934563e4dbb8..7b9035c01a2e 100644
+--- a/Documentation/admin-guide/sysrq.rst
++++ b/Documentation/admin-guide/sysrq.rst
+@@ -77,18 +77,6 @@ On all
+ 
+ 		echo t > /proc/sysrq-trigger
+ 
+-On all
+-        Enable network SysRq by writing a cookie to icmp_echo_sysrq, e.g.::
+-
+-                echo 0x01020304 >/proc/sys/net/ipv4/icmp_echo_sysrq
+-
+-        Send an ICMP echo request with this pattern plus the particular
+-        SysRq command key. Example::
+-
+-                ping -c1 -s57 -p0102030468
+-
+-        will trigger the SysRq-H (help) command.
+-
+ What are the 'command' keys?
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 
+diff --git a/include/net/netns/ipv4.h b/include/net/netns/ipv4.h
+index 93164a31ec51..8fcff2837484 100644
+--- a/include/net/netns/ipv4.h
++++ b/include/net/netns/ipv4.h
+@@ -79,7 +79,6 @@ struct netns_ipv4 {
+ 
+ 	int sysctl_icmp_echo_ignore_all;
+ 	int sysctl_icmp_echo_ignore_broadcasts;
+-	int sysctl_icmp_echo_sysrq;
+ 	int sysctl_icmp_ignore_bogus_error_responses;
+ 	int sysctl_icmp_ratelimit;
+ 	int sysctl_icmp_ratemask;
+diff --git a/net/ipv4/icmp.c b/net/ipv4/icmp.c
+index 574d2a3c86a0..0310ea93f877 100644
+--- a/net/ipv4/icmp.c
++++ b/net/ipv4/icmp.c
+@@ -69,7 +69,6 @@
+ #include <linux/jiffies.h>
+ #include <linux/kernel.h>
+ #include <linux/fcntl.h>
+-#include <linux/sysrq.h>
+ #include <linux/socket.h>
+ #include <linux/in.h>
+ #include <linux/inet.h>
+@@ -924,30 +923,6 @@ static bool icmp_redirect(struct sk_buff *skb)
+ 	return true;
+ }
+ 
+-/*
+- * 32bit and 64bit have different timestamp length, so we check for
+- * the cookie at offset 20 and verify it is repeated at offset 50
+- */
+-#define CO_POS0		20
+-#define CO_POS1		50
+-#define CO_SIZE		sizeof(int)
+-#define ICMP_SYSRQ_SIZE	57
+-
+-/*
+- * We got a ICMP_SYSRQ_SIZE sized ping request. Check for the cookie
+- * pattern and if it matches send the next byte as a trigger to sysrq.
+- */
+-static void icmp_check_sysrq(struct net *net, struct sk_buff *skb)
+-{
+-	int cookie = htonl(net->ipv4.sysctl_icmp_echo_sysrq);
+-	char *p = skb->data;
+-
+-	if (!memcmp(&cookie, p + CO_POS0, CO_SIZE) &&
+-	    !memcmp(&cookie, p + CO_POS1, CO_SIZE) &&
+-	    p[CO_POS0 + CO_SIZE] == p[CO_POS1 + CO_SIZE])
+-		handle_sysrq(p[CO_POS0 + CO_SIZE]);
+-}
+-
+ /*
+  *	Handle ICMP_ECHO ("ping") requests.
+  *
+@@ -975,11 +950,6 @@ static bool icmp_echo(struct sk_buff *skb)
+ 		icmp_param.data_len	   = skb->len;
+ 		icmp_param.head_len	   = sizeof(struct icmphdr);
+ 		icmp_reply(&icmp_param, skb);
+-
+-		if (skb->len == ICMP_SYSRQ_SIZE &&
+-		    net->ipv4.sysctl_icmp_echo_sysrq) {
+-			icmp_check_sysrq(net, skb);
+-		}
+ 	}
+ 	/* should there be an ICMP stat for ignored echos? */
+ 	return true;
+diff --git a/net/ipv4/sysctl_net_ipv4.c b/net/ipv4/sysctl_net_ipv4.c
+index 747ba53a8100..0989e739d098 100644
+--- a/net/ipv4/sysctl_net_ipv4.c
++++ b/net/ipv4/sysctl_net_ipv4.c
+@@ -771,13 +771,6 @@ static struct ctl_table ipv4_net_table[] = {
+ 		.mode		= 0644,
+ 		.proc_handler	= proc_dointvec
+ 	},
+-	{
+-		.procname	= "icmp_echo_sysrq",
+-		.data		= &init_net.ipv4.sysctl_icmp_echo_sysrq,
+-		.maxlen		= sizeof(int),
+-		.mode		= 0644,
+-		.proc_handler	= proc_dointvec
+-	},
+ 	{
+ 		.procname	= "icmp_ignore_bogus_error_responses",
+ 		.data		= &init_net.ipv4.sysctl_icmp_ignore_bogus_error_responses,
+-- 
+2.15.1
