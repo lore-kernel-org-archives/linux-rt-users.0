@@ -1,51 +1,42 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: Patching kernel versions for which there is no version specific
- patch released?
-Date: Wed, 24 Jan 2018 15:07:15 +0100
-Message-ID: <20180124140714.aqrhwpslt2z7wqii@linutronix.de>
-References: <413db8dc-b0d6-8f49-dd5f-2b842c06e05a@lsa2.com>
+Subject: Re: problems with 4.14.6-rt7
+Date: Wed, 24 Jan 2018 15:18:50 +0100
+Message-ID: <20180124141849.hsikgyqgymbd2qe5@linutronix.de>
+References: <2644174.vLadu3AOG5@dabox>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8BIT
-Cc: linux-rt-users@vger.kernel.org
-To: Joshua Kordani <jkordani@lsa2.com>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Tim Sander <tim@krieglstein.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Galois.linutronix.de ([146.0.238.70]:60697 "EHLO
+Received: from Galois.linutronix.de ([146.0.238.70]:60717 "EHLO
         Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S933576AbeAXOHQ (ORCPT
+        with ESMTP id S933648AbeAXOSv (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 24 Jan 2018 09:07:16 -0500
+        Wed, 24 Jan 2018 09:18:51 -0500
 Content-Disposition: inline
-In-Reply-To: <413db8dc-b0d6-8f49-dd5f-2b842c06e05a@lsa2.com>
+In-Reply-To: <2644174.vLadu3AOG5@dabox>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2018-01-16 10:34:25 [-0500], Joshua Kordani wrote:
-> Greetings,
+On 2018-01-08 15:56:17 [+0100], Tim Sander wrote:
+> Hi
 Hi,
 
-> I am trying to patch a kernel for which there doesn't seem to be a specific
-> patch set released.
-> For example, patch-4.9.61-rt52.patch.xz and patch-4.9.65-rt56.patch.xz
-> exist, but nothing in between.  Is it safe to assume that
-> patch-4.9.61-rt52.patch.xz is appropriate for all kernel versions from
-> 4.9.61 to 4.9.64?  Or, since the rt version jumps from 52 to 56, there are
-> intermediate versions of the patchset for intermediate versions of the
-> kernel that are available only in the git repo?
-> 
-> Looking to make the right call about how to patch what I need instead of
-> just compiling and hoping.
+> I am currently using 4.14.6-rt7 on an De0-Nano-Soc (intel/altera arm v7 dual core)
+> board. I have added a small driver which adds some functionality like iio. As soon
+> as i have some realtime load on one core i see messages like:
+…
+> I know that i am really using up all realtime budget on this system for one core 
+> but i would expect that rt-throttling kicks in and gets some time for these
+> starving processes?
 
-Those intermediate aren't uploaded but only tagged in git [0]. If you
-really require an intermediate then I guess the best way would be to
-create the diff from git.
-In general you are encourage to use the latest stable release.
+You should see something like
+	sched: RT throttling activated
 
-[0] https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git/
+once the RT tasks are throttled. Do you?
 
-> Thanks for your help!
-> 
-> Joshua Kordani
-> 
+> Best regards
+> Tim
 
 Sebastian
