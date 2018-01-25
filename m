@@ -1,34 +1,42 @@
-From: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
-Subject: Re: [ANNOUNCE] v4.14.15-rt12
-Date: Thu, 25 Jan 2018 20:00:35 +0100
-Message-ID: <20180125200035.020815f8@archlinux.localdomain>
-References: <20180125151706.v6pgbeixt2jfpph2@linutronix.de>
-        <20180125195839.53866ca0@archlinux.localdomain>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+From: Daniel Wagner <wagi@monom.org>
+Subject: [ANNOUNCE] 4.4.113-rt128
+Date: Thu, 25 Jan 2018 20:49:39 +0100
+Message-ID: <20180125195044.41B71500B00@mail.monom.org>
+To: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail79c50.megamailservers.eu ([91.136.10.89]:60902 "EHLO
-        mail70c50.megamailservers.eu" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1750994AbeAYTAk (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 25 Jan 2018 14:00:40 -0500
-Received: from archlinux.localdomain (x4e321512.dyn.telefonica.de [78.50.21.18])
-        (authenticated bits=0)
-        by mail70c50.megamailservers.eu (8.14.9/8.13.1) with ESMTP id w0PJ0aDe014369
-        (version=TLSv1/SSLv3 cipher=AES256-GCM-SHA384 bits=256 verify=NO)
-        for <linux-rt-users@vger.kernel.org>; Thu, 25 Jan 2018 19:00:37 +0000
-In-Reply-To: <20180125195839.53866ca0@archlinux.localdomain>
+Received: from mail.monom.org ([188.138.9.77]:51480 "EHLO mail.monom.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751108AbeAYTup (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 25 Jan 2018 14:50:45 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 25 Jan 2018 19:58:39 +0100, Ralf Mardorf wrote:
->On Thu, 25 Jan 2018 16:17:06 +0100, Sebastian Andrzej Siewior wrote:
->>I'm pleased to announce the v4.14.15-rt12 patch set.   
->
->Does performance differ when booting 4.14.15-rt11 with or without
->nopti?                                       ^^^^
-                                              ^^^^
-                                              Oops, this should read
-                                              rt12 ;).
+Hello RT Folks!
+
+I'm pleased to announce the 4.4.113-rt128 stable release.
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.4-rt
+  Head SHA1: 6fdbca2f35ee3e80079b31a5cda7bb6fec8def39
+
+Or to build 4.4.113-rt128 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.113.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.113-rt128.patch.xz
+
+Enjoy!
+   Daniel
