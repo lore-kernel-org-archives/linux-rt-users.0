@@ -1,33 +1,42 @@
-From: Michael Ellerman <patch-notifications@ellerman.id.au>
-Subject: Re: [v2,3/9] powerpc: mpc52xx_gpt: make use of raw_spinlock variants
-Date: Mon, 29 Jan 2018 15:13:45 +1100 (AEDT)
-Message-ID: <3zVGN94KNbz9sP9@ozlabs.org>
-References: <2142489eb41f758b5d04919a8efbb16794f16b0f.1490135047.git.julia@ni.com>
-Cc: linuxppc-dev@lists.ozlabs.org, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org
-To: Julia Cartwright <julia@ni.com>,
-        Anatolij Gustschin <agust@denx.de>,
-        Benjamin Herrenschmidt <benh@kernel.crashing.org>,
-        Paul Mackerras <paulus@samba.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [ANNOUNCE] v4.14.15-rt12
+Date: Mon, 29 Jan 2018 09:29:52 +0100
+Message-ID: <20180129082952.snffiicxlfyuhxhs@linutronix.de>
+References: <20180125151706.v6pgbeixt2jfpph2@linutronix.de>
+ <20180128151051.m3b3snwjm3xpqjbn@lorien.valinor.li>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Salvatore Bonaccorso <carnil@debian.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <2142489eb41f758b5d04919a8efbb16794f16b0f.1490135047.git.julia@ni.com>
+Content-Disposition: inline
+In-Reply-To: <20180128151051.m3b3snwjm3xpqjbn@lorien.valinor.li>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2017-03-21 at 22:43:03 UTC, Julia Cartwright wrote:
-> The mpc52xx_gpt code currently implements an irq_chip for handling
-> interrupts; due to how irq_chip handling is done, it's necessary for the
-> irq_chip methods to be invoked from hardirq context, even on a a
-> real-time kernel.  Because the spinlock_t type becomes a "sleeping"
-> spinlock w/ RT kernels, it is not suitable to be used with irq_chips.
+On 2018-01-28 16:10:51 [+0100], Salvatore Bonaccorso wrote:
+> Hi 
+Hi,
+
+> Just a small heads-up: Whilst ping-sysrq.patch was dropped the
+> included series file still contains:
 > 
-> A quick audit of the operations under the lock reveal that they do only
-> minimal, bounded work, and are therefore safe to do under a raw spinlock.
-> 
-> Signed-off-by: Julia Cartwright <julia@ni.com>
+> # NETWORK DEBUGGING AID
+> ping-sysrq.patch 
 
-Applied to powerpc next, thanks.
+so 'quilt push -a' aborts once it gets to it while 'git quiltimport'
+continues:
+| net-Have-__napi_schedule_irqoff-disable-interrupts-o.patch
+| ping-sysrq.patch doesn't exist. Skipping.
+| irqwork-push_most_work_into_softirq_context.patch
 
-https://git.kernel.org/powerpc/c/77720c82915a8b7797e0041af95707
+not sure if this is a bug or not.
+Thanks for the report, will try to fix this soon.
 
-cheers
+> Regards,
+> Salvatore
+
+Sebastian
