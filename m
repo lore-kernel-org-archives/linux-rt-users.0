@@ -1,42 +1,57 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [ANNOUNCE] v4.14.15-rt12
-Date: Mon, 29 Jan 2018 09:29:52 +0100
-Message-ID: <20180129082952.snffiicxlfyuhxhs@linutronix.de>
-References: <20180125151706.v6pgbeixt2jfpph2@linutronix.de>
- <20180128151051.m3b3snwjm3xpqjbn@lorien.valinor.li>
+Subject: [ANNOUNCE] v4.14.15-rt13
+Date: Mon, 29 Jan 2018 23:37:23 +0100
+Message-ID: <20180129223723.lr5avyspmglwcddr@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
+Cc: LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>
-To: Salvatore Bonaccorso <carnil@debian.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180128151051.m3b3snwjm3xpqjbn@lorien.valinor.li>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2018-01-28 16:10:51 [+0100], Salvatore Bonaccorso wrote:
-> Hi 
-Hi,
+Dear RT folks!
 
-> Just a small heads-up: Whilst ping-sysrq.patch was dropped the
-> included series file still contains:
-> 
-> # NETWORK DEBUGGING AID
-> ping-sysrq.patch 
+I'm pleased to announce the v4.14.15-rt13 patch set. 
 
-so 'quilt push -a' aborts once it gets to it while 'git quiltimport'
-continues:
-| net-Have-__napi_schedule_irqoff-disable-interrupts-o.patch
-| ping-sysrq.patch doesn't exist. Skipping.
-| irqwork-push_most_work_into_softirq_context.patch
+Changes since v4.14.15-rt12:
 
-not sure if this is a bug or not.
-Thanks for the report, will try to fix this soon.
+  - In the previous release the ping-sysrq patch was removed from the
+    queue but has been left listed in the series by mistake. "git
+    quiltimport" simply ignored that patch while "quilt push -a" did not
+    continue. This release provides a corrected series file. Reported by
+    Salvatore Bonaccorso.
 
-> Regards,
-> Salvatore
+Known issues
+     - A warning triggered in "rcu_note_context_switch" originated from
+       SyS_timer_gettime(). The issue was always there, it is now
+       visible. Reported by Grygorii Strashko and Daniel Wagner.
+
+The delta patch against v4.14.15-rt12 is appended below and can be found here:
+ 
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/incr/patch-4.14.15-rt12-rt13.patch.xz
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.14.15-rt13
+
+The RT patch against v4.14.15 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patch-4.14.15-rt13.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patches-4.14.15-rt13.tar.xz
 
 Sebastian
+
+diff --git a/localversion-rt b/localversion-rt
+index 6e44e540b927..9f7d0bdbffb1 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt12
++-rt13
