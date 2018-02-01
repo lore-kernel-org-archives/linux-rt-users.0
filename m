@@ -1,71 +1,56 @@
-From: Mirza Krak <mirza.krak-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: High CPU load when using USB Bluetooth on 4.14.15-rt13 kernel
-Date: Thu, 1 Feb 2018 10:58:28 +0100
-Message-ID: <CALw8SCWyD8-AVtqKvPZeNQuyLfvvdLe7ZtRWuh9KH09WNDDHuA@mail.gmail.com>
+From: Reinette Chatre <reinette.chatre@intel.com>
+Subject: Re: Kernel config options that impact latency
+Date: Thu, 1 Feb 2018 10:40:44 -0800
+Message-ID: <4b4f6310-bd54-77d8-51d0-216352746357@intel.com>
+References: <D5D6254030DBC644B6EE58B333BFBB1E9D96DC30@ORSMSX101.amr.corp.intel.com>
+ <20180104193736.GA5394@osadl.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-Cc: marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org, linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-bluetooth-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Return-path: <linux-bluetooth-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-bluetooth-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Nicholas Mc Guire <der.herr@hofr.at>,
+        "Hindman, Gavin" <gavin.hindman@intel.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mga02.intel.com ([134.134.136.20]:56662 "EHLO mga02.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751988AbeBASkp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 1 Feb 2018 13:40:45 -0500
+In-Reply-To: <20180104193736.GA5394@osadl.at>
+Content-Language: en-US
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi.
+Hi Nicholas,
 
-As I mentioned in the subject I am running a 4.14.15-rt13 kernel. The
-hardware is a RK3288 SoC and this combination is producing a heavy CPU
-load when an USB Bluetooth controller is simply powered on without the
-need of connecting to any device.
+On 1/4/2018 11:37 AM, Nicholas Mc Guire wrote:
+> On Thu, Jan 04, 2018 at 06:29:37PM +0000, Hindman, Gavin wrote:
+>> Since we seem to be in knowledge-sharing mode, is there an existing list of kernel config parameters, outside of those required to enable preempt_rt, known to impact or improve general system latency?  I didn't find anything prowling the various wikis.
+>>
+> 
+> Depending on what you mean with general system latency -
+> isolation related config items will allow you to improve the effectiveness
+> of pinning rt tasks to specific cores (e.g. cgroups) further
+> physical isolation like PALLOC (out of tree patch at
+> https://github.com/heechul/palloc) allow reducing cache side-effects
+> and L2/L3 sharing which can be a significant latency source.
+> of course these config items have no effect just by turning them on
+> but they allow to configure system software architectures that are
+> more suitable/robust for mixed rt/non-rt workloads.
 
-I am running bluez5 (5.46).
+If you do have the option to use Intel hardware then please do consider
+Cache Allocation Technology (CAT) instead. With CAT it is possible to
+isolate portions of cache and assign cores or tasks to the different
+portions in order to control the amount of cache space into which these
+entities can fill. CAT thus provides hardware support for the isolation
+and prioritization of key tasks you seek. Additional benefits of CAT are
+that it is supported in the Linux kernel from v4.10 and there is no
+guessing needed from user space on which address bits determine cache
+sets (which is increasingly hard to do).
 
-This is what it looks like:
+More details about Linux support of CAT can be found in
+Documentation/x86/intel_rdt_ui.txt within the kernel source (v4.10+). A
+technical blog about the Linux implementation is at
+https://01.org/intel-rdt-linux/blogs/fyu1/2017/resource-allocation-intel%C2%AE-resource-director-technology
 
-    92     2 root     RW       0   0%  20% [irq/45-dwc2_hso]
-    91     2 root     RW       0   0%  11% [irq/45-ff540000]
+Reinette
 
-Above is the USB interrupts of the controller where the USB bluetooth
-device is connected and it is simply power on without doing anything.
-
-Turning the controller off:
-
-    [bluetooth]# power off
-    Changing power off succeeded
-    [CHG] Controller 00:15:83:EA:73:23 Powered: no
-    [CHG] Controller 00:15:83:EA:73:23 Discovering: no
-    [CHG] Controller 00:15:83:EA:73:23 Class: 0x000000
-
-And the CPU load is down to minimal:
-
-   92     2 root     SW       0   0%   2% [irq/45-dwc2_hso]
-   91     2 root     SW       0   0%   2% [irq/45-ff540000]
-
-I have tried two different USB Bluetooth devices:
-
-    Bus 001 Device 003: ID 0a12:0001 Cambridge Silicon Radio, Ltd
-Bluetooth Dongle (HCI mode)
-
-    Bus 001 Device 005: ID 0a5c:4500 Broadcom Corp. BCM2046B1 USB 2.0
-Hub (part of BCM2046 Bluetooth)
-
-With the same result. I have also tried running a WLAN USB device and
-this does not produce any high CPU load. So fairly isolated to USB
-Bluetooth.
-
-I have tried running a 4.14.15 vanilla kernel, and this does not have
-this problem which means that it is the following combo
-
-    RT + USB Bluetooth
-
-That seem to the problem.
-
-Before I start digging deep in to the stacks I wanted to post my
-problem to the community to see if someone is having a similar problem
-on a different hardware or if you have any pointers on how to further
-debug this.
-
---=20
-Med V=C3=A4nliga H=C3=A4lsningar / Best Regards
-
-Mirza Krak
