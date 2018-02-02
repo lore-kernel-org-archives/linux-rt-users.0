@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH 04/18] tracing/x86: Add arch_get_func_args() function
-Date: Fri, 02 Feb 2018 18:05:02 -0500
-Message-ID: <20180202231017.612058326@goodmis.org>
+Subject: [PATCH 07/18] tracing: Add dereferencing multiple fields per arg
+Date: Fri, 02 Feb 2018 18:05:05 -0500
+Message-ID: <20180202231018.043996474@goodmis.org>
 References: <20180202230458.840252014@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -23,64 +23,165 @@ Cc: Linus Torvalds <torvalds@linux-foundation.org>,
         Namhyung Kim <namhyung@kernel.org>,
         Alexei Starovoitov <alexei.starovoitov@gmail.com>
 To: linux-kernel@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.99]:60506 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751826AbeBBXKT (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 2 Feb 2018 18:10:19 -0500
-Content-Disposition: inline; filename=0004-tracing-x86-Add-arch_get_func_args-function.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0007-tracing-Add-dereferencing-multiple-fields-per-arg.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-Add function to get the function arguments from pt_regs.
+As an argument may be a structure or an array, we may want to dereference
+more than one field per argument. Create a pipe '|' token to the parsing
+that allows to reference multipe dereference fields per function argument.
+
+Change func_arg fields from char to s8 or u8 to allow them to be
+subscripts to arrays.
 
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- arch/x86/kernel/ftrace.c | 28 ++++++++++++++++++++++++++++
- 1 file changed, 28 insertions(+)
+ Documentation/trace/function-based-events.rst | 20 +++++++++++++++++-
+ kernel/trace/trace_event_ftrace.c             | 29 ++++++++++++++++++++-------
+ 2 files changed, 41 insertions(+), 8 deletions(-)
 
-diff --git a/arch/x86/kernel/ftrace.c b/arch/x86/kernel/ftrace.c
-index 01ebcb6f263e..5e845c8cf89d 100644
---- a/arch/x86/kernel/ftrace.c
-+++ b/arch/x86/kernel/ftrace.c
-@@ -46,6 +46,34 @@ int ftrace_arch_code_modify_post_process(void)
- 	return 0;
- }
+diff --git a/Documentation/trace/function-based-events.rst b/Documentation/trace/function-based-events.rst
+index 7d67229e8e88..2a002c8a500b 100644
+--- a/Documentation/trace/function-based-events.rst
++++ b/Documentation/trace/function-based-events.rst
+@@ -91,7 +91,7 @@ as follows:
  
-+int arch_get_func_args(struct pt_regs *regs,
-+		       int start, int end, long *args)
-+{
-+#ifdef CONFIG_X86_64
-+# define MAX_ARGS 6
-+# define INIT_REGS				\
-+	{	regs->di, regs->si, regs->dx,	\
-+		regs->cx, regs->r8, regs->r9	\
-+	}
-+#else
-+# define MAX_ARGS 3
-+# define INIT_REGS				\
-+	{	regs->ax, regs->dx, regs->cx	}
-+#endif
-+	if (!regs)
-+		return MAX_ARGS;
+  ARGS := ARG | ARG ',' ARGS | ''
+ 
+- ARG := TYPE FIELD
++ ARG := TYPE FIELD | ARG '|' ARG
+ 
+  TYPE := ATOM
+ 
+@@ -158,3 +158,21 @@ As 128 / 4 (length of int) is 32, we can see the length of the skb with:
+     <idle>-0     [003] ..s3   280.807023: __netif_receive_skb_core->ip_rcv(skb=52, dev=ffff8801092f9400)
+ 
+ Now we see the length of the sk_buff per event.
 +
-+	{
-+		long pt_args[] = INIT_REGS;
-+		int i;
 +
-+		for (i = start; i <= end && i < MAX_ARGS; i++)
-+			args[i - start] = pt_args[i];
++Multiple fields per argument
++============================
 +
-+		return i - start;
-+	}
-+}
 +
- union ftrace_code_union {
- 	char code[MCOUNT_INSN_SIZE];
- 	struct {
++If we still want to see the skb pointer value along with the length of the
++skb, then using the '|' option allows us to add more than one option to
++an argument:
++
++ # echo 'ip_rcv(x64 skb | int skb[32], x64 dev)' > function_events
++
++ # echo 1 > events/functions/ip_rcv/enable
++ # cat trace
++    <idle>-0     [003] ..s3   904.075838: __netif_receive_skb_core->ip_rcv(skb=ffff88011396e800, skb=52, dev=ffff880115204000)
++    <idle>-0     [003] ..s3   904.075848: __netif_receive_skb_core->ip_rcv(skb=ffff88011396e800, skb=52, dev=ffff880115204000)
++    <idle>-0     [003] ..s3   904.725486: __netif_receive_skb_core->ip_rcv(skb=ffff88011396e800, skb=194, dev=ffff880115204000)
++    <idle>-0     [003] ..s3   905.152537: __netif_receive_skb_core->ip_rcv(skb=ffff88011396f200, skb=88, dev=ffff880115204000)
+diff --git a/kernel/trace/trace_event_ftrace.c b/kernel/trace/trace_event_ftrace.c
+index 5d37498d1c6b..8c9d4a92deab 100644
+--- a/kernel/trace/trace_event_ftrace.c
++++ b/kernel/trace/trace_event_ftrace.c
+@@ -21,8 +21,8 @@ struct func_arg {
+ 	long				indirect;
+ 	short				offset;
+ 	short				size;
+-	char				arg;
+-	char				sign;
++	s8				arg;
++	u8				sign;
+ };
+ 
+ struct func_event {
+@@ -60,6 +60,7 @@ enum func_states {
+ 	FUNC_STATE_BRACKET,
+ 	FUNC_STATE_BRACKET_END,
+ 	FUNC_STATE_INDIRECT,
++	FUNC_STATE_PIPE,
+ 	FUNC_STATE_TYPE,
+ 	FUNC_STATE_VAR,
+ 	FUNC_STATE_COMMA,
+@@ -179,6 +180,7 @@ static char *next_token(char **ptr, char *last)
+ 		    *str == '[' ||
+ 		    *str == ']' ||
+ 		    *str == ',' ||
++		    *str == '|' ||
+ 		    *str == ')')
+ 			break;
+ 	}
+@@ -251,11 +253,15 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+ 			break;
+ 		return FUNC_STATE_PARAM;
+ 
++	case FUNC_STATE_PIPE:
++		fevent->arg_cnt--;
++		goto comma;
+ 	case FUNC_STATE_PARAM:
+ 		if (token[0] == ')')
+ 			return FUNC_STATE_END;
+ 		/* Fall through */
+ 	case FUNC_STATE_COMMA:
++ comma:
+ 		for (i = 0; func_types[i].size; i++) {
+ 			if (strcmp(token, func_types[i].name) == 0)
+ 				break;
+@@ -297,6 +303,8 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+ 			return FUNC_STATE_END;
+ 		case ',':
+ 			return FUNC_STATE_COMMA;
++		case '|':
++			return FUNC_STATE_PIPE;
+ 		}
+ 		break;
+ 
+@@ -306,6 +314,8 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+ 			return FUNC_STATE_END;
+ 		case ',':
+ 			return FUNC_STATE_COMMA;
++		case '|':
++			return FUNC_STATE_PIPE;
+ 		case '[':
+ 			return FUNC_STATE_BRACKET;
+ 		}
+@@ -364,7 +374,6 @@ static void func_event_trace(struct trace_event_file *trace_file,
+ 	int nr_args;
+ 	int size;
+ 	int pc;
+-	int i = 0;
+ 
+ 	if (trace_trigger_soft_disabled(trace_file))
+ 		return;
+@@ -386,8 +395,8 @@ static void func_event_trace(struct trace_event_file *trace_file,
+ 	nr_args = arch_get_func_args(pt_regs, 0, func_event->arg_cnt, args);
+ 
+ 	list_for_each_entry(arg, &func_event->args, list) {
+-		if (i < nr_args)
+-			val = get_arg(arg, args[i]);
++		if (arg->arg < nr_args)
++			val = get_arg(arg, args[arg->arg]);
+ 		else
+ 			val = 0;
+ 		memcpy(&entry->data[arg->offset], &val, arg->size);
+@@ -741,12 +750,18 @@ static int func_event_seq_show(struct seq_file *m, void *v)
+ 	struct func_event *func_event = v;
+ 	struct func_arg *arg;
+ 	bool comma = false;
++	int last_arg = 0;
+ 
+ 	seq_printf(m, "%s(", func_event->func);
+ 
+ 	list_for_each_entry(arg, &func_event->args, list) {
+-		if (comma)
+-			seq_puts(m, ", ");
++		if (comma) {
++			if (last_arg == arg->arg)
++				seq_puts(m, " | ");
++			else
++				seq_puts(m, ", ");
++		}
++		last_arg = arg->arg;
+ 		comma = true;
+ 		seq_printf(m, "%s %s", arg->type, arg->name);
+ 		if (arg->indirect && arg->size)
 -- 
 2.15.1
-
-
