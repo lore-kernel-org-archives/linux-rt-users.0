@@ -1,86 +1,100 @@
-From: "Mills, William" <wmills@ti.com>
-Subject: Linux stable vs RT stable and RT dev
-Date: Fri, 2 Feb 2018 19:00:12 +0000
-Message-ID: <8155aea247374c058bd7c797124c3d28@ti.com>
+From: Julia Cartwright <julia@ni.com>
+Subject: Re: Linux stable vs RT stable and RT dev
+Date: Fri, 2 Feb 2018 15:46:11 -0600
+Message-ID: <20180202214611.GD868@jcartwri.amer.corp.natinst.com>
+References: <8155aea247374c058bd7c797124c3d28@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Cc: "Murphy, Dan" <dmurphy@ti.com>, "Nori, Sekhar" <nsekhar@ti.com>
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        "Murphy, Dan" <dmurphy@ti.com>, "Nori, Sekhar" <nsekhar@ti.com>,
+        <rostedt@goodmis.org>
+To: "Mills, William" <wmills@ti.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from fllnx210.ext.ti.com ([198.47.19.17]:28650 "EHLO
-        fllnx210.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1753344AbeBBTAO (ORCPT
+Received: from mx0a-00010702.pphosted.com ([148.163.156.75]:36990 "EHLO
+        mx0b-00010702.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1751880AbeBBVqS (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 2 Feb 2018 14:00:14 -0500
-Received: from dflxv15.itg.ti.com ([128.247.5.124])
-        by fllnx210.ext.ti.com (8.15.1/8.15.1) with ESMTP id w12J0D25000349
-        for <linux-rt-users@vger.kernel.org>; Fri, 2 Feb 2018 13:00:13 -0600
-Received: from DFLE108.ent.ti.com (dfle108.ent.ti.com [10.64.6.29])
-        by dflxv15.itg.ti.com (8.14.3/8.13.8) with ESMTP id w12J0DXd027121
-        for <linux-rt-users@vger.kernel.org>; Fri, 2 Feb 2018 13:00:13 -0600
-Content-Language: en-US
+        Fri, 2 Feb 2018 16:46:18 -0500
+Content-Disposition: inline
+In-Reply-To: <8155aea247374c058bd7c797124c3d28@ti.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+On Fri, Feb 02, 2018 at 07:00:12PM +0000, Mills, William wrote:
+> Hello,
 
-I am trying to understand the policy WRT the RT stable branches and the Lin=
-ux stable releases.
-It appears not every Linux stable gets its own RT stable. [1]
+Hey Bill-
 
-What is the goal? =20
-	Not getting behind by more than X weeks?
-	Only change when RT series needs to be updated?
-What is the expected consumer model?:
-	Use only the version published by the maintainer
-	Merge in upstream point release themselves between rt-stable releases
-How is the policy different for rt-dev vs rt-stable?
+> I am trying to understand the policy WRT the RT stable branches and
+> the Linux stable releases.  It appears not every Linux stable gets its
+> own RT stable. [1]
 
-I know Steven wrote up a stable RT maintainer's howto but I did not find it=
-.  Can I get a pointer?
-I did find Steven's slides from 2106[2] and skimmed them.
+I'm assuming you mean not every Linux stable release gets it's own
+stable-rt release, correct?  If so, then you're correct.  Some times
+I'll jump a few upstream stable versions if it's been awhile since I did
+an upstream merge.
 
-[1] https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.4/older/
-[2] https://wiki.linuxfoundation.org/_media/realtime/events/rt-summit2016/h=
-ow-much-stable-do-we-need_steven-rostedt.pdf
+The only guarantee is that the merged upstream stable release is
+monotonically increasing.
 
-Long version / background
----------------------------------------------------------------------------=
---------
-TI publishes 3 variants of our kernel for customers:
-	Base + TI + [Linaro LSK]
-	Base + TI + RT
-	Base + TI + Android Common
+You can consider a stable-rt release to be a synchronization point
+between the upstream stable release process and the rt-devel process.
 
-All this is based on the latest GKH LTS and there is maintenance of last ye=
-ars LTS
+> What is the goal?
+> 	Not getting behind by more than X weeks?
+> 	Only change when RT series needs to be updated?
 
-(Yes we understand this is all very simple if the TI set is nil.  We have n=
-ever achieved that to date.  In the very least it is backports from tip to =
-latest LTS.  In reality it is more.)
+In an ideal world, we could turn around a stable-rt release ontop of an
+upstream stable release in the time it takes to test it.  However, we're
+not in an ideal world, and merging in an upstream stable release can
+and does cause rt-specific regressions.
 
-Right now Base above is always the very latest stable from GKH LTS.  It is =
-auto merged as soon as it is published and picked up by our nightly builds.=
-   Any merge conflict in any of the variants stops auto merge progress.
+That being said, we do have a goal to be releasing a new stable-rt
+release within a month of an upstream stable release -OR- an rt-devel
+tree release with stable-targeted fixes.
 
-In this structure we tend to be the first to merge RT with a new stable.  M=
-ost of the time this is OK but sometimes it is not.
+> What is the expected consumer model?:
+> 	Use only the version published by the maintainer
+> 	Merge in upstream point release themselves between rt-stable releases
 
-Is it reasonable / expected for us to get ahead of you or should we arrange=
- things to just wait?
+It's expected that a consumer use the version released by the
+maintainer.
 
-I used 4.9 in this example but right now we are executing this on 4.14, 4.9=
-, and (somewhat) 4.4.
+Obviously, you're in control of your own destiny here, though.  One
+option for you would be to merge in an upstream point release for
+testing, then once a maintainer has released a new version, compare the
+two.
 
-Thanks,
-Bill
+> How is the policy different for rt-dev vs rt-stable?
 
----------------------------------------------------
-William A. Mills
-Chief Technologist, Open Source
-Texas Instruments, Processors
-20450 Century Blvd
-Germantown MD, 20874
-(work/mobile) +1-240-643-0836
+I'm not sure it is.
 
+> Long version / background
+> -----------------------------------------------------------------------------------
+> TI publishes 3 variants of our kernel for customers:
+> 	Base + TI + [Linaro LSK]
+> 	Base + TI + RT
+> 	Base + TI + Android Common
+>
+> All this is based on the latest GKH LTS and there is maintenance of last years LTS
+>
+> (Yes we understand this is all very simple if the TI set is nil.  We
+> have never achieved that to date.  In the very least it is backports
+> from tip to latest LTS.  In reality it is more.)
+>
+> Right now Base above is always the very latest stable from GKH LTS.
+> It is auto merged as soon as it is published and picked up by our
+> nightly builds.   Any merge conflict in any of the variants stops auto
+> merge progress.
+>
+> In this structure we tend to be the first to merge RT with a new
+> stable.  Most of the time this is OK but sometimes it is not.
+
+Yes, obviously there are many way things can fail that wouldn't trigger
+a textual merge conflict.  It's the responsibility of the maintainer to
+try to catch these things, or resolve them once they've been found.
+
+What I would like to understand is how you are testing these automerged
+branches.
+
+   Julia
