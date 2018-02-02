@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH 08/18] tracing: Add "unsigned" to function based events
-Date: Fri, 02 Feb 2018 18:05:06 -0500
-Message-ID: <20180202231018.191075357@goodmis.org>
+Subject: [PATCH 12/18] tracing: Add accessing direct address from function based events
+Date: Fri, 02 Feb 2018 18:05:10 -0500
+Message-ID: <20180202231018.828677654@goodmis.org>
 References: <20180202230458.840252014@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -24,162 +24,344 @@ Cc: Linus Torvalds <torvalds@linux-foundation.org>,
         Alexei Starovoitov <alexei.starovoitov@gmail.com>
 To: linux-kernel@vger.kernel.org
 Return-path: <linux-trace-users-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0008-tracing-Add-unsigned-to-function-based-events.patch
+Content-Disposition: inline; filename=0012-tracing-Add-accessing-direct-address-from-function-b.patch
 Sender: linux-trace-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-Add "unsigned" to the format processing to creating dynamic function based
-events. For example: "unsigned long" now works.
+Allow referencing any address during the function based event. The syntax is
+to use <type> <name>=<addr> For example:
+
+ # echo 'do_IRQ(long total_forks=0xffffffffa2a4b4c0)' > function_events
+ # echo 1 > events/function/enable
+ # cat trace
+            sshd-832   [000] d... 221639.210845: ret_from_intr->do_IRQ(total_forks=855)
+            sshd-832   [000] d... 221639.211114: ret_from_intr->do_IRQ(total_forks=855)
+          <idle>-0     [000] d... 221639.211198: ret_from_intr->do_IRQ(total_forks=855)
 
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- Documentation/trace/function-based-events.rst | 47 ++++++++++++++++++++++++++-
- kernel/trace/trace_event_ftrace.c             | 23 ++++++++++---
- 2 files changed, 65 insertions(+), 5 deletions(-)
+ Documentation/trace/function-based-events.rst |  40 +++++++-
+ kernel/trace/trace_event_ftrace.c             | 129 +++++++++++++++++++++-----
+ 2 files changed, 143 insertions(+), 26 deletions(-)
 
 diff --git a/Documentation/trace/function-based-events.rst b/Documentation/trace/function-based-events.rst
-index 2a002c8a500b..72e3e7730d63 100644
+index f18c8f3ef330..b0e6725f3032 100644
 --- a/Documentation/trace/function-based-events.rst
 +++ b/Documentation/trace/function-based-events.rst
-@@ -93,7 +93,7 @@ as follows:
+@@ -91,7 +91,7 @@ as follows:
  
-  ARG := TYPE FIELD | ARG '|' ARG
+  ARGS := ARG | ARG ',' ARGS | ''
  
-- TYPE := ATOM
-+ TYPE := ATOM | 'unsigned' ATOM
+- ARG := TYPE FIELD | ARG '|' ARG
++ ARG := TYPE FIELD | TYPE <name> '=' ADDR | TYPE ADDR | ARG '|' ARG
  
-  ATOM := 'u8' | 'u16' | 'u32' | 'u64' |
-          's8' | 's16' | 's32' | 's64' |
-@@ -176,3 +176,48 @@ an argument:
-     <idle>-0     [003] ..s3   904.075848: __netif_receive_skb_core->ip_rcv(skb=ffff88011396e800, skb=52, dev=ffff880115204000)
-     <idle>-0     [003] ..s3   904.725486: __netif_receive_skb_core->ip_rcv(skb=ffff88011396e800, skb=194, dev=ffff880115204000)
-     <idle>-0     [003] ..s3   905.152537: __netif_receive_skb_core->ip_rcv(skb=ffff88011396f200, skb=88, dev=ffff880115204000)
+  TYPE := ATOM | 'unsigned' ATOM
+ 
+@@ -107,6 +107,8 @@ as follows:
+ 
+  OFFSET := '+' <number>
+ 
++ ADDR := A hexidecimal address starting with '0x'
++
+  Where <name> is a unique string starting with an alphabetic character
+  and consists only of letters and numbers and underscores.
+ 
+@@ -267,3 +269,39 @@ Again, using gdb to find the offset of the "func" field of struct work_struct
+      <idle>-0     [000] dNs3  6241.172004: delayed_work_timer_fn->__queue_work(cpu=128, wq=ffff88011a010800, func=vmstat_shepherd+0x0/0xb0)
+  worker/0:2-1689  [000] d..2  6241.172026: __queue_delayed_work->__queue_work(cpu=7, wq=ffff88011a11da00, func=vmstat_update+0x0/0x70)
+      <idle>-0     [005] d.s3  6241.347996: queue_work_on->__queue_work(cpu=128, wq=ffff88011a011200, func=fb_flashcursor+0x0/0x110 [fb])
 +
 +
-+Unsigned usage
-+==============
++Direct memory access
++====================
 +
-+One can also use "unsigned" to make some types unsigned. It works against
-+"long", "int", "short" and "char". It doesn't error against other types but
-+may not make any sense.
++Function arguments are not the only thing that can be recorded from a function
++based event. Memory addresses can also be examined. If there's a global variable
++that you want to monitor via an interrupt, you can put in the address directly.
 +
-+ # echo 'ip_rcv(int skb[32])' > function_events
-+ # cat events/functions/ip_rcv/format
-+name: ip_rcv
-+ID: 1397
-+format:
-+	field:unsigned short common_type;	offset:0;	size:2;	signed:0;
-+	field:unsigned char common_flags;	offset:2;	size:1;	signed:0;
-+	field:unsigned char common_preempt_count;	offset:3;	size:1;	signed:0;
-+	field:int common_pid;	offset:4;	size:4;	signed:1;
++  # grep total_forks /proc/kallsyms
++ffffffff82354c18 B total_forks
 +
-+	field:unsigned long __parent_ip;	offset:8;	size:8;	signed:0;
-+	field:unsigned long __ip;	offset:16;	size:8;	signed:0;
-+	field:int skb;	offset:24;	size:4;	signed:1;
++  # echo 'do_IRQ(int total_forks=0xffffffff82354c18)' > function_events
 +
-+print fmt: "%pS->%pS(skb=%d)", REC->__ip, REC->__parent_ip, REC->skb
++  # echo 1 events/functions/do_IRQ/enable
++  # cat trace
++    <idle>-0     [003] d..3   337.076709: ret_from_intr->do_IRQ(total_forks=1419)
++    <idle>-0     [003] d..3   337.077046: ret_from_intr->do_IRQ(total_forks=1419)
++    <idle>-0     [003] d..3   337.077076: ret_from_intr->do_IRQ(total_forks=1420)
 +
++Note, address notations do not affect the argument count. For instance, with
 +
-+Notice that REC->skb is printed with "%d". By adding "unsigned"
++__visible unsigned int __irq_entry do_IRQ(struct pt_regs *regs)
 +
-+ # echo 'ip_rcv(unsigned int skb[32])' > function_events
-+ # cat events/functions/ip_rcv/format
-+name: ip_rcv
-+ID: 1398
-+format:
-+	field:unsigned short common_type;	offset:0;	size:2;	signed:0;
-+	field:unsigned char common_flags;	offset:2;	size:1;	signed:0;
-+	field:unsigned char common_preempt_count;	offset:3;	size:1;	signed:0;
-+	field:int common_pid;	offset:4;	size:4;	signed:1;
++  # echo 'do_IRQ(int total_forks=0xffffffff82354c18, symbol regs[16])' > function_events
 +
-+	field:unsigned long __parent_ip;	offset:8;	size:8;	signed:0;
-+	field:unsigned long __ip;	offset:16;	size:8;	signed:0;
-+	field:unsigned int skb;	offset:24;	size:4;	signed:0;
++Is the same as
 +
-+print fmt: "%pS->%pS(skb=%u)", REC->__ip, REC->__parent_ip, REC->skb
++  # echo 'do_IRQ(int total_forks=0xffffffff82354c18 | symbol regs[16])' > function_events
 +
-+It is now printed with a "%u".
++  # cat trace
++    <idle>-0     [003] d..3   653.839546: ret_from_intr->do_IRQ(total_forks=1504, regs=cpuidle_enter_state+0xb1/0x330)
++    <idle>-0     [003] d..3   653.906011: ret_from_intr->do_IRQ(total_forks=1504, regs=cpuidle_enter_state+0xb1/0x330)
++    <idle>-0     [003] d..3   655.823498: ret_from_intr->do_IRQ(total_forks=1504, regs=tick_nohz_idle_enter+0x4c/0x50)
++    <idle>-0     [003] d..3   655.954096: ret_from_intr->do_IRQ(total_forks=1504, regs=cpuidle_enter_state+0xb1/0x330)
++
 diff --git a/kernel/trace/trace_event_ftrace.c b/kernel/trace/trace_event_ftrace.c
-index 8c9d4a92deab..9548b93eb8cd 100644
+index ba10177b9bd6..206114f192be 100644
 --- a/kernel/trace/trace_event_ftrace.c
 +++ b/kernel/trace/trace_event_ftrace.c
-@@ -60,6 +60,7 @@ enum func_states {
- 	FUNC_STATE_BRACKET,
+@@ -63,6 +63,8 @@ enum func_states {
  	FUNC_STATE_BRACKET_END,
  	FUNC_STATE_INDIRECT,
-+	FUNC_STATE_UNSIGNED,
+ 	FUNC_STATE_UNSIGNED,
++	FUNC_STATE_ADDR,
++	FUNC_STATE_EQUAL,
  	FUNC_STATE_PIPE,
+ 	FUNC_STATE_PLUS,
  	FUNC_STATE_TYPE,
- 	FUNC_STATE_VAR,
-@@ -198,7 +199,7 @@ static char *next_token(char **ptr, char *last)
- 	return arg;
- }
- 
--static int add_arg(struct func_event *fevent, int ftype)
-+static int add_arg(struct func_event *fevent, int ftype, int unsign)
- {
- 	struct func_type *func_type = &func_types[ftype];
- 	struct func_arg *arg;
-@@ -211,13 +212,18 @@ static int add_arg(struct func_event *fevent, int ftype)
- 	if (!arg)
- 		return -ENOMEM;
- 
--	arg->type = kstrdup(func_type->name, GFP_KERNEL);
-+	if (unsign)
-+		arg->type = kasprintf(GFP_KERNEL, "unsigned %s",
-+				      func_type->name);
-+	else
-+		arg->type = kstrdup(func_type->name, GFP_KERNEL);
- 	if (!arg->type) {
- 		kfree(arg);
- 		return -ENOMEM;
+@@ -199,6 +201,7 @@ static char *next_token(char **ptr, char *last)
+ 		    *str == ',' ||
+ 		    *str == '|' ||
+ 		    *str == '+' ||
++		    *str == '=' ||
+ 		    *str == ')')
+ 			break;
  	}
- 	arg->size = func_type->size;
--	arg->sign = func_type->sign;
-+	if (!unsign)
-+		arg->sign = func_type->sign;
+@@ -243,12 +246,39 @@ static int add_arg(struct func_event *fevent, int ftype, int unsign)
+ 		arg->sign = func_type->sign;
  	arg->offset = ALIGN(fevent->arg_offset, arg->size);
- 	arg->arg = fevent->arg_cnt;
+ 	arg->func_type = ftype;
+-	arg->arg = fevent->arg_cnt;
  	fevent->arg_offset = arg->offset + arg->size;
-@@ -232,12 +238,14 @@ static int add_arg(struct func_event *fevent, int ftype)
+ 
+ 	list_add_tail(&arg->list, &fevent->args);
+ 	fevent->last_arg = arg;
+-	fevent->arg_cnt++;
++
++	return 0;
++}
++
++static int update_arg_name(struct func_event *fevent, const char *name)
++{
++	struct func_arg *arg = fevent->last_arg;
++
++	if (WARN_ON(!arg))
++		return -EINVAL;
++
++	arg->name = kstrdup(name, GFP_KERNEL);
++	if (!arg->name)
++		return -ENOMEM;
++	return 0;
++}
++
++static int update_arg_arg(struct func_event *fevent)
++{
++	struct func_arg *arg = fevent->last_arg;
++
++	if (WARN_ON(!arg))
++		return -EINVAL;
++
++	/* Make sure the arch can support this many args */
++	if (fevent->arg_cnt >= arch_get_func_args(NULL, 0, 0, NULL))
++		return -EINVAL;
++
++	arg->arg = fevent->arg_cnt;
+ 
+ 	return 0;
+ }
+@@ -256,14 +286,16 @@ static int add_arg(struct func_event *fevent, int ftype, int unsign)
  static enum func_states
  process_event(struct func_event *fevent, const char *token, enum func_states state)
  {
-+	static int unsign;
- 	long val;
++	static bool update_arg;
+ 	static int unsign;
+-	long val;
++	unsigned long val;
  	int ret;
  	int i;
  
  	switch (state) {
  	case FUNC_STATE_INIT:
-+		unsign = 0;
- 		if (!isalpha(token[0]))
+ 		unsign = 0;
++		update_arg = false;
+ 		if (!isalpha(token[0]) && token[0] != '_')
  			break;
  		/* Do not allow wild cards */
-@@ -262,13 +270,20 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+@@ -279,15 +311,15 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+ 			break;
+ 		return FUNC_STATE_PARAM;
+ 
+-	case FUNC_STATE_PIPE:
+-		fevent->arg_cnt--;
+-		goto comma;
+ 	case FUNC_STATE_PARAM:
+ 		if (token[0] == ')')
+ 			return FUNC_STATE_END;
  		/* Fall through */
  	case FUNC_STATE_COMMA:
-  comma:
-+		if (strcmp(token, "unsigned") == 0) {
-+			unsign = 2;
-+			return FUNC_STATE_UNSIGNED;
-+		}
-+		/* Fall through */
-+	case FUNC_STATE_UNSIGNED:
- 		for (i = 0; func_types[i].size; i++) {
- 			if (strcmp(token, func_types[i].name) == 0)
- 				break;
- 		}
- 		if (!func_types[i].size)
- 			break;
--		ret = add_arg(fevent, i);
-+		ret = add_arg(fevent, i, unsign);
-+		unsign = 0;
- 		if (ret < 0)
- 			break;
+- comma:
++		if (update_arg)
++			fevent->arg_cnt++;
++		update_arg = false;
++	case FUNC_STATE_PIPE:
+ 		if (strcmp(token, "unsigned") == 0) {
+ 			unsign = 2;
+ 			return FUNC_STATE_UNSIGNED;
+@@ -307,18 +339,20 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
  		return FUNC_STATE_TYPE;
+ 
+ 	case FUNC_STATE_TYPE:
+-		if (!isalpha(token[0]) || token[0] == '_')
+-			break;
+ 		if (WARN_ON(!fevent->last_arg))
+ 			break;
+-		fevent->last_arg->name = kstrdup(token, GFP_KERNEL);
+-		if (!fevent->last_arg->name)
++		if (update_arg_name(fevent, token) < 0)
++			break;
++		if (strncmp(token, "0x", 2) == 0)
++			goto equal;
++		if (!isalpha(token[0]) && token[0] != '_')
+ 			break;
++		update_arg = true;
+ 		return FUNC_STATE_VAR;
+ 
+ 	case FUNC_STATE_BRACKET:
+ 		WARN_ON(!fevent->last_arg);
+-		ret = kstrtol(token, 0, &val);
++		ret = kstrtoul(token, 0, &val);
+ 		if (ret)
+ 			break;
+ 		val *= fevent->last_arg->size;
+@@ -333,7 +367,7 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+ 	case FUNC_STATE_BRACKET_END:
+ 		switch (token[0]) {
+ 		case ')':
+-			return FUNC_STATE_END;
++			goto end;
+ 		case ',':
+ 			return FUNC_STATE_COMMA;
+ 		case '|':
+@@ -344,16 +378,33 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+ 	case FUNC_STATE_PLUS:
+ 		if (WARN_ON(!fevent->last_arg))
+ 			break;
+-		ret = kstrtol(token, 0, &val);
++		ret = kstrtoul(token, 0, &val);
+ 		if (ret)
+ 			break;
+ 		fevent->last_arg->index += val;
+ 		return FUNC_STATE_VAR;
+ 
++	case FUNC_STATE_ADDR:
++		switch (token[0]) {
++		case ')':
++			goto end;
++		case ',':
++			return FUNC_STATE_COMMA;
++		case '|':
++			return FUNC_STATE_PIPE;
++		}
++		break;
++
+ 	case FUNC_STATE_VAR:
++		if (token[0] == '=')
++			return FUNC_STATE_EQUAL;
++		if (WARN_ON(!fevent->last_arg))
++			break;
++		update_arg_arg(fevent);
++		update_arg = true;
+ 		switch (token[0]) {
+ 		case ')':
+-			return FUNC_STATE_END;
++			goto end;
+ 		case ',':
+ 			return FUNC_STATE_COMMA;
+ 		case '|':
+@@ -365,10 +416,29 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+ 		}
+ 		break;
+ 
++	case FUNC_STATE_EQUAL:
++		if (strncmp(token, "0x", 2) != 0)
++			break;
++ equal:
++		if (WARN_ON(!fevent->last_arg))
++			break;
++		ret = kstrtoul(token, 0, &val);
++		if (ret < 0)
++			break;
++		update_arg = false;
++		fevent->last_arg->index = val;
++		fevent->last_arg->arg = -1;
++		fevent->last_arg->indirect = INDIRECT_FLAG;
++		return FUNC_STATE_ADDR;
++
+ 	default:
+ 		break;
+ 	}
+ 	return FUNC_STATE_ERROR;
++ end:
++	if (update_arg)
++		fevent->arg_cnt++;
++	return FUNC_STATE_END;
+ }
+ 
+ static long long get_arg(struct func_arg *arg, unsigned long val)
+@@ -417,7 +487,7 @@ static void func_event_trace(struct trace_event_file *trace_file,
+ 	long args[func_event->arg_cnt];
+ 	long long val = 1;
+ 	unsigned long irq_flags;
+-	int nr_args;
++	int nr_args = 0;
+ 	int size;
+ 	int pc;
+ 
+@@ -438,12 +508,17 @@ static void func_event_trace(struct trace_event_file *trace_file,
+ 	entry = ring_buffer_event_data(event);
+ 	entry->ip = ip;
+ 	entry->parent_ip = parent_ip;
+-	nr_args = arch_get_func_args(pt_regs, 0, func_event->arg_cnt, args);
++	if (func_event->arg_cnt)
++		nr_args = arch_get_func_args(pt_regs, 0, func_event->arg_cnt, args);
+ 
+ 	list_for_each_entry(arg, &func_event->args, list) {
+-		if (arg->arg < nr_args)
+-			val = get_arg(arg, args[arg->arg]);
+-		else
++		if (arg->arg < nr_args) {
++			/* Is arg an address and not a parameter? */
++			if (arg->arg < 0)
++				val = get_arg(arg, 0);
++			else
++				val = get_arg(arg, args[arg->arg]);
++		} else
+ 			val = 0;
+ 		memcpy(&entry->data[arg->offset], &val, arg->size);
+ 	}
+@@ -815,11 +890,15 @@ static int func_event_seq_show(struct seq_file *m, void *v)
+ 		last_arg = arg->arg;
+ 		comma = true;
+ 		seq_printf(m, "%s %s", arg->type, arg->name);
+-		if (arg->index)
+-			seq_printf(m, "+%ld", arg->index);
+-		if (arg->indirect && arg->size)
+-			seq_printf(m, "[%ld]",
+-				   (arg->indirect ^ INDIRECT_FLAG) / arg->size);
++		if (arg->arg < 0) {
++			seq_printf(m, "=0x%lx", arg->index);
++		} else {
++			if (arg->index)
++				seq_printf(m, "+%ld", arg->index);
++			if (arg->indirect && arg->size)
++				seq_printf(m, "[%ld]",
++					   (arg->indirect ^ INDIRECT_FLAG) / arg->size);
++		}
+ 	}
+ 	seq_puts(m, ")\n");
+ 
 -- 
 2.15.1
 
