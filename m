@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH 05/18] tracing: Add hex print for dynamic ftrace based events
-Date: Fri, 02 Feb 2018 18:05:03 -0500
-Message-ID: <20180202231017.756258991@goodmis.org>
+Subject: [PATCH 02/18] tracing: Add documentation for function based events
+Date: Fri, 02 Feb 2018 18:05:00 -0500
+Message-ID: <20180202231017.316870605@goodmis.org>
 References: <20180202230458.840252014@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -23,102 +23,98 @@ Cc: Linus Torvalds <torvalds@linux-foundation.org>,
         Namhyung Kim <namhyung@kernel.org>,
         Alexei Starovoitov <alexei.starovoitov@gmail.com>
 To: linux-kernel@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.99]:60758 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751857AbeBBXKU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 2 Feb 2018 18:10:20 -0500
-Content-Disposition: inline; filename=0005-tracing-Add-hex-print-for-dynamic-ftrace-based-event.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-trace-users-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0002-tracing-Add-documentation-for-function-based-events.patch
+Sender: linux-trace-users-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-Add x64, x32, x16 and x8 to represent numbers of the same size in hex.
-Similar to u64, u32, u16, and u8 but uses %x instead of %u.
+Start documenting the usage of function based events. This only gives an
+introduction for the function based events. As new features are added to
+them, those features will be documented in this document.
 
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- Documentation/trace/function-based-events.rst | 14 +++++++++-----
- kernel/trace/trace_event_ftrace.c             | 13 ++++++++++++-
- 2 files changed, 21 insertions(+), 6 deletions(-)
+ Documentation/trace/function-based-events.rst | 69 +++++++++++++++++++++++++++
+ 1 file changed, 69 insertions(+)
+ create mode 100644 Documentation/trace/function-based-events.rst
 
 diff --git a/Documentation/trace/function-based-events.rst b/Documentation/trace/function-based-events.rst
-index 94c2c975295a..f27a0c4e829c 100644
---- a/Documentation/trace/function-based-events.rst
+new file mode 100644
+index 000000000000..843a1bf76459
+--- /dev/null
 +++ b/Documentation/trace/function-based-events.rst
-@@ -97,6 +97,7 @@ as follows:
- 
-  ATOM := 'u8' | 'u16' | 'u32' | 'u64' |
-          's8' | 's16' | 's32' | 's64' |
-+         'x8' | 'x16' | 'x32' | 'x64' |
-          'char' | 'short' | 'int' | 'long' | 'size_t'
- 
-  FIELD := <name>
-@@ -116,11 +117,14 @@ int ip_rcv(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
- 
- If we are only interested in the first argument (skb):
- 
-- # echo 'ip_rcv(u64 skb, u64 dev)' > function_events
-+ # echo 'ip_rcv(x64 skb, x86 dev)' > function_events
- 
-  # echo 1 > events/functions/ip_rcv/enable
-  # cat trace
--     <idle>-0     [003] ..s3  2119.041935: __netif_receive_skb_core->ip_rcv(skb=18446612136982403072, dev=18446612136968273920)
--     <idle>-0     [003] ..s3  2119.041944: __netif_receive_skb_core->ip_rcv(skb=18446612136982403072, dev=18446612136968273920)
--     <idle>-0     [003] ..s3  2119.288337: __netif_receive_skb_core->ip_rcv(skb=18446612136982403072, dev=18446612136968273920)
--     <idle>-0     [003] ..s3  2119.288960: __netif_receive_skb_core->ip_rcv(skb=18446612136982403072, dev=18446612136968273920)
-+     <idle>-0     [003] ..s3  5543.133460: __netif_receive_skb_core->ip_rcv(skb=ffff88007f960700, net=ffff880114250000)
-+     <idle>-0     [003] ..s3  5543.133475: __netif_receive_skb_core->ip_rcv(skb=ffff88007f960700, net=ffff880114250000)
-+     <idle>-0     [003] ..s3  5543.312592: __netif_receive_skb_core->ip_rcv(skb=ffff88007f960700, net=ffff880114250000)
-+     <idle>-0     [003] ..s3  5543.313150: __netif_receive_skb_core->ip_rcv(skb=ffff88007f960700, net=ffff880114250000)
+@@ -0,0 +1,69 @@
++=====================
++Function based events
++=====================
 +
-+We use "x64" in order to make sure that the data is displayed in hex.
-+This is on a x86_64 machine, and we know the pointer sizes are 8 bytes.
-diff --git a/kernel/trace/trace_event_ftrace.c b/kernel/trace/trace_event_ftrace.c
-index 66465be1e6d5..aa19c8af9d34 100644
---- a/kernel/trace/trace_event_ftrace.c
-+++ b/kernel/trace/trace_event_ftrace.c
-@@ -62,6 +62,11 @@ enum func_states {
- 	FUNC_STATE_ERROR,
- };
- 
-+typedef u64 x64;
-+typedef u32 x32;
-+typedef u16 x16;
-+typedef u8 x8;
++.. Copyright 2018 VMware Inc.
++..   Author:   Steven Rostedt <srostedt@goodmis.org>
++..  License:   The GNU Free Documentation License, Version 1.2
++..               (dual licensed under the GPL v2)
 +
- #define TYPE_TUPLE(type)			\
- 	{ #type, sizeof(type), is_signed_type(type) }
- 
-@@ -77,12 +82,16 @@ static struct func_type {
- 	TYPE_TUPLE(size_t),
- 	TYPE_TUPLE(u64),
- 	TYPE_TUPLE(s64),
-+	TYPE_TUPLE(x64),
- 	TYPE_TUPLE(u32),
- 	TYPE_TUPLE(s32),
-+	TYPE_TUPLE(x32),
- 	TYPE_TUPLE(u16),
- 	TYPE_TUPLE(s16),
-+	TYPE_TUPLE(x16),
- 	TYPE_TUPLE(u8),
- 	TYPE_TUPLE(s8),
-+	TYPE_TUPLE(x8),
- 	{ NULL,		0,	0 }
- };
- 
-@@ -353,7 +362,9 @@ static void make_fmt(struct func_arg *arg, char *fmt)
- 		fmt[c++] = 'l';
- 	}
- 
--	if (arg->sign)
-+	if (arg->type[0] == 'x')
-+		fmt[c++] = 'x';
-+	else if (arg->sign)
- 		fmt[c++] = 'd';
- 	else
- 		fmt[c++] = 'u';
++
++Introduction
++============
++
++Static events are extremely useful for analyzing the happenings of
++inside the Linux kernel. But there are times where events are not
++available, either due to not being in control of the kernel, or simply
++because a maintainer refuses to have them in their subsystem.
++
++The function tracer is a way trace within a subsystem without trace events.
++But it only provides information of when a function was hit and who
++called it. Combining trace events with the function tracer allows
++for dynamically creating trace events where they do not exist at
++function entry. They provide more information than the function
++tracer can provide, as they can read the parameters of a function
++or simply read an address. This makes it possible to create a
++trace point at any function that the function tracer can trace, and
++read the parameters of the function.
++
++
++Usage
++=====
++
++Simply writing an ASCII string into a file called "function_events"
++in the tracefs file system will create the function based events.
++Note, this file is only writable by root.
++
++ # mount -t tracefs nodev /sys/kernel/tracing
++ # cd /sys/kernel/tracing
++ # echo 'do_IRQ()' > function_events
++
++The above will create a trace event on the do_IRQ function call.
++As no parameters were specified, it will not trace anything other
++than the function and the parent. This is the minimum function
++based event.
++
++ # ls events/functions/do_IRQ
++enable  filter  format  hist  id  trigger
++
++Even though the above function based event does not record much more
++than the function tracer does, it does become a full fledge event.
++This can be used by the histogram infrastructure, and triggers.
++
++ # cat events/functions/do_IRQ/format
++name: do_IRQ
++ID: 1304
++format:
++	field:unsigned short common_type;	offset:0;	size:2;	signed:0;
++	field:unsigned char common_flags;	offset:2;	size:1;	signed:0;
++	field:unsigned char common_preempt_count;	offset:3;	size:1;	signed:0;
++	field:int common_pid;	offset:4;	size:4;	signed:1;
++
++	field:unsigned long __parent_ip;	offset:8;	size:8;	signed:0;
++	field:unsigned long __ip;	offset:16;	size:8;	signed:0;
++
++print fmt: "%pS->%pS()", REC->__ip, REC->__parent_ip
++
++The above shows that the format is very close to the function trace
++except that it displays the parent function followed by the called
++function.
 -- 
 2.15.1
 
