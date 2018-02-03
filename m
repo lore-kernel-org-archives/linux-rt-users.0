@@ -1,14 +1,15 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
 Subject: Re: [PATCH 00/18] [ANNOUNCE] Dynamically created function based
  events
-Date: Sat, 3 Feb 2018 14:02:17 -0500
-Message-ID: <20180203140217.2382df69@gandalf.local.home>
+Date: Sat, 3 Feb 2018 12:52:08 -0800
+Message-ID: <20180203205207.mpob4w6eyehhg2ky@ast-mbp>
 References: <20180202230458.840252014@goodmis.org>
-        <261141691.15507.1517677454208.JavaMail.zimbra@efficios.com>
+ <261141691.15507.1517677454208.JavaMail.zimbra@efficios.com>
+ <20180203140217.2382df69@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: linux-kernel <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset=us-ascii
+Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        linux-kernel <linux-kernel@vger.kernel.org>,
         Linus Torvalds <torvalds@linux-foundation.org>,
         Ingo Molnar <mingo@kernel.org>,
         Andrew Morton <akpm@linux-foundation.org>,
@@ -22,101 +23,59 @@ Cc: linux-kernel <linux-kernel@vger.kernel.org>,
         Jiri Olsa <jolsa@redhat.com>, bristot <bristot@redhat.com>,
         Juri Lelli <juri.lelli@redhat.com>,
         Jonathan Corbet <corbet@lwn.net>,
-        Namhyung Kim <namhyung@kernel.org>,
-        Alexei Starovoitov <alexei.starovoitov@gmail.com>
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+        Namhyung Kim <namhyung@kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <261141691.15507.1517677454208.JavaMail.zimbra@efficios.com>
+Content-Disposition: inline
+In-Reply-To: <20180203140217.2382df69@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Sat, 3 Feb 2018 17:04:14 +0000 (UTC)
-Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
-
-
-> The approach proposed here will introduce an expectation that internal
-> function signatures never change in the kernel, else it would break user-space
-> tools hooking on those functions.
-
-I had this exact discussion with Linus. Linus, please correct me if I'm
-wrong.
-
-This is a case where he said if someone expected a function to be
-there, than too bad. Functions can come and go depending on if gcc
-inlines it or not. We already have this interface today. It's the
-function tracer. One could argue a tool requires a function to exist
-because it depends on a function being accessible to the function
-tracer.
-
+On Sat, Feb 03, 2018 at 02:02:17PM -0500, Steven Rostedt wrote:
 > 
-> The instrumentation infrastructure provided by this patchset might be useful
-> for "one off" scripts, but it does not address the "stable instrumentation"
-> expectations issue.
+> From those that were asking about having "trace markers" (ie.
+> Facebook), they told us they can cope with kernel changes.
 
-Actually, it could work for adding a tracepoint.
+There is some misunderstanding here.
+We never asked for this interface.
+We're perfectly fine with existing kprobe/tracepoint+bpf.
+There are plenty of things to improve there, but this 'function based events'
+is not something we're interested in.
+I don't see how they are any better than kprobes and suffer from the same issues.
+We really dislike text based interfaces since they are good only
+for human access and very awkward to use from tools.
+We also dislike when kernel takes on challenge to do text language parsing.
+It's a user space job.
 
-> 
-> The problem today is caused by widely used trace analysis tools that cannot
-> cope with changes to the kernel instrumentation, do not report the
-> instrumentation mismatch compared to their expectations, and we generally
-> don't expect users to ever update those tools to deal with newer kernels. Having
-> those tools hook on function names/arguments will not make this magically go
-> away. As soon as kernel code changes, widely used trace analysis tools will
-> start breaking left and right, and we will be back to square one. Only this time,
-> it's the internal function signature which will have become an ABI.
+> The issue is that people are afraid to add tracepoints into their
+> subsystem because they are afraid that they will become stable and
+> limit their own development.
 
->From those that were asking about having "trace markers" (ie.
-Facebook), they told us they can cope with kernel changes.
+This is not true. Tracepoints are being added and they're being changed.
+We have a bunch of tools that use both kprobe and tracepoint hooks
+together with bpf programs to extract information from the kernel.
+They do break from time to time when we upgrade kernels (and we upgrade often),
+but keeping 'if kernel X do this, if kernel Y do that' inside the tool
+is perfectly fine.
+More often the tools have 'if kernel X ...' due to bpf verifier differences.
+It's constantly evolving and older kernels cannot load complex bpf
+programs written for the latest. So tools have to do some ugly workarounds.
 
-If a user can't cope with the changes, then they need to have their own
-custom kernels.
+> One problem we are having today is that too many trace events are being
+> created, where there are a lot of them that have been used once and
+> never used again. And people don't care about them.
 
-> 
-> A possible solution to this problem appears if we start considering trace
-> analysis tools as just that: "tooling", with the following properties:
-> 
-> 1) Tools need to validate that the instrumentation provided matches their
->    expectations. This can be done by checking event/field names and/or version.
->    Tools that fail to do that should be fixed.
-> 
-> 2) Tools need to report to the user when the instrumentation does not match
->    their expectations, and hint users to upgrade in order to deal with change.
-> 
-> 3) Tools need to be backward compatible with respect to instrumentation: a
->    user switching between older and newer kernels should not have to keep
->    various copies of their tooling stack (graphical UI, analysis scripts,
->    and so on).
-> 
-> If our goal is really to address this "stable instrumentation" issue, I don't
-> think hooking on functions helps in any way. I hope we can work on defining
-> instrumentation interface rules in order to deal with the fundamental problem
-> of requiring tooling to adapt to kernel changes.
+I don't think such issue exists. Please point an example of
+a tracepoint that was added and no one cares about it.
 
-I think you may have mistaken my goal. It was not to establish stable
-instrumentation. In fact, it was the exact opposite. It was a way to
-avoid stable instrumentation but still be able to add trace events.
+As far as Mathieu's point about detecting the difference between kernels,
+yes, it's a real problem to solve. The tracepoint changes are
+easy to detect, but changes to function arguments are much harder.
+Hence we're using kprobes on functions that are unlikely to change
+and that works well.
 
-The issue is that people are afraid to add tracepoints into their
-subsystem because they are afraid that they will become stable and
-limit their own development. The problem is that it hurts those that
-want to trace these subsystems who are perfectly fine with the
-tracepoints going away, and then they would need to change their tools.
-This change set was to help those that can customize their tools with
-new kernels. It was not to help those that just want their tools to
-work with all kernels.
-
-With that said, this actually can help those who want stable
-infrastructure as well. If there happens to be a function that is
-constantly used to create a dynamic function based event, it can then
-be shown to ask the sub system maintainer to add a static tracepoint
-there. As they can show that it is very useful to have.
-
-One problem we are having today is that too many trace events are being
-created, where there are a lot of them that have been used once and
-never used again. And people don't care about them. I want to slow down
-the addition of trace events if these function events can be used
-instead. And when they are not good enough, or we see that one is
-constantly being added, then we will know that we can add a trace event
-that would be useful in the future.
-
--- Steve
+Also please note that kernel tracepoints are not different from tracing tool
+point of view than USDT tracepoints in user space apps.
+The tools attach to both of them and expect both to be more or less
+stable. Yet kernel tracepoints and USDT in apps _do_ change
+and tools have to deal with changes. It's actually harder with USDT.
