@@ -1,187 +1,133 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH 07/18] tracing: Add dereferencing multiple fields per arg
-Date: Fri, 02 Feb 2018 18:05:05 -0500
-Message-ID: <20180202231018.043996474@goodmis.org>
-References: <20180202230458.840252014@goodmis.org>
+From: William Mills <wmills@ti.com>
+Subject: Re: Linux stable vs RT stable and RT dev
+Date: Fri, 2 Feb 2018 20:20:15 -0500
+Message-ID: <1c47b7e6-86d0-cbb0-9b72-7b7d63e46ddc@ti.com>
+References: <8155aea247374c058bd7c797124c3d28@ti.com>
+ <20180202214611.GD868@jcartwri.amer.corp.natinst.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Cc: Linus Torvalds <torvalds@linux-foundation.org>,
-        Ingo Molnar <mingo@kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        linux-rt-users@vger.kernel.org, linux-trace-users@vger.kernel.org,
-        Arnaldo Carvalho de Melo <acme@kernel.org>,
-        Clark Williams <williams@redhat.com>,
-        Jiri Olsa <jolsa@redhat.com>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-        Namhyung Kim <namhyung@kernel.org>,
-        Alexei Starovoitov <alexei.starovoitov@gmail.com>
-To: linux-kernel@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0007-tracing-Add-dereferencing-multiple-fields-per-arg.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        "Murphy, Dan" <dmurphy@ti.com>, "Nori, Sekhar" <nsekhar@ti.com>,
+        <rostedt@goodmis.org>, "Hernandez, Carlos" <ceh@ti.com>,
+        "Strashko, Grygorii" <grygorii.strashko@ti.com>
+To: Julia Cartwright <julia@ni.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from lelnx193.ext.ti.com ([198.47.27.77]:39174 "EHLO
+        lelnx193.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751470AbeBCBUT (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 2 Feb 2018 20:20:19 -0500
+In-Reply-To: <20180202214611.GD868@jcartwri.amer.corp.natinst.com>
+Content-Language: en-US
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+Hi Julia,
 
-As an argument may be a structure or an array, we may want to dereference
-more than one field per argument. Create a pipe '|' token to the parsing
-that allows to reference multipe dereference fields per function argument.
+On 02/02/2018 04:46 PM, Julia Cartwright wrote:
+> On Fri, Feb 02, 2018 at 07:00:12PM +0000, Mills, William wrote:
+>> Hello,
+> 
+> Hey Bill-
+> 
+>> I am trying to understand the policy WRT the RT stable branches and
+>> the Linux stable releases.  It appears not every Linux stable gets its
+>> own RT stable. [1]
+> 
+> I'm assuming you mean not every Linux stable release gets it's own
+> stable-rt release, correct?  If so, then you're correct.  Some times
+> I'll jump a few upstream stable versions if it's been awhile since I did
+> an upstream merge.
+> 
+> The only guarantee is that the merged upstream stable release is
+> monotonically increasing.
+> 
+> You can consider a stable-rt release to be a synchronization point
+> between the upstream stable release process and the rt-devel process.
+> 
+>> What is the goal?
+>> 	Not getting behind by more than X weeks?
+>> 	Only change when RT series needs to be updated?
+> 
+> In an ideal world, we could turn around a stable-rt release ontop of an
+> upstream stable release in the time it takes to test it.  However, we're
+> not in an ideal world, and merging in an upstream stable release can
+> and does cause rt-specific regressions.
+> 
+> That being said, we do have a goal to be releasing a new stable-rt
+> release within a month of an upstream stable release -OR- an rt-devel
+> tree release with stable-targeted fixes.
+> 
+>> What is the expected consumer model?:
+>> 	Use only the version published by the maintainer
+>> 	Merge in upstream point release themselves between rt-stable releases
+> 
+> It's expected that a consumer use the version released by the
+> maintainer.
+> 
+> Obviously, you're in control of your own destiny here, though.  One
+> option for you would be to merge in an upstream point release for
+> testing, then once a maintainer has released a new version, compare the
+> two.
+> 
+>> How is the policy different for rt-dev vs rt-stable?
+> 
+> I'm not sure it is.
+> 
 
-Change func_arg fields from char to s8 or u8 to allow them to be
-subscripts to arrays.
+Thanks for the answers.  That may be all me need for now and we will
+think about this more.
 
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
----
- Documentation/trace/function-based-events.rst | 20 +++++++++++++++++-
- kernel/trace/trace_event_ftrace.c             | 29 ++++++++++++++++++++-------
- 2 files changed, 41 insertions(+), 8 deletions(-)
+See below.
 
-diff --git a/Documentation/trace/function-based-events.rst b/Documentation/trace/function-based-events.rst
-index 7d67229e8e88..2a002c8a500b 100644
---- a/Documentation/trace/function-based-events.rst
-+++ b/Documentation/trace/function-based-events.rst
-@@ -91,7 +91,7 @@ as follows:
- 
-  ARGS := ARG | ARG ',' ARGS | ''
- 
-- ARG := TYPE FIELD
-+ ARG := TYPE FIELD | ARG '|' ARG
- 
-  TYPE := ATOM
- 
-@@ -158,3 +158,21 @@ As 128 / 4 (length of int) is 32, we can see the length of the skb with:
-     <idle>-0     [003] ..s3   280.807023: __netif_receive_skb_core->ip_rcv(skb=52, dev=ffff8801092f9400)
- 
- Now we see the length of the sk_buff per event.
-+
-+
-+Multiple fields per argument
-+============================
-+
-+
-+If we still want to see the skb pointer value along with the length of the
-+skb, then using the '|' option allows us to add more than one option to
-+an argument:
-+
-+ # echo 'ip_rcv(x64 skb | int skb[32], x64 dev)' > function_events
-+
-+ # echo 1 > events/functions/ip_rcv/enable
-+ # cat trace
-+    <idle>-0     [003] ..s3   904.075838: __netif_receive_skb_core->ip_rcv(skb=ffff88011396e800, skb=52, dev=ffff880115204000)
-+    <idle>-0     [003] ..s3   904.075848: __netif_receive_skb_core->ip_rcv(skb=ffff88011396e800, skb=52, dev=ffff880115204000)
-+    <idle>-0     [003] ..s3   904.725486: __netif_receive_skb_core->ip_rcv(skb=ffff88011396e800, skb=194, dev=ffff880115204000)
-+    <idle>-0     [003] ..s3   905.152537: __netif_receive_skb_core->ip_rcv(skb=ffff88011396f200, skb=88, dev=ffff880115204000)
-diff --git a/kernel/trace/trace_event_ftrace.c b/kernel/trace/trace_event_ftrace.c
-index 5d37498d1c6b..8c9d4a92deab 100644
---- a/kernel/trace/trace_event_ftrace.c
-+++ b/kernel/trace/trace_event_ftrace.c
-@@ -21,8 +21,8 @@ struct func_arg {
- 	long				indirect;
- 	short				offset;
- 	short				size;
--	char				arg;
--	char				sign;
-+	s8				arg;
-+	u8				sign;
- };
- 
- struct func_event {
-@@ -60,6 +60,7 @@ enum func_states {
- 	FUNC_STATE_BRACKET,
- 	FUNC_STATE_BRACKET_END,
- 	FUNC_STATE_INDIRECT,
-+	FUNC_STATE_PIPE,
- 	FUNC_STATE_TYPE,
- 	FUNC_STATE_VAR,
- 	FUNC_STATE_COMMA,
-@@ -179,6 +180,7 @@ static char *next_token(char **ptr, char *last)
- 		    *str == '[' ||
- 		    *str == ']' ||
- 		    *str == ',' ||
-+		    *str == '|' ||
- 		    *str == ')')
- 			break;
- 	}
-@@ -251,11 +253,15 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
- 			break;
- 		return FUNC_STATE_PARAM;
- 
-+	case FUNC_STATE_PIPE:
-+		fevent->arg_cnt--;
-+		goto comma;
- 	case FUNC_STATE_PARAM:
- 		if (token[0] == ')')
- 			return FUNC_STATE_END;
- 		/* Fall through */
- 	case FUNC_STATE_COMMA:
-+ comma:
- 		for (i = 0; func_types[i].size; i++) {
- 			if (strcmp(token, func_types[i].name) == 0)
- 				break;
-@@ -297,6 +303,8 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
- 			return FUNC_STATE_END;
- 		case ',':
- 			return FUNC_STATE_COMMA;
-+		case '|':
-+			return FUNC_STATE_PIPE;
- 		}
- 		break;
- 
-@@ -306,6 +314,8 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
- 			return FUNC_STATE_END;
- 		case ',':
- 			return FUNC_STATE_COMMA;
-+		case '|':
-+			return FUNC_STATE_PIPE;
- 		case '[':
- 			return FUNC_STATE_BRACKET;
- 		}
-@@ -364,7 +374,6 @@ static void func_event_trace(struct trace_event_file *trace_file,
- 	int nr_args;
- 	int size;
- 	int pc;
--	int i = 0;
- 
- 	if (trace_trigger_soft_disabled(trace_file))
- 		return;
-@@ -386,8 +395,8 @@ static void func_event_trace(struct trace_event_file *trace_file,
- 	nr_args = arch_get_func_args(pt_regs, 0, func_event->arg_cnt, args);
- 
- 	list_for_each_entry(arg, &func_event->args, list) {
--		if (i < nr_args)
--			val = get_arg(arg, args[i]);
-+		if (arg->arg < nr_args)
-+			val = get_arg(arg, args[arg->arg]);
- 		else
- 			val = 0;
- 		memcpy(&entry->data[arg->offset], &val, arg->size);
-@@ -741,12 +750,18 @@ static int func_event_seq_show(struct seq_file *m, void *v)
- 	struct func_event *func_event = v;
- 	struct func_arg *arg;
- 	bool comma = false;
-+	int last_arg = 0;
- 
- 	seq_printf(m, "%s(", func_event->func);
- 
- 	list_for_each_entry(arg, &func_event->args, list) {
--		if (comma)
--			seq_puts(m, ", ");
-+		if (comma) {
-+			if (last_arg == arg->arg)
-+				seq_puts(m, " | ");
-+			else
-+				seq_puts(m, ", ");
-+		}
-+		last_arg = arg->arg;
- 		comma = true;
- 		seq_printf(m, "%s %s", arg->type, arg->name);
- 		if (arg->indirect && arg->size)
--- 
-2.15.1
+>> Long version / background
+>> -----------------------------------------------------------------------------------
+>> TI publishes 3 variants of our kernel for customers:
+>> 	Base + TI + [Linaro LSK]
+>> 	Base + TI + RT
+>> 	Base + TI + Android Common
+>>
+>> All this is based on the latest GKH LTS and there is maintenance of last years LTS
+>>
+>> (Yes we understand this is all very simple if the TI set is nil.  We
+>> have never achieved that to date.  In the very least it is backports
+>> from tip to latest LTS.  In reality it is more.)
+>>
+>> Right now Base above is always the very latest stable from GKH LTS.
+>> It is auto merged as soon as it is published and picked up by our
+>> nightly builds.   Any merge conflict in any of the variants stops auto
+>> merge progress.
+>>
+>> In this structure we tend to be the first to merge RT with a new
+>> stable.  Most of the time this is OK but sometimes it is not.
+> 
+> Yes, obviously there are many way things can fail that wouldn't trigger
+> a textual merge conflict.  It's the responsibility of the maintainer to
+> try to catch these things, or resolve them once they've been found.
+> 
+> What I would like to understand is how you are testing these automerged
+> branches.
+> 
+>    Julia
+> 
+
++ Carlos (TI integration & test lead) who will correct me if I am wrong
++ Grygorii who actually solves these problems when they come up (and is
+a subscriber here anyway)
+
+TI has a pretty extensive test plan.  Not every test is run every night
+but the rest is picked up on -rc (~weekly) and by the time of the
+release (once per 6 weeks) a full test plan is executed.
+
+Most of our tests are focused on TI drivers and platform code for both
+functional and performance regressions.  We do run cyclic test for RT
+performance regressions and (I believe) general LTP tests to make sure
+we did not break the kernel.  Just the process of running the tests
+exercises a good bit of functionality.
+
+It should be a TI TODO to see if there is anything in RT-CI that we
+don't already run and incorporate it.
+
+Thanks again,
+Bill
