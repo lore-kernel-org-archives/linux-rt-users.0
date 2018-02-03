@@ -1,133 +1,199 @@
-From: William Mills <wmills@ti.com>
-Subject: Re: Linux stable vs RT stable and RT dev
-Date: Fri, 2 Feb 2018 20:20:15 -0500
-Message-ID: <1c47b7e6-86d0-cbb0-9b72-7b7d63e46ddc@ti.com>
-References: <8155aea247374c058bd7c797124c3d28@ti.com>
- <20180202214611.GD868@jcartwri.amer.corp.natinst.com>
+From: Masami Hiramatsu <mhiramat@kernel.org>
+Subject: Re: [PATCH 00/18] [ANNOUNCE] Dynamically created function based
+ events
+Date: Sat, 3 Feb 2018 22:38:17 +0900
+Message-ID: <20180203223817.0c8cc485d8163ad84039cf02@kernel.org>
+References: <20180202230458.840252014@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "Murphy, Dan" <dmurphy@ti.com>, "Nori, Sekhar" <nsekhar@ti.com>,
-        <rostedt@goodmis.org>, "Hernandez, Carlos" <ceh@ti.com>,
-        "Strashko, Grygorii" <grygorii.strashko@ti.com>
-To: Julia Cartwright <julia@ni.com>
+Cc: linux-kernel@vger.kernel.org,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Ingo Molnar <mingo@kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        linux-rt-users@vger.kernel.org, linux-trace-users@vger.kernel.org,
+        Arnaldo Carvalho de Melo <acme@kernel.org>,
+        Clark Williams <williams@redhat.com>,
+        Jiri Olsa <jolsa@redhat.com>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Namhyung Kim <namhyung@kernel.org>,
+        Alexei Starovoitov <alexei.starovoitov@gmail.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lelnx193.ext.ti.com ([198.47.27.77]:39174 "EHLO
-        lelnx193.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751470AbeBCBUT (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 2 Feb 2018 20:20:19 -0500
-In-Reply-To: <20180202214611.GD868@jcartwri.amer.corp.natinst.com>
-Content-Language: en-US
+Received: from mail.kernel.org ([198.145.29.99]:34886 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751839AbeBCNiX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 3 Feb 2018 08:38:23 -0500
+In-Reply-To: <20180202230458.840252014@goodmis.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Julia,
+On Fri, 02 Feb 2018 18:04:58 -0500
+Steven Rostedt <rostedt@goodmis.org> wrote:
 
-On 02/02/2018 04:46 PM, Julia Cartwright wrote:
-> On Fri, Feb 02, 2018 at 07:00:12PM +0000, Mills, William wrote:
->> Hello,
 > 
-> Hey Bill-
+> At Kernel Summit back in October, we tried to bring up trace markers, which
+> would be nops within the kernel proper, that would allow modules to hook
+> arbitrary trace events to them. The reaction to this proposal was less than
+> favorable. We were told that we were trying to make a work around for a
+> problem, and not solving it. The problem in our minds is the notion of a
+> "stable trace event".
 > 
->> I am trying to understand the policy WRT the RT stable branches and
->> the Linux stable releases.  It appears not every Linux stable gets its
->> own RT stable. [1]
+> There are maintainers that do not want trace events, or more trace events in
+> their subsystems. This is due to the fact that trace events post an
+> interface to user space, and this interface could become required by some
+> tool. This may cause the trace event to become stable where it must not
+> break the tool, and thus prevent the code from changing.
 > 
-> I'm assuming you mean not every Linux stable release gets it's own
-> stable-rt release, correct?  If so, then you're correct.  Some times
-> I'll jump a few upstream stable versions if it's been awhile since I did
-> an upstream merge.
+> Or, the trace event may just have to add padding for fields that tools
+> may require. The "success" field of the sched_wakeup trace event is one such
+> instance. There is no more "success" variable, but tools may fail if it were
+> to go away, so a "1" is simply added to the trace event wasting ring buffer
+> real estate.
 > 
-> The only guarantee is that the merged upstream stable release is
-> monotonically increasing.
+> I talked with Linus about this, and he told me that we already have these
+> markers in the kernel. They are from the mcount/__fentry__ used by function
+> tracing. Have the trace events be created by these, and see if this will
+> satisfy most areas that want trace events.
 > 
-> You can consider a stable-rt release to be a synchronization point
-> between the upstream stable release process and the rt-devel process.
+> I decided to implement this idea, and here's the patch set.
 > 
->> What is the goal?
->> 	Not getting behind by more than X weeks?
->> 	Only change when RT series needs to be updated?
-> 
-> In an ideal world, we could turn around a stable-rt release ontop of an
-> upstream stable release in the time it takes to test it.  However, we're
-> not in an ideal world, and merging in an upstream stable release can
-> and does cause rt-specific regressions.
-> 
-> That being said, we do have a goal to be releasing a new stable-rt
-> release within a month of an upstream stable release -OR- an rt-devel
-> tree release with stable-targeted fixes.
-> 
->> What is the expected consumer model?:
->> 	Use only the version published by the maintainer
->> 	Merge in upstream point release themselves between rt-stable releases
-> 
-> It's expected that a consumer use the version released by the
-> maintainer.
-> 
-> Obviously, you're in control of your own destiny here, though.  One
-> option for you would be to merge in an upstream point release for
-> testing, then once a maintainer has released a new version, compare the
-> two.
-> 
->> How is the policy different for rt-dev vs rt-stable?
-> 
-> I'm not sure it is.
-> 
+> Introducing "function based events". These are created dynamically by a
+> tracefs file called "function_events". By writing a pseudo prototype into
+> this file, you create an event.
 
-Thanks for the answers.  That may be all me need for now and we will
-think about this more.
+This seems very similar feature of what kprobe-based event does.
 
-See below.
+Earlier version of kprobe-based event supported Nth argument, but I decided
+to drop it because we can not ensure the "function signature" from kernel
+binary. It has been passed to "perf probe", so that we can define line-level
+granularity. 
 
->> Long version / background
->> -----------------------------------------------------------------------------------
->> TI publishes 3 variants of our kernel for customers:
->> 	Base + TI + [Linaro LSK]
->> 	Base + TI + RT
->> 	Base + TI + Android Common
->>
->> All this is based on the latest GKH LTS and there is maintenance of last years LTS
->>
->> (Yes we understand this is all very simple if the TI set is nil.  We
->> have never achieved that to date.  In the very least it is backports
->> from tip to latest LTS.  In reality it is more.)
->>
->> Right now Base above is always the very latest stable from GKH LTS.
->> It is auto merged as soon as it is published and picked up by our
->> nightly builds.   Any merge conflict in any of the variants stops auto
->> merge progress.
->>
->> In this structure we tend to be the first to merge RT with a new
->> stable.  Most of the time this is OK but sometimes it is not.
+Of course if it is easy to support "argN" again as it does if the arch's
+calling convention is clearly stated. (and now kprobe is based on ftrace
+if it is on the entry of functions)
+
+So my question is, what is the difference of those from the user perspective?
+Only event syntax is a problem?
+I'm very confusing...
+
+Thank you,
+
 > 
-> Yes, obviously there are many way things can fail that wouldn't trigger
-> a textual merge conflict.  It's the responsibility of the maintainer to
-> try to catch these things, or resolve them once they've been found.
+>  # mount -t tracefs nodev /sys/kernel/tracing
+>  # cd /sys/kernel/tracing
+>  # echo 'do_IRQ(symbol ip[16] | x64[6] irq_stack[16])' > function_events
+>  # cat events/functions/do_IRQ/format
+> name: do_IRQ
+> ID: 1399
+> format:
+> 	field:unsigned short common_type;	offset:0;	size:2;	signed:0;
+> 	field:unsigned char common_flags;	offset:2;	size:1;	signed:0;
+> 	field:unsigned char common_preempt_count;	offset:3;	size:1;	signed:0;
+> 	field:int common_pid;	offset:4;	size:4;	signed:1;
 > 
-> What I would like to understand is how you are testing these automerged
-> branches.
+> 	field:unsigned long __parent_ip;	offset:8;	size:8;	signed:0;
+> 	field:unsigned long __ip;	offset:16;	size:8;	signed:0;
+> 	field:symbol ip;	offset:24;	size:8;	signed:0;
+> 	field:x64 irq_stack[6];	offset:32;	size:48;	signed:0;
 > 
->    Julia
+> print fmt: "%pS->%pS(ip=%pS, irq_stack=%llx:%llx:%llx:%llx:%llx:%llx)", REC->__ip, REC->__parent_ip,
+> REC->ip, REC->irq_stack[0], REC->irq_stack[1], REC->irq_stack[2], REC->irq_stack[3], REC->irq_stack[4],
+> REC->irq_stack[5]
 > 
+>  # echo 1 > events/functions/do_IRQ/enable
+>  # cat trace
+>           <idle>-0     [003] d..3  3647.049344: ret_from_intr->do_IRQ(ip=cpuidle_enter_state+0xb1/0x330, irq_stack=ffffffff81665db1,10,246,ffffc900006c3e80,18,ffff88011eae9b40)
+>           <idle>-0     [003] d..3  3647.049433: ret_from_intr->do_IRQ(ip=cpuidle_enter_state+0xb1/0x330, irq_stack=ffffffff81665db1,10,246,ffffc900006c3e80,18,ffff88011eae9b40)
+>           <idle>-0     [003] d..3  3647.049672: ret_from_intr->do_IRQ(ip=cpuidle_enter_state+0xb1/0x330, irq_stack=ffffffff81665db1,10,246,ffffc900006c3e80,18,ffff88011eae9b40)
+>           <idle>-0     [003] d..3  3647.325709: ret_from_intr->do_IRQ(ip=cpuidle_enter_state+0xb1/0x330, irq_stack=ffffffff81665db1,10,246,ffffc900006c3e80,18,ffff88011eae9b40)
+>           <idle>-0     [003] d..3  3647.325929: ret_from_intr->do_IRQ(ip=cpuidle_enter_state+0xb1/0x330, irq_stack=ffffffff81665db1,10,246,ffffc900006c3e80,18,ffff88011eae9b40)
+>           <idle>-0     [003] d..3  3647.325993: ret_from_intr->do_IRQ(ip=cpuidle_enter_state+0xb1/0x330, irq_stack=ffffffff81665db1,10,246,ffffc900006c3e80,18,ffff88011eae9b40)
+>           <idle>-0     [003] d..3  3647.387571: ret_from_intr->do_IRQ(ip=cpuidle_enter_state+0xb1/0x330, irq_stack=ffffffff81665db1,10,246,ffffc900006c3e80,18,ffff88011eae9b40)
+>           <idle>-0     [003] d..3  3647.387791: ret_from_intr->do_IRQ(ip=cpuidle_enter_state+0xb1/0x330, irq_stack=ffffffff81665db1,10,246,ffffc900006c3e80,18,ffff88011eae9b40)
+>           <idle>-0     [003] d..3  3647.387874: ret_from_intr->do_IRQ(ip=cpuidle_enter_state+0xb1/0x330, irq_stack=ffffffff81665db1,10,246,ffffc900006c3e80,18,ffff88011eae9b40)
+> 
+> And this is much more powerful than just this. We can show strings, and
+> index off of structures into other structures.
+> 
+>   # echo '__vfs_read(symbol read+40[0]+16)' > function_events
+> 
+>   # echo 1 > events/functions/__vfs_read/enable
+>   # cat trace
+>          sshd-1343  [005] ...2   199.734752: vfs_read->__vfs_read(read=tty_read+0x0/0xf0)
+>          bash-1344  [003] ...2   199.734822: vfs_read->__vfs_read(read=tty_read+0x0/0xf0)
+>          sshd-1343  [005] ...2   199.734835: vfs_read->__vfs_read(read=tty_read+0x0/0xf0)
+>  avahi-daemon-910   [003] ...2   200.136740: vfs_read->__vfs_read(read=          (null))
+>  avahi-daemon-910   [003] ...2   200.136750: vfs_read->__vfs_read(read=          (null))
+> 
+> And even read user space:
+> 
+>   # echo 'SyS_openat(int dfd, string path, x32 flags, x16 mode)' > function_events
+>   # echo 1 > events/functions/enable
+>   # grep task_fork /proc/kallsyms 
+> ffffffff810d5a60 t task_fork_fair
+> ffffffff810dfc30 t task_fork_dl
+>   # cat trace
+>             grep-1820  [000] ...2  3926.107603: entry_SYSCALL_64_fastpath->SyS_openat(dfd=-100, path=/proc/kallsyms, flags=100, mode=0)
+> 
+> These are fully functional events. That is, they work with ftrace,
+> trace-cmd, perf, histograms, triggers, and eBPF.
+> 
+> What's next? I need to rewrite the function graph tracer, and be able to add
+> dynamic events on function return.
+> 
+> I made this work with x86 with a simple function that only returns
+> 6 function parameters for x86_64 and 3 for x86_32. But this could easily
+> be extended.
+> 
+> Cheers!
+> 
+>   git://git.kernel.org/pub/scm/linux/kernel/git/rostedt/linux-trace.git
+> ftrace/dynamic-ftrace-events
+> 
+> Head SHA1: 30fbdffd5d38bd27b04fb911f7158f10a99be8c4
+> 
+> 
+> Steven Rostedt (VMware) (18):
+>       tracing: Add function based events
+>       tracing: Add documentation for function based events
+>       tracing: Add simple arguments to function based events
+>       tracing/x86: Add arch_get_func_args() function
+>       tracing: Add hex print for dynamic ftrace based events
+>       tracing: Add indirect offset to args of ftrace based events
+>       tracing: Add dereferencing multiple fields per arg
+>       tracing: Add "unsigned" to function based events
+>       tracing: Add indexing of arguments for function based events
+>       tracing: Make func_type enums for easier comparing of arg types
+>       tracing: Add symbol type to function based events
+>       tracing: Add accessing direct address from function based events
+>       tracing: Add array type to function based events
+>       tracing: Have char arrays be strings for function based events
+>       tracing: Add string type for dynamic strings in function based events
+>       tracing: Add NULL to skip args for function based events
+>       tracing: Add indirect to indirect access for function based events
+>       tracing/perf: Allow perf to use function based events
+> 
+> ----
+>  Documentation/trace/function-based-events.rst |  426 ++++++++
+>  arch/x86/kernel/ftrace.c                      |   28 +
+>  include/linux/trace_events.h                  |    2 +
+>  kernel/trace/Kconfig                          |   12 +
+>  kernel/trace/Makefile                         |    1 +
+>  kernel/trace/trace.h                          |   11 +
+>  kernel/trace/trace_event_ftrace.c             | 1440 +++++++++++++++++++++++++
+>  kernel/trace/trace_probe.h                    |   11 -
+>  8 files changed, 1920 insertions(+), 11 deletions(-)
+>  create mode 100644 Documentation/trace/function-based-events.rst
+>  create mode 100644 kernel/trace/trace_event_ftrace.c
 
-+ Carlos (TI integration & test lead) who will correct me if I am wrong
-+ Grygorii who actually solves these problems when they come up (and is
-a subscriber here anyway)
 
-TI has a pretty extensive test plan.  Not every test is run every night
-but the rest is picked up on -rc (~weekly) and by the time of the
-release (once per 6 weeks) a full test plan is executed.
-
-Most of our tests are focused on TI drivers and platform code for both
-functional and performance regressions.  We do run cyclic test for RT
-performance regressions and (I believe) general LTP tests to make sure
-we did not break the kernel.  Just the process of running the tests
-exercises a good bit of functionality.
-
-It should be a TI TODO to see if there is anything in RT-CI that we
-don't already run and incorporate it.
-
-Thanks again,
-Bill
+-- 
+Masami Hiramatsu <mhiramat@kernel.org>
