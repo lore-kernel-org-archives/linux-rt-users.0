@@ -1,137 +1,164 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 04/18] tracing/x86: Add arch_get_func_args() function
-Date: Mon, 5 Feb 2018 12:06:12 -0500
-Message-ID: <20180205120612.5d7c97b0@gandalf.local.home>
-References: <20180202230458.840252014@goodmis.org>
-        <20180202231017.612058326@goodmis.org>
-        <20180206013322.754e66a4c956383174418953@kernel.org>
+From: Dan Murphy <dmurphy@ti.com>
+Subject: Re: Linux stable vs RT stable and RT dev
+Date: Mon, 5 Feb 2018 15:17:56 -0600
+Message-ID: <6eecb69a-e60f-f837-bc2c-a627e2660027@ti.com>
+References: <8155aea247374c058bd7c797124c3d28@ti.com>
+ <20180202214611.GD868@jcartwri.amer.corp.natinst.com>
+ <1c47b7e6-86d0-cbb0-9b72-7b7d63e46ddc@ti.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        Ingo Molnar <mingo@kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        linux-rt-users@vger.kernel.org, linux-trace-users@vger.kernel.org,
-        Arnaldo Carvalho de Melo <acme@kernel.org>,
-        Clark Williams <williams@redhat.com>,
-        Jiri Olsa <jolsa@redhat.com>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-        Namhyung Kim <namhyung@kernel.org>,
-        Alexei Starovoitov <alexei.starovoitov@gmail.com>
-To: Masami Hiramatsu <mhiramat@kernel.org>
-Return-path: <linux-trace-users-owner@vger.kernel.org>
-In-Reply-To: <20180206013322.754e66a4c956383174418953@kernel.org>
-Sender: linux-trace-users-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        "Nori, Sekhar" <nsekhar@ti.com>, <rostedt@goodmis.org>,
+        "Hernandez, Carlos" <ceh@ti.com>,
+        "Strashko, Grygorii" <grygorii.strashko@ti.com>
+To: William Mills <wmills@ti.com>, Julia Cartwright <julia@ni.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from lelnx193.ext.ti.com ([198.47.27.77]:25173 "EHLO
+        lelnx193.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751728AbeBEVSf (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 5 Feb 2018 16:18:35 -0500
+In-Reply-To: <1c47b7e6-86d0-cbb0-9b72-7b7d63e46ddc@ti.com>
+Content-Language: en-US
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 6 Feb 2018 01:33:22 +0900
-Masami Hiramatsu <mhiramat@kernel.org> wrote:
+Hi Julia
 
-> On Fri, 02 Feb 2018 18:05:02 -0500
-> Steven Rostedt <rostedt@goodmis.org> wrote:
+On 02/02/2018 07:20 PM, William Mills wrote:
+> Hi Julia,
 > 
-> > From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
-> > 
-> > Add function to get the function arguments from pt_regs.
-> >   
+> On 02/02/2018 04:46 PM, Julia Cartwright wrote:
+>> On Fri, Feb 02, 2018 at 07:00:12PM +0000, Mills, William wrote:
+>>> Hello,
+>>
+>> Hey Bill-
+>>
+>>> I am trying to understand the policy WRT the RT stable branches and
+>>> the Linux stable releases.  It appears not every Linux stable gets its
+>>> own RT stable. [1]
+>>
+>> I'm assuming you mean not every Linux stable release gets it's own
+>> stable-rt release, correct?  If so, then you're correct.  Some times
+>> I'll jump a few upstream stable versions if it's been awhile since I did
+>> an upstream merge.
+>>
+>> The only guarantee is that the merged upstream stable release is
+>> monotonically increasing.
+>>
+>> You can consider a stable-rt release to be a synchronization point
+>> between the upstream stable release process and the rt-devel process.
+>>
+>>> What is the goal?
+>>> 	Not getting behind by more than X weeks?
+>>> 	Only change when RT series needs to be updated?
+>>
+>> In an ideal world, we could turn around a stable-rt release ontop of an
+>> upstream stable release in the time it takes to test it.  However, we're
+>> not in an ideal world, and merging in an upstream stable release can
+>> and does cause rt-specific regressions.
+>>
+>> That being said, we do have a goal to be releasing a new stable-rt
+>> release within a month of an upstream stable release -OR- an rt-devel
+>> tree release with stable-targeted fixes.
+>>
+>>> What is the expected consumer model?:
+>>> 	Use only the version published by the maintainer
+>>> 	Merge in upstream point release themselves between rt-stable releases
+>>
+>> It's expected that a consumer use the version released by the
+>> maintainer.
+>>
+>> Obviously, you're in control of your own destiny here, though.  One
+>> option for you would be to merge in an upstream point release for
+>> testing, then once a maintainer has released a new version, compare the
+>> two.
+>>
+>>> How is the policy different for rt-dev vs rt-stable?
+>>
+>> I'm not sure it is.
+>>
 > 
-> Can we make it an independent feature in asm/ptrace.h so that
-> other components (like kprobe-event) share it?
+> Thanks for the answers.  That may be all me need for now and we will
+> think about this more.
+> 
+> See below.
+> 
+>>> Long version / background
+>>> -----------------------------------------------------------------------------------
+>>> TI publishes 3 variants of our kernel for customers:
+>>> 	Base + TI + [Linaro LSK]
+>>> 	Base + TI + RT
+>>> 	Base + TI + Android Common
+>>>
+>>> All this is based on the latest GKH LTS and there is maintenance of last years LTS
+>>>
+>>> (Yes we understand this is all very simple if the TI set is nil.  We
+>>> have never achieved that to date.  In the very least it is backports
+>>> from tip to latest LTS.  In reality it is more.)
+>>>
+>>> Right now Base above is always the very latest stable from GKH LTS.
+>>> It is auto merged as soon as it is published and picked up by our
+>>> nightly builds.   Any merge conflict in any of the variants stops auto
+>>> merge progress.
+>>>
+>>> In this structure we tend to be the first to merge RT with a new
+>>> stable.  Most of the time this is OK but sometimes it is not.
+>>
+>> Yes, obviously there are many way things can fail that wouldn't trigger
+>> a textual merge conflict.  It's the responsibility of the maintainer to
+>> try to catch these things, or resolve them once they've been found.
+>>
+>> What I would like to understand is how you are testing these automerged
+>> branches.
+>>
+>>    Julia
+>>
+> 
+> + Carlos (TI integration & test lead) who will correct me if I am wrong
+> + Grygorii who actually solves these problems when they come up (and is
+> a subscriber here anyway)
+> 
+> TI has a pretty extensive test plan.  Not every test is run every night
+> but the rest is picked up on -rc (~weekly) and by the time of the
+> release (once per 6 weeks) a full test plan is executed.
+> 
+> Most of our tests are focused on TI drivers and platform code for both
+> functional and performance regressions.  We do run cyclic test for RT
+> performance regressions and (I believe) general LTP tests to make sure
+> we did not break the kernel.  Just the process of running the tests
+> exercises a good bit of functionality.
+> 
+> It should be a TI TODO to see if there is anything in RT-CI that we
+> don't already run and incorporate it.
+> 
+> Thanks again,
+> Bill
+> 
 
-Most definitely!
+In addition to functional testing we compile test ~57 variations of defconfigs.
+We are catching warnings and errors with these defconfigs.  I have reported 2 warnings but
+I have not received a response.  I guess I should report these to this list as opposed to the maintainers.
 
-> E.g.
-> 
-> static inline unsigned long regs_get_func_arg(struct pt_regs *regs,
->                                               unsigned int n)
-> {
-> 	unsigned int offs[] = {
-> #ifdef CONFIG_X86_64
-> 	offsetof(typeof(regs),di),
-> 	offsetof(typeof(regs),si),
-> 	offsetof(typeof(regs),dx),
-> 	offsetof(typeof(regs),cx),
-> 	offsetof(typeof(regs),r8),
-> 	offsetof(typeof(regs),r9),
-> #else
-> 	offsetof(typeof(regs),ax),
-> 	offsetof(typeof(regs),dx),
-> 	offsetof(typeof(regs),cx),
-> #endif
-> 	};
-> 
-> 	if (unlikely(n >= ARRAY_SIZE(offs))
-> 		return 0;
-> 	return *(unsigned long *)((unsigned long)regs + offs[n]);
+We have a "next" process that runs nightly that merges in the stable rc candidate into our branch
+so we can anticipate if the new stable or TI developer branches will cause a merge conflict when merged into our branch sets.
 
-I like having the function I used, because it could also handle
-arguments in the stack (although I didn't implement that yet). But this
-would still be a nice helper function.
+For instance 4.14.17 stable rc caused a merge conflict in the hrtimer.c file. This became a known issue as soon as the stable rc was
+available.  The RT 4.14 upstream branch is currently on 4.14.15 so now our RT branch is blocked from receiving a new stable until the
+RT upstream branch is updated.
 
--- Steve
+We do not attempt to resolve merge conflicts, unless they are minor, on kernel files that are modified by RT patches.
+These conflicts usually happen when the RT branch is in development, once it migrates to the stable repo we see very little
+conflicts.
 
+We can create a Jenkins job that can take the RT development branch and merge in GKH stable rc and report any merge conflicts.
+We can send it to the list or if there was a maintainer that would like to see this that would be great.
 
-> }
-> 
-> And HAVE_REGS_GET_FUNC_ARG indicates this is defined on that arch.
-> 
-> Thank you,
-> 
-> > Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-> > ---
-> >  arch/x86/kernel/ftrace.c | 28 ++++++++++++++++++++++++++++
-> >  1 file changed, 28 insertions(+)
-> > 
-> > diff --git a/arch/x86/kernel/ftrace.c b/arch/x86/kernel/ftrace.c
-> > index 01ebcb6f263e..5e845c8cf89d 100644
-> > --- a/arch/x86/kernel/ftrace.c
-> > +++ b/arch/x86/kernel/ftrace.c
-> > @@ -46,6 +46,34 @@ int ftrace_arch_code_modify_post_process(void)
-> >  	return 0;
-> >  }
-> >  
-> > +int arch_get_func_args(struct pt_regs *regs,
-> > +		       int start, int end, long *args)
-> > +{
-> > +#ifdef CONFIG_X86_64
-> > +# define MAX_ARGS 6
-> > +# define INIT_REGS				\
-> > +	{	regs->di, regs->si, regs->dx,	\
-> > +		regs->cx, regs->r8, regs->r9	\
-> > +	}
-> > +#else
-> > +# define MAX_ARGS 3
-> > +# define INIT_REGS				\
-> > +	{	regs->ax, regs->dx, regs->cx	}
-> > +#endif
-> > +	if (!regs)
-> > +		return MAX_ARGS;
-> > +
-> > +	{
-> > +		long pt_args[] = INIT_REGS;
-> > +		int i;
-> > +
-> > +		for (i = start; i <= end && i < MAX_ARGS; i++)
-> > +			args[i - start] = pt_args[i];
-> > +
-> > +		return i - start;
-> > +	}
-> > +}
-> > +
-> >  union ftrace_code_union {
-> >  	char code[MCOUNT_INSN_SIZE];
-> >  	struct {
-> > -- 
-> > 2.15.1
-> > 
-> >   
-> 
-> 
+Let me know I can throw something together based on our auto merge scripts we have now.
 
+Dan
+
+-- 
+------------------
+Dan Murphy
