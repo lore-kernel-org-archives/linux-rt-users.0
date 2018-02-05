@@ -1,195 +1,132 @@
-From: Sam Mosel <sam.mosel@gmail.com>
-Subject: Re: RT thread running slower as SCHED_OTHER threads increases
-Date: Mon, 5 Feb 2018 11:32:16 +1030
-Message-ID: <CA+m2VPWWPPesVufFKBP94s4vHo8MoA_3gCEix-sJ4A_1qA5Qkw@mail.gmail.com>
-References: <CAF6bL9nmjZr-tQWF1Bd03TUj+X6=dcRWpsZ4kEwVjdSi5LnbMQ@mail.gmail.com>
- <d539f46a-e52a-903f-64ac-02ed2d013782@ti.com> <CAF6bL9mB-+3Zhw=9m7-TpfriT2iHipYX461nFHMYNZ9Ez2OTCQ@mail.gmail.com>
+From: Jiri Olsa <jolsa@redhat.com>
+Subject: Re: [PATCH 01/18] tracing: Add function based events
+Date: Mon, 5 Feb 2018 09:24:23 +0100
+Message-ID: <20180205082423.GB1253@krava>
+References: <20180202230458.840252014@goodmis.org>
+ <20180202231017.160509978@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Cc: Grygorii Strashko <grygorii.strashko@ti.com>,
-        linux-rt-users@vger.kernel.org
-To: Journey Journey <journeywang123@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Ingo Molnar <mingo@kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        linux-rt-users@vger.kernel.org, linux-trace-users@vger.kernel.org,
+        Arnaldo Carvalho de Melo <acme@kernel.org>,
+        Clark Williams <williams@redhat.com>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Namhyung Kim <namhyung@kernel.org>,
+        Alexei Starovoitov <alexei.starovoitov@gmail.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f54.google.com ([74.125.82.54]:51313 "EHLO
-        mail-wm0-f54.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1752114AbeBEBCi (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 4 Feb 2018 20:02:38 -0500
-Received: by mail-wm0-f54.google.com with SMTP id r71so23103908wmd.1
-        for <linux-rt-users@vger.kernel.org>; Sun, 04 Feb 2018 17:02:37 -0800 (PST)
-In-Reply-To: <CAF6bL9mB-+3Zhw=9m7-TpfriT2iHipYX461nFHMYNZ9Ez2OTCQ@mail.gmail.com>
+Received: from mx1.redhat.com ([209.132.183.28]:36512 "EHLO mx1.redhat.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751938AbeBEIYc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 5 Feb 2018 03:24:32 -0500
+Content-Disposition: inline
+In-Reply-To: <20180202231017.160509978@goodmis.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Throttling perhaps?
-https://stackoverflow.com/questions/20722615/sched-fifo-process-with-priority-of-99-gets-preempted
+On Fri, Feb 02, 2018 at 06:04:59PM -0500, Steven Rostedt wrote:
 
-322ms is a very long time for a RT task to run uninterrupted. Normally
-you choose RT to meet specific deadlines, not try to monopolise the
-CPUs for performance testing.
+SNIP
 
-See the cyclic task sample code in the first link that Grygorii sent.
+> +static int create_function_event(int argc, char **argv)
+> +{
+> +	struct func_event *func_event, *fe;
+> +	enum func_states state = FUNC_STATE_INIT;
+> +	char *token;
+> +	char *ptr;
+> +	char last;
+> +	int ret = -EINVAL;
+> +	int i;
+> +
+> +	func_event = kzalloc(sizeof(*func_event), GFP_KERNEL);
+> +	if (!func_event)
+> +		return -ENOMEM;
+> +
+> +	INIT_LIST_HEAD(&func_event->files);
+> +	func_event->ops.func = func_event_call;
+> +	func_event->ops.flags = FTRACE_OPS_FL_SAVE_REGS;
+> +
+> +	for (i = 0; i < argc; i++) {
+> +		ptr = argv[i];
+> +		last = 0;
+> +		for (token = next_token(&ptr, &last); token;
+> +		     token = next_token(&ptr, &last)) {
+> +			state = process_event(func_event, token, state);
+> +			if (state == FUNC_STATE_ERROR)
+> +				goto fail;
+> +		}
+> +	}
+> +	if (state != FUNC_STATE_END)
+> +		goto fail;
+> +
+> +	ret = -EALREADY;
+> +	list_for_each_entry(fe, &func_events, list) {
+> +		if (strcmp(fe->func, func_event->func) == 0)
+> +			goto fail;
+> +	}
+> +
+> +	ret = ftrace_set_filter(&func_event->ops, func_event->func,
+> +				strlen(func_event->func), 0);
+> +	if (ret < 0)
+> +		goto fail;
+> +
+> +	ret = func_event_create(func_event);
+> +	if (ret < 0)
+> +		goto fail;
+> +
+> +	list_add_tail(&func_event->list, &func_events);
+> +	return 0;
 
-Sam.
+should this be done under 'func_event_mutex' ?
 
-On 4 February 2018 at 17:10, Journey Journey <journeywang123@gmail.com> wrote:
-> Thanks very much for your reply!
->
-> I had followed the tutorial , but it doesn't work.
-> 1. mlockall
-> 2. echo -1 > /proc/sys/kernel/sched_rt_runtime_us
-> 3. under linux 4.4.32 with rt patch
->
-> I will be very glad if you can test this case yourself.
->
-> Thanks !
->
-> On Sat, Feb 3, 2018 at 12:46 AM, Grygorii Strashko
-> <grygorii.strashko@ti.com> wrote:
->> Hi
->>
->> You probably need to look at
->> https://wiki.linuxfoundation.org/realtime/documentation/howto/applications/start
->> https://rt.wiki.kernel.org/index.php/Main_Page
->>
->> it not enough to just set policy and prio - you need to follow some
->> additional rules while creating RT App.
->>
->>
->>
->> On 02/01/2018 09:52 PM, Journey Journey wrote:
->>> Hi  Dear All
->>>
->>> I had tested a program in order to calculate computing time in a
->>> machine with 48  intel cpu cores.
->>>
->>> 1. when running ./test, it outputs like this:
->>> MM: 324.039000 ms
->>> MM: 324.052000 ms
->>> MM: 324.079000 ms
->>> MM: 324.042000 ms
->>> MM: 324.060000 ms
->>> MM: 324.052000 ms
->>> MM: 324.026000 ms
->>> MM: 324.040000 ms
->>> MM: 324.075000 ms
->>> MM: 324.011000 ms
->>> MM: 324.072000 ms
->>>
->>> 2. running other programs, like sample code 2
->>> ./aa &
->>> ./aa &
->>> ....
->>> about 30 times
->>>
->>> 3. ./test output changes:
->>> MM: 354.601000 ms
->>> MM: 322.289000 ms
->>> MM: 322.250000 ms
->>> MM: 322.348000 ms
->>> MM: 354.700000 ms
->>> MM: 322.556000 ms
->>> MM: 354.834000 ms
->>> MM: 354.816000 ms
->>> MM: 354.777000 ms
->>> MM: 354.812000 ms
->>> MM: 322.451000 ms
->>> MM: 322.507000 ms
->>> MM: 322.473000 ms
->>>
->>> 4. For purpose to decrease computing cost time, I had tried:
->>> (1) set test policy to SCHED_RR/SCHED_FIFO, and priority to 50/98
->>>   chrt -f -p 98 5911
->>> (2)  bind test to specific cpu
->>> taskset -pc 4 5911
->>> (3) limit aa processes to other cpus
->>> for i in `ps -ef |grep aa|awk '{print $2}'`; do echo $i; taskset -pc
->>> 5-47 $i; done
->>>
->>> It still not working, the result is not good.
->>> MM: 322.316000 ms
->>> MM: 322.307000 ms
->>> MM: 326.739000 ms
->>> MM: 354.399000 ms
->>> MM: 354.662000 ms
->>> MM: 354.740000 ms
->>> MM: 322.275000 ms
->>>
->>> 5. But when limit aa processes to a small cpuset, it works,
->>> for i in `ps -ef |grep aa|awk '{print $2}'`; do echo $i; taskset -pc
->>> 5-7 $i; done
->>>
->>> the result:
->>> MM: 322.304000 ms
->>> MM: 322.335000 ms
->>> MM: 322.344000 ms
->>> MM: 322.319000 ms
->>> MM: 322.340000 ms
->>> MM: 322.328000 ms
->>> MM: 322.298000 ms
->>> MM: 322.318000 ms
->>>
->>>
->>> It's quite amazing why such low priority processes can affect realtime
->>> process, please help me!
->>>
->>>
->>>
->>> Sample test code1:
->>>
->>> #include <stdio.h>
->>> #include <sys/time.h>
->>>
->>> void calc() {
->>>      int c, d, k;
->>>      int m = 100000, q = 1, p = 1000;
->>>      int sum;
->>>      for (c = 0; c < m; c++) {
->>>          for (d = 0; d < q; d++) {
->>>              for (k = 0; k < p; k++) {
->>>                   sum = c * m * d * q * p * k;
->>>              }
->>>          }
->>>
->>>      }
->>> }
->>>
->>> int main() {
->>>      struct timeval t1, t2;
->>>      double elapsedTime;
->>>
->>>      while(1) {
->>>          gettimeofday(&t1, NULL);
->>>          calc();
->>>          gettimeofday(&t2, NULL);
->>>          elapsedTime = (t2.tv_sec - t1.tv_sec) * 1000.0;      // sec to ms
->>>          elapsedTime += (t2.tv_usec - t1.tv_usec) / 1000.0;   // us to ms
->>>          printf("MM: %lf ms\n", elapsedTime);
->>>          sleep(1);
->>>      }
->>> }
->>>
->>>
->>> Sample Code 2:
->>>
->>> #include <stdio.h>
->>>
->>> int main() {
->>>      while(1) {
->>>      }
->>> }
->>>
->>> Thanks~
->>> --
->>> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
->>> the body of a message to majordomo@vger.kernel.org
->>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->>>
->>
->> --
->> regards,
->> -grygorii
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+I tried and crashed the system by running 2 scripts with:
+
+  echo 'ip_rcv(u64 skb, u64 dev)' > /sys/kernel/debug/tracing/function_events
+  echo 'SyS_openat(int dfd, string buf, x32 flags, x32 mode)' >> /sys/kernel/debug/tracing/function_events
+  echo 'SyS_open(x8[32] buf, x32 flags, x32 mode)' >> /sys/kernel/debug/tracing/function_events
+
+jirka
+
+
+[  376.727159] general protection fault: 0000 [#1] SMP PTI
+[  376.732992] Modules linked in: intel_rapl sb_edac x86_pkg_temp_thermal intel_powerclamp coretemp kvm_intel kvm irqbypass crct10dif_pclmul crc32_pclmul igb ghash_clmulni_intel intel_cstate ptp intel_uncore pps_core iTCO_wdt iTCO_vendor_support ipmi_ssif ipmi_si ipmi_devintf ipmi_msghandler shpchp ioatdma cdc_ether usbnet mii intel_rapl_perf i2c_i801 tpm_tis tpm_tis_core dca tpm lpc_ich wmi xfs libcrc32c mgag200 i2c_algo_bit drm_kms_helper ttm crc32c_intel drm megaraid_sas
+[  376.779583] CPU: 9 PID: 1285 Comm: t.sh Not tainted 4.15.0-rc9idle+ #32
+[  376.786956] Hardware name: IBM System x3650 M4 : -[7915E2G]-/00Y7683, BIOS -[VVE124AUS-1.30]- 11/21/2012
+[  376.797545] RIP: 0010:__unregister_trace_event+0xe/0x70
+[  376.803376] RSP: 0018:ffffa643043cbc50 EFLAGS: 00010286
+[  376.809206] RAX: dead000000000100 RBX: ffff91b6340c2480 RCX: ffffffffbf2ebf50
+[  376.817170] RDX: dead000000000200 RSI: ffffffffbf2ed540 RDI: ffff91b6340c2480
+[  376.825135] RBP: ffff91b6340c2460 R08: 0000000000000001 R09: 0000000000000000
+[  376.833099] R10: ffffa643043cbc78 R11: 0000000000000000 R12: ffff91b6340c2400
+[  376.841062] R13: ffff91b6326f8600 R14: dead000000000200 R15: dead000000000100
+[  376.849028] FS:  00007ff3644bcb40(0000) GS:ffff91b63fac0000(0000) knlGS:0000000000000000
+[  376.858058] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[  376.864469] CR2: 000055c83b531008 CR3: 00000004736d0003 CR4: 00000000000606e0
+[  376.872433] Call Trace:
+[  376.875168]  event_remove+0x72/0x120
+[  376.879159]  trace_remove_event_call+0x79/0xd0
+[  376.884117]  func_event_open+0xb1/0xd0
+[  376.888302]  ? free_func_event+0x70/0x70
+[  376.892673]  do_dentry_open+0x1b1/0x2d0
+[  376.896954]  path_openat+0x602/0x14e0
+[  376.901041]  do_filp_open+0x9b/0x110
+[  376.905032]  ? __vfs_write+0x33/0x170
+[  376.909119]  ? __check_object_size+0xaf/0x1b0
+[  376.913981]  ? do_sys_open+0x1bd/0x250
+[  376.918164]  do_sys_open+0x1bd/0x250
+[  376.922156]  entry_SYSCALL_64_fastpath+0x20/0x83
+[  376.927299] RIP: 0033:0x7ff363ba01c0
+[  376.931287] RSP: 002b:00007ffdf21e4978 EFLAGS: 00000246
+[  376.931290] Code: e0 d9 2e bf e9 94 aa 6e 00 0f 1f 40 00 48 c7 c7 e0 d9 2e bf e9 54 5c f7 ff 0f 1f 40 00 53 48 8b 07 48 89 fb 48 8b 57 08 48 85 c0 <48> 89 02 74 04 48 89 50 08 48 b8 00 01 00 00 00 00 ad de 48 8d 
+[  376.958209] RIP: __unregister_trace_event+0xe/0x70 RSP: ffffa643043cbc50
+[  376.965711] ---[ end trace b3dd6064ee6bc2f4 ]---
