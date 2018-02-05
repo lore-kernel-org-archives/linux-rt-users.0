@@ -1,132 +1,81 @@
-From: Jiri Olsa <jolsa@redhat.com>
-Subject: Re: [PATCH 01/18] tracing: Add function based events
-Date: Mon, 5 Feb 2018 09:24:23 +0100
-Message-ID: <20180205082423.GB1253@krava>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH 00/18] [ANNOUNCE] Dynamically created function based
+ events
+Date: Mon, 5 Feb 2018 11:09:31 +0100
+Message-ID: <20180205100930.GH2249@hirez.programming.kicks-ass.net>
 References: <20180202230458.840252014@goodmis.org>
- <20180202231017.160509978@goodmis.org>
+ <261141691.15507.1517677454208.JavaMail.zimbra@efficios.com>
+ <CA+55aFz1=qWvnJ2271SGwuezwQRBA2nZp8_BxFyR-R0VKKgXRw@mail.gmail.com>
+ <292744194.15823.1517758204087.JavaMail.zimbra@efficios.com>
+ <CA+55aFwtCP3Nf86jwNFzdRy_m0GZWH5U2KBDutPDh1ZVATHLYg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org,
-        Linus Torvalds <torvalds@linux-foundation.org>,
+Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        rostedt <rostedt@goodmis.org>,
+        linux-kernel <linux-kernel@vger.kernel.org>,
         Ingo Molnar <mingo@kernel.org>,
         Andrew Morton <akpm@linux-foundation.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Peter Zijlstra <peterz@infradead.org>,
         Masami Hiramatsu <mhiramat@kernel.org>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
-        linux-rt-users@vger.kernel.org, linux-trace-users@vger.kernel.org,
-        Arnaldo Carvalho de Melo <acme@kernel.org>,
-        Clark Williams <williams@redhat.com>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        linux-trace-users <linux-trace-users@vger.kernel.org>,
+        acme <acme@kernel.org>, Clark Williams <williams@redhat.com>,
+        Jiri Olsa <jolsa@redhat.com>, bristot <bristot@redhat.com>,
         Juri Lelli <juri.lelli@redhat.com>,
         Jonathan Corbet <corbet@lwn.net>,
-        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
         Namhyung Kim <namhyung@kernel.org>,
         Alexei Starovoitov <alexei.starovoitov@gmail.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:36512 "EHLO mx1.redhat.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751938AbeBEIYc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 5 Feb 2018 03:24:32 -0500
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Return-path: <linux-trace-users-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180202231017.160509978@goodmis.org>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <CA+55aFwtCP3Nf86jwNFzdRy_m0GZWH5U2KBDutPDh1ZVATHLYg@mail.gmail.com>
+Sender: linux-trace-users-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Feb 02, 2018 at 06:04:59PM -0500, Steven Rostedt wrote:
+On Sun, Feb 04, 2018 at 11:39:39AM -0800, Linus Torvalds wrote:
+> Then there's the "I just want an overview" MIS people, who care about
+> things like "I want a histogram of packets sent according to criteria
+> XYZ", who want some highlevel block IO performance, or who just want
+> random system-wide statistics.
 
-SNIP
+> The second group might want explicit trace points exactly because that
+> group doesn't even care *how* a packet is sent or received, or what
+> the path through the block layer is. It just wants to know "packet
+> sent" or "latency between IO request and completion" or things like
+> that.
 
-> +static int create_function_event(int argc, char **argv)
-> +{
-> +	struct func_event *func_event, *fe;
-> +	enum func_states state = FUNC_STATE_INIT;
-> +	char *token;
-> +	char *ptr;
-> +	char last;
-> +	int ret = -EINVAL;
-> +	int i;
-> +
-> +	func_event = kzalloc(sizeof(*func_event), GFP_KERNEL);
-> +	if (!func_event)
-> +		return -ENOMEM;
-> +
-> +	INIT_LIST_HEAD(&func_event->files);
-> +	func_event->ops.func = func_event_call;
-> +	func_event->ops.flags = FTRACE_OPS_FL_SAVE_REGS;
-> +
-> +	for (i = 0; i < argc; i++) {
-> +		ptr = argv[i];
-> +		last = 0;
-> +		for (token = next_token(&ptr, &last); token;
-> +		     token = next_token(&ptr, &last)) {
-> +			state = process_event(func_event, token, state);
-> +			if (state == FUNC_STATE_ERROR)
-> +				goto fail;
-> +		}
-> +	}
-> +	if (state != FUNC_STATE_END)
-> +		goto fail;
-> +
-> +	ret = -EALREADY;
-> +	list_for_each_entry(fe, &func_events, list) {
-> +		if (strcmp(fe->func, func_event->func) == 0)
-> +			goto fail;
-> +	}
-> +
-> +	ret = ftrace_set_filter(&func_event->ops, func_event->func,
-> +				strlen(func_event->func), 0);
-> +	if (ret < 0)
-> +		goto fail;
-> +
-> +	ret = func_event_create(func_event);
-> +	if (ret < 0)
-> +		goto fail;
-> +
-> +	list_add_tail(&func_event->list, &func_events);
-> +	return 0;
+So a large sticking point here as been the scheduler tracepoints; which
+I'm rather unhappy with.
 
-should this be done under 'func_event_mutex' ?
+As a result of adding SCHED_DEADLINE the existing tracepoints no longer
+are sufficient (they don't provide any deadline specific information).
 
-I tried and crashed the system by running 2 scripts with:
+So the MIS people that are intersted in deadline tasks are unhappy.
 
-  echo 'ip_rcv(u64 skb, u64 dev)' > /sys/kernel/debug/tracing/function_events
-  echo 'SyS_openat(int dfd, string buf, x32 flags, x32 mode)' >> /sys/kernel/debug/tracing/function_events
-  echo 'SyS_open(x8[32] buf, x32 flags, x32 mode)' >> /sys/kernel/debug/tracing/function_events
+My own preference is to just add the deadline information to the
+existing tracepoints, but then people complain these become too big
+(which is slow etc..), saying sched_switch is a high rate tracepoint
+(true of course) (not to mention that changing the tracepoint will
+probably break something, but they'll just have to cope).
 
-jirka
+So they've proposed all kinds of horrible alternatives that are all
+variations of multiple tracepoints in the same location that fragment
+the information, each of which I hate.
 
+I'm ok with having the _one_ tracepoint, but I don't want 3+
+sched_switch tracepoints, each having a different set of information
+depending on what people want, that way lies madness.
 
-[  376.727159] general protection fault: 0000 [#1] SMP PTI
-[  376.732992] Modules linked in: intel_rapl sb_edac x86_pkg_temp_thermal intel_powerclamp coretemp kvm_intel kvm irqbypass crct10dif_pclmul crc32_pclmul igb ghash_clmulni_intel intel_cstate ptp intel_uncore pps_core iTCO_wdt iTCO_vendor_support ipmi_ssif ipmi_si ipmi_devintf ipmi_msghandler shpchp ioatdma cdc_ether usbnet mii intel_rapl_perf i2c_i801 tpm_tis tpm_tis_core dca tpm lpc_ich wmi xfs libcrc32c mgag200 i2c_algo_bit drm_kms_helper ttm crc32c_intel drm megaraid_sas
-[  376.779583] CPU: 9 PID: 1285 Comm: t.sh Not tainted 4.15.0-rc9idle+ #32
-[  376.786956] Hardware name: IBM System x3650 M4 : -[7915E2G]-/00Y7683, BIOS -[VVE124AUS-1.30]- 11/21/2012
-[  376.797545] RIP: 0010:__unregister_trace_event+0xe/0x70
-[  376.803376] RSP: 0018:ffffa643043cbc50 EFLAGS: 00010286
-[  376.809206] RAX: dead000000000100 RBX: ffff91b6340c2480 RCX: ffffffffbf2ebf50
-[  376.817170] RDX: dead000000000200 RSI: ffffffffbf2ed540 RDI: ffff91b6340c2480
-[  376.825135] RBP: ffff91b6340c2460 R08: 0000000000000001 R09: 0000000000000000
-[  376.833099] R10: ffffa643043cbc78 R11: 0000000000000000 R12: ffff91b6340c2400
-[  376.841062] R13: ffff91b6326f8600 R14: dead000000000200 R15: dead000000000100
-[  376.849028] FS:  00007ff3644bcb40(0000) GS:ffff91b63fac0000(0000) knlGS:0000000000000000
-[  376.858058] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-[  376.864469] CR2: 000055c83b531008 CR3: 00000004736d0003 CR4: 00000000000606e0
-[  376.872433] Call Trace:
-[  376.875168]  event_remove+0x72/0x120
-[  376.879159]  trace_remove_event_call+0x79/0xd0
-[  376.884117]  func_event_open+0xb1/0xd0
-[  376.888302]  ? free_func_event+0x70/0x70
-[  376.892673]  do_dentry_open+0x1b1/0x2d0
-[  376.896954]  path_openat+0x602/0x14e0
-[  376.901041]  do_filp_open+0x9b/0x110
-[  376.905032]  ? __vfs_write+0x33/0x170
-[  376.909119]  ? __check_object_size+0xaf/0x1b0
-[  376.913981]  ? do_sys_open+0x1bd/0x250
-[  376.918164]  do_sys_open+0x1bd/0x250
-[  376.922156]  entry_SYSCALL_64_fastpath+0x20/0x83
-[  376.927299] RIP: 0033:0x7ff363ba01c0
-[  376.931287] RSP: 002b:00007ffdf21e4978 EFLAGS: 00000246
-[  376.931290] Code: e0 d9 2e bf e9 94 aa 6e 00 0f 1f 40 00 48 c7 c7 e0 d9 2e bf e9 54 5c f7 ff 0f 1f 40 00 53 48 8b 07 48 89 fb 48 8b 57 08 48 85 c0 <48> 89 02 74 04 48 89 50 08 48 b8 00 01 00 00 00 00 ad de 48 8d 
-[  376.958209] RIP: __unregister_trace_event+0xe/0x70 RSP: ffffa643043cbc50
-[  376.965711] ---[ end trace b3dd6064ee6bc2f4 ]---
+As a run-around, Steve then suggested to decouple the trace-hook from
+the actual trace-event. Let the scheduler only provide the hook, nothing
+else. And then allow users to create their own events with the specific
+data they need for their specific use-case.
+
+Various options have been floated, ebpf, modules, whatever.
+
+At this point I'm well tired of all this and would just as soon rip out
+all tracepoints entire; but of course, the scheduler has some very
+useful information for MIS people, so we can't realy do that either.
+
+/sadface
