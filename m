@@ -1,106 +1,195 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [PATCH 00/18] [ANNOUNCE] Dynamically created function based events
-Date: Sun, 4 Feb 2018 11:39:39 -0800
-Message-ID: <CA+55aFwtCP3Nf86jwNFzdRy_m0GZWH5U2KBDutPDh1ZVATHLYg@mail.gmail.com>
-References: <20180202230458.840252014@goodmis.org> <261141691.15507.1517677454208.JavaMail.zimbra@efficios.com>
- <CA+55aFz1=qWvnJ2271SGwuezwQRBA2nZp8_BxFyR-R0VKKgXRw@mail.gmail.com> <292744194.15823.1517758204087.JavaMail.zimbra@efficios.com>
+From: Sam Mosel <sam.mosel@gmail.com>
+Subject: Re: RT thread running slower as SCHED_OTHER threads increases
+Date: Mon, 5 Feb 2018 11:32:16 +1030
+Message-ID: <CA+m2VPWWPPesVufFKBP94s4vHo8MoA_3gCEix-sJ4A_1qA5Qkw@mail.gmail.com>
+References: <CAF6bL9nmjZr-tQWF1Bd03TUj+X6=dcRWpsZ4kEwVjdSi5LnbMQ@mail.gmail.com>
+ <d539f46a-e52a-903f-64ac-02ed2d013782@ti.com> <CAF6bL9mB-+3Zhw=9m7-TpfriT2iHipYX461nFHMYNZ9Ez2OTCQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Cc: rostedt <rostedt@goodmis.org>,
-        linux-kernel <linux-kernel@vger.kernel.org>,
-        Ingo Molnar <mingo@kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        linux-trace-users <linux-trace-users@vger.kernel.org>,
-        acme <acme@kernel.org>, Clark Williams <williams@redhat.com>,
-        Jiri Olsa <jolsa@redhat.com>, bristot <bristot@redhat.com>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Namhyung Kim <namhyung@kernel.org>,
-        Alexei Starovoitov <alexei.starovoitov@gmail.com>
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Grygorii Strashko <grygorii.strashko@ti.com>,
+        linux-rt-users@vger.kernel.org
+To: Journey Journey <journeywang123@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-io0-f196.google.com ([209.85.223.196]:37962 "EHLO
-        mail-io0-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751788AbeBDTjl (ORCPT
+Received: from mail-wm0-f54.google.com ([74.125.82.54]:51313 "EHLO
+        mail-wm0-f54.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752114AbeBEBCi (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 4 Feb 2018 14:39:41 -0500
-In-Reply-To: <292744194.15823.1517758204087.JavaMail.zimbra@efficios.com>
+        Sun, 4 Feb 2018 20:02:38 -0500
+Received: by mail-wm0-f54.google.com with SMTP id r71so23103908wmd.1
+        for <linux-rt-users@vger.kernel.org>; Sun, 04 Feb 2018 17:02:37 -0800 (PST)
+In-Reply-To: <CAF6bL9mB-+3Zhw=9m7-TpfriT2iHipYX461nFHMYNZ9Ez2OTCQ@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sun, Feb 4, 2018 at 7:30 AM, Mathieu Desnoyers
-<mathieu.desnoyers@efficios.com> wrote:
+Throttling perhaps?
+https://stackoverflow.com/questions/20722615/sched-fifo-process-with-priority-of-99-gets-preempted
+
+322ms is a very long time for a RT task to run uninterrupted. Normally
+you choose RT to meet specific deadlines, not try to monopolise the
+CPUs for performance testing.
+
+See the cyclic task sample code in the first link that Grygorii sent.
+
+Sam.
+
+On 4 February 2018 at 17:10, Journey Journey <journeywang123@gmail.com> wrote:
+> Thanks very much for your reply!
 >
-> I agree with your arguments. A consequence of those arguments is that
-> function-based tracing should be expected to be used by kernel engineers
-> and experts who can adapt their scripts to follow code changes, and tune
-> the script based on their specific kernel version and configuration.
-
-Honestly, I think that's largely the case already.
-
-The main source of tracing is done by experts at big cloud companies,
-I bet. People who do it for performance reasons, or to find some
-anomaly. They're pretty intimate with the kernel.
-
-There _are_ "generic MIS" uses for tracing, and I think those are
-places where we may want architectural trace points. Things like
-gathering IO statistics etc.
-
-I personally think that one of the pain points with tracing has been
-exactly the fact that there are two *completely* different uses, and
-they have *completely* different requirements. There's the expert
-user, who basically wants tracepoints almost everywhere, and who is
-doing some really deep analysis of some random area.
-
-Then there's the "I just want an overview" MIS people, who care about
-things like "I want a histogram of packets sent according to criteria
-XYZ", who want some highlevel block IO performance, or who just want
-random system-wide statistics.
-
-One group really needs to tie in to _anything_, and by definition is
-going to delve deep into some very specific corner of the kernel,
-because they might be chasing a subtle bug and want to have traces to
-just _find_ it.
-
-The other group is looking for a much higher-level thing, and isn't
-necessarily a kernel hacker, and just wants to know IO latencies or
-something for statistics.
-
-I think the function-based events is for that first group. We do not
-want to have actual explicit trace events for that group, because that
-group might want them _everywhere_.  That first group might want to
-know the latency of a packet or block command through one particular
-chain.
-
-The second group might want explicit trace points exactly because that
-group doesn't even care *how* a packet is sent or received, or what
-the path through the block layer is. It just wants to know "packet
-sent" or "latency between IO request and completion" or things like
-that.
-
-The first group cares about a particular kernel implementation and has
-the expertise to line things up for the particular kernel that is
-being deployed on a hundred thousand machines.
-
-The second group doesn't want to care about a particular kernel, just
-wants tools that work across them.
-
-This is why I pushed Steven towards this function-based events things.
-Because I'm *hoping* that this can actually resolve that conflict
-between the two groups. Function-based events are for the first group,
-while actual explicit trace points are for the second.
-
-(Obviously it's not entirely black-and-white, but I do think there is
-a pretty big difference between the two groups. And the first group
-will obviously use the explicit trace points _too_, generally to
-narrow down where they want to go with the function-based one).
-
-We'll see. Maybe I'm entirely wrong. But I'm hoping that the
-function-based one will end up being helpful.
-
-               Linus
+> I had followed the tutorial , but it doesn't work.
+> 1. mlockall
+> 2. echo -1 > /proc/sys/kernel/sched_rt_runtime_us
+> 3. under linux 4.4.32 with rt patch
+>
+> I will be very glad if you can test this case yourself.
+>
+> Thanks !
+>
+> On Sat, Feb 3, 2018 at 12:46 AM, Grygorii Strashko
+> <grygorii.strashko@ti.com> wrote:
+>> Hi
+>>
+>> You probably need to look at
+>> https://wiki.linuxfoundation.org/realtime/documentation/howto/applications/start
+>> https://rt.wiki.kernel.org/index.php/Main_Page
+>>
+>> it not enough to just set policy and prio - you need to follow some
+>> additional rules while creating RT App.
+>>
+>>
+>>
+>> On 02/01/2018 09:52 PM, Journey Journey wrote:
+>>> Hi  Dear All
+>>>
+>>> I had tested a program in order to calculate computing time in a
+>>> machine with 48  intel cpu cores.
+>>>
+>>> 1. when running ./test, it outputs like this:
+>>> MM: 324.039000 ms
+>>> MM: 324.052000 ms
+>>> MM: 324.079000 ms
+>>> MM: 324.042000 ms
+>>> MM: 324.060000 ms
+>>> MM: 324.052000 ms
+>>> MM: 324.026000 ms
+>>> MM: 324.040000 ms
+>>> MM: 324.075000 ms
+>>> MM: 324.011000 ms
+>>> MM: 324.072000 ms
+>>>
+>>> 2. running other programs, like sample code 2
+>>> ./aa &
+>>> ./aa &
+>>> ....
+>>> about 30 times
+>>>
+>>> 3. ./test output changes:
+>>> MM: 354.601000 ms
+>>> MM: 322.289000 ms
+>>> MM: 322.250000 ms
+>>> MM: 322.348000 ms
+>>> MM: 354.700000 ms
+>>> MM: 322.556000 ms
+>>> MM: 354.834000 ms
+>>> MM: 354.816000 ms
+>>> MM: 354.777000 ms
+>>> MM: 354.812000 ms
+>>> MM: 322.451000 ms
+>>> MM: 322.507000 ms
+>>> MM: 322.473000 ms
+>>>
+>>> 4. For purpose to decrease computing cost time, I had tried:
+>>> (1) set test policy to SCHED_RR/SCHED_FIFO, and priority to 50/98
+>>>   chrt -f -p 98 5911
+>>> (2)  bind test to specific cpu
+>>> taskset -pc 4 5911
+>>> (3) limit aa processes to other cpus
+>>> for i in `ps -ef |grep aa|awk '{print $2}'`; do echo $i; taskset -pc
+>>> 5-47 $i; done
+>>>
+>>> It still not working, the result is not good.
+>>> MM: 322.316000 ms
+>>> MM: 322.307000 ms
+>>> MM: 326.739000 ms
+>>> MM: 354.399000 ms
+>>> MM: 354.662000 ms
+>>> MM: 354.740000 ms
+>>> MM: 322.275000 ms
+>>>
+>>> 5. But when limit aa processes to a small cpuset, it works,
+>>> for i in `ps -ef |grep aa|awk '{print $2}'`; do echo $i; taskset -pc
+>>> 5-7 $i; done
+>>>
+>>> the result:
+>>> MM: 322.304000 ms
+>>> MM: 322.335000 ms
+>>> MM: 322.344000 ms
+>>> MM: 322.319000 ms
+>>> MM: 322.340000 ms
+>>> MM: 322.328000 ms
+>>> MM: 322.298000 ms
+>>> MM: 322.318000 ms
+>>>
+>>>
+>>> It's quite amazing why such low priority processes can affect realtime
+>>> process, please help me!
+>>>
+>>>
+>>>
+>>> Sample test code1:
+>>>
+>>> #include <stdio.h>
+>>> #include <sys/time.h>
+>>>
+>>> void calc() {
+>>>      int c, d, k;
+>>>      int m = 100000, q = 1, p = 1000;
+>>>      int sum;
+>>>      for (c = 0; c < m; c++) {
+>>>          for (d = 0; d < q; d++) {
+>>>              for (k = 0; k < p; k++) {
+>>>                   sum = c * m * d * q * p * k;
+>>>              }
+>>>          }
+>>>
+>>>      }
+>>> }
+>>>
+>>> int main() {
+>>>      struct timeval t1, t2;
+>>>      double elapsedTime;
+>>>
+>>>      while(1) {
+>>>          gettimeofday(&t1, NULL);
+>>>          calc();
+>>>          gettimeofday(&t2, NULL);
+>>>          elapsedTime = (t2.tv_sec - t1.tv_sec) * 1000.0;      // sec to ms
+>>>          elapsedTime += (t2.tv_usec - t1.tv_usec) / 1000.0;   // us to ms
+>>>          printf("MM: %lf ms\n", elapsedTime);
+>>>          sleep(1);
+>>>      }
+>>> }
+>>>
+>>>
+>>> Sample Code 2:
+>>>
+>>> #include <stdio.h>
+>>>
+>>> int main() {
+>>>      while(1) {
+>>>      }
+>>> }
+>>>
+>>> Thanks~
+>>> --
+>>> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+>>> the body of a message to majordomo@vger.kernel.org
+>>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>>>
+>>
+>> --
+>> regards,
+>> -grygorii
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
