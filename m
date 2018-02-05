@@ -1,14 +1,14 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH 00/18] [ANNOUNCE] Dynamically created function based
  events
-Date: Mon, 5 Feb 2018 10:02:59 -0500
-Message-ID: <20180205100259.311603b2@gandalf.local.home>
+Date: Mon, 5 Feb 2018 10:07:43 -0500
+Message-ID: <20180205100743.4420c0e6@gandalf.local.home>
 References: <20180202230458.840252014@goodmis.org>
         <261141691.15507.1517677454208.JavaMail.zimbra@efficios.com>
         <20180203140217.2382df69@gandalf.local.home>
         <20180203205207.mpob4w6eyehhg2ky@ast-mbp>
         <20180203161732.4a65c66b@gandalf.local.home>
-        <CAM9d7cgmWmo6S30fLg6Zdk5ic8a3UJOjYSo3C55CcG=NBz6mhQ@mail.gmail.com>
+        <20180205135355.GX19535@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -26,29 +26,54 @@ Cc: Alexei Starovoitov <alexei.starovoitov@gmail.com>,
         linux-trace-users <linux-trace-users@vger.kernel.org>,
         acme <acme@kernel.org>, Clark Williams <williams@redhat.com>,
         Jiri Olsa <jolsa@redhat.com>, bristot <bristot@redhat.com>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Jonathan Corbet <corbet@lwn.net>
-To: Namhyung Kim <namhyung@kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.99]:52482 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1752914AbeBEPDC (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 5 Feb 2018 10:03:02 -0500
-In-Reply-To: <CAM9d7cgmWmo6S30fLg6Zdk5ic8a3UJOjYSo3C55CcG=NBz6mhQ@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+        Jonathan Corbet <corbet@lwn.net>,
+        Namhyung Kim <namhyung@kernel.org>,
+        Dietmar Eggemann <dietmar.eggemann@arm.co
+To: Juri Lelli <juri.lelli@redhat.com>
+Return-path: <linux-trace-users-owner@vger.kernel.org>
+In-Reply-To: <20180205135355.GX19535@localhost.localdomain>
+Sender: linux-trace-users-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Sun, 4 Feb 2018 11:25:20 +0900
-Namhyung Kim <namhyung@kernel.org> wrote:
+On Mon, 5 Feb 2018 14:53:55 +0100
+Juri Lelli <juri.lelli@redhat.com> wrote:
 
-> I'm interested in this.  From my understanding, it's basically
-> function tracing + filter + custom argument info, right?
+> First impression is that this is going to be definitely useful if
 > 
-> Supporting arguments with complex type could be error-prone.
-> We need to prevent malfunctions by invalid inputs.
+>  - it's possibile to hook at function end (e.g., replenish_dl_entity above
+>    carries more useful information _after_ it did its job)
 
-All reads are done with probe_kernel_read(). If it faults (at any
-stage), it simply returns "0".
+The one issue is that you will only have access to one argument at the
+end. And that will be the return value. How useful would that be?
+
+Hmm, actually, if we incorporate Tom Zanussi's histogram patches (which
+I'll start reviewing this week for inclusion), we could add the pseudo
+events to carry necessary data.
+
+>  - inside functions? not really sure it's actually going to be needed, but I
+>    was wondering if it's possible at all :); with tracepoints it's for example
+>    easy to collect detailed information about which branches has been taken etc.
+
+This will not be something to handle anything other than function
+calls. You have three options for dealing with inside a function.
+
+ - add another function that can be traced with this, inside the
+   function
+
+ - use kprobes
+
+ - add a tracepoint
+
+> 
+> I'm going to play with this more. Just wanted to give back a quick positive
+> feedback.
+
+Thanks!
+
+> 
+> I'm also adding Arm folks to the discussion, as they (and I :) have been
+> asking to add tracepoints to scheduler code in the past [1].
+
+You will need to implement the arch_get_func_args() for ARM too.
 
 -- Steve
-
