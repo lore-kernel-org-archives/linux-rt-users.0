@@ -1,49 +1,78 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Masami Hiramatsu <mhiramat@kernel.org>
 Subject: Re: [PATCH 00/18] [ANNOUNCE] Dynamically created function based
  events
-Date: Mon, 5 Feb 2018 10:11:07 -0500
-Message-ID: <20180205101107.1e4debd2@gandalf.local.home>
+Date: Tue, 6 Feb 2018 00:14:28 +0900
+Message-ID: <20180206001428.baf7f16d4a836a17488d7248@kernel.org>
 References: <20180202230458.840252014@goodmis.org>
-        <20180205102359.GV19535@localhost.localdomain>
-        <72fc5744-d064-9d0f-bd80-127f4d665580@redhat.com>
+        <261141691.15507.1517677454208.JavaMail.zimbra@efficios.com>
+        <CA+55aFz1=qWvnJ2271SGwuezwQRBA2nZp8_BxFyR-R0VKKgXRw@mail.gmail.com>
+        <292744194.15823.1517758204087.JavaMail.zimbra@efficios.com>
+        <CA+55aFwtCP3Nf86jwNFzdRy_m0GZWH5U2KBDutPDh1ZVATHLYg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Juri Lelli <juri.lelli@redhat.com>, linux-kernel@vger.kernel.org,
-        Linus Torvalds <torvalds@linux-foundation.org>,
+Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        rostedt <rostedt@goodmis.org>,
+        linux-kernel <linux-kernel@vger.kernel.org>,
         Ingo Molnar <mingo@kernel.org>,
         Andrew Morton <akpm@linux-foundation.org>,
         Thomas Gleixner <tglx@linutronix.de>,
         Peter Zijlstra <peterz@infradead.org>,
         Masami Hiramatsu <mhiramat@kernel.org>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
-        linux-rt-users@vger.kernel.org, linux-trace-users@vger.kernel.org,
-        Arnaldo Carvalho de Melo <acme@kernel.org>,
-        Clark Williams <williams@redhat.com>,
-        Jiri Olsa <jolsa@redhat.com>, Jonathan Corbet <corbet@lwn.net>,
-        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        linux-trace-users <linux-trace-users@vger.kernel.org>,
+        acme <acme@kernel.org>, Clark Williams <williams@redhat.com>,
+        Jiri Olsa <jolsa@redhat.com>, bristot <bristot@redhat.com>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
         Namhyung Kim <namhyung@kernel.org>,
         Alexei Starovoitov <alexei.starovoitov@gmail.com>
-To: Daniel Bristot de Oliveira <bristot@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.99]:53866 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1753101AbeBEPLL (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 5 Feb 2018 10:11:11 -0500
-In-Reply-To: <72fc5744-d064-9d0f-bd80-127f4d665580@redhat.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CA+55aFwtCP3Nf86jwNFzdRy_m0GZWH5U2KBDutPDh1ZVATHLYg@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 5 Feb 2018 11:49:31 +0100
-Daniel Bristot de Oliveira <bristot@redhat.com> wrote:
+(Note that I also agree with Linus's opinion that this is
+ like a debugger, since I already did it in perf-probe :))
 
-> Isn't this the case of calling tracing functions before calling:
+On Sun, 4 Feb 2018 11:39:39 -0800
+Linus Torvalds <torvalds@linux-foundation.org> wrote:
+
+> (Obviously it's not entirely black-and-white, but I do think there is
+> a pretty big difference between the two groups. And the first group
+> will obviously use the explicit trace points _too_, generally to
+> narrow down where they want to go with the function-based one).
 > 
-> rcu_irq_enter();
+> We'll see. Maybe I'm entirely wrong. But I'm hoping that the
+> function-based one will end up being helpful.
 
-Yes, I'm actually aware of this. I just forgot to deal with it during
-development.
+BTW, if the function-based tracing is helpful for both of them,
+they can start using it back in 2010 because kprobe-based tracer
+already supported it.
 
-Thanks, for reporting.
+It was less announced, I must admit that I was lazy at that point.
+Also, since I moved usability effort on perf-probe, kprobe-based
+event syntax is not so funcy.
 
--- Steve
+"SyS_openat(int dfd, string path, x32 flags, x16 mode)"
+
+is equal to
+
+"p SyS_openat dfd=%di:x64 path=%si:string flags=%dx:x32 mode=%cx:x16"
+
+in kprobe probe definition syntax, but with perf-probe and CONFIG_DEBUG_INFO,
+
+perf probe -a 'sys_openat $params'
+
+will setup the event correctly.
+
+So, we need to clarify what will attract more "2nd group" people to
+function based events. E.g. the events for EXPORT_SYMBOL_GPL() symbols
+already defined and easily on/off.
+
+Thank you,
+
+-- 
+Masami Hiramatsu <mhiramat@kernel.org>
