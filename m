@@ -1,81 +1,149 @@
-From: Peter Zijlstra <peterz@infradead.org>
+From: Juri Lelli <juri.lelli@redhat.com>
 Subject: Re: [PATCH 00/18] [ANNOUNCE] Dynamically created function based
  events
-Date: Mon, 5 Feb 2018 11:09:31 +0100
-Message-ID: <20180205100930.GH2249@hirez.programming.kicks-ass.net>
+Date: Mon, 5 Feb 2018 11:23:59 +0100
+Message-ID: <20180205102359.GV19535@localhost.localdomain>
 References: <20180202230458.840252014@goodmis.org>
- <261141691.15507.1517677454208.JavaMail.zimbra@efficios.com>
- <CA+55aFz1=qWvnJ2271SGwuezwQRBA2nZp8_BxFyR-R0VKKgXRw@mail.gmail.com>
- <292744194.15823.1517758204087.JavaMail.zimbra@efficios.com>
- <CA+55aFwtCP3Nf86jwNFzdRy_m0GZWH5U2KBDutPDh1ZVATHLYg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-        rostedt <rostedt@goodmis.org>,
-        linux-kernel <linux-kernel@vger.kernel.org>,
+Cc: linux-kernel@vger.kernel.org,
+        Linus Torvalds <torvalds@linux-foundation.org>,
         Ingo Molnar <mingo@kernel.org>,
         Andrew Morton <akpm@linux-foundation.org>,
         Thomas Gleixner <tglx@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
         Masami Hiramatsu <mhiramat@kernel.org>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        linux-trace-users <linux-trace-users@vger.kernel.org>,
-        acme <acme@kernel.org>, Clark Williams <williams@redhat.com>,
-        Jiri Olsa <jolsa@redhat.com>, bristot <bristot@redhat.com>,
-        Juri Lelli <juri.lelli@redhat.com>,
+        linux-rt-users@vger.kernel.org, linux-trace-users@vger.kernel.org,
+        Arnaldo Carvalho de Melo <acme@kernel.org>,
+        Clark Williams <williams@redhat.com>,
+        Jiri Olsa <jolsa@redhat.com>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
         Jonathan Corbet <corbet@lwn.net>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
         Namhyung Kim <namhyung@kernel.org>,
         Alexei Starovoitov <alexei.starovoitov@gmail.com>
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Return-path: <linux-trace-users-owner@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wm0-f67.google.com ([74.125.82.67]:53885 "EHLO
+        mail-wm0-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752498AbeBEKYE (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 5 Feb 2018 05:24:04 -0500
+Received: by mail-wm0-f67.google.com with SMTP id t74so25112765wme.3
+        for <linux-rt-users@vger.kernel.org>; Mon, 05 Feb 2018 02:24:03 -0800 (PST)
 Content-Disposition: inline
-In-Reply-To: <CA+55aFwtCP3Nf86jwNFzdRy_m0GZWH5U2KBDutPDh1ZVATHLYg@mail.gmail.com>
-Sender: linux-trace-users-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <20180202230458.840252014@goodmis.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sun, Feb 04, 2018 at 11:39:39AM -0800, Linus Torvalds wrote:
-> Then there's the "I just want an overview" MIS people, who care about
-> things like "I want a histogram of packets sent according to criteria
-> XYZ", who want some highlevel block IO performance, or who just want
-> random system-wide statistics.
+Hi Steve,
 
-> The second group might want explicit trace points exactly because that
-> group doesn't even care *how* a packet is sent or received, or what
-> the path through the block layer is. It just wants to know "packet
-> sent" or "latency between IO request and completion" or things like
-> that.
+On 02/02/18 18:04, Steven Rostedt wrote:
+> 
+> At Kernel Summit back in October, we tried to bring up trace markers, which
+> would be nops within the kernel proper, that would allow modules to hook
+> arbitrary trace events to them. The reaction to this proposal was less than
+> favorable. We were told that we were trying to make a work around for a
+> problem, and not solving it. The problem in our minds is the notion of a
+> "stable trace event".
+> 
+> There are maintainers that do not want trace events, or more trace events in
+> their subsystems. This is due to the fact that trace events post an
+> interface to user space, and this interface could become required by some
+> tool. This may cause the trace event to become stable where it must not
+> break the tool, and thus prevent the code from changing.
+> 
+> Or, the trace event may just have to add padding for fields that tools
+> may require. The "success" field of the sched_wakeup trace event is one such
+> instance. There is no more "success" variable, but tools may fail if it were
+> to go away, so a "1" is simply added to the trace event wasting ring buffer
+> real estate.
+> 
+> I talked with Linus about this, and he told me that we already have these
+> markers in the kernel. They are from the mcount/__fentry__ used by function
+> tracing. Have the trace events be created by these, and see if this will
+> satisfy most areas that want trace events.
+> 
+> I decided to implement this idea, and here's the patch set.
+> 
+> Introducing "function based events". These are created dynamically by a
+> tracefs file called "function_events". By writing a pseudo prototype into
+> this file, you create an event.
+> 
+>  # mount -t tracefs nodev /sys/kernel/tracing
+>  # cd /sys/kernel/tracing
+>  # echo 'do_IRQ(symbol ip[16] | x64[6] irq_stack[16])' > function_events
+>  # cat events/functions/do_IRQ/format
+> name: do_IRQ
+> ID: 1399
+> format:
+> 	field:unsigned short common_type;	offset:0;	size:2;	signed:0;
+> 	field:unsigned char common_flags;	offset:2;	size:1;	signed:0;
+> 	field:unsigned char common_preempt_count;	offset:3;	size:1;	signed:0;
+> 	field:int common_pid;	offset:4;	size:4;	signed:1;
+> 
+> 	field:unsigned long __parent_ip;	offset:8;	size:8;	signed:0;
+> 	field:unsigned long __ip;	offset:16;	size:8;	signed:0;
+> 	field:symbol ip;	offset:24;	size:8;	signed:0;
+> 	field:x64 irq_stack[6];	offset:32;	size:48;	signed:0;
+> 
+> print fmt: "%pS->%pS(ip=%pS, irq_stack=%llx:%llx:%llx:%llx:%llx:%llx)", REC->__ip, REC->__parent_ip,
+> REC->ip, REC->irq_stack[0], REC->irq_stack[1], REC->irq_stack[2], REC->irq_stack[3], REC->irq_stack[4],
+> REC->irq_stack[5]
+> 
+>  # echo 1 > events/functions/do_IRQ/enable
 
-So a large sticking point here as been the scheduler tracepoints; which
-I'm rather unhappy with.
+Got the following:
 
-As a result of adding SCHED_DEADLINE the existing tracepoints no longer
-are sufficient (they don't provide any deadline specific information).
+[  110.433602] =============================
+[  110.435671] WARNING: suspicious RCU usage
+[  110.437173] 4.15.0-rc9+ #42 Not tainted
+[  110.438698] -----------------------------
+[  110.440343] /home/juri/Work/kernel/linux/include/linux/rcupdate.h:749 rcu_read_lock_sched() used illegally while idle!
+[  110.444480]
+[  110.444480] other info that might help us debug this:
+[  110.444480]
+[  110.447616]
+[  110.447616] RCU used illegally from idle CPU!
+[  110.447616] rcu_scheduler_active = 2, debug_locks = 1
+[  110.452047] RCU used illegally from extended quiescent state!
+[  110.454072] 1 lock held by swapper/0/0:
+[  110.455447]  #0:  (rcu_read_lock_sched){....}, at: [<00000000de240ad4>] func_event_call+0x0/0x3c0
+[  110.458532]
+[  110.458532] stack backtrace:
+[  110.460066] CPU: 0 PID: 0 Comm: swapper/0 Not tainted 4.15.0-rc9+ #42
+[  110.462300] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.10.2-2.fc27 04/01/2014
+[  110.464477] Call Trace:
+[  110.465095]  <IRQ>
+[  110.465600]  dump_stack+0x85/0xc5
+[  110.466417]  func_event_call+0x378/0x3c0
+[  110.467373]  ? find_held_lock+0x34/0xa0
+[  110.468216]  ? common_interrupt+0xa2/0xa2
+[  110.468978]  ? irq_work_interrupt+0xb0/0xb0
+[  110.470021]  ? hrtimer_start_range_ns+0x1bf/0x3e0
+[  110.471031]  ftrace_ops_assist_func+0x64/0xf0
+[  110.471941]  ? _raw_spin_unlock_irqrestore+0x55/0x60
+[  110.472926]  0xffffffffc02e30bf
+[  110.473491]  ? do_IRQ+0x5/0x100
+[  110.473977]  do_IRQ+0x5/0x100
+[  110.474430]  common_interrupt+0xa2/0xa2
+[  110.475014]  </IRQ>
+[  110.475341] RIP: 0010:native_safe_halt+0x2/0x10
+[  110.476020] RSP: 0018:ffffffff96a03ec8 EFLAGS: 00000206 ORIG_RAX: ffffffffffffffdd
+[  110.477137] RAX: ffffffff96a2a500 RBX: 0000000000000000 RCX: 0000000000000000
+[  110.478110] RDX: ffffffff96a2a500 RSI: 0000000000000001 RDI: ffffffff96a2a500
+[  110.478997] RBP: 0000000000000000 R08: 0000000000000001 R09: 0000000000000000
+[  110.479880] R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000000
+[  110.480764] R13: 0000000000000000 R14: 0000000000000000 R15: 0000000000000000
+[  110.481661]  default_idle+0x1f/0x1a0
+[  110.482118]  do_idle+0x166/0x1e0
+[  110.482530]  cpu_startup_entry+0x19/0x20
+[  110.482985]  start_kernel+0x40a/0x412
+[  110.483385]  secondary_startup_64+0xa5/0xb0
 
-So the MIS people that are intersted in deadline tasks are unhappy.
+continuing to test this. :)
 
-My own preference is to just add the deadline information to the
-existing tracepoints, but then people complain these become too big
-(which is slow etc..), saying sched_switch is a high rate tracepoint
-(true of course) (not to mention that changing the tracepoint will
-probably break something, but they'll just have to cope).
+Thanks,
 
-So they've proposed all kinds of horrible alternatives that are all
-variations of multiple tracepoints in the same location that fragment
-the information, each of which I hate.
-
-I'm ok with having the _one_ tracepoint, but I don't want 3+
-sched_switch tracepoints, each having a different set of information
-depending on what people want, that way lies madness.
-
-As a run-around, Steve then suggested to decouple the trace-hook from
-the actual trace-event. Let the scheduler only provide the hook, nothing
-else. And then allow users to create their own events with the specific
-data they need for their specific use-case.
-
-Various options have been floated, ebpf, modules, whatever.
-
-At this point I'm well tired of all this and would just as soon rip out
-all tracepoints entire; but of course, the scheduler has some very
-useful information for MIS people, so we can't realy do that either.
-
-/sadface
+- Juri
