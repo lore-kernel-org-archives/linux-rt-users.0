@@ -1,106 +1,49 @@
-From: Gene Heskett <gheskett@shentel.net>
-Subject: Re: [ANNOUNCE] v4.14.15-rt13
-Date: Tue, 6 Feb 2018 09:07:56 -0500
-Message-ID: <201802060907.56549.gheskett@shentel.net>
-References: <20180129223723.lr5avyspmglwcddr@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: Linux stable vs RT stable and RT dev
+Date: Tue, 6 Feb 2018 15:34:26 +0100
+Message-ID: <20180206143426.fdzs6hnvmakqdwiu@linutronix.de>
+References: <8155aea247374c058bd7c797124c3d28@ti.com>
+ <20180202214611.GD868@jcartwri.amer.corp.natinst.com>
+ <1c47b7e6-86d0-cbb0-9b72-7b7d63e46ddc@ti.com>
+ <6eecb69a-e60f-f837-bc2c-a627e2660027@ti.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="utf-8"
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: William Mills <wmills@ti.com>, Julia Cartwright <julia@ni.com>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        "Nori, Sekhar" <nsekhar@ti.com>, rostedt@goodmis.org,
+        "Hernandez, Carlos" <ceh@ti.com>,
+        "Strashko, Grygorii" <grygorii.strashko@ti.com>
+To: Dan Murphy <dmurphy@ti.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from barracuda1.shentel.net ([204.111.1.144]:39166 "EHLO
-        barracuda4.shentel.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-        with ESMTP id S1751319AbeBFOIC (ORCPT
+Received: from Galois.linutronix.de ([146.0.238.70]:54959 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752061AbeBFOee (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 6 Feb 2018 09:08:02 -0500
-Received: from smtp2.edbg.cloud.shentel.net (smtp2.edbg.cloud.shentel.net [204.111.2.25]) by barracuda4.shentel.net with ESMTP id kdlxJ6PISMQYpRPO for <linux-rt-users@vger.kernel.org>; Tue, 06 Feb 2018 09:07:47 -0500 (EST)
-Received: from coyote.coyote.den (unknown [204.111.64.149])
-        by smtp2.edbg.cloud.shentel.net (Postfix) with ESMTPSA id DEFA721C84
-        for <linux-rt-users@vger.kernel.org>; Tue,  6 Feb 2018 09:07:46 -0500 (EST)
-In-Reply-To: <20180129223723.lr5avyspmglwcddr@linutronix.de>
+        Tue, 6 Feb 2018 09:34:34 -0500
 Content-Disposition: inline
+In-Reply-To: <6eecb69a-e60f-f837-bc2c-a627e2660027@ti.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Monday 29 January 2018 17:37:23 Sebastian Andrzej Siewior wrote:
+On 2018-02-05 15:17:56 [-0600], Dan Murphy wrote:
+> We are catching warnings and errors with these defconfigs.  I have reported 2 warnings but
+> I have not received a response.  I guess I should report these to this list as opposed to the maintainers.
 
-> Dear RT folks!
->
-> I'm pleased to announce the v4.14.15-rt13 patch set.
->
-> Changes since v4.14.15-rt12:
->
->   - In the previous release the ping-sysrq patch was removed from the
->     queue but has been left listed in the series by mistake. "git
->     quiltimport" simply ignored that patch while "quilt push -a" did
-> not continue. This release provides a corrected series file. Reported
-> by Salvatore Bonaccorso.
->
-> Known issues
->      - A warning triggered in "rcu_note_context_switch" originated
-> from SyS_timer_gettime(). The issue was always there, it is now
-> visible. Reported by Grygorii Strashko and Daniel Wagner.
->
-> The delta patch against v4.14.15-rt12 is appended below and can be
-> found here:
->
->     
-> https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/incr/patch-4.
->14.15-rt12-rt13.patch.xz
->
-> You can get this release via the git tree at:
->
->    
-> git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git
-> v4.14.15-rt13
->
-pulled this one. copied rock64 defconfig to top level dir. Read the docs, 
-some prerequisites are missing, like sphinx.
+You reported two warnings to my private address while I was traveling.
+The usual workflow for reporting is to send this to the mailing list and
+Cc the RT maintainer(s) (which would contain the email address I am
+using right now).
 
-But make menuconfig fails:
-scripts/kconfig/Makefile:202: recipe for 
-target 'scripts/kconfig/dochecklxdialog' failed
-make[1]: *** [scripts/kconfig/dochecklxdialog] Error 1
+> We have a "next" process that runs nightly that merges in the stable rc candidate into our branch
+> so we can anticipate if the new stable or TI developer branches will cause a merge conflict when merged into our branch sets.
+> 
+> For instance 4.14.17 stable rc caused a merge conflict in the hrtimer.c file. This became a known issue as soon as the stable rc was
+> available.  The RT 4.14 upstream branch is currently on 4.14.15 so now our RT branch is blocked from receiving a new stable until the
+> RT upstream branch is updated.
 
-Thats probably because something in the Docs/process/changes.rst is 
-missing from a stretch install on an arm64 board. And a sudo apt install 
-$name can't find it
+I usually do a new release once I have something in my pipe or if people
+ask to update new stable due to $reason.
 
-What am I missing thats available in stretch to satisfy this?
+> Dan
 
-> The RT patch against v4.14.15 can be found here:
->
->    
-> https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patch-4
->.14.15-rt13.patch.xz
->
-> The split quilt queue is available at:
->
->    
-> https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patches
->-4.14.15-rt13.tar.xz
->
-> Sebastian
->
-> diff --git a/localversion-rt b/localversion-rt
-> index 6e44e540b927..9f7d0bdbffb1 100644
-> --- a/localversion-rt
-> +++ b/localversion-rt
-> @@ -1 +1 @@
-> --rt12
-> +-rt13
-> --
-> To unsubscribe from this list: send the line "unsubscribe
-> linux-rt-users" in the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
-
-
--- 
-Cheers, Gene Heskett
---
-"There are four boxes to be used in defense of liberty:
- soap, ballot, jury, and ammo. Please use in that order."
--Ed Howdershelt (Author)
-Genes Web page <http://geneslinuxbox.net:6309/gene>
+Sebastian
