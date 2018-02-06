@@ -1,66 +1,120 @@
-From: Dan Murphy <dmurphy@ti.com>
-Subject: Re: Linux stable vs RT stable and RT dev
-Date: Tue, 6 Feb 2018 14:07:01 -0600
-Message-ID: <562d010a-efb2-8af4-3ae5-40eacf7d6e9e@ti.com>
-References: <8155aea247374c058bd7c797124c3d28@ti.com>
- <20180202214611.GD868@jcartwri.amer.corp.natinst.com>
- <1c47b7e6-86d0-cbb0-9b72-7b7d63e46ddc@ti.com>
- <6eecb69a-e60f-f837-bc2c-a627e2660027@ti.com>
- <20180206143426.fdzs6hnvmakqdwiu@linutronix.de>
- <8e201971-d626-7ef6-addd-bbbc32f63770@ti.com>
- <20180206111718.0eb267da@gandalf.local.home>
+From: Gene Heskett <gheskett@shentel.net>
+Subject: Re: [ANNOUNCE] v4.14.15-rt13
+Date: Tue, 6 Feb 2018 17:17:16 -0500
+Message-ID: <201802061717.16750.gheskett@shentel.net>
+References: <20180129223723.lr5avyspmglwcddr@linutronix.de> <201802060907.56549.gheskett@shentel.net> <201802061438.43464.gheskett@shentel.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: Text/Plain;
+  charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        William Mills <wmills@ti.com>, Julia Cartwright <julia@ni.com>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "Nori, Sekhar" <nsekhar@ti.com>, "Hernandez, Carlos" <ceh@ti.com>,
-        "Strashko, Grygorii" <grygorii.strashko@ti.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from fllnx209.ext.ti.com ([198.47.19.16]:41111 "EHLO
-        fllnx209.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751574AbeBFUHs (ORCPT
+Received: from barracuda1.shentel.net ([204.111.1.144]:27359 "EHLO
+        barracuda1.shentel.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1753267AbeBFWRW (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 6 Feb 2018 15:07:48 -0500
-In-Reply-To: <20180206111718.0eb267da@gandalf.local.home>
-Content-Language: en-US
+        Tue, 6 Feb 2018 17:17:22 -0500
+Received: from smtp1.edbg.cloud.shentel.net (smtp1.edbg.cloud.shentel.net [204.111.2.17]) by barracuda1.shentel.net with ESMTP id 3B1ChwH5P5GxEW98 for <linux-rt-users@vger.kernel.org>; Tue, 06 Feb 2018 17:17:07 -0500 (EST)
+Received: from coyote.coyote.den (unknown [204.111.64.149])
+        by smtp1.edbg.cloud.shentel.net (Postfix) with ESMTPSA id 12B8322488
+        for <linux-rt-users@vger.kernel.org>; Tue,  6 Feb 2018 17:17:07 -0500 (EST)
+In-Reply-To: <201802061438.43464.gheskett@shentel.net>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Steve
+On Tuesday 06 February 2018 14:38:43 Gene Heskett wrote:
 
-On 02/06/2018 10:17 AM, Steven Rostedt wrote:
-> On Tue, 6 Feb 2018 09:47:15 -0600
-> Dan Murphy <dmurphy@ti.com> wrote:
-> 
->> This is where we can put an automated job in place to merge GKH rc
->> stable into the RT branch and report only upcoming merge conflicts.
->> Then no one actually has to report or ask it would just be assumed?
-> 
-> I'd be careful about this. There's a few (not many) subtle changes that
-> get backported to stable that can break RT. You wont be able to notice
-> it with compiling, but it can cause deadlocks in certain scenarios.
-> 
+> On Tuesday 06 February 2018 09:07:56 Gene Heskett wrote:
+> > On Monday 29 January 2018 17:37:23 Sebastian Andrzej Siewior wrote:
+> > > Dear RT folks!
+> > >
+> > > I'm pleased to announce the v4.14.15-rt13 patch set.
+> > >
+> > > Changes since v4.14.15-rt12:
+> > >
+> > >   - In the previous release the ping-sysrq patch was removed from
+> > > the queue but has been left listed in the series by mistake. "git
+> > > quiltimport" simply ignored that patch while "quilt push -a" did
+> > > not continue. This release provides a corrected series file.
+> > > Reported by Salvatore Bonaccorso.
+> > >
+> > > Known issues
+> > >      - A warning triggered in "rcu_note_context_switch" originated
+> > > from SyS_timer_gettime(). The issue was always there, it is now
+> > > visible. Reported by Grygorii Strashko and Daniel Wagner.
+> > >
+> > > The delta patch against v4.14.15-rt12 is appended below and can be
+> > > found here:
+> > >
+> > >
+> > > https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/incr/patc
+> > >h- 4. 14.15-rt12-rt13.patch.xz
+> > >
+> > > You can get this release via the git tree at:
+> > >
+> > >
+> > > git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.gi
+> > >t v4.14.15-rt13
+> >
+> > pulled this one. copied rock64 defconfig to top level dir. Read the
+> > docs, some prerequisites are missing, like sphinx.
+> >
+> > But make menuconfig fails:
+> > scripts/kconfig/Makefile:202: recipe for
+> > target 'scripts/kconfig/dochecklxdialog' failed
+> > make[1]: *** [scripts/kconfig/dochecklxdialog] Error 1
+> >
+> > Thats probably because something in the Docs/process/changes.rst is
+> > missing from a stretch install on an arm64 board. And a sudo apt
+> > install $name can't find it
+> >
+> > What am I missing thats available in stretch to satisfy this?
+>
+> Ping?  If this is not the right list for the question, what might the
+> right list be called?
+>
+Sorry for the noise. It turns out that the failure messages on its own 
+consoles are far more informative as to why it fails, than they are for 
+an ssh -Y login and a session of synaptic on another console was able to 
+find what was needed. So its building until a showstopper pops up now.
+Theoretically for a rock64, on the rock64.
 
-We agree merge conflicts are only half the battle.  I guess I was not clear that the auto
-merge would not be distributed or even public it would just be informative.
+Thanks everybody.
 
-It would just be a test for merge conflicts.  And maybe build errors/warnings if we had a limited set
-of defconfig options.
+> > > The RT patch against v4.14.15 can be found here:
+> > >
+> > >
+> > > https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/older/pat
+> > >ch -4 .14.15-rt13.patch.xz
+> > >
+> > > The split quilt queue is available at:
+> > >
+> > >
+> > > https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/older/pat
+> > >ch es -4.14.15-rt13.tar.xz
+> > >
+> > > Sebastian
+> > >
+> > > diff --git a/localversion-rt b/localversion-rt
+> > > index 6e44e540b927..9f7d0bdbffb1 100644
+> > > --- a/localversion-rt
+> > > +++ b/localversion-rt
+> > > @@ -1 +1 @@
+> > > --rt12
+> > > +-rt13
+> > > --
+> > > To unsubscribe from this list: send the line "unsubscribe
+> > > linux-rt-users" in the body of a message to
+> > > majordomo@vger.kernel.org More majordomo info at
+> > > http://vger.kernel.org/majordomo-info.html
 
-Again the merge would be informative so we would know that the Linux stable will merge cleanly or not.
-If there was a conflict then that could trigger the merging of the stable into the RT branch to
-help the community consumers of the RT branch.
-
-Dan
-
-
-> -- Steve
-> 
 
 
 -- 
-------------------
-Dan Murphy
+Cheers, Gene Heskett
+--
+"There are four boxes to be used in defense of liberty:
+ soap, ballot, jury, and ammo. Please use in that order."
+-Ed Howdershelt (Author)
+Genes Web page <http://geneslinuxbox.net:6309/gene>
