@@ -1,120 +1,95 @@
-From: Gene Heskett <gheskett@shentel.net>
-Subject: Re: [ANNOUNCE] v4.14.15-rt13
-Date: Tue, 6 Feb 2018 17:17:16 -0500
-Message-ID: <201802061717.16750.gheskett@shentel.net>
-References: <20180129223723.lr5avyspmglwcddr@linutronix.de> <201802060907.56549.gheskett@shentel.net> <201802061438.43464.gheskett@shentel.net>
+From: "t-v.k@gmx.net" <t-v.k@gmx.net>
+Subject: Building the Raspberry Pi kernel with RT PREEMPT
+Date: Wed, 7 Feb 2018 00:02:52 +0100
+Message-ID: <e5469b0b-fc0e-95b1-0a80-69a6afab3f12@gmx.net>
 Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from barracuda1.shentel.net ([204.111.1.144]:27359 "EHLO
-        barracuda1.shentel.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1753267AbeBFWRW (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 6 Feb 2018 17:17:22 -0500
-Received: from smtp1.edbg.cloud.shentel.net (smtp1.edbg.cloud.shentel.net [204.111.2.17]) by barracuda1.shentel.net with ESMTP id 3B1ChwH5P5GxEW98 for <linux-rt-users@vger.kernel.org>; Tue, 06 Feb 2018 17:17:07 -0500 (EST)
-Received: from coyote.coyote.den (unknown [204.111.64.149])
-        by smtp1.edbg.cloud.shentel.net (Postfix) with ESMTPSA id 12B8322488
-        for <linux-rt-users@vger.kernel.org>; Tue,  6 Feb 2018 17:17:07 -0500 (EST)
-In-Reply-To: <201802061438.43464.gheskett@shentel.net>
-Content-Disposition: inline
+Received: from mout.gmx.net ([212.227.17.20]:50613 "EHLO mout.gmx.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1753711AbeBFXCy (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 6 Feb 2018 18:02:54 -0500
+Received: from localhost.localdomain ([77.7.131.240]) by mail.gmx.com
+ (mrgmx103 [212.227.17.168]) with ESMTPSA (Nemesis) id
+ 0MGB7j-1eWlnn3Rn5-00FC0l for <linux-rt-users@vger.kernel.org>; Wed, 07 Feb
+ 2018 00:02:52 +0100
+Content-Language: de-DE
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tuesday 06 February 2018 14:38:43 Gene Heskett wrote:
+Hello,
 
-> On Tuesday 06 February 2018 09:07:56 Gene Heskett wrote:
-> > On Monday 29 January 2018 17:37:23 Sebastian Andrzej Siewior wrote:
-> > > Dear RT folks!
-> > >
-> > > I'm pleased to announce the v4.14.15-rt13 patch set.
-> > >
-> > > Changes since v4.14.15-rt12:
-> > >
-> > >   - In the previous release the ping-sysrq patch was removed from
-> > > the queue but has been left listed in the series by mistake. "git
-> > > quiltimport" simply ignored that patch while "quilt push -a" did
-> > > not continue. This release provides a corrected series file.
-> > > Reported by Salvatore Bonaccorso.
-> > >
-> > > Known issues
-> > >      - A warning triggered in "rcu_note_context_switch" originated
-> > > from SyS_timer_gettime(). The issue was always there, it is now
-> > > visible. Reported by Grygorii Strashko and Daniel Wagner.
-> > >
-> > > The delta patch against v4.14.15-rt12 is appended below and can be
-> > > found here:
-> > >
-> > >
-> > > https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/incr/patc
-> > >h- 4. 14.15-rt12-rt13.patch.xz
-> > >
-> > > You can get this release via the git tree at:
-> > >
-> > >
-> > > git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.gi
-> > >t v4.14.15-rt13
-> >
-> > pulled this one. copied rock64 defconfig to top level dir. Read the
-> > docs, some prerequisites are missing, like sphinx.
-> >
-> > But make menuconfig fails:
-> > scripts/kconfig/Makefile:202: recipe for
-> > target 'scripts/kconfig/dochecklxdialog' failed
-> > make[1]: *** [scripts/kconfig/dochecklxdialog] Error 1
-> >
-> > Thats probably because something in the Docs/process/changes.rst is
-> > missing from a stretch install on an arm64 board. And a sudo apt
-> > install $name can't find it
-> >
-> > What am I missing thats available in stretch to satisfy this?
->
-> Ping?  If this is not the right list for the question, what might the
-> right list be called?
->
-Sorry for the noise. It turns out that the failure messages on its own 
-consoles are far more informative as to why it fails, than they are for 
-an ssh -Y login and a session of synaptic on another console was able to 
-find what was needed. So its building until a showstopper pops up now.
-Theoretically for a rock64, on the rock64.
+this is my first time on a mailing list. I'm not sure how this works.
+The FAQ linked on this page:
+https://wiki.linuxfoundation.org/realtime/communication/mailinglists
+just says "Page not found". I hope I can just ask a question this way.
 
-Thanks everybody.
+I'm currently trying to automate the build of a Linux kernel with the RT
+PREEMPT patch. The kernel that I'm trying to build is in this git
+repository: https://github.com/raspberrypi/linux (branch rpi-4.14.y)
 
-> > > The RT patch against v4.14.15 can be found here:
-> > >
-> > >
-> > > https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/older/pat
-> > >ch -4 .14.15-rt13.patch.xz
-> > >
-> > > The split quilt queue is available at:
-> > >
-> > >
-> > > https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/older/pat
-> > >ch es -4.14.15-rt13.tar.xz
-> > >
-> > > Sebastian
-> > >
-> > > diff --git a/localversion-rt b/localversion-rt
-> > > index 6e44e540b927..9f7d0bdbffb1 100644
-> > > --- a/localversion-rt
-> > > +++ b/localversion-rt
-> > > @@ -1 +1 @@
-> > > --rt12
-> > > +-rt13
-> > > --
-> > > To unsubscribe from this list: send the line "unsubscribe
-> > > linux-rt-users" in the body of a message to
-> > > majordomo@vger.kernel.org More majordomo info at
-> > > http://vger.kernel.org/majordomo-info.html
+It's the official kernel for the Raspberry Pi.
+
+But at the moment I am stuck. There are two problems. When I apply the
+patch "patch-4.14.15-rt13.patch.gz", I get errors like:
+
+Hunk #9 FAILED at 795.
+...
+1 out of 20 hunks FAILED -- saving rejects to file kernel/softirq.c.rej
+...
+
+and as a result of this it exits with code 1.
+
+Here is the full build process output:
+https://gitlab.com/T-vK/rpi-rt-kernel/-/jobs/51343435
+
+When I just ignore it and continue I get to the point where I can run
+"make zImage", which then fails with this:
+
+kernel/softirq.c: In function 'invoke_softirq':
+kernel/softirq.c:801:3: error: implicit declaration of function
+'do_softirq_own_stack' [-Werror=implicit-function-declaration]
+   do_softirq_own_stack();
+   ^
+kernel/softirq.c:806:2: error: #else without #if
+ #else /* PREEMPT_RT_FULL */
+  ^
+kernel/softirq.c:807:2: warning: ISO C90 forbids mixed declarations and
+code [-Wdeclaration-after-statement]
+  unsigned long flags;
+  ^
+kernel/softirq.c:817:2: error: #endif without #if
+ #endif
+  ^
+cc1: some warnings being treated as errors
+scripts/Makefile.build:320: recipe for target 'kernel/softirq.o' failed
+make[1]: *** [kernel/softirq.o] Error 1
+Makefile:1028: recipe for target 'kernel' failed
+make: *** [kernel] Error 2
 
 
+The full log is in the build output linked above.
+I've been trying to follow this guide: http://www.frank-durr.de/?p=203
+This is my "build script" if you will:
+https://gitlab.com/T-vK/rpi-rt-kernel/blob/master/.gitlab-ci.yml
+The docker image it runs on has been build from this file:
+https://gitlab.com/T-vK/rpi-rt-kernel/blob/master/Dockerfile
 
--- 
-Cheers, Gene Heskett
---
-"There are four boxes to be used in defense of liberty:
- soap, ballot, jury, and ammo. Please use in that order."
--Ed Howdershelt (Author)
-Genes Web page <http://geneslinuxbox.net:6309/gene>
+I should mention, the patch that I apply right before "make zImage"
+(patch < rt-config.patch) simply applies this menuconfig setting:
+
+Kernel Features → Preemption Model (Fully Preemptible Kernel (RT)) →
+Fully Preemptible Kernel (RT)
+
+(I just created the default config for rpi-4.14.y using "make
+bcm2709_defconfig" and then copied it and modified the above mentioned
+option using "make menuconfig" and then I just ran a "diff -u ..." on it
+to create the patch)
+
+Can anyone help me with these issues?
+
+
+Best regards
+T-vK
