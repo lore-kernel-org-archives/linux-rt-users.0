@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH 08/20 v2] tracing: Add "unsigned" to function based events
-Date: Wed, 07 Feb 2018 15:24:10 -0500
-Message-ID: <20180207202815.903071487@goodmis.org>
+Subject: [PATCH 05/20 v2] tracing: Add hex print for dynamic ftrace based events
+Date: Wed, 07 Feb 2018 15:24:07 -0500
+Message-ID: <20180207202815.311475155@goodmis.org>
 References: <20180207202402.253089656@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -20,162 +20,97 @@ Cc: Linus Torvalds <torvalds@linux-foundation.org>,
         Juri Lelli <juri.lelli@redhat.com>
 To: linux-kernel@vger.kernel.org
 Return-path: <linux-trace-users-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0008-tracing-Add-unsigned-to-function-based-events.patch
+Content-Disposition: inline; filename=0005-tracing-Add-hex-print-for-dynamic-ftrace-based-event.patch
 Sender: linux-trace-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-Add "unsigned" to the format processing to creating dynamic function based
-events. For example: "unsigned long" now works.
+Add x64, x32, x16 and x8 to represent numbers of the same size in hex.
+Similar to u64, u32, u16, and u8 but uses %x instead of %u.
 
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- Documentation/trace/function-based-events.rst | 47 ++++++++++++++++++++++++++-
- kernel/trace/trace_event_ftrace.c             | 23 ++++++++++---
- 2 files changed, 65 insertions(+), 5 deletions(-)
+ Documentation/trace/function-based-events.rst | 14 +++++++++-----
+ kernel/trace/trace_event_ftrace.c             | 13 ++++++++++++-
+ 2 files changed, 21 insertions(+), 6 deletions(-)
 
 diff --git a/Documentation/trace/function-based-events.rst b/Documentation/trace/function-based-events.rst
-index 2a002c8a500b..72e3e7730d63 100644
+index 94c2c975295a..f27a0c4e829c 100644
 --- a/Documentation/trace/function-based-events.rst
 +++ b/Documentation/trace/function-based-events.rst
-@@ -93,7 +93,7 @@ as follows:
- 
-  ARG := TYPE FIELD | ARG '|' ARG
- 
-- TYPE := ATOM
-+ TYPE := ATOM | 'unsigned' ATOM
+@@ -97,6 +97,7 @@ as follows:
  
   ATOM := 'u8' | 'u16' | 'u32' | 'u64' |
           's8' | 's16' | 's32' | 's64' |
-@@ -176,3 +176,48 @@ an argument:
-     <idle>-0     [003] ..s3   904.075848: __netif_receive_skb_core->ip_rcv(skb=ffff88011396e800, skb=52, dev=ffff880115204000)
-     <idle>-0     [003] ..s3   904.725486: __netif_receive_skb_core->ip_rcv(skb=ffff88011396e800, skb=194, dev=ffff880115204000)
-     <idle>-0     [003] ..s3   905.152537: __netif_receive_skb_core->ip_rcv(skb=ffff88011396f200, skb=88, dev=ffff880115204000)
++         'x8' | 'x16' | 'x32' | 'x64' |
+          'char' | 'short' | 'int' | 'long' | 'size_t'
+ 
+  FIELD := <name>
+@@ -116,11 +117,14 @@ int ip_rcv(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt,
+ 
+ If we are only interested in the first argument (skb):
+ 
+- # echo 'ip_rcv(u64 skb, u64 dev)' > function_events
++ # echo 'ip_rcv(x64 skb, x86 dev)' > function_events
+ 
+  # echo 1 > events/functions/ip_rcv/enable
+  # cat trace
+-     <idle>-0     [003] ..s3  2119.041935: __netif_receive_skb_core->ip_rcv(skb=18446612136982403072, dev=18446612136968273920)
+-     <idle>-0     [003] ..s3  2119.041944: __netif_receive_skb_core->ip_rcv(skb=18446612136982403072, dev=18446612136968273920)
+-     <idle>-0     [003] ..s3  2119.288337: __netif_receive_skb_core->ip_rcv(skb=18446612136982403072, dev=18446612136968273920)
+-     <idle>-0     [003] ..s3  2119.288960: __netif_receive_skb_core->ip_rcv(skb=18446612136982403072, dev=18446612136968273920)
++     <idle>-0     [003] ..s3  5543.133460: __netif_receive_skb_core->ip_rcv(skb=ffff88007f960700, net=ffff880114250000)
++     <idle>-0     [003] ..s3  5543.133475: __netif_receive_skb_core->ip_rcv(skb=ffff88007f960700, net=ffff880114250000)
++     <idle>-0     [003] ..s3  5543.312592: __netif_receive_skb_core->ip_rcv(skb=ffff88007f960700, net=ffff880114250000)
++     <idle>-0     [003] ..s3  5543.313150: __netif_receive_skb_core->ip_rcv(skb=ffff88007f960700, net=ffff880114250000)
 +
-+
-+Unsigned usage
-+==============
-+
-+One can also use "unsigned" to make some types unsigned. It works against
-+"long", "int", "short" and "char". It doesn't error against other types but
-+may not make any sense.
-+
-+ # echo 'ip_rcv(int skb[32])' > function_events
-+ # cat events/functions/ip_rcv/format
-+name: ip_rcv
-+ID: 1397
-+format:
-+	field:unsigned short common_type;	offset:0;	size:2;	signed:0;
-+	field:unsigned char common_flags;	offset:2;	size:1;	signed:0;
-+	field:unsigned char common_preempt_count;	offset:3;	size:1;	signed:0;
-+	field:int common_pid;	offset:4;	size:4;	signed:1;
-+
-+	field:unsigned long __parent_ip;	offset:8;	size:8;	signed:0;
-+	field:unsigned long __ip;	offset:16;	size:8;	signed:0;
-+	field:int skb;	offset:24;	size:4;	signed:1;
-+
-+print fmt: "%pS->%pS(skb=%d)", REC->__ip, REC->__parent_ip, REC->skb
-+
-+
-+Notice that REC->skb is printed with "%d". By adding "unsigned"
-+
-+ # echo 'ip_rcv(unsigned int skb[32])' > function_events
-+ # cat events/functions/ip_rcv/format
-+name: ip_rcv
-+ID: 1398
-+format:
-+	field:unsigned short common_type;	offset:0;	size:2;	signed:0;
-+	field:unsigned char common_flags;	offset:2;	size:1;	signed:0;
-+	field:unsigned char common_preempt_count;	offset:3;	size:1;	signed:0;
-+	field:int common_pid;	offset:4;	size:4;	signed:1;
-+
-+	field:unsigned long __parent_ip;	offset:8;	size:8;	signed:0;
-+	field:unsigned long __ip;	offset:16;	size:8;	signed:0;
-+	field:unsigned int skb;	offset:24;	size:4;	signed:0;
-+
-+print fmt: "%pS->%pS(skb=%u)", REC->__ip, REC->__parent_ip, REC->skb
-+
-+It is now printed with a "%u".
++We use "x64" in order to make sure that the data is displayed in hex.
++This is on a x86_64 machine, and we know the pointer sizes are 8 bytes.
 diff --git a/kernel/trace/trace_event_ftrace.c b/kernel/trace/trace_event_ftrace.c
-index 666edd76b70f..8327346799eb 100644
+index e915f70e2fd5..be7f5bc416cc 100644
 --- a/kernel/trace/trace_event_ftrace.c
 +++ b/kernel/trace/trace_event_ftrace.c
-@@ -60,6 +60,7 @@ enum func_states {
- 	FUNC_STATE_BRACKET,
- 	FUNC_STATE_BRACKET_END,
- 	FUNC_STATE_INDIRECT,
-+	FUNC_STATE_UNSIGNED,
- 	FUNC_STATE_PIPE,
- 	FUNC_STATE_TYPE,
- 	FUNC_STATE_VAR,
-@@ -200,7 +201,7 @@ static char *next_token(char **ptr, char *last)
- 	return arg;
- }
+@@ -62,6 +62,11 @@ enum func_states {
+ 	FUNC_STATE_ERROR,
+ };
  
--static int add_arg(struct func_event *fevent, int ftype)
-+static int add_arg(struct func_event *fevent, int ftype, int unsign)
- {
- 	struct func_type *func_type = &func_types[ftype];
- 	struct func_arg *arg;
-@@ -213,13 +214,18 @@ static int add_arg(struct func_event *fevent, int ftype)
- 	if (!arg)
- 		return -ENOMEM;
++typedef u64 x64;
++typedef u32 x32;
++typedef u16 x16;
++typedef u8 x8;
++
+ #define TYPE_TUPLE(type)			\
+ 	{ #type, sizeof(type), is_signed_type(type) }
  
--	arg->type = kstrdup(func_type->name, GFP_KERNEL);
-+	if (unsign)
-+		arg->type = kasprintf(GFP_KERNEL, "unsigned %s",
-+				      func_type->name);
-+	else
-+		arg->type = kstrdup(func_type->name, GFP_KERNEL);
- 	if (!arg->type) {
- 		kfree(arg);
- 		return -ENOMEM;
+@@ -77,12 +82,16 @@ static struct func_type {
+ 	TYPE_TUPLE(size_t),
+ 	TYPE_TUPLE(u64),
+ 	TYPE_TUPLE(s64),
++	TYPE_TUPLE(x64),
+ 	TYPE_TUPLE(u32),
+ 	TYPE_TUPLE(s32),
++	TYPE_TUPLE(x32),
+ 	TYPE_TUPLE(u16),
+ 	TYPE_TUPLE(s16),
++	TYPE_TUPLE(x16),
+ 	TYPE_TUPLE(u8),
+ 	TYPE_TUPLE(s8),
++	TYPE_TUPLE(x8),
+ 	{ NULL,		0,	0 }
+ };
+ 
+@@ -359,7 +368,9 @@ static void make_fmt(struct func_arg *arg, char *fmt)
+ 		fmt[c++] = 'l';
  	}
- 	arg->size = func_type->size;
--	arg->sign = func_type->sign;
-+	if (!unsign)
-+		arg->sign = func_type->sign;
- 	arg->offset = ALIGN(fevent->arg_offset, arg->size);
- 	arg->arg = fevent->arg_cnt;
- 	fevent->arg_offset = arg->offset + arg->size;
-@@ -234,12 +240,14 @@ static int add_arg(struct func_event *fevent, int ftype)
- static enum func_states
- process_event(struct func_event *fevent, const char *token, enum func_states state)
- {
-+	static int unsign;
- 	long val;
- 	int ret;
- 	int i;
  
- 	switch (state) {
- 	case FUNC_STATE_INIT:
-+		unsign = 0;
- 		if (!isalpha(token[0]))
- 			break;
- 		/* Do not allow wild cards */
-@@ -264,13 +272,20 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
- 		/* Fall through */
- 	case FUNC_STATE_COMMA:
-  comma:
-+		if (strcmp(token, "unsigned") == 0) {
-+			unsign = 2;
-+			return FUNC_STATE_UNSIGNED;
-+		}
-+		/* Fall through */
-+	case FUNC_STATE_UNSIGNED:
- 		for (i = 0; func_types[i].size; i++) {
- 			if (strcmp(token, func_types[i].name) == 0)
- 				break;
- 		}
- 		if (!func_types[i].size)
- 			break;
--		ret = add_arg(fevent, i);
-+		ret = add_arg(fevent, i, unsign);
-+		unsign = 0;
- 		if (ret < 0)
- 			break;
- 		return FUNC_STATE_TYPE;
+-	if (arg->sign)
++	if (arg->type[0] == 'x')
++		fmt[c++] = 'x';
++	else if (arg->sign)
+ 		fmt[c++] = 'd';
+ 	else
+ 		fmt[c++] = 'u';
 -- 
 2.15.1
 
