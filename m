@@ -1,95 +1,89 @@
-From: "t-v.k@gmx.net" <t-v.k@gmx.net>
-Subject: Building the Raspberry Pi kernel with RT PREEMPT
-Date: Wed, 7 Feb 2018 00:02:52 +0100
-Message-ID: <e5469b0b-fc0e-95b1-0a80-69a6afab3f12@gmx.net>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 01/18] tracing: Add function based events
+Date: Tue, 6 Feb 2018 22:09:17 -0500
+Message-ID: <20180206220917.1ca65b54@vmware.local.home>
+References: <20180202230458.840252014@goodmis.org>
+        <20180202231017.160509978@goodmis.org>
+        <20180205082423.GB1253@krava>
+        <20180205100050.75c04497@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mout.gmx.net ([212.227.17.20]:50613 "EHLO mout.gmx.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1753711AbeBFXCy (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 6 Feb 2018 18:02:54 -0500
-Received: from localhost.localdomain ([77.7.131.240]) by mail.gmx.com
- (mrgmx103 [212.227.17.168]) with ESMTPSA (Nemesis) id
- 0MGB7j-1eWlnn3Rn5-00FC0l for <linux-rt-users@vger.kernel.org>; Wed, 07 Feb
- 2018 00:02:52 +0100
-Content-Language: de-DE
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Ingo Molnar <mingo@kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        linux-rt-users@vger.kernel.org, linux-trace-users@vger.kernel.org,
+        Arnaldo Carvalho de Melo <acme@kernel.org>,
+        Clark Williams <williams@redhat.com>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Namhyung Kim <namhyung@kernel.org>,
+        Alexei Starovoitov <alexei.starovoitov@gmail.com>
+To: Jiri Olsa <jolsa@redhat.com>
+Return-path: <linux-trace-users-owner@vger.kernel.org>
+In-Reply-To: <20180205100050.75c04497@gandalf.local.home>
+Sender: linux-trace-users-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hello,
+On Mon, 5 Feb 2018 10:00:50 -0500
+Steven Rostedt <rostedt@goodmis.org> wrote:
 
-this is my first time on a mailing list. I'm not sure how this works.
-The FAQ linked on this page:
-https://wiki.linuxfoundation.org/realtime/communication/mailinglists
-just says "Page not found". I hope I can just ask a question this way.
+> On Mon, 5 Feb 2018 09:24:23 +0100
+> Jiri Olsa <jolsa@redhat.com> wrote:
+> 
+> 
+> > should this be done under 'func_event_mutex' ?  
+> 
+> Probably.
 
-I'm currently trying to automate the build of a Linux kernel with the RT
-PREEMPT patch. The kernel that I'm trying to build is in this git
-repository: https://github.com/raspberrypi/linux (branch rpi-4.14.y)
+I think we only need to add the list.
 
-It's the official kernel for the Raspberry Pi.
+> 
+> > 
+> > I tried and crashed the system by running 2 scripts with:
+> > 
+> >   echo 'ip_rcv(u64 skb, u64 dev)' > /sys/kernel/debug/tracing/function_events
+> >   echo 'SyS_openat(int dfd, string buf, x32 flags, x32 mode)' >> /sys/kernel/debug/tracing/function_events
+> >   echo 'SyS_open(x8[32] buf, x32 flags, x32 mode)' >> /sys/kernel/debug/tracing/function_events
+> >  
+> 
 
-But at the moment I am stuck. There are two problems. When I apply the
-patch "patch-4.14.15-rt13.patch.gz", I get errors like:
+There's no reason that we can't have more than one function  event
+attached to the same function. I'm adding this:
 
-Hunk #9 FAILED at 795.
-...
-1 out of 20 hunks FAILED -- saving rejects to file kernel/softirq.c.rej
-...
+diff --git a/kernel/trace/trace_event_ftrace.c b/kernel/trace/trace_event_ftrace.c
+index b145639eac45..928168fc2025 100644
+--- a/kernel/trace/trace_event_ftrace.c
++++ b/kernel/trace/trace_event_ftrace.c
+@@ -1275,12 +1275,6 @@ static int create_function_event(int argc, char **argv)
+ 	if (state != FUNC_STATE_END)
+ 		goto fail;
+ 
+-	ret = -EALREADY;
+-	list_for_each_entry(fe, &func_events, list) {
+-		if (strcmp(fe->func, func_event->func) == 0)
+-			goto fail;
+-	}
+-
+ 	ret = ftrace_set_filter(&func_event->ops, func_event->func,
+ 				strlen(func_event->func), 0);
+ 	if (ret < 0)
+@@ -1290,7 +1284,9 @@ static int create_function_event(int argc, char **argv)
+ 	if (ret < 0)
+ 		goto fail;
+ 
++	mutex_lock(&func_event_mutex);
+ 	list_add_tail(&func_event->list, &func_events);
++	mutex_unlock(&func_event_mutex);
+ 	return 0;
+  fail:
+ 	free_func_event(func_event);
 
-and as a result of this it exits with code 1.
-
-Here is the full build process output:
-https://gitlab.com/T-vK/rpi-rt-kernel/-/jobs/51343435
-
-When I just ignore it and continue I get to the point where I can run
-"make zImage", which then fails with this:
-
-kernel/softirq.c: In function 'invoke_softirq':
-kernel/softirq.c:801:3: error: implicit declaration of function
-'do_softirq_own_stack' [-Werror=implicit-function-declaration]
-   do_softirq_own_stack();
-   ^
-kernel/softirq.c:806:2: error: #else without #if
- #else /* PREEMPT_RT_FULL */
-  ^
-kernel/softirq.c:807:2: warning: ISO C90 forbids mixed declarations and
-code [-Wdeclaration-after-statement]
-  unsigned long flags;
-  ^
-kernel/softirq.c:817:2: error: #endif without #if
- #endif
-  ^
-cc1: some warnings being treated as errors
-scripts/Makefile.build:320: recipe for target 'kernel/softirq.o' failed
-make[1]: *** [kernel/softirq.o] Error 1
-Makefile:1028: recipe for target 'kernel' failed
-make: *** [kernel] Error 2
-
-
-The full log is in the build output linked above.
-I've been trying to follow this guide: http://www.frank-durr.de/?p=203
-This is my "build script" if you will:
-https://gitlab.com/T-vK/rpi-rt-kernel/blob/master/.gitlab-ci.yml
-The docker image it runs on has been build from this file:
-https://gitlab.com/T-vK/rpi-rt-kernel/blob/master/Dockerfile
-
-I should mention, the patch that I apply right before "make zImage"
-(patch < rt-config.patch) simply applies this menuconfig setting:
-
-Kernel Features → Preemption Model (Fully Preemptible Kernel (RT)) →
-Fully Preemptible Kernel (RT)
-
-(I just created the default config for rpi-4.14.y using "make
-bcm2709_defconfig" and then copied it and modified the above mentioned
-option using "make menuconfig" and then I just ran a "diff -u ..." on it
-to create the patch)
-
-Can anyone help me with these issues?
-
-
-Best regards
-T-vK
+-- Steve
