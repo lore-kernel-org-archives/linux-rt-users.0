@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH 10/20 v2] tracing: Make func_type enums for easier comparing of arg types
-Date: Wed, 07 Feb 2018 15:24:12 -0500
-Message-ID: <20180207202816.204065489@goodmis.org>
+Subject: [PATCH 07/20 v2] tracing: Add dereferencing multiple fields per arg
+Date: Wed, 07 Feb 2018 15:24:09 -0500
+Message-ID: <20180207202815.631048838@goodmis.org>
 References: <20180207202402.253089656@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -19,104 +19,171 @@ Cc: Linus Torvalds <torvalds@linux-foundation.org>,
         Daniel Bristot de Oliveira <bristot@redhat.com>,
         Juri Lelli <juri.lelli@redhat.com>
 To: linux-kernel@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0010-tracing-Make-func_type-enums-for-easier-comparing-of.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.99]:35734 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1754582AbeBGU2S (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 7 Feb 2018 15:28:18 -0500
+Content-Disposition: inline; filename=0007-tracing-Add-dereferencing-multiple-fields-per-arg.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-For the function based event args, knowing quickly what type they are is
-advantageous, as decisions can be made quickly based on them. Having an
-enum for the types is useful for this purpose.
+As an argument may be a structure or an array, we may want to dereference
+more than one field per argument. Create a pipe '|' token to the parsing
+that allows to reference multipe dereference fields per function argument.
 
-Use macros to create both the func_type array as well as enums that
-match the type to the index into that array.
+Change func_arg fields from char to s8 or u8 to allow them to be
+subscripts to arrays.
 
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/trace/trace_event_ftrace.c | 47 +++++++++++++++++++++++++--------------
- 1 file changed, 30 insertions(+), 17 deletions(-)
+ Documentation/trace/function-based-events.rst | 20 +++++++++++++++++-
+ kernel/trace/trace_event_ftrace.c             | 29 ++++++++++++++++++++-------
+ 2 files changed, 41 insertions(+), 8 deletions(-)
 
+diff --git a/Documentation/trace/function-based-events.rst b/Documentation/trace/function-based-events.rst
+index 7d67229e8e88..2a002c8a500b 100644
+--- a/Documentation/trace/function-based-events.rst
++++ b/Documentation/trace/function-based-events.rst
+@@ -91,7 +91,7 @@ as follows:
+ 
+  ARGS := ARG | ARG ',' ARGS | ''
+ 
+- ARG := TYPE FIELD
++ ARG := TYPE FIELD | ARG '|' ARG
+ 
+  TYPE := ATOM
+ 
+@@ -158,3 +158,21 @@ As 128 / 4 (length of int) is 32, we can see the length of the skb with:
+     <idle>-0     [003] ..s3   280.807023: __netif_receive_skb_core->ip_rcv(skb=52, dev=ffff8801092f9400)
+ 
+ Now we see the length of the sk_buff per event.
++
++
++Multiple fields per argument
++============================
++
++
++If we still want to see the skb pointer value along with the length of the
++skb, then using the '|' option allows us to add more than one option to
++an argument:
++
++ # echo 'ip_rcv(x64 skb | int skb[32], x64 dev)' > function_events
++
++ # echo 1 > events/functions/ip_rcv/enable
++ # cat trace
++    <idle>-0     [003] ..s3   904.075838: __netif_receive_skb_core->ip_rcv(skb=ffff88011396e800, skb=52, dev=ffff880115204000)
++    <idle>-0     [003] ..s3   904.075848: __netif_receive_skb_core->ip_rcv(skb=ffff88011396e800, skb=52, dev=ffff880115204000)
++    <idle>-0     [003] ..s3   904.725486: __netif_receive_skb_core->ip_rcv(skb=ffff88011396e800, skb=194, dev=ffff880115204000)
++    <idle>-0     [003] ..s3   905.152537: __netif_receive_skb_core->ip_rcv(skb=ffff88011396f200, skb=88, dev=ffff880115204000)
 diff --git a/kernel/trace/trace_event_ftrace.c b/kernel/trace/trace_event_ftrace.c
-index 1fa281386fa0..6e48361643c0 100644
+index b622634062db..666edd76b70f 100644
 --- a/kernel/trace/trace_event_ftrace.c
 +++ b/kernel/trace/trace_event_ftrace.c
-@@ -24,6 +24,7 @@ struct func_arg {
+@@ -21,8 +21,8 @@ struct func_arg {
+ 	long				indirect;
+ 	short				offset;
  	short				size;
- 	s8				arg;
- 	u8				sign;
-+	u8				func_type;
+-	char				arg;
+-	char				sign;
++	s8				arg;
++	u8				sign;
  };
  
  struct func_event {
-@@ -79,31 +80,42 @@ typedef u8 x8;
- #define TYPE_TUPLE(type)			\
- 	{ #type, sizeof(type), is_signed_type(type) }
+@@ -60,6 +60,7 @@ enum func_states {
+ 	FUNC_STATE_BRACKET,
+ 	FUNC_STATE_BRACKET_END,
+ 	FUNC_STATE_INDIRECT,
++	FUNC_STATE_PIPE,
+ 	FUNC_STATE_TYPE,
+ 	FUNC_STATE_VAR,
+ 	FUNC_STATE_COMMA,
+@@ -181,6 +182,7 @@ static char *next_token(char **ptr, char *last)
+ 		    *str == '[' ||
+ 		    *str == ']' ||
+ 		    *str == ',' ||
++		    *str == '|' ||
+ 		    *str == ')')
+ 			break;
+ 	}
+@@ -253,11 +255,15 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+ 			break;
+ 		return FUNC_STATE_PARAM;
  
-+#define FUNC_TYPES				\
-+	TYPE_TUPLE(long),			\
-+	TYPE_TUPLE(int),			\
-+	TYPE_TUPLE(short),			\
-+	TYPE_TUPLE(char),			\
-+	TYPE_TUPLE(size_t),			\
-+	TYPE_TUPLE(u64),			\
-+	TYPE_TUPLE(s64),			\
-+	TYPE_TUPLE(x64),			\
-+	TYPE_TUPLE(u32),			\
-+	TYPE_TUPLE(s32),			\
-+	TYPE_TUPLE(x32),			\
-+	TYPE_TUPLE(u16),			\
-+	TYPE_TUPLE(s16),			\
-+	TYPE_TUPLE(x16),			\
-+	TYPE_TUPLE(u8),				\
-+	TYPE_TUPLE(s8),				\
-+	TYPE_TUPLE(x8)
-+
- static struct func_type {
- 	char		*name;
- 	int		size;
- 	int		sign;
- } func_types[] = {
--	TYPE_TUPLE(long),
--	TYPE_TUPLE(int),
--	TYPE_TUPLE(short),
--	TYPE_TUPLE(char),
--	TYPE_TUPLE(size_t),
--	TYPE_TUPLE(u64),
--	TYPE_TUPLE(s64),
--	TYPE_TUPLE(x64),
--	TYPE_TUPLE(u32),
--	TYPE_TUPLE(s32),
--	TYPE_TUPLE(x32),
--	TYPE_TUPLE(u16),
--	TYPE_TUPLE(s16),
--	TYPE_TUPLE(x16),
--	TYPE_TUPLE(u8),
--	TYPE_TUPLE(s8),
--	TYPE_TUPLE(x8),
-+	FUNC_TYPES,
- 	{ NULL,		0,	0 }
- };
++	case FUNC_STATE_PIPE:
++		fevent->arg_cnt--;
++		goto comma;
+ 	case FUNC_STATE_PARAM:
+ 		if (token[0] == ')')
+ 			return FUNC_STATE_END;
+ 		/* Fall through */
+ 	case FUNC_STATE_COMMA:
++ comma:
+ 		for (i = 0; func_types[i].size; i++) {
+ 			if (strcmp(token, func_types[i].name) == 0)
+ 				break;
+@@ -299,6 +305,8 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+ 			return FUNC_STATE_END;
+ 		case ',':
+ 			return FUNC_STATE_COMMA;
++		case '|':
++			return FUNC_STATE_PIPE;
+ 		}
+ 		break;
  
-+#undef TYPE_TUPLE
-+#define TYPE_TUPLE(type)	FUNC_TYPE_##type
-+
-+enum {
-+	FUNC_TYPES,
-+	FUNC_TYPE_MAX
-+};
-+
- static int max_args __read_mostly = -1;
+@@ -308,6 +316,8 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+ 			return FUNC_STATE_END;
+ 		case ',':
+ 			return FUNC_STATE_COMMA;
++		case '|':
++			return FUNC_STATE_PIPE;
+ 		case '[':
+ 			return FUNC_STATE_BRACKET;
+ 		}
+@@ -366,7 +376,6 @@ static void func_event_trace(struct trace_event_file *trace_file,
+ 	int nr_args;
+ 	int size;
+ 	int pc;
+-	int i = 0;
  
- /**
-@@ -230,6 +242,7 @@ static int add_arg(struct func_event *fevent, int ftype, int unsign)
- 	if (!unsign)
- 		arg->sign = func_type->sign;
- 	arg->offset = ALIGN(fevent->arg_offset, arg->size);
-+	arg->func_type = ftype;
- 	arg->arg = fevent->arg_cnt;
- 	fevent->arg_offset = arg->offset + arg->size;
+ 	if (trace_trigger_soft_disabled(trace_file))
+ 		return;
+@@ -388,8 +397,8 @@ static void func_event_trace(struct trace_event_file *trace_file,
+ 	nr_args = arch_get_func_args(pt_regs, 0, func_event->arg_cnt, args);
  
+ 	list_for_each_entry(arg, &func_event->args, list) {
+-		if (i < nr_args)
+-			val = get_arg(arg, args[i]);
++		if (arg->arg < nr_args)
++			val = get_arg(arg, args[arg->arg]);
+ 		else
+ 			val = 0;
+ 		memcpy(&entry->data[arg->offset], &val, arg->size);
+@@ -743,12 +752,18 @@ static int func_event_seq_show(struct seq_file *m, void *v)
+ 	struct func_event *func_event = v;
+ 	struct func_arg *arg;
+ 	bool comma = false;
++	int last_arg = 0;
+ 
+ 	seq_printf(m, "%s(", func_event->func);
+ 
+ 	list_for_each_entry(arg, &func_event->args, list) {
+-		if (comma)
+-			seq_puts(m, ", ");
++		if (comma) {
++			if (last_arg == arg->arg)
++				seq_puts(m, " | ");
++			else
++				seq_puts(m, ", ");
++		}
++		last_arg = arg->arg;
+ 		comma = true;
+ 		seq_printf(m, "%s %s", arg->type, arg->name);
+ 		if (arg->indirect && arg->size)
 -- 
 2.15.1
+
+
