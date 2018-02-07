@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH 07/20 v2] tracing: Add dereferencing multiple fields per arg
-Date: Wed, 07 Feb 2018 15:24:09 -0500
-Message-ID: <20180207202815.631048838@goodmis.org>
+Subject: [PATCH 06/20 v2] tracing: Add indirect offset to args of ftrace based events
+Date: Wed, 07 Feb 2018 15:24:08 -0500
+Message-ID: <20180207202815.465458548@goodmis.org>
 References: <20180207202402.253089656@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -20,169 +20,224 @@ Cc: Linus Torvalds <torvalds@linux-foundation.org>,
         Juri Lelli <juri.lelli@redhat.com>
 To: linux-kernel@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.99]:35734 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.99]:35626 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1754582AbeBGU2S (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S1754461AbeBGU2S (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Wed, 7 Feb 2018 15:28:18 -0500
-Content-Disposition: inline; filename=0007-tracing-Add-dereferencing-multiple-fields-per-arg.patch
+Content-Disposition: inline; filename=0006-tracing-Add-indirect-offset-to-args-of-ftrace-based-.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-As an argument may be a structure or an array, we may want to dereference
-more than one field per argument. Create a pipe '|' token to the parsing
-that allows to reference multipe dereference fields per function argument.
+Add '[' ']' syntex to allow to get values indirectly from the arguments.
+For example:
 
-Change func_arg fields from char to s8 or u8 to allow them to be
-subscripts to arrays.
+ echo replenish_dl_entity(s64 dl_se[4]) > function_events
+
+Will get the 4th long long word from the first parameter like an array.
 
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- Documentation/trace/function-based-events.rst | 20 +++++++++++++++++-
- kernel/trace/trace_event_ftrace.c             | 29 ++++++++++++++++++++-------
- 2 files changed, 41 insertions(+), 8 deletions(-)
+ Documentation/trace/function-based-events.rst | 32 +++++++++++-
+ kernel/trace/trace_event_ftrace.c             | 73 +++++++++++++++++++++++++--
+ 2 files changed, 101 insertions(+), 4 deletions(-)
 
 diff --git a/Documentation/trace/function-based-events.rst b/Documentation/trace/function-based-events.rst
-index 7d67229e8e88..2a002c8a500b 100644
+index f27a0c4e829c..7d67229e8e88 100644
 --- a/Documentation/trace/function-based-events.rst
 +++ b/Documentation/trace/function-based-events.rst
-@@ -91,7 +91,7 @@ as follows:
+@@ -100,11 +100,15 @@ as follows:
+          'x8' | 'x16' | 'x32' | 'x64' |
+          'char' | 'short' | 'int' | 'long' | 'size_t'
  
-  ARGS := ARG | ARG ',' ARGS | ''
+- FIELD := <name>
++ FIELD := <name> | <name> INDEX
++
++ INDEX := '[' <number> ']'
  
-- ARG := TYPE FIELD
-+ ARG := TYPE FIELD | ARG '|' ARG
+  Where <name> is a unique string starting with an alphabetic character
+  and consists only of letters and numbers and underscores.
  
-  TYPE := ATOM
++ Where <number> is a number that can be read by kstrtol() (hex, decimal, etc).
++
  
-@@ -158,3 +158,21 @@ As 128 / 4 (length of int) is 32, we can see the length of the skb with:
-     <idle>-0     [003] ..s3   280.807023: __netif_receive_skb_core->ip_rcv(skb=52, dev=ffff8801092f9400)
+ Simple arguments
+ ================
+@@ -128,3 +132,29 @@ If we are only interested in the first argument (skb):
  
- Now we see the length of the sk_buff per event.
+ We use "x64" in order to make sure that the data is displayed in hex.
+ This is on a x86_64 machine, and we know the pointer sizes are 8 bytes.
 +
 +
-+Multiple fields per argument
-+============================
++Indexing
++========
 +
++The pointers of the skb and the dev isn't that interesting. But if we want the
++length "len" field of skb, we could index it with an index operator '[' and ']'.
 +
-+If we still want to see the skb pointer value along with the length of the
-+skb, then using the '|' option allows us to add more than one option to
-+an argument:
++Using gdb, we can find the offset of 'len' from the sk_buff type:
 +
-+ # echo 'ip_rcv(x64 skb | int skb[32], x64 dev)' > function_events
++ $ gdb vmlinux
++ (gdb) printf "%d\n", &((struct sk_buff *)0)->len
++128
++
++As 128 / 4 (length of int) is 32, we can see the length of the skb with:
++
++ # echo 'ip_rcv(int skb[32], x64 dev)' > function_events
 +
 + # echo 1 > events/functions/ip_rcv/enable
 + # cat trace
-+    <idle>-0     [003] ..s3   904.075838: __netif_receive_skb_core->ip_rcv(skb=ffff88011396e800, skb=52, dev=ffff880115204000)
-+    <idle>-0     [003] ..s3   904.075848: __netif_receive_skb_core->ip_rcv(skb=ffff88011396e800, skb=52, dev=ffff880115204000)
-+    <idle>-0     [003] ..s3   904.725486: __netif_receive_skb_core->ip_rcv(skb=ffff88011396e800, skb=194, dev=ffff880115204000)
-+    <idle>-0     [003] ..s3   905.152537: __netif_receive_skb_core->ip_rcv(skb=ffff88011396f200, skb=88, dev=ffff880115204000)
++    <idle>-0     [003] ..s3   280.167137: __netif_receive_skb_core->ip_rcv(skb=52, dev=ffff8801092f9400)
++    <idle>-0     [003] ..s3   280.167152: __netif_receive_skb_core->ip_rcv(skb=52, dev=ffff8801092f9400)
++    <idle>-0     [003] ..s3   280.806629: __netif_receive_skb_core->ip_rcv(skb=88, dev=ffff8801092f9400)
++    <idle>-0     [003] ..s3   280.807023: __netif_receive_skb_core->ip_rcv(skb=52, dev=ffff8801092f9400)
++
++Now we see the length of the sk_buff per event.
 diff --git a/kernel/trace/trace_event_ftrace.c b/kernel/trace/trace_event_ftrace.c
-index b622634062db..666edd76b70f 100644
+index be7f5bc416cc..b622634062db 100644
 --- a/kernel/trace/trace_event_ftrace.c
 +++ b/kernel/trace/trace_event_ftrace.c
-@@ -21,8 +21,8 @@ struct func_arg {
- 	long				indirect;
+@@ -10,13 +10,15 @@
+ 
+ #include "trace.h"
+ 
+-#define FUNC_EVENT_SYSTEM "functions"
+-#define WRITE_BUFSIZE  4096
++#define FUNC_EVENT_SYSTEM	"functions"
++#define WRITE_BUFSIZE		4096
++#define INDIRECT_FLAG		0x10000000
+ 
+ struct func_arg {
+ 	struct list_head		list;
+ 	char				*type;
+ 	char				*name;
++	long				indirect;
  	short				offset;
  	short				size;
--	char				arg;
--	char				sign;
-+	s8				arg;
-+	u8				sign;
- };
- 
- struct func_event {
-@@ -60,6 +60,7 @@ enum func_states {
- 	FUNC_STATE_BRACKET,
- 	FUNC_STATE_BRACKET_END,
- 	FUNC_STATE_INDIRECT,
-+	FUNC_STATE_PIPE,
+ 	char				arg;
+@@ -55,6 +57,9 @@ enum func_states {
+ 	FUNC_STATE_INIT,
+ 	FUNC_STATE_FUNC,
+ 	FUNC_STATE_PARAM,
++	FUNC_STATE_BRACKET,
++	FUNC_STATE_BRACKET_END,
++	FUNC_STATE_INDIRECT,
  	FUNC_STATE_TYPE,
  	FUNC_STATE_VAR,
  	FUNC_STATE_COMMA,
-@@ -181,6 +182,7 @@ static char *next_token(char **ptr, char *last)
- 		    *str == '[' ||
- 		    *str == ']' ||
+@@ -173,6 +178,8 @@ static char *next_token(char **ptr, char *last)
+ 
+ 	for (str = arg; *str; str++) {
+ 		if (*str == '(' ||
++		    *str == '[' ||
++		    *str == ']' ||
  		    *str == ',' ||
-+		    *str == '|' ||
  		    *str == ')')
  			break;
- 	}
-@@ -253,11 +255,15 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
- 			break;
- 		return FUNC_STATE_PARAM;
+@@ -225,6 +232,7 @@ static int add_arg(struct func_event *fevent, int ftype)
+ static enum func_states
+ process_event(struct func_event *fevent, const char *token, enum func_states state)
+ {
++	long val;
+ 	int ret;
+ 	int i;
  
-+	case FUNC_STATE_PIPE:
-+		fevent->arg_cnt--;
-+		goto comma;
- 	case FUNC_STATE_PARAM:
- 		if (token[0] == ')')
- 			return FUNC_STATE_END;
- 		/* Fall through */
- 	case FUNC_STATE_COMMA:
-+ comma:
- 		for (i = 0; func_types[i].size; i++) {
- 			if (strcmp(token, func_types[i].name) == 0)
- 				break;
-@@ -299,6 +305,8 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+@@ -271,12 +279,37 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+ 			break;
+ 		return FUNC_STATE_VAR;
+ 
++	case FUNC_STATE_BRACKET:
++		WARN_ON(!fevent->last_arg);
++		ret = kstrtol(token, 0, &val);
++		if (ret)
++			break;
++		val *= fevent->last_arg->size;
++		fevent->last_arg->indirect = val ^ INDIRECT_FLAG;
++		return FUNC_STATE_INDIRECT;
++
++	case FUNC_STATE_INDIRECT:
++		if (token[0] != ']')
++			break;
++		return FUNC_STATE_BRACKET_END;
++
++	case FUNC_STATE_BRACKET_END:
++		switch (token[0]) {
++		case ')':
++			return FUNC_STATE_END;
++		case ',':
++			return FUNC_STATE_COMMA;
++		}
++		break;
++
+ 	case FUNC_STATE_VAR:
+ 		switch (token[0]) {
+ 		case ')':
  			return FUNC_STATE_END;
  		case ',':
  			return FUNC_STATE_COMMA;
-+		case '|':
-+			return FUNC_STATE_PIPE;
++		case '[':
++			return FUNC_STATE_BRACKET;
  		}
  		break;
  
-@@ -308,6 +316,8 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
- 			return FUNC_STATE_END;
- 		case ',':
- 			return FUNC_STATE_COMMA;
-+		case '|':
-+			return FUNC_STATE_PIPE;
- 		case '[':
- 			return FUNC_STATE_BRACKET;
- 		}
-@@ -366,7 +376,6 @@ static void func_event_trace(struct trace_event_file *trace_file,
- 	int nr_args;
- 	int size;
- 	int pc;
--	int i = 0;
+@@ -286,6 +319,37 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+ 	return FUNC_STATE_ERROR;
+ }
  
- 	if (trace_trigger_soft_disabled(trace_file))
- 		return;
-@@ -388,8 +397,8 @@ static void func_event_trace(struct trace_event_file *trace_file,
- 	nr_args = arch_get_func_args(pt_regs, 0, func_event->arg_cnt, args);
++static long long get_arg(struct func_arg *arg, unsigned long val)
++{
++	char buf[8];
++	int ret;
++
++	if (!arg->indirect)
++		return val;
++
++	val = val + (arg->indirect ^ INDIRECT_FLAG);
++
++	ret = probe_kernel_read(buf, (void *)val, arg->size);
++	if (ret)
++		return 0;
++
++	switch (arg->size) {
++		case 8:
++			val = *(unsigned long long *)buf;
++			break;
++		case 4:
++			val = *(unsigned int *)buf;
++			break;
++		case 2:
++			val = *(unsigned short *)buf;
++			break;
++		case 1:
++			val = *(unsigned char *)buf;
++			break;
++	}
++	return val;
++}
++
+ static void func_event_trace(struct trace_event_file *trace_file,
+ 			     struct func_event *func_event,
+ 			     unsigned long ip, unsigned long parent_ip,
+@@ -325,7 +389,7 @@ static void func_event_trace(struct trace_event_file *trace_file,
  
  	list_for_each_entry(arg, &func_event->args, list) {
--		if (i < nr_args)
--			val = get_arg(arg, args[i]);
-+		if (arg->arg < nr_args)
-+			val = get_arg(arg, args[arg->arg]);
+ 		if (i < nr_args)
+-			val = args[i];
++			val = get_arg(arg, args[i]);
  		else
  			val = 0;
  		memcpy(&entry->data[arg->offset], &val, arg->size);
-@@ -743,12 +752,18 @@ static int func_event_seq_show(struct seq_file *m, void *v)
- 	struct func_event *func_event = v;
- 	struct func_arg *arg;
- 	bool comma = false;
-+	int last_arg = 0;
- 
- 	seq_printf(m, "%s(", func_event->func);
- 
- 	list_for_each_entry(arg, &func_event->args, list) {
--		if (comma)
--			seq_puts(m, ", ");
-+		if (comma) {
-+			if (last_arg == arg->arg)
-+				seq_puts(m, " | ");
-+			else
-+				seq_puts(m, ", ");
-+		}
-+		last_arg = arg->arg;
+@@ -687,6 +751,9 @@ static int func_event_seq_show(struct seq_file *m, void *v)
+ 			seq_puts(m, ", ");
  		comma = true;
  		seq_printf(m, "%s %s", arg->type, arg->name);
- 		if (arg->indirect && arg->size)
++		if (arg->indirect && arg->size)
++			seq_printf(m, "[%ld]",
++				   (arg->indirect ^ INDIRECT_FLAG) / arg->size);
+ 	}
+ 	seq_puts(m, ")\n");
+ 
 -- 
 2.15.1
 
