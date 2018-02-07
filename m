@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH 11/20 v2] tracing: Add symbol type to function based events
-Date: Wed, 07 Feb 2018 15:24:13 -0500
-Message-ID: <20180207202816.348135328@goodmis.org>
+Subject: [PATCH 09/20 v2] tracing: Add indexing of arguments for function based events
+Date: Wed, 07 Feb 2018 15:24:11 -0500
+Message-ID: <20180207202816.058222771@goodmis.org>
 References: <20180207202402.253089656@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -20,113 +20,139 @@ Cc: Linus Torvalds <torvalds@linux-foundation.org>,
         Juri Lelli <juri.lelli@redhat.com>
 To: linux-kernel@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0011-tracing-Add-symbol-type-to-function-based-events.patch
+Content-Disposition: inline; filename=0009-tracing-Add-indexing-of-arguments-for-function-based.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-Add a special type "symbol" that will use %pS to display the field of a
-function based event.
+Currently reading of 8 byte words can only happen 8 bytes aligned from the
+argument. But there may be cases that they are 4 bytes aligned. To make the
+capturing of arguments more flexible, add a plus '+' operator that can index
+the variable at arbitrary indexes to get any location.
+
+ u64 arg+4[3]
+
+Will get an 8 byte word at index 28 (3 * 8 + 4)
 
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- Documentation/trace/function-based-events.rst | 26 +++++++++++++++++++++++++-
- kernel/trace/trace_event_ftrace.c             | 13 ++++++++++---
- 2 files changed, 35 insertions(+), 4 deletions(-)
+ Documentation/trace/function-based-events.rst | 24 +++++++++++++++++++++++-
+ kernel/trace/trace_event_ftrace.c             | 18 ++++++++++++++++++
+ 2 files changed, 41 insertions(+), 1 deletion(-)
 
 diff --git a/Documentation/trace/function-based-events.rst b/Documentation/trace/function-based-events.rst
-index bdb28f433bfb..f18c8f3ef330 100644
+index 72e3e7730d63..bdb28f433bfb 100644
 --- a/Documentation/trace/function-based-events.rst
 +++ b/Documentation/trace/function-based-events.rst
-@@ -98,7 +98,8 @@ as follows:
-  ATOM := 'u8' | 'u16' | 'u32' | 'u64' |
-          's8' | 's16' | 's32' | 's64' |
+@@ -100,10 +100,12 @@ as follows:
           'x8' | 'x16' | 'x32' | 'x64' |
--         'char' | 'short' | 'int' | 'long' | 'size_t'
-+         'char' | 'short' | 'int' | 'long' | 'size_t' |
-+	 'symbol'
+          'char' | 'short' | 'int' | 'long' | 'size_t'
  
-  FIELD := <name> | <name> INDEX | <name> OFFSET | <name> OFFSET INDEX
+- FIELD := <name> | <name> INDEX
++ FIELD := <name> | <name> INDEX | <name> OFFSET | <name> OFFSET INDEX
  
-@@ -243,3 +244,26 @@ The above will take the parameter value, add it by 4, then index it by two
- 8 byte words. It's the same in C as: (u64 *)((void *)param + 4)[2]
+  INDEX := '[' <number> ']'
  
-  Note: "int skb[32]" is the same as "int skb+4[31]".
++ OFFSET := '+' <number>
++
+  Where <name> is a unique string starting with an alphabetic character
+  and consists only of letters and numbers and underscores.
+ 
+@@ -221,3 +223,23 @@ format:
+ print fmt: "%pS->%pS(skb=%u)", REC->__ip, REC->__parent_ip, REC->skb
+ 
+ It is now printed with a "%u".
 +
 +
-+Symbols (function names)
-+========================
++Offsets
++=======
 +
-+To display kallsyms "%pS" type of output, use the special type "symbol".
++After the name of the variable, brackets '[' number ']' will index the value of
++the argument by the number given times the size of the field.
 +
-+Again, using gdb to find the offset of the "func" field of struct work_struct
++ int field[5] will dereference the value of the argument 20 bytes away (4 * 5)
++  as sizeof(int) is 4.
 +
-+(gdb) printf "%d\n", &((struct work_struct *)0)->func
-+24
++If there's a case where the type is of 8 bytes in size but is not 8 bytes
++alligned in the structure, an offset may be required.
 +
-+ Both "symbol func[3]" and "symbol func+24[0]" will work.
++  For example: x64 param+4[2]
 +
-+ # echo '__queue_work(int cpu, x64 wq, symbol func[3])' > function_events
++The above will take the parameter value, add it by 4, then index it by two
++8 byte words. It's the same in C as: (u64 *)((void *)param + 4)[2]
 +
-+ # echo 1 > events/functions/__queue_work/enable
-+ # cat trace
-+       bash-1641  [007] d..2  6241.171332: queue_work_on->__queue_work(cpu=128, wq=ffff88011a010e00, func=flush_to_ldisc+0x0/0xa0)
-+       bash-1641  [007] d..2  6241.171460: queue_work_on->__queue_work(cpu=128, wq=ffff88011a010e00, func=flush_to_ldisc+0x0/0xa0)
-+     <idle>-0     [000] dNs3  6241.172004: delayed_work_timer_fn->__queue_work(cpu=128, wq=ffff88011a010800, func=vmstat_shepherd+0x0/0xb0)
-+ worker/0:2-1689  [000] d..2  6241.172026: __queue_delayed_work->__queue_work(cpu=7, wq=ffff88011a11da00, func=vmstat_update+0x0/0x70)
-+     <idle>-0     [005] d.s3  6241.347996: queue_work_on->__queue_work(cpu=128, wq=ffff88011a011200, func=fb_flashcursor+0x0/0x110 [fb])
++ Note: "int skb[32]" is the same as "int skb+4[31]".
 diff --git a/kernel/trace/trace_event_ftrace.c b/kernel/trace/trace_event_ftrace.c
-index 6e48361643c0..1359f714a1b1 100644
+index 8327346799eb..1fa281386fa0 100644
 --- a/kernel/trace/trace_event_ftrace.c
 +++ b/kernel/trace/trace_event_ftrace.c
-@@ -76,6 +76,7 @@ typedef u64 x64;
- typedef u32 x32;
- typedef u16 x16;
- typedef u8 x8;
-+typedef void * symbol;
- 
- #define TYPE_TUPLE(type)			\
- 	{ #type, sizeof(type), is_signed_type(type) }
-@@ -97,7 +98,8 @@ typedef u8 x8;
- 	TYPE_TUPLE(x16),			\
- 	TYPE_TUPLE(u8),				\
- 	TYPE_TUPLE(s8),				\
--	TYPE_TUPLE(x8)
-+	TYPE_TUPLE(x8),				\
-+	TYPE_TUPLE(symbol)
- 
- static struct func_type {
- 	char		*name;
-@@ -264,7 +266,7 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
- 	switch (state) {
- 	case FUNC_STATE_INIT:
- 		unsign = 0;
--		if (!isalpha(token[0]))
-+		if (!isalpha(token[0]) && token[0] != '_')
+@@ -19,6 +19,7 @@ struct func_arg {
+ 	char				*type;
+ 	char				*name;
+ 	long				indirect;
++	long				index;
+ 	short				offset;
+ 	short				size;
+ 	s8				arg;
+@@ -62,6 +63,7 @@ enum func_states {
+ 	FUNC_STATE_INDIRECT,
+ 	FUNC_STATE_UNSIGNED,
+ 	FUNC_STATE_PIPE,
++	FUNC_STATE_PLUS,
+ 	FUNC_STATE_TYPE,
+ 	FUNC_STATE_VAR,
+ 	FUNC_STATE_COMMA,
+@@ -184,6 +186,7 @@ static char *next_token(char **ptr, char *last)
+ 		    *str == ']' ||
+ 		    *str == ',' ||
+ 		    *str == '|' ||
++		    *str == '+' ||
+ 		    *str == ')')
  			break;
- 		/* Do not allow wild cards */
- 		if (strstr(token, "*") || strstr(token, "?"))
-@@ -307,7 +309,7 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
- 		return FUNC_STATE_TYPE;
+ 	}
+@@ -325,6 +328,15 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+ 		}
+ 		break;
  
- 	case FUNC_STATE_TYPE:
--		if (!isalpha(token[0]))
-+		if (!isalpha(token[0]) || token[0] == '_')
- 			break;
- 		if (WARN_ON(!fevent->last_arg))
- 			break;
-@@ -478,6 +480,11 @@ static void make_fmt(struct func_arg *arg, char *fmt)
- {
- 	int c = 0;
- 
-+	if (arg->func_type == FUNC_TYPE_symbol) {
-+		strcpy(fmt, "%pS");
-+		return;
-+	}
++	case FUNC_STATE_PLUS:
++		if (WARN_ON(!fevent->last_arg))
++			break;
++		ret = kstrtol(token, 0, &val);
++		if (ret)
++			break;
++		fevent->last_arg->index += val;
++		return FUNC_STATE_VAR;
 +
- 	fmt[c++] = '%';
+ 	case FUNC_STATE_VAR:
+ 		switch (token[0]) {
+ 		case ')':
+@@ -333,6 +345,8 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+ 			return FUNC_STATE_COMMA;
+ 		case '|':
+ 			return FUNC_STATE_PIPE;
++		case '+':
++			return FUNC_STATE_PLUS;
+ 		case '[':
+ 			return FUNC_STATE_BRACKET;
+ 		}
+@@ -349,6 +363,8 @@ static long long get_arg(struct func_arg *arg, unsigned long val)
+ 	char buf[8];
+ 	int ret;
  
- 	if (arg->size == 8) {
++	val += arg->index;
++
+ 	if (!arg->indirect)
+ 		return val;
+ 
+@@ -781,6 +797,8 @@ static int func_event_seq_show(struct seq_file *m, void *v)
+ 		last_arg = arg->arg;
+ 		comma = true;
+ 		seq_printf(m, "%s %s", arg->type, arg->name);
++		if (arg->index)
++			seq_printf(m, "+%ld", arg->index);
+ 		if (arg->indirect && arg->size)
+ 			seq_printf(m, "[%ld]",
+ 				   (arg->indirect ^ INDIRECT_FLAG) / arg->size);
 -- 
 2.15.1
