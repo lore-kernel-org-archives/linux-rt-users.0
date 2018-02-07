@@ -1,56 +1,96 @@
-From: Mirza Krak <mirza.krak-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: High CPU load when using USB Bluetooth on 4.14.15-rt13 kernel
-Date: Wed, 7 Feb 2018 10:34:02 +0100
-Message-ID: <CALw8SCUL2+zWt=88wk4LckToCz75VVGSmK-ai3KoUNxWiLx2tQ@mail.gmail.com>
-References: <CALw8SCWyD8-AVtqKvPZeNQuyLfvvdLe7ZtRWuh9KH09WNDDHuA@mail.gmail.com>
- <20180201190150.GA868@jcartwri.amer.corp.natinst.com>
+From: Jiri Olsa <jolsa@redhat.com>
+Subject: Re: [PATCH 01/18] tracing: Add function based events
+Date: Wed, 7 Feb 2018 13:06:51 +0100
+Message-ID: <20180207120651.GB16048@krava>
+References: <20180202230458.840252014@goodmis.org>
+ <20180202231017.160509978@goodmis.org>
+ <20180205082423.GB1253@krava>
+ <20180205100050.75c04497@gandalf.local.home>
+ <20180206220917.1ca65b54@vmware.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-Cc: linux-bluetooth-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-        Marcel Holtmann <marcel-kz+m5ild9QBg9hUCZPvPmw@public.gmane.org>,
-        linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Julia Cartwright <julia-acOepvfBmUk@public.gmane.org>
-Return-path: <linux-bluetooth-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20180201190150.GA868-ew3lsbMjNqt5wtABiV/Xjqyly8cj88Ttqxv4g6HH51o@public.gmane.org>
-Sender: linux-bluetooth-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Ingo Molnar <mingo@kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        linux-rt-users@vger.kernel.org, linux-trace-users@vger.kernel.org,
+        Arnaldo Carvalho de Melo <acme@kernel.org>,
+        Clark Williams <williams@redhat.com>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Namhyung Kim <namhyung@kernel.org>,
+        Alexei Starovoitov <alexei.starovoitov@gmail.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-trace-users-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20180206220917.1ca65b54@vmware.local.home>
+Sender: linux-trace-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 1 February 2018 at 20:01, Julia Cartwright <julia-acOepvfBmUk@public.gmane.org> wrote:
-> On Thu, Feb 01, 2018 at 10:58:28AM +0100, Mirza Krak wrote:
->> Hi.
->
-> Hello Mirza.
->
-> [..]
->> I have tried running a 4.14.15 vanilla kernel, and this does not have
->> this problem which means that it is the following combo
->>
->>     RT + USB Bluetooth
->>
->> That seem to the problem.
->>
->> Before I start digging deep in to the stacks I wanted to post my
->> problem to the community to see if someone is having a similar problem
->> on a different hardware or if you have any pointers on how to further
->> debug this.
->
-> One suggestion I would have would be to re-do your testing on mainline
-> v4.14.15 booted with the 'threadirqs' kernel command line parameter.
->
-> The reason being that without this option, interrupts aren't threaded in
-> mainline, so it very well could be that your hardware is still
-> misbehaving, however it's execution time just isn't being accounted for
-> in the same way.
+On Tue, Feb 06, 2018 at 10:09:17PM -0500, Steven Rostedt wrote:
+> On Mon, 5 Feb 2018 10:00:50 -0500
+> Steven Rostedt <rostedt@goodmis.org> wrote:
+> 
+> > On Mon, 5 Feb 2018 09:24:23 +0100
+> > Jiri Olsa <jolsa@redhat.com> wrote:
+> > 
+> > 
+> > > should this be done under 'func_event_mutex' ?  
+> > 
+> > Probably.
+> 
+> I think we only need to add the list.
 
-Thank you for the hint.
+yep, seems enough
 
-Adding "threadirq" on the mainline kernel exposed the CPU load and I
-guess that this is not a RT problem then.
+jirka
 
-Thank you once again.
-
---=20
-Med V=C3=A4nliga H=C3=A4lsningar / Best Regards
-
-Mirza Krak
+> 
+> > 
+> > > 
+> > > I tried and crashed the system by running 2 scripts with:
+> > > 
+> > >   echo 'ip_rcv(u64 skb, u64 dev)' > /sys/kernel/debug/tracing/function_events
+> > >   echo 'SyS_openat(int dfd, string buf, x32 flags, x32 mode)' >> /sys/kernel/debug/tracing/function_events
+> > >   echo 'SyS_open(x8[32] buf, x32 flags, x32 mode)' >> /sys/kernel/debug/tracing/function_events
+> > >  
+> > 
+> 
+> There's no reason that we can't have more than one function  event
+> attached to the same function. I'm adding this:
+> 
+> diff --git a/kernel/trace/trace_event_ftrace.c b/kernel/trace/trace_event_ftrace.c
+> index b145639eac45..928168fc2025 100644
+> --- a/kernel/trace/trace_event_ftrace.c
+> +++ b/kernel/trace/trace_event_ftrace.c
+> @@ -1275,12 +1275,6 @@ static int create_function_event(int argc, char **argv)
+>  	if (state != FUNC_STATE_END)
+>  		goto fail;
+>  
+> -	ret = -EALREADY;
+> -	list_for_each_entry(fe, &func_events, list) {
+> -		if (strcmp(fe->func, func_event->func) == 0)
+> -			goto fail;
+> -	}
+> -
+>  	ret = ftrace_set_filter(&func_event->ops, func_event->func,
+>  				strlen(func_event->func), 0);
+>  	if (ret < 0)
+> @@ -1290,7 +1284,9 @@ static int create_function_event(int argc, char **argv)
+>  	if (ret < 0)
+>  		goto fail;
+>  
+> +	mutex_lock(&func_event_mutex);
+>  	list_add_tail(&func_event->list, &func_events);
+> +	mutex_unlock(&func_event_mutex);
+>  	return 0;
+>   fail:
+>  	free_func_event(func_event);
+> 
+> -- Steve
