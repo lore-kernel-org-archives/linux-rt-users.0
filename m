@@ -1,43 +1,92 @@
-From: Daniel Wagner <wagi@monom.org>
-Subject: [ANNOUNCE] 4.4.115-rt130
-Date: Thu, 08 Feb 2018 10:06:40 +0100
-Message-ID: <20180208091210.C379C50096A@mail.monom.org>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
+From: Namhyung Kim <namhyung@kernel.org>
+Subject: Re: [PATCH 03/18] tracing: Add simple arguments to function based
+ events
+Date: Thu, 8 Feb 2018 19:18:18 +0900
+Message-ID: <20180208101818.GA26290@sejong>
+References: <20180202230458.840252014@goodmis.org>
+ <20180202231017.459764446@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Cc: linux-kernel@vger.kernel.org,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Ingo Molnar <mingo@kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>
+        Peter Zijlstra <peterz@infradead.org>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        linux-rt-users@vger.kernel.org, linux-trace-users@vger.kernel.org,
+        Arnaldo Carvalho de Melo <acme@kernel.org>,
+        Clark Williams <williams@redhat.com>,
+        Jiri Olsa <jolsa@redhat.com>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Alexei Starovoitov <alexei.starovoitov@gmail.com>,
+        kernel-team@lge.com
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20180202231017.459764446@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello RT Folks!
+On Fri, Feb 02, 2018 at 06:05:01PM -0500, Steven Rostedt wrote:
+> From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+> 
+> The function based events can now have arguments passed in. A weak function
+> arch_get_func_args() is created so that archs can fill in the arguments
+> based on pt_regs. Currently no arch implements this function, so no
+> arguments are returned. Passing NULL for pt_regs into this function returns
+> the number of supported args that can be processed, and the format will
+> only allow the user to add valid args. Which currently are all arguments
+> until an arch implements the arg_get_func_args() function.
+> 
+> [ missing 'static' found by Fengguang Wu's kbuild test robot ]
+> Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+> ---
 
-I'm pleased to announce the 4.4.115-rt130 stable release.
+[SNIP]
+> @@ -129,9 +284,14 @@ static void func_event_trace(struct trace_event_file *trace_file,
+>  	struct trace_event_call *call = &func_event->call;
+>  	struct ring_buffer_event *event;
+>  	struct ring_buffer *buffer;
+> +	struct func_arg *arg;
+> +	long args[func_event->arg_cnt];
+> +	long long val = 1;
+>  	unsigned long irq_flags;
+> +	int nr_args;
+>  	int size;
+>  	int pc;
+> +	int i = 0;
+>  
+>  	if (trace_trigger_soft_disabled(trace_file))
+>  		return;
+> @@ -139,7 +299,7 @@ static void func_event_trace(struct trace_event_file *trace_file,
+>  	local_save_flags(irq_flags);
+>  	pc = preempt_count();
+>  
+> -	size = sizeof(*entry);
+> +	size = func_event->arg_offset + sizeof(*entry);
+>  
+>  	event = trace_event_buffer_lock_reserve(&buffer, trace_file,
+>  						call->event.type,
+> @@ -150,6 +310,15 @@ static void func_event_trace(struct trace_event_file *trace_file,
+>  	entry = ring_buffer_event_data(event);
+>  	entry->ip = ip;
+>  	entry->parent_ip = parent_ip;
+> +	nr_args = arch_get_func_args(pt_regs, 0, func_event->arg_cnt, args);
+> +
+> +	list_for_each_entry(arg, &func_event->args, list) {
+> +		if (i < nr_args)
+> +			val = args[i];
+> +		else
+> +			val = 0;
+> +		memcpy(&entry->data[arg->offset], &val, arg->size);
+> +	}
 
-You can get this release via the git tree at:
+Where is the 'i' increased?
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.4-rt
-  Head SHA1: 701115b70ba8e8b20c6cfe689db4c1dd6af3ece9
-
-Or to build 4.4.115-rt130 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.115.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.115-rt130.patch.xz
-
-
-You can also build from 4.4.113-rt128 by applying the incremental patch:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/incr/patch-4.4.113-rt128-rt130.patch.xz
-
-Enjoy!
-   Daniel
+Thanks,
+Namhyung
