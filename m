@@ -1,10 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 11/18] tracing: Add symbol type to function based events
-Date: Thu, 8 Feb 2018 10:48:40 -0500
-Message-ID: <20180208104840.6c9667b7@gandalf.local.home>
-References: <20180202230458.840252014@goodmis.org>
-        <20180202231018.653298332@goodmis.org>
-        <20180208110341.GC26290@sejong>
+Subject: Re: [PATCH 01/20 v2] tracing: Add function based events
+Date: Thu, 8 Feb 2018 10:53:23 -0500
+Message-ID: <20180208105323.6263b2dd@gandalf.local.home>
+References: <20180207202402.253089656@goodmis.org>
+        <20180207202814.738058149@goodmis.org>
+        <20180208112014.GA30958@krava>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -19,72 +19,36 @@ Cc: linux-kernel@vger.kernel.org,
         linux-rt-users@vger.kernel.org, linux-trace-users@vger.kernel.org,
         Arnaldo Carvalho de Melo <acme@kernel.org>,
         Clark Williams <williams@redhat.com>,
-        Jiri Olsa <jolsa@redhat.com>,
         Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-        Alexei Starovoitov <alexei.starovoitov@gmail.com>,
-        kernel-team@lge.com
-To: Namhyung Kim <namhyung@kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.99]:60962 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1750847AbeBHPso (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 8 Feb 2018 10:48:44 -0500
-In-Reply-To: <20180208110341.GC26290@sejong>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+        Juri Lelli <juri.lelli@redhat.com>
+To: Jiri Olsa <jolsa@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180208112014.GA30958@krava>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 8 Feb 2018 20:03:41 +0900
-Namhyung Kim <namhyung@kernel.org> wrote:
+On Thu, 8 Feb 2018 12:20:14 +0100
+Jiri Olsa <jolsa@redhat.com> wrote:
 
-> > @@ -76,6 +76,7 @@ typedef u64 x64;
-> >  typedef u32 x32;
-> >  typedef u16 x16;
-> >  typedef u8 x8;
-> > +typedef void * symbol;
-> >  
-> >  #define TYPE_TUPLE(type)			\
-> >  	{ #type, sizeof(type), is_signed_type(type) }
-> > @@ -97,7 +98,8 @@ typedef u8 x8;
-> >  	TYPE_TUPLE(x16),			\
-> >  	TYPE_TUPLE(u8),				\
-> >  	TYPE_TUPLE(s8),				\
-> > -	TYPE_TUPLE(x8)
-> > +	TYPE_TUPLE(x8),				\
-> > +	TYPE_TUPLE(symbol)
-> >  
-> >  static struct func_type {
-> >  	char		*name;
-> > @@ -262,7 +264,7 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
-> >  	switch (state) {
-> >  	case FUNC_STATE_INIT:
-> >  		unsign = 0;
-> > -		if (!isalpha(token[0]))
-> > +		if (!isalpha(token[0]) && token[0] != '_')
-> >  			break;  
+> On Wed, Feb 07, 2018 at 03:24:03PM -0500, Steven Rostedt wrote:
 > 
-> Hmm.. it seems that it needs to be moved to the patch 1?
-
-Agreed.
-
+> SNIP
 > 
+> > +
+> > +void create_function_event_file(struct dentry *d_tracer)
+> > +{
+> > +	struct dentry *d;
+> > +
+> > +	d = trace_create_file("function_events", 0644, d_tracer, NULL,
+> > +			      &func_event_fops);
+> > +	WARN(!d, "Failed to create function_events file");
+> > +}  
 > 
-> >  		/* Do not allow wild cards */
-> >  		if (strstr(token, "*") || strstr(token, "?"))
-> > @@ -305,7 +307,7 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
-> >  		return FUNC_STATE_TYPE;
-> >  
-> >  	case FUNC_STATE_TYPE:
-> > -		if (!isalpha(token[0]))
-> > +		if (!isalpha(token[0]) || token[0] == '_')
-> >  			break;  
+> this fucntion seems like leftover.. can't see any code using it
 > 
-> Why is different that the above?  Anyway, '_' is not an alphabet..
 
-That's a bug. I thought I fixed that. Ah, in v2 I fixed it in a later
-patch. I'll restructure to fix it in the proper place.
+You are right. My original version had it created via instance, but
+then I realized that the events are for all instances. I'll nuke this.
 
 Thanks!
 
