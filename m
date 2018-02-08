@@ -1,83 +1,41 @@
-From: Jiri Olsa <jolsa@redhat.com>
-Subject: Re: [PATCH 11/20 v2] tracing: Add symbol type to function based
- events
-Date: Thu, 8 Feb 2018 12:20:31 +0100
-Message-ID: <20180208112031.GB30958@krava>
-References: <20180207202402.253089656@goodmis.org>
- <20180207202816.348135328@goodmis.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: permalink for RT patch set
+Date: Thu, 8 Feb 2018 14:32:16 +0100
+Message-ID: <20180208133216.gl3zwntaxqsp4tti@linutronix.de>
+References: <CAF_dkJDPq7GZKb1a61E00dYpPkuaJGTFJbfXdQCMay0-nGu2ug@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        Ingo Molnar <mingo@kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        linux-rt-users@vger.kernel.org, linux-trace-users@vger.kernel.org,
-        Arnaldo Carvalho de Melo <acme@kernel.org>,
-        Clark Williams <williams@redhat.com>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Juri Lelli <juri.lelli@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+Cc: linux-rt-users@vger.kernel.org
+To: Patrick Doyle <wpdster@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from Galois.linutronix.de ([146.0.238.70]:59672 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1750961AbeBHNcR (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 8 Feb 2018 08:32:17 -0500
 Content-Disposition: inline
-In-Reply-To: <20180207202816.348135328@goodmis.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <CAF_dkJDPq7GZKb1a61E00dYpPkuaJGTFJbfXdQCMay0-nGu2ug@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Feb 07, 2018 at 03:24:13PM -0500, Steven Rostedt wrote:
-> From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
-> 
-> Add a special type "symbol" that will use %pS to display the field of a
-> function based event.
-> 
-> Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-> ---
->  Documentation/trace/function-based-events.rst | 26 +++++++++++++++++++++++++-
->  kernel/trace/trace_event_ftrace.c             | 13 ++++++++++---
->  2 files changed, 35 insertions(+), 4 deletions(-)
-> 
-> diff --git a/Documentation/trace/function-based-events.rst b/Documentation/trace/function-based-events.rst
-> index bdb28f433bfb..f18c8f3ef330 100644
-> --- a/Documentation/trace/function-based-events.rst
-> +++ b/Documentation/trace/function-based-events.rst
-> @@ -98,7 +98,8 @@ as follows:
->   ATOM := 'u8' | 'u16' | 'u32' | 'u64' |
->           's8' | 's16' | 's32' | 's64' |
->           'x8' | 'x16' | 'x32' | 'x64' |
-> -         'char' | 'short' | 'int' | 'long' | 'size_t'
-> +         'char' | 'short' | 'int' | 'long' | 'size_t' |
-> +	 'symbol'
->  
->   FIELD := <name> | <name> INDEX | <name> OFFSET | <name> OFFSET INDEX
->  
-> @@ -243,3 +244,26 @@ The above will take the parameter value, add it by 4, then index it by two
->  8 byte words. It's the same in C as: (u64 *)((void *)param + 4)[2]
->  
->   Note: "int skb[32]" is the same as "int skb+4[31]".
-> +
-> +
-> +Symbols (function names)
-> +========================
-> +
-> +To display kallsyms "%pS" type of output, use the special type "symbol".
-> +
-> +Again, using gdb to find the offset of the "func" field of struct work_struct
-> +
-> +(gdb) printf "%d\n", &((struct work_struct *)0)->func
-> +24
+On 2018-02-07 19:26:45 [-0500], Patrick Doyle wrote:
+> I just noticed that the 4.9.61-rt61 patchset I have been using is no
+> longer available at
+> https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.9.  Nor do I see
+> it in https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.9/older.
+> Is there any place that the patch sets are archived?
 
-you could also use Arnaldo's pahole for this, seems like less typing:
+I doubt this was ever the case. I can't find an announcement for this
+version. I see 4.9.61-rt51 and 4.9.61-rt52 which share the same stable
+kernel version and 4.9.76-rt61 which shares the same -rt version. But
+not what you came up with.
 
-  $ pahole ./vmlinux -C work_struct
-  die__process_function: tag not supported (INVALID)!
-  struct work_struct {
-          atomic_long_t              data;                 /*     0     8 */
-          struct list_head           entry;                /*     8    16 */
-          work_func_t                func;                 /*    24     8 */
+> I know that the standard answer on this list is to use the latest
+> stable release, but that isn't always possible.
 
-it's in 'dwarves' package
+The …/rt/X/older/ link should remain stable.
 
-jirka
+> --wpd
+
+Sebastian
