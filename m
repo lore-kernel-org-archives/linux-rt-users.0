@@ -1,51 +1,96 @@
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: Re: [PATCH v9 35/37] tracing: Increase trace_recursive_lock() limit
- for synthetic events
-Date: Wed, 07 Feb 2018 22:34:12 -0600
-Message-ID: <1518064452.29966.4.camel@tzanussi-mobl.amr.corp.intel.com>
-References: <cover.1516069914.git.tom.zanussi@linux.intel.com>
-         <827fcc7a6840db06d196fc18905033d519681eff.1516069914.git.tom.zanussi@linux.intel.com>
-         <20180207205501.2b19c8d6@gandalf.local.home>
+From: Namhyung Kim <namhyung@kernel.org>
+Subject: Re: [PATCH 04/18] tracing/x86: Add arch_get_func_args() function
+Date: Thu, 8 Feb 2018 14:28:13 +0900
+Message-ID: <20180208052813.GD24686@sejong>
+References: <20180202230458.840252014@goodmis.org>
+ <20180202231017.612058326@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: linux-kernel@vger.kernel.org,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Ingo Molnar <mingo@kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        linux-rt-users@vger.kernel.org, linux-trace-users@vger.kernel.org,
+        Arnaldo Carvalho de Melo <acme@kernel.org>,
+        Clark Williams <williams@redhat.com>,
+        Jiri Olsa <jolsa@redhat.com>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Alexei Starovoitov <alexei.starovoitov@gmail.com>,
+        kernel-team@lge.com
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180207205501.2b19c8d6@gandalf.local.home>
+Content-Disposition: inline
+In-Reply-To: <20180202231017.612058326@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 Hi Steve,
 
-On Wed, 2018-02-07 at 20:55 -0500, Steven Rostedt wrote:
-> On Mon, 15 Jan 2018 20:52:09 -0600
-> Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
+On Fri, Feb 02, 2018 at 06:05:02PM -0500, Steven Rostedt wrote:
+> From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 > 
-> >  static __always_inline int
-> >  trace_recursive_lock(struct ring_buffer_per_cpu *cpu_buffer)
-> >  {
-> > -	if (cpu_buffer->current_context >= 4)
-> > +	if (cpu_buffer->current_context >= 6)
+> Add function to get the function arguments from pt_regs.
 > 
-> I can't apply this patch because the new context counting broke tracing
-> suspend and resume because it depended on the context recursive locking.
+> Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+> ---
+>  arch/x86/kernel/ftrace.c | 28 ++++++++++++++++++++++++++++
+>  1 file changed, 28 insertions(+)
 > 
-> Link: http://lkml.kernel.org/r/20180116020051.776011914@goodmis.org
-> 
-> I added the attached two patches which appear to do the job.
-> 
-> Let me know what you think.
-> 
+> diff --git a/arch/x86/kernel/ftrace.c b/arch/x86/kernel/ftrace.c
+> index 01ebcb6f263e..5e845c8cf89d 100644
+> --- a/arch/x86/kernel/ftrace.c
+> +++ b/arch/x86/kernel/ftrace.c
+> @@ -46,6 +46,34 @@ int ftrace_arch_code_modify_post_process(void)
+>  	return 0;
+>  }
+>  
+> +int arch_get_func_args(struct pt_regs *regs,
+> +		       int start, int end, long *args)
+> +{
+> +#ifdef CONFIG_X86_64
+> +# define MAX_ARGS 6
+> +# define INIT_REGS				\
+> +	{	regs->di, regs->si, regs->dx,	\
+> +		regs->cx, regs->r8, regs->r9	\
+> +	}
+> +#else
+> +# define MAX_ARGS 3
+> +# define INIT_REGS				\
+> +	{	regs->ax, regs->dx, regs->cx	}
+> +#endif
+> +	if (!regs)
+> +		return MAX_ARGS;
+> +
+> +	{
+> +		long pt_args[] = INIT_REGS;
+> +		int i;
+> +
+> +		for (i = start; i <= end && i < MAX_ARGS; i++)
+                                ^^^^^^^^
 
-Yeah, these look good and seem to do the trick - I did some quick
-testing and didn't see any problems.
+I expected it being 'i < end' based on your description.
 
 Thanks,
+Namhyung
 
-Tom
+
+> +			args[i - start] = pt_args[i];
+> +
+> +		return i - start;
+> +	}
+> +}
+> +
+>  union ftrace_code_union {
+>  	char code[MCOUNT_INSN_SIZE];
+>  	struct {
+> -- 
+> 2.15.1
+> 
+> 
