@@ -1,11 +1,11 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 03/18] tracing: Add simple arguments to function based
- events
-Date: Thu, 8 Feb 2018 10:37:56 -0500
-Message-ID: <20180208103756.743a53e0@gandalf.local.home>
+Subject: Re: [PATCH 09/18] tracing: Add indexing of arguments for function
+ based events
+Date: Thu, 8 Feb 2018 10:43:43 -0500
+Message-ID: <20180208104343.2fa63eda@gandalf.local.home>
 References: <20180202230458.840252014@goodmis.org>
-        <20180202231017.459764446@goodmis.org>
-        <20180208101818.GA26290@sejong>
+        <20180202231018.338259949@goodmis.org>
+        <20180208105924.GB26290@sejong>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -28,35 +28,42 @@ Cc: linux-kernel@vger.kernel.org,
         Alexei Starovoitov <alexei.starovoitov@gmail.com>,
         kernel-team@lge.com
 To: Namhyung Kim <namhyung@kernel.org>
-Return-path: <linux-trace-users-owner@vger.kernel.org>
-In-Reply-To: <20180208101818.GA26290@sejong>
-Sender: linux-trace-users-owner@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180208105924.GB26290@sejong>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 8 Feb 2018 19:18:18 +0900
+On Thu, 8 Feb 2018 19:59:24 +0900
 Namhyung Kim <namhyung@kernel.org> wrote:
-						call->event.type,
-> > @@ -150,6 +310,15 @@ static void func_event_trace(struct trace_event_file *trace_file,
-> >  	entry = ring_buffer_event_data(event);
-> >  	entry->ip = ip;
-> >  	entry->parent_ip = parent_ip;
-> > +	nr_args = arch_get_func_args(pt_regs, 0, func_event->arg_cnt, args);
+
+> > @@ -347,6 +361,8 @@ static long long get_arg(struct func_arg *arg, unsigned long val)
+> >  	char buf[8];
+> >  	int ret;
+> >  
+> > +	val += arg->index;
 > > +
-> > +	list_for_each_entry(arg, &func_event->args, list) {
-> > +		if (i < nr_args)
-> > +			val = args[i];
-> > +		else
-> > +			val = 0;
-> > +		memcpy(&entry->data[arg->offset], &val, arg->size);
-> > +	}  
+> >  	if (!arg->indirect)
+> >  		return val;  
 > 
-> Where is the 'i' increased?
+> So this also works without the indirect, and just add the immediate to
+> the value.
 
-Good question. I think the increment got nuked via one of my rebases,
-and then most my testing happened at the end of the patch series where
-"i" is no longer used. But that's no excuse for keeping this bug
-around. I'll fix it and test again at each patch.
+Not sure what you are asking here. The immediate adds to the current
+value, where as the indirect will then look what's at that location.
 
-Thanks for reporting.
+If the arg (val) is 0xffffffffabcd0000
+
+	u64 val+8
+
+Will return: 0xffffffffabcd0008
+
+	u64 val[1]
+
+will return what's at location 0xffffffffabcd0008
+
+"u64 val+8[0]" is the same as "u64 val[1]"
+
+Note: "u64 val[0]+8" will return what's at location 0xffffffffabcd0000
+plus 8.
 
 -- Steve
