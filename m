@@ -1,11 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 09/18] tracing: Add indexing of arguments for function
- based events
-Date: Thu, 8 Feb 2018 10:43:43 -0500
-Message-ID: <20180208104343.2fa63eda@gandalf.local.home>
+Subject: Re: [PATCH 11/18] tracing: Add symbol type to function based events
+Date: Thu, 8 Feb 2018 10:48:40 -0500
+Message-ID: <20180208104840.6c9667b7@gandalf.local.home>
 References: <20180202230458.840252014@goodmis.org>
-        <20180202231018.338259949@goodmis.org>
-        <20180208105924.GB26290@sejong>
+        <20180202231018.653298332@goodmis.org>
+        <20180208110341.GC26290@sejong>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -28,42 +27,65 @@ Cc: linux-kernel@vger.kernel.org,
         Alexei Starovoitov <alexei.starovoitov@gmail.com>,
         kernel-team@lge.com
 To: Namhyung Kim <namhyung@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180208105924.GB26290@sejong>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.99]:60962 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1750847AbeBHPso (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 8 Feb 2018 10:48:44 -0500
+In-Reply-To: <20180208110341.GC26290@sejong>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 8 Feb 2018 19:59:24 +0900
+On Thu, 8 Feb 2018 20:03:41 +0900
 Namhyung Kim <namhyung@kernel.org> wrote:
 
-> > @@ -347,6 +361,8 @@ static long long get_arg(struct func_arg *arg, unsigned long val)
-> >  	char buf[8];
-> >  	int ret;
+> > @@ -76,6 +76,7 @@ typedef u64 x64;
+> >  typedef u32 x32;
+> >  typedef u16 x16;
+> >  typedef u8 x8;
+> > +typedef void * symbol;
 > >  
-> > +	val += arg->index;
-> > +
-> >  	if (!arg->indirect)
-> >  		return val;  
+> >  #define TYPE_TUPLE(type)			\
+> >  	{ #type, sizeof(type), is_signed_type(type) }
+> > @@ -97,7 +98,8 @@ typedef u8 x8;
+> >  	TYPE_TUPLE(x16),			\
+> >  	TYPE_TUPLE(u8),				\
+> >  	TYPE_TUPLE(s8),				\
+> > -	TYPE_TUPLE(x8)
+> > +	TYPE_TUPLE(x8),				\
+> > +	TYPE_TUPLE(symbol)
+> >  
+> >  static struct func_type {
+> >  	char		*name;
+> > @@ -262,7 +264,7 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+> >  	switch (state) {
+> >  	case FUNC_STATE_INIT:
+> >  		unsign = 0;
+> > -		if (!isalpha(token[0]))
+> > +		if (!isalpha(token[0]) && token[0] != '_')
+> >  			break;  
 > 
-> So this also works without the indirect, and just add the immediate to
-> the value.
+> Hmm.. it seems that it needs to be moved to the patch 1?
 
-Not sure what you are asking here. The immediate adds to the current
-value, where as the indirect will then look what's at that location.
+Agreed.
 
-If the arg (val) is 0xffffffffabcd0000
+> 
+> 
+> >  		/* Do not allow wild cards */
+> >  		if (strstr(token, "*") || strstr(token, "?"))
+> > @@ -305,7 +307,7 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+> >  		return FUNC_STATE_TYPE;
+> >  
+> >  	case FUNC_STATE_TYPE:
+> > -		if (!isalpha(token[0]))
+> > +		if (!isalpha(token[0]) || token[0] == '_')
+> >  			break;  
+> 
+> Why is different that the above?  Anyway, '_' is not an alphabet..
 
-	u64 val+8
+That's a bug. I thought I fixed that. Ah, in v2 I fixed it in a later
+patch. I'll restructure to fix it in the proper place.
 
-Will return: 0xffffffffabcd0008
-
-	u64 val[1]
-
-will return what's at location 0xffffffffabcd0008
-
-"u64 val+8[0]" is the same as "u64 val[1]"
-
-Note: "u64 val[0]+8" will return what's at location 0xffffffffabcd0000
-plus 8.
+Thanks!
 
 -- Steve
