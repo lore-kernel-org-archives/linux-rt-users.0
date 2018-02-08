@@ -1,96 +1,43 @@
-From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [PATCH 04/18] tracing/x86: Add arch_get_func_args() function
-Date: Thu, 8 Feb 2018 14:28:13 +0900
-Message-ID: <20180208052813.GD24686@sejong>
-References: <20180202230458.840252014@goodmis.org>
- <20180202231017.612058326@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-kernel@vger.kernel.org,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        Ingo Molnar <mingo@kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
+From: Daniel Wagner <wagi@monom.org>
+Subject: [ANNOUNCE] 4.4.115-rt130
+Date: Thu, 08 Feb 2018 10:06:40 +0100
+Message-ID: <20180208091210.C379C50096A@mail.monom.org>
+To: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        linux-rt-users@vger.kernel.org, linux-trace-users@vger.kernel.org,
-        Arnaldo Carvalho de Melo <acme@kernel.org>,
-        Clark Williams <williams@redhat.com>,
-        Jiri Olsa <jolsa@redhat.com>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-        Alexei Starovoitov <alexei.starovoitov@gmail.com>,
-        kernel-team@lge.com
-To: Steven Rostedt <rostedt@goodmis.org>
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180202231017.612058326@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Steve,
+Hello RT Folks!
 
-On Fri, Feb 02, 2018 at 06:05:02PM -0500, Steven Rostedt wrote:
-> From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
-> 
-> Add function to get the function arguments from pt_regs.
-> 
-> Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-> ---
->  arch/x86/kernel/ftrace.c | 28 ++++++++++++++++++++++++++++
->  1 file changed, 28 insertions(+)
-> 
-> diff --git a/arch/x86/kernel/ftrace.c b/arch/x86/kernel/ftrace.c
-> index 01ebcb6f263e..5e845c8cf89d 100644
-> --- a/arch/x86/kernel/ftrace.c
-> +++ b/arch/x86/kernel/ftrace.c
-> @@ -46,6 +46,34 @@ int ftrace_arch_code_modify_post_process(void)
->  	return 0;
->  }
->  
-> +int arch_get_func_args(struct pt_regs *regs,
-> +		       int start, int end, long *args)
-> +{
-> +#ifdef CONFIG_X86_64
-> +# define MAX_ARGS 6
-> +# define INIT_REGS				\
-> +	{	regs->di, regs->si, regs->dx,	\
-> +		regs->cx, regs->r8, regs->r9	\
-> +	}
-> +#else
-> +# define MAX_ARGS 3
-> +# define INIT_REGS				\
-> +	{	regs->ax, regs->dx, regs->cx	}
-> +#endif
-> +	if (!regs)
-> +		return MAX_ARGS;
-> +
-> +	{
-> +		long pt_args[] = INIT_REGS;
-> +		int i;
-> +
-> +		for (i = start; i <= end && i < MAX_ARGS; i++)
-                                ^^^^^^^^
+I'm pleased to announce the 4.4.115-rt130 stable release.
 
-I expected it being 'i < end' based on your description.
+You can get this release via the git tree at:
 
-Thanks,
-Namhyung
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.4-rt
+  Head SHA1: 701115b70ba8e8b20c6cfe689db4c1dd6af3ece9
+
+Or to build 4.4.115-rt130 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.115.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.115-rt130.patch.xz
 
 
-> +			args[i - start] = pt_args[i];
-> +
-> +		return i - start;
-> +	}
-> +}
-> +
->  union ftrace_code_union {
->  	char code[MCOUNT_INSN_SIZE];
->  	struct {
-> -- 
-> 2.15.1
-> 
-> 
+You can also build from 4.4.113-rt128 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/incr/patch-4.4.113-rt128-rt130.patch.xz
+
+Enjoy!
+   Daniel
