@@ -1,61 +1,81 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 11/20 v2] tracing: Add symbol type to function based
- events
-Date: Thu, 8 Feb 2018 10:59:00 -0500
-Message-ID: <20180208105900.71a8ee8c@gandalf.local.home>
-References: <20180207202402.253089656@goodmis.org>
-        <20180207202816.348135328@goodmis.org>
-        <20180208112031.GB30958@krava>
+From: t-v.k@gmx.net
+Subject: Re: Building the Raspberry Pi kernel with RT PREEMPT
+Date: Thu, 8 Feb 2018 17:19:47 +0100
+Message-ID: <trinity-5732b42c-ae56-43bf-8369-571fb16fd685-1518106786845@3c-app-gmx-bs70>
+References: <e5469b0b-fc0e-95b1-0a80-69a6afab3f12@gmx.net>
+ <5367606.tDxCejrBfR@ada>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        Ingo Molnar <mingo@kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        linux-rt-users@vger.kernel.org, linux-trace-users@vger.kernel.org,
-        Arnaldo Carvalho de Melo <acme@kernel.org>,
-        Clark Williams <williams@redhat.com>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Juri Lelli <juri.lelli@redhat.com>
-To: Jiri Olsa <jolsa@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180208112031.GB30958@krava>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+Cc: "Alexander Dahl" <ada@thorsis.com>,
+        "Mirza Krak" <mirza.krak@gmail.com>
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mout.gmx.net ([212.227.15.19]:48537 "EHLO mout.gmx.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1751848AbeBHQTu (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 8 Feb 2018 11:19:50 -0500
+In-Reply-To: <5367606.tDxCejrBfR@ada>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 8 Feb 2018 12:20:31 +0100
-Jiri Olsa <jolsa@redhat.com> wrote:
+Thanks for the answers!
 
-> > +Symbols (function names)
-> > +========================
-> > +
-> > +To display kallsyms "%pS" type of output, use the special type "symbol".
-> > +
-> > +Again, using gdb to find the offset of the "func" field of struct work_struct
-> > +
-> > +(gdb) printf "%d\n", &((struct work_struct *)0)->func
-> > +24  
-> 
-> you could also use Arnaldo's pahole for this, seems like less typing:
-> 
->   $ pahole ./vmlinux -C work_struct
->   die__process_function: tag not supported (INVALID)!
->   struct work_struct {
->           atomic_long_t              data;                 /*     0     8 */
->           struct list_head           entry;                /*     8    16 */
->           work_func_t                func;                 /*    24     8 */
-> 
-> it's in 'dwarves' package
+I'll need a DE in the end so I'll probably have to stick with the Raspberry Pi kernel. 
+Also, I would like to have a very recent kernel. I'm using a Raspberry Pi 3 Model B btw.
+I think the issue with my patching was that I applied the patches for '4.14.15-rt13' while the 'rpi-4.14.y' branch from the Raspberry Pi kernel was a bit ahead (~4.14.17).
+I went back in the commit history and found a commit that literally said 'Linux 4.14.15', then I changed my script to check that out instead of 'rpi-4.14.y'. 
+Now the patches apply successfully: https://gitlab.com/T-vK/rpi-rt-kernel/-/jobs/51703707
+But as you can see there is another issue now. 'make bcm2709_defconfig' doesn't work:
+> Can't find default configuration "arch/arm/configs/bcm2709_defconfig"!
 
-Nice, I'll have to document that:
+T-vK
+ 
+ 
+On 07 February 2018 at 08:55, "Alexander Dahl" <ada@thorsis.com> wrote:
 
- $ pahole ./vmlinux -C net_device |grep perm
-        unsigned char              perm_addr[32];        /*   558    32 */
+Am Mittwoch, 7. Februar 2018, 00:02:52 CET schrieb t-v.k@gmx.net:
+> this is my first time on a mailing list. I'm not sure how this works.
 
+You write to the list address, everyone also subscribed gets your mail,
+including you. Some people will set you in Cc additionally.
 
--- Steve
+> I'm currently trying to automate the build of a Linux kernel with the RT
+> PREEMPT patch. The kernel that I'm trying to build is in this git
+> repository: https://github.com/raspberrypi/linux (branch rpi-4.14.y)
+>
+> It's the official kernel for the Raspberry Pi.
+
+Yes, and it has some patches on top of the upstream vanilla kernel, IIRC
+around 200 the last time a looked at it.
+
+> But at the moment I am stuck. There are two problems. When I apply the
+> patch "patch-4.14.15-rt13.patch.gz", I get errors like:
+>
+> Hunk #9 FAILED at 795.
+> ...
+> 1 out of 20 hunks FAILED -- saving rejects to file kernel/softirq.c.rej
+> ...
+>
+> and as a result of this it exits with code 1.
+>
+> Here is the full build process output:
+> https://gitlab.com/T-vK/rpi-rt-kernel/-/jobs/51343435[https://gitlab.com/T-vK/rpi-rt-kernel/-/jobs/51343435]
+>
+> When I just ignore it and continue I get to the point where I can run
+> "make zImage", which then fails with this:
+
+This makes no sense, the patch must apply. You don't want to build anything
+with a half applied patch.
+
+> Can anyone help me with these issues?
+
+If you're on v4.14 anyway, I would recommend to run a vanilla kernel and put
+the RT patch(es) on top. At least for a system without graphics, this should
+work. (I had a RPi 1B running with vanilla v4.12 built with ptxdist and the
+DistroKit BSP some time ago, v4.14 and v4.15 also run fine headless. Should
+also work for RPi 2.)
+
+HTH & Greets
+Alex
+ 
