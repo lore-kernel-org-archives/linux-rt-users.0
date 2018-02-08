@@ -1,81 +1,179 @@
-From: t-v.k@gmx.net
-Subject: Re: Building the Raspberry Pi kernel with RT PREEMPT
-Date: Thu, 8 Feb 2018 17:19:47 +0100
-Message-ID: <trinity-5732b42c-ae56-43bf-8369-571fb16fd685-1518106786845@3c-app-gmx-bs70>
-References: <e5469b0b-fc0e-95b1-0a80-69a6afab3f12@gmx.net>
- <5367606.tDxCejrBfR@ada>
+From: Arnaldo Carvalho de Melo <acme@kernel.org>
+Subject: Re: [PATCH 11/20 v2] tracing: Add symbol type to function based
+ events
+Date: Thu, 8 Feb 2018 13:22:50 -0300
+Message-ID: <20180208162250.GA5132@kernel.org>
+References: <20180207202402.253089656@goodmis.org>
+ <20180207202816.348135328@goodmis.org>
+ <20180208112031.GB30958@krava>
+ <20180208105900.71a8ee8c@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
-Cc: "Alexander Dahl" <ada@thorsis.com>,
-        "Mirza Krak" <mirza.krak@gmail.com>
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mout.gmx.net ([212.227.15.19]:48537 "EHLO mout.gmx.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751848AbeBHQTu (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 8 Feb 2018 11:19:50 -0500
-In-Reply-To: <5367606.tDxCejrBfR@ada>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Jiri Olsa <jolsa@redhat.com>, linux-kernel@vger.kernel.org,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Ingo Molnar <mingo@kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        linux-rt-users@vger.kernel.org, linux-trace-users@vger.kernel.org,
+        Clark Williams <williams@redhat.com>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Juri Lelli <juri.lelli@redhat.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20180208105900.71a8ee8c@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Thanks for the answers!
+Em Thu, Feb 08, 2018 at 10:59:00AM -0500, Steven Rostedt escreveu:
+> On Thu, 8 Feb 2018 12:20:31 +0100
+> Jiri Olsa <jolsa@redhat.com> wrote:
+> 
+> > > +Symbols (function names)
+> > > +========================
+> > > +
+> > > +To display kallsyms "%pS" type of output, use the special type "symbol".
+> > > +
+> > > +Again, using gdb to find the offset of the "func" field of struct work_struct
+> > > +
+> > > +(gdb) printf "%d\n", &((struct work_struct *)0)->func
+> > > +24  
+> > 
+> > you could also use Arnaldo's pahole for this, seems like less typing:
+> > 
+> >   $ pahole ./vmlinux -C work_struct
+> >   die__process_function: tag not supported (INVALID)!
+> >   struct work_struct {
+> >           atomic_long_t              data;                 /*     0     8 */
+> >           struct list_head           entry;                /*     8    16 */
+> >           work_func_t                func;                 /*    24     8 */
+> > 
+> > it's in 'dwarves' package
+> 
+> Nice, I'll have to document that:
+> 
+>  $ pahole ./vmlinux -C net_device |grep perm
+>         unsigned char              perm_addr[32];        /*   558    32 */
 
-I'll need a DE in the end so I'll probably have to stick with the Raspberry Pi kernel. 
-Also, I would like to have a very recent kernel. I'm using a Raspberry Pi 3 Model B btw.
-I think the issue with my patching was that I applied the patches for '4.14.15-rt13' while the 'rpi-4.14.y' branch from the Raspberry Pi kernel was a bit ahead (~4.14.17).
-I went back in the commit history and found a commit that literally said 'Linux 4.14.15', then I changed my script to check that out instead of 'rpi-4.14.y'. 
-Now the patches apply successfully: https://gitlab.com/T-vK/rpi-rt-kernel/-/jobs/51703707
-But as you can see there is another issue now. 'make bcm2709_defconfig' doesn't work:
-> Can't find default configuration "arch/arm/configs/bcm2709_defconfig"!
+You can also use just one .o file to speed things up instead of using
+vmlinux, where it ill go on parsing stuff till it finds a .o with that
+struct definition, i.e.:
 
-T-vK
- 
- 
-On 07 February 2018 at 08:55, "Alexander Dahl" <ada@thorsis.com> wrote:
+[acme@jouet linux]$ pahole -C work_struct ../build/v4.15.0-rc9+/kernel/sys.o 
+struct work_struct {
+	atomic_long_t              data;                 /*     0     8 */
+	struct list_head           entry;                /*     8    16 */
+	work_func_t                func;                 /*    24     8 */
 
-Am Mittwoch, 7. Februar 2018, 00:02:52 CET schrieb t-v.k@gmx.net:
-> this is my first time on a mailing list. I'm not sure how this works.
+	/* size: 32, cachelines: 1, members: 3 */
+	/* last cacheline: 32 bytes */
+};
 
-You write to the list address, everyone also subscribed gets your mail,
-including you. Some people will set you in Cc additionally.
+One may prefer hexadecimal numbers:
 
-> I'm currently trying to automate the build of a Linux kernel with the RT
-> PREEMPT patch. The kernel that I'm trying to build is in this git
-> repository: https://github.com/raspberrypi/linux (branch rpi-4.14.y)
->
-> It's the official kernel for the Raspberry Pi.
+[acme@jouet linux]$ pahole --hex -C work_struct ../build/v4.15.0-rc9+/kernel/sys.o 
+struct work_struct {
+	atomic_long_t              data;                 /*     0   0x8 */
+	struct list_head           entry;                /*   0x8  0x10 */
+	work_func_t                func;                 /*  0x18   0x8 */
 
-Yes, and it has some patches on top of the upstream vanilla kernel, IIRC
-around 200 the last time a looked at it.
+	/* size: 32, cachelines: 1, members: 3 */
+	/* last cacheline: 32 bytes */
+};
+[acme@jouet linux]$
 
-> But at the moment I am stuck. There are two problems. When I apply the
-> patch "patch-4.14.15-rt13.patch.gz", I get errors like:
->
-> Hunk #9 FAILED at 795.
-> ...
-> 1 out of 20 hunks FAILED -- saving rejects to file kernel/softirq.c.rej
-> ...
->
-> and as a result of this it exits with code 1.
->
-> Here is the full build process output:
-> https://gitlab.com/T-vK/rpi-rt-kernel/-/jobs/51343435[https://gitlab.com/T-vK/rpi-rt-kernel/-/jobs/51343435]
->
-> When I just ignore it and continue I get to the point where I can run
-> "make zImage", which then fails with this:
+Or even expand everything and get offsets from that work_struct to
+inside the list_head or other embedded types:
 
-This makes no sense, the patch must apply. You don't want to build anything
-with a half applied patch.
+[acme@jouet linux]$ pahole -E --hex -C work_struct ../build/v4.15.0-rc9+/kernel/sys.o 
+struct work_struct {
+	/* typedef atomic_long_t -> atomic64_t */ struct {
+		long int           counter;                                              /*     0   0x8 */
+	} data; /*     0   0x8 */
+	struct list_head {
+		struct list_head * next;                                                 /*   0x8   0x8 */
+		struct list_head * prev;                                                 /*  0x10   0x8 */
+	} entry; /*   0x8  0x10 */
+	/* typedef work_func_t */ void                       (*func)(struct work_struct *); /*  0x18   0x8 */
 
-> Can anyone help me with these issues?
+	/* size: 32, cachelines: 1, members: 3 */
+	/* last cacheline: 32 bytes */
+};
+[acme@jouet linux]$ 
 
-If you're on v4.14 anyway, I would recommend to run a vanilla kernel and put
-the RT patch(es) on top. At least for a system without graphics, this should
-work. (I had a RPi 1B running with vanilla v4.12 built with ptxdist and the
-DistroKit BSP some time ago, v4.14 and v4.15 also run fine headless. Should
-also work for RPi 2.)
+A long time ago I put the expansion of task_struct somewhere... yeah,
+almost a decade ago, 2008, but it was not -E, was -p (i.e. expand
+pointer types):
 
-HTH & Greets
-Alex
- 
+http://vger.kernel.org/~acme/vmlinux-expand_pointers-task_struct.txt
+
+	/* size: 1680, cachelines: 27, members: 141 */
+	/* sum members: 1641, holes: 10, sum holes: 39 */
+	/* bit holes: 1, sum bit holes: 31 bits */
+	/* paddings: 1, sum paddings: 4 */
+	/* last cacheline: 16 bytes */
+};
+
+Anyway, now we have:
+
+[acme@jouet linux]$ pahole -C task_struct ../build/v4.15.0-rc9+/kernel/sys.o  | tail -6
+	struct thread_struct       thread;               /*  6592  4352 */
+
+	/* size: 10944, cachelines: 171, members: 4 */
+	/* sum members: 10896, holes: 1, sum holes: 48 */
+	/* paddings: 1, sum paddings: 48 */
+};
+[acme@jouet linux]$
+
+We have way more memory and features now :-)
+
+The number of members is because now we have that randomize_struct stuff
+that creates an unamed struct inside task_struct, so we have:
+
+struct task_struct {
+        struct thread_info         thread_info;          /*     0     8 */
+        volatile long int          state;                /*     8     8 */
+
+        /* XXX 48 bytes hole, try to pack */
+
+        /* --- cacheline 1 boundary (64 bytes) --- */
+        struct {
+                void *             stack;                /*    64     8 */
+                atomic_t           usage;                /*    72     4 */
+<SNIP>
+                int                pagefault_disabled;   /*  6504     4 */
+
+                /* XXX 4 bytes hole, try to pack */
+
+                struct task_struct * oom_reaper_list;    /*  6512     8 */
+                struct vm_struct * stack_vm_area;        /*  6520     8 */
+                /* --- cacheline 102 boundary (6528 bytes) --- */
+                atomic_t           stack_refcount;       /*  6528     4 */
+
+                /* XXX 4 bytes hole, try to pack */
+
+                void *             security;             /*  6536     8 */
+        };                                               /*    64  6528 */
+
+        /* XXX last struct has 48 bytes of padding */
+
+        /* --- cacheline 103 boundary (6592 bytes) --- */
+        struct thread_struct       thread;               /*  6592  4352 */
+
+        /* size: 10944, cachelines: 171, members: 4 */
+        /* sum members: 10896, holes: 1, sum holes: 48 */
+        /* paddings: 1, sum paddings: 48 */
+};
+
+So indeed, 'just' 4 members.
+
+I guess I'll have to add some new mode where one can ask for unnamed
+structs to be removed for the sake of --reorganize and the summary
+information at the end, erm...
+
+Anyway, digressed too much :-)
+
+- Arnaldo
