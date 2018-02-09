@@ -1,13 +1,12 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 13/18] tracing: Add array type to function based events
-Date: Thu, 8 Feb 2018 20:54:31 -0500
-Message-ID: <20180208205431.4c0ef9eb@vmware.local.home>
+From: Namhyung Kim <namhyung@kernel.org>
+Subject: Re: [PATCH 15/18] tracing: Add string type for dynamic strings in
+ function based events
+Date: Fri, 9 Feb 2018 12:15:47 +0900
+Message-ID: <20180209031547.GD28206@sejong>
 References: <20180202230458.840252014@goodmis.org>
-        <20180202231018.977452228@goodmis.org>
-        <20180209011745.GC28206@sejong>
+ <20180202231019.285051395@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
 Cc: linux-kernel@vger.kernel.org,
         Linus Torvalds <torvalds@linux-foundation.org>,
         Ingo Molnar <mingo@kernel.org>,
@@ -26,99 +25,165 @@ Cc: linux-kernel@vger.kernel.org,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
         Alexei Starovoitov <alexei.starovoitov@gmail.com>,
         kernel-team@lge.com
-To: Namhyung Kim <namhyung@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180209011745.GC28206@sejong>
-Sender: linux-kernel-owner@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-trace-users-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20180202231019.285051395@goodmis.org>
+Sender: linux-trace-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 9 Feb 2018 10:17:45 +0900
-Namhyung Kim <namhyung@kernel.org> wrote:
-
-> > + # echo 1 > events/functions/ip_rcv/enable
-> > + # cat trace
-> > +    <idle>-0     [003] ..s3   219.813582: __netif_receive_skb_core->ip_rcv(skb=ffff880118195e00, perm_addr=b4,b5,2f,ce,18,65)
-> > +    <idle>-0     [003] ..s3   219.813595: __netif_receive_skb_core->ip_rcv(skb=ffff880118195e00, perm_addr=b4,b5,2f,ce,18,65)
-> > +    <idle>-0     [003] ..s3   220.115053: __netif_receive_skb_core->ip_rcv(skb=ffff880118195c00, perm_addr=b4,b5,2f,ce,18,65)
-> > +    <idle>-0     [003] ..s3   220.115293: __netif_receive_skb_core->ip_rcv(skb=ffff880118195c00, perm_addr=b4,b5,2f,ce,18,65)  
+On Fri, Feb 02, 2018 at 06:05:13PM -0500, Steven Rostedt wrote:
+> From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 > 
-> What about adding braces to indicate array type like below?
+> Add a "string" type that will create a dynamic length string for the
+> event, this is the same as the __string() field in normal TRACE_EVENTS.
 > 
-> ... ip_rcv(skb=ffff880118195c00, perm_addr={b4,b5,2f,ce,18,65})
+> [ missing 'static' found by Fengguang Wu's kbuild test robot ]
+> Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+> ---
+>  Documentation/trace/function-based-events.rst |  19 ++-
+>  kernel/trace/trace_event_ftrace.c             | 183 +++++++++++++++++++++++---
+>  2 files changed, 181 insertions(+), 21 deletions(-)
 > 
+> diff --git a/Documentation/trace/function-based-events.rst b/Documentation/trace/function-based-events.rst
+> index 99ae77cd59e6..6c643ea749e7 100644
+> --- a/Documentation/trace/function-based-events.rst
+> +++ b/Documentation/trace/function-based-events.rst
+> @@ -99,7 +99,7 @@ as follows:
+>           's8' | 's16' | 's32' | 's64' |
+>           'x8' | 'x16' | 'x32' | 'x64' |
+>           'char' | 'short' | 'int' | 'long' | 'size_t' |
+> -	 'symbol'
+> +	 'symbol' | 'string'
+>  
+>   FIELD := <name> | <name> INDEX | <name> OFFSET | <name> OFFSET INDEX
+>  
+> @@ -342,3 +342,20 @@ the format "%s". If a nul is found, the output will stop. Use another type
+>        bash-1470  [003] ...2   980.678715: path_openat->link_path_walk(name=/lib64/ld-linux-x86-64.so.2)
+>        bash-1470  [003] ...2   980.678721: path_openat->link_path_walk(name=ld-2.24.so)
+>        bash-1470  [003] ...2   980.678978: path_lookupat->link_path_walk(name=/etc/ld.so.preload)
+> +
+> +
+> +Dynamic strings
+> +===============
+> +
+> +Static strings are fine, but they can waste a lot of memory in the ring buffer.
+> +The above allocated 64 bytes for a character array, but most of the output was
+> +less than 20 characters. Not wanting to truncate strings or waste space on
+> +the ring buffer, the dynamic string can help.
+> +
+> +Use the "string" type for strings that have a large range in size. The max
+> +size that will be recorded is 512 bytes. If a string is larger than that, then
+> +it will be truncated.
+> +
+> + # echo 'link_path_walk(string name)' > function_events
+> +
+> +Gives the same result as above, but does not waste buffer space.
+> diff --git a/kernel/trace/trace_event_ftrace.c b/kernel/trace/trace_event_ftrace.c
+> index dd24b840329d..273c5838a8e2 100644
+> --- a/kernel/trace/trace_event_ftrace.c
+> +++ b/kernel/trace/trace_event_ftrace.c
+> @@ -39,6 +39,7 @@ struct func_event {
+>  	struct func_arg			*last_arg;
+>  	int				arg_cnt;
+>  	int				arg_offset;
+> +	int				has_strings;
+>  };
+>  
+>  struct func_file {
+> @@ -83,6 +84,8 @@ typedef u32 x32;
+>  typedef u16 x16;
+>  typedef u8 x8;
+>  typedef void * symbol;
+> +/* 2 byte offset, 2 byte length */
+> +typedef u32 string;
+>  
+>  #define TYPE_TUPLE(type)			\
+>  	{ #type, sizeof(type), is_signed_type(type) }
+> @@ -105,7 +108,8 @@ typedef void * symbol;
+>  	TYPE_TUPLE(u8),				\
+>  	TYPE_TUPLE(s8),				\
+>  	TYPE_TUPLE(x8),				\
+> -	TYPE_TUPLE(symbol)
+> +	TYPE_TUPLE(symbol),			\
+> +	TYPE_TUPLE(string)
+>  
+>  static struct func_type {
+>  	char		*name;
+> @@ -124,6 +128,16 @@ enum {
+>  	FUNC_TYPE_MAX
+>  };
+>  
+> +#define MAX_STR		512
+> +
+> +/* Two contexts, normal and NMI, hence the " * 2" */
+> +struct func_string {
+> +	char		buf[MAX_STR * 2];
+> +};
+> +
+> +static struct func_string __percpu *str_buffer;
+> +static int nr_strings;
 
-That's a nice idea, I'll add it.
+What protects it?
 
-> > +	case FUNC_STATE_ARRAY:
-> >  	case FUNC_STATE_BRACKET:
-> > -		WARN_ON(!fevent->last_arg);
-> > +		if (WARN_ON(!fevent->last_arg))
-> > +			break;
-> >  		ret = kstrtoul(token, 0, &val);
-> >  		if (ret)
-> >  			break;
-> > -		val *= fevent->last_arg->size;
-> > -		fevent->last_arg->indirect = val ^ INDIRECT_FLAG;
-> > -		return FUNC_STATE_INDIRECT;
-> > +		if (state == FUNC_STATE_BRACKET) {
-> > +			val *= fevent->last_arg->size;
-> > +			fevent->last_arg->indirect = val ^ INDIRECT_FLAG;
-> > +			return FUNC_STATE_INDIRECT;
-> > +		}
-> > +		if (val <= 0)
-> > +			break;  
-> 
-> The val is unsigned long type.
+Thanks,
+Namhyung
 
-I probably should make it a cap it for the array, as arrays that are
-too big will simply fail to allocate on the ring buffer.
 
-But it should only check for zero.
-
-> 
-> 
-> > +		fevent->last_arg->array = val;
-> > +		type = kasprintf(GFP_KERNEL, "%s[%d]", fevent->last_arg->type, (unsigned)val);  
-> 
-> s/%d/%lu/  and no need to cast it.
-
-Sure.
-
-> 
-> 
-> > +		if (!type)
-> > +			break;
-> > +		kfree(fevent->last_arg->type);
-> > +		fevent->last_arg->type = type;
-> > +		/*
-> > +		 * arg_offset has already been updated once by size.
-> > +		 * This update needs to account for that (hence the "- 1").
-> > +		 */
-> > +		fevent->arg_offset += fevent->last_arg->size * (fevent->last_arg->array - 1);
-> > +		return FUNC_STATE_ARRAY_SIZE;
-> > +
-> > +	case FUNC_STATE_ARRAY_SIZE:
-> > +		if (token[0] != ']')
-> > +			break;
-> > +		return FUNC_STATE_ARRAY_END;
-> >  
-> >  	case FUNC_STATE_INDIRECT:
-> >  		if (token[0] != ']')
-> > @@ -453,6 +485,10 @@ static long long get_arg(struct func_arg *arg, unsigned long val)
-> >  
-> >  	val = val + (arg->indirect ^ INDIRECT_FLAG);
-> >  
-> > +	/* Arrays do their own indirect reads */
-> > +	if (arg->array)
-> > +		return val;
-> > +  
-> 
-> Not sure about this.  After this change it would make 'x64[1] foo' and
-> 'x64[1] foo[0]' equivalent, right?
-
-Yeah, I may need to re-think this. I originally had the "array"
-use the "indirect" code, but I'm thinking that isn't necessary.
-
-Thanks for the input.
-
--- Steve
+> +
+>  /**
+>   * arch_get_func_args - retrieve function arguments via pt_regs
+>   * @regs: The registers at the moment the function is called
+> @@ -163,6 +177,23 @@ int __weak arch_get_func_args(struct pt_regs *regs,
+>  	return 0;
+>  }
+>  
+> +static void free_arg(struct func_arg *arg)
+> +{
+> +	list_del(&arg->list);
+> +	if (arg->func_type == FUNC_TYPE_string) {
+> +		nr_strings--;
+> +		if (WARN_ON(nr_strings < 0))
+> +			nr_strings = 0;
+> +		if (!nr_strings) {
+> +			free_percpu(str_buffer);
+> +			str_buffer = NULL;
+> +		}
+> +	}
+> +	kfree(arg->name);
+> +	kfree(arg->type);
+> +	kfree(arg);
+> +}
+> +
+>  static void free_func_event(struct func_event *func_event)
+>  {
+>  	struct func_arg *arg, *n;
+> @@ -171,10 +202,7 @@ static void free_func_event(struct func_event *func_event)
+>  		return;
+>  
+>  	list_for_each_entry_safe(arg, n, &func_event->args, list) {
+> -		list_del(&arg->list);
+> -		kfree(arg->name);
+> -		kfree(arg->type);
+> -		kfree(arg);
+> +		free_arg(arg);
+>  	}
+>  	ftrace_free_filter(&func_event->ops);
+>  	kfree(func_event->call.print_fmt);
+> @@ -255,6 +283,17 @@ static int add_arg(struct func_event *fevent, int ftype, int unsign)
+>  	list_add_tail(&arg->list, &fevent->args);
+>  	fevent->last_arg = arg;
+>  
+> +	if (ftype == FUNC_TYPE_string) {
+> +		fevent->has_strings++;
+> +		nr_strings++;
+> +		if (nr_strings == 1) {
+> +			str_buffer = alloc_percpu(struct func_string);
+> +			if (!str_buffer) {
+> +				free_arg(arg);
+> +				return -ENOMEM;
+> +			}
+> +		}
+> +	}
+>  	return 0;
+>  }
