@@ -1,14 +1,11 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 12/18] tracing: Add accessing direct address from
- function based events
-Date: Thu, 8 Feb 2018 20:10:03 -0500
-Message-ID: <20180208201003.62ad9526@gandalf.local.home>
+From: Namhyung Kim <namhyung@kernel.org>
+Subject: Re: [PATCH 13/18] tracing: Add array type to function based events
+Date: Fri, 9 Feb 2018 10:17:45 +0900
+Message-ID: <20180209011745.GC28206@sejong>
 References: <20180202230458.840252014@goodmis.org>
-        <20180202231018.828677654@goodmis.org>
-        <20180209003436.GB28206@sejong>
+ <20180202231018.977452228@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
 Cc: linux-kernel@vger.kernel.org,
         Linus Torvalds <torvalds@linux-foundation.org>,
         Ingo Molnar <mingo@kernel.org>,
@@ -27,67 +24,194 @@ Cc: linux-kernel@vger.kernel.org,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
         Alexei Starovoitov <alexei.starovoitov@gmail.com>,
         kernel-team@lge.com
-To: Namhyung Kim <namhyung@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180209003436.GB28206@sejong>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from LGEAMRELO13.lge.com ([156.147.23.53]:34803 "EHLO
+        lgeamrelo13.lge.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752501AbeBIBRt (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 8 Feb 2018 20:17:49 -0500
+Content-Disposition: inline
+In-Reply-To: <20180202231018.977452228@goodmis.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 9 Feb 2018 09:34:36 +0900
-Namhyung Kim <namhyung@kernel.org> wrote:
-
-> > +Direct memory access
-> > +====================
-> > +
-> > +Function arguments are not the only thing that can be recorded from a function
-> > +based event. Memory addresses can also be examined. If there's a global variable
-> > +that you want to monitor via an interrupt, you can put in the address directly.
-> > +
-> > +  # grep total_forks /proc/kallsyms
-> > +ffffffff82354c18 B total_forks
-> > +
-> > +  # echo 'do_IRQ(int total_forks=0xffffffff82354c18)' > function_events  
+On Fri, Feb 02, 2018 at 06:05:11PM -0500, Steven Rostedt wrote:
+> From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 > 
-> Couldn't we use the symbol name directly?  Maybe it needs a syntax to
-> indicate global variable.  Like this?
+> Add syntex to allow the user to create an array type. Brackets after the
+> type field will denote that this is an array type. For example:
 > 
->   # echo 'do_IRQ(int $total_forks)' > function_events
-
-Or perhaps use "@"?
-
-But that's a good idea and not hard to implement.
-
-
-> >  	case FUNC_STATE_TYPE:
-> > -		if (!isalpha(token[0]) || token[0] == '_')
-> > -			break;
-> >  		if (WARN_ON(!fevent->last_arg))
-> >  			break;
-> > -		fevent->last_arg->name = kstrdup(token, GFP_KERNEL);
-> > -		if (!fevent->last_arg->name)
-> > +		if (update_arg_name(fevent, token) < 0)
-> > +			break;
-> > +		if (strncmp(token, "0x", 2) == 0)
-> > +			goto equal;  
+>  # echo 'SyS_open(x8[32] buf, x32 flags, x32 mode)' > function_events
 > 
-> Not sure it's needed here.  IIUC it should see '=' first and you used
-> the same token with arg->name.  Hmm.. do you want support accessing to
-> an unnamed address directly like below?
+> Will make the first argument of the sys_open function call an array of
+> 32 bytes.
 > 
->   # echo 'do_IRQ(int 0xffffffff82354c18)' > function_events 
-
-Yes this works, and was the original way. Someone at DevConf.cz
-(Arnaldo maybe, can't remember) recommended giving a name and then we
-came up with the "=" sign to use.
-
+> The array type can also be used in conjunction with the indirect offset
+> brackets as well. For example to get the interrupt stack of regs in do_IRQ()
+> for x86_64.
 > 
-> > +		if (!isalpha(token[0]) && token[0] != '_')
-> >  			break;  
+>  # echo 'do_IRQ(x64[5] regs[16])' > function_events
 > 
-> Maybe you want to check it before the update_arg_name().
+> Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+> ---
+>  Documentation/trace/function-based-events.rst |  22 +++-
+>  kernel/trace/trace_event_ftrace.c             | 157 +++++++++++++++++++++-----
+>  2 files changed, 151 insertions(+), 28 deletions(-)
+> 
+> diff --git a/Documentation/trace/function-based-events.rst b/Documentation/trace/function-based-events.rst
+> index b0e6725f3032..4a8a6fb16a0a 100644
+> --- a/Documentation/trace/function-based-events.rst
+> +++ b/Documentation/trace/function-based-events.rst
+> @@ -93,7 +93,7 @@ as follows:
+>  
+>   ARG := TYPE FIELD | TYPE <name> '=' ADDR | TYPE ADDR | ARG '|' ARG
+>  
+> - TYPE := ATOM | 'unsigned' ATOM
+> + TYPE := ATOM | ATOM '[' <number> ']' | 'unsigned' TYPE
+>  
+>   ATOM := 'u8' | 'u16' | 'u32' | 'u64' |
+>           's8' | 's16' | 's32' | 's64' |
+> @@ -305,3 +305,23 @@ Is the same as
+>      <idle>-0     [003] d..3   655.823498: ret_from_intr->do_IRQ(total_forks=1504, regs=tick_nohz_idle_enter+0x4c/0x50)
+>      <idle>-0     [003] d..3   655.954096: ret_from_intr->do_IRQ(total_forks=1504, regs=cpuidle_enter_state+0xb1/0x330)
+>  
+> +
+> +Array types
+> +===========
+> +
+> +If there's a case where you want to see an array of a type, then you can
+> +declare a type as an array by adding '[' number ']' after the type.
+> +
+> +To get the net_device perm_addr, from the dev parameter.
+> +
+> + (gdb) printf "%d\n", &((struct net_device *)0)->perm_addr
+> +558
+> +
+> + # echo 'ip_rcv(x64 skb, x8[6] perm_addr+558)' > function_events
+> +
+> + # echo 1 > events/functions/ip_rcv/enable
+> + # cat trace
+> +    <idle>-0     [003] ..s3   219.813582: __netif_receive_skb_core->ip_rcv(skb=ffff880118195e00, perm_addr=b4,b5,2f,ce,18,65)
+> +    <idle>-0     [003] ..s3   219.813595: __netif_receive_skb_core->ip_rcv(skb=ffff880118195e00, perm_addr=b4,b5,2f,ce,18,65)
+> +    <idle>-0     [003] ..s3   220.115053: __netif_receive_skb_core->ip_rcv(skb=ffff880118195c00, perm_addr=b4,b5,2f,ce,18,65)
+> +    <idle>-0     [003] ..s3   220.115293: __netif_receive_skb_core->ip_rcv(skb=ffff880118195c00, perm_addr=b4,b5,2f,ce,18,65)
 
-Hmm, perhaps, I guess I should see what the error messages shows.
+What about adding braces to indicate array type like below?
 
-Thanks!
+... ip_rcv(skb=ffff880118195c00, perm_addr={b4,b5,2f,ce,18,65})
 
--- Steve
+
+> diff --git a/kernel/trace/trace_event_ftrace.c b/kernel/trace/trace_event_ftrace.c
+> index 206114f192be..64e2d7dcfd18 100644
+> --- a/kernel/trace/trace_event_ftrace.c
+> +++ b/kernel/trace/trace_event_ftrace.c
+> @@ -20,6 +20,7 @@ struct func_arg {
+>  	char				*name;
+>  	long				indirect;
+>  	long				index;
+> +	short				array;
+>  	short				offset;
+>  	short				size;
+>  	s8				arg;
+> @@ -68,6 +69,9 @@ enum func_states {
+>  	FUNC_STATE_PIPE,
+>  	FUNC_STATE_PLUS,
+>  	FUNC_STATE_TYPE,
+> +	FUNC_STATE_ARRAY,
+> +	FUNC_STATE_ARRAY_SIZE,
+> +	FUNC_STATE_ARRAY_END,
+>  	FUNC_STATE_VAR,
+>  	FUNC_STATE_COMMA,
+>  	FUNC_STATE_END,
+> @@ -289,6 +293,7 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+>  	static bool update_arg;
+>  	static int unsign;
+>  	unsigned long val;
+> +	char *type;
+>  	int ret;
+>  	int i;
+>  
+> @@ -339,6 +344,10 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+>  		return FUNC_STATE_TYPE;
+>  
+>  	case FUNC_STATE_TYPE:
+> +		if (token[0] == '[')
+> +			return FUNC_STATE_ARRAY;
+> +		/* Fall through */
+> +	case FUNC_STATE_ARRAY_END:
+>  		if (WARN_ON(!fevent->last_arg))
+>  			break;
+>  		if (update_arg_name(fevent, token) < 0)
+> @@ -350,14 +359,37 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+>  		update_arg = true;
+>  		return FUNC_STATE_VAR;
+>  
+> +	case FUNC_STATE_ARRAY:
+>  	case FUNC_STATE_BRACKET:
+> -		WARN_ON(!fevent->last_arg);
+> +		if (WARN_ON(!fevent->last_arg))
+> +			break;
+>  		ret = kstrtoul(token, 0, &val);
+>  		if (ret)
+>  			break;
+> -		val *= fevent->last_arg->size;
+> -		fevent->last_arg->indirect = val ^ INDIRECT_FLAG;
+> -		return FUNC_STATE_INDIRECT;
+> +		if (state == FUNC_STATE_BRACKET) {
+> +			val *= fevent->last_arg->size;
+> +			fevent->last_arg->indirect = val ^ INDIRECT_FLAG;
+> +			return FUNC_STATE_INDIRECT;
+> +		}
+> +		if (val <= 0)
+> +			break;
+
+The val is unsigned long type.
+
+
+> +		fevent->last_arg->array = val;
+> +		type = kasprintf(GFP_KERNEL, "%s[%d]", fevent->last_arg->type, (unsigned)val);
+
+s/%d/%lu/  and no need to cast it.
+
+
+> +		if (!type)
+> +			break;
+> +		kfree(fevent->last_arg->type);
+> +		fevent->last_arg->type = type;
+> +		/*
+> +		 * arg_offset has already been updated once by size.
+> +		 * This update needs to account for that (hence the "- 1").
+> +		 */
+> +		fevent->arg_offset += fevent->last_arg->size * (fevent->last_arg->array - 1);
+> +		return FUNC_STATE_ARRAY_SIZE;
+> +
+> +	case FUNC_STATE_ARRAY_SIZE:
+> +		if (token[0] != ']')
+> +			break;
+> +		return FUNC_STATE_ARRAY_END;
+>  
+>  	case FUNC_STATE_INDIRECT:
+>  		if (token[0] != ']')
+> @@ -453,6 +485,10 @@ static long long get_arg(struct func_arg *arg, unsigned long val)
+>  
+>  	val = val + (arg->indirect ^ INDIRECT_FLAG);
+>  
+> +	/* Arrays do their own indirect reads */
+> +	if (arg->array)
+> +		return val;
+> +
+
+Not sure about this.  After this change it would make 'x64[1] foo' and
+'x64[1] foo[0]' equivalent, right?
+
+Thanks,
+Namhyung
+
+
+>  	ret = probe_kernel_read(buf, (void *)val, arg->size);
+>  	if (ret)
+>  		return 0;
+> @@ -474,6 +510,21 @@ static long long get_arg(struct func_arg *arg, unsigned long val)
+>  	return val;
+>  }
