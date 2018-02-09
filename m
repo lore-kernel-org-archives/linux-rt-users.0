@@ -1,11 +1,12 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH 17/18] tracing: Add indirect to indirect access for
  function based events
-Date: Fri, 9 Feb 2018 10:47:58 -0500
-Message-ID: <20180209104758.093d31ad@gandalf.local.home>
+Date: Fri, 9 Feb 2018 12:18:40 -0500
+Message-ID: <20180209121840.5f96d400@gandalf.local.home>
 References: <20180202230458.840252014@goodmis.org>
         <20180202231019.582037880@goodmis.org>
         <20180209051301.GE28206@sejong>
+        <20180209104758.093d31ad@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -29,104 +30,43 @@ Cc: linux-kernel@vger.kernel.org,
         kernel-team@lge.com
 To: Namhyung Kim <namhyung@kernel.org>
 Return-path: <linux-trace-users-owner@vger.kernel.org>
-In-Reply-To: <20180209051301.GE28206@sejong>
+In-Reply-To: <20180209104758.093d31ad@gandalf.local.home>
 Sender: linux-trace-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 9 Feb 2018 14:13:01 +0900
-Namhyung Kim <namhyung@kernel.org> wrote:
+On Fri, 9 Feb 2018 10:47:58 -0500
+Steven Rostedt <rostedt@goodmis.org> wrote:
 
-> On Fri, Feb 02, 2018 at 06:05:15PM -0500, Steven Rostedt wrote:
-> > From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
-> > 
-> > Allow the function based events to retrieve not only the parameters offsets,
-> > but also get data from a pointer within a parameter structure. Something
-> > like:
-> > 
-> >  # echo 'ip_rcv(string skdev+16[0][0] | x8[6] skperm+16[0]+558)' > function_events
-> > 
-> >  # echo 1 > events/functions/ip_rcv/enable
-> >  # cat trace
-> >     <idle>-0     [003] ..s3   310.626391: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
-> >     <idle>-0     [003] ..s3   310.626400: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
-> >     <idle>-0     [003] ..s3   312.183775: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
-> >     <idle>-0     [003] ..s3   312.184329: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
-> >     <idle>-0     [003] ..s3   312.303895: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
-> >     <idle>-0     [003] ..s3   312.304610: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
-> >     <idle>-0     [003] ..s3   312.471980: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
-> >     <idle>-0     [003] ..s3   312.472908: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
-> >     <idle>-0     [003] ..s3   313.135804: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
-> > 
-> > That is, we retrieved the net_device of the sk_buff and displayed its name
-> > and perm_addr info.
-> > 
-> >   sk->dev->name, sk->dev->perm_addr
-> > 
-> > Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-> > ---  
+> Good catch!
 > 
-> [SNIP]
-> > +static unsigned long process_redirects(struct func_arg *arg, unsigned long val,
-> > +				       char *buf)
-> > +{
-> > +	struct func_arg_redirect *redirect;
-> > +	int ret;
-> > +
-> > +	if (arg->indirect) {
-> > +		ret = probe_kernel_read(buf, (void *)val, sizeof(long));
-> > +		if (ret)
-> > +			return 0;
-> > +		val = *(unsigned long *)buf;
-> > +	}
-> > +
-> > +	list_for_each_entry(redirect, &arg->redirects, list) {
-> > +		val += redirect->index;
-> > +		if (redirect->indirect) {
-> > +			val += (redirect->indirect ^ INDIRECT_FLAG);
-> > +			ret = probe_kernel_read(buf, (void *)val, sizeof(long));
-> > +			if (ret)
-> > +				return 0;
-> > +		}
-> > +	}
-> > +	return val;
-> > +}
-> > +
-> > +static long long __get_arg(struct func_arg *arg, unsigned long long val)
-> >  {
-> >  	char buf[8];
-> >  	int ret;
-> >  
-> >  	val += arg->index;
-> >  
-> > -	if (!arg->indirect)
-> > -		return val;
-> > +	if (arg->indirect)
-> > +		val += (arg->indirect ^ INDIRECT_FLAG);
-> >  
-> > -	val = val + (arg->indirect ^ INDIRECT_FLAG);
-> > +	if (!list_empty(&arg->redirects))
-> > +		val = process_redirects(arg, val, buf);
-> > +
-> > +	if (!val)
-> > +		return 0;
-> >  
-> >  	/* Arrays and strings do their own indirect reads */
-> > -	if (arg->array || arg->func_type == FUNC_TYPE_string)
-> > +	if (!arg->indirect || arg->array || arg->func_type == FUNC_TYPE_string)
-> >  		return val;  
+> It should have been:
 > 
-> It seems the indirect is processed twice with redirects.  Consider
-> "x64 foo[0]+4", the process_redirects() will call probe_kernel_read()
-> and then here again.
-> 
+> 		return process_redirects(arg, val, buf);
 
+Although I need to add this :-p
 
-Good catch!
+diff --git a/kernel/trace/trace_event_ftrace.c b/kernel/trace/trace_event_ftrace.c
+index 673336e352be..2690d4e46322 100644
+--- a/kernel/trace/trace_event_ftrace.c
++++ b/kernel/trace/trace_event_ftrace.c
+@@ -562,7 +564,7 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+                ret = add_arg_redirect(fevent->last_arg, val, 0);
+                if (ret)
+                        break;
+-               return FUNC_STATE_VAR;
++               return FUNC_STATE_BRACKET_END;
+ 
+        case FUNC_STATE_REDIRECT_BRACKET:
+                if (WARN_ON(!fevent->last_arg))
+@@ -656,6 +658,7 @@ static unsigned long process_redirects(struct func_arg *arg, unsigned long val,
+                        ret = probe_kernel_read(buf, (void *)val, sizeof(long));
+                        if (ret)
+                                return 0;
++                       val = *(unsigned long *)buf;
+                }
+        }
+        return val;
 
-It should have been:
-
-		return process_redirects(arg, val, buf);
-
-Thanks!
+Because it wasn't parsing properly, and then not getting the redirect.
 
 -- Steve
