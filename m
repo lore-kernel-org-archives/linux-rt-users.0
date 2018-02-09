@@ -1,154 +1,104 @@
-From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [PATCH 17/18] tracing: Add indirect to indirect access for
- function based events
-Date: Fri, 9 Feb 2018 14:13:01 +0900
-Message-ID: <20180209051301.GE28206@sejong>
-References: <20180202230458.840252014@goodmis.org>
- <20180202231019.582037880@goodmis.org>
+From: Roland Hieber <r.hieber@pengutronix.de>
+Subject: Re: Building the Raspberry Pi kernel with RT PREEMPT
+Date: Fri, 9 Feb 2018 11:35:11 +0100
+Message-ID: <8999c4a9-7389-3335-1175-935cc79d7abe@pengutronix.de>
+References: <e5469b0b-fc0e-95b1-0a80-69a6afab3f12@gmx.net>
+ <5367606.tDxCejrBfR@ada>
+ <trinity-5732b42c-ae56-43bf-8369-571fb16fd685-1518106786845@3c-app-gmx-bs70>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-kernel@vger.kernel.org,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        Ingo Molnar <mingo@kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        linux-rt-users@vger.kernel.org, linux-trace-users@vger.kernel.org,
-        Arnaldo Carvalho de Melo <acme@kernel.org>,
-        Clark Williams <williams@redhat.com>,
-        Jiri Olsa <jolsa@redhat.com>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-        Alexei Starovoitov <alexei.starovoitov@gmail.com>,
-        kernel-team@lge.com
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, Alexander Dahl <ada@thorsis.com>,
+        Mirza Krak <mirza.krak@gmail.com>
+To: t-v.k@gmx.net
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from LGEAMRELO12.lge.com ([156.147.23.52]:60837 "EHLO
-        lgeamrelo12.lge.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1750928AbeBIFND (ORCPT
+Received: from metis.ext.pengutronix.de ([85.220.165.71]:58019 "EHLO
+        metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1750961AbeBIKfO (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 9 Feb 2018 00:13:03 -0500
-Content-Disposition: inline
-In-Reply-To: <20180202231019.582037880@goodmis.org>
+        Fri, 9 Feb 2018 05:35:14 -0500
+In-Reply-To: <trinity-5732b42c-ae56-43bf-8369-571fb16fd685-1518106786845@3c-app-gmx-bs70>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Feb 02, 2018 at 06:05:15PM -0500, Steven Rostedt wrote:
-> From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
-> 
-> Allow the function based events to retrieve not only the parameters offsets,
-> but also get data from a pointer within a parameter structure. Something
-> like:
-> 
->  # echo 'ip_rcv(string skdev+16[0][0] | x8[6] skperm+16[0]+558)' > function_events
-> 
->  # echo 1 > events/functions/ip_rcv/enable
->  # cat trace
->     <idle>-0     [003] ..s3   310.626391: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
->     <idle>-0     [003] ..s3   310.626400: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
->     <idle>-0     [003] ..s3   312.183775: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
->     <idle>-0     [003] ..s3   312.184329: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
->     <idle>-0     [003] ..s3   312.303895: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
->     <idle>-0     [003] ..s3   312.304610: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
->     <idle>-0     [003] ..s3   312.471980: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
->     <idle>-0     [003] ..s3   312.472908: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
->     <idle>-0     [003] ..s3   313.135804: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
-> 
-> That is, we retrieved the net_device of the sk_buff and displayed its name
-> and perm_addr info.
-> 
->   sk->dev->name, sk->dev->perm_addr
-> 
-> Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-> ---
+Hi,
 
-[SNIP]
-> +static unsigned long process_redirects(struct func_arg *arg, unsigned long val,
-> +				       char *buf)
-> +{
-> +	struct func_arg_redirect *redirect;
-> +	int ret;
-> +
-> +	if (arg->indirect) {
-> +		ret = probe_kernel_read(buf, (void *)val, sizeof(long));
-> +		if (ret)
-> +			return 0;
-> +		val = *(unsigned long *)buf;
-> +	}
-> +
-> +	list_for_each_entry(redirect, &arg->redirects, list) {
-> +		val += redirect->index;
-> +		if (redirect->indirect) {
-> +			val += (redirect->indirect ^ INDIRECT_FLAG);
-> +			ret = probe_kernel_read(buf, (void *)val, sizeof(long));
-> +			if (ret)
-> +				return 0;
-> +		}
-> +	}
-> +	return val;
-> +}
-> +
-> +static long long __get_arg(struct func_arg *arg, unsigned long long val)
->  {
->  	char buf[8];
->  	int ret;
->  
->  	val += arg->index;
->  
-> -	if (!arg->indirect)
-> -		return val;
-> +	if (arg->indirect)
-> +		val += (arg->indirect ^ INDIRECT_FLAG);
->  
-> -	val = val + (arg->indirect ^ INDIRECT_FLAG);
-> +	if (!list_empty(&arg->redirects))
-> +		val = process_redirects(arg, val, buf);
-> +
-> +	if (!val)
-> +		return 0;
->  
->  	/* Arrays and strings do their own indirect reads */
-> -	if (arg->array || arg->func_type == FUNC_TYPE_string)
-> +	if (!arg->indirect || arg->array || arg->func_type == FUNC_TYPE_string)
->  		return val;
+the bcm2709_defconfig is an addition of the Raspberry Pi version of the 
+kernel, and is therefore not available in the upstream 4.4.15 commit you 
+checked out.
 
-It seems the indirect is processed twice with redirects.  Consider
-"x64 foo[0]+4", the process_redirects() will call probe_kernel_read()
-and then here again.
+  - Roland
 
-Thanks,
-Namhyung
-
-
->  
->  	ret = probe_kernel_read(buf, (void *)val, arg->size);
-> @@ -1162,6 +1246,7 @@ static void func_event_seq_stop(struct seq_file *m, void *v)
->  static int func_event_seq_show(struct seq_file *m, void *v)
->  {
->  	struct func_event *func_event = v;
-> +	struct func_arg_redirect *redirect;
->  	struct func_arg *arg;
->  	bool comma = false;
->  	int last_arg = 0;
-> @@ -1190,6 +1275,13 @@ static int func_event_seq_show(struct seq_file *m, void *v)
->  				seq_printf(m, "[%ld]",
->  					   (arg->indirect ^ INDIRECT_FLAG) / arg->size);
->  		}
-> +		list_for_each_entry(redirect, &arg->redirects, list) {
-> +			if (redirect->index)
-> +				seq_printf(m, "+%ld", redirect->index);
-> +			if (redirect->indirect)
-> +				seq_printf(m, "[%d]",
-> +					   (redirect->indirect ^ INDIRECT_FLAG) / arg->size);
-> +		}
->  	}
->  	seq_puts(m, ")\n");
->  
-> -- 
-> 2.15.1
+On 08.02.2018 17:19, t-v.k@gmx.net wrote:
+> Thanks for the answers!
 > 
+> I'll need a DE in the end so I'll probably have to stick with the Raspberry Pi kernel.
+> Also, I would like to have a very recent kernel. I'm using a Raspberry Pi 3 Model B btw.
+> I think the issue with my patching was that I applied the patches for '4.14.15-rt13' while the 'rpi-4.14.y' branch from the Raspberry Pi kernel was a bit ahead (~4.14.17).
+> I went back in the commit history and found a commit that literally said 'Linux 4.14.15', then I changed my script to check that out instead of 'rpi-4.14.y'.
+> Now the patches apply successfully: https://gitlab.com/T-vK/rpi-rt-kernel/-/jobs/51703707
+> But as you can see there is another issue now. 'make bcm2709_defconfig' doesn't work:
+>> Can't find default configuration "arch/arm/configs/bcm2709_defconfig"!
 > 
+> T-vK
+>   
+>   
+> On 07 February 2018 at 08:55, "Alexander Dahl" <ada@thorsis.com> wrote:
+> 
+> Am Mittwoch, 7. Februar 2018, 00:02:52 CET schrieb t-v.k@gmx.net:
+>> this is my first time on a mailing list. I'm not sure how this works.
+> 
+> You write to the list address, everyone also subscribed gets your mail,
+> including you. Some people will set you in Cc additionally.
+> 
+>> I'm currently trying to automate the build of a Linux kernel with the RT
+>> PREEMPT patch. The kernel that I'm trying to build is in this git
+>> repository: https://github.com/raspberrypi/linux (branch rpi-4.14.y)
+>>
+>> It's the official kernel for the Raspberry Pi.
+> 
+> Yes, and it has some patches on top of the upstream vanilla kernel, IIRC
+> around 200 the last time a looked at it.
+> 
+>> But at the moment I am stuck. There are two problems. When I apply the
+>> patch "patch-4.14.15-rt13.patch.gz", I get errors like:
+>>
+>> Hunk #9 FAILED at 795.
+>> ...
+>> 1 out of 20 hunks FAILED -- saving rejects to file kernel/softirq.c.rej
+>> ...
+>>
+>> and as a result of this it exits with code 1.
+>>
+>> Here is the full build process output:
+>> https://gitlab.com/T-vK/rpi-rt-kernel/-/jobs/51343435[https://gitlab.com/T-vK/rpi-rt-kernel/-/jobs/51343435]
+>>
+>> When I just ignore it and continue I get to the point where I can run
+>> "make zImage", which then fails with this:
+> 
+> This makes no sense, the patch must apply. You don't want to build anything
+> with a half applied patch.
+> 
+>> Can anyone help me with these issues?
+> 
+> If you're on v4.14 anyway, I would recommend to run a vanilla kernel and put
+> the RT patch(es) on top. At least for a system without graphics, this should
+> work. (I had a RPi 1B running with vanilla v4.12 built with ptxdist and the
+> DistroKit BSP some time ago, v4.14 and v4.15 also run fine headless. Should
+> also work for RPi 2.)
+> 
+> HTH & Greets
+> Alex
+>   
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
+
+-- 
+Pengutronix e.K.                  | Roland Hieber               |
+Industrial Linux Solutions        | http://www.pengutronix.de/  |
+Peiner Str. 6-8, 31137 Hildesheim | Phone: +49-5121-206917-5086 |
+Amtsgericht Hildesheim, HRA 2686  | Fax:   +49-5121-206917-5555 |
