@@ -1,15 +1,15 @@
-From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: Re: [PATCH 11/20 v2] tracing: Add symbol type to function based
- events
-Date: Sat, 10 Feb 2018 00:03:37 +0900
-Message-ID: <20180210000337.c2efb5438d281892e83caaba@kernel.org>
-References: <20180207202402.253089656@goodmis.org>
-        <20180207202816.348135328@goodmis.org>
-        <20180208112031.GB30958@krava>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 17/18] tracing: Add indirect to indirect access for
+ function based events
+Date: Fri, 9 Feb 2018 10:47:58 -0500
+Message-ID: <20180209104758.093d31ad@gandalf.local.home>
+References: <20180202230458.840252014@goodmis.org>
+        <20180202231019.582037880@goodmis.org>
+        <20180209051301.GE28206@sejong>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
+Cc: linux-kernel@vger.kernel.org,
         Linus Torvalds <torvalds@linux-foundation.org>,
         Ingo Molnar <mingo@kernel.org>,
         Andrew Morton <akpm@linux-foundation.org>,
@@ -20,79 +20,113 @@ Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
         linux-rt-users@vger.kernel.org, linux-trace-users@vger.kernel.org,
         Arnaldo Carvalho de Melo <acme@kernel.org>,
         Clark Williams <williams@redhat.com>,
+        Jiri Olsa <jolsa@redhat.com>,
         Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Juri Lelli <juri.lelli@redhat.com>
-To: Jiri Olsa <jolsa@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180208112031.GB30958@krava>
-Sender: linux-kernel-owner@vger.kernel.org
+        Juri Lelli <juri.lelli@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Alexei Starovoitov <alexei.starovoitov@gmail.com>,
+        kernel-team@lge.com
+To: Namhyung Kim <namhyung@kernel.org>
+Return-path: <linux-trace-users-owner@vger.kernel.org>
+In-Reply-To: <20180209051301.GE28206@sejong>
+Sender: linux-trace-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 8 Feb 2018 12:20:31 +0100
-Jiri Olsa <jolsa@redhat.com> wrote:
+On Fri, 9 Feb 2018 14:13:01 +0900
+Namhyung Kim <namhyung@kernel.org> wrote:
 
-> On Wed, Feb 07, 2018 at 03:24:13PM -0500, Steven Rostedt wrote:
+> On Fri, Feb 02, 2018 at 06:05:15PM -0500, Steven Rostedt wrote:
 > > From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 > > 
-> > Add a special type "symbol" that will use %pS to display the field of a
-> > function based event.
+> > Allow the function based events to retrieve not only the parameters offsets,
+> > but also get data from a pointer within a parameter structure. Something
+> > like:
+> > 
+> >  # echo 'ip_rcv(string skdev+16[0][0] | x8[6] skperm+16[0]+558)' > function_events
+> > 
+> >  # echo 1 > events/functions/ip_rcv/enable
+> >  # cat trace
+> >     <idle>-0     [003] ..s3   310.626391: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
+> >     <idle>-0     [003] ..s3   310.626400: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
+> >     <idle>-0     [003] ..s3   312.183775: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
+> >     <idle>-0     [003] ..s3   312.184329: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
+> >     <idle>-0     [003] ..s3   312.303895: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
+> >     <idle>-0     [003] ..s3   312.304610: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
+> >     <idle>-0     [003] ..s3   312.471980: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
+> >     <idle>-0     [003] ..s3   312.472908: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
+> >     <idle>-0     [003] ..s3   313.135804: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
+> > 
+> > That is, we retrieved the net_device of the sk_buff and displayed its name
+> > and perm_addr info.
+> > 
+> >   sk->dev->name, sk->dev->perm_addr
 > > 
 > > Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-> > ---
-> >  Documentation/trace/function-based-events.rst | 26 +++++++++++++++++++++++++-
-> >  kernel/trace/trace_event_ftrace.c             | 13 ++++++++++---
-> >  2 files changed, 35 insertions(+), 4 deletions(-)
-> > 
-> > diff --git a/Documentation/trace/function-based-events.rst b/Documentation/trace/function-based-events.rst
-> > index bdb28f433bfb..f18c8f3ef330 100644
-> > --- a/Documentation/trace/function-based-events.rst
-> > +++ b/Documentation/trace/function-based-events.rst
-> > @@ -98,7 +98,8 @@ as follows:
-> >   ATOM := 'u8' | 'u16' | 'u32' | 'u64' |
-> >           's8' | 's16' | 's32' | 's64' |
-> >           'x8' | 'x16' | 'x32' | 'x64' |
-> > -         'char' | 'short' | 'int' | 'long' | 'size_t'
-> > +         'char' | 'short' | 'int' | 'long' | 'size_t' |
-> > +	 'symbol'
+> > ---  
+> 
+> [SNIP]
+> > +static unsigned long process_redirects(struct func_arg *arg, unsigned long val,
+> > +				       char *buf)
+> > +{
+> > +	struct func_arg_redirect *redirect;
+> > +	int ret;
+> > +
+> > +	if (arg->indirect) {
+> > +		ret = probe_kernel_read(buf, (void *)val, sizeof(long));
+> > +		if (ret)
+> > +			return 0;
+> > +		val = *(unsigned long *)buf;
+> > +	}
+> > +
+> > +	list_for_each_entry(redirect, &arg->redirects, list) {
+> > +		val += redirect->index;
+> > +		if (redirect->indirect) {
+> > +			val += (redirect->indirect ^ INDIRECT_FLAG);
+> > +			ret = probe_kernel_read(buf, (void *)val, sizeof(long));
+> > +			if (ret)
+> > +				return 0;
+> > +		}
+> > +	}
+> > +	return val;
+> > +}
+> > +
+> > +static long long __get_arg(struct func_arg *arg, unsigned long long val)
+> >  {
+> >  	char buf[8];
+> >  	int ret;
 > >  
-> >   FIELD := <name> | <name> INDEX | <name> OFFSET | <name> OFFSET INDEX
+> >  	val += arg->index;
 > >  
-> > @@ -243,3 +244,26 @@ The above will take the parameter value, add it by 4, then index it by two
-> >  8 byte words. It's the same in C as: (u64 *)((void *)param + 4)[2]
+> > -	if (!arg->indirect)
+> > -		return val;
+> > +	if (arg->indirect)
+> > +		val += (arg->indirect ^ INDIRECT_FLAG);
 > >  
-> >   Note: "int skb[32]" is the same as "int skb+4[31]".
+> > -	val = val + (arg->indirect ^ INDIRECT_FLAG);
+> > +	if (!list_empty(&arg->redirects))
+> > +		val = process_redirects(arg, val, buf);
 > > +
-> > +
-> > +Symbols (function names)
-> > +========================
-> > +
-> > +To display kallsyms "%pS" type of output, use the special type "symbol".
-> > +
-> > +Again, using gdb to find the offset of the "func" field of struct work_struct
-> > +
-> > +(gdb) printf "%d\n", &((struct work_struct *)0)->func
-> > +24
+> > +	if (!val)
+> > +		return 0;
+> >  
+> >  	/* Arrays and strings do their own indirect reads */
+> > -	if (arg->array || arg->func_type == FUNC_TYPE_string)
+> > +	if (!arg->indirect || arg->array || arg->func_type == FUNC_TYPE_string)
+> >  		return val;  
 > 
-> you could also use Arnaldo's pahole for this, seems like less typing:
-> 
->   $ pahole ./vmlinux -C work_struct
->   die__process_function: tag not supported (INVALID)!
->   struct work_struct {
->           atomic_long_t              data;                 /*     0     8 */
->           struct list_head           entry;                /*     8    16 */
->           work_func_t                func;                 /*    24     8 */
-> 
-> it's in 'dwarves' package
+> It seems the indirect is processed twice with redirects.  Consider
+> "x64 foo[0]+4", the process_redirects() will call probe_kernel_read()
+> and then here again.
 > 
 
-Just FYI, perf probe gives you the offset too :)
 
-# perf probe -D "work_busy work->func"
-p:probe/work_busy _text+591936 func=+24(%di):x64
+Good catch!
 
-Anyway, this "symbol" type is also interesting. I'll pick it.
+It should have been:
 
-Thanks,
+		return process_redirects(arg, val, buf);
 
--- 
-Masami Hiramatsu <mhiramat@kernel.org>
+Thanks!
+
+-- Steve
