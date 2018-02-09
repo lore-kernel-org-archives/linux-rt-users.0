@@ -1,80 +1,219 @@
-From: Dan Murphy <dmurphy@ti.com>
-Subject: Re: Linux stable vs RT stable and RT dev
-Date: Fri, 9 Feb 2018 13:43:42 -0600
-Message-ID: <e6b1a499-6bf4-ae84-629a-961117966a47@ti.com>
-References: <8155aea247374c058bd7c797124c3d28@ti.com>
- <20180202214611.GD868@jcartwri.amer.corp.natinst.com>
- <1c47b7e6-86d0-cbb0-9b72-7b7d63e46ddc@ti.com>
- <6eecb69a-e60f-f837-bc2c-a627e2660027@ti.com>
- <20180206143426.fdzs6hnvmakqdwiu@linutronix.de>
- <8e201971-d626-7ef6-addd-bbbc32f63770@ti.com>
- <20180209173921.mtz55hgs5idj4vhk@linutronix.de>
- <a1c7a58e-2d67-f6fd-6e91-9cbd03678e7d@ti.com>
- <20180209193015.wms4o7wxsi3t535g@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 12/18] tracing: Add accessing direct address from
+ function based events
+Date: Fri, 9 Feb 2018 17:07:37 -0500
+Message-ID: <20180209170737.5921ea0f@gandalf.local.home>
+References: <20180202230458.840252014@goodmis.org>
+        <20180202231018.828677654@goodmis.org>
+        <20180209003436.GB28206@sejong>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Cc: William Mills <wmills@ti.com>, Julia Cartwright <julia@ni.com>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "Nori, Sekhar" <nsekhar@ti.com>, <rostedt@goodmis.org>,
-        "Hernandez, Carlos" <ceh@ti.com>,
-        "Strashko, Grygorii" <grygorii.strashko@ti.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lelnx193.ext.ti.com ([198.47.27.77]:44215 "EHLO
-        lelnx193.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1750933AbeBITn5 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 9 Feb 2018 14:43:57 -0500
-In-Reply-To: <20180209193015.wms4o7wxsi3t535g@linutronix.de>
-Content-Language: en-US
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8BIT
+Cc: linux-kernel@vger.kernel.org,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Ingo Molnar <mingo@kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        linux-rt-users@vger.kernel.org, linux-trace-users@vger.kernel.org,
+        Arnaldo Carvalho de Melo <acme@kernel.org>,
+        Clark Williams <williams@redhat.com>,
+        Jiri Olsa <jolsa@redhat.com>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Alexei Starovoitov <alexei.starovoitov@gmail.com>,
+        kernel-team@lge.com
+To: Namhyung Kim <namhyung@kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180209003436.GB28206@sejong>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Sebastian
+On Fri, 9 Feb 2018 09:34:36 +0900
+Namhyung Kim <namhyung@kernel.org> wrote:
 
-On 02/09/2018 01:30 PM, Sebastian Andrzej Siewior wrote:
-> On 2018-02-09 12:59:43 [-0600], Dan Murphy wrote:
->> Sebastian
-> HI Dan,
+> Couldn't we use the symbol name directly?  Maybe it needs a syntax to
+> indicate global variable.  Like this?
 > 
->> Hmmm I wonder why the compiler does not complain about this warning then.
->>
->> I will look into it.  This warning has been around for a while (4.9-rt as well).
-> 
-> probably once the local_irq_save() was removed.
-> 
->> We also noticed that there are 2 merge conflicts when going to 4.14.18.
->> Any comments about providing a merge conflict email to the list?
-> 
-> I am not sure about how helpful this actually is. Usually I do a RT
-> release a week while I have stuff in my pipe. Currently Greg is
-> releasing a lot. On the other hand it is almost two weeks since my last
-> release.
-
-For us it is helpful to have the experts resolve these stable->rt conflicts that occur
-in the base kernel files.  At least if there is a merge conflict that will occur this
-could be the "stuff" in your pipe.  If there were no merge conflicts detected for upcoming
-merges there would be no expectation to move quicker.
-
-I mean GKH 4.14.19 is coming on Monday it may be better just to wait for that to be released
-then merge that in.  There were only 22 patches added to 4.14.19 so it should be minimal.
-
-Dan
-
-> 
->> Attached is the merge conflicts we are seeing 4.14.15-> 4.14.18
-> 
-> In meantime I already uploaded the patch queue for v4.14.18-rt14.
-> I plan to sync with Steven's tracing then release -rt15 probably later
-> today.
-> 
->> Dan
-> 
-> Sebastian
-> 
+>   # echo 'do_IRQ(int $total_forks)' > function_events
 
 
+I decided to stick with "$".
+
+-- Steve
+
+>From ed303534dac5b2d9af7b4db9f042d7941c997288 Mon Sep 17 00:00:00 2001
+From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+Date: Fri, 9 Feb 2018 17:03:06 -0500
+Subject: [PATCH] tracing: Add direct kallsym access to function based events
+
+Instead of searching for the address via kallsyms to print the variable in a
+function based event, have "$<symbol>" be a way to tell the function based
+event to look up the symbol for you.
+
+Instead of:
+
+   # grep total_forks /proc/kallsyms
+ffffffff82354c18 B total_forks
+
+  # echo 'do_IRQ(int forks=0xffffffff82354c18)' > function_events
+
+One can do either:
+
+  # echo 'do_IRQ(int forks=$total_forks)' > function_events
+
+or simply
+
+  # echo 'do_IRQ(int $total_forks)' > function_events
+
+The latter will say "total_forks=" in the output where the formal says
+"forks=".
+
+Suggested-by: Namhyung Kim <namhyung@kernel.org>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+---
+ Documentation/trace/function-based-events.rst | 25 ++++++++++++++++++-
+ kernel/trace/trace_event_ftrace.c             | 35 ++++++++++++++++++++++++---
+ 2 files changed, 56 insertions(+), 4 deletions(-)
+
+diff --git a/Documentation/trace/function-based-events.rst b/Documentation/trace/function-based-events.rst
+index 606981b876a0..9a30aee338f4 100644
+--- a/Documentation/trace/function-based-events.rst
++++ b/Documentation/trace/function-based-events.rst
+@@ -112,13 +112,19 @@ as follows:
+ 
+  INDIRECT := INDEX | OFFSET | INDIRECT INDIRECT | ''
+ 
+- ADDR := A hexidecimal address starting with '0x'
++ ADDR := <symbol> | <hexnumber>
+ 
+  Where <name> is a unique string starting with an alphabetic character
+  and consists only of letters and numbers and underscores.
+ 
+  Where <number> is a number that can be read by kstrtol() (hex, decimal, etc).
+ 
++ Where <hexnumber> is an address starting with '0x'
++
++ Where <symbol> is a valid symbol name from kallsyms starting with "$".
++ For example: $total_forks
++
++
+ 
+ Simple arguments
+ ================
+@@ -317,6 +323,23 @@ Is the same as
+     <idle>-0     [003] d..3   655.823498: ret_from_intr->do_IRQ(total_forks=1504, regs=tick_nohz_idle_enter+0x4c/0x50)
+     <idle>-0     [003] d..3   655.954096: ret_from_intr->do_IRQ(total_forks=1504, regs=cpuidle_enter_state+0xb1/0x330)
+ 
++You can also accomplish the same thing above using the kallsym name following
++a "$" symbol. That is:
++
++  # echo 'do_IRQ(int $total_forks)' > function_events
++
++is the same as the above command using the "0xffffffff82354c18" address.
++
++You can rename the variable by using "=":
++
++  # echo 'do_IRQ(int forks=$total_forks)' > function_events
++
++  # cat trace
++    <idle>-0     [003] d..3   698.226763: ret_from_intr->do_IRQ(forks=1475)
++    <idle>-0     [003] d..3   698.226810: ret_from_intr->do_IRQ(forks=1475)
++    <idle>-0     [003] d..3   698.227046: ret_from_intr->do_IRQ(forks=1475)
++    <idle>-0     [003] d..3   698.502222: ret_from_intr->do_IRQ(forks=1475)
++
+ 
+ Array types
+ ===========
+diff --git a/kernel/trace/trace_event_ftrace.c b/kernel/trace/trace_event_ftrace.c
+index 376c9324d65c..39abda19d5d2 100644
+--- a/kernel/trace/trace_event_ftrace.c
++++ b/kernel/trace/trace_event_ftrace.c
+@@ -92,6 +92,7 @@ static LIST_HEAD(func_events);
+ 	C(ARRAY_END),				\
+ 	C(REDIRECT_PLUS),			\
+ 	C(REDIRECT_BRACKET),			\
++	C(SYMBOL),				\
+ 	C(VAR),					\
+ 	C(COMMA),				\
+ 	C(NULL),				\
+@@ -281,6 +282,7 @@ static char *next_token(char **ptr, char *last)
+ 		    *str == '|' ||
+ 		    *str == '+' ||
+ 		    *str == '=' ||
++		    *str == '$' ||
+ 		    *str == ')')
+ 			break;
+ 	}
+@@ -393,6 +395,14 @@ static int add_arg_redirect(struct func_arg *arg, long index, long indirect)
+ 	return 0;
+ }
+ 
++static int get_symbol(const char *symbol, unsigned long *val)
++{
++	*val = kallsyms_lookup_name(symbol);
++	if (!*val)
++		return -1;
++	return 0;
++}
++
+ static enum func_states
+ process_event(struct func_event *fevent, const char *token, enum func_states state)
+ {
+@@ -469,6 +479,8 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+ 	case FUNC_STATE_ARRAY_END:
+ 		if (WARN_ON(!fevent->last_arg))
+ 			break;
++		if (token[0] == '$')
++			return FUNC_STATE_SYMBOL;
+ 		if (update_arg_name(fevent, token) < 0)
+ 			break;
+ 		if (strncmp(token, "0x", 2) == 0)
+@@ -542,6 +554,11 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+ 		fevent->last_arg->index += val;
+ 		return FUNC_STATE_VAR;
+ 
++	case FUNC_STATE_SYMBOL:
++		if (!isalpha(token[0]) && token[0] != '_')
++			break;
++		goto equal;
++
+ 	case FUNC_STATE_ADDR:
+ 		switch (token[0]) {
+ 		case ')':
+@@ -599,14 +616,26 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+ 		break;
+ 
+ 	case FUNC_STATE_EQUAL:
++		if (token[0] == '$')
++			return FUNC_STATE_SYMBOL;
+ 		if (strncmp(token, "0x", 2) != 0)
+ 			break;
+  equal:
+ 		if (WARN_ON(!fevent->last_arg))
+ 			break;
+-		ret = kstrtoul(token, 0, &val);
+-		if (ret < 0)
+-			break;
++		if (isalpha(token[0]) || token[0] != '_') {
++			ret = get_symbol(token, &val);
++			if (ret < 0)
++				break;
++			if (!fevent->last_arg->name) {
++				if (update_arg_name(fevent, token) < 0)
++					break;
++			}
++		} else {
++			ret = kstrtoul(token, 0, &val);
++			if (ret < 0)
++				break;
++		}
+ 		update_arg = false;
+ 		fevent->last_arg->index = val;
+ 		fevent->last_arg->arg = -1;
 -- 
-------------------
-Dan Murphy
+2.13.6
