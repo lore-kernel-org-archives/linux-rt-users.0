@@ -1,14 +1,16 @@
-From: Namhyung Kim <namhyung@kernel.org>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH 09/18] tracing: Add indexing of arguments for function
  based events
-Date: Fri, 9 Feb 2018 08:56:15 +0900
-Message-ID: <20180208235615.GA28206@sejong>
+Date: Thu, 8 Feb 2018 19:19:10 -0500
+Message-ID: <20180208191910.6bfdc921@gandalf.local.home>
 References: <20180202230458.840252014@goodmis.org>
- <20180202231018.338259949@goodmis.org>
- <20180208105924.GB26290@sejong>
- <20180208104343.2fa63eda@gandalf.local.home>
+        <20180202231018.338259949@goodmis.org>
+        <20180208105924.GB26290@sejong>
+        <20180208104343.2fa63eda@gandalf.local.home>
+        <20180208235615.GA28206@sejong>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Cc: linux-kernel@vger.kernel.org,
         Linus Torvalds <torvalds@linux-foundation.org>,
         Ingo Molnar <mingo@kernel.org>,
@@ -27,35 +29,50 @@ Cc: linux-kernel@vger.kernel.org,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
         Alexei Starovoitov <alexei.starovoitov@gmail.com>,
         kernel-team@lge.com
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180208104343.2fa63eda@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
+To: Namhyung Kim <namhyung@kernel.org>
+Return-path: <linux-trace-users-owner@vger.kernel.org>
+In-Reply-To: <20180208235615.GA28206@sejong>
+Sender: linux-trace-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Feb 08, 2018 at 10:43:43AM -0500, Steven Rostedt wrote:
-> On Thu, 8 Feb 2018 19:59:24 +0900
-> Namhyung Kim <namhyung@kernel.org> wrote:
-> 
-> > > @@ -347,6 +361,8 @@ static long long get_arg(struct func_arg *arg, unsigned long val)
-> > >  	char buf[8];
-> > >  	int ret;
-> > >  
-> > > +	val += arg->index;
-> > > +
-> > >  	if (!arg->indirect)
-> > >  		return val;  
+On Fri, 9 Feb 2018 08:56:15 +0900
+Namhyung Kim <namhyung@kernel.org> wrote:
+
+> On Thu, Feb 08, 2018 at 10:43:43AM -0500, Steven Rostedt wrote:
+> > On Thu, 8 Feb 2018 19:59:24 +0900
+> > Namhyung Kim <namhyung@kernel.org> wrote:
+> >   
+> > > > @@ -347,6 +361,8 @@ static long long get_arg(struct func_arg *arg, unsigned long val)
+> > > >  	char buf[8];
+> > > >  	int ret;
+> > > >  
+> > > > +	val += arg->index;
+> > > > +
+> > > >  	if (!arg->indirect)
+> > > >  		return val;    
+> > > 
+> > > So this also works without the indirect, and just add the immediate to
+> > > the value.  
 > > 
-> > So this also works without the indirect, and just add the immediate to
-> > the value.
+> > Not sure what you are asking here. The immediate adds to the current
+> > value, where as the indirect will then look what's at that location.  
 > 
-> Not sure what you are asking here. The immediate adds to the current
-> value, where as the indirect will then look what's at that location.
+> I expected that the immediate offset is only meaningful with the
+> indirect (dereference) as the doc says just about it.  So I asked it
+> was intentional or not.
+>
 
-I expected that the immediate offset is only meaningful with the
-indirect (dereference) as the doc says just about it.  So I asked it
-was intentional or not.
+Yes it is intentional, but rather useless without an indirect. I mean,
+you could just add to the value if you want :-)
 
-Thanks,
-Namhyung
+The reason it doesn't need the indirect is because there's some types
+(arrays and strings) that don't need the indirect. For example, with
+the net_device with the perm_addr at 558 bytes away:
+
+ echo 'ip_rcv(NULL, x8[6] perm_addr+558)' > function_events
+
+produces:
+
+          <idle>-0     [003] ..s3  1809.074329: __netif_receive_skb_core->ip_rcv(perm_addr=b4,b5,2f,ce,18,65)
+
+-- Steve
