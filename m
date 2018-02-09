@@ -1,219 +1,271 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 12/18] tracing: Add accessing direct address from
- function based events
-Date: Fri, 9 Feb 2018 17:07:37 -0500
-Message-ID: <20180209170737.5921ea0f@gandalf.local.home>
-References: <20180202230458.840252014@goodmis.org>
-        <20180202231018.828677654@goodmis.org>
-        <20180209003436.GB28206@sejong>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [ANNOUNCE] v4.14.18-rt15
+Date: Sat, 10 Feb 2018 00:12:56 +0100
+Message-ID: <20180209231256.xv7wmzypkrrms7s4@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: linux-kernel@vger.kernel.org,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        Ingo Molnar <mingo@kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        linux-rt-users@vger.kernel.org, linux-trace-users@vger.kernel.org,
-        Arnaldo Carvalho de Melo <acme@kernel.org>,
-        Clark Williams <williams@redhat.com>,
-        Jiri Olsa <jolsa@redhat.com>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-        Alexei Starovoitov <alexei.starovoitov@gmail.com>,
-        kernel-team@lge.com
-To: Namhyung Kim <namhyung@kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180209003436.GB28206@sejong>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 9 Feb 2018 09:34:36 +0900
-Namhyung Kim <namhyung@kernel.org> wrote:
+Dear RT folks!
 
-> Couldn't we use the symbol name directly?  Maybe it needs a syntax to
-> indicate global variable.  Like this?
-> 
->   # echo 'do_IRQ(int $total_forks)' > function_events
+I'm pleased to announce the v4.14.18-rt15 patch set. 
 
+Changes since v4.14.18-rt14:
 
-I decided to stick with "$".
+  - Remove unused mutex brd_mutex, it was causing a "defined but not
+    used warning". Reported by Dan Murphy, patch by Mikulas Patocka.
 
--- Steve
+  - Update the "tracing: Inter-event (e.g. latency) support" patch to
+    what was merged in the end. The significant change is probably the
+    inclusion of commit a0e3a18f4baf ("ring-buffer: Bring back context
+    level recursive checks").
 
->From ed303534dac5b2d9af7b4db9f042d7941c997288 Mon Sep 17 00:00:00 2001
-From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
-Date: Fri, 9 Feb 2018 17:03:06 -0500
-Subject: [PATCH] tracing: Add direct kallsym access to function based events
+Known issues
+     - A warning triggered in "rcu_note_context_switch" originated from
+       SyS_timer_gettime(). The issue was always there, it is now
+       visible. Reported by Grygorii Strashko and Daniel Wagner.
 
-Instead of searching for the address via kallsyms to print the variable in a
-function based event, have "$<symbol>" be a way to tell the function based
-event to look up the symbol for you.
-
-Instead of:
-
-   # grep total_forks /proc/kallsyms
-ffffffff82354c18 B total_forks
-
-  # echo 'do_IRQ(int forks=0xffffffff82354c18)' > function_events
-
-One can do either:
-
-  # echo 'do_IRQ(int forks=$total_forks)' > function_events
-
-or simply
-
-  # echo 'do_IRQ(int $total_forks)' > function_events
-
-The latter will say "total_forks=" in the output where the formal says
-"forks=".
-
-Suggested-by: Namhyung Kim <namhyung@kernel.org>
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
----
- Documentation/trace/function-based-events.rst | 25 ++++++++++++++++++-
- kernel/trace/trace_event_ftrace.c             | 35 ++++++++++++++++++++++++---
- 2 files changed, 56 insertions(+), 4 deletions(-)
-
-diff --git a/Documentation/trace/function-based-events.rst b/Documentation/trace/function-based-events.rst
-index 606981b876a0..9a30aee338f4 100644
---- a/Documentation/trace/function-based-events.rst
-+++ b/Documentation/trace/function-based-events.rst
-@@ -112,13 +112,19 @@ as follows:
+The delta patch against v4.14.18-rt14 is appended below and can be found here:
  
-  INDIRECT := INDEX | OFFSET | INDIRECT INDIRECT | ''
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/incr/patch-4.14.18-rt14-rt15.patch.xz
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.14.18-rt15
+
+The RT patch against v4.14.18 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patch-4.14.18-rt15.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patches-4.14.18-rt15.tar.xz
+
+Sebastian
+
+diff --git a/drivers/block/brd.c b/drivers/block/brd.c
+index 2d7178f7754e..c1cf87718c2e 100644
+--- a/drivers/block/brd.c
++++ b/drivers/block/brd.c
+@@ -60,7 +60,6 @@ struct brd_device {
+ /*
+  * Look up and return a brd's page for a given sector.
+  */
+-static DEFINE_MUTEX(brd_mutex);
+ static struct page *brd_lookup_page(struct brd_device *brd, sector_t sector)
+ {
+ 	pgoff_t idx;
+diff --git a/include/linux/ring_buffer.h b/include/linux/ring_buffer.h
+index 47f9791971a4..ea8c1dd830f7 100644
+--- a/include/linux/ring_buffer.h
++++ b/include/linux/ring_buffer.h
+@@ -120,6 +120,9 @@ int ring_buffer_unlock_commit(struct ring_buffer *buffer,
+ int ring_buffer_write(struct ring_buffer *buffer,
+ 		      unsigned long length, void *data);
  
-- ADDR := A hexidecimal address starting with '0x'
-+ ADDR := <symbol> | <hexnumber>
++void ring_buffer_nest_start(struct ring_buffer *buffer);
++void ring_buffer_nest_end(struct ring_buffer *buffer);
++
+ struct ring_buffer_event *
+ ring_buffer_peek(struct ring_buffer *buffer, int cpu, u64 *ts,
+ 		 unsigned long *lost_events);
+diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
+index c4d554286334..76fe2d01d801 100644
+--- a/kernel/trace/ring_buffer.c
++++ b/kernel/trace/ring_buffer.c
+@@ -478,6 +478,7 @@ struct ring_buffer_per_cpu {
+ 	struct buffer_page		*reader_page;
+ 	unsigned long			lost_events;
+ 	unsigned long			last_overrun;
++	unsigned long			nest;
+ 	local_t				entries_bytes;
+ 	local_t				entries;
+ 	local_t				overrun;
+@@ -2585,29 +2586,58 @@ rb_wakeups(struct ring_buffer *buffer, struct ring_buffer_per_cpu *cpu_buffer)
+  * The lock and unlock are done within a preempt disable section.
+  * The current_context per_cpu variable can only be modified
+  * by the current task between lock and unlock. But it can
+- * be modified more than once via an interrupt. There are four
+- * different contexts that we need to consider.
++ * be modified more than once via an interrupt. To pass this
++ * information from the lock to the unlock without having to
++ * access the 'in_interrupt()' functions again (which do show
++ * a bit of overhead in something as critical as function tracing,
++ * we use a bitmask trick.
+  *
+- *  Normal context.
+- *  SoftIRQ context
+- *  IRQ context
+- *  NMI context
++ *  bit 0 =  NMI context
++ *  bit 1 =  IRQ context
++ *  bit 2 =  SoftIRQ context
++ *  bit 3 =  normal context.
+  *
+- * If for some reason the ring buffer starts to recurse, we only allow
+- * that to happen at most 6 times (one for each context, plus possibly
+- * two levels of synthetic event generation). If it happens 7 times,
+- * then we consider this a recusive loop and do not let it go further.
++ * This works because this is the order of contexts that can
++ * preempt other contexts. A SoftIRQ never preempts an IRQ
++ * context.
++ *
++ * When the context is determined, the corresponding bit is
++ * checked and set (if it was set, then a recursion of that context
++ * happened).
++ *
++ * On unlock, we need to clear this bit. To do so, just subtract
++ * 1 from the current_context and AND it to itself.
++ *
++ * (binary)
++ *  101 - 1 = 100
++ *  101 & 100 = 100 (clearing bit zero)
++ *
++ *  1010 - 1 = 1001
++ *  1010 & 1001 = 1000 (clearing bit 1)
++ *
++ * The least significant bit can be cleared this way, and it
++ * just so happens that it is the same bit corresponding to
++ * the current context.
+  */
  
-  Where <name> is a unique string starting with an alphabetic character
-  and consists only of letters and numbers and underscores.
+ static __always_inline int
+ trace_recursive_lock(struct ring_buffer_per_cpu *cpu_buffer)
+ {
+-	if (cpu_buffer->current_context >= 6)
++	unsigned int val = cpu_buffer->current_context;
++	unsigned long pc = preempt_count();
++	int bit;
++
++	if (!(pc & (NMI_MASK | HARDIRQ_MASK | SOFTIRQ_OFFSET)))
++		bit = RB_CTX_NORMAL;
++	else
++		bit = pc & NMI_MASK ? RB_CTX_NMI :
++			pc & HARDIRQ_MASK ? RB_CTX_IRQ : RB_CTX_SOFTIRQ;
++
++	if (unlikely(val & (1 << (bit + cpu_buffer->nest))))
+ 		return 1;
  
-  Where <number> is a number that can be read by kstrtol() (hex, decimal, etc).
+-	cpu_buffer->current_context++;
+-	/* Interrupts must see this update */
+-	barrier();
++	val |= (1 << (bit + cpu_buffer->nest));
++	cpu_buffer->current_context = val;
  
-+ Where <hexnumber> is an address starting with '0x'
-+
-+ Where <symbol> is a valid symbol name from kallsyms starting with "$".
-+ For example: $total_forks
-+
-+
- 
- Simple arguments
- ================
-@@ -317,6 +323,23 @@ Is the same as
-     <idle>-0     [003] d..3   655.823498: ret_from_intr->do_IRQ(total_forks=1504, regs=tick_nohz_idle_enter+0x4c/0x50)
-     <idle>-0     [003] d..3   655.954096: ret_from_intr->do_IRQ(total_forks=1504, regs=cpuidle_enter_state+0xb1/0x330)
- 
-+You can also accomplish the same thing above using the kallsym name following
-+a "$" symbol. That is:
-+
-+  # echo 'do_IRQ(int $total_forks)' > function_events
-+
-+is the same as the above command using the "0xffffffff82354c18" address.
-+
-+You can rename the variable by using "=":
-+
-+  # echo 'do_IRQ(int forks=$total_forks)' > function_events
-+
-+  # cat trace
-+    <idle>-0     [003] d..3   698.226763: ret_from_intr->do_IRQ(forks=1475)
-+    <idle>-0     [003] d..3   698.226810: ret_from_intr->do_IRQ(forks=1475)
-+    <idle>-0     [003] d..3   698.227046: ret_from_intr->do_IRQ(forks=1475)
-+    <idle>-0     [003] d..3   698.502222: ret_from_intr->do_IRQ(forks=1475)
-+
- 
- Array types
- ===========
-diff --git a/kernel/trace/trace_event_ftrace.c b/kernel/trace/trace_event_ftrace.c
-index 376c9324d65c..39abda19d5d2 100644
---- a/kernel/trace/trace_event_ftrace.c
-+++ b/kernel/trace/trace_event_ftrace.c
-@@ -92,6 +92,7 @@ static LIST_HEAD(func_events);
- 	C(ARRAY_END),				\
- 	C(REDIRECT_PLUS),			\
- 	C(REDIRECT_BRACKET),			\
-+	C(SYMBOL),				\
- 	C(VAR),					\
- 	C(COMMA),				\
- 	C(NULL),				\
-@@ -281,6 +282,7 @@ static char *next_token(char **ptr, char *last)
- 		    *str == '|' ||
- 		    *str == '+' ||
- 		    *str == '=' ||
-+		    *str == '$' ||
- 		    *str == ')')
- 			break;
- 	}
-@@ -393,6 +395,14 @@ static int add_arg_redirect(struct func_arg *arg, long index, long indirect)
  	return 0;
  }
- 
-+static int get_symbol(const char *symbol, unsigned long *val)
-+{
-+	*val = kallsyms_lookup_name(symbol);
-+	if (!*val)
-+		return -1;
-+	return 0;
+@@ -2615,9 +2645,57 @@ trace_recursive_lock(struct ring_buffer_per_cpu *cpu_buffer)
+ static __always_inline void
+ trace_recursive_unlock(struct ring_buffer_per_cpu *cpu_buffer)
+ {
+-	/* Don't let the dec leak out */
+-	barrier();
+-	cpu_buffer->current_context--;
++	cpu_buffer->current_context &=
++		cpu_buffer->current_context - (1 << cpu_buffer->nest);
 +}
 +
- static enum func_states
- process_event(struct func_event *fevent, const char *token, enum func_states state)
- {
-@@ -469,6 +479,8 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
- 	case FUNC_STATE_ARRAY_END:
- 		if (WARN_ON(!fevent->last_arg))
- 			break;
-+		if (token[0] == '$')
-+			return FUNC_STATE_SYMBOL;
- 		if (update_arg_name(fevent, token) < 0)
- 			break;
- 		if (strncmp(token, "0x", 2) == 0)
-@@ -542,6 +554,11 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
- 		fevent->last_arg->index += val;
- 		return FUNC_STATE_VAR;
- 
-+	case FUNC_STATE_SYMBOL:
-+		if (!isalpha(token[0]) && token[0] != '_')
-+			break;
-+		goto equal;
++/* The recursive locking above uses 4 bits */
++#define NESTED_BITS 4
 +
- 	case FUNC_STATE_ADDR:
- 		switch (token[0]) {
- 		case ')':
-@@ -599,14 +616,26 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
- 		break;
++/**
++ * ring_buffer_nest_start - Allow to trace while nested
++ * @buffer: The ring buffer to modify
++ *
++ * The ring buffer has a safty mechanism to prevent recursion.
++ * But there may be a case where a trace needs to be done while
++ * tracing something else. In this case, calling this function
++ * will allow this function to nest within a currently active
++ * ring_buffer_lock_reserve().
++ *
++ * Call this function before calling another ring_buffer_lock_reserve() and
++ * call ring_buffer_nest_end() after the nested ring_buffer_unlock_commit().
++ */
++void ring_buffer_nest_start(struct ring_buffer *buffer)
++{
++	struct ring_buffer_per_cpu *cpu_buffer;
++	int cpu;
++
++	/* Enabled by ring_buffer_nest_end() */
++	preempt_disable_notrace();
++	cpu = raw_smp_processor_id();
++	cpu_buffer = buffer->buffers[cpu];
++	/* This is the shift value for the above recusive locking */
++	cpu_buffer->nest += NESTED_BITS;
++}
++
++/**
++ * ring_buffer_nest_end - Allow to trace while nested
++ * @buffer: The ring buffer to modify
++ *
++ * Must be called after ring_buffer_nest_start() and after the
++ * ring_buffer_unlock_commit().
++ */
++void ring_buffer_nest_end(struct ring_buffer *buffer)
++{
++	struct ring_buffer_per_cpu *cpu_buffer;
++	int cpu;
++
++	/* disabled by ring_buffer_nest_start() */
++	cpu = raw_smp_processor_id();
++	cpu_buffer = buffer->buffers[cpu];
++	/* This is the shift value for the above recusive locking */
++	cpu_buffer->nest -= NESTED_BITS;
++	preempt_enable_notrace();
+ }
  
- 	case FUNC_STATE_EQUAL:
-+		if (token[0] == '$')
-+			return FUNC_STATE_SYMBOL;
- 		if (strncmp(token, "0x", 2) != 0)
- 			break;
-  equal:
- 		if (WARN_ON(!fevent->last_arg))
- 			break;
--		ret = kstrtoul(token, 0, &val);
--		if (ret < 0)
--			break;
-+		if (isalpha(token[0]) || token[0] != '_') {
-+			ret = get_symbol(token, &val);
-+			if (ret < 0)
-+				break;
-+			if (!fevent->last_arg->name) {
-+				if (update_arg_name(fevent, token) < 0)
-+					break;
-+			}
-+		} else {
-+			ret = kstrtoul(token, 0, &val);
-+			if (ret < 0)
-+				break;
-+		}
- 		update_arg = false;
- 		fevent->last_arg->index = val;
- 		fevent->last_arg->arg = -1;
--- 
-2.13.6
+ /**
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index e47b56632367..49afef3cc384 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -640,6 +640,7 @@ static notrace void trace_event_raw_event_synth(void *__data,
+ 	struct trace_event_file *trace_file = __data;
+ 	struct synth_trace_event *entry;
+ 	struct trace_event_buffer fbuffer;
++	struct ring_buffer *buffer;
+ 	struct synth_event *event;
+ 	unsigned int i, n_u64;
+ 	int fields_size = 0;
+@@ -651,10 +652,17 @@ static notrace void trace_event_raw_event_synth(void *__data,
+ 
+ 	fields_size = event->n_u64 * sizeof(u64);
+ 
++	/*
++	 * Avoid ring buffer recursion detection, as this event
++	 * is being performed within another event.
++	 */
++	buffer = trace_file->tr->trace_buffer.buffer;
++	ring_buffer_nest_start(buffer);
++
+ 	entry = trace_event_buffer_reserve(&fbuffer, trace_file,
+ 					   sizeof(*entry) + fields_size);
+ 	if (!entry)
+-		return;
++		goto out;
+ 
+ 	for (i = 0, n_u64 = 0; i < event->n_fields; i++) {
+ 		if (event->fields[i]->is_string) {
+@@ -670,6 +678,8 @@ static notrace void trace_event_raw_event_synth(void *__data,
+ 	}
+ 
+ 	trace_event_buffer_commit(&fbuffer);
++out:
++	ring_buffer_nest_end(buffer);
+ }
+ 
+ static void free_synth_event_print_fmt(struct trace_event_call *call)
+diff --git a/localversion-rt b/localversion-rt
+index 08b3e75841ad..18777ec0c27d 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt14
++-rt15
