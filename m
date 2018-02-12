@@ -1,15 +1,17 @@
-From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [PATCH 17/18] tracing: Add indirect to indirect access for
+From: Masami Hiramatsu <mhiramat@kernel.org>
+Subject: Re: [PATCH 12/18] tracing: Add accessing direct address from
  function based events
-Date: Mon, 12 Feb 2018 11:15:34 +0900
-Message-ID: <20180212021534.GH31513@sejong>
+Date: Tue, 13 Feb 2018 00:47:50 +0900
+Message-ID: <20180213004750.62e7ee5a1038589a80b09b41@kernel.org>
 References: <20180202230458.840252014@goodmis.org>
- <20180202231019.582037880@goodmis.org>
- <20180209051301.GE28206@sejong>
- <20180209104758.093d31ad@gandalf.local.home>
+        <20180202231018.828677654@goodmis.org>
+        <20180209003436.GB28206@sejong>
+        <20180209170737.5921ea0f@gandalf.local.home>
+        <20180212020644.GG31513@sejong>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-kernel@vger.kernel.org,
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
         Linus Torvalds <torvalds@linux-foundation.org>,
         Ingo Molnar <mingo@kernel.org>,
         Andrew Morton <akpm@linux-foundation.org>,
@@ -26,111 +28,110 @@ Cc: linux-kernel@vger.kernel.org,
         Jonathan Corbet <corbet@lwn.net>,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
         Alexei Starovoitov <alexei.starovoitov@gmail.com>,
-        kernel-team@lge.com
-To: Steven Rostedt <rostedt@goodmis.org>
+        kernel-t
+To: Namhyung Kim <namhyung@kernel.org>
 Return-path: <linux-trace-users-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180209104758.093d31ad@gandalf.local.home>
+In-Reply-To: <20180212020644.GG31513@sejong>
 Sender: linux-trace-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Feb 09, 2018 at 10:47:58AM -0500, Steven Rostedt wrote:
-> On Fri, 9 Feb 2018 14:13:01 +0900
-> Namhyung Kim <namhyung@kernel.org> wrote:
-> 
-> > On Fri, Feb 02, 2018 at 06:05:15PM -0500, Steven Rostedt wrote:
-> > > From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
-> > > 
-> > > Allow the function based events to retrieve not only the parameters offsets,
-> > > but also get data from a pointer within a parameter structure. Something
-> > > like:
-> > > 
-> > >  # echo 'ip_rcv(string skdev+16[0][0] | x8[6] skperm+16[0]+558)' > function_events
-> > > 
-> > >  # echo 1 > events/functions/ip_rcv/enable
-> > >  # cat trace
-> > >     <idle>-0     [003] ..s3   310.626391: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
-> > >     <idle>-0     [003] ..s3   310.626400: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
-> > >     <idle>-0     [003] ..s3   312.183775: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
-> > >     <idle>-0     [003] ..s3   312.184329: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
-> > >     <idle>-0     [003] ..s3   312.303895: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
-> > >     <idle>-0     [003] ..s3   312.304610: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
-> > >     <idle>-0     [003] ..s3   312.471980: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
-> > >     <idle>-0     [003] ..s3   312.472908: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
-> > >     <idle>-0     [003] ..s3   313.135804: __netif_receive_skb_core->ip_rcv(skdev=em1, skperm=b4,b5,2f,ce,18,65)
-> > > 
-> > > That is, we retrieved the net_device of the sk_buff and displayed its name
-> > > and perm_addr info.
-> > > 
-> > >   sk->dev->name, sk->dev->perm_addr
-> > > 
-> > > Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-> > > ---  
-> > 
-> > [SNIP]
-> > > +static unsigned long process_redirects(struct func_arg *arg, unsigned long val,
-> > > +				       char *buf)
-> > > +{
-> > > +	struct func_arg_redirect *redirect;
-> > > +	int ret;
-> > > +
-> > > +	if (arg->indirect) {
-> > > +		ret = probe_kernel_read(buf, (void *)val, sizeof(long));
-> > > +		if (ret)
-> > > +			return 0;
-> > > +		val = *(unsigned long *)buf;
-> > > +	}
-> > > +
-> > > +	list_for_each_entry(redirect, &arg->redirects, list) {
-> > > +		val += redirect->index;
-> > > +		if (redirect->indirect) {
-> > > +			val += (redirect->indirect ^ INDIRECT_FLAG);
-> > > +			ret = probe_kernel_read(buf, (void *)val, sizeof(long));
-> > > +			if (ret)
-> > > +				return 0;
-> > > +		}
-> > > +	}
-> > > +	return val;
-> > > +}
-> > > +
-> > > +static long long __get_arg(struct func_arg *arg, unsigned long long val)
-> > >  {
-> > >  	char buf[8];
-> > >  	int ret;
-> > >  
-> > >  	val += arg->index;
-> > >  
-> > > -	if (!arg->indirect)
-> > > -		return val;
-> > > +	if (arg->indirect)
-> > > +		val += (arg->indirect ^ INDIRECT_FLAG);
-> > >  
-> > > -	val = val + (arg->indirect ^ INDIRECT_FLAG);
-> > > +	if (!list_empty(&arg->redirects))
-> > > +		val = process_redirects(arg, val, buf);
-> > > +
-> > > +	if (!val)
-> > > +		return 0;
-> > >  
-> > >  	/* Arrays and strings do their own indirect reads */
-> > > -	if (arg->array || arg->func_type == FUNC_TYPE_string)
-> > > +	if (!arg->indirect || arg->array || arg->func_type == FUNC_TYPE_string)
-> > >  		return val;  
-> > 
-> > It seems the indirect is processed twice with redirects.  Consider
-> > "x64 foo[0]+4", the process_redirects() will call probe_kernel_read()
-> > and then here again.
-> > 
-> 
-> 
-> Good catch!
-> 
-> It should have been:
-> 
-> 		return process_redirects(arg, val, buf);
+On Mon, 12 Feb 2018 11:06:44 +0900
+Namhyung Kim <namhyung@kernel.org> wrote:
 
-But I think you need to consider data type of the arg when
-dereferencing the last redirect.
+> Hi Steve,
+> 
+> On Fri, Feb 09, 2018 at 05:07:37PM -0500, Steven Rostedt wrote:
+> > On Fri, 9 Feb 2018 09:34:36 +0900
+> > Namhyung Kim <namhyung@kernel.org> wrote:
+> > 
+> > > Couldn't we use the symbol name directly?  Maybe it needs a syntax to
+> > > indicate global variable.  Like this?
+> > > 
+> > >   # echo 'do_IRQ(int $total_forks)' > function_events
+> > 
+> > 
+> > I decided to stick with "$".
+> 
+> Good.
+> 
+> 
+> [SNIP]
+> >  static enum func_states
+> >  process_event(struct func_event *fevent, const char *token, enum func_states state)
+> >  {
+> > @@ -469,6 +479,8 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+> >  	case FUNC_STATE_ARRAY_END:
+> >  		if (WARN_ON(!fevent->last_arg))
+> >  			break;
+> > +		if (token[0] == '$')
+> > +			return FUNC_STATE_SYMBOL;
+> >  		if (update_arg_name(fevent, token) < 0)
+> >  			break;
+> >  		if (strncmp(token, "0x", 2) == 0)
+> > @@ -542,6 +554,11 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+> >  		fevent->last_arg->index += val;
+> >  		return FUNC_STATE_VAR;
+> >  
+> > +	case FUNC_STATE_SYMBOL:
+> > +		if (!isalpha(token[0]) && token[0] != '_')
+> > +			break;
+> > +		goto equal;
+> > +
+> >  	case FUNC_STATE_ADDR:
+> >  		switch (token[0]) {
+> >  		case ')':
+> > @@ -599,14 +616,26 @@ process_event(struct func_event *fevent, const char *token, enum func_states sta
+> >  		break;
+> >  
+> >  	case FUNC_STATE_EQUAL:
+> > +		if (token[0] == '$')
+> > +			return FUNC_STATE_SYMBOL;
+> >  		if (strncmp(token, "0x", 2) != 0)
+> >  			break;
+> >   equal:
+> >  		if (WARN_ON(!fevent->last_arg))
+> >  			break;
+> > -		ret = kstrtoul(token, 0, &val);
+> > -		if (ret < 0)
+> > -			break;
+> > +		if (isalpha(token[0]) || token[0] != '_') {
+> 
+> I guess you wanted the token[0] being '_'.  Maybe it'd be better adding
+> 
+>   #define isident0(x)  (isalpha(x) || (x) == '_')
+
+If this '$' is only for the symbol or direct address(with 0x prefix),
+you just need to check by !isdigit(token[0]), isn't it? 
+(and if it is insane get_symbol just fails)
 
 Thanks,
-Namhyung
+
+> 
+> ?
+> 
+> Thanks,
+> Namhyung
+> 
+> 
+> > +			ret = get_symbol(token, &val);
+> > +			if (ret < 0)
+> > +				break;
+> > +			if (!fevent->last_arg->name) {
+> > +				if (update_arg_name(fevent, token) < 0)
+> > +					break;
+> > +			}
+> > +		} else {
+> > +			ret = kstrtoul(token, 0, &val);
+> > +			if (ret < 0)
+> > +				break;
+> > +		}
+> >  		update_arg = false;
+> >  		fevent->last_arg->index = val;
+> >  		fevent->last_arg->arg = -1;
+> > -- 
+> > 2.13.6
+> > 
+
+
+-- 
+Masami Hiramatsu <mhiramat@kernel.org>
