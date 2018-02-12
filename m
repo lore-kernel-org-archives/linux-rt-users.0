@@ -1,23 +1,23 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 12/18] tracing: Add accessing direct address from
+Subject: Re: [PATCH 17/18] tracing: Add indirect to indirect access for
  function based events
-Date: Mon, 12 Feb 2018 11:47:02 -0500
-Message-ID: <20180212114702.0452e71c@gandalf.local.home>
+Date: Mon, 12 Feb 2018 12:23:54 -0500
+Message-ID: <20180212122354.1d2fb867@gandalf.local.home>
 References: <20180202230458.840252014@goodmis.org>
-        <20180202231018.828677654@goodmis.org>
-        <20180209003436.GB28206@sejong>
-        <20180209170737.5921ea0f@gandalf.local.home>
-        <20180212020644.GG31513@sejong>
-        <20180213004750.62e7ee5a1038589a80b09b41@kernel.org>
+        <20180202231019.582037880@goodmis.org>
+        <20180209051301.GE28206@sejong>
+        <20180209104758.093d31ad@gandalf.local.home>
+        <20180212021534.GH31513@sejong>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Namhyung Kim <namhyung@kernel.org>, linux-kernel@vger.kernel.org,
+Cc: linux-kernel@vger.kernel.org,
         Linus Torvalds <torvalds@linux-foundation.org>,
         Ingo Molnar <mingo@kernel.org>,
         Andrew Morton <akpm@linux-foundation.org>,
         Thomas Gleixner <tglx@linutronix.de>,
         Peter Zijlstra <peterz@infradead.org>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
         linux-rt-users@vger.kernel.org, linux-trace-users@vger.kernel.org,
         Arnaldo Carvalho de Melo <acme@kernel.org>,
@@ -29,80 +29,25 @@ Cc: Namhyung Kim <namhyung@kernel.org>, linux-kernel@vger.kernel.org,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
         Alexei Starovoitov <alexei.starovoitov@gmail.com>,
         kernel-team@lge.com
-To: Masami Hiramatsu <mhiramat@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180213004750.62e7ee5a1038589a80b09b41@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+To: Namhyung Kim <namhyung@kernel.org>
+Return-path: <linux-trace-users-owner@vger.kernel.org>
+In-Reply-To: <20180212021534.GH31513@sejong>
+Sender: linux-trace-users-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 13 Feb 2018 00:47:50 +0900
-Masami Hiramatsu <mhiramat@kernel.org> wrote:
+On Mon, 12 Feb 2018 11:15:34 +0900
+Namhyung Kim <namhyung@kernel.org> wrote:
 
-> > >  		if (WARN_ON(!fevent->last_arg))
-> > >  			break;
-> > > -		ret = kstrtoul(token, 0, &val);
-> > > -		if (ret < 0)
-> > > -			break;
-> > > +		if (isalpha(token[0]) || token[0] != '_') {  
+> > It should have been:
 > > 
-> > I guess you wanted the token[0] being '_'.  Maybe it'd be better adding
-> > 
-> >   #define isident0(x)  (isalpha(x) || (x) == '_')  
+> > 		return process_redirects(arg, val, buf);  
 > 
-> If this '$' is only for the symbol or direct address(with 0x prefix),
-> you just need to check by !isdigit(token[0]), isn't it? 
-> (and if it is insane get_symbol just fails)
+> But I think you need to consider data type of the arg when
+> dereferencing the last redirect.
 
-I modified a lot of this code for the next version (which I'm still
-tweaking).
+What for?
 
-I have this for next_token() (which I may add for the
-trace_events_filter.c code as Al Viro has recently pointed out issues
-with its parsing):
-
-static char *next_token(char **ptr, char *last)
-{
-	char *arg;
-	char *str;
-
-	if (!*ptr)
-		return NULL;
-
-	arg = *ptr;
-
-	if (*last)
-		*arg = *last;
-
-	if (!*arg)
-		return NULL;
-
-	for (str = arg; *str; str++) {
-		if (!isalnum(*str) && *str != '_')
-			break;
-	}
-	if (*str) {
-		if (str == arg)
-			str++;
-		*last = *str;
-		*str = 0;
-		*ptr = str;
-		return arg;
-	}
-
-	*last = 0;
-	*ptr = NULL;
-	return arg;
-}
-
-
-And this:
-
-static bool valid_name(const char *token)
-{
-	return isalpha(token[0]) || token[0] == '_';
-}
-
-As all tokens will now be either entirely alphanumeric with '_' or a
-single character.
+Also this code has also changed. I haven't posted new patches but my
+latest is in my git tree in the branch ftrace/dynamic-ftrace-events.
 
 -- Steve
