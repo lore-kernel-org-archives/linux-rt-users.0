@@ -1,165 +1,98 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from Galois.linutronix.de ([146.0.238.70]:37526 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S932686AbeBUQad (ORCPT
+Received: from fllnx209.ext.ti.com ([198.47.19.16]:41731 "EHLO
+        fllnx209.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751528AbeBSPRt (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 21 Feb 2018 11:30:33 -0500
-Date: Wed, 21 Feb 2018 17:30:30 +0100
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH RT] net: use task_struct instead of CPU number as the queue
- owner on -RT
-Message-ID: <20180221163030.467igkfyu3bxa7ew@linutronix.de>
+        Mon, 19 Feb 2018 10:17:49 -0500
+From: Dan Murphy <dmurphy@ti.com>
+Subject: Linux 4.9 RT stable has a merge conflict
+Message-ID: <ac8b02c9-a4e5-0707-187f-8243b9b7ff25@ti.com>
+Date: Mon, 19 Feb 2018 09:17:37 -0600
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
+Content-Type: multipart/mixed;
+        boundary="------------98D8F3B1009DAE280468CDF8"
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: linux-rt-users@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, tglx@linutronix.de, Steven Rostedt <rostedt@goodmis.org>, Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
+To: Julia Cartwright <julia@ni.com>, "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 
-In commit ("net: move xmit_recursion to per-task variable on -RT") the
-recursion level was changed to be per-task since we can get preempted in
-BH on -RT. The lock owner should consequently be recorded as the task
-that holds the lock and not the CPU. Otherwise we trigger the "Dead loop
-on virtual device" warning on SMP systems.
+--------------98D8F3B1009DAE280468CDF8
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
 
-Cc: stable-rt@vger.kernel.org
-Reported-by: Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- include/linux/netdevice.h | 54 +++++++++++++++++++++++++++++++++++++++++------
- net/core/dev.c            |  6 +++++-
- 2 files changed, 53 insertions(+), 7 deletions(-)
+Julia
 
-diff --git a/include/linux/netdevice.h b/include/linux/netdevice.h
-index dea370d31dc3..cd0f34dfc5f4 100644
---- a/include/linux/netdevice.h
-+++ b/include/linux/netdevice.h
-@@ -583,7 +583,11 @@ struct netdev_queue {
-  * write-mostly part
-  */
- 	spinlock_t		_xmit_lock ____cacheline_aligned_in_smp;
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	struct task_struct	*xmit_lock_owner;
-+#else
- 	int			xmit_lock_owner;
-+#endif
- 	/*
- 	 * Time (in jiffies) of last Tx
- 	 */
-@@ -3547,10 +3551,48 @@ static inline u32 netif_msg_init(int debug_value, int default_msg_enable_bits)
- 	return (1 << debug_value) - 1;
- }
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static inline void netdev_queue_set_owner(struct netdev_queue *txq, int cpu)
-+{
-+	txq->xmit_lock_owner = current;
-+}
-+
-+static inline void netdev_queue_clear_owner(struct netdev_queue *txq)
-+{
-+	txq->xmit_lock_owner = NULL;
-+}
-+
-+static inline bool netdev_queue_has_owner(struct netdev_queue *txq)
-+{
-+	if (txq->xmit_lock_owner != NULL)
-+		return true;
-+	return false;
-+}
-+
-+#else
-+
-+static inline void netdev_queue_set_owner(struct netdev_queue *txq, int cpu)
-+{
-+	txq->xmit_lock_owner = cpu;
-+}
-+
-+static inline void netdev_queue_clear_owner(struct netdev_queue *txq)
-+{
-+	txq->xmit_lock_owner = -1;
-+}
-+
-+static inline bool netdev_queue_has_owner(struct netdev_queue *txq)
-+{
-+	if (txq->xmit_lock_owner != -1)
-+		return true;
-+	return false;
-+}
-+#endif
-+
- static inline void __netif_tx_lock(struct netdev_queue *txq, int cpu)
- {
- 	spin_lock(&txq->_xmit_lock);
--	txq->xmit_lock_owner = cpu;
-+	netdev_queue_set_owner(txq, cpu);
- }
- 
- static inline bool __netif_tx_acquire(struct netdev_queue *txq)
-@@ -3567,32 +3609,32 @@ static inline void __netif_tx_release(struct netdev_queue *txq)
- static inline void __netif_tx_lock_bh(struct netdev_queue *txq)
- {
- 	spin_lock_bh(&txq->_xmit_lock);
--	txq->xmit_lock_owner = smp_processor_id();
-+	netdev_queue_set_owner(txq, smp_processor_id());
- }
- 
- static inline bool __netif_tx_trylock(struct netdev_queue *txq)
- {
- 	bool ok = spin_trylock(&txq->_xmit_lock);
- 	if (likely(ok))
--		txq->xmit_lock_owner = smp_processor_id();
-+		netdev_queue_set_owner(txq, smp_processor_id());
- 	return ok;
- }
- 
- static inline void __netif_tx_unlock(struct netdev_queue *txq)
- {
--	txq->xmit_lock_owner = -1;
-+	netdev_queue_clear_owner(txq);
- 	spin_unlock(&txq->_xmit_lock);
- }
- 
- static inline void __netif_tx_unlock_bh(struct netdev_queue *txq)
- {
--	txq->xmit_lock_owner = -1;
-+	netdev_queue_clear_owner(txq);
- 	spin_unlock_bh(&txq->_xmit_lock);
- }
- 
- static inline void txq_trans_update(struct netdev_queue *txq)
- {
--	if (txq->xmit_lock_owner != -1)
-+	if (netdev_queue_has_owner(txq))
- 		txq->trans_start = jiffies;
- }
- 
-diff --git a/net/core/dev.c b/net/core/dev.c
-index cd0fdfefdd99..489906baead1 100644
---- a/net/core/dev.c
-+++ b/net/core/dev.c
-@@ -3486,7 +3486,11 @@ static int __dev_queue_xmit(struct sk_buff *skb, void *accel_priv)
- 	if (dev->flags & IFF_UP) {
- 		int cpu = smp_processor_id(); /* ok because BHs are off */
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+		if (txq->xmit_lock_owner != current) {
-+#else
- 		if (txq->xmit_lock_owner != cpu) {
-+#endif
- 			if (unlikely(xmit_rec_read() > XMIT_RECURSION_LIMIT))
- 				goto recursion_alert;
- 
-@@ -7493,7 +7497,7 @@ static void netdev_init_one_queue(struct net_device *dev,
- 	/* Initialize queue lock */
- 	spin_lock_init(&queue->_xmit_lock);
- 	netdev_set_xmit_lockdep_class(&queue->_xmit_lock, dev->type);
--	queue->xmit_lock_owner = -1;
-+	netdev_queue_clear_owner(queue);
- 	netdev_queue_numa_node_write(queue, NUMA_NO_NODE);
- 	queue->dev = dev;
- #ifdef CONFIG_BQL
+The latest 4.9 stable dot release has a conflict on the following files
+
+	both modified:   arch/x86/include/asm/thread_info.h
+	both modified:   kernel/time/posix-timers.c
+	both modified:   kernel/workqueue.c
+
+Attached is the output file from the conflict
+
+Can you please resolve this conflict and update the 4.9 rt stable branch?
+
+Dan
 -- 
-2.16.1
+------------------
+Dan Murphy
 
+--------------98D8F3B1009DAE280468CDF8
+Content-Type: text/plain; charset="UTF-8";
+	name="linux_base_rt_merge_conflict.txt"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="linux_base_rt_merge_conflict.txt"
+
+ZGlmZiAtLWNjIGFyY2gveDg2L2luY2x1ZGUvYXNtL3RocmVhZF9pbmZvLmgKaW5kZXggNDU1
+YzI1MTkyYmMyLDg5OTc4YjljNjY3YS4uMDAwMDAwMDAwMDAwCi0tLSBhL2FyY2gveDg2L2lu
+Y2x1ZGUvYXNtL3RocmVhZF9pbmZvLmgKKysrIGIvYXJjaC94ODYvaW5jbHVkZS9hc20vdGhy
+ZWFkX2luZm8uaApAQEAgLTU0LDggLTU0LDcgKzU0LDEyIEBAQCBzdHJ1Y3QgdGFza19zdHJ1
+Y3QKICAKICBzdHJ1Y3QgdGhyZWFkX2luZm8gewogIAl1bnNpZ25lZCBsb25nCQlmbGFnczsJ
+CS8qIGxvdyBsZXZlbCBmbGFncyAqLworKzw8PDw8PDwgSEVBRAogKwlpbnQgICAgICAgICAg
+ICAgICAgICAgICBwcmVlbXB0X2xhenlfY291bnQ7ICAgICAvKiAwID0+IGxhenkgcHJlZW1w
+dGFibGUKICsJCQkJCQkJICAgPDAgPT4gQlVHICovCisrPT09PT09PQorIAl1MzIJCQlzdGF0
+dXM7CQkvKiB0aHJlYWQgc3luY2hyb25vdXMgZmxhZ3MgKi8KKys+Pj4+Pj4+IDYxZjg0NTc1
+NmNjMWVhYmViOWYwNTQzMGQxMDBmODlhYTViZDhjZDQKICB9OwogIAogICNkZWZpbmUgSU5J
+VF9USFJFQURfSU5GTyh0c2spCQkJXApkaWZmIC0tY2Mga2VybmVsL3RpbWUvcG9zaXgtdGlt
+ZXJzLmMKaW5kZXggNDY0YTk4MTU1YTBlLGZjN2MzN2FkOTBhMC4uMDAwMDAwMDAwMDAwCi0t
+LSBhL2tlcm5lbC90aW1lL3Bvc2l4LXRpbWVycy5jCisrKyBiL2tlcm5lbC90aW1lL3Bvc2l4
+LXRpbWVycy5jCkBAQCAtNTA2LDIwIC01MDYsMjMgKzUwNiwzNCBAQEAgc3RhdGljIGVudW0g
+aHJ0aW1lcl9yZXN0YXJ0IHBvc2l4X3RpbWVyCiAgc3RhdGljIHN0cnVjdCBwaWQgKmdvb2Rf
+c2lnZXZlbnQoc2lnZXZlbnRfdCAqIGV2ZW50KQogIHsKICAJc3RydWN0IHRhc2tfc3RydWN0
+ICpydG4gPSBjdXJyZW50LT5ncm91cF9sZWFkZXI7CiArCWludCBzaWcgPSBldmVudC0+c2ln
+ZXZfc2lnbm87CiAgCi0gCWlmICgoZXZlbnQtPnNpZ2V2X25vdGlmeSAmIFNJR0VWX1RIUkVB
+RF9JRCApICYmCi0gCQkoIShydG4gPSBmaW5kX3Rhc2tfYnlfdnBpZChldmVudC0+c2lnZXZf
+bm90aWZ5X3RocmVhZF9pZCkpIHx8Ci0gCQkgIXNhbWVfdGhyZWFkX2dyb3VwKHJ0biwgY3Vy
+cmVudCkgfHwKLSAJCSAoZXZlbnQtPnNpZ2V2X25vdGlmeSAmIH5TSUdFVl9USFJFQURfSUQp
+ICE9IFNJR0VWX1NJR05BTCkpCisgCXN3aXRjaCAoZXZlbnQtPnNpZ2V2X25vdGlmeSkgewor
+IAljYXNlIFNJR0VWX1NJR05BTCB8IFNJR0VWX1RIUkVBRF9JRDoKKyAJCXJ0biA9IGZpbmRf
+dGFza19ieV92cGlkKGV2ZW50LT5zaWdldl9ub3RpZnlfdGhyZWFkX2lkKTsKKyAJCWlmICgh
+cnRuIHx8ICFzYW1lX3RocmVhZF9ncm91cChydG4sIGN1cnJlbnQpKQorIAkJCXJldHVybiBO
+VUxMOworIAkJLyogRkFMTFRIUlUgKi8KKyAJY2FzZSBTSUdFVl9TSUdOQUw6CisgCWNhc2Ug
+U0lHRVZfVEhSRUFEOgorIAkJaWYgKGV2ZW50LT5zaWdldl9zaWdubyA8PSAwIHx8IGV2ZW50
+LT5zaWdldl9zaWdubyA+IFNJR1JUTUFYKQorIAkJCXJldHVybiBOVUxMOworIAkJLyogRkFM
+TFRIUlUgKi8KKyAJY2FzZSBTSUdFVl9OT05FOgorIAkJcmV0dXJuIHRhc2tfcGlkKHJ0bik7
+CisgCWRlZmF1bHQ6CiAgCQlyZXR1cm4gTlVMTDsKKys8PDw8PDw8IEhFQUQKICsKICsJaWYg
+KCgoZXZlbnQtPnNpZ2V2X25vdGlmeSAmIH5TSUdFVl9USFJFQURfSUQpICE9IFNJR0VWX05P
+TkUpICYmCiArCSAgICAoc2lnIDw9IDAgfHwgc2lnID4gU0lHUlRNQVggfHwgc2lnX2tlcm5l
+bF9vbmx5KHNpZykgfHwKICsJICAgICBzaWdfa2VybmVsX2NvcmVkdW1wKHNpZykpKQogKwkJ
+cmV0dXJuIE5VTEw7CiArCiArCXJldHVybiB0YXNrX3BpZChydG4pOworKz09PT09PT0KKyAJ
+fQorKz4+Pj4+Pj4gNjFmODQ1NzU2Y2MxZWFiZWI5ZjA1NDMwZDEwMGY4OWFhNWJkOGNkNAog
+IH0KICAKICB2b2lkIHBvc2l4X3RpbWVyc19yZWdpc3Rlcl9jbG9jayhjb25zdCBjbG9ja2lk
+X3QgY2xvY2tfaWQsCmRpZmYgLS1jYyBrZXJuZWwvd29ya3F1ZXVlLmMKaW5kZXggN2VlZDEy
+OWYxMTRhLGViZmVhNWY5NGI2Ni4uMDAwMDAwMDAwMDAwCi0tLSBhL2tlcm5lbC93b3JrcXVl
+dWUuYworKysgYi9rZXJuZWwvd29ya3F1ZXVlLmMKQEBAIC00OCw4IC00OCw3ICs0OCwxMiBA
+QEAKICAjaW5jbHVkZSA8bGludXgvbm9kZW1hc2suaD4KICAjaW5jbHVkZSA8bGludXgvbW9k
+dWxlcGFyYW0uaD4KICAjaW5jbHVkZSA8bGludXgvdWFjY2Vzcy5oPgorKzw8PDw8PDwgSEVB
+RAogKyNpbmNsdWRlIDxsaW51eC9sb2NhbGxvY2suaD4KICsjaW5jbHVkZSA8bGludXgvZGVs
+YXkuaD4KKys9PT09PT09CisgI2luY2x1ZGUgPGxpbnV4L25taS5oPgorKz4+Pj4+Pj4gNjFm
+ODQ1NzU2Y2MxZWFiZWI5ZjA1NDMwZDEwMGY4OWFhNWJkOGNkNAogIAogICNpbmNsdWRlICJ3
+b3JrcXVldWVfaW50ZXJuYWwuaCIKICAKQEBAIC00NDkyLDkgLTQ0NTgsMTUgKzQ1MDIsMTUg
+QEBAIHZvaWQgc2hvd193b3JrcXVldWVfc3RhdGUodm9pZAogIAkJcHJfY29udCgiXG4iKTsK
+ICAJbmV4dF9wb29sOgogIAkJc3Bpbl91bmxvY2tfaXJxcmVzdG9yZSgmcG9vbC0+bG9jaywg
+ZmxhZ3MpOworIAkJLyoKKyAJCSAqIFdlIGNvdWxkIGJlIHByaW50aW5nIGEgbG90IGZyb20g
+YXRvbWljIGNvbnRleHQsIGUuZy4KKyAJCSAqIHN5c3JxLXQgLT4gc2hvd193b3JrcXVldWVf
+c3RhdGUoKS4gQXZvaWQgdHJpZ2dlcmluZworIAkJICogaGFyZCBsb2NrdXAuCisgCQkgKi8K
+KyAJCXRvdWNoX25taV93YXRjaGRvZygpOwogIAl9CiAgCiAtCXJjdV9yZWFkX3VubG9ja19z
+Y2hlZCgpOwogKwlyY3VfcmVhZF91bmxvY2soKTsKICB9CiAgCiAgLyoK
+--------------98D8F3B1009DAE280468CDF8--
