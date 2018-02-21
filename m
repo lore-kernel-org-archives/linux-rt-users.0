@@ -1,57 +1,35 @@
-Return-Path: linux-kernel-owner@vger.kernel.org
-Date: Thu, 22 Feb 2018 20:14:21 +0100
+Return-Path: linux-rt-users-owner@vger.kernel.org
+Received: from Galois.linutronix.de ([146.0.238.70]:37526 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S932686AbeBUQad (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 21 Feb 2018 11:30:33 -0500
+Date: Wed, 21 Feb 2018 17:30:30 +0100
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] v4.14.20-rt17
-Message-ID: <20180222191420.ifs7yt33zhhplmuk@linutronix.de>
+Subject: [PATCH RT] net: use task_struct instead of CPU number as the queue
+ owner on -RT
+Message-ID: <20180221163030.467igkfyu3bxa7ew@linutronix.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-rt-users <linux-rt-users@vger.kernel.org>, Steven Rostedt <rostedt@goodmis.org>
+Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
+To: linux-rt-users@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, tglx@linutronix.de, Steven Rostedt <rostedt@goodmis.org>, Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
 
-Dear RT folks!
+In commit ("net: move xmit_recursion to per-task variable on -RT") the
+recursion level was changed to be per-task since we can get preempted in
+BH on -RT. The lock owner should consequently be recorded as the task
+that holds the lock and not the CPU. Otherwise we trigger the "Dead loop
+on virtual device" warning on SMP systems.
 
-I'm pleased to announce the v4.14.20-rt17 patch set. 
-
-Changes since v4.14.20-rt16:
-
-  - A RCU warning was disabled if we schedule() while we acquire a
-    sleeping lock. The warning was still seen on UP only kernels and is
-    now disabled. Reported by Grygorii Strashko.
-
-  - The recording of the recursion limit in networking was changed from
-    per-CPU to per-task on RT. This was done because BH-context can be
-    preempted on RT and therefore multiple tasks may attempt to send a
-    packet and so wrongly increase the counter.
-    The queue lock owner was still recording the CPU which was holding
-    the lock instead the task. This will lead to a recursion warning if
-    the same transmit queue is already used (locked) by another task.
-    Reported by Kurt Kanzenbach.
-
-Known issues
-     - A warning triggered in "rcu_note_context_switch" originated from
-       SyS_timer_gettime(). The issue was always there, it is now
-       visible. Reported by Grygorii Strashko and Daniel Wagner.
-
-The delta patch against v4.14.20-rt16 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/incr/patch-4.14.20-rt16-rt17.patch.xz
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.14.20-rt17
-
-The RT patch against v4.14.20 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patch-4.14.20-rt17.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patches-4.14.20-rt17.tar.xz
-
-Sebastian
+Cc: stable-rt@vger.kernel.org
+Reported-by: Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ include/linux/netdevice.h | 54 +++++++++++++++++++++++++++++++++++++++++------
+ net/core/dev.c            |  6 +++++-
+ 2 files changed, 53 insertions(+), 7 deletions(-)
 
 diff --git a/include/linux/netdevice.h b/include/linux/netdevice.h
 index dea370d31dc3..cd0f34dfc5f4 100644
@@ -157,117 +135,6 @@ index dea370d31dc3..cd0f34dfc5f4 100644
  		txq->trans_start = jiffies;
  }
  
-diff --git a/include/linux/preempt.h b/include/linux/preempt.h
-index b0e6248c8a3c..0591df500e9d 100644
---- a/include/linux/preempt.h
-+++ b/include/linux/preempt.h
-@@ -231,6 +231,15 @@ extern void migrate_enable(void);
- 
- int __migrate_disabled(struct task_struct *p);
- 
-+#elif !defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
-+
-+extern void migrate_disable(void);
-+extern void migrate_enable(void);
-+static inline int __migrate_disabled(struct task_struct *p)
-+{
-+	return 0;
-+}
-+
- #else
- #define migrate_disable()		barrier()
- #define migrate_enable()		barrier()
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index c42f64997ccd..a8909bcb26ec 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -593,6 +593,12 @@ struct task_struct {
- # ifdef CONFIG_SCHED_DEBUG
- 	int				migrate_disable_atomic;
- # endif
-+
-+#elif !defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
-+	int				migrate_disable;
-+# ifdef CONFIG_SCHED_DEBUG
-+	int				migrate_disable_atomic;
-+# endif
- #endif
- 
- #ifdef CONFIG_PREEMPT_RCU
-diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
-index 36e44ecd576e..3315ebad932f 100644
---- a/kernel/rcu/tree_plugin.h
-+++ b/kernel/rcu/tree_plugin.h
-@@ -304,7 +304,7 @@ static void rcu_preempt_note_context_switch(bool preempt)
- 	int mg_counter = 0;
- 
- 	RCU_LOCKDEP_WARN(!irqs_disabled(), "rcu_preempt_note_context_switch() invoked with interrupts enabled!!!\n");
--#if defined(CONFIG_PREEMPT_COUNT) && defined(CONFIG_SMP)
-+#if defined(CONFIG_PREEMPT_RT_BASE)
- 	mg_counter = t->migrate_disable;
- #endif
- 	WARN_ON_ONCE(!preempt && t->rcu_read_lock_nesting > 0 && !mg_counter);
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 1ab422da7706..ea8bfeddcea0 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -7047,4 +7047,49 @@ void migrate_enable(void)
- 	preempt_enable();
- }
- EXPORT_SYMBOL(migrate_enable);
-+
-+#elif !defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
-+void migrate_disable(void)
-+{
-+	struct task_struct *p = current;
-+
-+	if (in_atomic() || irqs_disabled()) {
-+#ifdef CONFIG_SCHED_DEBUG
-+		p->migrate_disable_atomic++;
-+#endif
-+		return;
-+	}
-+#ifdef CONFIG_SCHED_DEBUG
-+	if (unlikely(p->migrate_disable_atomic)) {
-+		tracing_off();
-+		WARN_ON_ONCE(1);
-+	}
-+#endif
-+
-+	p->migrate_disable++;
-+}
-+EXPORT_SYMBOL(migrate_disable);
-+
-+void migrate_enable(void)
-+{
-+	struct task_struct *p = current;
-+
-+	if (in_atomic() || irqs_disabled()) {
-+#ifdef CONFIG_SCHED_DEBUG
-+		p->migrate_disable_atomic--;
-+#endif
-+		return;
-+	}
-+
-+#ifdef CONFIG_SCHED_DEBUG
-+	if (unlikely(p->migrate_disable_atomic)) {
-+		tracing_off();
-+		WARN_ON_ONCE(1);
-+	}
-+#endif
-+
-+	WARN_ON_ONCE(p->migrate_disable <= 0);
-+	p->migrate_disable--;
-+}
-+EXPORT_SYMBOL(migrate_enable);
- #endif
-diff --git a/localversion-rt b/localversion-rt
-index 1199ebade17b..1e584b47c987 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt16
-+-rt17
 diff --git a/net/core/dev.c b/net/core/dev.c
 index cd0fdfefdd99..489906baead1 100644
 --- a/net/core/dev.c
@@ -293,3 +160,6 @@ index cd0fdfefdd99..489906baead1 100644
  	netdev_queue_numa_node_write(queue, NUMA_NO_NODE);
  	queue->dev = dev;
  #ifdef CONFIG_BQL
+-- 
+2.16.1
+
