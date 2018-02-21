@@ -1,98 +1,151 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from fllnx209.ext.ti.com ([198.47.19.16]:41731 "EHLO
-        fllnx209.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751528AbeBSPRt (ORCPT
+Received: from mx0a-00010702.pphosted.com ([148.163.156.75]:40840 "EHLO
+        mx0b-00010702.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S932970AbeBUNBq (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 19 Feb 2018 10:17:49 -0500
-From: Dan Murphy <dmurphy@ti.com>
-Subject: Linux 4.9 RT stable has a merge conflict
-Message-ID: <ac8b02c9-a4e5-0707-187f-8243b9b7ff25@ti.com>
-Date: Mon, 19 Feb 2018 09:17:37 -0600
+        Wed, 21 Feb 2018 08:01:46 -0500
+Date: Wed, 21 Feb 2018 07:01:27 -0600
+From: Julia Cartwright <julia@ni.com>
+Subject: Re: Linux 4.9 RT stable has a merge conflict
+Message-ID: <20180221130127.GN951@jcartwri.amer.corp.natinst.com>
+References: <ac8b02c9-a4e5-0707-187f-8243b9b7ff25@ti.com>
 MIME-Version: 1.0
-Content-Type: multipart/mixed;
-        boundary="------------98D8F3B1009DAE280468CDF8"
-Content-Language: en-US
+Content-Type: text/plain; charset="us-ascii"
+Content-Disposition: inline
+In-Reply-To: <ac8b02c9-a4e5-0707-187f-8243b9b7ff25@ti.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: Julia Cartwright <julia@ni.com>, "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Dan Murphy <dmurphy@ti.com>
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 
---------------98D8F3B1009DAE280468CDF8
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Hey Dan-
 
-Julia
+On Mon, Feb 19, 2018 at 09:17:37AM -0600, Dan Murphy wrote:
+> Julia
+> 
+> The latest 4.9 stable dot release has a conflict on the following files
+> 
+> 	both modified:   arch/x86/include/asm/thread_info.h
+> 	both modified:   kernel/time/posix-timers.c
+> 	both modified:   kernel/workqueue.c
+> 
+> Attached is the output file from the conflict
+> 
+> Can you please resolve this conflict and update the 4.9 rt stable branch?
 
-The latest 4.9 stable dot release has a conflict on the following files
+Yes, that is the role of a maintainer :).  I've got a preliminary
+resolution (see below), and will do testing over the next few days
+before releasing it.
 
-	both modified:   arch/x86/include/asm/thread_info.h
-	both modified:   kernel/time/posix-timers.c
-	both modified:   kernel/workqueue.c
+Thanks,
+   Julia
 
-Attached is the output file from the conflict
-
-Can you please resolve this conflict and update the 4.9 rt stable branch?
-
-Dan
--- 
-------------------
-Dan Murphy
-
---------------98D8F3B1009DAE280468CDF8
-Content-Type: text/plain; charset="UTF-8";
-	name="linux_base_rt_merge_conflict.txt"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="linux_base_rt_merge_conflict.txt"
-
-ZGlmZiAtLWNjIGFyY2gveDg2L2luY2x1ZGUvYXNtL3RocmVhZF9pbmZvLmgKaW5kZXggNDU1
-YzI1MTkyYmMyLDg5OTc4YjljNjY3YS4uMDAwMDAwMDAwMDAwCi0tLSBhL2FyY2gveDg2L2lu
-Y2x1ZGUvYXNtL3RocmVhZF9pbmZvLmgKKysrIGIvYXJjaC94ODYvaW5jbHVkZS9hc20vdGhy
-ZWFkX2luZm8uaApAQEAgLTU0LDggLTU0LDcgKzU0LDEyIEBAQCBzdHJ1Y3QgdGFza19zdHJ1
-Y3QKICAKICBzdHJ1Y3QgdGhyZWFkX2luZm8gewogIAl1bnNpZ25lZCBsb25nCQlmbGFnczsJ
-CS8qIGxvdyBsZXZlbCBmbGFncyAqLworKzw8PDw8PDwgSEVBRAogKwlpbnQgICAgICAgICAg
-ICAgICAgICAgICBwcmVlbXB0X2xhenlfY291bnQ7ICAgICAvKiAwID0+IGxhenkgcHJlZW1w
-dGFibGUKICsJCQkJCQkJICAgPDAgPT4gQlVHICovCisrPT09PT09PQorIAl1MzIJCQlzdGF0
-dXM7CQkvKiB0aHJlYWQgc3luY2hyb25vdXMgZmxhZ3MgKi8KKys+Pj4+Pj4+IDYxZjg0NTc1
-NmNjMWVhYmViOWYwNTQzMGQxMDBmODlhYTViZDhjZDQKICB9OwogIAogICNkZWZpbmUgSU5J
-VF9USFJFQURfSU5GTyh0c2spCQkJXApkaWZmIC0tY2Mga2VybmVsL3RpbWUvcG9zaXgtdGlt
-ZXJzLmMKaW5kZXggNDY0YTk4MTU1YTBlLGZjN2MzN2FkOTBhMC4uMDAwMDAwMDAwMDAwCi0t
-LSBhL2tlcm5lbC90aW1lL3Bvc2l4LXRpbWVycy5jCisrKyBiL2tlcm5lbC90aW1lL3Bvc2l4
-LXRpbWVycy5jCkBAQCAtNTA2LDIwIC01MDYsMjMgKzUwNiwzNCBAQEAgc3RhdGljIGVudW0g
-aHJ0aW1lcl9yZXN0YXJ0IHBvc2l4X3RpbWVyCiAgc3RhdGljIHN0cnVjdCBwaWQgKmdvb2Rf
-c2lnZXZlbnQoc2lnZXZlbnRfdCAqIGV2ZW50KQogIHsKICAJc3RydWN0IHRhc2tfc3RydWN0
-ICpydG4gPSBjdXJyZW50LT5ncm91cF9sZWFkZXI7CiArCWludCBzaWcgPSBldmVudC0+c2ln
-ZXZfc2lnbm87CiAgCi0gCWlmICgoZXZlbnQtPnNpZ2V2X25vdGlmeSAmIFNJR0VWX1RIUkVB
-RF9JRCApICYmCi0gCQkoIShydG4gPSBmaW5kX3Rhc2tfYnlfdnBpZChldmVudC0+c2lnZXZf
-bm90aWZ5X3RocmVhZF9pZCkpIHx8Ci0gCQkgIXNhbWVfdGhyZWFkX2dyb3VwKHJ0biwgY3Vy
-cmVudCkgfHwKLSAJCSAoZXZlbnQtPnNpZ2V2X25vdGlmeSAmIH5TSUdFVl9USFJFQURfSUQp
-ICE9IFNJR0VWX1NJR05BTCkpCisgCXN3aXRjaCAoZXZlbnQtPnNpZ2V2X25vdGlmeSkgewor
-IAljYXNlIFNJR0VWX1NJR05BTCB8IFNJR0VWX1RIUkVBRF9JRDoKKyAJCXJ0biA9IGZpbmRf
-dGFza19ieV92cGlkKGV2ZW50LT5zaWdldl9ub3RpZnlfdGhyZWFkX2lkKTsKKyAJCWlmICgh
-cnRuIHx8ICFzYW1lX3RocmVhZF9ncm91cChydG4sIGN1cnJlbnQpKQorIAkJCXJldHVybiBO
-VUxMOworIAkJLyogRkFMTFRIUlUgKi8KKyAJY2FzZSBTSUdFVl9TSUdOQUw6CisgCWNhc2Ug
-U0lHRVZfVEhSRUFEOgorIAkJaWYgKGV2ZW50LT5zaWdldl9zaWdubyA8PSAwIHx8IGV2ZW50
-LT5zaWdldl9zaWdubyA+IFNJR1JUTUFYKQorIAkJCXJldHVybiBOVUxMOworIAkJLyogRkFM
-TFRIUlUgKi8KKyAJY2FzZSBTSUdFVl9OT05FOgorIAkJcmV0dXJuIHRhc2tfcGlkKHJ0bik7
-CisgCWRlZmF1bHQ6CiAgCQlyZXR1cm4gTlVMTDsKKys8PDw8PDw8IEhFQUQKICsKICsJaWYg
-KCgoZXZlbnQtPnNpZ2V2X25vdGlmeSAmIH5TSUdFVl9USFJFQURfSUQpICE9IFNJR0VWX05P
-TkUpICYmCiArCSAgICAoc2lnIDw9IDAgfHwgc2lnID4gU0lHUlRNQVggfHwgc2lnX2tlcm5l
-bF9vbmx5KHNpZykgfHwKICsJICAgICBzaWdfa2VybmVsX2NvcmVkdW1wKHNpZykpKQogKwkJ
-cmV0dXJuIE5VTEw7CiArCiArCXJldHVybiB0YXNrX3BpZChydG4pOworKz09PT09PT0KKyAJ
-fQorKz4+Pj4+Pj4gNjFmODQ1NzU2Y2MxZWFiZWI5ZjA1NDMwZDEwMGY4OWFhNWJkOGNkNAog
-IH0KICAKICB2b2lkIHBvc2l4X3RpbWVyc19yZWdpc3Rlcl9jbG9jayhjb25zdCBjbG9ja2lk
-X3QgY2xvY2tfaWQsCmRpZmYgLS1jYyBrZXJuZWwvd29ya3F1ZXVlLmMKaW5kZXggN2VlZDEy
-OWYxMTRhLGViZmVhNWY5NGI2Ni4uMDAwMDAwMDAwMDAwCi0tLSBhL2tlcm5lbC93b3JrcXVl
-dWUuYworKysgYi9rZXJuZWwvd29ya3F1ZXVlLmMKQEBAIC00OCw4IC00OCw3ICs0OCwxMiBA
-QEAKICAjaW5jbHVkZSA8bGludXgvbm9kZW1hc2suaD4KICAjaW5jbHVkZSA8bGludXgvbW9k
-dWxlcGFyYW0uaD4KICAjaW5jbHVkZSA8bGludXgvdWFjY2Vzcy5oPgorKzw8PDw8PDwgSEVB
-RAogKyNpbmNsdWRlIDxsaW51eC9sb2NhbGxvY2suaD4KICsjaW5jbHVkZSA8bGludXgvZGVs
-YXkuaD4KKys9PT09PT09CisgI2luY2x1ZGUgPGxpbnV4L25taS5oPgorKz4+Pj4+Pj4gNjFm
-ODQ1NzU2Y2MxZWFiZWI5ZjA1NDMwZDEwMGY4OWFhNWJkOGNkNAogIAogICNpbmNsdWRlICJ3
-b3JrcXVldWVfaW50ZXJuYWwuaCIKICAKQEBAIC00NDkyLDkgLTQ0NTgsMTUgKzQ1MDIsMTUg
-QEBAIHZvaWQgc2hvd193b3JrcXVldWVfc3RhdGUodm9pZAogIAkJcHJfY29udCgiXG4iKTsK
-ICAJbmV4dF9wb29sOgogIAkJc3Bpbl91bmxvY2tfaXJxcmVzdG9yZSgmcG9vbC0+bG9jaywg
-ZmxhZ3MpOworIAkJLyoKKyAJCSAqIFdlIGNvdWxkIGJlIHByaW50aW5nIGEgbG90IGZyb20g
-YXRvbWljIGNvbnRleHQsIGUuZy4KKyAJCSAqIHN5c3JxLXQgLT4gc2hvd193b3JrcXVldWVf
-c3RhdGUoKS4gQXZvaWQgdHJpZ2dlcmluZworIAkJICogaGFyZCBsb2NrdXAuCisgCQkgKi8K
-KyAJCXRvdWNoX25taV93YXRjaGRvZygpOwogIAl9CiAgCiAtCXJjdV9yZWFkX3VubG9ja19z
-Y2hlZCgpOwogKwlyY3VfcmVhZF91bmxvY2soKTsKICB9CiAgCiAgLyoK
---------------98D8F3B1009DAE280468CDF8--
+--
+diff --cc arch/x86/include/asm/thread_info.h
+index 5ceb3a1c2b1a,89978b9c667a..b65c6705d6b9
+--- a/arch/x86/include/asm/thread_info.h
++++ b/arch/x86/include/asm/thread_info.h
+@@@ -54,8 -54,7 +54,9 @@@ struct task_struct
+  
+  struct thread_info {
+  	unsigned long		flags;		/* low level flags */
+ +	int                     preempt_lazy_count;     /* 0 => lazy preemptable
+ +							   <0 => BUG */
++ 	u32			status;		/* thread synchronous flags */
+  };
+  
+  #define INIT_THREAD_INFO(tsk)			\
+diff --cc kernel/time/hrtimer.c
+index 369203af6406,54fd2fed36e9..bb0bf0651b99
+--- a/kernel/time/hrtimer.c
++++ b/kernel/time/hrtimer.c
+@@@ -1824,14 -1610,11 +1826,15 @@@ int hrtimers_prepare_cpu(unsigned int c
+  	for (i = 0; i < HRTIMER_MAX_CLOCK_BASES; i++) {
+  		cpu_base->clock_base[i].cpu_base = cpu_base;
+  		timerqueue_init_head(&cpu_base->clock_base[i].active);
+ +		INIT_LIST_HEAD(&cpu_base->clock_base[i].expired);
+  	}
+  
++ 	cpu_base->active_bases = 0;
+  	cpu_base->cpu = cpu;
+  	hrtimer_init_hres(cpu_base);
+ +#ifdef CONFIG_PREEMPT_RT_BASE
+ +	init_waitqueue_head(&cpu_base->wait);
+ +#endif
+  	return 0;
+  }
+  
+diff --cc kernel/time/posix-timers.c
+index 464a98155a0e,fc7c37ad90a0..d4ee07e00b74
+--- a/kernel/time/posix-timers.c
++++ b/kernel/time/posix-timers.c
+@@@ -506,20 -506,23 +506,26 @@@ static enum hrtimer_restart posix_timer
+  static struct pid *good_sigevent(sigevent_t * event)
+  {
+  	struct task_struct *rtn = current->group_leader;
+ +	int sig = event->sigev_signo;
+  
+- 	if ((event->sigev_notify & SIGEV_THREAD_ID ) &&
+- 		(!(rtn = find_task_by_vpid(event->sigev_notify_thread_id)) ||
+- 		 !same_thread_group(rtn, current) ||
+- 		 (event->sigev_notify & ~SIGEV_THREAD_ID) != SIGEV_SIGNAL))
++ 	switch (event->sigev_notify) {
++ 	case SIGEV_SIGNAL | SIGEV_THREAD_ID:
++ 		rtn = find_task_by_vpid(event->sigev_notify_thread_id);
++ 		if (!rtn || !same_thread_group(rtn, current))
++ 			return NULL;
++ 		/* FALLTHRU */
++ 	case SIGEV_SIGNAL:
++ 	case SIGEV_THREAD:
++ 		if (event->sigev_signo <= 0 || event->sigev_signo > SIGRTMAX)
++ 			return NULL;
+++		if (sig_kernel_only(event->sigev_signo) ||
+++		    sig_kernel_coredump(event->sigev_signo)
+++			return NULL;
++ 		/* FALLTHRU */
++ 	case SIGEV_NONE:
++ 		return task_pid(rtn);
++ 	default:
+  		return NULL;
+- 
+- 	if (((event->sigev_notify & ~SIGEV_THREAD_ID) != SIGEV_NONE) &&
+- 	    (sig <= 0 || sig > SIGRTMAX || sig_kernel_only(sig) ||
+- 	     sig_kernel_coredump(sig)))
+- 		return NULL;
+- 
+- 	return task_pid(rtn);
+ -	}
+  }
+  
+  void posix_timers_register_clock(const clockid_t clock_id,
+diff --cc kernel/workqueue.c
+index 7eed129f114a,ebfea5f94b66..0750110471e4
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@@ -48,8 -48,7 +48,9 @@@
+  #include <linux/nodemask.h>
+  #include <linux/moduleparam.h>
+  #include <linux/uaccess.h>
+ +#include <linux/locallock.h>
+ +#include <linux/delay.h>
++ #include <linux/nmi.h>
+  
+  #include "workqueue_internal.h"
+  
+@@@ -4492,9 -4458,15 +4499,15 @@@ void show_workqueue_state(void
+  		pr_cont("\n");
+  	next_pool:
+  		spin_unlock_irqrestore(&pool->lock, flags);
++ 		/*
++ 		 * We could be printing a lot from atomic context, e.g.
++ 		 * sysrq-t -> show_workqueue_state(). Avoid triggering
++ 		 * hard lockup.
++ 		 */
++ 		touch_nmi_watchdog();
+  	}
+  
+ -	rcu_read_unlock_sched();
+ +	rcu_read_unlock();
+  }
+  
+  /*
