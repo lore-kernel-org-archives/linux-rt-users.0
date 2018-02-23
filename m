@@ -1,54 +1,59 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mail-oi0-f50.google.com ([209.85.218.50]:45647 "EHLO
-        mail-oi0-f50.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751158AbeBWBXL (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 22 Feb 2018 20:23:11 -0500
-Received: by mail-oi0-f50.google.com with SMTP id j79so5160769oib.12
-        for <linux-rt-users@vger.kernel.org>; Thu, 22 Feb 2018 17:23:11 -0800 (PST)
+Received: from mail-ve1eur01on0048.outbound.protection.outlook.com ([104.47.1.48]:34731
+        "EHLO EUR01-VE1-obe.outbound.protection.outlook.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S1750879AbeBWIqj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 23 Feb 2018 03:46:39 -0500
+From: =?utf-8?B?U3TDqXBoYW5lIEdyb3NqZWFu?= <s.grosjean@peak-system.com>
+Subject: RE: peak_pciefd 0000:06:00.0 can1: can_put_echo_skb: BUG! echo_skb is
+ occupied!
+Date: Fri, 23 Feb 2018 08:46:36 +0000
+Message-ID: <AM5PR03MB296341BA74D9A542E92E34E9D6CC0@AM5PR03MB2963.eurprd03.prod.outlook.com>
+References: <CADJaPTADCHOgHJYJYkaR0pboqNZH_jH_zY0vWAzMxp1NBLTDcA@mail.gmail.com>
+In-Reply-To: <CADJaPTADCHOgHJYJYkaR0pboqNZH_jH_zY0vWAzMxp1NBLTDcA@mail.gmail.com>
+Content-Language: en-US
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 MIME-Version: 1.0
-From: Diana Burgess <diana@peloton-tech.com>
-Date: Thu, 22 Feb 2018 17:23:10 -0800
-Message-ID: <CADJaPTADCHOgHJYJYkaR0pboqNZH_jH_zY0vWAzMxp1NBLTDcA@mail.gmail.com>
-Subject: peak_pciefd 0000:06:00.0 can1: can_put_echo_skb: BUG! echo_skb is occupied!
-Content-Type: text/plain; charset="UTF-8"
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: s.grosjean@peak-system.com, linux-can@vger.kernel.org, linux-rt-users@vger.kernel.org
-Cc: Philipp Schrader <philipp@peloton-tech.com>
+To: Diana Burgess <diana@peloton-tech.com>
+Cc: Philipp Schrader <philipp@peloton-tech.com>, "linux-can@vger.kernel.org" <linux-can@vger.kernel.org>, "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 
-Hi,
-
-I am seeing the following error:
-
-peak_pciefd 0000:06:00.0 can1: can_put_echo_skb: BUG! echo_skb is occupied!
-
-I am running 4.13.10-rt3 kernel using the following PCIe card connect
-to my board:
-
-06:00.0 Network controller: PEAK-System Technik GmbH Device 0013 (rev 01)
-    Subsystem: PEAK-System Technik GmbH Device 0014
-    Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop-
-ParErr- Stepping- SERR- FastB2B- DisINTx-
-    Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort-
-<TAbort- <MAbort- >SERR- <PERR- INTx-
-    Latency: 0, Cache Line Size: 64 bytes
-    Interrupt: pin A routed to IRQ 16
-    Region 0: Memory at fb100000 (32-bit, non-prefetchable) [size=64K]
-    Capabilities: <access denied>
-    Kernel driver in use: peak_pciefd
-
-This occurs when I am sending messages over the CAN bus with
-and without the other device on the bus also sending.
-
-I have not seen this issue with other can devices in similar setups
- (different kernel versions). It also only seems to occur on CAN1 which is
-set to a higher baud rate then all the other buses.
-
-I do have CONFIG PREEMPT RT turned on which might be exposing this
-issue more often.
-
-Has anyone seen this before? Does anyone know how to fix this or have a fix?
-
-Thanks,
-Diana Burgess
+SGkgRGlhbmEsDQoNCldlJ3ZlIHB1c2hlZCBhIHBhdGNoIHRvIGZpeCBhIHBvdGVudGlhbCBpc3N1
+ZSBhcm91bmQgdGhlIGhhbmRsaW5nIG9mIHRoZSBlY2hvIGZyYW1lcy4gSXQgaGFzIGJlZW4gaW5j
+bHVkZWQgaW4gNC4xNS4gQXJlIHlvdSBhYmxlIHRvIGJ1aWxkIGFuZCBydW4gdGhpcyB2ZXJzaW9u
+IG9mIHRoZSBLZXJuZWw/DQoNClJlZ2FyZHMsDQoNCj4gLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0t
+LS0NCj4gRnJvbTogRGlhbmEgQnVyZ2VzcyA8ZGlhbmFAcGVsb3Rvbi10ZWNoLmNvbT4NCj4gU2Vu
+dDogdmVuZHJlZGkgMjMgZsOpdnJpZXIgMjAxOCAwMjoyMw0KPiBUbzogU3TDqXBoYW5lIEdyb3Nq
+ZWFuIDxzLmdyb3NqZWFuQHBlYWstc3lzdGVtLmNvbT47IGxpbnV4LQ0KPiBjYW5Admdlci5rZXJu
+ZWwub3JnOyBsaW51eC1ydC11c2Vyc0B2Z2VyLmtlcm5lbC5vcmcNCj4gQ2M6IFBoaWxpcHAgU2No
+cmFkZXIgPHBoaWxpcHBAcGVsb3Rvbi10ZWNoLmNvbT4NCj4gU3ViamVjdDogcGVha19wY2llZmQg
+MDAwMDowNjowMC4wIGNhbjE6IGNhbl9wdXRfZWNob19za2I6IEJVRyEgZWNob19za2INCj4gaXMg
+b2NjdXBpZWQhDQo+DQo+IEhpLA0KPg0KPiBJIGFtIHNlZWluZyB0aGUgZm9sbG93aW5nIGVycm9y
+Og0KPg0KPiBwZWFrX3BjaWVmZCAwMDAwOjA2OjAwLjAgY2FuMTogY2FuX3B1dF9lY2hvX3NrYjog
+QlVHISBlY2hvX3NrYiBpcw0KPiBvY2N1cGllZCENCj4NCj4gSSBhbSBydW5uaW5nIDQuMTMuMTAt
+cnQzIGtlcm5lbCB1c2luZyB0aGUgZm9sbG93aW5nIFBDSWUgY2FyZCBjb25uZWN0IHRvIG15DQo+
+IGJvYXJkOg0KPg0KPiAwNjowMC4wIE5ldHdvcmsgY29udHJvbGxlcjogUEVBSy1TeXN0ZW0gVGVj
+aG5payBHbWJIIERldmljZSAwMDEzIChyZXYgMDEpDQo+ICAgICBTdWJzeXN0ZW06IFBFQUstU3lz
+dGVtIFRlY2huaWsgR21iSCBEZXZpY2UgMDAxNA0KPiAgICAgQ29udHJvbDogSS9PKyBNZW0rIEJ1
+c01hc3RlcisgU3BlY0N5Y2xlLSBNZW1XSU5WLSBWR0FTbm9vcC0NCj4gUGFyRXJyLSBTdGVwcGlu
+Zy0gU0VSUi0gRmFzdEIyQi0gRGlzSU5UeC0NCj4gICAgIFN0YXR1czogQ2FwKyA2Nk1Iei0gVURG
+LSBGYXN0QjJCLSBQYXJFcnItIERFVlNFTD1mYXN0ID5UQWJvcnQtDQo+IDxUQWJvcnQtIDxNQWJv
+cnQtID5TRVJSLSA8UEVSUi0gSU5UeC0NCj4gICAgIExhdGVuY3k6IDAsIENhY2hlIExpbmUgU2l6
+ZTogNjQgYnl0ZXMNCj4gICAgIEludGVycnVwdDogcGluIEEgcm91dGVkIHRvIElSUSAxNg0KPiAg
+ICAgUmVnaW9uIDA6IE1lbW9yeSBhdCBmYjEwMDAwMCAoMzItYml0LCBub24tcHJlZmV0Y2hhYmxl
+KSBbc2l6ZT02NEtdDQo+ICAgICBDYXBhYmlsaXRpZXM6IDxhY2Nlc3MgZGVuaWVkPg0KPiAgICAg
+S2VybmVsIGRyaXZlciBpbiB1c2U6IHBlYWtfcGNpZWZkDQo+DQo+IFRoaXMgb2NjdXJzIHdoZW4g
+SSBhbSBzZW5kaW5nIG1lc3NhZ2VzIG92ZXIgdGhlIENBTiBidXMgd2l0aCBhbmQgd2l0aG91dA0K
+PiB0aGUgb3RoZXIgZGV2aWNlIG9uIHRoZSBidXMgYWxzbyBzZW5kaW5nLg0KPg0KPiBJIGhhdmUg
+bm90IHNlZW4gdGhpcyBpc3N1ZSB3aXRoIG90aGVyIGNhbiBkZXZpY2VzIGluIHNpbWlsYXIgc2V0
+dXBzICAoZGlmZmVyZW50DQo+IGtlcm5lbCB2ZXJzaW9ucykuIEl0IGFsc28gb25seSBzZWVtcyB0
+byBvY2N1ciBvbiBDQU4xIHdoaWNoIGlzIHNldCB0byBhIGhpZ2hlcg0KPiBiYXVkIHJhdGUgdGhl
+biBhbGwgdGhlIG90aGVyIGJ1c2VzLg0KPg0KPiBJIGRvIGhhdmUgQ09ORklHIFBSRUVNUFQgUlQg
+dHVybmVkIG9uIHdoaWNoIG1pZ2h0IGJlIGV4cG9zaW5nIHRoaXMgaXNzdWUNCj4gbW9yZSBvZnRl
+bi4NCj4NCj4gSGFzIGFueW9uZSBzZWVuIHRoaXMgYmVmb3JlPyBEb2VzIGFueW9uZSBrbm93IGhv
+dyB0byBmaXggdGhpcyBvciBoYXZlIGENCj4gZml4Pw0KPg0KPiBUaGFua3MsDQo+IERpYW5hIEJ1
+cmdlc3MNCg0KLS0NClBFQUstU3lzdGVtIFRlY2huaWsgR21iSA0KU2l0eiBkZXIgR2VzZWxsc2No
+YWZ0IERhcm1zdGFkdCAtIEhSQiA5MTgzDQpHZXNjaGFlZnRzZnVlaHJ1bmc6IEFsZXhhbmRlciBH
+YWNoIC8gVXdlIFdpbGhlbG0NCi0tDQo=
