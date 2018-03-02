@@ -1,48 +1,88 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH v3 2/2] timers: Don't search for expired timers while
- TIMER_SOFTIRQ is scheduled
-Date: Thu, 1 Mar 2018 20:06:39 +0100
-Message-ID: <20180301190639.fttlaq272p67qzm4@linutronix.de>
-References: <alpine.DEB.2.20.1707182206110.2425@nanos>
- <20170803210657.19179-1-haris.okanovic@ni.com>
- <20170803210657.19179-2-haris.okanovic@ni.com>
- <28f05e39-6bc6-99c5-e1bc-91be3e79ea78@ni.com>
- <13c06708-f7ad-4f46-1c0b-f12d1ca16beb@ni.com>
- <20180301164755.pipco45y5nlvmdsy@linutronix.de>
- <7079102c-f53b-e8ab-c54d-1c40ff21d921@ni.com>
+Subject: [RFC/PATCH RT] Revert "rt,ntp: Move call to schedule_delayed_work()
+ to helper thread"
+Date: Fri, 2 Mar 2018 12:11:02 +0100
+Message-ID: <20180302111050.dlrh4egvgns6wwwj@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        tglx@linutronix.de, julia.cartwright@ni.com, gratian.crisan@ni.com,
-        anna-maria@linutronix.de
-To: Haris Okanovic <haris.okanovic@ni.com>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <7079102c-f53b-e8ab-c54d-1c40ff21d921@ni.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2018-03-01 12:37:49 [-0600], Haris Okanovic wrote:
-> On 03/01/2018 10:47 AM, Sebastian Andrzej Siewior wrote:
-> > On 2018-03-01 09:49:59 [-0600], Haris Okanovic wrote:
-> > > *bump* Has anyone looked into this?
-> > 
-> > I'm lost.
-> > It entered the kernel in v4.9.9-rt6 and left in v4.9.30-rt20 once we
-> > figured out that there is something wrong with it.
-> 
-> It was added back into 4.9 at some point after v4.9.30-rt20. I see an older
-> version in v4.9.68-rt60, for example, hence my original email. It was
-let me check that tomorrow.
+I've been looking at this in v3.10-RT where it got in. The patch
+description says
 
-> dropped sometime thereafter, presumably because it no longer cleanly
-> applies. I don't see it in v4.14.20-rt17, for example.
-> 
-> > Is there a newer patch pending on your side?
-> 
-> Not yet. The latest version on patchwork is OK, just needs to be rebased
-> post-4.9. I'll post a new version when I get a chance to build and retest
-> it.
-okay.
+|The ntp code for notify_cmos_timer() is called from a hard interrupt
+|context.
+
+I see only one caller of ntp_notify_cmos_timer() and that is
+do_adjtimex() after "raw_spin_unlock_irqrestore()".
+I see a few callers of do_adjtimex() which is SYS_adjtimex() (+compat)
+and posix_clock_realtime_adj() which in turn is called by
+SYS_clock_adjtime().
+
+I can't find the hard interrupt context. May I revert this patch?
+
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ kernel/time/ntp.c | 26 --------------------------
+ 1 file changed, 26 deletions(-)
+
+diff --git a/kernel/time/ntp.c b/kernel/time/ntp.c
+index 2c226b90c231..99e03bec68e4 100644
+--- a/kernel/time/ntp.c
++++ b/kernel/time/ntp.c
+@@ -18,7 +18,6 @@
+ #include <linux/module.h>
+ #include <linux/rtc.h>
+ #include <linux/math64.h>
+-#include <linux/swork.h>
+ 
+ #include "ntp_internal.h"
+ #include "timekeeping_internal.h"
+@@ -570,35 +569,10 @@ static void sync_cmos_clock(struct work_struct *work)
+ 			   &sync_cmos_work, timespec64_to_jiffies(&next));
+ }
+ 
+-#ifdef CONFIG_PREEMPT_RT_FULL
+-
+-static void run_clock_set_delay(struct swork_event *event)
+-{
+-	queue_delayed_work(system_power_efficient_wq, &sync_cmos_work, 0);
+-}
+-
+-static struct swork_event ntp_cmos_swork;
+-
+-void ntp_notify_cmos_timer(void)
+-{
+-	swork_queue(&ntp_cmos_swork);
+-}
+-
+-static __init int create_cmos_delay_thread(void)
+-{
+-	WARN_ON(swork_get());
+-	INIT_SWORK(&ntp_cmos_swork, run_clock_set_delay);
+-	return 0;
+-}
+-early_initcall(create_cmos_delay_thread);
+-
+-#else
+-
+ void ntp_notify_cmos_timer(void)
+ {
+ 	queue_delayed_work(system_power_efficient_wq, &sync_cmos_work, 0);
+ }
+-#endif /* CONFIG_PREEMPT_RT_FULL */
+ 
+ #else
+ void ntp_notify_cmos_timer(void) { }
+-- 
+2.16.2
+
 
 Sebastian
