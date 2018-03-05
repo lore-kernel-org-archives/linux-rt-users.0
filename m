@@ -1,65 +1,135 @@
-From: Haris Okanovic <haris.okanovic@ni.com>
-Subject: Re: [PATCH v3 2/2] timers: Don't search for expired timers while
- TIMER_SOFTIRQ is scheduled
-Date: Fri, 2 Mar 2018 11:19:46 -0600
-Message-ID: <5ad54baa-9019-fdb3-040b-057caf927ca3@ni.com>
-References: <alpine.DEB.2.20.1707182206110.2425@nanos>
- <20170803210657.19179-1-haris.okanovic@ni.com>
- <20170803210657.19179-2-haris.okanovic@ni.com>
- <28f05e39-6bc6-99c5-e1bc-91be3e79ea78@ni.com>
- <13c06708-f7ad-4f46-1c0b-f12d1ca16beb@ni.com>
- <20180301164755.pipco45y5nlvmdsy@linutronix.de>
- <7079102c-f53b-e8ab-c54d-1c40ff21d921@ni.com>
- <20180302145232.anp4hz25uwqygopa@linutronix.de>
- <98f4236e-9863-2af7-1170-51cd118f65bd@ni.com>
- <20180302163900.ldnkhgsvqxlki4ju@linutronix.de>
+From: Corey Minyard <cminyard@mvista.com>
+Subject: Warning from swake_up_all in 4.14.15-rt13 non-RT
+Date: Mon, 5 Mar 2018 09:08:11 -0600
+Message-ID: <dd6ad0b5-569b-067d-257f-dbf15ffa7077@mvista.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        tglx@linutronix.de, julia.cartwright@ni.com, gratian.crisan@ni.com,
-        anna-maria@linutronix.de
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Transfer-Encoding: 8bit
+To: linux-rt-users <linux-rt-users@vger.kernel.org>,
+        linux-kernel <linux-kernel@vger.kernel.org>,
+        Tejun Heo <tj@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180302163900.ldnkhgsvqxlki4ju@linutronix.de>
-Content-Language: en-US
+Content-Language: en-GB
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Starting with the change
+
+8a64547a07980f9d25e962a78c2e10ee82bdb742 fs/dcache: use swait_queue 
+instead of
+waitqueue
+
+we are getting the following warning when running with PREEMPT__LL when 
+inserting
+a USB drive.  This is on x86_64, 4.14.15-rt13.  It works fine with 
+PREEMPT_RT.
+
+# [  155.604042] usb 1-2: new high-speed USB device number 7 using xhci_hcd
+[  155.736588] usb 1-2: New USB device found, idVendor=0781, idProduct=5567
+[  155.743291] usb 1-2: New USB device strings: Mfr=1, Product=2, 
+SerialNumber=3
+[  155.750423] usb 1-2: Product: Cruzer Blade
+[  155.754517] usb 1-2: Manufacturer: SanDisk
+[  155.758616] usb 1-2: SerialNumber: 4C530302900731101541
+[  155.764207] usb-storage 1-2:1.0: USB Mass Storage device detected
+[  155.770457] scsi host7: usb-storage 1-2:1.0
+[  156.831919] scsi 7:0:0:0: Direct-Access     SanDisk  Cruzer Blade     
+1.26 PQ: 0 ANSI: 6
+[  156.840160] sd 7:0:0:0: Attached scsi generic sg1 type 0
+[  156.845766] ------------[ cut here ]------------
+[  156.850387] WARNING: CPU: 0 PID: 36 at kernel/sched/swait.c:72 
+swake_up_all+0xb4/0xc0
+[  156.858208] Modules linked in:
+[  156.861259] CPU: 0 PID: 36 Comm: kworker/0:1 Not tainted 4.14.15-rt13 #1
+[  156.867950] Hardware name: Supermicro Super Server/To be filled by 
+O.E.M., BIOS T20170302175436 03/02/2017
+[  156.877590] Workqueue: events_freezable usb_stor_scan_dwork
+[  156.883159] task: ffff8c7ead6c6a00 task.stack: ffffb19dc19d0000
+[  156.889072] RIP: 0010:swake_up_all+0xb4/0xc0
+[  156.893334] RSP: 0000:ffffb19dc19d3be0 EFLAGS: 00010046
+[  156.898550] RAX: 0000000000000046 RBX: ffff8c7eab451788 RCX: 
+0000000000000000
+[  156.905673] RDX: 0000000000000001 RSI: 0000000000000000 RDI: 
+ffff8c7eab451770
+[  156.912798] RBP: ffff8c7eab451770 R08: 0000000000023ca0 R09: 
+ffffffff8bb7663e
+[  156.919920] R10: ffffd80dd1a7dfc0 R11: 0000000000000000 R12: 
+ffffb19dc19d3be0
+[  156.927045] R13: 0000000000000003 R14: ffff8c7ea9e0e800 R15: 
+ffff8c7ea69e5000
+[  156.934171] FS:  0000000000000000(0000) GS:ffff8c7ebfc00000(0000) 
+knlGS:0000000000000000
+[  156.942246] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[  156.947983] CR2: 00000000fffd5000 CR3: 000000046bb4e000 CR4: 
+00000000003406f0
+[  156.955108] Call Trace:
+[  156.957556]  percpu_ref_kill_and_confirm+0x93/0xa0
+[  156.962345]  blk_freeze_queue_start+0x25/0x30
+[  156.966696]  blk_set_queue_dying+0x2b/0x90
+[  156.970786]  blk_cleanup_queue+0x28/0x110
+[  156.974793]  __scsi_remove_device+0x66/0x130
+[  156.979063]  scsi_probe_and_add_lun+0x878/0xbd0
+[  156.983587]  ? scsi_probe_and_add_lun+0x9df/0xbd0
+[  156.988285]  __scsi_scan_target+0x1e8/0x550
+[  156.992462]  ? __wake_up_common_lock+0x79/0x90
+[  156.996899]  scsi_scan_channel+0x5b/0x80
+[  157.000815]  scsi_scan_host_selected+0xbe/0xf0
+[  157.005252]  scsi_scan_host+0x15e/0x1a0
+[  157.009083]  usb_stor_scan_dwork+0x1d/0x80
+[  157.013177]  process_one_work+0x1dd/0x3e0
+[  157.017189]  worker_thread+0x26/0x400
+[  157.020844]  ? cancel_delayed_work+0x10/0x10
+[  157.025107]  kthread+0x116/0x130
+[  157.028333]  ? kthread_create_on_node+0x40/0x40
+[  157.032858]  ret_from_fork+0x35/0x40
+[  157.036435] Code: 49 39 c4 74 17 c6 45 00 00 fb 48 8d 7d 00 e8 c4 8a 
+97 00 48 8b 04 24 49 39 c4 75 b9 c6 45 00 00 fb 48 8d 64 24 10 5b 5d 41 
+5c c3
+[  157.055292] ---[ end trace 86c20fd8d6c01794 ]---
+[  157.060040] sd 7:0:0:0: [sdb] 15633408 512-byte logical blocks: (8.00 
+GB/7.45 GiB)
+[  157.070089] sd 7:0:0:0: [sdb] Write Protect is off
+[  157.075183] sd 7:0:0:0: [sdb] Write cache: disabled, read cache: 
+enabled, doesn't support DPO or FUA
+[  157.100295]  sdb: sdb1
+[  157.103778] sd 7:0:0:0: [sdb] Attached SCSI disk
+[  157.379921] FAT-fs (sdb1): Volume was not properly unmounted. Some 
+data may be corrupt. Please run fsck.
 
 
-On 03/02/2018 10:39 AM, Sebastian Andrzej Siewior wrote:
-> On 2018-03-02 10:29:56 [-0600], Haris Okanovic wrote:
->>> Could please point me to the code/patches or something?
->>
->> I rebase onto v4.14.20-rt17, running some sanity test before reposting to ml
->> (cyclictest & Anna's timertest). Will post V4 sometime today (US Central
->> Time) if everything goes well.
->>
->> Are you also asking for a 4.9 version? I'm fine leaving it out of 4.9.
-> 
-> Hmmm. Maybe this is a form of miscommunication here :)
+The following change is the obvious reason:
 
-Yea, I agree :) Let me try to summarize: When I originally asked this 
-question back in March, rt was on 4.9. I was asking back then to pull 
-the V3 revision of my timer patch (replacing the old V2). Given that RT 
-already moved to 4.14 in the meantime, backed out V3, and V3 no longer 
-applies 4.14, I'm fine leaving everything as-is! I post a V4 (for 4.14) 
-when I finish retesting it.
+--- a/kernel/sched/swait.c
++++ b/kernel/sched/swait.c
+@@ -69,6 +69,7 @@ void swake_up_all(struct swait_queue_head *q)
+         struct swait_queue *curr;
+         LIST_HEAD(tmp);
 
-> So my understanding is that you complain/ask why there is an older
-> version of the patch still in v4.9-RT:
-> 
-> |It was added back into 4.9 at some point after v4.9.30-rt20. I see an older
-> |version in v4.9.68-rt60, for example, hence my original email. It was dropped
-> |sometime thereafter, presumably because it no longer cleanly applies. I don't
-> |see it in v4.14.20-rt17, for example.
-> 
-> So I ask where you see the old version of your patch in v4.9-RT. Yes it
-> was added, then removed and it never appeared back in. However, I don't
-> see anymore in v4.9.68-rt60.
-> 
->> -- Haris
-> 
-> Sebastian
-> 
++       WARN_ON(irqs_disabled());
+         raw_spin_lock_irq(&q->lock);
+         list_splice_init(&q->task_list, &tmp);
+         while (!list_empty(&tmp)) {
+
+I've done a little bit of analysis here, percpu_ref_kill_and_confirm()
+does spin_lock_irqsave() and then does a percpu_ref_put().  If the
+refcount reaches zero, the release function of the refcount is
+called.  In this case, the block code has set this to
+blk_queue_usage_counter_release(), which calls swake_up_all().
+
+It seems like a bad idea to call percpu_ref_put() with interrupts
+disabled.  This problem actually doesn't appear to be RT-related,
+there's just no warning call if the RT tree isn't used.
+
+I'm not sure if it's best to just do the put outside the lock, or
+have modified put function that returns a bool to know if a release
+is required, then the release function can be called outside the
+lock.  I can do patches and test, but I'm hoping for a little
+guidance here.
+
+I'm also wondering why we don't have a warning like this in the
+*_spin_lock_irq() macros, perhaps turned on with a debug
+option.  That would catch things like this sooner.
+
+Thanks,
+
+-corey
