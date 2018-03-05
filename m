@@ -1,52 +1,82 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mail-oi0-f47.google.com ([209.85.218.47]:36522 "EHLO
-        mail-oi0-f47.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S964973AbeCCBhe (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 2 Mar 2018 20:37:34 -0500
-Received: by mail-oi0-f47.google.com with SMTP id u73so8393501oie.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 02 Mar 2018 17:37:34 -0800 (PST)
-MIME-Version: 1.0
-In-Reply-To: <20180227085851.2qivugzwmmcd64am@linutronix.de>
+Received: from mail-eopbgr10054.outbound.protection.outlook.com ([40.107.1.54]:32941
+        "EHLO EUR02-HE1-obe.outbound.protection.outlook.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S933677AbeCEJfL (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 5 Mar 2018 04:35:11 -0500
+From: =?utf-8?B?U3TDqXBoYW5lIEdyb3NqZWFu?= <s.grosjean@peak-system.com>
+Subject: RE: peak_pciefd 0000:06:00.0 can1: can_put_echo_skb: BUG! echo_skb is
+ occupied!
+Date: Mon, 5 Mar 2018 09:35:07 +0000
+Message-ID: <AM5PR03MB2963ABAC625DD0DB9CF8D694D6DA0@AM5PR03MB2963.eurprd03.prod.outlook.com>
 References: <CADJaPTADCHOgHJYJYkaR0pboqNZH_jH_zY0vWAzMxp1NBLTDcA@mail.gmail.com>
  <AM5PR03MB296341BA74D9A542E92E34E9D6CC0@AM5PR03MB2963.eurprd03.prod.outlook.com>
- <20180226094604.7biqg57c4xq2ugao@linutronix.de> <7e7f456f-17b9-ae40-5586-fa676db0d202@pengutronix.de>
- <CADJaPTC57W-3E8u+0xsAGFVFMm_9nge8sXf2Fdt=-qM_kOKMsw@mail.gmail.com> <20180227085851.2qivugzwmmcd64am@linutronix.de>
-From: Diana Burgess <diana@peloton-tech.com>
-Date: Fri, 2 Mar 2018 17:37:33 -0800
-Message-ID: <CADJaPTD_cLYxV37oBZjryWPs9X5qFVmWpphBqR6ZOUkOve+-og@mail.gmail.com>
-Subject: Re: peak_pciefd 0000:06:00.0 can1: can_put_echo_skb: BUG! echo_skb is occupied!
-Content-Type: text/plain; charset="UTF-8"
+ <20180226094604.7biqg57c4xq2ugao@linutronix.de>
+ <7e7f456f-17b9-ae40-5586-fa676db0d202@pengutronix.de>
+ <CADJaPTC57W-3E8u+0xsAGFVFMm_9nge8sXf2Fdt=-qM_kOKMsw@mail.gmail.com>
+ <20180227085851.2qivugzwmmcd64am@linutronix.de>
+ <CADJaPTD_cLYxV37oBZjryWPs9X5qFVmWpphBqR6ZOUkOve+-og@mail.gmail.com>
+In-Reply-To: <CADJaPTD_cLYxV37oBZjryWPs9X5qFVmWpphBqR6ZOUkOve+-og@mail.gmail.com>
+Content-Language: en-US
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+MIME-Version: 1.0
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: Marc Kleine-Budde <mkl@pengutronix.de>, =?UTF-8?Q?St=C3=A9phane_Grosjean?= <s.grosjean@peak-system.com>, Philipp Schrader <philipp@peloton-tech.com>, "linux-can@vger.kernel.org" <linux-can@vger.kernel.org>, "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Diana Burgess <diana@peloton-tech.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Marc Kleine-Budde <mkl@pengutronix.de>, Philipp Schrader <philipp@peloton-tech.com>, "linux-can@vger.kernel.org" <linux-can@vger.kernel.org>, "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 
-On Tue, Feb 27, 2018 at 12:58 AM, Sebastian Andrzej Siewior
-<bigeasy@linutronix.de> wrote:
-> On 2018-02-26 11:55:11 [-0800], Diana Burgess wrote:
->> That patch is part of my branch already so it does not fix this bug.
->>
->> Also 4.15 is not part of rt-devel yet so I did not try to build and run that
->> version.
-> about that. The tree you were using is not updated (is EOL) so I suggest
-> to upgrade to 4.14-RT. This may not fix your bug but you get a kernel
-> with stable/security updates.
->
-> You mentioned that you use -RT and you see this problem only with the
-> peak card. You never mentioned if this also happens often or rarely or
-> if this happens once you disable RT and you keep doing what you are
-> doing.
->
->>
->> Thanks,
->>
->
-> Sebastian
-
-I've upgraded to 4.14-RT and tried with and without RT. Using RT I see the
-bug approximately every 45s (though it is not consistent). This time between
-bugs increases when not using RT, but does not go away.
-
--- 
-Diana Burgess
+SGksDQoNClRoZSAiQlVHISBlY2hvX3NrYiBpcyBvY2N1cGllZCIgbXNnIGlzIHByaW50ZWQgd2hl
+biB0aGUgbmV0d29yayB0eCBxdWV1ZSBpcyByZXN0YXJ0ZWQsIHdoaWxlIHRoZXJlIGlzIG5vIHJv
+b20gbGVmdCBpbiB0aGUgZWNob19za2IgYXJyYXkuIE5vdGUgdGhhdCB0aGlzIG1zZyBkb2VzIG5v
+dCBwcmV2ZW50IGFueSBDQU4gZnJhbWUgdG8gYmUgd3JpdHRlbiBvbiB0aGUgYnVzLg0KDQpUaGVy
+ZSdzIGFjdHVhbGx5IG9uZSBwbGFjZSB3aGVyZSB0aGUgbmV0d29yayB0eCBxdWV1ZSBpcyByZXN0
+YXJ0ZWQsIGhvd2V2ZXIgdGhlIGVjaG9fc2tiIGFycmF5IGlzIGZpbGxlZDoNCg0KKHNlZSBodHRw
+czovL2dpdC5rZXJuZWwub3JnL3B1Yi9zY20vbGludXgva2VybmVsL2dpdC90b3J2YWxkcy9saW51
+eC5naXQvdHJlZS9kcml2ZXJzL25ldC9jYW4vcGVha19jYW5mZC9wZWFrX3BjaWVmZF9tYWluLmMj
+bjM1MykNCg0KQSBkcml2ZXIgdmVyc2lvbiBpbiB3aGljaCB0aGUgYmVsb3cgcGF0Y2ggaGFzIGJl
+ZW4gYXBwbGllZA0KDQogICAgICAgICAvKiBoYW5kbGUgdHggbGluayBpbnRlcnJ1cHQgKGlmIGFu
+eSkgKi8NCiAgICAgICAgIGlmIChwY2llZmRfaXJxX2lzX2xuayhwcml2LT5pcnFfc3RhdHVzKSkg
+ew0KICAgICAgICAgICAgICAgICB1bnNpZ25lZCBsb25nIGZsYWdzOw0KDQogICAgICAgICAgICAg
+ICAgIHNwaW5fbG9ja19pcnFzYXZlKCZwcml2LT50eF9sb2NrLCBmbGFncyk7DQogICAgICAgICAg
+ICAgICAgIHByaXYtPnR4X3BhZ2VzX2ZyZWUrKzsNCiAgICAgICAgICAgICAgICAgc3Bpbl91bmxv
+Y2tfaXJxcmVzdG9yZSgmcHJpdi0+dHhfbG9jaywgZmxhZ3MpOw0KLQ0KLSAgICAgICAgICAgICAg
+ICAvKiB3YWtlIHByb2R1Y2VyIHVwICovDQotICAgICAgICAgICAgICAgbmV0aWZfd2FrZV9xdWV1
+ZShwcml2LT51Y2FuLm5kZXYpOw0KICAgICAgICAgfQ0KDQpoYXMgcnVuIGR1cmluZyB0aGUgd2hv
+bGUgd2Vla2VuZCAofjYwIGgpLiBUaGUgZWNob19za2IgYXJyYXkgc2l6ZSBoYXMgYWxzbyBiZWVu
+IHJlZHVjZWQgdG8gOCBzbG90cyAoaW5zdGVhZCBvZiAyNCksIHRvIGluY3JlYXNlIHRoZSBwcm9i
+YWJpbGl0eSBmb3IgdGhlIGlzc3VlIHRvIG9jY3VyOyB0d28gImNhbmdlbiAtZyAwIC1pIiB3ZXJl
+IHJ1bm5pbmcgb24gY2FuMCBhbmQgY2FuMS4gVW5mb3J0dW5hdGVseSwgZHVyaW5nIHRoaXMgcGVy
+aW9kLCB0aGUgIkJVRyEgZWNobyBpcyBvY2N1cGllZCIgbXNnIGhhcyBiZWVuIHN0aWxsIHNwb3Jh
+ZGljYWxseSBwcmludGVkICg0IHRpbWVzLCAyIHRpbWVzIGZvciBjYW4wLCAyIHRpbWVzIGZvciBj
+YW4xKS4NCg0KU3RpbGwgdW5kZXIgaW52ZXN0aWdhdGlvbi4uLg0KDQpSZWdhcmRzLA0KDQoNCj4g
+LS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCj4gRnJvbTogRGlhbmEgQnVyZ2VzcyA8ZGlhbmFA
+cGVsb3Rvbi10ZWNoLmNvbT4NCj4gU2VudDogc2FtZWRpIDMgbWFycyAyMDE4IDAyOjM4DQo+IFRv
+OiBTZWJhc3RpYW4gQW5kcnplaiBTaWV3aW9yIDxiaWdlYXN5QGxpbnV0cm9uaXguZGU+DQo+IENj
+OiBNYXJjIEtsZWluZS1CdWRkZSA8bWtsQHBlbmd1dHJvbml4LmRlPjsgU3TDqXBoYW5lIEdyb3Nq
+ZWFuDQo+IDxzLmdyb3NqZWFuQHBlYWstc3lzdGVtLmNvbT47IFBoaWxpcHAgU2NocmFkZXIgPHBo
+aWxpcHBAcGVsb3Rvbi0NCj4gdGVjaC5jb20+OyBsaW51eC1jYW5Admdlci5rZXJuZWwub3JnOyBs
+aW51eC1ydC11c2Vyc0B2Z2VyLmtlcm5lbC5vcmcNCj4gU3ViamVjdDogUmU6IHBlYWtfcGNpZWZk
+IDAwMDA6MDY6MDAuMCBjYW4xOiBjYW5fcHV0X2VjaG9fc2tiOiBCVUchDQo+IGVjaG9fc2tiIGlz
+IG9jY3VwaWVkIQ0KPg0KPiBPbiBUdWUsIEZlYiAyNywgMjAxOCBhdCAxMjo1OCBBTSwgU2ViYXN0
+aWFuIEFuZHJ6ZWogU2lld2lvcg0KPiA8YmlnZWFzeUBsaW51dHJvbml4LmRlPiB3cm90ZToNCj4g
+PiBPbiAyMDE4LTAyLTI2IDExOjU1OjExIFstMDgwMF0sIERpYW5hIEJ1cmdlc3Mgd3JvdGU6DQo+
+ID4+IFRoYXQgcGF0Y2ggaXMgcGFydCBvZiBteSBicmFuY2ggYWxyZWFkeSBzbyBpdCBkb2VzIG5v
+dCBmaXggdGhpcyBidWcuDQo+ID4+DQo+ID4+IEFsc28gNC4xNSBpcyBub3QgcGFydCBvZiBydC1k
+ZXZlbCB5ZXQgc28gSSBkaWQgbm90IHRyeSB0byBidWlsZCBhbmQNCj4gPj4gcnVuIHRoYXQgdmVy
+c2lvbi4NCj4gPiBhYm91dCB0aGF0LiBUaGUgdHJlZSB5b3Ugd2VyZSB1c2luZyBpcyBub3QgdXBk
+YXRlZCAoaXMgRU9MKSBzbyBJDQo+ID4gc3VnZ2VzdCB0byB1cGdyYWRlIHRvIDQuMTQtUlQuIFRo
+aXMgbWF5IG5vdCBmaXggeW91ciBidWcgYnV0IHlvdSBnZXQgYQ0KPiA+IGtlcm5lbCB3aXRoIHN0
+YWJsZS9zZWN1cml0eSB1cGRhdGVzLg0KPiA+DQo+ID4gWW91IG1lbnRpb25lZCB0aGF0IHlvdSB1
+c2UgLVJUIGFuZCB5b3Ugc2VlIHRoaXMgcHJvYmxlbSBvbmx5IHdpdGggdGhlDQo+ID4gcGVhayBj
+YXJkLiBZb3UgbmV2ZXIgbWVudGlvbmVkIGlmIHRoaXMgYWxzbyBoYXBwZW5zIG9mdGVuIG9yIHJh
+cmVseSBvcg0KPiA+IGlmIHRoaXMgaGFwcGVucyBvbmNlIHlvdSBkaXNhYmxlIFJUIGFuZCB5b3Ug
+a2VlcCBkb2luZyB3aGF0IHlvdSBhcmUNCj4gPiBkb2luZy4NCj4gPg0KPiA+Pg0KPiA+PiBUaGFu
+a3MsDQo+ID4+DQo+ID4NCj4gPiBTZWJhc3RpYW4NCj4NCj4gSSd2ZSB1cGdyYWRlZCB0byA0LjE0
+LVJUIGFuZCB0cmllZCB3aXRoIGFuZCB3aXRob3V0IFJULiBVc2luZyBSVCBJIHNlZSB0aGUNCj4g
+YnVnIGFwcHJveGltYXRlbHkgZXZlcnkgNDVzICh0aG91Z2ggaXQgaXMgbm90IGNvbnNpc3RlbnQp
+LiBUaGlzIHRpbWUgYmV0d2Vlbg0KPiBidWdzIGluY3JlYXNlcyB3aGVuIG5vdCB1c2luZyBSVCwg
+YnV0IGRvZXMgbm90IGdvIGF3YXkuDQo+DQo+IC0tDQo+IERpYW5hIEJ1cmdlc3MNCg0KLS0NClBF
+QUstU3lzdGVtIFRlY2huaWsgR21iSA0KU2l0eiBkZXIgR2VzZWxsc2NoYWZ0IERhcm1zdGFkdCAt
+IEhSQiA5MTgzDQpHZXNjaGFlZnRzZnVlaHJ1bmc6IEFsZXhhbmRlciBHYWNoIC8gVXdlIFdpbGhl
+bG0NCi0tDQo=
