@@ -1,104 +1,99 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] v4.14.24-rt19
-Date: Mon, 5 Mar 2018 18:36:38 +0100
-Message-ID: <20180305173638.nu66gsbn6nvnwnf4@linutronix.de>
+Subject: Re: Warning from swake_up_all in 4.14.15-rt13 non-RT
+Date: Tue, 6 Mar 2018 18:46:04 +0100
+Message-ID: <20180306174604.nta5rcvfvrfdfftz@linutronix.de>
+References: <dd6ad0b5-569b-067d-257f-dbf15ffa7077@mvista.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Transfer-Encoding: 8BIT
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+        linux-kernel <linux-kernel@vger.kernel.org>,
+        Tejun Heo <tj@kernel.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>
+To: Corey Minyard <cminyard@mvista.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
+In-Reply-To: <dd6ad0b5-569b-067d-257f-dbf15ffa7077@mvista.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Dear RT folks!
+On 2018-03-05 09:08:11 [-0600], Corey Minyard wrote:
+> Starting with the change
+> 
+> 8a64547a07980f9d25e962a78c2e10ee82bdb742 fs/dcache: use swait_queue instead
+> of
+> waitqueue
+…
+> The following change is the obvious reason:
+> 
+> --- a/kernel/sched/swait.c
+> +++ b/kernel/sched/swait.c
+> @@ -69,6 +69,7 @@ void swake_up_all(struct swait_queue_head *q)
+>         struct swait_queue *curr;
+>         LIST_HEAD(tmp);
+> 
+> +       WARN_ON(irqs_disabled());
+>         raw_spin_lock_irq(&q->lock);
+>         list_splice_init(&q->task_list, &tmp);
+>         while (!list_empty(&tmp)) {
+> 
+> I've done a little bit of analysis here, percpu_ref_kill_and_confirm()
+> does spin_lock_irqsave() and then does a percpu_ref_put().  If the
+> refcount reaches zero, the release function of the refcount is
+> called.  In this case, the block code has set this to
+> blk_queue_usage_counter_release(), which calls swake_up_all().
+> 
+> It seems like a bad idea to call percpu_ref_put() with interrupts
+> disabled.  This problem actually doesn't appear to be RT-related,
+> there's just no warning call if the RT tree isn't used.
 
-I'm pleased to announce the v4.14.24-rt19 patch set. 
+yeah but vanilla uses wake_up() which does spin_lock_irqsafe() so it is
+not an issue there.
 
-Changes since v4.14.24-rt18:
+The odd part here is that percpu_ref_kill_and_confirm() does _irqsave()
+which suggests that it might be called from any context and then it does
+wait_event_lock_irq() which enables interrupts again while it waits. So
+it can't be used from any context.
 
-  - Some adjtimex related code has been moved to a helper thread after
-    it has been claimed that it is called from hard interrupt context.
-    I was not able to find that hard interrupt context and now that
-    change is reverted.
+> I'm not sure if it's best to just do the put outside the lock, or
+> have modified put function that returns a bool to know if a release
+> is required, then the release function can be called outside the
+> lock.  I can do patches and test, but I'm hoping for a little
+> guidance here.
 
-Known issues
-     - A warning triggered in "rcu_note_context_switch" originated from
-       SyS_timer_gettime(). The issue was always there, it is now
-       visible. Reported by Grygorii Strashko and Daniel Wagner.
+swake_up_all() does raw_spin_lock_irq() because it should be called from
+non-IRQ context. And it drops the lock (+IRQ enable) between wake-ups in
+case we "need_resched()" because we woke a high-priority waiter. There
+is the list_splice because we wanted to drop the locks (and have IRQs
+open) during the entire wake up process but finish_swait() may happen
+during the wake up and so we must hold the lock while the list-item is
+removed for the queue head.
+I have no idea what is the wisest thing to do here. The obvious fix
+would be to use the irqsafe() variant here and not drop the lock between
+wake ups. That is essentially what swake_up_all_locked() does which I
+need for the completions (and based on some testing most users have one
+waiter except during PM and some crypto code).
+It is probably no comparison to wake_up_q() (which does multiple wake
+ups without a context switch) but then we did this before like that.
 
-The delta patch against v4.14.24-rt18 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/incr/patch-4.14.24-rt18-rt19.patch.xz
+Preferably we would have a proper list_splice() and some magic in the
+"early" dequeue part that works.
 
-You can get this release via the git tree at:
+> I'm also wondering why we don't have a warning like this in the
+> *_spin_lock_irq() macros, perhaps turned on with a debug
+> option.  That would catch things like this sooner.
 
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.14.24-rt19
+Ideally you would add lockdep_assert_irqs_enabled() to
+local_irq_disable() so you would have it hidden behind lockdep with an
+recursion check and everything. But this needs a lot of headers like
+task_struct so…
+I had once WARN_ON_ONCE(irqs_disabled()) added to testdrive it and had a
+few false-positive in the early boot or constructs like in
+__run_hrtimer(). I didn't look at it further…
 
-The RT patch against v4.14.24 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patch-4.14.24-rt19.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patches-4.14.24-rt19.tar.xz
+> Thanks,
+> 
+> -corey
 
 Sebastian
-
-diff --git a/kernel/time/ntp.c b/kernel/time/ntp.c
-index 2c226b90c231..99e03bec68e4 100644
---- a/kernel/time/ntp.c
-+++ b/kernel/time/ntp.c
-@@ -18,7 +18,6 @@
- #include <linux/module.h>
- #include <linux/rtc.h>
- #include <linux/math64.h>
--#include <linux/swork.h>
- 
- #include "ntp_internal.h"
- #include "timekeeping_internal.h"
-@@ -570,35 +569,10 @@ static void sync_cmos_clock(struct work_struct *work)
- 			   &sync_cmos_work, timespec64_to_jiffies(&next));
- }
- 
--#ifdef CONFIG_PREEMPT_RT_FULL
--
--static void run_clock_set_delay(struct swork_event *event)
--{
--	queue_delayed_work(system_power_efficient_wq, &sync_cmos_work, 0);
--}
--
--static struct swork_event ntp_cmos_swork;
--
--void ntp_notify_cmos_timer(void)
--{
--	swork_queue(&ntp_cmos_swork);
--}
--
--static __init int create_cmos_delay_thread(void)
--{
--	WARN_ON(swork_get());
--	INIT_SWORK(&ntp_cmos_swork, run_clock_set_delay);
--	return 0;
--}
--early_initcall(create_cmos_delay_thread);
--
--#else
--
- void ntp_notify_cmos_timer(void)
- {
- 	queue_delayed_work(system_power_efficient_wq, &sync_cmos_work, 0);
- }
--#endif /* CONFIG_PREEMPT_RT_FULL */
- 
- #else
- void ntp_notify_cmos_timer(void) { }
-diff --git a/localversion-rt b/localversion-rt
-index 9e7cd66d9f44..483ad771f201 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt18
-+-rt19
