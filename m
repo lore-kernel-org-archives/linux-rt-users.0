@@ -1,106 +1,92 @@
-From: Haris Okanovic <haris.okanovic@ni.com>
-Subject: [PATCH v4 2/2] timers: Don't search for expired timers while TIMER_SOFTIRQ is scheduled
-Date: Tue, 6 Mar 2018 17:39:44 -0600
-Message-ID: <20180306233944.11271-2-haris.okanovic@ni.com>
-References: <alpine.DEB.2.20.1707182206110.2425@nanos>
- <20180306233944.11271-1-haris.okanovic@ni.com>
+From: Corey Minyard <cminyard@mvista.com>
+Subject: Re: Warning from swake_up_all in 4.14.15-rt13 non-RT
+Date: Wed, 7 Mar 2018 09:45:29 -0600
+Message-ID: <1704d817-8fb9-ce8f-1aa1-fe6e8b0c3919@mvista.com>
+References: <dd6ad0b5-569b-067d-257f-dbf15ffa7077@mvista.com>
+ <20180306174604.nta5rcvfvrfdfftz@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <haris.okanovic@ni.com>, <harisokn@gmail.com>,
-        <bigeasy@linutronix.de>, <tglx@linutronix.de>,
-        <julia.cartwright@ni.com>, <gratian.crisan@ni.com>,
-        <anna-maria@linutronix.de>, <daniel@bristot.me>
-To: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+        linux-kernel <linux-kernel@vger.kernel.org>,
+        Tejun Heo <tj@kernel.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180306233944.11271-1-haris.okanovic@ni.com>
+In-Reply-To: <20180306174604.nta5rcvfvrfdfftz@linutronix.de>
+Content-Language: en-GB
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-This change avoid needlessly searching for more timers in
-run_local_timers() (hard interrupt context) when they can't fire.
-For example, when ktimersoftd/run_timer_softirq() is scheduled but
-preempted due to cpu contention. When it runs, run_timer_softirq() will
-discover newly expired timers up to current jiffies in addition to
-firing previously expired timers.
+On 03/06/2018 11:46 AM, Sebastian Andrzej Siewior wrote:
+> On 2018-03-05 09:08:11 [-0600], Corey Minyard wrote:
+>> Starting with the change
+>>
+>> 8a64547a07980f9d25e962a78c2e10ee82bdb742 fs/dcache: use swait_queue instead
+>> of
+>> waitqueue
+> …
+>> The following change is the obvious reason:
+>>
+>> --- a/kernel/sched/swait.c
+>> +++ b/kernel/sched/swait.c
+>> @@ -69,6 +69,7 @@ void swake_up_all(struct swait_queue_head *q)
+>>          struct swait_queue *curr;
+>>          LIST_HEAD(tmp);
+>>
+>> +       WARN_ON(irqs_disabled());
+>>          raw_spin_lock_irq(&q->lock);
+>>          list_splice_init(&q->task_list, &tmp);
+>>          while (!list_empty(&tmp)) {
+>>
+>> I've done a little bit of analysis here, percpu_ref_kill_and_confirm()
+>> does spin_lock_irqsave() and then does a percpu_ref_put().  If the
+>> refcount reaches zero, the release function of the refcount is
+>> called.  In this case, the block code has set this to
+>> blk_queue_usage_counter_release(), which calls swake_up_all().
+>>
+>> It seems like a bad idea to call percpu_ref_put() with interrupts
+>> disabled.  This problem actually doesn't appear to be RT-related,
+>> there's just no warning call if the RT tree isn't used.
+> yeah but vanilla uses wake_up() which does spin_lock_irqsafe() so it is
+> not an issue there.
+>
+> The odd part here is that percpu_ref_kill_and_confirm() does _irqsave()
+> which suggests that it might be called from any context and then it does
+> wait_event_lock_irq() which enables interrupts again while it waits. So
+> it can't be used from any context.
+>
+>> I'm not sure if it's best to just do the put outside the lock, or
+>> have modified put function that returns a bool to know if a release
+>> is required, then the release function can be called outside the
+>> lock.  I can do patches and test, but I'm hoping for a little
+>> guidance here.
+> swake_up_all() does raw_spin_lock_irq() because it should be called from
+> non-IRQ context. And it drops the lock (+IRQ enable) between wake-ups in
+> case we "need_resched()" because we woke a high-priority waiter. There
+> is the list_splice because we wanted to drop the locks (and have IRQs
+> open) during the entire wake up process but finish_swait() may happen
+> during the wake up and so we must hold the lock while the list-item is
+> removed for the queue head.
+> I have no idea what is the wisest thing to do here. The obvious fix
+> would be to use the irqsafe() variant here and not drop the lock between
+> wake ups. That is essentially what swake_up_all_locked() does which I
+> need for the completions (and based on some testing most users have one
+> waiter except during PM and some crypto code).
+> It is probably no comparison to wake_up_q() (which does multiple wake
+> ups without a context switch) but then we did this before like that.
+>
+> Preferably we would have a proper list_splice() and some magic in the
+> "early" dequeue part that works.
+>
 
-However, this change also adds an edge case where non-hrtimer firing
-is sometimes delayed by an additional tick. This is acceptable since we
-don't make latency guarantees for non-hrtimers and would prefer to
-minimize hard interrupt time instead.
+Maybe just modify the block code to run the swake_up_all() call in a 
+workqueue
+or tasklet?  If you think that works, I'll create a patch, test it, and 
+submit it if
+all goes well.
 
-Signed-off-by: Haris Okanovic <haris.okanovic@ni.com>
----
-[PATCH v3]
- - Split block_softirq into separate commit
-[PATCH v4]
- - Rebase onto v4.14.20-rt17
+Thanks,
 
-https://github.com/harisokanovic/linux/tree/dev/hokanovi/timer-peek-v6
----
- kernel/time/timer.c | 21 +++++++++++++++++++--
- 1 file changed, 19 insertions(+), 2 deletions(-)
-
-diff --git a/kernel/time/timer.c b/kernel/time/timer.c
-index 98e952a6428d..5687e9bcf378 100644
---- a/kernel/time/timer.c
-+++ b/kernel/time/timer.c
-@@ -207,6 +207,7 @@ struct timer_base {
- 	unsigned int		cpu;
- 	bool			is_idle;
- 	bool			must_forward_clk;
-+	bool			block_softirq;
- 	DECLARE_BITMAP(pending_map, WHEEL_SIZE);
- 	struct hlist_head	vectors[WHEEL_SIZE];
- 	struct hlist_head	expired_lists[LVL_DEPTH];
-@@ -1404,9 +1405,11 @@ static int __collect_expired_timers(struct timer_base *base)
- 
- 	/*
- 	 * expire_timers() must be called at least once before we can
--	 * collect more timers.
-+	 * collect more timers. We should never hit this case unless
-+	 * TIMER_SOFTIRQ got raised without expired timers.
- 	 */
--	if (base->expired_levels)
-+	if (WARN_ONCE(base->expired_levels,
-+			"Must expire collected timers before collecting more"))
- 		return base->expired_levels;
- 
- 	clk = base->clk;
-@@ -1748,6 +1751,9 @@ static __latent_entropy void run_timer_softirq(struct softirq_action *h)
- 	__run_timers(base);
- 	if (IS_ENABLED(CONFIG_NO_HZ_COMMON))
- 		__run_timers(this_cpu_ptr(&timer_bases[BASE_DEF]));
-+
-+	/* Allow new TIMER_SOFTIRQs to get scheduled by run_local_timers() */
-+	base->block_softirq = false;
- }
- 
- /*
-@@ -1758,6 +1764,14 @@ void run_local_timers(void)
- 	struct timer_base *base = this_cpu_ptr(&timer_bases[BASE_STD]);
- 
- 	hrtimer_run_queues();
-+
-+	/*
-+	 * Skip if TIMER_SOFTIRQ is already running on this CPU, since it
-+	 * will find and expire all timers up to current jiffies.
-+	 */
-+	if (base->block_softirq)
-+		return;
-+
- 	/* Raise the softirq only if required. */
- 	if (time_before(jiffies, base->clk) || !tick_find_expired(base)) {
- 		if (!IS_ENABLED(CONFIG_NO_HZ_COMMON))
-@@ -1766,7 +1780,10 @@ void run_local_timers(void)
- 		base++;
- 		if (time_before(jiffies, base->clk) || !tick_find_expired(base))
- 			return;
-+		base--;
- 	}
-+
-+	base->block_softirq = true;
- 	raise_softirq(TIMER_SOFTIRQ);
- }
- 
--- 
-2.15.1
+-corey
