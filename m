@@ -1,76 +1,81 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from Galois.linutronix.de ([146.0.238.70]:39370 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S933700AbeCHSA0 (ORCPT
+Received: from mx-ginzinger.sigmacloud.services ([185.154.235.147]:46096 "EHLO
+        mx-ginzinger.sigmacloud.services" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1750878AbeCIJrV (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 8 Mar 2018 13:00:26 -0500
-Date: Thu, 8 Mar 2018 19:00:25 +0100
-From: "bigeasy@linutronix.de" <bigeasy@linutronix.de>
+        Fri, 9 Mar 2018 04:47:21 -0500
+From: Roosen Henri <Henri.Roosen@ginzinger.com>
 Subject: Re: inconsistent lock state on v4.14.20-rt17
-Message-ID: <20180308180025.zdhu3zl24zfkb3qz@linutronix.de>
+Date: Fri, 9 Mar 2018 09:47:16 +0000
+Message-ID: <1520588836.1921.2.camel@ginzinger.com>
 References: <1520350053.1744.6.camel@ginzinger.com>
- <20180306182154.nkia5hl4r3r2ncru@linutronix.de>
- <1520411200.1744.11.camel@ginzinger.com>
- <20180308155741.vbdqprs6stx5zu4q@linutronix.de>
- <1520530739.1744.18.camel@ginzinger.com>
+         <20180306182154.nkia5hl4r3r2ncru@linutronix.de>
+         <1520411200.1744.11.camel@ginzinger.com>
+         <20180308155741.vbdqprs6stx5zu4q@linutronix.de>
+         <1520530739.1744.18.camel@ginzinger.com>
+         <20180308180025.zdhu3zl24zfkb3qz@linutronix.de>
+In-Reply-To: <20180308180025.zdhu3zl24zfkb3qz@linutronix.de>
+Content-Language: de-DE
+Content-Type: text/plain; charset="utf-8"
+Content-ID: <EC49CA4FFBF23440A9A215CD1B57123E@ginzinger.com>
+Content-Transfer-Encoding: base64
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: 8BIT
-In-Reply-To: <1520530739.1744.18.camel@ginzinger.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: Roosen Henri <Henri.Roosen@ginzinger.com>
+To: "bigeasy@linutronix.de" <bigeasy@linutronix.de>
 Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 
-On 2018-03-08 17:38:59 [+0000], Roosen Henri wrote:
-> > Is the backtrace, that you receive from lockdep, always the same or
-> > is
-> > it different sometimes?
-> 
-> It is different each time. So my gut feeling tells me it might be a
-> memory corruption of some kind.. maybe caused by a use after free or
-> so..
-
-CONFIG_SLUB_DEBUG_ON should (or could) catch this.
-
-> I restarted the target yesterday evening and this morning it was frozen
-> without any trace on the terminal. Attaching a JTAG showed different
-> call-stacks than yesterday; Core #2 (trying to print the info to the
-> terminal) and #3 were spinning on a spin-lock, don't understand what
-> core #0 and #1 were doing.
-
-maybe #0 and #1 are idle but #2 and #3 should make progress. #2 looks
-like a warning, do you know where it is from or is this everything you
-get? Unless the warning comes from an atomic context you should see
-something on the UART.
-
-> Most of the times the call-stacks start at SyS_write() or SyS_read()
-> from hackbench.
-but what you posted was lockdep complaining about RQ lock.
-
-> Some things I found out by testing on v4.9:
-> - minimum test to reproduce problem "while true; do hackbench -g 100 -l
-> 1000; done &"
-> - reproducible with "hackbench -T" (threads)
-> - reproducible only on iMX6Q, not (yet) on iMX6S, iMX6D
-> - NOT reproducible with "hackbench -p" (pipes)
-interesting.
-
-> As that might be pointing towards the streaming unix socketpair
-> hackbench is using from multiple forked processes, I had a look at
-> net/unix/af_unix.c and wondered why unix_stream_sendmsg() doesn't
-> increase the reference count on the "other" socket the same as
-> unix_dgram_sendmsg() does. I don't see a reason why "other" is handled
-> differently in both functions, so it smells fishy to me. But I'm not
-> familiar with the net-code, so maybe you could review if the diff below
-> would make sense:
-
-Commit 830a1e5c212f ("[AF_UNIX]: Remove superfluous reference counting
-in unix_stream_sendmsg") claims that this is not required. But if your
-patch makes a difference then…
-
-> Thanks,
-> Henri
-
-Sebastian
+T24gVGh1LCAyMDE4LTAzLTA4IGF0IDE5OjAwICswMTAwLCBiaWdlYXN5QGxpbnV0cm9uaXguZGUg
+d3JvdGU6DQo+IE9uIDIwMTgtMDMtMDggMTc6Mzg6NTkgWyswMDAwXSwgUm9vc2VuIEhlbnJpIHdy
+b3RlOg0KPiA+ID4gSXMgdGhlIGJhY2t0cmFjZSwgdGhhdCB5b3UgcmVjZWl2ZSBmcm9tIGxvY2tk
+ZXAsIGFsd2F5cyB0aGUgc2FtZQ0KPiA+ID4gb3INCj4gPiA+IGlzDQo+ID4gPiBpdCBkaWZmZXJl
+bnQgc29tZXRpbWVzPw0KPiA+IA0KPiA+IEl0IGlzIGRpZmZlcmVudCBlYWNoIHRpbWUuIFNvIG15
+IGd1dCBmZWVsaW5nIHRlbGxzIG1lIGl0IG1pZ2h0IGJlIGENCj4gPiBtZW1vcnkgY29ycnVwdGlv
+biBvZiBzb21lIGtpbmQuLiBtYXliZSBjYXVzZWQgYnkgYSB1c2UgYWZ0ZXIgZnJlZQ0KPiA+IG9y
+DQo+ID4gc28uLg0KPiANCj4gQ09ORklHX1NMVUJfREVCVUdfT04gc2hvdWxkIChvciBjb3VsZCkg
+Y2F0Y2ggdGhpcy4NCg0KVGhhbmtzIGZvciBwb2ludGluZyB0aGF0IG91dCEgSSdsbCBlbmFibGUg
+dGhpcyBmb3IgdGhlIG5leHQgdGVzdCBydW4uDQpJZiB0aGVyZSBhcmUgbW9yZSBkZWJ1ZyBvcHRp
+b25zIHdoaWNoIGFyZSBvZiBpbnRlcmVzdCB0byBzd2l0Y2ggb24sDQp0aGVuIHBsZWFzZSBsZXQg
+bWUga25vdy4NCg0KPiANCj4gPiBJIHJlc3RhcnRlZCB0aGUgdGFyZ2V0IHllc3RlcmRheSBldmVu
+aW5nIGFuZCB0aGlzIG1vcm5pbmcgaXQgd2FzDQo+ID4gZnJvemVuDQo+ID4gd2l0aG91dCBhbnkg
+dHJhY2Ugb24gdGhlIHRlcm1pbmFsLiBBdHRhY2hpbmcgYSBKVEFHIHNob3dlZA0KPiA+IGRpZmZl
+cmVudA0KPiA+IGNhbGwtc3RhY2tzIHRoYW4geWVzdGVyZGF5OyBDb3JlICMyICh0cnlpbmcgdG8g
+cHJpbnQgdGhlIGluZm8gdG8NCj4gPiB0aGUNCj4gPiB0ZXJtaW5hbCkgYW5kICMzIHdlcmUgc3Bp
+bm5pbmcgb24gYSBzcGluLWxvY2ssIGRvbid0IHVuZGVyc3RhbmQNCj4gPiB3aGF0DQo+ID4gY29y
+ZSAjMCBhbmQgIzEgd2VyZSBkb2luZy4NCj4gDQo+IG1heWJlICMwIGFuZCAjMSBhcmUgaWRsZSBi
+dXQgIzIgYW5kICMzIHNob3VsZCBtYWtlIHByb2dyZXNzLiAjMiBsb29rcw0KPiBsaWtlIGEgd2Fy
+bmluZywgZG8geW91IGtub3cgd2hlcmUgaXQgaXMgZnJvbSBvciBpcyB0aGlzIGV2ZXJ5dGhpbmcN
+Cj4geW91DQo+IGdldD8gVW5sZXNzIHRoZSB3YXJuaW5nIGNvbWVzIGZyb20gYW4gYXRvbWljIGNv
+bnRleHQgeW91IHNob3VsZCBzZWUNCj4gc29tZXRoaW5nIG9uIHRoZSBVQVJULg0KDQojMiBhbmQg
+IzMgd2VyZSBub3QgbWFraW5nIHByb2dyZXNzLCB0aGV5IGtlcHQgb24gc3Bpbm5pbmcgYXQgdGhl
+DQphcmNoX3NwaW5fbG9jaygpLg0KDQo+IA0KPiA+IE1vc3Qgb2YgdGhlIHRpbWVzIHRoZSBjYWxs
+LXN0YWNrcyBzdGFydCBhdCBTeVNfd3JpdGUoKSBvcg0KPiA+IFN5U19yZWFkKCkNCj4gPiBmcm9t
+IGhhY2tiZW5jaC4NCj4gDQo+IGJ1dCB3aGF0IHlvdSBwb3N0ZWQgd2FzIGxvY2tkZXAgY29tcGxh
+aW5pbmcgYWJvdXQgUlEgbG9jay4NCg0KV2VsbCwgYWN0dWFsbHkgSSd2ZSByZXBvcnRlZCAic2lu
+Y2UgNC45IHdlJ3ZlIGJlZW4gY2hhc2luZyByYW5kb20NCmtlcm5lbCBjcmFzaGVzIiwgYW5kIHRo
+ZSB2NC4xNCBub3cgY2F1Z2h0IGFuIGluY29uc2lzdGVudCBsb2NrIHN0YXRlLg0KVGhlIGhvcGUg
+d2FzIHRoYXQgdGhlIHRyYWNlIGZvciB0aGUgaW5jb25zaXN0ZW50IGxvY2sgc3RhdGUgcG9pbnRl
+ZCB0bw0KdGhlIHJvb3QgY2F1c2Ugb2YgdGhlIHJhbmRvbSBrZXJuZWwgY3Jhc2hlcy4NCg0KPiAN
+Cj4gPiBTb21lIHRoaW5ncyBJIGZvdW5kIG91dCBieSB0ZXN0aW5nIG9uIHY0Ljk6DQo+ID4gLSBt
+aW5pbXVtIHRlc3QgdG8gcmVwcm9kdWNlIHByb2JsZW0gIndoaWxlIHRydWU7IGRvIGhhY2tiZW5j
+aCAtZw0KPiA+IDEwMCAtbA0KPiA+IDEwMDA7IGRvbmUgJiINCj4gPiAtIHJlcHJvZHVjaWJsZSB3
+aXRoICJoYWNrYmVuY2ggLVQiICh0aHJlYWRzKQ0KPiA+IC0gcmVwcm9kdWNpYmxlIG9ubHkgb24g
+aU1YNlEsIG5vdCAoeWV0KSBvbiBpTVg2UywgaU1YNkQNCj4gPiAtIE5PVCByZXByb2R1Y2libGUg
+d2l0aCAiaGFja2JlbmNoIC1wIiAocGlwZXMpDQo+IA0KPiBpbnRlcmVzdGluZy4NCj4gDQo+ID4g
+QXMgdGhhdCBtaWdodCBiZSBwb2ludGluZyB0b3dhcmRzIHRoZSBzdHJlYW1pbmcgdW5peCBzb2Nr
+ZXRwYWlyDQo+ID4gaGFja2JlbmNoIGlzIHVzaW5nIGZyb20gbXVsdGlwbGUgZm9ya2VkIHByb2Nl
+c3NlcywgSSBoYWQgYSBsb29rIGF0DQo+ID4gbmV0L3VuaXgvYWZfdW5peC5jIGFuZCB3b25kZXJl
+ZCB3aHkgdW5peF9zdHJlYW1fc2VuZG1zZygpIGRvZXNuJ3QNCj4gPiBpbmNyZWFzZSB0aGUgcmVm
+ZXJlbmNlIGNvdW50IG9uIHRoZSAib3RoZXIiIHNvY2tldCB0aGUgc2FtZSBhcw0KPiA+IHVuaXhf
+ZGdyYW1fc2VuZG1zZygpIGRvZXMuIEkgZG9uJ3Qgc2VlIGEgcmVhc29uIHdoeSAib3RoZXIiIGlz
+DQo+ID4gaGFuZGxlZA0KPiA+IGRpZmZlcmVudGx5IGluIGJvdGggZnVuY3Rpb25zLCBzbyBpdCBz
+bWVsbHMgZmlzaHkgdG8gbWUuIEJ1dCBJJ20NCj4gPiBub3QNCj4gPiBmYW1pbGlhciB3aXRoIHRo
+ZSBuZXQtY29kZSwgc28gbWF5YmUgeW91IGNvdWxkIHJldmlldyBpZiB0aGUgZGlmZg0KPiA+IGJl
+bG93DQo+ID4gd291bGQgbWFrZSBzZW5zZToNCj4gDQo+IENvbW1pdCA4MzBhMWU1YzIxMmYgKCJb
+QUZfVU5JWF06IFJlbW92ZSBzdXBlcmZsdW91cyByZWZlcmVuY2UNCj4gY291bnRpbmcNCj4gaW4g
+dW5peF9zdHJlYW1fc2VuZG1zZyIpIGNsYWltcyB0aGF0IHRoaXMgaXMgbm90IHJlcXVpcmVkLiBC
+dXQgaWYNCj4geW91cg0KPiBwYXRjaCBtYWtlcyBhIGRpZmZlcmVuY2UgdGhlbuKApg0KDQpPa2F5
+LCBJIGRpZG4ndCBrbm93IHRoZSByZWZjb3VudGluZyBjb3VsZCBiZSBzYWZlbHkgcmVtb3ZlZC4g
+VGhlDQpvdmVybmlnaHQgdGVzdCB3aXRoIHRoZSBjaGFuZ2UgcmVwcm9kdWNlZCB0aGUgaW5jb25z
+aXN0ZW50IGxvY2sgc3RhdGUNCmFnYWluLCB3aGljaCBwcm92ZXMgaW5kZWVkIGl0IG1ha2VzIG5v
+IGRpZmZlcmVuY2UuDQoNCj4gDQo+IFNlYmFzdGlhbg0KDQpUaGFua3MsDQpIZW5yaQ==
