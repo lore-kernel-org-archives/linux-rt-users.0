@@ -1,110 +1,43 @@
-From: Corey Minyard <cminyard@mvista.com>
-Subject: Re: Warning from swake_up_all in 4.14.15-rt13 non-RT
-Date: Fri, 9 Mar 2018 07:29:31 -0600
-Message-ID: <08aa9f8a-afe5-e1d3-5301-d196beb665b5@mvista.com>
-References: <dd6ad0b5-569b-067d-257f-dbf15ffa7077@mvista.com>
- <20180306174604.nta5rcvfvrfdfftz@linutronix.de>
- <1704d817-8fb9-ce8f-1aa1-fe6e8b0c3919@mvista.com>
- <20180308174103.mduy5qq2ttlcvig3@linutronix.de>
- <a11f140e-c44f-f967-1cd4-d8a6f09d4d29@mvista.com>
- <20180309110418.lwtennjqwqcxh422@linutronix.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-        linux-kernel <linux-kernel@vger.kernel.org>,
-        Tejun Heo <tj@kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Peter Zijlstra <peterz@infradead.org>,
+From: Daniel Wagner <wagi@monom.org>
+Subject: [ANNOUNCE] 4.4.120-rt135
+Date: Fri, 09 Mar 2018 14:55:34 +0100
+Message-ID: <20180309140010.A0B88500C74@mail.monom.org>
+To: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180309110418.lwtennjqwqcxh422@linutronix.de>
-Content-Language: en-GB
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 03/09/2018 05:04 AM, Sebastian Andrzej Siewior wrote:
-> On 2018-03-08 13:54:17 [-0600], Corey Minyard wrote:
->>> It will work but I don't think pushing this into workqueue/tasklet is a
->>> good idea. You want to wakeup all waiters on waitqueue X (probably one
->>> waiter) and instead there is one one wakeup + ctx-switch which does the
->>> final wakeup.
->> True, but this is an uncommon and already fairly expensive operation being
->> done.  Adding a context switch doesn't seem that bad.
-> still no need to make it more expensive if it can be avoided.
->
->>> But now I had an idea: swake_up_all() could iterate over list and
->>> instead performing wakes it would just wake_q_add() the tasks. Drop the
->>> lock and then wake_up_q(). So in case there is wakeup pending and the
->>> task removed itself from the list then the task may observe a spurious
->>> wakeup.
->> That sounds promising, but where does wake_up_q() get called?  No matter
->> what
->> it's an expensive operation and I'm not sure where you would put it in this
->> case.
-> Look at this:
->
-...
->   
->   void swake_up(struct swait_queue_head *q)
->   {
-> @@ -66,25 +62,14 @@ EXPORT_SYMBOL(swake_up);
->    */
->   void swake_up_all(struct swait_queue_head *q)
->   {
-> -	struct swait_queue *curr;
-> -	LIST_HEAD(tmp);
-> +	unsigned long flags;
-> +	DEFINE_WAKE_Q(wq);
->   
-> -	WARN_ON(irqs_disabled());
-> -	raw_spin_lock_irq(&q->lock);
-> -	list_splice_init(&q->task_list, &tmp);
-> -	while (!list_empty(&tmp)) {
-> -		curr = list_first_entry(&tmp, typeof(*curr), task_list);
-> +	raw_spin_lock_irqsave(&q->lock, flags);
-> +	swake_add_all_wq(q, &wq);
-> +	raw_spin_unlock_irqrestore(&q->lock, flags);
->   
-> -		wake_up_state(curr->task, TASK_NORMAL);
-> -		list_del_init(&curr->task_list);
-> -
-> -		if (list_empty(&tmp))
-> -			break;
-> -
-> -		raw_spin_unlock_irq(&q->lock);
-> -		raw_spin_lock_irq(&q->lock);
-> -	}
-> -	raw_spin_unlock_irq(&q->lock);
-> +	wake_up_q(&wq);
+Hello RT Folks!
 
- From what I can tell, wake_up_q() is unbounded, and you have undone what
-the previous code had tried to accomplish.  In the scenario I'm talking 
-about,
-interrupts are still disabled here.  That's why I was asking about where 
-to put
-wake_up_q(), I knew you could put it here, but it didn't seem to me to help
-at all.
+I'm pleased to announce the 4.4.120-rt135 stable release.
 
->   }
->   EXPORT_SYMBOL(swake_up_all);
->   
->
->> I had another idea.  This is only occurring if RT is not enabled, because
->> with
->> RT all the irq disable things go away and you are generally running in task
->> context.  So why not have a different version of swake_up_all() for non-RT
->> that does work from irqs-off context?
-> With the patch above I have puzzle part which would allow to use swait
-> based completions upstream. That ifdef would probably not help.
+You can get this release via the git tree at:
 
-I agree that having a bounded time way to wake up a bunch of threads while
-interrupts are disabled would solve a bunch of issues.  I just don't see 
-how it
-can be done without pushing it off to a softirq or workqueue.
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
--corey
+  branch: v4.4-rt
+  Head SHA1: 91db57e54eb9be1560454d6a370d67847b05735f
 
->> -corey
-> Sebastian
+Or to build 4.4.120-rt135 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.120.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.120-rt135.patch.xz
+
+
+You can also build from 4.4.115-rt130 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/incr/patch-4.4.115-rt130-rt135.patch.xz
+
+Enjoy!
+   Daniel
