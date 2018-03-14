@@ -1,10 +1,9 @@
-From: Peter Zijlstra <peterz@infradead.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Subject: Re: [RT PATCH 2/2] block: blk-mq: move
  blk_queue_usage_counter_release() into process context
-Date: Tue, 13 Mar 2018 21:10:39 +0100
-Message-ID: <20180313201039.GB4082@hirez.programming.kicks-ass.net>
-References: <20180309174605.GC4064@hirez.programming.kicks-ass.net>
- <20180309202550.j66qphz3txupt55u@linutronix.de>
+Date: Wed, 14 Mar 2018 16:23:46 +0100
+Message-ID: <20180314152345.xyphm4dg4m7suqov@linutronix.de>
+References: <20180309202550.j66qphz3txupt55u@linutronix.de>
  <20180309222643.GC5926@hirez.programming.kicks-ass.net>
  <20180312105113.p7jifhwdwbhpvxds@linutronix.de>
  <20180312132729.GI4064@hirez.programming.kicks-ass.net>
@@ -13,45 +12,52 @@ References: <20180309174605.GC4064@hirez.programming.kicks-ass.net>
  <20180312195118.rye5lg2pb26kmavn@linutronix.de>
  <20180313184039.begptzircgb5ketk@linutronix.de>
  <20180313184240.ndq2pw2fmvhkwidc@linutronix.de>
+ <20180313201039.GB4082@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
         Corey Minyard <cminyard@mvista.com>,
         Thomas Gleixner <tglx@linutronix.de>,
         Steven Rostedt <rostedt@goodmis.org>,
         linux-kernel <linux-kernel@vger.kernel.org>,
         Tejun Heo <tj@kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180313184240.ndq2pw2fmvhkwidc@linutronix.de>
+In-Reply-To: <20180313201039.GB4082@hirez.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, Mar 13, 2018 at 07:42:41PM +0100, Sebastian Andrzej Siewior wrote:
-> +static void blk_queue_usage_counter_release_swork(struct swork_event *sev)
-> +{
-> +	struct request_queue *q =
-> +		container_of(sev, struct request_queue, mq_pcpu_wake);
-> +
-> +	wake_up_all(&q->mq_freeze_wq);
-> +}
-> +
->  static void blk_queue_usage_counter_release(struct percpu_ref *ref)
->  {
->  	struct request_queue *q =
->  		container_of(ref, struct request_queue, q_usage_counter);
->  
-> -	wake_up_all(&q->mq_freeze_wq);
-> +	swork_queue(&q->mq_pcpu_wake);
->  }
+On 2018-03-13 21:10:39 [+0100], Peter Zijlstra wrote:
+> On Tue, Mar 13, 2018 at 07:42:41PM +0100, Sebastian Andrzej Siewior wrote:
+> > +static void blk_queue_usage_counter_release_swork(struct swork_event *sev)
+> > +{
+> > +	struct request_queue *q =
+> > +		container_of(sev, struct request_queue, mq_pcpu_wake);
+> > +
+> > +	wake_up_all(&q->mq_freeze_wq);
+> > +}
+> > +
+> >  static void blk_queue_usage_counter_release(struct percpu_ref *ref)
+> >  {
+> >  	struct request_queue *q =
+> >  		container_of(ref, struct request_queue, q_usage_counter);
+> >  
+> > -	wake_up_all(&q->mq_freeze_wq);
+> > +	swork_queue(&q->mq_pcpu_wake);
+> >  }
+> 
+> Depending on if we expect there to actually be wakeups, you could do
+> something like:
+> 
+> 	if (wq_has_sleepers(&q->mq_freeze_wq))
+> 		swork_queue(&q->mq_pcpu_wake));
+> 
+> avoiding the whole workqueue thing in the case there wasn't anybody
+> waiting for it. But since I don't know this code, I can't say if it
+> makes sense or not. Tejun?
 
-Depending on if we expect there to actually be wakeups, you could do
-something like:
+this pops up on boot and shows that there are no waiter. So I consider
+to take this.
 
-	if (wq_has_sleepers(&q->mq_freeze_wq))
-		swork_queue(&q->mq_pcpu_wake));
-
-avoiding the whole workqueue thing in the case there wasn't anybody
-waiting for it. But since I don't know this code, I can't say if it
-makes sense or not. Tejun?
+Sebastian
