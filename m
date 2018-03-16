@@ -1,63 +1,94 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [RT PATCH 2/2] block: blk-mq: move
- blk_queue_usage_counter_release() into process context
-Date: Wed, 14 Mar 2018 16:23:46 +0100
-Message-ID: <20180314152345.xyphm4dg4m7suqov@linutronix.de>
-References: <20180309202550.j66qphz3txupt55u@linutronix.de>
- <20180309222643.GC5926@hirez.programming.kicks-ass.net>
- <20180312105113.p7jifhwdwbhpvxds@linutronix.de>
- <20180312132729.GI4064@hirez.programming.kicks-ass.net>
- <20180312141107.roveviectc6a75s7@linutronix.de>
- <20180312142933.GF4043@hirez.programming.kicks-ass.net>
- <20180312195118.rye5lg2pb26kmavn@linutronix.de>
- <20180313184039.begptzircgb5ketk@linutronix.de>
- <20180313184240.ndq2pw2fmvhkwidc@linutronix.de>
- <20180313201039.GB4082@hirez.programming.kicks-ass.net>
+Subject: [RT PATCH 2/2] Revert "cpu_chill: Add a UNINTERRUPTIBLE hrtimer_nanosleep"
+Date: Fri, 16 Mar 2018 15:21:35 +0100
+Message-ID: <20180316142135.9664-2-bigeasy@linutronix.de>
+References: <20180316142135.9664-1-bigeasy@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Corey Minyard <cminyard@mvista.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        linux-kernel <linux-kernel@vger.kernel.org>,
-        Tejun Heo <tj@kernel.org>
-To: Peter Zijlstra <peterz@infradead.org>
+Content-Transfer-Encoding: quoted-printable
+Cc: linux-kernel@vger.kernel.org, tglx@linutronix.de,
+        Steven Rostedt <rostedt@goodmis.org>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180313201039.GB4082@hirez.programming.kicks-ass.net>
+In-Reply-To: <20180316142135.9664-1-bigeasy@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2018-03-13 21:10:39 [+0100], Peter Zijlstra wrote:
-> On Tue, Mar 13, 2018 at 07:42:41PM +0100, Sebastian Andrzej Siewior wrote:
-> > +static void blk_queue_usage_counter_release_swork(struct swork_event *sev)
-> > +{
-> > +	struct request_queue *q =
-> > +		container_of(sev, struct request_queue, mq_pcpu_wake);
-> > +
-> > +	wake_up_all(&q->mq_freeze_wq);
-> > +}
-> > +
-> >  static void blk_queue_usage_counter_release(struct percpu_ref *ref)
-> >  {
-> >  	struct request_queue *q =
-> >  		container_of(ref, struct request_queue, q_usage_counter);
-> >  
-> > -	wake_up_all(&q->mq_freeze_wq);
-> > +	swork_queue(&q->mq_pcpu_wake);
-> >  }
-> 
-> Depending on if we expect there to actually be wakeups, you could do
-> something like:
-> 
-> 	if (wq_has_sleepers(&q->mq_freeze_wq))
-> 		swork_queue(&q->mq_pcpu_wake));
-> 
-> avoiding the whole workqueue thing in the case there wasn't anybody
-> waiting for it. But since I don't know this code, I can't say if it
-> makes sense or not. Tejun?
+This reverts commit "cpu_chill: Add a UNINTERRUPTIBLE
+hrtimer_nanosleep". Since cpu_chill() is now using schedule_hrtimeout()
+we can remove that change since we have no users for it.
 
-this pops up on boot and shows that there are no waiter. So I consider
-to take this.
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ kernel/time/hrtimer.c | 21 ++++++---------------
+ 1 file changed, 6 insertions(+), 15 deletions(-)
 
-Sebastian
+diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+index c0efc22ba635..ce2c2d04cbaa 100644
+--- a/kernel/time/hrtimer.c
++++ b/kernel/time/hrtimer.c
+@@ -1742,13 +1742,12 @@ int nanosleep_copyout(struct restart_block *restart=
+, struct timespec64 *ts)
+ 	return -ERESTART_RESTARTBLOCK;
+ }
+=20
+-static int __sched do_nanosleep(struct hrtimer_sleeper *t, enum hrtimer_mo=
+de mode,
+-				unsigned long state)
++static int __sched do_nanosleep(struct hrtimer_sleeper *t, enum hrtimer_mo=
+de mode)
+ {
+ 	struct restart_block *restart;
+=20
+ 	do {
+-		set_current_state(state);
++		set_current_state(TASK_INTERRUPTIBLE);
+ 		hrtimer_start_expires(&t->timer, mode);
+=20
+ 		if (likely(t->task))
+@@ -1786,15 +1785,13 @@ static long __sched hrtimer_nanosleep_restart(struc=
+t restart_block *restart)
+ 	hrtimer_init_sleeper_on_stack(&t, restart->nanosleep.clockid,
+ 				      HRTIMER_MODE_ABS, current);
+ 	hrtimer_set_expires_tv64(&t.timer, restart->nanosleep.expires);
+-	/* cpu_chill() does not care about restart state. */
+-	ret =3D do_nanosleep(&t, HRTIMER_MODE_ABS, TASK_INTERRUPTIBLE);
++	ret =3D do_nanosleep(&t, HRTIMER_MODE_ABS);
+ 	destroy_hrtimer_on_stack(&t.timer);
+ 	return ret;
+ }
+=20
+-static long __hrtimer_nanosleep(const struct timespec64 *rqtp,
+-				const enum hrtimer_mode mode, const clockid_t clockid,
+-				unsigned long state)
++long hrtimer_nanosleep(const struct timespec64 *rqtp,
++		       const enum hrtimer_mode mode, const clockid_t clockid)
+ {
+ 	struct restart_block *restart;
+ 	struct hrtimer_sleeper t;
+@@ -1807,7 +1804,7 @@ static long __hrtimer_nanosleep(const struct timespec=
+64 *rqtp,
+=20
+ 	hrtimer_init_sleeper_on_stack(&t, clockid, mode, current);
+ 	hrtimer_set_expires_range_ns(&t.timer, timespec64_to_ktime(*rqtp), slack);
+-	ret =3D do_nanosleep(&t, mode, state);
++	ret =3D do_nanosleep(&t, mode);
+ 	if (ret !=3D -ERESTART_RESTARTBLOCK)
+ 		goto out;
+=20
+@@ -1826,12 +1823,6 @@ static long __hrtimer_nanosleep(const struct timespe=
+c64 *rqtp,
+ 	return ret;
+ }
+=20
+-long hrtimer_nanosleep(const struct timespec64 *rqtp,
+-		       const enum hrtimer_mode mode, const clockid_t clockid)
+-{
+-	return __hrtimer_nanosleep(rqtp, mode, clockid, TASK_INTERRUPTIBLE);
+-}
+-
+ SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
+ 		struct timespec __user *, rmtp)
+ {
+--=20
+2.16.2
