@@ -1,9 +1,9 @@
 From: Sasha Levin <Alexander.Levin@microsoft.com>
-Subject: [PATCH AUTOSEL for 4.4 084/167] perf probe: Add warning message if
+Subject: [PATCH AUTOSEL for 4.9 125/281] perf probe: Add warning message if
  there is unexpected event name
-Date: Mon, 19 Mar 2018 16:07:07 +0000
-Message-ID: <20180319160513.16384-84-alexander.levin@microsoft.com>
-References: <20180319160513.16384-1-alexander.levin@microsoft.com>
+Date: Mon, 19 Mar 2018 16:00:21 +0000
+Message-ID: <20180319155742.13731-125-alexander.levin@microsoft.com>
+References: <20180319155742.13731-1-alexander.levin@microsoft.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
@@ -16,7 +16,7 @@ Cc: Masami Hiramatsu <mhiramat@kernel.org>,
 To: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
         "stable@vger.kernel.org" <stable@vger.kernel.org>
 Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <20180319160513.16384-1-alexander.levin@microsoft.com>
+In-Reply-To: <20180319155742.13731-1-alexander.levin@microsoft.com>
 Content-Language: en-US
 Sender: stable-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
@@ -52,10 +52,10 @@ Signed-off-by: Sasha Levin <alexander.levin@microsoft.com>
  1 file changed, 8 insertions(+)
 
 diff --git a/tools/perf/util/probe-event.c b/tools/perf/util/probe-event.c
-index 03875f9154e7..0195b7e8c54a 100644
+index 6a6f44dd594b..da778ecba2d3 100644
 --- a/tools/perf/util/probe-event.c
 +++ b/tools/perf/util/probe-event.c
-@@ -2349,6 +2349,14 @@ static int get_new_event_name(char *buf, size_t len,=
+@@ -2609,6 +2609,14 @@ static int get_new_event_name(char *buf, size_t len,=
  const char *base,
 =20
  out:
