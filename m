@@ -1,223 +1,92 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [ANNOUNCE] v4.14.27-rt21
-Date: Sat, 17 Mar 2018 13:29:27 +0100
-Message-ID: <20180317122927.wlamwxfvqvnkgdhp@linutronix.de>
-References: <20180317114919.r74kp5m35cz6wstw@linutronix.de>
+From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Subject: Re: [PATCH v5 00/23] crypto: arm64 - play nice with CONFIG_PREEMPT
+Date: Mon, 19 Mar 2018 23:31:24 +0800
+Message-ID: <CAKv+Gu8jCa7dAoXHan+3zwBt2pZjD22MaCSwiAM-bXHgvVJkmQ@mail.gmail.com>
+References: <20180310152208.10369-1-ard.biesheuvel@linaro.org>
+ <20180316155735.GJ7095@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180317114919.r74kp5m35cz6wstw@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: Mark Rutland <mark.rutland@arm.com>, linux-rt-users@vger.kernel.org,
+ Peter Zijlstra <peterz@infradead.org>,
+ Catalin Marinas <catalin.marinas@arm.com>,
+ Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+ Russell King - ARM Linux <linux@armlinux.org.uk>,
+ Steven Rostedt <rostedt@goodmis.org>,
+ "open list:HARDWARE RANDOM NUMBER GENERATOR CORE"
+ <linux-crypto@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>,
+ Dave Martin <Dave.Martin@arm.com>,
+ linux-arm-kernel <linux-arm-kernel@lists.infradead.org>
+To: Herbert Xu <herbert@gondor.apana.org.au>, Will Deacon <will.deacon@arm.com>
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-Reply-To: <20180316155735.GJ7095@gondor.apana.org.au>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2018-03-17 12:49:20 [+0100], To Thomas Gleixner wrote:
-> The delta patch against v4.14.27-rt20 is appended below and can be found here:
+On 16 March 2018 at 23:57, Herbert Xu <herbert@gondor.apana.org.au> wrote:
+> On Sat, Mar 10, 2018 at 03:21:45PM +0000, Ard Biesheuvel wrote:
+>> As reported by Sebastian, the way the arm64 NEON crypto code currently
+>> keeps kernel mode NEON enabled across calls into skcipher_walk_xxx() is
+>> causing problems with RT builds, given that the skcipher walk API may
+>> allocate and free temporary buffers it uses to present the input and
+>> output arrays to the crypto algorithm in blocksize sized chunks (where
+>> blocksize is the natural blocksize of the crypto algorithm), and doing
+>> so with NEON enabled means we're alloc/free'ing memory with preemption
+>> disabled.
+>>
+>> This was deliberate: when this code was introduced, each kernel_neon_begin()
+>> and kernel_neon_end() call incurred a fixed penalty of storing resp.
+>> loading the contents of all NEON registers to/from memory, and so doing
+>> it less often had an obvious performance benefit. However, in the mean time,
+>> we have refactored the core kernel mode NEON code, and now kernel_neon_begin()
+>> only incurs this penalty the first time it is called after entering the kernel,
+>> and the NEON register restore is deferred until returning to userland. This
+>> means pulling those calls into the loops that iterate over the input/output
+>> of the crypto algorithm is not a big deal anymore (although there are some
+>> places in the code where we relied on the NEON registers retaining their
+>> values between calls)
+>>
+>> So let's clean this up for arm64: update the NEON based skcipher drivers to
+>> no longer keep the NEON enabled when calling into the skcipher walk API.
+>>
+>> As pointed out by Peter, this only solves part of the problem. So let's
+>> tackle it more thoroughly, and update the algorithms to test the NEED_RESCHED
+>> flag each time after processing a fixed chunk of input.
+>>
+>> Given that this issue was flagged by the RT people, I would appreciate it
+>> if they could confirm whether they are happy with this approach.
+>>
+>> Changes since v4:
+>> - rebase onto v4.16-rc3
+>> - apply the same treatment to new SHA512, SHA-3 and SM3 code that landed
+>>   in v4.16-rc1
+>
+> Looks good to me.  If more work is needed we can always do
+> incremental fixes.
+>
+> Patches 1-22 applied.  Thanks.
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index ff1258ca236c..b37ea6bb739c 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -799,7 +799,7 @@ int blk_queue_enter(struct request_queue *q, bool nowait)
- 		 */
- 		smp_rmb();
- 
--		ret = swait_event_interruptible(q->mq_freeze_wq,
-+		ret = wait_event_interruptible(q->mq_freeze_wq,
- 				!atomic_read(&q->mq_freeze_depth) ||
- 				blk_queue_dying(q));
- 		if (blk_queue_dying(q))
-@@ -814,12 +814,21 @@ void blk_queue_exit(struct request_queue *q)
- 	percpu_ref_put(&q->q_usage_counter);
- }
- 
-+static void blk_queue_usage_counter_release_swork(struct swork_event *sev)
-+{
-+	struct request_queue *q =
-+		container_of(sev, struct request_queue, mq_pcpu_wake);
-+
-+	wake_up_all(&q->mq_freeze_wq);
-+}
-+
- static void blk_queue_usage_counter_release(struct percpu_ref *ref)
- {
- 	struct request_queue *q =
- 		container_of(ref, struct request_queue, q_usage_counter);
- 
--	swake_up_all(&q->mq_freeze_wq);
-+	if (wq_has_sleeper(&q->mq_freeze_wq))
-+		swork_queue(&q->mq_pcpu_wake);
- }
- 
- static void blk_rq_timed_out_timer(unsigned long data)
-@@ -895,7 +904,8 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
- 	q->bypass_depth = 1;
- 	__set_bit(QUEUE_FLAG_BYPASS, &q->queue_flags);
- 
--	init_swait_queue_head(&q->mq_freeze_wq);
-+	init_waitqueue_head(&q->mq_freeze_wq);
-+	INIT_SWORK(&q->mq_pcpu_wake, blk_queue_usage_counter_release_swork);
- 
- 	/*
- 	 * Init percpu_ref in atomic mode so that it's faster to shutdown.
-@@ -3623,6 +3633,8 @@ int __init blk_dev_init(void)
- 	if (!kblockd_workqueue)
- 		panic("Failed to create kblockd\n");
- 
-+	BUG_ON(swork_get());
-+
- 	request_cachep = kmem_cache_create("blkdev_requests",
- 			sizeof(struct request), 0, SLAB_PANIC, NULL);
- 
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index bbe43d32f71a..c5bd467dd97b 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -132,14 +132,14 @@ EXPORT_SYMBOL_GPL(blk_freeze_queue_start);
- 
- void blk_mq_freeze_queue_wait(struct request_queue *q)
- {
--	swait_event(q->mq_freeze_wq, percpu_ref_is_zero(&q->q_usage_counter));
-+	wait_event(q->mq_freeze_wq, percpu_ref_is_zero(&q->q_usage_counter));
- }
- EXPORT_SYMBOL_GPL(blk_mq_freeze_queue_wait);
- 
- int blk_mq_freeze_queue_wait_timeout(struct request_queue *q,
- 				     unsigned long timeout)
- {
--	return swait_event_timeout(q->mq_freeze_wq,
-+	return wait_event_timeout(q->mq_freeze_wq,
- 					percpu_ref_is_zero(&q->q_usage_counter),
- 					timeout);
- }
-@@ -182,7 +182,7 @@ void blk_mq_unfreeze_queue(struct request_queue *q)
- 	WARN_ON_ONCE(freeze_depth < 0);
- 	if (!freeze_depth) {
- 		percpu_ref_reinit(&q->q_usage_counter);
--		swake_up_all(&q->mq_freeze_wq);
-+		wake_up_all(&q->mq_freeze_wq);
- 	}
- }
- EXPORT_SYMBOL_GPL(blk_mq_unfreeze_queue);
-@@ -263,7 +263,7 @@ void blk_mq_wake_waiters(struct request_queue *q)
- 	 * dying, we need to ensure that processes currently waiting on
- 	 * the queue are notified as well.
- 	 */
--	swake_up_all(&q->mq_freeze_wq);
-+	wake_up_all(&q->mq_freeze_wq);
- }
- 
- bool blk_mq_can_queue(struct blk_mq_hw_ctx *hctx)
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 6f278f1fd634..49b53ad6d2d6 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -27,6 +27,7 @@
- #include <linux/percpu-refcount.h>
- #include <linux/scatterlist.h>
- #include <linux/blkzoned.h>
-+#include <linux/swork.h>
- 
- struct module;
- struct scsi_ioctl_command;
-@@ -598,7 +599,8 @@ struct request_queue {
- 	struct throtl_data *td;
- #endif
- 	struct rcu_head		rcu_head;
--	struct swait_queue_head	mq_freeze_wq;
-+	wait_queue_head_t	mq_freeze_wq;
-+	struct swork_event	mq_pcpu_wake;
- 	struct percpu_ref	q_usage_counter;
- 	struct list_head	all_q_node;
- 
-diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
-index 6c77643eaf02..ce2c2d04cbaa 100644
---- a/kernel/time/hrtimer.c
-+++ b/kernel/time/hrtimer.c
-@@ -1742,13 +1742,12 @@ int nanosleep_copyout(struct restart_block *restart, struct timespec64 *ts)
- 	return -ERESTART_RESTARTBLOCK;
- }
- 
--static int __sched do_nanosleep(struct hrtimer_sleeper *t, enum hrtimer_mode mode,
--				unsigned long state)
-+static int __sched do_nanosleep(struct hrtimer_sleeper *t, enum hrtimer_mode mode)
- {
- 	struct restart_block *restart;
- 
- 	do {
--		set_current_state(state);
-+		set_current_state(TASK_INTERRUPTIBLE);
- 		hrtimer_start_expires(&t->timer, mode);
- 
- 		if (likely(t->task))
-@@ -1786,15 +1785,13 @@ static long __sched hrtimer_nanosleep_restart(struct restart_block *restart)
- 	hrtimer_init_sleeper_on_stack(&t, restart->nanosleep.clockid,
- 				      HRTIMER_MODE_ABS, current);
- 	hrtimer_set_expires_tv64(&t.timer, restart->nanosleep.expires);
--	/* cpu_chill() does not care about restart state. */
--	ret = do_nanosleep(&t, HRTIMER_MODE_ABS, TASK_INTERRUPTIBLE);
-+	ret = do_nanosleep(&t, HRTIMER_MODE_ABS);
- 	destroy_hrtimer_on_stack(&t.timer);
- 	return ret;
- }
- 
--static long __hrtimer_nanosleep(const struct timespec64 *rqtp,
--				const enum hrtimer_mode mode, const clockid_t clockid,
--				unsigned long state)
-+long hrtimer_nanosleep(const struct timespec64 *rqtp,
-+		       const enum hrtimer_mode mode, const clockid_t clockid)
- {
- 	struct restart_block *restart;
- 	struct hrtimer_sleeper t;
-@@ -1807,7 +1804,7 @@ static long __hrtimer_nanosleep(const struct timespec64 *rqtp,
- 
- 	hrtimer_init_sleeper_on_stack(&t, clockid, mode, current);
- 	hrtimer_set_expires_range_ns(&t.timer, timespec64_to_ktime(*rqtp), slack);
--	ret = do_nanosleep(&t, mode, state);
-+	ret = do_nanosleep(&t, mode);
- 	if (ret != -ERESTART_RESTARTBLOCK)
- 		goto out;
- 
-@@ -1826,12 +1823,6 @@ static long __hrtimer_nanosleep(const struct timespec64 *rqtp,
- 	return ret;
- }
- 
--long hrtimer_nanosleep(const struct timespec64 *rqtp,
--		       const enum hrtimer_mode mode, const clockid_t clockid)
--{
--	return __hrtimer_nanosleep(rqtp, mode, clockid, TASK_INTERRUPTIBLE);
--}
--
- SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
- 		struct timespec __user *, rmtp)
- {
-@@ -1873,14 +1864,13 @@ COMPAT_SYSCALL_DEFINE2(nanosleep, struct compat_timespec __user *, rqtp,
-  */
- void cpu_chill(void)
- {
--	struct timespec64 tu = {
--		.tv_nsec = NSEC_PER_MSEC,
--	};
-+	ktime_t chill_time;
- 	unsigned int freeze_flag = current->flags & PF_NOFREEZE;
- 
-+	chill_time = ktime_set(0, NSEC_PER_MSEC);
-+	set_current_state(TASK_UNINTERRUPTIBLE);
- 	current->flags |= PF_NOFREEZE;
--	__hrtimer_nanosleep(&tu, HRTIMER_MODE_REL_HARD, CLOCK_MONOTONIC,
--			    TASK_UNINTERRUPTIBLE);
-+	schedule_hrtimeout(&chill_time, HRTIMER_MODE_REL_HARD);
- 	if (!freeze_flag)
- 		current->flags &= ~PF_NOFREEZE;
- }
-diff --git a/localversion-rt b/localversion-rt
-index e095ab819714..6c6cde1c29e3 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt20
-+-rt21
+Thanks Herbert.
+
+Apologies if this wasn't clear, but there are some cross dependencies
+with the arm64 tree, which receives non-trivial modifications in
+patches 10 and 11, which are subsequently depended upon by patches 12
+- 23.
+
+Without acks from them, we should really not be merging this code yet,
+especially because I noticed a rebase issue in patch #10 (my bad).
+
+Would you mind reverting 10 - 22? I will revisit this asap, and try to
+get acks for the arm64 patches. If that means waiting for the next
+cycle, so be it.
+
+Thanks,
+Ard.
