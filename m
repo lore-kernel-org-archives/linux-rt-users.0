@@ -1,58 +1,91 @@
-From: Bart Van Assche <Bart.VanAssche@wdc.com>
-Subject: Re: [PATCH 2/2] target: remove spin_lock_assert() in
- __target_(attach|detach)_tg_pt_gp()
-Date: Fri, 23 Mar 2018 17:55:54 +0000
-Message-ID: <1521827753.2535.18.camel@wdc.com>
-References: <20180321153854.GB24312@kernel.org>
-         <CA+55aFwKN_JijmCt=0S4jF8KzGPmoKNbuYF59va7U4ziJLLryA@mail.gmail.com>
-         <20180322093745.GC4229@kernel.org>
-         <20180323155513.dwbgvblenlji33as@linutronix.de>
-         <1521822325.2535.5.camel@wdc.com>
-         <CA+55aFxVkuntSektVmwXktzvfEezdDTAM_zj4DJdp3qJxWf8aA@mail.gmail.com>
-         <20180323171736.bcyi2oiolge4l6hl@linutronix.de>
-         <20180323171959.7ac6klrqg4fdk3ey@linutronix.de>
-         <1521827085.2535.12.camel@wdc.com>
-         <20180323175013.6uucllg5ogyzfovt@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [ANNOUNCE] v4.14.29-rt25
+Date: Sun, 25 Mar 2018 12:12:04 +0200
+Message-ID: <20180325101204.ibuvdpnusv3vutyc@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: "daniel@bristot.me" <daniel@bristot.me>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "peterz@infradead.org" <peterz@infradead.org>,
-        "rostedt@goodmis.org" <rostedt@goodmis.org>,
-        "torvalds@linux-foundation.org" <torvalds@linux-foundation.org>,
-        "nab@linux-iscsi.org" <nab@linux-iscsi.org>,
-        "acme@kernel.org" <acme@kernel.org>,
-        "tglx@linutronix.de" <tglx@linutronix.de>,
-        "williams@redhat.com" <williams@redhat.com>,
-        "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
-        "lclaudio@redhat.com" <lclaudio@redhat.com>,
-        "target-devel@vger.kernel.org" <target-devel@vger.kernel.org>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: "bigeasy@linutronix.de" <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180323175013.6uucllg5ogyzfovt@linutronix.de>
-Content-Language: en-US
-Content-ID: <10DDBCCF35C36246B75B0AB3D36CA660@namprd04.prod.outlook.com>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-T24gRnJpLCAyMDE4LTAzLTIzIGF0IDE4OjUwICswMTAwLCBiaWdlYXN5QGxpbnV0cm9uaXguZGUg
-d3JvdGU6DQo+IE9uIDIwMTgtMDMtMjMgMTc6NDQ6NDYgWyswMDAwXSwgQmFydCBWYW4gQXNzY2hl
-IHdyb3RlOg0KPiA+IEluIG90aGVyIHdvcmRzLCBkbyB3ZSByZWFsbHkgbmVlZCB0byByZW1vdmUg
-dGhlc2UgY2hlY2tzPyBJIHRoaW5rIHRoYXQgdGhlc2UNCj4gPiBjaGVja3MgYXJlIHVzZWZ1bCBh
-cyBkb2N1bWVudGF0aW9uIHRvIHBlb3BsZSB3aG8gcmVhZCB0aGUgU0NTSSB0YXJnZXQgY29kZS4N
-Cj4gPiBUaGUgdGFyZ2V0IGNvZGUgaXMgYWxyZWFkeSBoYXJkIHRvIGZvbGxvdyBzbyBJIHRoaW5r
-IGFueSBkb2N1bWVudGF0aW9uLA0KPiA+IGVzcGVjaWFsbHkgZG9jdW1lbnRhdGlvbiBpbiB0aGUg
-Zm9ybSBvZiBjb2RlIHRoYXQgaXMgY2hlY2tlZCBhdCBydW50aW1lLCBpcw0KPiA+IHdlbGNvbWUu
-DQo+IA0KPiBzbyBpZiBJIHJlbW92ZSB0aG9zZSB0d28gYW5kIGFkZCBhIGtlcm5lbCBkb2MgY29t
-bWVudCBpbnN0ZWFkLCBzYXlpbmcNCj4gdGhhdCB0aGUgY2FsbGVyIG5lZWRzIHRvIGVuc3VyZSB0
-aGF0ICJsdW4tPmx1bl90Z19wdF9ncF9sb2NrIiBpcyBoZWxkDQo+IHRoZW4gd2Ugd291bGQgcmVt
-b3ZlIHRoZSBvYnZpb3VzIHJ1bnRpbWUgY2hlY2sgYW5kIGFkZCBhIHBpZWNlIG9mDQo+IGRvY3Vt
-ZW50YXRpb24uIFdvdWxkIHRoYXQgd29yaz8NCg0KQ29tbWVudHMgYXJlIG5vdCB2ZXJpZmllZCBh
-dCBydW50aW1lIGFuZCBoZW5jZSBjYW4gYmVjb21lIG91dGRhdGVkIGlmIHRoZSBjb2RlDQppcyBt
-b2RpZmllZC4gYXNzZXJ0X3NwaW5fbG9ja2VkKCkgYW5kIGxvY2tkZXBfYXNzZXJ0X2hlbGQoKSBh
-c3NlcnRpb25zIGhvd2V2ZXINCmFyZSB2ZXJpZmllZCBhdCBydW50aW1lIHdpdGggdGhlIHByb3Bl
-ciBrZXJuZWwgY29uZmlndXJhdGlvbiBvcHRpb25zIGVuYWJsZWQuDQpIZW5jZSBteSBwcmVmZXJl
-bmNlIGZvciBhc3NlcnRfc3Bpbl9sb2NrZWQoKS9sb2NrZGVwX2Fzc2VydF9oZWxkKCkgb3ZlciBz
-b3VyY2UNCmNvZGUgY29tbWVudHMuDQoNClRoYW5rcywNCg0KQmFydC4NCg0KDQo=
+Dear RT folks!
+
+I'm pleased to announce the v4.14.29-rt25 patch set. 
+
+Changes since v4.14.29-rt24:
+
+  - There are checks for disabled interrupts in the target code which do
+    not work on RT. Reported by Arnaldo Carvalho de Melo.
+
+Known issues
+     - A warning triggered in "rcu_note_context_switch" originated from
+       SyS_timer_gettime(). The issue was always there, it is now
+       visible. Reported by Grygorii Strashko and Daniel Wagner.
+
+The delta patch against v4.14.29-rt24 is appended below and can be found here:
+ 
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/incr/patch-4.14.29-rt24-rt25.patch.xz
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.14.29-rt25
+
+The RT patch against v4.14.29 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patch-4.14.29-rt25.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/older/patches-4.14.29-rt25.tar.xz
+
+Sebastian
+
+diff --git a/drivers/target/target_core_tmr.c b/drivers/target/target_core_tmr.c
+index 9c7bc1ca341a..3d35dad1de2c 100644
+--- a/drivers/target/target_core_tmr.c
++++ b/drivers/target/target_core_tmr.c
+@@ -114,8 +114,6 @@ static bool __target_check_io_state(struct se_cmd *se_cmd,
+ {
+ 	struct se_session *sess = se_cmd->se_sess;
+ 
+-	assert_spin_locked(&sess->sess_cmd_lock);
+-	WARN_ON_ONCE(!irqs_disabled());
+ 	/*
+ 	 * If command already reached CMD_T_COMPLETE state within
+ 	 * target_complete_cmd() or CMD_T_FABRIC_STOP due to shutdown,
+diff --git a/drivers/target/target_core_transport.c b/drivers/target/target_core_transport.c
+index e6d51135d105..b00829995131 100644
+--- a/drivers/target/target_core_transport.c
++++ b/drivers/target/target_core_transport.c
+@@ -2966,9 +2966,6 @@ __transport_wait_for_tasks(struct se_cmd *cmd, bool fabric_stop,
+ 	__acquires(&cmd->t_state_lock)
+ {
+ 
+-	assert_spin_locked(&cmd->t_state_lock);
+-	WARN_ON_ONCE(!irqs_disabled());
+-
+ 	if (fabric_stop)
+ 		cmd->transport_state |= CMD_T_FABRIC_STOP;
+ 
+@@ -3238,9 +3235,6 @@ static int __transport_check_aborted_status(struct se_cmd *cmd, int send_status)
+ {
+ 	int ret;
+ 
+-	assert_spin_locked(&cmd->t_state_lock);
+-	WARN_ON_ONCE(!irqs_disabled());
+-
+ 	if (!(cmd->transport_state & CMD_T_ABORTED))
+ 		return 0;
+ 	/*
+diff --git a/localversion-rt b/localversion-rt
+index b2111a212663..c5b71f9a229d 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt24
++-rt25
