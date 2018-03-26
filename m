@@ -1,47 +1,55 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT] Defer migrate_enable migration while task state !=
- TASK_RUNNING
-Date: Mon, 26 Mar 2018 11:35:15 -0400
-Message-ID: <20180326113515.720e7fb3@gandalf.local.home>
-References: <20180323150959.GA16131@zipoli.concurrent-rt.com>
-        <20180323165921.GG10942@jcartwri.amer.corp.natinst.com>
-        <20180323172131.GA2670@zipoli.concurrent-rt.com>
+Subject: Re: [PATCH 2/2] target: remove spin_lock_assert() in
+ __target_(attach|detach)_tg_pt_gp()
+Date: Mon, 26 Mar 2018 11:38:52 -0400
+Message-ID: <20180326113852.1582e597@gandalf.local.home>
+References: <20180321153854.GB24312@kernel.org>
+        <CA+55aFwKN_JijmCt=0S4jF8KzGPmoKNbuYF59va7U4ziJLLryA@mail.gmail.com>
+        <20180322093745.GC4229@kernel.org>
+        <20180323155513.dwbgvblenlji33as@linutronix.de>
+        <1521822325.2535.5.camel@wdc.com>
+        <CA+55aFxVkuntSektVmwXktzvfEezdDTAM_zj4DJdp3qJxWf8aA@mail.gmail.com>
+        <20180323171736.bcyi2oiolge4l6hl@linutronix.de>
+        <20180323171959.7ac6klrqg4fdk3ey@linutronix.de>
+        <1521827085.2535.12.camel@wdc.com>
+        <20180323175013.6uucllg5ogyzfovt@linutronix.de>
+        <1521827753.2535.18.camel@wdc.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Julia Cartwright <julia@ni.com>, <bigeasy@linutronix.de>,
-        <mingo@redhat.com>, <tglx@linutronix.de>,
-        <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>
-To: joe.korty@concurrent-rt.com
+Cc: "bigeasy@linutronix.de" <bigeasy@linutronix.de>,
+        "daniel@bristot.me" <daniel@bristot.me>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "peterz@infradead.org" <peterz@infradead.org>,
+        "torvalds@linux-foundation.org" <torvalds@linux-foundation.org>,
+        "nab@linux-iscsi.org" <nab@linux-iscsi.org>,
+        "acme@kernel.org" <acme@kernel.org>,
+        "tglx@linutronix.de" <tglx@linutronix.de>,
+        "williams@redhat.com" <williams@redhat.com>,
+        "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
+        "lclaudio@redhat.com" <lclaudio@redhat.com>,
+        "target-devel@vger.kernel.org" <target-devel@vger.kernel.org>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Bart Van Assche <Bart.VanAssche@wdc.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180323172131.GA2670@zipoli.concurrent-rt.com>
+In-Reply-To: <1521827753.2535.18.camel@wdc.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 23 Mar 2018 13:21:31 -0400
-joe.korty@concurrent-rt.com wrote:
+On Fri, 23 Mar 2018 17:55:54 +0000
+Bart Van Assche <Bart.VanAssche@wdc.com> wrote:
 
-> My understanding is, in standard Linux and in rt, setting
-> task state to anything other than TASK_RUNNING in of itself
-> blocks preemption.
+> Comments are not verified at runtime and hence can become outdated if the code
+> is modified. assert_spin_locked() and lockdep_assert_held() assertions however
+> are verified at runtime with the proper kernel configuration options enabled.
+> Hence my preference for assert_spin_locked()/lockdep_assert_held() over source
+> code comments.
 
-That is clearly false. The only thing that blocks preemption with a
-CONFIG_PREEMPT kernel is preempt_disable() and local_irq*() disabling.
+Asserts are fine, but when the code is static and used close to the
+caller, asserts are overkill. A comment at the beginning of a function
+should suffice. We do that all over the kernel for functions like that.
 
-(Note spin_locks call preempt_disable in non RT).
-
-Otherwise, nothing will stop preemption.
-
->  A preemption is not really needed here
-> as it is expected that there is a schedule() written in that
-> will shortly be executed.  And if a 'involuntary schedule'
-> (ie, preemption) were allowed to occur between the task
-> state set and the schedule(), that would change the task
-> state back to TASK_RUNNING, which would cause the schedule
-> to NOP.  Thus we risk not having paused long enough here
-> for the condition we were waiting for to become true.
-
-That is also incorrect. As Julia mentioned, a preemption keeps the
-state of the task.
+The asserts are there when the code can be called from other files, or
+in multiple places.
 
 -- Steve
