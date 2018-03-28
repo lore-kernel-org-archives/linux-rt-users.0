@@ -1,7 +1,8 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH RT 1/3] alarmtimer: Prevent live lock in alarm_cancel()
-Date: Wed, 28 Mar 2018 12:07:44 +0200
-Message-ID: <20180328100746.18668-1-bigeasy@linutronix.de>
+Subject: [PATCH RT 3/3] posix-timers: move the rcu head out of the union
+Date: Wed, 28 Mar 2018 12:07:46 +0200
+Message-ID: <20180328100746.18668-3-bigeasy@linutronix.de>
+References: <20180328100746.18668-1-bigeasy@linutronix.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 Cc: linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
@@ -10,32 +11,38 @@ Cc: linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         stable-rt@vger.kernel.org
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180328100746.18668-1-bigeasy@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-If alarm_try_to_cancel() requires a retry, then depending on the
-priority setting the retry loop might prevent timer callback completion
-on RT. Prevent that by waiting for completion on RT, no change for a
-non RT kernel.
+On RT the timer can be preempted while running and therefore we wait
+with timer_wait_for_callback() for the timer to complete (instead of
+busy looping). The RCU-readlock is held to ensure that this posix timer
+is not removed while we wait on it.
+If the timer is removed then it invokes call_rcu() with a pointer that
+is shared with the hrtimer because it is part of the same union.
+In order to avoid any possible side effects I am moving the rcu pointer
+out of the union.
 
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/time/alarmtimer.c | 2 +-
+ include/linux/posix-timers.h | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kernel/time/alarmtimer.c b/kernel/time/alarmtimer.c
-index ec09ce9a6012..ede5ef787865 100644
---- a/kernel/time/alarmtimer.c
-+++ b/kernel/time/alarmtimer.c
-@@ -429,7 +429,7 @@ int alarm_cancel(struct alarm *alarm)
- 		int ret =3D alarm_try_to_cancel(alarm);
- 		if (ret >=3D 0)
- 			return ret;
--		cpu_relax();
-+		hrtimer_wait_for_timer(&alarm->timer);
- 	}
- }
- EXPORT_SYMBOL_GPL(alarm_cancel);
+diff --git a/include/linux/posix-timers.h b/include/linux/posix-timers.h
+index 672c4f32311e..4754eb4298b1 100644
+--- a/include/linux/posix-timers.h
++++ b/include/linux/posix-timers.h
+@@ -101,8 +101,8 @@ struct k_itimer {
+ 		struct {
+ 			struct alarm	alarmtimer;
+ 		} alarm;
+-		struct rcu_head		rcu;
+ 	} it;
++	struct rcu_head		rcu;
+ };
+=20
+ void run_posix_cpu_timers(struct task_struct *task);
 --=20
 2.16.3
