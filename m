@@ -1,54 +1,54 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH RT 2/3] posix-timers: user proper timer while waiting for alarmtimer
-Date: Wed, 28 Mar 2018 12:07:45 +0200
-Message-ID: <20180328100746.18668-2-bigeasy@linutronix.de>
-References: <20180328100746.18668-1-bigeasy@linutronix.de>
+From: "bigeasy@linutronix.de" <bigeasy@linutronix.de>
+Subject: Re: [PATCH 1/2] target: drop spin_lock_assert() + irqs_disabled()
+ combo checks
+Date: Wed, 28 Mar 2018 12:15:54 +0200
+Message-ID: <20180328101553.uduqsdbxwnxrhl7a@linutronix.de>
+References: <20180321153854.GB24312@kernel.org>
+ <CA+55aFwKN_JijmCt=0S4jF8KzGPmoKNbuYF59va7U4ziJLLryA@mail.gmail.com>
+ <20180322093745.GC4229@kernel.org>
+ <20180323155513.dwbgvblenlji33as@linutronix.de>
+ <1521822325.2535.5.camel@wdc.com>
+ <CA+55aFxVkuntSektVmwXktzvfEezdDTAM_zj4DJdp3qJxWf8aA@mail.gmail.com>
+ <20180323171736.bcyi2oiolge4l6hl@linutronix.de>
+ <20180326111359.180f1604@gandalf.local.home>
 Mime-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-Cc: linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        stable-rt@vger.kernel.org
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: Linus Torvalds <torvalds@linux-foundation.org>,
+        "nab@linux-iscsi.org" <nab@linux-iscsi.org>,
+        Bart Van Assche <Bart.VanAssche@wdc.com>,
+        "acme@kernel.org" <acme@kernel.org>,
+        "daniel@bristot.me" <daniel@bristot.me>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "peterz@infradead.org" <peterz@infradead.org>,
+        "tglx@linutronix.de" <tglx@linutronix.de>,
+        "williams@redhat.com" <williams@redhat.com>,
+        "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
+        "lclaudio@redhat.com" <lclaudio@redhat.com>,
+        "target-devel@vger.kernel.org" <target-devel@vger.kernel.org>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180328100746.18668-1-bigeasy@linutronix.de>
+Content-Disposition: inline
+In-Reply-To: <20180326111359.180f1604@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On RT the timer can be preempted while running and therefore we wait
-with timer_wait_for_callback() for the timer to complete (instead of
-busy looping).
-The POSIX timer has an hrtimer underneath and this hrtimer is used to
-wait for its completion. The alartimer has also an hrtimer but at a
-different location.
+On 2018-03-26 11:13:59 [-0400], Steven Rostedt wrote:
+> > diff --git a/drivers/target/target_core_tmr.c b/drivers/target/target_core_tmr.c
+> > index 9c7bc1ca341a..3d35dad1de2c 100644
+> > --- a/drivers/target/target_core_tmr.c
+> > +++ b/drivers/target/target_core_tmr.c
+> 
+> Can you add a comment above the functions though?
+> 
+> /* Expects to have se_cmd->se_sess->sess_cmd_lock held */
 
-Instead of checking for ->timer_set which is the same for the alarmtimer
-and the "posix-timers" I instead check for ->arm which is only used by
-the "posix-timers". To match the alarmtimer I check for the alarm_clock
-struct.
+I could. I haven't heard from Bart / Nicholas about their opinion. I
+know, we do this other places but Bart was against this kind of
+annotation in 2/2 of this thread.
+So I am waiting to hear from them :)
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- kernel/time/posix-timers.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+> 
+> -- Steve
 
-diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
-index 0b568087bd64..8a16cb8f684a 100644
---- a/kernel/time/posix-timers.c
-+++ b/kernel/time/posix-timers.c
-@@ -802,8 +802,10 @@ SYSCALL_DEFINE1(timer_getoverrun, timer_t, timer_id)
- static void timer_wait_for_callback(const struct k_clock *kc, struct k_iti=
-mer *timr)
- {
- #ifdef CONFIG_PREEMPT_RT_FULL
--	if (kc->timer_set =3D=3D common_timer_set)
-+	if (kc->arm =3D=3D common_hrtimer_arm)
- 		hrtimer_wait_for_timer(&timr->it.real.timer);
-+	else if (kc =3D=3D alarm_clock)
-+		hrtimer_wait_for_timer(&timr->it.alarm.alarmtimer.timer);
- 	else
- 		/* FIXME: Whacky hack for posix-cpu-timers */
- 		schedule_timeout(1);
---=20
-2.16.3
+Sebastian
