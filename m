@@ -1,52 +1,64 @@
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH 2/4] tracing: Don't add flag strings when displaying variable references
-Date: Wed, 28 Mar 2018 15:10:54 -0500
-Message-ID: <913318a5610ef6b24af2522575f671fa6ee19b6b.1522256721.git.tom.zanussi@linux.intel.com>
-References: <cover.1522256721.git.tom.zanussi@linux.intel.com>
-Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        Tom Zanussi <tom.zanussi@linux.intel.com>
-To: rostedt@goodmis.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1522256721.git.tom.zanussi@linux.intel.com>
-In-Reply-To: <cover.1522256721.git.tom.zanussi@linux.intel.com>
-References: <cover.1522256721.git.tom.zanussi@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-Path: linux-rt-users-owner@vger.kernel.org
+Received: from mx1.redhat.com ([209.132.183.28]:46762 "EHLO mx1.redhat.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1754032AbeC1PcA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 28 Mar 2018 11:32:00 -0400
+Date: Wed, 28 Mar 2018 10:31:56 -0500
+From: Clark Williams <williams@redhat.com>
+Subject: Re: cyclictest result variations
+Message-ID: <20180328103156.61721154@tagon>
+In-Reply-To: <87370kqmec.fsf@linutronix.de>
+References: <TY1PR01MB1769F9602F276EC6B3A351DDF5A30@TY1PR01MB1769.jpnprd01.prod.outlook.com>
+        <87vadgqqgv.fsf@linutronix.de>
+        <TY1PR01MB17698C0EF45D762EB61E593BF5A30@TY1PR01MB1769.jpnprd01.prod.outlook.com>
+        <87370kqmec.fsf@linutronix.de>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
+To: John Ogness <john.ogness@linutronix.de>
+Cc: Phil Edworthy <phil.edworthy@renesas.com>, rt-users <linux-rt-users@vger.kernel.org>, John Kacur <jkacur@gmail.com>, Carsten Emde <C.Emde@osadl.org>
 
-Variable references should never have flags appended when displayed -
-prevent that from happening.
+On Wed, 28 Mar 2018 16:56:27 +0200
+John Ogness <john.ogness@linutronix.de> wrote:
 
-Before:
+> On 2018-03-28, Phil Edworthy <phil.edworthy@renesas.com> wrote:
+> >> > I found that cyclictest results vary from one run to another.
+> >> >
+> >> > [...]
+> >> >
+> >> > Is it common knowledge that cyclictest results vary so much from
+> >> > one run to another? Any ideas how to mitigate this?  
+> >> 
+> >> It would be helpful if you provided the command arguments you use for
+> >> your tests. Particularly important options to consider:
+> >> 
+> >>     -a / --affinity
+> >>     -m / --mlockall
+> >>     -n / --nanosleep
+> >>     -t / --threads
+> >>          --secaligned
+> >> 
+> >> and of course giving it an appropriate realtime priority:
+> >> 
+> >>     -p / --priority  
+> >
+> > Sure:
+> > cyclictest   -m -n -Sp99 -i200 -h300 -M -D 10h  
+> 
+> I would recommend using prio 98 instead of 99. In general, applications
+> should not be taking the CPU from the migration or watchdog tasks. And
+> usually you want cyclictest to reflect the latencies of real
+> applications.
 
-  # cat /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-  hist:keys=next_pid:vals=hitcount:wakeup_lat=common_timestamp.usecs-$ts0.usecs:...
+Agree, please don't use fifo:99. Honestly there's no difference between fifo:51
+and fifo:98. The interrupt threads default to fifo:50, so you want to be above that
+but no real need to contend with migration, watchdog or posix timers. 
 
-After:
+Also, if you are on a NUMA architecture system, you may want to use the
+--numa/-U option, instead of the --smp/-S option. With that option cyclictest
+uses the libnuma calls to allocate a stack on the local NUMA node for each
+measurement thread (trying to avoid cross-node allocations). 
 
-  hist:keys=next_pid:vals=hitcount:wakeup_lat=common_timestamp.usecs-$ts0:...
-
-Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
----
- kernel/trace/trace_events_hist.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index fb81447..468e43f 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -2052,7 +2052,7 @@ static void expr_field_str(struct hist_field *field, char *expr)
- 
- 	strcat(expr, hist_field_name(field, 0));
- 
--	if (field->flags) {
-+	if (field->flags && !(field->flags & HIST_FIELD_FL_VAR_REF)) {
- 		const char *flags_str = get_hist_field_flags(field);
- 
- 		if (flags_str) {
--- 
-1.9.3
+Clark
