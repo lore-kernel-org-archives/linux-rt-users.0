@@ -1,38 +1,120 @@
-Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from Galois.linutronix.de ([146.0.238.70]:60136 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751874AbeCERk2 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 5 Mar 2018 12:40:28 -0500
-Date: Mon, 5 Mar 2018 18:40:27 +0100
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: schedule under irqs_disabled in SLUB problem
-Message-ID: <20180305174026.pyw2jcably7bosmt@linutronix.de>
-References: <5A01812F.7040406@mcst.ru>
- <20171116160837.hfpnq4vb4j2osbuz@linutronix.de>
- <20171117173820.GM872@jcartwri.amer.corp.natinst.com>
- <CAJ9FNxsfHRuc+UZCPKGDJDtk5neApOb3i6thpGTy9c-oP8T4JA@mail.gmail.com>
- <20171124093724.GB2564@linutronix.de>
- <CAJ9FNxtpTqjLevwN1w037=g1eqRPf-Fht+SFqSqJS0jVhFXkLg@mail.gmail.com>
- <20171204095912.GH2255@linutronix.de>
- <CAJ9FNxsqcLjq8=jcOJz+3mwbkzuXyXCp59XVhj-xamsv6Ux0nA@mail.gmail.com>
- <20171212101816.ux24jdai4fftd7ro@linutronix.de>
- <CAJ9FNxtVuwtXhtPUoBQJTD=eO3dKznP9xtE2Yde4Q+p1Mr2iQQ@mail.gmail.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <CAJ9FNxtVuwtXhtPUoBQJTD=eO3dKznP9xtE2Yde4Q+p1Mr2iQQ@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
-To: Sam Kappen <skappen@mvista.com>
-Cc: linux-rt-users@vger.kernel.org
+From: Masami Hiramatsu <mhiramat@kernel.org>
+Subject: Re: [PATCH 3/4] tracing: Add action comparisons when testing
+ matching hist triggers
+Date: Tue, 3 Apr 2018 00:10:25 +0900
+Message-ID: <20180403001025.6dfed9403d50d20104e54458@kernel.org>
+References: <cover.1522256721.git.tom.zanussi@linux.intel.com>
+        <a7fd668b87ec10736c8f016ac4279c8480d50c2b.1522256721.git.tom.zanussi@linux.intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
+        namhyung@kernel.org, vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel.opensrc@gmail.com, joelaf@google.com,
+        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
+        rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Tom Zanussi <tom.zanussi@linux.intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <a7fd668b87ec10736c8f016ac4279c8480d50c2b.1522256721.git.tom.zanussi@linux.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 2018-03-05 14:17:29 [+0530], Sam Kappen wrote:
-> On Tue, Dec 12, 2017 at 3:48 PM, Sebastian Andrzej Siewior
-> <bigeasy@linutronix.de> wrote:
+On Wed, 28 Mar 2018 15:10:55 -0500
+Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
 
-The whole email looks like quote of my email with no additional content.
-Did you press the send button too soon or did you hide the new content
-somewhere where I could not find it :)?
+> Actions also need to be considered when checking for matching triggers
+> - triggers differing only by action should be allowed, but currently
+> aren't because the matching check ignores the action and erroneously
+> returns -EEXIST.
 
-Sebastian
+Hi Tom,
+
+Could you show us the bad/good examples (maybe different onmatch() actions)?
+And if it is real bugfix, I would like to add a ftracetest testcase for this fix.
+
+Thank you,
+
+> 
+> Add and call an actions_match() function to address that.
+> 
+> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> ---
+>  kernel/trace/trace_events_hist.c | 50 ++++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 50 insertions(+)
+> 
+> diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+> index 468e43f..ae84470 100644
+> --- a/kernel/trace/trace_events_hist.c
+> +++ b/kernel/trace/trace_events_hist.c
+> @@ -4363,6 +4363,53 @@ static void print_onmatch_spec(struct seq_file *m,
+>  	seq_puts(m, ")");
+>  }
+>  
+> +static bool actions_match(struct hist_trigger_data *hist_data,
+> +			  struct hist_trigger_data *hist_data_test)
+> +{
+> +	unsigned int i, j;
+> +
+> +	if (hist_data->n_actions != hist_data_test->n_actions)
+> +		return false;
+> +
+> +	for (i = 0; i < hist_data->n_actions; i++) {
+> +		struct action_data *data = hist_data->actions[i];
+> +		struct action_data *data_test = hist_data_test->actions[i];
+> +
+> +		if (data->fn != data_test->fn)
+> +			return false;
+> +
+> +		if (data->n_params != data_test->n_params)
+> +			return false;
+> +
+> +		for (j = 0; j < data->n_params; j++) {
+> +			if (strcmp(data->params[j], data_test->params[j]) != 0)
+> +				return false;
+> +		}
+> +
+> +		if (data->fn == action_trace) {
+> +			if (strcmp(data->onmatch.synth_event_name,
+> +				   data_test->onmatch.synth_event_name) != 0)
+> +				return false;
+> +			if (strcmp(data->onmatch.match_event_system,
+> +				   data_test->onmatch.match_event_system) != 0)
+> +				return false;
+> +			if (strcmp(data->onmatch.match_event,
+> +				   data_test->onmatch.match_event) != 0)
+> +				return false;
+> +		} else if (data->fn == onmax_save) {
+> +			if (strcmp(data->onmax.var_str,
+> +				   data_test->onmax.var_str) != 0)
+> +				return false;
+> +			if (strcmp(data->onmax.fn_name,
+> +				   data_test->onmax.fn_name) != 0)
+> +				return false;
+> +		}
+> +	}
+> +
+> +	return true;
+> +}
+> +
+> +
+>  static void print_actions_spec(struct seq_file *m,
+>  			       struct hist_trigger_data *hist_data)
+>  {
+> @@ -5173,6 +5220,9 @@ static bool hist_trigger_match(struct event_trigger_data *data,
+>  	    (strcmp(data->filter_str, data_test->filter_str) != 0))
+>  		return false;
+>  
+> +	if (!actions_match(hist_data, hist_data_test))
+> +		return false;
+> +
+>  	return true;
+>  }
+>  
+> -- 
+> 1.9.3
+> 
+
+
+-- 
+Masami Hiramatsu <mhiramat@kernel.org>
