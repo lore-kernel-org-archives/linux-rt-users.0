@@ -1,120 +1,61 @@
-From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: Re: [PATCH 3/4] tracing: Add action comparisons when testing
- matching hist triggers
-Date: Tue, 3 Apr 2018 00:10:25 +0900
-Message-ID: <20180403001025.6dfed9403d50d20104e54458@kernel.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 0/4] tracing: A few inter-event bugfixes
+Date: Mon, 2 Apr 2018 11:26:28 -0400
+Message-ID: <20180402112628.3cc00f62@gandalf.local.home>
 References: <cover.1522256721.git.tom.zanussi@linux.intel.com>
-        <a7fd668b87ec10736c8f016ac4279c8480d50c2b.1522256721.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
-        namhyung@kernel.org, vedang.patel@intel.com, bigeasy@linutronix.de,
+Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
+        vedang.patel@intel.com, bigeasy@linutronix.de,
         joel.opensrc@gmail.com, joelaf@google.com,
         mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
         rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 To: Tom Zanussi <tom.zanussi@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <a7fd668b87ec10736c8f016ac4279c8480d50c2b.1522256721.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <cover.1522256721.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 28 Mar 2018 15:10:55 -0500
+On Wed, 28 Mar 2018 15:10:52 -0500
 Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
 
-> Actions also need to be considered when checking for matching triggers
-> - triggers differing only by action should be allowed, but currently
-> aren't because the matching check ignores the action and erroneously
-> returns -EEXIST.
+> Hi Steven,
+> 
+> Here are a few bugfixes that should be applied on top of the
+> 'Inter-event (e.g. latency) support v9' patchset.
 
-Hi Tom,
+Thanks, I pulled them in and will send them out to git after testing
+has succeeded.
 
-Could you show us the bad/good examples (maybe different onmatch() actions)?
-And if it is real bugfix, I would like to add a ftracetest testcase for this fix.
-
-Thank you,
+-- Steve
 
 > 
-> Add and call an actions_match() function to address that.
+> The first two are things introduced by the refactoring of the last
+> version, the third I noticed when adding further actions for a future
+> add-on, and the last was prompted by a patch for a similar problem
+> posted this morning by Arnd Bergmann.
 > 
-> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> ---
->  kernel/trace/trace_events_hist.c | 50 ++++++++++++++++++++++++++++++++++++++++
->  1 file changed, 50 insertions(+)
+> Thanks,
 > 
-> diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-> index 468e43f..ae84470 100644
-> --- a/kernel/trace/trace_events_hist.c
-> +++ b/kernel/trace/trace_events_hist.c
-> @@ -4363,6 +4363,53 @@ static void print_onmatch_spec(struct seq_file *m,
->  	seq_puts(m, ")");
->  }
->  
-> +static bool actions_match(struct hist_trigger_data *hist_data,
-> +			  struct hist_trigger_data *hist_data_test)
-> +{
-> +	unsigned int i, j;
-> +
-> +	if (hist_data->n_actions != hist_data_test->n_actions)
-> +		return false;
-> +
-> +	for (i = 0; i < hist_data->n_actions; i++) {
-> +		struct action_data *data = hist_data->actions[i];
-> +		struct action_data *data_test = hist_data_test->actions[i];
-> +
-> +		if (data->fn != data_test->fn)
-> +			return false;
-> +
-> +		if (data->n_params != data_test->n_params)
-> +			return false;
-> +
-> +		for (j = 0; j < data->n_params; j++) {
-> +			if (strcmp(data->params[j], data_test->params[j]) != 0)
-> +				return false;
-> +		}
-> +
-> +		if (data->fn == action_trace) {
-> +			if (strcmp(data->onmatch.synth_event_name,
-> +				   data_test->onmatch.synth_event_name) != 0)
-> +				return false;
-> +			if (strcmp(data->onmatch.match_event_system,
-> +				   data_test->onmatch.match_event_system) != 0)
-> +				return false;
-> +			if (strcmp(data->onmatch.match_event,
-> +				   data_test->onmatch.match_event) != 0)
-> +				return false;
-> +		} else if (data->fn == onmax_save) {
-> +			if (strcmp(data->onmax.var_str,
-> +				   data_test->onmax.var_str) != 0)
-> +				return false;
-> +			if (strcmp(data->onmax.fn_name,
-> +				   data_test->onmax.fn_name) != 0)
-> +				return false;
-> +		}
-> +	}
-> +
-> +	return true;
-> +}
-> +
-> +
->  static void print_actions_spec(struct seq_file *m,
->  			       struct hist_trigger_data *hist_data)
->  {
-> @@ -5173,6 +5220,9 @@ static bool hist_trigger_match(struct event_trigger_data *data,
->  	    (strcmp(data->filter_str, data_test->filter_str) != 0))
->  		return false;
->  
-> +	if (!actions_match(hist_data, hist_data_test))
-> +		return false;
-> +
->  	return true;
->  }
->  
-> -- 
-> 1.9.3
+> Tom
 > 
-
-
--- 
-Masami Hiramatsu <mhiramat@kernel.org>
+> The following changes since commit 80765597bc587feae8dbc8ce97a0f32e12a6e625:
+> 
+>   tracing: Rewrite filter logic to be simpler and faster (2018-03-14 12:35:39 -0400)
+> 
+> are available in the git repository at:
+> 
+>   https://github.com/tzanussi/linux-trace-inter-event.git tzanussi/inter-event-update1
+>   https://github.com/tzanussi/linux-trace-inter-event/tree/tzanussi/inter-event-update1
+> 
+> Tom Zanussi (4):
+>   tracing: Fix display of hist trigger expressions containing timestamps
+>   tracing: Don't add flag strings when displaying variable references
+>   tracing: Add action comparisons when testing matching hist triggers
+>   tracing: Make sure variable string fields are NULL-terminated
+> 
+>  kernel/trace/trace_events_hist.c | 75 +++++++++++++++++++++++++++++++---------
+>  1 file changed, 58 insertions(+), 17 deletions(-)
+> 
