@@ -1,61 +1,72 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 0/4] tracing: A few inter-event bugfixes
-Date: Mon, 2 Apr 2018 11:26:28 -0400
-Message-ID: <20180402112628.3cc00f62@gandalf.local.home>
+From: Tom Zanussi <tom.zanussi@linux.intel.com>
+Subject: Re: [PATCH 3/4] tracing: Add action comparisons when testing
+ matching hist triggers
+Date: Mon, 02 Apr 2018 12:09:33 -0500
+Message-ID: <1522688973.3254.8.camel@tzanussi-mobl.amr.corp.intel.com>
 References: <cover.1522256721.git.tom.zanussi@linux.intel.com>
+         <a7fd668b87ec10736c8f016ac4279c8480d50c2b.1522256721.git.tom.zanussi@linux.intel.com>
+         <20180403001025.6dfed9403d50d20104e54458@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
+Cc: rostedt@goodmis.org, tglx@linutronix.de, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
         joel.opensrc@gmail.com, joelaf@google.com,
         mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
         rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Tom Zanussi <tom.zanussi@linux.intel.com>
+To: Masami Hiramatsu <mhiramat@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1522256721.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <20180403001025.6dfed9403d50d20104e54458@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 28 Mar 2018 15:10:52 -0500
-Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
+Hi Masami,
 
-> Hi Steven,
+On Tue, 2018-04-03 at 00:10 +0900, Masami Hiramatsu wrote:
+> On Wed, 28 Mar 2018 15:10:55 -0500
+> Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
 > 
-> Here are a few bugfixes that should be applied on top of the
-> 'Inter-event (e.g. latency) support v9' patchset.
+> > Actions also need to be considered when checking for matching triggers
+> > - triggers differing only by action should be allowed, but currently
+> > aren't because the matching check ignores the action and erroneously
+> > returns -EEXIST.
+> 
+> Hi Tom,
+> 
+> Could you show us the bad/good examples (maybe different onmatch() actions)?
+> And if it is real bugfix, I would like to add a ftracetest testcase for this fix.
+> 
 
-Thanks, I pulled them in and will send them out to git after testing
-has succeeded.
+Here's an example using onmatch() actions.  The first -EEXIST shouldn't
+occur because the onmatch() is different in the second wakeup_latency()
+param.  The second -EEXIST shouldn't occur because it's a different
+action (in this case, it doesn't have an action, so shouldn't be seen
+as being the same and therefore rejected).
 
--- Steve
+In the after case, both are correctly accepted (and trying to add one of
+them again returns -EEXIST as it should).
 
-> 
-> The first two are things introduced by the refactoring of the last
-> version, the third I noticed when adding further actions for a future
-> add-on, and the last was prompted by a patch for a similar problem
-> posted this morning by Arnd Bergmann.
-> 
-> Thanks,
-> 
-> Tom
-> 
-> The following changes since commit 80765597bc587feae8dbc8ce97a0f32e12a6e625:
-> 
->   tracing: Rewrite filter logic to be simpler and faster (2018-03-14 12:35:39 -0400)
-> 
-> are available in the git repository at:
-> 
->   https://github.com/tzanussi/linux-trace-inter-event.git tzanussi/inter-event-update1
->   https://github.com/tzanussi/linux-trace-inter-event/tree/tzanussi/inter-event-update1
-> 
-> Tom Zanussi (4):
->   tracing: Fix display of hist trigger expressions containing timestamps
->   tracing: Don't add flag strings when displaying variable references
->   tracing: Add action comparisons when testing matching hist triggers
->   tracing: Make sure variable string fields are NULL-terminated
-> 
->  kernel/trace/trace_events_hist.c | 75 +++++++++++++++++++++++++++++++---------
->  1 file changed, 58 insertions(+), 17 deletions(-)
-> 
+before:
+
+  # echo 'wakeup_latency u64 lat; pid_t pid' >> /sys/kernel/debug/tracing/synthetic_events
+  # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+  # echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0 if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+  # echo 'hist:keys=next_pid:onmatch(sched.sched_wakeup).wakeup_latency(sched.sched_switch.$wakeup_lat,next_pid) if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+  # echo 'hist:keys=next_pid:onmatch(sched.sched_wakeup).wakeup_latency(sched.sched_switch.$wakeup_lat,prev_pid) if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+-su: echo: write error: File exists
+  # echo 'hist:keys=next_pid if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+-su: echo: write error: File exists
+
+after:
+
+  # echo 'wakeup_latency u64 lat; pid_t pid' >> /sys/kernel/debug/tracing/synthetic_events
+  # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+  # echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0 if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+  # echo 'hist:keys=next_pid:onmatch(sched.sched_wakeup).wakeup_latency(sched.sched_switch.$wakeup_lat,next_pid) if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+  # echo 'hist:keys=next_pid:onmatch(sched.sched_wakeup).wakeup_latency(sched.sched_switch.$wakeup_lat,prev_pid) if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+  # echo 'hist:keys=next_pid if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+
+Thanks,
+
+Tom
