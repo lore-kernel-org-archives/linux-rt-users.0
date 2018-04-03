@@ -1,72 +1,34 @@
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: Re: [PATCH 3/4] tracing: Add action comparisons when testing
- matching hist triggers
-Date: Mon, 02 Apr 2018 12:09:33 -0500
-Message-ID: <1522688973.3254.8.camel@tzanussi-mobl.amr.corp.intel.com>
-References: <cover.1522256721.git.tom.zanussi@linux.intel.com>
-         <a7fd668b87ec10736c8f016ac4279c8480d50c2b.1522256721.git.tom.zanussi@linux.intel.com>
-         <20180403001025.6dfed9403d50d20104e54458@kernel.org>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Re: [PATCH RT 1/3] alarmtimer: Prevent live lock in alarm_cancel()
+Date: Tue, 3 Apr 2018 20:32:36 +0200
+Message-ID: <c248f69e-1016-e7ec-64c2-1b8756524a49@monom.org>
+References: <20180328100746.18668-1-bigeasy@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: rostedt@goodmis.org, tglx@linutronix.de, namhyung@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Masami Hiramatsu <mhiramat@kernel.org>
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>, stable-rt@vger.kernel.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180403001025.6dfed9403d50d20104e54458@kernel.org>
+In-Reply-To: <20180328100746.18668-1-bigeasy@linutronix.de>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Masami,
+Hi Sebastian,
 
-On Tue, 2018-04-03 at 00:10 +0900, Masami Hiramatsu wrote:
-> On Wed, 28 Mar 2018 15:10:55 -0500
-> Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
+On 03/28/2018 12:07 PM, Sebastian Andrzej Siewior wrote:
+> If alarm_try_to_cancel() requires a retry, then depending on the
+> priority setting the retry loop might prevent timer callback completion
+> on RT. Prevent that by waiting for completion on RT, no change for a
+> non RT kernel.
 > 
-> > Actions also need to be considered when checking for matching triggers
-> > - triggers differing only by action should be allowed, but currently
-> > aren't because the matching check ignores the action and erroneously
-> > returns -EEXIST.
-> 
-> Hi Tom,
-> 
-> Could you show us the bad/good examples (maybe different onmatch() actions)?
-> And if it is real bugfix, I would like to add a ftracetest testcase for this fix.
-> 
+> Cc: stable-rt@vger.kernel.org
 
-Here's an example using onmatch() actions.  The first -EEXIST shouldn't
-occur because the onmatch() is different in the second wakeup_latency()
-param.  The second -EEXIST shouldn't occur because it's a different
-action (in this case, it doesn't have an action, so shouldn't be seen
-as being the same and therefore rejected).
-
-In the after case, both are correctly accepted (and trying to add one of
-them again returns -EEXIST as it should).
-
-before:
-
-  # echo 'wakeup_latency u64 lat; pid_t pid' >> /sys/kernel/debug/tracing/synthetic_events
-  # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-  # echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0 if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-  # echo 'hist:keys=next_pid:onmatch(sched.sched_wakeup).wakeup_latency(sched.sched_switch.$wakeup_lat,next_pid) if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-  # echo 'hist:keys=next_pid:onmatch(sched.sched_wakeup).wakeup_latency(sched.sched_switch.$wakeup_lat,prev_pid) if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
--su: echo: write error: File exists
-  # echo 'hist:keys=next_pid if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
--su: echo: write error: File exists
-
-after:
-
-  # echo 'wakeup_latency u64 lat; pid_t pid' >> /sys/kernel/debug/tracing/synthetic_events
-  # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-  # echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0 if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-  # echo 'hist:keys=next_pid:onmatch(sched.sched_wakeup).wakeup_latency(sched.sched_switch.$wakeup_lat,next_pid) if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-  # echo 'hist:keys=next_pid:onmatch(sched.sched_wakeup).wakeup_latency(sched.sched_switch.$wakeup_lat,prev_pid) if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-  # echo 'hist:keys=next_pid if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+How relevant is this serie for trees before eae1c4ae275f ("posix-timers: 
+Make use of cancel/arm callbacks")? Patch #2 seems to depend on that 
+change which was added in v4.12.
 
 Thanks,
-
-Tom
+Daniel
