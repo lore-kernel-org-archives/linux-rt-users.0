@@ -1,48 +1,44 @@
-From: Daniel Wagner <wagi@monom.org>
-Subject: [PATCH RT 1/7] locking: add types.h
-Date: Wed,  4 Apr 2018 09:16:46 +0200
-Message-ID: <20180404071652.24196-2-wagi@monom.org>
-References: <20180404071652.24196-1-wagi@monom.org>
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH RT 1/3] alarmtimer: Prevent live lock in alarm_cancel()
+Date: Wed, 4 Apr 2018 09:37:15 +0200
+Message-ID: <20180404073715.gwiabamwvvyi2bum@linutronix.de>
+References: <20180328100746.18668-1-bigeasy@linutronix.de>
+ <c248f69e-1016-e7ec-64c2-1b8756524a49@monom.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
         Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Paul Gortmaker <paul.gortmaker@windriver.com>,
-        Julia Cartwright <julia@ni.com>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        stable-rt@vger.kernel.org
-To: linux-kernel@vger.kernel.org
+        Steven Rostedt <rostedt@goodmis.org>, stable-rt@vger.kernel.org
+To: Daniel Wagner <wagi@monom.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180404071652.24196-1-wagi@monom.org>
+Content-Disposition: inline
+In-Reply-To: <c248f69e-1016-e7ec-64c2-1b8756524a49@monom.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+On 2018-04-03 20:32:36 [+0200], Daniel Wagner wrote:
+> Hi Sebastian,
+> 
+> On 03/28/2018 12:07 PM, Sebastian Andrzej Siewior wrote:
+> > If alarm_try_to_cancel() requires a retry, then depending on the
+> > priority setting the retry loop might prevent timer callback completion
+> > on RT. Prevent that by waiting for completion on RT, no change for a
+> > non RT kernel.
+> > 
+> > Cc: stable-rt@vger.kernel.org
+> 
+> How relevant is this serie for trees before eae1c4ae275f ("posix-timers:
+> Make use of cancel/arm callbacks")? Patch #2 seems to depend on that change
+> which was added in v4.12.
 
-During the stable update the arm architecture did not compile anymore
-due to missing definition of u16/32.
+so #1 looks relevant since that alarmtimer was introduced. #2 since the
+change you mentioned because after that patch alarmtimer would be
+handled wrongly - before you should do the schedule_timout() which
+should be fine.  And #3 since 3.0+ (since the RCU-readsection was added)
+but it is not easy to trigger (you would have to delete the timer while
+a callback is waiting for it).
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- include/linux/spinlock_types_raw.h | 2 ++
- 1 file changed, 2 insertions(+)
+> Thanks,
+> Daniel
 
-diff --git a/include/linux/spinlock_types_raw.h b/include/linux/spinlock_types_raw.h
-index edffc4d53fc9..03235b475b77 100644
---- a/include/linux/spinlock_types_raw.h
-+++ b/include/linux/spinlock_types_raw.h
-@@ -1,6 +1,8 @@
- #ifndef __LINUX_SPINLOCK_TYPES_RAW_H
- #define __LINUX_SPINLOCK_TYPES_RAW_H
- 
-+#include <linux/types.h>
-+
- #if defined(CONFIG_SMP)
- # include <asm/spinlock_types.h>
- #else
--- 
-2.14.3
+Sebastian
