@@ -1,34 +1,46 @@
 From: Daniel Wagner <wagi@monom.org>
-Subject: Re: [PATCH RT 1/3] alarmtimer: Prevent live lock in alarm_cancel()
-Date: Tue, 3 Apr 2018 20:32:36 +0200
-Message-ID: <c248f69e-1016-e7ec-64c2-1b8756524a49@monom.org>
-References: <20180328100746.18668-1-bigeasy@linutronix.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+Subject: [ANNOUNCE] 4.4.126-rt141
+Date: Wed, 04 Apr 2018 08:22:57 +0200
+Message-ID: <20180404062410.28619500B6A@mail.monom.org>
+To: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>, stable-rt@vger.kernel.org
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180328100746.18668-1-bigeasy@linutronix.de>
-Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Sebastian,
+Hello RT Folks!
 
-On 03/28/2018 12:07 PM, Sebastian Andrzej Siewior wrote:
-> If alarm_try_to_cancel() requires a retry, then depending on the
-> priority setting the retry loop might prevent timer callback completion
-> on RT. Prevent that by waiting for completion on RT, no change for a
-> non RT kernel.
-> 
-> Cc: stable-rt@vger.kernel.org
+I'm pleased to announce the 4.4.126-rt141 stable release.
 
-How relevant is this serie for trees before eae1c4ae275f ("posix-timers: 
-Make use of cancel/arm callbacks")? Patch #2 seems to depend on that 
-change which was added in v4.12.
+This release is just an update to the new stable 4.4.126 version
+and no RT specific changes have been made.
 
-Thanks,
-Daniel
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.4-rt
+  Head SHA1: bdfaf62feda1231b04e01223c29771f5961012a9
+
+Or to build 4.4.126-rt141 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.126.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.126-rt141.patch.xz
+
+
+You can also build from 4.4.120-rt135 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/incr/patch-4.4.120-rt135-rt141.patch.xz
+
+Enjoy!
+   Daniel
