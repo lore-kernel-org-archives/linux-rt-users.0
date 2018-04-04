@@ -1,18 +1,18 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Tom Zanussi <tom.zanussi@linux.intel.com>
 Subject: Re: [PATCH 3/4] tracing: Add action comparisons when testing
  matching hist triggers
-Date: Wed, 4 Apr 2018 09:01:34 -0400
-Message-ID: <20180404090134.4db3de17@gandalf.local.home>
+Date: Wed, 04 Apr 2018 10:17:03 -0500
+Message-ID: <1522855023.32118.14.camel@tzanussi-mobl.amr.corp.intel.com>
 References: <cover.1522256721.git.tom.zanussi@linux.intel.com>
-        <a7fd668b87ec10736c8f016ac4279c8480d50c2b.1522256721.git.tom.zanussi@linux.intel.com>
-        <20180403001025.6dfed9403d50d20104e54458@kernel.org>
-        <1522688973.3254.8.camel@tzanussi-mobl.amr.corp.intel.com>
-        <20180404213338.5bcd14994d8e0142b5bfefc6@kernel.org>
+         <a7fd668b87ec10736c8f016ac4279c8480d50c2b.1522256721.git.tom.zanussi@linux.intel.com>
+         <20180403001025.6dfed9403d50d20104e54458@kernel.org>
+         <1522688973.3254.8.camel@tzanussi-mobl.amr.corp.intel.com>
+         <20180404213338.5bcd14994d8e0142b5bfefc6@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Tom Zanussi <tom.zanussi@linux.intel.com>, tglx@linutronix.de,
-        namhyung@kernel.org, vedang.patel@intel.com, bigeasy@linutronix.de,
+Cc: rostedt@goodmis.org, tglx@linutronix.de, namhyung@kernel.org,
+        vedang.patel@intel.com, bigeasy@linutronix.de,
         joel.opensrc@gmail.com, joelaf@google.com,
         mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
         rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
@@ -23,26 +23,123 @@ In-Reply-To: <20180404213338.5bcd14994d8e0142b5bfefc6@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 4 Apr 2018 21:33:38 +0900
-Masami Hiramatsu <mhiramat@kernel.org> wrote:
+Hi Masami,
+
+On Wed, 2018-04-04 at 21:33 +0900, Masami Hiramatsu wrote:
+> Hi Tom,
+> 
+> On Mon, 02 Apr 2018 12:09:33 -0500
+> Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
+> 
+> > after:
+> > 
+> >   # echo 'wakeup_latency u64 lat; pid_t pid' >> /sys/kernel/debug/tracing/synthetic_events
+> >   # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+> >   # echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0 if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+> >   # echo 'hist:keys=next_pid:onmatch(sched.sched_wakeup).wakeup_latency(sched.sched_switch.$wakeup_lat,next_pid) if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+> >   # echo 'hist:keys=next_pid:onmatch(sched.sched_wakeup).wakeup_latency(sched.sched_switch.$wakeup_lat,prev_pid) if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+> >   # echo 'hist:keys=next_pid if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+> 
+> I ensured this sequence has no problem.
+> After above sequence, the trigger file shows
+> 
+> ======
+> # cat events/sched/sched_switch/trigger
+> hist:keys=next_pid:vals=hitcount:wakeup_lat=common_timestamp.usecs-$ts0:sort=hitcount:size=2048:clock=global if next_comm=="cyclictest" [active]
+> hist:keys=next_pid:vals=hitcount:sort=hitcount:size=2048:onmatch(sched.sched_wakeup).wakeup_latency(sched.sched_switch.$wakeup_lat,next_pid) if next_comm=="cyclictest" [active]
+> hist:keys=next_pid:vals=hitcount:sort=hitcount:size=2048:onmatch(sched.sched_wakeup).wakeup_latency(sched.sched_switch.$wakeup_lat,prev_pid) if next_comm=="cyclictest" [active]
+> hist:keys=next_pid:vals=hitcount:sort=hitcount:size=2048 if next_comm=="cyclictest" [active]
+> ======
+> 
+> So I clear the last one
+> 
+> ======
+> # echo '!hist:keys=next_pid if next_comm=="cyclictest"' >> events/sched/sched_switch/trigger
+> #
+> ======
+> 
+> OK, it should be removed. I can not see it anymore on the trigger file.
+> 
+> ======
+> # cat events/sched/sched_switch/trigger
+> hist:keys=next_pid:vals=hitcount:wakeup_lat=common_timestamp.usecs-$ts0:sort=hitcount:size=2048:clock=global if next_comm=="cyclictest" [active]
+> hist:keys=next_pid:vals=hitcount:sort=hitcount:size=2048:onmatch(sched.sched_wakeup).wakeup_latency(sched.sched_switch.$wakeup_lat,next_pid) if next_comm=="cyclictest" [active]
+> hist:keys=next_pid:vals=hitcount:sort=hitcount:size=2048:onmatch(sched.sched_wakeup).wakeup_latency(sched.sched_switch.$wakeup_lat,prev_pid) if next_comm=="cyclictest" [active]
+> ======
+> 
+> But when I missed to remove it again, it is accepted (is not an error?)
+> 
+> ======
+> # echo '!hist:keys=next_pid if next_comm=="cyclictest"' >> events/sched/sched_switch/trigger
+> #
+> ======
+
+This is consistent with existing behavior, not only for the hist
+triggers but ftrace in general I think e.g.
+
+# echo 'traceoff:1 if nr_rq > 1' >> /sys/kernel/debug/tracing/events/block/block_unplug/trigger
+# echo '!traceoff:1 if nr_rq > 1' >> /sys/kernel/debug/tracing/events/block/block_unplug/trigger
+# echo '!traceoff:1 if nr_rq > 1' >> /sys/kernel/debug/tracing/events/block/block_unplug/trigger
+
+# echo 'try_to_wake_up:enable_event:sched:sched_switch:2' >> set_ftrace_filter
+# echo '!try_to_wake_up:enable_event:sched:sched_switch:2' >> set_ftrace_filter
+# echo '!try_to_wake_up:enable_event:sched:sched_switch:2' >> set_ftrace_filter
+
+Neither produces an error trying to remove an already-removed trigger.
+Or are you thinking about something else?
+
+> 
+> Hmm... anyway, let's clear others too.
+> 
+> ======
+> # echo '!hist:keys=next_pid:onmatch(sched.sched_wakeup).wakeup_latency(sched.sched_switch.$wakeup_lat,next_pid) if next_comm=="cyclictest"' >> events/sched/sched_switch/trigger
+> # echo '!hist:keys=next_pid:onmatch(sched.sched_wakeup).wakeup_latency(sched.sched_switch.$wakeup_lat,prev_pid) if next_comm=="cyclictest"' >> events/sched/sched_switch/trigger
+> # cat events/sched/sched_switch/trigger
+> # Available triggers:
+> # traceon traceoff snapshot stacktrace enable_event disable_event enable_hist disable_hist hist
+> ======
+> 
+> OK, it is cleared now.
+> 
+> Now I test it again.
+> 
+> ======
+> # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> events/sched/sched_wakeup/trigger
+> sh: write error: Invalid argument
+> ======
+> 
+> Oops, what's the error?
+> 
+> ======
+> # cat events/sched/sched_switch/hist
+> 
+> ERROR: Variable already defined: ts0
+>   Last command: keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"
+> ======
+> 
+
+Hmm, but ts0 is defined on sched_wakeup - you removed the triggers on
+sched_switch, but I didn't see where you removed the sched_wakeup
+trigger defining ts0... 
 
 > Hmm, how can I undef ts0 and test it again?
+
+You should be able to remove the sched_wakeup trigger defining ts0 and
+after doing that test again.  At least I was able to:
+
+# echo '!hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> 
+events/sched/sched_wakeup/trigger
+
+# echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"'
+>> events/sched/sched_wakeup/trigger
+
+Thanks,
+
+Tom
+
+
+
 > If I can not clean it, the testcase must fail on the 2nd time.
-
-Tom,
-
-I already pulled in your patches and almost completed my tests (which
-obviously are not stress testing this code).
-
-Any fixes you make to address Masami's concerns, can you please make as
-separate patches on top of this. You can see my current tree that I'm
-testing and base on top of that one.
-
- git://git.kernel.org/pub/scm/linux/kernel/git/rostedt/linux-trace.git
- branch: ftrace/core
-
-(Note, that can rebase, but mostly to add acks)
-
-Thanks!
-
--- Steve
+> 
+> Thank you,
+> 
