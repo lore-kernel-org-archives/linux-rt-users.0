@@ -1,46 +1,83 @@
 From: Daniel Wagner <wagi@monom.org>
-Subject: [ANNOUNCE] 4.4.126-rt141
-Date: Wed, 04 Apr 2018 08:22:57 +0200
-Message-ID: <20180404062410.28619500B6A@mail.monom.org>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
+Subject: [PATCH RT 0/7] 4.4.126-rt141-rc1
+Date: Wed,  4 Apr 2018 09:16:45 +0200
+Message-ID: <20180404071652.24196-1-wagi@monom.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Paul Gortmaker <paul.gortmaker@windriver.com>,
+        Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com, Alex Shi <alex.shi@linaro.org>
+        tom.zanussi@linux.intel.com, Daniel Wagner <wagi@monom.org>
+To: linux-kernel@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello RT Folks!
+Dear RT Folks,
 
-I'm pleased to announce the 4.4.126-rt141 stable release.
+This is the RT stable review cycle of patch 4.4.126-rt141-rc1.
 
-This release is just an update to the new stable 4.4.126 version
-and no RT specific changes have been made.
+The series contains a few patches which never made it to the v4.4-rt
+tree. I identified the patches using Steven's workflow. Next thing I
+try to do is to use Julia's script to idendtify missing
+patches. In theory nothing should be. 
 
-You can get this release via the git tree at:
+Please scream at me if I messed something up. Please test the patches too.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+The pre-releases will not be pushed to the git repository, only the
+final release is.
 
-  branch: v4.4-rt
-  Head SHA1: bdfaf62feda1231b04e01223c29771f5961012a9
+If all goes well, this patch will be converted to the next main release
+on 16.04.2017.
 
-Or to build 4.4.126-rt141 directly, the following patches should be applied:
+Enjoy,
+-- Daniel
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+ps: Bare with me, I didn't have time to get all the magic tooling
+working for releasing a -rc series as Steven has done in the past.
+That's why this mail looks slightly different then what you are used.
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.126.xz
+Changes from 4.4.126-rt141:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.126-rt141.patch.xz
+Daniel Wagner (1):
+  Linux 4.4.126-rt141-rc1
 
+Sebastian Andrzej Siewior (4):
+  locking: add types.h
+  mm/slub: close possible memory-leak in kmem_cache_alloc_bulk()
+  arm*: disable NEON in kernel mode
+  crypto: limit more FPU-enabled sections
 
-You can also build from 4.4.120-rt135 by applying the incremental patch:
+Steven Rostedt (VMware) (1):
+  Revert "memcontrol: Prevent scheduling while atomic in cgroup code"
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/incr/patch-4.4.120-rt135-rt141.patch.xz
+Thomas Gleixner (1):
+  timer: Invoke timer_start_debug() where it makes sense
 
-Enjoy!
-   Daniel
+ arch/arm/Kconfig                           |  2 +-
+ arch/arm64/crypto/Kconfig                  | 14 +++++++-------
+ arch/x86/crypto/camellia_aesni_avx2_glue.c | 20 ++++++++++++++++++++
+ arch/x86/crypto/camellia_aesni_avx_glue.c  | 19 +++++++++++++++++++
+ arch/x86/crypto/cast6_avx_glue.c           | 24 +++++++++++++++++++-----
+ arch/x86/crypto/chacha20_glue.c            |  8 +++++---
+ arch/x86/crypto/serpent_avx2_glue.c        | 19 +++++++++++++++++++
+ arch/x86/crypto/serpent_avx_glue.c         | 23 +++++++++++++++++++----
+ arch/x86/crypto/serpent_sse2_glue.c        | 23 +++++++++++++++++++----
+ arch/x86/crypto/twofish_avx_glue.c         | 27 +++++++++++++++++++++++++--
+ arch/x86/include/asm/fpu/api.h             |  1 +
+ arch/x86/kernel/fpu/core.c                 | 12 ++++++++++++
+ include/linux/spinlock_types_raw.h         |  2 ++
+ kernel/time/timer.c                        |  4 ++--
+ localversion-rt                            |  2 +-
+ mm/memcontrol.c                            |  7 ++-----
+ mm/slub.c                                  |  1 +
+ 17 files changed, 174 insertions(+), 34 deletions(-)
+
+-- 
+2.14.3
