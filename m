@@ -1,7 +1,7 @@
 From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: [PATCH 1/2] selftests: ftrace: Fix trigger extended error testcase
-Date: Thu,  5 Apr 2018 18:28:42 +0900
-Message-ID: <152292052250.15769.12565292689264162435.stgit@devbox>
+Subject: [PATCH 2/2] selftests: ftrace: Add a testcase for multiple actions on trigger
+Date: Thu,  5 Apr 2018 18:29:12 +0900
+Message-ID: <152292055227.15769.6327959816123227152.stgit@devbox>
 References: <152292049091.15769.13306554953968999494.stgit@devbox>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -19,39 +19,64 @@ In-Reply-To: <152292049091.15769.13306554953968999494.stgit@devbox>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Previous testcase redirects echo-out into /dev/null
-using "&>" as below
+Add a testcase for multiple actions with different
+parameters on an event trigger, which has been fixed
+by commit 192c283e93bd ("tracing: Add action comparisons
+ when testing matching hist triggers").
 
-echo "trigger-command" >> trigger &> /dev/null
-
-But this means redirecting both stdout and stderr into
-/dev/null because it is same as below
-
-echo "trigger-command" >> trigger > /dev/null 2>&1
-
-So ">> trigger" redirects stdout to trigger file, but
-next "> /dev/null" redirects stdout to /dev/null again
-and the last "2>/&1" redirects stderr to stdout (/dev/null)
-
-This fixes it by "2> /dev/null". And also, since it
-must fail, add "!" to echo command.
-
-Fixes: f06eec4d0f2c ("selftests: ftrace: Add inter-event hist triggers testcases")
 Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
 ---
- .../inter-event/trigger-extended-error-support.tc  |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ .../inter-event/trigger-multi-actions-accept.tc    |   44 ++++++++++++++++++++
+ 1 file changed, 44 insertions(+)
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-multi-actions-accept.tc
 
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
-index 786dce7e48be..2aabab363cfb 100644
---- a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
-@@ -29,7 +29,7 @@ do_reset
- 
- echo "Test extended error support"
- echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="ping"' > events/sched/sched_wakeup/trigger
--echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="ping"' >> events/sched/sched_wakeup/trigger &>/dev/null
-+! echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="ping"' >> events/sched/sched_wakeup/trigger 2> /dev/null
- if ! grep -q "ERROR:" events/sched/sched_wakeup/hist; then
-     fail "Failed to generate extended error in histogram"
- fi
+diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-multi-actions-accept.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-multi-actions-accept.tc
+new file mode 100644
+index 000000000000..c193dce611a2
+--- /dev/null
++++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-multi-actions-accept.tc
+@@ -0,0 +1,44 @@
++#!/bin/sh
++# description: event trigger - test multiple actions on hist trigger
++
++
++do_reset() {
++    reset_trigger
++    echo > set_event
++    clear_trace
++}
++
++fail() { #msg
++    do_reset
++    echo $1
++    exit_fail
++}
++
++if [ ! -f set_event ]; then
++    echo "event tracing is not supported"
++    exit_unsupported
++fi
++
++if [ ! -f synthetic_events ]; then
++    echo "synthetic event is not supported"
++    exit_unsupported
++fi
++
++clear_synthetic_events
++reset_tracer
++do_reset
++
++echo "Test multiple actions on hist trigger"
++echo 'wakeup_latency u64 lat; pid_t pid' >> synthetic_events
++TRIGGER1=events/sched/sched_wakeup/trigger
++TRIGGER2=events/sched/sched_switch/trigger
++
++echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' > $TRIGGER1
++echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0 if next_comm=="cyclictest"' >> $TRIGGER2
++echo 'hist:keys=next_pid:onmatch(sched.sched_wakeup).wakeup_latency(sched.sched_switch.$wakeup_lat,next_pid) if next_comm=="cyclictest"' >> $TRIGGER2
++echo 'hist:keys=next_pid:onmatch(sched.sched_wakeup).wakeup_latency(sched.sched_switch.$wakeup_lat,prev_pid) if next_comm=="cyclictest"' >> $TRIGGER2
++echo 'hist:keys=next_pid if next_comm=="cyclictest"' >> $TRIGGER2
++
++do_reset
++
++exit 0
