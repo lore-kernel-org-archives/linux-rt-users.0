@@ -1,24 +1,40 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mga09.intel.com ([134.134.136.24]:15581 "EHLO mga09.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751891AbeDMAY5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 12 Apr 2018 20:24:57 -0400
-Date: Thu, 12 Apr 2018 17:16:13 -0700
-From: Ramesh Thomas <ramesh.thomas@intel.com>
-Subject: RT 4.16 devel timeframe
-Message-ID: <20180413001613.GA1311@intel.com>
-Reply-To: ramesh.thomas@intel.com
+Received: from mx3-rdu2.redhat.com ([66.187.233.73]:33884 "EHLO mx1.redhat.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S1751318AbeDER7R (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 5 Apr 2018 13:59:17 -0400
+Date: Thu, 5 Apr 2018 12:59:15 -0500
+From: Clark Williams <williams@redhat.com>
+Subject: Re: cyclictest: duration flag not working with refresh on max
+Message-ID: <20180405125915.53222b0f@tagon>
+In-Reply-To: <TY1PR01MB17696559983A8DBC77E83D59F5BB0@TY1PR01MB1769.jpnprd01.prod.outlook.com>
+References: <TY1PR01MB17696559983A8DBC77E83D59F5BB0@TY1PR01MB1769.jpnprd01.prod.outlook.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: linux-rt-users@vger.kernel.org
-Cc: bigeasy@linutronix.de, gavin.hindman@intel.com
+To: Phil Edworthy <phil.edworthy@renesas.com>
+Cc: rt-users <linux-rt-users@vger.kernel.org>, John Kacur <jkacur@gmail.com>
 
-Hi Sebastian,
+On Thu, 5 Apr 2018 08:44:56 +0000
+Phil Edworthy <phil.edworthy@renesas.com> wrote:
 
-Do you have an approximate timeframe for RT 4.16 devel?  We are very interested in the nohz related changes that went in 4.16.
+> Hi,
+> 
+> If I set the duration flag (e.g. -D 1h) and the refresh on max flag (-M),
+> cyclictest doesn't stop after the specified duration. It doesn't matter how
+> long the duration is.
+> 
+> Does anyone else see this behaviour?
+> 
+> Thanks
+> Phil
 
-Thanks,
-Ramesh
+I tried with --duration == 2m, 10m and 1h with refresh_on_max set and it worked for me.
+
+What is your full command line?
+
+-- 
+The United States Coast Guard
+Ruining Natural Selection since 1790
