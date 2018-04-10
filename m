@@ -1,59 +1,60 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mx3-rdu2.redhat.com ([66.187.233.73]:43524 "EHLO mx1.redhat.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1756347AbeDFOYe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 6 Apr 2018 10:24:34 -0400
-Date: Fri, 6 Apr 2018 09:24:32 -0500
-From: Clark Williams <williams@redhat.com>
-Subject: Re: cyclictest: duration flag not working with refresh on max
-Message-ID: <20180406092432.112d53e2@tagon>
-In-Reply-To: <TY1PR01MB1769F86BBD60A56D6F52D2B1F5BA0@TY1PR01MB1769.jpnprd01.prod.outlook.com>
-References: <TY1PR01MB17696559983A8DBC77E83D59F5BB0@TY1PR01MB1769.jpnprd01.prod.outlook.com>
-        <20180405125915.53222b0f@tagon>
-        <TY1PR01MB1769F86BBD60A56D6F52D2B1F5BA0@TY1PR01MB1769.jpnprd01.prod.outlook.com>
+Received: from relmlor4.renesas.com ([210.160.252.174]:22321 "EHLO
+        relmlie3.idc.renesas.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1751882AbeDJIgb (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 10 Apr 2018 04:36:31 -0400
+From: Phil Edworthy <phil.edworthy@renesas.com>
+Subject: RE: hrtimers with ARM architected timer
+Date: Tue, 10 Apr 2018 08:36:28 +0000
+Message-ID: <TY1PR01MB1769901BD4D607FC8D47A87BF5BE0@TY1PR01MB1769.jpnprd01.prod.outlook.com>
+References: <HK2PR0601MB139370058E9696E9648BC8CCF5AF0@HK2PR0601MB1393.apcprd06.prod.outlook.com>
+ <447aa980-ef0c-6307-d347-866e3cd054bb@ti.com>  
+Content-Language: en-US
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: Phil Edworthy <phil.edworthy@renesas.com>
-Cc: rt-users <linux-rt-users@vger.kernel.org>, John Kacur <jkacur@gmail.com>
+To: Grygorii Strashko <grygorii.strashko@ti.com>
+Cc: rt-users <linux-rt-users@vger.kernel.org>
 
-On Fri, 6 Apr 2018 06:24:02 +0000
-Phil Edworthy <phil.edworthy@renesas.com> wrote:
-
-> Hi Clark,
-> 
-> On 05 April 2018 18:59 Clark Williams wrote:
-> > On Thu, 5 Apr 2018 08:44:56 +0000 Phil Edworthy wrote:
-> >   
-> > > Hi,
-> > >
-> > > If I set the duration flag (e.g. -D 1h) and the refresh on max flag
-> > > (-M), cyclictest doesn't stop after the specified duration. It doesn't
-> > > matter how long the duration is.
-> > >
-> > > Does anyone else see this behaviour?
-> > >
-> > > Thanks
-> > > Phil  
-> > 
-> > I tried with --duration == 2m, 10m and 1h with refresh_on_max set and it
-> > worked for me.
-> > 
-> > What is your full command line?  
-> cyclictest -m -S -p98 -i400 -M -D10s
-> 
-> I also tried this and it also doesn't stop:
-> cyclictest -m -S -p98 -i400 -M --duration 10s
-> 
-> Thanks
-> Phil
-
-Ugh, both of those worked for me on a RHEL7 and a Fedora box. 
-
-What version of cyclictest are you running?
-
--- 
-The United States Coast Guard
-Ruining Natural Selection since 1790
+SGksDQoNCk9uIDEzIEp1bHkgMjAxNyAxNDoyOCBQaGlsIEVkd29ydGh5IHdyb3RlOg0KPiBPbiAx
+MyBKdWx5IDIwMTcgMTA6MjcsIFBoaWwgRWR3b3J0aHkgd3JvdGU6DQo+ID4gT24gMTIgSnVseSAy
+MDE3IDE4OjMyLCBHcnlnb3JpaSBTdHJhc2hrbyB3cm90ZToNCj4gPiA+IE9uIDA3LzEyLzIwMTcg
+MDg6NTUgQU0sIFBoaWwgRWR3b3J0aHkgd3JvdGU6DQo+ID4gPiA+IEhpLA0KPiA+ID4gPg0KPiA+
+ID4gPiBJJ20gbmV3IHRvIHJ0LWxpbnV4LCBzbyBwbGVhc2UgZm9yZ2l2ZSBtZSBpZiBJIGFzayBz
+b21lIGR1bWIgcXVlc3Rpb25zLg0KPiA+ID4gPiBJIGhhdmUgc2VhcmNoZWQgZm9yIGEgd2hpbGUs
+IGJ1dCBub3QgZm91bmQgd2hhdCBJIGFtIGxvb2tpbmcgZm9yLg0KPiA+ID4gPg0KPiA+ID4gPiBJ
+J20gdHJ5aW5nIG91dCB0aGUgcnQtbGludXggcGF0Y2hlcyAodjQuOS4zNSkgb24gYW4gb3V0LW9m
+LXRyZWUNCj4gPiA+ID4gQlNQIGZvciBhIG5ldyBBUk0gQ29ydGV4IEE3IGRldmljZS4gV2hlbiBJ
+IHRyaWVkIGN5Y2xpY3Rlc3QsIGl0DQo+ID4gPiA+IGNvbXBsYWluZWQgdGhhdCBJIGRvbid0IGhh
+dmUgSGlnaCBSZXNvbHV0aW9uIHRpbWVycywgc28gSSBjaGVja2VkDQo+ID4gPiA+IGFuZCBzdXJl
+IGVub3VnaCAvcHJvYy90aW1lcl9saXN0IHNob3dlZCB0aGUgdGltZXIgcmVzb2x1dGlvbiBpcw0K
+PiA+ID4gPiAxMG1zLiBJJ3ZlIGNoZWNrZWQgbXkga2VybmVsIGNvbmZpZyBhbmQgSSBoYXZlIGVu
+YWJsZWQgaHJ0aW1lcnMuDQo+ID4gPiA+DQo+ID4gPiA+IFRoaXMgZGV2aWNlIHVzZXMgdGhlIEFS
+TSBhcmNoaXRlY3RlZCB0aW1lcg0KPiA+IChDT05GSUdfQVJNX0FSQ0hfVElNRVIpDQo+ID4gPiA+
+IHJ1bm5pbmcgYXQgYSBsb3dseSA2LjI1TUh6Lg0KPiA+ID4gPg0KPiA+ID4gPiBTbywgaG93IGNh
+biBJIHRlbGwgaWYgYSBkcml2ZXIgaXMgc3VwcG9zZWQgdG8gc3VwcG9ydCBocnRpbWVycz8NCj4g
+PiA+ID4gSWYgdGhlIEFSTSBhcmNoaXRlY3RlZCB0aW1lciBkcml2ZXIgZG9lcyBzdXBwb3J0IGhy
+dGltZXJzLCB3aGF0DQo+ID4gPiA+IGNvdWxkIHN0b3AgdGhlbSBiZWluZyB1c2VkPw0KPiA+ID4N
+Cj4gPiA+DQo+ID4gPiBNb3N0IHByb2JhYmx5IHlvdSBkbyBub3QgaGF2ZSBhdCBsZWFzdCBvbmUg
+dGlja19icm9hZGNhc3QgdGltZXINCj4gZW5hYmxlZC4NCj4gPiA+IFNlZToNCj4gPiA+IHRpY2tf
+Y2hlY2tfb25lc2hvdF9jaGFuZ2UoKS0+dGlja19pc19vbmVzaG90X2F2YWlsYWJsZSgpDQo+ID4g
+TWFueSB0aGFua3MgZm9yIHRoZSBwb2ludGVyLCBJIGRpZG4ndCBrbm93IHdoZXJlIHRvIHN0YXJ0
+IGxvb2tpbmcuDQo+ID4gWW91IGFyZSByaWdodCwgdGlja19pc19vbmVzaG90X2F2YWlsYWJsZSBp
+cyByZXR1cm5pbmcgMCBiZWNhdXNlIGluDQo+ID4gdGlja19icm9hZGNhc3Rfb25lc2hvdF9hdmFp
+bGFibGUgKCkgdGhlIGNvZGUgZGV0ZXJtaW5lcyB0aGF0IHRoZSB0aW1lcg0KPiA+IGRvZXNuJ3Qg
+aGF2ZSBDTE9DS19FVlRfRkVBVF9PTkVTSE9ULiBIb3dldmVyLCB0aGUgQVJNIGFyY2ggdGltZXIN
+Cj4gZG9lcw0KPiA+IGVuYWJsZSB0aGF0IGZlYXR1cmUuDQo+ID4NCj4gPiBTbyBkb2VzIHRoaXMg
+bWVhbiB0aGUgQVJNIGFyY2ggdGltZXIgaXMgdXNlZCBmb3Igc29tZXRoaW5nIGVsc2UsIHRodXMN
+Cj4gPiBJIGNhbm5vdCB1c2UgaXQgZm9yIGFuIGhydGltZXI/DQo+IEkgZm91bmQgdGhhdCBJIGhh
+ZCB0byBlbmFibGUgYW5vdGhlciB0aW1lciBvbiB0aGUgZGV2aWNlIGFuZCBub3cgSSd2ZSBnb3QN
+Cj4gaHJ0aW1lcnMhDQo+IElmIG9ubHkgb25lIG9mIHRoZSB0aW1lcnMgaXMgZW5hYmxlZCwgbm8g
+aHJ0aW1lcnMuDQoNCkZvciBwb3N0ZXJpdHksIEkgZm91bmQgb3V0IHdoeSBhIHN5c3RlbSB3aXRo
+IGp1c3QgdGhlIEFSTSBhcmNoIHRpbWVyIGVuYWJsZWQNCnJlcG9ydGVkIHRoYXQgaHJ0aW1lcnMg
+d2VyZSBub3QgYXZhaWxhYmxlLiBUaGUgdGltZXIgaGFkIHRoZQ0KQ0xPQ0tfRVZUX0ZFQVRfQzNT
+VE9QIGZlYXR1cmUgc2V0IC0gdGhpcyBpcyB0aGUgZGVmYXVsdCBmb3IgdGhlIGRyaXZlci4gSWYg
+eW91cg0Kc3lzdGVtIGRvZXMgbm90IHN0b3AgdGhlIHRpbWVyIGNsb2NrIGR1cmluZyBzdXNwZW5k
+LCB5b3UgaGF2ZSB0byBhZGQgdGhlDQoiYWx3YXlzLW9uIiBwcm9wZXJ0eSB0byB0aGUgYXJtdjct
+dGltZXIgRFQgbm9kZS4NCg0KUGhpbA0K
