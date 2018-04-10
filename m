@@ -1,23 +1,23 @@
 From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: [PATCH 4.14 009/138] perf probe: Find versioned symbols from map
-Date: Wed, 11 Apr 2018 00:23:19 +0200
-Message-ID: <20180410212903.244714179@linuxfoundation.org>
+Subject: [PATCH 4.14 010/138] perf probe: Add warning message if there is unexpected event name
+Date: Wed, 11 Apr 2018 00:23:20 +0200
+Message-ID: <20180410212903.361416262@linuxfoundation.org>
 References: <20180410212902.121524696@linuxfoundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        stable@vger.kernel.org, Masami Hiramatsu <mhiramat@kernel.org>,
-        Thomas Richter <tmricht@linux.vnet.ibm.com>,
+        stable@vger.kernel.org, Arnaldo Carvalho de Melo <acme@redhat.com>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
         Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>,
-        Arnaldo Carvalho de Melo <acme@redhat.com>,
+        Thomas Richter <tmricht@linux.vnet.ibm.com>,
         Paul Clarke <pc@us.ibm.com>,
         bhargavb <bhargavaramudu@gmail.com>,
         linux-rt-users@vger.kernel.org,
         Sasha Levin <alexander.levin@microsoft.com>
 To: linux-kernel@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <stable-owner@vger.kernel.org>
 In-Reply-To: <20180410212902.121524696@linuxfoundation.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: stable-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 4.14-stable review patch.  If anyone has any objections, please let me know.
@@ -27,136 +27,48 @@ List-Id: linux-rt-users.vger.kernel.org
 From: Masami Hiramatsu <mhiramat@kernel.org>
 
 
-[ Upstream commit 4b3a2716dd785fabb9f6ac80c1d53cb29a88169d ]
+[ Upstream commit 9f5c6d8777a2d962b0eeacb2a16f37da6bea545b ]
 
-Commit d80406453ad4 ("perf symbols: Allow user probes on versioned
-symbols") allows user to find default versioned symbols (with "@@") in
-map. However, it did not enable normal versioned symbol (with "@") for
-perf-probe.  E.g.
+This improve the error message so that user can know event-name error
+before writing new events to kprobe-events interface.
 
-  =====
-  # ./perf probe -x /lib64/libc-2.25.so malloc_get_state
-  Failed to find symbol malloc_get_state in /usr/lib64/libc-2.25.so
-    Error: Failed to add events.
-  =====
+E.g.
+   ======
+   #./perf probe -x /lib64/libc-2.25.so malloc_get_state*
+   Internal error: "malloc_get_state@GLIBC_2" is an invalid event name.
+     Error: Failed to add events.
+   ======
 
-This solves above issue by improving perf-probe symbol search function,
-as below.
-
-  =====
-  # ./perf probe -x /lib64/libc-2.25.so malloc_get_state
-  Added new event:
-    probe_libc:malloc_get_state (on malloc_get_state in /usr/lib64/libc-2.25.so)
-
-  You can now use it in all perf tools, such as:
-
-	  perf record -e probe_libc:malloc_get_state -aR sleep 1
-
-  # ./perf probe -l
-    probe_libc:malloc_get_state (on malloc_get_state@GLIBC_2.2.5 in /usr/lib64/libc-2.25.so)
-  =====
-
+Reported-by: Arnaldo Carvalho de Melo <acme@redhat.com>
 Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
-Reviewed-by: Thomas Richter <tmricht@linux.vnet.ibm.com>
 Acked-by: Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>
+Reviewed-by: Thomas Richter <tmricht@linux.vnet.ibm.com>
 Tested-by: Arnaldo Carvalho de Melo <acme@redhat.com>
 Cc: Paul Clarke <pc@us.ibm.com>
 Cc: bhargavb <bhargavaramudu@gmail.com>
 Cc: linux-rt-users@vger.kernel.org
-Link: http://lkml.kernel.org/r/151275049269.24652.1639103455496216255.stgit@devbox
+Link: http://lkml.kernel.org/r/151275040665.24652.5188568529237584489.stgit@devbox
 Signed-off-by: Arnaldo Carvalho de Melo <acme@redhat.com>
 Signed-off-by: Sasha Levin <alexander.levin@microsoft.com>
 Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 ---
- tools/perf/arch/powerpc/util/sym-handling.c |    8 ++++++++
- tools/perf/util/probe-event.c               |   20 ++++++++++++++++++--
- tools/perf/util/symbol.c                    |    5 +++++
- tools/perf/util/symbol.h                    |    1 +
- 4 files changed, 32 insertions(+), 2 deletions(-)
+ tools/perf/util/probe-event.c |    8 ++++++++
+ 1 file changed, 8 insertions(+)
 
---- a/tools/perf/arch/powerpc/util/sym-handling.c
-+++ b/tools/perf/arch/powerpc/util/sym-handling.c
-@@ -64,6 +64,14 @@ int arch__compare_symbol_names_n(const c
- 
- 	return strncmp(namea, nameb, n);
- }
-+
-+const char *arch__normalize_symbol_name(const char *name)
-+{
-+	/* Skip over initial dot */
-+	if (name && *name == '.')
-+		name++;
-+	return name;
-+}
- #endif
- 
- #if defined(_CALL_ELF) && _CALL_ELF == 2
 --- a/tools/perf/util/probe-event.c
 +++ b/tools/perf/util/probe-event.c
-@@ -2792,16 +2792,32 @@ static int find_probe_functions(struct m
- 	int found = 0;
- 	struct symbol *sym;
- 	struct rb_node *tmp;
-+	const char *norm, *ver;
-+	char *buf = NULL;
+@@ -2625,6 +2625,14 @@ static int get_new_event_name(char *buf,
  
- 	if (map__load(map) < 0)
- 		return 0;
- 
- 	map__for_each_symbol(map, sym, tmp) {
--		if (strglobmatch(sym->name, name)) {
-+		norm = arch__normalize_symbol_name(sym->name);
-+		if (!norm)
-+			continue;
+ out:
+ 	free(nbase);
 +
-+		/* We don't care about default symbol or not */
-+		ver = strchr(norm, '@');
-+		if (ver) {
-+			buf = strndup(norm, ver - norm);
-+			if (!buf)
-+				return -ENOMEM;
-+			norm = buf;
-+		}
-+		if (strglobmatch(norm, name)) {
- 			found++;
- 			if (syms && found < probe_conf.max_probes)
- 				syms[found - 1] = sym;
- 		}
-+		if (buf)
-+			zfree(&buf);
- 	}
- 
- 	return found;
-@@ -2847,7 +2863,7 @@ static int find_probe_trace_events_from_
- 	 * same name but different addresses, this lists all the symbols.
- 	 */
- 	num_matched_functions = find_probe_functions(map, pp->function, syms);
--	if (num_matched_functions == 0) {
-+	if (num_matched_functions <= 0) {
- 		pr_err("Failed to find symbol %s in %s\n", pp->function,
- 			pev->target ? : "kernel");
- 		ret = -ENOENT;
---- a/tools/perf/util/symbol.c
-+++ b/tools/perf/util/symbol.c
-@@ -93,6 +93,11 @@ static int prefix_underscores_count(cons
- 	return tail - str;
++	/* Final validation */
++	if (ret >= 0 && !is_c_func_name(buf)) {
++		pr_warning("Internal error: \"%s\" is an invalid event name.\n",
++			   buf);
++		ret = -EINVAL;
++	}
++
+ 	return ret;
  }
- 
-+const char * __weak arch__normalize_symbol_name(const char *name)
-+{
-+	return name;
-+}
-+
- int __weak arch__compare_symbol_names(const char *namea, const char *nameb)
- {
- 	return strcmp(namea, nameb);
---- a/tools/perf/util/symbol.h
-+++ b/tools/perf/util/symbol.h
-@@ -347,6 +347,7 @@ bool elf__needs_adjust_symbols(GElf_Ehdr
- void arch__sym_update(struct symbol *s, GElf_Sym *sym);
- #endif
- 
-+const char *arch__normalize_symbol_name(const char *name);
- #define SYMBOL_A 0
- #define SYMBOL_B 1
  
