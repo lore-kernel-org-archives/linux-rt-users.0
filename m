@@ -1,272 +1,162 @@
-From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: Re: [PATCH 3/4] tracing: Add action comparisons when testing
- matching hist triggers
-Date: Sat, 7 Apr 2018 21:16:38 +0900
-Message-ID: <20180407211638.ca984867724d459031be3aa7@kernel.org>
-References: <cover.1522256721.git.tom.zanussi@linux.intel.com>
-        <a7fd668b87ec10736c8f016ac4279c8480d50c2b.1522256721.git.tom.zanussi@linux.intel.com>
-        <20180403001025.6dfed9403d50d20104e54458@kernel.org>
-        <1522688973.3254.8.camel@tzanussi-mobl.amr.corp.intel.com>
-        <20180404213338.5bcd14994d8e0142b5bfefc6@kernel.org>
-        <1522855023.32118.14.camel@tzanussi-mobl.amr.corp.intel.com>
-        <20180405125016.6460a0ab372061ecf49f471a@kernel.org>
-        <1522971253.32118.47.camel@tzanussi-mobl.amr.corp.intel.com>
-        <20180406105309.b50ea1a21d2cbd9b0e39dbfd@kernel.org>
-        <1523033249.32118.85.camel@tzanussi-mobl.amr.corp.intel.com>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: [PATCH 4.14 009/138] perf probe: Find versioned symbols from map
+Date: Wed, 11 Apr 2018 00:23:19 +0200
+Message-ID: <20180410212903.244714179@linuxfoundation.org>
+References: <20180410212902.121524696@linuxfoundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: rostedt@goodmis.org, tglx@linutronix.de, namhyung@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Tom Zanussi <tom.zanussi@linux.intel.com>
+Content-Type: text/plain; charset=UTF-8
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        stable@vger.kernel.org, Masami Hiramatsu <mhiramat@kernel.org>,
+        Thomas Richter <tmricht@linux.vnet.ibm.com>,
+        Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>,
+        Arnaldo Carvalho de Melo <acme@redhat.com>,
+        Paul Clarke <pc@us.ibm.com>,
+        bhargavb <bhargavaramudu@gmail.com>,
+        linux-rt-users@vger.kernel.org,
+        Sasha Levin <alexander.levin@microsoft.com>
+To: linux-kernel@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1523033249.32118.85.camel@tzanussi-mobl.amr.corp.intel.com>
+In-Reply-To: <20180410212902.121524696@linuxfoundation.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 06 Apr 2018 11:47:29 -0500
-Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
+4.14-stable review patch.  If anyone has any objections, please let me know.
 
-> > > > Can you print out the error with which event we should see? e.g.
-> > > > 
-> > > >   ERROR: Variable already defined at sched_wakeup: ts0
-> > > > 
-> > > 
-> > > How about printing the event name along with the last command, for any
-> > > error? :
-> > > 
-> > >   ERROR: Variable already defined: ts0
-> > >     Last command: [sched:sched_wakeup] keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"
-> > 
-> > Hmm, is the Last command shows the last command on sched_wakeup ? or sched_switch??
-> > 
-> 
-> Just the last command that executed with an error - it's a global set by
-> the last command that failed, kind of like errno.
-> 
-> In this case, the last error was for the command listed, on the
-> sched_wakeup event.  Even if you see it by reading a different hist
-> file, the last error is still the same - we don't keep a last error for
-> each event.
+------------------
 
-OK, in that case, it may not be useful for my case.
-I need to know why the error happens and where should I see to solve it.
-
-> 
-> > [...]
-> > > Before:
-> > > 
-> > >   # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-> > > 
-> > >   # echo '!hist:keys=next_pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-> > > 
-> > > And other commands making us think we cleared everything out so the
-> > > below error is a surprise
-> > > 
-> > >   # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-> > >   -su: echo: write error: Invalid argument
-> > 
-> > No, my senario is different.
-> > 
-> > Your senario tries
-> > 1) define ts0 on sched_wakeup
-> > 2) remove ts0 from sched_switch (but silently failed)
-> > 3) re-define ts0 on sched_wakeup and get an error
-> > 
-> > In this case, user can dump sched_wakeup/trigger and see there is already ts0 defined.
-> > 
-> > My senario is a bit different
-> > 1) define ts0 on sched_wakeup
-> > 2) remove ts0 from sched_switch (but silently failed)
-> > 3) re-define ts0 on *sched_switch* and get an error
-> > 
-> > The 3rd operation failed on "sched_switch" not on "sched_wakeup". In this case we will totally lost where the ts0 defined.
-> > That's why I have asked you to show "where the ts0 is defined" at error line.
-> > 
-> 
-> Your scenario should work, which is why I assumed my scenario.  Anyway,
-> this I think corresponds to your scenario, which works for me:
-> 
->   # echo 'wakeup_latency u64 lat; pid_t pid' >> /sys/kernel/debug/tracing/synthetic_events
->   # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
->   # echo '!hist:keys=next_pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
->   # echo 'hist:keys=next_pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-
-Hmm, is it possible to redefine ts0 on different event??
-In that case, will ts0 be updated on both sched_switch and sched_wakeup?
-
-> 
-> I also tried this, which works too:
-> 
->   # echo '!wakeup_latency u64 lat; pid_t pid' >> /sys/kernel/debug/tracing/synthetic_events
->   # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
->   # echo 'hist:keys=next_pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
->   # echo '!hist:keys=next_pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
->   # echo '!hist:keys=next_pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
->   # echo 'hist:keys=next_pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-> 
-> When I looked at the details of what you did in your script, it
-> corresponded to my scenario - the error you saw was because you didn't
-> remove the sched_wakeup trigger though you apparently thought you did,
-> and then tried to do it again (according to your script, the command
-> that failed was to sched_wakeup, and then you looked at sched_switch and
-> saw the error).
-
-Ah, I got it! I mixed it up, sorry.
-
-BTW, if I defied ts0 at sched_wakeup
-
-====
-[root@devbox ~]# echo 'wakeup_latency u64 lat; pid_t pid' >> /sys/kernel/debug/tracing/synthetic_events
-[root@devbox ~]# echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-====
-
-and do it again,
-
-====
-[root@devbox ~]# echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
--bash: echo: write error: Invalid argument
-[root@devbox ~]# cat /sys/kernel/debug/tracing/events/sched/sched_wakeup/hist  
-# event histogram
-#
-# trigger info: hist:keys=pid:vals=hitcount:ts0=common_timestamp:sort=hitcount:size=2048:clock=global if comm=="cyclictest" [active]
-#
+From: Masami Hiramatsu <mhiramat@kernel.org>
 
 
-Totals:
-    Hits: 0
-    Entries: 0
-    Dropped: 0
+[ Upstream commit 4b3a2716dd785fabb9f6ac80c1d53cb29a88169d ]
 
-ERROR: Variable already defined: ts0
-  Last command: keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"
-====
+Commit d80406453ad4 ("perf symbols: Allow user probes on versioned
+symbols") allows user to find default versioned symbols (with "@@") in
+map. However, it did not enable normal versioned symbol (with "@") for
+perf-probe.  E.g.
 
-OK, I got this error message.
-However, if I write same command on sched_switch,
+  =====
+  # ./perf probe -x /lib64/libc-2.25.so malloc_get_state
+  Failed to find symbol malloc_get_state in /usr/lib64/libc-2.25.so
+    Error: Failed to add events.
+  =====
 
-====
-[root@devbox ~]# echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
--bash: echo: write error: Invalid argument
-====
+This solves above issue by improving perf-probe symbol search function,
+as below.
 
-This gets error because there is no "pid" argument in the event, but
+  =====
+  # ./perf probe -x /lib64/libc-2.25.so malloc_get_state
+  Added new event:
+    probe_libc:malloc_get_state (on malloc_get_state in /usr/lib64/libc-2.25.so)
 
-====
-[root@devbox ~]# cat /sys/kernel/debug/tracing/events/sched/sched_wakeup/hist# event histogram
-#
-# trigger info: hist:keys=pid:vals=hitcount:ts0=common_timestamp:sort=hitcount:size=2048:clock=global if comm=="cyclictest" [active]
-#
+  You can now use it in all perf tools, such as:
 
+	  perf record -e probe_libc:malloc_get_state -aR sleep 1
 
-Totals:
-    Hits: 0
-    Entries: 0
-    Dropped: 0
-[root@devbox ~]#
-====
+  # ./perf probe -l
+    probe_libc:malloc_get_state (on malloc_get_state@GLIBC_2.2.5 in /usr/lib64/libc-2.25.so)
+  =====
 
-I can't see the corresponding error message...
+Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
+Reviewed-by: Thomas Richter <tmricht@linux.vnet.ibm.com>
+Acked-by: Ravi Bangoria <ravi.bangoria@linux.vnet.ibm.com>
+Tested-by: Arnaldo Carvalho de Melo <acme@redhat.com>
+Cc: Paul Clarke <pc@us.ibm.com>
+Cc: bhargavb <bhargavaramudu@gmail.com>
+Cc: linux-rt-users@vger.kernel.org
+Link: http://lkml.kernel.org/r/151275049269.24652.1639103455496216255.stgit@devbox
+Signed-off-by: Arnaldo Carvalho de Melo <acme@redhat.com>
+Signed-off-by: Sasha Levin <alexander.levin@microsoft.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ tools/perf/arch/powerpc/util/sym-handling.c |    8 ++++++++
+ tools/perf/util/probe-event.c               |   20 ++++++++++++++++++--
+ tools/perf/util/symbol.c                    |    5 +++++
+ tools/perf/util/symbol.h                    |    1 +
+ 4 files changed, 32 insertions(+), 2 deletions(-)
 
-> 
-> Anyway, here's the corresponding version that works if you add the
-> trigger to sched_switch instead of twice to sched_wakeup:
-> 
-> Try adding to sched_wakeup, fails:
-> 
->   # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
->     -su: echo: 
->     write error: Invalid argument
-> 
-> Look at sched_switch instead of sched_wakeup, shows error was on sched_wakeup:
-> 
->   # cat /sys/kernel/debug/tracing/events/sched/sched_switch/hist
->     ERROR: Variable already defined: ts0
->     Last command: [sched:sched_wakeup] keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"
-> 
-> Look at sched_wakeup, sched_wakeup trigger exists and has the ts0 defined:
-> 
->   # cat /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
->     hist:keys=pid:vals=hitcount:ts0=common_timestamp.usecs:sort=hitcount:size=2048:clock=global if comm=="cyclictest" [active]
-> 
-> Let's add a trigger with ts0 to sched_switch:
-> 
->   # echo 'hist:keys=next_pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-> 
-> No error seen, and now we can see that both sched_switch and sched_wakeup have triggers with ts0:
-> 
->   # cat /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
->     hist:keys=next_pid:vals=hitcount:ts0=common_timestamp.usecs:sort=hitcount:size=2048:clock=global if comm=="cyclictest" [active]
->   # cat /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
->     hist:keys=pid:vals=hitcount:ts0=common_timestamp.usecs:sort=hitcount:size=2048:clock=global if comm=="cyclictest" [active]
->  
-> Now at this point, we have two triggers with the same variable name, ts0
-> - if we try to use an unqualified ts0 in another trigger, we get an
-> error:
-> 
->   # echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0 if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
->     -su: echo: write error: Invalid argument
->   # cat /sys/kernel/debug/tracing/events/sched/sched_switch/hist
->   # event histogram
->   #
->   # trigger info: 
->     hist:keys=next_pid:vals=hitcount:ts0=common_timestamp.usecs:sort=hitcount:size=2048:clock=global if comm=="cyclictest" [active]
->   #
-> 
-> 
->   Totals:
->        Hits: 0
->        Entries: 0
->        Dropped: 0
-> 
->   ERROR: Variable name not unique, need to use fully qualified name (subsys.event.var) for variable: ts0
->    Last command: [sched:sched_switch] keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0 if next_comm=="cyclictest"
-
-Ah, I see. So ts0 is abbreviated name :) we have 2 different variables.
-
-
-> So in order to set the trigger, we need to explicitly specify which ts0 to use:
-> 
-> # echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-sched.sched_wakeup.$ts0 if next_comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-> 
-> So we use the explicit sched.sched_wakeup.$ts0 to specify that we want
-> to use the ts0 on sched_wakeup for the calculation.
-
-got it.
-
-> Note that the most common use case is to put the
-> wakeup_lat=common_timestamp.usecs-$ts0 expression on a trigger with an
-> onmatch() action, and onmatch() specifies the matching event, so there's
-> no need to explicitly use the fully qualified sched.sched_wakeup.$ts0 in
-> that case.  The above doesn't have onmatch(), and therefore has no way
-> to disambiguate the name without specifying which event explicitly.
-
-Cool :)
-
-> > Anyway, I think it is a good chance to introduce <tracefs>/error_log file, since we have too many non-critical errors on operations. I feel that checking hist file by errors on trigger file is not a bit intuitive.
-> > 
-> > # cat /sys/kernel/debug/tracing/error_log
-> > ERROR(events/sched/sched_switch/trigger): Variable already defined: ts0@sched:sched_wakeup
-> >   Command: keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"
-> > 
-> > This can be used from probe events too :) 
-> > e.g.
-> > 
-> > ERROR(kprobe_events): Unsupported type: uint8
-> >   Command: p vfs_read arg1=%di:uint8
-> > 
-> > Any thought?
-> > 
-> 
-> I agree - I think that would make more sense than using the hist files
-> for that purpose.  I'll work on adding this and getting rid of the hist
-> file error mechanism.
-
-Thank you!
-
--- 
-Masami Hiramatsu <mhiramat@kernel.org>
+--- a/tools/perf/arch/powerpc/util/sym-handling.c
++++ b/tools/perf/arch/powerpc/util/sym-handling.c
+@@ -64,6 +64,14 @@ int arch__compare_symbol_names_n(const c
+ 
+ 	return strncmp(namea, nameb, n);
+ }
++
++const char *arch__normalize_symbol_name(const char *name)
++{
++	/* Skip over initial dot */
++	if (name && *name == '.')
++		name++;
++	return name;
++}
+ #endif
+ 
+ #if defined(_CALL_ELF) && _CALL_ELF == 2
+--- a/tools/perf/util/probe-event.c
++++ b/tools/perf/util/probe-event.c
+@@ -2792,16 +2792,32 @@ static int find_probe_functions(struct m
+ 	int found = 0;
+ 	struct symbol *sym;
+ 	struct rb_node *tmp;
++	const char *norm, *ver;
++	char *buf = NULL;
+ 
+ 	if (map__load(map) < 0)
+ 		return 0;
+ 
+ 	map__for_each_symbol(map, sym, tmp) {
+-		if (strglobmatch(sym->name, name)) {
++		norm = arch__normalize_symbol_name(sym->name);
++		if (!norm)
++			continue;
++
++		/* We don't care about default symbol or not */
++		ver = strchr(norm, '@');
++		if (ver) {
++			buf = strndup(norm, ver - norm);
++			if (!buf)
++				return -ENOMEM;
++			norm = buf;
++		}
++		if (strglobmatch(norm, name)) {
+ 			found++;
+ 			if (syms && found < probe_conf.max_probes)
+ 				syms[found - 1] = sym;
+ 		}
++		if (buf)
++			zfree(&buf);
+ 	}
+ 
+ 	return found;
+@@ -2847,7 +2863,7 @@ static int find_probe_trace_events_from_
+ 	 * same name but different addresses, this lists all the symbols.
+ 	 */
+ 	num_matched_functions = find_probe_functions(map, pp->function, syms);
+-	if (num_matched_functions == 0) {
++	if (num_matched_functions <= 0) {
+ 		pr_err("Failed to find symbol %s in %s\n", pp->function,
+ 			pev->target ? : "kernel");
+ 		ret = -ENOENT;
+--- a/tools/perf/util/symbol.c
++++ b/tools/perf/util/symbol.c
+@@ -93,6 +93,11 @@ static int prefix_underscores_count(cons
+ 	return tail - str;
+ }
+ 
++const char * __weak arch__normalize_symbol_name(const char *name)
++{
++	return name;
++}
++
+ int __weak arch__compare_symbol_names(const char *namea, const char *nameb)
+ {
+ 	return strcmp(namea, nameb);
+--- a/tools/perf/util/symbol.h
++++ b/tools/perf/util/symbol.h
+@@ -347,6 +347,7 @@ bool elf__needs_adjust_symbols(GElf_Ehdr
+ void arch__sym_update(struct symbol *s, GElf_Sym *sym);
+ #endif
+ 
++const char *arch__normalize_symbol_name(const char *name);
+ #define SYMBOL_A 0
+ #define SYMBOL_B 1
+ 
