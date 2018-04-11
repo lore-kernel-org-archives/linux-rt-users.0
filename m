@@ -1,8 +1,8 @@
 From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: [PATCH 4.9 123/310] perf probe: Add warning message if there is unexpected event name
-Date: Wed, 11 Apr 2018 20:34:22 +0200
-Message-ID: <20180411183627.497322322@linuxfoundation.org>
-References: <20180411183622.305902791@linuxfoundation.org>
+Subject: [PATCH 4.4 083/190] perf probe: Add warning message if there is unexpected event name
+Date: Wed, 11 Apr 2018 20:35:29 +0200
+Message-ID: <20180411183555.454699178@linuxfoundation.org>
+References: <20180411183550.114495991@linuxfoundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
@@ -16,11 +16,11 @@ Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
         Sasha Levin <alexander.levin@microsoft.com>
 To: linux-kernel@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180411183622.305902791@linuxfoundation.org>
+In-Reply-To: <20180411183550.114495991@linuxfoundation.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-4.9-stable review patch.  If anyone has any objections, please let me know.
+4.4-stable review patch.  If anyone has any objections, please let me know.
 
 ------------------
 
@@ -57,7 +57,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 
 --- a/tools/perf/util/probe-event.c
 +++ b/tools/perf/util/probe-event.c
-@@ -2609,6 +2609,14 @@ static int get_new_event_name(char *buf,
+@@ -2349,6 +2349,14 @@ static int get_new_event_name(char *buf,
  
  out:
  	free(nbase);
