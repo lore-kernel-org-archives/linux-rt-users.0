@@ -1,7 +1,8 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH 0/6] tracing: trace event error_log and inter-event bugfixes
-Date: Thu, 12 Apr 2018 10:13:15 -0500
-Message-ID: <cover.1523545519.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 1/6] tracing: Restore proper field flag printing when displaying triggers
+Date: Thu, 12 Apr 2018 10:13:16 -0500
+Message-ID: <dc44e7dcacb91b4378c5326a9a20e09263868444.1523545519.git.tom.zanussi@linux.intel.com>
+References: <cover.1523545519.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
         joel.opensrc@gmail.com, joelaf@google.com,
@@ -11,46 +12,65 @@ Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         Tom Zanussi <tom.zanussi@linux.intel.com>
 To: rostedt@goodmis.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <cover.1523545519.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <cover.1523545519.git.tom.zanussi@linux.intel.com>
+References: <cover.1523545519.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Steve,
+The flag-printing code used when displaying hist triggers somehow got
+dropped during refactoring of the inter-event patchset.  This restores
+it.
 
-Here are a few patches that should be applied on top of the
-'Inter-event (e.g. latency) support v9' patchset.
+Below are a couple examples - in the first case, .usecs wasn't being
+displayed properly for common_timestamps and the second illustrates
+the same for other flags such as .execname.
 
-The first fixes another problem I noticed when printing flags.
+Before:
 
-The rest implement the tracing/events/error_log suggested by Masami,
-and update the inter-event code to use it (and remove the old hist
-file error mechanism).
+  # echo 'hist:key=common_pid.execname:val=count:sort=count' > /sys/kernel/debug/tracing/events/syscalls/sys_enter_read/trigger
+  # cat /sys/kernel/debug/tracing/events/syscalls/sys_enter_read/trigger
+  hist:keys=common_pid:vals=hitcount,count:sort=count:size=2048 [active]
 
-Thanks,
+  # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+  # cat /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+  hist:keys=pid:vals=hitcount:ts0=common_timestamp:sort=hitcount:size=2048:clock=global if comm=="cyclictest" [active]
 
-Tom
+After:
 
-The following changes since commit 404bb11b24fb9a592023c077b878d30ad6da4322:
+  # echo 'hist:key=common_pid.execname:val=count:sort=count' > /sys/kernel/debug/tracing/events/syscalls/sys_enter_read/trigger
+  # cat /sys/kernel/debug/tracing/events/syscalls/sys_enter_read/trigger
+  hist:keys=common_pid.execname:vals=hitcount,count:sort=count:size=2048 [active]
 
-  tracing: Enforce passing in filter=NULL to create_filter() (2018-04-11 11:18:42 -0400)
+  # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+  # cat /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+  hist:keys=pid:vals=hitcount:ts0=common_timestamp.usecs:sort=hitcount:size=2048:clock=global if comm=="cyclictest" [active]
 
-are available in the git repository at:
+Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+---
+ kernel/trace/trace_events_hist.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
-  https://github.com/tzanussi/linux-trace-inter-event.git tzanussi/inter-event-update2
-  https://github.com/tzanussi/linux-trace-inter-event/tree/tzanussi/inter-event-update2
-
-Tom Zanussi (6):
-  tracing: Restore proper field flag printing when displaying triggers
-  tracing: Add trace event error log
-  tracing: Save the last hist command's associated event name
-  tracing: Use trace event error_log with hist triggers
-  tracing: Add field parsing trace event errors for hist triggers
-  selftests: ftrace: Fix extended error support testcase
-
- kernel/trace/trace.h                               |   3 +
- kernel/trace/trace_events.c                        | 172 +++++++++++++++++++
- kernel/trace/trace_events_hist.c                   | 188 +++++++++++----------
- .../inter-event/trigger-extended-error-support.tc  |   2 +-
- 4 files changed, 274 insertions(+), 91 deletions(-)
-
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 0d7b3ff..66c87be 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -4913,6 +4913,16 @@ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
+ 		seq_printf(m, "%s", field_name);
+ 	} else if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP)
+ 		seq_puts(m, "common_timestamp");
++
++	if (hist_field->flags) {
++		if (!(hist_field->flags & HIST_FIELD_FL_VAR_REF) &&
++		    !(hist_field->flags & HIST_FIELD_FL_EXPR)) {
++			const char *flags = get_hist_field_flags(hist_field);
++
++			if (flags)
++				seq_printf(m, ".%s", flags);
++		}
++	}
+ }
+ 
+ static int event_hist_trigger_print(struct seq_file *m,
 -- 
 1.9.3
