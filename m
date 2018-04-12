@@ -1,191 +1,307 @@
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: Re: [PATCH 3/4] tracing: Add action comparisons when testing
- matching hist triggers
-Date: Thu, 12 Apr 2018 10:22:23 -0500
-Message-ID: <1523546543.9119.5.camel@tzanussi-mobl.amr.corp.intel.com>
-References: <cover.1522256721.git.tom.zanussi@linux.intel.com>
-         <a7fd668b87ec10736c8f016ac4279c8480d50c2b.1522256721.git.tom.zanussi@linux.intel.com>
-         <20180403001025.6dfed9403d50d20104e54458@kernel.org>
-         <1522688973.3254.8.camel@tzanussi-mobl.amr.corp.intel.com>
-         <20180404213338.5bcd14994d8e0142b5bfefc6@kernel.org>
-         <1522855023.32118.14.camel@tzanussi-mobl.amr.corp.intel.com>
-         <20180405125016.6460a0ab372061ecf49f471a@kernel.org>
-         <1522971253.32118.47.camel@tzanussi-mobl.amr.corp.intel.com>
-         <20180406105309.b50ea1a21d2cbd9b0e39dbfd@kernel.org>
-         <1523033249.32118.85.camel@tzanussi-mobl.amr.corp.intel.com>
-         <20180407211638.ca984867724d459031be3aa7@kernel.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 2/6] tracing: Add trace event error log
+Date: Thu, 12 Apr 2018 18:20:01 -0400
+Message-ID: <20180412182001.75bfb4e2@gandalf.local.home>
+References: <cover.1523545519.git.tom.zanussi@linux.intel.com>
+        <194bd34e689dd6df9e48855111fd6c5c66e37fc9.1523545519.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: rostedt@goodmis.org, tglx@linutronix.de, namhyung@kernel.org,
+Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
         joel.opensrc@gmail.com, joelaf@google.com,
         mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
         rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Masami Hiramatsu <mhiramat@kernel.org>
+To: Tom Zanussi <tom.zanussi@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180407211638.ca984867724d459031be3aa7@kernel.org>
+In-Reply-To: <194bd34e689dd6df9e48855111fd6c5c66e37fc9.1523545519.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Masami,
+On Thu, 12 Apr 2018 10:13:17 -0500
+Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
 
-Sorry for the delay in replying - was off for a few days..
+> diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
+> index 6fb46a0..f2dc7e6 100644
+> --- a/kernel/trace/trace.h
+> +++ b/kernel/trace/trace.h
+> @@ -1765,6 +1765,9 @@ extern ssize_t trace_parse_run_command(struct file *file,
+>  		const char __user *buffer, size_t count, loff_t *ppos,
+>  		int (*createfn)(int, char**));
+>  
+> +extern void event_log_err(const char *loc, const char *cmd, const char *fmt,
+> +			  ...);
+> +
+>  /*
+>   * Normal trace_printk() and friends allocates special buffers
+>   * to do the manipulation, as well as saves the print formats
+> diff --git a/kernel/trace/trace_events.c b/kernel/trace/trace_events.c
+> index 05c7172..fd02e22 100644
+> --- a/kernel/trace/trace_events.c
+> +++ b/kernel/trace/trace_events.c
+> @@ -1668,6 +1668,164 @@ static void ignore_task_cpu(void *data)
+>  	return ret;
+>  }
+>  
+> +#define EVENT_LOG_ERRS_MAX	(PAGE_SIZE / sizeof(struct event_log_err))
 
-On Sat, 2018-04-07 at 21:16 +0900, Masami Hiramatsu wrote:
-> On Fri, 06 Apr 2018 11:47:29 -0500
-> Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
-> 
-> > > > > Can you print out the error with which event we should see? e.g.
-> > > > > 
-> > > > >   ERROR: Variable already defined at sched_wakeup: ts0
-> > > > > 
-> > > > 
-> > > > How about printing the event name along with the last command, for any
-> > > > error? :
-> > > > 
-> > > >   ERROR: Variable already defined: ts0
-> > > >     Last command: [sched:sched_wakeup] keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"
-> > > 
-> > > Hmm, is the Last command shows the last command on sched_wakeup ? or sched_switch??
-> > > 
-> > 
-> > Just the last command that executed with an error - it's a global set by
-> > the last command that failed, kind of like errno.
-> > 
-> > In this case, the last error was for the command listed, on the
-> > sched_wakeup event.  Even if you see it by reading a different hist
-> > file, the last error is still the same - we don't keep a last error for
-> > each event.
-> 
-> OK, in that case, it may not be useful for my case.
-> I need to know why the error happens and where should I see to solve it.
-> 
-> > 
-> > > [...]
-> > > > Before:
-> > > > 
-> > > >   # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-> > > > 
-> > > >   # echo '!hist:keys=next_pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-> > > > 
-> > > > And other commands making us think we cleared everything out so the
-> > > > below error is a surprise
-> > > > 
-> > > >   # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-> > > >   -su: echo: write error: Invalid argument
-> > > 
-> > > No, my senario is different.
-> > > 
-> > > Your senario tries
-> > > 1) define ts0 on sched_wakeup
-> > > 2) remove ts0 from sched_switch (but silently failed)
-> > > 3) re-define ts0 on sched_wakeup and get an error
-> > > 
-> > > In this case, user can dump sched_wakeup/trigger and see there is already ts0 defined.
-> > > 
-> > > My senario is a bit different
-> > > 1) define ts0 on sched_wakeup
-> > > 2) remove ts0 from sched_switch (but silently failed)
-> > > 3) re-define ts0 on *sched_switch* and get an error
-> > > 
-> > > The 3rd operation failed on "sched_switch" not on "sched_wakeup". In this case we will totally lost where the ts0 defined.
-> > > That's why I have asked you to show "where the ts0 is defined" at error line.
-> > > 
-> > 
-> > Your scenario should work, which is why I assumed my scenario.  Anyway,
-> > this I think corresponds to your scenario, which works for me:
-> > 
-> >   # echo 'wakeup_latency u64 lat; pid_t pid' >> /sys/kernel/debug/tracing/synthetic_events
-> >   # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-> >   # echo '!hist:keys=next_pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-> >   # echo 'hist:keys=next_pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-> 
-> Hmm, is it possible to redefine ts0 on different event??
-> In that case, will ts0 be updated on both sched_switch and sched_wakeup?
-> 
+> +#define EVENT_ERR_LOG_MASK	(EVENT_LOG_ERRS_MAX - 1)
 
-It's not really redefining ts0 - those are separate variables on two
-different events that happen to have the same name (thus the need to
-disambiguate when referencing them in later expressions).  And yes, they
-are updated separately whenever the corresponding event occurs.
+BTW, the above only works if EVENT_LOG_ERRS_MAX is a power of two,
+which it's not guaranteed to be.
 
-> > 
-> > I also tried this, which works too:
-> > 
-> >   # echo '!wakeup_latency u64 lat; pid_t pid' >> /sys/kernel/debug/tracing/synthetic_events
-> >   # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-> >   # echo 'hist:keys=next_pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-> >   # echo '!hist:keys=next_pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-> >   # echo '!hist:keys=next_pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-> >   # echo 'hist:keys=next_pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-> > 
-> > When I looked at the details of what you did in your script, it
-> > corresponded to my scenario - the error you saw was because you didn't
-> > remove the sched_wakeup trigger though you apparently thought you did,
-> > and then tried to do it again (according to your script, the command
-> > that failed was to sched_wakeup, and then you looked at sched_switch and
-> > saw the error).
-> 
-> Ah, I got it! I mixed it up, sorry.
-> 
-> BTW, if I defied ts0 at sched_wakeup
-> 
-> ====
-> [root@devbox ~]# echo 'wakeup_latency u64 lat; pid_t pid' >> /sys/kernel/debug/tracing/synthetic_events
-> [root@devbox ~]# echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-> ====
-> 
-> and do it again,
-> 
-> ====
-> [root@devbox ~]# echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-> -bash: echo: write error: Invalid argument
-> [root@devbox ~]# cat /sys/kernel/debug/tracing/events/sched/sched_wakeup/hist  
-> # event histogram
-> #
-> # trigger info: hist:keys=pid:vals=hitcount:ts0=common_timestamp:sort=hitcount:size=2048:clock=global if comm=="cyclictest" [active]
-> #
-> 
-> 
-> Totals:
->     Hits: 0
->     Entries: 0
->     Dropped: 0
-> 
-> ERROR: Variable already defined: ts0
->   Last command: keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"
-> ====
-> 
-> OK, I got this error message.
-> However, if I write same command on sched_switch,
-> 
-> ====
-> [root@devbox ~]# echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
-> -bash: echo: write error: Invalid argument
-> ====
-> 
-> This gets error because there is no "pid" argument in the event, but
-> 
-> ====
-> [root@devbox ~]# cat /sys/kernel/debug/tracing/events/sched/sched_wakeup/hist# event histogram
-> #
-> # trigger info: hist:keys=pid:vals=hitcount:ts0=common_timestamp:sort=hitcount:size=2048:clock=global if comm=="cyclictest" [active]
-> #
-> 
-> 
-> Totals:
->     Hits: 0
->     Entries: 0
->     Dropped: 0
-> [root@devbox ~]#
-> ====
-> 
-> I can't see the corresponding error message...
+> +
+> +struct event_log_err {
+> +	char			err[MAX_FILTER_STR_VAL];
+> +	char			cmd[MAX_FILTER_STR_VAL];
+> +};
 
-Right, that's because I forgot to generate an error message for that.
-The patchset I just posted adds an error message for that - thanks for
-pointing it out.
+I like the event_log_err idea, but the above can be shrunk to:
 
-Tom
+struct err_info {
+	u8	type; /* I can only imagine 254 types */
+	u8	pos;  /* MAX_FILTER_STR_VAR = 256 */
+};
+
+struct event_log_err {
+	struct err_info		info;
+	char			cmd[MAX_FILTER_STR_VAL];
+};
+
+There's no reason to put in a bunch of text that's going to be static
+anyway. Have a lookup table like we do for filters.
+
++				log_err("Variable name not unique, need to use fully qualified name (%s) for variable: ", fqvar(system, event_name, var_name, true));
+
+
+Instead of making the fqvar, find the location of the variable, and add:
+
+ blah blah $var blah blah
+            ^
+  Variable name not unique, need to use fully qualified name for variable
+
+> +
+> +static char *event_err_log;
+> +static unsigned int event_err_log_tail;
+> +
+> +struct event_log_err *get_event_log_err(void)
+> +{
+> +	struct event_log_err *err;
+> +	char *errpos;
+> +
+> +	if (!event_err_log) {
+> +		event_err_log = (char *)get_zeroed_page(GFP_KERNEL);
+> +		if (!event_err_log)
+> +			return NULL;
+> +	}
+> +
+> +	errpos = event_err_log + event_err_log_tail * sizeof(*err);
+> +	err = (struct event_log_err *)errpos;
+> +
+> +	event_err_log_tail = (event_err_log_tail + 1) & EVENT_ERR_LOG_MASK;
+
+So you add errors one after the other:
+
+First error:
+
+ err1,NULL,NULL,NULL,...
+      ^
+     tail
+
+Second error:
+
+ err1,err2,NULL,NULL,...
+           ^
+          tail
+
+Third error:
+
+ err1,err2,err3,NULL,
+                ^
+               tail
+
+> +
+> +	return err;
+> +}
+> +
+> +/**
+> + * event_log_err - write an error to the trace event error log
+> + * @loc: A string describing where the error occurred
+> + * @cmd: The trace event command that caused the error
+> + * @fmt: snprintf format string
+> + * @...: variable length list of snprintf args
+> + *
+> + * Writes an error into tracing/events/error_log of the form:
+> + *
+> + * ERROR(<loc>): <error text ala snprintf>
+> + *   Command: <command that caused the error>
+> + *
+> + * tracing/events/error_log is a small log file containing the last
+> + * EVENT_LOG_ERRS_MAX errors (8).  Memory for the error log isn't
+> + * allocated unless there has been a trace event error, and the error
+> + * log can be cleared and have its memory freed by writing the empty
+> + * string in truncation mode to it i.e. echo > error_log.
+> + *
+> + * Must be called with event_mutex held.
+> + */
+> +void event_log_err(const char *loc, const char *cmd, const char *fmt, ...)
+> +{
+> +	struct event_log_err *err;
+> +	va_list args;
+> +	int len;
+> +
+> +	err = get_event_log_err();
+> +	if (!err)
+> +		return;
+> +
+> +	snprintf(err->cmd, MAX_FILTER_STR_VAL,"\n  Command: %s\n", cmd);
+> +
+> +	len = snprintf(err->err, MAX_FILTER_STR_VAL, "ERROR(%s): ", loc);
+> +	if (len >= MAX_FILTER_STR_VAL)
+> +		return;
+> +
+> +	va_start(args, fmt);
+> +	vsnprintf(err->err + len, MAX_FILTER_STR_VAL - len, fmt, args);
+> +	va_end(args);
+> +}
+> +
+> +static void clear_event_err_log(void)
+> +{
+> +	free_page((long unsigned int)event_err_log);
+> +	event_err_log_tail = 0;
+> +	event_err_log = NULL;
+> +}
+> +
+> +static void *event_err_log_inc(loff_t *pos)
+> +{
+> +	struct event_log_err *err = NULL;
+> +	char *errpos = NULL;
+> +	int i = *pos;
+> +
+> +	++*pos;
+> +
+> +	if (i >= EVENT_LOG_ERRS_MAX)
+> +		return NULL;
+> +
+> +	i += event_err_log_tail;
+> +	i &= EVENT_ERR_LOG_MASK;
+> +
+> +	errpos = event_err_log + (i * sizeof(*err));
+> +	err = (struct event_log_err *)errpos;
+
+Now I'm confused. i += tail, so on *pos = 0, and tail = 3, we have 
+i = 3 (or i = tail)
+
+ err1,err2,err3,NULL,...
+                ^
+               tail
+                i
+
+How do we return anything when the buffer isn't full yet?
+
+What did I miss?
+
+Wouldn't this need to go backwards?
+
+	i = event_err_log_tail - (i + 1);
+	if (i < 0)
+		i = EVENT_ERROR_LOG - 1;
+
+-- Steve
+
+> +
+> +	return err;
+> +}
+> +
+> +static void *event_err_log_seq_start(struct seq_file *m, loff_t *pos)
+> +{
+> +	mutex_lock(&event_mutex);
+> +
+> +	return event_err_log_inc(pos);
+> +}
+> +
+> +static void *event_err_log_seq_next(struct seq_file *m, void *v, loff_t *pos)
+> +{
+> +	return event_err_log_inc(pos);
+> +}
+> +
+> +static void event_err_log_seq_stop(struct seq_file *m, void *v)
+> +{
+> +	mutex_unlock(&event_mutex);
+> +}
+> +
+> +static int event_err_log_seq_show(struct seq_file *m, void *v)
+> +{
+> +	struct event_log_err *err = v;
+> +
+> +	if (err)
+> +		seq_printf(m, "%s%s", err->err, err->cmd);
+> +
+> +	return 0;
+> +}
+> +
+> +static const struct seq_operations event_err_log_seq_op = {
+> +	.start  = event_err_log_seq_start,
+> +	.next   = event_err_log_seq_next,
+> +	.stop   = event_err_log_seq_stop,
+> +	.show   = event_err_log_seq_show
+> +};
+> +
+> +static int event_err_log_open(struct inode *inode, struct file *file)
+> +{
+> +	if (file->f_mode & FMODE_WRITE) {
+> +		if (file->f_flags & O_TRUNC)
+> +			return 0;
+> +		else
+> +			return -EINVAL;
+> +	}
+> +
+> +	return seq_open(file, &event_err_log_seq_op);
+> +}
+> +
+> +static ssize_t event_err_log_write(struct file *file,
+> +				   const char __user *buffer,
+> +				   size_t count, loff_t *ppos)
+> +{
+> +	if (count == 1)
+> +		clear_event_err_log();
+> +	else
+> +		return -EINVAL;
+> +
+> +	*ppos += count;
+> +
+> +	return count;
+> +}
+> +
+>  static int ftrace_event_avail_open(struct inode *inode, struct file *file);
+>  static int ftrace_event_set_open(struct inode *inode, struct file *file);
+>  static int ftrace_event_set_pid_open(struct inode *inode, struct file *file);
+> @@ -1767,6 +1925,13 @@ static void ignore_task_cpu(void *data)
+>  	.release = subsystem_release,
+>  };
+>  
+> +static const struct file_operations ftrace_event_err_log_fops = {
+> +	.open           = event_err_log_open,
+> +	.write		= event_err_log_write,
+> +	.read           = seq_read,
+> +	.llseek         = seq_lseek,
+> +};
+> +
+>  static const struct file_operations ftrace_show_header_fops = {
+>  	.open = tracing_open_generic,
+>  	.read = show_header,
+> @@ -2927,6 +3092,13 @@ static __init int setup_trace_event(char *str)
+>  		return -ENOMEM;
+>  	}
+>  
+> +	entry = trace_create_file("error_log", 0644, d_events,
+> +				  tr, &ftrace_event_err_log_fops);
+> +	if (!entry) {
+> +		pr_warn("Could not create tracefs 'error_log' entry\n");
+> +		return -ENOMEM;
+> +	}
+> +
+>  	/* There are not as crucial, just warn if they are not created */
+>  
+>  	entry = tracefs_create_file("set_event_pid", 0644, parent,
