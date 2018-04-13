@@ -1,48 +1,44 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mail-io0-f194.google.com ([209.85.223.194]:39586 "EHLO
-        mail-io0-f194.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751064AbeD3LFx (ORCPT
+Received: from mail-wr0-f173.google.com ([209.85.128.173]:35098 "EHLO
+        mail-wr0-f173.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751622AbeDMQmv (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 30 Apr 2018 07:05:53 -0400
-Received: by mail-io0-f194.google.com with SMTP id r9-v6so9711189iod.6
-        for <linux-rt-users@vger.kernel.org>; Mon, 30 Apr 2018 04:05:53 -0700 (PDT)
+        Fri, 13 Apr 2018 12:42:51 -0400
+Received: by mail-wr0-f173.google.com with SMTP id o3so9720742wri.2
+        for <linux-rt-users@vger.kernel.org>; Fri, 13 Apr 2018 09:42:50 -0700 (PDT)
+Date: Fri, 13 Apr 2018 18:42:41 +0200
+From: Juri Lelli <juri.lelli@redhat.com>
+Subject: [ANNOUNCE] OSPM-summit 2018 - live events
+Message-ID: <20180413164241.GB10485@localhost.localdomain>
 MIME-Version: 1.0
-From: Iain Hunter <drhunter95@gmail.com>
-Date: Mon, 30 Apr 2018 12:05:52 +0100
-Message-ID: <CALC81-sg=86AZgZv4bGSNPJEmw3r_j=yNv5HuGPBWKMYVoXJ1A@mail.gmail.com>
-Subject: RT Patch and Xen
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: linux-rt-users@vger.kernel.org
+To: linux-pm@vger.kernel.org, linux-acpi@vger.kernel.org, linux-pci@vger.kernel.org, linux-rt-users@vger.kernel.org
 
-Hi,
+Hi all,
 
-I am using 4.9-rt1 on an Ultrascale+ device which is running Xen.
+Gentle reminder that the Power Management and Scheduling in the Linux
+Kernel II edition summit (OSPM-summit 2018) is happening next week.
 
+April 16-18, 2018
+Scuola Superiore Sant'Anna
+Pisa, Italy
 
+http://retis.sssup.it/ospm-summit/
 
-By default whenever I enable RT Linux then Xen is disabled according
-to the patch "arm64/xen: Make XEN depend on !RT" in
+If you didn't make it this year, but you are still interested in what is
+going to be discussed there, good news is that all the talks are going
+to be streamed online and recorded. Please find schedule and links to
+the live events at:
 
-https://marc.info/?l=3Dlinux-rt-users&m=3D144509814328860&w=3D2
+http://retis.sssup.it/ospm-summit/program.html
 
+If you wish to participate remotely, simply send me a private email
+specifying which Google Hangouts contact I should be inviting to join
+the live event (it worked great last year! :).
 
-Can someone explain the background to this patch (which appears to
-still be in latest 4.14 development release)?
+Best,
 
-Is it simply because Xen drivers in the kernel fail to build due to an
-include file problem (which I have worked around)
-Is there a fundamental stability problem on 64 bit ARM when RT Linux
-is running in a DomU? Initial runs of cyclictest don=E2=80=99t show any.
-
-
-
-Thanks,
-
-Iain
-
-
-
--
+- Juri
