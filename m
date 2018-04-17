@@ -1,8 +1,7 @@
 From: Joel Fernandes <joelaf@google.com>
-Subject: [RFC v4 2/4] softirq: reorder trace_softirqs_on to prevent lockdep splat
-Date: Mon, 16 Apr 2018 21:07:46 -0700
-Message-ID: <20180417040748.212236-3-joelaf@google.com>
-References: <20180417040748.212236-1-joelaf@google.com>
+Subject: [RFC v4 0/4] Centralize and unify usage of preempt/irq tracepoints
+Date: Mon, 16 Apr 2018 21:07:44 -0700
+Message-ID: <20180417040748.212236-1-joelaf@google.com>
 Cc: Joel Fernandes <joelaf@google.com>,
         Steven Rostedt <rostedt@goodmis.org>,
         Peter Zilstra <peterz@infradead.org>,
@@ -21,27 +20,61 @@ Cc: Joel Fernandes <joelaf@google.com>,
         Vedang Patel <vedang.patel@intel.com>
 To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180417040748.212236-1-joelaf@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Currently there's an issue which is not always reproducible, where the
-softirqs annotation in lockdep goes out of sync with the reality of the
-world and causes a lockdep splat. This is because the preemptoff tracer
-calls into lockdep which can cause a softirqs invalid annotation splat.
+Hello,
+This is the next revision of preempt/irq tracepoint centralization and
+unified usage across the kernel [1].
+The preempt/irq tracepoints exist but not everything in the kernel is
+using it. This makes things not work simultaneously (for ex, only
+lockdep or irqsoff events can be used). This series is an attempt to
+solve that.
 
-The same issue was fixed in local_bh_disable_ip.
-/*
- * The preempt tracer hooks into preempt_count_add and will break
- * lockdep because it calls back into lockdep after SOFTIRQ_OFFSET
- * is set and before current->softirq_enabled is cleared.
- * We must manually increment preempt_count here and manually
- * call the trace_preempt_off later.
- */
+I fixed several issues since last rev and I'm posting it slightly early
+than I wanted to for some feedback especially for the new patches 1-3 in
+this series. Also any testing is deeply appreciated.
 
-I am not fully sure why the issue is reproducible with my patches easily,
-but it seems like the same ordering issue can exist so we ought to fix
-it.
+Status:
+Currently I'm noticing a performance issue with "enabling" of the
+preemptoff tracer (not during its running but the enabling/startup of
+it). I narrowed this down to rcu_irq_enter_irqson and
+rcu_irq_exit_irqson calls in tracepoint.h. Commenting these out makes
+the perf issue go away. I also notice that disabling function tracer
+also makes the issue go away. Note that I ran hackbench and don't notice
+any performance issues with my patch itself per-se, however the
+preemptoff tracer startup seems slow and I'm debugging that. If you have
+a clue why this might be happening, please let me know.
+
+Note that I skipped v3 because I used that number already for some
+internal reviews of these patches. Also I changed the subject back to
+RFC in light of the lockdep issues I fixed this time and added some more
+folks for review. Thanks much for any review or testing.
+
+[1] https://www.spinics.net/lists/kernel/msg2750826.html
+
+Joel Fernandes (4):
+  tracepoint: Add API to not do lockdep checks during RCU ops
+  softirq: reorder trace_softirqs_on to prevent lockdep splat
+  irqflags: Avoid unnecessary calls to trace_ if you can
+  tracing: Centralize preemptirq tracepoints and unify their usage
+
+ include/linux/ftrace.h            |  11 +-
+ include/linux/irqflags.h          |  32 +++--
+ include/linux/lockdep.h           |   8 +-
+ include/linux/preempt.h           |   2 +-
+ include/linux/tracepoint.h        |  32 ++++-
+ include/trace/events/preemptirq.h |  23 ++--
+ init/main.c                       |   5 +-
+ kernel/locking/lockdep.c          |  35 ++---
+ kernel/sched/core.c               |   2 +-
+ kernel/softirq.c                  |   6 +-
+ kernel/trace/Kconfig              |  22 +++-
+ kernel/trace/Makefile             |   2 +-
+ kernel/trace/trace_irqsoff.c      | 206 +++++++-----------------------
+ kernel/trace/trace_preemptirq.c   |  73 +++++++++++
+ 14 files changed, 229 insertions(+), 230 deletions(-)
+ create mode 100644 kernel/trace/trace_preemptirq.c
 
 Cc: Steven Rostedt <rostedt@goodmis.org>
 Cc: Peter Zilstra <peterz@infradead.org>
@@ -58,29 +91,5 @@ Cc: Masami Hiramatsu <mhiramat@kernel.org>
 Cc: Fenguang Wu <fengguang.wu@intel.com>
 Cc: Baohong Liu <baohong.liu@intel.com>
 Cc: Vedang Patel <vedang.patel@intel.com>
-Signed-off-by: Joel Fernandes <joelaf@google.com>
----
- kernel/softirq.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
-
-diff --git a/kernel/softirq.c b/kernel/softirq.c
-index 177de3640c78..8a040bcaa033 100644
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -139,9 +139,13 @@ static void __local_bh_enable(unsigned int cnt)
- {
- 	lockdep_assert_irqs_disabled();
- 
-+	if (preempt_count() == cnt)
-+		trace_preempt_on(CALLER_ADDR0, get_lock_parent_ip());
-+
- 	if (softirq_count() == (cnt & SOFTIRQ_MASK))
- 		trace_softirqs_on(_RET_IP_);
--	preempt_count_sub(cnt);
-+
-+	__preempt_count_sub(cnt);
- }
- 
- /*
 -- 
 2.17.0.484.g0c8726318c-goog
