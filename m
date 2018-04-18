@@ -1,9 +1,14 @@
-From: Joel Fernandes <joelaf@google.com>
-Subject: [RFC v4 3/4] irqflags: Avoid unnecessary calls to trace_ if you can
-Date: Mon, 16 Apr 2018 21:07:47 -0700
-Message-ID: <20180417040748.212236-4-joelaf@google.com>
+From: Masami Hiramatsu <mhiramat@kernel.org>
+Subject: Re: [RFC v4 3/4] irqflags: Avoid unnecessary calls to trace_ if you
+ can
+Date: Wed, 18 Apr 2018 18:02:50 +0900
+Message-ID: <20180418180250.7b6038dddba46b37c94b796c@kernel.org>
 References: <20180417040748.212236-1-joelaf@google.com>
-Cc: Joel Fernandes <joelaf@google.com>,
+        <20180417040748.212236-4-joelaf@google.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         Steven Rostedt <rostedt@goodmis.org>,
         Peter Zilstra <peterz@infradead.org>,
         Ingo Molnar <mingo@redhat.com>,
@@ -19,76 +24,102 @@ Cc: Joel Fernandes <joelaf@google.com>,
         Fenguang Wu <fengguang.wu@intel.com>,
         Baohong Liu <baohong.liu@intel.com>,
         Vedang Patel <vedang.patel@intel.com>
-To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Joel Fernandes <joelaf@google.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180417040748.212236-1-joelaf@google.com>
+In-Reply-To: <20180417040748.212236-4-joelaf@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-With TRACE_IRQFLAGS, we call trace_ API too many times. We don't need
-to if local_irq_restore or local_irq_save didn't actually do anything.
+On Mon, 16 Apr 2018 21:07:47 -0700
+Joel Fernandes <joelaf@google.com> wrote:
 
-This gives around a 4% improvement in performance when doing the
-following command: "time find / > /dev/null"
+> With TRACE_IRQFLAGS, we call trace_ API too many times. We don't need
+> to if local_irq_restore or local_irq_save didn't actually do anything.
+> 
+> This gives around a 4% improvement in performance when doing the
+> following command: "time find / > /dev/null"
+> 
+> Also its best to avoid these calls where possible, since in this series,
+> the RCU code in tracepoint.h seems to be call these quite a bit and I'd
+> like to keep this overhead low.
 
-Also its best to avoid these calls where possible, since in this series,
-the RCU code in tracepoint.h seems to be call these quite a bit and I'd
-like to keep this overhead low.
+Can we assume that the "flags" has only 1 bit irq-disable flag?
+Since it skips calling raw_local_irq_restore(flags); too,
+if there is any state in the flags on any arch, it may change the
+result. In that case, we can do it as below (just skipping trace_hardirqs_*)
 
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Peter Zilstra <peterz@infradead.org>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Tom Zanussi <tom.zanussi@linux.intel.com>
-Cc: Namhyung Kim <namhyung@kernel.org>
-Cc: Thomas Glexiner <tglx@linutronix.de>
-Cc: Boqun Feng <boqun.feng@gmail.com>
-Cc: Paul McKenney <paulmck@linux.vnet.ibm.com>
-Cc: Frederic Weisbecker <fweisbec@gmail.com>
-Cc: Randy Dunlap <rdunlap@infradead.org>
-Cc: Masami Hiramatsu <mhiramat@kernel.org>
-Cc: Fenguang Wu <fengguang.wu@intel.com>
-Cc: Baohong Liu <baohong.liu@intel.com>
-Cc: Vedang Patel <vedang.patel@intel.com>
-Signed-off-by: Joel Fernandes <joelaf@google.com>
----
- include/linux/irqflags.h | 21 +++++++++++----------
- 1 file changed, 11 insertions(+), 10 deletions(-)
+int disabled = irqs_disabled();
 
-diff --git a/include/linux/irqflags.h b/include/linux/irqflags.h
-index 9700f00bbc04..ea8df0ac57d3 100644
---- a/include/linux/irqflags.h
-+++ b/include/linux/irqflags.h
-@@ -104,19 +104,20 @@ do {						\
- #define local_irq_save(flags)				\
- 	do {						\
- 		raw_local_irq_save(flags);		\
--		trace_hardirqs_off();			\
-+		if (!raw_irqs_disabled_flags(flags))	\
-+			trace_hardirqs_off();		\
- 	} while (0)
- 
- 
--#define local_irq_restore(flags)			\
--	do {						\
--		if (raw_irqs_disabled_flags(flags)) {	\
--			raw_local_irq_restore(flags);	\
--			trace_hardirqs_off();		\
--		} else {				\
--			trace_hardirqs_on();		\
--			raw_local_irq_restore(flags);	\
--		}					\
-+#define local_irq_restore(flags)						\
-+	do {									\
-+		if (raw_irqs_disabled_flags(flags) && !irqs_disabled()) {	\
-+			raw_local_irq_restore(flags);				\
-+			trace_hardirqs_off();					\
-+		} else if (!raw_irqs_disabled_flags(flags) && irqs_disabled()) {\
-+			trace_hardirqs_on();					\
-+			raw_local_irq_restore(flags);				\
-+		}								\
- 	} while (0)
- 
- #define safe_halt()				\
+if (!raw_irqs_disabled_flags(flags) && disabled)
+	trace_hardirqs_on();
+
+raw_local_irq_restore(flags);
+
+if (raw_irqs_disabled_flags(flags) && !disabled)
+	trace_hardirqs_off();
+
+Thank you,
+
+> 
+> Cc: Steven Rostedt <rostedt@goodmis.org>
+> Cc: Peter Zilstra <peterz@infradead.org>
+> Cc: Ingo Molnar <mingo@redhat.com>
+> Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+> Cc: Tom Zanussi <tom.zanussi@linux.intel.com>
+> Cc: Namhyung Kim <namhyung@kernel.org>
+> Cc: Thomas Glexiner <tglx@linutronix.de>
+> Cc: Boqun Feng <boqun.feng@gmail.com>
+> Cc: Paul McKenney <paulmck@linux.vnet.ibm.com>
+> Cc: Frederic Weisbecker <fweisbec@gmail.com>
+> Cc: Randy Dunlap <rdunlap@infradead.org>
+> Cc: Masami Hiramatsu <mhiramat@kernel.org>
+> Cc: Fenguang Wu <fengguang.wu@intel.com>
+> Cc: Baohong Liu <baohong.liu@intel.com>
+> Cc: Vedang Patel <vedang.patel@intel.com>
+> Signed-off-by: Joel Fernandes <joelaf@google.com>
+> ---
+>  include/linux/irqflags.h | 21 +++++++++++----------
+>  1 file changed, 11 insertions(+), 10 deletions(-)
+> 
+> diff --git a/include/linux/irqflags.h b/include/linux/irqflags.h
+> index 9700f00bbc04..ea8df0ac57d3 100644
+> --- a/include/linux/irqflags.h
+> +++ b/include/linux/irqflags.h
+> @@ -104,19 +104,20 @@ do {						\
+>  #define local_irq_save(flags)				\
+>  	do {						\
+>  		raw_local_irq_save(flags);		\
+> -		trace_hardirqs_off();			\
+> +		if (!raw_irqs_disabled_flags(flags))	\
+> +			trace_hardirqs_off();		\
+>  	} while (0)
+>  
+>  
+> -#define local_irq_restore(flags)			\
+> -	do {						\
+> -		if (raw_irqs_disabled_flags(flags)) {	\
+> -			raw_local_irq_restore(flags);	\
+> -			trace_hardirqs_off();		\
+> -		} else {				\
+> -			trace_hardirqs_on();		\
+> -			raw_local_irq_restore(flags);	\
+> -		}					\
+> +#define local_irq_restore(flags)						\
+> +	do {									\
+> +		if (raw_irqs_disabled_flags(flags) && !irqs_disabled()) {	\
+> +			raw_local_irq_restore(flags);				\
+> +			trace_hardirqs_off();					\
+> +		} else if (!raw_irqs_disabled_flags(flags) && irqs_disabled()) {\
+> +			trace_hardirqs_on();					\
+> +			raw_local_irq_restore(flags);				\
+> +		}								\
+>  	} while (0)
+>  
+>  #define safe_halt()				\
+> -- 
+> 2.17.0.484.g0c8726318c-goog
+> 
+
+
 -- 
-2.17.0.484.g0c8726318c-goog
+Masami Hiramatsu <mhiramat@kernel.org>
