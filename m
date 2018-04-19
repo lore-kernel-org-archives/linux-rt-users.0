@@ -1,68 +1,76 @@
 From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [PATCH 2/6] tracing: Add trace event error log
-Date: Thu, 19 Apr 2018 09:40:33 +0900
-Message-ID: <20180419004033.GA13370@sejong>
-References: <cover.1523545519.git.tom.zanussi@linux.intel.com>
- <194bd34e689dd6df9e48855111fd6c5c66e37fc9.1523545519.git.tom.zanussi@linux.intel.com>
- <20180412182001.75bfb4e2@gandalf.local.home>
- <1523577133.11817.31.camel@tzanussi-mobl.amr.corp.intel.com>
- <20180413094515.19fb3691@gandalf.local.home>
- <1523629474.25328.14.camel@tzanussi-mobl.amr.corp.intel.com>
- <20180413104432.148f13dc@gandalf.local.home>
- <20180418183434.34eb10004275c9e89a9e709c@kernel.org>
- <20180418094924.3ad22dbf@gandalf.local.home>
+Subject: Re: [RFC v4 3/4] irqflags: Avoid unnecessary calls to trace_ if you
+ can
+Date: Thu, 19 Apr 2018 14:43:02 +0900
+Message-ID: <20180419054302.GD13370@sejong>
+References: <20180417040748.212236-1-joelaf@google.com>
+ <20180417040748.212236-4-joelaf@google.com>
+ <20180418180250.7b6038dddba46b37c94b796c@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: Masami Hiramatsu <mhiramat@kernel.org>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>, tglx@linutronix.de,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        kernel-team@lge.com
-To: Steven Rostedt <rostedt@goodmis.org>
+Cc: Joel Fernandes <joelaf@google.com>, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Peter Zilstra <peterz@infradead.org>,
+        Ingo Molnar <mingo@redhat.com>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Thomas Glexiner <tglx@linutronix.de>,
+        Boqun Feng <boqun.feng@gmail.com>,
+        Paul McKenney <paulmck@linux.vnet.ibm.com>,
+        Frederic Weisbecker <fweisbec@gmail.com>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        Fenguang Wu <fengguang.wu@intel.com>,
+        Baohong Liu <baohong.liu@intel.com>,
+        Vedang Patel <vedang.patel@intel.com>, kernel-team@lge.com
+To: Masami Hiramatsu <mhiramat@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180418094924.3ad22dbf@gandalf.local.home>
+In-Reply-To: <20180418180250.7b6038dddba46b37c94b796c@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi guys, :)
-
-On Wed, Apr 18, 2018 at 09:49:24AM -0400, Steven Rostedt wrote:
-> On Wed, 18 Apr 2018 18:34:34 +0900
-> Masami Hiramatsu <mhiramat@kernel.org> wrote:
+On Wed, Apr 18, 2018 at 06:02:50PM +0900, Masami Hiramatsu wrote:
+> On Mon, 16 Apr 2018 21:07:47 -0700
+> Joel Fernandes <joelaf@google.com> wrote:
 > 
-> > On Fri, 13 Apr 2018 10:44:32 -0400
-> > Steven Rostedt <rostedt@goodmis.org> wrote:
+> > With TRACE_IRQFLAGS, we call trace_ API too many times. We don't need
+> > to if local_irq_restore or local_irq_save didn't actually do anything.
 > > 
-> > > On Fri, 13 Apr 2018 09:24:34 -0500
-> > > Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
-> > >   
-> > > > Yeah, I agree - I'd rather get it right than get it in now.  I thought
-> > > > this made sense, and was based on input from Masami, which I may have
-> > > > misinterpreted, but I'll wait for some more ideas about the best way to
-> > > > do this.  
-> > > 
-> > > Too bad we are not closer to November, as this would actually be a good
-> > > Plumbers topic. Maybe it's not that important and we should wait until
-> > > then. I'd like to get some brain storming ideas out before we decide on
-> > > anything, and this is something I believe is better done face to face
-> > > than over email.  
+> > This gives around a 4% improvement in performance when doing the
+> > following command: "time find / > /dev/null"
 > > 
-> > OK, sounds good for me too :)
-> > My point was that printk buffer is not good place for the parser error
-> > of ftrace, nor each sub-features (like hist, trigger, probe_events etc.) 
-> > has different place to show it. I just want to unify the user experience
-> > over the ftrace UI.
+> > Also its best to avoid these calls where possible, since in this series,
+> > the RCU code in tracepoint.h seems to be call these quite a bit and I'd
+> > like to keep this overhead low.
 > 
-> I totally agree. I just want to make sure that whatever we come up with
-> will be well thought out. Perhaps we can wait till November to talk
-> about it.
+> Can we assume that the "flags" has only 1 bit irq-disable flag?
+> Since it skips calling raw_local_irq_restore(flags); too,
 
-I'm not sure I can go to LPC this year, but definitely interested in
-improving error logging for tracing.
+I don't know how many it impacts on performance but maybe we can have
+an arch-specific config option something like below?
+
+
+> if there is any state in the flags on any arch, it may change the
+> result. In that case, we can do it as below (just skipping trace_hardirqs_*)
+> 
+> int disabled = irqs_disabled();
+
+  if (disabled == raw_irqs_disabled_flags(flags)) {
+#ifndef CONFIG_ARCH_CAN_SKIP_NESTED_IRQ_RESTORE
+        raw_local_irq_restore(flags);
+#endif
+        return;
+  }
+
+> 
+> if (!raw_irqs_disabled_flags(flags) && disabled)
+> 	trace_hardirqs_on();
+> 
+> raw_local_irq_restore(flags);
+> 
+> if (raw_irqs_disabled_flags(flags) && !disabled)
+> 	trace_hardirqs_off();
 
 Thanks,
 Namhyung
