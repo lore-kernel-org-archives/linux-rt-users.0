@@ -1,17 +1,22 @@
-From: Joel Fernandes <joelaf@google.com>
-Subject: Re: [RFC v4 3/4] irqflags: Avoid unnecessary calls to trace_ if you can
-Date: Mon, 23 Apr 2018 08:49:16 -0700
-Message-ID: <CAJWu+oqVo54cMN6-wZk8D1=Uq-wx3-RMTjg1g6txkS15YQSZVw@mail.gmail.com>
-References: <20180417040748.212236-1-joelaf@google.com> <20180417040748.212236-4-joelaf@google.com>
- <20180418180250.7b6038dddba46b37c94b796c@kernel.org> <20180419054302.GD13370@sejong>
- <CAJWu+ooK5jETwB-L37=8PX+A4ercM8BrVb6g23t7F_xYhH4BSw@mail.gmail.com>
- <CAJWu+opGN5+h4=ggKcQGnqG8h1LvtMjD_XQywU7=ULjjyS-v6w@mail.gmail.com>
- <20180423031926.GF26088@linux.vnet.ibm.com> <409016827.14587.1524493888181.JavaMail.zimbra@efficios.com>
- <20180423105325.7d5d245b@gandalf.local.home>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [RFC v4 3/4] irqflags: Avoid unnecessary calls to trace_ if you
+ can
+Date: Mon, 23 Apr 2018 12:18:00 -0400
+Message-ID: <20180423121800.47b173af@gandalf.local.home>
+References: <20180417040748.212236-1-joelaf@google.com>
+        <20180418180250.7b6038dddba46b37c94b796c@kernel.org>
+        <20180419054302.GD13370@sejong>
+        <CAJWu+ooK5jETwB-L37=8PX+A4ercM8BrVb6g23t7F_xYhH4BSw@mail.gmail.com>
+        <CAJWu+opGN5+h4=ggKcQGnqG8h1LvtMjD_XQywU7=ULjjyS-v6w@mail.gmail.com>
+        <20180423031926.GF26088@linux.vnet.ibm.com>
+        <409016827.14587.1524493888181.JavaMail.zimbra@efficios.com>
+        <20180423105325.7d5d245b@gandalf.local.home>
+        <1045420715.14686.1524495583859.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-        "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+        Joel Fernandes <joelaf@google.com>,
         Namhyung Kim <namhyung@kernel.org>,
         Masami Hiramatsu <mhiramat@kernel.org>,
         linux-kernel <linux-kernel@vger.kernel.org>,
@@ -25,36 +30,39 @@ Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
         Randy Dunlap <rdunlap@infradead.org>,
         kbuild test robot <fengguang.wu@intel.com>,
         baohong liu <baohong.liu@intel.com>,
-        vedang patel <vedang.patel@intel.com>, kernel-team@lge.com
-To: Steven Rostedt <rostedt@goodmis.org>
+        vedang patel <vedang.patel@intel.com>,
+        kernel-team <kernel-team@lge.com>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180423105325.7d5d245b@gandalf.local.home>
+In-Reply-To: <1045420715.14686.1524495583859.JavaMail.zimbra@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
+On Mon, 23 Apr 2018 10:59:43 -0400 (EDT)
+Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
 
-On Mon, Apr 23, 2018 at 7:53 AM, Steven Rostedt <rostedt@goodmis.org> wrote:
-> On Mon, 23 Apr 2018 10:31:28 -0400 (EDT)
-> Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
-[..]
->> I would be tempted to proceed carefully and introduce a new kind of SRCU
->> tracepoint rather than changing all existing ones from sched-rcu to SRCU
->> though.
->
-> Agreed.
->
->>
->> So the lockdep stuff could use the SRCU tracepoint flavor, which I guess
->> would be faster than the rcu_irq_enter_*().
->
-> Also agree.
+> The main open question here is whether we want one SRCU grace period
+> domain per SRCU tracepoint definition, or just one SRCU domain for all
+> SRCU tracepoints would be fine.
+> 
+> I'm not sure what we would gain by having the extra granularity provided
+> by one SRCU grace period domain per tracepoint, and having a single SRCU
+> domain for all SRCU tracepoints makes it easy to batch grace period after
+> bulk tracepoint modifications.
+> 
+> Thoughts ?
 
-I also agree about careful proceeding with separate SRCU flavor and
-using that for few places first. Perhaps, if it works well once we can
-benchmark it then we can slowly convert the _rcuidle API users to
-this, since it seems from my testing those will benefit the most.
+I didn't think too much depth in this. It was more of just a brain
+storming idea. Yeah, one singe RCU domain may be good enough. I was
+thinking more of how to know when a tracepoint required the SRCU domain
+as supposed to a preempt disabled domain, and wanted to just suggest
+the linker script approach.
 
-thanks,
+This is how I detect if trace_printk() is used anywhere in the kernel
+(and do that big warning if it is). That way the trace events don't
+need to be created any special way. You just use the trace_##event##_X
+flavor and it automatically detects what to do. But we need to make
+sure the same event isn't used for multiple flavors (SRCU vs schedule),
+or maybe we can, and any change would have to do both synchronizations.
 
-- Joel
+-- Steve
