@@ -1,64 +1,93 @@
-From: Grygorii Strashko <grygorii.strashko@ti.com>
-Subject: Re: [ANNOUNCE] v4.14.29-rt25
-Date: Mon, 23 Apr 2018 11:57:39 -0500
-Message-ID: <764d0abc-7e88-a696-17a0-0bf807148d5b@ti.com>
-References: <20180325101204.ibuvdpnusv3vutyc@linutronix.de>
- <b04275af-000d-7b29-3031-508c9a01cd91@ti.com>
- <20180420171116.w2hxytgzvp4jgpyl@linutronix.de>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC v4 3/4] irqflags: Avoid unnecessary calls to trace_ if you
+ can
+Date: Mon, 23 Apr 2018 13:12:21 -0400 (EDT)
+Message-ID: <1212130312.14753.1524503541789.JavaMail.zimbra@efficios.com>
+References: <20180417040748.212236-1-joelaf@google.com> <CAJWu+ooK5jETwB-L37=8PX+A4ercM8BrVb6g23t7F_xYhH4BSw@mail.gmail.com> <CAJWu+opGN5+h4=ggKcQGnqG8h1LvtMjD_XQywU7=ULjjyS-v6w@mail.gmail.com> <20180423031926.GF26088@linux.vnet.ibm.com> <409016827.14587.1524493888181.JavaMail.zimbra@efficios.com> <20180423105325.7d5d245b@gandalf.local.home> <1045420715.14686.1524495583859.JavaMail.zimbra@efficios.com> <20180423121800.47b173af@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Transfer-Encoding: 8bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+        Joel Fernandes <joelaf@google.com>,
+        Namhyung Kim <namhyung@kernel.org>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        linux-kernel <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+        Peter Zijlstra <peterz@infradead.org>,
+        Ingo Molnar <mingo@redhat.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Boqun Feng <boqun.feng@gmail.com>,
+        fweisbec <fweisbec@gmail.com>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        kbuild test robot <fengguang.wu@intel.com>,
+        baohong liu <baohong.liu@intel.com>,
+        vedang patel <vedang.patel@intel.com>,
+        kernel-team <kernel-team@lge.com>
+To: rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180420171116.w2hxytgzvp4jgpyl@linutronix.de>
-Content-Language: en-US
+In-Reply-To: <20180423121800.47b173af@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+----- On Apr 23, 2018, at 12:18 PM, rostedt rostedt@goodmis.org wrote:
 
+> On Mon, 23 Apr 2018 10:59:43 -0400 (EDT)
+> Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
+> 
+>> The main open question here is whether we want one SRCU grace period
+>> domain per SRCU tracepoint definition, or just one SRCU domain for all
+>> SRCU tracepoints would be fine.
+>> 
+>> I'm not sure what we would gain by having the extra granularity provided
+>> by one SRCU grace period domain per tracepoint, and having a single SRCU
+>> domain for all SRCU tracepoints makes it easy to batch grace period after
+>> bulk tracepoint modifications.
+>> 
+>> Thoughts ?
+> 
+> I didn't think too much depth in this. It was more of just a brain
+> storming idea. Yeah, one singe RCU domain may be good enough. I was
+> thinking more of how to know when a tracepoint required the SRCU domain
+> as supposed to a preempt disabled domain, and wanted to just suggest
+> the linker script approach.
+> 
+> This is how I detect if trace_printk() is used anywhere in the kernel
+> (and do that big warning if it is). That way the trace events don't
+> need to be created any special way. You just use the trace_##event##_X
+> flavor and it automatically detects what to do. But we need to make
+> sure the same event isn't used for multiple flavors (SRCU vs schedule),
+> or maybe we can, and any change would have to do both synchronizations.
 
-On 04/20/2018 12:11 PM, Sebastian Andrzej Siewior wrote:
-> On 2018-03-27 13:01:07 [-0500], Grygorii Strashko wrote:
->> Hi Sebastian,
-> Hi Grygorii,
-> 
->> I've took this RT version and applied "[RT] kernel/time/posix-timer: avoid schedule()
->> while holding the RCU lock" [1] on top. Then I run below tests:
-> …
->> no stall or crashes were observed, but I've caught two "rcu_note_context_switch()" warnings
-> 
-> the warning is unrelated to the patch I posted. This should mute it:
-> 
-> Subject: [PATCH RT] rtmutex: annotate sleeping lock context
-> 
-> The RCU code complains on schedule() within a rcu_readlock() section.
-> The valid scenario on -RT is if a sleeping is held. In order to suppress
-> the warning the mirgrate_disable counter was used to identify the
-> invocation of schedule() due to lock contention.
-> 
-> Grygorii Strashko report that during CPU hotplug we might see the
-> warning via
->   rt_spin_lock() -> migrate_disable() -> pin_current_cpu() -> __read_rt_lock()
-> 
-> because the counter is not yet set.
-> It is also possible to trigger the warning from cpu_chill()
-> (seen on a kblockd_mod_delayed_work_on() caller).
-> 
-> To address this RCU warning I annotate the sleeping lock context. The
-> counter is incremented before migrate_disable() so the warning Grygorii
-> should not trigger anymore. Additionally I use that counter in
-> cpu_chill() to avoid the RCU warning from there.
+The approach I used for synchronize rcu a few years ago when I did a srcu
+tracepoint prototype [1] was simply this:
 
-Sry, but I can't apply it. What's you base?
+ static inline void tracepoint_synchronize_unregister(void)
+ {
++	synchronize_srcu(&tracepoint_srcu);
+ 	synchronize_sched();
+ }
+
+So whenever we synchronize after tracepoint unregistration, the tracepoint
+code always issue both synchronize_sched() and SRCU synchronize. This way,
+tracepoint API users don't have to care about the kind of tracepoint they
+are updating.
+
+I'm inclined to explicitly declare the tracepoints with their given
+synchronization method. Tracepoint probe callback functions for currently
+existing tracepoints expect to have preemption disabled when invoked.
+This assumption will not be true anymore for srcu-tracepoints.
+
+Thanks,
+
+Mathieu
+
+[1] https://github.com/compudj/linux-dev/commits/tracepoint-srcu
 
 > 
-> Reported-by: Grygorii Strashko <grygorii.strashko@ti.com>
-> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> ---
+> -- Steve
+
 -- 
-regards,
--grygorii
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
