@@ -1,14 +1,22 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [RFC v4 3/4] irqflags: Avoid unnecessary calls to trace_ if you
  can
-Date: Wed, 25 Apr 2018 17:40:56 -0400 (EDT)
-Message-ID: <1267842641.1791.1524692456344.JavaMail.zimbra@efficios.com>
-References: <20180423172244.694dbc9d@gandalf.local.home> <20180424182623.GA1357@linux.vnet.ibm.com> <CAJWu+opC9pLxoiXq7QDRUDe6ouC4ij398bHCfnUwp+h7Y_ssDg@mail.gmail.com> <849066633.939.1524612064698.JavaMail.zimbra@efficios.com> <68e4c123-a223-5e26-e57a-da2515041bf3@google.com> <20180425001049.GX26088@linux.vnet.ibm.com> <20180425042056.GA21412@linux.vnet.ibm.com> <CAJWu+orWC=W0Jn2Jo7f+u5mbHMi+D1yuCmhD-xSgjWZ6Ynw32Q@mail.gmail.com>
+Date: Wed, 25 Apr 2018 18:51:49 -0400
+Message-ID: <20180425185149.64f89922@vmware.local.home>
+References: <20180423172244.694dbc9d@gandalf.local.home>
+        <20180424182623.GA1357@linux.vnet.ibm.com>
+        <CAJWu+opC9pLxoiXq7QDRUDe6ouC4ij398bHCfnUwp+h7Y_ssDg@mail.gmail.com>
+        <849066633.939.1524612064698.JavaMail.zimbra@efficios.com>
+        <68e4c123-a223-5e26-e57a-da2515041bf3@google.com>
+        <20180425001049.GX26088@linux.vnet.ibm.com>
+        <20180425042056.GA21412@linux.vnet.ibm.com>
+        <CAJWu+orWC=W0Jn2Jo7f+u5mbHMi+D1yuCmhD-xSgjWZ6Ynw32Q@mail.gmail.com>
+        <1267842641.1791.1524692456344.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-        rostedt <rostedt@goodmis.org>,
+Cc: Joel Fernandes <joelaf@google.com>,
+        "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
         Namhyung Kim <namhyung@kernel.org>,
         Masami Hiramatsu <mhiramat@kernel.org>,
         linux-kernel <linux-kernel@vger.kernel.org>,
@@ -24,127 +32,48 @@ Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
         baohong liu <baohong.liu@intel.com>,
         vedang patel <vedang.patel@intel.com>,
         kernel-team <kernel-team@lge.com>
-To: Joel Fernandes <joelaf@google.com>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAJWu+orWC=W0Jn2Jo7f+u5mbHMi+D1yuCmhD-xSgjWZ6Ynw32Q@mail.gmail.com>
+In-Reply-To: <1267842641.1791.1524692456344.JavaMail.zimbra@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
------ On Apr 25, 2018, at 5:27 PM, Joel Fernandes joelaf@google.com wrote:
+On Wed, 25 Apr 2018 17:40:56 -0400 (EDT)
+Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
 
-> On Tue, Apr 24, 2018 at 9:20 PM, Paul E. McKenney
-> <paulmck@linux.vnet.ibm.com> wrote:
-> [..]
->>> >
->>> > Sounds good, thanks.
->>> >
->>> > Also I found the reason for my boot issue. It was because the
->>> > init_srcu_struct in the prototype was being done in an initcall.
->>> > Instead if I do it in start_kernel before the tracepoint is used, it
->>> > fixes it (although I don't know if this is dangerous to do like this
->>> > but I can get it to boot atleast.. Let me know if this isn't the
->>> > right way to do it, or if something else could go wrong)
->>> >
->>> > diff --git a/init/main.c b/init/main.c
->>> > index 34823072ef9e..ecc88319c6da 100644
->>> > --- a/init/main.c
->>> > +++ b/init/main.c
->>> > @@ -631,6 +631,7 @@ asmlinkage __visible void __init start_kernel(void)
->>> >         WARN(!irqs_disabled(), "Interrupts were enabled early\n");
->>> >         early_boot_irqs_disabled = false;
->>> >
->>> > +       init_srcu_struct(&tracepoint_srcu);
->>> >         lockdep_init_early();
->>> >
->>> >         local_irq_enable();
->>> > --
->>> >
->>> > I benchmarked it and the performance also looks quite good compared
->>> > to the rcu tracepoint version.
->>> >
->>> > If you, Paul and other think doing the init_srcu_struct like this
->>> > should be Ok, then I can try to work more on your srcu prototype and
->>> > roll into my series and post them in the next RFC series (or let me
->>> > know if you wanted to work your srcu stuff in a separate series..).
->>>
->>> That is definitely not what I was expecting, but let's see if it works
->>> anyway...  ;-)
->>>
->>> But first, I was instead expecting something like this:
->>>
->>> DEFINE_SRCU(tracepoint_srcu);
->>>
->>> With this approach, some of the initialization happens at compile time
->>> and the rest happens at the first call_srcu().
->>>
->>> This will work -only- if the first call_srcu() doesn't happen until after
->>> workqueue_init_early() has been invoked.  Which I believe must have been
->>> the case in your testing, because otherwise it looks like __call_srcu()
->>> would have complained bitterly.
->>>
->>> On the other hand, if you need to invoke call_srcu() before the call
->>> to workqueue_init_early(), then you need the patch that I am beating
->>> into shape.  Plus you would need to use DEFINE_SRCU() and to avoid
->>> invoking init_srcu_struct().
->>
->> And here is the patch.  I do not intend to send it upstream unless it
->> actually proves necessary, and it appears that current SRCU does what
->> you need.
->>
->> You would only need this patch if you wanted to invoke call_srcu()
->> before workqueue_init_early() was called, which does not seem likely.
-> 
-> Cool. So I was chatting with Paul and just to update everyone as well,
-> I tried the DEFINE_SRCU instead of the late init_srcu_struct call and
-> can make it past boot too (thanks Paul!). Also I don't see a reason we
-> need the RCU callback to execute early and its fine if it runs later.
-> 
-> Also, I was thinking of introducing a separate trace_*event*_srcu API
-> as a replacement to the _rcuidle API. Then I can make use of it for my
-> tracepoints, and then later can use it for the other tracepoints
-> needing _rcuidle. After that we can finally get rid of the _rcuidle
-> API if there are no other users of it. This is just a rough plan, but
-> let me know if there's any issue with this plan that you can think
-> off.
-> IMO, I believe its simpler if the caller worries about whether it can
-> tolerate if tracepoint probes can block or not, than making it a
-> property of the tracepoint. That would also simplify the patch to
-> introduce srcu and keep the tracepoint creation API simple and less
-> confusing, but let me know if I'm missing something about this.
+> One problem with your approach is that you can have multiple callers
+> for the same tracepoint name, where some could be non-preemptible and
+> others blocking. Also, there is then no clear way for the callback
+> registration API to enforce whether the callback expects the tracepoint
+> to be blocking or non-preemptible. This can introduce hard to diagnose
+> issues in a kernel without debug options enabled.
 
-One problem with your approach is that you can have multiple callers
-for the same tracepoint name, where some could be non-preemptible and
-others blocking. Also, there is then no clear way for the callback
-registration API to enforce whether the callback expects the tracepoint
-to be blocking or non-preemptible. This can introduce hard to diagnose
-issues in a kernel without debug options enabled.
-
-Regarding the name, I'm OK with having something along the lines of
-trace_*event*_blocking or such. Please don't use "srcu" or other naming
-that is explicitly tied to the underlying mechanism used internally
-however: what we want to convey is that this specific tracepoint probe
-can be preempted and block. The underlying implementation could move to
-a different RCU flavor brand in the future, and it should not impact
-users of the tracepoint APIs.
-
-In order to ensure that probes that may block only register themselves
-to tracepoints that allow blocking, we should introduce new tracepoint
-declaration/definition *and* registration APIs also contain the
-"BLOCKING/blocking" keywords (or such), so we can ensure that a
-tracepoint probe being registered to a "blocking" tracepoint is indeed
-allowed to block.
-
-Thanks,
-
-Mathieu
-
+I agree that it should not be tied to an implementation name. But
+"blocking" is confusing. I would say "can_sleep" or some such name that
+states that the trace point caller is indeed something that can sleep.
 
 > 
-> Thanks,
+> Regarding the name, I'm OK with having something along the lines of
+> trace_*event*_blocking or such. Please don't use "srcu" or other naming
+> that is explicitly tied to the underlying mechanism used internally
+> however: what we want to convey is that this specific tracepoint probe
+> can be preempted and block. The underlying implementation could move to
+> a different RCU flavor brand in the future, and it should not impact
+> users of the tracepoint APIs.
 > 
->  - Joel
+> In order to ensure that probes that may block only register themselves
+> to tracepoints that allow blocking, we should introduce new tracepoint
+> declaration/definition *and* registration APIs also contain the
+> "BLOCKING/blocking" keywords (or such), so we can ensure that a
+> tracepoint probe being registered to a "blocking" tracepoint is indeed
+> allowed to block.
 
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+I'd really don't want to add more declaration/definitions, as we
+already have too many as is, and with different meanings and the number
+is of incarnations is n! in growth.
+
+I'd say we just stick with a trace_<event>_can_sleep() call, and make
+sure that if that is used that no trace_<event>() call is also used, and
+enforce this with linker or compiler tricks.
+
+-- Steve
