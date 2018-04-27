@@ -1,60 +1,40 @@
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH 3/3] tracing: Add field modifier parsing hist error for hist triggers
-Date: Thu, 26 Apr 2018 20:04:49 -0500
-Message-ID: <b043c59fa79acd06a5f14a1d44dee9e5a3cd1248.1524790601.git.tom.zanussi@linux.intel.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 0/3] A few hist trigger fixes
+Date: Thu, 26 Apr 2018 21:40:29 -0400
+Message-ID: <20180426214029.6d36fa7a@gandalf.local.home>
 References: <cover.1524790601.git.tom.zanussi@linux.intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
         joel.opensrc@gmail.com, joelaf@google.com,
         mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
         rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        Tom Zanussi <tom.zanussi@linux.intel.com>
-To: rostedt@goodmis.org
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Tom Zanussi <tom.zanussi@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1524790601.git.tom.zanussi@linux.intel.com>
-In-Reply-To: <cover.1524790601.git.tom.zanussi@linux.intel.com>
-References: <cover.1524790601.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-If the user specifies an invalid field modifier for a hist trigger,
-the current code correctly flags that as an error, but doesn't tell
-the user what happened.
+On Thu, 26 Apr 2018 20:04:46 -0500
+Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
 
-Fix this by invoking hist_err() with an appropriate message when
-invalid modifiers are specified.
+> Hi Steve,
+> 
+> Here are a few patches that fix some problems found when testing the
+> hist trigger inter-event (e.g. latency) support patches.
+> 
+> The first fixes a problem I noticed when printing flags.
+> 
+> The remaining two add some hist_err() calls for fields, the first
+> reported by Masami, the second something I noticed when fixing the
+> first.
+> 
 
-Before:
+They look good and I queued them up.
 
-  # echo 'hist:keys=pid:ts0=common_timestamp.junkusecs' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-  -su: echo: write error: Invalid argument
-  # cat /sys/kernel/debug/tracing/events/sched/sched_wakeup/hist
+Thanks!
 
-After:
-
-  # echo 'hist:keys=pid:ts0=common_timestamp.junkusecs' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-  -su: echo: write error: Invalid argument
-  # cat /sys/kernel/debug/tracing/events/sched/sched_wakeup/hist
-  ERROR: Invalid field modifier: junkusecs
-    Last command: keys=pid:ts0=common_timestamp.junkusecs
-
-Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
----
- kernel/trace/trace_events_hist.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index f231fa2..b9061ed 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -2466,6 +2466,7 @@ static struct hist_field *parse_var_ref(struct hist_trigger_data *hist_data,
- 		else if (strcmp(modifier, "usecs") == 0)
- 			*flags |= HIST_FIELD_FL_TIMESTAMP_USECS;
- 		else {
-+			hist_err("Invalid field modifier: ", modifier);
- 			field = ERR_PTR(-EINVAL);
- 			goto out;
- 		}
--- 
-1.9.3
+-- Steve
