@@ -1,60 +1,67 @@
-Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from relmlor4.renesas.com ([210.160.252.174]:22321 "EHLO
-        relmlie3.idc.renesas.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1751882AbeDJIgb (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 10 Apr 2018 04:36:31 -0400
-From: Phil Edworthy <phil.edworthy@renesas.com>
-Subject: RE: hrtimers with ARM architected timer
-Date: Tue, 10 Apr 2018 08:36:28 +0000
-Message-ID: <TY1PR01MB1769901BD4D607FC8D47A87BF5BE0@TY1PR01MB1769.jpnprd01.prod.outlook.com>
-References: <HK2PR0601MB139370058E9696E9648BC8CCF5AF0@HK2PR0601MB1393.apcprd06.prod.outlook.com>
- <447aa980-ef0c-6307-d347-866e3cd054bb@ti.com>  
-Content-Language: en-US
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-MIME-Version: 1.0
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
-To: Grygorii Strashko <grygorii.strashko@ti.com>
-Cc: rt-users <linux-rt-users@vger.kernel.org>
+From: Joel Fernandes <joelaf@google.com>
+Subject: Re: [RFC v4 3/4] irqflags: Avoid unnecessary calls to trace_ if you can
+Date: Tue, 01 May 2018 01:18:09 +0000
+Message-ID: <CAJWu+ooJLUJZ5nArFPbxsoRy6Rbp4ipR3njdZUXSPT0Ng1yy6A@mail.gmail.com>
+References: <20180417040748.212236-1-joelaf@google.com> <20180417040748.212236-4-joelaf@google.com>
+ <20180418180250.7b6038dddba46b37c94b796c@kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Ingo Molnar <mingo@redhat.com>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Namhyung Kim <namhyung@kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Boqun Feng <boqun.feng@gmail.com>,
+        Paul McKenney <paulmck@linux.vnet.ibm.com>,
+        "Cc: Frederic Weisbecker" <fweisbec@gmail.com>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        Fenguang Wu <fengguang.wu@intel.com>,
+        Baohong Liu <baohong.liu@intel.com>,
+        Vedang Patel <vedang.patel@intel.com>
+To: Masami Hiramatsu <mhiramat@kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180418180250.7b6038dddba46b37c94b796c@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-SGksDQoNCk9uIDEzIEp1bHkgMjAxNyAxNDoyOCBQaGlsIEVkd29ydGh5IHdyb3RlOg0KPiBPbiAx
-MyBKdWx5IDIwMTcgMTA6MjcsIFBoaWwgRWR3b3J0aHkgd3JvdGU6DQo+ID4gT24gMTIgSnVseSAy
-MDE3IDE4OjMyLCBHcnlnb3JpaSBTdHJhc2hrbyB3cm90ZToNCj4gPiA+IE9uIDA3LzEyLzIwMTcg
-MDg6NTUgQU0sIFBoaWwgRWR3b3J0aHkgd3JvdGU6DQo+ID4gPiA+IEhpLA0KPiA+ID4gPg0KPiA+
-ID4gPiBJJ20gbmV3IHRvIHJ0LWxpbnV4LCBzbyBwbGVhc2UgZm9yZ2l2ZSBtZSBpZiBJIGFzayBz
-b21lIGR1bWIgcXVlc3Rpb25zLg0KPiA+ID4gPiBJIGhhdmUgc2VhcmNoZWQgZm9yIGEgd2hpbGUs
-IGJ1dCBub3QgZm91bmQgd2hhdCBJIGFtIGxvb2tpbmcgZm9yLg0KPiA+ID4gPg0KPiA+ID4gPiBJ
-J20gdHJ5aW5nIG91dCB0aGUgcnQtbGludXggcGF0Y2hlcyAodjQuOS4zNSkgb24gYW4gb3V0LW9m
-LXRyZWUNCj4gPiA+ID4gQlNQIGZvciBhIG5ldyBBUk0gQ29ydGV4IEE3IGRldmljZS4gV2hlbiBJ
-IHRyaWVkIGN5Y2xpY3Rlc3QsIGl0DQo+ID4gPiA+IGNvbXBsYWluZWQgdGhhdCBJIGRvbid0IGhh
-dmUgSGlnaCBSZXNvbHV0aW9uIHRpbWVycywgc28gSSBjaGVja2VkDQo+ID4gPiA+IGFuZCBzdXJl
-IGVub3VnaCAvcHJvYy90aW1lcl9saXN0IHNob3dlZCB0aGUgdGltZXIgcmVzb2x1dGlvbiBpcw0K
-PiA+ID4gPiAxMG1zLiBJJ3ZlIGNoZWNrZWQgbXkga2VybmVsIGNvbmZpZyBhbmQgSSBoYXZlIGVu
-YWJsZWQgaHJ0aW1lcnMuDQo+ID4gPiA+DQo+ID4gPiA+IFRoaXMgZGV2aWNlIHVzZXMgdGhlIEFS
-TSBhcmNoaXRlY3RlZCB0aW1lcg0KPiA+IChDT05GSUdfQVJNX0FSQ0hfVElNRVIpDQo+ID4gPiA+
-IHJ1bm5pbmcgYXQgYSBsb3dseSA2LjI1TUh6Lg0KPiA+ID4gPg0KPiA+ID4gPiBTbywgaG93IGNh
-biBJIHRlbGwgaWYgYSBkcml2ZXIgaXMgc3VwcG9zZWQgdG8gc3VwcG9ydCBocnRpbWVycz8NCj4g
-PiA+ID4gSWYgdGhlIEFSTSBhcmNoaXRlY3RlZCB0aW1lciBkcml2ZXIgZG9lcyBzdXBwb3J0IGhy
-dGltZXJzLCB3aGF0DQo+ID4gPiA+IGNvdWxkIHN0b3AgdGhlbSBiZWluZyB1c2VkPw0KPiA+ID4N
-Cj4gPiA+DQo+ID4gPiBNb3N0IHByb2JhYmx5IHlvdSBkbyBub3QgaGF2ZSBhdCBsZWFzdCBvbmUg
-dGlja19icm9hZGNhc3QgdGltZXINCj4gZW5hYmxlZC4NCj4gPiA+IFNlZToNCj4gPiA+IHRpY2tf
-Y2hlY2tfb25lc2hvdF9jaGFuZ2UoKS0+dGlja19pc19vbmVzaG90X2F2YWlsYWJsZSgpDQo+ID4g
-TWFueSB0aGFua3MgZm9yIHRoZSBwb2ludGVyLCBJIGRpZG4ndCBrbm93IHdoZXJlIHRvIHN0YXJ0
-IGxvb2tpbmcuDQo+ID4gWW91IGFyZSByaWdodCwgdGlja19pc19vbmVzaG90X2F2YWlsYWJsZSBp
-cyByZXR1cm5pbmcgMCBiZWNhdXNlIGluDQo+ID4gdGlja19icm9hZGNhc3Rfb25lc2hvdF9hdmFp
-bGFibGUgKCkgdGhlIGNvZGUgZGV0ZXJtaW5lcyB0aGF0IHRoZSB0aW1lcg0KPiA+IGRvZXNuJ3Qg
-aGF2ZSBDTE9DS19FVlRfRkVBVF9PTkVTSE9ULiBIb3dldmVyLCB0aGUgQVJNIGFyY2ggdGltZXIN
-Cj4gZG9lcw0KPiA+IGVuYWJsZSB0aGF0IGZlYXR1cmUuDQo+ID4NCj4gPiBTbyBkb2VzIHRoaXMg
-bWVhbiB0aGUgQVJNIGFyY2ggdGltZXIgaXMgdXNlZCBmb3Igc29tZXRoaW5nIGVsc2UsIHRodXMN
-Cj4gPiBJIGNhbm5vdCB1c2UgaXQgZm9yIGFuIGhydGltZXI/DQo+IEkgZm91bmQgdGhhdCBJIGhh
-ZCB0byBlbmFibGUgYW5vdGhlciB0aW1lciBvbiB0aGUgZGV2aWNlIGFuZCBub3cgSSd2ZSBnb3QN
-Cj4gaHJ0aW1lcnMhDQo+IElmIG9ubHkgb25lIG9mIHRoZSB0aW1lcnMgaXMgZW5hYmxlZCwgbm8g
-aHJ0aW1lcnMuDQoNCkZvciBwb3N0ZXJpdHksIEkgZm91bmQgb3V0IHdoeSBhIHN5c3RlbSB3aXRo
-IGp1c3QgdGhlIEFSTSBhcmNoIHRpbWVyIGVuYWJsZWQNCnJlcG9ydGVkIHRoYXQgaHJ0aW1lcnMg
-d2VyZSBub3QgYXZhaWxhYmxlLiBUaGUgdGltZXIgaGFkIHRoZQ0KQ0xPQ0tfRVZUX0ZFQVRfQzNT
-VE9QIGZlYXR1cmUgc2V0IC0gdGhpcyBpcyB0aGUgZGVmYXVsdCBmb3IgdGhlIGRyaXZlci4gSWYg
-eW91cg0Kc3lzdGVtIGRvZXMgbm90IHN0b3AgdGhlIHRpbWVyIGNsb2NrIGR1cmluZyBzdXNwZW5k
-LCB5b3UgaGF2ZSB0byBhZGQgdGhlDQoiYWx3YXlzLW9uIiBwcm9wZXJ0eSB0byB0aGUgYXJtdjct
-dGltZXIgRFQgbm9kZS4NCg0KUGhpbA0K
+On Wed, Apr 18, 2018 at 2:02 AM Masami Hiramatsu <mhiramat@kernel.org>
+wrote:
+
+> On Mon, 16 Apr 2018 21:07:47 -0700
+> Joel Fernandes <joelaf@google.com> wrote:
+
+> > With TRACE_IRQFLAGS, we call trace_ API too many times. We don't need
+> > to if local_irq_restore or local_irq_save didn't actually do anything.
+> >
+> > This gives around a 4% improvement in performance when doing the
+> > following command: "time find / > /dev/null"
+> >
+> > Also its best to avoid these calls where possible, since in this series,
+> > the RCU code in tracepoint.h seems to be call these quite a bit and I'd
+> > like to keep this overhead low.
+
+> Can we assume that the "flags" has only 1 bit irq-disable flag?
+> Since it skips calling raw_local_irq_restore(flags); too,
+> if there is any state in the flags on any arch, it may change the
+> result. In that case, we can do it as below (just skipping
+trace_hardirqs_*)
+
+> int disabled = irqs_disabled();
+
+> if (!raw_irqs_disabled_flags(flags) && disabled)
+>          trace_hardirqs_on();
+
+> raw_local_irq_restore(flags);
+
+> if (raw_irqs_disabled_flags(flags) && !disabled)
+>          trace_hardirqs_off();
+
+With changes to the tracepoint implementation which uses srcu instead of
+rcu, I'm not able to see a performance improvement with the above patch.
+For this reason, I will drop this patch from next series. thanks,
+
+- Joel
