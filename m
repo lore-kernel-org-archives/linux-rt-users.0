@@ -1,253 +1,685 @@
-From: Grygorii Strashko <grygorii.strashko@ti.com>
-Subject: Re: [ANNOUNCE] v4.14.29-rt25
-Date: Tue, 1 May 2018 10:04:13 -0500
-Message-ID: <8933b3b9-7f70-0f3f-a8b8-19d4369b35d4@ti.com>
-References: <20180325101204.ibuvdpnusv3vutyc@linutronix.de>
- <b04275af-000d-7b29-3031-508c9a01cd91@ti.com>
- <20180420171116.w2hxytgzvp4jgpyl@linutronix.de>
- <764d0abc-7e88-a696-17a0-0bf807148d5b@ti.com>
- <20180423191023.qtinidsq4vj3lmha@linutronix.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
+From: Daniel Wagner <wagi@monom.org>
+Subject: [ANNOUNCE] 4.4.126-rt142
+Date: Wed, 02 May 2018 21:33:17 +0200
+Message-ID: <20180502193926.91E0F500E0A@mail.monom.org>
+To: LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        tom.zanussi@linux.intel.com
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180423191023.qtinidsq4vj3lmha@linutronix.de>
-Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Sebastian,
+Hello RT Folks!
 
-On 04/23/2018 02:10 PM, Sebastian Andrzej Siewior wrote:
-> On 2018-04-23 11:57:39 [-0500], Grygorii Strashko wrote:
->> Sry, but I can't apply it. What's you base?
-> 
-> please try this patch and latest v4.14-RT
+I'm pleased to announce the 4.4.126-rt142 stable release.
 
-I've tried this (with  v4.14.34-rt27) and I do not see rcu_note_context_switch() any more.
+This release contains -rt changes only. It contains patches I
+identified which were missing in the v4.4-rt tree. There are sill a
+few more missing, which I haven't included into the release candidate
+for review. Meanwhile Greg was busy and therefore I decided to release
+the current queue before updating to latest v4.4 stable tree. After
+that I'll post the missing patches for review.
 
-Sry, it took some time as i found some instability -
-test "stress-ng --class os --all 0 -t 5m " not always finished :(
-So, I've tried to rollback to v4.14.29-rt25 and use as TI RT kernel as
-pure rt-devel. Still not sure if this is some sort of regression or not.
+You can get this release via the git tree at:
 
-> 
-> diff --git a/include/linux/sched.h b/include/linux/sched.h
-> index e305a8f8cd7d..0322503084a5 100644
-> --- a/include/linux/sched.h
-> +++ b/include/linux/sched.h
-> @@ -600,6 +600,9 @@ struct task_struct {
->   	int				migrate_disable_atomic;
->   # endif
->   #endif
-> +#ifdef CONFIG_PREEMPT_RT_FULL
-> +	int				sleeping_lock;
-> +#endif
->   
->   #ifdef CONFIG_PREEMPT_RCU
->   	int				rcu_read_lock_nesting;
-> @@ -1757,6 +1760,23 @@ static __always_inline bool need_resched(void)
->   	return unlikely(tif_need_resched());
->   }
->   
-> +#ifdef CONFIG_PREEMPT_RT_FULL
-> +static inline void sleeping_lock_inc(void)
-> +{
-> +	current->sleeping_lock++;
-> +}
-> +
-> +static inline void sleeping_lock_dec(void)
-> +{
-> +	current->sleeping_lock--;
-> +}
-> +
-> +#else
-> +
-> +static inline void sleeping_lock_inc(void) { }
-> +static inline void sleeping_lock_dec(void) { }
-> +#endif
-> +
->   /*
->    * Wrappers for p->thread_info->cpu access. No-op on UP.
->    */
-> diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-> index 0cb716ba3be0..bac3fb580af6 100644
-> --- a/kernel/locking/rtmutex.c
-> +++ b/kernel/locking/rtmutex.c
-> @@ -1141,6 +1141,7 @@ void __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
->   
->   void __lockfunc rt_spin_lock(spinlock_t *lock)
->   {
-> +	sleeping_lock_inc();
->   	migrate_disable();
->   	spin_acquire(&lock->dep_map, 0, 0, _RET_IP_);
->   	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
-> @@ -1155,6 +1156,7 @@ void __lockfunc __rt_spin_lock(struct rt_mutex *lock)
->   #ifdef CONFIG_DEBUG_LOCK_ALLOC
->   void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subclass)
->   {
-> +	sleeping_lock_inc();
->   	migrate_disable();
->   	spin_acquire(&lock->dep_map, subclass, 0, _RET_IP_);
->   	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
-> @@ -1168,6 +1170,7 @@ void __lockfunc rt_spin_unlock(spinlock_t *lock)
->   	spin_release(&lock->dep_map, 1, _RET_IP_);
->   	rt_spin_lock_fastunlock(&lock->lock, rt_spin_lock_slowunlock);
->   	migrate_enable();
-> +	sleeping_lock_dec();
->   }
->   EXPORT_SYMBOL(rt_spin_unlock);
->   
-> @@ -1193,12 +1196,15 @@ int __lockfunc rt_spin_trylock(spinlock_t *lock)
->   {
->   	int ret;
->   
-> +	sleeping_lock_inc();
->   	migrate_disable();
->   	ret = __rt_mutex_trylock(&lock->lock);
-> -	if (ret)
-> +	if (ret) {
->   		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
-> -	else
-> +	} else {
->   		migrate_enable();
-> +		sleeping_lock_dec();
-> +	}
->   	return ret;
->   }
->   EXPORT_SYMBOL(rt_spin_trylock);
-> @@ -1210,6 +1216,7 @@ int __lockfunc rt_spin_trylock_bh(spinlock_t *lock)
->   	local_bh_disable();
->   	ret = __rt_mutex_trylock(&lock->lock);
->   	if (ret) {
-> +		sleeping_lock_inc();
->   		migrate_disable();
->   		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
->   	} else
-> @@ -1225,6 +1232,7 @@ int __lockfunc rt_spin_trylock_irqsave(spinlock_t *lock, unsigned long *flags)
->   	*flags = 0;
->   	ret = __rt_mutex_trylock(&lock->lock);
->   	if (ret) {
-> +		sleeping_lock_inc();
->   		migrate_disable();
->   		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
->   	}
-> diff --git a/kernel/locking/rwlock-rt.c b/kernel/locking/rwlock-rt.c
-> index aebb7ce25bc6..f2e155b2c4a8 100644
-> --- a/kernel/locking/rwlock-rt.c
-> +++ b/kernel/locking/rwlock-rt.c
-> @@ -305,12 +305,15 @@ int __lockfunc rt_read_trylock(rwlock_t *rwlock)
->   {
->   	int ret;
->   
-> +	sleeping_lock_inc();
->   	migrate_disable();
->   	ret = do_read_rt_trylock(rwlock);
-> -	if (ret)
-> +	if (ret) {
->   		rwlock_acquire_read(&rwlock->dep_map, 0, 1, _RET_IP_);
-> -	else
-> +	} else {
->   		migrate_enable();
-> +		sleeping_lock_dec();
-> +	}
->   	return ret;
->   }
->   EXPORT_SYMBOL(rt_read_trylock);
-> @@ -319,18 +322,22 @@ int __lockfunc rt_write_trylock(rwlock_t *rwlock)
->   {
->   	int ret;
->   
-> +	sleeping_lock_inc();
->   	migrate_disable();
->   	ret = do_write_rt_trylock(rwlock);
-> -	if (ret)
-> +	if (ret) {
->   		rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
-> -	else
-> +	} else {
->   		migrate_enable();
-> +		sleeping_lock_dec();
-> +	}
->   	return ret;
->   }
->   EXPORT_SYMBOL(rt_write_trylock);
->   
->   void __lockfunc rt_read_lock(rwlock_t *rwlock)
->   {
-> +	sleeping_lock_inc();
->   	migrate_disable();
->   	rwlock_acquire_read(&rwlock->dep_map, 0, 0, _RET_IP_);
->   	do_read_rt_lock(rwlock);
-> @@ -339,6 +346,7 @@ EXPORT_SYMBOL(rt_read_lock);
->   
->   void __lockfunc rt_write_lock(rwlock_t *rwlock)
->   {
-> +	sleeping_lock_inc();
->   	migrate_disable();
->   	rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
->   	do_write_rt_lock(rwlock);
-> @@ -350,6 +358,7 @@ void __lockfunc rt_read_unlock(rwlock_t *rwlock)
->   	rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
->   	do_read_rt_unlock(rwlock);
->   	migrate_enable();
-> +	sleeping_lock_dec();
->   }
->   EXPORT_SYMBOL(rt_read_unlock);
->   
-> @@ -358,6 +367,7 @@ void __lockfunc rt_write_unlock(rwlock_t *rwlock)
->   	rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
->   	do_write_rt_unlock(rwlock);
->   	migrate_enable();
-> +	sleeping_lock_dec();
->   }
->   EXPORT_SYMBOL(rt_write_unlock);
->   
-> diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
-> index 3315ebad932f..c6098f60e641 100644
-> --- a/kernel/rcu/tree_plugin.h
-> +++ b/kernel/rcu/tree_plugin.h
-> @@ -301,13 +301,13 @@ static void rcu_preempt_note_context_switch(bool preempt)
->   	struct task_struct *t = current;
->   	struct rcu_data *rdp;
->   	struct rcu_node *rnp;
-> -	int mg_counter = 0;
-> +	int sleeping_l = 0;
->   
->   	RCU_LOCKDEP_WARN(!irqs_disabled(), "rcu_preempt_note_context_switch() invoked with interrupts enabled!!!\n");
-> -#if defined(CONFIG_PREEMPT_RT_BASE)
-> -	mg_counter = t->migrate_disable;
-> +#if defined(CONFIG_PREEMPT_RT_FULL)
-> +	sleeping_l = t->sleeping_lock;
->   #endif
-> -	WARN_ON_ONCE(!preempt && t->rcu_read_lock_nesting > 0 && !mg_counter);
-> +	WARN_ON_ONCE(!preempt && t->rcu_read_lock_nesting > 0 && !sleeping_l);
->   	if (t->rcu_read_lock_nesting > 0 &&
->   	    !t->rcu_read_unlock_special.b.blocked) {
->   
-> diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
-> index ce2c2d04cbaa..b59e009087a9 100644
-> --- a/kernel/time/hrtimer.c
-> +++ b/kernel/time/hrtimer.c
-> @@ -1870,7 +1870,9 @@ void cpu_chill(void)
->   	chill_time = ktime_set(0, NSEC_PER_MSEC);
->   	set_current_state(TASK_UNINTERRUPTIBLE);
->   	current->flags |= PF_NOFREEZE;
-> +	sleeping_lock_inc();
->   	schedule_hrtimeout(&chill_time, HRTIMER_MODE_REL_HARD);
-> +	sleeping_lock_dec();
->   	if (!freeze_flag)
->   		current->flags &= ~PF_NOFREEZE;
->   }
-> 
-> Sebastian
-> 
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
--- 
-regards,
--grygorii
+  branch: v4.4-rt
+  Head SHA1: e650c36988747f830716cb8bf51452f53832c850
+
+Or to build 4.4.126-rt142 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.126.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.126-rt142.patch.xz
+
+
+You can also build from 4.4.126-rt141 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/incr/patch-4.4.126-rt141-rt142.patch.xz
+
+Enjoy!
+   Daniel
+
+Changes from v4.4.126-rt141:
+---
+Daniel Wagner (1):
+      Linux 4.4.126-rt142
+
+Sebastian Andrzej Siewior (4):
+      locking: add types.h
+      mm/slub: close possible memory-leak in kmem_cache_alloc_bulk()
+      arm*: disable NEON in kernel mode
+      crypto: limit more FPU-enabled sections
+
+Steven Rostedt (VMware) (1):
+      Revert "memcontrol: Prevent scheduling while atomic in cgroup code"
+
+Thomas Gleixner (1):
+      timer: Invoke timer_start_debug() where it makes sense
+
+---
+ arch/arm/Kconfig                           |  2 +-
+ arch/arm64/crypto/Kconfig                  | 14 +++++++-------
+ arch/x86/crypto/camellia_aesni_avx2_glue.c | 20 ++++++++++++++++++++
+ arch/x86/crypto/camellia_aesni_avx_glue.c  | 19 +++++++++++++++++++
+ arch/x86/crypto/cast6_avx_glue.c           | 24 +++++++++++++++++++-----
+ arch/x86/crypto/chacha20_glue.c            |  8 +++++---
+ arch/x86/crypto/serpent_avx2_glue.c        | 19 +++++++++++++++++++
+ arch/x86/crypto/serpent_avx_glue.c         | 23 +++++++++++++++++++----
+ arch/x86/crypto/serpent_sse2_glue.c        | 23 +++++++++++++++++++----
+ arch/x86/crypto/twofish_avx_glue.c         | 27 +++++++++++++++++++++++++--
+ arch/x86/include/asm/fpu/api.h             |  1 +
+ arch/x86/kernel/fpu/core.c                 | 12 ++++++++++++
+ include/linux/spinlock_types_raw.h         |  2 ++
+ kernel/time/timer.c                        |  4 ++--
+ localversion-rt                            |  2 +-
+ mm/memcontrol.c                            |  7 ++-----
+ mm/slub.c                                  |  1 +
+ 17 files changed, 174 insertions(+), 34 deletions(-)
+---
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index 79c4603e9453..5e054a0c4b25 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -2119,7 +2119,7 @@ config NEON
+ 
+ config KERNEL_MODE_NEON
+ 	bool "Support for NEON in kernel mode"
+-	depends on NEON && AEABI
++	depends on NEON && AEABI && !PREEMPT_RT_BASE
+ 	help
+ 	  Say Y to include support for NEON in kernel mode.
+ 
+diff --git a/arch/arm64/crypto/Kconfig b/arch/arm64/crypto/Kconfig
+index 2cf32e9887e1..cd71b3432720 100644
+--- a/arch/arm64/crypto/Kconfig
++++ b/arch/arm64/crypto/Kconfig
+@@ -10,41 +10,41 @@ if ARM64_CRYPTO
+ 
+ config CRYPTO_SHA1_ARM64_CE
+ 	tristate "SHA-1 digest algorithm (ARMv8 Crypto Extensions)"
+-	depends on ARM64 && KERNEL_MODE_NEON
++	depends on ARM64 && KERNEL_MODE_NEON && !PREEMPT_RT_BASE
+ 	select CRYPTO_HASH
+ 
+ config CRYPTO_SHA2_ARM64_CE
+ 	tristate "SHA-224/SHA-256 digest algorithm (ARMv8 Crypto Extensions)"
+-	depends on ARM64 && KERNEL_MODE_NEON
++	depends on ARM64 && KERNEL_MODE_NEON && !PREEMPT_RT_BASE
+ 	select CRYPTO_HASH
+ 
+ config CRYPTO_GHASH_ARM64_CE
+ 	tristate "GHASH (for GCM chaining mode) using ARMv8 Crypto Extensions"
+-	depends on ARM64 && KERNEL_MODE_NEON
++	depends on ARM64 && KERNEL_MODE_NEON && !PREEMPT_RT_BASE
+ 	select CRYPTO_HASH
+ 
+ config CRYPTO_AES_ARM64_CE
+ 	tristate "AES core cipher using ARMv8 Crypto Extensions"
+-	depends on ARM64 && KERNEL_MODE_NEON
++	depends on ARM64 && KERNEL_MODE_NEON && !PREEMPT_RT_BASE
+ 	select CRYPTO_ALGAPI
+ 
+ config CRYPTO_AES_ARM64_CE_CCM
+ 	tristate "AES in CCM mode using ARMv8 Crypto Extensions"
+-	depends on ARM64 && KERNEL_MODE_NEON
++	depends on ARM64 && KERNEL_MODE_NEON && !PREEMPT_RT_BASE
+ 	select CRYPTO_ALGAPI
+ 	select CRYPTO_AES_ARM64_CE
+ 	select CRYPTO_AEAD
+ 
+ config CRYPTO_AES_ARM64_CE_BLK
+ 	tristate "AES in ECB/CBC/CTR/XTS modes using ARMv8 Crypto Extensions"
+-	depends on ARM64 && KERNEL_MODE_NEON
++	depends on ARM64 && KERNEL_MODE_NEON && !PREEMPT_RT_BASE
+ 	select CRYPTO_BLKCIPHER
+ 	select CRYPTO_AES_ARM64_CE
+ 	select CRYPTO_ABLK_HELPER
+ 
+ config CRYPTO_AES_ARM64_NEON_BLK
+ 	tristate "AES in ECB/CBC/CTR/XTS modes using NEON instructions"
+-	depends on ARM64 && KERNEL_MODE_NEON
++	depends on ARM64 && KERNEL_MODE_NEON && !PREEMPT_RT_BASE
+ 	select CRYPTO_BLKCIPHER
+ 	select CRYPTO_AES
+ 	select CRYPTO_ABLK_HELPER
+diff --git a/arch/x86/crypto/camellia_aesni_avx2_glue.c b/arch/x86/crypto/camellia_aesni_avx2_glue.c
+index d84456924563..c54536d9932c 100644
+--- a/arch/x86/crypto/camellia_aesni_avx2_glue.c
++++ b/arch/x86/crypto/camellia_aesni_avx2_glue.c
+@@ -206,6 +206,20 @@ struct crypt_priv {
+ 	bool fpu_enabled;
+ };
+ 
++#ifdef CONFIG_PREEMPT_RT_FULL
++static void camellia_fpu_end_rt(struct crypt_priv *ctx)
++{
++       bool fpu_enabled = ctx->fpu_enabled;
++
++       if (!fpu_enabled)
++               return;
++       camellia_fpu_end(fpu_enabled);
++       ctx->fpu_enabled = false;
++}
++#else
++static void camellia_fpu_end_rt(struct crypt_priv *ctx) { }
++#endif
++
+ static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
+ {
+ 	const unsigned int bsize = CAMELLIA_BLOCK_SIZE;
+@@ -221,16 +235,19 @@ static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
+ 	}
+ 
+ 	if (nbytes >= CAMELLIA_AESNI_PARALLEL_BLOCKS * bsize) {
++		kernel_fpu_resched();
+ 		camellia_ecb_enc_16way(ctx->ctx, srcdst, srcdst);
+ 		srcdst += bsize * CAMELLIA_AESNI_PARALLEL_BLOCKS;
+ 		nbytes -= bsize * CAMELLIA_AESNI_PARALLEL_BLOCKS;
+ 	}
+ 
+ 	while (nbytes >= CAMELLIA_PARALLEL_BLOCKS * bsize) {
++		kernel_fpu_resched();
+ 		camellia_enc_blk_2way(ctx->ctx, srcdst, srcdst);
+ 		srcdst += bsize * CAMELLIA_PARALLEL_BLOCKS;
+ 		nbytes -= bsize * CAMELLIA_PARALLEL_BLOCKS;
+ 	}
++	camellia_fpu_end_rt(ctx);
+ 
+ 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
+ 		camellia_enc_blk(ctx->ctx, srcdst, srcdst);
+@@ -251,16 +268,19 @@ static void decrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
+ 	}
+ 
+ 	if (nbytes >= CAMELLIA_AESNI_PARALLEL_BLOCKS * bsize) {
++		kernel_fpu_resched();
+ 		camellia_ecb_dec_16way(ctx->ctx, srcdst, srcdst);
+ 		srcdst += bsize * CAMELLIA_AESNI_PARALLEL_BLOCKS;
+ 		nbytes -= bsize * CAMELLIA_AESNI_PARALLEL_BLOCKS;
+ 	}
+ 
+ 	while (nbytes >= CAMELLIA_PARALLEL_BLOCKS * bsize) {
++		kernel_fpu_resched();
+ 		camellia_dec_blk_2way(ctx->ctx, srcdst, srcdst);
+ 		srcdst += bsize * CAMELLIA_PARALLEL_BLOCKS;
+ 		nbytes -= bsize * CAMELLIA_PARALLEL_BLOCKS;
+ 	}
++	camellia_fpu_end_rt(ctx);
+ 
+ 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
+ 		camellia_dec_blk(ctx->ctx, srcdst, srcdst);
+diff --git a/arch/x86/crypto/camellia_aesni_avx_glue.c b/arch/x86/crypto/camellia_aesni_avx_glue.c
+index 93d8f295784e..a1666a58eee5 100644
+--- a/arch/x86/crypto/camellia_aesni_avx_glue.c
++++ b/arch/x86/crypto/camellia_aesni_avx_glue.c
+@@ -210,6 +210,21 @@ struct crypt_priv {
+ 	bool fpu_enabled;
+ };
+ 
++#ifdef CONFIG_PREEMPT_RT_FULL
++static void camellia_fpu_end_rt(struct crypt_priv *ctx)
++{
++	bool fpu_enabled = ctx->fpu_enabled;
++
++	if (!fpu_enabled)
++		return;
++	camellia_fpu_end(fpu_enabled);
++	ctx->fpu_enabled = false;
++}
++
++#else
++static void camellia_fpu_end_rt(struct crypt_priv *ctx) { }
++#endif
++
+ static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
+ {
+ 	const unsigned int bsize = CAMELLIA_BLOCK_SIZE;
+@@ -225,10 +240,12 @@ static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
+ 	}
+ 
+ 	while (nbytes >= CAMELLIA_PARALLEL_BLOCKS * bsize) {
++		kernel_fpu_resched();
+ 		camellia_enc_blk_2way(ctx->ctx, srcdst, srcdst);
+ 		srcdst += bsize * CAMELLIA_PARALLEL_BLOCKS;
+ 		nbytes -= bsize * CAMELLIA_PARALLEL_BLOCKS;
+ 	}
++	camellia_fpu_end_rt(ctx);
+ 
+ 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
+ 		camellia_enc_blk(ctx->ctx, srcdst, srcdst);
+@@ -249,10 +266,12 @@ static void decrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
+ 	}
+ 
+ 	while (nbytes >= CAMELLIA_PARALLEL_BLOCKS * bsize) {
++		kernel_fpu_resched();
+ 		camellia_dec_blk_2way(ctx->ctx, srcdst, srcdst);
+ 		srcdst += bsize * CAMELLIA_PARALLEL_BLOCKS;
+ 		nbytes -= bsize * CAMELLIA_PARALLEL_BLOCKS;
+ 	}
++	camellia_fpu_end_rt(ctx);
+ 
+ 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
+ 		camellia_dec_blk(ctx->ctx, srcdst, srcdst);
+diff --git a/arch/x86/crypto/cast6_avx_glue.c b/arch/x86/crypto/cast6_avx_glue.c
+index fca459578c35..9eb469b9836a 100644
+--- a/arch/x86/crypto/cast6_avx_glue.c
++++ b/arch/x86/crypto/cast6_avx_glue.c
+@@ -205,19 +205,33 @@ struct crypt_priv {
+ 	bool fpu_enabled;
+ };
+ 
++#ifdef CONFIG_PREEMPT_RT_FULL
++static void cast6_fpu_end_rt(struct crypt_priv *ctx)
++{
++	bool fpu_enabled = ctx->fpu_enabled;
++
++	if (!fpu_enabled)
++		return;
++	cast6_fpu_end(fpu_enabled);
++	ctx->fpu_enabled = false;
++}
++
++#else
++static void cast6_fpu_end_rt(struct crypt_priv *ctx) { }
++#endif
++
+ static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
+ {
+ 	const unsigned int bsize = CAST6_BLOCK_SIZE;
+ 	struct crypt_priv *ctx = priv;
+ 	int i;
+ 
+-	ctx->fpu_enabled = cast6_fpu_begin(ctx->fpu_enabled, nbytes);
+-
+ 	if (nbytes == bsize * CAST6_PARALLEL_BLOCKS) {
++		ctx->fpu_enabled = cast6_fpu_begin(ctx->fpu_enabled, nbytes);
+ 		cast6_ecb_enc_8way(ctx->ctx, srcdst, srcdst);
++		cast6_fpu_end_rt(ctx);
+ 		return;
+ 	}
+-
+ 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
+ 		__cast6_encrypt(ctx->ctx, srcdst, srcdst);
+ }
+@@ -228,10 +242,10 @@ static void decrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
+ 	struct crypt_priv *ctx = priv;
+ 	int i;
+ 
+-	ctx->fpu_enabled = cast6_fpu_begin(ctx->fpu_enabled, nbytes);
+-
+ 	if (nbytes == bsize * CAST6_PARALLEL_BLOCKS) {
++		ctx->fpu_enabled = cast6_fpu_begin(ctx->fpu_enabled, nbytes);
+ 		cast6_ecb_dec_8way(ctx->ctx, srcdst, srcdst);
++		cast6_fpu_end_rt(ctx);
+ 		return;
+ 	}
+ 
+diff --git a/arch/x86/crypto/chacha20_glue.c b/arch/x86/crypto/chacha20_glue.c
+index 722bacea040e..0e3eb53a87cd 100644
+--- a/arch/x86/crypto/chacha20_glue.c
++++ b/arch/x86/crypto/chacha20_glue.c
+@@ -80,22 +80,24 @@ static int chacha20_simd(struct blkcipher_desc *desc, struct scatterlist *dst,
+ 
+ 	crypto_chacha20_init(state, crypto_blkcipher_ctx(desc->tfm), walk.iv);
+ 
+-	kernel_fpu_begin();
+-
+ 	while (walk.nbytes >= CHACHA20_BLOCK_SIZE) {
++		kernel_fpu_begin();
++
+ 		chacha20_dosimd(state, walk.dst.virt.addr, walk.src.virt.addr,
+ 				rounddown(walk.nbytes, CHACHA20_BLOCK_SIZE));
++		kernel_fpu_end();
+ 		err = blkcipher_walk_done(desc, &walk,
+ 					  walk.nbytes % CHACHA20_BLOCK_SIZE);
+ 	}
+ 
+ 	if (walk.nbytes) {
++		kernel_fpu_begin();
+ 		chacha20_dosimd(state, walk.dst.virt.addr, walk.src.virt.addr,
+ 				walk.nbytes);
++		kernel_fpu_end();
+ 		err = blkcipher_walk_done(desc, &walk, 0);
+ 	}
+ 
+-	kernel_fpu_end();
+ 
+ 	return err;
+ }
+diff --git a/arch/x86/crypto/serpent_avx2_glue.c b/arch/x86/crypto/serpent_avx2_glue.c
+index 6d198342e2de..0954bae9a995 100644
+--- a/arch/x86/crypto/serpent_avx2_glue.c
++++ b/arch/x86/crypto/serpent_avx2_glue.c
+@@ -184,6 +184,21 @@ struct crypt_priv {
+ 	bool fpu_enabled;
+ };
+ 
++#ifdef CONFIG_PREEMPT_RT_FULL
++static void serpent_fpu_end_rt(struct crypt_priv *ctx)
++{
++       bool fpu_enabled = ctx->fpu_enabled;
++
++       if (!fpu_enabled)
++               return;
++       serpent_fpu_end(fpu_enabled);
++       ctx->fpu_enabled = false;
++}
++
++#else
++static void serpent_fpu_end_rt(struct crypt_priv *ctx) { }
++#endif
++
+ static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
+ {
+ 	const unsigned int bsize = SERPENT_BLOCK_SIZE;
+@@ -199,10 +214,12 @@ static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
+ 	}
+ 
+ 	while (nbytes >= SERPENT_PARALLEL_BLOCKS * bsize) {
++		kernel_fpu_resched();
+ 		serpent_ecb_enc_8way_avx(ctx->ctx, srcdst, srcdst);
+ 		srcdst += bsize * SERPENT_PARALLEL_BLOCKS;
+ 		nbytes -= bsize * SERPENT_PARALLEL_BLOCKS;
+ 	}
++	serpent_fpu_end_rt(ctx);
+ 
+ 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
+ 		__serpent_encrypt(ctx->ctx, srcdst, srcdst);
+@@ -223,10 +240,12 @@ static void decrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
+ 	}
+ 
+ 	while (nbytes >= SERPENT_PARALLEL_BLOCKS * bsize) {
++		kernel_fpu_resched();
+ 		serpent_ecb_dec_8way_avx(ctx->ctx, srcdst, srcdst);
+ 		srcdst += bsize * SERPENT_PARALLEL_BLOCKS;
+ 		nbytes -= bsize * SERPENT_PARALLEL_BLOCKS;
+ 	}
++	serpent_fpu_end_rt(ctx);
+ 
+ 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
+ 		__serpent_decrypt(ctx->ctx, srcdst, srcdst);
+diff --git a/arch/x86/crypto/serpent_avx_glue.c b/arch/x86/crypto/serpent_avx_glue.c
+index 5dc37026c7ce..8c812a05a084 100644
+--- a/arch/x86/crypto/serpent_avx_glue.c
++++ b/arch/x86/crypto/serpent_avx_glue.c
+@@ -218,16 +218,31 @@ struct crypt_priv {
+ 	bool fpu_enabled;
+ };
+ 
++#ifdef CONFIG_PREEMPT_RT_FULL
++static void serpent_fpu_end_rt(struct crypt_priv *ctx)
++{
++	bool fpu_enabled = ctx->fpu_enabled;
++
++	if (!fpu_enabled)
++		return;
++	serpent_fpu_end(fpu_enabled);
++	ctx->fpu_enabled = false;
++}
++
++#else
++static void serpent_fpu_end_rt(struct crypt_priv *ctx) { }
++#endif
++
+ static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
+ {
+ 	const unsigned int bsize = SERPENT_BLOCK_SIZE;
+ 	struct crypt_priv *ctx = priv;
+ 	int i;
+ 
+-	ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
+-
+ 	if (nbytes == bsize * SERPENT_PARALLEL_BLOCKS) {
++		ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
+ 		serpent_ecb_enc_8way_avx(ctx->ctx, srcdst, srcdst);
++		serpent_fpu_end_rt(ctx);
+ 		return;
+ 	}
+ 
+@@ -241,10 +256,10 @@ static void decrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
+ 	struct crypt_priv *ctx = priv;
+ 	int i;
+ 
+-	ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
+-
+ 	if (nbytes == bsize * SERPENT_PARALLEL_BLOCKS) {
++		ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
+ 		serpent_ecb_dec_8way_avx(ctx->ctx, srcdst, srcdst);
++		serpent_fpu_end_rt(ctx);
+ 		return;
+ 	}
+ 
+diff --git a/arch/x86/crypto/serpent_sse2_glue.c b/arch/x86/crypto/serpent_sse2_glue.c
+index 3643dd508f45..1ef09f8b5cc7 100644
+--- a/arch/x86/crypto/serpent_sse2_glue.c
++++ b/arch/x86/crypto/serpent_sse2_glue.c
+@@ -187,16 +187,31 @@ struct crypt_priv {
+ 	bool fpu_enabled;
+ };
+ 
++#ifdef CONFIG_PREEMPT_RT_FULL
++static void serpent_fpu_end_rt(struct crypt_priv *ctx)
++{
++	bool fpu_enabled = ctx->fpu_enabled;
++
++	if (!fpu_enabled)
++		return;
++	serpent_fpu_end(fpu_enabled);
++	ctx->fpu_enabled = false;
++}
++
++#else
++static void serpent_fpu_end_rt(struct crypt_priv *ctx) { }
++#endif
++
+ static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
+ {
+ 	const unsigned int bsize = SERPENT_BLOCK_SIZE;
+ 	struct crypt_priv *ctx = priv;
+ 	int i;
+ 
+-	ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
+-
+ 	if (nbytes == bsize * SERPENT_PARALLEL_BLOCKS) {
++		ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
+ 		serpent_enc_blk_xway(ctx->ctx, srcdst, srcdst);
++		serpent_fpu_end_rt(ctx);
+ 		return;
+ 	}
+ 
+@@ -210,10 +225,10 @@ static void decrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
+ 	struct crypt_priv *ctx = priv;
+ 	int i;
+ 
+-	ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
+-
+ 	if (nbytes == bsize * SERPENT_PARALLEL_BLOCKS) {
++		ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
+ 		serpent_dec_blk_xway(ctx->ctx, srcdst, srcdst);
++		serpent_fpu_end_rt(ctx);
+ 		return;
+ 	}
+ 
+diff --git a/arch/x86/crypto/twofish_avx_glue.c b/arch/x86/crypto/twofish_avx_glue.c
+index b7a3904b953c..de00fe24927e 100644
+--- a/arch/x86/crypto/twofish_avx_glue.c
++++ b/arch/x86/crypto/twofish_avx_glue.c
+@@ -218,6 +218,21 @@ struct crypt_priv {
+ 	bool fpu_enabled;
+ };
+ 
++#ifdef CONFIG_PREEMPT_RT_FULL
++static void twofish_fpu_end_rt(struct crypt_priv *ctx)
++{
++	bool fpu_enabled = ctx->fpu_enabled;
++
++	if (!fpu_enabled)
++		return;
++	twofish_fpu_end(fpu_enabled);
++	ctx->fpu_enabled = false;
++}
++
++#else
++static void twofish_fpu_end_rt(struct crypt_priv *ctx) { }
++#endif
++
+ static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
+ {
+ 	const unsigned int bsize = TF_BLOCK_SIZE;
+@@ -228,12 +243,16 @@ static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
+ 
+ 	if (nbytes == bsize * TWOFISH_PARALLEL_BLOCKS) {
+ 		twofish_ecb_enc_8way(ctx->ctx, srcdst, srcdst);
++		twofish_fpu_end_rt(ctx);
+ 		return;
+ 	}
+ 
+-	for (i = 0; i < nbytes / (bsize * 3); i++, srcdst += bsize * 3)
++	for (i = 0; i < nbytes / (bsize * 3); i++, srcdst += bsize * 3) {
++		kernel_fpu_resched();
+ 		twofish_enc_blk_3way(ctx->ctx, srcdst, srcdst);
++	}
+ 
++	twofish_fpu_end_rt(ctx);
+ 	nbytes %= bsize * 3;
+ 
+ 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
+@@ -250,11 +269,15 @@ static void decrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
+ 
+ 	if (nbytes == bsize * TWOFISH_PARALLEL_BLOCKS) {
+ 		twofish_ecb_dec_8way(ctx->ctx, srcdst, srcdst);
++		twofish_fpu_end_rt(ctx);
+ 		return;
+ 	}
+ 
+-	for (i = 0; i < nbytes / (bsize * 3); i++, srcdst += bsize * 3)
++	for (i = 0; i < nbytes / (bsize * 3); i++, srcdst += bsize * 3) {
++		kernel_fpu_resched();
+ 		twofish_dec_blk_3way(ctx->ctx, srcdst, srcdst);
++	}
++	twofish_fpu_end_rt(ctx);
+ 
+ 	nbytes %= bsize * 3;
+ 
+diff --git a/arch/x86/include/asm/fpu/api.h b/arch/x86/include/asm/fpu/api.h
+index 1429a7c736db..85428df40a22 100644
+--- a/arch/x86/include/asm/fpu/api.h
++++ b/arch/x86/include/asm/fpu/api.h
+@@ -24,6 +24,7 @@ extern void __kernel_fpu_begin(void);
+ extern void __kernel_fpu_end(void);
+ extern void kernel_fpu_begin(void);
+ extern void kernel_fpu_end(void);
++extern void kernel_fpu_resched(void);
+ extern bool irq_fpu_usable(void);
+ 
+ /*
+diff --git a/arch/x86/kernel/fpu/core.c b/arch/x86/kernel/fpu/core.c
+index d25097c3fc1d..67ae18aeaf8b 100644
+--- a/arch/x86/kernel/fpu/core.c
++++ b/arch/x86/kernel/fpu/core.c
+@@ -149,6 +149,18 @@ void kernel_fpu_end(void)
+ }
+ EXPORT_SYMBOL_GPL(kernel_fpu_end);
+ 
++void kernel_fpu_resched(void)
++{
++	WARN_ON_FPU(!this_cpu_read(in_kernel_fpu));
++
++	if (should_resched(PREEMPT_OFFSET)) {
++		kernel_fpu_end();
++		cond_resched();
++		kernel_fpu_begin();
++	}
++}
++EXPORT_SYMBOL_GPL(kernel_fpu_resched);
++
+ /*
+  * CR0::TS save/restore functions:
+  */
+diff --git a/include/linux/spinlock_types_raw.h b/include/linux/spinlock_types_raw.h
+index edffc4d53fc9..03235b475b77 100644
+--- a/include/linux/spinlock_types_raw.h
++++ b/include/linux/spinlock_types_raw.h
+@@ -1,6 +1,8 @@
+ #ifndef __LINUX_SPINLOCK_TYPES_RAW_H
+ #define __LINUX_SPINLOCK_TYPES_RAW_H
+ 
++#include <linux/types.h>
++
+ #if defined(CONFIG_SMP)
+ # include <asm/spinlock_types.h>
+ #else
+diff --git a/kernel/time/timer.c b/kernel/time/timer.c
+index a8246d79cb5a..6b322aea1c46 100644
+--- a/kernel/time/timer.c
++++ b/kernel/time/timer.c
+@@ -838,8 +838,6 @@ __mod_timer(struct timer_list *timer, unsigned long expires,
+ 	if (!ret && pending_only)
+ 		goto out_unlock;
+ 
+-	debug_activate(timer, expires);
+-
+ 	new_base = get_target_base(base, pinned);
+ 
+ 	if (base != new_base) {
+@@ -854,6 +852,8 @@ __mod_timer(struct timer_list *timer, unsigned long expires,
+ 			base = switch_timer_base(timer, base, new_base);
+ 	}
+ 
++	debug_activate(timer, expires);
++
+ 	timer->expires = expires;
+ 	internal_add_timer(base, timer);
+ 
+diff --git a/localversion-rt b/localversion-rt
+index 09a4d4e4f010..234720dc343d 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt141
++-rt142
+diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+index 493b4986d5dc..56f67a15937b 100644
+--- a/mm/memcontrol.c
++++ b/mm/memcontrol.c
+@@ -1925,17 +1925,14 @@ static void drain_local_stock(struct work_struct *dummy)
+  */
+ static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
+ {
+-	struct memcg_stock_pcp *stock;
+-	int cpu = get_cpu_light();
+-
+-	stock = &per_cpu(memcg_stock, cpu);
++	struct memcg_stock_pcp *stock = &get_cpu_var(memcg_stock);
+ 
+ 	if (stock->cached != memcg) { /* reset if necessary */
+ 		drain_stock(stock);
+ 		stock->cached = memcg;
+ 	}
+ 	stock->nr_pages += nr_pages;
+-	put_cpu_light();
++	put_cpu_var(memcg_stock);
+ }
+ 
+ /*
+diff --git a/mm/slub.c b/mm/slub.c
+index b183c5271607..b3626ab324fe 100644
+--- a/mm/slub.c
++++ b/mm/slub.c
+@@ -3026,6 +3026,7 @@ int kmem_cache_alloc_bulk(struct kmem_cache *s, gfp_t flags, size_t size,
+ 	return i;
+ error:
+ 	local_irq_enable();
++	free_delayed(&to_free);
+ 	slab_post_alloc_hook(s, flags, i, p);
+ 	__kmem_cache_free_bulk(s, i, p);
+ 	return 0;
