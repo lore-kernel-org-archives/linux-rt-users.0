@@ -1,61 +1,46 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] v4.16.7-rt1
-Date: Thu, 3 May 2018 18:29:34 +0200
-Message-ID: <20180503162934.b2ly6jz4a5tydaag@linutronix.de>
+From: Grygorii Strashko <grygorii.strashko@ti.com>
+Subject: Re: [ANNOUNCE] v4.14.29-rt25
+Date: Thu, 3 May 2018 13:26:57 -0500
+Message-ID: <0096e540-7966-f6bf-522c-c6c18c13da95@ti.com>
+References: <20180325101204.ibuvdpnusv3vutyc@linutronix.de>
+ <b04275af-000d-7b29-3031-508c9a01cd91@ti.com>
+ <20180420171116.w2hxytgzvp4jgpyl@linutronix.de>
+ <764d0abc-7e88-a696-17a0-0bf807148d5b@ti.com>
+ <20180423191023.qtinidsq4vj3lmha@linutronix.de>
+ <8933b3b9-7f70-0f3f-a8b8-19d4369b35d4@ti.com>
+ <20180503152417.sztoptu5fcbw2b5h@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Transfer-Encoding: 8bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
+In-Reply-To: <20180503152417.sztoptu5fcbw2b5h@linutronix.de>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Dear RT folks!
 
-I'm pleased to announce the v4.16.7-rt1 patch set. 
 
-Changes since v4.14.39-rt28:
+On 05/03/2018 10:24 AM, Sebastian Andrzej Siewior wrote:
+> On 2018-05-01 10:04:13 [-0500], Grygorii Strashko wrote:
+>> Hi Sebastian,
+> Hi Grygorii,
+> 
+>> Sry, it took some time as i found some instability -
+>> test "stress-ng --class os --all 0 -t 5m " not always finished :(
+>> So, I've tried to rollback to v4.14.29-rt25 and use as TI RT kernel as
+>> pure rt-devel. Still not sure if this is some sort of regression or not.
+> 
+> is this new? So v4.14.29-rt25 works and v4.14.29-rt25 with this does
+> not? This patch just silences the warning so it should not break
+> anything…
 
-  - Rebase to v4.16
+Yes. It seems not related.
 
-  - The queue went through a big cleanup and reordering, so the patches
-    which belong together are not scattered all over the place.
-
-    The sections at the front of the series are patches which are either
-    upstream already (4.17), queued in a maintainer tree for 4.18, posted
-    and under discussion or just ready to be posted.
-
-  - A large section covers the recent rework of the *_nort/*_rt()
-    wrappers. Instead of trying to argue them upstream they have been made
-    obsolete by refactoring the code in which they have been used. There
-    are a few hard to solve leftovers, but non of them should survive.
-
-  - The cpu_chill() related try-lock-loop in dcache has been replaced
-    with a rework avoiding the loop. The rework was joint work by Al
-    Viro and John Ogness.
-
-    There are still a few cpu_chill() instances which are going to be
-    tackled in the next weeks.
-
-  - The AT91 timer patches have been mostly replaced with the "TCB timer
-    driver" patches by Alexandre Belloni.
-
-  - The latest version of the latency tracer patches which is aimed for 4.18
-    has been incorporated.
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.16.7-rt1
-
-The RT patch against v4.16.7 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.16/older/patch-4.16.7-rt1.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.16/older/patches-4.16.7-rt1.tar.xz
-
-Sebastian
+-- 
+regards,
+-grygorii
