@@ -1,46 +1,51 @@
 From: Daniel Wagner <wagi@monom.org>
-Subject: [ANNOUNCE] 4.4.131-rt147
-Date: Fri, 04 May 2018 13:25:47 +0200
-Message-ID: <20180504112702.C35DA500C12@mail.monom.org>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
+Subject: [PATCH RT 0/3] 4.4.131-rt148-rc1
+Date: Fri,  4 May 2018 15:55:13 +0200
+Message-ID: <20180504135516.32601-1-wagi@monom.org>
+Cc: linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Julia Cartwright <julia@ni.com>, Daniel Wagner <wagi@monom.org>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello RT Folks!
+Dear RT Folks,
 
-I'm pleased to announce the 4.4.131-rt147 stable release.
+This is the RT stable review cycle of patch 4.4.131-rt148-rc1.
 
-This release is just an update to the new stable 4.4.131 version
-and no RT specific changes have been made.
+Here are couple of patches from Sebiastian which didn't make into
+4.4.126-rt142 cycle.  I haven't included Julia's "seqlock: provide the
+same ordering semantics as mainline" patch, because I don't know it
+needs a review or not.
 
-You can get this release via the git tree at:
+The pre-releases will not be pushed to the git repository, only the
+final release is.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+If all goes well, this patch will be converted to the next main release
+on 09.05.2017.
 
-  branch: v4.4-rt
-  Head SHA1: 01b743e71d4038e97973c583f237f946b357780f
-
-Or to build 4.4.131-rt147 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.131.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.131-rt147.patch.xz
+Enjoy,
+-- Daniel
 
 
-You can also build from 4.4.126-rt142 by applying the incremental patch:
+Daniel Wagner (1):
+  Linux 4.4.131-rt148-rc1
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/incr/patch-4.4.126-rt142-rt147.patch.xz
+Sebastian Andrzej Siewior (2):
+  alarmtimer: Prevent live lock in alarm_cancel()
+  posix-timers: move the rcu head out of the union
 
-Enjoy!
-   Daniel
+ include/linux/posix-timers.h | 2 +-
+ kernel/time/alarmtimer.c     | 2 +-
+ kernel/time/posix-timers.c   | 4 ++--
+ localversion-rt              | 2 +-
+ 4 files changed, 5 insertions(+), 5 deletions(-)
+
+-- 
+2.14.3
