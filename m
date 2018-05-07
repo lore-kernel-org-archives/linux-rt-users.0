@@ -1,50 +1,78 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH v2] serial: sh-sci: Use spin_{try}lock_irqsave instead of
- open coding version
-Date: Mon, 7 May 2018 14:51:46 +0200
-Message-ID: <20180507125146.75crpaj2scav7mql@linutronix.de>
-References: <20180504163041.28726-1-wagi@monom.org>
+From: Julia Cartwright <julia@ni.com>
+Subject: [PATCH RT 2/2] squashfs: make use of local lock in multi_cpu decompressor
+Date: Mon, 7 May 2018 08:58:57 -0500
+Message-ID: <20180507135857.7565-2-julia@ni.com>
+References: <4064553.Shs7ScuBS6@ws-stein> <20180507135857.7565-1-julia@ni.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-kernel@vger.kernel.org,
-        Geert Uytterhoeven <geert@linux-m68k.org>,
-        linux-rt-users@vger.kernel.org, linux-serial@vger.kernel.org,
-        linux-sh@vger.kernel.org, gregkh@linuxfoundation.org,
-        Daniel Wagner <daniel.wagner@siemens.com>
-To: Daniel Wagner <wagi@monom.org>
+Content-Type: text/plain
+Cc: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
+        Phillip Lougher <phillip@squashfs.org.uk>,
+        Alexander Stein <alexander.stein@systec-electronic.com>
+To: <bigeasy@linutronix.de>, <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180504163041.28726-1-wagi@monom.org>
+In-Reply-To: <20180507135857.7565-1-julia@ni.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2018-05-04 18:30:41 [+0200], Daniel Wagner wrote:
-> --- a/drivers/tty/serial/sh-sci.c
-> +++ b/drivers/tty/serial/sh-sci.c
-> @@ -2890,16 +2890,16 @@ static void serial_console_write(struct console *co, const char *s,
->  	unsigned long flags;
->  	int locked = 1;
->  
-> -	local_irq_save(flags);
->  #if defined(SUPPORT_SYSRQ)
-> -	if (port->sysrq)
-> +	if (port->sysrq) {
->  		locked = 0;
-> -	else
-> +		local_irq_save(flags);
+Currently, the squashfs multi_cpu decompressor makes use of
+get_cpu_ptr()/put_cpu_ptr(), which unconditionally disable preemption
+during decompression.
 
-how is this helping? You should see a splat after a sysrq request.
+Because the workload is distributed across CPUs, all CPUs can observe a
+very high wakeup latency, which has been seen to be as much as 8000us.
 
-> +	} else
->  #endif
->  	if (oops_in_progress)
-> -		locked = spin_trylock(&port->lock);
-> +		locked = spin_trylock_irqsave(&port->lock, flags);
->  	else
-> -		spin_lock(&port->lock);
-> +		spin_lock_irqsave(&port->lock, flags);
->  
->  	/* first save SCSCR then disable interrupts, keep clock source */
->  	ctrl = serial_port_in(port, SCSCR);
+Convert this decompressor to make use of a local lock, which will allow
+execution of the decompressor with preemption-enabled, but also ensure
+concurrent accesses to the percpu compressor data on the local CPU will
+be serialized.
 
-Sebastian
+Reported-by: Alexander Stein <alexander.stein@systec-electronic.com>
+Tested-by: Alexander Stein <alexander.stein@systec-electronic.com>
+Signed-off-by: Julia Cartwright <julia@ni.com>
+---
+ fs/squashfs/decompressor_multi_percpu.c | 16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
+
+diff --git a/fs/squashfs/decompressor_multi_percpu.c b/fs/squashfs/decompressor_multi_percpu.c
+index 23a9c28ad8ea..6a73c4fa88e7 100644
+--- a/fs/squashfs/decompressor_multi_percpu.c
++++ b/fs/squashfs/decompressor_multi_percpu.c
+@@ -10,6 +10,7 @@
+ #include <linux/slab.h>
+ #include <linux/percpu.h>
+ #include <linux/buffer_head.h>
++#include <linux/locallock.h>
+ 
+ #include "squashfs_fs.h"
+ #include "squashfs_fs_sb.h"
+@@ -25,6 +26,8 @@ struct squashfs_stream {
+ 	void		*stream;
+ };
+ 
++static DEFINE_LOCAL_IRQ_LOCK(stream_lock);
++
+ void *squashfs_decompressor_create(struct squashfs_sb_info *msblk,
+ 						void *comp_opts)
+ {
+@@ -79,10 +82,15 @@ int squashfs_decompress(struct squashfs_sb_info *msblk, struct buffer_head **bh,
+ {
+ 	struct squashfs_stream __percpu *percpu =
+ 			(struct squashfs_stream __percpu *) msblk->stream;
+-	struct squashfs_stream *stream = get_cpu_ptr(percpu);
+-	int res = msblk->decompressor->decompress(msblk, stream->stream, bh, b,
+-		offset, length, output);
+-	put_cpu_ptr(stream);
++	struct squashfs_stream *stream;
++	int res;
++
++	stream = get_locked_ptr(stream_lock, percpu);
++
++	res = msblk->decompressor->decompress(msblk, stream->stream, bh, b,
++			offset, length, output);
++
++	put_locked_ptr(stream_lock, stream);
+ 
+ 	if (res < 0)
+ 		ERROR("%s decompression failed, data probably corrupt\n",
+-- 
+2.17.0
