@@ -1,64 +1,120 @@
-From: Geert Uytterhoeven <geert@linux-m68k.org>
-Subject: Re: [PATCH v3] serial: sh-sci: Use spin_{try}lock_irqsave instead of
- open coding version
-Date: Tue, 8 May 2018 11:52:53 +0200
-Message-ID: <CAMuHMdV4D4uMWNxFH-RzuUV_ssEMYWZ-dbhfa=cgB57oNHiyuA@mail.gmail.com>
-References: <20180508085509.31384-1-wagi@monom.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org,
-        "open list:SERIAL DRIVERS" <linux-serial@vger.kernel.org>,
-        Linux-sh list <linux-sh@vger.kernel.org>,
-        Greg KH <gregkh@linuxfoundation.org>,
+From: Daniel Wagner <wagi@monom.org>
+Subject: [ANNOUNCE] 4.4.131-rt148
+Date: Wed, 09 May 2018 18:18:49 +0200
+Message-ID: <20180509162840.7BB9D500C4B@mail.monom.org>
+To: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Daniel Wagner <wagi@monom.org>
+        tom.zanussi@linux.intel.com
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180508085509.31384-1-wagi@monom.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, May 8, 2018 at 10:55 AM, Daniel Wagner <wagi@monom.org> wrote:
-> From: Daniel Wagner <daniel.wagner@siemens.com>
->
-> Commit 40f70c03e33a ("serial: sh-sci: add locking to console write
-> function to avoid SMP lockup") copied the strategy to avoid locking
-> problems in conjuncture with the console from the UART8250
-> driver. Instead using directly spin_{try}lock_irqsave(),
-> local_irq_save() followed by spin_{try}lock() was used. While this is
-> correct on mainline, for -rt it is a problem. spin_{try}lock() will
-> check if it is running in a valid context. Since the local_irq_save()
-> has already been executed, the context has changed and
-> spin_{try}lock() will complain. The reason why spin_{try}lock()
-> complains is that on -rt the spin locks are turned into mutexes and
-> therefore can sleep. Sleeping with interrupts disabled is not valid.
+Hello RT Folks!
 
-[...]
+I'm pleased to announce the 4.4.131-rt148 stable release.
 
-> Cc: Geert Uytterhoeven <geert@linux-m68k.org>
-> Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> Signed-off-by: Daniel Wagner <daniel.wagner@siemens.com>
-> ---
-> changes since v2:
->  - dropped the local_irq_save() it's wrong as Sebastian pointed out
->
-> changes since v1:
->  - Ported to current mainline (initial version was against v4.4.y)
->  - Left local_irq_save() in place when spinlocks are not used as suggested
->    by Geert.
+This release add the missing stable-rt patches from Sebastian. With
+this the v4.4-rt tree should contain all stable-rt patches. Let me
+knonw if I missed anything.
 
-Thanks for the update!
+You can get this release via the git tree at:
 
-Reviewed-by: Geert Uytterhoeven <geert+renesas@glider.be>
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-Gr{oetje,eeting}s,
+  branch: v4.4-rt
+  Head SHA1: d103ae2fc7d8e8a3a713dab5eabd6e4e3a1488b3
 
-                        Geert
+Or to build 4.4.131-rt148 directly, the following patches should be applied:
 
--- 
-Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k.org
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
 
-In personal conversations with technical people, I call myself a hacker. But
-when I'm talking to journalists I just say "programmer" or something like that.
-                                -- Linus Torvalds
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.131.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.131-rt148.patch.xz
+
+
+You can also build from 4.4.131-rt147 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/incr/patch-4.4.131-rt147-rt148.patch.xz
+
+Enjoy!
+   Daniel
+
+Changes from v4.4.131-rt147:
+---
+Daniel Wagner (1):
+      Linux 4.4.131-rt148
+
+Sebastian Andrzej Siewior (2):
+      alarmtimer: Prevent live lock in alarm_cancel()
+      posix-timers: move the rcu head out of the union
+
+---
+ include/linux/posix-timers.h | 2 +-
+ kernel/time/alarmtimer.c     | 2 +-
+ kernel/time/posix-timers.c   | 4 ++--
+ localversion-rt              | 2 +-
+ 4 files changed, 5 insertions(+), 5 deletions(-)
+---
+diff --git a/include/linux/posix-timers.h b/include/linux/posix-timers.h
+index 907f3fd191ac..e2e43c61f6a1 100644
+--- a/include/linux/posix-timers.h
++++ b/include/linux/posix-timers.h
+@@ -92,8 +92,8 @@ struct k_itimer {
+ 			struct alarm alarmtimer;
+ 			ktime_t interval;
+ 		} alarm;
+-		struct rcu_head rcu;
+ 	} it;
++	struct rcu_head rcu;
+ };
+ 
+ struct k_clock {
+diff --git a/kernel/time/alarmtimer.c b/kernel/time/alarmtimer.c
+index 6fcc367ad531..9d5eac2c9275 100644
+--- a/kernel/time/alarmtimer.c
++++ b/kernel/time/alarmtimer.c
+@@ -392,7 +392,7 @@ int alarm_cancel(struct alarm *alarm)
+ 		int ret = alarm_try_to_cancel(alarm);
+ 		if (ret >= 0)
+ 			return ret;
+-		cpu_relax();
++		hrtimer_wait_for_timer(&alarm->timer);
+ 	}
+ }
+ EXPORT_SYMBOL_GPL(alarm_cancel);
+diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
+index 48ca053dae2e..0808e2ae49bf 100644
+--- a/kernel/time/posix-timers.c
++++ b/kernel/time/posix-timers.c
+@@ -567,7 +567,7 @@ static struct k_itimer * alloc_posix_timer(void)
+ 
+ static void k_itimer_rcu_free(struct rcu_head *head)
+ {
+-	struct k_itimer *tmr = container_of(head, struct k_itimer, it.rcu);
++	struct k_itimer *tmr = container_of(head, struct k_itimer, rcu);
+ 
+ 	kmem_cache_free(posix_timers_cache, tmr);
+ }
+@@ -584,7 +584,7 @@ static void release_posix_timer(struct k_itimer *tmr, int it_id_set)
+ 	}
+ 	put_pid(tmr->it_pid);
+ 	sigqueue_free(tmr->sigq);
+-	call_rcu(&tmr->it.rcu, k_itimer_rcu_free);
++	call_rcu(&tmr->rcu, k_itimer_rcu_free);
+ }
+ 
+ static struct k_clock *clockid_to_kclock(const clockid_t id)
+diff --git a/localversion-rt b/localversion-rt
+index d3fa072b6b43..857407b62668 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt147
++-rt148
