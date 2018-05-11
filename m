@@ -1,8 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [RFC][PATCH 08/10] tracing: Prevent further users of zero size static arrays in trace
- events
-Date: Fri, 11 May 2018 15:49:35 -0400
-Message-ID: <20180511195341.176372901@goodmis.org>
+Subject: [RFC][PATCH 09/10] tracing: Allow histogram triggers to access ftrace internal events
+Date: Fri, 11 May 2018 15:49:36 -0400
+Message-ID: <20180511195341.318916085@goodmis.org>
 References: <20180511194927.190877137@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -19,36 +18,34 @@ Cc: Ingo Molnar <mingo@kernel.org>,
         linux-rt-users@vger.kernel.org
 To: linux-kernel@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0008-tracing-Prevent-further-users-of-zero-size-static-ar.patch
+Content-Disposition: inline; filename=0009-tracing-Allow-histogram-triggers-to-access-ftrace-in.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-A zero size static array has special meaning in the ftrace infrastructure.
-Trace events are for recording data in the trace buffers that is normally
-difficult to obtain via probes or function tracing. There is no reason for
-any trace event to declare a zero size static array.
-
-If one does, BUILD_BUG_ON() will trigger and prevent the kernel from
-compiling.
+Now that trace_marker can have triggers, including a histogram triggers, the
+onmatch() and onmax() access the trace event. To do so, the search routine
+to find the event file needs to use the raw __find_event_file() that does
+not filter out ftrace events.
 
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- include/trace/trace_events.h | 1 +
- 1 file changed, 1 insertion(+)
+ kernel/trace/trace_events_hist.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/include/trace/trace_events.h b/include/trace/trace_events.h
-index bfda803b0a09..4ecdfe2e3580 100644
---- a/include/trace/trace_events.h
-+++ b/include/trace/trace_events.h
-@@ -422,6 +422,7 @@ static struct trace_event_functions trace_event_type_funcs_##call = {	\
- 	do {								\
- 		char *type_str = #type"["__stringify(len)"]";		\
- 		BUILD_BUG_ON(len > MAX_FILTER_STR_VAL);			\
-+		BUILD_BUG_ON(len <= 0);					\
- 		ret = trace_define_field(event_call, type_str, #item,	\
- 				 offsetof(typeof(field), item),		\
- 				 sizeof(field.item),			\
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index b9061ed59bbd..046c716a6536 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -2865,7 +2865,7 @@ static struct trace_event_file *event_file(struct trace_array *tr,
+ {
+ 	struct trace_event_file *file;
+ 
+-	file = find_event_file(tr, system, event_name);
++	file = __find_event_file(tr, system, event_name);
+ 	if (!file)
+ 		return ERR_PTR(-EINVAL);
+ 
 -- 
 2.17.0
