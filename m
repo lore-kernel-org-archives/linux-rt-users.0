@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [RFC][PATCH 06/10] tracing: Add trigger file for trace_markers tracefs/ftrace/print
-Date: Fri, 11 May 2018 15:49:33 -0400
-Message-ID: <20180511195340.876528094@goodmis.org>
+Subject: [RFC][PATCH 07/10] tracing: Have zero size length in filter logic be full string
+Date: Fri, 11 May 2018 15:49:34 -0400
+Message-ID: <20180511195341.034688188@goodmis.org>
 References: <20180511194927.190877137@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -18,138 +18,75 @@ Cc: Ingo Molnar <mingo@kernel.org>,
         linux-rt-users@vger.kernel.org
 To: linux-kernel@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0006-tracing-Add-trigger-file-for-trace_markers-tracefs-f.patch
+Content-Disposition: inline; filename=0007-tracing-Have-zero-size-length-in-filter-logic-be-ful.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-Allow writing to the trace_markers file initiate triggers defined in
-tracefs/ftrace/print/trigger file. This will allow of user space to trigger
-the same type of triggers (including histograms) that the trace events use.
+As strings in trace events may not have a nul terminating character, the
+filter string compares use the defined string length for the field for the
+compares.
 
-Cc: Tom Zanussi <tom.zanussi@linux.intel.com>
-Cc: Clark Williams <williams@redhat.com>
-Cc: Karim Yaghmour <karim.yaghmour@opersys.com>
-Cc: Brendan Gregg <bgregg@netflix.com>
-Suggested-by: Joel Fernandes <joelaf@google.com>
+The trace_marker records data slightly different than do normal events. It's
+size is zero, meaning that the string is the rest of the array, and that the
+string also ends with '\0'.
+
+If the size is zero, assume that the string is nul terminated and read the
+string in question as is.
+
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/trace/trace.c         | 17 +++++++++++++++++
- kernel/trace/trace.h         |  1 +
- kernel/trace/trace_entries.h |  6 ++++--
- kernel/trace/trace_export.c  |  7 +++++++
- 4 files changed, 29 insertions(+), 2 deletions(-)
+ kernel/trace/trace_events_filter.c | 23 ++++++++++++-----------
+ 1 file changed, 12 insertions(+), 11 deletions(-)
 
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index e0d6ffb76985..f11b89fa5049 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -6074,6 +6074,7 @@ tracing_mark_write(struct file *filp, const char __user *ubuf,
+diff --git a/kernel/trace/trace_events_filter.c b/kernel/trace/trace_events_filter.c
+index 7d306b74230f..675392b9edd2 100644
+--- a/kernel/trace/trace_events_filter.c
++++ b/kernel/trace/trace_events_filter.c
+@@ -750,31 +750,32 @@ static int filter_pred_none(struct filter_pred *pred, void *event)
+  *
+  * Note:
+  * - @str might not be NULL-terminated if it's of type DYN_STRING
+- *   or STATIC_STRING
++ *   or STATIC_STRING, unless @len is zero.
+  */
+ 
+ static int regex_match_full(char *str, struct regex *r, int len)
  {
- 	struct trace_array *tr = filp->private_data;
- 	struct ring_buffer_event *event;
-+	enum event_trigger_type tt = ETT_NONE;
- 	struct ring_buffer *buffer;
- 	struct print_entry *entry;
- 	unsigned long irq_flags;
-@@ -6122,6 +6123,12 @@ tracing_mark_write(struct file *filp, const char __user *ubuf,
- 		written = cnt;
- 	len = cnt;
- 
-+	if (tr->trace_marker_file && !list_empty(&tr->trace_marker_file->triggers)) {
-+		/* do not add \n before testing triggers, but add \0 */
-+		entry->buf[cnt] = '\0';
-+		tt = event_triggers_call(tr->trace_marker_file, entry, event);
-+	}
+-	if (strncmp(str, r->pattern, len) == 0)
+-		return 1;
+-	return 0;
++	/* len means str is dynamic and ends with '\0' */
++	if (!len)
++		return strcmp(str, r->pattern) == 0;
 +
- 	if (entry->buf[cnt - 1] != '\n') {
- 		entry->buf[cnt] = '\n';
- 		entry->buf[cnt + 1] = '\0';
-@@ -6130,6 +6137,9 @@ tracing_mark_write(struct file *filp, const char __user *ubuf,
++	return strncmp(str, r->pattern, len) == 0;
+ }
  
- 	__buffer_unlock_commit(buffer, event);
- 
-+	if (tt)
-+		event_triggers_post_call(tr->trace_marker_file, tt);
-+
- 	if (written > 0)
- 		*fpos += written;
- 
-@@ -7896,6 +7906,7 @@ static __init void create_trace_instances(struct dentry *d_tracer)
- static void
- init_tracer_tracefs(struct trace_array *tr, struct dentry *d_tracer)
+ static int regex_match_front(char *str, struct regex *r, int len)
  {
-+	struct trace_event_file *file;
- 	int cpu;
+-	if (len < r->len)
++	if (len && len < r->len)
+ 		return 0;
  
- 	trace_create_file("available_tracers", 0444, d_tracer,
-@@ -7928,6 +7939,12 @@ init_tracer_tracefs(struct trace_array *tr, struct dentry *d_tracer)
- 	trace_create_file("trace_marker", 0220, d_tracer,
- 			  tr, &tracing_mark_fops);
+-	if (strncmp(str, r->pattern, r->len) == 0)
+-		return 1;
+-	return 0;
++	return strncmp(str, r->pattern, len) == 0;
+ }
  
-+	file = __find_event_file(tr, "ftrace", "print");
-+	if (file && file->dir)
-+		trace_create_file("trigger", 0644, file->dir, file,
-+				  &event_trigger_fops);
-+	tr->trace_marker_file = file;
+ static int regex_match_middle(char *str, struct regex *r, int len)
+ {
+-	if (strnstr(str, r->pattern, len))
+-		return 1;
+-	return 0;
++	if (!len)
++		return strstr(str, r->pattern) != NULL;
 +
- 	trace_create_file("trace_marker_raw", 0220, d_tracer,
- 			  tr, &tracing_mark_raw_fops);
++	return strnstr(str, r->pattern, len) != NULL;
+ }
  
-diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
-index 2414fd72dedd..c7fa58d31a84 100644
---- a/kernel/trace/trace.h
-+++ b/kernel/trace/trace.h
-@@ -259,6 +259,7 @@ struct trace_array {
- 	struct trace_options	*topts;
- 	struct list_head	systems;
- 	struct list_head	events;
-+	struct trace_event_file *trace_marker_file;
- 	cpumask_var_t		tracing_cpumask; /* only trace on set CPUs */
- 	int			ref;
- #ifdef CONFIG_FUNCTION_TRACER
-diff --git a/kernel/trace/trace_entries.h b/kernel/trace/trace_entries.h
-index e3a658bac10f..de3fce14cd00 100644
---- a/kernel/trace/trace_entries.h
-+++ b/kernel/trace/trace_entries.h
-@@ -230,7 +230,7 @@ FTRACE_ENTRY(bprint, bprint_entry,
- 	FILTER_OTHER
- );
- 
--FTRACE_ENTRY(print, print_entry,
-+FTRACE_ENTRY_REG(print, print_entry,
- 
- 	TRACE_PRINT,
- 
-@@ -242,7 +242,9 @@ FTRACE_ENTRY(print, print_entry,
- 	F_printk("%ps: %s",
- 		 (void *)__entry->ip, __entry->buf),
- 
--	FILTER_OTHER
-+	FILTER_OTHER,
-+
-+	 ftrace_event_register
- );
- 
- FTRACE_ENTRY(raw_data, raw_data_entry,
-diff --git a/kernel/trace/trace_export.c b/kernel/trace/trace_export.c
-index d842f1eadfe5..45630a76ed3a 100644
---- a/kernel/trace/trace_export.c
-+++ b/kernel/trace/trace_export.c
-@@ -14,6 +14,13 @@
- 
- #include "trace_output.h"
- 
-+/* Stub function for events with triggers */
-+static int ftrace_event_register(struct trace_event_call *call,
-+				 enum trace_reg type, void *data)
-+{
-+	return 0;
-+}
-+
- #undef TRACE_SYSTEM
- #define TRACE_SYSTEM	ftrace
- 
+ static int regex_match_end(char *str, struct regex *r, int len)
 -- 
 2.17.0
