@@ -1,46 +1,75 @@
-From: Julia Cartwright <julia@ni.com>
-Subject: [ANNOUNCE] 4.9.98-rt76
-Date: Thu, 10 May 2018 16:16:31 -0500
-Message-ID: <20180510211631.GA1063@jcartwri.amer.corp.natinst.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-To: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [RFC][PATCH 00/10] tracing: Add triggers to trace_marker writes
+Date: Fri, 11 May 2018 15:49:27 -0400
+Message-ID: <20180511194927.190877137@goodmis.org>
+Cc: Ingo Molnar <mingo@kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Alex Shi <alex.shi@linaro.org>
+        Clark Williams <williams@redhat.com>,
+        Karim Yaghmour <karim.yaghmour@opersys.com>,
+        Brendan Gregg <bgregg@netflix.com>,
+        Joel Fernandes <joelaf@google.com>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
+        Namhyung Kim <namhyung@kernel.org>,
+        linux-rt-users@vger.kernel.org
+To: linux-kernel@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello RT Folks!
+A few people have asked for this in the past, and I finally got around
+to implementing it. What this does is to allow writes into trace_marker
+to initiate a trigger.
 
-I'm pleased to announce the 4.9.98-rt76 stable release.
+The trace_marker event is described in:
 
-This release is just an update to the new stable 4.9.98 version
-and no RT specific changes have been made.
+ tracefs/events/ftrace/print
 
-Expect a 4.9.98-rt77-rc1 with backports from rt-devel soon.
+Thus the trigger file is added there:
 
-You can get this release via the git tree at:
+ tracefs/events/ftrace/print/trigger
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+As there's already a "hist" file there, everything appears to work
+just like any other trigger to an event. See the last patch for
+documentation on how to use the triggers to a trace_marker write.
 
-  branch: v4.9-rt
-  Head SHA1: bc64e52891b8b9e56b19cbb800a1b8c415df13e8
+By the way, the patch:
 
-Or to build 4.9.98-rt76 directly, the following patches should be applied:
+  tracing: Prevent further users of zero size static arrays in trace events
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.tar.xz
+May prevent your kernel from building if you include Xen. You will need
+to add this patch to make it work.
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.9.98.xz
+ http://lkml.kernel.org/r/20180509144605.5a220327@gandalf.local.home
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.9/patch-4.9.98-rt76.patch.xz
+-- Steve
 
-Enjoy!
-    Julia
+
+Steven Rostedt (VMware) (10):
+      tracing: Do not reference event data in post call triggers
+      tracing: Add __find_event_file() to find event files without restrictions
+      tracing: Have event_trace_init() called by trace_init_tracefs()
+      tracing: Add brackets in ftrace event dynamic arrays
+      tracing: Do not show filter file for ftrace internal events
+      tracing: Add trigger file for trace_markers tracefs/ftrace/print
+      tracing: Have zero size length in filter logic be full string
+      tracing: Prevent further users of zero size static arrays in trace events
+      tracing: Allow histogram triggers to access ftrace internal events
+      tracing: Document trace_marker triggers
+
+----
+ Documentation/trace/events.rst      |   6 +-
+ Documentation/trace/ftrace.rst      |   5 +
+ Documentation/trace/histogram.txt   | 546 +++++++++++++++++++++++++++++++++++-
+ include/linux/trace_events.h        |   3 +-
+ include/trace/trace_events.h        |   1 +
+ kernel/trace/trace.c                |  19 ++
+ kernel/trace/trace.h                |   9 +-
+ kernel/trace/trace_entries.h        |   6 +-
+ kernel/trace/trace_events.c         |  36 ++-
+ kernel/trace/trace_events_filter.c  |  23 +-
+ kernel/trace/trace_events_hist.c    |   2 +-
+ kernel/trace/trace_events_trigger.c |   6 +-
+ kernel/trace/trace_export.c         |   9 +-
+ 13 files changed, 634 insertions(+), 37 deletions(-)
