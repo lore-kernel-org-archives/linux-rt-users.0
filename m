@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [RFC][PATCH 01/10] tracing: Do not reference event data in post call triggers
-Date: Fri, 11 May 2018 15:49:28 -0400
-Message-ID: <20180511195340.135783750@goodmis.org>
+Subject: [RFC][PATCH 03/10] tracing: Have event_trace_init() called by trace_init_tracefs()
+Date: Fri, 11 May 2018 15:49:30 -0400
+Message-ID: <20180511195340.438096887@goodmis.org>
 References: <20180511194927.190877137@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -18,99 +18,72 @@ Cc: Ingo Molnar <mingo@kernel.org>,
         linux-rt-users@vger.kernel.org
 To: linux-kernel@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-tracing-Do-not-reference-event-data-in-post-call-tri.patch
+Content-Disposition: inline; filename=0003-tracing-Have-event_trace_init-called-by-trace_init_t.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-Trace event triggers can be called before or after the event has been
-committed. If it has been called after the commit, there's a possibility
-that the event no longer exists. Currently, the two post callers is the
-trigger to disable tracing (traceoff) and the one that will record a stack
-dump (stacktrace). Neither of them reference the trace event entry record,
-as that would lead to a race condition that could pass in corrupted data.
-
-To prevent any other users of the post data triggers from using the trace
-event record, pass in NULL to the post call trigger functions for the event
-record, as they should never need to use them in the first place.
-
-This does not fix any bug, but prevents bugs from happening by new post call
-trigger users.
+Instead of having both trace_init_tracefs() and event_trace_init() be called
+by fs_initcall() routines, have event_trace_init() called directly by
+trace_init_tracefs(). This will guarantee order of how the events are
+created with respect to the rest of the ftrace infrastructure. This is
+needed to be able to assoctiate event files with ftrace internal events,
+such as the trace_marker.
 
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- include/linux/trace_events.h        | 3 +--
- kernel/trace/trace.h                | 4 ++--
- kernel/trace/trace_events_trigger.c | 6 ++----
- 3 files changed, 5 insertions(+), 8 deletions(-)
+ kernel/trace/trace.c        | 2 ++
+ kernel/trace/trace.h        | 1 +
+ kernel/trace/trace_events.c | 4 +---
+ 3 files changed, 4 insertions(+), 3 deletions(-)
 
-diff --git a/include/linux/trace_events.h b/include/linux/trace_events.h
-index 2bde3eff564c..d1c442d9bd85 100644
---- a/include/linux/trace_events.h
-+++ b/include/linux/trace_events.h
-@@ -435,8 +435,7 @@ event_triggers_call(struct trace_event_file *file, void *rec,
- 		    struct ring_buffer_event *event);
- extern void
- event_triggers_post_call(struct trace_event_file *file,
--			 enum event_trigger_type tt,
--			 void *rec, struct ring_buffer_event *event);
-+			 enum event_trigger_type tt);
+diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
+index 414d7210b2ec..e0d6ffb76985 100644
+--- a/kernel/trace/trace.c
++++ b/kernel/trace/trace.c
+@@ -8111,6 +8111,8 @@ static __init int tracer_init_tracefs(void)
+ 	if (IS_ERR(d_tracer))
+ 		return 0;
  
- bool trace_event_ignore_this_pid(struct trace_event_file *trace_file);
++	event_trace_init();
++
+ 	init_tracer_tracefs(&global_trace, d_tracer);
+ 	ftrace_init_tracefs_toplevel(&global_trace, d_tracer);
  
 diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
-index 6fb46a06c9dc..24b666891eaf 100644
+index 8ecca43d6aea..2414fd72dedd 100644
 --- a/kernel/trace/trace.h
 +++ b/kernel/trace/trace.h
-@@ -1334,7 +1334,7 @@ event_trigger_unlock_commit(struct trace_event_file *file,
- 		trace_buffer_unlock_commit(file->tr, buffer, event, irq_flags, pc);
+@@ -1451,6 +1451,7 @@ trace_find_event_field(struct trace_event_call *call, char *name);
+ extern void trace_event_enable_cmd_record(bool enable);
+ extern void trace_event_enable_tgid_record(bool enable);
  
- 	if (tt)
--		event_triggers_post_call(file, tt, entry, event);
-+		event_triggers_post_call(file, tt);
- }
++extern int event_trace_init(void);
+ extern int event_trace_add_tracer(struct dentry *parent, struct trace_array *tr);
+ extern int event_trace_del_tracer(struct trace_array *tr);
  
- /**
-@@ -1367,7 +1367,7 @@ event_trigger_unlock_commit_regs(struct trace_event_file *file,
- 						irq_flags, pc, regs);
+diff --git a/kernel/trace/trace_events.c b/kernel/trace/trace_events.c
+index caf76355f0a3..5b647904a65b 100644
+--- a/kernel/trace/trace_events.c
++++ b/kernel/trace/trace_events.c
+@@ -3144,7 +3144,7 @@ static __init int event_trace_enable_again(void)
  
- 	if (tt)
--		event_triggers_post_call(file, tt, entry, event);
-+		event_triggers_post_call(file, tt);
- }
+ early_initcall(event_trace_enable_again);
  
- #define FILTER_PRED_INVALID	((unsigned short)-1)
-diff --git a/kernel/trace/trace_events_trigger.c b/kernel/trace/trace_events_trigger.c
-index d251cabcf69a..cc4148bfc01a 100644
---- a/kernel/trace/trace_events_trigger.c
-+++ b/kernel/trace/trace_events_trigger.c
-@@ -97,7 +97,6 @@ EXPORT_SYMBOL_GPL(event_triggers_call);
-  * event_triggers_post_call - Call 'post_triggers' for a trace event
-  * @file: The trace_event_file associated with the event
-  * @tt: enum event_trigger_type containing a set bit for each trigger to invoke
-- * @rec: The trace entry for the event
-  *
-  * For each trigger associated with an event, invoke the trigger
-  * function registered with the associated trigger command, if the
-@@ -108,8 +107,7 @@ EXPORT_SYMBOL_GPL(event_triggers_call);
-  */
- void
- event_triggers_post_call(struct trace_event_file *file,
--			 enum event_trigger_type tt,
--			 void *rec, struct ring_buffer_event *event)
-+			 enum event_trigger_type tt)
+-static __init int event_trace_init(void)
++__init int event_trace_init(void)
  {
- 	struct event_trigger_data *data;
- 
-@@ -117,7 +115,7 @@ event_triggers_post_call(struct trace_event_file *file,
- 		if (data->paused)
- 			continue;
- 		if (data->cmd_ops->trigger_type & tt)
--			data->ops->func(data, rec, event);
-+			data->ops->func(data, NULL, NULL);
- 	}
+ 	struct trace_array *tr;
+ 	struct dentry *d_tracer;
+@@ -3189,8 +3189,6 @@ void __init trace_event_init(void)
+ 	event_trace_enable();
  }
- EXPORT_SYMBOL_GPL(event_triggers_post_call);
+ 
+-fs_initcall(event_trace_init);
+-
+ #ifdef CONFIG_FTRACE_STARTUP_TEST
+ 
+ static DEFINE_SPINLOCK(test_spinlock);
 -- 
 2.17.0
