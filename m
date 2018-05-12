@@ -1,10 +1,10 @@
 From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: Re: [RFC][PATCH 01/10] tracing: Do not reference event data in post
- call triggers
-Date: Sat, 12 May 2018 21:04:38 +0900
-Message-ID: <20180512210438.f876501a1c7f2f5623f9e336@kernel.org>
+Subject: Re: [RFC][PATCH 07/10] tracing: Have zero size length in filter
+ logic be full string
+Date: Sat, 12 May 2018 21:40:29 +0900
+Message-ID: <20180512214029.8610c88ecc3de94a95822189@kernel.org>
 References: <20180511194927.190877137@goodmis.org>
-        <20180511195340.135783750@goodmis.org>
+        <20180511195341.034688188@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -21,117 +21,55 @@ Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
         linux-rt-users@vger.kernel.org
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180511195340.135783750@goodmis.org>
+In-Reply-To: <20180511195341.034688188@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 11 May 2018 15:49:28 -0400
+On Fri, 11 May 2018 15:49:34 -0400
 Steven Rostedt <rostedt@goodmis.org> wrote:
 
 > From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 > 
-> Trace event triggers can be called before or after the event has been
-> committed. If it has been called after the commit, there's a possibility
-> that the event no longer exists. Currently, the two post callers is the
-> trigger to disable tracing (traceoff) and the one that will record a stack
-> dump (stacktrace). Neither of them reference the trace event entry record,
-> as that would lead to a race condition that could pass in corrupted data.
+> As strings in trace events may not have a nul terminating character, the
+> filter string compares use the defined string length for the field for the
+> compares.
 > 
-> To prevent any other users of the post data triggers from using the trace
-> event record, pass in NULL to the post call trigger functions for the event
-> record, as they should never need to use them in the first place.
+> The trace_marker records data slightly different than do normal events. It's
+> size is zero, meaning that the string is the rest of the array, and that the
+> string also ends with '\0'.
 > 
-> This does not fix any bug, but prevents bugs from happening by new post call
-> trigger users.
+> If the size is zero, assume that the string is nul terminated and read the
+> string in question as is.
 > 
-
-OK, so after commit the event record, the event handler should not access it.
-
-Looks good to me.
-
-Reviewed-by: Masami Hiramatsu <mhiramat@kernel.org>
-
-Thanks,
-
-
 > Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 > ---
->  include/linux/trace_events.h        | 3 +--
->  kernel/trace/trace.h                | 4 ++--
->  kernel/trace/trace_events_trigger.c | 6 ++----
->  3 files changed, 5 insertions(+), 8 deletions(-)
+>  kernel/trace/trace_events_filter.c | 23 ++++++++++++-----------
+>  1 file changed, 12 insertions(+), 11 deletions(-)
 > 
-> diff --git a/include/linux/trace_events.h b/include/linux/trace_events.h
-> index 2bde3eff564c..d1c442d9bd85 100644
-> --- a/include/linux/trace_events.h
-> +++ b/include/linux/trace_events.h
-> @@ -435,8 +435,7 @@ event_triggers_call(struct trace_event_file *file, void *rec,
->  		    struct ring_buffer_event *event);
->  extern void
->  event_triggers_post_call(struct trace_event_file *file,
-> -			 enum event_trigger_type tt,
-> -			 void *rec, struct ring_buffer_event *event);
-> +			 enum event_trigger_type tt);
->  
->  bool trace_event_ignore_this_pid(struct trace_event_file *trace_file);
->  
-> diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
-> index 6fb46a06c9dc..24b666891eaf 100644
-> --- a/kernel/trace/trace.h
-> +++ b/kernel/trace/trace.h
-> @@ -1334,7 +1334,7 @@ event_trigger_unlock_commit(struct trace_event_file *file,
->  		trace_buffer_unlock_commit(file->tr, buffer, event, irq_flags, pc);
->  
->  	if (tt)
-> -		event_triggers_post_call(file, tt, entry, event);
-> +		event_triggers_post_call(file, tt);
->  }
->  
->  /**
-> @@ -1367,7 +1367,7 @@ event_trigger_unlock_commit_regs(struct trace_event_file *file,
->  						irq_flags, pc, regs);
->  
->  	if (tt)
-> -		event_triggers_post_call(file, tt, entry, event);
-> +		event_triggers_post_call(file, tt);
->  }
->  
->  #define FILTER_PRED_INVALID	((unsigned short)-1)
-> diff --git a/kernel/trace/trace_events_trigger.c b/kernel/trace/trace_events_trigger.c
-> index d251cabcf69a..cc4148bfc01a 100644
-> --- a/kernel/trace/trace_events_trigger.c
-> +++ b/kernel/trace/trace_events_trigger.c
-> @@ -97,7 +97,6 @@ EXPORT_SYMBOL_GPL(event_triggers_call);
->   * event_triggers_post_call - Call 'post_triggers' for a trace event
->   * @file: The trace_event_file associated with the event
->   * @tt: enum event_trigger_type containing a set bit for each trigger to invoke
-> - * @rec: The trace entry for the event
+> diff --git a/kernel/trace/trace_events_filter.c b/kernel/trace/trace_events_filter.c
+> index 7d306b74230f..675392b9edd2 100644
+> --- a/kernel/trace/trace_events_filter.c
+> +++ b/kernel/trace/trace_events_filter.c
+> @@ -750,31 +750,32 @@ static int filter_pred_none(struct filter_pred *pred, void *event)
 >   *
->   * For each trigger associated with an event, invoke the trigger
->   * function registered with the associated trigger command, if the
-> @@ -108,8 +107,7 @@ EXPORT_SYMBOL_GPL(event_triggers_call);
+>   * Note:
+>   * - @str might not be NULL-terminated if it's of type DYN_STRING
+> - *   or STATIC_STRING
+> + *   or STATIC_STRING, unless @len is zero.
 >   */
->  void
->  event_triggers_post_call(struct trace_event_file *file,
-> -			 enum event_trigger_type tt,
-> -			 void *rec, struct ring_buffer_event *event)
-> +			 enum event_trigger_type tt)
->  {
->  	struct event_trigger_data *data;
 >  
-> @@ -117,7 +115,7 @@ event_triggers_post_call(struct trace_event_file *file,
->  		if (data->paused)
->  			continue;
->  		if (data->cmd_ops->trigger_type & tt)
-> -			data->ops->func(data, rec, event);
-> +			data->ops->func(data, NULL, NULL);
->  	}
->  }
->  EXPORT_SYMBOL_GPL(event_triggers_post_call);
-> -- 
-> 2.17.0
-> 
-> 
+>  static int regex_match_full(char *str, struct regex *r, int len)
+>  {
+> -	if (strncmp(str, r->pattern, len) == 0)
+> -		return 1;
+> -	return 0;
+> +	/* len means str is dynamic and ends with '\0' */
+           ^^^
+          !len (or len == 0)?
+
+Thank you,
+
+
 
 
 -- 
