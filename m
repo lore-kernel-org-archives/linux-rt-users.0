@@ -1,8 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH v2 02/14] tracing: Add __find_event_file() to find event files without
- restrictions
-Date: Mon, 14 May 2018 16:58:47 -0400
-Message-ID: <20180514205957.633659366@goodmis.org>
+Subject: [PATCH v2 03/14] tracing: Have event_trace_init() called by trace_init_tracefs()
+Date: Mon, 14 May 2018 16:58:48 -0400
+Message-ID: <20180514205957.771118653@goodmis.org>
 References: <20180514205845.017925650@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -20,89 +19,72 @@ Cc: Ingo Molnar <mingo@kernel.org>,
         linux-rt-users@vger.kernel.org
 To: linux-kernel@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-tracing-Add-__find_event_file-to-find-event-files-wi.patch
+Content-Disposition: inline; filename=0003-tracing-Have-event_trace_init-called-by-trace_init_t.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-By adding the function __find_event_file() that can search for files without
-restrictions, such as if the event associated with the file has a reg
-function, or if it has the "ignore" flag set, the files that are associated
-to ftrace internal events (like trace_marker and function events) can be
-found and used.
-
-find_event_file() still returns a "filtered" file, as most callers need a
-valid trace event file. One created by the trace_events.h macros and not one
-created for parsing ftrace specific events.
+Instead of having both trace_init_tracefs() and event_trace_init() be called
+by fs_initcall() routines, have event_trace_init() called directly by
+trace_init_tracefs(). This will guarantee order of how the events are
+created with respect to the rest of the ftrace infrastructure. This is
+needed to be able to assoctiate event files with ftrace internal events,
+such as the trace_marker.
 
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/trace/trace.h        |  3 +++
- kernel/trace/trace_events.c | 22 +++++++++++++++++-----
- 2 files changed, 20 insertions(+), 5 deletions(-)
+ kernel/trace/trace.c        | 2 ++
+ kernel/trace/trace.h        | 1 +
+ kernel/trace/trace_events.c | 4 +---
+ 3 files changed, 4 insertions(+), 3 deletions(-)
 
+diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
+index 414d7210b2ec..e0d6ffb76985 100644
+--- a/kernel/trace/trace.c
++++ b/kernel/trace/trace.c
+@@ -8111,6 +8111,8 @@ static __init int tracer_init_tracefs(void)
+ 	if (IS_ERR(d_tracer))
+ 		return 0;
+ 
++	event_trace_init();
++
+ 	init_tracer_tracefs(&global_trace, d_tracer);
+ 	ftrace_init_tracefs_toplevel(&global_trace, d_tracer);
+ 
 diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
-index 24b666891eaf..8ecca43d6aea 100644
+index 8ecca43d6aea..2414fd72dedd 100644
 --- a/kernel/trace/trace.h
 +++ b/kernel/trace/trace.h
-@@ -1454,6 +1454,9 @@ extern void trace_event_enable_tgid_record(bool enable);
+@@ -1451,6 +1451,7 @@ trace_find_event_field(struct trace_event_call *call, char *name);
+ extern void trace_event_enable_cmd_record(bool enable);
+ extern void trace_event_enable_tgid_record(bool enable);
+ 
++extern int event_trace_init(void);
  extern int event_trace_add_tracer(struct dentry *parent, struct trace_array *tr);
  extern int event_trace_del_tracer(struct trace_array *tr);
  
-+extern struct trace_event_file *__find_event_file(struct trace_array *tr,
-+						  const char *system,
-+						  const char *event);
- extern struct trace_event_file *find_event_file(struct trace_array *tr,
- 						const char *system,
- 						const char *event);
 diff --git a/kernel/trace/trace_events.c b/kernel/trace/trace_events.c
-index 05c7172c6667..caf76355f0a3 100644
+index caf76355f0a3..5b647904a65b 100644
 --- a/kernel/trace/trace_events.c
 +++ b/kernel/trace/trace_events.c
-@@ -2473,8 +2473,9 @@ __trace_add_event_dirs(struct trace_array *tr)
- 	}
- }
+@@ -3144,7 +3144,7 @@ static __init int event_trace_enable_again(void)
  
-+/* Returns any file that matches the system and event */
- struct trace_event_file *
--find_event_file(struct trace_array *tr, const char *system,  const char *event)
-+__find_event_file(struct trace_array *tr, const char *system, const char *event)
+ early_initcall(event_trace_enable_again);
+ 
+-static __init int event_trace_init(void)
++__init int event_trace_init(void)
  {
- 	struct trace_event_file *file;
- 	struct trace_event_call *call;
-@@ -2485,10 +2486,7 @@ find_event_file(struct trace_array *tr, const char *system,  const char *event)
- 		call = file->event_call;
- 		name = trace_event_name(call);
- 
--		if (!name || !call->class || !call->class->reg)
--			continue;
--
--		if (call->flags & TRACE_EVENT_FL_IGNORE_ENABLE)
-+		if (!name || !call->class)
- 			continue;
- 
- 		if (strcmp(event, name) == 0 &&
-@@ -2498,6 +2496,20 @@ find_event_file(struct trace_array *tr, const char *system,  const char *event)
- 	return NULL;
+ 	struct trace_array *tr;
+ 	struct dentry *d_tracer;
+@@ -3189,8 +3189,6 @@ void __init trace_event_init(void)
+ 	event_trace_enable();
  }
  
-+/* Returns valid trace event files that match system and event */
-+struct trace_event_file *
-+find_event_file(struct trace_array *tr, const char *system, const char *event)
-+{
-+	struct trace_event_file *file;
-+
-+	file = __find_event_file(tr, system, event);
-+	if (!file || !file->event_call->class->reg ||
-+	    file->event_call->flags & TRACE_EVENT_FL_IGNORE_ENABLE)
-+		return NULL;
-+
-+	return file;
-+}
-+
- #ifdef CONFIG_DYNAMIC_FTRACE
+-fs_initcall(event_trace_init);
+-
+ #ifdef CONFIG_FTRACE_STARTUP_TEST
  
- /* Avoid typos */
+ static DEFINE_SPINLOCK(test_spinlock);
 -- 
 2.17.0
