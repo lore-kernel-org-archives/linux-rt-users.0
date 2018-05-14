@@ -1,15 +1,13 @@
 From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [RFC][PATCH 07/10] tracing: Have zero size length in filter
- logic be full string
-Date: Mon, 14 May 2018 11:23:09 +0900
-Message-ID: <20180514022309.GA9220@sejong>
+Subject: Re: [RFC][PATCH 06/10] tracing: Add trigger file for trace_markers
+ tracefs/ftrace/print
+Date: Mon, 14 May 2018 12:13:22 +0900
+Message-ID: <20180514031322.GB9220@sejong>
 References: <20180511194927.190877137@goodmis.org>
- <20180511195341.034688188@goodmis.org>
- <CAKQ1sVPS_rKYUVRRAU-zHKZqCNBKamBoHdHyhXOV+Ckifm1Jbw@mail.gmail.com>
+ <20180511195340.876528094@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
-        Ingo Molnar <mingo@kernel.org>,
+Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
         Andrew Morton <akpm@linux-foundation.org>,
         Thomas Gleixner <tglx@linutronix.de>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
@@ -19,33 +17,82 @@ Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
         Joel Fernandes <joelaf@google.com>,
         Masami Hiramatsu <mhiramat@kernel.org>,
         linux-rt-users@vger.kernel.org, kernel-team@lge.com
-To: Yann Ylavic <ylavic.dev@gmail.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAKQ1sVPS_rKYUVRRAU-zHKZqCNBKamBoHdHyhXOV+Ckifm1Jbw@mail.gmail.com>
+In-Reply-To: <20180511195340.876528094@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
-
-On Sat, May 12, 2018 at 08:32:18PM +0200, Yann Ylavic wrote:
-> On Fri, May 11, 2018 at 9:49 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
-> []
-> >
-> >  static int regex_match_front(char *str, struct regex *r, int len)
-> >  {
-> > -       if (len < r->len)
-> > +       if (len && len < r->len)
-> >                 return 0;
-> >
-> > -       if (strncmp(str, r->pattern, r->len) == 0)
-> > -               return 1;
-> > -       return 0;
-> > +       return strncmp(str, r->pattern, len) == 0;
+On Fri, May 11, 2018 at 03:49:33PM -0400, Steven Rostedt wrote:
+> From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 > 
-> strncmp(..., r->len) still?
+> Allow writing to the trace_markers file initiate triggers defined in
+> tracefs/ftrace/print/trigger file. This will allow of user space to trigger
+> the same type of triggers (including histograms) that the trace events use.
+> 
+> Cc: Tom Zanussi <tom.zanussi@linux.intel.com>
+> Cc: Clark Williams <williams@redhat.com>
+> Cc: Karim Yaghmour <karim.yaghmour@opersys.com>
+> Cc: Brendan Gregg <bgregg@netflix.com>
+> Suggested-by: Joel Fernandes <joelaf@google.com>
+> Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+> ---
 
-Yep, I think so.  Otherwise it'll always return true when len is 0.
+[SNIP]
+> diff --git a/kernel/trace/trace_entries.h b/kernel/trace/trace_entries.h
+> index e3a658bac10f..de3fce14cd00 100644
+> --- a/kernel/trace/trace_entries.h
+> +++ b/kernel/trace/trace_entries.h
+> @@ -230,7 +230,7 @@ FTRACE_ENTRY(bprint, bprint_entry,
+>  	FILTER_OTHER
+>  );
+>  
+> -FTRACE_ENTRY(print, print_entry,
+> +FTRACE_ENTRY_REG(print, print_entry,
+>  
+>  	TRACE_PRINT,
+>  
+> @@ -242,7 +242,9 @@ FTRACE_ENTRY(print, print_entry,
+>  	F_printk("%ps: %s",
+>  		 (void *)__entry->ip, __entry->buf),
+>  
+> -	FILTER_OTHER
+> +	FILTER_OTHER,
+> +
+> +	 ftrace_event_register
+
+I wonder this is still needed since you added __find_event_file()
+which ignores the reg field.  Maybe I'm missing something..
+
+Anyway it looks whitespace damaged.
 
 Thanks,
 Namhyung
+
+
+>  );
+>  
+>  FTRACE_ENTRY(raw_data, raw_data_entry,
+> diff --git a/kernel/trace/trace_export.c b/kernel/trace/trace_export.c
+> index d842f1eadfe5..45630a76ed3a 100644
+> --- a/kernel/trace/trace_export.c
+> +++ b/kernel/trace/trace_export.c
+> @@ -14,6 +14,13 @@
+>  
+>  #include "trace_output.h"
+>  
+> +/* Stub function for events with triggers */
+> +static int ftrace_event_register(struct trace_event_call *call,
+> +				 enum trace_reg type, void *data)
+> +{
+> +	return 0;
+> +}
+> +
+>  #undef TRACE_SYSTEM
+>  #define TRACE_SYSTEM	ftrace
+>  
+> -- 
+> 2.17.0
+> 
+> 
