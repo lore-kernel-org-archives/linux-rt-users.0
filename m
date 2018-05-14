@@ -1,8 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH v2 08/14] tracing: Prevent further users of zero size static arrays in trace
- events
-Date: Mon, 14 May 2018 16:58:53 -0400
-Message-ID: <20180514205958.482418055@goodmis.org>
+Subject: [PATCH v2 07/14] tracing: Have zero size length in filter logic be full string
+Date: Mon, 14 May 2018 16:58:52 -0400
+Message-ID: <20180514205958.349218767@goodmis.org>
 References: <20180514205845.017925650@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -20,36 +19,75 @@ Cc: Ingo Molnar <mingo@kernel.org>,
         linux-rt-users@vger.kernel.org
 To: linux-kernel@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0008-tracing-Prevent-further-users-of-zero-size-static-ar.patch
+Content-Disposition: inline; filename=0007-tracing-Have-zero-size-length-in-filter-logic-be-ful.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-A zero size static array has special meaning in the ftrace infrastructure.
-Trace events are for recording data in the trace buffers that is normally
-difficult to obtain via probes or function tracing. There is no reason for
-any trace event to declare a zero size static array.
+As strings in trace events may not have a nul terminating character, the
+filter string compares use the defined string length for the field for the
+compares.
 
-If one does, BUILD_BUG_ON() will trigger and prevent the kernel from
-compiling.
+The trace_marker records data slightly different than do normal events. It's
+size is zero, meaning that the string is the rest of the array, and that the
+string also ends with '\0'.
+
+If the size is zero, assume that the string is nul terminated and read the
+string in question as is.
 
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- include/trace/trace_events.h | 1 +
- 1 file changed, 1 insertion(+)
+ kernel/trace/trace_events_filter.c | 23 ++++++++++++-----------
+ 1 file changed, 12 insertions(+), 11 deletions(-)
 
-diff --git a/include/trace/trace_events.h b/include/trace/trace_events.h
-index bfda803b0a09..4ecdfe2e3580 100644
---- a/include/trace/trace_events.h
-+++ b/include/trace/trace_events.h
-@@ -422,6 +422,7 @@ static struct trace_event_functions trace_event_type_funcs_##call = {	\
- 	do {								\
- 		char *type_str = #type"["__stringify(len)"]";		\
- 		BUILD_BUG_ON(len > MAX_FILTER_STR_VAL);			\
-+		BUILD_BUG_ON(len <= 0);					\
- 		ret = trace_define_field(event_call, type_str, #item,	\
- 				 offsetof(typeof(field), item),		\
- 				 sizeof(field.item),			\
+diff --git a/kernel/trace/trace_events_filter.c b/kernel/trace/trace_events_filter.c
+index 7d306b74230f..0171407d231f 100644
+--- a/kernel/trace/trace_events_filter.c
++++ b/kernel/trace/trace_events_filter.c
+@@ -750,31 +750,32 @@ static int filter_pred_none(struct filter_pred *pred, void *event)
+  *
+  * Note:
+  * - @str might not be NULL-terminated if it's of type DYN_STRING
+- *   or STATIC_STRING
++ *   or STATIC_STRING, unless @len is zero.
+  */
+ 
+ static int regex_match_full(char *str, struct regex *r, int len)
+ {
+-	if (strncmp(str, r->pattern, len) == 0)
+-		return 1;
+-	return 0;
++	/* len of zero means str is dynamic and ends with '\0' */
++	if (!len)
++		return strcmp(str, r->pattern) == 0;
++
++	return strncmp(str, r->pattern, len) == 0;
+ }
+ 
+ static int regex_match_front(char *str, struct regex *r, int len)
+ {
+-	if (len < r->len)
++	if (len && len < r->len)
+ 		return 0;
+ 
+-	if (strncmp(str, r->pattern, r->len) == 0)
+-		return 1;
+-	return 0;
++	return strncmp(str, r->pattern, r->len) == 0;
+ }
+ 
+ static int regex_match_middle(char *str, struct regex *r, int len)
+ {
+-	if (strnstr(str, r->pattern, len))
+-		return 1;
+-	return 0;
++	if (!len)
++		return strstr(str, r->pattern) != NULL;
++
++	return strnstr(str, r->pattern, len) != NULL;
+ }
+ 
+ static int regex_match_end(char *str, struct regex *r, int len)
 -- 
 2.17.0
