@@ -1,11 +1,11 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [RFC][PATCH 07/10] tracing: Have zero size length in filter
- logic be full string
-Date: Mon, 14 May 2018 10:12:06 -0400
-Message-ID: <20180514101206.46add982@gandalf.local.home>
+Subject: Re: [RFC][PATCH 06/10] tracing: Add trigger file for trace_markers
+ tracefs/ftrace/print
+Date: Mon, 14 May 2018 11:04:36 -0400
+Message-ID: <20180514110436.336b214b@gandalf.local.home>
 References: <20180511194927.190877137@goodmis.org>
-        <20180511195341.034688188@goodmis.org>
-        <CAKQ1sVPS_rKYUVRRAU-zHKZqCNBKamBoHdHyhXOV+Ckifm1Jbw@mail.gmail.com>
+        <20180511195340.876528094@goodmis.org>
+        <20180514031322.GB9220@sejong>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,37 +18,85 @@ Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
         Brendan Gregg <bgregg@netflix.com>,
         Joel Fernandes <joelaf@google.com>,
         Masami Hiramatsu <mhiramat@kernel.org>,
-        Namhyung Kim <namhyung@kernel.org>,
-        linux-rt-users@vger.kernel.org
-To: Yann Ylavic <ylavic.dev@gmail.com>
+        linux-rt-users@vger.kernel.org, kernel-team@lge.com
+To: Namhyung Kim <namhyung@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKQ1sVPS_rKYUVRRAU-zHKZqCNBKamBoHdHyhXOV+Ckifm1Jbw@mail.gmail.com>
+In-Reply-To: <20180514031322.GB9220@sejong>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Sat, 12 May 2018 20:32:18 +0200
-Yann Ylavic <ylavic.dev@gmail.com> wrote:
+On Mon, 14 May 2018 12:13:22 +0900
+Namhyung Kim <namhyung@kernel.org> wrote:
 
-> On Fri, May 11, 2018 at 9:49 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
-> []
-> >
-> >  static int regex_match_front(char *str, struct regex *r, int len)
-> >  {
-> > -       if (len < r->len)
-> > +       if (len && len < r->len)
-> >                 return 0;
-> >
-> > -       if (strncmp(str, r->pattern, r->len) == 0)
-> > -               return 1;
-> > -       return 0;
-> > +       return strncmp(str, r->pattern, len) == 0;  
+> On Fri, May 11, 2018 at 03:49:33PM -0400, Steven Rostedt wrote:
+> > From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+> > 
+> > Allow writing to the trace_markers file initiate triggers defined in
+> > tracefs/ftrace/print/trigger file. This will allow of user space to trigger
+> > the same type of triggers (including histograms) that the trace events use.
+> > 
+> > Cc: Tom Zanussi <tom.zanussi@linux.intel.com>
+> > Cc: Clark Williams <williams@redhat.com>
+> > Cc: Karim Yaghmour <karim.yaghmour@opersys.com>
+> > Cc: Brendan Gregg <bgregg@netflix.com>
+> > Suggested-by: Joel Fernandes <joelaf@google.com>
+> > Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+> > ---  
 > 
-> strncmp(..., r->len) still?
+> [SNIP]
+> > diff --git a/kernel/trace/trace_entries.h b/kernel/trace/trace_entries.h
+> > index e3a658bac10f..de3fce14cd00 100644
+> > --- a/kernel/trace/trace_entries.h
+> > +++ b/kernel/trace/trace_entries.h
+> > @@ -230,7 +230,7 @@ FTRACE_ENTRY(bprint, bprint_entry,
+> >  	FILTER_OTHER
+> >  );
+> >  
+> > -FTRACE_ENTRY(print, print_entry,
+> > +FTRACE_ENTRY_REG(print, print_entry,
+> >  
+> >  	TRACE_PRINT,
+> >  
+> > @@ -242,7 +242,9 @@ FTRACE_ENTRY(print, print_entry,
+> >  	F_printk("%ps: %s",
+> >  		 (void *)__entry->ip, __entry->buf),
+> >  
+> > -	FILTER_OTHER
+> > +	FILTER_OTHER,
+> > +
+> > +	 ftrace_event_register  
 > 
-> >  }  
+> I wonder this is still needed since you added __find_event_file()
+> which ignores the reg field.  Maybe I'm missing something..
 
-Ouch! Yes! I have no idea how I did that :-/
+No, that's not the reason for it. The reason is due to the
+event_trigger_callback() function. I'll update the changelog to specify
+this.
 
-Thanks for pointing that out.
+We have something like:
+
+ # echo snapshot > events/ftrace/print/trigger
+
+Which will do:
+
+  event_trigger_write() {
+    event_trigger_regex_write() {
+      trigger_process_regex() {
+        for p in trigger_commands {
+          p->func(); /* trigger_snapshot_cmd->func */
+            event_trigger_callback() {
+              cmd_ops->reg() /* register_trigger() */ {
+                trace_event_trigger_enable_disable() {
+                  trace_event_enable_disable() {
+                    call->class->reg();
+
+Without this patch, we jump to NULL and BOOM!
+                
+
+> 
+> Anyway it looks whitespace damaged.
+>
+
+Thanks, I'll fix it up.
 
 -- Steve
