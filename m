@@ -1,10 +1,10 @@
 From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [PATCH v2 05/14] tracing: Do not show filter file for ftrace
- internal events
-Date: Wed, 16 May 2018 18:10:25 +0900
-Message-ID: <20180516091025.GB30309@danjae.aot.lge.com>
+Subject: Re: [PATCH v2 14/14] tracing/selftest: Add test to test hist trigger
+ between kernel event and trace_marker
+Date: Wed, 16 May 2018 18:11:53 +0900
+Message-ID: <20180516091153.GC30309@danjae.aot.lge.com>
 References: <20180514205845.017925650@goodmis.org>
- <20180514205958.061558690@goodmis.org>
+ <20180514205959.393826165@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
@@ -21,55 +21,67 @@ Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180514205958.061558690@goodmis.org>
+In-Reply-To: <20180514205959.393826165@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, May 14, 2018 at 04:58:50PM -0400, Steven Rostedt wrote:
+On Mon, May 14, 2018 at 04:58:59PM -0400, Steven Rostedt wrote:
 > From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 > 
-> The filter file in the ftrace internal events, like in
-> /sys/kernel/tracing/events/ftrace/function/filter is not attached to any
-> functionality. Do not create them as they are meaningless.
-> 
-> In the future, if an ftrace internal event gets filter functionality, then
-> it will need to create it directly.
+> Add a test that tests a trigger that is initiated by a kernel event
+> (sched_waking) and compared to a write to the trace_marker.
 > 
 > Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 > ---
->  kernel/trace/trace_events.c | 10 ++++++----
->  1 file changed, 6 insertions(+), 4 deletions(-)
+>  .../trigger/trigger-trace-marker-synthetic.tc | 22 +++++++++++++++++++
+>  1 file changed, 22 insertions(+)
 > 
-> diff --git a/kernel/trace/trace_events.c b/kernel/trace/trace_events.c
-> index 5b647904a65b..14ff4ff3caab 100644
-> --- a/kernel/trace/trace_events.c
-> +++ b/kernel/trace/trace_events.c
-> @@ -2007,16 +2007,18 @@ event_create_dir(struct dentry *parent, struct trace_event_file *file)
->  			return -1;
->  		}
->  	}
-> -	trace_create_file("filter", 0644, file->dir, file,
-> -			  &ftrace_event_filter_fops);
+> diff --git a/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc
+> index 8e7a043da7fb..d8cfc36f228b 100644
+> --- a/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc
+> +++ b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc
+> @@ -31,6 +31,11 @@ if [ ! -d events/ftrace/print ]; then
+>      exit_unsupported
+>  fi
 >  
->  	/*
->  	 * Only event directories that can be enabled should have
-> -	 * triggers.
-> +	 * triggers or filters.
->  	 */
-> -	if (!(call->flags & TRACE_EVENT_FL_IGNORE_ENABLE))
-> +	if (!(call->flags & TRACE_EVENT_FL_IGNORE_ENABLE)) {
-> +		trace_create_file("filter", 0644, file->dir, file,
-> +				  &ftrace_event_filter_fops);
+> +if [ ! -d events/sched/sched_waking ]; then
+> +    echo "event sched_waking is not supported"
+> +    exit_unsupported
+> +fi
 > +
->  		trace_create_file("trigger", 0644, file->dir, file,
->  				  &event_trigger_fops);
-> +	}
+>  if [ ! -f events/ftrace/print/trigger ]; then
+>      echo "event trigger is not supported"
+>      exit_unsupported
+> @@ -63,4 +68,21 @@ grep 'hitcount: *1$' events/synthetic/latency/hist > /dev/null || \
 >  
->  #ifdef CONFIG_HIST_TRIGGERS
->  	trace_create_file("hist", 0444, file->dir, file,
+>  do_reset
+>  
+> +echo "Test histogram kernel event to trace_marker latency histogram trigger"
+> +
+> +echo 'latency u64 lat' > synthetic_events
+> +echo 'hist:keys=pid:ts0=common_timestamp.usecs' > events/sched/sched_waking/trigger
+> +echo 'hist:keys=common_pid:lat=common_timestamp.usecs-$ts0:onmatch(ftrace.print).latency($lat)' > events/ftrace/print/trigger
 
-What about moving the "hist" file as well since it's meaningless
-without the trigger.
+Shouldn't it be "onmatch(sched.sched_waking)" ?
 
 Thanks,
 Namhyung
+
+
+> +echo 'hist:keys=common_pid,lat:sort=lat' > events/synthetic/latency/trigger
+> +sleep 1
+> +echo "hello" > trace_marker
+> +
+> +grep 'hitcount: *1$' events/ftrace/print/hist > /dev/null || \
+> +    fail "hist trigger did not trigger correct times on trace_marker"
+> +
+> +grep 'hitcount: *1$' events/synthetic/latency/hist > /dev/null || \
+> +    fail "hist trigger did not trigger "
+> +
+> +do_reset
+> +
+>  exit 0
+> -- 
+> 2.17.0
+> 
+> 
