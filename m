@@ -1,70 +1,135 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT 3/5] tracing: Restore proper field flag printing when
- displaying triggers
-Date: Wed, 16 May 2018 11:45:35 -0400
-Message-ID: <20180516114535.6c3dbd1b@gandalf.local.home>
-References: <20180516133642.521479369@goodmis.org>
-        <20180516133836.518686476@goodmis.org>
-        <20180516153213.mh5zgxzd2hwnkvuh@linutronix.de>
+From: Masami Hiramatsu <mhiramat@kernel.org>
+Subject: Re: [PATCH v2 11/14] ftrace/selftest: Have the reset_trigger code
+ be a bit more careful
+Date: Thu, 17 May 2018 08:15:04 +0900
+Message-ID: <20180517081504.119ed2cd0fedc2a43199d86a@kernel.org>
+References: <20180514205845.017925650@goodmis.org>
+        <20180514205958.915494639@goodmis.org>
+        <20180516215350.4fb775e101bc6a122bfe3282@kernel.org>
+        <20180516100004.1e9c774c@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
+Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Paul Gortmaker <paul.gortmaker@windriver.com>,
-        Julia Cartwright <julia@ni.com>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Karim Yaghmour <karim.yaghmour@opersys.com>,
+        Brendan Gregg <bgregg@netflix.com>,
+        Joel Fernandes <joel@joelfernandes.org>,
+        Namhyung Kim <namhyung@kernel.org>,
+        Yann Ylavic <ylavic.dev@gmail.com>,
+        linux-rt-users@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180516153213.mh5zgxzd2hwnkvuh@linutronix.de>
+In-Reply-To: <20180516100004.1e9c774c@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 16 May 2018 17:32:14 +0200
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+On Wed, 16 May 2018 10:00:04 -0400
+Steven Rostedt <rostedt@goodmis.org> wrote:
 
-> On 2018-05-16 09:36:45 [-0400], Steven Rostedt wrote:
-> > diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-> > index 9dac8bae4f34..4745ed588607 100644
-> > --- a/kernel/trace/trace_events_hist.c
-> > +++ b/kernel/trace/trace_events_hist.c
-> > @@ -4916,6 +4916,16 @@ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
-> >  		seq_printf(m, "%s", field_name);
-> >  	} else if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP)
-> >  		seq_puts(m, "common_timestamp");
-> > +
-> > +	if (hist_field->flags) {
-> > +		if (!(hist_field->flags & HIST_FIELD_FL_VAR_REF) &&
-> > +		    !(hist_field->flags & HIST_FIELD_FL_EXPR)) {
-> > +			const char *flags = get_hist_field_flags(hist_field);
-> > +
-> > +			if (flags)
-> > +				seq_printf(m, ".%s", flags);
-> > +		}
-> > +	}
-> >  }
-> >  
-> >  static int event_hist_trigger_print(struct seq_file *m,  
+> On Wed, 16 May 2018 21:53:50 +0900
+> Masami Hiramatsu <mhiramat@kernel.org> wrote:
 > 
-> For v4.16 I needed commit 0ae7961e75c3 ("tracing: Fix display of hist
-> trigger expressions containing timestamps") in order to get this one
+> > On Mon, 14 May 2018 16:58:56 -0400
+> > Steven Rostedt <rostedt@goodmis.org> wrote:
+> > 
+> > > From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+> > > 
+> > > The trigger code is picky in how it can be disabled as there may be
+> > > dependencies between different events and synthetic events. Change the order
+> > > on how triggers are reset.
+> > > 
+> > >  1) Reset triggers of all synthetic events first
+> > >  2) Remove triggers with actions attached to them
+> > >  3) Remove all other triggers
+> > > 
+> > > If this order isn't followed, then some triggers will not be reset, and an
+> > > error may happen because a trigger is busy.  
+> > 
+> > Ah, right!
+> > 
+> > Acked-by: Masami Hiramatsu <mhiramat@kernel.org>
+> 
+> Thanks!
+> 
+> > 
+> > I think this should go into stable tree too.
+> 
+> I wonder if I should break this into two patches then.
+> 
+> One for the actions before attached, and one for synthetic events?
+> 
+> Hmm, maybe not. As it can handle not having synthetic events, it should
+> be OK to let the update go to a time when they were not there.
+> 
+> Thoughts?
 
-Yes, I assumed you had it as you pulled it into 4.14-rt. I was just
-looking at what 4.14-rt has. Anything you added there you should add to
-4.16-rt as well.
+I think the latest test-set can be run on the any stable kernel,
+and this correctly checks existence of the knob, so you don't need
+to split it.
 
-> cleanly applied. Comparing with -rc3 it looks like commit 5e4cf2bf6d1c
-> ("tracing: Fix a potential NULL dereference") would be great addition.
-
-Good catch, yeah, I should pull that in too.
+Thank you, 
 
 > 
-> Safe to take them, right?
+> -- Steve
+> 
+> > 
+> > Thank you!
+> > 
+> > > 
+> > > Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+> > > ---
+> > >  .../testing/selftests/ftrace/test.d/functions | 21 ++++++++++++++++---
+> > >  1 file changed, 18 insertions(+), 3 deletions(-)
+> > > 
+> > > diff --git a/tools/testing/selftests/ftrace/test.d/functions b/tools/testing/selftests/ftrace/test.d/functions
+> > > index 2a4f16fc9819..8393b1c06027 100644
+> > > --- a/tools/testing/selftests/ftrace/test.d/functions
+> > > +++ b/tools/testing/selftests/ftrace/test.d/functions
+> > > @@ -15,14 +15,29 @@ reset_tracer() { # reset the current tracer
+> > >      echo nop > current_tracer
+> > >  }
+> > >  
+> > > -reset_trigger() { # reset all current setting triggers
+> > > -    grep -v ^# events/*/*/trigger |
+> > > +reset_trigger_file() {
+> > > +    # remove action triggers first
+> > > +    grep -H ':on[^:]*(' $@ |
+> > > +    while read line; do
+> > > +        cmd=`echo $line | cut -f2- -d: | cut -f1 -d" "`
+> > > +	file=`echo $line | cut -f1 -d:`
+> > > +	echo "!$cmd" >> $file
+> > > +    done
+> > > +    grep -Hv ^# $@ |
+> > >      while read line; do
+> > >          cmd=`echo $line | cut -f2- -d: | cut -f1 -d" "`
+> > > -	echo "!$cmd" > `echo $line | cut -f1 -d:`
+> > > +	file=`echo $line | cut -f1 -d:`
+> > > +	echo "!$cmd" > $file
+> > >      done
+> > >  }
+> > >  
+> > > +reset_trigger() { # reset all current setting triggers
+> > > +    if [ -d events/synthetic ]; then
+> > > +        reset_trigger_file events/synthetic/*/trigger
+> > > +    fi
+> > > +    reset_trigger_file events/*/*/trigger
+> > > +}
+> > > +
+> > >  reset_events_filter() { # reset all current setting filters
+> > >      grep -v ^none events/*/*/filter |
+> > >      while read line; do
+> > > -- 
+> > > 2.17.0
+> > > 
+> > >   
+> > 
+> > 
+> 
 
-Yep.
 
--- Steve
+-- 
+Masami Hiramatsu <mhiramat@kernel.org>
