@@ -1,11 +1,10 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH v2 05/14] tracing: Do not show filter file for ftrace
- internal events
-Date: Wed, 16 May 2018 06:44:25 -0400
-Message-ID: <20180516064425.6cdd45e1@gandalf.local.home>
+From: Masami Hiramatsu <mhiramat@kernel.org>
+Subject: Re: [PATCH v2 11/14] ftrace/selftest: Have the reset_trigger code
+ be a bit more careful
+Date: Wed, 16 May 2018 21:53:50 +0900
+Message-ID: <20180516215350.4fb775e101bc6a122bfe3282@kernel.org>
 References: <20180514205845.017925650@goodmis.org>
-        <20180514205958.061558690@goodmis.org>
-        <20180516091025.GB30309@danjae.aot.lge.com>
+        <20180514205958.915494639@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,42 +17,87 @@ Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
         Brendan Gregg <bgregg@netflix.com>,
         Joel Fernandes <joel@joelfernandes.org>,
         Masami Hiramatsu <mhiramat@kernel.org>,
+        Namhyung Kim <namhyung@kernel.org>,
         Yann Ylavic <ylavic.dev@gmail.com>,
-        linux-rt-users@vger.kernel.org, kernel-team@lge.com
-To: Namhyung Kim <namhyung@kernel.org>
+        linux-rt-users@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180516091025.GB30309@danjae.aot.lge.com>
+In-Reply-To: <20180514205958.915494639@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 16 May 2018 18:10:25 +0900
-Namhyung Kim <namhyung@kernel.org> wrote:
+On Mon, 14 May 2018 16:58:56 -0400
+Steven Rostedt <rostedt@goodmis.org> wrote:
 
-  
-> >  	/*
-> >  	 * Only event directories that can be enabled should have
-> > -	 * triggers.
-> > +	 * triggers or filters.
-> >  	 */
-> > -	if (!(call->flags & TRACE_EVENT_FL_IGNORE_ENABLE))
-> > +	if (!(call->flags & TRACE_EVENT_FL_IGNORE_ENABLE)) {
-> > +		trace_create_file("filter", 0644, file->dir, file,
-> > +				  &ftrace_event_filter_fops);
-> > +
-> >  		trace_create_file("trigger", 0644, file->dir, file,
-> >  				  &event_trigger_fops);
-> > +	}
-> >  
-> >  #ifdef CONFIG_HIST_TRIGGERS
-> >  	trace_create_file("hist", 0444, file->dir, file,  
+> From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 > 
-> What about moving the "hist" file as well since it's meaningless
-> without the trigger.
+> The trigger code is picky in how it can be disabled as there may be
+> dependencies between different events and synthetic events. Change the order
+> on how triggers are reset.
+> 
+>  1) Reset triggers of all synthetic events first
+>  2) Remove triggers with actions attached to them
+>  3) Remove all other triggers
+> 
+> If this order isn't followed, then some triggers will not be reset, and an
+> error may happen because a trigger is busy.
 
-I thought about doing this too. But when I had to manually create the
-trigger file, I'll have to also manually create the hist file. As the
-hist file is read only and rather harmless, I figured I'd just leave it
-as is. The filter file is a command file and this patch wants to remove
-the confusion of writing into the file and having no effect.
+Ah, right!
 
--- Steve
+Acked-by: Masami Hiramatsu <mhiramat@kernel.org>
+
+I think this should go into stable tree too.
+
+Thank you!
+
+> 
+> Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+> ---
+>  .../testing/selftests/ftrace/test.d/functions | 21 ++++++++++++++++---
+>  1 file changed, 18 insertions(+), 3 deletions(-)
+> 
+> diff --git a/tools/testing/selftests/ftrace/test.d/functions b/tools/testing/selftests/ftrace/test.d/functions
+> index 2a4f16fc9819..8393b1c06027 100644
+> --- a/tools/testing/selftests/ftrace/test.d/functions
+> +++ b/tools/testing/selftests/ftrace/test.d/functions
+> @@ -15,14 +15,29 @@ reset_tracer() { # reset the current tracer
+>      echo nop > current_tracer
+>  }
+>  
+> -reset_trigger() { # reset all current setting triggers
+> -    grep -v ^# events/*/*/trigger |
+> +reset_trigger_file() {
+> +    # remove action triggers first
+> +    grep -H ':on[^:]*(' $@ |
+> +    while read line; do
+> +        cmd=`echo $line | cut -f2- -d: | cut -f1 -d" "`
+> +	file=`echo $line | cut -f1 -d:`
+> +	echo "!$cmd" >> $file
+> +    done
+> +    grep -Hv ^# $@ |
+>      while read line; do
+>          cmd=`echo $line | cut -f2- -d: | cut -f1 -d" "`
+> -	echo "!$cmd" > `echo $line | cut -f1 -d:`
+> +	file=`echo $line | cut -f1 -d:`
+> +	echo "!$cmd" > $file
+>      done
+>  }
+>  
+> +reset_trigger() { # reset all current setting triggers
+> +    if [ -d events/synthetic ]; then
+> +        reset_trigger_file events/synthetic/*/trigger
+> +    fi
+> +    reset_trigger_file events/*/*/trigger
+> +}
+> +
+>  reset_events_filter() { # reset all current setting filters
+>      grep -v ^none events/*/*/filter |
+>      while read line; do
+> -- 
+> 2.17.0
+> 
+> 
+
+
+-- 
+Masami Hiramatsu <mhiramat@kernel.org>
