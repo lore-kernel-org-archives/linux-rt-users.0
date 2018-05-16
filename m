@@ -1,11 +1,11 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH v2 13/14] tracing/selftest: Add selftests to test
- trace_marker histogram triggers
-Date: Wed, 16 May 2018 10:06:06 -0400
-Message-ID: <20180516100606.0ecf2e56@gandalf.local.home>
+Subject: Re: [PATCH v2 14/14] tracing/selftest: Add test to test hist
+ trigger between kernel event and trace_marker
+Date: Wed, 16 May 2018 10:09:59 -0400
+Message-ID: <20180516100959.677fed4b@gandalf.local.home>
 References: <20180514205845.017925650@goodmis.org>
-        <20180514205959.230719465@goodmis.org>
-        <20180516220716.60174e9edd8d9f970fcd37e1@kernel.org>
+        <20180514205959.393826165@goodmis.org>
+        <20180516091153.GC30309@danjae.aot.lge.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -17,26 +17,33 @@ Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
         Karim Yaghmour <karim.yaghmour@opersys.com>,
         Brendan Gregg <bgregg@netflix.com>,
         Joel Fernandes <joel@joelfernandes.org>,
-        Namhyung Kim <namhyung@kernel.org>,
+        Masami Hiramatsu <mhiramat@kernel.org>,
         Yann Ylavic <ylavic.dev@gmail.com>,
-        linux-rt-users@vger.kernel.org
-To: Masami Hiramatsu <mhiramat@kernel.org>
+        linux-rt-users@vger.kernel.org, kernel-team@lge.com
+To: Namhyung Kim <namhyung@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180516220716.60174e9edd8d9f970fcd37e1@kernel.org>
+In-Reply-To: <20180516091153.GC30309@danjae.aot.lge.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 16 May 2018 22:07:16 +0900
-Masami Hiramatsu <mhiramat@kernel.org> wrote:
+On Wed, 16 May 2018 18:11:53 +0900
+Namhyung Kim <namhyung@kernel.org> wrote:
 
-> > --- /dev/null
-> > +++ b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker.tc  
+ 
+> > +echo "Test histogram kernel event to trace_marker latency histogram trigger"
+> > +
+> > +echo 'latency u64 lat' > synthetic_events
+> > +echo 'hist:keys=pid:ts0=common_timestamp.usecs' > events/sched/sched_waking/trigger
+> > +echo 'hist:keys=common_pid:lat=common_timestamp.usecs-$ts0:onmatch(ftrace.print).latency($lat)' > events/ftrace/print/trigger  
 > 
-> But this test actually kicks histogram, maybe
-> trigger-trace-marker-hist.tc will be better, since we may need to add
-> a simpler testcase just for checking whether trace-marker works with
-> some actions (e.g. enable/disable other events).
+> Shouldn't it be "onmatch(sched.sched_waking)" ?
 
-OK, will update that file. Thanks for reviewing.
+Ug, yes! Cut-and-paste fail :-p
+
+I tested this my hand and did it correctly, but instead of
+cut-and-pasting the command line, I cut and pasted the other test and
+updated it.
+
+Thanks for reviewing Namhyung!
 
 -- Steve
