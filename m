@@ -1,13 +1,11 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [RFC][PATCH 06/10] tracing: Add trigger file for trace_markers
- tracefs/ftrace/print
-Date: Wed, 16 May 2018 06:37:57 -0400
-Message-ID: <20180516063757.7d5a1ca5@gandalf.local.home>
-References: <20180511194927.190877137@goodmis.org>
-        <20180511195340.876528094@goodmis.org>
-        <20180514031322.GB9220@sejong>
-        <20180514110436.336b214b@gandalf.local.home>
-        <20180516074904.GA30309@danjae.aot.lge.com>
+Subject: Re: [PATCH v2 05/14] tracing: Do not show filter file for ftrace
+ internal events
+Date: Wed, 16 May 2018 06:44:25 -0400
+Message-ID: <20180516064425.6cdd45e1@gandalf.local.home>
+References: <20180514205845.017925650@goodmis.org>
+        <20180514205958.061558690@goodmis.org>
+        <20180516091025.GB30309@danjae.aot.lge.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,43 +16,44 @@ Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
         Clark Williams <williams@redhat.com>,
         Karim Yaghmour <karim.yaghmour@opersys.com>,
         Brendan Gregg <bgregg@netflix.com>,
-        Joel Fernandes <joelaf@google.com>,
+        Joel Fernandes <joel@joelfernandes.org>,
         Masami Hiramatsu <mhiramat@kernel.org>,
+        Yann Ylavic <ylavic.dev@gmail.com>,
         linux-rt-users@vger.kernel.org, kernel-team@lge.com
 To: Namhyung Kim <namhyung@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180516074904.GA30309@danjae.aot.lge.com>
+In-Reply-To: <20180516091025.GB30309@danjae.aot.lge.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 16 May 2018 16:49:04 +0900
+On Wed, 16 May 2018 18:10:25 +0900
 Namhyung Kim <namhyung@kernel.org> wrote:
 
-
-> > Which will do:
-> > 
-> >   event_trigger_write() {
-> >     event_trigger_regex_write() {
-> >       trigger_process_regex() {
-> >         for p in trigger_commands {
-> >           p->func(); /* trigger_snapshot_cmd->func */
-> >             event_trigger_callback() {
-> >               cmd_ops->reg() /* register_trigger() */ {
-> >                 trace_event_trigger_enable_disable() {
-> >                   trace_event_enable_disable() {
-> >                     call->class->reg();
-> > 
-> > Without this patch, we jump to NULL and BOOM!  
+  
+> >  	/*
+> >  	 * Only event directories that can be enabled should have
+> > -	 * triggers.
+> > +	 * triggers or filters.
+> >  	 */
+> > -	if (!(call->flags & TRACE_EVENT_FL_IGNORE_ENABLE))
+> > +	if (!(call->flags & TRACE_EVENT_FL_IGNORE_ENABLE)) {
+> > +		trace_create_file("filter", 0644, file->dir, file,
+> > +				  &ftrace_event_filter_fops);
+> > +
+> >  		trace_create_file("trigger", 0644, file->dir, file,
+> >  				  &event_trigger_fops);
+> > +	}
+> >  
+> >  #ifdef CONFIG_HIST_TRIGGERS
+> >  	trace_create_file("hist", 0444, file->dir, file,  
 > 
-> Thanks for the explanation.  I wonder we can skip calling
-> trace_event_enable_disable() for events which have the
-> TRACE_EVENT_FL_IGNORE_ENABLE flag.
+> What about moving the "hist" file as well since it's meaningless
+> without the trigger.
 
-Sounds like something we can do in the future. I rather have do the
-minimal now as it will have the least side effects, and it's already
-getting late in the current rc series. I'm looking to get this into the
-next merge window.
-
-But after that, changing it this way would be a nice clean up.
+I thought about doing this too. But when I had to manually create the
+trigger file, I'll have to also manually create the hist file. As the
+hist file is read only and rather harmless, I figured I'd just leave it
+as is. The filter file is a command file and this patch wants to remove
+the confusion of writing into the file and having no effect.
 
 -- Steve
