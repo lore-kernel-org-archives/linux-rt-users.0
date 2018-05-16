@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 5/5] Linux 4.14.40-rt31-rc1
-Date: Wed, 16 May 2018 09:36:47 -0400
-Message-ID: <20180516133836.810759690@goodmis.org>
+Subject: [PATCH RT 4/5] tracing: Uninitialized variable in create_tracing_map_fields()
+Date: Wed, 16 May 2018 09:36:46 -0400
+Message-ID: <20180516133836.671203800@goodmis.org>
 References: <20180516133642.521479369@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -12,11 +12,12 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com
+        tom.zanussi@linux.intel.com,
+        Dan Carpenter <dan.carpenter@oracle.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0005-Linux-4.14.40-rt31-rc1.patch
+Content-Disposition: inline; filename=0004-tracing-Uninitialized-variable-in-create_tracing_map.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -25,18 +26,37 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+From: Dan Carpenter <dan.carpenter@oracle.com>
 
+[ commit b28d7b2dc27f0eef1ae608b49d6860f2463910f1 ]
+
+Smatch complains that idx can be used uninitialized when we check if
+(idx < 0).  It has to be the first iteration through the loop and the
+HIST_FIELD_FL_STACKTRACE bit has to be clear and the HIST_FIELD_FL_VAR
+bit has to be set to reach the bug.
+
+Link: http://lkml.kernel.org/r/20180328114815.GC29050@mwanda
+
+Fixes: 30350d65ac56 ("tracing: Add variable support to hist triggers")
+Acked-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+Signed-off-by: Dan Carpenter <dan.carpenter@oracle.com>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- localversion-rt | 2 +-
+ kernel/trace/trace_events_hist.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/localversion-rt b/localversion-rt
-index b72862e06be4..7f30ff78f82f 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt30
-+-rt31-rc1
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 4745ed588607..b3808969ac92 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -4459,7 +4459,7 @@ static int create_tracing_map_fields(struct hist_trigger_data *hist_data)
+ 	struct tracing_map *map = hist_data->map;
+ 	struct ftrace_event_field *field;
+ 	struct hist_field *hist_field;
+-	int i, idx;
++	int i, idx = 0;
+ 
+ 	for_each_hist_field(i, hist_data) {
+ 		hist_field = hist_data->fields[i];
 -- 
 2.17.0
