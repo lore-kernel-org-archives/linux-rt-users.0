@@ -1,193 +1,90 @@
-From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: Re: [PATCH v2 13/14] tracing/selftest: Add selftests to test
- trace_marker histogram triggers
-Date: Wed, 16 May 2018 22:07:16 +0900
-Message-ID: <20180516220716.60174e9edd8d9f970fcd37e1@kernel.org>
-References: <20180514205845.017925650@goodmis.org>
-        <20180514205959.230719465@goodmis.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 3/5] tracing: Restore proper field flag printing when displaying triggers
+Date: Wed, 16 May 2018 09:36:45 -0400
+Message-ID: <20180516133836.518686476@goodmis.org>
+References: <20180516133642.521479369@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Karim Yaghmour <karim.yaghmour@opersys.com>,
-        Brendan Gregg <bgregg@netflix.com>,
-        Joel Fernandes <joel@joelfernandes.org>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        Namhyung Kim <namhyung@kernel.org>,
-        Yann Ylavic <ylavic.dev@gmail.com>,
-        linux-rt-users@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=ISO-8859-15
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        John Kacur <jkacur@redhat.com>,
+        Paul Gortmaker <paul.gortmaker@windriver.com>,
+        Julia Cartwright <julia@ni.com>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        tom.zanussi@linux.intel.com
+To: linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180514205959.230719465@goodmis.org>
+Content-Disposition: inline; filename=0003-tracing-Restore-proper-field-flag-printing-when-disp.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 14 May 2018 16:58:58 -0400
-Steven Rostedt <rostedt@goodmis.org> wrote:
+4.14.40-rt31-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-> From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
-> 
-> Add a couple of tests that test the trace_marker histogram triggers.
-> One does a straight histogram test, the other will create a synthetic event
-> and test the latency between two different writes (using filters to
-> differentiate between them).
-> 
-> Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-> ---
->  .../trigger/trigger-trace-marker-synthetic.tc | 66 +++++++++++++++++++
->  .../test.d/trigger/trigger-trace-marker.tc    | 49 ++++++++++++++
->  2 files changed, 115 insertions(+)
->  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc
->  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker.tc
-> 
-> diff --git a/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc
-> new file mode 100644
-> index 000000000000..8e7a043da7fb
-> --- /dev/null
-> +++ b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc
+------------------
 
-OK, since the synthetic event may need histogram support, so this testname is OK.
+From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
+[ commit 608940dabe1bd2ce4c97524004ec86637cf80f2c ]
 
-> @@ -0,0 +1,66 @@
-> +#!/bin/sh
-> +# SPDX-License-Identifier: GPL-2.0
-> +# description: event trigger - test histogram with synthetic event
-> +# flags:
-> +
-> +do_reset() {
-> +    reset_trigger
-> +    echo > set_event
-> +    echo > synthetic_events
-> +    clear_trace
-> +}
-> +
-> +fail() { #msg
-> +    do_reset
-> +    echo $1
-> +    exit_fail
-> +}
-> +
-> +if [ ! -f set_event ]; then
-> +    echo "event tracing is not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +if [ ! -f synthetic_events ]; then
-> +    echo "synthetic events not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +if [ ! -d events/ftrace/print ]; then
-> +    echo "event trace_marker is not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +if [ ! -f events/ftrace/print/trigger ]; then
-> +    echo "event trigger is not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +if [ ! -f events/ftrace/print/hist ]; then
-> +    echo "hist trigger is not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +do_reset
-> +
-> +echo "Test histogram trace_marker to trace_marker latency histogram trigger"
-> +
-> +echo 'latency u64 lat' > synthetic_events
-> +echo 'hist:keys=common_pid:ts0=common_timestamp.usecs if buf == "start"' > events/ftrace/print/trigger
-> +echo 'hist:keys=common_pid:lat=common_timestamp.usecs-$ts0:onmatch(ftrace.print).latency($lat) if buf == "end"' >> events/ftrace/print/trigger
-> +echo 'hist:keys=common_pid,lat:sort=lat' > events/synthetic/latency/trigger
-> +echo -n "start" > trace_marker
-> +echo -n "end" > trace_marker
+The flag-printing code used when displaying hist triggers somehow got
+dropped during refactoring of the inter-event patchset.  This restores
+it.
 
-Ah, this is a great example how we can use this combination :D
+Below are a couple examples - in the first case, .usecs wasn't being
+displayed properly for common_timestamps and the second illustrates
+the same for other flags such as .execname.
 
-> +
-> +cnt=`grep 'hitcount: *1$' events/ftrace/print/hist | wc -l`
-> +
-> +if [ $cnt -ne 2 ]; then
-> +    fail "hist trace_marker trigger did not trigger correctly"
-> +fi
-> +
-> +grep 'hitcount: *1$' events/synthetic/latency/hist > /dev/null || \
-> +    fail "hist trigger did not trigger "
-> +
-> +do_reset
-> +
-> +exit 0
-> diff --git a/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker.tc b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker.tc
-> new file mode 100644
-> index 000000000000..48e7ac1ccbc1
-> --- /dev/null
-> +++ b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker.tc
+Before:
 
-But this test actually kicks histogram, maybe trigger-trace-marker-hist.tc will be better, since we may need to add a simpler testcase just for checking whether trace-marker works with some actions (e.g. enable/disable other events).
+  # echo 'hist:key=common_pid.execname:val=count:sort=count' > /sys/kernel/debug/tracing/events/syscalls/sys_enter_read/trigger
+  # cat /sys/kernel/debug/tracing/events/syscalls/sys_enter_read/trigger
+  hist:keys=common_pid:vals=hitcount,count:sort=count:size=2048 [active]
 
-Thank you,
+  # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+  # cat /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+  hist:keys=pid:vals=hitcount:ts0=common_timestamp:sort=hitcount:size=2048:clock=global if comm=="cyclictest" [active]
 
-> @@ -0,0 +1,49 @@
-> +#!/bin/sh
-> +# SPDX-License-Identifier: GPL-2.0
-> +# description: event trigger - test histogram trigger
-> +# flags: instance
-> +
-> +do_reset() {
-> +    reset_trigger
-> +    echo > set_event
-> +    clear_trace
-> +}
-> +
-> +fail() { #msg
-> +    do_reset
-> +    echo $1
-> +    exit_fail
-> +}
-> +
-> +if [ ! -f set_event ]; then
-> +    echo "event tracing is not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +if [ ! -d events/ftrace/print ]; then
-> +    echo "event trace_marker is not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +if [ ! -f events/ftrace/print/trigger ]; then
-> +    echo "event trigger is not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +if [ ! -f events/ftrace/print/hist ]; then
-> +    echo "hist trigger is not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +do_reset
-> +
-> +echo "Test histogram trace_marker tigger"
-> +
-> +echo 'hist:keys=common_pid' > events/ftrace/print/trigger
-> +for i in `seq 1 10` ; do echo "hello" > trace_marker; done
-> +grep 'hitcount: *10$' events/ftrace/print/hist > /dev/null || \
-> +    fail "hist trigger did not trigger correct times on trace_marker"
-> +
-> +do_reset
-> +
-> +exit 0
-> -- 
-> 2.17.0
-> 
-> 
+After:
 
+  # echo 'hist:key=common_pid.execname:val=count:sort=count' > /sys/kernel/debug/tracing/events/syscalls/sys_enter_read/trigger
+  # cat /sys/kernel/debug/tracing/events/syscalls/sys_enter_read/trigger
+  hist:keys=common_pid.execname:vals=hitcount,count:sort=count:size=2048 [active]
 
+  # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+  # cat /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+  hist:keys=pid:vals=hitcount:ts0=common_timestamp.usecs:sort=hitcount:size=2048:clock=global if comm=="cyclictest" [active]
+
+Link: http://lkml.kernel.org/r/492bab42ff21806600af98a8ea901af10efbee0c.1524790601.git.tom.zanussi@linux.intel.com
+
+Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+---
+ kernel/trace/trace_events_hist.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 9dac8bae4f34..4745ed588607 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -4916,6 +4916,16 @@ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
+ 		seq_printf(m, "%s", field_name);
+ 	} else if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP)
+ 		seq_puts(m, "common_timestamp");
++
++	if (hist_field->flags) {
++		if (!(hist_field->flags & HIST_FIELD_FL_VAR_REF) &&
++		    !(hist_field->flags & HIST_FIELD_FL_EXPR)) {
++			const char *flags = get_hist_field_flags(hist_field);
++
++			if (flags)
++				seq_printf(m, ".%s", flags);
++		}
++	}
+ }
+ 
+ static int event_hist_trigger_print(struct seq_file *m,
 -- 
-Masami Hiramatsu <mhiramat@kernel.org>
+2.17.0
