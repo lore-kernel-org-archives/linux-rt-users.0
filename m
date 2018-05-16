@@ -1,12 +1,10 @@
 From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [RFC][PATCH 06/10] tracing: Add trigger file for trace_markers
- tracefs/ftrace/print
-Date: Wed, 16 May 2018 16:49:04 +0900
-Message-ID: <20180516074904.GA30309@danjae.aot.lge.com>
-References: <20180511194927.190877137@goodmis.org>
- <20180511195340.876528094@goodmis.org>
- <20180514031322.GB9220@sejong>
- <20180514110436.336b214b@gandalf.local.home>
+Subject: Re: [PATCH v2 05/14] tracing: Do not show filter file for ftrace
+ internal events
+Date: Wed, 16 May 2018 18:10:25 +0900
+Message-ID: <20180516091025.GB30309@danjae.aot.lge.com>
+References: <20180514205845.017925650@goodmis.org>
+ <20180514205958.061558690@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
@@ -16,89 +14,62 @@ Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
         Clark Williams <williams@redhat.com>,
         Karim Yaghmour <karim.yaghmour@opersys.com>,
         Brendan Gregg <bgregg@netflix.com>,
-        Joel Fernandes <joelaf@google.com>,
+        Joel Fernandes <joel@joelfernandes.org>,
         Masami Hiramatsu <mhiramat@kernel.org>,
+        Yann Ylavic <ylavic.dev@gmail.com>,
         linux-rt-users@vger.kernel.org, kernel-team@lge.com
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180514110436.336b214b@gandalf.local.home>
+In-Reply-To: <20180514205958.061558690@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Steve,
+On Mon, May 14, 2018 at 04:58:50PM -0400, Steven Rostedt wrote:
+> From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+> 
+> The filter file in the ftrace internal events, like in
+> /sys/kernel/tracing/events/ftrace/function/filter is not attached to any
+> functionality. Do not create them as they are meaningless.
+> 
+> In the future, if an ftrace internal event gets filter functionality, then
+> it will need to create it directly.
+> 
+> Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+> ---
+>  kernel/trace/trace_events.c | 10 ++++++----
+>  1 file changed, 6 insertions(+), 4 deletions(-)
+> 
+> diff --git a/kernel/trace/trace_events.c b/kernel/trace/trace_events.c
+> index 5b647904a65b..14ff4ff3caab 100644
+> --- a/kernel/trace/trace_events.c
+> +++ b/kernel/trace/trace_events.c
+> @@ -2007,16 +2007,18 @@ event_create_dir(struct dentry *parent, struct trace_event_file *file)
+>  			return -1;
+>  		}
+>  	}
+> -	trace_create_file("filter", 0644, file->dir, file,
+> -			  &ftrace_event_filter_fops);
+>  
+>  	/*
+>  	 * Only event directories that can be enabled should have
+> -	 * triggers.
+> +	 * triggers or filters.
+>  	 */
+> -	if (!(call->flags & TRACE_EVENT_FL_IGNORE_ENABLE))
+> +	if (!(call->flags & TRACE_EVENT_FL_IGNORE_ENABLE)) {
+> +		trace_create_file("filter", 0644, file->dir, file,
+> +				  &ftrace_event_filter_fops);
+> +
+>  		trace_create_file("trigger", 0644, file->dir, file,
+>  				  &event_trigger_fops);
+> +	}
+>  
+>  #ifdef CONFIG_HIST_TRIGGERS
+>  	trace_create_file("hist", 0444, file->dir, file,
 
-On Mon, May 14, 2018 at 11:04:36AM -0400, Steven Rostedt wrote:
-> On Mon, 14 May 2018 12:13:22 +0900
-> Namhyung Kim <namhyung@kernel.org> wrote:
-> 
-> > On Fri, May 11, 2018 at 03:49:33PM -0400, Steven Rostedt wrote:
-> > > From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
-> > > 
-> > > Allow writing to the trace_markers file initiate triggers defined in
-> > > tracefs/ftrace/print/trigger file. This will allow of user space to trigger
-> > > the same type of triggers (including histograms) that the trace events use.
-> > > 
-> > > Cc: Tom Zanussi <tom.zanussi@linux.intel.com>
-> > > Cc: Clark Williams <williams@redhat.com>
-> > > Cc: Karim Yaghmour <karim.yaghmour@opersys.com>
-> > > Cc: Brendan Gregg <bgregg@netflix.com>
-> > > Suggested-by: Joel Fernandes <joelaf@google.com>
-> > > Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-> > > ---  
-> > 
-> > [SNIP]
-> > > diff --git a/kernel/trace/trace_entries.h b/kernel/trace/trace_entries.h
-> > > index e3a658bac10f..de3fce14cd00 100644
-> > > --- a/kernel/trace/trace_entries.h
-> > > +++ b/kernel/trace/trace_entries.h
-> > > @@ -230,7 +230,7 @@ FTRACE_ENTRY(bprint, bprint_entry,
-> > >  	FILTER_OTHER
-> > >  );
-> > >  
-> > > -FTRACE_ENTRY(print, print_entry,
-> > > +FTRACE_ENTRY_REG(print, print_entry,
-> > >  
-> > >  	TRACE_PRINT,
-> > >  
-> > > @@ -242,7 +242,9 @@ FTRACE_ENTRY(print, print_entry,
-> > >  	F_printk("%ps: %s",
-> > >  		 (void *)__entry->ip, __entry->buf),
-> > >  
-> > > -	FILTER_OTHER
-> > > +	FILTER_OTHER,
-> > > +
-> > > +	 ftrace_event_register  
-> > 
-> > I wonder this is still needed since you added __find_event_file()
-> > which ignores the reg field.  Maybe I'm missing something..
-> 
-> No, that's not the reason for it. The reason is due to the
-> event_trigger_callback() function. I'll update the changelog to specify
-> this.
-> 
-> We have something like:
-> 
->  # echo snapshot > events/ftrace/print/trigger
-> 
-> Which will do:
-> 
->   event_trigger_write() {
->     event_trigger_regex_write() {
->       trigger_process_regex() {
->         for p in trigger_commands {
->           p->func(); /* trigger_snapshot_cmd->func */
->             event_trigger_callback() {
->               cmd_ops->reg() /* register_trigger() */ {
->                 trace_event_trigger_enable_disable() {
->                   trace_event_enable_disable() {
->                     call->class->reg();
-> 
-> Without this patch, we jump to NULL and BOOM!
-
-Thanks for the explanation.  I wonder we can skip calling
-trace_event_enable_disable() for events which have the
-TRACE_EVENT_FL_IGNORE_ENABLE flag.
+What about moving the "hist" file as well since it's meaningless
+without the trigger.
 
 Thanks,
 Namhyung
