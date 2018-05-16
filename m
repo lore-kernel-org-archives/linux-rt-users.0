@@ -1,10 +1,10 @@
 From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: Re: [PATCH v2 12/14] ftrace/selftest: Fix reset_trigger() to handle
- triggers with filters
-Date: Wed, 16 May 2018 21:56:12 +0900
-Message-ID: <20180516215612.e86701c1da81e9b9982a3c9f@kernel.org>
+Subject: Re: [PATCH v2 13/14] tracing/selftest: Add selftests to test
+ trace_marker histogram triggers
+Date: Wed, 16 May 2018 22:07:16 +0900
+Message-ID: <20180516220716.60174e9edd8d9f970fcd37e1@kernel.org>
 References: <20180514205845.017925650@goodmis.org>
-        <20180514205959.080491350@goodmis.org>
+        <20180514205959.230719465@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -22,79 +22,167 @@ Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
         linux-rt-users@vger.kernel.org
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180514205959.080491350@goodmis.org>
+In-Reply-To: <20180514205959.230719465@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 14 May 2018 16:58:57 -0400
+On Mon, 14 May 2018 16:58:58 -0400
 Steven Rostedt <rostedt@goodmis.org> wrote:
 
 > From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 > 
-> The reset_trigger() function breaks up the command by a space ' '. This is
-> useful to ignore the '[active]' word for triggers when removing them. But if
-> the trigger has a filter (ie. "if prio < 10") then the filter needs to be
-> attached to the line that is written into the trigger file to remove it. But
-> the truncation removes the filter and the triggers are not cleared properly.
+> Add a couple of tests that test the trace_marker histogram triggers.
+> One does a straight histogram test, the other will create a synthetic event
+> and test the latency between two different writes (using filters to
+> differentiate between them).
 > 
-> Before, reset_trigger() did this:
+> Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+> ---
+>  .../trigger/trigger-trace-marker-synthetic.tc | 66 +++++++++++++++++++
+>  .../test.d/trigger/trigger-trace-marker.tc    | 49 ++++++++++++++
+>  2 files changed, 115 insertions(+)
+>  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc
+>  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker.tc
 > 
->  # echo 'hist:keys=common_pid if prev_prio < 10' > events/sched/sched_switch/trigger
->  # echo 'hist:keys=common_pid if next_prio < 10' >> events/sched/sched_switch/trigger
->  # cat events/sched/sched_switch/trigger
-> hist:keys=common_pid:vals=hitcount:sort=hitcount:size=2048 if prev_prio < 10 [active]
-> hist:keys=common_pid:vals=hitcount:sort=hitcount:size=2048 if next_prio < 10 [active]
-> 
->  reset_trigger() {
->    echo '!hist:keys=common_pid:vals=hitcount:sort=hitcount:size=2048' >> events/sched/sched_switch/trigger
->  }
-> 
->  # cat events/sched/sched_switch/trigger
-> hist:keys=common_pid:vals=hitcount:sort=hitcount:size=2048 if prev_prio < 10 [active]
-> hist:keys=common_pid:vals=hitcount:sort=hitcount:size=2048 if next_prio < 10 [active]
-> 
-> After, where it includes the filter:
-> 
->  reset_trigger() {
->    echo '!hist:keys=common_pid:vals=hitcount:sort=hitcount:size=2048 if prev_prio < 10' >> events/sched/sched_switch/trigger
->  }
-> 
->  # cat events/sched/sched_switch/trigger
-> hist:keys=common_pid:vals=hitcount:sort=hitcount:size=2048 if next_prio < 10 [active]
-> 
+> diff --git a/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc
+> new file mode 100644
+> index 000000000000..8e7a043da7fb
+> --- /dev/null
+> +++ b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc
 
-This also looks good to me and needs to go into stable.
+OK, since the synthetic event may need histogram support, so this testname is OK.
 
-Acked-by: Masami Hiramatsu <mhiramat@kernel.org>
+
+> @@ -0,0 +1,66 @@
+> +#!/bin/sh
+> +# SPDX-License-Identifier: GPL-2.0
+> +# description: event trigger - test histogram with synthetic event
+> +# flags:
+> +
+> +do_reset() {
+> +    reset_trigger
+> +    echo > set_event
+> +    echo > synthetic_events
+> +    clear_trace
+> +}
+> +
+> +fail() { #msg
+> +    do_reset
+> +    echo $1
+> +    exit_fail
+> +}
+> +
+> +if [ ! -f set_event ]; then
+> +    echo "event tracing is not supported"
+> +    exit_unsupported
+> +fi
+> +
+> +if [ ! -f synthetic_events ]; then
+> +    echo "synthetic events not supported"
+> +    exit_unsupported
+> +fi
+> +
+> +if [ ! -d events/ftrace/print ]; then
+> +    echo "event trace_marker is not supported"
+> +    exit_unsupported
+> +fi
+> +
+> +if [ ! -f events/ftrace/print/trigger ]; then
+> +    echo "event trigger is not supported"
+> +    exit_unsupported
+> +fi
+> +
+> +if [ ! -f events/ftrace/print/hist ]; then
+> +    echo "hist trigger is not supported"
+> +    exit_unsupported
+> +fi
+> +
+> +do_reset
+> +
+> +echo "Test histogram trace_marker to trace_marker latency histogram trigger"
+> +
+> +echo 'latency u64 lat' > synthetic_events
+> +echo 'hist:keys=common_pid:ts0=common_timestamp.usecs if buf == "start"' > events/ftrace/print/trigger
+> +echo 'hist:keys=common_pid:lat=common_timestamp.usecs-$ts0:onmatch(ftrace.print).latency($lat) if buf == "end"' >> events/ftrace/print/trigger
+> +echo 'hist:keys=common_pid,lat:sort=lat' > events/synthetic/latency/trigger
+> +echo -n "start" > trace_marker
+> +echo -n "end" > trace_marker
+
+Ah, this is a great example how we can use this combination :D
+
+> +
+> +cnt=`grep 'hitcount: *1$' events/ftrace/print/hist | wc -l`
+> +
+> +if [ $cnt -ne 2 ]; then
+> +    fail "hist trace_marker trigger did not trigger correctly"
+> +fi
+> +
+> +grep 'hitcount: *1$' events/synthetic/latency/hist > /dev/null || \
+> +    fail "hist trigger did not trigger "
+> +
+> +do_reset
+> +
+> +exit 0
+> diff --git a/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker.tc b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker.tc
+> new file mode 100644
+> index 000000000000..48e7ac1ccbc1
+> --- /dev/null
+> +++ b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker.tc
+
+But this test actually kicks histogram, maybe trigger-trace-marker-hist.tc will be better, since we may need to add a simpler testcase just for checking whether trace-marker works with some actions (e.g. enable/disable other events).
 
 Thank you,
 
-
-> Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-> ---
->  tools/testing/selftests/ftrace/test.d/functions | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
-> 
-> diff --git a/tools/testing/selftests/ftrace/test.d/functions b/tools/testing/selftests/ftrace/test.d/functions
-> index 8393b1c06027..e4645d5e3126 100644
-> --- a/tools/testing/selftests/ftrace/test.d/functions
-> +++ b/tools/testing/selftests/ftrace/test.d/functions
-> @@ -19,13 +19,13 @@ reset_trigger_file() {
->      # remove action triggers first
->      grep -H ':on[^:]*(' $@ |
->      while read line; do
-> -        cmd=`echo $line | cut -f2- -d: | cut -f1 -d" "`
-> +        cmd=`echo $line | cut -f2- -d: | cut -f1 -d"["`
->  	file=`echo $line | cut -f1 -d:`
->  	echo "!$cmd" >> $file
->      done
->      grep -Hv ^# $@ |
->      while read line; do
-> -        cmd=`echo $line | cut -f2- -d: | cut -f1 -d" "`
-> +        cmd=`echo $line | cut -f2- -d: | cut -f1 -d"["`
->  	file=`echo $line | cut -f1 -d:`
->  	echo "!$cmd" > $file
->      done
+> @@ -0,0 +1,49 @@
+> +#!/bin/sh
+> +# SPDX-License-Identifier: GPL-2.0
+> +# description: event trigger - test histogram trigger
+> +# flags: instance
+> +
+> +do_reset() {
+> +    reset_trigger
+> +    echo > set_event
+> +    clear_trace
+> +}
+> +
+> +fail() { #msg
+> +    do_reset
+> +    echo $1
+> +    exit_fail
+> +}
+> +
+> +if [ ! -f set_event ]; then
+> +    echo "event tracing is not supported"
+> +    exit_unsupported
+> +fi
+> +
+> +if [ ! -d events/ftrace/print ]; then
+> +    echo "event trace_marker is not supported"
+> +    exit_unsupported
+> +fi
+> +
+> +if [ ! -f events/ftrace/print/trigger ]; then
+> +    echo "event trigger is not supported"
+> +    exit_unsupported
+> +fi
+> +
+> +if [ ! -f events/ftrace/print/hist ]; then
+> +    echo "hist trigger is not supported"
+> +    exit_unsupported
+> +fi
+> +
+> +do_reset
+> +
+> +echo "Test histogram trace_marker tigger"
+> +
+> +echo 'hist:keys=common_pid' > events/ftrace/print/trigger
+> +for i in `seq 1 10` ; do echo "hello" > trace_marker; done
+> +grep 'hitcount: *10$' events/ftrace/print/hist > /dev/null || \
+> +    fail "hist trigger did not trigger correct times on trace_marker"
+> +
+> +do_reset
+> +
+> +exit 0
 > -- 
 > 2.17.0
 > 
