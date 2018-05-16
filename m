@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH v3 12/14] ftrace/selftest: Fix reset_trigger() to handle triggers with filters
-Date: Wed, 16 May 2018 11:00:24 -0400
-Message-ID: <20180516150201.098399646@goodmis.org>
+Subject: [PATCH v3 09/14] tracing: Allow histogram triggers to access ftrace internal events
+Date: Wed, 16 May 2018 11:00:21 -0400
+Message-ID: <20180516150200.665458704@goodmis.org>
 References: <20180516150012.135869655@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -19,69 +19,34 @@ Cc: Ingo Molnar <mingo@kernel.org>,
         linux-rt-users@vger.kernel.org
 To: linux-kernel@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0012-ftrace-selftest-Fix-reset_trigger-to-handle-triggers.patch
+Content-Disposition: inline; filename=0009-tracing-Allow-histogram-triggers-to-access-ftrace-in.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-The reset_trigger() function breaks up the command by a space ' '. This is
-useful to ignore the '[active]' word for triggers when removing them. But if
-the trigger has a filter (ie. "if prio < 10") then the filter needs to be
-attached to the line that is written into the trigger file to remove it. But
-the truncation removes the filter and the triggers are not cleared properly.
+Now that trace_marker can have triggers, including a histogram triggers, the
+onmatch() and onmax() access the trace event. To do so, the search routine
+to find the event file needs to use the raw __find_event_file() that does
+not filter out ftrace events.
 
-Before, reset_trigger() did this:
-
- # echo 'hist:keys=common_pid if prev_prio < 10' > events/sched/sched_switch/trigger
- # echo 'hist:keys=common_pid if next_prio < 10' >> events/sched/sched_switch/trigger
- # cat events/sched/sched_switch/trigger
-hist:keys=common_pid:vals=hitcount:sort=hitcount:size=2048 if prev_prio < 10 [active]
-hist:keys=common_pid:vals=hitcount:sort=hitcount:size=2048 if next_prio < 10 [active]
-
- reset_trigger() {
-   echo '!hist:keys=common_pid:vals=hitcount:sort=hitcount:size=2048' >> events/sched/sched_switch/trigger
- }
-
- # cat events/sched/sched_switch/trigger
-hist:keys=common_pid:vals=hitcount:sort=hitcount:size=2048 if prev_prio < 10 [active]
-hist:keys=common_pid:vals=hitcount:sort=hitcount:size=2048 if next_prio < 10 [active]
-
-After, where it includes the filter:
-
- reset_trigger() {
-   echo '!hist:keys=common_pid:vals=hitcount:sort=hitcount:size=2048 if prev_prio < 10' >> events/sched/sched_switch/trigger
- }
-
- # cat events/sched/sched_switch/trigger
-hist:keys=common_pid:vals=hitcount:sort=hitcount:size=2048 if next_prio < 10 [active]
-
-Fixes: cfa0963dc474f ("kselftests/ftrace : Add event trigger testcases")
-Acked-by: Masami Hiramatsu <mhiramat@kernel.org>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- tools/testing/selftests/ftrace/test.d/functions | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ kernel/trace/trace_events_hist.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/tools/testing/selftests/ftrace/test.d/functions b/tools/testing/selftests/ftrace/test.d/functions
-index 8393b1c06027..e4645d5e3126 100644
---- a/tools/testing/selftests/ftrace/test.d/functions
-+++ b/tools/testing/selftests/ftrace/test.d/functions
-@@ -19,13 +19,13 @@ reset_trigger_file() {
-     # remove action triggers first
-     grep -H ':on[^:]*(' $@ |
-     while read line; do
--        cmd=`echo $line | cut -f2- -d: | cut -f1 -d" "`
-+        cmd=`echo $line | cut -f2- -d: | cut -f1 -d"["`
- 	file=`echo $line | cut -f1 -d:`
- 	echo "!$cmd" >> $file
-     done
-     grep -Hv ^# $@ |
-     while read line; do
--        cmd=`echo $line | cut -f2- -d: | cut -f1 -d" "`
-+        cmd=`echo $line | cut -f2- -d: | cut -f1 -d"["`
- 	file=`echo $line | cut -f1 -d:`
- 	echo "!$cmd" > $file
-     done
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index b9061ed59bbd..046c716a6536 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -2865,7 +2865,7 @@ static struct trace_event_file *event_file(struct trace_array *tr,
+ {
+ 	struct trace_event_file *file;
+ 
+-	file = find_event_file(tr, system, event_name);
++	file = __find_event_file(tr, system, event_name);
+ 	if (!file)
+ 		return ERR_PTR(-EINVAL);
+ 
 -- 
 2.17.0
