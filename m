@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 3/5] tracing: Restore proper field flag printing when displaying triggers
-Date: Wed, 16 May 2018 09:36:45 -0400
-Message-ID: <20180516133836.518686476@goodmis.org>
+Subject: [PATCH RT 2/5] tracing: Add field parsing hist error for hist triggers
+Date: Wed, 16 May 2018 09:36:44 -0400
+Message-ID: <20180516133836.375029832@goodmis.org>
 References: <20180516133642.521479369@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -12,11 +12,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com
+        tom.zanussi@linux.intel.com, Masami Hiramatsu <mhiramat@kernel.org>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-tracing-Restore-proper-field-flag-printing-when-disp.patch
+Content-Disposition: inline; filename=0002-tracing-Add-field-parsing-hist-error-for-hist-trigge.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -27,64 +27,49 @@ If anyone has any objections, please let me know.
 
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-[ commit 608940dabe1bd2ce4c97524004ec86637cf80f2c ]
+[ commit 5ec432d7bf9dd3b4a2b84f8974e3adb71f45fb1d ]
 
-The flag-printing code used when displaying hist triggers somehow got
-dropped during refactoring of the inter-event patchset.  This restores
-it.
+If the user specifies a nonexistent field for a hist trigger, the
+current code correctly flags that as an error, but doesn't tell the
+user what happened.
 
-Below are a couple examples - in the first case, .usecs wasn't being
-displayed properly for common_timestamps and the second illustrates
-the same for other flags such as .execname.
+Fix this by invoking hist_err() with an appropriate message when
+nonexistent fields are specified.
 
 Before:
 
-  # echo 'hist:key=common_pid.execname:val=count:sort=count' > /sys/kernel/debug/tracing/events/syscalls/sys_enter_read/trigger
-  # cat /sys/kernel/debug/tracing/events/syscalls/sys_enter_read/trigger
-  hist:keys=common_pid:vals=hitcount,count:sort=count:size=2048 [active]
-
-  # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-  # cat /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-  hist:keys=pid:vals=hitcount:ts0=common_timestamp:sort=hitcount:size=2048:clock=global if comm=="cyclictest" [active]
+  # echo 'hist:keys=pid:ts0=common_timestamp.usecs' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+  -su: echo: write error: Invalid argument
+  # cat /sys/kernel/debug/tracing/events/sched/sched_switch/hist
 
 After:
 
-  # echo 'hist:key=common_pid.execname:val=count:sort=count' > /sys/kernel/debug/tracing/events/syscalls/sys_enter_read/trigger
-  # cat /sys/kernel/debug/tracing/events/syscalls/sys_enter_read/trigger
-  hist:keys=common_pid.execname:vals=hitcount,count:sort=count:size=2048 [active]
+  # echo 'hist:keys=pid:ts0=common_timestamp.usecs' >> /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
+  -su: echo: write error: Invalid argument
+  # cat /sys/kernel/debug/tracing/events/sched/sched_switch/hist
+  ERROR: Couldn't find field: pid
+    Last command: keys=pid:ts0=common_timestamp.usecs
 
-  # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-  # cat /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
-  hist:keys=pid:vals=hitcount:ts0=common_timestamp.usecs:sort=hitcount:size=2048:clock=global if comm=="cyclictest" [active]
-
-Link: http://lkml.kernel.org/r/492bab42ff21806600af98a8ea901af10efbee0c.1524790601.git.tom.zanussi@linux.intel.com
+Link: http://lkml.kernel.org/r/fdc8746969d16906120f162b99dd71c741e0b62c.1524790601.git.tom.zanussi@linux.intel.com
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+Reported-by: Masami Hiramatsu <mhiramat@kernel.org>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/trace/trace_events_hist.c | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+ kernel/trace/trace_events_hist.c | 1 +
+ 1 file changed, 1 insertion(+)
 
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 9dac8bae4f34..4745ed588607 100644
+index b8fee11b5be9..9dac8bae4f34 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -4916,6 +4916,16 @@ static void hist_field_print(struct seq_file *m, struct hist_field *hist_field)
- 		seq_printf(m, "%s", field_name);
- 	} else if (hist_field->flags & HIST_FIELD_FL_TIMESTAMP)
- 		seq_puts(m, "common_timestamp");
-+
-+	if (hist_field->flags) {
-+		if (!(hist_field->flags & HIST_FIELD_FL_VAR_REF) &&
-+		    !(hist_field->flags & HIST_FIELD_FL_EXPR)) {
-+			const char *flags = get_hist_field_flags(hist_field);
-+
-+			if (flags)
-+				seq_printf(m, ".%s", flags);
-+		}
-+	}
- }
- 
- static int event_hist_trigger_print(struct seq_file *m,
+@@ -2482,6 +2482,7 @@ parse_field(struct hist_trigger_data *hist_data, struct trace_event_file *file,
+ 	else {
+ 		field = trace_find_event_field(file->event_call, field_name);
+ 		if (!field || !field->size) {
++			hist_err("Couldn't find field: ", field_name);
+ 			field = ERR_PTR(-EINVAL);
+ 			goto out;
+ 		}
 -- 
 2.17.0
