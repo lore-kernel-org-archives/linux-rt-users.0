@@ -1,15 +1,12 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH v2 14/14] tracing/selftest: Add test to test hist
- trigger between kernel event and trace_marker
-Date: Wed, 16 May 2018 10:09:59 -0400
-Message-ID: <20180516100959.677fed4b@gandalf.local.home>
-References: <20180514205845.017925650@goodmis.org>
-        <20180514205959.393826165@goodmis.org>
-        <20180516091153.GC30309@danjae.aot.lge.com>
+Subject: [PATCH v3 02/14] tracing: Add __find_event_file() to find event files without
+ restrictions
+Date: Wed, 16 May 2018 11:00:14 -0400
+Message-ID: <20180516150159.483627079@goodmis.org>
+References: <20180516150012.135869655@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
+Content-Type: text/plain; charset=ISO-8859-15
+Cc: Ingo Molnar <mingo@kernel.org>,
         Andrew Morton <akpm@linux-foundation.org>,
         Thomas Gleixner <tglx@linutronix.de>,
         Tom Zanussi <tom.zanussi@linux.intel.com>,
@@ -18,32 +15,94 @@ Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
         Brendan Gregg <bgregg@netflix.com>,
         Joel Fernandes <joel@joelfernandes.org>,
         Masami Hiramatsu <mhiramat@kernel.org>,
+        Namhyung Kim <namhyung@kernel.org>,
         Yann Ylavic <ylavic.dev@gmail.com>,
-        linux-rt-users@vger.kernel.org, kernel-team@lge.com
-To: Namhyung Kim <namhyung@kernel.org>
+        linux-rt-users@vger.kernel.org
+To: linux-kernel@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180516091153.GC30309@danjae.aot.lge.com>
+Content-Disposition: inline; filename=0002-tracing-Add-__find_event_file-to-find-event-files-wi.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 16 May 2018 18:11:53 +0900
-Namhyung Kim <namhyung@kernel.org> wrote:
+From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
+By adding the function __find_event_file() that can search for files without
+restrictions, such as if the event associated with the file has a reg
+function, or if it has the "ignore" flag set, the files that are associated
+to ftrace internal events (like trace_marker and function events) can be
+found and used.
+
+find_event_file() still returns a "filtered" file, as most callers need a
+valid trace event file. One created by the trace_events.h macros and not one
+created for parsing ftrace specific events.
+
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+---
+ kernel/trace/trace.h        |  3 +++
+ kernel/trace/trace_events.c | 22 +++++++++++++++++-----
+ 2 files changed, 20 insertions(+), 5 deletions(-)
+
+diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
+index 24b666891eaf..8ecca43d6aea 100644
+--- a/kernel/trace/trace.h
++++ b/kernel/trace/trace.h
+@@ -1454,6 +1454,9 @@ extern void trace_event_enable_tgid_record(bool enable);
+ extern int event_trace_add_tracer(struct dentry *parent, struct trace_array *tr);
+ extern int event_trace_del_tracer(struct trace_array *tr);
  
-> > +echo "Test histogram kernel event to trace_marker latency histogram trigger"
-> > +
-> > +echo 'latency u64 lat' > synthetic_events
-> > +echo 'hist:keys=pid:ts0=common_timestamp.usecs' > events/sched/sched_waking/trigger
-> > +echo 'hist:keys=common_pid:lat=common_timestamp.usecs-$ts0:onmatch(ftrace.print).latency($lat)' > events/ftrace/print/trigger  
-> 
-> Shouldn't it be "onmatch(sched.sched_waking)" ?
-
-Ug, yes! Cut-and-paste fail :-p
-
-I tested this my hand and did it correctly, but instead of
-cut-and-pasting the command line, I cut and pasted the other test and
-updated it.
-
-Thanks for reviewing Namhyung!
-
--- Steve
++extern struct trace_event_file *__find_event_file(struct trace_array *tr,
++						  const char *system,
++						  const char *event);
+ extern struct trace_event_file *find_event_file(struct trace_array *tr,
+ 						const char *system,
+ 						const char *event);
+diff --git a/kernel/trace/trace_events.c b/kernel/trace/trace_events.c
+index 05c7172c6667..caf76355f0a3 100644
+--- a/kernel/trace/trace_events.c
++++ b/kernel/trace/trace_events.c
+@@ -2473,8 +2473,9 @@ __trace_add_event_dirs(struct trace_array *tr)
+ 	}
+ }
+ 
++/* Returns any file that matches the system and event */
+ struct trace_event_file *
+-find_event_file(struct trace_array *tr, const char *system,  const char *event)
++__find_event_file(struct trace_array *tr, const char *system, const char *event)
+ {
+ 	struct trace_event_file *file;
+ 	struct trace_event_call *call;
+@@ -2485,10 +2486,7 @@ find_event_file(struct trace_array *tr, const char *system,  const char *event)
+ 		call = file->event_call;
+ 		name = trace_event_name(call);
+ 
+-		if (!name || !call->class || !call->class->reg)
+-			continue;
+-
+-		if (call->flags & TRACE_EVENT_FL_IGNORE_ENABLE)
++		if (!name || !call->class)
+ 			continue;
+ 
+ 		if (strcmp(event, name) == 0 &&
+@@ -2498,6 +2496,20 @@ find_event_file(struct trace_array *tr, const char *system,  const char *event)
+ 	return NULL;
+ }
+ 
++/* Returns valid trace event files that match system and event */
++struct trace_event_file *
++find_event_file(struct trace_array *tr, const char *system, const char *event)
++{
++	struct trace_event_file *file;
++
++	file = __find_event_file(tr, system, event);
++	if (!file || !file->event_call->class->reg ||
++	    file->event_call->flags & TRACE_EVENT_FL_IGNORE_ENABLE)
++		return NULL;
++
++	return file;
++}
++
+ #ifdef CONFIG_DYNAMIC_FTRACE
+ 
+ /* Avoid typos */
+-- 
+2.17.0
