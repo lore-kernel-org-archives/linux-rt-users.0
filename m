@@ -1,14 +1,17 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH v3 03/14] tracing: Have event_trace_init() called by trace_init_tracefs()
-Date: Wed, 16 May 2018 11:00:15 -0400
-Message-ID: <20180516150159.619411766@goodmis.org>
-References: <20180516150012.135869655@goodmis.org>
+From: Tom Zanussi <tom.zanussi@linux.intel.com>
+Subject: Re: [PATCH v2 10/14] tracing: Document trace_marker triggers
+Date: Wed, 16 May 2018 10:22:27 -0500
+Message-ID: <1526484147.11544.6.camel@tzanussi-mobl.amr.corp.intel.com>
+References: <20180514205845.017925650@goodmis.org>
+         <20180514205958.769987842@goodmis.org>
+         <1526334427.26800.15.camel@tzanussi-mobl.amr.corp.intel.com>
+         <20180516095534.676d7938@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Cc: Ingo Molnar <mingo@kernel.org>,
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
         Andrew Morton <akpm@linux-foundation.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
         Clark Williams <williams@redhat.com>,
         Karim Yaghmour <karim.yaghmour@opersys.com>,
         Brendan Gregg <bgregg@netflix.com>,
@@ -17,74 +20,131 @@ Cc: Ingo Molnar <mingo@kernel.org>,
         Namhyung Kim <namhyung@kernel.org>,
         Yann Ylavic <ylavic.dev@gmail.com>,
         linux-rt-users@vger.kernel.org
-To: linux-kernel@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-tracing-Have-event_trace_init-called-by-trace_init_t.patch
+In-Reply-To: <20180516095534.676d7938@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+Hi Steve,
 
-Instead of having both trace_init_tracefs() and event_trace_init() be called
-by fs_initcall() routines, have event_trace_init() called directly by
-trace_init_tracefs(). This will guarantee order of how the events are
-created with respect to the rest of the ftrace infrastructure. This is
-needed to be able to assoctiate event files with ftrace internal events,
-such as the trace_marker.
+On Wed, 2018-05-16 at 09:55 -0400, Steven Rostedt wrote:
+> On Mon, 14 May 2018 16:47:07 -0500
+> Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
+> 
+> > Hi Steve,
+> > 
+> > This is a nice new event feature - thanks for doing it!  Some minor typo
+> > comments below..
+> 
+> Can I get an Acked-by from you?
+> 
+> 
+> 
+> > > +3. User space creating a trigger
+> > > +--------------------------------
+> > > +
+> > > +Writing into /sys/kernel/tracing/trace_marker writes into the ftrace
+> > > +ring buffer. This can also act like an event, by writing into the trigger
+> > > +file located in /sys/kernel/tracing/events/ftrace/print/
+> > > +
+> > > +Modifying cyclictest to write into the trace_marker file before it sleeps
+> > > +and after it wakes up, something like this:
+> > > +
+> > > +static void traceputs(char *str)
+> > > +{
+> > > +	/* tracemark_fd is the trace_marker file descripto */
+> > >   
+> > 
+> > Should be 'descriptor'?
+> 
+> Fixed.
+> 
+> 
+> 
+> > > + # ./cyclictest -p80 -d0 -i250 -n -a -t --tracemark -b 1000
+> > > +
+> > > + -p80  : run threads at priority 80
+> > > + -d0   : have all threads run at the same interval
+> > > + -i250 : start the interval at 250 microseconds (all threads will do this)
+> > > + -n    : sleep with nanosleep
+> > > + -a    : affine all threads to a separate CPU
+> > > + -t    : one thread per available CPU
+> > > + --tracemark : enable trace mark writing
+> > > + -b 1000 : stop if any latency is greater than 1000 microseconds
+> > > +
+> > > +Note, the -b 1000 is used just to make --tracemark available.
+> > > +
+> > > +The we can see the histogram created by this with:
+> > > +  
+> > 
+> > 'Then we can..
+> 
+> Fixed
+> 
+> 
+> > > +The difference this time is that instead of using the trace_marker to start
+> > > +the latency, the sched_waking event is used, matching the common_pid for the
+> > > +trace_marker write with the pid that is being worken by sched_waking.
+> > >   
+> > 
+> > s/worken/woken ?
+> 
+> Fixed. (It's kind of like Borken)
 
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
----
- kernel/trace/trace.c        | 2 ++
- kernel/trace/trace.h        | 1 +
- kernel/trace/trace_events.c | 4 +---
- 3 files changed, 4 insertions(+), 3 deletions(-)
+:-)
 
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index 414d7210b2ec..e0d6ffb76985 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -8111,6 +8111,8 @@ static __init int tracer_init_tracefs(void)
- 	if (IS_ERR(d_tracer))
- 		return 0;
- 
-+	event_trace_init();
-+
- 	init_tracer_tracefs(&global_trace, d_tracer);
- 	ftrace_init_tracefs_toplevel(&global_trace, d_tracer);
- 
-diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
-index 8ecca43d6aea..2414fd72dedd 100644
---- a/kernel/trace/trace.h
-+++ b/kernel/trace/trace.h
-@@ -1451,6 +1451,7 @@ trace_find_event_field(struct trace_event_call *call, char *name);
- extern void trace_event_enable_cmd_record(bool enable);
- extern void trace_event_enable_tgid_record(bool enable);
- 
-+extern int event_trace_init(void);
- extern int event_trace_add_tracer(struct dentry *parent, struct trace_array *tr);
- extern int event_trace_del_tracer(struct trace_array *tr);
- 
-diff --git a/kernel/trace/trace_events.c b/kernel/trace/trace_events.c
-index caf76355f0a3..5b647904a65b 100644
---- a/kernel/trace/trace_events.c
-+++ b/kernel/trace/trace_events.c
-@@ -3144,7 +3144,7 @@ static __init int event_trace_enable_again(void)
- 
- early_initcall(event_trace_enable_again);
- 
--static __init int event_trace_init(void)
-+__init int event_trace_init(void)
- {
- 	struct trace_array *tr;
- 	struct dentry *d_tracer;
-@@ -3189,8 +3189,6 @@ void __init trace_event_init(void)
- 	event_trace_enable();
- }
- 
--fs_initcall(event_trace_init);
--
- #ifdef CONFIG_FTRACE_STARTUP_TEST
- 
- static DEFINE_SPINLOCK(test_spinlock);
--- 
-2.17.0
+> 
+> > 
+> > > 
+> > > +
+> > > +After running cyclictest again with the same parameters, we now have:
+> > > +
+> > > + # cat events/synthetic/latency/hist
+> > > +# event histogram
+> > > +#
+> > > +# trigger info: hist:keys=lat,common_pid:vals=hitcount:sort=lat:size=2048 [active]
+> > > +#
+> > > +
+> > > +{ lat:          7, common_pid:       2302 } hitcount:        640
+> > >   
+> > 
+> > snip
+> > 
+> > > 
+> > > +{ lat:         61, common_pid:       2302 } hitcount:          1
+> > > +{ lat:        110, common_pid:       2302 } hitcount:          1
+> > > +
+> > > +Totals:
+> > > +    Hits: 89565
+> > > +    Entries: 158
+> > > +    Dropped: 0
+> > > +
+> > > +This doesn't tell us any information about how late cyclictest may have
+> > > +worken up, but it does show us a nice histogram of how long it took from
+> > > +the time that cyclictest was worken to the time it made it into user space.
+> > >   
+> > 
+> > A couple more that don't seem to be 'worken' ;-)
+> 
+> I have an itchy 'r' finger.
+> 
+> Thanks for the review, I just updated this.
+> 
+> Oh, I guess I think I prefer a "Reviewed-by" tag instead of Ack (gives
+> a stronger meaning).
+
+Sure, but noticed in the new version you just posted, that this line is
+still in there for your second example:
+
++ # echo '!hist:keys=common_pid:vals=hitcount:lat=common_timestamp.usecs-$ts0:sort=hitcount:size=2048:clock=global:onmatch(sched.sched_switch).latency($lat) if buf == "end"' > events/ftrace/print/trigger
+
+Did you intend that, or am I missing something?
+
+Anyway, you have my
+
+Reviewed-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+
+Thanks,
+
+Tom
