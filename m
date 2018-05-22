@@ -1,105 +1,38 @@
-From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: Re: [PATCH v3 13/14] tracing/selftest: Add selftests to test
- trace_marker histogram triggers
-Date: Thu, 31 May 2018 08:09:41 +0900
-Message-ID: <20180531080941.fd02980b7fd9aac015dbfd73@kernel.org>
-References: <20180516150012.135869655@goodmis.org>
-        <20180516150201.246539183@goodmis.org>
-        <20180523231331.bf69453f05478e11b00451ab@kernel.org>
-        <20180525140731.07d7543a@gandalf.local.home>
-        <20180525171229.76bae7a8@gandalf.local.home>
-        <20180525171353.53b44f5e@gandalf.local.home>
-        <20180528013258.59715b8111d3e59319006cd2@kernel.org>
-        <20180528212055.21e24c52@vmware.local.home>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Karim Yaghmour <karim.yaghmour@opersys.com>,
-        Brendan Gregg <bgregg@netflix.com>,
-        Joel Fernandes <joel@joelfernandes.org>,
-        Namhyung Kim <namhyung@kernel.org>,
-        Yann Ylavic <ylavic.dev@gmail.com>,
-        linux-rt-users@vger.kernel.org, Shuah Khan <shuahkhan@gmail.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180528212055.21e24c52@vmware.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-Path: linux-rt-users-owner@vger.kernel.org
+Received: from mail-qt0-f169.google.com ([209.85.216.169]:41892 "EHLO
+        mail-qt0-f169.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1752895AbeEVVRU (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 22 May 2018 17:17:20 -0400
+Received: by mail-qt0-f169.google.com with SMTP id g13-v6so25407157qth.8
+        for <linux-rt-users@vger.kernel.org>; Tue, 22 May 2018 14:17:20 -0700 (PDT)
+MIME-Version: 1.0
+From: Ran Shalit <ranshalit@gmail.com>
+Date: Wed, 23 May 2018 00:17:18 +0300
+Message-ID: <CAJ2oMhL=AT0K4rqMpaYGEfM+oxSPgw7n-KaWzhg5VNvkujDVJw@mail.gmail.com>
+Subject: i7 vs Atom
+Content-Type: text/plain; charset="UTF-8"
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 
-On Mon, 28 May 2018 21:20:55 -0400
-Steven Rostedt <rostedt@goodmis.org> wrote:
+Hello,
 
-> On Mon, 28 May 2018 01:32:58 +0900
-> Masami Hiramatsu <mhiramat@kernel.org> wrote:
-> 
-> > Hi Steve,
-> > 
-> > On Fri, 25 May 2018 17:13:53 -0400
-> > Steven Rostedt <rostedt@goodmis.org> wrote:
-> > 
-> > > On Fri, 25 May 2018 17:12:29 -0400
-> > > Steven Rostedt <rostedt@goodmis.org> wrote:
-> > > 
-> > >    
-> > > > #!/bin/sh  
-> > > 
-> > > Hmm, I think I need to make this #!/bin/bash
-> > >   
-> > > > test_trace() {
-> > > >     file=$1
-> > > >     x=$2
-> > > > 
-> > > >     cat $file | while read line; do
-> > > > 	if [ "$line" != "${line/\#/}" ]; then
-> > > > 	    continue
-> > > > 	fi
-> > > > 	echo "testing $line for >$x<"
-> > > > 	if [ "$line" == "${line/>$x</}" ]; then  
-> > > 
-> > > The ${line/>$x</} is unique to bash I believe.  
-> > 
-> > Hmm, could you try to use only posix-shell based test ?
-> > Since I would like to keep this can run on small 
-> > environment, like busybox, etc.
-> >
-> 
-> Like something like this?
-
-This looks good to me. :)
-
-Acked-by: Masami Hiramatsu <mhiramat@kernel.org>
-
-Thanks,
-
-> 
-> -- Steve
-> 
-> diff --git a/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-snapshot.tc b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-snapshot.tc
-> index c6c50a2..3a3c33d 100644
-> --- a/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-snapshot.tc
-> +++ b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-snapshot.tc
-> @@ -41,11 +41,13 @@ test_trace() {
->      x=$2
->  
->      cat $file | while read line; do
-> -	if [ "$line" != "${line/\#/}" ]; then
-> +	comment=`echo $line | sed -e 's/^#//'`
-> +	if [ "$line" != "$comment" ]; then
->  	    continue
->  	fi
->  	echo "testing $line for >$x<"
-> -	if [ "$line" == "${line/>$x</}" ]; then
-> +	match=`echo $line | sed -e "s/>$x<//"`
-> +	if [ "$line" == "$match" ]; then
->  	    fail "$line does not have >$x< in it"
->  	fi
->  	let x=$x+2
+We are using same BSP , kernel 3.18.11 rt7, with 2 different hardwares:
+1. kontron board - i7 cpu
+2. portwell board. - atom cpu (E3845 )
 
 
--- 
-Masami Hiramatsu <mhiramat@kernel.org>
+The results are totally different with the same testing.
+
+In kontron the error is 11usec, while in portwell it is 2000usec .
+
+The results of portwell seems more than just bad - they same
+unbelievable, the error is VERY high (2msec).
+
+I've tried to find a benchmark which can support my results, but found
+no benchmark with ATOM.
+
+Thank you for any suggestion.
+
+Ranran
