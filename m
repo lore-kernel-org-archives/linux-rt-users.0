@@ -1,90 +1,53 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 1/2] swait: export the symbols __prepare_to_swait and
- __finish_swait
-Date: Fri, 18 May 2018 17:03:23 -0400
-Message-ID: <20180518210323.GA6119@redhat.com>
-References: <alpine.LRH.2.02.1711222134370.2330@file01.intranet.prod.int.rdu2.redhat.com>
- <20171123082857.GA17859@infradead.org>
- <alpine.LRH.2.02.1711231722440.12809@file01.intranet.prod.int.rdu2.redhat.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH RT] sched: let softirq_count() return !0 if inside
+ local_bh_disable()ed section
+Date: Tue, 22 May 2018 11:53:11 -0400
+Message-ID: <20180522115311.0fee528a@gandalf.local.home>
+References: <20180517102214.orea3ol6dj7wvpf5@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Christoph Hellwig <hch@infradead.org>,
-        linux-rt-users@vger.kernel.org,
-        Daniel Wagner <daniel.wagner@bmw-carit.de>,
-        linux-kernel@vger.kernel.org, dm-devel@redhat.com,
-        Thomas Gleixner <tglx@linutronix.de>
-To: Mikulas Patocka <mpatocka@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        tglx@linutronix.de
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.02.1711231722440.12809@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <20180517102214.orea3ol6dj7wvpf5@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Nov 23 2017 at  5:27pm -0500,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+On Thu, 17 May 2018 12:22:14 +0200
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+
+> I don't see a reason why softirq_count() shouldn't reflect the fact that
+> we are within a local_bh_disable() section. I *think* it was done
+> primary because in RT the softirq is slightly different (and
+> preemptible) and it broke some of RCU's assumptions.
+> I don't see any fallout with this change. Furthermore, all checks like
+> "WARN_ON(!softirq_count())" will work and we can drop the workaround we
+> currently have in the queue.
+
+Looks to keep the paradigm closer to vanilla Linux to me.
+
+Acked-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+
+-- Steve
 
 > 
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> ---
+>  include/linux/preempt.h | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 > 
-> On Thu, 23 Nov 2017, Christoph Hellwig wrote:
-> 
-> > Please run this past the swait authors.  It is supposed to be a simple
-> > and self-contained API so I'd expect this patch to be seen critical.
-> 
-> I already sent it to Peter Zijlstra and didn't get a response yet.
-> 
-> > You might be better off to just use the normal complex waitqueues if
-> > you want to micro-optimize like this.
-> 
-> If we wanted to micro-optimize, we should use the simpler wait queue 
-> variant.
-> 
-> 
-> If these functions are not supposed to be used by others, then
-> - why are they in in file swait.h?
-> - why does the implementation export swake_up_locked which assumes that 
-> someone else will lock the spinlock before calling it?
-
-Hi,
-
-I'd like to get this patch upstream.  I'm happy to send it to Linus via
-linux-dm.git but I wanted to check with others who might care more
-deeply about swait interfaces to get their Ack (or otherwise):
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-4.18&id=4a2ec3f321f83db09da4824025420586c9ef1612
-
-Here is Mikulas' DM driver code that makes use of __prepare_to_swait()
-and __finish_swait():
-
-static int writecache_endio_thread(void *data)
-{
-        struct dm_writecache *wc = data;
-
-        while (1) {
-                DECLARE_SWAITQUEUE(wait);
-                struct list_head list;
-
-                raw_spin_lock_irq(&wc->endio_thread_wait.lock);
-continue_locked:
-                if (!list_empty(&wc->endio_list))
-                        goto pop_from_list;
-                set_current_state(TASK_INTERRUPTIBLE);
-                __prepare_to_swait(&wc->endio_thread_wait, &wait);
-                raw_spin_unlock_irq(&wc->endio_thread_wait.lock);
-
-                if (unlikely(kthread_should_stop())) {
-                        finish_swait(&wc->endio_thread_wait, &wait);
-                        break;
-                }
-
-                schedule();
-
-                raw_spin_lock_irq(&wc->endio_thread_wait.lock);
-                __finish_swait(&wc->endio_thread_wait, &wait);
-                goto continue_locked;
-
-pop_from_list:
-                list = wc->endio_list;
-                list.next->prev = list.prev->next = &list;
-                INIT_LIST_HEAD(&wc->endio_list);
-                raw_spin_unlock_irq(&wc->endio_thread_wait.lock);
-                ...
+> diff --git a/include/linux/preempt.h b/include/linux/preempt.h
+> index 0591df500e9d..d8c05a2626ca 100644
+> --- a/include/linux/preempt.h
+> +++ b/include/linux/preempt.h
+> @@ -91,7 +91,7 @@
+>  # define softirq_count()	(preempt_count() & SOFTIRQ_MASK)
+>  # define in_serving_softirq()	(softirq_count() & SOFTIRQ_OFFSET)
+>  #else
+> -# define softirq_count()	(0UL)
+> +# define softirq_count()	(current->softirq_nestcnt)
+>  extern int in_serving_softirq(void);
+>  #endif
+>  
