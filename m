@@ -1,285 +1,146 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from barracuda1.shentel.net ([204.111.1.144]:17081 "EHLO
-        barracuda1.shentel.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1751199AbeEVNJO (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 22 May 2018 09:09:14 -0400
-Received: from smtp1.edbg.cloud.shentel.net (smtp1.edbg.cloud.shentel.net [204.111.2.17]) by barracuda1.shentel.net with ESMTP id mBfWPec18MGNveDc for <linux-rt-users@vger.kernel.org>; Tue, 22 May 2018 08:51:04 -0400 (EDT)
-Received: from coyote.coyote.den (unknown [204.111.64.149])
-        by smtp1.edbg.cloud.shentel.net (Postfix) with ESMTPSA id 6EB332033E
-        for <linux-rt-users@vger.kernel.org>; Tue, 22 May 2018 08:51:04 -0400 (EDT)
-From: Gene Heskett <gheskett@shentel.net>
-Subject: Re: Non RT threads impact on RT thread
-Date: Tue, 22 May 2018 08:51:03 -0400
+Received: from mx02.jhcn.net ([194.25.102.130]:45444 "EHLO mx02.jhcn.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1750733AbeEVKcm (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 22 May 2018 06:32:42 -0400
+From: Lampersperger Andreas <lampersperger.andreas@heidenhain.de>
+Subject: AW: Non RT threads impact on RT thread
+Date: Tue, 22 May 2018 10:20:25 +0000
+Message-ID: <d3dfe5596f1943c9a287be8a34a40161@de01ex22.GLOBAL.JHCN.NET>
 References: <CAGiv7G3sWoamRjg=ArLRi1eYYFJLY4bZvX2VQttMsw8DuVVScA@mail.gmail.com>
 In-Reply-To: <CAGiv7G3sWoamRjg=ArLRi1eYYFJLY4bZvX2VQttMsw8DuVVScA@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: Text/Plain;
-  charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-Message-Id: <201805220851.03875.gheskett@shentel.net>
+Content-Language: de-DE
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: linux-rt-users@vger.kernel.org
+To: Jordan Palacios <jordan.palacios@pal-robotics.com>, "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 
-On Tuesday 22 May 2018 06:00:27 Jordan Palacios wrote:
+SGVsbG8gSm9yZGFuLA0KDQpJTUhPIHRoaXMgaXMgYmVjYXVzZSB0aGUgbm9uLVJUIFRhc2tzIHVz
+ZXMgdGhlIHNhbWUgQ1BVIGFuZCB0aGVyZWZvcmUgdGhlIHNhbWUgY2FjaGUuIEVzcGVjaWFsbHkg
+d2hlbiB5b3VyIENQVSBoYXMgaHlwZXJ0aHJlYWRpbmcgYWxzbyB0aGUgTDEtQ2FjaGUgaXMgc2hh
+cmVkIGJldHdlZW4gUlQgYW5kIG5vbi1SVC4gDQpUcnkgdXNpbmcgZGlmZmVyZW50IENQVXMgZm9y
+IFJUIGFuZCBub24tUlQgdGFza3MgdW5kIGRpc2FibGUgaHlwZXJ0aHJlYWRpbmcgKGluIHRoZSBi
+aW9zKS4NCg0KQGFsbDogV2hlbiBJJ20gbm90IGNvcnJlY3QsIEkgd291bGQgYmUgdmVyeSBwbGVh
+c2VkIGlmIHNvbWVib2R5IGxldCBtZSBrbm93IGFib3V0IHRoaXMuDQoNCkJlc3QgcmVnYXJkcw0K
+QW5kcmVhcw0KDQotLS0tLVVyc3Byw7xuZ2xpY2hlIE5hY2hyaWNodC0tLS0tDQpWb246IGxpbnV4
+LXJ0LXVzZXJzLW93bmVyQHZnZXIua2VybmVsLm9yZyBbbWFpbHRvOmxpbnV4LXJ0LXVzZXJzLW93
+bmVyQHZnZXIua2VybmVsLm9yZ10gSW0gQXVmdHJhZyB2b24gSm9yZGFuIFBhbGFjaW9zDQpHZXNl
+bmRldDogRGllbnN0YWcsIDIyLiBNYWkgMjAxOCAxMjowMA0KQW46IGxpbnV4LXJ0LXVzZXJzQHZn
+ZXIua2VybmVsLm9yZw0KQmV0cmVmZjogTm9uIFJUIHRocmVhZHMgaW1wYWN0IG9uIFJUIHRocmVh
+ZA0KDQpIZWxsbywNCg0KV2UgYXJlIGN1cnJlbnRseSBydW5uaW5nIGEgdmVyc2lvbiBvZiB0aGUg
+bGludXgga2VybmVsICgzLjE4LjI0KSB3aXRoIHRoZSBSVC1QUkVFTVBUIHBhdGNoLiBJbiBvdXIg
+c3lzdGVtIHRoZXJlIGFyZSBzZXZlcmFsIG5vbiBSVCB0YXNrcyBhbmQgb25lIFJUIHRhc2suIFRo
+ZSBSVCBwcm9jZXNzIHJ1bnMgaW4gdGhlIEZJRk8gc2NoZWR1bGVyIHdpdGggOTUgcHJpb3JpdHkg
+YW5kIGEgY29udHJvbCBsb29wIG9mIDFtcy4NCg0KV2UgaGF2ZSBhY2hpZXZlZCBsYXRlbmNpZXMg
+b2YgYWJvdXQgNXVzIHdoaWNoIGFyZSBwZXJmZWN0IGZvciB1cy4NCg0KT3VyIGlzc3VlIGlzIHRo
+YXQgdGhlIFJUIHRhc2sgc29tZXRpbWVzIG1pc3NlcyBvbmUgb2YgaXRzIGN5Y2xlcyBkdWUgdG8g
+YW4gdW5leHBlY3RlZCB2ZXJ5IGxvbmcgZXhlY3V0aW9uIHRpbWUgb2YgaXRzIGNvbnRyb2wgbG9v
+cC4gSW4gb3VyIHN5c3RlbSB0aGlzIGlzIGEgY3JpdGljYWwgZmFpbHVyZS4NCg0KV2UgZW5hYmxl
+ZCB0cmFjaW5nIGluIHRoZSBrZXJuZWwgYW5kIHN0YXJ0ZWQgbWVhc3VyaW5nIHRoZSBleGVjdXRp
+b24gdGltZSBvZiB0aGUgUlQgdGhyZWFkLiBUaGUgZXhlY3V0aW9uIHRpbWUgaXMgcXVpdGUgY29u
+c3RhbnQgKGFib3V0IDIwMHVzKSwgd2hpY2ggcmFuZG9tIHNwaWtlcyBldmVyeSBub3cgYW5kIHRo
+ZW4uIFRoaW5nIGlzLCB0aGUgbGVzcyBub24gUlQgdGFza3MgcnVubmluZyBpbiB0aGUgc3lzdGVt
+IHRoZSBiZXR0ZXIgdGhlIFJUIHRhc2sgYmVoYXZlcy4NCg0KV2Ugd3JvdGUgYSB2ZXJ5IHNpbXBs
+ZSBSVCBhcHBsaWNhdGlvbiB0aGF0IGRvZXMgc29tZSBsaWdodCB3b3JrIGFuZCB3cml0ZXMgaXRz
+IGV4ZWN1dGlvbiB0aW1lIHVzaW5nIHRoZSB0cmFjZV9tYXJrZXIuIEV4ZWN1dGlvbiB0aW1lIGlz
+IGNvbnN0YW50IGJ1dCBJTyBpbnRlbnNpdmUgc3R1ZmYsIGxpa2UgYSBzdHJlc3MgLS1pbyAzMiBv
+ciBhIGhkcGFybSwgd2lsbCBoYXZlIGFuZCBpbXBhY3Qgb24gaXRzIGV4ZWN1dGlvbiB0aW1lLiBU
+aGlzIGlzIHN1cnByaXNpbmcgYmVjYXVzZSB0aGUgdGVzdCBkb2VzIG5vdCBhbnkga2luZCBvZiB3
+b3JrIHJlbGF0ZWQgdG8gSU8uIE5vciBkb2VzIHRoZSBSVCB0YXNrIGluIG91ciBzeXN0ZW0gZm9y
+IHRoYXQgbWF0dGVyLg0KDQpPdXIgcXVlc3Rpb24gaXM6IElzIHRoaXMgYmVoYXZpb3VyIG5vcm1h
+bD8gV2h5IGFyZSBub24gUlQgdGFza3MgYWZmZWN0aW5nIHRoZSBSVCB0YXNrIHBlcmZvcm1hbmNl
+PyBJcyB0aGVyZSBhbnkgb3RoZXIga2luZCBvZiB0ZXN0IHRoYXQgd2UgY291bGQgcnVuIHRoYXQg
+d291bGQgc2hlZCBzb21lIGxpZ2h0IG9uIHRoaXMgaXNzdWU/DQoNClRoYW5rcyBpbiBhZHZhbmNl
+Lg0KDQpKb3JkYW4uDQoNCg0KDQojaW5jbHVkZSA8bGltaXRzLmg+DQojaW5jbHVkZSA8cHRocmVh
+ZC5oPg0KI2luY2x1ZGUgPHNjaGVkLmg+DQojaW5jbHVkZSA8c3RkaW8uaD4NCiNpbmNsdWRlIDxz
+dGRsaWIuaD4NCiNpbmNsdWRlIDxzeXMvbW1hbi5oPg0KI2luY2x1ZGUgPHN5cy90eXBlcy5oPg0K
+I2luY2x1ZGUgPHN5cy9zeXNjYWxsLmg+DQojaW5jbHVkZSA8c3lzL3N0YXQuaD4NCiNpbmNsdWRl
+IDxmY250bC5oPg0KI2luY2x1ZGUgPHNzdHJlYW0+DQojaW5jbHVkZSA8bWF0aC5oPg0KI2luY2x1
+ZGUgPHVuaXN0ZC5oPg0KI2luY2x1ZGUgPHN0ZGFyZy5oPg0KDQp0eXBlZGVmIGxvbmcgbG9uZyBO
+QU5PX1RJTUU7DQp0eXBlZGVmIHN0cnVjdCB0aW1lc3BlYyBUSU1FX1NQRUM7DQoNCnN0YXRpYyBj
+b25zdCBsb25nIGludCBJTlRFUlZBTCA9IDEwMDAwMDBMTDsgLy8gMW1zDQoNCnN0YXRpYyBUSU1F
+X1NQRUMgbmFubzJ0aW1lc3BlYyhOQU5PX1RJTUUgaHJ0KSB7DQogIFRJTUVfU1BFQyB0aW1ldmw7
+DQogIHRpbWV2bC50dl9zZWMgPSBocnQgLyAxMDAwMDAwMDAwTEw7DQogIHRpbWV2bC50dl9uc2Vj
+ID0gaHJ0ICUgMTAwMDAwMDAwMExMOw0KICByZXR1cm4gdGltZXZsOw0KfQ0KDQpzdGF0aWMgZG91
+YmxlIHRvX3VzKE5BTk9fVElNRSBucykNCnsNCiAgcmV0dXJuIHN0YXRpY19jYXN0PGRvdWJsZT4o
+bnMpIC8gMTAwMC4wOyB9DQoNCnN0YXRpYyBOQU5PX1RJTUUgZ2V0X3RpbWVfbnModm9pZCkNCnsN
+CiAgVElNRV9TUEVDIHR2Ow0KICBjbG9ja19nZXR0aW1lKENMT0NLX1JFQUxUSU1FLCAmdHYpOw0K
+ICByZXR1cm4gTkFOT19USU1FKHR2LnR2X3NlYykgKiAxMDAwMDAwMDAwTEwgKyBOQU5PX1RJTUUo
+dHYudHZfbnNlYyk7IH0NCg0Kc3RhdGljIGNvbnN0IHVuc2lnbmVkIGludCBXT1JLX1NJWkUgPSAx
+MDAwMDsNCg0Kdm9pZCBkb193b3JrKCkNCnsNCiAgdW5zaWduZWQgaW50IGkgPSAwOw0KICBkb3Vi
+bGUgYXV4ID0gMjsNCg0KICAvLyBkbyBzb21lIHN0dWZmIHRvIHVzZSBjcHUNCiAgd2hpbGUgKGkg
+PCBXT1JLX1NJWkUpDQogIHsNCiAgICBhdXggPSBwb3coYXV4LCBpKTsNCiAgICArK2k7DQogIH0N
+Cn0NCg0KaW50IHRyYWNlX2ZkID0gLTE7DQoNCnZvaWQgdHJhY2Vfd3JpdGUoY29uc3QgY2hhciog
+Zm10LCAuLi4pDQp7DQogIHZhX2xpc3QgYXA7DQogIGNoYXIgYnVmWzI1Nl07DQogIGludCBuOw0K
+DQogIGlmICh0cmFjZV9mZCA8IDApDQogICAgcmV0dXJuOw0KDQogIHZhX3N0YXJ0KGFwLCBmbXQp
+Ow0KICBuID0gdnNucHJpbnRmKGJ1ZiwgMjU2LCBmbXQsIGFwKTsNCiAgdmFfZW5kKGFwKTsNCg0K
+ICB3cml0ZSh0cmFjZV9mZCwgYnVmLCBuKTsNCn0NCg0Kdm9pZCogdGhyZWFkX2Z1bmModm9pZCog
+LypkYXRhKi8pDQp7DQogIHBpZF90IHRpZCA9IHN5c2NhbGwoX19OUl9nZXR0aWQpOw0KICBwcmlu
+dGYoInB0aHJlYWQgam9pbmVkLiBUSUQgJWkgXG4iLCB0aWQpOw0KDQogIFRJTUVfU1BFQyB0c19u
+ZXh0Ow0KICBOQU5PX1RJTUUgd2FrZSwgaW5pdCwgYWZ0ZXJfd29yazsNCg0KICB3YWtlID0gZ2V0
+X3RpbWVfbnMoKSArIElOVEVSVkFMOw0KICB0c19uZXh0ID0gbmFubzJ0aW1lc3BlYyh3YWtlKTsN
+Cg0KICB3aGlsZSAodHJ1ZSkNCiAgew0KICAgIGluaXQgPSBnZXRfdGltZV9ucygpOw0KDQogICAg
+aWYgKGluaXQgPCB3YWtlKQ0KICAgIHsNCiAgICAgIGRvX3dvcmsoKTsNCiAgICAgIGFmdGVyX3dv
+cmsgPSBnZXRfdGltZV9ucygpOw0KDQogICAgICBjb25zdCBkb3VibGUgZXhlY190aW1lID0gdG9f
+dXMoYWZ0ZXJfd29yayAtIGluaXQpOw0KICAgICAgdHJhY2Vfd3JpdGUoInJ0X3Rlc3RfZXhlY190
+aW1lIC0gJWYiLCBleGVjX3RpbWUpOw0KICAgIH0NCiAgICBlbHNlDQogICAgew0KICAgICAgcHJp
+bnRmKCJvdmVycnVuIGRldGVjdGVkXG4iKTsNCiAgICB9DQoNCiAgICBjbG9ja19uYW5vc2xlZXAo
+Q0xPQ0tfUkVBTFRJTUUsIFRJTUVSX0FCU1RJTUUsICYodHNfbmV4dCksIE5VTEwpOw0KICAgIHdh
+a2UgPSB3YWtlICsgSU5URVJWQUw7DQogICAgdHNfbmV4dCA9IG5hbm8ydGltZXNwZWMod2FrZSk7
+DQogIH0NCiAgcmV0dXJuIE5VTEw7DQp9DQoNCmludCBtYWluKGludCAvKmFyZ2MqLywgY2hhciog
+Lyphcmd2Ki9bXSkgew0KICBzdHJ1Y3Qgc2NoZWRfcGFyYW0gcGFyYW07DQogIHB0aHJlYWRfYXR0
+cl90IGF0dHI7DQogIHB0aHJlYWRfdCB0aHJlYWQ7DQogIGludCByZXQ7DQoNCiAgLyogTG9jayBt
+ZW1vcnkgKi8NCiAgaWYgKG1sb2NrYWxsKE1DTF9DVVJSRU5UIHwgTUNMX0ZVVFVSRSkgPT0gLTEp
+DQogIHsNCiAgICBwcmludGYoIm1sb2NrYWxsIGZhaWxlZDogJW1cbiIpOw0KICAgIGV4aXQoLTIp
+Ow0KICB9DQoNCiAgLyogQWxsb2NhdGUgYWxsIHRoZSBtZW1vcnkgcmVxdWlyZWQgYnkgdGhlIHBy
+b2Nlc3MgKi8NCiAgaWYgKCFtYWxsb2MoMTAwICogMTA0ODU3NikpICAvLyAxMDBNQg0KICB7DQog
+ICAgcHJpbnRmKCJtYWxsb2MgZmFpbGVkXG4iKTsNCiAgICBleGl0KC0zKTsNCiAgfQ0KDQogIC8q
+IEluaXRpYWxpemUgcHRocmVhZCBhdHRyaWJ1dGVzIChkZWZhdWx0IHZhbHVlcykgKi8NCiAgcmV0
+ID0gcHRocmVhZF9hdHRyX2luaXQoJmF0dHIpOw0KICBpZiAocmV0KQ0KICB7DQogICAgcHJpbnRm
+KCJpbml0IHB0aHJlYWQgYXR0cmlidXRlcyBmYWlsZWRcbiIpOw0KICAgIHJldHVybiByZXQ7DQog
+IH0NCg0KICAvKiBTZXQgYSBzcGVjaWZpYyBzdGFjayBzaXplICAqLw0KICByZXQgPSBwdGhyZWFk
+X2F0dHJfc2V0c3RhY2tzaXplKCZhdHRyLCBQVEhSRUFEX1NUQUNLX01JTiAqIDEwMCk7DQogIGlm
+IChyZXQpDQogIHsNCiAgICBwcmludGYoInB0aHJlYWQgc2V0c3RhY2tzaXplIGZhaWxlZFxuIik7
+DQogICAgcmV0dXJuIHJldDsNCiAgfQ0KDQogIC8qIFNldCBzY2hlZHVsZXIgcG9saWN5IGFuZCBw
+cmlvcml0eSBvZiBwdGhyZWFkICovDQogIHJldCA9IHB0aHJlYWRfYXR0cl9zZXRzY2hlZHBvbGlj
+eSgmYXR0ciwgU0NIRURfRklGTyk7DQogIGlmIChyZXQpDQogIHsNCiAgICBwcmludGYoInB0aHJl
+YWQgc2V0c2NoZWRwb2xpY3kgZmFpbGVkXG4iKTsNCiAgICByZXR1cm4gcmV0Ow0KICB9DQoNCiAg
+cGFyYW0uc2NoZWRfcHJpb3JpdHkgPSA5NTsNCiAgcmV0ID0gcHRocmVhZF9hdHRyX3NldHNjaGVk
+cGFyYW0oJmF0dHIsICZwYXJhbSk7DQogIGlmIChyZXQpDQogIHsNCiAgICBwcmludGYoInB0aHJl
+YWQgc2V0c2NoZWRwYXJhbSBmYWlsZWRcbiIpOw0KICAgIHJldHVybiByZXQ7DQogIH0NCg0KICAv
+KiBVc2Ugc2NoZWR1bGluZyBwYXJhbWV0ZXJzIG9mIGF0dHIgKi8NCiAgcmV0ID0gcHRocmVhZF9h
+dHRyX3NldGluaGVyaXRzY2hlZCgmYXR0ciwgUFRIUkVBRF9FWFBMSUNJVF9TQ0hFRCk7DQogIGlm
+IChyZXQpDQogIHsNCiAgICBwcmludGYoInB0aHJlYWQgc2V0aW5oZXJpdHNjaGVkIGZhaWxlZFxu
+Iik7DQogICAgcmV0dXJuIHJldDsNCiAgfQ0KDQogIC8qIENyZWF0ZSBhIHB0aHJlYWQgd2l0aCBz
+cGVjaWZpZWQgYXR0cmlidXRlcyAqLw0KICByZXQgPSBwdGhyZWFkX2NyZWF0ZSgmdGhyZWFkLCAm
+YXR0ciwgdGhyZWFkX2Z1bmMsIE5VTEwpOw0KICBpZiAocmV0KQ0KICB7DQogICAgcHJpbnRmKCJj
+cmVhdGUgcHRocmVhZCBmYWlsZWRcbiIpOw0KICAgIHJldHVybiByZXQ7DQogIH0NCg0KICAvKiBP
+cGVuIHRyYWNlcl9tYXJrZXIgKi8NCiAgdHJhY2VfZmQgPSBvcGVuKCIvdHJhY2luZy90cmFjZV9t
+YXJrZXIiLCBPX1dST05MWSk7DQogIGlmICh0cmFjZV9mZCA9PSAtMSkNCiAgew0KICAgIHByaW50
+ZigidHJhY2VfbWFya2VyIG9wZW4gZmFpbGVkXG4iKTsNCiAgICByZXR1cm4gcmV0Ow0KICB9DQoN
+CiAgc3lzdGVtKCJlY2hvIDEgPiAvdHJhY2luZy90cmFjaW5nX29uIik7ICAgICAgICAgICAgIC8v
+IGVuYWJsZSB0cmFjaW5nDQogIHN5c3RlbSgiZWNobyBub3AgPiAvdHJhY2luZy9jdXJyZW50X3Ry
+YWNlciIpOyAgICAgICAvLyByZXNldCB0cmFjZQ0KICBzeXN0ZW0oImVjaG8gZnVuY3Rpb24gPiAv
+dHJhY2luZy9jdXJyZW50X3RyYWNlciIpOyAgLy8gdXNlIGZ1bmN0aW9uIHRyYWNlcg0KICBzeXN0
+ZW0oImVjaG8gMSA+IC90cmFjaW5nL2V2ZW50cy9lbmFibGUiKTsgICAgICAgICAgLy8gZW5hYmxl
+IGFsbCBldmVudHMNCg0KICAvKiBKb2luIHRoZSB0aHJlYWQgYW5kIHdhaXQgdW50aWwgaXQgaXMg
+ZG9uZSAqLw0KICByZXQgPSBwdGhyZWFkX2pvaW4odGhyZWFkLCBOVUxMKTsNCiAgaWYgKHJldCkN
+CiAgICBwcmludGYoImpvaW4gcHRocmVhZCBmYWlsZWQ6ICVtXG4iKTsNCg0KICBzeXN0ZW0oImVj
+aG8gMCA+IC90cmFjaW5nL3RyYWNpbmdfb24iKTsgICAgIC8vIGRpc2FibGUgdHJhY2luZw0KICBz
+eXN0ZW0oImVjaG8gMCA+IC90cmFjaW5nL2V2ZW50cy9lbmFibGUiKTsgIC8vIGRpc2FibGUgYWxs
+IGV2ZW50cw0KDQogIHJldHVybiByZXQ7DQp9DQotLQ0KVG8gdW5zdWJzY3JpYmUgZnJvbSB0aGlz
+IGxpc3Q6IHNlbmQgdGhlIGxpbmUgInVuc3Vic2NyaWJlIGxpbnV4LXJ0LXVzZXJzIiBpbiB0aGUg
+Ym9keSBvZiBhIG1lc3NhZ2UgdG8gbWFqb3Jkb21vQHZnZXIua2VybmVsLm9yZyBNb3JlIG1ham9y
+ZG9tbyBpbmZvIGF0ICBodHRwOi8vdmdlci5rZXJuZWwub3JnL21ham9yZG9tby1pbmZvLmh0bWwN
+Cg0KLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tClJlZ2lzdGVy
+Z2VyaWNodDogVHJhdW5zdGVpbiAvIFJlZ2lzdHJ5IENvdXJ0OiBIUkIgMjc1IC0gU2l0eiAvIEhl
+YWQgT2ZmaWNlOiBUcmF1bnJldXQKQXVmc2ljaHRzcmF0c3ZvcnNpdHplbmRlciAvIENoYWlybWFu
+IG9mIFN1cGVydmlzb3J5IEJvYXJkOiBSYWluZXIgQnVya2hhcmQKR2VzY2jDpGZ0c2bDvGhydW5n
+IC8gTWFuYWdlbWVudCBCb2FyZDogVGhvbWFzIFNlc3NlbG1hbm4gKFZvcnNpdHplbmRlciAvIENo
+YWlybWFuKSwKSHViZXJ0IEVybWVyLCBNaWNoYWVsIEdyaW1tLCBMdXR6IFJpc3NpbmcKCkUtTWFp
+bCBIYWZ0dW5nc2F1c3NjaGx1c3MgLyBFLU1haWwgRGlzY2xhaW1lcjogaHR0cDovL3d3dy5oZWlk
+ZW5oYWluLmRlL2Rpc2NsYWltZXIK
 
-> Hello,
->
-> We are currently running a version of the linux kernel (3.18.24) with
-> the RT-PREEMPT patch. In our system there are several non RT tasks and
-> one RT task. The RT process runs in the FIFO scheduler with 95
-> priority and a control loop of 1ms.
->
-> We have achieved latencies of about 5us which are perfect for us.
->
-> Our issue is that the RT task sometimes misses one of its cycles due
-> to an unexpected very long execution time of its control loop. In our
-> system this is a critical failure.
->
-And its a trademark of using the nvidia video driver, which runs with the 
-IRQ's disabled, sometimes for hundreds of milliseconds at a time. So use 
-the nouveau driver instead, its not guilty of that transgression. You 
-may also have to disable the bios "SMI" stuff.
-
-> We enabled tracing in the kernel and started measuring the execution
-> time of the RT thread. The execution time is quite constant (about
-> 200us), which random spikes every now and then. Thing is, the less non
-> RT tasks running in the system the better the RT task behaves.
->
-> We wrote a very simple RT application that does some light work and
-> writes its execution time using the trace_marker. Execution time is
-> constant but IO intensive stuff, like a stress --io 32 or a hdparm,
-> will have and impact on its execution time. This is surprising because
-> the test does not any kind of work related to IO. Nor does the RT task
-> in our system for that matter.
->
-> Our question is: Is this behaviour normal? Why are non RT tasks
-> affecting the RT task performance? Is there any other kind of test
-> that we could run that would shed some light on this issue?
->
-LinuxCNC which can run several realtime threads, has latencytest, and at 
-least one other way to measure this.
-
-> Thanks in advance.
->
-> Jordan.
->
->
->
-> #include <limits.h>
-> #include <pthread.h>
-> #include <sched.h>
-> #include <stdio.h>
-> #include <stdlib.h>
-> #include <sys/mman.h>
-> #include <sys/types.h>
-> #include <sys/syscall.h>
-> #include <sys/stat.h>
-> #include <fcntl.h>
-> #include <sstream>
-> #include <math.h>
-> #include <unistd.h>
-> #include <stdarg.h>
->
-> typedef long long NANO_TIME;
-> typedef struct timespec TIME_SPEC;
->
-> static const long int INTERVAL = 1000000LL; // 1ms
->
-> static TIME_SPEC nano2timespec(NANO_TIME hrt)
-> {
->   TIME_SPEC timevl;
->   timevl.tv_sec = hrt / 1000000000LL;
->   timevl.tv_nsec = hrt % 1000000000LL;
->   return timevl;
-> }
->
-> static double to_us(NANO_TIME ns)
-> {
->   return static_cast<double>(ns) / 1000.0;
-> }
->
-> static NANO_TIME get_time_ns(void)
-> {
->   TIME_SPEC tv;
->   clock_gettime(CLOCK_REALTIME, &tv);
->   return NANO_TIME(tv.tv_sec) * 1000000000LL + NANO_TIME(tv.tv_nsec);
-> }
->
-> static const unsigned int WORK_SIZE = 10000;
->
-> void do_work()
-> {
->   unsigned int i = 0;
->   double aux = 2;
->
->   // do some stuff to use cpu
->   while (i < WORK_SIZE)
->   {
->     aux = pow(aux, i);
->     ++i;
->   }
-> }
->
-> int trace_fd = -1;
->
-> void trace_write(const char* fmt, ...)
-> {
->   va_list ap;
->   char buf[256];
->   int n;
->
->   if (trace_fd < 0)
->     return;
->
->   va_start(ap, fmt);
->   n = vsnprintf(buf, 256, fmt, ap);
->   va_end(ap);
->
->   write(trace_fd, buf, n);
-> }
->
-> void* thread_func(void* /*data*/)
-> {
->   pid_t tid = syscall(__NR_gettid);
->   printf("pthread joined. TID %i \n", tid);
->
->   TIME_SPEC ts_next;
->   NANO_TIME wake, init, after_work;
->
->   wake = get_time_ns() + INTERVAL;
->   ts_next = nano2timespec(wake);
->
->   while (true)
->   {
->     init = get_time_ns();
->
->     if (init < wake)
->     {
->       do_work();
->       after_work = get_time_ns();
->
->       const double exec_time = to_us(after_work - init);
->       trace_write("rt_test_exec_time - %f", exec_time);
->     }
->     else
->     {
->       printf("overrun detected\n");
->     }
->
->     clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &(ts_next), NULL);
->     wake = wake + INTERVAL;
->     ts_next = nano2timespec(wake);
->   }
->   return NULL;
-> }
->
-> int main(int /*argc*/, char* /*argv*/[])
-> {
->   struct sched_param param;
->   pthread_attr_t attr;
->   pthread_t thread;
->   int ret;
->
->   /* Lock memory */
->   if (mlockall(MCL_CURRENT | MCL_FUTURE) == -1)
->   {
->     printf("mlockall failed: %m\n");
->     exit(-2);
->   }
->
->   /* Allocate all the memory required by the process */
->   if (!malloc(100 * 1048576))  // 100MB
->   {
->     printf("malloc failed\n");
->     exit(-3);
->   }
->
->   /* Initialize pthread attributes (default values) */
->   ret = pthread_attr_init(&attr);
->   if (ret)
->   {
->     printf("init pthread attributes failed\n");
->     return ret;
->   }
->
->   /* Set a specific stack size  */
->   ret = pthread_attr_setstacksize(&attr, PTHREAD_STACK_MIN * 100);
->   if (ret)
->   {
->     printf("pthread setstacksize failed\n");
->     return ret;
->   }
->
->   /* Set scheduler policy and priority of pthread */
->   ret = pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
->   if (ret)
->   {
->     printf("pthread setschedpolicy failed\n");
->     return ret;
->   }
->
->   param.sched_priority = 95;
->   ret = pthread_attr_setschedparam(&attr, &param);
->   if (ret)
->   {
->     printf("pthread setschedparam failed\n");
->     return ret;
->   }
->
->   /* Use scheduling parameters of attr */
->   ret = pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
->   if (ret)
->   {
->     printf("pthread setinheritsched failed\n");
->     return ret;
->   }
->
->   /* Create a pthread with specified attributes */
->   ret = pthread_create(&thread, &attr, thread_func, NULL);
->   if (ret)
->   {
->     printf("create pthread failed\n");
->     return ret;
->   }
->
->   /* Open tracer_marker */
->   trace_fd = open("/tracing/trace_marker", O_WRONLY);
->   if (trace_fd == -1)
->   {
->     printf("trace_marker open failed\n");
->     return ret;
->   }
->
->   system("echo 1 > /tracing/tracing_on");             // enable
-> tracing system("echo nop > /tracing/current_tracer");       // reset
-> trace system("echo function > /tracing/current_tracer");  // use
-> function tracer system("echo 1 > /tracing/events/enable");          //
-> enable all events
->
->   /* Join the thread and wait until it is done */
->   ret = pthread_join(thread, NULL);
->   if (ret)
->     printf("join pthread failed: %m\n");
->
->   system("echo 0 > /tracing/tracing_on");     // disable tracing
->   system("echo 0 > /tracing/events/enable");  // disable all events
->
->   return ret;
-> }
-> --
-> To unsubscribe from this list: send the line "unsubscribe
-> linux-rt-users" in the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
-
-
--- 
-Cheers, Gene Heskett
---
-"There are four boxes to be used in defense of liberty:
- soap, ballot, jury, and ammo. Please use in that order."
--Ed Howdershelt (Author)
-Genes Web page <http://geneslinuxbox.net:6309/gene>
