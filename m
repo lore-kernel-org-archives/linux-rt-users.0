@@ -1,83 +1,92 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from barracuda1.shentel.net ([204.111.1.144]:11473 "EHLO
-        barracuda3.shentel.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-        with ESMTP id S1751214AbeEVM4G (ORCPT
+Received: from mail-ua0-f193.google.com ([209.85.217.193]:34772 "EHLO
+        mail-ua0-f193.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1751002AbeEVLER (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 22 May 2018 08:56:06 -0400
-Received: from smtp1.edbg.cloud.shentel.net (smtp1.edbg.cloud.shentel.net [204.111.2.17]) by barracuda3.shentel.net with ESMTP id VZc0s7SKpQdtk64K for <linux-rt-users@vger.kernel.org>; Tue, 22 May 2018 08:56:04 -0400 (EDT)
-Received: from coyote.coyote.den (unknown [204.111.64.149])
-        by smtp1.edbg.cloud.shentel.net (Postfix) with ESMTPSA id 09E322033E
-        for <linux-rt-users@vger.kernel.org>; Tue, 22 May 2018 08:56:04 -0400 (EDT)
-From: Gene Heskett <gheskett@shentel.net>
-Subject: Re: AW: Non RT threads impact on RT thread
-Date: Tue, 22 May 2018 08:56:03 -0400
-References: <CAGiv7G3sWoamRjg=ArLRi1eYYFJLY4bZvX2VQttMsw8DuVVScA@mail.gmail.com> <d3dfe5596f1943c9a287be8a34a40161@de01ex22.GLOBAL.JHCN.NET>
-In-Reply-To: <d3dfe5596f1943c9a287be8a34a40161@de01ex22.GLOBAL.JHCN.NET>
+        Tue, 22 May 2018 07:04:17 -0400
+Received: by mail-ua0-f193.google.com with SMTP id f22-v6so12002147uam.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 22 May 2018 04:04:17 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: Text/Plain;
-  charset="utf-8"
-Content-Transfer-Encoding: 8BIT
-Content-Disposition: inline
-Message-Id: <201805220856.03493.gheskett@shentel.net>
+In-Reply-To: <d3dfe5596f1943c9a287be8a34a40161@de01ex22.GLOBAL.JHCN.NET>
+References: <CAGiv7G3sWoamRjg=ArLRi1eYYFJLY4bZvX2VQttMsw8DuVVScA@mail.gmail.com>
+ <d3dfe5596f1943c9a287be8a34a40161@de01ex22.GLOBAL.JHCN.NET>
+From: Jordan Palacios <jordan.palacios@pal-robotics.com>
+Date: Tue, 22 May 2018 13:03:56 +0200
+Message-ID: <CAGiv7G2ivUoKrsfaOGnDiPs_0ZLrTL1vEviNnthUXwPvDe+6YQ@mail.gmail.com>
+Subject: Re: Non RT threads impact on RT thread
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: linux-rt-users@vger.kernel.org
+To: Lampersperger Andreas <lampersperger.andreas@heidenhain.de>
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 
-On Tuesday 22 May 2018 06:20:25 Lampersperger Andreas wrote:
+Hello Andreas,
 
+Thanks for your response.
+
+Our system has hyperthreading currently disabled. In fact we have
+tested and applied most of the tips given here:
+http://linuxrealtime.org/index.php/Improving_the_Real-Time_Properties
+
+The RT task is running in an isolated CPU (using cset) but even stuff
+like hdparm (which is used for testing hard drives) manages to somehow
+impact the RT performance.
+
+Kind regards,
+Jordan.
+
+On 22 May 2018 at 12:20, Lampersperger Andreas
+<lampersperger.andreas@heidenhain.de> wrote:
 > Hello Jordan,
 >
-> IMHO this is because the non-RT Tasks uses the same CPU and therefore
-> the same cache. Especially when your CPU has hyperthreading also the
-> L1-Cache is shared between RT and non-RT. Try using different CPUs for
-> RT and non-RT tasks und disable hyperthreading (in the bios).
+> IMHO this is because the non-RT Tasks uses the same CPU and therefore the=
+ same cache. Especially when your CPU has hyperthreading also the L1-Cache =
+is shared between RT and non-RT.
+> Try using different CPUs for RT and non-RT tasks und disable hyperthreadi=
+ng (in the bios).
 >
-> @all: When I'm not correct, I would be very pleased if somebody let me
-> know about this.
+> @all: When I'm not correct, I would be very pleased if somebody let me kn=
+ow about this.
 >
 > Best regards
 > Andreas
 >
-> -----Urspr√ºngliche Nachricht-----
-> Von: linux-rt-users-owner@vger.kernel.org
-> [mailto:linux-rt-users-owner@vger.kernel.org] Im Auftrag von Jordan
-> Palacios Gesendet: Dienstag, 22. Mai 2018 12:00
+> -----Urspr=C3=BCngliche Nachricht-----
+> Von: linux-rt-users-owner@vger.kernel.org [mailto:linux-rt-users-owner@vg=
+er.kernel.org] Im Auftrag von Jordan Palacios
+> Gesendet: Dienstag, 22. Mai 2018 12:00
 > An: linux-rt-users@vger.kernel.org
 > Betreff: Non RT threads impact on RT thread
 >
 > Hello,
 >
-> We are currently running a version of the linux kernel (3.18.24) with
-> the RT-PREEMPT patch. In our system there are several non RT tasks and
-> one RT task. The RT process runs in the FIFO scheduler with 95
-> priority and a control loop of 1ms.
+> We are currently running a version of the linux kernel (3.18.24) with the=
+ RT-PREEMPT patch. In our system there are several non RT tasks and one RT =
+task. The RT process runs in the FIFO scheduler with 95 priority and a cont=
+rol loop of 1ms.
 >
 > We have achieved latencies of about 5us which are perfect for us.
 >
-> Our issue is that the RT task sometimes misses one of its cycles due
-> to an unexpected very long execution time of its control loop. In our
-> system this is a critical failure.
+> Our issue is that the RT task sometimes misses one of its cycles due to a=
+n unexpected very long execution time of its control loop. In our system th=
+is is a critical failure.
 >
-There is also the kernel argument isolcpus, where in a multicore machine, 
-it makes the cpu # passed disappear from the schedulers control, and 
-linuxcnc then runs its main realtime stuff on this isolated cpu core.  
-And that can be a real help with this.
-
-> We enabled tracing in the kernel and started measuring the execution
-> time of the RT thread. The execution time is quite constant (about
-> 200us), which random spikes every now and then. Thing is, the less non
-> RT tasks running in the system the better the RT task behaves.
+> We enabled tracing in the kernel and started measuring the execution time=
+ of the RT thread. The execution time is quite constant (about 200us), whic=
+h random spikes every now and then. Thing is, the less non RT tasks running=
+ in the system the better the RT task behaves.
 >
-> We wrote a very simple RT application that does some light work and
-> writes its execution time using the trace_marker. Execution time is
-> constant but IO intensive stuff, like a stress --io 32 or a hdparm,
-> will have and impact on its execution time. This is surprising because
-> the test does not any kind of work related to IO. Nor does the RT task
-> in our system for that matter.
+> We wrote a very simple RT application that does some light work and write=
+s its execution time using the trace_marker. Execution time is constant but=
+ IO intensive stuff, like a stress --io 32 or a hdparm, will have and impac=
+t on its execution time. This is surprising because the test does not any k=
+ind of work related to IO. Nor does the RT task in our system for that matt=
+er.
 >
-> Our question is: Is this behaviour normal? Why are non RT tasks
-> affecting the RT task performance? Is there any other kind of test
-> that we could run that would shed some light on this issue?
+> Our question is: Is this behaviour normal? Why are non RT tasks affecting=
+ the RT task performance? Is there any other kind of test that we could run=
+ that would shed some light on this issue?
 >
 > Thanks in advance.
 >
@@ -103,12 +112,12 @@ And that can be a real help with this.
 > typedef long long NANO_TIME;
 > typedef struct timespec TIME_SPEC;
 >
-> static const long int INTERVAL = 1000000LL; // 1ms
+> static const long int INTERVAL =3D 1000000LL; // 1ms
 >
 > static TIME_SPEC nano2timespec(NANO_TIME hrt) {
 >   TIME_SPEC timevl;
->   timevl.tv_sec = hrt / 1000000000LL;
->   timevl.tv_nsec = hrt % 1000000000LL;
+>   timevl.tv_sec =3D hrt / 1000000000LL;
+>   timevl.tv_nsec =3D hrt % 1000000000LL;
 >   return timevl;
 > }
 >
@@ -120,25 +129,24 @@ And that can be a real help with this.
 > {
 >   TIME_SPEC tv;
 >   clock_gettime(CLOCK_REALTIME, &tv);
->   return NANO_TIME(tv.tv_sec) * 1000000000LL + NANO_TIME(tv.tv_nsec);
-> }
+>   return NANO_TIME(tv.tv_sec) * 1000000000LL + NANO_TIME(tv.tv_nsec); }
 >
-> static const unsigned int WORK_SIZE = 10000;
+> static const unsigned int WORK_SIZE =3D 10000;
 >
 > void do_work()
 > {
->   unsigned int i = 0;
->   double aux = 2;
+>   unsigned int i =3D 0;
+>   double aux =3D 2;
 >
 >   // do some stuff to use cpu
 >   while (i < WORK_SIZE)
 >   {
->     aux = pow(aux, i);
+>     aux =3D pow(aux, i);
 >     ++i;
 >   }
 > }
 >
-> int trace_fd = -1;
+> int trace_fd =3D -1;
 >
 > void trace_write(const char* fmt, ...)
 > {
@@ -150,7 +158,7 @@ And that can be a real help with this.
 >     return;
 >
 >   va_start(ap, fmt);
->   n = vsnprintf(buf, 256, fmt, ap);
+>   n =3D vsnprintf(buf, 256, fmt, ap);
 >   va_end(ap);
 >
 >   write(trace_fd, buf, n);
@@ -158,25 +166,25 @@ And that can be a real help with this.
 >
 > void* thread_func(void* /*data*/)
 > {
->   pid_t tid = syscall(__NR_gettid);
+>   pid_t tid =3D syscall(__NR_gettid);
 >   printf("pthread joined. TID %i \n", tid);
 >
 >   TIME_SPEC ts_next;
 >   NANO_TIME wake, init, after_work;
 >
->   wake = get_time_ns() + INTERVAL;
->   ts_next = nano2timespec(wake);
+>   wake =3D get_time_ns() + INTERVAL;
+>   ts_next =3D nano2timespec(wake);
 >
 >   while (true)
 >   {
->     init = get_time_ns();
+>     init =3D get_time_ns();
 >
 >     if (init < wake)
 >     {
 >       do_work();
->       after_work = get_time_ns();
+>       after_work =3D get_time_ns();
 >
->       const double exec_time = to_us(after_work - init);
+>       const double exec_time =3D to_us(after_work - init);
 >       trace_write("rt_test_exec_time - %f", exec_time);
 >     }
 >     else
@@ -185,8 +193,8 @@ And that can be a real help with this.
 >     }
 >
 >     clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &(ts_next), NULL);
->     wake = wake + INTERVAL;
->     ts_next = nano2timespec(wake);
+>     wake =3D wake + INTERVAL;
+>     ts_next =3D nano2timespec(wake);
 >   }
 >   return NULL;
 > }
@@ -198,7 +206,7 @@ And that can be a real help with this.
 >   int ret;
 >
 >   /* Lock memory */
->   if (mlockall(MCL_CURRENT | MCL_FUTURE) == -1)
+>   if (mlockall(MCL_CURRENT | MCL_FUTURE) =3D=3D -1)
 >   {
 >     printf("mlockall failed: %m\n");
 >     exit(-2);
@@ -212,7 +220,7 @@ And that can be a real help with this.
 >   }
 >
 >   /* Initialize pthread attributes (default values) */
->   ret = pthread_attr_init(&attr);
+>   ret =3D pthread_attr_init(&attr);
 >   if (ret)
 >   {
 >     printf("init pthread attributes failed\n");
@@ -220,7 +228,7 @@ And that can be a real help with this.
 >   }
 >
 >   /* Set a specific stack size  */
->   ret = pthread_attr_setstacksize(&attr, PTHREAD_STACK_MIN * 100);
+>   ret =3D pthread_attr_setstacksize(&attr, PTHREAD_STACK_MIN * 100);
 >   if (ret)
 >   {
 >     printf("pthread setstacksize failed\n");
@@ -228,15 +236,15 @@ And that can be a real help with this.
 >   }
 >
 >   /* Set scheduler policy and priority of pthread */
->   ret = pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
+>   ret =3D pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
 >   if (ret)
 >   {
 >     printf("pthread setschedpolicy failed\n");
 >     return ret;
 >   }
 >
->   param.sched_priority = 95;
->   ret = pthread_attr_setschedparam(&attr, &param);
+>   param.sched_priority =3D 95;
+>   ret =3D pthread_attr_setschedparam(&attr, &param);
 >   if (ret)
 >   {
 >     printf("pthread setschedparam failed\n");
@@ -244,7 +252,7 @@ And that can be a real help with this.
 >   }
 >
 >   /* Use scheduling parameters of attr */
->   ret = pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
+>   ret =3D pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
 >   if (ret)
 >   {
 >     printf("pthread setinheritsched failed\n");
@@ -252,7 +260,7 @@ And that can be a real help with this.
 >   }
 >
 >   /* Create a pthread with specified attributes */
->   ret = pthread_create(&thread, &attr, thread_func, NULL);
+>   ret =3D pthread_create(&thread, &attr, thread_func, NULL);
 >   if (ret)
 >   {
 >     printf("create pthread failed\n");
@@ -260,21 +268,22 @@ And that can be a real help with this.
 >   }
 >
 >   /* Open tracer_marker */
->   trace_fd = open("/tracing/trace_marker", O_WRONLY);
->   if (trace_fd == -1)
+>   trace_fd =3D open("/tracing/trace_marker", O_WRONLY);
+>   if (trace_fd =3D=3D -1)
 >   {
 >     printf("trace_marker open failed\n");
 >     return ret;
 >   }
 >
->   system("echo 1 > /tracing/tracing_on");             // enable
-> tracing system("echo nop > /tracing/current_tracer");       // reset
-> trace system("echo function > /tracing/current_tracer");  // use
-> function tracer system("echo 1 > /tracing/events/enable");          //
-> enable all events
+>   system("echo 1 > /tracing/tracing_on");             // enable tracing
+>   system("echo nop > /tracing/current_tracer");       // reset trace
+>   system("echo function > /tracing/current_tracer");  // use function tra=
+cer
+>   system("echo 1 > /tracing/events/enable");          // enable all event=
+s
 >
 >   /* Join the thread and wait until it is done */
->   ret = pthread_join(thread, NULL);
+>   ret =3D pthread_join(thread, NULL);
 >   if (ret)
 >     printf("join pthread failed: %m\n");
 >
@@ -284,30 +293,19 @@ And that can be a real help with this.
 >   return ret;
 > }
 > --
-> To unsubscribe from this list: send the line "unsubscribe
-> linux-rt-users" in the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users"=
+ in the body of a message to majordomo@vger.kernel.org More majordomo info =
+at  http://vger.kernel.org/majordomo-info.html
 >
-> ----------------------------------------------------------------------
->-------------------------------- Registergericht: Traunstein / Registry
-> Court: HRB 275 - Sitz / Head Office: Traunreut
-> Aufsichtsratsvorsitzender / Chairman of Supervisory Board: Rainer
-> Burkhard Gesch√§ftsf√ºhrung / Management Board: Thomas Sesselmann
-> (Vorsitzender / Chairman), Hubert Ermer, Michael Grimm, Lutz Rissing
+> -------------------------------------------------------------------------=
+-----------------------------
+> Registergericht: Traunstein / Registry Court: HRB 275 - Sitz / Head Offic=
+e: Traunreut
+> Aufsichtsratsvorsitzender / Chairman of Supervisory Board: Rainer Burkhar=
+d
+> Gesch=C3=A4ftsf=C3=BChrung / Management Board: Thomas Sesselmann (Vorsitz=
+ender / Chairman),
+> Hubert Ermer, Michael Grimm, Lutz Rissing
 >
-> E-Mail Haftungsausschluss / E-Mail Disclaimer:
-> http://www.heidenhain.de/disclaimer
-> Nãß≤ÊÏr∏õy˙Ëöÿb≤X¨∂«ßvÿ^ñ)ﬁ∫{.n«+â∑•ä{±Æ€¨zª"ûÿ
->^nár°ˆ¶zÀÅÎhô®Ë≠⁄&¢¯
-ÆG´ùÈhÆ(≠Èöéä›¢j"ù˙∂mßˇ
->ÔÅÍ‰zπﬁñä‡˛f£¢∑höàß~àmö
-
-
-
--- 
-Cheers, Gene Heskett
---
-"There are four boxes to be used in defense of liberty:
- soap, ballot, jury, and ammo. Please use in that order."
--Ed Howdershelt (Author)
-Genes Web page <http://geneslinuxbox.net:6309/gene>
+> E-Mail Haftungsausschluss / E-Mail Disclaimer: http://www.heidenhain.de/d=
+isclaimer
