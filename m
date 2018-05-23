@@ -1,10 +1,10 @@
 From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: Re: [PATCH v3 13/14] tracing/selftest: Add selftests to test
- trace_marker histogram triggers
-Date: Wed, 23 May 2018 23:13:31 +0900
-Message-ID: <20180523231331.bf69453f05478e11b00451ab@kernel.org>
+Subject: Re: [PATCH v3 14/14] tracing/selftest: Add test to test hist
+ trigger between kernel event and trace_marker
+Date: Wed, 23 May 2018 23:15:59 +0900
+Message-ID: <20180523231559.fdc6c528b49ce9764a0ceda5@kernel.org>
 References: <20180516150012.135869655@goodmis.org>
-        <20180516150201.246539183@goodmis.org>
+        <20180516150201.411972764@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -22,170 +22,64 @@ Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
         linux-rt-users@vger.kernel.org
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180516150201.246539183@goodmis.org>
+In-Reply-To: <20180516150201.411972764@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 16 May 2018 11:00:25 -0400
+On Wed, 16 May 2018 11:00:26 -0400
 Steven Rostedt <rostedt@goodmis.org> wrote:
 
 > From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 > 
-> Add a couple of tests that test the trace_marker histogram triggers.
-> One does a straight histogram test, the other will create a synthetic event
-> and test the latency between two different writes (using filters to
-> differentiate between them).
+> Add a test that tests a trigger that is initiated by a kernel event
+> (sched_waking) and compared to a write to the trace_marker.
 > 
-
-This looks good to me.
-
-Acked-by: Masami Hiramatsu <mhiramat@kernel.org>
-
-BTW, would you plan to add simplar test case for the marker?
-(like just write a marker and read trace log, and run a simple
- trigger, like taking a snapshot by marker)
-
-Thanks,
-
 > Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 > ---
->  .../trigger/trigger-trace-marker-hist.tc      | 49 ++++++++++++++
->  .../trigger/trigger-trace-marker-synthetic.tc | 66 +++++++++++++++++++
->  2 files changed, 115 insertions(+)
->  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-hist.tc
->  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc
+>  .../trigger/trigger-trace-marker-synthetic.tc | 22 +++++++++++++++++++
+>  1 file changed, 22 insertions(+)
 > 
-> diff --git a/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-hist.tc
-> new file mode 100644
-> index 000000000000..2acbfe2c0c0c
-> --- /dev/null
-> +++ b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-hist.tc
-> @@ -0,0 +1,49 @@
-> +#!/bin/sh
-> +# SPDX-License-Identifier: GPL-2.0
-> +# description: trace_marker trigger - test histogram trigger
-> +# flags: instance
-> +
-> +do_reset() {
-> +    reset_trigger
-> +    echo > set_event
-> +    clear_trace
-> +}
-> +
-> +fail() { #msg
-> +    do_reset
-> +    echo $1
-> +    exit_fail
-> +}
-> +
-> +if [ ! -f set_event ]; then
-> +    echo "event tracing is not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +if [ ! -d events/ftrace/print ]; then
-> +    echo "event trace_marker is not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +if [ ! -f events/ftrace/print/trigger ]; then
-> +    echo "event trigger is not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +if [ ! -f events/ftrace/print/hist ]; then
-> +    echo "hist trigger is not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +do_reset
-> +
-> +echo "Test histogram trace_marker tigger"
-> +
-> +echo 'hist:keys=common_pid' > events/ftrace/print/trigger
-> +for i in `seq 1 10` ; do echo "hello" > trace_marker; done
-> +grep 'hitcount: *10$' events/ftrace/print/hist > /dev/null || \
-> +    fail "hist trigger did not trigger correct times on trace_marker"
-> +
-> +do_reset
-> +
-> +exit 0
 > diff --git a/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc
-> new file mode 100644
-> index 000000000000..3666dd6ab02a
-> --- /dev/null
+> index 3666dd6ab02a..b06996ecd5e0 100644
+> --- a/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc
 > +++ b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc
-> @@ -0,0 +1,66 @@
-> +#!/bin/sh
-> +# SPDX-License-Identifier: GPL-2.0
-> +# description: trace_marker trigger - test histogram with synthetic event
-> +# flags:
-> +
-> +do_reset() {
-> +    reset_trigger
-> +    echo > set_event
-> +    echo > synthetic_events
-> +    clear_trace
-> +}
-> +
-> +fail() { #msg
-> +    do_reset
-> +    echo $1
-> +    exit_fail
-> +}
-> +
-> +if [ ! -f set_event ]; then
-> +    echo "event tracing is not supported"
+> @@ -31,6 +31,11 @@ if [ ! -d events/ftrace/print ]; then
+>      exit_unsupported
+>  fi
+>  
+> +if [ ! -d events/sched/sched_waking ]; then
+> +    echo "event sched_waking is not supported"
 > +    exit_unsupported
 > +fi
-> +
-> +if [ ! -f synthetic_events ]; then
-> +    echo "synthetic events not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +if [ ! -d events/ftrace/print ]; then
-> +    echo "event trace_marker is not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +if [ ! -f events/ftrace/print/trigger ]; then
-> +    echo "event trigger is not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +if [ ! -f events/ftrace/print/hist ]; then
-> +    echo "hist trigger is not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +do_reset
-> +
-> +echo "Test histogram trace_marker to trace_marker latency histogram trigger"
+
+Hmm, this looks no good sign... Can you split this out to another testcase,
+since this check is only for new test case below?
+
+[..]
+> @@ -63,4 +68,21 @@ grep 'hitcount: *1$' events/synthetic/latency/hist > /dev/null || \
+>  
+>  do_reset
+>  
+> +echo "Test histogram kernel event to trace_marker latency histogram trigger"
 > +
 > +echo 'latency u64 lat' > synthetic_events
-> +echo 'hist:keys=common_pid:ts0=common_timestamp.usecs if buf == "start"' > events/ftrace/print/trigger
-> +echo 'hist:keys=common_pid:lat=common_timestamp.usecs-$ts0:onmatch(ftrace.print).latency($lat) if buf == "end"' >> events/ftrace/print/trigger
+> +echo 'hist:keys=pid:ts0=common_timestamp.usecs' > events/sched/sched_waking/trigger
+> +echo 'hist:keys=common_pid:lat=common_timestamp.usecs-$ts0:onmatch(sched.sched_waking).latency($lat)' > events/ftrace/print/trigger
 > +echo 'hist:keys=common_pid,lat:sort=lat' > events/synthetic/latency/trigger
-> +echo -n "start" > trace_marker
-> +echo -n "end" > trace_marker
+> +sleep 1
+> +echo "hello" > trace_marker
 > +
-> +cnt=`grep 'hitcount: *1$' events/ftrace/print/hist | wc -l`
-> +
-> +if [ $cnt -ne 2 ]; then
-> +    fail "hist trace_marker trigger did not trigger correctly"
-> +fi
+> +grep 'hitcount: *1$' events/ftrace/print/hist > /dev/null || \
+> +    fail "hist trigger did not trigger correct times on trace_marker"
 > +
 > +grep 'hitcount: *1$' events/synthetic/latency/hist > /dev/null || \
 > +    fail "hist trigger did not trigger "
 > +
 > +do_reset
 > +
-> +exit 0
-> -- 
-> 2.17.0
-> 
-> 
+
+Thank you,
+
 
 
 -- 
