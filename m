@@ -1,98 +1,44 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from lgeamrelo11.lge.com ([156.147.23.51]:42758 "EHLO
-        lgeamrelo11.lge.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1750718AbeEXEI0 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 24 May 2018 00:08:26 -0400
+Received: from mail.monom.org ([188.138.9.77]:55284 "EHLO mail.monom.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S933104AbeEWOa0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 23 May 2018 10:30:26 -0400
 Subject: Re: i7 vs Atom
 References: <CAJ2oMhL=AT0K4rqMpaYGEfM+oxSPgw7n-KaWzhg5VNvkujDVJw@mail.gmail.com>
  <47b20a1d-6b06-3791-1cf2-931c30116dcf@lge.com>
- <CAJ2oMhKS5FN0jC35y6iVK9RVMMA5ROwi5017dRJCowPxQVqG1g@mail.gmail.com>
-From: Seokhee Han <seokhee.han@lge.com>
-Message-ID: <6a79922e-9e1e-35d6-00dd-b54443686bf2@lge.com>
-Date: Thu, 24 May 2018 13:08:23 +0900
+From: Daniel Wagner <wagi@monom.org>
+Message-ID: <cec18eea-0bcc-421f-43a0-ec07039cdf9b@monom.org>
+Date: Wed, 23 May 2018 16:30:24 +0200
 MIME-Version: 1.0
-In-Reply-To: <CAJ2oMhKS5FN0jC35y6iVK9RVMMA5ROwi5017dRJCowPxQVqG1g@mail.gmail.com>
+In-Reply-To: <47b20a1d-6b06-3791-1cf2-931c30116dcf@lge.com>
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
 Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: Ran Shalit <ranshalit@gmail.com>
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Seokhee Han <seokhee.han@lge.com>, Ran Shalit <ranshalit@gmail.com>, linux-rt-users <linux-rt-users@vger.kernel.org>
 
+Hi,
 
+On 23.05.2018 06:19, Seokhee Han wrote:
+>> The results of portwell seems more than just bad - they same
+>> unbelievable, the error is VERY high (2msec).
+>>
+>> I've tried to find a benchmark which can support my results, but found
+>> no benchmark with ATOM.
+> I am now developing RT Linux system on minnowboard Turbot Quad Core board,
+> which adopts ATOM E3845 series SoC, and it shows above about 2ms worst-case
+> latency during cyclictest. So I try to detect SMI-related, kernel unaware,
+> hw latency using Linux kernel's hwlat tracer and it tells me that there are
+> couples of latency spikes (above 1000us) on the board.
 
-On 23/05/18 18:14, Ran Shalit wrote:
->
->
-> בתאריך יום ד׳, 23 במאי 2018, 07:19, מאת Seokhee Han ‏<seokhee.han@lge.com <mailto:seokhee.han@lge.com>>:
->
->     Hi,
->
->
->     On 23/05/18 06:17, Ran Shalit wrote:
->     > Hello,
->     >
->     > We are using same BSP , kernel 3.18.11 rt7, with 2 different hardwares:
->     > 1. kontron board - i7 cpu
->     > 2. portwell board. - atom cpu (E3845 )
->     > The results are totally different with the same testing.
->     >
->     > In kontron the error is 11usec, while in portwell it is 2000usec .
->     >
->     > The results of portwell seems more than just bad - they same
->     > unbelievable, the error is VERY high (2msec).
->     >
->     > I've tried to find a benchmark which can support my results, but found
->     > no benchmark with ATOM.
->     I am now developing RT Linux system on minnowboard Turbot Quad Core board,
->     which adopts ATOM E3845 series SoC, and it shows above about 2ms worst-case
->     latency during cyclictest. So I try to detect SMI-related, kernel unaware,
->     hw latency using Linux kernel's hwlat tracer and it tells me that there are
->     couples of latency spikes (above 1000us) on the board.
->
->
->
-> Hi Han,
->
-> I see the 1.5 to 2 msec values every time I execute this test application
-> https://github.com/nma/preempt-rt/blob/master/test-rt.c
-> Can you please tell me if you get similiar results with this test application?
->
-> Thanks
-> Ran
->
->
+FWIW, I played a while with a MinnowBoard too. As it turns out the
+firmware provided from Intel is just no good for -rt. I ended up
+building a firmware with coreboot. With coreboot all the 2-3ms spikes
+were gone. Unfortunately, building your own firmware for the MinnowBoard
+is far from easy though possible:
 
-
-Hi Ran,
-
-I've also got the similar results (under 3ms spikes) with test-rt.c on minnowboard.
+https://3mdeb.com/firmware/building-coreboot-on-minnowboard/
 
 Thanks,
-Seokhee
-
-
->
->     I think that most of them are SMI-related. However, because I am not familiar
->     with intel system, I could not find the right way yet to disable SMI. Morever,
->     as googling, disabling SMI on the intel system can make the system harmful,
->     because some actions with SMI are related with critical conditions of the system,
->     like critical thermal conditions.
->
->     As you can see in the below link, you can also detect hw latency with hwlat tracer.
->     https://www.osadl.org/Create-a-frequency-plot-from-data-of-har.bash-script-for-hwlat-plots.0.html
->
->     Seokhee
->     > Thank you for any suggestion.
->     >
->     > Ranran
->     > --
->     > To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
->     > the body of a message to majordomo@vger.kernel.org <mailto:majordomo@vger.kernel.org>
->     > More majordomo info at  http://vger.kernel.org/majordomo-info.html
->     >
->
->
-
+Daniel
