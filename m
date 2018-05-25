@@ -1,14 +1,14 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH v3 13/14] tracing/selftest: Add selftests to test
- trace_marker histogram triggers
-Date: Fri, 25 May 2018 14:07:31 -0400
-Message-ID: <20180525140731.07d7543a@gandalf.local.home>
+Subject: Re: [PATCH v3 14/14] tracing/selftest: Add test to test hist
+ trigger between kernel event and trace_marker
+Date: Fri, 25 May 2018 14:15:06 -0400
+Message-ID: <20180525141506.65150cee@gandalf.local.home>
 References: <20180516150012.135869655@goodmis.org>
-        <20180516150201.246539183@goodmis.org>
-        <20180523231331.bf69453f05478e11b00451ab@kernel.org>
+        <20180516150201.411972764@goodmis.org>
+        <20180523231559.fdc6c528b49ce9764a0ceda5@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8BIT
 Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
         Andrew Morton <akpm@linux-foundation.org>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -22,24 +22,136 @@ Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
         linux-rt-users@vger.kernel.org
 To: Masami Hiramatsu <mhiramat@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180523231331.bf69453f05478e11b00451ab@kernel.org>
+In-Reply-To: <20180523231559.fdc6c528b49ce9764a0ceda5@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 23 May 2018 23:13:31 +0900
+On Wed, 23 May 2018 23:15:59 +0900
 Masami Hiramatsu <mhiramat@kernel.org> wrote:
 
-> This looks good to me.
+> On Wed, 16 May 2018 11:00:26 -0400
+> Steven Rostedt <rostedt@goodmis.org> wrote:
 > 
-> Acked-by: Masami Hiramatsu <mhiramat@kernel.org>
-
-Thanks!
-
+> > From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+> > 
+> > Add a test that tests a trigger that is initiated by a kernel event
+> > (sched_waking) and compared to a write to the trace_marker.
+> > 
+> > Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+> > ---
+> >  .../trigger/trigger-trace-marker-synthetic.tc | 22 +++++++++++++++++++
+> >  1 file changed, 22 insertions(+)
+> > 
+> > diff --git a/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc
+> > index 3666dd6ab02a..b06996ecd5e0 100644
+> > --- a/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc
+> > +++ b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc
+> > @@ -31,6 +31,11 @@ if [ ! -d events/ftrace/print ]; then
+> >      exit_unsupported
+> >  fi
+> >  
+> > +if [ ! -d events/sched/sched_waking ]; then
+> > +    echo "event sched_waking is not supported"
+> > +    exit_unsupported
+> > +fi  
 > 
-> BTW, would you plan to add simplar test case for the marker?
-> (like just write a marker and read trace log, and run a simple
->  trigger, like taking a snapshot by marker)
+> Hmm, this looks no good sign... Can you split this out to another testcase,
+> since this check is only for new test case below?
+> 
 
-I wasn't planning to, but I could.
+You mean like this?
 
 -- Steve
+
+
+>From 9a34a00fb3c44e5adebb31e6e7d9e8c233797200 Mon Sep 17 00:00:00 2001
+From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+Date: Mon, 14 May 2018 15:47:07 -0400
+Subject: [PATCH] tracing/selftest: Add test to test hist trigger between
+ kernel event and trace_marker
+
+Add a test that tests a trigger that is initiated by a kernel event
+(sched_waking) and compared to a write to the trace_marker.
+
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+---
+ .../trigger-trace-marker-synthetic-kernel.tc       | 68 ++++++++++++++++++++++
+ 1 file changed, 68 insertions(+)
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic-kernel.tc
+
+diff --git a/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic-kernel.tc b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic-kernel.tc
+new file mode 100644
+index 000000000000..447df015c56f
+--- /dev/null
++++ b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic-kernel.tc
+@@ -0,0 +1,68 @@
++#!/bin/sh
++# SPDX-License-Identifier: GPL-2.0
++# description: trace_marker trigger - test histogram with synthetic event
++# flags:
++
++do_reset() {
++    reset_trigger
++    echo > set_event
++    echo > synthetic_events
++    clear_trace
++}
++
++fail() { #msg
++    do_reset
++    echo $1
++    exit_fail
++}
++
++if [ ! -f set_event ]; then
++    echo "event tracing is not supported"
++    exit_unsupported
++fi
++
++if [ ! -f synthetic_events ]; then
++    echo "synthetic events not supported"
++    exit_unsupported
++fi
++
++if [ ! -d events/ftrace/print ]; then
++    echo "event trace_marker is not supported"
++    exit_unsupported
++fi
++
++if [ ! -d events/sched/sched_waking ]; then
++    echo "event sched_waking is not supported"
++    exit_unsupported
++fi
++
++if [ ! -f events/ftrace/print/trigger ]; then
++    echo "event trigger is not supported"
++    exit_unsupported
++fi
++
++if [ ! -f events/ftrace/print/hist ]; then
++    echo "hist trigger is not supported"
++    exit_unsupported
++fi
++
++do_reset
++
++echo "Test histogram kernel event to trace_marker latency histogram trigger"
++
++echo 'latency u64 lat' > synthetic_events
++echo 'hist:keys=pid:ts0=common_timestamp.usecs' > events/sched/sched_waking/trigger
++echo 'hist:keys=common_pid:lat=common_timestamp.usecs-$ts0:onmatch(sched.sched_waking).latency($lat)' > events/ftrace/print/trigger
++echo 'hist:keys=common_pid,lat:sort=lat' > events/synthetic/latency/trigger
++sleep 1
++echo "hello" > trace_marker
++
++grep 'hitcount: *1$' events/ftrace/print/hist > /dev/null || \
++    fail "hist trigger did not trigger correct times on trace_marker"
++
++grep 'hitcount: *1$' events/synthetic/latency/hist > /dev/null || \
++    fail "hist trigger did not trigger "
++
++do_reset
++
++exit 0
+-- 
+2.13.6
