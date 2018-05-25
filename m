@@ -1,11 +1,12 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH v3 14/14] tracing/selftest: Add test to test hist
  trigger between kernel event and trace_marker
-Date: Fri, 25 May 2018 14:15:06 -0400
-Message-ID: <20180525141506.65150cee@gandalf.local.home>
+Date: Fri, 25 May 2018 14:19:43 -0400
+Message-ID: <20180525141943.0a05e039@gandalf.local.home>
 References: <20180516150012.135869655@goodmis.org>
         <20180516150201.411972764@goodmis.org>
         <20180523231559.fdc6c528b49ce9764a0ceda5@kernel.org>
+        <20180525141506.65150cee@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 8BIT
@@ -22,49 +23,30 @@ Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
         linux-rt-users@vger.kernel.org
 To: Masami Hiramatsu <mhiramat@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180523231559.fdc6c528b49ce9764a0ceda5@kernel.org>
+In-Reply-To: <20180525141506.65150cee@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 23 May 2018 23:15:59 +0900
-Masami Hiramatsu <mhiramat@kernel.org> wrote:
+On Fri, 25 May 2018 14:15:06 -0400
+Steven Rostedt <rostedt@goodmis.org> wrote:
 
-> On Wed, 16 May 2018 11:00:26 -0400
-> Steven Rostedt <rostedt@goodmis.org> wrote:
-> 
-> > From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
-> > 
-> > Add a test that tests a trigger that is initiated by a kernel event
-> > (sched_waking) and compared to a write to the trace_marker.
-> > 
-> > Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-> > ---
-> >  .../trigger/trigger-trace-marker-synthetic.tc | 22 +++++++++++++++++++
-> >  1 file changed, 22 insertions(+)
-> > 
-> > diff --git a/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc
-> > index 3666dd6ab02a..b06996ecd5e0 100644
-> > --- a/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc
-> > +++ b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic.tc
-> > @@ -31,6 +31,11 @@ if [ ! -d events/ftrace/print ]; then
-> >      exit_unsupported
-> >  fi
-> >  
-> > +if [ ! -d events/sched/sched_waking ]; then
-> > +    echo "event sched_waking is not supported"
-> > +    exit_unsupported
-> > +fi  
-> 
-> Hmm, this looks no good sign... Can you split this out to another testcase,
-> since this check is only for new test case below?
-> 
+> diff --git a/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic-kernel.tc b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic-kernel.tc
+> new file mode 100644
+> index 000000000000..447df015c56f
+> --- /dev/null
+> +++ b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic-kernel.tc
+> @@ -0,0 +1,68 @@
+> +#!/bin/sh
+> +# SPDX-License-Identifier: GPL-2.0
+> +# description: trace_marker trigger - test histogram with synthetic event
+> +# flags:
+> +
 
-You mean like this?
+I forgot to update the description. Here's the new patch:
 
 -- Steve
 
-
->From 9a34a00fb3c44e5adebb31e6e7d9e8c233797200 Mon Sep 17 00:00:00 2001
+>From 9699fdb67ba8ea9981bd0af1802209b0011a86ab Mon Sep 17 00:00:00 2001
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 Date: Mon, 14 May 2018 15:47:07 -0400
 Subject: [PATCH] tracing/selftest: Add test to test hist trigger between
@@ -81,13 +63,13 @@ Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 
 diff --git a/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic-kernel.tc b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic-kernel.tc
 new file mode 100644
-index 000000000000..447df015c56f
+index 000000000000..0a69c5d1cda8
 --- /dev/null
 +++ b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic-kernel.tc
 @@ -0,0 +1,68 @@
 +#!/bin/sh
 +# SPDX-License-Identifier: GPL-2.0
-+# description: trace_marker trigger - test histogram with synthetic event
++# description: trace_marker trigger - test histogram with synthetic event against kernel event
 +# flags:
 +
 +do_reset() {
