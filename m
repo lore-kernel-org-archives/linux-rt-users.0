@@ -1,47 +1,45 @@
-From: Daniel Wagner <wagi@monom.org>
-Subject: [ANNOUNCE] 4.4.132-rt149
-Date: Fri, 25 May 2018 11:03:01 +0200
-Message-ID: <20180525090752.3616A500BEA@mail.monom.org>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH v3 13/14] tracing/selftest: Add selftests to test
+ trace_marker histogram triggers
+Date: Fri, 25 May 2018 14:07:31 -0400
+Message-ID: <20180525140731.07d7543a@gandalf.local.home>
+References: <20180516150012.135869655@goodmis.org>
+        <20180516150201.246539183@goodmis.org>
+        <20180523231331.bf69453f05478e11b00451ab@kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        Tom Zanusse <tom.zanussi@linux.intel.com>,
-        Julia Cartwright <julia@ni.com>
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Karim Yaghmour <karim.yaghmour@opersys.com>,
+        Brendan Gregg <bgregg@netflix.com>,
+        Joel Fernandes <joel@joelfernandes.org>,
+        Namhyung Kim <namhyung@kernel.org>,
+        Yann Ylavic <ylavic.dev@gmail.com>,
+        linux-rt-users@vger.kernel.org
+To: Masami Hiramatsu <mhiramat@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180523231331.bf69453f05478e11b00451ab@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello RT Folks!
+On Wed, 23 May 2018 23:13:31 +0900
+Masami Hiramatsu <mhiramat@kernel.org> wrote:
 
-I'm pleased to announce the 4.4.132-rt149 stable release.
+> This looks good to me.
+> 
+> Acked-by: Masami Hiramatsu <mhiramat@kernel.org>
 
-This release is just an update to the new stable 4.4.132 version
-and no RT specific changes have been made.
+Thanks!
 
-You can get this release via the git tree at:
+> 
+> BTW, would you plan to add simplar test case for the marker?
+> (like just write a marker and read trace log, and run a simple
+>  trigger, like taking a snapshot by marker)
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+I wasn't planning to, but I could.
 
-  branch: v4.4-rt
-  Head SHA1: 3f39cdf309d8915d1286609cdc20837d3e565e5a
-
-Or to build 4.4.132-rt149 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.132.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.132-rt149.patch.xz
-
-
-You can also build from 4.4.131-rt148 by applying the incremental patch:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/incr/patch-4.4.131-rt148-rt149.patch.xz
-
-Enjoy!
-   Daniel
+-- Steve
