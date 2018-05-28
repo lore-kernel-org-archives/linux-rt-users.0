@@ -1,155 +1,66 @@
-From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: Re: [PATCH v3 14/14] tracing/selftest: Add test to test hist
- trigger between kernel event and trace_marker
-Date: Mon, 28 May 2018 01:33:56 +0900
-Message-ID: <20180528013356.f18c922e754867365022698f@kernel.org>
-References: <20180516150012.135869655@goodmis.org>
-        <20180516150201.411972764@goodmis.org>
-        <20180523231559.fdc6c528b49ce9764a0ceda5@kernel.org>
-        <20180525141506.65150cee@gandalf.local.home>
-        <20180525141943.0a05e039@gandalf.local.home>
+From: "bigeasy@linutronix.de" <bigeasy@linutronix.de>
+Subject: Re: [PATCH 1/2] target: drop spin_lock_assert() + irqs_disabled()
+ combo checks
+Date: Mon, 28 May 2018 16:35:18 +0200
+Message-ID: <20180528143518.f46hyhi5r5jd3oxe@linutronix.de>
+References: <20180322093745.GC4229@kernel.org>
+ <20180323155513.dwbgvblenlji33as@linutronix.de>
+ <1521822325.2535.5.camel@wdc.com>
+ <CA+55aFxVkuntSektVmwXktzvfEezdDTAM_zj4DJdp3qJxWf8aA@mail.gmail.com>
+ <20180323171736.bcyi2oiolge4l6hl@linutronix.de>
+ <20180326111359.180f1604@gandalf.local.home>
+ <20180328101553.uduqsdbxwnxrhl7a@linutronix.de>
+ <c9f5df1e54bb2bd8f3f0aef86a55deb11888a6a4.camel@wdc.com>
+ <20180328151433.elhw6kgxdxq6fn6b@linutronix.de>
+ <86c1243e-8733-c94d-d8ff-5c299b8266a6@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, Ingo Molnar <mingo@kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>,
-        Karim Yaghmour <karim.yaghmour@opersys.com>,
-        Brendan Gregg <bgregg@netflix.com>,
-        Joel Fernandes <joel@joelfernandes.org>,
-        Namhyung Kim <namhyung@kernel.org>,
-        Yann Ylavic <ylavic.dev@gmail.com>,
-        linux-rt-users@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=utf-8
+Cc: "rostedt@goodmis.org" <rostedt@goodmis.org>,
+        "daniel@bristot.me" <daniel@bristot.me>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "peterz@infradead.org" <peterz@infradead.org>,
+        "torvalds@linux-foundation.org" <torvalds@linux-foundation.org>,
+        "tglx@linutronix.de" <tglx@linutronix.de>,
+        "acme@kernel.org" <acme@kernel.org>,
+        "nab@linux-iscsi.org" <nab@linux-iscsi.org>,
+        "williams@redhat.com" <williams@redhat.com>,
+        "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
+        "lclaudio@redhat.com" <lclaudio@redhat.com>,
+        "target-devel@vger.kernel.org" <target-devel@vger.kernel.org>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Bart Van Assche <bart.vanassche@wdc.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180525141943.0a05e039@gandalf.local.home>
+Content-Disposition: inline
+In-Reply-To: <86c1243e-8733-c94d-d8ff-5c299b8266a6@wdc.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 25 May 2018 14:19:43 -0400
-Steven Rostedt <rostedt@goodmis.org> wrote:
+On 2018-03-28 08:31:38 [-0700], Bart Van Assche wrote:
+> On 03/28/18 08:14, bigeasy@linutronix.de wrote:
+> > On 2018-03-28 15:05:41 [+0000], Bart Van Assche wrote:
+> > > The names of the two functions touched by patch 1/2 start with a double
+> > > underscore. That by itself is already a hint that these should be called with
+> > > a lock held (I know that this is not a universal convention in the Linux
+> > > kernel). I'm fine either way - either with patch 1/2 as posted or patch 1/2
+> > > with the above comment added.
+> > 
+> > Okay. In that case let me update 1/2.
+> > But 2/2 with the comment as Steven suggested is still a no no for you?
+> 
+> Although I'm not enthusiast about patch 2/2, if others agree with that patch
+> I'm fine with that patch being sent upstream.
 
-> On Fri, 25 May 2018 14:15:06 -0400
-> Steven Rostedt <rostedt@goodmis.org> wrote:
-> 
-> > diff --git a/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic-kernel.tc b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic-kernel.tc
-> > new file mode 100644
-> > index 000000000000..447df015c56f
-> > --- /dev/null
-> > +++ b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic-kernel.tc
-> > @@ -0,0 +1,68 @@
-> > +#!/bin/sh
-> > +# SPDX-License-Identifier: GPL-2.0
-> > +# description: trace_marker trigger - test histogram with synthetic event
-> > +# flags:
-> > +
-> 
-> I forgot to update the description. Here's the new patch:
-> 
-> -- Steve
-> 
-> From 9699fdb67ba8ea9981bd0af1802209b0011a86ab Mon Sep 17 00:00:00 2001
-> From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
-> Date: Mon, 14 May 2018 15:47:07 -0400
-> Subject: [PATCH] tracing/selftest: Add test to test hist trigger between
->  kernel event and trace_marker
-> 
-> Add a test that tests a trigger that is initiated by a kernel event
-> (sched_waking) and compared to a write to the trace_marker.
-> 
+I've been waiting for something to happen but nobody replied.
+Bart, you were fine with 1/2 as posted but not too happy about 2/2.
+Assuming we keep 1/2 as is and I remove just the
+"WARN_ON_ONCE(!irqs_disabled());" from 2/2 (keeping the
+assert_spin_locked()), would that improve your mood? Lockdep would still
+perform full validation, yell if __transport_check_aborted_status() was
+invoked without locking and also yell abut missing IRQ-save at locking
+time of ->t_state_lock).
 
-Yeah, this looks good to me :)
-
-Acked-by: Masami Hiramatsu <mhiramat@kernel.org>
-
-Thanks!
-
-> Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-> ---
->  .../trigger-trace-marker-synthetic-kernel.tc       | 68 ++++++++++++++++++++++
->  1 file changed, 68 insertions(+)
->  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic-kernel.tc
+> Thanks,
 > 
-> diff --git a/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic-kernel.tc b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic-kernel.tc
-> new file mode 100644
-> index 000000000000..0a69c5d1cda8
-> --- /dev/null
-> +++ b/tools/testing/selftests/ftrace/test.d/trigger/trigger-trace-marker-synthetic-kernel.tc
-> @@ -0,0 +1,68 @@
-> +#!/bin/sh
-> +# SPDX-License-Identifier: GPL-2.0
-> +# description: trace_marker trigger - test histogram with synthetic event against kernel event
-> +# flags:
-> +
-> +do_reset() {
-> +    reset_trigger
-> +    echo > set_event
-> +    echo > synthetic_events
-> +    clear_trace
-> +}
-> +
-> +fail() { #msg
-> +    do_reset
-> +    echo $1
-> +    exit_fail
-> +}
-> +
-> +if [ ! -f set_event ]; then
-> +    echo "event tracing is not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +if [ ! -f synthetic_events ]; then
-> +    echo "synthetic events not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +if [ ! -d events/ftrace/print ]; then
-> +    echo "event trace_marker is not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +if [ ! -d events/sched/sched_waking ]; then
-> +    echo "event sched_waking is not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +if [ ! -f events/ftrace/print/trigger ]; then
-> +    echo "event trigger is not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +if [ ! -f events/ftrace/print/hist ]; then
-> +    echo "hist trigger is not supported"
-> +    exit_unsupported
-> +fi
-> +
-> +do_reset
-> +
-> +echo "Test histogram kernel event to trace_marker latency histogram trigger"
-> +
-> +echo 'latency u64 lat' > synthetic_events
-> +echo 'hist:keys=pid:ts0=common_timestamp.usecs' > events/sched/sched_waking/trigger
-> +echo 'hist:keys=common_pid:lat=common_timestamp.usecs-$ts0:onmatch(sched.sched_waking).latency($lat)' > events/ftrace/print/trigger
-> +echo 'hist:keys=common_pid,lat:sort=lat' > events/synthetic/latency/trigger
-> +sleep 1
-> +echo "hello" > trace_marker
-> +
-> +grep 'hitcount: *1$' events/ftrace/print/hist > /dev/null || \
-> +    fail "hist trigger did not trigger correct times on trace_marker"
-> +
-> +grep 'hitcount: *1$' events/synthetic/latency/hist > /dev/null || \
-> +    fail "hist trigger did not trigger "
-> +
-> +do_reset
-> +
-> +exit 0
-> -- 
-> 2.13.6
-> 
+> Bart.
 
-
--- 
-Masami Hiramatsu <mhiramat@kernel.org>
+Sebastian
