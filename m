@@ -1,136 +1,67 @@
-From: Geunsik Lim <geunsik.lim@gmail.com>
-Subject: Re: About GPL license compliance of Tesla Model S, Linux kernel 4.4
-Date: Mon, 4 Jun 2018 11:35:50 +0900
-Message-ID: <CAGFP0LK3jWq=rW+3QY+=OxrJFHsVZyjd5jZ5=jvZ4TStebD23g@mail.gmail.com>
-References: <CAGFP0L+ndXDPRFT3fjgwBoVZwHOhCEan4Pcj_oW0FXNHV2Rkbw@mail.gmail.com>
- <CAGFP0L+EprYNOoz2-rubi+EOytsEJmwckUZk9J8y3jZ9xjdHmw@mail.gmail.com>
+From: Bart Van Assche <Bart.VanAssche@wdc.com>
+Subject: Re: [PATCH 1/2] target: drop spin_lock_assert() + irqs_disabled()
+ combo checks
+Date: Mon, 4 Jun 2018 07:02:15 +0000
+Message-ID: <92633c987a900acf5e7defb481d347a9e5b1253d.camel@wdc.com>
+References: <20180322093745.GC4229@kernel.org>
+         <20180323155513.dwbgvblenlji33as@linutronix.de>
+         <1521822325.2535.5.camel@wdc.com>
+         <CA+55aFxVkuntSektVmwXktzvfEezdDTAM_zj4DJdp3qJxWf8aA@mail.gmail.com>
+         <20180323171736.bcyi2oiolge4l6hl@linutronix.de>
+         <20180326111359.180f1604@gandalf.local.home>
+         <20180328101553.uduqsdbxwnxrhl7a@linutronix.de>
+         <c9f5df1e54bb2bd8f3f0aef86a55deb11888a6a4.camel@wdc.com>
+         <20180328151433.elhw6kgxdxq6fn6b@linutronix.de>
+         <86c1243e-8733-c94d-d8ff-5c299b8266a6@wdc.com>
+         <20180528143518.f46hyhi5r5jd3oxe@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Cc: Harald Welte <laforge@gnumonks.org>,
-        Linus Torvalds <torvalds@linux-foundation.org>
-To: linux-kernel <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: "daniel@bristot.me" <daniel@bristot.me>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "peterz@infradead.org" <peterz@infradead.org>,
+        "rostedt@goodmis.org" <rostedt@goodmis.org>,
+        "torvalds@linux-foundation.org" <torvalds@linux-foundation.org>,
+        "nab@linux-iscsi.org" <nab@linux-iscsi.org>,
+        "tglx@linutronix.de" <tglx@linutronix.de>,
+        "acme@kernel.org" <acme@kernel.org>,
+        "williams@redhat.com" <williams@redhat.com>,
+        "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
+        "lclaudio@redhat.com" <lclaudio@redhat.com>,
+        "target-devel@vger.kernel.org" <target-devel@vger.kernel.org>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: "bigeasy@linutronix.de" <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAGFP0L+EprYNOoz2-rubi+EOytsEJmwckUZk9J8y3jZ9xjdHmw@mail.gmail.com>
+In-Reply-To: <20180528143518.f46hyhi5r5jd3oxe@linutronix.de>
+Content-Language: en-US
+Content-ID: <2B0C44F68D3CC04DBEBD1BC21910647A@namprd04.prod.outlook.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-FYI, https://sfconservancy.org/blog/2018/may/18/tesla-incomplete-ccs/
-
-On Sun, Nov 26, 2017 at 8:23 PM, Geunsik Lim <geunsik.lim@gmail.com> wrote:
-> Here is my next activity.
->
-> After reading http://gpl-violations.org/helping/,
-> I have reported this issue to solve a potential GPL misuse about the
-> Linux kernel open source code
-> that is used to deploy Tesla Model S (Linux kernel based commercial product).
->
->
->
->
-> BRs,
-> Geunsik Lim.
->
->
-> On Sat, Nov 25, 2017 at 4:48 PM, Geunsik Lim <geunsik.lim@gmail.com> wrote:
->> Hi All,
->>
->> I want to talk about a potential GPL misuse of the Linux open source
->> that is used by Tesla Model S. Some months ago, I have read that a
->> version information of Linux kernel that is deployed into the
->> commercial self-driving car such as Tesla Model S via (1) the twitter
->> web page of Tesla CEO Elon Musk  and (2) the presentation material of
->> the Blackhat 2017  presenter Sen Nie as follows.
->>
->> Oct-05-2016, Twitter, "When we upgrade the core Linux OS to 4.4, which
->> is probably December"
->> https://twitter.com/elonmusk/status/783759011724210176
->>
->> Jul-22-2017, Blackhat 2017, "FREE-FALL: HACKING TESLA FROM WIRELESS TO CAN BUS"
->> https://www.blackhat.com/us-17/briefings.html#free-fall-hacking-tesla-from-wireless-to-can-bus
->>
->>
->> In case of the embedded device vendors, it seems that the most of the
->> global vendors have being uploaded related open source software that
->> are used by commercial products via their open source release center
->> to keep the GPL compliance as following:
->>
->> https://opensource.google.com/
->> https://opensource.microsoft.com/
->> https://opensource.apple.com
->> https://opensource.samsung.com
->> https://opensource.lge.com
->> https://opensource.dell.com/
->> http://opensource.alibaba.com/
->> https://developer.sonymobile.com/knowledge-base/open-source/
->> http://consumer.huawei.com/en/opensource/
->> http://xiaomi.github.io/
->> https://software.intel.com/en-us/open-source
->>
->>
->> Also, we can download related open sources such as Linux kernel, GCC,
->> and so on from their official homepage in case of BMW, GM, Ford, and
->> Toyota cars.
->>
->> BMW - http://www.bmw-carit.de/open-source/
->> GM - http://oss.bosch-cm.com/gm.html
->> Ford - http://corporate.ford.com/ford-open-source.html
->> Toyota - http://www.globaldenso.com/en/opensource/ivi/toyota/
->>
->>
->> BTW, in case of Tesla, where can we find an official open source
->> release center to download their Linux kernel source that is deployed
->> into a commercial self-driving car? I could not find an official web
->> page of Tesla to download Linux Kernel 4.4 (GPLv2) and other open
->> sources that are used by Tesla company. And, I can not find the
->> related Linux kernel source code from https://github.com/teslamotors.
->> Unfortunately, even though I asked a person in charging on this issue,
->> they do not reply me any e-mail for 2 weeks. Anyone that already tried
->> to get their Linux kernel source of Tesla Model S?
->>
->> As we all know, Linus Torvalds has released his Linux Kernel under
->> GPLv2 license via https://www.kernel.org/.
->> For more details, please visit the below web-pages.
->>
->> https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/COPYING?h=v4.4
->> http://www.gnu.org/licenses/gpl-faq.en.html#GPLRequireSourcePostedPublic
->>
->> I wonder if they correctly keep the GPL compliance because I am not a lawyer.
->>
->>
->> Thanks for reading.
->>
->>
->>
->> BRs,
->> Geunsik Lim.
->>
->>
->>
->> ----
->> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
->> the body of a message to majordomo@vger.kernel.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->> Please read the FAQ at  http://www.tux.org/lkml/
->> ----
->
->
->
-> --
-> ----
-> Best regards,
-> Geunsik Lim, Samsung Electronics
-> http://leemgs.fedorapeople.org
-> ----
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
-
-
-
--- 
-----
-Best regards,
-Geunsik Lim, Samsung Electronics
-http://leemgs.fedorapeople.org
+T24gTW9uLCAyMDE4LTA1LTI4IGF0IDE2OjM1ICswMjAwLCBiaWdlYXN5QGxpbnV0cm9uaXguZGUg
+d3JvdGU6DQo+IE9uIDIwMTgtMDMtMjggMDg6MzE6MzggWy0wNzAwXSwgQmFydCBWYW4gQXNzY2hl
+IHdyb3RlOg0KPiA+IE9uIDAzLzI4LzE4IDA4OjE0LCBiaWdlYXN5QGxpbnV0cm9uaXguZGUgd3Jv
+dGU6DQo+ID4gPiBPbiAyMDE4LTAzLTI4IDE1OjA1OjQxIFsrMDAwMF0sIEJhcnQgVmFuIEFzc2No
+ZSB3cm90ZToNCj4gPiA+ID4gVGhlIG5hbWVzIG9mIHRoZSB0d28gZnVuY3Rpb25zIHRvdWNoZWQg
+YnkgcGF0Y2ggMS8yIHN0YXJ0IHdpdGggYSBkb3VibGUNCj4gPiA+ID4gdW5kZXJzY29yZS4gVGhh
+dCBieSBpdHNlbGYgaXMgYWxyZWFkeSBhIGhpbnQgdGhhdCB0aGVzZSBzaG91bGQgYmUgY2FsbGVk
+IHdpdGgNCj4gPiA+ID4gYSBsb2NrIGhlbGQgKEkga25vdyB0aGF0IHRoaXMgaXMgbm90IGEgdW5p
+dmVyc2FsIGNvbnZlbnRpb24gaW4gdGhlIExpbnV4DQo+ID4gPiA+IGtlcm5lbCkuIEknbSBmaW5l
+IGVpdGhlciB3YXkgLSBlaXRoZXIgd2l0aCBwYXRjaCAxLzIgYXMgcG9zdGVkIG9yIHBhdGNoIDEv
+Mg0KPiA+ID4gPiB3aXRoIHRoZSBhYm92ZSBjb21tZW50IGFkZGVkLg0KPiA+ID4gDQo+ID4gPiBP
+a2F5LiBJbiB0aGF0IGNhc2UgbGV0IG1lIHVwZGF0ZSAxLzIuDQo+ID4gPiBCdXQgMi8yIHdpdGgg
+dGhlIGNvbW1lbnQgYXMgU3RldmVuIHN1Z2dlc3RlZCBpcyBzdGlsbCBhIG5vIG5vIGZvciB5b3U/
+DQo+ID4gDQo+ID4gQWx0aG91Z2ggSSdtIG5vdCBlbnRodXNpYXN0IGFib3V0IHBhdGNoIDIvMiwg
+aWYgb3RoZXJzIGFncmVlIHdpdGggdGhhdCBwYXRjaA0KPiA+IEknbSBmaW5lIHdpdGggdGhhdCBw
+YXRjaCBiZWluZyBzZW50IHVwc3RyZWFtLg0KPiANCj4gSSd2ZSBiZWVuIHdhaXRpbmcgZm9yIHNv
+bWV0aGluZyB0byBoYXBwZW4gYnV0IG5vYm9keSByZXBsaWVkLg0KPiBCYXJ0LCB5b3Ugd2VyZSBm
+aW5lIHdpdGggMS8yIGFzIHBvc3RlZCBidXQgbm90IHRvbyBoYXBweSBhYm91dCAyLzIuDQo+IEFz
+c3VtaW5nIHdlIGtlZXAgMS8yIGFzIGlzIGFuZCBJIHJlbW92ZSBqdXN0IHRoZQ0KPiAiV0FSTl9P
+Tl9PTkNFKCFpcnFzX2Rpc2FibGVkKCkpOyIgZnJvbSAyLzIgKGtlZXBpbmcgdGhlDQo+IGFzc2Vy
+dF9zcGluX2xvY2tlZCgpKSwgd291bGQgdGhhdCBpbXByb3ZlIHlvdXIgbW9vZD8gTG9ja2RlcCB3
+b3VsZCBzdGlsbA0KPiBwZXJmb3JtIGZ1bGwgdmFsaWRhdGlvbiwgeWVsbCBpZiBfX3RyYW5zcG9y
+dF9jaGVja19hYm9ydGVkX3N0YXR1cygpIHdhcw0KPiBpbnZva2VkIHdpdGhvdXQgbG9ja2luZyBh
+bmQgYWxzbyB5ZWxsIGFidXQgbWlzc2luZyBJUlEtc2F2ZSBhdCBsb2NraW5nDQo+IHRpbWUgb2Yg
+LT50X3N0YXRlX2xvY2spLg0KDQpXb3VsZCBhZGRpbmcgV0FSTl9PTl9PTkNFKCFpcnFzX2Rpc2Fi
+bGVkKCkpIHdvcmsgZmluZSB3aXRoIGFuIFJUIGtlcm5lbD8NCg0KVGhhbmtzLA0KDQpCYXJ0Lg0K
+DQoNCg0KDQo=
