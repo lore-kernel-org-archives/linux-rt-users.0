@@ -1,13 +1,13 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from Galois.linutronix.de ([146.0.238.70]:50242 "EHLO
+Received: from Galois.linutronix.de ([146.0.238.70]:50240 "EHLO
         Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1752019AbeFFNb6 (ORCPT
+        with ESMTP id S1751991AbeFFNb5 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 6 Jun 2018 09:31:58 -0400
+        Wed, 6 Jun 2018 09:31:57 -0400
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH 6/6] rcu: Suppress lockdep false-positive ->boost_mtx complaints
-Date: Wed,  6 Jun 2018 15:31:31 +0200
-Message-Id: <20180606133131.7747-7-bigeasy@linutronix.de>
+Subject: [PATCH 5/6] rtmutex: Make rt_mutex_futex_unlock() safe for irq-off callsites
+Date: Wed,  6 Jun 2018 15:31:30 +0200
+Message-Id: <20180606133131.7747-6-bigeasy@linutronix.de>
 In-Reply-To: <20180606133131.7747-1-bigeasy@linutronix.de>
 References: <20180606133131.7747-1-bigeasy@linutronix.de>
 MIME-Version: 1.0
@@ -17,42 +17,130 @@ List-ID: <linux-rt-users.vger.kernel.org>
 To: julia@ni.com
 Cc: linux-rt-users@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>
 
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+From: Boqun Feng <boqun.feng@gmail.com>
 
-[ Upstream commit 02a7c234e54052101164368ff981bd72f7acdd65 ]
+[ Upstream commit 6b0ef92fee2a3189eba6d6b827b247cb4f6da7e9 ]
 
-RCU priority boosting uses rt_mutex_init_proxy_locked() to initialize an
-rt_mutex structure in locked state held by some other task.  When that
-other task releases it, lockdep complains (quite accurately, but a bit
-uselessly) that the other task never acquired it.  This complaint can
-suppress other, more helpful, lockdep complaints, and in any case it is
-a false positive.
+When running rcutorture with TREE03 config, CONFIG_PROVE_LOCKING=3Dy, and
+kernel cmdline argument "rcutorture.gp_exp=3D1", lockdep reports a
+HARDIRQ-safe->HARDIRQ-unsafe deadlock:
 
-This commit therefore switches from rt_mutex_unlock() to
-rt_mutex_futex_unlock(), thereby avoiding the lockdep annotations.
-Of course, if lockdep ever learns about rt_mutex_init_proxy_locked(),
-addtional adjustments will be required.
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D
+ WARNING: inconsistent lock state
+ 4.16.0-rc4+ #1 Not tainted
+ --------------------------------
+ inconsistent {IN-HARDIRQ-W} -> {HARDIRQ-ON-W} usage.
+ takes:
+ __schedule+0xbe/0xaf0
+ {IN-HARDIRQ-W} state was registered at:
+   _raw_spin_lock+0x2a/0x40
+   scheduler_tick+0x47/0xf0
+...
+ other info that might help us debug this:
+  Possible unsafe locking scenario:
+        CPU0
+        ----
+   lock(&rq->lock);
+   <Interrupt>
+     lock(&rq->lock);
+  *** DEADLOCK ***
+ 1 lock held by rcu_torture_rea/724:
+ rcu_torture_read_lock+0x0/0x70
+ stack backtrace:
+ CPU: 2 PID: 724 Comm: rcu_torture_rea Not tainted 4.16.0-rc4+ #1
+ Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.11.0-2017111=
+0_100015-anatol 04/01/2014
+ Call Trace:
+  lock_acquire+0x90/0x200
+  ? __schedule+0xbe/0xaf0
+  _raw_spin_lock+0x2a/0x40
+  ? __schedule+0xbe/0xaf0
+  __schedule+0xbe/0xaf0
+  preempt_schedule_irq+0x2f/0x60
+  retint_kernel+0x1b/0x2d
+ RIP: 0010:rcu_read_unlock_special+0x0/0x680
+  ? rcu_torture_read_unlock+0x60/0x60
+  __rcu_read_unlock+0x64/0x70
+  rcu_torture_read_unlock+0x17/0x60
+  rcu_torture_reader+0x275/0x450
+  ? rcutorture_booster_init+0x110/0x110
+  ? rcu_torture_stall+0x230/0x230
+  ? kthread+0x10e/0x130
+  kthread+0x10e/0x130
+  ? kthread_create_worker_on_cpu+0x70/0x70
+  ? call_usermodehelper_exec_async+0x11a/0x150
+  ret_from_fork+0x3a/0x50
 
-Suggested-by: Peter Zijlstra <peterz@infradead.org>
-Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+This happens with the following even sequence:
+
+	preempt_schedule_irq();
+	  local_irq_enable();
+	  __schedule():
+	    local_irq_disable(); // irq off
+	    ...
+	    rcu_note_context_switch():
+	      rcu_note_preempt_context_switch():
+	        rcu_read_unlock_special():
+	          local_irq_save(flags);
+	          ...
+		  raw_spin_unlock_irqrestore(...,flags); // irq remains off
+	          rt_mutex_futex_unlock():
+	            raw_spin_lock_irq();
+	            ...
+	            raw_spin_unlock_irq(); // accidentally set irq on
+
+	    <return to __schedule()>
+	    rq_lock():
+	      raw_spin_lock(); // acquiring rq->lock with irq on
+
+which means rq->lock becomes a HARDIRQ-unsafe lock, which can cause
+deadlocks in scheduler code.
+
+This problem was introduced by commit 02a7c234e540 ("rcu: Suppress
+lockdep false-positive ->boost_mtx complaints"). That brought the user
+of rt_mutex_futex_unlock() with irq off.
+
+To fix this, replace the *lock_irq() in rt_mutex_futex_unlock() with
+*lock_irq{save,restore}() to make it safe to call rt_mutex_futex_unlock()
+with irq off.
+
+Fixes: 02a7c234e540 ("rcu: Suppress lockdep false-positive ->boost_mtx comp=
+laints")
+Signed-off-by: Boqun Feng <boqun.feng@gmail.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Lai Jiangshan <jiangshanlai@gmail.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Josh Triplett <josh@joshtriplett.org>
+Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>
+Link: https://lkml.kernel.org/r/20180309065630.8283-1-boqun.feng@gmail.com
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/rcu/tree_plugin.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kernel/locking/rtmutex.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
-index be12d1aac840..ce069b37d961 100644
---- a/kernel/rcu/tree_plugin.h
-+++ b/kernel/rcu/tree_plugin.h
-@@ -485,7 +485,7 @@ void rcu_read_unlock_special(struct task_struct *t)
+diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+index 57361d631749..5e15f5c73637 100644
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -2213,11 +2213,12 @@ void __sched rt_mutex_futex_unlock(struct rt_mutex =
+*lock)
+ {
+ 	WAKE_Q(wake_q);
+ 	WAKE_Q(wake_sleeper_q);
++	unsigned long flags;
+ 	bool postunlock;
 =20
- 		/* Unboost if we were boosted. */
- 		if (IS_ENABLED(CONFIG_RCU_BOOST) && drop_boost_mutex)
--			rt_mutex_unlock(&rnp->boost_mtx);
-+			rt_mutex_futex_unlock(&rnp->boost_mtx);
+-	raw_spin_lock_irq(&lock->wait_lock);
++	raw_spin_lock_irqsave(&lock->wait_lock, flags);
+ 	postunlock =3D __rt_mutex_futex_unlock(lock, &wake_q, &wake_sleeper_q);
+-	raw_spin_unlock_irq(&lock->wait_lock);
++	raw_spin_unlock_irqrestore(&lock->wait_lock, flags);
 =20
- 		/*
- 		 * If this was the last task on the expedited lists,
+ 	if (postunlock)
+ 		rt_mutex_postunlock(&wake_q, &wake_sleeper_q);
 --=20
 2.17.1
 
