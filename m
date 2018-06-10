@@ -1,40 +1,93 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mail.ableton.net ([62.96.12.117]:58227 "EHLO mail.ableton.net"
+Received: from mout.gmx.net ([212.227.17.22]:44093 "EHLO mout.gmx.net"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1752323AbeFDMb1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 4 Jun 2018 08:31:27 -0400
-Received: from moon.office.ableton.com ([10.1.15.25])
-        by mail.ableton.net with esmtps (TLS1.2:DHE_RSA_AES_256_CBC_SHA1:256)
-        (Exim 4.82)
-        (envelope-from <diez.roggisch@ableton.com>)
-        id 1fPoKR-0000cW-5V
-        for linux-rt-users@vger.kernel.org; Mon, 04 Jun 2018 12:11:15 +0000
-From: Diez Roggisch <diez.roggisch@ableton.com>
-Subject: Re: printf & writing to disk
-Date: Mon, 4 Jun 2018 12:11:14 +0000
-Message-ID: <9C652E73-E71E-4F5C-8545-D8C7D30D011E@ableton.com>
-References: <CAJ2oMhJ3koLBA3=d0y+UBh2n1JH442vVLbFUxppSjFYN8wXLNg@mail.gmail.com>
-In-Reply-To: <CAJ2oMhJ3koLBA3=d0y+UBh2n1JH442vVLbFUxppSjFYN8wXLNg@mail.gmail.com>
-Content-Language: en-US
-Content-Type: text/plain; charset="utf-8"
-Content-ID: <7E67C275E2ABF3429FF6CD2672499967@office.ableton.com>
-Content-Transfer-Encoding: base64
-MIME-Version: 1.0
+        id S1751626AbeFJE7k (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 10 Jun 2018 00:59:40 -0400
+Message-ID: <1528606772.13494.14.camel@gmx.de>
+Subject: [missing 4.16-rt5 patch ?]  mm/memcontrol: Don't call
+ schedule_work_on in preemption disabled context
+From: Mike Galbraith <efault@gmx.de>
+Date: Sun, 10 Jun 2018 06:59:32 +0200
+In-Reply-To: <20180529164210.4os2rn5femjpku6a@linutronix.de>
+References: <20180529164210.4os2rn5femjpku6a@linutronix.de>
+Content-Type: text/plain; charset="ISO-8859-15"
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
 
-SGkgUmFuLA0KDQo+IEhvdyBzaG91bGQgcHJpbnRmIGFuZCB3cml0ZSB0byBkaXNrIHNob3VsZCBi
-ZSBoYW5kbGVkIGluIHJ0IGFwcGxpY2F0aW9uID8NCj4gDQo+IDEuIHByaW50ZiAtIGNhbiBpdCBi
-ZSB1c2VkIGluIHJ0IGFwcGxpY2F0aW9uID8gaG93ID8NCj4gDQo+IDIuIHdyaXRpbmcgdG8gZmls
-ZSBpbiBkaXNrIC0gc2hvdWxkIGl0IGJlIGRvbmUgaW4gc2VwYXJhdGUgdGhyZWFkIHdpdGgNCj4g
-bG93ZXIgcHJpb3JpdHkgPyBvciBkb2Vzbid0IGl0IG1ha2UgYW55IGRpZmZlcmVuY2UgaW4gd2hp
-Y2ggdGhyZWFkID8NCg0KRm9yIGJvdGggcXVlc3Rpb25zIHlvdSBwb3N0cG9uZSBleGVjdXRpb24g
-b2YgeW91ciB0aHJlYWQgYnkgd2FpdGluZyBmb3IgdGhlIElPIHRvIGNvbXBsZXRlLiBTbyBpdCB3
-aWxsIGludGVycnVwdCB5b3VyIFJUIHNjaGVkdWxpbmcuIA0KDQpUaGUgd2F5IHdlIGRlYWwgd2l0
-aCBpdCBpcyB0aGUgc2FtZSBhcyBpbiBjeWNsaWN0ZXN0LCBhbmQgd2hhdCB5b3UgYWxyZWFkeSBo
-aW50IG9uOiB1c2UgbG9jay1mcmVlIGRhdGEtc3RydWN0dXJlcyAoZS5nLiByaW5nYnVmZmVycykg
-YW5kIGEgbG93ZXIgcHJpb3JpdHkgdGhyZWFkIHRvIGRvIHRoZSBJTy4NCg0KdnNwcmludGYgKnNo
-b3VsZCogd29yayB0aG91Z2guIFNvIHlvdSBjb3VsZCBwcm9kdWNlIHRoZSBvdXRwdXQgeW91IGRl
-c2lyZSwgYnV0IGp1c3QgZG9u4oCZdCB3cml0ZSBpdCBpbiB0aGUgUlQgY29udGV4dC4NCg0KQ2hl
-ZXJzLA0KDQpEaWV6
+Was dropping this patch unintentional?
+
+(met the gripe in my tip-rt5 tree, so resurrected it)
+
+From: Yang Shi <yang.shi@windriver.com>
+
+The following trace is triggered when running ltp oom test cases:
+
+BUG: sleeping function called from invalid context at kernel/rtmutex.c:659
+in_atomic(): 1, irqs_disabled(): 0, pid: 17188, name: oom03
+Preemption disabled at:[<ffffffff8112ba70>] mem_cgroup_reclaim+0x90/0xe0
+
+CPU: 2 PID: 17188 Comm: oom03 Not tainted 3.10.10-rt3 #2
+Hardware name: Intel Corporation Calpella platform/MATXM-CORE-411-B, BIOS 4.6.3 08/18/2010
+ffff88007684d730 ffff880070df9b58 ffffffff8169918d ffff880070df9b70
+ffffffff8106db31 ffff88007688b4a0 ffff880070df9b88 ffffffff8169d9c0
+ffff88007688b4a0 ffff880070df9bc8 ffffffff81059da1 0000000170df9bb0
+Call Trace:
+[<ffffffff8169918d>] dump_stack+0x19/0x1b
+[<ffffffff8106db31>] __might_sleep+0xf1/0x170
+[<ffffffff8169d9c0>] rt_spin_lock+0x20/0x50
+[<ffffffff81059da1>] queue_work_on+0x61/0x100
+[<ffffffff8112b361>] drain_all_stock+0xe1/0x1c0
+[<ffffffff8112ba70>] mem_cgroup_reclaim+0x90/0xe0
+[<ffffffff8112beda>] __mem_cgroup_try_charge+0x41a/0xc40
+[<ffffffff810f1c91>] ? release_pages+0x1b1/0x1f0
+[<ffffffff8106f200>] ? sched_exec+0x40/0xb0
+[<ffffffff8112cc87>] mem_cgroup_charge_common+0x37/0x70
+[<ffffffff8112e2c6>] mem_cgroup_newpage_charge+0x26/0x30
+[<ffffffff8110af68>] handle_pte_fault+0x618/0x840
+[<ffffffff8103ecf6>] ? unpin_current_cpu+0x16/0x70
+[<ffffffff81070f94>] ? migrate_enable+0xd4/0x200
+[<ffffffff8110cde5>] handle_mm_fault+0x145/0x1e0
+[<ffffffff810301e1>] __do_page_fault+0x1a1/0x4c0
+[<ffffffff8169c9eb>] ? preempt_schedule_irq+0x4b/0x70
+[<ffffffff8169e3b7>] ? retint_kernel+0x37/0x40
+[<ffffffff8103053e>] do_page_fault+0xe/0x10
+[<ffffffff8169e4c2>] page_fault+0x22/0x30
+
+So, to prevent schedule_work_on from being called in preempt disabled context,
+replace the pair of get/put_cpu() to get/put_cpu_light().
+
+Signed-off-by: Yang Shi <yang.shi@windriver.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ mm/memcontrol.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+index 93bf018af10e..82d1842ef814 100644
+--- a/mm/memcontrol.c
++++ b/mm/memcontrol.c
+@@ -1786,7 +1786,7 @@ static void drain_all_stock(struct mem_cgroup *root_memcg)
+ 	 * as well as workers from this path always operate on the local
+ 	 * per-cpu data. CPU up doesn't touch memcg_stock at all.
+ 	 */
+-	curcpu = get_cpu();
++	curcpu = get_cpu_light();
+ 	for_each_online_cpu(cpu) {
+ 		struct memcg_stock_pcp *stock = &per_cpu(memcg_stock, cpu);
+ 		struct mem_cgroup *memcg;
+@@ -1806,7 +1806,7 @@ static void drain_all_stock(struct mem_cgroup *root_memcg)
+ 		}
+ 		css_put(&memcg->css);
+ 	}
+-	put_cpu();
++	put_cpu_light();
+ 	mutex_unlock(&percpu_charge_mutex);
+ }
+ 
+-- 
+2.17.0
+
