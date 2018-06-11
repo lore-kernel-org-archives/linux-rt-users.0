@@ -1,93 +1,37 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mout.gmx.net ([212.227.17.22]:44093 "EHLO mout.gmx.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1751626AbeFJE7k (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 10 Jun 2018 00:59:40 -0400
-Message-ID: <1528606772.13494.14.camel@gmx.de>
-Subject: [missing 4.16-rt5 patch ?]  mm/memcontrol: Don't call
+Received: from Galois.linutronix.de ([146.0.238.70]:37557 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1753933AbeFKP3l (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 11 Jun 2018 11:29:41 -0400
+Date: Mon, 11 Jun 2018 17:29:40 +0200
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [missing 4.16-rt5 patch ?]  mm/memcontrol: Don't call
  schedule_work_on in preemption disabled context
-From: Mike Galbraith <efault@gmx.de>
-Date: Sun, 10 Jun 2018 06:59:32 +0200
-In-Reply-To: <20180529164210.4os2rn5femjpku6a@linutronix.de>
+Message-ID: <20180611152940.ul5xunrepa5ine4s@linutronix.de>
 References: <20180529164210.4os2rn5femjpku6a@linutronix.de>
-Content-Type: text/plain; charset="ISO-8859-15"
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+ <1528606772.13494.14.camel@gmx.de>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <1528606772.13494.14.camel@gmx.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Thomas Gleixner <tglx@linutronix.de>
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Mike Galbraith <efault@gmx.de>
+Cc: Thomas Gleixner <tglx@linutronix.de>, linux-rt-users <linux-rt-users@vger.kernel.org>
 
-Was dropping this patch unintentional?
+On 2018-06-10 06:59:32 [+0200], Mike Galbraith wrote:
+> Was dropping this patch unintentional?
+> 
+> (met the gripe in my tip-rt5 tree, so resurrected it)
 
-(met the gripe in my tip-rt5 tree, so resurrected it)
+Not sure. I remember the local_irq_save() block was dealing with
+counters only and it was safe to drop it.
+The schedule_work_on() part is obvious (not to mention the possible
+latency part).
 
-From: Yang Shi <yang.shi@windriver.com>
+So that css_put() is not a problem? I'm mostly curious in the callback
+which would run irq-off section. How does not get into that code path
+anyway, is there something in the LTP that would trigger that?
 
-The following trace is triggered when running ltp oom test cases:
-
-BUG: sleeping function called from invalid context at kernel/rtmutex.c:659
-in_atomic(): 1, irqs_disabled(): 0, pid: 17188, name: oom03
-Preemption disabled at:[<ffffffff8112ba70>] mem_cgroup_reclaim+0x90/0xe0
-
-CPU: 2 PID: 17188 Comm: oom03 Not tainted 3.10.10-rt3 #2
-Hardware name: Intel Corporation Calpella platform/MATXM-CORE-411-B, BIOS 4.6.3 08/18/2010
-ffff88007684d730 ffff880070df9b58 ffffffff8169918d ffff880070df9b70
-ffffffff8106db31 ffff88007688b4a0 ffff880070df9b88 ffffffff8169d9c0
-ffff88007688b4a0 ffff880070df9bc8 ffffffff81059da1 0000000170df9bb0
-Call Trace:
-[<ffffffff8169918d>] dump_stack+0x19/0x1b
-[<ffffffff8106db31>] __might_sleep+0xf1/0x170
-[<ffffffff8169d9c0>] rt_spin_lock+0x20/0x50
-[<ffffffff81059da1>] queue_work_on+0x61/0x100
-[<ffffffff8112b361>] drain_all_stock+0xe1/0x1c0
-[<ffffffff8112ba70>] mem_cgroup_reclaim+0x90/0xe0
-[<ffffffff8112beda>] __mem_cgroup_try_charge+0x41a/0xc40
-[<ffffffff810f1c91>] ? release_pages+0x1b1/0x1f0
-[<ffffffff8106f200>] ? sched_exec+0x40/0xb0
-[<ffffffff8112cc87>] mem_cgroup_charge_common+0x37/0x70
-[<ffffffff8112e2c6>] mem_cgroup_newpage_charge+0x26/0x30
-[<ffffffff8110af68>] handle_pte_fault+0x618/0x840
-[<ffffffff8103ecf6>] ? unpin_current_cpu+0x16/0x70
-[<ffffffff81070f94>] ? migrate_enable+0xd4/0x200
-[<ffffffff8110cde5>] handle_mm_fault+0x145/0x1e0
-[<ffffffff810301e1>] __do_page_fault+0x1a1/0x4c0
-[<ffffffff8169c9eb>] ? preempt_schedule_irq+0x4b/0x70
-[<ffffffff8169e3b7>] ? retint_kernel+0x37/0x40
-[<ffffffff8103053e>] do_page_fault+0xe/0x10
-[<ffffffff8169e4c2>] page_fault+0x22/0x30
-
-So, to prevent schedule_work_on from being called in preempt disabled context,
-replace the pair of get/put_cpu() to get/put_cpu_light().
-
-Signed-off-by: Yang Shi <yang.shi@windriver.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- mm/memcontrol.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index 93bf018af10e..82d1842ef814 100644
---- a/mm/memcontrol.c
-+++ b/mm/memcontrol.c
-@@ -1786,7 +1786,7 @@ static void drain_all_stock(struct mem_cgroup *root_memcg)
- 	 * as well as workers from this path always operate on the local
- 	 * per-cpu data. CPU up doesn't touch memcg_stock at all.
- 	 */
--	curcpu = get_cpu();
-+	curcpu = get_cpu_light();
- 	for_each_online_cpu(cpu) {
- 		struct memcg_stock_pcp *stock = &per_cpu(memcg_stock, cpu);
- 		struct mem_cgroup *memcg;
-@@ -1806,7 +1806,7 @@ static void drain_all_stock(struct mem_cgroup *root_memcg)
- 		}
- 		css_put(&memcg->css);
- 	}
--	put_cpu();
-+	put_cpu_light();
- 	mutex_unlock(&percpu_charge_mutex);
- }
- 
--- 
-2.17.0
-
+Sebastian
