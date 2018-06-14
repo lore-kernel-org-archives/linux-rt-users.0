@@ -1,182 +1,55 @@
-From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH 2/7] tracing: Split up onmatch action data
-Date: Thu, 14 Jun 2018 12:45:11 -0500
-Message-ID: <e91d2a84759a037eec8253f5234d90cbb3fe220a.1528986926.git.tom.zanussi@linux.intel.com>
-References: <cover.1528986925.git.tom.zanussi@linux.intel.com>
-Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, julia@ni.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        Tom Zanussi <tom.zanussi@linux.intel.com>
-To: rostedt@goodmis.org
+From: Daniel Wagner <wagi@monom.org>
+Subject: [ANNOUNCE] 4.4.137-rt154
+Date: Thu, 14 Jun 2018 21:02:51 +0200
+Message-ID: <20180614191001.6882950047A@mail.monom.org>
+To: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Julia Cartwright <julia@ni.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1528986925.git.tom.zanussi@linux.intel.com>
-In-Reply-To: <cover.1528986925.git.tom.zanussi@linux.intel.com>
-References: <cover.1528986925.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
+Hello RT Folks!
 
-Currently, the onmatch action data binds the onmatch action to data
-related to synthetic event generation.  Since we want to allow the
-onmatch handler to potentially invoke a different action, and because
-we expect other handlers to generate synthetic events, we need to
-separate the data related to these two functions.
+I'm pleased to announce the 4.4.137-rt154 stable release.
 
-Also rename the onmatch data to something more descriptive.
+This release is just an update to the new stable 4.4.137 version
+and no RT specific changes have been made.
 
-Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
----
- kernel/trace/trace_events_hist.c | 59 ++++++++++++++++++++--------------------
- 1 file changed, 30 insertions(+), 29 deletions(-)
+I am not sure if I am hunting a ghost. During testing on the CI
+testfarm, a spike of around 400us popped up on a x86_64 box
+(*). Fortunately, I have the same CPU for testing at home and I
+tried very hard to reproduce it. Even Steven was helping out for
+setting up the test correctly. But so far I haven't seen it again.
 
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index ede7a27fa52b..61a3a8ca2f76 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -347,13 +347,14 @@ struct action_data {
- 	unsigned int		n_params;
- 	char			*params[SYNTH_FIELDS_MAX];
- 
-+	unsigned int		var_ref_idx;
-+	struct synth_event	*synth_event;
-+
- 	union {
- 		struct {
--			unsigned int		var_ref_idx;
--			char			*match_event;
--			char			*match_event_system;
--			struct synth_event	*synth_event;
--		} onmatch;
-+			char			*event;
-+			char			*event_system;
-+		} match_data;
- 
- 		struct {
- 			char			*var_str;
-@@ -1001,9 +1002,9 @@ static void action_trace(struct hist_trigger_data *hist_data,
- 			 struct ring_buffer_event *rbe,
- 			 struct action_data *data, u64 *var_ref_vals)
- {
--	struct synth_event *event = data->onmatch.synth_event;
-+	struct synth_event *event = data->synth_event;
- 
--	trace_synth(event, var_ref_vals, data->onmatch.var_ref_idx);
-+	trace_synth(event, var_ref_vals, data->var_ref_idx);
- }
- 
- struct hist_var_data {
-@@ -1573,8 +1574,8 @@ find_match_var(struct hist_trigger_data *hist_data, char *var_name)
- 		struct action_data *data = hist_data->actions[i];
- 
- 		if (data->handler == HANDLER_ONMATCH) {
--			char *system = data->onmatch.match_event_system;
--			char *event_name = data->onmatch.match_event;
-+			char *system = data->match_data.event_system;
-+			char *event_name = data->match_data.event;
- 
- 			file = find_var_file(tr, system, event_name, var_name);
- 			if (!file)
-@@ -3521,15 +3522,15 @@ static void onmatch_destroy(struct action_data *data)
- 
- 	mutex_lock(&synth_event_mutex);
- 
--	kfree(data->onmatch.match_event);
--	kfree(data->onmatch.match_event_system);
-+	kfree(data->match_data.event);
-+	kfree(data->match_data.event_system);
- 	kfree(data->action_name);
- 
- 	for (i = 0; i < data->n_params; i++)
- 		kfree(data->params[i]);
- 
--	if (data->onmatch.synth_event)
--		data->onmatch.synth_event->ref--;
-+	if (data->synth_event)
-+		data->synth_event->ref--;
- 
- 	kfree(data);
- 
-@@ -3611,8 +3612,8 @@ trace_action_find_var(struct hist_trigger_data *hist_data,
- 	hist_field = find_target_event_var(hist_data, system, event, var);
- 	if (!hist_field) {
- 		if (!system && data->handler == HANDLER_ONMATCH) {
--			system = data->onmatch.match_event_system;
--			event = data->onmatch.match_event;
-+			system = data->match_data.event_system;
-+			event = data->match_data.event;
- 		}
- 
- 		hist_field = find_event_var(hist_data, system, event, var);
-@@ -3651,8 +3652,8 @@ trace_action_create_field_var(struct hist_trigger_data *hist_data,
- 		 * event.
- 		 */
- 		if (!system && data->handler == HANDLER_ONMATCH) {
--			system = data->onmatch.match_event_system;
--			event = data->onmatch.match_event;
-+			system = data->match_data.event_system;
-+			event = data->match_data.event;
- 		}
- 
- 		/*
-@@ -3764,8 +3765,8 @@ static int trace_action_create(struct hist_trigger_data *hist_data,
- 		goto err;
- 	}
- 
--	data->onmatch.synth_event = event;
--	data->onmatch.var_ref_idx = var_ref_idx;
-+	data->synth_event = event;
-+	data->var_ref_idx = var_ref_idx;
-  out:
- 	return ret;
-  err:
-@@ -3855,14 +3856,14 @@ static struct action_data *onmatch_parse(struct trace_array *tr, char *str)
- 		goto free;
- 	}
- 
--	data->onmatch.match_event = kstrdup(match_event, GFP_KERNEL);
--	if (!data->onmatch.match_event) {
-+	data->match_data.event = kstrdup(match_event, GFP_KERNEL);
-+	if (!data->match_data.event) {
- 		ret = -ENOMEM;
- 		goto free;
- 	}
- 
--	data->onmatch.match_event_system = kstrdup(match_event_system, GFP_KERNEL);
--	if (!data->onmatch.match_event_system) {
-+	data->match_data.event_system = kstrdup(match_event_system, GFP_KERNEL);
-+	if (!data->match_data.event_system) {
- 		ret = -ENOMEM;
- 		goto free;
- 	}
-@@ -4424,8 +4425,8 @@ static void print_onmatch_spec(struct seq_file *m,
- {
- 	unsigned int i;
- 
--	seq_printf(m, ":onmatch(%s.%s).", data->onmatch.match_event_system,
--		   data->onmatch.match_event);
-+	seq_printf(m, ":onmatch(%s.%s).", data->match_data.event_system,
-+		   data->match_data.event);
- 
- 	seq_printf(m, "%s(", data->action_name);
- 
-@@ -4469,11 +4470,11 @@ static bool actions_match(struct hist_trigger_data *hist_data,
- 			return false;
- 
- 		if (data->handler == HANDLER_ONMATCH) {
--			if (strcmp(data->onmatch.match_event_system,
--				   data_test->onmatch.match_event_system) != 0)
-+			if (strcmp(data->match_data.event_system,
-+				   data_test->match_data.event_system) != 0)
- 				return false;
--			if (strcmp(data->onmatch.match_event,
--				   data_test->onmatch.match_event) != 0)
-+			if (strcmp(data->match_data.event,
-+				   data_test->match_data.event) != 0)
- 				return false;
- 		} else if (data->handler == HANDLER_ONMAX) {
- 			if (strcmp(data->onmax.var_str,
--- 
-2.14.1
+(*) https://ci-rt.linutronix.de/RT-Test/kb_details.jsp?id=139&b_id=5234&bt_id=382
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.4-rt
+  Head SHA1: 74e9e457a9fce5f4d6723ad7f5331ab0951d485a
+
+Or to build 4.4.137-rt154 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.137.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.137-rt154.patch.xz
+
+
+You can also build from 4.4.131-rt148 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/incr/patch-4.4.131-rt148-rt154.patch.xz
+
+Enjoy!
+   Daniel
