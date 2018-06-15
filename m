@@ -1,69 +1,65 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from frisell.zx2c4.com ([192.95.5.64]:46889 "EHLO frisell.zx2c4.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1755899AbeFONBE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 15 Jun 2018 09:01:04 -0400
-Received: by frisell.zx2c4.com (ZX2C4 Mail Server) with ESMTP id 3bfc572a
-        for <linux-rt-users@vger.kernel.org>;
-        Fri, 15 Jun 2018 12:55:41 +0000 (UTC)
-Received: by frisell.zx2c4.com (ZX2C4 Mail Server) with ESMTPSA id 24952c8f (TLSv1.2:ECDHE-RSA-AES128-GCM-SHA256:128:NO)
-        for <linux-rt-users@vger.kernel.org>;
-        Fri, 15 Jun 2018 12:55:41 +0000 (UTC)
-Received: by mail-oi0-f52.google.com with SMTP id a141-v6so8708256oii.8
-        for <linux-rt-users@vger.kernel.org>; Fri, 15 Jun 2018 06:01:03 -0700 (PDT)
+Received: from Galois.linutronix.de ([146.0.238.70]:50323 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S965931AbeFOQJV (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 15 Jun 2018 12:09:21 -0400
+Date: Fri, 15 Jun 2018 18:09:19 +0200
+From: Sebastian Andrzej Siewior <sebastian.siewior@linutronix.de>
+Subject: Re: kernel_fpu_begin and spinlocks
+Message-ID: <20180615160919.45pyszi2dbeboff5@linutronix.de>
+References: <CAHmME9p1TZV9i6EBuFR+Pqf+8yg-sjM0f=uYzqdYKMxxUiHuRw@mail.gmail.com>
 MIME-Version: 1.0
-From: "Jason A. Donenfeld" <Jason@zx2c4.com>
-Date: Fri, 15 Jun 2018 15:00:51 +0200
-Message-ID: <CAHmME9p1TZV9i6EBuFR+Pqf+8yg-sjM0f=uYzqdYKMxxUiHuRw@mail.gmail.com>
-Subject: kernel_fpu_begin and spinlocks
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <CAHmME9p1TZV9i6EBuFR+Pqf+8yg-sjM0f=uYzqdYKMxxUiHuRw@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: linux-rt-users@vger.kernel.org
+To: "Jason A. Donenfeld" <Jason@zx2c4.com>
+Cc: linux-rt-users@vger.kernel.org
 
-Hello,
+On 2018-06-15 15:00:51 [+0200], Jason A. Donenfeld wrote:
+> Hello,
+Hi,
 
-In order to do fast crypto, people like to use vector instructions,
-which make use of the FPU registers. Typically things resemble this
-pattern:
+> On normal kernels, that's certainly okay. 
 
-kernel_fpu_begin();
-encrypt();
-kernel_fpu_end();
+once the latencies get "big" it is also affects PREEMPT.
 
-If there are multiple things to encrypt, one pattern is:
+> But on rt kernels, spinlocks
+> call schedule(), and kernel_fpu_begin() explicitly disables
+> preemption, so everything explodes.
+> 
+> I'm wondering if -rt has any ideas about not having a strict
+> preemption requirement for kernel_fpu_begin/end, so that the ordinary
+> pattern can work on -rt kernels without exploding.
 
-for (thing) {
-  kernel_fpu_begin();
-  encrypt(thing);
-  kernel_fpu_end();
-}
+We can't do fast crypto on RT. We unbreak those sections:
+ https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git/tree/patches/x86-crypto-reduce-preempt-disabled-regions.patch?h=linux-4.16.y-rt-patches
+ https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git/tree/patches/crypto-limit-more-FPU-enabled-sections.patch?h=linux-4.16.y-rt-patches
+ https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git/tree/patches/crypto-Reduce-preempt-disabled-regions-more-algos.patch?h=linux-4.16.y-rt-patches
 
-But it turns out this is slow, so instead it's better to:
+There are a few problems. One problem is that algorithm involving
+SSE/AVX doing page_size+ operations in "one go" would affect the latency
+due to the "long" preempt-disable regions.
+The other thing are nested locks like you mentioned. "Simple" locks like
+those protecting a list_head could be turned into raw-locks. But then
+some of those implementation involve advancing the scatter-gather list
+within a kernel_fpu_begin()/preempt_disable() region. Depending on the
+size of list this is also bad latency wise for PREEMPT (and not only for
+RT) the problem is that on RT we can't do kmalloc()/kmap() within
+kernel_fpu_begin().
 
-kernel_fpu_begin();
-for (thing)
-  encrypt(thing);
-kernel_fpu_end();
+At some point I tried something like:
 
-However, what if that innerloop has some spinlocks?
+	if (tif_need_resched_now()) {
+		kernel_fpu_end();
+		kernel_fpu_begin();
+	}
 
-kernel_fpu_begin();
-for (thing) {
-  encrypt(thing);
-  spin_lock(queue_lock);
-  add_to_queue(queue, thing);
-  spin_unlock(queue_lock);
-}
-kernel_fpu_end();
+which died once the scatter-gather got into the game.
 
-On normal kernels, that's certainly okay. But on rt kernels, spinlocks
-call schedule(), and kernel_fpu_begin() explicitly disables
-preemption, so everything explodes.
+> Regards,
+> Jason
 
-I'm wondering if -rt has any ideas about not having a strict
-preemption requirement for kernel_fpu_begin/end, so that the ordinary
-pattern can work on -rt kernels without exploding.
-
-Regards,
-Jason
+Sebastian
