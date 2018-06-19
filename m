@@ -1,306 +1,85 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] v4.16.15-rt7
-Date: Mon, 18 Jun 2018 12:15:25 +0200
-Message-ID: <20180618101524.6mrngxrcmbjktyck@linutronix.de>
+From: Daniel Bristot de Oliveira <daniel@bristot.me>
+Subject: Re: [PATCH v4 1/2] timers: Don't wake ktimersoftd on every tick
+Date: Tue, 19 Jun 2018 14:43:56 +0200
+Message-ID: <0c3d5147-a2c2-4773-c4f1-af5745a27384@bristot.me>
+References: <alpine.DEB.2.20.1707182206110.2425@nanos>
+ <20180306233944.11271-1-haris.okanovic@ni.com>
+ <1523332961.4827.1.camel@gmx.de>
+ <c2664fbe-52e7-1044-e9f9-de4875047ee8@ni.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=iso-8859-15
+Content-Transfer-Encoding: 8bit
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Haris Okanovic <haris.okanovic@ni.com>,
+        Mike Galbraith <efault@gmx.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
+In-Reply-To: <c2664fbe-52e7-1044-e9f9-de4875047ee8@ni.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Dear RT folks!
 
-I'm pleased to announce the v4.16.15-rt7 patch set. 
 
-Changes since v4.16.15-rt6:
+On 04/12/2018 05:00 PM, Haris Okanovic wrote:
+> Hi Mike,
+> 
+> I haven't tested the patch with wireshark until now. My system also
+> hangs shortly after it starts. I'm pretty sure I hit workqueues in my
+> earlier tests via the block driver, but it's clearly not whatever
+> wireshark is using. I'll look at it and try to post a fix. CCing the
+> list to avoid this patch until then.
 
-  - Add the mm/memcontro pach back to fix a "sleeping while atomic"
-    warning. It was dropped in the v4.16 cycle because it was wrongly
-    assumed that it is not longer required. Reported by Mike Galbraith.
+Hi Haris,
 
-  - Add a percpu_ida fix from upstream.
+Do we have any update regarding a newer version of this patch?
 
-  - Drop the patch for the X86 Ultraviolet platform. It should be merged
-    upstream because PREEMPT causes warnings, too. This is not going to
-    happen so I drop it from RT since nobody cares.
+-- Daniel
 
-Known issues
-     - A warning triggered in "rcu_note_context_switch" originated from
-       SyS_timer_gettime(). The issue was always there, it is now
-       visible. Reported by Grygorii Strashko and Daniel Wagner.
-
-The delta patch against v4.16.15-rt6 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.16/incr/patch-4.16.15-rt6-rt7.patch.xz
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.16.15-rt7
-
-The RT patch against v4.16.15 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.16/older/patch-4.16.15-rt7.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.16/older/patches-4.16.15-rt7.tar.xz
-
-Sebastian
-
-diff --git a/arch/x86/include/asm/uv/uv_bau.h b/arch/x86/include/asm/uv/uv_bau.h
-index 2242c3ae1bb6..7803114aa140 100644
---- a/arch/x86/include/asm/uv/uv_bau.h
-+++ b/arch/x86/include/asm/uv/uv_bau.h
-@@ -642,9 +642,9 @@ struct bau_control {
- 	cycles_t		send_message;
- 	cycles_t		period_end;
- 	cycles_t		period_time;
--	raw_spinlock_t		uvhub_lock;
--	raw_spinlock_t		queue_lock;
--	raw_spinlock_t		disable_lock;
-+	spinlock_t		uvhub_lock;
-+	spinlock_t		queue_lock;
-+	spinlock_t		disable_lock;
- 	/* tunables */
- 	int			max_concurr;
- 	int			max_concurr_const;
-@@ -846,15 +846,15 @@ static inline int atom_asr(short i, struct atomic_short *v)
-  * to be lowered below the current 'v'.  atomic_add_unless can only stop
-  * on equal.
-  */
--static inline int atomic_inc_unless_ge(raw_spinlock_t *lock, atomic_t *v, int u)
-+static inline int atomic_inc_unless_ge(spinlock_t *lock, atomic_t *v, int u)
- {
--	raw_spin_lock(lock);
-+	spin_lock(lock);
- 	if (atomic_read(v) >= u) {
--		raw_spin_unlock(lock);
-+		spin_unlock(lock);
- 		return 0;
- 	}
- 	atomic_inc(v);
--	raw_spin_unlock(lock);
-+	spin_unlock(lock);
- 	return 1;
- }
- 
-diff --git a/arch/x86/platform/uv/tlb_uv.c b/arch/x86/platform/uv/tlb_uv.c
-index ca74e1e24dcd..b36caae0fb2f 100644
---- a/arch/x86/platform/uv/tlb_uv.c
-+++ b/arch/x86/platform/uv/tlb_uv.c
-@@ -740,9 +740,9 @@ static void destination_plugged(struct bau_desc *bau_desc,
- 
- 		quiesce_local_uvhub(hmaster);
- 
--		raw_spin_lock(&hmaster->queue_lock);
-+		spin_lock(&hmaster->queue_lock);
- 		reset_with_ipi(&bau_desc->distribution, bcp);
--		raw_spin_unlock(&hmaster->queue_lock);
-+		spin_unlock(&hmaster->queue_lock);
- 
- 		end_uvhub_quiesce(hmaster);
- 
-@@ -762,9 +762,9 @@ static void destination_timeout(struct bau_desc *bau_desc,
- 
- 		quiesce_local_uvhub(hmaster);
- 
--		raw_spin_lock(&hmaster->queue_lock);
-+		spin_lock(&hmaster->queue_lock);
- 		reset_with_ipi(&bau_desc->distribution, bcp);
--		raw_spin_unlock(&hmaster->queue_lock);
-+		spin_unlock(&hmaster->queue_lock);
- 
- 		end_uvhub_quiesce(hmaster);
- 
-@@ -785,7 +785,7 @@ static void disable_for_period(struct bau_control *bcp, struct ptc_stats *stat)
- 	cycles_t tm1;
- 
- 	hmaster = bcp->uvhub_master;
--	raw_spin_lock(&hmaster->disable_lock);
-+	spin_lock(&hmaster->disable_lock);
- 	if (!bcp->baudisabled) {
- 		stat->s_bau_disabled++;
- 		tm1 = get_cycles();
-@@ -798,7 +798,7 @@ static void disable_for_period(struct bau_control *bcp, struct ptc_stats *stat)
- 			}
- 		}
- 	}
--	raw_spin_unlock(&hmaster->disable_lock);
-+	spin_unlock(&hmaster->disable_lock);
- }
- 
- static void count_max_concurr(int stat, struct bau_control *bcp,
-@@ -861,7 +861,7 @@ static void record_send_stats(cycles_t time1, cycles_t time2,
-  */
- static void uv1_throttle(struct bau_control *hmaster, struct ptc_stats *stat)
- {
--	raw_spinlock_t *lock = &hmaster->uvhub_lock;
-+	spinlock_t *lock = &hmaster->uvhub_lock;
- 	atomic_t *v;
- 
- 	v = &hmaster->active_descriptor_count;
-@@ -995,7 +995,7 @@ static int check_enable(struct bau_control *bcp, struct ptc_stats *stat)
- 	struct bau_control *hmaster;
- 
- 	hmaster = bcp->uvhub_master;
--	raw_spin_lock(&hmaster->disable_lock);
-+	spin_lock(&hmaster->disable_lock);
- 	if (bcp->baudisabled && (get_cycles() >= bcp->set_bau_on_time)) {
- 		stat->s_bau_reenabled++;
- 		for_each_present_cpu(tcpu) {
-@@ -1007,10 +1007,10 @@ static int check_enable(struct bau_control *bcp, struct ptc_stats *stat)
- 				tbcp->period_giveups = 0;
- 			}
- 		}
--		raw_spin_unlock(&hmaster->disable_lock);
-+		spin_unlock(&hmaster->disable_lock);
- 		return 0;
- 	}
--	raw_spin_unlock(&hmaster->disable_lock);
-+	spin_unlock(&hmaster->disable_lock);
- 	return -1;
- }
- 
-@@ -1942,9 +1942,9 @@ static void __init init_per_cpu_tunables(void)
- 		bcp->cong_reps			= congested_reps;
- 		bcp->disabled_period		= sec_2_cycles(disabled_period);
- 		bcp->giveup_limit		= giveup_limit;
--		raw_spin_lock_init(&bcp->queue_lock);
--		raw_spin_lock_init(&bcp->uvhub_lock);
--		raw_spin_lock_init(&bcp->disable_lock);
-+		spin_lock_init(&bcp->queue_lock);
-+		spin_lock_init(&bcp->uvhub_lock);
-+		spin_lock_init(&bcp->disable_lock);
- 	}
- }
- 
-diff --git a/arch/x86/platform/uv/uv_time.c b/arch/x86/platform/uv/uv_time.c
-index badf377efc21..b082d71b08ee 100644
---- a/arch/x86/platform/uv/uv_time.c
-+++ b/arch/x86/platform/uv/uv_time.c
-@@ -57,7 +57,7 @@ static DEFINE_PER_CPU(struct clock_event_device, cpu_ced);
- 
- /* There is one of these allocated per node */
- struct uv_rtc_timer_head {
--	raw_spinlock_t	lock;
-+	spinlock_t	lock;
- 	/* next cpu waiting for timer, local node relative: */
- 	int		next_cpu;
- 	/* number of cpus on this node: */
-@@ -177,7 +177,7 @@ static __init int uv_rtc_allocate_timers(void)
- 				uv_rtc_deallocate_timers();
- 				return -ENOMEM;
- 			}
--			raw_spin_lock_init(&head->lock);
-+			spin_lock_init(&head->lock);
- 			head->ncpus = uv_blade_nr_possible_cpus(bid);
- 			head->next_cpu = -1;
- 			blade_info[bid] = head;
-@@ -231,7 +231,7 @@ static int uv_rtc_set_timer(int cpu, u64 expires)
- 	unsigned long flags;
- 	int next_cpu;
- 
--	raw_spin_lock_irqsave(&head->lock, flags);
-+	spin_lock_irqsave(&head->lock, flags);
- 
- 	next_cpu = head->next_cpu;
- 	*t = expires;
-@@ -243,12 +243,12 @@ static int uv_rtc_set_timer(int cpu, u64 expires)
- 		if (uv_setup_intr(cpu, expires)) {
- 			*t = ULLONG_MAX;
- 			uv_rtc_find_next_timer(head, pnode);
--			raw_spin_unlock_irqrestore(&head->lock, flags);
-+			spin_unlock_irqrestore(&head->lock, flags);
- 			return -ETIME;
- 		}
- 	}
- 
--	raw_spin_unlock_irqrestore(&head->lock, flags);
-+	spin_unlock_irqrestore(&head->lock, flags);
- 	return 0;
- }
- 
-@@ -267,7 +267,7 @@ static int uv_rtc_unset_timer(int cpu, int force)
- 	unsigned long flags;
- 	int rc = 0;
- 
--	raw_spin_lock_irqsave(&head->lock, flags);
-+	spin_lock_irqsave(&head->lock, flags);
- 
- 	if ((head->next_cpu == bcpu && uv_read_rtc(NULL) >= *t) || force)
- 		rc = 1;
-@@ -279,7 +279,7 @@ static int uv_rtc_unset_timer(int cpu, int force)
- 			uv_rtc_find_next_timer(head, pnode);
- 	}
- 
--	raw_spin_unlock_irqrestore(&head->lock, flags);
-+	spin_unlock_irqrestore(&head->lock, flags);
- 
- 	return rc;
- }
-@@ -299,17 +299,13 @@ static int uv_rtc_unset_timer(int cpu, int force)
- static u64 uv_read_rtc(struct clocksource *cs)
- {
- 	unsigned long offset;
--	u64 cycles;
- 
--	preempt_disable();
- 	if (uv_get_min_hub_revision_id() == 1)
- 		offset = 0;
- 	else
- 		offset = (uv_blade_processor_id() * L1_CACHE_BYTES) % PAGE_SIZE;
- 
--	cycles = (u64)uv_read_local_mmr(UVH_RTC | offset);
--	preempt_enable();
--	return cycles;
-+	return (u64)uv_read_local_mmr(UVH_RTC | offset);
- }
- 
- /*
-diff --git a/lib/percpu_ida.c b/lib/percpu_ida.c
-index 9bbd9c5d375a..beb14839b41a 100644
---- a/lib/percpu_ida.c
-+++ b/lib/percpu_ida.c
-@@ -141,7 +141,7 @@ int percpu_ida_alloc(struct percpu_ida *pool, int state)
- 	spin_lock_irqsave(&tags->lock, flags);
- 
- 	/* Fastpath */
--	if (likely(tags->nr_free >= 0)) {
-+	if (likely(tags->nr_free)) {
- 		tag = tags->freelist[--tags->nr_free];
- 		spin_unlock_irqrestore(&tags->lock, flags);
- 		return tag;
-diff --git a/localversion-rt b/localversion-rt
-index 8fc605d80667..045478966e9f 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt6
-+-rt7
-diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index 93bf018af10e..82d1842ef814 100644
---- a/mm/memcontrol.c
-+++ b/mm/memcontrol.c
-@@ -1786,7 +1786,7 @@ static void drain_all_stock(struct mem_cgroup *root_memcg)
- 	 * as well as workers from this path always operate on the local
- 	 * per-cpu data. CPU up doesn't touch memcg_stock at all.
- 	 */
--	curcpu = get_cpu();
-+	curcpu = get_cpu_light();
- 	for_each_online_cpu(cpu) {
- 		struct memcg_stock_pcp *stock = &per_cpu(memcg_stock, cpu);
- 		struct mem_cgroup *memcg;
-@@ -1806,7 +1806,7 @@ static void drain_all_stock(struct mem_cgroup *root_memcg)
- 		}
- 		css_put(&memcg->css);
- 	}
--	put_cpu();
-+	put_cpu_light();
- 	mutex_unlock(&percpu_charge_mutex);
- }
- 
+> Thanks,
+> Haris
+> 
+> 
+> On 04/09/2018 11:02 PM, Mike Galbraith wrote:
+>> Hi,
+>>
+>> Are these patches dead, or are you planning another submission?  I ask
+>> because I discovered that with them applied, firing up wireshark hangs
+>> the box 100% repeatably, with wireshark never fully initializing.
+>>
+>> Applying them to an otherwise virgin 4.14.20-rt17 to be sure...
+>>
+>> crash> bt 6016PID: 6016   TASK: ffff95dd68572180  CPU: 2   COMMAND:
+>> "dumpcap"
+>>   #0 [ffffb490094f3bc0] __schedule at ffffffffa56d55b9
+>>   #1 [ffffb490094f3c40] schedule at ffffffffa56d5a03
+>>   #2 [ffffb490094f3c58] schedule_timeout at ffffffffa56d8467
+>>   #3 [ffffb490094f3cd8] wait_for_completion at ffffffffa56d6e34
+>>   #4 [ffffb490094f3d18] __wait_rcu_gp at ffffffffa50e59cd
+>>   #5 [ffffb490094f3d58] synchronize_rcu at ffffffffa50ec14e
+>>   #6 [ffffb490094f3d98] packet_set_ring at ffffffffc0c74da0 [af_packet]
+>>   #7 [ffffb490094f3e50] packet_setsockopt at ffffffffc0c75d23 [af_packet]
+>>   #8 [ffffb490094f3ef8] sys_setsockopt at ffffffffa558a5e2
+>>   #9 [ffffb490094f3f30] do_syscall_64 at ffffffffa5001b05
+>> #10 [ffffb490094f3f50] entry_SYSCALL_64_after_hwframe at ffffffffa5800065
+>>      RIP: 00007f3107a1cfaa  RSP: 00007ffc9745c2e8  RFLAGS: 00000246
+>>      RAX: ffffffffffffffda  RBX: 0000000000000001  RCX: 00007f3107a1cfaa
+>>      RDX: 0000000000000005  RSI: 0000000000000107  RDI: 0000000000000003
+>>      RBP: 000055ae1d8eb470   R8: 000000000000001c   R9: 0000000000000002
+>>      R10: 00007ffc9745c350  R11: 0000000000000246  R12: 00007ffc9745c350
+>>      R13: 0000000000000000  R14: 000055ae1d8eb200  R15: 000055ae1d8eb2d0
+>>      ORIG_RAX: 0000000000000036  CS: 0033  SS: 002b
+>> crash> dmesg
+>> ...
+>> [  483.808197] BUG: workqueue lockup - pool cpus=2 node=0 flags=0x0
+>> nice=0 stuck for 52s!
+>> [  483.808204] Showing busy workqueues and worker pools:
+>> [  483.808206] workqueue events: flags=0x0
+>> [  483.808208]   pwq 4: cpus=2 node=0 flags=0x0 nice=0 active=1/256
+>> [  483.808211]     pending: check_corruption
+>> [  492.695124] sysrq: SysRq : Trigger a crash
+>>
+> -- 
+> To unsubscribe from this list: send the line "unsubscribe
+> linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
