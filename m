@@ -1,53 +1,43 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 4.14.52-rt34
-Date: Fri, 29 Jun 2018 19:03:20 -0400
-Message-ID: <20180629190320.6316b93b@gandalf.local.home>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Julia Cartwright <julia@ni.com>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-Path: linux-rt-users-owner@vger.kernel.org
+Received: from mx1.redhat.com ([209.132.183.28]:37524 "EHLO mx1.redhat.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1753960AbeFTNWF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 20 Jun 2018 09:22:05 -0400
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mx1.redhat.com (Postfix) with ESMTPS id 38342C0587E3
+        for <linux-rt-users@vger.kernel.org>; Wed, 20 Jun 2018 13:22:05 +0000 (UTC)
+Date: Wed, 20 Jun 2018 10:21:31 -0300
+From: Marcelo Tosatti <mtosatti@redhat.com>
+Subject: [PATCH rt-tests] queuelat: fix get_cpuinfo_mhz.sh script on SMP
+ systems
+Message-ID: <20180620132129.GA7983@amt.cnet>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
+To: John Kacur <jkacur@redhat.com>
+Cc: linux-rt-users@vger.kernel.org
 
 
-Dear RT Folks,
+get_cpuinfo_mhz.sh fails on SMP systems because 
+/proc/cpuinfo returns multiple "cpu MHz" containing
+lines.
 
-I'm pleased to announce the 4.14.52-rt34 stable release.
+Get only the first one.
 
-This includes the merging of the stable releases, but also required
-pulling in ("Revert mm/vmstat.c: fix vmstat_update() preemption BUG")
-because v4.14.45 pulled in commit c7f26ccfb2c3 ("mm/vmstat.c: fix
-vmstat_update() preemption BUG") which broke RT.
+Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
 
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.14-rt
-  Head SHA1: 71fbfbcfbcea9e6e5aa9dac068602f633dca5ad8
-
-
-Or to build 4.14.52-rt34 directly, the following patches should be
-applied:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.52.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.52-rt34.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
+diff --git a/src/queuelat/get_cpuinfo_mhz.sh b/src/queuelat/get_cpuinfo_mhz.sh
+index fb5158f..46f94c4 100755
+--- a/src/queuelat/get_cpuinfo_mhz.sh
++++ b/src/queuelat/get_cpuinfo_mhz.sh
+@@ -1,5 +1,5 @@
+ #!/bin/bash
+ 
+-mhz=`cat /proc/cpuinfo  | grep "cpu MHz" | uniq | cut -f 3 -d " "`
++mhz=`cat /proc/cpuinfo  | grep "cpu MHz" | uniq | cut -f 3 -d " " | head -1`
+ echo $mhz
+ 
