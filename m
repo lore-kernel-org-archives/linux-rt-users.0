@@ -1,97 +1,264 @@
 From: Haris Okanovic <haris.okanovic@ni.com>
-Subject: Re: [PATCH v4 1/2] timers: Don't wake ktimersoftd on every tick
-Date: Thu, 28 Jun 2018 11:36:54 -0500
-Message-ID: <7d21ff63-3dce-b8ea-a0f1-81d53617747d@ni.com>
-References: <alpine.DEB.2.20.1707182206110.2425@nanos>
- <20180306233944.11271-1-haris.okanovic@ni.com>
- <1523332961.4827.1.camel@gmx.de>
- <c2664fbe-52e7-1044-e9f9-de4875047ee8@ni.com>
+Subject: [PATCH v5 1/2] timers: Don't wake ktimersoftd on every tick
+Date: Thu, 28 Jun 2018 11:40:35 -0500
+Message-ID: <20180628164036.27378-1-haris.okanovic@ni.com>
+References: <7d21ff63-3dce-b8ea-a0f1-81d53617747d@ni.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15; format=flowed
-Content-Transfer-Encoding: 8bit
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        daniel@bristot.me, hokanovi <haris.okanovic@ni.com>
-To: Mike Galbraith <efault@gmx.de>
+Content-Type: text/plain
+Cc: <haris.okanovic@ni.com>, <harisokn@gmail.com>,
+        <bigeasy@linutronix.de>, <tglx@linutronix.de>,
+        <julia.cartwright@ni.com>, <gratian.crisan@ni.com>,
+        <anna-maria@linutronix.de>, <daniel@bristot.me>, <efault@gmx.de>
+To: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <c2664fbe-52e7-1044-e9f9-de4875047ee8@ni.com>
-Content-Language: en-US
+In-Reply-To: <7d21ff63-3dce-b8ea-a0f1-81d53617747d@ni.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-I found the problem: Running `dumpcap -D` (E.g. by wireshark) creates a 
-timer that's sometimes re-armed with 0 timeout in it's callback function 
-prb_retire_rx_blk_timer_expired(). My change introduced a subtle change 
-in __run_timers()'s stop condition, which causes ktimersoftd to spin 
-when such a timer is present. This blocks all other timers including 
-those from workqueues.
+Collect expired timers in interrupt context to avoid overhead of waking
+ktimersoftd on every scheduler tick.
 
-ktimersoftd stack:
-  __run_timers()
-  [...]
-  call_timer_fn()
-  prb_retire_rx_blk_timer_expired()
-  _prb_refresh_rx_retire_blk_timer()
-  mod_timer(..., jiffies + 0)
+This is implemented by storing lists of expired timers in the timer_base
+struct, which is updated by the interrupt routing on each tick in
+run_local_timers(). TIMER softirq (ktimersoftd) is then raised only when
+one or more expired timers are collected.
 
-The current implementation deals with this corner case by deferring 
-0-timeout timers to the next tick, where they expires late. I'll submit 
-a v5 shortly to match this behavior.
+Performance impact on a 2core Intel Atom E3825 system:
+ * reduction in small latency spikes measured by cyclictest
+ * ~30% fewer context-switches measured by perf
+ * run_local_timers() execution time increases by 0.2 measured by TSC
 
-Thanks again for reporting this issue, Mike. It's a good find! And my 
-apologies for the late fix. I've been busy the last few months.
+Signed-off-by: Haris Okanovic <haris.okanovic@ni.com>
 
--- Haris
+---
+[PATCH v2] Applied Thomas Gleixner's suggestions:
+ - Fix expired_count race
+ - Remove unneeded base->clk lookahead
+ - Return expired_count in collect_expired_timers()
+ - Add block_softirq
+ - Rebase to v4.11.8-rt5
+[PATCH v3]
+ - Fix cosmetic issues
+ - Rename "count" to "levels" in timer_base and various functions
+ - Move expired_levels and block_softirq to fill holes in timer_base
+ - Remove READ_ONCE/WRITE_ONCE around block_softirq
+[PATCH v4]
+ - Rebase onto v4.14.20-rt17
+[PATCH v5]
+ - Fix hang when timer is rearmed with 0 offset in it's callback
+ - Rewrite description
 
+https://github.com/harisokanovic/linux/tree/dev/hokanovi/timer-peek-v7
+---
+ kernel/time/timer.c | 111 ++++++++++++++++++++++++++++++++------------
+ 1 file changed, 82 insertions(+), 29 deletions(-)
 
-On 04/12/2018 10:00 AM, Haris Okanovic wrote:
-> Hi Mike,
-> 
-> I haven't tested the patch with wireshark until now. My system also 
-> hangs shortly after it starts. I'm pretty sure I hit workqueues in my 
-> earlier tests via the block driver, but it's clearly not whatever 
-> wireshark is using. I'll look at it and try to post a fix. CCing the 
-> list to avoid this patch until then.
-> 
-> Thanks,
-> Haris
-> 
-> 
-> On 04/09/2018 11:02 PM, Mike Galbraith wrote:
->> Hi,
->>
->> Are these patches dead, or are you planning another submission?  I ask
->> because I discovered that with them applied, firing up wireshark hangs
->> the box 100% repeatably, with wireshark never fully initializing.
->>
->> Applying them to an otherwise virgin 4.14.20-rt17 to be sure...
->>
->> crash> bt 6016PID: 6016   TASK: ffff95dd68572180  CPU: 2   COMMAND:
->> "dumpcap"
->>   #0 [ffffb490094f3bc0] __schedule at ffffffffa56d55b9
->>   #1 [ffffb490094f3c40] schedule at ffffffffa56d5a03
->>   #2 [ffffb490094f3c58] schedule_timeout at ffffffffa56d8467
->>   #3 [ffffb490094f3cd8] wait_for_completion at ffffffffa56d6e34
->>   #4 [ffffb490094f3d18] __wait_rcu_gp at ffffffffa50e59cd
->>   #5 [ffffb490094f3d58] synchronize_rcu at ffffffffa50ec14e
->>   #6 [ffffb490094f3d98] packet_set_ring at ffffffffc0c74da0 [af_packet]
->>   #7 [ffffb490094f3e50] packet_setsockopt at ffffffffc0c75d23 [af_packet]
->>   #8 [ffffb490094f3ef8] sys_setsockopt at ffffffffa558a5e2
->>   #9 [ffffb490094f3f30] do_syscall_64 at ffffffffa5001b05
->> #10 [ffffb490094f3f50] entry_SYSCALL_64_after_hwframe at ffffffffa5800065
->>      RIP: 00007f3107a1cfaa  RSP: 00007ffc9745c2e8  RFLAGS: 00000246
->>      RAX: ffffffffffffffda  RBX: 0000000000000001  RCX: 00007f3107a1cfaa
->>      RDX: 0000000000000005  RSI: 0000000000000107  RDI: 0000000000000003
->>      RBP: 000055ae1d8eb470   R8: 000000000000001c   R9: 0000000000000002
->>      R10: 00007ffc9745c350  R11: 0000000000000246  R12: 00007ffc9745c350
->>      R13: 0000000000000000  R14: 000055ae1d8eb200  R15: 000055ae1d8eb2d0
->>      ORIG_RAX: 0000000000000036  CS: 0033  SS: 002b
->> crash> dmesg
->> ...
->> [  483.808197] BUG: workqueue lockup - pool cpus=2 node=0 flags=0x0 
->> nice=0 stuck for 52s!
->> [  483.808204] Showing busy workqueues and worker pools:
->> [  483.808206] workqueue events: flags=0x0
->> [  483.808208]   pwq 4: cpus=2 node=0 flags=0x0 nice=0 active=1/256
->> [  483.808211]     pending: check_corruption
->> [  492.695124] sysrq: SysRq : Trigger a crash
->>
+diff --git a/kernel/time/timer.c b/kernel/time/timer.c
+index 96fd01c9f6b1..dd67c18c16d0 100644
+--- a/kernel/time/timer.c
++++ b/kernel/time/timer.c
+@@ -197,6 +197,7 @@ EXPORT_SYMBOL(jiffies_64);
+ 
+ struct timer_base {
+ 	raw_spinlock_t		lock;
++	int					expired_levels;
+ 	struct timer_list	*running_timer;
+ #ifdef CONFIG_PREEMPT_RT_FULL
+ 	struct swait_queue_head	wait_for_running_timer;
+@@ -208,6 +209,7 @@ struct timer_base {
+ 	bool			must_forward_clk;
+ 	DECLARE_BITMAP(pending_map, WHEEL_SIZE);
+ 	struct hlist_head	vectors[WHEEL_SIZE];
++	struct hlist_head	expired_lists[LVL_DEPTH];
+ } ____cacheline_aligned;
+ 
+ static DEFINE_PER_CPU(struct timer_base, timer_bases[NR_BASES]);
+@@ -1342,7 +1344,8 @@ static void call_timer_fn(struct timer_list *timer, void (*fn)(unsigned long),
+ 	}
+ }
+ 
+-static void expire_timers(struct timer_base *base, struct hlist_head *head)
++static void __expire_timers(struct timer_base *base,
++				   struct hlist_head *head)
+ {
+ 	while (!hlist_empty(head)) {
+ 		struct timer_list *timer;
+@@ -1372,21 +1375,49 @@ static void expire_timers(struct timer_base *base, struct hlist_head *head)
+ 	}
+ }
+ 
+-static int __collect_expired_timers(struct timer_base *base,
+-				    struct hlist_head *heads)
++static void expire_timers(struct timer_base *base)
++{
++	struct hlist_head *head;
++	int levels = base->expired_levels;
++
++	while (levels--) {
++		head = base->expired_lists + levels;
++		__expire_timers(base, head);
++	}
++
++	/*
++	 * Zero base->expired_levels after processing all base->expired_lists
++	 * to signal it's ready to get re-populated. Otherwise, we race with
++	 * tick_find_expired() when base->lock is temporarily dropped in
++	 * __expire_timers()
++	 */
++	base->expired_levels = 0;
++}
++
++static int __collect_expired_timers(struct timer_base *base)
+ {
+-	unsigned long clk = base->clk;
+ 	struct hlist_head *vec;
+-	int i, levels = 0;
++	struct hlist_head *expired_list = base->expired_lists;
++	unsigned long clk;
++	int i;
+ 	unsigned int idx;
+ 
++	/*
++	 * expire_timers() must be called at least once before we can
++	 * collect more timers.
++	 */
++	if (base->expired_levels)
++		return base->expired_levels;
++
++	clk = base->clk;
+ 	for (i = 0; i < LVL_DEPTH; i++) {
+ 		idx = (clk & LVL_MASK) + i * LVL_SIZE;
+ 
+ 		if (__test_and_clear_bit(idx, base->pending_map)) {
+ 			vec = base->vectors + idx;
+-			hlist_move_list(vec, heads++);
+-			levels++;
++			hlist_move_list(vec, expired_list);
++			base->expired_levels++;
++			expired_list++;
+ 		}
+ 		/* Is it time to look at the next level? */
+ 		if (clk & LVL_CLK_MASK)
+@@ -1394,7 +1425,8 @@ static int __collect_expired_timers(struct timer_base *base,
+ 		/* Shift clock for the next level granularity */
+ 		clk >>= LVL_CLK_SHIFT;
+ 	}
+-	return levels;
++
++	return base->expired_levels;
+ }
+ 
+ #ifdef CONFIG_NO_HZ_COMMON
+@@ -1593,8 +1625,7 @@ void timer_clear_idle(void)
+ 	base->is_idle = false;
+ }
+ 
+-static int collect_expired_timers(struct timer_base *base,
+-				  struct hlist_head *heads)
++static int collect_expired_timers(struct timer_base *base)
+ {
+ 	/*
+ 	 * NOHZ optimization. After a long idle sleep we need to forward the
+@@ -1615,16 +1646,47 @@ static int collect_expired_timers(struct timer_base *base,
+ 		}
+ 		base->clk = next;
+ 	}
+-	return __collect_expired_timers(base, heads);
++	return __collect_expired_timers(base);
+ }
+ #else
+-static inline int collect_expired_timers(struct timer_base *base,
+-					 struct hlist_head *heads)
++static inline int collect_expired_timers(struct timer_base *base)
+ {
+-	return __collect_expired_timers(base, heads);
++	return __collect_expired_timers(base);
+ }
+ #endif
+ 
++/*
++ * Increments timer_base to current jiffies or until first expired
++ * timer is found. Return number of expired levels.
++ */
++static int find_expired_timers(struct timer_base *base)
++{
++	unsigned long int end_clk = jiffies;
++	int expired_levels = 0;
++
++	while (time_after_eq(end_clk, base->clk) && !expired_levels) {
++		expired_levels = collect_expired_timers(base);
++		base->clk++;
++	}
++
++	return expired_levels;
++}
++
++/*
++ * Called from CPU tick routine to collect expired timers up to current
++ * jiffies. Return number of expired levels.
++ */
++static int tick_find_expired(struct timer_base *base)
++{
++	int levels;
++
++	raw_spin_lock(&base->lock);
++	levels = find_expired_timers(base);
++	raw_spin_unlock(&base->lock);
++
++	return levels;
++}
++
+ /*
+  * Called from the timer interrupt handler to charge one tick to the current
+  * process.  user_tick is 1 if the tick is user time, 0 for system.
+@@ -1652,22 +1714,12 @@ void update_process_times(int user_tick)
+  */
+ static inline void __run_timers(struct timer_base *base)
+ {
+-	struct hlist_head heads[LVL_DEPTH];
+-	int levels;
+-
+-	if (!time_after_eq(jiffies, base->clk))
+-		return;
+-
+ 	raw_spin_lock_irq(&base->lock);
+ 
+-	while (time_after_eq(jiffies, base->clk)) {
++	do {
++		expire_timers(base);
++	} while (find_expired_timers(base));
+ 
+-		levels = collect_expired_timers(base, heads);
+-		base->clk++;
+-
+-		while (levels--)
+-			expire_timers(base, heads + levels);
+-	}
+ 	raw_spin_unlock_irq(&base->lock);
+ 	wakeup_timer_waiters(base);
+ }
+@@ -1707,12 +1759,12 @@ void run_local_timers(void)
+ 
+ 	hrtimer_run_queues();
+ 	/* Raise the softirq only if required. */
+-	if (time_before(jiffies, base->clk)) {
++	if (time_before(jiffies, base->clk) || !tick_find_expired(base)) {
+ 		if (!IS_ENABLED(CONFIG_NO_HZ_COMMON))
+ 			return;
+ 		/* CPU is awake, so check the deferrable base. */
+ 		base++;
+-		if (time_before(jiffies, base->clk))
++		if (time_before(jiffies, base->clk) || !tick_find_expired(base))
+ 			return;
+ 	}
+ 	raise_softirq(TIMER_SOFTIRQ);
+@@ -1887,6 +1939,7 @@ int timers_dead_cpu(unsigned int cpu)
+ 		raw_spin_lock_nested(&old_base->lock, SINGLE_DEPTH_NESTING);
+ 
+ 		BUG_ON(old_base->running_timer);
++		BUG_ON(old_base->expired_levels);
+ 
+ 		for (i = 0; i < WHEEL_SIZE; i++)
+ 			migrate_timer_list(new_base, old_base->vectors + i);
+-- 
+2.17.1
