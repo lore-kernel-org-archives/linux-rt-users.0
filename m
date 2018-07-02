@@ -1,13 +1,18 @@
-From: John Stultz <john.stultz@linaro.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Subject: Re: hrtimer become inaccurate with RT patch
-Date: Mon, 2 Jul 2018 12:25:27 -0700
-Message-ID: <CALAqxLVK=EghPr=GVTKzX511XMO2NM4Ehh3pVP9QumpKRBP+rA@mail.gmail.com>
-References: <12e6da4e-7681-771f-38d3-3c1abf943c24@huawei.com> <43d78927-3955-acde-a2d1-d2b82932a7a6@huawei.com>
+Date: Mon, 2 Jul 2018 21:38:46 +0200
+Message-ID: <20180702193845.6n3jrei35zdtfb7z@linutronix.de>
+References: <12e6da4e-7681-771f-38d3-3c1abf943c24@huawei.com>
+ <43d78927-3955-acde-a2d1-d2b82932a7a6@huawei.com>
+ <20180702101420.rskzwqrdyws5fl6m@breakpoint.cc>
+ <75928d33-ade0-3bc7-33df-43abf5442c32@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        lkml <linux-kernel@vger.kernel.org>, anna-maria@linutronix.de,
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+Cc: "Ouyangzhaowei (Charles)" <ouyangzhaowei@huawei.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        anna-maria@linutronix.de, john.stultz@linaro.org,
         Hangaohuai <hangaohuai@huawei.com>,
         "zhangjianwei (D)" <zhangjianwei8@huawei.com>,
         yangchuanlong@huawei.com,
@@ -15,46 +20,52 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         liupeifeng3@huawei.com
 To: gengdongjiu <gengdongjiu@huawei.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <43d78927-3955-acde-a2d1-d2b82932a7a6@huawei.com>
+Content-Disposition: inline
+In-Reply-To: <75928d33-ade0-3bc7-33df-43abf5442c32@huawei.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, Jul 2, 2018 at 2:34 AM, gengdongjiu <gengdongjiu@huawei.com> wrote:
-> Hi Thomas/Anna/John,
->
->   Recently I found that the hrtimer become inaccurate when there is a RT
-> process runs on the same cpu core, and the kernel has applied preempt_rt
-> patch.
->   The Linux kernel version is v4.1.46, and the preempt_rt patch is
-> patch-4.1.46-rt52.patch.
->   I know that in the preempt_rt environment the interrupt handlers no
-> longer run in interrupt context but in process context, so that RT
-> process will not be interrupt. But if the hrtimer is also runs in
-> process context the timer is useless when it's inaccurate. so I want to
-> consult you whether this is expected behavior? whether is reasonable to move the timer IRQ
-> handling to a thread?
+On 2018-07-02 19:19:07 [+0800], gengdongjiu wrote:
+> Hi Sebastian ,
+Hi gengdongjiu,
 
-I've not looked at the PREEMPT_RT code in a long time, but years ago
-there was a tension in that there is not an easy way track ownership
-of timers. Thus timers all fired at the same priority of the hrtimer
-irq thread. This thread could be moved up or down in priority, but the
-problem was all timers would fire with the same priority. So either
-the thread priority was so high that low-priority process could
-generate a bunch of timers which would interrupt higher priority
-tasks, or the thread priority was lower, so a high priority task could
-block all timers.
+> > the 4.1 series is no longer supported (neither RT wise nor non-RT,
+> > https://www.kernel.org/category/releases.html). I suggest to move away.
+> > If you notice this problem now it is hardly a long running project.
+> yes, I Know, but we found the latest RT 4.14 series also has the same problem,
+> so this is common issue.
+This does not change what I wrote regarding the v4.1 series. Also you
+could have mention v4.14 instead v4.1 if you really tested on v4.14.
 
-There was some handwavy talk of trying to keep per-process timer
-lists, so the hrtimer irq could still be in irq context but the firing
-logic it didn't do anything but mark its task as runnable and do the
-the actual timer firing logic before we eventually run the task (in
-proper rt priority order), in a fashion similar to signals. But I'm
-not sure if any attempts were made in that direction. I also think it
-was an open question if there's any logic in kernel that depend on
-strict in-order kernel timer processing, so its possible there could
-be odd inversion issues where high priority timer logic is waiting on
-/expecting lower priority timers to fire, etc, so its probably an area
-of research.
+> >> process will not be interrupt. But if the hrtimer is also runs in
+> >> process context the timer is useless when it's inaccurate. so I want to
+> >> consult you whether this is expected behavior? whether is reasonable to move the timer IRQ
+> >> handling to a thread?
+> > 
+> > This depends on your expectations. The timer is defined not to fire
+> > before the programmed time. So it fires as soon as possible _after_ the
+> > programmed time.
+> It is reasonable that the timer is defined not to fire before the programmed time.
+> but we found it fires long _after_ the programmed time. For example, we define it to
+> fire after 2s, but it will fire after 5s, so it is very later than the expectations. 
 
-thanks
--john
+under normal circumstances I would expect to have a few µs delay due to
+wakeup of the softirq thread. Not seconds. This is either broken HW or a
+long running RT thread which blocks the expected execution.
+
+> I think the reason may be
+> that the timer handler thread is preempted by another higher priority thread. so from for this issue,
+> the timer handler should be in IRQ context instead of the process context or increase the timer handler thread priority, right?
+
+speculating on what is going on and acting based on speculation is one
+way to handle situation. You could also enable tracing to see
+- when does the timer fire
+- when does the thread wake up
+- when does is timer's function start / complete
+
+and then you know what *really* causes the delay. The hrtimer and sched
+tracepoints should provide enough information. Based on that you can
+figure out if it is wise the toggle the irqsave flag or change something
+else so that the system does not run ~3sec RT secs without a break.
+
+Sebastian
