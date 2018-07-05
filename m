@@ -1,47 +1,86 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH RT] Revert "timer: delay waking softirqs from the jiffy tick"
-Date: Thu, 5 Jul 2018 17:54:36 +0200
-Message-ID: <20180705155435.3zb65vwxgagpza3b@linutronix.de>
+From: joe.korty@concurrent-rt.com
+Subject: Re: [PATCH RT] sched/migrate_disable: fallback to preempt_disable()
+ instead barrier()
+Date: Thu, 5 Jul 2018 12:18:07 -0400
+Message-ID: <20180705161807.GA5800@zipoli.concurrent-rt.com>
+References: <20180704173519.GA24614@zipoli.concurrent-rt.com>
+ <20180705155034.s6q2lsqc3o7srzwp@linutronix.de>
+Reply-To: "Joe Korty" <joe.korty@concurrent-rt.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: tglx@linutronix.de, rostedt@goodmis.org,
-        Peter Zilstra <peterz@infradead.org>,
-        linux-kernel@vger.kernel.org
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Julia Cartwright <julia@ni.com>, <tglx@linutronix.de>,
+        <rostedt@goodmis.org>, <linux-rt-users@vger.kernel.org>,
+        <linux-kernel@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
+In-Reply-To: <20180705155034.s6q2lsqc3o7srzwp@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Anna-Maria Gleixner <anna-maria@linutronix.de>
+On Thu, Jul 05, 2018 at 05:50:34PM +0200, Sebastian Andrzej Siewior wrote:
+> migrate_disable() does nothing !SMP && !RT. This is bad for two reasons:
+> - The futex code relies on the fact migrate_disable() is part of spin_lock().
+>   There is a workaround for the !in_atomic() case in migrate_disable() which
+>   work-arounds the different ordering (non-atomic lock and atomic unlock).
+> 
+> - we have a few instances where preempt_disable() is replaced with
+>   migrate_disable().
+> 
+> For both cases it is bad if migrate_disable() ends up as barrier() instead of
+> preempt_disable(). Let migrate_disable() fallback to preempt_disable().
+> 
+> Cc: stable-rt@vger.kernel.org
+> Reported-by: joe.korty@concurrent-rt.com
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> ---
+>  include/linux/preempt.h | 4 ++--
+>  kernel/sched/core.c     | 2 ++
+>  2 files changed, 4 insertions(+), 2 deletions(-)
+> 
+> diff --git a/include/linux/preempt.h b/include/linux/preempt.h
+> index 043e431a7e8e..d46688d521e6 100644
+> --- a/include/linux/preempt.h
+> +++ b/include/linux/preempt.h
+> @@ -241,8 +241,8 @@ static inline int __migrate_disabled(struct task_struct *p)
+>  }
+>  
+>  #else
+> -#define migrate_disable()		barrier()
+> -#define migrate_enable()		barrier()
+> +#define migrate_disable()		preempt_disable()
+> +#define migrate_enable()		preempt_enable()
+>  static inline int __migrate_disabled(struct task_struct *p)
+>  {
+>  	return 0;
+> diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+> index ac3fb8495bd5..626a62218518 100644
+> --- a/kernel/sched/core.c
+> +++ b/kernel/sched/core.c
+> @@ -7326,6 +7326,7 @@ void migrate_disable(void)
+>  #endif
+>  
+>  	p->migrate_disable++;
+> +	preempt_disable();
+>  }
+>  EXPORT_SYMBOL(migrate_disable);
+>  
+> @@ -7349,6 +7350,7 @@ void migrate_enable(void)
+>  
+>  	WARN_ON_ONCE(p->migrate_disable <= 0);
+>  	p->migrate_disable--;
+> +	preempt_enable();
+>  }
+>  EXPORT_SYMBOL(migrate_enable);
+>  #endif
+> -- 
+> 2.18.0
 
-This patch was required as long as RT tasks where accounted to CFS
-load but this was only a work around. Upstream Commit 17bdcf949d03
-("sched: Drop all load weight manipulation for RT tasks") fixed the
-accounting of RT tasks into CFS load.
 
-Remove the patch and fix dependencies.
 
-Signed-off-by: Anna-Maria Gleixner <anna-maria@linutronix.de>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- kernel/time/timer.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Hi Sebastian,
+I just verified that this fix does not work for my mix of
+config options (smp && preempt && !rt).
 
---- a/kernel/time/timer.c
-+++ b/kernel/time/timer.c
-@@ -1666,13 +1666,13 @@ void update_process_times(int user_tick)
- 
- 	/* Note: this timer irq context must be accounted for as well. */
- 	account_process_tick(p, user_tick);
--	scheduler_tick();
- 	run_local_timers();
- 	rcu_check_callbacks(user_tick);
- #ifdef CONFIG_IRQ_WORK
- 	if (in_irq())
- 		irq_work_tick();
- #endif
-+	scheduler_tick();
- 	if (IS_ENABLED(CONFIG_POSIX_TIMERS))
- 		run_posix_cpu_timers(p);
- }
+Regards,
+Joe
