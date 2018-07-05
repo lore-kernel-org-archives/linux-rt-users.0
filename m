@@ -1,35 +1,61 @@
-From: joe.korty@concurrent-rt.com
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH RT] sched/migrate_disable: fallback to preempt_disable()
  instead barrier()
-Date: Thu, 5 Jul 2018 12:18:07 -0400
-Message-ID: <20180705161807.GA5800@zipoli.concurrent-rt.com>
+Date: Thu, 5 Jul 2018 12:23:00 -0400
+Message-ID: <20180705122300.42164577@gandalf.local.home>
 References: <20180704173519.GA24614@zipoli.concurrent-rt.com>
- <20180705155034.s6q2lsqc3o7srzwp@linutronix.de>
-Reply-To: "Joe Korty" <joe.korty@concurrent-rt.com>
+        <20180705155034.s6q2lsqc3o7srzwp@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Julia Cartwright <julia@ni.com>, <tglx@linutronix.de>,
-        <rostedt@goodmis.org>, <linux-rt-users@vger.kernel.org>,
-        <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Joe Korty <joe.korty@concurrent-rt.com>,
+        Julia Cartwright <julia@ni.com>, tglx@linutronix.de,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        Peter Zijlstra <peterz@infradead.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
 In-Reply-To: <20180705155034.s6q2lsqc3o7srzwp@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Jul 05, 2018 at 05:50:34PM +0200, Sebastian Andrzej Siewior wrote:
+[ Added Peter ]
+
+On Thu, 5 Jul 2018 17:50:34 +0200
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+
 > migrate_disable() does nothing !SMP && !RT. This is bad for two reasons:
 > - The futex code relies on the fact migrate_disable() is part of spin_lock().
 >   There is a workaround for the !in_atomic() case in migrate_disable() which
 >   work-arounds the different ordering (non-atomic lock and atomic unlock).
+
+But isn't it only part of spin_lock() in the RT case?
+
 > 
 > - we have a few instances where preempt_disable() is replaced with
 >   migrate_disable().
+
+What? Really? I thought we only replace preempt_disable() with a
+local_lock(). Which gives annotation to why a preempt_disable() exists.
+And on non-RT, local_lock() is preempt_disable().
+
 > 
 > For both cases it is bad if migrate_disable() ends up as barrier() instead of
 > preempt_disable(). Let migrate_disable() fallback to preempt_disable().
 > 
+
+I still don't understand exactly what is "bad" about it.
+
+IIRC, I remember Peter not wanting any open coded "migrate_disable"
+calls. It was to be for internal use cases only, and specifically, only
+for RT.
+
+Personally, I think making migrate_disable() into preempt_disable() on
+NON_RT is incorrect too.
+
+-- Steve
+
+
+
 > Cc: stable-rt@vger.kernel.org
 > Reported-by: joe.korty@concurrent-rt.com
 > Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
@@ -73,14 +99,3 @@ On Thu, Jul 05, 2018 at 05:50:34PM +0200, Sebastian Andrzej Siewior wrote:
 >  }
 >  EXPORT_SYMBOL(migrate_enable);
 >  #endif
-> -- 
-> 2.18.0
-
-
-
-Hi Sebastian,
-I just verified that this fix does not work for my mix of
-config options (smp && preempt && !rt).
-
-Regards,
-Joe
