@@ -1,211 +1,107 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH RT v2] sched/migrate_disable: fallback to preempt_disable()
- instead barrier()
-Date: Fri, 6 Jul 2018 12:58:57 +0200
-Message-ID: <20180706105857.5tgi5irdxdryet64@linutronix.de>
-References: <20180704173519.GA24614@zipoli.concurrent-rt.com>
- <20180705155034.s6q2lsqc3o7srzwp@linutronix.de>
- <20180705161807.GA5800@zipoli.concurrent-rt.com>
- <20180705165937.5orx3md3krg4akaz@linutronix.de>
+Subject: [ANNOUNCE] v4.16.18-rt9
+Date: Fri, 6 Jul 2018 16:11:19 +0200
+Message-ID: <20180706141119.2x6zg4klzsa42val@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Cc: Julia Cartwright <julia@ni.com>, tglx@linutronix.de,
-        rostedt@goodmis.org, linux-rt-users@vger.kernel.org,
-        linux-kernel@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>
-To: Joe Korty <joe.korty@concurrent-rt.com>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180705165937.5orx3md3krg4akaz@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On SMP + !RT migrate_disable() is still around. It is not part of spin_lock()
-anymore so it has almost no users. However the futex code has a workaround for
-the !in_atomic() part of migrate disable which fails because the matching
-migrade_disable() is no longer part of spin_lock().
+Dear RT folks!
 
-On !SMP + !RT migrate_disable() is reduced to barrier(). This is not optimal
-because we few spots where a "preempt_disable()" statement was replaced with
-"migrate_disable()".
+I'm pleased to announce the v4.16.18-rt9 patch set. 
 
-We also used the migration_disable counter to figure out if a sleeping lock is
-acquired so RCU does not complain about schedule() during rcu_read_lock() while
-a sleeping lock is held. This changed, we no longer use it, we have now a
-sleeping_lock counter for the RCU purpose.
+Changes since v4.16.18-rt8:
 
-This means we can now:
-- for SMP + RT_BASE
-  full migration program, nothing changes here
+  - A patch from upstream to avoid a warning in the kthread code. The
+    warning was part of the stable update.
 
-- for !SMP + RT_BASE
-  the migration counting is no longer required. It used to ensure that the task
-  is not migrated to another CPU and that this CPU remains online. !SMP ensures
-  that already.
-  Move it to CONFIG_SCHED_DEBUG so the counting is done for debugging purpose
-  only.
+  - Revert of a timer patch which is no longer since the initial problem
+    was addressed upstream. Patch by Anna-Maria Gleixner.
 
-- for all other cases including !RT
-  fallback to preempt_disable(). The only remaining users of migrate_disable()
-  are those which were converted from preempt_disable() and the futex
-  workaround which is already in the preempt_disable() section due to the
-  spin_lock that is held.
+Known issues
+     - A warning triggered in "rcu_note_context_switch" originated from
+       SyS_timer_gettime(). The issue was always there, it is now
+       visible. Reported by Grygorii Strashko and Daniel Wagner.
 
-Cc: stable-rt@vger.kernel.org
-Reported-by: joe.korty@concurrent-rt.com
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
-v1…v2: limit migrate_disable to RT only. Use preempt_disable() for !RT
-       if migrate_disable() is used.
-
- include/linux/preempt.h |    6 +++---
- include/linux/sched.h   |    4 ++--
- kernel/sched/core.c     |   23 +++++++++++------------
- kernel/sched/debug.c    |    2 +-
- 4 files changed, 17 insertions(+), 18 deletions(-)
-
---- a/include/linux/preempt.h
-+++ b/include/linux/preempt.h
-@@ -204,7 +204,7 @@ do { \
+The delta patch against v4.16.18-rt8 is appended below and can be found here:
  
- #define preemptible()	(preempt_count() == 0 && !irqs_disabled())
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.16/incr/patch-4.16.18-rt8-rt9.patch.xz
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.16.18-rt9
+
+The RT patch against v4.16.18 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.16/older/patch-4.16.18-rt9.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.16/older/patches-4.16.18-rt9.tar.xz
+
+Sebastian
+
+diff --git a/kernel/kthread.c b/kernel/kthread.c
+index 2017a39ab490..481951bf091d 100644
+--- a/kernel/kthread.c
++++ b/kernel/kthread.c
+@@ -193,7 +193,7 @@ EXPORT_SYMBOL_GPL(kthread_parkme);
  
--#ifdef CONFIG_SMP
-+#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
- 
- extern void migrate_disable(void);
- extern void migrate_enable(void);
-@@ -221,8 +221,8 @@ static inline int __migrate_disabled(str
+ void kthread_park_complete(struct task_struct *k)
+ {
+-	complete(&to_kthread(k)->parked);
++	complete_all(&to_kthread(k)->parked);
  }
  
- #else
--#define migrate_disable()		barrier()
--#define migrate_enable()		barrier()
-+#define migrate_disable()		preempt_disable()
-+#define migrate_enable()		preempt_enable()
- static inline int __migrate_disabled(struct task_struct *p)
- {
- 	return 0;
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -645,7 +645,7 @@ struct task_struct {
- 	int				nr_cpus_allowed;
- 	const cpumask_t			*cpus_ptr;
- 	cpumask_t			cpus_mask;
--#if defined(CONFIG_PREEMPT_COUNT) && defined(CONFIG_SMP)
-+#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
- 	int				migrate_disable;
- 	int				migrate_disable_update;
- # ifdef CONFIG_SCHED_DEBUG
-@@ -653,8 +653,8 @@ struct task_struct {
- # endif
+ static int kthread(void *_create)
+@@ -459,6 +459,7 @@ void kthread_unpark(struct task_struct *k)
+ 	if (test_bit(KTHREAD_IS_PER_CPU, &kthread->flags))
+ 		__kthread_bind(k, kthread->cpu, TASK_PARKED);
  
- #elif !defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
--	int				migrate_disable;
- # ifdef CONFIG_SCHED_DEBUG
-+	int				migrate_disable;
- 	int				migrate_disable_atomic;
- # endif
++	reinit_completion(&kthread->parked);
+ 	clear_bit(KTHREAD_SHOULD_PARK, &kthread->flags);
+ 	wake_up_state(k, TASK_PARKED);
+ }
+@@ -483,9 +484,6 @@ int kthread_park(struct task_struct *k)
+ 	if (WARN_ON(k->flags & PF_EXITING))
+ 		return -ENOSYS;
+ 
+-	if (WARN_ON_ONCE(test_bit(KTHREAD_SHOULD_PARK, &kthread->flags)))
+-		return -EBUSY;
+-
+ 	set_bit(KTHREAD_SHOULD_PARK, &kthread->flags);
+ 	if (k != current) {
+ 		wake_up_process(k);
+diff --git a/kernel/time/timer.c b/kernel/time/timer.c
+index 26f23481030b..20ae4c544cda 100644
+--- a/kernel/time/timer.c
++++ b/kernel/time/timer.c
+@@ -1673,13 +1673,13 @@ void update_process_times(int user_tick)
+ 
+ 	/* Note: this timer irq context must be accounted for as well. */
+ 	account_process_tick(p, user_tick);
+-	scheduler_tick();
+ 	run_local_timers();
+ 	rcu_check_callbacks(user_tick);
+ #if defined(CONFIG_IRQ_WORK)
+ 	if (in_irq())
+ 		irq_work_tick();
  #endif
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -1059,7 +1059,7 @@ void set_cpus_allowed_common(struct task
- 	p->nr_cpus_allowed = cpumask_weight(new_mask);
++	scheduler_tick();
+ 	if (IS_ENABLED(CONFIG_POSIX_TIMERS))
+ 		run_posix_cpu_timers(p);
  }
- 
--#if defined(CONFIG_PREEMPT_COUNT) && defined(CONFIG_SMP)
-+#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
- int __migrate_disabled(struct task_struct *p)
- {
- 	return p->migrate_disable;
-@@ -1098,7 +1098,7 @@ static void __do_set_cpus_allowed_tail(s
- 
- void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
- {
--#if defined(CONFIG_PREEMPT_COUNT) && defined(CONFIG_SMP)
-+#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
- 	if (__migrate_disabled(p)) {
- 		lockdep_assert_held(&p->pi_lock);
- 
-@@ -1171,7 +1171,7 @@ static int __set_cpus_allowed_ptr(struct
- 	if (cpumask_test_cpu(task_cpu(p), new_mask) || __migrate_disabled(p))
- 		goto out;
- 
--#if defined(CONFIG_PREEMPT_COUNT) && defined(CONFIG_SMP)
-+#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
- 	if (__migrate_disabled(p)) {
- 		p->migrate_disable_update = 1;
- 		goto out;
-@@ -7134,7 +7134,7 @@ const u32 sched_prio_to_wmult[40] = {
-  /*  15 */ 119304647, 148102320, 186737708, 238609294, 286331153,
- };
- 
--#if defined(CONFIG_PREEMPT_COUNT) && defined(CONFIG_SMP)
-+#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
- 
- static inline void
- update_nr_migratory(struct task_struct *p, long delta)
-@@ -7282,45 +7282,44 @@ EXPORT_SYMBOL(migrate_enable);
- #elif !defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
- void migrate_disable(void)
- {
-+#ifdef CONFIG_SCHED_DEBUG
- 	struct task_struct *p = current;
- 
- 	if (in_atomic() || irqs_disabled()) {
--#ifdef CONFIG_SCHED_DEBUG
- 		p->migrate_disable_atomic++;
--#endif
- 		return;
- 	}
--#ifdef CONFIG_SCHED_DEBUG
-+
- 	if (unlikely(p->migrate_disable_atomic)) {
- 		tracing_off();
- 		WARN_ON_ONCE(1);
- 	}
--#endif
- 
- 	p->migrate_disable++;
-+#endif
-+	barrier();
- }
- EXPORT_SYMBOL(migrate_disable);
- 
- void migrate_enable(void)
- {
-+#ifdef CONFIG_SCHED_DEBUG
- 	struct task_struct *p = current;
- 
- 	if (in_atomic() || irqs_disabled()) {
--#ifdef CONFIG_SCHED_DEBUG
- 		p->migrate_disable_atomic--;
--#endif
- 		return;
- 	}
- 
--#ifdef CONFIG_SCHED_DEBUG
- 	if (unlikely(p->migrate_disable_atomic)) {
- 		tracing_off();
- 		WARN_ON_ONCE(1);
- 	}
--#endif
- 
- 	WARN_ON_ONCE(p->migrate_disable <= 0);
- 	p->migrate_disable--;
-+#endif
-+	barrier();
- }
- EXPORT_SYMBOL(migrate_enable);
- #endif
---- a/kernel/sched/debug.c
-+++ b/kernel/sched/debug.c
-@@ -1030,7 +1030,7 @@ void proc_sched_show_task(struct task_st
- 		P(dl.runtime);
- 		P(dl.deadline);
- 	}
--#if defined(CONFIG_PREEMPT_COUNT) && defined(CONFIG_SMP)
-+#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
- 	P(migrate_disable);
- #endif
- 	P(nr_cpus_allowed);
+diff --git a/localversion-rt b/localversion-rt
+index 700c857efd9b..22746d6390a4 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt8
++-rt9
