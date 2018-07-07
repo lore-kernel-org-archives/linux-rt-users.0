@@ -1,83 +1,123 @@
-From: joe.korty@concurrent-rt.com
-Subject: Re: [PATCH RT v2] sched/migrate_disable: fallback to
- preempt_disable() instead barrier()
-Date: Fri, 6 Jul 2018 15:05:02 -0400
-Message-ID: <20180706190502.GA26154@zipoli.concurrent-rt.com>
-References: <20180704173519.GA24614@zipoli.concurrent-rt.com>
- <20180705155034.s6q2lsqc3o7srzwp@linutronix.de>
- <20180705161807.GA5800@zipoli.concurrent-rt.com>
- <20180705165937.5orx3md3krg4akaz@linutronix.de>
- <20180706105857.5tgi5irdxdryet64@linutronix.de>
-Reply-To: "Joe Korty" <joe.korty@concurrent-rt.com>
+From: Masami Hiramatsu <mhiramat@kernel.org>
+Subject: Re: [PATCH v2 0/7] tracing: Hist trigger snapshot and onchange
+ additions
+Date: Sun, 8 Jul 2018 00:00:06 +0900
+Message-ID: <20180708000006.5b93884b8123392ab2446809@kernel.org>
+References: <cover.1530561352.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Julia Cartwright <julia@ni.com>, <tglx@linutronix.de>,
-        <rostedt@goodmis.org>, <linux-rt-users@vger.kernel.org>,
-        <linux-kernel@vger.kernel.org>,
-        Peter Zijlstra <peterz@infradead.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
+        namhyung@kernel.org, vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
+        julia@ni.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org,
+        Tom Zanussi <tom.zanussi@linux.intel.com>
+To: Tom Zanussi <zanussi@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180706105857.5tgi5irdxdryet64@linutronix.de>
+In-Reply-To: <cover.1530561352.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Jul 06, 2018 at 12:58:57PM +0200, Sebastian Andrzej Siewior wrote:
-> On SMP + !RT migrate_disable() is still around. It is not part of spin_lock()
-> anymore so it has almost no users. However the futex code has a workaround for
-> the !in_atomic() part of migrate disable which fails because the matching
-> migrade_disable() is no longer part of spin_lock().
+Hi Tom,
+
+On Mon,  2 Jul 2018 15:22:19 -0500
+Tom Zanussi <zanussi@kernel.org> wrote:
+
+> From: Tom Zanussi <tom.zanussi@linux.intel.com>
 > 
-> On !SMP + !RT migrate_disable() is reduced to barrier(). This is not optimal
-> because we few spots where a "preempt_disable()" statement was replaced with
-> "migrate_disable()".
+> Hi,
 > 
-> We also used the migration_disable counter to figure out if a sleeping lock is
-> acquired so RCU does not complain about schedule() during rcu_read_lock() while
-> a sleeping lock is held. This changed, we no longer use it, we have now a
-> sleeping_lock counter for the RCU purpose.
+> This is v2 of the hist trigger snapshot and onchange additions
+> patchset.  It adds a couple fixes to problems flagged by the kbuild
+> test robot, but is otherwise the same as v1.
 > 
-> This means we can now:
-> - for SMP + RT_BASE
->   full migration program, nothing changes here
+> Changes since v1:
 > 
-> - for !SMP + RT_BASE
->   the migration counting is no longer required. It used to ensure that the task
->   is not migrated to another CPU and that this CPU remains online. !SMP ensures
->   that already.
->   Move it to CONFIG_SCHED_DEBUG so the counting is done for debugging purpose
->   only.
+>   - added missing tracing_cond_snapshot_data() definition for when
+>     CONFIG_TRACER_SNAPSHOT not defined
+>   - removed an unnecessary WARN_ON() in track_data_snapshot_print()
 > 
-> - for all other cases including !RT
->   fallback to preempt_disable(). The only remaining users of migrate_disable()
->   are those which were converted from preempt_disable() and the futex
->   workaround which is already in the preempt_disable() section due to the
->   spin_lock that is held.
 > 
-> Cc: stable-rt@vger.kernel.org
-> Reported-by: joe.korty@concurrent-rt.com
-> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> ---
-> v1???v2: limit migrate_disable to RT only. Use preempt_disable() for !RT
->        if migrate_disable() is used.
+> Original text:
 > 
->  include/linux/preempt.h |    6 +++---
->  include/linux/sched.h   |    4 ++--
->  kernel/sched/core.c     |   23 +++++++++++------------
->  kernel/sched/debug.c    |    2 +-
->  4 files changed, 17 insertions(+), 18 deletions(-)
+> This patchset adds some useful new functions to the hist
+> trigger code: a snapshot action and an onchange handler.
+> 
+> In order to make it easier to add these and in the process make the
+> code more generic, I separated the code into explicit 'handlers' and
+> 'actions', handlers being things like 'onmax' and 'onchange', and
+> 'actions' being things like 'take a snapshot' or 'save some fields'.
+
+Sounds great!
+
+By the way, it seems that nowadays the syntax of trigger is
+very complicated. For example, we can set some 'actions' without
+handlers, but this introduce new 'handlers' on it.
+
+Could you consider not just extending it, but refactor it from
+the viewpoint of consistent and extensible syntax?
+
+e.g. if we support
+
+<actions> if <condition>
+
+syntax, why we can not do 
+
+<actions> onchange(<var>)
+
+? :)
+
+Thank you,
+
+> 
+> The first few patches do that basic refactoring, which make it easier
+> to add the subsequent changes that arbitrarily combine actions and
+> handlers.
+> 
+> The fourth patch adds a 'conditional snapshot' capability that via a
+> new tracing_snaphot_cond() function extends the existing snapshot
+> code.  It allows the caller to associate some user data with the
+> snapshot that can be checked and saved in an update() callback whose
+> return value determines whether the snapshot should be taken or not.
+> 
+> The remaining patches finally add the new snapshot action and onchange
+> handler functionality - please see those patches for details and some
+> examples.
+> 
+> Thanks,
+> 
+> Tom
+> 
+> The following changes since commit 591a033dc17ff6f684b6b6d1d7426e22d178194f:
+> 
+>   tracing: Use match_string() instead of open coding it in trace_set_options() (2018-06-05 16:19:39 -0400)
+> 
+> are available in the git repository at:
+> 
+>   git://git.kernel.org/pub/scm/linux/kernel/git/zanussi/linux-trace.git ftrace/hist-snapshot-onchange-v2
+> 
+> Tom Zanussi (7):
+>   tracing: Refactor hist trigger action code
+>   tracing: Split up onmatch action data
+>   tracing: Generalize hist trigger onmax and save action
+>   tracing: Add conditional snapshot
+>   tracing: Move hist trigger key printing into a separate function
+>   tracing: Add snapshot action
+>   tracing: Add hist trigger onchange() handler
+> 
+>  Documentation/trace/histogram.txt   | 206 ++++++++
+>  kernel/trace/trace.c                | 162 +++++-
+>  kernel/trace/trace.h                |  58 ++-
+>  kernel/trace/trace_events_hist.c    | 982 ++++++++++++++++++++++++++----------
+>  kernel/trace/trace_events_trigger.c |   2 +-
+>  kernel/trace/trace_sched_wakeup.c   |   2 +-
+>  6 files changed, 1140 insertions(+), 272 deletions(-)
+> 
+> -- 
+> 2.14.1
+> 
 
 
-Hi Sebastian,
-v2 works for me.
-
-I compiled and booted both smp+preempt+!rt and
-smp+preempt+rt kernels, no splats on boot for either.
-
-I ran the futex selftests on both kernels, both passed.
-
-I ran a selection of posix tests from an old version of
-the Linux Test Project, both kernels passed all tests.
-
-Regards, and thanks,
-Joe
+-- 
+Masami Hiramatsu <mhiramat@kernel.org>
