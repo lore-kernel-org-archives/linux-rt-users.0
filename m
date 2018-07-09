@@ -1,74 +1,64 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from Galois.linutronix.de ([146.0.238.70]:37484 "EHLO
+Received: from Galois.linutronix.de ([146.0.238.70]:60337 "EHLO
         Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2388625AbeGJSf2 (ORCPT
+        with ESMTP id S1754011AbeGIJ6M (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 10 Jul 2018 14:35:28 -0400
-Date: Tue, 10 Jul 2018 18:53:18 +0200
+        Mon, 9 Jul 2018 05:58:12 -0400
+Date: Mon, 9 Jul 2018 11:58:08 +0200
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH RT 8/6] sched, tracing: Fix trace_sched_pi_setprio() for
- deboosting
-Message-ID: <20180710165318.ibnwxuipxczf2x6t@linutronix.de>
+Subject: [PATCH RT 7/6] rcu: Do not include rtmutex_common.h unconditionally
+Message-ID: <20180709095807.7lhflcfgy3yujt6z@linutronix.de>
 References: <20180606133131.7747-1-bigeasy@linutronix.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: 8BIT
 In-Reply-To: <20180606133131.7747-1-bigeasy@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 To: julia@ni.com
 Cc: linux-rt-users@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>
 
-[ Upstream commit 4ff648decf4712d39f184fc2df3163f43975575a ]
+[ upstream commit b88697810d7c1d102a529990f9071b0f14cfe6df ]
 
-Since the following commit:
+This commit adjusts include files and provides definitions in preparation
+for suppressing lockdep false-positive ->boost_mtx complaints.  Without
+this preparation, architectures not supporting rt_mutex will get build
+failures.
 
-  b91473ff6e97 ("sched,tracing: Update trace_sched_pi_setprio()")
-
-the sched_pi_setprio trace point shows the "newprio" during a deboost:
-
-  |futex sched_pi_setprio: comm=futex_requeue_p pid"34 oldprio newprio=3D98
-  |futex sched_switch: prev_comm=futex_requeue_p prev_pid"34 prev_prio=120
-
-This patch open codes __rt_effective_prio() in the tracepoint as the
-'newprio' to get the old behaviour back / the correct priority:
-
-  |futex sched_pi_setprio: comm=futex_requeue_p pid"20 oldprio newprio=3D120
-  |futex sched_switch: prev_comm=futex_requeue_p prev_pid"20 prev_prio=120
-
-Peter suggested to open code the new priority so people using tracehook
-could get the deadline data out.
-
-Reported-by: Mansky Christian <man@keba.com>
+Reported-by: kbuild test robot <fengguang.wu@intel.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Fixes: b91473ff6e97 ("sched,tracing: Update trace_sched_pi_setprio()")
-Link: http://lkml.kernel.org/r/20180524132647.gg6ziuogczdmjjzu@linutronix.de
-Signed-off-by: Ingo Molnar <mingo@kernel.org>
+Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
 ---
- include/trace/events/sched.h | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/include/trace/events/sched.h b/include/trace/events/sched.h
-index 516ae88cddf4..742682079acf 100644
---- a/include/trace/events/sched.h
-+++ b/include/trace/events/sched.h
-@@ -429,7 +429,9 @@ TRACE_EVENT(sched_pi_setprio,
- 		memcpy(__entry->comm, tsk->comm, TASK_COMM_LEN);
- 		__entry->pid		= tsk->pid;
- 		__entry->oldprio	= tsk->prio;
--		__entry->newprio	= pi_task ? pi_task->prio : tsk->prio;
-+		__entry->newprio	= pi_task ?
-+				min(tsk->normal_prio, pi_task->prio) :
-+				tsk->normal_prio;
- 		/* XXX SCHED_DEADLINE bits missing */
- 	),
+Without this one we get build failures for RCU_BOOST=n. It would make
+sense to apply this one before
+
+   [PATCH 6/6] rcu: Suppress lockdep false-positive ->boost_mtx complaints
+
+ kernel/rcu/tree_plugin.h | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
+index ce069b37d961..d97eedd9c6d4 100644
+--- a/kernel/rcu/tree_plugin.h
++++ b/kernel/rcu/tree_plugin.h
+@@ -37,6 +37,7 @@
+  * This probably needs to be excluded from -rt builds.
+  */
+ #define rt_mutex_owner(a) ({ WARN_ON_ONCE(1); NULL; })
++#define rt_mutex_futex_unlock(x) WARN_ON_ONCE(1)
  
+ #endif /* #else #ifdef CONFIG_RCU_BOOST */
+ 
+@@ -828,8 +829,6 @@ static void rcu_cpu_kthread_setup(unsigned int cpu)
+ 
+ #ifdef CONFIG_RCU_BOOST
+ 
+-#include "../locking/rtmutex_common.h"
+-
+ #ifdef CONFIG_RCU_TRACE
+ 
+ static void rcu_initiate_boost_trace(struct rcu_node *rnp)
 -- 
 2.18.0
 
