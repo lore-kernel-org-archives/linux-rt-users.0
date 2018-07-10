@@ -1,81 +1,47 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: cgroup trace events acquire sleeping locks
-Date: Mon, 9 Jul 2018 16:30:10 -0400
-Message-ID: <20180709163010.257a08a0@gandalf.local.home>
+Date: Tue, 10 Jul 2018 11:26:35 +0200
+Message-ID: <20180710092635.GD2476@hirez.programming.kicks-ass.net>
 References: <20180703140750.1dab75ef@tagon>
-        <20180706174745.hwvnwojzfbmp7ma5@linutronix.de>
-        <20180708203600.2edf24e2@tagon>
-        <20180709163805.ai4ljzaj3i73ypx4@linutronix.de>
-        <20180709150154.66843cba@gandalf.local.home>
-        <20180709202214.h2t5t3ndx6xqtrtg@linutronix.de>
+ <20180706174745.hwvnwojzfbmp7ma5@linutronix.de>
+ <20180708203600.2edf24e2@tagon>
+ <20180709163805.ai4ljzaj3i73ypx4@linutronix.de>
+ <20180709150154.66843cba@gandalf.local.home>
+ <20180709202214.h2t5t3ndx6xqtrtg@linutronix.de>
+ <20180709163010.257a08a0@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: tglx@linutronix.de, Clark Williams <williams@redhat.com>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        Peter Zijlstra <peterz@infradead.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=us-ascii
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        tglx@linutronix.de, Clark Williams <williams@redhat.com>,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180709202214.h2t5t3ndx6xqtrtg@linutronix.de>
+Content-Disposition: inline
+In-Reply-To: <20180709163010.257a08a0@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 9 Jul 2018 22:22:15 +0200
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
-
-> On 2018-07-09 15:01:54 [-0400], Steven Rostedt wrote:
-> > > which is the trace_cgroup_rmdir() trace event in cgroup_rmdir(). The
-> > > trace event invokes cgroup_path() which acquires a spin_lock_t and this
-> > > is invoked within a preempt_disable()ed section.   
-> > 
-> > Correct. And I wish no trace event took spin locks.  
+On Mon, Jul 09, 2018 at 04:30:10PM -0400, Steven Rostedt wrote:
+> On Mon, 9 Jul 2018 22:22:15 +0200
+> Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 > 
-> is there an easy way to detect this? I mean instead hitting the trace
-> event with debug enabled and doing a review of each of them.
-
-Hmm, good question. I could possibly make all the tracepoint code into
-its own section. And then look to see if any spin locks exist in them.
-That wouldn't be too trivial to implement though.
-
-> 
-> > > It says "Preemption disabled at" migrate_enable() but this is not true.
-> > > A printk() just before the lock reports preempt_count() of two and
-> > > sometimes one. I *think*
-> > > - one is from rcu_read_lock_sched_notrace() in __DO_TRACE()
-> > > - the second is from preempt_disable_notrace() in ring_buffer_lock_reserve()
+> > On 2018-07-09 15:01:54 [-0400], Steven Rostedt wrote:
+> > > > which is the trace_cgroup_rmdir() trace event in cgroup_rmdir(). The
+> > > > trace event invokes cgroup_path() which acquires a spin_lock_t and this
+> > > > is invoked within a preempt_disable()ed section.   
 > > > 
-> > > I would prefer not to turn kernfs_rename_lock into raw_spin_lock_t. We
-> > > had a similar problem with a i915 trace event which eventually vanished
-> > > (and before I just disabled it).
-> > > 
-> > > So how likely are chances that we can use rcu_read_lock() in __DO_TRACE()?  
+> > > Correct. And I wish no trace event took spin locks.  
 > > 
-> > Not very.  
+> > is there an easy way to detect this? I mean instead hitting the trace
+> > event with debug enabled and doing a review of each of them.
 > 
-> Is there a reason for this? I don't think this is documented. I changed
-> it to the "normal" RCU read section and it appeared to work :)
-> 
+> Hmm, good question. I could possibly make all the tracepoint code into
+> its own section. And then look to see if any spin locks exist in them.
+> That wouldn't be too trivial to implement though.
 
-Well, there's trace points in RCU code. Not sure how they will react.
+pick a bit from the preempt_count (say right above NMI_MASK) and set it
+inside a trace-event and add in_trace().
 
-> > > And how likely are chances that the preempt_disable() in
-> > > ring_buffer_lock_reserve() could be avoided while the trace event is
-> > > invoked?  
-> > 
-> > Even less likely. The design of the ring buffer is based on not being
-> > able to be preempted.  
-> 
-> I was expecting this.
-> 
-> > > I guess nothing of this is easy peasy. Any suggestions?
-> > >   
-> > 
-> > One solution, albeit not so pretty, is to move the grabbing of the
-> > path, outside the trace event. But this should work.  
-> 
-> okay, wasn't aware of the trace_cgroup_##type##_enabled() magic. Yes,
-> this should work. Do you mind posting this upstream?
+Then make lockdep explode when in_trace().
 
-Sure.
-
--- Steve
+Or something along those lines.
