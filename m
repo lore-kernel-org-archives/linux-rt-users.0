@@ -1,42 +1,29 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: cgroup trace events acquire sleeping locks
-Date: Tue, 10 Jul 2018 09:32:45 -0400
-Message-ID: <20180710093245.4e326156@gandalf.local.home>
-References: <20180703140750.1dab75ef@tagon>
-        <20180706174745.hwvnwojzfbmp7ma5@linutronix.de>
-        <20180708203600.2edf24e2@tagon>
-        <20180709163805.ai4ljzaj3i73ypx4@linutronix.de>
-        <20180709150154.66843cba@gandalf.local.home>
-        <20180709202214.h2t5t3ndx6xqtrtg@linutronix.de>
-        <20180709163010.257a08a0@gandalf.local.home>
-        <20180710092635.GD2476@hirez.programming.kicks-ass.net>
+Subject: Why the mce reverts in 4.16-rt?
+Date: Tue, 10 Jul 2018 20:56:24 -0400
+Message-ID: <20180710205624.19ff9ef0@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        tglx@linutronix.de, Clark Williams <williams@redhat.com>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180710092635.GD2476@hirez.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 10 Jul 2018 11:26:35 +0200
-Peter Zijlstra <peterz@infradead.org> wrote:
+Hi Sebastian,
 
-> > Hmm, good question. I could possibly make all the tracepoint code into
-> > its own section. And then look to see if any spin locks exist in them.
-> > That wouldn't be too trivial to implement though.  
-> 
-> pick a bit from the preempt_count (say right above NMI_MASK) and set it
-> inside a trace-event and add in_trace().
-> 
-> Then make lockdep explode when in_trace().
-> 
-> Or something along those lines.
+I'm looking at backporting patches from 4.16-rt and noticed that you
+have:
 
-Sure. We have current->trace for special tracing flags. That could
-easily be used.
+Revert "x86: Convert mce timer to hrtimer"
+Revert "x86/mce: use swait queue for mce wakeups"
+
+With no explanation to why they were reverted. When did things change?
+Should this be 4.14-rt material?
+
+Thanks,
 
 -- Steve
