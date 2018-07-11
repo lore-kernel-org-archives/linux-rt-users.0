@@ -1,54 +1,67 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Why the mce reverts in 4.16-rt?
-Date: Wed, 11 Jul 2018 08:51:01 -0400
-Message-ID: <20180711085101.553face7@gandalf.local.home>
-References: <20180710205624.19ff9ef0@gandalf.local.home>
-        <20180711072311.cprdgb2xqwag2iem@linutronix.de>
+Subject: Re: [PATCH RT] arm64: fpsimd: use a local_lock() in addition to
+ local_bh_disable()
+Date: Wed, 11 Jul 2018 09:25:55 -0400
+Message-ID: <20180711092555.268adf7f@gandalf.local.home>
+References: <20180517124006.ohygrrpg7z2moqqt@linutronix.de>
+        <20180522131004.3012953c@gandalf.local.home>
+        <20180522172115.fpqguqlsq6bavtxy@linutronix.de>
+        <20180522132429.6f1dcf92@gandalf.local.home>
+        <20180522173333.aawadhkcekzvrswp@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        tglx@linutronix.de, Catalin Marinas <catalin.marinas@arm.com>,
+        Will Deacon <will.deacon@arm.com>,
+        linux-arm-kernel@lists.infradead.org
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180711072311.cprdgb2xqwag2iem@linutronix.de>
+In-Reply-To: <20180522173333.aawadhkcekzvrswp@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 11 Jul 2018 09:23:11 +0200
+On Tue, 22 May 2018 19:33:33 +0200
 Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 
-> On 2018-07-10 20:56:24 [-0400], Steven Rostedt wrote:
-> > Hi Sebastian,  
-> Hi Steven,
-> 
-> > I'm looking at backporting patches from 4.16-rt and noticed that you
-> > have:
+> On 2018-05-22 13:24:29 [-0400], Steven Rostedt wrote:
+> > On Tue, 22 May 2018 19:21:16 +0200
+> > Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+> >   
+> > > On 2018-05-22 13:10:04 [-0400], Steven Rostedt wrote:  
+> > > > On Thu, 17 May 2018 14:40:06 +0200
+> > > > Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+> > > >     
+> > > > > +static DEFINE_LOCAL_IRQ_LOCK(fpsimd_lock);
+> > > > >  /*
+> > > > >   * Update current's FPSIMD/SVE registers from thread_struct.
+> > > > >   *
+> > > > > @@ -594,6 +595,7 @@ int sve_set_vector_length(struct task_struct *task,
+> > > > >  	 * non-SVE thread.
+> > > > >  	 */
+> > > > >  	if (task == current) {
+> > > > > +		local_lock(fpsimd_lock);
+> > > > >  		local_bh_disable();    
+> > > > 
+> > > > I'm surprised that we don't have a "local_lock_bh()"?    
+> > > 
+> > > right. Like the last time when we introduced a global lock with no
+> > > locking context? 
+> > >   
 > > 
-> > Revert "x86: Convert mce timer to hrtimer"
-> > Revert "x86/mce: use swait queue for mce wakeups"
-> > 
-> > With no explanation to why they were reverted. When did things change?
-> > Should this be 4.14-rt material?  
+> > I meant, we could have local_lock_bh(fpsimd_lock); that would turn into
+> > a local_bh_disable() when !PREEMPT_RT.  
 > 
-> from the announce email:
-> |    Changes since v4.16.8-rt2:
-> |    
-> |      - Drop two MCE related patches. They are no longer required since the
-> |        timer wheel rework.
+> Oh that part. That could be possible I guess. I need to look into the
+> second part which disables preemption while the FPU is taken.
+>
 
-Thanks, still would have preferred a comment in the revert commit
-message ;-)
+Did you decide to create a local_lock_bh(lock) function? I don't see it.
 
-> 
-> The timer wheel rework made it possible to have a raw_spin_lock_t in the
-> timer_list timer. The problem with MCE was that it enqueued a timer from
-> hardirq context which is now possible. So the patches are no longer
-> required. This revert does not fix a bug in v4.14 nor does it break
-> anything.
+And should this be backported to 4.14-rt too? You state you saw this in
+4.16-rt, but did you start doing something different then, or did the
+kernel change?
 
-OK, even though this doesn't fix anything, I think I'll still
-backport it.
+Thanks!
 
 -- Steve
