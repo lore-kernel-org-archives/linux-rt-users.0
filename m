@@ -1,64 +1,43 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from Galois.linutronix.de ([146.0.238.70]:60337 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1754011AbeGIJ6M (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 9 Jul 2018 05:58:12 -0400
-Date: Mon, 9 Jul 2018 11:58:08 +0200
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH RT 7/6] rcu: Do not include rtmutex_common.h unconditionally
-Message-ID: <20180709095807.7lhflcfgy3yujt6z@linutronix.de>
-References: <20180606133131.7747-1-bigeasy@linutronix.de>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <20180606133131.7747-1-bigeasy@linutronix.de>
+Received: from mout.gmx.net ([212.227.15.15]:46837 "EHLO mout.gmx.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S2388631AbeGKRMr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 11 Jul 2018 13:12:47 -0400
+Message-ID: <1531328845.12761.54.camel@gmx.de>
+Subject: Re: [PATCH RT] arm64: fpsimd: use a local_lock() in addition to
+ local_bh_disable()
+From: Mike Galbraith <efault@gmx.de>
+Date: Wed, 11 Jul 2018 19:07:25 +0200
+In-Reply-To: <20180711133157.bvrza5vmthu6lwjd@linutronix.de>
+References: <20180517124006.ohygrrpg7z2moqqt@linutronix.de>
+         <20180522131004.3012953c@gandalf.local.home>
+         <20180522172115.fpqguqlsq6bavtxy@linutronix.de>
+         <20180522132429.6f1dcf92@gandalf.local.home>
+         <20180522173333.aawadhkcekzvrswp@linutronix.de>
+         <20180711092555.268adf7f@gandalf.local.home>
+         <20180711133157.bvrza5vmthu6lwjd@linutronix.de>
+Content-Type: text/plain; charset="ISO-8859-15"
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: julia@ni.com
-Cc: linux-rt-users@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: linux-rt-users@vger.kernel.org
 
-[ upstream commit b88697810d7c1d102a529990f9071b0f14cfe6df ]
+On Wed, 2018-07-11 at 15:31 +0200, Sebastian Andrzej Siewior wrote:
+> On 2018-07-11 09:25:55 [-0400], Steven Rostedt wrote:
+> > Did you decide to create a local_lock_bh(lock) function? I don't see it.
+> > 
+> > And should this be backported to 4.14-rt too? You state you saw this in
+> > 4.16-rt, but did you start doing something different then, or did the
+> > kernel change?
+> 
+> I wanted to re-evaluate the whole situation here but didn't get to it
+> yet.
 
-This commit adjusts include files and provides definitions in preparation
-for suppressing lockdep false-positive ->boost_mtx complaints.  Without
-this preparation, architectures not supporting rt_mutex will get build
-failures.
+Ignore the rfc I sent then.  New toy works well enough meanwhile.
 
-Reported-by: kbuild test robot <fengguang.wu@intel.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
----
+(cavium boxen are a LOT less dinky/cute than I'm used to thinking of
+arm gizmos being.. 224 core box boogies right along)
 
-Without this one we get build failures for RCU_BOOST=n. It would make
-sense to apply this one before
-
-   [PATCH 6/6] rcu: Suppress lockdep false-positive ->boost_mtx complaints
-
- kernel/rcu/tree_plugin.h | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
-
-diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
-index ce069b37d961..d97eedd9c6d4 100644
---- a/kernel/rcu/tree_plugin.h
-+++ b/kernel/rcu/tree_plugin.h
-@@ -37,6 +37,7 @@
-  * This probably needs to be excluded from -rt builds.
-  */
- #define rt_mutex_owner(a) ({ WARN_ON_ONCE(1); NULL; })
-+#define rt_mutex_futex_unlock(x) WARN_ON_ONCE(1)
- 
- #endif /* #else #ifdef CONFIG_RCU_BOOST */
- 
-@@ -828,8 +829,6 @@ static void rcu_cpu_kthread_setup(unsigned int cpu)
- 
- #ifdef CONFIG_RCU_BOOST
- 
--#include "../locking/rtmutex_common.h"
--
- #ifdef CONFIG_RCU_TRACE
- 
- static void rcu_initiate_boost_trace(struct rcu_node *rnp)
--- 
-2.18.0
-
+	-Mike
