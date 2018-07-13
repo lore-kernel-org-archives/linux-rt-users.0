@@ -1,108 +1,71 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH RT] locallock: add local_lock_bh()
-Date: Fri, 13 Jul 2018 19:50:49 +0200
-Message-ID: <20180713175049.nx2xg4no4zbfcnfl@linutronix.de>
+From: Mike Galbraith <efault@gmx.de>
+Subject: Re: [PATCH RT v2] arm64: fpsimd: use a local_lock() in addition to
+ local_bh_disable()
+Date: Sat, 14 Jul 2018 00:03:44 +0200
+Message-ID: <1531519424.23898.68.camel@gmx.de>
 References: <20180517124006.ohygrrpg7z2moqqt@linutronix.de>
- <20180522131004.3012953c@gandalf.local.home>
- <20180522172115.fpqguqlsq6bavtxy@linutronix.de>
- <20180522132429.6f1dcf92@gandalf.local.home>
- <20180522173333.aawadhkcekzvrswp@linutronix.de>
- <20180711092555.268adf7f@gandalf.local.home>
- <20180711133157.bvrza5vmthu6lwjd@linutronix.de>
- <20180711093346.782af07a@gandalf.local.home>
- <20180713174937.5ddaqpylalcmc3jq@linutronix.de>
+         <20180522131004.3012953c@gandalf.local.home>
+         <20180522172115.fpqguqlsq6bavtxy@linutronix.de>
+         <20180522132429.6f1dcf92@gandalf.local.home>
+         <20180522173333.aawadhkcekzvrswp@linutronix.de>
+         <20180711092555.268adf7f@gandalf.local.home>
+         <20180711133157.bvrza5vmthu6lwjd@linutronix.de>
+         <20180711093346.782af07a@gandalf.local.home>
+         <20180713174937.5ddaqpylalcmc3jq@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
 Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
         tglx@linutronix.de, Catalin Marinas <catalin.marinas@arm.com>,
         Will Deacon <will.deacon@arm.com>,
-        linux-arm-kernel@lists.infradead.org,
-        Mike Galbraith <efault@gmx.de>
-To: Steven Rostedt <rostedt@goodmis.org>
+        linux-arm-kernel@lists.infradead.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
 In-Reply-To: <20180713174937.5ddaqpylalcmc3jq@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-For the ARM64 simd locking it would be easier to have local_lock_bh()
-which grabs a local_lock with BH disabled and turns into a
-local_bh_disable() on !RT.
+On Fri, 2018-07-13 at 19:49 +0200, Sebastian Andrzej Siewior wrote:
+> In v4.16-RT I noticed a number of warnings from task_fpsimd_load(). The
+> code disables BH and expects that it is not preemptible. On -RT the
+> task remains preemptible but remains the same CPU. This may corrupt the
+> content of the SIMD registers if the task is preempted during
+> saving/restoring those registers.
+> Add a locallock around this process. This avoids that the any function
+> within the locallock block is invoked more than once on the same CPU.
+> 
+> The kernel_neon_begin() can't be kept preemptible. If the task-switch notices
+> TIF_FOREIGN_FPSTATE then it would restore task's SIMD state and we lose the
+> state of registers used for in-kernel-work. We would require additional storage
+> for the in-kernel copy of the registers. But then the NEON-crypto checks for
+> the need-resched flag so it shouldn't that bad.
+> The preempt_disable() avoids the context switch while the kernel uses the SIMD
+> registers. Unfortunately we have to balance out the migrate_disable() counter
+> because local_lock_bh() is invoked in different context compared to its unlock
+> counterpart.
+> 
+> __efi_fpsimd_begin() should not use kernel_fpu_begin() due to its
+> preempt_disable() context and instead save the registers always in its
+> extra spot on RT.
+> 
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> ---
+> 
+> This seems to make work (crypto chacha20-neon + cyclictest). I have no
+> EFI so I have no clue if saving SIMD while calling to EFI works.
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
-obviously required by the previous one…
+All is not well on cavium test box.  I'm seeing random errors ala...
 
- include/linux/locallock.h | 33 +++++++++++++++++++++++++++++++++
- 1 file changed, 33 insertions(+)
+./include/linux/fs.h:3137:11: internal compiler error: Segmentation fault
+./include/linux/bio.h:175:1: internal compiler error: in grokdeclarator, at c/c-decl.c:7023
 
-diff --git a/include/linux/locallock.h b/include/linux/locallock.h
-index 921eab83cd34..15aa0dea2bfb 100644
---- a/include/linux/locallock.h
-+++ b/include/linux/locallock.h
-@@ -47,9 +47,23 @@ static inline void __local_lock(struct local_irq_lock *lv)
- 	lv->nestcnt++;
- }
- 
-+static inline void __local_lock_bh(struct local_irq_lock *lv)
-+{
-+	if (lv->owner != current) {
-+		spin_lock_bh(&lv->lock);
-+		LL_WARN(lv->owner);
-+		LL_WARN(lv->nestcnt);
-+		lv->owner = current;
-+	}
-+	lv->nestcnt++;
-+}
-+
- #define local_lock(lvar)					\
- 	do { __local_lock(&get_local_var(lvar)); } while (0)
- 
-+#define local_lock_bh(lvar)					\
-+	do { __local_lock_bh(&get_local_var(lvar)); } while (0)
-+
- #define local_lock_on(lvar, cpu)				\
- 	do { __local_lock(&per_cpu(lvar, cpu)); } while (0)
- 
-@@ -88,12 +102,29 @@ static inline void __local_unlock(struct local_irq_lock *lv)
- 	spin_unlock(&lv->lock);
- }
- 
-+static inline void __local_unlock_bh(struct local_irq_lock *lv)
-+{
-+	LL_WARN(lv->nestcnt == 0);
-+	LL_WARN(lv->owner != current);
-+	if (--lv->nestcnt)
-+		return;
-+
-+	lv->owner = NULL;
-+	spin_unlock_bh(&lv->lock);
-+}
-+
- #define local_unlock(lvar)					\
- 	do {							\
- 		__local_unlock(this_cpu_ptr(&lvar));		\
- 		put_local_var(lvar);				\
- 	} while (0)
- 
-+#define local_unlock_bh(lvar)					\
-+	do {							\
-+		__local_unlock_bh(this_cpu_ptr(&lvar));		\
-+		put_local_var(lvar);				\
-+	} while (0)
-+
- #define local_unlock_on(lvar, cpu)                       \
- 	do { __local_unlock(&per_cpu(lvar, cpu)); } while (0)
- 
-@@ -253,6 +284,8 @@ static inline void local_irq_lock_init(int lvar) { }
- 
- #define local_lock(lvar)			preempt_disable()
- #define local_unlock(lvar)			preempt_enable()
-+#define local_lock_bh(lvar)			local_bh_disable()
-+#define local_unlock_bh(lvar)			local_bh_enable()
- #define local_lock_irq(lvar)			local_irq_disable()
- #define local_lock_irq_on(lvar, cpu)		local_irq_disable()
- #define local_unlock_irq(lvar)			local_irq_enable()
--- 
-2.18.0
+...during make -j96 (2*cpus) kbuild.  Turns out 4.14-rt has this issue
+as well, which is unsurprising if it's related to fpsimd woes.  Box
+does not exhibit the issue with NONRT kernels, PREEMPT or NOPREEMPT.
+
+To file under FWIW, arm64 configured SLE15-RT, 4.12 based kernel
+containing virgin @stable arch/arm64/kernel/fpsimd.c, does not exhibit
+the problem. (relevant? dunno, it may be unrelated to fpsimd.c).
+
+	-Mike
