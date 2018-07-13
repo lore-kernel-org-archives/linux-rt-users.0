@@ -1,8 +1,7 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH RT v2] arm64: fpsimd: use a local_lock() in addition to
- local_bh_disable()
-Date: Fri, 13 Jul 2018 19:49:38 +0200
-Message-ID: <20180713174937.5ddaqpylalcmc3jq@linutronix.de>
+Subject: [PATCH RT] locallock: add local_lock_bh()
+Date: Fri, 13 Jul 2018 19:50:49 +0200
+Message-ID: <20180713175049.nx2xg4no4zbfcnfl@linutronix.de>
 References: <20180517124006.ohygrrpg7z2moqqt@linutronix.de>
  <20180522131004.3012953c@gandalf.local.home>
  <20180522172115.fpqguqlsq6bavtxy@linutronix.de>
@@ -11,8 +10,10 @@ References: <20180517124006.ohygrrpg7z2moqqt@linutronix.de>
  <20180711092555.268adf7f@gandalf.local.home>
  <20180711133157.bvrza5vmthu6lwjd@linutronix.de>
  <20180711093346.782af07a@gandalf.local.home>
+ <20180713174937.5ddaqpylalcmc3jq@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
 Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
         tglx@linutronix.de, Catalin Marinas <catalin.marinas@arm.com>,
         Will Deacon <will.deacon@arm.com>,
@@ -21,206 +22,87 @@ Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180711093346.782af07a@gandalf.local.home>
+In-Reply-To: <20180713174937.5ddaqpylalcmc3jq@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-In v4.16-RT I noticed a number of warnings from task_fpsimd_load(). The
-code disables BH and expects that it is not preemptible. On -RT the
-task remains preemptible but remains the same CPU. This may corrupt the
-content of the SIMD registers if the task is preempted during
-saving/restoring those registers.
-Add a locallock around this process. This avoids that the any function
-within the locallock block is invoked more than once on the same CPU.
-
-The kernel_neon_begin() can't be kept preemptible. If the task-switch notices
-TIF_FOREIGN_FPSTATE then it would restore task's SIMD state and we lose the
-state of registers used for in-kernel-work. We would require additional storage
-for the in-kernel copy of the registers. But then the NEON-crypto checks for
-the need-resched flag so it shouldn't that bad.
-The preempt_disable() avoids the context switch while the kernel uses the SIMD
-registers. Unfortunately we have to balance out the migrate_disable() counter
-because local_lock_bh() is invoked in different context compared to its unlock
-counterpart.
-
-__efi_fpsimd_begin() should not use kernel_fpu_begin() due to its
-preempt_disable() context and instead save the registers always in its
-extra spot on RT.
+For the ARM64 simd locking it would be easier to have local_lock_bh()
+which grabs a local_lock with BH disabled and turns into a
+local_bh_disable() on !RT.
 
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
+obviously required by the previous one…
 
-This seems to make work (crypto chacha20-neon + cyclictest). I have no
-EFI so I have no clue if saving SIMD while calling to EFI works.
+ include/linux/locallock.h | 33 +++++++++++++++++++++++++++++++++
+ 1 file changed, 33 insertions(+)
 
- arch/arm64/kernel/fpsimd.c |   47 ++++++++++++++++++++++++++-------------------
- 1 file changed, 28 insertions(+), 19 deletions(-)
-
---- a/arch/arm64/kernel/fpsimd.c
-+++ b/arch/arm64/kernel/fpsimd.c
-@@ -38,6 +38,7 @@
- #include <linux/signal.h>
- #include <linux/slab.h>
- #include <linux/sysctl.h>
-+#include <linux/locallock.h>
- 
- #include <asm/fpsimd.h>
- #include <asm/cputype.h>
-@@ -235,7 +236,7 @@ static void sve_user_enable(void)
-  *    whether TIF_SVE is clear or set, since these are not vector length
-  *    dependent.
-  */
--
-+static DEFINE_LOCAL_IRQ_LOCK(fpsimd_lock);
- /*
-  * Update current's FPSIMD/SVE registers from thread_struct.
-  *
-@@ -594,7 +595,7 @@ int sve_set_vector_length(struct task_st
- 	 * non-SVE thread.
- 	 */
- 	if (task == current) {
--		local_bh_disable();
-+		local_lock_bh(fpsimd_lock);
- 
- 		task_fpsimd_save();
- 		set_thread_flag(TIF_FOREIGN_FPSTATE);
-@@ -605,7 +606,7 @@ int sve_set_vector_length(struct task_st
- 		sve_to_fpsimd(task);
- 
- 	if (task == current)
--		local_bh_enable();
-+		local_unlock_bh(fpsimd_lock);
- 
- 	/*
- 	 * Force reallocation of task SVE state to the correct size
-@@ -837,7 +838,7 @@ asmlinkage void do_sve_acc(unsigned int
- 
- 	sve_alloc(current);
- 
--	local_bh_disable();
-+	local_lock_bh(fpsimd_lock);
- 
- 	task_fpsimd_save();
- 	fpsimd_to_sve(current);
-@@ -849,7 +850,7 @@ asmlinkage void do_sve_acc(unsigned int
- 	if (test_and_set_thread_flag(TIF_SVE))
- 		WARN_ON(1); /* SVE access shouldn't have trapped */
- 
--	local_bh_enable();
-+	local_unlock_bh(fpsimd_lock);
+diff --git a/include/linux/locallock.h b/include/linux/locallock.h
+index 921eab83cd34..15aa0dea2bfb 100644
+--- a/include/linux/locallock.h
++++ b/include/linux/locallock.h
+@@ -47,9 +47,23 @@ static inline void __local_lock(struct local_irq_lock *lv)
+ 	lv->nestcnt++;
  }
  
- /*
-@@ -925,7 +926,7 @@ void fpsimd_flush_thread(void)
- 	if (!system_supports_fpsimd())
- 		return;
++static inline void __local_lock_bh(struct local_irq_lock *lv)
++{
++	if (lv->owner != current) {
++		spin_lock_bh(&lv->lock);
++		LL_WARN(lv->owner);
++		LL_WARN(lv->nestcnt);
++		lv->owner = current;
++	}
++	lv->nestcnt++;
++}
++
+ #define local_lock(lvar)					\
+ 	do { __local_lock(&get_local_var(lvar)); } while (0)
  
--	local_bh_disable();
-+	local_lock_bh(fpsimd_lock);
++#define local_lock_bh(lvar)					\
++	do { __local_lock_bh(&get_local_var(lvar)); } while (0)
++
+ #define local_lock_on(lvar, cpu)				\
+ 	do { __local_lock(&per_cpu(lvar, cpu)); } while (0)
  
- 	memset(&current->thread.fpsimd_state, 0, sizeof(struct fpsimd_state));
- 	fpsimd_flush_task_state(current);
-@@ -967,7 +968,7 @@ void fpsimd_flush_thread(void)
- 
- 	set_thread_flag(TIF_FOREIGN_FPSTATE);
- 
--	local_bh_enable();
-+	local_unlock_bh(fpsimd_lock);
+@@ -88,12 +102,29 @@ static inline void __local_unlock(struct local_irq_lock *lv)
+ 	spin_unlock(&lv->lock);
  }
  
- /*
-@@ -979,9 +980,9 @@ void fpsimd_preserve_current_state(void)
- 	if (!system_supports_fpsimd())
- 		return;
++static inline void __local_unlock_bh(struct local_irq_lock *lv)
++{
++	LL_WARN(lv->nestcnt == 0);
++	LL_WARN(lv->owner != current);
++	if (--lv->nestcnt)
++		return;
++
++	lv->owner = NULL;
++	spin_unlock_bh(&lv->lock);
++}
++
+ #define local_unlock(lvar)					\
+ 	do {							\
+ 		__local_unlock(this_cpu_ptr(&lvar));		\
+ 		put_local_var(lvar);				\
+ 	} while (0)
  
--	local_bh_disable();
-+	local_lock_bh(fpsimd_lock);
- 	task_fpsimd_save();
--	local_bh_enable();
-+	local_unlock_bh(fpsimd_lock);
- }
++#define local_unlock_bh(lvar)					\
++	do {							\
++		__local_unlock_bh(this_cpu_ptr(&lvar));		\
++		put_local_var(lvar);				\
++	} while (0)
++
+ #define local_unlock_on(lvar, cpu)                       \
+ 	do { __local_unlock(&per_cpu(lvar, cpu)); } while (0)
  
- /*
-@@ -1021,14 +1022,14 @@ void fpsimd_restore_current_state(void)
- 	if (!system_supports_fpsimd())
- 		return;
+@@ -253,6 +284,8 @@ static inline void local_irq_lock_init(int lvar) { }
  
--	local_bh_disable();
-+	local_lock_bh(fpsimd_lock);
- 
- 	if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE)) {
- 		task_fpsimd_load();
- 		fpsimd_bind_to_cpu();
- 	}
- 
--	local_bh_enable();
-+	local_unlock_bh(fpsimd_lock);
- }
- 
- /*
-@@ -1041,7 +1042,7 @@ void fpsimd_update_current_state(struct
- 	if (!system_supports_fpsimd())
- 		return;
- 
--	local_bh_disable();
-+	local_lock_bh(fpsimd_lock);
- 
- 	current->thread.fpsimd_state.user_fpsimd = *state;
- 	if (system_supports_sve() && test_thread_flag(TIF_SVE))
-@@ -1052,7 +1053,7 @@ void fpsimd_update_current_state(struct
- 	if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE))
- 		fpsimd_bind_to_cpu();
- 
--	local_bh_enable();
-+	local_unlock_bh(fpsimd_lock);
- }
- 
- /*
-@@ -1115,7 +1116,7 @@ void kernel_neon_begin(void)
- 
- 	BUG_ON(!may_use_simd());
- 
--	local_bh_disable();
-+	local_lock_bh(fpsimd_lock);
- 
- 	__this_cpu_write(kernel_neon_busy, true);
- 
-@@ -1129,8 +1130,14 @@ void kernel_neon_begin(void)
- 	fpsimd_flush_cpu_state();
- 
- 	preempt_disable();
--
--	local_bh_enable();
-+	/*
-+	 * ballance atomic vs !atomic context of migrate_disable().
-+	 * local_lock_bh = get_local_var() + spin_lock_bh (2x migrate_disable)
-+	 */
-+	migrate_disable();
-+	migrate_disable();
-+	migrate_disable();
-+	local_unlock_bh(fpsimd_lock);
- }
- EXPORT_SYMBOL(kernel_neon_begin);
- 
-@@ -1154,6 +1161,10 @@ void kernel_neon_end(void)
- 	WARN_ON(!busy);	/* No matching kernel_neon_begin()? */
- 
- 	preempt_enable();
-+	/* balance migrate_disable(). See kernel_neon_begin() */
-+	migrate_enable();
-+	migrate_enable();
-+	migrate_enable();
- }
- EXPORT_SYMBOL(kernel_neon_end);
- 
-@@ -1185,9 +1196,7 @@ void __efi_fpsimd_begin(void)
- 	if (!system_supports_fpsimd())
- 		return;
- 
--	WARN_ON(preemptible());
--
--	if (may_use_simd()) {
-+	if (!IS_ENABLED(CONFIG_PREEMPT_RT_BASE) && may_use_simd()) {
- 		kernel_neon_begin();
- 	} else {
- 		/*
+ #define local_lock(lvar)			preempt_disable()
+ #define local_unlock(lvar)			preempt_enable()
++#define local_lock_bh(lvar)			local_bh_disable()
++#define local_unlock_bh(lvar)			local_bh_enable()
+ #define local_lock_irq(lvar)			local_irq_disable()
+ #define local_lock_irq_on(lvar, cpu)		local_irq_disable()
+ #define local_unlock_irq(lvar)			local_irq_enable()
+-- 
+2.18.0
