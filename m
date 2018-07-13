@@ -1,55 +1,226 @@
-From: Haris Okanovic <haris.okanovic@ni.com>
-Subject: Re: [PATCH v5 1/2] timers: Don't wake ktimersoftd on every tick
-Date: Fri, 13 Jul 2018 09:37:52 -0500
-Message-ID: <cba32de4-7b04-52d3-a068-909d675604f0@ni.com>
-References: <7d21ff63-3dce-b8ea-a0f1-81d53617747d@ni.com>
- <20180628164036.27378-1-haris.okanovic@ni.com>
- <alpine.DEB.2.21.1807131354560.2242@somnus>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH RT v2] arm64: fpsimd: use a local_lock() in addition to
+ local_bh_disable()
+Date: Fri, 13 Jul 2018 19:49:38 +0200
+Message-ID: <20180713174937.5ddaqpylalcmc3jq@linutronix.de>
+References: <20180517124006.ohygrrpg7z2moqqt@linutronix.de>
+ <20180522131004.3012953c@gandalf.local.home>
+ <20180522172115.fpqguqlsq6bavtxy@linutronix.de>
+ <20180522132429.6f1dcf92@gandalf.local.home>
+ <20180522173333.aawadhkcekzvrswp@linutronix.de>
+ <20180711092555.268adf7f@gandalf.local.home>
+ <20180711133157.bvrza5vmthu6lwjd@linutronix.de>
+ <20180711093346.782af07a@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
 Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        harisokn@gmail.com, bigeasy@linutronix.de, tglx@linutronix.de,
-        julia.cartwright@ni.com, gratian.crisan@ni.com, daniel@bristot.me,
-        efault@gmx.de
-To: Anna-Maria Gleixner <anna-maria@linutronix.de>
+        tglx@linutronix.de, Catalin Marinas <catalin.marinas@arm.com>,
+        Will Deacon <will.deacon@arm.com>,
+        linux-arm-kernel@lists.infradead.org,
+        Mike Galbraith <efault@gmx.de>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.21.1807131354560.2242@somnus>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20180711093346.782af07a@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Sounds good. I'll keep an eye out for your patch set and try it on my 
-boards as well. CC me if you can.
+In v4.16-RT I noticed a number of warnings from task_fpsimd_load(). The
+code disables BH and expects that it is not preemptible. On -RT the
+task remains preemptible but remains the same CPU. This may corrupt the
+content of the SIMD registers if the task is preempted during
+saving/restoring those registers.
+Add a locallock around this process. This avoids that the any function
+within the locallock block is invoked more than once on the same CPU.
 
--- Haris
+The kernel_neon_begin() can't be kept preemptible. If the task-switch notices
+TIF_FOREIGN_FPSTATE then it would restore task's SIMD state and we lose the
+state of registers used for in-kernel-work. We would require additional storage
+for the in-kernel copy of the registers. But then the NEON-crypto checks for
+the need-resched flag so it shouldn't that bad.
+The preempt_disable() avoids the context switch while the kernel uses the SIMD
+registers. Unfortunately we have to balance out the migrate_disable() counter
+because local_lock_bh() is invoked in different context compared to its unlock
+counterpart.
 
+__efi_fpsimd_begin() should not use kernel_fpu_begin() due to its
+preempt_disable() context and instead save the registers always in its
+extra spot on RT.
 
-On 07/13/2018 07:01 AM, Anna-Maria Gleixner wrote:
-> Hi Haris,
-> 
-> On Thu, 28 Jun 2018, Haris Okanovic wrote:
-> 
->> Collect expired timers in interrupt context to avoid overhead of waking
->> ktimersoftd on every scheduler tick.
->>
->> This is implemented by storing lists of expired timers in the timer_base
->> struct, which is updated by the interrupt routing on each tick in
->> run_local_timers(). TIMER softirq (ktimersoftd) is then raised only when
->> one or more expired timers are collected.
->>
->> Performance impact on a 2core Intel Atom E3825 system:
->>   * reduction in small latency spikes measured by cyclictest
->>   * ~30% fewer context-switches measured by perf
->>   * run_local_timers() execution time increases by 0.2 measured by TSC
->>
-> 
-> I'm also working on timer improvements at the moment. When I fixed all
-> my bugs in my implementation (there is a last horrible one), I'm very
-> interested in integrating your patches into my testing to be able to
-> give you a tested-by.
-> 
-> Thanks,
-> 
-> 	Anna-Maria
-> 
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+
+This seems to make work (crypto chacha20-neon + cyclictest). I have no
+EFI so I have no clue if saving SIMD while calling to EFI works.
+
+ arch/arm64/kernel/fpsimd.c |   47 ++++++++++++++++++++++++++-------------------
+ 1 file changed, 28 insertions(+), 19 deletions(-)
+
+--- a/arch/arm64/kernel/fpsimd.c
++++ b/arch/arm64/kernel/fpsimd.c
+@@ -38,6 +38,7 @@
+ #include <linux/signal.h>
+ #include <linux/slab.h>
+ #include <linux/sysctl.h>
++#include <linux/locallock.h>
+ 
+ #include <asm/fpsimd.h>
+ #include <asm/cputype.h>
+@@ -235,7 +236,7 @@ static void sve_user_enable(void)
+  *    whether TIF_SVE is clear or set, since these are not vector length
+  *    dependent.
+  */
+-
++static DEFINE_LOCAL_IRQ_LOCK(fpsimd_lock);
+ /*
+  * Update current's FPSIMD/SVE registers from thread_struct.
+  *
+@@ -594,7 +595,7 @@ int sve_set_vector_length(struct task_st
+ 	 * non-SVE thread.
+ 	 */
+ 	if (task == current) {
+-		local_bh_disable();
++		local_lock_bh(fpsimd_lock);
+ 
+ 		task_fpsimd_save();
+ 		set_thread_flag(TIF_FOREIGN_FPSTATE);
+@@ -605,7 +606,7 @@ int sve_set_vector_length(struct task_st
+ 		sve_to_fpsimd(task);
+ 
+ 	if (task == current)
+-		local_bh_enable();
++		local_unlock_bh(fpsimd_lock);
+ 
+ 	/*
+ 	 * Force reallocation of task SVE state to the correct size
+@@ -837,7 +838,7 @@ asmlinkage void do_sve_acc(unsigned int
+ 
+ 	sve_alloc(current);
+ 
+-	local_bh_disable();
++	local_lock_bh(fpsimd_lock);
+ 
+ 	task_fpsimd_save();
+ 	fpsimd_to_sve(current);
+@@ -849,7 +850,7 @@ asmlinkage void do_sve_acc(unsigned int
+ 	if (test_and_set_thread_flag(TIF_SVE))
+ 		WARN_ON(1); /* SVE access shouldn't have trapped */
+ 
+-	local_bh_enable();
++	local_unlock_bh(fpsimd_lock);
+ }
+ 
+ /*
+@@ -925,7 +926,7 @@ void fpsimd_flush_thread(void)
+ 	if (!system_supports_fpsimd())
+ 		return;
+ 
+-	local_bh_disable();
++	local_lock_bh(fpsimd_lock);
+ 
+ 	memset(&current->thread.fpsimd_state, 0, sizeof(struct fpsimd_state));
+ 	fpsimd_flush_task_state(current);
+@@ -967,7 +968,7 @@ void fpsimd_flush_thread(void)
+ 
+ 	set_thread_flag(TIF_FOREIGN_FPSTATE);
+ 
+-	local_bh_enable();
++	local_unlock_bh(fpsimd_lock);
+ }
+ 
+ /*
+@@ -979,9 +980,9 @@ void fpsimd_preserve_current_state(void)
+ 	if (!system_supports_fpsimd())
+ 		return;
+ 
+-	local_bh_disable();
++	local_lock_bh(fpsimd_lock);
+ 	task_fpsimd_save();
+-	local_bh_enable();
++	local_unlock_bh(fpsimd_lock);
+ }
+ 
+ /*
+@@ -1021,14 +1022,14 @@ void fpsimd_restore_current_state(void)
+ 	if (!system_supports_fpsimd())
+ 		return;
+ 
+-	local_bh_disable();
++	local_lock_bh(fpsimd_lock);
+ 
+ 	if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE)) {
+ 		task_fpsimd_load();
+ 		fpsimd_bind_to_cpu();
+ 	}
+ 
+-	local_bh_enable();
++	local_unlock_bh(fpsimd_lock);
+ }
+ 
+ /*
+@@ -1041,7 +1042,7 @@ void fpsimd_update_current_state(struct
+ 	if (!system_supports_fpsimd())
+ 		return;
+ 
+-	local_bh_disable();
++	local_lock_bh(fpsimd_lock);
+ 
+ 	current->thread.fpsimd_state.user_fpsimd = *state;
+ 	if (system_supports_sve() && test_thread_flag(TIF_SVE))
+@@ -1052,7 +1053,7 @@ void fpsimd_update_current_state(struct
+ 	if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE))
+ 		fpsimd_bind_to_cpu();
+ 
+-	local_bh_enable();
++	local_unlock_bh(fpsimd_lock);
+ }
+ 
+ /*
+@@ -1115,7 +1116,7 @@ void kernel_neon_begin(void)
+ 
+ 	BUG_ON(!may_use_simd());
+ 
+-	local_bh_disable();
++	local_lock_bh(fpsimd_lock);
+ 
+ 	__this_cpu_write(kernel_neon_busy, true);
+ 
+@@ -1129,8 +1130,14 @@ void kernel_neon_begin(void)
+ 	fpsimd_flush_cpu_state();
+ 
+ 	preempt_disable();
+-
+-	local_bh_enable();
++	/*
++	 * ballance atomic vs !atomic context of migrate_disable().
++	 * local_lock_bh = get_local_var() + spin_lock_bh (2x migrate_disable)
++	 */
++	migrate_disable();
++	migrate_disable();
++	migrate_disable();
++	local_unlock_bh(fpsimd_lock);
+ }
+ EXPORT_SYMBOL(kernel_neon_begin);
+ 
+@@ -1154,6 +1161,10 @@ void kernel_neon_end(void)
+ 	WARN_ON(!busy);	/* No matching kernel_neon_begin()? */
+ 
+ 	preempt_enable();
++	/* balance migrate_disable(). See kernel_neon_begin() */
++	migrate_enable();
++	migrate_enable();
++	migrate_enable();
+ }
+ EXPORT_SYMBOL(kernel_neon_end);
+ 
+@@ -1185,9 +1196,7 @@ void __efi_fpsimd_begin(void)
+ 	if (!system_supports_fpsimd())
+ 		return;
+ 
+-	WARN_ON(preemptible());
+-
+-	if (may_use_simd()) {
++	if (!IS_ENABLED(CONFIG_PREEMPT_RT_BASE) && may_use_simd()) {
+ 		kernel_neon_begin();
+ 	} else {
+ 		/*
