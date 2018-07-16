@@ -1,8 +1,8 @@
-From: Mike Galbraith <efault@gmx.de>
+From: Dave Martin <Dave.Martin@arm.com>
 Subject: Re: [PATCH RT v2] arm64: fpsimd: use a local_lock() in addition to
  local_bh_disable()
-Date: Sun, 15 Jul 2018 09:22:33 +0200
-Message-ID: <1531639353.7900.76.camel@gmx.de>
+Date: Mon, 16 Jul 2018 16:17:39 +0100
+Message-ID: <20180716151737.GO9486@e103592.cambridge.arm.com>
 References: <20180517124006.ohygrrpg7z2moqqt@linutronix.de>
  <20180522131004.3012953c@gandalf.local.home>
  <20180522172115.fpqguqlsq6bavtxy@linutronix.de>
@@ -12,216 +12,313 @@ References: <20180517124006.ohygrrpg7z2moqqt@linutronix.de>
  <20180711133157.bvrza5vmthu6lwjd@linutronix.de>
  <20180711093346.782af07a@gandalf.local.home>
  <20180713174937.5ddaqpylalcmc3jq@linutronix.de>
- <1531519424.23898.68.camel@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, Catalin Marinas <catalin.marinas@arm.com>,
- Will Deacon <will.deacon@arm.com>, linux-kernel@vger.kernel.org,
- tglx@linutronix.de, linux-arm-kernel@lists.infradead.org
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Steven Rostedt
- <rostedt@goodmis.org>
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <1531519424.23898.68.camel@gmx.de>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+        linux-rt-users@vger.kernel.org,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Mike Galbraith <efault@gmx.de>,
+        Will Deacon <will.deacon@arm.com>,
+        linux-kernel@vger.kernel.org, tglx@linutronix.de,
+        linux-arm-kernel@lists.infradead.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20180713174937.5ddaqpylalcmc3jq@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Sat, 2018-07-14 at 00:03 +0200, Mike Galbraith wrote:
-> On Fri, 2018-07-13 at 19:49 +0200, Sebastian Andrzej Siewior wrote:
-> > In v4.16-RT I noticed a number of warnings from task_fpsimd_load(). The
-> > code disables BH and expects that it is not preemptible. On -RT the
-> > task remains preemptible but remains the same CPU. This may corrupt the
-> > content of the SIMD registers if the task is preempted during
-> > saving/restoring those registers.
-> > Add a locallock around this process. This avoids that the any function
-> > within the locallock block is invoked more than once on the same CPU.
-> > 
-> > The kernel_neon_begin() can't be kept preemptible. If the task-switch notices
-> > TIF_FOREIGN_FPSTATE then it would restore task's SIMD state and we lose the
-> > state of registers used for in-kernel-work. We would require additional storage
-> > for the in-kernel copy of the registers. But then the NEON-crypto checks for
-> > the need-resched flag so it shouldn't that bad.
-> > The preempt_disable() avoids the context switch while the kernel uses the SIMD
-> > registers. Unfortunately we have to balance out the migrate_disable() counter
-> > because local_lock_bh() is invoked in different context compared to its unlock
-> > counterpart.
-> > 
-> > __efi_fpsimd_begin() should not use kernel_fpu_begin() due to its
-> > preempt_disable() context and instead save the registers always in its
-> > extra spot on RT.
-> > 
-> > Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> > ---
-> > 
-> > This seems to make work (crypto chacha20-neon + cyclictest). I have no
-> > EFI so I have no clue if saving SIMD while calling to EFI works.
+On Fri, Jul 13, 2018 at 07:49:38PM +0200, Sebastian Andrzej Siewior wrote:
+> In v4.16-RT I noticed a number of warnings from task_fpsimd_load(). The
+> code disables BH and expects that it is not preemptible. On -RT the
+> task remains preemptible but remains the same CPU. This may corrupt the
+> content of the SIMD registers if the task is preempted during
+> saving/restoring those registers.
+> Add a locallock around this process. This avoids that the any function
+> within the locallock block is invoked more than once on the same CPU.
+
+The overall shape of this looks reasonable -- I have some comments and
+concerns though, below.
+
+I'm to blame for much of the current shape of this code, so please Cc
+me on reposts.
+
+> The kernel_neon_begin() can't be kept preemptible. If the task-switch notices
+> TIF_FOREIGN_FPSTATE then it would restore task's SIMD state and we lose the
+> state of registers used for in-kernel-work. We would require additional storage
+
+Are you trying to say that a kernel_neon_begin()...kernel_neon_end()
+critical section can't be preemptible?
+
+Whether kernel_neon_begin() itself is preemptible is more of an
+implementation detail.
+
+> for the in-kernel copy of the registers. But then the NEON-crypto checks for
+> the need-resched flag so it shouldn't that bad.
+
+This sounds like an (understandably) confused description of how the
+existing code is intended to work, rather than what the patch does.
+
+Can we say something along the lines of:
+
+"kernel_neon_begin() ... kernel_neon_end() are intended to delimit a
+critical section where the executing context has exclusive access to
+the cpu's FPSIMD/SVE registers.  This means that we must not allow
+preemption by another context or migration to another cpu during this
+region [...]"
+
+(Not trying to be pedantic here: this -rt patch should help to clarify
+the intended semantics of the code here beyond what is currently
+explicit.  What I truly intended is less clear than I'd like... even to
+me.)
+
+> The preempt_disable() avoids the context switch while the kernel uses the SIMD
+> registers. Unfortunately we have to balance out the migrate_disable() counter
+> because local_lock_bh() is invoked in different context compared to its unlock
+> counterpart.
 > 
-> All is not well on cavium test box.  I'm seeing random errors ala...
+> __efi_fpsimd_begin() should not use kernel_fpu_begin() due to its
+
+Confused -- is this a typo for "kernel_neon_begin()"?
+
+> preempt_disable() context and instead save the registers always in its
+> extra spot on RT.
+
+I'm not sure this works.  Some EFI runtime service calls are interruptible,
+so we arrange here to stash off the state as normal if an EFI call is
+made from an interruptible context; otherwise we stash in a dedicated
+percpu side buffer and restore eagerly in __efi_fpsimd_end().
+
+If we now unconditionally use the side-buffer with
+IS_ENABLED(CONFIG_PREEMPT_RT_BASE), I think a nested EFI call will save
+state over the outer context's saved state, leading to corruption of the
+vector registers.
+
+TBH, I think EFI calls need to be non-preemptible and non-migratable.
+I doubt anything else will conform to the EFI spec.
+
+IIRC EFI runtime services are not specified to be in any way real-time,
+but I don't think there's a lot we can do about that.
+
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> ---
 > 
-> ./include/linux/fs.h:3137:11: internal compiler error: Segmentation fault
-> ./include/linux/bio.h:175:1: internal compiler error: in grokdeclarator, at c/c-decl.c:7023
+> This seems to make work (crypto chacha20-neon + cyclictest). I have no
+> EFI so I have no clue if saving SIMD while calling to EFI works.
 > 
-> ...during make -j96 (2*cpus) kbuild.  Turns out 4.14-rt has this issue
-> as well, which is unsurprising if it's related to fpsimd woes.  Box
-> does not exhibit the issue with NONRT kernels, PREEMPT or NOPREEMPT.
+>  arch/arm64/kernel/fpsimd.c |   47 ++++++++++++++++++++++++++-------------------
+>  1 file changed, 28 insertions(+), 19 deletions(-)
+> 
+> --- a/arch/arm64/kernel/fpsimd.c
+> +++ b/arch/arm64/kernel/fpsimd.c
+> @@ -38,6 +38,7 @@
+>  #include <linux/signal.h>
+>  #include <linux/slab.h>
+>  #include <linux/sysctl.h>
+> +#include <linux/locallock.h>
+>  
+>  #include <asm/fpsimd.h>
+>  #include <asm/cputype.h>
+> @@ -235,7 +236,7 @@ static void sve_user_enable(void)
+>   *    whether TIF_SVE is clear or set, since these are not vector length
+>   *    dependent.
+>   */
+> -
+> +static DEFINE_LOCAL_IRQ_LOCK(fpsimd_lock);
 
-Verified to be SIMD woes.  I backported your V2 to 4.14-rt, and the
-CPUS*2 kbuild still reliably reproduced the corruption issue.  I then
-did the below to both 4.14-rt and 4.16-rt, and the corruption is gone.
+Does this really disable IRQs, and if so, why?
 
-(this looks a bit like a patch, but is actually a functional yellow
-sticky should I need to come back for another poke at it later)
+If so, this creates an IRQ blackout around task_fpsimd_save(), which is
+something we explicitly tried to avoid in the original design.  It can
+be costly.
 
-arm64: fpsimd: disable preemption for RT where that is assumed
+Also, this belongs alongside the declaration for fpsimd_last_state,
+since that's (part of) what the lock protects.
 
-1. Per Sebastian's analysis, kernel_neon_begin() can't be made preemptible:
-If the task-switch notices TIF_FOREIGN_FPSTATE then it would restore task's
-SIMD state and we lose the state of registers used for in-kernel-work.  We
-would require additional storage for the in-kernel copy of the registers.
-But then the NEON-crypto checks for the need-resched flag so it shouldn't
-that bad.
+>  /*
+>   * Update current's FPSIMD/SVE registers from thread_struct.
+>   *
+> @@ -594,7 +595,7 @@ int sve_set_vector_length(struct task_st
+>  	 * non-SVE thread.
+>  	 */
+>  	if (task == current) {
+> -		local_bh_disable();
+> +		local_lock_bh(fpsimd_lock);
+>  
+>  		task_fpsimd_save();
+>  		set_thread_flag(TIF_FOREIGN_FPSTATE);
+> @@ -605,7 +606,7 @@ int sve_set_vector_length(struct task_st
+>  		sve_to_fpsimd(task);
+>  
+>  	if (task == current)
+> -		local_bh_enable();
+> +		local_unlock_bh(fpsimd_lock);
+>  
+>  	/*
+>  	 * Force reallocation of task SVE state to the correct size
+> @@ -837,7 +838,7 @@ asmlinkage void do_sve_acc(unsigned int
+>  
+>  	sve_alloc(current);
+>  
+> -	local_bh_disable();
+> +	local_lock_bh(fpsimd_lock);
+>  
+>  	task_fpsimd_save();
+>  	fpsimd_to_sve(current);
+> @@ -849,7 +850,7 @@ asmlinkage void do_sve_acc(unsigned int
+>  	if (test_and_set_thread_flag(TIF_SVE))
+>  		WARN_ON(1); /* SVE access shouldn't have trapped */
+>  
+> -	local_bh_enable();
+> +	local_unlock_bh(fpsimd_lock);
+>  }
+>  
+>  /*
+> @@ -925,7 +926,7 @@ void fpsimd_flush_thread(void)
+>  	if (!system_supports_fpsimd())
+>  		return;
+>  
+> -	local_bh_disable();
+> +	local_lock_bh(fpsimd_lock);
+>  
+>  	memset(&current->thread.fpsimd_state, 0, sizeof(struct fpsimd_state));
+>  	fpsimd_flush_task_state(current);
+> @@ -967,7 +968,7 @@ void fpsimd_flush_thread(void)
+>  
+>  	set_thread_flag(TIF_FOREIGN_FPSTATE);
+>  
+> -	local_bh_enable();
+> +	local_unlock_bh(fpsimd_lock);
+>  }
+>  
+>  /*
+> @@ -979,9 +980,9 @@ void fpsimd_preserve_current_state(void)
+>  	if (!system_supports_fpsimd())
+>  		return;
+>  
+> -	local_bh_disable();
+> +	local_lock_bh(fpsimd_lock);
+>  	task_fpsimd_save();
+> -	local_bh_enable();
+> +	local_unlock_bh(fpsimd_lock);
+>  }
+>  
+>  /*
+> @@ -1021,14 +1022,14 @@ void fpsimd_restore_current_state(void)
+>  	if (!system_supports_fpsimd())
+>  		return;
+>  
+> -	local_bh_disable();
+> +	local_lock_bh(fpsimd_lock);
+>  
+>  	if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE)) {
+>  		task_fpsimd_load();
+>  		fpsimd_bind_to_cpu();
+>  	}
+>  
+> -	local_bh_enable();
+> +	local_unlock_bh(fpsimd_lock);
+>  }
+>  
+>  /*
+> @@ -1041,7 +1042,7 @@ void fpsimd_update_current_state(struct
+>  	if (!system_supports_fpsimd())
+>  		return;
+>  
+> -	local_bh_disable();
+> +	local_lock_bh(fpsimd_lock);
+>  
+>  	current->thread.fpsimd_state.user_fpsimd = *state;
+>  	if (system_supports_sve() && test_thread_flag(TIF_SVE))
+> @@ -1052,7 +1053,7 @@ void fpsimd_update_current_state(struct
+>  	if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE))
+>  		fpsimd_bind_to_cpu();
+>  
+> -	local_bh_enable();
+> +	local_unlock_bh(fpsimd_lock);
+>  }
+>  
+>  /*
+> @@ -1115,7 +1116,7 @@ void kernel_neon_begin(void)
+>  
+>  	BUG_ON(!may_use_simd());
+>  
+> -	local_bh_disable();
+> +	local_lock_bh(fpsimd_lock);
+>  
+>  	__this_cpu_write(kernel_neon_busy, true);
+>  
+> @@ -1129,8 +1130,14 @@ void kernel_neon_begin(void)
+>  	fpsimd_flush_cpu_state();
+>  
+>  	preempt_disable();
+> -
+> -	local_bh_enable();
+> +	/*
+> +	 * ballance atomic vs !atomic context of migrate_disable().
+> +	 * local_lock_bh = get_local_var() + spin_lock_bh (2x migrate_disable)
+> +	 */
+> +	migrate_disable();
+> +	migrate_disable();
+> +	migrate_disable();
+> +	local_unlock_bh(fpsimd_lock);
 
-2. arch_efi_call_virt_setup/teardown() encapsulate __efi_fpsimd_begin/end()
-in preempt disabled sections via efi_virtmap_load/unload().  That could be
-fixed, but... 
+This looks fragile.
 
-3. A local lock solution which left preempt disabled sections 1 & 2 intact
-failed, CPUS*2 parallel kbuild reliably reproduced memory corruption.
+Do we really need to do it 3 times?
 
-Given the two non-preemptible sections which could encapsulate something
-painful remained intact with the local lock solution, and the fact that
-the remaining BH disabled sections are all small, with empirical evidence
-at hand that at LEAST one truely does require preemption be disabled,
-the best solution for both RT and !RT is to simply disable preemption for
-RT where !RT assumes preemption has been disabled.  That adds no cycles
-to the !RT case, fewer cycles to the RT case, and requires no (ugly) work
-around for the consequences of local_unlock() under preempt_disable().
+Showing my ignorance here, but I'd naively expect that the migrate-
+disableness changes as follows:
 
-Signed-off-by: Mike Galbraith <efault@gmx.de>
----
- arch/arm64/kernel/fpsimd.c |   18 +++++++++++++++---
- 1 file changed, 15 insertions(+), 3 deletions(-)
+	/* 0 */
+	local_lock_bh(); /* +3 */
 
---- a/arch/arm64/kernel/fpsimd.c
-+++ b/arch/arm64/kernel/fpsimd.c
-@@ -594,6 +594,7 @@ int sve_set_vector_length(struct task_st
- 	 * non-SVE thread.
- 	 */
- 	if (task == current) {
-+		preempt_disable_rt();
- 		local_bh_disable();
- 
- 		task_fpsimd_save();
-@@ -604,8 +605,10 @@ int sve_set_vector_length(struct task_st
- 	if (test_and_clear_tsk_thread_flag(task, TIF_SVE))
- 		sve_to_fpsimd(task);
- 
--	if (task == current)
-+	if (task == current) {
- 		local_bh_enable();
-+		preempt_enable_rt();
-+	}
- 
- 	/*
- 	 * Force reallocation of task SVE state to the correct size
-@@ -837,6 +840,7 @@ asmlinkage void do_sve_acc(unsigned int
- 
- 	sve_alloc(current);
- 
-+	preempt_disable_rt();
- 	local_bh_disable();
- 
- 	task_fpsimd_save();
-@@ -850,6 +854,7 @@ asmlinkage void do_sve_acc(unsigned int
- 		WARN_ON(1); /* SVE access shouldn't have trapped */
- 
- 	local_bh_enable();
-+	preempt_enable_rt();
- }
- 
- /*
-@@ -925,6 +930,7 @@ void fpsimd_flush_thread(void)
- 	if (!system_supports_fpsimd())
- 		return;
- 
-+	preempt_disable_rt();
- 	local_bh_disable();
- 
- 	memset(&current->thread.fpsimd_state, 0, sizeof(struct fpsimd_state));
-@@ -968,6 +974,7 @@ void fpsimd_flush_thread(void)
- 	set_thread_flag(TIF_FOREIGN_FPSTATE);
- 
- 	local_bh_enable();
-+	preempt_enable_rt();
- }
- 
- /*
-@@ -979,9 +986,11 @@ void fpsimd_preserve_current_state(void)
- 	if (!system_supports_fpsimd())
- 		return;
- 
-+	preempt_disable_rt();
- 	local_bh_disable();
- 	task_fpsimd_save();
- 	local_bh_enable();
-+	preempt_enable_rt();
- }
- 
- /*
-@@ -1021,6 +1030,7 @@ void fpsimd_restore_current_state(void)
- 	if (!system_supports_fpsimd())
- 		return;
- 
-+	preempt_disable_rt();
- 	local_bh_disable();
- 
- 	if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE)) {
-@@ -1029,6 +1039,7 @@ void fpsimd_restore_current_state(void)
- 	}
- 
- 	local_bh_enable();
-+	preempt_enable_rt();
- }
- 
- /*
-@@ -1041,6 +1052,7 @@ void fpsimd_update_current_state(struct
- 	if (!system_supports_fpsimd())
- 		return;
- 
-+	preempt_disable_rt();
- 	local_bh_disable();
- 
- 	current->thread.fpsimd_state.user_fpsimd = *state;
-@@ -1053,6 +1065,7 @@ void fpsimd_update_current_state(struct
- 		fpsimd_bind_to_cpu();
- 
- 	local_bh_enable();
-+	preempt_enable_rt();
- }
- 
- /*
-@@ -1115,6 +1128,7 @@ void kernel_neon_begin(void)
- 
- 	BUG_ON(!may_use_simd());
- 
-+	preempt_disable();
- 	local_bh_disable();
- 
- 	__this_cpu_write(kernel_neon_busy, true);
-@@ -1128,8 +1142,6 @@ void kernel_neon_begin(void)
- 	/* Invalidate any task state remaining in the fpsimd regs: */
- 	fpsimd_flush_cpu_state();
- 
--	preempt_disable();
--
- 	local_bh_enable();
- }
- EXPORT_SYMBOL(kernel_neon_begin);
+	...
+
+	preempt_disable(); /* +3 */
+
+	migrate_disable(); /* +4 */
+	migrate_disable(); /* +5 */
+	migrate_disable(); /* +6 */
+
+	local_unlock_bh(); /* +3 */
+
+
+If so, I don't understand why it's not OK to call migrate_disable()
+just once, leaving the count at +1  (?)
+
+I'm making assumptions about the relationship between preempt_disable()
+and migrate_disable() here.
+
+>  }
+>  EXPORT_SYMBOL(kernel_neon_begin);
+>  
+> @@ -1154,6 +1161,10 @@ void kernel_neon_end(void)
+>  	WARN_ON(!busy);	/* No matching kernel_neon_begin()? */
+>  
+>  	preempt_enable();
+> +	/* balance migrate_disable(). See kernel_neon_begin() */
+> +	migrate_enable();
+> +	migrate_enable();
+> +	migrate_enable();
+>  }
+>  EXPORT_SYMBOL(kernel_neon_end);
+>  
+> @@ -1185,9 +1196,7 @@ void __efi_fpsimd_begin(void)
+>  	if (!system_supports_fpsimd())
+>  		return;
+>  
+> -	WARN_ON(preemptible());
+> -
+> -	if (may_use_simd()) {
+> +	if (!IS_ENABLED(CONFIG_PREEMPT_RT_BASE) && may_use_simd()) {
+
+I suspect this is wrong -- see comments on the commit message.
+
+>  		kernel_neon_begin();
+>  	} else {
+
+[...]
+
+Cheers
+---Dave
