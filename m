@@ -1,54 +1,176 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT v2] arm64: fpsimd: use a local_lock() in addition to
- local_bh_disable()
-Date: Wed, 18 Jul 2018 12:36:57 +0200
-Message-ID: <20180718103657.zyqinxambp5n3tv6@linutronix.de>
-References: <20180522172115.fpqguqlsq6bavtxy@linutronix.de>
- <20180522132429.6f1dcf92@gandalf.local.home>
- <20180522173333.aawadhkcekzvrswp@linutronix.de>
- <20180711092555.268adf7f@gandalf.local.home>
- <20180711133157.bvrza5vmthu6lwjd@linutronix.de>
- <20180711093346.782af07a@gandalf.local.home>
- <20180713174937.5ddaqpylalcmc3jq@linutronix.de>
- <1531519424.23898.68.camel@gmx.de>
- <20180718092741.pah2lubzo2a7tkmu@linutronix.de>
- <1531909728.6904.84.camel@gmx.de>
+From: Pintu Kumar <pintu.ping@gmail.com>
+Subject: Re: [PREEMPT_RT]: Using printk-rt-aware.patch in non-rt kernel
+Date: Wed, 18 Jul 2018 20:19:15 +0530
+Message-ID: <CAOuPNLhTBdzj8B_u9f7FLXHwaA5KYVwPoy87LaZNhzLxbuifaQ@mail.gmail.com>
+References: <CAOuPNLiK9tdHF6k+mNSqEQG92hA9oo4C+obhiwpjVOi_zaBZXw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        tglx@linutronix.de, Catalin Marinas <catalin.marinas@arm.com>,
-        Will Deacon <will.deacon@arm.com>,
+Content-Type: text/plain; charset="UTF-8"
+To: Thomas Gleixner <tglx@linutronix.de>,
+        linux-rt-users@vger.kernel.org,
+        open list <linux-kernel@vger.kernel.org>,
         linux-arm-kernel@lists.infradead.org
-To: Mike Galbraith <efault@gmx.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1531909728.6904.84.camel@gmx.de>
+In-Reply-To: <CAOuPNLiK9tdHF6k+mNSqEQG92hA9oo4C+obhiwpjVOi_zaBZXw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2018-07-18 12:28:48 [+0200], Mike Galbraith wrote:
-> > Okay, so you did not test this because you can't compile.
-> 
-> Nope, the running kernel, the one that is doing the segfaulting etc,
-> has the patches applied.
-> 
-> It is exhibiting that symptom because those patches do not cure this
-> symptom, one which I verified to be present in virgin 4.14-rt as well. 
-> The pseudo-patch I sent, disabling preemption where it is assumed to be
-> disabled instead, does cure it.  With preemption so disabled, I can
-> beat on affected kernels (>=4.14-rt) as long as I like.
+Hi All,
 
-ah. so gcc shows the problem instead gcc explodes with the patch
-applied. Okay. Let me stare at this a little more…
+I have a question about PREEMPT_RT patch for 3.10 kernel.
+I am trying to port this rt patch: 0224-printk-rt-aware.patch.patch
+(see the patch below), in non-rt kernel.
+I could able to successfully apply this patch after replacing:
+migrate_enable/disable with preempt_enable/disable.
+Things were working fine so far.
 
-> This particular 48 core Cavium is very slow, maybe that makes it easier
-> to reproduce, dunno.  According to pipe-test, the thing is essentially
-> a dozen RPi super-glued together.  pipe-test pinned to a single core
-> can only context switch at ~40KHz with PREEMPT_RT, or ~90 with
-> NOPREEMPT, comparable to measurement done in real deal RPi.
-> 
-> 	-Mike
+Then, I noticed that "printk" from interrupt context is not appearing
+on console (minicom), if console shell is active.
+However, it appears on the dmesg output.
 
-Sebastian
+So, I am wondering, what could be the cause of this patch for this
+behavior in non-rt kernel?
+Is this the expected behavior, even on PREEMPT_RT kernel?
+Is there a way we can fix this issue on non-rt kernel?
+
+Please help us with your suggestions.
+
+Thanks,
+Pintu
+
+On Wed, Jun 13, 2018 at 8:02 PM Pintu Kumar <pintu.ping@gmail.com> wrote:
+>
+> Dear Thomas,
+>
+> I was looking into this RT patches for 3.10 kernel:
+> https://mirrors.edge.kernel.org/pub/linux/kernel/projects/rt/3.10/patches-3.10.108-rt123.tar.gz
+>
+> And I came across your patch: 0224-printk-rt-aware.patch.patch
+> I guess, this patch is related to improving irq latency during printk.
+> And this patch can work only if PREEMPT_RT_FULL is enabled.
+>
+> But, I have 3.10 non-RT kernel, and still I want to use this feature
+> for non-RT case and achieve the same functionality.
+> Can you give me some idea, how to convert this RT patch to non-RT
+> kernel and still achieve the same behavior.
+> I know this is weird but it is our internal requirement.
+>
+
+> So, if you have any suggestions, it will be really helpful.
+>
+> Thank You!
+>
+> Regards,
+> Pintu
+>
+> This is the patch details:
+> -----------------------------------
+> rt-patches/patches$ cat 0224-printk-rt-aware.patch.patch
+> From ec944721d45454681485906615affa9368e0dfae Mon Sep 17 00:00:00 2001
+> From: Thomas Gleixner <tglx@linutronix.de>
+> Date: Wed, 19 Sep 2012 14:50:37 +0200
+> Subject: [PATCH 224/405] printk-rt-aware.patch
+>
+> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+> ---
+>  kernel/printk.c | 34 +++++++++++++++++++++++++++++-----
+>  1 file changed, 29 insertions(+), 5 deletions(-)
+>
+> diff --git a/kernel/printk.c b/kernel/printk.c
+> index e879b8615a0f..07d32a2c8a5f 100644
+> --- a/kernel/printk.c
+> +++ b/kernel/printk.c
+> @@ -1277,6 +1277,7 @@ static void call_console_drivers(int level,
+> const char *text, size_t len)
+>         if (!console_drivers)
+>                 return;
+>
+> +       migrate_disable();
+>         for_each_console(con) {
+>                 if (exclusive_console && con != exclusive_console)
+>                         continue;
+> @@ -1289,6 +1290,7 @@ static void call_console_drivers(int level,
+> const char *text, size_t len)
+>                         continue;
+>                 con->write(con, text, len);
+>         }
+> +       migrate_enable();
+>  }
+>
+>  /*
+> @@ -1348,12 +1350,18 @@ static inline int can_use_console(unsigned int cpu)
+>   * interrupts disabled. It should return with 'lockbuf_lock'
+>   * released but interrupts still disabled.
+>   */
+> -static int console_trylock_for_printk(unsigned int cpu)
+> +static int console_trylock_for_printk(unsigned int cpu, unsigned long flags)
+>         __releases(&logbuf_lock)
+>  {
+>         int retval = 0, wake = 0;
+> +#ifdef CONFIG_PREEMPT_RT_FULL
+> +       int lock = !early_boot_irqs_disabled && !irqs_disabled_flags(flags) &&
+> +               (preempt_count() <= 1);
+> +#else
+> +       int lock = 1;
+> +#endif
+>
+> -       if (console_trylock()) {
+> +       if (lock && console_trylock()) {
+>                 retval = 1;
+>
+>                 /*
+> @@ -1688,8 +1696,15 @@ asmlinkage int vprintk_emit(int facility, int level,
+>          * The console_trylock_for_printk() function will release 'logbuf_lock'
+>          * regardless of whether it actually gets the console semaphore or not.
+>          */
+> -       if (console_trylock_for_printk(this_cpu))
+> +       if (console_trylock_for_printk(this_cpu, flags)) {
+> +#ifndef CONFIG_PREEMPT_RT_FULL
+>                 console_unlock();
+> +#else
+> +               raw_local_irq_restore(flags);
+> +               console_unlock();
+> +               raw_local_irq_save(flags);
+> +#endif
+> +       }
+>
+>         lockdep_on();
+>  out_restore_irqs:
+> @@ -2043,11 +2058,16 @@ static void console_cont_flush(char *text, size_t size)
+>                 goto out;
+>
+>         len = cont_print_text(text, size);
+> +#ifndef CONFIG_PREEMPT_RT_FULL
+>         raw_spin_unlock(&logbuf_lock);
+>         stop_critical_timings();
+>         call_console_drivers(cont.level, text, len);
+>         start_critical_timings();
+>         local_irq_restore(flags);
+> +#else
+> +       raw_spin_unlock_irqrestore(&logbuf_lock, flags);
+> +       call_console_drivers(cont.level, text, len);
+> +#endif
+>         return;
+>  out:
+>         raw_spin_unlock_irqrestore(&logbuf_lock, flags);
+> @@ -2141,13 +2161,17 @@ skip:
+>                 console_idx = log_next(console_idx);
+>                 console_seq++;
+>                 console_prev = msg->flags;
+> -               raw_spin_unlock(&logbuf_lock);
+>
+> +#ifndef CONFIG_PREEMPT_RT_FULL
+> +               raw_spin_unlock(&logbuf_lock);
+>                 stop_critical_timings();        /* don't trace print latency */
+>                 call_console_drivers(level, text, len);
+>                 start_critical_timings();
+>                 local_irq_restore(flags);
+> -
+> +#else
+> +               raw_spin_unlock_irqrestore(&logbuf_lock, flags);
+> +               call_console_drivers(level, text, len);
+> +#endif
+>                 if (do_cond_resched)
+>                         cond_resched();
+>         }
+> --
+> 2.13.2
