@@ -1,35 +1,103 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mail.thorsis.com ([92.198.35.195]:59422 "EHLO mail.thorsis.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728035AbeGaPrn (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 31 Jul 2018 11:47:43 -0400
-From: Alexander Dahl <ada@thorsis.com>
-Subject: Re: How to apply RT patches to a kernel not listed in http://cdn.kernel.org/pub/linux/kernel/projects/rt/4.9/older/
-Date: Tue, 31 Jul 2018 16:07:09 +0200
-Message-ID: <8426606.ZxYD7UXQP7@ada>
-In-Reply-To: <CAF_dkJDV0t7Cp7xjW2j9teJRU45anfKMJMO6KpU+ewTVmW0J4A@mail.gmail.com>
-References: <CAF_dkJC2UqpDVGzF4K575_hZYii_-OL6H1h=nNO8mTQm4QK2SQ@mail.gmail.com> <4333850.dc08gExWjP@ada> <CAF_dkJDV0t7Cp7xjW2j9teJRU45anfKMJMO6KpU+ewTVmW0J4A@mail.gmail.com>
-Content-Transfer-Encoding: 7Bit
-Content-Type: text/plain; charset="us-ascii"
+Received: from lelv0142.ext.ti.com ([198.47.23.249]:39682 "EHLO
+        lelv0142.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S2387982AbeGWV2j (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 23 Jul 2018 17:28:39 -0400
+From: Dan Murphy <dmurphy@ti.com>
+Subject: Linux RT 4.14 Merge conflict
+Message-ID: <d4d7832c-857f-a531-7836-61065a9686d4@ti.com>
+Date: Mon, 23 Jul 2018 15:25:34 -0500
+MIME-Version: 1.0
+Content-Type: multipart/mixed;
+        boundary="------------3D0074AC96FF3E6457621356"
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: linux-rt-users@vger.kernel.org
-Cc: Patrick Doyle <wpdster@gmail.com>
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>, Steven Rostedt <rostedt@goodmis.org>
 
-Hello,
+--------------3D0074AC96FF3E6457621356
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
 
-Am Dienstag, 31. Juli 2018, 09:49:20 CEST schrieb Patrick Doyle:
-> I guess I have always assumed that the linux-at91 tree was more
-> betterer for the SAMA5 than the vanilla tree.  But I have never asked
-> what makes it better.  I do admire and applaud Atmel/Microchip's
-> commitment to getting their changes mainlined.
+Hello!
 
-They do, although also a lot seems to come from the engineers at Bootlin?
+There is a merge conflict when merging in the latest 4.14 stable release into the current 4.14 rt stable release.
 
-If you're aiming at SAMA5: I have a look at linux-arm-kernel every now and 
-then and there's still a lot of ongoing development for that target. Maybe LTS 
-vanilla v4.14 with the PREEMPT_RT patches is also an option for you?
+Attached is the merge conflict that is seen.
 
-HTH and Greets
-Alex
+We appreciate it if the merge conflict resolution can come from the RT stable branch.
 
+Dan
+
+-- 
+------------------
+Dan Murphy
+
+--------------3D0074AC96FF3E6457621356
+Content-Type: text/plain; charset="UTF-8";
+	name="linux_41457_rt_merge_conflict.txt"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+	filename="linux_41457_rt_merge_conflict.txt"
+
+ZGlmZiAtLWNjIGtlcm5lbC9zY2hlZC9jb3JlLmMKaW5kZXggZDZjMmFmYzhjNjI5LDMxNjE1
+ZDFhZTQ0Yy4uMDAwMDAwMDAwMDAwCi0tLSBhL2tlcm5lbC9zY2hlZC9jb3JlLmMKKysrIGIv
+a2VybmVsL3NjaGVkL2NvcmUuYwpAQEAgLTEwMTYsMTYgLTk3OCw4ICsxMDQzLDEyIEBAQCBz
+dHJ1Y3QgbWlncmF0aW9uX2FyZyAKICBzdGF0aWMgc3RydWN0IHJxICpfX21pZ3JhdGVfdGFz
+ayhzdHJ1Y3QgcnEgKnJxLCBzdHJ1Y3QgcnFfZmxhZ3MgKnJmLAogIAkJCQkgc3RydWN0IHRh
+c2tfc3RydWN0ICpwLCBpbnQgZGVzdF9jcHUpCiAgewotIAlpZiAocC0+ZmxhZ3MgJiBQRl9L
+VEhSRUFEKSB7Ci0gCQlpZiAodW5saWtlbHkoIWNwdV9vbmxpbmUoZGVzdF9jcHUpKSkKLSAJ
+CQlyZXR1cm4gcnE7Ci0gCX0gZWxzZSB7Ci0gCQlpZiAodW5saWtlbHkoIWNwdV9hY3RpdmUo
+ZGVzdF9jcHUpKSkKLSAJCQlyZXR1cm4gcnE7Ci0gCX0KLSAKICAJLyogQWZmaW5pdHkgY2hh
+bmdlZCAoYWdhaW4pLiAqLworKzw8PDw8PDwgSEVBRAogKwlpZiAoIWNwdW1hc2tfdGVzdF9j
+cHUoZGVzdF9jcHUsIHAtPmNwdXNfcHRyKSkKKys9PT09PT09CisgCWlmICghaXNfY3B1X2Fs
+bG93ZWQocCwgZGVzdF9jcHUpKQorKz4+Pj4+Pj4gNTU1MzkzM2Q0MDE1N2U0MWVkMmVkNjM5
+MGUyZWJmZjRmNTQ4Zjk2ZQogIAkJcmV0dXJuIHJxOwogIAogIAl1cGRhdGVfcnFfY2xvY2so
+cnEpOwpAQEAgLTE1OTUsMTEgLTE1MDcsMTAgKzE2MTgsMTcgQEBAIHN0YXRpYyBpbnQgc2Vs
+ZWN0X2ZhbGxiYWNrX3JxKGludCBjcHUsIAogIAogIAlmb3IgKDs7KSB7CiAgCQkvKiBBbnkg
+YWxsb3dlZCwgb25saW5lIENQVT8gKi8KKys8PDw8PDw8IEhFQUQKICsJCWZvcl9lYWNoX2Nw
+dShkZXN0X2NwdSwgcC0+Y3B1c19wdHIpIHsKICsJCQlpZiAoIShwLT5mbGFncyAmIFBGX0tU
+SFJFQUQpICYmICFjcHVfYWN0aXZlKGRlc3RfY3B1KSkKICsJCQkJY29udGludWU7CiArCQkJ
+aWYgKCFjcHVfb25saW5lKGRlc3RfY3B1KSkKKys9PT09PT09CisgCQlmb3JfZWFjaF9jcHUo
+ZGVzdF9jcHUsICZwLT5jcHVzX2FsbG93ZWQpIHsKKyAJCQlpZiAoIWlzX2NwdV9hbGxvd2Vk
+KHAsIGRlc3RfY3B1KSkKKys+Pj4+Pj4+IDU1NTM5MzNkNDAxNTdlNDFlZDJlZDYzOTBlMmVi
+ZmY0ZjU0OGY5NmUKICAJCQkJY29udGludWU7CisgCiAgCQkJZ290byBvdXQ7CiAgCQl9CiAg
+CkBAQCAtMTY2Miw4IC0xNTczLDcgKzE2OTEsMTIgQEBAIGludCBzZWxlY3RfdGFza19ycShz
+dHJ1Y3QgdGFza19zdHJ1Y3QgKgogIAkgKiBbIHRoaXMgYWxsb3dzIC0+c2VsZWN0X3Rhc2so
+KSB0byBzaW1wbHkgcmV0dXJuIHRhc2tfY3B1KHApIGFuZAogIAkgKiAgIG5vdCB3b3JyeSBh
+Ym91dCB0aGlzIGdlbmVyaWMgY29uc3RyYWludCBdCiAgCSAqLworKzw8PDw8PDwgSEVBRAog
+KwlpZiAodW5saWtlbHkoIWNwdW1hc2tfdGVzdF9jcHUoY3B1LCBwLT5jcHVzX3B0cikgfHwK
+ICsJCSAgICAgIWNwdV9vbmxpbmUoY3B1KSkpCisrPT09PT09PQorIAlpZiAodW5saWtlbHko
+IWlzX2NwdV9hbGxvd2VkKHAsIGNwdSkpKQorKz4+Pj4+Pj4gNTU1MzkzM2Q0MDE1N2U0MWVk
+MmVkNjM5MGUyZWJmZjRmNTQ4Zjk2ZQogIAkJY3B1ID0gc2VsZWN0X2ZhbGxiYWNrX3JxKHRh
+c2tfY3B1KHApLCBwKTsKICAKICAJcmV0dXJuIGNwdTsKZGlmZiAtLWNjIGtlcm5lbC90cmFj
+ZS90cmFjZS5jCmluZGV4IGQ2N2FjNWMyYmM2NixlMjY4NzUwYmQ0YWQuLjAwMDAwMDAwMDAw
+MAotLS0gYS9rZXJuZWwvdHJhY2UvdHJhY2UuYworKysgYi9rZXJuZWwvdHJhY2UvdHJhY2Uu
+YwpAQEAgLTMzODksMTcgLTMzNzQsMTUgKzMzODksMjMgQEBAIHN0YXRpYyB2b2lkIHByaW50
+X2Z1bmNfaGVscF9oZWFkZXJfaXJxKAogIAkJICAgdGdpZCA/IHRnaWRfc3BhY2UgOiBzcGFj
+ZSk7CiAgCXNlcV9wcmludGYobSwgIiMgICAgICAgICAgICAgICAgICAgICAgICAgICVzIC8g
+Xy0tLS09PiBuZWVkLXJlc2NoZWRcbiIsCiAgCQkgICB0Z2lkID8gdGdpZF9zcGFjZSA6IHNw
+YWNlKTsKIC0Jc2VxX3ByaW50ZihtLCAiIyAgICAgICAgICAgICAgICAgICAgICAgICAgJXN8
+IC8gXy0tLT0+IGhhcmRpcnEvc29mdGlycVxuIiwKICsJc2VxX3ByaW50ZihtLCAiIyAgICAg
+ICAgICAgICAgICAgICAgICAgICAgJXN8IC8gIF8tLS0tPT4gbmVlZC1yZXNjaGVkX2xhenlc
+biIsCiArCQkgICB0Z2lkID8gdGdpZF9zcGFjZSA6IHNwYWNlKTsKICsJc2VxX3ByaW50Ziht
+LCAiIyAgICAgICAgICAgICAgICAgICAgICAgICAgJXN8fCAvIF8tLS09PiBoYXJkaXJxL3Nv
+ZnRpcnFcbiIsCiAgCQkgICB0Z2lkID8gdGdpZF9zcGFjZSA6IHNwYWNlKTsKIC0Jc2VxX3By
+aW50ZihtLCAiIyAgICAgICAgICAgICAgICAgICAgICAgICAgJXN8fCAvIF8tLT0+IHByZWVt
+cHQtZGVwdGhcbiIsCiArCXNlcV9wcmludGYobSwgIiMgICAgICAgICAgICAgICAgICAgICAg
+ICAgICVzfHx8IC8gXy0tPT4gcHJlZW1wdC1kZXB0aFxuIiwKICAJCSAgIHRnaWQgPyB0Z2lk
+X3NwYWNlIDogc3BhY2UpOwogLQlzZXFfcHJpbnRmKG0sICIjICAgICAgICAgICAgICAgICAg
+ICAgICAgICAlc3x8fCAvICAgICBkZWxheVxuIiwKICsJc2VxX3ByaW50ZihtLCAiIyAgICAg
+ICAgICAgICAgICAgICAgICAgICAgJXN8fHx8IC8gICAgIGRlbGF5XG4iLAogIAkJICAgdGdp
+ZCA/IHRnaWRfc3BhY2UgOiBzcGFjZSk7CisrPDw8PDw8PCBIRUFECiArCXNlcV9wcmludGYo
+bSwgIiMgICAgICAgICAgIFRBU0stUElEICAgQ1BVIyVzfHx8fHwgICAgVElNRVNUQU1QICBG
+VU5DVElPTlxuIiwKICsJCSAgIHRnaWQgPyAiICAgVEdJRCAgICIgOiBzcGFjZSk7CiArCXNl
+cV9wcmludGYobSwgIiMgICAgICAgICAgICAgIHwgfCAgICAgICB8ICVzfHx8fHwgICAgICAg
+fCAgICAgICAgIHxcbiIsCisrPT09PT09PQorIAlzZXFfcHJpbnRmKG0sICIjICAgICAgICAg
+ICBUQVNLLVBJRCAlc0NQVSMgIHx8fHwgICAgVElNRVNUQU1QICBGVU5DVElPTlxuIiwKKyAJ
+CSAgIHRnaWQgPyAiICAgVEdJRCAgICIgOiBzcGFjZSk7CisgCXNlcV9wcmludGYobSwgIiMg
+ICAgICAgICAgICAgIHwgfCAgICVzICB8ICAgfHx8fCAgICAgICB8ICAgICAgICAgfFxuIiwK
+Kys+Pj4+Pj4+IDU1NTM5MzNkNDAxNTdlNDFlZDJlZDYzOTBlMmViZmY0ZjU0OGY5NmUKICAJ
+CSAgIHRnaWQgPyAiICAgICB8ICAgICIgOiBzcGFjZSk7CiAgfQogIAo=
+--------------3D0074AC96FF3E6457621356--
