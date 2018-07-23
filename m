@@ -1,33 +1,51 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mail.kernel.org ([198.145.29.99]:36934 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1732274AbeGaRLF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 31 Jul 2018 13:11:05 -0400
-Date: Tue, 31 Jul 2018 11:30:13 -0400
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Linux RT 4.14 Merge conflict
-Message-ID: <20180731113013.12306761@gandalf.local.home>
-In-Reply-To: <41428b93-b272-c052-57f9-3bf4daf23b03@ti.com>
-References: <d4d7832c-857f-a531-7836-61065a9686d4@ti.com>
-        <20180723165903.4d93070d@gandalf.local.home>
-        <4a21f0c4-75ff-672e-f7a6-d9474423de8d@ti.com>
-        <41428b93-b272-c052-57f9-3bf4daf23b03@ti.com>
+Received: from mail-lj1-f175.google.com ([209.85.208.175]:40097 "EHLO
+        mail-lj1-f175.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S2388002AbeGWSfm (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 23 Jul 2018 14:35:42 -0400
+Received: by mail-lj1-f175.google.com with SMTP id j19-v6so1234868ljc.7
+        for <linux-rt-users@vger.kernel.org>; Mon, 23 Jul 2018 10:33:25 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+From: Steve W Heim <heim.steve@gmail.com>
+Date: Mon, 23 Jul 2018 19:33:24 +0200
+Message-ID: <CAE_sPDHk13a8X+n3NS3z05Nw6wCCKbo1fPzjmVU8pWOZm3AuDg@mail.gmail.com>
+Subject: compilation on 4.14.52
+Content-Type: multipart/alternative; boundary="000000000000e3cc620571ae0add"
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: Dan Murphy <dmurphy@ti.com>
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: linux-rt-users@vger.kernel.org
 
-On Tue, 31 Jul 2018 08:18:00 -0500
-Dan Murphy <dmurphy@ti.com> wrote:
+--000000000000e3cc620571ae0add
+Content-Type: text/plain; charset="UTF-8"
 
+I'm trying to patch ubuntu 16.04 to use the latest stable kernel, 4.14.52
+with preempt-rt, and at compilation, when running `CONCURRENCY_LEVEL=8
+make-kpkg --rootcmd fakeroot --initrd kernel_image kernel_headers`, I get
+the error
 
-> Do you have a time frame of when we will get the update?
+./include/linux/interrupt.h:758:2: error: #endif without #if
 
-I'm starting the merges today, and depending on how testing goes, I
-hope to have a release this week.
+When diffing this file with the same file for the patched 4.9 preempt-rt
+kernel (which I've successfully patched before), the missing parts seem to
+be `#if defined(CONFIG_FUNCTION_GRAPH_TRACER) || defined(CONFIG_KASAN)`
 
--- Steve
+but simply adding this (and the other missing lines) results in more
+errors. Is this a known issue?
 
+--000000000000e3cc620571ae0add
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>I&#39;m trying to patch ubuntu 16.04 to use the lates=
+t stable kernel, 4.14.52 with preempt-rt, and at compilation, when running =
+`CONCURRENCY_LEVEL=3D8 make-kpkg --rootcmd fakeroot --initrd kernel_image k=
+ernel_headers`, I get the error</div><div><br></div><div>./include/linux/in=
+terrupt.h:758:2: error: #endif without #if<br></div><div><br></div><div>Whe=
+n diffing this file with the same file for the patched 4.9 preempt-rt kerne=
+l (which I&#39;ve successfully patched before), the missing parts seem to b=
+e `#if defined(CONFIG_FUNCTION_GRAPH_TRACER) || defined(CONFIG_KASAN)`</div=
+><div><br></div><div>but simply adding this (and the other missing lines) r=
+esults in more errors. Is this a known issue?<br></div></div>
+
+--000000000000e3cc620571ae0add--
