@@ -1,103 +1,42 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from lelv0142.ext.ti.com ([198.47.23.249]:39682 "EHLO
-        lelv0142.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2387982AbeGWV2j (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 23 Jul 2018 17:28:39 -0400
-From: Dan Murphy <dmurphy@ti.com>
-Subject: Linux RT 4.14 Merge conflict
-Message-ID: <d4d7832c-857f-a531-7836-61065a9686d4@ti.com>
-Date: Mon, 23 Jul 2018 15:25:34 -0500
+Received: from mail.kernel.org ([198.145.29.99]:47258 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1728357AbeGWWCF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 23 Jul 2018 18:02:05 -0400
+Date: Mon, 23 Jul 2018 16:59:03 -0400
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: Linux RT 4.14 Merge conflict
+Message-ID: <20180723165903.4d93070d@gandalf.local.home>
+In-Reply-To: <d4d7832c-857f-a531-7836-61065a9686d4@ti.com>
+References: <d4d7832c-857f-a531-7836-61065a9686d4@ti.com>
 MIME-Version: 1.0
-Content-Type: multipart/mixed;
-        boundary="------------3D0074AC96FF3E6457621356"
-Content-Language: en-US
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>, Steven Rostedt <rostedt@goodmis.org>
+To: Dan Murphy <dmurphy@ti.com>
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 
---------------3D0074AC96FF3E6457621356
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+On Mon, 23 Jul 2018 15:25:34 -0500
+Dan Murphy <dmurphy@ti.com> wrote:
 
-Hello!
+> Hello!
+> 
+> There is a merge conflict when merging in the latest 4.14 stable
+> release into the current 4.14 rt stable release.
+> 
+> Attached is the merge conflict that is seen.
+> 
+> We appreciate it if the merge conflict resolution can come from the
+> RT stable branch.
+>
 
-There is a merge conflict when merging in the latest 4.14 stable release into the current 4.14 rt stable release.
+Hi Dan,
 
-Attached is the merge conflict that is seen.
+I just came back from vacation. I was planning on getting to a new
+release of 4.14 next week. I'll be sorting out all the merge conflicts
+then.
 
-We appreciate it if the merge conflict resolution can come from the RT stable branch.
+Thanks!
 
-Dan
-
--- 
-------------------
-Dan Murphy
-
---------------3D0074AC96FF3E6457621356
-Content-Type: text/plain; charset="UTF-8";
-	name="linux_41457_rt_merge_conflict.txt"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
-	filename="linux_41457_rt_merge_conflict.txt"
-
-ZGlmZiAtLWNjIGtlcm5lbC9zY2hlZC9jb3JlLmMKaW5kZXggZDZjMmFmYzhjNjI5LDMxNjE1
-ZDFhZTQ0Yy4uMDAwMDAwMDAwMDAwCi0tLSBhL2tlcm5lbC9zY2hlZC9jb3JlLmMKKysrIGIv
-a2VybmVsL3NjaGVkL2NvcmUuYwpAQEAgLTEwMTYsMTYgLTk3OCw4ICsxMDQzLDEyIEBAQCBz
-dHJ1Y3QgbWlncmF0aW9uX2FyZyAKICBzdGF0aWMgc3RydWN0IHJxICpfX21pZ3JhdGVfdGFz
-ayhzdHJ1Y3QgcnEgKnJxLCBzdHJ1Y3QgcnFfZmxhZ3MgKnJmLAogIAkJCQkgc3RydWN0IHRh
-c2tfc3RydWN0ICpwLCBpbnQgZGVzdF9jcHUpCiAgewotIAlpZiAocC0+ZmxhZ3MgJiBQRl9L
-VEhSRUFEKSB7Ci0gCQlpZiAodW5saWtlbHkoIWNwdV9vbmxpbmUoZGVzdF9jcHUpKSkKLSAJ
-CQlyZXR1cm4gcnE7Ci0gCX0gZWxzZSB7Ci0gCQlpZiAodW5saWtlbHkoIWNwdV9hY3RpdmUo
-ZGVzdF9jcHUpKSkKLSAJCQlyZXR1cm4gcnE7Ci0gCX0KLSAKICAJLyogQWZmaW5pdHkgY2hh
-bmdlZCAoYWdhaW4pLiAqLworKzw8PDw8PDwgSEVBRAogKwlpZiAoIWNwdW1hc2tfdGVzdF9j
-cHUoZGVzdF9jcHUsIHAtPmNwdXNfcHRyKSkKKys9PT09PT09CisgCWlmICghaXNfY3B1X2Fs
-bG93ZWQocCwgZGVzdF9jcHUpKQorKz4+Pj4+Pj4gNTU1MzkzM2Q0MDE1N2U0MWVkMmVkNjM5
-MGUyZWJmZjRmNTQ4Zjk2ZQogIAkJcmV0dXJuIHJxOwogIAogIAl1cGRhdGVfcnFfY2xvY2so
-cnEpOwpAQEAgLTE1OTUsMTEgLTE1MDcsMTAgKzE2MTgsMTcgQEBAIHN0YXRpYyBpbnQgc2Vs
-ZWN0X2ZhbGxiYWNrX3JxKGludCBjcHUsIAogIAogIAlmb3IgKDs7KSB7CiAgCQkvKiBBbnkg
-YWxsb3dlZCwgb25saW5lIENQVT8gKi8KKys8PDw8PDw8IEhFQUQKICsJCWZvcl9lYWNoX2Nw
-dShkZXN0X2NwdSwgcC0+Y3B1c19wdHIpIHsKICsJCQlpZiAoIShwLT5mbGFncyAmIFBGX0tU
-SFJFQUQpICYmICFjcHVfYWN0aXZlKGRlc3RfY3B1KSkKICsJCQkJY29udGludWU7CiArCQkJ
-aWYgKCFjcHVfb25saW5lKGRlc3RfY3B1KSkKKys9PT09PT09CisgCQlmb3JfZWFjaF9jcHUo
-ZGVzdF9jcHUsICZwLT5jcHVzX2FsbG93ZWQpIHsKKyAJCQlpZiAoIWlzX2NwdV9hbGxvd2Vk
-KHAsIGRlc3RfY3B1KSkKKys+Pj4+Pj4+IDU1NTM5MzNkNDAxNTdlNDFlZDJlZDYzOTBlMmVi
-ZmY0ZjU0OGY5NmUKICAJCQkJY29udGludWU7CisgCiAgCQkJZ290byBvdXQ7CiAgCQl9CiAg
-CkBAQCAtMTY2Miw4IC0xNTczLDcgKzE2OTEsMTIgQEBAIGludCBzZWxlY3RfdGFza19ycShz
-dHJ1Y3QgdGFza19zdHJ1Y3QgKgogIAkgKiBbIHRoaXMgYWxsb3dzIC0+c2VsZWN0X3Rhc2so
-KSB0byBzaW1wbHkgcmV0dXJuIHRhc2tfY3B1KHApIGFuZAogIAkgKiAgIG5vdCB3b3JyeSBh
-Ym91dCB0aGlzIGdlbmVyaWMgY29uc3RyYWludCBdCiAgCSAqLworKzw8PDw8PDwgSEVBRAog
-KwlpZiAodW5saWtlbHkoIWNwdW1hc2tfdGVzdF9jcHUoY3B1LCBwLT5jcHVzX3B0cikgfHwK
-ICsJCSAgICAgIWNwdV9vbmxpbmUoY3B1KSkpCisrPT09PT09PQorIAlpZiAodW5saWtlbHko
-IWlzX2NwdV9hbGxvd2VkKHAsIGNwdSkpKQorKz4+Pj4+Pj4gNTU1MzkzM2Q0MDE1N2U0MWVk
-MmVkNjM5MGUyZWJmZjRmNTQ4Zjk2ZQogIAkJY3B1ID0gc2VsZWN0X2ZhbGxiYWNrX3JxKHRh
-c2tfY3B1KHApLCBwKTsKICAKICAJcmV0dXJuIGNwdTsKZGlmZiAtLWNjIGtlcm5lbC90cmFj
-ZS90cmFjZS5jCmluZGV4IGQ2N2FjNWMyYmM2NixlMjY4NzUwYmQ0YWQuLjAwMDAwMDAwMDAw
-MAotLS0gYS9rZXJuZWwvdHJhY2UvdHJhY2UuYworKysgYi9rZXJuZWwvdHJhY2UvdHJhY2Uu
-YwpAQEAgLTMzODksMTcgLTMzNzQsMTUgKzMzODksMjMgQEBAIHN0YXRpYyB2b2lkIHByaW50
-X2Z1bmNfaGVscF9oZWFkZXJfaXJxKAogIAkJICAgdGdpZCA/IHRnaWRfc3BhY2UgOiBzcGFj
-ZSk7CiAgCXNlcV9wcmludGYobSwgIiMgICAgICAgICAgICAgICAgICAgICAgICAgICVzIC8g
-Xy0tLS09PiBuZWVkLXJlc2NoZWRcbiIsCiAgCQkgICB0Z2lkID8gdGdpZF9zcGFjZSA6IHNw
-YWNlKTsKIC0Jc2VxX3ByaW50ZihtLCAiIyAgICAgICAgICAgICAgICAgICAgICAgICAgJXN8
-IC8gXy0tLT0+IGhhcmRpcnEvc29mdGlycVxuIiwKICsJc2VxX3ByaW50ZihtLCAiIyAgICAg
-ICAgICAgICAgICAgICAgICAgICAgJXN8IC8gIF8tLS0tPT4gbmVlZC1yZXNjaGVkX2xhenlc
-biIsCiArCQkgICB0Z2lkID8gdGdpZF9zcGFjZSA6IHNwYWNlKTsKICsJc2VxX3ByaW50Ziht
-LCAiIyAgICAgICAgICAgICAgICAgICAgICAgICAgJXN8fCAvIF8tLS09PiBoYXJkaXJxL3Nv
-ZnRpcnFcbiIsCiAgCQkgICB0Z2lkID8gdGdpZF9zcGFjZSA6IHNwYWNlKTsKIC0Jc2VxX3By
-aW50ZihtLCAiIyAgICAgICAgICAgICAgICAgICAgICAgICAgJXN8fCAvIF8tLT0+IHByZWVt
-cHQtZGVwdGhcbiIsCiArCXNlcV9wcmludGYobSwgIiMgICAgICAgICAgICAgICAgICAgICAg
-ICAgICVzfHx8IC8gXy0tPT4gcHJlZW1wdC1kZXB0aFxuIiwKICAJCSAgIHRnaWQgPyB0Z2lk
-X3NwYWNlIDogc3BhY2UpOwogLQlzZXFfcHJpbnRmKG0sICIjICAgICAgICAgICAgICAgICAg
-ICAgICAgICAlc3x8fCAvICAgICBkZWxheVxuIiwKICsJc2VxX3ByaW50ZihtLCAiIyAgICAg
-ICAgICAgICAgICAgICAgICAgICAgJXN8fHx8IC8gICAgIGRlbGF5XG4iLAogIAkJICAgdGdp
-ZCA/IHRnaWRfc3BhY2UgOiBzcGFjZSk7CisrPDw8PDw8PCBIRUFECiArCXNlcV9wcmludGYo
-bSwgIiMgICAgICAgICAgIFRBU0stUElEICAgQ1BVIyVzfHx8fHwgICAgVElNRVNUQU1QICBG
-VU5DVElPTlxuIiwKICsJCSAgIHRnaWQgPyAiICAgVEdJRCAgICIgOiBzcGFjZSk7CiArCXNl
-cV9wcmludGYobSwgIiMgICAgICAgICAgICAgIHwgfCAgICAgICB8ICVzfHx8fHwgICAgICAg
-fCAgICAgICAgIHxcbiIsCisrPT09PT09PQorIAlzZXFfcHJpbnRmKG0sICIjICAgICAgICAg
-ICBUQVNLLVBJRCAlc0NQVSMgIHx8fHwgICAgVElNRVNUQU1QICBGVU5DVElPTlxuIiwKKyAJ
-CSAgIHRnaWQgPyAiICAgVEdJRCAgICIgOiBzcGFjZSk7CisgCXNlcV9wcmludGYobSwgIiMg
-ICAgICAgICAgICAgIHwgfCAgICVzICB8ICAgfHx8fCAgICAgICB8ICAgICAgICAgfFxuIiwK
-Kys+Pj4+Pj4+IDU1NTM5MzNkNDAxNTdlNDFlZDJlZDYzOTBlMmViZmY0ZjU0OGY5NmUKICAJ
-CSAgIHRnaWQgPyAiICAgICB8ICAgICIgOiBzcGFjZSk7CiAgfQogIAo=
---------------3D0074AC96FF3E6457621356--
+-- Steve
