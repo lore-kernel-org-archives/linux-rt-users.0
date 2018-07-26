@@ -1,42 +1,63 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT] rtc: Disable RTC_DRV_EFI on RT
-Date: Thu, 26 Jul 2018 18:04:31 +0200
-Message-ID: <20180726160430.ser3j5pfxnjh2bla@linutronix.de>
-References: <20180726090449.hfvtey3ruzzhzdaz@linutronix.de>
- <CAKv+Gu_+t_VwY3xDq3nWbnOTfzBc6OtQeRD2GKsseO2uK-uruw@mail.gmail.com>
- <20180726121504.ba35z3j3wsesryy3@linutronix.de>
- <5052E25B-9942-40C1-BD53-86E3D7014557@linaro.org>
- <20180726124613.xgmidioqd4mcqpiw@linutronix.de>
- <8640BE46-B141-44F9-BD92-58A21A2B0EA7@linaro.org>
- <20180726131323.ffecgeqnry6th4mp@linutronix.de>
- <20180726131424.nqkalmmncnfcrh2q@linutronix.de>
- <CAKv+Gu8FgcPZDDKWnC03eWVFH2npJz5_XQDoOzkGdDxxSqCj8g@mail.gmail.com>
+From: Pintu Kumar <pintu.ping@gmail.com>
+Subject: Re: [PREEMPT_RT]: Using printk-rt-aware.patch in non-rt kernel
+Date: Thu, 26 Jul 2018 23:38:05 +0530
+Message-ID: <CAOuPNLgXNMm20nuPPDtUoy3qTF9MLDTRNmsOsocYYLrXtS0rBg@mail.gmail.com>
+References: <CAOuPNLiK9tdHF6k+mNSqEQG92hA9oo4C+obhiwpjVOi_zaBZXw@mail.gmail.com>
+ <CAOuPNLhTBdzj8B_u9f7FLXHwaA5KYVwPoy87LaZNhzLxbuifaQ@mail.gmail.com> <20180726153857.abxfebvxjcp4jqgx@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>,
+Content-Type: text/plain; charset="UTF-8"
+Cc: Thomas Gleixner <tglx@linutronix.de>,
         linux-rt-users@vger.kernel.org,
-        Marc Zyngier <marc.zyngier@arm.com>,
-        linux-efi <linux-efi@vger.kernel.org>,
-        Anna-Maria Gleixner <anna-maria@linutronix.de>
-To: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+        open list <linux-kernel@vger.kernel.org>,
+        linux-arm-kernel@lists.infradead.org
+To: sebastian.siewior@linutronix.de
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAKv+Gu8FgcPZDDKWnC03eWVFH2npJz5_XQDoOzkGdDxxSqCj8g@mail.gmail.com>
+In-Reply-To: <20180726153857.abxfebvxjcp4jqgx@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2018-07-26 18:01:47 [+0200], Ard Biesheuvel wrote:
-> Yes, that's what I was thinking. This way, you can still reboot into
-> the same kernel occasionally with EFI runtime services enabled to,
-> e.g., use efibootmgr.
-> 
-> Acked-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
-> 
-> for both patches if you queue them in the -rt tree. If you want them
-> in mainline, please resend them as proper patches once
-> CONFIG_PREEMPT_RT_BASE has been declared in mainline as well.
-Okay, thank you.
+On Thu, Jul 26, 2018 at 9:08 PM Sebastian Andrzej Siewior
+<sebastian.siewior@linutronix.de> wrote:
+>
+> On 2018-07-18 20:19:15 [+0530], Pintu Kumar wrote:
+> > Hi All,
+> Hi,
+>
+> > I have a question about PREEMPT_RT patch for 3.10 kernel.
+> > I am trying to port this rt patch: 0224-printk-rt-aware.patch.patch
+> > (see the patch below), in non-rt kernel.
+> > I could able to successfully apply this patch after replacing:
+> > migrate_enable/disable with preempt_enable/disable.
+> > Things were working fine so far.
+>
+> Why?
+>
+> > Then, I noticed that "printk" from interrupt context is not appearing
+> > on console (minicom), if console shell is active.
+> > However, it appears on the dmesg output.
+> >
+> > So, I am wondering, what could be the cause of this patch for this
+> > behavior in non-rt kernel?
+> > Is this the expected behavior, even on PREEMPT_RT kernel?
+>
+> I *think* it is but there are hardly any prints from atomic context for
+> anyone to notice. And the next print from non-atomic context should
+> flush it out.
+>
+Yes, we observed the same behavior with CONFIG_PREEMPT_RT_FULL with
+beagle bone-rt kernel 4.9.
+And yes, after doing : echo "1234" > /dev/kmsg the content were flushed.
+So, I guess this is the expected behavior with this patch.
 
-Sebastian
+> > Is there a way we can fix this issue on non-rt kernel?
+> I would guess that a wakeup to klogd would fix it.
+>
+Sorry, can you elaborate more about "wakeup to klogd".
+I wanted to try it and check.
+
+> > Please help us with your suggestions.
+> >
+> > Thanks,
+> > Pintu
+>
+> Sebastian
