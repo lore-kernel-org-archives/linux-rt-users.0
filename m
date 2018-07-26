@@ -1,53 +1,87 @@
-From: Sebastian Andrzej Siewior <sebastian.siewior@linutronix.de>
-Subject: Re: [PREEMPT_RT]: Using printk-rt-aware.patch in non-rt kernel
-Date: Thu, 26 Jul 2018 17:38:58 +0200
-Message-ID: <20180726153857.abxfebvxjcp4jqgx@linutronix.de>
-References: <CAOuPNLiK9tdHF6k+mNSqEQG92hA9oo4C+obhiwpjVOi_zaBZXw@mail.gmail.com>
- <CAOuPNLhTBdzj8B_u9f7FLXHwaA5KYVwPoy87LaZNhzLxbuifaQ@mail.gmail.com>
+From: Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Subject: Re: [PATCH RT] rtc: Disable RTC_DRV_EFI on RT
+Date: Thu, 26 Jul 2018 18:01:47 +0200
+Message-ID: <CAKv+Gu8FgcPZDDKWnC03eWVFH2npJz5_XQDoOzkGdDxxSqCj8g@mail.gmail.com>
+References: <20180726090449.hfvtey3ruzzhzdaz@linutronix.de>
+ <CAKv+Gu_+t_VwY3xDq3nWbnOTfzBc6OtQeRD2GKsseO2uK-uruw@mail.gmail.com>
+ <20180726121504.ba35z3j3wsesryy3@linutronix.de> <5052E25B-9942-40C1-BD53-86E3D7014557@linaro.org>
+ <20180726124613.xgmidioqd4mcqpiw@linutronix.de> <8640BE46-B141-44F9-BD92-58A21A2B0EA7@linaro.org>
+ <20180726131323.ffecgeqnry6th4mp@linutronix.de> <20180726131424.nqkalmmncnfcrh2q@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset="UTF-8"
+Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
         linux-rt-users@vger.kernel.org,
-        open list <linux-kernel@vger.kernel.org>,
-        linux-arm-kernel@lists.infradead.org
-To: Pintu Kumar <pintu.ping@gmail.com>
+        Marc Zyngier <marc.zyngier@arm.com>,
+        linux-efi <linux-efi@vger.kernel.org>,
+        Anna-Maria Gleixner <anna-maria@linutronix.de>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAOuPNLhTBdzj8B_u9f7FLXHwaA5KYVwPoy87LaZNhzLxbuifaQ@mail.gmail.com>
+In-Reply-To: <20180726131424.nqkalmmncnfcrh2q@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2018-07-18 20:19:15 [+0530], Pintu Kumar wrote:
-> Hi All,
-Hi,
+On 26 July 2018 at 15:14, Sebastian Andrzej Siewior
+<bigeasy@linutronix.de> wrote:
+> On 2018-07-26 15:13:23 [+0200], To Ard Biesheuvel wrote:
+>> On 2018-07-26 14:52:21 [+0200], Ard Biesheuvel wrote:
+>> > We could also make it the default on -rt, but not disable it entirely, so that efi=runtime can be used to re-enable it.
+>>
+>> Oh. I like that. We have something similar for RCU. So I would need
+>> that:
+> and then I could make it default off:
+>
+> ----- >8
+>
+> Subject: [PATCH] efi: Disable runtime services on RT
+>
+> Based on meassurements the EFI functions get_variable /
+> get_next_variable take up to 2us which looks okay.
+> The functions get_time, set_time take around 10ms. Those 10ms are too
+> much. Even one ms would be too much.
+> Ard mentioned that SetVariable might even trigger larger latencies if
+> the firware will erase flash blocks on NOR.
+>
+> The time-functions are used by efi-rtc and can be triggered during
+> runtimed (either via explicit read/write or ntp sync).
+>
+> The variable write could be used by pstore.
+> These functions can be disabled without much of a loss. The poweroff /
+> reboot hooks may be provided by PSCI.
+>
+> Disable EFI's runtime wrappers.
+>
+> This was observed on "EFI v2.60 by SoftIron Overdrive 1000".
+>
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> ---
+>  drivers/firmware/efi/efi.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>
+> diff --git a/drivers/firmware/efi/efi.c b/drivers/firmware/efi/efi.c
+> index 232f4915223b..62c6e4b6ce3e 100644
+> --- a/drivers/firmware/efi/efi.c
+> +++ b/drivers/firmware/efi/efi.c
+> @@ -84,7 +84,7 @@ struct mm_struct efi_mm = {
+>         .mmlist                 = LIST_HEAD_INIT(efi_mm.mmlist),
+>  };
+>
+> -static bool disable_runtime;
+> +static bool disable_runtime = IS_ENABLED(CONFIG_PREEMPT_RT_BASE);
+>  static int __init setup_noefi(char *arg)
+>  {
+>         disable_runtime = true;
+> --
+> 2.18.0
+>
 
-> I have a question about PREEMPT_RT patch for 3.10 kernel.
-> I am trying to port this rt patch: 0224-printk-rt-aware.patch.patch
-> (see the patch below), in non-rt kernel.
-> I could able to successfully apply this patch after replacing:
-> migrate_enable/disable with preempt_enable/disable.
-> Things were working fine so far.
+Yes, that's what I was thinking. This way, you can still reboot into
+the same kernel occasionally with EFI runtime services enabled to,
+e.g., use efibootmgr.
 
-Why? 
+Acked-by: Ard Biesheuvel <ard.biesheuvel@linaro.org>
 
-> Then, I noticed that "printk" from interrupt context is not appearing
-> on console (minicom), if console shell is active.
-> However, it appears on the dmesg output.
-> 
-> So, I am wondering, what could be the cause of this patch for this
-> behavior in non-rt kernel?
-> Is this the expected behavior, even on PREEMPT_RT kernel?
-
-I *think* it is but there are hardly any prints from atomic context for
-anyone to notice. And the next print from non-atomic context should
-flush it out.
-
-> Is there a way we can fix this issue on non-rt kernel?
-I would guess that a wakeup to klogd would fix it.
-
-> Please help us with your suggestions.
-> 
-> Thanks,
-> Pintu
-
-Sebastian
+for both patches if you queue them in the -rt tree. If you want them
+in mainline, please resend them as proper patches once
+CONFIG_PREEMPT_RT_BASE has been declared in mainline as well.
