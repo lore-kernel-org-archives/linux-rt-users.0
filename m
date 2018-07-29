@@ -1,8 +1,7 @@
 From: Mike Galbraith <efault@gmx.de>
-Subject: [rt-patch 1/3] arm64/acpi/perf: move pmu allocation to an early CPU
- up hook
-Date: Sat, 28 Jul 2018 11:13:55 +0200
-Message-ID: <1532769235.5926.0.camel@gmx.de>
+Subject: Re: candidates for @devel-rt localversion-rt++
+Date: Sun, 29 Jul 2018 08:55:30 +0200
+Message-ID: <1532847330.1618.8.camel@gmx.de>
 References: <20180727215710.zq6gkoqzlb4ca7qv@linutronix.de>
          <1532768831.9882.71.camel@gmx.de>
 Mime-Version: 1.0
@@ -18,59 +17,11 @@ In-Reply-To: <1532768831.9882.71.camel@gmx.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Sat, 2018-07-28 at 11:07 +0200, Mike Galbraith wrote:
+> 1. arm64/acpi/perf: move pmu allocation to an early CPU up hook
 
-RT cannot allocate while irqs are disabled.
+Nope, it's an ex-candidate.  Having found/run kvm unit tests, I
+discovered that while the above fixes boot time splat, it somehow
+manages to break kvm pmu tests, so needs staring at.
 
-  BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:974
-  in_atomic(): 0, irqs_disabled(): 128, pid: 25, name: cpuhp/0
-  CPU: 0 PID: 25 Comm: cpuhp/0 Not tainted 4.16.18-rt10-rt #2
-  Hardware name: Huawei TaiShan 2280 /BC11SPCD, BIOS 1.32 08/22/2017
-  Call trace:
-   dump_backtrace+0x0/0x188
-   show_stack+0x24/0x30
-   dump_stack+0x9c/0xd0
-   ___might_sleep+0x124/0x188
-   rt_spin_lock+0x40/0x80
-   pcpu_alloc+0x104/0x7a0
-   __alloc_percpu_gfp+0x38/0x48
-   __armpmu_alloc+0x44/0x168
-   armpmu_alloc_atomic+0x1c/0x28
-   arm_pmu_acpi_cpu_starting+0x1cc/0x210
-   cpuhp_invoke_callback+0xb8/0x820
-   cpuhp_thread_fun+0xc0/0x1e0
-   smpboot_thread_fn+0x1ac/0x2c8
-   kthread+0x134/0x138
-   ret_from_fork+0x10/0x18
-
-Move the allocation to CPUHP_BP_PREPARE_DYN, where we'll be preemptible,
-thus no longer needing GFP_ATOMIC.
-
-Signed-off-by: Mike Galbraith <efault@gmx.de>
----
- drivers/perf/arm_pmu_acpi.c |    6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
-
---- a/drivers/perf/arm_pmu_acpi.c
-+++ b/drivers/perf/arm_pmu_acpi.c
-@@ -135,10 +135,10 @@ static struct arm_pmu *arm_pmu_acpi_find
- 		return pmu;
- 	}
- 
--	pmu = armpmu_alloc_atomic();
-+	pmu = armpmu_alloc();
- 	if (!pmu) {
- 		pr_warn("Unable to allocate PMU for CPU%d\n",
--			smp_processor_id());
-+			raw_smp_processor_id());
- 		return NULL;
- 	}
- 
-@@ -283,7 +283,7 @@ static int arm_pmu_acpi_init(void)
- 	if (ret)
- 		return ret;
- 
--	ret = cpuhp_setup_state(CPUHP_AP_PERF_ARM_ACPI_STARTING,
-+	ret = cpuhp_setup_state(CPUHP_BP_PREPARE_DYN,
- 				"perf/arm/pmu_acpi:starting",
- 				arm_pmu_acpi_cpu_starting, NULL);
- 
+	-Mike
