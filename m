@@ -1,59 +1,50 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: candidates for @devel-rt localversion-rt++
-Date: Sun, 29 Jul 2018 13:47:47 +0200
-Message-ID: <1532864867.1618.32.camel@gmx.de>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [rt-patch 3/3] arm, KVM: convert vgic_irq.irq_lock to
+ raw_spinlock_t
+Date: Mon, 30 Jul 2018 11:27:28 +0200
+Message-ID: <20180730092728.GE2494@hirez.programming.kicks-ass.net>
 References: <20180727215710.zq6gkoqzlb4ca7qv@linutronix.de>
-         <1532768831.9882.71.camel@gmx.de> <1532847330.1618.8.camel@gmx.de>
+ <1532764179.9882.14.camel@gmx.de>
+ <1532768853.9882.73.camel@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset=us-ascii
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>
+To: Mike Galbraith <efault@gmx.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1532847330.1618.8.camel@gmx.de>
+Content-Disposition: inline
+In-Reply-To: <1532768853.9882.73.camel@gmx.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-FYI, per kvm unit tests, 4.16-rt definitely has more kvm issues.
+On Sat, Jul 28, 2018 at 11:07:33AM +0200, Mike Galbraith wrote:
+> 
+> b103cc3f10c0 ("KVM: arm/arm64: Avoid timer save/restore in vcpu entry/exit")
+> requires vgic_irq.irq_lock be converted to raw_spinlock_t.
+> 
+> Problem: kvm_preempt_ops.sched_in = kvm_sched_in;
+>    kvm_sched_in()
+>       kvm_arch_vcpu_load()
+>          kvm_timer_vcpu_load() <- b103cc3f10c0 addition
+>             kvm_timer_vcpu_load_gic()
+>                kvm_vgic_map_is_active()
+>                   spin_lock_irqsave(&irq->irq_lock, flags);
+> 
+> Quoting virt/kvm/arm/vgic/vgic.c, locking order is...
+> 
+>   kvm->lock (mutex)
+>     its->cmd_lock (mutex)
+>       its->its_lock (mutex)
+>         vgic_cpu->ap_list_lock         must be taken with IRQs disabled
+>           kvm->lpi_list_lock           must be taken with IRQs disabled
+>             vgic_irq->irq_lock         must be taken with IRQs disabled
+> 
+> ...meaning vgic_dist.lpi_list_lock and vgic_cpu.ap_list_lock must be
+> converted as well.
 
-huawei5:/abuild/mike/kvm-unit-tests # uname -r
-4.16.18-rt11-rt
-huawei5:/abuild/mike/kvm-unit-tests # ./run_tests.sh
-PASS selftest-setup (2 tests)
-FAIL selftest-vectors-kernel 
-FAIL selftest-vectors-user 
-PASS selftest-smp (65 tests)
-PASS pci-test (1 tests)
-PASS pmu (3 tests)
-FAIL gicv2-ipi 
-FAIL gicv3-ipi 
-FAIL gicv2-active 
-FAIL gicv3-active 
-PASS psci (4 tests)
-FAIL timer 
-huawei5:/abuild/mike/kvm-unit-tests #
-
-4.14-rt passes all tests.  The above is with the kvm raw_spinlock_t
-conversion patch applied, but the 4.12 based SLERT tree I cloned to
-explore arm-land in the first place shows only one timer failure, and
-has/needs it applied as well, which would seem to vindicate it.
-
-huawei5:/abuild/mike/kvm-unit-tests # uname -r
-4.12.14-0.gec0b559-rt
-huawei5:/abuild/mike/kvm-unit-tests # ./run_tests.sh
-PASS selftest-setup (2 tests)
-PASS selftest-vectors-kernel (2 tests)
-PASS selftest-vectors-user (2 tests)
-PASS selftest-smp (65 tests)
-PASS pci-test (1 tests)
-PASS pmu (3 tests)
-PASS gicv2-ipi (3 tests)
-PASS gicv3-ipi (3 tests)
-PASS gicv2-active (1 tests)
-PASS gicv3-active (1 tests)
-PASS psci (4 tests)
-FAIL timer (8 tests, 1 unexpected failures)
-huawei5:/abuild/mike/kvm-unit-tests #
+The thing missing from the Changelog is the analysis that all the work
+done under these locks is indeed properly bounded and cannot cause
+excessive latencies.
