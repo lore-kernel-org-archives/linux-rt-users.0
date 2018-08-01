@@ -1,43 +1,54 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from Galois.linutronix.de ([146.0.238.70]:37820 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1732493AbeHBRGc (ORCPT
+Received: from goliath.siemens.de ([192.35.17.28]:56349 "EHLO
+        goliath.siemens.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S2388930AbeHAOwW (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 2 Aug 2018 13:06:32 -0400
-Date: Thu, 2 Aug 2018 17:14:54 +0200
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH RT] Revert "arm64/xen: Make XEN depend on !RT"
-Message-ID: <20180802151454.j7rfou5bp4nv6ecs@linutronix.de>
+        Wed, 1 Aug 2018 10:52:22 -0400
+Date: Wed, 1 Aug 2018 14:52:38 +0200
+From: Henning Schild <henning.schild@siemens.com>
+Subject: CONFIG_RT_GROUP_SCHED on RT
+Message-ID: <20180801145238.777d71a7@md1pvb1c.ad001.siemens.net>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: Iain Hunter <drhunter95@gmail.com>
+To: Thomas Gleixner <tglx@linutronix.de>, Carsten Emde <cbe@osadl.org>
 Cc: linux-rt-users@vger.kernel.org
 
-Iain Hunter reported that there are no problems with it so there is no
-reason to keep it disabled.
+Hi,
 
-Reported-by: Iain Hunter <drhunter95@gmail.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- arch/arm64/Kconfig | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+i just wanted to have a look at RT_GROUP_SCHED as a way to prevent
+crashing real-time applications from starving other rt application, in
+the case of prio based scheduling.
+I had to find out that the feature is not compatible with PREEMPT_RT
+and quickly traced it down to the following commit:
 
-diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
-index d2370c7829451..3a6f0ae739d39 100644
---- a/arch/arm64/Kconfig
-+++ b/arch/arm64/Kconfig
-@@ -861,7 +861,7 @@ config XEN_DOM0
- 
- config XEN
- 	bool "Xen guest support on ARM64"
--	depends on ARM64 && OF && !PREEMPT_RT_FULL
-+	depends on ARM64 && OF
- 	select SWIOTLB_XEN
- 	select PARAVIRT
- 	help
--- 
-2.18.0
+"sched: Disable CONFIG_RT_GROUP_SCHED on RT"
 
+https://kernel.googlesource.com/pub/scm/linux/kernel/git/paulg/3.4-rt-patches/+/1b19454df58db731fa9ca09b34909d28d4eef968/patches/0133-sched-Disable-CONFIG_RT_GROUP_SCHED-on-RT.patch
+
+My current theory is that there never was a problem with the two not
+being compatible ... it was more likely a broken userland, more
+specific a broken cgroups setup.
+Further my theory is, if you set cgroups up correctly both featues can
+most likely be combined without a problem ... 
+But maybe i am totally wrong and there are some reasons, in that case
+the commit should be a little more verbose. And i would be happy to
+hear about it.
+
+On newer systems ... systemd is the reason ... fits the "works in ssh
+but not in rc.local"
+
+https://www.freedesktop.org/wiki/Software/systemd/MyServiceCantGetRealtime/
+
+> Note that this all only applies to services.
+> ...
+
+On older systems it might have been libcgroup/cgconfig like explained
+here:
+https://github.com/jackaudio/jackaudio.github.com/wiki/Cgroups
+http://jackaudio.org/faq/linux_group_sched.html
+
+regards,
+Henning
