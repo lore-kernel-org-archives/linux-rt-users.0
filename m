@@ -1,31 +1,46 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT] sched: drop is_special_task_state() check from
- __set_current_state_no_track()
-Date: Wed, 1 Aug 2018 17:53:08 +0200
-Message-ID: <20180801155308.wcw6mo6mrhlsgpg3@linutronix.de>
-References: <20180801090524.7hmzfdx7r4bivekq@linutronix.de>
- <20180801091942.46292953@gandalf.local.home>
+From: Tom Zanussi <zanussi@kernel.org>
+Subject: [ANNOUNCE] 3.18.117-rt104
+Date: Wed, 01 Aug 2018 13:22:30 -0500
+Message-ID: <1533147750.7905.8.camel@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org, tglx@linutronix.de,
-        linux-kernel@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        Julia Cartwright <julia@ni.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180801091942.46292953@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2018-08-01 09:19:42 [-0400], Steven Rostedt wrote:
-> I don't think we need to keep the do { } while with a single line. It
-> is now equivalent to the non-debug version of __set_current_state()
-> which is defined as:
-> 
-> #define __set_current_state(state_value)				\
-> 	current->state = (state_value)
+Hello RT Folks!
 
-okay.
+I'm pleased to announce the 3.18.117-rt104 stable release.
 
-> -- Steve
+This release is just an update to the new stable 3.18.117 version
+and no RT specific changes have been made.
 
-Sebastian
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v3.18-rt
+  Head SHA1: e6a7a51bc0c7f124d97e412fdda291ce2ca96a28
+
+Or to build 3.18.117-rt104 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.117.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.117-rt104.patch.xz
+
+
+Enjoy!
+   
+   Tom
