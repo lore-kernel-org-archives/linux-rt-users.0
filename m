@@ -1,43 +1,52 @@
-Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mout.gmx.net ([212.227.15.15]:46837 "EHLO mout.gmx.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2388631AbeGKRMr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 11 Jul 2018 13:12:47 -0400
-Message-ID: <1531328845.12761.54.camel@gmx.de>
-Subject: Re: [PATCH RT] arm64: fpsimd: use a local_lock() in addition to
- local_bh_disable()
-From: Mike Galbraith <efault@gmx.de>
-Date: Wed, 11 Jul 2018 19:07:25 +0200
-In-Reply-To: <20180711133157.bvrza5vmthu6lwjd@linutronix.de>
-References: <20180517124006.ohygrrpg7z2moqqt@linutronix.de>
-         <20180522131004.3012953c@gandalf.local.home>
-         <20180522172115.fpqguqlsq6bavtxy@linutronix.de>
-         <20180522132429.6f1dcf92@gandalf.local.home>
-         <20180522173333.aawadhkcekzvrswp@linutronix.de>
-         <20180711092555.268adf7f@gandalf.local.home>
-         <20180711133157.bvrza5vmthu6lwjd@linutronix.de>
-Content-Type: text/plain; charset="ISO-8859-15"
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 4.14.59-rt37
+Date: Tue, 31 Jul 2018 20:54:05 -0400
+Message-ID: <20180731205405.2e434cab@gandalf.local.home>
 Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: linux-rt-users@vger.kernel.org
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Julia Cartwright <julia@ni.com>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2018-07-11 at 15:31 +0200, Sebastian Andrzej Siewior wrote:
-> On 2018-07-11 09:25:55 [-0400], Steven Rostedt wrote:
-> > Did you decide to create a local_lock_bh(lock) function? I don't see it.
-> > 
-> > And should this be backported to 4.14-rt too? You state you saw this in
-> > 4.16-rt, but did you start doing something different then, or did the
-> > kernel change?
-> 
-> I wanted to re-evaluate the whole situation here but didn't get to it
-> yet.
 
-Ignore the rfc I sent then.  New toy works well enough meanwhile.
+Dear RT Folks,
 
-(cavium boxen are a LOT less dinky/cute than I'm used to thinking of
-arm gizmos being.. 224 core box boogies right along)
+I'm pleased to announce the 4.14.59-rt37 stable release.
 
-	-Mike
+
+This release is just an update to the new stable 4.14.59 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.14-rt
+  Head SHA1: c3547993bf846cf6dafff25953713302676e1f19
+
+
+Or to build 4.14.59-rt37 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.59.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.59-rt37.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
