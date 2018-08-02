@@ -1,46 +1,88 @@
-From: Tom Zanussi <zanussi@kernel.org>
-Subject: [ANNOUNCE] 3.18.117-rt104
-Date: Wed, 01 Aug 2018 13:22:30 -0500
-Message-ID: <1533147750.7905.8.camel@kernel.org>
+From: Mike Galbraith <efault@gmx.de>
+Subject: [rt-patch 4/3] arm,KVM: Move phys_timer handling to hard irq context
+Date: Thu, 02 Aug 2018 08:56:20 +0200
+Message-ID: <1533192980.11791.8.camel@gmx.de>
+References: <20180727215710.zq6gkoqzlb4ca7qv@linutronix.de>
+         <1532764179.9882.14.camel@gmx.de> <1532768853.9882.73.camel@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        Julia Cartwright <julia@ni.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Peter Zijlstra <peterz@infradead.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1532768853.9882.73.camel@gmx.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello RT Folks!
+(arm-land adventures 1/3 take2 will have to wait, my cup runeth over) 
 
-I'm pleased to announce the 3.18.117-rt104 stable release.
+v4.14..v4.15 timer handling changes including calling kvm_timer_vcpu_load()
+during kvm_preempt_ops.sched_in and taking vgic_dist.lpi_list_lock in the
+timer interrupt handler required locks for which locking rules/context had
+been changed be converted to raw_spinlock_t...
 
-This release is just an update to the new stable 3.18.117 version
-and no RT specific changes have been made.
+Quoting virt/kvm/arm/vgic/vgic.c:
+ * Locking order is always:
+ * kvm->lock (mutex)
+ *   its->cmd_lock (mutex)
+ *     its->its_lock (mutex)
+ *       vgic_cpu->ap_list_lock         must be taken with IRQs disabled
+ *         kvm->lpi_list_lock           must be taken with IRQs disabled
+ *           vgic_irq->irq_lock         must be taken with IRQs disabled
+ *
+ * As the ap_list_lock might be taken from the timer interrupt handler,
+ * we have to disable IRQs before taking this lock and everything lower
+ * than it.
 
-You can get this release via the git tree at:
+...and fixed the obvious bricking consequence of those changes for RT,
+but left an RT specific kvm unit test timer failure in its wake.  Handling
+phys_timer in hard interrupt context as expected cures that failure.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+Pre:
+PASS selftest-setup (2 tests)
+PASS selftest-vectors-kernel (2 tests)
+PASS selftest-vectors-user (2 tests)
+PASS selftest-smp (65 tests)
+PASS pci-test (1 tests)
+PASS pmu (3 tests)
+PASS gicv2-ipi (3 tests)
+PASS gicv3-ipi (3 tests)
+PASS gicv2-active (1 tests)
+PASS gicv3-active (1 tests)
+PASS psci (4 tests)
+FAIL timer (8 tests, 1 unexpected failures)
 
-  branch: v3.18-rt
-  Head SHA1: e6a7a51bc0c7f124d97e412fdda291ce2ca96a28
+Post:
+PASS selftest-setup (2 tests)
+PASS selftest-vectors-kernel (2 tests)
+PASS selftest-vectors-user (2 tests)
+PASS selftest-smp (65 tests)
+PASS pci-test (1 tests)
+PASS pmu (3 tests)
+PASS gicv2-ipi (3 tests)
+PASS gicv3-ipi (3 tests)
+PASS gicv2-active (1 tests)
+PASS gicv3-active (1 tests)
+PASS psci (4 tests)
+PASS timer (8 tests)
 
-Or to build 3.18.117-rt104 directly, the following patches should be applied:
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+---
+ virt/kvm/arm/arch_timer.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.117.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.117-rt104.patch.xz
-
-
-Enjoy!
-   
-   Tom
+--- a/virt/kvm/arm/arch_timer.c
++++ b/virt/kvm/arm/arch_timer.c
+@@ -634,7 +634,7 @@ void kvm_timer_vcpu_init(struct kvm_vcpu
+ 	hrtimer_init(&timer->bg_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
+ 	timer->bg_timer.function = kvm_bg_timer_expire;
+ 
+-	hrtimer_init(&timer->phys_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
++	hrtimer_init(&timer->phys_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_HARD);
+ 	timer->phys_timer.function = kvm_phys_timer_expire;
+ 
+ 	vtimer->irq.irq = default_vtimer_irq.irq;
