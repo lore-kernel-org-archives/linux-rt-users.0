@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH 08/15] seqlock: provide the same ordering semantics as mainline
-Date: Thu,  2 Aug 2018 17:25:23 -0500
-Message-ID: <650bfc722354f3307e6390ddddf1e4ee4e9dced2.1533242791.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 09/15] squashfs: make use of local lock in multi_cpu decompressor
+Date: Thu,  2 Aug 2018 17:25:24 -0500
+Message-ID: <a4ca188b1e2fe97377304eea12b5c877bae2e8b2.1533242791.git.tom.zanussi@linux.intel.com>
 References: <cover.1533242791.git.tom.zanussi@linux.intel.com>
 Cc: rostedt@goodmis.org, tglx@linutronix.de, C.Emde@osadl.org,
         jkacur@redhat.com, bigeasy@linutronix.de,
@@ -17,34 +17,69 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Julia Cartwright <julia@ni.com>
 
-The mainline implementation of read_seqbegin() orders prior loads w.r.t.
-the read-side critical section.  Fixup the RT writer-boosting
-implementation to provide the same guarantee.
+Currently, the squashfs multi_cpu decompressor makes use of
+get_cpu_ptr()/put_cpu_ptr(), which unconditionally disable preemption
+during decompression.
 
-Also, while we're here, update the usage of ACCESS_ONCE() to use
-READ_ONCE().
+Because the workload is distributed across CPUs, all CPUs can observe a
+very high wakeup latency, which has been seen to be as much as 8000us.
 
-Fixes: e69f15cf77c23 ("seqlock: Prevent rt starvation")
+Convert this decompressor to make use of a local lock, which will allow
+execution of the decompressor with preemption-enabled, but also ensure
+concurrent accesses to the percpu compressor data on the local CPU will
+be serialized.
+
 Cc: stable-rt@vger.kernel.org
+Reported-by: Alexander Stein <alexander.stein@systec-electronic.com>
+Tested-by: Alexander Stein <alexander.stein@systec-electronic.com>
 Signed-off-by: Julia Cartwright <julia@ni.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-(cherry picked from commit afa4c06b89a3c0fb7784ff900ccd707bef519cb7)
+(cherry picked from commit c160736542d7b3d67da32848d2f028b8e35730e5)
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- include/linux/seqlock.h | 1 +
- 1 file changed, 1 insertion(+)
+ fs/squashfs/decompressor_multi_percpu.c | 16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
 
-diff --git a/include/linux/seqlock.h b/include/linux/seqlock.h
-index 4acd0e2fb5cb..efa234031230 100644
---- a/include/linux/seqlock.h
-+++ b/include/linux/seqlock.h
-@@ -338,6 +338,7 @@ repeat:
- 		spin_unlock_wait(&sl->lock);
- 		goto repeat;
- 	}
-+	smp_rmb();
- 	return ret;
- }
- #endif
+diff --git a/fs/squashfs/decompressor_multi_percpu.c b/fs/squashfs/decompressor_multi_percpu.c
+index 23a9c28ad8ea..6a73c4fa88e7 100644
+--- a/fs/squashfs/decompressor_multi_percpu.c
++++ b/fs/squashfs/decompressor_multi_percpu.c
+@@ -10,6 +10,7 @@
+ #include <linux/slab.h>
+ #include <linux/percpu.h>
+ #include <linux/buffer_head.h>
++#include <linux/locallock.h>
+ 
+ #include "squashfs_fs.h"
+ #include "squashfs_fs_sb.h"
+@@ -25,6 +26,8 @@ struct squashfs_stream {
+ 	void		*stream;
+ };
+ 
++static DEFINE_LOCAL_IRQ_LOCK(stream_lock);
++
+ void *squashfs_decompressor_create(struct squashfs_sb_info *msblk,
+ 						void *comp_opts)
+ {
+@@ -79,10 +82,15 @@ int squashfs_decompress(struct squashfs_sb_info *msblk, struct buffer_head **bh,
+ {
+ 	struct squashfs_stream __percpu *percpu =
+ 			(struct squashfs_stream __percpu *) msblk->stream;
+-	struct squashfs_stream *stream = get_cpu_ptr(percpu);
+-	int res = msblk->decompressor->decompress(msblk, stream->stream, bh, b,
+-		offset, length, output);
+-	put_cpu_ptr(stream);
++	struct squashfs_stream *stream;
++	int res;
++
++	stream = get_locked_ptr(stream_lock, percpu);
++
++	res = msblk->decompressor->decompress(msblk, stream->stream, bh, b,
++			offset, length, output);
++
++	put_locked_ptr(stream_lock, stream);
+ 
+ 	if (res < 0)
+ 		ERROR("%s decompression failed, data probably corrupt\n",
 -- 
 2.14.1
