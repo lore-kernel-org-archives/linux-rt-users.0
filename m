@@ -1,7 +1,7 @@
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH 05/15] alarmtimer: Prevent live lock in alarm_cancel()
-Date: Thu,  2 Aug 2018 17:25:20 -0500
-Message-ID: <f83843102b0b0be99a3504aff0e41ddbb91e8f44.1533242791.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 06/15] locking: add types.h
+Date: Thu,  2 Aug 2018 17:25:21 -0500
+Message-ID: <8e0d5aeb84b08416dd846d0223e02d9209cda0f8.1533242791.git.tom.zanussi@linux.intel.com>
 References: <cover.1533242791.git.tom.zanussi@linux.intel.com>
 Cc: rostedt@goodmis.org, tglx@linutronix.de, C.Emde@osadl.org,
         jkacur@redhat.com, bigeasy@linutronix.de,
@@ -17,31 +17,29 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-If alarm_try_to_cancel() requires a retry, then depending on the
-priority setting the retry loop might prevent timer callback completion
-on RT. Prevent that by waiting for completion on RT, no change for a
-non RT kernel.
+During the stable update the arm architecture did not compile anymore
+due to missing definition of u16/32.
 
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-(cherry picked from commit 51e376c469bf05f32cb1ceb9e39d31bb92f1f6c8)
+(cherry picked from commit 1289b06974d64f244a26455fab699c6a1332f4bc)
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/time/alarmtimer.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ include/linux/spinlock_types_raw.h | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/kernel/time/alarmtimer.c b/kernel/time/alarmtimer.c
-index 119847b93ba6..5a5e05fc92a3 100644
---- a/kernel/time/alarmtimer.c
-+++ b/kernel/time/alarmtimer.c
-@@ -395,7 +395,7 @@ int alarm_cancel(struct alarm *alarm)
- 		int ret = alarm_try_to_cancel(alarm);
- 		if (ret >= 0)
- 			return ret;
--		cpu_relax();
-+		hrtimer_wait_for_timer(&alarm->timer);
- 	}
- }
- EXPORT_SYMBOL_GPL(alarm_cancel);
+diff --git a/include/linux/spinlock_types_raw.h b/include/linux/spinlock_types_raw.h
+index edffc4d53fc9..03235b475b77 100644
+--- a/include/linux/spinlock_types_raw.h
++++ b/include/linux/spinlock_types_raw.h
+@@ -1,6 +1,8 @@
+ #ifndef __LINUX_SPINLOCK_TYPES_RAW_H
+ #define __LINUX_SPINLOCK_TYPES_RAW_H
+ 
++#include <linux/types.h>
++
+ #if defined(CONFIG_SMP)
+ # include <asm/spinlock_types.h>
+ #else
 -- 
 2.14.1
