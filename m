@@ -1,43 +1,41 @@
-From: Daniel Wagner <wagi@monom.org>
-Subject: [ANNOUNCE] 4.4.145-rt162
-Date: Fri, 03 Aug 2018 13:44:48 +0200
-Message-ID: <20180803114449.A12E5500AD8@mail.monom.org>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Julia Cartwright <julia@ni.com>
+From: Tom Zanussi <tom.zanussi@linux.intel.com>
+Subject: Re: [PATCH 00/15][ANNOUNCE] 3.18.117-rt105-rc1
+Date: Fri, 3 Aug 2018 08:34:11 -0500
+Message-ID: <67dc4732-4690-5a3f-8176-1f451f0ea4d2@linux.intel.com>
+References: <cover.1533242791.git.tom.zanussi@linux.intel.com>
+ <20180803073217.4szbepnmngoctvn6@linutronix.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        rostedt@goodmis.org, tglx@linutronix.de, C.Emde@osadl.org,
+        jkacur@redhat.com, daniel.wagner@siemens.com, julia@ni.com
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180803073217.4szbepnmngoctvn6@linutronix.de>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello RT Folks!
+Hi Sebastian,
 
-I'm pleased to announce the 4.4.145-rt162 stable release.
+On 8/3/2018 2:32 AM, Sebastian Andrzej Siewior wrote:
+> On 2018-08-02 17:25:15 [-0500], Tom Zanussi wrote:
+>> Please scream at me if I messed something up. Please test the patches
+>> too.
+> 
+> The series claims to have 15 patches and I see only the first 10 (in my
+> inbox, rt-users and linux-kernel).
+> 
 
-This release is just an update to the new stable 4.4.145 version
-and no RT specific changes have been made.
+Yeah, my script was broken and didn't send the last third - resent. 
+Thanks for letting me know,
 
-You can get this release via the git tree at:
+Tom
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.4-rt
-  Head SHA1: 2ef91c486c0425efec209a9bde6d7baf2b68d572
-
-Or to build 4.4.145-rt162 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.145.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/4.4/patch-4.4.145-rt162.patch.xz
-
-
-Enjoy!
-   Daniel
+>> Enjoy!
+>>     
+>>     Tom
+> 
+> Sebastian
+> 
