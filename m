@@ -1,12 +1,12 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mail.kernel.org ([198.145.29.99]:38960 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.99]:38940 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1731364AbeHCPXK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 3 Aug 2018 11:23:10 -0400
+        id S1731146AbeHCPXJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 3 Aug 2018 11:23:09 -0400
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [PATCH 15/15] Linux 3.18.117-rt105-rc1
-Date: Fri,  3 Aug 2018 08:25:34 -0500
-Message-Id: <bb29d1139a2138af2822ba4c1b84231a56076775.1533242791.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 14/15] um: Use POSIX ucontext_t instead of struct ucontext
+Date: Fri,  3 Aug 2018 08:25:33 -0500
+Message-Id: <138f9967688d534a362fd395632eb0f5d049705c.1533242791.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1533242791.git.tom.zanussi@linux.intel.com>
 References: <cover.1533242791.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1533242791.git.tom.zanussi@linux.intel.com>
@@ -16,17 +16,57 @@ List-ID: <linux-rt-users.vger.kernel.org>
 To: linux-rt-users@vger.kernel.org
 Cc: rostedt@goodmis.org, tglx@linutronix.de, C.Emde@osadl.org, jkacur@redhat.com, bigeasy@linutronix.de, daniel.wagner@siemens.com, julia@ni.com, tom.zanussi@linux.intel.com
 
----
- localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+From: Krzysztof Mazur <krzysiek@podlesie.net>
 
-diff --git a/localversion-rt b/localversion-rt
-index d068aedeebe2..39f988470301 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt104
-+-rt105-rc1
+glibc 2.26 removed the 'struct ucontext' to "improve" POSIX compliance
+and break programs, including User Mode Linux. Fix User Mode Linux
+by using POSIX ucontext_t.
+
+This fixes:
+
+arch/um/os-Linux/signal.c: In function 'hard_handler':
+arch/um/os-Linux/signal.c:163:22: error: dereferencing pointer to incomplete type 'struct ucontext'
+  mcontext_t *mc = &uc->uc_mcontext;
+arch/x86/um/stub_segv.c: In function 'stub_segv_handler':
+arch/x86/um/stub_segv.c:16:13: error: dereferencing pointer to incomplete type 'struct ucontext'
+          &uc->uc_mcontext);
+
+Cc: stable@vger.kernel.org
+Signed-off-by: Krzysztof Mazur <krzysiek@podlesie.net>
+Signed-off-by: Richard Weinberger <richard@nod.at>
+(cherry picked from commit 4d1a535b8ec5e74b42dfd9dc809142653b2597f6)
+Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+---
+ arch/um/os-Linux/signal.c | 2 +-
+ arch/x86/um/stub_segv.c   | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/um/os-Linux/signal.c b/arch/um/os-Linux/signal.c
+index 7b605e4dfffa..2ac6a7e5a179 100644
+--- a/arch/um/os-Linux/signal.c
++++ b/arch/um/os-Linux/signal.c
+@@ -135,7 +135,7 @@ static void (*handlers[_NSIG])(int sig, struct siginfo *si, mcontext_t *mc) = {
+ 
+ static void hard_handler(int sig, siginfo_t *si, void *p)
+ {
+-	struct ucontext *uc = p;
++	ucontext_t *uc = p;
+ 	mcontext_t *mc = &uc->uc_mcontext;
+ 	unsigned long pending = 1UL << sig;
+ 
+diff --git a/arch/x86/um/stub_segv.c b/arch/x86/um/stub_segv.c
+index 1518d2805ae8..fd6825537b97 100644
+--- a/arch/x86/um/stub_segv.c
++++ b/arch/x86/um/stub_segv.c
+@@ -10,7 +10,7 @@
+ void __attribute__ ((__section__ (".__syscall_stub")))
+ stub_segv_handler(int sig, siginfo_t *info, void *p)
+ {
+-	struct ucontext *uc = p;
++	ucontext_t *uc = p;
+ 
+ 	GET_FAULTINFO_FROM_MC(*((struct faultinfo *) STUB_DATA),
+ 			      &uc->uc_mcontext);
 -- 
 2.14.1
 
