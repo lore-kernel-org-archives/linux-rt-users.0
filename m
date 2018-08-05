@@ -1,13 +1,14 @@
 From: Mike Galbraith <efault@gmx.de>
 Subject: Re: [rt-patch 4/3] arm,KVM: Move phys_timer handling to hard irq
  context
-Date: Sat, 04 Aug 2018 14:25:20 +0200
-Message-ID: <1533385520.5602.31.camel@gmx.de>
+Date: Sun, 05 Aug 2018 06:52:57 +0200
+Message-ID: <1533444777.9157.10.camel@gmx.de>
 References: <20180727215710.zq6gkoqzlb4ca7qv@linutronix.de>
          <1532764179.9882.14.camel@gmx.de> <1532768853.9882.73.camel@gmx.de>
          <1533192980.11791.8.camel@gmx.de>
          <20180802123104.7fed73b4@gandalf.local.home>
          <1533228650.12550.15.camel@gmx.de> <1533231816.12550.54.camel@gmx.de>
+         <1533385520.5602.31.camel@gmx.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
@@ -18,120 +19,19 @@ Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Peter Zijlstra <peterz@infradead.org>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1533231816.12550.54.camel@gmx.de>
+In-Reply-To: <1533385520.5602.31.camel@gmx.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2018-08-02 at 19:43 +0200, Mike Galbraith wrote:
-> On Thu, 2018-08-02 at 18:50 +0200, Mike Galbraith wrote:
-> > On Thu, 2018-08-02 at 12:31 -0400, Steven Rostedt wrote:
-> > > On Thu, 02 Aug 2018 08:56:20 +0200
-> > > Mike Galbraith <efault@gmx.de> wrote:
-> > > 
-> > > > (arm-land adventures 1/3 take2 will have to wait, my cup runeth over) 
-> > > > 
-> > > > v4.14..v4.15 timer handling changes including calling kvm_timer_vcpu_load()
-> > > 
-> > > I take it that this should be added to v4.16-rt and marked stable-rt?
-> > 
-> > Yeah, barring way sexier ideas of course.
+On Sat, 2018-08-04 at 14:25 +0200, Mike Galbraith wrote:
 > 
-> Gah, wait.  WRT marking for stable-rt, only the pmu allocation splat
-> fix is applicable to @stable-rt, kvm locking woes start at 4.15.
+> Besides, there are more interesting fish in the arm64 sea than kvm.
+> 
+> virgin 4.16.18-rt12-rt
+> 
+> [  537.236131] ITS queue timeout (65440 65504 4640)
+> [  537.236150] ITS cmd its_build_inv_cmd failed
 
-None of that series got picked up, so the pmu patch is moot as well. 
-The warning is harmless anyway.
-
-Besides, there are more interesting fish in the arm64 sea than kvm.
-
-virgin 4.16.18-rt12-rt
-
-[  537.236131] ITS queue timeout (65440 65504 4640)
-[  537.236150] ITS cmd its_build_inv_cmd failed
-[  537.236160] sched: RT throttling activated
-[ 1229.180124] ITS queue timeout (65440 65504 3744)
-[ 1229.180134] ITS cmd its_build_inv_cmd failed
-
-(converts those to trace_printk [invalidating virgin source warantee])
-
-# tracer: nop
-#
-#                              _-----=> irqs-off
-#                             / _----=> need-resched
-#                            | /  _----=> need-resched_lazy
-#                            || / _---=> hardirq/softirq
-#                            ||| / _--=> preempt-depth
-#                            |||| /     delay
-#           TASK-PID   CPU#  |||||    TIMESTAMP  FUNCTION
-#              | |       |   |||||       |         |
-          <idle>-0     [000] d..h2..    84.967153: its_wait_for_range_completion+0xa8/0xe0: ITS queue timeout (65440 65504 96)
-          <idle>-0     [000] d..h2..    84.967155: its_send_single_command+0xd4/0x130: ITS cmd its_build_inv_cmd failed
-
-(starts cyclictest+kbuild)
-
-[ 9609.602489] NOHZ: local_softirq_pending 10
-[10089.311713] NOHZ: local_softirq_pending 80
-[10089.311735] NOHZ: local_softirq_pending 80
-[10097.315809] NOHZ: local_softirq_pending 80
-[10112.262436] NOHZ: local_softirq_pending 10
-[10118.966066] NOHZ: local_softirq_pending 80
-[10121.211106] NOHZ: local_softirq_pending 80
-[10121.287093] NOHZ: local_softirq_pending 80
-[10329.501202] NOHZ: local_softirq_pending 80
-[10329.501231] NOHZ: local_softirq_pending 80
-
-T:60 (17291) P:99 I:31000 C:  18128 Min:      5 Act:   12 Avg:  107 Max: 1581163 <== Thar she blows!
-
- irq/464-eth0-Tx-3955  [060] d...111 11015.059743: its_wait_for_range_completion+0xa8/0xe0: ITS queue timeout (65440 65504 5280)
- irq/464-eth0-Tx-3955  [060] d...111 11015.059749: <stack trace>
- => irq_chip_unmask_parent+0x2c/0x38
- => its_unmask_msi_irq+0x28/0x38
- => unmask_irq.part.4+0x30/0x50
- => unmask_threaded_irq+0x4c/0x58
- => irq_finalize_oneshot.part.2+0x9c/0x100
- => irq_forced_thread_fn+0x60/0x98
- => irq_thread+0x148/0x1e0
- => kthread+0x140/0x148
- => ret_from_fork+0x10/0x18
- irq/464-eth0-Tx-3955  [060] d...111 11015.059751: its_send_single_command+0xd4/0x130: ITS cmd its_build_inv_cmd failed
- irq/464-eth0-Tx-3955  [060] d...111 11015.059752: <stack trace>
- => its_unmask_msi_irq+0x28/0x38
- => unmask_irq.part.4+0x30/0x50
- => unmask_threaded_irq+0x4c/0x58
- => irq_finalize_oneshot.part.2+0x9c/0x100
- => irq_forced_thread_fn+0x60/0x98
- => irq_thread+0x148/0x1e0
- => kthread+0x140/0x148
- => ret_from_fork+0x10/0x18
- irq/464-eth0-Tx-3955  [060] d..h311 11015.059764: update_curr_rt+0x280/0x320: sched: RT throttling activated
- irq/464-eth0-Tx-3955  [060] d..h311 11015.059765: <stack trace>
- => update_process_times+0x48/0x60
- => tick_sched_handle.isra.5+0x34/0x70
- => tick_sched_timer+0x54/0xa8
- => __hrtimer_run_queues+0xf8/0x388
- => hrtimer_interrupt+0xe4/0x258
- => arch_timer_handler_phys+0x38/0x58
- => handle_percpu_devid_irq+0xa8/0x2c8
- => generic_handle_irq+0x34/0x50
- => __handle_domain_irq+0x8c/0x100
- => gic_handle_irq+0x80/0x18c
- => el1_irq+0xb4/0x13c
- => _raw_spin_unlock_irq+0x2c/0x78
- => irq_finalize_oneshot.part.2+0x6c/0x100
- => irq_forced_thread_fn+0x60/0x98
- => irq_thread+0x148/0x1e0
- => kthread+0x140/0x148
- => ret_from_fork+0x10/0x18
-          <idle>-0     [008] d..h3.. 11015.374565: sched_rt_period_timer+0x2f0/0x420: sched: RT throttling deactivated
-          <idle>-0     [008] d..h3.. 11015.374570: <stack trace>
- => arch_timer_handler_phys+0x38/0x58
- => handle_percpu_devid_irq+0xa8/0x2c8
- => generic_handle_irq+0x34/0x50
- => __handle_domain_irq+0x8c/0x100
- => gic_handle_irq+0x80/0x18c
- => el1_irq+0xb4/0x13c
- => arch_cpu_idle+0x2c/0x1d0
- => default_idle_call+0x30/0x48
- => do_idle+0x1c4/0x218
- => cpu_startup_entry+0x2c/0x30
- => secondary_start_kernel+0x184/0x1d0
+FWIW, I had thought that something 4.16..master had made that business
+go entirely away, but it only became much more infrequent.  So much for
+plan to slowly sneak up on whatever than was via ~bisect.
