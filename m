@@ -1,7 +1,7 @@
 From: Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 13/22] net: use task_struct instead of CPU number as the queue owner on -RT
-Date: Mon,  6 Aug 2018 04:17:29 -0500
-Message-ID: <3e1cac93740464869248669c4f10a68773844243.1533540554.git.julia@ni.com>
+Subject: [PATCH RT 21/22] seqlock: provide the same ordering semantics as mainline
+Date: Mon,  6 Aug 2018 04:17:37 -0500
+Message-ID: <40aac5862b763fabc66d146390356347b82a8231.1533540554.git.julia@ni.com>
 References: <cover.1533540554.git.julia@ni.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -19,155 +19,38 @@ In-Reply-To: <cover.1533540554.git.julia@ni.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-
 4.9.115-rt94-rc1 stable review patch.
 If you have any objection to the inclusion of this patch, let me know.
 
 --- 8< --- 8< --- 8< ---
-In commit ("net: move xmit_recursion to per-task variable on -RT") the
-recursion level was changed to be per-task since we can get preempted in
-BH on -RT. The lock owner should consequently be recorded as the task
-that holds the lock and not the CPU. Otherwise we trigger the "Dead loop
-on virtual device" warning on SMP systems.
+The mainline implementation of read_seqbegin() orders prior loads w.r.t.
+the read-side critical section.  Fixup the RT writer-boosting
+implementation to provide the same guarantee.
 
+Also, while we're here, update the usage of ACCESS_ONCE() to use
+READ_ONCE().
+
+Fixes: e69f15cf77c23 ("seqlock: Prevent rt starvation")
 Cc: stable-rt@vger.kernel.org
-Reported-by: Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
-Tested-by: Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
+Signed-off-by: Julia Cartwright <julia@ni.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-(cherry picked from commit d3a66ffd1c4f0253076069b10a8223e7b6e80e38)
+(cherry picked from commit afa4c06b89a3c0fb7784ff900ccd707bef519cb7)
 Signed-off-by: Julia Cartwright <julia@ni.com>
 ---
- include/linux/netdevice.h | 54 ++++++++++++++++++++++++++++++++++-----
- net/core/dev.c            |  6 ++++-
- 2 files changed, 53 insertions(+), 7 deletions(-)
+ include/linux/seqlock.h | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/include/linux/netdevice.h b/include/linux/netdevice.h
-index 85fc72b8a92b..6f1a3f286c4b 100644
---- a/include/linux/netdevice.h
-+++ b/include/linux/netdevice.h
-@@ -594,7 +594,11 @@ struct netdev_queue {
-  * write-mostly part
-  */
- 	spinlock_t		_xmit_lock ____cacheline_aligned_in_smp;
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	struct task_struct	*xmit_lock_owner;
-+#else
- 	int			xmit_lock_owner;
-+#endif
- 	/*
- 	 * Time (in jiffies) of last Tx
- 	 */
-@@ -3610,41 +3614,79 @@ static inline u32 netif_msg_init(int debug_value, int default_msg_enable_bits)
- 	return (1 << debug_value) - 1;
+diff --git a/include/linux/seqlock.h b/include/linux/seqlock.h
+index 3d7223ffdd3b..de04d6d0face 100644
+--- a/include/linux/seqlock.h
++++ b/include/linux/seqlock.h
+@@ -461,6 +461,7 @@ static inline unsigned read_seqbegin(seqlock_t *sl)
+ 		spin_unlock_wait(&sl->lock);
+ 		goto repeat;
+ 	}
++	smp_rmb();
+ 	return ret;
  }
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static inline void netdev_queue_set_owner(struct netdev_queue *txq, int cpu)
-+{
-+	txq->xmit_lock_owner = current;
-+}
-+
-+static inline void netdev_queue_clear_owner(struct netdev_queue *txq)
-+{
-+	txq->xmit_lock_owner = NULL;
-+}
-+
-+static inline bool netdev_queue_has_owner(struct netdev_queue *txq)
-+{
-+	if (txq->xmit_lock_owner != NULL)
-+		return true;
-+	return false;
-+}
-+
-+#else
-+
-+static inline void netdev_queue_set_owner(struct netdev_queue *txq, int cpu)
-+{
-+	txq->xmit_lock_owner = cpu;
-+}
-+
-+static inline void netdev_queue_clear_owner(struct netdev_queue *txq)
-+{
-+	txq->xmit_lock_owner = -1;
-+}
-+
-+static inline bool netdev_queue_has_owner(struct netdev_queue *txq)
-+{
-+	if (txq->xmit_lock_owner != -1)
-+		return true;
-+	return false;
-+}
-+#endif
-+
- static inline void __netif_tx_lock(struct netdev_queue *txq, int cpu)
- {
- 	spin_lock(&txq->_xmit_lock);
--	txq->xmit_lock_owner = cpu;
-+	netdev_queue_set_owner(txq, cpu);
- }
- 
- static inline void __netif_tx_lock_bh(struct netdev_queue *txq)
- {
- 	spin_lock_bh(&txq->_xmit_lock);
--	txq->xmit_lock_owner = smp_processor_id();
-+	netdev_queue_set_owner(txq, smp_processor_id());
- }
- 
- static inline bool __netif_tx_trylock(struct netdev_queue *txq)
- {
- 	bool ok = spin_trylock(&txq->_xmit_lock);
- 	if (likely(ok))
--		txq->xmit_lock_owner = smp_processor_id();
-+		netdev_queue_set_owner(txq, smp_processor_id());
- 	return ok;
- }
- 
- static inline void __netif_tx_unlock(struct netdev_queue *txq)
- {
--	txq->xmit_lock_owner = -1;
-+	netdev_queue_clear_owner(txq);
- 	spin_unlock(&txq->_xmit_lock);
- }
- 
- static inline void __netif_tx_unlock_bh(struct netdev_queue *txq)
- {
--	txq->xmit_lock_owner = -1;
-+	netdev_queue_clear_owner(txq);
- 	spin_unlock_bh(&txq->_xmit_lock);
- }
- 
- static inline void txq_trans_update(struct netdev_queue *txq)
- {
--	if (txq->xmit_lock_owner != -1)
-+	if (netdev_queue_has_owner(txq))
- 		txq->trans_start = jiffies;
- }
- 
-diff --git a/net/core/dev.c b/net/core/dev.c
-index 93995575d23a..e7dc4700e463 100644
---- a/net/core/dev.c
-+++ b/net/core/dev.c
-@@ -3449,7 +3449,11 @@ static int __dev_queue_xmit(struct sk_buff *skb, void *accel_priv)
- 	if (dev->flags & IFF_UP) {
- 		int cpu = smp_processor_id(); /* ok because BHs are off */
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+		if (txq->xmit_lock_owner != current) {
-+#else
- 		if (txq->xmit_lock_owner != cpu) {
-+#endif
- 			if (unlikely(xmit_rec_read() > XMIT_RECURSION_LIMIT))
- 				goto recursion_alert;
- 
-@@ -7168,7 +7172,7 @@ static void netdev_init_one_queue(struct net_device *dev,
- 	/* Initialize queue lock */
- 	spin_lock_init(&queue->_xmit_lock);
- 	netdev_set_xmit_lockdep_class(&queue->_xmit_lock, dev->type);
--	queue->xmit_lock_owner = -1;
-+	netdev_queue_clear_owner(queue);
- 	netdev_queue_numa_node_write(queue, NUMA_NO_NODE);
- 	queue->dev = dev;
- #ifdef CONFIG_BQL
+ #endif
 -- 
 2.18.0
