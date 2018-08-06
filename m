@@ -1,7 +1,7 @@
 From: Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 06/22] rcu: Do not include rtmutex_common.h unconditionally
-Date: Mon,  6 Aug 2018 04:17:22 -0500
-Message-ID: <de65a1a830c790099a8e27238566ec8785c7a3b8.1533540554.git.julia@ni.com>
+Subject: [PATCH RT 12/22] locking: add types.h
+Date: Mon,  6 Aug 2018 04:17:28 -0500
+Message-ID: <c1dafe11673fe140e4155fc3fb2e480c073d22d7.1533540554.git.julia@ni.com>
 References: <cover.1533540554.git.julia@ni.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -12,8 +12,7 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com,
-        "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>
+        tom.zanussi@linux.intel.com, stable-rt@vger.kernel.org
 To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1533540554.git.julia@ni.com>
@@ -26,41 +25,29 @@ From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 If you have any objection to the inclusion of this patch, let me know.
 
 --- 8< --- 8< --- 8< ---
-[ upstream commit b88697810d7c1d102a529990f9071b0f14cfe6df ]
+During the stable update the arm architecture did not compile anymore
+due to missing definition of u16/32.
 
-This commit adjusts include files and provides definitions in preparation
-for suppressing lockdep false-positive ->boost_mtx complaints.  Without
-this preparation, architectures not supporting rt_mutex will get build
-failures.
-
-Reported-by: kbuild test robot <fengguang.wu@intel.com>
+Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+(cherry picked from commit 1289b06974d64f244a26455fab699c6a1332f4bc)
 Signed-off-by: Julia Cartwright <julia@ni.com>
 ---
- kernel/rcu/tree_plugin.h | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ include/linux/spinlock_types_raw.h | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
-index a1a7bafcce15..3d18d08e8382 100644
---- a/kernel/rcu/tree_plugin.h
-+++ b/kernel/rcu/tree_plugin.h
-@@ -37,6 +37,7 @@
-  * This probably needs to be excluded from -rt builds.
-  */
- #define rt_mutex_owner(a) ({ WARN_ON_ONCE(1); NULL; })
-+#define rt_mutex_futex_unlock(x) WARN_ON_ONCE(1)
+diff --git a/include/linux/spinlock_types_raw.h b/include/linux/spinlock_types_raw.h
+index edffc4d53fc9..03235b475b77 100644
+--- a/include/linux/spinlock_types_raw.h
++++ b/include/linux/spinlock_types_raw.h
+@@ -1,6 +1,8 @@
+ #ifndef __LINUX_SPINLOCK_TYPES_RAW_H
+ #define __LINUX_SPINLOCK_TYPES_RAW_H
  
- #endif /* #else #ifdef CONFIG_RCU_BOOST */
- 
-@@ -834,8 +835,6 @@ static void rcu_cpu_kthread_setup(unsigned int cpu)
- 
- #ifdef CONFIG_RCU_BOOST
- 
--#include "../locking/rtmutex_common.h"
--
- #ifdef CONFIG_RCU_TRACE
- 
- static void rcu_initiate_boost_trace(struct rcu_node *rnp)
++#include <linux/types.h>
++
+ #if defined(CONFIG_SMP)
+ # include <asm/spinlock_types.h>
+ #else
 -- 
 2.18.0
