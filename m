@@ -1,7 +1,7 @@
 From: Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 15/22] Revert "block: blk-mq: Use swait"
-Date: Mon,  6 Aug 2018 04:17:31 -0500
-Message-ID: <8ef3b21d6eae4978b052c3384bc205f355cc92c2.1533540554.git.julia@ni.com>
+Subject: [PATCH RT 06/22] rcu: Do not include rtmutex_common.h unconditionally
+Date: Mon,  6 Aug 2018 04:17:22 -0500
+Message-ID: <de65a1a830c790099a8e27238566ec8785c7a3b8.1533540554.git.julia@ni.com>
 References: <cover.1533540554.git.julia@ni.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -12,7 +12,8 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com, stable-rt@vger.kernel.org
+        tom.zanussi@linux.intel.com,
+        "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>
 To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1533540554.git.julia@ni.com>
@@ -25,97 +26,41 @@ From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 If you have any objection to the inclusion of this patch, let me know.
 
 --- 8< --- 8< --- 8< ---
-This reverts commit "block: blk-mq: Use swait". The issue remains but
-will be fixed differently.
+[ upstream commit b88697810d7c1d102a529990f9071b0f14cfe6df ]
 
-Cc: stable-rt@vger.kernel.org
+This commit adjusts include files and provides definitions in preparation
+for suppressing lockdep false-positive ->boost_mtx complaints.  Without
+this preparation, architectures not supporting rt_mutex will get build
+failures.
+
+Reported-by: kbuild test robot <fengguang.wu@intel.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-(cherry-picked from ca3fd6cf836739fd59eac2f7a9b0261365e818bb)
+Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
 Signed-off-by: Julia Cartwright <julia@ni.com>
 ---
- block/blk-core.c       | 10 +++++-----
- block/blk-mq.c         |  6 +++---
- include/linux/blkdev.h |  2 +-
- 3 files changed, 9 insertions(+), 9 deletions(-)
+ kernel/rcu/tree_plugin.h | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index e4ac43392875..87d3e0a503e5 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -662,9 +662,9 @@ int blk_queue_enter(struct request_queue *q, bool nowait)
- 		if (nowait)
- 			return -EBUSY;
+diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
+index a1a7bafcce15..3d18d08e8382 100644
+--- a/kernel/rcu/tree_plugin.h
++++ b/kernel/rcu/tree_plugin.h
+@@ -37,6 +37,7 @@
+  * This probably needs to be excluded from -rt builds.
+  */
+ #define rt_mutex_owner(a) ({ WARN_ON_ONCE(1); NULL; })
++#define rt_mutex_futex_unlock(x) WARN_ON_ONCE(1)
  
--		swait_event(q->mq_freeze_wq,
--			    !atomic_read(&q->mq_freeze_depth) ||
--			    blk_queue_dying(q));
-+		wait_event(q->mq_freeze_wq,
-+			   !atomic_read(&q->mq_freeze_depth) ||
-+			   blk_queue_dying(q));
- 		if (blk_queue_dying(q))
- 			return -ENODEV;
- 	}
-@@ -680,7 +680,7 @@ static void blk_queue_usage_counter_release(struct percpu_ref *ref)
- 	struct request_queue *q =
- 		container_of(ref, struct request_queue, q_usage_counter);
+ #endif /* #else #ifdef CONFIG_RCU_BOOST */
  
--	swake_up_all(&q->mq_freeze_wq);
-+	wake_up_all(&q->mq_freeze_wq);
- }
+@@ -834,8 +835,6 @@ static void rcu_cpu_kthread_setup(unsigned int cpu)
  
- static void blk_rq_timed_out_timer(unsigned long data)
-@@ -750,7 +750,7 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
- 	q->bypass_depth = 1;
- 	__set_bit(QUEUE_FLAG_BYPASS, &q->queue_flags);
+ #ifdef CONFIG_RCU_BOOST
  
--	init_swait_queue_head(&q->mq_freeze_wq);
-+	init_waitqueue_head(&q->mq_freeze_wq);
+-#include "../locking/rtmutex_common.h"
+-
+ #ifdef CONFIG_RCU_TRACE
  
- 	/*
- 	 * Init percpu_ref in atomic mode so that it's faster to shutdown.
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index e0a804ab5420..3a49552974ec 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -72,7 +72,7 @@ EXPORT_SYMBOL_GPL(blk_mq_freeze_queue_start);
- 
- static void blk_mq_freeze_queue_wait(struct request_queue *q)
- {
--	swait_event(q->mq_freeze_wq, percpu_ref_is_zero(&q->q_usage_counter));
-+	wait_event(q->mq_freeze_wq, percpu_ref_is_zero(&q->q_usage_counter));
- }
- 
- /*
-@@ -110,7 +110,7 @@ void blk_mq_unfreeze_queue(struct request_queue *q)
- 	WARN_ON_ONCE(freeze_depth < 0);
- 	if (!freeze_depth) {
- 		percpu_ref_reinit(&q->q_usage_counter);
--		swake_up_all(&q->mq_freeze_wq);
-+		wake_up_all(&q->mq_freeze_wq);
- 	}
- }
- EXPORT_SYMBOL_GPL(blk_mq_unfreeze_queue);
-@@ -129,7 +129,7 @@ void blk_mq_wake_waiters(struct request_queue *q)
- 	 * dying, we need to ensure that processes currently waiting on
- 	 * the queue are notified as well.
- 	 */
--	swake_up_all(&q->mq_freeze_wq);
-+	wake_up_all(&q->mq_freeze_wq);
- }
- 
- bool blk_mq_can_queue(struct blk_mq_hw_ctx *hctx)
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 34fd1ed9845e..fdb449fe3ff7 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -468,7 +468,7 @@ struct request_queue {
- 	struct throtl_data *td;
- #endif
- 	struct rcu_head		rcu_head;
--	struct swait_queue_head	mq_freeze_wq;
-+	wait_queue_head_t	mq_freeze_wq;
- 	struct percpu_ref	q_usage_counter;
- 	struct list_head	all_q_node;
- 
+ static void rcu_initiate_boost_trace(struct rcu_node *rnp)
 -- 
 2.18.0
