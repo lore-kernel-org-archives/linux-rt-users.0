@@ -1,7 +1,7 @@
 From: Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 11/22] mm/slub: close possible memory-leak in kmem_cache_alloc_bulk()
-Date: Mon,  6 Aug 2018 04:17:27 -0500
-Message-ID: <e01b9184383bd4cece79f22bcb500f2a2918e3aa.1533540554.git.julia@ni.com>
+Subject: [PATCH RT 15/22] Revert "block: blk-mq: Use swait"
+Date: Mon,  6 Aug 2018 04:17:31 -0500
+Message-ID: <8ef3b21d6eae4978b052c3384bc205f355cc92c2.1533540554.git.julia@ni.com>
 References: <cover.1533540554.git.julia@ni.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -25,29 +25,97 @@ From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 If you have any objection to the inclusion of this patch, let me know.
 
 --- 8< --- 8< --- 8< ---
-Under certain circumstances we could leak elements which were moved to
-the local "to_free" list. The damage is limited since I can't find
-any users here.
+This reverts commit "block: blk-mq: Use swait". The issue remains but
+will be fixed differently.
 
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-(cherry picked from commit 5022166d3b225bf5e343efb3ea01b3c5a41d69ba)
+(cherry-picked from ca3fd6cf836739fd59eac2f7a9b0261365e818bb)
 Signed-off-by: Julia Cartwright <julia@ni.com>
 ---
- mm/slub.c | 1 +
- 1 file changed, 1 insertion(+)
+ block/blk-core.c       | 10 +++++-----
+ block/blk-mq.c         |  6 +++---
+ include/linux/blkdev.h |  2 +-
+ 3 files changed, 9 insertions(+), 9 deletions(-)
 
-diff --git a/mm/slub.c b/mm/slub.c
-index 67eb368b9314..738b2bccbd5f 100644
---- a/mm/slub.c
-+++ b/mm/slub.c
-@@ -3209,6 +3209,7 @@ int kmem_cache_alloc_bulk(struct kmem_cache *s, gfp_t flags, size_t size,
- 	return i;
- error:
- 	local_irq_enable();
-+	free_delayed(&to_free);
- 	slab_post_alloc_hook(s, flags, i, p);
- 	__kmem_cache_free_bulk(s, i, p);
- 	return 0;
+diff --git a/block/blk-core.c b/block/blk-core.c
+index e4ac43392875..87d3e0a503e5 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -662,9 +662,9 @@ int blk_queue_enter(struct request_queue *q, bool nowait)
+ 		if (nowait)
+ 			return -EBUSY;
+ 
+-		swait_event(q->mq_freeze_wq,
+-			    !atomic_read(&q->mq_freeze_depth) ||
+-			    blk_queue_dying(q));
++		wait_event(q->mq_freeze_wq,
++			   !atomic_read(&q->mq_freeze_depth) ||
++			   blk_queue_dying(q));
+ 		if (blk_queue_dying(q))
+ 			return -ENODEV;
+ 	}
+@@ -680,7 +680,7 @@ static void blk_queue_usage_counter_release(struct percpu_ref *ref)
+ 	struct request_queue *q =
+ 		container_of(ref, struct request_queue, q_usage_counter);
+ 
+-	swake_up_all(&q->mq_freeze_wq);
++	wake_up_all(&q->mq_freeze_wq);
+ }
+ 
+ static void blk_rq_timed_out_timer(unsigned long data)
+@@ -750,7 +750,7 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
+ 	q->bypass_depth = 1;
+ 	__set_bit(QUEUE_FLAG_BYPASS, &q->queue_flags);
+ 
+-	init_swait_queue_head(&q->mq_freeze_wq);
++	init_waitqueue_head(&q->mq_freeze_wq);
+ 
+ 	/*
+ 	 * Init percpu_ref in atomic mode so that it's faster to shutdown.
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index e0a804ab5420..3a49552974ec 100644
+--- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -72,7 +72,7 @@ EXPORT_SYMBOL_GPL(blk_mq_freeze_queue_start);
+ 
+ static void blk_mq_freeze_queue_wait(struct request_queue *q)
+ {
+-	swait_event(q->mq_freeze_wq, percpu_ref_is_zero(&q->q_usage_counter));
++	wait_event(q->mq_freeze_wq, percpu_ref_is_zero(&q->q_usage_counter));
+ }
+ 
+ /*
+@@ -110,7 +110,7 @@ void blk_mq_unfreeze_queue(struct request_queue *q)
+ 	WARN_ON_ONCE(freeze_depth < 0);
+ 	if (!freeze_depth) {
+ 		percpu_ref_reinit(&q->q_usage_counter);
+-		swake_up_all(&q->mq_freeze_wq);
++		wake_up_all(&q->mq_freeze_wq);
+ 	}
+ }
+ EXPORT_SYMBOL_GPL(blk_mq_unfreeze_queue);
+@@ -129,7 +129,7 @@ void blk_mq_wake_waiters(struct request_queue *q)
+ 	 * dying, we need to ensure that processes currently waiting on
+ 	 * the queue are notified as well.
+ 	 */
+-	swake_up_all(&q->mq_freeze_wq);
++	wake_up_all(&q->mq_freeze_wq);
+ }
+ 
+ bool blk_mq_can_queue(struct blk_mq_hw_ctx *hctx)
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 34fd1ed9845e..fdb449fe3ff7 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -468,7 +468,7 @@ struct request_queue {
+ 	struct throtl_data *td;
+ #endif
+ 	struct rcu_head		rcu_head;
+-	struct swait_queue_head	mq_freeze_wq;
++	wait_queue_head_t	mq_freeze_wq;
+ 	struct percpu_ref	q_usage_counter;
+ 	struct list_head	all_q_node;
+ 
 -- 
 2.18.0
