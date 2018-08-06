@@ -1,7 +1,7 @@
 From: Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 10/22] arm*: disable NEON in kernel mode
-Date: Mon,  6 Aug 2018 04:17:26 -0500
-Message-ID: <e762f762bb8a7afe92b522f2345fb126f60a2792.1533540554.git.julia@ni.com>
+Subject: [PATCH RT 18/22] posix-timers: move the rcu head out of the union
+Date: Mon,  6 Aug 2018 04:17:34 -0500
+Message-ID: <63db6ca7324ab08eaad12613bf865382e54cd6c0.1533540554.git.julia@ni.com>
 References: <cover.1533540554.git.julia@ni.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -25,88 +25,59 @@ From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 If you have any objection to the inclusion of this patch, let me know.
 
 --- 8< --- 8< --- 8< ---
-NEON in kernel mode is used by the crypto algorithms and raid6 code.
-While the raid6 code looks okay, the crypto algorithms do not: NEON
-is enabled on first invocation and may allocate/free/map memory before
-the NEON mode is disabled again.
-This needs to be changed until it can be enabled.
-On ARM NEON in kernel mode can be simply disabled. on ARM64 it needs to
-stay on due to possible EFI callbacks so here I disable each algorithm.
+On RT the timer can be preempted while running and therefore we wait
+with timer_wait_for_callback() for the timer to complete (instead of
+busy looping). The RCU-readlock is held to ensure that this posix timer
+is not removed while we wait on it.
+If the timer is removed then it invokes call_rcu() with a pointer that
+is shared with the hrtimer because it is part of the same union.
+In order to avoid any possible side effects I am moving the rcu pointer
+out of the union.
 
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-(cherry picked from commit b3a776555e0d465df138d254d6dc3ac1b718ac6d)
+(cherry picked from commit b8401365af110949f12c7cf1fa86b4c0ea069bbd)
 Signed-off-by: Julia Cartwright <julia@ni.com>
 ---
- arch/arm/Kconfig          |  2 +-
- arch/arm64/crypto/Kconfig | 14 +++++++-------
- 2 files changed, 8 insertions(+), 8 deletions(-)
+ include/linux/posix-timers.h | 2 +-
+ kernel/time/posix-timers.c   | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
-index 5715844e83e3..8c40f7d73251 100644
---- a/arch/arm/Kconfig
-+++ b/arch/arm/Kconfig
-@@ -2158,7 +2158,7 @@ config NEON
+diff --git a/include/linux/posix-timers.h b/include/linux/posix-timers.h
+index 62d44c176071..cbd3f9334543 100644
+--- a/include/linux/posix-timers.h
++++ b/include/linux/posix-timers.h
+@@ -92,8 +92,8 @@ struct k_itimer {
+ 			struct alarm alarmtimer;
+ 			ktime_t interval;
+ 		} alarm;
+-		struct rcu_head rcu;
+ 	} it;
++	struct rcu_head		rcu;
+ };
  
- config KERNEL_MODE_NEON
- 	bool "Support for NEON in kernel mode"
--	depends on NEON && AEABI
-+	depends on NEON && AEABI && !PREEMPT_RT_BASE
- 	help
- 	  Say Y to include support for NEON in kernel mode.
+ struct k_clock {
+diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
+index 6084618436fd..45d8033caec4 100644
+--- a/kernel/time/posix-timers.c
++++ b/kernel/time/posix-timers.c
+@@ -568,7 +568,7 @@ static struct k_itimer * alloc_posix_timer(void)
  
-diff --git a/arch/arm64/crypto/Kconfig b/arch/arm64/crypto/Kconfig
-index 2cf32e9887e1..cd71b3432720 100644
---- a/arch/arm64/crypto/Kconfig
-+++ b/arch/arm64/crypto/Kconfig
-@@ -10,41 +10,41 @@ if ARM64_CRYPTO
+ static void k_itimer_rcu_free(struct rcu_head *head)
+ {
+-	struct k_itimer *tmr = container_of(head, struct k_itimer, it.rcu);
++	struct k_itimer *tmr = container_of(head, struct k_itimer, rcu);
  
- config CRYPTO_SHA1_ARM64_CE
- 	tristate "SHA-1 digest algorithm (ARMv8 Crypto Extensions)"
--	depends on ARM64 && KERNEL_MODE_NEON
-+	depends on ARM64 && KERNEL_MODE_NEON && !PREEMPT_RT_BASE
- 	select CRYPTO_HASH
+ 	kmem_cache_free(posix_timers_cache, tmr);
+ }
+@@ -585,7 +585,7 @@ static void release_posix_timer(struct k_itimer *tmr, int it_id_set)
+ 	}
+ 	put_pid(tmr->it_pid);
+ 	sigqueue_free(tmr->sigq);
+-	call_rcu(&tmr->it.rcu, k_itimer_rcu_free);
++	call_rcu(&tmr->rcu, k_itimer_rcu_free);
+ }
  
- config CRYPTO_SHA2_ARM64_CE
- 	tristate "SHA-224/SHA-256 digest algorithm (ARMv8 Crypto Extensions)"
--	depends on ARM64 && KERNEL_MODE_NEON
-+	depends on ARM64 && KERNEL_MODE_NEON && !PREEMPT_RT_BASE
- 	select CRYPTO_HASH
- 
- config CRYPTO_GHASH_ARM64_CE
- 	tristate "GHASH (for GCM chaining mode) using ARMv8 Crypto Extensions"
--	depends on ARM64 && KERNEL_MODE_NEON
-+	depends on ARM64 && KERNEL_MODE_NEON && !PREEMPT_RT_BASE
- 	select CRYPTO_HASH
- 
- config CRYPTO_AES_ARM64_CE
- 	tristate "AES core cipher using ARMv8 Crypto Extensions"
--	depends on ARM64 && KERNEL_MODE_NEON
-+	depends on ARM64 && KERNEL_MODE_NEON && !PREEMPT_RT_BASE
- 	select CRYPTO_ALGAPI
- 
- config CRYPTO_AES_ARM64_CE_CCM
- 	tristate "AES in CCM mode using ARMv8 Crypto Extensions"
--	depends on ARM64 && KERNEL_MODE_NEON
-+	depends on ARM64 && KERNEL_MODE_NEON && !PREEMPT_RT_BASE
- 	select CRYPTO_ALGAPI
- 	select CRYPTO_AES_ARM64_CE
- 	select CRYPTO_AEAD
- 
- config CRYPTO_AES_ARM64_CE_BLK
- 	tristate "AES in ECB/CBC/CTR/XTS modes using ARMv8 Crypto Extensions"
--	depends on ARM64 && KERNEL_MODE_NEON
-+	depends on ARM64 && KERNEL_MODE_NEON && !PREEMPT_RT_BASE
- 	select CRYPTO_BLKCIPHER
- 	select CRYPTO_AES_ARM64_CE
- 	select CRYPTO_ABLK_HELPER
- 
- config CRYPTO_AES_ARM64_NEON_BLK
- 	tristate "AES in ECB/CBC/CTR/XTS modes using NEON instructions"
--	depends on ARM64 && KERNEL_MODE_NEON
-+	depends on ARM64 && KERNEL_MODE_NEON && !PREEMPT_RT_BASE
- 	select CRYPTO_BLKCIPHER
- 	select CRYPTO_AES
- 	select CRYPTO_ABLK_HELPER
+ static struct k_clock *clockid_to_kclock(const clockid_t id)
 -- 
 2.18.0
