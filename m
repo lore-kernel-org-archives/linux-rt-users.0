@@ -1,7 +1,7 @@
 From: Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 01/22] futex: Fix pi_state->owner serialization
-Date: Mon,  6 Aug 2018 04:17:17 -0500
-Message-ID: <43d23e5c64e32c64e18559ef810157700bf3eac4.1533540554.git.julia@ni.com>
+Subject: [PATCH RT 14/22] Revert "rt,ntp: Move call to schedule_delayed_work() to helper thread"
+Date: Mon,  6 Aug 2018 04:17:30 -0500
+Message-ID: <b9699e9fe2effcc1e54e54e04d247f5b6cf1b294.1533540554.git.julia@ni.com>
 References: <cover.1533540554.git.julia@ni.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -12,133 +12,88 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com, Peter Zijlstra <peterz@infradead.org>,
-        dvhart@infradead.org, stable@vger.kernel.org
+        tom.zanussi@linux.intel.com, stable-rt@vger.kernel.org
 To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1533540554.git.julia@ni.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Peter Zijlstra <peterz@infradead.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
 4.9.115-rt94-rc1 stable review patch.
 If you have any objection to the inclusion of this patch, let me know.
 
 --- 8< --- 8< --- 8< ---
-[ Upstream commit c74aef2d06a9f59cece89093eecc552933cba72a ]
+I've been looking at this in v3.10-RT where it got in. The patch
+description says
 
-There was a reported suspicion about a race between exit_pi_state_list()
-and put_pi_state(). The same report mentioned the comment with
-put_pi_state() said it should be called with hb->lock held, and it no
-longer is in all places.
+|The ntp code for notify_cmos_timer() is called from a hard interrupt
+|context.
 
-As it turns out, the pi_state->owner serialization is indeed broken. As per
-the new rules:
+I see only one caller of ntp_notify_cmos_timer() and that is
+do_adjtimex() after "raw_spin_unlock_irqrestore()".
+I see a few callers of do_adjtimex() which is SYS_adjtimex() (+compat)
+and posix_clock_realtime_adj() which in turn is called by
+SYS_clock_adjtime().
 
-  734009e96d19 ("futex: Change locking rules")
+Reverting the patch.
 
-pi_state->owner should be serialized by pi_state->pi_mutex.wait_lock.
-For the sites setting pi_state->owner we already hold wait_lock (where
-required) but exit_pi_state_list() and put_pi_state() were not and
-raced on clearing it.
-
-Fixes: 734009e96d19 ("futex: Change locking rules")
-Reported-by: Gratian Crisan <gratian.crisan@ni.com>
-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: dvhart@infradead.org
-Cc: stable@vger.kernel.org
-Link: https://lkml.kernel.org/r/20170922154806.jd3ffltfk24m4o4y@hirez.programming.kicks-ass.net
+Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+(cherry picked from commit 932c5783d4434250a1019f49ae81b80731dfd4cd)
 Signed-off-by: Julia Cartwright <julia@ni.com>
 ---
- kernel/futex.c | 34 ++++++++++++++++++++++------------
- 1 file changed, 22 insertions(+), 12 deletions(-)
+ kernel/time/ntp.c | 26 --------------------------
+ 1 file changed, 26 deletions(-)
 
-diff --git a/kernel/futex.c b/kernel/futex.c
-index 8ab0ddd4cf8f..47e42faad6c5 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -819,8 +819,6 @@ static void get_pi_state(struct futex_pi_state *pi_state)
- /*
-  * Drops a reference to the pi_state object and frees or caches it
-  * when the last reference is gone.
-- *
-- * Must be called with the hb lock held.
-  */
- static void put_pi_state(struct futex_pi_state *pi_state)
- {
-@@ -835,16 +833,22 @@ static void put_pi_state(struct futex_pi_state *pi_state)
- 	 * and has cleaned up the pi_state already
- 	 */
- 	if (pi_state->owner) {
--		raw_spin_lock_irq(&pi_state->owner->pi_lock);
--		list_del_init(&pi_state->list);
--		raw_spin_unlock_irq(&pi_state->owner->pi_lock);
-+		struct task_struct *owner;
+diff --git a/kernel/time/ntp.c b/kernel/time/ntp.c
+index 05b7391bf9bd..6df8927c58a5 100644
+--- a/kernel/time/ntp.c
++++ b/kernel/time/ntp.c
+@@ -17,7 +17,6 @@
+ #include <linux/module.h>
+ #include <linux/rtc.h>
+ #include <linux/math64.h>
+-#include <linux/swork.h>
  
--		rt_mutex_proxy_unlock(&pi_state->pi_mutex, pi_state->owner);
-+		raw_spin_lock_irq(&pi_state->pi_mutex.wait_lock);
-+		owner = pi_state->owner;
-+		if (owner) {
-+			raw_spin_lock(&owner->pi_lock);
-+			list_del_init(&pi_state->list);
-+			raw_spin_unlock(&owner->pi_lock);
-+		}
-+		rt_mutex_proxy_unlock(&pi_state->pi_mutex, owner);
-+		raw_spin_unlock_irq(&pi_state->pi_mutex.wait_lock);
- 	}
+ #include "ntp_internal.h"
+ #include "timekeeping_internal.h"
+@@ -569,35 +568,10 @@ static void sync_cmos_clock(struct work_struct *work)
+ 			   &sync_cmos_work, timespec64_to_jiffies(&next));
+ }
  
--	if (current->pi_state_cache)
-+	if (current->pi_state_cache) {
- 		kfree(pi_state);
--	else {
-+	} else {
- 		/*
- 		 * pi_state->list is already empty.
- 		 * clear pi_state->owner.
-@@ -903,14 +907,15 @@ void exit_pi_state_list(struct task_struct *curr)
- 		raw_spin_unlock_irq(&curr->pi_lock);
- 
- 		spin_lock(&hb->lock);
+-#ifdef CONFIG_PREEMPT_RT_FULL
 -
--		raw_spin_lock_irq(&curr->pi_lock);
-+		raw_spin_lock_irq(&pi_state->pi_mutex.wait_lock);
-+		raw_spin_lock(&curr->pi_lock);
- 		/*
- 		 * We dropped the pi-lock, so re-check whether this
- 		 * task still owns the PI-state:
- 		 */
- 		if (head->next != next) {
--			raw_spin_unlock_irq(&curr->pi_lock);
-+			raw_spin_unlock(&curr->pi_lock);
-+			raw_spin_unlock_irq(&pi_state->pi_mutex.wait_lock);
- 			spin_unlock(&hb->lock);
- 			raw_spin_lock_irq(&curr->pi_lock);
- 			continue;
-@@ -920,9 +925,10 @@ void exit_pi_state_list(struct task_struct *curr)
- 		WARN_ON(list_empty(&pi_state->list));
- 		list_del_init(&pi_state->list);
- 		pi_state->owner = NULL;
--		raw_spin_unlock_irq(&curr->pi_lock);
-+		raw_spin_unlock(&curr->pi_lock);
+-static void run_clock_set_delay(struct swork_event *event)
+-{
+-	queue_delayed_work(system_power_efficient_wq, &sync_cmos_work, 0);
+-}
+-
+-static struct swork_event ntp_cmos_swork;
+-
+-void ntp_notify_cmos_timer(void)
+-{
+-	swork_queue(&ntp_cmos_swork);
+-}
+-
+-static __init int create_cmos_delay_thread(void)
+-{
+-	WARN_ON(swork_get());
+-	INIT_SWORK(&ntp_cmos_swork, run_clock_set_delay);
+-	return 0;
+-}
+-early_initcall(create_cmos_delay_thread);
+-
+-#else
+-
+ void ntp_notify_cmos_timer(void)
+ {
+ 	queue_delayed_work(system_power_efficient_wq, &sync_cmos_work, 0);
+ }
+-#endif /* CONFIG_PREEMPT_RT_FULL */
  
- 		get_pi_state(pi_state);
-+		raw_spin_unlock_irq(&pi_state->pi_mutex.wait_lock);
- 		spin_unlock(&hb->lock);
- 
- 		rt_mutex_futex_unlock(&pi_state->pi_mutex);
-@@ -1204,6 +1210,10 @@ static int attach_to_pi_owner(u32 uval, union futex_key *key,
- 
- 	WARN_ON(!list_empty(&pi_state->list));
- 	list_add(&pi_state->list, &p->pi_state_list);
-+	/*
-+	 * Assignment without holding pi_state->pi_mutex.wait_lock is safe
-+	 * because there is no concurrency as the object is not published yet.
-+	 */
- 	pi_state->owner = p;
- 	raw_spin_unlock_irq(&p->pi_lock);
- 
+ #else
+ void ntp_notify_cmos_timer(void) { }
 -- 
 2.18.0
