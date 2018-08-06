@@ -1,11 +1,10 @@
 From: Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 09/22] crypto: limit more FPU-enabled sections
-Date: Mon,  6 Aug 2018 04:17:25 -0500
-Message-ID: <5fc4fe6c1f808230483b805de7bf21ff935707c4.1533540554.git.julia@ni.com>
+Subject: [PATCH RT 16/22] block: blk-mq: move blk_queue_usage_counter_release() into process context
+Date: Mon,  6 Aug 2018 04:17:32 -0500
+Message-ID: <9dd9d390ebdb534a766887b11bb1666bf87d8ca3.1533540554.git.julia@ni.com>
 References: <cover.1533540554.git.julia@ni.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Steven Rostedt <rostedt@goodmis.org>,
         Carsten Emde <C.Emde@osadl.org>,
@@ -26,496 +25,118 @@ From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 If you have any objection to the inclusion of this patch, let me know.
 
 --- 8< --- 8< --- 8< ---
-Those crypto drivers use SSE/AVX/… for their crypto work and in order to
-do so in kernel they need to enable the "FPU" in kernel mode which
-disables preemption.
-There are two problems with the way they are used:
-- the while loop which processes X bytes may create latency spikes and
-  should be avoided or limited.
-- the cipher-walk-next part may allocate/free memory and may use
-  kmap_atomic().
+| BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:914
+| in_atomic(): 1, irqs_disabled(): 0, pid: 255, name: kworker/u257:6
+| 5 locks held by kworker/u257:6/255:
+|  #0:  ("events_unbound"){.+.+.+}, at: [<ffffffff8108edf1>] process_one_work+0x171/0x5e0
+|  #1:  ((&entry->work)){+.+.+.}, at: [<ffffffff8108edf1>] process_one_work+0x171/0x5e0
+|  #2:  (&shost->scan_mutex){+.+.+.}, at: [<ffffffffa000faa3>] __scsi_add_device+0xa3/0x130 [scsi_mod]
+|  #3:  (&set->tag_list_lock){+.+...}, at: [<ffffffff812f09fa>] blk_mq_init_queue+0x96a/0xa50
+|  #4:  (rcu_read_lock_sched){......}, at: [<ffffffff8132887d>] percpu_ref_kill_and_confirm+0x1d/0x120
+| Preemption disabled at:[<ffffffff812eff76>] blk_mq_freeze_queue_start+0x56/0x70
+|
+| CPU: 2 PID: 255 Comm: kworker/u257:6 Not tainted 3.18.7-rt0+ #1
+| Workqueue: events_unbound async_run_entry_fn
+|  0000000000000003 ffff8800bc29f998 ffffffff815b3a12 0000000000000000
+|  0000000000000000 ffff8800bc29f9b8 ffffffff8109aa16 ffff8800bc29fa28
+|  ffff8800bc5d1bc8 ffff8800bc29f9e8 ffffffff815b8dd4 ffff880000000000
+| Call Trace:
+|  [<ffffffff815b3a12>] dump_stack+0x4f/0x7c
+|  [<ffffffff8109aa16>] __might_sleep+0x116/0x190
+|  [<ffffffff815b8dd4>] rt_spin_lock+0x24/0x60
+|  [<ffffffff810b6089>] __wake_up+0x29/0x60
+|  [<ffffffff812ee06e>] blk_mq_usage_counter_release+0x1e/0x20
+|  [<ffffffff81328966>] percpu_ref_kill_and_confirm+0x106/0x120
+|  [<ffffffff812eff76>] blk_mq_freeze_queue_start+0x56/0x70
+|  [<ffffffff812f0000>] blk_mq_update_tag_set_depth+0x40/0xd0
+|  [<ffffffff812f0a1c>] blk_mq_init_queue+0x98c/0xa50
+|  [<ffffffffa000dcf0>] scsi_mq_alloc_queue+0x20/0x60 [scsi_mod]
+|  [<ffffffffa000ea35>] scsi_alloc_sdev+0x2f5/0x370 [scsi_mod]
+|  [<ffffffffa000f494>] scsi_probe_and_add_lun+0x9e4/0xdd0 [scsi_mod]
+|  [<ffffffffa000fb26>] __scsi_add_device+0x126/0x130 [scsi_mod]
+|  [<ffffffffa013033f>] ata_scsi_scan_host+0xaf/0x200 [libata]
+|  [<ffffffffa012b5b6>] async_port_probe+0x46/0x60 [libata]
+|  [<ffffffff810978fb>] async_run_entry_fn+0x3b/0xf0
+|  [<ffffffff8108ee81>] process_one_work+0x201/0x5e0
 
-The whole kernel_fpu_begin()/end() processing isn't probably that cheap.
-It most likely makes sense to process as much of those as possible in one
-go. The new *_fpu_sched_rt() schedules only if a RT task is pending.
-
-Probably we should measure the performance those ciphers in pure SW
-mode and with this optimisations to see if it makes sense to keep them
-for RT.
-
-This kernel_fpu_resched() makes the code more preemptible which might hurt
-performance.
+percpu_ref_kill_and_confirm() invokes blk_mq_usage_counter_release() in
+a rcu-sched region. swait based wake queue can't be used due to
+wake_up_all() usage and disabled interrupts in !RT configs (as reported
+by Corey Minyard).
+The wq_has_sleeper() check has been suggested by Peter Zijlstra.
 
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-(cherry picked from commit 0dcc4c1693ef37e166da420ef7c68c7047c996f1)
+(cherry picked from commit 2d701058d614554cce412a787f00568b9fdffade)
 Signed-off-by: Julia Cartwright <julia@ni.com>
 ---
- arch/x86/crypto/camellia_aesni_avx2_glue.c | 20 ++++++++++++++++
- arch/x86/crypto/camellia_aesni_avx_glue.c  | 19 +++++++++++++++
- arch/x86/crypto/cast6_avx_glue.c           | 24 +++++++++++++++----
- arch/x86/crypto/chacha20_glue.c            |  9 ++++----
- arch/x86/crypto/serpent_avx2_glue.c        | 19 +++++++++++++++
- arch/x86/crypto/serpent_avx_glue.c         | 23 ++++++++++++++----
- arch/x86/crypto/serpent_sse2_glue.c        | 23 ++++++++++++++----
- arch/x86/crypto/twofish_avx_glue.c         | 27 ++++++++++++++++++++--
- arch/x86/include/asm/fpu/api.h             |  1 +
- arch/x86/kernel/fpu/core.c                 | 12 ++++++++++
- 10 files changed, 158 insertions(+), 19 deletions(-)
+ block/blk-core.c       | 14 +++++++++++++-
+ include/linux/blkdev.h |  2 ++
+ 2 files changed, 15 insertions(+), 1 deletion(-)
 
-diff --git a/arch/x86/crypto/camellia_aesni_avx2_glue.c b/arch/x86/crypto/camellia_aesni_avx2_glue.c
-index 60907c139c4e..0902db7d326a 100644
---- a/arch/x86/crypto/camellia_aesni_avx2_glue.c
-+++ b/arch/x86/crypto/camellia_aesni_avx2_glue.c
-@@ -206,6 +206,20 @@ struct crypt_priv {
- 	bool fpu_enabled;
- };
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static void camellia_fpu_end_rt(struct crypt_priv *ctx)
-+{
-+       bool fpu_enabled = ctx->fpu_enabled;
-+
-+       if (!fpu_enabled)
-+               return;
-+       camellia_fpu_end(fpu_enabled);
-+       ctx->fpu_enabled = false;
-+}
-+#else
-+static void camellia_fpu_end_rt(struct crypt_priv *ctx) { }
-+#endif
-+
- static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- {
- 	const unsigned int bsize = CAMELLIA_BLOCK_SIZE;
-@@ -221,16 +235,19 @@ static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- 	}
- 
- 	if (nbytes >= CAMELLIA_AESNI_PARALLEL_BLOCKS * bsize) {
-+		kernel_fpu_resched();
- 		camellia_ecb_enc_16way(ctx->ctx, srcdst, srcdst);
- 		srcdst += bsize * CAMELLIA_AESNI_PARALLEL_BLOCKS;
- 		nbytes -= bsize * CAMELLIA_AESNI_PARALLEL_BLOCKS;
- 	}
- 
- 	while (nbytes >= CAMELLIA_PARALLEL_BLOCKS * bsize) {
-+		kernel_fpu_resched();
- 		camellia_enc_blk_2way(ctx->ctx, srcdst, srcdst);
- 		srcdst += bsize * CAMELLIA_PARALLEL_BLOCKS;
- 		nbytes -= bsize * CAMELLIA_PARALLEL_BLOCKS;
- 	}
-+	camellia_fpu_end_rt(ctx);
- 
- 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
- 		camellia_enc_blk(ctx->ctx, srcdst, srcdst);
-@@ -251,16 +268,19 @@ static void decrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- 	}
- 
- 	if (nbytes >= CAMELLIA_AESNI_PARALLEL_BLOCKS * bsize) {
-+		kernel_fpu_resched();
- 		camellia_ecb_dec_16way(ctx->ctx, srcdst, srcdst);
- 		srcdst += bsize * CAMELLIA_AESNI_PARALLEL_BLOCKS;
- 		nbytes -= bsize * CAMELLIA_AESNI_PARALLEL_BLOCKS;
- 	}
- 
- 	while (nbytes >= CAMELLIA_PARALLEL_BLOCKS * bsize) {
-+		kernel_fpu_resched();
- 		camellia_dec_blk_2way(ctx->ctx, srcdst, srcdst);
- 		srcdst += bsize * CAMELLIA_PARALLEL_BLOCKS;
- 		nbytes -= bsize * CAMELLIA_PARALLEL_BLOCKS;
- 	}
-+	camellia_fpu_end_rt(ctx);
- 
- 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
- 		camellia_dec_blk(ctx->ctx, srcdst, srcdst);
-diff --git a/arch/x86/crypto/camellia_aesni_avx_glue.c b/arch/x86/crypto/camellia_aesni_avx_glue.c
-index d96429da88eb..3b8e91841039 100644
---- a/arch/x86/crypto/camellia_aesni_avx_glue.c
-+++ b/arch/x86/crypto/camellia_aesni_avx_glue.c
-@@ -210,6 +210,21 @@ struct crypt_priv {
- 	bool fpu_enabled;
- };
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static void camellia_fpu_end_rt(struct crypt_priv *ctx)
-+{
-+	bool fpu_enabled = ctx->fpu_enabled;
-+
-+	if (!fpu_enabled)
-+		return;
-+	camellia_fpu_end(fpu_enabled);
-+	ctx->fpu_enabled = false;
-+}
-+
-+#else
-+static void camellia_fpu_end_rt(struct crypt_priv *ctx) { }
-+#endif
-+
- static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- {
- 	const unsigned int bsize = CAMELLIA_BLOCK_SIZE;
-@@ -225,10 +240,12 @@ static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- 	}
- 
- 	while (nbytes >= CAMELLIA_PARALLEL_BLOCKS * bsize) {
-+		kernel_fpu_resched();
- 		camellia_enc_blk_2way(ctx->ctx, srcdst, srcdst);
- 		srcdst += bsize * CAMELLIA_PARALLEL_BLOCKS;
- 		nbytes -= bsize * CAMELLIA_PARALLEL_BLOCKS;
- 	}
-+	camellia_fpu_end_rt(ctx);
- 
- 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
- 		camellia_enc_blk(ctx->ctx, srcdst, srcdst);
-@@ -249,10 +266,12 @@ static void decrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- 	}
- 
- 	while (nbytes >= CAMELLIA_PARALLEL_BLOCKS * bsize) {
-+		kernel_fpu_resched();
- 		camellia_dec_blk_2way(ctx->ctx, srcdst, srcdst);
- 		srcdst += bsize * CAMELLIA_PARALLEL_BLOCKS;
- 		nbytes -= bsize * CAMELLIA_PARALLEL_BLOCKS;
- 	}
-+	camellia_fpu_end_rt(ctx);
- 
- 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
- 		camellia_dec_blk(ctx->ctx, srcdst, srcdst);
-diff --git a/arch/x86/crypto/cast6_avx_glue.c b/arch/x86/crypto/cast6_avx_glue.c
-index 50e684768c55..8caf9ba8c1da 100644
---- a/arch/x86/crypto/cast6_avx_glue.c
-+++ b/arch/x86/crypto/cast6_avx_glue.c
-@@ -205,19 +205,33 @@ struct crypt_priv {
- 	bool fpu_enabled;
- };
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static void cast6_fpu_end_rt(struct crypt_priv *ctx)
-+{
-+	bool fpu_enabled = ctx->fpu_enabled;
-+
-+	if (!fpu_enabled)
-+		return;
-+	cast6_fpu_end(fpu_enabled);
-+	ctx->fpu_enabled = false;
-+}
-+
-+#else
-+static void cast6_fpu_end_rt(struct crypt_priv *ctx) { }
-+#endif
-+
- static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- {
- 	const unsigned int bsize = CAST6_BLOCK_SIZE;
- 	struct crypt_priv *ctx = priv;
- 	int i;
- 
--	ctx->fpu_enabled = cast6_fpu_begin(ctx->fpu_enabled, nbytes);
--
- 	if (nbytes == bsize * CAST6_PARALLEL_BLOCKS) {
-+		ctx->fpu_enabled = cast6_fpu_begin(ctx->fpu_enabled, nbytes);
- 		cast6_ecb_enc_8way(ctx->ctx, srcdst, srcdst);
-+		cast6_fpu_end_rt(ctx);
- 		return;
- 	}
--
- 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
- 		__cast6_encrypt(ctx->ctx, srcdst, srcdst);
- }
-@@ -228,10 +242,10 @@ static void decrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- 	struct crypt_priv *ctx = priv;
- 	int i;
- 
--	ctx->fpu_enabled = cast6_fpu_begin(ctx->fpu_enabled, nbytes);
--
- 	if (nbytes == bsize * CAST6_PARALLEL_BLOCKS) {
-+		ctx->fpu_enabled = cast6_fpu_begin(ctx->fpu_enabled, nbytes);
- 		cast6_ecb_dec_8way(ctx->ctx, srcdst, srcdst);
-+		cast6_fpu_end_rt(ctx);
- 		return;
- 	}
- 
-diff --git a/arch/x86/crypto/chacha20_glue.c b/arch/x86/crypto/chacha20_glue.c
-index f910d1d449f0..f9e5820ae06a 100644
---- a/arch/x86/crypto/chacha20_glue.c
-+++ b/arch/x86/crypto/chacha20_glue.c
-@@ -80,23 +80,24 @@ static int chacha20_simd(struct blkcipher_desc *desc, struct scatterlist *dst,
- 
- 	crypto_chacha20_init(state, crypto_blkcipher_ctx(desc->tfm), walk.iv);
- 
--	kernel_fpu_begin();
--
- 	while (walk.nbytes >= CHACHA20_BLOCK_SIZE) {
-+		kernel_fpu_begin();
-+
- 		chacha20_dosimd(state, walk.dst.virt.addr, walk.src.virt.addr,
- 				rounddown(walk.nbytes, CHACHA20_BLOCK_SIZE));
-+		kernel_fpu_end();
- 		err = blkcipher_walk_done(desc, &walk,
- 					  walk.nbytes % CHACHA20_BLOCK_SIZE);
- 	}
- 
- 	if (walk.nbytes) {
-+		kernel_fpu_begin();
- 		chacha20_dosimd(state, walk.dst.virt.addr, walk.src.virt.addr,
- 				walk.nbytes);
-+		kernel_fpu_end();
- 		err = blkcipher_walk_done(desc, &walk, 0);
- 	}
- 
--	kernel_fpu_end();
--
- 	return err;
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 87d3e0a503e5..346d5bba3948 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -675,12 +675,21 @@ void blk_queue_exit(struct request_queue *q)
+ 	percpu_ref_put(&q->q_usage_counter);
  }
  
-diff --git a/arch/x86/crypto/serpent_avx2_glue.c b/arch/x86/crypto/serpent_avx2_glue.c
-index 870f6d812a2d..5c806bf39f1d 100644
---- a/arch/x86/crypto/serpent_avx2_glue.c
-+++ b/arch/x86/crypto/serpent_avx2_glue.c
-@@ -184,6 +184,21 @@ struct crypt_priv {
- 	bool fpu_enabled;
- };
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static void serpent_fpu_end_rt(struct crypt_priv *ctx)
++static void blk_queue_usage_counter_release_swork(struct swork_event *sev)
 +{
-+       bool fpu_enabled = ctx->fpu_enabled;
++	struct request_queue *q =
++		container_of(sev, struct request_queue, mq_pcpu_wake);
 +
-+       if (!fpu_enabled)
-+               return;
-+       serpent_fpu_end(fpu_enabled);
-+       ctx->fpu_enabled = false;
++	wake_up_all(&q->mq_freeze_wq);
 +}
 +
-+#else
-+static void serpent_fpu_end_rt(struct crypt_priv *ctx) { }
-+#endif
-+
- static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
+ static void blk_queue_usage_counter_release(struct percpu_ref *ref)
  {
- 	const unsigned int bsize = SERPENT_BLOCK_SIZE;
-@@ -199,10 +214,12 @@ static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- 	}
+ 	struct request_queue *q =
+ 		container_of(ref, struct request_queue, q_usage_counter);
  
- 	while (nbytes >= SERPENT_PARALLEL_BLOCKS * bsize) {
-+		kernel_fpu_resched();
- 		serpent_ecb_enc_8way_avx(ctx->ctx, srcdst, srcdst);
- 		srcdst += bsize * SERPENT_PARALLEL_BLOCKS;
- 		nbytes -= bsize * SERPENT_PARALLEL_BLOCKS;
- 	}
-+	serpent_fpu_end_rt(ctx);
- 
- 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
- 		__serpent_encrypt(ctx->ctx, srcdst, srcdst);
-@@ -223,10 +240,12 @@ static void decrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- 	}
- 
- 	while (nbytes >= SERPENT_PARALLEL_BLOCKS * bsize) {
-+		kernel_fpu_resched();
- 		serpent_ecb_dec_8way_avx(ctx->ctx, srcdst, srcdst);
- 		srcdst += bsize * SERPENT_PARALLEL_BLOCKS;
- 		nbytes -= bsize * SERPENT_PARALLEL_BLOCKS;
- 	}
-+	serpent_fpu_end_rt(ctx);
- 
- 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
- 		__serpent_decrypt(ctx->ctx, srcdst, srcdst);
-diff --git a/arch/x86/crypto/serpent_avx_glue.c b/arch/x86/crypto/serpent_avx_glue.c
-index 6f778d3daa22..46dcbdbd0518 100644
---- a/arch/x86/crypto/serpent_avx_glue.c
-+++ b/arch/x86/crypto/serpent_avx_glue.c
-@@ -218,16 +218,31 @@ struct crypt_priv {
- 	bool fpu_enabled;
- };
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static void serpent_fpu_end_rt(struct crypt_priv *ctx)
-+{
-+	bool fpu_enabled = ctx->fpu_enabled;
-+
-+	if (!fpu_enabled)
-+		return;
-+	serpent_fpu_end(fpu_enabled);
-+	ctx->fpu_enabled = false;
-+}
-+
-+#else
-+static void serpent_fpu_end_rt(struct crypt_priv *ctx) { }
-+#endif
-+
- static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- {
- 	const unsigned int bsize = SERPENT_BLOCK_SIZE;
- 	struct crypt_priv *ctx = priv;
- 	int i;
- 
--	ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
--
- 	if (nbytes == bsize * SERPENT_PARALLEL_BLOCKS) {
-+		ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
- 		serpent_ecb_enc_8way_avx(ctx->ctx, srcdst, srcdst);
-+		serpent_fpu_end_rt(ctx);
- 		return;
- 	}
- 
-@@ -241,10 +256,10 @@ static void decrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- 	struct crypt_priv *ctx = priv;
- 	int i;
- 
--	ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
--
- 	if (nbytes == bsize * SERPENT_PARALLEL_BLOCKS) {
-+		ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
- 		serpent_ecb_dec_8way_avx(ctx->ctx, srcdst, srcdst);
-+		serpent_fpu_end_rt(ctx);
- 		return;
- 	}
- 
-diff --git a/arch/x86/crypto/serpent_sse2_glue.c b/arch/x86/crypto/serpent_sse2_glue.c
-index 644f97ab8cac..7b135b4f6262 100644
---- a/arch/x86/crypto/serpent_sse2_glue.c
-+++ b/arch/x86/crypto/serpent_sse2_glue.c
-@@ -187,16 +187,31 @@ struct crypt_priv {
- 	bool fpu_enabled;
- };
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static void serpent_fpu_end_rt(struct crypt_priv *ctx)
-+{
-+	bool fpu_enabled = ctx->fpu_enabled;
-+
-+	if (!fpu_enabled)
-+		return;
-+	serpent_fpu_end(fpu_enabled);
-+	ctx->fpu_enabled = false;
-+}
-+
-+#else
-+static void serpent_fpu_end_rt(struct crypt_priv *ctx) { }
-+#endif
-+
- static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- {
- 	const unsigned int bsize = SERPENT_BLOCK_SIZE;
- 	struct crypt_priv *ctx = priv;
- 	int i;
- 
--	ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
--
- 	if (nbytes == bsize * SERPENT_PARALLEL_BLOCKS) {
-+		ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
- 		serpent_enc_blk_xway(ctx->ctx, srcdst, srcdst);
-+		serpent_fpu_end_rt(ctx);
- 		return;
- 	}
- 
-@@ -210,10 +225,10 @@ static void decrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- 	struct crypt_priv *ctx = priv;
- 	int i;
- 
--	ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
--
- 	if (nbytes == bsize * SERPENT_PARALLEL_BLOCKS) {
-+		ctx->fpu_enabled = serpent_fpu_begin(ctx->fpu_enabled, nbytes);
- 		serpent_dec_blk_xway(ctx->ctx, srcdst, srcdst);
-+		serpent_fpu_end_rt(ctx);
- 		return;
- 	}
- 
-diff --git a/arch/x86/crypto/twofish_avx_glue.c b/arch/x86/crypto/twofish_avx_glue.c
-index b7a3904b953c..de00fe24927e 100644
---- a/arch/x86/crypto/twofish_avx_glue.c
-+++ b/arch/x86/crypto/twofish_avx_glue.c
-@@ -218,6 +218,21 @@ struct crypt_priv {
- 	bool fpu_enabled;
- };
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static void twofish_fpu_end_rt(struct crypt_priv *ctx)
-+{
-+	bool fpu_enabled = ctx->fpu_enabled;
-+
-+	if (!fpu_enabled)
-+		return;
-+	twofish_fpu_end(fpu_enabled);
-+	ctx->fpu_enabled = false;
-+}
-+
-+#else
-+static void twofish_fpu_end_rt(struct crypt_priv *ctx) { }
-+#endif
-+
- static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- {
- 	const unsigned int bsize = TF_BLOCK_SIZE;
-@@ -228,12 +243,16 @@ static void encrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- 
- 	if (nbytes == bsize * TWOFISH_PARALLEL_BLOCKS) {
- 		twofish_ecb_enc_8way(ctx->ctx, srcdst, srcdst);
-+		twofish_fpu_end_rt(ctx);
- 		return;
- 	}
- 
--	for (i = 0; i < nbytes / (bsize * 3); i++, srcdst += bsize * 3)
-+	for (i = 0; i < nbytes / (bsize * 3); i++, srcdst += bsize * 3) {
-+		kernel_fpu_resched();
- 		twofish_enc_blk_3way(ctx->ctx, srcdst, srcdst);
-+	}
- 
-+	twofish_fpu_end_rt(ctx);
- 	nbytes %= bsize * 3;
- 
- 	for (i = 0; i < nbytes / bsize; i++, srcdst += bsize)
-@@ -250,11 +269,15 @@ static void decrypt_callback(void *priv, u8 *srcdst, unsigned int nbytes)
- 
- 	if (nbytes == bsize * TWOFISH_PARALLEL_BLOCKS) {
- 		twofish_ecb_dec_8way(ctx->ctx, srcdst, srcdst);
-+		twofish_fpu_end_rt(ctx);
- 		return;
- 	}
- 
--	for (i = 0; i < nbytes / (bsize * 3); i++, srcdst += bsize * 3)
-+	for (i = 0; i < nbytes / (bsize * 3); i++, srcdst += bsize * 3) {
-+		kernel_fpu_resched();
- 		twofish_dec_blk_3way(ctx->ctx, srcdst, srcdst);
-+	}
-+	twofish_fpu_end_rt(ctx);
- 
- 	nbytes %= bsize * 3;
- 
-diff --git a/arch/x86/include/asm/fpu/api.h b/arch/x86/include/asm/fpu/api.h
-index 1429a7c736db..85428df40a22 100644
---- a/arch/x86/include/asm/fpu/api.h
-+++ b/arch/x86/include/asm/fpu/api.h
-@@ -24,6 +24,7 @@ extern void __kernel_fpu_begin(void);
- extern void __kernel_fpu_end(void);
- extern void kernel_fpu_begin(void);
- extern void kernel_fpu_end(void);
-+extern void kernel_fpu_resched(void);
- extern bool irq_fpu_usable(void);
- 
- /*
-diff --git a/arch/x86/kernel/fpu/core.c b/arch/x86/kernel/fpu/core.c
-index 96d80dfac383..6e473a44afb7 100644
---- a/arch/x86/kernel/fpu/core.c
-+++ b/arch/x86/kernel/fpu/core.c
-@@ -158,6 +158,18 @@ void kernel_fpu_end(void)
+-	wake_up_all(&q->mq_freeze_wq);
++	if (wq_has_sleeper(&q->mq_freeze_wq))
++		swork_queue(&q->mq_pcpu_wake);
  }
- EXPORT_SYMBOL_GPL(kernel_fpu_end);
  
-+void kernel_fpu_resched(void)
-+{
-+	WARN_ON_FPU(!this_cpu_read(in_kernel_fpu));
+ static void blk_rq_timed_out_timer(unsigned long data)
+@@ -751,6 +760,7 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
+ 	__set_bit(QUEUE_FLAG_BYPASS, &q->queue_flags);
+ 
+ 	init_waitqueue_head(&q->mq_freeze_wq);
++	INIT_SWORK(&q->mq_pcpu_wake, blk_queue_usage_counter_release_swork);
+ 
+ 	/*
+ 	 * Init percpu_ref in atomic mode so that it's faster to shutdown.
+@@ -3556,6 +3566,8 @@ int __init blk_dev_init(void)
+ 	if (!kblockd_workqueue)
+ 		panic("Failed to create kblockd\n");
+ 
++	BUG_ON(swork_get());
 +
-+	if (should_resched(PREEMPT_OFFSET)) {
-+		kernel_fpu_end();
-+		cond_resched();
-+		kernel_fpu_begin();
-+	}
-+}
-+EXPORT_SYMBOL_GPL(kernel_fpu_resched);
-+
- /*
-  * CR0::TS save/restore functions:
-  */
+ 	request_cachep = kmem_cache_create("blkdev_requests",
+ 			sizeof(struct request), 0, SLAB_PANIC, NULL);
+ 
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index fdb449fe3ff7..ab039211ab9f 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -24,6 +24,7 @@
+ #include <linux/rcupdate.h>
+ #include <linux/percpu-refcount.h>
+ #include <linux/scatterlist.h>
++#include <linux/swork.h>
+ 
+ struct module;
+ struct scsi_ioctl_command;
+@@ -469,6 +470,7 @@ struct request_queue {
+ #endif
+ 	struct rcu_head		rcu_head;
+ 	wait_queue_head_t	mq_freeze_wq;
++	struct swork_event	mq_pcpu_wake;
+ 	struct percpu_ref	q_usage_counter;
+ 	struct list_head	all_q_node;
+ 
 -- 
 2.18.0
