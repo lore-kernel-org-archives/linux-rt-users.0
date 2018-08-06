@@ -1,7 +1,7 @@
 From: Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 02/22] futex: Fix more put_pi_state() vs. exit_pi_state_list() races
-Date: Mon,  6 Aug 2018 04:17:18 -0500
-Message-ID: <31e791651f8d58a70490d8a6bb0809521f64ca6e.1533540554.git.julia@ni.com>
+Subject: [PATCH RT 13/22] net: use task_struct instead of CPU number as the queue owner on -RT
+Date: Mon,  6 Aug 2018 04:17:29 -0500
+Message-ID: <3e1cac93740464869248669c4f10a68773844243.1533540554.git.julia@ni.com>
 References: <cover.1533540554.git.julia@ni.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -12,134 +12,162 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com, Peter Zijlstra <peterz@infradead.org>,
-        Gratian Crisan <gratian.crisan@ni.com>,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        dvhart@infradead.org,
-        syzbot
-        <bot+2af19c9e1ffe4d4ee1d16c56ae7580feaee75765@syzkaller.appspotmail.com>,
-        syzkaller-bugs@googlegroups.com, stable@vger.kernel.org,
-        Ingo Molnar <mingo@kernel.org>
+        tom.zanussi@linux.intel.com, stable-rt@vger.kernel.org
 To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Return-path: <stable-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1533540554.git.julia@ni.com>
-Sender: stable-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Peter Zijlstra <peterz@infradead.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
 4.9.115-rt94-rc1 stable review patch.
 If you have any objection to the inclusion of this patch, let me know.
 
 --- 8< --- 8< --- 8< ---
-[ Upstream commit 51d00899f7e6ded15c89cb4e2cb11a35283bac81 ]
+In commit ("net: move xmit_recursion to per-task variable on -RT") the
+recursion level was changed to be per-task since we can get preempted in
+BH on -RT. The lock owner should consequently be recorded as the task
+that holds the lock and not the CPU. Otherwise we trigger the "Dead loop
+on virtual device" warning on SMP systems.
 
-Dmitry (through syzbot) reported being able to trigger the WARN in
-get_pi_state() and a use-after-free on:
-
-	raw_spin_lock_irq(&pi_state->pi_mutex.wait_lock);
-
-Both are due to this race:
-
-  exit_pi_state_list()				put_pi_state()
-
-  lock(&curr->pi_lock)
-  while() {
-	pi_state = list_first_entry(head);
-	hb = hash_futex(&pi_state->key);
-	unlock(&curr->pi_lock);
-
-						dec_and_test(&pi_state->refcount);
-
-	lock(&hb->lock)
-	lock(&pi_state->pi_mutex.wait_lock)	// uaf if pi_state free'd
-	lock(&curr->pi_lock);
-
-	....
-
-	unlock(&curr->pi_lock);
-	get_pi_state();				// WARN; refcount==0
-
-The problem is we take the reference count too late, and don't allow it
-being 0. Fix it by using inc_not_zero() and simply retrying the loop
-when we fail to get a refcount. In that case put_pi_state() should
-remove the entry from the list.
-
-Reported-by: Dmitry Vyukov <dvyukov@google.com>
-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: Gratian Crisan <gratian.crisan@ni.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: dvhart@infradead.org
-Cc: syzbot <bot+2af19c9e1ffe4d4ee1d16c56ae7580feaee75765@syzkaller.appspotmail.com>
-Cc: syzkaller-bugs@googlegroups.com
-Cc: <stable@vger.kernel.org>
-Fixes: c74aef2d06a9 ("futex: Fix pi_state->owner serialization")
-Link: http://lkml.kernel.org/r/20171031101853.xpfh72y643kdfhjs@hirez.programming.kicks-ass.net
-Signed-off-by: Ingo Molnar <mingo@kernel.org>
+Cc: stable-rt@vger.kernel.org
+Reported-by: Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
+Tested-by: Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+(cherry picked from commit d3a66ffd1c4f0253076069b10a8223e7b6e80e38)
 Signed-off-by: Julia Cartwright <julia@ni.com>
 ---
- kernel/futex.c | 23 ++++++++++++++++++++---
- 1 file changed, 20 insertions(+), 3 deletions(-)
+ include/linux/netdevice.h | 54 ++++++++++++++++++++++++++++++++++-----
+ net/core/dev.c            |  6 ++++-
+ 2 files changed, 53 insertions(+), 7 deletions(-)
 
-diff --git a/kernel/futex.c b/kernel/futex.c
-index 47e42faad6c5..270148be5647 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -899,11 +899,27 @@ void exit_pi_state_list(struct task_struct *curr)
+diff --git a/include/linux/netdevice.h b/include/linux/netdevice.h
+index 85fc72b8a92b..6f1a3f286c4b 100644
+--- a/include/linux/netdevice.h
++++ b/include/linux/netdevice.h
+@@ -594,7 +594,11 @@ struct netdev_queue {
+  * write-mostly part
+  */
+ 	spinlock_t		_xmit_lock ____cacheline_aligned_in_smp;
++#ifdef CONFIG_PREEMPT_RT_FULL
++	struct task_struct	*xmit_lock_owner;
++#else
+ 	int			xmit_lock_owner;
++#endif
+ 	/*
+ 	 * Time (in jiffies) of last Tx
  	 */
- 	raw_spin_lock_irq(&curr->pi_lock);
- 	while (!list_empty(head)) {
--
- 		next = head->next;
- 		pi_state = list_entry(next, struct futex_pi_state, list);
- 		key = pi_state->key;
- 		hb = hash_futex(&key);
+@@ -3610,41 +3614,79 @@ static inline u32 netif_msg_init(int debug_value, int default_msg_enable_bits)
+ 	return (1 << debug_value) - 1;
+ }
+ 
++#ifdef CONFIG_PREEMPT_RT_FULL
++static inline void netdev_queue_set_owner(struct netdev_queue *txq, int cpu)
++{
++	txq->xmit_lock_owner = current;
++}
 +
-+		/*
-+		 * We can race against put_pi_state() removing itself from the
-+		 * list (a waiter going away). put_pi_state() will first
-+		 * decrement the reference count and then modify the list, so
-+		 * its possible to see the list entry but fail this reference
-+		 * acquire.
-+		 *
-+		 * In that case; drop the locks to let put_pi_state() make
-+		 * progress and retry the loop.
-+		 */
-+		if (!atomic_inc_not_zero(&pi_state->refcount)) {
-+			raw_spin_unlock_irq(&curr->pi_lock);
-+			cpu_relax();
-+			raw_spin_lock_irq(&curr->pi_lock);
-+			continue;
-+		}
- 		raw_spin_unlock_irq(&curr->pi_lock);
++static inline void netdev_queue_clear_owner(struct netdev_queue *txq)
++{
++	txq->xmit_lock_owner = NULL;
++}
++
++static inline bool netdev_queue_has_owner(struct netdev_queue *txq)
++{
++	if (txq->xmit_lock_owner != NULL)
++		return true;
++	return false;
++}
++
++#else
++
++static inline void netdev_queue_set_owner(struct netdev_queue *txq, int cpu)
++{
++	txq->xmit_lock_owner = cpu;
++}
++
++static inline void netdev_queue_clear_owner(struct netdev_queue *txq)
++{
++	txq->xmit_lock_owner = -1;
++}
++
++static inline bool netdev_queue_has_owner(struct netdev_queue *txq)
++{
++	if (txq->xmit_lock_owner != -1)
++		return true;
++	return false;
++}
++#endif
++
+ static inline void __netif_tx_lock(struct netdev_queue *txq, int cpu)
+ {
+ 	spin_lock(&txq->_xmit_lock);
+-	txq->xmit_lock_owner = cpu;
++	netdev_queue_set_owner(txq, cpu);
+ }
  
- 		spin_lock(&hb->lock);
-@@ -914,10 +930,12 @@ void exit_pi_state_list(struct task_struct *curr)
- 		 * task still owns the PI-state:
- 		 */
- 		if (head->next != next) {
-+			/* retain curr->pi_lock for the loop invariant */
- 			raw_spin_unlock(&curr->pi_lock);
- 			raw_spin_unlock_irq(&pi_state->pi_mutex.wait_lock);
- 			spin_unlock(&hb->lock);
- 			raw_spin_lock_irq(&curr->pi_lock);
-+			put_pi_state(pi_state);
- 			continue;
- 		}
+ static inline void __netif_tx_lock_bh(struct netdev_queue *txq)
+ {
+ 	spin_lock_bh(&txq->_xmit_lock);
+-	txq->xmit_lock_owner = smp_processor_id();
++	netdev_queue_set_owner(txq, smp_processor_id());
+ }
  
-@@ -925,9 +943,8 @@ void exit_pi_state_list(struct task_struct *curr)
- 		WARN_ON(list_empty(&pi_state->list));
- 		list_del_init(&pi_state->list);
- 		pi_state->owner = NULL;
--		raw_spin_unlock(&curr->pi_lock);
+ static inline bool __netif_tx_trylock(struct netdev_queue *txq)
+ {
+ 	bool ok = spin_trylock(&txq->_xmit_lock);
+ 	if (likely(ok))
+-		txq->xmit_lock_owner = smp_processor_id();
++		netdev_queue_set_owner(txq, smp_processor_id());
+ 	return ok;
+ }
  
--		get_pi_state(pi_state);
-+		raw_spin_unlock(&curr->pi_lock);
- 		raw_spin_unlock_irq(&pi_state->pi_mutex.wait_lock);
- 		spin_unlock(&hb->lock);
+ static inline void __netif_tx_unlock(struct netdev_queue *txq)
+ {
+-	txq->xmit_lock_owner = -1;
++	netdev_queue_clear_owner(txq);
+ 	spin_unlock(&txq->_xmit_lock);
+ }
  
+ static inline void __netif_tx_unlock_bh(struct netdev_queue *txq)
+ {
+-	txq->xmit_lock_owner = -1;
++	netdev_queue_clear_owner(txq);
+ 	spin_unlock_bh(&txq->_xmit_lock);
+ }
+ 
+ static inline void txq_trans_update(struct netdev_queue *txq)
+ {
+-	if (txq->xmit_lock_owner != -1)
++	if (netdev_queue_has_owner(txq))
+ 		txq->trans_start = jiffies;
+ }
+ 
+diff --git a/net/core/dev.c b/net/core/dev.c
+index 93995575d23a..e7dc4700e463 100644
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -3449,7 +3449,11 @@ static int __dev_queue_xmit(struct sk_buff *skb, void *accel_priv)
+ 	if (dev->flags & IFF_UP) {
+ 		int cpu = smp_processor_id(); /* ok because BHs are off */
+ 
++#ifdef CONFIG_PREEMPT_RT_FULL
++		if (txq->xmit_lock_owner != current) {
++#else
+ 		if (txq->xmit_lock_owner != cpu) {
++#endif
+ 			if (unlikely(xmit_rec_read() > XMIT_RECURSION_LIMIT))
+ 				goto recursion_alert;
+ 
+@@ -7168,7 +7172,7 @@ static void netdev_init_one_queue(struct net_device *dev,
+ 	/* Initialize queue lock */
+ 	spin_lock_init(&queue->_xmit_lock);
+ 	netdev_set_xmit_lockdep_class(&queue->_xmit_lock, dev->type);
+-	queue->xmit_lock_owner = -1;
++	netdev_queue_clear_owner(queue);
+ 	netdev_queue_numa_node_write(queue, NUMA_NO_NODE);
+ 	queue->dev = dev;
+ #ifdef CONFIG_BQL
 -- 
 2.18.0
