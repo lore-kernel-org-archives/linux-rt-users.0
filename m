@@ -1,11 +1,10 @@
 From: Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 08/22] sched, tracing: Fix trace_sched_pi_setprio() for deboosting
-Date: Mon,  6 Aug 2018 04:17:24 -0500
-Message-ID: <4e6fa907dfa79aafc97aa3fd2386b12ef6a42446.1533540554.git.julia@ni.com>
+Subject: [PATCH RT 04/22] futex: Fix OWNER_DEAD fixup
+Date: Mon,  6 Aug 2018 04:17:20 -0500
+Message-ID: <464abec1c5e435a618d3dcd6a05f207e8456d53d.1533540554.git.julia@ni.com>
 References: <cover.1533540554.git.julia@ni.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Steven Rostedt <rostedt@goodmis.org>,
         Carsten Emde <C.Emde@osadl.org>,
@@ -14,7 +13,9 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
         tom.zanussi@linux.intel.com, Peter Zijlstra <peterz@infradead.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
         Linus Torvalds <torvalds@linux-foundation.org>,
+        "Paul E . McKenney" <paulmck@us.ibm.com>,
         Ingo Molnar <mingo@kernel.org>
 To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
@@ -22,61 +23,64 @@ In-Reply-To: <cover.1533540554.git.julia@ni.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Peter Zijlstra <peterz@infradead.org>
 
 4.9.115-rt94-rc1 stable review patch.
 If you have any objection to the inclusion of this patch, let me know.
 
 --- 8< --- 8< --- 8< ---
-[ Upstream commit 4ff648decf4712d39f184fc2df3163f43975575a ]
+[ Upstream commit a97cb0e7b3f4c6297fd857055ae8e895f402f501 ]
 
-Since the following commit:
+Both Geert and DaveJ reported that the recent futex commit:
 
-  b91473ff6e97 ("sched,tracing: Update trace_sched_pi_setprio()")
+  c1e2f0eaf015 ("futex: Avoid violating the 10th rule of futex")
 
-the sched_pi_setprio trace point shows the "newprio" during a deboost:
+introduced a problem with setting OWNER_DEAD. We set the bit on an
+uninitialized variable and then entirely optimize it away as a
+dead-store.
 
-  |futex sched_pi_setprio: comm=futex_requeue_p pid"34 oldprio newprio=98
-  |futex sched_switch: prev_comm=futex_requeue_p prev_pid"34 prev_prio0
+Move the setting of the bit to where it is more useful.
 
-This patch open codes __rt_effective_prio() in the tracepoint as the
-'newprio' to get the old behaviour back / the correct priority:
-
-  |futex sched_pi_setprio: comm=futex_requeue_p pid"20 oldprio newprio=120
-  |futex sched_switch: prev_comm=futex_requeue_p prev_pid"20 prev_prio0
-
-Peter suggested to open code the new priority so people using tracehook
-could get the deadline data out.
-
-Reported-by: Mansky Christian <man@keba.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Reported-by: Geert Uytterhoeven <geert@linux-m68k.org>
+Reported-by: Dave Jones <davej@codemonkey.org.uk>
 Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>
 Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Paul E. McKenney <paulmck@us.ibm.com>
 Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>
-Fixes: b91473ff6e97 ("sched,tracing: Update trace_sched_pi_setprio()")
-Link: http://lkml.kernel.org/r/20180524132647.gg6ziuogczdmjjzu@linutronix.de
+Fixes: c1e2f0eaf015 ("futex: Avoid violating the 10th rule of futex")
+Link: http://lkml.kernel.org/r/20180122103947.GD2228@hirez.programming.kicks-ass.net
 Signed-off-by: Ingo Molnar <mingo@kernel.org>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Julia Cartwright <julia@ni.com>
 ---
- include/trace/events/sched.h | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ kernel/futex.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/include/trace/events/sched.h b/include/trace/events/sched.h
-index 516ae88cddf4..742682079acf 100644
---- a/include/trace/events/sched.h
-+++ b/include/trace/events/sched.h
-@@ -429,7 +429,9 @@ TRACE_EVENT(sched_pi_setprio,
- 		memcpy(__entry->comm, tsk->comm, TASK_COMM_LEN);
- 		__entry->pid		= tsk->pid;
- 		__entry->oldprio	= tsk->prio;
--		__entry->newprio	= pi_task ? pi_task->prio : tsk->prio;
-+		__entry->newprio	= pi_task ?
-+				min(tsk->normal_prio, pi_task->prio) :
-+				tsk->normal_prio;
- 		/* XXX SCHED_DEADLINE bits missing */
- 	),
+diff --git a/kernel/futex.c b/kernel/futex.c
+index cdd68ba6e3a6..57038131ad3f 100644
+--- a/kernel/futex.c
++++ b/kernel/futex.c
+@@ -2301,9 +2301,6 @@ static int fixup_pi_state_owner(u32 __user *uaddr, struct futex_q *q,
+ 	raw_spin_lock_irq(&pi_state->pi_mutex.wait_lock);
  
+ 	oldowner = pi_state->owner;
+-	/* Owner died? */
+-	if (!pi_state->owner)
+-		newtid |= FUTEX_OWNER_DIED;
+ 
+ 	/*
+ 	 * We are here because either:
+@@ -2364,6 +2361,9 @@ static int fixup_pi_state_owner(u32 __user *uaddr, struct futex_q *q,
+ 	}
+ 
+ 	newtid = task_pid_vnr(newowner) | FUTEX_WAITERS;
++	/* Owner died? */
++	if (!pi_state->owner)
++		newtid |= FUTEX_OWNER_DIED;
+ 
+ 	if (get_futex_value_locked(&uval, uaddr))
+ 		goto handle_fault;
 -- 
 2.18.0
