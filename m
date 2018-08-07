@@ -1,53 +1,47 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [CFP] Real-Time Summit 2018 Call for Presentations
-Date: Mon, 6 Aug 2018 13:56:12 +0200 (CEST)
-Message-ID: <alpine.DEB.2.21.1808061353140.1558@nanos.tec.linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [ANNOUNCE] v4.18-rc8-rt1
+Date: Tue, 7 Aug 2018 16:35:40 +0200
+Message-ID: <20180807143540.g26ex7ibnp2iw5gh@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Cc: rt-users <linux-rt-users@vger.kernel.org>
-To: LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Anna-Maria Gleixner <anna-maria@linutronix.de>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-This is a call for presentations for the 8th Real-Time Summit which
-will be held in Edinburgh, UK, on October 25th, 2018. The event
-follows the Embedded Linux Conference Europe 2018.
+Dear RT folks!
 
-The Real-Time Summit is organized by the Linux Foundation Real-Time
-Linux (RTL) collaborative project. The event is intended to gather
-developers and users of the Real-Time preemption patch. The main
-intent is to provide room for discussion between developers, tooling
-experts and users.
+I'm pleased to announce the v4.18-rc8-rt1 patch set. 
+It has been in testing the last few weeks on x86-64 and arm64. Please
+give it a try and please report and problems you might find while doing
+so.
+I will be absent until the end of August so I my answer might take same
+time :)
 
-If you are interested to present, please submit a proposal to
-rt-cfp@linutronix.de before September 9th, 2018, at 23:59 EST. Please
-provide a title, abstract describing the proposed talk (900 characters
-maximum), short biography (900 characters maximum), and describe the
-targeted audience (900 characters maximum). Please indicate the slot
-length you are aiming for: The format is a single track with
-presentation slots of 30 or 45 minutes length. The maximum
-presentation time is 15 resp. 25 minutes and the remaining time is
-reserved for discussion. The focus of this event is discussion.
+Changes since v4.16.18-rt12:
 
-We are welcoming presentations from both end users and developers, on
-topics covering, but not limited to:
+  - rebase to v4.18-rc8
 
-  - Real-time Linux development
-  - Real-time Linux evaluation
-  - Real-time Linux use cases (Success and failures)
-  - Real-time Linux tooling (tracing, configuration, ...)
+Known issues
+     - A warning triggered in "rcu_note_context_switch" originated from
+       SyS_timer_gettime(). The issue was always there, it is now
+       visible. Reported by Grygorii Strashko and Daniel Wagner.
 
-Those can cover recently available technologies, ongoing work and new
-ideas. Please understand that this is not a place for presenting sales
-and marketing pitches or to advertise technology which is not related
-or not usable in the context of real-time Linux technology.
+You can get this release via the git tree at:
 
-Further information about the event is available at the Real-Time
-Summit 2018 wiki page:
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.18-rc8-rt1
 
-https://wiki.linuxfoundation.org/realtime/events/rt-summit2018/start
+The RT patch against v4.18-rc8 can be found here:
 
-On behalf of the RTL collaborative project
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.18/older/patch-4.18-rc8-rt1.patch.xz
 
-   Thomas Gleixner
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.18/older/patches-4.18-rc8-rt1.tar.xz
+
+Sebastian
