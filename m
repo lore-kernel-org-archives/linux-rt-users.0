@@ -1,47 +1,38 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] v4.18-rc8-rt1
-Date: Tue, 7 Aug 2018 16:35:40 +0200
-Message-ID: <20180807143540.g26ex7ibnp2iw5gh@linutronix.de>
+Subject: Re: [rt-patch 4/3] arm,KVM: Move phys_timer handling to hard irq
+ context
+Date: Tue, 7 Aug 2018 16:46:00 +0200
+Message-ID: <20180807144600.pmyckao2brlsatsr@linutronix.de>
+References: <20180727215710.zq6gkoqzlb4ca7qv@linutronix.de>
+ <1532764179.9882.14.camel@gmx.de>
+ <1532768853.9882.73.camel@gmx.de>
+ <1533192980.11791.8.camel@gmx.de>
+ <20180802123104.7fed73b4@gandalf.local.home>
+ <1533228650.12550.15.camel@gmx.de>
+ <1533231816.12550.54.camel@gmx.de>
+ <1533385520.5602.31.camel@gmx.de>
+ <1533444777.9157.10.camel@gmx.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Anna-Maria Gleixner <anna-maria@linutronix.de>
-To: Thomas Gleixner <tglx@linutronix.de>
+        Peter Zijlstra <peterz@infradead.org>
+To: Mike Galbraith <efault@gmx.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
+In-Reply-To: <1533444777.9157.10.camel@gmx.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Dear RT folks!
+On 2018-08-05 06:52:57 [+0200], Mike Galbraith wrote:
+> 
+> FWIW, I had thought that something 4.16..master had made that business
+> go entirely away, but it only became much more infrequent.  So much for
+> plan to slowly sneak up on whatever than was via ~bisect.
 
-I'm pleased to announce the v4.18-rc8-rt1 patch set. 
-It has been in testing the last few weeks on x86-64 and arm64. Please
-give it a try and please report and problems you might find while doing
-so.
-I will be absent until the end of August so I my answer might take same
-time :)
-
-Changes since v4.16.18-rt12:
-
-  - rebase to v4.18-rc8
-
-Known issues
-     - A warning triggered in "rcu_note_context_switch" originated from
-       SyS_timer_gettime(). The issue was always there, it is now
-       visible. Reported by Grygorii Strashko and Daniel Wagner.
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.18-rc8-rt1
-
-The RT patch against v4.18-rc8 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.18/older/patch-4.18-rc8-rt1.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.18/older/patches-4.18-rc8-rt1.tar.xz
+I just released v4.18 based RT. Please repost the kvm/RT patches once
+things have settled.
 
 Sebastian
