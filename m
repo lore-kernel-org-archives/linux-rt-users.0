@@ -1,70 +1,124 @@
-From: Tom Zanussi <zanussi@kernel.org>
-Subject: Re: [PATCH v3 0/7] tracing: Hist trigger snapshot and onchange
- additions
-Date: Thu, 09 Aug 2018 09:56:49 -0500
-Message-ID: <1533826609.1918.3.camel@kernel.org>
+From: Namhyung Kim <namhyung@kernel.org>
+Subject: Re: [PATCH v3 1/7] tracing: Refactor hist trigger action code
+Date: Fri, 10 Aug 2018 15:58:58 +0900
+Message-ID: <20180810065858.GB479@sejong>
 References: <cover.1533753152.git.tom.zanussi@linux.intel.com>
-         <20180809104711.7962b340@gandalf.local.home>
-         <1533826297.1918.2.camel@kernel.org>
-         <20180809105516.41b68a83@gandalf.local.home>
+ <9d8aaf30dc0c8d48885b0936a038ddd770a55caa.1533753152.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
+Content-Type: text/plain; charset=utf-8
+Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
         joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
         julia@ni.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
+        linux-rt-users@vger.kernel.org, kernel-team@lge.com
+To: Tom Zanussi <zanussi@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180809105516.41b68a83@gandalf.local.home>
+Content-Disposition: inline
+In-Reply-To: <9d8aaf30dc0c8d48885b0936a038ddd770a55caa.1533753152.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2018-08-09 at 10:55 -0400, Steven Rostedt wrote:
-> On Thu, 09 Aug 2018 09:51:37 -0500
-> Tom Zanussi <zanussi@kernel.org> wrote:
-> 
-> > Hi Steve,
-> > 
-> > On Thu, 2018-08-09 at 10:47 -0400, Steven Rostedt wrote:
-> > > On Thu,  9 Aug 2018 09:34:10 -0500
-> > > Tom Zanussi <zanussi@kernel.org> wrote:
-> > >   
-> > > > From: Tom Zanussi <tom.zanussi@linux.intel.com>
-> > > > 
-> > > > Hi,
-> > > > 
-> > > > This is v3 of the hist trigger snapshot and onchange additions
-> > > > patchset.  It's rebased on top of the latest ftrace/core and
-> > > > adds a
-> > > > few fixes to some handler/action problems I noticed while
-> > > > testing.  
-> > > 
-> > > Hi Tom,
-> > > 
-> > > How ready is this? I'm still dealing with the fallout of the
-> > > preempt
-> > > irqs tracepoint updates, and trying to get that stable before
-> > > pushing
-> > > to linux-next. Are you confident that these are solid enough to
-> > > pull
-> > > in
-> > > this late before the merge window opens? Or should I ignore them
-> > > until
-> > > the merge window closes and push this for the following release?
-> > >   
-> > 
-> > I wasn't really expecting they'd go into this merge window, so no
-> > problem ignoring them until the next release..
-> > 
-> 
-> Great, that makes things easier. Can you ping me after the merge
-> window
-> closes to remind me to take a look at these? Much appreciated if you
-> do :-)
-> 
+Hi Tom,
 
-Sure, will do!
+On Thu, Aug 09, 2018 at 09:34:11AM -0500, Tom Zanussi wrote:
+> From: Tom Zanussi <tom.zanussi@linux.intel.com>
+> 
+> The hist trigger action code currently implements two essentially
+> hard-coded pairs of 'actions' - onmax(), which tracks a variable and
+> saves some event fields when a max is hit, and onmatch(), which is
+> hard-coded to generate a synthetic event.
+> 
+> These hardcoded pairs (track max/save fields and detect match/generate
+> synthetic event) should really be decoupled into separate components
+> that can then be arbitrarily combined.  The first component of each
+> pair (track max/detect match) is called a 'handler' in the new code,
+> while the second component (save fields/generate synthetic event) is
+> called an 'action' in this scheme.
+> 
+> This change refactors the action code to reflect this split by adding
+> two handlers, HANDLER_ONMATCH and HANDLER_ONMAX, along with two
+> actions, ACTION_SAVE and ACTION_TRACE.
+> 
+> The new code combines them to produce the existing ONMATCH/TRACE and
+> ONMAX/SAVE functionality, but doesn't implement the other combinations
+> now possible.  Future patches will expand these to further useful
+> cases, such as ONMAX/TRACE, as well as add additional handlers and
+> actions such as ONCHANGE and SNAPSHOT.
+> 
+> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> ---
 
-Tom
+[SNIP]
+> @@ -3421,10 +3419,69 @@ static int parse_action_params(char *params, struct action_data *data)
+>  	return ret;
+>  }
+>  
+> -static struct action_data *onmax_parse(char *str)
+> +static int action_parse(char *str, struct action_data *data,
+> +			enum handler_id handler)
+> +{
+> +	char *action_name;
+> +	int ret = 0;
+> +
+> +	strsep(&str, ".");
+> +	if (!str) {
+> +		hist_err("action parsing: No action found", "");
+> +		ret = -EINVAL;
+> +		goto out;
+> +	}
+> +
+> +	action_name = strsep(&str, "(");
+> +	if (!action_name || !str) {
+> +		hist_err("action parsing: No action found", "");
+> +		ret = -EINVAL;
+> +		goto out;
+> +	}
+> +
+> +	if (strncmp(action_name, "save", strlen("save")) == 0) {
+> +		char *params = strsep(&str, ")");
+> +
+> +		if (!params) {
+> +			hist_err("action parsing: No params found for %s", "save");
+> +			ret = -EINVAL;
+> +			goto out;
+> +		}
+> +
+> +		ret = parse_action_params(params, data);
+> +		if (ret)
+> +			goto out;
+> +
+> +		if (handler == HANDLER_ONMAX)
+> +			data->fn = onmax_save;
+> +
+> +		data->action = ACTION_SAVE;
+> +	} else {
+> +		char *params = strsep(&str, ")");
+> +
+> +		if (params) {
+> +			ret = parse_action_params(params, data);
+> +			if (ret)
+> +				goto out;
+> +		}
+> +
+> +		data->fn = action_trace;
+> +		data->action = ACTION_TRACE;
+
+This will set action name as (synthetic) event name, right?  I think
+it's natural to have "trace" for it with this change.  Maybe it's time
+to change the syntax like below?
+
+  onmatch(SYS.EVENT).trace(EVENT, FIELD, ...)
+
+Of course it should support old syntax too..
+
+
+> +	}
+> +
+> +	data->action_name = kstrdup(action_name, GFP_KERNEL);
+> +	if (!data->action_name) {
+> +		ret = -ENOMEM;
+> +		goto out;
+> +	}
+> + out:
+> +	return ret;
+> +}
