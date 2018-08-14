@@ -1,75 +1,117 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from ms01.santannapisa.it ([193.205.80.99]:24979 "EHLO
-        mail.santannapisa.it" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726557AbeHULO2 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 21 Aug 2018 07:14:28 -0400
-Subject: Re: SCHED_DEADLINE as user
-References: <pl0fsj$ohn$1@blaine.gmane.org>
- <0ac9fabc-c316-2a59-c3dd-c7b4e4f93209@bristot.me>
- <20180817095106.GB27071@localhost.localdomain>
- <c2b1a7a4-db8c-b8bd-6623-5c66b55ee6d2@klingt.org>
- <20180817102810.GC27071@localhost.localdomain>
- <513fd544-bc51-7ea6-8b94-983d28922a66@klingt.org>
- <20180820085420.GB8866@localhost.localdomain>
- <d7cd5c88-dbe6-c74d-43e8-724ac0b463ce@klingt.org>
- <4c58c94c-d99d-9f08-a5a3-710defc612c8@bristot.me>
- <dfe1cea0-089d-fed9-a349-23de2660889e@klingt.org>
- <e207a65d-b1af-3fb1-8802-d1c05c0a9118@bristot.me>
- <05fbd5a4-f354-e084-cf40-8488548d7cb1@klingt.org>
-From: Tommaso Cucinotta <tommaso.cucinotta@santannapisa.it>
-Message-ID: <cc32702c-b0e0-86e0-0382-3b266d382771@santannapisa.it>
-Date: Tue, 21 Aug 2018 08:55:18 +0200
-MIME-Version: 1.0
-In-Reply-To: <05fbd5a4-f354-e084-cf40-8488548d7cb1@klingt.org>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
-Content-Language: en-US
+Received: from mail.kernel.org ([198.145.29.99]:51674 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1727787AbeHNVnS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 14 Aug 2018 17:43:18 -0400
+From: Tom Zanussi <zanussi@kernel.org>
+Subject: [PATCH 00/15] [ANNOUNCE] 3.18.117-rt105-rc2
+Date: Tue, 14 Aug 2018 13:53:53 -0500
+Message-Id: <cover.1534263273.git.tom.zanussi@linux.intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: Tim Blechmann <tim@klingt.org>, Daniel Bristot de Oliveira <daniel@bristot.me>, Juri Lelli <juri.lelli@gmail.com>
-Cc: linux-rt-users@vger.kernel.org, Luca Abeni <luca.abeni@santannapisa.it>, Alessio Balsini <alessio.balsini@santannapisa.it>
+To: linux-rt-users@vger.kernel.org
+Cc: rostedt@goodmis.org, tglx@linutronix.de, C.Emde@osadl.org, jkacur@redhat.com, bigeasy@linutronix.de, daniel.wagner@siemens.com, julia@ni.com
 
-Hi all,
+From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-+cc-ing Alessio, who has been working on this just recently on Android (will tell more answering on a different msg).
+Hello RT Folks!
 
-On 20/08/2018 18:45, Tim Blechmann wrote:
-> the mach API also has this notion of "period == 0", but apart from that it's quite similar. 
+This is the RT stable review cycle of patch 3.18.117-rt105-rc2.
 
-in terms of API, XNU time constrained threads look like DEADLINE, however in terms of kernel behavior/implementation 
-behind that, it's something completely different: last time I had a glance at this, it was .... ehm .... probably just 
-during that old Linux Audio Conference (LAC) back in 2011, where the take away was: 1) in the kernel there's nothing 
-like the CBS or deadline-based scheduling, but just a heuristic boosting a bit more those tasks, accompanied by usual 
-heuristics to de-boost in case the task becomes CPU-intensive (similar to CFS heuristics for interactive-vs-batch); 2) 
-the only user of that API seemed to be some sound daemon on OS-X, that had an almost random value set as "runtime", 
-accompanied by a comment "this just works" ;-P
+This is -rc2, containing the same set of patches as -rc1, but with the
+'cherry-picked from xxx' lines removed and replaced with the more
+standard [ Upstream commit xxx ] form.
 
-But, it was long ago, if anyone has a pointer to what XNU does with time constrained threads in these days....
+In addition to the applicable stable-rt patches not yet in the 3.18-rt
+kernel, this set includes some patches needed to fix cross-compilation
+build failures.
 
-> apart from that, i'm only missing two features:
->
-> * using SCHED_DEADLINE from user applications is kind of a showstopper
-> for me
+Please scream at me if I messed something up. Please test the
+patches too.
 
-unprivileged tasks using DEADLINE remained a request for quite a long time -- that old single-processor implementation 
-(AQuoSA) we used long ago with JACK had such a feature, that was implementing this model:
+The -rc release will be uploaded to kernel.org and will be
+deleted when the final release is out. This is just a review
+release (or release candidate).
 
-   http://retis.sssup.it/~tommaso/papers/rtas08.php
+The pre-releases will not be pushed to the git repository,
+only the final release is.
 
-the criticality for DEADLINE is that those tasks preempt RT99 ones, so even with controlled runtime/deadline boundaries....
-> * a nicer glibc wrapper, that allows me to use pthreads rather than
-> using `syscall`: it's all pretty easy to obtain the `tid` for a calling
-> thread (gettid), but it seems to be impossible to obtain the `tid` from
->   `pthread_t` without some hacks which are way too dirty to share in
-> public ...
+If all goes well, this patch will be converted to the next
+main release on 8/16/2018.
 
-well-known "pain" as well, thanks.
+To build 3.18.117-rt105-rc2 directly, the following patches should be applied:
 
-     T.
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.117.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.117-rt105-rc2.patch.xz
+
+
+You can also build from 3.18.117-rt104 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/incr/patch-3.18.117-rt104-rt105-rc2.patch.xz
+
+Enjoy!
+   
+   Tom
+
+
+Changes from v3.18.117-rt104:
+
+Anton Blanchard (1):
+  powerpc/vdso64: Use double word compare on pointers
+
+Julia Cartwright (2):
+  seqlock: provide the same ordering semantics as mainline
+  squashfs: make use of local lock in multi_cpu decompressor
+
+Krzysztof Mazur (1):
+  um: Use POSIX ucontext_t instead of struct ucontext
+
+Paul Gortmaker (1):
+  powerpc: ps3/device-init.c - adapt to completions using swait vs wait
+
+Peter Zijlstra (1):
+  sched: Remove TASK_ALL
+
+Philipp Schrader (1):
+  tracing: Fix rcu splat from idle CPU on boot
+
+Sebastian Andrzej Siewior (5):
+  arm*: disable NEON in kernel mode
+  posix-timers: move the rcu head out of the union
+  alarmtimer: Prevent live lock in alarm_cancel()
+  locking: add types.h
+  net: use task_struct instead of CPU number as the queue owner on -RT
+
+Tom Zanussi (3):
+  Revert "fs, jbd: pull your plug when waiting for space"
+  s390/mm: Fix missed tsk->pagefault_disabled conversion to
+    pagefault_disable()
+  Linux 3.18.117-rt105-rc2
+
+ arch/arm/Kconfig                          |  2 +-
+ arch/arm64/crypto/Kconfig                 | 14 ++++----
+ arch/powerpc/kernel/vdso64/datapage.S     |  2 +-
+ arch/powerpc/kernel/vdso64/gettimeofday.S |  2 +-
+ arch/powerpc/platforms/ps3/device-init.c  |  2 +-
+ arch/s390/mm/fault.c                      |  2 +-
+ arch/um/os-Linux/signal.c                 |  2 +-
+ arch/x86/um/stub_segv.c                   |  2 +-
+ fs/jbd/checkpoint.c                       |  2 --
+ fs/squashfs/decompressor_multi_percpu.c   | 16 ++++++---
+ include/linux/netdevice.h                 | 54 +++++++++++++++++++++++++++----
+ include/linux/posix-timers.h              |  2 +-
+ include/linux/sched.h                     |  1 -
+ include/linux/seqlock.h                   |  1 +
+ include/linux/spinlock_types_raw.h        |  2 ++
+ kernel/time/alarmtimer.c                  |  2 +-
+ kernel/time/posix-timers.c                |  4 +--
+ kernel/trace/trace_irqsoff.c              |  4 +--
+ localversion-rt                           |  2 +-
+ net/core/dev.c                            |  6 +++-
+ 20 files changed, 89 insertions(+), 35 deletions(-)
 
 -- 
-Tommaso Cucinotta, Computer Engineering PhD
-Associate Professor at the Real-Time Systems Laboratory (ReTiS)
-Scuola Superiore Sant'Anna, Pisa, Italy
-http://retis.sssup.it/people/tommaso
+2.14.1
