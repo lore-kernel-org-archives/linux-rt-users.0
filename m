@@ -1,12 +1,12 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mail.kernel.org ([198.145.29.99]:53664 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.99]:53480 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727787AbeHNVne (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 14 Aug 2018 17:43:34 -0400
+        id S1727787AbeHNVnd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 14 Aug 2018 17:43:33 -0400
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH 10/15] Revert "fs, jbd: pull your plug when waiting for space"
-Date: Tue, 14 Aug 2018 13:54:03 -0500
-Message-Id: <3d904ee157a64d2b6fa8b22b21c33d00b699c362.1534263273.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 09/15] squashfs: make use of local lock in multi_cpu decompressor
+Date: Tue, 14 Aug 2018 13:54:02 -0500
+Message-Id: <37654199e62d7092f0da75e87841dfe82dda483f.1534263273.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1534263273.git.tom.zanussi@linux.intel.com>
 References: <cover.1534263273.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1534263273.git.tom.zanussi@linux.intel.com>
@@ -21,37 +21,72 @@ please let me know.
 
 ------------------
 
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
+From: Julia Cartwright <julia@ni.com>
 
-This reverts stable-rt commit 3b5cf23e6b87a938522eb074baeb034e66dc9cb3.
+[ Upstream rt-devel commit c160736542d7b3d67da32848d2f028b8e35730e5 ]
 
-Similar to commit d5bc2c7b2cc0 Revert "fs: jbd2: pull your plug when
-waiting for space", according to Sebastian Siewior: this "is the same
-thing but for ext3/jbd.  The code was removed at some point so I did
-not revert in my tree."
+Currently, the squashfs multi_cpu decompressor makes use of
+get_cpu_ptr()/put_cpu_ptr(), which unconditionally disable preemption
+during decompression.
 
->From the original commit message: "This was a duct-tape fix which
-shouldn't be needed since commit "locking/rt-mutex: fix deadlock in
-device mapper / block-IO".
+Because the workload is distributed across CPUs, all CPUs can observe a
+very high wakeup latency, which has been seen to be as much as 8000us.
+
+Convert this decompressor to make use of a local lock, which will allow
+execution of the decompressor with preemption-enabled, but also ensure
+concurrent accesses to the percpu compressor data on the local CPU will
+be serialized.
 
 Cc: stable-rt@vger.kernel.org
+Reported-by: Alexander Stein <alexander.stein@systec-electronic.com>
+Tested-by: Alexander Stein <alexander.stein@systec-electronic.com>
+Signed-off-by: Julia Cartwright <julia@ni.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- fs/jbd/checkpoint.c | 2 --
- 1 file changed, 2 deletions(-)
+ fs/squashfs/decompressor_multi_percpu.c | 16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
 
-diff --git a/fs/jbd/checkpoint.c b/fs/jbd/checkpoint.c
-index 95debd71e5fa..08c03044abdd 100644
---- a/fs/jbd/checkpoint.c
-+++ b/fs/jbd/checkpoint.c
-@@ -129,8 +129,6 @@ void __log_wait_for_space(journal_t *journal)
- 		if (journal->j_flags & JFS_ABORT)
- 			return;
- 		spin_unlock(&journal->j_state_lock);
--		if (current->plug)
--			io_schedule();
- 		mutex_lock(&journal->j_checkpoint_mutex);
+diff --git a/fs/squashfs/decompressor_multi_percpu.c b/fs/squashfs/decompressor_multi_percpu.c
+index 23a9c28ad8ea..6a73c4fa88e7 100644
+--- a/fs/squashfs/decompressor_multi_percpu.c
++++ b/fs/squashfs/decompressor_multi_percpu.c
+@@ -10,6 +10,7 @@
+ #include <linux/slab.h>
+ #include <linux/percpu.h>
+ #include <linux/buffer_head.h>
++#include <linux/locallock.h>
  
- 		/*
+ #include "squashfs_fs.h"
+ #include "squashfs_fs_sb.h"
+@@ -25,6 +26,8 @@ struct squashfs_stream {
+ 	void		*stream;
+ };
+ 
++static DEFINE_LOCAL_IRQ_LOCK(stream_lock);
++
+ void *squashfs_decompressor_create(struct squashfs_sb_info *msblk,
+ 						void *comp_opts)
+ {
+@@ -79,10 +82,15 @@ int squashfs_decompress(struct squashfs_sb_info *msblk, struct buffer_head **bh,
+ {
+ 	struct squashfs_stream __percpu *percpu =
+ 			(struct squashfs_stream __percpu *) msblk->stream;
+-	struct squashfs_stream *stream = get_cpu_ptr(percpu);
+-	int res = msblk->decompressor->decompress(msblk, stream->stream, bh, b,
+-		offset, length, output);
+-	put_cpu_ptr(stream);
++	struct squashfs_stream *stream;
++	int res;
++
++	stream = get_locked_ptr(stream_lock, percpu);
++
++	res = msblk->decompressor->decompress(msblk, stream->stream, bh, b,
++			offset, length, output);
++
++	put_locked_ptr(stream_lock, stream);
+ 
+ 	if (res < 0)
+ 		ERROR("%s decompression failed, data probably corrupt\n",
 -- 
 2.14.1
