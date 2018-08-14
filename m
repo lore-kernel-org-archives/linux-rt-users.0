@@ -1,12 +1,12 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mail.kernel.org ([198.145.29.99]:52522 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.99]:52340 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727787AbeHNVnZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 14 Aug 2018 17:43:25 -0400
+        id S1727787AbeHNVnX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 14 Aug 2018 17:43:23 -0400
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH 04/15] tracing: Fix rcu splat from idle CPU on boot
-Date: Tue, 14 Aug 2018 13:53:57 -0500
-Message-Id: <141f0d83f2711ba29422dea0f88737ffe9798b5e.1534263273.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 03/15] posix-timers: move the rcu head out of the union
+Date: Tue, 14 Aug 2018 13:53:56 -0500
+Message-Id: <de298a548dbb709443972c9e1349bc194e9a44f7.1534263273.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1534263273.git.tom.zanussi@linux.intel.com>
 References: <cover.1534263273.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1534263273.git.tom.zanussi@linux.intel.com>
@@ -21,87 +21,63 @@ please let me know.
 
 ------------------
 
-From: Philipp Schrader <philipp@peloton-tech.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-[ Upstream rt-devel commit ac56e4167d84ada099f2af0d1d53f4742d577ce9 ]
+[ Upstream 4.4 stable-rt commit 57f93c5f597fa32af860321c5bca34bc5ffe08e1 ]
 
-With PREEMPT_RT and most of the lockdep-related options enabled I
-encountered this splat when booting our DRA7 evaluation module:
+On RT the timer can be preempted while running and therefore we wait
+with timer_wait_for_callback() for the timer to complete (instead of
+busy looping). The RCU-readlock is held to ensure that this posix timer
+is not removed while we wait on it.
+If the timer is removed then it invokes call_rcu() with a pointer that
+is shared with the hrtimer because it is part of the same union.
+In order to avoid any possible side effects I am moving the rcu pointer
+out of the union.
 
-[    0.055073]
-[    0.055076] ===============================
-[    0.055079] [ INFO: suspicious RCU usage. ]
-[    0.055084] 4.1.6+ #2 Not tainted
-[    0.055086] -------------------------------
-[    0.055090] include/trace/events/hist.h:31 suspicious
-rcu_dereference_check() usage!
-[    0.055093]
-[    0.055093] other info that might help us debug this:
-[    0.055093]
-[    0.055097]
-[    0.055097] RCU used illegally from idle CPU!
-[    0.055097] rcu_scheduler_active = 1, debug_locks = 1
-[    0.055100] RCU used illegally from extended quiescent state!
-[    0.055104] no locks held by swapper/0/0.
-[    0.055106]
-[    0.055106] stack backtrace:
-[    0.055112] CPU: 0 PID: 0 Comm: swapper/0 Not tainted 4.1.6+ #2
-[    0.055116] Hardware name: Generic DRA74X (Flattened Device Tree)
-[    0.055130] [<c00196b8>] (unwind_backtrace) from [<c001515c>]
-(show_stack+0x20/0x24)
-[    0.055146] [<c001515c>] (show_stack) from [<c07bc408>]
-(dump_stack+0x84/0xa0)
-[    0.055160] [<c07bc408>] (dump_stack) from [<c009bc38>]
-(lockdep_rcu_suspicious+0xb0/0x110)
-[    0.055172] [<c009bc38>] (lockdep_rcu_suspicious) from [<c01246c4>]
-(time_hardirqs_off+0x2b8/0x3c8)
-[    0.055184] [<c01246c4>] (time_hardirqs_off) from [<c009a218>]
-(trace_hardirqs_off_caller+0x2c/0xf4)
-[    0.055194] [<c009a218>] (trace_hardirqs_off_caller) from
-[<c009a2f4>] (trace_hardirqs_off+0x14/0x18)
-[    0.055204] [<c009a2f4>] (trace_hardirqs_off) from [<c00c7ecc>]
-(rcu_idle_enter+0x78/0xcc)
-[    0.055213] [<c00c7ecc>] (rcu_idle_enter) from [<c0093eb0>]
-(cpu_startup_entry+0x190/0x518)
-[    0.055222] [<c0093eb0>] (cpu_startup_entry) from [<c07b95b4>]
-(rest_init+0x13c/0x17c)
-[    0.055231] [<c07b95b4>] (rest_init) from [<c0b32c74>]
-(start_kernel+0x320/0x380)
-[    0.055238] [<c0b32c74>] (start_kernel) from [<8000807c>] (0x8000807c)
-
-As per Steve Rotstedt's suggestion I changed the trace_* calls to
-trace_*_rcuidle calls. He pointed out that the trace points were getting
-triggered when rcu wasn't watching.
-
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: Steven Rostedt <rostedt@goodmis.org>
 Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Daniel Wagner <wagi@monom.org>
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_irqsoff.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ include/linux/posix-timers.h | 2 +-
+ kernel/time/posix-timers.c   | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/kernel/trace/trace_irqsoff.c b/kernel/trace/trace_irqsoff.c
-index d1940b095d85..9cbc38722905 100644
---- a/kernel/trace/trace_irqsoff.c
-+++ b/kernel/trace/trace_irqsoff.c
-@@ -452,7 +452,7 @@ EXPORT_SYMBOL_GPL(stop_critical_timings);
- #ifdef CONFIG_PROVE_LOCKING
- void time_hardirqs_on(unsigned long a0, unsigned long a1)
+diff --git a/include/linux/posix-timers.h b/include/linux/posix-timers.h
+index 907f3fd191ac..e2e43c61f6a1 100644
+--- a/include/linux/posix-timers.h
++++ b/include/linux/posix-timers.h
+@@ -92,8 +92,8 @@ struct k_itimer {
+ 			struct alarm alarmtimer;
+ 			ktime_t interval;
+ 		} alarm;
+-		struct rcu_head rcu;
+ 	} it;
++	struct rcu_head rcu;
+ };
+ 
+ struct k_clock {
+diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
+index b5e0ff549422..bdf91054e6c3 100644
+--- a/kernel/time/posix-timers.c
++++ b/kernel/time/posix-timers.c
+@@ -560,7 +560,7 @@ static struct k_itimer * alloc_posix_timer(void)
+ 
+ static void k_itimer_rcu_free(struct rcu_head *head)
  {
--	trace_preemptirqsoff_hist(IRQS_ON, 0);
-+	trace_preemptirqsoff_hist_rcuidle(IRQS_ON, 0);
- 	if (!preempt_trace() && irq_trace())
- 		stop_critical_timing(a0, a1);
+-	struct k_itimer *tmr = container_of(head, struct k_itimer, it.rcu);
++	struct k_itimer *tmr = container_of(head, struct k_itimer, rcu);
+ 
+ 	kmem_cache_free(posix_timers_cache, tmr);
  }
-@@ -461,7 +461,7 @@ void time_hardirqs_off(unsigned long a0, unsigned long a1)
- {
- 	if (!preempt_trace() && irq_trace())
- 		start_critical_timing(a0, a1);
--	trace_preemptirqsoff_hist(IRQS_OFF, 1);
-+	trace_preemptirqsoff_hist_rcuidle(IRQS_OFF, 1);
+@@ -577,7 +577,7 @@ static void release_posix_timer(struct k_itimer *tmr, int it_id_set)
+ 	}
+ 	put_pid(tmr->it_pid);
+ 	sigqueue_free(tmr->sigq);
+-	call_rcu(&tmr->it.rcu, k_itimer_rcu_free);
++	call_rcu(&tmr->rcu, k_itimer_rcu_free);
  }
  
- #else /* !CONFIG_PROVE_LOCKING */
+ static struct k_clock *clockid_to_kclock(const clockid_t id)
 -- 
 2.14.1
