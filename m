@@ -1,12 +1,12 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mail.kernel.org ([198.145.29.99]:54178 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.99]:54012 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727787AbeHNVnj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 14 Aug 2018 17:43:39 -0400
+        id S1727787AbeHNVnh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 14 Aug 2018 17:43:37 -0400
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH 13/15] s390/mm: Fix missed tsk->pagefault_disabled conversion to pagefault_disable()
-Date: Tue, 14 Aug 2018 13:54:06 -0500
-Message-Id: <f97ca04fb6bb69f9af55231470cd4f3ce4cf921e.1534263273.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 12/15] powerpc: ps3/device-init.c - adapt to completions using swait vs wait
+Date: Tue, 14 Aug 2018 13:54:05 -0500
+Message-Id: <9ae5bcd04c27d27993be9b29794367ea2e0b1082.1534263273.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1534263273.git.tom.zanussi@linux.intel.com>
 References: <cover.1534263273.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1534263273.git.tom.zanussi@linux.intel.com>
@@ -21,41 +21,39 @@ please let me know.
 
 ------------------
 
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
 
-stable-rt commit 7be67fb433a0 ("mm: pagefault_disabled()") does this for s390:
+[ Upstream rt-devel commit 360395995f05ef133534d7ae74e01aea233623a6 ]
 
-  -       if (unlikely(!user_space_fault(regs) || in_atomic() || !mm ||
-  +       if (unlikely(!user_space_fault(regs) || !mm ||
-                       tsk->pagefault_disabled))
+To fix:
 
-  whereas elsewhere it does the right thing for other arches e.g.:
+  cc1: warnings being treated as errors
+  arch/powerpc/platforms/ps3/device-init.c: In function 'ps3_notification_read_write':
+  arch/powerpc/platforms/ps3/device-init.c:755:2: error: passing argument 1 of 'prepare_to_wait_event' from incompatible pointer type
+  arch/powerpc/platforms/ps3/device-init.c:755:2: error: passing argument 1 of 'abort_exclusive_wait' from incompatible pointer type
+  arch/powerpc/platforms/ps3/device-init.c:755:2: error: passing argument 1 of 'finish_wait' from incompatible pointer type
+  arch/powerpc/platforms/ps3/device-init.o] Error 1
+  make[3]: *** Waiting for unfinished jobs....
 
-  -       if (in_atomic() || !mm || current->pagefault_disabled)
-  +       if (!mm || pagefault_disabled())
-
-i.e. because of the linebreak it misses the tsk->pagefault_disabled
-and leaves it unconverted.
-
-So fix that up and use pagefault_disabled() as intended.
-
+Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- arch/s390/mm/fault.c | 2 +-
+ arch/powerpc/platforms/ps3/device-init.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/arch/s390/mm/fault.c b/arch/s390/mm/fault.c
-index 43ec237a17e2..466154e1dfc0 100644
---- a/arch/s390/mm/fault.c
-+++ b/arch/s390/mm/fault.c
-@@ -436,7 +436,7 @@ static inline int do_exception(struct pt_regs *regs, int access)
- 	 */
- 	fault = VM_FAULT_BADCONTEXT;
- 	if (unlikely(!user_space_fault(regs) || !mm ||
--		     tsk->pagefault_disabled))
-+		     pagefault_disabled()))
- 		goto out;
+diff --git a/arch/powerpc/platforms/ps3/device-init.c b/arch/powerpc/platforms/ps3/device-init.c
+index 3f175e8aedb4..c4c02f91904c 100644
+--- a/arch/powerpc/platforms/ps3/device-init.c
++++ b/arch/powerpc/platforms/ps3/device-init.c
+@@ -752,7 +752,7 @@ static int ps3_notification_read_write(struct ps3_notification_device *dev,
+ 	}
+ 	pr_debug("%s:%u: notification %s issued\n", __func__, __LINE__, op);
  
- 	address = trans_exc_code & __FAIL_ADDR_MASK;
+-	res = wait_event_interruptible(dev->done.wait,
++	res = swait_event_interruptible(dev->done.wait,
+ 				       dev->done.done || kthread_should_stop());
+ 	if (kthread_should_stop())
+ 		res = -EINTR;
 -- 
 2.14.1
