@@ -1,12 +1,12 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mail.kernel.org ([198.145.29.99]:52932 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.99]:52750 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727787AbeHNVn2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 14 Aug 2018 17:43:28 -0400
+        id S1727787AbeHNVn0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 14 Aug 2018 17:43:26 -0400
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH 06/15] locking: add types.h
-Date: Tue, 14 Aug 2018 13:53:59 -0500
-Message-Id: <aa5ffd43df199e1f5605e484d7ae72e49b9dc6f5.1534263273.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 05/15] alarmtimer: Prevent live lock in alarm_cancel()
+Date: Tue, 14 Aug 2018 13:53:58 -0500
+Message-Id: <f5183b98e3f877f8b380ff6f561a8122c6594ed7.1534263273.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1534263273.git.tom.zanussi@linux.intel.com>
 References: <cover.1534263273.git.tom.zanussi@linux.intel.com>
 In-Reply-To: <cover.1534263273.git.tom.zanussi@linux.intel.com>
@@ -23,30 +23,32 @@ please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-[ Upstream rt-devel commit 1289b06974d64f244a26455fab699c6a1332f4bc ]
+[ Upstream rt-devel commit 51e376c469bf05f32cb1ceb9e39d31bb92f1f6c8 ]
 
-During the stable update the arm architecture did not compile anymore
-due to missing definition of u16/32.
+If alarm_try_to_cancel() requires a retry, then depending on the
+priority setting the retry loop might prevent timer callback completion
+on RT. Prevent that by waiting for completion on RT, no change for a
+non RT kernel.
 
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- include/linux/spinlock_types_raw.h | 2 ++
- 1 file changed, 2 insertions(+)
+ kernel/time/alarmtimer.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/include/linux/spinlock_types_raw.h b/include/linux/spinlock_types_raw.h
-index edffc4d53fc9..03235b475b77 100644
---- a/include/linux/spinlock_types_raw.h
-+++ b/include/linux/spinlock_types_raw.h
-@@ -1,6 +1,8 @@
- #ifndef __LINUX_SPINLOCK_TYPES_RAW_H
- #define __LINUX_SPINLOCK_TYPES_RAW_H
- 
-+#include <linux/types.h>
-+
- #if defined(CONFIG_SMP)
- # include <asm/spinlock_types.h>
- #else
+diff --git a/kernel/time/alarmtimer.c b/kernel/time/alarmtimer.c
+index 119847b93ba6..5a5e05fc92a3 100644
+--- a/kernel/time/alarmtimer.c
++++ b/kernel/time/alarmtimer.c
+@@ -395,7 +395,7 @@ int alarm_cancel(struct alarm *alarm)
+ 		int ret = alarm_try_to_cancel(alarm);
+ 		if (ret >= 0)
+ 			return ret;
+-		cpu_relax();
++		hrtimer_wait_for_timer(&alarm->timer);
+ 	}
+ }
+ EXPORT_SYMBOL_GPL(alarm_cancel);
 -- 
 2.14.1
