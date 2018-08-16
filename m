@@ -1,87 +1,54 @@
-From: Tom Zanussi <zanussi@kernel.org>
-Subject: Re: [PATCH v3 6/7] tracing: Add snapshot action
-Date: Fri, 10 Aug 2018 09:07:16 -0500
-Message-ID: <1533910036.1918.12.camel@kernel.org>
-References: <cover.1533753152.git.tom.zanussi@linux.intel.com>
-         <b3cfc09e0c3e55dc0d6682cd2b89525f3f446665.1533753152.git.tom.zanussi@linux.intel.com>
-         <20180810070404.GD479@sejong>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
-        julia@ni.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org, kernel-team@lge.com
-To: Namhyung Kim <namhyung@kernel.org>
+From: Daniel Wagner <wagi@monom.org>
+Subject: [ANNOUNCE] 4.4.148-rt165
+Date: Thu, 16 Aug 2018 22:27:07 +0200
+Message-ID: <20180816202709.69869500B0B@mail.monom.org>
+To: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Julia Cartwright <julia@ni.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180810070404.GD479@sejong>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 2018-08-10 at 16:04 +0900, Namhyung Kim wrote:
-> On Thu, Aug 09, 2018 at 09:34:16AM -0500, Tom Zanussi wrote:
-> > From: Tom Zanussi <tom.zanussi@linux.intel.com>
-> > 
-> > Add support for hist:handlerXXX($var).snapshot(), which will take a
-> > snapshot of the current trace buffer whenever handlerXXX is hit.
-> > 
-> > As a first user, this also adds snapshot() action support for the
-> > onmax() handler i.e. hist:onmax($var).snapshot().
-> > 
-> > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> > ---
-> 
-> [SNIP]
-> > +static struct track_data *track_data_alloc(unsigned int key_len,
-> > +					   struct action_data
-> > *action_data,
-> > +					   struct
-> > hist_trigger_data *hist_data)
-> > +{
-> > +	struct track_data *data = kzalloc(sizeof(*data),
-> > GFP_KERNEL);
-> > +	unsigned int size = TASK_COMM_LEN;
-> > +	struct hist_elt_data *elt_data;
-> > +
-> > +	if (!data)
-> > +		return ERR_PTR(-ENOMEM);
-> > +
-> > +	data->key = kzalloc(key_len, GFP_KERNEL);
-> > +	if (!data->key) {
-> > +		track_data_free(data);
-> > +		return ERR_PTR(-ENOMEM);
-> > +	}
-> > +
-> > +	data->key_len = key_len;
-> > +	data->action_data = action_data;
-> > +	data->hist_data = hist_data;
-> > +
-> > +	elt_data = kzalloc(sizeof(*elt_data), GFP_KERNEL);
-> > +	if (!elt_data) {
-> > +		track_data_free(data);
-> > +		return ERR_PTR(-ENOMEM);
-> > +	}
-> > +	elt_data->comm = kzalloc(size, GFP_KERNEL);
-> > +	if (!elt_data->comm) {
-> > +		track_data_free(data);
-> 
-> It seems to leak 'elf_data' here.
-> 
+Hello RT Folks!
 
-Yep, it does - thanks for pointing that out.
+I'm pleased to announce the 4.4.148-rt165 stable release.
 
-Tom
+This release is just an update to the new stable 4.4.148 version
+and no RT specific changes have been made.
+
+Known issues:
+
+- 'stress-ng --ptrace 4' is able to trigger a latency spike of
+   several ms. Usually around 2 - 3ms on two different x86_64 boxes I can
+   test on. 4.9-rt seems to have the same problem. 4.14-rt and 4.16-rt
+   work just fine. Still debugging the issue.
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.4-rt
+  Head SHA1: 581e591d5bda2fb9fd1d2802d98587f2555d20e4
+
+Or to build 4.4.148-rt165 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.148.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/4.4/patch-4.4.148-rt165.patch.xz
 
 
-> Thanks,
-> Namhyung
-> 
-> 
-> > +		return ERR_PTR(-ENOMEM);
-> > +	}
-> > +
-> > +	data->elt.private_data = elt_data;
-> > +
-> > +	return data;
-> > +}
+You can also build from 4.4.145-rt162 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/4.4/incr/patch-4.4.145-rt162-rt165.patch.xz
+
+Enjoy!
+   Daniel
