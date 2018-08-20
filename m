@@ -1,36 +1,60 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mx0a-00010702.pphosted.com ([148.163.156.75]:60216 "EHLO
-        mx0b-00010702.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1727240AbeIADkX (ORCPT
+Received: from mail-oi0-f50.google.com ([209.85.218.50]:46222 "EHLO
+        mail-oi0-f50.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726129AbeHTMuy (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 31 Aug 2018 23:40:23 -0400
-Date: Fri, 31 Aug 2018 18:30:19 -0500
-From: Julia Cartwright <julia@ni.com>
-Subject: Re: PREEMPT_RT_FULL breaks NO_HZ_FULL (full dynticks)
-Message-ID: <20180831233019.GK8562@jcartwri.amer.corp.natinst.com>
-References: <20180827033922.GA28188@intel.com>
- <20180830141856.tjvispfgqrnz727b@linutronix.de>
- <20180831081819.GB23052@intel.com>
- <20180831163152.vrrntdy7xsej2kwv@linutronix.de>
+        Mon, 20 Aug 2018 08:50:54 -0400
+Received: by mail-oi0-f50.google.com with SMTP id y207-v6so24640508oie.13
+        for <linux-rt-users@vger.kernel.org>; Mon, 20 Aug 2018 02:36:01 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20180831163152.vrrntdy7xsej2kwv@linutronix.de>
+From: Vignesh Raman <vignesh.raman.in@gmail.com>
+Date: Mon, 20 Aug 2018 15:05:49 +0530
+Message-ID: <CAH3OF51v8_KK_XF_sttVzSddmWoLUvVOjbUvKr2OuiJTLntTQQ@mail.gmail.com>
+Subject: kernel freeze when running docker
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: Ramesh Thomas <ramesh.thomas@intel.com>, linux-rt-users@vger.kernel.org, fweisbec@gmail.com, tglx@linutronix.de, mingo@kernel.org
+To: linux-rt-users@vger.kernel.org
 
-On Fri, Aug 31, 2018 at 06:31:52PM +0200, Sebastian Andrzej Siewior wrote:
-> On 2018-08-31 01:18:20 [-0700], Ramesh Thomas wrote:
-[..]
-> > 2. Timer is armed even though only a single high priority task is running.
-> 
-> something must have armed that timer. The clock_nanosleep() API won't
-> use those new threads but for instance timer_create() / timer_settime()
-> will.
+Hi,
 
-Did we actually ever solve the "ktimersoftd uselessly woken on every
-tick" problem?
+I'm seeing a kernel freeze (and systemd reboots after few seconds)
+when docker running kubernetes with debian 4.9 RT kernel
+(4.9.0-6-rt-amd64).
+This was tested with 4.14 -rt kernel and the issue was still seen.
+kdump is not capturing the coredump in this case so I'm unable to
+check the crash logs.
+The system crash logs are not available in /sys/fs/pstore.
 
-   Julia
+When manual crash is triggered with sysrq the kdump captures the crash
+logs. But this does not work always.
+Sometimes the system does not reboot when manual crash (sysrq) is
+triggered and a freeze happens.
+Maybe the capture kernel itself hangs while taking coredump.
+
+When manual crash is triggered with sysrq the crash logs are available
+in /sys/fs/pstore.
+
+I'm able to reproduce a similar freeze/reset issue with the steps
+mentioned here https://github.com/moby/moby/issues/19758.
+Run "for f in $(seq 1 1000);do docker run -it --rm ubuntu echo $f;
+done" concurrently in 3 terminals.
+But I'm unable to confirm if both these issues are related due to
+unavailability of crash logs.
+
+Enabled CPUAccounting/MemoryAccounting in docker.service but the
+system freeze was still seen.,
+sudo systemctl set-property docker.service MemoryAccounting=yes
+sudo systemctl set-property docker.service CPUAccounting=yes
+
+I was thinking to enable CONFIG_RT_GROUP_SCHED (allocate real CPU
+bandwidth to task groups). But this is disabled if PREEMPT_RT_FULL is
+enabled.
+
+I'm unable to root cause the reason for freeze/crash because crash
+logs are not available.
+Is there any other way to capture the crashdump? Any pointers will be
+helpful. Thanks.
+
+Regards,
+Vignesh
