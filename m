@@ -1,8 +1,10 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mail.klingt.org ([86.59.21.178]:33288 "EHLO klingt.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726026AbeHTPKq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 20 Aug 2018 11:10:46 -0400
+Received: from mail.santannapisa.it ([193.205.80.99]:64873 "EHLO
+        mail.santannapisa.it" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726253AbeHUKg1 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 21 Aug 2018 06:36:27 -0400
+Subject: Re: SCHED_DEADLINE as user
 References: <pl0fsj$ohn$1@blaine.gmane.org>
  <0ac9fabc-c316-2a59-c3dd-c7b4e4f93209@bristot.me>
  <20180817095106.GB27071@localhost.localdomain>
@@ -10,113 +12,93 @@ References: <pl0fsj$ohn$1@blaine.gmane.org>
  <20180817102810.GC27071@localhost.localdomain>
  <513fd544-bc51-7ea6-8b94-983d28922a66@klingt.org>
  <20180820085420.GB8866@localhost.localdomain>
-From: Tim Blechmann <tim@klingt.org>
-Subject: Re: SCHED_DEADLINE as user
-Message-ID: <d7cd5c88-dbe6-c74d-43e8-724ac0b463ce@klingt.org>
-Date: Mon, 20 Aug 2018 19:54:58 +0800
+ <d7cd5c88-dbe6-c74d-43e8-724ac0b463ce@klingt.org>
+From: Tommaso Cucinotta <tommaso.cucinotta@santannapisa.it>
+Message-ID: <0a8f899a-589d-a84b-dadb-50def9c0b4c3@santannapisa.it>
+Date: Tue, 21 Aug 2018 09:17:27 +0200
 MIME-Version: 1.0
-In-Reply-To: <20180820085420.GB8866@localhost.localdomain>
-Content-Type: multipart/signed; micalg=pgp-sha512;
- protocol="application/pgp-signature";
- boundary="H6jkRoFCU33RPUWJXtUysCcMyb8t6wH3G"
+In-Reply-To: <d7cd5c88-dbe6-c74d-43e8-724ac0b463ce@klingt.org>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: Juri Lelli <juri.lelli@gmail.com>
-Cc: Daniel Bristot de Oliveira <daniel@bristot.me>, linux-rt-users@vger.kernel.org, Tommaso Cucinotta <tommaso.cucinotta@santannapisa.it>, Luca Abeni <luca.abeni@santannapisa.it>
+To: Tim Blechmann <tim@klingt.org>, Juri Lelli <juri.lelli@gmail.com>
+Cc: Daniel Bristot de Oliveira <daniel@bristot.me>, linux-rt-users@vger.kernel.org, Luca Abeni <luca.abeni@santannapisa.it>, Alessio Balsini <alessio.balsini@santannapisa.it>
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---H6jkRoFCU33RPUWJXtUysCcMyb8t6wH3G
-Content-Type: multipart/mixed; boundary="1VeoxWEgyeT3Y122cGAHZhtpBId8i1D7t";
- protected-headers="v1"
-From: Tim Blechmann <tim@klingt.org>
-To: Juri Lelli <juri.lelli@gmail.com>
-Cc: Daniel Bristot de Oliveira <daniel@bristot.me>,
- linux-rt-users@vger.kernel.org,
- Tommaso Cucinotta <tommaso.cucinotta@santannapisa.it>,
- Luca Abeni <luca.abeni@santannapisa.it>
-Message-ID: <d7cd5c88-dbe6-c74d-43e8-724ac0b463ce@klingt.org>
-Subject: Re: SCHED_DEADLINE as user
-References: <pl0fsj$ohn$1@blaine.gmane.org>
- <0ac9fabc-c316-2a59-c3dd-c7b4e4f93209@bristot.me>
- <20180817095106.GB27071@localhost.localdomain>
- <c2b1a7a4-db8c-b8bd-6623-5c66b55ee6d2@klingt.org>
- <20180817102810.GC27071@localhost.localdomain>
- <513fd544-bc51-7ea6-8b94-983d28922a66@klingt.org>
- <20180820085420.GB8866@localhost.localdomain>
-In-Reply-To: <20180820085420.GB8866@localhost.localdomain>
+[copying Alessio]
 
---1VeoxWEgyeT3Y122cGAHZhtpBId8i1D7t
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: quoted-printable
+Hi,
 
-> In your case - assuming you could already use DEADLINE for !root - do
-> you think you would need to use the same interface for the multiple
-> threads you are distributing work among? Or would you be fine with
-> assigning runtime/deadline for each one of those?
+On 20/08/2018 13:54, Tim Blechmann wrote:
+> that's a tricky question and depends on the use-case: for me it's "good
+> enough" to use something like:
+>
+> main audio thread:
+> while running:
+>    snd_pcm_read  // blocks until data is delivered from ALSA
+>    wake helper(s)
+>    do work()
+>    sync_with_helper(s)
+>    snd_pcm_write // blocks until data is delivered to ALSA
+>
+> alsa is basically driven by the hardware, which delivers/requests data
+> every ~1.3ms.
 
-that's a tricky question and depends on the use-case: for me it's "good
-enough" to use something like:
+this is exactly the use-case we considered in that old paper back in LAC 2011, and let me just add that there is more 
+experimentation and details and results in Giacomo's MSc thesis:
 
-main audio thread:
-while running:
-  snd_pcm_read  // blocks until data is delivered from ALSA
-  wake helper(s)
-  do work()
-  sync_with_helper(s)
-  snd_pcm_write // blocks until data is delivered to ALSA
+   https://retis.sssup.it/?q=node/77
 
-alsa is basically driven by the hardware, which delivers/requests data
-every ~1.3ms.
+FYI, we restarted activities on this use-case just recently, considering a couple of further dimensions:
 
+1) support for heterogeneous platforms with the aim of achieving a sound support for Arm big.LITTLE on Android, and 
+apply it to the Android video & audio processing pipelines;
 
-distributing the work is a little tricky: to avoid excessive scheduling
-overhead, the worker threads are typically woken up (after snd_pcm_read)
-and the result is collected where sync_with_helper() typically boils
-down to busy waiting. in this case, the workers as rate-monotonic in a
-similar manner as the main audio thread.
+2) proper consideration of power switching capabilities of the platform (assuming the user would block the CPU frequency 
+to its maximum is not really multimedia-friendly);
 
-one could also use lock-free queues with semaphores to wake only as many
-threads as needed for the graph topology (which can depend on user
-input). in this case SCHED_FIFO sounds more suitable.
+3) support for multi-threaded processing workflows on multi-cores, as typically needed by (high-performance) audio 
+applications, either with a single multi-threaded audio processing client, or, e.g., with JACK, with a DAG of 
+computations that can take advantage of underlying multi-core processing.
 
---
+In this context, we've been playing also with the hierarchical extension to SCHED_DEADLINE we sent last year on LKML
 
-from a practical point of view: i'm not targeting a safety critical
-system. one advantage i'm seeing of DEADLINE over FIFO/RR is that it's
-easier to prevent lockups (e.g. when a user overloads the system). in
-the linux audio world this is typically done by a watchdog thread. the
-other part of the unix world (mach) is using time-constraint threads by
-default for audio use cases. so i'd assume that DEADLINE would free me
-from the need to spawn the watchdog thread ...
+   https://lkml.org/lkml/2017/3/31/658
 
-cheers,
-tim
+I hope we can share some good write-up & experimental results pretty soon about some of the above...
+> distributing the work is a little tricky: to avoid excessive scheduling
+> overhead, the worker threads are typically woken up (after snd_pcm_read)
+> and the result is collected where sync_with_helper() typically boils
+> down to busy waiting. in this case, the workers as rate-monotonic in a
+> similar manner as the main audio thread.
+>
+> one could also use lock-free queues with semaphores to wake only as many
+> threads as needed for the graph topology (which can depend on user
+> input). in this case SCHED_FIFO sounds more suitable.
 
+proper handling of task dependencies & synchronization, and associated priority inversion issues, is also an aspect 
+we've been and we're still working on, as when you mix DEADLINE tasks in the picture, it's a big mess.
+> from a practical point of view: i'm not targeting a safety critical
+> system. one advantage i'm seeing of DEADLINE over FIFO/RR is that it's
+> easier to prevent lockups (e.g. when a user overloads the system). in
+> the linux audio world this is typically done by a watchdog thread. the
+> other part of the unix world (mach) is using time-constraint threads by
+> default for audio use cases. so i'd assume that DEADLINE would free me
+> from the need to spawn the watchdog thread ...
 
---1VeoxWEgyeT3Y122cGAHZhtpBId8i1D7t--
+I'm not sure I'm getting this: AFAIU, from this viewpoint, what you could get
+with DEADLINE, is very similar to what you can get already with RT throttling
+on RT (RR/FIFO), setting up properly CPU cgroups & limits. Why do you think
+DEADLINE would allow you to avoid a watchdog thread, that you need with
+RT instead ?
 
---H6jkRoFCU33RPUWJXtUysCcMyb8t6wH3G
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
+Thanks,
 
------BEGIN PGP SIGNATURE-----
-Comment: GPGTools - http://gpgtools.org
+     T.
 
-iQIcBAEBCgAGBQJbeqwTAAoJEAIkvWiom07DTs4P+wQgiM5akROmFSJtXl1N/qVx
-uPGp7MLpvrhTaNPSwOGXhcAFYA2ZxoDBHO4pn2uPoxWhe5psrjoHy85U8OKzKUnb
-6opU8kVx722KzKLSkS8iD1Dh9fi9Sw8bZteVe/vkcKKKKVCCr/D9i7aRCXsiz0lt
-Al9InP3fIj0oDF3BNvU26AzPz3AXj/zG2QFZqWdBU+gWUYJfg3y9Ow74Mrjx8YYH
-M8k+purLxf74vX/IFes1i3/9rLsPzH0OvXByT/339MAmINyGiRTBWURskfbP/Ic4
-tBN2p5S4iwTBYOa7rjEoRROmRnV7NfyjM2w8qchF1+zjWudMUpRtlCcf0cCVnWvc
-VtllRTL3g4LuBbbk5cn/L0R7KrPkeycIImoYk6DG8d7Jq4sDirkG/fi+Y0oayUfM
-JvrYkSrQANFMV+qqTXdV7tfUrHLNFWCJ5mJoKefUrnGNgY/RWRbU47UqFk3k0vFS
-ueJqf5Lp6usq3p5whN95hKU2FSIGVfbVuKjC4QcUqsyzCzTtfxru6G1vm34+yAz2
-5cRQPXVwAnxXl/cXxvYzEiGvZpDTRpV83FwZ2reYlh/hJ7EpCdCRg4ZdYBN3XOES
-1cwTgReJvUf9qJEgG0cw107KRPPW3OkHjS6cL8qigzC9xzdtHTfSUP1w/AKZzvJp
-RQzObSrjyjonbLJ4Wn8p
-=qyPi
------END PGP SIGNATURE-----
-
---H6jkRoFCU33RPUWJXtUysCcMyb8t6wH3G--
+-- 
+Tommaso Cucinotta, Computer Engineering PhD
+Associate Professor at the Real-Time Systems Laboratory (ReTiS)
+Scuola Superiore Sant'Anna, Pisa, Italy
+http://retis.sssup.it/people/tommaso
