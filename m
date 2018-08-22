@@ -1,42 +1,64 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: bisected - arm64 kvm unit test failures
-Date: Wed, 22 Aug 2018 15:57:26 +0200
-Message-ID: <1534946246.8087.11.camel@gmx.de>
-References: <20180727215710.zq6gkoqzlb4ca7qv@linutronix.de>
-         <1532768831.9882.71.camel@gmx.de> <1532847330.1618.8.camel@gmx.de>
-         <1532864867.1618.32.camel@gmx.de> <1532967899.30205.62.camel@gmx.de>
-         <1533061729.12487.26.camel@gmx.de>
-         <c96d252c-6ed7-320e-0d47-c4b78af20ce0@arm.com>
-         <1534945105.8087.8.camel@gmx.de>
-         <77ab9a57-b3ad-d8fa-7dc8-b94527f56139@arm.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [BUG v4.14-rt] kernel BUG at
+ /work/rt/stable-rt.git/kernel/sched/core.c:1639!
+Date: Wed, 22 Aug 2018 12:17:49 -0400
+Message-ID: <20180822121749.5c4632d7@gandalf.local.home>
+References: <20180817162340.6e8482fd@gandalf.local.home>
+        <1534588142.2516.10.camel@gmx.de>
+        <1534597992.15909.17.camel@gmx.de>
+        <1534660115.6187.4.camel@gmx.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Marc Zyngier <marc.zyngier@arm.com>,
+Cc: Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>
+        Julia Cartwright <julia@ni.com>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>
+To: Mike Galbraith <efault@gmx.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <77ab9a57-b3ad-d8fa-7dc8-b94527f56139@arm.com>
+In-Reply-To: <1534660115.6187.4.camel@gmx.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2018-08-22 at 14:50 +0100, Marc Zyngier wrote:
-> On 22/08/18 14:38, Mike Galbraith wrote:
-> > On Tue, 2018-08-21 at 16:34 +0100, Marc Zyngier wrote:
-> >> Could you give that patchlet[1] a go? It solves a similar issue for me
-> >> on a different platform.
-> >>
-> >> [1] https://lists.cs.columbia.edu/pipermail/kvmarm/2018-August/032469.html
-> > 
-> > Yup, all better.
+On Sun, 19 Aug 2018 08:28:35 +0200
+Mike Galbraith <efault@gmx.de> wrote:
+
+> On Sat, 2018-08-18 at 15:13 +0200, Mike Galbraith wrote:
+> > seems it has be something from the 4.17 cycle that went back to 4.14-
+> > stable after 4.1[56]-stable trees went extinct.  
 > 
-> Now I'm not sure it actually fixes anything. Alex's test case seem to
-> have opened a new can of worms... In tracing hell at the moment.
+> See ("sched/core: Require cpu_active() in select_task_rq(), for user tasks")
+> 
+> Fix it like so?
+> 
+> sched: Allow pinned user tasks to be awakened to the CPU they pinned
+> 
+> Since 7af443ee16976, select_fallback_rq() will BUG() if the CPU to
+> which a task has pinned itself and pinned becomes !cpu_active()
+> while it slept.  Serving a 10 megaton eviction notice is neither
+> helpful nor required, the task will migrate when it can do so.
 
-I'll keep the test box reserved a while longer.  When you get it's
-other leg stuffed into the casket, if you want testing, holler.
+This seems to fix the issue that I was seeing. Thanks!
 
-	-Mike
+I'll add this to my repo as well.
+
+-- Steve
+
+> 
+> Signed-off-by: Mike Galbraith <efault@gmx.de>
+> ---
+>  kernel/sched/core.c |    2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> --- a/kernel/sched/core.c
+> +++ b/kernel/sched/core.c
+> @@ -980,7 +980,7 @@ static inline bool is_cpu_allowed(struct
+>  	if (!cpumask_test_cpu(cpu, p->cpus_ptr))
+>  		return false;
+>  
+> -	if (is_per_cpu_kthread(p))
+> +	if (is_per_cpu_kthread(p) || __migrate_disabled(p))
+>  		return cpu_online(cpu);
+>  
+>  	return cpu_active(cpu);
