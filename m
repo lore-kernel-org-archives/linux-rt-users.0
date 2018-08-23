@@ -1,70 +1,59 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from barracuda2.shentel.net ([204.111.1.145]:39489 "EHLO
-        barracuda4.shentel.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-        with ESMTP id S1726917AbeHWVjB (ORCPT
+Received: from mail-wr1-f52.google.com ([209.85.221.52]:42898 "EHLO
+        mail-wr1-f52.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726461AbeHWQjk (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 23 Aug 2018 17:39:01 -0400
-Received: from smtp1.edbg.cloud.shentel.net (smtp1.edbg.cloud.shentel.net [204.111.2.17]) by barracuda4.shentel.net with ESMTP id CNgsPJPiW8JTvqll for <linux-rt-users@vger.kernel.org>; Thu, 23 Aug 2018 14:07:45 -0400 (EDT)
-Received: from coyote.coyote.den (unknown [204.111.64.149])
-        by smtp1.edbg.cloud.shentel.net (Postfix) with ESMTPSA id 4C53522423
-        for <linux-rt-users@vger.kernel.org>; Thu, 23 Aug 2018 14:07:45 -0400 (EDT)
-From: Gene Heskett <gheskett@shentel.net>
+        Thu, 23 Aug 2018 12:39:40 -0400
+Received: by mail-wr1-f52.google.com with SMTP id v17-v6so4597613wrr.9
+        for <linux-rt-users@vger.kernel.org>; Thu, 23 Aug 2018 06:10:01 -0700 (PDT)
+Date: Thu, 23 Aug 2018 15:09:57 +0200
+From: Juri Lelli <juri.lelli@gmail.com>
 Subject: Re: SCHED_DEADLINE as user
-Date: Thu, 23 Aug 2018 14:07:35 -0400
-References: <pl0fsj$ohn$1@blaine.gmane.org> <201808230945.02854.gheskett@shentel.net> <5B7EDA65.7000906@windriver.com>
-In-Reply-To: <5B7EDA65.7000906@windriver.com>
+Message-ID: <20180823130957.GD31443@localhost.localdomain>
+References: <20180817095106.GB27071@localhost.localdomain>
+ <c2b1a7a4-db8c-b8bd-6623-5c66b55ee6d2@klingt.org>
+ <20180817102810.GC27071@localhost.localdomain>
+ <513fd544-bc51-7ea6-8b94-983d28922a66@klingt.org>
+ <20180820085420.GB8866@localhost.localdomain>
+ <20180823115618.5584687b@luca64>
+ <20180823102350.GB31443@localhost.localdomain>
+ <20180823124340.765632d8@luca64>
+ <20180823123739.GC31443@localhost.localdomain>
+ <20180823150040.7da1624f@luca64>
 MIME-Version: 1.0
-Content-Type: Text/Plain;
-  charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Message-Id: <201808231407.35449.gheskett@shentel.net>
+In-Reply-To: <20180823150040.7da1624f@luca64>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: linux-rt-users@vger.kernel.org
+To: luca abeni <luca.abeni@santannapisa.it>
+Cc: Tim Blechmann <tim@klingt.org>, Daniel Bristot de Oliveira <daniel@bristot.me>, linux-rt-users@vger.kernel.org, Tommaso Cucinotta <tommaso.cucinotta@santannapisa.it>
 
-On Thursday 23 August 2018 12:01:41 Chris Friesen wrote:
+On 23/08/18 15:00, luca abeni wrote:
+> On Thu, 23 Aug 2018 14:37:39 +0200
+> Juri Lelli <juri.lelli@gmail.com> wrote:
+> [...]
+> > > > Maybe the existing system wide sched_rt_{period,
+> > > > runtime}_us are enough?  
+> > > 
+> > > I do not know... A cgroup-based interface looks more powerful (and
+> > > not so difficult to implement... :), and would allow the sysadmin
+> > > to decide which users can use SCHED_DEADLINE, how much
+> > > SCHED_DEADLINE bandwidth can each user/group use, etc...  
+> > 
+> > How about extending PAM limits instead? It looks like it's what (e.g.)
+> > audio users rely on already [1]. It is maybe possible to add
+> > dlruntime, dlperiod, dldeadline parameters in there?
+> 
+> Ok, I do not know much about these PAM limits... Where can I find more
+> information?
 
-> On 08/23/2018 07:45 AM, Gene Heskett wrote:
-> > LinuxCNC is also run as a common user, never as root.  Thats my
-> > $0.02 from a users viewpoint.
->
-> Given that these are special-purpose machines, can I ask why you
-> wouldn't run as root if it gave better performance?
->
-> Chris
+The link I shared already gives some information, man pam_limits and
+limits.conf also.
 
-Its a rather bad habit, and if I get used to doing it on this machine, I 
-might do it on one of the metal carvers, which has a tendency to mess 
-with the user perms. Root or known user is all the same to  lcnc AFAIK. 
-I have done it 3 or 4 times, but there is no detectable diff in 
-performance. But sometime in the last few years it has now been trained 
-to refuse to run as root.
+> What do we need to implement exactly, to add these dlruntime,
+> dlperiod, dldeadline parameters?
 
-The kernel argument isolcpus= comes in handy occasionally on really old 
-but still multicore hdwe but has had little or no effect since about 
-kernel 3.4.0 built for SMP and PREEMPT. We don't use  more than 2GB of 
-d-ram for the same reason, the patches to give a 4GB capable address are 
-also a performance penalty.
+Not sure yet "exactly" :-), but I'd say something along these lines
 
-Currently running
-Linux GO704 3.4-9-rtai-686-pae #1 SMP PREEMPT Debian 3.4.55-4linuxcnc 
-i686 GNU/Linux, a 32 bit build because its faster at a context switch 
-than the larger stack image the 64 bit build uses.
-
-This machine, my "doitall" machine doesn't drive any of that sort of 
-hardware, and is currently running:3.16.0-0.bpo.4-amd64 #1 SMP Debian 
-3.16.39-1+deb8u1~bpo70+1 (2017-02-24) x86_64 GNU/Linux which will run 
-the simulator so I can write cgode from a comfy chair.  Then export it 
-with sshfs to the machine that will actually make the swarf, aka 
-metallic sawdust.
-
-Thanks Chris.
-
--- 
-Cheers, Gene Heskett
---
-"There are four boxes to be used in defense of liberty:
- soap, ballot, jury, and ammo. Please use in that order."
--Ed Howdershelt (Author)
-Genes Web page <http://geneslinuxbox.net:6309/gene>
+https://elixir.bootlin.com/linux/latest/source/kernel/sched/core.c#L4198
