@@ -1,10 +1,11 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 4.14.63-rt40
-Date: Wed, 22 Aug 2018 14:14:58 -0400
-Message-ID: <20180822141458.0b6b6af7@gandalf.local.home>
+From: Tiejun Chen <tiejunc@vmware.com>
+Subject: RE: [ANNOUNCE] 4.14.63-rt40
+Date: Thu, 23 Aug 2018 09:31:09 +0000
+Message-ID: <CY1PR0501MB14666E51F4D066F2E0C5208AC5370@CY1PR0501MB1466.namprd05.prod.outlook.com>
+References: <20180822141458.0b6b6af7@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         John Kacur <jkacur@redhat.com>,
@@ -12,48 +13,73 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
         Tom Zanussi <tom.zanussi@linux.intel.com>
-To: LKML <linux-kernel@vger.kernel.org>,
+To: Steven Rostedt <rostedt@goodmis.org>,
+        LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180822141458.0b6b6af7@gandalf.local.home>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-
-Dear RT Folks,
-
-I'm pleased to announce the 4.14.63-rt40 stable release.
-
-
-This release is just an update to the new stable 4.14.63 version
-and no RT specific changes have been made.
-
-NOTE: There is a known issue with this release. The fix is here:
-
-  http://lkml.kernel.org/r/1534660115.6187.4.camel@gmx.de
-
-I did not apply it to this release because it needs to be added to
-v4.16-rt first before it gets backported. Feel free to apply it
-yourself if you have any concerns.
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.14-rt
-  Head SHA1: da6bee3cef4af60566dc56f3d48fce0b18165107
-
-
-Or to build 4.14.63-rt40 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.63.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.63-rt40.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
+U3RldmVuLA0KDQpjb21taXQgN2YxMWE1OTFiYmRiMTExNzkyMjk4MTQ0YzM0NzY1MDZhYTdmMWNh
+OCAoSEVBRCAtPiB2NC4xNC42My1ydDQwLXJlYmFzZSwgdGFnOiB2NC4xNC42My1ydDQwLXJlYmFz
+ZSwgb3JpZ2luL3Y0LjE0LXJ0LXJlYmFzZSkNCkF1dGhvcjogU3RldmVuIFJvc3RlZHQgKFZNd2Fy
+ZSkgPHJvc3RlZHRAZ29vZG1pcy5vcmc+DQpEYXRlOiAgIFdlZCBNYXkgMTYgMDk6MzM6MDAgMjAx
+OCAtMDQwMA0KDQogICAgTGludXggNC4xNC42My1ydDQwIFJFQkFTRQ0KDQpkaWZmIC0tZ2l0IGEv
+bG9jYWx2ZXJzaW9uLXJ0IGIvbG9jYWx2ZXJzaW9uLXJ0DQppbmRleCA5MDI5MGM2NDJlZDUuLmEz
+YjI0MDhjMWRhNiAxMDA2NDQNCi0tLSBhL2xvY2FsdmVyc2lvbi1ydA0KKysrIGIvbG9jYWx2ZXJz
+aW9uLXJ0DQpAQCAtMSArMSBAQA0KLS1ydDI5DQorLXJ0MzcNCiAgICBeDQpJc24ndCBpdCBzdXBw
+b3NlZCB0byBiZSBydDQwPw0KDQpUaGFua3MNClRpZWp1bg0KDQo+IC0tLS0tT3JpZ2luYWwgTWVz
+c2FnZS0tLS0tDQo+IEZyb206IGxpbnV4LXJ0LXVzZXJzLW93bmVyQHZnZXIua2VybmVsLm9yZyA8
+bGludXgtcnQtdXNlcnMtDQo+IG93bmVyQHZnZXIua2VybmVsLm9yZz4gT24gQmVoYWxmIE9mIFN0
+ZXZlbiBSb3N0ZWR0DQo+IFNlbnQ6IFRodXJzZGF5LCBBdWd1c3QgMjMsIDIwMTggMjoxNSBBTQ0K
+PiBUbzogTEtNTCA8bGludXgta2VybmVsQHZnZXIua2VybmVsLm9yZz47IGxpbnV4LXJ0LXVzZXJz
+IDxsaW51eC1ydC0NCj4gdXNlcnNAdmdlci5rZXJuZWwub3JnPg0KPiBDYzogVGhvbWFzIEdsZWl4
+bmVyIDx0Z2x4QGxpbnV0cm9uaXguZGU+OyBDYXJzdGVuIEVtZGUNCj4gPEMuRW1kZUBvc2FkbC5v
+cmc+OyBKb2huIEthY3VyIDxqa2FjdXJAcmVkaGF0LmNvbT47IFNlYmFzdGlhbiBBbmRyemVqDQo+
+IFNpZXdpb3IgPGJpZ2Vhc3lAbGludXRyb25peC5kZT47IEp1bGlhIENhcnR3cmlnaHQgPGp1bGlh
+QG5pLmNvbT47IERhbmllbA0KPiBXYWduZXIgPGRhbmllbC53YWduZXJAc2llbWVucy5jb20+OyBU
+b20gWmFudXNzaQ0KPiA8dG9tLnphbnVzc2lAbGludXguaW50ZWwuY29tPg0KPiBTdWJqZWN0OiBb
+QU5OT1VOQ0VdIDQuMTQuNjMtcnQ0MA0KPiANCj4gDQo+IERlYXIgUlQgRm9sa3MsDQo+IA0KPiBJ
+J20gcGxlYXNlZCB0byBhbm5vdW5jZSB0aGUgNC4xNC42My1ydDQwIHN0YWJsZSByZWxlYXNlLg0K
+PiANCj4gDQo+IFRoaXMgcmVsZWFzZSBpcyBqdXN0IGFuIHVwZGF0ZSB0byB0aGUgbmV3IHN0YWJs
+ZSA0LjE0LjYzIHZlcnNpb24gYW5kIG5vIFJUDQo+IHNwZWNpZmljIGNoYW5nZXMgaGF2ZSBiZWVu
+IG1hZGUuDQo+IA0KPiBOT1RFOiBUaGVyZSBpcyBhIGtub3duIGlzc3VlIHdpdGggdGhpcyByZWxl
+YXNlLiBUaGUgZml4IGlzIGhlcmU6DQo+IA0KPiANCj4gaHR0cHM6Ly9uYTAxLnNhZmVsaW5rcy5w
+cm90ZWN0aW9uLm91dGxvb2suY29tLz91cmw9aHR0cCUzQSUyRiUyRmxrbWwua2VyDQo+IG5lbC5v
+cmclMkZyJTJGMTUzNDY2MDExNS42MTg3LjQuY2FtZWwlNDBnbXguZGUmYW1wO2RhdGE9MDIlN0Mw
+MSUNCj4gN0N0aWVqdW5jJTQwdm13YXJlLmNvbSU3Q2Y1NTA1YTEyNmJiODQ5MWFjMmRiMDhkNjA4
+NWIyZTE1JTdDYjM5DQo+IDEzOGNhM2NlZTRiNGFhNGQ2Y2Q4M2Q5ZGQ2MmYwJTdDMSU3QzAlN0M2
+MzY3MDU1ODUwNjIxNDI5NTYmYW1wDQo+IDtzZGF0YT12ZEg5eENJakMycFZ3TWdnR0p2VkFrZkly
+cTJqRzNxSmFUaTBhc25xN1NrJTNEJmFtcDtyZXNlcnZlZA0KPiA9MA0KPiANCj4gSSBkaWQgbm90
+IGFwcGx5IGl0IHRvIHRoaXMgcmVsZWFzZSBiZWNhdXNlIGl0IG5lZWRzIHRvIGJlIGFkZGVkIHRv
+IHY0LjE2LXJ0IGZpcnN0DQo+IGJlZm9yZSBpdCBnZXRzIGJhY2twb3J0ZWQuIEZlZWwgZnJlZSB0
+byBhcHBseSBpdCB5b3Vyc2VsZiBpZiB5b3UgaGF2ZSBhbnkNCj4gY29uY2VybnMuDQo+IA0KPiBZ
+b3UgY2FuIGdldCB0aGlzIHJlbGVhc2UgdmlhIHRoZSBnaXQgdHJlZSBhdDoNCj4gDQo+ICAgZ2l0
+Oi8vZ2l0Lmtlcm5lbC5vcmcvcHViL3NjbS9saW51eC9rZXJuZWwvZ2l0L3J0L2xpbnV4LXN0YWJs
+ZS1ydC5naXQNCj4gDQo+ICAgYnJhbmNoOiB2NC4xNC1ydA0KPiAgIEhlYWQgU0hBMTogZGE2YmVl
+M2NlZjRhZjYwNTY2ZGM1NmYzZDQ4ZmNlMGIxODE2NTEwNw0KPiANCj4gDQo+IE9yIHRvIGJ1aWxk
+IDQuMTQuNjMtcnQ0MCBkaXJlY3RseSwgdGhlIGZvbGxvd2luZyBwYXRjaGVzIHNob3VsZCBiZSBh
+cHBsaWVkOg0KPiANCj4gDQo+IGh0dHBzOi8vbmEwMS5zYWZlbGlua3MucHJvdGVjdGlvbi5vdXRs
+b29rLmNvbS8/dXJsPWh0dHAlM0ElMkYlMkZ3d3cua2UNCj4gcm5lbC5vcmclMkZwdWIlMkZsaW51
+eCUyRmtlcm5lbCUyRnY0LnglMkZsaW51eC0NCj4gNC4xNC50YXIueHomYW1wO2RhdGE9MDIlN0Mw
+MSU3Q3RpZWp1bmMlNDB2bXdhcmUuY29tJTdDZjU1MDVhMTI2YmINCj4gODQ5MWFjMmRiMDhkNjA4
+NWIyZTE1JTdDYjM5MTM4Y2EzY2VlNGI0YWE0ZDZjZDgzZDlkZDYyZjAlN0MxJTcNCj4gQzAlN0M2
+MzY3MDU1ODUwNjIxNTI5NzAmYW1wO3NkYXRhPWN1VFVKT3pQYjhySlNiSzhRTGZxYjVzOWpITllr
+Mw0KPiBXYnJVRGxhNXM2aXhNJTNEJmFtcDtyZXNlcnZlZD0wDQo+IA0KPiANCj4gaHR0cHM6Ly9u
+YTAxLnNhZmVsaW5rcy5wcm90ZWN0aW9uLm91dGxvb2suY29tLz91cmw9aHR0cCUzQSUyRiUyRnd3
+dy5rZQ0KPiBybmVsLm9yZyUyRnB1YiUyRmxpbnV4JTJGa2VybmVsJTJGdjQueCUyRnBhdGNoLQ0K
+PiA0LjE0LjYzLnh6JmFtcDtkYXRhPTAyJTdDMDElN0N0aWVqdW5jJTQwdm13YXJlLmNvbSU3Q2Y1
+NTA1YTEyNmJiDQo+IDg0OTFhYzJkYjA4ZDYwODViMmUxNSU3Q2IzOTEzOGNhM2NlZTRiNGFhNGQ2
+Y2Q4M2Q5ZGQ2MmYwJTdDMSU3DQo+IEMwJTdDNjM2NzA1NTg1MDYyMTUyOTcwJmFtcDtzZGF0YT15
+VnIzbGU0SjJtWWlrJTJCOE1KNzk2S2NFYiUyQg0KPiA3aSUyQmhBa0VXUXQycVo1cTJLWSUzRCZh
+bXA7cmVzZXJ2ZWQ9MA0KPiANCj4gDQo+IGh0dHBzOi8vbmEwMS5zYWZlbGlua3MucHJvdGVjdGlv
+bi5vdXRsb29rLmNvbS8/dXJsPWh0dHAlM0ElMkYlMkZ3d3cua2UNCj4gcm5lbC5vcmclMkZwdWIl
+MkZsaW51eCUyRmtlcm5lbCUyRnByb2plY3RzJTJGcnQlMkY0LjE0JTJGcGF0Y2gtDQo+IDQuMTQu
+NjMtDQo+IHJ0NDAucGF0Y2gueHomYW1wO2RhdGE9MDIlN0MwMSU3Q3RpZWp1bmMlNDB2bXdhcmUu
+Y29tJTdDZjU1MDVhMTI2DQo+IGJiODQ5MWFjMmRiMDhkNjA4NWIyZTE1JTdDYjM5MTM4Y2EzY2Vl
+NGI0YWE0ZDZjZDgzZDlkZDYyZjAlN0MxDQo+ICU3QzAlN0M2MzY3MDU1ODUwNjIxNTI5NzAmYW1w
+O3NkYXRhPVRFY0wzZDNua0c2MjNVRk9nV1pWNXdrckpsDQo+IG9Qc1k3cVhjWjhibSUyRm1GREkl
+M0QmYW1wO3Jlc2VydmVkPTANCj4gDQo+IA0KPiANCj4gDQo+IEVuam95LA0KPiANCj4gLS0gU3Rl
+dmUNCg0K
