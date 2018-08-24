@@ -1,12 +1,12 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [ANNOUNCE] 4.14.63-rt40
-Date: Thu, 23 Aug 2018 20:32:23 -0400
-Message-ID: <20180823203223.11dee5e8@vmware.local.home>
+Date: Fri, 24 Aug 2018 12:17:51 -0400
+Message-ID: <20180824121751.606659c9@gandalf.local.home>
 References: <20180822141458.0b6b6af7@gandalf.local.home>
-        <CY1PR0501MB14666E51F4D066F2E0C5208AC5370@CY1PR0501MB1466.namprd05.prod.outlook.com>
+        <7e1b2b0a-2e52-8f0d-2e17-c3ba9232f8b7@manjaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 Cc: LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -15,39 +15,32 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>
-To: Tiejun Chen <tiejunc@vmware.com>
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Philip =?UTF-8?B?TcO8bGxlcg==?= <philm@manjaro.org>
+To: Bernhard Landauer <oberon@manjaro.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CY1PR0501MB14666E51F4D066F2E0C5208AC5370@CY1PR0501MB1466.namprd05.prod.outlook.com>
+In-Reply-To: <7e1b2b0a-2e52-8f0d-2e17-c3ba9232f8b7@manjaro.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 23 Aug 2018 09:31:09 +0000
-Tiejun Chen <tiejunc@vmware.com> wrote:
+On Fri, 24 Aug 2018 18:14:43 +0200
+Bernhard Landauer <oberon@manjaro.org> wrote:
 
-> Steven,
+> Hello everyone,
 > 
-> commit 7f11a591bbdb111792298144c3476506aa7f1ca8 (HEAD -> v4.14.63-rt40-rebase, tag: v4.14.63-rt40-rebase, origin/v4.14-rt-rebase)
-> Author: Steven Rostedt (VMware) <rostedt@goodmis.org>
-> Date:   Wed May 16 09:33:00 2018 -0400
+> for some reason I am not able to build 4.14.63-rt40 for Manjarolinux.
+> Even after removing all our custom patches build fails at
 > 
->     Linux 4.14.63-rt40 REBASE
+>   LD [M]  drivers/gpu/drm/drm.o
+>   AR      drivers/gpu/built-in.o
+> make: *** [Makefile:1035: drivers] Error 2
 > 
-> diff --git a/localversion-rt b/localversion-rt
-> index 90290c642ed5..a3b2408c1da6 100644
-> --- a/localversion-rt
-> +++ b/localversion-rt
-> @@ -1 +1 @@
-> --rt29
-> +-rt37
->     ^
-> Isn't it supposed to be rt40?
+> My config can be found here for information:
+> https://gitlab.manjaro.org/packages/community/realtime-kernels/linux414-rt/raw/master/config.rt
 > 
+> Thank you for any advice!
+>
 
-Ug, the last step of creating the rebase is to manually update the
-localversion-rt file. Which I did. But I forgot to add "-a" to the 
-"git commit --amend" part. Thanks for pointing this out!
-
-Luckily, this is the rebase branch, where I can just rebase it ;-)
+Thanks for the report, I'll take a look.
 
 -- Steve
