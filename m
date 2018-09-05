@@ -1,89 +1,229 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] Submit a topic for the RT Microconference at Linux
- Plumbers
-Date: Tue, 4 Sep 2018 13:25:29 -0400
-Message-ID: <20180904132529.6ae7166e@gandalf.local.home>
+Subject: [PATCH RT 12/22] sched/migrate_disable: fallback to preempt_disable() instead
+ barrier()
+Date: Wed, 05 Sep 2018 08:28:06 -0400
+Message-ID: <20180905122836.291129565@goodmis.org>
+References: <20180905122754.443196118@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Julia Cartwright <julia@ni.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset=ISO-8859-15
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Clark Williams <williams@redhat.com>,
-        Daniel Wagner <wagi@monom.org>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Jan Kiszka <jan.kiszka@siemens.com>,
-        Mark Brown <mark.brown@linaro.org>,
-        Anna-Maria Gleixner <anna-maria@linutronix.de>,
-        Juri Lelli <juri.lelli@gmail.com>,
-        "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-        Kate Stewart <kstewart@linuxfoundation.org>,
-        Darren Hart <darren@dvhart.com>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        contact@linuxplumbersconf.org
+        John Kacur <jkacur@redhat.com>,
+        Paul Gortmaker <paul.gortmaker@windriver.com>,
+        Julia Cartwright <julia@ni.com>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        tom.zanussi@linux.intel.com, stable-rt@vger.kernel.org,
+        joe.korty@concurrent-rt.com
+To: linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi RT folks!
+4.14.63-rt41-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-The call for proposals (CfP) is now open for the RT Microconference at
-Linux Plumbers in Vancouver, Canada. The topics we are looking at this
-year are:
+------------------
 
- - How will PREEMPT_RT be maintained (is it a subsystem?)
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
- - Who will maintain it?
+[ Upstream commit 10e90c155bbc7cab420f47694404f8f9fe33c2b2 ]
 
- - How do we teach the rest of the kernel developers how not to break PREEMPT_RT?
+On SMP + !RT migrate_disable() is still around. It is not part of spin_lock()
+anymore so it has almost no users. However the futex code has a workaround for
+the !in_atomic() part of migrate disable which fails because the matching
+migrade_disable() is no longer part of spin_lock().
 
- - How do we catch when it breaks?
+On !SMP + !RT migrate_disable() is reduced to barrier(). This is not optimal
+because we few spots where a "preempt_disable()" statement was replaced with
+"migrate_disable()".
 
- - What tools can we add into tools/ that other kernel developers can use to test and learn about PREEMPT_RT?
+We also used the migration_disable counter to figure out if a sleeping lock is
+acquired so RCU does not complain about schedule() during rcu_read_lock() while
+a sleeping lock is held. This changed, we no longer use it, we have now a
+sleeping_lock counter for the RCU purpose.
 
- - What tests can we add into tools/testing/selftests?
+This means we can now:
+- for SMP + RT_BASE
+  full migration program, nothing changes here
 
- - What kernel boot selftests can be added?
+- for !SMP + RT_BASE
+  the migration counting is no longer required. It used to ensure that the task
+  is not migrated to another CPU and that this CPU remains online. !SMP ensures
+  that already.
+  Move it to CONFIG_SCHED_DEBUG so the counting is done for debugging purpose
+  only.
 
- - How can we modify lockdep to catch problems that can break PREEMPT_RT?
+- for all other cases including !RT
+  fallback to preempt_disable(). The only remaining users of migrate_disable()
+  are those which were converted from preempt_disable() and the futex
+  workaround which is already in the preempt_disable() section due to the
+  spin_lock that is held.
 
- - Discuss various types of failures that can happen with PREEMPT_RT that normally would not happen in the vanilla kernel.
+Cc: stable-rt@vger.kernel.org
+Reported-by: joe.korty@concurrent-rt.com
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+---
+ include/linux/preempt.h |  6 +++---
+ include/linux/sched.h   |  4 ++--
+ kernel/sched/core.c     | 23 +++++++++++------------
+ kernel/sched/debug.c    |  2 +-
+ 4 files changed, 17 insertions(+), 18 deletions(-)
 
- - How do we handle stable backports?
-
- - Interaction with Safety Critical domains?
-
- - Interrupt threads are RT and are not protected by the RT Throttling.
-   How can we prevent interrupt thread starvation from a rogue RT task?
-
- - How to determine if a kernel is booted with PREEMPT_RT enabled?
-
- - librtpi: "solving" long-standing glibc pthread condvar internal lock inversion with a new implementation; motivations, technical details, etc.
-
- - SCHED_DEADLINE - Lots of research has been made to various issues like CPU affinity, Bandwidth inheritance, cgroup support; but nothing has been done to the kernel. Let's make a commitment and push these ideas forward into mainline.
-
- - How can we modify lockdep to catch problems that can break PREEMPT_RT?
-
- - Discuss various types of failures that can happen with PREEMPT_RT that normally would not happen in the vanilla kernel.
-
-If you want to lead one of the above sessions, or if you have a new
-session you want to submit, please do so here:
-
-  https://linuxplumbersconf.org/event/2/abstracts/
-
-Set up an account, and then click "Submit new proposal".
-
-Fill out the "Title", "Content", select the "Authors" as the one leading
-the session (yourself), and then for "Track" select "RT MC Topics CfP".
-Select "Yes" to agree with the anti-harassment policy, and then hit
-Submit.
-
-The RT Microconference is only 4 hours (including breaks), thus we may
-not be able to fit all the topics in. But if a session is not
-submitted, then it will not have any chance of being on the agenda.
-
-Looking forward to seeing you in Vancouver, Canada in November!
-
--- Steve
+diff --git a/include/linux/preempt.h b/include/linux/preempt.h
+index 0591df500e9d..6728662a81e8 100644
+--- a/include/linux/preempt.h
++++ b/include/linux/preempt.h
+@@ -224,7 +224,7 @@ do { \
+ 
+ #define preemptible()	(preempt_count() == 0 && !irqs_disabled())
+ 
+-#ifdef CONFIG_SMP
++#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+ 
+ extern void migrate_disable(void);
+ extern void migrate_enable(void);
+@@ -241,8 +241,8 @@ static inline int __migrate_disabled(struct task_struct *p)
+ }
+ 
+ #else
+-#define migrate_disable()		barrier()
+-#define migrate_enable()		barrier()
++#define migrate_disable()		preempt_disable()
++#define migrate_enable()		preempt_enable()
+ static inline int __migrate_disabled(struct task_struct *p)
+ {
+ 	return 0;
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index c26b5ff005ab..a6ffb552be01 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -626,7 +626,7 @@ struct task_struct {
+ 	int				nr_cpus_allowed;
+ 	const cpumask_t			*cpus_ptr;
+ 	cpumask_t			cpus_mask;
+-#if defined(CONFIG_PREEMPT_COUNT) && defined(CONFIG_SMP)
++#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+ 	int				migrate_disable;
+ 	int				migrate_disable_update;
+ 	int				pinned_on_cpu;
+@@ -635,8 +635,8 @@ struct task_struct {
+ # endif
+ 
+ #elif !defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+-	int				migrate_disable;
+ # ifdef CONFIG_SCHED_DEBUG
++	int				migrate_disable;
+ 	int				migrate_disable_atomic;
+ # endif
+ #endif
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index e7817c6c44d2..fa5b76255f8c 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -1107,7 +1107,7 @@ void set_cpus_allowed_common(struct task_struct *p, const struct cpumask *new_ma
+ 	p->nr_cpus_allowed = cpumask_weight(new_mask);
+ }
+ 
+-#if defined(CONFIG_PREEMPT_COUNT) && defined(CONFIG_SMP)
++#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+ int __migrate_disabled(struct task_struct *p)
+ {
+ 	return p->migrate_disable;
+@@ -1146,7 +1146,7 @@ static void __do_set_cpus_allowed_tail(struct task_struct *p,
+ 
+ void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
+ {
+-#if defined(CONFIG_PREEMPT_COUNT) && defined(CONFIG_SMP)
++#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+ 	if (__migrate_disabled(p)) {
+ 		lockdep_assert_held(&p->pi_lock);
+ 
+@@ -1219,7 +1219,7 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
+ 	if (cpumask_test_cpu(task_cpu(p), new_mask) || __migrate_disabled(p))
+ 		goto out;
+ 
+-#if defined(CONFIG_PREEMPT_COUNT) && defined(CONFIG_SMP)
++#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+ 	if (__migrate_disabled(p)) {
+ 		p->migrate_disable_update = 1;
+ 		goto out;
+@@ -6897,7 +6897,7 @@ const u32 sched_prio_to_wmult[40] = {
+  /*  15 */ 119304647, 148102320, 186737708, 238609294, 286331153,
+ };
+ 
+-#if defined(CONFIG_PREEMPT_COUNT) && defined(CONFIG_SMP)
++#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+ 
+ static inline void
+ update_nr_migratory(struct task_struct *p, long delta)
+@@ -7048,45 +7048,44 @@ EXPORT_SYMBOL(migrate_enable);
+ #elif !defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+ void migrate_disable(void)
+ {
++#ifdef CONFIG_SCHED_DEBUG
+ 	struct task_struct *p = current;
+ 
+ 	if (in_atomic() || irqs_disabled()) {
+-#ifdef CONFIG_SCHED_DEBUG
+ 		p->migrate_disable_atomic++;
+-#endif
+ 		return;
+ 	}
+-#ifdef CONFIG_SCHED_DEBUG
++
+ 	if (unlikely(p->migrate_disable_atomic)) {
+ 		tracing_off();
+ 		WARN_ON_ONCE(1);
+ 	}
+-#endif
+ 
+ 	p->migrate_disable++;
++#endif
++	barrier();
+ }
+ EXPORT_SYMBOL(migrate_disable);
+ 
+ void migrate_enable(void)
+ {
++#ifdef CONFIG_SCHED_DEBUG
+ 	struct task_struct *p = current;
+ 
+ 	if (in_atomic() || irqs_disabled()) {
+-#ifdef CONFIG_SCHED_DEBUG
+ 		p->migrate_disable_atomic--;
+-#endif
+ 		return;
+ 	}
+ 
+-#ifdef CONFIG_SCHED_DEBUG
+ 	if (unlikely(p->migrate_disable_atomic)) {
+ 		tracing_off();
+ 		WARN_ON_ONCE(1);
+ 	}
+-#endif
+ 
+ 	WARN_ON_ONCE(p->migrate_disable <= 0);
+ 	p->migrate_disable--;
++#endif
++	barrier();
+ }
+ EXPORT_SYMBOL(migrate_enable);
+ #endif
+diff --git a/kernel/sched/debug.c b/kernel/sched/debug.c
+index 3108da1ee253..b5b43861c2b6 100644
+--- a/kernel/sched/debug.c
++++ b/kernel/sched/debug.c
+@@ -1017,7 +1017,7 @@ void proc_sched_show_task(struct task_struct *p, struct pid_namespace *ns,
+ 		P(dl.runtime);
+ 		P(dl.deadline);
+ 	}
+-#if defined(CONFIG_PREEMPT_COUNT) && defined(CONFIG_SMP)
++#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+ 	P(migrate_disable);
+ #endif
+ 	P(nr_cpus_allowed);
+-- 
+2.18.0
