@@ -1,8 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 11/22] irqchip/gic-v3-its: Move ITS ->pend_page allocation into an early
- CPU up hook
-Date: Wed, 05 Sep 2018 08:28:05 -0400
-Message-ID: <20180905122836.102034908@goodmis.org>
+Subject: [PATCH RT 20/22] sched: Allow pinned user tasks to be awakened to the CPU they pinned
+Date: Wed, 05 Sep 2018 08:28:14 -0400
+Message-ID: <20180905122837.674583106@goodmis.org>
 References: <20180905122754.443196118@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -13,7 +12,8 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com
+        tom.zanussi@linux.intel.com, stable-rt@vger.kernel.org,
+        Mike Galbraith <efault@gmx.de>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
@@ -25,135 +25,38 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Mike Galbraith <efault@gmx.de>
 
-[ Upstream commit e083f14dc2e98ced872bf077b4d1cccf95b7e4f8 ]
+[ Upstream commit cd4d35ef89948221f7cd1751cee453943967364c ]
 
-The AP-GIC-starting hook allocates memory for the ->pend_page while the
-CPU is started during boot-up. This callback is invoked on the target
-CPU with disabled interrupts.
-This does not work on -RT beacuse memory allocations are not possible
-with disabled interrupts.
-Move the memory allocation to an earlier hotplug step which invoked with
-enabled interrupts on the boot CPU.
+Since commit 7af443ee16976 ("sched/core: Require cpu_active() in
+select_task_rq(), for user tasks") select_fallback_rq() will BUG() if
+the CPU to which a task has pinned itself and pinned becomes
+!cpu_active() while it slept.
+The task will continue running on the to-be-removed CPU and will remove
+itself from the CPU during takedown_cpu() (while cpuhp_pin_lock will be
+acquired) and move to another CPU based on its mask after the
+migrate_disable() section has been left.
 
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Mike Galbraith <efault@gmx.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- drivers/irqchip/irq-gic-v3-its.c | 60 ++++++++++++++++++++++----------
- 1 file changed, 41 insertions(+), 19 deletions(-)
+ kernel/sched/core.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/irqchip/irq-gic-v3-its.c b/drivers/irqchip/irq-gic-v3-its.c
-index e8217ebe8c1e..60533a795124 100644
---- a/drivers/irqchip/irq-gic-v3-its.c
-+++ b/drivers/irqchip/irq-gic-v3-its.c
-@@ -165,6 +165,7 @@ static DEFINE_RAW_SPINLOCK(vmovp_lock);
- static DEFINE_IDA(its_vpeid_ida);
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index a5ce37b90fca..6e6bd5262f23 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -980,7 +980,7 @@ static inline bool is_cpu_allowed(struct task_struct *p, int cpu)
+ 	if (!cpumask_test_cpu(cpu, p->cpus_ptr))
+ 		return false;
  
- #define gic_data_rdist()		(raw_cpu_ptr(gic_rdists->rdist))
-+#define gic_data_rdist_cpu(cpu)		(per_cpu_ptr(gic_rdists->rdist, cpu))
- #define gic_data_rdist_rd_base()	(gic_data_rdist()->rd_base)
- #define gic_data_rdist_vlpi_base()	(gic_data_rdist_rd_base() + SZ_128K)
+-	if (is_per_cpu_kthread(p))
++	if (is_per_cpu_kthread(p) || __migrate_disabled(p))
+ 		return cpu_online(cpu);
  
-@@ -1734,15 +1735,17 @@ static int its_alloc_collections(struct its_node *its)
- 	return 0;
- }
- 
--static struct page *its_allocate_pending_table(gfp_t gfp_flags)
-+static struct page *its_allocate_pending_table(unsigned int cpu)
- {
- 	struct page *pend_page;
-+	unsigned int order;
- 	/*
- 	 * The pending pages have to be at least 64kB aligned,
- 	 * hence the 'max(LPI_PENDBASE_SZ, SZ_64K)' below.
- 	 */
--	pend_page = alloc_pages(gfp_flags | __GFP_ZERO,
--				get_order(max_t(u32, LPI_PENDBASE_SZ, SZ_64K)));
-+	order = get_order(max_t(u32, LPI_PENDBASE_SZ, SZ_64K));
-+	pend_page = alloc_pages_node(cpu_to_node(cpu), GFP_KERNEL | __GFP_ZERO,
-+				     order);
- 	if (!pend_page)
- 		return NULL;
- 
-@@ -1758,6 +1761,28 @@ static void its_free_pending_table(struct page *pt)
- 		   get_order(max_t(u32, LPI_PENDBASE_SZ, SZ_64K)));
- }
- 
-+static int its_alloc_pend_page(unsigned int cpu)
-+{
-+	struct page *pend_page;
-+	phys_addr_t paddr;
-+
-+	pend_page = gic_data_rdist_cpu(cpu)->pend_page;
-+	if (pend_page)
-+		return 0;
-+
-+	pend_page = its_allocate_pending_table(cpu);
-+	if (!pend_page) {
-+		pr_err("Failed to allocate PENDBASE for CPU%d\n",
-+		       smp_processor_id());
-+		return -ENOMEM;
-+	}
-+
-+	paddr = page_to_phys(pend_page);
-+	pr_info("CPU%d: using LPI pending table @%pa\n", cpu, &paddr);
-+	gic_data_rdist_cpu(cpu)->pend_page = pend_page;
-+	return 0;
-+}
-+
- static void its_cpu_init_lpis(void)
- {
- 	void __iomem *rbase = gic_data_rdist_rd_base();
-@@ -1766,21 +1791,8 @@ static void its_cpu_init_lpis(void)
- 
- 	/* If we didn't allocate the pending table yet, do it now */
- 	pend_page = gic_data_rdist()->pend_page;
--	if (!pend_page) {
--		phys_addr_t paddr;
--
--		pend_page = its_allocate_pending_table(GFP_NOWAIT);
--		if (!pend_page) {
--			pr_err("Failed to allocate PENDBASE for CPU%d\n",
--			       smp_processor_id());
--			return;
--		}
--
--		paddr = page_to_phys(pend_page);
--		pr_info("CPU%d: using LPI pending table @%pa\n",
--			smp_processor_id(), &paddr);
--		gic_data_rdist()->pend_page = pend_page;
--	}
-+	if (!pend_page)
-+		return;
- 
- 	/* Disable LPIs */
- 	val = readl_relaxed(rbase + GICR_CTLR);
-@@ -2599,7 +2611,7 @@ static int its_vpe_init(struct its_vpe *vpe)
- 		return vpe_id;
- 
- 	/* Allocate VPT */
--	vpt_page = its_allocate_pending_table(GFP_KERNEL);
-+	vpt_page = its_allocate_pending_table(raw_smp_processor_id());
- 	if (!vpt_page) {
- 		its_vpe_id_free(vpe_id);
- 		return -ENOMEM;
-@@ -3282,6 +3294,16 @@ int __init its_init(struct fwnode_handle *handle, struct rdists *rdists,
- 	if (err)
- 		return err;
- 
-+	err = cpuhp_setup_state(CPUHP_BP_PREPARE_DYN, "irqchip/arm/gicv3:prepare",
-+				its_alloc_pend_page, NULL);
-+	if (err < 0) {
-+		pr_warn("ITS: Can't register CPU-hoplug callback.\n");
-+		return err;
-+	}
-+	err = its_alloc_pend_page(smp_processor_id());
-+	if (err < 0)
-+		return err;
-+
- 	list_for_each_entry(its, &its_nodes, entry)
- 		has_v4 |= its->is_v4;
- 
+ 	return cpu_active(cpu);
 -- 
 2.18.0
