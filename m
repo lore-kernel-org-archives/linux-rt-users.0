@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 02/22] locallock: provide {get,put}_locked_ptr() variants
-Date: Wed, 05 Sep 2018 08:27:56 -0400
-Message-ID: <20180905122834.641572443@goodmis.org>
+Subject: [PATCH RT 09/22] Revert "timer: delay waking softirqs from the jiffy tick"
+Date: Wed, 05 Sep 2018 08:28:03 -0400
+Message-ID: <20180905122835.798847460@goodmis.org>
 References: <20180905122754.443196118@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -12,7 +12,8 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com
+        tom.zanussi@linux.intel.com,
+        Anna-Maria Gleixner <anna-maria@linutronix.de>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
@@ -24,50 +25,42 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Julia Cartwright <julia@ni.com>
+From: Anna-Maria Gleixner <anna-maria@linutronix.de>
 
-[ Upstream commit 3d45cf23db4f76cd356ebb0aa4cdaa7d92d1a64e ]
+[ Upstream commit b5b16907c58280e015d5673dca4c6bd3fde0c348 ]
 
-Provide a set of locallocked accessors for pointers to per-CPU data;
-this is useful for dynamically-allocated per-CPU regions, for example.
+This patch was required as long as RT tasks where accounted to CFS
+load but this was only a work around. Upstream Commit 17bdcf949d03
+("sched: Drop all load weight manipulation for RT tasks") fixed the
+accounting of RT tasks into CFS load.
 
-These are symmetric with the {get,put}_cpu_ptr() per-CPU accessor
-variants.
+Remove the patch and fix dependencies.
 
-Signed-off-by: Julia Cartwright <julia@ni.com>
+Signed-off-by: Anna-Maria Gleixner <anna-maria@linutronix.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- include/linux/locallock.h | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+ kernel/time/timer.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/include/linux/locallock.h b/include/linux/locallock.h
-index d658c2552601..921eab83cd34 100644
---- a/include/linux/locallock.h
-+++ b/include/linux/locallock.h
-@@ -222,6 +222,14 @@ static inline int __local_unlock_irqrestore(struct local_irq_lock *lv,
+diff --git a/kernel/time/timer.c b/kernel/time/timer.c
+index ff1d60d4c0cc..f57106c6e786 100644
+--- a/kernel/time/timer.c
++++ b/kernel/time/timer.c
+@@ -1635,13 +1635,13 @@ void update_process_times(int user_tick)
  
- #define put_locked_var(lvar, var)	local_unlock(lvar);
- 
-+#define get_locked_ptr(lvar, var)					\
-+	({								\
-+		local_lock(lvar);					\
-+		this_cpu_ptr(var);					\
-+	})
-+
-+#define put_locked_ptr(lvar, var)	local_unlock(lvar);
-+
- #define local_lock_cpu(lvar)						\
- 	({								\
- 		local_lock(lvar);					\
-@@ -262,6 +270,8 @@ static inline void local_irq_lock_init(int lvar) { }
- 
- #define get_locked_var(lvar, var)		get_cpu_var(var)
- #define put_locked_var(lvar, var)		put_cpu_var(var)
-+#define get_locked_ptr(lvar, var)		get_cpu_ptr(var)
-+#define put_locked_ptr(lvar, var)		put_cpu_ptr(var)
- 
- #define local_lock_cpu(lvar)			get_cpu()
- #define local_unlock_cpu(lvar)			put_cpu()
+ 	/* Note: this timer irq context must be accounted for as well. */
+ 	account_process_tick(p, user_tick);
+-	scheduler_tick();
+ 	run_local_timers();
+ 	rcu_check_callbacks(user_tick);
+ #if defined(CONFIG_IRQ_WORK)
+ 	if (in_irq())
+ 		irq_work_tick();
+ #endif
++	scheduler_tick();
+ 	if (IS_ENABLED(CONFIG_POSIX_TIMERS))
+ 		run_posix_cpu_timers(p);
+ }
 -- 
 2.18.0
