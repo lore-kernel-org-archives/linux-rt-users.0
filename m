@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 18/22] sched/core: Avoid __schedule() being called twice in a row
-Date: Wed, 05 Sep 2018 08:28:12 -0400
-Message-ID: <20180905122837.239092225@goodmis.org>
+Subject: [PATCH RT 19/22] Revert "arm64/xen: Make XEN depend on !RT"
+Date: Wed, 05 Sep 2018 08:28:13 -0400
+Message-ID: <20180905122837.410099779@goodmis.org>
 References: <20180905122754.443196118@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -12,13 +12,7 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        Tommaso Cucinotta <tommaso.cucinotta@sssup.it>,
-        Romulo da Silva de Oliveira <romulo.deoliveira@ufsc.br>,
-        Ingo Molnar <mingo@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>
+        tom.zanussi@linux.intel.com, Iain Hunter <drhunter95@gmail.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
@@ -30,61 +24,32 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Daniel Bristot de Oliveira <bristot@redhat.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-[ Upstream commit 2bb94c48b2ffaabf8c15a51e5cc1b4c541988cab ]
+[ Upstream commit c0a308b58829bd4066bce841fe49e8277a0cb32b ]
 
-If a worker invokes schedule() then we may have the call chain:
- schedule()
- -> sched_submit_work()
-    -> wq_worker_sleeping()
-       -> wake_up_worker()
-	  -> wake_up_process().
+Iain Hunter reported that there are no problems with it so there is no
+reason to keep it disabled.
 
-The last wakeup may cause a schedule which is unnecessary because we are
-already in schedule() and do it anyway.
-
-Add a preempt_disable() + preempt_enable_no_resched() around
-wq_worker_sleeping() so the context switch could be delayed until
-__schedule().
-
-Signed-off-by: Daniel Bristot de Oliveira <bristot@redhat.com>
-Cc: Clark Williams <williams@redhat.com>
-Cc: Tommaso Cucinotta <tommaso.cucinotta@sssup.it>
-Cc: Romulo da Silva de Oliveira <romulo.deoliveira@ufsc.br>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-[bigeasy: rewrite changelog]
+Reported-by: Iain Hunter <drhunter95@gmail.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/sched/core.c | 9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
+ arch/arm64/Kconfig | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index fa5b76255f8c..a5ce37b90fca 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -3482,10 +3482,15 @@ static inline void sched_submit_work(struct task_struct *tsk)
- 	/*
- 	 * If a worker went to sleep, notify and ask workqueue whether
- 	 * it wants to wake up a task to maintain concurrency.
-+	 * As this function is called inside the schedule() context,
-+	 * we disable preemption to avoid it calling schedule() again
-+	 * in the possible wakeup of a kworker.
- 	 */
--	if (tsk->flags & PF_WQ_WORKER)
-+	if (tsk->flags & PF_WQ_WORKER) {
-+		preempt_disable();
- 		wq_worker_sleeping(tsk);
--
-+		preempt_enable_no_resched();
-+	}
+diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
+index 6ccd878c32c2..ebc261c8620b 100644
+--- a/arch/arm64/Kconfig
++++ b/arch/arm64/Kconfig
+@@ -792,7 +792,7 @@ config XEN_DOM0
  
- 	if (tsk_is_pi_blocked(tsk))
- 		return;
+ config XEN
+ 	bool "Xen guest support on ARM64"
+-	depends on ARM64 && OF && !PREEMPT_RT_FULL
++	depends on ARM64 && OF
+ 	select SWIOTLB_XEN
+ 	select PARAVIRT
+ 	help
 -- 
 2.18.0
