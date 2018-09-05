@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 22/22] Linux 4.14.63-rt41-rc1
-Date: Wed, 05 Sep 2018 08:28:16 -0400
-Message-ID: <20180905122838.246205324@goodmis.org>
+Subject: [PATCH RT 17/22] crypto: scompress - serialize RT percpu scratch buffer access with a
+ local lock
+Date: Wed, 05 Sep 2018 08:28:11 -0400
+Message-ID: <20180905122837.084673508@goodmis.org>
 References: <20180905122754.443196118@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -12,7 +13,7 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com
+        tom.zanussi@linux.intel.com, Mike Galbraith <efault@gmx.de>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
@@ -24,18 +25,83 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+From: Mike Galbraith <efault@gmx.de>
 
+[ Upstream commit 1a4eff3f8e743d149be26a414822710aef07fe14 ]
+
+| BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:974
+| in_atomic(): 1, irqs_disabled(): 0, pid: 1401, name: cryptomgr_test
+| Preemption disabled at:
+| [<ffff00000849941c>] scomp_acomp_comp_decomp+0x34/0x1a0
+| CPU: 21 PID: 1401 Comm: cryptomgr_test Tainted: G        W        4.16.18-rt9-rt #1
+| Hardware name: www.cavium.com crb-1s/crb-1s, BIOS 0.3 Apr 25 2017
+| Call trace:
+|  dump_backtrace+0x0/0x1c8
+|  show_stack+0x24/0x30
+|  dump_stack+0xac/0xe8
+|  ___might_sleep+0x124/0x188
+|  rt_spin_lock+0x40/0x88
+|  zip_load_instr+0x44/0x170 [thunderx_zip]
+|  zip_deflate+0x184/0x378 [thunderx_zip]
+|  zip_compress+0xb0/0x130 [thunderx_zip]
+|  zip_scomp_compress+0x48/0x60 [thunderx_zip]
+|  scomp_acomp_comp_decomp+0xd8/0x1a0
+|  scomp_acomp_compress+0x24/0x30
+|  test_acomp+0x15c/0x558
+|  alg_test_comp+0xc0/0x128
+|  alg_test.part.6+0x120/0x2c0
+|  alg_test+0x6c/0xa0
+|  cryptomgr_test+0x50/0x58
+|  kthread+0x134/0x138
+|  ret_from_fork+0x10/0x18
+
+Mainline disables preemption to serialize percpu scratch buffer access,
+causing the splat above.  Serialize with a local lock for RT instead.
+
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ crypto/scompress.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/localversion-rt b/localversion-rt
-index 2af6c89aee6d..ad263cec032a 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt40
-+-rt41-rc1
+diff --git a/crypto/scompress.c b/crypto/scompress.c
+index 2075e2c4e7df..c6b4e265c6bf 100644
+--- a/crypto/scompress.c
++++ b/crypto/scompress.c
+@@ -24,6 +24,7 @@
+ #include <linux/cryptouser.h>
+ #include <net/netlink.h>
+ #include <linux/scatterlist.h>
++#include <linux/locallock.h>
+ #include <crypto/scatterwalk.h>
+ #include <crypto/internal/acompress.h>
+ #include <crypto/internal/scompress.h>
+@@ -34,6 +35,7 @@ static void * __percpu *scomp_src_scratches;
+ static void * __percpu *scomp_dst_scratches;
+ static int scomp_scratch_users;
+ static DEFINE_MUTEX(scomp_lock);
++static DEFINE_LOCAL_IRQ_LOCK(scomp_scratches_lock);
+ 
+ #ifdef CONFIG_NET
+ static int crypto_scomp_report(struct sk_buff *skb, struct crypto_alg *alg)
+@@ -193,7 +195,7 @@ static int scomp_acomp_comp_decomp(struct acomp_req *req, int dir)
+ 	void **tfm_ctx = acomp_tfm_ctx(tfm);
+ 	struct crypto_scomp *scomp = *tfm_ctx;
+ 	void **ctx = acomp_request_ctx(req);
+-	const int cpu = get_cpu();
++	const int cpu = local_lock_cpu(scomp_scratches_lock);
+ 	u8 *scratch_src = *per_cpu_ptr(scomp_src_scratches, cpu);
+ 	u8 *scratch_dst = *per_cpu_ptr(scomp_dst_scratches, cpu);
+ 	int ret;
+@@ -228,7 +230,7 @@ static int scomp_acomp_comp_decomp(struct acomp_req *req, int dir)
+ 					 1);
+ 	}
+ out:
+-	put_cpu();
++	local_unlock_cpu(scomp_scratches_lock);
+ 	return ret;
+ }
+ 
 -- 
 2.18.0
