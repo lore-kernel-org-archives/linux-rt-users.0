@@ -1,10 +1,13 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 01/22] sched/fair: Fix CFS bandwidth control lockdep DEADLOCK report
-Date: Wed, 05 Sep 2018 08:27:55 -0400
-Message-ID: <20180905122834.505806075@goodmis.org>
+Subject: Re: [PATCH RT 21/22] Drivers: hv: vmbus: include header for
+ get_irq_regs()
+Date: Wed, 5 Sep 2018 08:34:55 -0400
+Message-ID: <20180905083455.78cd72d3@gandalf.local.home>
 References: <20180905122754.443196118@goodmis.org>
+        <20180905122837.830614967@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -12,69 +15,59 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com, stable-rt@vger.kernel.org,
-        Mike Galbraith <efault@gmx.de>
+        tom.zanussi@linux.intel.com,
+        Bernhard Landauer <oberon@manjaro.org>,
+        Ralf Ramsauer <ralf.ramsauer@oth-regensburg.de>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180905122837.830614967@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-4.14.63-rt41-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+[ It appears that quilt doesn't use the right mime for the strange
+  characters in the change log. I'm replying here as it was bounced
+  by the mailing lists ]
 
-From: Mike Galbraith <efault@gmx.de>
+On Wed, 05 Sep 2018 08:28:15 -0400
+Steven Rostedt <rostedt@goodmis.org> wrote:
 
-[ Upstream commit df7e8acc0c9a84979a448d215b8ef889efe4ac5a ]
-
-CFS bandwidth control yields the inversion gripe below, moving
-handling quells it.
-
-|========================================================
-|WARNING: possible irq lock inversion dependency detected
-|4.16.7-rt1-rt #2 Tainted: G            E
-|--------------------------------------------------------
-|sirq-hrtimer/0/15 just changed the state of lock:
-| (&cfs_b->lock){+...}, at: [<000000009adb5cf7>] sched_cfs_period_timer+0x28/0x140
-|but this lock was taken by another, HARDIRQ-safe lock in the past: (&rq->lock){-...}
-|and interrupts could create inverse lock ordering between them.
-|other info that might help us debug this:
-| Possible interrupt unsafe locking scenario:
-|       CPU0                    CPU1
-|       ----                    ----
-|  lock(&cfs_b->lock);
-|                               local_irq_disable();
-|                               lock(&rq->lock);
-|                               lock(&cfs_b->lock);
-|  <Interrupt>
-|    lock(&rq->lock);
-
-Cc: stable-rt@vger.kernel.org
-Acked-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-Signed-off-by: Mike Galbraith <efault@gmx.de>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
----
- kernel/sched/fair.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 36ef77839be4..51ecea4f5d16 100644
---- a/kernel/sched/fair.c
-+++ b/kernel/sched/fair.c
-@@ -4684,9 +4684,9 @@ void init_cfs_bandwidth(struct cfs_bandwidth *cfs_b)
- 	cfs_b->period = ns_to_ktime(default_cfs_period());
- 
- 	INIT_LIST_HEAD(&cfs_b->throttled_cfs_rq);
--	hrtimer_init(&cfs_b->period_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_PINNED);
-+	hrtimer_init(&cfs_b->period_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_PINNED_HARD);
- 	cfs_b->period_timer.function = sched_cfs_period_timer;
--	hrtimer_init(&cfs_b->slack_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-+	hrtimer_init(&cfs_b->slack_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
- 	cfs_b->slack_timer.function = sched_cfs_slack_timer;
- }
- 
--- 
-2.18.0
+> 4.14.63-rt41-rc1 stable review patch.
+> If anyone has any objections, please let me know.
+> 
+> ------------------
+> 
+> From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> 
+> [ Upstream commit b9fcc1867cc7921bb8441be327ed58461ed12255 ]
+> 
+> On !RT the header file get_irq_regs() gets pulled in via other header files. On
+> RT it does not and the build fails:
+> 
+>     drivers/hv/vmbus_drv.c:975 implicit declaration of function âget_irq_regsâ [-Werror=implicit-function-declaration]
+>     drivers/hv/hv.c:115 implicit declaration of function âget_irq_regsâ [-Werror=implicit-function-declaration]
+> 
+> Add the header file for get_irq_regs() in a common header so it used by
+> vmbus_drv.c by hv.c for their get_irq_regs() usage.
+> 
+> Reported-by: Bernhard Landauer <oberon@manjaro.org>
+> Reported-by: Ralf Ramsauer <ralf.ramsauer@oth-regensburg.de>
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+> ---
+>  drivers/hv/hyperv_vmbus.h | 1 +
+>  1 file changed, 1 insertion(+)
+> 
+> diff --git a/drivers/hv/hyperv_vmbus.h b/drivers/hv/hyperv_vmbus.h
+> index 49569f8fe038..a3608cd52805 100644
+> --- a/drivers/hv/hyperv_vmbus.h
+> +++ b/drivers/hv/hyperv_vmbus.h
+> @@ -30,6 +30,7 @@
+>  #include <linux/atomic.h>
+>  #include <linux/hyperv.h>
+>  #include <linux/interrupt.h>
+> +#include <linux/irq.h>
+>  
+>  /*
+>   * Timeout for services such as KVP and fcopy.
