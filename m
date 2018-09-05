@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 06/22] PM / s2idle: Make s2idle_wait_head swait based
-Date: Wed, 05 Sep 2018 08:28:00 -0400
-Message-ID: <20180905122835.224064505@goodmis.org>
+Subject: [PATCH RT 01/22] sched/fair: Fix CFS bandwidth control lockdep DEADLOCK report
+Date: Wed, 05 Sep 2018 08:27:55 -0400
+Message-ID: <20180905122834.505806075@goodmis.org>
 References: <20180905122754.443196118@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -12,7 +12,8 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com
+        tom.zanussi@linux.intel.com, stable-rt@vger.kernel.org,
+        Mike Galbraith <efault@gmx.de>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
@@ -24,61 +25,56 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Mike Galbraith <efault@gmx.de>
 
-[ Upstream commit 93f141324d4860a1294e6899923c01ec5411d70b ]
+[ Upstream commit df7e8acc0c9a84979a448d215b8ef889efe4ac5a ]
 
-s2idle_wait_head is used during s2idle with interrupts disabled even on
-RT. There is no "custom" wake up function so swait could be used instead
-which is also lower weight compared to the wait_queue.
-Make s2idle_wait_head a swait_queue_head.
+CFS bandwidth control yields the inversion gripe below, moving
+handling quells it.
 
+|========================================================
+|WARNING: possible irq lock inversion dependency detected
+|4.16.7-rt1-rt #2 Tainted: G            E
+|--------------------------------------------------------
+|sirq-hrtimer/0/15 just changed the state of lock:
+| (&cfs_b->lock){+...}, at: [<000000009adb5cf7>] sched_cfs_period_timer+0x28/0x140
+|but this lock was taken by another, HARDIRQ-safe lock in the past: (&rq->lock){-...}
+|and interrupts could create inverse lock ordering between them.
+|other info that might help us debug this:
+| Possible interrupt unsafe locking scenario:
+|       CPU0                    CPU1
+|       ----                    ----
+|  lock(&cfs_b->lock);
+|                               local_irq_disable();
+|                               lock(&rq->lock);
+|                               lock(&cfs_b->lock);
+|  <Interrupt>
+|    lock(&rq->lock);
+
+Cc: stable-rt@vger.kernel.org
+Acked-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+Signed-off-by: Mike Galbraith <efault@gmx.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/power/suspend.c | 9 +++++----
- 1 file changed, 5 insertions(+), 4 deletions(-)
+ kernel/sched/fair.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/power/suspend.c b/kernel/power/suspend.c
-index 999236413460..b89605fe0e88 100644
---- a/kernel/power/suspend.c
-+++ b/kernel/power/suspend.c
-@@ -27,6 +27,7 @@
- #include <linux/export.h>
- #include <linux/suspend.h>
- #include <linux/syscore_ops.h>
-+#include <linux/swait.h>
- #include <linux/ftrace.h>
- #include <trace/events/power.h>
- #include <linux/compiler.h>
-@@ -57,7 +58,7 @@ EXPORT_SYMBOL_GPL(pm_suspend_global_flags);
+diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
+index 36ef77839be4..51ecea4f5d16 100644
+--- a/kernel/sched/fair.c
++++ b/kernel/sched/fair.c
+@@ -4684,9 +4684,9 @@ void init_cfs_bandwidth(struct cfs_bandwidth *cfs_b)
+ 	cfs_b->period = ns_to_ktime(default_cfs_period());
  
- static const struct platform_suspend_ops *suspend_ops;
- static const struct platform_s2idle_ops *s2idle_ops;
--static DECLARE_WAIT_QUEUE_HEAD(s2idle_wait_head);
-+static DECLARE_SWAIT_QUEUE_HEAD(s2idle_wait_head);
- 
- enum s2idle_states __read_mostly s2idle_state;
- static DEFINE_RAW_SPINLOCK(s2idle_lock);
-@@ -91,8 +92,8 @@ static void s2idle_enter(void)
- 	/* Push all the CPUs into the idle loop. */
- 	wake_up_all_idle_cpus();
- 	/* Make the current CPU wait so it can enter the idle loop too. */
--	wait_event(s2idle_wait_head,
--		   s2idle_state == S2IDLE_STATE_WAKE);
-+	swait_event(s2idle_wait_head,
-+		    s2idle_state == S2IDLE_STATE_WAKE);
- 
- 	cpuidle_pause();
- 	put_online_cpus();
-@@ -159,7 +160,7 @@ void s2idle_wake(void)
- 	raw_spin_lock_irqsave(&s2idle_lock, flags);
- 	if (s2idle_state > S2IDLE_STATE_NONE) {
- 		s2idle_state = S2IDLE_STATE_WAKE;
--		wake_up(&s2idle_wait_head);
-+		swake_up(&s2idle_wait_head);
- 	}
- 	raw_spin_unlock_irqrestore(&s2idle_lock, flags);
+ 	INIT_LIST_HEAD(&cfs_b->throttled_cfs_rq);
+-	hrtimer_init(&cfs_b->period_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_PINNED);
++	hrtimer_init(&cfs_b->period_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_PINNED_HARD);
+ 	cfs_b->period_timer.function = sched_cfs_period_timer;
+-	hrtimer_init(&cfs_b->slack_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
++	hrtimer_init(&cfs_b->slack_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
+ 	cfs_b->slack_timer.function = sched_cfs_slack_timer;
  }
+ 
 -- 
 2.18.0
