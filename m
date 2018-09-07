@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 10/24] irqchip/gic-v3-its: Make its_lock a raw_spin_lock_t
-Date: Fri, 07 Sep 2018 16:59:07 -0400
-Message-ID: <20180907205931.250248170@goodmis.org>
+Subject: [PATCH RT 04/24] PM / suspend: Prevent might sleep splats (updated)
+Date: Fri, 07 Sep 2018 16:59:01 -0400
+Message-ID: <20180907205930.343784416@goodmis.org>
 References: <20180907205857.262840394@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -26,62 +26,36 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-[ Upstream commit c7a3334c762a9b1dd2e39cb2ded00ce66e8a06d1 ]
+[ Upstream commit ec7ff06b919647a2fd7d2761a26f5a1d465e819c ]
 
-The its_lock lock is held while a new device is added to the list and
-during setup while the CPU is booted. Even on -RT the CPU-bootup is
-performed with disabled interrupts.
-
-Make its_lock a raw_spin_lock_t.
+This is an updated version of this patch which was merged upstream as
+commit c1a957d17086d20d52d7f9c8dffaeac2ee09d6f9
 
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- drivers/irqchip/irq-gic-v3-its.c | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+ kernel/time/tick-common.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/drivers/irqchip/irq-gic-v3-its.c b/drivers/irqchip/irq-gic-v3-its.c
-index 2ea39a83737f..e8217ebe8c1e 100644
---- a/drivers/irqchip/irq-gic-v3-its.c
-+++ b/drivers/irqchip/irq-gic-v3-its.c
-@@ -148,7 +148,7 @@ static struct {
- } vpe_proxy;
+diff --git a/kernel/time/tick-common.c b/kernel/time/tick-common.c
+index 7f5a26c3a8ee..7a87a4488a5e 100644
+--- a/kernel/time/tick-common.c
++++ b/kernel/time/tick-common.c
+@@ -492,6 +492,7 @@ void tick_freeze(void)
+ 	if (tick_freeze_depth == num_online_cpus()) {
+ 		trace_suspend_resume(TPS("timekeeping_freeze"),
+ 				     smp_processor_id(), true);
++		system_state = SYSTEM_SUSPEND;
+ 		timekeeping_suspend();
+ 	} else {
+ 		tick_suspend_local();
+@@ -515,6 +516,7 @@ void tick_unfreeze(void)
  
- static LIST_HEAD(its_nodes);
--static DEFINE_SPINLOCK(its_lock);
-+static DEFINE_RAW_SPINLOCK(its_lock);
- static struct rdists *gic_rdists;
- static struct irq_domain *its_parent;
- 
-@@ -1850,7 +1850,7 @@ static void its_cpu_init_collection(void)
- 	struct its_node *its;
- 	int cpu;
- 
--	spin_lock(&its_lock);
-+	raw_spin_lock(&its_lock);
- 	cpu = smp_processor_id();
- 
- 	list_for_each_entry(its, &its_nodes, entry) {
-@@ -1892,7 +1892,7 @@ static void its_cpu_init_collection(void)
- 		its_send_invall(its, &its->collections[cpu]);
- 	}
- 
--	spin_unlock(&its_lock);
-+	raw_spin_unlock(&its_lock);
- }
- 
- static struct its_device *its_find_device(struct its_node *its, u32 dev_id)
-@@ -3041,9 +3041,9 @@ static int __init its_probe_one(struct resource *res,
- 	if (err)
- 		goto out_free_tables;
- 
--	spin_lock(&its_lock);
-+	raw_spin_lock(&its_lock);
- 	list_add(&its->entry, &its_nodes);
--	spin_unlock(&its_lock);
-+	raw_spin_unlock(&its_lock);
- 
- 	return 0;
- 
+ 	if (tick_freeze_depth == num_online_cpus()) {
+ 		timekeeping_resume();
++		system_state = SYSTEM_RUNNING;
+ 		trace_suspend_resume(TPS("timekeeping_freeze"),
+ 				     smp_processor_id(), false);
+ 	} else {
 -- 
 2.18.0
