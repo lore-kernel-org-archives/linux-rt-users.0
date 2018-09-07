@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 24/24] Linux 4.14.63-rt41-rc2
-Date: Fri, 07 Sep 2018 16:59:21 -0400
-Message-ID: <20180907205933.701964364@goodmis.org>
+Subject: [PATCH RT 21/24] sched: Allow pinned user tasks to be awakened to the CPU they pinned
+Date: Fri, 07 Sep 2018 16:59:18 -0400
+Message-ID: <20180907205933.227671780@goodmis.org>
 References: <20180907205857.262840394@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -12,7 +12,8 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com
+        tom.zanussi@linux.intel.com, stable-rt@vger.kernel.org,
+        Mike Galbraith <efault@gmx.de>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
@@ -24,18 +25,38 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+From: Mike Galbraith <efault@gmx.de>
 
+[ Upstream commit cd4d35ef89948221f7cd1751cee453943967364c ]
+
+Since commit 7af443ee16976 ("sched/core: Require cpu_active() in
+select_task_rq(), for user tasks") select_fallback_rq() will BUG() if
+the CPU to which a task has pinned itself and pinned becomes
+!cpu_active() while it slept.
+The task will continue running on the to-be-removed CPU and will remove
+itself from the CPU during takedown_cpu() (while cpuhp_pin_lock will be
+acquired) and move to another CPU based on its mask after the
+migrate_disable() section has been left.
+
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- localversion-rt | 2 +-
+ kernel/sched/core.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/localversion-rt b/localversion-rt
-index 2af6c89aee6d..eba723cf4812 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt40
-+-rt41-rc2
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index a5ce37b90fca..6e6bd5262f23 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -980,7 +980,7 @@ static inline bool is_cpu_allowed(struct task_struct *p, int cpu)
+ 	if (!cpumask_test_cpu(cpu, p->cpus_ptr))
+ 		return false;
+ 
+-	if (is_per_cpu_kthread(p))
++	if (is_per_cpu_kthread(p) || __migrate_disabled(p))
+ 		return cpu_online(cpu);
+ 
+ 	return cpu_active(cpu);
 -- 
 2.18.0
