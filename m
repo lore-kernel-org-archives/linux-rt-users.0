@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 23/24] Revert "softirq: keep the softirq pending check RT-only"
-Date: Fri, 07 Sep 2018 16:59:20 -0400
-Message-ID: <20180907205933.547534163@goodmis.org>
+Subject: [PATCH RT 17/24] crypto: cryptd - add a lock instead preempt_disable/local_bh_disable
+Date: Fri, 07 Sep 2018 16:59:14 -0400
+Message-ID: <20180907205932.529511011@goodmis.org>
 References: <20180907205857.262840394@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -24,42 +24,85 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-This reverts commit 5536f5491a2e098ba34995662dfc0e82d66d65c9.
+[ Upstream commit 21aedb30d85979697f79a72a084e5d781e323663 ]
 
-Sebastian says that the stable commits:
+cryptd has a per-CPU lock which protected with local_bh_disable() and
+preempt_disable().
+Add an explicit spin_lock to make the locking context more obvious and
+visible to lockdep. Since it is a per-CPU lock, there should be no lock
+contention on the actual spinlock.
+There is a small race-window where we could be migrated to another CPU
+after the cpu_queue has been obtain. This is not a problem because the
+actual ressource is protected by the spinlock.
 
- 0a0e0829f9901 ("nohz: Fix missing tick reprogram when interrupting an inline softirq")
- 80d20d35af1ed ("nohz: Fix local_timer_softirq_pending()")
-
-Make this commit obsolete, thus it should be reverted.
-
-Link: http://lkml.kernel.org/r/20180906193028.jvyp2dj3rto4ax7s@linutronix.de
-
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/softirq.c | 7 +------
- 1 file changed, 1 insertion(+), 6 deletions(-)
+ crypto/cryptd.c | 19 +++++++++----------
+ 1 file changed, 9 insertions(+), 10 deletions(-)
 
-diff --git a/kernel/softirq.c b/kernel/softirq.c
-index 996b03fb8c53..ec801952785a 100644
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -842,13 +842,8 @@ static inline void tick_irq_exit(void)
- 	int cpu = smp_processor_id();
+diff --git a/crypto/cryptd.c b/crypto/cryptd.c
+index 248f6ba41688..54b7985c8caa 100644
+--- a/crypto/cryptd.c
++++ b/crypto/cryptd.c
+@@ -37,6 +37,7 @@
+ struct cryptd_cpu_queue {
+ 	struct crypto_queue queue;
+ 	struct work_struct work;
++	spinlock_t qlock;
+ };
  
- 	/* Make sure that timer wheel updates are propagated */
--#ifdef CONFIG_PREEMPT_RT_BASE
- 	if ((idle_cpu(cpu) || tick_nohz_full_cpu(cpu)) &&
--	    !need_resched() && !local_softirq_pending())
--#else
--	if ((idle_cpu(cpu) && !need_resched()) || tick_nohz_full_cpu(cpu))
--#endif
--	{
-+	    !need_resched() && !local_softirq_pending()) {
- 		if (!in_irq())
- 			tick_nohz_irq_exit();
+ struct cryptd_queue {
+@@ -115,6 +116,7 @@ static int cryptd_init_queue(struct cryptd_queue *queue,
+ 		cpu_queue = per_cpu_ptr(queue->cpu_queue, cpu);
+ 		crypto_init_queue(&cpu_queue->queue, max_cpu_qlen);
+ 		INIT_WORK(&cpu_queue->work, cryptd_queue_worker);
++		spin_lock_init(&cpu_queue->qlock);
  	}
+ 	return 0;
+ }
+@@ -139,8 +141,10 @@ static int cryptd_enqueue_request(struct cryptd_queue *queue,
+ 	atomic_t *refcnt;
+ 	bool may_backlog;
+ 
+-	cpu = get_cpu();
+-	cpu_queue = this_cpu_ptr(queue->cpu_queue);
++	cpu_queue = raw_cpu_ptr(queue->cpu_queue);
++	spin_lock_bh(&cpu_queue->qlock);
++	cpu = smp_processor_id();
++
+ 	err = crypto_enqueue_request(&cpu_queue->queue, request);
+ 
+ 	refcnt = crypto_tfm_ctx(request->tfm);
+@@ -157,7 +161,7 @@ static int cryptd_enqueue_request(struct cryptd_queue *queue,
+ 	atomic_inc(refcnt);
+ 
+ out_put_cpu:
+-	put_cpu();
++	spin_unlock_bh(&cpu_queue->qlock);
+ 
+ 	return err;
+ }
+@@ -173,16 +177,11 @@ static void cryptd_queue_worker(struct work_struct *work)
+ 	cpu_queue = container_of(work, struct cryptd_cpu_queue, work);
+ 	/*
+ 	 * Only handle one request at a time to avoid hogging crypto workqueue.
+-	 * preempt_disable/enable is used to prevent being preempted by
+-	 * cryptd_enqueue_request(). local_bh_disable/enable is used to prevent
+-	 * cryptd_enqueue_request() being accessed from software interrupts.
+ 	 */
+-	local_bh_disable();
+-	preempt_disable();
++	spin_lock_bh(&cpu_queue->qlock);
+ 	backlog = crypto_get_backlog(&cpu_queue->queue);
+ 	req = crypto_dequeue_request(&cpu_queue->queue);
+-	preempt_enable();
+-	local_bh_enable();
++	spin_unlock_bh(&cpu_queue->qlock);
+ 
+ 	if (!req)
+ 		return;
 -- 
 2.18.0
