@@ -1,7 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 00/24] Linux 4.14.63-rt41-rc2
-Date: Fri, 07 Sep 2018 16:58:57 -0400
-Message-ID: <20180907205857.262840394@goodmis.org>
+Subject: [PATCH RT 02/24] locallock: provide {get,put}_locked_ptr() variants
+Date: Fri, 07 Sep 2018 16:58:59 -0400
+Message-ID: <20180907205930.057848815@goodmis.org>
+References: <20180907205857.262840394@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -16,109 +19,55 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+4.14.63-rt41-rc2 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 4.14.63-rt41-rc2.
+From: Julia Cartwright <julia@ni.com>
 
-Please scream at me if I messed something up. Please test the patches too.
+[ Upstream commit 3d45cf23db4f76cd356ebb0aa4cdaa7d92d1a64e ]
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
+Provide a set of locallocked accessors for pointers to per-CPU data;
+this is useful for dynamically-allocated per-CPU regions, for example.
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
+These are symmetric with the {get,put}_cpu_ptr() per-CPU accessor
+variants.
 
-If all goes well, this patch will be converted to the next main release
-on 9/10/2018.
-
-Enjoy,
-
--- Steve
-
-
-To build 4.14.63-rt41-rc2 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.63.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.63-rt41-rc2.patch.xz
-
-You can also build from 4.14.63-rt40 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/4.14/incr/patch-4.14.63-rt40-rt41-rc2.patch.xz
-
-
-Changes from 4.14.63-rt40:
-
+Signed-off-by: Julia Cartwright <julia@ni.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
+ include/linux/locallock.h | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
-
-Anna-Maria Gleixner (1):
-      Revert "timer: delay waking softirqs from the jiffy tick"
-
-Daniel Bristot de Oliveira (1):
-      sched/core: Avoid __schedule() being called twice in a row
-
-Julia Cartwright (3):
-      locallock: provide {get,put}_locked_ptr() variants
-      squashfs: make use of local lock in multi_cpu decompressor
-      seqlock: provide the same ordering semantics as mainline
-
-Marc Zyngier (1):
-      irqchip/gic-v3-its: Move pending table allocation to init time
-
-Mike Galbraith (3):
-      sched/fair: Fix CFS bandwidth control lockdep DEADLOCK report
-      crypto: scompress - serialize RT percpu scratch buffer access with a local lock
-      sched: Allow pinned user tasks to be awakened to the CPU they pinned
-
-Sebastian Andrzej Siewior (12):
-      PM / suspend: Prevent might sleep splats (updated)
-      PM / wakeup: Make events_lock a RAW_SPINLOCK
-      PM / s2idle: Make s2idle_wait_head swait based
-      Revert "x86: UV: raw_spinlock conversion"
-      irqchip/gic-v3-its: Make its_lock a raw_spin_lock_t
-      sched/migrate_disable: fallback to preempt_disable() instead barrier()
-      irqchip/gic-v3-its: Move ITS' ->pend_page allocation into an early CPU up hook
-      efi: Allow efi=runtime
-      efi: Disable runtime services on RT
-      crypto: cryptd - add a lock instead preempt_disable/local_bh_disable
-      Revert "arm64/xen: Make XEN depend on !RT"
-      Drivers: hv: vmbus: include header for get_irq_regs()
-
-Steven Rostedt (VMware) (2):
-      Revert "softirq: keep the 'softirq pending' check RT-only"
-      Linux 4.14.63-rt41-rc2
-
-Thomas Gleixner (1):
-      x86/ioapic: Don't let setaffinity unmask threaded EOI interrupt too early
-
-----
- arch/arm64/Kconfig                      |  2 +-
- arch/x86/include/asm/uv/uv_bau.h        | 14 +++----
- arch/x86/kernel/apic/io_apic.c          | 26 +++++++------
- arch/x86/platform/uv/tlb_uv.c           | 26 ++++++-------
- arch/x86/platform/uv/uv_time.c          | 20 ++++------
- crypto/cryptd.c                         | 19 +++++-----
- crypto/scompress.c                      |  6 ++-
- drivers/base/power/wakeup.c             | 18 ++++-----
- drivers/firmware/efi/efi.c              |  5 ++-
- drivers/hv/hyperv_vmbus.h               |  1 +
- drivers/irqchip/irq-gic-v3-its.c        | 67 ++++++++++++++++++++++-----------
- fs/squashfs/decompressor_multi_percpu.c | 16 ++++++--
- include/linux/irqchip/arm-gic-v3.h      |  1 +
- include/linux/locallock.h               | 10 +++++
- include/linux/preempt.h                 |  6 +--
- include/linux/sched.h                   |  4 +-
- include/linux/seqlock.h                 |  1 +
- kernel/power/suspend.c                  |  9 +++--
- kernel/sched/core.c                     | 34 +++++++++--------
- kernel/sched/debug.c                    |  2 +-
- kernel/sched/fair.c                     |  4 +-
- kernel/softirq.c                        |  7 +---
- kernel/time/tick-common.c               |  2 +
- kernel/time/timer.c                     |  2 +-
- localversion-rt                         |  2 +-
- 25 files changed, 176 insertions(+), 128 deletions(-)
+diff --git a/include/linux/locallock.h b/include/linux/locallock.h
+index d658c2552601..921eab83cd34 100644
+--- a/include/linux/locallock.h
++++ b/include/linux/locallock.h
+@@ -222,6 +222,14 @@ static inline int __local_unlock_irqrestore(struct local_irq_lock *lv,
+ 
+ #define put_locked_var(lvar, var)	local_unlock(lvar);
+ 
++#define get_locked_ptr(lvar, var)					\
++	({								\
++		local_lock(lvar);					\
++		this_cpu_ptr(var);					\
++	})
++
++#define put_locked_ptr(lvar, var)	local_unlock(lvar);
++
+ #define local_lock_cpu(lvar)						\
+ 	({								\
+ 		local_lock(lvar);					\
+@@ -262,6 +270,8 @@ static inline void local_irq_lock_init(int lvar) { }
+ 
+ #define get_locked_var(lvar, var)		get_cpu_var(var)
+ #define put_locked_var(lvar, var)		put_cpu_var(var)
++#define get_locked_ptr(lvar, var)		get_cpu_ptr(var)
++#define put_locked_ptr(lvar, var)		put_cpu_ptr(var)
+ 
+ #define local_lock_cpu(lvar)			get_cpu()
+ #define local_unlock_cpu(lvar)			put_cpu()
+-- 
+2.18.0
