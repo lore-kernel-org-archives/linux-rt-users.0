@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 19/24] sched/core: Avoid __schedule() being called twice in a row
-Date: Fri, 07 Sep 2018 16:59:16 -0400
-Message-ID: <20180907205932.908152135@goodmis.org>
+Subject: [PATCH RT 24/24] Linux 4.14.63-rt41-rc2
+Date: Fri, 07 Sep 2018 16:59:21 -0400
+Message-ID: <20180907205933.701964364@goodmis.org>
 References: <20180907205857.262840394@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -12,13 +12,7 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        Tommaso Cucinotta <tommaso.cucinotta@sssup.it>,
-        Romulo da Silva de Oliveira <romulo.deoliveira@ufsc.br>,
-        Ingo Molnar <mingo@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>
+        tom.zanussi@linux.intel.com
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
@@ -30,61 +24,18 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Daniel Bristot de Oliveira <bristot@redhat.com>
+From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-[ Upstream commit 2bb94c48b2ffaabf8c15a51e5cc1b4c541988cab ]
-
-If a worker invokes schedule() then we may have the call chain:
- schedule()
- -> sched_submit_work()
-    -> wq_worker_sleeping()
-       -> wake_up_worker()
-	  -> wake_up_process().
-
-The last wakeup may cause a schedule which is unnecessary because we are
-already in schedule() and do it anyway.
-
-Add a preempt_disable() + preempt_enable_no_resched() around
-wq_worker_sleeping() so the context switch could be delayed until
-__schedule().
-
-Signed-off-by: Daniel Bristot de Oliveira <bristot@redhat.com>
-Cc: Clark Williams <williams@redhat.com>
-Cc: Tommaso Cucinotta <tommaso.cucinotta@sssup.it>
-Cc: Romulo da Silva de Oliveira <romulo.deoliveira@ufsc.br>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-[bigeasy: rewrite changelog]
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/sched/core.c | 9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index fa5b76255f8c..a5ce37b90fca 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -3482,10 +3482,15 @@ static inline void sched_submit_work(struct task_struct *tsk)
- 	/*
- 	 * If a worker went to sleep, notify and ask workqueue whether
- 	 * it wants to wake up a task to maintain concurrency.
-+	 * As this function is called inside the schedule() context,
-+	 * we disable preemption to avoid it calling schedule() again
-+	 * in the possible wakeup of a kworker.
- 	 */
--	if (tsk->flags & PF_WQ_WORKER)
-+	if (tsk->flags & PF_WQ_WORKER) {
-+		preempt_disable();
- 		wq_worker_sleeping(tsk);
--
-+		preempt_enable_no_resched();
-+	}
- 
- 	if (tsk_is_pi_blocked(tsk))
- 		return;
+diff --git a/localversion-rt b/localversion-rt
+index 2af6c89aee6d..eba723cf4812 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt40
++-rt41-rc2
 -- 
 2.18.0
