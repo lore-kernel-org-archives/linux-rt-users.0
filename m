@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 15/24] efi: Allow efi=runtime
-Date: Fri, 07 Sep 2018 16:59:12 -0400
-Message-ID: <20180907205932.222864392@goodmis.org>
+Subject: [PATCH RT 11/24] sched/migrate_disable: fallback to preempt_disable() instead
+ barrier()
+Date: Fri, 07 Sep 2018 16:59:08 -0400
+Message-ID: <20180907205931.491739215@goodmis.org>
 References: <20180907205857.262840394@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -12,7 +13,8 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com
+        tom.zanussi@linux.intel.com, stable-rt@vger.kernel.org,
+        joe.korty@concurrent-rt.com
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
@@ -26,30 +28,202 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-[ Upstream commit 71bef7da4112ed2677d4f10a58202a5a4638fb90 ]
+[ Upstream commit 10e90c155bbc7cab420f47694404f8f9fe33c2b2 ]
 
-In case the option "efi=noruntime" is default at built-time, the user
-could overwrite its sate by `efi=runtime' and allow it again.
+On SMP + !RT migrate_disable() is still around. It is not part of spin_lock()
+anymore so it has almost no users. However the futex code has a workaround for
+the !in_atomic() part of migrate disable which fails because the matching
+migrade_disable() is no longer part of spin_lock().
 
+On !SMP + !RT migrate_disable() is reduced to barrier(). This is not optimal
+because we few spots where a "preempt_disable()" statement was replaced with
+"migrate_disable()".
+
+We also used the migration_disable counter to figure out if a sleeping lock is
+acquired so RCU does not complain about schedule() during rcu_read_lock() while
+a sleeping lock is held. This changed, we no longer use it, we have now a
+sleeping_lock counter for the RCU purpose.
+
+This means we can now:
+- for SMP + RT_BASE
+  full migration program, nothing changes here
+
+- for !SMP + RT_BASE
+  the migration counting is no longer required. It used to ensure that the task
+  is not migrated to another CPU and that this CPU remains online. !SMP ensures
+  that already.
+  Move it to CONFIG_SCHED_DEBUG so the counting is done for debugging purpose
+  only.
+
+- for all other cases including !RT
+  fallback to preempt_disable(). The only remaining users of migrate_disable()
+  are those which were converted from preempt_disable() and the futex
+  workaround which is already in the preempt_disable() section due to the
+  spin_lock that is held.
+
+Cc: stable-rt@vger.kernel.org
+Reported-by: joe.korty@concurrent-rt.com
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- drivers/firmware/efi/efi.c | 3 +++
- 1 file changed, 3 insertions(+)
+ include/linux/preempt.h |  6 +++---
+ include/linux/sched.h   |  4 ++--
+ kernel/sched/core.c     | 23 +++++++++++------------
+ kernel/sched/debug.c    |  2 +-
+ 4 files changed, 17 insertions(+), 18 deletions(-)
 
-diff --git a/drivers/firmware/efi/efi.c b/drivers/firmware/efi/efi.c
-index c3eefa126e3b..9bd749389f31 100644
---- a/drivers/firmware/efi/efi.c
-+++ b/drivers/firmware/efi/efi.c
-@@ -100,6 +100,9 @@ static int __init parse_efi_cmdline(char *str)
- 	if (parse_option_str(str, "noruntime"))
- 		disable_runtime = true;
+diff --git a/include/linux/preempt.h b/include/linux/preempt.h
+index 0591df500e9d..6728662a81e8 100644
+--- a/include/linux/preempt.h
++++ b/include/linux/preempt.h
+@@ -224,7 +224,7 @@ do { \
  
-+	if (parse_option_str(str, "runtime"))
-+		disable_runtime = false;
-+
- 	return 0;
+ #define preemptible()	(preempt_count() == 0 && !irqs_disabled())
+ 
+-#ifdef CONFIG_SMP
++#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+ 
+ extern void migrate_disable(void);
+ extern void migrate_enable(void);
+@@ -241,8 +241,8 @@ static inline int __migrate_disabled(struct task_struct *p)
  }
- early_param("efi", parse_efi_cmdline);
+ 
+ #else
+-#define migrate_disable()		barrier()
+-#define migrate_enable()		barrier()
++#define migrate_disable()		preempt_disable()
++#define migrate_enable()		preempt_enable()
+ static inline int __migrate_disabled(struct task_struct *p)
+ {
+ 	return 0;
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index c26b5ff005ab..a6ffb552be01 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -626,7 +626,7 @@ struct task_struct {
+ 	int				nr_cpus_allowed;
+ 	const cpumask_t			*cpus_ptr;
+ 	cpumask_t			cpus_mask;
+-#if defined(CONFIG_PREEMPT_COUNT) && defined(CONFIG_SMP)
++#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+ 	int				migrate_disable;
+ 	int				migrate_disable_update;
+ 	int				pinned_on_cpu;
+@@ -635,8 +635,8 @@ struct task_struct {
+ # endif
+ 
+ #elif !defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+-	int				migrate_disable;
+ # ifdef CONFIG_SCHED_DEBUG
++	int				migrate_disable;
+ 	int				migrate_disable_atomic;
+ # endif
+ #endif
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index e7817c6c44d2..fa5b76255f8c 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -1107,7 +1107,7 @@ void set_cpus_allowed_common(struct task_struct *p, const struct cpumask *new_ma
+ 	p->nr_cpus_allowed = cpumask_weight(new_mask);
+ }
+ 
+-#if defined(CONFIG_PREEMPT_COUNT) && defined(CONFIG_SMP)
++#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+ int __migrate_disabled(struct task_struct *p)
+ {
+ 	return p->migrate_disable;
+@@ -1146,7 +1146,7 @@ static void __do_set_cpus_allowed_tail(struct task_struct *p,
+ 
+ void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
+ {
+-#if defined(CONFIG_PREEMPT_COUNT) && defined(CONFIG_SMP)
++#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+ 	if (__migrate_disabled(p)) {
+ 		lockdep_assert_held(&p->pi_lock);
+ 
+@@ -1219,7 +1219,7 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
+ 	if (cpumask_test_cpu(task_cpu(p), new_mask) || __migrate_disabled(p))
+ 		goto out;
+ 
+-#if defined(CONFIG_PREEMPT_COUNT) && defined(CONFIG_SMP)
++#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+ 	if (__migrate_disabled(p)) {
+ 		p->migrate_disable_update = 1;
+ 		goto out;
+@@ -6897,7 +6897,7 @@ const u32 sched_prio_to_wmult[40] = {
+  /*  15 */ 119304647, 148102320, 186737708, 238609294, 286331153,
+ };
+ 
+-#if defined(CONFIG_PREEMPT_COUNT) && defined(CONFIG_SMP)
++#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+ 
+ static inline void
+ update_nr_migratory(struct task_struct *p, long delta)
+@@ -7048,45 +7048,44 @@ EXPORT_SYMBOL(migrate_enable);
+ #elif !defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+ void migrate_disable(void)
+ {
++#ifdef CONFIG_SCHED_DEBUG
+ 	struct task_struct *p = current;
+ 
+ 	if (in_atomic() || irqs_disabled()) {
+-#ifdef CONFIG_SCHED_DEBUG
+ 		p->migrate_disable_atomic++;
+-#endif
+ 		return;
+ 	}
+-#ifdef CONFIG_SCHED_DEBUG
++
+ 	if (unlikely(p->migrate_disable_atomic)) {
+ 		tracing_off();
+ 		WARN_ON_ONCE(1);
+ 	}
+-#endif
+ 
+ 	p->migrate_disable++;
++#endif
++	barrier();
+ }
+ EXPORT_SYMBOL(migrate_disable);
+ 
+ void migrate_enable(void)
+ {
++#ifdef CONFIG_SCHED_DEBUG
+ 	struct task_struct *p = current;
+ 
+ 	if (in_atomic() || irqs_disabled()) {
+-#ifdef CONFIG_SCHED_DEBUG
+ 		p->migrate_disable_atomic--;
+-#endif
+ 		return;
+ 	}
+ 
+-#ifdef CONFIG_SCHED_DEBUG
+ 	if (unlikely(p->migrate_disable_atomic)) {
+ 		tracing_off();
+ 		WARN_ON_ONCE(1);
+ 	}
+-#endif
+ 
+ 	WARN_ON_ONCE(p->migrate_disable <= 0);
+ 	p->migrate_disable--;
++#endif
++	barrier();
+ }
+ EXPORT_SYMBOL(migrate_enable);
+ #endif
+diff --git a/kernel/sched/debug.c b/kernel/sched/debug.c
+index 3108da1ee253..b5b43861c2b6 100644
+--- a/kernel/sched/debug.c
++++ b/kernel/sched/debug.c
+@@ -1017,7 +1017,7 @@ void proc_sched_show_task(struct task_struct *p, struct pid_namespace *ns,
+ 		P(dl.runtime);
+ 		P(dl.deadline);
+ 	}
+-#if defined(CONFIG_PREEMPT_COUNT) && defined(CONFIG_SMP)
++#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+ 	P(migrate_disable);
+ #endif
+ 	P(nr_cpus_allowed);
 -- 
 2.18.0
