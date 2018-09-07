@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 17/24] crypto: cryptd - add a lock instead preempt_disable/local_bh_disable
-Date: Fri, 07 Sep 2018 16:59:14 -0400
-Message-ID: <20180907205932.529511011@goodmis.org>
+Subject: [PATCH RT 18/24] crypto: scompress - serialize RT percpu scratch buffer access with a
+ local lock
+Date: Fri, 07 Sep 2018 16:59:15 -0400
+Message-ID: <20180907205932.723319792@goodmis.org>
 References: <20180907205857.262840394@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -12,7 +13,7 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com
+        tom.zanussi@linux.intel.com, Mike Galbraith <efault@gmx.de>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
@@ -24,85 +25,83 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Mike Galbraith <efault@gmx.de>
 
-[ Upstream commit 21aedb30d85979697f79a72a084e5d781e323663 ]
+[ Upstream commit 1a4eff3f8e743d149be26a414822710aef07fe14 ]
 
-cryptd has a per-CPU lock which protected with local_bh_disable() and
-preempt_disable().
-Add an explicit spin_lock to make the locking context more obvious and
-visible to lockdep. Since it is a per-CPU lock, there should be no lock
-contention on the actual spinlock.
-There is a small race-window where we could be migrated to another CPU
-after the cpu_queue has been obtain. This is not a problem because the
-actual ressource is protected by the spinlock.
+| BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:974
+| in_atomic(): 1, irqs_disabled(): 0, pid: 1401, name: cryptomgr_test
+| Preemption disabled at:
+| [<ffff00000849941c>] scomp_acomp_comp_decomp+0x34/0x1a0
+| CPU: 21 PID: 1401 Comm: cryptomgr_test Tainted: G        W        4.16.18-rt9-rt #1
+| Hardware name: www.cavium.com crb-1s/crb-1s, BIOS 0.3 Apr 25 2017
+| Call trace:
+|  dump_backtrace+0x0/0x1c8
+|  show_stack+0x24/0x30
+|  dump_stack+0xac/0xe8
+|  ___might_sleep+0x124/0x188
+|  rt_spin_lock+0x40/0x88
+|  zip_load_instr+0x44/0x170 [thunderx_zip]
+|  zip_deflate+0x184/0x378 [thunderx_zip]
+|  zip_compress+0xb0/0x130 [thunderx_zip]
+|  zip_scomp_compress+0x48/0x60 [thunderx_zip]
+|  scomp_acomp_comp_decomp+0xd8/0x1a0
+|  scomp_acomp_compress+0x24/0x30
+|  test_acomp+0x15c/0x558
+|  alg_test_comp+0xc0/0x128
+|  alg_test.part.6+0x120/0x2c0
+|  alg_test+0x6c/0xa0
+|  cryptomgr_test+0x50/0x58
+|  kthread+0x134/0x138
+|  ret_from_fork+0x10/0x18
 
+Mainline disables preemption to serialize percpu scratch buffer access,
+causing the splat above.  Serialize with a local lock for RT instead.
+
+Signed-off-by: Mike Galbraith <efault@gmx.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- crypto/cryptd.c | 19 +++++++++----------
- 1 file changed, 9 insertions(+), 10 deletions(-)
+ crypto/scompress.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/crypto/cryptd.c b/crypto/cryptd.c
-index 248f6ba41688..54b7985c8caa 100644
---- a/crypto/cryptd.c
-+++ b/crypto/cryptd.c
-@@ -37,6 +37,7 @@
- struct cryptd_cpu_queue {
- 	struct crypto_queue queue;
- 	struct work_struct work;
-+	spinlock_t qlock;
- };
+diff --git a/crypto/scompress.c b/crypto/scompress.c
+index 2075e2c4e7df..c6b4e265c6bf 100644
+--- a/crypto/scompress.c
++++ b/crypto/scompress.c
+@@ -24,6 +24,7 @@
+ #include <linux/cryptouser.h>
+ #include <net/netlink.h>
+ #include <linux/scatterlist.h>
++#include <linux/locallock.h>
+ #include <crypto/scatterwalk.h>
+ #include <crypto/internal/acompress.h>
+ #include <crypto/internal/scompress.h>
+@@ -34,6 +35,7 @@ static void * __percpu *scomp_src_scratches;
+ static void * __percpu *scomp_dst_scratches;
+ static int scomp_scratch_users;
+ static DEFINE_MUTEX(scomp_lock);
++static DEFINE_LOCAL_IRQ_LOCK(scomp_scratches_lock);
  
- struct cryptd_queue {
-@@ -115,6 +116,7 @@ static int cryptd_init_queue(struct cryptd_queue *queue,
- 		cpu_queue = per_cpu_ptr(queue->cpu_queue, cpu);
- 		crypto_init_queue(&cpu_queue->queue, max_cpu_qlen);
- 		INIT_WORK(&cpu_queue->work, cryptd_queue_worker);
-+		spin_lock_init(&cpu_queue->qlock);
+ #ifdef CONFIG_NET
+ static int crypto_scomp_report(struct sk_buff *skb, struct crypto_alg *alg)
+@@ -193,7 +195,7 @@ static int scomp_acomp_comp_decomp(struct acomp_req *req, int dir)
+ 	void **tfm_ctx = acomp_tfm_ctx(tfm);
+ 	struct crypto_scomp *scomp = *tfm_ctx;
+ 	void **ctx = acomp_request_ctx(req);
+-	const int cpu = get_cpu();
++	const int cpu = local_lock_cpu(scomp_scratches_lock);
+ 	u8 *scratch_src = *per_cpu_ptr(scomp_src_scratches, cpu);
+ 	u8 *scratch_dst = *per_cpu_ptr(scomp_dst_scratches, cpu);
+ 	int ret;
+@@ -228,7 +230,7 @@ static int scomp_acomp_comp_decomp(struct acomp_req *req, int dir)
+ 					 1);
  	}
- 	return 0;
- }
-@@ -139,8 +141,10 @@ static int cryptd_enqueue_request(struct cryptd_queue *queue,
- 	atomic_t *refcnt;
- 	bool may_backlog;
- 
--	cpu = get_cpu();
--	cpu_queue = this_cpu_ptr(queue->cpu_queue);
-+	cpu_queue = raw_cpu_ptr(queue->cpu_queue);
-+	spin_lock_bh(&cpu_queue->qlock);
-+	cpu = smp_processor_id();
-+
- 	err = crypto_enqueue_request(&cpu_queue->queue, request);
- 
- 	refcnt = crypto_tfm_ctx(request->tfm);
-@@ -157,7 +161,7 @@ static int cryptd_enqueue_request(struct cryptd_queue *queue,
- 	atomic_inc(refcnt);
- 
- out_put_cpu:
+ out:
 -	put_cpu();
-+	spin_unlock_bh(&cpu_queue->qlock);
- 
- 	return err;
++	local_unlock_cpu(scomp_scratches_lock);
+ 	return ret;
  }
-@@ -173,16 +177,11 @@ static void cryptd_queue_worker(struct work_struct *work)
- 	cpu_queue = container_of(work, struct cryptd_cpu_queue, work);
- 	/*
- 	 * Only handle one request at a time to avoid hogging crypto workqueue.
--	 * preempt_disable/enable is used to prevent being preempted by
--	 * cryptd_enqueue_request(). local_bh_disable/enable is used to prevent
--	 * cryptd_enqueue_request() being accessed from software interrupts.
- 	 */
--	local_bh_disable();
--	preempt_disable();
-+	spin_lock_bh(&cpu_queue->qlock);
- 	backlog = crypto_get_backlog(&cpu_queue->queue);
- 	req = crypto_dequeue_request(&cpu_queue->queue);
--	preempt_enable();
--	local_bh_enable();
-+	spin_unlock_bh(&cpu_queue->qlock);
  
- 	if (!req)
- 		return;
 -- 
 2.18.0
