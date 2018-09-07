@@ -1,103 +1,80 @@
-From: Julia Cartwright <julia@ni.com>
-Subject: Re: [ANNOUNCE] Submit a topic for the RT Microconference at Linux
- Plumbers
-Date: Fri, 7 Sep 2018 15:44:00 -0500
-Message-ID: <20180907204400.GN8562@jcartwri.amer.corp.natinst.com>
-References: <20180904132529.6ae7166e@gandalf.local.home>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 01/24] sched/fair: Fix CFS bandwidth control lockdep DEADLOCK report
+Date: Fri, 07 Sep 2018 16:58:58 -0400
+Message-ID: <20180907205929.901024799@goodmis.org>
+References: <20180907205857.262840394@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        contact@linuxplumbersconf.org,
-        Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset=ISO-8859-15
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Clark Williams <williams@redhat.com>,
-        Daniel Wagner <wagi@monom.org>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Jan Kiszka <jan.kiszka@siemens.com>,
-        Mark Brown <mark.brown@linaro.org>,
-        Anna-Maria Gleixner <anna-maria@linutronix.de>,
-        Juri Lelli <juri.lelli@gmail.com>,
-        "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-        Kate Stewart <kstewart@linuxfoundation.org>,
-        Darren Hart <darren@dvhart.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+        John Kacur <jkacur@redhat.com>,
+        Paul Gortmaker <paul.gortmaker@windriver.com>,
+        Julia Cartwright <julia@ni.com>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        tom.zanussi@linux.intel.com, stable-rt@vger.kernel.org,
+        Mike Galbraith <efault@gmx.de>
+To: linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180904132529.6ae7166e@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello all-
+4.14.63-rt41-rc2 stable review patch.
+If anyone has any objections, please let me know.
 
-On Tue, Sep 04, 2018 at 01:25:29PM -0400, Steven Rostedt wrote:
-> Hi RT folks!
->
-> The call for proposals (CfP) is now open for the RT Microconference at
-> Linux Plumbers in Vancouver, Canada. The topics we are looking at this
-> year are:
->
->  - How will PREEMPT_RT be maintained (is it a subsystem?)
->
->  - Who will maintain it?
->
->  - How do we teach the rest of the kernel developers how not to break PREEMPT_RT?
->
->  - How do we catch when it breaks?
->
->  - What tools can we add into tools/ that other kernel developers can use to test and learn about PREEMPT_RT?
->
->  - What tests can we add into tools/testing/selftests?
->
->  - What kernel boot selftests can be added?
->
->  - How can we modify lockdep to catch problems that can break PREEMPT_RT?
->
->  - Discuss various types of failures that can happen with PREEMPT_RT that normally would not happen in the vanilla kernel.
->
->  - How do we handle stable backports?
->
->  - Interaction with Safety Critical domains?
->
->  - Interrupt threads are RT and are not protected by the RT Throttling.
->    How can we prevent interrupt thread starvation from a rogue RT task?
->
->  - How to determine if a kernel is booted with PREEMPT_RT enabled?
->
->  - librtpi: "solving" long-standing glibc pthread condvar internal lock inversion with a new implementation; motivations, technical details, etc.
->
->  - SCHED_DEADLINE - Lots of research has been made to various issues like CPU affinity, Bandwidth inheritance, cgroup support; but nothing has been done to the kernel. Let's make a commitment and push these ideas forward into mainline.
->
->  - How can we modify lockdep to catch problems that can break PREEMPT_RT?
->
->  - Discuss various types of failures that can happen with PREEMPT_RT that normally would not happen in the vanilla kernel.
+------------------
 
-There was some confusion as to whether or not a topic being listed above
-automatically meant that it was to be included in the RT Microconference
-agenda.
+From: Mike Galbraith <efault@gmx.de>
 
-The answer is: NO.  If you would like to see a specific topic discussed,
-either from this list or otherwise, you must submit it via the portal
-listed below.  Only topics submitted to the portal will be considered
-for the RT Microconference agenda.
+[ Upstream commit df7e8acc0c9a84979a448d215b8ef889efe4ac5a ]
 
-Note also that submitting a topic will also mean that you will be
-responsible for introducing the necessary context to the group to
-facilitate further discussion.
+CFS bandwidth control yields the inversion gripe below, moving
+handling quells it.
 
-> If you want to lead one of the above sessions, or if you have a new
-> session you want to submit, please do so here:
->
->   https://linuxplumbersconf.org/event/2/abstracts/
->
-> Set up an account, and then click "Submit new proposal".
->
-> Fill out the "Title", "Content", select the "Authors" as the one leading
-> the session (yourself), and then for "Track" select "RT MC Topics CfP".
-> Select "Yes" to agree with the anti-harassment policy, and then hit
-> Submit.
+|========================================================
+|WARNING: possible irq lock inversion dependency detected
+|4.16.7-rt1-rt #2 Tainted: G            E
+|--------------------------------------------------------
+|sirq-hrtimer/0/15 just changed the state of lock:
+| (&cfs_b->lock){+...}, at: [<000000009adb5cf7>] sched_cfs_period_timer+0x28/0x140
+|but this lock was taken by another, HARDIRQ-safe lock in the past: (&rq->lock){-...}
+|and interrupts could create inverse lock ordering between them.
+|other info that might help us debug this:
+| Possible interrupt unsafe locking scenario:
+|       CPU0                    CPU1
+|       ----                    ----
+|  lock(&cfs_b->lock);
+|                               local_irq_disable();
+|                               lock(&rq->lock);
+|                               lock(&cfs_b->lock);
+|  <Interrupt>
+|    lock(&rq->lock);
 
-Thanks, and see you there!
+Cc: stable-rt@vger.kernel.org
+Acked-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+---
+ kernel/sched/fair.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-   Julia
+diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
+index 36ef77839be4..51ecea4f5d16 100644
+--- a/kernel/sched/fair.c
++++ b/kernel/sched/fair.c
+@@ -4684,9 +4684,9 @@ void init_cfs_bandwidth(struct cfs_bandwidth *cfs_b)
+ 	cfs_b->period = ns_to_ktime(default_cfs_period());
+ 
+ 	INIT_LIST_HEAD(&cfs_b->throttled_cfs_rq);
+-	hrtimer_init(&cfs_b->period_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_PINNED);
++	hrtimer_init(&cfs_b->period_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_PINNED_HARD);
+ 	cfs_b->period_timer.function = sched_cfs_period_timer;
+-	hrtimer_init(&cfs_b->slack_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
++	hrtimer_init(&cfs_b->slack_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
+ 	cfs_b->slack_timer.function = sched_cfs_slack_timer;
+ }
+ 
+-- 
+2.18.0
