@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 21/24] sched: Allow pinned user tasks to be awakened to the CPU they pinned
-Date: Fri, 07 Sep 2018 16:59:18 -0400
-Message-ID: <20180907205933.227671780@goodmis.org>
+Subject: [PATCH RT 14/24] x86/ioapic: Dont let setaffinity unmask threaded EOI interrupt too
+ early
+Date: Fri, 07 Sep 2018 16:59:11 -0400
+Message-ID: <20180907205931.925916531@goodmis.org>
 References: <20180907205857.262840394@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -12,8 +13,7 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com, stable-rt@vger.kernel.org,
-        Mike Galbraith <efault@gmx.de>
+        tom.zanussi@linux.intel.com
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
@@ -25,38 +25,114 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mike Galbraith <efault@gmx.de>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-[ Upstream commit cd4d35ef89948221f7cd1751cee453943967364c ]
+[ Upstream commit ac14002317721910204b82b9d8611dadb1cec2bb ]
 
-Since commit 7af443ee16976 ("sched/core: Require cpu_active() in
-select_task_rq(), for user tasks") select_fallback_rq() will BUG() if
-the CPU to which a task has pinned itself and pinned becomes
-!cpu_active() while it slept.
-The task will continue running on the to-be-removed CPU and will remove
-itself from the CPU during takedown_cpu() (while cpuhp_pin_lock will be
-acquired) and move to another CPU based on its mask after the
-migrate_disable() section has been left.
+There is an issue with threaded interrupts which are marked ONESHOT
+and using the fasteoi handler.
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Mike Galbraith <efault@gmx.de>
+    if (IS_ONESHOT())
+        mask_irq();
+
+    ....
+    ....
+
+    cond_unmask_eoi_irq()
+        chip->irq_eoi();
+
+So if setaffinity is pending then the interrupt will be moved and then
+unmasked, which is wrong as it should be kept masked up to the point where
+the threaded handler finished. It's not a real problem, the interrupt will
+just be able to fire before the threaded handler has finished, though the irq
+masked state will be wrong for a bit.
+
+The patch below should cure the issue. It also renames the horribly
+misnomed functions so it becomes clear what they are supposed to do.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+[bigeasy: add the body of the patch, use the same functions in both
+          ifdef paths (spotted by Andy Shevchenko)]
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/sched/core.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ arch/x86/kernel/apic/io_apic.c | 26 ++++++++++++++------------
+ 1 file changed, 14 insertions(+), 12 deletions(-)
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index a5ce37b90fca..6e6bd5262f23 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -980,7 +980,7 @@ static inline bool is_cpu_allowed(struct task_struct *p, int cpu)
- 	if (!cpumask_test_cpu(cpu, p->cpus_ptr))
- 		return false;
+diff --git a/arch/x86/kernel/apic/io_apic.c b/arch/x86/kernel/apic/io_apic.c
+index 5832a9d657f2..c9af5afebc4a 100644
+--- a/arch/x86/kernel/apic/io_apic.c
++++ b/arch/x86/kernel/apic/io_apic.c
+@@ -1688,20 +1688,20 @@ static bool io_apic_level_ack_pending(struct mp_chip_data *data)
+ 	return false;
+ }
  
--	if (is_per_cpu_kthread(p))
-+	if (is_per_cpu_kthread(p) || __migrate_disabled(p))
- 		return cpu_online(cpu);
+-static inline bool ioapic_irqd_mask(struct irq_data *data)
++static inline bool ioapic_prepare_move(struct irq_data *data)
+ {
+ 	/* If we are moving the irq we need to mask it */
+-	if (unlikely(irqd_is_setaffinity_pending(data) &&
+-		     !irqd_irq_inprogress(data))) {
+-		mask_ioapic_irq(data);
++	if (unlikely(irqd_is_setaffinity_pending(data))) {
++		if (!irqd_irq_masked(data))
++			mask_ioapic_irq(data);
+ 		return true;
+ 	}
+ 	return false;
+ }
  
- 	return cpu_active(cpu);
+-static inline void ioapic_irqd_unmask(struct irq_data *data, bool masked)
++static inline void ioapic_finish_move(struct irq_data *data, bool moveit)
+ {
+-	if (unlikely(masked)) {
++	if (unlikely(moveit)) {
+ 		/* Only migrate the irq if the ack has been received.
+ 		 *
+ 		 * On rare occasions the broadcast level triggered ack gets
+@@ -1730,15 +1730,17 @@ static inline void ioapic_irqd_unmask(struct irq_data *data, bool masked)
+ 		 */
+ 		if (!io_apic_level_ack_pending(data->chip_data))
+ 			irq_move_masked_irq(data);
+-		unmask_ioapic_irq(data);
++		/* If the irq is masked in the core, leave it */
++		if (!irqd_irq_masked(data))
++			unmask_ioapic_irq(data);
+ 	}
+ }
+ #else
+-static inline bool ioapic_irqd_mask(struct irq_data *data)
++static inline bool ioapic_prepare_move(struct irq_data *data)
+ {
+ 	return false;
+ }
+-static inline void ioapic_irqd_unmask(struct irq_data *data, bool masked)
++static inline void ioapic_finish_move(struct irq_data *data, bool moveit)
+ {
+ }
+ #endif
+@@ -1747,11 +1749,11 @@ static void ioapic_ack_level(struct irq_data *irq_data)
+ {
+ 	struct irq_cfg *cfg = irqd_cfg(irq_data);
+ 	unsigned long v;
+-	bool masked;
++	bool moveit;
+ 	int i;
+ 
+ 	irq_complete_move(cfg);
+-	masked = ioapic_irqd_mask(irq_data);
++	moveit = ioapic_prepare_move(irq_data);
+ 
+ 	/*
+ 	 * It appears there is an erratum which affects at least version 0x11
+@@ -1806,7 +1808,7 @@ static void ioapic_ack_level(struct irq_data *irq_data)
+ 		eoi_ioapic_pin(cfg->vector, irq_data->chip_data);
+ 	}
+ 
+-	ioapic_irqd_unmask(irq_data, masked);
++	ioapic_finish_move(irq_data, moveit);
+ }
+ 
+ static void ioapic_ir_ack_level(struct irq_data *irq_data)
 -- 
 2.18.0
