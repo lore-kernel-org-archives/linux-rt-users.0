@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 16/24] efi: Disable runtime services on RT
-Date: Fri, 07 Sep 2018 16:59:13 -0400
-Message-ID: <20180907205932.386725513@goodmis.org>
+Subject: [PATCH RT 06/24] PM / s2idle: Make s2idle_wait_head swait based
+Date: Fri, 07 Sep 2018 16:59:03 -0400
+Message-ID: <20180907205930.644573313@goodmis.org>
 References: <20180907205857.262840394@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -26,44 +26,59 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-[ Upstream commit 55544e1d5eb0d7608e2b41452729649c8ea1607a ]
+[ Upstream commit 93f141324d4860a1294e6899923c01ec5411d70b ]
 
-Based on meassurements the EFI functions get_variable /
-get_next_variable take up to 2us which looks okay.
-The functions get_time, set_time take around 10ms. Those 10ms are too
-much. Even one ms would be too much.
-Ard mentioned that SetVariable might even trigger larger latencies if
-the firware will erase flash blocks on NOR.
-
-The time-functions are used by efi-rtc and can be triggered during
-runtimed (either via explicit read/write or ntp sync).
-
-The variable write could be used by pstore.
-These functions can be disabled without much of a loss. The poweroff /
-reboot hooks may be provided by PSCI.
-
-Disable EFI's runtime wrappers.
-
-This was observed on "EFI v2.60 by SoftIron Overdrive 1000".
+s2idle_wait_head is used during s2idle with interrupts disabled even on
+RT. There is no "custom" wake up function so swait could be used instead
+which is also lower weight compared to the wait_queue.
+Make s2idle_wait_head a swait_queue_head.
 
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- drivers/firmware/efi/efi.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kernel/power/suspend.c | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/firmware/efi/efi.c b/drivers/firmware/efi/efi.c
-index 9bd749389f31..47093745a53c 100644
---- a/drivers/firmware/efi/efi.c
-+++ b/drivers/firmware/efi/efi.c
-@@ -74,7 +74,7 @@ static unsigned long *efi_tables[] = {
- 	&efi.mem_attr_table,
- };
+diff --git a/kernel/power/suspend.c b/kernel/power/suspend.c
+index 999236413460..b89605fe0e88 100644
+--- a/kernel/power/suspend.c
++++ b/kernel/power/suspend.c
+@@ -27,6 +27,7 @@
+ #include <linux/export.h>
+ #include <linux/suspend.h>
+ #include <linux/syscore_ops.h>
++#include <linux/swait.h>
+ #include <linux/ftrace.h>
+ #include <trace/events/power.h>
+ #include <linux/compiler.h>
+@@ -57,7 +58,7 @@ EXPORT_SYMBOL_GPL(pm_suspend_global_flags);
  
--static bool disable_runtime;
-+static bool disable_runtime = IS_ENABLED(CONFIG_PREEMPT_RT_BASE);
- static int __init setup_noefi(char *arg)
- {
- 	disable_runtime = true;
+ static const struct platform_suspend_ops *suspend_ops;
+ static const struct platform_s2idle_ops *s2idle_ops;
+-static DECLARE_WAIT_QUEUE_HEAD(s2idle_wait_head);
++static DECLARE_SWAIT_QUEUE_HEAD(s2idle_wait_head);
+ 
+ enum s2idle_states __read_mostly s2idle_state;
+ static DEFINE_RAW_SPINLOCK(s2idle_lock);
+@@ -91,8 +92,8 @@ static void s2idle_enter(void)
+ 	/* Push all the CPUs into the idle loop. */
+ 	wake_up_all_idle_cpus();
+ 	/* Make the current CPU wait so it can enter the idle loop too. */
+-	wait_event(s2idle_wait_head,
+-		   s2idle_state == S2IDLE_STATE_WAKE);
++	swait_event(s2idle_wait_head,
++		    s2idle_state == S2IDLE_STATE_WAKE);
+ 
+ 	cpuidle_pause();
+ 	put_online_cpus();
+@@ -159,7 +160,7 @@ void s2idle_wake(void)
+ 	raw_spin_lock_irqsave(&s2idle_lock, flags);
+ 	if (s2idle_state > S2IDLE_STATE_NONE) {
+ 		s2idle_state = S2IDLE_STATE_WAKE;
+-		wake_up(&s2idle_wait_head);
++		swake_up(&s2idle_wait_head);
+ 	}
+ 	raw_spin_unlock_irqrestore(&s2idle_lock, flags);
+ }
 -- 
 2.18.0
