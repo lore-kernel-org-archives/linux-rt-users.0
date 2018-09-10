@@ -1,62 +1,44 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mga04.intel.com ([192.55.52.120]:56252 "EHLO mga04.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726795AbeIQWqJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 17 Sep 2018 18:46:09 -0400
-From: "Patel, Vedang" <vedang.patel@intel.com>
-Subject: Re: yielding while running SCHED_DEADLINE
-Date: Mon, 17 Sep 2018 17:14:20 +0000
-Message-ID: <1537204460.3250.4.camel@intel.com>
-References: <1536966797.25468.109.camel@intel.com>
-         <20180917092648.GA4282@localhost.localdomain>
-         <20180917114219.GE24106@hirez.programming.kicks-ass.net>
-In-Reply-To: <20180917114219.GE24106@hirez.programming.kicks-ass.net>
-Content-Language: en-US
-Content-Type: text/plain; charset="utf-8"
-Content-ID: <FFA9BE1AB3FF6E4EBAD8496324E0F9C6@intel.com>
-Content-Transfer-Encoding: base64
+Received: from Galois.linutronix.de ([146.0.238.70]:39956 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727777AbeIJVNz (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 10 Sep 2018 17:13:55 -0400
+Date: Mon, 10 Sep 2018 18:18:55 +0200
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: PREEMPT_RT_FULL breaks NO_HZ_FULL (full dynticks)
+Message-ID: <20180910161855.g34ui7qzevnamffg@linutronix.de>
+References: <20180827033922.GA28188@intel.com>
+ <20180830141856.tjvispfgqrnz727b@linutronix.de>
+ <20180831081819.GB23052@intel.com>
+ <20180831163152.vrrntdy7xsej2kwv@linutronix.de>
+ <20180831233019.GK8562@jcartwri.amer.corp.natinst.com>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20180831233019.GK8562@jcartwri.amer.corp.natinst.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: "juri.lelli@gmail.com" <juri.lelli@gmail.com>, "peterz@infradead.org" <peterz@infradead.org>
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>, "Koppolu, Chanakya" <chanakya.koppolu@intel.com>
+To: Julia Cartwright <julia@ni.com>
+Cc: Ramesh Thomas <ramesh.thomas@intel.com>, linux-rt-users@vger.kernel.org, fweisbec@gmail.com, tglx@linutronix.de, mingo@kernel.org
 
-T24gTW9uLCAyMDE4LTA5LTE3IGF0IDEzOjQyICswMjAwLCBQZXRlciBaaWpsc3RyYSB3cm90ZToN
-Cj4gT24gTW9uLCBTZXAgMTcsIDIwMTggYXQgMTE6MjY6NDhBTSArMDIwMCwgSnVyaSBMZWxsaSB3
-cm90ZToNCj4gPiANCj4gPiBIaSwNCj4gPiANCj4gPiBPbiAxNC8wOS8xOCAyMzoxMywgUGF0ZWws
-IFZlZGFuZyB3cm90ZToNCj4gPiA+IA0KPiA+ID4gSGkgYWxsLMKgDQo+ID4gPiANCj4gPiA+IFdl
-IGhhdmUgYmVlbiBwbGF5aW5nIGFyb3VuZCB3aXRoIFNDSEVEX0RFQURMSU5FIGFuZCBmb3VuZCBz
-b21lDQo+ID4gPiBkaXNjcmVwYW5jeSBhcm91bmQgdGhlIGNhbGN1bGF0aW9uIG9mwqBucl9pbnZv
-bHVudGFyeV9zd2l0Y2hlcyBhbmQNCj4gPiA+IG5yX3ZvbHVudGFyeV9zd2l0Y2hlcyBpbiAvcHJv
-Yy8ke1BJRH0vc2NoZWQuDQo+ID4gPiANCj4gPiA+IFdoZW5ldmVyIHRoZSB0YXNrIGlzIGRvbmUg
-d2l0aCBpdCdzIHdvcmsgZWFybGllciBhbmQgZXhlY3V0ZXMNCj4gPiA+IHNjaGVkX3lpZWxkKCkg
-dG8gdm9sdW50YXJpbHkgZ2l2ZXMgdXAgdGhlIENQVSB0aGlzIGluY3JlbWVudHMNCj4gPiA+IG5y
-X2ludm9sdW50YXJ5X3N3aXRjaGVzLiBJdCBzaG91bGQgaGF2ZSBpbmNyZW1lbnRlZA0KPiA+ID4g
-bnJfdm9sdW50YXJ5X3N3aXRjaGVzLg0KPiA+IE1tbSwgSSBzZWUgd2hhdCB5b3UgYXJlIHNheWlu
-Zy4NCj4gPiANCj4gPiBbLi4uXQ0KPiA+IA0KPiA+ID4gDQo+ID4gPiBMb29raW5nIGF0IF9fc2No
-ZWR1bGUoKSBpbiBrZXJuZWwvc2NoZWQvY29yZS5jLCB0aGUgc3dpdGNoIGlzDQo+ID4gPiBjb3Vu
-dGVkDQo+ID4gPiBhcyBwYXJ0IG9mIG5yX2ludm9sdW50YXJ5X3N3aXRjaGVzIGlmIHRoZSB0YXNr
-IGhhcyBub3QgYmVlbg0KPiA+ID4gcHJlZW1wdGVkDQo+ID4gPiBhbmQgdGhlIHRhc2sgaXMgVEFT
-S19SVU5OSU5HIHN0YXRlLiBUaGlzIGRvZXMgbm90IHNlZW0gdG8gaGFwcGVuDQo+ID4gPiB3aGVu
-DQo+ID4gPiBzY2hlZF95aWVsZCgpIGlzIGNhbGxlZC4NCj4gPiBNbW0sDQo+ID4gDQo+ID4gwqAt
-IG5yX3ZvbHVudGFyeV9zd2l0Y2hlcysrIGlmICFwcmVlbXB0ICYmICFSVU5OSU5HDQo+ID4gwqAt
-IG5yX2ludm9sdW50YXJ5X3N3aXRjaGVzKysgb3RoZXJ3aXNlICh5aWVsZCBmaXRzIHRoaXMgYXMg
-dGhlIHRhc2sNCj4gPiBpcw0KPiA+IMKgwqDCoHN0aWxsIFJVTk5JTkcsIGV2ZW4gdGhvdWdoIHRo
-cm90dGxlZCBmb3IgREVBRExJTkUpDQo+ID4gDQo+ID4gTm90IHN1cmUgdGhpcyBpcyB0aGUgc2Ft
-ZSBhcyB3aGF0IHlvdSBzYXkgYWJvdmUuLg0KPiA+IA0KPiA+ID4gDQo+ID4gPiBJcyB0aGVyZSBz
-b21ldGhpbmcgd2UgYXJlIG1pc3Npbmcgb3ZlciBoZXJlPyBPUiBJcyB0aGlzIGEga25vd24NCj4g
-PiA+IGlzc3VlDQo+ID4gPiBhbmQgaXMgcGxhbm5lZCB0byBiZSBmaXhlZCBsYXRlcj8NCj4gPiAu
-LiBob3dldmVyLCBub3Qgc3VyZS4gUGV0ZXIsIHdoYXQgeW91IHNheS4gSXQgbG9va3MgbGlrZSB3
-ZSBtaWdodA0KPiA+IGluZGVlZA0KPiA+IHdhbnQgdG8gYWNjb3VudCB5aWVsZCBhcyBhIHZvbHVu
-dGFyeSBzd2l0Y2gsIHNlZW1zIHRvIGZpdC4gSW4gdGhpcw0KPiA+IGNhc2UNCj4gPiBJIGd1ZXNz
-IHdlIGNvdWxkIHVzZSBhIGZsYWcgb3IgYWRkIGEgc2NoZWRfIGJpdCB0byB0YXNrX3N0cnVjdCB0
-bw0KPiA+IGhhbmRsZQ0KPiA+IHRoZSBjYXNlPw0KPiBJdCdzIGJlZW4gbGlrZSB0aGlzIF9mb3Jl
-dmVyXyBhZmFpY3QuIFRoaXMgaXNuJ3QgZGVhZGxpbmUgc3BlY2lmaWMNCj4gYWZhaWN0LCBhbGwg
-eWllbGQgY2FsbGVycyB3aWxsIGVuZCB1cCBpbiBub24tdm9sdW50YXJ5IHN3aXRjaGVzLg0KPiAN
-Cj4gSSBkb24ndCBrbm93IGFueWJvZHkgdGhhdCBjYXJlcyBhbmQgSSBkb24ndCB0aGluayB0aGlz
-IGlzIHNvbWV0aGluZw0KPiB3b3J0aCBmaXhpbmcuIElmIHNvbWVvbmUgZGlkIHJlbHkgb24gdGhp
-cyBiZWhhdmlvdXIgd2UnZCBicmVhayB0aGVtLA0KPiBhbmQNCj4gaSdkIG11Y2ggcmF0aGVyIHNh
-dmUgYSBjeWNsZSB0aGFuIGFkZCBtb3JlIHN0dXBpZCBzdGF0cyBjcmFwIHRvIHRoZQ0KPiBzY2hl
-ZHVsZXIuDQpUaGFua3MgUGV0ZXIgYW5kIEp1cmkgZm9yIHRoZSByZXNwb25zZS4NCg0KV2Ugd2ls
-bCB0cnkgdG8gdXNlIGEgZGlmZmVyZW50IG1lY2hhbmlzbSB0byBhY2NvdW50IGZvciB0aGlzLg0K
-DQotVmVkYW5n
+On 2018-08-31 18:30:19 [-0500], Julia Cartwright wrote:
+> On Fri, Aug 31, 2018 at 06:31:52PM +0200, Sebastian Andrzej Siewior wrote:
+> > On 2018-08-31 01:18:20 [-0700], Ramesh Thomas wrote:
+> [..]
+> > > 2. Timer is armed even though only a single high priority task is running.
+> > 
+> > something must have armed that timer. The clock_nanosleep() API won't
+> > use those new threads but for instance timer_create() / timer_settime()
+> > will.
+> 
+> Did we actually ever solve the "ktimersoftd uselessly woken on every
+> tick" problem?
+
+I think so, yes. According to the report the problem does not happen the
+first invocation. However the "ktimersoftd uselessly woken on every
+tick" problem occurred "always".
+
+>    Julia
+
+Sebastian
