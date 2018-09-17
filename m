@@ -1,88 +1,62 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mga17.intel.com ([192.55.52.151]:26317 "EHLO mga17.intel.com"
+Received: from mga04.intel.com ([192.55.52.120]:56252 "EHLO mga04.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725828AbeIUGGS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 21 Sep 2018 02:06:18 -0400
-Message-ID: <5BA43906.2070800@intel.com>
-Date: Thu, 20 Sep 2018 17:19:18 -0700
-From: "Bowles, Matthew K" <Matthew.K.Bowles@intel.com>
-MIME-Version: 1.0
+        id S1726795AbeIQWqJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 17 Sep 2018 18:46:09 -0400
+From: "Patel, Vedang" <vedang.patel@intel.com>
 Subject: Re: yielding while running SCHED_DEADLINE
+Date: Mon, 17 Sep 2018 17:14:20 +0000
+Message-ID: <1537204460.3250.4.camel@intel.com>
+References: <1536966797.25468.109.camel@intel.com>
+         <20180917092648.GA4282@localhost.localdomain>
+         <20180917114219.GE24106@hirez.programming.kicks-ass.net>
 In-Reply-To: <20180917114219.GE24106@hirez.programming.kicks-ass.net>
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Language: en-US
+Content-Type: text/plain; charset="utf-8"
+Content-ID: <FFA9BE1AB3FF6E4EBAD8496324E0F9C6@intel.com>
+Content-Transfer-Encoding: base64
+MIME-Version: 1.0
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: linux-rt-users@vger.kernel.org
+To: "juri.lelli@gmail.com" <juri.lelli@gmail.com>, "peterz@infradead.org" <peterz@infradead.org>
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>, "Koppolu, Chanakya" <chanakya.koppolu@intel.com>
 
-I’m fine with not fixing this behavior since Vedang has mentioned, we 
-can use different mechanisms to achieve the same goal.  However, I would 
-like to go on the record as someone that cares about this functionality. 
-  Assuming that sched_yield was counted as part of nr_voluntary 
-switches, then the specific scenario in which I would find this 
-statistic useful is during debug of latency spikes on a realtime thread. 
-  In particular, I could quickly correlate whether or not a latency 
-spike occurred due to being swapped out by the scheduler.
-
-On Mon, 2018-09-17 at 13:42 +0200, Peter Zijlstra wrote:
- > On Mon, Sep 17, 2018 at 11:26:48AM +0200, Juri Lelli wrote:
- > >
- > > Hi,
- > >
- > > On 14/09/18 23:13, Patel, Vedang wrote:
- > > >
- > > > Hi all,
- > > >
- > > > We have been playing around with SCHED_DEADLINE and found some
- > > > discrepancy around the calculation of nr_involuntary_switches and
- > > > nr_voluntary_switches in /proc/${PID}/sched.
- > > >
- > > > Whenever the task is done with it's work earlier and executes
- > > > sched_yield() to voluntarily gives up the CPU this increments
- > > > nr_involuntary_switches. It should have incremented
- > > > nr_voluntary_switches.
- > > Mmm, I see what you are saying.
- > >
- > > [...]
- > >
- > > >
- > > > Looking at __schedule() in kernel/sched/core.c, the switch is
- > > > counted
- > > > as part of nr_involuntary_switches if the task has not been
- > > > preempted
- > > > and the task is TASK_RUNNING state. This does not seem to happen
- > > > when
- > > > sched_yield() is called.
- > > Mmm,
- > >
- > >  - nr_voluntary_switches++ if !preempt && !RUNNING
- > >  - nr_involuntary_switches++ otherwise (yield fits this as the task
- > > is
- > >    still RUNNING, even though throttled for DEADLINE)
- > >
- > > Not sure this is the same as what you say above..
- > >
- > > >
- > > > Is there something we are missing over here? OR Is this a known
- > > > issue
- > > > and is planned to be fixed later?
- > > .. however, not sure. Peter, what you say. It looks like we might
- > > indeed
- > > want to account yield as a voluntary switch, seems to fit. In this
- > > case
- > > I guess we could use a flag or add a sched_ bit to task_struct to
- > > handle
- > > the case?
- > It's been like this _forever_ afaict. This isn't deadline specific
- > afaict, all yield callers will end up in non-voluntary switches.
- >
- > I don't know anybody that cares and I don't think this is something
- > worth fixing. If someone did rely on this behaviour we'd break them,
- > and
- > i'd much rather save a cycle than add more stupid stats crap to the
- > scheduler.
-Thanks Peter and Juri for the response.
-
-We will try to use a different mechanism to account for this.
-
--Vedang
+T24gTW9uLCAyMDE4LTA5LTE3IGF0IDEzOjQyICswMjAwLCBQZXRlciBaaWpsc3RyYSB3cm90ZToN
+Cj4gT24gTW9uLCBTZXAgMTcsIDIwMTggYXQgMTE6MjY6NDhBTSArMDIwMCwgSnVyaSBMZWxsaSB3
+cm90ZToNCj4gPiANCj4gPiBIaSwNCj4gPiANCj4gPiBPbiAxNC8wOS8xOCAyMzoxMywgUGF0ZWws
+IFZlZGFuZyB3cm90ZToNCj4gPiA+IA0KPiA+ID4gSGkgYWxsLMKgDQo+ID4gPiANCj4gPiA+IFdl
+IGhhdmUgYmVlbiBwbGF5aW5nIGFyb3VuZCB3aXRoIFNDSEVEX0RFQURMSU5FIGFuZCBmb3VuZCBz
+b21lDQo+ID4gPiBkaXNjcmVwYW5jeSBhcm91bmQgdGhlIGNhbGN1bGF0aW9uIG9mwqBucl9pbnZv
+bHVudGFyeV9zd2l0Y2hlcyBhbmQNCj4gPiA+IG5yX3ZvbHVudGFyeV9zd2l0Y2hlcyBpbiAvcHJv
+Yy8ke1BJRH0vc2NoZWQuDQo+ID4gPiANCj4gPiA+IFdoZW5ldmVyIHRoZSB0YXNrIGlzIGRvbmUg
+d2l0aCBpdCdzIHdvcmsgZWFybGllciBhbmQgZXhlY3V0ZXMNCj4gPiA+IHNjaGVkX3lpZWxkKCkg
+dG8gdm9sdW50YXJpbHkgZ2l2ZXMgdXAgdGhlIENQVSB0aGlzIGluY3JlbWVudHMNCj4gPiA+IG5y
+X2ludm9sdW50YXJ5X3N3aXRjaGVzLiBJdCBzaG91bGQgaGF2ZSBpbmNyZW1lbnRlZA0KPiA+ID4g
+bnJfdm9sdW50YXJ5X3N3aXRjaGVzLg0KPiA+IE1tbSwgSSBzZWUgd2hhdCB5b3UgYXJlIHNheWlu
+Zy4NCj4gPiANCj4gPiBbLi4uXQ0KPiA+IA0KPiA+ID4gDQo+ID4gPiBMb29raW5nIGF0IF9fc2No
+ZWR1bGUoKSBpbiBrZXJuZWwvc2NoZWQvY29yZS5jLCB0aGUgc3dpdGNoIGlzDQo+ID4gPiBjb3Vu
+dGVkDQo+ID4gPiBhcyBwYXJ0IG9mIG5yX2ludm9sdW50YXJ5X3N3aXRjaGVzIGlmIHRoZSB0YXNr
+IGhhcyBub3QgYmVlbg0KPiA+ID4gcHJlZW1wdGVkDQo+ID4gPiBhbmQgdGhlIHRhc2sgaXMgVEFT
+S19SVU5OSU5HIHN0YXRlLiBUaGlzIGRvZXMgbm90IHNlZW0gdG8gaGFwcGVuDQo+ID4gPiB3aGVu
+DQo+ID4gPiBzY2hlZF95aWVsZCgpIGlzIGNhbGxlZC4NCj4gPiBNbW0sDQo+ID4gDQo+ID4gwqAt
+IG5yX3ZvbHVudGFyeV9zd2l0Y2hlcysrIGlmICFwcmVlbXB0ICYmICFSVU5OSU5HDQo+ID4gwqAt
+IG5yX2ludm9sdW50YXJ5X3N3aXRjaGVzKysgb3RoZXJ3aXNlICh5aWVsZCBmaXRzIHRoaXMgYXMg
+dGhlIHRhc2sNCj4gPiBpcw0KPiA+IMKgwqDCoHN0aWxsIFJVTk5JTkcsIGV2ZW4gdGhvdWdoIHRo
+cm90dGxlZCBmb3IgREVBRExJTkUpDQo+ID4gDQo+ID4gTm90IHN1cmUgdGhpcyBpcyB0aGUgc2Ft
+ZSBhcyB3aGF0IHlvdSBzYXkgYWJvdmUuLg0KPiA+IA0KPiA+ID4gDQo+ID4gPiBJcyB0aGVyZSBz
+b21ldGhpbmcgd2UgYXJlIG1pc3Npbmcgb3ZlciBoZXJlPyBPUiBJcyB0aGlzIGEga25vd24NCj4g
+PiA+IGlzc3VlDQo+ID4gPiBhbmQgaXMgcGxhbm5lZCB0byBiZSBmaXhlZCBsYXRlcj8NCj4gPiAu
+LiBob3dldmVyLCBub3Qgc3VyZS4gUGV0ZXIsIHdoYXQgeW91IHNheS4gSXQgbG9va3MgbGlrZSB3
+ZSBtaWdodA0KPiA+IGluZGVlZA0KPiA+IHdhbnQgdG8gYWNjb3VudCB5aWVsZCBhcyBhIHZvbHVu
+dGFyeSBzd2l0Y2gsIHNlZW1zIHRvIGZpdC4gSW4gdGhpcw0KPiA+IGNhc2UNCj4gPiBJIGd1ZXNz
+IHdlIGNvdWxkIHVzZSBhIGZsYWcgb3IgYWRkIGEgc2NoZWRfIGJpdCB0byB0YXNrX3N0cnVjdCB0
+bw0KPiA+IGhhbmRsZQ0KPiA+IHRoZSBjYXNlPw0KPiBJdCdzIGJlZW4gbGlrZSB0aGlzIF9mb3Jl
+dmVyXyBhZmFpY3QuIFRoaXMgaXNuJ3QgZGVhZGxpbmUgc3BlY2lmaWMNCj4gYWZhaWN0LCBhbGwg
+eWllbGQgY2FsbGVycyB3aWxsIGVuZCB1cCBpbiBub24tdm9sdW50YXJ5IHN3aXRjaGVzLg0KPiAN
+Cj4gSSBkb24ndCBrbm93IGFueWJvZHkgdGhhdCBjYXJlcyBhbmQgSSBkb24ndCB0aGluayB0aGlz
+IGlzIHNvbWV0aGluZw0KPiB3b3J0aCBmaXhpbmcuIElmIHNvbWVvbmUgZGlkIHJlbHkgb24gdGhp
+cyBiZWhhdmlvdXIgd2UnZCBicmVhayB0aGVtLA0KPiBhbmQNCj4gaSdkIG11Y2ggcmF0aGVyIHNh
+dmUgYSBjeWNsZSB0aGFuIGFkZCBtb3JlIHN0dXBpZCBzdGF0cyBjcmFwIHRvIHRoZQ0KPiBzY2hl
+ZHVsZXIuDQpUaGFua3MgUGV0ZXIgYW5kIEp1cmkgZm9yIHRoZSByZXNwb25zZS4NCg0KV2Ugd2ls
+bCB0cnkgdG8gdXNlIGEgZGlmZmVyZW50IG1lY2hhbmlzbSB0byBhY2NvdW50IGZvciB0aGlzLg0K
+DQotVmVkYW5n
