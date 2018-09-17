@@ -1,77 +1,65 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mga17.intel.com ([192.55.52.151]:29043 "EHLO mga17.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725198AbeIOE3y (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 15 Sep 2018 00:29:54 -0400
-From: "Patel, Vedang" <vedang.patel@intel.com>
-Subject: yielding while running SCHED_DEADLINE
-Date: Fri, 14 Sep 2018 23:13:17 +0000
-Message-ID: <1536966797.25468.109.camel@intel.com>
-Content-Language: en-US
-Content-Type: text/plain; charset="utf-8"
-Content-ID: <B1564D563D107547A69561A8F02E353B@intel.com>
-Content-Transfer-Encoding: base64
+Received: from mail-wr1-f65.google.com ([209.85.221.65]:41044 "EHLO
+        mail-wr1-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725757AbeIQOx0 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 17 Sep 2018 10:53:26 -0400
+Received: by mail-wr1-f65.google.com with SMTP id z96-v6so16501236wrb.8
+        for <linux-rt-users@vger.kernel.org>; Mon, 17 Sep 2018 02:26:52 -0700 (PDT)
+Date: Mon, 17 Sep 2018 11:26:48 +0200
+From: Juri Lelli <juri.lelli@gmail.com>
+Subject: Re: yielding while running SCHED_DEADLINE
+Message-ID: <20180917092648.GA4282@localhost.localdomain>
+References: <1536966797.25468.109.camel@intel.com>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <1536966797.25468.109.camel@intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Cc: "Koppolu, Chanakya" <chanakya.koppolu@intel.com>
+To: "Patel, Vedang" <vedang.patel@intel.com>
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>, "Koppolu, Chanakya" <chanakya.koppolu@intel.com>, Peter Zijlstra <peterz@infradead.org>
 
-SGkgYWxsLMKgDQoNCldlIGhhdmUgYmVlbiBwbGF5aW5nIGFyb3VuZCB3aXRoIFNDSEVEX0RFQURM
-SU5FIGFuZCBmb3VuZCBzb21lDQpkaXNjcmVwYW5jeSBhcm91bmQgdGhlIGNhbGN1bGF0aW9uIG9m
-wqBucl9pbnZvbHVudGFyeV9zd2l0Y2hlcyBhbmQNCm5yX3ZvbHVudGFyeV9zd2l0Y2hlcyBpbiAv
-cHJvYy8ke1BJRH0vc2NoZWQuDQoNCldoZW5ldmVyIHRoZSB0YXNrIGlzIGRvbmUgd2l0aCBpdCdz
-IHdvcmsgZWFybGllciBhbmQgZXhlY3V0ZXMNCnNjaGVkX3lpZWxkKCkgdG8gdm9sdW50YXJpbHkg
-Z2l2ZXMgdXAgdGhlIENQVSB0aGlzIGluY3JlbWVudHMNCm5yX2ludm9sdW50YXJ5X3N3aXRjaGVz
-LiBJdCBzaG91bGQgaGF2ZSBpbmNyZW1lbnRlZA0KbnJfdm9sdW50YXJ5X3N3aXRjaGVzLg0KDQpU
-aGlzIGNhbiBiZSBlYXNpbHkgZGVtb25zdHJhdGVkIGJ5IHJ1bm5pbmcgY3ljbGljZGVhZGxpbmUg
-dGFzayB3aGljaCBpcw0KcGFydCBvZiBydC10ZXN0cyhodHRwczovL2dpdC5rZXJuZWwub3JnL3B1
-Yi9zY20vdXRpbHMvcnQtdGVzdHMvcnQtdGVzdHMNCi5naXQvKSBhbmQgY2hlY2tpbmcgdGhlIHZh
-bHVlIG9mIG5yX3ZvbHVudGFyeV9zd2l0Y2hlcy4NCg0KUGxlYXNlIG5vdGUgdGhhdCB0aGUgaXNz
-dWUgc2VlbXMgdG8gYmUgd2l0aCBzY2hlZF95aWVsZCgpIGFuZCBub3QNClNDSEVEX0RFQURMSU5F
-IGJlY2F1c2Ugd2UgaGF2ZSBzZWVuIHNpbWlsYXIgYmVoYXZpb3Igd2hlbiB3ZSB0cmllZA0Kc3dp
-dGNoaW5nIHRvIG90aGVyIHBvbGljaWVzLiBCdXQsIHdlIGFyZSB1c2luZyBTQ0hFRF9ERUFETElO
-RSBiZWNhdXNlDQppdCBpcyBvbmUgb2YgdGhlICh2ZXJ5KSBmZXcgc2NlbmFyaW9zIHdoZXJlIHNj
-aGVkX3lpZWxkKCkgY2FuIGJlIHVzZWQNCmNvcnJlY3RseS4NCg0KU29tZSBhbmFseXNpczoNCi0t
-LS0tLS0tLS0tLS0tDQoNCkkgZW5hYmxlZCB0aGUgc2NoZWQvc2NoZWRfc3dpdGNoIChzZXR0aW5n
-IGN5Y2xpY2RlYWRsaW5lIGFzIGZpbHRlcikgYW5kDQpzeXNjYWxscy9zeXNfZW50ZXJfc2NoZWRf
-eWllbGQgZXZlbnRzIHRvIGNoZWNrIHdoZXRoZXIgdGhlDQpzY2hlZF95aWVsZCgpIGNhbGwgd2Fz
-IHJlc3VsdGluZyBpbiBhIG5ldyB0YXNrIHJ1bm5pbmcuIEkgZ290IHRoZQ0KZm9sbG93aW5nIHJl
-c3VsdHM6DQoNCsKgIGN5Y2xpY2RlYWRsaW5lLTMyOTDCoMKgWzAwM10gLi4uLi4uLsKgwqAzMTEx
-LjEzMjc4NjogdHJhY2luZ19tYXJrX3dyaXRlOiBzdGFydCBhdCAzMTExMTI1MTAxIG9mZj0zIChw
-ZXJpb2Q9MzExMTEyNTA5OCBuZXh0PTMxMTExMjYwOTgpDQrCoCBjeWNsaWNkZWFkbGluZS0zMjkw
-wqDCoFswMDNdIC4uLi4xLi7CoMKgMzExMS4xMzI3ODk6IHN5c19zY2hlZF95aWVsZCgpDQrCoCBj
-eWNsaWNkZWFkbGluZS0zMjkwwqDCoFswMDNdIGQuLi4yLi7CoMKgMzExMS4xMzI3OTc6IHNjaGVk
-X3N3aXRjaDogcHJldl9jb21tPWN5Y2xpY2RlYWRsaW5lIHByZXZfcGlkPTMyOTAgcHJldl9wcmlv
-PS0xIHByZXZfc3RhdGU9UiA9PT4gbmV4dF9jb21tPXN3YXBwZXIvMyBuZXh0X3BpZD0wIG5leHRf
-cHJpbz0xMjANCsKgIGN5Y2xpY2RlYWRsaW5lLTMyOTDCoMKgWzAwM10gLi4uLi4uLsKgwqAzMTEx
-LjEzMzc4NjogdHJhY2luZ19tYXJrX3dyaXRlOiBzdGFydCBhdCAzMTExMTI2MTAxIG9mZj0zIChw
-ZXJpb2Q9MzExMTEyNjA5OCBuZXh0PTMxMTExMjcwOTgpDQrCoCBjeWNsaWNkZWFkbGluZS0zMjkw
-wqDCoFswMDNdIC4uLi4xLi7CoMKgMzExMS4xMzM3ODk6IHN5c19zY2hlZF95aWVsZCgpDQrCoCBj
-eWNsaWNkZWFkbGluZS0zMjkwwqDCoFswMDNdIGQuLi4yLi7CoMKgMzExMS4xMzM3OTc6IHNjaGVk
-X3N3aXRjaDogcHJldl9jb21tPWN5Y2xpY2RlYWRsaW5lIHByZXZfcGlkPTMyOTAgcHJldl9wcmlv
-PS0xIHByZXZfc3RhdGU9UiA9PT4gbmV4dF9jb21tPXN3YXBwZXIvMyBuZXh0X3BpZD0wIG5leHRf
-cHJpbz0xMjANCsKgIGN5Y2xpY2RlYWRsaW5lLTMyOTDCoMKgWzAwM10gLi4uLi4uLsKgwqAzMTEx
-LjEzNDc4NjogdHJhY2luZ19tYXJrX3dyaXRlOiBzdGFydCBhdCAzMTExMTI3MTAxIG9mZj0zIChw
-ZXJpb2Q9MzExMTEyNzA5OCBuZXh0PTMxMTExMjgwOTgpDQrCoCBjeWNsaWNkZWFkbGluZS0zMjkw
-wqDCoFswMDNdIC4uLi4xLi7CoMKgMzExMS4xMzQ3ODk6IHN5c19zY2hlZF95aWVsZCgpDQrCoCBj
-eWNsaWNkZWFkbGluZS0zMjkwwqDCoFswMDNdIGQuLi4yLi7CoMKgMzExMS4xMzQ3OTc6IHNjaGVk
-X3N3aXRjaDogcHJldl9jb21tPWN5Y2xpY2RlYWRsaW5lIHByZXZfcGlkPTMyOTAgcHJldl9wcmlv
-PS0xIHByZXZfc3RhdGU9UiA9PT4gbmV4dF9jb21tPXN3YXBwZXIvMyBuZXh0X3BpZD0wIG5leHRf
-cHJpbz0xMjANCiAgLi4uLg0KDQpBcyBzZWVuIGFib3ZlLCBhbGwgdGhlIHNjaGVkX3lpZWxkIGNh
-bGxzIGFyZSBmb2xsb3dlZCBieSBzY2hlZCBzd2l0Y2guDQpTbywgd2UgYmVsaWV2ZSB0aGF0IHRo
-ZSBzY2hlZF95aWVsZCgpIGlzIGFjdHVhbGx5IHJlc3VsdGluZyBpbiBhDQpzd2l0Y2guIFRoZSB2
-YWx1ZXMgZm9yIG5yX3ZvbHVudGFyeV9zd2l0Y2hlcy9ucl9pbnZvbHVudGFyeV9zd2l0Y2hlcyBp
-bg0KdGhpcyBzY2VuYXJpbzoNCg0KbnJfc3dpdGNoZXPCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoDrCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqAxMzg3NTMNCm5yX3ZvbHVudGFyeV9zd2l0Y2hlc8KgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoDrCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgMQ0KbnJfaW52b2x1bnRhcnlfc3dpdGNoZXPCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoDrCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-wqDCoMKgwqAxMzg3NTINCg0KTG9va2luZyBhdCBfX3NjaGVkdWxlKCkgaW4ga2VybmVsL3NjaGVk
-L2NvcmUuYywgdGhlIHN3aXRjaCBpcyBjb3VudGVkDQphcyBwYXJ0IG9mIG5yX2ludm9sdW50YXJ5
-X3N3aXRjaGVzIGlmIHRoZSB0YXNrIGhhcyBub3QgYmVlbiBwcmVlbXB0ZWQNCmFuZCB0aGUgdGFz
-ayBpcyBUQVNLX1JVTk5JTkcgc3RhdGUuIFRoaXMgZG9lcyBub3Qgc2VlbSB0byBoYXBwZW4gd2hl
-bg0Kc2NoZWRfeWllbGQoKSBpcyBjYWxsZWQuDQoNCklzIHRoZXJlIHNvbWV0aGluZyB3ZSBhcmUg
-bWlzc2luZyBvdmVyIGhlcmU/IE9SIElzIHRoaXMgYSBrbm93biBpc3N1ZQ0KYW5kIGlzIHBsYW5u
-ZWQgdG8gYmUgZml4ZWQgbGF0ZXI/DQoNClRoYW5rcywNClZlZGFuZyBQYXRlbA0KDQrCoA0KwqA=
+Hi,
+
+On 14/09/18 23:13, Patel, Vedang wrote:
+> Hi all, 
+> 
+> We have been playing around with SCHED_DEADLINE and found some
+> discrepancy around the calculation of nr_involuntary_switches and
+> nr_voluntary_switches in /proc/${PID}/sched.
+> 
+> Whenever the task is done with it's work earlier and executes
+> sched_yield() to voluntarily gives up the CPU this increments
+> nr_involuntary_switches. It should have incremented
+> nr_voluntary_switches.
+
+Mmm, I see what you are saying.
+
+[...]
+
+> Looking at __schedule() in kernel/sched/core.c, the switch is counted
+> as part of nr_involuntary_switches if the task has not been preempted
+> and the task is TASK_RUNNING state. This does not seem to happen when
+> sched_yield() is called.
+
+Mmm,
+
+ - nr_voluntary_switches++ if !preempt && !RUNNING
+ - nr_involuntary_switches++ otherwise (yield fits this as the task is
+   still RUNNING, even though throttled for DEADLINE)
+
+Not sure this is the same as what you say above..
+
+> Is there something we are missing over here? OR Is this a known issue
+> and is planned to be fixed later?
+
+.. however, not sure. Peter, what you say. It looks like we might indeed
+want to account yield as a voluntary switch, seems to fit. In this case
+I guess we could use a flag or add a sched_ bit to task_struct to handle
+the case?
+
+Best,
+
+- Juri
