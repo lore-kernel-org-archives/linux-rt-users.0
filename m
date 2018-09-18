@@ -1,50 +1,99 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mail.efficios.com ([167.114.142.138]:51152 "EHLO
-        mail.efficios.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1730571AbeISC3i (ORCPT
+Received: from metis.ext.pengutronix.de ([85.220.165.71]:44215 "EHLO
+        metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728718AbeIRSxr (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 18 Sep 2018 22:29:38 -0400
-Date: Tue, 18 Sep 2018 16:55:14 -0400
-From: Jonathan Rajotte-Julien <jonathan.rajotte-julien@efficios.com>
-Subject: __migrate_disabled symbol not exported for rt kernel > 4.9
-Message-ID: <20180918205514.GB31793@joraj-alpa>
+        Tue, 18 Sep 2018 14:53:47 -0400
+From: Steffen Trumtrar <s.trumtrar@pengutronix.de>
+Subject: [BUG] dw_wdt watchdog on linux-rt 4.18.5-rt4 not triggering
+Date: Tue, 18 Sep 2018 15:21:08 +0200
+Message-ID: <73d0tbdjqz.fsf@pengutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Type: text/plain; format=flowed
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: bigeasy@linutronix.de
-Cc: linux-rt-users@vger.kernel.org, skrishnakar@gmail.com
+To: linux-watchdog@vger.kernel.org
+Cc: Wim Van Sebroeck <wim@linux-watchdog.org>, Guenter Roeck <linux@roeck-us.net>, Christophe Leroy <christophe.leroy@c-s.fr>, linux-rt-users@vger.kernel.org
 
-Hi,
 
-While building/linking our out-of-tree modules, lttng-modules, against
-4.14.69-rt43 we encounter this error:
+Hi all!
 
-    WARNING: "__migrate_disabled" [/home/builder/lttng-modules/lttng-modules-2.10.7/lttng-tracer.ko] undefined!
+I'm seeing an issue with the dw_wdt watchdog on the SoCFPGA ARM 
+platform with the latest linux-rt v4.18.5-rt4. Actually I seem to 
+have the same problem, that these patches try to fix:
 
-Same problem for other stable rt kernels > 4.9.
-Everything work fine against 4.9.115-rt93.
+  38a1222ae4f364d5bd5221fe305dbb0889f45d15
+  Author:     Christophe Leroy <christophe.leroy@c-s.fr>
+  AuthorDate: Fri Dec 8 11:18:35 2017 +0100
+  Commit:     Wim Van Sebroeck <wim@iguana.be>
+  CommitDate: Thu Dec 28 20:45:57 2017 +0100
 
-It looks like __migrate_disabled was moved from linux/include/sched.h to
-linux/include/preempt.h. No problem there but for a configuration the
-inline function was transformed into a function declaration. The symbol for
-that function is not currently exported (EXPORT_SYMBOL*).
+  Follows:    v4.15-rc3 (345)
+  Precedes:   v4.16-rc1 (13997)
 
-Should __migrate_disabled be exported when defined in kernel/sched/core.c?
+  watchdog: core: make sure the watchdog worker always works
 
-And for personal knowledge:
+  When running a command like 'chrt -f 50 dd if=/dev/zero 
+  of=/dev/null',
+  the watchdog_worker fails to service the HW watchdog and the
+  HW watchdog fires long before the watchdog soft timeout.
 
-What is the reason for not using an inline function for the (CONFIG_SMP)
-&& (CONFIG_PREEMPT_RT_BASE) configuration?
+  At the moment, the watchdog_worker is invoked as a delayed work.
+  Delayed works are handled by non realtime kernel threads. The
+  WQ_HIGHPRI flag only increases the niceness of that threads.
 
-The commit message introducing __migrate_disabled does not give much information
-regarding why it is done differently compared to 4.9-rt kernels.
+  This patch replaces the delayed work logic by kthread delayed 
+  work,
+  and sets the associated kernel task to SCHED_FIFO with the 
+  highest
+  priority, in order to ensure that the watchdog worker will run 
+  as
+  soon as possible.
 
-We will probably end up accessing the migrate_disabled field directly since we
-need to support those kernel versions somehow.
 
-Cheers
--- 
-Jonathan Rajotte-Julien
-EfficiOS
+  1ff688209e2ed23f699269b9733993e2ce123fd2
+  Author:     Christophe Leroy <christophe.leroy@c-s.fr>
+  AuthorDate: Thu Jan 18 12:11:21 2018 +0100
+  Commit:     Wim Van Sebroeck <wim@iguana.be>
+  CommitDate: Sun Jan 21 12:44:59 2018 +0100
+
+  Follows:    v4.15-rc3 (349)
+  Precedes:   v4.16-rc1 (13993)
+
+  watchdog: core: make sure the watchdog_worker is not deferred
+
+  commit 4cd13c21b207e ("softirq: Let ksoftirqd do its job") has 
+  the
+  effect of deferring timer handling in case of high CPU load, 
+  hence
+  delaying the delayed work allthought the worker is running which
+  high realtime priority.
+
+  As hrtimers are not managed by softirqs, this patch replaces the
+  delayed work by a plain work and uses an hrtimer to schedule 
+  that work.
+
+
+If I run the same test or 'chrt 50 hackbench 20 -l 150' or any 
+task where I change the prio with chrt and that runs long enough, 
+I get a system reset from the watchdog because it times out. This 
+only happens if the watchdog is already enabled on boot and 
+CONFIG_PREEMPT_RT_FULL is set.
+
+Any idea if I'm missing something essential? If I understand it 
+correctly, the two commits fix the framework and therefore the 
+dw_wdt driver doesn't need any updates.
+
+
+Best regards,
+Steffen
+
+--
+Pengutronix e.K.                          | Steffen Trumtrar 
+|
+Industrial Linux Solutions                | 
+http://www.pengutronix.de/ |
+Peiner Str. 6-8, 31137 Hildesheim, Germany| Phone: 
++49-5121-206917-0   |
+Amtsgericht Hildesheim, HRA 2686          | Fax: 
++49-5121-206917-5555|
