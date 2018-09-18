@@ -1,94 +1,50 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mail-wr1-f67.google.com ([209.85.221.67]:43283 "EHLO
-        mail-wr1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1731221AbeISURw (ORCPT
+Received: from mail.efficios.com ([167.114.142.138]:51152 "EHLO
+        mail.efficios.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1730571AbeISC3i (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 19 Sep 2018 16:17:52 -0400
-Received: by mail-wr1-f67.google.com with SMTP id k5-v6so6061214wre.10
-        for <linux-rt-users@vger.kernel.org>; Wed, 19 Sep 2018 07:39:38 -0700 (PDT)
-Date: Wed, 19 Sep 2018 16:39:28 +0200 (CEST)
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [patch 1/2] add -h option to queuelat
-In-Reply-To: <20180904115700.461458689@redhat.com>
-Message-ID: <alpine.LFD.2.21.1809191638280.6250@planxty>
-References: <20180904115633.410153367@redhat.com> <20180904115700.461458689@redhat.com>
+        Tue, 18 Sep 2018 22:29:38 -0400
+Date: Tue, 18 Sep 2018 16:55:14 -0400
+From: Jonathan Rajotte-Julien <jonathan.rajotte-julien@efficios.com>
+Subject: __migrate_disabled symbol not exported for rt kernel > 4.9
+Message-ID: <20180918205514.GB31793@joraj-alpa>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: Marcelo Tosatti <mtosatti@redhat.com>
-Cc: Linux RT Users <linux-rt-users@vger.kernel.org>
+To: bigeasy@linutronix.de
+Cc: linux-rt-users@vger.kernel.org, skrishnakar@gmail.com
 
+Hi,
 
+While building/linking our out-of-tree modules, lttng-modules, against
+4.14.69-rt43 we encounter this error:
 
-On Tue, 4 Sep 2018, Marcelo Tosatti wrote:
+    WARNING: "__migrate_disabled" [/home/builder/lttng-modules/lttng-modules-2.10.7/lttng-tracer.ko] undefined!
 
-> Add -h (help) option to queuelat, which lists all 
-> options.
-> 
-> Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
-> 
-> ---
->  src/queuelat/README     |    1 +
->  src/queuelat/queuelat.c |   17 ++++++++++++++++-
->  2 files changed, 17 insertions(+), 1 deletion(-)
-> 
-> Index: rt-tests/src/queuelat/README
-> ===================================================================
-> --- rt-tests.orig/src/queuelat/README	2018-09-03 16:31:38.578945651 -0300
-> +++ rt-tests/src/queuelat/README	2018-09-03 16:31:56.083000015 -0300
-> @@ -51,6 +51,7 @@
->  mpps(million-packet-per-sec): million packets per second (float).
->  tsc_freq_mhz: TSC frequency in MHz, as measured by TSC PIT calibration 
->  (search for "Detected XXX MHz processor" in dmesg, and use the integer part).
-> +timeout: timeout (in seconds).
->  
->  How it works
->  ============
-> Index: rt-tests/src/queuelat/queuelat.c
-> ===================================================================
-> --- rt-tests.orig/src/queuelat/queuelat.c	2018-09-03 16:31:38.578945651 -0300
-> +++ rt-tests/src/queuelat/queuelat.c	2018-09-03 16:31:56.084000018 -0300
-> @@ -532,6 +532,18 @@
->  	return nr_packets_drain_per_block;
->  }
->  
-> +
-> +void print_help(void)
-> +{
-> +	printf("usage: queuelat [options]\n");
-> +	printf("-h show this help menu\n");
-> +	printf("-m max-queue-len (maximum latency allowed, in nanoseconds) (int)\n");
-> +	printf("-c cycles-per-packet (number of cycles to process one packet (int)\n");
-> +	printf("-p million-packet-per-sec (million packets per second) (float)\n");
-> +	printf("-f tsc-freq-mhz (TSC frequency in MHz) (float)\n");
-> +	printf("-t timeout (timeout, in seconds) (int)\n");
-> +}
-> +
->  int main(int argc, char **argv)
->  {
->  	double tsc_freq_mhz;
-> @@ -549,7 +561,7 @@
->  
->  	opterr = 0;
->  
-> -	while ((c = getopt (argc, argv, "m:c:p:f:t:q:")) != -1)
-> +	while ((c = getopt (argc, argv, "m:c:p:f:t:q:h")) != -1)
->  		switch (c)
->  		{
->  		case 'm':
-> @@ -570,6 +582,9 @@
->  		case 'q':
->  			qvalue = optarg;
->  			break;
-> +		case 'h':
-> +			print_help();
-> +			return 0;
->  		case '?':
->  			if (optopt == 'm' || optopt == 'c' || optopt == 'p' ||
->  			    optopt == 'f' || optopt == 't' || optopt == 'q')
-> 
-> 
-> 
+Same problem for other stable rt kernels > 4.9.
+Everything work fine against 4.9.115-rt93.
 
-Signed-off-by: John Kacur <jkacur@redhat.com
+It looks like __migrate_disabled was moved from linux/include/sched.h to
+linux/include/preempt.h. No problem there but for a configuration the
+inline function was transformed into a function declaration. The symbol for
+that function is not currently exported (EXPORT_SYMBOL*).
+
+Should __migrate_disabled be exported when defined in kernel/sched/core.c?
+
+And for personal knowledge:
+
+What is the reason for not using an inline function for the (CONFIG_SMP)
+&& (CONFIG_PREEMPT_RT_BASE) configuration?
+
+The commit message introducing __migrate_disabled does not give much information
+regarding why it is done differently compared to 4.9-rt kernels.
+
+We will probably end up accessing the migrate_disabled field directly since we
+need to support those kernel versions somehow.
+
+Cheers
+-- 
+Jonathan Rajotte-Julien
+EfficiOS
