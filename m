@@ -1,97 +1,46 @@
-From: Clark Williams <williams@redhat.com>
-Subject: [PATCH RT] rt: convert mm/kasan/quarantine_lock to raw_spinlock
-Date: Tue, 18 Sep 2018 10:29:31 -0500
-Message-ID: <20180918152931.17322-1-williams@redhat.com>
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Masami Hiramatsu <mhiramat@kernel.org>
+Subject: Re: [PATCH v4 8/8] trace: Add alternative synthetic event trace
+ action syntax
+Date: Wed, 19 Sep 2018 03:54:46 +0900
+Message-ID: <20180919035446.4fb6b856ab51229984eb2736@kernel.org>
+References: <cover.1536605847.git.tom.zanussi@linux.intel.com>
+        <95e91d682061a3a43ea293b20ff4beea755b945a.1536605847.git.tom.zanussi@linux.intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
+        namhyung@kernel.org, vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
+        julia@ni.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
+To: Tom Zanussi <zanussi@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <95e91d682061a3a43ea293b20ff4beea755b945a.1536605847.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-The static lock quarantine_lock is used in mm/kasan/quarantine.c to protect
-the quarantine queue datastructures. It is taken inside quarantine queue
-manipulation routines (quarantine_put(), quarantine_reduce() and quarantine_remove_cache()),
-with IRQs disabled. This is no problem on a stock kernel but is problematic
-on an RT kernel where spin locks are converted to rt_mutex_t, which can sleep.
+Hi Tom,
 
-Convert the quarantine_lock to a raw spinlock. The usage of quarantine_lock
-is confined to quarantine.c and the work performed while the lock is held is limited.
+On Mon, 10 Sep 2018 14:10:46 -0500
+Tom Zanussi <zanussi@kernel.org> wrote:
 
-Signed-off-by: Clark Williams <williams@redhat.com>
----
- mm/kasan/quarantine.c | 18 +++++++++---------
- 1 file changed, 9 insertions(+), 9 deletions(-)
+> From: Tom Zanussi <tom.zanussi@linux.intel.com>
+> 
+> Add a 'trace(synthetic_event_name, params)' alternative to
+> synthetic_event_name(params).
+> 
+> Currently, the syntax used for generating synthetic events is to
+> invoke synthetic_event_name(params) i.e. use the synthetic event name
+> as a function call.
+> 
+> Users requested a new form that more explicitly shows that the
+> synthetic event is in effect being traced.  In this version, a new
+> 'trace()' keyword is used, and the synthetic event name is passed in
+> as the first argument.
 
-diff --git a/mm/kasan/quarantine.c b/mm/kasan/quarantine.c
-index 3a8ddf8baf7d..b209dbaefde8 100644
---- a/mm/kasan/quarantine.c
-+++ b/mm/kasan/quarantine.c
-@@ -103,7 +103,7 @@ static int quarantine_head;
- static int quarantine_tail;
- /* Total size of all objects in global_quarantine across all batches. */
- static unsigned long quarantine_size;
--static DEFINE_SPINLOCK(quarantine_lock);
-+static DEFINE_RAW_SPINLOCK(quarantine_lock);
- DEFINE_STATIC_SRCU(remove_cache_srcu);
- 
- /* Maximum size of the global queue. */
-@@ -190,7 +190,7 @@ void quarantine_put(struct kasan_free_meta *info, struct kmem_cache *cache)
- 	if (unlikely(q->bytes > QUARANTINE_PERCPU_SIZE)) {
- 		qlist_move_all(q, &temp);
- 
--		spin_lock(&quarantine_lock);
-+		raw_spin_lock(&quarantine_lock);
- 		WRITE_ONCE(quarantine_size, quarantine_size + temp.bytes);
- 		qlist_move_all(&temp, &global_quarantine[quarantine_tail]);
- 		if (global_quarantine[quarantine_tail].bytes >=
-@@ -203,7 +203,7 @@ void quarantine_put(struct kasan_free_meta *info, struct kmem_cache *cache)
- 			if (new_tail != quarantine_head)
- 				quarantine_tail = new_tail;
- 		}
--		spin_unlock(&quarantine_lock);
-+		raw_spin_unlock(&quarantine_lock);
- 	}
- 
- 	local_irq_restore(flags);
-@@ -230,7 +230,7 @@ void quarantine_reduce(void)
- 	 * expected case).
- 	 */
- 	srcu_idx = srcu_read_lock(&remove_cache_srcu);
--	spin_lock_irqsave(&quarantine_lock, flags);
-+	raw_spin_lock_irqsave(&quarantine_lock, flags);
- 
- 	/*
- 	 * Update quarantine size in case of hotplug. Allocate a fraction of
-@@ -254,7 +254,7 @@ void quarantine_reduce(void)
- 			quarantine_head = 0;
- 	}
- 
--	spin_unlock_irqrestore(&quarantine_lock, flags);
-+	raw_spin_unlock_irqrestore(&quarantine_lock, flags);
- 
- 	qlist_free_all(&to_free, NULL);
- 	srcu_read_unlock(&remove_cache_srcu, srcu_idx);
-@@ -310,17 +310,17 @@ void quarantine_remove_cache(struct kmem_cache *cache)
- 	 */
- 	on_each_cpu(per_cpu_remove_cache, cache, 1);
- 
--	spin_lock_irqsave(&quarantine_lock, flags);
-+	raw_spin_lock_irqsave(&quarantine_lock, flags);
- 	for (i = 0; i < QUARANTINE_BATCHES; i++) {
- 		if (qlist_empty(&global_quarantine[i]))
- 			continue;
- 		qlist_move_cache(&global_quarantine[i], &to_free, cache);
- 		/* Scanning whole quarantine can take a while. */
--		spin_unlock_irqrestore(&quarantine_lock, flags);
-+		raw_spin_unlock_irqrestore(&quarantine_lock, flags);
- 		cond_resched();
--		spin_lock_irqsave(&quarantine_lock, flags);
-+		raw_spin_lock_irqsave(&quarantine_lock, flags);
- 	}
--	spin_unlock_irqrestore(&quarantine_lock, flags);
-+	raw_spin_unlock_irqrestore(&quarantine_lock, flags);
- 
- 	qlist_free_all(&to_free, cache);
- 
+Hmm, what is the advantage of adding this new form?
+
+Thanks,
+
 -- 
-2.17.1
+Masami Hiramatsu <mhiramat@kernel.org>
