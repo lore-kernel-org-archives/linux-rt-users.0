@@ -1,52 +1,97 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 4.14.69-rt43
-Date: Tue, 11 Sep 2018 13:07:33 -0400
-Message-ID: <20180911130733.57a19988@vmware.local.home>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Julia Cartwright <julia@ni.com>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
+From: Clark Williams <williams@redhat.com>
+Subject: [PATCH RT] rt: convert mm/kasan/quarantine_lock to raw_spinlock
+Date: Tue, 18 Sep 2018 10:29:31 -0500
+Message-ID: <20180918152931.17322-1-williams@redhat.com>
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+The static lock quarantine_lock is used in mm/kasan/quarantine.c to protect
+the quarantine queue datastructures. It is taken inside quarantine queue
+manipulation routines (quarantine_put(), quarantine_reduce() and quarantine_remove_cache()),
+with IRQs disabled. This is no problem on a stock kernel but is problematic
+on an RT kernel where spin locks are converted to rt_mutex_t, which can sleep.
 
-Dear RT Folks,
+Convert the quarantine_lock to a raw spinlock. The usage of quarantine_lock
+is confined to quarantine.c and the work performed while the lock is held is limited.
 
-I'm pleased to announce the 4.14.69-rt43 stable release.
+Signed-off-by: Clark Williams <williams@redhat.com>
+---
+ mm/kasan/quarantine.c | 18 +++++++++---------
+ 1 file changed, 9 insertions(+), 9 deletions(-)
 
-
-This release is just an update to the new stable 4.14.69 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.14-rt
-  Head SHA1: f8a185d1405165fd06829e2d28cf370ba1fa9d0f
-
-
-Or to build 4.14.69-rt43 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.69.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.69-rt43.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
+diff --git a/mm/kasan/quarantine.c b/mm/kasan/quarantine.c
+index 3a8ddf8baf7d..b209dbaefde8 100644
+--- a/mm/kasan/quarantine.c
++++ b/mm/kasan/quarantine.c
+@@ -103,7 +103,7 @@ static int quarantine_head;
+ static int quarantine_tail;
+ /* Total size of all objects in global_quarantine across all batches. */
+ static unsigned long quarantine_size;
+-static DEFINE_SPINLOCK(quarantine_lock);
++static DEFINE_RAW_SPINLOCK(quarantine_lock);
+ DEFINE_STATIC_SRCU(remove_cache_srcu);
+ 
+ /* Maximum size of the global queue. */
+@@ -190,7 +190,7 @@ void quarantine_put(struct kasan_free_meta *info, struct kmem_cache *cache)
+ 	if (unlikely(q->bytes > QUARANTINE_PERCPU_SIZE)) {
+ 		qlist_move_all(q, &temp);
+ 
+-		spin_lock(&quarantine_lock);
++		raw_spin_lock(&quarantine_lock);
+ 		WRITE_ONCE(quarantine_size, quarantine_size + temp.bytes);
+ 		qlist_move_all(&temp, &global_quarantine[quarantine_tail]);
+ 		if (global_quarantine[quarantine_tail].bytes >=
+@@ -203,7 +203,7 @@ void quarantine_put(struct kasan_free_meta *info, struct kmem_cache *cache)
+ 			if (new_tail != quarantine_head)
+ 				quarantine_tail = new_tail;
+ 		}
+-		spin_unlock(&quarantine_lock);
++		raw_spin_unlock(&quarantine_lock);
+ 	}
+ 
+ 	local_irq_restore(flags);
+@@ -230,7 +230,7 @@ void quarantine_reduce(void)
+ 	 * expected case).
+ 	 */
+ 	srcu_idx = srcu_read_lock(&remove_cache_srcu);
+-	spin_lock_irqsave(&quarantine_lock, flags);
++	raw_spin_lock_irqsave(&quarantine_lock, flags);
+ 
+ 	/*
+ 	 * Update quarantine size in case of hotplug. Allocate a fraction of
+@@ -254,7 +254,7 @@ void quarantine_reduce(void)
+ 			quarantine_head = 0;
+ 	}
+ 
+-	spin_unlock_irqrestore(&quarantine_lock, flags);
++	raw_spin_unlock_irqrestore(&quarantine_lock, flags);
+ 
+ 	qlist_free_all(&to_free, NULL);
+ 	srcu_read_unlock(&remove_cache_srcu, srcu_idx);
+@@ -310,17 +310,17 @@ void quarantine_remove_cache(struct kmem_cache *cache)
+ 	 */
+ 	on_each_cpu(per_cpu_remove_cache, cache, 1);
+ 
+-	spin_lock_irqsave(&quarantine_lock, flags);
++	raw_spin_lock_irqsave(&quarantine_lock, flags);
+ 	for (i = 0; i < QUARANTINE_BATCHES; i++) {
+ 		if (qlist_empty(&global_quarantine[i]))
+ 			continue;
+ 		qlist_move_cache(&global_quarantine[i], &to_free, cache);
+ 		/* Scanning whole quarantine can take a while. */
+-		spin_unlock_irqrestore(&quarantine_lock, flags);
++		raw_spin_unlock_irqrestore(&quarantine_lock, flags);
+ 		cond_resched();
+-		spin_lock_irqsave(&quarantine_lock, flags);
++		raw_spin_lock_irqsave(&quarantine_lock, flags);
+ 	}
+-	spin_unlock_irqrestore(&quarantine_lock, flags);
++	raw_spin_unlock_irqrestore(&quarantine_lock, flags);
+ 
+ 	qlist_free_all(&to_free, cache);
+ 
+-- 
+2.17.1
