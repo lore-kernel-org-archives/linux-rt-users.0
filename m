@@ -1,52 +1,47 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 4.14.71-rt44
-Date: Sat, 22 Sep 2018 09:23:15 -0400
-Message-ID: <20180922092315.1b4930c7@gandalf.local.home>
+From: Kurt Kanzenbach <kurt@linutronix.de>
+Subject: [PATCH RT] tty: serial: pl011: fix warning about uninitialized variable
+Date: Mon, 24 Sep 2018 10:29:01 +0200
+Message-ID: <20180924082901.21191-1-kurt@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Julia Cartwright <julia@ni.com>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        Kurt Kanzenbach <kurt@linutronix.de>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Silence the following gcc warning:
 
-Dear RT Folks,
+drivers/tty/serial/amba-pl011.c: In function ‘pl011_console_write’:
+./include/linux/spinlock.h:260:3: warning: ‘flags’ may be used uninitialized in this function [-Wmaybe-uninitialized]
+   _raw_spin_unlock_irqrestore(lock, flags); \
+   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+drivers/tty/serial/amba-pl011.c:2214:16: note: ‘flags’ was declared here
+  unsigned long flags;
+                ^~~~~
 
-I'm pleased to announce the 4.14.71-rt44 stable release.
+The code is correct. Thus, initializing flags to zero doesn't change the
+behavior and resolves the warning.
 
+Signed-off-by: Kurt Kanzenbach <kurt@linutronix.de>
+---
+ drivers/tty/serial/amba-pl011.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-This release is just an update to the new stable 4.14.71 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.14-rt
-  Head SHA1: 917fa4e672939669f74f1c879b3aae6239f6719b
-
-
-Or to build 4.14.71-rt44 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.71.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.71-rt44.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
+diff --git a/drivers/tty/serial/amba-pl011.c b/drivers/tty/serial/amba-pl011.c
+index 484861278e9c..a658214486e7 100644
+--- a/drivers/tty/serial/amba-pl011.c
++++ b/drivers/tty/serial/amba-pl011.c
+@@ -2211,7 +2211,7 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
+ {
+ 	struct uart_amba_port *uap = amba_ports[co->index];
+ 	unsigned int old_cr = 0, new_cr;
+-	unsigned long flags;
++	unsigned long flags = 0;
+ 	int locked = 1;
+ 
+ 	clk_enable(uap->clk);
+-- 
+2.11.0
