@@ -1,69 +1,100 @@
-From: Guenter Roeck <linux@roeck-us.net>
-Subject: Re: [PATCH RT 2/2] watchdog, rt: prevent deferral of watchdogd wakeup
-Date: Sun, 30 Sep 2018 07:00:02 -0700
-Message-ID: <51edd05c-a5a2-062f-bbc6-1ca7af81e4d8@roeck-us.net>
-References: <cover.1538089179.git.julia@ni.com>
- <0e02d8327aeca344096c246713033887bc490dd7.1538089180.git.julia@ni.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Return-Path: linux-rt-users-owner@vger.kernel.org
+Received: from mta02.hs-regensburg.de ([194.95.104.12]:58522 "EHLO
+        mta02.hs-regensburg.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727048AbeIZVUb (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 26 Sep 2018 17:20:31 -0400
+Received: from E16S02.hs-regensburg.de (e16s02.hs-regensburg.de [IPv6:2001:638:a01:8013::92])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+        (Client CN "E16S02", Issuer "E16S02" (not verified))
+        by mta02.hs-regensburg.de (Postfix) with ESMTPS id 42L1WG16PpzygG
+        for <linux-rt-users@vger.kernel.org>; Wed, 26 Sep 2018 17:07:06 +0200 (CEST)
+From: Ralf Ramsauer <ralf.ramsauer@oth-regensburg.de>
+Subject: Bug or works as intended: signal behaviour on -RT
+Message-ID: <d5b58969-26d3-d32b-71f7-fdd437c06ee1@oth-regensburg.de>
+Date: Wed, 26 Sep 2018 17:07:02 +0200
+MIME-Version: 1.0
+Content-Type: multipart/mixed;
+        boundary="------------0D99F403CF0346CAF386EEF5"
+Content-Language: de-DE
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+
+--------------0D99F403CF0346CAF386EEF5
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        Steffen Trumtrar <s.trumtrar@pengutronix.de>,
-        Tim Sander <tim@krieglstein.org>
-To: Julia Cartwright <julia@ni.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <0e02d8327aeca344096c246713033887bc490dd7.1538089180.git.julia@ni.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
 
-On 09/28/2018 02:03 PM, Julia Cartwright wrote:
-> When PREEMPT_RT_FULL is enabled, all hrtimer expiry functions are
-> deferred for execution into the context of ktimersoftd unless otherwise
-> annotated.
-> 
-> Deferring the expiry of the hrtimer used by the watchdog core, however,
-> is a waste, as the callback does nothing but queue a kthread work item
-> and wakeup watchdogd.
-> 
-> It's worst then that, too: the deferral through ktimersoftd also means
-> that for correct behavior a user must adjust the scheduling parameters
-> of both watchdogd _and_ ktimersoftd, which is unnecessary and has other
-> side effects (like causing unrelated expiry functions to execute at
-> potentially elevated priority).
-> 
-> Instead, mark the hrtimer used by the watchdog core as being _HARD to
-> allow it's execution directly from hardirq context.  The work done in
-> this expiry function is well-bounded and minimal.
-> 
-> A user still must adjust the scheduling parameters of the watchdogd
-> to be correct w.r.t. their application needs.
-> 
-> Cc: Guenter Roeck <linux@roeck-us.net>
-> Reported-and-tested-by: Steffen Trumtrar <s.trumtrar@pengutronix.de>
-> Reported-by: Tim Sander <tim@krieglstein.org>
-> Signed-off-by: Julia Cartwright <julia@ni.com>
+Hi,
 
-Acked-by: Guenter Roeck <linux@roeck-us.net>
+If I set the SCHED_FIFO schedular, register a SIGALRM handler, set an
+alarm() and consume 100% of CPU time on an isolated CPU (IOW, never
+leave running/runable), the signal will never arrive in userspace.
+According to /proc/timer_list the expiration time will become a negative
+value.
 
-> ---
->   drivers/watchdog/watchdog_dev.c | 2 +-
->   1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/drivers/watchdog/watchdog_dev.c b/drivers/watchdog/watchdog_dev.c
-> index ffbdc4642ea5..9c2b3e5cebdc 100644
-> --- a/drivers/watchdog/watchdog_dev.c
-> +++ b/drivers/watchdog/watchdog_dev.c
-> @@ -945,7 +945,7 @@ static int watchdog_cdev_register(struct watchdog_device *wdd, dev_t devno)
->   		return -ENODEV;
->   
->   	kthread_init_work(&wd_data->work, watchdog_ping_work);
-> -	hrtimer_init(&wd_data->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-> +	hrtimer_init(&wd_data->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
->   	wd_data->timer.function = watchdog_timer_expired;
->   
->   	if (wdd->id == 0) {
-> 
+But if I synchronously send a SIGALRM via kill, it will immediately
+arrive. Even a sched_yield() in the busy loop won't help. In order to
+get the signal, I have to leave running/runable with usleep().
+
+Now I'm not sure if this behaviour is intended for some reason or if
+it's a bug. Please find a minimal example attached. Run it on an
+isolated CPU with taskset.
+
+Reproduceable with 4.14.x-rt and latest -rt. Not reproducable with
+mainline Linux and PREEMPT.
+
+Thanks
+  Ralf
+
+(How I found this: I'm currently using stress-ng as a stressor for some
+cyclictest measurements. stress-ng fork()s stressors. Stressors can be
+parameterised by a timeout, which is implemented as alarm(). The timeout
+will never occur, as stressors never leave Running/Runable.)
+
+--------------0D99F403CF0346CAF386EEF5
+Content-Type: text/x-csrc; name="sigalrm.c"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="sigalrm.c"
+
+#include <unistd.h>
+#include <stdio.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sched.h>
+#include <string.h>
+
+static volatile bool stop;
+
+static void alarm_handler(int sig)
+{
+	printf("Woof woof!\n");
+	stop = true;
+}
+
+int main(void) {
+	struct sched_param sp;
+	int ret;
+
+	memset(&sp, 0, sizeof(sp));
+	sp.sched_priority = 12;
+	ret = sched_setscheduler(0, SCHED_FIFO, &sp);
+	if (ret != 0) {
+		printf("Error setting scheduler\n");
+		return -1;
+	}
+
+	if (signal(SIGALRM, alarm_handler) == SIG_ERR) {
+		printf("\ncan't catch SIGINT\n");
+		return -1;
+	}
+
+	alarm(5);
+	while (!stop) {}
+
+	return 0;
+}
+
+--------------0D99F403CF0346CAF386EEF5--
