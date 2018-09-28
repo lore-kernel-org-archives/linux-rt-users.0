@@ -1,67 +1,53 @@
 From: Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 2/2] watchdog, rt: prevent deferral of watchdogd wakeup
-Date: Fri, 28 Sep 2018 21:03:51 +0000
-Message-ID: <0e02d8327aeca344096c246713033887bc490dd7.1538089180.git.julia@ni.com>
-References: <cover.1538089179.git.julia@ni.com>
+Subject: [PATCH 0/2] Fix watchdogd wakeup deferral on RT
+Date: Fri, 28 Sep 2018 21:03:52 +0000
+Message-ID: <cover.1538089179.git.julia@ni.com>
+References: <73in2vl5mj.fsf@pengutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
         "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        Guenter Roeck <linux@roeck-us.net>,
         Steffen Trumtrar <s.trumtrar@pengutronix.de>,
-        Tim Sander <tim@krieglstein.org>,
-        Guenter Roeck <linux@roeck-us.net>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>
+        Tim Sander <tim@krieglstein.org>
+To: Ingo Molnar <mingo@kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1538089179.git.julia@ni.com>
+In-Reply-To: <73in2vl5mj.fsf@pengutronix.de>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-When PREEMPT_RT_FULL is enabled, all hrtimer expiry functions are
-deferred for execution into the context of ktimersoftd unless otherwise
-annotated.
+The following two patches solve an issue reported by Steffen Trumtrar
+and Tim Sander to the linux-rt-users mailing list.  Namely, the wakeup
+of the watchdogd thread being starved by an RT task due to the hrtimer
+deferral through ktimersoftd (on PREEMPT_RT_FULL).
 
-Deferring the expiry of the hrtimer used by the watchdog core, however,
-is a waste, as the callback does nothing but queue a kthread work item
-and wakeup watchdogd.
+The first patch adjusts the kthread_worker locking to make use of a raw
+spinlock, making it suitable for work item queueing from hardirq context
+on PREEMPT_RT.  This patch can be applied directly to mainline without
+any functional change.
 
-It's worst then that, too: the deferral through ktimersoftd also means
-that for correct behavior a user must adjust the scheduling parameters
-of both watchdogd _and_ ktimersoftd, which is unnecessary and has other
-side effects (like causing unrelated expiry functions to execute at
-potentially elevated priority).
-
-Instead, mark the hrtimer used by the watchdog core as being _HARD to
-allow it's execution directly from hardirq context.  The work done in
-this expiry function is well-bounded and minimal.
-
-A user still must adjust the scheduling parameters of the watchdogd
-to be correct w.r.t. their application needs.
+The second patch adjusts the hrtimer used by the watchdog core to be a
+_HARD timer (and thus not deferred through ktimersoftd w/ PREEMPT_RT).
+This patch depends on hrtimer patches carried in the RT patch, and so
+should therefore land there.
 
 Cc: Guenter Roeck <linux@roeck-us.net>
-Reported-and-tested-by: Steffen Trumtrar <s.trumtrar@pengutronix.de>
-Reported-by: Tim Sander <tim@krieglstein.org>
-Signed-off-by: Julia Cartwright <julia@ni.com>
----
- drivers/watchdog/watchdog_dev.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Cc: Steffen Trumtrar <s.trumtrar@pengutronix.de>
+Cc: Tim Sander <tim@krieglstein.org>
 
-diff --git a/drivers/watchdog/watchdog_dev.c b/drivers/watchdog/watchdog_de=
-v.c
-index ffbdc4642ea5..9c2b3e5cebdc 100644
---- a/drivers/watchdog/watchdog_dev.c
-+++ b/drivers/watchdog/watchdog_dev.c
-@@ -945,7 +945,7 @@ static int watchdog_cdev_register(struct watchdog_devic=
-e *wdd, dev_t devno)
- 		return -ENODEV;
-=20
- 	kthread_init_work(&wd_data->work, watchdog_ping_work);
--	hrtimer_init(&wd_data->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-+	hrtimer_init(&wd_data->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
- 	wd_data->timer.function =3D watchdog_timer_expired;
-=20
- 	if (wdd->id =3D=3D 0) {
+Julia Cartwright (2):
+  kthread: convert worker lock to raw spinlock
+  watchdog, rt: prevent deferral of watchdogd wakeup
+
+ drivers/watchdog/watchdog_dev.c |  2 +-
+ include/linux/kthread.h         |  2 +-
+ kernel/kthread.c                | 42 ++++++++++++++++-----------------
+ 3 files changed, 23 insertions(+), 23 deletions(-)
+
 --=20
 2.18.0
