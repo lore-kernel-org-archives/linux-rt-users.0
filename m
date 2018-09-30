@@ -1,57 +1,69 @@
-From: "Li, Philip" <philip.li@intel.com>
-Subject: RE: [kbuild-all] [PATCH RT 2/2] watchdog, rt: prevent deferral of
- watchdogd wakeup
-Date: Sun, 30 Sep 2018 01:41:18 +0000
-Message-ID: <831EE4E5E37DCC428EB295A351E662494CD1CCC3@shsmsx102.ccr.corp.intel.com>
-References: <0e02d8327aeca344096c246713033887bc490dd7.1538089180.git.julia@ni.com>
- <201809290614.fxFuwGkP%fengguang.wu@intel.com>
- <alpine.DEB.2.21.1809290835240.1432@nanos.tec.linutronix.de>
- <20180929221301.z7dytm4whpcbip6a@linutronix.de>
+From: Guenter Roeck <linux@roeck-us.net>
+Subject: Re: [PATCH RT 2/2] watchdog, rt: prevent deferral of watchdogd wakeup
+Date: Sun, 30 Sep 2018 07:00:02 -0700
+Message-ID: <51edd05c-a5a2-062f-bbc6-1ca7af81e4d8@roeck-us.net>
+References: <cover.1538089179.git.julia@ni.com>
+ <0e02d8327aeca344096c246713033887bc490dd7.1538089180.git.julia@ni.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "Julia Cartwright" <julia@ni.com>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "kbuild-all@01.org" <kbuild-all@01.org>,
-        "Tim Sander" <tim@krieglstein.org>,
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
         Steffen Trumtrar <s.trumtrar@pengutronix.de>,
-        Guenter Roeck <linux@roeck-us.net>, lkp <lkp@intel.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Tim Sander <tim@krieglstein.org>
+To: Julia Cartwright <julia@ni.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180929221301.z7dytm4whpcbip6a@linutronix.de>
+In-Reply-To: <0e02d8327aeca344096c246713033887bc490dd7.1538089180.git.julia@ni.com>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-> Subject: Re: [kbuild-all] [PATCH RT 2/2] watchdog, rt: prevent deferral of
-> watchdogd wakeup
+On 09/28/2018 02:03 PM, Julia Cartwright wrote:
+> When PREEMPT_RT_FULL is enabled, all hrtimer expiry functions are
+> deferred for execution into the context of ktimersoftd unless otherwise
+> annotated.
 > 
-> On 2018-09-29 08:38:55 [+0200], Thomas Gleixner wrote:
-> > On Sat, 29 Sep 2018, kbuild test robot wrote:
-> > > [also build test ERROR on v4.19-rc5 next-20180928]
-> > > [if your patch is applied to the wrong git tree, please drop us a note to help
-> improve the system]
-> > >
-> >
-> > It's against the RT tree, so it won't work against next or upstream. I
-> > think it would be good to have a machine parseable tag to describe which
-> > tree/branch/commit patches are applicable to. If that tag is missing, the
-> > bot can assume it's against upstream/next.
+> Deferring the expiry of the hrtimer used by the watchdog core, however,
+> is a waste, as the callback does nothing but queue a kthread work item
+> and wakeup watchdogd.
 > 
-> I asked the testing team to ignore patches or test against the RT tree
-> if the patch is tagged [PATCH RT]. I think it worked since I haven't
-> seen those mails.
-thanks Sebastian for the input, we will consider this to add to our TODO.
+> It's worst then that, too: the deferral through ktimersoftd also means
+> that for correct behavior a user must adjust the scheduling parameters
+> of both watchdogd _and_ ktimersoftd, which is unnecessary and has other
+> side effects (like causing unrelated expiry functions to execute at
+> potentially elevated priority).
+> 
+> Instead, mark the hrtimer used by the watchdog core as being _HARD to
+> allow it's execution directly from hardirq context.  The work done in
+> this expiry function is well-bounded and minimal.
+> 
+> A user still must adjust the scheduling parameters of the watchdogd
+> to be correct w.r.t. their application needs.
+> 
+> Cc: Guenter Roeck <linux@roeck-us.net>
+> Reported-and-tested-by: Steffen Trumtrar <s.trumtrar@pengutronix.de>
+> Reported-by: Tim Sander <tim@krieglstein.org>
+> Signed-off-by: Julia Cartwright <julia@ni.com>
 
+Acked-by: Guenter Roeck <linux@roeck-us.net>
+
+> ---
+>   drivers/watchdog/watchdog_dev.c | 2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
 > 
-> > Thanks,
-> >
-> > 	tglx
+> diff --git a/drivers/watchdog/watchdog_dev.c b/drivers/watchdog/watchdog_dev.c
+> index ffbdc4642ea5..9c2b3e5cebdc 100644
+> --- a/drivers/watchdog/watchdog_dev.c
+> +++ b/drivers/watchdog/watchdog_dev.c
+> @@ -945,7 +945,7 @@ static int watchdog_cdev_register(struct watchdog_device *wdd, dev_t devno)
+>   		return -ENODEV;
+>   
+>   	kthread_init_work(&wd_data->work, watchdog_ping_work);
+> -	hrtimer_init(&wd_data->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+> +	hrtimer_init(&wd_data->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
+>   	wd_data->timer.function = watchdog_timer_expired;
+>   
+>   	if (wdd->id == 0) {
 > 
-> Sebastian
-> _______________________________________________
-> kbuild-all mailing list
-> kbuild-all@lists.01.org
-> https://lists.01.org/mailman/listinfo/kbuild-all
