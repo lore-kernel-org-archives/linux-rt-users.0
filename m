@@ -1,50 +1,46 @@
-From: Daniel Wagner <daniel.wagner@siemens.com>
-Subject: [PATCH RT 0/2] Linux v4.4.148-rt166-rc1
-Date: Thu,  4 Oct 2018 15:46:20 +0200
-Message-ID: <20181004134622.23181-1-daniel.wagner@siemens.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
+From: Tom Zanussi <zanussi@kernel.org>
+Subject: [ANNOUNCE] 3.18.123-rt107
+Date: Thu, 04 Oct 2018 16:01:20 -0500
+Message-ID: <1538686880.15852.3.camel@kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
         Julia Cartwright <julia@ni.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Dear RT Folks,
+Hello RT Folks!
 
-This is the RT stable review cycle of patch v4.4.148-rt166-rc1.
+I'm pleased to announce the 3.18.123-rt107 stable release.
 
-Please scream at me if I messed something up. Please test the patches
-too.
+This release is just an update to the new stable 3.18.123 version
+and no RT specific changes have been made.
 
-The -rc release will be uploaded to kernel.org and will be deleted
-when the final release is out. This is just a review release (or
-release candidate).
+You can get this release via the git tree at:
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-If all goes well, this patch will be converted to the next main
-release on 2018-10-11.
+  branch: v3.18-rt
+  Head SHA1: 8f272fa0fc773cf8ec21cb1924c44ebc21433098
 
-Enjoy,
+Or to build 3.18.123-rt107 directly, the following patches should be applied:
 
--- Daniel
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.123.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.123-rt107.patch.xz
 
 
-Daniel Wagner (2):
-  x86/kconfig: Use ticket spinlocks for -rt
-  Linux 4.4.148-rt166-rc1
-
- arch/x86/Kconfig | 2 +-
- localversion-rt  | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
-
--- 
-2.17.1
+Enjoy!
+   
+   Tom
