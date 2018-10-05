@@ -1,8 +1,9 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Subject: Re: [PATCH] kasan: convert kasan/quarantine_lock to raw_spinlock
-Date: Fri, 5 Oct 2018 18:30:18 +0200
-Message-ID: <20181005163018.icbknlzymwjhdehi@linutronix.de>
+Date: Fri, 5 Oct 2018 18:33:20 +0200
+Message-ID: <20181005163320.zkacovxvlih6blpp@linutronix.de>
 References: <20180918152931.17322-1-williams@redhat.com>
+ <20181005163018.icbknlzymwjhdehi@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8BIT
@@ -15,107 +16,133 @@ To: Clark Williams <williams@redhat.com>,
         linux-mm@kvack.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180918152931.17322-1-williams@redhat.com>
+In-Reply-To: <20181005163018.icbknlzymwjhdehi@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2018-09-18 10:29:31 [-0500], Clark Williams wrote:
+On 2018-10-05 18:30:18 [+0200], To Clark Williams wrote:
+> This is the minimum to get this working on RT splat free. There is one
+> memory deallocation with irqs off which should work on RT in its current
+> way.
+> Once this and the on_each_cpu() invocation, I was wondering if…
 
-So I received this from Clark:
+the patch at the bottom wouldn't work just fine for everyone.
+It would have the beaty of annotating the locking scope a little and
+avoiding the on_each_cpu() invocation. No local_irq_save() but actually
+the proper locking primitives.
+I haven't fully decoded the srcu part in the code.
 
-> The static lock quarantine_lock is used in mm/kasan/quarantine.c to protect
-> the quarantine queue datastructures. It is taken inside quarantine queue
-> manipulation routines (quarantine_put(), quarantine_reduce() and quarantine_remove_cache()),
-> with IRQs disabled. This is no problem on a stock kernel but is problematic
-> on an RT kernel where spin locks are converted to rt_mutex_t, which can sleep.
-> 
-> Convert the quarantine_lock to a raw spinlock. The usage of quarantine_lock
-> is confined to quarantine.c and the work performed while the lock is held is limited.
-> 
-> Signed-off-by: Clark Williams <williams@redhat.com>
+Wouldn't that work for you?
 
-This is the minimum to get this working on RT splat free. There is one
-memory deallocation with irqs off which should work on RT in its current
-way.
-Once this and the on_each_cpu() invocation, I was wondering if…
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ mm/kasan/quarantine.c | 45 +++++++++++++++++++++++++------------------
+ 1 file changed, 26 insertions(+), 19 deletions(-)
 
-> ---
->  mm/kasan/quarantine.c | 18 +++++++++---------
->  1 file changed, 9 insertions(+), 9 deletions(-)
-> 
-> diff --git a/mm/kasan/quarantine.c b/mm/kasan/quarantine.c
-> index 3a8ddf8baf7d..b209dbaefde8 100644
-> --- a/mm/kasan/quarantine.c
-> +++ b/mm/kasan/quarantine.c
-> @@ -103,7 +103,7 @@ static int quarantine_head;
->  static int quarantine_tail;
->  /* Total size of all objects in global_quarantine across all batches. */
->  static unsigned long quarantine_size;
-> -static DEFINE_SPINLOCK(quarantine_lock);
-> +static DEFINE_RAW_SPINLOCK(quarantine_lock);
->  DEFINE_STATIC_SRCU(remove_cache_srcu);
->  
->  /* Maximum size of the global queue. */
-> @@ -190,7 +190,7 @@ void quarantine_put(struct kasan_free_meta *info, struct kmem_cache *cache)
->  	if (unlikely(q->bytes > QUARANTINE_PERCPU_SIZE)) {
->  		qlist_move_all(q, &temp);
->  
-> -		spin_lock(&quarantine_lock);
-> +		raw_spin_lock(&quarantine_lock);
->  		WRITE_ONCE(quarantine_size, quarantine_size + temp.bytes);
->  		qlist_move_all(&temp, &global_quarantine[quarantine_tail]);
->  		if (global_quarantine[quarantine_tail].bytes >=
-> @@ -203,7 +203,7 @@ void quarantine_put(struct kasan_free_meta *info, struct kmem_cache *cache)
->  			if (new_tail != quarantine_head)
->  				quarantine_tail = new_tail;
->  		}
-> -		spin_unlock(&quarantine_lock);
-> +		raw_spin_unlock(&quarantine_lock);
->  	}
->  
->  	local_irq_restore(flags);
-> @@ -230,7 +230,7 @@ void quarantine_reduce(void)
->  	 * expected case).
->  	 */
->  	srcu_idx = srcu_read_lock(&remove_cache_srcu);
-> -	spin_lock_irqsave(&quarantine_lock, flags);
-> +	raw_spin_lock_irqsave(&quarantine_lock, flags);
->  
->  	/*
->  	 * Update quarantine size in case of hotplug. Allocate a fraction of
-> @@ -254,7 +254,7 @@ void quarantine_reduce(void)
->  			quarantine_head = 0;
->  	}
->  
-> -	spin_unlock_irqrestore(&quarantine_lock, flags);
-> +	raw_spin_unlock_irqrestore(&quarantine_lock, flags);
->  
->  	qlist_free_all(&to_free, NULL);
->  	srcu_read_unlock(&remove_cache_srcu, srcu_idx);
-> @@ -310,17 +310,17 @@ void quarantine_remove_cache(struct kmem_cache *cache)
->  	 */
->  	on_each_cpu(per_cpu_remove_cache, cache, 1);
->  
-> -	spin_lock_irqsave(&quarantine_lock, flags);
-> +	raw_spin_lock_irqsave(&quarantine_lock, flags);
->  	for (i = 0; i < QUARANTINE_BATCHES; i++) {
->  		if (qlist_empty(&global_quarantine[i]))
->  			continue;
->  		qlist_move_cache(&global_quarantine[i], &to_free, cache);
->  		/* Scanning whole quarantine can take a while. */
-> -		spin_unlock_irqrestore(&quarantine_lock, flags);
-> +		raw_spin_unlock_irqrestore(&quarantine_lock, flags);
->  		cond_resched();
-> -		spin_lock_irqsave(&quarantine_lock, flags);
-> +		raw_spin_lock_irqsave(&quarantine_lock, flags);
->  	}
-> -	spin_unlock_irqrestore(&quarantine_lock, flags);
-> +	raw_spin_unlock_irqrestore(&quarantine_lock, flags);
->  
->  	qlist_free_all(&to_free, cache);
->  
-> -- 
-> 2.17.1
-> 
-
-Sebastian
+diff --git a/mm/kasan/quarantine.c b/mm/kasan/quarantine.c
+index 3a8ddf8baf7dc..8ed595960e3c1 100644
+--- a/mm/kasan/quarantine.c
++++ b/mm/kasan/quarantine.c
+@@ -39,12 +39,13 @@
+  * objects inside of it.
+  */
+ struct qlist_head {
++	spinlock_t	lock;
+ 	struct qlist_node *head;
+ 	struct qlist_node *tail;
+ 	size_t bytes;
+ };
+ 
+-#define QLIST_INIT { NULL, NULL, 0 }
++#define QLIST_INIT {.head = NULL, .tail = NULL, .bytes = 0 }
+ 
+ static bool qlist_empty(struct qlist_head *q)
+ {
+@@ -95,7 +96,9 @@ static void qlist_move_all(struct qlist_head *from, struct qlist_head *to)
+  * The object quarantine consists of per-cpu queues and a global queue,
+  * guarded by quarantine_lock.
+  */
+-static DEFINE_PER_CPU(struct qlist_head, cpu_quarantine);
++static DEFINE_PER_CPU(struct qlist_head, cpu_quarantine) = {
++	.lock = __SPIN_LOCK_UNLOCKED(cpu_quarantine.lock),
++};
+ 
+ /* Round-robin FIFO array of batches. */
+ static struct qlist_head global_quarantine[QUARANTINE_BATCHES];
+@@ -183,12 +186,13 @@ void quarantine_put(struct kasan_free_meta *info, struct kmem_cache *cache)
+ 	 * beginning which ensures that it either sees the objects in per-cpu
+ 	 * lists or in the global quarantine.
+ 	 */
+-	local_irq_save(flags);
++	q = raw_cpu_ptr(&cpu_quarantine);
++	spin_lock_irqsave(&q->lock, flags);
+ 
+-	q = this_cpu_ptr(&cpu_quarantine);
+ 	qlist_put(q, &info->quarantine_link, cache->size);
+ 	if (unlikely(q->bytes > QUARANTINE_PERCPU_SIZE)) {
+ 		qlist_move_all(q, &temp);
++		spin_unlock(&q->lock);
+ 
+ 		spin_lock(&quarantine_lock);
+ 		WRITE_ONCE(quarantine_size, quarantine_size + temp.bytes);
+@@ -203,10 +207,10 @@ void quarantine_put(struct kasan_free_meta *info, struct kmem_cache *cache)
+ 			if (new_tail != quarantine_head)
+ 				quarantine_tail = new_tail;
+ 		}
+-		spin_unlock(&quarantine_lock);
++		spin_unlock_irqrestore(&quarantine_lock, flags);
++	} else {
++		spin_unlock_irqrestore(&q->lock, flags);
+ 	}
+-
+-	local_irq_restore(flags);
+ }
+ 
+ void quarantine_reduce(void)
+@@ -284,21 +288,11 @@ static void qlist_move_cache(struct qlist_head *from,
+ 	}
+ }
+ 
+-static void per_cpu_remove_cache(void *arg)
+-{
+-	struct kmem_cache *cache = arg;
+-	struct qlist_head to_free = QLIST_INIT;
+-	struct qlist_head *q;
+-
+-	q = this_cpu_ptr(&cpu_quarantine);
+-	qlist_move_cache(q, &to_free, cache);
+-	qlist_free_all(&to_free, cache);
+-}
+-
+ /* Free all quarantined objects belonging to cache. */
+ void quarantine_remove_cache(struct kmem_cache *cache)
+ {
+ 	unsigned long flags, i;
++	unsigned int cpu;
+ 	struct qlist_head to_free = QLIST_INIT;
+ 
+ 	/*
+@@ -308,7 +302,20 @@ void quarantine_remove_cache(struct kmem_cache *cache)
+ 	 * achieves the first goal, while synchronize_srcu() achieves the
+ 	 * second.
+ 	 */
+-	on_each_cpu(per_cpu_remove_cache, cache, 1);
++	/* get_online_cpus() invoked by caller */
++	for_each_online_cpu(cpu) {
++		struct qlist_head *q;
++		unsigned long flags;
++		struct qlist_head to_free = QLIST_INIT;
++
++		q = per_cpu_ptr(&cpu_quarantine, cpu);
++		spin_lock_irqsave(&q->lock, flags);
++		qlist_move_cache(q, &to_free, cache);
++		spin_unlock_irqrestore(&q->lock, flags);
++
++		qlist_free_all(&to_free, cache);
++
++	}
+ 
+ 	spin_lock_irqsave(&quarantine_lock, flags);
+ 	for (i = 0; i < QUARANTINE_BATCHES; i++) {
+-- 
+2.19.0
