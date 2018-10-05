@@ -1,184 +1,103 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mx1.redhat.com ([209.132.183.28]:43602 "EHLO mx1.redhat.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725794AbeJIFBh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 9 Oct 2018 01:01:37 -0400
-Date: Mon, 8 Oct 2018 16:47:47 -0500
-From: Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH] cyclictest: only print non-zero values in histogram
- output
-Message-ID: <20181008164747.3afab224@tagon>
-In-Reply-To: <e8080a04-597a-2bb3-f745-6a6c75b7dd5c@oth-regensburg.de>
-References: <20180913125239.32679-1-ralf.ramsauer@oth-regensburg.de>
-        <alpine.LFD.2.21.1809261251270.6531@planxty>
-        <43c66b87-f3e6-6bb1-b83e-5632a6676077@oth-regensburg.de>
-        <4b26cf5f-ff58-ea60-4e05-effe4b67b76d@gmail.com>
-        <e8080a04-597a-2bb3-f745-6a6c75b7dd5c@oth-regensburg.de>
+Received: from mail-io1-f50.google.com ([209.85.166.50]:35943 "EHLO
+        mail-io1-f50.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726800AbeJEJJe (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 5 Oct 2018 05:09:34 -0400
+Received: by mail-io1-f50.google.com with SMTP id p4-v6so9550455iom.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 04 Oct 2018 19:13:05 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+From: Anup Pemmaiah <anup.pemmaiah@gmail.com>
+Date: Thu, 4 Oct 2018 19:12:53 -0700
+Message-ID: <CAF_EZTMMAkxfCxjAVTJCqVHTUbPQNyUXDgbDk8xmGvp-hKdwcQ@mail.gmail.com>
+Subject: Floating point register corruption on ARM Cortex A57 (ARMv8) with
+ RT_PREEMPT linux
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: Ralf Ramsauer <ralf.ramsauer@oth-regensburg.de>
-Cc: Frank Rowand <frowand.list@gmail.com>, John Kacur <jkacur@redhat.com>, John Kacur <jkacur@gmail.com>, Linux RT Users <linux-rt-users@vger.kernel.org>
+To: linux-rt-users@vger.kernel.org
 
-On Wed, 26 Sep 2018 21:18:30 +0200
-Ralf Ramsauer <ralf.ramsauer@oth-regensburg.de> wrote:
+Hi,
 
-> On 9/26/18 8:46 PM, Frank Rowand wrote:
-> > On 09/26/18 04:15, Ralf Ramsauer wrote:  
-> >>
-> >>
-> >> On 9/26/18 12:53 PM, John Kacur wrote:  
-> >>>
-> >>>
-> >>> On Thu, 13 Sep 2018, Ralf Ramsauer wrote:
-> >>>  
-> >>>> If the histogram output is enabled, cyclictest dumps lines of all latencies,
-> >>>> even if the specific latency was never hit. For analysing a histogram, it is
-> >>>> sufficient to only dump latencies that actually occured. This patch skips
-> >>>> latencies that were never hit with respect to all threads.
-> >>>>
-> >>>> If cyclictest is used in combination with --nsecs, this removes a lot of
-> >>>> output noise.
-> >>>>
-> >>>> It shrinks output to:
-> >>>>   $ cyclictest --threads 2 --affinity 2-3 --priority 99 --histofall 100 --loops 100000
-> >>>>   # /dev/cpu_dma_latency set to 0us
-> >>>>   policy: fifo: loadavg: 0.03 0.13 0.07 1/560 1248
-> >>>>
-> >>>>   T: 0 ( 1228) P:99 I:1000 C: 100000 Min:      2 Act:    2 Avg:    2 Max:  4
-> >>>>   T: 1 ( 1229) P:99 I:1000 C: 100000 Min:      2 Act:    2 Avg:    2 Max:  4
-> >>>>   # Histogram
-> >>>>   000002 069425   067138  136563
-> >>>>   000003 030536   032850  063386
-> >>>>   000004 000039   000012  000051
-> >>>>   # Total: 000100000 000100000 000200000
-> >>>>   # Min Latencies: 00002 00002
-> >>>>   # Avg Latencies: 00002 00002
-> >>>>   # Max Latencies: 00004 00004 00004
-> >>>>   # Histogram Overflows: 00000 00000 00000
-> >>>>   # Histogram Overflow at cycle number:
-> >>>>   # Thread 0:
-> >>>>   # Thread 1:
-> >>>>
-> >>>> Signed-off-by: Ralf Ramsauer <ralf.ramsauer@oth-regensburg.de>
-> >>>> ---
-> >>>>  src/cyclictest/cyclictest.c | 13 ++++++++++---
-> >>>>  1 file changed, 10 insertions(+), 3 deletions(-)
-> >>>>
-> >>>> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> >>>> index 8d9ec80..0e8459c 100644
-> >>>> --- a/src/cyclictest/cyclictest.c
-> >>>> +++ b/src/cyclictest/cyclictest.c
-> >>>> @@ -1988,16 +1988,23 @@ static void print_hist(struct thread_param *par[], int nthreads)
-> >>>>  	fprintf(fd, "# Histogram\n");
-> >>>>  	for (i = 0; i < histogram; i++) {
-> >>>>  		unsigned long long int allthreads = 0;
-> >>>> +		unsigned long curr_latency = 0;
-> >>>> +
-> >>>> +		for (j = 0; j < nthreads ; j++) {
-> >>>> +			curr_latency = par[j]->stats->hist_array[i];
-> >>>> +			allthreads += curr_latency;
-> >>>> +			log_entries[j] += curr_latency;
-> >>>> +		}
-> >>>> +		if (!allthreads)
-> >>>> +			continue;
-> >>>>  
-> >>>>  		fprintf(fd, "%06d ", i);
-> >>>>  
-> >>>>  		for (j = 0; j < nthreads; j++) {
-> >>>> -			unsigned long curr_latency=par[j]->stats->hist_array[i];
-> >>>> +			curr_latency = par[j]->stats->hist_array[i];
-> >>>>  			fprintf(fd, "%06lu", curr_latency);
-> >>>>  			if (j < nthreads - 1)
-> >>>>  				fprintf(fd, "\t");
-> >>>> -			log_entries[j] += curr_latency;
-> >>>> -			allthreads += curr_latency;
-> >>>>  		}
-> >>>>  		if (histofall && nthreads > 1) {
-> >>>>  			fprintf(fd, "\t%06llu", allthreads);
-> >>>> -- 
-> >>>> 2.19.0
-> >>>>
-> >>>>  
-> >>>
-> >>> Note, although I initially accepted this patch I may have to revert it.
-> >>> The output of the histogram is not consumed just by humans but by 
-> >>> software, namely rteval  
-> >>
-> >> Narf, didn't know.  
-> > 
-> > I considered commenting on this patch when it was first submitted, then
-> > decided not to since I am no longer actively using cyclictest.  But it
-> > sounds like I can add some insight on usage of histogram data.
-> > 
-> > One of the ways that histogram data can be used is to create a line graph.
-> > In this case, it is important to have a zero value at the beginning and
-> > end of a range of zero values.  This is maybe easiest to illustrate with
-> > a simple data set of x (latency) and y (occurances):
-> > 
-> >   1   5
-> >   2   7
-> >   3   0
-> >   4   0
-> >   5   0
-> >   6   9
-> >   7  11
-> >   8  25
-> >   9   0
-> > 
-> > If the zero values are left out, then the graph will show a straight line
-> > from 2,7 to 6,9, which is very misleading.  
-> 
-> I see the point, but for further visualisation of data, I prefer to use
-> density plots created by some software (R/gnuplot/younameit) than trying
-> to interprate command line output, which might be several sites long.
-> 
->   I'm currently writing a R script that is able to parse, plot and
-> compare (multiple) cyclictest output files. I can publish it, if someone
-> is interested.
+I have a multi threaded userspace application running on RT_PREEMPT
+linux on ARM Cortex A57 (ARMv8). The linux version is 4.14.0 with the
+corresponding RT_PREEMPT patch. The below code is a simplified version
+to re-create the issue. When the code is compiled with optimization
+level -O1 and above, it error's out after sometime, with random value
+in fl_val(result of the multiplication in thr_fn) at Line-24. After
+looking at the compiled assembly code and through gdb, noticed that,
+the value of 0.002 is loaded into a floating point register(s8) before
+the looping starts at Line-21. The s8 register value is then used to
+multiply with register storing frand value at Line-24. At random
+times, the value in s8, has garbage value and the process aborts as
+expected. It looks like, during kernel context switches, it is not
+properly re-storing the values of floating point registers. The same
+code works fine without any errors, on a non-rt kernel of the same
+version on the same hardware.
 
-I'm interested and would love to see it. I've been fighting with gnuplot for
-ten years or so and would like to have an alternative. :)
+My Questions
 
-> 
-> > 
-> > When I was creating a lot of cyclictest data, I had a simple filter program
-> > that stripped out the extraneous zero values, leaving only the first and
-> > last zero value in a contiguous range of zero values.  I did this both to
-> > make the data files smaller (use less space and transfer faster across a
-> > slow data link) and to make them easier to examine in a text editor.  
-> 
-> Ack, this is exactly the motivation behind this patch. I'm running
-> cyclictest with ns resolution and a high maximum of max. histogram
-> latency. Most of the values are never hit, but I'd like to see all
-> extreme outliers. Cyclictest produced files with several hundret MiB,
-> while this tiny fix can extremely shrink it -- data is useless, so
-> instead of producing and filtering it, simply don't print it.
-> 
-> > 
-> > The reason I did not speak up is that with cyclictest not outputting zero
-> > values my filter program would simply have to be changed to sort-of the
-> > inverse of what it does now: insert the first and last zero values.
-> > 
-> > Whether the data includes or excludes the zero data, it is a simple
-> > filter program to transform it.  Though having options to exclude
-> > excessive zero values instead of all zero values would be a nice
-> > feature for cyclictest.  (Not volunteering to write the code. :-))  
-> 
-> Yet another command line switch... :) I can add an additional switch, if
-> desired. I leave the decision up to the maintainer, though I still think
-> that zero lines are useless in any case.
-> 
-> BTW: Patches for rteval are ready! I'll send them soon, they will
-> support both, the old and new output format.
+1) Is there any floating point related kernel setting that I should
+set in the RT_PREEMPT kernel? I have set eagerfpu=on (even though it
+is on by default)
 
-I look forward to another perspective on rteval.
+2) Was reading about "Lazy Stacking" for Cortex-M4, but not sure if it
+applies for Cortex A57
 
-Clark
+Any comments will be greatly appreciated.
 
-
--- 
-The United States Coast Guard
-Ruining Natural Selection since 1790
+----------------------------------------------Test-code------------------------------------------------------------
+  1 #include <iostream>
+  2 #include <cstdlib>
+  3 #include <cstdint>
+  4 #include <ctime>
+  5 #include <random>
+  6 #include <pthread.h>
+  7 #include <string.h>
+  8 #include <errno.h>
+  9 #include <unistd.h>
+ 10 #include <signal.h>
+ 11
+ 12 #define MAX_THR 30
+ 13
+ 14 typedef float float32_t;
+ 15 int32_t gflag = 0;
+ 16
+ 17 void *thr_fn(void *arg) {
+ 18   //pthread_t cur_tid = pthread_self();
+ 19   std::random_device rd;   // non-deterministic generator
+ 20   std::mt19937 gen(rd());
+ 21   while (1) {
+ 22     uint32_t rand_num = gen() % 1000;
+ 23     float32_t frand = static_cast<float32_t>(rand_num);
+ 24     float32_t fl_val = (frand * 0.002F);
+ 25     if ((fl_val < 0.0F) || (fl_val > 2.0F)) {
+ 26       gflag = -1;
+ 27       // Keep sleeping till the process gets aborted by the main thread
+ 28       while(1){usleep(2000);}
+ 29     }
+ 30     usleep(1000);
+ 31   }
+ 32 }
+ 33
+ 34 int main() {
+ 35   int thr_cnt;
+ 36   int res = 0;
+ 37   pthread_t tid;
+ 38   for (thr_cnt = 0; thr_cnt < MAX_THR; thr_cnt++) {
+ 39     res = pthread_create(&tid,  NULL, thr_fn, NULL);
+ 40     if (res != 0) {
+ 41       std::cout <<"Error creating pthread: " <<strerror(errno);
+ 42     }
+ 43   }
+ 44   while(1){
+ 45     if (gflag != 0) {
+ 46       kill(getpid(), SIGABRT);
+ 47     }
+ 48     usleep(1000 * 1000 * 1);
+ 49   }
+ 50   return (0);
+ 51 }
+~
+Thanks
+Anup
