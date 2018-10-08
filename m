@@ -1,305 +1,184 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mail-oi1-f196.google.com ([209.85.167.196]:32858 "EHLO
-        mail-oi1-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726468AbeJJQhO (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 10 Oct 2018 12:37:14 -0400
-Received: by mail-oi1-f196.google.com with SMTP id a203-v6so3533200oib.0
-        for <linux-rt-users@vger.kernel.org>; Wed, 10 Oct 2018 02:15:58 -0700 (PDT)
+Received: from mx1.redhat.com ([209.132.183.28]:43602 "EHLO mx1.redhat.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1725794AbeJIFBh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 9 Oct 2018 01:01:37 -0400
+Date: Mon, 8 Oct 2018 16:47:47 -0500
+From: Clark Williams <williams@redhat.com>
+Subject: Re: [PATCH] cyclictest: only print non-zero values in histogram
+ output
+Message-ID: <20181008164747.3afab224@tagon>
+In-Reply-To: <e8080a04-597a-2bb3-f745-6a6c75b7dd5c@oth-regensburg.de>
+References: <20180913125239.32679-1-ralf.ramsauer@oth-regensburg.de>
+        <alpine.LFD.2.21.1809261251270.6531@planxty>
+        <43c66b87-f3e6-6bb1-b83e-5632a6676077@oth-regensburg.de>
+        <4b26cf5f-ff58-ea60-4e05-effe4b67b76d@gmail.com>
+        <e8080a04-597a-2bb3-f745-6a6c75b7dd5c@oth-regensburg.de>
 MIME-Version: 1.0
-From: Philipp K <philipp97kl@gmail.com>
-Date: Wed, 10 Oct 2018 11:15:46 +0200
-Message-ID: <CAGZ+4_+DRKxKWC4zMu_xTUoy6ogPpjwVOVtXyAmbj4XXAnpUXw@mail.gmail.com>
-Subject: complete_all() with 5 waiters in swake_up_all_locked
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: linux-rt-users@vger.kernel.org
-Cc: tglx@linutronix.de, bigeasy@linutronix.de
+To: Ralf Ramsauer <ralf.ramsauer@oth-regensburg.de>
+Cc: Frank Rowand <frowand.list@gmail.com>, John Kacur <jkacur@redhat.com>, John Kacur <jkacur@gmail.com>, Linux RT Users <linux-rt-users@vger.kernel.org>
 
-Hi,
+On Wed, 26 Sep 2018 21:18:30 +0200
+Ralf Ramsauer <ralf.ramsauer@oth-regensburg.de> wrote:
 
-I've been fuzzing linux-rt with syzkaller and found a way to trigger
-$title warning.
+> On 9/26/18 8:46 PM, Frank Rowand wrote:
+> > On 09/26/18 04:15, Ralf Ramsauer wrote:  
+> >>
+> >>
+> >> On 9/26/18 12:53 PM, John Kacur wrote:  
+> >>>
+> >>>
+> >>> On Thu, 13 Sep 2018, Ralf Ramsauer wrote:
+> >>>  
+> >>>> If the histogram output is enabled, cyclictest dumps lines of all latencies,
+> >>>> even if the specific latency was never hit. For analysing a histogram, it is
+> >>>> sufficient to only dump latencies that actually occured. This patch skips
+> >>>> latencies that were never hit with respect to all threads.
+> >>>>
+> >>>> If cyclictest is used in combination with --nsecs, this removes a lot of
+> >>>> output noise.
+> >>>>
+> >>>> It shrinks output to:
+> >>>>   $ cyclictest --threads 2 --affinity 2-3 --priority 99 --histofall 100 --loops 100000
+> >>>>   # /dev/cpu_dma_latency set to 0us
+> >>>>   policy: fifo: loadavg: 0.03 0.13 0.07 1/560 1248
+> >>>>
+> >>>>   T: 0 ( 1228) P:99 I:1000 C: 100000 Min:      2 Act:    2 Avg:    2 Max:  4
+> >>>>   T: 1 ( 1229) P:99 I:1000 C: 100000 Min:      2 Act:    2 Avg:    2 Max:  4
+> >>>>   # Histogram
+> >>>>   000002 069425   067138  136563
+> >>>>   000003 030536   032850  063386
+> >>>>   000004 000039   000012  000051
+> >>>>   # Total: 000100000 000100000 000200000
+> >>>>   # Min Latencies: 00002 00002
+> >>>>   # Avg Latencies: 00002 00002
+> >>>>   # Max Latencies: 00004 00004 00004
+> >>>>   # Histogram Overflows: 00000 00000 00000
+> >>>>   # Histogram Overflow at cycle number:
+> >>>>   # Thread 0:
+> >>>>   # Thread 1:
+> >>>>
+> >>>> Signed-off-by: Ralf Ramsauer <ralf.ramsauer@oth-regensburg.de>
+> >>>> ---
+> >>>>  src/cyclictest/cyclictest.c | 13 ++++++++++---
+> >>>>  1 file changed, 10 insertions(+), 3 deletions(-)
+> >>>>
+> >>>> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> >>>> index 8d9ec80..0e8459c 100644
+> >>>> --- a/src/cyclictest/cyclictest.c
+> >>>> +++ b/src/cyclictest/cyclictest.c
+> >>>> @@ -1988,16 +1988,23 @@ static void print_hist(struct thread_param *par[], int nthreads)
+> >>>>  	fprintf(fd, "# Histogram\n");
+> >>>>  	for (i = 0; i < histogram; i++) {
+> >>>>  		unsigned long long int allthreads = 0;
+> >>>> +		unsigned long curr_latency = 0;
+> >>>> +
+> >>>> +		for (j = 0; j < nthreads ; j++) {
+> >>>> +			curr_latency = par[j]->stats->hist_array[i];
+> >>>> +			allthreads += curr_latency;
+> >>>> +			log_entries[j] += curr_latency;
+> >>>> +		}
+> >>>> +		if (!allthreads)
+> >>>> +			continue;
+> >>>>  
+> >>>>  		fprintf(fd, "%06d ", i);
+> >>>>  
+> >>>>  		for (j = 0; j < nthreads; j++) {
+> >>>> -			unsigned long curr_latency=par[j]->stats->hist_array[i];
+> >>>> +			curr_latency = par[j]->stats->hist_array[i];
+> >>>>  			fprintf(fd, "%06lu", curr_latency);
+> >>>>  			if (j < nthreads - 1)
+> >>>>  				fprintf(fd, "\t");
+> >>>> -			log_entries[j] += curr_latency;
+> >>>> -			allthreads += curr_latency;
+> >>>>  		}
+> >>>>  		if (histofall && nthreads > 1) {
+> >>>>  			fprintf(fd, "\t%06llu", allthreads);
+> >>>> -- 
+> >>>> 2.19.0
+> >>>>
+> >>>>  
+> >>>
+> >>> Note, although I initially accepted this patch I may have to revert it.
+> >>> The output of the histogram is not consumed just by humans but by 
+> >>> software, namely rteval  
+> >>
+> >> Narf, didn't know.  
+> > 
+> > I considered commenting on this patch when it was first submitted, then
+> > decided not to since I am no longer actively using cyclictest.  But it
+> > sounds like I can add some insight on usage of histogram data.
+> > 
+> > One of the ways that histogram data can be used is to create a line graph.
+> > In this case, it is important to have a zero value at the beginning and
+> > end of a range of zero values.  This is maybe easiest to illustrate with
+> > a simple data set of x (latency) and y (occurances):
+> > 
+> >   1   5
+> >   2   7
+> >   3   0
+> >   4   0
+> >   5   0
+> >   6   9
+> >   7  11
+> >   8  25
+> >   9   0
+> > 
+> > If the zero values are left out, then the graph will show a straight line
+> > from 2,7 to 6,9, which is very misleading.  
+> 
+> I see the point, but for further visualisation of data, I prefer to use
+> density plots created by some software (R/gnuplot/younameit) than trying
+> to interprate command line output, which might be several sites long.
+> 
+>   I'm currently writing a R script that is able to parse, plot and
+> compare (multiple) cyclictest output files. I can publish it, if someone
+> is interested.
 
-The reproducer works with a defconfig + CONFIG_NET_KEY=3Dy on 4.18.12-rt6 k=
-ernel.
+I'm interested and would love to see it. I've been fighting with gnuplot for
+ten years or so and would like to have an alternative. :)
 
-Philipp
+> 
+> > 
+> > When I was creating a lot of cyclictest data, I had a simple filter program
+> > that stripped out the extraneous zero values, leaving only the first and
+> > last zero value in a contiguous range of zero values.  I did this both to
+> > make the data files smaller (use less space and transfer faster across a
+> > slow data link) and to make them easier to examine in a text editor.  
+> 
+> Ack, this is exactly the motivation behind this patch. I'm running
+> cyclictest with ns resolution and a high maximum of max. histogram
+> latency. Most of the values are never hit, but I'd like to see all
+> extreme outliers. Cyclictest produced files with several hundret MiB,
+> while this tiny fix can extremely shrink it -- data is useless, so
+> instead of producing and filtering it, simply don't print it.
+> 
+> > 
+> > The reason I did not speak up is that with cyclictest not outputting zero
+> > values my filter program would simply have to be changed to sort-of the
+> > inverse of what it does now: insert the first and last zero values.
+> > 
+> > Whether the data includes or excludes the zero data, it is a simple
+> > filter program to transform it.  Though having options to exclude
+> > excessive zero values instead of all zero values would be a nice
+> > feature for cyclictest.  (Not volunteering to write the code. :-))  
+> 
+> Yet another command line switch... :) I can add an additional switch, if
+> desired. I leave the decision up to the maintainer, though I still think
+> that zero lines are useless in any case.
+> 
+> BTW: Patches for rteval are ready! I'll send them soon, they will
+> support both, the old and new output format.
 
-PS: Liebe Gr=C3=BC=C3=9Fe von Lukas Bulwahn
+I look forward to another perspective on rteval.
 
-
-Syzkaller hit 'WARNING in swake_up_all_locked' bug.
-
-------------[ cut here ]------------
-WARNING: CPU: 3 PID: 1778 at /kernel-source//kernel/sched/swait.c:48
-swake_up_all_locked+0x18d/0x220 kernel/sched/swait.c:48
-complete_all() with 5 waiters
-Kernel panic - not syncing: panic_on_warn set ...
-
-CPU: 3 PID: 1778 Comm: cryptomgr_probe Not tainted 4.9.56-rt37-hpad-a1-64-a=
-bl #1
-Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS
-Ubuntu-1.8.2-1ubuntu1 04/01/2014
- ffff88006a907ba8 ffffffff8b88c869 ffffffff8ca440a0 ffff88006a907c80
- ffffffff8ca58600 ffffffff8b01f84d ffff88006a907c70 ffffffff8b1f8ec9
- 0000000041b58ab3 ffffffff8ceea20b ffffffff8b1f8d13 ffffffff0000001d
-Call Trace:
- [<ffffffff8b88c869>] __dump_stack lib/dump_stack.c:15 [inline]
- [<ffffffff8b88c869>] dump_stack+0x6c/0x93 lib/dump_stack.c:51
- [<ffffffff8b1f8ec9>] panic+0x1b6/0x397 kernel/panic.c:179
- [<ffffffff8af32dd2>] __warn+0x1e2/0x200 kernel/panic.c:544
- [<ffffffff8af32eb7>] warn_slowpath_fmt+0xc7/0x100 kernel/panic.c:567
- [<ffffffff8b01f84d>] swake_up_all_locked+0x18d/0x220 kernel/sched/swait.c:=
-48
- [<ffffffff8b0208dc>] complete_all+0x4c/0x70 kernel/sched/completion.c:55
- [<ffffffff8b7a95c3>] cryptomgr_probe+0x173/0x240 crypto/algboss.c:89
- [<ffffffff8af980cd>] kthread+0x22d/0x2b0 kernel/kthread.c:211
- [<ffffffff8c7f89a2>] ret_from_fork+0x22/0x30 arch/x86/entry/entry_64.S:433
-Shutting down cpus with NMI
-Dumping ftrace buffer:
-   (ftrace buffer empty)
-Kernel Offset: 0xac00000 from 0xffffffff80200000 (relocation range:
-0xffffffff80000000-0xffffffffbfffffff)
+Clark
 
 
-Syzkaller reproducer:
-# {Threaded:false Collide:false Repeat:true RepeatTimes:0 Procs:8
-Sandbox:none Fault:false FaultCall:-1 FaultNth:0 EnableTun:false
-UseTmpDir:false EnableCgroups:false EnableNetdev:false ResetNet:false
-HandleSegv:false Repro:false Trace:false}
-r0 =3D socket$key(0xf, 0x3, 0x2)
-sendmsg$key(r0, &(0x7f0000000180)=3D{0x0, 0x0,
-&(0x7f0000000040)=3D{&(0x7f0000000000)=3D{0x2, 0x7, 0x0, 0x0, 0x2, 0x0,
-0x4}, 0x10}}, 0x0)
-
-
-C reproducer:
-// autogenerated by syzkaller (https://github.com/google/syzkaller)
-
-#define _GNU_SOURCE
-
-#include <dirent.h>
-#include <endian.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <sched.h>
-#include <signal.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/mount.h>
-#include <sys/prctl.h>
-#include <sys/resource.h>
-#include <sys/stat.h>
-#include <sys/syscall.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <time.h>
-#include <unistd.h>
-
-unsigned long long procid;
-
-static void sleep_ms(uint64_t ms)
-{
-    usleep(ms * 1000);
-}
-
-static uint64_t current_time_ms()
-{
-    struct timespec ts;
-    if (clock_gettime(CLOCK_MONOTONIC, &ts))
-    exit(1);
-    return (uint64_t)ts.tv_sec * 1000 + (uint64_t)ts.tv_nsec / 1000000;
-}
-
-static void setup_common()
-{
-    if (mount(0, "/sys/fs/fuse/connections", "fusectl", 0, 0)) {
-    }
-}
-
-static void loop();
-
-static void sandbox_common()
-{
-    prctl(PR_SET_PDEATHSIG, SIGKILL, 0, 0, 0);
-    setpgrp();
-    setsid();
-    struct rlimit rlim;
-    rlim.rlim_cur =3D rlim.rlim_max =3D 160 << 20;
-    setrlimit(RLIMIT_AS, &rlim);
-    rlim.rlim_cur =3D rlim.rlim_max =3D 8 << 20;
-    setrlimit(RLIMIT_MEMLOCK, &rlim);
-    rlim.rlim_cur =3D rlim.rlim_max =3D 136 << 20;
-    setrlimit(RLIMIT_FSIZE, &rlim);
-    rlim.rlim_cur =3D rlim.rlim_max =3D 1 << 20;
-    setrlimit(RLIMIT_STACK, &rlim);
-    rlim.rlim_cur =3D rlim.rlim_max =3D 0;
-    setrlimit(RLIMIT_CORE, &rlim);
-    rlim.rlim_cur =3D rlim.rlim_max =3D 256;
-    setrlimit(RLIMIT_NOFILE, &rlim);
-    if (unshare(CLONE_NEWNS)) {
-    }
-    if (unshare(CLONE_NEWIPC)) {
-    }
-    if (unshare(0x02000000)) {
-    }
-    if (unshare(CLONE_NEWUTS)) {
-    }
-    if (unshare(CLONE_SYSVSEM)) {
-    }
-}
-
-int wait_for_loop(int pid)
-{
-    if (pid < 0)
-    exit(1);
-    int status =3D 0;
-    while (waitpid(-1, &status, __WALL) !=3D pid) {
-    }
-    return WEXITSTATUS(status);
-}
-
-static int do_sandbox_none(void)
-{
-    if (unshare(CLONE_NEWPID)) {
-    }
-    int pid =3D fork();
-    if (pid !=3D 0)
-        return wait_for_loop(pid);
-    setup_common();
-    sandbox_common();
-    if (unshare(CLONE_NEWNET)) {
-    }
-    loop();
-    exit(1);
-}
-
-static void kill_and_wait(int pid, int* status)
-{
-    kill(-pid, SIGKILL);
-    kill(pid, SIGKILL);
-    int i;
-    for (i =3D 0; i < 100; i++) {
-        if (waitpid(-1, status, WNOHANG | __WALL) =3D=3D pid)
-            return;
-        usleep(1000);
-    }
-    DIR* dir =3D opendir("/sys/fs/fuse/connections");
-    if (dir) {
-        for (;;) {
-            struct dirent* ent =3D readdir(dir);
-            if (!ent)
-                break;
-            if (strcmp(ent->d_name, ".") =3D=3D 0 || strcmp(ent->d_name, ".=
-.") =3D=3D 0)
-                continue;
-            char abort[300];
-            snprintf(abort, sizeof(abort),
-"/sys/fs/fuse/connections/%s/abort", ent->d_name);
-            int fd =3D open(abort, O_WRONLY);
-            if (fd =3D=3D -1) {
-                continue;
-            }
-            if (write(fd, abort, 1) < 0) {
-            }
-            close(fd);
-        }
-        closedir(dir);
-    } else {
-    }
-    while (waitpid(-1, status, __WALL) !=3D pid) {
-    }
-}
-
-#define SYZ_HAVE_SETUP_TEST 1
-static void setup_test()
-{
-    prctl(PR_SET_PDEATHSIG, SIGKILL, 0, 0, 0);
-    setpgrp();
-}
-
-#define SYZ_HAVE_RESET_TEST 1
-static void reset_test()
-{
-    int fd;
-    for (fd =3D 3; fd < 30; fd++)
-        close(fd);
-}
-
-static void execute_one();
-
-#define WAIT_FLAGS __WALL
-
-static void loop()
-{
-    int iter;
-    for (iter =3D 0;; iter++) {
-        int pid =3D fork();
-        if (pid < 0)
-    exit(1);
-        if (pid =3D=3D 0) {
-            setup_test();
-            execute_one();
-            reset_test();
-            exit(0);
-        }
-        int status =3D 0;
-        uint64_t start =3D current_time_ms();
-        for (;;) {
-            if (waitpid(-1, &status, WNOHANG | WAIT_FLAGS) =3D=3D pid)
-                break;
-            sleep_ms(1);
-            if (current_time_ms() - start < 5 * 1000)
-                continue;
-            kill_and_wait(pid, &status);
-            break;
-        }
-    }
-}
-
-uint64_t r[1] =3D {0xffffffffffffffff};
-
-void execute_one()
-{
-        long res =3D 0;
-    res =3D syscall(__NR_socket, 0xf, 3, 2);  // socket(PF_KEY,
-SOCK_RAW, AF_INET);
-    if (res !=3D -1)
-        r[0] =3D res;
-*(uint64_t*)0x20000180 =3D 0;
-*(uint32_t*)0x20000188 =3D 0;
-*(uint64_t*)0x20000190 =3D 0x20000040;
-*(uint64_t*)0x20000040 =3D 0x20000000;
-*(uint8_t*)0x20000000 =3D 2;
-*(uint8_t*)0x20000001 =3D 7;
-*(uint8_t*)0x20000002 =3D 0;
-*(uint8_t*)0x20000003 =3D 0;
-*(uint16_t*)0x20000004 =3D 2;
-*(uint16_t*)0x20000006 =3D 0;
-*(uint32_t*)0x20000008 =3D 4;
-*(uint32_t*)0x2000000c =3D 0;
-*(uint64_t*)0x20000048 =3D 0x10;
-*(uint64_t*)0x20000198 =3D 1;
-*(uint64_t*)0x200001a0 =3D 0;
-*(uint64_t*)0x200001a8 =3D 0;
-*(uint32_t*)0x200001b0 =3D 0;
-    syscall(__NR_sendmsg, r[0], 0x20000180, 0);
-
-}
-int main()
-{
-        syscall(__NR_mmap, 0x20000000, 0x1000000, 3, 0x32, -1, 0);
-    for (procid =3D 0; procid < 8; procid++) {
-        if (fork() =3D=3D 0) {
-            do_sandbox_none();
-        }
-    }
-    sleep(1000000);
-    return 0;
-}
+-- 
+The United States Coast Guard
+Ruining Natural Selection since 1790
