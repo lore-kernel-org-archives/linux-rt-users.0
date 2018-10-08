@@ -1,230 +1,163 @@
-From: Andrea Parri <andrea.parri@amarulasolutions.com>
-Subject: Re: [PATCH 1/2] kthread: convert worker lock to raw spinlock
-Date: Fri, 5 Oct 2018 20:10:35 +0200
-Message-ID: <20181005181035.GA19828@andrea>
-References: <cover.1538089179.git.julia@ni.com>
- <da33d7d7aa32d08f9cbf5016fb04426f90645cb0.1538089180.git.julia@ni.com>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: [PATCH] kasan: convert kasan/quarantine_lock to raw_spinlock
+Date: Sun, 7 Oct 2018 19:47:26 -0500
+Message-ID: <20181007194726.78d8464f@tagon>
+References: <20180918152931.17322-1-williams@redhat.com>
+        <20181005163018.icbknlzymwjhdehi@linutronix.de>
+        <20181005163320.zkacovxvlih6blpp@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Ingo Molnar <mingo@kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+Cc: Alexander Potapenko <glider@google.com>,
+        Dmitry Vyukov <dvyukov@google.com>, kasan-dev@googlegroups.com,
+        linux-mm@kvack.org, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org,
         Peter Zijlstra <peterz@infradead.org>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        Steffen Trumtrar <s.trumtrar@pengutronix.de>,
-        Tim Sander <tim@krieglstein.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Guenter Roeck <linux@roeck-us.net>
-To: Julia Cartwright <julia@ni.com>
+        Thomas Gleixner <tglx@linutronix.de>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <da33d7d7aa32d08f9cbf5016fb04426f90645cb0.1538089180.git.julia@ni.com>
+In-Reply-To: <20181005163320.zkacovxvlih6blpp@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Julia,
+I applied this patch to a fairly stock 4.18-rt5 kernel and booted with no complaints, then
+ran rteval for 12h with no stack splats reported. I'll keep banging on it but preliminary
+reports look good. 
 
-On Fri, Sep 28, 2018 at 09:03:51PM +0000, Julia Cartwright wrote:
-> In order to enable the queuing of kthread work items from hardirq
-> context even when PREEMPT_RT_FULL is enabled, convert the worker
-> spin_lock to a raw_spin_lock.
+Clark
+
+On Fri, 5 Oct 2018 18:33:20 +0200
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+
+> On 2018-10-05 18:30:18 [+0200], To Clark Williams wrote:
+> > This is the minimum to get this working on RT splat free. There is one
+> > memory deallocation with irqs off which should work on RT in its current
+> > way.
+> > Once this and the on_each_cpu() invocation, I was wondering if…  
 > 
-> This is only acceptable to do because the work performed under the lock
-> is well-bounded and minimal.
-
-Clearly not my topic..., but out of curiosity:  What do you mean by
-"well-bounded" and "minimal"?  Can you maybe point me to some doc.?
-
-  Andrea
-
-
+> the patch at the bottom wouldn't work just fine for everyone.
+> It would have the beaty of annotating the locking scope a little and
+> avoiding the on_each_cpu() invocation. No local_irq_save() but actually
+> the proper locking primitives.
+> I haven't fully decoded the srcu part in the code.
 > 
-> Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> Cc: Guenter Roeck <linux@roeck-us.net>
-> Reported-and-tested-by: Steffen Trumtrar <s.trumtrar@pengutronix.de>
-> Reported-by: Tim Sander <tim@krieglstein.org>
-> Signed-off-by: Julia Cartwright <julia@ni.com>
+> Wouldn't that work for you?
+> 
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 > ---
->  include/linux/kthread.h |  2 +-
->  kernel/kthread.c        | 42 ++++++++++++++++++++---------------------
->  2 files changed, 22 insertions(+), 22 deletions(-)
+>  mm/kasan/quarantine.c | 45 +++++++++++++++++++++++++------------------
+>  1 file changed, 26 insertions(+), 19 deletions(-)
 > 
-> diff --git a/include/linux/kthread.h b/include/linux/kthread.h
-> index c1961761311d..ad292898f7f2 100644
-> --- a/include/linux/kthread.h
-> +++ b/include/linux/kthread.h
-> @@ -85,7 +85,7 @@ enum {
+> diff --git a/mm/kasan/quarantine.c b/mm/kasan/quarantine.c
+> index 3a8ddf8baf7dc..8ed595960e3c1 100644
+> --- a/mm/kasan/quarantine.c
+> +++ b/mm/kasan/quarantine.c
+> @@ -39,12 +39,13 @@
+>   * objects inside of it.
+>   */
+>  struct qlist_head {
+> +	spinlock_t	lock;
+>  	struct qlist_node *head;
+>  	struct qlist_node *tail;
+>  	size_t bytes;
+>  };
 >  
->  struct kthread_worker {
->  	unsigned int		flags;
-> -	spinlock_t		lock;
-> +	raw_spinlock_t		lock;
->  	struct list_head	work_list;
->  	struct list_head	delayed_work_list;
->  	struct task_struct	*task;
-> diff --git a/kernel/kthread.c b/kernel/kthread.c
-> index 486dedbd9af5..c1d9ee6671c6 100644
-> --- a/kernel/kthread.c
-> +++ b/kernel/kthread.c
-> @@ -597,7 +597,7 @@ void __kthread_init_worker(struct kthread_worker *worker,
->  				struct lock_class_key *key)
+> -#define QLIST_INIT { NULL, NULL, 0 }
+> +#define QLIST_INIT {.head = NULL, .tail = NULL, .bytes = 0 }
+>  
+>  static bool qlist_empty(struct qlist_head *q)
 >  {
->  	memset(worker, 0, sizeof(struct kthread_worker));
-> -	spin_lock_init(&worker->lock);
-> +	raw_spin_lock_init(&worker->lock);
->  	lockdep_set_class_and_name(&worker->lock, key, name);
->  	INIT_LIST_HEAD(&worker->work_list);
->  	INIT_LIST_HEAD(&worker->delayed_work_list);
-> @@ -639,21 +639,21 @@ int kthread_worker_fn(void *worker_ptr)
+> @@ -95,7 +96,9 @@ static void qlist_move_all(struct qlist_head *from, struct qlist_head *to)
+>   * The object quarantine consists of per-cpu queues and a global queue,
+>   * guarded by quarantine_lock.
+>   */
+> -static DEFINE_PER_CPU(struct qlist_head, cpu_quarantine);
+> +static DEFINE_PER_CPU(struct qlist_head, cpu_quarantine) = {
+> +	.lock = __SPIN_LOCK_UNLOCKED(cpu_quarantine.lock),
+> +};
 >  
->  	if (kthread_should_stop()) {
->  		__set_current_state(TASK_RUNNING);
-> -		spin_lock_irq(&worker->lock);
-> +		raw_spin_lock_irq(&worker->lock);
->  		worker->task = NULL;
-> -		spin_unlock_irq(&worker->lock);
-> +		raw_spin_unlock_irq(&worker->lock);
->  		return 0;
->  	}
->  
->  	work = NULL;
-> -	spin_lock_irq(&worker->lock);
-> +	raw_spin_lock_irq(&worker->lock);
->  	if (!list_empty(&worker->work_list)) {
->  		work = list_first_entry(&worker->work_list,
->  					struct kthread_work, node);
->  		list_del_init(&work->node);
->  	}
->  	worker->current_work = work;
-> -	spin_unlock_irq(&worker->lock);
-> +	raw_spin_unlock_irq(&worker->lock);
->  
->  	if (work) {
->  		__set_current_state(TASK_RUNNING);
-> @@ -810,12 +810,12 @@ bool kthread_queue_work(struct kthread_worker *worker,
->  	bool ret = false;
->  	unsigned long flags;
->  
-> -	spin_lock_irqsave(&worker->lock, flags);
-> +	raw_spin_lock_irqsave(&worker->lock, flags);
->  	if (!queuing_blocked(worker, work)) {
->  		kthread_insert_work(worker, work, &worker->work_list);
->  		ret = true;
->  	}
-> -	spin_unlock_irqrestore(&worker->lock, flags);
-> +	raw_spin_unlock_irqrestore(&worker->lock, flags);
->  	return ret;
->  }
->  EXPORT_SYMBOL_GPL(kthread_queue_work);
-> @@ -841,7 +841,7 @@ void kthread_delayed_work_timer_fn(struct timer_list *t)
->  	if (WARN_ON_ONCE(!worker))
->  		return;
->  
-> -	spin_lock(&worker->lock);
-> +	raw_spin_lock(&worker->lock);
->  	/* Work must not be used with >1 worker, see kthread_queue_work(). */
->  	WARN_ON_ONCE(work->worker != worker);
->  
-> @@ -850,7 +850,7 @@ void kthread_delayed_work_timer_fn(struct timer_list *t)
->  	list_del_init(&work->node);
->  	kthread_insert_work(worker, work, &worker->work_list);
->  
-> -	spin_unlock(&worker->lock);
-> +	raw_spin_unlock(&worker->lock);
->  }
->  EXPORT_SYMBOL(kthread_delayed_work_timer_fn);
->  
-> @@ -906,14 +906,14 @@ bool kthread_queue_delayed_work(struct kthread_worker *worker,
->  	unsigned long flags;
->  	bool ret = false;
->  
-> -	spin_lock_irqsave(&worker->lock, flags);
-> +	raw_spin_lock_irqsave(&worker->lock, flags);
->  
->  	if (!queuing_blocked(worker, work)) {
->  		__kthread_queue_delayed_work(worker, dwork, delay);
->  		ret = true;
->  	}
->  
-> -	spin_unlock_irqrestore(&worker->lock, flags);
-> +	raw_spin_unlock_irqrestore(&worker->lock, flags);
->  	return ret;
->  }
->  EXPORT_SYMBOL_GPL(kthread_queue_delayed_work);
-> @@ -949,7 +949,7 @@ void kthread_flush_work(struct kthread_work *work)
->  	if (!worker)
->  		return;
->  
-> -	spin_lock_irq(&worker->lock);
-> +	raw_spin_lock_irq(&worker->lock);
->  	/* Work must not be used with >1 worker, see kthread_queue_work(). */
->  	WARN_ON_ONCE(work->worker != worker);
->  
-> @@ -961,7 +961,7 @@ void kthread_flush_work(struct kthread_work *work)
->  	else
->  		noop = true;
->  
-> -	spin_unlock_irq(&worker->lock);
-> +	raw_spin_unlock_irq(&worker->lock);
->  
->  	if (!noop)
->  		wait_for_completion(&fwork.done);
-> @@ -994,9 +994,9 @@ static bool __kthread_cancel_work(struct kthread_work *work, bool is_dwork,
->  		 * any queuing is blocked by setting the canceling counter.
->  		 */
->  		work->canceling++;
-> -		spin_unlock_irqrestore(&worker->lock, *flags);
-> +		raw_spin_unlock_irqrestore(&worker->lock, *flags);
->  		del_timer_sync(&dwork->timer);
-> -		spin_lock_irqsave(&worker->lock, *flags);
-> +		raw_spin_lock_irqsave(&worker->lock, *flags);
->  		work->canceling--;
->  	}
->  
-> @@ -1043,7 +1043,7 @@ bool kthread_mod_delayed_work(struct kthread_worker *worker,
->  	unsigned long flags;
->  	int ret = false;
->  
-> -	spin_lock_irqsave(&worker->lock, flags);
-> +	raw_spin_lock_irqsave(&worker->lock, flags);
->  
->  	/* Do not bother with canceling when never queued. */
->  	if (!work->worker)
-> @@ -1060,7 +1060,7 @@ bool kthread_mod_delayed_work(struct kthread_worker *worker,
->  fast_queue:
->  	__kthread_queue_delayed_work(worker, dwork, delay);
->  out:
-> -	spin_unlock_irqrestore(&worker->lock, flags);
-> +	raw_spin_unlock_irqrestore(&worker->lock, flags);
->  	return ret;
->  }
->  EXPORT_SYMBOL_GPL(kthread_mod_delayed_work);
-> @@ -1074,7 +1074,7 @@ static bool __kthread_cancel_work_sync(struct kthread_work *work, bool is_dwork)
->  	if (!worker)
->  		goto out;
->  
-> -	spin_lock_irqsave(&worker->lock, flags);
-> +	raw_spin_lock_irqsave(&worker->lock, flags);
->  	/* Work must not be used with >1 worker, see kthread_queue_work(). */
->  	WARN_ON_ONCE(work->worker != worker);
->  
-> @@ -1088,13 +1088,13 @@ static bool __kthread_cancel_work_sync(struct kthread_work *work, bool is_dwork)
->  	 * In the meantime, block any queuing by setting the canceling counter.
+>  /* Round-robin FIFO array of batches. */
+>  static struct qlist_head global_quarantine[QUARANTINE_BATCHES];
+> @@ -183,12 +186,13 @@ void quarantine_put(struct kasan_free_meta *info, struct kmem_cache *cache)
+>  	 * beginning which ensures that it either sees the objects in per-cpu
+>  	 * lists or in the global quarantine.
 >  	 */
->  	work->canceling++;
-> -	spin_unlock_irqrestore(&worker->lock, flags);
-> +	raw_spin_unlock_irqrestore(&worker->lock, flags);
->  	kthread_flush_work(work);
-> -	spin_lock_irqsave(&worker->lock, flags);
-> +	raw_spin_lock_irqsave(&worker->lock, flags);
->  	work->canceling--;
+> -	local_irq_save(flags);
+> +	q = raw_cpu_ptr(&cpu_quarantine);
+> +	spin_lock_irqsave(&q->lock, flags);
 >  
->  out_fast:
-> -	spin_unlock_irqrestore(&worker->lock, flags);
-> +	raw_spin_unlock_irqrestore(&worker->lock, flags);
->  out:
->  	return ret;
+> -	q = this_cpu_ptr(&cpu_quarantine);
+>  	qlist_put(q, &info->quarantine_link, cache->size);
+>  	if (unlikely(q->bytes > QUARANTINE_PERCPU_SIZE)) {
+>  		qlist_move_all(q, &temp);
+> +		spin_unlock(&q->lock);
+>  
+>  		spin_lock(&quarantine_lock);
+>  		WRITE_ONCE(quarantine_size, quarantine_size + temp.bytes);
+> @@ -203,10 +207,10 @@ void quarantine_put(struct kasan_free_meta *info, struct kmem_cache *cache)
+>  			if (new_tail != quarantine_head)
+>  				quarantine_tail = new_tail;
+>  		}
+> -		spin_unlock(&quarantine_lock);
+> +		spin_unlock_irqrestore(&quarantine_lock, flags);
+> +	} else {
+> +		spin_unlock_irqrestore(&q->lock, flags);
+>  	}
+> -
+> -	local_irq_restore(flags);
 >  }
+>  
+>  void quarantine_reduce(void)
+> @@ -284,21 +288,11 @@ static void qlist_move_cache(struct qlist_head *from,
+>  	}
+>  }
+>  
+> -static void per_cpu_remove_cache(void *arg)
+> -{
+> -	struct kmem_cache *cache = arg;
+> -	struct qlist_head to_free = QLIST_INIT;
+> -	struct qlist_head *q;
+> -
+> -	q = this_cpu_ptr(&cpu_quarantine);
+> -	qlist_move_cache(q, &to_free, cache);
+> -	qlist_free_all(&to_free, cache);
+> -}
+> -
+>  /* Free all quarantined objects belonging to cache. */
+>  void quarantine_remove_cache(struct kmem_cache *cache)
+>  {
+>  	unsigned long flags, i;
+> +	unsigned int cpu;
+>  	struct qlist_head to_free = QLIST_INIT;
+>  
+>  	/*
+> @@ -308,7 +302,20 @@ void quarantine_remove_cache(struct kmem_cache *cache)
+>  	 * achieves the first goal, while synchronize_srcu() achieves the
+>  	 * second.
+>  	 */
+> -	on_each_cpu(per_cpu_remove_cache, cache, 1);
+> +	/* get_online_cpus() invoked by caller */
+> +	for_each_online_cpu(cpu) {
+> +		struct qlist_head *q;
+> +		unsigned long flags;
+> +		struct qlist_head to_free = QLIST_INIT;
+> +
+> +		q = per_cpu_ptr(&cpu_quarantine, cpu);
+> +		spin_lock_irqsave(&q->lock, flags);
+> +		qlist_move_cache(q, &to_free, cache);
+> +		spin_unlock_irqrestore(&q->lock, flags);
+> +
+> +		qlist_free_all(&to_free, cache);
+> +
+> +	}
+>  
+>  	spin_lock_irqsave(&quarantine_lock, flags);
+>  	for (i = 0; i < QUARANTINE_BATCHES; i++) {
 > -- 
-> 2.18.0
+> 2.19.0
 > 
+
+
+-- 
+The United States Coast Guard
+Ruining Natural Selection since 1790
