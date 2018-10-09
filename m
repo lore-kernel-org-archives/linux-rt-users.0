@@ -1,56 +1,57 @@
-From: Juri Lelli <juri.lelli@redhat.com>
-Subject: Re: [RFD/RFC PATCH 0/8] Towards implementing proxy execution
-Date: Tue, 9 Oct 2018 14:35:58 +0200
-Message-ID: <20181009123558.GF9130@localhost.localdomain>
-References: <20181009092434.26221-1-juri.lelli@redhat.com>
- <20181009105112.bhqlrabdt5ae5qmm@linutronix.de>
- <9837aa4b-1bd4-bc6a-84f7-0b8704995d44@redhat.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH] kasan: convert kasan/quarantine_lock to raw_spinlock
+Date: Tue, 9 Oct 2018 16:27:42 +0200
+Message-ID: <20181009142742.ikh7xv2dn5skjjbe@linutronix.de>
+References: <20180918152931.17322-1-williams@redhat.com>
+ <20181005163018.icbknlzymwjhdehi@linutronix.de>
+ <20181005163320.zkacovxvlih6blpp@linutronix.de>
+ <CACT4Y+YoNCm=0C6PZtQR1V1j4QeQ0cFcJzpJF1hn34Oaht=jwg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        peterz@infradead.org, mingo@redhat.com, rostedt@goodmis.org,
-        tglx@linutronix.de, linux-kernel@vger.kernel.org,
-        luca.abeni@santannapisa.it, claudio@evidence.eu.com,
-        tommaso.cucinotta@santannapisa.it, alessio.balsini@gmail.com,
-        will.deacon@arm.com, andrea.parri@amarulasolutions.com,
-        dietmar.eggemann@arm.com, patrick.bellasi@arm.com,
-        henrik@austad.us, linux-rt-users@vger.kernel.org
-To: Daniel Bristot de Oliveira <bristot@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+Cc: Clark Williams <williams@redhat.com>,
+        Alexander Potapenko <glider@google.com>,
+        kasan-dev <kasan-dev@googlegroups.com>,
+        Linux-MM <linux-mm@kvack.org>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>
+To: Dmitry Vyukov <dvyukov@google.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <9837aa4b-1bd4-bc6a-84f7-0b8704995d44@redhat.com>
+In-Reply-To: <CACT4Y+YoNCm=0C6PZtQR1V1j4QeQ0cFcJzpJF1hn34Oaht=jwg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 09/10/18 13:56, Daniel Bristot de Oliveira wrote:
-> On 10/9/18 12:51 PM, Sebastian Andrzej Siewior wrote:
-> >> The main concerns I have with the current approach is that, being based
-> >> on mutex.c, it's both
-> >>
-> >>  - not linked with futexes
-> >>  - not involving "legacy" priority inheritance (rt_mutex.c)
-> >>
-> >> I believe one of the main reasons Peter started this on mutexes is to
-> >> have better coverage of potential problems (which I can assure everybody
-> >> it had). I'm not yet sure what should we do moving forward, and this is
-> >> exactly what I'd be pleased to hear your opinions on.
-> > wasn't the idea that once it works to get rid of rt_mutex?
+On 2018-10-08 11:15:57 [+0200], Dmitry Vyukov wrote:
+> Hi Sebastian,
+Hi Dmitry,
 
-Looks like it was (see Peter's reply).
+> This seems to beak quarantine_remove_cache( ) in the sense that some
+> object from the cache may still be in quarantine when
+> quarantine_remove_cache() returns. When quarantine_remove_cache()
+> returns all objects from the cache must be purged from quarantine.
+> That srcu and irq trickery is there for a reason.
 
-> As far as I know, it is. But there are some additional complexity
-> involving a -rt version of this patch, for instance:
-> 
-> What should the protocol do if the thread migrating is with migration
-> disabled?
-> 
-> The side effects of, for instance, ignoring the migrate_disable() would
-> add noise for the initial implementation... too much complexity at once.
-> 
-> IMHO, once it works in the non-rt, it will be easier to do the changes
-> needed to integrate it with -rt.
-> 
-> Thoughts?
+That loop should behave like your on_each_cpu() except it does not
+involve the remote CPU.
 
-Makes sense to me. Maybe we should just still keep in mind eventual
-integration, so that we don't take decisions we would regret.
+> This code is also on hot path of kmallock/kfree, an additional
+> lock/unlock per operation is expensive. Adding 2 locked RMW per
+> kmalloc is not something that should be done only out of refactoring
+> reasons.
+But this is debug code anyway, right? And it is highly complex imho.
+Well, maybe only for me after I looked at it for the first time…
+
+> The original message from Clark mentions that the problem can be fixed
+> by just changing type of spinlock. This looks like a better and
+> simpler way to resolve the problem to me.
+
+I usually prefer to avoid adding raw_locks everywhere if it can be
+avoided. However given that this is debug code and a few additional us
+shouldn't matter here, I have no problem with Clark's initial patch
+(also the mem-free in irq-off region works in this scenario).
+Can you take it as-is or should I repost it with an acked-by?
+
+Sebastian
