@@ -1,176 +1,151 @@
-From: Dmitry Vyukov <dvyukov@google.com>
-Subject: Re: [PATCH] kasan: convert kasan/quarantine_lock to raw_spinlock
-Date: Mon, 8 Oct 2018 11:15:57 +0200
-Message-ID: <CACT4Y+YoNCm=0C6PZtQR1V1j4QeQ0cFcJzpJF1hn34Oaht=jwg@mail.gmail.com>
-References: <20180918152931.17322-1-williams@redhat.com> <20181005163018.icbknlzymwjhdehi@linutronix.de>
- <20181005163320.zkacovxvlih6blpp@linutronix.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-Cc: Clark Williams <williams@redhat.com>,
-        Alexander Potapenko <glider@google.com>,
-        kasan-dev <kasan-dev@googlegroups.com>,
-        Linux-MM <linux-mm@kvack.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org,
-        Peter Zijlstra <peterz@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Juri Lelli <juri.lelli@redhat.com>
+Subject: [RFD/RFC PATCH 0/8] Towards implementing proxy execution
+Date: Tue,  9 Oct 2018 11:24:26 +0200
+Message-ID: <20181009092434.26221-1-juri.lelli@redhat.com>
+Cc: rostedt@goodmis.org, tglx@linutronix.de,
+        linux-kernel@vger.kernel.org, luca.abeni@santannapisa.it,
+        claudio@evidence.eu.com, tommaso.cucinotta@santannapisa.it,
+        alessio.balsini@gmail.com, bristot@redhat.com, will.deacon@arm.com,
+        andrea.parri@amarulasolutions.com, dietmar.eggemann@arm.com,
+        patrick.bellasi@arm.com, henrik@austad.us,
+        linux-rt-users@vger.kernel.org, Juri Lelli <juri.lelli@redhat.com>
+To: peterz@infradead.org, mingo@redhat.com
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181005163320.zkacovxvlih6blpp@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Oct 5, 2018 at 6:33 PM, Sebastian Andrzej Siewior
-<bigeasy@linutronix.de> wrote:
-> On 2018-10-05 18:30:18 [+0200], To Clark Williams wrote:
->> This is the minimum to get this working on RT splat free. There is one
->> memory deallocation with irqs off which should work on RT in its current
->> way.
->> Once this and the on_each_cpu() invocation, I was wondering if=E2=80=A6
->
-> the patch at the bottom wouldn't work just fine for everyone.
-> It would have the beaty of annotating the locking scope a little and
-> avoiding the on_each_cpu() invocation. No local_irq_save() but actually
-> the proper locking primitives.
-> I haven't fully decoded the srcu part in the code.
->
-> Wouldn't that work for you?
+Hi all,
 
-Hi Sebastian,
+Proxy Execution (also goes under several other names) isn't a new
+concept, it has been mentioned already in the past to this community
+(both in email discussions and at conferences [1, 2]), but no actual
+implementation that applies to a fairly recent kernel exists as of today
+(of which I'm aware of at least - happy to be proven wrong).
 
-This seems to beak quarantine_remove_cache( ) in the sense that some
-object from the cache may still be in quarantine when
-quarantine_remove_cache() returns. When quarantine_remove_cache()
-returns all objects from the cache must be purged from quarantine.
-That srcu and irq trickery is there for a reason.
-This code is also on hot path of kmallock/kfree, an additional
-lock/unlock per operation is expensive. Adding 2 locked RMW per
-kmalloc is not something that should be done only out of refactoring
-reasons.
+Very broadly speaking, more info below, proxy execution enables a task
+to run using the context of some other task that is "willing" to
+participate in the mechanism, as this helps both tasks to improve
+performance (w.r.t. the latter task not participating to proxy
+execution).
 
-The original message from Clark mentions that the problem can be fixed
-by just changing type of spinlock. This looks like a better and
-simpler way to resolve the problem to me.
+This RFD/proof of concept aims at starting a discussion about how we can
+get proxy execution in mainline. But, first things first, why do we even
+care about it?
 
+I'm pretty confident with saying that the line of development that is
+mainly interested in this at the moment is the one that might benefit
+in allowing non privileged processes to use deadline scheduling [3].
+The main missing bit before we can safely relax the root privileges
+constraint is a proper priority inheritance mechanism, which translates
+to bandwidth inheritance [4, 5] for deadline scheduling, or to some sort
+of interpretation of the concept of running a task holding a (rt_)mutex
+within the bandwidth allotment of some other task that is blocked on the
+same (rt_)mutex.
 
-> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> ---
->  mm/kasan/quarantine.c | 45 +++++++++++++++++++++++++------------------
->  1 file changed, 26 insertions(+), 19 deletions(-)
->
-> diff --git a/mm/kasan/quarantine.c b/mm/kasan/quarantine.c
-> index 3a8ddf8baf7dc..8ed595960e3c1 100644
-> --- a/mm/kasan/quarantine.c
-> +++ b/mm/kasan/quarantine.c
-> @@ -39,12 +39,13 @@
->   * objects inside of it.
->   */
->  struct qlist_head {
-> +       spinlock_t      lock;
->         struct qlist_node *head;
->         struct qlist_node *tail;
->         size_t bytes;
->  };
->
-> -#define QLIST_INIT { NULL, NULL, 0 }
-> +#define QLIST_INIT {.head =3D NULL, .tail =3D NULL, .bytes =3D 0 }
->
->  static bool qlist_empty(struct qlist_head *q)
->  {
-> @@ -95,7 +96,9 @@ static void qlist_move_all(struct qlist_head *from, str=
-uct qlist_head *to)
->   * The object quarantine consists of per-cpu queues and a global queue,
->   * guarded by quarantine_lock.
->   */
-> -static DEFINE_PER_CPU(struct qlist_head, cpu_quarantine);
-> +static DEFINE_PER_CPU(struct qlist_head, cpu_quarantine) =3D {
-> +       .lock =3D __SPIN_LOCK_UNLOCKED(cpu_quarantine.lock),
-> +};
->
->  /* Round-robin FIFO array of batches. */
->  static struct qlist_head global_quarantine[QUARANTINE_BATCHES];
-> @@ -183,12 +186,13 @@ void quarantine_put(struct kasan_free_meta *info, s=
-truct kmem_cache *cache)
->          * beginning which ensures that it either sees the objects in per=
--cpu
->          * lists or in the global quarantine.
->          */
-> -       local_irq_save(flags);
-> +       q =3D raw_cpu_ptr(&cpu_quarantine);
-> +       spin_lock_irqsave(&q->lock, flags);
->
-> -       q =3D this_cpu_ptr(&cpu_quarantine);
->         qlist_put(q, &info->quarantine_link, cache->size);
->         if (unlikely(q->bytes > QUARANTINE_PERCPU_SIZE)) {
->                 qlist_move_all(q, &temp);
-> +               spin_unlock(&q->lock);
->
->                 spin_lock(&quarantine_lock);
->                 WRITE_ONCE(quarantine_size, quarantine_size + temp.bytes)=
-;
-> @@ -203,10 +207,10 @@ void quarantine_put(struct kasan_free_meta *info, s=
-truct kmem_cache *cache)
->                         if (new_tail !=3D quarantine_head)
->                                 quarantine_tail =3D new_tail;
->                 }
-> -               spin_unlock(&quarantine_lock);
-> +               spin_unlock_irqrestore(&quarantine_lock, flags);
-> +       } else {
-> +               spin_unlock_irqrestore(&q->lock, flags);
->         }
-> -
-> -       local_irq_restore(flags);
->  }
->
->  void quarantine_reduce(void)
-> @@ -284,21 +288,11 @@ static void qlist_move_cache(struct qlist_head *fro=
-m,
->         }
->  }
->
-> -static void per_cpu_remove_cache(void *arg)
-> -{
-> -       struct kmem_cache *cache =3D arg;
-> -       struct qlist_head to_free =3D QLIST_INIT;
-> -       struct qlist_head *q;
-> -
-> -       q =3D this_cpu_ptr(&cpu_quarantine);
-> -       qlist_move_cache(q, &to_free, cache);
-> -       qlist_free_all(&to_free, cache);
-> -}
-> -
->  /* Free all quarantined objects belonging to cache. */
->  void quarantine_remove_cache(struct kmem_cache *cache)
->  {
->         unsigned long flags, i;
-> +       unsigned int cpu;
->         struct qlist_head to_free =3D QLIST_INIT;
->
->         /*
-> @@ -308,7 +302,20 @@ void quarantine_remove_cache(struct kmem_cache *cach=
-e)
->          * achieves the first goal, while synchronize_srcu() achieves the
->          * second.
->          */
-> -       on_each_cpu(per_cpu_remove_cache, cache, 1);
-> +       /* get_online_cpus() invoked by caller */
-> +       for_each_online_cpu(cpu) {
-> +               struct qlist_head *q;
-> +               unsigned long flags;
-> +               struct qlist_head to_free =3D QLIST_INIT;
-> +
-> +               q =3D per_cpu_ptr(&cpu_quarantine, cpu);
-> +               spin_lock_irqsave(&q->lock, flags);
-> +               qlist_move_cache(q, &to_free, cache);
-> +               spin_unlock_irqrestore(&q->lock, flags);
-> +
-> +               qlist_free_all(&to_free, cache);
-> +
-> +       }
->
->         spin_lock_irqsave(&quarantine_lock, flags);
->         for (i =3D 0; i < QUARANTINE_BATCHES; i++) {
-> --
-> 2.19.0
->
+The concept itself is pretty general however, and it is not hard to
+foresee possible applications in other scenarios (say for example nice
+values/shares across co-operating CFS tasks or clamping values [6]).
+But I'm already digressing, so let's get back to the code that comes
+with this cover letter.
+
+One can define the scheduling context of a task as all the information
+in task_struct that the scheduler needs to implement a policy and the
+execution contex as all the state required to actually "run" the task.
+An example of scheduling context might be the information contained in
+task_struct se, rt and dl fields; affinity pertains instead to execution
+context (and I guess decideing what pertains to what is actually up for
+discussion as well ;-). Patch 04/08 implements such distinction.
+
+As implemented in this set, a link between scheduling contexts of
+different tasks might be established when a task blocks on a mutex held
+by some other task (blocked_on relation). In this case the former task
+starts to be considered a potential proxy for the latter (mutex owner).
+One key change in how mutexes work made in here is that waiters don't
+really sleep: they are not dequeued, so they can be picked up by the
+scheduler when it runs.  If a waiter (potential proxy) task is selected
+by the scheduler, the blocked_on relation is used to find the mutex
+owner and put that to run on the CPU, using the proxy task scheduling
+context.
+
+   Follow the blocked-on relation:
+  
+                  ,-> task           <- proxy, picked by scheduler
+                  |     | blocked-on
+                  |     v
+     blocked-task |   mutex
+                  |     | owner
+                  |     v
+                  `-- task           <- gets to run using proxy info
+
+Now, the situation is (of course) more tricky than depicted so far
+because we have to deal with all sort of possible states the mutex
+owner might be in while a potential proxy is selected by the scheduler,
+e.g. owner might be sleeping, running on a different CPU, blocked on
+another mutex itself... so, I'd kindly refer people to have a look at
+05/08 proxy() implementation and comments.
+
+Peter kindly shared his WIP patches with us (me, Luca, Tommaso, Claudio,
+Daniel, the Pisa gang) a while ago, but I could seriously have a decent
+look at them only recently (thanks a lot to the other guys for giving a
+first look at this way before me!). This set is thus composed of Peter's
+original patches (which I rebased on tip/sched/core as of today,
+commented and hopefully duly reported in changelogs what have I possibly
+broke) plus a bunch of additional changes that seemed required to make
+all this boot "successfully" on a virtual machine. So be advised! This
+is good only for fun ATM (I actually really hope this is good enough for
+discussion), pretty far from production I'm afraid. Share early, share
+often, right?  :-)
+
+The main concerns I have with the current approach is that, being based
+on mutex.c, it's both
+
+ - not linked with futexes
+ - not involving "legacy" priority inheritance (rt_mutex.c)
+
+I believe one of the main reasons Peter started this on mutexes is to
+have better coverage of potential problems (which I can assure everybody
+it had). I'm not yet sure what should we do moving forward, and this is
+exactly what I'd be pleased to hear your opinions on.
+
+https://github.com/jlelli/linux.git experimental/deadline/proxy-rfc-v1
+
+Thanks a lot in advance!
+
+- Juri
+
+1 - https://wiki.linuxfoundation.org/_media/realtime/events/rt-summit2017/proxy-execution_peter-zijlstra.pdf
+2 - https://lwn.net/Articles/397422/ which "points" to https://goo.gl/3VrLza
+3 - https://marc.info/?l=linux-rt-users&m=153450086400459&w=2
+4 - https://ieeexplore.ieee.org/document/5562902
+5 - http://retis.sssup.it/~lipari/papers/rtlws2013.pdf
+6 - https://lore.kernel.org/lkml/20180828135324.21976-1-patrick.bellasi@arm.com/
+
+Juri Lelli (3):
+  locking/mutex: make mutex::wait_lock irq safe
+  sched: Ensure blocked_on is always guarded by blocked_lock
+  sched: Fixup task CPUs for potential proxies.
+
+Peter Zijlstra (5):
+  locking/mutex: Convert mutex::wait_lock to raw_spinlock_t
+  locking/mutex: Removes wakeups from under mutex::wait_lock
+  locking/mutex: Rework task_struct::blocked_on
+  sched: Split scheduler execution context
+  sched: Add proxy execution
+
+ include/linux/mutex.h        |   4 +-
+ include/linux/sched.h        |   8 +-
+ init/Kconfig                 |   4 +
+ init/init_task.c             |   1 +
+ kernel/Kconfig.locks         |   2 +-
+ kernel/fork.c                |   8 +-
+ kernel/locking/mutex-debug.c |  12 +-
+ kernel/locking/mutex.c       | 127 +++++++--
+ kernel/sched/core.c          | 510 +++++++++++++++++++++++++++++++++--
+ kernel/sched/deadline.c      |   2 +-
+ kernel/sched/fair.c          |   7 +
+ kernel/sched/rt.c            |   2 +-
+ kernel/sched/sched.h         |  30 ++-
+ 13 files changed, 642 insertions(+), 75 deletions(-)
+
+-- 
+2.17.1
