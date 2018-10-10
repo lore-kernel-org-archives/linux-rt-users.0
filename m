@@ -1,377 +1,87 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] v4.18.12-rt7
-Date: Tue, 9 Oct 2018 18:08:57 +0200
-Message-ID: <20181009160856.eiydl7jvglcao442@linutronix.de>
+From: Dmitry Vyukov <dvyukov@google.com>
+Subject: Re: [PATCH] kasan: convert kasan/quarantine_lock to raw_spinlock
+Date: Wed, 10 Oct 2018 10:25:42 +0200
+Message-ID: <CACT4Y+ZB38pKvT8+BAjDZ1t4ZjXQQKoya+ytXT+ASQxHUkWwnA@mail.gmail.com>
+References: <20180918152931.17322-1-williams@redhat.com> <20181005163018.icbknlzymwjhdehi@linutronix.de>
+ <20181005163320.zkacovxvlih6blpp@linutronix.de> <CACT4Y+YoNCm=0C6PZtQR1V1j4QeQ0cFcJzpJF1hn34Oaht=jwg@mail.gmail.com>
+ <20181009142742.ikh7xv2dn5skjjbe@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+Cc: Clark Williams <williams@redhat.com>,
+        Alexander Potapenko <glider@google.com>,
+        kasan-dev <kasan-dev@googlegroups.com>,
+        Linux-MM <linux-mm@kvack.org>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Peter Zijlstra <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
+In-Reply-To: <20181009142742.ikh7xv2dn5skjjbe@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Dear RT folks!
+On Tue, Oct 9, 2018 at 4:27 PM, Sebastian Andrzej Siewior
+<bigeasy@linutronix.de> wrote:
+> On 2018-10-08 11:15:57 [+0200], Dmitry Vyukov wrote:
+>> Hi Sebastian,
+> Hi Dmitry,
+>
+>> This seems to beak quarantine_remove_cache( ) in the sense that some
+>> object from the cache may still be in quarantine when
+>> quarantine_remove_cache() returns. When quarantine_remove_cache()
+>> returns all objects from the cache must be purged from quarantine.
+>> That srcu and irq trickery is there for a reason.
+>
+> That loop should behave like your on_each_cpu() except it does not
+> involve the remote CPU.
 
-I'm pleased to announce the v4.18.12-rt7 patch set. 
 
-Changes since v4.18.12-rt6:
+The problem is that it can squeeze in between:
 
-  - Let the watchdog core expire the watchdog timer hardirq context.
-    Otherwise a high priority thread may not allow the watchdog to run.
-    The user must still adjust the priority of "watchdogd". Reported by
-    Steffen Trumtrar and Tim Sander, patched by Julia Cartwright.
++               spin_unlock(&q->lock);
 
-  - Make kasan related lock a raw_lock_t. Patch by Clark Williams.
+                spin_lock(&quarantine_lock);
 
-  - Explicitly initialize a variable in the amba-pl011 driver to avoid
-    false "uninitialized" warning. Patch by Kurt Kanzenbach.
+as far as I see. And then some objects can be left in the quarantine.
 
-  - Export the __migrate_disabled symbol so modules (like lttng-modules)
-    don't complain about a missing symbol. Reported and fix suggested by
-    Jonathan Rajotte-Julien.
 
-Known issues
-     - A warning triggered in "rcu_note_context_switch" originated from
-       SyS_timer_gettime(). The issue was always there, it is now
-       visible. Reported by Grygorii Strashko and Daniel Wagner.
+>> This code is also on hot path of kmallock/kfree, an additional
+>> lock/unlock per operation is expensive. Adding 2 locked RMW per
+>> kmalloc is not something that should be done only out of refactoring
+>> reasons.
+> But this is debug code anyway, right? And it is highly complex imho.
+> Well, maybe only for me after I looked at it for the first time=E2=80=A6
 
-The delta patch against v4.18.12-rt6 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.18/incr/patch-4.18.12-rt6-rt7.patch.xz
+It is debug code - yes.
+Nothing about its performance matters - no.
 
-You can get this release via the git tree at:
+That's the way to produce unusable debug tools.
+With too much overhead timeouts start to fire and code behaves not the
+way it behaves in production.
+The tool is used in continuous integration and developers wait for
+test results before merging code.
+The tool is used on canary devices and directly contributes to usage experi=
+ence.
 
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.18.12-rt7
+We of course don't want to trade a page of assembly code for cutting
+few cycles here (something that could make sense for some networking
+code maybe). But otherwise let's not introduce spinlocks on fast paths
+just for refactoring reasons.
 
-The RT patch against v4.18.12 can be found here:
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.18/older/patch-4.18.12-rt7.patch.xz
+>> The original message from Clark mentions that the problem can be fixed
+>> by just changing type of spinlock. This looks like a better and
+>> simpler way to resolve the problem to me.
+>
+> I usually prefer to avoid adding raw_locks everywhere if it can be
+> avoided. However given that this is debug code and a few additional us
+> shouldn't matter here, I have no problem with Clark's initial patch
+> (also the mem-free in irq-off region works in this scenario).
+> Can you take it as-is or should I repost it with an acked-by?
 
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.18/older/patches-4.18.12-rt7.tar.xz
-
-Sebastian
-
-diff --git a/drivers/tty/serial/amba-pl011.c b/drivers/tty/serial/amba-pl011.c
-index 484861278e9c3..a658214486e76 100644
---- a/drivers/tty/serial/amba-pl011.c
-+++ b/drivers/tty/serial/amba-pl011.c
-@@ -2211,7 +2211,7 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
- {
- 	struct uart_amba_port *uap = amba_ports[co->index];
- 	unsigned int old_cr = 0, new_cr;
--	unsigned long flags;
-+	unsigned long flags = 0;
- 	int locked = 1;
- 
- 	clk_enable(uap->clk);
-diff --git a/drivers/watchdog/watchdog_dev.c b/drivers/watchdog/watchdog_dev.c
-index ffbdc4642ea55..84f75b5045f66 100644
---- a/drivers/watchdog/watchdog_dev.c
-+++ b/drivers/watchdog/watchdog_dev.c
-@@ -147,7 +147,7 @@ static inline void watchdog_update_worker(struct watchdog_device *wdd)
- 		ktime_t t = watchdog_next_keepalive(wdd);
- 
- 		if (t > 0)
--			hrtimer_start(&wd_data->timer, t, HRTIMER_MODE_REL);
-+			hrtimer_start(&wd_data->timer, t, HRTIMER_MODE_REL_HARD);
- 	} else {
- 		hrtimer_cancel(&wd_data->timer);
- 	}
-@@ -166,7 +166,7 @@ static int __watchdog_ping(struct watchdog_device *wdd)
- 	if (ktime_after(earliest_keepalive, now)) {
- 		hrtimer_start(&wd_data->timer,
- 			      ktime_sub(earliest_keepalive, now),
--			      HRTIMER_MODE_REL);
-+			      HRTIMER_MODE_REL_HARD);
- 		return 0;
- 	}
- 
-@@ -945,7 +945,7 @@ static int watchdog_cdev_register(struct watchdog_device *wdd, dev_t devno)
- 		return -ENODEV;
- 
- 	kthread_init_work(&wd_data->work, watchdog_ping_work);
--	hrtimer_init(&wd_data->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-+	hrtimer_init(&wd_data->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
- 	wd_data->timer.function = watchdog_timer_expired;
- 
- 	if (wdd->id == 0) {
-@@ -992,7 +992,7 @@ static int watchdog_cdev_register(struct watchdog_device *wdd, dev_t devno)
- 		__module_get(wdd->ops->owner);
- 		kref_get(&wd_data->kref);
- 		if (handle_boot_enabled)
--			hrtimer_start(&wd_data->timer, 0, HRTIMER_MODE_REL);
-+			hrtimer_start(&wd_data->timer, 0, HRTIMER_MODE_REL_HARD);
- 		else
- 			pr_info("watchdog%d running and kernel based pre-userspace handler disabled\n",
- 				wdd->id);
-diff --git a/include/linux/kthread.h b/include/linux/kthread.h
-index c1961761311db..ad292898f7f2b 100644
---- a/include/linux/kthread.h
-+++ b/include/linux/kthread.h
-@@ -85,7 +85,7 @@ enum {
- 
- struct kthread_worker {
- 	unsigned int		flags;
--	spinlock_t		lock;
-+	raw_spinlock_t		lock;
- 	struct list_head	work_list;
- 	struct list_head	delayed_work_list;
- 	struct task_struct	*task;
-diff --git a/kernel/kthread.c b/kernel/kthread.c
-index 486dedbd9af58..c1d9ee6671c67 100644
---- a/kernel/kthread.c
-+++ b/kernel/kthread.c
-@@ -597,7 +597,7 @@ void __kthread_init_worker(struct kthread_worker *worker,
- 				struct lock_class_key *key)
- {
- 	memset(worker, 0, sizeof(struct kthread_worker));
--	spin_lock_init(&worker->lock);
-+	raw_spin_lock_init(&worker->lock);
- 	lockdep_set_class_and_name(&worker->lock, key, name);
- 	INIT_LIST_HEAD(&worker->work_list);
- 	INIT_LIST_HEAD(&worker->delayed_work_list);
-@@ -639,21 +639,21 @@ int kthread_worker_fn(void *worker_ptr)
- 
- 	if (kthread_should_stop()) {
- 		__set_current_state(TASK_RUNNING);
--		spin_lock_irq(&worker->lock);
-+		raw_spin_lock_irq(&worker->lock);
- 		worker->task = NULL;
--		spin_unlock_irq(&worker->lock);
-+		raw_spin_unlock_irq(&worker->lock);
- 		return 0;
- 	}
- 
- 	work = NULL;
--	spin_lock_irq(&worker->lock);
-+	raw_spin_lock_irq(&worker->lock);
- 	if (!list_empty(&worker->work_list)) {
- 		work = list_first_entry(&worker->work_list,
- 					struct kthread_work, node);
- 		list_del_init(&work->node);
- 	}
- 	worker->current_work = work;
--	spin_unlock_irq(&worker->lock);
-+	raw_spin_unlock_irq(&worker->lock);
- 
- 	if (work) {
- 		__set_current_state(TASK_RUNNING);
-@@ -810,12 +810,12 @@ bool kthread_queue_work(struct kthread_worker *worker,
- 	bool ret = false;
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&worker->lock, flags);
-+	raw_spin_lock_irqsave(&worker->lock, flags);
- 	if (!queuing_blocked(worker, work)) {
- 		kthread_insert_work(worker, work, &worker->work_list);
- 		ret = true;
- 	}
--	spin_unlock_irqrestore(&worker->lock, flags);
-+	raw_spin_unlock_irqrestore(&worker->lock, flags);
- 	return ret;
- }
- EXPORT_SYMBOL_GPL(kthread_queue_work);
-@@ -841,7 +841,7 @@ void kthread_delayed_work_timer_fn(struct timer_list *t)
- 	if (WARN_ON_ONCE(!worker))
- 		return;
- 
--	spin_lock(&worker->lock);
-+	raw_spin_lock(&worker->lock);
- 	/* Work must not be used with >1 worker, see kthread_queue_work(). */
- 	WARN_ON_ONCE(work->worker != worker);
- 
-@@ -850,7 +850,7 @@ void kthread_delayed_work_timer_fn(struct timer_list *t)
- 	list_del_init(&work->node);
- 	kthread_insert_work(worker, work, &worker->work_list);
- 
--	spin_unlock(&worker->lock);
-+	raw_spin_unlock(&worker->lock);
- }
- EXPORT_SYMBOL(kthread_delayed_work_timer_fn);
- 
-@@ -906,14 +906,14 @@ bool kthread_queue_delayed_work(struct kthread_worker *worker,
- 	unsigned long flags;
- 	bool ret = false;
- 
--	spin_lock_irqsave(&worker->lock, flags);
-+	raw_spin_lock_irqsave(&worker->lock, flags);
- 
- 	if (!queuing_blocked(worker, work)) {
- 		__kthread_queue_delayed_work(worker, dwork, delay);
- 		ret = true;
- 	}
- 
--	spin_unlock_irqrestore(&worker->lock, flags);
-+	raw_spin_unlock_irqrestore(&worker->lock, flags);
- 	return ret;
- }
- EXPORT_SYMBOL_GPL(kthread_queue_delayed_work);
-@@ -949,7 +949,7 @@ void kthread_flush_work(struct kthread_work *work)
- 	if (!worker)
- 		return;
- 
--	spin_lock_irq(&worker->lock);
-+	raw_spin_lock_irq(&worker->lock);
- 	/* Work must not be used with >1 worker, see kthread_queue_work(). */
- 	WARN_ON_ONCE(work->worker != worker);
- 
-@@ -961,7 +961,7 @@ void kthread_flush_work(struct kthread_work *work)
- 	else
- 		noop = true;
- 
--	spin_unlock_irq(&worker->lock);
-+	raw_spin_unlock_irq(&worker->lock);
- 
- 	if (!noop)
- 		wait_for_completion(&fwork.done);
-@@ -994,9 +994,9 @@ static bool __kthread_cancel_work(struct kthread_work *work, bool is_dwork,
- 		 * any queuing is blocked by setting the canceling counter.
- 		 */
- 		work->canceling++;
--		spin_unlock_irqrestore(&worker->lock, *flags);
-+		raw_spin_unlock_irqrestore(&worker->lock, *flags);
- 		del_timer_sync(&dwork->timer);
--		spin_lock_irqsave(&worker->lock, *flags);
-+		raw_spin_lock_irqsave(&worker->lock, *flags);
- 		work->canceling--;
- 	}
- 
-@@ -1043,7 +1043,7 @@ bool kthread_mod_delayed_work(struct kthread_worker *worker,
- 	unsigned long flags;
- 	int ret = false;
- 
--	spin_lock_irqsave(&worker->lock, flags);
-+	raw_spin_lock_irqsave(&worker->lock, flags);
- 
- 	/* Do not bother with canceling when never queued. */
- 	if (!work->worker)
-@@ -1060,7 +1060,7 @@ bool kthread_mod_delayed_work(struct kthread_worker *worker,
- fast_queue:
- 	__kthread_queue_delayed_work(worker, dwork, delay);
- out:
--	spin_unlock_irqrestore(&worker->lock, flags);
-+	raw_spin_unlock_irqrestore(&worker->lock, flags);
- 	return ret;
- }
- EXPORT_SYMBOL_GPL(kthread_mod_delayed_work);
-@@ -1074,7 +1074,7 @@ static bool __kthread_cancel_work_sync(struct kthread_work *work, bool is_dwork)
- 	if (!worker)
- 		goto out;
- 
--	spin_lock_irqsave(&worker->lock, flags);
-+	raw_spin_lock_irqsave(&worker->lock, flags);
- 	/* Work must not be used with >1 worker, see kthread_queue_work(). */
- 	WARN_ON_ONCE(work->worker != worker);
- 
-@@ -1088,13 +1088,13 @@ static bool __kthread_cancel_work_sync(struct kthread_work *work, bool is_dwork)
- 	 * In the meantime, block any queuing by setting the canceling counter.
- 	 */
- 	work->canceling++;
--	spin_unlock_irqrestore(&worker->lock, flags);
-+	raw_spin_unlock_irqrestore(&worker->lock, flags);
- 	kthread_flush_work(work);
--	spin_lock_irqsave(&worker->lock, flags);
-+	raw_spin_lock_irqsave(&worker->lock, flags);
- 	work->canceling--;
- 
- out_fast:
--	spin_unlock_irqrestore(&worker->lock, flags);
-+	raw_spin_unlock_irqrestore(&worker->lock, flags);
- out:
- 	return ret;
- }
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 7d789c1b316b3..4739472fb72ef 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -1100,6 +1100,7 @@ int __migrate_disabled(struct task_struct *p)
- {
- 	return p->migrate_disable;
- }
-+EXPORT_SYMBOL_GPL(__migrate_disabled);
- #endif
- 
- static void __do_set_cpus_allowed_tail(struct task_struct *p,
-diff --git a/localversion-rt b/localversion-rt
-index 8fc605d806670..045478966e9f1 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt6
-+-rt7
-diff --git a/mm/kasan/quarantine.c b/mm/kasan/quarantine.c
-index 3a8ddf8baf7dc..b209dbaefde82 100644
---- a/mm/kasan/quarantine.c
-+++ b/mm/kasan/quarantine.c
-@@ -103,7 +103,7 @@ static int quarantine_head;
- static int quarantine_tail;
- /* Total size of all objects in global_quarantine across all batches. */
- static unsigned long quarantine_size;
--static DEFINE_SPINLOCK(quarantine_lock);
-+static DEFINE_RAW_SPINLOCK(quarantine_lock);
- DEFINE_STATIC_SRCU(remove_cache_srcu);
- 
- /* Maximum size of the global queue. */
-@@ -190,7 +190,7 @@ void quarantine_put(struct kasan_free_meta *info, struct kmem_cache *cache)
- 	if (unlikely(q->bytes > QUARANTINE_PERCPU_SIZE)) {
- 		qlist_move_all(q, &temp);
- 
--		spin_lock(&quarantine_lock);
-+		raw_spin_lock(&quarantine_lock);
- 		WRITE_ONCE(quarantine_size, quarantine_size + temp.bytes);
- 		qlist_move_all(&temp, &global_quarantine[quarantine_tail]);
- 		if (global_quarantine[quarantine_tail].bytes >=
-@@ -203,7 +203,7 @@ void quarantine_put(struct kasan_free_meta *info, struct kmem_cache *cache)
- 			if (new_tail != quarantine_head)
- 				quarantine_tail = new_tail;
- 		}
--		spin_unlock(&quarantine_lock);
-+		raw_spin_unlock(&quarantine_lock);
- 	}
- 
- 	local_irq_restore(flags);
-@@ -230,7 +230,7 @@ void quarantine_reduce(void)
- 	 * expected case).
- 	 */
- 	srcu_idx = srcu_read_lock(&remove_cache_srcu);
--	spin_lock_irqsave(&quarantine_lock, flags);
-+	raw_spin_lock_irqsave(&quarantine_lock, flags);
- 
- 	/*
- 	 * Update quarantine size in case of hotplug. Allocate a fraction of
-@@ -254,7 +254,7 @@ void quarantine_reduce(void)
- 			quarantine_head = 0;
- 	}
- 
--	spin_unlock_irqrestore(&quarantine_lock, flags);
-+	raw_spin_unlock_irqrestore(&quarantine_lock, flags);
- 
- 	qlist_free_all(&to_free, NULL);
- 	srcu_read_unlock(&remove_cache_srcu, srcu_idx);
-@@ -310,17 +310,17 @@ void quarantine_remove_cache(struct kmem_cache *cache)
- 	 */
- 	on_each_cpu(per_cpu_remove_cache, cache, 1);
- 
--	spin_lock_irqsave(&quarantine_lock, flags);
-+	raw_spin_lock_irqsave(&quarantine_lock, flags);
- 	for (i = 0; i < QUARANTINE_BATCHES; i++) {
- 		if (qlist_empty(&global_quarantine[i]))
- 			continue;
- 		qlist_move_cache(&global_quarantine[i], &to_free, cache);
- 		/* Scanning whole quarantine can take a while. */
--		spin_unlock_irqrestore(&quarantine_lock, flags);
-+		raw_spin_unlock_irqrestore(&quarantine_lock, flags);
- 		cond_resched();
--		spin_lock_irqsave(&quarantine_lock, flags);
-+		raw_spin_lock_irqsave(&quarantine_lock, flags);
- 	}
--	spin_unlock_irqrestore(&quarantine_lock, flags);
-+	raw_spin_unlock_irqrestore(&quarantine_lock, flags);
- 
- 	qlist_free_all(&to_free, cache);
- 
+Perhaps it's the problem with the way RT kernel changes things then?
+This is not specific to quarantine, right? Should that mutex detect
+that IRQs are disabled and not try to schedule? If this would happen
+in some networking code, what would we do?
