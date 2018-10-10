@@ -1,142 +1,305 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mx1.redhat.com ([209.132.183.28]:53148 "EHLO mx1.redhat.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727417AbeJKVO6 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 11 Oct 2018 17:14:58 -0400
-Date: Thu, 11 Oct 2018 08:47:39 -0500
-From: Clark Williams <williams@redhat.com>
-Subject: Re: cyclictest: possible bugs in CPU enumeration
-Message-ID: <20181011084739.71b7ac91@tagon>
-In-Reply-To: <48452eff-7071-a83f-1bd5-25d45410f323@oth-regensburg.de>
-References: <48452eff-7071-a83f-1bd5-25d45410f323@oth-regensburg.de>
+Received: from mail-oi1-f196.google.com ([209.85.167.196]:32858 "EHLO
+        mail-oi1-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726468AbeJJQhO (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 10 Oct 2018 12:37:14 -0400
+Received: by mail-oi1-f196.google.com with SMTP id a203-v6so3533200oib.0
+        for <linux-rt-users@vger.kernel.org>; Wed, 10 Oct 2018 02:15:58 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+From: Philipp K <philipp97kl@gmail.com>
+Date: Wed, 10 Oct 2018 11:15:46 +0200
+Message-ID: <CAGZ+4_+DRKxKWC4zMu_xTUoy6ogPpjwVOVtXyAmbj4XXAnpUXw@mail.gmail.com>
+Subject: complete_all() with 5 waiters in swake_up_all_locked
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: Ralf Ramsauer <ralf.ramsauer@oth-regensburg.de>
-Cc: John Kacur <jkacur@redhat.com>, linux-rt-users <linux-rt-users@vger.kernel.org>, Daniel Wagner <wagi@monom.org>
+To: linux-rt-users@vger.kernel.org
+Cc: tglx@linutronix.de, bigeasy@linutronix.de
 
-Comments below.
+Hi,
 
-BTW Ralf, I do appreciate the work. Sorry for being slow responding but for
-some reason my manager expects me to do work... :)
+I've been fuzzing linux-rt with syzkaller and found a way to trigger
+$title warning.
 
-On Fri, 28 Sep 2018 15:25:17 +0200
-Ralf Ramsauer <ralf.ramsauer@oth-regensburg.de> wrote:
+The reproducer works with a defconfig + CONFIG_NET_KEY=3Dy on 4.18.12-rt6 k=
+ernel.
 
-> Hi,
-> 
-> I think I might have trapped into some bugs in cyclictest's CPU enumeration.
-> 
-> a) If cyclictest is parameterised with "-a 0,2", then in
-> process_options() we will run into:
-> 
->     [...]
->     if (optarg != NULL) {
->             parse_cpumask(optarg, max_cpus);
->             setaffinity = AFFINITY_SPECIFIED;
->     } else if (optind<argc && atoi(argv[optind])) {
-> >                             ^^^^
-> >                             |- atoi will be 0, and this case fails  
->             parse_cpumask(argv[optind], max_cpus);
->             setaffinity = AFFINITY_SPECIFIED;
->     } else {
->             setaffinity = AFFINITY_USEALL;
->     }
-> 
-> Though we should, we won't enter this case and end up with
-> AFFINITY_USEALL. So I have to reverse the argument to "-a 2,0" as a
-> quick workaround.
-> 
-> Isn't the atoi() check superfluous? We're not relying on its result in
-> any case.
-> 
-> 
-> b) I boot with nosmt on a 2 core / 2 threads x86 machine where I can not
-> disable SMT via firmware. nosmt results in offlining SMT siblings:
->     # cat /sys/devices/system/cpu/o{ff,n}line
->     1,3-7
->     0,2
-> 
-> As mentioned before, I have to reverse the CPU mask, so I run
->     # ./cyclictest -p 99 -m -t 2 --affinity 2,0
->     Bug in cpu mask handling code.
-> 
-> This bug is hidden in max_cpus. For getting max_cpu, cyclictest uses:
->         int max_cpus = sysconf(_SC_NPROCESSORS_ONLN);
-> 
-> But if some CPUs are offlined, then NRPROC_ONLN !=
-> max_cpus_available... Later, when cyclictest tries to assign threads
-> to CPUs, max_cpus is the highest CPU# that will be considered in
-> enumeration. I think that's wrong, if some CPUs are offline.
-> 
-> The dirty steam hammer quickfix of hard-coding max_cpus = 4 works for
-> my setup atm.
-> 
-> A fix could be to somehow retrieve the number of present CPUs. Is
-> there some API available, besides parsing sysfs?
+Philipp
+
+PS: Liebe Gr=C3=BC=C3=9Fe von Lukas Bulwahn
 
 
-Ah, I see. We may need to change that call to be:
+Syzkaller hit 'WARNING in swake_up_all_locked' bug.
 
-	int max_cpus = sysconf(_SC_NPROCESSORS_CONF);
+------------[ cut here ]------------
+WARNING: CPU: 3 PID: 1778 at /kernel-source//kernel/sched/swait.c:48
+swake_up_all_locked+0x18d/0x220 kernel/sched/swait.c:48
+complete_all() with 5 waiters
+Kernel panic - not syncing: panic_on_warn set ...
 
-That way we'll have the correct max value, but that means we need to insert
-an online check for each cpu when we get passed a cpulist.
-
-I'm torn on whether we should just punt if we get passed an offline cpu or
-whether we should just drop it from the list and run with the ones that actually
-are online. Thoughts?
-
-> 
-> 
-> c) On a 4 core arm64 system, where numa.h is not available, cyclictest
-> uses its own implementation in rt_numa.h. In my configuration, all
-> available cores are up and running. Let's say I want to spawn
-> three threads allocated on the uppermost three CPUS:
->   # cyclictest -p 99 -m -a 1-3 -t 3 -v
-> 
-> Though -a is provided, cyclictest will move all threads to CPU 1:
->     Max CPUs = 4
->     # /dev/cpu_dma_latency set to 0us
->     Thread 0 Interval: 1500
->     Thread 0 using cpu 1.
->     Thread 1 Interval: 2000
->     Thread 1 using cpu 1.
->     Thread 2 Interval: 2500
->     Thread 2 using cpu 1.
-> 
-> Digging a beet deeper, I think rt_numa.h's rt_numa_parse_cpustring()
-> is broken (or incomplete?) in rt_numa.h:230:
->     cpu = atoi(s);
-> 
-> where s = "1-3". Of course, this will fail. AFAICT,
-> rt_numa_parse_cpustring() currently doesn't support cpu strings like
-> "1-3" and silently fails.
-> 
-> Again, my dirty workaround to get things running is to hardcode
-> enumeration.
-> 
-> 
-> I'm not aware of the history of cyclictest, and maybe there are some
-> reasons for this behavior. If so, please let me know!
-> 
-> IMHO, at least bug a) should be easy to fix. I tried to implement a
-> proper fix for b) and c), but I have to admit that CPU enumeration is
-> a beast.
->
-
-Yeah, the parsing of cpu ranges is a PITA, no question. I'm not surprised
-that we don't handle ranges properly. We just need to take a harder look
-a the parsing code. 
-
-Could I trouble you to open a BZ on bugzilla.kernel.org for cyclictest?
-
-Clark
+CPU: 3 PID: 1778 Comm: cryptomgr_probe Not tainted 4.9.56-rt37-hpad-a1-64-a=
+bl #1
+Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS
+Ubuntu-1.8.2-1ubuntu1 04/01/2014
+ ffff88006a907ba8 ffffffff8b88c869 ffffffff8ca440a0 ffff88006a907c80
+ ffffffff8ca58600 ffffffff8b01f84d ffff88006a907c70 ffffffff8b1f8ec9
+ 0000000041b58ab3 ffffffff8ceea20b ffffffff8b1f8d13 ffffffff0000001d
+Call Trace:
+ [<ffffffff8b88c869>] __dump_stack lib/dump_stack.c:15 [inline]
+ [<ffffffff8b88c869>] dump_stack+0x6c/0x93 lib/dump_stack.c:51
+ [<ffffffff8b1f8ec9>] panic+0x1b6/0x397 kernel/panic.c:179
+ [<ffffffff8af32dd2>] __warn+0x1e2/0x200 kernel/panic.c:544
+ [<ffffffff8af32eb7>] warn_slowpath_fmt+0xc7/0x100 kernel/panic.c:567
+ [<ffffffff8b01f84d>] swake_up_all_locked+0x18d/0x220 kernel/sched/swait.c:=
+48
+ [<ffffffff8b0208dc>] complete_all+0x4c/0x70 kernel/sched/completion.c:55
+ [<ffffffff8b7a95c3>] cryptomgr_probe+0x173/0x240 crypto/algboss.c:89
+ [<ffffffff8af980cd>] kthread+0x22d/0x2b0 kernel/kthread.c:211
+ [<ffffffff8c7f89a2>] ret_from_fork+0x22/0x30 arch/x86/entry/entry_64.S:433
+Shutting down cpus with NMI
+Dumping ftrace buffer:
+   (ftrace buffer empty)
+Kernel Offset: 0xac00000 from 0xffffffff80200000 (relocation range:
+0xffffffff80000000-0xffffffffbfffffff)
 
 
+Syzkaller reproducer:
+# {Threaded:false Collide:false Repeat:true RepeatTimes:0 Procs:8
+Sandbox:none Fault:false FaultCall:-1 FaultNth:0 EnableTun:false
+UseTmpDir:false EnableCgroups:false EnableNetdev:false ResetNet:false
+HandleSegv:false Repro:false Trace:false}
+r0 =3D socket$key(0xf, 0x3, 0x2)
+sendmsg$key(r0, &(0x7f0000000180)=3D{0x0, 0x0,
+&(0x7f0000000040)=3D{&(0x7f0000000000)=3D{0x2, 0x7, 0x0, 0x0, 0x2, 0x0,
+0x4}, 0x10}}, 0x0)
 
--- 
-The United States Coast Guard
-Ruining Natural Selection since 1790
+
+C reproducer:
+// autogenerated by syzkaller (https://github.com/google/syzkaller)
+
+#define _GNU_SOURCE
+
+#include <dirent.h>
+#include <endian.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <sched.h>
+#include <signal.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/mount.h>
+#include <sys/prctl.h>
+#include <sys/resource.h>
+#include <sys/stat.h>
+#include <sys/syscall.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <time.h>
+#include <unistd.h>
+
+unsigned long long procid;
+
+static void sleep_ms(uint64_t ms)
+{
+    usleep(ms * 1000);
+}
+
+static uint64_t current_time_ms()
+{
+    struct timespec ts;
+    if (clock_gettime(CLOCK_MONOTONIC, &ts))
+    exit(1);
+    return (uint64_t)ts.tv_sec * 1000 + (uint64_t)ts.tv_nsec / 1000000;
+}
+
+static void setup_common()
+{
+    if (mount(0, "/sys/fs/fuse/connections", "fusectl", 0, 0)) {
+    }
+}
+
+static void loop();
+
+static void sandbox_common()
+{
+    prctl(PR_SET_PDEATHSIG, SIGKILL, 0, 0, 0);
+    setpgrp();
+    setsid();
+    struct rlimit rlim;
+    rlim.rlim_cur =3D rlim.rlim_max =3D 160 << 20;
+    setrlimit(RLIMIT_AS, &rlim);
+    rlim.rlim_cur =3D rlim.rlim_max =3D 8 << 20;
+    setrlimit(RLIMIT_MEMLOCK, &rlim);
+    rlim.rlim_cur =3D rlim.rlim_max =3D 136 << 20;
+    setrlimit(RLIMIT_FSIZE, &rlim);
+    rlim.rlim_cur =3D rlim.rlim_max =3D 1 << 20;
+    setrlimit(RLIMIT_STACK, &rlim);
+    rlim.rlim_cur =3D rlim.rlim_max =3D 0;
+    setrlimit(RLIMIT_CORE, &rlim);
+    rlim.rlim_cur =3D rlim.rlim_max =3D 256;
+    setrlimit(RLIMIT_NOFILE, &rlim);
+    if (unshare(CLONE_NEWNS)) {
+    }
+    if (unshare(CLONE_NEWIPC)) {
+    }
+    if (unshare(0x02000000)) {
+    }
+    if (unshare(CLONE_NEWUTS)) {
+    }
+    if (unshare(CLONE_SYSVSEM)) {
+    }
+}
+
+int wait_for_loop(int pid)
+{
+    if (pid < 0)
+    exit(1);
+    int status =3D 0;
+    while (waitpid(-1, &status, __WALL) !=3D pid) {
+    }
+    return WEXITSTATUS(status);
+}
+
+static int do_sandbox_none(void)
+{
+    if (unshare(CLONE_NEWPID)) {
+    }
+    int pid =3D fork();
+    if (pid !=3D 0)
+        return wait_for_loop(pid);
+    setup_common();
+    sandbox_common();
+    if (unshare(CLONE_NEWNET)) {
+    }
+    loop();
+    exit(1);
+}
+
+static void kill_and_wait(int pid, int* status)
+{
+    kill(-pid, SIGKILL);
+    kill(pid, SIGKILL);
+    int i;
+    for (i =3D 0; i < 100; i++) {
+        if (waitpid(-1, status, WNOHANG | __WALL) =3D=3D pid)
+            return;
+        usleep(1000);
+    }
+    DIR* dir =3D opendir("/sys/fs/fuse/connections");
+    if (dir) {
+        for (;;) {
+            struct dirent* ent =3D readdir(dir);
+            if (!ent)
+                break;
+            if (strcmp(ent->d_name, ".") =3D=3D 0 || strcmp(ent->d_name, ".=
+.") =3D=3D 0)
+                continue;
+            char abort[300];
+            snprintf(abort, sizeof(abort),
+"/sys/fs/fuse/connections/%s/abort", ent->d_name);
+            int fd =3D open(abort, O_WRONLY);
+            if (fd =3D=3D -1) {
+                continue;
+            }
+            if (write(fd, abort, 1) < 0) {
+            }
+            close(fd);
+        }
+        closedir(dir);
+    } else {
+    }
+    while (waitpid(-1, status, __WALL) !=3D pid) {
+    }
+}
+
+#define SYZ_HAVE_SETUP_TEST 1
+static void setup_test()
+{
+    prctl(PR_SET_PDEATHSIG, SIGKILL, 0, 0, 0);
+    setpgrp();
+}
+
+#define SYZ_HAVE_RESET_TEST 1
+static void reset_test()
+{
+    int fd;
+    for (fd =3D 3; fd < 30; fd++)
+        close(fd);
+}
+
+static void execute_one();
+
+#define WAIT_FLAGS __WALL
+
+static void loop()
+{
+    int iter;
+    for (iter =3D 0;; iter++) {
+        int pid =3D fork();
+        if (pid < 0)
+    exit(1);
+        if (pid =3D=3D 0) {
+            setup_test();
+            execute_one();
+            reset_test();
+            exit(0);
+        }
+        int status =3D 0;
+        uint64_t start =3D current_time_ms();
+        for (;;) {
+            if (waitpid(-1, &status, WNOHANG | WAIT_FLAGS) =3D=3D pid)
+                break;
+            sleep_ms(1);
+            if (current_time_ms() - start < 5 * 1000)
+                continue;
+            kill_and_wait(pid, &status);
+            break;
+        }
+    }
+}
+
+uint64_t r[1] =3D {0xffffffffffffffff};
+
+void execute_one()
+{
+        long res =3D 0;
+    res =3D syscall(__NR_socket, 0xf, 3, 2);  // socket(PF_KEY,
+SOCK_RAW, AF_INET);
+    if (res !=3D -1)
+        r[0] =3D res;
+*(uint64_t*)0x20000180 =3D 0;
+*(uint32_t*)0x20000188 =3D 0;
+*(uint64_t*)0x20000190 =3D 0x20000040;
+*(uint64_t*)0x20000040 =3D 0x20000000;
+*(uint8_t*)0x20000000 =3D 2;
+*(uint8_t*)0x20000001 =3D 7;
+*(uint8_t*)0x20000002 =3D 0;
+*(uint8_t*)0x20000003 =3D 0;
+*(uint16_t*)0x20000004 =3D 2;
+*(uint16_t*)0x20000006 =3D 0;
+*(uint32_t*)0x20000008 =3D 4;
+*(uint32_t*)0x2000000c =3D 0;
+*(uint64_t*)0x20000048 =3D 0x10;
+*(uint64_t*)0x20000198 =3D 1;
+*(uint64_t*)0x200001a0 =3D 0;
+*(uint64_t*)0x200001a8 =3D 0;
+*(uint32_t*)0x200001b0 =3D 0;
+    syscall(__NR_sendmsg, r[0], 0x20000180, 0);
+
+}
+int main()
+{
+        syscall(__NR_mmap, 0x20000000, 0x1000000, 3, 0x32, -1, 0);
+    for (procid =3D 0; procid < 8; procid++) {
+        if (fork() =3D=3D 0) {
+            do_sandbox_none();
+        }
+    }
+    sleep(1000000);
+    return 0;
+}
