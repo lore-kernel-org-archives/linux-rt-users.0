@@ -1,7 +1,7 @@
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH v6 13/15] tracing: Add hist trigger onchange() handler test case
-Date: Thu, 11 Oct 2018 16:02:10 -0500
-Message-ID: <3b24797f013b6274ba4c59acfe63c611ad3ad912.1539288364.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v6 07/15] tracing: Move hist trigger key printing into a separate function
+Date: Thu, 11 Oct 2018 16:02:04 -0500
+Message-ID: <7b9b456df5b0738f73aa6a688db82c345d0358e1.1539288364.git.tom.zanussi@linux.intel.com>
 References: <cover.1539288364.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,59 +18,50 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-Add a test case verifying the basic functionality of the
-hist:onchange($var) handler.
+Future patches will want to print a histogram key outside a histogram
+- add and use hist_trigger_print_key() for that purpose.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- .../inter-event/trigger-onchange-action-hist.tc    | 39 ++++++++++++++++++++++
- 1 file changed, 39 insertions(+)
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onchange-action-hist.tc
+ kernel/trace/trace_events_hist.c | 19 +++++++++++++++----
+ 1 file changed, 15 insertions(+), 4 deletions(-)
 
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onchange-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onchange-action-hist.tc
-new file mode 100644
-index 000000000000..d6c452ce5c32
---- /dev/null
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onchange-action-hist.tc
-@@ -0,0 +1,39 @@
-+#!/bin/sh
-+# description: event trigger - test inter-event histogram trigger onchange action
-+
-+do_reset() {
-+    reset_trigger
-+    echo > set_event
-+    clear_trace
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 3712200dc670..5ec462cb7672 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -4849,10 +4849,10 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
+ 	}
+ }
+ 
+-static void
+-hist_trigger_entry_print(struct seq_file *m,
+-			 struct hist_trigger_data *hist_data, void *key,
+-			 struct tracing_map_elt *elt)
++static void hist_trigger_print_key(struct seq_file *m,
++				   struct hist_trigger_data *hist_data,
++				   void *key,
++				   struct tracing_map_elt *elt)
+ {
+ 	struct hist_field *key_field;
+ 	char str[KSYM_SYMBOL_LEN];
+@@ -4928,6 +4928,17 @@ hist_trigger_entry_print(struct seq_file *m,
+ 		seq_puts(m, " ");
+ 
+ 	seq_puts(m, "}");
 +}
 +
-+fail() { #msg
-+    do_reset
-+    echo $1
-+    exit_fail
-+}
++static void hist_trigger_entry_print(struct seq_file *m,
++				     struct hist_trigger_data *hist_data,
++				     void *key,
++				     struct tracing_map_elt *elt)
++{
++	const char *field_name;
++	unsigned int i;
 +
-+if [ ! -f set_event ]; then
-+    echo "event tracing is not supported"
-+    exit_unsupported
-+fi
-+
-+grep "onchange(var)" README > /dev/null || exit_unsupported # version issue
-+
-+reset_tracer
-+do_reset
-+
-+echo "Test onchange action"
-+
-+echo 'hist:keys=comm:newprio=prio:onchange($newprio).save(comm,prio) if comm=="ping"' >> /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
-+
-+ping localhost -c 3
-+nice -n 1 ping localhost -c 3
-+
-+if ! grep -q "changed:" events/sched/sched_waking/hist; then
-+    fail "Failed to create onchange action inter-event histogram"
-+fi
-+
-+do_reset
-+
-+exit 0
++	hist_trigger_print_key(m, hist_data, key, elt);
+ 
+ 	seq_printf(m, " hitcount: %10llu",
+ 		   tracing_map_read_sum(elt, HITCOUNT_IDX));
 -- 
 2.14.1
