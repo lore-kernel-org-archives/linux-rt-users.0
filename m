@@ -1,66 +1,53 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mail.ableton.net ([62.96.12.117]:46024 "EHLO mail.ableton.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728081AbeJKX6b (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 11 Oct 2018 19:58:31 -0400
-Received: from moon.office.ableton.com ([10.1.15.25] helo=mail.office.ableton.com)
-        by mail.ableton.net with esmtps (TLS1.2:DHE_RSA_AES_256_CBC_SHA1:256)
-        (Exim 4.82)
-        (envelope-from <diez.roggisch@ableton.com>)
-        id 1gAdr6-0003YY-AM
-        for linux-rt-users@vger.kernel.org; Thu, 11 Oct 2018 16:30:32 +0000
-From: Diez Roggisch <diez.roggisch@ableton.com>
-Subject: freezing system
-Date: Thu, 11 Oct 2018 16:30:36 +0000
-Message-ID: <53E9713C-8920-41A7-A9D6-4E5169C77CF2@ableton.com>
+Received: from mx0a-00010702.pphosted.com ([148.163.156.75]:44178 "EHLO
+        mx0b-00010702.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1728239AbeJLCaQ (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 11 Oct 2018 22:30:16 -0400
+From: Julia Cartwright <julia@ni.com>
+Subject: Re: freezing system
+Date: Thu, 11 Oct 2018 19:01:35 +0000
+Message-ID: <20181011190133.GF21426@jcartwri.amer.corp.natinst.com>
+References: <53E9713C-8920-41A7-A9D6-4E5169C77CF2@ableton.com>
+In-Reply-To: <53E9713C-8920-41A7-A9D6-4E5169C77CF2@ableton.com>
 Content-Language: en-US
-Content-Type: text/plain; charset="utf-8"
-Content-ID: <44329F406CA02F4AA62FE9243FB20227@office.ableton.com>
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-ID: <68D45A403F9A824E9B35E4CE02DBFF42@namprd04.prod.outlook.com>
+Content-Transfer-Encoding: quoted-printable
 MIME-Version: 1.0
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Diez Roggisch <diez.roggisch@ableton.com>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
 
-SGksDQoNCmR1cmluZyB3b3JrIG9uIGEgZHJpdmVyIEkgZW5jb3VudGVyZWQgYSBiZWhhdmlvdXIg
-SSBjYW7igJl0IGV4cGxhaW4gYW5kIHdvdWxkIGxpa2UgdG8gaGVhciB0aGUgb3BpbmlvbiBvZiB0
-aGUgZXhwZXJ0cyBoZXJlLg0KDQpXZSB3b3JrIHdpdGggdGhlIHJhc3BlcnJ5IFBJIDMgKGluIGl0
-4oCZcyBjb21wdXRlIG1vZHVsZSBpbmNhcm5hdGlvbiwgYnV0IHRoYXQgc2hvdWxkbuKAmXQgbWFr
-ZSBhIGRpZmZlcmVuY2UgZm9yIHRoaXMgZGlzY3Vzc2lvbikuDQoNCkl0IGlzIGhvb2tlZCB1cCB0
-byBhIG1pY3JvY29udHJvbGxlciB2aWEgU1BJLCBhbmQgYmVjYXVzZSB0aGUgdUMgbmVlZHMgdG8g
-c2lnbmFsIHRoYXQgaXQgaXMgcmVhZHkgdG8gcmVjZWl2ZSBkYXRhLCB3ZSBzdHJ1bmcgYW4gSVJR
-IGxpbmUgdG8gYSBHUElPIG9uIHRoZSBwaS4NCg0KSW4gdGhlIGRyaXZlciBJIHJlZ2lzdGVyIGFu
-IElTUiBmb3IgdGhhdCBHUElPIHdoaWNoIHNpZ25hbHMgYSB3YWl0X3F1ZXVlX2hlYWRfdCB3aXRo
-IHdha2VfdXAuIFRoZSBJU1IgaXMgYWxsb2NhdGVkIHdpdGggSVJRRl9OT19USFJFQUQgYmVjYXVz
-ZSB0aGlzIGlzIG9uIG91ciBjcml0aWNhbCBwYXRoIGFuZCBzaG91bGQgYmUgYXMgZmFzdCBhcyBw
-b3NzaWJsZS4NCg0KVGhlIHVzZXIgc3BhY2UgdGhyZWFkIChvdXIgYWN0dWFsIHJlYWx0aW1lIHRo
-cmVhZCkgaW52b2tlcyBhbiBpb2N0bCB0aGF0IHdpbGwgd2FpdF9ldmVudF9pbnRlcnJ1cHRpYmxl
-IGZvciB0aGlzIGV2ZW50IGFuZCB0aGVuIGluaXRpYXRlcyB0aGUgU1BJIGNvbW11bmljYXRpb24u
-DQoNCkFmdGVyIGEgZmV3IG1pbnV0ZXMgb2Ygb3BlcmF0aW9uLCB0aGUgc3lzdGVtIGZyZWV6ZXMu
-IFdpdGhvdXQgYW55IGRpc2Nlcm5pYmxlIG91dHB1dCwgbm8gb29vcHMsIG5vIG5vdGhpbmcuIEp1
-c3Qgc3RvcHMuDQoNCkZ1cnRoZXIgaW52ZXN0aWdhdGlvbiByZXZlYWxlZCB0aGF0IHRoaXMgb25s
-eSBoYXBwZW5zIGlmIHdlIGFjdHVhbGx5IHdhaXQgZm9yIHRoZSBldmVudC4gTm90IGp1c3QgYnkg
-cnVubmluZyB0aGUgSVNSLg0KDQpJbiBvcmRlciB0byByZXBvcnQgdGhpcyBwcm9ibGVtLCBJIHJl
-ZHVjZWQgdGhlIHNldHVwIHRvIGEgc2ltcGxlciBvbmUgdGhhdCBjYW4gYmUgY3JlYXRlZCB3aXRo
-IGEgc2ltcGxlIFJQSTM6DQoNCiAtIGFsbG9jYXRlIG9uZSBJUlEgZ3BpbyAxMi4NCiAtIGFsbG9j
-YXRlIGEgdHJpZ2dlciBncGlvIDEzLg0KIC0gc2hvcnQgY2lyY3VpdCB0aGUgdHdvIHdpdGggYSBj
-YWJsZS4NCiAtIGxvYWQgdGhlIGtlcm5lbCBtb2R1bGUuDQogLSBydW4gYSB0ZXN0IHByb2dyYW0g
-dGhhdCB0cmlnZ2VycyBhbmQgd2FpdHMgaW4gYSBkaWZmZXJlbnQgdGhyZWFkLg0KDQpBZnRlciBh
-IGZldyBzZWNvbmRzLCB0aGUgc3lzdGVtICBmcmVlemVzLg0KDQpZb3UgY2FuIGZpbmQgdGhlIGtl
-cm5lbCBtb2R1bGUgaGVyZToNCg0KIGh0dHBzOi8vZ2lzdC5naXRodWIuY29tL2Rpci1hYmxldG9u
-LzcwMDVmYTEwZmQ0YmRjZjY1Y2JjMjFhYjIyZjVhNTcyDQoNClRoZSB0ZXN0IHByb2dyYW06DQoN
-CiBodHRwczovL2dpc3QuZ2l0aHViLmNvbS9kaXItYWJsZXRvbi82MzMwOTg4Y2JkZTUwNGJkNmYw
-MjRmNTUxMzU3MWFiNg0KDQpLZXJuZWwgdmVyc2lvbg0KDQogYTQyMDQ4YzZlZWU1OGIxYjhkMjUy
-ZTMwMjI0YjdkMDY1NjE1YzNmZCBmcm9tIA0KDQogaHR0cHM6Ly9naXRodWIuY29tL3Jhc3BiZXJy
-eXBpL2xpbnV4L3RyZWUvcnBpLTQuMTQueS1ydA0KDQp3aGljaCBpcyBhIDQuMTQuNzEgd2l0aCBQ
-UkVFTVBUX1JUIHBhdGNoIGFwcGxpZWQgYXMgb2YgdHdvIGRheXMgYWdvLg0KDQpJ4oCZdmUgYWxz
-byBydW4gdGhpcyB0ZXN0IHdpdGggdGhlIGNvcnJlc3BvbmRpbmcgdmFuaWxsYSBrZXJuZWwNCg0K
-IDEyZDc4MDk2YjE2NjlhMDhkNDQwZjdlYmFkZGY1ZDkyNWU1MmZlNzkNCg0KIGh0dHBzOi8vZ2l0
-aHViLmNvbS9yYXNwYmVycnlwaS9saW51eC90cmVlL3JwaS00LjE0LnkNCg0KVGhpcyBkaWQgbm90
-IGZyZWV6ZSBhZnRlciBydW5uaW5nIGEgZnVsbCBuaWdodC4NCg0KSeKAmW0gcHJvYmFibHkgZG9p
-bmcgc29tZXRoaW5nIHN0dXBpZCBoZXJlLCBieSBub3QgZGlzYWJsaW5nIElSUXMgb3Igc2ltaWxh
-ciBzdHVmZi4gSSB0b29rIHRoZSBleGFtcGxlIGZvciBhIGdwaW8gSVNSIGZyb20gYSBsaW51eCBk
-cml2ZXIgZGV2ZWxvcG1lbnQgYm9vayAoZ2VybWFuLCDigJxMaW51eCBUcmVpYmVyIEVudHdpY2tl
-bG7igJ0pLiBNYXliZSB0aGUgZXhhbXBsZSBpcyBub3QgY29tcGxldGU/DQoNCkFueSBoaW50cyBv
-biB3aGF0IGlzIGdvaW5nIG9uIGhlcmUsIG9yIGhvdyB0byBkZWJ1ZyB0aGUgcHJvYmxlbSBmdXJ0
-aGVyIGFyZSBtdWNoIGFwcHJlY2lhdGVkLg0KDQpDaGVlcnMsDQoNCkRpZXogQi4gUm9nZ2lzY2g=
+Hello Diez-
+
+On Thu, Oct 11, 2018 at 04:30:36PM +0000, Diez Roggisch wrote:
+> Hi,
+>
+> during work on a driver I encountered a behaviour I can't explain and
+> would like to hear the opinion of the experts here.
+>
+> We work with the rasperry PI 3 (in it's compute module incarnation,
+> but that shouldn't make a difference for this discussion).
+>
+> It is hooked up to a microcontroller via SPI, and because the uC needs
+> to signal that it is ready to receive data, we strung an IRQ line to a
+> GPIO on the pi.
+>
+> In the driver I register an ISR for that GPIO which signals a
+> wait_queue_head_t with wake_up. The ISR is allocated with
+> IRQF_NO_THREAD because this is on our critical path and should be as
+> fast as possible.
+
+Can you reproduce the hanging behaviour without IRQF_NO_THREAD?
+
+In general, the signalling/wakeup of wait queues is not allowed from
+hardirq context (like what would happen if you've passed IRQF_NO_THREAD
+at the time you register your handler).  If there's ever contention on
+the waitqueue's internal spin_lock on RT, the handler will end up trying
+to schedule() in a non-schedulable context.  This might lead to a
+complete hang like you're seeing.
+
+Good luck,
+   Julia
