@@ -1,11 +1,12 @@
-From: Peter Zijlstra <peterz@infradead.org>
+From: Juri Lelli <juri.lelli@redhat.com>
 Subject: Re: [RFD/RFC PATCH 5/8] sched: Add proxy execution
-Date: Thu, 11 Oct 2018 14:53:25 +0200
-Message-ID: <20181011125325.GA9867@hirez.programming.kicks-ass.net>
+Date: Thu, 11 Oct 2018 15:42:24 +0200
+Message-ID: <20181011134224.GT9130@localhost.localdomain>
 References: <20181009092434.26221-1-juri.lelli@redhat.com>
  <20181009092434.26221-6-juri.lelli@redhat.com>
  <20181010131048.54afd1b6@luca64>
  <20181011123448.GS9130@localhost.localdomain>
+ <20181011125325.GA9867@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: luca abeni <luca.abeni@santannapisa.it>, mingo@redhat.com,
@@ -16,70 +17,29 @@ Cc: luca abeni <luca.abeni@santannapisa.it>, mingo@redhat.com,
         andrea.parri@amarulasolutions.com, dietmar.eggemann@arm.com,
         patrick.bellasi@arm.com, henrik@austad.us,
         linux-rt-users@vger.kernel.org
-To: Juri Lelli <juri.lelli@redhat.com>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181011123448.GS9130@localhost.localdomain>
+In-Reply-To: <20181011125325.GA9867@hirez.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Oct 11, 2018 at 02:34:48PM +0200, Juri Lelli wrote:
-> Hi Luca,
-> 
-> On 10/10/18 13:10, luca abeni wrote:
-> > Hi,
-> > 
-> > On Tue,  9 Oct 2018 11:24:31 +0200
-> > Juri Lelli <juri.lelli@redhat.com> wrote:
-> > [...]
-> > > +migrate_task:
-> > [...]
-> > > +	put_prev_task(rq, next);
-> > > +	if (rq->curr != rq->idle) {
-> > > +		rq->proxy = rq->idle;
-> > > +		set_tsk_need_resched(rq->idle);
-> > > +		/*
-> > > +		 * XXX [juril] don't we still need to migrate @next
-> > > to
-> > > +		 * @owner's CPU?
-> > > +		 */
-> > > +		return rq->idle;
-> > > +	}
-> > 
-> > If I understand well, this code ends up migrating the task only if the
-> > CPU was previously idle? (scheduling the idle task if the CPU was not
-> > previously idle)
-> > 
-> > Out of curiosity (I admit this is my ignorance), why is this needed?
-> > If I understand well, after scheduling the idle task the scheduler will
-> > be invoked again (because of the set_tsk_need_resched(rq->idle)) but I
-> > do not understand why it is not possible to migrate task "p" immediately
-> > (I would just check "rq->curr != p", to avoid migrating the currently
-> > scheduled task).
-> 
-> As the comment suggests, I was also puzzled by this bit.
-> 
-> I'd be inclined to agree with you, it seems that the only case in which
-> we want to "temporarily" schedule the idle task is if the proxy was
-> executing (so it just blocked on the mutex and being scheduled out).
-> 
-> If it wasn't we should be able to let the current "curr" continue
-> executing, in this case returning it as next will mean that schedule
-> takes the else branch and there isn't an actual context switch.
-> 
-> > > +	rq->proxy = &fake_task;
-> 
-> [...]
-> 
-> We can maybe also rq->proxy = rq->curr and return rq->curr in such a
-> case, instead of the below?
-> 
-> > > +	return NULL; /* Retry task selection on _this_ CPU. */
-> 
-> Peter, what are we missing? :-)
+On 11/10/18 14:53, Peter Zijlstra wrote:
 
-I think it was the safe and simple choice; note that we're not migrating
-just a single @p, but a whole chain of @p. rq->curr must not be any of the
-possible @p's. rq->idle, is per definition not one of the @p's.
+[...]
 
-Does that make sense?
+> I think it was the safe and simple choice; note that we're not migrating
+> just a single @p, but a whole chain of @p. rq->curr must not be any of the
+> possible @p's. rq->idle, is per definition not one of the @p's.
+> 
+> Does that make sense?
+
+It does, and I guess is most probably the safest choice indeed. But,
+just to put together a proper comment for next version..
+
+The chain we are migrating is composed of blocked_task(s), so tasks that
+blocked on a mutex owned by @p. Now, if such a chain has been built, it
+means that proxy() has been called "for" @p previously, and @p might be
+curr while one of its waiters might be proxy. So, none of the blocked_
+task(s) should be rq->curr (even if one of their scheduling context
+might be in use)?
