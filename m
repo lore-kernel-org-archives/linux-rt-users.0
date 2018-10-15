@@ -1,19 +1,21 @@
-From: Peter Zijlstra <peterz@infradead.org>
+From: Andrew Morton <akpm@linux-foundation.org>
 Subject: Re: [PATCH] mm/kasan: make quarantine_lock a raw_spinlock_t
-Date: Sat, 13 Oct 2018 15:50:58 +0200
-Message-ID: <20181013135058.GC4931@worktop.programming.kicks-ass.net>
+Date: Mon, 15 Oct 2018 16:35:29 -0700
+Message-ID: <20181015163529.30ed9b0ac18e20dd975f4253@linux-foundation.org>
 References: <20181005163320.zkacovxvlih6blpp@linutronix.de>
- <CACT4Y+YoNCm=0C6PZtQR1V1j4QeQ0cFcJzpJF1hn34Oaht=jwg@mail.gmail.com>
- <20181009142742.ikh7xv2dn5skjjbe@linutronix.de>
- <CACT4Y+ZB38pKvT8+BAjDZ1t4ZjXQQKoya+ytXT+ASQxHUkWwnA@mail.gmail.com>
- <20181010092929.a5gd3fkkw6swco4c@linutronix.de>
- <CACT4Y+agGPSTZ-8A8r8haSeRM8UpRYMAF8BC4A87yeM9nvpP6w@mail.gmail.com>
- <20181010095343.6qxved3owi6yokoa@linutronix.de>
- <CACT4Y+ZpMjYBPS0GHP0AsEJZZmDjwV9DJBiVUzYKBnD+r9W4+A@mail.gmail.com>
- <20181010214945.5owshc3mlrh74z4b@linutronix.de>
- <20181012165655.f067886428a394dc7fbae7af@linux-foundation.org>
+        <CACT4Y+YoNCm=0C6PZtQR1V1j4QeQ0cFcJzpJF1hn34Oaht=jwg@mail.gmail.com>
+        <20181009142742.ikh7xv2dn5skjjbe@linutronix.de>
+        <CACT4Y+ZB38pKvT8+BAjDZ1t4ZjXQQKoya+ytXT+ASQxHUkWwnA@mail.gmail.com>
+        <20181010092929.a5gd3fkkw6swco4c@linutronix.de>
+        <CACT4Y+agGPSTZ-8A8r8haSeRM8UpRYMAF8BC4A87yeM9nvpP6w@mail.gmail.com>
+        <20181010095343.6qxved3owi6yokoa@linutronix.de>
+        <CACT4Y+ZpMjYBPS0GHP0AsEJZZmDjwV9DJBiVUzYKBnD+r9W4+A@mail.gmail.com>
+        <20181010214945.5owshc3mlrh74z4b@linutronix.de>
+        <20181012165655.f067886428a394dc7fbae7af@linux-foundation.org>
+        <20181013135058.GC4931@worktop.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Dmitry Vyukov <dvyukov@google.com>,
         Clark Williams <williams@redhat.com>,
@@ -23,38 +25,17 @@ Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users@vger.kernel.org,
         Thomas Gleixner <tglx@linutronix.de>
-To: Andrew Morton <akpm@linux-foundation.org>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181012165655.f067886428a394dc7fbae7af@linux-foundation.org>
+In-Reply-To: <20181013135058.GC4931@worktop.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Oct 12, 2018 at 04:56:55PM -0700, Andrew Morton wrote:
-> There are several reasons for using raw_*, so an explanatory comment at
-> each site is called for.
-> 
-> However it would be smarter to stop "using raw_* for several reasons". 
-> Instead, create a differently named variant for each such reason.  ie, do
-> 
-> /*
->  * Nice comment goes here.  It explains all the possible reasons why -rt
->  * might use a raw_spin_lock when a spin_lock could otherwise be used.
->  */
-> #define raw_spin_lock_for_rt	raw_spinlock
-> 
-> Then use raw_spin_lock_for_rt() at all such sites.
+On Sat, 13 Oct 2018 15:50:58 +0200 Peter Zijlstra <peterz@infradead.org> wrote:
 
-The whole raw_spinlock_t is for RT, no other reason. It is the one true
-spinlock.
+> The whole raw_spinlock_t is for RT, no other reason.
 
->From this, it naturally follows that:
+Oh.  I never realised that.
 
- - nesting order: raw_spinlock_t < spinlock_t < mutex_t
- - raw_spinlock_t sections must be bounded
-
-The patch under discussion is the result of the nesting order rule; and
-is allowed to violate the second rule, by virtue of it being debug code.
-
-There are no other reasons; and I'm somewhat confused by what you
-propose.
+Is this documented anywhere?  Do there exist guidelines which tell
+non-rt developers and reviewers when it should be used?
