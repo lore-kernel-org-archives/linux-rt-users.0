@@ -1,44 +1,96 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH] mm/kasan: make quarantine_lock a raw_spinlock_t
-Date: Fri, 19 Oct 2018 12:58:51 +0200
-Message-ID: <20181019105851.GG3121@hirez.programming.kicks-ass.net>
-References: <20181009142742.ikh7xv2dn5skjjbe@linutronix.de>
- <CACT4Y+ZB38pKvT8+BAjDZ1t4ZjXQQKoya+ytXT+ASQxHUkWwnA@mail.gmail.com>
- <20181010092929.a5gd3fkkw6swco4c@linutronix.de>
- <CACT4Y+agGPSTZ-8A8r8haSeRM8UpRYMAF8BC4A87yeM9nvpP6w@mail.gmail.com>
- <20181010095343.6qxved3owi6yokoa@linutronix.de>
- <CACT4Y+ZpMjYBPS0GHP0AsEJZZmDjwV9DJBiVUzYKBnD+r9W4+A@mail.gmail.com>
- <20181010214945.5owshc3mlrh74z4b@linutronix.de>
- <20181012165655.f067886428a394dc7fbae7af@linux-foundation.org>
- <20181013135058.GC4931@worktop.programming.kicks-ass.net>
- <20181015163529.30ed9b0ac18e20dd975f4253@linux-foundation.org>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: TSC to Mono-raw Drift
+Date: Fri, 19 Oct 2018 17:25:02 +0200 (CEST)
+Message-ID: <alpine.DEB.2.21.1810191720590.6075@nanos.tec.linutronix.de>
+References: <20181015160945.5993-1-christopher.s.hall@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Dmitry Vyukov <dvyukov@google.com>,
-        Clark Williams <williams@redhat.com>,
-        Alexander Potapenko <glider@google.com>,
-        kasan-dev <kasan-dev@googlegroups.com>,
-        Linux-MM <linux-mm@kvack.org>,
+Content-Type: text/plain; charset=US-ASCII
+Cc: "H. Peter Anvin" <hpa@zytor.com>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        jesus.sanchez-palencia@intel.com, gavin.hindman@intel.com,
+        liam.r.girdwood@intel.com, Peter Zijlstra <peterz@infradead.org>,
         LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org,
-        Thomas Gleixner <tglx@linutronix.de>
-To: Andrew Morton <akpm@linux-foundation.org>
+        John Stultz <john.stultz@linaro.org>
+To: Christopher Hall <christopher.s.hall@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181015163529.30ed9b0ac18e20dd975f4253@linux-foundation.org>
+In-Reply-To: <20181015160945.5993-1-christopher.s.hall@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, Oct 15, 2018 at 04:35:29PM -0700, Andrew Morton wrote:
-> On Sat, 13 Oct 2018 15:50:58 +0200 Peter Zijlstra <peterz@infradead.org> wrote:
-> 
-> > The whole raw_spinlock_t is for RT, no other reason.
-> 
-> Oh.  I never realised that.
-> 
-> Is this documented anywhere?  Do there exist guidelines which tell
-> non-rt developers and reviewers when it should be used?
+Christopher,
 
-I'm afraid not; I'll put it on the todo list ... I've also been working
-on some lockdep validation for the lock order stuff.
+Please Cc LKML on such issues in the future.
+
+On Mon, 15 Oct 2018, Christopher Hall wrote:
+
+Leaving context around for new readers:
+
+> Problem Statement:
+> 
+> The TSC clocksource mult/shift values are derived from CPUID[15H], but the
+> monotonic raw clock value is not equal to TSC in nominal nanoseconds, i.e.
+> the timekeeping code is not accurately transforming TSC ticks to nominal
+> nanoseconds based on CPUID[15H}.
+> 
+> The included code calculates the drift between nominal TSC nanoseconds and
+> the monotonic raw clock.
+> 
+> Background:
+> 
+> Starting with 6th generation Intel CPUs, the TSC is "phase locked" to the
+> Always Running Timer (ART). The relation between TSC and ART is read from
+> CPUID[15H]. Details of the TSC-ART relation are in the "Invariant
+> Timekeeping" section of the SDM.
+> 
+> CPUID[15H].ECX returns the nominal frequency of ART (or crystal frequency).
+> CPU feature TSC_KNOWN_FREQ indicates that tsc_khz (tsc.c) is derived from
+> CPUID[15H]. The calculation is in tsc.c:native_calibrate_tsc().
+> 
+> When the TSC clocksource is selected, the timekeeping code uses mult/shift
+> values to transform TSC into nanoseconds. The mult/shift value is determined
+> using tsc_khz.
+> 
+> Example Output:
+> 
+> Running for 3 seconds trial 1
+> Scaled TSC delta: 3000328845
+> Monotonic raw delta: 3000329117
+> Ran for 3 seconds with 272 ns skew
+> 
+> Running for 3 seconds trial 2
+> Scaled TSC delta: 3000295209
+> Monotonic raw delta: 3000295482
+> Ran for 3 seconds with 273 ns skew
+> 
+> Running for 3 seconds trial 3
+> Scaled TSC delta: 3000262870
+> Monotonic raw delta: 3000263142
+> Ran for 3 seconds with 272 ns skew
+> 
+> Running for 300 seconds trial 4
+> Scaled TSC delta: 300000281725
+> Monotonic raw delta: 300000308905
+> Ran for 300 seconds with 27180 ns skew
+> 
+> The skew between tsc and monotonic raw is about 91 PPB. 
+> 
+> System Information:
+> 
+> CPU model string: Intel(R) Core(TM) i5-6600 CPU @ 3.30GHz
+> Kernel version tested: 4.14.71-rt44
+> 	NOTE: The skew seems to be insensitive to kernel version after
+> 		introduction of TSC_KNOWN_FREQ capability
+> 
+> >From CPUID[15H]:
+> 	Time Stamp Counter/Core Crystal Clock Information (0x15):
+> 		TSC/clock ratio = 276/2
+> 		nominal core crystal clock = 24000000 Hz (table lookup)
+> 
+> TSC kHz used to calculate mult/shift value: 3312000
+
+Now the most interesting information here would be the resulting mult/shift
+value which the kernel uses. Can you please provide that?
+
+Thanks,
+
+	Thomas
