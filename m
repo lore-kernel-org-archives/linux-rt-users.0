@@ -1,10 +1,10 @@
 From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: Re: [PATCH v6 07/15] tracing: Move hist trigger key printing into a
- separate function
-Date: Tue, 23 Oct 2018 23:37:22 +0900
-Message-ID: <20181023233722.95a6685f2395c0ba979698a4@kernel.org>
+Subject: Re: [PATCH v6 10/15] tracing: Add hist trigger snapshot() action
+ test case
+Date: Wed, 24 Oct 2018 00:03:42 +0900
+Message-ID: <20181024000342.d1e82a160a5efecdb9c0d4f5@kernel.org>
 References: <cover.1539288364.git.tom.zanussi@linux.intel.com>
-        <7b9b456df5b0738f73aa6a688db82c345d0358e1.1539288364.git.tom.zanussi@linux.intel.com>
+        <75db4ded21471580e5ad8d57c74fd9c8923cd90a.1539288364.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -15,68 +15,113 @@ Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
         linux-rt-users@vger.kernel.org
 To: Tom Zanussi <zanussi@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <7b9b456df5b0738f73aa6a688db82c345d0358e1.1539288364.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <75db4ded21471580e5ad8d57c74fd9c8923cd90a.1539288364.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Tom,
-
-On Thu, 11 Oct 2018 16:02:04 -0500
+On Thu, 11 Oct 2018 16:02:07 -0500
 Tom Zanussi <zanussi@kernel.org> wrote:
 
 > From: Tom Zanussi <tom.zanussi@linux.intel.com>
 > 
-> Future patches will want to print a histogram key outside a histogram
-> - add and use hist_trigger_print_key() for that purpose.
+> Add a test case verifying the basic functionality of the
+> hist:snapshot() action.
+> 
 
-Hmm, I think this change should be done with such user code, because without
-the user code I can not decide it is good or not.
+I think this is OK for current tracing tree, but for next kernel version
+you may need to update it (against the kselftest tree)
+
+> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> ---
+>  .../inter-event/trigger-snapshot-action-hist.tc    | 55 ++++++++++++++++++++++
+>  1 file changed, 55 insertions(+)
+>  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
+> 
+> diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
+> new file mode 100644
+> index 000000000000..f427be989296
+> --- /dev/null
+> +++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
+> @@ -0,0 +1,55 @@
+> +#!/bin/sh
+> +# description: event trigger - test inter-event histogram trigger snapshot action
+> +
+> +do_reset() {
+> +    reset_trigger
+> +    echo > set_event
+> +    echo 0 > snapshot
+> +    clear_trace
+> +}
+> +
+> +fail() { #msg
+> +    do_reset
+> +    echo $1
+> +    exit_fail
+> +}
+> +
+> +if [ ! -f set_event ]; then
+> +    echo "event tracing is not supported"
+> +    exit_unsupported
+> +fi
+> +
+> +if [ ! -f snapshot ]; then
+> +    echo "snapshot is not supported"
+> +    exit_unsupported
+> +fi
+> +
+> +grep "onchange(var)" README > /dev/null || exit_unsupported # version issue
+
+grep -q will be better.
+
+> +
+> +grep "snapshot()" README > /dev/null || exit_unsupported # version issue
+
+Ditto.
+
+> +
+> +reset_tracer
+> +do_reset
+
+Depends on the merge timing, but I already moved this kind of "reset 
+before/after test" into initialize_ftrace(), so you don't need do_reset()
+here. It is required only if you reset tracer in between tests.
+
+> +
+> +echo "Test snapshot action"
+> +
+> +echo 1 > /sys/kernel/debug/tracing/events/sched/enable
+> +
+> +echo 'hist:keys=comm:newprio=prio:onchange($newprio).save(comm,prio):onchange($newprio).snapshot() if comm=="ping"' >> /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
+> +
+> +ping localhost -c 3
+> +nice -n 1 ping localhost -c 3
+
+Ditto. please use $LOCALHOST if you send this to the latest tree.
+
+http://lkml.kernel.org/r/153563862993.29700.6436770573173736555.stgit@devbox
+
+> +
+> +echo 0 > /sys/kernel/debug/tracing/events/sched/enable
+> +
+> +if ! grep -q "changed:" events/sched/sched_waking/hist; then
+> +    fail "Failed to create onchange action inter-event histogram"
+> +fi
+> +
+> +if ! grep -q "comm=ping" snapshot; then
+> +    fail "Failed to create snapshot action inter-event histogram"
+> +fi
+> +
+> +do_reset
+
+Also you don't need this.
+
+
+BTW, are there no "expected fail" tests? (e.g. passing wrong snapshot command to trigger)
 
 Thank you,
 
-> 
-> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> ---
->  kernel/trace/trace_events_hist.c | 19 +++++++++++++++----
->  1 file changed, 15 insertions(+), 4 deletions(-)
-> 
-> diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-> index 3712200dc670..5ec462cb7672 100644
-> --- a/kernel/trace/trace_events_hist.c
-> +++ b/kernel/trace/trace_events_hist.c
-> @@ -4849,10 +4849,10 @@ static void hist_trigger_stacktrace_print(struct seq_file *m,
->  	}
->  }
->  
-> -static void
-> -hist_trigger_entry_print(struct seq_file *m,
-> -			 struct hist_trigger_data *hist_data, void *key,
-> -			 struct tracing_map_elt *elt)
-> +static void hist_trigger_print_key(struct seq_file *m,
-> +				   struct hist_trigger_data *hist_data,
-> +				   void *key,
-> +				   struct tracing_map_elt *elt)
->  {
->  	struct hist_field *key_field;
->  	char str[KSYM_SYMBOL_LEN];
-> @@ -4928,6 +4928,17 @@ hist_trigger_entry_print(struct seq_file *m,
->  		seq_puts(m, " ");
->  
->  	seq_puts(m, "}");
-> +}
 > +
-> +static void hist_trigger_entry_print(struct seq_file *m,
-> +				     struct hist_trigger_data *hist_data,
-> +				     void *key,
-> +				     struct tracing_map_elt *elt)
-> +{
-> +	const char *field_name;
-> +	unsigned int i;
-> +
-> +	hist_trigger_print_key(m, hist_data, key, elt);
->  
->  	seq_printf(m, " hitcount: %10llu",
->  		   tracing_map_read_sum(elt, HITCOUNT_IDX));
+> +exit 0
 > -- 
 > 2.14.1
 > 
