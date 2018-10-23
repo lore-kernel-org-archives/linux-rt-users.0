@@ -1,135 +1,55 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mx-ginzinger.sigmacloud.services ([185.154.235.147]:39483 "EHLO
-        mx-ginzinger.sigmacloud.services" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1727628AbeJVVyj (ORCPT
+Received: from mail-pg1-f195.google.com ([209.85.215.195]:36520 "EHLO
+        mail-pg1-f195.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725768AbeJWKR6 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 22 Oct 2018 17:54:39 -0400
-Received: from [31.193.165.228] (port=13865 helo=mx-ginzinger.sigmacloud.services)
-        by mx-ginzinger.sigmacloud.services with esmtps (TLSv1.2:AES256-GCM-SHA384:256)
-        (Exim 4.82_1-5b7a7c0-XX)
-        (envelope-from <Henri.Roosen@ginzinger.com>)
-        id 1gEaHc-0004Jk-2A
-        for linux-rt-users@vger.kernel.org; Mon, 22 Oct 2018 15:30:12 +0200
-From: Roosen Henri <Henri.Roosen@ginzinger.com>
-Subject: Kernel v4.14.52-rt34 triggered a kernel-oops
-Date: Mon, 22 Oct 2018 13:30:12 +0000
-Message-ID: <1540215012.26412.7.camel@ginzinger.com>
+        Tue, 23 Oct 2018 06:17:58 -0400
+Received: by mail-pg1-f195.google.com with SMTP id l6-v6so1169461pgp.3
+        for <linux-rt-users@vger.kernel.org>; Mon, 22 Oct 2018 18:56:51 -0700 (PDT)
+Date: Tue, 23 Oct 2018 10:56:45 +0900
+From: Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>
+Subject: Re: Kernel v4.14.52-rt34 triggered a kernel-oops
+Message-ID: <20181023015645.GA748@jagdpanzerIV>
+References: <1540215012.26412.7.camel@ginzinger.com>
 MIME-Version: 1.0
-Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----FB81337C22204EAFC3444869B984E66C"
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <1540215012.26412.7.camel@ginzinger.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Roosen Henri <Henri.Roosen@ginzinger.com>
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 
-This is an S/MIME signed message
+On (10/22/18 13:30), Roosen Henri wrote:
+> Hi RT-experts,
+> 
+> One of our ARM iMX6Q systems running an SMP PREEMPT RT kernel version
+> based on v4.14.52-rt34 triggered a kernel-oops after about 60 days
+> duration test (running cyclic-test and additional load apps).
+> 
+> Looking at the trace (see https://paste.debian.net/1048486/), PC is
+> incorrect. LR is c016816c, so the processor just executed the
+> instruction at c0168168:
+> 
+> c0168168:       e12fff33        blx     r3
+> (kernel/printk/printk.c:1666)
+> 
+> With r3 being ee4fe01c, the processor has jumped to that location
+> causing the OOPS.
+> 
+> Looking at the console_unlock disassembly (see
+> https://paste.debian.net/1048485/), r3 should have the con->write()
+> function pointer. The console pointer con is retrieved while walking
+> the console_drivers list.
+> 
+> So, I guess the list gets corrupted, maybe some kind of concurrency
+> issue? Unfortunately there are a lot of locking primitives used in the
+> console_unlock() function and some RT-specific code, so it's not so
+> easy to find the root-cause at first glance. Could someone of you have
+> a look?
 
-------FB81337C22204EAFC3444869B984E66C
-Content-Language: de-DE
-Content-Type: text/plain; charset="utf-8"
-Content-ID: <86CB8332DAB5494A9733BAFEDD44E389@ginzinger.com>
-Content-Transfer-Encoding: base64
-MIME-Version: 1.0
+Did you register/unregister consoles during the test? Nothing else
+should modify the console drivers list.
 
-SGkgUlQtZXhwZXJ0cywNCg0KT25lIG9mIG91ciBBUk0gaU1YNlEgc3lzdGVtcyBydW5uaW5nIGFu
-IFNNUCBQUkVFTVBUIFJUIGtlcm5lbCB2ZXJzaW9uDQpiYXNlZCBvbiB2NC4xNC41Mi1ydDM0IHRy
-aWdnZXJlZCBhIGtlcm5lbC1vb3BzIGFmdGVyIGFib3V0IDYwIGRheXMNCmR1cmF0aW9uIHRlc3Qg
-KHJ1bm5pbmcgY3ljbGljLXRlc3QgYW5kIGFkZGl0aW9uYWwgbG9hZCBhcHBzKS4NCg0KTG9va2lu
-ZyBhdCB0aGUgdHJhY2UgKHNlZSBodHRwczovL3Bhc3RlLmRlYmlhbi5uZXQvMTA0ODQ4Ni8pLCBQ
-QyBpcw0KaW5jb3JyZWN0LiBMUiBpcyBjMDE2ODE2Yywgc28gdGhlIHByb2Nlc3NvciBqdXN0IGV4
-ZWN1dGVkIHRoZQ0KaW5zdHJ1Y3Rpb24gYXQgYzAxNjgxNjg6DQoNCmMwMTY4MTY4OsKgwqDCoMKg
-wqDCoMKgZTEyZmZmMzPCoMKgwqDCoMKgwqDCoMKgYmx4wqDCoMKgwqDCoHIzDQooa2VybmVsL3By
-aW50ay9wcmludGsuYzoxNjY2KQ0KDQpXaXRoIHIzIGJlaW5nIGVlNGZlMDFjLCB0aGUgcHJvY2Vz
-c29yIGhhcyBqdW1wZWQgdG8gdGhhdCBsb2NhdGlvbg0KY2F1c2luZyB0aGUgT09QUy4NCg0KTG9v
-a2luZyBhdCB0aGUgY29uc29sZV91bmxvY2sgZGlzYXNzZW1ibHkgKHNlZQ0KaHR0cHM6Ly9wYXN0
-ZS5kZWJpYW4ubmV0LzEwNDg0ODUvKSwgcjMgc2hvdWxkIGhhdmUgdGhlIGNvbi0+d3JpdGUoKQ0K
-ZnVuY3Rpb24gcG9pbnRlci4gVGhlIGNvbnNvbGUgcG9pbnRlciBjb24gaXMgcmV0cmlldmVkIHdo
-aWxlIHdhbGtpbmcNCnRoZSBjb25zb2xlX2RyaXZlcnMgbGlzdC4NCg0KU28sIEkgZ3Vlc3MgdGhl
-IGxpc3QgZ2V0cyBjb3JydXB0ZWQsIG1heWJlIHNvbWUga2luZCBvZiBjb25jdXJyZW5jeQ0KaXNz
-dWU/IFVuZm9ydHVuYXRlbHkgdGhlcmUgYXJlIGEgbG90IG9mIGxvY2tpbmcgcHJpbWl0aXZlcyB1
-c2VkIGluIHRoZQ0KY29uc29sZV91bmxvY2soKSBmdW5jdGlvbiBhbmQgc29tZSBSVC1zcGVjaWZp
-YyBjb2RlLCBzbyBpdCdzIG5vdCBzbw0KZWFzeSB0byBmaW5kIHRoZSByb290LWNhdXNlIGF0IGZp
-cnN0IGdsYW5jZS4gQ291bGQgc29tZW9uZSBvZiB5b3UgaGF2ZQ0KYSBsb29rPw0KDQpUaGFua3Mh
-DQpIZW5yaQ==
-
-------FB81337C22204EAFC3444869B984E66C
-Content-Type: application/x-pkcs7-signature; name="smime.p7s"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="smime.p7s"
-
-MIIOFAYJKoZIhvcNAQcCoIIOBTCCDgECAQExDzANBglghkgBZQMEAgEFADALBgkq
-hkiG9w0BBwGgggsYMIIF5jCCA86gAwIBAgIQapvhODv/K2ufAdXZuKdSVjANBgkq
-hkiG9w0BAQwFADCBhTELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFu
-Y2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExp
-bWl0ZWQxKzApBgNVBAMTIkNPTU9ETyBSU0EgQ2VydGlmaWNhdGlvbiBBdXRob3Jp
-dHkwHhcNMTMwMTEwMDAwMDAwWhcNMjgwMTA5MjM1OTU5WjCBlzELMAkGA1UEBhMC
-R0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9y
-ZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxPTA7BgNVBAMTNENPTU9ETyBS
-U0EgQ2xpZW50IEF1dGhlbnRpY2F0aW9uIGFuZCBTZWN1cmUgRW1haWwgQ0EwggEi
-MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC+s55XrCh2dUAWxzgDmNPGGHYh
-UPMleQtMtaDRfTpYPpynMS6n9jR22YRq2tA9NEjk6vW7rN/5sYFLIP1of3l0NKZ6
-fLWfF2VgJ5cijKYy/qlAckY1wgOkUMgzKlWlVJGyK+UlNEQ1/5ErCsHq9x9aU/x1
-KwTdF/LCrT03Rl/FwFrf1XTCwa2QZYL55AqLPikFlgqOtzk06kb2qvGlnHJvijjI
-03BOrNpo+kZGpcHsgyO1/u1OZTaOo8wvEU17VVeP1cHWse9tGKTDyUGg2hJZjrqc
-k39UIm/nKbpDSZ0JsMoIw/JtOOg0JC56VzQgBo7ictReTQE5LFLG3yQK+xS1AgMB
-AAGjggE8MIIBODAfBgNVHSMEGDAWgBS7r34CPfqm8TyEjq3uOJjs2TIy1DAdBgNV
-HQ4EFgQUgq9sjPjF/pZhfOgfPStxSF7Ei8AwDgYDVR0PAQH/BAQDAgGGMBIGA1Ud
-EwEB/wQIMAYBAf8CAQAwEQYDVR0gBAowCDAGBgRVHSAAMEwGA1UdHwRFMEMwQaA/
-oD2GO2h0dHA6Ly9jcmwuY29tb2RvY2EuY29tL0NPTU9ET1JTQUNlcnRpZmljYXRp
-b25BdXRob3JpdHkuY3JsMHEGCCsGAQUFBwEBBGUwYzA7BggrBgEFBQcwAoYvaHR0
-cDovL2NydC5jb21vZG9jYS5jb20vQ09NT0RPUlNBQWRkVHJ1c3RDQS5jcnQwJAYI
-KwYBBQUHMAGGGGh0dHA6Ly9vY3NwLmNvbW9kb2NhLmNvbTANBgkqhkiG9w0BAQwF
-AAOCAgEAeFyygSg0TzzuX1bOn5dW7I+iaxf28/ZJCAbU2C81zd9A/tNx4+jsQgwR
-GiHjZrAYayZrrm78hOx7aEpkfNPQIHGG6Fvq3EzWf/Lvx7/hk6zSPwIal9v5IkDc
-ZoFD7f3iT7PdkHJY9B51csvU50rxpEg1OyOT8fk2zvvPBuM4qQNqbGWlnhMpIMwp
-WZT89RY0wpJO+2V6eXEGGHsROs3njeP9DqqqAJaBa4wBeKOdGCWn1/Jp2oY6dyNm
-NppI4ZNMUH4Tam85S1j6E95u4+1Nuru84OrMIzqvISE2HN/56ebTOWlcrurffade
-2022O/tUU1gb4jfWCcyvB8czm12FgX/y/lRjmDbEA08QJNB2729Y+io1IYO3ztve
-BdvUCIYZojTq/OCR6MvnzS6X72HP0PRLRTiOSEmIDsS5N5w/8IW1Hva5hEFy6fDA
-fd9yI+O+IMMAj1KcL/Zo9jzJ16HO5m60ttl1Enk8MQkz/W3JlHaeI5iKFn4UJu1/
-cP2YHXYPiWf2JyBzsLBrGk1II+3yL8aorYew6CQvdVifC3HtwlSam9V1niiCfOBe
-2C12TdKGu05LWIA3ZkFcWJGaNXOZ6Ggyh/TqvXG5v7zmEVDNXFnHn9tFpMpOUvxh
-csjycBtH0dZ0WrNw6gH+HF8TIhCnH3+zzWuDN0Rk6h9KVkfKehIwggUqMIIEEqAD
-AgECAhEAgK6FAFOiNDdgM5+lyjA8gTANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UE
-BhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2Fs
-Zm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxPTA7BgNVBAMTNENPTU9E
-TyBSU0EgQ2xpZW50IEF1dGhlbnRpY2F0aW9uIGFuZCBTZWN1cmUgRW1haWwgQ0Ew
-HhcNMTgwNzE4MDAwMDAwWhcNMjEwNzE3MjM1OTU5WjArMSkwJwYJKoZIhvcNAQkB
-FhpoZW5yaS5yb29zZW5AZ2luemluZ2VyLmNvbTCCASIwDQYJKoZIhvcNAQEBBQAD
-ggEPADCCAQoCggEBAMmwBmquEWhoUH5WNJe7bQRLBAccBq0ZBVQbLAbJQwN5bg9i
-wSsPG7mveXqXYWpuHhbb7lbs3zFTS4H511nWurRqcvVceVOs5vtsbVMHjfuNmHo8
-WrMCJPFBw64uBUoGdsiwuAvA0CeFpPyA/CsAuvIbmvEF+GxMjaeQhqQ9d5K4z4I6
-w6R3wFtNJiSUMUSdgtnNPDYnUIKILR3mfbSCHWA7Pepe1dh+S9JFWhcoNv1h6D/R
-SAKVdUtC2GS0vt3nk4cEg8Z0s4/OvVDRm2jluvPK+fEeUfGahwHFrk68nYTq3v2P
-dMxHg93+Li+jYAX6R3XXGbdcjZJ3UM5MGEKq+u0CAwEAAaOCAdowggHWMB8GA1Ud
-IwQYMBaAFIKvbIz4xf6WYXzoHz0rcUhexIvAMB0GA1UdDgQWBBQ9s9JCcV1JOI2I
-/oXSyF8VIj2VhTAOBgNVHQ8BAf8EBAMCBaAwDAYDVR0TAQH/BAIwADAdBgNVHSUE
-FjAUBggrBgEFBQcDBAYIKwYBBQUHAwIwRgYDVR0gBD8wPTA7BgwrBgEEAbIxAQIB
-AwUwKzApBggrBgEFBQcCARYdaHR0cHM6Ly9zZWN1cmUuY29tb2RvLm5ldC9DUFMw
-WgYDVR0fBFMwUTBPoE2gS4ZJaHR0cDovL2NybC5jb21vZG9jYS5jb20vQ09NT0RP
-UlNBQ2xpZW50QXV0aGVudGljYXRpb25hbmRTZWN1cmVFbWFpbENBLmNybDCBiwYI
-KwYBBQUHAQEEfzB9MFUGCCsGAQUFBzAChklodHRwOi8vY3J0LmNvbW9kb2NhLmNv
-bS9DT01PRE9SU0FDbGllbnRBdXRoZW50aWNhdGlvbmFuZFNlY3VyZUVtYWlsQ0Eu
-Y3J0MCQGCCsGAQUFBzABhhhodHRwOi8vb2NzcC5jb21vZG9jYS5jb20wJQYDVR0R
-BB4wHIEaaGVucmkucm9vc2VuQGdpbnppbmdlci5jb20wDQYJKoZIhvcNAQELBQAD
-ggEBAKdv6bSTLlu63Ckq7aibIwJCE0hhs83Z6Jr5G2wWrwVdFB9Dkb6l2NmdGRoq
-qbSz3Remg5qamURXec3XdEBxO1FPMcZJrHKAZuNjYdj1tzYA/rbTdYmVbno1TG5/
-O6rVb7A624UZHoucW+NpfNCrxfQY+BliMbCKJEWqQE0P6vyDenSYa76NLt1699B5
-vyHbYLrJHAjFzHe7BqSkP815C47KpJFXuGYasewJDOpvyINtn6kBlrAIanoVfDFa
-W9aUjUeNjqmcCEN4TpuSZCf1L8oWAjv5oH0R87orEAFZnSVWDIW8i7TMiFtCiF3D
-LYmN6J96LCNCs0iQIFqcnJnkHAkxggLAMIICvAIBATCBrTCBlzELMAkGA1UEBhMC
-R0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9y
-ZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxPTA7BgNVBAMTNENPTU9ETyBS
-U0EgQ2xpZW50IEF1dGhlbnRpY2F0aW9uIGFuZCBTZWN1cmUgRW1haWwgQ0ECEQCA
-roUAU6I0N2Azn6XKMDyBMA0GCWCGSAFlAwQCAQUAoIHkMBgGCSqGSIb3DQEJAzEL
-BgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTE4MTAyMjEzMzAxNVowLwYJKoZI
-hvcNAQkEMSIEIDh4PilQNIqLj0ITCMXmxB1t3RxWUPXgdrfTMFu4OcRXMHkGCSqG
-SIb3DQEJDzFsMGowCwYJYIZIAWUDBAEqMAsGCWCGSAFlAwQBFjALBglghkgBZQME
-AQIwCgYIKoZIhvcNAwcwDgYIKoZIhvcNAwICAgCAMA0GCCqGSIb3DQMCAgFAMAcG
-BSsOAwIHMA0GCCqGSIb3DQMCAgEoMA0GCSqGSIb3DQEBAQUABIIBAJN8Hs+tYaSc
-ryXgmgp+dzaiRYGG+PYV+s/yX1l6iFQxRncWer5xLdjDaiWq4mAlBlbKOV9IF6TL
-ZU9c5iet7tH2+Nc/zUaQzb4cD2ukWToJob31hNBe+Yy54gt0/ojNMcXQPya4mMq5
-4dCf7SIzkFwwbKrhIGb6d5KrNAEFGq5YDpNMWf3hPRyjpk/nvzRyZFkwS7FjCDuN
-iTguNbWlCQg+Eb/L1YQX+MXE3om5hQuV6KdnJ17jJrBtMh9DSfHFYbAKKDG161el
-JceZZBpx9zg+MtS2AfyzUWhjZCxSlcVa4KaQXvgSVGaGLKwBEA6mOJjA8oefvh9G
-6PEsyUvw0o8=
-
-------FB81337C22204EAFC3444869B984E66C--
+	-ss
