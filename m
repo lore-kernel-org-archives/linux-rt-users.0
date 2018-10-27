@@ -1,78 +1,115 @@
-From: Miroslav Lichvar <mlichvar@redhat.com>
-Subject: Re: TSC to Mono-raw Drift
-Date: Thu, 25 Oct 2018 13:49:44 +0200
-Message-ID: <20181025114944.GH12019@localhost>
-References: <alpine.DEB.2.21.1810191720590.6075@nanos.tec.linutronix.de>
- <alpine.DEB.2.21.1810191955250.1651@nanos.tec.linutronix.de>
- <CALAqxLWHdZn9RCcYbYicKXeu3QiCuVna27mWBQPbFvaj9gm-fw@mail.gmail.com>
- <alpine.DEB.2.21.1810192050250.1651@nanos.tec.linutronix.de>
- <CALAqxLVrPH-SFacys6pWBvL79OBwiAMUOL55oy3S7C+7pNffHA@mail.gmail.com>
- <alpine.DEB.2.21.1810192244150.1651@nanos.tec.linutronix.de>
- <CALAqxLUpKU73kzBh6mxgoCX4nEueuE42REcXw6F6DYYk4Hry6Q@mail.gmail.com>
- <CALAqxLUKOYYm=bzn4owZC_UgWTqrVPiz2TSnLFm1RNak3tm8-g@mail.gmail.com>
- <20181024145113.GF12019@localhost>
- <20181024173248.GB6121@artvirt.jf.intel.com>
+From: Lukas Wunner <lukas-JFq808J9C/izQB+pC5nmwQ@public.gmane.org>
+Subject: [PATCH] pinctrl: bcm2835: Use raw spinlock for RT compatibility
+Date: Sat, 27 Oct 2018 10:15:33 +0200
+Message-ID: <d71c523a8a0af5628da59a44223a357102c2a193.1540627754.git.lukas@wunner.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: John Stultz <john.stultz@linaro.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        "H. Peter Anvin" <hpa@zytor.com>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        jesus.sanchez-palencia@intel.com,
-        Gavin Hindman <gavin.hindman@intel.com>,
-        liam.r.girdwood@intel.com, Peter Zijlstra <peterz@infradead.org>,
-        LKML <linux-kernel@vger.kernel.org>
-To: Christopher Hall <christopher.s.hall@intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181024173248.GB6121@artvirt.jf.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mathias Duckeck <m.duckeck-XB/JSsFECOqzQB+pC5nmwQ@public.gmane.org>,
+ Tiejun Chen <tiejun.china-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-rpi-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org,
+ linux-gpio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Eric Anholt <eric-WhKQ6XTQaPysTnJN9+BGXg@public.gmane.org>,
+ Stefan Wahren <stefan.wahren-eS4NqCHxEME@public.gmane.org>
+Return-path: <linux-rpi-kernel-bounces+glkr-linux-rpi-kernel=m.gmane.org-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-rpi-kernel>,
+ <mailto:linux-rpi-kernel-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-rpi-kernel/>
+List-Post: <mailto:linux-rpi-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
+List-Help: <mailto:linux-rpi-kernel-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-rpi-kernel>,
+ <mailto:linux-rpi-kernel-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=subscribe>
+Sender: "linux-rpi-kernel" <linux-rpi-kernel-bounces-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
+Errors-To: linux-rpi-kernel-bounces+glkr-linux-rpi-kernel=m.gmane.org-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Oct 24, 2018 at 01:32:48PM -0400, Christopher Hall wrote:
-> On Wed, Oct 24, 2018 at 04:51:13PM +0200, Miroslav Lichvar wrote:
-> > The error is too large to be corrected by stepping on clock updates.
-> > For a typical TSC frequency we have multiplier in the range of few
-> > millions, so that's a frequency error of up to few hundred ppb. In the
-> 
-> For this example, a i5-6600 CPU @ 3.30GHz I measured 90 ppb. That is the
-> largest I've seen since measuring this on a few platforms. 20-40 PPB seems
-> more typical.
+The BCM2835 pinctrl driver acquires a spinlock in its ->irq_enable,
+->irq_disable and ->irq_set_type callbacks.  Spinlocks become sleeping
+locks with CONFIG_PREEMPT_RT_FULL=y, therefore invocation of one of the
+callbacks in atomic context may cause a hard lockup if at least two GPIO
+pins in the same bank are used as interrupts.  The issue doesn't occur
+with just a single interrupt pin per bank because the lock is never
+contended.  I'm experiencing such lockups with GPIO 8 and 28 used as
+level-triggered interrupts, i.e. with ->irq_disable being invoked on
+reception of every IRQ.
 
-It looks like there is rounding in the calculation of the multiplier,
-so for frequencies in the range of 3-5GHz the error will be up to
-about 149 ppb. Without rounding it would be twice as much, but always
-fast or slow.
+The critical section protected by the spinlock is very small (one bitop
+and one RMW of an MMIO register), hence converting to a raw spinlock
+seems a better trade-off than converting the driver to threaded IRQ
+handling (which would increase latency to handle an interrupt).
 
-> > A better fix might be to modify the calculation of time to use a
-> > second multiplier, effectively increasing its resolution. However,
-> 
-> I'm not sure, I'm understanding. Like cascading transforms? While this
-> would increase the precision, I think it would still drift over days. We
-> could probably fix up every second though.
+Cc: Mathias Duckeck <m.duckeck-XB/JSsFECOqzQB+pC5nmwQ@public.gmane.org>
+Signed-off-by: Lukas Wunner <lukas-JFq808J9C/izQB+pC5nmwQ@public.gmane.org>
+---
+ drivers/pinctrl/bcm/pinctrl-bcm2835.c | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
 
-I was thinking about using a wider multiplier, but avoiding a full
-64x64 bit multiplication.
-
-For example, in your case with the 3312MHz clock
-
-nsec = (cycles * 5065585) >> 24
-
-could be replaced with
-
-nsec = (cycles * 5065584) >> 24 + (cycles * 4538763) >> 47
-
-This would take few hours to drift by one nanosecond. If something
-like this was implemented for the raw clock, it would probably make
-sense to switch the other clocks too.
-
-> > that would slow down all users of the clock.
-> 
-> Couldn't some clocksources specify an additional multiplier/precision and
-> others use lower precision?
-
-I guess it could, but I'm not sure if people here would be happy with
-the extra complexity.
-
+diff --git a/drivers/pinctrl/bcm/pinctrl-bcm2835.c b/drivers/pinctrl/bcm/pinctrl-bcm2835.c
+index fa530913a2c8..08925d24180b 100644
+--- a/drivers/pinctrl/bcm/pinctrl-bcm2835.c
++++ b/drivers/pinctrl/bcm/pinctrl-bcm2835.c
+@@ -90,7 +90,7 @@ struct bcm2835_pinctrl {
+ 	struct gpio_chip gpio_chip;
+ 	struct pinctrl_gpio_range gpio_range;
+ 
+-	spinlock_t irq_lock[BCM2835_NUM_BANKS];
++	raw_spinlock_t irq_lock[BCM2835_NUM_BANKS];
+ };
+ 
+ /* pins are just named GPIO0..GPIO53 */
+@@ -461,10 +461,10 @@ static void bcm2835_gpio_irq_enable(struct irq_data *data)
+ 	unsigned bank = GPIO_REG_OFFSET(gpio);
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&pc->irq_lock[bank], flags);
++	raw_spin_lock_irqsave(&pc->irq_lock[bank], flags);
+ 	set_bit(offset, &pc->enabled_irq_map[bank]);
+ 	bcm2835_gpio_irq_config(pc, gpio, true);
+-	spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
++	raw_spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
+ }
+ 
+ static void bcm2835_gpio_irq_disable(struct irq_data *data)
+@@ -476,12 +476,12 @@ static void bcm2835_gpio_irq_disable(struct irq_data *data)
+ 	unsigned bank = GPIO_REG_OFFSET(gpio);
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&pc->irq_lock[bank], flags);
++	raw_spin_lock_irqsave(&pc->irq_lock[bank], flags);
+ 	bcm2835_gpio_irq_config(pc, gpio, false);
+ 	/* Clear events that were latched prior to clearing event sources */
+ 	bcm2835_gpio_set_bit(pc, GPEDS0, gpio);
+ 	clear_bit(offset, &pc->enabled_irq_map[bank]);
+-	spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
++	raw_spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
+ }
+ 
+ static int __bcm2835_gpio_irq_set_type_disabled(struct bcm2835_pinctrl *pc,
+@@ -584,7 +584,7 @@ static int bcm2835_gpio_irq_set_type(struct irq_data *data, unsigned int type)
+ 	unsigned long flags;
+ 	int ret;
+ 
+-	spin_lock_irqsave(&pc->irq_lock[bank], flags);
++	raw_spin_lock_irqsave(&pc->irq_lock[bank], flags);
+ 
+ 	if (test_bit(offset, &pc->enabled_irq_map[bank]))
+ 		ret = __bcm2835_gpio_irq_set_type_enabled(pc, gpio, type);
+@@ -596,7 +596,7 @@ static int bcm2835_gpio_irq_set_type(struct irq_data *data, unsigned int type)
+ 	else
+ 		irq_set_handler_locked(data, handle_level_irq);
+ 
+-	spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
++	raw_spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
+ 
+ 	return ret;
+ }
+@@ -1047,7 +1047,7 @@ static int bcm2835_pinctrl_probe(struct platform_device *pdev)
+ 		for_each_set_bit(offset, &events, 32)
+ 			bcm2835_gpio_wr(pc, GPEDS0 + i * 4, BIT(offset));
+ 
+-		spin_lock_init(&pc->irq_lock[i]);
++		raw_spin_lock_init(&pc->irq_lock[i]);
+ 	}
+ 
+ 	err = gpiochip_add_data(&pc->gpio_chip, pc);
 -- 
-Miroslav Lichvar
+2.19.1
