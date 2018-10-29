@@ -1,115 +1,95 @@
-From: Lukas Wunner <lukas-JFq808J9C/izQB+pC5nmwQ@public.gmane.org>
-Subject: [PATCH] pinctrl: bcm2835: Use raw spinlock for RT compatibility
-Date: Sat, 27 Oct 2018 10:15:33 +0200
-Message-ID: <d71c523a8a0af5628da59a44223a357102c2a193.1540627754.git.lukas@wunner.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [ANNOUNCE] v4.18.16-rt9
+Date: Mon, 29 Oct 2018 12:59:04 +0100
+Message-ID: <20181029115904.yxoreisulsusexky@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mathias Duckeck <m.duckeck-XB/JSsFECOqzQB+pC5nmwQ@public.gmane.org>,
- Tiejun Chen <tiejun.china-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-rpi-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org,
- linux-gpio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Walleij <linus.walleij-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Eric Anholt <eric-WhKQ6XTQaPysTnJN9+BGXg@public.gmane.org>,
- Stefan Wahren <stefan.wahren-eS4NqCHxEME@public.gmane.org>
-Return-path: <linux-rpi-kernel-bounces+glkr-linux-rpi-kernel=m.gmane.org-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-rpi-kernel>,
- <mailto:linux-rpi-kernel-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-rpi-kernel/>
-List-Post: <mailto:linux-rpi-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
-List-Help: <mailto:linux-rpi-kernel-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-rpi-kernel>,
- <mailto:linux-rpi-kernel-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=subscribe>
-Sender: "linux-rpi-kernel" <linux-rpi-kernel-bounces-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
-Errors-To: linux-rpi-kernel-bounces+glkr-linux-rpi-kernel=m.gmane.org-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-The BCM2835 pinctrl driver acquires a spinlock in its ->irq_enable,
-->irq_disable and ->irq_set_type callbacks.  Spinlocks become sleeping
-locks with CONFIG_PREEMPT_RT_FULL=y, therefore invocation of one of the
-callbacks in atomic context may cause a hard lockup if at least two GPIO
-pins in the same bank are used as interrupts.  The issue doesn't occur
-with just a single interrupt pin per bank because the lock is never
-contended.  I'm experiencing such lockups with GPIO 8 and 28 used as
-level-triggered interrupts, i.e. with ->irq_disable being invoked on
-reception of every IRQ.
+Dear RT folks!
 
-The critical section protected by the spinlock is very small (one bitop
-and one RMW of an MMIO register), hence converting to a raw spinlock
-seems a better trade-off than converting the driver to threaded IRQ
-handling (which would increase latency to handle an interrupt).
+I'm pleased to announce the v4.18.16-rt9 patch set. 
 
-Cc: Mathias Duckeck <m.duckeck-XB/JSsFECOqzQB+pC5nmwQ@public.gmane.org>
-Signed-off-by: Lukas Wunner <lukas-JFq808J9C/izQB+pC5nmwQ@public.gmane.org>
----
- drivers/pinctrl/bcm/pinctrl-bcm2835.c | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
+Changes since v4.18.16-rt8:
 
-diff --git a/drivers/pinctrl/bcm/pinctrl-bcm2835.c b/drivers/pinctrl/bcm/pinctrl-bcm2835.c
-index fa530913a2c8..08925d24180b 100644
---- a/drivers/pinctrl/bcm/pinctrl-bcm2835.c
-+++ b/drivers/pinctrl/bcm/pinctrl-bcm2835.c
-@@ -90,7 +90,7 @@ struct bcm2835_pinctrl {
- 	struct gpio_chip gpio_chip;
- 	struct pinctrl_gpio_range gpio_range;
+  - The RCU fix, which was introduced in v4.18.7-rt5, leads to a lockdep
+    warning during CPU hotplug. After a discussion with upstream it was
+    suggested to revert the change that lead to the problem in -RT.
+
+Known issues
+     - A warning triggered in "rcu_note_context_switch" originated from
+       SyS_timer_gettime(). The issue was always there, it is now
+       visible. Reported by Grygorii Strashko and Daniel Wagner.
+
+The delta patch against v4.18.16-rt8 is appended below and can be found here:
  
--	spinlock_t irq_lock[BCM2835_NUM_BANKS];
-+	raw_spinlock_t irq_lock[BCM2835_NUM_BANKS];
- };
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.18/incr/patch-4.18.16-rt8-rt9.patch.xz
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.18.16-rt9
+
+The RT patch against v4.18.16 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.18/older/patch-4.18.16-rt9.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.18/older/patches-4.18.16-rt9.tar.xz
+
+Sebastian
+
+diff --git a/kernel/rcu/tree_exp.h b/kernel/rcu/tree_exp.h
+index a104cf91e6b90..d40708e8c5d6e 100644
+--- a/kernel/rcu/tree_exp.h
++++ b/kernel/rcu/tree_exp.h
+@@ -472,14 +472,12 @@ static void sync_rcu_exp_select_node_cpus(struct work_struct *wp)
+ static void sync_rcu_exp_select_cpus(struct rcu_state *rsp,
+ 				     smp_call_func_t func)
+ {
+-	int cpu;
+ 	struct rcu_node *rnp;
  
- /* pins are just named GPIO0..GPIO53 */
-@@ -461,10 +461,10 @@ static void bcm2835_gpio_irq_enable(struct irq_data *data)
- 	unsigned bank = GPIO_REG_OFFSET(gpio);
- 	unsigned long flags;
+ 	trace_rcu_exp_grace_period(rsp->name, rcu_exp_gp_seq_endval(rsp), TPS("reset"));
+ 	sync_exp_reset_tree(rsp);
+ 	trace_rcu_exp_grace_period(rsp->name, rcu_exp_gp_seq_endval(rsp), TPS("select"));
  
--	spin_lock_irqsave(&pc->irq_lock[bank], flags);
-+	raw_spin_lock_irqsave(&pc->irq_lock[bank], flags);
- 	set_bit(offset, &pc->enabled_irq_map[bank]);
- 	bcm2835_gpio_irq_config(pc, gpio, true);
--	spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
-+	raw_spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
- }
- 
- static void bcm2835_gpio_irq_disable(struct irq_data *data)
-@@ -476,12 +476,12 @@ static void bcm2835_gpio_irq_disable(struct irq_data *data)
- 	unsigned bank = GPIO_REG_OFFSET(gpio);
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&pc->irq_lock[bank], flags);
-+	raw_spin_lock_irqsave(&pc->irq_lock[bank], flags);
- 	bcm2835_gpio_irq_config(pc, gpio, false);
- 	/* Clear events that were latched prior to clearing event sources */
- 	bcm2835_gpio_set_bit(pc, GPEDS0, gpio);
- 	clear_bit(offset, &pc->enabled_irq_map[bank]);
--	spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
-+	raw_spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
- }
- 
- static int __bcm2835_gpio_irq_set_type_disabled(struct bcm2835_pinctrl *pc,
-@@ -584,7 +584,7 @@ static int bcm2835_gpio_irq_set_type(struct irq_data *data, unsigned int type)
- 	unsigned long flags;
- 	int ret;
- 
--	spin_lock_irqsave(&pc->irq_lock[bank], flags);
-+	raw_spin_lock_irqsave(&pc->irq_lock[bank], flags);
- 
- 	if (test_bit(offset, &pc->enabled_irq_map[bank]))
- 		ret = __bcm2835_gpio_irq_set_type_enabled(pc, gpio, type);
-@@ -596,7 +596,7 @@ static int bcm2835_gpio_irq_set_type(struct irq_data *data, unsigned int type)
- 	else
- 		irq_set_handler_locked(data, handle_level_irq);
- 
--	spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
-+	raw_spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
- 
- 	return ret;
- }
-@@ -1047,7 +1047,7 @@ static int bcm2835_pinctrl_probe(struct platform_device *pdev)
- 		for_each_set_bit(offset, &events, 32)
- 			bcm2835_gpio_wr(pc, GPEDS0 + i * 4, BIT(offset));
- 
--		spin_lock_init(&pc->irq_lock[i]);
-+		raw_spin_lock_init(&pc->irq_lock[i]);
+-	cpus_read_lock();
+ 	/* Schedule work for each leaf rcu_node structure. */
+ 	rcu_for_each_leaf_node(rsp, rnp) {
+ 		rnp->exp_need_flush = false;
+@@ -494,11 +492,7 @@ static void sync_rcu_exp_select_cpus(struct rcu_state *rsp,
+ 			continue;
+ 		}
+ 		INIT_WORK(&rnp->rew.rew_work, sync_rcu_exp_select_node_cpus);
+-		cpu = cpumask_next(rnp->grplo - 1, cpu_online_mask);
+-		/* If all offline, queue the work on an unbound CPU. */
+-		if (unlikely(cpu > rnp->grphi))
+-			cpu = WORK_CPU_UNBOUND;
+-		queue_work_on(cpu, rcu_par_gp_wq, &rnp->rew.rew_work);
++		queue_work_on(rnp->grplo, rcu_par_gp_wq, &rnp->rew.rew_work);
+ 		rnp->exp_need_flush = true;
  	}
  
- 	err = gpiochip_add_data(&pc->gpio_chip, pc);
--- 
-2.19.1
+@@ -506,7 +500,6 @@ static void sync_rcu_exp_select_cpus(struct rcu_state *rsp,
+ 	rcu_for_each_leaf_node(rsp, rnp)
+ 		if (rnp->exp_need_flush)
+ 			flush_work(&rnp->rew.rew_work);
+-	cpus_read_unlock();
+ }
+ 
+ static void synchronize_sched_expedited_wait(struct rcu_state *rsp)
+diff --git a/localversion-rt b/localversion-rt
+index 700c857efd9ba..22746d6390a42 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt8
++-rt9
