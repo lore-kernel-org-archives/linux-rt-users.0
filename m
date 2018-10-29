@@ -1,7 +1,8 @@
 From: Daniel Wagner <wagi@monom.org>
-Subject: [ANNOUNCE] 4.4.162-rt175
-Date: Mon, 29 Oct 2018 21:04:59 +0100
-Message-ID: <20181029200501.BECE75007F3@mail.monom.org>
+Subject: [PATCH RT 0/2] Linux v4.4.162-rt176-rc1
+Date: Mon, 29 Oct 2018 21:16:15 +0100
+Message-ID: <20181029201617.24733-1-wagi@monom.org>
+Cc: Daniel Wagner <wagi@monom.org>
 To: LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
@@ -16,36 +17,35 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello RT Folks!
+Dear RT Folks,
 
-I'm pleased to announce the 4.4.162-rt175 stable release.
+This is the RT stable review cycle of patch v4.4.162-rt176-rc1.
 
-This release is just an update to the new stable 4.4.120 version
-and no RT specific changes have been made.
+Please scream at me if I messed something up. Please test the patches
+too.
 
-This version still qspinlock enabled, because I wanted to update first
-to the last stable release and then resend the patch which drops back
-to ticket spinlocks.
+The -rc release will be uploaded to kernel.org and will be deleted
+when the final release is out. This is just a review release (or
+release candidate).
 
-You can get this release via the git tree at:
+The pre-releases will not be pushed to the git repository, only the
+final release is.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+If all goes well, this patch will be converted to the next main
+release on 2018-11-05.
 
-  branch: v4.4-rt
-  Head SHA1: 795fdff63ee1ad9582e242ab80e9257b64770cef
+Enjoy,
 
-Or to build 4.4.162-rt175 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.162.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.4/4.4/patch-4.4.162-rt175.patch.xz
+-- Daniel
 
 
-You can also build from 4.4.157-rt174 by applying the incremental patch:
+Daniel Wagner (2):
+  x86/kconfig: Fall back to ticket spinlocks
+  Linux 4.4.162-rt176-rc1
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.4/4.4/incr/patch-4.4.157-rt174-rt175.patch.xz
+ arch/x86/Kconfig | 1 -
+ localversion-rt  | 2 +-
+ 2 files changed, 1 insertion(+), 2 deletions(-)
 
-Enjoy!
-   Daniel
+-- 
+2.14.4
