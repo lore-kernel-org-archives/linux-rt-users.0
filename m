@@ -1,45 +1,41 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT 1/2] x86/kconfig: Fall back to ticket spinlocks
-Date: Tue, 30 Oct 2018 00:12:45 +0100
-Message-ID: <20181029231244.xfj42ucddp7xnoae@linutronix.de>
-References: <20181029201617.24733-1-wagi@monom.org>
- <20181029201617.24733-2-wagi@monom.org>
+Subject: [ANNOUNCE] v4.19-rt1
+Date: Tue, 30 Oct 2018 01:27:16 +0100
+Message-ID: <20181030002715.34trdtwud62kpfis@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Cc: LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Julia Cartwright <julia@ni.com>,
-        Peter Zijlstra <peterz@infradead.org>
-To: Daniel Wagner <wagi@monom.org>
+        Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181029201617.24733-2-wagi@monom.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2018-10-29 21:16:16 [+0100], Daniel Wagner wrote:
-> From: Daniel Wagner <daniel.wagner@siemens.com>
-> 
-> v4.4.162-rt176-rc1 stable review patch.
-> If anyone has any objections, please let me know.
+Dear RT folks!
 
-I though that we are going to route this via Greg/stable for v4.4?
+I'm pleased to announce the v4.19-rt1 patch set. 
 
-> --- a/arch/x86/Kconfig
-> +++ b/arch/x86/Kconfig
-> @@ -42,7 +42,6 @@ config X86
->  	select ARCH_USE_BUILTIN_BSWAP
->  	select ARCH_USE_CMPXCHG_LOCKREF		if X86_64
->  	select ARCH_USE_QUEUED_RWLOCKS
-> -	select ARCH_USE_QUEUED_SPINLOCKS
->  	select ARCH_WANT_BATCHED_UNMAP_TLB_FLUSH
->  	select ARCH_WANTS_DYNAMIC_TASK_STRUCT
->  	select ARCH_WANT_FRAME_POINTERS
-> -- 
-> 2.14.4
+Changes since v4.18.16-rt9:
+
+  - rebase to v4.19
+
+Known issues
+     - A warning triggered in "rcu_note_context_switch" originated from
+       SyS_timer_gettime(). The issue was always there, it is now
+       visible. Reported by Grygorii Strashko and Daniel Wagner.
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.19-rt1
+
+The RT patch against v4.19 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patch-4.19-rt1.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patches-4.19-rt1.tar.xz
+
+Sebastian
