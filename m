@@ -1,41 +1,39 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] v4.19-rt1
-Date: Tue, 30 Oct 2018 01:27:16 +0100
-Message-ID: <20181030002715.34trdtwud62kpfis@linutronix.de>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Re: [PATCH RT 1/2] x86/kconfig: Fall back to ticket spinlocks
+Date: Tue, 30 Oct 2018 09:37:05 +0100
+Message-ID: <3f4d0e85-c48a-17bf-c180-00ddf5584484@monom.org>
+References: <20181029201617.24733-1-wagi@monom.org>
+ <20181029201617.24733-2-wagi@monom.org>
+ <20181029231244.xfj42ucddp7xnoae@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Cc: LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Julia Cartwright <julia@ni.com>,
+        Peter Zijlstra <peterz@infradead.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
+In-Reply-To: <20181029231244.xfj42ucddp7xnoae@linutronix.de>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Dear RT folks!
+On 30/10/2018 00:12, Sebastian Andrzej Siewior wrote:
+> On 2018-10-29 21:16:16 [+0100], Daniel Wagner wrote:
+>> From: Daniel Wagner <daniel.wagner@siemens.com>
+>>
+>> v4.4.162-rt176-rc1 stable review patch.
+>> If anyone has any objections, please let me know.
+> 
+> I though that we are going to route this via Greg/stable for v4.4?
 
-I'm pleased to announce the v4.19-rt1 patch set. 
+ah yes... I should not send out patches after a long day of work...
 
-Changes since v4.18.16-rt9:
-
-  - rebase to v4.19
-
-Known issues
-     - A warning triggered in "rcu_note_context_switch" originated from
-       SyS_timer_gettime(). The issue was always there, it is now
-       visible. Reported by Grygorii Strashko and Daniel Wagner.
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.19-rt1
-
-The RT patch against v4.19 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patch-4.19-rt1.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patches-4.19-rt1.tar.xz
-
-Sebastian
+next try
