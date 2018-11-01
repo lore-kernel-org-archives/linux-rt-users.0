@@ -1,349 +1,181 @@
 From: "Paul E. McKenney" <paulmck@linux.ibm.com>
-Subject: rcu: Merge RCU-bh into RCU-preempt
-Date: Thu, 1 Nov 2018 16:18:04 -0700
-Message-ID: <20181101231804.GA11280@linux.ibm.com>
+Subject: rcu: Frob softirq test
+Date: Thu, 1 Nov 2018 16:21:34 -0700
+Message-ID: <20181101232134.GA11875@linux.ibm.com>
 Reply-To: paulmck@linux.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: tglx@linutronix.de, bigeasy@linutronix.de
+To: a.p.zijlstra@chello.nl, tglx@linutronix.de, bigeasy@linutronix.de
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-> The Linux kernel has long RCU-bh read-side critical sections that
-> intolerably increase scheduling latency under mainline's RCU-bh rules,
-> which include RCU-bh read-side critical sections being non-preemptible.
-> This patch therefore arranges for RCU-bh to be implemented in terms of
-> RCU-preempt for CONFIG_PREEMPT_RT_FULL=y.
-> 
-> This has the downside of defeating the purpose of RCU-bh, namely,
-> handling the case where the system is subjected to a network-based
-> denial-of-service attack that keeps at least one CPU doing full-time
-> softirq processing.  This issue will be fixed by a later commit.
-> 
-> The current commit will need some work to make it appropriate for
-> mainline use, for example, it needs to be extended to cover Tiny RCU.
+> With RT_FULL we get the below wreckage:
 
-The need for this goes away as of the current merge window because
-RCU-bh has gone away.  (Aside from still being able to do things
-like rcu_read_lock_bh() as a documentation device.)
+The code that this applies to has itself been fully frobbed as of the
+current merge window.  I believe that it should now work in -rt as is,
+but who knows?  ;-)
 
 							Thanx, Paul
 
-> [ paulmck: Added a useful changelog ]
+> [  126.060484] =======================================================
+> [  126.060486] [ INFO: possible circular locking dependency detected ]
+> [  126.060489] 3.0.1-rt10+ #30
+> [  126.060490] -------------------------------------------------------
+> [  126.060492] irq/24-eth0/1235 is trying to acquire lock:
+> [  126.060495]  (&(lock)->wait_lock#2){+.+...}, at: [<ffffffff81501c81>] rt_mutex_slowunlock+0x16/0x55
+> [  126.060503]
+> [  126.060504] but task is already holding lock:
+> [  126.060506]  (&p->pi_lock){-...-.}, at: [<ffffffff81074fdc>] try_to_wake_up+0x35/0x429
+> [  126.060511]
+> [  126.060511] which lock already depends on the new lock.
+> [  126.060513]
+> [  126.060514]
+> [  126.060514] the existing dependency chain (in reverse order) is:
+> [  126.060516]
+> [  126.060516] -> #1 (&p->pi_lock){-...-.}:
+> [  126.060519]        [<ffffffff810afe9e>] lock_acquire+0x145/0x18a
+> [  126.060524]        [<ffffffff8150291e>] _raw_spin_lock_irqsave+0x4b/0x85
+> [  126.060527]        [<ffffffff810b5aa4>] task_blocks_on_rt_mutex+0x36/0x20f
+> [  126.060531]        [<ffffffff815019bb>] rt_mutex_slowlock+0xd1/0x15a
+> [  126.060534]        [<ffffffff81501ae3>] rt_mutex_lock+0x2d/0x2f
+> [  126.060537]        [<ffffffff810d9020>] rcu_boost+0xad/0xde
+> [  126.060541]        [<ffffffff810d90ce>] rcu_boost_kthread+0x7d/0x9b
+> [  126.060544]        [<ffffffff8109a760>] kthread+0x99/0xa1
+> [  126.060547]        [<ffffffff81509b14>] kernel_thread_helper+0x4/0x10
+> [  126.060551]
+> [  126.060552] -> #0 (&(lock)->wait_lock#2){+.+...}:
+> [  126.060555]        [<ffffffff810af1b8>] __lock_acquire+0x1157/0x1816
+> [  126.060558]        [<ffffffff810afe9e>] lock_acquire+0x145/0x18a
+> [  126.060561]        [<ffffffff8150279e>] _raw_spin_lock+0x40/0x73
+> [  126.060564]        [<ffffffff81501c81>] rt_mutex_slowunlock+0x16/0x55
+> [  126.060566]        [<ffffffff81501ce7>] rt_mutex_unlock+0x27/0x29
+> [  126.060569]        [<ffffffff810d9f86>] rcu_read_unlock_special+0x17e/0x1c4
+> [  126.060573]        [<ffffffff810da014>] __rcu_read_unlock+0x48/0x89
+> [  126.060576]        [<ffffffff8106847a>] select_task_rq_rt+0xc7/0xd5
+> [  126.060580]        [<ffffffff8107511c>] try_to_wake_up+0x175/0x429
+> [  126.060583]        [<ffffffff81075425>] wake_up_process+0x15/0x17
+> [  126.060585]        [<ffffffff81080a51>] wakeup_softirqd+0x24/0x26
+> [  126.060590]        [<ffffffff81081df9>] irq_exit+0x49/0x55
+> [  126.060593]        [<ffffffff8150a3bd>] smp_apic_timer_interrupt+0x8a/0x98
+> [  126.060597]        [<ffffffff81509793>] apic_timer_interrupt+0x13/0x20
+> [  126.060600]        [<ffffffff810d5952>] irq_forced_thread_fn+0x1b/0x44
+> [  126.060603]        [<ffffffff810d582c>] irq_thread+0xde/0x1af
+> [  126.060606]        [<ffffffff8109a760>] kthread+0x99/0xa1
+> [  126.060608]        [<ffffffff81509b14>] kernel_thread_helper+0x4/0x10
+> [  126.060611]
+> [  126.060612] other info that might help us debug this:
+> [  126.060614]
+> [  126.060615]  Possible unsafe locking scenario:
+> [  126.060616]
+> [  126.060617]        CPU0                    CPU1
+> [  126.060619]        ----                    ----
+> [  126.060620]   lock(&p->pi_lock);
+> [  126.060623]                                lock(&(lock)->wait_lock);
+> [  126.060625]                                lock(&p->pi_lock);
+> [  126.060627]   lock(&(lock)->wait_lock);
+> [  126.060629]
+> [  126.060629]  *** DEADLOCK ***
+> [  126.060630]
+> [  126.060632] 1 lock held by irq/24-eth0/1235:
+> [  126.060633]  #0:  (&p->pi_lock){-...-.}, at: [<ffffffff81074fdc>] try_to_wake_up+0x35/0x429
+> [  126.060638]
+> [  126.060638] stack backtrace:
+> [  126.060641] Pid: 1235, comm: irq/24-eth0 Not tainted 3.0.1-rt10+ #30
+> [  126.060643] Call Trace:
+> [  126.060644]  <IRQ>  [<ffffffff810acbde>] print_circular_bug+0x289/0x29a
+> [  126.060651]  [<ffffffff810af1b8>] __lock_acquire+0x1157/0x1816
+> [  126.060655]  [<ffffffff810ab3aa>] ? trace_hardirqs_off_caller+0x1f/0x99
+> [  126.060658]  [<ffffffff81501c81>] ? rt_mutex_slowunlock+0x16/0x55
+> [  126.060661]  [<ffffffff810afe9e>] lock_acquire+0x145/0x18a
+> [  126.060664]  [<ffffffff81501c81>] ? rt_mutex_slowunlock+0x16/0x55
+> [  126.060668]  [<ffffffff8150279e>] _raw_spin_lock+0x40/0x73
+> [  126.060671]  [<ffffffff81501c81>] ? rt_mutex_slowunlock+0x16/0x55
+> [  126.060674]  [<ffffffff810d9655>] ? rcu_report_qs_rsp+0x87/0x8c
+> [  126.060677]  [<ffffffff81501c81>] rt_mutex_slowunlock+0x16/0x55
+> [  126.060680]  [<ffffffff810d9ea3>] ? rcu_read_unlock_special+0x9b/0x1c4
+> [  126.060683]  [<ffffffff81501ce7>] rt_mutex_unlock+0x27/0x29
+> [  126.060687]  [<ffffffff810d9f86>] rcu_read_unlock_special+0x17e/0x1c4
+> [  126.060690]  [<ffffffff810da014>] __rcu_read_unlock+0x48/0x89
+> [  126.060693]  [<ffffffff8106847a>] select_task_rq_rt+0xc7/0xd5
+> [  126.060696]  [<ffffffff810683da>] ? select_task_rq_rt+0x27/0xd5
+> [  126.060701]  [<ffffffff810a852a>] ? clockevents_program_event+0x8e/0x90
+> [  126.060704]  [<ffffffff8107511c>] try_to_wake_up+0x175/0x429
+> [  126.060708]  [<ffffffff810a95dc>] ? tick_program_event+0x1f/0x21
+> [  126.060711]  [<ffffffff81075425>] wake_up_process+0x15/0x17
+> [  126.060715]  [<ffffffff81080a51>] wakeup_softirqd+0x24/0x26
+> [  126.060718]  [<ffffffff81081df9>] irq_exit+0x49/0x55
+> [  126.060721]  [<ffffffff8150a3bd>] smp_apic_timer_interrupt+0x8a/0x98
+> [  126.060724]  [<ffffffff81509793>] apic_timer_interrupt+0x13/0x20
+> [  126.060726]  <EOI>  [<ffffffff81072855>] ? migrate_disable+0x75/0x12d
+> [  126.060733]  [<ffffffff81080a61>] ? local_bh_disable+0xe/0x1f
+> [  126.060736]  [<ffffffff81080a70>] ? local_bh_disable+0x1d/0x1f
+> [  126.060739]  [<ffffffff810d5952>] irq_forced_thread_fn+0x1b/0x44
+> [  126.060742]  [<ffffffff81502ac0>] ? _raw_spin_unlock_irq+0x3b/0x59
+> [  126.060745]  [<ffffffff810d582c>] irq_thread+0xde/0x1af
+> [  126.060748]  [<ffffffff810d5937>] ? irq_thread_fn+0x3a/0x3a
+> [  126.060751]  [<ffffffff810d574e>] ? irq_finalize_oneshot+0xd1/0xd1
+> [  126.060754]  [<ffffffff810d574e>] ? irq_finalize_oneshot+0xd1/0xd1
+> [  126.060757]  [<ffffffff8109a760>] kthread+0x99/0xa1
+> [  126.060761]  [<ffffffff81509b14>] kernel_thread_helper+0x4/0x10
+> [  126.060764]  [<ffffffff81069ed7>] ? finish_task_switch+0x87/0x10a
+> [  126.060768]  [<ffffffff81502ec4>] ? retint_restore_args+0xe/0xe
+> [  126.060771]  [<ffffffff8109a6c7>] ? __init_kthread_worker+0x8c/0x8c
+> [  126.060774]  [<ffffffff81509b10>] ? gs_change+0xb/0xb
 > 
-> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-> Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-> Link: http://lkml.kernel.org/r/20111005185938.GA20403@linux.vnet.ibm.com
-> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+> Because irq_exit() does:
 > 
-> diff --git a/include/linux/rcupdate.h b/include/linux/rcupdate.h
-> index 63cd0a1a99a0..60a9b5feefe2 100644
-> --- a/include/linux/rcupdate.h
-> +++ b/include/linux/rcupdate.h
-> @@ -56,7 +56,11 @@ void call_rcu(struct rcu_head *head, rcu_callback_t func);
->  #define	call_rcu	call_rcu_sched
->  #endif /* #else #ifdef CONFIG_PREEMPT_RCU */
->  
-> +#ifdef CONFIG_PREEMPT_RT_FULL
-> +#define call_rcu_bh	call_rcu
-> +#else
->  void call_rcu_bh(struct rcu_head *head, rcu_callback_t func);
-> +#endif
->  void call_rcu_sched(struct rcu_head *head, rcu_callback_t func);
->  void synchronize_sched(void);
->  void rcu_barrier_tasks(void);
-> @@ -263,7 +267,14 @@ extern struct lockdep_map rcu_sched_lock_map;
->  extern struct lockdep_map rcu_callback_map;
->  int debug_lockdep_rcu_enabled(void);
->  int rcu_read_lock_held(void);
-> +#ifdef CONFIG_PREEMPT_RT_FULL
-> +static inline int rcu_read_lock_bh_held(void)
-> +{
-> +	return rcu_read_lock_held();
-> +}
-> +#else
->  int rcu_read_lock_bh_held(void);
-> +#endif
->  int rcu_read_lock_sched_held(void);
->  
->  #else /* #ifdef CONFIG_DEBUG_LOCK_ALLOC */
-> @@ -663,10 +674,14 @@ static inline void rcu_read_unlock(void)
->  static inline void rcu_read_lock_bh(void)
->  {
->  	local_bh_disable();
-> +#ifdef CONFIG_PREEMPT_RT_FULL
-> +	rcu_read_lock();
-> +#else
->  	__acquire(RCU_BH);
->  	rcu_lock_acquire(&rcu_bh_lock_map);
->  	RCU_LOCKDEP_WARN(!rcu_is_watching(),
->  			 "rcu_read_lock_bh() used illegally while idle");
-> +#endif
->  }
->  
->  /*
-> @@ -676,10 +691,14 @@ static inline void rcu_read_lock_bh(void)
->   */
->  static inline void rcu_read_unlock_bh(void)
->  {
-> +#ifdef CONFIG_PREEMPT_RT_FULL
-> +	rcu_read_unlock();
-> +#else
->  	RCU_LOCKDEP_WARN(!rcu_is_watching(),
->  			 "rcu_read_unlock_bh() used illegally while idle");
->  	rcu_lock_release(&rcu_bh_lock_map);
->  	__release(RCU_BH);
-> +#endif
->  	local_bh_enable();
->  }
->  
-> diff --git a/include/linux/rcutree.h b/include/linux/rcutree.h
-> index 914655848ef6..462ce061bac7 100644
-> --- a/include/linux/rcutree.h
-> +++ b/include/linux/rcutree.h
-> @@ -44,7 +44,11 @@ static inline void rcu_virt_note_context_switch(int cpu)
->  	rcu_note_context_switch(false);
->  }
->  
-> +#ifdef CONFIG_PREEMPT_RT_FULL
-> +# define synchronize_rcu_bh	synchronize_rcu
-> +#else
->  void synchronize_rcu_bh(void);
-> +#endif
->  void synchronize_sched_expedited(void);
->  void synchronize_rcu_expedited(void);
->  
-> @@ -72,7 +76,11 @@ static inline void synchronize_rcu_bh_expedited(void)
->  }
->  
->  void rcu_barrier(void);
-> +#ifdef CONFIG_PREEMPT_RT_FULL
-> +# define rcu_barrier_bh		rcu_barrier
-> +#else
->  void rcu_barrier_bh(void);
-> +#endif
->  void rcu_barrier_sched(void);
->  bool rcu_eqs_special_set(int cpu);
->  unsigned long get_state_synchronize_rcu(void);
-> diff --git a/kernel/rcu/rcu.h b/kernel/rcu/rcu.h
-> index 4d04683c31b2..808cce9a5d43 100644
-> --- a/kernel/rcu/rcu.h
-> +++ b/kernel/rcu/rcu.h
-> @@ -528,7 +528,6 @@ static inline void show_rcu_gp_kthreads(void) { }
->  static inline int rcu_get_gp_kthreads_prio(void) { return 0; }
->  #else /* #ifdef CONFIG_TINY_RCU */
->  unsigned long rcu_get_gp_seq(void);
-> -unsigned long rcu_bh_get_gp_seq(void);
->  unsigned long rcu_sched_get_gp_seq(void);
->  unsigned long rcu_exp_batches_completed(void);
->  unsigned long rcu_exp_batches_completed_sched(void);
-> @@ -536,10 +535,18 @@ unsigned long srcu_batches_completed(struct srcu_struct *sp);
->  void show_rcu_gp_kthreads(void);
->  int rcu_get_gp_kthreads_prio(void);
->  void rcu_force_quiescent_state(void);
-> -void rcu_bh_force_quiescent_state(void);
->  void rcu_sched_force_quiescent_state(void);
->  extern struct workqueue_struct *rcu_gp_wq;
->  extern struct workqueue_struct *rcu_par_gp_wq;
-> +
-> +#ifdef CONFIG_PREEMPT_RT_FULL
-> +#define rcu_bh_get_gp_seq		rcu_get_gp_seq
-> +#define rcu_bh_force_quiescent_state	rcu_force_quiescent_state
-> +#else
-> +unsigned long rcu_bh_get_gp_seq(void);
-> +void rcu_bh_force_quiescent_state(void);
-> +#endif
-> +
->  #endif /* #else #ifdef CONFIG_TINY_RCU */
->  
->  #ifdef CONFIG_RCU_NOCB_CPU
-> diff --git a/kernel/rcu/rcutorture.c b/kernel/rcu/rcutorture.c
-> index c596c6f1e457..7d2a615601e7 100644
-> --- a/kernel/rcu/rcutorture.c
-> +++ b/kernel/rcu/rcutorture.c
-> @@ -434,6 +434,7 @@ static struct rcu_torture_ops rcu_ops = {
->  	.name		= "rcu"
->  };
->  
-> +#ifndef CONFIG_PREEMPT_RT_FULL
->  /*
->   * Definitions for rcu_bh torture testing.
->   */
-> @@ -475,6 +476,12 @@ static struct rcu_torture_ops rcu_bh_ops = {
->  	.name		= "rcu_bh"
->  };
->  
-> +#else
-> +static struct rcu_torture_ops rcu_bh_ops = {
-> +	.ttype		= INVALID_RCU_FLAVOR,
-> +};
-> +#endif
-> +
->  /*
->   * Don't even think about trying any of these in real life!!!
->   * The names includes "busted", and they really means it!
-> diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
-> index 0b760c1369f7..197088cdb56e 100644
-> --- a/kernel/rcu/tree.c
-> +++ b/kernel/rcu/tree.c
-> @@ -244,6 +244,7 @@ void rcu_sched_qs(void)
->  			   this_cpu_ptr(&rcu_sched_data), true);
->  }
->  
-> +#ifndef CONFIG_PREEMPT_RT_FULL
->  void rcu_bh_qs(void)
->  {
->  	RCU_LOCKDEP_WARN(preemptible(), "rcu_bh_qs() invoked with preemption enabled!!!");
-> @@ -254,6 +255,7 @@ void rcu_bh_qs(void)
->  		__this_cpu_write(rcu_bh_data.cpu_no_qs.b.norm, false);
+> void irq_exit(void)
+> {
+>     account_system_vtime(current);
+>     trace_hardirq_exit();
+>     sub_preempt_count(IRQ_EXIT_OFFSET);
+>     if (!in_interrupt() && local_softirq_pending())
+> 	    invoke_softirq();
+> 
+>     ...
+> }
+> 
+> Which triggers a wakeup, which uses RCU, now if the interrupted task has
+> t->rcu_read_unlock_special set, the rcu usage from the wakeup will end
+> up in rcu_read_unlock_special(). rcu_read_unlock_special() will test
+> for in_irq(), which will fail as we just decremented preempt_count
+> with IRQ_EXIT_OFFSET, and in_sering_softirq(), which for
+> PREEMPT_RT_FULL reads:
+> 
+> int in_serving_softirq(void)
+> {
+>     int res;
+> 
+>     preempt_disable();
+>     res = __get_cpu_var(local_softirq_runner) == current;
+>     preempt_enable();
+>     return res;
+> }
+> 
+> Which will thus also fail, resulting in the above wreckage.
+> 
+> The 'somewhat' ugly solution is to open-code the preempt_count() test
+> in rcu_read_unlock_special().
+> 
+> Also, we're not at all sure how ->rcu_read_unlock_special gets set
+> here... so this is very likely a bandaid and more thought is required.
+> 
+> Cc: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+> Signed-off-by: Peter Zijlstra <a.p.zijlstra@chello.nl>
+> 
+> diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
+> index 564e3927e7b0..429a2f144e19 100644
+> --- a/kernel/rcu/tree_plugin.h
+> +++ b/kernel/rcu/tree_plugin.h
+> @@ -524,7 +524,7 @@ static void rcu_read_unlock_special(struct task_struct *t)
 >  	}
->  }
-> +#endif
 >  
->  /*
->   * Steal a bit from the bottom of ->dynticks for idle entry/exit
-> @@ -568,6 +570,7 @@ unsigned long rcu_sched_get_gp_seq(void)
->  }
->  EXPORT_SYMBOL_GPL(rcu_sched_get_gp_seq);
->  
-> +#ifndef CONFIG_PREEMPT_RT_FULL
->  /*
->   * Return the number of RCU-bh GPs completed thus far for debug & stats.
->   */
-> @@ -576,6 +579,7 @@ unsigned long rcu_bh_get_gp_seq(void)
->  	return READ_ONCE(rcu_bh_state.gp_seq);
->  }
->  EXPORT_SYMBOL_GPL(rcu_bh_get_gp_seq);
-> +#endif
->  
->  /*
->   * Return the number of RCU expedited batches completed thus far for
-> @@ -599,6 +603,7 @@ unsigned long rcu_exp_batches_completed_sched(void)
->  }
->  EXPORT_SYMBOL_GPL(rcu_exp_batches_completed_sched);
->  
-> +#ifndef CONFIG_PREEMPT_RT_FULL
->  /*
->   * Force a quiescent state.
->   */
-> @@ -617,6 +622,13 @@ void rcu_bh_force_quiescent_state(void)
->  }
->  EXPORT_SYMBOL_GPL(rcu_bh_force_quiescent_state);
->  
-> +#else
-> +void rcu_force_quiescent_state(void)
-> +{
-> +}
-> +EXPORT_SYMBOL_GPL(rcu_force_quiescent_state);
-> +#endif
-> +
->  /*
->   * Force a quiescent state for RCU-sched.
->   */
-> @@ -674,9 +686,11 @@ void rcutorture_get_gp_data(enum rcutorture_type test_type, int *flags,
->  	case RCU_FLAVOR:
->  		rsp = rcu_state_p;
->  		break;
-> +#ifndef CONFIG_PREEMPT_RT_FULL
->  	case RCU_BH_FLAVOR:
->  		rsp = &rcu_bh_state;
->  		break;
-> +#endif
->  	case RCU_SCHED_FLAVOR:
->  		rsp = &rcu_sched_state;
->  		break;
-> @@ -3040,6 +3054,7 @@ void call_rcu_sched(struct rcu_head *head, rcu_callback_t func)
->  }
->  EXPORT_SYMBOL_GPL(call_rcu_sched);
->  
-> +#ifndef CONFIG_PREEMPT_RT_FULL
->  /**
->   * call_rcu_bh() - Queue an RCU for invocation after a quicker grace period.
->   * @head: structure to be used for queueing the RCU updates.
-> @@ -3067,6 +3082,7 @@ void call_rcu_bh(struct rcu_head *head, rcu_callback_t func)
->  	__call_rcu(head, func, &rcu_bh_state, -1, 0);
->  }
->  EXPORT_SYMBOL_GPL(call_rcu_bh);
-> +#endif
->  
->  /*
->   * Queue an RCU callback for lazy invocation after a grace period.
-> @@ -3152,6 +3168,7 @@ void synchronize_sched(void)
->  }
->  EXPORT_SYMBOL_GPL(synchronize_sched);
->  
-> +#ifndef CONFIG_PREEMPT_RT_FULL
->  /**
->   * synchronize_rcu_bh - wait until an rcu_bh grace period has elapsed.
->   *
-> @@ -3178,6 +3195,7 @@ void synchronize_rcu_bh(void)
->  		wait_rcu_gp(call_rcu_bh);
->  }
->  EXPORT_SYMBOL_GPL(synchronize_rcu_bh);
-> +#endif
->  
->  /**
->   * get_state_synchronize_rcu - Snapshot current RCU state
-> @@ -3485,6 +3503,7 @@ static void _rcu_barrier(struct rcu_state *rsp)
->  	mutex_unlock(&rsp->barrier_mutex);
->  }
->  
-> +#ifndef CONFIG_PREEMPT_RT_FULL
->  /**
->   * rcu_barrier_bh - Wait until all in-flight call_rcu_bh() callbacks complete.
->   */
-> @@ -3493,6 +3512,7 @@ void rcu_barrier_bh(void)
->  	_rcu_barrier(&rcu_bh_state);
->  }
->  EXPORT_SYMBOL_GPL(rcu_barrier_bh);
-> +#endif
->  
->  /**
->   * rcu_barrier_sched - Wait for in-flight call_rcu_sched() callbacks.
-> @@ -4140,7 +4160,9 @@ void __init rcu_init(void)
->  
->  	rcu_bootup_announce();
->  	rcu_init_geometry();
-> +#ifndef CONFIG_PREEMPT_RT_FULL
->  	rcu_init_one(&rcu_bh_state);
-> +#endif
->  	rcu_init_one(&rcu_sched_state);
->  	if (dump_tree)
->  		rcu_dump_rcu_node_tree(&rcu_sched_state);
-> diff --git a/kernel/rcu/tree.h b/kernel/rcu/tree.h
-> index 4e74df768c57..fbbff7c21148 100644
-> --- a/kernel/rcu/tree.h
-> +++ b/kernel/rcu/tree.h
-> @@ -413,7 +413,9 @@ extern struct list_head rcu_struct_flavors;
->   */
->  extern struct rcu_state rcu_sched_state;
->  
-> +#ifndef CONFIG_PREEMPT_RT_FULL
->  extern struct rcu_state rcu_bh_state;
-> +#endif
->  
->  #ifdef CONFIG_PREEMPT_RCU
->  extern struct rcu_state rcu_preempt_state;
-> diff --git a/kernel/rcu/update.c b/kernel/rcu/update.c
-> index 39cb23d22109..f56c0fbdf22e 100644
-> --- a/kernel/rcu/update.c
-> +++ b/kernel/rcu/update.c
-> @@ -286,6 +286,7 @@ int rcu_read_lock_held(void)
->  }
->  EXPORT_SYMBOL_GPL(rcu_read_lock_held);
->  
-> +#ifndef CONFIG_PREEMPT_RT_FULL
->  /**
->   * rcu_read_lock_bh_held() - might we be in RCU-bh read-side critical section?
->   *
-> @@ -312,6 +313,7 @@ int rcu_read_lock_bh_held(void)
->  	return in_softirq() || irqs_disabled();
->  }
->  EXPORT_SYMBOL_GPL(rcu_read_lock_bh_held);
-> +#endif
->  
->  #endif /* #ifdef CONFIG_DEBUG_LOCK_ALLOC */
->  
+>  	/* Hardware IRQ handlers cannot block, complain if they get here. */
+> -	if (in_irq() || in_serving_softirq()) {
+> +	if (preempt_count() & (HARDIRQ_MASK | SOFTIRQ_OFFSET)) {
+>  		lockdep_rcu_suspicious(__FILE__, __LINE__,
+>  				       "rcu_read_unlock() from irq or softirq with blocking in critical section!!!\n");
+>  		pr_alert("->rcu_read_unlock_special: %#x (b: %d, enq: %d nq: %d)\n",
