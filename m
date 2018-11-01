@@ -1,121 +1,113 @@
 From: "Paul E. McKenney" <paulmck@linux.ibm.com>
-Subject: srcu: use cpu_online() instead custom check
-Date: Thu, 1 Nov 2018 16:12:28 -0700
-Message-ID: <20181101231228.GA9118@linux.ibm.com>
+Subject: rcu: Make ksoftirqd do RCU quiescent states
+Date: Thu, 1 Nov 2018 16:16:17 -0700
+Message-ID: <20181101231617.GA10882@linux.ibm.com>
 Reply-To: paulmck@linux.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: bigeasy@linutronix.de
+To: tglx@linutronix.de, bigeasy@linutronix.de
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-> The current check via srcu_online is slightly racy because after looking
-> at srcu_online there could be an interrupt that interrupted us long
-> enough until the CPU we checked against went offline.
-
-I don't see how this can happen, even in -rt.  The call to
-srcu_offline_cpu() happens very early in the CPU removal process,
-which means that the synchronize_rcu_mult(call_rcu, call_rcu_sched)
-in sched_cpu_deactivate() would wait for the interrupt to complete.
-And for the enclosing preempt_disable region to complete.
-
-Or is getting rid of that preempt_disable region the real reason for
-this change?
-
-> An alternative would be to hold the hotplug rwsem (so the CPUs don't
-> change their state) and then check based on cpu_online() if we queue it
-> on a specific CPU or not. queue_work_on() itself can handle if something
-> is enqueued on an offline CPU but a timer which is enqueued on an offline
-> CPU won't fire until the CPU is back online.
+> Implementing RCU-bh in terms of RCU-preempt makes the system vulnerable
+> to network-based denial-of-service attacks.  This patch therefore
+> makes __do_softirq() invoke rcu_bh_qs(), but only when __do_softirq()
+> is running in ksoftirqd context.  A wrapper layer in interposed so that
+> other calls to __do_softirq() avoid invoking rcu_bh_qs().  The underlying
+> function __do_softirq_common() does the actual work.
 > 
-> I am not sure if the removal in rcu_init() is okay or not. I assume that
-> SRCU won't enqueue a work item before SRCU is up and ready.
+> The reason that rcu_bh_qs() is bad in these non-ksoftirqd contexts is
+> that there might be a local_bh_enable() inside an RCU-preempt read-side
+> critical section.  This local_bh_enable() can invoke __do_softirq()
+> directly, so if __do_softirq() were to invoke rcu_bh_qs() (which just
+> calls rcu_preempt_qs() in the PREEMPT_RT_FULL case), there would be
+> an illegal RCU-preempt quiescent state in the middle of an RCU-preempt
+> read-side critical section.  Therefore, quiescent states can only happen
+> in cases where __do_softirq() is invoked directly from ksoftirqd.
 
-That was the case before the current merge window, but use of call_srcu()
-by tracing means that SRCU needs to be able to deal with call_srcu()
-long before any initialization has happened.  The actual callbacks
-won't be invoked until much later, after the scheduler and workqueues
-are completely up and running, but call_srcu() can be invoked very early.
-
-But I am not seeing any removal in rcu_init() in this patch, so I might
-be missing something.
+I -think- that the need for this goes away in the current merge window
+because RCU-bh is going away.  There might still be an rt-specific need
+to disable irqs, though.
 
 							Thanx, Paul
 
-> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+> Link: http://lkml.kernel.org/r/20111005184518.GA21601@linux.vnet.ibm.com
+> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 > 
-> diff --git a/kernel/rcu/srcutree.c b/kernel/rcu/srcutree.c
-> index 6c9866a854b1..3428a40a813e 100644
-> --- a/kernel/rcu/srcutree.c
-> +++ b/kernel/rcu/srcutree.c
-> @@ -38,6 +38,7 @@
->  #include <linux/delay.h>
->  #include <linux/module.h>
->  #include <linux/srcu.h>
-> +#include <linux/cpu.h>
->  
->  #include "rcu.h"
->  #include "rcu_segcblist.h"
-> @@ -458,21 +459,6 @@ static void srcu_gp_start(struct srcu_struct *sp)
->  	WARN_ON_ONCE(state != SRCU_STATE_SCAN1);
->  }
->  
-> -/*
-> - * Track online CPUs to guide callback workqueue placement.
-> - */
-> -DEFINE_PER_CPU(bool, srcu_online);
-> -
-> -void srcu_online_cpu(unsigned int cpu)
-> -{
-> -	WRITE_ONCE(per_cpu(srcu_online, cpu), true);
-> -}
-> -
-> -void srcu_offline_cpu(unsigned int cpu)
-> -{
-> -	WRITE_ONCE(per_cpu(srcu_online, cpu), false);
-> -}
-> -
->  /*
->   * Place the workqueue handler on the specified CPU if online, otherwise
->   * just run it whereever.  This is useful for placing workqueue handlers
-> @@ -484,12 +470,12 @@ static bool srcu_queue_delayed_work_on(int cpu, struct workqueue_struct *wq,
->  {
->  	bool ret;
->  
-> -	preempt_disable();
-> -	if (READ_ONCE(per_cpu(srcu_online, cpu)))
-> +	cpus_read_lock();
-> +	if (cpu_online(cpu))
->  		ret = queue_delayed_work_on(cpu, wq, dwork, delay);
->  	else
->  		ret = queue_delayed_work(wq, dwork, delay);
-> -	preempt_enable();
-> +	cpus_read_unlock();
->  	return ret;
->  }
->  
 > diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
-> index 6868ef417e9f..e2e68250009b 100644
+> index 197088cdb56e..968579b86401 100644
 > --- a/kernel/rcu/tree.c
 > +++ b/kernel/rcu/tree.c
-> @@ -3767,8 +3767,6 @@ int rcutree_online_cpu(unsigned int cpu)
->  		rnp->ffmask |= rdp->grpmask;
->  		raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
->  	}
-> -	if (IS_ENABLED(CONFIG_TREE_SRCU))
-> -		srcu_online_cpu(cpu);
->  	if (rcu_scheduler_active == RCU_SCHEDULER_INACTIVE)
->  		return 0; /* Too early in boot for scheduler work. */
->  	sync_sched_exp_online_cleanup(cpu);
-> @@ -3796,8 +3794,6 @@ int rcutree_offline_cpu(unsigned int cpu)
->  	}
->  
->  	rcutree_affinity_setting(cpu, cpu);
-> -	if (IS_ENABLED(CONFIG_TREE_SRCU))
-> -		srcu_offline_cpu(cpu);
->  	return 0;
+> @@ -244,7 +244,19 @@ void rcu_sched_qs(void)
+>  			   this_cpu_ptr(&rcu_sched_data), true);
 >  }
 >  
+> -#ifndef CONFIG_PREEMPT_RT_FULL
+> +#ifdef CONFIG_PREEMPT_RT_FULL
+> +static void rcu_preempt_qs(void);
+> +
+> +void rcu_bh_qs(void)
+> +{
+> +	unsigned long flags;
+> +
+> +	/* Callers to this function, rcu_preempt_qs(), must disable irqs. */
+> +	local_irq_save(flags);
+> +	rcu_preempt_qs();
+> +	local_irq_restore(flags);
+> +}
+> +#else
+>  void rcu_bh_qs(void)
+>  {
+>  	RCU_LOCKDEP_WARN(preemptible(), "rcu_bh_qs() invoked with preemption enabled!!!");
+> diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
+> index 429a2f144e19..bee9bffeb0ce 100644
+> --- a/kernel/rcu/tree_plugin.h
+> +++ b/kernel/rcu/tree_plugin.h
+> @@ -29,6 +29,7 @@
+>  #include <linux/oom.h>
+>  #include <linux/sched/debug.h>
+>  #include <linux/smpboot.h>
+> +#include <linux/jiffies.h>
+>  #include <linux/sched/isolation.h>
+>  #include <uapi/linux/sched/types.h>
+>  #include "../time/tick-internal.h"
+> @@ -1407,7 +1408,7 @@ static void rcu_prepare_kthreads(int cpu)
+>  
+>  #endif /* #else #ifdef CONFIG_RCU_BOOST */
+>  
+> -#if !defined(CONFIG_RCU_FAST_NO_HZ)
+> +#if !defined(CONFIG_RCU_FAST_NO_HZ) || defined(CONFIG_PREEMPT_RT_FULL)
+>  
+>  /*
+>   * Check to see if any future RCU-related work will need to be done
+> @@ -1423,7 +1424,9 @@ int rcu_needs_cpu(u64 basemono, u64 *nextevt)
+>  	*nextevt = KTIME_MAX;
+>  	return rcu_cpu_has_callbacks(NULL);
+>  }
+> +#endif /* !defined(CONFIG_RCU_FAST_NO_HZ) || defined(CONFIG_PREEMPT_RT_FULL) */
+>  
+> +#if !defined(CONFIG_RCU_FAST_NO_HZ)
+>  /*
+>   * Because we do not have RCU_FAST_NO_HZ, don't bother cleaning up
+>   * after it.
+> @@ -1520,6 +1523,8 @@ static bool __maybe_unused rcu_try_advance_all_cbs(void)
+>  	return cbs_ready;
+>  }
+>  
+> +#ifndef CONFIG_PREEMPT_RT_FULL
+> +
+>  /*
+>   * Allow the CPU to enter dyntick-idle mode unless it has callbacks ready
+>   * to invoke.  If the CPU has callbacks, try to advance them.  Tell the
+> @@ -1562,6 +1567,7 @@ int rcu_needs_cpu(u64 basemono, u64 *nextevt)
+>  	*nextevt = basemono + dj * TICK_NSEC;
+>  	return 0;
+>  }
+> +#endif /* #ifndef CONFIG_PREEMPT_RT_FULL */
+>  
+>  /*
+>   * Prepare a CPU for idle from an RCU perspective.  The first major task
