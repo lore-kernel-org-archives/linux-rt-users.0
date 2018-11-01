@@ -1,60 +1,46 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: TSC to Mono-raw Drift
-Date: Thu, 1 Nov 2018 19:03:37 +0100 (CET)
-Message-ID: <alpine.DEB.2.21.1811011859590.1642@nanos.tec.linutronix.de>
-References: <20181015160945.5993-1-christopher.s.hall@intel.com> <alpine.DEB.2.21.1810191720590.6075@nanos.tec.linutronix.de> <alpine.DEB.2.21.1810191955250.1651@nanos.tec.linutronix.de> <CALAqxLWHdZn9RCcYbYicKXeu3QiCuVna27mWBQPbFvaj9gm-fw@mail.gmail.com>
- <alpine.DEB.2.21.1810192050250.1651@nanos.tec.linutronix.de> <CALAqxLVrPH-SFacys6pWBvL79OBwiAMUOL55oy3S7C+7pNffHA@mail.gmail.com> <alpine.DEB.2.21.1810192244150.1651@nanos.tec.linutronix.de> <CALAqxLUpKU73kzBh6mxgoCX4nEueuE42REcXw6F6DYYk4Hry6Q@mail.gmail.com>
- <CALAqxLUKOYYm=bzn4owZC_UgWTqrVPiz2TSnLFm1RNak3tm8-g@mail.gmail.com> <alpine.DEB.2.21.1811011841060.1642@nanos.tec.linutronix.de> <CALAqxLV7SGRx_jKyM_RmzBGmnqAtDRXQLcH4Yjj+HKCY1O9sOQ@mail.gmail.com>
+From: "Paul E. McKenney" <paulmck@linux.ibm.com>
+Subject: rcu: enable rcu_normal_after_boot by default for RT
+Date: Thu, 1 Nov 2018 16:02:35 -0700
+Message-ID: <20181101230235.GA8757@linux.ibm.com>
+Reply-To: paulmck@linux.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Cc: Christopher Hall <christopher.s.hall@intel.com>,
-        "H. Peter Anvin" <hpa@zytor.com>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        jesus.sanchez-palencia@intel.com,
-        Gavin Hindman <gavin.hindman@intel.com>,
-        liam.r.girdwood@intel.com, Peter Zijlstra <peterz@infradead.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        Miroslav Lichvar <mlichvar@redhat.com>
-To: John Stultz <john.stultz@linaro.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: lcapitulino@redhat.com, julia@ni.com, bigeasy@linutronix.de
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALAqxLV7SGRx_jKyM_RmzBGmnqAtDRXQLcH4Yjj+HKCY1O9sOQ@mail.gmail.com>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 1 Nov 2018, John Stultz wrote:
-> On Thu, Nov 1, 2018 at 10:44 AM, Thomas Gleixner <tglx@linutronix.de> wrote:
-> > On Tue, 23 Oct 2018, John Stultz wrote:
-> >> On Fri, Oct 19, 2018 at 3:36 PM, John Stultz <john.stultz@linaro.org> wrote:
-> >> I spent a little bit of time thinking this out. Unfortunately I don't
-> >> think its a simple matter of calculating the granularity error on the
-> >> raw clock and adding it in each interval. The other trouble spot is
-> >> that the adjusted clocks (monotonic/realtime) are adjusted off of that
-> >> raw clock. So they would need to have that error added as well,
-> >> otherwise the raw and a otherwise non-adjusted monotonic clock would
-> >> drift.
-> >>
-> >> However, to be correct, the ntp adjustments made would have to be made
-> >> to both the base interval + error, which mucks the math up a fair bit.
-> >
-> > Hmm, confused as usual. Why would you need to do anything like that?
+> The forcing of an expedited grace period is an expensive and very
+> RT-application unfriendly operation, as it forcibly preempts all running
+> tasks on CPUs which are preventing the gp from expiring.
 > 
-> Because the NTP adjustment is done off of what is now the raw clock.
-> If the raw clock is "corrected" the ppb adjustment has to be done off
-> of that corrected rate.
+> By default, as a policy decision, disable the expediting of grace
+> periods (after boot) on configurations which enable PREEMPT_RT_FULL.
+> 
+> Suggested-by: Luiz Capitulino <lcapitulino@redhat.com>
+> Signed-off-by: Julia Cartwright <julia@ni.com>
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Sure, but why would that require any change? Right now the raw clock is
-slightly off and you correct clock monotonic against NTP. So with that
-extra correction you just see a slightly different raw clock slew and work
-from there.
+In case it matters:
 
-> Otherwise with no correction, the raw clock and the monotonic clock
-> would drift apart.
+Acked-by: Paul E. McKenney <paulmck@linux.ibm.com>
 
-They drift apart today already if you do NTP correction. They stay in sync
-w/o NTP/PTP/PPS.
+Alternatively, any reason that I should not pull this into -rcu?
 
-But maybe I confused myself completely by now.
+							Thanx, Paul
 
-Thanks,
-
-	tglx
+> diff --git a/kernel/rcu/update.c b/kernel/rcu/update.c
+> index f56c0fbdf22e..12027723abaf 100644
+> --- a/kernel/rcu/update.c
+> +++ b/kernel/rcu/update.c
+> @@ -67,7 +67,7 @@ extern int rcu_expedited; /* from sysctl */
+>  module_param(rcu_expedited, int, 0);
+>  extern int rcu_normal; /* from sysctl */
+>  module_param(rcu_normal, int, 0);
+> -static int rcu_normal_after_boot;
+> +static int rcu_normal_after_boot = IS_ENABLED(CONFIG_PREEMPT_RT_FULL);
+>  module_param(rcu_normal_after_boot, int, 0);
+>  #endif /* #ifndef CONFIG_TINY_RCU */
+>  
