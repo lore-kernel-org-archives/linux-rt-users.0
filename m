@@ -1,12 +1,19 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Miroslav Lichvar <mlichvar@redhat.com>
 Subject: Re: TSC to Mono-raw Drift
-Date: Fri, 2 Nov 2018 12:27:16 +0100 (CET)
-Message-ID: <alpine.DEB.2.21.1811021226000.1895@nanos.tec.linutronix.de>
-References: <alpine.DEB.2.21.1810191720590.6075@nanos.tec.linutronix.de> <alpine.DEB.2.21.1810191955250.1651@nanos.tec.linutronix.de> <CALAqxLWHdZn9RCcYbYicKXeu3QiCuVna27mWBQPbFvaj9gm-fw@mail.gmail.com> <alpine.DEB.2.21.1810192050250.1651@nanos.tec.linutronix.de>
- <CALAqxLVrPH-SFacys6pWBvL79OBwiAMUOL55oy3S7C+7pNffHA@mail.gmail.com> <alpine.DEB.2.21.1810192244150.1651@nanos.tec.linutronix.de> <CALAqxLUpKU73kzBh6mxgoCX4nEueuE42REcXw6F6DYYk4Hry6Q@mail.gmail.com> <CALAqxLUKOYYm=bzn4owZC_UgWTqrVPiz2TSnLFm1RNak3tm8-g@mail.gmail.com>
- <20181024145113.GF12019@localhost> <alpine.DEB.2.21.1811011813470.1642@nanos.tec.linutronix.de> <20181102102613.GL19434@localhost>
+Date: Fri, 2 Nov 2018 13:31:58 +0100
+Message-ID: <20181102123158.GN19434@localhost>
+References: <alpine.DEB.2.21.1810192050250.1651@nanos.tec.linutronix.de>
+ <CALAqxLVrPH-SFacys6pWBvL79OBwiAMUOL55oy3S7C+7pNffHA@mail.gmail.com>
+ <alpine.DEB.2.21.1810192244150.1651@nanos.tec.linutronix.de>
+ <CALAqxLUpKU73kzBh6mxgoCX4nEueuE42REcXw6F6DYYk4Hry6Q@mail.gmail.com>
+ <CALAqxLUKOYYm=bzn4owZC_UgWTqrVPiz2TSnLFm1RNak3tm8-g@mail.gmail.com>
+ <alpine.DEB.2.21.1811011841060.1642@nanos.tec.linutronix.de>
+ <CALAqxLV7SGRx_jKyM_RmzBGmnqAtDRXQLcH4Yjj+HKCY1O9sOQ@mail.gmail.com>
+ <alpine.DEB.2.21.1811011859590.1642@nanos.tec.linutronix.de>
+ <20181102112006.GM19434@localhost>
+ <alpine.DEB.2.21.1811021225010.1895@nanos.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Cc: John Stultz <john.stultz@linaro.org>,
         Christopher Hall <christopher.s.hall@intel.com>,
         "H. Peter Anvin" <hpa@zytor.com>,
@@ -15,53 +22,47 @@ Cc: John Stultz <john.stultz@linaro.org>,
         Gavin Hindman <gavin.hindman@intel.com>,
         liam.r.girdwood@intel.com, Peter Zijlstra <peterz@infradead.org>,
         LKML <linux-kernel@vger.kernel.org>
-To: Miroslav Lichvar <mlichvar@redhat.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181102102613.GL19434@localhost>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.21.1811021225010.1895@nanos.tec.linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Miroslav,
-
-On Fri, 2 Nov 2018, Miroslav Lichvar wrote:
-> On Thu, Nov 01, 2018 at 06:41:00PM +0100, Thomas Gleixner wrote:
-> > On Wed, 24 Oct 2018, Miroslav Lichvar wrote:
-> > > The error is too large to be corrected by stepping on clock updates.
-> > > For a typical TSC frequency we have multiplier in the range of few
-> > > millions, so that's a frequency error of up to few hundred ppb. In the
-> > > old days when the clock was updated 1000 times per second that would
-> > > be hidden in the resolution of the clock, but now with tickless
-> > > kernels those steps would be very noticeable.
+On Fri, Nov 02, 2018 at 12:25:56PM +0100, Thomas Gleixner wrote:
+> On Fri, 2 Nov 2018, Miroslav Lichvar wrote:
+> > clocksource -> MONOTONIC_RAW -> MONOTONIC/REALTIME
+> > 
+> > or 
+> > 
+> > clocksource -> ? -> MONOTONIC_RAW
+> >                  -> MONOTONIC/REALTIME
 > 
-> > That only happens when the system was completely idle for a second and in
-> > that case it's a non issue because the clock is updated before it's
-> > used. So nothing will be able to observe the time jumping forward by a few
-> > or even a few hundreds of nanoseconds.
-> 
-> That's great news (to me). I think we should do the same with the
-> mono/real clock. A periodic 4ns step would be better than a slew
-> correcting tens or hundreds of nanoseconds. This would be a
-> significant improvement in accuracy on idle systems, in theory
-> identical to running with nohz=off.
-> 
-> Maybe I am missing some important detail, but I think we can just drop
-> the +1 mult adjustment and step on each update by the (truncated)
-> amount that has accumulated in the NTP error register. With the
-> changes that have been made earlier this year the clock should never
-> be ahead, so the step would always be forward.
+> That's what we have now. At least I don't see how the raw thing is coupled
+> in NTP.
 
-That sounds reasonable.
+Oh, right.
 
-> > For the regular case, where CPUs are
-> > busy and the update happens 100/250/1000 times per second the jump forward
-> > will not be noticable at all.
-> 
-> I think a 4ns jump at 100 Hz might be noticeable with a good reference
-> clock and large number of measurements, but so would be the current +1
-> mult adjustment.
+So, for the first approach when the raw clock is stepped, the same
+step needs to be applied to the mono clock. That means the mono clock
+will have two large independent corrections applied to it, which will
+make it less stable, e.g. steps of up to 8 ns at 100 Hz instead of 4
+ns. Otherwise they would drift from each other when not synchronized
+by NTP/PTP.
 
-Indeed.
+In the second approach, the corrections of the two clocks are
+independent, but the NTP tick length needs to be adjusted before the
+multiplier is calculated to match the frequency of the raw clock. If
+the correction was applied later, I suspect it would require a +2 mult
+adjustment or larger steps as in the first approach.
 
-Thanks,
+That tick adjustment generally won't be perfectly accurate, so an
+extra small correction would be needed to keep the clocks in sync over
+long intervals. This could be a +1 adjustment of the NTP tick length,
+or it could be a small forward step. I'm not sure what would be easier
+to implement.
 
-	tglx
+Does that make sense?
+
+-- 
+Miroslav Lichvar
