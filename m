@@ -1,52 +1,46 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 4.14.78-rt47
-Date: Mon, 5 Nov 2018 17:51:46 -0500
-Message-ID: <20181105175146.2e0f1f96@gandalf.local.home>
+From: Grygorii Strashko <grygorii.strashko@ti.com>
+Subject: arm64 + ARM64_64K_PAGES=y
+Date: Tue, 6 Nov 2018 15:34:55 -0600
+Message-ID: <1ab7ee03-64fe-384a-c88f-f6d519b965db@ti.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="utf-8"; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Julia Cartwright <julia@ni.com>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: <linux-kernel@vger.kernel.org>,
+        Linux ARM Mailing List <linux-arm-kernel@lists.infradead.org>
+To: <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hi All,
 
-Dear RT Folks,
+Do anybody tried to use ARM64 RT with 76K pages enabled?
 
-I'm pleased to announce the 4.14.78-rt47 stable release.
+My attempt shows that enabling  CONFIG_ARM64_64K_PAGES=y increases latencies by ~30%
 
+cyclictest -n -m -Sp98 -q -D2m with CONFIG_ARM64_64K_PAGES=y
 
-This release is just an update to the new stable 4.14.78 version
-and no RT specific changes have been made.
+  
 
+T: 0 (  772) P:98 I:1000 C: 120000 Min:      7 Act:   13 Avg:   10 Max:      85
+T: 1 (  773) P:98 I:1500 C:  79998 Min:      7 Act:   13 Avg:   10 Max:      71
+T: 2 (  774) P:98 I:2000 C:  59997 Min:      7 Act:   11 Avg:   11 Max:      64
+T: 3 (  775) P:98 I:2500 C:  47996 Min:      7 Act:   14 Avg:   12 Max:      66
 
-You can get this release via the git tree at:
+  
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+cyclictest -n -m -Sp98 -q -D2m with CONFIG_ARM64_64K_PAGES=n
 
-  branch: v4.14-rt
-  Head SHA1: 131db32e18b13df56b279e7ef7f16dd8d6244e4c
+  
 
-
-Or to build 4.14.78-rt47 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.78.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.78-rt47.patch.xz
-
-
+T: 0 (  697) P:98 I:1000 C: 120000 Min:      7 Act:   10 Avg:    9 Max:      38
+T: 1 (  698) P:98 I:1500 C:  79987 Min:      7 Act:   10 Avg:   10 Max:      32
+T: 2 (  699) P:98 I:2000 C:  59981 Min:      7 Act:   14 Avg:   11 Max:      46
+T: 3 (  700) P:98 I:2500 C:  47977 Min:      6 Act:   11 Avg:   10 Max:      45
 
 
-Enjoy,
 
--- Steve
+-- 
+regards,
+-grygorii
