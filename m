@@ -1,28 +1,26 @@
-From: Daniel Bristot de Oliveira <daniel@bristot.me>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH] kernel/time/posix-cpu-timers: Remove useless call to
  check_dl_overrun
-Date: Wed, 7 Nov 2018 15:17:36 +0100
-Message-ID: <a2fabbe4-a3be-6d10-1634-a5b23036c6f0@bristot.me>
+Date: Wed, 7 Nov 2018 09:56:27 -0500
+Message-ID: <20181107095627.13e9c187@gandalf.local.home>
 References: <20181107111032.32291-1-juri.lelli@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: rostedt@goodmis.org, tglx@linutronix.de,
+Cc: peterz@infradead.org, mingo@redhat.com, tglx@linutronix.de,
         linux-kernel@vger.kernel.org, luca.abeni@santannapisa.it,
         claudio@evidence.eu.com, bristot@redhat.com,
         linux-rt-users@vger.kernel.org, mtk.manpages@gmail.com,
         Mathieu Poirier <mathieu.poirier@linaro.org>
-To: Juri Lelli <juri.lelli@redhat.com>, peterz@infradead.org,
-        mingo@redhat.com
+To: Juri Lelli <juri.lelli@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181107111032.32291-1-juri.lelli@redhat.com>
-Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Wed,  7 Nov 2018 12:10:32 +0100
+Juri Lelli <juri.lelli@redhat.com> wrote:
 
-
-On 11/7/18 12:10 PM, Juri Lelli wrote:
 > check_dl_overrun is used to send a SIGXCPU to users that asked to be
 > informed when SCHED_DEADLINE runtime overruns occur.
 > 
@@ -38,13 +36,6 @@ On 11/7/18 12:10 PM, Juri Lelli wrote:
 > Cc: Luca Abeni <luca.abeni@santannapisa.it>
 > Cc: Claudio Scordino <claudio@evidence.eu.com>
 > Cc: Mathieu Poirier <mathieu.poirier@linaro.org>
-
-Reviewed-by: Daniel Bristot de Oliveira <bristot@redhat.com>
-
-Thanks!
-
--- Daniel
-
 > ---
 >  kernel/time/posix-cpu-timers.c | 3 ---
 >  1 file changed, 3 deletions(-)
@@ -60,7 +51,13 @@ Thanks!
 > -	if (dl_task(tsk))
 > -		check_dl_overrun(tsk);
 > -
+
+Hmm, I wonder if we should just move this check directly into
+run_posix_cpu_timers() directly. Why is it hidden in this call?
+
+-- Steve
+
+
 >  	/*
 >  	 * If cputimer is not running, then there are no active
 >  	 * process wide timers (POSIX 1.b, itimers, RLIMIT_CPU).
-> 
