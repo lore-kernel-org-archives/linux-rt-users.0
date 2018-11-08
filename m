@@ -1,92 +1,49 @@
-From: "Paul E. McKenney" <paulmck@linux.ibm.com>
-Subject: Re: srcu: use cpu_online() instead custom check
-Date: Thu, 8 Nov 2018 09:10:24 -0800
-Message-ID: <20181108171024.GM4170@linux.ibm.com>
-References: <20181101231228.GA9118@linux.ibm.com>
- <20181108163850.sjedoaom64tzvqgc@linutronix.de>
-Reply-To: paulmck@linux.ibm.com
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: rcu: Merge RCU-bh into RCU-preempt
+Date: Thu, 8 Nov 2018 18:15:16 +0100
+Message-ID: <20181108171516.axwvjtgay4zolc56@linutronix.de>
+References: <20181101231804.GA11280@linux.ibm.com>
+ <20181108160256.xpawe65h5lm65soi@linutronix.de>
+ <20181108164247.GL4170@linux.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=utf-8
+Cc: tglx@linutronix.de, linux-rt-users@vger.kernel.org,
+        linux-kernel@vger.kernel.org
+To: "Paul E. McKenney" <paulmck@linux.ibm.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181108163850.sjedoaom64tzvqgc@linutronix.de>
+In-Reply-To: <20181108164247.GL4170@linux.ibm.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Nov 08, 2018 at 05:38:51PM +0100, Sebastian Andrzej Siewior wrote:
-> On 2018-11-01 16:12:28 [-0700], Paul E. McKenney wrote:
-> > > The current check via srcu_online is slightly racy because after looking
-> > > at srcu_online there could be an interrupt that interrupted us long
-> > > enough until the CPU we checked against went offline.
+On 2018-11-08 08:42:47 [-0800], Paul E. McKenney wrote:
+> On Thu, Nov 08, 2018 at 05:02:57PM +0100, Sebastian Andrzej Siewior wrote:
+> > On 2018-11-01 16:18:04 [-0700], Paul E. McKenney wrote:
+> > > The need for this goes away as of the current merge window because
+> > > RCU-bh has gone away.  (Aside from still being able to do things
+> > > like rcu_read_lock_bh() as a documentation device.)
 > > 
-> > I don't see how this can happen, even in -rt.  The call to
-> > srcu_offline_cpu() happens very early in the CPU removal process,
-> > which means that the synchronize_rcu_mult(call_rcu, call_rcu_sched)
-> > in sched_cpu_deactivate() would wait for the interrupt to complete.
-> > And for the enclosing preempt_disable region to complete.
-> 
-> Is this again a hidden RCU detail that preempt_disable() on CPU4 is
-> enough to ensure that CPU2 does not get marked offline between?
-
-The call_rcu_sched parameter to synchronize_rcu_mult() makes this work.
-This synchronize_rcu_mult() call is in sched_cpu_deactivate(), so it
-is a hidden sched/RCU detail, I guess.
-
-Or am I missing the point of your question?
-
-> > Or is getting rid of that preempt_disable region the real reason for
-> > this change?
-> 
-> Well, that preempt_disable() + queue_(delayed_)work() does not work -RT.
-> But looking further, that preempt_disable() while looking at online CPUs
-> didn't look good.
-
-That is why it is invoked from the very early CPU-hotplug notifier.  That
-early in the process, the preempt_disable() does prevent the current CPU
-from being taken offline twice:  Once due to synchronize_rcu_mult(), and
-once due to the stop-machine call.
-
-> > > An alternative would be to hold the hotplug rwsem (so the CPUs don't
-> > > change their state) and then check based on cpu_online() if we queue it
-> > > on a specific CPU or not. queue_work_on() itself can handle if something
-> > > is enqueued on an offline CPU but a timer which is enqueued on an offline
-> > > CPU won't fire until the CPU is back online.
-> > > 
-> > > I am not sure if the removal in rcu_init() is okay or not. I assume that
-> > > SRCU won't enqueue a work item before SRCU is up and ready.
+> > So in -RT rcu_read_lock_bh() does
+> >  { local_bh_disable() ;  rcu_read_lock() }
 > > 
-> > That was the case before the current merge window, but use of call_srcu()
-> > by tracing means that SRCU needs to be able to deal with call_srcu()
-> > long before any initialization has happened.  The actual callbacks
-> > won't be invoked until much later, after the scheduler and workqueues
-> > are completely up and running, but call_srcu() can be invoked very early.
-> > 
-> > But I am not seeing any removal in rcu_init() in this patch, so I might
-> > be missing something.
+> > So you are saying that this is also the case in v4.20?
 > 
-> The description is not up-to-date. There was this hunk:
-> |@@ -4236,8 +4232,6 @@ void __init rcu_init(void)
-> |       for_each_online_cpu(cpu) {
-> |               rcutree_prepare_cpu(cpu);
-> |               rcu_cpu_starting(cpu);
-> |-              if (IS_ENABLED(CONFIG_TREE_SRCU))
-> |-                      srcu_online_cpu(cpu);
-> |       }
-> | }
+> No, rcu_read_lock_bh() and rcu_read_unlock_bh() are unchanged in v4.20.
+> With the new RCU grace-period mechanism, local_bh_disable() blocks future
+> grace periods on its own.
 > 
-> which got removed in v4.16.
+> Unless I am missing something (quite probable, actually), the v4.20
+> definitions of rcu_read_lock_bh() and rcu_read_unlock_bh() should work
+> as-is for -rt.
 
-Ah!  Here is the current rcu_init() code:
+I *think* tglx made this patch, then you somehow reverted it partly [0]
+and the final piece we need for RT is this gem:
 
-	for_each_online_cpu(cpu) {
-		rcutree_prepare_cpu(cpu);
-		rcu_cpu_starting(cpu);
-		rcutree_online_cpu(cpu);
-	}
+  https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git/tree/patches/rcu-Eliminate-softirq-processing-from-rcutree.patch?h=linux-4.19.y-rt-patches
 
-And rcutree_online_cpu() calls srcu_online_cpu() when CONFIG_TREE_SRCU
-is enabled, so no need for the direct call from rcu_init().
+[0] rcu: Make ksoftirqd do RCU quiescent states
+    https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git/tree/patches/patch-to-introduce-rcu-bh-qs-where-safe-from-softirq.patch?h=linux-4.19.y-rt-patches
 
-							Thanx, Paul
+> 							Thanx, Paul
+
+Sebastian
