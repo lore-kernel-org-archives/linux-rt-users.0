@@ -1,85 +1,92 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: EXP rcu: Revert expedited GP parallelization cleverness
-Date: Thu, 8 Nov 2018 17:58:45 +0100
-Message-ID: <20181108165845.bzx6pjtmm3u7yur7@linutronix.de>
-References: <20181101233031.GA13002@linux.ibm.com>
+From: "Paul E. McKenney" <paulmck@linux.ibm.com>
+Subject: Re: srcu: use cpu_online() instead custom check
+Date: Thu, 8 Nov 2018 09:10:24 -0800
+Message-ID: <20181108171024.GM4170@linux.ibm.com>
+References: <20181101231228.GA9118@linux.ibm.com>
+ <20181108163850.sjedoaom64tzvqgc@linutronix.de>
+Reply-To: paulmck@linux.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: "Paul E. McKenney" <paulmck@linux.ibm.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181101233031.GA13002@linux.ibm.com>
+In-Reply-To: <20181108163850.sjedoaom64tzvqgc@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2018-11-01 16:30:31 [-0700], Paul E. McKenney wrote:
-> > (Commit 258ba8e089db23f760139266c232f01bad73f85c from linux-rcu)
+On Thu, Nov 08, 2018 at 05:38:51PM +0100, Sebastian Andrzej Siewior wrote:
+> On 2018-11-01 16:12:28 [-0700], Paul E. McKenney wrote:
+> > > The current check via srcu_online is slightly racy because after looking
+> > > at srcu_online there could be an interrupt that interrupted us long
+> > > enough until the CPU we checked against went offline.
 > > 
-> > This commit reverts a series of commits starting with fcc635436501 ("rcu:
-> > Make expedited GPs handle CPU 0 being offline") and its successors, thus
-> > queueing each rcu_node structure's expedited grace-period initialization
-> > work on the first CPU of that rcu_node structure.
+> > I don't see how this can happen, even in -rt.  The call to
+> > srcu_offline_cpu() happens very early in the CPU removal process,
+> > which means that the synchronize_rcu_mult(call_rcu, call_rcu_sched)
+> > in sched_cpu_deactivate() would wait for the interrupt to complete.
+> > And for the enclosing preempt_disable region to complete.
+> 
+> Is this again a hidden RCU detail that preempt_disable() on CPU4 is
+> enough to ensure that CPU2 does not get marked offline between?
+
+The call_rcu_sched parameter to synchronize_rcu_mult() makes this work.
+This synchronize_rcu_mult() call is in sched_cpu_deactivate(), so it
+is a hidden sched/RCU detail, I guess.
+
+Or am I missing the point of your question?
+
+> > Or is getting rid of that preempt_disable region the real reason for
+> > this change?
+> 
+> Well, that preempt_disable() + queue_(delayed_)work() does not work -RT.
+> But looking further, that preempt_disable() while looking at online CPUs
+> didn't look good.
+
+That is why it is invoked from the very early CPU-hotplug notifier.  That
+early in the process, the preempt_disable() does prevent the current CPU
+from being taken offline twice:  Once due to synchronize_rcu_mult(), and
+once due to the stop-machine call.
+
+> > > An alternative would be to hold the hotplug rwsem (so the CPUs don't
+> > > change their state) and then check based on cpu_online() if we queue it
+> > > on a specific CPU or not. queue_work_on() itself can handle if something
+> > > is enqueued on an offline CPU but a timer which is enqueued on an offline
+> > > CPU won't fire until the CPU is back online.
+> > > 
+> > > I am not sure if the removal in rcu_init() is okay or not. I assume that
+> > > SRCU won't enqueue a work item before SRCU is up and ready.
 > > 
-> > Suggested-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> > Signed-off-by: Paul E. McKenney <paulmck@linux.ibm.com>
-> > Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> > That was the case before the current merge window, but use of call_srcu()
+> > by tracing means that SRCU needs to be able to deal with call_srcu()
+> > long before any initialization has happened.  The actual callbacks
+> > won't be invoked until much later, after the scheduler and workqueues
+> > are completely up and running, but call_srcu() can be invoked very early.
 > > 
-> > diff --git a/kernel/rcu/tree_exp.h b/kernel/rcu/tree_exp.h
-> > index 0b2c2ad69629..a0486414edb4 100644
-> > --- a/kernel/rcu/tree_exp.h
-> > +++ b/kernel/rcu/tree_exp.h
-> > @@ -472,7 +472,6 @@ static void sync_rcu_exp_select_node_cpus(struct work_struct *wp)
-> >  static void sync_rcu_exp_select_cpus(struct rcu_state *rsp,
-> >  				     smp_call_func_t func)
-> >  {
-> > -	int cpu;
-> >  	struct rcu_node *rnp;
-> >  
-> >  	trace_rcu_exp_grace_period(rsp->name, rcu_exp_gp_seq_endval(rsp), TPS("reset"));
-> > @@ -494,13 +493,7 @@ static void sync_rcu_exp_select_cpus(struct rcu_state *rsp,
-> >  			continue;
-> >  		}
-> >  		INIT_WORK(&rnp->rew.rew_work, sync_rcu_exp_select_node_cpus);
-> > -		preempt_disable();
-> > -		cpu = cpumask_next(rnp->grplo - 1, cpu_online_mask);
-> > -		/* If all offline, queue the work on an unbound CPU. */
-> > -		if (unlikely(cpu > rnp->grphi))
-> > -			cpu = WORK_CPU_UNBOUND;
-> > -		queue_work_on(cpu, rcu_par_gp_wq, &rnp->rew.rew_work);
-> > -		preempt_enable();
-> > +		queue_work_on(rnp->grplo, rcu_par_gp_wq, &rnp->rew.rew_work);
-> >  		rnp->exp_need_flush = true;
-> >  	}
+> > But I am not seeing any removal in rcu_init() in this patch, so I might
+> > be missing something.
 > 
-> How about instead changing the earlier "if" statement to read as follows?
+> The description is not up-to-date. There was this hunk:
+> |@@ -4236,8 +4232,6 @@ void __init rcu_init(void)
+> |       for_each_online_cpu(cpu) {
+> |               rcutree_prepare_cpu(cpu);
+> |               rcu_cpu_starting(cpu);
+> |-              if (IS_ENABLED(CONFIG_TREE_SRCU))
+> |-                      srcu_online_cpu(cpu);
+> |       }
+> | }
 > 
-> 		if (!READ_ONCE(rcu_par_gp_wq) ||
-> 		    rcu_scheduler_active != RCU_SCHEDULER_RUNNING ||
-> 		    rcu_is_last_leaf_node(rnp) ||
-> 		    IS_ENABLED(CONFIG_PREEMPT_RT_FULL)) {
-> 			/* No workqueues yet or last leaf, do direct call. */
-> 			sync_rcu_exp_select_node_cpus(&rnp->rew.rew_work);
-> 			continue;
-> 		}
-> 
-> This just adds the "|| IS_ENABLED(CONFIG_PREEMPT_RT_FULL)" to the "if"
-> condition.
-> 
-> The advantage of this approach is that it leaves the parallelization
-> alone for mainline, and avoids the overhead of the workqueues for -rt.
+> which got removed in v4.16.
 
-I don't oppose to the workqueue approach. It is just preempt_disable() +
-workqueue don't work on -RT. And if I remember correctly, we can't take
-CPU hotplug lock for other reasons (which woould make the
-preempt_disable() go away). Also the original argument why that patch
-went in was not solid so I though removing the extra complexity would be
-a good thing.
-However using sync_rcu_exp_select_node_cpus() (based von v4.20-rc1)
-should work on -RT from what I can see. And performance wise it should
-not matter for -RT because the whole synchronize_.*_expedited() is
-disabled on -RT anyway. So it should be used only during boot-up.
+Ah!  Here is the current rcu_init() code:
 
-> 							Thanx, Paul
+	for_each_online_cpu(cpu) {
+		rcutree_prepare_cpu(cpu);
+		rcu_cpu_starting(cpu);
+		rcutree_online_cpu(cpu);
+	}
 
-Sebastian
+And rcutree_online_cpu() calls srcu_online_cpu() when CONFIG_TREE_SRCU
+is enabled, so no need for the direct call from rcu_init().
+
+							Thanx, Paul
