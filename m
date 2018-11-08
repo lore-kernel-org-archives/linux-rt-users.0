@@ -1,93 +1,64 @@
-From: "Paul E. McKenney" <paulmck@linux.ibm.com>
-Subject: Re: srcu: use cpu_online() instead custom check
-Date: Thu, 8 Nov 2018 10:05:17 -0800
-Message-ID: <20181108180517.GR4170@linux.ibm.com>
-References: <20181101231228.GA9118@linux.ibm.com>
- <20181108163850.sjedoaom64tzvqgc@linutronix.de>
- <20181108171024.GM4170@linux.ibm.com>
- <20181108174655.mnm3cr4wn2hrrtep@linutronix.de>
-Reply-To: paulmck@linux.ibm.com
+From: Grygorii Strashko <grygorii.strashko@ti.com>
+Subject: Re: arm64 + ARM64_64K_PAGES=y
+Date: Thu, 8 Nov 2018 12:14:11 -0600
+Message-ID: <99e0b883-cf9f-2ab9-5003-d4506bfa461d@ti.com>
+References: <1ab7ee03-64fe-384a-c88f-f6d519b965db@ti.com>
+ <20181108120040.pzupzyqnsxeuv5ne@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: tglx@linutronix.de, linux-rt-users@vger.kernel.org,
-        linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
+        Linux ARM Mailing List <linux-arm-kernel@lists.infradead.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181108174655.mnm3cr4wn2hrrtep@linutronix.de>
+In-Reply-To: <20181108120040.pzupzyqnsxeuv5ne@linutronix.de>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Nov 08, 2018 at 06:46:55PM +0100, Sebastian Andrzej Siewior wrote:
-> On 2018-11-08 09:10:24 [-0800], Paul E. McKenney wrote:
-> > > Is this again a hidden RCU detail that preempt_disable() on CPU4 is
-> > > enough to ensure that CPU2 does not get marked offline between?
-> > 
-> > The call_rcu_sched parameter to synchronize_rcu_mult() makes this work.
-> > This synchronize_rcu_mult() call is in sched_cpu_deactivate(), so it
-> > is a hidden sched/RCU detail, I guess.
-> > 
-> > Or am I missing the point of your question?
-> 
-> No, this answers it.
-> 
-> > > > Or is getting rid of that preempt_disable region the real reason for
-> > > > this change?
-> > > 
-> > > Well, that preempt_disable() + queue_(delayed_)work() does not work -RT.
-> > > But looking further, that preempt_disable() while looking at online CPUs
-> > > didn't look good.
-> > 
-> > That is why it is invoked from the very early CPU-hotplug notifier.  That
-> > early in the process, the preempt_disable() does prevent the current CPU
-> > from being taken offline twice:  Once due to synchronize_rcu_mult(), and
-> > once due to the stop-machine call.
-> 
-> :)
->  
-> > > The description is not up-to-date. There was this hunk:
-> > > |@@ -4236,8 +4232,6 @@ void __init rcu_init(void)
-> > > |       for_each_online_cpu(cpu) {
-> > > |               rcutree_prepare_cpu(cpu);
-> > > |               rcu_cpu_starting(cpu);
-> > > |-              if (IS_ENABLED(CONFIG_TREE_SRCU))
-> > > |-                      srcu_online_cpu(cpu);
-> > > |       }
-> > > | }
-> > > 
-> > > which got removed in v4.16.
-> > 
-> > Ah!  Here is the current rcu_init() code:
-> > 
-> > 	for_each_online_cpu(cpu) {
-> > 		rcutree_prepare_cpu(cpu);
-> > 		rcu_cpu_starting(cpu);
-> > 		rcutree_online_cpu(cpu);
-> > 	}
-> > 
-> > And rcutree_online_cpu() calls srcu_online_cpu() when CONFIG_TREE_SRCU
-> > is enabled, so no need for the direct call from rcu_init().
-> 
-> So if a CPU goes down, the timer gets migrated to another CPU. If the
-> CPU is already offline the timer can be programmed and nothing happens.
-> If timer_add_on() would return an error we could have fallback code.
-> Looking at the users of queue_delayed_work_on() there are only two using
-> it really (the others are using smp_processor_id()) and one of them is
-> using get_online_cpus().
-> It does not look like there a lot of users affected. Would be reasonable
-> to avoid adding timers to offlined CPUs?
 
-Just to make sure I understand, this is the call to queue_delayed_work_on()
-from srcu_queue_delayed_work_on(), right?
 
-And if I am guessing correctly, you would like to get rid of the
-constraint requiring CPUHP_RCUTREE_PREP to precede CPUHP_TIMERS_PREPARE?
-If so, the swait_event_idle_timeout_exclusive() in rcu_gp_fqs_loop()
-in kernel/rcu/tree.c also requires this ordering.  There are probably
-other pieces of code needing this.
+On 11/8/18 6:00 AM, Sebastian Andrzej Siewior wrote:
+> On 2018-11-06 15:34:55 [-0600], Grygorii Strashko wrote:
+>> Hi All,
+> Hi,
+> 
+>> Do anybody tried to use ARM64 RT with 76K pages enabled?
+> 
+> 75 would be an off by one but this :)
 
-Plus the reason for running this on a specific CPU is that the workqueue
-item is processing that CPU's per-CPU variables, including invoking that
-CPU's callbacks.  The item is srcu_invoke_callbacks().
+Ops 8-). at least subj is correct.
 
-							Thanx, Paul
+> 
+>> My attempt shows that enabling  CONFIG_ARM64_64K_PAGES=y increases latencies by ~30%
+>>
+>> cyclictest -n -m -Sp98 -q -D2m with CONFIG_ARM64_64K_PAGES=y
+>>
+>>
+>> T: 0 (  772) P:98 I:1000 C: 120000 Min:      7 Act:   13 Avg:   10 Max:      85
+>> T: 1 (  773) P:98 I:1500 C:  79998 Min:      7 Act:   13 Avg:   10 Max:      71
+>> T: 2 (  774) P:98 I:2000 C:  59997 Min:      7 Act:   11 Avg:   11 Max:      64
+>> T: 3 (  775) P:98 I:2500 C:  47996 Min:      7 Act:   14 Avg:   12 Max:      66
+>>
+>>
+>> cyclictest -n -m -Sp98 -q -D2m with CONFIG_ARM64_64K_PAGES=n
+>>
+>>
+>> T: 0 (  697) P:98 I:1000 C: 120000 Min:      7 Act:   10 Avg:    9 Max:      38
+>> T: 1 (  698) P:98 I:1500 C:  79987 Min:      7 Act:   10 Avg:   10 Max:      32
+>> T: 2 (  699) P:98 I:2000 C:  59981 Min:      7 Act:   14 Avg:   11 Max:      46
+>> T: 3 (  700) P:98 I:2500 C:  47977 Min:      6 Act:   11 Avg:   10 Max:      45
+> 
+> So this is an idle system?
+
+Yes (in general) - it's collected with systemd, so some daemons are active.
+
+> The Kconfig help says "faster TLB lookup". Interesting.
+> Are the 16k pages in between (latency wise) by any chance?
+
+I'll try it.
+
+
+-- 
+regards,
+-grygorii
