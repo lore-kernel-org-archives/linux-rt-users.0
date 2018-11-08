@@ -1,62 +1,52 @@
-From: Claudio Scordino <claudio@evidence.eu.com>
-Subject: Re: [PATCH] kernel/time/posix-cpu-timers: Remove useless call to
- check_dl_overrun
-Date: Thu, 8 Nov 2018 11:58:08 +0100
-Message-ID: <20181108105808.GB13282@erbrow>
-References: <20181107111032.32291-1-juri.lelli@redhat.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: arm64 + ARM64_64K_PAGES=y
+Date: Thu, 8 Nov 2018 13:00:40 +0100
+Message-ID: <20181108120040.pzupzyqnsxeuv5ne@linutronix.de>
+References: <1ab7ee03-64fe-384a-c88f-f6d519b965db@ti.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: peterz@infradead.org, mingo@redhat.com, rostedt@goodmis.org,
-        tglx@linutronix.de, linux-kernel@vger.kernel.org,
-        luca.abeni@santannapisa.it, bristot@redhat.com,
-        linux-rt-users@vger.kernel.org, mtk.manpages@gmail.com,
-        Mathieu Poirier <mathieu.poirier@linaro.org>
-To: Juri Lelli <juri.lelli@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        Linux ARM Mailing List <linux-arm-kernel@lists.infradead.org>
+To: Grygorii Strashko <grygorii.strashko@ti.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181107111032.32291-1-juri.lelli@redhat.com>
+In-Reply-To: <1ab7ee03-64fe-384a-c88f-f6d519b965db@ti.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 071118, 12:10, Juri Lelli wrote:
-> check_dl_overrun is used to send a SIGXCPU to users that asked to be
-> informed when SCHED_DEADLINE runtime overruns occur.
+On 2018-11-06 15:34:55 [-0600], Grygorii Strashko wrote:
+> Hi All,
+Hi,
+
+> Do anybody tried to use ARM64 RT with 76K pages enabled?
+
+75 would be an off by one but this :)
+
+> My attempt shows that enabling  CONFIG_ARM64_64K_PAGES=y increases latencies by ~30%
 > 
-> The function is called by check_thread_timers already, so the call in
-> check_process_timers is redundant/wrong (even though harmless).
+> cyclictest -n -m -Sp98 -q -D2m with CONFIG_ARM64_64K_PAGES=y
 > 
-> Remove it.
 > 
-> Fixes: 34be39305a77 ("sched/deadline: Implement "runtime overrun signal" support")
-> Signed-off-by: Juri Lelli <juri.lelli@redhat.com>
-> Cc: Peter Zijlstra <peterz@infradead.org>
-> Cc: Thomas Gleixner <tglx@linutronix.de>
-> Cc: Luca Abeni <luca.abeni@santannapisa.it>
-> Cc: Claudio Scordino <claudio@evidence.eu.com>
-> Cc: Mathieu Poirier <mathieu.poirier@linaro.org>
-> ---
->  kernel/time/posix-cpu-timers.c | 3 ---
->  1 file changed, 3 deletions(-)
+> T: 0 (  772) P:98 I:1000 C: 120000 Min:      7 Act:   13 Avg:   10 Max:      85
+> T: 1 (  773) P:98 I:1500 C:  79998 Min:      7 Act:   13 Avg:   10 Max:      71
+> T: 2 (  774) P:98 I:2000 C:  59997 Min:      7 Act:   11 Avg:   11 Max:      64
+> T: 3 (  775) P:98 I:2500 C:  47996 Min:      7 Act:   14 Avg:   12 Max:      66
 > 
-> diff --git a/kernel/time/posix-cpu-timers.c b/kernel/time/posix-cpu-timers.c
-> index ce32cf741b25..8f0644af40be 100644
-> --- a/kernel/time/posix-cpu-timers.c
-> +++ b/kernel/time/posix-cpu-timers.c
-> @@ -917,9 +917,6 @@ static void check_process_timers(struct task_struct *tsk,
->  	struct task_cputime cputime;
->  	unsigned long soft;
->  
-> -	if (dl_task(tsk))
-> -		check_dl_overrun(tsk);
-> -
->  	/*
->  	 * If cputimer is not running, then there are no active
->  	 * process wide timers (POSIX 1.b, itimers, RLIMIT_CPU).
+> 
+> cyclictest -n -m -Sp98 -q -D2m with CONFIG_ARM64_64K_PAGES=n
+> 
+> 
+> T: 0 (  697) P:98 I:1000 C: 120000 Min:      7 Act:   10 Avg:    9 Max:      38
+> T: 1 (  698) P:98 I:1500 C:  79987 Min:      7 Act:   10 Avg:   10 Max:      32
+> T: 2 (  699) P:98 I:2000 C:  59981 Min:      7 Act:   14 Avg:   11 Max:      46
+> T: 3 (  700) P:98 I:2500 C:  47977 Min:      6 Act:   11 Avg:   10 Max:      45
+
+So this is an idle system?
+The Kconfig help says "faster TLB lookup". Interesting.
+Are the 16k pages in between (latency wise) by any chance?
+
 > -- 
+> regards,
+> -grygorii
 
-[ Superfluous as (fortunately) already queued...]
-Tested-by: Claudio Scordino <claudio@evidence.eu.com>
-
-Thank you for taking care of this pending issue.
-
-          Claudio
+Sebastian
