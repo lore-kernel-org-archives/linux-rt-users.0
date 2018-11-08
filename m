@@ -1,64 +1,50 @@
-From: Grygorii Strashko <grygorii.strashko@ti.com>
-Subject: Re: arm64 + ARM64_64K_PAGES=y
-Date: Thu, 8 Nov 2018 12:14:11 -0600
-Message-ID: <99e0b883-cf9f-2ab9-5003-d4506bfa461d@ti.com>
-References: <1ab7ee03-64fe-384a-c88f-f6d519b965db@ti.com>
- <20181108120040.pzupzyqnsxeuv5ne@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: srcu: use cpu_online() instead custom check
+Date: Thu, 8 Nov 2018 19:16:30 +0100
+Message-ID: <20181108181630.nsr3cyjwsch2y2r5@linutronix.de>
+References: <20181101231228.GA9118@linux.ibm.com>
+ <20181108163850.sjedoaom64tzvqgc@linutronix.de>
+ <20181108171024.GM4170@linux.ibm.com>
+ <20181108174655.mnm3cr4wn2hrrtep@linutronix.de>
+ <20181108180517.GR4170@linux.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
-        Linux ARM Mailing List <linux-arm-kernel@lists.infradead.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=utf-8
+Cc: tglx@linutronix.de, linux-rt-users@vger.kernel.org,
+        linux-kernel@vger.kernel.org
+To: "Paul E. McKenney" <paulmck@linux.ibm.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181108120040.pzupzyqnsxeuv5ne@linutronix.de>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20181108180517.GR4170@linux.ibm.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On 2018-11-08 10:05:17 [-0800], Paul E. McKenney wrote:
+> Just to make sure I understand, this is the call to queue_delayed_work_on()
+> from srcu_queue_delayed_work_on(), right?
 
+correct.
 
-On 11/8/18 6:00 AM, Sebastian Andrzej Siewior wrote:
-> On 2018-11-06 15:34:55 [-0600], Grygorii Strashko wrote:
->> Hi All,
-> Hi,
+> And if I am guessing correctly, you would like to get rid of the
+> constraint requiring CPUHP_RCUTREE_PREP to precede CPUHP_TIMERS_PREPARE?
+
+no, my problem is the preempt_disable() around queue_delayed_work_on().
+If the CPUs goes offline _after_ queue_delayed_work_on() then the timer
+gets migrated and work item should show up on another CPU. 
+If the CPU is offline at queue_delayed_work_on() time then the timer
+gets enqueued and won't fire until the CPU is back online and I *think*
+that is the reason behind this "is CPU online" check.
+
+> If so, the swait_event_idle_timeout_exclusive() in rcu_gp_fqs_loop()
+> in kernel/rcu/tree.c also requires this ordering.  There are probably
+> other pieces of code needing this.
 > 
->> Do anybody tried to use ARM64 RT with 76K pages enabled?
-> 
-> 75 would be an off by one but this :)
+> Plus the reason for running this on a specific CPU is that the workqueue
+> item is processing that CPU's per-CPU variables, including invoking that
+> CPU's callbacks.  The item is srcu_invoke_callbacks().
 
-Ops 8-). at least subj is correct.
+The SRCU callback is invoking per-CPU variables? Like this_cpu_ptr()?
+But if the CPU is offline then you fallback to queue_delayed_work()?
 
-> 
->> My attempt shows that enabling  CONFIG_ARM64_64K_PAGES=y increases latencies by ~30%
->>
->> cyclictest -n -m -Sp98 -q -D2m with CONFIG_ARM64_64K_PAGES=y
->>
->>
->> T: 0 (  772) P:98 I:1000 C: 120000 Min:      7 Act:   13 Avg:   10 Max:      85
->> T: 1 (  773) P:98 I:1500 C:  79998 Min:      7 Act:   13 Avg:   10 Max:      71
->> T: 2 (  774) P:98 I:2000 C:  59997 Min:      7 Act:   11 Avg:   11 Max:      64
->> T: 3 (  775) P:98 I:2500 C:  47996 Min:      7 Act:   14 Avg:   12 Max:      66
->>
->>
->> cyclictest -n -m -Sp98 -q -D2m with CONFIG_ARM64_64K_PAGES=n
->>
->>
->> T: 0 (  697) P:98 I:1000 C: 120000 Min:      7 Act:   10 Avg:    9 Max:      38
->> T: 1 (  698) P:98 I:1500 C:  79987 Min:      7 Act:   10 Avg:   10 Max:      32
->> T: 2 (  699) P:98 I:2000 C:  59981 Min:      7 Act:   14 Avg:   11 Max:      46
->> T: 3 (  700) P:98 I:2500 C:  47977 Min:      6 Act:   11 Avg:   10 Max:      45
-> 
-> So this is an idle system?
+> 							Thanx, Paul
 
-Yes (in general) - it's collected with systemd, so some daemons are active.
-
-> The Kconfig help says "faster TLB lookup". Interesting.
-> Are the 16k pages in between (latency wise) by any chance?
-
-I'll try it.
-
-
--- 
-regards,
--grygorii
+Sebastian
