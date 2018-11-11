@@ -1,71 +1,89 @@
-From: Grygorii Strashko <grygorii.strashko@ti.com>
-Subject: Re: arm64 + ARM64_64K_PAGES=y
-Date: Fri, 9 Nov 2018 13:15:47 -0600
-Message-ID: <274c9742-0aa9-b4a5-11cb-b506aeef7761@ti.com>
-References: <1ab7ee03-64fe-384a-c88f-f6d519b965db@ti.com>
- <20181108120040.pzupzyqnsxeuv5ne@linutronix.de>
- <99e0b883-cf9f-2ab9-5003-d4506bfa461d@ti.com>
+From: Oleksandr Natalenko <oleksandr@natalenko.name>
+Subject: WARN_ON() in netconsole with PREEMPT_RT
+Date: Sun, 11 Nov 2018 20:13:40 +0100
+Message-ID: <f9111ab09dbc264c8ff8b3b79e9f4c06@natalenko.name>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset=UTF-8;
+ format=flowed
 Content-Transfer-Encoding: 8bit
-Cc: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
-        Linux ARM Mailing List <linux-arm-kernel@lists.infradead.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Eric Dumazet <edumazet@google.com>,
+        Dave Jones <davej@codemonkey.org.uk>, netdev@vger.kernel.org,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: "David S. Miller" <davem@davemloft.net>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <99e0b883-cf9f-2ab9-5003-d4506bfa461d@ti.com>
-Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hi.
 
+I was just curious about PREEMPT_RT and decided to give it a (small) 
+shot on my laptop. As a safety measure, I've enabled netconsole to catch 
+all the weird stuff that can pop up, and immediately it indeed did… in 
+the netconsole code itself (irony):
 
-On 11/8/18 12:14 PM, Grygorii Strashko wrote:
-> 
-> 
-> On 11/8/18 6:00 AM, Sebastian Andrzej Siewior wrote:
->> On 2018-11-06 15:34:55 [-0600], Grygorii Strashko wrote:
->>> Hi All,
->> Hi,
->>
->>> Do anybody tried to use ARM64 RT with 76K pages enabled?
->>
->> 75 would be an off by one but this :)
-> 
-> Ops 8-). at least subj is correct.
-> 
->>
->>> My attempt shows that enabling  CONFIG_ARM64_64K_PAGES=y increases latencies by ~30%
->>>
->>> cyclictest -n -m -Sp98 -q -D2m with CONFIG_ARM64_64K_PAGES=y
->>>
->>>
->>> T: 0 (  772) P:98 I:1000 C: 120000 Min:      7 Act:   13 Avg:   10 Max:      85
->>> T: 1 (  773) P:98 I:1500 C:  79998 Min:      7 Act:   13 Avg:   10 Max:      71
->>> T: 2 (  774) P:98 I:2000 C:  59997 Min:      7 Act:   11 Avg:   11 Max:      64
->>> T: 3 (  775) P:98 I:2500 C:  47996 Min:      7 Act:   14 Avg:   12 Max:      66
->>>
->>>
->>> cyclictest -n -m -Sp98 -q -D2m with CONFIG_ARM64_64K_PAGES=n
->>>
->>>
->>> T: 0 (  697) P:98 I:1000 C: 120000 Min:      7 Act:   10 Avg:    9 Max:      38
->>> T: 1 (  698) P:98 I:1500 C:  79987 Min:      7 Act:   10 Avg:   10 Max:      32
->>> T: 2 (  699) P:98 I:2000 C:  59981 Min:      7 Act:   14 Avg:   11 Max:      46
->>> T: 3 (  700) P:98 I:2500 C:  47977 Min:      6 Act:   11 Avg:   10 Max:      45
->>
->> So this is an idle system?
-> 
-> Yes (in general) - it's collected with systemd, so some daemons are active.
-> 
->> The Kconfig help says "faster TLB lookup". Interesting.
->> Are the 16k pages in between (latency wise) by any chance?
-> 
-> I'll try it.
+===
+[   64.018949] WARNING: CPU: 0 PID: 1204 at net/core/netpoll.c:372 
+netpoll_send_udp+0x3e8/0x3ef
+…
+[   64.019057] CPU: 0 PID: 1204 Comm: bash Not tainted 4.19.0-ig1 #1
+[   64.019058] Hardware name: Dell Inc.          Vostro 3360/0F5DWF, 
+BIOS A18 09/25/2013
+[   64.019063] RIP: 0010:netpoll_send_udp+0x3e8/0x3ef                    
+                                                              [   
+64.019066] Code: dd ff ff 41 ba 86 dd ff ff 49 2b 96 d0 00 00 00 66 41 
+89 96 c6 00 00 00 66 44 89 48 0c 66 45 89 96 c0 00 00 00 e9
+  93 fe ff ff <0f> 0b e9 40 fc ff ff 0f 1f 44 00 00 53 0f b7 57 42 48 89 
+fb 48 8b
+[   64.019068] RSP: 0018:ffffaa6743f87c98 EFLAGS: 00010202
+[   64.019070] RAX: 0000000000000292 RBX: 0000000000000014 RCX: 
+0000000000000028
+[   64.019072] RDX: 0000000000000014 RSI: ffffffffb1e6a300 RDI: 
+ffff95973d905668
+[   64.019073] RBP: ffffaa6743f87cd8 R08: ffffffffc11f6ba0 R09: 
+0000000000000000
+[   64.019075] R10: 0000000000000008 R11: 0000000000000000 R12: 
+00000000000003e8
+[   64.019076] R13: ffff95973d905668 R14: 0000000000000014 R15: 
+ffff95973d905668
+[   64.019079] FS:  00007f2f8b809b80(0000) GS:ffff95976f000000(0000) 
+knlGS:0000000000000000
+[   64.019081] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[   64.019083] CR2: 000055b8e126fbc8 CR3: 0000000415440006 CR4: 
+00000000001606f0
+[   64.019084] Call Trace:
+[   64.019098]  write_msg+0xd1/0xe0 [netconsole]
+[   64.019107]  console_unlock.part.6+0x55b/0x5a0
+[   64.019115]  ? _raw_spin_unlock_irqrestore+0x20/0x60
+[   64.019120]  vprintk_emit+0x16a/0x1a0
+[   64.019125]  printk_emit+0x44/0x5b
+[   64.019130]  ? _raw_spin_trylock+0x13/0x80
+[   64.019134]  devkmsg_write.cold.16+0x21/0x4e
+[   64.019140]  __vfs_write+0x136/0x1a0
+[   64.019145]  vfs_write+0xa9/0x1a0
+[   64.019149]  ksys_write+0x52/0xc0
+[   64.019156]  do_syscall_64+0x5b/0x170
+[   64.019160]  entry_SYSCALL_64_after_hwframe+0x44/0xa9
+…
+===
 
-no i'll not, at least not fast. with 16k pages enabled I can't boot TI 4.14 kernel
--  4.14.71-rt44.
-No msg in log, just "Starting kernel ..."
+This is a v4.19.1-rt3-based kernel.
+
+The WARN_ON() is:
+
+362 void netpoll_send_udp(struct netpoll *np, const char *msg, int len)
+363 {
+…
+372     WARN_ON_ONCE(!irqs_disabled());
+…
+
+If that matters, I have "threadirqs" passed to the kernel.
+
+Netconsole seems to work even after this warning. Is this OK/expected?
+
+Thanks.
 
 -- 
-regards,
--grygorii
+   Oleksandr Natalenko (post-factum)
