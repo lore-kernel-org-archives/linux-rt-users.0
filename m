@@ -1,100 +1,195 @@
-From: Grygorii Strashko <grygorii.strashko@ti.com>
-Subject: Re: arm64 + ARM64_64K_PAGES=y
-Date: Mon, 12 Nov 2018 15:22:24 -0600
-Message-ID: <ff1646e5-4e38-3064-107b-63f294a49a4b@ti.com>
-References: <1ab7ee03-64fe-384a-c88f-f6d519b965db@ti.com>
- <20181108120040.pzupzyqnsxeuv5ne@linutronix.de>
- <99e0b883-cf9f-2ab9-5003-d4506bfa461d@ti.com>
- <274c9742-0aa9-b4a5-11cb-b506aeef7761@ti.com>
- <20181112142703.0d6ceb57@donnerap.cambridge.arm.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        <linux-rt-users@vger.kernel.org>,
-        Linux ARM Mailing List <linux-arm-kernel@lists.infradead.org>,
-        <linux-kernel@vger.kernel.org>
-To: Andre Przywara <andre.przywara@arm.com>
+From: Tom Zanussi <zanussi@kernel.org>
+Subject: [PATCH v7 00/16] tracing: Hist trigger snapshot and onchange additions
+Date: Wed, 14 Nov 2018 14:17:57 -0600
+Message-ID: <cover.1542221862.git.tom.zanussi@linux.intel.com>
+Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
+        vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
+        julia@ni.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
+To: rostedt@goodmis.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181112142703.0d6ceb57@donnerap.cambridge.arm.com>
-Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+From: Tom Zanussi <tom.zanussi@linux.intel.com>
+
+Hi,
+
+This is v7 of the hist trigger snapshot and onchange additions
+patchset.  It does a bit of refactoring to address the suggestions
+made by Masami in v6.
+
+It also adds an additional patch to update the trigger/inter-event
+testcases with SPDX license blurbs.
+
+BTW, I noticed that with the recent kselftest changes, I now get
+mangled output when running the selftests, though I can still see well
+enough that the tests passed as expected.  This happens with any of
+the ftrace selftests and not just the trigger selftests.  In my case,
+this is using the stock Terminal in Ubuntu 17.10, in case that helps.
+Example output:
+
+  # ./ftracetest test.d/trigger/
+  
+-e === Ftrace unit tests ===
+-e -n [1] event trigger - test inter-event histogram trigger expected fail actions
+-e 	[\e[31mXFAIL\e[0m]
+-e -n [2] event trigger - test extended error support
+-e 	[\e[32mPASS\e[0m]
+-e -n [3] event trigger - test field variable support
+-e 	[\e[32mPASS\e[0m]
+-e -n [4] event trigger - test inter-event combined histogram trigger
+-e 	[\e[32mPASS\e[0m]
+-e -n [5] event trigger - test multiple actions on hist trigger
+-e 	[\e[32mPASS\e[0m]
+.
+.
+.
+-e 
+-e # of passed:  31
+-e # of failed:  0
+-e # of unresolved:  0
+-e # of untested:  0
+-e # of unsupported:  0
+-e # of xfailed:  1
+-e # of undefined(test bug):  0
+
+v6->v7 changes:
+
+  - Removed unnecessary HANDLER_ONMAX checks from onmax_print()/create()
+  - Moved handler assignment to acion_parse()
+  - Changed goto in ATION_TRACE case in action_create() to return
+  - Changed EINVAL to EEXIST in action_create() ACTION_SAVE case
+  - Made the return logic in create_actions() more consistent
+  - Merged 'tracing: Move hist trigger key printing into a separate
+    function' into 'tracing: Add hist trigger snapshot() action'
+  - Updated the new snapshot, onchange, and trace test cases to match
+    4.20 kselftest changes.
+  - Added new xfail test case that make sure certain unsupported
+    handler/action combinations fail as expected.
+  - While updating the test cases, realized that the other testcases
+    in the inter-event subdir needed SPDX license updates, so added
+    them.
+
+v5->v6 changes:
+
+  - Added new Documentation patch explaining handler.action
+  - Added new README patch explaining handler.action
+  - Added separate snapshot() Documentation
+  - Added new snapshot() test case
+  - Updated README with snapshote()
+  - Added separate onchange() Documentation
+  - Added separate onchange() test case
+  - Updated README with onchange()
+  - Added separate trace() test case
+  - Updated README with trace() and <synthetic_event>() syntax
+
+v4->v5 changes:
+
+  - added 'trace' keyword test case
+  - added 'onchange' handler test case
+
+v3->v4 changes:
+
+  - added 'trace' keyword for generating synthetic events
+  - fix elt_data leak
+  - changed cond_update to cond_update_fn_t
+
+v2->v3 changes:
+
+  - fixed problem where trace actions were only being allowed for
+    onmatch handlers - now trace actions can be used with any handler.
+  - fixed problem where no action was being assigned to onmatch
+    handlers if save or snapshot actions were specified.
+
+v1->v2 changes:
+
+  - added missing tracing_cond_snapshot_data() definition for when
+    CONFIG_TRACER_SNAPSHOT not defined
+  - removed an unnecessary WARN_ON() in track_data_snapshot_print()
 
 
-On 11/12/18 8:27 AM, Andre Przywara wrote:
-> On Fri, 9 Nov 2018 13:15:47 -0600
-> Grygorii Strashko <grygorii.strashko@ti.com> wrote:
-> 
-> Hi,
-> 
->> On 11/8/18 12:14 PM, Grygorii Strashko wrote:
->>>
->>>
->>> On 11/8/18 6:00 AM, Sebastian Andrzej Siewior wrote:
->>>> On 2018-11-06 15:34:55 [-0600], Grygorii Strashko wrote:
->>>>> Hi All,
->>>> Hi,
->>>>   
->>>>> Do anybody tried to use ARM64 RT with 76K pages enabled?
->>>>
->>>> 75 would be an off by one but this :)
->>>
->>> Ops 8-). at least subj is correct.
->>>    
->>>>   
->>>>> My attempt shows that enabling  CONFIG_ARM64_64K_PAGES=y
->>>>> increases latencies by ~30%
-> 
-> That's not really surprising. Performance on systems using a bigger page
-> size granules might have some trade-offs (bigger memory overhead, worse
-> cache utilization), so 64K pages might not be really great for your
-> particular workload. You would probably need a real performance
-> analysis (using perf, for instance) to pinpoint TLB misses as your
-> bottleneck.
-> 
->>>>> cyclictest -n -m -Sp98 -q -D2m with  =y
->>>>>
->>>>>
->>>>> T: 0 (  772) P:98 I:1000 C: 120000 Min:      7 Act:   13 Avg:
->>>>> 10 Max:      85 T: 1 (  773) P:98 I:1500 C:  79998 Min:      7
->>>>> Act:   13 Avg:   10 Max:      71 T: 2 (  774) P:98 I:2000 C:
->>>>> 59997 Min:      7 Act:   11 Avg:   11 Max:      64 T: 3 (  775)
->>>>> P:98 I:2500 C:  47996 Min:      7 Act:   14 Avg:   12 Max:      66
->>>>>
->>>>>
->>>>> cyclictest -n -m -Sp98 -q -D2m with CONFIG_ARM64_64K_PAGES=n
->>>>>
->>>>>
->>>>> T: 0 (  697) P:98 I:1000 C: 120000 Min:      7 Act:   10 Avg:
->>>>> 9 Max:      38 T: 1 (  698) P:98 I:1500 C:  79987 Min:      7
->>>>> Act:   10 Avg:   10 Max:      32 T: 2 (  699) P:98 I:2000 C:
->>>>> 59981 Min:      7 Act:   14 Avg:   11 Max:      46 T: 3 (  700)
->>>>> P:98 I:2500 C:  47977 Min:      6 Act:   11 Avg:   10 Max:
->>>>> 45
->>>>
->>>> So this is an idle system?
->>>
->>> Yes (in general) - it's collected with systemd, so some daemons are
->>> active.
->>>> The Kconfig help says "faster TLB lookup". Interesting.
->>>> Are the 16k pages in between (latency wise) by any chance?
->>>
->>> I'll try it.
->>
->> no i'll not, at least not fast. with 16k pages enabled I can't boot
->> TI 4.14 kernel
->> -  4.14.71-rt44.
->> No msg in log, just "Starting kernel ..."
-> 
-> You need a core that actually supports 16K pages (supporting
-> certain page size granules is architecturally optional).
->  From the Arm Ltd. cores it's Cortex-A73, A75 or A55, possibly other
-> newer ones as well. Cortex-A53, A57 and A72 do not support 16k pages.
+Original text:
 
-Thank a lot for you reply.
+This patchset adds some useful new functions to the hist
+trigger code: a snapshot action and an onchange handler.
+
+In order to make it easier to add these and in the process make the
+code more generic, I separated the code into explicit 'handlers' and
+'actions', handlers being things like 'onmax' and 'onchange', and
+'actions' being things like 'take a snapshot' or 'save some fields'.
+
+The first few patches do that basic refactoring, which make it easier
+to add the subsequent changes that arbitrarily combine actions and
+handlers.
+
+The fourth patch adds a 'conditional snapshot' capability that via a
+new tracing_snaphot_cond() function extends the existing snapshot
+code.  It allows the caller to associate some user data with the
+snapshot that can be checked and saved in an update() callback whose
+return value determines whether the snapshot should be taken or not.
+
+The remaining patches finally add the new snapshot action and onchange
+handler functionality - please see those patches for details and some
+examples.
+
+Thanks,
+
+Tom
+
+
+The following changes since commit ee474b81fe5aa5dc0faae920bf66240fbf55f891:
+
+  tracing/kprobes: Fix strpbrk() argument order (2018-11-05 09:47:14 -0500)
+
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/zanussi/linux-trace.git ftrace/hist-snapshot-onchange-v7
+
+Tom Zanussi (16):
+  tracing: Refactor hist trigger action code
+  tracing: Make hist trigger Documentation better reflect
+    actions/handlers
+  tracing: Add hist trigger handler.action documentation to README
+  tracing: Split up onmatch action data
+  tracing: Generalize hist trigger onmax and save action
+  tracing: Add conditional snapshot
+  tracing: Add hist trigger snapshot() action
+  tracing: Add hist trigger snapshot() action Documentation
+  tracing: Add hist trigger snapshot() action test case
+  tracing: Add hist trigger onchange() handler
+  tracing: Add hist trigger onchange() handler Documentation
+  tracing: Add hist trigger onchange() handler test case
+  tracing: Add alternative synthetic event trace action syntax
+  tracing: Add alternative synthetic event trace action test case
+  tracing: Add hist trigger action 'expected fail' test case
+  tracing: Add SPDX license GPL-2.0 license identifier to inter-event
+    testcases
+
+ Documentation/trace/histogram.rst                  |  285 +++++-
+ kernel/trace/trace.c                               |  177 +++-
+ kernel/trace/trace.h                               |   56 +-
+ kernel/trace/trace_events_hist.c                   | 1062 +++++++++++++++-----
+ kernel/trace/trace_events_trigger.c                |    2 +-
+ kernel/trace/trace_sched_wakeup.c                  |    2 +-
+ .../inter-event/trigger-action-hist-xfail.tc       |   30 +
+ .../inter-event/trigger-extended-error-support.tc  |    1 +
+ .../inter-event/trigger-field-variable-support.tc  |    1 +
+ .../trigger-inter-event-combined-hist.tc           |    1 +
+ .../inter-event/trigger-multi-actions-accept.tc    |    1 +
+ .../inter-event/trigger-onchange-action-hist.tc    |   28 +
+ .../inter-event/trigger-onmatch-action-hist.tc     |    1 +
+ .../trigger-onmatch-onmax-action-hist.tc           |    1 +
+ .../inter-event/trigger-onmax-action-hist.tc       |    1 +
+ .../inter-event/trigger-snapshot-action-hist.tc    |   43 +
+ .../trigger-synthetic-event-createremove.tc        |    1 +
+ .../inter-event/trigger-trace-action-hist.tc       |   42 +
+ 18 files changed, 1433 insertions(+), 302 deletions(-)
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-action-hist-xfail.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onchange-action-hist.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-trace-action-hist.tc
 
 -- 
-regards,
--grygorii
+2.14.1
