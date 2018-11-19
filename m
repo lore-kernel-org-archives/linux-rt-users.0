@@ -1,45 +1,53 @@
-From: Tom Zanussi <tzanussi@gmail.com>
-Subject: [ANNOUNCE] 3.18.125-rt108
-Date: Fri, 16 Nov 2018 13:06:12 -0600
-Message-ID: <1542395172.7838.15.camel@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        Julia Cartwright <julia@ni.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
+From: Julien Thierry <julien.thierry@arm.com>
+Subject: [PATCH 0/4] KVM: arm/arm64: vgic: Use raw_spinlock for locks taken in IRQ context
+Date: Mon, 19 Nov 2018 17:07:55 +0000
+Message-ID: <1542647279-46609-1-git-send-email-julien.thierry@arm.com>
+Cc: marc.zyngier@arm.com, Christoffer.Dall@arm.com,
+        linux-arm-kernel@lists.infradead.org,
+        linux-rt-users@vger.kernel.org, tglx@linutronix.de,
+        rostedt@goodmis.org, bigeasy@linutronix.de,
+        Julien Thierry <julien.thierry@arm.com>
+To: linux-kernel@vger.kernel.org, kvmarm@lists.cs.columbia.edu
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello RT Folks!
+While testing KVM running on PREEMPT_RT, starting guest could simply
+freeze the machine. This is because we are using spinlocks for VGIC
+locks, which is invalid in the VGIC case since the locks must be take
+with interrupts disabled.
 
-I'm pleased to announce the 3.18.125-rt108 stable release.
+The solution is to use raw_spinlock instead of spinlocks.
 
-This release is just an update to the new stable 3.18.125 version
-and no RT specific changes have been made.
+Replacing those locks also highlighted an issue where we attempt to
+cond_resched with interrupts disabled.
 
-You can get this release via the git tree at:
+Patch 1 fixes the cond_resched issue.
+Patch 2-4 replace the VGIC spinlocks with raw_spinlocks
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+Cheers,
 
-  branch: v3.18-rt
-  Head SHA1: a3456b7dddca102a7ca8e36d0f87cfc71e1b068f
+Julien
 
-Or to build 3.18.125-rt108 directly, the following patches should be applied:
+-->
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
+Julien Thierry (4):
+  KVM: arm/arm64: vgic: Do not cond_resched_lock() with IRQs disabled
+  KVM: arm/arm64: vgic: Make vgic_irq->irq_lock a raw_spinlock
+  KVM: arm/arm64: vgic: Make vgic_dist->lpi_list_lock a raw_spinlock
+  KVM: arm/arm64: vgic: Make vgic_cpu->ap_list_lock a raw_spinlock
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.125.xz
+ include/kvm/arm_vgic.h           |   6 +-
+ virt/kvm/arm/vgic/vgic-debug.c   |   4 +-
+ virt/kvm/arm/vgic/vgic-init.c    |   8 +--
+ virt/kvm/arm/vgic/vgic-its.c     |  22 +++----
+ virt/kvm/arm/vgic/vgic-mmio-v2.c |  14 ++---
+ virt/kvm/arm/vgic/vgic-mmio-v3.c |  12 ++--
+ virt/kvm/arm/vgic/vgic-mmio.c    |  67 +++++++++-----------
+ virt/kvm/arm/vgic/vgic-v2.c      |   4 +-
+ virt/kvm/arm/vgic/vgic-v3.c      |   8 +--
+ virt/kvm/arm/vgic/vgic.c         | 130 +++++++++++++++++++--------------------
+ 10 files changed, 132 insertions(+), 143 deletions(-)
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.125-rt108.patch.xz
-
-Enjoy!
-   
-   Tom
+--
+1.9.1
