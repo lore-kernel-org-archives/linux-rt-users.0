@@ -1,27 +1,28 @@
-From: Marc Zyngier <marc.zyngier@arm.com>
+From: Julien Thierry <julien.thierry@arm.com>
 Subject: Re: [PATCH 1/4] KVM: arm/arm64: vgic: Do not cond_resched_lock() with
  IRQs disabled
-Date: Tue, 20 Nov 2018 14:37:45 +0000
-Message-ID: <0e12d8a7-2a76-e04a-ab18-ed9fc69d5d47@arm.com>
+Date: Tue, 20 Nov 2018 17:22:39 +0000
+Message-ID: <76a488a9-893c-ffbe-16f2-23735af8126a@arm.com>
 References: <1542647279-46609-1-git-send-email-julien.thierry@arm.com>
  <1542647279-46609-2-git-send-email-julien.thierry@arm.com>
  <20181120141832.GA11162@e113682-lin.lund.arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Cc: linux-kernel@vger.kernel.org, kvmarm@lists.cs.columbia.edu,
-        linux-arm-kernel@lists.infradead.org,
+        marc.zyngier@arm.com, linux-arm-kernel@lists.infradead.org,
         linux-rt-users@vger.kernel.org, tglx@linutronix.de,
         rostedt@goodmis.org, bigeasy@linutronix.de, stable@vger.kernel.org
-To: Christoffer Dall <christoffer.dall@arm.com>,
-        Julien Thierry <julien.thierry@arm.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+To: Christoffer Dall <christoffer.dall@arm.com>
+Return-path: <stable-owner@vger.kernel.org>
 In-Reply-To: <20181120141832.GA11162@e113682-lin.lund.arm.com>
 Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: stable-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 20/11/2018 14:18, Christoffer Dall wrote:
+
+
+On 20/11/18 14:18, Christoffer Dall wrote:
 > On Mon, Nov 19, 2018 at 05:07:56PM +0000, Julien Thierry wrote:
 >> To change the active state of an MMIO, halt is requested for all vcpus of
 >> the affected guest before modifying the IRQ state. This is done by calling
@@ -29,6 +30,12 @@ On 20/11/2018 14:18, Christoffer Dall wrote:
 >> disabled at this point and running a vcpu cannot get rescheduled.
 > 
 > "running a vcpu cannot get rescheduled" ?
+
+Yes, that doesn't make much sense :\ . I guess I just meant "a vcpu 
+cannot get rescheduled on this cpu".
+
+I'll rewrite this.
+
 > 
 >>
 >> Solve this by waiting for all vcpus to be halted after emmiting the halt
@@ -43,8 +50,8 @@ On 20/11/2018 14:18, Christoffer Dall wrote:
 >> Cc: Marc Zyngier <marc.zyngier@arm.com>
 >> Cc: stable@vger.kernel.org
 >> ---
->>  virt/kvm/arm/vgic/vgic-mmio.c | 33 +++++++++++----------------------
->>  1 file changed, 11 insertions(+), 22 deletions(-)
+>>   virt/kvm/arm/vgic/vgic-mmio.c | 33 +++++++++++----------------------
+>>   1 file changed, 11 insertions(+), 22 deletions(-)
 >>
 >> diff --git a/virt/kvm/arm/vgic/vgic-mmio.c b/virt/kvm/arm/vgic/vgic-mmio.c
 >> index f56ff1c..eefd877 100644
@@ -52,7 +59,7 @@ On 20/11/2018 14:18, Christoffer Dall wrote:
 >> +++ b/virt/kvm/arm/vgic/vgic-mmio.c
 >> @@ -313,27 +313,6 @@ static void vgic_mmio_change_active(struct kvm_vcpu *vcpu, struct vgic_irq *irq,
 >>
->>  	spin_lock_irqsave(&irq->irq_lock, flags);
+>>   	spin_lock_irqsave(&irq->irq_lock, flags);
 >>
 >> -	/*
 >> -	 * If this virtual IRQ was written into a list register, we
@@ -75,19 +82,19 @@ On 20/11/2018 14:18, Christoffer Dall wrote:
 >> -	       irq->vcpu->cpu != -1) /* VCPU thread is running */
 >> -		cond_resched_lock(&irq->irq_lock);
 >> -
->>  	if (irq->hw) {
->>  		vgic_hw_irq_change_active(vcpu, irq, active, !requester_vcpu);
->>  	} else {
+>>   	if (irq->hw) {
+>>   		vgic_hw_irq_change_active(vcpu, irq, active, !requester_vcpu);
+>>   	} else {
 >> @@ -368,8 +347,18 @@ static void vgic_mmio_change_active(struct kvm_vcpu *vcpu, struct vgic_irq *irq,
->>   */
->>  static void vgic_change_active_prepare(struct kvm_vcpu *vcpu, u32 intid)
->>  {
+>>    */
+>>   static void vgic_change_active_prepare(struct kvm_vcpu *vcpu, u32 intid)
+>>   {
 >> -	if (intid > VGIC_NR_PRIVATE_IRQS)
 >> +	if (intid > VGIC_NR_PRIVATE_IRQS) {
 >> +		struct kvm_vcpu *tmp;
 >> +		int i;
 >> +
->>  		kvm_arm_halt_guest(vcpu->kvm);
+>>   		kvm_arm_halt_guest(vcpu->kvm);
 >> +
 >> +		/* Wait for each vcpu to be halted */
 >> +		kvm_for_each_vcpu(i, tmp, vcpu->kvm) {
@@ -99,12 +106,11 @@ On 20/11/2018 14:18, Christoffer Dall wrote:
 > called kvm_arch_vcpu_put, and its cpu value would still have a value.
 > 
 > That's why we have the vcpu && vcpu != requester check.
+> 
 
-Ah, I now remember that one. I guess it is a matter of skipping the
-requester vcpu in the kvm_for_each_vcpu loop.
+I see, thanks for pointing that out. I'll fix this in the next iteration.
 
 Thanks,
 
-	M.
 -- 
-Jazz is not dead. It just smells funny...
+Julien Thierry
