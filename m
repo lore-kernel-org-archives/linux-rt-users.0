@@ -1,220 +1,30 @@
-From: Daniel Bristot de Oliveira <bristot@redhat.com>
-Subject: BUG: ftrace/perf dropping events at the begin of interrupt handlers
-Date: Thu, 22 Nov 2018 10:45:05 +0100
-Message-ID: <a5e8182e-de6c-caaf-3106-a43b54198b97@redhat.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH v2] kmemleak: Turn kmemleak_lock to raw spinlock on RT
+Date: Thu, 22 Nov 2018 11:16:12 +0100
+Message-ID: <20181122101611.tmbmylbshd4mrnxi@linutronix.de>
+References: <1542877459-144382-1-git-send-email-zhe.he@windriver.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Cc: Clark Williams <williams@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-        Masami Hiramatsu <mhiramat@kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Marko Pusch <marko.pusch@siemens.com>,
-        Tommaso Cucinotta <tommaso.cucinotta@sssup.it>,
-        =?UTF-8?Q?R=c3=b4mulo_Silva_de_Oliveira?=
-        <romulo.deoliveira@ufsc.br>, Ingo Molnar <mingo@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>,
-        Arnaldo Carvalho de Melo <acme@kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>
+Content-Transfer-Encoding: 8BIT
+Cc: catalin.marinas@arm.com, tglx@linutronix.de, rostedt@goodmis.org,
+        linux-mm@kvack.org, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
+To: zhe.he@windriver.com
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <1542877459-144382-1-git-send-email-zhe.he@windriver.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-While developing the automata [1], I've hit cases in which need resched
-and/or sched wakeup events were being fired with preemption and/or
-interrupts enabled. However, this is not possible because interrupts must
-be disabled to avoid concurrence with an interrupt handler, and the
-preemption must be disabled to avoid concurrence with the scheduler.
-The tool I use to validate the model is based on perf, and it was
-complaining about this situation. I’ve talked to Arnaldo about it
-two months.
+On 2018-11-22 17:04:19 [+0800], zhe.he@windriver.com wrote:
+> From: He Zhe <zhe.he@windriver.com>
+> 
+> kmemleak_lock, as a rwlock on RT, can possibly be held in atomic context and
+> causes the follow BUG.
 
-Further debug on perf has shown that those cases always took place
-associated with the occurrence of interrupts. At ELC Europe
-Marko Pusch (Siemens) also mentioned hitting cases in which he saw
-missing events related to IRQ handling, but using ftrace. Steven and
-I also discussed this during the last Plumbers (Vancouver - CA) and we
-agreed that there is a problem on ftrace too.
+please use
+ [PATCH RT … ]
 
-To reproduce this problem with ftrace, one needs to enable function
-tracer and do kernel operations in a CPU in which IRQs are taking place.
+in future while posting for RT. And this was (and is) on my TODO list.
 
-For instance, in a single CPU VM, run:
-
-# while [ 1 ]; do echo > /dev/null; done
-
-In a shell, and 
-
-# trace-cmd record -b [enough buff to avoid missing trace because of buffer overun] -p function sleep 5
-
-In another shell.
-
-Then, using trace-cmd report --debug, we can see the problem. Here is one
-example of output, first the expected one:
-
-================ Regular execution =================
-In the regular execution, a thread is working...
-         kswapd0-32    [000]   218.980065: function:                   __delete_from_page_cache [61:0x898:24]
-         kswapd0-32    [000]   218.980065: function:                      unaccount_page_cache_page [55:0x8b4:24]
-         kswapd0-32    [000]   218.980065: function:                         page_mapped [72:0x8d0:24]
-         kswapd0-32    [000]   218.980065: function:                         PageHuge [56:0x8ec:24]
-         kswapd0-32    [000]   218.980065: function:                         __mod_node_page_state [56:0x908:24]
-         kswapd0-32    [000]   218.980065: function:                      PageHuge [53:0x924:24]
-         kswapd0-32    [000]   218.980065: function:                      shmem_mapping [77:0x940:24]
-         kswapd0-32    [000]   218.980065: function:             workingset_update_node [69:0x95c:24]
-         kswapd0-32    [000]   218.980065: function:                   _raw_spin_unlock_irqrestore [59:0x978:24]
-         kswapd0-32    [000]   218.980065: function:             unlock_page [64:0x994:24]
-         kswapd0-32    [000]   218.980065: function:             pagevec_remove_exceptionals [75:0x9b0:24]
-         kswapd0-32    [000]   218.980065: function:             __pagevec_release [78:0x9cc:24]
-
-Then an interrupt takes place (do_IRQ is the handler)
-         kswapd0-32    [000]   218.980068: function:             do_IRQ [2539:0x9e8:24]
-         kswapd0-32    [000]   218.980068: function:                irq_enter [90:0xa04:24]
-         kswapd0-32    [000]   218.980068: function:                   rcu_irq_enter [68:0xa20:24]
-         kswapd0-32    [000]   218.980068: function:                   rcu_nmi_enter [72:0xa3c:24]
-         kswapd0-32    [000]   218.980068: function:                   irqtime_account_irq [61:0xa58:24]
-
-And handle_irq is executed as part of the handler, called by do_IRQ:
-         kswapd0-32    [000]   218.980068: function:                handle_irq [107:0xa74:24]			
-         kswapd0-32    [000]   218.980068: function:                   handle_edge_irq [167:0xa90:24]
-         kswapd0-32    [000]   218.980068: function:                      _raw_spin_lock [76:0xaac:24]
-         kswapd0-32    [000]   218.980069: function:                      irq_may_run [68:0xac8:24]
-         kswapd0-32    [000]   218.980069: function:                      irq_chip_ack_parent [105:0xae4:24]
-         kswapd0-32    [000]   218.980069: function:                      apic_ack_edge [102:0xb00:24]
-         kswapd0-32    [000]   218.980069: function:                         apic_chip_data.part.16 [65:0xb1c:24]
-         kswapd0-32    [000]   218.980069: function:                         __irq_complete_move [68:0xb38:24]
-         kswapd0-32    [000]   218.980069: function:                      apic_ack_irq [58:0xb54:24]
-         kswapd0-32    [000]   218.980069: function:                      handle_irq_event [114:0xb70:24]
-         kswapd0-32    [000]   218.980069: function:                         handle_irq_event_percpu [67:0xb8c:24]
-         kswapd0-32    [000]   218.980069: function:                            __handle_irq_event_percpu [58:0xba8:24]
-
-This is the device interrupt in charge:
-         kswapd0-32    [000]   218.980069: function:                               vring_interrupt [100:0xbc4:24]
-         kswapd0-32    [000]   218.980069: function:                                  virtblk_done [118:0xbe0:24]
-         kswapd0-32    [000]   218.980069: function:                                     _raw_spin_lock_irqsave [82:0xbfc:24]
-         kswapd0-32    [000]   218.980070: function:                                     virtqueue_disable_cb [60:0xc18:24]
-         kswapd0-32    [000]   218.980070: function:                                     virtqueue_get_buf [74:0xc34:24]
-         kswapd0-32    [000]   218.980070: function:                                     virtqueue_get_buf_ctx [69:0xc50:24]
-         kswapd0-32    [000]   218.980070: function:                                        detach_buf [74:0xc6c:24]
-         kswapd0-32    [000]   218.980070: function:                                           vring_unmap_one [73:0xc88:24]
-         kswapd0-32    [000]   218.980070: function:                                              vring_use_dma_api [65:0xca4:24]
-         kswapd0-32    [000]   218.980070: function:                                           vring_unmap_one [81:0xcc0:24]
-         kswapd0-32    [000]   218.980070: function:                                              vring_use_dma_api [56:0xcdc:24]
-         kswapd0-32    [000]   218.980070: function:                                           vring_unmap_one [58:0xcf8:24]
-         kswapd0-32    [000]   218.980070: function:                                              vring_use_dma_api [55:0xd14:24]
-         kswapd0-32    [000]   218.980070: function:                                           vring_unmap_one [53:0xd30:24]
-         kswapd0-32    [000]   218.980070: function:                                              vring_use_dma_api [56:0xd4c:24]
-         kswapd0-32    [000]   218.980070: function:                                           kfree [76:0xd68:24]
-         kswapd0-32    [000]   218.980070: function:                                     blk_mq_complete_request [141:0xd84:24]
-         kswapd0-32    [000]   218.980071: function:                                        cpus_share_cache [87:0xda0:24]
-         kswapd0-32    [000]   218.980071: function:                                        blk_mq_end_request [96:0xdbc:24]
-         kswapd0-32    [000]   218.980071: function:                                           blk_update_request [70:0xdd8:24]
-         kswapd0-32    [000]   218.980071: function:                                              blk_status_to_errno [82:0xdf4:24]
-         kswapd0-32    [000]   218.980071: function:                                              blk_account_io_completion [67:0xe10:24]
-         kswapd0-32    [000]   218.980071: function:                                              bio_advance [98:0xe2c:24]
-         kswapd0-32    [000]   218.980071: function:                                              bio_endio [73:0xe48:24]
-         kswapd0-32    [000]   218.980071: function:                                                 rq_qos_done_bio [65:0xe64:24]
-         kswapd0-32    [000]   218.980071: function:                                                 bio_disassociate_task [82:0xe80:24]
-         kswapd0-32    [000]   218.980071: function:                                              xfs_end_bio [90:0xe9c:24]
-         kswapd0-32    [000]   218.980071: function:                                                 blk_status_to_errno [72:0xeb8:24]
-         kswapd0-32    [000]   218.980071: function:                                              xfs_destroy_ioend [76:0xed4:24]
-         kswapd0-32    [000]   218.980072: function:                                                 end_page_writeback [83:0xef0:24]
-         kswapd0-32    [000]   218.980072: function:                                                    test_clear_page_writeback [70:0xf0c:24]
-         kswapd0-32    [000]   218.980072: function:                                                       page_mapping [57:0xf28:24]
-         kswapd0-32    [000]   218.980072: function:                                                       lock_page_memcg [74:0xf44:24]
-         kswapd0-32    [000]   218.980072: function:                                                       mem_cgroup_page_lruvec [63:0xf60:24]
-         kswapd0-32    [000]   218.980072: function:                                                       _raw_spin_lock_irqsave [86:0xf7c:24]
-         kswapd0-32    [000]   218.980072: function:                                                       mem_cgroup_wb_domain [272:0xf98:24]
-         kswapd0-32    [000]   218.980072: function:                                                       _raw_spin_unlock_irqrestore [69:0xfb4:24]
-         kswapd0-32    [000]   218.980072: function:                                                       __mod_node_page_state [66:0xfd0:24]
-
-For the sake of completeness, here is a debug message about the start of
-a new sub-buffer - no messages about dropped events.
-CPU:0 [SUBBUFFER START] [218980072425:0x23120000]
-         kswapd0-32    [000]   218.980072: function:                                                       dec_zone_page_state [0:0x10:24]
-================ Regular execution =================
-
-
-Here is an occurence of the problem:
-================ Problematic execution =================
-A thread is running:
-       trace-cmd-761   [000]   218.979853: function:                                                          __inc_node_page_state [57:0xb54:24]
-       trace-cmd-761   [000]   218.979853: function:                                                          __inc_node_state [53:0xb70:24]
-       trace-cmd-761   [000]   218.979853: function:                                                          mem_cgroup_commit_charge [60:0xb8c:24]
-       trace-cmd-761   [000]   218.979853: function:                                                             commit_charge [55:0xba8:24]
-       trace-cmd-761   [000]   218.979853: function:                                                             mem_cgroup_charge_statistics [60:0xbc4:24]
-       trace-cmd-761   [000]   218.979853: function:                                                             memcg_check_events [60:0xbe0:24]
-       trace-cmd-761   [000]   218.979853: function:                                                       lru_cache_add [59:0xbfc:24]
-       trace-cmd-761   [000]   218.979854: function:                                                       __lru_cache_add [53:0xc18:24]
-
-Than handle_irq is called outside of the context....
-       trace-cmd-761   [000]   218.979857: function:             handle_irq [3780:0xc34:24]
-       trace-cmd-761   [000]   218.979857: function:                handle_edge_irq [0:0xc50:24]
-       trace-cmd-761   [000]   218.979857: function:                   _raw_spin_lock [0:0xc6c:24]
-       trace-cmd-761   [000]   218.979857: function:                   irq_may_run [0:0xc88:24]
-       trace-cmd-761   [000]   218.979857: function:                   irq_chip_ack_parent [0:0xca4:24]
-       trace-cmd-761   [000]   218.979857: function:                   apic_ack_edge [0:0xcc0:24]
-       trace-cmd-761   [000]   218.979857: function:                      apic_chip_data.part.16 [0:0xcdc:24]
-       trace-cmd-761   [000]   218.979857: function:                      __irq_complete_move [0:0xcf8:24]
-       trace-cmd-761   [000]   218.979857: function:                   apic_ack_irq [0:0xd14:24]
-       trace-cmd-761   [000]   218.979857: function:                   handle_irq_event [0:0xd30:24]
-       trace-cmd-761   [000]   218.979857: function:                      handle_irq_event_percpu [0:0xd4c:24]
-       trace-cmd-761   [000]   218.979857: function:                         __handle_irq_event_percpu [0:0xd68:24]
-
-and it also handles the same device interrupt.
-       trace-cmd-761   [000]   218.979857: function:                            vring_interrupt [0:0xd84:24]
-       trace-cmd-761   [000]   218.979857: function:                               virtblk_done [0:0xda0:24]
-       trace-cmd-761   [000]   218.979857: function:                                  _raw_spin_lock_irqsave [0:0xdbc:24]
-       trace-cmd-761   [000]   218.979857: function:                                  virtqueue_disable_cb [0:0xdd8:24]
-       trace-cmd-761   [000]   218.979857: function:                                  virtqueue_get_buf [0:0xdf4:24]
-       trace-cmd-761   [000]   218.979857: function:                                  virtqueue_get_buf_ctx [0:0xe10:24]
-       trace-cmd-761   [000]   218.979857: function:                                     detach_buf [0:0xe2c:24]
-       trace-cmd-761   [000]   218.979857: function:                                        vring_unmap_one [0:0xe48:24]
-       trace-cmd-761   [000]   218.979857: function:                                           vring_use_dma_api [0:0xe64:24]
-       trace-cmd-761   [000]   218.979857: function:                                        vring_unmap_one [0:0xe80:24]
-       trace-cmd-761   [000]   218.979857: function:                                           vring_use_dma_api [0:0xe9c:24]
-       trace-cmd-761   [000]   218.979857: function:                                        vring_unmap_one [0:0xeb8:24]
-       trace-cmd-761   [000]   218.979857: function:                                           vring_use_dma_api [0:0xed4:24]
-       trace-cmd-761   [000]   218.979857: function:                                        vring_unmap_one [0:0xef0:24]
-       trace-cmd-761   [000]   218.979857: function:                                           vring_use_dma_api [0:0xf0c:24]
-       trace-cmd-761   [000]   218.979857: function:                                        kfree [0:0xf28:24]
-       trace-cmd-761   [000]   218.979857: function:                                  blk_mq_complete_request [0:0xf44:24]
-       trace-cmd-761   [000]   218.979857: function:                                     cpus_share_cache [0:0xf60:24]
-       trace-cmd-761   [000]   218.979857: function:                                     blk_mq_end_request [0:0xf7c:24]
-       trace-cmd-761   [000]   218.979857: function:                                        blk_update_request [0:0xf98:24]
-       trace-cmd-761   [000]   218.979857: function:                                           blk_status_to_errno [0:0xfb4:24]
-       trace-cmd-761   [000]   218.979857: function:                                           blk_account_io_completion [0:0xfd0:24]
-
-Again... the debug was on... but no messages about dropped events.
-CPU:0 [SUBBUFFER START] [218979863426:0x2310d000]
-       trace-cmd-761   [000]   218.979863: function:                                           bio_advance [0:0x10:24]
-================ Faulty execution =================
-
-Thus, ftrace and perf, sometimes, are dropping events at the begin of
-interrupt handlers. And that is The reason why interrupt disable and
-preempt disable were not being recorded (and causing problem in the
-automata execution) is that these events take place in the very early
-execution of the interrupt handler, in the section in which the
-perf/ftrace are dropping events [ without notifying ].
-
-[1] This is a good demonstration of problems that can be found using the
-automata model presented in this workshop paper:
-
-Modeling the Behavior of Threads in the PREEMPT_RT Linux Kernel Using
-Automata. Daniel Bristot de Oliveira, Tommaso Cucinotta, Rômulo Silva de
-Oliveira - EWiLi'2018 – Embedded operating system workshop Torino, Italy,
-4 October 2018.
-
-And in the presentations:
-"Mind the gap between real-time Linux and real-time theory"
-"How can we catch problems that can break the PREEMPT_RT preemption model?"
-At the Linux Plumbers (Vancouver - CA)
-
-Steven is already aware of this problem, and he is working on it.
-
-Thanks!
-
--- Daniel
+Sebastian
