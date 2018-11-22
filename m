@@ -1,474 +1,241 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ptrace, rt] erratic behaviour in PTRACE_SINGLESET on 4.13-rt
- and later.
-Date: Tue, 20 Nov 2018 12:29:00 -0500
-Message-ID: <20181120122900.625b1d98@gandalf.local.home>
-References: <20181119194619.GA32121@zipoli.concurrent-rt.com>
+From: <zhe.he@windriver.com>
+Subject: [PATCH v2] kmemleak: Turn kmemleak_lock to raw spinlock on RT
+Date: Thu, 22 Nov 2018 17:04:19 +0800
+Message-ID: <1542877459-144382-1-git-send-email-zhe.he@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: "julia@ni.com" <julia@ni.com>,
-        "tglx@linutronix.de" <tglx@linutronix.de>,
-        "bigeasy@linutronix.de" <bigeasy@linutronix.de>,
-        "oleg@redhat.com" <oleg@redhat.com>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>
-To: Joe Korty <Joe.Korty@concurrent-rt.com>
+Content-Type: text/plain
+To: <catalin.marinas@arm.com>, <bigeasy@linutronix.de>,
+        <tglx@linutronix.de>, <rostedt@goodmis.org>, <linux-mm@kvack.org>,
+        <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181119194619.GA32121@zipoli.concurrent-rt.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+From: He Zhe <zhe.he@windriver.com>
 
-[ Adding Clark and John who manage the rt-tests repo ]
+kmemleak_lock, as a rwlock on RT, can possibly be held in atomic context and
+causes the follow BUG.
 
--- Steve
+BUG: scheduling while atomic: migration/15/132/0x00000002
+Modules linked in: iTCO_wdt iTCO_vendor_support intel_rapl pcc_cpufreq
+pnd2_edac intel_powerclamp coretemp crct10dif_pclmul crct10dif_common
+aesni_intel matroxfb_base aes_x86_64 matroxfb_g450 matroxfb_accel
+crypto_simd matroxfb_DAC1064 cryptd glue_helper g450_pll matroxfb_misc
+i2c_ismt i2c_i801 acpi_cpufreq
+Preemption disabled at:
+[<ffffffff8c927c11>] cpu_stopper_thread+0x71/0x100
+CPU: 15 PID: 132 Comm: migration/15 Not tainted 4.19.0-rt1-preempt-rt #1
+Hardware name: Intel Corp. Harcuvar/Server, BIOS HAVLCRB1.X64.0015.D62.1708310404 08/31/2017
+Call Trace:
+ dump_stack+0x4f/0x6a
+ ? cpu_stopper_thread+0x71/0x100
+ __schedule_bug.cold.16+0x38/0x55
+ __schedule+0x484/0x6c0
+ schedule+0x3d/0xe0
+ rt_spin_lock_slowlock_locked+0x118/0x2a0
+ rt_spin_lock_slowlock+0x57/0x90
+ __rt_spin_lock+0x26/0x30
+ __write_rt_lock+0x23/0x1a0
+ ? intel_pmu_cpu_dying+0x67/0x70
+ rt_write_lock+0x2a/0x30
+ find_and_remove_object+0x1e/0x80
+ delete_object_full+0x10/0x20
+ kmemleak_free+0x32/0x50
+ kfree+0x104/0x1f0
+ ? x86_pmu_starting_cpu+0x30/0x30
+ intel_pmu_cpu_dying+0x67/0x70
+ x86_pmu_dying_cpu+0x1a/0x30
+ cpuhp_invoke_callback+0x92/0x700
+ take_cpu_down+0x70/0xa0
+ multi_cpu_stop+0x62/0xc0
+ ? cpu_stop_queue_work+0x130/0x130
+ cpu_stopper_thread+0x79/0x100
+ smpboot_thread_fn+0x20f/0x2d0
+ kthread+0x121/0x140
+ ? sort_range+0x30/0x30
+ ? kthread_park+0x90/0x90
+ ret_from_fork+0x35/0x40
 
-On Mon, 19 Nov 2018 19:46:23 +0000
-Joe Korty <Joe.Korty@concurrent-rt.com> wrote:
+And on v4.18 stable tree the following call trace, caused by grabbing
+kmemleak_lock again, is also observed.
 
-> Hi Julia & the RT team,
-> 
-> The following program might make a good addition to the rt
-> test suite.  It tests the reliability of PTRACE_SINGLESTEP.
-> It does by default 10,000 ssteps against a simple,
-> spinner tracee.  Also by default, it spins off ten of these
-> tracer/tracee pairs, all of which are to run concurrently.
-> 
-> Starting with 4.13-rt, this test occasionally encounters a
-> sstep whose waitpid returns a WIFSIGNALED (signal SIGTRAP)
-> rather than a WIFSTOPPED.  This usually happens after
-> thousands of ssteps have executed.  Having multiple
-> tracer/tracee pairs running dramatically increases the
-> chances of failure.
-> 
-> The is what the test output looks like for a good run:
-> 
->   #forks: 10
->   #steps: 10000
->   
->   forktest#0/22872: STARTING
->   forktest#7/22879: STARTING
->   forktest#8/22880: STARTING
->   forktest#6/22878: STARTING
->   forktest#5/22877: STARTING
->   forktest#3/22875: STARTING
->   forktest#4/22876: STARTING
->   forktest#9/22882: STARTING
->   forktest#2/22874: STARTING
->   forktest#1/22873: STARTING
->   forktest#0/22872: EXITING, no error
->   forktest#8/22880: EXITING, no error
->   forktest#3/22875: EXITING, no error
->   forktest#7/22879: EXITING, no error
->   forktest#6/22878: EXITING, no error
->   forktest#5/22877: EXITING, no error
->   forktest#2/22874: EXITING, no error
->   forktest#4/22876: EXITING, no error
->   forktest#9/22882: EXITING, no error
->   forktest#1/22873: EXITING, no error
->   All tests PASSED.
-> 
-> This is what the test output looks like for a failing run:
-> 
->   #forks: 10
->   #steps: 10000
->   
->   forktest#0/22906: STARTING
->   forktest#1/22907: STARTING
->   forktest#2/22909: STARTING
->   forktest#3/22911: STARTING
->   forktest#4/22912: STARTING
->   forktest#5/22915: STARTING
->   forktest#6/22916: STARTING
->   forktest#7/22919: STARTING
->   forktest#8/22920: STARTING
->   forktest#9/22923: STARTING
->   forktest#2/22909: EXITING, ERROR: wait on PTRACE_SINGLESTEP #9: wanted STATE_STOPPED, saw STATE_SIGNALED instead (and saw signo 5 too)
->   forktest#5/22915: EXITING, no error
->   forktest#3/22911: EXITING, ERROR: wait on PTRACE_SINGLESTEP #7953: wanted STATE_STOPPED, saw STATE_SIGNALED instead (and saw signo 5 too)
->   forktest#0/22906: EXITING, ERROR: wait on PTRACE_SINGLESTEP #5072: wanted STATE_STOPPED, saw STATE_SIGNALED instead (and saw signo 5 too)
->   forktest#9/22923: EXITING, ERROR: wait on PTRACE_SINGLESTEP #7992: wanted STATE_STOPPED, saw STATE_SIGNALED instead (and saw signo 5 too)
->   forktest#4/22912: EXITING, ERROR: wait on PTRACE_SINGLESTEP #9923: wanted STATE_STOPPED, saw STATE_SIGNALED instead (and saw signo 5 too)
->   forktest#1/22907: EXITING, ERROR: wait on PTRACE_SINGLESTEP #7723: wanted STATE_STOPPED, saw STATE_SIGNALED instead (and saw signo 5 too)
->   forktest#7/22919: EXITING, ERROR: wait on PTRACE_SINGLESTEP #5036: wanted STATE_STOPPED, saw STATE_SIGNALED instead (and saw signo 5 too)
->   forktest#8/22920: EXITING, ERROR: wait on PTRACE_SINGLESTEP #4943: wanted STATE_STOPPED, saw STATE_SIGNALED instead (and saw signo 5 too)
->   forktest#6/22916: EXITING, no error
->   One or more tests FAILED.
-> 
-> Here are the observations from my testing so far:
-> 
->   - It has never failed when confined to a single cpu.
->   - It has never failed on !rt kernels.
->   - It has never failed on any kernel prior to 4.13.
->   - More failures than what chance would dictate happen
->     near the end of a test run (ie, if a test of 10,000 
->     steps is run, the failure will be at the 9,xxx'th step,
->     if 100,000 steps are run, the failure will be at
->     the 9x,xxx'th step).
-> 
-> The above results are from kernels 4.{4,9,11,13,14,19}-rt
-> and some !rt's of these as well.
-> 
-> I have yet to see or hear of this bug, if it is a bug,
-> giving anyone a problem in a debug session.  It might not
-> even be a bug but merely expected behaviour. And of course
-> there is the possibility of a misuse of ptrace/waitpid in
-> my test program. Its API, after all, is rather convoluted.
-> 
-> Regards,
-> Joe
-> 
-> 
-> 
-> 
-> /*
->  * Have a tracer do a bunch of PTRACE_SINGLESTEPs against
->  * a tracee as fast as possible.  Create several of these
->  * tracer/tracee pairs and see if they can be made to
->  * interfere with each other.
->  *
->  * Usage:
->  *   ssdd nforks niters
->  * Where:
->  *   nforks - number of tracer/tracee pairs to fork off.
->  *            default 10.
->  *   niters - number of PTRACE_SINGLESTEP iterations to
->  *            do before declaring success, for each tracer/
->  *            tracee pair set up.  Default 10,000.
->  *
->  * The tracee waits on each PTRACE_SINGLESTEP with a waitpid(2)
->  * and checks that waitpid's return values for correctness.
->  */
-> #include <stdio.h>
-> #include <stdlib.h>
-> #include <stddef.h>
-> #include <unistd.h>
-> #include <string.h>
-> #include <signal.h>
-> #include <errno.h>
-> 
-> #include <sys/types.h>
-> #include <sys/wait.h>
-> #include <sys/ptrace.h>
-> 
-> /* do_wait return values */
-> #define STATE_EXITED	1
-> #define STATE_STOPPED	2
-> #define STATE_SIGNALED	3
-> #define STATE_UNKNOWN	4
-> #define STATE_ECHILD	5
-> #define STATE_EXITED_TSIG	6	/* exited with termination signal */
-> #define STATE_EXITED_ERRSTAT	7	/* exited with non-zero status */
-> 
-> char *state_name[] = {
-> 	[STATE_EXITED] = "STATE_EXITED",
-> 	[STATE_STOPPED] = "STATE_STOPPED",
-> 	[STATE_SIGNALED] = "STATE_SIGNALED",
-> 	[STATE_UNKNOWN] = "STATE_UNKNOWN",
-> 	[STATE_ECHILD] = "STATE_ECHILD",
-> 	[STATE_EXITED_TSIG] = "STATE_EXITED_TSIG",
-> 	[STATE_EXITED_ERRSTAT] = "STATE_EXITED_ERRSTAT"
-> };
-> 
-> const char *get_state_name(int state)
-> {
-> 	if (state < STATE_EXITED || state > STATE_EXITED_ERRSTAT)
-> 		return "?";
-> 	return state_name[state];
-> }
-> 
-> #define unused __attribute__((unused))
-> 
-> static int got_sigchld;
-> 
-> static int do_wait(pid_t *wait_pid, int *ret_sig)
-> {
-> 	int status, child_status;
-> 
-> 	*ret_sig = -1; /* initially mark 'nothing returned' */
-> 
-> 	while (1) {
-> 		status = waitpid(-1, &child_status, WUNTRACED | __WALL);
-> 		if (status == -1) {
-> 			if (errno == EINTR)
-> 				continue;
-> 			if (errno == ECHILD) {
-> 				*wait_pid = (pid_t)0;
-> 				return STATE_ECHILD;
-> 			}
-> 			printf("do_wait/%d: EXITING, ERROR: "
-> 			       "waitpid() returned errno %d\n",
-> 			       getpid(), errno);
-> 			exit(1);
-> 		}
-> 		break;
-> 	}
-> 	*wait_pid = (pid_t)status;
-> 
-> 	if (WIFEXITED(child_status)) {
-> 		if (WIFSIGNALED(child_status))
-> 			return STATE_EXITED_TSIG;
-> 		if (WEXITSTATUS(child_status))
-> 			return STATE_EXITED_ERRSTAT;
-> 		return STATE_EXITED;
-> 	}
-> 	if (WIFSTOPPED(child_status)) {
-> 		*ret_sig = WSTOPSIG(child_status);
-> 		return STATE_STOPPED;
-> 	}
-> 	if (WIFSIGNALED(child_status)) {
-> 		*ret_sig = WTERMSIG(child_status);
-> 		return STATE_SIGNALED;
-> 	}
-> 	return STATE_UNKNOWN;
-> }
-> 
-> int check_sigchld(void)
-> {
-> 	int i;
-> 	/*
-> 	 * The signal is asynchronous so give it some
-> 	 * time to arrive.
-> 	 */
-> 	for (i = 0; i < 10 && !got_sigchld; i++)
-> 		usleep(1000); /* 10 msecs */
-> 	for (i = 0; i < 10 && !got_sigchld; i++)
-> 		usleep(2000); /* 20 + 10 = 30 msecs */
-> 	for (i = 0; i < 10 && !got_sigchld; i++)
-> 		usleep(4000); /* 40 + 30 = 70 msecs */
-> 	for (i = 0; i < 10 && !got_sigchld; i++)
-> 		usleep(8000); /* 80 + 40 = 150 msecs */
-> 	for (i = 0; i < 10 && !got_sigchld; i++)
-> 		usleep(16000); /* 160 + 150 = 310 msecs */
-> 	for (i = 0; i < 10 && !got_sigchld; i++)
-> 		usleep(32000); /* 320 + 310 = 630 msecs */
-> 
-> 	return got_sigchld;
-> }
-> 
-> pid_t parent;
-> int nforks = 10;
-> int nsteps = 10000;
-> 
-> static void sigchld(int sig, unused siginfo_t * info, unused void *arg)
-> {
-> 	got_sigchld = 1;
-> }
-> 
-> static void child_process(void)
-> {
-> 	unused volatile int i;
-> 
-> 	/* wait for ptrace attach */
-> 	usleep(100000);
-> 	while (1)
-> 		i = 0;
-> }
-> 
-> static int forktests(int testid)
-> {
-> 	int i, status, ret_sig;
-> 	long pstatus;
-> 	pid_t child, wait_pid;
-> 	struct sigaction act, oact;
-> 
-> 	parent = getpid();
-> 	printf("forktest#%d/%d: STARTING\n", testid, parent);
-> 
-> 	child = fork();
-> 	if (child == -1) {
-> 		printf("forktest#%d/%d: EXITING, ERROR: "
-> 		       "fork returned errno %d\n", testid, parent, errno);
-> 		exit(1);
-> 	}
-> 	if (!child)
-> 		child_process();
-> 
-> 	act.sa_sigaction = sigchld;
-> 	sigemptyset(&act.sa_mask);
-> 	act.sa_flags = SA_SIGINFO;
-> 	status = sigaction(SIGCHLD, &act, &oact);
-> 	if (status) {
-> 		printf("forktest#%d/%d: EXITING, ERROR: "
-> 		       "sigaction returned %d, errno %d\n",
-> 		       testid, parent, status, errno);
-> 		exit(1);
-> 	}
-> 
-> 	/* give both our child and parent time to set things up */
-> 	usleep(125000);
-> 
-> 	/*
-> 	 * Attach to the child.
-> 	 */
-> 	pstatus = ptrace(PTRACE_ATTACH, child, NULL, NULL);
-> 	if (pstatus == ~0l) {
-> 		printf("forktest#%d/%d: EXITING, ERROR: "
-> 		       "attach failed.  errno %d\n",
-> 		       testid, getpid(), errno);
-> 		exit(1);
-> 	}
-> 
-> 	/*
-> 	 * The attach should cause the child to receive a signal.
-> 	 */
-> 	status = do_wait(&wait_pid, &ret_sig);
-> 	if (wait_pid != child) {
-> 		printf("forktest#%d/%d: EXITING, ERROR: "
-> 		       "attach: Unexpected wait pid %d\n",
-> 		       testid, getpid(), wait_pid);
-> 		exit(1);
-> 	}
-> 	if (status != STATE_STOPPED) {
-> 		printf("forktest#%d/%d: EXITING, ERROR: "
-> 		       "attach: wait on PTRACE_ATTACH returned %d "
-> 		       "[%s, wanted STATE_STOPPED], signo %d\n",
-> 		       testid, getpid(), status, get_state_name(status),
-> 		       ret_sig);
-> 		exit(1);
-> 	}
-> 	else if (!check_sigchld()) {
-> 		printf("forktest#%d/%d: EXITING, ERROR: "
-> 		       "wait on PTRACE_ATTACH saw a SIGCHLD count of %d, should be 1\n",
-> 		       testid, getpid(), got_sigchld);
-> 		exit(1);
-> 	}
-> 	got_sigchld = 0;
-> 
-> 
-> 	/*
-> 	 * Generate 'nsteps' PTRACE_SINGLESTEPs, make sure they all actually step
-> 	 * the tracee.
-> 	 */
-> 	for (i = 0; i < nsteps; i++) {
-> 		pstatus = ptrace(PTRACE_SINGLESTEP, child, NULL, NULL);
-> 
-> 		if (pstatus) {
-> 			printf("forktest#%d/%d: EXITING, ERROR: "
-> 			       "PTRACE_SINGLESTEP #%d: returned status %ld, "
-> 			       "errno %d, signo %d\n",
-> 			       testid, getpid(), i, pstatus, errno, ret_sig);
-> 			exit(1);
-> 		}
-> 
-> 		status = do_wait(&wait_pid, &ret_sig);
-> 		if (wait_pid != child) {
-> 			printf("forktest#%d/%d: EXITING, ERROR: "
-> 			       "wait on PTRACE_SINGLESTEP #%d: returned wrong pid %d, "
-> 			       "expected %d\n",
-> 			       testid, getpid(), i, wait_pid, child);
-> 			exit(1);
-> 		}
-> 		if (status != STATE_STOPPED) {
-> 			printf("forktest#%d/%d: EXITING, ERROR: "
-> 			       "wait on PTRACE_SINGLESTEP #%d: wanted STATE_STOPPED, "
-> 			       "saw %s instead (and saw signo %d too)\n",
-> 			       testid, getpid(), i,
-> 			       get_state_name(status), ret_sig);
-> 			exit(1);
-> 		}
-> 		if (ret_sig != SIGTRAP) {
-> 			printf("forktest#%d/%d: EXITING, ERROR: "
-> 			       "wait on PTRACE_SINGLESTEP #%d: returned signal %d, "
-> 			       "wanted SIGTRAP\n",
-> 			       testid, getpid(), i, ret_sig);
-> 			exit(1);
-> 		}
-> 		if (!check_sigchld()) {
-> 			printf("forktest#%d/%d: EXITING, ERROR: "
-> 			       "wait on PTRACE_SINGLESTEP #%d: no SIGCHLD seen "
-> 			       "(signal count == 0), signo %d\n",
-> 			       testid, getpid(), i, ret_sig);
-> 			exit(1);
-> 		}
-> 		got_sigchld = 0;
-> 	}
-> 
-> 	/*
-> 	 * We are all done, kill the tracee and wait for it to die.  We test
-> 	 * the killing results as much as the above attach and sstep results,
-> 	 * though failure here really isn't the point of this test.
-> 	 */
-> 	status = kill(child, SIGKILL);
-> 
-> 	if (status) {
-> 		printf("forktest#%d/%d: EXITING, ERROR: "
-> 		       "kill of child %d returned %d\n",
-> 		       testid, getpid(), child, errno);
-> 		exit(1);
-> 	}
-> 
-> 	status = do_wait(&wait_pid, &ret_sig);
-> 	if (wait_pid != child) {
-> 		printf("forktest#%d/%d: EXITING, ERROR: "
-> 		       "kill: Unexpected wait pid %d\n",
-> 		       testid, getpid(), wait_pid);
-> 		exit(1);
-> 	}
-> 	if (status != STATE_SIGNALED) {
-> 		printf("forktest#%d/%d: EXITING, ERROR: "
-> 		       "kill: Unexpected child, do_wait status %d "
-> 		       "[%s, wanted STATE_SIGNALED]\n",
-> 		       testid, getpid(), status, get_state_name(status));
-> 		exit(1);
-> 	}
-> 	if (ret_sig != SIGKILL) {
-> 		printf("forktest#%d/%d: EXITING, ERROR: "
-> 		       "kill: Unexpected child signal %d\n",
-> 		       testid, getpid(), ret_sig);
-> 		exit(1);
-> 	}
-> 
-> 	printf("forktest#%d/%d: EXITING, no error\n", testid, parent);
-> 	exit(0);
-> }
-> 
-> int main(int argc, char **argv)
-> {
-> 	int i, ret_sig, status;
-> 	pid_t child = 0, wait_pid;
-> 	int error = 0;
-> 
-> 	setbuf(stdout, NULL);
-> 
-> 	argc--, argv++;
-> 	if (argc) {
-> 		nforks = atoi(*argv);
-> 		argc--, argv++;
-> 		if (argc)
-> 			nsteps = atoi(*argv);
-> 	}
-> 	printf("#forks: %d\n", nforks);
-> 	printf("#steps: %d\n", nsteps);
-> 	printf("\n");
-> 
-> 	for (i = 0; i < nforks; i++) {
-> 		child = fork();
-> 		if (child == -1) {
-> 			printf("main: fork returned errno %d\n", errno);
-> 			exit(1);
-> 		}
-> 		if (!child)
-> 			forktests(i);
-> 	}
-> 
-> 	for (i = 0; i < nforks; i++) {
-> 		status = do_wait(&wait_pid, &ret_sig);
-> 		if (status != STATE_EXITED) {
-> 			if (0) printf("main/%d: ERROR: "
-> 			       "forktest#%d unexpected do_wait status %d "
-> 			       "[%s, wanted STATE_EXITED]\n",
-> 			       getpid(), wait_pid, status,
-> 			       get_state_name(status));
-> 			error = 1;
-> 		}
-> 	}
-> 
-> 	printf("%s.\n", error ?
-> 		"One or more tests FAILED" :
-> 		"All tests PASSED");
-> 	exit(error);
-> }
+kernel BUG at kernel/locking/rtmutex.c:1048! 
+invalid opcode: 0000 [#1] PREEMPT SMP PTI 
+CPU: 5 PID: 689 Comm: mkfs.ext4 Not tainted 4.18.16-rt9-preempt-rt #1 
+Hardware name: Intel Corp. Harcuvar/Server, BIOS HAVLCRB1.X64.0015.D62.1708310404 08/31/2017 
+RIP: 0010:rt_spin_lock_slowlock_locked+0x277/0x2a0 
+Code: e8 5e 64 61 ff e9 bc fe ff ff e8 54 64 61 ff e9 b7 fe ff ff 0f 0b e8 98 57 53 ff e9 43 fe ff ff e8 8e 57 53 ff e9 74 ff ff ff <0f> 0b 0f 0b 0f 0b 48 8b 43 10 48 85 c0 74 06 48 3b 58 38 75 0b 49 
+RSP: 0018:ffff936846d4f3b0 EFLAGS: 00010046 
+RAX: ffff8e3680361e00 RBX: ffffffff83a8b240 RCX: 0000000000000001 
+RDX: 0000000000000000 RSI: ffff8e3680361e00 RDI: ffffffff83a8b258 
+RBP: ffff936846d4f3e8 R08: ffff8e3680361e01 R09: ffffffff82adfdf0 
+R10: ffffffff827ede18 R11: 0000000000000000 R12: ffff936846d4f3f8 
+R13: ffff8e3680361e00 R14: ffff936846d4f3f8 R15: 0000000000000246 
+FS: 00007fc8b6bfd780(0000) GS:ffff8e369f340000(0000) knlGS:0000000000000000 
+CS: 0010 DS: 0000 ES: 0000 CR0: 0000000080050033 
+CR2: 000055fb5659e000 CR3: 00000007fdd14000 CR4: 00000000003406e0 
+Call Trace: 
+ ? preempt_count_add+0x74/0xc0 
+ rt_spin_lock_slowlock+0x57/0x90 
+ ? __kernel_text_address+0x12/0x40 
+ ? __save_stack_trace+0x75/0x100 
+ __rt_spin_lock+0x26/0x30 
+ __write_rt_lock+0x23/0x1a0 
+ rt_write_lock+0x2a/0x30 
+ create_object+0x17d/0x2b0 
+ kmemleak_alloc+0x34/0x50 
+ kmem_cache_alloc+0x146/0x220 
+ ? mempool_alloc_slab+0x15/0x20 
+ mempool_alloc_slab+0x15/0x20 
+ mempool_alloc+0x65/0x170 
+ sg_pool_alloc+0x21/0x60 
+ __sg_alloc_table+0x101/0x160 
+ ? sg_free_table_chained+0x30/0x30 
+ sg_alloc_table_chained+0x8b/0xb0 
+ scsi_init_sgtable+0x31/0x90 
+ scsi_init_io+0x44/0x130 
+ sd_setup_write_same16_cmnd+0xef/0x150 
+ sd_init_command+0x6bf/0xaa0 
+ ? cgroup_base_stat_cputime_account_end.isra.0+0x26/0x60 
+ ? elv_rb_del+0x2a/0x40 
+ scsi_setup_cmnd+0x8e/0x140 
+ scsi_prep_fn+0x5d/0x140 
+ blk_peek_request+0xda/0x2f0 
+ scsi_request_fn+0x33/0x550 
+ ? cfq_rb_erase+0x23/0x40 
+ __blk_run_queue+0x43/0x60 
+ cfq_insert_request+0x2f3/0x5d0 
+ __elv_add_request+0x160/0x290 
+ blk_flush_plug_list+0x204/0x230 
+ schedule+0x87/0xe0 
+ __write_rt_lock+0x18b/0x1a0 
+ rt_write_lock+0x2a/0x30 
+ create_object+0x17d/0x2b0 
+ kmemleak_alloc+0x34/0x50 
+ __kmalloc_node+0x1cd/0x340 
+ alloc_request_size+0x30/0x70 
+ mempool_alloc+0x65/0x170 
+ ? ioc_lookup_icq+0x54/0x70 
+ get_request+0x4e3/0x8d0 
+ ? wait_woken+0x80/0x80 
+ blk_queue_bio+0x153/0x470 
+ generic_make_request+0x1dc/0x3f0 
+ submit_bio+0x49/0x140 
+ ? next_bio+0x38/0x40 
+ submit_bio_wait+0x59/0x90 
+ blkdev_issue_discard+0x7a/0xd0 
+ ? _raw_spin_unlock_irqrestore+0x18/0x50 
+ blk_ioctl_discard+0xc7/0x110 
+ blkdev_ioctl+0x57e/0x960 
+ ? __wake_up+0x13/0x20 
+ block_ioctl+0x3d/0x50 
+ do_vfs_ioctl+0xa8/0x610 
+ ? vfs_write+0x166/0x1b0 
+ ksys_ioctl+0x67/0x90 
+ __x64_sys_ioctl+0x1a/0x20 
+ do_syscall_64+0x4d/0xf0 
+ entry_SYSCALL_64_after_hwframe+0x44/0xa9
+
+kmemleak is an error detecting feature. We would not expect as good performance
+as without it. As there is no raw rwlock defining helpers, we turn kmemleak_lock
+to a raw spinlock.
+
+Signed-off-by: He Zhe <zhe.he@windriver.com>
+Cc: catalin.marinas@arm.com
+Cc: bigeasy@linutronix.de
+Cc: tglx@linutronix.de
+Cc: rostedt@goodmis.org
+---
+v2: Remove stable tag as this is only for preempt-rt patchset
+
+ mm/kmemleak.c | 20 ++++++++++----------
+ 1 file changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/mm/kmemleak.c b/mm/kmemleak.c
+index 17dd883..b68a3d0 100644
+--- a/mm/kmemleak.c
++++ b/mm/kmemleak.c
+@@ -26,7 +26,7 @@
+  *
+  * The following locks and mutexes are used by kmemleak:
+  *
+- * - kmemleak_lock (rwlock): protects the object_list modifications and
++ * - kmemleak_lock (raw spinlock): protects the object_list modifications and
+  *   accesses to the object_tree_root. The object_list is the main list
+  *   holding the metadata (struct kmemleak_object) for the allocated memory
+  *   blocks. The object_tree_root is a red black tree used to look-up
+@@ -197,7 +197,7 @@ static LIST_HEAD(gray_list);
+ /* search tree for object boundaries */
+ static struct rb_root object_tree_root = RB_ROOT;
+ /* rw_lock protecting the access to object_list and object_tree_root */
+-static DEFINE_RWLOCK(kmemleak_lock);
++static DEFINE_RAW_SPINLOCK(kmemleak_lock);
+ 
+ /* allocation caches for kmemleak internal data */
+ static struct kmem_cache *object_cache;
+@@ -491,9 +491,9 @@ static struct kmemleak_object *find_and_get_object(unsigned long ptr, int alias)
+ 	struct kmemleak_object *object;
+ 
+ 	rcu_read_lock();
+-	read_lock_irqsave(&kmemleak_lock, flags);
++	raw_spin_lock_irqsave(&kmemleak_lock, flags);
+ 	object = lookup_object(ptr, alias);
+-	read_unlock_irqrestore(&kmemleak_lock, flags);
++	raw_spin_unlock_irqrestore(&kmemleak_lock, flags);
+ 
+ 	/* check whether the object is still available */
+ 	if (object && !get_object(object))
+@@ -513,13 +513,13 @@ static struct kmemleak_object *find_and_remove_object(unsigned long ptr, int ali
+ 	unsigned long flags;
+ 	struct kmemleak_object *object;
+ 
+-	write_lock_irqsave(&kmemleak_lock, flags);
++	raw_spin_lock_irqsave(&kmemleak_lock, flags);
+ 	object = lookup_object(ptr, alias);
+ 	if (object) {
+ 		rb_erase(&object->rb_node, &object_tree_root);
+ 		list_del_rcu(&object->object_list);
+ 	}
+-	write_unlock_irqrestore(&kmemleak_lock, flags);
++	raw_spin_unlock_irqrestore(&kmemleak_lock, flags);
+ 
+ 	return object;
+ }
+@@ -593,7 +593,7 @@ static struct kmemleak_object *create_object(unsigned long ptr, size_t size,
+ 	/* kernel backtrace */
+ 	object->trace_len = __save_stack_trace(object->trace);
+ 
+-	write_lock_irqsave(&kmemleak_lock, flags);
++	raw_spin_lock_irqsave(&kmemleak_lock, flags);
+ 
+ 	min_addr = min(min_addr, ptr);
+ 	max_addr = max(max_addr, ptr + size);
+@@ -624,7 +624,7 @@ static struct kmemleak_object *create_object(unsigned long ptr, size_t size,
+ 
+ 	list_add_tail_rcu(&object->object_list, &object_list);
+ out:
+-	write_unlock_irqrestore(&kmemleak_lock, flags);
++	raw_spin_unlock_irqrestore(&kmemleak_lock, flags);
+ 	return object;
+ }
+ 
+@@ -1310,7 +1310,7 @@ static void scan_block(void *_start, void *_end,
+ 	unsigned long *end = _end - (BYTES_PER_POINTER - 1);
+ 	unsigned long flags;
+ 
+-	read_lock_irqsave(&kmemleak_lock, flags);
++	raw_spin_lock_irqsave(&kmemleak_lock, flags);
+ 	for (ptr = start; ptr < end; ptr++) {
+ 		struct kmemleak_object *object;
+ 		unsigned long pointer;
+@@ -1367,7 +1367,7 @@ static void scan_block(void *_start, void *_end,
+ 			spin_unlock(&object->lock);
+ 		}
+ 	}
+-	read_unlock_irqrestore(&kmemleak_lock, flags);
++	raw_spin_unlock_irqrestore(&kmemleak_lock, flags);
+ }
+ 
+ /*
+-- 
+2.7.4
