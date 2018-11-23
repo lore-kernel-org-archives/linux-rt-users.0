@@ -1,243 +1,87 @@
-From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [PATCH v7 05/16] tracing: Generalize hist trigger onmax and save
- action
-Date: Fri, 23 Nov 2018 16:01:05 +0900
-Message-ID: <20181123070105.GA3838@sejong>
-References: <cover.1542221862.git.tom.zanussi@linux.intel.com>
- <9baa2b4a9b708791b39f176e3b63c207163d8c3b.1542221863.git.tom.zanussi@linux.intel.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH v2] kmemleak: Turn kmemleak_lock to raw spinlock on RT
+Date: Fri, 23 Nov 2018 10:53:14 +0100
+Message-ID: <20181123095314.hervxkxtqoixovro@linutronix.de>
+References: <1542877459-144382-1-git-send-email-zhe.he@windriver.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
-        julia@ni.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org, kernel-team@lge.com
-To: Tom Zanussi <zanussi@kernel.org>
+Content-Transfer-Encoding: 8BIT
+Cc: catalin.marinas@arm.com, tglx@linutronix.de, rostedt@goodmis.org,
+        linux-mm@kvack.org, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
+To: zhe.he@windriver.com
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <9baa2b4a9b708791b39f176e3b63c207163d8c3b.1542221863.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <1542877459-144382-1-git-send-email-zhe.he@windriver.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Nov 14, 2018 at 02:18:02PM -0600, Tom Zanussi wrote:
-> From: Tom Zanussi <tom.zanussi@linux.intel.com>
+On 2018-11-22 17:04:19 [+0800], zhe.he@windriver.com wrote:
+> From: He Zhe <zhe.he@windriver.com>
 > 
-> The action refactor code allowed actions and handlers to be separated,
-> but the existing onmax handler and save action code is still not
-> flexible enough to handle arbitrary coupling.  This change generalizes
-> them and in the process makes additional handlers and actions easier
-> to implement.
+> kmemleak_lock, as a rwlock on RT, can possibly be held in atomic context and
+> causes the follow BUG.
 > 
-> The onmax action can be broken up and thought of as two separate
-> components - a variable to be tracked (the parameter given to the
-> onmax($var_to_track) function) and an invisible variable created to
-> save the ongoing result of doing something with that variable, such as
-> saving the max value of that variable so far seen.
+> BUG: scheduling while atomic: migration/15/132/0x00000002
+…
+> Preemption disabled at:
+> [<ffffffff8c927c11>] cpu_stopper_thread+0x71/0x100
+> CPU: 15 PID: 132 Comm: migration/15 Not tainted 4.19.0-rt1-preempt-rt #1
+> Hardware name: Intel Corp. Harcuvar/Server, BIOS HAVLCRB1.X64.0015.D62.1708310404 08/31/2017
+> Call Trace:
+>  dump_stack+0x4f/0x6a
+>  ? cpu_stopper_thread+0x71/0x100
+>  __schedule_bug.cold.16+0x38/0x55
+>  __schedule+0x484/0x6c0
+>  schedule+0x3d/0xe0
+>  rt_spin_lock_slowlock_locked+0x118/0x2a0
+>  rt_spin_lock_slowlock+0x57/0x90
+>  __rt_spin_lock+0x26/0x30
+>  __write_rt_lock+0x23/0x1a0
+>  ? intel_pmu_cpu_dying+0x67/0x70
+>  rt_write_lock+0x2a/0x30
+>  find_and_remove_object+0x1e/0x80
+>  delete_object_full+0x10/0x20
+>  kmemleak_free+0x32/0x50
+>  kfree+0x104/0x1f0
+>  ? x86_pmu_starting_cpu+0x30/0x30
+>  intel_pmu_cpu_dying+0x67/0x70
+>  x86_pmu_dying_cpu+0x1a/0x30
+>  cpuhp_invoke_callback+0x92/0x700
+>  take_cpu_down+0x70/0xa0
+>  multi_cpu_stop+0x62/0xc0
+>  ? cpu_stop_queue_work+0x130/0x130
+>  cpu_stopper_thread+0x79/0x100
+>  smpboot_thread_fn+0x20f/0x2d0
+>  kthread+0x121/0x140
+>  ? sort_range+0x30/0x30
+>  ? kthread_park+0x90/0x90
+>  ret_from_fork+0x35/0x40
+
+If this is the only problem? kfree() from a preempt-disabled section
+should cause a warning even without kmemleak.
+
+> And on v4.18 stable tree the following call trace, caused by grabbing
+> kmemleak_lock again, is also observed.
 > 
-> Separating it out like this and renaming it appropriately allows us to
-> use the same code for similar tracking functions such as
-> onchange($var_to_track), which would just track the last value seen
-> rather than the max seen so far, which is useful in some situations.
-> 
-> Additionally, because different handlers and actions may want to save
-> and access data differently e.g. save and retrieve tracking values as
-> local variables vs something more global, save_val() and get_val()
-> interface functions are introduced and max-specific implementations
-> are used instead.
-> 
-> The same goes for the code that checks whether a maximum has been hit
-> - a generic check_val() interface and max-checking implementation is
-> used instead, which allows future patches to make use of he same code
-> using their own implemetations of similar functionality.
-> 
-> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> ---
->  kernel/trace/trace_events_hist.c | 225 ++++++++++++++++++++++++++-------------
->  1 file changed, 151 insertions(+), 74 deletions(-)
-> 
-> diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-> index 54b78cfe2766..ac48ad1482c8 100644
-> --- a/kernel/trace/trace_events_hist.c
-> +++ b/kernel/trace/trace_events_hist.c
-> @@ -319,6 +319,15 @@ typedef void (*action_fn_t) (struct hist_trigger_data *hist_data,
->  			     struct ring_buffer_event *rbe,
->  			     struct action_data *data, u64 *var_ref_vals);
->  
-> +typedef bool (*check_track_val_fn_t) (u64 track_val, u64 var_val);
-> +typedef bool (*save_track_val_fn_t) (struct hist_trigger_data *hist_data,
-> +				     struct tracing_map_elt *elt,
-> +				     struct action_data *data,
-> +				     unsigned int track_var_idx, u64 var_val);
-> +typedef u64 (*get_track_val_fn_t) (struct hist_trigger_data *hist_data,
-> +				   struct tracing_map_elt *elt,
-> +				   struct action_data *data);
-> +
->  enum handler_id {
->  	HANDLER_ONMATCH = 1,
->  	HANDLER_ONMAX,
-> @@ -349,14 +358,18 @@ struct action_data {
->  
->  		struct {
->  			char			*var_str;
-> -			unsigned int		max_var_ref_idx;
-> -			struct hist_field	*max_var;
-> -			struct hist_field	*var;
-> -		} onmax;
-> +			struct hist_field	*var_ref;
-> +			unsigned int		var_ref_idx;
-> +
-> +			struct hist_field	*track_var;
-> +
-> +			check_track_val_fn_t	check_val;
-> +			save_track_val_fn_t	save_val;
-> +			get_track_val_fn_t	get_val;
-> +		} track_data;
->  	};
->  };
->  
-> -
->  static char last_hist_cmd[MAX_FILTER_STR_VAL];
->  static char hist_err_str[MAX_FILTER_STR_VAL];
->  
-> @@ -3133,10 +3146,10 @@ static void update_field_vars(struct hist_trigger_data *hist_data,
->  			    hist_data->n_field_vars, 0);
->  }
->  
-> -static void update_max_vars(struct hist_trigger_data *hist_data,
-> -			    struct tracing_map_elt *elt,
-> -			    struct ring_buffer_event *rbe,
-> -			    void *rec)
-> +static void update_save_vars(struct hist_trigger_data *hist_data,
-> +			     struct tracing_map_elt *elt,
-> +			     struct ring_buffer_event *rbe,
-> +			     void *rec)
->  {
->  	__update_field_vars(elt, rbe, rec, hist_data->save_vars,
->  			    hist_data->n_save_vars, hist_data->n_field_var_str);
-> @@ -3274,14 +3287,68 @@ create_target_field_var(struct hist_trigger_data *target_hist_data,
->  	return create_field_var(target_hist_data, file, var_name);
->  }
->  
-> -static void onmax_print(struct seq_file *m,
-> -			struct hist_trigger_data *hist_data,
-> -			struct tracing_map_elt *elt,
-> -			struct action_data *data)
-> +static bool check_track_val_max(u64 track_val, u64 var_val)
->  {
-> -	unsigned int i, save_var_idx, max_idx = data->onmax.max_var->var.idx;
-> +	if (var_val <= track_val)
-> +		return false;
-> +
-> +	return true;
-> +}
->  
-> -	seq_printf(m, "\n\tmax: %10llu", tracing_map_read_var(elt, max_idx));
-> +static u64 get_track_val_local(struct hist_trigger_data *hist_data,
-> +			       struct tracing_map_elt *elt,
-> +			       struct action_data *data)
-> +{
-> +	unsigned int track_var_idx = data->track_data.track_var->var.idx;
-> +	u64 track_val;
-> +
-> +	track_val = tracing_map_read_var(elt, track_var_idx);
-> +
-> +	return track_val;
-> +}
-> +
-> +static bool save_track_val_local(struct hist_trigger_data *hist_data,
-> +				 struct tracing_map_elt *elt,
-> +				 struct action_data *data,
-> +				 unsigned int track_var_idx, u64 var_val)
-> +{
-> +	bool ret = false;
-> +	u64 track_val;
-> +
-> +	track_val = tracing_map_read_var(elt, track_var_idx);
-> +
-> +	if (data->track_data.check_val(track_val, var_val)) {
-> +		tracing_map_set_var(elt, track_var_idx, var_val);
-> +		ret = true;
-> +	}
-> +
-> +	return ret;
-> +}
-> +
-> +static bool update_track_val(struct hist_trigger_data *hist_data,
-> +			     struct tracing_map_elt *elt,
-> +			     struct action_data *data, u64 *var_ref_vals)
-> +{
-> +	unsigned int track_var_idx = data->track_data.track_var->var.idx;
-> +	unsigned int track_var_ref_idx = data->track_data.var_ref_idx;
-> +	u64 var_val;
-> +
-> +	var_val = var_ref_vals[track_var_ref_idx];
-> +
-> +	return data->track_data.save_val(hist_data, elt, data,
-> +					 track_var_idx, var_val);
-> +}
+> kernel BUG at kernel/locking/rtmutex.c:1048! 
+> invalid opcode: 0000 [#1] PREEMPT SMP PTI 
+> CPU: 5 PID: 689 Comm: mkfs.ext4 Not tainted 4.18.16-rt9-preempt-rt #1 
+…
+> Call Trace: 
+>  ? preempt_count_add+0x74/0xc0 
+>  rt_spin_lock_slowlock+0x57/0x90 
+>  ? __kernel_text_address+0x12/0x40 
+>  ? __save_stack_trace+0x75/0x100 
+>  __rt_spin_lock+0x26/0x30 
+>  __write_rt_lock+0x23/0x1a0 
+>  rt_write_lock+0x2a/0x30 
+>  create_object+0x17d/0x2b0 
+…
 
-It's bit confusing for me update_track_val() calls ->save_val() and it
-in turn calls ->check_val().  Why not having wrappers corresponding to
-their callback name?  - get_track_val(), check_track_val() and
-save_trace_val()...
+is this an RT-only problem? Because mainline should not allow read->read
+locking or read->write locking for reader-writer locks. If this only
+happens on v4.18 and not on v4.19 then something must have fixed it.
+ 
 
-
-> +
-> +static void track_data_print(struct seq_file *m,
-> +			     struct hist_trigger_data *hist_data,
-> +			     struct tracing_map_elt *elt,
-> +			     struct action_data *data)
-> +{
-> +	u64 track_val = data->track_data.get_val(hist_data, elt, data);
-> +	unsigned int i, save_var_idx;
-> +
-> +	if (data->handler == HANDLER_ONMAX)
-> +		seq_printf(m, "\n\tmax: %10llu", track_val);
->  
->  	for (i = 0; i < hist_data->n_save_vars; i++) {
->  		struct hist_field *save_val = hist_data->save_vars[i]->val;
-> @@ -3300,25 +3367,13 @@ static void onmax_print(struct seq_file *m,
->  	}
->  }
->  
-> -static void onmax_save(struct hist_trigger_data *hist_data,
-> -		       struct tracing_map_elt *elt, void *rec,
-> -		       struct ring_buffer_event *rbe,
-> -		       struct action_data *data, u64 *var_ref_vals)
-> +static void ontrack_save(struct hist_trigger_data *hist_data,
-> +			 struct tracing_map_elt *elt, void *rec,
-> +			 struct ring_buffer_event *rbe,
-> +			 struct action_data *data, u64 *var_ref_vals)
->  {
-> -	unsigned int max_idx = data->onmax.max_var->var.idx;
-> -	unsigned int max_var_ref_idx = data->onmax.max_var_ref_idx;
-> -
-> -	u64 var_val, max_val;
-> -
-> -	var_val = var_ref_vals[max_var_ref_idx];
-> -	max_val = tracing_map_read_var(elt, max_idx);
-> -
-> -	if (var_val <= max_val)
-> -		return;
-> -
-> -	tracing_map_set_var(elt, max_idx, var_val);
-> -
-> -	update_max_vars(hist_data, elt, rbe, rec);
-> +	if (update_track_val(hist_data, elt, data, var_ref_vals))
-> +		update_save_vars(hist_data, elt, rbe, rec);
-
-... and then it should look like:
-
-	if (check_track_val()) {
-		save_track_val();
-		update_save_vars();
-	}
-
-I also think update_save_vars() also needs to be renamed something
-like save_track_vars() or save_trace_data().
-
-Thanks,
-Namhyung
-
-
->  }
+Sebastian
