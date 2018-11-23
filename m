@@ -1,109 +1,50 @@
-From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [PATCH v7 05/16] tracing: Generalize hist trigger onmax and save
- action
-Date: Fri, 23 Nov 2018 11:50:00 +0900
-Message-ID: <20181123025000.GC25952@sejong>
-References: <cover.1542221862.git.tom.zanussi@linux.intel.com>
- <9baa2b4a9b708791b39f176e3b63c207163d8c3b.1542221863.git.tom.zanussi@linux.intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
-        julia@ni.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org, kernel-team@lge.com
-To: Tom Zanussi <zanussi@kernel.org>
+From: Daniel Wagner <wagi@monom.org>
+Subject: [ANNOUNCE] 4.4.164-rt176
+Date: Fri, 23 Nov 2018 07:33:13 +0100
+Message-ID: <20181123063315.2DD3A5007D2@mail.monom.org>
+To: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Julia Cartwright <julia@ni.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <9baa2b4a9b708791b39f176e3b63c207163d8c3b.1542221863.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Tom,
+Hello RT Folks!
 
-On Wed, Nov 14, 2018 at 02:18:02PM -0600, Tom Zanussi wrote:
-> From: Tom Zanussi <tom.zanussi@linux.intel.com>
-> 
-> The action refactor code allowed actions and handlers to be separated,
-> but the existing onmax handler and save action code is still not
-> flexible enough to handle arbitrary coupling.  This change generalizes
-> them and in the process makes additional handlers and actions easier
-> to implement.
-> 
-> The onmax action can be broken up and thought of as two separate
-> components - a variable to be tracked (the parameter given to the
-> onmax($var_to_track) function) and an invisible variable created to
-> save the ongoing result of doing something with that variable, such as
-> saving the max value of that variable so far seen.
-> 
-> Separating it out like this and renaming it appropriately allows us to
-> use the same code for similar tracking functions such as
-> onchange($var_to_track), which would just track the last value seen
-> rather than the max seen so far, which is useful in some situations.
-> 
-> Additionally, because different handlers and actions may want to save
-> and access data differently e.g. save and retrieve tracking values as
-> local variables vs something more global, save_val() and get_val()
-> interface functions are introduced and max-specific implementations
-> are used instead.
-> 
-> The same goes for the code that checks whether a maximum has been hit
-> - a generic check_val() interface and max-checking implementation is
-> used instead, which allows future patches to make use of he same code
-> using their own implemetations of similar functionality.
-> 
-> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> ---
->  kernel/trace/trace_events_hist.c | 225 ++++++++++++++++++++++++++-------------
->  1 file changed, 151 insertions(+), 74 deletions(-)
-> 
-> diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-> index 54b78cfe2766..ac48ad1482c8 100644
-> --- a/kernel/trace/trace_events_hist.c
-> +++ b/kernel/trace/trace_events_hist.c
-> @@ -319,6 +319,15 @@ typedef void (*action_fn_t) (struct hist_trigger_data *hist_data,
->  			     struct ring_buffer_event *rbe,
->  			     struct action_data *data, u64 *var_ref_vals);
->  
-> +typedef bool (*check_track_val_fn_t) (u64 track_val, u64 var_val);
-> +typedef bool (*save_track_val_fn_t) (struct hist_trigger_data *hist_data,
-> +				     struct tracing_map_elt *elt,
-> +				     struct action_data *data,
-> +				     unsigned int track_var_idx, u64 var_val);
-> +typedef u64 (*get_track_val_fn_t) (struct hist_trigger_data *hist_data,
-> +				   struct tracing_map_elt *elt,
-> +				   struct action_data *data);
-> +
->  enum handler_id {
->  	HANDLER_ONMATCH = 1,
->  	HANDLER_ONMAX,
-> @@ -349,14 +358,18 @@ struct action_data {
->  
->  		struct {
->  			char			*var_str;
-> -			unsigned int		max_var_ref_idx;
-> -			struct hist_field	*max_var;
-> -			struct hist_field	*var;
-> -		} onmax;
-> +			struct hist_field	*var_ref;
-> +			unsigned int		var_ref_idx;
+I'm pleased to announce the 4.4.164-rt176 stable release.
 
-I have a question.  It's confusing for me there are many indexes for a
-variable (ref).  The hist_field already has var.idx, var_idx and
-var_ref_idx in it.  But you also added an external var_ref_idx along
-with the var_ref.  Also I see another var_ref_idx in the action data.
-Is all that really needed?  Could you please add some comment then?
+This release is just an update to the new stable 4.4.164 version
+and no RT specific changes have been made.
 
-Thanks,
-Namhyung
+The previously reported cache line starvation bug has been resolved
+via the stable tree (see https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/commit/?h=linux-4.4.y&id=97b8ca659ab410c6955da052592959244d041fa8)
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.4-rt
+  Head SHA1: 726ccc5cab11ae1ac086642f022d0abf8cb85530
+
+Or to build 4.4.164-rt176 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.164.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/4.4/patch-4.4.164-rt176.patch.xz
 
 
-> +
-> +			struct hist_field	*track_var;
-> +
-> +			check_track_val_fn_t	check_val;
-> +			save_track_val_fn_t	save_val;
-> +			get_track_val_fn_t	get_val;
-> +		} track_data;
->  	};
->  };
+You can also build from 4.4.162-rt175 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/4.4/incr/patch-4.4.162-rt175-rt176.patch.xz
+
+Enjoy!
+   Daniel
