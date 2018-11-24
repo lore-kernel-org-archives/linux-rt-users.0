@@ -1,117 +1,52 @@
-From: He Zhe <zhe.he@windriver.com>
-Subject: Re: [PATCH v2] kmemleak: Turn kmemleak_lock to raw spinlock on RT
-Date: Sat, 24 Nov 2018 22:26:46 +0800
-Message-ID: <40a63aa5-edb6-4673-b4cc-1bc10e7b3953@windriver.com>
-References: <1542877459-144382-1-git-send-email-zhe.he@windriver.com>
- <20181123095314.hervxkxtqoixovro@linutronix.de>
+From: Oleksandr Natalenko <oleksandr@natalenko.name>
+Subject: Re: WARN_ON() in netconsole with PREEMPT_RT
+Date: Sat, 24 Nov 2018 20:15:45 +0100
+Message-ID: <f479ed5153809ad643cbcf988d76585b@natalenko.name>
+References: <f9111ab09dbc264c8ff8b3b79e9f4c06@natalenko.name>
+ <a23ae3a8501d5c996d7a9dd2f27dd5fa@natalenko.name>
+ <20181111210105.7f376c35@vmware.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
-Cc: <catalin.marinas@arm.com>, <tglx@linutronix.de>,
-        <rostedt@goodmis.org>, <linux-mm@kvack.org>,
-        <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181123095314.hervxkxtqoixovro@linutronix.de>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII;
+ format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: "David S. Miller" <davem@davemloft.net>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Eric Dumazet <edumazet@google.com>,
+        Dave Jones <davej@codemonkey.org.uk>, netdev@vger.kernel.org,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        Nikolay Aleksandrov <nikolay@cumulusnetworks.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20181111210105.7f376c35@vmware.local.home>
+Sender: netdev-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hi.
 
+On 12.11.2018 03:01, Steven Rostedt wrote:
+> On Sun, 11 Nov 2018 21:16:00 +0100
+> Oleksandr Natalenko <oleksandr@natalenko.name> wrote:
+>> Oh, I see that write_msg() calls netpoll_send_udp() under
+>> spin_lock_irqsave(), but in PREEMPT_RT this, AFAIK, does not disable
+>> interrupts.
+>> 
+>> So, the real question here is whether the interrupts should be indeed
+>> disabled. And if so, -rt should replace spin_lock_irqsave() call there
+>> with what? local_irq_save()? and get rid of the warning?
+>> 
+> 
+> Why do we care if interrupts are disabled with PREEMPT_RT here?
 
-On 2018/11/23 17:53, Sebastian Andrzej Siewior wrote:
-> On 2018-11-22 17:04:19 [+0800], zhe.he@windriver.com wrote:
->> From: He Zhe <zhe.he@windriver.com>
->>
->> kmemleak_lock, as a rwlock on RT, can possibly be held in atomic context and
->> causes the follow BUG.
->>
->> BUG: scheduling while atomic: migration/15/132/0x00000002
-> …
->> Preemption disabled at:
->> [<ffffffff8c927c11>] cpu_stopper_thread+0x71/0x100
->> CPU: 15 PID: 132 Comm: migration/15 Not tainted 4.19.0-rt1-preempt-rt #1
->> Hardware name: Intel Corp. Harcuvar/Server, BIOS HAVLCRB1.X64.0015.D62.1708310404 08/31/2017
->> Call Trace:
->>  dump_stack+0x4f/0x6a
->>  ? cpu_stopper_thread+0x71/0x100
->>  __schedule_bug.cold.16+0x38/0x55
->>  __schedule+0x484/0x6c0
->>  schedule+0x3d/0xe0
->>  rt_spin_lock_slowlock_locked+0x118/0x2a0
->>  rt_spin_lock_slowlock+0x57/0x90
->>  __rt_spin_lock+0x26/0x30
->>  __write_rt_lock+0x23/0x1a0
->>  ? intel_pmu_cpu_dying+0x67/0x70
->>  rt_write_lock+0x2a/0x30
->>  find_and_remove_object+0x1e/0x80
->>  delete_object_full+0x10/0x20
->>  kmemleak_free+0x32/0x50
->>  kfree+0x104/0x1f0
->>  ? x86_pmu_starting_cpu+0x30/0x30
->>  intel_pmu_cpu_dying+0x67/0x70
->>  x86_pmu_dying_cpu+0x1a/0x30
->>  cpuhp_invoke_callback+0x92/0x700
->>  take_cpu_down+0x70/0xa0
->>  multi_cpu_stop+0x62/0xc0
->>  ? cpu_stop_queue_work+0x130/0x130
->>  cpu_stopper_thread+0x79/0x100
->>  smpboot_thread_fn+0x20f/0x2d0
->>  kthread+0x121/0x140
->>  ? sort_range+0x30/0x30
->>  ? kthread_park+0x90/0x90
->>  ret_from_fork+0x35/0x40
-> If this is the only problem? kfree() from a preempt-disabled section
-> should cause a warning even without kmemleak.
+I don't know, if you ask me. But the check was added intentionally with 
+c9fd56b34efd0, so the author had definitely something on his mind. 
+Cc'ing him.
 
-Thanks for your review. I just did some tests aginst the latest code.
+> printk() itself has a lot of issues with PREEMPT_RT that we are working
+> on dealing with. Right now netconsole is actually at the end of that
+> todo list.
 
-On latest v4.19.1-rt3, both of the call traces can be reproduced with kmemleak
-enabied. And none can be reproduced with kmemleak disabled.
+OK, I see.
 
-On latest mainline tree, none can be reproduced no matter kmemleak is enabled
-or disabled.
-
-I don't get why kfree from a preempt-disabled section should cause a warning
-without kmemleak, since kfree can't sleep.
-
-If I understand correctly, the call trace above is caused by trying to schedule
-after preemption is disabled, which cannot be reached in mainline kernel. So
-we might need to turn to use raw lock to keep preemption disabled.
-
->
->> And on v4.18 stable tree the following call trace, caused by grabbing
->> kmemleak_lock again, is also observed.
->>
->> kernel BUG at kernel/locking/rtmutex.c:1048! 
->> invalid opcode: 0000 [#1] PREEMPT SMP PTI 
->> CPU: 5 PID: 689 Comm: mkfs.ext4 Not tainted 4.18.16-rt9-preempt-rt #1 
-> …
->> Call Trace: 
->>  ? preempt_count_add+0x74/0xc0 
->>  rt_spin_lock_slowlock+0x57/0x90 
->>  ? __kernel_text_address+0x12/0x40 
->>  ? __save_stack_trace+0x75/0x100 
->>  __rt_spin_lock+0x26/0x30 
->>  __write_rt_lock+0x23/0x1a0 
->>  rt_write_lock+0x2a/0x30 
->>  create_object+0x17d/0x2b0 
-> …
->
-> is this an RT-only problem? Because mainline should not allow read->read
-> locking or read->write locking for reader-writer locks. If this only
-> happens on v4.18 and not on v4.19 then something must have fixed it.
-
->From what I reached above, this is RT-only and happens on v4.18 and v4.19.
-
-The call trace above is caused by grabbing kmemleak_lock and then getting
-scheduled and then re-grabbing kmemleak_lock. Using raw lock can also solve
-this problem.
-
-Thanks,
-Zhe
-
->  
->
-> Sebastian
->
+-- 
+   Oleksandr Natalenko (post-factum)
