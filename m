@@ -1,47 +1,104 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH v2] kmemleak: Turn kmemleak_lock to raw spinlock on RT
-Date: Mon, 26 Nov 2018 09:40:42 +0100
-Message-ID: <20181126084042.GK2113@hirez.programming.kicks-ass.net>
-References: <1542877459-144382-1-git-send-email-zhe.he@windriver.com>
- <20181123095314.hervxkxtqoixovro@linutronix.de>
- <20181123110226.GA5125@andrea>
- <20181123110611.s2gmd237j7docrxt@linutronix.de>
+From: Masami Hiramatsu <mhiramat@kernel.org>
+Subject: Re: [PATCH v7 09/16] tracing: Add hist trigger snapshot() action
+ test case
+Date: Mon, 26 Nov 2018 22:03:32 +0900
+Message-ID: <20181126220332.215b461779d1d57f37b46e20@kernel.org>
+References: <cover.1542221862.git.tom.zanussi@linux.intel.com>
+        <a40dadf6ffa267a1a573b62bb1c9b4db9d91f744.1542221863.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Andrea Parri <andrea.parri@amarulasolutions.com>,
-        zhe.he@windriver.com, catalin.marinas@arm.com, tglx@linutronix.de,
-        rostedt@goodmis.org, linux-mm@kvack.org,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        boqun.feng@gmail.com
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
+        namhyung@kernel.org, vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
+        julia@ni.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
+To: Tom Zanussi <zanussi@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181123110611.s2gmd237j7docrxt@linutronix.de>
+In-Reply-To: <a40dadf6ffa267a1a573b62bb1c9b4db9d91f744.1542221863.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Nov 23, 2018 at 12:06:11PM +0100, Sebastian Andrzej Siewior wrote:
-> On 2018-11-23 12:02:55 [+0100], Andrea Parri wrote:
-> > > is this an RT-only problem? Because mainline should not allow read->read
-> > > locking or read->write locking for reader-writer locks. If this only
-> > > happens on v4.18 and not on v4.19 then something must have fixed it.
-> > 
-> > Probably misunderstanding, but I'd say that read->read locking is "the
-> > norm"...?
-> > 
-> > If you don't use qrwlock, readers are also "recursive", in part.,
-> > 
-> >   P0			P1
-> >   read_lock(l)
-> > 			write_lock(l)
-> >   read_lock(l)
-> > 
-> > won't block P0 on the second read_lock().  (qrwlock somehow complicate
-> > the analysis; IIUC, they are recursive if and only if in_interrupt().).
-> 
-> ehm, peterz, is that true? My memory on that is that all readers will
-> block if there is a writer pending.
+On Wed, 14 Nov 2018 14:18:06 -0600
+Tom Zanussi <zanussi@kernel.org> wrote:
 
-Since qrwlock is the more strict, all users should use its semantics.
-Just like we cannot 'rely' on the unfairness of some lock
-implementations.
+> From: Tom Zanussi <tom.zanussi@linux.intel.com>
+> 
+> Add a test case verifying the basic functionality of the
+> hist:snapshot() action.
+> 
+> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> ---
+>  .../inter-event/trigger-snapshot-action-hist.tc    | 43 ++++++++++++++++++++++
+>  1 file changed, 43 insertions(+)
+>  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
+> 
+> diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
+> new file mode 100644
+> index 000000000000..a0a51e6a6a0c
+> --- /dev/null
+> +++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
+> @@ -0,0 +1,43 @@
+> +#!/bin/sh
+> +# SPDX-License-Identifier: GPL-2.0
+> +# description: event trigger - test inter-event histogram trigger snapshot action
+> +
+> +fail() { #msg
+> +    echo $1
+> +    exit_fail
+> +}
+> +
+> +if [ ! -f set_event ]; then
+> +    echo "event tracing is not supported"
+> +    exit_unsupported
+> +fi
+> +
+> +if [ ! -f snapshot ]; then
+> +    echo "snapshot is not supported"
+> +    exit_unsupported
+> +fi
+> +
+> +grep -q "onchange(var)" README > /dev/null || exit_unsupported # version issue
+> +
+> +grep -q "snapshot()" README > /dev/null || exit_unsupported # version issue
+
+"grep -q ... > /dev/null" is redundant, since -q doesn't show anything.
+please drop "> /dev/null" redirection.
+
+> +
+> +echo "Test snapshot action"
+> +
+> +echo 1 > /sys/kernel/debug/tracing/events/sched/enable
+> +
+> +echo 'hist:keys=comm:newprio=prio:onchange($newprio).save(comm,prio):onchange($newprio).snapshot() if comm=="ping"' >> /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
+
+This tests onchange().snapshot(), but document change only describes onmax().snapshot().
+Maybe we should improve document too.
+
+> +
+> +ping $LOCALHOST -c 3
+> +nice -n 1 ping $LOCALHOST -c 3
+> +
+> +echo 0 > /sys/kernel/debug/tracing/events/sched/enable
+
+Shouldn't we stop tracing instead of disabling the event?
+
+Thank you,
+
+> +
+> +if ! grep -q "changed:" events/sched/sched_waking/hist; then
+> +    fail "Failed to create onchange action inter-event histogram"
+> +fi
+> +
+> +if ! grep -q "comm=ping" snapshot; then
+> +    fail "Failed to create snapshot action inter-event histogram"
+> +fi
+> +
+> +exit 0
+> -- 
+> 2.14.1
+> 
+
+
+-- 
+Masami Hiramatsu <mhiramat@kernel.org>
