@@ -1,290 +1,490 @@
-From: Tom Zanussi <zanussi@kernel.org>
-Subject: Re: [PATCH v7 00/16] tracing: Hist trigger snapshot and onchange
- additions
-Date: Mon, 26 Nov 2018 15:21:28 -0600
-Message-ID: <1543267288.2529.25.camel@kernel.org>
-References: <cover.1542221862.git.tom.zanussi@linux.intel.com>
-         <20181126230928.17883eecfaefd6a29cbbd1c3@kernel.org>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: [ptrace, rt] erratic behaviour in PTRACE_SINGLESET on 4.13-rt
+ and later.
+Date: Tue, 27 Nov 2018 08:58:19 -0600
+Message-ID: <20181127085819.7e0865ee@tagon>
+References: <20181119194619.GA32121@zipoli.concurrent-rt.com>
+        <20181120122900.625b1d98@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: rostedt@goodmis.org, tglx@linutronix.de, namhyung@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
-        julia@ni.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org
-To: Masami Hiramatsu <mhiramat@kernel.org>
+Cc: Joe Korty <Joe.Korty@concurrent-rt.com>,
+        "julia@ni.com" <julia@ni.com>,
+        "tglx@linutronix.de" <tglx@linutronix.de>,
+        "bigeasy@linutronix.de" <bigeasy@linutronix.de>,
+        "oleg@redhat.com" <oleg@redhat.com>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        John Kacur <jkacur@redhat.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181126230928.17883eecfaefd6a29cbbd1c3@kernel.org>
+In-Reply-To: <20181120122900.625b1d98@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Masami,
+Joe,
 
-On Mon, 2018-11-26 at 23:09 +0900, Masami Hiramatsu wrote:
-> Hi Tom,
+This looks interesting. Do you have a git repo where I can pull the
+source?
+
+Clark
+
+On Tue, 20 Nov 2018 12:29:00 -0500
+Steven Rostedt <rostedt@goodmis.org> wrote:
+
+> [ Adding Clark and John who manage the rt-tests repo ]
 > 
-> On Wed, 14 Nov 2018 14:17:57 -0600
-> Tom Zanussi <zanussi@kernel.org> wrote:
+> -- Steve
 > 
-> > From: Tom Zanussi <tom.zanussi@linux.intel.com>
+> On Mon, 19 Nov 2018 19:46:23 +0000
+> Joe Korty <Joe.Korty@concurrent-rt.com> wrote:
+> 
+> > Hi Julia & the RT team,
 > > 
-> > Hi,
+> > The following program might make a good addition to the rt
+> > test suite.  It tests the reliability of PTRACE_SINGLESTEP.
+> > It does by default 10,000 ssteps against a simple,
+> > spinner tracee.  Also by default, it spins off ten of these
+> > tracer/tracee pairs, all of which are to run concurrently.
 > > 
-> > This is v7 of the hist trigger snapshot and onchange additions
-> > patchset.  It does a bit of refactoring to address the suggestions
-> > made by Masami in v6.
-> 
-> Thank you for fixing it. 
-> 
+> > Starting with 4.13-rt, this test occasionally encounters a
+> > sstep whose waitpid returns a WIFSIGNALED (signal SIGTRAP)
+> > rather than a WIFSTOPPED.  This usually happens after
+> > thousands of ssteps have executed.  Having multiple
+> > tracer/tracee pairs running dramatically increases the
+> > chances of failure.
 > > 
-> > It also adds an additional patch to update the trigger/inter-event
-> > testcases with SPDX license blurbs.
+> > The is what the test output looks like for a good run:
 > > 
-> > BTW, I noticed that with the recent kselftest changes, I now get
-> > mangled output when running the selftests, though I can still see
-> > well
-> > enough that the tests passed as expected.  This happens with any of
-> > the ftrace selftests and not just the trigger selftests.  In my
-> > case,
-> > this is using the stock Terminal in Ubuntu 17.10, in case that
-> > helps.
-> 
-> Hmm, it should be fixed by
-> 8096fbcf55c0 ("selftests/ftrace: Use colored output when available")
-> 
-> Could you check your kernel has this commit?
-> 
-
-Yes, it does have this commit.
-
-> BTW, what terminal and environment (especially echo command)
-> did you run your tests on? (It seems echo command didn't accept -e
-> option)
-> 
-
-For that system, I'm using Gnome terminal 3.24.2 and GNU bash, version
-4.4.12(1)-release (x86_64-pc-linux-gnu) (Ubuntu 17.10).
-
-If I change 'echo' to '/bin/echo' in e.g. prlog() it works fine, so it
-must be the inbuilt bash echo that's not doing the right thing.  I
-thought it might be the xpg_echo option, but 'shopt -s xpg_echo'
-doesn't have any effect.
-
-I also tried on a Fedora 28 system (GNOME terminal 3.28.2, GNU bash,
-version 4.4.23(1)-release (x86_64-redhat-linux-gnu), and it worked
-fine.
-
-Also, tried a Ubuntu 18.04.1 system (GNOME Terminal 3.28.1, GNU bash,
-version 4.4.19(1)-release (x86_64-pc-linux-gnu) and in that case the
-colors worked fine, but still got the '-e -n' and newlines in the
-output:
-
--e -n [28] (instance)  event trigger - test histogram modifiers
--e 	[PASS]
--e -n [29] (instance)  event trigger - test histogram trigger
--e 	[PASS]
-
-Again, substituting '/bin/echo' in prlog() fixed things in this case
-too.   I guess the builtin bash 'echo' can't be relied on..
-
-Tom
-
-
-> Thank you,
-> 
-> > Example output:
-> > 
-> >   # ./ftracetest test.d/trigger/
+> >   #forks: 10
+> >   #steps: 10000
 > >   
-> > -e === Ftrace unit tests ===
-> > -e -n [1] event trigger - test inter-event histogram trigger
-> > expected fail actions
-> > -e 	[\e[31mXFAIL\e[0m]
-> > -e -n [2] event trigger - test extended error support
-> > -e 	[\e[32mPASS\e[0m]
-> > -e -n [3] event trigger - test field variable support
-> > -e 	[\e[32mPASS\e[0m]
-> > -e -n [4] event trigger - test inter-event combined histogram
-> > trigger
-> > -e 	[\e[32mPASS\e[0m]
-> > -e -n [5] event trigger - test multiple actions on hist trigger
-> > -e 	[\e[32mPASS\e[0m]
-> > .
-> > .
-> > .
-> > -e 
-> > -e # of passed:  31
-> > -e # of failed:  0
-> > -e # of unresolved:  0
-> > -e # of untested:  0
-> > -e # of unsupported:  0
-> > -e # of xfailed:  1
-> > -e # of undefined(test bug):  0
+> >   forktest#0/22872: STARTING
+> >   forktest#7/22879: STARTING
+> >   forktest#8/22880: STARTING
+> >   forktest#6/22878: STARTING
+> >   forktest#5/22877: STARTING
+> >   forktest#3/22875: STARTING
+> >   forktest#4/22876: STARTING
+> >   forktest#9/22882: STARTING
+> >   forktest#2/22874: STARTING
+> >   forktest#1/22873: STARTING
+> >   forktest#0/22872: EXITING, no error
+> >   forktest#8/22880: EXITING, no error
+> >   forktest#3/22875: EXITING, no error
+> >   forktest#7/22879: EXITING, no error
+> >   forktest#6/22878: EXITING, no error
+> >   forktest#5/22877: EXITING, no error
+> >   forktest#2/22874: EXITING, no error
+> >   forktest#4/22876: EXITING, no error
+> >   forktest#9/22882: EXITING, no error
+> >   forktest#1/22873: EXITING, no error
+> >   All tests PASSED.
 > > 
-> > v6->v7 changes:
+> > This is what the test output looks like for a failing run:
 > > 
-> >   - Removed unnecessary HANDLER_ONMAX checks from
-> > onmax_print()/create()
-> >   - Moved handler assignment to acion_parse()
-> >   - Changed goto in ATION_TRACE case in action_create() to return
-> >   - Changed EINVAL to EEXIST in action_create() ACTION_SAVE case
-> >   - Made the return logic in create_actions() more consistent
-> >   - Merged 'tracing: Move hist trigger key printing into a separate
-> >     function' into 'tracing: Add hist trigger snapshot() action'
-> >   - Updated the new snapshot, onchange, and trace test cases to
-> > match
-> >     4.20 kselftest changes.
-> >   - Added new xfail test case that make sure certain unsupported
-> >     handler/action combinations fail as expected.
-> >   - While updating the test cases, realized that the other
-> > testcases
-> >     in the inter-event subdir needed SPDX license updates, so added
-> >     them.
+> >   #forks: 10
+> >   #steps: 10000
+> >   
+> >   forktest#0/22906: STARTING
+> >   forktest#1/22907: STARTING
+> >   forktest#2/22909: STARTING
+> >   forktest#3/22911: STARTING
+> >   forktest#4/22912: STARTING
+> >   forktest#5/22915: STARTING
+> >   forktest#6/22916: STARTING
+> >   forktest#7/22919: STARTING
+> >   forktest#8/22920: STARTING
+> >   forktest#9/22923: STARTING
+> >   forktest#2/22909: EXITING, ERROR: wait on PTRACE_SINGLESTEP #9: wanted STATE_STOPPED, saw STATE_SIGNALED instead (and saw signo 5 too)
+> >   forktest#5/22915: EXITING, no error
+> >   forktest#3/22911: EXITING, ERROR: wait on PTRACE_SINGLESTEP #7953: wanted STATE_STOPPED, saw STATE_SIGNALED instead (and saw signo 5 too)
+> >   forktest#0/22906: EXITING, ERROR: wait on PTRACE_SINGLESTEP #5072: wanted STATE_STOPPED, saw STATE_SIGNALED instead (and saw signo 5 too)
+> >   forktest#9/22923: EXITING, ERROR: wait on PTRACE_SINGLESTEP #7992: wanted STATE_STOPPED, saw STATE_SIGNALED instead (and saw signo 5 too)
+> >   forktest#4/22912: EXITING, ERROR: wait on PTRACE_SINGLESTEP #9923: wanted STATE_STOPPED, saw STATE_SIGNALED instead (and saw signo 5 too)
+> >   forktest#1/22907: EXITING, ERROR: wait on PTRACE_SINGLESTEP #7723: wanted STATE_STOPPED, saw STATE_SIGNALED instead (and saw signo 5 too)
+> >   forktest#7/22919: EXITING, ERROR: wait on PTRACE_SINGLESTEP #5036: wanted STATE_STOPPED, saw STATE_SIGNALED instead (and saw signo 5 too)
+> >   forktest#8/22920: EXITING, ERROR: wait on PTRACE_SINGLESTEP #4943: wanted STATE_STOPPED, saw STATE_SIGNALED instead (and saw signo 5 too)
+> >   forktest#6/22916: EXITING, no error
+> >   One or more tests FAILED.
 > > 
-> > v5->v6 changes:
+> > Here are the observations from my testing so far:
 > > 
-> >   - Added new Documentation patch explaining handler.action
-> >   - Added new README patch explaining handler.action
-> >   - Added separate snapshot() Documentation
-> >   - Added new snapshot() test case
-> >   - Updated README with snapshote()
-> >   - Added separate onchange() Documentation
-> >   - Added separate onchange() test case
-> >   - Updated README with onchange()
-> >   - Added separate trace() test case
-> >   - Updated README with trace() and <synthetic_event>() syntax
+> >   - It has never failed when confined to a single cpu.
+> >   - It has never failed on !rt kernels.
+> >   - It has never failed on any kernel prior to 4.13.
+> >   - More failures than what chance would dictate happen
+> >     near the end of a test run (ie, if a test of 10,000 
+> >     steps is run, the failure will be at the 9,xxx'th step,
+> >     if 100,000 steps are run, the failure will be at
+> >     the 9x,xxx'th step).
 > > 
-> > v4->v5 changes:
+> > The above results are from kernels 4.{4,9,11,13,14,19}-rt
+> > and some !rt's of these as well.
 > > 
-> >   - added 'trace' keyword test case
-> >   - added 'onchange' handler test case
+> > I have yet to see or hear of this bug, if it is a bug,
+> > giving anyone a problem in a debug session.  It might not
+> > even be a bug but merely expected behaviour. And of course
+> > there is the possibility of a misuse of ptrace/waitpid in
+> > my test program. Its API, after all, is rather convoluted.
 > > 
-> > v3->v4 changes:
-> > 
-> >   - added 'trace' keyword for generating synthetic events
-> >   - fix elt_data leak
-> >   - changed cond_update to cond_update_fn_t
-> > 
-> > v2->v3 changes:
-> > 
-> >   - fixed problem where trace actions were only being allowed for
-> >     onmatch handlers - now trace actions can be used with any
-> > handler.
-> >   - fixed problem where no action was being assigned to onmatch
-> >     handlers if save or snapshot actions were specified.
-> > 
-> > v1->v2 changes:
-> > 
-> >   - added missing tracing_cond_snapshot_data() definition for when
-> >     CONFIG_TRACER_SNAPSHOT not defined
-> >   - removed an unnecessary WARN_ON() in track_data_snapshot_print()
+> > Regards,
+> > Joe
 > > 
 > > 
-> > Original text:
-> > 
-> > This patchset adds some useful new functions to the hist
-> > trigger code: a snapshot action and an onchange handler.
-> > 
-> > In order to make it easier to add these and in the process make the
-> > code more generic, I separated the code into explicit 'handlers'
-> > and
-> > 'actions', handlers being things like 'onmax' and 'onchange', and
-> > 'actions' being things like 'take a snapshot' or 'save some
-> > fields'.
-> > 
-> > The first few patches do that basic refactoring, which make it
-> > easier
-> > to add the subsequent changes that arbitrarily combine actions and
-> > handlers.
-> > 
-> > The fourth patch adds a 'conditional snapshot' capability that via
-> > a
-> > new tracing_snaphot_cond() function extends the existing snapshot
-> > code.  It allows the caller to associate some user data with the
-> > snapshot that can be checked and saved in an update() callback
-> > whose
-> > return value determines whether the snapshot should be taken or
-> > not.
-> > 
-> > The remaining patches finally add the new snapshot action and
-> > onchange
-> > handler functionality - please see those patches for details and
-> > some
-> > examples.
-> > 
-> > Thanks,
-> > 
-> > Tom
 > > 
 > > 
-> > The following changes since commit
-> > ee474b81fe5aa5dc0faae920bf66240fbf55f891:
+> > /*
+> >  * Have a tracer do a bunch of PTRACE_SINGLESTEPs against
+> >  * a tracee as fast as possible.  Create several of these
+> >  * tracer/tracee pairs and see if they can be made to
+> >  * interfere with each other.
+> >  *
+> >  * Usage:
+> >  *   ssdd nforks niters
+> >  * Where:
+> >  *   nforks - number of tracer/tracee pairs to fork off.
+> >  *            default 10.
+> >  *   niters - number of PTRACE_SINGLESTEP iterations to
+> >  *            do before declaring success, for each tracer/
+> >  *            tracee pair set up.  Default 10,000.
+> >  *
+> >  * The tracee waits on each PTRACE_SINGLESTEP with a waitpid(2)
+> >  * and checks that waitpid's return values for correctness.
+> >  */
+> > #include <stdio.h>
+> > #include <stdlib.h>
+> > #include <stddef.h>
+> > #include <unistd.h>
+> > #include <string.h>
+> > #include <signal.h>
+> > #include <errno.h>
 > > 
-> >   tracing/kprobes: Fix strpbrk() argument order (2018-11-05
-> > 09:47:14 -0500)
+> > #include <sys/types.h>
+> > #include <sys/wait.h>
+> > #include <sys/ptrace.h>
 > > 
-> > are available in the git repository at:
+> > /* do_wait return values */
+> > #define STATE_EXITED	1
+> > #define STATE_STOPPED	2
+> > #define STATE_SIGNALED	3
+> > #define STATE_UNKNOWN	4
+> > #define STATE_ECHILD	5
+> > #define STATE_EXITED_TSIG	6	/* exited with termination signal */
+> > #define STATE_EXITED_ERRSTAT	7	/* exited with non-zero status */
 > > 
-> >   git://git.kernel.org/pub/scm/linux/kernel/git/zanussi/linux-
-> > trace.git ftrace/hist-snapshot-onchange-v7
+> > char *state_name[] = {
+> > 	[STATE_EXITED] = "STATE_EXITED",
+> > 	[STATE_STOPPED] = "STATE_STOPPED",
+> > 	[STATE_SIGNALED] = "STATE_SIGNALED",
+> > 	[STATE_UNKNOWN] = "STATE_UNKNOWN",
+> > 	[STATE_ECHILD] = "STATE_ECHILD",
+> > 	[STATE_EXITED_TSIG] = "STATE_EXITED_TSIG",
+> > 	[STATE_EXITED_ERRSTAT] = "STATE_EXITED_ERRSTAT"
+> > };
 > > 
-> > Tom Zanussi (16):
-> >   tracing: Refactor hist trigger action code
-> >   tracing: Make hist trigger Documentation better reflect
-> >     actions/handlers
-> >   tracing: Add hist trigger handler.action documentation to README
-> >   tracing: Split up onmatch action data
-> >   tracing: Generalize hist trigger onmax and save action
-> >   tracing: Add conditional snapshot
-> >   tracing: Add hist trigger snapshot() action
-> >   tracing: Add hist trigger snapshot() action Documentation
-> >   tracing: Add hist trigger snapshot() action test case
-> >   tracing: Add hist trigger onchange() handler
-> >   tracing: Add hist trigger onchange() handler Documentation
-> >   tracing: Add hist trigger onchange() handler test case
-> >   tracing: Add alternative synthetic event trace action syntax
-> >   tracing: Add alternative synthetic event trace action test case
-> >   tracing: Add hist trigger action 'expected fail' test case
-> >   tracing: Add SPDX license GPL-2.0 license identifier to inter-
-> > event
-> >     testcases
+> > const char *get_state_name(int state)
+> > {
+> > 	if (state < STATE_EXITED || state > STATE_EXITED_ERRSTAT)
+> > 		return "?";
+> > 	return state_name[state];
+> > }
 > > 
-> >  Documentation/trace/histogram.rst                  |  285 +++++-
-> >  kernel/trace/trace.c                               |  177 +++-
-> >  kernel/trace/trace.h                               |   56 +-
-> >  kernel/trace/trace_events_hist.c                   | 1062
-> > +++++++++++++++-----
-> >  kernel/trace/trace_events_trigger.c                |    2 +-
-> >  kernel/trace/trace_sched_wakeup.c                  |    2 +-
-> >  .../inter-event/trigger-action-hist-xfail.tc       |   30 +
-> >  .../inter-event/trigger-extended-error-support.tc  |    1 +
-> >  .../inter-event/trigger-field-variable-support.tc  |    1 +
-> >  .../trigger-inter-event-combined-hist.tc           |    1 +
-> >  .../inter-event/trigger-multi-actions-accept.tc    |    1 +
-> >  .../inter-event/trigger-onchange-action-hist.tc    |   28 +
-> >  .../inter-event/trigger-onmatch-action-hist.tc     |    1 +
-> >  .../trigger-onmatch-onmax-action-hist.tc           |    1 +
-> >  .../inter-event/trigger-onmax-action-hist.tc       |    1 +
-> >  .../inter-event/trigger-snapshot-action-hist.tc    |   43 +
-> >  .../trigger-synthetic-event-createremove.tc        |    1 +
-> >  .../inter-event/trigger-trace-action-hist.tc       |   42 +
-> >  18 files changed, 1433 insertions(+), 302 deletions(-)
-> >  create mode 100644
-> > tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-
-> > action-hist-xfail.tc
-> >  create mode 100644
-> > tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-
-> > onchange-action-hist.tc
-> >  create mode 100644
-> > tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-
-> > snapshot-action-hist.tc
-> >  create mode 100644
-> > tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-
-> > trace-action-hist.tc
+> > #define unused __attribute__((unused))
 > > 
-> > -- 
-> > 2.14.1
+> > static int got_sigchld;
 > > 
+> > static int do_wait(pid_t *wait_pid, int *ret_sig)
+> > {
+> > 	int status, child_status;
+> > 
+> > 	*ret_sig = -1; /* initially mark 'nothing returned' */
+> > 
+> > 	while (1) {
+> > 		status = waitpid(-1, &child_status, WUNTRACED | __WALL);
+> > 		if (status == -1) {
+> > 			if (errno == EINTR)
+> > 				continue;
+> > 			if (errno == ECHILD) {
+> > 				*wait_pid = (pid_t)0;
+> > 				return STATE_ECHILD;
+> > 			}
+> > 			printf("do_wait/%d: EXITING, ERROR: "
+> > 			       "waitpid() returned errno %d\n",
+> > 			       getpid(), errno);
+> > 			exit(1);
+> > 		}
+> > 		break;
+> > 	}
+> > 	*wait_pid = (pid_t)status;
+> > 
+> > 	if (WIFEXITED(child_status)) {
+> > 		if (WIFSIGNALED(child_status))
+> > 			return STATE_EXITED_TSIG;
+> > 		if (WEXITSTATUS(child_status))
+> > 			return STATE_EXITED_ERRSTAT;
+> > 		return STATE_EXITED;
+> > 	}
+> > 	if (WIFSTOPPED(child_status)) {
+> > 		*ret_sig = WSTOPSIG(child_status);
+> > 		return STATE_STOPPED;
+> > 	}
+> > 	if (WIFSIGNALED(child_status)) {
+> > 		*ret_sig = WTERMSIG(child_status);
+> > 		return STATE_SIGNALED;
+> > 	}
+> > 	return STATE_UNKNOWN;
+> > }
+> > 
+> > int check_sigchld(void)
+> > {
+> > 	int i;
+> > 	/*
+> > 	 * The signal is asynchronous so give it some
+> > 	 * time to arrive.
+> > 	 */
+> > 	for (i = 0; i < 10 && !got_sigchld; i++)
+> > 		usleep(1000); /* 10 msecs */
+> > 	for (i = 0; i < 10 && !got_sigchld; i++)
+> > 		usleep(2000); /* 20 + 10 = 30 msecs */
+> > 	for (i = 0; i < 10 && !got_sigchld; i++)
+> > 		usleep(4000); /* 40 + 30 = 70 msecs */
+> > 	for (i = 0; i < 10 && !got_sigchld; i++)
+> > 		usleep(8000); /* 80 + 40 = 150 msecs */
+> > 	for (i = 0; i < 10 && !got_sigchld; i++)
+> > 		usleep(16000); /* 160 + 150 = 310 msecs */
+> > 	for (i = 0; i < 10 && !got_sigchld; i++)
+> > 		usleep(32000); /* 320 + 310 = 630 msecs */
+> > 
+> > 	return got_sigchld;
+> > }
+> > 
+> > pid_t parent;
+> > int nforks = 10;
+> > int nsteps = 10000;
+> > 
+> > static void sigchld(int sig, unused siginfo_t * info, unused void *arg)
+> > {
+> > 	got_sigchld = 1;
+> > }
+> > 
+> > static void child_process(void)
+> > {
+> > 	unused volatile int i;
+> > 
+> > 	/* wait for ptrace attach */
+> > 	usleep(100000);
+> > 	while (1)
+> > 		i = 0;
+> > }
+> > 
+> > static int forktests(int testid)
+> > {
+> > 	int i, status, ret_sig;
+> > 	long pstatus;
+> > 	pid_t child, wait_pid;
+> > 	struct sigaction act, oact;
+> > 
+> > 	parent = getpid();
+> > 	printf("forktest#%d/%d: STARTING\n", testid, parent);
+> > 
+> > 	child = fork();
+> > 	if (child == -1) {
+> > 		printf("forktest#%d/%d: EXITING, ERROR: "
+> > 		       "fork returned errno %d\n", testid, parent, errno);
+> > 		exit(1);
+> > 	}
+> > 	if (!child)
+> > 		child_process();
+> > 
+> > 	act.sa_sigaction = sigchld;
+> > 	sigemptyset(&act.sa_mask);
+> > 	act.sa_flags = SA_SIGINFO;
+> > 	status = sigaction(SIGCHLD, &act, &oact);
+> > 	if (status) {
+> > 		printf("forktest#%d/%d: EXITING, ERROR: "
+> > 		       "sigaction returned %d, errno %d\n",
+> > 		       testid, parent, status, errno);
+> > 		exit(1);
+> > 	}
+> > 
+> > 	/* give both our child and parent time to set things up */
+> > 	usleep(125000);
+> > 
+> > 	/*
+> > 	 * Attach to the child.
+> > 	 */
+> > 	pstatus = ptrace(PTRACE_ATTACH, child, NULL, NULL);
+> > 	if (pstatus == ~0l) {
+> > 		printf("forktest#%d/%d: EXITING, ERROR: "
+> > 		       "attach failed.  errno %d\n",
+> > 		       testid, getpid(), errno);
+> > 		exit(1);
+> > 	}
+> > 
+> > 	/*
+> > 	 * The attach should cause the child to receive a signal.
+> > 	 */
+> > 	status = do_wait(&wait_pid, &ret_sig);
+> > 	if (wait_pid != child) {
+> > 		printf("forktest#%d/%d: EXITING, ERROR: "
+> > 		       "attach: Unexpected wait pid %d\n",
+> > 		       testid, getpid(), wait_pid);
+> > 		exit(1);
+> > 	}
+> > 	if (status != STATE_STOPPED) {
+> > 		printf("forktest#%d/%d: EXITING, ERROR: "
+> > 		       "attach: wait on PTRACE_ATTACH returned %d "
+> > 		       "[%s, wanted STATE_STOPPED], signo %d\n",
+> > 		       testid, getpid(), status, get_state_name(status),
+> > 		       ret_sig);
+> > 		exit(1);
+> > 	}
+> > 	else if (!check_sigchld()) {
+> > 		printf("forktest#%d/%d: EXITING, ERROR: "
+> > 		       "wait on PTRACE_ATTACH saw a SIGCHLD count of %d, should be 1\n",
+> > 		       testid, getpid(), got_sigchld);
+> > 		exit(1);
+> > 	}
+> > 	got_sigchld = 0;
+> > 
+> > 
+> > 	/*
+> > 	 * Generate 'nsteps' PTRACE_SINGLESTEPs, make sure they all actually step
+> > 	 * the tracee.
+> > 	 */
+> > 	for (i = 0; i < nsteps; i++) {
+> > 		pstatus = ptrace(PTRACE_SINGLESTEP, child, NULL, NULL);
+> > 
+> > 		if (pstatus) {
+> > 			printf("forktest#%d/%d: EXITING, ERROR: "
+> > 			       "PTRACE_SINGLESTEP #%d: returned status %ld, "
+> > 			       "errno %d, signo %d\n",
+> > 			       testid, getpid(), i, pstatus, errno, ret_sig);
+> > 			exit(1);
+> > 		}
+> > 
+> > 		status = do_wait(&wait_pid, &ret_sig);
+> > 		if (wait_pid != child) {
+> > 			printf("forktest#%d/%d: EXITING, ERROR: "
+> > 			       "wait on PTRACE_SINGLESTEP #%d: returned wrong pid %d, "
+> > 			       "expected %d\n",
+> > 			       testid, getpid(), i, wait_pid, child);
+> > 			exit(1);
+> > 		}
+> > 		if (status != STATE_STOPPED) {
+> > 			printf("forktest#%d/%d: EXITING, ERROR: "
+> > 			       "wait on PTRACE_SINGLESTEP #%d: wanted STATE_STOPPED, "
+> > 			       "saw %s instead (and saw signo %d too)\n",
+> > 			       testid, getpid(), i,
+> > 			       get_state_name(status), ret_sig);
+> > 			exit(1);
+> > 		}
+> > 		if (ret_sig != SIGTRAP) {
+> > 			printf("forktest#%d/%d: EXITING, ERROR: "
+> > 			       "wait on PTRACE_SINGLESTEP #%d: returned signal %d, "
+> > 			       "wanted SIGTRAP\n",
+> > 			       testid, getpid(), i, ret_sig);
+> > 			exit(1);
+> > 		}
+> > 		if (!check_sigchld()) {
+> > 			printf("forktest#%d/%d: EXITING, ERROR: "
+> > 			       "wait on PTRACE_SINGLESTEP #%d: no SIGCHLD seen "
+> > 			       "(signal count == 0), signo %d\n",
+> > 			       testid, getpid(), i, ret_sig);
+> > 			exit(1);
+> > 		}
+> > 		got_sigchld = 0;
+> > 	}
+> > 
+> > 	/*
+> > 	 * We are all done, kill the tracee and wait for it to die.  We test
+> > 	 * the killing results as much as the above attach and sstep results,
+> > 	 * though failure here really isn't the point of this test.
+> > 	 */
+> > 	status = kill(child, SIGKILL);
+> > 
+> > 	if (status) {
+> > 		printf("forktest#%d/%d: EXITING, ERROR: "
+> > 		       "kill of child %d returned %d\n",
+> > 		       testid, getpid(), child, errno);
+> > 		exit(1);
+> > 	}
+> > 
+> > 	status = do_wait(&wait_pid, &ret_sig);
+> > 	if (wait_pid != child) {
+> > 		printf("forktest#%d/%d: EXITING, ERROR: "
+> > 		       "kill: Unexpected wait pid %d\n",
+> > 		       testid, getpid(), wait_pid);
+> > 		exit(1);
+> > 	}
+> > 	if (status != STATE_SIGNALED) {
+> > 		printf("forktest#%d/%d: EXITING, ERROR: "
+> > 		       "kill: Unexpected child, do_wait status %d "
+> > 		       "[%s, wanted STATE_SIGNALED]\n",
+> > 		       testid, getpid(), status, get_state_name(status));
+> > 		exit(1);
+> > 	}
+> > 	if (ret_sig != SIGKILL) {
+> > 		printf("forktest#%d/%d: EXITING, ERROR: "
+> > 		       "kill: Unexpected child signal %d\n",
+> > 		       testid, getpid(), ret_sig);
+> > 		exit(1);
+> > 	}
+> > 
+> > 	printf("forktest#%d/%d: EXITING, no error\n", testid, parent);
+> > 	exit(0);
+> > }
+> > 
+> > int main(int argc, char **argv)
+> > {
+> > 	int i, ret_sig, status;
+> > 	pid_t child = 0, wait_pid;
+> > 	int error = 0;
+> > 
+> > 	setbuf(stdout, NULL);
+> > 
+> > 	argc--, argv++;
+> > 	if (argc) {
+> > 		nforks = atoi(*argv);
+> > 		argc--, argv++;
+> > 		if (argc)
+> > 			nsteps = atoi(*argv);
+> > 	}
+> > 	printf("#forks: %d\n", nforks);
+> > 	printf("#steps: %d\n", nsteps);
+> > 	printf("\n");
+> > 
+> > 	for (i = 0; i < nforks; i++) {
+> > 		child = fork();
+> > 		if (child == -1) {
+> > 			printf("main: fork returned errno %d\n", errno);
+> > 			exit(1);
+> > 		}
+> > 		if (!child)
+> > 			forktests(i);
+> > 	}
+> > 
+> > 	for (i = 0; i < nforks; i++) {
+> > 		status = do_wait(&wait_pid, &ret_sig);
+> > 		if (status != STATE_EXITED) {
+> > 			if (0) printf("main/%d: ERROR: "
+> > 			       "forktest#%d unexpected do_wait status %d "
+> > 			       "[%s, wanted STATE_EXITED]\n",
+> > 			       getpid(), wait_pid, status,
+> > 			       get_state_name(status));
+> > 			error = 1;
+> > 		}
+> > 	}
+> > 
+> > 	printf("%s.\n", error ?
+> > 		"One or more tests FAILED" :
+> > 		"All tests PASSED");
+> > 	exit(error);
+> > }  
 > 
-> 
+
+
+-- 
+The United States Coast Guard
+Ruining Natural Selection since 1790
