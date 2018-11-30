@@ -1,54 +1,58 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: WARN_ON() in netconsole with PREEMPT_RT
-Date: Fri, 30 Nov 2018 19:04:43 +0100
-Message-ID: <20181130180443.o2kjcpweaglmsmx6@linutronix.de>
-References: <f9111ab09dbc264c8ff8b3b79e9f4c06@natalenko.name>
- <a23ae3a8501d5c996d7a9dd2f27dd5fa@natalenko.name>
- <20181111210105.7f376c35@vmware.local.home>
+Subject: Re: [PATCH v2] kmemleak: Turn kmemleak_lock to raw spinlock on RT
+Date: Fri, 30 Nov 2018 19:19:57 +0100
+Message-ID: <20181130181956.eewrlaabtceekzyu@linutronix.de>
+References: <1542877459-144382-1-git-send-email-zhe.he@windriver.com>
+ <20181123095314.hervxkxtqoixovro@linutronix.de>
+ <40a63aa5-edb6-4673-b4cc-1bc10e7b3953@windriver.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: Oleksandr Natalenko <oleksandr@natalenko.name>,
-        "David S. Miller" <davem@davemloft.net>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Eric Dumazet <edumazet@google.com>,
-        Dave Jones <davej@codemonkey.org.uk>, netdev@vger.kernel.org,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>,
-        Nikolay Aleksandrov <nikolay@cumulusnetworks.com>
+Cc: catalin.marinas@arm.com, tglx@linutronix.de, rostedt@goodmis.org,
+        linux-mm@kvack.org, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
+To: He Zhe <zhe.he@windriver.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181111210105.7f376c35@vmware.local.home>
+In-Reply-To: <40a63aa5-edb6-4673-b4cc-1bc10e7b3953@windriver.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2018-11-11 21:01:05 [-0500], Steven Rostedt wrote:
-> On Sun, 11 Nov 2018 21:16:00 +0100
-> Oleksandr Natalenko <oleksandr@natalenko.name> wrote:
-> > Oh, I see that write_msg() calls netpoll_send_udp() under 
-> > spin_lock_irqsave(), but in PREEMPT_RT this, AFAIK, does not disable 
-> > interrupts.
-> > 
-> > So, the real question here is whether the interrupts should be indeed 
-> > disabled. And if so, -rt should replace spin_lock_irqsave() call there 
-> > with what? local_irq_save()? and get rid of the warning?
-> > 
+On 2018-11-24 22:26:46 [+0800], He Zhe wrote:
+> On latest v4.19.1-rt3, both of the call traces can be reproduced with kmemleak
+> enabied. And none can be reproduced with kmemleak disabled.
+okay. So it needs attention.
+
+> On latest mainline tree, none can be reproduced no matter kmemleak is enabled
+> or disabled.
 > 
-> Why do we care if interrupts are disabled with PREEMPT_RT here?
+> I don't get why kfree from a preempt-disabled section should cause a warning
+> without kmemleak, since kfree can't sleep.
 
-We don't actually. It was broken before for some reason and disabled on
-RT. Later people asked for NETCONSOLE on RT and it seemed to have worked
-so I allowed it again starting with v3.14.3-rt5.
-A year later (v4.3-rc1) commit c9fd56b34efd0 ("netpoll: warn on
-netpoll_send_udp users who haven't disabled irqs") introduced that
-warning. 
-It seems the only reason why netpoll_send_udp() is invoked with disabled
-interrupts is because the caller acquired `target_list_lock' with
-disabled interrupts. I remember that earlier there was some
-local_irq_save() based locking but all this is gone now.
+it might. It will acquire a sleeping lock if it has go down to the
+memory allocator to actually give memory back.
 
-Nikolay could you please explain why interrupts have to be disabled at
-this point? It looks to me that this check could be dropped.
+> If I understand correctly, the call trace above is caused by trying to schedule
+> after preemption is disabled, which cannot be reached in mainline kernel. So
+> we might need to turn to use raw lock to keep preemption disabled.
 
-> -- Steve
+The buddy-allocator runs with spin locks so it is okay on !RT. So you
+can use kfree() with disabled preemption or disabled interrupts.
+I don't think that we want to use raw-locks in the buddy-allocator.
+
+> >From what I reached above, this is RT-only and happens on v4.18 and v4.19.
+> 
+> The call trace above is caused by grabbing kmemleak_lock and then getting
+> scheduled and then re-grabbing kmemleak_lock. Using raw lock can also solve
+> this problem.
+
+But this is a reader / writer lock. And if I understand the other part
+of the thread then it needs multiple readers.
+Couldn't we just get rid of that kfree() or move it somewhere else?
+I mean if the free() memory on CPU-down and allocate it again CPU-up
+then we could skip that, rigth? Just allocate it and don't free it
+because the CPU will likely get up again.
+
+> Thanks,
+> Zhe
 
 Sebastian
