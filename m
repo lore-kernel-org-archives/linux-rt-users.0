@@ -1,53 +1,155 @@
-Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from Galois.linutronix.de ([146.0.238.70]:38439 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726645AbeLAEGY (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 30 Nov 2018 23:06:24 -0500
-Date: Fri, 30 Nov 2018 17:56:27 +0100
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: complete_all() with 5 waiters in swake_up_all_locked
-Message-ID: <20181130165626.h7fzrvkxtcqjgnx4@linutronix.de>
-References: <CAGZ+4_+DRKxKWC4zMu_xTUoy6ogPpjwVOVtXyAmbj4XXAnpUXw@mail.gmail.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: 8BIT
-In-Reply-To: <CAGZ+4_+DRKxKWC4zMu_xTUoy6ogPpjwVOVtXyAmbj4XXAnpUXw@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
-To: Philipp K <philipp97kl@gmail.com>
-Cc: linux-rt-users@vger.kernel.org, tglx@linutronix.de
+From: Tom Zanussi <zanussi@kernel.org>
+Subject: Re: [PATCH v7 05/16] tracing: Generalize hist trigger onmax and
+ save action
+Date: Mon, 03 Dec 2018 16:22:02 -0600
+Message-ID: <1543875722.2018.22.camel@kernel.org>
+References: <cover.1542221862.git.tom.zanussi@linux.intel.com>
+         <9baa2b4a9b708791b39f176e3b63c207163d8c3b.1542221863.git.tom.zanussi@linux.intel.com>
+         <20181123025000.GC25952@sejong>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
+        vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
+        julia@ni.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org, kernel-team@lge.com
+To: Namhyung Kim <namhyung@kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181123025000.GC25952@sejong>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 2018-10-10 11:15:46 [+0200], Philipp K wrote:
-> Hi,
-Hi,
+Hi Namhyung,
 
-sorry for being late.
-
-> I've been fuzzing linux-rt with syzkaller and found a way to trigger
-> $title warning.
+On Fri, 2018-11-23 at 11:50 +0900, Namhyung Kim wrote:
+> Hi Tom,
 > 
-> The reproducer works with a defconfig + CONFIG_NET_KEY=y on 4.18.12-rt6 kernel.
+> On Wed, Nov 14, 2018 at 02:18:02PM -0600, Tom Zanussi wrote:
+> > From: Tom Zanussi <tom.zanussi@linux.intel.com>
+> > 
 
-I didn't manage to reproduce this on v4.19-RT. Also that backtrace is
-from v4.9. With that test case I didn't manage to end up in
-cryptomgr_probe() which would be a requirement.
+[snip]
 
-So. The warning says that the system managed to wake up 5 tasks in one
-go, that is without re-enabling the interrupts. It has been agreed that
-two wakes are okay and more should be avoided. The problem is that it
-may cause latency spikes if for some reason the system wakes say 100
-tasks like that.
-We have one exception for the PM case because nobody does (or should do)
-suspend-to-ram and run a RT task which has to meet a deadline.
-
-So for this case, we should figure out why it managed to wake 5 tasks
-and how bad can it get and can we limit it somehow.
-
-> Philipp
+> > 
+ enum handler_id {
+> >  	HANDLER_ONMATCH = 1,
+> >  	HANDLER_ONMAX,
+> > @@ -349,14 +358,18 @@ struct action_data {
+> >  
+> >  		struct {
+> >  			char			*var_str;
+> > -			unsigned int		max_var_ref_id
+> > x;
+> > -			struct hist_field	*max_var;
+> > -			struct hist_field	*var;
+> > -		} onmax;
+> > +			struct hist_field	*var_ref;
+> > +			unsigned int		var_ref_idx;
 > 
-> PS: Liebe Grüße von Lukas Bulwahn
-Ah. Greetings!
+> I have a question.  It's confusing for me there are many indexes for
+> a
+> variable (ref).  The hist_field already has var.idx, var_idx and
+> var_ref_idx in it.  But you also added an external var_ref_idx along
+> with the var_ref.  Also I see another var_ref_idx in the action data.
+> Is all that really needed?  Could you please add some comment then?
+> 
 
-Sebastian
+Below is a patch with some comments I'll merge into the next version
+that I hope will help make things more clear.  Basically, the
+hist_field.var_idx isn't used so I've removed it and therefore that
+source of confusion, while var.idx is the variable's unique 'handle' in
+the tracing_map, used when getting and setting the variable.  And then
+there are the several versions of var_ref_idx used for different
+purposes depending on the context, but all of them are indices into the
+array of variable values collected when a trigger is hit.  For example,
+the var_ref_idx defined inside track_data is the index that points to
+the tracked var value, which the action can use directly, and the
+var_ref_idx alongside the synth fields in action_data is the index of
+the first param used when generating a synthetic event, and so on.
+
+Tom 
+
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 818944391d97..5310ef73f023 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -39,6 +39,16 @@ enum field_op_id {
+ 	FIELD_OP_UNARY_MINUS,
+ };
+ 
++/*
++ * A hist_var (histogram variable) contains variable information for
++ * hist_fields having the HIST_FIELD_FL_VAR or HIST_FIELD_FL_VAR_REF
++ * flag set.  A hist_var has a variable name e.g. ts0, and is
++ * associated with a given histogram trigger, as specified by
++ * hist_data.  The hist_var idx is the unique index assigned to the
++ * variable by the hist trigger's tracing_map.  The idx is what is
++ * used to set a variable's value and, by a variable reference, to
++ * retrieve it.
++ */
+ struct hist_var {
+ 	char				*name;
+ 	struct hist_trigger_data	*hist_data;
+@@ -60,7 +70,15 @@ struct hist_field {
+ 	char				*system;
+ 	char				*event_name;
+ 	char				*name;
+-	unsigned int			var_idx;
++
++	/*
++	 * When a histogram trigger is hit, if it has any references
++	 * to variables, the values of those variables are collected
++	 * into a var_ref_vals array by resolve_var_refs().  The
++	 * current value of each variable is read from the tracing_map
++	 * using the hist field's hist_var.idx and entered into the
++	 * var_ref_idx entry i.e. var_ref_vals[var_ref_idx].
++	 */
+ 	unsigned int			var_ref_idx;
+ 	bool                            read_once;
+ };
+@@ -350,6 +368,14 @@ struct action_data {
+ 	unsigned int		n_params;
+ 	char			*params[SYNTH_FIELDS_MAX];
+ 
++	/*
++	 * When a histogram trigger is hit, the values of any
++	 * references to variables, including variables being passed
++	 * as parameters to synthetic events, are collected into a
++	 * var_ref_vals array.  This var_ref_idx is the index of the
++	 * first param in the array to be passed to the synthetic
++	 * event invocation.
++	 */
+ 	unsigned int		var_ref_idx;
+ 	struct synth_event	*synth_event;
+ 	bool			use_trace_keyword;
+@@ -362,10 +388,29 @@ struct action_data {
+ 		} match_data;
+ 
+ 		struct {
++			/*
++			 * var_str and var_ref refer to the variable
++			 * being tracked e.g onmax($var).
++			 */
+ 			char			*var_str;
+ 			struct hist_field	*var_ref;
++
++			/*
++			 * When a histogram trigger is hit, the values
++			 * of any references to variables, including
++			 * variables being tracked e.g. onmax($var),
++			 * are collected into a var_ref_vals array.
++			 * This var_ref_idx is the index of the
++			 * tracked var value in var_ref_vals, which
++			 * the action can make use of directly.
++			 */
+ 			unsigned int		var_ref_idx;
+ 
++			/*
++			 * This track_var contains the 'invisible'
++			 * tracking variable created to keep the
++			 * current e.g. max value.
++			 */
+ 			struct hist_field	*track_var;
+ 
+ 			check_track_val_fn_t	check_val;
