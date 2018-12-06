@@ -1,79 +1,55 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH v2] kmemleak: Turn kmemleak_lock to raw spinlock on RT
-Date: Wed, 5 Dec 2018 20:14:01 +0100
-Message-ID: <20181205191400.qrhim3m3ak5hcsuh@linutronix.de>
-References: <1542877459-144382-1-git-send-email-zhe.he@windriver.com>
- <20181123095314.hervxkxtqoixovro@linutronix.de>
- <40a63aa5-edb6-4673-b4cc-1bc10e7b3953@windriver.com>
- <20181130181956.eewrlaabtceekzyu@linutronix.de>
- <e7795912-7d93-8f4e-b997-67c4ac1f3549@windriver.com>
+Subject: [PATCH RT] hrtimer: move state change before hrtimer_cancel in
+ do_nanosleep()
+Date: Thu, 6 Dec 2018 11:15:55 +0100
+Message-ID: <20181206101555.xqrz2fl6k36bvezm@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Cc: catalin.marinas@arm.com, tglx@linutronix.de, rostedt@goodmis.org,
-        linux-mm@kvack.org, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org
-To: He Zhe <zhe.he@windriver.com>
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <e7795912-7d93-8f4e-b997-67c4ac1f3549@windriver.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2018-12-05 21:53:37 [+0800], He Zhe wrote:
-> For call trace 1:
-…
-> Since kmemleak would most likely be used to debug in environments where
-> we would not expect as great performance as without it, and kfree() has raw locks
-> in its main path and other debug function paths, I suppose it wouldn't hurt that
-> we change to raw locks.
-okay.
+There is a small window between setting t->task to NULL and waking the
+task up (which would set TASK_RUNNING). So the timer would fire, run and
+set ->task to NULL while the other side/do_nanosleep() wouldn't enter
+freezable_schedule(). After all we are peemptible here (in
+do_nanosleep() and on the timer wake up path) and on KVM/virt the
+virt-CPU might get preempted.
+So do_nanosleep() wouldn't enter freezable_schedule() but cancel the
+timer which is still running and wait for it via
+hrtimer_wait_for_timer(). Then wait_event()/might_sleep() would complain
+that it is invoked with state != TASK_RUNNING.
+This isn't a problem since it would be reset to TASK_RUNNING later
+anyway and we don't rely on the previous state.
 
-> >> >From what I reached above, this is RT-only and happens on v4.18 and v4.19.
-> >>
-> >> The call trace above is caused by grabbing kmemleak_lock and then getting
-> >> scheduled and then re-grabbing kmemleak_lock. Using raw lock can also solve
-> >> this problem.
-> > But this is a reader / writer lock. And if I understand the other part
-> > of the thread then it needs multiple readers.
-> 
-> For call trace 2:
-> 
-> I don't get what "it needs multiple readers" exactly means here.
-> 
-> In this call trace, the kmemleak_lock is grabbed as write lock, and then scheduled
-> away, and then grabbed again as write lock from another path. It's a
-> write->write locking, compared to the discussion in the other part of the thread.
-> 
-> This is essentially because kmemleak hooks on the very low level memory
-> allocation and free operations. After scheduled away, it can easily re-enter itself.
-> We need raw locks to prevent this from happening.
+Move the state update to TASK_RUNNING before hrtimer_cancel() so there
+are no complains from might_sleep() about wrong state.
 
-With raw locks you wouldn't have multiple readers at the same time.
-Maybe you wouldn't have recursion but since you can't have multiple
-readers you would add lock contention where was none (because you could
-have two readers at the same time).
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ kernel/time/hrtimer.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-> > Couldn't we just get rid of that kfree() or move it somewhere else?
-> > I mean if the free() memory on CPU-down and allocate it again CPU-up
-> > then we could skip that, rigth? Just allocate it and don't free it
-> > because the CPU will likely get up again.
-> 
-> For call trace 1:
-> 
-> I went through the CPU hotplug code and found that the allocation of the
-> problematic data, cpuc->shared_regs, is done in intel_pmu_cpu_prepare. And
-> the free is done in intel_pmu_cpu_dying. They are handlers triggered by two
-> different perf events.
-> 
-> It seems we can hardly form a convincing method that holds the data while
-> CPUs are off and then uses it again. raw locks would be easy and good enough.
-
-Why not allocate the memory in intel_pmu_cpu_prepare() if it is not
-already there (otherwise skip the allocation) and in
-intel_pmu_cpu_dying() not free it. It looks easy.
-
-> Thanks,
-> Zhe
-
-Sebastian
+diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+index bf0ec3fbbe797..851b2134e77f4 100644
+--- a/kernel/time/hrtimer.c
++++ b/kernel/time/hrtimer.c
+@@ -1785,12 +1785,12 @@ static int __sched do_nanosleep(struct hrtimer_sleeper *t, enum hrtimer_mode mod
+ 		if (likely(t->task))
+ 			freezable_schedule();
+ 
++		__set_current_state(TASK_RUNNING);
+ 		hrtimer_cancel(&t->timer);
+ 		mode = HRTIMER_MODE_ABS;
+ 
+ 	} while (t->task && !signal_pending(current));
+ 
+-	__set_current_state(TASK_RUNNING);
+ 
+ 	if (!t->task)
+ 		return 0;
+-- 
+2.20.0.rc2
