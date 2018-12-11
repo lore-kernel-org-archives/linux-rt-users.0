@@ -1,7 +1,7 @@
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH v8 21/22] tracing: Remove hist trigger synth_var_refs
-Date: Mon, 10 Dec 2018 18:01:35 -0600
-Message-ID: <ba76fb56aa03b6c0287ca118531349451a1e35d9.1544483273.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v8 17/22] tracing: Remove unnecessary hist trigger struct fields
+Date: Mon, 10 Dec 2018 18:01:31 -0600
+Message-ID: <725804f4cd0e90ee3f19048e195e0bff08a189a8.1544483273.git.tom.zanussi@linux.intel.com>
 References: <cover.1544483272.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,64 +18,61 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-All var_refs are now handled uniformly and there's no reason to treat
-the synth_refs in a special way now, so remove them and associated
-functions.
+track_data->var_ref->var_ref_idx can be used instead of
+track_data.var_ref_idx, so remove it.
+
+Also, hist_field.var_idx is completely unused, so remove it too.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 18 ------------------
- 1 file changed, 18 deletions(-)
+ kernel/trace/trace_events_hist.c | 7 +------
+ 1 file changed, 1 insertion(+), 6 deletions(-)
 
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index da4800c3f745..81e998bb601e 100644
+index 9c19932a5321..130ac2cf6893 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -279,8 +279,6 @@ struct hist_trigger_data {
- 	struct action_data		*actions[HIST_ACTIONS_MAX];
- 	unsigned int			n_actions;
+@@ -61,7 +61,6 @@ struct hist_field {
+ 	char				*system;
+ 	char				*event_name;
+ 	char				*name;
+-	unsigned int			var_idx;
+ 	unsigned int			var_ref_idx;
+ 	bool                            read_once;
+ };
+@@ -419,7 +418,6 @@ struct action_data {
+ 			 * tracked e.g onmax($var).
+ 			 */
+ 			struct hist_field	*var_ref;
+-			unsigned int		var_ref_idx;
  
--	struct hist_field               *synth_var_refs[SYNTH_FIELDS_MAX];
--	unsigned int                    n_synth_var_refs;
- 	struct field_var		*field_vars[SYNTH_FIELDS_MAX];
- 	unsigned int			n_field_vars;
- 	unsigned int			n_field_var_str;
-@@ -4005,20 +4003,6 @@ static void save_field_var(struct hist_trigger_data *hist_data,
- }
+ 			/*
+ 			 * track_var contains the 'invisible' tracking
+@@ -3637,7 +3635,7 @@ static void ontrack_action(struct hist_trigger_data *hist_data,
+ 			   struct ring_buffer_event *rbe,
+ 			   struct action_data *data, u64 *var_ref_vals)
+ {
+-	u64 var_val = var_ref_vals[data->track_data.var_ref_idx];
++	u64 var_val = var_ref_vals[data->track_data.var_ref->var_ref_idx];
  
+ 	if (check_track_val(elt, data, var_val)) {
+ 		save_track_val(hist_data, elt, data, var_val);
+@@ -3694,7 +3692,6 @@ static int track_data_create(struct hist_trigger_data *hist_data,
+ {
+ 	struct hist_field *var_field, *ref_field, *track_var = NULL;
+ 	struct trace_event_file *file = hist_data->event_file;
+-	unsigned int var_ref_idx = hist_data->n_var_refs;
+ 	char *track_data_var_str;
+ 	unsigned long flags;
+ 	int ret = 0;
+@@ -3726,8 +3723,6 @@ static int track_data_create(struct hist_trigger_data *hist_data,
+ 	ref_field->var_ref_idx = hist_data->n_var_refs++;
+ 	data->track_data.var_ref = ref_field;
  
--static void destroy_synth_var_refs(struct hist_trigger_data *hist_data)
--{
--	unsigned int i;
+-	data->track_data.var_ref_idx = var_ref_idx;
 -
--	for (i = 0; i < hist_data->n_synth_var_refs; i++)
--		destroy_hist_field(hist_data->synth_var_refs[i], 0);
--}
--
--static void save_synth_var_ref(struct hist_trigger_data *hist_data,
--			 struct hist_field *var_ref)
--{
--	hist_data->synth_var_refs[hist_data->n_synth_var_refs++] = var_ref;
--}
--
- static int check_synth_field(struct synth_event *event,
- 			     struct hist_field *hist_field,
- 			     unsigned int field_pos)
-@@ -4187,7 +4171,6 @@ static int trace_action_create(struct hist_trigger_data *hist_data,
- 				goto err;
- 			}
- 
--			save_synth_var_ref(hist_data, var_ref);
- 			field_pos++;
- 			kfree(p);
- 			continue;
-@@ -5028,7 +5011,6 @@ static void destroy_hist_data(struct hist_trigger_data *hist_data)
- 	destroy_actions(hist_data);
- 	destroy_field_vars(hist_data);
- 	destroy_field_var_hists(hist_data);
--	destroy_synth_var_refs(hist_data);
- 
- 	kfree(hist_data);
- }
+ 	if (data->handler == HANDLER_ONMAX)
+ 		track_var = create_var(hist_data, file, "__max", sizeof(u64), "u64");
+ 	if (IS_ERR(track_var)) {
 -- 
 2.14.1
