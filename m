@@ -1,107 +1,119 @@
-From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH v8 02/22] tracing: Make hist trigger Documentation better reflect actions/handlers
-Date: Mon, 10 Dec 2018 18:01:16 -0600
-Message-ID: <13400eb0079506b8e4be24c833d301071eb6fecb.1544483272.git.tom.zanussi@linux.intel.com>
-References: <cover.1544483272.git.tom.zanussi@linux.intel.com>
-Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
-        julia@ni.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org
-To: rostedt@goodmis.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1544483272.git.tom.zanussi@linux.intel.com>
-In-Reply-To: <cover.1544483272.git.tom.zanussi@linux.intel.com>
-References: <cover.1544483272.git.tom.zanussi@linux.intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
+From: Christoffer Dall <christoffer.dall@arm.com>
+Subject: Re: [PATCH v2 1/4] KVM: arm/arm64: vgic: Do not cond_resched_lock()
+ with IRQs disabled
+Date: Tue, 11 Dec 2018 11:20:15 +0100
+Message-ID: <20181211102015.GV30263@e113682-lin.lund.arm.com>
+References: <1543256807-9768-1-git-send-email-julien.thierry@arm.com>
+ <1543256807-9768-2-git-send-email-julien.thierry@arm.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, marc.zyngier@arm.com, bigeasy@linutronix.de,
+ linux-kernel@vger.kernel.org, rostedt@goodmis.org, stable@vger.kernel.org,
+ tglx@linutronix.de, kvmarm@lists.cs.columbia.edu,
+ linux-arm-kernel@lists.infradead.org
+To: Julien Thierry <julien.thierry@arm.com>
+Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
+Content-Disposition: inline
+In-Reply-To: <1543256807-9768-2-git-send-email-julien.thierry@arm.com>
+List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
+List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
+List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
+List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
+List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
+Errors-To: kvmarm-bounces@lists.cs.columbia.edu
+Sender: kvmarm-bounces@lists.cs.columbia.edu
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
+On Mon, Nov 26, 2018 at 06:26:44PM +0000, Julien Thierry wrote:
+> To change the active state of an MMIO, halt is requested for all vcpus of
+> the affected guest before modifying the IRQ state. This is done by calling
+> cond_resched_lock() in vgic_mmio_change_active(). However interrupts are
+> disabled at this point and we cannot reschedule a vcpu.
+> 
+> Solve this by waiting for all vcpus to be halted after emmiting the halt
+> request.
+> 
+> Signed-off-by: Julien Thierry <julien.thierry@arm.com>
+> Suggested-by: Marc Zyngier <marc.zyngier@arm.com>
+> Cc: Christoffer Dall <christoffer.dall@arm.com>
+> Cc: Marc Zyngier <marc.zyngier@arm.com>
+> Cc: stable@vger.kernel.org
+> ---
+>  virt/kvm/arm/vgic/vgic-mmio.c | 36 ++++++++++++++----------------------
+>  1 file changed, 14 insertions(+), 22 deletions(-)
+> 
+> diff --git a/virt/kvm/arm/vgic/vgic-mmio.c b/virt/kvm/arm/vgic/vgic-mmio.c
+> index f56ff1c..5c76a92 100644
+> --- a/virt/kvm/arm/vgic/vgic-mmio.c
+> +++ b/virt/kvm/arm/vgic/vgic-mmio.c
+> @@ -313,27 +313,6 @@ static void vgic_mmio_change_active(struct kvm_vcpu *vcpu, struct vgic_irq *irq,
+>  
+>  	spin_lock_irqsave(&irq->irq_lock, flags);
+>  
+> -	/*
+> -	 * If this virtual IRQ was written into a list register, we
+> -	 * have to make sure the CPU that runs the VCPU thread has
+> -	 * synced back the LR state to the struct vgic_irq.
+> -	 *
+> -	 * As long as the conditions below are true, we know the VCPU thread
+> -	 * may be on its way back from the guest (we kicked the VCPU thread in
+> -	 * vgic_change_active_prepare)  and still has to sync back this IRQ,
+> -	 * so we release and re-acquire the spin_lock to let the other thread
+> -	 * sync back the IRQ.
+> -	 *
+> -	 * When accessing VGIC state from user space, requester_vcpu is
+> -	 * NULL, which is fine, because we guarantee that no VCPUs are running
+> -	 * when accessing VGIC state from user space so irq->vcpu->cpu is
+> -	 * always -1.
+> -	 */
+> -	while (irq->vcpu && /* IRQ may have state in an LR somewhere */
+> -	       irq->vcpu != requester_vcpu && /* Current thread is not the VCPU thread */
+> -	       irq->vcpu->cpu != -1) /* VCPU thread is running */
+> -		cond_resched_lock(&irq->irq_lock);
+> -
+>  	if (irq->hw) {
+>  		vgic_hw_irq_change_active(vcpu, irq, active, !requester_vcpu);
+>  	} else {
+> @@ -368,8 +347,21 @@ static void vgic_mmio_change_active(struct kvm_vcpu *vcpu, struct vgic_irq *irq,
+>   */
+>  static void vgic_change_active_prepare(struct kvm_vcpu *vcpu, u32 intid)
+>  {
+> -	if (intid > VGIC_NR_PRIVATE_IRQS)
+> +	if (intid > VGIC_NR_PRIVATE_IRQS) {
+> +		struct kvm_vcpu *tmp;
+> +		int i;
+> +
+>  		kvm_arm_halt_guest(vcpu->kvm);
+> +
+> +		/* Wait for each vcpu to be halted */
+> +		kvm_for_each_vcpu(i, tmp, vcpu->kvm) {
+> +			if (tmp == vcpu)
+> +				continue;
+> +
+> +			while (tmp->cpu != -1)
+> +				cond_resched();
+> +		}
 
-The action/handler code refactoring didn't change the action/handler
-syntax, but did generalize it - the Documentation should reflect that.
+I'm actually thinking we don't need this loop at all after the requet
+rework which causes:
 
-Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
----
- Documentation/trace/histogram.rst | 56 ++++++++++++++++++++++++++++++---------
- 1 file changed, 43 insertions(+), 13 deletions(-)
+ 1. kvm_arm_halt_guest() to use kvm_make_all_cpus_request(kvm, KVM_REQ_SLEEP), and
+ 2. KVM_REQ_SLEEP uses REQ_WAIT, and
+ 3. REQ_WAIT requires the VCPU to respond to IPIs before returning, and
+ 4. a VCPU thread can only respond when it enables interrupt, and
+ 5. enabling interrupts when running a VCPU only happens after syncing
+    the VGIC hwstate.
 
-diff --git a/Documentation/trace/histogram.rst b/Documentation/trace/histogram.rst
-index 7dda76503127..63e522107e59 100644
---- a/Documentation/trace/histogram.rst
-+++ b/Documentation/trace/histogram.rst
-@@ -25,7 +25,7 @@ Documentation written by Tom Zanussi
- 
-         hist:keys=<field1[,field2,...]>[:values=<field1[,field2,...]>]
-           [:sort=<field1[,field2,...]>][:size=#entries][:pause][:continue]
--          [:clear][:name=histname1] [if <filter>]
-+          [:clear][:name=histname1][:<handler>.<action>] [if <filter>]
- 
-   When a matching event is hit, an entry is added to a hash table
-   using the key(s) and value(s) named.  Keys and values correspond to
-@@ -1831,21 +1831,51 @@ and looks and behaves just like any other event::
- Like any other event, once a histogram is enabled for the event, the
- output can be displayed by reading the event's 'hist' file.
- 
--2.2.3 Hist trigger 'actions'
------------------------------
-+2.2.3 Hist trigger 'handlers' and 'actions'
-+-------------------------------------------
- 
--A hist trigger 'action' is a function that's executed whenever a
--histogram entry is added or updated.
-+A hist trigger 'action' is a function that's executed (in most cases
-+conditionally) whenever a histogram entry is added or updated.
- 
--The default 'action' if no special function is explicitly specified is
--as it always has been, to simply update the set of values associated
--with an entry.  Some applications, however, may want to perform
--additional actions at that point, such as generate another event, or
--compare and save a maximum.
-+When a histogram entry is added or updated, a hist trigger 'handler'
-+is what decides whether the corresponding action is actually invoked
-+or not.
- 
--The following additional actions are available.  To specify an action
--for a given event, simply specify the action between colons in the
--hist trigger specification.
-+Hist trigger handlers and actions are paired together in the general
-+form:
-+
-+  <handler>.<action>
-+
-+To specify a handler.action pair for a given event, simply specify
-+that handler.action pair between colons in the hist trigger
-+specification.
-+
-+In theory, any handler can be combined with any action, but in
-+practice, not every handler.action combination is currently supported;
-+if a given handler.action combination isn't supported, the hist
-+trigger will fail with -EINVAL;
-+
-+The default 'handler.action' if none is explicity specified is as it
-+always has been, to simply update the set of values associated with an
-+entry.  Some applications, however, may want to perform additional
-+actions at that point, such as generate another event, or compare and
-+save a maximum.
-+
-+The supported handlers and actions are listed below, and each is
-+described in more detail in the following paragraphs, in the context
-+of descriptions of some common and useful handler.action combinations.
-+
-+The available handlers are:
-+
-+  - onmatch(matching.event)    - invoke action on any addition or update
-+  - onmax(var)                 - invoke action if var exceeds current max
-+
-+The available actions are:
-+
-+  - <synthetic_event_name>(param list)         - generate synthetic event
-+  - save(field,...)                            - save current event fields
-+
-+The following commonly-used handler.action pairs are available:
- 
-   - onmatch(matching.event).<synthetic_event_name>(param list)
- 
--- 
-2.14.1
+Does that make sense?
+
+It would be good if someone can validate this, but if it holds this
+patch just becomes a nice deletion of the logic in
+vgic-mmio_change_active.
+
+
+Thanks,
+
+    Christoffer
