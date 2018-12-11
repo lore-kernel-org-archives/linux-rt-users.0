@@ -1,7 +1,7 @@
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH v8 15/22] tracing: Add hist trigger action 'expected fail' test case
-Date: Mon, 10 Dec 2018 18:01:29 -0600
-Message-ID: <08399819a5aae7b50b79c9e81c580e0b961d73ea.1544483273.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v8 18/22] tracing: Use var_refs[] for hist trigger reference checking
+Date: Mon, 10 Dec 2018 18:01:32 -0600
+Message-ID: <fe1901c79da40f54471e37d4c1ca9b61eea8dc89.1544483273.git.tom.zanussi@linux.intel.com>
 References: <cover.1544483272.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,50 +18,94 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-Add a test case verifying that basic action combinations fail as
-expected.
+Since all the variable reference hist_fields are collected into
+hist_data->var_refs[] array, there's no need to go through all the
+fields looking for them, or in separate arrays like synth_var_refs[],
+which will be going away soon anyway.
+
+This also allows us to get rid of some unnecessary code and functions
+currently used for the same purpose.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- .../inter-event/trigger-action-hist-xfail.tc       | 30 ++++++++++++++++++++++
- 1 file changed, 30 insertions(+)
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-action-hist-xfail.tc
+ kernel/trace/trace_events_hist.c | 57 +++++-----------------------------------
+ 1 file changed, 7 insertions(+), 50 deletions(-)
 
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-action-hist-xfail.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-action-hist-xfail.tc
-new file mode 100644
-index 000000000000..1221240f8cf6
---- /dev/null
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-action-hist-xfail.tc
-@@ -0,0 +1,30 @@
-+#!/bin/sh
-+# SPDX-License-Identifier: GPL-2.0
-+# description: event trigger - test inter-event histogram trigger expected fail actions
-+
-+fail() { #msg
-+    echo $1
-+    exit_fail
-+}
-+
-+if [ ! -f set_event ]; then
-+    echo "event tracing is not supported"
-+    exit_unsupported
-+fi
-+
-+if [ ! -f snapshot ]; then
-+    echo "snapshot is not supported"
-+    exit_unsupported
-+fi
-+
-+grep -q "snapshot()" README || exit_unsupported # version issue
-+
-+echo "Test expected snapshot action failure"
-+
-+echo 'hist:keys=comm:onmatch(sched.sched_wakeup).snapshot()' >> /sys/kernel/debug/tracing/events/sched/sched_waking/trigger && exit_fail
-+
-+echo "Test expected save action failure"
-+
-+echo 'hist:keys=comm:onmatch(sched.sched_wakeup).save(comm,prio)' >> /sys/kernel/debug/tracing/events/sched/sched_waking/trigger && exit_fail
-+
-+exit_xfail
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 130ac2cf6893..268f56bc12de 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -1423,45 +1423,11 @@ check_field_for_var_ref(struct hist_field *hist_field,
+ {
+ 	struct hist_field *found = NULL;
+ 
+-	if (hist_field && hist_field->flags & HIST_FIELD_FL_VAR_REF) {
+-		if (hist_field->var.idx == var_idx &&
+-		    hist_field->var.hist_data == var_data) {
+-			found = hist_field;
+-		}
+-	}
+-
+-	return found;
+-}
+-
+-static struct hist_field *
+-check_field_for_var_refs(struct hist_trigger_data *hist_data,
+-			 struct hist_field *hist_field,
+-			 struct hist_trigger_data *var_data,
+-			 unsigned int var_idx,
+-			 unsigned int level)
+-{
+-	struct hist_field *found = NULL;
+-	unsigned int i;
+-
+-	if (level > 3)
+-		return found;
+-
+-	if (!hist_field)
+-		return found;
++	WARN_ON(!(hist_field && hist_field->flags & HIST_FIELD_FL_VAR_REF));
+ 
+-	found = check_field_for_var_ref(hist_field, var_data, var_idx);
+-	if (found)
+-		return found;
+-
+-	for (i = 0; i < HIST_FIELD_OPERANDS_MAX; i++) {
+-		struct hist_field *operand;
+-
+-		operand = hist_field->operands[i];
+-		found = check_field_for_var_refs(hist_data, operand, var_data,
+-						 var_idx, level + 1);
+-		if (found)
+-			return found;
+-	}
++	if (hist_field && hist_field->var.idx == var_idx &&
++	    hist_field->var.hist_data == var_data)
++		found = hist_field;
+ 
+ 	return found;
+ }
+@@ -1473,18 +1439,9 @@ static struct hist_field *find_var_ref(struct hist_trigger_data *hist_data,
+ 	struct hist_field *hist_field, *found = NULL;
+ 	unsigned int i;
+ 
+-	for_each_hist_field(i, hist_data) {
+-		hist_field = hist_data->fields[i];
+-		found = check_field_for_var_refs(hist_data, hist_field,
+-						 var_data, var_idx, 0);
+-		if (found)
+-			return found;
+-	}
+-
+-	for (i = 0; i < hist_data->n_synth_var_refs; i++) {
+-		hist_field = hist_data->synth_var_refs[i];
+-		found = check_field_for_var_refs(hist_data, hist_field,
+-						 var_data, var_idx, 0);
++	for (i = 0; i < hist_data->n_var_refs; i++) {
++		hist_field = hist_data->var_refs[i];
++		found = check_field_for_var_ref(hist_field, var_data, var_idx);
+ 		if (found)
+ 			return found;
+ 	}
 -- 
 2.14.1
