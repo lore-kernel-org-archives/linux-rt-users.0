@@ -1,7 +1,7 @@
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH v8 03/22] tracing: Add hist trigger handler.action documentation to README
-Date: Mon, 10 Dec 2018 18:01:17 -0600
-Message-ID: <aed0a478f683ac4a7669c62d72e8a01d975e525b.1544483272.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v8 02/22] tracing: Make hist trigger Documentation better reflect actions/handlers
+Date: Mon, 10 Dec 2018 18:01:16 -0600
+Message-ID: <13400eb0079506b8e4be24c833d301071eb6fecb.1544483272.git.tom.zanussi@linux.intel.com>
 References: <cover.1544483272.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,42 +18,90 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-Add abbreviated documentation for handlers and actions to README.
+The action/handler code refactoring didn't change the action/handler
+syntax, but did generalize it - the Documentation should reflect that.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace.c | 12 +++++++++++-
- 1 file changed, 11 insertions(+), 1 deletion(-)
+ Documentation/trace/histogram.rst | 56 ++++++++++++++++++++++++++++++---------
+ 1 file changed, 43 insertions(+), 13 deletions(-)
 
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index 911470ad9e94..1abde13a7eab 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -4698,6 +4698,7 @@ static const char readme_msg[] =
- 	"\t            [:size=#entries]\n"
- 	"\t            [:pause][:continue][:clear]\n"
- 	"\t            [:name=histname1]\n"
-+	"\t            [:<handler>.<action>]\n"
- 	"\t            [if <filter>]\n\n"
- 	"\t    When a matching event is hit, an entry is added to a hash\n"
- 	"\t    table using the key(s) and value(s) named, and the value of a\n"
-@@ -4739,7 +4740,16 @@ static const char readme_msg[] =
- 	"\t    The enable_hist and disable_hist triggers can be used to\n"
- 	"\t    have one event conditionally start and stop another event's\n"
- 	"\t    already-attached hist trigger.  The syntax is analagous to\n"
--	"\t    the enable_event and disable_event triggers.\n"
-+	"\t    the enable_event and disable_event triggers.\n\n"
-+	"\t    Hist trigger handlers and actions are executed whenever a\n"
-+	"\t    a histogram entry is added or updated.  They take the form:\n\n"
-+	"\t        <handler>.<action>\n\n"
-+	"\t    The available handlers are:\n\n"
-+	"\t        onmatch(matching.event)  - invoke on addition or update\n"
-+	"\t        onmax(var)               - invoke if var exceeds current max\n\n"
-+	"\t    The available actions are:\n\n"
-+	"\t        <synthetic_event>(param list)        - generate synthetic event\n"
-+	"\t        save(field,...)                      - save current event fields\n"
- #endif
- ;
+diff --git a/Documentation/trace/histogram.rst b/Documentation/trace/histogram.rst
+index 7dda76503127..63e522107e59 100644
+--- a/Documentation/trace/histogram.rst
++++ b/Documentation/trace/histogram.rst
+@@ -25,7 +25,7 @@ Documentation written by Tom Zanussi
+ 
+         hist:keys=<field1[,field2,...]>[:values=<field1[,field2,...]>]
+           [:sort=<field1[,field2,...]>][:size=#entries][:pause][:continue]
+-          [:clear][:name=histname1] [if <filter>]
++          [:clear][:name=histname1][:<handler>.<action>] [if <filter>]
+ 
+   When a matching event is hit, an entry is added to a hash table
+   using the key(s) and value(s) named.  Keys and values correspond to
+@@ -1831,21 +1831,51 @@ and looks and behaves just like any other event::
+ Like any other event, once a histogram is enabled for the event, the
+ output can be displayed by reading the event's 'hist' file.
+ 
+-2.2.3 Hist trigger 'actions'
+-----------------------------
++2.2.3 Hist trigger 'handlers' and 'actions'
++-------------------------------------------
+ 
+-A hist trigger 'action' is a function that's executed whenever a
+-histogram entry is added or updated.
++A hist trigger 'action' is a function that's executed (in most cases
++conditionally) whenever a histogram entry is added or updated.
+ 
+-The default 'action' if no special function is explicitly specified is
+-as it always has been, to simply update the set of values associated
+-with an entry.  Some applications, however, may want to perform
+-additional actions at that point, such as generate another event, or
+-compare and save a maximum.
++When a histogram entry is added or updated, a hist trigger 'handler'
++is what decides whether the corresponding action is actually invoked
++or not.
+ 
+-The following additional actions are available.  To specify an action
+-for a given event, simply specify the action between colons in the
+-hist trigger specification.
++Hist trigger handlers and actions are paired together in the general
++form:
++
++  <handler>.<action>
++
++To specify a handler.action pair for a given event, simply specify
++that handler.action pair between colons in the hist trigger
++specification.
++
++In theory, any handler can be combined with any action, but in
++practice, not every handler.action combination is currently supported;
++if a given handler.action combination isn't supported, the hist
++trigger will fail with -EINVAL;
++
++The default 'handler.action' if none is explicity specified is as it
++always has been, to simply update the set of values associated with an
++entry.  Some applications, however, may want to perform additional
++actions at that point, such as generate another event, or compare and
++save a maximum.
++
++The supported handlers and actions are listed below, and each is
++described in more detail in the following paragraphs, in the context
++of descriptions of some common and useful handler.action combinations.
++
++The available handlers are:
++
++  - onmatch(matching.event)    - invoke action on any addition or update
++  - onmax(var)                 - invoke action if var exceeds current max
++
++The available actions are:
++
++  - <synthetic_event_name>(param list)         - generate synthetic event
++  - save(field,...)                            - save current event fields
++
++The following commonly-used handler.action pairs are available:
+ 
+   - onmatch(matching.event).<synthetic_event_name>(param list)
  
 -- 
 2.14.1
