@@ -1,7 +1,8 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH RT] x86/fpu: Disable preemption around local_bh_disable()
-Date: Tue, 11 Dec 2018 19:54:49 +0100
-Message-ID: <20181211185448.4iainycyvrnwep6p@linutronix.de>
+Subject: [PATCH RT] x86/mm/pat: disable preemption __split_large_page() after
+ spin_lock()
+Date: Thu, 13 Dec 2018 17:44:31 +0100
+Message-ID: <20181213164430.mggilzfjgr5retz6@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Cc: linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
@@ -12,34 +13,54 @@ Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-__fpu__restore_sig() restores the content of the FPU state in the CPUs
-and in order to avoid concurrency it disables BH. On !RT this also
-disables preemption but on RT we can get preempted in BH.
+Commit "x86/mm/pat: Disable preemption around __flush_tlb_all()" added a
+warning if __flush_tlb_all() is invoked in preemptible context. On !RT
+the warning does not trigger because a spin lock is acquired which
+disables preemption. On RT the spin lock does not disable preemption and
+so the warning is seen.
 
-Add preempt_disable() while the FPU state is restored.
+Disable preemption to avoid the warning in __flush_tlb_all().
 
-Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- arch/x86/kernel/fpu/signal.c | 2 ++
- 1 file changed, 2 insertions(+)
+ arch/x86/mm/pageattr.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/arch/x86/kernel/fpu/signal.c b/arch/x86/kernel/fpu/signal.c
-index d99a8ee9e185e..5e0274a941333 100644
---- a/arch/x86/kernel/fpu/signal.c
-+++ b/arch/x86/kernel/fpu/signal.c
-@@ -344,10 +344,12 @@ static int __fpu__restore_sig(void __user *buf, void __user *buf_fx, int size)
- 			sanitize_restored_xstate(tsk, &env, xfeatures, fx_only);
- 		}
+diff --git a/arch/x86/mm/pageattr.c b/arch/x86/mm/pageattr.c
+index e2d4b25c7aa44..abbe3e93ec266 100644
+--- a/arch/x86/mm/pageattr.c
++++ b/arch/x86/mm/pageattr.c
+@@ -687,6 +687,7 @@ __split_large_page(struct cpa_data *cpa, pte_t *kpte, unsigned long address,
+ 	pgprot_t ref_prot;
  
-+		preempt_disable();
- 		local_bh_disable();
- 		fpu->initialized = 1;
- 		fpu__restore(fpu);
- 		local_bh_enable();
+ 	spin_lock(&pgd_lock);
++	preempt_disable();
+ 	/*
+ 	 * Check for races, another CPU might have split this page
+ 	 * up for us already:
+@@ -694,6 +695,7 @@ __split_large_page(struct cpa_data *cpa, pte_t *kpte, unsigned long address,
+ 	tmp = _lookup_address_cpa(cpa, address, &level);
+ 	if (tmp != kpte) {
+ 		spin_unlock(&pgd_lock);
 +		preempt_enable();
+ 		return 1;
+ 	}
  
- 		return err;
- 	} else {
+@@ -727,6 +729,7 @@ __split_large_page(struct cpa_data *cpa, pte_t *kpte, unsigned long address,
+ 
+ 	default:
+ 		spin_unlock(&pgd_lock);
++		preempt_enable();
+ 		return 1;
+ 	}
+ 
+@@ -764,6 +767,7 @@ __split_large_page(struct cpa_data *cpa, pte_t *kpte, unsigned long address,
+ 	 * going on.
+ 	 */
+ 	__flush_tlb_all();
++	preempt_enable();
+ 	spin_unlock(&pgd_lock);
+ 
+ 	return 0;
 -- 
 2.20.0
