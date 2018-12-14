@@ -1,10 +1,10 @@
 From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: Re: [PATCH v8 09/22] tracing: Add hist trigger snapshot() action
+Subject: Re: [PATCH v8 12/22] tracing: Add hist trigger onchange() handler
  test case
-Date: Sat, 15 Dec 2018 01:14:13 +0900
-Message-ID: <20181215011413.a7d57f32823d316fa6af8526@kernel.org>
+Date: Sat, 15 Dec 2018 01:18:10 +0900
+Message-ID: <20181215011810.61e1009d133fc1f999534d72@kernel.org>
 References: <cover.1544483272.git.tom.zanussi@linux.intel.com>
-        <08e018fd4f7346435c36435d155f1aa8f9e7346d.1544483273.git.tom.zanussi@linux.intel.com>
+        <86f8570a993bd8b70e7d8a0260706736b59da2ea.1544483273.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -15,40 +15,43 @@ Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
         linux-rt-users@vger.kernel.org
 To: Tom Zanussi <zanussi@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <08e018fd4f7346435c36435d155f1aa8f9e7346d.1544483273.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <86f8570a993bd8b70e7d8a0260706736b59da2ea.1544483273.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 10 Dec 2018 18:01:23 -0600
+On Mon, 10 Dec 2018 18:01:26 -0600
 Tom Zanussi <zanussi@kernel.org> wrote:
 
 > From: Tom Zanussi <tom.zanussi@linux.intel.com>
 > 
 > Add a test case verifying the basic functionality of the
-> hist:snapshot() action.
-> 
+> hist:onchange($var) handler.
 
-Looks good to me.
+This looks good to me.
 
 Acked-by: Masami Hiramatsu <mhiramat@kernel.org>
 
-Thank you!
+BTW, could you sort these test patches at the end of this series?
+(or at least after 2 features? since both depends on new onchange(var) feature)
 
+Thank you,
+
+> 
 > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 > ---
->  .../inter-event/trigger-snapshot-action-hist.tc    | 43 ++++++++++++++++++++++
->  1 file changed, 43 insertions(+)
->  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
+>  .../inter-event/trigger-onchange-action-hist.tc    | 28 ++++++++++++++++++++++
+>  1 file changed, 28 insertions(+)
+>  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onchange-action-hist.tc
 > 
-> diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
+> diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onchange-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onchange-action-hist.tc
 > new file mode 100644
-> index 000000000000..18fff69fc433
+> index 000000000000..064a284e4e75
 > --- /dev/null
-> +++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
-> @@ -0,0 +1,43 @@
+> +++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onchange-action-hist.tc
+> @@ -0,0 +1,28 @@
 > +#!/bin/sh
 > +# SPDX-License-Identifier: GPL-2.0
-> +# description: event trigger - test inter-event histogram trigger snapshot action
+> +# description: event trigger - test inter-event histogram trigger onchange action
 > +
 > +fail() { #msg
 > +    echo $1
@@ -60,32 +63,17 @@ Thank you!
 > +    exit_unsupported
 > +fi
 > +
-> +if [ ! -f snapshot ]; then
-> +    echo "snapshot is not supported"
-> +    exit_unsupported
-> +fi
-> +
 > +grep -q "onchange(var)" README || exit_unsupported # version issue
 > +
-> +grep -q "snapshot()" README || exit_unsupported # version issue
+> +echo "Test onchange action"
 > +
-> +echo "Test snapshot action"
-> +
-> +echo 1 > /sys/kernel/debug/tracing/events/sched/enable
-> +
-> +echo 'hist:keys=comm:newprio=prio:onchange($newprio).save(comm,prio):onchange($newprio).snapshot() if comm=="ping"' >> /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
+> +echo 'hist:keys=comm:newprio=prio:onchange($newprio).save(comm,prio) if comm=="ping"' >> /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
 > +
 > +ping $LOCALHOST -c 3
 > +nice -n 1 ping $LOCALHOST -c 3
 > +
-> +echo 0 > tracing_on
-> +
 > +if ! grep -q "changed:" events/sched/sched_waking/hist; then
 > +    fail "Failed to create onchange action inter-event histogram"
-> +fi
-> +
-> +if ! grep -q "comm=ping" snapshot; then
-> +    fail "Failed to create snapshot action inter-event histogram"
 > +fi
 > +
 > +exit 0
