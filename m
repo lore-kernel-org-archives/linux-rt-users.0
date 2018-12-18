@@ -1,7 +1,7 @@
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH 3/7] tracing: Use var_refs[] for hist trigger reference checking
-Date: Tue, 18 Dec 2018 14:33:22 -0600
-Message-ID: <becb9627fb09681960f26809961b832be9591048.1545161087.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 2/7] tracing: Change strlen to sizeof for hist trigger static strings
+Date: Tue, 18 Dec 2018 14:33:21 -0600
+Message-ID: <e3e754f2bd18e56eaa8baf79bee619316ebf4cfc.1545161087.git.tom.zanussi@linux.intel.com>
 References: <cover.1545161087.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,94 +18,133 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-Since all the variable reference hist_fields are collected into
-hist_data->var_refs[] array, there's no need to go through all the
-fields looking for them, or in separate arrays like synth_var_refs[],
-which will be going away soon anyway.
-
-This also allows us to get rid of some unnecessary code and functions
-currently used for the same purpose.
+There's no need to use strlen() for static strings when the length is
+already known, so update trace_events_hist.c with sizeof() for those
+cases.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 57 +++++-----------------------------------
- 1 file changed, 7 insertions(+), 50 deletions(-)
+ kernel/trace/trace_events_hist.c | 38 +++++++++++++++++++-------------------
+ 1 file changed, 19 insertions(+), 19 deletions(-)
 
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 25d06b3ae1f6..ee839c52bd3f 100644
+index d29bf8a8e1dd..25d06b3ae1f6 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -1299,45 +1299,11 @@ check_field_for_var_ref(struct hist_field *hist_field,
+@@ -507,7 +507,7 @@ static int synth_field_string_size(char *type)
+ 	start = strstr(type, "char[");
+ 	if (start == NULL)
+ 		return -EINVAL;
+-	start += strlen("char[");
++	start += sizeof("char[") - 1;
+ 
+ 	end = strchr(type, ']');
+ 	if (!end || end < start)
+@@ -1843,8 +1843,8 @@ static int parse_action(char *str, struct hist_trigger_attrs *attrs)
+ 	if (attrs->n_actions >= HIST_ACTIONS_MAX)
+ 		return ret;
+ 
+-	if ((strncmp(str, "onmatch(", strlen("onmatch(")) == 0) ||
+-	    (strncmp(str, "onmax(", strlen("onmax(")) == 0)) {
++	if ((strncmp(str, "onmatch(", sizeof("onmatch(") - 1) == 0) ||
++	    (strncmp(str, "onmax(", sizeof("onmax(") - 1) == 0)) {
+ 		attrs->action_str[attrs->n_actions] = kstrdup(str, GFP_KERNEL);
+ 		if (!attrs->action_str[attrs->n_actions]) {
+ 			ret = -ENOMEM;
+@@ -1861,34 +1861,34 @@ static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
  {
- 	struct hist_field *found = NULL;
+ 	int ret = 0;
  
--	if (hist_field && hist_field->flags & HIST_FIELD_FL_VAR_REF) {
--		if (hist_field->var.idx == var_idx &&
--		    hist_field->var.hist_data == var_data) {
--			found = hist_field;
--		}
--	}
--
--	return found;
--}
--
--static struct hist_field *
--check_field_for_var_refs(struct hist_trigger_data *hist_data,
--			 struct hist_field *hist_field,
--			 struct hist_trigger_data *var_data,
--			 unsigned int var_idx,
--			 unsigned int level)
--{
--	struct hist_field *found = NULL;
--	unsigned int i;
--
--	if (level > 3)
--		return found;
--
--	if (!hist_field)
--		return found;
-+	WARN_ON(!(hist_field && hist_field->flags & HIST_FIELD_FL_VAR_REF));
+-	if ((strncmp(str, "key=", strlen("key=")) == 0) ||
+-	    (strncmp(str, "keys=", strlen("keys=")) == 0)) {
++	if ((strncmp(str, "key=", sizeof("key=") - 1) == 0) ||
++	    (strncmp(str, "keys=", sizeof("keys=") - 1) == 0)) {
+ 		attrs->keys_str = kstrdup(str, GFP_KERNEL);
+ 		if (!attrs->keys_str) {
+ 			ret = -ENOMEM;
+ 			goto out;
+ 		}
+-	} else if ((strncmp(str, "val=", strlen("val=")) == 0) ||
+-		 (strncmp(str, "vals=", strlen("vals=")) == 0) ||
+-		 (strncmp(str, "values=", strlen("values=")) == 0)) {
++	} else if ((strncmp(str, "val=", sizeof("val=") - 1) == 0) ||
++		 (strncmp(str, "vals=", sizeof("vals=") - 1) == 0) ||
++		 (strncmp(str, "values=", sizeof("values=") - 1) == 0)) {
+ 		attrs->vals_str = kstrdup(str, GFP_KERNEL);
+ 		if (!attrs->vals_str) {
+ 			ret = -ENOMEM;
+ 			goto out;
+ 		}
+-	} else if (strncmp(str, "sort=", strlen("sort=")) == 0) {
++	} else if (strncmp(str, "sort=", sizeof("sort=") - 1) == 0) {
+ 		attrs->sort_key_str = kstrdup(str, GFP_KERNEL);
+ 		if (!attrs->sort_key_str) {
+ 			ret = -ENOMEM;
+ 			goto out;
+ 		}
+-	} else if (strncmp(str, "name=", strlen("name=")) == 0) {
++	} else if (strncmp(str, "name=", sizeof("name=") - 1) == 0) {
+ 		attrs->name = kstrdup(str, GFP_KERNEL);
+ 		if (!attrs->name) {
+ 			ret = -ENOMEM;
+ 			goto out;
+ 		}
+-	} else if (strncmp(str, "clock=", strlen("clock=")) == 0) {
++	} else if (strncmp(str, "clock=", sizeof("clock=") - 1) == 0) {
+ 		strsep(&str, "=");
+ 		if (!str) {
+ 			ret = -EINVAL;
+@@ -1901,7 +1901,7 @@ static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
+ 			ret = -ENOMEM;
+ 			goto out;
+ 		}
+-	} else if (strncmp(str, "size=", strlen("size=")) == 0) {
++	} else if (strncmp(str, "size=", sizeof("size=") - 1) == 0) {
+ 		int map_bits = parse_map_size(str);
  
--	found = check_field_for_var_ref(hist_field, var_data, var_idx);
--	if (found)
--		return found;
--
--	for (i = 0; i < HIST_FIELD_OPERANDS_MAX; i++) {
--		struct hist_field *operand;
--
--		operand = hist_field->operands[i];
--		found = check_field_for_var_refs(hist_data, operand, var_data,
--						 var_idx, level + 1);
--		if (found)
--			return found;
--	}
-+	if (hist_field && hist_field->var.idx == var_idx &&
-+	    hist_field->var.hist_data == var_data)
-+		found = hist_field;
+ 		if (map_bits < 0) {
+@@ -3497,7 +3497,7 @@ static struct action_data *onmax_parse(char *str)
+ 	if (!onmax_fn_name || !str)
+ 		goto free;
  
- 	return found;
- }
-@@ -1349,18 +1315,9 @@ static struct hist_field *find_var_ref(struct hist_trigger_data *hist_data,
- 	struct hist_field *hist_field, *found = NULL;
- 	unsigned int i;
+-	if (strncmp(onmax_fn_name, "save", strlen("save")) == 0) {
++	if (strncmp(onmax_fn_name, "save", sizeof("save") - 1) == 0) {
+ 		char *params = strsep(&str, ")");
  
--	for_each_hist_field(i, hist_data) {
--		hist_field = hist_data->fields[i];
--		found = check_field_for_var_refs(hist_data, hist_field,
--						 var_data, var_idx, 0);
--		if (found)
--			return found;
--	}
--
--	for (i = 0; i < hist_data->n_synth_var_refs; i++) {
--		hist_field = hist_data->synth_var_refs[i];
--		found = check_field_for_var_refs(hist_data, hist_field,
--						 var_data, var_idx, 0);
-+	for (i = 0; i < hist_data->n_var_refs; i++) {
-+		hist_field = hist_data->var_refs[i];
-+		found = check_field_for_var_ref(hist_field, var_data, var_idx);
- 		if (found)
- 			return found;
- 	}
+ 		if (!params) {
+@@ -4302,8 +4302,8 @@ static int parse_actions(struct hist_trigger_data *hist_data)
+ 	for (i = 0; i < hist_data->attrs->n_actions; i++) {
+ 		str = hist_data->attrs->action_str[i];
+ 
+-		if (strncmp(str, "onmatch(", strlen("onmatch(")) == 0) {
+-			char *action_str = str + strlen("onmatch(");
++		if (strncmp(str, "onmatch(", sizeof("onmatch(") - 1) == 0) {
++			char *action_str = str + sizeof("onmatch(") - 1;
+ 
+ 			data = onmatch_parse(tr, action_str);
+ 			if (IS_ERR(data)) {
+@@ -4311,8 +4311,8 @@ static int parse_actions(struct hist_trigger_data *hist_data)
+ 				break;
+ 			}
+ 			data->fn = action_trace;
+-		} else if (strncmp(str, "onmax(", strlen("onmax(")) == 0) {
+-			char *action_str = str + strlen("onmax(");
++		} else if (strncmp(str, "onmax(", sizeof("onmax(") - 1) == 0) {
++			char *action_str = str + sizeof("onmax(") - 1;
+ 
+ 			data = onmax_parse(action_str);
+ 			if (IS_ERR(data)) {
+@@ -5548,9 +5548,9 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
+ 			p++;
+ 			continue;
+ 		}
+-		if (p >= param + strlen(param) - strlen("if") - 1)
++		if (p >= param + strlen(param) - (sizeof("if") - 1) - 1)
+ 			return -EINVAL;
+-		if (*(p + strlen("if")) != ' ' && *(p + strlen("if")) != '\t') {
++		if (*(p + sizeof("if") - 1) != ' ' && *(p + sizeof("if") - 1) != '\t') {
+ 			p++;
+ 			continue;
+ 		}
 -- 
 2.14.1
