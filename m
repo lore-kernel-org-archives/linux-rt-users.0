@@ -1,8 +1,7 @@
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH 2/7] tracing: Change strlen to sizeof for hist trigger static strings
-Date: Tue, 18 Dec 2018 14:33:21 -0600
-Message-ID: <e3e754f2bd18e56eaa8baf79bee619316ebf4cfc.1545161087.git.tom.zanussi@linux.intel.com>
-References: <cover.1545161087.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v9 00/15] tracing: Hist trigger snapshot and onchange additions
+Date: Tue, 18 Dec 2018 14:33:59 -0600
+Message-ID: <cover.1545161056.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
         joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
@@ -10,141 +9,191 @@ Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         linux-rt-users@vger.kernel.org
 To: rostedt@goodmis.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1545161087.git.tom.zanussi@linux.intel.com>
-In-Reply-To: <cover.1545161087.git.tom.zanussi@linux.intel.com>
-References: <cover.1545161087.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-There's no need to use strlen() for static strings when the length is
-already known, so update trace_events_hist.c with sizeof() for those
-cases.
+Hi,
 
-Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
----
- kernel/trace/trace_events_hist.c | 38 +++++++++++++++++++-------------------
- 1 file changed, 19 insertions(+), 19 deletions(-)
+This is v9 of the hist trigger snapshot and onchange additions
+patchset.  It splits out patches 17-22 of the v8 patchset into a
+standalone patchset posted just before this one, 'tracing: Hist
+trigger var-ref cleanup and comments'.
 
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index d29bf8a8e1dd..25d06b3ae1f6 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -507,7 +507,7 @@ static int synth_field_string_size(char *type)
- 	start = strstr(type, "char[");
- 	if (start == NULL)
- 		return -EINVAL;
--	start += strlen("char[");
-+	start += sizeof("char[") - 1;
- 
- 	end = strchr(type, ']');
- 	if (!end || end < start)
-@@ -1843,8 +1843,8 @@ static int parse_action(char *str, struct hist_trigger_attrs *attrs)
- 	if (attrs->n_actions >= HIST_ACTIONS_MAX)
- 		return ret;
- 
--	if ((strncmp(str, "onmatch(", strlen("onmatch(")) == 0) ||
--	    (strncmp(str, "onmax(", strlen("onmax(")) == 0)) {
-+	if ((strncmp(str, "onmatch(", sizeof("onmatch(") - 1) == 0) ||
-+	    (strncmp(str, "onmax(", sizeof("onmax(") - 1) == 0)) {
- 		attrs->action_str[attrs->n_actions] = kstrdup(str, GFP_KERNEL);
- 		if (!attrs->action_str[attrs->n_actions]) {
- 			ret = -ENOMEM;
-@@ -1861,34 +1861,34 @@ static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
- {
- 	int ret = 0;
- 
--	if ((strncmp(str, "key=", strlen("key=")) == 0) ||
--	    (strncmp(str, "keys=", strlen("keys=")) == 0)) {
-+	if ((strncmp(str, "key=", sizeof("key=") - 1) == 0) ||
-+	    (strncmp(str, "keys=", sizeof("keys=") - 1) == 0)) {
- 		attrs->keys_str = kstrdup(str, GFP_KERNEL);
- 		if (!attrs->keys_str) {
- 			ret = -ENOMEM;
- 			goto out;
- 		}
--	} else if ((strncmp(str, "val=", strlen("val=")) == 0) ||
--		 (strncmp(str, "vals=", strlen("vals=")) == 0) ||
--		 (strncmp(str, "values=", strlen("values=")) == 0)) {
-+	} else if ((strncmp(str, "val=", sizeof("val=") - 1) == 0) ||
-+		 (strncmp(str, "vals=", sizeof("vals=") - 1) == 0) ||
-+		 (strncmp(str, "values=", sizeof("values=") - 1) == 0)) {
- 		attrs->vals_str = kstrdup(str, GFP_KERNEL);
- 		if (!attrs->vals_str) {
- 			ret = -ENOMEM;
- 			goto out;
- 		}
--	} else if (strncmp(str, "sort=", strlen("sort=")) == 0) {
-+	} else if (strncmp(str, "sort=", sizeof("sort=") - 1) == 0) {
- 		attrs->sort_key_str = kstrdup(str, GFP_KERNEL);
- 		if (!attrs->sort_key_str) {
- 			ret = -ENOMEM;
- 			goto out;
- 		}
--	} else if (strncmp(str, "name=", strlen("name=")) == 0) {
-+	} else if (strncmp(str, "name=", sizeof("name=") - 1) == 0) {
- 		attrs->name = kstrdup(str, GFP_KERNEL);
- 		if (!attrs->name) {
- 			ret = -ENOMEM;
- 			goto out;
- 		}
--	} else if (strncmp(str, "clock=", strlen("clock=")) == 0) {
-+	} else if (strncmp(str, "clock=", sizeof("clock=") - 1) == 0) {
- 		strsep(&str, "=");
- 		if (!str) {
- 			ret = -EINVAL;
-@@ -1901,7 +1901,7 @@ static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
- 			ret = -ENOMEM;
- 			goto out;
- 		}
--	} else if (strncmp(str, "size=", strlen("size=")) == 0) {
-+	} else if (strncmp(str, "size=", sizeof("size=") - 1) == 0) {
- 		int map_bits = parse_map_size(str);
- 
- 		if (map_bits < 0) {
-@@ -3497,7 +3497,7 @@ static struct action_data *onmax_parse(char *str)
- 	if (!onmax_fn_name || !str)
- 		goto free;
- 
--	if (strncmp(onmax_fn_name, "save", strlen("save")) == 0) {
-+	if (strncmp(onmax_fn_name, "save", sizeof("save") - 1) == 0) {
- 		char *params = strsep(&str, ")");
- 
- 		if (!params) {
-@@ -4302,8 +4302,8 @@ static int parse_actions(struct hist_trigger_data *hist_data)
- 	for (i = 0; i < hist_data->attrs->n_actions; i++) {
- 		str = hist_data->attrs->action_str[i];
- 
--		if (strncmp(str, "onmatch(", strlen("onmatch(")) == 0) {
--			char *action_str = str + strlen("onmatch(");
-+		if (strncmp(str, "onmatch(", sizeof("onmatch(") - 1) == 0) {
-+			char *action_str = str + sizeof("onmatch(") - 1;
- 
- 			data = onmatch_parse(tr, action_str);
- 			if (IS_ERR(data)) {
-@@ -4311,8 +4311,8 @@ static int parse_actions(struct hist_trigger_data *hist_data)
- 				break;
- 			}
- 			data->fn = action_trace;
--		} else if (strncmp(str, "onmax(", strlen("onmax(")) == 0) {
--			char *action_str = str + strlen("onmax(");
-+		} else if (strncmp(str, "onmax(", sizeof("onmax(") - 1) == 0) {
-+			char *action_str = str + sizeof("onmax(") - 1;
- 
- 			data = onmax_parse(action_str);
- 			if (IS_ERR(data)) {
-@@ -5548,9 +5548,9 @@ static int event_hist_trigger_func(struct event_command *cmd_ops,
- 			p++;
- 			continue;
- 		}
--		if (p >= param + strlen(param) - strlen("if") - 1)
-+		if (p >= param + strlen(param) - (sizeof("if") - 1) - 1)
- 			return -EINVAL;
--		if (*(p + strlen("if")) != ' ' && *(p + strlen("if")) != '\t') {
-+		if (*(p + sizeof("if") - 1) != ' ' && *(p + sizeof("if") - 1) != '\t') {
- 			p++;
- 			continue;
- 		}
+It also makes some minor changes addressing the v8 comments from
+Masami and Namhyung.
+
+NOTE: This series should be applied on top of the 'tracing: Hist
+trigger var-ref cleanup and comments' series.
+
+Thanks,
+
+Tom
+
+
+v8->v9 changes:
+
+  - Moved v8 patches 17-22 to a separate series
+  - Moved track_data.var_ref_idx removal into 'tracing: Generalize
+    hist trigger onmax and save action'
+  - Merged 'tracing: Add hist trigger handler.action documentation'
+    into 'tracing: Refactor hist trigger action code'
+  - Updated patches to change all strlen() to sizeof() for string
+    constants
+  - Moved test cases to the end of the series
+
+v7->v8 changes:
+
+  - Removed /dev/null redirection from test cases
+  - Replaced event disable with tracing_on disable instead
+  - New patch to remove hist_field.var_idx and track_data.var_ref_idx
+  - New patch to use var_refs[] array for reference checking
+  - New patch to remove open-coding of var_ref count manipulation
+  - New patch to use var_refs[] array to destroy var_refs
+  - New patch to remove synth_var_refs[] now that var_refs[] is used
+  - New patch to add comments to variable-related fields
+  - Added various new comments in the patches to clarify other things
+  - Replaced the convoluted logic mentioned by Namhyung in
+    update_track_val with wrappers and simpler check/save logic as
+    suggested
+  - Rebased to latest ftrace/core including Masami's dynamic event
+    framework changes
+
+v6->v7 changes:
+
+  - Removed unnecessary HANDLER_ONMAX checks from onmax_print()/create()
+  - Moved handler assignment to acion_parse()
+  - Changed goto in ATION_TRACE case in action_create() to return
+  - Changed EINVAL to EEXIST in action_create() ACTION_SAVE case
+  - Made the return logic in create_actions() more consistent
+  - Merged 'tracing: Move hist trigger key printing into a separate
+    function' into 'tracing: Add hist trigger snapshot() action'
+  - Updated the new snapshot, onchange, and trace test cases to match
+    4.20 kselftest changes.
+  - Added new xfail test case that make sure certain unsupported
+    handler/action combinations fail as expected.
+  - While updating the test cases, realized that the other testcases
+    in the inter-event subdir needed SPDX license updates, so added
+    them.
+
+v5->v6 changes:
+
+  - Added new Documentation patch explaining handler.action
+  - Added new README patch explaining handler.action
+  - Added separate snapshot() Documentation
+  - Added new snapshot() test case
+  - Updated README with snapshote()
+  - Added separate onchange() Documentation
+  - Added separate onchange() test case
+  - Updated README with onchange()
+  - Added separate trace() test case
+  - Updated README with trace() and <synthetic_event>() syntax
+
+v4->v5 changes:
+
+  - added 'trace' keyword test case
+  - added 'onchange' handler test case
+
+v3->v4 changes:
+
+  - added 'trace' keyword for generating synthetic events
+  - fix elt_data leak
+  - changed cond_update to cond_update_fn_t
+
+v2->v3 changes:
+
+  - fixed problem where trace actions were only being allowed for
+    onmatch handlers - now trace actions can be used with any handler.
+  - fixed problem where no action was being assigned to onmatch
+    handlers if save or snapshot actions were specified.
+
+v1->v2 changes:
+
+  - added missing tracing_cond_snapshot_data() definition for when
+    CONFIG_TRACER_SNAPSHOT not defined
+  - removed an unnecessary WARN_ON() in track_data_snapshot_print()
+
+
+Original text:
+
+This patchset adds some useful new functions to the hist
+trigger code: a snapshot action and an onchange handler.
+
+In order to make it easier to add these and in the process make the
+code more generic, I separated the code into explicit 'handlers' and
+'actions', handlers being things like 'onmax' and 'onchange', and
+'actions' being things like 'take a snapshot' or 'save some fields'.
+
+The first few patches do that basic refactoring, which make it easier
+to add the subsequent changes that arbitrarily combine actions and
+handlers.
+
+The fourth patch adds a 'conditional snapshot' capability that via a
+new tracing_snaphot_cond() function extends the existing snapshot
+code.  It allows the caller to associate some user data with the
+snapshot that can be checked and saved in an update() callback whose
+return value determines whether the snapshot should be taken or not.
+
+The remaining patches finally add the new snapshot action and onchange
+handler functionality - please see those patches for details and some
+examples.
+
+Thanks,
+
+Tom
+
+
+The following changes since commit ea857ce948531d7bec712bbb0f38360aa1d378ec:
+
+  tracing: Add hist trigger comments for variable-related fields (2018-12-17 15:20:53 -0600)
+
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/zanussi/linux-trace.git ftrace/hist-snapshot-onchange-v9
+
+Tom Zanussi (15):
+  tracing: Refactor hist trigger action code
+  tracing: Make hist trigger Documentation better reflect
+    actions/handlers
+  tracing: Split up onmatch action data
+  tracing: Generalize hist trigger onmax and save action
+  tracing: Add conditional snapshot
+  tracing: Add hist trigger snapshot() action
+  tracing: Add hist trigger snapshot() action Documentation
+  tracing: Add hist trigger onchange() handler
+  tracing: Add hist trigger onchange() handler Documentation
+  tracing: Add alternative synthetic event trace action syntax
+  tracing: Add SPDX license GPL-2.0 license identifier to inter-event
+    testcases
+  tracing: Add hist trigger snapshot() action test case
+  tracing: Add hist trigger onchange() handler test case
+  tracing: Add alternative synthetic event trace action test case
+  tracing: Add hist trigger action 'expected fail' test case
+
+ Documentation/trace/histogram.rst                  |  285 ++++-
+ kernel/trace/trace.c                               |  177 +++-
+ kernel/trace/trace.h                               |   56 +-
+ kernel/trace/trace_events_hist.c                   | 1090 +++++++++++++++-----
+ kernel/trace/trace_events_trigger.c                |    2 +-
+ kernel/trace/trace_sched_wakeup.c                  |    2 +-
+ .../inter-event/trigger-action-hist-xfail.tc       |   30 +
+ .../inter-event/trigger-extended-error-support.tc  |    1 +
+ .../inter-event/trigger-field-variable-support.tc  |    1 +
+ .../trigger-inter-event-combined-hist.tc           |    1 +
+ .../inter-event/trigger-multi-actions-accept.tc    |    1 +
+ .../inter-event/trigger-onchange-action-hist.tc    |   28 +
+ .../inter-event/trigger-onmatch-action-hist.tc     |    1 +
+ .../trigger-onmatch-onmax-action-hist.tc           |    1 +
+ .../inter-event/trigger-onmax-action-hist.tc       |    1 +
+ .../inter-event/trigger-snapshot-action-hist.tc    |   43 +
+ .../trigger-synthetic-event-createremove.tc        |    1 +
+ .../inter-event/trigger-trace-action-hist.tc       |   42 +
+ 18 files changed, 1455 insertions(+), 308 deletions(-)
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-action-hist-xfail.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onchange-action-hist.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-trace-action-hist.tc
+
 -- 
 2.14.1
