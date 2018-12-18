@@ -1,214 +1,100 @@
-From: <zhe.he@windriver.com>
-Subject: [PATCH] perf/x86/intel: Avoid unnecessary reallocations of memory allocated in cpu hotplug prepare state
-Date: Tue, 18 Dec 2018 18:30:33 +0800
-Message-ID: <1545129033-21757-1-git-send-email-zhe.he@windriver.com>
+From: He Zhe <zhe.he@windriver.com>
+Subject: Re: [PATCH v2] kmemleak: Turn kmemleak_lock to raw spinlock on RT
+Date: Tue, 18 Dec 2018 18:51:41 +0800
+Message-ID: <16ac893a-a080-18a5-e636-7b7668d978b0@windriver.com>
+References: <1542877459-144382-1-git-send-email-zhe.he@windriver.com>
+ <20181123095314.hervxkxtqoixovro@linutronix.de>
+ <40a63aa5-edb6-4673-b4cc-1bc10e7b3953@windriver.com>
+ <20181130181956.eewrlaabtceekzyu@linutronix.de>
+ <e7795912-7d93-8f4e-b997-67c4ac1f3549@windriver.com>
+ <20181205191400.qrhim3m3ak5hcsuh@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain
-To: <acme@kernel.org>, <ak@linux.intel.com>,
-        <alexander.shishkin@linux.intel.com>, <bp@alien8.de>,
-        <hpa@zytor.com>, <jolsa@kernel.org>, <jolsa@redhat.com>,
-        <kan.liang@linux.intel.com>, <mingo@redhat.com>,
-        <namhyung@kernel.org>, <peterz@infradead.org>,
-        <tglx@linutronix.de>, <x86@kernel.org>,
-        <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
-        <zhe.he@windriver.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+Cc: <catalin.marinas@arm.com>, <tglx@linutronix.de>,
+        <rostedt@goodmis.org>, <linux-mm@kvack.org>,
+        <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181205191400.qrhim3m3ak5hcsuh@linutronix.de>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: He Zhe <zhe.he@windriver.com>
 
-The memory of shared_regs excl_cntrs and constraint_list in struct cpu_hw_events
-is currently allocated in hotplug prepare state and freed in dying state. The
-memory can actually be reused across multiple cpu pluggings.
 
-Besides, in preempt-rt full mode, the freeing can happen in atomic context and
-thus cause the following BUG.
+On 2018/12/6 03:14, Sebastian Andrzej Siewior wrote:
+> On 2018-12-05 21:53:37 [+0800], He Zhe wrote:
+>> For call trace 1:
+> …
+>> Since kmemleak would most likely be used to debug in environments where
+>> we would not expect as great performance as without it, and kfree() has raw locks
+>> in its main path and other debug function paths, I suppose it wouldn't hurt that
+>> we change to raw locks.
+> okay.
+>
+>>>> >From what I reached above, this is RT-only and happens on v4.18 and v4.19.
+>>>>
+>>>> The call trace above is caused by grabbing kmemleak_lock and then getting
+>>>> scheduled and then re-grabbing kmemleak_lock. Using raw lock can also solve
+>>>> this problem.
+>>> But this is a reader / writer lock. And if I understand the other part
+>>> of the thread then it needs multiple readers.
+>> For call trace 2:
+>>
+>> I don't get what "it needs multiple readers" exactly means here.
+>>
+>> In this call trace, the kmemleak_lock is grabbed as write lock, and then scheduled
+>> away, and then grabbed again as write lock from another path. It's a
+>> write->write locking, compared to the discussion in the other part of the thread.
+>>
+>> This is essentially because kmemleak hooks on the very low level memory
+>> allocation and free operations. After scheduled away, it can easily re-enter itself.
+>> We need raw locks to prevent this from happening.
+> With raw locks you wouldn't have multiple readers at the same time.
+> Maybe you wouldn't have recursion but since you can't have multiple
+> readers you would add lock contention where was none (because you could
+> have two readers at the same time).
 
-BUG: scheduling while atomic: migration/4/44/0x00000002
----- snip ----
-Preemption disabled at:
-[<ffffffffa1b282e1>] cpu_stopper_thread+0x71/0x100
-CPU: 4 PID: 44 Comm: migration/4 Not tainted 4.19.8-rt6-preempt-rt #1
-Hardware name: Intel Corporation Broadwell Client platform/Basking Ridge, BIOS BDW-E1R1.86C.0100.R03.1411050121 11/05/2014
-Call Trace:
- dump_stack+0x4f/0x6a
- ? cpu_stopper_thread+0x71/0x100
- __schedule_bug.cold.16+0x38/0x55
- __schedule+0x484/0x6c0
- schedule+0x3d/0xf0
- rt_spin_lock_slowlock_locked+0x11a/0x2a0
- rt_spin_lock_slowlock+0x57/0x90
- __rt_spin_lock+0x26/0x30
- __write_rt_lock+0x23/0x1a0
- ? intel_pmu_cpu_dying+0x67/0x70
- rt_write_lock+0x2a/0x30
- find_and_remove_object+0x1e/0x80
- delete_object_full+0x10/0x20
- kmemleak_free+0x32/0x50
- kfree+0x104/0x1f0
- intel_pmu_cpu_dying+0x67/0x70
- ? x86_pmu_starting_cpu+0x30/0x30
- x86_pmu_dying_cpu+0x1a/0x30
- cpuhp_invoke_callback+0x9c/0x770
- ? cpu_disable_common+0x241/0x250
- take_cpu_down+0x70/0xa0
- multi_cpu_stop+0x62/0xc0
- ? cpu_stop_queue_work+0x130/0x130
- cpu_stopper_thread+0x79/0x100
- smpboot_thread_fn+0x217/0x2e0
- kthread+0x121/0x140
- ? sort_range+0x30/0x30
- ? kthread_park+0x90/0x90
- ret_from_fork+0x35/0x40
+Sorry for slow reply.
 
-This patch changes to allocate the memory only when it has not been allocated,
-and fill it with all zero when it has already been allocated, and remove the
-unnecessary freeings.
+OK. I understand your concern finally. At the commit log said, I wanted to use raw
+rwlock but didn't find the DEFINE helper for it. Thinking it would not be expected to
+have great performance, I turn to use raw spinlock instead. And yes, this would
+introduce worse performance.
 
-Credit to Sebastian Andrzej Siewior for his suggestion.
+Maybe I miss the reason, but why don't we have rwlock_types_raw.h to define raw
+rwlock helper for RT? With that, we can cleanly replace kmemleak_lock with a raw
+rwlock.
 
-Signed-off-by: He Zhe <zhe.he@windriver.com>
----
- arch/x86/events/core.c       |  2 +-
- arch/x86/events/intel/core.c | 45 ++++++++++++++++++++------------------------
- arch/x86/events/perf_event.h |  5 ++---
- 3 files changed, 23 insertions(+), 29 deletions(-)
+Or should we just define a raw rwlock using basic type, like arch_rwlock_t, only in
+kmemleak?
 
-diff --git a/arch/x86/events/core.c b/arch/x86/events/core.c
-index 374a197..f07d1b1 100644
---- a/arch/x86/events/core.c
-+++ b/arch/x86/events/core.c
-@@ -2010,7 +2010,7 @@ static struct cpu_hw_events *allocate_fake_cpuc(void)
- 
- 	/* only needed, if we have extra_regs */
- 	if (x86_pmu.extra_regs) {
--		cpuc->shared_regs = allocate_shared_regs(cpu);
-+		allocate_shared_regs(&cpuc->shared_regs, cpu);
- 		if (!cpuc->shared_regs)
- 			goto error;
- 	}
-diff --git a/arch/x86/events/intel/core.c b/arch/x86/events/intel/core.c
-index ecc3e34..a3c18de 100644
---- a/arch/x86/events/intel/core.c
-+++ b/arch/x86/events/intel/core.c
-@@ -3398,13 +3398,16 @@ ssize_t intel_event_sysfs_show(char *page, u64 config)
- 	return x86_event_sysfs_show(page, config, event);
- }
- 
--struct intel_shared_regs *allocate_shared_regs(int cpu)
-+void allocate_shared_regs(struct intel_shared_regs **pregs, int cpu)
- {
--	struct intel_shared_regs *regs;
-+	struct intel_shared_regs *regs = *pregs;
- 	int i;
- 
--	regs = kzalloc_node(sizeof(struct intel_shared_regs),
--			    GFP_KERNEL, cpu_to_node(cpu));
-+	if (regs)
-+		memset(regs, 0, sizeof(struct intel_shared_regs));
-+	else
-+		regs = *pregs = kzalloc_node(sizeof(struct intel_shared_regs),
-+					     GFP_KERNEL, cpu_to_node(cpu));
- 	if (regs) {
- 		/*
- 		 * initialize the locks to keep lockdep happy
-@@ -3414,20 +3417,21 @@ struct intel_shared_regs *allocate_shared_regs(int cpu)
- 
- 		regs->core_id = -1;
- 	}
--	return regs;
- }
- 
--static struct intel_excl_cntrs *allocate_excl_cntrs(int cpu)
-+static void allocate_excl_cntrs(struct intel_excl_cntrs **pc, int cpu)
- {
--	struct intel_excl_cntrs *c;
-+	struct intel_excl_cntrs *c = *pc;
- 
--	c = kzalloc_node(sizeof(struct intel_excl_cntrs),
--			 GFP_KERNEL, cpu_to_node(cpu));
-+	if (c)
-+		memset(c, 0, sizeof(struct intel_excl_cntrs));
-+	else
-+		c = *pc = kzalloc_node(sizeof(struct intel_excl_cntrs),
-+				       GFP_KERNEL, cpu_to_node(cpu));
- 	if (c) {
- 		raw_spin_lock_init(&c->lock);
- 		c->core_id = -1;
- 	}
--	return c;
- }
- 
- static int intel_pmu_cpu_prepare(int cpu)
-@@ -3435,7 +3439,7 @@ static int intel_pmu_cpu_prepare(int cpu)
- 	struct cpu_hw_events *cpuc = &per_cpu(cpu_hw_events, cpu);
- 
- 	if (x86_pmu.extra_regs || x86_pmu.lbr_sel_map) {
--		cpuc->shared_regs = allocate_shared_regs(cpu);
-+		allocate_shared_regs(&cpuc->shared_regs, cpu);
- 		if (!cpuc->shared_regs)
- 			goto err;
- 	}
-@@ -3443,11 +3447,14 @@ static int intel_pmu_cpu_prepare(int cpu)
- 	if (x86_pmu.flags & PMU_FL_EXCL_CNTRS) {
- 		size_t sz = X86_PMC_IDX_MAX * sizeof(struct event_constraint);
- 
--		cpuc->constraint_list = kzalloc(sz, GFP_KERNEL);
-+		if (cpuc->constraint_list)
-+			memset(cpuc->constraint_list, 0, sz);
-+		else
-+			cpuc->constraint_list = kzalloc(sz, GFP_KERNEL);
- 		if (!cpuc->constraint_list)
- 			goto err_shared_regs;
- 
--		cpuc->excl_cntrs = allocate_excl_cntrs(cpu);
-+		allocate_excl_cntrs(&cpuc->excl_cntrs, cpu);
- 		if (!cpuc->excl_cntrs)
- 			goto err_constraint_list;
- 
-@@ -3559,18 +3566,6 @@ static void free_excl_cntrs(int cpu)
- 
- static void intel_pmu_cpu_dying(int cpu)
- {
--	struct cpu_hw_events *cpuc = &per_cpu(cpu_hw_events, cpu);
--	struct intel_shared_regs *pc;
--
--	pc = cpuc->shared_regs;
--	if (pc) {
--		if (pc->core_id == -1 || --pc->refcnt == 0)
--			kfree(pc);
--		cpuc->shared_regs = NULL;
--	}
--
--	free_excl_cntrs(cpu);
--
- 	fini_debug_store_on_cpu(cpu);
- 
- 	if (x86_pmu.counter_freezing)
-diff --git a/arch/x86/events/perf_event.h b/arch/x86/events/perf_event.h
-index 78d7b70..967bdb6 100644
---- a/arch/x86/events/perf_event.h
-+++ b/arch/x86/events/perf_event.h
-@@ -877,7 +877,7 @@ struct event_constraint *
- x86_get_event_constraints(struct cpu_hw_events *cpuc, int idx,
- 			  struct perf_event *event);
- 
--struct intel_shared_regs *allocate_shared_regs(int cpu);
-+void allocate_shared_regs(struct intel_shared_regs **pregs, int cpu);
- 
- int intel_pmu_init(void);
- 
-@@ -1013,9 +1013,8 @@ static inline int intel_pmu_init(void)
- 	return 0;
- }
- 
--static inline struct intel_shared_regs *allocate_shared_regs(int cpu)
-+static inline void allocate_shared_regs(struct intel_shared_regs **pregs, int cpu)
- {
--	return NULL;
- }
- 
- static inline int is_ht_workaround_enabled(void)
--- 
-2.7.4
+>
+>>> Couldn't we just get rid of that kfree() or move it somewhere else?
+>>> I mean if the free() memory on CPU-down and allocate it again CPU-up
+>>> then we could skip that, rigth? Just allocate it and don't free it
+>>> because the CPU will likely get up again.
+>> For call trace 1:
+>>
+>> I went through the CPU hotplug code and found that the allocation of the
+>> problematic data, cpuc->shared_regs, is done in intel_pmu_cpu_prepare. And
+>> the free is done in intel_pmu_cpu_dying. They are handlers triggered by two
+>> different perf events.
+>>
+>> It seems we can hardly form a convincing method that holds the data while
+>> CPUs are off and then uses it again. raw locks would be easy and good enough.
+> Why not allocate the memory in intel_pmu_cpu_prepare() if it is not
+> already there (otherwise skip the allocation) and in
+> intel_pmu_cpu_dying() not free it. It looks easy.
+
+Thanks for your suggestion. I've sent the change for call trace 1 to mainline
+mailing list. Hopefully it can be accepted.
+
+Zhe
+
+>
+>> Thanks,
+>> Zhe
+> Sebastian
+>
