@@ -1,7 +1,7 @@
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH 5/7] tracing: Use hist trigger's var_ref array to destroy var_refs
-Date: Tue, 18 Dec 2018 14:33:24 -0600
-Message-ID: <fad1a164f0e257c158e70d6eadbf6c586e04b2a2.1545161087.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 6/7] tracing: Remove hist trigger synth_var_refs
+Date: Tue, 18 Dec 2018 14:33:25 -0600
+Message-ID: <b4d3470526b8f0426dcec125399dad9ad9b8589d.1545161087.git.tom.zanussi@linux.intel.com>
 References: <cover.1545161087.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,70 +18,64 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-Since every var ref for a trigger has an entry in the var_ref[] array,
-use that to destroy the var_refs, instead of piecemeal via the field
-expressions.
-
-This allows us to avoid having to keep and treat differently separate
-lists for the action-related references, which future patches will
-remove.
+All var_refs are now handled uniformly and there's no reason to treat
+the synth_refs in a special way now, so remove them and associated
+functions.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 24 +++++++++++++++++++-----
- 1 file changed, 19 insertions(+), 5 deletions(-)
+ kernel/trace/trace_events_hist.c | 18 ------------------
+ 1 file changed, 18 deletions(-)
 
 diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 9d4cf7a8a95b..725d22f5372f 100644
+index 725d22f5372f..e66dd764e057 100644
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -2193,6 +2193,15 @@ static int contains_operator(char *str)
- 	return field_op;
+@@ -279,8 +279,6 @@ struct hist_trigger_data {
+ 	struct action_data		*actions[HIST_ACTIONS_MAX];
+ 	unsigned int			n_actions;
+ 
+-	struct hist_field               *synth_var_refs[SYNTH_FIELDS_MAX];
+-	unsigned int                    n_synth_var_refs;
+ 	struct field_var		*field_vars[SYNTH_FIELDS_MAX];
+ 	unsigned int			n_field_vars;
+ 	unsigned int			n_field_var_str;
+@@ -3602,20 +3600,6 @@ static void save_field_var(struct hist_trigger_data *hist_data,
  }
  
-+static void __destroy_hist_field(struct hist_field *hist_field)
-+{
-+	kfree(hist_field->var.name);
-+	kfree(hist_field->name);
-+	kfree(hist_field->type);
-+
-+	kfree(hist_field);
-+}
-+
- static void destroy_hist_field(struct hist_field *hist_field,
- 			       unsigned int level)
- {
-@@ -2204,14 +2213,13 @@ static void destroy_hist_field(struct hist_field *hist_field,
- 	if (!hist_field)
- 		return;
  
-+	if (hist_field->flags & HIST_FIELD_FL_VAR_REF)
-+		return; /* var refs will be destroyed separately */
-+
- 	for (i = 0; i < HIST_FIELD_OPERANDS_MAX; i++)
- 		destroy_hist_field(hist_field->operands[i], level + 1);
- 
--	kfree(hist_field->var.name);
--	kfree(hist_field->name);
--	kfree(hist_field->type);
+-static void destroy_synth_var_refs(struct hist_trigger_data *hist_data)
+-{
+-	unsigned int i;
 -
--	kfree(hist_field);
-+	__destroy_hist_field(hist_field);
- }
+-	for (i = 0; i < hist_data->n_synth_var_refs; i++)
+-		destroy_hist_field(hist_data->synth_var_refs[i], 0);
+-}
+-
+-static void save_synth_var_ref(struct hist_trigger_data *hist_data,
+-			 struct hist_field *var_ref)
+-{
+-	hist_data->synth_var_refs[hist_data->n_synth_var_refs++] = var_ref;
+-}
+-
+ static int check_synth_field(struct synth_event *event,
+ 			     struct hist_field *hist_field,
+ 			     unsigned int field_pos)
+@@ -3775,7 +3759,6 @@ static int onmatch_create(struct hist_trigger_data *hist_data,
+ 				goto err;
+ 			}
  
- static struct hist_field *create_hist_field(struct hist_trigger_data *hist_data,
-@@ -2338,6 +2346,12 @@ static void destroy_hist_fields(struct hist_trigger_data *hist_data)
- 			hist_data->fields[i] = NULL;
- 		}
- 	}
-+
-+	for (i = 0; i < hist_data->n_var_refs; i++) {
-+		WARN_ON(!(hist_data->var_refs[i]->flags & HIST_FIELD_FL_VAR_REF));
-+		__destroy_hist_field(hist_data->var_refs[i]);
-+		hist_data->var_refs[i] = NULL;
-+	}
- }
+-			save_synth_var_ref(hist_data, var_ref);
+ 			field_pos++;
+ 			kfree(p);
+ 			continue;
+@@ -4519,7 +4502,6 @@ static void destroy_hist_data(struct hist_trigger_data *hist_data)
+ 	destroy_actions(hist_data);
+ 	destroy_field_vars(hist_data);
+ 	destroy_field_var_hists(hist_data);
+-	destroy_synth_var_refs(hist_data);
  
- static int init_var_ref(struct hist_field *ref_field,
+ 	kfree(hist_data);
+ }
 -- 
 2.14.1
