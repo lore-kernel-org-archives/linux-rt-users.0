@@ -1,7 +1,7 @@
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH v9 12/15] tracing: Add hist trigger snapshot() action test case
-Date: Tue, 18 Dec 2018 14:34:11 -0600
-Message-ID: <70170085e7c70124530d42d8ae40a80544235269.1545161056.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v9 08/15] tracing: Add hist trigger onchange() handler
+Date: Tue, 18 Dec 2018 14:34:07 -0600
+Message-ID: <46a49a9a173e5ed687e4ea236b372e1739d94dd9.1545161056.git.tom.zanussi@linux.intel.com>
 References: <cover.1545161056.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,63 +18,209 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-Add a test case verifying the basic functionality of the
-hist:snapshot() action.
+Add support for a hist:onchange($var) handler, similar to the onmax()
+handler but triggering whenever there's any change in $var, not just a
+max.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- .../inter-event/trigger-snapshot-action-hist.tc    | 43 ++++++++++++++++++++++
- 1 file changed, 43 insertions(+)
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
+ kernel/trace/trace.c             |  3 ++-
+ kernel/trace/trace_events_hist.c | 58 ++++++++++++++++++++++++++++++++++------
+ 2 files changed, 52 insertions(+), 9 deletions(-)
 
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
-new file mode 100644
-index 000000000000..18fff69fc433
---- /dev/null
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
-@@ -0,0 +1,43 @@
-+#!/bin/sh
-+# SPDX-License-Identifier: GPL-2.0
-+# description: event trigger - test inter-event histogram trigger snapshot action
+diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
+index 824e43e51c3b..f3f54b268b5a 100644
+--- a/kernel/trace/trace.c
++++ b/kernel/trace/trace.c
+@@ -4894,7 +4894,8 @@ static const char readme_msg[] =
+ 	"\t        <handler>.<action>\n\n"
+ 	"\t    The available handlers are:\n\n"
+ 	"\t        onmatch(matching.event)  - invoke on addition or update\n"
+-	"\t        onmax(var)               - invoke if var exceeds current max\n\n"
++	"\t        onmax(var)               - invoke if var exceeds current max\n"
++	"\t        onchange(var)            - invoke action if var changes\n\n"
+ 	"\t    The available actions are:\n\n"
+ 	"\t        <synthetic_event>(param list)        - generate synthetic event\n"
+ 	"\t        save(field,...)                      - save current event fields\n"
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index e88dc8246e30..5203c4809c9d 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -398,6 +398,7 @@ typedef u64 (*get_track_val_fn_t) (struct hist_trigger_data *hist_data,
+ enum handler_id {
+ 	HANDLER_ONMATCH = 1,
+ 	HANDLER_ONMAX,
++	HANDLER_ONCHANGE,
+ };
+ 
+ enum action_id {
+@@ -2000,7 +2001,8 @@ static int parse_action(char *str, struct hist_trigger_attrs *attrs)
+ 		return ret;
+ 
+ 	if ((strncmp(str, "onmatch(", sizeof("onmatch(") - 1) == 0) ||
+-	    (strncmp(str, "onmax(", sizeof("onmax(") - 1) == 0)) {
++	    (strncmp(str, "onmax(", sizeof("onmax(") - 1) == 0) ||
++	    (strncmp(str, "onchange(", sizeof("onchange(") - 1) == 0)) {
+ 		attrs->action_str[attrs->n_actions] = kstrdup(str, GFP_KERNEL);
+ 		if (!attrs->action_str[attrs->n_actions]) {
+ 			ret = -ENOMEM;
+@@ -3492,6 +3494,14 @@ static bool check_track_val_max(u64 track_val, u64 var_val)
+ 	return true;
+ }
+ 
++static bool check_track_val_changed(u64 track_val, u64 var_val)
++{
++	if (var_val == track_val)
++		return false;
 +
-+fail() { #msg
-+    echo $1
-+    exit_fail
++	return true;
 +}
 +
-+if [ ! -f set_event ]; then
-+    echo "event tracing is not supported"
-+    exit_unsupported
-+fi
+ static u64 get_track_val_local(struct hist_trigger_data *hist_data,
+ 			       struct tracing_map_elt *elt,
+ 			       struct action_data *data)
+@@ -3668,6 +3678,8 @@ static void track_data_print(struct seq_file *m,
+ 
+ 	if (data->handler == HANDLER_ONMAX)
+ 		seq_printf(m, "\n\tmax: %10llu", track_val);
++	else if (data->handler == HANDLER_ONCHANGE)
++		seq_printf(m, "\n\tchanged: %10llu", track_val);
+ 
+ 	if (data->action == ACTION_SNAPSHOT)
+ 		return;
+@@ -3754,14 +3766,14 @@ static int track_data_create(struct hist_trigger_data *hist_data,
+ 
+ 	track_data_var_str = data->track_data.var_str;
+ 	if (track_data_var_str[0] != '$') {
+-		hist_err("For onmax(x), x must be a variable: ", track_data_var_str);
++		hist_err("For onmax(x) or onchange(x), x must be a variable: ", track_data_var_str);
+ 		return -EINVAL;
+ 	}
+ 	track_data_var_str++;
+ 
+ 	var_field = find_target_event_var(hist_data, NULL, NULL, track_data_var_str);
+ 	if (!var_field) {
+-		hist_err("Couldn't find onmax variable: ", track_data_var_str);
++		hist_err("Couldn't find onmax or onchange variable: ", track_data_var_str);
+ 		return -EINVAL;
+ 	}
+ 
+@@ -3778,6 +3790,14 @@ static int track_data_create(struct hist_trigger_data *hist_data,
+ 		ret = PTR_ERR(track_var);
+ 		goto out;
+ 	}
 +
-+if [ ! -f snapshot ]; then
-+    echo "snapshot is not supported"
-+    exit_unsupported
-+fi
++	if (data->handler == HANDLER_ONCHANGE)
++		track_var = create_var(hist_data, file, "__change", sizeof(u64), "u64");
++	if (IS_ERR(track_var)) {
++		hist_err("Couldn't create onchange variable: ", "__change");
++		ret = PTR_ERR(track_var);
++		goto out;
++	}
+ 	data->track_data.track_var = track_var;
+ 
+ 	ret = action_create(hist_data, data);
+@@ -3857,6 +3877,8 @@ static int action_parse(char *str, struct action_data *data,
+ 
+ 		if (handler == HANDLER_ONMAX)
+ 			data->track_data.check_val = check_track_val_max;
++		else if (handler == HANDLER_ONCHANGE)
++			data->track_data.check_val = check_track_val_changed;
+ 		else {
+ 			hist_err("action parsing: Handler doesn't support action: ", action_name);
+ 			ret = -EINVAL;
+@@ -3881,6 +3903,8 @@ static int action_parse(char *str, struct action_data *data,
+ 
+ 		if (handler == HANDLER_ONMAX)
+ 			data->track_data.check_val = check_track_val_max;
++		else if (handler == HANDLER_ONCHANGE)
++			data->track_data.check_val = check_track_val_changed;
+ 		else {
+ 			hist_err("action parsing: Handler doesn't support action: ", action_name);
+ 			ret = -EINVAL;
+@@ -3904,6 +3928,8 @@ static int action_parse(char *str, struct action_data *data,
+ 
+ 		if (handler == HANDLER_ONMAX)
+ 			data->track_data.check_val = check_track_val_max;
++		else if (handler == HANDLER_ONCHANGE)
++			data->track_data.check_val = check_track_val_changed;
+ 
+ 		if (handler != HANDLER_ONMATCH) {
+ 			data->track_data.save_val = save_track_val_local;
+@@ -4747,7 +4773,8 @@ static void destroy_actions(struct hist_trigger_data *hist_data)
+ 
+ 		if (data->handler == HANDLER_ONMATCH)
+ 			onmatch_destroy(data);
+-		else if (data->handler == HANDLER_ONMAX)
++		else if (data->handler == HANDLER_ONMAX ||
++			 data->handler == HANDLER_ONCHANGE)
+ 			track_data_destroy(hist_data, data);
+ 		else
+ 			kfree(data);
+@@ -4782,6 +4809,15 @@ static int parse_actions(struct hist_trigger_data *hist_data)
+ 				ret = PTR_ERR(data);
+ 				break;
+ 			}
++		} else if (strncmp(str, "onchange(", sizeof("onchange(") - 1) == 0) {
++			char *action_str = str + sizeof("onchange(") - 1;
 +
-+grep -q "onchange(var)" README || exit_unsupported # version issue
-+
-+grep -q "snapshot()" README || exit_unsupported # version issue
-+
-+echo "Test snapshot action"
-+
-+echo 1 > /sys/kernel/debug/tracing/events/sched/enable
-+
-+echo 'hist:keys=comm:newprio=prio:onchange($newprio).save(comm,prio):onchange($newprio).snapshot() if comm=="ping"' >> /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
-+
-+ping $LOCALHOST -c 3
-+nice -n 1 ping $LOCALHOST -c 3
-+
-+echo 0 > tracing_on
-+
-+if ! grep -q "changed:" events/sched/sched_waking/hist; then
-+    fail "Failed to create onchange action inter-event histogram"
-+fi
-+
-+if ! grep -q "comm=ping" snapshot; then
-+    fail "Failed to create snapshot action inter-event histogram"
-+fi
-+
-+exit 0
++			data = track_data_parse(hist_data, action_str,
++						HANDLER_ONCHANGE);
++			if (IS_ERR(data)) {
++				ret = PTR_ERR(data);
++				break;
++			}
+ 		} else {
+ 			ret = -EINVAL;
+ 			break;
+@@ -4806,7 +4842,8 @@ static int create_actions(struct hist_trigger_data *hist_data)
+ 			ret = onmatch_create(hist_data, data);
+ 			if (ret)
+ 				break;
+-		} else if (data->handler == HANDLER_ONMAX) {
++		} else if (data->handler == HANDLER_ONMAX ||
++			   data->handler == HANDLER_ONCHANGE) {
+ 			ret = track_data_create(hist_data, data);
+ 			if (ret)
+ 				break;
+@@ -4834,7 +4871,8 @@ static void print_actions(struct seq_file *m,
+ 			continue;
+ 		}
+ 
+-		if (data->handler == HANDLER_ONMAX)
++		if (data->handler == HANDLER_ONMAX ||
++		    data->handler == HANDLER_ONCHANGE)
+ 			track_data_print(m, hist_data, elt, data);
+ 	}
+ }
+@@ -4866,6 +4904,8 @@ static void print_track_data_spec(struct seq_file *m,
+ {
+ 	if (data->handler == HANDLER_ONMAX)
+ 		seq_puts(m, ":onmax(");
++	else if (data->handler == HANDLER_ONCHANGE)
++		seq_puts(m, ":onchange(");
+ 	seq_printf(m, "%s", data->track_data.var_str);
+ 	seq_printf(m, ").%s(", data->action_name);
+ 
+@@ -4923,7 +4963,8 @@ static bool actions_match(struct hist_trigger_data *hist_data,
+ 			if (strcmp(data->match_data.event,
+ 				   data_test->match_data.event) != 0)
+ 				return false;
+-		} else if (data->handler == HANDLER_ONMAX) {
++		} else if (data->handler == HANDLER_ONMAX ||
++			   data->handler == HANDLER_ONCHANGE) {
+ 			if (strcmp(data->track_data.var_str,
+ 				   data_test->track_data.var_str) != 0)
+ 				return false;
+@@ -4944,7 +4985,8 @@ static void print_actions_spec(struct seq_file *m,
+ 
+ 		if (data->handler == HANDLER_ONMATCH)
+ 			print_onmatch_spec(m, hist_data, data);
+-		else if (data->handler == HANDLER_ONMAX)
++		else if (data->handler == HANDLER_ONMAX ||
++			 data->handler == HANDLER_ONCHANGE)
+ 			print_track_data_spec(m, hist_data, data);
+ 	}
+ }
 -- 
 2.14.1
