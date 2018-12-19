@@ -1,45 +1,28 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ANNOUNCE] 4.14.87-rt49
-Date: Tue, 18 Dec 2018 17:14:12 -0500
-Message-ID: <20181218171412.548dab13@gandalf.local.home>
-References: <20181218154034.612d729d@gandalf.local.home>
-        <20181218220836.y5tfo6qyuf3674vj@linutronix.de>
+From: Schrempf Frieder <frieder.schrempf@kontron.de>
+Subject: Re: RT-Kernel boot stalls because of change in fs/dcache.c
+Date: Wed, 19 Dec 2018 07:50:17 +0000
+Message-ID: <4aa4a0f1-373f-4978-42b1-6b676d6f1950@kontron.de>
+References: <cfff1645-aab1-7b39-5f75-31b94f3365d1@kontron.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Julia Cartwright <julia@ni.com>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181218220836.y5tfo6qyuf3674vj@linutronix.de>
+In-Reply-To: <cfff1645-aab1-7b39-5f75-31b94f3365d1@kontron.de>
+Content-Language: en-US
+Content-ID: <E1FA4A9911B66D41B1A43A6085DE32D1@snt-world.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 18 Dec 2018 23:08:36 +0100
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
-
-> On 2018-12-18 15:40:34 [-0500], Steven Rostedt wrote:
-> > 
-> > Dear RT Folks,
-> > 
-> > I'm pleased to announce the 4.14.87-rt49 stable release.  
-> 
-> This contains also commit
->   e8499ab5b93ac ("x86/fpu: Disable bottom halves while loading FPU registers")
-> 
-> which means you need commit
->   [PATCH] x86/fpu: Disable preemption around local_bh_disable()
->   https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git/plain/patches/x86-fpu-Disable-preemption-around-local_bh_disable.patch?h=linux-4.19.y-rt-patches
-> 
-
-I plan on doing a backport soon. My tests didn't bomb without this
-patch :-) so i released this stable. But this just shows I need to do a
-backport of your updates ASAP.
-
--- Steve
+KyBsaW51eC1ydC11c2Vycw0KDQpPbiAxNy4xMi4xOCAxMTo0MiwgRnJpZWRlciBTY2hyZW1wZiB3
+cm90ZToNCj4gSGksDQo+IA0KPiBJIGhhdmUgdHJpZWQgdG8gYm9vdCBhIDQuMTQtS2VybmVsIHdp
+dGggdGhlIFJULXBhdGNoZXMgYW5kIA0KPiBQUkVFTVBUX1JUX0ZVTEwgb24gYW4gaS5NWDZVTCBi
+b2FyZC4gVW5mb3J0dW5hdGVseSB0aGUgYm9vdCBzdGFsbHMgYXQgDQo+IHNvbWUgcG9pbnQgYW5k
+IG5ldmVyIGZpbmlzaGVzLg0KPiANCj4gSSBkaWQgc29tZSBiaXNlY3RpbmcgYW5kIGZvdW5kIG91
+dCwgdGhhdCByZXZlcnRpbmcgdGhpcyBjaGFuZ2U6IFsxXSwgDQo+IG1ha2VzIHRoZSBib2FyZCBi
+b290IGNvcnJlY3RseS4NCj4gDQo+IENhbiBhbnlvbmUgaGVscCB0byBjb21lIHVwIHdpdGggYSBw
+cm9wZXIgZml4IGZvciB0aGlzPw0KPiANCj4gVGhhbmtzLA0KPiBGcmllZGVyDQo+IA0KPiBbMV06
+IA0KPiBodHRwczovL2dpdC5rZXJuZWwub3JnL3B1Yi9zY20vbGludXgva2VybmVsL2dpdC9ydC9s
+aW51eC1zdGFibGUtcnQuZ2l0L2NvbW1pdC8/aD12NC4xNC1ydCZpZD01NjY4NGQyMWY3ZjgzNDFm
+N2E1ZWQxNDMzNzE0MTEyZjQ5Mjk0NTkwIA0KPiA=
