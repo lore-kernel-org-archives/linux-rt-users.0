@@ -1,59 +1,106 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 3/7] tracing: Use var_refs[] for hist trigger reference
- checking
-Date: Wed, 19 Dec 2018 10:36:47 -0500
-Message-ID: <20181219103647.18c61a6a@gandalf.local.home>
-References: <cover.1545161087.git.tom.zanussi@linux.intel.com>
-        <becb9627fb09681960f26809961b832be9591048.1545161087.git.tom.zanussi@linux.intel.com>
-        <20181219212224.968ee0ad61aada5a8a3f634f@kernel.org>
-        <1545231703.4491.2.camel@kernel.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH] perf/x86/intel: Delay memory deallocation until
+ x86_pmu_dead_cpu()
+Date: Wed, 19 Dec 2018 17:53:50 +0100
+Message-ID: <20181219165350.6s3jvyxbibpvlhtq@linutronix.de>
+References: <1545129033-21757-1-git-send-email-zhe.he@windriver.com>
+ <20181218110209.GD15430@hirez.programming.kicks-ass.net>
+ <20181218111637.b53u5pi3nxnyldaq@linutronix.de>
+ <20181218113119.GG15430@hirez.programming.kicks-ass.net>
+ <20181218113700.GC16284@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Masami Hiramatsu <mhiramat@kernel.org>, tglx@linutronix.de,
-        namhyung@kernel.org, vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
-        julia@ni.com, linux-kernel@vger.kernel.org,
+Content-Type: text/plain; charset=utf-8
+Cc: zhe.he@windriver.com, acme@kernel.org, ak@linux.intel.com,
+        alexander.shishkin@linux.intel.com, bp@alien8.de, hpa@zytor.com,
+        jolsa@kernel.org, jolsa@redhat.com, kan.liang@linux.intel.com,
+        mingo@redhat.com, namhyung@kernel.org, tglx@linutronix.de,
+        x86@kernel.org, linux-kernel@vger.kernel.org,
         linux-rt-users@vger.kernel.org
-To: Tom Zanussi <zanussi@kernel.org>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1545231703.4491.2.camel@kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20181218113700.GC16284@hirez.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 19 Dec 2018 09:01:43 -0600
-Tom Zanussi <zanussi@kernel.org> wrote:
+From: Peter Zijlstra <peterz@infradead.org>
 
-> > > +	if (hist_field && hist_field->var.idx == var_idx &&
-> > > +	    hist_field->var.hist_data == var_data)
-> > > +		found = hist_field;
-> > >  
-> > >  	return found;  
-> > 
-> > It seems we don't need "found" var here. Just return hist_field or
-> > NULL.
-> >   
-> 
-> OK, will change these and resubmit shortly.
+intel_pmu_cpu_prepare() allocated memory for ->shared_regs among other
+members of struct cpu_hw_events. This memory is released in
+intel_pmu_cpu_dying() which is wrong. The counterpart of the
+intel_pmu_cpu_prepare() callback is x86_pmu_dead_cpu().
 
-Tom,
+Otherwise if the CPU fails on the UP path between CPUHP_PERF_X86_PREPARE
+and CPUHP_AP_PERF_X86_STARTING then it won't release the memory but
+allocate new memory on the next attempt to online the CPU (leaking the
+old memory).
+Also, if the CPU down path fails between CPUHP_AP_PERF_X86_STARTING and
+CPUHP_PERF_X86_PREPARE then the CPU will go back online but never
+allocate the memory that was released in x86_pmu_dying_cpu().
 
-If this is the only patch in the series that needs updating, can you
-just reply to this patch with the v2 of 3/7? That is have a subject of:
+Make the memory allocation/free symmetrical in regard to the CPU hotplug
+notifier by moving the deallocation to intel_pmu_cpu_dead().
 
-[PATCH v2 3/7] tracing: Use var_refs[] for hist trigger reference checking
+This started in commit
+   a7e3ed1e47011 ("perf: Add support for supplementary event registers").
 
-and reply to the [PATCH 3/7]
+Cc: stable@vger.kernel.org
+Reported-by: He Zhe <zhe.he@windriver.com>
+Fixes: a7e3ed1e47011 ("perf: Add support for supplementary event registers").
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+[bigeasy: patch description]
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ arch/x86/events/intel/core.c | 16 +++++++++++-----
+ 1 file changed, 11 insertions(+), 5 deletions(-)
 
-
-This isn't the normal way of updates, but I want to start taking this
-patches in ASAP, and I figured this may be the easiest for both of us.
-
-It's fine to send a v2 of the entire patch series (which other
-maintainers require), so I'll leave it up to you.
-
-If there's any other patch that needs changing, then a full v2 series
-is required. But if this is the only change and you want to send just
-this patch, then I'll take that as well.
-
--- Steve
+diff --git a/arch/x86/events/intel/core.c b/arch/x86/events/intel/core.c
+index ecc3e34ca955f..90b6718ff861d 100644
+--- a/arch/x86/events/intel/core.c
++++ b/arch/x86/events/intel/core.c
+@@ -3558,6 +3558,14 @@ static void free_excl_cntrs(int cpu)
+ }
+ 
+ static void intel_pmu_cpu_dying(int cpu)
++{
++	fini_debug_store_on_cpu(cpu);
++
++	if (x86_pmu.counter_freezing)
++		disable_counter_freeze();
++}
++
++static void intel_pmu_cpu_dead(int cpu)
+ {
+ 	struct cpu_hw_events *cpuc = &per_cpu(cpu_hw_events, cpu);
+ 	struct intel_shared_regs *pc;
+@@ -3570,11 +3578,6 @@ static void intel_pmu_cpu_dying(int cpu)
+ 	}
+ 
+ 	free_excl_cntrs(cpu);
+-
+-	fini_debug_store_on_cpu(cpu);
+-
+-	if (x86_pmu.counter_freezing)
+-		disable_counter_freeze();
+ }
+ 
+ static void intel_pmu_sched_task(struct perf_event_context *ctx,
+@@ -3663,6 +3666,7 @@ static __initconst const struct x86_pmu core_pmu = {
+ 	.cpu_prepare		= intel_pmu_cpu_prepare,
+ 	.cpu_starting		= intel_pmu_cpu_starting,
+ 	.cpu_dying		= intel_pmu_cpu_dying,
++	.cpu_dead		= intel_pmu_cpu_dead,
+ };
+ 
+ static struct attribute *intel_pmu_attrs[];
+@@ -3703,6 +3707,8 @@ static __initconst const struct x86_pmu intel_pmu = {
+ 	.cpu_prepare		= intel_pmu_cpu_prepare,
+ 	.cpu_starting		= intel_pmu_cpu_starting,
+ 	.cpu_dying		= intel_pmu_cpu_dying,
++	.cpu_dead		= intel_pmu_cpu_dead,
++
+ 	.guest_get_msrs		= intel_guest_get_msrs,
+ 	.sched_task		= intel_pmu_sched_task,
+ };
+-- 
+2.20.1
