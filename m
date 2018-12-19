@@ -1,47 +1,46 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from Galois.linutronix.de ([146.0.238.70]:47100 "EHLO
+Received: from Galois.linutronix.de ([146.0.238.70]:58442 "EHLO
         Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727428AbeLMQS1 (ORCPT
+        with ESMTP id S1725294AbeLSLcy (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 13 Dec 2018 11:18:27 -0500
-Date: Thu, 13 Dec 2018 17:18:24 +0100
+        Wed, 19 Dec 2018 06:32:54 -0500
+Date: Wed, 19 Dec 2018 12:32:51 +0100
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: outliers when measuring boost msqueues latency v4.14.79-rt47
- RT-Preempt
-Message-ID: <20181213161824.nuookwzlmgshz4vq@linutronix.de>
-References: <VI1PR06MB44627C92EA94534421191FEBCEA90@VI1PR06MB4462.eurprd06.prod.outlook.com>
- <20181207114450.pypgcipls27f3izw@linutronix.de>
- <AM0PR06MB445132FA3FB5915AFB3A736ECEAA0@AM0PR06MB4451.eurprd06.prod.outlook.com>
- <20181210140828.ytut6wktdjsbopze@linutronix.de>
- <VI1PR06MB4462D090E47B81C7B207D152CEA50@VI1PR06MB4462.eurprd06.prod.outlook.com>
- <VI1PR06MB4462F8F06850961618D318C1CEA60@VI1PR06MB4462.eurprd06.prod.outlook.com>
+Subject: [PATCH RT] drm/i915: skip DRM_I915_LOW_LEVEL_TRACEPOINTS with NOTRACE
+Message-ID: <20181219113251.c4di2rlnet6ibm36@linutronix.de>
+References: <CAJfkoWpnXJtTo2qkX2UkNeWX6Q7f2=g=sryi2HY1YZRtjSBVcg@mail.gmail.com>
+ <20181206091008.62d7cwuwhxrx3s3b@linutronix.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <VI1PR06MB4462F8F06850961618D318C1CEA60@VI1PR06MB4462.eurprd06.prod.outlook.com>
+In-Reply-To: <20181206091008.62d7cwuwhxrx3s3b@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: Andreas Hoefler <andreas.hoefler@ch.abb.com>
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
+Cc: linux-rt-users@vger.kernel.org, Luca Abeni <lucabe72@gmail.com>
 
-On 2018-12-11 08:28:12 [+0000], Andreas Hoefler wrote:
-> Hi all
-Him
+The order of the header files is important. If this header file is
+included after tracepoint.h was included then the NOTRACE here becomes a
+nop. Currently this happens for two .c files which use the tracepoitns
+behind DRM_I915_LOW_LEVEL_TRACEPOINTS.
 
-> I finally found the root cause of my problem! What made me very suspicious was the fact, that the spikes occur pretty much exactly after 950ms each time. 
-> It turns out that throttling was activated having sched_rt_runtime_us set to 950000. Switching it to -1 and everything runs just fine!
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ drivers/gpu/drm/i915/i915_trace.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Be aware that once a RT task forgets to go to sleep, it may lockup /
-starve the whole system.
-
-> Just out of curiosity: in case the throttling kicks in, are all the rt task just in a suspended state?
-
-All RT tasks. This includes threaded interrupts which usually run at
-FIFO 50.
-
-> Again thanx to Sebastian for helping me out here!
-> 
-> BR
-> Andy
-
-Sebastian
+diff --git a/drivers/gpu/drm/i915/i915_trace.h b/drivers/gpu/drm/i915/i915_trace.h
+index cc54ec0ef75c1..33028d8f470e5 100644
+--- a/drivers/gpu/drm/i915/i915_trace.h
++++ b/drivers/gpu/drm/i915/i915_trace.h
+@@ -683,7 +683,7 @@ DEFINE_EVENT(i915_request, i915_request_add,
+ 	    TP_ARGS(rq)
+ );
+ 
+-#if defined(CONFIG_DRM_I915_LOW_LEVEL_TRACEPOINTS)
++#if defined(CONFIG_DRM_I915_LOW_LEVEL_TRACEPOINTS) && !defined(NOTRACE)
+ DEFINE_EVENT(i915_request, i915_request_submit,
+ 	     TP_PROTO(struct i915_request *rq),
+ 	     TP_ARGS(rq)
+-- 
+2.20.1
