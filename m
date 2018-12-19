@@ -1,42 +1,60 @@
-From: Schrempf Frieder <frieder.schrempf@kontron.de>
-Subject: Re: RT-Kernel boot stalls because of change in fs/dcache.c
-Date: Wed, 19 Dec 2018 13:46:34 +0000
-Message-ID: <d9448930-e466-864a-41ce-08bf4588d0d1@kontron.de>
-References: <cfff1645-aab1-7b39-5f75-31b94f3365d1@kontron.de>
- <4aa4a0f1-373f-4978-42b1-6b676d6f1950@kontron.de>
- <20181219113650.ak3wj3h3oapfy3tj@linutronix.de>
+From: Tom Zanussi <zanussi@kernel.org>
+Subject: Re: [PATCH 0/7] tracing: Hist trigger var-ref cleanup and comments
+Date: Wed, 19 Dec 2018 09:00:08 -0600
+Message-ID: <1545231608.4491.0.camel@kernel.org>
+References: <cover.1545161087.git.tom.zanussi@linux.intel.com>
+         <20181219114517.GA19177@danjae.aot.lge.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
+        vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
+        julia@ni.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org, kernel-team@lge.com
+To: Namhyung Kim <namhyung@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181219113650.ak3wj3h3oapfy3tj@linutronix.de>
-Content-Language: en-US
-Content-ID: <86BED2A03AFBD14C825E6D010706EF2E@snt-world.com>
+In-Reply-To: <20181219114517.GA19177@danjae.aot.lge.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-SGkgU2ViYXN0aWFuLA0KDQpPbiAxOS4xMi4xOCAxMjozNiwgU2ViYXN0aWFuIEFuZHJ6ZWogU2ll
-d2lvciB3cm90ZToNCj4gT24gMjAxOC0xMi0xOSAwNzo1MDoxNyBbKzAwMDBdLCBTY2hyZW1wZiBG
-cmllZGVyIHdyb3RlOg0KPj4gKyBsaW51eC1ydC11c2Vycw0KPj4NCj4+IE9uIDE3LjEyLjE4IDEx
-OjQyLCBGcmllZGVyIFNjaHJlbXBmIHdyb3RlOg0KPj4+IEhpLA0KPj4+DQo+Pj4gSSBoYXZlIHRy
-aWVkIHRvIGJvb3QgYSA0LjE0LUtlcm5lbCB3aXRoIHRoZSBSVC1wYXRjaGVzIGFuZA0KPj4+IFBS
-RUVNUFRfUlRfRlVMTCBvbiBhbiBpLk1YNlVMIGJvYXJkLiBVbmZvcnR1bmF0ZWx5IHRoZSBib290
-IHN0YWxscyBhdA0KPj4+IHNvbWUgcG9pbnQgYW5kIG5ldmVyIGZpbmlzaGVzLg0KPj4+DQo+Pj4g
-SSBkaWQgc29tZSBiaXNlY3RpbmcgYW5kIGZvdW5kIG91dCwgdGhhdCByZXZlcnRpbmcgdGhpcyBj
-aGFuZ2U6IFsxXSwNCj4+PiBtYWtlcyB0aGUgYm9hcmQgYm9vdCBjb3JyZWN0bHkuDQo+Pj4NCj4+
-PiBDYW4gYW55b25lIGhlbHAgdG8gY29tZSB1cCB3aXRoIGEgcHJvcGVyIGZpeCBmb3IgdGhpcz8N
-Cj4gDQo+IGNhbiB5b3UgY2hlY2sgaWYgdGhlIGhhc2h0YWJsZSBpcyBpbml0aWFsaXplZCB0d2lj
-ZT8NCg0KSSdtIG5vdCBzdXJlIGhvdyB0byBjaGVjaywgYnV0IEkgZ3Vlc3MgeW91IGFyZSBvbiB0
-aGUgcmlnaHQgdHJhY2suIEkgY2FuIA0KbGVhdmUgdGhlIGluaXQgbG9vcCBmb3IgZGVudHJ5X2hh
-c2h0YWJsZSBpbiBwbGFjZSBhbmQgcmVtb3ZlIHRoZSBvbmUgZm9yIA0KaW5fbG9va3VwX2hhc2h0
-YWJsZSBpbiB2ZnNfY2FjaGVzX2luaXRfZWFybHkoKSBhbmQgdGhpcyBhbHNvIG1ha2VzIHRoZSAN
-CmJvYXJkIGJvb3QuDQoNCkNvdWxkIGl0IGJlLCB0aGF0IHRoZSBpbml0aWFsaXppbmcgZm9yIGRl
-bnRyeV9oYXNodGFibGUgYW5kIA0KaW5fbG9va3VwX2hhc2h0YWJsZSBzb21laG93IGludGVyZmVy
-ZT8NCg0KVGhhbmtzIGZvciB5b3VyIGhlbHAsDQpGcmllZGVyDQoNCj4gDQo+Pj4gVGhhbmtzLA0K
-Pj4+IEZyaWVkZXINCj4+Pg0KPj4+IFsxXToNCj4+PiBodHRwczovL2dpdC5rZXJuZWwub3JnL3B1
-Yi9zY20vbGludXgva2VybmVsL2dpdC9ydC9saW51eC1zdGFibGUtcnQuZ2l0L2NvbW1pdC8/aD12
-NC4xNC1ydCZpZD01NjY4NGQyMWY3ZjgzNDFmN2E1ZWQxNDMzNzE0MTEyZjQ5Mjk0NTkwDQo+IA0K
-PiBTZWJhc3RpYW4NCj4g
+Hi Namhyung,
+
+On Wed, 2018-12-19 at 20:45 +0900, Namhyung Kim wrote:
+> Hi Tom,
+> 
+> On Tue, Dec 18, 2018 at 02:33:19PM -0600, Tom Zanussi wrote:
+> > From: Tom Zanussi <tom.zanussi@linux.intel.com>
+> > 
+> > Hi,
+> > 
+> > This patchset is a standalone series broken out of the v8 version
+> > of
+> > the 'tracing: Hist trigger snapshot and onchange additions'
+> > patchset.
+> > 
+> > It's a series of changes resulting from some suggestions from
+> > Namhyung
+> > for making the variable-reference handling code more understandable
+> > through some refactoring and comments.
+> > 
+> > It also added a new patch changing all strlen() to sizeof() for
+> > string
+> > constants, in trace_events_hist.c
+> > 
+> > Also, in the 'tracing: Remove open-coding of hist trigger var_ref
+> > management' patch, in create_var_ref(), moved the saving of
+> > ref_field
+> > and update of ref_field->var_ref_idx into the 'if' as pointed out
+> > by
+> > Dan Carpenter/smatch 0-day robot.
+> > 
+> > It doesn't introduce any functional changes and can be applied
+> > independently of the other patchset.
+> 
+> Acked-by: Namhyung Kim <namhyung@kernel.org>
+> 
+
+Thanks!
+
+Tom
