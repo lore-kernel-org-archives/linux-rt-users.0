@@ -1,41 +1,74 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: RT-Kernel boot stalls because of change in fs/dcache.c
-Date: Wed, 19 Dec 2018 12:36:51 +0100
-Message-ID: <20181219113650.ak3wj3h3oapfy3tj@linutronix.de>
-References: <cfff1645-aab1-7b39-5f75-31b94f3365d1@kontron.de>
- <4aa4a0f1-373f-4978-42b1-6b676d6f1950@kontron.de>
+From: Namhyung Kim <namhyung@kernel.org>
+Subject: Re: [PATCH 0/7] tracing: Hist trigger var-ref cleanup and comments
+Date: Wed, 19 Dec 2018 20:45:17 +0900
+Message-ID: <20181219114517.GA19177@danjae.aot.lge.com>
+References: <cover.1545161087.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Schrempf Frieder <frieder.schrempf@kontron.de>
+Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
+        vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
+        julia@ni.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org, kernel-team@lge.com
+To: Tom Zanussi <zanussi@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <4aa4a0f1-373f-4978-42b1-6b676d6f1950@kontron.de>
+In-Reply-To: <cover.1545161087.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2018-12-19 07:50:17 [+0000], Schrempf Frieder wrote:
-> + linux-rt-users
+Hi Tom,
+
+On Tue, Dec 18, 2018 at 02:33:19PM -0600, Tom Zanussi wrote:
+> From: Tom Zanussi <tom.zanussi@linux.intel.com>
 > 
-> On 17.12.18 11:42, Frieder Schrempf wrote:
-> > Hi,
-> > 
-> > I have tried to boot a 4.14-Kernel with the RT-patches and 
-> > PREEMPT_RT_FULL on an i.MX6UL board. Unfortunately the boot stalls at 
-> > some point and never finishes.
-> > 
-> > I did some bisecting and found out, that reverting this change: [1], 
-> > makes the board boot correctly.
-> > 
-> > Can anyone help to come up with a proper fix for this?
+> Hi,
+> 
+> This patchset is a standalone series broken out of the v8 version of
+> the 'tracing: Hist trigger snapshot and onchange additions' patchset.
+> 
+> It's a series of changes resulting from some suggestions from Namhyung
+> for making the variable-reference handling code more understandable
+> through some refactoring and comments.
+> 
+> It also added a new patch changing all strlen() to sizeof() for string
+> constants, in trace_events_hist.c
+> 
+> Also, in the 'tracing: Remove open-coding of hist trigger var_ref
+> management' patch, in create_var_ref(), moved the saving of ref_field
+> and update of ref_field->var_ref_idx into the 'if' as pointed out by
+> Dan Carpenter/smatch 0-day robot.
+> 
+> It doesn't introduce any functional changes and can be applied
+> independently of the other patchset.
 
-can you check if the hashtable is initialized twice?
+Acked-by: Namhyung Kim <namhyung@kernel.org>
 
-> > Thanks,
-> > Frieder
-> > 
-> > [1]: 
-> > https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git/commit/?h=v4.14-rt&id=56684d21f7f8341f7a5ed1433714112f49294590 
+Thanks,
+Namhyung
 
-Sebastian
+
+> 
+> The following changes since commit 5d6ddf6acce68d1290112cb08b12fd78b201e7d5:
+> 
+>   arm64: Use ftrace_graph_get_ret_stack() instead of curr_ret_stack (2018-12-08 22:21:31 -0500)
+> 
+> are available in the git repository at:
+> 
+>   git://git.kernel.org/pub/scm/linux/kernel/git/zanussi/linux-trace.git ftrace/hist-var-ref-cleanup-v1
+> 
+> Tom Zanussi (7):
+>   tracing: Remove unnecessary hist trigger struct field
+>   tracing: Change strlen to sizeof for hist trigger static strings
+>   tracing: Use var_refs[] for hist trigger reference checking
+>   tracing: Remove open-coding of hist trigger var_ref management
+>   tracing: Use hist trigger's var_ref array to destroy var_refs
+>   tracing: Remove hist trigger synth_var_refs
+>   tracing: Add hist trigger comments for variable-related fields
+> 
+>  kernel/trace/trace_events_hist.c | 267 +++++++++++++++++++++++----------------
+>  1 file changed, 156 insertions(+), 111 deletions(-)
+> 
+> -- 
+> 2.14.1
+> 
