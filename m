@@ -1,106 +1,52 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH] perf/x86/intel: Delay memory deallocation until
- x86_pmu_dead_cpu()
-Date: Wed, 19 Dec 2018 17:53:50 +0100
-Message-ID: <20181219165350.6s3jvyxbibpvlhtq@linutronix.de>
-References: <1545129033-21757-1-git-send-email-zhe.he@windriver.com>
- <20181218110209.GD15430@hirez.programming.kicks-ass.net>
- <20181218111637.b53u5pi3nxnyldaq@linutronix.de>
- <20181218113119.GG15430@hirez.programming.kicks-ass.net>
- <20181218113700.GC16284@hirez.programming.kicks-ass.net>
+From: Schrempf Frieder <frieder.schrempf@kontron.de>
+Subject: Re: RT-Kernel boot stalls because of change in fs/dcache.c
+Date: Wed, 19 Dec 2018 17:24:30 +0000
+Message-ID: <9d9c55d7-cc62-8c84-1782-e49929e58adf@kontron.de>
+References: <cfff1645-aab1-7b39-5f75-31b94f3365d1@kontron.de>
+ <4aa4a0f1-373f-4978-42b1-6b676d6f1950@kontron.de>
+ <20181219113650.ak3wj3h3oapfy3tj@linutronix.de>
+ <d9448930-e466-864a-41ce-08bf4588d0d1@kontron.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: zhe.he@windriver.com, acme@kernel.org, ak@linux.intel.com,
-        alexander.shishkin@linux.intel.com, bp@alien8.de, hpa@zytor.com,
-        jolsa@kernel.org, jolsa@redhat.com, kan.liang@linux.intel.com,
-        mingo@redhat.com, namhyung@kernel.org, tglx@linutronix.de,
-        x86@kernel.org, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181218113700.GC16284@hirez.programming.kicks-ass.net>
+In-Reply-To: <d9448930-e466-864a-41ce-08bf4588d0d1@kontron.de>
+Content-Language: en-US
+Content-ID: <D77791C64BEFCD4B91F3140F41938D76@snt-world.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Peter Zijlstra <peterz@infradead.org>
-
-intel_pmu_cpu_prepare() allocated memory for ->shared_regs among other
-members of struct cpu_hw_events. This memory is released in
-intel_pmu_cpu_dying() which is wrong. The counterpart of the
-intel_pmu_cpu_prepare() callback is x86_pmu_dead_cpu().
-
-Otherwise if the CPU fails on the UP path between CPUHP_PERF_X86_PREPARE
-and CPUHP_AP_PERF_X86_STARTING then it won't release the memory but
-allocate new memory on the next attempt to online the CPU (leaking the
-old memory).
-Also, if the CPU down path fails between CPUHP_AP_PERF_X86_STARTING and
-CPUHP_PERF_X86_PREPARE then the CPU will go back online but never
-allocate the memory that was released in x86_pmu_dying_cpu().
-
-Make the memory allocation/free symmetrical in regard to the CPU hotplug
-notifier by moving the deallocation to intel_pmu_cpu_dead().
-
-This started in commit
-   a7e3ed1e47011 ("perf: Add support for supplementary event registers").
-
-Cc: stable@vger.kernel.org
-Reported-by: He Zhe <zhe.he@windriver.com>
-Fixes: a7e3ed1e47011 ("perf: Add support for supplementary event registers").
-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-[bigeasy: patch description]
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- arch/x86/events/intel/core.c | 16 +++++++++++-----
- 1 file changed, 11 insertions(+), 5 deletions(-)
-
-diff --git a/arch/x86/events/intel/core.c b/arch/x86/events/intel/core.c
-index ecc3e34ca955f..90b6718ff861d 100644
---- a/arch/x86/events/intel/core.c
-+++ b/arch/x86/events/intel/core.c
-@@ -3558,6 +3558,14 @@ static void free_excl_cntrs(int cpu)
- }
- 
- static void intel_pmu_cpu_dying(int cpu)
-+{
-+	fini_debug_store_on_cpu(cpu);
-+
-+	if (x86_pmu.counter_freezing)
-+		disable_counter_freeze();
-+}
-+
-+static void intel_pmu_cpu_dead(int cpu)
- {
- 	struct cpu_hw_events *cpuc = &per_cpu(cpu_hw_events, cpu);
- 	struct intel_shared_regs *pc;
-@@ -3570,11 +3578,6 @@ static void intel_pmu_cpu_dying(int cpu)
- 	}
- 
- 	free_excl_cntrs(cpu);
--
--	fini_debug_store_on_cpu(cpu);
--
--	if (x86_pmu.counter_freezing)
--		disable_counter_freeze();
- }
- 
- static void intel_pmu_sched_task(struct perf_event_context *ctx,
-@@ -3663,6 +3666,7 @@ static __initconst const struct x86_pmu core_pmu = {
- 	.cpu_prepare		= intel_pmu_cpu_prepare,
- 	.cpu_starting		= intel_pmu_cpu_starting,
- 	.cpu_dying		= intel_pmu_cpu_dying,
-+	.cpu_dead		= intel_pmu_cpu_dead,
- };
- 
- static struct attribute *intel_pmu_attrs[];
-@@ -3703,6 +3707,8 @@ static __initconst const struct x86_pmu intel_pmu = {
- 	.cpu_prepare		= intel_pmu_cpu_prepare,
- 	.cpu_starting		= intel_pmu_cpu_starting,
- 	.cpu_dying		= intel_pmu_cpu_dying,
-+	.cpu_dead		= intel_pmu_cpu_dead,
-+
- 	.guest_get_msrs		= intel_guest_get_msrs,
- 	.sched_task		= intel_pmu_sched_task,
- };
--- 
-2.20.1
+T24gMTkuMTIuMTggMTQ6NDYsIEZyaWVkZXIgU2NocmVtcGYgd3JvdGU6DQo+IEhpIFNlYmFzdGlh
+biwNCj4gDQo+IE9uIDE5LjEyLjE4IDEyOjM2LCBTZWJhc3RpYW4gQW5kcnplaiBTaWV3aW9yIHdy
+b3RlOg0KPj4gT24gMjAxOC0xMi0xOSAwNzo1MDoxNyBbKzAwMDBdLCBTY2hyZW1wZiBGcmllZGVy
+IHdyb3RlOg0KPj4+ICsgbGludXgtcnQtdXNlcnMNCj4+Pg0KPj4+IE9uIDE3LjEyLjE4IDExOjQy
+LCBGcmllZGVyIFNjaHJlbXBmIHdyb3RlOg0KPj4+PiBIaSwNCj4+Pj4NCj4+Pj4gSSBoYXZlIHRy
+aWVkIHRvIGJvb3QgYSA0LjE0LUtlcm5lbCB3aXRoIHRoZSBSVC1wYXRjaGVzIGFuZA0KPj4+PiBQ
+UkVFTVBUX1JUX0ZVTEwgb24gYW4gaS5NWDZVTCBib2FyZC4gVW5mb3J0dW5hdGVseSB0aGUgYm9v
+dCBzdGFsbHMgYXQNCj4+Pj4gc29tZSBwb2ludCBhbmQgbmV2ZXIgZmluaXNoZXMuDQo+Pj4+DQo+
+Pj4+IEkgZGlkIHNvbWUgYmlzZWN0aW5nIGFuZCBmb3VuZCBvdXQsIHRoYXQgcmV2ZXJ0aW5nIHRo
+aXMgY2hhbmdlOiBbMV0sDQo+Pj4+IG1ha2VzIHRoZSBib2FyZCBib290IGNvcnJlY3RseS4NCj4+
+Pj4NCj4+Pj4gQ2FuIGFueW9uZSBoZWxwIHRvIGNvbWUgdXAgd2l0aCBhIHByb3BlciBmaXggZm9y
+IHRoaXM/DQo+Pg0KPj4gY2FuIHlvdSBjaGVjayBpZiB0aGUgaGFzaHRhYmxlIGlzIGluaXRpYWxp
+emVkIHR3aWNlPw0KPiANCj4gSSdtIG5vdCBzdXJlIGhvdyB0byBjaGVjaywgYnV0IEkgZ3Vlc3Mg
+eW91IGFyZSBvbiB0aGUgcmlnaHQgdHJhY2suIEkgY2FuIA0KPiBsZWF2ZSB0aGUgaW5pdCBsb29w
+IGZvciBkZW50cnlfaGFzaHRhYmxlIGluIHBsYWNlIGFuZCByZW1vdmUgdGhlIG9uZSBmb3IgDQo+
+IGluX2xvb2t1cF9oYXNodGFibGUgaW4gdmZzX2NhY2hlc19pbml0X2Vhcmx5KCkgYW5kIHRoaXMg
+YWxzbyBtYWtlcyB0aGUgDQo+IGJvYXJkIGJvb3QuDQo+IA0KPiBDb3VsZCBpdCBiZSwgdGhhdCB0
+aGUgaW5pdGlhbGl6aW5nIGZvciBkZW50cnlfaGFzaHRhYmxlIGFuZCANCj4gaW5fbG9va3VwX2hh
+c2h0YWJsZSBzb21laG93IGludGVyZmVyZT8NCg0KU28gdGhlIHNvdXJjZSBvZiB0aGUgaXNzdWUg
+dHVybmVkIG91dCB0byBiZSBjb21wbGV0ZWx5IHVucmVsYXRlZCB0byANCnRoaXMuIEFsdGhvdWdo
+IGl0IHNlZW1zIGxpa2UgZW5hYmxpbmcgUFJFRU1QVF9SVF9GVUxMIHRyaWdnZXJlZCB0aGUgDQpw
+cm9ibGVtIGluIG15IGNhc2UuDQoNClRoZSBsb2NrdXAgb2YgdGhlIGtlcm5lbCB3YXMgY2F1c2Vk
+IGJ5IHRoZSBTTlZTIFJUQyBkcml2ZXIuIFB1bGxpbmcgaW4gDQp0aGlzIHBhdGNoOiBbMV0sIHNv
+bHZlZCB0aGUgcHJvYmxlbS4NCg0KQXMgdGhpcyBwYXRjaCBmaXhlcyBhIHJlYWwgYnVnIEkgc2Vu
+dCBhIHJlcXVlc3QgZm9yIGl0IHRvIGJlIGJhY2twb3J0ZWQgDQp0byB0aGUgc3RhYmxlIHJlbGVh
+c2VzLg0KDQpbMV06IA0KaHR0cHM6Ly9naXQua2VybmVsLm9yZy9wdWIvc2NtL2xpbnV4L2tlcm5l
+bC9naXQvdG9ydmFsZHMvbGludXguZ2l0L2NvbW1pdC8/aWQ9Y2Q3ZjNhMjQ5ZGJlZDI4NThlNmMy
+ZjMwZTViZTdmMWY3YTcwOWVlMg0KDQo+Pj4+DQo+Pj4+IFsxXToNCj4+Pj4gaHR0cHM6Ly9naXQu
+a2VybmVsLm9yZy9wdWIvc2NtL2xpbnV4L2tlcm5lbC9naXQvcnQvbGludXgtc3RhYmxlLXJ0Lmdp
+dC9jb21taXQvP2g9djQuMTQtcnQmaWQ9NTY2ODRkMjFmN2Y4MzQxZjdhNWVkMTQzMzcxNDExMmY0
+OTI5NDU5MCANCj4+Pj4NCj4+DQo+PiBTZWJhc3RpYW4NCj4+
