@@ -1,64 +1,42 @@
-From: Tom Zanussi <zanussi@kernel.org>
-Subject: Re: [PATCH 0/7] tracing: Hist trigger var-ref cleanup and comments
-Date: Wed, 19 Dec 2018 09:02:36 -0600
-Message-ID: <1545231756.4491.3.camel@kernel.org>
-References: <cover.1545161087.git.tom.zanussi@linux.intel.com>
-         <20181219212739.d5ec4edf7443c3dc1448c8d2@kernel.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH v2] kmemleak: Turn kmemleak_lock to raw spinlock on RT
+Date: Wed, 19 Dec 2018 16:30:22 +0100
+Message-ID: <20181219153022.w5le6nf7meiogh72@linutronix.de>
+References: <1542877459-144382-1-git-send-email-zhe.he@windriver.com>
+ <20181123095314.hervxkxtqoixovro@linutronix.de>
+ <40a63aa5-edb6-4673-b4cc-1bc10e7b3953@windriver.com>
+ <20181130181956.eewrlaabtceekzyu@linutronix.de>
+ <e7795912-7d93-8f4e-b997-67c4ac1f3549@windriver.com>
+ <20181205191400.qrhim3m3ak5hcsuh@linutronix.de>
+ <16ac893a-a080-18a5-e636-7b7668d978b0@windriver.com>
+ <20181218150744.GB20197@arrakis.emea.arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: rostedt@goodmis.org, tglx@linutronix.de, namhyung@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
-        julia@ni.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org
-To: Masami Hiramatsu <mhiramat@kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+Cc: He Zhe <zhe.he@windriver.com>, tglx@linutronix.de,
+        rostedt@goodmis.org, linux-mm@kvack.org,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Catalin Marinas <catalin.marinas@arm.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181219212739.d5ec4edf7443c3dc1448c8d2@kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20181218150744.GB20197@arrakis.emea.arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2018-12-19 at 21:27 +0900, Masami Hiramatsu wrote:
-> Hi Tom,
+On 2018-12-18 15:07:45 [+0000], Catalin Marinas wrote:
+…
+> It may be worth running some performance/latency tests during kmemleak
+> scanning (echo scan > /sys/kernel/debug/kmemleak) but at a quick look,
+> I don't think we'd see any difference with a raw_spin_lock_t.
 > 
-> On Tue, 18 Dec 2018 14:33:19 -0600
-> Tom Zanussi <zanussi@kernel.org> wrote:
-> 
-> > From: Tom Zanussi <tom.zanussi@linux.intel.com>
-> > 
-> > Hi,
-> > 
-> > This patchset is a standalone series broken out of the v8 version
-> > of
-> > the 'tracing: Hist trigger snapshot and onchange additions'
-> > patchset.
-> > 
-> > It's a series of changes resulting from some suggestions from
-> > Namhyung
-> > for making the variable-reference handling code more understandable
-> > through some refactoring and comments.
-> > 
-> > It also added a new patch changing all strlen() to sizeof() for
-> > string
-> > constants, in trace_events_hist.c
-> > 
-> > Also, in the 'tracing: Remove open-coding of hist trigger var_ref
-> > management' patch, in create_var_ref(), moved the saving of
-> > ref_field
-> > and update of ref_field->var_ref_idx into the 'if' as pointed out
-> > by
-> > Dan Carpenter/smatch 0-day robot.
-> > 
-> > It doesn't introduce any functional changes and can be applied
-> > independently of the other patchset.
-> 
-> OK, now it is very clear to me :-)
-> 
-> Reviewed-by: Masami Hiramatsu <mhiramat@kernel.org>
-> 
-> for the series.
-> 
+> With a bit more thinking (though I'll be off until the new year), we
+> could probably get rid of the kmemleak_lock entirely in scan_block() and
+> make lookup_object() and the related rbtree code in kmemleak RCU-safe.
 
-Thanks, Masami!
+Okay. So let me apply that patch into my RT tree with your ack (from the
+other email). And then I hope that it either shows up upstream or gets
+replaced with RCU in the ende :)
 
-Tom
+Thanks.
+
+Sebastian
