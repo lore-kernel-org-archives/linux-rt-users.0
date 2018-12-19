@@ -1,52 +1,78 @@
-From: Schrempf Frieder <frieder.schrempf@kontron.de>
-Subject: Re: RT-Kernel boot stalls because of change in fs/dcache.c
-Date: Wed, 19 Dec 2018 17:24:30 +0000
-Message-ID: <9d9c55d7-cc62-8c84-1782-e49929e58adf@kontron.de>
-References: <cfff1645-aab1-7b39-5f75-31b94f3365d1@kontron.de>
- <4aa4a0f1-373f-4978-42b1-6b676d6f1950@kontron.de>
- <20181219113650.ak3wj3h3oapfy3tj@linutronix.de>
- <d9448930-e466-864a-41ce-08bf4588d0d1@kontron.de>
+From: Tom Zanussi <zanussi@kernel.org>
+Subject: Re: [PATCH 3/7] tracing: Use var_refs[] for hist trigger reference
+ checking
+Date: Wed, 19 Dec 2018 13:08:58 -0600
+Message-ID: <1545246538.4239.6.camel@kernel.org>
+References: <cover.1545161087.git.tom.zanussi@linux.intel.com>
+         <becb9627fb09681960f26809961b832be9591048.1545161087.git.tom.zanussi@linux.intel.com>
+         <20181219212224.968ee0ad61aada5a8a3f634f@kernel.org>
+         <1545231703.4491.2.camel@kernel.org>
+         <20181219103647.18c61a6a@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Masami Hiramatsu <mhiramat@kernel.org>, tglx@linutronix.de,
+        namhyung@kernel.org, vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
+        julia@ni.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <d9448930-e466-864a-41ce-08bf4588d0d1@kontron.de>
-Content-Language: en-US
-Content-ID: <D77791C64BEFCD4B91F3140F41938D76@snt-world.com>
+In-Reply-To: <20181219103647.18c61a6a@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-T24gMTkuMTIuMTggMTQ6NDYsIEZyaWVkZXIgU2NocmVtcGYgd3JvdGU6DQo+IEhpIFNlYmFzdGlh
-biwNCj4gDQo+IE9uIDE5LjEyLjE4IDEyOjM2LCBTZWJhc3RpYW4gQW5kcnplaiBTaWV3aW9yIHdy
-b3RlOg0KPj4gT24gMjAxOC0xMi0xOSAwNzo1MDoxNyBbKzAwMDBdLCBTY2hyZW1wZiBGcmllZGVy
-IHdyb3RlOg0KPj4+ICsgbGludXgtcnQtdXNlcnMNCj4+Pg0KPj4+IE9uIDE3LjEyLjE4IDExOjQy
-LCBGcmllZGVyIFNjaHJlbXBmIHdyb3RlOg0KPj4+PiBIaSwNCj4+Pj4NCj4+Pj4gSSBoYXZlIHRy
-aWVkIHRvIGJvb3QgYSA0LjE0LUtlcm5lbCB3aXRoIHRoZSBSVC1wYXRjaGVzIGFuZA0KPj4+PiBQ
-UkVFTVBUX1JUX0ZVTEwgb24gYW4gaS5NWDZVTCBib2FyZC4gVW5mb3J0dW5hdGVseSB0aGUgYm9v
-dCBzdGFsbHMgYXQNCj4+Pj4gc29tZSBwb2ludCBhbmQgbmV2ZXIgZmluaXNoZXMuDQo+Pj4+DQo+
-Pj4+IEkgZGlkIHNvbWUgYmlzZWN0aW5nIGFuZCBmb3VuZCBvdXQsIHRoYXQgcmV2ZXJ0aW5nIHRo
-aXMgY2hhbmdlOiBbMV0sDQo+Pj4+IG1ha2VzIHRoZSBib2FyZCBib290IGNvcnJlY3RseS4NCj4+
-Pj4NCj4+Pj4gQ2FuIGFueW9uZSBoZWxwIHRvIGNvbWUgdXAgd2l0aCBhIHByb3BlciBmaXggZm9y
-IHRoaXM/DQo+Pg0KPj4gY2FuIHlvdSBjaGVjayBpZiB0aGUgaGFzaHRhYmxlIGlzIGluaXRpYWxp
-emVkIHR3aWNlPw0KPiANCj4gSSdtIG5vdCBzdXJlIGhvdyB0byBjaGVjaywgYnV0IEkgZ3Vlc3Mg
-eW91IGFyZSBvbiB0aGUgcmlnaHQgdHJhY2suIEkgY2FuIA0KPiBsZWF2ZSB0aGUgaW5pdCBsb29w
-IGZvciBkZW50cnlfaGFzaHRhYmxlIGluIHBsYWNlIGFuZCByZW1vdmUgdGhlIG9uZSBmb3IgDQo+
-IGluX2xvb2t1cF9oYXNodGFibGUgaW4gdmZzX2NhY2hlc19pbml0X2Vhcmx5KCkgYW5kIHRoaXMg
-YWxzbyBtYWtlcyB0aGUgDQo+IGJvYXJkIGJvb3QuDQo+IA0KPiBDb3VsZCBpdCBiZSwgdGhhdCB0
-aGUgaW5pdGlhbGl6aW5nIGZvciBkZW50cnlfaGFzaHRhYmxlIGFuZCANCj4gaW5fbG9va3VwX2hh
-c2h0YWJsZSBzb21laG93IGludGVyZmVyZT8NCg0KU28gdGhlIHNvdXJjZSBvZiB0aGUgaXNzdWUg
-dHVybmVkIG91dCB0byBiZSBjb21wbGV0ZWx5IHVucmVsYXRlZCB0byANCnRoaXMuIEFsdGhvdWdo
-IGl0IHNlZW1zIGxpa2UgZW5hYmxpbmcgUFJFRU1QVF9SVF9GVUxMIHRyaWdnZXJlZCB0aGUgDQpw
-cm9ibGVtIGluIG15IGNhc2UuDQoNClRoZSBsb2NrdXAgb2YgdGhlIGtlcm5lbCB3YXMgY2F1c2Vk
-IGJ5IHRoZSBTTlZTIFJUQyBkcml2ZXIuIFB1bGxpbmcgaW4gDQp0aGlzIHBhdGNoOiBbMV0sIHNv
-bHZlZCB0aGUgcHJvYmxlbS4NCg0KQXMgdGhpcyBwYXRjaCBmaXhlcyBhIHJlYWwgYnVnIEkgc2Vu
-dCBhIHJlcXVlc3QgZm9yIGl0IHRvIGJlIGJhY2twb3J0ZWQgDQp0byB0aGUgc3RhYmxlIHJlbGVh
-c2VzLg0KDQpbMV06IA0KaHR0cHM6Ly9naXQua2VybmVsLm9yZy9wdWIvc2NtL2xpbnV4L2tlcm5l
-bC9naXQvdG9ydmFsZHMvbGludXguZ2l0L2NvbW1pdC8/aWQ9Y2Q3ZjNhMjQ5ZGJlZDI4NThlNmMy
-ZjMwZTViZTdmMWY3YTcwOWVlMg0KDQo+Pj4+DQo+Pj4+IFsxXToNCj4+Pj4gaHR0cHM6Ly9naXQu
-a2VybmVsLm9yZy9wdWIvc2NtL2xpbnV4L2tlcm5lbC9naXQvcnQvbGludXgtc3RhYmxlLXJ0Lmdp
-dC9jb21taXQvP2g9djQuMTQtcnQmaWQ9NTY2ODRkMjFmN2Y4MzQxZjdhNWVkMTQzMzcxNDExMmY0
-OTI5NDU5MCANCj4+Pj4NCj4+DQo+PiBTZWJhc3RpYW4NCj4+
+Hi Steve,
+
+On Wed, 2018-12-19 at 10:36 -0500, Steven Rostedt wrote:
+> On Wed, 19 Dec 2018 09:01:43 -0600
+> Tom Zanussi <zanussi@kernel.org> wrote:
+> 
+> > > > +	if (hist_field && hist_field->var.idx == var_idx &&
+> > > > +	    hist_field->var.hist_data == var_data)
+> > > > +		found = hist_field;
+> > > >  
+> > > >  	return found;  
+> > > 
+> > > It seems we don't need "found" var here. Just return hist_field
+> > > or
+> > > NULL.
+> > >   
+> > 
+> > OK, will change these and resubmit shortly.
+> 
+> Tom,
+> 
+> If this is the only patch in the series that needs updating, can you
+> just reply to this patch with the v2 of 3/7? That is have a subject
+> of:
+> 
+> [PATCH v2 3/7] tracing: Use var_refs[] for hist trigger reference
+> checking
+> 
+> and reply to the [PATCH 3/7]
+> 
+> 
+> This isn't the normal way of updates, but I want to start taking this
+> patches in ASAP, and I figured this may be the easiest for both of
+> us.
+> 
+> It's fine to send a v2 of the entire patch series (which other
+> maintainers require), so I'll leave it up to you.
+> 
+> If there's any other patch that needs changing, then a full v2 series
+> is required. But if this is the only change and you want to send just
+> this patch, then I'll take that as well.
+> 
+
+Sorry for the delay - had an emergency appointment for the dog at the
+vet this morning..
+
+Anyway, yeah, I'll reply with the patch - it's the only one that needs
+updating in this series.
+
+Thanks,
+
+Tom
+
+> -- Steve
