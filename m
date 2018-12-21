@@ -1,66 +1,84 @@
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 2/9] efi: Disable runtime services on RT
-Date: Fri, 21 Dec 2018 09:21:14 -0600
-Message-ID: <4b7dce66c503f20080605dc39b812056c51d4a23.1545347029.git.tom.zanussi@linux.intel.com>
-References: <cover.1545347029.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH RT 0/9] Linux 3.18.129-rt111-rc1
+Date: Fri, 21 Dec 2018 09:21:12 -0600
+Message-ID: <cover.1545347029.git.tom.zanussi@linux.intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 Cc: rostedt@goodmis.org, tglx@linutronix.de, C.Emde@osadl.org,
         jkacur@redhat.com, bigeasy@linutronix.de,
         daniel.wagner@siemens.com, julia@ni.com
 To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1545347029.git.tom.zanussi@linux.intel.com>
-In-Reply-To: <cover.1545347029.git.tom.zanussi@linux.intel.com>
-References: <cover.1545347029.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-v3.18.129-rt111 rt-stable review patch.  If anyone has any objections,
-please let me know.
+From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-------------------
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Hello RT Folks!
 
-[ Upstream commit 55544e1d5eb0d7608e2b41452729649c8ea1607a ]
+This is the RT stable review cycle of patch 3.18.129-rt111-rc1.
 
-Based on meassurements the EFI functions get_variable /
-get_next_variable take up to 2us which looks okay.
-The functions get_time, set_time take around 10ms. Those 10ms are too
-much. Even one ms would be too much.
-Ard mentioned that SetVariable might even trigger larger latencies if
-the firware will erase flash blocks on NOR.
+Please scream at me if I messed something up. Please test the
+patches too.
 
-The time-functions are used by efi-rtc and can be triggered during
-runtimed (either via explicit read/write or ntp sync).
+The -rc release will be uploaded to kernel.org and will be
+deleted when the final release is out. This is just a review
+release (or release candidate).
 
-The variable write could be used by pstore.
-These functions can be disabled without much of a loss. The poweroff /
-reboot hooks may be provided by PSCI.
+The pre-releases will not be pushed to the git repository,
+only the final release is.
 
-Disable EFI's runtime wrappers.
+If all goes well, this patch will be converted to the next
+main release on 12/24/2018.
 
-This was observed on "EFI v2.60 by SoftIron Overdrive 1000".
+To build 3.18.129-rt111-rc1 directly, the following patches should be applied:
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
 
- Conflicts:
-	drivers/firmware/efi/efi.c
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.129.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.129-rt111-rc1.patch.xz
+
+
+You can also build from 3.18.129-rt110 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/incr/patch-3.18.129-rt110-rt111-rc1.patch.xz
+
+Enjoy!
+   
+   Tom
+
+Changes from v3.18.129-rt110:
 ---
- drivers/firmware/efi/efi.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Daniel Bristot de Oliveira (1):
+  sched/core: Avoid __schedule() being called twice in a row
 
-diff --git a/drivers/firmware/efi/efi.c b/drivers/firmware/efi/efi.c
-index e47c522e1d8f..f2be407247e5 100644
---- a/drivers/firmware/efi/efi.c
-+++ b/drivers/firmware/efi/efi.c
-@@ -41,7 +41,7 @@ struct efi __read_mostly efi = {
- };
- EXPORT_SYMBOL(efi);
- 
--static bool disable_runtime;
-+static bool disable_runtime = IS_ENABLED(CONFIG_PREEMPT_RT_BASE);
- static int __init setup_noefi(char *arg)
- {
- 	disable_runtime = true;
+Kurt Kanzenbach (1):
+  tty: serial: pl011: explicitly initialize the flags variable
+
+Lukas Wunner (1):
+  pinctrl: bcm2835: Use raw spinlock for RT compatibility
+
+Sebastian Andrzej Siewior (5):
+  efi: Allow efi=runtime
+  efi: Disable runtime services on RT
+  crypto: cryptd - add a lock instead preempt_disable/local_bh_disable
+  work-simple: drop a shit statement in SWORK_EVENT_PENDING
+  drm/i915: disable tracing on -RT
+
+Tom Zanussi (1):
+  Linux 3.18.129-rt111-rc1
+
+ crypto/cryptd.c                   | 18 ++++++++----------
+ drivers/firmware/efi/efi.c        |  5 ++++-
+ drivers/gpu/drm/i915/i915_trace.h |  4 ++++
+ drivers/pinctrl/pinctrl-bcm2835.c | 16 ++++++++--------
+ drivers/tty/serial/amba-pl011.c   |  2 +-
+ kernel/sched/core.c               |  9 +++++++--
+ kernel/sched/work-simple.c        |  2 +-
+ localversion-rt                   |  2 +-
+ 8 files changed, 34 insertions(+), 24 deletions(-)
+
 -- 
 2.14.1
