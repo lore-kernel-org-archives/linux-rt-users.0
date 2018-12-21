@@ -1,7 +1,7 @@
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH v10 12/15] tracing: Add hist trigger snapshot() action test case
-Date: Fri, 21 Dec 2018 10:29:11 -0600
-Message-ID: <bbc341a2bcf33417e3136440ea4cde883c928e46.1545408962.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v10 14/15] tracing: Add alternative synthetic event trace action test case
+Date: Fri, 21 Dec 2018 10:29:13 -0600
+Message-ID: <dd5bcb5db7f4aed314625c182c60977ece37fd4f.1545408962.git.tom.zanussi@linux.intel.com>
 References: <cover.1545408962.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,24 +18,24 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-Add a test case verifying the basic functionality of the
-hist:snapshot() action.
+Add a test case for the alternative trace(<synthetic_event, params)
+synthetic event generation syntax.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- .../inter-event/trigger-snapshot-action-hist.tc    | 43 ++++++++++++++++++++++
- 1 file changed, 43 insertions(+)
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
+ .../inter-event/trigger-trace-action-hist.tc       | 42 ++++++++++++++++++++++
+ 1 file changed, 42 insertions(+)
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-trace-action-hist.tc
 
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
+diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-trace-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-trace-action-hist.tc
 new file mode 100644
-index 000000000000..18fff69fc433
+index 000000000000..8021d60aafec
 --- /dev/null
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
-@@ -0,0 +1,43 @@
++++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-trace-action-hist.tc
+@@ -0,0 +1,42 @@
 +#!/bin/sh
 +# SPDX-License-Identifier: GPL-2.0
-+# description: event trigger - test inter-event histogram trigger snapshot action
++# description: event trigger - test inter-event histogram trigger trace action
 +
 +fail() { #msg
 +    echo $1
@@ -47,32 +47,31 @@ index 000000000000..18fff69fc433
 +    exit_unsupported
 +fi
 +
-+if [ ! -f snapshot ]; then
-+    echo "snapshot is not supported"
++if [ ! -f synthetic_events ]; then
++    echo "synthetic event is not supported"
 +    exit_unsupported
 +fi
 +
-+grep -q "onchange(var)" README || exit_unsupported # version issue
++grep -q "trace(<synthetic_event>" README || exit_unsupported # version issue
 +
-+grep -q "snapshot()" README || exit_unsupported # version issue
++echo "Test create synthetic event"
 +
-+echo "Test snapshot action"
-+
-+echo 1 > /sys/kernel/debug/tracing/events/sched/enable
-+
-+echo 'hist:keys=comm:newprio=prio:onchange($newprio).save(comm,prio):onchange($newprio).snapshot() if comm=="ping"' >> /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
-+
-+ping $LOCALHOST -c 3
-+nice -n 1 ping $LOCALHOST -c 3
-+
-+echo 0 > tracing_on
-+
-+if ! grep -q "changed:" events/sched/sched_waking/hist; then
-+    fail "Failed to create onchange action inter-event histogram"
++echo 'wakeup_latency  u64 lat pid_t pid char comm[16]' > synthetic_events
++if [ ! -d events/synthetic/wakeup_latency ]; then
++    fail "Failed to create wakeup_latency synthetic event"
 +fi
 +
-+if ! grep -q "comm=ping" snapshot; then
-+    fail "Failed to create snapshot action inter-event histogram"
++echo "Test create histogram for synthetic event using trace action"
++echo "Test histogram variables,simple expression support and trace action"
++
++echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="ping"' > events/sched/sched_wakeup/trigger
++echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0:onmatch(sched.sched_wakeup).trace(wakeup_latency,$wakeup_lat,next_pid,next_comm) if next_comm=="ping"' > events/sched/sched_switch/trigger
++echo 'hist:keys=comm,pid,lat:wakeup_lat=lat:sort=lat' > events/synthetic/wakeup_latency/trigger
++
++ping $LOCALHOST -c 5
++
++if ! grep -q "ping" events/synthetic/wakeup_latency/hist; then
++    fail "Failed to create trace action inter-event histogram"
 +fi
 +
 +exit 0
