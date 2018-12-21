@@ -1,84 +1,199 @@
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 0/9] Linux 3.18.129-rt111-rc1
-Date: Fri, 21 Dec 2018 09:21:12 -0600
-Message-ID: <cover.1545347029.git.tom.zanussi@linux.intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-Cc: rostedt@goodmis.org, tglx@linutronix.de, C.Emde@osadl.org,
-        jkacur@redhat.com, bigeasy@linutronix.de,
-        daniel.wagner@siemens.com, julia@ni.com
-To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Subject: [PATCH v10 00/15]  tracing: Hist trigger snapshot and onchange additions
+Date: Fri, 21 Dec 2018 10:28:59 -0600
+Message-ID: <cover.1545408962.git.tom.zanussi@linux.intel.com>
+Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
+        vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
+        julia@ni.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
+To: rostedt@goodmis.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-Hello RT Folks!
+Hi,
 
-This is the RT stable review cycle of patch 3.18.129-rt111-rc1.
+This is v10 of the hist trigger snapshot and onchange additions
+patchset.
 
-Please scream at me if I messed something up. Please test the
-patches too.
+It doesn't add anything new - it's just a rebase of v9 on top of the
+latest ftrace/core with conflicts due to the new strncmp_prefix()
+fixed.
 
-The -rc release will be uploaded to kernel.org and will be
-deleted when the final release is out. This is just a review
-release (or release candidate).
+Thanks,
 
-The pre-releases will not be pushed to the git repository,
-only the final release is.
-
-If all goes well, this patch will be converted to the next
-main release on 12/24/2018.
-
-To build 3.18.129-rt111-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.129.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.129-rt111-rc1.patch.xz
+Tom
 
 
-You can also build from 3.18.129-rt110 by applying the incremental patch:
+v9->v10 changes:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/incr/patch-3.18.129-rt110-rt111-rc1.patch.xz
+  - Updated to use strncmp_prefix() for static strings
 
-Enjoy!
-   
-   Tom
+v8->v9 changes:
 
-Changes from v3.18.129-rt110:
----
-Daniel Bristot de Oliveira (1):
-  sched/core: Avoid __schedule() being called twice in a row
+  - Moved v8 patches 17-22 to a separate series
+  - Moved track_data.var_ref_idx removal into 'tracing: Generalize
+    hist trigger onmax and save action'
+  - Merged 'tracing: Add hist trigger handler.action documentation'
+    into 'tracing: Refactor hist trigger action code'
+  - Updated patches to change all strlen() to sizeof() for string
+    constants
+  - Moved test cases to the end of the series
 
-Kurt Kanzenbach (1):
-  tty: serial: pl011: explicitly initialize the flags variable
+v7->v8 changes:
 
-Lukas Wunner (1):
-  pinctrl: bcm2835: Use raw spinlock for RT compatibility
+  - Removed /dev/null redirection from test cases
+  - Replaced event disable with tracing_on disable instead
+  - New patch to remove hist_field.var_idx and track_data.var_ref_idx
+  - New patch to use var_refs[] array for reference checking
+  - New patch to remove open-coding of var_ref count manipulation
+  - New patch to use var_refs[] array to destroy var_refs
+  - New patch to remove synth_var_refs[] now that var_refs[] is used
+  - New patch to add comments to variable-related fields
+  - Added various new comments in the patches to clarify other things
+  - Replaced the convoluted logic mentioned by Namhyung in
+    update_track_val with wrappers and simpler check/save logic as
+    suggested
+  - Rebased to latest ftrace/core including Masami's dynamic event
+    framework changes
 
-Sebastian Andrzej Siewior (5):
-  efi: Allow efi=runtime
-  efi: Disable runtime services on RT
-  crypto: cryptd - add a lock instead preempt_disable/local_bh_disable
-  work-simple: drop a shit statement in SWORK_EVENT_PENDING
-  drm/i915: disable tracing on -RT
+v6->v7 changes:
 
-Tom Zanussi (1):
-  Linux 3.18.129-rt111-rc1
+  - Removed unnecessary HANDLER_ONMAX checks from onmax_print()/create()
+  - Moved handler assignment to acion_parse()
+  - Changed goto in ATION_TRACE case in action_create() to return
+  - Changed EINVAL to EEXIST in action_create() ACTION_SAVE case
+  - Made the return logic in create_actions() more consistent
+  - Merged 'tracing: Move hist trigger key printing into a separate
+    function' into 'tracing: Add hist trigger snapshot() action'
+  - Updated the new snapshot, onchange, and trace test cases to match
+    4.20 kselftest changes.
+  - Added new xfail test case that make sure certain unsupported
+    handler/action combinations fail as expected.
+  - While updating the test cases, realized that the other testcases
+    in the inter-event subdir needed SPDX license updates, so added
+    them.
 
- crypto/cryptd.c                   | 18 ++++++++----------
- drivers/firmware/efi/efi.c        |  5 ++++-
- drivers/gpu/drm/i915/i915_trace.h |  4 ++++
- drivers/pinctrl/pinctrl-bcm2835.c | 16 ++++++++--------
- drivers/tty/serial/amba-pl011.c   |  2 +-
- kernel/sched/core.c               |  9 +++++++--
- kernel/sched/work-simple.c        |  2 +-
- localversion-rt                   |  2 +-
- 8 files changed, 34 insertions(+), 24 deletions(-)
+v5->v6 changes:
+
+  - Added new Documentation patch explaining handler.action
+  - Added new README patch explaining handler.action
+  - Added separate snapshot() Documentation
+  - Added new snapshot() test case
+  - Updated README with snapshote()
+  - Added separate onchange() Documentation
+  - Added separate onchange() test case
+  - Updated README with onchange()
+  - Added separate trace() test case
+  - Updated README with trace() and <synthetic_event>() syntax
+
+v4->v5 changes:
+
+  - added 'trace' keyword test case
+  - added 'onchange' handler test case
+
+v3->v4 changes:
+
+  - added 'trace' keyword for generating synthetic events
+  - fix elt_data leak
+  - changed cond_update to cond_update_fn_t
+
+v2->v3 changes:
+
+  - fixed problem where trace actions were only being allowed for
+    onmatch handlers - now trace actions can be used with any handler.
+  - fixed problem where no action was being assigned to onmatch
+    handlers if save or snapshot actions were specified.
+
+v1->v2 changes:
+
+  - added missing tracing_cond_snapshot_data() definition for when
+    CONFIG_TRACER_SNAPSHOT not defined
+  - removed an unnecessary WARN_ON() in track_data_snapshot_print()
+
+
+Original text:
+
+This patchset adds some useful new functions to the hist
+trigger code: a snapshot action and an onchange handler.
+
+In order to make it easier to add these and in the process make the
+code more generic, I separated the code into explicit 'handlers' and
+'actions', handlers being things like 'onmax' and 'onchange', and
+'actions' being things like 'take a snapshot' or 'save some fields'.
+
+The first few patches do that basic refactoring, which make it easier
+to add the subsequent changes that arbitrarily combine actions and
+handlers.
+
+The fourth patch adds a 'conditional snapshot' capability that via a
+new tracing_snaphot_cond() function extends the existing snapshot
+code.  It allows the caller to associate some user data with the
+snapshot that can be checked and saved in an update() callback whose
+return value determines whether the snapshot should be taken or not.
+
+The remaining patches finally add the new snapshot action and onchange
+handler functionality - please see those patches for details and some
+examples.
+
+Thanks,
+
+Tom
+
+
+The following changes since commit 05cd667ce570cb82a967af7166c54c610324861c:
+
+  tracing: Use strncmp_prefix() helper for histogram code (2018-12-20 11:37:17 -0500)
+
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/zanussi/linux-trace.git ftrace/hist-snapshot-onchange-v10
+
+Tom Zanussi (15):
+  tracing: Refactor hist trigger action code
+  tracing: Make hist trigger Documentation better reflect
+    actions/handlers
+  tracing: Split up onmatch action data
+  tracing: Generalize hist trigger onmax and save action
+  tracing: Add conditional snapshot
+  tracing: Add hist trigger snapshot() action
+  tracing: Add hist trigger snapshot() action Documentation
+  tracing: Add hist trigger onchange() handler
+  tracing: Add hist trigger onchange() handler Documentation
+  tracing: Add alternative synthetic event trace action syntax
+  tracing: Add SPDX license GPL-2.0 license identifier to inter-event
+    testcases
+  tracing: Add hist trigger snapshot() action test case
+  tracing: Add hist trigger onchange() handler test case
+  tracing: Add alternative synthetic event trace action test case
+  tracing: Add hist trigger action 'expected fail' test case
+
+ Documentation/trace/histogram.rst                  |  285 ++++-
+ kernel/trace/trace.c                               |  177 +++-
+ kernel/trace/trace.h                               |   56 +-
+ kernel/trace/trace_events_hist.c                   | 1090 +++++++++++++++-----
+ kernel/trace/trace_events_trigger.c                |    2 +-
+ kernel/trace/trace_sched_wakeup.c                  |    2 +-
+ .../inter-event/trigger-action-hist-xfail.tc       |   30 +
+ .../inter-event/trigger-extended-error-support.tc  |    1 +
+ .../inter-event/trigger-field-variable-support.tc  |    1 +
+ .../trigger-inter-event-combined-hist.tc           |    1 +
+ .../inter-event/trigger-multi-actions-accept.tc    |    1 +
+ .../inter-event/trigger-onchange-action-hist.tc    |   28 +
+ .../inter-event/trigger-onmatch-action-hist.tc     |    1 +
+ .../trigger-onmatch-onmax-action-hist.tc           |    1 +
+ .../inter-event/trigger-onmax-action-hist.tc       |    1 +
+ .../inter-event/trigger-snapshot-action-hist.tc    |   43 +
+ .../trigger-synthetic-event-createremove.tc        |    1 +
+ .../inter-event/trigger-trace-action-hist.tc       |   42 +
+ 18 files changed, 1455 insertions(+), 308 deletions(-)
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-action-hist-xfail.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onchange-action-hist.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-trace-action-hist.tc
 
 -- 
 2.14.1
