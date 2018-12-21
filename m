@@ -1,8 +1,11 @@
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 8/9] drm/i915: disable tracing on -RT
-Date: Fri, 21 Dec 2018 09:21:20 -0600
-Message-ID: <bc045daf7dcb077b845955b25a8f2d1b6eaceac0.1545347029.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH RT 6/9] tty: serial: pl011: explicitly initialize the flags variable
+Date: Fri, 21 Dec 2018 09:21:18 -0600
+Message-ID: <cbe003d988c3904bb5164e6b83282bafc85f6bd0.1545347029.git.tom.zanussi@linux.intel.com>
 References: <cover.1545347029.git.tom.zanussi@linux.intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 Cc: rostedt@goodmis.org, tglx@linutronix.de, C.Emde@osadl.org,
         jkacur@redhat.com, bigeasy@linutronix.de,
         daniel.wagner@siemens.com, julia@ni.com
@@ -18,48 +21,42 @@ v3.18.129-rt111 rt-stable review patch.  If anyone has any objections,
 please let me know.
 
 ------------------
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Kurt Kanzenbach <kurt@linutronix.de>
 
-[Upstream commit 05cebb309b156646e61b898e92acc8e46c47ba75]
+[ Upstream commit 3260983a587d528811a15fc00fa2a9e4473c4453 ]
 
-Luca Abeni reported this:
-| BUG: scheduling while atomic: kworker/u8:2/15203/0x00000003
-| CPU: 1 PID: 15203 Comm: kworker/u8:2 Not tainted 4.19.1-rt3 #10
-| Call Trace:
-|  rt_spin_lock+0x3f/0x50
-|  gen6_read32+0x45/0x1d0 [i915]
-|  g4x_get_vblank_counter+0x36/0x40 [i915]
-|  trace_event_raw_event_i915_pipe_update_start+0x7d/0xf0 [i915]
+Silence the following gcc warning:
 
-The tracing events use trace_i915_pipe_update_start() among other events
-use functions acquire spin locks. A few trace points use
-intel_get_crtc_scanline(), others use ->get_vblank_counter() wich also
-might acquire a sleeping lock.
+drivers/tty/serial/amba-pl011.c: In function ‘pl011_console_write’:
+./include/linux/spinlock.h:260:3: warning: ‘flags’ may be used uninitialized in this function [-Wmaybe-uninitialized]
+   _raw_spin_unlock_irqrestore(lock, flags); \
+   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+drivers/tty/serial/amba-pl011.c:2214:16: note: ‘flags’ was declared here
+  unsigned long flags;
+                ^~~~~
 
-Based on this I don't see any other way than disable trace points on RT.
+The code is correct. Thus, initializing flags to zero doesn't change the
+behavior and resolves the warning.
 
-Cc: stable-rt@vger.kernel.org
-Reported-by: Luca Abeni <lucabe72@gmail.com>
+Signed-off-by: Kurt Kanzenbach <kurt@linutronix.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- drivers/gpu/drm/i915/i915_trace.h | 4 ++++
- 1 file changed, 4 insertions(+)
+ drivers/tty/serial/amba-pl011.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/gpu/drm/i915/i915_trace.h b/drivers/gpu/drm/i915/i915_trace.h
-index f5aa0067755a..3b37567b76c8 100644
---- a/drivers/gpu/drm/i915/i915_trace.h
-+++ b/drivers/gpu/drm/i915/i915_trace.h
-@@ -1,6 +1,10 @@
- #if !defined(_I915_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
- #define _I915_TRACE_H_
+diff --git a/drivers/tty/serial/amba-pl011.c b/drivers/tty/serial/amba-pl011.c
+index 5ef2c62bb904..dede68aa679e 100644
+--- a/drivers/tty/serial/amba-pl011.c
++++ b/drivers/tty/serial/amba-pl011.c
+@@ -1930,7 +1930,7 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
+ {
+ 	struct uart_amba_port *uap = amba_ports[co->index];
+ 	unsigned int status, old_cr, new_cr;
+-	unsigned long flags;
++	unsigned long flags = 0;
+ 	int locked = 1;
  
-+#ifdef CONFIG_PREEMPT_RT_BASE
-+#define NOTRACE
-+#endif
-+
- #include <linux/stringify.h>
- #include <linux/types.h>
- #include <linux/tracepoint.h>
+ 	clk_enable(uap->clk);
 -- 
 2.14.1
