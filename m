@@ -1,11 +1,8 @@
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 6/9] tty: serial: pl011: explicitly initialize the flags variable
-Date: Fri, 21 Dec 2018 09:21:18 -0600
-Message-ID: <cbe003d988c3904bb5164e6b83282bafc85f6bd0.1545347029.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH RT 2/9] efi: Disable runtime services on RT
+Date: Fri, 21 Dec 2018 09:21:14 -0600
+Message-ID: <4b7dce66c503f20080605dc39b812056c51d4a23.1545347029.git.tom.zanussi@linux.intel.com>
 References: <cover.1545347029.git.tom.zanussi@linux.intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
 Cc: rostedt@goodmis.org, tglx@linutronix.de, C.Emde@osadl.org,
         jkacur@redhat.com, bigeasy@linutronix.de,
         daniel.wagner@siemens.com, julia@ni.com
@@ -21,42 +18,49 @@ v3.18.129-rt111 rt-stable review patch.  If anyone has any objections,
 please let me know.
 
 ------------------
-From: Kurt Kanzenbach <kurt@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-[ Upstream commit 3260983a587d528811a15fc00fa2a9e4473c4453 ]
+[ Upstream commit 55544e1d5eb0d7608e2b41452729649c8ea1607a ]
 
-Silence the following gcc warning:
+Based on meassurements the EFI functions get_variable /
+get_next_variable take up to 2us which looks okay.
+The functions get_time, set_time take around 10ms. Those 10ms are too
+much. Even one ms would be too much.
+Ard mentioned that SetVariable might even trigger larger latencies if
+the firware will erase flash blocks on NOR.
 
-drivers/tty/serial/amba-pl011.c: In function ‘pl011_console_write’:
-./include/linux/spinlock.h:260:3: warning: ‘flags’ may be used uninitialized in this function [-Wmaybe-uninitialized]
-   _raw_spin_unlock_irqrestore(lock, flags); \
-   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-drivers/tty/serial/amba-pl011.c:2214:16: note: ‘flags’ was declared here
-  unsigned long flags;
-                ^~~~~
+The time-functions are used by efi-rtc and can be triggered during
+runtimed (either via explicit read/write or ntp sync).
 
-The code is correct. Thus, initializing flags to zero doesn't change the
-behavior and resolves the warning.
+The variable write could be used by pstore.
+These functions can be disabled without much of a loss. The poweroff /
+reboot hooks may be provided by PSCI.
 
-Signed-off-by: Kurt Kanzenbach <kurt@linutronix.de>
+Disable EFI's runtime wrappers.
+
+This was observed on "EFI v2.60 by SoftIron Overdrive 1000".
+
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+
+ Conflicts:
+	drivers/firmware/efi/efi.c
 ---
- drivers/tty/serial/amba-pl011.c | 2 +-
+ drivers/firmware/efi/efi.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/tty/serial/amba-pl011.c b/drivers/tty/serial/amba-pl011.c
-index 5ef2c62bb904..dede68aa679e 100644
---- a/drivers/tty/serial/amba-pl011.c
-+++ b/drivers/tty/serial/amba-pl011.c
-@@ -1930,7 +1930,7 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
- {
- 	struct uart_amba_port *uap = amba_ports[co->index];
- 	unsigned int status, old_cr, new_cr;
--	unsigned long flags;
-+	unsigned long flags = 0;
- 	int locked = 1;
+diff --git a/drivers/firmware/efi/efi.c b/drivers/firmware/efi/efi.c
+index e47c522e1d8f..f2be407247e5 100644
+--- a/drivers/firmware/efi/efi.c
++++ b/drivers/firmware/efi/efi.c
+@@ -41,7 +41,7 @@ struct efi __read_mostly efi = {
+ };
+ EXPORT_SYMBOL(efi);
  
- 	clk_enable(uap->clk);
+-static bool disable_runtime;
++static bool disable_runtime = IS_ENABLED(CONFIG_PREEMPT_RT_BASE);
+ static int __init setup_noefi(char *arg)
+ {
+ 	disable_runtime = true;
 -- 
 2.14.1
