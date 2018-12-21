@@ -1,51 +1,50 @@
-From: He Zhe <zhe.he@windriver.com>
-Subject: Re: [PATCH v2] kmemleak: Turn kmemleak_lock to raw spinlock on RT
-Date: Thu, 20 Dec 2018 09:46:34 +0800
-Message-ID: <b967b22a-78a9-5b73-9b04-26085f796e5d@windriver.com>
-References: <1542877459-144382-1-git-send-email-zhe.he@windriver.com>
- <20181123095314.hervxkxtqoixovro@linutronix.de>
- <40a63aa5-edb6-4673-b4cc-1bc10e7b3953@windriver.com>
- <20181130181956.eewrlaabtceekzyu@linutronix.de>
- <e7795912-7d93-8f4e-b997-67c4ac1f3549@windriver.com>
- <20181205191400.qrhim3m3ak5hcsuh@linutronix.de>
- <16ac893a-a080-18a5-e636-7b7668d978b0@windriver.com>
- <20181218150744.GB20197@arrakis.emea.arm.com>
- <20181219153022.w5le6nf7meiogh72@linutronix.de>
+From: Julia Cartwright <julia@ni.com>
+Subject: [ANNOUNCE] 4.9.146-rt125
+Date: Fri, 21 Dec 2018 04:36:08 +0000
+Message-ID: <20181221043607.GC15714@jcartwri.amer.corp.natinst.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
-Cc: <tglx@linutronix.de>, <rostedt@goodmis.org>, <linux-mm@kvack.org>,
-        <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Catalin Marinas <catalin.marinas@arm.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+To: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181219153022.w5le6nf7meiogh72@linutronix.de>
 Content-Language: en-US
+Content-ID: <8705DE394E612B46B86AB7A366E0EE0B@namprd04.prod.outlook.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hello RT Folks!
 
+I'm pleased to announce the 4.9.146-rt125 stable release.
 
-On 2018/12/19 23:30, Sebastian Andrzej Siewior wrote:
-> On 2018-12-18 15:07:45 [+0000], Catalin Marinas wrote:
-> …
->> It may be worth running some performance/latency tests during kmemleak
->> scanning (echo scan > /sys/kernel/debug/kmemleak) but at a quick look,
->> I don't think we'd see any difference with a raw_spin_lock_t.
->>
->> With a bit more thinking (though I'll be off until the new year), we
->> could probably get rid of the kmemleak_lock entirely in scan_block() and
->> make lookup_object() and the related rbtree code in kmemleak RCU-safe.
-> Okay. So let me apply that patch into my RT tree with your ack (from the
-> other email). And then I hope that it either shows up upstream or gets
-> replaced with RCU in the ende :)
+Apologies for an update to the 4.9-rt tree being way overdue.
 
-I'd like to do the upstreaming or replacing. Thanks.
+This release is just an update to the new stable 4.9.146 version
+and no RT specific changes have been made.
 
-Zhe
+You can get this release via the git tree at:
 
->
-> Thanks.
->
-> Sebastian
->
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.9-rt
+  Head SHA1: 5b5e350d8c82f5dcbad136aeede6b73d41cd1e8a
+
+Or to build 4.9.146-rt125 directly, the following patches should be applied=
+:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.9.146.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.9/patch-4.9.146-rt12=
+5.patch.xz
+
+Enjoy, and happy holidays,
+    Julia
