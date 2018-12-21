@@ -1,43 +1,49 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [ANNOUNCE] 4.9.146-rt125
-Date: Fri, 21 Dec 2018 12:09:56 +0100
-Message-ID: <20181221110956.quje2nriylyq54xg@linutronix.de>
-References: <20181221043607.GC15714@jcartwri.amer.corp.natinst.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>
-To: Julia Cartwright <julia@ni.com>
+From: Tom Zanussi <zanussi@kernel.org>
+Subject: [PATCH RT 1/9] efi: Allow efi=runtime
+Date: Fri, 21 Dec 2018 09:21:13 -0600
+Message-ID: <25f3709f40dc290bd5702feecb762dbd96ce6744.1545347029.git.tom.zanussi@linux.intel.com>
+References: <cover.1545347029.git.tom.zanussi@linux.intel.com>
+Cc: rostedt@goodmis.org, tglx@linutronix.de, C.Emde@osadl.org,
+        jkacur@redhat.com, bigeasy@linutronix.de,
+        daniel.wagner@siemens.com, julia@ni.com
+To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181221043607.GC15714@jcartwri.amer.corp.natinst.com>
+In-Reply-To: <cover.1545347029.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <cover.1545347029.git.tom.zanussi@linux.intel.com>
+References: <cover.1545347029.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2018-12-21 04:36:08 [+0000], Julia Cartwright wrote:
-> Hello RT Folks!
-> 
-> I'm pleased to announce the 4.9.146-rt125 stable release.
+v3.18.129-rt111 rt-stable review patch.  If anyone has any objections,
+please let me know.
 
-Thank you Julia.
+------------------
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-> Apologies for an update to the 4.9-rt tree being way overdue.
-> 
-> This release is just an update to the new stable 4.9.146 version
-> and no RT specific changes have been made.
+[ Upstream commit 71bef7da4112ed2677d4f10a58202a5a4638fb90 ]
 
-Except that 4.9.115-rt94 has been also released in the meantime which
-did contain some RT specific changes (for people which skipped the rc1
-release).
+In case the option "efi=noruntime" is default at built-time, the user
+could overwrite its sate by `efi=runtime' and allow it again.
 
-Regarding the spin_lock backports for lockup on x86 as reported by
-Daniel: The backports are part of the stable tree 4.9.147 and 4.14.90
-which is currently out for review.
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+---
+ drivers/firmware/efi/efi.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-Sebastian
+diff --git a/drivers/firmware/efi/efi.c b/drivers/firmware/efi/efi.c
+index 297066df6946..e47c522e1d8f 100644
+--- a/drivers/firmware/efi/efi.c
++++ b/drivers/firmware/efi/efi.c
+@@ -59,6 +59,9 @@ static int __init parse_efi_cmdline(char *str)
+ 	if (parse_option_str(str, "noruntime"))
+ 		disable_runtime = true;
+ 
++	if (parse_option_str(str, "runtime"))
++		disable_runtime = false;
++
+ 	return 0;
+ }
+ early_param("efi", parse_efi_cmdline);
+-- 
+2.14.1
