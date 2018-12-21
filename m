@@ -1,50 +1,43 @@
-From: Julia Cartwright <julia@ni.com>
-Subject: [ANNOUNCE] 4.9.146-rt125
-Date: Fri, 21 Dec 2018 04:36:08 +0000
-Message-ID: <20181221043607.GC15714@jcartwri.amer.corp.natinst.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [ANNOUNCE] 4.9.146-rt125
+Date: Fri, 21 Dec 2018 12:09:56 +0100
+Message-ID: <20181221110956.quje2nriylyq54xg@linutronix.de>
+References: <20181221043607.GC15714@jcartwri.amer.corp.natinst.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-To: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset=utf-8
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
         "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Daniel Wagner <daniel.wagner@siemens.com>,
         Tom Zanussi <tom.zanussi@linux.intel.com>
+To: Julia Cartwright <julia@ni.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Language: en-US
-Content-ID: <8705DE394E612B46B86AB7A366E0EE0B@namprd04.prod.outlook.com>
+Content-Disposition: inline
+In-Reply-To: <20181221043607.GC15714@jcartwri.amer.corp.natinst.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello RT Folks!
+On 2018-12-21 04:36:08 [+0000], Julia Cartwright wrote:
+> Hello RT Folks!
+> 
+> I'm pleased to announce the 4.9.146-rt125 stable release.
 
-I'm pleased to announce the 4.9.146-rt125 stable release.
+Thank you Julia.
 
-Apologies for an update to the 4.9-rt tree being way overdue.
+> Apologies for an update to the 4.9-rt tree being way overdue.
+> 
+> This release is just an update to the new stable 4.9.146 version
+> and no RT specific changes have been made.
 
-This release is just an update to the new stable 4.9.146 version
-and no RT specific changes have been made.
+Except that 4.9.115-rt94 has been also released in the meantime which
+did contain some RT specific changes (for people which skipped the rc1
+release).
 
-You can get this release via the git tree at:
+Regarding the spin_lock backports for lockup on x86 as reported by
+Daniel: The backports are part of the stable tree 4.9.147 and 4.14.90
+which is currently out for review.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.9-rt
-  Head SHA1: 5b5e350d8c82f5dcbad136aeede6b73d41cd1e8a
-
-Or to build 4.9.146-rt125 directly, the following patches should be applied=
-:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.9.146.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.9/patch-4.9.146-rt12=
-5.patch.xz
-
-Enjoy, and happy holidays,
-    Julia
+Sebastian
