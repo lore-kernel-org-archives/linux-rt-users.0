@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 06/13] pinctrl: bcm2835: Use raw spinlock for RT compatibility
-Date: Mon, 07 Jan 2019 14:52:58 -0500
-Message-ID: <20190107195332.697308672@goodmis.org>
+Subject: [PATCH RT 10/13] drm/i915: disable tracing on -RT
+Date: Mon, 07 Jan 2019 14:53:02 -0500
+Message-ID: <20190107195333.594740538@goodmis.org>
 References: <20190107195252.599921907@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -12,9 +12,8 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com, Mathias Duckeck <m.duckeck@kunbus.de>,
-        Lukas Wunner <lukas@wunner.de>,
-        Linus Walleij <linus.walleij@linaro.org>
+        tom.zanussi@linux.intel.com, stable-rt@vger.kernel.org,
+        Luca Abeni <lucabe72@gmail.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
@@ -26,102 +25,48 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Lukas Wunner <lukas@wunner.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-[ Upstream commit 71dfaa749f2f7c1722ebf6716d3f797a04528cba ]
+[ Upstream commit 05cebb309b156646e61b898e92acc8e46c47ba75 ]
 
-The BCM2835 pinctrl driver acquires a spinlock in its ->irq_enable,
-->irq_disable and ->irq_set_type callbacks.  Spinlocks become sleeping
-locks with CONFIG_PREEMPT_RT_FULL=y, therefore invocation of one of the
-callbacks in atomic context may cause a hard lockup if at least two GPIO
-pins in the same bank are used as interrupts.  The issue doesn't occur
-with just a single interrupt pin per bank because the lock is never
-contended.  I'm experiencing such lockups with GPIO 8 and 28 used as
-level-triggered interrupts, i.e. with ->irq_disable being invoked on
-reception of every IRQ.
+Luca Abeni reported this:
+| BUG: scheduling while atomic: kworker/u8:2/15203/0x00000003
+| CPU: 1 PID: 15203 Comm: kworker/u8:2 Not tainted 4.19.1-rt3 #10
+| Call Trace:
+|  rt_spin_lock+0x3f/0x50
+|  gen6_read32+0x45/0x1d0 [i915]
+|  g4x_get_vblank_counter+0x36/0x40 [i915]
+|  trace_event_raw_event_i915_pipe_update_start+0x7d/0xf0 [i915]
 
-The critical section protected by the spinlock is very small (one bitop
-and one RMW of an MMIO register), hence converting to a raw spinlock
-seems a better trade-off than converting the driver to threaded IRQ
-handling (which would increase latency to handle an interrupt).
+The tracing events use trace_i915_pipe_update_start() among other events
+use functions acquire spin locks. A few trace points use
+intel_get_crtc_scanline(), others use ->get_vblank_counter() wich also
+might acquire a sleeping lock.
 
-Cc: Mathias Duckeck <m.duckeck@kunbus.de>
-Signed-off-by: Lukas Wunner <lukas@wunner.de>
-Acked-by: Julia Cartwright <julia@ni.com>
-Signed-off-by: Linus Walleij <linus.walleij@linaro.org>
+Based on this I don't see any other way than disable trace points on RT.
+
+Cc: stable-rt@vger.kernel.org
+Reported-by: Luca Abeni <lucabe72@gmail.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- drivers/pinctrl/bcm/pinctrl-bcm2835.c | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
+ drivers/gpu/drm/i915/i915_trace.h | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/drivers/pinctrl/bcm/pinctrl-bcm2835.c b/drivers/pinctrl/bcm/pinctrl-bcm2835.c
-index ff782445dfb7..e72bf2502eca 100644
---- a/drivers/pinctrl/bcm/pinctrl-bcm2835.c
-+++ b/drivers/pinctrl/bcm/pinctrl-bcm2835.c
-@@ -92,7 +92,7 @@ struct bcm2835_pinctrl {
- 	struct gpio_chip gpio_chip;
- 	struct pinctrl_gpio_range gpio_range;
+diff --git a/drivers/gpu/drm/i915/i915_trace.h b/drivers/gpu/drm/i915/i915_trace.h
+index ef72da74b87f..adf0974415bc 100644
+--- a/drivers/gpu/drm/i915/i915_trace.h
++++ b/drivers/gpu/drm/i915/i915_trace.h
+@@ -2,6 +2,10 @@
+ #if !defined(_I915_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
+ #define _I915_TRACE_H_
  
--	spinlock_t irq_lock[BCM2835_NUM_BANKS];
-+	raw_spinlock_t irq_lock[BCM2835_NUM_BANKS];
- };
- 
- /* pins are just named GPIO0..GPIO53 */
-@@ -471,10 +471,10 @@ static void bcm2835_gpio_irq_enable(struct irq_data *data)
- 	unsigned bank = GPIO_REG_OFFSET(gpio);
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&pc->irq_lock[bank], flags);
-+	raw_spin_lock_irqsave(&pc->irq_lock[bank], flags);
- 	set_bit(offset, &pc->enabled_irq_map[bank]);
- 	bcm2835_gpio_irq_config(pc, gpio, true);
--	spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
-+	raw_spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
- }
- 
- static void bcm2835_gpio_irq_disable(struct irq_data *data)
-@@ -486,12 +486,12 @@ static void bcm2835_gpio_irq_disable(struct irq_data *data)
- 	unsigned bank = GPIO_REG_OFFSET(gpio);
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&pc->irq_lock[bank], flags);
-+	raw_spin_lock_irqsave(&pc->irq_lock[bank], flags);
- 	bcm2835_gpio_irq_config(pc, gpio, false);
- 	/* Clear events that were latched prior to clearing event sources */
- 	bcm2835_gpio_set_bit(pc, GPEDS0, gpio);
- 	clear_bit(offset, &pc->enabled_irq_map[bank]);
--	spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
-+	raw_spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
- }
- 
- static int __bcm2835_gpio_irq_set_type_disabled(struct bcm2835_pinctrl *pc,
-@@ -594,7 +594,7 @@ static int bcm2835_gpio_irq_set_type(struct irq_data *data, unsigned int type)
- 	unsigned long flags;
- 	int ret;
- 
--	spin_lock_irqsave(&pc->irq_lock[bank], flags);
-+	raw_spin_lock_irqsave(&pc->irq_lock[bank], flags);
- 
- 	if (test_bit(offset, &pc->enabled_irq_map[bank]))
- 		ret = __bcm2835_gpio_irq_set_type_enabled(pc, gpio, type);
-@@ -606,7 +606,7 @@ static int bcm2835_gpio_irq_set_type(struct irq_data *data, unsigned int type)
- 	else
- 		irq_set_handler_locked(data, handle_level_irq);
- 
--	spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
-+	raw_spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
- 
- 	return ret;
- }
-@@ -1021,7 +1021,7 @@ static int bcm2835_pinctrl_probe(struct platform_device *pdev)
- 		for_each_set_bit(offset, &events, 32)
- 			bcm2835_gpio_wr(pc, GPEDS0 + i * 4, BIT(offset));
- 
--		spin_lock_init(&pc->irq_lock[i]);
-+		raw_spin_lock_init(&pc->irq_lock[i]);
- 	}
- 
- 	err = gpiochip_add_data(&pc->gpio_chip, pc);
++#ifdef CONFIG_PREEMPT_RT_BASE
++#define NOTRACE
++#endif
++
+ #include <linux/stringify.h>
+ #include <linux/types.h>
+ #include <linux/tracepoint.h>
 -- 
 2.19.2
