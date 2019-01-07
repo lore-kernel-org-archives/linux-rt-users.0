@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 01/13] work-simple: drop a shit statement in SWORK_EVENT_PENDING
-Date: Mon, 07 Jan 2019 14:52:53 -0500
-Message-ID: <20190107195331.608898679@goodmis.org>
+Subject: [PATCH RT 03/13] mm/kasan: make quarantine_lock a raw_spinlock_t
+Date: Mon, 07 Jan 2019 14:52:55 -0500
+Message-ID: <20190107195332.098645365@goodmis.org>
 References: <20190107195252.599921907@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -12,7 +12,7 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com
+        tom.zanussi@linux.intel.com, Clark Williams <williams@redhat.com>
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
@@ -24,37 +24,99 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Clark Williams <williams@redhat.com>
 
-[ Upstream commit 22f41ebe5579cc847a7bb6c71916be92c8926216 ]
+[ Upstream commit 089cb35faad5da57fa90399b230b3aee4920bb02 ]
 
-Dan Carpenter reported
-| smatch warnings:
-|kernel/sched/swork.c:63 swork_kthread() warn: test_bit() takes a bit number
+The static lock quarantine_lock is used in quarantine.c to protect the
+quarantine queue datastructures. It is taken inside quarantine queue
+manipulation routines (quarantine_put(), quarantine_reduce() and
+quarantine_remove_cache()), with IRQs disabled.
+This is not a problem on a stock kernel but is problematic on an RT
+kernel where spin locks are sleeping spinlocks, which can sleep and can
+not be acquired with disabled interrupts.
 
-This is not a bug because we shift by zero (and use the same value in
-both places).
-Nevertheless I'm dropping that shift by zero to keep smatch quiet.
+Convert the quarantine_lock to a raw spinlock_t. The usage of
+quarantine_lock is confined to quarantine.c and the work performed while
+the lock is held is limited.
 
-Cc: Daniel Wagner <daniel.wagner@siemens.com>
+Signed-off-by: Clark Williams <williams@redhat.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/sched/swork.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ mm/kasan/quarantine.c | 18 +++++++++---------
+ 1 file changed, 9 insertions(+), 9 deletions(-)
 
-diff --git a/kernel/sched/swork.c b/kernel/sched/swork.c
-index 1950f40ca725..5559c22f664c 100644
---- a/kernel/sched/swork.c
-+++ b/kernel/sched/swork.c
-@@ -12,7 +12,7 @@
- #include <linux/spinlock.h>
- #include <linux/export.h>
+diff --git a/mm/kasan/quarantine.c b/mm/kasan/quarantine.c
+index 3a8ddf8baf7d..b209dbaefde8 100644
+--- a/mm/kasan/quarantine.c
++++ b/mm/kasan/quarantine.c
+@@ -103,7 +103,7 @@ static int quarantine_head;
+ static int quarantine_tail;
+ /* Total size of all objects in global_quarantine across all batches. */
+ static unsigned long quarantine_size;
+-static DEFINE_SPINLOCK(quarantine_lock);
++static DEFINE_RAW_SPINLOCK(quarantine_lock);
+ DEFINE_STATIC_SRCU(remove_cache_srcu);
  
--#define SWORK_EVENT_PENDING     (1 << 0)
-+#define SWORK_EVENT_PENDING     1
+ /* Maximum size of the global queue. */
+@@ -190,7 +190,7 @@ void quarantine_put(struct kasan_free_meta *info, struct kmem_cache *cache)
+ 	if (unlikely(q->bytes > QUARANTINE_PERCPU_SIZE)) {
+ 		qlist_move_all(q, &temp);
  
- static DEFINE_MUTEX(worker_mutex);
- static struct sworker *glob_worker;
+-		spin_lock(&quarantine_lock);
++		raw_spin_lock(&quarantine_lock);
+ 		WRITE_ONCE(quarantine_size, quarantine_size + temp.bytes);
+ 		qlist_move_all(&temp, &global_quarantine[quarantine_tail]);
+ 		if (global_quarantine[quarantine_tail].bytes >=
+@@ -203,7 +203,7 @@ void quarantine_put(struct kasan_free_meta *info, struct kmem_cache *cache)
+ 			if (new_tail != quarantine_head)
+ 				quarantine_tail = new_tail;
+ 		}
+-		spin_unlock(&quarantine_lock);
++		raw_spin_unlock(&quarantine_lock);
+ 	}
+ 
+ 	local_irq_restore(flags);
+@@ -230,7 +230,7 @@ void quarantine_reduce(void)
+ 	 * expected case).
+ 	 */
+ 	srcu_idx = srcu_read_lock(&remove_cache_srcu);
+-	spin_lock_irqsave(&quarantine_lock, flags);
++	raw_spin_lock_irqsave(&quarantine_lock, flags);
+ 
+ 	/*
+ 	 * Update quarantine size in case of hotplug. Allocate a fraction of
+@@ -254,7 +254,7 @@ void quarantine_reduce(void)
+ 			quarantine_head = 0;
+ 	}
+ 
+-	spin_unlock_irqrestore(&quarantine_lock, flags);
++	raw_spin_unlock_irqrestore(&quarantine_lock, flags);
+ 
+ 	qlist_free_all(&to_free, NULL);
+ 	srcu_read_unlock(&remove_cache_srcu, srcu_idx);
+@@ -310,17 +310,17 @@ void quarantine_remove_cache(struct kmem_cache *cache)
+ 	 */
+ 	on_each_cpu(per_cpu_remove_cache, cache, 1);
+ 
+-	spin_lock_irqsave(&quarantine_lock, flags);
++	raw_spin_lock_irqsave(&quarantine_lock, flags);
+ 	for (i = 0; i < QUARANTINE_BATCHES; i++) {
+ 		if (qlist_empty(&global_quarantine[i]))
+ 			continue;
+ 		qlist_move_cache(&global_quarantine[i], &to_free, cache);
+ 		/* Scanning whole quarantine can take a while. */
+-		spin_unlock_irqrestore(&quarantine_lock, flags);
++		raw_spin_unlock_irqrestore(&quarantine_lock, flags);
+ 		cond_resched();
+-		spin_lock_irqsave(&quarantine_lock, flags);
++		raw_spin_lock_irqsave(&quarantine_lock, flags);
+ 	}
+-	spin_unlock_irqrestore(&quarantine_lock, flags);
++	raw_spin_unlock_irqrestore(&quarantine_lock, flags);
+ 
+ 	qlist_free_all(&to_free, cache);
+ 
 -- 
 2.19.2
