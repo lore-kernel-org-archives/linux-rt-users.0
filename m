@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 02/13] kthread: convert worker lock to raw spinlock
-Date: Mon, 07 Jan 2019 14:52:54 -0500
-Message-ID: <20190107195331.792595159@goodmis.org>
+Subject: [PATCH RT 08/13] x86/fpu: Disable preemption around local_bh_disable()
+Date: Mon, 07 Jan 2019 14:53:00 -0500
+Message-ID: <20190107195333.112062036@goodmis.org>
 References: <20190107195252.599921907@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -12,8 +12,7 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com, Guenter Roeck <linux@roeck-us.net>,
-        Tim Sander <tim@krieglstein.org>
+        tom.zanussi@linux.intel.com, stable-rt@vger.kernel.org
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
@@ -25,204 +24,39 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Julia Cartwright <julia@ni.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-[ Upstream commit 5c8919eed1cfcad5da452047bd4ab088837afc41 ]
+[ Upstream commit f70ac4a5ca5df1d84dae809453464eca16b54f51 ]
 
-In order to enable the queuing of kthread work items from hardirq
-context even when PREEMPT_RT_FULL is enabled, convert the worker
-spin_lock to a raw_spin_lock.
+__fpu__restore_sig() restores the content of the FPU state in the CPUs
+and in order to avoid concurency it disbles BH. On !RT it also disables
+preemption but on RT we can get preempted in BH.
 
-This is only acceptable to do because the work performed under the lock
-is well-bounded and minimal.
+Add preempt_disable() while the FPU state is restored.
 
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: Guenter Roeck <linux@roeck-us.net>
-Reported-and-tested-by: Steffen Trumtrar <s.trumtrar@pengutronix.de>
-Reported-by: Tim Sander <tim@krieglstein.org>
-Signed-off-by: Julia Cartwright <julia@ni.com>
+Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- include/linux/kthread.h |  2 +-
- kernel/kthread.c        | 42 ++++++++++++++++++++---------------------
- 2 files changed, 22 insertions(+), 22 deletions(-)
+ arch/x86/kernel/fpu/signal.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/include/linux/kthread.h b/include/linux/kthread.h
-index 4e26609c77d4..4e0449df82c3 100644
---- a/include/linux/kthread.h
-+++ b/include/linux/kthread.h
-@@ -84,7 +84,7 @@ enum {
+diff --git a/arch/x86/kernel/fpu/signal.c b/arch/x86/kernel/fpu/signal.c
+index d99a8ee9e185..5e0274a94133 100644
+--- a/arch/x86/kernel/fpu/signal.c
++++ b/arch/x86/kernel/fpu/signal.c
+@@ -344,10 +344,12 @@ static int __fpu__restore_sig(void __user *buf, void __user *buf_fx, int size)
+ 			sanitize_restored_xstate(tsk, &env, xfeatures, fx_only);
+ 		}
  
- struct kthread_worker {
- 	unsigned int		flags;
--	spinlock_t		lock;
-+	raw_spinlock_t		lock;
- 	struct list_head	work_list;
- 	struct list_head	delayed_work_list;
- 	struct task_struct	*task;
-diff --git a/kernel/kthread.c b/kernel/kthread.c
-index 4e6d85b63201..430fd79cd3fe 100644
---- a/kernel/kthread.c
-+++ b/kernel/kthread.c
-@@ -579,7 +579,7 @@ void __kthread_init_worker(struct kthread_worker *worker,
- 				struct lock_class_key *key)
- {
- 	memset(worker, 0, sizeof(struct kthread_worker));
--	spin_lock_init(&worker->lock);
-+	raw_spin_lock_init(&worker->lock);
- 	lockdep_set_class_and_name(&worker->lock, key, name);
- 	INIT_LIST_HEAD(&worker->work_list);
- 	INIT_LIST_HEAD(&worker->delayed_work_list);
-@@ -621,21 +621,21 @@ int kthread_worker_fn(void *worker_ptr)
++		preempt_disable();
+ 		local_bh_disable();
+ 		fpu->initialized = 1;
+ 		fpu__restore(fpu);
+ 		local_bh_enable();
++		preempt_enable();
  
- 	if (kthread_should_stop()) {
- 		__set_current_state(TASK_RUNNING);
--		spin_lock_irq(&worker->lock);
-+		raw_spin_lock_irq(&worker->lock);
- 		worker->task = NULL;
--		spin_unlock_irq(&worker->lock);
-+		raw_spin_unlock_irq(&worker->lock);
- 		return 0;
- 	}
- 
- 	work = NULL;
--	spin_lock_irq(&worker->lock);
-+	raw_spin_lock_irq(&worker->lock);
- 	if (!list_empty(&worker->work_list)) {
- 		work = list_first_entry(&worker->work_list,
- 					struct kthread_work, node);
- 		list_del_init(&work->node);
- 	}
- 	worker->current_work = work;
--	spin_unlock_irq(&worker->lock);
-+	raw_spin_unlock_irq(&worker->lock);
- 
- 	if (work) {
- 		__set_current_state(TASK_RUNNING);
-@@ -792,12 +792,12 @@ bool kthread_queue_work(struct kthread_worker *worker,
- 	bool ret = false;
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&worker->lock, flags);
-+	raw_spin_lock_irqsave(&worker->lock, flags);
- 	if (!queuing_blocked(worker, work)) {
- 		kthread_insert_work(worker, work, &worker->work_list);
- 		ret = true;
- 	}
--	spin_unlock_irqrestore(&worker->lock, flags);
-+	raw_spin_unlock_irqrestore(&worker->lock, flags);
- 	return ret;
- }
- EXPORT_SYMBOL_GPL(kthread_queue_work);
-@@ -824,7 +824,7 @@ void kthread_delayed_work_timer_fn(unsigned long __data)
- 	if (WARN_ON_ONCE(!worker))
- 		return;
- 
--	spin_lock(&worker->lock);
-+	raw_spin_lock(&worker->lock);
- 	/* Work must not be used with >1 worker, see kthread_queue_work(). */
- 	WARN_ON_ONCE(work->worker != worker);
- 
-@@ -833,7 +833,7 @@ void kthread_delayed_work_timer_fn(unsigned long __data)
- 	list_del_init(&work->node);
- 	kthread_insert_work(worker, work, &worker->work_list);
- 
--	spin_unlock(&worker->lock);
-+	raw_spin_unlock(&worker->lock);
- }
- EXPORT_SYMBOL(kthread_delayed_work_timer_fn);
- 
-@@ -890,14 +890,14 @@ bool kthread_queue_delayed_work(struct kthread_worker *worker,
- 	unsigned long flags;
- 	bool ret = false;
- 
--	spin_lock_irqsave(&worker->lock, flags);
-+	raw_spin_lock_irqsave(&worker->lock, flags);
- 
- 	if (!queuing_blocked(worker, work)) {
- 		__kthread_queue_delayed_work(worker, dwork, delay);
- 		ret = true;
- 	}
- 
--	spin_unlock_irqrestore(&worker->lock, flags);
-+	raw_spin_unlock_irqrestore(&worker->lock, flags);
- 	return ret;
- }
- EXPORT_SYMBOL_GPL(kthread_queue_delayed_work);
-@@ -933,7 +933,7 @@ void kthread_flush_work(struct kthread_work *work)
- 	if (!worker)
- 		return;
- 
--	spin_lock_irq(&worker->lock);
-+	raw_spin_lock_irq(&worker->lock);
- 	/* Work must not be used with >1 worker, see kthread_queue_work(). */
- 	WARN_ON_ONCE(work->worker != worker);
- 
-@@ -945,7 +945,7 @@ void kthread_flush_work(struct kthread_work *work)
- 	else
- 		noop = true;
- 
--	spin_unlock_irq(&worker->lock);
-+	raw_spin_unlock_irq(&worker->lock);
- 
- 	if (!noop)
- 		wait_for_completion(&fwork.done);
-@@ -978,9 +978,9 @@ static bool __kthread_cancel_work(struct kthread_work *work, bool is_dwork,
- 		 * any queuing is blocked by setting the canceling counter.
- 		 */
- 		work->canceling++;
--		spin_unlock_irqrestore(&worker->lock, *flags);
-+		raw_spin_unlock_irqrestore(&worker->lock, *flags);
- 		del_timer_sync(&dwork->timer);
--		spin_lock_irqsave(&worker->lock, *flags);
-+		raw_spin_lock_irqsave(&worker->lock, *flags);
- 		work->canceling--;
- 	}
- 
-@@ -1027,7 +1027,7 @@ bool kthread_mod_delayed_work(struct kthread_worker *worker,
- 	unsigned long flags;
- 	int ret = false;
- 
--	spin_lock_irqsave(&worker->lock, flags);
-+	raw_spin_lock_irqsave(&worker->lock, flags);
- 
- 	/* Do not bother with canceling when never queued. */
- 	if (!work->worker)
-@@ -1044,7 +1044,7 @@ bool kthread_mod_delayed_work(struct kthread_worker *worker,
- fast_queue:
- 	__kthread_queue_delayed_work(worker, dwork, delay);
- out:
--	spin_unlock_irqrestore(&worker->lock, flags);
-+	raw_spin_unlock_irqrestore(&worker->lock, flags);
- 	return ret;
- }
- EXPORT_SYMBOL_GPL(kthread_mod_delayed_work);
-@@ -1058,7 +1058,7 @@ static bool __kthread_cancel_work_sync(struct kthread_work *work, bool is_dwork)
- 	if (!worker)
- 		goto out;
- 
--	spin_lock_irqsave(&worker->lock, flags);
-+	raw_spin_lock_irqsave(&worker->lock, flags);
- 	/* Work must not be used with >1 worker, see kthread_queue_work(). */
- 	WARN_ON_ONCE(work->worker != worker);
- 
-@@ -1072,13 +1072,13 @@ static bool __kthread_cancel_work_sync(struct kthread_work *work, bool is_dwork)
- 	 * In the meantime, block any queuing by setting the canceling counter.
- 	 */
- 	work->canceling++;
--	spin_unlock_irqrestore(&worker->lock, flags);
-+	raw_spin_unlock_irqrestore(&worker->lock, flags);
- 	kthread_flush_work(work);
--	spin_lock_irqsave(&worker->lock, flags);
-+	raw_spin_lock_irqsave(&worker->lock, flags);
- 	work->canceling--;
- 
- out_fast:
--	spin_unlock_irqrestore(&worker->lock, flags);
-+	raw_spin_unlock_irqrestore(&worker->lock, flags);
- out:
- 	return ret;
- }
+ 		return err;
+ 	} else {
 -- 
 2.19.2
