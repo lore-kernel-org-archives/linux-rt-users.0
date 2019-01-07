@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 08/13] x86/fpu: Disable preemption around local_bh_disable()
-Date: Mon, 07 Jan 2019 14:53:00 -0500
-Message-ID: <20190107195333.112062036@goodmis.org>
+Subject: [PATCH RT 07/13] rcu: make RCU_BOOST default on RT without EXPERT
+Date: Mon, 07 Jan 2019 14:52:59 -0500
+Message-ID: <20190107195332.915976523@goodmis.org>
 References: <20190107195252.599921907@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -12,7 +12,7 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com, stable-rt@vger.kernel.org
+        tom.zanussi@linux.intel.com
 To: linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
@@ -26,37 +26,39 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-[ Upstream commit f70ac4a5ca5df1d84dae809453464eca16b54f51 ]
+[ Upstream commit 78cab7cb632b6a4c84e78e4f12bb9e83c09b8885 ]
 
-__fpu__restore_sig() restores the content of the FPU state in the CPUs
-and in order to avoid concurency it disbles BH. On !RT it also disables
-preemption but on RT we can get preempted in BH.
+Paul E. McKenney suggested to allow enabling RCU_BOOST on RT without the
+need to go through the EXPERT option first.
 
-Add preempt_disable() while the FPU state is restored.
-
-Cc: stable-rt@vger.kernel.org
+Suggeted-by: Paul E. McKenney <paulmck@linux.ibm.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- arch/x86/kernel/fpu/signal.c | 2 ++
- 1 file changed, 2 insertions(+)
+ kernel/rcu/Kconfig | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/arch/x86/kernel/fpu/signal.c b/arch/x86/kernel/fpu/signal.c
-index d99a8ee9e185..5e0274a94133 100644
---- a/arch/x86/kernel/fpu/signal.c
-+++ b/arch/x86/kernel/fpu/signal.c
-@@ -344,10 +344,12 @@ static int __fpu__restore_sig(void __user *buf, void __user *buf_fx, int size)
- 			sanitize_restored_xstate(tsk, &env, xfeatures, fx_only);
- 		}
+diff --git a/kernel/rcu/Kconfig b/kernel/rcu/Kconfig
+index 0be2c96fb640..a243a78ff38c 100644
+--- a/kernel/rcu/Kconfig
++++ b/kernel/rcu/Kconfig
+@@ -36,7 +36,7 @@ config TINY_RCU
  
-+		preempt_disable();
- 		local_bh_disable();
- 		fpu->initialized = 1;
- 		fpu__restore(fpu);
- 		local_bh_enable();
-+		preempt_enable();
+ config RCU_EXPERT
+ 	bool "Make expert-level adjustments to RCU configuration"
+-	default y if PREEMPT_RT_FULL
++	default n
+ 	help
+ 	  This option needs to be enabled if you wish to make
+ 	  expert-level adjustments to RCU configuration.  By default,
+@@ -190,7 +190,7 @@ config RCU_FAST_NO_HZ
  
- 		return err;
- 	} else {
+ config RCU_BOOST
+ 	bool "Enable RCU priority boosting"
+-	depends on RT_MUTEXES && PREEMPT_RCU && RCU_EXPERT
++	depends on (RT_MUTEXES && PREEMPT_RCU && RCU_EXPERT) || PREEMPT_RT_FULL
+ 	default y if PREEMPT_RT_FULL
+ 	help
+ 	  This option boosts the priority of preempted RCU readers that
 -- 
 2.19.2
