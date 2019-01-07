@@ -1,51 +1,60 @@
-From: Scott Wood <swood@redhat.com>
-Subject: [PATCH RT] rtmutex: Flush block plug on __down_read()
-Date: Fri,  4 Jan 2019 15:33:21 -0500
-Message-ID: <1546634001-4450-1-git-send-email-swood@redhat.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        Scott Wood <swood@redhat.com>
-To: Thomas Gleixner <tglx@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Julien Thierry <julien.thierry@arm.com>
+Subject: [PATCH v3 0/3] KVM: arm/arm64: vgic: Use raw_spinlock for locks taken in IRQ context
+Date: Mon,  7 Jan 2019 15:06:14 +0000
+Message-ID: <1546873577-13895-1-git-send-email-julien.thierry@arm.com>
+Cc: marc.zyngier@arm.com, Christoffer.Dall@arm.com,
+        linux-arm-kernel@lists.infradead.org,
+        linux-rt-users@vger.kernel.org, tglx@linutronix.de,
+        rostedt@goodmis.org, bigeasy@linutronix.de,
+        Julien Thierry <julien.thierry@arm.com>
+To: linux-kernel@vger.kernel.org, kvmarm@lists.cs.columbia.edu
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-__down_read() bypasses the rtmutex frontend to call
-rt_mutex_slowlock_locked() directly, and thus it needs to call
-blk_schedule_flush_flug() itself.
+Hi,
 
-Signed-off-by: Scott Wood <swood@redhat.com>
----
- kernel/locking/rwsem-rt.c | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+While testing KVM running on PREEMPT_RT, starting guest could simply
+freeze the machine. This is because we are using spinlocks for VGIC
+locks, which is invalid in the VGIC case since the locks must be take
+with interrupts disabled.
 
-diff --git a/kernel/locking/rwsem-rt.c b/kernel/locking/rwsem-rt.c
-index 660e22caf709..f73cd4eda5cd 100644
---- a/kernel/locking/rwsem-rt.c
-+++ b/kernel/locking/rwsem-rt.c
-@@ -1,5 +1,6 @@
- /*
-  */
-+#include <linux/blkdev.h>
- #include <linux/rwsem.h>
- #include <linux/sched/debug.h>
- #include <linux/sched/signal.h>
-@@ -88,6 +89,15 @@ static int __sched __down_read_common(struct rw_semaphore *sem, int state)
- 	if (__down_read_trylock(sem))
- 		return 0;
- 
-+	/*
-+	 * If sem->rtmutex blocks, the function sched_submit_work will not
-+	 * call blk_schedule_flush_plug (because tsk_is_pi_blocked would be
-+	 * true).  We must call blk_schedule_flush_plug here; if we don't
-+	 * call it, an I/O deadlock may occur.
-+	 */
-+	if (unlikely(blk_needs_flush_plug(current)))
-+		blk_schedule_flush_plug(current);
-+
- 	might_sleep();
- 	raw_spin_lock_irq(&m->wait_lock);
- 	/*
--- 
-1.8.3.1
+The solution is to use raw_spinlock instead of spinlocks.
+
+Changes since v2[1]:
+- Rebase on v5.0-rc1
+- Remove first patch from series as it has been applied
+
+Changes since v1[2]:
+- Rebase on v4.20-rc4
+- Add Christoffer's Acked-by
+- Fix potential lock up when waiting for vcpus to halt
+
+[1] https://lkml.org/lkml/2018/11/27/20
+[2] https://lkml.org/lkml/2018/11/19/776
+
+Cheers,
+
+Julien
+
+-->
+
+Julien Thierry (3):
+  KVM: arm/arm64: vgic: Make vgic_irq->irq_lock a raw_spinlock
+  KVM: arm/arm64: vgic: Make vgic_dist->lpi_list_lock a raw_spinlock
+  KVM: arm/arm64: vgic: Make vgic_cpu->ap_list_lock a raw_spinlock
+
+ include/kvm/arm_vgic.h           |   6 +-
+ virt/kvm/arm/vgic/vgic-debug.c   |   4 +-
+ virt/kvm/arm/vgic/vgic-init.c    |   8 +--
+ virt/kvm/arm/vgic/vgic-its.c     |  22 ++++----
+ virt/kvm/arm/vgic/vgic-mmio-v2.c |  14 ++---
+ virt/kvm/arm/vgic/vgic-mmio-v3.c |  12 ++--
+ virt/kvm/arm/vgic/vgic-mmio.c    |  34 +++++------
+ virt/kvm/arm/vgic/vgic-v2.c      |   4 +-
+ virt/kvm/arm/vgic/vgic-v3.c      |   8 +--
+ virt/kvm/arm/vgic/vgic.c         | 118 +++++++++++++++++++--------------------
+ 10 files changed, 115 insertions(+), 115 deletions(-)
+
+--
+1.9.1
