@@ -1,65 +1,62 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT] rtmutex: Flush block plug on __down_read()
-Date: Mon, 7 Jan 2019 17:50:57 +0100
-Message-ID: <20190107165056.2lhd53umgt4vod5o@linutronix.de>
-References: <1546634001-4450-1-git-send-email-swood@redhat.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 05/13] sched/migrate_disable: Add export_symbol_gpl for __migrate_disabled
+Date: Mon, 07 Jan 2019 14:52:57 -0500
+Message-ID: <20190107195332.509917755@goodmis.org>
+References: <20190107195252.599921907@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-        Mikulas Patocka <mpatocka@redhat.com>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Scott Wood <swood@redhat.com>
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        John Kacur <jkacur@redhat.com>,
+        Paul Gortmaker <paul.gortmaker@windriver.com>,
+        Julia Cartwright <julia@ni.com>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        tom.zanussi@linux.intel.com,
+        Jonathan Rajott <jonathan.rajotte-julien@efficios.com>
+To: linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1546634001-4450-1-git-send-email-swood@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2019-01-04 15:33:21 [-0500], Scott Wood wrote:
-> __down_read() bypasses the rtmutex frontend to call
-> rt_mutex_slowlock_locked() directly, and thus it needs to call
-> blk_schedule_flush_flug() itself.
+4.14.87-rt50-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-we don't do this in the spin_lock() case because !RT doesn't do it. We
-do it for rtmutex because !RT does it for mutex.
-Now I can't remember why this was skipped for a rw_sem since it is
-performed for !RT as part of the schedule() invocation.
+------------------
 
-If I don't come up with a plausible explanation then I will apply this
-plus a hunk for the __down_write_common() case which should also be
-required (right?).
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-> Signed-off-by: Scott Wood <swood@redhat.com>
-> ---
->  kernel/locking/rwsem-rt.c | 10 ++++++++++
->  1 file changed, 10 insertions(+)
-> 
-> diff --git a/kernel/locking/rwsem-rt.c b/kernel/locking/rwsem-rt.c
-> index 660e22caf709..f73cd4eda5cd 100644
-> --- a/kernel/locking/rwsem-rt.c
-> +++ b/kernel/locking/rwsem-rt.c
-> @@ -1,5 +1,6 @@
->  /*
->   */
-> +#include <linux/blkdev.h>
->  #include <linux/rwsem.h>
->  #include <linux/sched/debug.h>
->  #include <linux/sched/signal.h>
-> @@ -88,6 +89,15 @@ static int __sched __down_read_common(struct rw_semaphore *sem, int state)
->  	if (__down_read_trylock(sem))
->  		return 0;
->  
-> +	/*
-> +	 * If sem->rtmutex blocks, the function sched_submit_work will not
-> +	 * call blk_schedule_flush_plug (because tsk_is_pi_blocked would be
-> +	 * true).  We must call blk_schedule_flush_plug here; if we don't
-> +	 * call it, an I/O deadlock may occur.
-> +	 */
-> +	if (unlikely(blk_needs_flush_plug(current)))
-> +		blk_schedule_flush_plug(current);
-> +
->  	might_sleep();
->  	raw_spin_lock_irq(&m->wait_lock);
->  	/*
+[ Upstream commit c0f0dd3ced7abe307d8e89477dae2929e488ba6c ]
 
-Sebastian
+Jonathan reported that lttng/modules can't use __migrate_disabled().
+This function is only used by sched/core itself and the tracing
+infrastructure to report the migrate counter (lttng does probably the
+same). Since the rework migrate_disable() it moved from sched.h to
+preempt.h and is became an exported function instead of a "static
+inline" due to the header recursion of preempt vs sched.
+
+Since the compiler inlines the function for sched/core usage, add a
+EXPORT_SYMBOL_GPL to allow the module/LTTNG usage.
+
+Reported-by: Jonathan Rajott <jonathan.rajotte-julien@efficios.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+---
+ kernel/sched/core.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 6ce950f24a7f..7c960cf07e7b 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -1112,6 +1112,7 @@ int __migrate_disabled(struct task_struct *p)
+ {
+ 	return p->migrate_disable;
+ }
++EXPORT_SYMBOL_GPL(__migrate_disabled);
+ #endif
+ 
+ static void __do_set_cpus_allowed_tail(struct task_struct *p,
+-- 
+2.19.2
