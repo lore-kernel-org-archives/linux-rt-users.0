@@ -1,50 +1,48 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT 01/13] work-simple: drop a shit statement in
- SWORK_EVENT_PENDING
-Date: Tue, 8 Jan 2019 10:00:43 +0100
-Message-ID: <20190108090042.x4bghetwa2vu2r3e@linutronix.de>
-References: <20190107195252.599921907@goodmis.org>
- <20190107195331.608898679@goodmis.org>
- <20190108030623.GA6619@jagdpanzerIV>
- <20190107222634.381bfbd0@vmware.local.home>
- <20190108044719.GA19275@jagdpanzerIV>
+From: Scott Wood <swood@redhat.com>
+Subject: Re: [PATCH RT] rtmutex: Flush block plug on __down_read()
+Date: Tue, 08 Jan 2019 13:19:47 -0600
+Message-ID: <1546975187.3632.10.camel@redhat.com>
+References: <1546634001-4450-1-git-send-email-swood@redhat.com>
+         <20190107165056.2lhd53umgt4vod5o@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Paul Gortmaker <paul.gortmaker@windriver.com>,
-        Julia Cartwright <julia@ni.com>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com
-To: Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        Mikulas Patocka <mpatocka@redhat.com>,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190108044719.GA19275@jagdpanzerIV>
+In-Reply-To: <20190107165056.2lhd53umgt4vod5o@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2019-01-08 13:47:19 [+0900], Sergey Senozhatsky wrote:
-> On (01/07/19 22:26), Steven Rostedt wrote:
-> > > On (01/07/19 14:52), Steven Rostedt wrote:
-> > > > Subject: [PATCH RT 01/13] work-simple: drop a shit statement in SWORK_EVENT_PENDING  
-> > > 
-> > > 						shift?
-> > 
-> > Yes. And I noticed this typo after I sent out the list. It appears that
-> > Sebastian's keyboard has a faulty 'f' key, as he has made this typo
-> > more than once.
+On Mon, 2019-01-07 at 17:50 +0100, Sebastian Andrzej Siewior wrote:
+> On 2019-01-04 15:33:21 [-0500], Scott Wood wrote:
+> > __down_read() bypasses the rtmutex frontend to call
+> > rt_mutex_slowlock_locked() directly, and thus it needs to call
+> > blk_schedule_flush_flug() itself.
 > 
-> I think Sebastian can configure his emacs to interpret a long
-> spacebar hold as 'f' key [0].
+> we don't do this in the spin_lock() case because !RT doesn't do it.
 
-Thanks for the hint but Sebastian is a vim user. Might be a reason to
-migrate.
+And because spin_lock() is called inside the flush path.
 
-> [0] https://imgs.xkcd.com/comics/workflow.png
-> 
-> 	-ss
+>  We
+> do it for rtmutex because !RT does it for mutex.
+> Now I can't remember why this was skipped for a rw_sem since it is
+> performed for !RT as part of the schedule() invocation.
 
-Sebastian
+Without this we were seeing XFS hangs on our internal kernel.  I wasn't able
+to reproduce it on a newer kernel, but it's very timing-dependant so I
+wouldn't read too much into that.
+
+> If I don't come up with a plausible explanation then I will apply this
+> plus a hunk for the __down_write_common() case which should also be
+> required (right?).
+
+I don't think it's needed, as it doesn't call into the rtmutex code via a
+backdoor.  When blocking on sem->rtmutex, rt_mutex_fastlock() will call the
+flush.  When blocking with a direct call to schedule(), tsk_is_pi_blocked()
+will not be true, and thus schedule() will do the flush via
+sched_submit_work().
+
+-Scott
