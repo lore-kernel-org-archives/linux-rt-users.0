@@ -1,293 +1,203 @@
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [ANNOUNCE] 3.18.129-rt111
-Date: Wed, 09 Jan 2019 13:16:46 -0600
-Message-ID: <1547061406.6258.4.camel@kernel.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        Julia Cartwright <julia@ni.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
+Subject: [PATCH v11 00/15] tracing: Hist trigger snapshot and onchange additions
+Date: Wed,  9 Jan 2019 13:49:07 -0600
+Message-ID: <cover.1547062835.git.tom.zanussi@linux.intel.com>
+Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
+        vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
+        julia@ni.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
+To: rostedt@goodmis.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello RT Folks!
+From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-I'm pleased to announce the 3.18.129-rt111 stable release.
+Hi,
 
-You can get this release via the git tree at:
+This is v11 of the hist trigger snapshot and onchange additions
+patchset.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+It doesn't add anything new - it's just a rebase of v10 on top of the
+latest ftrace/core with conflicts due to the new str_has_prefix()
+fixed.
 
-  branch: v3.18-rt
-  Head SHA1: abae91683efc5c482d2fbbad07010decde532360
+Thanks,
 
-Or to build 3.18.129-rt111 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.129.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.129-rt111.patch.xz
+Tom
 
 
-You can also build from 3.18.129-rt110 by applying the incremental patch:
+v10->v11 changes:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/incr/patch-3.18.129-rt110-rt111.patch.xz
+  - Updated to use str_has_prefix() for static strings
 
-Enjoy!
-   
-   Tom
+v9->v10 changes:
 
-Changes from v3.18.129-rt110:
----
-Daniel Bristot de Oliveira (1):
-      sched/core: Avoid __schedule() being called twice in a row
+  - Updated to use strncmp_prefix() for static strings
 
-Kurt Kanzenbach (1):
-      tty: serial: pl011: explicitly initialize the flags variable
+v8->v9 changes:
 
-Lukas Wunner (1):
-      pinctrl: bcm2835: Use raw spinlock for RT compatibility
+  - Moved v8 patches 17-22 to a separate series
+  - Moved track_data.var_ref_idx removal into 'tracing: Generalize
+    hist trigger onmax and save action'
+  - Merged 'tracing: Add hist trigger handler.action documentation'
+    into 'tracing: Refactor hist trigger action code'
+  - Updated patches to change all strlen() to sizeof() for string
+    constants
+  - Moved test cases to the end of the series
 
-Sebastian Andrzej Siewior (5):
-      efi: Allow efi=runtime
-      efi: Disable runtime services on RT
-      crypto: cryptd - add a lock instead preempt_disable/local_bh_disable
-      work-simple: drop a shit statement in SWORK_EVENT_PENDING
-      drm/i915: disable tracing on -RT
+v7->v8 changes:
 
-Tom Zanussi (1):
-      Linux 3.18.129-rt111
+  - Removed /dev/null redirection from test cases
+  - Replaced event disable with tracing_on disable instead
+  - New patch to remove hist_field.var_idx and track_data.var_ref_idx
+  - New patch to use var_refs[] array for reference checking
+  - New patch to remove open-coding of var_ref count manipulation
+  - New patch to use var_refs[] array to destroy var_refs
+  - New patch to remove synth_var_refs[] now that var_refs[] is used
+  - New patch to add comments to variable-related fields
+  - Added various new comments in the patches to clarify other things
+  - Replaced the convoluted logic mentioned by Namhyung in
+    update_track_val with wrappers and simpler check/save logic as
+    suggested
+  - Rebased to latest ftrace/core including Masami's dynamic event
+    framework changes
 
----
- crypto/cryptd.c                   | 18 ++++++++----------
- drivers/firmware/efi/efi.c        |  5 ++++-
- drivers/gpu/drm/i915/i915_trace.h |  4 ++++
- drivers/pinctrl/pinctrl-bcm2835.c | 16 ++++++++--------
- drivers/tty/serial/amba-pl011.c   |  2 +-
- kernel/sched/core.c               |  9 +++++++--
- kernel/sched/work-simple.c        |  2 +-
- localversion-rt                   |  2 +-
- 8 files changed, 34 insertions(+), 24 deletions(-)
----
-diff --git a/crypto/cryptd.c b/crypto/cryptd.c
-index 828ead458c09..ec32d9bf4651 100644
---- a/crypto/cryptd.c
-+++ b/crypto/cryptd.c
-@@ -36,6 +36,7 @@
- struct cryptd_cpu_queue {
- 	struct crypto_queue queue;
- 	struct work_struct work;
-+	spinlock_t qlock;
- };
- 
- struct cryptd_queue {
-@@ -97,6 +98,7 @@ static int cryptd_init_queue(struct cryptd_queue *queue,
- 		cpu_queue = per_cpu_ptr(queue->cpu_queue, cpu);
- 		crypto_init_queue(&cpu_queue->queue, max_cpu_qlen);
- 		INIT_WORK(&cpu_queue->work, cryptd_queue_worker);
-+		spin_lock_init(&cpu_queue->qlock);
- 	}
- 	return 0;
- }
-@@ -119,11 +121,12 @@ static int cryptd_enqueue_request(struct cryptd_queue *queue,
- 	int cpu, err;
- 	struct cryptd_cpu_queue *cpu_queue;
- 
--	cpu = get_cpu();
--	cpu_queue = this_cpu_ptr(queue->cpu_queue);
-+	cpu_queue = raw_cpu_ptr(queue->cpu_queue);
-+	spin_lock_bh(&cpu_queue->qlock);
-+	cpu = smp_processor_id();
- 	err = crypto_enqueue_request(&cpu_queue->queue, request);
- 	queue_work_on(cpu, kcrypto_wq, &cpu_queue->work);
--	put_cpu();
-+	spin_unlock_bh(&cpu_queue->qlock);
- 
- 	return err;
- }
-@@ -139,16 +142,11 @@ static void cryptd_queue_worker(struct work_struct *work)
- 	cpu_queue = container_of(work, struct cryptd_cpu_queue, work);
- 	/*
- 	 * Only handle one request at a time to avoid hogging crypto workqueue.
--	 * preempt_disable/enable is used to prevent being preempted by
--	 * cryptd_enqueue_request(). local_bh_disable/enable is used to prevent
--	 * cryptd_enqueue_request() being accessed from software interrupts.
- 	 */
--	local_bh_disable();
--	preempt_disable();
-+	spin_lock_bh(&cpu_queue->qlock);
- 	backlog = crypto_get_backlog(&cpu_queue->queue);
- 	req = crypto_dequeue_request(&cpu_queue->queue);
--	preempt_enable();
--	local_bh_enable();
-+	spin_unlock_bh(&cpu_queue->qlock);
- 
- 	if (!req)
- 		return;
-diff --git a/drivers/firmware/efi/efi.c b/drivers/firmware/efi/efi.c
-index 297066df6946..f2be407247e5 100644
---- a/drivers/firmware/efi/efi.c
-+++ b/drivers/firmware/efi/efi.c
-@@ -41,7 +41,7 @@ struct efi __read_mostly efi = {
- };
- EXPORT_SYMBOL(efi);
- 
--static bool disable_runtime;
-+static bool disable_runtime = IS_ENABLED(CONFIG_PREEMPT_RT_BASE);
- static int __init setup_noefi(char *arg)
- {
- 	disable_runtime = true;
-@@ -59,6 +59,9 @@ static int __init parse_efi_cmdline(char *str)
- 	if (parse_option_str(str, "noruntime"))
- 		disable_runtime = true;
- 
-+	if (parse_option_str(str, "runtime"))
-+		disable_runtime = false;
-+
- 	return 0;
- }
- early_param("efi", parse_efi_cmdline);
-diff --git a/drivers/gpu/drm/i915/i915_trace.h b/drivers/gpu/drm/i915/i915_trace.h
-index f5aa0067755a..3b37567b76c8 100644
---- a/drivers/gpu/drm/i915/i915_trace.h
-+++ b/drivers/gpu/drm/i915/i915_trace.h
-@@ -1,6 +1,10 @@
- #if !defined(_I915_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
- #define _I915_TRACE_H_
- 
-+#ifdef CONFIG_PREEMPT_RT_BASE
-+#define NOTRACE
-+#endif
-+
- #include <linux/stringify.h>
- #include <linux/types.h>
- #include <linux/tracepoint.h>
-diff --git a/drivers/pinctrl/pinctrl-bcm2835.c b/drivers/pinctrl/pinctrl-bcm2835.c
-index eabba02f71f9..9a975a12b8e3 100644
---- a/drivers/pinctrl/pinctrl-bcm2835.c
-+++ b/drivers/pinctrl/pinctrl-bcm2835.c
-@@ -106,7 +106,7 @@ struct bcm2835_pinctrl {
- 	struct pinctrl_gpio_range gpio_range;
- 
- 	struct bcm2835_gpio_irqdata irq_data[BCM2835_NUM_BANKS];
--	spinlock_t irq_lock[BCM2835_NUM_BANKS];
-+	raw_spinlock_t irq_lock[BCM2835_NUM_BANKS];
- };
- 
- static struct lock_class_key gpio_lock_class;
-@@ -465,10 +465,10 @@ static void bcm2835_gpio_irq_enable(struct irq_data *data)
- 	unsigned bank = GPIO_REG_OFFSET(gpio);
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&pc->irq_lock[bank], flags);
-+	raw_spin_lock_irqsave(&pc->irq_lock[bank], flags);
- 	set_bit(offset, &pc->enabled_irq_map[bank]);
- 	bcm2835_gpio_irq_config(pc, gpio, true);
--	spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
-+	raw_spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
- }
- 
- static void bcm2835_gpio_irq_disable(struct irq_data *data)
-@@ -479,10 +479,10 @@ static void bcm2835_gpio_irq_disable(struct irq_data *data)
- 	unsigned bank = GPIO_REG_OFFSET(gpio);
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&pc->irq_lock[bank], flags);
-+	raw_spin_lock_irqsave(&pc->irq_lock[bank], flags);
- 	bcm2835_gpio_irq_config(pc, gpio, false);
- 	clear_bit(offset, &pc->enabled_irq_map[bank]);
--	spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
-+	raw_spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
- }
- 
- static int __bcm2835_gpio_irq_set_type_disabled(struct bcm2835_pinctrl *pc,
-@@ -584,14 +584,14 @@ static int bcm2835_gpio_irq_set_type(struct irq_data *data, unsigned int type)
- 	unsigned long flags;
- 	int ret;
- 
--	spin_lock_irqsave(&pc->irq_lock[bank], flags);
-+	raw_spin_lock_irqsave(&pc->irq_lock[bank], flags);
- 
- 	if (test_bit(offset, &pc->enabled_irq_map[bank]))
- 		ret = __bcm2835_gpio_irq_set_type_enabled(pc, gpio, type);
- 	else
- 		ret = __bcm2835_gpio_irq_set_type_disabled(pc, gpio, type);
- 
--	spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
-+	raw_spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
- 
- 	return ret;
- }
-@@ -1004,7 +1004,7 @@ static int bcm2835_pinctrl_probe(struct platform_device *pdev)
- 		pc->irq[i] = irq_of_parse_and_map(np, i);
- 		pc->irq_data[i].pc = pc;
- 		pc->irq_data[i].bank = i;
--		spin_lock_init(&pc->irq_lock[i]);
-+		raw_spin_lock_init(&pc->irq_lock[i]);
- 
- 		len = strlen(dev_name(pc->dev)) + 16;
- 		name = devm_kzalloc(pc->dev, len, GFP_KERNEL);
-diff --git a/drivers/tty/serial/amba-pl011.c b/drivers/tty/serial/amba-pl011.c
-index 5ef2c62bb904..dede68aa679e 100644
---- a/drivers/tty/serial/amba-pl011.c
-+++ b/drivers/tty/serial/amba-pl011.c
-@@ -1930,7 +1930,7 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
- {
- 	struct uart_amba_port *uap = amba_ports[co->index];
- 	unsigned int status, old_cr, new_cr;
--	unsigned long flags;
-+	unsigned long flags = 0;
- 	int locked = 1;
- 
- 	clk_enable(uap->clk);
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index d5534f439b4a..500c319fcfc5 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -3114,10 +3114,15 @@ static inline void sched_submit_work(struct task_struct *tsk)
- 	/*
- 	 * If a worker went to sleep, notify and ask workqueue whether
- 	 * it wants to wake up a task to maintain concurrency.
-+	 * As this function is called inside the schedule() context,
-+	 * we disable preemption to avoid it calling schedule() again
-+	 * in the possible wakeup of a kworker.
- 	 */
--	if (tsk->flags & PF_WQ_WORKER)
-+	if (tsk->flags & PF_WQ_WORKER) {
-+		preempt_disable();
- 		wq_worker_sleeping(tsk);
--
-+		preempt_enable_no_resched();
-+	}
- 
- 	if (tsk_is_pi_blocked(tsk))
- 		return;
-diff --git a/kernel/sched/work-simple.c b/kernel/sched/work-simple.c
-index c996f755dba6..4284dd37aebe 100644
---- a/kernel/sched/work-simple.c
-+++ b/kernel/sched/work-simple.c
-@@ -11,7 +11,7 @@
- #include <linux/slab.h>
- #include <linux/spinlock.h>
- 
--#define SWORK_EVENT_PENDING     (1 << 0)
-+#define SWORK_EVENT_PENDING     1
- 
- static DEFINE_MUTEX(worker_mutex);
- static struct sworker *glob_worker;
-diff --git a/localversion-rt b/localversion-rt
-index b3e668a8fb94..9969a4b69fad 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt110
-+-rt111
+v6->v7 changes:
+
+  - Removed unnecessary HANDLER_ONMAX checks from onmax_print()/create()
+  - Moved handler assignment to acion_parse()
+  - Changed goto in ATION_TRACE case in action_create() to return
+  - Changed EINVAL to EEXIST in action_create() ACTION_SAVE case
+  - Made the return logic in create_actions() more consistent
+  - Merged 'tracing: Move hist trigger key printing into a separate
+    function' into 'tracing: Add hist trigger snapshot() action'
+  - Updated the new snapshot, onchange, and trace test cases to match
+    4.20 kselftest changes.
+  - Added new xfail test case that make sure certain unsupported
+    handler/action combinations fail as expected.
+  - While updating the test cases, realized that the other testcases
+    in the inter-event subdir needed SPDX license updates, so added
+    them.
+
+v5->v6 changes:
+
+  - Added new Documentation patch explaining handler.action
+  - Added new README patch explaining handler.action
+  - Added separate snapshot() Documentation
+  - Added new snapshot() test case
+  - Updated README with snapshote()
+  - Added separate onchange() Documentation
+  - Added separate onchange() test case
+  - Updated README with onchange()
+  - Added separate trace() test case
+  - Updated README with trace() and <synthetic_event>() syntax
+
+v4->v5 changes:
+
+  - added 'trace' keyword test case
+  - added 'onchange' handler test case
+
+v3->v4 changes:
+
+  - added 'trace' keyword for generating synthetic events
+  - fix elt_data leak
+  - changed cond_update to cond_update_fn_t
+
+v2->v3 changes:
+
+  - fixed problem where trace actions were only being allowed for
+    onmatch handlers - now trace actions can be used with any handler.
+  - fixed problem where no action was being assigned to onmatch
+    handlers if save or snapshot actions were specified.
+
+v1->v2 changes:
+
+  - added missing tracing_cond_snapshot_data() definition for when
+    CONFIG_TRACER_SNAPSHOT not defined
+  - removed an unnecessary WARN_ON() in track_data_snapshot_print()
+
+
+Original text:
+
+This patchset adds some useful new functions to the hist
+trigger code: a snapshot action and an onchange handler.
+
+In order to make it easier to add these and in the process make the
+code more generic, I separated the code into explicit 'handlers' and
+'actions', handlers being things like 'onmax' and 'onchange', and
+'actions' being things like 'take a snapshot' or 'save some fields'.
+
+The first few patches do that basic refactoring, which make it easier
+to add the subsequent changes that arbitrarily combine actions and
+handlers.
+
+The fourth patch adds a 'conditional snapshot' capability that via a
+new tracing_snaphot_cond() function extends the existing snapshot
+code.  It allows the caller to associate some user data with the
+snapshot that can be checked and saved in an update() callback whose
+return value determines whether the snapshot should be taken or not.
+
+The remaining patches finally add the new snapshot action and onchange
+handler functionality - please see those patches for details and some
+examples.
+
+Thanks,
+
+Tom
+
+
+The following changes since commit aa6e33335e1ff99c7ac3d00fa5e27faaad04f981:
+
+  tracing: Use str_has_prefix() in synth_event_create() (2019-01-08 16:54:20 -0600)
+
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/zanussi/linux-trace.git ftrace/hist-snapshot-onchange-v11
+
+Tom Zanussi (15):
+  tracing: Refactor hist trigger action code
+  tracing: Make hist trigger Documentation better reflect
+    actions/handlers
+  tracing: Split up onmatch action data
+  tracing: Generalize hist trigger onmax and save action
+  tracing: Add conditional snapshot
+  tracing: Add hist trigger snapshot() action
+  tracing: Add hist trigger snapshot() action Documentation
+  tracing: Add hist trigger onchange() handler
+  tracing: Add hist trigger onchange() handler Documentation
+  tracing: Add alternative synthetic event trace action syntax
+  tracing: Add SPDX license GPL-2.0 license identifier to inter-event
+    testcases
+  tracing: Add hist trigger snapshot() action test case
+  tracing: Add hist trigger onchange() handler test case
+  tracing: Add alternative synthetic event trace action test case
+  tracing: Add hist trigger action 'expected fail' test case
+
+ Documentation/trace/histogram.rst                  |  285 ++++-
+ kernel/trace/trace.c                               |  177 +++-
+ kernel/trace/trace.h                               |   56 +-
+ kernel/trace/trace_events_hist.c                   | 1090 +++++++++++++++-----
+ kernel/trace/trace_events_trigger.c                |    2 +-
+ kernel/trace/trace_sched_wakeup.c                  |    2 +-
+ .../inter-event/trigger-action-hist-xfail.tc       |   30 +
+ .../inter-event/trigger-extended-error-support.tc  |    1 +
+ .../inter-event/trigger-field-variable-support.tc  |    1 +
+ .../trigger-inter-event-combined-hist.tc           |    1 +
+ .../inter-event/trigger-multi-actions-accept.tc    |    1 +
+ .../inter-event/trigger-onchange-action-hist.tc    |   28 +
+ .../inter-event/trigger-onmatch-action-hist.tc     |    1 +
+ .../trigger-onmatch-onmax-action-hist.tc           |    1 +
+ .../inter-event/trigger-onmax-action-hist.tc       |    1 +
+ .../inter-event/trigger-snapshot-action-hist.tc    |   43 +
+ .../trigger-synthetic-event-createremove.tc        |    1 +
+ .../inter-event/trigger-trace-action-hist.tc       |   42 +
+ 18 files changed, 1455 insertions(+), 308 deletions(-)
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-action-hist-xfail.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onchange-action-hist.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-trace-action-hist.tc
+
+-- 
+2.14.1
