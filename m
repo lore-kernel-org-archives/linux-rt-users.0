@@ -1,95 +1,293 @@
-From: Daniel Bristot de Oliveira <bristot@redhat.com>
-Subject: [PATCH RT] padata: Make padata_do_serial() use get_cpu_light()
-Date: Wed,  9 Jan 2019 16:59:26 +0100
-Message-ID: <5894faebe7c816c6b210ab2616a49330f067a492.1547039140.git.bristot@redhat.com>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+From: Tom Zanussi <zanussi@kernel.org>
+Subject: [ANNOUNCE] 3.18.129-rt111
+Date: Wed, 09 Jan 2019 13:16:46 -0600
+Message-ID: <1547061406.6258.4.camel@kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Clark Williams <williams@redhat.com>,
-        linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org
-To: linux-rt-users@vger.kernel.org
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        Julia Cartwright <julia@ni.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-We hit the following BUG:
+Hello RT Folks!
 
-  BUG: scheduling while atomic: kworker/1:1/24117/0x00000002
-  Preemption disabled at:
-  [<ffffffffb61fd824>] padata_do_serial+0x24/0x110
-  CPU: 1 PID: 24117 Comm: kworker/1:1 Not tainted 4.18.0-56.rt9.107.el8.x86_64 #1
-  Hardware name: HPE ProLiant DL380 Gen10/ProLiant DL380 Gen10, BIOS U30 11/14/2017
-  Workqueue: pencrypt padata_parallel_worker
-  Call Trace:
-    dump_stack+0x5c/0x80
-    ? padata_do_serial+0x24/0x110
-    __schedule_bug.cold.83+0x8e/0x9b
-    __schedule+0x5a0/0x680
-    schedule+0x39/0xd0
-    rt_spin_lock_slowlock_locked+0x10e/0x2b0
-    rt_spin_lock_slowlock+0x50/0x80
-    padata_do_serial+0x4d/0x110
-    padata_parallel_worker+0xaf/0xe0
-    process_one_work+0x183/0x3b0
-    ? process_one_work+0x3b0/0x3b0
-    worker_thread+0x30/0x3d0
-    ? process_one_work+0x3b0/0x3b0
-    kthread+0x112/0x130
-    ? kthread_create_worker_on_cpu+0x70/0x70
-    ret_from_fork+0x35/0x40
+I'm pleased to announce the 3.18.129-rt111 stable release.
 
-and the cause is a spin_lock() taken inside a get_cpu() section.
+You can get this release via the git tree at:
 
-Convert the get/put_cpu to get/put_cpu_light to fix the BUG while reducing the
-preempt_disable section.
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-Signed-off-by: Daniel Bristot de Oliveira <bristot@redhat.com>
-Reviewed-by: Clark Williams <williams@redhat.com>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Clark Williams <williams@redhat.com>
-Cc: linux-rt-users@vger.kernel.org
-Cc: linux-crypto@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org
+  branch: v3.18-rt
+  Head SHA1: abae91683efc5c482d2fbbad07010decde532360
 
-diff --git a/kernel/padata.c b/kernel/padata.c
-index d568cc56405f..bfcbdeb20ba5 100644
---- a/kernel/padata.c
-+++ b/kernel/padata.c
-@@ -295,7 +295,7 @@ static void padata_reorder_timer(struct timer_list *t)
- 	unsigned int weight;
- 	int target_cpu, cpu;
+Or to build 3.18.129-rt111 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.129.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.129-rt111.patch.xz
+
+
+You can also build from 3.18.129-rt110 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/incr/patch-3.18.129-rt110-rt111.patch.xz
+
+Enjoy!
+   
+   Tom
+
+Changes from v3.18.129-rt110:
+---
+Daniel Bristot de Oliveira (1):
+      sched/core: Avoid __schedule() being called twice in a row
+
+Kurt Kanzenbach (1):
+      tty: serial: pl011: explicitly initialize the flags variable
+
+Lukas Wunner (1):
+      pinctrl: bcm2835: Use raw spinlock for RT compatibility
+
+Sebastian Andrzej Siewior (5):
+      efi: Allow efi=runtime
+      efi: Disable runtime services on RT
+      crypto: cryptd - add a lock instead preempt_disable/local_bh_disable
+      work-simple: drop a shit statement in SWORK_EVENT_PENDING
+      drm/i915: disable tracing on -RT
+
+Tom Zanussi (1):
+      Linux 3.18.129-rt111
+
+---
+ crypto/cryptd.c                   | 18 ++++++++----------
+ drivers/firmware/efi/efi.c        |  5 ++++-
+ drivers/gpu/drm/i915/i915_trace.h |  4 ++++
+ drivers/pinctrl/pinctrl-bcm2835.c | 16 ++++++++--------
+ drivers/tty/serial/amba-pl011.c   |  2 +-
+ kernel/sched/core.c               |  9 +++++++--
+ kernel/sched/work-simple.c        |  2 +-
+ localversion-rt                   |  2 +-
+ 8 files changed, 34 insertions(+), 24 deletions(-)
+---
+diff --git a/crypto/cryptd.c b/crypto/cryptd.c
+index 828ead458c09..ec32d9bf4651 100644
+--- a/crypto/cryptd.c
++++ b/crypto/cryptd.c
+@@ -36,6 +36,7 @@
+ struct cryptd_cpu_queue {
+ 	struct crypto_queue queue;
+ 	struct work_struct work;
++	spinlock_t qlock;
+ };
+ 
+ struct cryptd_queue {
+@@ -97,6 +98,7 @@ static int cryptd_init_queue(struct cryptd_queue *queue,
+ 		cpu_queue = per_cpu_ptr(queue->cpu_queue, cpu);
+ 		crypto_init_queue(&cpu_queue->queue, max_cpu_qlen);
+ 		INIT_WORK(&cpu_queue->work, cryptd_queue_worker);
++		spin_lock_init(&cpu_queue->qlock);
+ 	}
+ 	return 0;
+ }
+@@ -119,11 +121,12 @@ static int cryptd_enqueue_request(struct cryptd_queue *queue,
+ 	int cpu, err;
+ 	struct cryptd_cpu_queue *cpu_queue;
  
 -	cpu = get_cpu();
-+	cpu = get_cpu_light();
- 
- 	/* We don't lock pd here to not interfere with parallel processing
- 	 * padata_reorder() calls on other CPUs. We just need any CPU out of
-@@ -321,7 +321,7 @@ static void padata_reorder_timer(struct timer_list *t)
- 		padata_reorder(pd);
- 	}
- 
+-	cpu_queue = this_cpu_ptr(queue->cpu_queue);
++	cpu_queue = raw_cpu_ptr(queue->cpu_queue);
++	spin_lock_bh(&cpu_queue->qlock);
++	cpu = smp_processor_id();
+ 	err = crypto_enqueue_request(&cpu_queue->queue, request);
+ 	queue_work_on(cpu, kcrypto_wq, &cpu_queue->work);
 -	put_cpu();
-+	put_cpu_light();
++	spin_unlock_bh(&cpu_queue->qlock);
+ 
+ 	return err;
+ }
+@@ -139,16 +142,11 @@ static void cryptd_queue_worker(struct work_struct *work)
+ 	cpu_queue = container_of(work, struct cryptd_cpu_queue, work);
+ 	/*
+ 	 * Only handle one request at a time to avoid hogging crypto workqueue.
+-	 * preempt_disable/enable is used to prevent being preempted by
+-	 * cryptd_enqueue_request(). local_bh_disable/enable is used to prevent
+-	 * cryptd_enqueue_request() being accessed from software interrupts.
+ 	 */
+-	local_bh_disable();
+-	preempt_disable();
++	spin_lock_bh(&cpu_queue->qlock);
+ 	backlog = crypto_get_backlog(&cpu_queue->queue);
+ 	req = crypto_dequeue_request(&cpu_queue->queue);
+-	preempt_enable();
+-	local_bh_enable();
++	spin_unlock_bh(&cpu_queue->qlock);
+ 
+ 	if (!req)
+ 		return;
+diff --git a/drivers/firmware/efi/efi.c b/drivers/firmware/efi/efi.c
+index 297066df6946..f2be407247e5 100644
+--- a/drivers/firmware/efi/efi.c
++++ b/drivers/firmware/efi/efi.c
+@@ -41,7 +41,7 @@ struct efi __read_mostly efi = {
+ };
+ EXPORT_SYMBOL(efi);
+ 
+-static bool disable_runtime;
++static bool disable_runtime = IS_ENABLED(CONFIG_PREEMPT_RT_BASE);
+ static int __init setup_noefi(char *arg)
+ {
+ 	disable_runtime = true;
+@@ -59,6 +59,9 @@ static int __init parse_efi_cmdline(char *str)
+ 	if (parse_option_str(str, "noruntime"))
+ 		disable_runtime = true;
+ 
++	if (parse_option_str(str, "runtime"))
++		disable_runtime = false;
++
+ 	return 0;
+ }
+ early_param("efi", parse_efi_cmdline);
+diff --git a/drivers/gpu/drm/i915/i915_trace.h b/drivers/gpu/drm/i915/i915_trace.h
+index f5aa0067755a..3b37567b76c8 100644
+--- a/drivers/gpu/drm/i915/i915_trace.h
++++ b/drivers/gpu/drm/i915/i915_trace.h
+@@ -1,6 +1,10 @@
+ #if !defined(_I915_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
+ #define _I915_TRACE_H_
+ 
++#ifdef CONFIG_PREEMPT_RT_BASE
++#define NOTRACE
++#endif
++
+ #include <linux/stringify.h>
+ #include <linux/types.h>
+ #include <linux/tracepoint.h>
+diff --git a/drivers/pinctrl/pinctrl-bcm2835.c b/drivers/pinctrl/pinctrl-bcm2835.c
+index eabba02f71f9..9a975a12b8e3 100644
+--- a/drivers/pinctrl/pinctrl-bcm2835.c
++++ b/drivers/pinctrl/pinctrl-bcm2835.c
+@@ -106,7 +106,7 @@ struct bcm2835_pinctrl {
+ 	struct pinctrl_gpio_range gpio_range;
+ 
+ 	struct bcm2835_gpio_irqdata irq_data[BCM2835_NUM_BANKS];
+-	spinlock_t irq_lock[BCM2835_NUM_BANKS];
++	raw_spinlock_t irq_lock[BCM2835_NUM_BANKS];
+ };
+ 
+ static struct lock_class_key gpio_lock_class;
+@@ -465,10 +465,10 @@ static void bcm2835_gpio_irq_enable(struct irq_data *data)
+ 	unsigned bank = GPIO_REG_OFFSET(gpio);
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&pc->irq_lock[bank], flags);
++	raw_spin_lock_irqsave(&pc->irq_lock[bank], flags);
+ 	set_bit(offset, &pc->enabled_irq_map[bank]);
+ 	bcm2835_gpio_irq_config(pc, gpio, true);
+-	spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
++	raw_spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
  }
  
- static void padata_serial_worker(struct work_struct *serial_work)
-@@ -369,7 +369,7 @@ void padata_do_serial(struct padata_priv *padata)
+ static void bcm2835_gpio_irq_disable(struct irq_data *data)
+@@ -479,10 +479,10 @@ static void bcm2835_gpio_irq_disable(struct irq_data *data)
+ 	unsigned bank = GPIO_REG_OFFSET(gpio);
+ 	unsigned long flags;
  
- 	pd = padata->pd;
+-	spin_lock_irqsave(&pc->irq_lock[bank], flags);
++	raw_spin_lock_irqsave(&pc->irq_lock[bank], flags);
+ 	bcm2835_gpio_irq_config(pc, gpio, false);
+ 	clear_bit(offset, &pc->enabled_irq_map[bank]);
+-	spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
++	raw_spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
+ }
  
--	cpu = get_cpu();
-+	cpu = get_cpu_light();
+ static int __bcm2835_gpio_irq_set_type_disabled(struct bcm2835_pinctrl *pc,
+@@ -584,14 +584,14 @@ static int bcm2835_gpio_irq_set_type(struct irq_data *data, unsigned int type)
+ 	unsigned long flags;
+ 	int ret;
  
- 	/* We need to run on the same CPU padata_do_parallel(.., padata, ..)
- 	 * was called on -- or, at least, enqueue the padata object into the
-@@ -387,7 +387,7 @@ void padata_do_serial(struct padata_priv *padata)
- 	list_add_tail(&padata->list, &pqueue->reorder.list);
- 	spin_unlock(&pqueue->reorder.lock);
+-	spin_lock_irqsave(&pc->irq_lock[bank], flags);
++	raw_spin_lock_irqsave(&pc->irq_lock[bank], flags);
  
--	put_cpu();
-+	put_cpu_light();
+ 	if (test_bit(offset, &pc->enabled_irq_map[bank]))
+ 		ret = __bcm2835_gpio_irq_set_type_enabled(pc, gpio, type);
+ 	else
+ 		ret = __bcm2835_gpio_irq_set_type_disabled(pc, gpio, type);
  
- 	/* If we're running on the wrong CPU, call padata_reorder() via a
- 	 * kernel worker.
--- 
-2.17.2
+-	spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
++	raw_spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
+ 
+ 	return ret;
+ }
+@@ -1004,7 +1004,7 @@ static int bcm2835_pinctrl_probe(struct platform_device *pdev)
+ 		pc->irq[i] = irq_of_parse_and_map(np, i);
+ 		pc->irq_data[i].pc = pc;
+ 		pc->irq_data[i].bank = i;
+-		spin_lock_init(&pc->irq_lock[i]);
++		raw_spin_lock_init(&pc->irq_lock[i]);
+ 
+ 		len = strlen(dev_name(pc->dev)) + 16;
+ 		name = devm_kzalloc(pc->dev, len, GFP_KERNEL);
+diff --git a/drivers/tty/serial/amba-pl011.c b/drivers/tty/serial/amba-pl011.c
+index 5ef2c62bb904..dede68aa679e 100644
+--- a/drivers/tty/serial/amba-pl011.c
++++ b/drivers/tty/serial/amba-pl011.c
+@@ -1930,7 +1930,7 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
+ {
+ 	struct uart_amba_port *uap = amba_ports[co->index];
+ 	unsigned int status, old_cr, new_cr;
+-	unsigned long flags;
++	unsigned long flags = 0;
+ 	int locked = 1;
+ 
+ 	clk_enable(uap->clk);
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index d5534f439b4a..500c319fcfc5 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -3114,10 +3114,15 @@ static inline void sched_submit_work(struct task_struct *tsk)
+ 	/*
+ 	 * If a worker went to sleep, notify and ask workqueue whether
+ 	 * it wants to wake up a task to maintain concurrency.
++	 * As this function is called inside the schedule() context,
++	 * we disable preemption to avoid it calling schedule() again
++	 * in the possible wakeup of a kworker.
+ 	 */
+-	if (tsk->flags & PF_WQ_WORKER)
++	if (tsk->flags & PF_WQ_WORKER) {
++		preempt_disable();
+ 		wq_worker_sleeping(tsk);
+-
++		preempt_enable_no_resched();
++	}
+ 
+ 	if (tsk_is_pi_blocked(tsk))
+ 		return;
+diff --git a/kernel/sched/work-simple.c b/kernel/sched/work-simple.c
+index c996f755dba6..4284dd37aebe 100644
+--- a/kernel/sched/work-simple.c
++++ b/kernel/sched/work-simple.c
+@@ -11,7 +11,7 @@
+ #include <linux/slab.h>
+ #include <linux/spinlock.h>
+ 
+-#define SWORK_EVENT_PENDING     (1 << 0)
++#define SWORK_EVENT_PENDING     1
+ 
+ static DEFINE_MUTEX(worker_mutex);
+ static struct sworker *glob_worker;
+diff --git a/localversion-rt b/localversion-rt
+index b3e668a8fb94..9969a4b69fad 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt110
++-rt111
