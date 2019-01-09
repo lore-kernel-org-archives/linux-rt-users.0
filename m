@@ -1,222 +1,95 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] v4.19.13-rt10
-Date: Wed, 9 Jan 2019 12:00:50 +0100
-Message-ID: <20190109110049.cp5scbhd2xaqqjn3@linutronix.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+From: Daniel Bristot de Oliveira <bristot@redhat.com>
+Subject: [PATCH RT] padata: Make padata_do_serial() use get_cpu_light()
+Date: Wed,  9 Jan 2019 16:59:26 +0100
+Message-ID: <5894faebe7c816c6b210ab2616a49330f067a492.1547039140.git.bristot@redhat.com>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Clark Williams <williams@redhat.com>,
+        linux-crypto@vger.kernel.org, linux-kernel@vger.kernel.org
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Dear RT folks!
+We hit the following BUG:
 
-I'm pleased to announce the v4.19.13-rt10 patch set. 
+  BUG: scheduling while atomic: kworker/1:1/24117/0x00000002
+  Preemption disabled at:
+  [<ffffffffb61fd824>] padata_do_serial+0x24/0x110
+  CPU: 1 PID: 24117 Comm: kworker/1:1 Not tainted 4.18.0-56.rt9.107.el8.x86_64 #1
+  Hardware name: HPE ProLiant DL380 Gen10/ProLiant DL380 Gen10, BIOS U30 11/14/2017
+  Workqueue: pencrypt padata_parallel_worker
+  Call Trace:
+    dump_stack+0x5c/0x80
+    ? padata_do_serial+0x24/0x110
+    __schedule_bug.cold.83+0x8e/0x9b
+    __schedule+0x5a0/0x680
+    schedule+0x39/0xd0
+    rt_spin_lock_slowlock_locked+0x10e/0x2b0
+    rt_spin_lock_slowlock+0x50/0x80
+    padata_do_serial+0x4d/0x110
+    padata_parallel_worker+0xaf/0xe0
+    process_one_work+0x183/0x3b0
+    ? process_one_work+0x3b0/0x3b0
+    worker_thread+0x30/0x3d0
+    ? process_one_work+0x3b0/0x3b0
+    kthread+0x112/0x130
+    ? kthread_create_worker_on_cpu+0x70/0x70
+    ret_from_fork+0x35/0x40
 
-Changes since v4.19.13-rt9:
+and the cause is a spin_lock() taken inside a get_cpu() section.
 
-  - Two scheduler timer were moved from hardirq context to softirq.
-    Patch by Peter Zijlstra.
+Convert the get/put_cpu to get/put_cpu_light to fix the BUG while reducing the
+preempt_disable section.
 
-  - Flush I/O while waiting for readlock of a rwsem to avoid I/O
-    deadlocks. Patch by Scott Wood.
+Signed-off-by: Daniel Bristot de Oliveira <bristot@redhat.com>
+Reviewed-by: Clark Williams <williams@redhat.com>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Clark Williams <williams@redhat.com>
+Cc: linux-rt-users@vger.kernel.org
+Cc: linux-crypto@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org
 
-Known issues
-     - A warning triggered in "rcu_note_context_switch" originated from
-       SyS_timer_gettime(). The issue was always there, it is now
-       visible. Reported by Grygorii Strashko and Daniel Wagner.
-
-The delta patch against v4.19.13-rt9 is appended below and can be found here:
+diff --git a/kernel/padata.c b/kernel/padata.c
+index d568cc56405f..bfcbdeb20ba5 100644
+--- a/kernel/padata.c
++++ b/kernel/padata.c
+@@ -295,7 +295,7 @@ static void padata_reorder_timer(struct timer_list *t)
+ 	unsigned int weight;
+ 	int target_cpu, cpu;
  
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.19/incr/patch-4.19.13-rt9-rt10.patch.xz
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.19.13-rt10
-
-The RT patch against v4.19.13 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patch-4.19.13-rt10.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patches-4.19.13-rt10.tar.xz
-
-Sebastian
-
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index 27f144b2d87b9..bbac843464de1 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -1932,7 +1932,7 @@ rt_mutex_fastlock(struct rt_mutex *lock, int state,
- 	 * If rt_mutex blocks, the function sched_submit_work will not call
- 	 * blk_schedule_flush_plug (because tsk_is_pi_blocked would be true).
- 	 * We must call blk_schedule_flush_plug here, if we don't call it,
--	 * a deadlock in device mapper may happen.
-+	 * a deadlock in I/O may happen.
- 	 */
- 	if (unlikely(blk_needs_flush_plug(current)))
- 		blk_schedule_flush_plug(current);
-diff --git a/kernel/locking/rwsem-rt.c b/kernel/locking/rwsem-rt.c
-index 660e22caf7099..f518495bd6ccd 100644
---- a/kernel/locking/rwsem-rt.c
-+++ b/kernel/locking/rwsem-rt.c
-@@ -1,5 +1,6 @@
- /*
-  */
-+#include <linux/blkdev.h>
- #include <linux/rwsem.h>
- #include <linux/sched/debug.h>
- #include <linux/sched/signal.h>
-@@ -87,6 +88,14 @@ static int __sched __down_read_common(struct rw_semaphore *sem, int state)
+-	cpu = get_cpu();
++	cpu = get_cpu_light();
  
- 	if (__down_read_trylock(sem))
- 		return 0;
-+	/*
-+	 * If rt_mutex blocks, the function sched_submit_work will not call
-+	 * blk_schedule_flush_plug (because tsk_is_pi_blocked would be true).
-+	 * We must call blk_schedule_flush_plug here, if we don't call it,
-+	 * a deadlock in I/O may happen.
-+	 */
-+	if (unlikely(blk_needs_flush_plug(current)))
-+		blk_schedule_flush_plug(current);
- 
- 	might_sleep();
- 	raw_spin_lock_irq(&m->wait_lock);
-diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 4d4dbed98adf2..049ff794c74e7 100644
---- a/kernel/sched/fair.c
-+++ b/kernel/sched/fair.c
-@@ -4554,7 +4554,7 @@ static u64 distribute_cfs_runtime(struct cfs_bandwidth *cfs_b,
- 		struct rq *rq = rq_of(cfs_rq);
- 		struct rq_flags rf;
- 
--		rq_lock(rq, &rf);
-+		rq_lock_irqsave(rq, &rf);
- 		if (!cfs_rq_throttled(cfs_rq))
- 			goto next;
- 
-@@ -4571,7 +4571,7 @@ static u64 distribute_cfs_runtime(struct cfs_bandwidth *cfs_b,
- 			unthrottle_cfs_rq(cfs_rq);
- 
- next:
--		rq_unlock(rq, &rf);
-+		rq_unlock_irqrestore(rq, &rf);
- 
- 		if (!remaining)
- 			break;
-@@ -4587,7 +4587,7 @@ static u64 distribute_cfs_runtime(struct cfs_bandwidth *cfs_b,
-  * period the timer is deactivated until scheduling resumes; cfs_b->idle is
-  * used to track this state.
-  */
--static int do_sched_cfs_period_timer(struct cfs_bandwidth *cfs_b, int overrun)
-+static int do_sched_cfs_period_timer(struct cfs_bandwidth *cfs_b, int overrun, unsigned long flags)
- {
- 	u64 runtime, runtime_expires;
- 	int throttled;
-@@ -4629,11 +4629,11 @@ static int do_sched_cfs_period_timer(struct cfs_bandwidth *cfs_b, int overrun)
- 	while (throttled && cfs_b->runtime > 0 && !cfs_b->distribute_running) {
- 		runtime = cfs_b->runtime;
- 		cfs_b->distribute_running = 1;
--		raw_spin_unlock(&cfs_b->lock);
-+		raw_spin_unlock_irqrestore(&cfs_b->lock, flags);
- 		/* we can't nest cfs_b->lock while distributing bandwidth */
- 		runtime = distribute_cfs_runtime(cfs_b, runtime,
- 						 runtime_expires);
--		raw_spin_lock(&cfs_b->lock);
-+		raw_spin_lock_irqsave(&cfs_b->lock, flags);
- 
- 		cfs_b->distribute_running = 0;
- 		throttled = !list_empty(&cfs_b->throttled_cfs_rq);
-@@ -4742,17 +4742,18 @@ static __always_inline void return_cfs_rq_runtime(struct cfs_rq *cfs_rq)
- static void do_sched_cfs_slack_timer(struct cfs_bandwidth *cfs_b)
- {
- 	u64 runtime = 0, slice = sched_cfs_bandwidth_slice();
-+	unsigned long flags;
- 	u64 expires;
- 
- 	/* confirm we're still not at a refresh boundary */
--	raw_spin_lock(&cfs_b->lock);
-+	raw_spin_lock_irqsave(&cfs_b->lock, flags);
- 	if (cfs_b->distribute_running) {
--		raw_spin_unlock(&cfs_b->lock);
-+		raw_spin_unlock_irqrestore(&cfs_b->lock, flags);
- 		return;
+ 	/* We don't lock pd here to not interfere with parallel processing
+ 	 * padata_reorder() calls on other CPUs. We just need any CPU out of
+@@ -321,7 +321,7 @@ static void padata_reorder_timer(struct timer_list *t)
+ 		padata_reorder(pd);
  	}
  
- 	if (runtime_refresh_within(cfs_b, min_bandwidth_expiration)) {
--		raw_spin_unlock(&cfs_b->lock);
-+		raw_spin_unlock_irqrestore(&cfs_b->lock, flags);
- 		return;
- 	}
- 
-@@ -4763,18 +4764,18 @@ static void do_sched_cfs_slack_timer(struct cfs_bandwidth *cfs_b)
- 	if (runtime)
- 		cfs_b->distribute_running = 1;
- 
--	raw_spin_unlock(&cfs_b->lock);
-+	raw_spin_unlock_irqrestore(&cfs_b->lock, flags);
- 
- 	if (!runtime)
- 		return;
- 
- 	runtime = distribute_cfs_runtime(cfs_b, runtime, expires);
- 
--	raw_spin_lock(&cfs_b->lock);
-+	raw_spin_lock_irqsave(&cfs_b->lock, flags);
- 	if (expires == cfs_b->runtime_expires)
- 		cfs_b->runtime -= min(runtime, cfs_b->runtime);
- 	cfs_b->distribute_running = 0;
--	raw_spin_unlock(&cfs_b->lock);
-+	raw_spin_unlock_irqrestore(&cfs_b->lock, flags);
+-	put_cpu();
++	put_cpu_light();
  }
  
- /*
-@@ -4852,20 +4853,21 @@ static enum hrtimer_restart sched_cfs_period_timer(struct hrtimer *timer)
- {
- 	struct cfs_bandwidth *cfs_b =
- 		container_of(timer, struct cfs_bandwidth, period_timer);
-+	unsigned long flags;
- 	int overrun;
- 	int idle = 0;
+ static void padata_serial_worker(struct work_struct *serial_work)
+@@ -369,7 +369,7 @@ void padata_do_serial(struct padata_priv *padata)
  
--	raw_spin_lock(&cfs_b->lock);
-+	raw_spin_lock_irqsave(&cfs_b->lock, flags);
- 	for (;;) {
- 		overrun = hrtimer_forward_now(timer, cfs_b->period);
- 		if (!overrun)
- 			break;
+ 	pd = padata->pd;
  
--		idle = do_sched_cfs_period_timer(cfs_b, overrun);
-+		idle = do_sched_cfs_period_timer(cfs_b, overrun, flags);
- 	}
- 	if (idle)
- 		cfs_b->period_active = 0;
--	raw_spin_unlock(&cfs_b->lock);
-+	raw_spin_unlock_irqrestore(&cfs_b->lock, flags);
+-	cpu = get_cpu();
++	cpu = get_cpu_light();
  
- 	return idle ? HRTIMER_NORESTART : HRTIMER_RESTART;
- }
-@@ -4878,9 +4880,9 @@ void init_cfs_bandwidth(struct cfs_bandwidth *cfs_b)
- 	cfs_b->period = ns_to_ktime(default_cfs_period());
+ 	/* We need to run on the same CPU padata_do_parallel(.., padata, ..)
+ 	 * was called on -- or, at least, enqueue the padata object into the
+@@ -387,7 +387,7 @@ void padata_do_serial(struct padata_priv *padata)
+ 	list_add_tail(&padata->list, &pqueue->reorder.list);
+ 	spin_unlock(&pqueue->reorder.lock);
  
- 	INIT_LIST_HEAD(&cfs_b->throttled_cfs_rq);
--	hrtimer_init(&cfs_b->period_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_PINNED_HARD);
-+	hrtimer_init(&cfs_b->period_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_PINNED);
- 	cfs_b->period_timer.function = sched_cfs_period_timer;
--	hrtimer_init(&cfs_b->slack_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
-+	hrtimer_init(&cfs_b->slack_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
- 	cfs_b->slack_timer.function = sched_cfs_slack_timer;
- 	cfs_b->distribute_running = 0;
- }
-diff --git a/localversion-rt b/localversion-rt
-index 22746d6390a42..d79dde624aaac 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt9
-+-rt10
+-	put_cpu();
++	put_cpu_light();
+ 
+ 	/* If we're running on the wrong CPU, call padata_reorder() via a
+ 	 * kernel worker.
+-- 
+2.17.2
