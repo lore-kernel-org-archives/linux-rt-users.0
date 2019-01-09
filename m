@@ -1,59 +1,23 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mail-wm1-f65.google.com ([209.85.128.65]:54340 "EHLO
-        mail-wm1-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2387606AbfAKOYY (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 11 Jan 2019 09:24:24 -0500
-Received: by mail-wm1-f65.google.com with SMTP id a62so2559325wmh.4
-        for <linux-rt-users@vger.kernel.org>; Fri, 11 Jan 2019 06:24:23 -0800 (PST)
-From: John Kacur <jkacur@redhat.com>
-Subject: [PATCH] cyclictest: fix_with_expected_identifier_in_latest
-Date: Fri, 11 Jan 2019 15:24:09 +0100
-Message-Id: <20190111142409.9733-1-jkacur@redhat.com>
+Received: from mga05.intel.com ([192.55.52.43]:7257 "EHLO mga05.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726510AbfAIRJD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 9 Jan 2019 12:09:03 -0500
+From: "Hindman, Gavin" <gavin.hindman@intel.com>
+Subject: ETA for 4.19rt-stable patch set?
+Date: Wed, 9 Jan 2019 17:09:01 +0000
+Message-ID: <D5D6254030DBC644B6EE58B333BFBB1EA7C44112@ORSMSX101.amr.corp.intel.com>
+References: <D5D6254030DBC644B6EE58B333BFBB1EA7C440AB@ORSMSX101.amr.corp.intel.com>
+In-Reply-To: <D5D6254030DBC644B6EE58B333BFBB1EA7C440AB@ORSMSX101.amr.corp.intel.com>
+Content-Language: en-US
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: rt-users <linux-rt-users@vger.kernel.org>
-Cc: Li Xiaoming <lixm.fnst@cn.fujitsu.com>, Zhong Lu <zhongl.fnst@cn.fujitsu.com>, John Kacur <jkacur@redhat.com>
+To: 'linux-rt-users' <linux-rt-users@vger.kernel.org>
 
-From: Li Xiaoming <lixm.fnst@cn.fujitsu.com>
+We have a number of customers starting to productize on top of the 4.19LTS for next-gen platforms, I'm sure others are in the same position - any estimate on when we might see 4.19rt-stable? 
 
-An error occurred during the build process:
-src/cyclictest/cyclictest.c:1396:2: error: expected identifier or '(' before 'if'
-  if (option_affinity) {
-
-The expected identifier "}"  for  "if (option_affinity){" occurs in another place.
-
-Signed-off-by: Li Xiaoming <lixm.fnst@cn.fujitsu.com>
-Signed-off-by: Zhong Lu <zhongl.fnst@cn.fujitsu.com>
-
-- Fixed the indentation of the bracket
-- Fixed the indentation of the block where NUMA is not defined
-
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- src/cyclictest/cyclictest.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
-
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 188a202c5171..68b3836405c1 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -1386,11 +1386,11 @@ static void process_options (int argc, char *argv[], int max_cpus)
- 			numa = 1;
- 			num_threads = max_cpus;
- 			setaffinity = AFFINITY_USEALL;
-+		}
- #else
--			warn("cyclictest was not built with the numa option\n");
--			numa = 0;
-+		warn("cyclictest was not built with the numa option\n");
-+		numa = 0;
- #endif
--		}
- 	}
- 
- 	if (option_affinity) {
--- 
-2.20.1
+Thanks,
+Gavin
