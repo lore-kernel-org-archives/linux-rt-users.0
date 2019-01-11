@@ -1,107 +1,77 @@
-From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH v11 02/15] tracing: Make hist trigger Documentation better reflect actions/handlers
-Date: Wed,  9 Jan 2019 13:49:09 -0600
-Message-ID: <bd6078a4036ebb70e5c89020d91dda04a262cb83.1547062835.git.tom.zanussi@linux.intel.com>
+From: Namhyung Kim <namhyung@kernel.org>
+Subject: Re: [PATCH v11 03/15] tracing: Split up onmatch action data
+Date: Fri, 11 Jan 2019 13:32:46 +0900
+Message-ID: <20190111043246.GB625@sejong>
 References: <cover.1547062835.git.tom.zanussi@linux.intel.com>
-Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
+ <37949f9c6e89144e6ed553e75617ff6528b9b7eb.1547062835.git.tom.zanussi@linux.intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
         joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
         julia@ni.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org
-To: rostedt@goodmis.org
+        linux-rt-users@vger.kernel.org, kernel-team@lge.com
+To: Tom Zanussi <zanussi@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1547062835.git.tom.zanussi@linux.intel.com>
-In-Reply-To: <cover.1547062835.git.tom.zanussi@linux.intel.com>
-References: <cover.1547062835.git.tom.zanussi@linux.intel.com>
+Content-Disposition: inline
+In-Reply-To: <37949f9c6e89144e6ed553e75617ff6528b9b7eb.1547062835.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
+Hi Tom,
 
-The action/handler code refactoring didn't change the action/handler
-syntax, but did generalize it - the Documentation should reflect that.
+On Wed, Jan 09, 2019 at 01:49:10PM -0600, Tom Zanussi wrote:
+> From: Tom Zanussi <tom.zanussi@linux.intel.com>
+> 
+> Currently, the onmatch action data binds the onmatch action to data
+> related to synthetic event generation.  Since we want to allow the
+> onmatch handler to potentially invoke a different action, and because
+> we expect other handlers to generate synthetic events, we need to
+> separate the data related to these two functions.
+> 
+> Also rename the onmatch data to something more descriptive, and create
+> and use common action data destroy function.
+> 
+> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> ---
+[SNIP]
+>  
+> -static void onmax_destroy(struct action_data *data)
+> +static void action_data_destroy(struct action_data *data)
+>  {
+>  	unsigned int i;
+>  
+> -	destroy_hist_field(data->onmax.max_var, 0);
+> -	destroy_hist_field(data->onmax.var, 0);
+> +	lockdep_assert_held(&event_mutex);
+>  
+> -	kfree(data->onmax.var_str);
+>  	kfree(data->action_name);
+>  
+>  	for (i = 0; i < data->n_params; i++)
+>  		kfree(data->params[i]);
+>  
+> +	if (data->synth_event)
+> +		data->synth_event->ref--;
+> +
 
-Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
----
- Documentation/trace/histogram.rst | 56 ++++++++++++++++++++++++++++++---------
- 1 file changed, 43 insertions(+), 13 deletions(-)
+I was wondering about the missing synth_event_mutex used to guard the
+refcount.  Then I noticed that I totally missed Masami's dynamic event
+work which removed it.  Nice job..
 
-diff --git a/Documentation/trace/histogram.rst b/Documentation/trace/histogram.rst
-index 7dda76503127..63e522107e59 100644
---- a/Documentation/trace/histogram.rst
-+++ b/Documentation/trace/histogram.rst
-@@ -25,7 +25,7 @@ Documentation written by Tom Zanussi
- 
-         hist:keys=<field1[,field2,...]>[:values=<field1[,field2,...]>]
-           [:sort=<field1[,field2,...]>][:size=#entries][:pause][:continue]
--          [:clear][:name=histname1] [if <filter>]
-+          [:clear][:name=histname1][:<handler>.<action>] [if <filter>]
- 
-   When a matching event is hit, an entry is added to a hash table
-   using the key(s) and value(s) named.  Keys and values correspond to
-@@ -1831,21 +1831,51 @@ and looks and behaves just like any other event::
- Like any other event, once a histogram is enabled for the event, the
- output can be displayed by reading the event's 'hist' file.
- 
--2.2.3 Hist trigger 'actions'
------------------------------
-+2.2.3 Hist trigger 'handlers' and 'actions'
-+-------------------------------------------
- 
--A hist trigger 'action' is a function that's executed whenever a
--histogram entry is added or updated.
-+A hist trigger 'action' is a function that's executed (in most cases
-+conditionally) whenever a histogram entry is added or updated.
- 
--The default 'action' if no special function is explicitly specified is
--as it always has been, to simply update the set of values associated
--with an entry.  Some applications, however, may want to perform
--additional actions at that point, such as generate another event, or
--compare and save a maximum.
-+When a histogram entry is added or updated, a hist trigger 'handler'
-+is what decides whether the corresponding action is actually invoked
-+or not.
- 
--The following additional actions are available.  To specify an action
--for a given event, simply specify the action between colons in the
--hist trigger specification.
-+Hist trigger handlers and actions are paired together in the general
-+form:
-+
-+  <handler>.<action>
-+
-+To specify a handler.action pair for a given event, simply specify
-+that handler.action pair between colons in the hist trigger
-+specification.
-+
-+In theory, any handler can be combined with any action, but in
-+practice, not every handler.action combination is currently supported;
-+if a given handler.action combination isn't supported, the hist
-+trigger will fail with -EINVAL;
-+
-+The default 'handler.action' if none is explicity specified is as it
-+always has been, to simply update the set of values associated with an
-+entry.  Some applications, however, may want to perform additional
-+actions at that point, such as generate another event, or compare and
-+save a maximum.
-+
-+The supported handlers and actions are listed below, and each is
-+described in more detail in the following paragraphs, in the context
-+of descriptions of some common and useful handler.action combinations.
-+
-+The available handlers are:
-+
-+  - onmatch(matching.event)    - invoke action on any addition or update
-+  - onmax(var)                 - invoke action if var exceeds current max
-+
-+The available actions are:
-+
-+  - <synthetic_event_name>(param list)         - generate synthetic event
-+  - save(field,...)                            - save current event fields
-+
-+The following commonly-used handler.action pairs are available:
- 
-   - onmatch(matching.event).<synthetic_event_name>(param list)
- 
--- 
-2.14.1
+Thanks,
+Namhyung
+
+
+>  	kfree(data);
+>  }
+>  
+> +static void onmax_destroy(struct action_data *data)
+> +{
+> +	destroy_hist_field(data->onmax.max_var, 0);
+> +	destroy_hist_field(data->onmax.var, 0);
+> +
+> +	kfree(data->onmax.var_str);
+> +
+> +	action_data_destroy(data);
+> +}
