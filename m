@@ -1,107 +1,52 @@
-From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH v12 03/16] tracing: Make hist trigger Documentation better reflect actions/handlers
-Date: Tue, 15 Jan 2019 16:05:47 -0600
-Message-ID: <bd6078a4036ebb70e5c89020d91dda04a262cb83.1547589128.git.tom.zanussi@linux.intel.com>
-References: <cover.1547589128.git.tom.zanussi@linux.intel.com>
-Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
-        julia@ni.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org
-To: rostedt@goodmis.org
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 4.14.93-rt53
+Date: Tue, 15 Jan 2019 18:56:40 -0500
+Message-ID: <20190115185640.23bbce08@gandalf.local.home>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Julia Cartwright <julia@ni.com>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1547589128.git.tom.zanussi@linux.intel.com>
-In-Reply-To: <cover.1547589128.git.tom.zanussi@linux.intel.com>
-References: <cover.1547589128.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-The action/handler code refactoring didn't change the action/handler
-syntax, but did generalize it - the Documentation should reflect that.
+Dear RT Folks,
 
-Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
----
- Documentation/trace/histogram.rst | 56 ++++++++++++++++++++++++++++++---------
- 1 file changed, 43 insertions(+), 13 deletions(-)
+I'm pleased to announce the 4.14.93-rt53 stable release.
 
-diff --git a/Documentation/trace/histogram.rst b/Documentation/trace/histogram.rst
-index 7dda76503127..63e522107e59 100644
---- a/Documentation/trace/histogram.rst
-+++ b/Documentation/trace/histogram.rst
-@@ -25,7 +25,7 @@ Documentation written by Tom Zanussi
- 
-         hist:keys=<field1[,field2,...]>[:values=<field1[,field2,...]>]
-           [:sort=<field1[,field2,...]>][:size=#entries][:pause][:continue]
--          [:clear][:name=histname1] [if <filter>]
-+          [:clear][:name=histname1][:<handler>.<action>] [if <filter>]
- 
-   When a matching event is hit, an entry is added to a hash table
-   using the key(s) and value(s) named.  Keys and values correspond to
-@@ -1831,21 +1831,51 @@ and looks and behaves just like any other event::
- Like any other event, once a histogram is enabled for the event, the
- output can be displayed by reading the event's 'hist' file.
- 
--2.2.3 Hist trigger 'actions'
------------------------------
-+2.2.3 Hist trigger 'handlers' and 'actions'
-+-------------------------------------------
- 
--A hist trigger 'action' is a function that's executed whenever a
--histogram entry is added or updated.
-+A hist trigger 'action' is a function that's executed (in most cases
-+conditionally) whenever a histogram entry is added or updated.
- 
--The default 'action' if no special function is explicitly specified is
--as it always has been, to simply update the set of values associated
--with an entry.  Some applications, however, may want to perform
--additional actions at that point, such as generate another event, or
--compare and save a maximum.
-+When a histogram entry is added or updated, a hist trigger 'handler'
-+is what decides whether the corresponding action is actually invoked
-+or not.
- 
--The following additional actions are available.  To specify an action
--for a given event, simply specify the action between colons in the
--hist trigger specification.
-+Hist trigger handlers and actions are paired together in the general
-+form:
-+
-+  <handler>.<action>
-+
-+To specify a handler.action pair for a given event, simply specify
-+that handler.action pair between colons in the hist trigger
-+specification.
-+
-+In theory, any handler can be combined with any action, but in
-+practice, not every handler.action combination is currently supported;
-+if a given handler.action combination isn't supported, the hist
-+trigger will fail with -EINVAL;
-+
-+The default 'handler.action' if none is explicity specified is as it
-+always has been, to simply update the set of values associated with an
-+entry.  Some applications, however, may want to perform additional
-+actions at that point, such as generate another event, or compare and
-+save a maximum.
-+
-+The supported handlers and actions are listed below, and each is
-+described in more detail in the following paragraphs, in the context
-+of descriptions of some common and useful handler.action combinations.
-+
-+The available handlers are:
-+
-+  - onmatch(matching.event)    - invoke action on any addition or update
-+  - onmax(var)                 - invoke action if var exceeds current max
-+
-+The available actions are:
-+
-+  - <synthetic_event_name>(param list)         - generate synthetic event
-+  - save(field,...)                            - save current event fields
-+
-+The following commonly-used handler.action pairs are available:
- 
-   - onmatch(matching.event).<synthetic_event_name>(param list)
- 
--- 
-2.14.1
+
+This release is just an update to the new stable 4.14.93 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.14-rt
+  Head SHA1: bfad5e75a071a5ebf9ebe2981d1f35d1824a6552
+
+
+Or to build 4.14.93-rt53 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.93.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.93-rt53.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
