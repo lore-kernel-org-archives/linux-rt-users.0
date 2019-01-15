@@ -1,86 +1,212 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT] printk: Shortcut out of waiter spinning on
- PREEMPT_RT
-Date: Tue, 15 Jan 2019 14:58:15 -0500
-Message-ID: <20190115145815.13713791@gandalf.local.home>
-References: <20190115123910.2b18df54@gandalf.local.home>
-        <20190115185433.e7hmlpmjvpyqdyhc@linutronix.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Petr Mladek <pmladek@suse.com>,
-        Sergey Senozhatsky <sergey.senozhatsky@gmail.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Tom Zanussi <zanussi@kernel.org>
+Subject: [PATCH v12 00/16] tracing: Hist trigger snapshot and onchange additions
+Date: Tue, 15 Jan 2019 16:05:44 -0600
+Message-ID: <cover.1547589128.git.tom.zanussi@linux.intel.com>
+Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
+        vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
+        julia@ni.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
+To: rostedt@goodmis.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190115185433.e7hmlpmjvpyqdyhc@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 15 Jan 2019 19:54:33 +0100
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-> On 2019-01-15 12:39:10 [-0500], Steven Rostedt wrote:
-> > --- a/kernel/printk/printk.c
-> > +++ b/kernel/printk/printk.c
-> > @@ -1742,6 +1742,13 @@ static int console_trylock_spinning(void)
-> >  	if (console_trylock())
-> >  		return 1;
-> >  
-> > +	/*
-> > +	 * The consoles are preemptable in PREEMPT_RT, which can cause
-> > +	 * spinning to deadlock.
-> > +	 */
-> > +	if (IS_ENABLED(CONFIG_PREEMPT_RT_FULL))
-> > +		return 0;
-> > +
-> >  	printk_safe_enter_irqsave(flags);
-> >  
-> >  	raw_spin_lock(&console_owner_lock);  
-> 
-> So my ("printk: Make rt aware") patch does:
-> 
-> diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-> index 6553508ff3889..d983c509f74a2 100644
-> --- a/kernel/printk/printk.c
-> +++ b/kernel/printk/printk.c
-> @@ -1617,6 +1617,7 @@ SYSCALL_DEFINE3(syslog, int, type, char __user *, buf, int, len)
->         return do_syslog(type, buf, len, SYSLOG_FROM_READER);
->  }
->  
-> +#ifndef CONFIG_PREEMPT_RT_FULL
->  /*
->   * Special console_lock variants that help to reduce the risk of soft-lockups.
->   * They allow to pass console_lock to another printk() call using a busy wait.
-> @@ -1757,6 +1758,15 @@ static int console_trylock_spinning(void)
->         return 1;
->  }
->  
-> +#else
-> +
-> +static int console_trylock_spinning(void)
-> +{
-> +       return console_trylock();
-> +}
-> +
-> +#endif
-> +
->  /*
->   * Call the console drivers, asking them to write out
->   * log_buf[start] to log_buf[end - 1].
-> 
-> 
-> So it never gets into the codepath where you try to avoid spinning.
-> Right?
->
+Hi,
 
-You right! Which appears to be missing from my 4.14, and I thought I
-looked for that in 4.19-rt too, but I guess I was still looking at
-4.14 :-/. OK, ignore. Sorry for the noise.
+This is v12 of the hist trigger snapshot and onchange additions
+patchset.
 
-Well, it wasn't a total waste. I now know what to backport to 4.14-rt
-;-)
+It addresses some comments from Namhyung regarding the 'tracing: Add
+alternative synthetic event trace action syntax' patch to remove
+parens and change the documentation to emphasize the trace() form of
+the synthetic event generation command.
 
--- Steve
+Thanks,
+
+Tom
+
+
+v11->v12 changes:
+
+  - Removed parens from the param list specification in the trace()
+    command description
+  - Changed the Documentation for synthetic event generation to
+    emphasize the trace() form over the function-call form.
+
+v10->v11 changes:
+
+  - Updated to use str_has_prefix() for static strings
+
+v9->v10 changes:
+
+  - Updated to use strncmp_prefix() for static strings
+
+v8->v9 changes:
+
+  - Moved v8 patches 17-22 to a separate series
+  - Moved track_data.var_ref_idx removal into 'tracing: Generalize
+    hist trigger onmax and save action'
+  - Merged 'tracing: Add hist trigger handler.action documentation'
+    into 'tracing: Refactor hist trigger action code'
+  - Updated patches to change all strlen() to sizeof() for string
+    constants
+  - Moved test cases to the end of the series
+
+v7->v8 changes:
+
+  - Removed /dev/null redirection from test cases
+  - Replaced event disable with tracing_on disable instead
+  - New patch to remove hist_field.var_idx and track_data.var_ref_idx
+  - New patch to use var_refs[] array for reference checking
+  - New patch to remove open-coding of var_ref count manipulation
+  - New patch to use var_refs[] array to destroy var_refs
+  - New patch to remove synth_var_refs[] now that var_refs[] is used
+  - New patch to add comments to variable-related fields
+  - Added various new comments in the patches to clarify other things
+  - Replaced the convoluted logic mentioned by Namhyung in
+    update_track_val with wrappers and simpler check/save logic as
+    suggested
+  - Rebased to latest ftrace/core including Masami's dynamic event
+    framework changes
+
+v6->v7 changes:
+
+  - Removed unnecessary HANDLER_ONMAX checks from onmax_print()/create()
+  - Moved handler assignment to acion_parse()
+  - Changed goto in ATION_TRACE case in action_create() to return
+  - Changed EINVAL to EEXIST in action_create() ACTION_SAVE case
+  - Made the return logic in create_actions() more consistent
+  - Merged 'tracing: Move hist trigger key printing into a separate
+    function' into 'tracing: Add hist trigger snapshot() action'
+  - Updated the new snapshot, onchange, and trace test cases to match
+    4.20 kselftest changes.
+  - Added new xfail test case that make sure certain unsupported
+    handler/action combinations fail as expected.
+  - While updating the test cases, realized that the other testcases
+    in the inter-event subdir needed SPDX license updates, so added
+    them.
+
+v5->v6 changes:
+
+  - Added new Documentation patch explaining handler.action
+  - Added new README patch explaining handler.action
+  - Added separate snapshot() Documentation
+  - Added new snapshot() test case
+  - Updated README with snapshote()
+  - Added separate onchange() Documentation
+  - Added separate onchange() test case
+  - Updated README with onchange()
+  - Added separate trace() test case
+  - Updated README with trace() and <synthetic_event>() syntax
+
+v4->v5 changes:
+
+  - added 'trace' keyword test case
+  - added 'onchange' handler test case
+
+v3->v4 changes:
+
+  - added 'trace' keyword for generating synthetic events
+  - fix elt_data leak
+  - changed cond_update to cond_update_fn_t
+
+v2->v3 changes:
+
+  - fixed problem where trace actions were only being allowed for
+    onmatch handlers - now trace actions can be used with any handler.
+  - fixed problem where no action was being assigned to onmatch
+    handlers if save or snapshot actions were specified.
+
+v1->v2 changes:
+
+  - added missing tracing_cond_snapshot_data() definition for when
+    CONFIG_TRACER_SNAPSHOT not defined
+  - removed an unnecessary WARN_ON() in track_data_snapshot_print()
+
+
+Original text:
+
+This patchset adds some useful new functions to the hist
+trigger code: a snapshot action and an onchange handler.
+
+In order to make it easier to add these and in the process make the
+code more generic, I separated the code into explicit 'handlers' and
+'actions', handlers being things like 'onmax' and 'onchange', and
+'actions' being things like 'take a snapshot' or 'save some fields'.
+
+The first few patches do that basic refactoring, which make it easier
+to add the subsequent changes that arbitrarily combine actions and
+handlers.
+
+The fourth patch adds a 'conditional snapshot' capability that via a
+new tracing_snaphot_cond() function extends the existing snapshot
+code.  It allows the caller to associate some user data with the
+snapshot that can be checked and saved in an update() callback whose
+return value determines whether the snapshot should be taken or not.
+
+The remaining patches finally add the new snapshot action and onchange
+handler functionality - please see those patches for details and some
+examples.
+
+Thanks,
+
+Tom
+
+
+The following changes since commit 67748dbeaf2b1240c0b87588df4bb0fb9471a751:
+
+  sh: ftrace: Fix missing parenthesis in WARN_ON() (2019-01-08 10:19:02 -0600)
+
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/zanussi/linux-trace.git ftrace/hist-snapshot-onchange-v12
+
+Tom Zanussi (16):
+  tracing: Use str_has_prefix() in synth_event_create()
+  tracing: Refactor hist trigger action code
+  tracing: Make hist trigger Documentation better reflect
+    actions/handlers
+  tracing: Split up onmatch action data
+  tracing: Generalize hist trigger onmax and save action
+  tracing: Add conditional snapshot
+  tracing: Add hist trigger snapshot() action
+  tracing: Add hist trigger snapshot() action Documentation
+  tracing: Add hist trigger onchange() handler
+  tracing: Add hist trigger onchange() handler Documentation
+  tracing: Add alternative synthetic event trace action syntax
+  tracing: Add SPDX license GPL-2.0 license identifier to inter-event
+    testcases
+  tracing: Add hist trigger snapshot() action test case
+  tracing: Add hist trigger onchange() handler test case
+  tracing: Add alternative synthetic event trace action test case
+  tracing: Add hist trigger action 'expected fail' test case
+
+ Documentation/trace/histogram.rst                  |  316 +++++-
+ kernel/trace/trace.c                               |  176 +++-
+ kernel/trace/trace.h                               |   56 +-
+ kernel/trace/trace_events_hist.c                   | 1093 +++++++++++++++-----
+ kernel/trace/trace_events_trigger.c                |    2 +-
+ kernel/trace/trace_sched_wakeup.c                  |    2 +-
+ .../inter-event/trigger-action-hist-xfail.tc       |   30 +
+ .../inter-event/trigger-extended-error-support.tc  |    1 +
+ .../inter-event/trigger-field-variable-support.tc  |    1 +
+ .../trigger-inter-event-combined-hist.tc           |    1 +
+ .../inter-event/trigger-multi-actions-accept.tc    |    1 +
+ .../inter-event/trigger-onchange-action-hist.tc    |   28 +
+ .../inter-event/trigger-onmatch-action-hist.tc     |    1 +
+ .../trigger-onmatch-onmax-action-hist.tc           |    1 +
+ .../inter-event/trigger-onmax-action-hist.tc       |    1 +
+ .../inter-event/trigger-snapshot-action-hist.tc    |   43 +
+ .../trigger-synthetic-event-createremove.tc        |    1 +
+ .../inter-event/trigger-trace-action-hist.tc       |   42 +
+ 18 files changed, 1470 insertions(+), 326 deletions(-)
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-action-hist-xfail.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onchange-action-hist.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-trace-action-hist.tc
+
+-- 
+2.14.1
