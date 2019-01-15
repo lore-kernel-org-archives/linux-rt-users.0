@@ -1,7 +1,7 @@
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH v12 05/16] tracing: Generalize hist trigger onmax and save action
-Date: Tue, 15 Jan 2019 16:05:49 -0600
-Message-ID: <a9928e3c0067fe23f3fe1e712b7ff86260b9ae79.1547589128.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v12 08/16] tracing: Add hist trigger snapshot() action Documentation
+Date: Tue, 15 Jan 2019 16:05:52 -0600
+Message-ID: <de88a97b850e5fe3b1ef4494742b8d5c657cbeeb.1547589128.git.tom.zanussi@linux.intel.com>
 References: <cover.1547589128.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,466 +18,140 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-The action refactor code allowed actions and handlers to be separated,
-but the existing onmax handler and save action code is still not
-flexible enough to handle arbitrary coupling.  This change generalizes
-them and in the process makes additional handlers and actions easier
-to implement.
-
-The onmax action can be broken up and thought of as two separate
-components - a variable to be tracked (the parameter given to the
-onmax($var_to_track) function) and an invisible variable created to
-save the ongoing result of doing something with that variable, such as
-saving the max value of that variable so far seen.
-
-Separating it out like this and renaming it appropriately allows us to
-use the same code for similar tracking functions such as
-onchange($var_to_track), which would just track the last value seen
-rather than the max seen so far, which is useful in some situations.
-
-Additionally, because different handlers and actions may want to save
-and access data differently e.g. save and retrieve tracking values as
-local variables vs something more global, save_val() and get_val()
-interface functions are introduced and max-specific implementations
-are used instead.
-
-The same goes for the code that checks whether a maximum has been hit
-- a generic check_val() interface and max-checking implementation is
-used instead, which allows future patches to make use of he same code
-using their own implemetations of similar functionality.
+Add Documentation for the hist:handlerXXX($var).snapshot() action.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_hist.c | 257 +++++++++++++++++++++++++++------------
- 1 file changed, 181 insertions(+), 76 deletions(-)
+ Documentation/trace/histogram.rst | 110 ++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 110 insertions(+)
 
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index f0e9667a29c6..d5c0b3f67804 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -386,6 +386,15 @@ typedef void (*action_fn_t) (struct hist_trigger_data *hist_data,
- 			     struct ring_buffer_event *rbe,
- 			     struct action_data *data, u64 *var_ref_vals);
+diff --git a/Documentation/trace/histogram.rst b/Documentation/trace/histogram.rst
+index 63e522107e59..353317bc3825 100644
+--- a/Documentation/trace/histogram.rst
++++ b/Documentation/trace/histogram.rst
+@@ -1874,6 +1874,7 @@ The available actions are:
  
-+typedef bool (*check_track_val_fn_t) (u64 track_val, u64 var_val);
-+typedef void (*save_track_val_fn_t) (struct hist_trigger_data *hist_data,
-+				     struct tracing_map_elt *elt,
-+				     struct action_data *data,
-+				     unsigned int track_var_idx, u64 var_val);
-+typedef u64 (*get_track_val_fn_t) (struct hist_trigger_data *hist_data,
-+				   struct tracing_map_elt *elt,
-+				   struct action_data *data);
+   - <synthetic_event_name>(param list)         - generate synthetic event
+   - save(field,...)                            - save current event fields
++  - snapshot()                                 - snapshot the trace buffer
+ 
+ The following commonly-used handler.action pairs are available:
+ 
+@@ -2030,6 +2031,115 @@ The following commonly-used handler.action pairs are available:
+             Entries: 2
+             Dropped: 0
+ 
++  - onmax(var).snapshot()
 +
- enum handler_id {
- 	HANDLER_ONMATCH = 1,
- 	HANDLER_ONMAX,
-@@ -423,15 +432,37 @@ struct action_data {
- 		} match_data;
- 
- 		struct {
-+			/*
-+			 * var_str contains the $-unstripped variable
-+			 * name referenced by var_ref, and used when
-+			 * printing the action.  Because var_ref
-+			 * creation is deferred to create_actions(),
-+			 * we need a per-action way to save it until
-+			 * then, thus var_str.
-+			 */
- 			char			*var_str;
--			unsigned int		max_var_ref_idx;
--			struct hist_field	*max_var;
--			struct hist_field	*var;
--		} onmax;
++    The 'onmax(var).snapshot()' hist trigger action is invoked
++    whenever the value of 'var' associated with a histogram entry
++    exceeds the current maximum contained in that variable.
 +
-+			/*
-+			 * var_ref refers to the variable being
-+			 * tracked e.g onmax($var).
-+			 */
-+			struct hist_field	*var_ref;
++    The end result is that a global snapshot of the trace buffer will
++    be saved in the tracing/snapshot file if 'var' exceeds the current
++    maximum for any hist trigger entry.
 +
-+			/*
-+			 * track_var contains the 'invisible' tracking
-+			 * variable created to keep the current
-+			 * e.g. max value.
-+			 */
-+			struct hist_field	*track_var;
++    Note that in this case the maximum is a global maximum for the
++    current trace instance, which is the maximum across all buckets of
++    the histogram.  The key of the specific trace event that caused
++    the global maximum and the global maximum itself are displayed,
++    along with a message stating that a snapshot has been taken and
++    where to find it.  The user can use the key information displayed
++    to locate the corresponding bucket in the histogram for even more
++    detail.
 +
-+			check_track_val_fn_t	check_val;
-+			save_track_val_fn_t	save_val;
-+			action_fn_t		save_data;
-+			get_track_val_fn_t	get_val;
-+		} track_data;
- 	};
- };
- 
--
- static char last_hist_cmd[MAX_FILTER_STR_VAL];
- static char hist_err_str[MAX_FILTER_STR_VAL];
- 
-@@ -3237,10 +3268,10 @@ static void update_field_vars(struct hist_trigger_data *hist_data,
- 			    hist_data->n_field_vars, 0);
- }
- 
--static void update_max_vars(struct hist_trigger_data *hist_data,
--			    struct tracing_map_elt *elt,
--			    struct ring_buffer_event *rbe,
--			    void *rec)
-+static void save_track_data_vars(struct hist_trigger_data *hist_data,
-+				 struct tracing_map_elt *elt, void *rec,
-+				 struct ring_buffer_event *rbe,
-+				 struct action_data *data, u64 *var_ref_vals)
- {
- 	__update_field_vars(elt, rbe, rec, hist_data->save_vars,
- 			    hist_data->n_save_vars, hist_data->n_field_var_str);
-@@ -3378,14 +3409,73 @@ create_target_field_var(struct hist_trigger_data *target_hist_data,
- 	return create_field_var(target_hist_data, file, var_name);
- }
- 
--static void onmax_print(struct seq_file *m,
--			struct hist_trigger_data *hist_data,
--			struct tracing_map_elt *elt,
--			struct action_data *data)
-+static bool check_track_val_max(u64 track_val, u64 var_val)
-+{
-+	if (var_val <= track_val)
-+		return false;
++    As an example the below defines a couple of hist triggers, one for
++    sched_waking and another for sched_switch, keyed on pid.  Whenever
++    a sched_waking event occurs, the timestamp is saved in the entry
++    corresponding to the current pid, and when the scheduler switches
++    back to that pid, the timestamp difference is calculated.  If the
++    resulting latency, stored in wakeup_lat, exceeds the current
++    maximum latency, a snapshot is taken.  As part of the setup, all
++    the scheduler events are also enabled, which are the events that
++    will show up in the snapshot when it is taken at some point:
 +
-+	return true;
-+}
++    # echo 1 > /sys/kernel/debug/tracing/events/sched/enable
 +
-+static u64 get_track_val_local(struct hist_trigger_data *hist_data,
-+			       struct tracing_map_elt *elt,
-+			       struct action_data *data)
-+{
-+	unsigned int track_var_idx = data->track_data.track_var->var.idx;
-+	u64 track_val;
++    # echo 'hist:keys=pid:ts0=common_timestamp.usecs \
++            if comm=="cyclictest"' >> \
++            /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
 +
-+	track_val = tracing_map_read_var(elt, track_var_idx);
++    # echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0: \
++            onmax($wakeup_lat).save(next_prio,next_comm,prev_pid,prev_prio, \
++	    prev_comm):onmax($wakeup_lat).snapshot() \
++	    if next_comm=="cyclictest"' >> \
++	    /sys/kernel/debug/tracing/events/sched/sched_switch/trigger
 +
-+	return track_val;
-+}
++    When the histogram is displayed, for each bucket the max value
++    and the saved values corresponding to the max are displayed
++    following the rest of the fields.
 +
-+static void save_track_val_local(struct hist_trigger_data *hist_data,
-+				 struct tracing_map_elt *elt,
-+				 struct action_data *data,
-+				 unsigned int track_var_idx, u64 var_val)
-+{
-+	tracing_map_set_var(elt, track_var_idx, var_val);
-+}
++    If a snaphot was taken, there is also a message indicating that,
++    along with the value and event that triggered the global maximum:
 +
-+static void save_track_val(struct hist_trigger_data *hist_data,
-+			   struct tracing_map_elt *elt,
-+			   struct action_data *data,
-+			   u64 var_val)
-+{
-+	unsigned int track_var_idx = data->track_data.track_var->var.idx;
++    # cat /sys/kernel/debug/tracing/events/sched/sched_switch/hist
++      { next_pid:       2101 } hitcount:        200
++	max:         52  next_prio:        120  next_comm: cyclictest \
++        prev_pid:          0  prev_prio:        120  prev_comm: swapper/6
 +
-+	data->track_data.save_val(hist_data, elt, data, track_var_idx, var_val);
-+}
++      { next_pid:       2103 } hitcount:       1326
++	max:        572  next_prio:         19  next_comm: cyclictest \
++        prev_pid:          0  prev_prio:        120  prev_comm: swapper/1
 +
-+static void save_track_data(struct hist_trigger_data *hist_data,
-+			    struct tracing_map_elt *elt, void *rec,
-+			    struct ring_buffer_event *rbe,
-+			    struct action_data *data, u64 *var_ref_vals)
-+{
-+	if (data->track_data.save_data)
-+		data->track_data.save_data(hist_data, elt, rec, rbe, data, var_ref_vals);
-+}
++      { next_pid:       2102 } hitcount:       1982 \
++	max:         74  next_prio:         19  next_comm: cyclictest \
++        prev_pid:          0  prev_prio:        120  prev_comm: swapper/5
 +
-+static bool check_track_val(struct tracing_map_elt *elt,
-+			    struct action_data *data,
-+			    u64 var_val)
- {
--	unsigned int i, save_var_idx, max_idx = data->onmax.max_var->var.idx;
-+	unsigned int track_var_idx = data->track_data.track_var->var.idx;
-+	u64 track_val = tracing_map_read_var(elt, track_var_idx);
- 
--	seq_printf(m, "\n\tmax: %10llu", tracing_map_read_var(elt, max_idx));
-+	return data->track_data.check_val(track_val, var_val);
-+}
++    Snapshot taken (see tracing/snapshot).  Details:
++	triggering value { onmax($wakeup_lat) }:        572	\
++	triggered by event with key: { next_pid:       2103 }
 +
-+static void track_data_print(struct seq_file *m,
-+			     struct hist_trigger_data *hist_data,
-+			     struct tracing_map_elt *elt,
-+			     struct action_data *data)
-+{
-+	u64 track_val = data->track_data.get_val(hist_data, elt, data);
-+	unsigned int i, save_var_idx;
++    Totals:
++        Hits: 3508
++        Entries: 3
++        Dropped: 0
 +
-+	if (data->handler == HANDLER_ONMAX)
-+		seq_printf(m, "\n\tmax: %10llu", track_val);
- 
- 	for (i = 0; i < hist_data->n_save_vars; i++) {
- 		struct hist_field *save_val = hist_data->save_vars[i]->val;
-@@ -3404,25 +3494,17 @@ static void onmax_print(struct seq_file *m,
- 	}
- }
- 
--static void onmax_save(struct hist_trigger_data *hist_data,
--		       struct tracing_map_elt *elt, void *rec,
--		       struct ring_buffer_event *rbe,
--		       struct action_data *data, u64 *var_ref_vals)
-+static void ontrack_action(struct hist_trigger_data *hist_data,
-+			   struct tracing_map_elt *elt, void *rec,
-+			   struct ring_buffer_event *rbe,
-+			   struct action_data *data, u64 *var_ref_vals)
- {
--	unsigned int max_idx = data->onmax.max_var->var.idx;
--	unsigned int max_var_ref_idx = data->onmax.max_var_ref_idx;
-+	u64 var_val = var_ref_vals[data->track_data.var_ref->var_ref_idx];
- 
--	u64 var_val, max_val;
--
--	var_val = var_ref_vals[max_var_ref_idx];
--	max_val = tracing_map_read_var(elt, max_idx);
--
--	if (var_val <= max_val)
--		return;
--
--	tracing_map_set_var(elt, max_idx, var_val);
--
--	update_max_vars(hist_data, elt, rbe, rec);
-+	if (check_track_val(elt, data, var_val)) {
-+		save_track_val(hist_data, elt, data, var_val);
-+		save_track_data(hist_data, elt, rec, rbe, data, var_ref_vals);
-+	}
- }
- 
- static void action_data_destroy(struct action_data *data)
-@@ -3442,12 +3524,13 @@ static void action_data_destroy(struct action_data *data)
- 	kfree(data);
- }
- 
--static void onmax_destroy(struct action_data *data)
-+static void track_data_destroy(struct hist_trigger_data *hist_data,
-+			       struct action_data *data)
- {
--	destroy_hist_field(data->onmax.max_var, 0);
--	destroy_hist_field(data->onmax.var, 0);
-+	destroy_hist_field(data->track_data.track_var, 0);
-+	destroy_hist_field(data->track_data.var_ref, 0);
- 
--	kfree(data->onmax.var_str);
-+	kfree(data->track_data.var_str);
- 
- 	action_data_destroy(data);
- }
-@@ -3455,25 +3538,24 @@ static void onmax_destroy(struct action_data *data)
- static int action_create(struct hist_trigger_data *hist_data,
- 			 struct action_data *data);
- 
--static int onmax_create(struct hist_trigger_data *hist_data,
--			struct action_data *data)
-+static int track_data_create(struct hist_trigger_data *hist_data,
-+			     struct action_data *data)
- {
--	struct hist_field *var_field, *ref_field, *max_var = NULL;
-+	struct hist_field *var_field, *ref_field, *track_var = NULL;
- 	struct trace_event_file *file = hist_data->event_file;
--	unsigned int var_ref_idx = hist_data->n_var_refs;
--	char *onmax_var_str;
-+	char *track_data_var_str;
- 	int ret = 0;
- 
--	onmax_var_str = data->onmax.var_str;
--	if (onmax_var_str[0] != '$') {
--		hist_err("onmax: For onmax(x), x must be a variable: ", onmax_var_str);
-+	track_data_var_str = data->track_data.var_str;
-+	if (track_data_var_str[0] != '$') {
-+		hist_err("For onmax(x), x must be a variable: ", track_data_var_str);
- 		return -EINVAL;
- 	}
--	onmax_var_str++;
-+	track_data_var_str++;
- 
--	var_field = find_target_event_var(hist_data, NULL, NULL, onmax_var_str);
-+	var_field = find_target_event_var(hist_data, NULL, NULL, track_data_var_str);
- 	if (!var_field) {
--		hist_err("onmax: Couldn't find onmax variable: ", onmax_var_str);
-+		hist_err("Couldn't find onmax variable: ", track_data_var_str);
- 		return -EINVAL;
- 	}
- 
-@@ -3481,17 +3563,16 @@ static int onmax_create(struct hist_trigger_data *hist_data,
- 	if (!ref_field)
- 		return -ENOMEM;
- 
--	data->onmax.var = ref_field;
--
--	data->onmax.max_var_ref_idx = var_ref_idx;
-+	data->track_data.var_ref = ref_field;
- 
--	max_var = create_var(hist_data, file, "max", sizeof(u64), "u64");
--	if (IS_ERR(max_var)) {
--		hist_err("onmax: Couldn't create onmax variable: ", "max");
--		ret = PTR_ERR(max_var);
-+	if (data->handler == HANDLER_ONMAX)
-+		track_var = create_var(hist_data, file, "__max", sizeof(u64), "u64");
-+	if (IS_ERR(track_var)) {
-+		hist_err("Couldn't create onmax variable: ", "__max");
-+		ret = PTR_ERR(track_var);
- 		goto out;
- 	}
--	data->onmax.max_var = max_var;
-+	data->track_data.track_var = track_var;
- 
- 	ret = action_create(hist_data, data);
-  out:
-@@ -3569,7 +3650,18 @@ static int action_parse(char *str, struct action_data *data,
- 			goto out;
- 
- 		if (handler == HANDLER_ONMAX)
--			data->fn = onmax_save;
-+			data->track_data.check_val = check_track_val_max;
-+		else {
-+			hist_err("action parsing: Handler doesn't support action: ", action_name);
-+			ret = -EINVAL;
-+			goto out;
-+		}
++    In the above case, the event that triggered the global maximum has
++    the key with next_pid == 2103.  If you look at the bucket that has
++    2103 as the key, you'll find the additional values save()'d along
++    with the local maximum for that bucket, which should be the same
++    as the global maximum (since that was the same value that
++    triggered the global snapshot).
 +
-+		data->track_data.save_val = save_track_val_local;
-+		data->track_data.get_val = get_track_val_local;
-+		data->track_data.save_data = save_track_data_vars;
++    And finally, looking at the snapshot data should show at or near
++    the end the event that triggered the snapshot (in this case you
++    can verify the timestamps between the sched_waking and
++    sched_switch events, which should match the time displayed in the
++    global maximum):
 +
-+		data->fn = ontrack_action;
- 
- 		data->action = ACTION_SAVE;
- 	} else {
-@@ -3581,7 +3673,17 @@ static int action_parse(char *str, struct action_data *data,
- 				goto out;
- 		}
- 
--		data->fn = action_trace;
-+		if (handler == HANDLER_ONMAX)
-+			data->track_data.check_val = check_track_val_max;
++    # cat /sys/kernel/debug/tracing/snapshot
 +
-+		if (handler != HANDLER_ONMATCH) {
-+			data->track_data.save_val = save_track_val_local;
-+			data->track_data.get_val = get_track_val_local;
-+			data->track_data.save_data = action_trace;
-+			data->fn = ontrack_action;
-+		} else
-+			data->fn = action_trace;
++     <...>-2103  [005] d..3   309.873125: sched_switch: prev_comm=cyclictest prev_pid=2103 prev_prio=19 prev_state=D ==> next_comm=swapper/5 next_pid=0 next_prio=120
++     <idle>-0     [005] d.h3   309.873611: sched_waking: comm=cyclictest pid=2102 prio=19 target_cpu=005
++     <idle>-0     [005] dNh4   309.873613: sched_wakeup: comm=cyclictest pid=2102 prio=19 target_cpu=005
++     <idle>-0     [005] d..3   309.873616: sched_switch: prev_comm=swapper/5 prev_pid=0 prev_prio=120 prev_state=S ==> next_comm=cyclictest next_pid=2102 next_prio=19
++     <...>-2102  [005] d..3   309.873625: sched_switch: prev_comm=cyclictest prev_pid=2102 prev_prio=19 prev_state=D ==> next_comm=swapper/5 next_pid=0 next_prio=120
++     <idle>-0     [005] d.h3   309.874624: sched_waking: comm=cyclictest pid=2102 prio=19 target_cpu=005
++     <idle>-0     [005] dNh4   309.874626: sched_wakeup: comm=cyclictest pid=2102 prio=19 target_cpu=005
++     <idle>-0     [005] dNh3   309.874628: sched_waking: comm=cyclictest pid=2103 prio=19 target_cpu=005
++     <idle>-0     [005] dNh4   309.874630: sched_wakeup: comm=cyclictest pid=2103 prio=19 target_cpu=005
++     <idle>-0     [005] d..3   309.874633: sched_switch: prev_comm=swapper/5 prev_pid=0 prev_prio=120 prev_state=S ==> next_comm=cyclictest next_pid=2102 next_prio=19
++     <idle>-0     [004] d.h3   309.874757: sched_waking: comm=gnome-terminal- pid=1699 prio=120 target_cpu=004
++     <idle>-0     [004] dNh4   309.874762: sched_wakeup: comm=gnome-terminal- pid=1699 prio=120 target_cpu=004
++     <idle>-0     [004] d..3   309.874766: sched_switch: prev_comm=swapper/4 prev_pid=0 prev_prio=120 prev_state=S ==> next_comm=gnome-terminal- next_pid=1699 next_prio=120
++ gnome-terminal--1699  [004] d.h2   309.874941: sched_stat_runtime: comm=gnome-terminal- pid=1699 runtime=180706 [ns] vruntime=1126870572 [ns]
++     <idle>-0     [003] d.s4   309.874956: sched_waking: comm=rcu_sched pid=9 prio=120 target_cpu=007
++     <idle>-0     [003] d.s5   309.874960: sched_wake_idle_without_ipi: cpu=7
++     <idle>-0     [003] d.s5   309.874961: sched_wakeup: comm=rcu_sched pid=9 prio=120 target_cpu=007
++     <idle>-0     [007] d..3   309.874963: sched_switch: prev_comm=swapper/7 prev_pid=0 prev_prio=120 prev_state=S ==> next_comm=rcu_sched next_pid=9 next_prio=120
++  rcu_sched-9     [007] d..3   309.874973: sched_stat_runtime: comm=rcu_sched pid=9 runtime=13646 [ns] vruntime=22531430286 [ns]
++  rcu_sched-9     [007] d..3   309.874978: sched_switch: prev_comm=rcu_sched prev_pid=9 prev_prio=120 prev_state=R+ ==> next_comm=swapper/7 next_pid=0 next_prio=120
++      <...>-2102  [005] d..4   309.874994: sched_migrate_task: comm=cyclictest pid=2103 prio=19 orig_cpu=5 dest_cpu=1
++      <...>-2102  [005] d..4   309.875185: sched_wake_idle_without_ipi: cpu=1
++     <idle>-0     [001] d..3   309.875200: sched_switch: prev_comm=swapper/1 prev_pid=0 prev_prio=120 prev_state=S ==> next_comm=cyclictest next_pid=2103 next_prio=19
 +
- 		data->action = ACTION_TRACE;
- 	}
- 
-@@ -3596,24 +3698,25 @@ static int action_parse(char *str, struct action_data *data,
- 	return ret;
- }
- 
--static struct action_data *onmax_parse(char *str, enum handler_id handler)
-+static struct action_data *track_data_parse(struct hist_trigger_data *hist_data,
-+					    char *str, enum handler_id handler)
- {
- 	struct action_data *data;
--	char *onmax_var_str;
- 	int ret = -EINVAL;
-+	char *var_str;
- 
- 	data = kzalloc(sizeof(*data), GFP_KERNEL);
- 	if (!data)
- 		return ERR_PTR(-ENOMEM);
- 
--	onmax_var_str = strsep(&str, ")");
--	if (!onmax_var_str || !str) {
-+	var_str = strsep(&str, ")");
-+	if (!var_str || !str) {
- 		ret = -EINVAL;
- 		goto free;
- 	}
- 
--	data->onmax.var_str = kstrdup(onmax_var_str, GFP_KERNEL);
--	if (!data->onmax.var_str) {
-+	data->track_data.var_str = kstrdup(var_str, GFP_KERNEL);
-+	if (!data->track_data.var_str) {
- 		ret = -ENOMEM;
- 		goto free;
- 	}
-@@ -3624,7 +3727,7 @@ static struct action_data *onmax_parse(char *str, enum handler_id handler)
-  out:
- 	return data;
-  free:
--	onmax_destroy(data);
-+	track_data_destroy(hist_data, data);
- 	data = ERR_PTR(ret);
- 	goto out;
- }
-@@ -4388,7 +4491,7 @@ static void destroy_actions(struct hist_trigger_data *hist_data)
- 		if (data->handler == HANDLER_ONMATCH)
- 			onmatch_destroy(data);
- 		else if (data->handler == HANDLER_ONMAX)
--			onmax_destroy(data);
-+			track_data_destroy(hist_data, data);
- 		else
- 			kfree(data);
- 	}
-@@ -4417,7 +4520,8 @@ static int parse_actions(struct hist_trigger_data *hist_data)
- 		} else if ((len = str_has_prefix(str, "onmax("))) {
- 			char *action_str = str + len;
- 
--			data = onmax_parse(action_str, HANDLER_ONMAX);
-+			data = track_data_parse(hist_data, action_str,
-+						HANDLER_ONMAX);
- 			if (IS_ERR(data)) {
- 				ret = PTR_ERR(data);
- 				break;
-@@ -4447,7 +4551,7 @@ static int create_actions(struct hist_trigger_data *hist_data)
- 			if (ret)
- 				break;
- 		} else if (data->handler == HANDLER_ONMAX) {
--			ret = onmax_create(hist_data, data);
-+			ret = track_data_create(hist_data, data);
- 			if (ret)
- 				break;
- 		} else {
-@@ -4469,7 +4573,7 @@ static void print_actions(struct seq_file *m,
- 		struct action_data *data = hist_data->actions[i];
- 
- 		if (data->handler == HANDLER_ONMAX)
--			onmax_print(m, hist_data, elt, data);
-+			track_data_print(m, hist_data, elt, data);
- 	}
- }
- 
-@@ -4494,12 +4598,13 @@ static void print_action_spec(struct seq_file *m,
- 	}
- }
- 
--static void print_onmax_spec(struct seq_file *m,
--			     struct hist_trigger_data *hist_data,
--			     struct action_data *data)
-+static void print_track_data_spec(struct seq_file *m,
-+				  struct hist_trigger_data *hist_data,
-+				  struct action_data *data)
- {
--	seq_puts(m, ":onmax(");
--	seq_printf(m, "%s", data->onmax.var_str);
-+	if (data->handler == HANDLER_ONMAX)
-+		seq_puts(m, ":onmax(");
-+	seq_printf(m, "%s", data->track_data.var_str);
- 	seq_printf(m, ").%s(", data->action_name);
- 
- 	print_action_spec(m, hist_data, data);
-@@ -4557,8 +4662,8 @@ static bool actions_match(struct hist_trigger_data *hist_data,
- 				   data_test->match_data.event) != 0)
- 				return false;
- 		} else if (data->handler == HANDLER_ONMAX) {
--			if (strcmp(data->onmax.var_str,
--				   data_test->onmax.var_str) != 0)
-+			if (strcmp(data->track_data.var_str,
-+				   data_test->track_data.var_str) != 0)
- 				return false;
- 		}
- 	}
-@@ -4578,7 +4683,7 @@ static void print_actions_spec(struct seq_file *m,
- 		if (data->handler == HANDLER_ONMATCH)
- 			print_onmatch_spec(m, hist_data, data);
- 		else if (data->handler == HANDLER_ONMAX)
--			print_onmax_spec(m, hist_data, data);
-+			print_track_data_spec(m, hist_data, data);
- 	}
- }
+ 3. User space creating a trigger
+ --------------------------------
  
 -- 
 2.14.1
