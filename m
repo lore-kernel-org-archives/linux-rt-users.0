@@ -1,73 +1,44 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 0/6] tracing: trace event error_log and inter-event
- bugfixes
-Date: Tue, 15 Jan 2019 22:31:26 -0500
-Message-ID: <20190115223126.366d854c@vmware.local.home>
-References: <cover.1523545519.git.tom.zanussi@linux.intel.com>
+From: Joe Perches <joe@perches.com>
+Subject: Re: [PATCH v12 01/16] tracing: Use str_has_prefix() in
+ synth_event_create()
+Date: Tue, 15 Jan 2019 20:59:16 -0800
+Message-ID: <7c07519607d08c0afe448a03fb2010bce13cd77f.camel@perches.com>
+References: <cover.1547589128.git.tom.zanussi@linux.intel.com>
+         <aa6e33335e1ff99c7ac3d00fa5e27faaad04f981.1547589128.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel.opensrc@gmail.com, joelaf@google.com,
-        mathieu.desnoyers@efficios.com, baohong.liu@intel.com,
-        rajvi.jingar@intel.com, julia@ni.com, fengguang.wu@intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Tom Zanussi <tom.zanussi@linux.intel.com>
+        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
+        julia@ni.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
+To: Tom Zanussi <zanussi@kernel.org>, rostedt@goodmis.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1523545519.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <aa6e33335e1ff99c7ac3d00fa5e27faaad04f981.1547589128.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Tue, 2019-01-15 at 16:05 -0600, Tom Zanussi wrote:
+> Since we now have a str_has_prefix() that returns the length, we can
+> use that instead of explicitly calculating it.
+[]
+> diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+[]
+> @@ -1200,8 +1200,7 @@ static int synth_event_create(int argc, const char **argv)
+>  
+>  	/* This interface accepts group name prefix */
+>  	if (strchr(name, '/')) {
+> -		len = sizeof(SYNTH_SYSTEM "/") - 1;
+> -		if (strncmp(name, SYNTH_SYSTEM "/", len))
+> +		if ((len = str_has_prefix(name, SYNTH_SYSTEM "/")) == 0)
 
-Hi Tom,
+Since this is a single test, and not multiple if/else if
+blocks, I believe this would read better on two lines
 
-This thread sorta died and appears to be forgotten. Is there follow up
-patches on this?
+		len = str_has_prefix(name, SYNTH_SYSTEM "/");
+		if (len == 0)
 
-Thanks!
-
--- Steve
-
-
-On Thu, 12 Apr 2018 10:13:15 -0500
-Tom Zanussi <tom.zanussi@linux.intel.com> wrote:
-
-> Hi Steve,
-> 
-> Here are a few patches that should be applied on top of the
-> 'Inter-event (e.g. latency) support v9' patchset.
-> 
-> The first fixes another problem I noticed when printing flags.
-> 
-> The rest implement the tracing/events/error_log suggested by Masami,
-> and update the inter-event code to use it (and remove the old hist
-> file error mechanism).
-> 
-> Thanks,
-> 
-> Tom
-> 
-> The following changes since commit 404bb11b24fb9a592023c077b878d30ad6da4322:
-> 
->   tracing: Enforce passing in filter=NULL to create_filter() (2018-04-11 11:18:42 -0400)
-> 
-> are available in the git repository at:
-> 
->   https://github.com/tzanussi/linux-trace-inter-event.git tzanussi/inter-event-update2
->   https://github.com/tzanussi/linux-trace-inter-event/tree/tzanussi/inter-event-update2
-> 
-> Tom Zanussi (6):
->   tracing: Restore proper field flag printing when displaying triggers
->   tracing: Add trace event error log
->   tracing: Save the last hist command's associated event name
->   tracing: Use trace event error_log with hist triggers
->   tracing: Add field parsing trace event errors for hist triggers
->   selftests: ftrace: Fix extended error support testcase
-> 
->  kernel/trace/trace.h                               |   3 +
->  kernel/trace/trace_events.c                        | 172 +++++++++++++++++++
->  kernel/trace/trace_events_hist.c                   | 188 +++++++++++----------
->  .../inter-event/trigger-extended-error-support.tc  |   2 +-
->  4 files changed, 274 insertions(+), 91 deletions(-)
-> 
+>  			return -EINVAL;
+>  		name += len;
+>  	}
