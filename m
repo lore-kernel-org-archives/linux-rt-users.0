@@ -1,45 +1,47 @@
 Return-Path: linux-rt-users-owner@vger.kernel.org
-Received: from mail-lf1-f67.google.com ([209.85.167.67]:45763 "EHLO
-        mail-lf1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726218AbfAYXOa (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 25 Jan 2019 18:14:30 -0500
-Received: by mail-lf1-f67.google.com with SMTP id b20so8080439lfa.12
-        for <linux-rt-users@vger.kernel.org>; Fri, 25 Jan 2019 15:14:28 -0800 (PST)
-MIME-Version: 1.0
+Received: from mga04.intel.com ([192.55.52.120]:3370 "EHLO mga04.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1725550AbfAZBaE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 25 Jan 2019 20:30:04 -0500
+From: "Hindman, Gavin" <gavin.hindman@intel.com>
+Subject: RE: ETA for 4.19rt-stable patch set?
+Date: Sat, 26 Jan 2019 01:30:03 +0000
+Message-ID: <D5D6254030DBC644B6EE58B333BFBB1EA86D66C1@ORSMSX122.amr.corp.intel.com>
 References: <D5D6254030DBC644B6EE58B333BFBB1EA7C440AB@ORSMSX101.amr.corp.intel.com>
- <D5D6254030DBC644B6EE58B333BFBB1EA7C44112@ORSMSX101.amr.corp.intel.com> <D5D6254030DBC644B6EE58B333BFBB1EA86D6207@ORSMSX122.amr.corp.intel.com>
-In-Reply-To: <D5D6254030DBC644B6EE58B333BFBB1EA86D6207@ORSMSX122.amr.corp.intel.com>
-From: Arve Barsnes <arve.barsnes@gmail.com>
-Date: Sat, 26 Jan 2019 00:14:16 +0100
-Message-ID: <CAJjrzcXsY87RVbcv0Nb-mzB0gX4mqD35uCr0H5Uk+PNnOzX_JQ@mail.gmail.com>
-Subject: Re: ETA for 4.19rt-stable patch set?
-Content-Type: text/plain; charset="UTF-8"
+ <D5D6254030DBC644B6EE58B333BFBB1EA7C44112@ORSMSX101.amr.corp.intel.com>
+ <D5D6254030DBC644B6EE58B333BFBB1EA86D6207@ORSMSX122.amr.corp.intel.com>
+ <CAJjrzcXsY87RVbcv0Nb-mzB0gX4mqD35uCr0H5Uk+PNnOzX_JQ@mail.gmail.com>
+In-Reply-To: <CAJjrzcXsY87RVbcv0Nb-mzB0gX4mqD35uCr0H5Uk+PNnOzX_JQ@mail.gmail.com>
+Content-Language: en-US
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+MIME-Version: 1.0
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-To: linux-rt-users@vger.kernel.org
+To: Arve Barsnes <arve.barsnes@gmail.com>, "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 
-On Fri, 25 Jan 2019 at 22:03, Hindman, Gavin <gavin.hindman@intel.com> wrote:
->
-> bump
->
-> >-----Original Message-----
-> >From: linux-rt-users-owner@vger.kernel.org <linux-rt-users-
-> >owner@vger.kernel.org> On Behalf Of Hindman, Gavin
-> >Sent: Wednesday, January 09, 2019 9:09 AM
-> >To: 'linux-rt-users' <linux-rt-users@vger.kernel.org>
-> >Subject: ETA for 4.19rt-stable patch set?
-> >
-> >We have a number of customers starting to productize on top of the 4.19LTS
-> >for next-gen platforms, I'm sure others are in the same position - any
-> >estimate on when we might see 4.19rt-stable?
-
-I might be far off here, but I assume rt-stable is just a name put on
-the rt-kernels older than the current that are still maintained. In
-other words, nothing special about it, and it will probably appear
-once a new kernel series gets rt patch sets. It's the 4.19-series that
-is LTS, there is nothing special about rt patches on the older series
-as far as I know.
-
-Cheers,
-Arve
+DQoNCk9uIEZyaWRheSwgSmFudWFyeSAyNSwgMjAxOSAzOjE0IFBNIEFydmUgQmFyc25lcyB3cm90
+ZToNCg0KPk9uIEZyaSwgMjUgSmFuIDIwMTkgYXQgMjI6MDMsIEhpbmRtYW4sIEdhdmluIDxnYXZp
+bi5oaW5kbWFuQGludGVsLmNvbT4NCj53cm90ZToNCj4+DQo+PiBidW1wDQo+Pg0KPj4gPi0tLS0t
+T3JpZ2luYWwgTWVzc2FnZS0tLS0tDQo+PiA+RnJvbTogbGludXgtcnQtdXNlcnMtb3duZXJAdmdl
+ci5rZXJuZWwub3JnIDxsaW51eC1ydC11c2Vycy0NCj4+ID5vd25lckB2Z2VyLmtlcm5lbC5vcmc+
+IE9uIEJlaGFsZiBPZiBIaW5kbWFuLCBHYXZpbg0KPj4gPlNlbnQ6IFdlZG5lc2RheSwgSmFudWFy
+eSAwOSwgMjAxOSA5OjA5IEFNDQo+PiA+VG86ICdsaW51eC1ydC11c2VycycgPGxpbnV4LXJ0LXVz
+ZXJzQHZnZXIua2VybmVsLm9yZz4NCj4+ID5TdWJqZWN0OiBFVEEgZm9yIDQuMTlydC1zdGFibGUg
+cGF0Y2ggc2V0Pw0KPj4gPg0KPj4gPldlIGhhdmUgYSBudW1iZXIgb2YgY3VzdG9tZXJzIHN0YXJ0
+aW5nIHRvIHByb2R1Y3RpemUgb24gdG9wIG9mIHRoZQ0KPj4gPjQuMTlMVFMgZm9yIG5leHQtZ2Vu
+IHBsYXRmb3JtcywgSSdtIHN1cmUgb3RoZXJzIGFyZSBpbiB0aGUgc2FtZQ0KPj4gPnBvc2l0aW9u
+IC0gYW55IGVzdGltYXRlIG9uIHdoZW4gd2UgbWlnaHQgc2VlIDQuMTlydC1zdGFibGU/DQo+DQo+
+SSBtaWdodCBiZSBmYXIgb2ZmIGhlcmUsIGJ1dCBJIGFzc3VtZSBydC1zdGFibGUgaXMganVzdCBh
+IG5hbWUgcHV0IG9uIHRoZSBydC0NCj5rZXJuZWxzIG9sZGVyIHRoYW4gdGhlIGN1cnJlbnQgdGhh
+dCBhcmUgc3RpbGwgbWFpbnRhaW5lZC4gSW4gb3RoZXIgd29yZHMsDQo+bm90aGluZyBzcGVjaWFs
+IGFib3V0IGl0LCBhbmQgaXQgd2lsbCBwcm9iYWJseSBhcHBlYXIgb25jZSBhIG5ldyBrZXJuZWwg
+c2VyaWVzDQo+Z2V0cyBydCBwYXRjaCBzZXRzLiBJdCdzIHRoZSA0LjE5LXNlcmllcyB0aGF0IGlz
+IExUUywgdGhlcmUgaXMgbm90aGluZyBzcGVjaWFsIGFib3V0DQo+cnQgcGF0Y2hlcyBvbiB0aGUg
+b2xkZXIgc2VyaWVzIGFzIGZhciBhcyBJIGtub3cuDQo+DQoNCk15IHVuZGVyc3RhbmRpbmcgaXMg
+dGhhdCB0aGUgZGV2IHRyZWUgaXMganVzdCB0aGF0IC0gc29tZSB3b3JrIGluIHByb2dyZXNzIHNv
+IGNvdWxkIGJlIHN1YmplY3QgdG8gdHJhbnNpZW50IGxhdGVuY3kgYW5kIHN0YWJpbGl0eSByZWdy
+ZXNzaW9ucy4gIENlcnRhaW5seSwgdGhlIGRldiB0cmVlIGdlbmVyYWxseSB3b3JrcywgYnV0IGl0
+J3Mgbm90IGd1YXJhbnRlZWQgdG8gcmVtYWluIHRoYXQgd2F5LiAgVGhlIHN0YWJsZSBwYXRjaCBz
+ZXRzIGp1c3QgZ2V0IHRoZSBjaGFuZ2VzIGNvbnNpZGVyZWQgdHJ1bHkgc3RhYmxlLg0KDQo+Q2hl
+ZXJzLA0KPkFydmUNCg==
