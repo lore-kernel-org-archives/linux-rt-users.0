@@ -1,51 +1,44 @@
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH 0/2] A couple hist trigger patches
-Date: Mon,  4 Feb 2019 15:07:22 -0600
-Message-ID: <cover.1549309756.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 1/2] tracing: Use str_has_prefix() in synth_event_create()
+Date: Mon,  4 Feb 2019 15:07:23 -0600
+Message-ID: <03418373fd1e80030e7394b8e3e081c5de28a710.1549309756.git.tom.zanussi@linux.intel.com>
+References: <cover.1549309756.git.tom.zanussi@linux.intel.com>
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        Tom Zanussi <tom.zanussi@linux.intel.com>
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Joe Perches <joe@perches.com>
 To: rostedt@goodmis.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <cover.1549309756.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <cover.1549309756.git.tom.zanussi@linux.intel.com>
+References: <cover.1549309756.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-Hi,
+Since we now have a str_has_prefix() that returns the length, we can
+use that instead of explicitly calculating it.
 
-Here are a couple miscellaneous hist trigger patches which can be
-applied independently of the onchange/snapshot patches.
+Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+Cc: Joe Perches <joe@perches.com>
+---
+ kernel/trace/trace_events_hist.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-The first is just an additional use of str_has_prefix() that was
-apparently missed in the original str_has_prefix() conversion, with an
-update suggested by Joe Perches.
-
-The second fixes a bug I noticed when testing the onchange/snapshot
-fixes.
-
-I pulled these out into this separate patchset because they should be
-applied regardless of what happens with the onchange/snapshot patchset.
-
-Thanks,
-
-Tom
-
-
-The following changes since commit 67748dbeaf2b1240c0b87588df4bb0fb9471a751:
-
-  sh: ftrace: Fix missing parenthesis in WARN_ON() (2019-01-08 10:19:02 -0600)
-
-are available in the git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/zanussi/linux-trace.git ftrace/hist-fixes-v1
-
-Tom Zanussi (2):
-  tracing: Use str_has_prefix() in synth_event_create()
-  tracing: Use strncpy instead of memcpy for string keys in hist
-    triggers
-
- kernel/trace/trace_events_hist.c | 9 +++++----
- 1 file changed, 5 insertions(+), 4 deletions(-)
-
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 449d90cfa151..c4a667503bf0 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -1200,8 +1200,8 @@ static int synth_event_create(int argc, const char **argv)
+ 
+ 	/* This interface accepts group name prefix */
+ 	if (strchr(name, '/')) {
+-		len = sizeof(SYNTH_SYSTEM "/") - 1;
+-		if (strncmp(name, SYNTH_SYSTEM "/", len))
++		len = str_has_prefix(name, SYNTH_SYSTEM "/");
++		if (len == 0)
+ 			return -EINVAL;
+ 		name += len;
+ 	}
 -- 
 2.14.1
