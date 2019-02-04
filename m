@@ -1,7 +1,7 @@
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH v13 15/15] tracing: Add hist trigger action 'expected fail' test case
-Date: Mon,  4 Feb 2019 15:45:09 -0600
-Message-ID: <d332488450f4954126e66e710d77b006c0be2122.1549310519.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v13 13/15] tracing: Add hist trigger onchange() handler test case
+Date: Mon,  4 Feb 2019 15:45:07 -0600
+Message-ID: <e3dc4b4014e186f92e9dbf319bc268ed98f1a21a.1549310519.git.tom.zanussi@linux.intel.com>
 References: <cover.1549310519.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,24 +18,25 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-Add a test case verifying that basic action combinations fail as
-expected.
+Add a test case verifying the basic functionality of the
+hist:onchange($var) handler.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+Acked-by: Masami Hiramatsu <mhiramat@kernel.org>
 ---
- .../inter-event/trigger-action-hist-xfail.tc       | 30 ++++++++++++++++++++++
- 1 file changed, 30 insertions(+)
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-action-hist-xfail.tc
+ .../inter-event/trigger-onchange-action-hist.tc    | 28 ++++++++++++++++++++++
+ 1 file changed, 28 insertions(+)
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onchange-action-hist.tc
 
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-action-hist-xfail.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-action-hist-xfail.tc
+diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onchange-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onchange-action-hist.tc
 new file mode 100644
-index 000000000000..1221240f8cf6
+index 000000000000..064a284e4e75
 --- /dev/null
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-action-hist-xfail.tc
-@@ -0,0 +1,30 @@
++++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onchange-action-hist.tc
+@@ -0,0 +1,28 @@
 +#!/bin/sh
 +# SPDX-License-Identifier: GPL-2.0
-+# description: event trigger - test inter-event histogram trigger expected fail actions
++# description: event trigger - test inter-event histogram trigger onchange action
 +
 +fail() { #msg
 +    echo $1
@@ -47,21 +48,19 @@ index 000000000000..1221240f8cf6
 +    exit_unsupported
 +fi
 +
-+if [ ! -f snapshot ]; then
-+    echo "snapshot is not supported"
-+    exit_unsupported
++grep -q "onchange(var)" README || exit_unsupported # version issue
++
++echo "Test onchange action"
++
++echo 'hist:keys=comm:newprio=prio:onchange($newprio).save(comm,prio) if comm=="ping"' >> /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
++
++ping $LOCALHOST -c 3
++nice -n 1 ping $LOCALHOST -c 3
++
++if ! grep -q "changed:" events/sched/sched_waking/hist; then
++    fail "Failed to create onchange action inter-event histogram"
 +fi
 +
-+grep -q "snapshot()" README || exit_unsupported # version issue
-+
-+echo "Test expected snapshot action failure"
-+
-+echo 'hist:keys=comm:onmatch(sched.sched_wakeup).snapshot()' >> /sys/kernel/debug/tracing/events/sched/sched_waking/trigger && exit_fail
-+
-+echo "Test expected save action failure"
-+
-+echo 'hist:keys=comm:onmatch(sched.sched_wakeup).save(comm,prio)' >> /sys/kernel/debug/tracing/events/sched/sched_waking/trigger && exit_fail
-+
-+exit_xfail
++exit 0
 -- 
 2.14.1
