@@ -1,7 +1,7 @@
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH v13 11/15] tracing: Add SPDX license GPL-2.0 license identifier to inter-event testcases
-Date: Mon,  4 Feb 2019 15:45:05 -0600
-Message-ID: <2801ba691f74494510a9103c28b51adad88b97b3.1549310519.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v13 10/15] tracing: Add alternative synthetic event trace action syntax
+Date: Mon,  4 Feb 2019 15:45:04 -0600
+Message-ID: <8820a8944e4e2632bbd956c5213898537df4e25c.1549310519.git.tom.zanussi@linux.intel.com>
 References: <cover.1549310519.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,100 +18,236 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-Apparently this directory was missed in the license cleanup process -
-add the missing identifiers to the trigger/inter-event test cases.
+Add a 'trace(synthetic_event_name, params)' alternative to
+synthetic_event_name(params).
+
+Currently, the syntax used for generating synthetic events is to
+invoke synthetic_event_name(params) i.e. use the synthetic event name
+as a function call.
+
+Users requested a new form that more explicitly shows that the
+synthetic event is in effect being traced.  In this version, a new
+'trace()' keyword is used, and the synthetic event name is passed in
+as the first argument.
+
+In addition, for the sake of consistency with other actions, change
+the documention to emphasize the trace() form over the function-call
+form, which remains documented as equivalent.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- .../ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc  | 1 +
- .../ftrace/test.d/trigger/inter-event/trigger-field-variable-support.tc  | 1 +
- .../test.d/trigger/inter-event/trigger-inter-event-combined-hist.tc      | 1 +
- .../ftrace/test.d/trigger/inter-event/trigger-multi-actions-accept.tc    | 1 +
- .../ftrace/test.d/trigger/inter-event/trigger-onmatch-action-hist.tc     | 1 +
- .../test.d/trigger/inter-event/trigger-onmatch-onmax-action-hist.tc      | 1 +
- .../ftrace/test.d/trigger/inter-event/trigger-onmax-action-hist.tc       | 1 +
- .../test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc   | 1 +
- 8 files changed, 8 insertions(+)
+ Documentation/trace/histogram.rst | 54 +++++++++++++++++++++++++++------------
+ kernel/trace/trace.c              |  2 +-
+ kernel/trace/trace_events_hist.c  | 42 +++++++++++++++++++++++++++---
+ 3 files changed, 76 insertions(+), 22 deletions(-)
 
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
-index 401104344593..9912616a8672 100644
---- a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
-@@ -1,4 +1,5 @@
- #!/bin/sh
-+# SPDX-License-Identifier: GPL-2.0
- # description: event trigger - test extended error support
+diff --git a/Documentation/trace/histogram.rst b/Documentation/trace/histogram.rst
+index 79476c906b1a..0ea59d45aef1 100644
+--- a/Documentation/trace/histogram.rst
++++ b/Documentation/trace/histogram.rst
+@@ -1873,31 +1873,45 @@ The available handlers are:
  
+ The available actions are:
  
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-field-variable-support.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-field-variable-support.tc
-index f59b2a9a1f22..77be6e1f6e7b 100644
---- a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-field-variable-support.tc
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-field-variable-support.tc
-@@ -1,4 +1,5 @@
- #!/bin/sh
-+# SPDX-License-Identifier: GPL-2.0
- # description: event trigger - test field variable support
+-  - <synthetic_event_name>(param list)         - generate synthetic event
++  - trace(<synthetic_event_name>,param list)   - generate synthetic event
+   - save(field,...)                            - save current event fields
+   - snapshot()                                 - snapshot the trace buffer
  
- fail() { #msg
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-inter-event-combined-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-inter-event-combined-hist.tc
-index 524d9ce361e2..f3eb8aacec0e 100644
---- a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-inter-event-combined-hist.tc
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-inter-event-combined-hist.tc
-@@ -1,4 +1,5 @@
- #!/bin/sh
-+# SPDX-License-Identifier: GPL-2.0
- # description: event trigger - test inter-event combined histogram trigger
+ The following commonly-used handler.action pairs are available:
  
- fail() { #msg
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-multi-actions-accept.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-multi-actions-accept.tc
-index 4ddc546771b5..d281f056f980 100644
---- a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-multi-actions-accept.tc
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-multi-actions-accept.tc
-@@ -1,4 +1,5 @@
- #!/bin/sh
-+# SPDX-License-Identifier: GPL-2.0
- # description: event trigger - test multiple actions on hist trigger
+-  - onmatch(matching.event).<synthetic_event_name>(param list)
++  - onmatch(matching.event).trace(<synthetic_event_name>,param list)
  
- fail() { #msg
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-action-hist.tc
-index 39fb65b0cd9f..a708f0e7858a 100644
---- a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-action-hist.tc
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-action-hist.tc
-@@ -1,4 +1,5 @@
- #!/bin/sh
-+# SPDX-License-Identifier: GPL-2.0
- # description: event trigger - test inter-event histogram trigger onmatch action
+-    The 'onmatch(matching.event).<synthetic_event_name>(params)' hist
+-    trigger action is invoked whenever an event matches and the
+-    histogram entry would be added or updated.  It causes the named
+-    synthetic event to be generated with the values given in the
++    The 'onmatch(matching.event).trace(<synthetic_event_name>,param
++    list)' hist trigger action is invoked whenever an event matches
++    and the histogram entry would be added or updated.  It causes the
++    named synthetic event to be generated with the values given in the
+     'param list'.  The result is the generation of a synthetic event
+     that consists of the values contained in those variables at the
+-    time the invoking event was hit.
+-
+-    The 'param list' consists of one or more parameters which may be
+-    either variables or fields defined on either the 'matching.event'
+-    or the target event.  The variables or fields specified in the
+-    param list may be either fully-qualified or unqualified.  If a
+-    variable is specified as unqualified, it must be unique between
+-    the two events.  A field name used as a param can be unqualified
+-    if it refers to the target event, but must be fully qualified if
+-    it refers to the matching event.  A fully-qualified name is of the
+-    form 'system.event_name.$var_name' or 'system.event_name.field'.
++    time the invoking event was hit.  For example, if the synthetic
++    event name is 'wakeup_latency', a wakeup_latency event is
++    generated using onmatch(event).trace(wakeup_latency,arg1,arg2).
++
++    There is also an equivalent alternative form available for
++    generating synthetic events.  In this form, the synthetic event
++    name is used as if it were a function name.  For example, using
++    the 'wakeup_latency' synthetic event name again, the
++    wakeup_latency event would be generated by invoking it as if it
++    were a function call, with the event field values passed in as
++    arguments: onmatch(event).wakeup_latency(arg1,arg2).  The syntax
++    for this form is:
++
++      onmatch(matching.event).<synthetic_event_name>(param list)
++
++    In either case, the 'param list' consists of one or more
++    parameters which may be either variables or fields defined on
++    either the 'matching.event' or the target event.  The variables or
++    fields specified in the param list may be either fully-qualified
++    or unqualified.  If a variable is specified as unqualified, it
++    must be unique between the two events.  A field name used as a
++    param can be unqualified if it refers to the target event, but
++    must be fully qualified if it refers to the matching event.  A
++    fully-qualified name is of the form 'system.event_name.$var_name'
++    or 'system.event_name.field'.
  
- fail() { #msg
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-onmax-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-onmax-action-hist.tc
-index 81ab3939c96a..dfce6932d8be 100644
---- a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-onmax-action-hist.tc
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-onmax-action-hist.tc
-@@ -1,4 +1,5 @@
- #!/bin/sh
-+# SPDX-License-Identifier: GPL-2.0
- # description: event trigger - test inter-event histogram trigger onmatch-onmax action
+     The 'matching.event' specification is simply the fully qualified
+     event name of the event that matches the target event for the
+@@ -1928,6 +1942,12 @@ The following commonly-used handler.action pairs are available:
+               wakeup_new_test($testpid) if comm=="cyclictest"' >> \
+               /sys/kernel/debug/tracing/events/sched/sched_wakeup_new/trigger
  
- fail() { #msg
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmax-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmax-action-hist.tc
-index 1180ab5f0845..0035995c2194 100644
---- a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmax-action-hist.tc
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmax-action-hist.tc
-@@ -1,4 +1,5 @@
- #!/bin/sh
-+# SPDX-License-Identifier: GPL-2.0
- # description: event trigger - test inter-event histogram trigger onmax action
++    Or, equivalently, using the 'trace' keyword syntax:
++
++    # echo 'hist:keys=$testpid:testpid=pid:onmatch(sched.sched_wakeup_new).\
++            trace(wakeup_new_test,$testpid) if comm=="cyclictest"' >> \
++            /sys/kernel/debug/tracing/events/sched/sched_wakeup_new/trigger
++
+     Creating and displaying a histogram based on those events is now
+     just a matter of using the fields and new synthetic event in the
+     tracing/events/synthetic directory, as usual::
+diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
+index 4a847fa19819..49ec37b439c0 100644
+--- a/kernel/trace/trace.c
++++ b/kernel/trace/trace.c
+@@ -4917,7 +4917,7 @@ static const char readme_msg[] =
+ 	"\t        onmax(var)               - invoke if var exceeds current max\n"
+ 	"\t        onchange(var)            - invoke action if var changes\n\n"
+ 	"\t    The available actions are:\n\n"
+-	"\t        <synthetic_event>(param list)        - generate synthetic event\n"
++	"\t        trace(<synthetic_event>,param list)  - generate synthetic event\n"
+ 	"\t        save(field,...)                      - save current event fields\n"
+ 	"\t        snapshot()                           - snapshot the trace buffer\n"
+ #endif
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index e504aa6e93e7..3709e4deeff4 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -419,6 +419,8 @@ struct action_data {
+ 	 */
+ 	unsigned int		var_ref_idx;
+ 	struct synth_event	*synth_event;
++	bool			use_trace_keyword;
++	char			*synth_event_name;
  
- fail() { #msg
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc
-index 41128219231a..df44b14724a4 100644
---- a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc
-@@ -1,4 +1,5 @@
- #!/bin/sh
-+# SPDX-License-Identifier: GPL-2.0
- # description: event trigger - test synthetic event create remove
+ 	union {
+ 		struct {
+@@ -3687,6 +3689,8 @@ static void action_data_destroy(struct action_data *data)
+ 	if (data->synth_event)
+ 		data->synth_event->ref--;
  
- fail() { #msg
++	kfree(data->synth_event_name);
++
+ 	kfree(data);
+ }
+ 
+@@ -3766,6 +3770,7 @@ static int track_data_create(struct hist_trigger_data *hist_data,
+ static int parse_action_params(char *params, struct action_data *data)
+ {
+ 	char *param, *saved_param;
++	bool first_param = true;
+ 	int ret = 0;
+ 
+ 	while (params) {
+@@ -3794,6 +3799,13 @@ static int parse_action_params(char *params, struct action_data *data)
+ 			goto out;
+ 		}
+ 
++		if (first_param && data->use_trace_keyword) {
++			data->synth_event_name = saved_param;
++			first_param = false;
++			continue;
++		}
++		first_param = false;
++
+ 		data->params[data->n_params++] = saved_param;
+ 	}
+  out:
+@@ -3871,6 +3883,9 @@ static int action_parse(char *str, struct action_data *data,
+ 	} else {
+ 		char *params = strsep(&str, ")");
+ 
++		if (str_has_prefix(action_name, "trace"))
++			data->use_trace_keyword = true;
++
+ 		if (params) {
+ 			ret = parse_action_params(params, data);
+ 			if (ret)
+@@ -4073,13 +4088,19 @@ static int trace_action_create(struct hist_trigger_data *hist_data,
+ 	unsigned int i, var_ref_idx;
+ 	unsigned int field_pos = 0;
+ 	struct synth_event *event;
++	char *synth_event_name;
+ 	int ret = 0;
+ 
+ 	lockdep_assert_held(&event_mutex);
+ 
+-	event = find_synth_event(data->action_name);
++	if (data->use_trace_keyword)
++		synth_event_name = data->synth_event_name;
++	else
++		synth_event_name = data->action_name;
++
++	event = find_synth_event(synth_event_name);
+ 	if (!event) {
+-		hist_err("trace action: Couldn't find synthetic event: ", data->action_name);
++		hist_err("trace action: Couldn't find synthetic event: ", synth_event_name);
+ 		return -EINVAL;
+ 	}
+ 
+@@ -4829,8 +4850,10 @@ static void print_action_spec(struct seq_file *m,
+ 				seq_puts(m, ",");
+ 		}
+ 	} else if (data->action == ACTION_TRACE) {
++		if (data->use_trace_keyword)
++			seq_printf(m, "%s", data->synth_event_name);
+ 		for (i = 0; i < data->n_params; i++) {
+-			if (i)
++			if (i || data->use_trace_keyword)
+ 				seq_puts(m, ",");
+ 			seq_printf(m, "%s", data->params[i]);
+ 		}
+@@ -4878,6 +4901,7 @@ static bool actions_match(struct hist_trigger_data *hist_data,
+ 	for (i = 0; i < hist_data->n_actions; i++) {
+ 		struct action_data *data = hist_data->actions[i];
+ 		struct action_data *data_test = hist_data_test->actions[i];
++		char *action_name, *action_name_test;
+ 
+ 		if (data->handler != data_test->handler)
+ 			return false;
+@@ -4892,7 +4916,17 @@ static bool actions_match(struct hist_trigger_data *hist_data,
+ 				return false;
+ 		}
+ 
+-		if (strcmp(data->action_name, data_test->action_name) != 0)
++		if (data->use_trace_keyword)
++			action_name = data->synth_event_name;
++		else
++			action_name = data->action_name;
++
++		if (data_test->use_trace_keyword)
++			action_name_test = data_test->synth_event_name;
++		else
++			action_name_test = data_test->action_name;
++
++		if (strcmp(action_name, action_name_test) != 0)
+ 			return false;
+ 
+ 		if (data->handler == HANDLER_ONMATCH) {
 -- 
 2.14.1
