@@ -1,272 +1,313 @@
-From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH v14 03/15] tracing: Split up onmatch action data
-Date: Tue,  5 Feb 2019 16:41:49 -0600
-Message-ID: <b9abbf9aae69fe3920cdc8ddbcaad544dd258d78.1549403369.git.tom.zanussi@linux.intel.com>
-References: <cover.1549403369.git.tom.zanussi@linux.intel.com>
-Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
-        julia@ni.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org
-To: rostedt@goodmis.org
+From: Julien Grall <julien.grall@arm.com>
+Subject: [RFC PATCH] arm64/fpsimd: Don't disable softirq when touching FPSIMD/SVE state
+Date: Fri,  8 Feb 2019 16:55:13 +0000
+Message-ID: <20190208165513.8435-1-julien.grall@arm.com>
+Cc: bigeasy@linutronix.de, Dave.Martin@arm.com,
+        linux-rt-users@vger.kernel.org, catalin.marinas@arm.com,
+        will.deacon@arm.com, ard.biesheuvel@linaro.org,
+        linux-kernel@vger.kernel.org, Julien Grall <julien.grall@arm.com>
+To: linux-arm-kernel@lists.infradead.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1549403369.git.tom.zanussi@linux.intel.com>
-In-Reply-To: <cover.1549403369.git.tom.zanussi@linux.intel.com>
-References: <cover.1549403369.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
+When the kernel is compiled with CONFIG_KERNEL_MODE_NEON, some part of
+the kernel may be able to use FPSIMD/SVE. This is for instance the case
+for crypto code.
 
-Currently, the onmatch action data binds the onmatch action to data
-related to synthetic event generation.  Since we want to allow the
-onmatch handler to potentially invoke a different action, and because
-we expect other handlers to generate synthetic events, we need to
-separate the data related to these two functions.
+Any use of FPSIMD/SVE in the kernel are clearly marked by using the
+function kernel_neon_{begin, end}. Furthermore, this can only be used
+when may_use_simd() returns true.
 
-Also rename the onmatch data to something more descriptive, and create
-and use common action data destroy function.
+The current implementation of may_use_simd() allows softirq to use
+FPSIMD/SVE unless it is currently in used (i.e kernel_neon_busy is true).
+When in used, softirqs usually fallback to a software method.
 
-Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+At the moment, as a softirq may use FPSIMD/SVE, softirqs are disabled
+when touching the FPSIMD/SVE context. This has the drawback to disable
+all softirqs even if they are not using FPSIMD/SVE.
+
+As a softirq should not rely on been able to use simd at a given time,
+there are limited reason to keep softirq disabled when touching the
+FPSIMD/SVE context. Instead, we can only disable preemption and tell
+the NEON unit is currently in use.
+
+This patch introduces two new helpers kernel_neon_{disable, enable} to
+mark the area using FPSIMD/SVE context and use them in replacement of
+local_bh_{disable, enable}. The functions kernel_neon_{begin, end} are
+also re-implemented to use the new helpers.
+
+Signed-off-by: Julien Grall <julien.grall@arm.com>
+
 ---
- kernel/trace/trace.c             |  12 ++++-
- kernel/trace/trace_events_hist.c | 103 ++++++++++++++++++++-------------------
- 2 files changed, 63 insertions(+), 52 deletions(-)
 
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index 18b86c3974e1..188c4e06c1cc 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -4700,6 +4700,7 @@ static const char readme_msg[] =
- 	"\t            [:size=#entries]\n"
- 	"\t            [:pause][:continue][:clear]\n"
- 	"\t            [:name=histname1]\n"
-+	"\t            [:<handler>.<action>]\n"
- 	"\t            [if <filter>]\n\n"
- 	"\t    When a matching event is hit, an entry is added to a hash\n"
- 	"\t    table using the key(s) and value(s) named, and the value of a\n"
-@@ -4741,7 +4742,16 @@ static const char readme_msg[] =
- 	"\t    The enable_hist and disable_hist triggers can be used to\n"
- 	"\t    have one event conditionally start and stop another event's\n"
- 	"\t    already-attached hist trigger.  The syntax is analagous to\n"
--	"\t    the enable_event and disable_event triggers.\n"
-+	"\t    the enable_event and disable_event triggers.\n\n"
-+	"\t    Hist trigger handlers and actions are executed whenever a\n"
-+	"\t    a histogram entry is added or updated.  They take the form:\n\n"
-+	"\t        <handler>.<action>\n\n"
-+	"\t    The available handlers are:\n\n"
-+	"\t        onmatch(matching.event)  - invoke on addition or update\n"
-+	"\t        onmax(var)               - invoke if var exceeds current max\n\n"
-+	"\t    The available actions are:\n\n"
-+	"\t        <synthetic_event>(param list)        - generate synthetic event\n"
-+	"\t        save(field,...)                      - save current event fields\n"
- #endif
- ;
+I have been exploring this solution as an alternative approach to the RT
+patch "arm64: fpsimd: use preemp_disable in addition to local_bh_disable()".
+
+So far, the patch has only been lightly tested.
+
+For RT-linux, it might be possible to use migrate_{enable, disable}. I
+am quite new with RT and have some trouble to understand the semantics
+of migrate_{enable, disable}. So far, I am still unsure if it is possible
+to run another userspace task on the same CPU while getting preempted
+when the migration is disabled.
+---
+ arch/arm64/include/asm/simd.h |  4 +--
+ arch/arm64/kernel/fpsimd.c    | 76 +++++++++++++++++++++++++------------------
+ 2 files changed, 46 insertions(+), 34 deletions(-)
+
+diff --git a/arch/arm64/include/asm/simd.h b/arch/arm64/include/asm/simd.h
+index 6495cc51246f..94c0dac508aa 100644
+--- a/arch/arm64/include/asm/simd.h
++++ b/arch/arm64/include/asm/simd.h
+@@ -15,10 +15,10 @@
+ #include <linux/preempt.h>
+ #include <linux/types.h>
  
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 1d5a44330df6..16f91467a02d 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -405,21 +405,22 @@ struct action_data {
- 	unsigned int		n_params;
- 	char			*params[SYNTH_FIELDS_MAX];
+-#ifdef CONFIG_KERNEL_MODE_NEON
+-
+ DECLARE_PER_CPU(bool, kernel_neon_busy);
  
-+	/*
-+	 * When a histogram trigger is hit, the values of any
-+	 * references to variables, including variables being passed
-+	 * as parameters to synthetic events, are collected into a
-+	 * var_ref_vals array.  This var_ref_idx is the index of the
-+	 * first param in the array to be passed to the synthetic
-+	 * event invocation.
-+	 */
-+	unsigned int		var_ref_idx;
-+	struct synth_event	*synth_event;
++#ifdef CONFIG_KERNEL_MODE_NEON
 +
- 	union {
- 		struct {
--			/*
--			 * When a histogram trigger is hit, the values of any
--			 * references to variables, including variables being passed
--			 * as parameters to synthetic events, are collected into a
--			 * var_ref_vals array.  This var_ref_idx is the index of the
--			 * first param in the array to be passed to the synthetic
--			 * event invocation.
--			 */
--			unsigned int		var_ref_idx;
--			char			*match_event;
--			char			*match_event_system;
--			struct synth_event	*synth_event;
--		} onmatch;
-+			char			*event;
-+			char			*event_system;
-+		} match_data;
+ /*
+  * may_use_simd - whether it is allowable at this time to issue SIMD
+  *                instructions or access the SIMD register file
+diff --git a/arch/arm64/kernel/fpsimd.c b/arch/arm64/kernel/fpsimd.c
+index 5ebe73b69961..b7e5dac26190 100644
+--- a/arch/arm64/kernel/fpsimd.c
++++ b/arch/arm64/kernel/fpsimd.c
+@@ -90,7 +90,8 @@
+  * To prevent this from racing with the manipulation of the task's FPSIMD state
+  * from task context and thereby corrupting the state, it is necessary to
+  * protect any manipulation of a task's fpsimd_state or TIF_FOREIGN_FPSTATE
+- * flag with local_bh_disable() unless softirqs are already masked.
++ * flag with kernel_neon_{disable, enable}. This will still allow softirqs to
++ * run but prevent them to use FPSIMD.
+  *
+  * For a certain task, the sequence may look something like this:
+  * - the task gets scheduled in; if both the task's fpsimd_cpu field
+@@ -142,6 +143,9 @@ extern void __percpu *efi_sve_state;
  
- 		struct {
- 			char			*var_str;
-@@ -1093,9 +1094,9 @@ static void action_trace(struct hist_trigger_data *hist_data,
- 			 struct ring_buffer_event *rbe, void *key,
- 			 struct action_data *data, u64 *var_ref_vals)
- {
--	struct synth_event *event = data->onmatch.synth_event;
-+	struct synth_event *event = data->synth_event;
+ #endif /* ! CONFIG_ARM64_SVE */
  
--	trace_synth(event, var_ref_vals, data->onmatch.var_ref_idx);
-+	trace_synth(event, var_ref_vals, data->var_ref_idx);
- }
- 
- struct hist_var_data {
-@@ -1657,8 +1658,8 @@ find_match_var(struct hist_trigger_data *hist_data, char *var_name)
- 		struct action_data *data = hist_data->actions[i];
- 
- 		if (data->handler == HANDLER_ONMATCH) {
--			char *system = data->onmatch.match_event_system;
--			char *event_name = data->onmatch.match_event;
-+			char *system = data->match_data.event_system;
-+			char *event_name = data->match_data.event;
- 
- 			file = find_var_file(tr, system, event_name, var_name);
- 			if (!file)
-@@ -3425,22 +3426,33 @@ static void onmax_save(struct hist_trigger_data *hist_data,
- 	update_max_vars(hist_data, elt, rbe, rec);
- }
- 
--static void onmax_destroy(struct action_data *data)
-+static void action_data_destroy(struct action_data *data)
- {
- 	unsigned int i;
- 
--	destroy_hist_field(data->onmax.max_var, 0);
--	destroy_hist_field(data->onmax.var, 0);
-+	lockdep_assert_held(&event_mutex);
- 
--	kfree(data->onmax.var_str);
- 	kfree(data->action_name);
- 
- 	for (i = 0; i < data->n_params; i++)
- 		kfree(data->params[i]);
- 
-+	if (data->synth_event)
-+		data->synth_event->ref--;
++static void kernel_neon_disable(void);
++static void kernel_neon_enable(void);
 +
- 	kfree(data);
+ /*
+  * Call __sve_free() directly only if you know task can't be scheduled
+  * or preempted.
+@@ -213,11 +217,11 @@ static void sve_free(struct task_struct *task)
+  * thread_struct is known to be up to date, when preparing to enter
+  * userspace.
+  *
+- * Softirqs (and preemption) must be disabled.
++ * Preemption must be disabled.
+  */
+ static void task_fpsimd_load(void)
+ {
+-	WARN_ON(!in_softirq() && !irqs_disabled());
++	WARN_ON(!preempt_count() && !irqs_disabled());
+ 
+ 	if (system_supports_sve() && test_thread_flag(TIF_SVE))
+ 		sve_load_state(sve_pffr(&current->thread),
+@@ -238,7 +242,7 @@ void fpsimd_save(void)
+ 	struct user_fpsimd_state *st = __this_cpu_read(fpsimd_last_state.st);
+ 	/* set by fpsimd_bind_task_to_cpu() or fpsimd_bind_state_to_cpu() */
+ 
+-	WARN_ON(!in_softirq() && !irqs_disabled());
++	WARN_ON(!preempt_count() && !irqs_disabled());
+ 
+ 	if (!test_thread_flag(TIF_FOREIGN_FPSTATE)) {
+ 		if (system_supports_sve() && test_thread_flag(TIF_SVE)) {
+@@ -360,7 +364,7 @@ static int __init sve_sysctl_init(void) { return 0; }
+  * task->thread.sve_state.
+  *
+  * Task can be a non-runnable task, or current.  In the latter case,
+- * softirqs (and preemption) must be disabled.
++ * preemption must be disabled.
+  * task->thread.sve_state must point to at least sve_state_size(task)
+  * bytes of allocated kernel memory.
+  * task->thread.uw.fpsimd_state must be up to date before calling this
+@@ -387,7 +391,7 @@ static void fpsimd_to_sve(struct task_struct *task)
+  * task->thread.uw.fpsimd_state.
+  *
+  * Task can be a non-runnable task, or current.  In the latter case,
+- * softirqs (and preemption) must be disabled.
++ * preemption must be disabled.
+  * task->thread.sve_state must point to at least sve_state_size(task)
+  * bytes of allocated kernel memory.
+  * task->thread.sve_state must be up to date before calling this function.
+@@ -547,7 +551,7 @@ int sve_set_vector_length(struct task_struct *task,
+ 	 * non-SVE thread.
+ 	 */
+ 	if (task == current) {
+-		local_bh_disable();
++		kernel_neon_disable();
+ 
+ 		fpsimd_save();
+ 		set_thread_flag(TIF_FOREIGN_FPSTATE);
+@@ -558,7 +562,7 @@ int sve_set_vector_length(struct task_struct *task,
+ 		sve_to_fpsimd(task);
+ 
+ 	if (task == current)
+-		local_bh_enable();
++		kernel_neon_enable();
+ 
+ 	/*
+ 	 * Force reallocation of task SVE state to the correct size
+@@ -813,7 +817,7 @@ asmlinkage void do_sve_acc(unsigned int esr, struct pt_regs *regs)
+ 
+ 	sve_alloc(current);
+ 
+-	local_bh_disable();
++	kernel_neon_disable();
+ 
+ 	fpsimd_save();
+ 	fpsimd_to_sve(current);
+@@ -825,7 +829,7 @@ asmlinkage void do_sve_acc(unsigned int esr, struct pt_regs *regs)
+ 	if (test_and_set_thread_flag(TIF_SVE))
+ 		WARN_ON(1); /* SVE access shouldn't have trapped */
+ 
+-	local_bh_enable();
++	kernel_neon_enable();
  }
  
-+static void onmax_destroy(struct action_data *data)
+ /*
+@@ -892,7 +896,7 @@ void fpsimd_flush_thread(void)
+ 	if (!system_supports_fpsimd())
+ 		return;
+ 
+-	local_bh_disable();
++	kernel_neon_disable();
+ 
+ 	memset(&current->thread.uw.fpsimd_state, 0,
+ 	       sizeof(current->thread.uw.fpsimd_state));
+@@ -935,7 +939,7 @@ void fpsimd_flush_thread(void)
+ 
+ 	set_thread_flag(TIF_FOREIGN_FPSTATE);
+ 
+-	local_bh_enable();
++	kernel_neon_enable();
+ }
+ 
+ /*
+@@ -947,9 +951,9 @@ void fpsimd_preserve_current_state(void)
+ 	if (!system_supports_fpsimd())
+ 		return;
+ 
+-	local_bh_disable();
++	kernel_neon_disable();
+ 	fpsimd_save();
+-	local_bh_enable();
++	kernel_neon_enable();
+ }
+ 
+ /*
+@@ -1007,14 +1011,14 @@ void fpsimd_restore_current_state(void)
+ 	if (!system_supports_fpsimd())
+ 		return;
+ 
+-	local_bh_disable();
++	kernel_neon_disable();
+ 
+ 	if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE)) {
+ 		task_fpsimd_load();
+ 		fpsimd_bind_task_to_cpu();
+ 	}
+ 
+-	local_bh_enable();
++	kernel_neon_enable();
+ }
+ 
+ /*
+@@ -1027,7 +1031,7 @@ void fpsimd_update_current_state(struct user_fpsimd_state const *state)
+ 	if (!system_supports_fpsimd())
+ 		return;
+ 
+-	local_bh_disable();
++	kernel_neon_disable();
+ 
+ 	current->thread.uw.fpsimd_state = *state;
+ 	if (system_supports_sve() && test_thread_flag(TIF_SVE))
+@@ -1038,7 +1042,7 @@ void fpsimd_update_current_state(struct user_fpsimd_state const *state)
+ 
+ 	clear_thread_flag(TIF_FOREIGN_FPSTATE);
+ 
+-	local_bh_enable();
++	kernel_neon_enable();
+ }
+ 
+ /*
+@@ -1055,11 +1059,28 @@ void fpsimd_flush_cpu_state(void)
+ 	set_thread_flag(TIF_FOREIGN_FPSTATE);
+ }
+ 
+-#ifdef CONFIG_KERNEL_MODE_NEON
+-
+ DEFINE_PER_CPU(bool, kernel_neon_busy);
+ EXPORT_PER_CPU_SYMBOL(kernel_neon_busy);
+ 
++static void kernel_neon_disable(void)
 +{
-+	destroy_hist_field(data->onmax.max_var, 0);
-+	destroy_hist_field(data->onmax.var, 0);
-+
-+	kfree(data->onmax.var_str);
-+
-+	action_data_destroy(data);
++	preempt_disable();
++	WARN_ON(__this_cpu_read(kernel_neon_busy));
++	__this_cpu_write(kernel_neon_busy, true);
 +}
 +
- static int action_create(struct hist_trigger_data *hist_data,
- 			 struct action_data *data);
++static void kernel_neon_enable(void)
++{
++	bool busy;
++
++	busy = __this_cpu_xchg(kernel_neon_busy, false);
++	WARN_ON(!busy); /* No matching kernel_neon_disable()? */
++
++	preempt_enable();
++}
++
++#ifdef CONFIG_KERNEL_MODE_NEON
++
+ /*
+  * Kernel-side NEON support functions
+  */
+@@ -1084,9 +1105,7 @@ void kernel_neon_begin(void)
  
-@@ -3620,21 +3632,10 @@ static struct action_data *onmax_parse(char *str, enum handler_id handler)
+ 	BUG_ON(!may_use_simd());
  
- static void onmatch_destroy(struct action_data *data)
- {
--	unsigned int i;
+-	local_bh_disable();
 -
--	lockdep_assert_held(&event_mutex);
-+	kfree(data->match_data.event);
-+	kfree(data->match_data.event_system);
+-	__this_cpu_write(kernel_neon_busy, true);
++	kernel_neon_disable();
  
--	kfree(data->onmatch.match_event);
--	kfree(data->onmatch.match_event_system);
--	kfree(data->action_name);
+ 	/* Save unsaved fpsimd state, if any: */
+ 	fpsimd_save();
+@@ -1094,9 +1113,7 @@ void kernel_neon_begin(void)
+ 	/* Invalidate any task state remaining in the fpsimd regs: */
+ 	fpsimd_flush_cpu_state();
+ 
+-	preempt_disable();
 -
--	for (i = 0; i < data->n_params; i++)
--		kfree(data->params[i]);
--
--	if (data->onmatch.synth_event)
--		data->onmatch.synth_event->ref--;
--
--	kfree(data);
-+	action_data_destroy(data);
+-	local_bh_enable();
++	kernel_neon_enable();
  }
+ EXPORT_SYMBOL(kernel_neon_begin);
  
- static void destroy_field_var(struct field_var *field_var)
-@@ -3695,8 +3696,8 @@ trace_action_find_var(struct hist_trigger_data *hist_data,
- 	hist_field = find_target_event_var(hist_data, system, event, var);
- 	if (!hist_field) {
- 		if (!system && data->handler == HANDLER_ONMATCH) {
--			system = data->onmatch.match_event_system;
--			event = data->onmatch.match_event;
-+			system = data->match_data.event_system;
-+			event = data->match_data.event;
- 		}
- 
- 		hist_field = find_event_var(hist_data, system, event, var);
-@@ -3735,8 +3736,8 @@ trace_action_create_field_var(struct hist_trigger_data *hist_data,
- 		 * event.
- 		 */
- 		if (!system && data->handler == HANDLER_ONMATCH) {
--			system = data->onmatch.match_event_system;
--			event = data->onmatch.match_event;
-+			system = data->match_data.event_system;
-+			event = data->match_data.event;
- 		}
- 
- 		/*
-@@ -3846,8 +3847,8 @@ static int trace_action_create(struct hist_trigger_data *hist_data,
- 		goto err;
- 	}
- 
--	data->onmatch.synth_event = event;
--	data->onmatch.var_ref_idx = var_ref_idx;
-+	data->synth_event = event;
-+	data->var_ref_idx = var_ref_idx;
-  out:
- 	return ret;
-  err:
-@@ -3933,14 +3934,14 @@ static struct action_data *onmatch_parse(struct trace_array *tr, char *str)
- 		goto free;
- 	}
- 
--	data->onmatch.match_event = kstrdup(match_event, GFP_KERNEL);
--	if (!data->onmatch.match_event) {
-+	data->match_data.event = kstrdup(match_event, GFP_KERNEL);
-+	if (!data->match_data.event) {
- 		ret = -ENOMEM;
- 		goto free;
- 	}
- 
--	data->onmatch.match_event_system = kstrdup(match_event_system, GFP_KERNEL);
--	if (!data->onmatch.match_event_system) {
-+	data->match_data.event_system = kstrdup(match_event_system, GFP_KERNEL);
-+	if (!data->match_data.event_system) {
- 		ret = -ENOMEM;
- 		goto free;
- 	}
-@@ -4511,8 +4512,8 @@ static void print_onmatch_spec(struct seq_file *m,
- 			       struct hist_trigger_data *hist_data,
- 			       struct action_data *data)
+@@ -1111,15 +1128,10 @@ EXPORT_SYMBOL(kernel_neon_begin);
+  */
+ void kernel_neon_end(void)
  {
--	seq_printf(m, ":onmatch(%s.%s).", data->onmatch.match_event_system,
--		   data->onmatch.match_event);
-+	seq_printf(m, ":onmatch(%s.%s).", data->match_data.event_system,
-+		   data->match_data.event);
+-	bool busy;
+-
+ 	if (!system_supports_fpsimd())
+ 		return;
  
- 	seq_printf(m, "%s(", data->action_name);
+-	busy = __this_cpu_xchg(kernel_neon_busy, false);
+-	WARN_ON(!busy);	/* No matching kernel_neon_begin()? */
+-
+-	preempt_enable();
++	kernel_neon_enable();
+ }
+ EXPORT_SYMBOL(kernel_neon_end);
  
-@@ -4550,11 +4551,11 @@ static bool actions_match(struct hist_trigger_data *hist_data,
- 			return false;
- 
- 		if (data->handler == HANDLER_ONMATCH) {
--			if (strcmp(data->onmatch.match_event_system,
--				   data_test->onmatch.match_event_system) != 0)
-+			if (strcmp(data->match_data.event_system,
-+				   data_test->match_data.event_system) != 0)
- 				return false;
--			if (strcmp(data->onmatch.match_event,
--				   data_test->onmatch.match_event) != 0)
-+			if (strcmp(data->match_data.event,
-+				   data_test->match_data.event) != 0)
- 				return false;
- 		} else if (data->handler == HANDLER_ONMAX) {
- 			if (strcmp(data->onmax.var_str,
 -- 
-2.14.1
+2.11.0
