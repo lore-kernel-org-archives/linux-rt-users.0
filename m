@@ -1,7 +1,7 @@
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [RFC PATCH v2 5/5] tracing: Use tracing error_log with trace event filters
-Date: Wed, 13 Feb 2019 12:17:56 -0600
-Message-ID: <df938f8158788fdb81628052c003c0d4e760aebb.1550074795.git.tom.zanussi@linux.intel.com>
+Subject: [RFC PATCH v2 4/5] tracing: Use tracing error_log with kprobe events (incomplete)
+Date: Wed, 13 Feb 2019 12:17:55 -0600
+Message-ID: <db931dea3818fb79a710f7b83cb53b06cf565de1.1550074795.git.tom.zanussi@linux.intel.com>
 References: <cover.1550074795.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         bigeasy@linutronix.de, joel@joelfernandes.org,
@@ -16,53 +16,79 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-Use tracing_log_err() from the new tracing error_log mechanism to send
-filter parse errors to tracing/error_log.
+Here are a few examples of replacing kprobe_events error handling with
+tracing_log_err() from the new tracing error_log mechanism.  Only a
+few example errors are converted, and even these are incomplete, since
+I didn't know where to get the current command and used a dummy string
+for those.  Also, these are completely untested, just provided for
+RFC purposes.
 
-With this change, users will be able to see filter errors by looking
-at tracing/error_log.
+With this change, users will find some kprobe_events errors in
+tracing/error_log instead of dmesg.
 
-The same errors will also be available in the filter file, as
-expected.
+TODO: If acceptable, convert all the rest of the kprobe errors and
+figure out how to get the actual cmd logged along with the error.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_filter.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+ kernel/trace/trace_probe.c | 24 ++++++++++++++++++++----
+ 1 file changed, 20 insertions(+), 4 deletions(-)
 
-diff --git a/kernel/trace/trace_events_filter.c b/kernel/trace/trace_events_filter.c
-index 84a65173b1e9..139c3c976d83 100644
---- a/kernel/trace/trace_events_filter.c
-+++ b/kernel/trace/trace_events_filter.c
-@@ -66,7 +66,8 @@ static const char * ops[] = { OPS };
- 	C(INVALID_FILTER,	"Meaningless filter expression"),	\
- 	C(IP_FIELD_ONLY,	"Only 'ip' field is supported for function trace"), \
- 	C(INVALID_VALUE,	"Invalid value (did you forget quotes)?"), \
--	C(NO_FILTER,		"No filter found"),
-+	C(ERRNO,		"Error"),				\
-+	C(NO_FILTER,		"No filter found")
+diff --git a/kernel/trace/trace_probe.c b/kernel/trace/trace_probe.c
+index 9962cb5da8ac..3d7b195c943b 100644
+--- a/kernel/trace/trace_probe.c
++++ b/kernel/trace/trace_probe.c
+@@ -13,6 +13,22 @@
  
- #undef C
- #define C(a, b)		FILT_ERR_##a
-@@ -76,7 +77,7 @@ enum { ERRORS };
- #undef C
- #define C(a, b)		b
+ #include "trace_probe.h"
  
--static char *err_text[] = { ERRORS };
++#define ERRORS								\
++	C(NONE,			"No error"),				\
++	C(INVALID_STRING_SPEC,	"string only accepts memory or address."), \
++	C(ARG_TOO_LONG,		"Argument is too long."),		\
++	C(INVALID_ARG_NAME,	"Invalid argument name"),
++
++#undef C
++#define C(a, b)		KPROBE_ERR_##a
++
++enum { ERRORS };
++
++#undef C
++#define C(a, b)		b
++
 +static const char *err_text[] = { ERRORS };
++
+ const char *reserved_field_names[] = {
+ 	"common_type",
+ 	"common_flags",
+@@ -384,7 +400,7 @@ static int traceprobe_parse_probe_arg_body(char *arg, ssize_t *size,
+ 	int ret, len;
  
- /* Called after a '!' character but "!=" and "!~" are not "not"s */
- static bool is_not(const char *str)
-@@ -938,8 +939,10 @@ static void append_filter_err(struct filter_parse_error *pe,
- 	if (pe->lasterr > 0) {
- 		trace_seq_printf(s, "\n%*s", pos, "^");
- 		trace_seq_printf(s, "\nparse_error: %s\n", err_text[pe->lasterr]);
-+		tracing_log_err("event filter parse error", filter->filter_string, err_text, pe->lasterr, pe->lasterr_pos);
- 	} else {
- 		trace_seq_printf(s, "\nError: (%d)\n", pe->lasterr);
-+		tracing_log_err("event filter parse error", filter->filter_string, err_text, FILT_ERR_ERRNO, 0);
+ 	if (strlen(arg) > MAX_ARGSTR_LEN) {
+-		pr_info("Argument is too long.: %s\n",  arg);
++		tracing_log_err("kprobe_events", "replace this with command", err_text, KPROBE_ERR_ARG_TOO_LONG, err_pos("command", arg));
+ 		return -ENOSPC;
  	}
- 	trace_seq_putc(s, 0);
- 	buf = kmemdup_nul(s->buffer, s->seq.len, GFP_KERNEL);
+ 	parg->comm = kstrdup(arg, GFP_KERNEL);
+@@ -443,7 +459,8 @@ static int traceprobe_parse_probe_arg_body(char *arg, ssize_t *size,
+ 	if (!strcmp(parg->type->name, "string")) {
+ 		if (code->op != FETCH_OP_DEREF && code->op != FETCH_OP_IMM &&
+ 		    code->op != FETCH_OP_COMM) {
+-			pr_info("string only accepts memory or address.\n");
++			tracing_log_err("kprobe_events", "replace this with command", err_text, KPROBE_ERR_INVALID_STRING_SPEC, 0);
++
+ 			ret = -EINVAL;
+ 			goto fail;
+ 		}
+@@ -558,8 +575,7 @@ int traceprobe_parse_probe_arg(struct trace_probe *tp, int i, char *arg,
+ 		return -ENOMEM;
+ 
+ 	if (!is_good_name(parg->name)) {
+-		pr_info("Invalid argument[%d] name: %s\n",
+-			i, parg->name);
++		tracing_log_err("kprobe_events", "replace this with command", err_text, KPROBE_ERR_INVALID_ARG_NAME, err_pos("cmd", parg->name));
+ 		return -EINVAL;
+ 	}
+ 
 -- 
 2.14.1
