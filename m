@@ -1,7 +1,7 @@
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH v15 13/15] tracing: Add hist trigger onchange() handler test case
-Date: Wed, 13 Feb 2019 17:42:53 -0600
-Message-ID: <bec87aa8ed7d81794510b3d465096a750c71fce7.1550100284.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v15 11/15] tracing: Add SPDX license GPL-2.0 license identifier to inter-event testcases
+Date: Wed, 13 Feb 2019 17:42:51 -0600
+Message-ID: <6f9828c2cfb0b378ebd217a39a1b44f063fc17fb.1550100284.git.tom.zanussi@linux.intel.com>
 References: <cover.1550100284.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,49 +18,100 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-Add a test case verifying the basic functionality of the
-hist:onchange($var) handler.
+Apparently this directory was missed in the license cleanup process -
+add the missing identifiers to the trigger/inter-event test cases.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-Acked-by: Masami Hiramatsu <mhiramat@kernel.org>
 ---
- .../inter-event/trigger-onchange-action-hist.tc    | 28 ++++++++++++++++++++++
- 1 file changed, 28 insertions(+)
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onchange-action-hist.tc
+ .../ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc  | 1 +
+ .../ftrace/test.d/trigger/inter-event/trigger-field-variable-support.tc  | 1 +
+ .../test.d/trigger/inter-event/trigger-inter-event-combined-hist.tc      | 1 +
+ .../ftrace/test.d/trigger/inter-event/trigger-multi-actions-accept.tc    | 1 +
+ .../ftrace/test.d/trigger/inter-event/trigger-onmatch-action-hist.tc     | 1 +
+ .../test.d/trigger/inter-event/trigger-onmatch-onmax-action-hist.tc      | 1 +
+ .../ftrace/test.d/trigger/inter-event/trigger-onmax-action-hist.tc       | 1 +
+ .../test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc   | 1 +
+ 8 files changed, 8 insertions(+)
 
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onchange-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onchange-action-hist.tc
-new file mode 100644
-index 000000000000..064a284e4e75
---- /dev/null
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onchange-action-hist.tc
-@@ -0,0 +1,28 @@
-+#!/bin/sh
+diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
+index 401104344593..9912616a8672 100644
+--- a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
++++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
+@@ -1,4 +1,5 @@
+ #!/bin/sh
 +# SPDX-License-Identifier: GPL-2.0
-+# description: event trigger - test inter-event histogram trigger onchange action
-+
-+fail() { #msg
-+    echo $1
-+    exit_fail
-+}
-+
-+if [ ! -f set_event ]; then
-+    echo "event tracing is not supported"
-+    exit_unsupported
-+fi
-+
-+grep -q "onchange(var)" README || exit_unsupported # version issue
-+
-+echo "Test onchange action"
-+
-+echo 'hist:keys=comm:newprio=prio:onchange($newprio).save(comm,prio) if comm=="ping"' >> /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
-+
-+ping $LOCALHOST -c 3
-+nice -n 1 ping $LOCALHOST -c 3
-+
-+if ! grep -q "changed:" events/sched/sched_waking/hist; then
-+    fail "Failed to create onchange action inter-event histogram"
-+fi
-+
-+exit 0
+ # description: event trigger - test extended error support
+ 
+ 
+diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-field-variable-support.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-field-variable-support.tc
+index f59b2a9a1f22..77be6e1f6e7b 100644
+--- a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-field-variable-support.tc
++++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-field-variable-support.tc
+@@ -1,4 +1,5 @@
+ #!/bin/sh
++# SPDX-License-Identifier: GPL-2.0
+ # description: event trigger - test field variable support
+ 
+ fail() { #msg
+diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-inter-event-combined-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-inter-event-combined-hist.tc
+index 524d9ce361e2..f3eb8aacec0e 100644
+--- a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-inter-event-combined-hist.tc
++++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-inter-event-combined-hist.tc
+@@ -1,4 +1,5 @@
+ #!/bin/sh
++# SPDX-License-Identifier: GPL-2.0
+ # description: event trigger - test inter-event combined histogram trigger
+ 
+ fail() { #msg
+diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-multi-actions-accept.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-multi-actions-accept.tc
+index 4ddc546771b5..d281f056f980 100644
+--- a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-multi-actions-accept.tc
++++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-multi-actions-accept.tc
+@@ -1,4 +1,5 @@
+ #!/bin/sh
++# SPDX-License-Identifier: GPL-2.0
+ # description: event trigger - test multiple actions on hist trigger
+ 
+ fail() { #msg
+diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-action-hist.tc
+index 39fb65b0cd9f..a708f0e7858a 100644
+--- a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-action-hist.tc
++++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-action-hist.tc
+@@ -1,4 +1,5 @@
+ #!/bin/sh
++# SPDX-License-Identifier: GPL-2.0
+ # description: event trigger - test inter-event histogram trigger onmatch action
+ 
+ fail() { #msg
+diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-onmax-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-onmax-action-hist.tc
+index 81ab3939c96a..dfce6932d8be 100644
+--- a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-onmax-action-hist.tc
++++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmatch-onmax-action-hist.tc
+@@ -1,4 +1,5 @@
+ #!/bin/sh
++# SPDX-License-Identifier: GPL-2.0
+ # description: event trigger - test inter-event histogram trigger onmatch-onmax action
+ 
+ fail() { #msg
+diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmax-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmax-action-hist.tc
+index 1180ab5f0845..0035995c2194 100644
+--- a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmax-action-hist.tc
++++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-onmax-action-hist.tc
+@@ -1,4 +1,5 @@
+ #!/bin/sh
++# SPDX-License-Identifier: GPL-2.0
+ # description: event trigger - test inter-event histogram trigger onmax action
+ 
+ fail() { #msg
+diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc
+index 41128219231a..df44b14724a4 100644
+--- a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc
++++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-synthetic-event-createremove.tc
+@@ -1,4 +1,5 @@
+ #!/bin/sh
++# SPDX-License-Identifier: GPL-2.0
+ # description: event trigger - test synthetic event create remove
+ 
+ fail() { #msg
 -- 
 2.14.1
