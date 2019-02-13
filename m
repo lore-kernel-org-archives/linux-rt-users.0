@@ -1,7 +1,7 @@
 From: Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH v15 15/15] tracing: Add hist trigger action 'expected fail' test case
-Date: Wed, 13 Feb 2019 17:42:55 -0600
-Message-ID: <1790bf93e01dbdfa1b4af945f42147d92bd565aa.1550100284.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH v15 12/15] tracing: Add hist trigger snapshot() action test case
+Date: Wed, 13 Feb 2019 17:42:52 -0600
+Message-ID: <c0555f462cbfe56dadfec6e63e531e109bd72930.1550100284.git.tom.zanussi@linux.intel.com>
 References: <cover.1550100284.git.tom.zanussi@linux.intel.com>
 Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         vedang.patel@intel.com, bigeasy@linutronix.de,
@@ -18,24 +18,25 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-Add a test case verifying that basic action combinations fail as
-expected.
+Add a test case verifying the basic functionality of the
+hist:snapshot() action.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+Acked-by: Masami Hiramatsu <mhiramat@kernel.org>
 ---
- .../inter-event/trigger-action-hist-xfail.tc       | 30 ++++++++++++++++++++++
- 1 file changed, 30 insertions(+)
- create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-action-hist-xfail.tc
+ .../inter-event/trigger-snapshot-action-hist.tc    | 43 ++++++++++++++++++++++
+ 1 file changed, 43 insertions(+)
+ create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
 
-diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-action-hist-xfail.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-action-hist-xfail.tc
+diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
 new file mode 100644
-index 000000000000..1221240f8cf6
+index 000000000000..18fff69fc433
 --- /dev/null
-+++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-action-hist-xfail.tc
-@@ -0,0 +1,30 @@
++++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-snapshot-action-hist.tc
+@@ -0,0 +1,43 @@
 +#!/bin/sh
 +# SPDX-License-Identifier: GPL-2.0
-+# description: event trigger - test inter-event histogram trigger expected fail actions
++# description: event trigger - test inter-event histogram trigger snapshot action
 +
 +fail() { #msg
 +    echo $1
@@ -52,16 +53,29 @@ index 000000000000..1221240f8cf6
 +    exit_unsupported
 +fi
 +
++grep -q "onchange(var)" README || exit_unsupported # version issue
++
 +grep -q "snapshot()" README || exit_unsupported # version issue
 +
-+echo "Test expected snapshot action failure"
++echo "Test snapshot action"
 +
-+echo 'hist:keys=comm:onmatch(sched.sched_wakeup).snapshot()' >> /sys/kernel/debug/tracing/events/sched/sched_waking/trigger && exit_fail
++echo 1 > /sys/kernel/debug/tracing/events/sched/enable
 +
-+echo "Test expected save action failure"
++echo 'hist:keys=comm:newprio=prio:onchange($newprio).save(comm,prio):onchange($newprio).snapshot() if comm=="ping"' >> /sys/kernel/debug/tracing/events/sched/sched_waking/trigger
 +
-+echo 'hist:keys=comm:onmatch(sched.sched_wakeup).save(comm,prio)' >> /sys/kernel/debug/tracing/events/sched/sched_waking/trigger && exit_fail
++ping $LOCALHOST -c 3
++nice -n 1 ping $LOCALHOST -c 3
 +
-+exit_xfail
++echo 0 > tracing_on
++
++if ! grep -q "changed:" events/sched/sched_waking/hist; then
++    fail "Failed to create onchange action inter-event histogram"
++fi
++
++if ! grep -q "comm=ping" snapshot; then
++    fail "Failed to create snapshot action inter-event histogram"
++fi
++
++exit 0
 -- 
 2.14.1
