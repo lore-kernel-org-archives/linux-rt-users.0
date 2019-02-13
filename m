@@ -1,92 +1,122 @@
-From: Pintu Agarwal <pintu.ping@gmail.com>
-Subject: Re: BUG: sleeping function called from invalid context at kernel/locking/rwsem.c:65
-Date: Wed, 13 Feb 2019 20:10:55 +0530
-Message-ID: <CAOuPNLgUvECE6XBjszFggY3efmEBKywzKNWupjfQ2svsCMqd7w@mail.gmail.com>
-References: <CAOuPNLgaDJm27nECxq1jtny=+ixt=GPf2C7zyDsVgbsLvtDarA@mail.gmail.com>
- <6183c865-2e90-5fb9-9e10-1339ae491b71@codeaurora.org>
+From: Dave Martin <Dave.Martin@arm.com>
+Subject: Re: [RFC PATCH] arm64/fpsimd: Don't disable softirq when touching
+ FPSIMD/SVE state
+Date: Wed, 13 Feb 2019 15:36:30 +0000
+Message-ID: <20190213153630.GK3567@e103592.cambridge.arm.com>
+References: <20190208165513.8435-1-julien.grall@arm.com>
+ <20190213143029.ad2kzg7vtuo3zpjk@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Cc: open list <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset=us-ascii
+Cc: Julien Grall <julien.grall@arm.com>,
         linux-arm-kernel@lists.infradead.org,
-        linux-rt-users@vger.kernel.org, linux-mm@kvack.org,
-        Jorge Ramirez <jorge.ramirez-ortiz@linaro.org>,
-        "Xenomai@xenomai.org" <xenomai@xenomai.org>
-To: Sai Prakash Ranjan <saiprakash.ranjan@codeaurora.org>
+        linux-rt-users@vger.kernel.org, catalin.marinas@arm.com,
+        will.deacon@arm.com, ard.biesheuvel@linaro.org,
+        linux-kernel@vger.kernel.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <6183c865-2e90-5fb9-9e10-1339ae491b71@codeaurora.org>
+Content-Disposition: inline
+In-Reply-To: <20190213143029.ad2kzg7vtuo3zpjk@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Feb 13, 2019 at 3:21 PM Sai Prakash Ranjan
-<saiprakash.ranjan@codeaurora.org> wrote:
->
-> Hi Pintu,
->
-> On 2/13/2019 2:04 PM, Pintu Agarwal wrote:
-> >
-> > This is the complete logs at the time of crash:
-> >
-> > [   21.681020] VFS: Mounted root (ext4 filesystem) readonly on device 8:6.
-> > [   21.690441] devtmpfs: mounted
-> > [   21.702517] Freeing unused kernel memory: 6528K
-> > [   21.766665] BUG: sleeping function called from invalid context at
-> > kernel/locking/rwsem.c:65
-> > [   21.775108] in_atomic(): 0, irqs_disabled(): 128, pid: 1, name: init
-> > [   21.781532] ------------[ cut here ]------------
-> > [   21.786209] kernel BUG at kernel/sched/core.c:8490!
-> > [   21.791157] ------------[ cut here ]------------
-> > [   21.795831] kernel BUG at kernel/sched/core.c:8490!
-> > [   21.800763] Internal error: Oops - BUG: 0 [#1] PREEMPT SMP
-> > [   21.806319] Modules linked in:
-> > [   21.809474] CPU: 0 PID: 1 Comm: init Not tainted 4.9.103+ #115
-> > [   21.815375] Hardware name: Qualcomm Technologies, Inc. MSM XXXX
-> > [   21.822584] task: ffffffe330440080 task.stack: ffffffe330448000
-> > [   21.828584] PC is at ___might_sleep+0x140/0x188
-> > [   21.833175] LR is at ___might_sleep+0x128/0x188
-> > [   21.837759] pc : [<ffffff88b8ce65a8>] lr : [<ffffff88b8ce6590>]
-> > pstate: 604001c5
->
-> <snip...>
->
-> > 0000000000000000 ffffffe33044b8d0
-> > [   22.135279] bac0: 0000000000000462 0000000000000006
-> > [   22.140224] [<ffffff88b8ce65a8>] ___might_sleep+0x140/0x188
-> > [   22.145862] [<ffffff88b8ce6648>] __might_sleep+0x58/0x90
-> > [   22.151249] [<ffffff88b9d43f84>] down_write_killable+0x2c/0x80
-> > [   22.157155] [<ffffff88b8e53cd8>] setup_arg_pages+0xb8/0x208
-> > [   22.162792] [<ffffff88b8eb7534>] load_elf_binary+0x434/0x1298
-> > [   22.168600] [<ffffff88b8e55674>] search_binary_handler+0xac/0x1f0
-> > [   22.174763] [<ffffff88b8e560ec>] do_execveat_common.isra.15+0x504/0x6c8
-> > [   22.181452] [<ffffff88b8e562f4>] do_execve+0x44/0x58
-> > [   22.186481] [<ffffff88b8c84030>] run_init_process+0x38/0x48
-> > [   22.192122] [<ffffff88b9d3db1c>] kernel_init+0x8c/0x108
-> > [   22.197411] [<ffffff88b8c83f00>] ret_from_fork+0x10/0x50
-> > [   22.202790] Code: b9453800 0b000020 6b00027f 540000c1 (d4210000)
-> > [   22.208965] ---[ end trace d775a851176a61ec ]---
-> > [   22.220051] Kernel panic - not syncing: Attempted to kill init!
-> > exitcode=0x0000000b
-> >
->
-> This might be the work of CONFIG_PANIC_ON_SCHED_BUG which is extra debug
-> option enabled in *sdm845_defconfig*. You can disable it or better
-> I would suggest to use *sdm845-perf_defconfig* instead of
-> sdm845_defconfig since there are a lot of debug options enabled
-> in the latter which may be not compatible when IPIPE patches
-> are applied.
+On Wed, Feb 13, 2019 at 03:30:29PM +0100, Sebastian Andrzej Siewior wrote:
+> On 2019-02-08 16:55:13 [+0000], Julien Grall wrote:
+> > When the kernel is compiled with CONFIG_KERNEL_MODE_NEON, some part of
+> > the kernel may be able to use FPSIMD/SVE. This is for instance the case
+> > for crypto code.
+> > 
+> > Any use of FPSIMD/SVE in the kernel are clearly marked by using the
+> > function kernel_neon_{begin, end}. Furthermore, this can only be used
+> > when may_use_simd() returns true.
+> 
+> This is equal what x86 is currently doing. The naming is slightly
+> different, there is irq_fpu_usable().
 
-OK thanks for your suggestions. sdm845-perf_defconfig did not work for
-me. The target did not boot.
-However, disabling CONFIG_PANIC_ON_SCHED_BUG works, and I got a root
-shell at least.
-This at least proves that there is no issue in core ipipe patches, and
-I can proceed.
+Yes, I think it's basically the same idea.
 
-But this seems to be a work around.
-I still get a back trace in kernel logs from many different places.
-So, it looks like there is some code in qualcomm specific drivers that
-is calling a sleeping method from invalid context.
-How to find that...
-If this fix is already available in latest version, please let me know.
+It's been evolving a bit on both sides, but is quite similar now.
 
-Thanks,
-Pintu
+> > The current implementation of may_use_simd() allows softirq to use
+> > FPSIMD/SVE unless it is currently in used (i.e kernel_neon_busy is true).
+> > When in used, softirqs usually fallback to a software method.
+> > 
+> > At the moment, as a softirq may use FPSIMD/SVE, softirqs are disabled
+> > when touching the FPSIMD/SVE context. This has the drawback to disable
+> > all softirqs even if they are not using FPSIMD/SVE.
+> 
+> Is this bad? This means also that your crypto code will not be
+> interrupted by a softirq. Also if you would get rid of it, you could
+> avoid the software fallback in case may_use_simd() says false.
+
+Masking softirqs during kernel_neon_begin()..._end() is unlikely to be a
+huge problem, but currently we block softirq during all context switch
+operations that act on the CPU vector registers.
+
+The reasons for this are somewhat historical, and IIRC predated the
+requirement for softirq users of kernel-mode NEON to include the
+may_use_simd() check and implement a fallback path on arm64.
+
+Now that softirq code is required to work around kernel-mode NEON being
+temporarily unusable, masking softirqs completely during context switch
+etc. should no longer be necessary.
+
+> > As a softirq should not rely on been able to use simd at a given time,
+> > there are limited reason to keep softirq disabled when touching the
+> > FPSIMD/SVE context. Instead, we can only disable preemption and tell
+> > the NEON unit is currently in use.
+> > 
+> > This patch introduces two new helpers kernel_neon_{disable, enable} to
+> > mark the area using FPSIMD/SVE context and use them in replacement of
+> > local_bh_{disable, enable}. The functions kernel_neon_{begin, end} are
+> > also re-implemented to use the new helpers.
+> > 
+> > Signed-off-by: Julien Grall <julien.grall@arm.com>
+> > 
+> > ---
+> > 
+> > I have been exploring this solution as an alternative approach to the RT
+> > patch "arm64: fpsimd: use preemp_disable in addition to local_bh_disable()".
+> > 
+> > So far, the patch has only been lightly tested.
+> > 
+> > For RT-linux, it might be possible to use migrate_{enable, disable}. I
+> > am quite new with RT and have some trouble to understand the semantics
+> > of migrate_{enable, disable}. So far, I am still unsure if it is possible
+> > to run another userspace task on the same CPU while getting preempted
+> > when the migration is disabled.
+> 
+> In RT:
+> - preemt_disable() is the same as !RT. A thread can not be suspend. An
+>   interrupt may interrupt. However on RT we have threaded interrupts so
+>   the interrupt is limited to the first-level handler (not the threaded
+>   handler).
+> 
+> - migrate_disable() means that the thread can not be moved to another
+>   CPU. It can be suspended.
+> 
+> - local_bh_disable() disables the BH: No softirq can run. In RT
+>   local_bh_disable() does not inherit preempt_disable(). Two different
+>   softirqs can be executed in parallel.
+>   The BH is usually invoked at the end of the threaded interrupt
+>   (because the threaded interrupt handler raises the softirq). It can
+>   also run in the ksoftirqd.
+> 
+> Usually you should not get preempted in a migrate_disable() section. A
+> SCHED_OTHER task should not interrupt another SCHED_OTHER task in a
+> migrate_disable() section. A task with a higher priority (a RT/DL task)
+> will. Since threaded interrupts run with a RT priority of 50, they will
+> interrupt your task in a migrate_disable() section.
+
+"Usually" is probably not good enough if another task can run: if the
+preempting task enters userspace then the vector registers are needed
+for its use, which is tricky to arrange if the registers are currently
+in use by context switch logic running in the first task.
+
+My current feeling is that we probably have to stick with
+preempt_disable() here, but hopefully we can get rid of
+local_bh_disable() (as proposed) with no ill effects...
+
+Does that sound sensible?
+
+Cheers
+---Dave
