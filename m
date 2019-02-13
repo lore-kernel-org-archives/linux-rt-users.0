@@ -1,82 +1,440 @@
-From: Sai Prakash Ranjan <saiprakash.ranjan@codeaurora.org>
-Subject: Re: BUG: sleeping function called from invalid context at
- kernel/locking/rwsem.c:65
-Date: Thu, 14 Feb 2019 00:14:28 +0530
-Message-ID: <2c91af7d-4580-cedc-70ea-d38c2587c7bf@codeaurora.org>
-References: <CAOuPNLgaDJm27nECxq1jtny=+ixt=GPf2C7zyDsVgbsLvtDarA@mail.gmail.com>
- <6183c865-2e90-5fb9-9e10-1339ae491b71@codeaurora.org>
- <CAOuPNLgUvECE6XBjszFggY3efmEBKywzKNWupjfQ2svsCMqd7w@mail.gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH v14 05/15] tracing: Add conditional snapshot
+Date: Wed, 13 Feb 2019 14:18:17 -0500
+Message-ID: <20190213141817.3c5b80ea@gandalf.local.home>
+References: <cover.1549403369.git.tom.zanussi@linux.intel.com>
+        <0bba382aea3ee9a94283c32319072938cb18bbc9.1549403369.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: open list <linux-kernel@vger.kernel.org>,
-        linux-arm-kernel@lists.infradead.org,
-        linux-rt-users@vger.kernel.org, linux-mm@kvack.org,
-        Jorge Ramirez <jorge.ramirez-ortiz@linaro.org>,
-        "Xenomai@xenomai.org" <xenomai@xenomai.org>
-To: Pintu Agarwal <pintu.ping@gmail.com>
+Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
+        vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
+        julia@ni.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
+To: Tom Zanussi <zanussi@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAOuPNLgUvECE6XBjszFggY3efmEBKywzKNWupjfQ2svsCMqd7w@mail.gmail.com>
-Content-Language: en-US
+In-Reply-To: <0bba382aea3ee9a94283c32319072938cb18bbc9.1549403369.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
+On Tue,  5 Feb 2019 16:41:51 -0600
+Tom Zanussi <zanussi@kernel.org> wrote:
 
-On 2/13/2019 8:10 PM, Pintu Agarwal wrote:
-> OK thanks for your suggestions. sdm845-perf_defconfig did not work for
-> me. The target did not boot.
+> +/**
+> + * tracing_snapshot_cond_enable - enable conditional snapshot for an instance
+> + * @tr:		The tracing instance
+> + * @cond_data:	User data to associate with the snapshot
+> + * @update:	Implementation of the cond_snapshot update function
+> + *
+> + * Check whether the conditional snapshot for the given instance has
+> + * already been enabled, or if the current tracer is already using a
+> + * snapshot; if so, return -EBUSY, else create a cond_snapshot and
+> + * save the cond_data and update function inside.
+> + *
+> + * Returns 0 if successful, error otherwise.
+> + */
+> +int tracing_snapshot_cond_enable(struct trace_array *tr, void *cond_data,
+> +				 cond_update_fn_t update)
+> +{
+> +	struct cond_snapshot *cond_snapshot;
+> +	int ret = 0;
+> +
+> +	cond_snapshot = kzalloc(sizeof(*cond_snapshot), GFP_KERNEL);
+> +	if (!cond_snapshot)
+> +		return -ENOMEM;
+> +
+> +	cond_snapshot->cond_data = cond_data;
+> +	cond_snapshot->update = update;
+> +
+> +	mutex_lock(&trace_types_lock);
+> +
+> +	ret = tracing_alloc_snapshot_instance(tr);
+> +	if (ret) {
+> +		kfree(cond_snapshot);
+> +		return ret;
 
-Perf defconfig works fine. You need to enable serial console with below
-config added to perf defconfig.
+Just returned while holding trace_types_lock.
 
-CONFIG_SERIAL_MSM_GENI_CONSOLE=y
+Best to have:
 
-> However, disabling CONFIG_PANIC_ON_SCHED_BUG works, and I got a root
-> shell at least.
+	if (ret)
+		goto fail_unlock;
 
-> 
-> But this seems to be a work around.
-> I still get a back trace in kernel logs from many different places.
-> So, it looks like there is some code in qualcomm specific drivers that
-> is calling a sleeping method from invalid context.
-> How to find that...
-> If this fix is already available in latest version, please let me know.
-> 
 
-Seems like interrupts are disabled when down_write_killable() is called.
-It's not the drivers that is calling the sleeping method which can  be
-seen from the log.
+> +	}
+> +
+> +	if (tr->current_trace->use_max_tr) {
+> +		mutex_unlock(&trace_types_lock);
+> +		kfree(cond_snapshot);
+> +		return -EBUSY;
+> +	}
+> +
+> +	arch_spin_lock(&tr->max_lock);
+> +
+> +	if (tr->cond_snapshot) {
+> +		kfree(cond_snapshot);
+> +		ret = -EBUSY;
 
-[   22.140224] [<ffffff88b8ce65a8>] ___might_sleep+0x140/0x188
-[   22.145862] [<ffffff88b8ce6648>] __might_sleep+0x58/0x90         <---
-[   22.151249] [<ffffff88b9d43f84>] down_write_killable+0x2c/0x80   <---
-[   22.157155] [<ffffff88b8e53cd8>] setup_arg_pages+0xb8/0x208      <---
-[   22.162792] [<ffffff88b8eb7534>] load_elf_binary+0x434/0x1298
-[   22.168600] [<ffffff88b8e55674>] search_binary_handler+0xac/0x1f0
-[   22.174763] [<ffffff88b8e560ec>]
-do_execveat_common.isra.15+0x504/0x6c8
-[   22.181452] [<ffffff88b8e562f4>] do_execve+0x44/0x58
-[   22.186481] [<ffffff88b8c84030>] run_init_process+0x38/0x48      <---
-[   22.192122] [<ffffff88b9d3db1c>] kernel_init+0x8c/0x108
-[   22.197411] [<ffffff88b8c83f00>] ret_from_fork+0x10/0x50
+Hmm, as the tr->cond_snapshot can only be set while holding the
+trace_types_mutex (although it can be cleared without it), we can still
+move this check up. Yeah, it may race with clearing (but do we care?)
+but it makes the code a bit simpler.
 
- >
- > This at least proves that there is no issue in core ipipe patches, and
- > I can proceed.
 
-I doubt the *IPIPE patches*. You said you removed the configs, but all
-code are not under IPIPE configs and as I see there are lots of
-changes to interrupt code in general with ipipe.
+	mutex_lock(&trace_types_lock);
 
-So to actually confirm whether the issue is with qcom drivers or ipipe,
-please *remove ipipe patches (not just configs)* and boot.
-Also paste the full dmesg logs for these 2 cases(with and without
-ipipe).
+	/*
+	 * Because tr->cond_snapshot is only set to something other
+	 * than NULL under the trace_types_lock, we can perform the
+	 * busy test here. Worse case is that we return a -EBUSY just
+	 * before it gets cleared. But do we really care about that?
+	 */
+	if (tr->cond_snapshot) {
+		ret = -EBUSY;
+		goto fail_unlock;
+	}
 
-Thanks,
-Sai
+	arch_spin_lock(&tr->max_lock);
+	tr->cond_snapshot = cond_snapshot;
+	arch_spin_unlock(&tr->max_lock);
 
--- 
-QUALCOMM INDIA, on behalf of Qualcomm Innovation Center, Inc. is a member
-of Code Aurora Forum, hosted by The Linux Foundation
+
+> +	} else
+> +		tr->cond_snapshot = cond_snapshot;
+> +
+> +	arch_spin_unlock(&tr->max_lock);
+> +
+> +	mutex_unlock(&trace_types_lock);
+> +
+> +	return ret;
+
+fail_unlock:
+	kfree(concd_snapshot);
+	mutex_unlock(&trace_types_lock);
+	return ret;
+
+> +}
+> +EXPORT_SYMBOL_GPL(tracing_snapshot_cond_enable);
+> +
+> +/**
+> + * tracing_snapshot_cond_disable - disable conditional snapshot for an instance
+> + * @tr:		The tracing instance
+> + *
+> + * Check whether the conditional snapshot for the given instance is
+> + * enabled; if so, free the cond_snapshot associated with it,
+> + * otherwise return -EINVAL.
+> + *
+> + * Returns 0 if successful, error otherwise.
+> + */
+> +int tracing_snapshot_cond_disable(struct trace_array *tr)
+> +{
+> +	int ret = 0;
+> +
+> +	arch_spin_lock(&tr->max_lock);
+> +
+> +	if (!tr->cond_snapshot)
+> +		ret = -EINVAL;
+> +	else {
+> +		kfree(tr->cond_snapshot);
+> +		tr->cond_snapshot = NULL;
+> +	}
+> +
+> +	arch_spin_unlock(&tr->max_lock);
+> +
+> +	return ret;
+> +}
+> +EXPORT_SYMBOL_GPL(tracing_snapshot_cond_disable);
+>  #else
+>  void tracing_snapshot(void)
+>  {
+>  	WARN_ONCE(1, "Snapshot feature not enabled, but internal snapshot used");
+>  }
+>  EXPORT_SYMBOL_GPL(tracing_snapshot);
+> +void tracing_snapshot_cond(struct trace_array *tr, void *cond_data)
+> +{
+> +	WARN_ONCE(1, "Snapshot feature not enabled, but internal conditional snapshot used");
+> +}
+> +EXPORT_SYMBOL_GPL(tracing_snapshot_cond);
+>  int tracing_alloc_snapshot(void)
+>  {
+>  	WARN_ONCE(1, "Snapshot feature not enabled, but snapshot allocation used");
+> @@ -1043,6 +1181,21 @@ void tracing_snapshot_alloc(void)
+>  	tracing_snapshot();
+>  }
+>  EXPORT_SYMBOL_GPL(tracing_snapshot_alloc);
+> +void *tracing_cond_snapshot_data(struct trace_array *tr)
+> +{
+> +	return NULL;
+> +}
+> +EXPORT_SYMBOL_GPL(tracing_cond_snapshot_data);
+> +int tracing_snapshot_cond_enable(struct trace_array *tr, void *cond_data, cond_update_fn_t update)
+> +{
+> +	return -ENODEV;
+> +}
+> +EXPORT_SYMBOL_GPL(tracing_snapshot_cond_enable);
+> +int tracing_snapshot_cond_disable(struct trace_array *tr)
+> +{
+> +	return false;
+> +}
+> +EXPORT_SYMBOL_GPL(tracing_snapshot_cond_disable);
+>  #endif /* CONFIG_TRACER_SNAPSHOT */
+>  
+>  void tracer_tracing_off(struct trace_array *tr)
+> @@ -1354,12 +1507,14 @@ __update_max_tr(struct trace_array *tr, struct task_struct *tsk, int cpu)
+>   * @tr: tracer
+>   * @tsk: the task with the latency
+>   * @cpu: The cpu that initiated the trace.
+> + * @cond_data: User data associated with a conditional snapshot
+>   *
+>   * Flip the buffers between the @tr and the max_tr and record information
+>   * about which task was the cause of this latency.
+>   */
+>  void
+> -update_max_tr(struct trace_array *tr, struct task_struct *tsk, int cpu)
+> +update_max_tr(struct trace_array *tr, struct task_struct *tsk, int cpu,
+> +	      void *cond_data)
+>  {
+>  	if (tr->stop_count)
+>  		return;
+> @@ -1380,6 +1535,12 @@ update_max_tr(struct trace_array *tr, struct task_struct *tsk, int cpu)
+>  	else
+>  		ring_buffer_record_off(tr->max_buffer.buffer);
+>  
+> +#ifdef CONFIG_TRACER_SNAPSHOT
+> +	if (tr->cond_snapshot && !tr->cond_snapshot->update(tr, cond_data)) {
+
+Let's make this just a "goto out_unlock;";
+
+And add the out_unlock just before the arch_spin_unlock.
+
+
+> +		arch_spin_unlock(&tr->max_lock);
+> +		return;
+> +	}
+> +#endif
+>  	swap(tr->trace_buffer.buffer, tr->max_buffer.buffer);
+>  
+>  	__update_max_tr(tr, tsk, cpu);
+> @@ -5396,6 +5557,17 @@ static int tracing_set_tracer(struct trace_array *tr, const char *buf)
+>  	if (t == tr->current_trace)
+>  		goto out;
+>  
+> +#ifdef CONFIG_TRACER_SNAPSHOT
+> +	if (t->use_max_tr) {
+> +		arch_spin_lock(&tr->max_lock);
+> +		if (tr->cond_snapshot) {
+> +			ret = -EBUSY;
+> +			arch_spin_unlock(&tr->max_lock);
+> +			goto out;
+> +		}
+> +		arch_spin_unlock(&tr->max_lock);
+> +	}
+
+How about:
+
+	if (t->use_max_tr) {
+		arch_spin_lock(&tr->max_lock);
+		if (tr->cond_snapshot)
+			ret = -EBUSY;
+		arch_spin_unlock(&tr->max_lock);
+		if (ret)
+			goto out;
+	}
+
+
+> +#endif
+>  	/* Some tracers won't work on kernel command line */
+>  	if (system_state < SYSTEM_RUNNING && t->noboot) {
+>  		pr_warn("Tracer '%s' is not allowed on command line, ignored\n",
+> @@ -6478,6 +6650,14 @@ tracing_snapshot_write(struct file *filp, const char __user *ubuf, size_t cnt,
+>  		goto out;
+>  	}
+>  
+> +	arch_spin_lock(&tr->max_lock);
+> +	if (tr->cond_snapshot) {
+> +		ret = -EBUSY;
+> +		arch_spin_unlock(&tr->max_lock);
+> +		goto out;
+> +	}
+> +	arch_spin_unlock(&tr->max_lock);
+
+Same here.
+
+> +
+>  	switch (val) {
+>  	case 0:
+>  		if (iter->cpu_file != RING_BUFFER_ALL_CPUS) {
+> @@ -6503,7 +6683,7 @@ tracing_snapshot_write(struct file *filp, const char __user *ubuf, size_t cnt,
+>  		local_irq_disable();
+>  		/* Now, we're going to swap */
+>  		if (iter->cpu_file == RING_BUFFER_ALL_CPUS)
+> -			update_max_tr(tr, current, smp_processor_id());
+> +			update_max_tr(tr, current, smp_processor_id(), NULL);
+>  		else
+>  			update_max_tr_single(tr, current, iter->cpu_file);
+>  		local_irq_enable();
+> @@ -7095,7 +7275,7 @@ ftrace_snapshot(unsigned long ip, unsigned long parent_ip,
+>  		struct trace_array *tr, struct ftrace_probe_ops *ops,
+>  		void *data)
+>  {
+> -	tracing_snapshot_instance(tr);
+> +	tracing_snapshot_instance(tr, NULL);
+>  }
+>  
+>  static void
+> @@ -7117,7 +7297,7 @@ ftrace_count_snapshot(unsigned long ip, unsigned long parent_ip,
+>  		(*count)--;
+>  	}
+>  
+> -	tracing_snapshot_instance(tr);
+> +	tracing_snapshot_instance(tr, NULL);
+>  }
+>  
+>  static int
+> diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
+> index 08900828d282..23c1ed047868 100644
+> --- a/kernel/trace/trace.h
+> +++ b/kernel/trace/trace.h
+> @@ -194,6 +194,53 @@ struct trace_pid_list {
+>  	unsigned long			*pids;
+>  };
+>  
+> +typedef bool (*cond_update_fn_t)(struct trace_array *tr, void *cond_data);
+> +
+> +/**
+> + * struct cond_snapshot - conditional snapshot data and callback
+> + *
+> + * The cond_snapshot structure encapsulates a callback function and
+> + * data associated with the snapshot for a given tracing instance.
+> + *
+> + * When a snapshot is taken conditionally, by invoking
+> + * tracing_snapshot_cond(tr, cond_data), the cond_data passed in is
+> + * passed in turn to the cond_snapshot.update() function.  That data
+> + * can be compared by the update() implementation with the cond_data
+> + * contained wihin the struct cond_snapshot instance associated with
+> + * the trace_array.  Because the tr->max_lock is held throughout the
+> + * update() call, the update() function can directly retrieve the
+> + * cond_snapshot and cond_data associated with the per-instance
+> + * snapshot associated with the trace_array.
+> + *
+> + * The cond_snapshot.update() implementation can save data to be
+> + * associated with the snapshot if it decides to, and returns 'true'
+> + * in that case, or it returns 'false' if the conditional snapshot
+> + * shouldn't be taken.
+> + *
+> + * The cond_snapshot instance is created and associated with the
+> + * user-defined cond_data by tracing_cond_snapshot_enable().
+> + * Likewise, the cond_snapshot instance is destroyed and is no longer
+> + * associated with the trace instance by
+> + * tracing_cond_snapshot_disable().
+> + *
+> + * The method below is required.
+> + *
+> + * @update: When a conditional snapshot is invoked, the update()
+> + *	callback function is invoked with the tr->max_lock held.  The
+> + *	update() implementation signals whether or not to actually
+> + *	take the snapshot, by returning 'true' if so, 'false' if no
+> + *	snapshot should be taken.  Because the max_lock is held for
+> + *	the duration of update(), the implementation is safe to
+> + *	directly retrieven and save any implementation data it needs
+> + *	to in association with the snapshot.
+> + */
+> +#ifdef CONFIG_TRACER_SNAPSHOT
+> +struct cond_snapshot {
+> +	void				*cond_data;
+> +	cond_update_fn_t		update;
+> +};
+> +#endif
+
+This is just defining a structure, not data or text. No need for the
+#ifdef.
+
+> +
+>  /*
+>   * The trace array - an array of per-CPU trace arrays. This is the
+>   * highest level data structure that individual tracers deal with.
+> @@ -277,6 +324,9 @@ struct trace_array {
+>  #endif
+>  	int			time_stamp_abs_ref;
+>  	struct list_head	hist_vars;
+> +#ifdef CONFIG_TRACER_SNAPSHOT
+> +	struct cond_snapshot	*cond_snapshot;
+> +#endif
+>  };
+>  
+>  enum {
+> @@ -727,7 +777,8 @@ int trace_pid_write(struct trace_pid_list *filtered_pids,
+>  		    const char __user *ubuf, size_t cnt);
+>  
+>  #ifdef CONFIG_TRACER_MAX_TRACE
+> -void update_max_tr(struct trace_array *tr, struct task_struct *tsk, int cpu);
+> +void update_max_tr(struct trace_array *tr, struct task_struct *tsk, int cpu,
+> +		   void *cond_data);
+>  void update_max_tr_single(struct trace_array *tr,
+>  			  struct task_struct *tsk, int cpu);
+>  #endif /* CONFIG_TRACER_MAX_TRACE */
+> @@ -1808,6 +1859,11 @@ static inline bool event_command_needs_rec(struct event_command *cmd_ops)
+>  extern int trace_event_enable_disable(struct trace_event_file *file,
+>  				      int enable, int soft_disable);
+>  extern int tracing_alloc_snapshot(void);
+> +extern void tracing_snapshot_cond(struct trace_array *tr, void *cond_data);
+> +extern int tracing_snapshot_cond_enable(struct trace_array *tr, void *cond_data, cond_update_fn_t update);
+> +
+> +extern int tracing_snapshot_cond_disable(struct trace_array *tr);
+> +extern void *tracing_cond_snapshot_data(struct trace_array *tr);
+>  
+>  extern const char *__start___trace_bprintk_fmt[];
+>  extern const char *__stop___trace_bprintk_fmt[];
+> @@ -1881,7 +1937,7 @@ static inline void trace_event_eval_update(struct trace_eval_map **map, int len)
+>  #endif
+>  
+>  #ifdef CONFIG_TRACER_SNAPSHOT
+> -void tracing_snapshot_instance(struct trace_array *tr);
+> +void tracing_snapshot_instance(struct trace_array *tr, void *cond_data);
+>  int tracing_alloc_snapshot_instance(struct trace_array *tr);
+>  #else
+>  static inline void tracing_snapshot_instance(struct trace_array *tr) { }
+> diff --git a/kernel/trace/trace_events_trigger.c b/kernel/trace/trace_events_trigger.c
+> index 2152d1e530cb..a77102a17046 100644
+> --- a/kernel/trace/trace_events_trigger.c
+> +++ b/kernel/trace/trace_events_trigger.c
+> @@ -1049,7 +1049,7 @@ snapshot_trigger(struct event_trigger_data *data, void *rec,
+>  	struct trace_event_file *file = data->private_data;
+>  
+>  	if (file)
+> -		tracing_snapshot_instance(file->tr);
+> +		tracing_snapshot_instance(file->tr, NULL);
+
+Hmm, with all theses added NULLs, I wounder if it wouldn't just be
+better to make another function
+
+void tracing_snapshot_instance_cond(struct trace_array *tr, void *cond_var);
+
+void tracing_snapshot_instance(struct trace_array *tr)
+{
+	tracing_snapshot_instance_cond(tr, NULL);
+}
+
+Then it wont be so intrusive, as there's more calls with NULL than
+something added.
+
+-- Steve
+
+
+>  	else
+>  		tracing_snapshot();
+>  }
+> diff --git a/kernel/trace/trace_sched_wakeup.c b/kernel/trace/trace_sched_wakeup.c
+> index 4ea7e6845efb..007c074fe6d6 100644
+> --- a/kernel/trace/trace_sched_wakeup.c
+> +++ b/kernel/trace/trace_sched_wakeup.c
+> @@ -482,7 +482,7 @@ probe_wakeup_sched_switch(void *ignore, bool preempt,
+>  
+>  	if (likely(!is_tracing_stopped())) {
+>  		wakeup_trace->max_latency = delta;
+> -		update_max_tr(wakeup_trace, wakeup_task, wakeup_cpu);
+> +		update_max_tr(wakeup_trace, wakeup_task, wakeup_cpu, NULL);
+>  	}
+>  
+>  out_unlock:
