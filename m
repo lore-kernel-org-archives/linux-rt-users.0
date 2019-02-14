@@ -1,105 +1,50 @@
-From: Pintu Agarwal <pintu.ping@gmail.com>
-Subject: Re: BUG: sleeping function called from invalid context at kernel/locking/rwsem.c:65
-Date: Thu, 14 Feb 2019 14:41:27 +0530
-Message-ID: <CAOuPNLip6rwxC1DdDiCb28d5+uJNE9=ThCn+rjac854GkcnedA@mail.gmail.com>
-References: <CAOuPNLgaDJm27nECxq1jtny=+ixt=GPf2C7zyDsVgbsLvtDarA@mail.gmail.com>
- <6183c865-2e90-5fb9-9e10-1339ae491b71@codeaurora.org> <CAOuPNLgUvECE6XBjszFggY3efmEBKywzKNWupjfQ2svsCMqd7w@mail.gmail.com>
- <2c91af7d-4580-cedc-70ea-d38c2587c7bf@codeaurora.org>
+From: Dave Martin <Dave.Martin@arm.com>
+Subject: Re: [RFC PATCH] arm64/fpsimd: Don't disable softirq when touching
+ FPSIMD/SVE state
+Date: Thu, 14 Feb 2019 10:34:52 +0000
+Message-ID: <20190214103449.GN3567@e103592.cambridge.arm.com>
+References: <20190208165513.8435-1-julien.grall@arm.com>
+ <20190213143029.ad2kzg7vtuo3zpjk@linutronix.de>
+ <20190213153630.GK3567@e103592.cambridge.arm.com>
+ <CAKv+Gu__0uy6Y-EJGSygSYH4RqpLDWMMNFE3yauF_x7-UNcgFQ@mail.gmail.com>
+ <20190213165227.7ekekkxazhbaqxoe@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Cc: open list <linux-kernel@vger.kernel.org>,
-        linux-arm-kernel@lists.infradead.org,
-        linux-rt-users@vger.kernel.org, linux-mm@kvack.org,
-        Jorge Ramirez <jorge.ramirez-ortiz@linaro.org>,
-        "Xenomai@xenomai.org" <xenomai@xenomai.org>
-To: Sai Prakash Ranjan <saiprakash.ranjan@codeaurora.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Ard Biesheuvel <ard.biesheuvel@linaro.org>,
+        Julien Grall <julien.grall@arm.com>,
+        linux-arm-kernel <linux-arm-kernel@lists.infradead.org>,
+        linux-rt-users@vger.kernel.org,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Will Deacon <will.deacon@arm.com>,
+        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <2c91af7d-4580-cedc-70ea-d38c2587c7bf@codeaurora.org>
+Content-Disposition: inline
+In-Reply-To: <20190213165227.7ekekkxazhbaqxoe@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello Sai,
+On Wed, Feb 13, 2019 at 05:52:27PM +0100, Sebastian Andrzej Siewior wrote:
+> On 2019-02-13 16:40:00 [+0100], Ard Biesheuvel wrote:
+> > > > This is equal what x86 is currently doing. The naming is slightly
+> > > > different, there is irq_fpu_usable().
+> > >
+> > > Yes, I think it's basically the same idea.
+> > >
+> > > It's been evolving a bit on both sides, but is quite similar now.
+> > >
+> > 
+> > may_use_simd() only exists because we have a generic crypto SIMD
+> > helper, and so we needed something arch agnostic to wrap around
+> > irq_fpu_usable()
+> 
+> My question was more if this is helpful and we want to keep or if
+> it would be better to remove it and always disable BH as part of SIMD
+> operations.
 
-Thanks so much for your help.
+Wouldn't this arbitrarily increase softirq latency?  Unconditionally
+forbidding SIMD in softirq might make more sense.  It depends on how
+important the use cases are...
 
-On Thu, Feb 14, 2019 at 12:14 AM Sai Prakash Ranjan
-<saiprakash.ranjan@codeaurora.org> wrote:
->
-> Hi,
->
-> On 2/13/2019 8:10 PM, Pintu Agarwal wrote:
-> > OK thanks for your suggestions. sdm845-perf_defconfig did not work for
-> > me. The target did not boot.
->
-> Perf defconfig works fine. You need to enable serial console with below
-> config added to perf defconfig.
->
-> CONFIG_SERIAL_MSM_GENI_CONSOLE=y
->
-Actually for me the kernel does not boot. It stuck in bootloader, with
-"valid dtb not found".
-I did not debug it further.
-Anyways, we can look into this issue later.
-
-> > However, disabling CONFIG_PANIC_ON_SCHED_BUG works, and I got a root
-> > shell at least.
->
-> >
-> > But this seems to be a work around.
-> > I still get a back trace in kernel logs from many different places.
-> > So, it looks like there is some code in qualcomm specific drivers that
-> > is calling a sleeping method from invalid context.
-> > How to find that...
-> > If this fix is already available in latest version, please let me know.
-> >
->
-> Seems like interrupts are disabled when down_write_killable() is called.
-> It's not the drivers that is calling the sleeping method which can  be
-> seen from the log.
->
-> [   22.140224] [<ffffff88b8ce65a8>] ___might_sleep+0x140/0x188
-> [   22.145862] [<ffffff88b8ce6648>] __might_sleep+0x58/0x90         <---
-> [   22.151249] [<ffffff88b9d43f84>] down_write_killable+0x2c/0x80   <---
-> [   22.157155] [<ffffff88b8e53cd8>] setup_arg_pages+0xb8/0x208      <---
-> [   22.162792] [<ffffff88b8eb7534>] load_elf_binary+0x434/0x1298
-> [   22.168600] [<ffffff88b8e55674>] search_binary_handler+0xac/0x1f0
-> [   22.174763] [<ffffff88b8e560ec>]
-> do_execveat_common.isra.15+0x504/0x6c8
-> [   22.181452] [<ffffff88b8e562f4>] do_execve+0x44/0x58
-> [   22.186481] [<ffffff88b8c84030>] run_init_process+0x38/0x48      <---
-> [   22.192122] [<ffffff88b9d3db1c>] kernel_init+0x8c/0x108
-> [   22.197411] [<ffffff88b8c83f00>] ret_from_fork+0x10/0x50
->
-Yes, these are generic API, and I don't expect any changes in here.
-We don't have this issue in another SOC 4.9 kernel.
-Also I compared these APIs with mainline and there is no major changes here.
-This is just one example.
-This sleep issue is happening from other places as well.
-May be one common similarity may be: during task loading, or switching.
-
->  >
->  > This at least proves that there is no issue in core ipipe patches, and
->  > I can proceed.
->
-> I doubt the *IPIPE patches*. You said you removed the configs, but all
-> code are not under IPIPE configs and as I see there are lots of
-> changes to interrupt code in general with ipipe.
->
-We observed that this issue is happening in normal sdm845 kernel as
-well (without ipipe/xenomai patches applied in another branch).
-Another point is, we don't see this issue in another arm64 target such
-as hikey, with same 4.9 kernel.
-
-> So to actually confirm whether the issue is with qcom drivers or ipipe,
-> please *remove ipipe patches (not just configs)* and boot.
-> Also paste the full dmesg logs for these 2 cases(with and without
-> ipipe).
->
-hmmm. This will be little tough.
-I will try to find sometime to point the exact cause, and share findings here.
-Currently, I am debugging another issue.
-
-Thanks for your help.
-
-
-Regards
+Cheers
+---Dave
