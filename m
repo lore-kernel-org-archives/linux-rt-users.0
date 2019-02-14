@@ -1,87 +1,94 @@
-From: Juri Lelli <juri.lelli@redhat.com>
-Subject: [RFC PATCH RT 1/2] time/hrtimer: Add PINNED_HARD mode for realtime hrtimers
-Date: Thu, 14 Feb 2019 14:37:15 +0100
-Message-ID: <20190214133716.10187-2-juri.lelli@redhat.com>
-References: <20190214133716.10187-1-juri.lelli@redhat.com>
-Cc: linux-rt-users@vger.kernel.org, peterz@infradead.org,
-        linux-kernel@vger.kernel.org, bristot@redhat.com,
-        williams@redhat.com, Juri Lelli <juri.lelli@redhat.com>
-To: tglx@linutronix.de, bigeasy@linutronix.de
+From: Tom Zanussi <zanussi@kernel.org>
+Subject: Re: [RFC PATCH v2 0/5] tracing: common error_log for ftrace
+Date: Thu, 14 Feb 2019 09:15:23 -0600
+Message-ID: <1550157323.2498.2.camel@kernel.org>
+References: <cover.1550074795.git.tom.zanussi@linux.intel.com>
+         <20190214121357.727a0f34246b51e6660354bc@kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: rostedt@goodmis.org, tglx@linutronix.de, namhyung@kernel.org,
+        bigeasy@linutronix.de, joel@joelfernandes.org,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Masami Hiramatsu <mhiramat@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190214133716.10187-1-juri.lelli@redhat.com>
+In-Reply-To: <20190214121357.727a0f34246b51e6660354bc@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-While running cyclictest on isolated CPUs I noticed the following odd
-behavior, where CPU0 is one of the housekeeping CPUs and CPU2 is
-isolated:
+Hi Masami,
 
-     <idle>-0     [000] ... hrtimer_cancel:       hrtimer=0xffffb4a74be7fe70
-     <idle>-0     [000] ... hrtimer_expire_entry: hrtimer=0xffffb4a74be7fe70 now=144805770984 function=hrtimer_wakeup/0x0
-     <idle>-0     [000] ... sched_wakeup:         cyclictest:1171 [4] success=1 CPU:002
-     <idle>-0     [000] ... hrtimer_expire_exit:  hrtimer=0xffffb4a74be7fe70
-     <idle>-0     [002] ... sched_switch:         swapper/2:0 [120] R ==> cyclictest:1171 [4]
- cyclictest-1171  [002] ... hrtimer_init:         hrtimer=0xffffb4a74be7fe70 clockid=CLOCK_MONOTONIC mode=0x8
- cyclictest-1171  [002] ... hrtimer_start:        hrtimer=0xffffb4a74be7fe70 function=hrtimer_wakeup/0x0 ...
- cyclictest-1171  [002] ... sched_switch:         cyclictest:1171 [4] S ==> swapper/2:0 [120]
+On Thu, 2019-02-14 at 12:13 +0900, Masami Hiramatsu wrote:
+> Hi Tom,
+> 
+> Thank you for your great work!
 
-While cyclitest was arming the hrtimer while running on isolated CPU2
-(by means of clock_nanosleep), the hrtimer was then firing on CPU0. This
-is due to the fact that switch_hrtimer_base(), called at hrtimer enqueue
-time, will prefer to enqueue the timer on an housekeeping !idle CPU, if
-the timer is not pinned, as it is currently the case.
+Thanks!
 
-The problem with this is that we are measuring wake up latencies across
-isolated and !isolated domains, which is against the purpose of
-configuring the latter.
+> 
+> On Wed, 13 Feb 2019 12:17:51 -0600
+> Tom Zanussi <zanussi@kernel.org> wrote:
+> 
+> > From: Tom Zanussi <tom.zanussi@linux.intel.com>
+> > 
+> > Last April, I posted an RFC patchset [1] implementing a common
+> > error_log interface as suggested by Masami [2].  We were supposed
+> > to
+> > discuss it at Plumbers but that never happened, and Steve recently
+> > asked about patches for a follow-on discussion [3], so here they
+> > are.
+> > 
+> > 
 
-Since PREEMPT_RT_FULL already forces HARD mode for hrtimers armed by
-tasks running with RT policies, it makes sense to also force PINNED mode
-under the same conditions.
+[snip]
 
-This patch implements this behavior, achieving something like the
-following:
+> >   # cat /sys/kernel/debug/tracing/error_log
+> >   hist:sched:sched_wakeup: error: Variable already defined
+> >   Command: keys=pid:ts0=common_timestamp.usecs if
+> > comm=="cyclictest"
+> >                     ^
+> >   hist:sched:sched_waking: error: Couldn't find onmax or onchange
+> > variable
+> >     Command: key=comm:p=prio:onchange($q).snapshot()
+> >                                        ^
+> >   hist:sched:sched_wakeup: error: Hist trigger already exists
+> >     Command: keys=pid
+> >              ^
+> >   event filter parse error: error: Invalid operator
+> >     Command: comm="cyclictest"
+> >                   ^
+> >   event filter parse error: error: Field not found
+> >     Command: ((sig >= 10 && sig < 15) || dsig == 17) && comm !=
+> > bash
+> >                                               ^  
+> 
+> I like this very much! One point I would like to comment is to add a
+> kind of
+> entry number tag, so that user distinguish the error message, e.g.
+> 
+>   # cat /sys/kernel/debug/tracing/error_log
+>   [1] hist:sched:sched_wakeup: error: Variable already defined
+>     Command: keys=pid:ts0=common_timestamp.usecs if
+> comm=="cyclictest"
+>                     ^
+>   [2] hist:sched:sched_waking: error: Couldn't find onmax or onchange
+> variable
+>     Command: key=comm:p=prio:onchange($q).snapshot()
+>                                        ^
+>   [3] hist:sched:sched_wakeup: error: Hist trigger already exists
+>     Command: keys=pid
+>              ^
+>   ...
+> 
+> What would you think?
+> 
 
-     <idle>-0     [002] ... hrtimer_cancel:       hrtimer=0xffffafbacc19fe78
-     <idle>-0     [002] ... hrtimer_expire_entry: hrtimer=0xffffafbacc19fe78 now=104335855898 function=hrtimer_wakeup/0x0
-     <idle>-0     [002] ... sched_wakeup:         cyclictest:1165 [4] success=1 CPU:002
-     <idle>-0     [002] ... hrtimer_expire_exit:  hrtimer=0xffffafbacc19fe78
-     <idle>-0     [002] ... sched_switch:         swapper/2:0 [120] R ==> cyclictest:1165 [4]
- cyclictest-1165  [002] ... hrtimer_init:         hrtimer=0xffffafbacc19fe78 clockid=CLOCK_MONOTONIC mode=0xa
- cyclictest-1165  [002] ... hrtimer_start:        hrtimer=0xffffafbacc19fe78 function=hrtimer_wakeup/0x0 ...
- cyclictest-1165  [002] ... sched_switch:         cyclictest:1165 [4] S ==> swapper/2:0 [120]
+I think that makes sense and would be simple to add - will do in the
+next version.
 
-Signed-off-by: Juri Lelli <juri.lelli@redhat.com>
----
- include/linux/hrtimer.h | 2 ++
- kernel/time/hrtimer.c   | 2 +-
- 2 files changed, 3 insertions(+), 1 deletion(-)
+Thanks,
 
-diff --git a/include/linux/hrtimer.h b/include/linux/hrtimer.h
-index 2bdb047c7656..c6d4941c7dd8 100644
---- a/include/linux/hrtimer.h
-+++ b/include/linux/hrtimer.h
-@@ -56,6 +56,8 @@ enum hrtimer_mode {
- 	HRTIMER_MODE_ABS_HARD	= HRTIMER_MODE_ABS | HRTIMER_MODE_HARD,
- 	HRTIMER_MODE_REL_HARD	= HRTIMER_MODE_REL | HRTIMER_MODE_HARD,
- 
-+	HRTIMER_MODE_PINNED_HARD = HRTIMER_MODE_PINNED | HRTIMER_MODE_HARD,
-+
- 	HRTIMER_MODE_ABS_PINNED_HARD = HRTIMER_MODE_ABS_PINNED | HRTIMER_MODE_HARD,
- 	HRTIMER_MODE_REL_PINNED_HARD = HRTIMER_MODE_REL_PINNED | HRTIMER_MODE_HARD,
- };
-diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
-index 851b2134e77f..4a905fb721a1 100644
---- a/kernel/time/hrtimer.c
-+++ b/kernel/time/hrtimer.c
-@@ -1717,7 +1717,7 @@ static void __hrtimer_init_sleeper(struct hrtimer_sleeper *sl,
- #ifdef CONFIG_PREEMPT_RT_FULL
- 	if (!(mode & (HRTIMER_MODE_SOFT | HRTIMER_MODE_HARD))) {
- 		if (task_is_realtime(current) || system_state != SYSTEM_RUNNING)
--			mode |= HRTIMER_MODE_HARD;
-+			mode |= HRTIMER_MODE_PINNED_HARD;
- 		else
- 			mode |= HRTIMER_MODE_SOFT;
- 	}
--- 
-2.17.2
+Tom
+
+> Thank you,
+> 
