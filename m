@@ -1,10 +1,10 @@
 From: Masami Hiramatsu <mhiramat@kernel.org>
-Subject: Re: [PATCH v15 14/15] tracing: Add alternative synthetic event
- trace action test case
-Date: Sat, 16 Feb 2019 00:06:17 +0900
-Message-ID: <20190216000617.2b3e80357f0bef490cfe6c83@kernel.org>
+Subject: Re: [PATCH v15 15/15] tracing: Add hist trigger action 'expected
+ fail' test case
+Date: Sat, 16 Feb 2019 00:08:14 +0900
+Message-ID: <20190216000814.c76e09f4b7597e6892326524@kernel.org>
 References: <cover.1550100284.git.tom.zanussi@linux.intel.com>
-        <0616d18423ab1dfdbf333bce9c92ac4fa0779207.1550100284.git.tom.zanussi@linux.intel.com>
+        <1790bf93e01dbdfa1b4af945f42147d92bd565aa.1550100284.git.tom.zanussi@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -15,19 +15,19 @@ Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
         linux-rt-users@vger.kernel.org
 To: Tom Zanussi <zanussi@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <0616d18423ab1dfdbf333bce9c92ac4fa0779207.1550100284.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <1790bf93e01dbdfa1b4af945f42147d92bd565aa.1550100284.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 Hi Tom,
 
-On Wed, 13 Feb 2019 17:42:54 -0600
+On Wed, 13 Feb 2019 17:42:55 -0600
 Tom Zanussi <zanussi@kernel.org> wrote:
 
 > From: Tom Zanussi <tom.zanussi@linux.intel.com>
 > 
-> Add a test case for the alternative trace(<synthetic_event, params)
-> synthetic event generation syntax.
+> Add a test case verifying that basic action combinations fail as
+> expected.
 > 
 > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 
@@ -38,19 +38,19 @@ Acked-by: Masami Hiramatsu <mhiramat@kernel.org>
 Thank you!
 
 > ---
->  .../inter-event/trigger-trace-action-hist.tc       | 42 ++++++++++++++++++++++
->  1 file changed, 42 insertions(+)
->  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-trace-action-hist.tc
+>  .../inter-event/trigger-action-hist-xfail.tc       | 30 ++++++++++++++++++++++
+>  1 file changed, 30 insertions(+)
+>  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-action-hist-xfail.tc
 > 
-> diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-trace-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-trace-action-hist.tc
+> diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-action-hist-xfail.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-action-hist-xfail.tc
 > new file mode 100644
-> index 000000000000..8021d60aafec
+> index 000000000000..1221240f8cf6
 > --- /dev/null
-> +++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-trace-action-hist.tc
-> @@ -0,0 +1,42 @@
+> +++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-action-hist-xfail.tc
+> @@ -0,0 +1,30 @@
 > +#!/bin/sh
 > +# SPDX-License-Identifier: GPL-2.0
-> +# description: event trigger - test inter-event histogram trigger trace action
+> +# description: event trigger - test inter-event histogram trigger expected fail actions
 > +
 > +fail() { #msg
 > +    echo $1
@@ -62,34 +62,22 @@ Thank you!
 > +    exit_unsupported
 > +fi
 > +
-> +if [ ! -f synthetic_events ]; then
-> +    echo "synthetic event is not supported"
+> +if [ ! -f snapshot ]; then
+> +    echo "snapshot is not supported"
 > +    exit_unsupported
 > +fi
 > +
-> +grep -q "trace(<synthetic_event>" README || exit_unsupported # version issue
+> +grep -q "snapshot()" README || exit_unsupported # version issue
 > +
-> +echo "Test create synthetic event"
+> +echo "Test expected snapshot action failure"
 > +
-> +echo 'wakeup_latency  u64 lat pid_t pid char comm[16]' > synthetic_events
-> +if [ ! -d events/synthetic/wakeup_latency ]; then
-> +    fail "Failed to create wakeup_latency synthetic event"
-> +fi
+> +echo 'hist:keys=comm:onmatch(sched.sched_wakeup).snapshot()' >> /sys/kernel/debug/tracing/events/sched/sched_waking/trigger && exit_fail
 > +
-> +echo "Test create histogram for synthetic event using trace action"
-> +echo "Test histogram variables,simple expression support and trace action"
+> +echo "Test expected save action failure"
 > +
-> +echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="ping"' > events/sched/sched_wakeup/trigger
-> +echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0:onmatch(sched.sched_wakeup).trace(wakeup_latency,$wakeup_lat,next_pid,next_comm) if next_comm=="ping"' > events/sched/sched_switch/trigger
-> +echo 'hist:keys=comm,pid,lat:wakeup_lat=lat:sort=lat' > events/synthetic/wakeup_latency/trigger
+> +echo 'hist:keys=comm:onmatch(sched.sched_wakeup).save(comm,prio)' >> /sys/kernel/debug/tracing/events/sched/sched_waking/trigger && exit_fail
 > +
-> +ping $LOCALHOST -c 5
-> +
-> +if ! grep -q "ping" events/synthetic/wakeup_latency/hist; then
-> +    fail "Failed to create trace action inter-event histogram"
-> +fi
-> +
-> +exit 0
+> +exit_xfail
 > -- 
 > 2.14.1
 > 
