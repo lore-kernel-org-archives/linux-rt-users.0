@@ -1,47 +1,99 @@
-From: Daniel Wagner <wagi@monom.org>
-Subject: [ANNOUNCE] 4.4.174-rt178
-Date: Fri, 15 Feb 2019 10:23:24 +0100
-Message-ID: <20190215092326.35736500633@mail.monom.org>
-To: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Julia Cartwright <julia@ni.com>
+From: Masami Hiramatsu <mhiramat@kernel.org>
+Subject: Re: [PATCH v15 14/15] tracing: Add alternative synthetic event
+ trace action test case
+Date: Sat, 16 Feb 2019 00:06:17 +0900
+Message-ID: <20190216000617.2b3e80357f0bef490cfe6c83@kernel.org>
+References: <cover.1550100284.git.tom.zanussi@linux.intel.com>
+        <0616d18423ab1dfdbf333bce9c92ac4fa0779207.1550100284.git.tom.zanussi@linux.intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
+        namhyung@kernel.org, vedang.patel@intel.com, bigeasy@linutronix.de,
+        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
+        julia@ni.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
+To: Tom Zanussi <zanussi@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <0616d18423ab1dfdbf333bce9c92ac4fa0779207.1550100284.git.tom.zanussi@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello RT Folks!
+Hi Tom,
 
-I'm pleased to announce the 4.4.174-rt178 stable release.
+On Wed, 13 Feb 2019 17:42:54 -0600
+Tom Zanussi <zanussi@kernel.org> wrote:
 
-This release is just an update to the new stable 4.4.174 version
-and no RT specific changes have been made.
+> From: Tom Zanussi <tom.zanussi@linux.intel.com>
+> 
+> Add a test case for the alternative trace(<synthetic_event, params)
+> synthetic event generation syntax.
+> 
+> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-You can get this release via the git tree at:
+This looks good to me.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+Acked-by: Masami Hiramatsu <mhiramat@kernel.org>
 
-  branch: v4.4-rt
-  Head SHA1: 9be24e580f9f3125b09794b025b4a856c57f43ec
+Thank you!
 
-Or to build 4.4.174-rt178 directly, the following patches should be applied:
+> ---
+>  .../inter-event/trigger-trace-action-hist.tc       | 42 ++++++++++++++++++++++
+>  1 file changed, 42 insertions(+)
+>  create mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-trace-action-hist.tc
+> 
+> diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-trace-action-hist.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-trace-action-hist.tc
+> new file mode 100644
+> index 000000000000..8021d60aafec
+> --- /dev/null
+> +++ b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-trace-action-hist.tc
+> @@ -0,0 +1,42 @@
+> +#!/bin/sh
+> +# SPDX-License-Identifier: GPL-2.0
+> +# description: event trigger - test inter-event histogram trigger trace action
+> +
+> +fail() { #msg
+> +    echo $1
+> +    exit_fail
+> +}
+> +
+> +if [ ! -f set_event ]; then
+> +    echo "event tracing is not supported"
+> +    exit_unsupported
+> +fi
+> +
+> +if [ ! -f synthetic_events ]; then
+> +    echo "synthetic event is not supported"
+> +    exit_unsupported
+> +fi
+> +
+> +grep -q "trace(<synthetic_event>" README || exit_unsupported # version issue
+> +
+> +echo "Test create synthetic event"
+> +
+> +echo 'wakeup_latency  u64 lat pid_t pid char comm[16]' > synthetic_events
+> +if [ ! -d events/synthetic/wakeup_latency ]; then
+> +    fail "Failed to create wakeup_latency synthetic event"
+> +fi
+> +
+> +echo "Test create histogram for synthetic event using trace action"
+> +echo "Test histogram variables,simple expression support and trace action"
+> +
+> +echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="ping"' > events/sched/sched_wakeup/trigger
+> +echo 'hist:keys=next_pid:wakeup_lat=common_timestamp.usecs-$ts0:onmatch(sched.sched_wakeup).trace(wakeup_latency,$wakeup_lat,next_pid,next_comm) if next_comm=="ping"' > events/sched/sched_switch/trigger
+> +echo 'hist:keys=comm,pid,lat:wakeup_lat=lat:sort=lat' > events/synthetic/wakeup_latency/trigger
+> +
+> +ping $LOCALHOST -c 5
+> +
+> +if ! grep -q "ping" events/synthetic/wakeup_latency/hist; then
+> +    fail "Failed to create trace action inter-event histogram"
+> +fi
+> +
+> +exit 0
+> -- 
+> 2.14.1
+> 
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.174.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/4.4/patch-4.4.174-rt178.patch.xz
-
-
-You can also build from 4.4.169-rt177 by applying the incremental patch:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/4.4/incr/patch-4.4.169-rt177-rt178.patch.xz
-
-Enjoy!
-   Daniel
+-- 
+Masami Hiramatsu <mhiramat@kernel.org>
