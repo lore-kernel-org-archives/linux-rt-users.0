@@ -1,41 +1,39 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH RT 2/2] x86: lazy-preempt: properly check against preempt-mask
-Date: Mon, 18 Feb 2019 17:31:37 +0100
-Message-ID: <20190218163137.cmor4ek3odus5m6j@linutronix.de>
-References: <20190218163107.iwdpngwmbs6xyk7x@linutronix.de>
+From: Julien Grall <julien.grall@arm.com>
+Subject: Re: [RFC PATCH] arm64/fpsimd: Don't disable softirq when touching
+ FPSIMD/SVE state
+Date: Mon, 18 Feb 2019 16:32:14 +0000
+Message-ID: <10464811-e050-5ea1-6763-4362cb1c7c7c@arm.com>
+References: <20190208165513.8435-1-julien.grall@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: bigeasy@linutronix.de, Dave.Martin@arm.com,
+        linux-rt-users@vger.kernel.org, catalin.marinas@arm.com,
+        will.deacon@arm.com, ard.biesheuvel@linaro.org,
+        linux-kernel@vger.kernel.org
+To: linux-arm-kernel@lists.infradead.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190218163107.iwdpngwmbs6xyk7x@linutronix.de>
+In-Reply-To: <20190208165513.8435-1-julien.grall@arm.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-should_resched() should check against preempt_offset after unmasking the
-need-resched-bit. Otherwise should_resched() won't work for
-preempt_offset != 0 and lazy-preempt set.
+Hi all,
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- arch/x86/include/asm/preempt.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+On 08/02/2019 16:55, Julien Grall wrote:
+> @@ -1094,9 +1113,7 @@ void kernel_neon_begin(void)
+>   	/* Invalidate any task state remaining in the fpsimd regs: */
+>   	fpsimd_flush_cpu_state();
+>   
+> -	preempt_disable();
+> -
+> -	local_bh_enable();
+> +	kernel_neon_enable();
 
-diff --git a/arch/x86/include/asm/preempt.h b/arch/x86/include/asm/preempt.h
-index 22992c8377952..f667087792747 100644
---- a/arch/x86/include/asm/preempt.h
-+++ b/arch/x86/include/asm/preempt.h
-@@ -118,7 +118,7 @@ static __always_inline bool should_resched(int preempt_offset)
- 
- 	/* preempt count == 0 ? */
- 	tmp &= ~PREEMPT_NEED_RESCHED;
--	if (tmp)
-+	if (tmp != preempt_offset)
- 		return false;
- 	if (current_thread_info()->preempt_lazy_count)
- 		return false;
+I found one error in the patch. We should not re-enable NEON from 
+kernel_neon_begin(). I will resend a patch once the thread settle down.
+
+Cheers,
+
 -- 
-2.20.1
+Julien Grall
