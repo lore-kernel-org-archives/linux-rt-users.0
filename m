@@ -1,63 +1,121 @@
-From: Julien Grall <julien.grall@arm.com>
-Subject: Re: [RFC PATCH] arm64/fpsimd: Don't disable softirq when touching
- FPSIMD/SVE state
-Date: Mon, 18 Feb 2019 15:07:51 +0000
-Message-ID: <32ba7e1e-37ce-c904-15e4-9c908e873479@arm.com>
-References: <20190208165513.8435-1-julien.grall@arm.com>
- <20190213143029.ad2kzg7vtuo3zpjk@linutronix.de>
- <20190213153630.GK3567@e103592.cambridge.arm.com>
- <CAKv+Gu__0uy6Y-EJGSygSYH4RqpLDWMMNFE3yauF_x7-UNcgFQ@mail.gmail.com>
- <20190213165227.7ekekkxazhbaqxoe@linutronix.de>
- <20190214103449.GN3567@e103592.cambridge.arm.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH RT 1/2] softirq: Avoid "local_softirq_pending" messages if
+ ksoftirqd is blocked
+Date: Mon, 18 Feb 2019 17:31:08 +0100
+Message-ID: <20190218163107.iwdpngwmbs6xyk7x@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Ard Biesheuvel <ard.biesheuvel@linaro.org>,
-        linux-arm-kernel <linux-arm-kernel@lists.infradead.org>,
-        linux-rt-users@vger.kernel.org,
-        Catalin Marinas <catalin.marinas@arm.com>,
-        Will Deacon <will.deacon@arm.com>,
-        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
-To: Dave Martin <Dave.Martin@arm.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=utf-8
+Cc: linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190214103449.GN3567@e103592.cambridge.arm.com>
-Content-Language: en-US
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
+If the ksoftirqd thread has a softirq pending and is blocked on the
+`local_softirq_locks' lock then softirq_check_pending_idle() won't
+complain because the "lock owner" will mask away this softirq from the
+mask of pending softirqs.
+If ksoftirqd has an additional softirq pending then it won't be masked
+out because we never look at ksoftirqd's mask.
 
-On 14/02/2019 10:34, Dave Martin wrote:
-> On Wed, Feb 13, 2019 at 05:52:27PM +0100, Sebastian Andrzej Siewior wrote:
->> On 2019-02-13 16:40:00 [+0100], Ard Biesheuvel wrote:
->>>>> This is equal what x86 is currently doing. The naming is slightly
->>>>> different, there is irq_fpu_usable().
->>>>
->>>> Yes, I think it's basically the same idea.
->>>>
->>>> It's been evolving a bit on both sides, but is quite similar now.
->>>>
->>>
->>> may_use_simd() only exists because we have a generic crypto SIMD
->>> helper, and so we needed something arch agnostic to wrap around
->>> irq_fpu_usable()
->>
->> My question was more if this is helpful and we want to keep or if
->> it would be better to remove it and always disable BH as part of SIMD
->> operations.
-> 
-> Wouldn't this arbitrarily increase softirq latency?  Unconditionally
-> forbidding SIMD in softirq might make more sense.  It depends on how
-> important the use cases are...
+If there are still pending softirqs while going to idle check
+ksoftirqd's and ktimersfotd's mask before complaining about unhandled
+softirqs.
 
-Looking at the commit message from cb84d11e1625 "arm64: neon: Remove support for 
-nested or hardirq kernel-mode NEON", one of the use case for crypto in softirq 
-is certain mac80211 drivers.
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ kernel/softirq.c | 58 +++++++++++++++++++++++++++++++++++-------------
+ 1 file changed, 42 insertions(+), 16 deletions(-)
 
-Is there any other use case for use crypto in softirqs?
-
-Cheers,
-
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index c15583162a559..8da664eb843a4 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -92,6 +92,31 @@ static inline void softirq_clr_runner(unsigned int sirq)
+ 	sr->runner[sirq] = NULL;
+ }
+ 
++static bool softirq_check_runner_tsk(struct task_struct *tsk,
++				     unsigned int *pending)
++{
++	bool ret = false;
++
++	if (!tsk)
++		return ret;
++
++	/*
++	 * The wakeup code in rtmutex.c wakes up the task
++	 * _before_ it sets pi_blocked_on to NULL under
++	 * tsk->pi_lock. So we need to check for both: state
++	 * and pi_blocked_on.
++	 */
++	raw_spin_lock(&tsk->pi_lock);
++	if (tsk->pi_blocked_on || tsk->state == TASK_RUNNING) {
++		/* Clear all bits pending in that task */
++		*pending &= ~(tsk->softirqs_raised);
++		ret = true;
++	}
++	raw_spin_unlock(&tsk->pi_lock);
++
++	return ret;
++}
++
+ /*
+  * On preempt-rt a softirq running context might be blocked on a
+  * lock. There might be no other runnable task on this CPU because the
+@@ -104,6 +129,7 @@ static inline void softirq_clr_runner(unsigned int sirq)
+  */
+ void softirq_check_pending_idle(void)
+ {
++	struct task_struct *tsk;
+ 	static int rate_limit;
+ 	struct softirq_runner *sr = this_cpu_ptr(&softirq_runners);
+ 	u32 warnpending;
+@@ -113,26 +139,26 @@ void softirq_check_pending_idle(void)
+ 		return;
+ 
+ 	warnpending = local_softirq_pending() & SOFTIRQ_STOP_IDLE_MASK;
++	if (!warnpending)
++		return;
+ 	for (i = 0; i < NR_SOFTIRQS; i++) {
+-		struct task_struct *tsk = sr->runner[i];
++		tsk = sr->runner[i];
+ 
+-		/*
+-		 * The wakeup code in rtmutex.c wakes up the task
+-		 * _before_ it sets pi_blocked_on to NULL under
+-		 * tsk->pi_lock. So we need to check for both: state
+-		 * and pi_blocked_on.
+-		 */
+-		if (tsk) {
+-			raw_spin_lock(&tsk->pi_lock);
+-			if (tsk->pi_blocked_on || tsk->state == TASK_RUNNING) {
+-				/* Clear all bits pending in that task */
+-				warnpending &= ~(tsk->softirqs_raised);
+-				warnpending &= ~(1 << i);
+-			}
+-			raw_spin_unlock(&tsk->pi_lock);
+-		}
++		if (softirq_check_runner_tsk(tsk, &warnpending))
++			warnpending &= ~(1 << i);
+ 	}
+ 
++	if (warnpending) {
++		tsk = __this_cpu_read(ksoftirqd);
++		softirq_check_runner_tsk(tsk, &warnpending);
++	}
++
++	if (warnpending) {
++		tsk = __this_cpu_read(ktimer_softirqd);
++		softirq_check_runner_tsk(tsk, &warnpending);
++	}
++
++
+ 	if (warnpending) {
+ 		printk(KERN_ERR "NOHZ: local_softirq_pending %02x\n",
+ 		       warnpending);
 -- 
-Julien Grall
+2.20.1
