@@ -1,46 +1,38 @@
-From: Juri Lelli <juri.lelli@gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Subject: Re: [PATCH RT 1/2] softirq: Avoid "local_softirq_pending" messages
  if ksoftirqd is blocked
-Date: Tue, 19 Feb 2019 15:58:26 +0100
-Message-ID: <20190219145826.GH21785@localhost.localdomain>
+Date: Tue, 19 Feb 2019 17:06:06 +0100
+Message-ID: <20190219160606.jwjrgf6nxarnd2wt@linutronix.de>
 References: <20190218163107.iwdpngwmbs6xyk7x@linutronix.de>
+ <20190219145826.GH21785@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
         Thomas Gleixner <tglx@linutronix.de>,
         Steven Rostedt <rostedt@goodmis.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Juri Lelli <juri.lelli@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190218163107.iwdpngwmbs6xyk7x@linutronix.de>
+In-Reply-To: <20190219145826.GH21785@localhost.localdomain>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On 2019-02-19 15:58:26 [+0100], Juri Lelli wrote:
+> Hi,
 Hi,
 
-On 18/02/19 17:31, Sebastian Andrzej Siewior wrote:
-> If the ksoftirqd thread has a softirq pending and is blocked on the
-> `local_softirq_locks' lock then softirq_check_pending_idle() won't
-> complain because the "lock owner" will mask away this softirq from the
-> mask of pending softirqs.
-> If ksoftirqd has an additional softirq pending then it won't be masked
-> out because we never look at ksoftirqd's mask.
+> I've been seeing those messages while running some stress tests (hog
+> tasks pinned to CPUs).
 > 
-> If there are still pending softirqs while going to idle check
-> ksoftirqd's and ktimersfotd's mask before complaining about unhandled
-> softirqs.
+> Have yet to see them after I applied this patch earlier this morning (it
+> usually took not much time to reproduce).
+
+So is it better or not. I kind of read this as "nothing changed".
+
+> Tested-by: Juri Lelli <juri.lelli@redhat.com>
 > 
-> Cc: stable-rt@vger.kernel.org
-> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> Thanks!
+> 
+> - Juri
 
-I've been seeing those messages while running some stress tests (hog
-tasks pinned to CPUs).
-
-Have yet to see them after I applied this patch earlier this morning (it
-usually took not much time to reproduce).
-
-Tested-by: Juri Lelli <juri.lelli@redhat.com>
-
-Thanks!
-
-- Juri
+Sebastian
