@@ -1,48 +1,49 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH v15 15/15] tracing: Add hist trigger action 'expected
- fail' test case
-Date: Wed, 20 Feb 2019 13:54:12 -0500
-Message-ID: <20190220135412.52a244e7@gandalf.local.home>
-References: <cover.1550100284.git.tom.zanussi@linux.intel.com>
-        <1790bf93e01dbdfa1b4af945f42147d92bd565aa.1550100284.git.tom.zanussi@linux.intel.com>
-        <20190220121748.7aa83459@gandalf.local.home>
-        <1550684302.2027.6.camel@kernel.org>
-        <20190220125625.77802cac@gandalf.local.home>
-        <1550686231.2027.14.camel@kernel.org>
-        <20190220133316.587f3941@gandalf.local.home>
-        <1550688315.2027.20.camel@kernel.org>
+From: Juri Lelli <juri.lelli@redhat.com>
+Subject: Re: [RFC PATCH RT 0/2] Add PINNED_HARD mode to hrtimers
+Date: Thu, 21 Feb 2019 09:46:59 +0100
+Message-ID: <20190221084659.GK21785@localhost.localdomain>
+References: <20190214133716.10187-1-juri.lelli@redhat.com>
+ <20190219171905.qrpr5uurayfqbehp@linutronix.de>
+ <20190220074751.GJ21785@localhost.localdomain>
+ <20190220153055.dt7vm47c2auove3d@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
-        vedang.patel@intel.com, bigeasy@linutronix.de,
-        joel@joelfernandes.org, mathieu.desnoyers@efficios.com,
-        julia@ni.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org
-To: Tom Zanussi <zanussi@kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: tglx@linutronix.de, linux-rt-users@vger.kernel.org,
+        peterz@infradead.org, linux-kernel@vger.kernel.org,
+        bristot@redhat.com, williams@redhat.com
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1550688315.2027.20.camel@kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190220153055.dt7vm47c2auove3d@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 20 Feb 2019 12:45:15 -0600
-Tom Zanussi <zanussi@kernel.org> wrote:
-
-> > OK, so this has nothing to do with your patch set. I've tested
-> > everything else, and I'm ready to finally push my tree to linux-next.
+On 20/02/19 16:30, Sebastian Andrzej Siewior wrote:
+> On 2019-02-20 08:47:51 [+0100], Juri Lelli wrote:
+> > > In this case you prepare the wakeup and then wake the CPU anyway. There
+> > > should be no downside to this unless the housekeeping CPU is busy and in
+> > > irq-off regions which would increase the latency. Also in case of
+> > > 	cyclictest -d0
+> > > 
+> > > the one CPU would have to process all timers. So the latency will be
+> > > worse compared to every CPU does its own wakeup. And on RT you probably
+> > > do not want to do deep idle anyway.
 > > 
-> > I'm thinking that we should get rid of xfail, as it's really
-> > confusing,
-> > and I don't understand its purpose. But that shouldn't stop pushing
-> > your patches.
-> >   
+> > Mmm, right. But, still very much dependent on the workload, I understand
+> > you are saying? So, no one size fits all solution.
 > 
-> OK, I'm fine with removing it, if it's too confusing.  IIRC Masami
-> suggested it to highlight that not all actions and handlers can be used
-> together, so I guess I'll hold off on a patch removing it until he can
-> chime in...
+> Now that I slept over it, I think it makes sense from RT point of view
+> to always pin the timer. I'm not sure if we want to swap the sysctl or
+> make the PINNED change like you suggested.
 
-Yeah, its a different issue. At the very least, we should change the
-color of XFAIL to green.
+My thinking was that it would be nice to be able to discern between
+timers coming from RT and !RT tasks so that the latter can be migrated
+to housekeeping CPUs, leaving potentially isolated CPUs to deal with the
+former only.
 
--- Steve
+Not sure we can achieve this "best of both worlds" policy any way we set
+the sysctl default to be.
+
+Thanks,
+
+- Juri
