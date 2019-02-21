@@ -1,49 +1,183 @@
-From: Juri Lelli <juri.lelli@redhat.com>
-Subject: Re: [RFC PATCH RT 0/2] Add PINNED_HARD mode to hrtimers
-Date: Thu, 21 Feb 2019 09:46:59 +0100
-Message-ID: <20190221084659.GK21785@localhost.localdomain>
-References: <20190214133716.10187-1-juri.lelli@redhat.com>
- <20190219171905.qrpr5uurayfqbehp@linutronix.de>
- <20190220074751.GJ21785@localhost.localdomain>
- <20190220153055.dt7vm47c2auove3d@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [ANNOUNCE] v4.19.23-rt14
+Date: Thu, 21 Feb 2019 23:15:25 +0100
+Message-ID: <20190221221524.ipghtw4t7qy3mnip@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: tglx@linutronix.de, linux-rt-users@vger.kernel.org,
-        peterz@infradead.org, linux-kernel@vger.kernel.org,
-        bristot@redhat.com, williams@redhat.com
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190220153055.dt7vm47c2auove3d@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 20/02/19 16:30, Sebastian Andrzej Siewior wrote:
-> On 2019-02-20 08:47:51 [+0100], Juri Lelli wrote:
-> > > In this case you prepare the wakeup and then wake the CPU anyway. There
-> > > should be no downside to this unless the housekeeping CPU is busy and in
-> > > irq-off regions which would increase the latency. Also in case of
-> > > 	cyclictest -d0
-> > > 
-> > > the one CPU would have to process all timers. So the latency will be
-> > > worse compared to every CPU does its own wakeup. And on RT you probably
-> > > do not want to do deep idle anyway.
-> > 
-> > Mmm, right. But, still very much dependent on the workload, I understand
-> > you are saying? So, no one size fits all solution.
-> 
-> Now that I slept over it, I think it makes sense from RT point of view
-> to always pin the timer. I'm not sure if we want to swap the sysctl or
-> make the PINNED change like you suggested.
+Dear RT folks!
 
-My thinking was that it would be nice to be able to discern between
-timers coming from RT and !RT tasks so that the latter can be migrated
-to housekeeping CPUs, leaving potentially isolated CPUs to deal with the
-former only.
+I'm pleased to announce the v4.19.23-rt14 patch set. 
 
-Not sure we can achieve this "best of both worlds" policy any way we set
-the sysctl default to be.
+Changes since v4.19.23-rt13:
 
-Thanks,
+  - Use the specified preempt mask in should_resched() on x86. Otherwise
+    a scheduling opportunity of non RT tasks could be missed.
 
-- Juri
+  - Preserve the task state in cpu_chill()
+
+  - Add two more cases to consider before warning about pending
+    softirqs. 
+
+Known issues
+     - A warning triggered in "rcu_note_context_switch" originated from
+       SyS_timer_gettime(). The issue was always there, it is now
+       visible. Reported by Grygorii Strashko and Daniel Wagner.
+
+The delta patch against v4.19.23-rt13 is appended below and can be found here:
+ 
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.19/incr/patch-4.19.23-rt13-rt14.patch.xz
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.19.23-rt14
+
+The RT patch against v4.19.23 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patch-4.19.23-rt14.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patches-4.19.23-rt14.tar.xz
+
+Sebastian
+
+diff --git a/arch/x86/include/asm/preempt.h b/arch/x86/include/asm/preempt.h
+index 22992c8377952..f667087792747 100644
+--- a/arch/x86/include/asm/preempt.h
++++ b/arch/x86/include/asm/preempt.h
+@@ -118,7 +118,7 @@ static __always_inline bool should_resched(int preempt_offset)
+ 
+ 	/* preempt count == 0 ? */
+ 	tmp &= ~PREEMPT_NEED_RESCHED;
+-	if (tmp)
++	if (tmp != preempt_offset)
+ 		return false;
+ 	if (current_thread_info()->preempt_lazy_count)
+ 		return false;
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index c15583162a559..25bcf2f2714ba 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -92,6 +92,34 @@ static inline void softirq_clr_runner(unsigned int sirq)
+ 	sr->runner[sirq] = NULL;
+ }
+ 
++static bool softirq_check_runner_tsk(struct task_struct *tsk,
++				     unsigned int *pending)
++{
++	bool ret = false;
++
++	if (!tsk)
++		return ret;
++
++	/*
++	 * The wakeup code in rtmutex.c wakes up the task
++	 * _before_ it sets pi_blocked_on to NULL under
++	 * tsk->pi_lock. So we need to check for both: state
++	 * and pi_blocked_on.
++	 * The test against UNINTERRUPTIBLE + ->sleeping_lock is in case the
++	 * task does cpu_chill().
++	 */
++	raw_spin_lock(&tsk->pi_lock);
++	if (tsk->pi_blocked_on || tsk->state == TASK_RUNNING ||
++	    (tsk->state == TASK_UNINTERRUPTIBLE && tsk->sleeping_lock)) {
++		/* Clear all bits pending in that task */
++		*pending &= ~(tsk->softirqs_raised);
++		ret = true;
++	}
++	raw_spin_unlock(&tsk->pi_lock);
++
++	return ret;
++}
++
+ /*
+  * On preempt-rt a softirq running context might be blocked on a
+  * lock. There might be no other runnable task on this CPU because the
+@@ -104,6 +132,7 @@ static inline void softirq_clr_runner(unsigned int sirq)
+  */
+ void softirq_check_pending_idle(void)
+ {
++	struct task_struct *tsk;
+ 	static int rate_limit;
+ 	struct softirq_runner *sr = this_cpu_ptr(&softirq_runners);
+ 	u32 warnpending;
+@@ -113,24 +142,23 @@ void softirq_check_pending_idle(void)
+ 		return;
+ 
+ 	warnpending = local_softirq_pending() & SOFTIRQ_STOP_IDLE_MASK;
++	if (!warnpending)
++		return;
+ 	for (i = 0; i < NR_SOFTIRQS; i++) {
+-		struct task_struct *tsk = sr->runner[i];
++		tsk = sr->runner[i];
+ 
+-		/*
+-		 * The wakeup code in rtmutex.c wakes up the task
+-		 * _before_ it sets pi_blocked_on to NULL under
+-		 * tsk->pi_lock. So we need to check for both: state
+-		 * and pi_blocked_on.
+-		 */
+-		if (tsk) {
+-			raw_spin_lock(&tsk->pi_lock);
+-			if (tsk->pi_blocked_on || tsk->state == TASK_RUNNING) {
+-				/* Clear all bits pending in that task */
+-				warnpending &= ~(tsk->softirqs_raised);
+-				warnpending &= ~(1 << i);
+-			}
+-			raw_spin_unlock(&tsk->pi_lock);
+-		}
++		if (softirq_check_runner_tsk(tsk, &warnpending))
++			warnpending &= ~(1 << i);
++	}
++
++	if (warnpending) {
++		tsk = __this_cpu_read(ksoftirqd);
++		softirq_check_runner_tsk(tsk, &warnpending);
++	}
++
++	if (warnpending) {
++		tsk = __this_cpu_read(ktimer_softirqd);
++		softirq_check_runner_tsk(tsk, &warnpending);
+ 	}
+ 
+ 	if (warnpending) {
+diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+index 851b2134e77f4..6f2736ec4b8ef 100644
+--- a/kernel/time/hrtimer.c
++++ b/kernel/time/hrtimer.c
+@@ -1902,15 +1902,18 @@ void cpu_chill(void)
+ {
+ 	ktime_t chill_time;
+ 	unsigned int freeze_flag = current->flags & PF_NOFREEZE;
++	long saved_state;
+ 
++	saved_state = current->state;
+ 	chill_time = ktime_set(0, NSEC_PER_MSEC);
+-	set_current_state(TASK_UNINTERRUPTIBLE);
++	__set_current_state_no_track(TASK_UNINTERRUPTIBLE);
+ 	current->flags |= PF_NOFREEZE;
+ 	sleeping_lock_inc();
+ 	schedule_hrtimeout(&chill_time, HRTIMER_MODE_REL_HARD);
+ 	sleeping_lock_dec();
+ 	if (!freeze_flag)
+ 		current->flags &= ~PF_NOFREEZE;
++	__set_current_state_no_track(saved_state);
+ }
+ EXPORT_SYMBOL(cpu_chill);
+ #endif
+diff --git a/localversion-rt b/localversion-rt
+index 9f7d0bdbffb18..08b3e75841adc 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt13
++-rt14
