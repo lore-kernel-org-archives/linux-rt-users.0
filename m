@@ -1,183 +1,132 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] v4.19.23-rt14
-Date: Thu, 21 Feb 2019 23:15:25 +0100
-Message-ID: <20190221221524.ipghtw4t7qy3mnip@linutronix.de>
+From: Juri Lelli <juri.lelli@redhat.com>
+Subject: Re: [ANNOUNCE][CFP] Power Management and Scheduling in the Linux
+ Kernel III edition (OSPM-summit 2019)
+Date: Mon, 25 Feb 2019 08:43:33 +0100
+Message-ID: <20190225074333.GH21785@localhost.localdomain>
+References: <20190114161910.GB5581@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=us-ascii
+To: linux-pm@vger.kernel.org, linux-acpi@vger.kernel.org,
+        linux-pci@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        linux-kernel@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
+In-Reply-To: <20190114161910.GB5581@localhost.localdomain>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Dear RT folks!
+Hello,
 
-I'm pleased to announce the v4.19.23-rt14 patch set. 
+A quick one to inform everybody that registrations are now open!
 
-Changes since v4.19.23-rt13:
+Although list of topics looks pretty good already, we are still
+accepting new ones. So, please don't hesitate to add your.
 
-  - Use the specified preempt mask in should_resched() on x86. Otherwise
-    a scheduling opportunity of non RT tasks could be missed.
+Best,
 
-  - Preserve the task state in cpu_chill()
+- Juri
 
-  - Add two more cases to consider before warning about pending
-    softirqs. 
-
-Known issues
-     - A warning triggered in "rcu_note_context_switch" originated from
-       SyS_timer_gettime(). The issue was always there, it is now
-       visible. Reported by Grygorii Strashko and Daniel Wagner.
-
-The delta patch against v4.19.23-rt13 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.19/incr/patch-4.19.23-rt13-rt14.patch.xz
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.19.23-rt14
-
-The RT patch against v4.19.23 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patch-4.19.23-rt14.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patches-4.19.23-rt14.tar.xz
-
-Sebastian
-
-diff --git a/arch/x86/include/asm/preempt.h b/arch/x86/include/asm/preempt.h
-index 22992c8377952..f667087792747 100644
---- a/arch/x86/include/asm/preempt.h
-+++ b/arch/x86/include/asm/preempt.h
-@@ -118,7 +118,7 @@ static __always_inline bool should_resched(int preempt_offset)
- 
- 	/* preempt count == 0 ? */
- 	tmp &= ~PREEMPT_NEED_RESCHED;
--	if (tmp)
-+	if (tmp != preempt_offset)
- 		return false;
- 	if (current_thread_info()->preempt_lazy_count)
- 		return false;
-diff --git a/kernel/softirq.c b/kernel/softirq.c
-index c15583162a559..25bcf2f2714ba 100644
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -92,6 +92,34 @@ static inline void softirq_clr_runner(unsigned int sirq)
- 	sr->runner[sirq] = NULL;
- }
- 
-+static bool softirq_check_runner_tsk(struct task_struct *tsk,
-+				     unsigned int *pending)
-+{
-+	bool ret = false;
-+
-+	if (!tsk)
-+		return ret;
-+
-+	/*
-+	 * The wakeup code in rtmutex.c wakes up the task
-+	 * _before_ it sets pi_blocked_on to NULL under
-+	 * tsk->pi_lock. So we need to check for both: state
-+	 * and pi_blocked_on.
-+	 * The test against UNINTERRUPTIBLE + ->sleeping_lock is in case the
-+	 * task does cpu_chill().
-+	 */
-+	raw_spin_lock(&tsk->pi_lock);
-+	if (tsk->pi_blocked_on || tsk->state == TASK_RUNNING ||
-+	    (tsk->state == TASK_UNINTERRUPTIBLE && tsk->sleeping_lock)) {
-+		/* Clear all bits pending in that task */
-+		*pending &= ~(tsk->softirqs_raised);
-+		ret = true;
-+	}
-+	raw_spin_unlock(&tsk->pi_lock);
-+
-+	return ret;
-+}
-+
- /*
-  * On preempt-rt a softirq running context might be blocked on a
-  * lock. There might be no other runnable task on this CPU because the
-@@ -104,6 +132,7 @@ static inline void softirq_clr_runner(unsigned int sirq)
-  */
- void softirq_check_pending_idle(void)
- {
-+	struct task_struct *tsk;
- 	static int rate_limit;
- 	struct softirq_runner *sr = this_cpu_ptr(&softirq_runners);
- 	u32 warnpending;
-@@ -113,24 +142,23 @@ void softirq_check_pending_idle(void)
- 		return;
- 
- 	warnpending = local_softirq_pending() & SOFTIRQ_STOP_IDLE_MASK;
-+	if (!warnpending)
-+		return;
- 	for (i = 0; i < NR_SOFTIRQS; i++) {
--		struct task_struct *tsk = sr->runner[i];
-+		tsk = sr->runner[i];
- 
--		/*
--		 * The wakeup code in rtmutex.c wakes up the task
--		 * _before_ it sets pi_blocked_on to NULL under
--		 * tsk->pi_lock. So we need to check for both: state
--		 * and pi_blocked_on.
--		 */
--		if (tsk) {
--			raw_spin_lock(&tsk->pi_lock);
--			if (tsk->pi_blocked_on || tsk->state == TASK_RUNNING) {
--				/* Clear all bits pending in that task */
--				warnpending &= ~(tsk->softirqs_raised);
--				warnpending &= ~(1 << i);
--			}
--			raw_spin_unlock(&tsk->pi_lock);
--		}
-+		if (softirq_check_runner_tsk(tsk, &warnpending))
-+			warnpending &= ~(1 << i);
-+	}
-+
-+	if (warnpending) {
-+		tsk = __this_cpu_read(ksoftirqd);
-+		softirq_check_runner_tsk(tsk, &warnpending);
-+	}
-+
-+	if (warnpending) {
-+		tsk = __this_cpu_read(ktimer_softirqd);
-+		softirq_check_runner_tsk(tsk, &warnpending);
- 	}
- 
- 	if (warnpending) {
-diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
-index 851b2134e77f4..6f2736ec4b8ef 100644
---- a/kernel/time/hrtimer.c
-+++ b/kernel/time/hrtimer.c
-@@ -1902,15 +1902,18 @@ void cpu_chill(void)
- {
- 	ktime_t chill_time;
- 	unsigned int freeze_flag = current->flags & PF_NOFREEZE;
-+	long saved_state;
- 
-+	saved_state = current->state;
- 	chill_time = ktime_set(0, NSEC_PER_MSEC);
--	set_current_state(TASK_UNINTERRUPTIBLE);
-+	__set_current_state_no_track(TASK_UNINTERRUPTIBLE);
- 	current->flags |= PF_NOFREEZE;
- 	sleeping_lock_inc();
- 	schedule_hrtimeout(&chill_time, HRTIMER_MODE_REL_HARD);
- 	sleeping_lock_dec();
- 	if (!freeze_flag)
- 		current->flags &= ~PF_NOFREEZE;
-+	__set_current_state_no_track(saved_state);
- }
- EXPORT_SYMBOL(cpu_chill);
- #endif
-diff --git a/localversion-rt b/localversion-rt
-index 9f7d0bdbffb18..08b3e75841adc 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt13
-+-rt14
+On 14/01/19 17:19, Juri Lelli wrote:
+> Power Management and Scheduling in the Linux Kernel (OSPM-summit) III edition
+> May 20-22, 2019
+> Scuola Superiore Sant'Anna
+> Pisa, Italy
+> 
+> ---
+> 
+> .:: FOCUS
+> 
+> The III edition of the Power Management and Scheduling in the Linux
+> Kernel (OSPM) summit aims at fostering discussions on power management
+> and (real-time) scheduling techniques. Summit will be held in Pisa
+> (Italy) on May 20-22, 2019.
+> 
+> Although scheduler techniques for reducing energy consumption while
+> meeting performance and latency requirements are the prime interest of
+> the summit, we welcome anybody interested in having discussions on the
+> broader scope of real-time systems, real-time and non-real-time
+> scheduling, tooling, debugging and tracing.
+> 
+> Feel free to have a look at what happened previous years:
+> 
+>  I  edition - https://lwn.net/Articles/721573/
+>  II edition - https://lwn.net/Articles/754923/
+> 
+> .:: FORMAT
+> 
+> The summit is organized to cover three days of discussions and talks.
+> 
+> The list of topics of interest includes (but it is not limited to):
+> 
+>  * Power management techniques
+>  * Real-time and non real-time scheduling techniques
+>  * Energy consumption and CPU capacity aware scheduling
+>  * Real-time virtualization
+>  * Mobile/Server power management real-world use cases (successes and
+>    failures)
+>  * Power management and scheduling tooling (configuration, integration,
+>    testing, etc.)
+>  * Tracing
+>  * Recap/lightning talks
+> 
+> Presentations can cover recently developed technologies, ongoing work
+> and new ideas. Please understand that this workshop is not intended for
+> presenting sales and marketing pitches.
+> 
+> .:: ATTENDING
+> 
+> Attending the OSPM-summit is free of charge, but registration to the
+> event is mandatory. The event can allow a maximum of 50 people (so, be
+> sure to register early!). Registrations open on February 22nd, 2019.
+> 
+> To register fill in the registration form available at
+> https://goo.gl/forms/33rgOC70ypRrrZV33.
+> 
+> While it is not strictly required to submit a topic/presentation (see
+> below), registrations with a topic/presentation proposal will take
+> precedence.
+> 
+> .:: SUBMIT A TOPIC/PRESENTATION
+> 
+> To submit a topic/presentation add its details to this list:
+> https://docs.google.com/spreadsheets/d/1s5JzAlPoISZFwvV6QajE3aPBGVaixdLb5ftamJ4Mn9U/edit?usp=sharing
+> 
+> (feel free to get inspired by last year list of accepted topics
+> https://docs.google.com/spreadsheets/d/1ZPfASW6zVOM3xQvOrcaDEf1c-Pxi1XnFukVYHHwGUq4/edit?usp=sharing)
+> 
+> Or, if you prefer, simply reply (only to me, please :) to this email
+> specifying:
+> 
+> - name/surname
+> - affiliation
+> - short bio
+> - email address
+> - title
+> - abstract
+> - 30min or 50min slot
+> 
+> Deadline for submitting topics/presentations is 8th of February 2019.
+> Notifications for accepted topics/presentations will be sent out on 22nd
+> of February 2019.
+> 
+> .:: VENUE
+> 
+> The workshop will take place at ReTiS Lab*, Scuola Superiore Sant'Anna,
+> Pisa, Italy. Pisa is a small town, walking distance from the city center
+> to the venue is 20 minutes, walking distance from the airport to the
+> city center is 30 minutes. More details are available from the summit
+> web page: http://retis.sssup.it/ospm-summit/#site
+> 
+> * https://goo.gl/maps/2pPXG2v7Lfp
+> 
+> .:: ORGANIZERS (in alphabetical order)
+> 
+> Luca Abeni (SSSA)
+> Patrick Bellasi (Arm)
+> Tommaso Cucinotta (SSSA)
+> Dietmar Eggemann (Arm)
+> Sudeep Holla (Arm)
+> Juri Lelli (Red Hat)
+> Lorenzo Pieralisi (Arm)
+> Morten Rasmussen (Arm)
+> Claudio Scordino (Evidence SRL)
