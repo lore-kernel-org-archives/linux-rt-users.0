@@ -1,132 +1,68 @@
-From: Juri Lelli <juri.lelli@redhat.com>
-Subject: Re: [ANNOUNCE][CFP] Power Management and Scheduling in the Linux
- Kernel III edition (OSPM-summit 2019)
-Date: Mon, 25 Feb 2019 08:43:33 +0100
-Message-ID: <20190225074333.GH21785@localhost.localdomain>
-References: <20190114161910.GB5581@localhost.localdomain>
+From: Mike Galbraith <efault@gmx.de>
+Subject: Re: [PATCH RT 4/2] hrtimer: Don't lose state in cpu_chill()
+Date: Mon, 25 Feb 2019 15:43:35 +0100
+Message-ID: <1551105815.6234.14.camel@gmx.de>
+References: <20190218163107.iwdpngwmbs6xyk7x@linutronix.de>
+         <20190218163137.cmor4ek3odus5m6j@linutronix.de>
+         <20190219160755.fn4c65ph4lzqflw2@linutronix.de>
+         <20190219160842.qxpwicoa5tzq4njo@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-To: linux-pm@vger.kernel.org, linux-acpi@vger.kernel.org,
-        linux-pci@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Peter Zijlstra <peterz@infradead.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190114161910.GB5581@localhost.localdomain>
+In-Reply-To: <20190219160842.qxpwicoa5tzq4njo@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello,
+Hi Sebastian,
 
-A quick one to inform everybody that registrations are now open!
+My box claims that this patch is busted.  It argues its case by IO
+deadlocking any kernel this patch is applied to when spinning rust is
+flogged, including virgin 4.19-rt14, said kernel becoming stable again
+when I whack the accused.
 
-Although list of topics looks pretty good already, we are still
-accepting new ones. So, please don't hesitate to add your.
-
-Best,
-
-- Juri
-
-On 14/01/19 17:19, Juri Lelli wrote:
-> Power Management and Scheduling in the Linux Kernel (OSPM-summit) III edition
-> May 20-22, 2019
-> Scuola Superiore Sant'Anna
-> Pisa, Italy
+On Tue, 2019-02-19 at 17:08 +0100, Sebastian Andrzej Siewior wrote:
+> In cpu_chill() the state is set to TASK_UNINTERRUPTIBLE and a timer is
+> programmed. On return the state is always TASK_RUNNING which means we
+> lose the state if it was something other than RUNNING. Also
+> set_current_state() sets ->task_state_change to within cpu_chill() which
+> is not expected.
 > 
+> Save the task state on entry and restore it on return. Simply set the
+> state in order to avoid updating ->task_state_change.
+> 
+> Cc: stable-rt@vger.kernel.org
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 > ---
+>  kernel/time/hrtimer.c | 5 ++++-
+>  1 file changed, 4 insertions(+), 1 deletion(-)
 > 
-> .:: FOCUS
-> 
-> The III edition of the Power Management and Scheduling in the Linux
-> Kernel (OSPM) summit aims at fostering discussions on power management
-> and (real-time) scheduling techniques. Summit will be held in Pisa
-> (Italy) on May 20-22, 2019.
-> 
-> Although scheduler techniques for reducing energy consumption while
-> meeting performance and latency requirements are the prime interest of
-> the summit, we welcome anybody interested in having discussions on the
-> broader scope of real-time systems, real-time and non-real-time
-> scheduling, tooling, debugging and tracing.
-> 
-> Feel free to have a look at what happened previous years:
-> 
->  I  edition - https://lwn.net/Articles/721573/
->  II edition - https://lwn.net/Articles/754923/
-> 
-> .:: FORMAT
-> 
-> The summit is organized to cover three days of discussions and talks.
-> 
-> The list of topics of interest includes (but it is not limited to):
-> 
->  * Power management techniques
->  * Real-time and non real-time scheduling techniques
->  * Energy consumption and CPU capacity aware scheduling
->  * Real-time virtualization
->  * Mobile/Server power management real-world use cases (successes and
->    failures)
->  * Power management and scheduling tooling (configuration, integration,
->    testing, etc.)
->  * Tracing
->  * Recap/lightning talks
-> 
-> Presentations can cover recently developed technologies, ongoing work
-> and new ideas. Please understand that this workshop is not intended for
-> presenting sales and marketing pitches.
-> 
-> .:: ATTENDING
-> 
-> Attending the OSPM-summit is free of charge, but registration to the
-> event is mandatory. The event can allow a maximum of 50 people (so, be
-> sure to register early!). Registrations open on February 22nd, 2019.
-> 
-> To register fill in the registration form available at
-> https://goo.gl/forms/33rgOC70ypRrrZV33.
-> 
-> While it is not strictly required to submit a topic/presentation (see
-> below), registrations with a topic/presentation proposal will take
-> precedence.
-> 
-> .:: SUBMIT A TOPIC/PRESENTATION
-> 
-> To submit a topic/presentation add its details to this list:
-> https://docs.google.com/spreadsheets/d/1s5JzAlPoISZFwvV6QajE3aPBGVaixdLb5ftamJ4Mn9U/edit?usp=sharing
-> 
-> (feel free to get inspired by last year list of accepted topics
-> https://docs.google.com/spreadsheets/d/1ZPfASW6zVOM3xQvOrcaDEf1c-Pxi1XnFukVYHHwGUq4/edit?usp=sharing)
-> 
-> Or, if you prefer, simply reply (only to me, please :) to this email
-> specifying:
-> 
-> - name/surname
-> - affiliation
-> - short bio
-> - email address
-> - title
-> - abstract
-> - 30min or 50min slot
-> 
-> Deadline for submitting topics/presentations is 8th of February 2019.
-> Notifications for accepted topics/presentations will be sent out on 22nd
-> of February 2019.
-> 
-> .:: VENUE
-> 
-> The workshop will take place at ReTiS Lab*, Scuola Superiore Sant'Anna,
-> Pisa, Italy. Pisa is a small town, walking distance from the city center
-> to the venue is 20 minutes, walking distance from the airport to the
-> city center is 30 minutes. More details are available from the summit
-> web page: http://retis.sssup.it/ospm-summit/#site
-> 
-> * https://goo.gl/maps/2pPXG2v7Lfp
-> 
-> .:: ORGANIZERS (in alphabetical order)
-> 
-> Luca Abeni (SSSA)
-> Patrick Bellasi (Arm)
-> Tommaso Cucinotta (SSSA)
-> Dietmar Eggemann (Arm)
-> Sudeep Holla (Arm)
-> Juri Lelli (Red Hat)
-> Lorenzo Pieralisi (Arm)
-> Morten Rasmussen (Arm)
-> Claudio Scordino (Evidence SRL)
+> diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+> index 851b2134e77f4..6f2736ec4b8ef 100644
+> --- a/kernel/time/hrtimer.c
+> +++ b/kernel/time/hrtimer.c
+> @@ -1902,15 +1902,18 @@ void cpu_chill(void)
+>  {
+>  	ktime_t chill_time;
+>  	unsigned int freeze_flag = current->flags & PF_NOFREEZE;
+> +	long saved_state;
+>  
+> +	saved_state = current->state;
+>  	chill_time = ktime_set(0, NSEC_PER_MSEC);
+> -	set_current_state(TASK_UNINTERRUPTIBLE);
+> +	__set_current_state_no_track(TASK_UNINTERRUPTIBLE);
+>  	current->flags |= PF_NOFREEZE;
+>  	sleeping_lock_inc();
+>  	schedule_hrtimeout(&chill_time, HRTIMER_MODE_REL_HARD);
+>  	sleeping_lock_dec();
+>  	if (!freeze_flag)
+>  		current->flags &= ~PF_NOFREEZE;
+> +	__set_current_state_no_track(saved_state);
+>  }
+>  EXPORT_SYMBOL(cpu_chill);
+>  #endif
