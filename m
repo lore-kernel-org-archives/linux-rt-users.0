@@ -1,49 +1,77 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT 4/2] hrtimer: Don't lose state in cpu_chill()
-Date: Tue, 26 Feb 2019 12:38:25 +0100
-Message-ID: <20190226113825.cusw372nwlbju4hh@linutronix.de>
-References: <20190218163107.iwdpngwmbs6xyk7x@linutronix.de>
- <20190218163137.cmor4ek3odus5m6j@linutronix.de>
- <20190219160755.fn4c65ph4lzqflw2@linutronix.de>
- <20190219160842.qxpwicoa5tzq4njo@linutronix.de>
- <1551105815.6234.14.camel@gmx.de>
- <20190225163440.ptw2ohijokhumn7i@linutronix.de>
- <1551116436.5281.5.camel@gmx.de>
+Subject: [ANNOUNCE] v4.19.25-rt16
+Date: Tue, 26 Feb 2019 17:19:28 +0100
+Message-ID: <20190226161928.fktqci3obi56h2ea@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Peter Zijlstra <peterz@infradead.org>
-To: Mike Galbraith <efault@gmx.de>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1551116436.5281.5.camel@gmx.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2019-02-25 18:40:36 [+0100], Mike Galbraith wrote:
-> Ah.  Yup, box says you're right.
+Dear RT folks!
 
-Thank you. Added:
+I'm pleased to announce the v4.19.25-rt16 patch set. 
 
-Subject: [PATCH] hrtimer: cpu_chill(): save task state in ->saved_state()
+Changes since v4.19.25-rt15:
 
-In the previous change I saved the current task state on stack. This was
-bad because while the task is scheduled-out it might receive a wake-up.
-The wake up changes the task state and we must not destroy it.
+  - The "preserve task state" change in cpu_chill() in the previous
+    release is responsible for missing a wake up. Reported by Mike
+    Galbraith.
 
-Save the task-state in ->saved_state under a PI-lock to unsure that
-state changes during are not missed while the task temporary scheduled
-out.
+  - The x86-32 lazy preempt code was broken. Reported by Andri Yngvason.
 
-Reported-by: Mike Galbraith <efault@gmx.de>
-Tested-by: Mike Galbraith <efault@gmx.de>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- kernel/time/hrtimer.c | 18 +++++++++++++-----
- 1 file changed, 13 insertions(+), 5 deletions(-)
+Known issues
+     - A warning triggered in "rcu_note_context_switch" originated from
+       SyS_timer_gettime(). The issue was always there, it is now
+       visible. Reported by Grygorii Strashko and Daniel Wagner.
 
+The delta patch against v4.19.25-rt15 is appended below and can be found here:
+ 
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.19/incr/patch-4.19.25-rt15-rt16.patch.xz
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.19.25-rt16
+
+The RT patch against v4.19.25 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patch-4.19.25-rt16.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.19/older/patches-4.19.25-rt16.tar.xz
+
+Sebastian
+
+diff --git a/arch/x86/entry/entry_32.S b/arch/x86/entry/entry_32.S
+index 0169c257cfffe..e6f61c813baf6 100644
+--- a/arch/x86/entry/entry_32.S
++++ b/arch/x86/entry/entry_32.S
+@@ -773,15 +773,15 @@ ENTRY(resume_kernel)
+ 
+ 	# atleast preempt count == 0 ?
+ 	cmpl $_PREEMPT_ENABLED,PER_CPU_VAR(__preempt_count)
+-	jne restore_all
++	jne	restore_all_kernel
+ 
+ 	movl	PER_CPU_VAR(current_task), %ebp
+ 	cmpl	$0,TASK_TI_preempt_lazy_count(%ebp)	# non-zero preempt_lazy_count ?
+-	jnz	restore_all
++	jnz	restore_all_kernel
+ 
+ 	testl	$_TIF_NEED_RESCHED_LAZY, TASK_TI_flags(%ebp)
+-	jz	restore_all
+-	test_int_off:
++	jz	restore_all_kernel
++test_int_off:
+ #endif
+ 	testl	$X86_EFLAGS_IF, PT_EFLAGS(%esp)	# interrupts off (exception path) ?
+ 	jz	restore_all_kernel
 diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
 index 6f2736ec4b8ef..e1040b80362c9 100644
 --- a/kernel/time/hrtimer.c
@@ -82,8 +110,10 @@ index 6f2736ec4b8ef..e1040b80362c9 100644
  }
  EXPORT_SYMBOL(cpu_chill);
  #endif
--- 
-2.20.1
-
-
-Sebastian
+diff --git a/localversion-rt b/localversion-rt
+index 18777ec0c27d4..1199ebade17b4 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt15
++-rt16
