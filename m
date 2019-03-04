@@ -2,111 +2,112 @@ Return-Path: <SRS0=pHM8=RH=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_PASS autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_PASS,USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 21EB7C43381
-	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Mar 2019 23:15:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DBB30C43381
+	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Mar 2019 23:37:11 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id EB9CB20830
-	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Mar 2019 23:15:24 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A96E421019
+	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Mar 2019 23:37:11 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1551742631;
+	bh=hYpJ/QqCu2VPJ1ziJl6kJTmXakIcDvPOS/KFb9DFnU8=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
+	 References:List-ID:From;
+	b=imLchGAiVklP3qkDjLFqxZs3LHsh8yY487KIzrkEYOYF0AwdGc9sPzwDxQbjJE3PE
+	 RwIrlIKVWu6SUKkCV9YUW3OVDIMho1O0M2RoBy50HItt5tjBx7kCfpfSs6uDcMpI20
+	 KLqxI8QAzh6z5yBJ8RW3Vh8G5KEkQZnLhjMUA/8Y=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726095AbfCDXPY (ORCPT
+        id S1726856AbfCDXhG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 4 Mar 2019 18:15:24 -0500
-Received: from mail.kernel.org ([198.145.29.99]:52140 "EHLO mail.kernel.org"
+        Mon, 4 Mar 2019 18:37:06 -0500
+Received: from mail.kernel.org ([198.145.29.99]:51706 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726066AbfCDXPY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 4 Mar 2019 18:15:24 -0500
-Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        id S1726838AbfCDXhE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 4 Mar 2019 18:37:04 -0500
+Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 5286020823;
-        Mon,  4 Mar 2019 23:15:23 +0000 (UTC)
-Date:   Mon, 4 Mar 2019 18:15:21 -0500
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     Julien Grall <Julien.Grall@arm.com>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>, nd <nd@arm.com>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "jslaby@suse.com" <jslaby@suse.com>,
-        "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH] tty/sysrq: Convert show_lock to raw_spinlock_t
-Message-ID: <20190304181521.06e42396@gandalf.local.home>
-In-Reply-To: <75159b6e-0733-e300-e4f5-d519ca7f6b13@arm.com>
-References: <20190304172053.17340-1-julien.grall@arm.com>
-        <545fb96e-0f07-758e-5c79-a725e74e3387@arm.com>
-        <20190304220152.nozgclpu2jx3zgvy@linutronix.de>
-        <75159b6e-0733-e300-e4f5-d519ca7f6b13@arm.com>
-X-Mailer: Claws Mail 3.16.0 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
-MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+        by mail.kernel.org (Postfix) with ESMTPSA id 1650C2087C;
+        Mon,  4 Mar 2019 23:37:03 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1551742623;
+        bh=hYpJ/QqCu2VPJ1ziJl6kJTmXakIcDvPOS/KFb9DFnU8=;
+        h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
+         References:From;
+        b=J5BzDo7sQ75zBh3crU3/ND294/PUnyB203t6tWqe9oK+mZQdioBaTNS+YOc2GEQPj
+         UeYHrWV6hikEEFTX5rpUjES0LFaMh43qUKc8GanKMTULGh5NE2Dsr0xz4s7CvLuNez
+         Eq2d/akBguOaUE4SnU5lDi6f1mVNFP/eJlDm2vEU=
+From:   Tom Zanussi <zanussi@kernel.org>
+To:     rostedt@goodmis.org
+Cc:     tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
+        bigeasy@linutronix.de, joel@joelfernandes.org,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Subject: [RFC PATCH v3 5/5] tracing: Use tracing error_log with trace event filters
+Date:   Mon,  4 Mar 2019 17:36:48 -0600
+Message-Id: <a44c5a86c619d9c8b01edf59fe5f8290552f6006.1551741458.git.tom.zanussi@linux.intel.com>
+X-Mailer: git-send-email 2.14.1
+In-Reply-To: <cover.1551741458.git.tom.zanussi@linux.intel.com>
+References: <cover.1551741458.git.tom.zanussi@linux.intel.com>
+In-Reply-To: <cover.1551741458.git.tom.zanussi@linux.intel.com>
+References: <cover.1551741458.git.tom.zanussi@linux.intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, 4 Mar 2019 22:25:41 +0000
-Julien Grall <Julien.Grall@arm.com> wrote:
+From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-> Hello Sebastian,
-> 
-> On 04/03/2019 22:01, Sebastian Andrzej Siewior wrote:
-> > On 2019-03-04 17:21:57 [+0000], Julien Grall wrote:  
-> >> (CC correctly linux-rt-users)
-> >>
-> >> On 04/03/2019 17:20, Julien Grall wrote:  
-> >>> At the moment show_lock is implemented using spin_lock_t and called from
-> >>> an interrupt context on Arm64. The following backtrace was triggered by:
-> >>>
-> >>> 42sh# echo l > /proc/sysrq-trigger
-> >>>
-> >>> [ 4432.073756] sysrq: SysRq : Show backtrace of all active CPUs
-> >>> [ 4432.403422] BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:974
-> >>> [ 4432.403424] sysrq: CPU6:
-> >>> [ 4432.403426] in_atomic(): 1, irqs_disabled(): 128, pid: 2410, name: kworker/u16:2
-> >>>
-> >>> [...]
-> >>>
-> >>> [ 4432.403581] Call trace:
-> >>> [ 4432.403584]  dump_backtrace+0x0/0x148
-> >>> [ 4432.403586]  show_stack+0x14/0x20
-> >>> [ 4432.403588]  dump_stack+0x9c/0xd4
-> >>> [ 4432.403592]  ___might_sleep+0x1cc/0x298
-> >>> [ 4432.403595]  rt_spin_lock+0x5c/0x70
-> >>> [ 4432.403596]  showacpu+0x34/0x68
-> >>> [ 4432.403599]  flush_smp_call_function_queue+0xd4/0x278
-> >>> [ 4432.403602]  generic_smp_call_function_single_interrupt+0x10/0x18
-> >>> [ 4432.403605]  handle_IPI+0x26c/0x668
-> >>> [ 4432.403607]  gic_handle_irq+0x9c/0xa0
-> >>> [ 4432.403609]  el1_irq+0xb4/0x13c
-> >>>
-> >>> With RT-patches, spin_lock can now sleep and therefore cannot be used from
-> >>> interrupt context. Use a raw_spin_lock instead to prevent the lock to
-> >>> sleep.
-> >>>
-> >>> Signed-off-by: Julien Grall <julien.grall@arm.com>  
-> > 
-> > I don't have to look at this properly but this looks is wrong.  
-> 
-> May I ask why does it look wrong? On Arm64, this code is called from an 
-> IRQ disabled context (see the check in flush_smp_call_function_queue).
+Use tracing_log_err() from the new tracing error_log mechanism to send
+filter parse errors to tracing/error_log.
 
-I'll answer.
+With this change, users will be able to see filter errors by looking
+at tracing/error_log.
 
-It's going to call printk, and depending on consoles and such, it may
-not print anything (a printk without atomic consoles shows nothing).
+The same errors will also be available in the filter file, as
+expected.
 
-That said, perhaps we need to do something like the "safe printk", 
-where it only loads it into the log buffers and doesn't do the actual
-prints.
+Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+---
+ kernel/trace/trace_events_filter.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
-Hmm, do we do that now? I need to look at the latest printk code in RT.
+diff --git a/kernel/trace/trace_events_filter.c b/kernel/trace/trace_events_filter.c
+index ade606c33231..3a1ed8631aa0 100644
+--- a/kernel/trace/trace_events_filter.c
++++ b/kernel/trace/trace_events_filter.c
+@@ -66,7 +66,8 @@ static const char * ops[] = { OPS };
+ 	C(INVALID_FILTER,	"Meaningless filter expression"),	\
+ 	C(IP_FIELD_ONLY,	"Only 'ip' field is supported for function trace"), \
+ 	C(INVALID_VALUE,	"Invalid value (did you forget quotes)?"), \
+-	C(NO_FILTER,		"No filter found"),
++	C(ERRNO,		"Error"),				\
++	C(NO_FILTER,		"No filter found")
+ 
+ #undef C
+ #define C(a, b)		FILT_ERR_##a
+@@ -76,7 +77,7 @@ enum { ERRORS };
+ #undef C
+ #define C(a, b)		b
+ 
+-static char *err_text[] = { ERRORS };
++static const char *err_text[] = { ERRORS };
+ 
+ /* Called after a '!' character but "!=" and "!~" are not "not"s */
+ static bool is_not(const char *str)
+@@ -947,8 +948,10 @@ static void append_filter_err(struct filter_parse_error *pe,
+ 	if (pe->lasterr > 0) {
+ 		trace_seq_printf(s, "\n%*s", pos, "^");
+ 		trace_seq_printf(s, "\nparse_error: %s\n", err_text[pe->lasterr]);
++		tracing_log_err("event filter parse error", filter->filter_string, err_text, pe->lasterr, pe->lasterr_pos);
+ 	} else {
+ 		trace_seq_printf(s, "\nError: (%d)\n", pe->lasterr);
++		tracing_log_err("event filter parse error", filter->filter_string, err_text, FILT_ERR_ERRNO, 0);
+ 	}
+ 	trace_seq_putc(s, 0);
+ 	buf = kmemdup_nul(s->buffer, s->seq.len, GFP_KERNEL);
+-- 
+2.14.1
 
-Also, there's a big discussion going on in LKML right now about
-rewriting how the printk buffers work.
-
--- Steve
