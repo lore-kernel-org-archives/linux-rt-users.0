@@ -6,48 +6,48 @@ X-Spam-Status: No, score=-9.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
 	SPF_PASS,USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1996BC43381
-	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Mar 2019 23:37:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 47AD3C43381
+	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Mar 2019 23:37:26 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id D85AE208E4
-	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Mar 2019 23:37:18 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id EBB9720663
+	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Mar 2019 23:37:25 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1551742638;
-	bh=ox9A14m6Kl2/YJvLVomhXm2WN1OTqvPJKQfo7LbYlVI=;
+	s=default; t=1551742646;
+	bh=zWbE2FbZnyJjSltSHPwFOvpm8dwJvqxkQDEGoLJYS+4=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=SbAIa1lWIEY8dqEJFwdi0UEPBoIPb3EuaSFj3+8rF4MvZqhrhi0iVuXG7TAfGfJQc
-	 DigvgnJ0F0fmlLFcZ4RlHEWCOFFfcH0NgYWuW1Xf4emi1xPnT4jST2eeDs0sFcQ7FQ
-	 IV6z2K+64my0rBruWl5KHvzWhA+MnUgoMAhyN1Yc=
+	b=1mDxlom+Cy7u6hRBgIQOY+8TeS1oD5x27eDBXMFbnQ+avy8sDG6ijwJmlK9sw1Eqa
+	 iS7NAEelNLw/ntb22nCKm89+gorAY7aWNbyTjb4GHgDNhkQxdetcFhuy+PWma3KdLN
+	 BxdJFoj+GH3TvcCRFNE5niWzrJ6qSRcmaw+a7B7o=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726888AbfCDXhN (ORCPT
+        id S1726913AbfCDXhT (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 4 Mar 2019 18:37:13 -0500
-Received: from mail.kernel.org ([198.145.29.99]:51628 "EHLO mail.kernel.org"
+        Mon, 4 Mar 2019 18:37:19 -0500
+Received: from mail.kernel.org ([198.145.29.99]:51578 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726751AbfCDXhD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 4 Mar 2019 18:37:03 -0500
+        id S1726792AbfCDXhC (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 4 Mar 2019 18:37:02 -0500
 Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 9ED5C20835;
-        Mon,  4 Mar 2019 23:37:01 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 15EB320830;
+        Mon,  4 Mar 2019 23:37:00 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1551742622;
-        bh=ox9A14m6Kl2/YJvLVomhXm2WN1OTqvPJKQfo7LbYlVI=;
+        s=default; t=1551742621;
+        bh=zWbE2FbZnyJjSltSHPwFOvpm8dwJvqxkQDEGoLJYS+4=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=KGxUQZMgyvpAp/iIjQhkRr+dAbBFt+ifzvDWpBv+/ZXlsfRQpTjnU+gbsxqsaDsUH
-         Z46+PHo+EtJCtPHywPWvutFldsm3QONBdyYweps3Ua3C7sfqmSM1J/HrGQDBY1hmbG
-         pRf8+ywZh1nsgdliGhUrJp21inHQkdf6EaHLvyDs=
+        b=0ABHk9rv33uffhN+ttkUj/i1nXtqyuvH0QszIvAliYFIrPtGdruxomDNZMVNbNRyu
+         GJw1Q85vpDx18IsjLFLQHpSH69cg/GS7RrcxfffWJufOtwUhGMBhw6QRVoLbrVVjuz
+         UF9h9pxQ9mnku5kpANUU2gCetbKRhEp7wzMArnqI=
 From:   Tom Zanussi <zanussi@kernel.org>
 To:     rostedt@goodmis.org
 Cc:     tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         bigeasy@linutronix.de, joel@joelfernandes.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: [RFC PATCH v3 4/5] tracing: Use tracing error_log with kprobe events (incomplete)
-Date:   Mon,  4 Mar 2019 17:36:47 -0600
-Message-Id: <9362894b9b84807e4e42832a1d217072edec3930.1551741458.git.tom.zanussi@linux.intel.com>
+Subject: [RFC PATCH v3 3/5] tracing: Use tracing error_log with hist triggers
+Date:   Mon,  4 Mar 2019 17:36:46 -0600
+Message-Id: <7cc4a06837b8cbabec0e2b14d96da6396f081dca.1551741458.git.tom.zanussi@linux.intel.com>
 X-Mailer: git-send-email 2.14.1
 In-Reply-To: <cover.1551741458.git.tom.zanussi@linux.intel.com>
 References: <cover.1551741458.git.tom.zanussi@linux.intel.com>
@@ -60,40 +60,72 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-Here are a few examples of replacing kprobe_events error handling with
-tracing_log_err() from the new tracing error_log mechanism.  Only a
-few example errors are converted, and even these are incomplete, since
-I didn't know where to get the current command and used a dummy string
-for those.  Also, these are completely untested, just provided for
-RFC purposes.
+Replace hist_err() and hist_err_event() with tracing_log_err() from
+the new tracing error_log mechanism.
 
-With this change, users will find some kprobe_events errors in
-tracing/error_log instead of dmesg.
+Also add a couple related helper functions and remove most of the old
+hist_err()-related code.
 
-TODO: If acceptable, convert all the rest of the kprobe errors and
-figure out how to get the actual cmd logged along with the error.
+With this change, users no longer read the hist files for hist trigger
+error information, but instead look at tracing/error_log for the same
+information.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_probe.c | 24 ++++++++++++++++++++----
- 1 file changed, 20 insertions(+), 4 deletions(-)
+ kernel/trace/trace_events_hist.c | 206 ++++++++++++++++++++-------------------
+ 1 file changed, 104 insertions(+), 102 deletions(-)
 
-diff --git a/kernel/trace/trace_probe.c b/kernel/trace/trace_probe.c
-index 89da34b326e3..5da08c1972af 100644
---- a/kernel/trace/trace_probe.c
-+++ b/kernel/trace/trace_probe.c
-@@ -13,6 +13,22 @@
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 231f9e4379d2..562306265c9d 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -22,6 +22,57 @@
  
- #include "trace_probe.h"
+ #define STR_VAR_LEN_MAX		32 /* must be multiple of sizeof(u64) */
  
 +#define ERRORS								\
 +	C(NONE,			"No error"),				\
-+	C(INVALID_STRING_SPEC,	"string only accepts memory or address."), \
-+	C(ARG_TOO_LONG,		"Argument is too long."),		\
-+	C(INVALID_ARG_NAME,	"Invalid argument name"),
++	C(DUPLICATE_VAR,	"Variable already defined"),		\
++	C(VAR_NOT_UNIQUE,	"Variable name not unique, need to use fully qualified name (subsys.event.var) for variable"), \
++	C(TOO_MANY_VARS,	"Too many variables defined"),		\
++	C(MALFORMED_ASSIGNMENT,	"Malformed assignment"),		\
++	C(NAMED_MISMATCH,	"Named hist trigger doesn't match existing named trigger (includes variables)"), \
++	C(TRIGGER_EEXIST,	"Hist trigger already exists"),		\
++	C(TRIGGER_ENOENT_CLEAR,	"Can't clear or continue a nonexistent hist trigger"), \
++	C(SET_CLOCK_FAIL,	"Couldn't set trace_clock"),		\
++	C(BAD_FIELD_MODIFIER,	"Invalid field modifier"),		\
++	C(TOO_MANY_SUBEXPR,	"Too many subexpressions (3 max)"),	\
++	C(TIMESTAMP_MISMATCH,	"Timestamp units in expression don't match"), \
++	C(TOO_MANY_FIELD_VARS,	"Too many field variables defined"),	\
++	C(EVENT_FILE_NOT_FOUND,	"Event file not found"),		\
++	C(HIST_NOT_FOUND,	"Matching event histogram not found"),	\
++	C(HIST_CREATE_FAIL,	"Couldn't create histogram for field"),	\
++	C(SYNTH_VAR_NOT_FOUND,	"Couldn't find synthetic variable"),	\
++	C(SYNTH_EVENT_NOT_FOUND,"Couldn't find synthetic event"),	\
++	C(SYNTH_TYPE_MISMATCH,	"Param type doesn't match synthetic event field type"), \
++	C(SYNTH_COUNT_MISMATCH,	"Param count doesn't match synthetic event field count"), \
++	C(FIELD_VAR_PARSE_FAIL,	"Couldn't parse field variable"),	\
++	C(VAR_CREATE_FIND_FAIL,	"Couldn't create or find variable"),	\
++	C(ONX_NOT_VAR,		"For onmax(x) or onchange(x), x must be a variable"), \
++	C(ONX_VAR_NOT_FOUND,	"Couldn't find onmax or onchange variable"), \
++	C(ONX_VAR_CREATE_FAIL,	"Couldn't create onmax or onchange variable"), \
++	C(FIELD_VAR_CREATE_FAIL,"Couldn't create field variable"),	\
++	C(TOO_MANY_PARAMS,	"Too many action params"),		\
++	C(PARAM_NOT_FOUND,	"Couldn't find param"),			\
++	C(INVALID_PARAM,	"Invalid action param"),		\
++	C(ACTION_NOT_FOUND,	"No action found"),			\
++	C(NO_SAVE_PARAMS,	"No params found for save()"),		\
++	C(TOO_MANY_SAVE_ACTIONS,"Can't have more than one save() action per hist"), \
++	C(ACTION_MISMATCH,	"Handler doesn't support action"),	\
++	C(NO_CLOSING_PAREN,	"No closing paren found"),		\
++	C(SUBSYS_NOT_FOUND,	"Missing subsystem"),			\
++	C(INVALID_SUBSYS_EVENT,	"Invalid subsystem or event name"),	\
++	C(INVALID_REF_KEY,	"Using variable references as keys not supported"), \
++	C(VAR_NOT_FOUND,	"Couldn't find variable"),		\
++	C(FIELD_NOT_FOUND,	"Couldn't find field"),
 +
 +#undef C
-+#define C(a, b)		KPROBE_ERR_##a
++#define C(a, b)		HIST_ERR_##a
 +
 +enum { ERRORS };
 +
@@ -102,37 +134,513 @@ index 89da34b326e3..5da08c1972af 100644
 +
 +static const char *err_text[] = { ERRORS };
 +
- const char *reserved_field_names[] = {
- 	"common_type",
- 	"common_flags",
-@@ -385,7 +401,7 @@ static int traceprobe_parse_probe_arg_body(char *arg, ssize_t *size,
- 	int ret, len;
+ struct hist_field;
  
- 	if (strlen(arg) > MAX_ARGSTR_LEN) {
--		pr_info("Argument is too long.: %s\n",  arg);
-+		tracing_log_err("kprobe_events", "replace this with command", err_text, KPROBE_ERR_ARG_TOO_LONG, err_pos("command", arg));
- 		return -ENOSPC;
+ typedef u64 (*hist_field_fn_t) (struct hist_field *field,
+@@ -538,7 +589,10 @@ static struct track_data *track_data_alloc(unsigned int key_len,
+ static char last_cmd[MAX_FILTER_STR_VAL];
+ static char last_cmd_loc[MAX_FILTER_STR_VAL];
+ 
+-static char hist_err_str[MAX_FILTER_STR_VAL];
++static int errpos(char *str)
++{
++	return err_pos(last_cmd, str);
++}
+ 
+ static void last_cmd_set(struct trace_event_file *file, char *str)
+ {
+@@ -565,55 +619,17 @@ static void last_cmd_set(struct trace_event_file *file, char *str)
+ 		snprintf(last_cmd_loc, MAX_FILTER_STR_VAL, "hist:%s:%s", system, name);
+ }
+ 
+-static void hist_err(char *str, char *var)
++static void hist_err(u8 err_type, u8 err_pos)
+ {
+-	int maxlen = MAX_FILTER_STR_VAL - 1;
+-
+-	if (!str)
+-		return;
+-
+-	if (strlen(hist_err_str))
+-		return;
+-
+-	if (!var)
+-		var = "";
+-
+-	if (strlen(hist_err_str) + strlen(str) + strlen(var) > maxlen)
+-		return;
+-
+-	strcat(hist_err_str, str);
+-	strcat(hist_err_str, var);
+-}
+-
+-static void hist_err_event(char *str, char *system, char *event, char *var)
+-{
+-	char err[MAX_FILTER_STR_VAL];
+-
+-	if (system && var)
+-		snprintf(err, MAX_FILTER_STR_VAL, "%s.%s.%s", system, event, var);
+-	else if (system)
+-		snprintf(err, MAX_FILTER_STR_VAL, "%s.%s", system, event);
+-	else
+-		strscpy(err, var, MAX_FILTER_STR_VAL);
+-
+-	hist_err(str, err);
++	tracing_log_err(last_cmd_loc, last_cmd, err_text, err_type, err_pos);
+ }
+ 
+ static void hist_err_clear(void)
+ {
+-	hist_err_str[0] = '\0';
+ 	last_cmd[0] = '\0';
+ 	last_cmd_loc[0] = '\0';
+ }
+ 
+-static bool have_hist_err(void)
+-{
+-	if (strlen(hist_err_str))
+-		return true;
+-
+-	return false;
+-}
+-
+ struct synth_trace_event {
+ 	struct trace_entry	ent;
+ 	u64			fields[];
+@@ -1740,7 +1756,7 @@ static struct trace_event_file *find_var_file(struct trace_array *tr,
+ 
+ 		if (find_var_field(var_hist_data, var_name)) {
+ 			if (found) {
+-				hist_err_event("Variable name not unique, need to use fully qualified name (subsys.event.var) for variable: ", system, event_name, var_name);
++				hist_err(HIST_ERR_VAR_NOT_UNIQUE, errpos(var_name));
+ 				return NULL;
+ 			}
+ 
+@@ -1791,7 +1807,7 @@ find_match_var(struct hist_trigger_data *hist_data, char *var_name)
+ 			hist_field = find_file_var(file, var_name);
+ 			if (hist_field) {
+ 				if (found) {
+-					hist_err_event("Variable name not unique, need to use fully qualified name (subsys.event.var) for variable: ", system, event_name, var_name);
++					hist_err(HIST_ERR_VAR_NOT_UNIQUE, errpos(var_name));
+ 					return ERR_PTR(-EINVAL);
+ 				}
+ 
+@@ -2023,7 +2039,6 @@ static int parse_action(char *str, struct hist_trigger_attrs *attrs)
+ 		attrs->n_actions++;
+ 		ret = 0;
  	}
- 	parg->comm = kstrdup(arg, GFP_KERNEL);
-@@ -444,7 +460,8 @@ static int traceprobe_parse_probe_arg_body(char *arg, ssize_t *size,
- 	if (!strcmp(parg->type->name, "string")) {
- 		if (code->op != FETCH_OP_DEREF && code->op != FETCH_OP_IMM &&
- 		    code->op != FETCH_OP_COMM) {
--			pr_info("string only accepts memory or address.\n");
-+			tracing_log_err("kprobe_events", "replace this with command", err_text, KPROBE_ERR_INVALID_STRING_SPEC, 0);
-+
- 			ret = -EINVAL;
- 			goto fail;
- 		}
-@@ -559,8 +576,7 @@ int traceprobe_parse_probe_arg(struct trace_probe *tp, int i, char *arg,
- 		return -ENOMEM;
+-
+ 	return ret;
+ }
  
- 	if (!is_good_name(parg->name)) {
--		pr_info("Invalid argument[%d] name: %s\n",
--			i, parg->name);
-+		tracing_log_err("kprobe_events", "replace this with command", err_text, KPROBE_ERR_INVALID_ARG_NAME, err_pos("cmd", parg->name));
+@@ -2083,7 +2098,7 @@ static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
+ 		char *assignment;
+ 
+ 		if (attrs->n_assignments == TRACING_MAP_VARS_MAX) {
+-			hist_err("Too many variables defined: ", str);
++			hist_err(HIST_ERR_TOO_MANY_VARS, errpos(str));
+ 			ret = -EINVAL;
+ 			goto out;
+ 		}
+@@ -2681,8 +2696,7 @@ static struct hist_field *parse_var_ref(struct hist_trigger_data *hist_data,
+ 					   system, event_name);
+ 
+ 	if (!ref_field)
+-		hist_err_event("Couldn't find variable: $",
+-			       system, event_name, var_name);
++		hist_err(HIST_ERR_VAR_NOT_FOUND, errpos(var_name));
+ 
+ 	return ref_field;
+ }
+@@ -2716,7 +2730,7 @@ parse_field(struct hist_trigger_data *hist_data, struct trace_event_file *file,
+ 		else if (strcmp(modifier, "usecs") == 0)
+ 			*flags |= HIST_FIELD_FL_TIMESTAMP_USECS;
+ 		else {
+-			hist_err("Invalid field modifier: ", modifier);
++			hist_err(HIST_ERR_BAD_FIELD_MODIFIER, errpos(modifier));
+ 			field = ERR_PTR(-EINVAL);
+ 			goto out;
+ 		}
+@@ -2732,7 +2746,7 @@ parse_field(struct hist_trigger_data *hist_data, struct trace_event_file *file,
+ 	else {
+ 		field = trace_find_event_field(file->event_call, field_name);
+ 		if (!field || !field->size) {
+-			hist_err("Couldn't find field: ", field_name);
++			hist_err(HIST_ERR_FIELD_NOT_FOUND, errpos(field_name));
+ 			field = ERR_PTR(-EINVAL);
+ 			goto out;
+ 		}
+@@ -2843,7 +2857,7 @@ static struct hist_field *parse_unary(struct hist_trigger_data *hist_data,
+ 	/* we support only -(xxx) i.e. explicit parens required */
+ 
+ 	if (level > 3) {
+-		hist_err("Too many subexpressions (3 max): ", str);
++		hist_err(HIST_ERR_TOO_MANY_SUBEXPR, errpos(str));
+ 		ret = -EINVAL;
+ 		goto free;
+ 	}
+@@ -2926,7 +2940,7 @@ static int check_expr_operands(struct hist_field *operand1,
+ 
+ 	if ((operand1_flags & HIST_FIELD_FL_TIMESTAMP_USECS) !=
+ 	    (operand2_flags & HIST_FIELD_FL_TIMESTAMP_USECS)) {
+-		hist_err("Timestamp units in expression don't match", NULL);
++		hist_err(HIST_ERR_TIMESTAMP_MISMATCH, 0);
  		return -EINVAL;
  	}
+ 
+@@ -2944,7 +2958,7 @@ static struct hist_field *parse_expr(struct hist_trigger_data *hist_data,
+ 	char *sep, *operand1_str;
+ 
+ 	if (level > 3) {
+-		hist_err("Too many subexpressions (3 max): ", str);
++		hist_err(HIST_ERR_TOO_MANY_SUBEXPR, errpos(str));
+ 		return ERR_PTR(-EINVAL);
+ 	}
+ 
+@@ -3182,16 +3196,14 @@ create_field_var_hist(struct hist_trigger_data *target_hist_data,
+ 	int ret;
+ 
+ 	if (target_hist_data->n_field_var_hists >= SYNTH_FIELDS_MAX) {
+-		hist_err_event("trace action: Too many field variables defined: ",
+-			       subsys_name, event_name, field_name);
++		hist_err(HIST_ERR_TOO_MANY_FIELD_VARS, errpos(field_name));
+ 		return ERR_PTR(-EINVAL);
+ 	}
+ 
+ 	file = event_file(tr, subsys_name, event_name);
+ 
+ 	if (IS_ERR(file)) {
+-		hist_err_event("trace action: Event file not found: ",
+-			       subsys_name, event_name, field_name);
++		hist_err(HIST_ERR_EVENT_FILE_NOT_FOUND, errpos(field_name));
+ 		ret = PTR_ERR(file);
+ 		return ERR_PTR(ret);
+ 	}
+@@ -3204,8 +3216,7 @@ create_field_var_hist(struct hist_trigger_data *target_hist_data,
+ 	 */
+ 	hist_data = find_compatible_hist(target_hist_data, file);
+ 	if (!hist_data) {
+-		hist_err_event("trace action: Matching event histogram not found: ",
+-			       subsys_name, event_name, field_name);
++		hist_err(HIST_ERR_HIST_NOT_FOUND, errpos(field_name));
+ 		return ERR_PTR(-EINVAL);
+ 	}
+ 
+@@ -3266,8 +3277,7 @@ create_field_var_hist(struct hist_trigger_data *target_hist_data,
+ 		kfree(cmd);
+ 		kfree(var_hist->cmd);
+ 		kfree(var_hist);
+-		hist_err_event("trace action: Couldn't create histogram for field: ",
+-			       subsys_name, event_name, field_name);
++		hist_err(HIST_ERR_HIST_CREATE_FAIL, errpos(field_name));
+ 		return ERR_PTR(ret);
+ 	}
+ 
+@@ -3279,8 +3289,7 @@ create_field_var_hist(struct hist_trigger_data *target_hist_data,
+ 	if (IS_ERR_OR_NULL(event_var)) {
+ 		kfree(var_hist->cmd);
+ 		kfree(var_hist);
+-		hist_err_event("trace action: Couldn't find synthetic variable: ",
+-			       subsys_name, event_name, field_name);
++		hist_err(HIST_ERR_SYNTH_VAR_NOT_FOUND, errpos(field_name));
+ 		return ERR_PTR(-EINVAL);
+ 	}
+ 
+@@ -3417,21 +3426,21 @@ static struct field_var *create_field_var(struct hist_trigger_data *hist_data,
+ 	int ret = 0;
+ 
+ 	if (hist_data->n_field_vars >= SYNTH_FIELDS_MAX) {
+-		hist_err("Too many field variables defined: ", field_name);
++		hist_err(HIST_ERR_TOO_MANY_FIELD_VARS, errpos(field_name));
+ 		ret = -EINVAL;
+ 		goto err;
+ 	}
+ 
+ 	val = parse_atom(hist_data, file, field_name, &flags, NULL);
+ 	if (IS_ERR(val)) {
+-		hist_err("Couldn't parse field variable: ", field_name);
++		hist_err(HIST_ERR_FIELD_VAR_PARSE_FAIL, errpos(field_name));
+ 		ret = PTR_ERR(val);
+ 		goto err;
+ 	}
+ 
+ 	var = create_var(hist_data, file, field_name, val->size, val->type);
+ 	if (IS_ERR(var)) {
+-		hist_err("Couldn't create or find variable: ", field_name);
++		hist_err(HIST_ERR_VAR_CREATE_FIND_FAIL, errpos(field_name));
+ 		kfree(val);
+ 		ret = PTR_ERR(var);
+ 		goto err;
+@@ -3764,14 +3773,14 @@ static int track_data_create(struct hist_trigger_data *hist_data,
+ 
+ 	track_data_var_str = data->track_data.var_str;
+ 	if (track_data_var_str[0] != '$') {
+-		hist_err("For onmax(x) or onchange(x), x must be a variable: ", track_data_var_str);
++		hist_err(HIST_ERR_ONX_NOT_VAR, errpos(track_data_var_str));
+ 		return -EINVAL;
+ 	}
+ 	track_data_var_str++;
+ 
+ 	var_field = find_target_event_var(hist_data, NULL, NULL, track_data_var_str);
+ 	if (!var_field) {
+-		hist_err("Couldn't find onmax or onchange variable: ", track_data_var_str);
++		hist_err(HIST_ERR_ONX_VAR_NOT_FOUND, errpos(track_data_var_str));
+ 		return -EINVAL;
+ 	}
+ 
+@@ -3784,7 +3793,7 @@ static int track_data_create(struct hist_trigger_data *hist_data,
+ 	if (data->handler == HANDLER_ONMAX)
+ 		track_var = create_var(hist_data, file, "__max", sizeof(u64), "u64");
+ 	if (IS_ERR(track_var)) {
+-		hist_err("Couldn't create onmax variable: ", "__max");
++		hist_err(HIST_ERR_ONX_VAR_CREATE_FAIL, 0);
+ 		ret = PTR_ERR(track_var);
+ 		goto out;
+ 	}
+@@ -3792,7 +3801,7 @@ static int track_data_create(struct hist_trigger_data *hist_data,
+ 	if (data->handler == HANDLER_ONCHANGE)
+ 		track_var = create_var(hist_data, file, "__change", sizeof(u64), "u64");
+ 	if (IS_ERR(track_var)) {
+-		hist_err("Couldn't create onchange variable: ", "__change");
++		hist_err(HIST_ERR_ONX_VAR_CREATE_FAIL, 0);
+ 		ret = PTR_ERR(track_var);
+ 		goto out;
+ 	}
+@@ -3811,20 +3820,20 @@ static int parse_action_params(char *params, struct action_data *data)
+ 
+ 	while (params) {
+ 		if (data->n_params >= SYNTH_FIELDS_MAX) {
+-			hist_err("Too many action params", "");
++			hist_err(HIST_ERR_TOO_MANY_PARAMS, 0);
+ 			goto out;
+ 		}
+ 
+ 		param = strsep(&params, ",");
+ 		if (!param) {
+-			hist_err("No action param found", "");
++			hist_err(HIST_ERR_PARAM_NOT_FOUND, 0);
+ 			ret = -EINVAL;
+ 			goto out;
+ 		}
+ 
+ 		param = strstrip(param);
+ 		if (strlen(param) < 2) {
+-			hist_err("Invalid action param: ", param);
++			hist_err(HIST_ERR_INVALID_PARAM, errpos(param));
+ 			ret = -EINVAL;
+ 			goto out;
+ 		}
+@@ -3856,14 +3865,14 @@ static int action_parse(char *str, struct action_data *data,
+ 
+ 	strsep(&str, ".");
+ 	if (!str) {
+-		hist_err("action parsing: No action found", "");
++		hist_err(HIST_ERR_ACTION_NOT_FOUND, 0);
+ 		ret = -EINVAL;
+ 		goto out;
+ 	}
+ 
+ 	action_name = strsep(&str, "(");
+ 	if (!action_name || !str) {
+-		hist_err("action parsing: No action found", "");
++		hist_err(HIST_ERR_ACTION_NOT_FOUND, 0);
+ 		ret = -EINVAL;
+ 		goto out;
+ 	}
+@@ -3872,7 +3881,7 @@ static int action_parse(char *str, struct action_data *data,
+ 		char *params = strsep(&str, ")");
+ 
+ 		if (!params) {
+-			hist_err("action parsing: No params found for %s", "save");
++			hist_err(HIST_ERR_NO_SAVE_PARAMS, 0);
+ 			ret = -EINVAL;
+ 			goto out;
+ 		}
+@@ -3886,7 +3895,7 @@ static int action_parse(char *str, struct action_data *data,
+ 		else if (handler == HANDLER_ONCHANGE)
+ 			data->track_data.check_val = check_track_val_changed;
+ 		else {
+-			hist_err("action parsing: Handler doesn't support action: ", action_name);
++			hist_err(HIST_ERR_ACTION_MISMATCH, errpos(action_name));
+ 			ret = -EINVAL;
+ 			goto out;
+ 		}
+@@ -3898,7 +3907,7 @@ static int action_parse(char *str, struct action_data *data,
+ 		char *params = strsep(&str, ")");
+ 
+ 		if (!str) {
+-			hist_err("action parsing: No closing paren found: %s", params);
++			hist_err(HIST_ERR_NO_CLOSING_PAREN, errpos(params));
+ 			ret = -EINVAL;
+ 			goto out;
+ 		}
+@@ -3908,7 +3917,7 @@ static int action_parse(char *str, struct action_data *data,
+ 		else if (handler == HANDLER_ONCHANGE)
+ 			data->track_data.check_val = check_track_val_changed;
+ 		else {
+-			hist_err("action parsing: Handler doesn't support action: ", action_name);
++			hist_err(HIST_ERR_ACTION_MISMATCH, errpos(action_name));
+ 			ret = -EINVAL;
+ 			goto out;
+ 		}
+@@ -4061,7 +4070,7 @@ trace_action_find_var(struct hist_trigger_data *hist_data,
+ 	}
+ 
+ 	if (!hist_field)
+-		hist_err_event("trace action: Couldn't find param: $", system, event, var);
++		hist_err(HIST_ERR_PARAM_NOT_FOUND, errpos(var));
+ 
+ 	return hist_field;
+ }
+@@ -4136,7 +4145,7 @@ static int trace_action_create(struct hist_trigger_data *hist_data,
+ 
+ 	event = find_synth_event(synth_event_name);
+ 	if (!event) {
+-		hist_err("trace action: Couldn't find synthetic event: ", synth_event_name);
++		hist_err(HIST_ERR_SYNTH_EVENT_NOT_FOUND, errpos(synth_event_name));
+ 		return -EINVAL;
+ 	}
+ 
+@@ -4197,15 +4206,14 @@ static int trace_action_create(struct hist_trigger_data *hist_data,
+ 			continue;
+ 		}
+ 
+-		hist_err_event("trace action: Param type doesn't match synthetic event field type: ",
+-			       system, event_name, param);
++		hist_err(HIST_ERR_SYNTH_TYPE_MISMATCH, errpos(param));
+ 		kfree(p);
+ 		ret = -EINVAL;
+ 		goto err;
+ 	}
+ 
+ 	if (field_pos != event->n_fields) {
+-		hist_err("trace action: Param count doesn't match synthetic event field count: ", event->name);
++		hist_err(HIST_ERR_SYNTH_COUNT_MISMATCH, errpos(event->name));
+ 		ret = -EINVAL;
+ 		goto err;
+ 	}
+@@ -4251,7 +4259,7 @@ static int action_create(struct hist_trigger_data *hist_data,
+ 	if (data->action == ACTION_SAVE) {
+ 		if (hist_data->n_save_vars) {
+ 			ret = -EEXIST;
+-			hist_err("save action: Can't have more than one save() action per hist", "");
++			hist_err(HIST_ERR_TOO_MANY_SAVE_ACTIONS, 0);
+ 			goto out;
+ 		}
+ 
+@@ -4264,7 +4272,7 @@ static int action_create(struct hist_trigger_data *hist_data,
+ 
+ 			field_var = create_target_field_var(hist_data, NULL, NULL, param);
+ 			if (IS_ERR(field_var)) {
+-				hist_err("save action: Couldn't create field variable: ", param);
++				hist_err(HIST_ERR_FIELD_VAR_CREATE_FAIL, errpos(param));
+ 				ret = PTR_ERR(field_var);
+ 				kfree(param);
+ 				goto out;
+@@ -4298,19 +4306,18 @@ static struct action_data *onmatch_parse(struct trace_array *tr, char *str)
+ 
+ 	match_event = strsep(&str, ")");
+ 	if (!match_event || !str) {
+-		hist_err("onmatch: Missing closing paren: ", match_event);
++		hist_err(HIST_ERR_NO_CLOSING_PAREN, errpos(match_event));
+ 		goto free;
+ 	}
+ 
+ 	match_event_system = strsep(&match_event, ".");
+ 	if (!match_event) {
+-		hist_err("onmatch: Missing subsystem for match event: ", match_event_system);
++		hist_err(HIST_ERR_SUBSYS_NOT_FOUND, errpos(match_event_system));
+ 		goto free;
+ 	}
+ 
+ 	if (IS_ERR(event_file(tr, match_event_system, match_event))) {
+-		hist_err_event("onmatch: Invalid subsystem or event name: ",
+-			       match_event_system, match_event, NULL);
++		hist_err(HIST_ERR_INVALID_SUBSYS_EVENT, errpos(match_event));
+ 		goto free;
+ 	}
+ 
+@@ -4401,7 +4408,7 @@ static int create_var_field(struct hist_trigger_data *hist_data,
+ 		return -EINVAL;
+ 
+ 	if (find_var(hist_data, file, var_name) && !hist_data->remove) {
+-		hist_err("Variable already defined: ", var_name);
++		hist_err(HIST_ERR_DUPLICATE_VAR, errpos(var_name));
+ 		return -EINVAL;
+ 	}
+ 
+@@ -4482,7 +4489,7 @@ static int create_key_field(struct hist_trigger_data *hist_data,
+ 		}
+ 
+ 		if (hist_field->flags & HIST_FIELD_FL_VAR_REF) {
+-			hist_err("Using variable references as keys not supported: ", field_str);
++			hist_err(HIST_ERR_INVALID_REF_KEY, errpos(field_str));
+ 			destroy_hist_field(hist_field, 0);
+ 			ret = -EINVAL;
+ 			goto out;
+@@ -4596,13 +4603,13 @@ static int parse_var_defs(struct hist_trigger_data *hist_data)
+ 
+ 			var_name = strsep(&field_str, "=");
+ 			if (!var_name || !field_str) {
+-				hist_err("Malformed assignment: ", var_name);
++				hist_err(HIST_ERR_MALFORMED_ASSIGNMENT, errpos(var_name));
+ 				ret = -EINVAL;
+ 				goto free;
+ 			}
+ 
+ 			if (n_vars == TRACING_MAP_VARS_MAX) {
+-				hist_err("Too many variables defined: ", var_name);
++				hist_err(HIST_ERR_TOO_MANY_VARS, errpos(var_name));
+ 				ret = -EINVAL;
+ 				goto free;
+ 			}
+@@ -5458,11 +5465,6 @@ static int hist_show(struct seq_file *m, void *v)
+ 			hist_trigger_show(m, data, n++);
+ 	}
+ 
+-	if (have_hist_err()) {
+-		seq_printf(m, "\n%s: error: \n", hist_err_str);
+-		seq_printf(m, "  Last command: %s\n", last_cmd);
+-	}
+-
+  out_unlock:
+ 	mutex_unlock(&event_mutex);
+ 
+@@ -5834,7 +5836,7 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
+ 		if (named_data) {
+ 			if (!hist_trigger_match(data, named_data, named_data,
+ 						true)) {
+-				hist_err("Named hist trigger doesn't match existing named trigger (includes variables): ", hist_data->attrs->name);
++				hist_err(HIST_ERR_NAMED_MISMATCH, errpos(hist_data->attrs->name));
+ 				ret = -EINVAL;
+ 				goto out;
+ 			}
+@@ -5855,7 +5857,7 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
+ 			else if (hist_data->attrs->clear)
+ 				hist_clear(test);
+ 			else {
+-				hist_err("Hist trigger already exists", NULL);
++				hist_err(HIST_ERR_TRIGGER_EEXIST, 0);
+ 				ret = -EEXIST;
+ 			}
+ 			goto out;
+@@ -5863,7 +5865,7 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
+ 	}
+  new:
+ 	if (hist_data->attrs->cont || hist_data->attrs->clear) {
+-		hist_err("Can't clear or continue a nonexistent hist trigger", NULL);
++		hist_err(HIST_ERR_TRIGGER_ENOENT_CLEAR, 0);
+ 		ret = -ENOENT;
+ 		goto out;
+ 	}
+@@ -5888,7 +5890,7 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
+ 
+ 		ret = tracing_set_clock(file->tr, hist_data->attrs->clock);
+ 		if (ret) {
+-			hist_err("Couldn't set trace_clock: ", clock);
++			hist_err(HIST_ERR_SET_CLOCK_FAIL, errpos(clock));
+ 			goto out;
+ 		}
  
 -- 
 2.14.1
