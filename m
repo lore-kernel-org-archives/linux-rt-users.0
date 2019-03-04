@@ -2,103 +2,111 @@ Return-Path: <SRS0=pHM8=RH=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_PASS autolearn=unavailable autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-4.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_PASS autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6BA32C4360F
-	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Mar 2019 22:31:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 21EB7C43381
+	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Mar 2019 23:15:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 4554F20830
-	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Mar 2019 22:31:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id EB9CB20830
+	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Mar 2019 23:15:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726117AbfCDWbm (ORCPT
+        id S1726095AbfCDXPY (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 4 Mar 2019 17:31:42 -0500
-Received: from mga11.intel.com ([192.55.52.93]:60965 "EHLO mga11.intel.com"
+        Mon, 4 Mar 2019 18:15:24 -0500
+Received: from mail.kernel.org ([198.145.29.99]:52140 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726066AbfCDWbm (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 4 Mar 2019 17:31:42 -0500
-X-Amp-Result: SKIPPED(no attachment in message)
-X-Amp-File-Uploaded: False
-Received: from orsmga008.jf.intel.com ([10.7.209.65])
-  by fmsmga102.fm.intel.com with ESMTP/TLS/DHE-RSA-AES256-GCM-SHA384; 04 Mar 2019 14:31:41 -0800
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="5.58,441,1544515200"; 
-   d="scan'208";a="122613464"
-Received: from cdbrown-mobl.amr.corp.intel.com ([10.254.61.64])
-  by orsmga008.jf.intel.com with ESMTP; 04 Mar 2019 14:31:40 -0800
-Message-ID: <5c978b4b0d629e5a914c512c14f99f6a24241407.camel@linux.intel.com>
-Subject: Re: [PATCH 2/2] tracing: Use strncpy instead of memcpy for string
- keys in hist triggers
-From:   Tom Zanussi <tom.zanussi@linux.intel.com>
-To:     Steven Rostedt <rostedt@goodmis.org>,
-        Tom Zanussi <zanussi@kernel.org>
-Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        Namhyung Kim <namhyung@kernel.org>
-Date:   Mon, 04 Mar 2019 16:31:40 -0600
-In-Reply-To: <5643a1971831ce2d01a947f0f07cefa002bbdc25.camel@linux.intel.com>
-References: <cover.1549309756.git.tom.zanussi@linux.intel.com>
-         <50c35ae1267d64eee975b8125e151e600071d4dc.1549309756.git.tom.zanussi@linux.intel.com>
-         <20190304165000.0ce0fbdd@gandalf.local.home>
-         <20190304165653.17699f9f@gandalf.local.home>
-         <5643a1971831ce2d01a947f0f07cefa002bbdc25.camel@linux.intel.com>
-Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.28.5 (3.28.5-1.fc28) 
-Mime-Version: 1.0
+        id S1726066AbfCDXPY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 4 Mar 2019 18:15:24 -0500
+Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 5286020823;
+        Mon,  4 Mar 2019 23:15:23 +0000 (UTC)
+Date:   Mon, 4 Mar 2019 18:15:21 -0500
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     Julien Grall <Julien.Grall@arm.com>
+Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>, nd <nd@arm.com>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "jslaby@suse.com" <jslaby@suse.com>,
+        "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH] tty/sysrq: Convert show_lock to raw_spinlock_t
+Message-ID: <20190304181521.06e42396@gandalf.local.home>
+In-Reply-To: <75159b6e-0733-e300-e4f5-d519ca7f6b13@arm.com>
+References: <20190304172053.17340-1-julien.grall@arm.com>
+        <545fb96e-0f07-758e-5c79-a725e74e3387@arm.com>
+        <20190304220152.nozgclpu2jx3zgvy@linutronix.de>
+        <75159b6e-0733-e300-e4f5-d519ca7f6b13@arm.com>
+X-Mailer: Claws Mail 3.16.0 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Steve,
+On Mon, 4 Mar 2019 22:25:41 +0000
+Julien Grall <Julien.Grall@arm.com> wrote:
 
-On Mon, 2019-03-04 at 16:22 -0600, Tom Zanussi wrote:
-> Hi Steve,
+> Hello Sebastian,
 > 
-> On Mon, 2019-03-04 at 16:56 -0500, Steven Rostedt wrote:
-> > On Mon, 4 Mar 2019 16:50:00 -0500
-> > Steven Rostedt <rostedt@goodmis.org> wrote:
+> On 04/03/2019 22:01, Sebastian Andrzej Siewior wrote:
+> > On 2019-03-04 17:21:57 [+0000], Julien Grall wrote:  
+> >> (CC correctly linux-rt-users)
+> >>
+> >> On 04/03/2019 17:20, Julien Grall wrote:  
+> >>> At the moment show_lock is implemented using spin_lock_t and called from
+> >>> an interrupt context on Arm64. The following backtrace was triggered by:
+> >>>
+> >>> 42sh# echo l > /proc/sysrq-trigger
+> >>>
+> >>> [ 4432.073756] sysrq: SysRq : Show backtrace of all active CPUs
+> >>> [ 4432.403422] BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:974
+> >>> [ 4432.403424] sysrq: CPU6:
+> >>> [ 4432.403426] in_atomic(): 1, irqs_disabled(): 128, pid: 2410, name: kworker/u16:2
+> >>>
+> >>> [...]
+> >>>
+> >>> [ 4432.403581] Call trace:
+> >>> [ 4432.403584]  dump_backtrace+0x0/0x148
+> >>> [ 4432.403586]  show_stack+0x14/0x20
+> >>> [ 4432.403588]  dump_stack+0x9c/0xd4
+> >>> [ 4432.403592]  ___might_sleep+0x1cc/0x298
+> >>> [ 4432.403595]  rt_spin_lock+0x5c/0x70
+> >>> [ 4432.403596]  showacpu+0x34/0x68
+> >>> [ 4432.403599]  flush_smp_call_function_queue+0xd4/0x278
+> >>> [ 4432.403602]  generic_smp_call_function_single_interrupt+0x10/0x18
+> >>> [ 4432.403605]  handle_IPI+0x26c/0x668
+> >>> [ 4432.403607]  gic_handle_irq+0x9c/0xa0
+> >>> [ 4432.403609]  el1_irq+0xb4/0x13c
+> >>>
+> >>> With RT-patches, spin_lock can now sleep and therefore cannot be used from
+> >>> interrupt context. Use a raw_spin_lock instead to prevent the lock to
+> >>> sleep.
+> >>>
+> >>> Signed-off-by: Julien Grall <julien.grall@arm.com>  
 > > 
-> > > > +++ b/kernel/trace/trace_events_hist.c
-> > > > @@ -4695,9 +4695,10 @@ static inline void add_to_key(char
-> > > > *compound_key, void *key,
-> > > >  		/* ensure NULL-termination */
-> > > >  		if (size > key_field->size - 1)
-> > > >  			size = key_field->size - 1;
-> > > > -	}
-> > > >  
-> > > > -	memcpy(compound_key + key_field->offset, key, size);
-> > > > +		strncpy(compound_key + key_field->offset, (char
-> > > > *)key,
-> > > > size);
-> > > > +	} else
-> > > > +		memcpy(compound_key + key_field->offset, key,
-> > > > size);
-> > > >  }
-> > > >    
-> > > 
-> > > Shouldn't we use strncpy() in save_comm() too. Feels safer.
-> > 
-> > Note, if that is changed, it can be another patch. This one is fine
-> > as
-> > is. I just was looking at other use cases of memcpy() in that file.
-> > 
+> > I don't have to look at this properly but this looks is wrong.  
 > 
-> Hmm, I don't think it's really necessary - it's not used in a key so
-> don't care about anything after the null, and TASK_COMM_LEN is used
-> in
-> the memcpy.
+> May I ask why does it look wrong? On Arm64, this code is called from an 
+> IRQ disabled context (see the check in flush_smp_call_function_queue).
 
-Never mind, yeah, it would make sense to do this, will create another
-patch...
+I'll answer.
 
-Tom
+It's going to call printk, and depending on consoles and such, it may
+not print anything (a printk without atomic consoles shows nothing).
 
+That said, perhaps we need to do something like the "safe printk", 
+where it only loads it into the log buffers and doesn't do the actual
+prints.
 
-> 
-> Tom
-> 
-> > -- Steve
+Hmm, do we do that now? I need to look at the latest printk code in RT.
 
+Also, there's a big discussion going on in LKML right now about
+rewriting how the printk buffers work.
+
+-- Steve
