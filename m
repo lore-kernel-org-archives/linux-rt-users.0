@@ -6,48 +6,48 @@ X-Spam-Status: No, score=-9.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
 	SPF_PASS,USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DBB30C43381
-	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Mar 2019 23:37:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1996BC43381
+	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Mar 2019 23:37:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id A96E421019
-	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Mar 2019 23:37:11 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D85AE208E4
+	for <linux-rt-users@archiver.kernel.org>; Mon,  4 Mar 2019 23:37:18 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1551742631;
-	bh=hYpJ/QqCu2VPJ1ziJl6kJTmXakIcDvPOS/KFb9DFnU8=;
+	s=default; t=1551742638;
+	bh=ox9A14m6Kl2/YJvLVomhXm2WN1OTqvPJKQfo7LbYlVI=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=imLchGAiVklP3qkDjLFqxZs3LHsh8yY487KIzrkEYOYF0AwdGc9sPzwDxQbjJE3PE
-	 RwIrlIKVWu6SUKkCV9YUW3OVDIMho1O0M2RoBy50HItt5tjBx7kCfpfSs6uDcMpI20
-	 KLqxI8QAzh6z5yBJ8RW3Vh8G5KEkQZnLhjMUA/8Y=
+	b=SbAIa1lWIEY8dqEJFwdi0UEPBoIPb3EuaSFj3+8rF4MvZqhrhi0iVuXG7TAfGfJQc
+	 DigvgnJ0F0fmlLFcZ4RlHEWCOFFfcH0NgYWuW1Xf4emi1xPnT4jST2eeDs0sFcQ7FQ
+	 IV6z2K+64my0rBruWl5KHvzWhA+MnUgoMAhyN1Yc=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726856AbfCDXhG (ORCPT
+        id S1726888AbfCDXhN (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 4 Mar 2019 18:37:06 -0500
-Received: from mail.kernel.org ([198.145.29.99]:51706 "EHLO mail.kernel.org"
+        Mon, 4 Mar 2019 18:37:13 -0500
+Received: from mail.kernel.org ([198.145.29.99]:51628 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726838AbfCDXhE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 4 Mar 2019 18:37:04 -0500
+        id S1726751AbfCDXhD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 4 Mar 2019 18:37:03 -0500
 Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 1650C2087C;
-        Mon,  4 Mar 2019 23:37:03 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 9ED5C20835;
+        Mon,  4 Mar 2019 23:37:01 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1551742623;
-        bh=hYpJ/QqCu2VPJ1ziJl6kJTmXakIcDvPOS/KFb9DFnU8=;
+        s=default; t=1551742622;
+        bh=ox9A14m6Kl2/YJvLVomhXm2WN1OTqvPJKQfo7LbYlVI=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=J5BzDo7sQ75zBh3crU3/ND294/PUnyB203t6tWqe9oK+mZQdioBaTNS+YOc2GEQPj
-         UeYHrWV6hikEEFTX5rpUjES0LFaMh43qUKc8GanKMTULGh5NE2Dsr0xz4s7CvLuNez
-         Eq2d/akBguOaUE4SnU5lDi6f1mVNFP/eJlDm2vEU=
+        b=KGxUQZMgyvpAp/iIjQhkRr+dAbBFt+ifzvDWpBv+/ZXlsfRQpTjnU+gbsxqsaDsUH
+         Z46+PHo+EtJCtPHywPWvutFldsm3QONBdyYweps3Ua3C7sfqmSM1J/HrGQDBY1hmbG
+         pRf8+ywZh1nsgdliGhUrJp21inHQkdf6EaHLvyDs=
 From:   Tom Zanussi <zanussi@kernel.org>
 To:     rostedt@goodmis.org
 Cc:     tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
         bigeasy@linutronix.de, joel@joelfernandes.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: [RFC PATCH v3 5/5] tracing: Use tracing error_log with trace event filters
-Date:   Mon,  4 Mar 2019 17:36:48 -0600
-Message-Id: <a44c5a86c619d9c8b01edf59fe5f8290552f6006.1551741458.git.tom.zanussi@linux.intel.com>
+Subject: [RFC PATCH v3 4/5] tracing: Use tracing error_log with kprobe events (incomplete)
+Date:   Mon,  4 Mar 2019 17:36:47 -0600
+Message-Id: <9362894b9b84807e4e42832a1d217072edec3930.1551741458.git.tom.zanussi@linux.intel.com>
 X-Mailer: git-send-email 2.14.1
 In-Reply-To: <cover.1551741458.git.tom.zanussi@linux.intel.com>
 References: <cover.1551741458.git.tom.zanussi@linux.intel.com>
@@ -60,54 +60,80 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-Use tracing_log_err() from the new tracing error_log mechanism to send
-filter parse errors to tracing/error_log.
+Here are a few examples of replacing kprobe_events error handling with
+tracing_log_err() from the new tracing error_log mechanism.  Only a
+few example errors are converted, and even these are incomplete, since
+I didn't know where to get the current command and used a dummy string
+for those.  Also, these are completely untested, just provided for
+RFC purposes.
 
-With this change, users will be able to see filter errors by looking
-at tracing/error_log.
+With this change, users will find some kprobe_events errors in
+tracing/error_log instead of dmesg.
 
-The same errors will also be available in the filter file, as
-expected.
+TODO: If acceptable, convert all the rest of the kprobe errors and
+figure out how to get the actual cmd logged along with the error.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- kernel/trace/trace_events_filter.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+ kernel/trace/trace_probe.c | 24 ++++++++++++++++++++----
+ 1 file changed, 20 insertions(+), 4 deletions(-)
 
-diff --git a/kernel/trace/trace_events_filter.c b/kernel/trace/trace_events_filter.c
-index ade606c33231..3a1ed8631aa0 100644
---- a/kernel/trace/trace_events_filter.c
-+++ b/kernel/trace/trace_events_filter.c
-@@ -66,7 +66,8 @@ static const char * ops[] = { OPS };
- 	C(INVALID_FILTER,	"Meaningless filter expression"),	\
- 	C(IP_FIELD_ONLY,	"Only 'ip' field is supported for function trace"), \
- 	C(INVALID_VALUE,	"Invalid value (did you forget quotes)?"), \
--	C(NO_FILTER,		"No filter found"),
-+	C(ERRNO,		"Error"),				\
-+	C(NO_FILTER,		"No filter found")
+diff --git a/kernel/trace/trace_probe.c b/kernel/trace/trace_probe.c
+index 89da34b326e3..5da08c1972af 100644
+--- a/kernel/trace/trace_probe.c
++++ b/kernel/trace/trace_probe.c
+@@ -13,6 +13,22 @@
  
- #undef C
- #define C(a, b)		FILT_ERR_##a
-@@ -76,7 +77,7 @@ enum { ERRORS };
- #undef C
- #define C(a, b)		b
+ #include "trace_probe.h"
  
--static char *err_text[] = { ERRORS };
++#define ERRORS								\
++	C(NONE,			"No error"),				\
++	C(INVALID_STRING_SPEC,	"string only accepts memory or address."), \
++	C(ARG_TOO_LONG,		"Argument is too long."),		\
++	C(INVALID_ARG_NAME,	"Invalid argument name"),
++
++#undef C
++#define C(a, b)		KPROBE_ERR_##a
++
++enum { ERRORS };
++
++#undef C
++#define C(a, b)		b
++
 +static const char *err_text[] = { ERRORS };
++
+ const char *reserved_field_names[] = {
+ 	"common_type",
+ 	"common_flags",
+@@ -385,7 +401,7 @@ static int traceprobe_parse_probe_arg_body(char *arg, ssize_t *size,
+ 	int ret, len;
  
- /* Called after a '!' character but "!=" and "!~" are not "not"s */
- static bool is_not(const char *str)
-@@ -947,8 +948,10 @@ static void append_filter_err(struct filter_parse_error *pe,
- 	if (pe->lasterr > 0) {
- 		trace_seq_printf(s, "\n%*s", pos, "^");
- 		trace_seq_printf(s, "\nparse_error: %s\n", err_text[pe->lasterr]);
-+		tracing_log_err("event filter parse error", filter->filter_string, err_text, pe->lasterr, pe->lasterr_pos);
- 	} else {
- 		trace_seq_printf(s, "\nError: (%d)\n", pe->lasterr);
-+		tracing_log_err("event filter parse error", filter->filter_string, err_text, FILT_ERR_ERRNO, 0);
+ 	if (strlen(arg) > MAX_ARGSTR_LEN) {
+-		pr_info("Argument is too long.: %s\n",  arg);
++		tracing_log_err("kprobe_events", "replace this with command", err_text, KPROBE_ERR_ARG_TOO_LONG, err_pos("command", arg));
+ 		return -ENOSPC;
  	}
- 	trace_seq_putc(s, 0);
- 	buf = kmemdup_nul(s->buffer, s->seq.len, GFP_KERNEL);
+ 	parg->comm = kstrdup(arg, GFP_KERNEL);
+@@ -444,7 +460,8 @@ static int traceprobe_parse_probe_arg_body(char *arg, ssize_t *size,
+ 	if (!strcmp(parg->type->name, "string")) {
+ 		if (code->op != FETCH_OP_DEREF && code->op != FETCH_OP_IMM &&
+ 		    code->op != FETCH_OP_COMM) {
+-			pr_info("string only accepts memory or address.\n");
++			tracing_log_err("kprobe_events", "replace this with command", err_text, KPROBE_ERR_INVALID_STRING_SPEC, 0);
++
+ 			ret = -EINVAL;
+ 			goto fail;
+ 		}
+@@ -559,8 +576,7 @@ int traceprobe_parse_probe_arg(struct trace_probe *tp, int i, char *arg,
+ 		return -ENOMEM;
+ 
+ 	if (!is_good_name(parg->name)) {
+-		pr_info("Invalid argument[%d] name: %s\n",
+-			i, parg->name);
++		tracing_log_err("kprobe_events", "replace this with command", err_text, KPROBE_ERR_INVALID_ARG_NAME, err_pos("cmd", parg->name));
+ 		return -EINVAL;
+ 	}
+ 
 -- 
 2.14.1
 
