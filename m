@@ -3,122 +3,148 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
 X-Spam-Status: No, score=-9.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_PASS,USER_AGENT_GIT
-	autolearn=ham autolearn_force=no version=3.4.0
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_PASS,USER_AGENT_NEOMUTT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 20F95C43381
-	for <linux-rt-users@archiver.kernel.org>; Thu,  7 Mar 2019 12:09:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 14833C43381
+	for <linux-rt-users@archiver.kernel.org>; Thu,  7 Mar 2019 12:38:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id EE67620675
-	for <linux-rt-users@archiver.kernel.org>; Thu,  7 Mar 2019 12:09:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E440A20684
+	for <linux-rt-users@archiver.kernel.org>; Thu,  7 Mar 2019 12:38:35 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726217AbfCGMJj (ORCPT
+        id S1726180AbfCGMia (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 7 Mar 2019 07:09:39 -0500
-Received: from mail-wm1-f65.google.com ([209.85.128.65]:51826 "EHLO
-        mail-wm1-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726186AbfCGMJj (ORCPT
+        Thu, 7 Mar 2019 07:38:30 -0500
+Received: from Chamillionaire.breakpoint.cc ([146.0.238.67]:57150 "EHLO
+        Chamillionaire.breakpoint.cc" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1726127AbfCGMi3 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 7 Mar 2019 07:09:39 -0500
-Received: by mail-wm1-f65.google.com with SMTP id n19so9012412wmi.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 07 Mar 2019 04:09:38 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id;
-        bh=fmxRHEhfqe4KOpOLNzkfUAlcDzf0ZKEImK2Tad1sR2Q=;
-        b=j3EvckTSp6Kp1GORAMwbcxWw4bKm4xlTRMTJyKGkOvCIl7OUDKh7D8zFRtq4TBpH89
-         dijmge8GaBLUKSINGH1jlRt+POxj+k44egajlsU6cgsXzGb789fWnsuVYQtzXYMUdBgN
-         5WJgcOB5A1X0H4FYX0Ke0STv4or7yhWTkbkORnIh60eCl9MAJPNK39sBrWGkEl+8pD5E
-         kIRweBl4A0Mt8seI7oDCMzxK/vyZ7piF2FhmkE84GjTXRbRsBE/hCfZnvMHnZe9yswQg
-         z98FburE/d3hzaA6JkUxF9PuEZLFD2k9k1VfO5fOWX2XIFhV/2Y61tlf2W9HJMdaxhZI
-         Mokw==
-X-Gm-Message-State: APjAAAXctiaaDJwhHNH9KDdNHkuSN4/ms4IlKH5MT7wYK/cc3OBCqWvh
-        sbzhfs59G3Yg/fQuBzfL7+QfjGee3nM=
-X-Google-Smtp-Source: APXvYqyzLzFVbS+eWoxcDeXtGiB33RKmdt3rzfdxHYtRr5mgB5jr3vkg/WwhnVCg5GRHUMaDYl4syg==
-X-Received: by 2002:a1c:b40b:: with SMTP id d11mr5902285wmf.80.1551960577218;
-        Thu, 07 Mar 2019 04:09:37 -0800 (PST)
-Received: from localhost.localdomain.com ([151.15.252.68])
-        by smtp.gmail.com with ESMTPSA id u17sm10967703wrg.71.2019.03.07.04.09.36
-        (version=TLS1_2 cipher=ECDHE-RSA-CHACHA20-POLY1305 bits=256/256);
-        Thu, 07 Mar 2019 04:09:36 -0800 (PST)
-From:   Juri Lelli <juri.lelli@redhat.com>
-To:     tglx@linutronix.de, bigeasy@linutronix.de
-Cc:     linux-rt-users@vger.kernel.org, peterz@infradead.org,
-        linux-kernel@vger.kernel.org, bristot@redhat.com,
-        williams@redhat.com, Juri Lelli <juri.lelli@redhat.com>
-Subject: [RFC PATCH RT] x86/tsc: Add option to disable tsc clocksource watchdog
-Date:   Thu,  7 Mar 2019 13:09:13 +0100
-Message-Id: <20190307120913.13168-1-juri.lelli@redhat.com>
-X-Mailer: git-send-email 2.17.2
+        Thu, 7 Mar 2019 07:38:29 -0500
+Received: from bigeasy by Chamillionaire.breakpoint.cc with local (Exim 4.89)
+        (envelope-from <bigeasy@linutronix.de>)
+        id 1h1sI4-0005vw-EB; Thu, 07 Mar 2019 13:38:24 +0100
+Date:   Thu, 7 Mar 2019 13:38:24 +0100
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Julien Grall <julien.grall@arm.com>
+Cc:     linux-kernel@vger.kernel.org, jslaby@suse.com,
+        gregkh@linuxfoundation.org, linux-rt-users@vger.kernel.org,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH] tty/sysrq: Convert show_lock to raw_spinlock_t
+Message-ID: <20190307123823.fnzb7njqdib4xghk@flow>
+References: <20190304172053.17340-1-julien.grall@arm.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20190304172053.17340-1-julien.grall@arm.com>
+User-Agent: NeoMutt/20180716
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Clocksource watchdog has been found responsible for generating latency
-spikes (in the 10-20 us range) when woken up to check for TSC stability.
+On 2019-03-04 17:20:53 [+0000], Julien Grall wrote:
+> At the moment show_lock is implemented using spin_lock_t and called from
+> an interrupt context on Arm64. The following backtrace was triggered by:
+> 
+> 42sh# echo l > /proc/sysrq-trigger
+> 
+> [ 4432.073756] sysrq: SysRq : Show backtrace of all active CPUs
+> [ 4432.403422] BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:974
+> [ 4432.403424] sysrq: CPU6:
+> [ 4432.403426] in_atomic(): 1, irqs_disabled(): 128, pid: 2410, name: kworker/u16:2
+> 
+> [...]
+> 
+> [ 4432.403581] Call trace:
+> [ 4432.403584]  dump_backtrace+0x0/0x148
+> [ 4432.403586]  show_stack+0x14/0x20
+> [ 4432.403588]  dump_stack+0x9c/0xd4
+> [ 4432.403592]  ___might_sleep+0x1cc/0x298
+> [ 4432.403595]  rt_spin_lock+0x5c/0x70
+> [ 4432.403596]  showacpu+0x34/0x68
+> [ 4432.403599]  flush_smp_call_function_queue+0xd4/0x278
+> [ 4432.403602]  generic_smp_call_function_single_interrupt+0x10/0x18
+> [ 4432.403605]  handle_IPI+0x26c/0x668
+> [ 4432.403607]  gic_handle_irq+0x9c/0xa0
+> [ 4432.403609]  el1_irq+0xb4/0x13c
+> 
+> With RT-patches, spin_lock can now sleep and therefore cannot be used from
+> interrupt context. Use a raw_spin_lock instead to prevent the lock to
+> sleep.
+> 
+> Signed-off-by: Julien Grall <julien.grall@arm.com>
 
-Add an option to disable it at boot.
+Now that I had time to look at it, for the change itself:
+	Acked-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Signed-off-by: Juri Lelli <juri.lelli@redhat.com>
----
-Sending this out as an RFC after yesterday discussion with Thomas on IRC.
+For the description please take into consideration to add something like
+this:
 
-AFAICT, CLOCK_SOURCE_MUST_VERIFY only controls enqueue\dequeue of the
-watchdog. TSC sync checks are still done if tsc_clocksource_reliable is
-set (booting w/o tsc=reliable).
+ Systems which don't provide arch_trigger_cpumask_backtrace() will
+ invoke showacpu() from a smp_call_function() function which is invoked
+ with disabled interrupts even on -RT systems.
+ The function acquires the show_lock lock which only purpose is to
+ ensure that the CPUs don't print simultaneously. Otherwise the output
+ would clash and it would be hard to tell the output from CPUx apart
+ from CPUy.
+ On -RT the spin_lock() can not be acquired from this context. A
+ raw_spin_lock() is required. It will introduce the system's latency
+ by performing the sysrq request and other CPUs will block on the lock
+ until the request is done. This is okay because the user asked for a
+ backtrace of all active CPUs and under "normal circumstances in
+ production" this path should not be triggered.
 
-Thomas, is this anywhere close to what you had in mind?
----
- Documentation/admin-guide/kernel-parameters.txt | 4 ++++
- arch/x86/kernel/tsc.c                           | 5 ++++-
- 2 files changed, 8 insertions(+), 1 deletion(-)
+Which explains *why* you do the change and *why* it is okay to do the
+change. If we start changing each spin_lock() to a raw_spin_lock()
+because lockdep said so then soon the RT switch will make less change
+than it should.
 
-diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index f5acf35c712f..ea7c4967aa80 100644
---- a/Documentation/admin-guide/kernel-parameters.txt
-+++ b/Documentation/admin-guide/kernel-parameters.txt
-@@ -4619,6 +4619,10 @@
- 			[x86] unstable: mark the TSC clocksource as unstable, this
- 			marks the TSC unconditionally unstable at bootup and
- 			avoids any further wobbles once the TSC watchdog notices.
-+			[x86] nowatchdog: disable clocksource watchdog. Used
-+			in situations with strict latency requirements (where
-+			interruptions from clocksource watchdog are not
-+			acceptable).
- 
- 	turbografx.map[2|3]=	[HW,JOY]
- 			TurboGraFX parallel port interface
-diff --git a/arch/x86/kernel/tsc.c b/arch/x86/kernel/tsc.c
-index 6d5dc5dabfd7..4b753d057aee 100644
---- a/arch/x86/kernel/tsc.c
-+++ b/arch/x86/kernel/tsc.c
-@@ -283,6 +283,7 @@ int __init notsc_setup(char *str)
- __setup("notsc", notsc_setup);
- 
- static int no_sched_irq_time;
-+static int no_tsc_watchdog;
- 
- static int __init tsc_setup(char *str)
- {
-@@ -292,6 +293,8 @@ static int __init tsc_setup(char *str)
- 		no_sched_irq_time = 1;
- 	if (!strcmp(str, "unstable"))
- 		mark_tsc_unstable("boot parameter");
-+	if (!strcmp(str, "nowatchdog"))
-+		no_tsc_watchdog = 1;
- 	return 1;
- }
- 
-@@ -1347,7 +1350,7 @@ static int __init init_tsc_clocksource(void)
- 	if (tsc_unstable)
- 		goto unreg;
- 
--	if (tsc_clocksource_reliable)
-+	if (tsc_clocksource_reliable || no_tsc_watchdog)
- 		clocksource_tsc.flags &= ~CLOCK_SOURCE_MUST_VERIFY;
- 
- 	if (boot_cpu_has(X86_FEATURE_NONSTOP_TSC_S3))
--- 
-2.17.2
+From top of my head I think you won't see the output on -RT right away.
+The output won't be printed from the non-preemptible context and will be
+delayed until a printk occurs from a preemptible context. There are
+printk related patches which fix that and allow a printk from a
+non-preemptible context for a configured log level.
 
+Looking at the showacpu() construct: Do you get a proper stacktrace for a
+busy CPU or does it always start at el1_irq()? Because if the interrupt
+always starts with its own interrupt stack then the backtrace is
+useless. All you would need is the information that the CPU is alive and
+a oneline printk() saying so would be enough. Or, if it starts on its
+own stack but is able to unwind to the previous context *then* you gain
+additional information you are looking for.
+
+> ---
+>  drivers/tty/sysrq.c | 6 +++---
+>  1 file changed, 3 insertions(+), 3 deletions(-)
+> 
+> diff --git a/drivers/tty/sysrq.c b/drivers/tty/sysrq.c
+> index 1f03078ec352..8473557c7ab2 100644
+> --- a/drivers/tty/sysrq.c
+> +++ b/drivers/tty/sysrq.c
+> @@ -208,7 +208,7 @@ static struct sysrq_key_op sysrq_showlocks_op = {
+>  #endif
+>  
+>  #ifdef CONFIG_SMP
+> -static DEFINE_SPINLOCK(show_lock);
+> +static DEFINE_RAW_SPINLOCK(show_lock);
+>  
+>  static void showacpu(void *dummy)
+>  {
+> @@ -218,10 +218,10 @@ static void showacpu(void *dummy)
+>  	if (idle_cpu(smp_processor_id()))
+>  		return;
+>  
+> -	spin_lock_irqsave(&show_lock, flags);
+> +	raw_spin_lock_irqsave(&show_lock, flags);
+>  	pr_info("CPU%d:\n", smp_processor_id());
+>  	show_stack(NULL, NULL);
+> -	spin_unlock_irqrestore(&show_lock, flags);
+> +	raw_spin_unlock_irqrestore(&show_lock, flags);
+>  }
+>  
+>  static void sysrq_showregs_othercpus(struct work_struct *dummy)
+> -- 
+> 2.11.0
+> 
+
+Sebastian
