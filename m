@@ -2,99 +2,122 @@ Return-Path: <SRS0=xoO4=RO=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 17C20C43381
-	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Mar 2019 00:45:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5DE78C43381
+	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Mar 2019 13:26:08 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id E566D20652
-	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Mar 2019 00:45:55 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2F6802084F
+	for <linux-rt-users@archiver.kernel.org>; Mon, 11 Mar 2019 13:26:08 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="L7twHwuX"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727031AbfCKApu (ORCPT
+        id S1727854AbfCKN0H (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 10 Mar 2019 20:45:50 -0400
-Received: from mail.windriver.com ([147.11.1.11]:44571 "EHLO
-        mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726879AbfCKApt (ORCPT
+        Mon, 11 Mar 2019 09:26:07 -0400
+Received: from mail-wr1-f68.google.com ([209.85.221.68]:46862 "EHLO
+        mail-wr1-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727587AbfCKN0G (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 10 Mar 2019 20:45:49 -0400
-Received: from ALA-HCA.corp.ad.wrs.com ([147.11.189.40])
-        by mail.windriver.com (8.15.2/8.15.1) with ESMTPS id x2B0j0ib009225
-        (version=TLSv1 cipher=AES128-SHA bits=128 verify=FAIL);
-        Sun, 10 Mar 2019 17:45:00 -0700 (PDT)
-Received: from ALA-MBD.corp.ad.wrs.com ([169.254.3.68]) by
- ALA-HCA.corp.ad.wrs.com ([147.11.189.40]) with mapi id 14.03.0439.000; Sun,
- 10 Mar 2019 17:44:59 -0700
-From:   "Liu, Yongxin" <Yongxin.Liu@windriver.com>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-CC:     "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "tglx@linutronix.de" <tglx@linutronix.de>,
-        "rostedt@goodmis.org" <rostedt@goodmis.org>,
-        "dan.j.williams@intel.com" <dan.j.williams@intel.com>,
-        "pagupta@redhat.com" <pagupta@redhat.com>,
-        "Gortmaker, Paul" <Paul.Gortmaker@windriver.com>,
-        "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>
-Subject: RE: [PATCH RT] nvdimm: make lane acquirement RT aware
-Thread-Topic: [PATCH RT] nvdimm: make lane acquirement RT aware
-Thread-Index: AQHU1AQaa42orSwEx0mmBzBs0WZNkaYAw5wAgAAVVLCAAStcgIADmlcQ
-Date:   Mon, 11 Mar 2019 00:44:58 +0000
-Message-ID: <597B109EC20B76429F71A8A97770610D12A5643B@ALA-MBD.corp.ad.wrs.com>
-References: <20190306095709.23138-1-yongxin.liu@windriver.com>
- <20190307143344.ytsnbmot5tjzjhip@linutronix.de>
- <597B109EC20B76429F71A8A97770610D12A52669@ALA-MBD.corp.ad.wrs.com>
- <20190308094131.ge4wbsvz4p6xikdf@linutronix.de>
-In-Reply-To: <20190308094131.ge4wbsvz4p6xikdf@linutronix.de>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-originating-ip: [128.224.162.171]
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+        Mon, 11 Mar 2019 09:26:06 -0400
+Received: by mail-wr1-f68.google.com with SMTP id i16so5060751wrs.13
+        for <linux-rt-users@vger.kernel.org>; Mon, 11 Mar 2019 06:26:05 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=BiAIZ1p8+94UDSsBbGd6zrU4YDwwG/biuV4TwTr/ADk=;
+        b=L7twHwuXJ2K/IlZH7KnqWelgy+QaPJu8e3P3LTveH8EBy0k6dNHUI/CZBNxQFlmDwT
+         0yUOIJgd9/YRQIgAEOByI7ZXY34W5I+t7PVMLFC+8EIZP7ZLBh6gpVvtQh9WdC/KlpBh
+         3EQGTcZVGW0vHr2unWLGJS+LV8PhXIDSIkckGE578TatlIgjMKQ+ClKNvufnqH2aqjA2
+         HwShgQP2hj9g7s5O/TUHzKL13zJuK2TdL320mcZZZ9OYNqPZrPj/GdnYKE16DLpYJm+G
+         921IAXpfMLuZaA9iqNcl9F9GRccdKFWjNZAGSkwTzHAVHyisKNAt8tU0Zfn7BEr1TR5s
+         3OBw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
+         :in-reply-to:references:mime-version:content-transfer-encoding;
+        bh=BiAIZ1p8+94UDSsBbGd6zrU4YDwwG/biuV4TwTr/ADk=;
+        b=hZOJ8M3hLefDYPz48H2CxWuoBa9PFSkEbscb8i/oqfI6UwikWZE7Mf0cRYlbb5Kk89
+         F5cG2RsPJOHUXRq1OGEXH3GLDbSiMihN7V3lmJzQ7mkTqGqhJTmMPjJBOxvJLUQQJrQF
+         cvSUQXFVhLHbiqac1SDXX79Zmy95XvDLuISIbnqibWQEOaNHbt2wWmbXezZ4S17Apa8T
+         /LFQ9YhL9k76S+3t9pbWhtlwMurRzlEwrLFviYToUphxngGB8joGLVlkfP75Zpy+jfv0
+         CSFHdUqz9D20Kqbg06lsXzqpNO0KyK82JfpdfvbCsaHdjhuVVqN5+71P+WVvU+WMdjX8
+         V2CA==
+X-Gm-Message-State: APjAAAUtbYbskunJqIL1ZS4zyQHQFPVnL0EP1eZ9ehSgqAi0zk3xQDpD
+        SFdSfo5Z/07S5XaIwlo3jmkZdOnp
+X-Google-Smtp-Source: APXvYqxjOYY4J74lBIVcRw6Sv07mra4KX3O4Qjpx6TDPW7r261mcrCG37t+CtMCJ03BdZiVbHcNTNw==
+X-Received: by 2002:a5d:5292:: with SMTP id c18mr15735399wrv.251.1552310764291;
+        Mon, 11 Mar 2019 06:26:04 -0700 (PDT)
+Received: from planxty.redhat.com ([2a02:8108:1700:1960:91dd:e2f9:ed05:ee2b])
+        by smtp.gmail.com with ESMTPSA id g202sm21776222wme.26.2019.03.11.06.26.03
+        (version=TLS1_3 cipher=AEAD-AES256-GCM-SHA384 bits=256/256);
+        Mon, 11 Mar 2019 06:26:03 -0700 (PDT)
+From:   John Kacur <jkacur@redhat.com>
+To:     rt-users <linux-rt-users@vger.kernel.org>
+Cc:     John Kacur <jkacur@redhat.com>
+Subject: [PATCH 2/2] cyclictest: Make sure affinity is respected when numa is detected
+Date:   Mon, 11 Mar 2019 14:25:49 +0100
+Message-Id: <20190311132549.7219-2-jkacur@redhat.com>
+X-Mailer: git-send-email 2.20.1
+In-Reply-To: <20190311132549.7219-1-jkacur@redhat.com>
+References: <20190311132549.7219-1-jkacur@redhat.com>
 MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-DQo+IC0tLS0tT3JpZ2luYWwgTWVzc2FnZS0tLS0tDQo+IEZyb206IGxpbnV4LWtlcm5lbC1vd25l
-ckB2Z2VyLmtlcm5lbC5vcmcgW21haWx0bzpsaW51eC1rZXJuZWwtDQo+IG93bmVyQHZnZXIua2Vy
-bmVsLm9yZ10gT24gQmVoYWxmIE9mIFNlYmFzdGlhbiBBbmRyemVqIFNpZXdpb3INCj4gU2VudDog
-RnJpZGF5LCBNYXJjaCA4LCAyMDE5IDE3OjQyDQo+IFRvOiBMaXUsIFlvbmd4aW4NCj4gQ2M6IGxp
-bnV4LWtlcm5lbEB2Z2VyLmtlcm5lbC5vcmc7IGxpbnV4LXJ0LXVzZXJzQHZnZXIua2VybmVsLm9y
-ZzsNCj4gdGdseEBsaW51dHJvbml4LmRlOyByb3N0ZWR0QGdvb2RtaXMub3JnOyBkYW4uai53aWxs
-aWFtc0BpbnRlbC5jb207DQo+IHBhZ3VwdGFAcmVkaGF0LmNvbTsgR29ydG1ha2VyLCBQYXVsOyBs
-aW51eC1udmRpbW1AbGlzdHMuMDEub3JnDQo+IFN1YmplY3Q6IFJlOiBbUEFUQ0ggUlRdIG52ZGlt
-bTogbWFrZSBsYW5lIGFjcXVpcmVtZW50IFJUIGF3YXJlDQo+IA0KPiBPbiAyMDE5LTAzLTA4IDAw
-OjA3OjQxIFsrMDAwMF0sIExpdSwgWW9uZ3hpbiB3cm90ZToNCj4gPiBUaGUgbGFuZSBpcyBjcml0
-aWNhbCByZXNvdXJjZSB3aGljaCBuZWVkcyB0byBiZSBwcm90ZWN0ZWQuIE9uZSBDUFUgY2FuDQo+
-IHVzZSBvbmx5IG9uZQ0KPiA+IGxhbmUuIElmIENQVSBudW1iZXIgaXMgZ3JlYXRlciB0aGFuIHRo
-ZSBudW1iZXIgb2YgdG90YWwgbGFuZSwgdGhlIGxhbmUNCj4gY2FuIGJlIHNoYXJlZA0KPiA+IGFt
-b25nIENQVXMuDQo+ID4NCj4gPiBJbiBub24tUlQga2VybmVsLCBnZXRfY3B1KCkgZGlzYWJsZSBw
-cmVlbXB0aW9uIGJ5IGNhbGxpbmcNCj4gcHJlZW1wdF9kaXNhYmxlKCkgZmlyc3QuDQo+ID4gT25s
-eSBvbmUgdGhyZWFkIG9uIHRoZSBzYW1lIENQVSBjYW4gZ2V0IHRoZSBsYW5lLg0KPiA+DQo+ID4g
-SW4gUlQga2VybmVsLCBpZiB3ZSBvbmx5IHVzZSByYXdfc21wX3Byb2Nlc3Nvcl9pZCgpLCB0aGlz
-IGRvZXNuJ3QNCj4gcHJvdGVjdCB0aGUgbGFuZS4NCj4gPiBUaHVzIHR3byB0aHJlYWRzIG9uIHRo
-ZSBzYW1lIENQVSBjYW4gZ2V0IHRoZSBzYW1lIGxhbmUgYXQgdGhlIHNhbWUgdGltZS4NCj4gPg0K
-PiA+IEluIHRoaXMgcGF0Y2gsIHR3by1sZXZlbCBsb2NrIGNhbiBhdm9pZCByYWNlIGNvbmRpdGlv
-biBmb3IgdGhlIGxhbmUuDQo+IA0KPiBidXQgeW91IHN0aWxsIGhhdmUgdGhlIG5kbF9sb2NrLT5s
-b2NrIHdoaWNoIHByb3RlY3RzIHRoZSByZXNvdXJjZS4gU28gaW4NCj4gdGhlIHVubGlrZWx5IChi
-dXQgcG9zc2libGUgZXZlbnQpIHRoYXQgeW91IHN3aXRjaCBDUFVzIGFmdGVyIG9idGFpbmluZw0K
-PiB0aGUgQ1BVIG51bWJlciB5b3UgYmxvY2sgb24gdGhlIGxvY2suIE5vIGhhcm0gaXMgZG9uZSwg
-cmlnaHQ/DQoNClRoZSByZXNvdXJjZSAibGFuZSIgY2FuIGJlIGFjcXVpcmVkIHJlY3Vyc2l2ZWx5
-LCBzbyAibmRsX2xvY2stPmxvY2siIGlzIGEgY29uZGl0aW9uYWwgbG9jay4NCg0KbmRsX2NvdW50
-LT5jb3VudCBpcyBwZXIgQ1BVLg0KbmRsX2xvY2stPmxvY2sgaXMgcGVyIGxhbmUuDQoNCkhlcmUg
-aXMgYW4gZXhhbXBsZToNClRocmVhZCBBICBvbiBDUFUgNSAtLT4gbmRfcmVnaW9uX2FjcXVpcmVf
-bGFuZSAtLT4gbGFuZSMgNSAtLT4gZ2V0ICJuZGxfbG9jay0+bG9jayINCi0tPiBuZF9yZWdpb25f
-YWNxdWlyZV9sYW5lIC0tPiBsYW5lIyA1IC0tPiBieXBhc3MgIm5kbF9sb2NrLT5sb2NrIiBkdWUg
-dG8gIm5kbF9jb3VudC0+Y291bnQrKyIuDQoNClRocmVhZCBCIG9uIENQVSA1IC0tPiBuZF9yZWdp
-b25fYWNxdWlyZV9sYW5lIC0tPiBsYW5lIyA1IC0tPiBieXBhc3MgIm5kbF9sb2NrLT5sb2NrIiAo
-Im5kbF9jb3VudC0+Y291bnQiDQp3YXMgY2hhbmdlZCBieSBUaHJlYWQgQSkNCg0KSWYgd2UgdXNl
-IHJhd19zbXBfcHJvY2Vzc29yX2lkKCksIG5vIG1hdHRlciB3aGljaCBDUFUgdGhlIHRocmVhZCB3
-YXMgbWlncmF0ZWQgdG8sIA0KaWYgdGhlcmUgaXMgYW5vdGhlciB0aHJlYWQgcnVubmluZyBvbiB0
-aGUgb2xkIENQVSwgdGhlcmUgd2lsbCBiZSByYWNlIGNvbmRpdGlvbiANCmR1ZSB0byBwZXIgQ1BV
-IHZhcmlhYmxlICJuZGxfY291bnQtPmNvdW50Ii4NCg0KDQpUaGFua3MsDQpZb25neGluDQoNCj4g
-DQo+IFNlYmFzdGlhbg0K
+Make sure affinity is respected when numa is automatically detected and
+when smp is not specified. Don't break the way smp currently works.
+
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ src/cyclictest/cyclictest.c | 13 ++++++-------
+ 1 file changed, 6 insertions(+), 7 deletions(-)
+
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 1bd63fd93dce..ed59edefbf97 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -1218,7 +1218,7 @@ static void process_options (int argc, char *argv[], int max_cpus)
+ 		case 'a':
+ 		case OPT_AFFINITY:
+ 			option_affinity = 1;
+-			if (smp || numa)
++			if (smp)
+ 				break;
+ 			if (optarg != NULL) {
+ 				parse_cpumask(optarg, max_cpus);
+@@ -1384,8 +1384,10 @@ static void process_options (int argc, char *argv[], int max_cpus)
+ #ifdef NUMA
+ 		if (numa_available() != -1) {
+ 			numa = 1;
+-			num_threads = max_cpus;
+-			setaffinity = AFFINITY_USEALL;
++			if (setaffinity == AFFINITY_UNSPECIFIED) {
++				num_threads = max_cpus;
++				setaffinity = AFFINITY_USEALL;
++			}
+ 		}
+ #else
+ 		warn("cyclictest was not built with the numa option\n");
+@@ -1394,11 +1396,8 @@ static void process_options (int argc, char *argv[], int max_cpus)
+ 	}
+ 
+ 	if (option_affinity) {
+-		if (smp) {
++		if (smp)
+ 			warn("-a ignored due to smp mode\n");
+-		} else if (numa) {
+-			warn("-a ignored due to numa mode\n");
+-		}
+ 	}
+ 
+ 	if (smi) {
+-- 
+2.20.1
+
