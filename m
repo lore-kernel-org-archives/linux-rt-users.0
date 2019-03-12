@@ -2,95 +2,68 @@ Return-Path: <SRS0=Dbld=RP=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_PASS,URIBL_BLOCKED
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_PASS,URIBL_BLOCKED,
+	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 171B7C43381
-	for <linux-rt-users@archiver.kernel.org>; Tue, 12 Mar 2019 16:51:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 23D76C10F00
+	for <linux-rt-users@archiver.kernel.org>; Tue, 12 Mar 2019 17:25:04 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id DCBF22087C
-	for <linux-rt-users@archiver.kernel.org>; Tue, 12 Mar 2019 16:51:02 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1552409462;
-	bh=JqKYz84J3hwKXElgIgyxB9fiRd7g0dLiXoh5PxHm6fU=;
-	h=Subject:From:To:Cc:Date:In-Reply-To:References:List-ID:From;
-	b=CVarOl++vBl6+U6VT8rmG4rkpAZBaWBGnUEjP0qxSlmgd9g6TT375L1dT8d9iOtMk
-	 IckfBxX4GGbzHRQGpEGkDo0vf1kNDo/YM1JNnznjbfXtOrJev2pSyY0InhPDQ//xsV
-	 E0pTkyAKM+VDQKEn7X+kc8ZgMbjfk4P+ebb49d+I=
+	by mail.kernel.org (Postfix) with ESMTP id F3A512175B
+	for <linux-rt-users@archiver.kernel.org>; Tue, 12 Mar 2019 17:25:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726498AbfCLQu5 (ORCPT
+        id S1730168AbfCLRZC (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 12 Mar 2019 12:50:57 -0400
-Received: from mail.kernel.org ([198.145.29.99]:57550 "EHLO mail.kernel.org"
+        Tue, 12 Mar 2019 13:25:02 -0400
+Received: from thoth.sbs.de ([192.35.17.2]:49715 "EHLO thoth.sbs.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726415AbfCLQu5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 12 Mar 2019 12:50:57 -0400
-Received: from tzanussi-mobl (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 05D102054F;
-        Tue, 12 Mar 2019 16:50:55 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1552409456;
-        bh=JqKYz84J3hwKXElgIgyxB9fiRd7g0dLiXoh5PxHm6fU=;
-        h=Subject:From:To:Cc:Date:In-Reply-To:References:From;
-        b=lO1M6JYtHIjG3C+PM8TSEXQh+kA/No594nk4Die52cUlK+/4+tuS2YwGOsVAsGVWh
-         5fGGTAjEoy0c9NONqQ6w2JhpPxRCEdH2e0GMfMHYbHa0lBv/Xj6kudHjwG7Mqpj22q
-         llewtXyvC+Ttc4HHL0aRoMYVJ8g7EnorhaFMaWdU=
-Message-ID: <1552409455.4293.24.camel@kernel.org>
-Subject: Re: [RFC PATCH v3 3/5] tracing: Use tracing error_log with hist
- triggers
-From:   Tom Zanussi <zanussi@kernel.org>
-To:     Masami Hiramatsu <mhiramat@kernel.org>
-Cc:     rostedt@goodmis.org, tglx@linutronix.de, namhyung@kernel.org,
-        bigeasy@linutronix.de, joel@joelfernandes.org,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Date:   Tue, 12 Mar 2019 11:50:55 -0500
-In-Reply-To: <20190313004631.d8feedaaa0ac701f2322ca38@kernel.org>
-References: <cover.1551741458.git.tom.zanussi@linux.intel.com>
-         <7cc4a06837b8cbabec0e2b14d96da6396f081dca.1551741458.git.tom.zanussi@linux.intel.com>
-         <20190313004631.d8feedaaa0ac701f2322ca38@kernel.org>
-Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.26.1-1 
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+        id S1728847AbfCLRZC (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 12 Mar 2019 13:25:02 -0400
+Received: from mail1.sbs.de (mail1.sbs.de [192.129.41.35])
+        by thoth.sbs.de (8.15.2/8.15.2) with ESMTPS id x2CHOtBB002451
+        (version=TLSv1.2 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+        Tue, 12 Mar 2019 18:24:55 +0100
+Received: from localhost ([139.25.69.33])
+        by mail1.sbs.de (8.15.2/8.15.2) with ESMTP id x2CHOtbU015814;
+        Tue, 12 Mar 2019 18:24:55 +0100
+From:   Daniel Wagner <daniel.wagner@siemens.com>
+To:     linux-rt-users@vger.kernel.org
+Cc:     John Kacur <jkacur@redhat.com>,
+        Clark Williams <williams@redhat.com>,
+        Daniel Wagner <daniel.wagner@siemens.com>
+Subject: [PATCH 1/4] cyclicdeadline: Fix stack corruption
+Date:   Tue, 12 Mar 2019 18:24:33 +0100
+Message-Id: <20190312172436.18314-2-daniel.wagner@siemens.com>
+X-Mailer: git-send-email 2.20.1
+In-Reply-To: <20190312172436.18314-1-daniel.wagner@siemens.com>
+References: <20190312172436.18314-1-daniel.wagner@siemens.com>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Masami,
+The buffer is too short for the string.
 
-On Wed, 2019-03-13 at 00:46 +0900, Masami Hiramatsu wrote:
-> On Mon,  4 Mar 2019 17:36:46 -0600
-> Tom Zanussi <zanussi@kernel.org> wrote:
-> 
-> > From: Tom Zanussi <tom.zanussi@linux.intel.com>
-> > 
-> > Replace hist_err() and hist_err_event() with tracing_log_err() from
-> > the new tracing error_log mechanism.
-> > 
-> > Also add a couple related helper functions and remove most of the
-> > old
-> > hist_err()-related code.
-> > 
-> > With this change, users no longer read the hist files for hist
-> > trigger
-> > error information, but instead look at tracing/error_log for the
-> > same
-> > information.
-> 
-> Could you also add a patch which update its testcase?
->  
-> test.d/trigger/inter-event/trigger-extended-error-support.tc
-> 
-> will fail after this patch.
-> 
+Signed-off-by: Daniel Wagner <daniel.wagner@siemens.com>
+---
+ src/sched_deadline/cyclicdeadline.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Yeah, good point, will do (and documentation too).
-
-Thanks,
-
-Tom
+diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
+index 577ad95cfee1..095e6ccc166f 100644
+--- a/src/sched_deadline/cyclicdeadline.c
++++ b/src/sched_deadline/cyclicdeadline.c
+@@ -285,7 +285,7 @@ static void setup_ftrace_marker(void)
+ {
+ 	struct stat st;
+ 	const char *debugfs = find_debugfs();
+-	char files[strlen(debugfs) + 14];
++	char files[strlen(debugfs) + strlen("/tracing/trace_marker")];
+ 	int ret;
+ 
+ 	if (strlen(debugfs) == 0)
+-- 
+2.20.1
 
