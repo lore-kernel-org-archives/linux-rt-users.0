@@ -3,53 +3,54 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
 X-Spam-Status: No, score=-1.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_PASS autolearn=unavailable
-	autolearn_force=no version=3.4.0
+	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_PASS,URIBL_BLOCKED
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5A8CBC43381
-	for <linux-rt-users@archiver.kernel.org>; Tue, 12 Mar 2019 16:49:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 171B7C43381
+	for <linux-rt-users@archiver.kernel.org>; Tue, 12 Mar 2019 16:51:03 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 294882087C
-	for <linux-rt-users@archiver.kernel.org>; Tue, 12 Mar 2019 16:49:19 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DCBF22087C
+	for <linux-rt-users@archiver.kernel.org>; Tue, 12 Mar 2019 16:51:02 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1552409359;
-	bh=QYO7095VXhN8T7/S5iYO2zw8ve4VvoBBWYaGoy3r5QQ=;
+	s=default; t=1552409462;
+	bh=JqKYz84J3hwKXElgIgyxB9fiRd7g0dLiXoh5PxHm6fU=;
 	h=Subject:From:To:Cc:Date:In-Reply-To:References:List-ID:From;
-	b=jgXDM12KxE/s97uhcW6MvLP51mfGMrGDT/ex6GE3RfTbg+OdIF5CVPAL8KXFjzkTo
-	 94ZZoIHt7O7fvE41ARwfVLTCV2ZyZptv3C766oz7bLtBAfalRP+Osu2KR29SM5XI3L
-	 OVnIZ9Fw2xyCxwINA+ED0HDo3WjgyTeMCOwtelOc=
+	b=CVarOl++vBl6+U6VT8rmG4rkpAZBaWBGnUEjP0qxSlmgd9g6TT375L1dT8d9iOtMk
+	 IckfBxX4GGbzHRQGpEGkDo0vf1kNDo/YM1JNnznjbfXtOrJev2pSyY0InhPDQ//xsV
+	 E0pTkyAKM+VDQKEn7X+kc8ZgMbjfk4P+ebb49d+I=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726849AbfCLQtO (ORCPT
+        id S1726498AbfCLQu5 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 12 Mar 2019 12:49:14 -0400
-Received: from mail.kernel.org ([198.145.29.99]:56652 "EHLO mail.kernel.org"
+        Tue, 12 Mar 2019 12:50:57 -0400
+Received: from mail.kernel.org ([198.145.29.99]:57550 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726141AbfCLQtO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 12 Mar 2019 12:49:14 -0400
+        id S1726415AbfCLQu5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 12 Mar 2019 12:50:57 -0400
 Received: from tzanussi-mobl (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 33F1D2054F;
-        Tue, 12 Mar 2019 16:49:12 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 05D102054F;
+        Tue, 12 Mar 2019 16:50:55 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1552409352;
-        bh=QYO7095VXhN8T7/S5iYO2zw8ve4VvoBBWYaGoy3r5QQ=;
+        s=default; t=1552409456;
+        bh=JqKYz84J3hwKXElgIgyxB9fiRd7g0dLiXoh5PxHm6fU=;
         h=Subject:From:To:Cc:Date:In-Reply-To:References:From;
-        b=XcUt67iPp7Byf1rW5+givNZsHfolOn/iIVRnmPRQQlgQ3ee0yVE4+y7QaYOoaMUtB
-         xO6Y7aMrSGym1B/C2c4YUhfiAFI0WCwiDxXzzy+Gt8hh/IijUb9/TzOqok5IgDFY8s
-         N92tBQZbR5IDjn0XzDai+WtRhYPNgRJn3rYxvjd8=
-Message-ID: <1552409351.4293.22.camel@kernel.org>
-Subject: Re: [RFC PATCH v3 0/5] tracing: common error_log for ftrace
+        b=lO1M6JYtHIjG3C+PM8TSEXQh+kA/No594nk4Die52cUlK+/4+tuS2YwGOsVAsGVWh
+         5fGGTAjEoy0c9NONqQ6w2JhpPxRCEdH2e0GMfMHYbHa0lBv/Xj6kudHjwG7Mqpj22q
+         llewtXyvC+Ttc4HHL0aRoMYVJ8g7EnorhaFMaWdU=
+Message-ID: <1552409455.4293.24.camel@kernel.org>
+Subject: Re: [RFC PATCH v3 3/5] tracing: Use tracing error_log with hist
+ triggers
 From:   Tom Zanussi <zanussi@kernel.org>
 To:     Masami Hiramatsu <mhiramat@kernel.org>
 Cc:     rostedt@goodmis.org, tglx@linutronix.de, namhyung@kernel.org,
         bigeasy@linutronix.de, joel@joelfernandes.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Date:   Tue, 12 Mar 2019 11:49:11 -0500
-In-Reply-To: <20190312152605.00150aae7b781137005e9ebf@kernel.org>
+Date:   Tue, 12 Mar 2019 11:50:55 -0500
+In-Reply-To: <20190313004631.d8feedaaa0ac701f2322ca38@kernel.org>
 References: <cover.1551741458.git.tom.zanussi@linux.intel.com>
-         <20190305230646.e7f99c46f86c0e099ac0cd30@kernel.org>
-         <20190312152605.00150aae7b781137005e9ebf@kernel.org>
+         <7cc4a06837b8cbabec0e2b14d96da6396f081dca.1551741458.git.tom.zanussi@linux.intel.com>
+         <20190313004631.d8feedaaa0ac701f2322ca38@kernel.org>
 Content-Type: text/plain; charset="UTF-8"
 X-Mailer: Evolution 3.26.1-1 
 Mime-Version: 1.0
@@ -61,95 +62,35 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 Hi Masami,
 
-On Tue, 2019-03-12 at 15:26 +0900, Masami Hiramatsu wrote:
-> Hi Tom,
+On Wed, 2019-03-13 at 00:46 +0900, Masami Hiramatsu wrote:
+> On Mon,  4 Mar 2019 17:36:46 -0600
+> Tom Zanussi <zanussi@kernel.org> wrote:
 > 
-> On Tue, 5 Mar 2019 23:06:46 +0900
-> Masami Hiramatsu <mhiramat@kernel.org> wrote:
+> > From: Tom Zanussi <tom.zanussi@linux.intel.com>
+> > 
+> > Replace hist_err() and hist_err_event() with tracing_log_err() from
+> > the new tracing error_log mechanism.
+> > 
+> > Also add a couple related helper functions and remove most of the
+> > old
+> > hist_err()-related code.
+> > 
+> > With this change, users no longer read the hist files for hist
+> > trigger
+> > error information, but instead look at tracing/error_log for the
+> > same
+> > information.
 > 
-> > On Mon,  4 Mar 2019 17:36:43 -0600
-> > > Changes from v2:
-> > > 
-> > >   - Added [n] numbering as suggested by Masami
+> Could you also add a patch which update its testcase?
+>  
+> test.d/trigger/inter-event/trigger-extended-error-support.tc
 > 
-> Hmm, this seems a bit different what I suggested.
-> 
-> I'm trying to port probe event's error report on
-> your error log, and I found that the number is
-> just shifted as below.
-> 
-> When I filled the log with errors.
-> =============
-> /sys/kernel/debug/tracing # cat error_log 
-> [1] trace_kprobe: error: Invalid unsigned integer string
->   Command: r10aa00:foo/bar vfs
->             ^
-> ...
-> 
-> [7] trace_kprobe: error: Group name must follow C naming convention
->   Command: p:a-b/bar vfs_read
->              ^
-> [8] trace_kprobe: error: Event name is too long
->   Command:
-> p:a/barrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
-> rrrrrrrrrrr vfs_read
-> =============
-> 
-> And do one more error, 
-> 
-> =============
-> /sys/kernel/debug/tracing # cat error_log 
-> [1] trace_kprobe: error: Maxactive is too big
->   Command: r0xaa00:foo/bar vfs
-> 
-> ....
-> 
-> [7] trace_kprobe: error: Event name is too long
->   Command:
-> p:a/barrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
-> rrrrrrrrrrr vfs_read
->                ^
-> [8] trace_kprobe: error: Event name must follow C naming convention
->   Command: p:a/bar.c vfs_read
->                ^
-> =============
-> 
-> The number of logs are changed :(  This can confuse users.
-> I think it is better to keep the number as a unique number for
-> each entry as below.
+> will fail after this patch.
 > 
 
-Hmm, that makes sense, but I wonder if that will also confuse users,
-when the log wraps around and no longer starts at [1] and there's no
-way to retrieve the previous errors.
-
-I took your suggestion as a way mainly to clearly delineate each error,
-since without the [number] or something similar, they all kind of run
-together.
-
-Not sure what advantage numbering itself provides - would some other
-non-numbered separator work?
+Yeah, good point, will do (and documentation too).
 
 Thanks,
 
 Tom
 
-> =============
-> /sys/kernel/debug/tracing # cat error_log 
-> [2] trace_kprobe: error: Maxactive is too big
->   Command: r0xaa00:foo/bar vfs
-> 
-> ....
-> 
-> [8] trace_kprobe: error: Event name is too long
->   Command:
-> p:a/barrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
-> rrrrrrrrrrr vfs_read
->                ^
-> [9] trace_kprobe: error: Event name must follow C naming convention
->   Command: p:a/bar.c vfs_read
->                ^
-> =============
-> 
-> Thank you,
-> 
