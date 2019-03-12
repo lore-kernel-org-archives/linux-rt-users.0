@@ -2,663 +2,815 @@ Return-Path: <SRS0=Dbld=RP=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_PASS,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 33FB4C43381
-	for <linux-rt-users@archiver.kernel.org>; Tue, 12 Mar 2019 15:46:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1CEADC43381
+	for <linux-rt-users@archiver.kernel.org>; Tue, 12 Mar 2019 15:47:59 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id D67972147C
-	for <linux-rt-users@archiver.kernel.org>; Tue, 12 Mar 2019 15:46:45 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1552405606;
-	bh=cUvphSzUejrMVNiRo5E2zZA9+jk9LdhW7M5jUiaPZEk=;
-	h=Date:From:To:Cc:Subject:In-Reply-To:References:List-ID:From;
-	b=E27U8HTqemUDYP9x0QMCYOnclMnHJtX+aXPay2Hs5g/3LnOVk0tvG/SvxYxLbVJ2l
-	 MafeK2/ocR3Te2QjzQE0ap5FGYS36xs78eepOzlKdhIORSrd+yneXdujrXJYFuS0cq
-	 fYMtofD9/1GUKlPPFDWQA7WX8bguG+S1oYnGnOwU=
+	by mail.kernel.org (Postfix) with ESMTP id C90F520693
+	for <linux-rt-users@archiver.kernel.org>; Tue, 12 Mar 2019 15:47:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726292AbfCLPqj (ORCPT
+        id S1726456AbfCLPr6 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 12 Mar 2019 11:46:39 -0400
-Received: from mail.kernel.org ([198.145.29.99]:47076 "EHLO mail.kernel.org"
+        Tue, 12 Mar 2019 11:47:58 -0400
+Received: from thoth.sbs.de ([192.35.17.2]:58727 "EHLO thoth.sbs.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726272AbfCLPqj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 12 Mar 2019 11:46:39 -0400
-Received: from devnote2 (NE2965lan1.rev.em-net.ne.jp [210.141.244.193])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 927CA20693;
-        Tue, 12 Mar 2019 15:46:34 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1552405597;
-        bh=cUvphSzUejrMVNiRo5E2zZA9+jk9LdhW7M5jUiaPZEk=;
-        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
-        b=dIAyLiJ3gQX2v6SKNOew05FNNIbgFSb0sLIj3I7MU6fe6oMwSo3yozx8rFtwVtHi+
-         fc3JSPPuagDPWdzso1GY5veM/sPpt85n6sgU/2a0q0CDYqqS0GiHyvC4xjaDh60pJ0
-         zo0GhpbkSBn6IpkB6oe4ufhbJLPYJhMPgT9mDZRk=
-Date:   Wed, 13 Mar 2019 00:46:31 +0900
-From:   Masami Hiramatsu <mhiramat@kernel.org>
-To:     Tom Zanussi <zanussi@kernel.org>
-Cc:     rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
-        namhyung@kernel.org, bigeasy@linutronix.de, joel@joelfernandes.org,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: Re: [RFC PATCH v3 3/5] tracing: Use tracing error_log with hist
- triggers
-Message-Id: <20190313004631.d8feedaaa0ac701f2322ca38@kernel.org>
-In-Reply-To: <7cc4a06837b8cbabec0e2b14d96da6396f081dca.1551741458.git.tom.zanussi@linux.intel.com>
-References: <cover.1551741458.git.tom.zanussi@linux.intel.com>
-        <7cc4a06837b8cbabec0e2b14d96da6396f081dca.1551741458.git.tom.zanussi@linux.intel.com>
-X-Mailer: Sylpheed 3.5.1 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+        id S1726365AbfCLPr6 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 12 Mar 2019 11:47:58 -0400
+Received: from mail1.sbs.de (mail1.sbs.de [192.129.41.35])
+        by thoth.sbs.de (8.15.2/8.15.2) with ESMTPS id x2CFlnmI031796
+        (version=TLSv1.2 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+        Tue, 12 Mar 2019 16:47:49 +0100
+Received: from localhost ([139.25.69.33])
+        by mail1.sbs.de (8.15.2/8.15.2) with ESMTP id x2CFlnvI020770;
+        Tue, 12 Mar 2019 16:47:49 +0100
+From:   Daniel Wagner <daniel.wagner@siemens.com>
+To:     John Kacur <jkacur@redhat.com>,
+        Clark Williams <williams@redhat.com>
+Cc:     linux-rt-users@vger.kernel.org,
+        Daniel Wagner <daniel.wagner@siemens.com>
+Subject: [PATCH v1] rt-tests: Add --duration argument to tests
+Date:   Tue, 12 Mar 2019 16:47:38 +0100
+Message-Id: <20190312154738.10925-1-daniel.wagner@siemens.com>
+X-Mailer: git-send-email 2.20.1
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon,  4 Mar 2019 17:36:46 -0600
-Tom Zanussi <zanussi@kernel.org> wrote:
+Many of the test programs have the --loop argument for automatic
+stopping. The main problem with the --loop argument is how long is
+--loop 1000?
 
-> From: Tom Zanussi <tom.zanussi@linux.intel.com>
-> 
-> Replace hist_err() and hist_err_event() with tracing_log_err() from
-> the new tracing error_log mechanism.
-> 
-> Also add a couple related helper functions and remove most of the old
-> hist_err()-related code.
-> 
-> With this change, users no longer read the hist files for hist trigger
-> error information, but instead look at tracing/error_log for the same
-> information.
+To simplify automated tests  introduce a --duration argument which
+allows to set the time how long a test should run. This allows the
+test suite to define the executation time and also the timeout which a
+normal human can understand.
 
-Could you also add a patch which update its testcase?
+For example run the test for 10 minutes and timeout at 11 minutes:
+
+  # timeout 11m sigwaittest --duration 10m
+
+Signed-off-by: Daniel Wagner <daniel.wagner@siemens.com>
+---
+Hi,
+
+I tried to patch all tests where possible. Not all tests need it,
+e.g. pip_stress.
+
+There are two memory corruption bugs in cyclicdeadline and
+deadline_test. The setcpu_buf gets corrupted but I haven't figured
+where it happens. valgrind doesn't help :(
+
+Thanks,
+Daniel
+
+ src/cyclictest/cyclictest.c           | 33 --------------------------
+ src/include/rt-utils.h                |  2 ++
+ src/lib/rt-utils.c                    | 34 +++++++++++++++++++++++++++
+ src/pi_tests/pi_stress.8              |  4 ++++
+ src/pi_tests/pi_stress.c              |  9 +++----
+ src/pmqtest/pmqtest.8                 |  5 ++++
+ src/pmqtest/pmqtest.c                 | 17 ++++++++++++--
+ src/ptsematest/ptsematest.8           |  5 ++++
+ src/ptsematest/ptsematest.c           | 14 ++++++++++-
+ src/rt-migrate-test/rt-migrate-test.8 |  5 ++++
+ src/rt-migrate-test/rt-migrate-test.c | 12 +++++++++-
+ src/sched_deadline/cyclicdeadline.c   | 12 +++++++++-
+ src/signaltest/signaltest.8           |  5 ++++
+ src/signaltest/signaltest.c           | 14 ++++++++++-
+ src/sigwaittest/sigwaittest.8         |  5 ++++
+ src/sigwaittest/sigwaittest.c         | 15 +++++++++++-
+ src/svsematest/svsematest.8           |  5 ++++
+ src/svsematest/svsematest.c           | 15 +++++++++++-
+ 18 files changed, 166 insertions(+), 45 deletions(-)
+
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index ed59edefbf97..03d56e4f520c 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -406,39 +406,6 @@ static void enable_trace_mark(void)
+ 	open_tracemark_fd();
+ }
  
-test.d/trigger/inter-event/trigger-extended-error-support.tc
-
-will fail after this patch.
-
-Thank you,
-
-> 
-> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> ---
->  kernel/trace/trace_events_hist.c | 206 ++++++++++++++++++++-------------------
->  1 file changed, 104 insertions(+), 102 deletions(-)
-> 
-> diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-> index 231f9e4379d2..562306265c9d 100644
-> --- a/kernel/trace/trace_events_hist.c
-> +++ b/kernel/trace/trace_events_hist.c
-> @@ -22,6 +22,57 @@
->  
->  #define STR_VAR_LEN_MAX		32 /* must be multiple of sizeof(u64) */
->  
-> +#define ERRORS								\
-> +	C(NONE,			"No error"),				\
-> +	C(DUPLICATE_VAR,	"Variable already defined"),		\
-> +	C(VAR_NOT_UNIQUE,	"Variable name not unique, need to use fully qualified name (subsys.event.var) for variable"), \
-> +	C(TOO_MANY_VARS,	"Too many variables defined"),		\
-> +	C(MALFORMED_ASSIGNMENT,	"Malformed assignment"),		\
-> +	C(NAMED_MISMATCH,	"Named hist trigger doesn't match existing named trigger (includes variables)"), \
-> +	C(TRIGGER_EEXIST,	"Hist trigger already exists"),		\
-> +	C(TRIGGER_ENOENT_CLEAR,	"Can't clear or continue a nonexistent hist trigger"), \
-> +	C(SET_CLOCK_FAIL,	"Couldn't set trace_clock"),		\
-> +	C(BAD_FIELD_MODIFIER,	"Invalid field modifier"),		\
-> +	C(TOO_MANY_SUBEXPR,	"Too many subexpressions (3 max)"),	\
-> +	C(TIMESTAMP_MISMATCH,	"Timestamp units in expression don't match"), \
-> +	C(TOO_MANY_FIELD_VARS,	"Too many field variables defined"),	\
-> +	C(EVENT_FILE_NOT_FOUND,	"Event file not found"),		\
-> +	C(HIST_NOT_FOUND,	"Matching event histogram not found"),	\
-> +	C(HIST_CREATE_FAIL,	"Couldn't create histogram for field"),	\
-> +	C(SYNTH_VAR_NOT_FOUND,	"Couldn't find synthetic variable"),	\
-> +	C(SYNTH_EVENT_NOT_FOUND,"Couldn't find synthetic event"),	\
-> +	C(SYNTH_TYPE_MISMATCH,	"Param type doesn't match synthetic event field type"), \
-> +	C(SYNTH_COUNT_MISMATCH,	"Param count doesn't match synthetic event field count"), \
-> +	C(FIELD_VAR_PARSE_FAIL,	"Couldn't parse field variable"),	\
-> +	C(VAR_CREATE_FIND_FAIL,	"Couldn't create or find variable"),	\
-> +	C(ONX_NOT_VAR,		"For onmax(x) or onchange(x), x must be a variable"), \
-> +	C(ONX_VAR_NOT_FOUND,	"Couldn't find onmax or onchange variable"), \
-> +	C(ONX_VAR_CREATE_FAIL,	"Couldn't create onmax or onchange variable"), \
-> +	C(FIELD_VAR_CREATE_FAIL,"Couldn't create field variable"),	\
-> +	C(TOO_MANY_PARAMS,	"Too many action params"),		\
-> +	C(PARAM_NOT_FOUND,	"Couldn't find param"),			\
-> +	C(INVALID_PARAM,	"Invalid action param"),		\
-> +	C(ACTION_NOT_FOUND,	"No action found"),			\
-> +	C(NO_SAVE_PARAMS,	"No params found for save()"),		\
-> +	C(TOO_MANY_SAVE_ACTIONS,"Can't have more than one save() action per hist"), \
-> +	C(ACTION_MISMATCH,	"Handler doesn't support action"),	\
-> +	C(NO_CLOSING_PAREN,	"No closing paren found"),		\
-> +	C(SUBSYS_NOT_FOUND,	"Missing subsystem"),			\
-> +	C(INVALID_SUBSYS_EVENT,	"Invalid subsystem or event name"),	\
-> +	C(INVALID_REF_KEY,	"Using variable references as keys not supported"), \
-> +	C(VAR_NOT_FOUND,	"Couldn't find variable"),		\
-> +	C(FIELD_NOT_FOUND,	"Couldn't find field"),
-> +
-> +#undef C
-> +#define C(a, b)		HIST_ERR_##a
-> +
-> +enum { ERRORS };
-> +
-> +#undef C
-> +#define C(a, b)		b
-> +
-> +static const char *err_text[] = { ERRORS };
-> +
->  struct hist_field;
->  
->  typedef u64 (*hist_field_fn_t) (struct hist_field *field,
-> @@ -538,7 +589,10 @@ static struct track_data *track_data_alloc(unsigned int key_len,
->  static char last_cmd[MAX_FILTER_STR_VAL];
->  static char last_cmd_loc[MAX_FILTER_STR_VAL];
->  
-> -static char hist_err_str[MAX_FILTER_STR_VAL];
-> +static int errpos(char *str)
-> +{
-> +	return err_pos(last_cmd, str);
-> +}
->  
->  static void last_cmd_set(struct trace_event_file *file, char *str)
->  {
-> @@ -565,55 +619,17 @@ static void last_cmd_set(struct trace_event_file *file, char *str)
->  		snprintf(last_cmd_loc, MAX_FILTER_STR_VAL, "hist:%s:%s", system, name);
->  }
->  
-> -static void hist_err(char *str, char *var)
-> +static void hist_err(u8 err_type, u8 err_pos)
->  {
-> -	int maxlen = MAX_FILTER_STR_VAL - 1;
-> -
-> -	if (!str)
-> -		return;
-> -
-> -	if (strlen(hist_err_str))
-> -		return;
-> -
-> -	if (!var)
-> -		var = "";
-> -
-> -	if (strlen(hist_err_str) + strlen(str) + strlen(var) > maxlen)
-> -		return;
-> -
-> -	strcat(hist_err_str, str);
-> -	strcat(hist_err_str, var);
-> -}
-> -
-> -static void hist_err_event(char *str, char *system, char *event, char *var)
-> -{
-> -	char err[MAX_FILTER_STR_VAL];
-> -
-> -	if (system && var)
-> -		snprintf(err, MAX_FILTER_STR_VAL, "%s.%s.%s", system, event, var);
-> -	else if (system)
-> -		snprintf(err, MAX_FILTER_STR_VAL, "%s.%s", system, event);
-> -	else
-> -		strscpy(err, var, MAX_FILTER_STR_VAL);
-> -
-> -	hist_err(str, err);
-> +	tracing_log_err(last_cmd_loc, last_cmd, err_text, err_type, err_pos);
->  }
->  
->  static void hist_err_clear(void)
->  {
-> -	hist_err_str[0] = '\0';
->  	last_cmd[0] = '\0';
->  	last_cmd_loc[0] = '\0';
->  }
->  
-> -static bool have_hist_err(void)
-> -{
-> -	if (strlen(hist_err_str))
-> -		return true;
-> -
-> -	return false;
-> -}
-> -
->  struct synth_trace_event {
->  	struct trace_entry	ent;
->  	u64			fields[];
-> @@ -1740,7 +1756,7 @@ static struct trace_event_file *find_var_file(struct trace_array *tr,
->  
->  		if (find_var_field(var_hist_data, var_name)) {
->  			if (found) {
-> -				hist_err_event("Variable name not unique, need to use fully qualified name (subsys.event.var) for variable: ", system, event_name, var_name);
-> +				hist_err(HIST_ERR_VAR_NOT_UNIQUE, errpos(var_name));
->  				return NULL;
->  			}
->  
-> @@ -1791,7 +1807,7 @@ find_match_var(struct hist_trigger_data *hist_data, char *var_name)
->  			hist_field = find_file_var(file, var_name);
->  			if (hist_field) {
->  				if (found) {
-> -					hist_err_event("Variable name not unique, need to use fully qualified name (subsys.event.var) for variable: ", system, event_name, var_name);
-> +					hist_err(HIST_ERR_VAR_NOT_UNIQUE, errpos(var_name));
->  					return ERR_PTR(-EINVAL);
->  				}
->  
-> @@ -2023,7 +2039,6 @@ static int parse_action(char *str, struct hist_trigger_attrs *attrs)
->  		attrs->n_actions++;
->  		ret = 0;
->  	}
-> -
->  	return ret;
->  }
->  
-> @@ -2083,7 +2098,7 @@ static int parse_assignment(char *str, struct hist_trigger_attrs *attrs)
->  		char *assignment;
->  
->  		if (attrs->n_assignments == TRACING_MAP_VARS_MAX) {
-> -			hist_err("Too many variables defined: ", str);
-> +			hist_err(HIST_ERR_TOO_MANY_VARS, errpos(str));
->  			ret = -EINVAL;
->  			goto out;
->  		}
-> @@ -2681,8 +2696,7 @@ static struct hist_field *parse_var_ref(struct hist_trigger_data *hist_data,
->  					   system, event_name);
->  
->  	if (!ref_field)
-> -		hist_err_event("Couldn't find variable: $",
-> -			       system, event_name, var_name);
-> +		hist_err(HIST_ERR_VAR_NOT_FOUND, errpos(var_name));
->  
->  	return ref_field;
->  }
-> @@ -2716,7 +2730,7 @@ parse_field(struct hist_trigger_data *hist_data, struct trace_event_file *file,
->  		else if (strcmp(modifier, "usecs") == 0)
->  			*flags |= HIST_FIELD_FL_TIMESTAMP_USECS;
->  		else {
-> -			hist_err("Invalid field modifier: ", modifier);
-> +			hist_err(HIST_ERR_BAD_FIELD_MODIFIER, errpos(modifier));
->  			field = ERR_PTR(-EINVAL);
->  			goto out;
->  		}
-> @@ -2732,7 +2746,7 @@ parse_field(struct hist_trigger_data *hist_data, struct trace_event_file *file,
->  	else {
->  		field = trace_find_event_field(file->event_call, field_name);
->  		if (!field || !field->size) {
-> -			hist_err("Couldn't find field: ", field_name);
-> +			hist_err(HIST_ERR_FIELD_NOT_FOUND, errpos(field_name));
->  			field = ERR_PTR(-EINVAL);
->  			goto out;
->  		}
-> @@ -2843,7 +2857,7 @@ static struct hist_field *parse_unary(struct hist_trigger_data *hist_data,
->  	/* we support only -(xxx) i.e. explicit parens required */
->  
->  	if (level > 3) {
-> -		hist_err("Too many subexpressions (3 max): ", str);
-> +		hist_err(HIST_ERR_TOO_MANY_SUBEXPR, errpos(str));
->  		ret = -EINVAL;
->  		goto free;
->  	}
-> @@ -2926,7 +2940,7 @@ static int check_expr_operands(struct hist_field *operand1,
->  
->  	if ((operand1_flags & HIST_FIELD_FL_TIMESTAMP_USECS) !=
->  	    (operand2_flags & HIST_FIELD_FL_TIMESTAMP_USECS)) {
-> -		hist_err("Timestamp units in expression don't match", NULL);
-> +		hist_err(HIST_ERR_TIMESTAMP_MISMATCH, 0);
->  		return -EINVAL;
->  	}
->  
-> @@ -2944,7 +2958,7 @@ static struct hist_field *parse_expr(struct hist_trigger_data *hist_data,
->  	char *sep, *operand1_str;
->  
->  	if (level > 3) {
-> -		hist_err("Too many subexpressions (3 max): ", str);
-> +		hist_err(HIST_ERR_TOO_MANY_SUBEXPR, errpos(str));
->  		return ERR_PTR(-EINVAL);
->  	}
->  
-> @@ -3182,16 +3196,14 @@ create_field_var_hist(struct hist_trigger_data *target_hist_data,
->  	int ret;
->  
->  	if (target_hist_data->n_field_var_hists >= SYNTH_FIELDS_MAX) {
-> -		hist_err_event("trace action: Too many field variables defined: ",
-> -			       subsys_name, event_name, field_name);
-> +		hist_err(HIST_ERR_TOO_MANY_FIELD_VARS, errpos(field_name));
->  		return ERR_PTR(-EINVAL);
->  	}
->  
->  	file = event_file(tr, subsys_name, event_name);
->  
->  	if (IS_ERR(file)) {
-> -		hist_err_event("trace action: Event file not found: ",
-> -			       subsys_name, event_name, field_name);
-> +		hist_err(HIST_ERR_EVENT_FILE_NOT_FOUND, errpos(field_name));
->  		ret = PTR_ERR(file);
->  		return ERR_PTR(ret);
->  	}
-> @@ -3204,8 +3216,7 @@ create_field_var_hist(struct hist_trigger_data *target_hist_data,
->  	 */
->  	hist_data = find_compatible_hist(target_hist_data, file);
->  	if (!hist_data) {
-> -		hist_err_event("trace action: Matching event histogram not found: ",
-> -			       subsys_name, event_name, field_name);
-> +		hist_err(HIST_ERR_HIST_NOT_FOUND, errpos(field_name));
->  		return ERR_PTR(-EINVAL);
->  	}
->  
-> @@ -3266,8 +3277,7 @@ create_field_var_hist(struct hist_trigger_data *target_hist_data,
->  		kfree(cmd);
->  		kfree(var_hist->cmd);
->  		kfree(var_hist);
-> -		hist_err_event("trace action: Couldn't create histogram for field: ",
-> -			       subsys_name, event_name, field_name);
-> +		hist_err(HIST_ERR_HIST_CREATE_FAIL, errpos(field_name));
->  		return ERR_PTR(ret);
->  	}
->  
-> @@ -3279,8 +3289,7 @@ create_field_var_hist(struct hist_trigger_data *target_hist_data,
->  	if (IS_ERR_OR_NULL(event_var)) {
->  		kfree(var_hist->cmd);
->  		kfree(var_hist);
-> -		hist_err_event("trace action: Couldn't find synthetic variable: ",
-> -			       subsys_name, event_name, field_name);
-> +		hist_err(HIST_ERR_SYNTH_VAR_NOT_FOUND, errpos(field_name));
->  		return ERR_PTR(-EINVAL);
->  	}
->  
-> @@ -3417,21 +3426,21 @@ static struct field_var *create_field_var(struct hist_trigger_data *hist_data,
->  	int ret = 0;
->  
->  	if (hist_data->n_field_vars >= SYNTH_FIELDS_MAX) {
-> -		hist_err("Too many field variables defined: ", field_name);
-> +		hist_err(HIST_ERR_TOO_MANY_FIELD_VARS, errpos(field_name));
->  		ret = -EINVAL;
->  		goto err;
->  	}
->  
->  	val = parse_atom(hist_data, file, field_name, &flags, NULL);
->  	if (IS_ERR(val)) {
-> -		hist_err("Couldn't parse field variable: ", field_name);
-> +		hist_err(HIST_ERR_FIELD_VAR_PARSE_FAIL, errpos(field_name));
->  		ret = PTR_ERR(val);
->  		goto err;
->  	}
->  
->  	var = create_var(hist_data, file, field_name, val->size, val->type);
->  	if (IS_ERR(var)) {
-> -		hist_err("Couldn't create or find variable: ", field_name);
-> +		hist_err(HIST_ERR_VAR_CREATE_FIND_FAIL, errpos(field_name));
->  		kfree(val);
->  		ret = PTR_ERR(var);
->  		goto err;
-> @@ -3764,14 +3773,14 @@ static int track_data_create(struct hist_trigger_data *hist_data,
->  
->  	track_data_var_str = data->track_data.var_str;
->  	if (track_data_var_str[0] != '$') {
-> -		hist_err("For onmax(x) or onchange(x), x must be a variable: ", track_data_var_str);
-> +		hist_err(HIST_ERR_ONX_NOT_VAR, errpos(track_data_var_str));
->  		return -EINVAL;
->  	}
->  	track_data_var_str++;
->  
->  	var_field = find_target_event_var(hist_data, NULL, NULL, track_data_var_str);
->  	if (!var_field) {
-> -		hist_err("Couldn't find onmax or onchange variable: ", track_data_var_str);
-> +		hist_err(HIST_ERR_ONX_VAR_NOT_FOUND, errpos(track_data_var_str));
->  		return -EINVAL;
->  	}
->  
-> @@ -3784,7 +3793,7 @@ static int track_data_create(struct hist_trigger_data *hist_data,
->  	if (data->handler == HANDLER_ONMAX)
->  		track_var = create_var(hist_data, file, "__max", sizeof(u64), "u64");
->  	if (IS_ERR(track_var)) {
-> -		hist_err("Couldn't create onmax variable: ", "__max");
-> +		hist_err(HIST_ERR_ONX_VAR_CREATE_FAIL, 0);
->  		ret = PTR_ERR(track_var);
->  		goto out;
->  	}
-> @@ -3792,7 +3801,7 @@ static int track_data_create(struct hist_trigger_data *hist_data,
->  	if (data->handler == HANDLER_ONCHANGE)
->  		track_var = create_var(hist_data, file, "__change", sizeof(u64), "u64");
->  	if (IS_ERR(track_var)) {
-> -		hist_err("Couldn't create onchange variable: ", "__change");
-> +		hist_err(HIST_ERR_ONX_VAR_CREATE_FAIL, 0);
->  		ret = PTR_ERR(track_var);
->  		goto out;
->  	}
-> @@ -3811,20 +3820,20 @@ static int parse_action_params(char *params, struct action_data *data)
->  
->  	while (params) {
->  		if (data->n_params >= SYNTH_FIELDS_MAX) {
-> -			hist_err("Too many action params", "");
-> +			hist_err(HIST_ERR_TOO_MANY_PARAMS, 0);
->  			goto out;
->  		}
->  
->  		param = strsep(&params, ",");
->  		if (!param) {
-> -			hist_err("No action param found", "");
-> +			hist_err(HIST_ERR_PARAM_NOT_FOUND, 0);
->  			ret = -EINVAL;
->  			goto out;
->  		}
->  
->  		param = strstrip(param);
->  		if (strlen(param) < 2) {
-> -			hist_err("Invalid action param: ", param);
-> +			hist_err(HIST_ERR_INVALID_PARAM, errpos(param));
->  			ret = -EINVAL;
->  			goto out;
->  		}
-> @@ -3856,14 +3865,14 @@ static int action_parse(char *str, struct action_data *data,
->  
->  	strsep(&str, ".");
->  	if (!str) {
-> -		hist_err("action parsing: No action found", "");
-> +		hist_err(HIST_ERR_ACTION_NOT_FOUND, 0);
->  		ret = -EINVAL;
->  		goto out;
->  	}
->  
->  	action_name = strsep(&str, "(");
->  	if (!action_name || !str) {
-> -		hist_err("action parsing: No action found", "");
-> +		hist_err(HIST_ERR_ACTION_NOT_FOUND, 0);
->  		ret = -EINVAL;
->  		goto out;
->  	}
-> @@ -3872,7 +3881,7 @@ static int action_parse(char *str, struct action_data *data,
->  		char *params = strsep(&str, ")");
->  
->  		if (!params) {
-> -			hist_err("action parsing: No params found for %s", "save");
-> +			hist_err(HIST_ERR_NO_SAVE_PARAMS, 0);
->  			ret = -EINVAL;
->  			goto out;
->  		}
-> @@ -3886,7 +3895,7 @@ static int action_parse(char *str, struct action_data *data,
->  		else if (handler == HANDLER_ONCHANGE)
->  			data->track_data.check_val = check_track_val_changed;
->  		else {
-> -			hist_err("action parsing: Handler doesn't support action: ", action_name);
-> +			hist_err(HIST_ERR_ACTION_MISMATCH, errpos(action_name));
->  			ret = -EINVAL;
->  			goto out;
->  		}
-> @@ -3898,7 +3907,7 @@ static int action_parse(char *str, struct action_data *data,
->  		char *params = strsep(&str, ")");
->  
->  		if (!str) {
-> -			hist_err("action parsing: No closing paren found: %s", params);
-> +			hist_err(HIST_ERR_NO_CLOSING_PAREN, errpos(params));
->  			ret = -EINVAL;
->  			goto out;
->  		}
-> @@ -3908,7 +3917,7 @@ static int action_parse(char *str, struct action_data *data,
->  		else if (handler == HANDLER_ONCHANGE)
->  			data->track_data.check_val = check_track_val_changed;
->  		else {
-> -			hist_err("action parsing: Handler doesn't support action: ", action_name);
-> +			hist_err(HIST_ERR_ACTION_MISMATCH, errpos(action_name));
->  			ret = -EINVAL;
->  			goto out;
->  		}
-> @@ -4061,7 +4070,7 @@ trace_action_find_var(struct hist_trigger_data *hist_data,
->  	}
->  
->  	if (!hist_field)
-> -		hist_err_event("trace action: Couldn't find param: $", system, event, var);
-> +		hist_err(HIST_ERR_PARAM_NOT_FOUND, errpos(var));
->  
->  	return hist_field;
->  }
-> @@ -4136,7 +4145,7 @@ static int trace_action_create(struct hist_trigger_data *hist_data,
->  
->  	event = find_synth_event(synth_event_name);
->  	if (!event) {
-> -		hist_err("trace action: Couldn't find synthetic event: ", synth_event_name);
-> +		hist_err(HIST_ERR_SYNTH_EVENT_NOT_FOUND, errpos(synth_event_name));
->  		return -EINVAL;
->  	}
->  
-> @@ -4197,15 +4206,14 @@ static int trace_action_create(struct hist_trigger_data *hist_data,
->  			continue;
->  		}
->  
-> -		hist_err_event("trace action: Param type doesn't match synthetic event field type: ",
-> -			       system, event_name, param);
-> +		hist_err(HIST_ERR_SYNTH_TYPE_MISMATCH, errpos(param));
->  		kfree(p);
->  		ret = -EINVAL;
->  		goto err;
->  	}
->  
->  	if (field_pos != event->n_fields) {
-> -		hist_err("trace action: Param count doesn't match synthetic event field count: ", event->name);
-> +		hist_err(HIST_ERR_SYNTH_COUNT_MISMATCH, errpos(event->name));
->  		ret = -EINVAL;
->  		goto err;
->  	}
-> @@ -4251,7 +4259,7 @@ static int action_create(struct hist_trigger_data *hist_data,
->  	if (data->action == ACTION_SAVE) {
->  		if (hist_data->n_save_vars) {
->  			ret = -EEXIST;
-> -			hist_err("save action: Can't have more than one save() action per hist", "");
-> +			hist_err(HIST_ERR_TOO_MANY_SAVE_ACTIONS, 0);
->  			goto out;
->  		}
->  
-> @@ -4264,7 +4272,7 @@ static int action_create(struct hist_trigger_data *hist_data,
->  
->  			field_var = create_target_field_var(hist_data, NULL, NULL, param);
->  			if (IS_ERR(field_var)) {
-> -				hist_err("save action: Couldn't create field variable: ", param);
-> +				hist_err(HIST_ERR_FIELD_VAR_CREATE_FAIL, errpos(param));
->  				ret = PTR_ERR(field_var);
->  				kfree(param);
->  				goto out;
-> @@ -4298,19 +4306,18 @@ static struct action_data *onmatch_parse(struct trace_array *tr, char *str)
->  
->  	match_event = strsep(&str, ")");
->  	if (!match_event || !str) {
-> -		hist_err("onmatch: Missing closing paren: ", match_event);
-> +		hist_err(HIST_ERR_NO_CLOSING_PAREN, errpos(match_event));
->  		goto free;
->  	}
->  
->  	match_event_system = strsep(&match_event, ".");
->  	if (!match_event) {
-> -		hist_err("onmatch: Missing subsystem for match event: ", match_event_system);
-> +		hist_err(HIST_ERR_SUBSYS_NOT_FOUND, errpos(match_event_system));
->  		goto free;
->  	}
->  
->  	if (IS_ERR(event_file(tr, match_event_system, match_event))) {
-> -		hist_err_event("onmatch: Invalid subsystem or event name: ",
-> -			       match_event_system, match_event, NULL);
-> +		hist_err(HIST_ERR_INVALID_SUBSYS_EVENT, errpos(match_event));
->  		goto free;
->  	}
->  
-> @@ -4401,7 +4408,7 @@ static int create_var_field(struct hist_trigger_data *hist_data,
->  		return -EINVAL;
->  
->  	if (find_var(hist_data, file, var_name) && !hist_data->remove) {
-> -		hist_err("Variable already defined: ", var_name);
-> +		hist_err(HIST_ERR_DUPLICATE_VAR, errpos(var_name));
->  		return -EINVAL;
->  	}
->  
-> @@ -4482,7 +4489,7 @@ static int create_key_field(struct hist_trigger_data *hist_data,
->  		}
->  
->  		if (hist_field->flags & HIST_FIELD_FL_VAR_REF) {
-> -			hist_err("Using variable references as keys not supported: ", field_str);
-> +			hist_err(HIST_ERR_INVALID_REF_KEY, errpos(field_str));
->  			destroy_hist_field(hist_field, 0);
->  			ret = -EINVAL;
->  			goto out;
-> @@ -4596,13 +4603,13 @@ static int parse_var_defs(struct hist_trigger_data *hist_data)
->  
->  			var_name = strsep(&field_str, "=");
->  			if (!var_name || !field_str) {
-> -				hist_err("Malformed assignment: ", var_name);
-> +				hist_err(HIST_ERR_MALFORMED_ASSIGNMENT, errpos(var_name));
->  				ret = -EINVAL;
->  				goto free;
->  			}
->  
->  			if (n_vars == TRACING_MAP_VARS_MAX) {
-> -				hist_err("Too many variables defined: ", var_name);
-> +				hist_err(HIST_ERR_TOO_MANY_VARS, errpos(var_name));
->  				ret = -EINVAL;
->  				goto free;
->  			}
-> @@ -5458,11 +5465,6 @@ static int hist_show(struct seq_file *m, void *v)
->  			hist_trigger_show(m, data, n++);
->  	}
->  
-> -	if (have_hist_err()) {
-> -		seq_printf(m, "\n%s: error: \n", hist_err_str);
-> -		seq_printf(m, "  Last command: %s\n", last_cmd);
-> -	}
-> -
->   out_unlock:
->  	mutex_unlock(&event_mutex);
->  
-> @@ -5834,7 +5836,7 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
->  		if (named_data) {
->  			if (!hist_trigger_match(data, named_data, named_data,
->  						true)) {
-> -				hist_err("Named hist trigger doesn't match existing named trigger (includes variables): ", hist_data->attrs->name);
-> +				hist_err(HIST_ERR_NAMED_MISMATCH, errpos(hist_data->attrs->name));
->  				ret = -EINVAL;
->  				goto out;
->  			}
-> @@ -5855,7 +5857,7 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
->  			else if (hist_data->attrs->clear)
->  				hist_clear(test);
->  			else {
-> -				hist_err("Hist trigger already exists", NULL);
-> +				hist_err(HIST_ERR_TRIGGER_EEXIST, 0);
->  				ret = -EEXIST;
->  			}
->  			goto out;
-> @@ -5863,7 +5865,7 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
->  	}
->   new:
->  	if (hist_data->attrs->cont || hist_data->attrs->clear) {
-> -		hist_err("Can't clear or continue a nonexistent hist trigger", NULL);
-> +		hist_err(HIST_ERR_TRIGGER_ENOENT_CLEAR, 0);
->  		ret = -ENOENT;
->  		goto out;
->  	}
-> @@ -5888,7 +5890,7 @@ static int hist_register_trigger(char *glob, struct event_trigger_ops *ops,
->  
->  		ret = tracing_set_clock(file->tr, hist_data->attrs->clock);
->  		if (ret) {
-> -			hist_err("Couldn't set trace_clock: ", clock);
-> +			hist_err(HIST_ERR_SET_CLOCK_FAIL, errpos(clock));
->  			goto out;
->  		}
->  
-> -- 
-> 2.14.1
-> 
-
-
+-/*
+- * parse an input value as a base10 value followed by an optional
+- * suffix. The input value is presumed to be in seconds, unless
+- * followed by a modifier suffix: m=minutes, h=hours, d=days
+- *
+- * the return value is a value in seconds
+- */
+-static int parse_time_string(char *val)
+-{
+-	char *end;
+-	int t = strtol(val, &end, 10);
+-	if (end) {
+-		switch (*end) {
+-		case 'm':
+-		case 'M':
+-			t *= 60;
+-			break;
+-
+-		case 'h':
+-		case 'H':
+-			t *= 60*60;
+-			break;
+-
+-		case 'd':
+-		case 'D':
+-			t *= 24*60*60;
+-			break;
+-
+-		}
+-	}
+-	return t;
+-}
+-
+ /*
+  * Raise the soft priority limit up to prio, if that is less than or equal
+  * to the hard limit
+diff --git a/src/include/rt-utils.h b/src/include/rt-utils.h
+index ef0f6acf4ab5..405fa7855346 100644
+--- a/src/include/rt-utils.h
++++ b/src/include/rt-utils.h
+@@ -24,4 +24,6 @@ uint32_t string_to_policy(const char *str);
+ 
+ pid_t gettid(void);
+ 
++int parse_time_string(char *val);
++
+ #endif	/* __RT_UTILS.H */
+diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
+index ac6878ccacf1..e1b166afcd6c 100644
+--- a/src/lib/rt-utils.c
++++ b/src/lib/rt-utils.c
+@@ -13,6 +13,7 @@
+ #include <sched.h>
+ #include <stdarg.h>
+ #include <errno.h>
++#include <ctype.h>
+ #include <fcntl.h>
+ #include <sys/types.h>
+ #include <sys/stat.h>
+@@ -320,3 +321,36 @@ pid_t gettid(void)
+ {
+ 	return syscall(SYS_gettid);
+ }
++
++/*
++ * parse an input value as a base10 value followed by an optional
++ * suffix. The input value is presumed to be in seconds, unless
++ * followed by a modifier suffix: m=minutes, h=hours, d=days
++ *
++ * the return value is a value in seconds
++ */
++int parse_time_string(char *val)
++{
++	char *end;
++	int t = strtol(val, &end, 10);
++	if (end) {
++		switch (*end) {
++		case 'm':
++		case 'M':
++			t *= 60;
++			break;
++
++		case 'h':
++		case 'H':
++			t *= 60*60;
++			break;
++
++		case 'd':
++		case 'D':
++			t *= 24*60*60;
++			break;
++
++		}
++	}
++	return t;
++}
+diff --git a/src/pi_tests/pi_stress.8 b/src/pi_tests/pi_stress.8
+index c92b4bdf5609..475d3c34f135 100644
+--- a/src/pi_tests/pi_stress.8
++++ b/src/pi_tests/pi_stress.8
+@@ -57,6 +57,10 @@ seconds and then terminate.
+ The number of inversion groups to run. Defaults to 10.
+ .IP \-d|\-\-debug
+ Run in debug mode; lots of extra prints
++.IP "\-D, \-\-duration=TIME"
++Specify a length for the test run.
++.br
++Append 'm', 'h', or 'd' to specify minutes, hours or days.
+ .IP \-v|\-\-verbose
+ Run with verbose messages
+ .IP \-s|\-\-signal
+diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
+index ac7646cd2613..eac782a8d355 100644
+--- a/src/pi_tests/pi_stress.c
++++ b/src/pi_tests/pi_stress.c
+@@ -146,7 +146,7 @@ int lockall = 0;
+ 
+ /* command line options */
+ struct option options[] = {
+-	{"duration", required_argument, NULL, 't'},
++	{"duration", required_argument, NULL, 'D'},
+ 	{"verbose", no_argument, NULL, 'v'},
+ 	{"quiet", no_argument, NULL, 'q'},
+ 	{"groups", required_argument, NULL, 'g'},
+@@ -1027,7 +1027,8 @@ void usage(void)
+ 	printf("\t--verbose\t- lots of output\n");
+ 	printf("\t--quiet\t\t- suppress running output\n");
+ 	printf
+-	    ("\t--duration=<n>- length of the test run in seconds [infinite]\n");
++	    ("\t--duration=<n>\t- length of the test run in seconds [infinite]\n");
++	printf("\t\t\t  Append 'm', 'h', or 'd' to specify minutes, hours or days.\n");
+ 	printf("\t--groups=<n>\t- set the number of inversion groups [%d]\n",
+ 	       ngroups);
+ 	printf
+@@ -1328,8 +1329,8 @@ void process_command_line(int argc, char **argv)
+ 		case 'h':
+ 			usage();
+ 			exit(0);
+-		case 't':
+-			duration = strtol(optarg, NULL, 10);
++		case 'D':
++			duration = parse_time_string(optarg);
+ 			break;
+ 		case 'v':
+ 			verbose = 1;
+diff --git a/src/pmqtest/pmqtest.8 b/src/pmqtest/pmqtest.8
+index 05421e01e70b..9108a939b9f7 100644
+--- a/src/pmqtest/pmqtest.8
++++ b/src/pmqtest/pmqtest.8
+@@ -21,6 +21,11 @@ It is useful to track down unexpected large latencies of a system.
+ .B \-d, \-\-distance=DIST
+ Set the distance of thread intervals in microseconds (default is 500 us). When pmqtest is called with the -t option and more than one thread is created, then this distance value is added to the interval of the threads: Interval(thread N) = Interval(thread N-1) + DIST
+ .TP
++.B \-D, \-\-duration=TIME
++Specify a length for the test run.
++.br
++Append 'm', 'h', or 'd' to specify minutes, hours or days.
++.TP
+ .B \-f, \-\-forcetimeout=TO
+ Set an artificial delay of the send function to force timeout of the receiver, requires the -T option
+ .TP
+diff --git a/src/pmqtest/pmqtest.c b/src/pmqtest/pmqtest.c
+index 75d5ee8185a0..054768d161a7 100644
+--- a/src/pmqtest/pmqtest.c
++++ b/src/pmqtest/pmqtest.c
+@@ -252,6 +252,8 @@ static void display_help(void)
+ 	"-f TO    --forcetimeout=TO force timeout of mq_timedreceive(), requires -T\n"
+ 	"-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
+ 	"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
++	"-D       --duration=TIME   specify a length for the test run.\n"
++	"                           Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
+ 	"-p PRIO  --prio=PRIO       priority\n"
+ 	"-S       --smp             SMP testing: options -a -t and same priority\n"
+         "                           of all threads\n"
+@@ -271,6 +273,7 @@ static int tracelimit;
+ static int priority;
+ static int num_threads = 1;
+ static int max_cycles;
++static int duration;
+ static int interval = 1000;
+ static int distance = 500;
+ static int smp;
+@@ -293,6 +296,7 @@ static void process_options (int argc, char *argv[])
+ 			{"forcetimeout", required_argument, NULL, 'f'},
+ 			{"interval", required_argument, NULL, 'i'},
+ 			{"loops", required_argument, NULL, 'l'},
++			{"duration", required_argument, NULL, 'D'},
+ 			{"priority", required_argument, NULL, 'p'},
+ 			{"smp", no_argument, NULL, 'S'},
+ 			{"threads", optional_argument, NULL, 't'},
+@@ -300,7 +304,7 @@ static void process_options (int argc, char *argv[])
+ 			{"help", no_argument, NULL, '?'},
+ 			{NULL, 0, NULL, 0}
+ 		};
+-		int c = getopt_long (argc, argv, "a::b:d:f:i:l:p:St::T:",
++		int c = getopt_long (argc, argv, "a::b:d:f:i:l:D:p:St::T:",
+ 			long_options, &option_index);
+ 		if (c == -1)
+ 			break;
+@@ -325,6 +329,7 @@ static void process_options (int argc, char *argv[])
+ 		case 'f': forcetimeout = atoi(optarg); break;
+ 		case 'i': interval = atoi(optarg); break;
+ 		case 'l': max_cycles = atoi(optarg); break;
++		case 'D': duration = parse_time_string(optarg); break;
+ 		case 'p': priority = atoi(optarg); break;
+ 		case 'S':
+ 			smp = 1;
+@@ -369,7 +374,10 @@ static void process_options (int argc, char *argv[])
+ 
+ 	if (forcetimeout && !timeout)
+ 		error = 1;
+- 
++
++	if (duration < 0)
++		error = 1;
++
+ 	if (priority && smp)
+ 		sameprio = 1;
+ 
+@@ -418,10 +426,15 @@ int main(int argc, char *argv[])
+ 	sigemptyset(&sigset);
+ 	sigaddset(&sigset, SIGTERM);
+ 	sigaddset(&sigset, SIGINT);
++	sigaddset(&sigset, SIGALRM);
+ 	pthread_sigmask(SIG_SETMASK, &sigset, NULL);
+ 
+ 	signal(SIGINT, sighand);
+ 	signal(SIGTERM, sighand);
++	signal(SIGALRM, sighand);
++
++	if (duration)
++		alarm(duration);
+ 
+ 	receiver = calloc(num_threads, sizeof(struct params));
+ 	sender = calloc(num_threads, sizeof(struct params));
+diff --git a/src/ptsematest/ptsematest.8 b/src/ptsematest/ptsematest.8
+index 9d835337ec27..289f3a1d7ae8 100644
+--- a/src/ptsematest/ptsematest.8
++++ b/src/ptsematest/ptsematest.8
+@@ -21,6 +21,11 @@ It is useful to track down unexpected large latencies of a system.
+ .B \-d, \-\-distance=DIST
+ Set the distance of thread intervals in microseconds (default is 500 us). When  cyclictest is called with the -t option and more than one thread is created, then this distance value is added to the interval of the threads: Interval(thread N) = Interval(thread N-1) + DIST
+ .TP
++.B \-D, \-\-duration=TIME
++Specify a length for the test run.
++.br
++Append 'm', 'h', or 'd' to specify minutes, hours or days.
++.TP
+ .B \-i, \-\-interval=INTV
+ Set the base interval of the thread(s) in microseconds (default is 1000 us). This sets the interval of the first thread. See also -d.
+ .TP
+diff --git a/src/ptsematest/ptsematest.c b/src/ptsematest/ptsematest.c
+index a31c745ec928..6bedbc81b572 100644
+--- a/src/ptsematest/ptsematest.c
++++ b/src/ptsematest/ptsematest.c
+@@ -173,6 +173,8 @@ static void display_help(void)
+ 	"-d DIST  --distance=DIST   distance of thread intervals in us default=500\n"
+ 	"-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
+ 	"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
++	"-D       --duration=TIME   specify a length for the test run.\n"
++	"                           Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
+ 	"-p PRIO  --prio=PRIO       priority\n"
+ 	"-S       --smp             SMP testing: options -a -t and same priority\n"
+         "                           of all threads\n"
+@@ -190,6 +192,7 @@ static int tracelimit;
+ static int priority;
+ static int num_threads = 1;
+ static int max_cycles;
++static int duration;
+ static int interval = 1000;
+ static int distance = 500;
+ static int smp;
+@@ -209,13 +212,14 @@ static void process_options (int argc, char *argv[])
+ 			{"distance", required_argument, NULL, 'd'},
+ 			{"interval", required_argument, NULL, 'i'},
+ 			{"loops", required_argument, NULL, 'l'},
++			{"duration", required_argument, NULL, 'D'},
+ 			{"priority", required_argument, NULL, 'p'},
+ 			{"smp", no_argument, NULL, 'S'},
+ 			{"threads", optional_argument, NULL, 't'},
+ 			{"help", no_argument, NULL, '?'},
+ 			{NULL, 0, NULL, 0}
+ 		};
+-		int c = getopt_long (argc, argv, "a::b:d:i:l:p:St::",
++		int c = getopt_long (argc, argv, "a::b:d:i:l:D:p:St::",
+ 			long_options, &option_index);
+ 		if (c == -1)
+ 			break;
+@@ -239,6 +243,7 @@ static void process_options (int argc, char *argv[])
+ 		case 'd': distance = atoi(optarg); break;
+ 		case 'i': interval = atoi(optarg); break;
+ 		case 'l': max_cycles = atoi(optarg); break;
++		case 'D': duration = parse_time_string(optarg); break;
+ 		case 'p': priority = atoi(optarg); break;
+ 		case 'S':
+ 			smp = 1;
+@@ -280,6 +285,9 @@ static void process_options (int argc, char *argv[])
+ 	if (num_threads < 1)
+ 		error = 1;
+ 
++	if (duration < 0)
++		error = 1;
++
+ 	if (priority && smp)
+ 		sameprio = 1;
+ 
+@@ -317,6 +325,10 @@ int main(int argc, char *argv[])
+ 
+ 	signal(SIGINT, sighand);
+ 	signal(SIGTERM, sighand);
++	signal(SIGALRM, sighand);
++
++	if (duration)
++		alarm(duration);
+ 
+ 	receiver = calloc(num_threads, sizeof(struct params));
+ 	sender = calloc(num_threads, sizeof(struct params));
+diff --git a/src/rt-migrate-test/rt-migrate-test.8 b/src/rt-migrate-test/rt-migrate-test.8
+index 8af50e54291d..b9c07f1ed80a 100644
+--- a/src/rt-migrate-test/rt-migrate-test.8
++++ b/src/rt-migrate-test/rt-migrate-test.8
+@@ -15,6 +15,11 @@ This program follows the usual GNU command line syntax, with long options starti
+ In the summary of options, a value in brackets (), indicates a default value
+ .br
+ .TP
++.B \-D, \-\-duration=TIME
++Specify a length for the test run.
++.br
++Append 'm', 'h', or 'd' to specify minutes, hours or days.
++.TP
+ .B \-p, \-\-prio=prio
+ base priority to start RT tasks with (2)
+ .br
+diff --git a/src/rt-migrate-test/rt-migrate-test.c b/src/rt-migrate-test/rt-migrate-test.c
+index 0a0bb77ab661..8223d6669a37 100644
+--- a/src/rt-migrate-test/rt-migrate-test.c
++++ b/src/rt-migrate-test/rt-migrate-test.c
+@@ -41,6 +41,7 @@
+ #include <errno.h>
+ #include <sched.h>
+ #include <pthread.h>
++#include "rt-utils.h"
+ 
+ #define gettid() syscall(__NR_gettid)
+ 
+@@ -115,6 +116,7 @@ static unsigned long long now;
+ 
+ static int done;
+ static int loop;
++static int duration;
+ 
+ static pthread_barrier_t start_barrier;
+ static pthread_barrier_t end_barrier;
+@@ -180,6 +182,8 @@ static void usage(char **argv)
+ 	       "-s time --sleep-time time   Sleep time (ms) between intervals (100)\n"
+ 	       "-m time --maxerr time       Max allowed error (microsecs)\n"
+ 	       "-l loops --loops loops      Number of iterations to run (50)\n"
++	       "-D       --duration=TIME    specify a length for the test run.\n"
++	       "                            Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
+ 	       "-e                          Use equal prio for #CPU-1 tasks (requires > 2 CPUS)\n"
+ 	       "-c    --check               Stop if lower prio task is quicker than higher (off)\n"
+ 	       "-h    --help\n"
+@@ -199,11 +203,12 @@ static void parse_options (int argc, char *argv[])
+ 			{"sleep-time", required_argument, NULL, 's'},
+ 			{"maxerr", required_argument, NULL, 'm'},
+ 			{"loops", required_argument, NULL, 'l'},
++			{"duration", required_argument, NULL, 'D'},
+ 			{"check", no_argument, NULL, 'c'},
+ 			{"help", no_argument, NULL, '?'},
+ 			{NULL, 0, NULL, 0}
+ 		};
+-		int c = getopt_long (argc, argv, "p:r:s:m:l:ech",
++		int c = getopt_long (argc, argv, "p:r:s:m:l:D:ech",
+ 			long_options, &option_index);
+ 		if (c == -1)
+ 			break;
+@@ -214,6 +219,7 @@ static void parse_options (int argc, char *argv[])
+ 			break;
+ 		case 's': interval = atoi(optarg); break;
+ 		case 'l': nr_runs = atoi(optarg); break;
++		case 'D': duration = parse_time_string(optarg); break;
+ 		case 'm': max_err = usec2nano(atoi(optarg)); break;
+ 		case 'e': equal = 1; break;
+ 		case 'c': check = 1; break;
+@@ -472,6 +478,10 @@ int main (int argc, char **argv)
+ 	parse_options(argc, argv);
+ 
+ 	signal(SIGINT, stop_log);
++	signal(SIGALRM, stop_log);
++
++	if (duration)
++		alarm(duration);
+ 
+ 	if (argc >= (optind + 1))
+ 		nr_tasks = atoi(argv[optind]);
+diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
+index 761f8d7d7483..577ad95cfee1 100644
+--- a/src/sched_deadline/cyclicdeadline.c
++++ b/src/sched_deadline/cyclicdeadline.c
+@@ -21,6 +21,8 @@
+ #include <linux/unistd.h>
+ #include <linux/magic.h>
+ 
++#include <rt-utils.h>
++
+ #ifdef __i386__
+ #ifndef __NR_sched_setattr
+ #define __NR_sched_setattr		351
+@@ -1049,6 +1051,7 @@ int main (int argc, char **argv)
+ 	unsigned int interval = 1000;
+ 	unsigned int step = 500;
+ 	int percent = 60;
++	int duration = 0;
+ 	u64 runtime;
+ 	u64 start_period;
+ 	u64 end_period;
+@@ -1062,7 +1065,7 @@ int main (int argc, char **argv)
+ 		exit(-1);
+ 	}
+ 
+-	while ((c = getopt(argc, argv, "+hac:t:")) >= 0) {
++	while ((c = getopt(argc, argv, "+hac:t:D:")) >= 0) {
+ 		switch (c) {
+ 		case 'a':
+ 			all_cpus = 1;
+@@ -1081,6 +1084,9 @@ int main (int argc, char **argv)
+ 		case 't':
+ 			nr_threads = atoi(optarg);
+ 			break;
++		case 'D':
++			duration = parse_time_string(optarg);
++			break;
+ 		case 'h':
+ 		default:
+ 			usage(argv);
+@@ -1246,6 +1252,10 @@ int main (int argc, char **argv)
+ 
+ 	signal(SIGINT, sighand);
+ 	signal(SIGTERM, sighand);
++	signal(SIGALRM, sighand);
++
++	if (duration)
++		alarm(duration);
+ 
+ 	if (!fail)
+ 		loop(sched_data, nr_threads);
+diff --git a/src/signaltest/signaltest.8 b/src/signaltest/signaltest.8
+index 634d392a6da5..bd6ffe5c7a36 100644
+--- a/src/signaltest/signaltest.8
++++ b/src/signaltest/signaltest.8
+@@ -13,6 +13,11 @@ starting with two dashes ('\-\-').
+ .B \-b, \-\-breaktrace=USEC
+ Send break trace command when latency > USEC
+ .TP
++.B \-D, \-\-duration=TIME
++Specify a length for the test run.
++.br
++Append 'm', 'h', or 'd' to specify minutes, hours or days.
++.TP
+ .B \-l, \-\-loops=LOOPS
+ Number of loops: default=0 (endless)
+ .TP
+diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
+index 59f979ec5ad1..a168191b7573 100644
+--- a/src/signaltest/signaltest.c
++++ b/src/signaltest/signaltest.c
+@@ -208,6 +208,8 @@ static void display_help(void)
+ 		"signaltest <options>\n\n"
+ 		"-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
+ 		"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
++		"-D       --duration=TIME   specify a length for the test run.\n"
++		"                           Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
+ 		"-p PRIO  --prio=PRIO       priority of highest prio thread\n"
+ 		"-q       --quiet           print a summary only on exit\n"
+ 		"-t NUM   --threads=NUM     number of threads: default=2\n"
+@@ -221,6 +223,7 @@ static void display_help(void)
+ static int priority;
+ static int num_threads = 2;
+ static int max_cycles;
++static int duration;
+ static int verbose;
+ static int quiet;
+ static int lockall = 0;
+@@ -235,6 +238,7 @@ static void process_options (int argc, char *argv[])
+ 		static struct option long_options[] = {
+ 			{"breaktrace", required_argument, NULL, 'b'},
+ 			{"loops", required_argument, NULL, 'l'},
++			{"duration", required_argument, NULL, 'D'},
+ 			{"priority", required_argument, NULL, 'p'},
+ 			{"quiet", no_argument, NULL, 'q'},
+ 			{"threads", required_argument, NULL, 't'},
+@@ -243,13 +247,14 @@ static void process_options (int argc, char *argv[])
+ 			{"help", no_argument, NULL, '?'},
+ 			{NULL, 0, NULL, 0}
+ 		};
+-		int c = getopt_long (argc, argv, "b:c:d:i:l:np:qrsmt:v",
++		int c = getopt_long (argc, argv, "b:c:d:i:l:D:np:qrsmt:v",
+ 			long_options, &option_index);
+ 		if (c == -1)
+ 			break;
+ 		switch (c) {
+ 		case 'b': tracelimit = atoi(optarg); break;
+ 		case 'l': max_cycles = atoi(optarg); break;
++		case 'D': duration = parse_time_string(optarg); break;
+ 		case 'p': priority = atoi(optarg); break;
+ 		case 'q': quiet = 1; break;
+ 		case 't': num_threads = atoi(optarg); break;
+@@ -259,6 +264,9 @@ static void process_options (int argc, char *argv[])
+ 		}
+ 	}
+ 
++	if (duration < 0)
++		error = 1;
++
+ 	if (priority < 0 || priority > 99)
+ 		error = 1;
+ 
+@@ -340,6 +348,10 @@ int main(int argc, char **argv)
+ 
+ 	signal(SIGINT, sighand);
+ 	signal(SIGTERM, sighand);
++	signal(SIGALRM, sighand);
++
++	if (duration)
++		alarm(duration);
+ 
+ 	par = calloc(num_threads, sizeof(struct thread_param));
+ 	if (!par)
+diff --git a/src/sigwaittest/sigwaittest.8 b/src/sigwaittest/sigwaittest.8
+index 2290ca2c76bc..5bedf2ced0dd 100644
+--- a/src/sigwaittest/sigwaittest.8
++++ b/src/sigwaittest/sigwaittest.8
+@@ -21,6 +21,11 @@ It is useful to track down unexpected large latencies of a system.
+ .B \-d, \-\-distance=DIST
+ Set the distance of thread intervals in microseconds (default is 500 us). When  cyclictest is called with the -t option and more than one thread is created, then this distance value is added to the interval of the threads: Interval(thread N) = Interval(thread N-1) + DIST
+ .TP
++.B \-D, \-\-duration=TIME
++Specify a length for the test run.
++.br
++Append 'm', 'h', or 'd' to specify minutes, hours or days.
++.TP
+ .B \-f, \-\-fork
+ Instead of creating threads (which is the default), fork new processes
+ .TP
+diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
+index 91fcdaa5f185..6e3c28330447 100644
+--- a/src/sigwaittest/sigwaittest.c
++++ b/src/sigwaittest/sigwaittest.c
+@@ -222,6 +222,8 @@ static void display_help(void)
+ 	"-f       --fork            fork new processes instead of creating threads\n"
+ 	"-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
+ 	"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
++	"-D       --duration=TIME   specify a length for the test run.\n"
++	"                           Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
+ 	"-p PRIO  --prio=PRIO       priority\n"
+ 	"-t       --threads         one thread per available processor\n"
+ 	"-t [NUM] --threads=NUM     number of threads:\n"
+@@ -236,6 +238,7 @@ static int affinity;
+ static int priority;
+ static int num_threads = 1;
+ static int max_cycles;
++static int duration;
+ static int interval = 1000;
+ static int distance = 500;
+ 
+@@ -255,12 +258,13 @@ static void process_options (int argc, char *argv[])
+ 			{"fork", optional_argument, NULL, 'f'},
+ 			{"interval", required_argument, NULL, 'i'},
+ 			{"loops", required_argument, NULL, 'l'},
++			{"duration", required_argument, NULL, 'D'},
+ 			{"priority", required_argument, NULL, 'p'},
+ 			{"threads", optional_argument, NULL, 't'},
+ 			{"help", no_argument, NULL, '?'},
+ 			{NULL, 0, NULL, 0}
+ 		};
+-		int c = getopt_long (argc, argv, "a::b:d:f::i:l:p:t::",
++		int c = getopt_long (argc, argv, "a::b:d:f::i:l:D:p:t::",
+ 			long_options, &option_index);
+ 		if (c == -1)
+ 			break;
+@@ -291,6 +295,7 @@ static void process_options (int argc, char *argv[])
+ 			break;
+ 		case 'i': interval = atoi(optarg); break;
+ 		case 'l': max_cycles = atoi(optarg); break;
++		case 'D': duration = parse_time_string(optarg); break;
+ 		case 'p': priority = atoi(optarg); break;
+ 		case 't':
+ 			if (optarg != NULL)
+@@ -316,6 +321,9 @@ static void process_options (int argc, char *argv[])
+ 			}
+ 		}
+ 
++		if (duration < 0)
++			error = 1;
++
+ 		if (num_threads < 1 || num_threads > 255)
+ 			error = 1;
+ 
+@@ -433,9 +441,13 @@ int main(int argc, char *argv[])
+ 
+ 	signal(SIGINT, sighand);
+ 	signal(SIGTERM, sighand);
++	signal(SIGALRM, sighand);
+ 	sigemptyset(&sigset);
+ 	pthread_sigmask(SIG_SETMASK, &sigset, NULL);
+ 
++	if (duration)
++		alarm(duration);
++
+ 	if (!mustfork && !wasforked) {
+ 		receiver = calloc(num_threads, sizeof(struct params));
+ 		sender = calloc(num_threads, sizeof(struct params));
+@@ -578,6 +590,7 @@ int main(int argc, char *argv[])
+ 		sigemptyset(&sigset);
+ 		sigaddset(&sigset, SIGTERM);
+ 		sigaddset(&sigset, SIGINT);
++		sigaddset(&sigset, SIGALRM);
+ 		pthread_sigmask(SIG_SETMASK, &sigset, NULL);
+ 
+ 		nanosleep(&maindelay, NULL);
+diff --git a/src/svsematest/svsematest.8 b/src/svsematest/svsematest.8
+index 0d4eaf3bb7ff..da64e9875d9f 100644
+--- a/src/svsematest/svsematest.8
++++ b/src/svsematest/svsematest.8
+@@ -21,6 +21,11 @@ It is useful to track down unexpected large latencies of a system.
+ .B \-d, \-\-distance=DIST
+ Set the distance of thread intervals in microseconds (default is 500 us). When  cyclictest is called with the -t option and more than one thread is created, then this distance value is added to the interval of the threads: Interval(thread N) = Interval(thread N-1) + DIST
+ .TP
++.B \-D, \-\-duration=TIME
++Specify a length for the test run.
++.br
++Append 'm', 'h', or 'd' to specify minutes, hours or days.
++.TP
+ .B \-f, \-\-fork
+ Instead of creating threads (which is the default), fork new processes
+ .TP
+diff --git a/src/svsematest/svsematest.c b/src/svsematest/svsematest.c
+index eeb82858720a..dfa4660c0e43 100644
+--- a/src/svsematest/svsematest.c
++++ b/src/svsematest/svsematest.c
+@@ -248,6 +248,8 @@ static void display_help(void)
+ 	"-f       --fork            fork new processes instead of creating threads\n"
+ 	"-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
+ 	"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
++	"-D       --duration=TIME   specify a length for the test run.\n"
++	"                           Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
+ 	"-p PRIO  --prio=PRIO       priority\n"
+ 	"-S       --smp             SMP testing: options -a -t and same priority\n"
+         "                           of all threads\n"
+@@ -264,6 +266,7 @@ static int affinity;
+ static int priority;
+ static int num_threads = 1;
+ static int max_cycles;
++static int duration;
+ static int interval = 1000;
+ static int distance = 500;
+ static int smp;
+@@ -285,13 +288,14 @@ static void process_options (int argc, char *argv[])
+ 			{"fork", optional_argument, NULL, 'f'},
+ 			{"interval", required_argument, NULL, 'i'},
+ 			{"loops", required_argument, NULL, 'l'},
++			{"duration", required_argument, NULL, 'D'},
+ 			{"priority", required_argument, NULL, 'p'},
+ 			{"smp", no_argument, NULL, 'S'},
+ 			{"threads", optional_argument, NULL, 't'},
+ 			{"help", no_argument, NULL, '?'},
+ 			{NULL, 0, NULL, 0}
+ 		};
+-		int c = getopt_long (argc, argv, "a::b:d:f::i:l:p:St::",
++		int c = getopt_long (argc, argv, "a::b:d:f::i:l:D:p:St::",
+ 			long_options, &option_index);
+ 		if (c == -1)
+ 			break;
+@@ -326,6 +330,7 @@ static void process_options (int argc, char *argv[])
+ 			break;
+ 		case 'i': interval = atoi(optarg); break;
+ 		case 'l': max_cycles = atoi(optarg); break;
++		case 'D': duration = parse_time_string(optarg); break;
+ 		case 'p': priority = atoi(optarg); break;
+ 		case 'S':
+ 			smp = 1;
+@@ -360,6 +365,9 @@ static void process_options (int argc, char *argv[])
+ 			}
+ 		}
+ 
++		if (duration < 0)
++			error = 0;
++
+ 		if (num_threads < 1 || num_threads > 255)
+ 			error = 1;
+ 
+@@ -486,10 +494,14 @@ int main(int argc, char *argv[])
+ 
+ 	signal(SIGINT, sighand);
+ 	signal(SIGTERM, sighand);
++	signal(SIGALRM, sighand);
+ 
+ 	sigemptyset(&sigset);
+ 	pthread_sigmask(SIG_SETMASK, &sigset, NULL);
+ 
++	if (duration)
++		alarm(duration);
++
+ 	if (!mustfork && !wasforked) {
+ 		receiver = calloc(num_threads, sizeof(struct params));
+ 		sender = calloc(num_threads, sizeof(struct params));
+@@ -663,6 +675,7 @@ int main(int argc, char *argv[])
+ 		sigemptyset(&sigset);
+ 		sigaddset(&sigset, SIGTERM);
+ 		sigaddset(&sigset, SIGINT);
++		sigaddset(&sigset, SIGALRM);
+ 		pthread_sigmask(SIG_SETMASK, &sigset, NULL);
+ 
+ 		nanosleep(&maindelay, NULL);
 -- 
-Masami Hiramatsu <mhiramat@kernel.org>
+2.20.1
+
