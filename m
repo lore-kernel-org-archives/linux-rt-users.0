@@ -2,115 +2,166 @@ Return-Path: <SRS0=s/eb=RQ=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-1.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_PASS autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D6354C43381
-	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Mar 2019 13:24:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7E064C43381
+	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Mar 2019 14:09:42 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id AD9492184D
-	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Mar 2019 13:24:05 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 47E922171F
+	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Mar 2019 14:09:42 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1552486182;
+	bh=3+2I98o1I9ZiI96NR/5ZyEUSMXPnk3CzMGlkkeqLB30=;
+	h=Subject:From:To:Cc:Date:In-Reply-To:References:List-ID:From;
+	b=qIbBJnLrQrwAr8j+UM6ljOQae74rUCaWLQLJ6wgRt3pDwx/rLnFwDvcOK7tII/uFE
+	 AgCHq3ONX1GatqxIs23aTMfO5ArtJMsnlZb2AOBLaKCKK5uqVgiSFQ9JFFxoUG8S0x
+	 /3Ckdlm27jcbtLfRFb4+FqsYIgvM0i45W4C3oSa0=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726694AbfCMNYA (ORCPT
+        id S1726921AbfCMOJh (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 13 Mar 2019 09:24:00 -0400
-Received: from mail.kernel.org ([198.145.29.99]:39612 "EHLO mail.kernel.org"
+        Wed, 13 Mar 2019 10:09:37 -0400
+Received: from mail.kernel.org ([198.145.29.99]:39780 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725868AbfCMNX6 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 13 Mar 2019 09:23:58 -0400
-Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        id S1726530AbfCMOJg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 13 Mar 2019 10:09:36 -0400
+Received: from tzanussi-mobl (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 3EDF62087C;
-        Wed, 13 Mar 2019 13:23:57 +0000 (UTC)
-Date:   Wed, 13 Mar 2019 09:23:55 -0400
-From:   Steven Rostedt <rostedt@goodmis.org>
+        by mail.kernel.org (Postfix) with ESMTPSA id 0F3402147C;
+        Wed, 13 Mar 2019 14:09:34 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1552486175;
+        bh=3+2I98o1I9ZiI96NR/5ZyEUSMXPnk3CzMGlkkeqLB30=;
+        h=Subject:From:To:Cc:Date:In-Reply-To:References:From;
+        b=qJW10C3wPFIZceA3hWQLpZ01njnBt5nl8W+MQ1DtRaCj8qGHL2tAgOW2opuKCdGfZ
+         I4xlIJs0xsI7gzc4L8RS7yoBZ7M80DJhNmxp0Q+kAiDT+8xVLfzm3vpMCvBTFwV4s4
+         JQQtm8lKPKR/UO1o0w9kBtzT9sk21JEBZjAMS8XI=
+Message-ID: <1552486173.4293.27.camel@kernel.org>
+Subject: Re: [RFC PATCH v3 0/5] tracing: common error_log for ftrace
+From:   Tom Zanussi <zanussi@kernel.org>
 To:     Masami Hiramatsu <mhiramat@kernel.org>
-Cc:     Tom Zanussi <zanussi@kernel.org>, tglx@linutronix.de,
-        namhyung@kernel.org, bigeasy@linutronix.de, joel@joelfernandes.org,
+Cc:     rostedt@goodmis.org, tglx@linutronix.de, namhyung@kernel.org,
+        bigeasy@linutronix.de, joel@joelfernandes.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: Re: [RFC PATCH 4/7] tracing/probe: Check event/group naming rule at
- parsing
-Message-ID: <20190313092355.6f434c9f@gandalf.local.home>
-In-Reply-To: <155248009231.10815.12287201787254147977.stgit@devnote2>
-References: <155248005229.10815.334731901778152247.stgit@devnote2>
-        <155248009231.10815.12287201787254147977.stgit@devnote2>
-X-Mailer: Claws Mail 3.16.0 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
-MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Date:   Wed, 13 Mar 2019 09:09:33 -0500
+In-Reply-To: <20190313220348.d0481a0a5ad7de91e90dbadc@kernel.org>
+References: <cover.1551741458.git.tom.zanussi@linux.intel.com>
+         <20190305230646.e7f99c46f86c0e099ac0cd30@kernel.org>
+         <20190312152605.00150aae7b781137005e9ebf@kernel.org>
+         <1552409351.4293.22.camel@kernel.org>
+         <20190313220348.d0481a0a5ad7de91e90dbadc@kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+X-Mailer: Evolution 3.26.1-1 
+Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, 13 Mar 2019 21:28:12 +0900
-Masami Hiramatsu <mhiramat@kernel.org> wrote:
+Hi Masami,
 
-> Check event and group naming rule at parsing it instead
-> of allocating probes.
+On Wed, 2019-03-13 at 22:03 +0900, Masami Hiramatsu wrote:
+> On Tue, 12 Mar 2019 11:49:11 -0500
+> Tom Zanussi <zanussi@kernel.org> wrote:
 > 
-> Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
-> ---
->  kernel/trace/trace_kprobe.c |    7 +------
->  kernel/trace/trace_probe.c  |    8 ++++++++
->  kernel/trace/trace_uprobe.c |    5 +----
->  3 files changed, 10 insertions(+), 10 deletions(-)
+> > Hi Masami,
+> > 
+> > On Tue, 2019-03-12 at 15:26 +0900, Masami Hiramatsu wrote:
+> > > Hi Tom,
+> > > 
+> > > On Tue, 5 Mar 2019 23:06:46 +0900
+> > > Masami Hiramatsu <mhiramat@kernel.org> wrote:
+> > > 
+> > > > On Mon,  4 Mar 2019 17:36:43 -0600
+> > > > > Changes from v2:
+> > > > > 
+> > > > >   - Added [n] numbering as suggested by Masami
+> > > 
+> > > Hmm, this seems a bit different what I suggested.
+> > > 
+> > > I'm trying to port probe event's error report on
+> > > your error log, and I found that the number is
+> > > just shifted as below.
+> > > 
+> > > When I filled the log with errors.
+> > > =============
+> > > /sys/kernel/debug/tracing # cat error_log 
+> > > [1] trace_kprobe: error: Invalid unsigned integer string
+> > >   Command: r10aa00:foo/bar vfs
+> > >             ^
+> > > ...
+> > > 
+> > > [7] trace_kprobe: error: Group name must follow C naming
+> > > convention
+> > >   Command: p:a-b/bar vfs_read
+> > >              ^
+> > > [8] trace_kprobe: error: Event name is too long
+> > >   Command:
+> > > p:a/barrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+> > > rrrr
+> > > rrrrrrrrrrr vfs_read
+> > > =============
+> > > 
+> > > And do one more error, 
+> > > 
+> > > =============
+> > > /sys/kernel/debug/tracing # cat error_log 
+> > > [1] trace_kprobe: error: Maxactive is too big
+> > >   Command: r0xaa00:foo/bar vfs
+> > > 
+> > > ....
+> > > 
+> > > [7] trace_kprobe: error: Event name is too long
+> > >   Command:
+> > > p:a/barrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+> > > rrrr
+> > > rrrrrrrrrrr vfs_read
+> > >                ^
+> > > [8] trace_kprobe: error: Event name must follow C naming
+> > > convention
+> > >   Command: p:a/bar.c vfs_read
+> > >                ^
+> > > =============
+> > > 
+> > > The number of logs are changed :(  This can confuse users.
+> > > I think it is better to keep the number as a unique number for
+> > > each entry as below.
+> > > 
+> > 
+> > Hmm, that makes sense, but I wonder if that will also confuse
+> > users,
+> > when the log wraps around and no longer starts at [1] and there's
+> > no
+> > way to retrieve the previous errors.
 > 
-> diff --git a/kernel/trace/trace_kprobe.c b/kernel/trace/trace_kprobe.c
-> index d47e12596f12..5222fd82e7e4 100644
-> --- a/kernel/trace/trace_kprobe.c
-> +++ b/kernel/trace/trace_kprobe.c
-> @@ -221,7 +221,7 @@ static struct trace_kprobe *alloc_trace_kprobe(const char *group,
->  
->  	tk->rp.maxactive = maxactive;
->  
-> -	if (!event || !is_good_name(event)) {
-> +	if (!event || !group) {
->  		ret = -EINVAL;
->  		goto error;
->  	}
-> @@ -231,11 +231,6 @@ static struct trace_kprobe *alloc_trace_kprobe(const char *group,
->  	if (!tk->tp.call.name)
->  		goto error;
->  
-> -	if (!group || !is_good_name(group)) {
-> -		ret = -EINVAL;
-> -		goto error;
-> -	}
-> -
->  	tk->tp.class.system = kstrdup(group, GFP_KERNEL);
->  	if (!tk->tp.class.system)
->  		goto error;
-> diff --git a/kernel/trace/trace_probe.c b/kernel/trace/trace_probe.c
-> index feae03056f0b..1f0cb4030c0b 100644
-> --- a/kernel/trace/trace_probe.c
-> +++ b/kernel/trace/trace_probe.c
-> @@ -172,6 +172,10 @@ int traceprobe_parse_event_name(const char **pevent, const char **pgroup,
->  			return -E2BIG;
->  		}
->  		strlcpy(buf, event, slash - event + 1);
-> +		if (!is_good_name(buf)) {
-> +			pr_info("Group name must follow the rule of C identifier\n");
+> It is OK, that is same as dmesg. If user needs to keep watching it,
+> it should be dumped to disk by a daemon.
+> 
+> > 
+> > I took your suggestion as a way mainly to clearly delineate each
+> > error,
+> > since without the [number] or something similar, they all kind of
+> > run
+> > together.
+> > 
+> > Not sure what advantage numbering itself provides - would some
+> > other
+> > non-numbered separator work?
+> 
+> What about timestamp, similar to dmesg?
+> 
 
-What do you mean by "C identifier"?
+Yeah, I think that makes more sense - unlike the counter, there's no
+sense that you may be missing some prior messages.
 
--- Steve
+Thanks,
 
-> +			return -EINVAL;
-> +		}
->  		*pgroup = buf;
->  		*pevent = slash + 1;
->  		event = *pevent;
-> @@ -184,6 +188,10 @@ int traceprobe_parse_event_name(const char **pevent, const char **pgroup,
->  		pr_info("Event name is too long\n");
->  		return -E2BIG;
->  	}
-> +	if (!is_good_name(event)) {
-> +		pr_info("Event name must follow the rule of C identifier\n");
-> +		return -EINVAL;
-> +	}
->  	return 0;
->  }
->
+Tom 
+
+> Thank you,
+> 
+> 
+> 
