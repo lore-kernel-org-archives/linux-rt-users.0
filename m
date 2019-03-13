@@ -3,55 +3,56 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
 X-Spam-Status: No, score=-1.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_PASS autolearn=ham
-	autolearn_force=no version=3.4.0
+	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_PASS,URIBL_BLOCKED
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 15721C43381
-	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Mar 2019 22:43:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 25BC3C43381
+	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Mar 2019 22:47:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id D48E82146E
-	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Mar 2019 22:43:25 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E33DE2146E
+	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Mar 2019 22:47:39 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1552517005;
-	bh=7KjrVbqvN7Fja0wUJEvobWPWEE8XOHR/+Za/Ed9QAJ0=;
+	s=default; t=1552517260;
+	bh=jOM7YFbP7b87c9/WtmjV6Nv0aLqZCF7mhZK4c23ri4Y=;
 	h=Date:From:To:Cc:Subject:In-Reply-To:References:List-ID:From;
-	b=pN7RmOp4nqSgcJt1ar7PpgEavUL5UXoioa2xQVsc4AorHZwN3YKPVYXEtZM9xV4X0
-	 P5k3D7IB15of8YtXtpt0ywSWciLUw2RTxUXUGK49qBtU/bI89zMhaQSPY1LJGJYZto
-	 OlNLuc3k6VeOIdjADBlpjjZt69GmUPWaaL7SHq2E=
+	b=z8avsMaR49FQwVYvwMm1HLPoCTfCbKB7t+zuPoiB+Fx7tHjMlE6Yhk12T2MJWfs/9
+	 PCEmYCscv3/fIaN/sed+lFfhKaf2nAh562VsaZOc9YxGLujuNQ8WpnOMa0SUP07LzQ
+	 3F/8DSGHAvsGc5dVkVdFJHIyDPqPRysAQh8RCyr4=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726582AbfCMWnZ (ORCPT
+        id S1726618AbfCMWrd (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 13 Mar 2019 18:43:25 -0400
-Received: from mail.kernel.org ([198.145.29.99]:58548 "EHLO mail.kernel.org"
+        Wed, 13 Mar 2019 18:47:33 -0400
+Received: from mail.kernel.org ([198.145.29.99]:35708 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726556AbfCMWnZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 13 Mar 2019 18:43:25 -0400
+        id S1726405AbfCMWrd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 13 Mar 2019 18:47:33 -0400
 Received: from devnote2 (NE2965lan1.rev.em-net.ne.jp [210.141.244.193])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id A7C182087C;
-        Wed, 13 Mar 2019 22:43:22 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id C3F532087C;
+        Wed, 13 Mar 2019 22:47:30 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1552517004;
-        bh=7KjrVbqvN7Fja0wUJEvobWPWEE8XOHR/+Za/Ed9QAJ0=;
+        s=default; t=1552517252;
+        bh=jOM7YFbP7b87c9/WtmjV6Nv0aLqZCF7mhZK4c23ri4Y=;
         h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
-        b=TOxO7ih1pa82e8vEAsv/1ZZUOigSEUcOJ66gDlHtHzgo1SKOsyWoz28ONPdiD5V9M
-         jR+7FHzMHkOZMRjENEnIvuwXVTWoC9uq93VoN1aMvq4hd0igVsRk8S/hAN9H0c643f
-         PayOZxJMXTdEF4McgYzzyQlOSygr+6ZRxIpxelIA=
-Date:   Thu, 14 Mar 2019 07:43:20 +0900
+        b=bFO5argsAfj9TDcDPgTKQMx6NHVKLYeMHGnK1r0ZYk+j5qkzGVU1oWbzpwCjl8bci
+         PY0Dm/aUnfdTd+W2v5yOdf3LjgqrLvDr20edP75PG6krf6weuhaiUv2TYYWyvBeavs
+         j3SCsQNrUIE5e2FEmWcrNxHnYVsqFNFxm5kw74ag=
+Date:   Thu, 14 Mar 2019 07:47:28 +0900
 From:   Masami Hiramatsu <mhiramat@kernel.org>
 To:     Steven Rostedt <rostedt@goodmis.org>
 Cc:     Tom Zanussi <zanussi@kernel.org>, tglx@linutronix.de,
         namhyung@kernel.org, bigeasy@linutronix.de, joel@joelfernandes.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: Re: [RFC PATCH 1/7] tracing/probe: Check maxactive error cases
-Message-Id: <20190314074320.0ec13cf5b4b9e2261f2d5b78@kernel.org>
-In-Reply-To: <20190313105156.7f1da539@gandalf.local.home>
+Subject: Re: [RFC PATCH 4/7] tracing/probe: Check event/group naming rule at
+ parsing
+Message-Id: <20190314074728.2e58af676503c2fe05d1f485@kernel.org>
+In-Reply-To: <20190313112346.0b3fc25f@gandalf.local.home>
 References: <155248005229.10815.334731901778152247.stgit@devnote2>
-        <155248006270.10815.14600382508884855084.stgit@devnote2>
-        <20190313092051.77d04675@gandalf.local.home>
-        <20190313233739.09f58a0c5762d9a43470046b@kernel.org>
-        <20190313105156.7f1da539@gandalf.local.home>
+        <155248009231.10815.12287201787254147977.stgit@devnote2>
+        <20190313092355.6f434c9f@gandalf.local.home>
+        <20190314000402.3b14693f9030e891648124f1@kernel.org>
+        <20190313112346.0b3fc25f@gandalf.local.home>
 X-Mailer: Sylpheed 3.5.1 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
@@ -61,27 +62,46 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, 13 Mar 2019 10:51:56 -0400
+On Wed, 13 Mar 2019 11:23:46 -0400
 Steven Rostedt <rostedt@goodmis.org> wrote:
 
-> On Wed, 13 Mar 2019 23:37:39 +0900
+> On Thu, 14 Mar 2019 00:04:02 +0900
 > Masami Hiramatsu <mhiramat@kernel.org> wrote:
 > 
-> 
-> > > So now 'p1:..." will error out and not just be ignored?  
+> > > >  		strlcpy(buf, event, slash - event + 1);
+> > > > +		if (!is_good_name(buf)) {
+> > > > +			pr_info("Group name must follow the rule of C identifier\n");  
+> > > 
+> > > What do you mean by "C identifier"?  
 > > 
-> > Yes, I think it is better to tell user "your command has a
-> > meaningless option, maybe you made a mistake" than ignore that.
+> > I meant "the naming rules of C language identifiers". It means
+> > that the name has to start with alphabet or "_" and only contain
+> > alphanumeric characters and "_". Does it clear?
+> > I couldn't think of a good word. maybe "naming convention"
+> > does not fit...
+> 
+> Ah, OK that now makes sense.
+> 
 > > 
+> > Would you have any idea?
 > 
-> OK, just making sure. Hope nobody complains about it ;-)
+> I think I was more confused by the way it was stated. What about saying:
 > 
-> Are these OK to add for the next merge window, or do you want them in
-> now? I could probably get them ready for -rc1.
+> 	"Group names must follow the same rules as C identifiers"
 
-Yes, I think [1/7] to [3/7] would be better to go to 5.1.
+OK, I will update it.
 
-Thank you,
+> Saying "the rule of C identifiers" made me think more of "the rule of
+> law", and thought that this had something to do with rules of C
+> zealots, and those that identify with "C" ;-)
+
+Oh, I got it. :-)
+
+Thank you!
+
+> 
+> -- Steve
+
 
 -- 
 Masami Hiramatsu <mhiramat@kernel.org>
