@@ -1,107 +1,102 @@
-Return-Path: <SRS0=s/eb=RQ=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=rL3Y=RR=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_PASS,URIBL_BLOCKED
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_PASS,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 25BC3C43381
-	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Mar 2019 22:47:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BC445C43381
+	for <linux-rt-users@archiver.kernel.org>; Thu, 14 Mar 2019 04:30:05 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id E33DE2146E
-	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Mar 2019 22:47:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 86A3F2184C
+	for <linux-rt-users@archiver.kernel.org>; Thu, 14 Mar 2019 04:30:05 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1552517260;
-	bh=jOM7YFbP7b87c9/WtmjV6Nv0aLqZCF7mhZK4c23ri4Y=;
-	h=Date:From:To:Cc:Subject:In-Reply-To:References:List-ID:From;
-	b=z8avsMaR49FQwVYvwMm1HLPoCTfCbKB7t+zuPoiB+Fx7tHjMlE6Yhk12T2MJWfs/9
-	 PCEmYCscv3/fIaN/sed+lFfhKaf2nAh562VsaZOc9YxGLujuNQ8WpnOMa0SUP07LzQ
-	 3F/8DSGHAvsGc5dVkVdFJHIyDPqPRysAQh8RCyr4=
+	s=default; t=1552537805;
+	bh=VwWdkFvgpbeIVEvL6i1lSaHhTX3+yofQWzD7SD60KD8=;
+	h=From:To:Cc:Subject:Date:List-ID:From;
+	b=EuMYpACUB2HkyLUhM+FtLsAdeBBEntS/4rEzoRYm//6Uxc/2rMnrkaPMHlAWSsOum
+	 s8QuFXziAwjBHOb6397b3admSxzvlRk1mfyc5Pa+lHxkJEf4L3f+8bO0d1eCqXfKVm
+	 3Gy2/yijzpozBHPULtkqBEMVPnArQTnLLx8w7uVQ=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726618AbfCMWrd (ORCPT
+        id S1725959AbfCNEaE (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 13 Mar 2019 18:47:33 -0400
-Received: from mail.kernel.org ([198.145.29.99]:35708 "EHLO mail.kernel.org"
+        Thu, 14 Mar 2019 00:30:04 -0400
+Received: from mail.kernel.org ([198.145.29.99]:47400 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726405AbfCMWrd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 13 Mar 2019 18:47:33 -0400
-Received: from devnote2 (NE2965lan1.rev.em-net.ne.jp [210.141.244.193])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        id S1725897AbfCNEaE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 14 Mar 2019 00:30:04 -0400
+Received: from localhost.localdomain (NE2965lan1.rev.em-net.ne.jp [210.141.244.193])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id C3F532087C;
-        Wed, 13 Mar 2019 22:47:30 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 4E43D2085A;
+        Thu, 14 Mar 2019 04:30:02 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1552517252;
-        bh=jOM7YFbP7b87c9/WtmjV6Nv0aLqZCF7mhZK4c23ri4Y=;
-        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
-        b=bFO5argsAfj9TDcDPgTKQMx6NHVKLYeMHGnK1r0ZYk+j5qkzGVU1oWbzpwCjl8bci
-         PY0Dm/aUnfdTd+W2v5yOdf3LjgqrLvDr20edP75PG6krf6weuhaiUv2TYYWyvBeavs
-         j3SCsQNrUIE5e2FEmWcrNxHnYVsqFNFxm5kw74ag=
-Date:   Thu, 14 Mar 2019 07:47:28 +0900
+        s=default; t=1552537804;
+        bh=VwWdkFvgpbeIVEvL6i1lSaHhTX3+yofQWzD7SD60KD8=;
+        h=From:To:Cc:Subject:Date:From;
+        b=h7TCWIERGyVZg6MqMbGNcy9uKoAyBT/EJaqIiHrjX443XQF/LhuIQY8KdJ4YQ9bDE
+         CA6u9IMn5J12p1ZhD2i6WilxsIKDcnCeSwd+24tyeVLxy7YjGE1zM5TnSxYHi8++qX
+         1OgT0lJf8tn7o4y9sdIAy5rWvotN0JMcL9H4Bb8c=
 From:   Masami Hiramatsu <mhiramat@kernel.org>
-To:     Steven Rostedt <rostedt@goodmis.org>
-Cc:     Tom Zanussi <zanussi@kernel.org>, tglx@linutronix.de,
-        namhyung@kernel.org, bigeasy@linutronix.de, joel@joelfernandes.org,
+To:     Tom Zanussi <zanussi@kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+Cc:     tglx@linutronix.de, mhiramat@kernel.org, namhyung@kernel.org,
+        bigeasy@linutronix.de, joel@joelfernandes.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: Re: [RFC PATCH 4/7] tracing/probe: Check event/group naming rule at
- parsing
-Message-Id: <20190314074728.2e58af676503c2fe05d1f485@kernel.org>
-In-Reply-To: <20190313112346.0b3fc25f@gandalf.local.home>
-References: <155248005229.10815.334731901778152247.stgit@devnote2>
-        <155248009231.10815.12287201787254147977.stgit@devnote2>
-        <20190313092355.6f434c9f@gandalf.local.home>
-        <20190314000402.3b14693f9030e891648124f1@kernel.org>
-        <20190313112346.0b3fc25f@gandalf.local.home>
-X-Mailer: Sylpheed 3.5.1 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Subject: [RFC PATCH v2 0/7] tracing: Use common error_log with probe events
+Date:   Thu, 14 Mar 2019 13:29:49 +0900
+Message-Id: <155253778926.14922.14048967363017104338.stgit@devnote2>
+X-Mailer: git-send-email 2.17.1
+User-Agent: StGit/0.17.1-dirty
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, 13 Mar 2019 11:23:46 -0400
-Steven Rostedt <rostedt@goodmis.org> wrote:
+Hi,
 
-> On Thu, 14 Mar 2019 00:04:02 +0900
-> Masami Hiramatsu <mhiramat@kernel.org> wrote:
-> 
-> > > >  		strlcpy(buf, event, slash - event + 1);
-> > > > +		if (!is_good_name(buf)) {
-> > > > +			pr_info("Group name must follow the rule of C identifier\n");  
-> > > 
-> > > What do you mean by "C identifier"?  
-> > 
-> > I meant "the naming rules of C language identifiers". It means
-> > that the name has to start with alphabet or "_" and only contain
-> > alphanumeric characters and "_". Does it clear?
-> > I couldn't think of a good word. maybe "naming convention"
-> > does not fit...
-> 
-> Ah, OK that now makes sense.
-> 
-> > 
-> > Would you have any idea?
-> 
-> I think I was more confused by the way it was stated. What about saying:
-> 
-> 	"Group names must follow the same rules as C identifiers"
+Here is the 2nd version of using common error_log  with probe events.
+Previous version is here.
 
-OK, I will update it.
+http://lkml.kernel.org/r/155248005229.10815.334731901778152247.stgit@devnote2
 
-> Saying "the rule of C identifiers" made me think more of "the rule of
-> law", and thought that this had something to do with rules of C
-> zealots, and those that identify with "C" ;-)
+In this version, I've updated some error messages according to
+Steve's comment, adjust some error position, and update testcase
+to simplify a bit.
 
-Oh, I got it. :-)
+ - [4/7]: Update error message according to Steve's comment (Thanks!)
+ - [6/7]: Update error message, adjust error positions, and add uprobe errors
+ - [7/7]: Specify error position in command string by "^".
+          Clear error_log right before writing command.
+          Add uprobe syntax error checker
 
-Thank you!
+Thank you,
 
-> 
-> -- Steve
+---
+
+Masami Hiramatsu (7):
+      tracing/probe: Check maxactive error cases
+      tracing/probe: Check event name length correctly
+      tracing/probe: Check the size of argument name and body
+      tracing/probe: Check event/group naming rule at parsing
+      tracing/probe: Verify alloc_trace_*probe() result
+      tracing: Use tracing error_log with probe events
+      selftests/ftrace: Add error_log testcase for probe errors
 
 
--- 
+ kernel/trace/trace_kprobe.c                        |   90 ++++--
+ kernel/trace/trace_probe.c                         |  282 +++++++++++++++-----
+ kernel/trace/trace_probe.h                         |   78 +++++-
+ kernel/trace/trace_uprobe.c                        |   52 ++--
+ .../ftrace/test.d/kprobe/kprobe_syntax_errors.tc   |   93 +++++++
+ .../ftrace/test.d/kprobe/uprobe_syntax_errors.tc   |   31 ++
+ 6 files changed, 494 insertions(+), 132 deletions(-)
+ create mode 100644 tools/testing/selftests/ftrace/test.d/kprobe/kprobe_syntax_errors.tc
+ create mode 100644 tools/testing/selftests/ftrace/test.d/kprobe/uprobe_syntax_errors.tc
+
+--
 Masami Hiramatsu <mhiramat@kernel.org>
