@@ -1,32 +1,35 @@
-Return-Path: <SRS0=6U1w=RS=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=5OrQ=RV=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_PASS,USER_AGENT_NEOMUTT
+X-Spam-Status: No, score=-4.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_PASS,URIBL_BLOCKED
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6B19BC43381
-	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Mar 2019 16:42:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3C206C43381
+	for <linux-rt-users@archiver.kernel.org>; Mon, 18 Mar 2019 01:42:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 428AE218AC
-	for <linux-rt-users@archiver.kernel.org>; Fri, 15 Mar 2019 16:42:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 02C702085A
+	for <linux-rt-users@archiver.kernel.org>; Mon, 18 Mar 2019 01:42:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729541AbfCOQmn (ORCPT
+        id S1727159AbfCRBmV (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 15 Mar 2019 12:42:43 -0400
-Received: from Galois.linutronix.de ([146.0.238.70]:53783 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728480AbfCOQmm (ORCPT
+        Sun, 17 Mar 2019 21:42:21 -0400
+Received: from mail1.windriver.com ([147.11.146.13]:62762 "EHLO
+        mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726828AbfCRBmU (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 15 Mar 2019 12:42:42 -0400
-Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
-        (envelope-from <bigeasy@linutronix.de>)
-        id 1h4pum-0004z8-7P; Fri, 15 Mar 2019 17:42:36 +0100
-Date:   Fri, 15 Mar 2019 17:42:36 +0100
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     "Liu, Yongxin" <Yongxin.Liu@windriver.com>
-Cc:     "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        Sun, 17 Mar 2019 21:42:20 -0400
+Received: from ALA-HCB.corp.ad.wrs.com ([147.11.189.41])
+        by mail1.windriver.com (8.15.2/8.15.1) with ESMTPS id x2I1fTpb022619
+        (version=TLSv1 cipher=AES128-SHA bits=128 verify=FAIL);
+        Sun, 17 Mar 2019 18:41:29 -0700 (PDT)
+Received: from ALA-MBD.corp.ad.wrs.com ([169.254.3.68]) by
+ ALA-HCB.corp.ad.wrs.com ([147.11.189.41]) with mapi id 14.03.0439.000; Sun,
+ 17 Mar 2019 18:41:11 -0700
+From:   "Liu, Yongxin" <Yongxin.Liu@windriver.com>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+CC:     "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
         "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
         "tglx@linutronix.de" <tglx@linutronix.de>,
         "rostedt@goodmis.org" <rostedt@goodmis.org>,
@@ -34,139 +37,127 @@ Cc:     "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
         "pagupta@redhat.com" <pagupta@redhat.com>,
         "Gortmaker, Paul" <Paul.Gortmaker@windriver.com>,
         "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>
-Subject: Re: [PATCH RT] nvdimm: make lane acquirement RT aware
-Message-ID: <20190315164236.rzbwe7reeprjv3um@linutronix.de>
+Subject: RE: [PATCH RT] nvdimm: make lane acquirement RT aware
+Thread-Topic: [PATCH RT] nvdimm: make lane acquirement RT aware
+Thread-Index: AQHU1AQaa42orSwEx0mmBzBs0WZNkaYAw5wAgAAVVLCAAStcgIADmlcQgAfK3QCAA0RWUA==
+Date:   Mon, 18 Mar 2019 01:41:10 +0000
+Message-ID: <597B109EC20B76429F71A8A97770610D12A63C81@ALA-MBD.corp.ad.wrs.com>
 References: <20190306095709.23138-1-yongxin.liu@windriver.com>
  <20190307143344.ytsnbmot5tjzjhip@linutronix.de>
  <597B109EC20B76429F71A8A97770610D12A52669@ALA-MBD.corp.ad.wrs.com>
  <20190308094131.ge4wbsvz4p6xikdf@linutronix.de>
  <597B109EC20B76429F71A8A97770610D12A5643B@ALA-MBD.corp.ad.wrs.com>
+ <20190315164236.rzbwe7reeprjv3um@linutronix.de>
+In-Reply-To: <20190315164236.rzbwe7reeprjv3um@linutronix.de>
+Accept-Language: en-US
+Content-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-originating-ip: [128.224.162.171]
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <597B109EC20B76429F71A8A97770610D12A5643B@ALA-MBD.corp.ad.wrs.com>
-User-Agent: NeoMutt/20180716
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2019-03-11 00:44:58 [+0000], Liu, Yongxin wrote:
-> > but you still have the ndl_lock->lock which protects the resource. So in
-> > the unlikely (but possible event) that you switch CPUs after obtaining
-> > the CPU number you block on the lock. No harm is done, right?
-> 
-> The resource "lane" can be acquired recursively, so "ndl_lock->lock" is a conditional lock.
-> 
-> ndl_count->count is per CPU.
-> ndl_lock->lock is per lane.
-> 
-> Here is an example:
-> Thread A  on CPU 5 --> nd_region_acquire_lane --> lane# 5 --> get "ndl_lock->lock"
-> --> nd_region_acquire_lane --> lane# 5 --> bypass "ndl_lock->lock" due to "ndl_count->count++".
-> 
-> Thread B on CPU 5 --> nd_region_acquire_lane --> lane# 5 --> bypass "ndl_lock->lock" ("ndl_count->count"
-> was changed by Thread A)
-> 
-> If we use raw_smp_processor_id(), no matter which CPU the thread was migrated to, 
-> if there is another thread running on the old CPU, there will be race condition 
-> due to per CPU variable "ndl_count->count".
-
-so I've been looking at it again. The recursive locking could have been
-solved better. Like the local_lock() on -RT is doing it.
-Given that you lock with preempt_disable() there should be no in-IRQ
-usage.
-But in the "nd_region->num_lanes >= nr_cpu_ids" case you don't take any
-locks. That would be a problem with raw_smp_processor_id() approach.
-
-So what about the completely untested patch here:
-
-diff --git a/drivers/nvdimm/nd.h b/drivers/nvdimm/nd.h
-index 379bf4305e615..98c2e9df4b2e4 100644
---- a/drivers/nvdimm/nd.h
-+++ b/drivers/nvdimm/nd.h
-@@ -109,7 +109,8 @@ unsigned sizeof_namespace_label(struct nvdimm_drvdata *ndd);
- 			res; res = next, next = next ? next->sibling : NULL)
- 
- struct nd_percpu_lane {
--	int count;
-+	struct task_struct *owner;
-+	int nestcnt;
- 	spinlock_t lock;
- };
- 
-diff --git a/drivers/nvdimm/region_devs.c b/drivers/nvdimm/region_devs.c
-index e2818f94f2928..8a62f9833513f 100644
---- a/drivers/nvdimm/region_devs.c
-+++ b/drivers/nvdimm/region_devs.c
-@@ -946,19 +946,17 @@ int nd_blk_region_init(struct nd_region *nd_region)
-  */
- unsigned int nd_region_acquire_lane(struct nd_region *nd_region)
- {
-+	struct nd_percpu_lane *ndl_lock;
- 	unsigned int cpu, lane;
- 
--	cpu = get_cpu();
--	if (nd_region->num_lanes < nr_cpu_ids) {
--		struct nd_percpu_lane *ndl_lock, *ndl_count;
--
--		lane = cpu % nd_region->num_lanes;
--		ndl_count = per_cpu_ptr(nd_region->lane, cpu);
--		ndl_lock = per_cpu_ptr(nd_region->lane, lane);
--		if (ndl_count->count++ == 0)
--			spin_lock(&ndl_lock->lock);
--	} else
--		lane = cpu;
-+	cpu = raw_smp_processor_id();
-+	lane = cpu % nd_region->num_lanes;
-+	ndl_lock  = per_cpu_ptr(nd_region->lane, lane);
-+	if (ndl_lock->owner != current) {
-+		spin_lock(&ndl_lock->lock);
-+		ndl_lock->owner = current;
-+	}
-+	ndl_lock->nestcnt++;
- 
- 	return lane;
- }
-@@ -966,17 +964,16 @@ EXPORT_SYMBOL(nd_region_acquire_lane);
- 
- void nd_region_release_lane(struct nd_region *nd_region, unsigned int lane)
- {
--	if (nd_region->num_lanes < nr_cpu_ids) {
--		unsigned int cpu = get_cpu();
--		struct nd_percpu_lane *ndl_lock, *ndl_count;
-+	struct nd_percpu_lane *ndl_lock;
- 
--		ndl_count = per_cpu_ptr(nd_region->lane, cpu);
--		ndl_lock = per_cpu_ptr(nd_region->lane, lane);
--		if (--ndl_count->count == 0)
--			spin_unlock(&ndl_lock->lock);
--		put_cpu();
--	}
--	put_cpu();
-+	ndl_lock = per_cpu_ptr(nd_region->lane, lane);
-+	WARN_ON(ndl_lock->nestcnt == 0);
-+	WARN_ON(ndl_lock->owner != current);
-+	if (--ndl_lock->nestcnt)
-+		return;
-+
-+	ndl_lock->owner = NULL;
-+	spin_unlock(&ndl_lock->lock);
- }
- EXPORT_SYMBOL(nd_region_release_lane);
- 
-@@ -1042,7 +1039,8 @@ static struct nd_region *nd_region_create(struct nvdimm_bus *nvdimm_bus,
- 
- 		ndl = per_cpu_ptr(nd_region->lane, i);
- 		spin_lock_init(&ndl->lock);
--		ndl->count = 0;
-+		ndl->owner = NULL;
-+		ndl->nestcnt = 0;
- 	}
- 
- 	for (i = 0; i < ndr_desc->num_mappings; i++) {
-
-> Thanks,
-> Yongxin
-
-Sebastian
+DQo+IC0tLS0tT3JpZ2luYWwgTWVzc2FnZS0tLS0tDQo+IEZyb206IGxpbnV4LWtlcm5lbC1vd25l
+ckB2Z2VyLmtlcm5lbC5vcmcgW21haWx0bzpsaW51eC1rZXJuZWwtDQo+IG93bmVyQHZnZXIua2Vy
+bmVsLm9yZ10gT24gQmVoYWxmIE9mIFNlYmFzdGlhbiBBbmRyemVqIFNpZXdpb3INCj4gU2VudDog
+U2F0dXJkYXksIE1hcmNoIDE2LCAyMDE5IDAwOjQzDQo+IFRvOiBMaXUsIFlvbmd4aW4NCj4gQ2M6
+IGxpbnV4LWtlcm5lbEB2Z2VyLmtlcm5lbC5vcmc7IGxpbnV4LXJ0LXVzZXJzQHZnZXIua2VybmVs
+Lm9yZzsNCj4gdGdseEBsaW51dHJvbml4LmRlOyByb3N0ZWR0QGdvb2RtaXMub3JnOyBkYW4uai53
+aWxsaWFtc0BpbnRlbC5jb207DQo+IHBhZ3VwdGFAcmVkaGF0LmNvbTsgR29ydG1ha2VyLCBQYXVs
+OyBsaW51eC1udmRpbW1AbGlzdHMuMDEub3JnDQo+IFN1YmplY3Q6IFJlOiBbUEFUQ0ggUlRdIG52
+ZGltbTogbWFrZSBsYW5lIGFjcXVpcmVtZW50IFJUIGF3YXJlDQo+IA0KPiBPbiAyMDE5LTAzLTEx
+IDAwOjQ0OjU4IFsrMDAwMF0sIExpdSwgWW9uZ3hpbiB3cm90ZToNCj4gPiA+IGJ1dCB5b3Ugc3Rp
+bGwgaGF2ZSB0aGUgbmRsX2xvY2stPmxvY2sgd2hpY2ggcHJvdGVjdHMgdGhlIHJlc291cmNlLiBT
+bw0KPiBpbg0KPiA+ID4gdGhlIHVubGlrZWx5IChidXQgcG9zc2libGUgZXZlbnQpIHRoYXQgeW91
+IHN3aXRjaCBDUFVzIGFmdGVyDQo+IG9idGFpbmluZw0KPiA+ID4gdGhlIENQVSBudW1iZXIgeW91
+IGJsb2NrIG9uIHRoZSBsb2NrLiBObyBoYXJtIGlzIGRvbmUsIHJpZ2h0Pw0KPiA+DQo+ID4gVGhl
+IHJlc291cmNlICJsYW5lIiBjYW4gYmUgYWNxdWlyZWQgcmVjdXJzaXZlbHksIHNvICJuZGxfbG9j
+ay0+bG9jayIgaXMNCj4gYSBjb25kaXRpb25hbCBsb2NrLg0KPiA+DQo+ID4gbmRsX2NvdW50LT5j
+b3VudCBpcyBwZXIgQ1BVLg0KPiA+IG5kbF9sb2NrLT5sb2NrIGlzIHBlciBsYW5lLg0KPiA+DQo+
+ID4gSGVyZSBpcyBhbiBleGFtcGxlOg0KPiA+IFRocmVhZCBBICBvbiBDUFUgNSAtLT4gbmRfcmVn
+aW9uX2FjcXVpcmVfbGFuZSAtLT4gbGFuZSMgNSAtLT4gZ2V0DQo+ICJuZGxfbG9jay0+bG9jayIN
+Cj4gPiAtLT4gbmRfcmVnaW9uX2FjcXVpcmVfbGFuZSAtLT4gbGFuZSMgNSAtLT4gYnlwYXNzICJu
+ZGxfbG9jay0+bG9jayIgZHVlDQo+IHRvICJuZGxfY291bnQtPmNvdW50KysiLg0KPiA+DQo+ID4g
+VGhyZWFkIEIgb24gQ1BVIDUgLS0+IG5kX3JlZ2lvbl9hY3F1aXJlX2xhbmUgLS0+IGxhbmUjIDUg
+LS0+IGJ5cGFzcw0KPiAibmRsX2xvY2stPmxvY2siICgibmRsX2NvdW50LT5jb3VudCINCj4gPiB3
+YXMgY2hhbmdlZCBieSBUaHJlYWQgQSkNCj4gPg0KPiA+IElmIHdlIHVzZSByYXdfc21wX3Byb2Nl
+c3Nvcl9pZCgpLCBubyBtYXR0ZXIgd2hpY2ggQ1BVIHRoZSB0aHJlYWQgd2FzDQo+IG1pZ3JhdGVk
+IHRvLA0KPiA+IGlmIHRoZXJlIGlzIGFub3RoZXIgdGhyZWFkIHJ1bm5pbmcgb24gdGhlIG9sZCBD
+UFUsIHRoZXJlIHdpbGwgYmUgcmFjZQ0KPiBjb25kaXRpb24NCj4gPiBkdWUgdG8gcGVyIENQVSB2
+YXJpYWJsZSAibmRsX2NvdW50LT5jb3VudCIuDQo+IA0KPiBzbyBJJ3ZlIGJlZW4gbG9va2luZyBh
+dCBpdCBhZ2Fpbi4gVGhlIHJlY3Vyc2l2ZSBsb2NraW5nIGNvdWxkIGhhdmUgYmVlbg0KPiBzb2x2
+ZWQgYmV0dGVyLiBMaWtlIHRoZSBsb2NhbF9sb2NrKCkgb24gLVJUIGlzIGRvaW5nIGl0Lg0KPiBH
+aXZlbiB0aGF0IHlvdSBsb2NrIHdpdGggcHJlZW1wdF9kaXNhYmxlKCkgdGhlcmUgc2hvdWxkIGJl
+IG5vIGluLUlSUQ0KPiB1c2FnZS4NCj4gQnV0IGluIHRoZSAibmRfcmVnaW9uLT5udW1fbGFuZXMg
+Pj0gbnJfY3B1X2lkcyIgY2FzZSB5b3UgZG9uJ3QgdGFrZSBhbnkNCj4gbG9ja3MuIFRoYXQgd291
+bGQgYmUgYSBwcm9ibGVtIHdpdGggcmF3X3NtcF9wcm9jZXNzb3JfaWQoKSBhcHByb2FjaC4NCj4g
+DQo+IFNvIHdoYXQgYWJvdXQgdGhlIGNvbXBsZXRlbHkgdW50ZXN0ZWQgcGF0Y2ggaGVyZToNCj4g
+DQo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL252ZGltbS9uZC5oIGIvZHJpdmVycy9udmRpbW0vbmQu
+aA0KPiBpbmRleCAzNzliZjQzMDVlNjE1Li45OGMyZTlkZjRiMmU0IDEwMDY0NA0KPiAtLS0gYS9k
+cml2ZXJzL252ZGltbS9uZC5oDQo+ICsrKyBiL2RyaXZlcnMvbnZkaW1tL25kLmgNCj4gQEAgLTEw
+OSw3ICsxMDksOCBAQCB1bnNpZ25lZCBzaXplb2ZfbmFtZXNwYWNlX2xhYmVsKHN0cnVjdCBudmRp
+bW1fZHJ2ZGF0YQ0KPiAqbmRkKTsNCj4gIAkJCXJlczsgcmVzID0gbmV4dCwgbmV4dCA9IG5leHQg
+PyBuZXh0LT5zaWJsaW5nIDogTlVMTCkNCj4gDQo+ICBzdHJ1Y3QgbmRfcGVyY3B1X2xhbmUgew0K
+PiAtCWludCBjb3VudDsNCj4gKwlzdHJ1Y3QgdGFza19zdHJ1Y3QgKm93bmVyOw0KPiArCWludCBu
+ZXN0Y250Ow0KPiAgCXNwaW5sb2NrX3QgbG9jazsNCj4gIH07DQo+IA0KPiBkaWZmIC0tZ2l0IGEv
+ZHJpdmVycy9udmRpbW0vcmVnaW9uX2RldnMuYyBiL2RyaXZlcnMvbnZkaW1tL3JlZ2lvbl9kZXZz
+LmMNCj4gaW5kZXggZTI4MThmOTRmMjkyOC4uOGE2MmY5ODMzNTEzZiAxMDA2NDQNCj4gLS0tIGEv
+ZHJpdmVycy9udmRpbW0vcmVnaW9uX2RldnMuYw0KPiArKysgYi9kcml2ZXJzL252ZGltbS9yZWdp
+b25fZGV2cy5jDQo+IEBAIC05NDYsMTkgKzk0NiwxNyBAQCBpbnQgbmRfYmxrX3JlZ2lvbl9pbml0
+KHN0cnVjdCBuZF9yZWdpb24gKm5kX3JlZ2lvbikNCj4gICAqLw0KPiAgdW5zaWduZWQgaW50IG5k
+X3JlZ2lvbl9hY3F1aXJlX2xhbmUoc3RydWN0IG5kX3JlZ2lvbiAqbmRfcmVnaW9uKQ0KPiAgew0K
+PiArCXN0cnVjdCBuZF9wZXJjcHVfbGFuZSAqbmRsX2xvY2s7DQo+ICAJdW5zaWduZWQgaW50IGNw
+dSwgbGFuZTsNCj4gDQo+IC0JY3B1ID0gZ2V0X2NwdSgpOw0KPiAtCWlmIChuZF9yZWdpb24tPm51
+bV9sYW5lcyA8IG5yX2NwdV9pZHMpIHsNCj4gLQkJc3RydWN0IG5kX3BlcmNwdV9sYW5lICpuZGxf
+bG9jaywgKm5kbF9jb3VudDsNCj4gLQ0KPiAtCQlsYW5lID0gY3B1ICUgbmRfcmVnaW9uLT5udW1f
+bGFuZXM7DQo+IC0JCW5kbF9jb3VudCA9IHBlcl9jcHVfcHRyKG5kX3JlZ2lvbi0+bGFuZSwgY3B1
+KTsNCj4gLQkJbmRsX2xvY2sgPSBwZXJfY3B1X3B0cihuZF9yZWdpb24tPmxhbmUsIGxhbmUpOw0K
+PiAtCQlpZiAobmRsX2NvdW50LT5jb3VudCsrID09IDApDQo+IC0JCQlzcGluX2xvY2soJm5kbF9s
+b2NrLT5sb2NrKTsNCj4gLQl9IGVsc2UNCj4gLQkJbGFuZSA9IGNwdTsNCj4gKwljcHUgPSByYXdf
+c21wX3Byb2Nlc3Nvcl9pZCgpOw0KPiArCWxhbmUgPSBjcHUgJSBuZF9yZWdpb24tPm51bV9sYW5l
+czsNCj4gKwluZGxfbG9jayAgPSBwZXJfY3B1X3B0cihuZF9yZWdpb24tPmxhbmUsIGxhbmUpOw0K
+PiArCWlmIChuZGxfbG9jay0+b3duZXIgIT0gY3VycmVudCkgew0KPiArCQlzcGluX2xvY2soJm5k
+bF9sb2NrLT5sb2NrKTsNCj4gKwkJbmRsX2xvY2stPm93bmVyID0gY3VycmVudDsNCj4gKwl9DQo+
+ICsJbmRsX2xvY2stPm5lc3RjbnQrKzsNCj4gDQo+ICAJcmV0dXJuIGxhbmU7DQo+ICB9DQo+IEBA
+IC05NjYsMTcgKzk2NCwxNiBAQCBFWFBPUlRfU1lNQk9MKG5kX3JlZ2lvbl9hY3F1aXJlX2xhbmUp
+Ow0KPiANCj4gIHZvaWQgbmRfcmVnaW9uX3JlbGVhc2VfbGFuZShzdHJ1Y3QgbmRfcmVnaW9uICpu
+ZF9yZWdpb24sIHVuc2lnbmVkIGludA0KPiBsYW5lKQ0KPiAgew0KPiAtCWlmIChuZF9yZWdpb24t
+Pm51bV9sYW5lcyA8IG5yX2NwdV9pZHMpIHsNCj4gLQkJdW5zaWduZWQgaW50IGNwdSA9IGdldF9j
+cHUoKTsNCj4gLQkJc3RydWN0IG5kX3BlcmNwdV9sYW5lICpuZGxfbG9jaywgKm5kbF9jb3VudDsN
+Cj4gKwlzdHJ1Y3QgbmRfcGVyY3B1X2xhbmUgKm5kbF9sb2NrOw0KPiANCj4gLQkJbmRsX2NvdW50
+ID0gcGVyX2NwdV9wdHIobmRfcmVnaW9uLT5sYW5lLCBjcHUpOw0KPiAtCQluZGxfbG9jayA9IHBl
+cl9jcHVfcHRyKG5kX3JlZ2lvbi0+bGFuZSwgbGFuZSk7DQo+IC0JCWlmICgtLW5kbF9jb3VudC0+
+Y291bnQgPT0gMCkNCj4gLQkJCXNwaW5fdW5sb2NrKCZuZGxfbG9jay0+bG9jayk7DQo+IC0JCXB1
+dF9jcHUoKTsNCj4gLQl9DQo+IC0JcHV0X2NwdSgpOw0KPiArCW5kbF9sb2NrID0gcGVyX2NwdV9w
+dHIobmRfcmVnaW9uLT5sYW5lLCBsYW5lKTsNCj4gKwlXQVJOX09OKG5kbF9sb2NrLT5uZXN0Y250
+ID09IDApOw0KPiArCVdBUk5fT04obmRsX2xvY2stPm93bmVyICE9IGN1cnJlbnQpOw0KPiArCWlm
+ICgtLW5kbF9sb2NrLT5uZXN0Y250KQ0KPiArCQlyZXR1cm47DQo+ICsNCj4gKwluZGxfbG9jay0+
+b3duZXIgPSBOVUxMOw0KPiArCXNwaW5fdW5sb2NrKCZuZGxfbG9jay0+bG9jayk7DQo+ICB9DQo+
+ICBFWFBPUlRfU1lNQk9MKG5kX3JlZ2lvbl9yZWxlYXNlX2xhbmUpOw0KPiANCj4gQEAgLTEwNDIs
+NyArMTAzOSw4IEBAIHN0YXRpYyBzdHJ1Y3QgbmRfcmVnaW9uICpuZF9yZWdpb25fY3JlYXRlKHN0
+cnVjdA0KPiBudmRpbW1fYnVzICpudmRpbW1fYnVzLA0KPiANCj4gIAkJbmRsID0gcGVyX2NwdV9w
+dHIobmRfcmVnaW9uLT5sYW5lLCBpKTsNCj4gIAkJc3Bpbl9sb2NrX2luaXQoJm5kbC0+bG9jayk7
+DQo+IC0JCW5kbC0+Y291bnQgPSAwOw0KPiArCQluZGwtPm93bmVyID0gTlVMTDsNCj4gKwkJbmRs
+LT5uZXN0Y250ID0gMDsNCj4gIAl9DQo+IA0KPiAgCWZvciAoaSA9IDA7IGkgPCBuZHJfZGVzYy0+
+bnVtX21hcHBpbmdzOyBpKyspIHsNCj4gDQo+ID4gVGhhbmtzLA0KPiA+IFlvbmd4aW4NCj4gDQoN
+CkNvbnNpZGVyIHRoZSByZWN1cnNpdmUgY2FsbCB0byBuZF9yZWdpb25fYWNxdWlyZV9sYW5lKCkg
+aW4gdGhlIGZvbGxvd2luZyBzaXR1YXRpb24uDQpXaWxsIHRoZXJlIGJlIGEgZGVhZCBsb2NrPw0K
+DQoNCiAgICBUaHJlYWQgQSAgICAgICAgICAgICAgICAgICAgVGhyZWFkIEINCiAgICAgICB8ICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgfA0KICAgICAgIHwgICAgICAgICAgICAgICAgICAgICAg
+ICAgICB8DQogICAgIENQVSAxICAgICAgICAgICAgICAgICAgICAgICBDUFUgMg0KICAgICAgIHwg
+ICAgICAgICAgICAgICAgICAgICAgICAgICB8DQogICAgICAgfCAgICAgICAgICAgICAgICAgICAg
+ICAgICAgIHwNCiBnZXQgbG9jayBmb3IgTGFuZSAxICAgICAgICAgZ2V0IGxvY2sgZm9yIExhbmUg
+Mg0KICAgICAgIHwgICAgICAgICAgICAgICAgICAgICAgICAgICB8DQogICAgICAgfCAgICAgICAg
+ICAgICAgICAgICAgICAgICAgIHwNCiBtaWdyYXRlIHRvIENQVSAyICAgICAgICAgICAgbWlncmF0
+ZSB0byBDUFUgMQ0KICAgICAgIHwgICAgICAgICAgICAgICAgICAgICAgICAgICB8DQogICAgICAg
+fCAgICAgICAgICAgICAgICAgICAgICAgICAgIHwNCiB3YWl0IGxvY2sgZm9yIExhbmUgMiAgICAg
+ICAgd2FpdCBsb2NrIGZvciBMYW5lIDEgDQogICAgICAgfCAgICAgICAgICAgICAgICAgICAgICAg
+ICAgIHwNCiAgICAgICB8ICAgICAgICAgICAgICAgICAgICAgICAgICAgfA0KICAgICAgIF9fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fDQogICAgICAgICAgICAgICAgICAgfA0KICAgICAgICAg
+ICAgICAgIGRlYWQgbG9jayA/DQoNCg0KVGhhbmtzLA0KWW9nbnhpbg0KDQoNCj4gU2ViYXN0aWFu
+DQo=
