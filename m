@@ -1,104 +1,155 @@
-Return-Path: <SRS0=B6j+=RX=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=LpNT=RY=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_PASS,USER_AGENT_NEOMUTT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_PASS,URIBL_BLOCKED,URIBL_SBL,URIBL_SBL_A
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 41B96C43381
-	for <linux-rt-users@archiver.kernel.org>; Wed, 20 Mar 2019 17:15:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BC31FC43381
+	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Mar 2019 21:27:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 1B62821873
-	for <linux-rt-users@archiver.kernel.org>; Wed, 20 Mar 2019 17:15:20 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6F58921917
+	for <linux-rt-users@archiver.kernel.org>; Thu, 21 Mar 2019 21:27:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726577AbfCTRPP (ORCPT
+        id S1726749AbfCUV1d (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 20 Mar 2019 13:15:15 -0400
-Received: from Galois.linutronix.de ([146.0.238.70]:36097 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725966AbfCTRPP (ORCPT
+        Thu, 21 Mar 2019 17:27:33 -0400
+Received: from mail-wr1-f68.google.com ([209.85.221.68]:47043 "EHLO
+        mail-wr1-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726247AbfCUV1d (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 20 Mar 2019 13:15:15 -0400
-Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
-        (envelope-from <bigeasy@linutronix.de>)
-        id 1h6eo4-0004oK-5u; Wed, 20 Mar 2019 18:15:12 +0100
-Date:   Wed, 20 Mar 2019 18:15:12 +0100
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v5.0.3-rt1
-Message-ID: <20190320171511.icjhdlulgal2yeho@linutronix.de>
+        Thu, 21 Mar 2019 17:27:33 -0400
+Received: by mail-wr1-f68.google.com with SMTP id o1so119686wrs.13
+        for <linux-rt-users@vger.kernel.org>; Thu, 21 Mar 2019 14:27:32 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:to:cc:from:subject:message-id:date:user-agent
+         :mime-version:content-language:content-transfer-encoding;
+        bh=Rqm7ac/x/Lallc3QWbJp9N4x7jU0ErblacsYj2QBmhI=;
+        b=EE51QOuvy14DqNjQXycGET2f/XdE7/I9HPAo4AsBuE4Z9s77CsZnGTMuwRjI7+GE8H
+         keDU/iW9WoXRHM7hmuiHZS2kZ0zfQ8kNEkjqLD73gmX2kGAFIRTA4sn9wklCCy9ZqfXX
+         8F45lc//cyL7bwMXshPmIPrD0ukJMMXiZGGO5ijXLValeJRK9lKUGWdke2ZAK5JYLgOg
+         rs+W23npml3Y23FYOp2c/VRl5sOawWMfRfFOIK43Q6F4EOOeTJrtnrgGc8hwF1OiTJB7
+         GrnQvmUusxskNoBHZlnmllHjylq9Hvxt8PZdlQKVyOGlTcQgllVQdmiH/GeYjkpb+Wjj
+         PKuQ==
+X-Gm-Message-State: APjAAAWYIkQhfvggaFAs+afuoiPzLnGl+HbFP2d/5CTkgbkLojIj85Lj
+        /ADqBr44hGNziwQYybPHAixq/A==
+X-Google-Smtp-Source: APXvYqwiWg6Iohg5BJo5XEifNmfI7HEZWCT9HVcJ/VU7ZChAbCcY8XWR89jPnl1QoBc5sXOkBUhsQQ==
+X-Received: by 2002:a5d:63c4:: with SMTP id c4mr3862294wrw.307.1553203651906;
+        Thu, 21 Mar 2019 14:27:31 -0700 (PDT)
+Received: from t460s.bristot.redhat.com (host42-239-dynamic.117-80-r.retail.telecomitalia.it. [80.117.239.42])
+        by smtp.gmail.com with ESMTPSA id w10sm7539967wrn.32.2019.03.21.14.27.30
+        (version=TLS1_3 cipher=AEAD-AES128-GCM-SHA256 bits=128/128);
+        Thu, 21 Mar 2019 14:27:31 -0700 (PDT)
+To:     linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Clark Williams <williams@redhat.com>,
+        Tommaso Cucinotta <tommaso.cucinotta@sssup.it>,
+        =?UTF-8?Q?R=c3=b4mulo_Silva_de_Oliveira?= 
+        <romulo.deoliveira@ufsc.br>, LKML <linux-kernel@vger.kernel.org>
+From:   Daniel Bristot de Oliveira <bristot@redhat.com>
+Subject: BUG-RT: scheduling while in atomic in the watchdog's hrtimer
+Message-ID: <d2eb047a-6c07-e176-aa2a-68a425efd0ae@redhat.com>
+Date:   Thu, 21 Mar 2019 22:27:30 +0100
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101
+ Thunderbird/60.4.0
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-User-Agent: NeoMutt/20180716
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear RT folks!
+Hi,
 
-I'm pleased to announce the v5.0.3-rt1 patch set. 
+In the 4.19/5.0-rt configured !SMP, the following chain of events can
+take place:
 
-Changes since v4.19.25-rt16:
+------------------------------ %< -------------------------------------
+smp_apic_timer_interrupt(){
+	hrtimer_interrupt() {
+		__hrtimer_run_queues() {
+			watchdog_timer_fn() {
+				stop_one_cpu_nowait() {
+					#ifdef !CONFIG_SMP
+						schedule_work() {
+							queue_work() {
+								queue_work_on() {
+								/* phew, long, ah!?.... */	
+									local_lock_irqsave() {
+										__local_lock_irqsave() {
+											__local_lock_irq() {
+												spin_lock_irqsave() {
+													rt_spin_lock()...
+														/* from here on you already know...*/
+														/* a lot of } */
+------------------------------ >% -------------------------------------
 
-  - rebase to v5.0
+And this can cause a scheduling while in atomic.
 
-  - Several ARM architectures have a so called "boot_lock" in their SMP
-    bring up code. In previous releases the boot_lock was converted to
-    to a raw_spinlock in order to get in working on -RT. As of v5.0 only the
-    bits for the `versatile' platform have been applied upstream and I
-    dropped the patch entirely.
-    The other platforms were rejected because they were doing it wrong by
-    using such a lock. The omap2 and sti platform were converted to other
-    mechanism as part of the discussion. Others (like i.MX) were never
-    using such a lock.
-    There are still a few platforms using such a lock. If you are
-    affected you would to convince the platform maintainer to remove the
-    lock from the SMP code.
+Tracking down, the commit that introduced the stop_one_cpu_nowait()->
+queue_work_on() to the path was:
 
-  - Applied John Ogness' prinkt rework. One visible change is the
-    output during boot. Under the hood and for RT: By default, output
-    that is created at KERN_WARN[0] or higher is printed immediately if the
-    console supports "atomic" print (currently the 8250 driver does).
-    This output is printed immediately (and visible) even from IRQ-off
-    or preempt-disabled regions which wasn't the case earlier. This will
-    raise the latency at run-time *but* there should be no WARNING,
-    ERROR or PANIC messages at run-time on a fully working system.
-    Messages with lower severity are printed "later" by a kthread.
+------------------------------ %< -------------------------------------
+commit 9cf57731b63e37ed995b46690adc604891a9a28f
+Author: Peter Zijlstra 
+Date:   Thu Jun 7 10:52:03 2018 +0200
 
-    [0] default message level, default_message_loglevel, second field in
-	/proc/sys/kernel/printk
+    watchdog/softlockup: Replace "watchdog/%u" threads with cpu_stop_work
+    
+    Oleg suggested to replace the "watchdog/%u" threads with
+    cpu_stop_work. That removes one thread per CPU while at the same time
+    fixes softlockup vs SCHED_DEADLINE.
+    
+    But more importantly, it does away with the single
+    smpboot_update_cpumask_percpu_thread() user, which allows
+    cleanups/shrinkage of the smpboot interface.
+    
+    Suggested-by: Oleg Nesterov 
+    Signed-off-by: Peter Zijlstra (Intel) 
+    Cc: Linus Torvalds 
+    Cc: Peter Zijlstra 
+    Cc: Thomas Gleixner 
+    Cc: linux-kernel@vger.kernel.org
+    Signed-off-by: Ingo Molnar 
+------------------------------ >% -------------------------------------
 
-  - Applied "restore FPU on return to userland" series. This only
-    applies to x86. This change makes repeated kernel_fpu_begin() +
-    kernel_fpu_end() cheap.
+Later modified by:
 
-  - I tried to include some BH related rework but it is not yet in
-    reasonable shape. I will probably revisit this during the v5.0
-    cycle.
+------------------------------ %< -------------------------------------
+commit be45bf5395e0886a93fc816bbe41a008ec2e42e2
+Author: Peter Zijlstra 
+Date:   Fri Jul 13 12:42:08 2018 +0200
 
-Known issues
-     - A warning triggered in "rcu_note_context_switch" originated from
-       SyS_timer_gettime(). The issue was always there, it is now
-       visible. Reported by Grygorii Strashko and Daniel Wagner.
+    watchdog/softlockup: Fix cpu_stop_queue_work() double-queue bug
+    
+    When scheduling is delayed for longer than the softlockup interrupt
+    period it is possible to double-queue the cpu_stop_work, causing list
+    corruption.
+    
+    Cure this by adding a completion to track the cpu_stop_work's
+    progress.
+    
+    Reported-by: kernel test robot 
+    Tested-by: Rong Chen 
+    Signed-off-by: Peter Zijlstra (Intel) 
+    Cc: Linus Torvalds 
+    Cc: Peter Zijlstra 
+    Cc: Thomas Gleixner 
+    Fixes: 9cf57731b63e ("watchdog/softlockup: Replace "watchdog/%u" threads with cpu_stop_work")
+    Link: http://lkml.kernel.org/r/20180713104208.GW2494@hirez.programming.kicks-ass.net
+    Signed-off-by: Ingo Molnar 
+------------------------------ >% -------------------------------------
 
-     - rcutorture is currently broken on -RT. Reported by Juri Lelli.
+I hit it while trying the automata model against the 4.19-rt/5.0-rt 
+kernels.
 
-You can get this release via the git tree at:
+You can find more about it here:
+http://bristot.me/another-bug-found-with-the-model/
 
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.0.3-rt1
-
-The RT patch against v5.0.3 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.0/older/patch-5.0.3-rt1.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.0/older/patches-5.0.3-rt1.tar.xz
-
-Sebastian
+Thanks
+-- Daniel
