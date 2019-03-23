@@ -6,51 +6,51 @@ X-Spam-Status: No, score=-4.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_PASS,
 	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5849FC43381
-	for <linux-rt-users@archiver.kernel.org>; Sat, 23 Mar 2019 13:11:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F2A2CC43381
+	for <linux-rt-users@archiver.kernel.org>; Sat, 23 Mar 2019 13:14:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 208DE218A2
-	for <linux-rt-users@archiver.kernel.org>; Sat, 23 Mar 2019 13:11:17 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BEFFB218A2
+	for <linux-rt-users@archiver.kernel.org>; Sat, 23 Mar 2019 13:14:25 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1553346677;
-	bh=gv0IlAZf2DpPuPdN28l8P+/G5k9DfhscJvWcVnV33zw=;
+	s=default; t=1553346865;
+	bh=ixii/RRagtCEsBA6Ax8LV25s3Q1FXn0eJqziYZ/+8iI=;
 	h=Subject:From:To:Cc:Date:In-Reply-To:References:List-ID:From;
-	b=hg0fK3KHoknR54NI9abzmjxGqoCfuju1dd9F3KrYlA4Bt9AYJhBm6vwmSGnfVp8Im
-	 hRhu2P76od3tTDQho1jaGptFGkQ403pb/bDhR+TuwOp0QDkyec2HQSnHvF0yacD2fX
-	 Mjup/IniVjkoPo+wrCAAjw+5F174M1RAuveeTPDU=
+	b=jBsd75dIi8VROTZ7hPNkU0kWiuILeRWkbmZpwfWzjOMZVq64fBO9YbhwoFw6QMAi3
+	 puSCnjsq1ZbZH4pfyIhYdIumloy7I4LXyUhHXsS6PVMZnAvDSkI+FqehQIxuUzgoY7
+	 0iNJBIxsNK6W8HwE8FpSkmYh72EfcAGWmRg5Wz6g=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727402AbfCWNLM (ORCPT
+        id S1727385AbfCWNOU (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 23 Mar 2019 09:11:12 -0400
-Received: from mail.kernel.org ([198.145.29.99]:54022 "EHLO mail.kernel.org"
+        Sat, 23 Mar 2019 09:14:20 -0400
+Received: from mail.kernel.org ([198.145.29.99]:54934 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726118AbfCWNLL (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 23 Mar 2019 09:11:11 -0400
+        id S1726118AbfCWNOU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 23 Mar 2019 09:14:20 -0400
 Received: from tzanussi-mobl (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 377D02183E;
-        Sat, 23 Mar 2019 13:11:10 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 6BE082175B;
+        Sat, 23 Mar 2019 13:14:18 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1553346670;
-        bh=gv0IlAZf2DpPuPdN28l8P+/G5k9DfhscJvWcVnV33zw=;
+        s=default; t=1553346859;
+        bh=ixii/RRagtCEsBA6Ax8LV25s3Q1FXn0eJqziYZ/+8iI=;
         h=Subject:From:To:Cc:Date:In-Reply-To:References:From;
-        b=oDxPL2UHnKRztXBKH/Z8wsJdhVqTbS7oj8mNoW0kRyjMYaPxDkP/dNhPZdZotYyBr
-         BcUH0p3jRotkgOiUWD5BQgSiUQKekTozYlP0bJAAtCDrxWR+asHRr/rtB10Gc7W1wE
-         VVSNJHZ4js/U6gQz21wF36s6FcH31jsDXlnQfyhE=
-Message-ID: <1553346669.2307.8.camel@kernel.org>
-Subject: Re: [PATCH v4 06/11] selftests/ftrace: Add error_log testcase for
- probe errors
+        b=RVP06xrVoWjw0iwD1JIc2/audOmA5ZbXdT5WAZ2Dsk4+WXgRdcxhfTmre2BQxTOQn
+         w7GdIDqTIssDx4JnGSe6Nb5MglGYtYi82e72UPUltYbmkKp4NmFLjQ7QulGIx32Hzx
+         sM3OjCP+FVdsB12MT77AvgCT7F+CduEl5b638br0=
+Message-ID: <1553346857.2307.11.camel@kernel.org>
+Subject: Re: [PATCH v4 11/11] selftests/ftrace: Change stderr redirection
+ for probe error_log testcase
 From:   Tom Zanussi <zanussi@kernel.org>
 To:     Masami Hiramatsu <mhiramat@kernel.org>
 Cc:     rostedt@goodmis.org, tglx@linutronix.de, namhyung@kernel.org,
         bigeasy@linutronix.de, joel@joelfernandes.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Date:   Sat, 23 Mar 2019 08:11:09 -0500
-In-Reply-To: <20190323192234.7884a15d9fab262ef70d3cab@kernel.org>
+Date:   Sat, 23 Mar 2019 08:14:17 -0500
+In-Reply-To: <20190323192851.ea9f26822f6572fafc946b74@kernel.org>
 References: <cover.1553268040.git.tom.zanussi@linux.intel.com>
-         <c620157fa19f9df4ebf33e3e138c1234a4b5def7.1553268040.git.tom.zanussi@linux.intel.com>
-         <20190323192234.7884a15d9fab262ef70d3cab@kernel.org>
+         <ce51abd8585b775fd98e31e5feb1b1505483312f.1553268041.git.tom.zanussi@linux.intel.com>
+         <20190323192851.ea9f26822f6572fafc946b74@kernel.org>
 Content-Type: text/plain; charset="UTF-8"
 X-Mailer: Evolution 3.26.1-1 
 Mime-Version: 1.0
@@ -62,98 +62,94 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 Hi Masami,
 
-On Sat, 2019-03-23 at 19:22 +0900, Masami Hiramatsu wrote:
-> On Fri, 22 Mar 2019 10:34:32 -0500
+On Sat, 2019-03-23 at 19:28 +0900, Masami Hiramatsu wrote:
+> On Fri, 22 Mar 2019 10:34:37 -0500
 > Tom Zanussi <zanussi@kernel.org> wrote:
 > 
-> > From: Masami Hiramatsu <mhiramat@kernel.org>
+> > From: Tom Zanussi <tom.zanussi@linux.intel.com>
 > > 
-> > Add error_log testcase for error logs on probe events.
-> > This tests most of error cases and checks the error position
-> > is correct.
+> > On my system, /bin/sh is symlinked to dash, which doesn't
+> > understand
+> > the >& syntax, so the kprobe and uprobe error cases fail, with this
+> > in
+> > the log:
 > > 
-> > Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
-> > ---
-> >  .../ftrace/test.d/kprobe/kprobe_syntax_errors.tc   | 93
-> > ++++++++++++++++++++++
-> >  .../ftrace/test.d/kprobe/uprobe_syntax_errors.tc   | 31 ++++++++
-> >  2 files changed, 124 insertions(+)
-> >  create mode 100644
+> > ./ftracetest: 26:
 > > tools/testing/selftests/ftrace/test.d/kprobe/kprobe_syntax_errors.t
-> > c
-> >  create mode 100644
-> > tools/testing/selftests/ftrace/test.d/kprobe/uprobe_syntax_errors.t
-> > c
+> > c:
+> > Syntax error: Bad fd number
+> > 
+> > Changing >& to 2> does work though, and should work in any shell.
+> 
+> Ah, I missed this patch.
+> 
+> This looks good to me.
+> 
+> Acked-by: Masami Hiramatsu <mhiramat@kernel.org>
+> 
+
+OK, thanks, will merge it with the original testcase.
+
+> BTW, where is my checkbashisms testcase ...
+
+Haha, yeah, seems to be a problem with recent testcases.
+
+Tom
+
+> 
+> > 
+> > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> > ---
+> >  tools/testing/selftests/ftrace/test.d/kprobe/kprobe_syntax_errors.
+> > tc | 2 +-
+> >  tools/testing/selftests/ftrace/test.d/kprobe/uprobe_syntax_errors.
+> > tc | 2 +-
+> >  2 files changed, 2 insertions(+), 2 deletions(-)
 > > 
 > > diff --git
 > > a/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_syntax_errors
 > > .tc
 > > b/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_syntax_errors
 > > .tc
-> > new file mode 100644
-> > index 000000000000..281665b1348c
-> > --- /dev/null
+> > index 281665b1348c..7eb577b1d222 100644
+> > ---
+> > a/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_syntax_errors
+> > .tc
 > > +++
 > > b/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_syntax_errors
 > > .tc
-> > @@ -0,0 +1,93 @@
-> > +#!/bin/sh
-> > +# SPDX-License-Identifier: GPL-2.0
-> > +# description: Kprobe event parser error log check
-> > +
-> > +[ -f kprobe_events ] || exit_unsupported # this is configurable
-> > +
-> > +[ -f error_log ] || exit_unsupported
-> > +
-> > +check_error() { # command-with-error-pos-by-^
-> > +pos=$(echo -n "${1%^*}" | wc -c) # error position
-> > +command=$(echo "$1" | tr -d ^)
-> > +echo "Test command: $command"
-> > +echo > error_log
-> > +(! echo "$command" > kprobe_events ) >& /dev/null
-> 
-> Oops, this one. This must be
-> 
-> (! echo "$command" > kprobe_events ) > /dev/null 2>&1
-> 
-> [...]
+> > @@ -11,7 +11,7 @@ pos=$(echo -n "${1%^*}" | wc -c) # error position
+> >  command=$(echo "$1" | tr -d ^)
+> >  echo "Test command: $command"
+> >  echo > error_log
+> > -(! echo "$command" > kprobe_events ) >& /dev/null
+> > +(! echo "$command" > kprobe_events ) 2> /dev/null
+> >  grep "trace_kprobe: error:" -A 3 error_log
+> >  N=$(tail -n 1 error_log | wc -c)
+> >  # "  Command: " and "^\n" => 13
 > > diff --git
 > > a/tools/testing/selftests/ftrace/test.d/kprobe/uprobe_syntax_errors
 > > .tc
 > > b/tools/testing/selftests/ftrace/test.d/kprobe/uprobe_syntax_errors
 > > .tc
-> > new file mode 100644
-> > index 000000000000..957011300bb7
-> > --- /dev/null
+> > index 957011300bb7..ec7389b7934b 100644
+> > ---
+> > a/tools/testing/selftests/ftrace/test.d/kprobe/uprobe_syntax_errors
+> > .tc
 > > +++
 > > b/tools/testing/selftests/ftrace/test.d/kprobe/uprobe_syntax_errors
 > > .tc
-> > @@ -0,0 +1,31 @@
-> > +#!/bin/sh
-> > +# SPDX-License-Identifier: GPL-2.0
-> > +# description: Uprobe event parser error log check
-> > +
-> > +[ -f uprobe_events ] || exit_unsupported # this is configurable
-> > +
-> > +[ -f error_log ] || exit_unsupported
-> > +
-> > +check_error() { # command-with-error-pos-by-^
-> > +pos=$(echo -n "${1%^*}" | wc -c) # error position
-> > +command=$(echo "$1" | tr -d ^)
-> > +echo "Test command: $command"
-> > +echo > error_log
-> > +(! echo "$command" > uprobe_events ) >& /dev/null
+> > @@ -11,7 +11,7 @@ pos=$(echo -n "${1%^*}" | wc -c) # error position
+> >  command=$(echo "$1" | tr -d ^)
+> >  echo "Test command: $command"
+> >  echo > error_log
+> > -(! echo "$command" > uprobe_events ) >& /dev/null
+> > +(! echo "$command" > uprobe_events ) 2> /dev/null
+> >  grep "trace_uprobe: error:" -A 3 error_log
+> >  N=$(tail -n 1 error_log | wc -c)
+> >  # "  Command: " and "^\n" => 13
+> > -- 
+> > 2.14.1
+> > 
 > 
-> Here too.
-> 
-> Tom, if you don't mind, could you update it when you update
-> the series? Or should I resend it?
-> 
-
-I can just change it in the next update.  I assume 2> as in the other
-patch?
-
-Tom
-
-> Thank you,
 > 
