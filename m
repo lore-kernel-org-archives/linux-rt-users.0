@@ -2,54 +2,52 @@ Return-Path: <SRS0=VUdo=R2=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-1.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_PASS,URIBL_BLOCKED
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3925CC43381
-	for <linux-rt-users@archiver.kernel.org>; Sat, 23 Mar 2019 10:13:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D6B1FC43381
+	for <linux-rt-users@archiver.kernel.org>; Sat, 23 Mar 2019 10:15:05 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 05668218E2
-	for <linux-rt-users@archiver.kernel.org>; Sat, 23 Mar 2019 10:13:14 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A5FB521925
+	for <linux-rt-users@archiver.kernel.org>; Sat, 23 Mar 2019 10:15:05 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1553335994;
-	bh=jueNsNBggMZ+k4Ytsnu2LDSmnSPHO+ANvLfVnYuPpSQ=;
+	s=default; t=1553336105;
+	bh=WcTWVdQSyh72/J+FBx0urkmoCjnrvcg+bh4FZVjzzDs=;
 	h=Date:From:To:Cc:Subject:In-Reply-To:References:List-ID:From;
-	b=jZADE0hEtYclDKE181FoacVCIqumGXGtOGcgUHqqULJjHtdBawh0TDmmCilzW69jE
-	 aT3lSThk+bbnZgIFuGZRJU7jzNel/+ykt6TvsWrRVe1+FhSt693+GRIchAoRpPVbCk
-	 j8X/9c6bCuhDPD55lV8k1LfNJDcp77eFkIyglHRg=
+	b=EQxF1oxCVReI7GouS/0FN2VHQjnEAv2zehys2z3UVx8JPcFJLDthCyRfWaafxtdlC
+	 eVz9fxgWtoKHZsCr5Io4IjwlWTDHbvAqIXCGB+C3XDbQzxyhFziIZAojVVWWk8WsGr
+	 uc7kzrs2HryUZVeeeJJ/RI5wDbOyEKM9bUVptkGo=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726100AbfCWKNI (ORCPT
+        id S1726809AbfCWKPA (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 23 Mar 2019 06:13:08 -0400
-Received: from mail.kernel.org ([198.145.29.99]:59472 "EHLO mail.kernel.org"
+        Sat, 23 Mar 2019 06:15:00 -0400
+Received: from mail.kernel.org ([198.145.29.99]:60354 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726026AbfCWKNI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 23 Mar 2019 06:13:08 -0400
+        id S1726181AbfCWKPA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 23 Mar 2019 06:15:00 -0400
 Received: from devnote2 (NE2965lan1.rev.em-net.ne.jp [210.141.244.193])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 229D9218A5;
-        Sat, 23 Mar 2019 10:13:04 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 5AE9E218A5;
+        Sat, 23 Mar 2019 10:14:57 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1553335987;
-        bh=jueNsNBggMZ+k4Ytsnu2LDSmnSPHO+ANvLfVnYuPpSQ=;
+        s=default; t=1553336099;
+        bh=WcTWVdQSyh72/J+FBx0urkmoCjnrvcg+bh4FZVjzzDs=;
         h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
-        b=F2W05HuOSO9JBfZ2kTOkq/viamP75gG5Qjsg3oQwa8turY/ouSX6evdmGmJJpfjQF
-         xsM504oCpf1jFChZ3Pl3czlPf1Vr+SZgq46YmFbTg1Ojj+wNgkUfyd21GO8tSF+EEf
-         BCpfzwHV7gZj0Vq0SfBRbybnNhKDP2qrkH8Atrvo=
-Date:   Sat, 23 Mar 2019 19:13:02 +0900
+        b=RO2fYZokY8At6RWjpJzbkXbTu3kX293URu+R4CUPjHnNSuQdR+yRLLozXL9gfr7mD
+         WcBR+uwlVXiKshdw4QYg7wtIg8ZMsUEwN0xUMLUcx9C8/QFpGorUZ+G9xHEvyyYmBC
+         PxLi4sy4Wd4O+HoCoYneGBw4LCC2EwZdI6531S3A=
+Date:   Sat, 23 Mar 2019 19:14:55 +0900
 From:   Masami Hiramatsu <mhiramat@kernel.org>
 To:     Tom Zanussi <zanussi@kernel.org>
 Cc:     rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
         namhyung@kernel.org, bigeasy@linutronix.de, joel@joelfernandes.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v4 07/11] tracing: Remove trigger-extended-error-support
- testcase
-Message-Id: <20190323191302.321ea1d6b9cb1c75c7e828c7@kernel.org>
-In-Reply-To: <064693880a99a7ac3cb43ee375c265a938402257.1553268041.git.tom.zanussi@linux.intel.com>
+Subject: Re: [PATCH v4 00/11] tracing: common error_log for ftrace
+Message-Id: <20190323191455.e921b0e0dbe2d56b695bcee2@kernel.org>
+In-Reply-To: <cover.1553268040.git.tom.zanussi@linux.intel.com>
 References: <cover.1553268040.git.tom.zanussi@linux.intel.com>
-        <064693880a99a7ac3cb43ee375c265a938402257.1553268041.git.tom.zanussi@linux.intel.com>
 X-Mailer: Sylpheed 3.5.1 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
@@ -61,62 +59,50 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 Hi Tom,
 
-This should be tagged with "selftests/ftrace:". :)
-
-Thank you,
-
-On Fri, 22 Mar 2019 10:34:33 -0500
+On Fri, 22 Mar 2019 10:34:26 -0500
 Tom Zanussi <zanussi@kernel.org> wrote:
 
 > From: Tom Zanussi <tom.zanussi@linux.intel.com>
 > 
-> Error handling has been moved to the common tracing/error_log, so this
-> test is no longer valid.
+> Hi,
 > 
-> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> ---
->  .../inter-event/trigger-extended-error-support.tc  | 28 ----------------------
->  1 file changed, 28 deletions(-)
->  delete mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
+> This is v4 of the frace error_log patchset.  This version adds
+> Masami's probe events error_log patches and removes the previous
+> placeholder for that.  It also removes the hist trigger extended error
+> err testcase and replaces it with a basic error_log functionality
+> testcase, and replaces the error numbering with timestamps, also as
+> suggested by Masami.  Finally, the Documentation and README are both
+> updated to describe the error_log.
+
+Thank you for updating this series! :)
+
 > 
-> diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
-> deleted file mode 100644
-> index 9912616a8672..000000000000
-> --- a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
-> +++ /dev/null
-> @@ -1,28 +0,0 @@
-> -#!/bin/sh
-> -# SPDX-License-Identifier: GPL-2.0
-> -# description: event trigger - test extended error support
-> -
-> -
-> -fail() { #msg
-> -    echo $1
-> -    exit_fail
-> -}
-> -
-> -if [ ! -f set_event ]; then
-> -    echo "event tracing is not supported"
-> -    exit_unsupported
-> -fi
-> -
-> -if [ ! -f synthetic_events ]; then
-> -    echo "synthetic event is not supported"
-> -    exit_unsupported
-> -fi
-> -
-> -echo "Test extended error support"
-> -echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="ping"' > events/sched/sched_wakeup/trigger
-> -! echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="ping"' >> events/sched/sched_wakeup/trigger 2> /dev/null
-> -if ! grep -q "ERROR:" events/sched/sched_wakeup/hist; then
-> -    fail "Failed to generate extended error in histogram"
-> -fi
-> -
-> -exit 0
-> -- 
-> 2.14.1
+> Note: The probe event error_log test cases failed on my Ubuntu system,
+> due to the >& redirection operator that dash doesn't understand, so I
+> tacked on a final patch that fixes it for me.  If acceptable, feel
+> free to just merge it with Masami's patch.
+
+Oops, that's my laziness... that should be > /dev/null 2>&1, sorry.
+
+[...]
+> Below is an example session of a few failed commands and the
+> corresponding error_log contents:
+> 
+>   # echo > /sys/kernel/debug/tracing/error_log
+> 
+>   # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+>   # echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"' >> /sys/kernel/debug/tracing/events/sched/sched_wakeup/trigger
+>   -su: echo: write error: Invalid argument
+> 
+>   #  cat /sys/kernel/debug/tracing/error_log
+>   [  217.431858] hist:sched:sched_wakeup: error: Variable already defined
+>     Command: keys=pid:ts0=common_timestamp.usecs if comm=="cyclictest"
+>                       ^
 > 
 
+Yeah, this looks good to me :)
+
+Thank you!
 
 -- 
 Masami Hiramatsu <mhiramat@kernel.org>
