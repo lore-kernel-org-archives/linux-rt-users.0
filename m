@@ -1,88 +1,122 @@
-Return-Path: <SRS0=2PTS=RZ=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=VUdo=R2=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-7.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0A108C43381
-	for <linux-rt-users@archiver.kernel.org>; Fri, 22 Mar 2019 22:12:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3925CC43381
+	for <linux-rt-users@archiver.kernel.org>; Sat, 23 Mar 2019 10:13:14 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id CD23421929
-	for <linux-rt-users@archiver.kernel.org>; Fri, 22 Mar 2019 22:12:05 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 05668218E2
+	for <linux-rt-users@archiver.kernel.org>; Sat, 23 Mar 2019 10:13:14 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1553292725;
-	bh=ujYd7IX7fyxS9/kWpv5Metrq+K6lSudMgEg/9fWswUc=;
-	h=Subject:From:To:Cc:Date:List-ID:From;
-	b=ThjAxmZbP5ue4SEpylyANmQyumJJpq06VpiE+dwgRh5E5EUkttUc4T4HPF+n4NeKi
-	 bCaIJevJrVePSTb+n4lXDNOIBGILssFVjDFMOzUdRBsaGAbx7PgDW0RqENeSrFwPza
-	 X8ydbfu/C04Ee+uereA7nKue5ZcbweAMSRZtGVHs=
+	s=default; t=1553335994;
+	bh=jueNsNBggMZ+k4Ytsnu2LDSmnSPHO+ANvLfVnYuPpSQ=;
+	h=Date:From:To:Cc:Subject:In-Reply-To:References:List-ID:From;
+	b=jZADE0hEtYclDKE181FoacVCIqumGXGtOGcgUHqqULJjHtdBawh0TDmmCilzW69jE
+	 aT3lSThk+bbnZgIFuGZRJU7jzNel/+ykt6TvsWrRVe1+FhSt693+GRIchAoRpPVbCk
+	 j8X/9c6bCuhDPD55lV8k1LfNJDcp77eFkIyglHRg=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727873AbfCVWL7 (ORCPT
+        id S1726100AbfCWKNI (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 22 Mar 2019 18:11:59 -0400
-Received: from mail.kernel.org ([198.145.29.99]:52158 "EHLO mail.kernel.org"
+        Sat, 23 Mar 2019 06:13:08 -0400
+Received: from mail.kernel.org ([198.145.29.99]:59472 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727733AbfCVWL7 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 22 Mar 2019 18:11:59 -0400
-Received: from tzanussi-mobl (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
+        id S1726026AbfCWKNI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 23 Mar 2019 06:13:08 -0400
+Received: from devnote2 (NE2965lan1.rev.em-net.ne.jp [210.141.244.193])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 1C52E2190A;
-        Fri, 22 Mar 2019 22:11:58 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 229D9218A5;
+        Sat, 23 Mar 2019 10:13:04 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1553292719;
-        bh=ujYd7IX7fyxS9/kWpv5Metrq+K6lSudMgEg/9fWswUc=;
-        h=Subject:From:To:Cc:Date:From;
-        b=LalVyt6VhuaSAnb2Q4d0zzRlPXDswsfEQkSucUWvmx4oJ5ZYXKCwiBnjDgtAL90Cl
-         vaGaxCHkBLJkKmGuPnzuigpBseDjLaawUzL9yhkGaBypekFesGIyL0G1+jH2ttakKJ
-         5YPziyV1HRVxKmwRbIr5vB0deMF5fySftpdRKOi8=
-Message-ID: <1553292717.2307.3.camel@kernel.org>
-Subject: [ANNOUNCE] 4.14.106-rt56
-From:   Tom Zanussi <zanussi@kernel.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc:     Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <daniel.wagner@siemens.com>,
-        Julia Cartwright <julia@ni.com>
-Date:   Fri, 22 Mar 2019 17:11:57 -0500
-Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.26.1-1 
+        s=default; t=1553335987;
+        bh=jueNsNBggMZ+k4Ytsnu2LDSmnSPHO+ANvLfVnYuPpSQ=;
+        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
+        b=F2W05HuOSO9JBfZ2kTOkq/viamP75gG5Qjsg3oQwa8turY/ouSX6evdmGmJJpfjQF
+         xsM504oCpf1jFChZ3Pl3czlPf1Vr+SZgq46YmFbTg1Ojj+wNgkUfyd21GO8tSF+EEf
+         BCpfzwHV7gZj0Vq0SfBRbybnNhKDP2qrkH8Atrvo=
+Date:   Sat, 23 Mar 2019 19:13:02 +0900
+From:   Masami Hiramatsu <mhiramat@kernel.org>
+To:     Tom Zanussi <zanussi@kernel.org>
+Cc:     rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
+        namhyung@kernel.org, bigeasy@linutronix.de, joel@joelfernandes.org,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH v4 07/11] tracing: Remove trigger-extended-error-support
+ testcase
+Message-Id: <20190323191302.321ea1d6b9cb1c75c7e828c7@kernel.org>
+In-Reply-To: <064693880a99a7ac3cb43ee375c265a938402257.1553268041.git.tom.zanussi@linux.intel.com>
+References: <cover.1553268040.git.tom.zanussi@linux.intel.com>
+        <064693880a99a7ac3cb43ee375c265a938402257.1553268041.git.tom.zanussi@linux.intel.com>
+X-Mailer: Sylpheed 3.5.1 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
 Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT Folks!
+Hi Tom,
 
-I'm pleased to announce the 4.14.106-rt56 stable release.
+This should be tagged with "selftests/ftrace:". :)
 
-This release is just an update to the new stable 4.14.106 version
-and no RT specific changes have been made.
+Thank you,
 
-You can get this release via the git tree at:
+On Fri, 22 Mar 2019 10:34:33 -0500
+Tom Zanussi <zanussi@kernel.org> wrote:
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+> From: Tom Zanussi <tom.zanussi@linux.intel.com>
+> 
+> Error handling has been moved to the common tracing/error_log, so this
+> test is no longer valid.
+> 
+> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> ---
+>  .../inter-event/trigger-extended-error-support.tc  | 28 ----------------------
+>  1 file changed, 28 deletions(-)
+>  delete mode 100644 tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
+> 
+> diff --git a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc b/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
+> deleted file mode 100644
+> index 9912616a8672..000000000000
+> --- a/tools/testing/selftests/ftrace/test.d/trigger/inter-event/trigger-extended-error-support.tc
+> +++ /dev/null
+> @@ -1,28 +0,0 @@
+> -#!/bin/sh
+> -# SPDX-License-Identifier: GPL-2.0
+> -# description: event trigger - test extended error support
+> -
+> -
+> -fail() { #msg
+> -    echo $1
+> -    exit_fail
+> -}
+> -
+> -if [ ! -f set_event ]; then
+> -    echo "event tracing is not supported"
+> -    exit_unsupported
+> -fi
+> -
+> -if [ ! -f synthetic_events ]; then
+> -    echo "synthetic event is not supported"
+> -    exit_unsupported
+> -fi
+> -
+> -echo "Test extended error support"
+> -echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="ping"' > events/sched/sched_wakeup/trigger
+> -! echo 'hist:keys=pid:ts0=common_timestamp.usecs if comm=="ping"' >> events/sched/sched_wakeup/trigger 2> /dev/null
+> -if ! grep -q "ERROR:" events/sched/sched_wakeup/hist; then
+> -    fail "Failed to generate extended error in histogram"
+> -fi
+> -
+> -exit 0
+> -- 
+> 2.14.1
+> 
 
-  branch: v4.14-rt
-  Head SHA1: fd629860fb77274f443798e02346e153a243be0e
 
-Or to build 4.14.106-rt56 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.106.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.106-rt56.patch.xz
-
-
-Enjoy!
-   
-   Tom
+-- 
+Masami Hiramatsu <mhiramat@kernel.org>
