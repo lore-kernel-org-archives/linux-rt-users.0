@@ -1,131 +1,79 @@
-Return-Path: <SRS0=VUdo=R2=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=fj9P=R3=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 813F2C43381
-	for <linux-rt-users@archiver.kernel.org>; Sat, 23 Mar 2019 13:17:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 073FEC43381
+	for <linux-rt-users@archiver.kernel.org>; Sun, 24 Mar 2019 04:12:48 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 4C654218A2
-	for <linux-rt-users@archiver.kernel.org>; Sat, 23 Mar 2019 13:17:25 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1553347045;
-	bh=FjwV6yy8jZo7U7CXAoZyQvyklUkvn/BZaZo6XEtq0nY=;
-	h=Subject:From:To:Cc:Date:In-Reply-To:References:List-ID:From;
-	b=FQ8dWkjyb1RVasU5Z23KWkvmPUg7hko/II4E5buni5sZXhhcg0aMF1aiH0qx5DTEf
-	 q49uG5q5GyYhywBe+HolXjR1PxAE6Ny4t/hB1LCYrPO7DG2OXipy6LrLfW29iFkGws
-	 /SvJbB7ytvmpVrmAoD854HYOf+MASMU6vAJdNYyc=
+	by mail.kernel.org (Postfix) with ESMTP id C57DD2171F
+	for <linux-rt-users@archiver.kernel.org>; Sun, 24 Mar 2019 04:12:47 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Rl7RJeXk"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727476AbfCWNRZ (ORCPT
+        id S1725601AbfCXEMp (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 23 Mar 2019 09:17:25 -0400
-Received: from mail.kernel.org ([198.145.29.99]:55614 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727364AbfCWNRY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 23 Mar 2019 09:17:24 -0400
-Received: from tzanussi-mobl (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 9CF5E2175B;
-        Sat, 23 Mar 2019 13:17:22 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1553347043;
-        bh=FjwV6yy8jZo7U7CXAoZyQvyklUkvn/BZaZo6XEtq0nY=;
-        h=Subject:From:To:Cc:Date:In-Reply-To:References:From;
-        b=qWlcwvYYXwiiVWLpvMnoOVy5kHBRNPEHVLKAzmSBT/YYl0wAlQNBw+azh3Hgi9cM0
-         RT81BOQxmfLieVEociLWmvRVaBdYyopGVDI4SkJ9+96VKrxpbBug47YyByAbqhn3ov
-         pZRV3wgYwgS1ryOpizegzV0c4gYIB60qVpEvrXWo=
-Message-ID: <1553347041.2307.13.camel@kernel.org>
-Subject: Re: [PATCH v4 08/11] selftests/ftrace: Add tracing/error_log
- testcase
-From:   Tom Zanussi <zanussi@kernel.org>
-To:     Masami Hiramatsu <mhiramat@kernel.org>
-Cc:     rostedt@goodmis.org, tglx@linutronix.de, namhyung@kernel.org,
-        bigeasy@linutronix.de, joel@joelfernandes.org,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Date:   Sat, 23 Mar 2019 08:17:21 -0500
-In-Reply-To: <20190323210816.5cc19aa0d7c43c4c19c639b8@kernel.org>
-References: <cover.1553268040.git.tom.zanussi@linux.intel.com>
-         <a0b936b8ba26b6c55bddc7d5ec22fc40e49a77b9.1553268041.git.tom.zanussi@linux.intel.com>
-         <20190323210816.5cc19aa0d7c43c4c19c639b8@kernel.org>
+        Sun, 24 Mar 2019 00:12:45 -0400
+Received: from mail-oi1-f169.google.com ([209.85.167.169]:34072 "EHLO
+        mail-oi1-f169.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725267AbfCXEMo (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 24 Mar 2019 00:12:44 -0400
+Received: by mail-oi1-f169.google.com with SMTP id v10so221391oib.1
+        for <linux-rt-users@vger.kernel.org>; Sat, 23 Mar 2019 21:12:44 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:from:date:message-id:subject:to;
+        bh=VE0RonCdfZe4NMGx/h5Df3aysCUDd0n7oXPAg0p4M40=;
+        b=Rl7RJeXkXtiNtOz7dIgFnBr0Zh0Fa9LqlJb/3ZD03FE6D3R4jL6xAHKTNNAJb9kGnQ
+         qPLamSviGJKwh8zW01RakgWamcL0FjFagIV8xifSr61LKWJNFsgxSBn7yKmM76JBWluw
+         DluhvWWnSU7Ihfz4e87aNurdla1yVAkW0Unux90G+lOX0Ta3tt/FdwGGy7+STGz8u6Jk
+         eTN5a5BrvQhKWCT1C4oQVC2ve1lAHNS4ITN39KJZEnErSFMY8dNA9TpCPrcjCLpnBE0e
+         dGjmLzggjRsOzwDD6WLvw53QFh/MYKlVCCfVIIgLRIjOUrg3yLFlAW59u0wXR5QOXjL7
+         3OFA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:from:date:message-id:subject:to;
+        bh=VE0RonCdfZe4NMGx/h5Df3aysCUDd0n7oXPAg0p4M40=;
+        b=fYoXDMK6xiZ+erPJXTNUhRmwgKUVLj1hTX36D1jbxzm3AhWEr8xJr8x59eerccnhiG
+         lVYabrWjVPZhEadrlNIvzQBmXbh5hJ5PP2ZZNkGxd7r5+izPEYv4z1iGmZj5/roBOjSX
+         anlGMxKueMHmaQOIBnmjq4VKAsQNkOnLxqTNWdIYwUwZ50ke7zzYgMoPEHM5vvSzHV8r
+         UT3QIazmg0z1QqRiNcld+hTnEhNx0by5NuXDM0psvL9AvkW0RgxUq8XKDkHjX1g5RZbs
+         x+EaQ/MULhn5n19DpFKw0qssqzWuHEFj3rcAXyKq1nRet+DRYZnZ/go7lSpQkZWzObwV
+         +0oQ==
+X-Gm-Message-State: APjAAAWUbQnZaGpc37UomXOJXaeB8w6sRyaCvRQk7WWoVjm1fRQGANo+
+        wklpT/dR4pbBLZfCsHXQTf2MFduJDP88JMP9f5P9gA==
+X-Google-Smtp-Source: APXvYqwFg3WzMXNTyhQTTnJ67Bl+yW60iqGRFG0sGCfynEkBIW0QnDxRsJen2rdmRaqk3/LoVmLrSA6aANw9byXfnXE=
+X-Received: by 2002:aca:fcd7:: with SMTP id a206mr7229058oii.21.1553400763881;
+ Sat, 23 Mar 2019 21:12:43 -0700 (PDT)
+MIME-Version: 1.0
+From:   Andy Ng <andreas2025@gmail.com>
+Date:   Sun, 24 Mar 2019 04:12:33 +0000
+Message-ID: <CAAVaN8yNc+sG7UP0J5SLDwVB=YMBUhC=sJZ3Gx72bkfWS5DQYQ@mail.gmail.com>
+Subject: Latency issue to kick off a working queue
+To:     linux-rt-users <linux-rt-users@vger.kernel.org>
 Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.26.1-1 
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Masami,
+Hello there.
 
-On Sat, 2019-03-23 at 21:08 +0900, Masami Hiramatsu wrote:
-> On Fri, 22 Mar 2019 10:34:34 -0500
-> Tom Zanussi <zanussi@kernel.org> wrote:
-> 
-> > From: Tom Zanussi <tom.zanussi@linux.intel.com>
-> > 
-> > Add a testcase verifying basic tracing/error_log functionality.
-> 
-> Would you be OK that you don't test all error cases with
-> error position?
-> 
+I am using 4.9.11 with rt9 on ARM imx6  soc. I am writing a device
+driver and I noticed that my first run of my driver gives big latency
+- in the region on 10msec. When I get a gpio interrupt, I schedule
+some work and the user waiting on a read() takes reply in about
+10,30msec, on the second run it gets latency down to 140usec. I
+changed the tick from 100Hz to 300Hz and 500Hz, I noticed that my
+starting latency was dropped to 3400usec and 2320usec respectively.
+Which indicate  some delays to kickoff for first time the scheduled
+work related to the granularity of the timer tick.
+Any ideas of what may be wrong?
 
-Good point - I'll add checks for error position in my testcases too.
-
-Thanks,
-
-Tom
-
-> Thank you,
-> 
-> > 
-> > Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
-> > ---
-> >  .../ftrace/test.d/ftrace/tracing-error-log.tc      | 23
-> > ++++++++++++++++++++++
-> >  1 file changed, 23 insertions(+)
-> >  create mode 100644
-> > tools/testing/selftests/ftrace/test.d/ftrace/tracing-error-log.tc
-> > 
-> > diff --git a/tools/testing/selftests/ftrace/test.d/ftrace/tracing-
-> > error-log.tc
-> > b/tools/testing/selftests/ftrace/test.d/ftrace/tracing-error-log.tc
-> > new file mode 100644
-> > index 000000000000..601ffebfbb9f
-> > --- /dev/null
-> > +++ b/tools/testing/selftests/ftrace/test.d/ftrace/tracing-error-
-> > log.tc
-> > @@ -0,0 +1,23 @@
-> > +#!/bin/sh
-> > +# SPDX-License-Identifier: GPL-2.0
-> > +# description: ftrace - test tracing error log support
-> > +
-> > +fail() { #msg
-> > +    echo $1
-> > +    exit_fail
-> > +}
-> > +
-> > +# event tracing is currently the only ftrace tracer that uses the
-> > +# tracing error_log, hence this check
-> > +if [ ! -f set_event ]; then
-> > +    echo "event tracing is not supported"
-> > +    exit_unsupported
-> > +fi
-> > +
-> > +echo "Test tracing error log support"
-> > +! echo "((sig >= 10 && sig < 15) || dsig == 17) && comm != bash" >
-> > events/signal/signal_generate/filter 2> /dev/null
-> > +if ! grep "error:" error_log; then
-> > +    fail "Failed to generate tracing error log error"
-> > +fi
-> > +
-> > +exit 0
-> > -- 
-> > 2.14.1
-> > 
-> 
-> 
+Thanks
+Andy
