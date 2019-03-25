@@ -1,166 +1,101 @@
-Return-Path: <SRS0=fj9P=R3=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=5pzl=R4=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_PASS,
-	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-1.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AAE29C43381
-	for <linux-rt-users@archiver.kernel.org>; Sun, 24 Mar 2019 10:11:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8CBCDC43381
+	for <linux-rt-users@archiver.kernel.org>; Mon, 25 Mar 2019 08:13:21 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 79C22222D1
-	for <linux-rt-users@archiver.kernel.org>; Sun, 24 Mar 2019 10:11:35 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1553422295;
-	bh=fTY6ByfBDjTqTC0vO4fhTB4xlWJtyXhHJRuBJjcij3I=;
-	h=Date:From:To:Cc:Subject:In-Reply-To:References:List-ID:From;
-	b=U3KirEKXE6T6V8uIqr4sAZzGu2ZgAagT0ywKA0S7TcfuLS4kW/zGpNlhOTKhloVgk
-	 or1JX8rsJGJuxZHYIOyXVUTrMWc+gpLMjWhHk+lxKnXp7LheCJgPbiOLumHNZtujaB
-	 GBE3OlxtKOXfVHae+Y3maZzEWWxSD4fGMYb7i4qU=
+	by mail.kernel.org (Postfix) with ESMTP id 674C12087E
+	for <linux-rt-users@archiver.kernel.org>; Mon, 25 Mar 2019 08:13:21 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727221AbfCXKL1 (ORCPT
+        id S1729978AbfCYINP (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 24 Mar 2019 06:11:27 -0400
-Received: from mail.kernel.org ([198.145.29.99]:36684 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726160AbfCXKL1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 24 Mar 2019 06:11:27 -0400
-Received: from devnote2 (NE2965lan1.rev.em-net.ne.jp [210.141.244.193])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 92B26222D0;
-        Sun, 24 Mar 2019 10:11:24 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1553422286;
-        bh=fTY6ByfBDjTqTC0vO4fhTB4xlWJtyXhHJRuBJjcij3I=;
-        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
-        b=lQFZjSc6AcJHEiDU3ytZBZa7EH+x/H4oqldi8e0n/7sV3m/H43EqLpZ66SGWY4LMd
-         cEoXICGQrLym6wBM4V8Aw1oy1wvm7bwG480CxyWTuOILESeY2WXgdyO4z/00jh7wni
-         6sxIESaKdBRT8Kk6iCrnrUdjzzpjdWHwV5Ji51zk=
-Date:   Sun, 24 Mar 2019 19:11:21 +0900
-From:   Masami Hiramatsu <mhiramat@kernel.org>
-To:     Tom Zanussi <zanussi@kernel.org>
-Cc:     rostedt@goodmis.org, tglx@linutronix.de, namhyung@kernel.org,
-        bigeasy@linutronix.de, joel@joelfernandes.org,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v4 06/11] selftests/ftrace: Add error_log testcase for
- probe errors
-Message-Id: <20190324191121.16b130a0c92ea1a8ff35194c@kernel.org>
-In-Reply-To: <1553346669.2307.8.camel@kernel.org>
-References: <cover.1553268040.git.tom.zanussi@linux.intel.com>
-        <c620157fa19f9df4ebf33e3e138c1234a4b5def7.1553268040.git.tom.zanussi@linux.intel.com>
-        <20190323192234.7884a15d9fab262ef70d3cab@kernel.org>
-        <1553346669.2307.8.camel@kernel.org>
-X-Mailer: Sylpheed 3.5.1 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+        Mon, 25 Mar 2019 04:13:15 -0400
+Received: from Galois.linutronix.de ([146.0.238.70]:44953 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1729950AbfCYINP (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 25 Mar 2019 04:13:15 -0400
+Received: from localhost ([127.0.0.1] helo=vostro.local)
+        by Galois.linutronix.de with esmtp (Exim 4.80)
+        (envelope-from <john.ogness@linutronix.de>)
+        id 1h8KjF-00052Y-TW; Mon, 25 Mar 2019 09:13:10 +0100
+From:   John Ogness <john.ogness@linutronix.de>
+To:     Julien Grall <julien.grall@arm.com>
+Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Dave P Martin <Dave.Martin@arm.com>
+Subject: Re: [ANNOUNCE] v5.0.3-rt1
+References: <20190320171511.icjhdlulgal2yeho@linutronix.de>
+        <791056c4-3575-0bd8-031e-44d0e3b21e54@arm.com>
+Date:   Mon, 25 Mar 2019 09:13:08 +0100
+In-Reply-To: <791056c4-3575-0bd8-031e-44d0e3b21e54@arm.com> (Julien Grall's
+        message of "Fri, 22 Mar 2019 18:52:48 +0000")
+Message-ID: <87tvfrs76z.fsf@linutronix.de>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/23.4 (gnu/linux)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Sat, 23 Mar 2019 08:11:09 -0500
-Tom Zanussi <zanussi@kernel.org> wrote:
+On 2019-03-22, Julien Grall <julien.grall@arm.com> wrote:
+> Apologies for a possible stupid question.
 
-> Hi Masami,
-> 
-> On Sat, 2019-03-23 at 19:22 +0900, Masami Hiramatsu wrote:
-> > On Fri, 22 Mar 2019 10:34:32 -0500
-> > Tom Zanussi <zanussi@kernel.org> wrote:
-> > 
-> > > From: Masami Hiramatsu <mhiramat@kernel.org>
-> > > 
-> > > Add error_log testcase for error logs on probe events.
-> > > This tests most of error cases and checks the error position
-> > > is correct.
-> > > 
-> > > Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
-> > > ---
-> > >  .../ftrace/test.d/kprobe/kprobe_syntax_errors.tc   | 93
-> > > ++++++++++++++++++++++
-> > >  .../ftrace/test.d/kprobe/uprobe_syntax_errors.tc   | 31 ++++++++
-> > >  2 files changed, 124 insertions(+)
-> > >  create mode 100644
-> > > tools/testing/selftests/ftrace/test.d/kprobe/kprobe_syntax_errors.t
-> > > c
-> > >  create mode 100644
-> > > tools/testing/selftests/ftrace/test.d/kprobe/uprobe_syntax_errors.t
-> > > c
-> > > 
-> > > diff --git
-> > > a/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_syntax_errors
-> > > .tc
-> > > b/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_syntax_errors
-> > > .tc
-> > > new file mode 100644
-> > > index 000000000000..281665b1348c
-> > > --- /dev/null
-> > > +++
-> > > b/tools/testing/selftests/ftrace/test.d/kprobe/kprobe_syntax_errors
-> > > .tc
-> > > @@ -0,0 +1,93 @@
-> > > +#!/bin/sh
-> > > +# SPDX-License-Identifier: GPL-2.0
-> > > +# description: Kprobe event parser error log check
-> > > +
-> > > +[ -f kprobe_events ] || exit_unsupported # this is configurable
-> > > +
-> > > +[ -f error_log ] || exit_unsupported
-> > > +
-> > > +check_error() { # command-with-error-pos-by-^
-> > > +pos=$(echo -n "${1%^*}" | wc -c) # error position
-> > > +command=$(echo "$1" | tr -d ^)
-> > > +echo "Test command: $command"
-> > > +echo > error_log
-> > > +(! echo "$command" > kprobe_events ) >& /dev/null
-> > 
-> > Oops, this one. This must be
-> > 
-> > (! echo "$command" > kprobe_events ) > /dev/null 2>&1
-> > 
-> > [...]
-> > > diff --git
-> > > a/tools/testing/selftests/ftrace/test.d/kprobe/uprobe_syntax_errors
-> > > .tc
-> > > b/tools/testing/selftests/ftrace/test.d/kprobe/uprobe_syntax_errors
-> > > .tc
-> > > new file mode 100644
-> > > index 000000000000..957011300bb7
-> > > --- /dev/null
-> > > +++
-> > > b/tools/testing/selftests/ftrace/test.d/kprobe/uprobe_syntax_errors
-> > > .tc
-> > > @@ -0,0 +1,31 @@
-> > > +#!/bin/sh
-> > > +# SPDX-License-Identifier: GPL-2.0
-> > > +# description: Uprobe event parser error log check
-> > > +
-> > > +[ -f uprobe_events ] || exit_unsupported # this is configurable
-> > > +
-> > > +[ -f error_log ] || exit_unsupported
-> > > +
-> > > +check_error() { # command-with-error-pos-by-^
-> > > +pos=$(echo -n "${1%^*}" | wc -c) # error position
-> > > +command=$(echo "$1" | tr -d ^)
-> > > +echo "Test command: $command"
-> > > +echo > error_log
-> > > +(! echo "$command" > uprobe_events ) >& /dev/null
-> > 
-> > Here too.
-> > 
-> > Tom, if you don't mind, could you update it when you update
-> > the series? Or should I resend it?
-> > 
-> 
-> I can just change it in the next update.  I assume 2> as in the other
-> patch?
+It's an important question because the behavior of console printing has
+changed. (Or, rather, is in the process of being changed. Depending on
+complaints/approval, it may change some more.)
 
-Yes, that is better, since stdout goes to [ku]probe_event file.
+> On 20/03/2019 17:15, Sebastian Andrzej Siewior wrote:
+>>    - Applied John Ogness' prinkt rework. One visible change is the
+>>      output during boot. Under the hood and for RT: By default, output
+>>      that is created at KERN_WARN[0] or higher is printed immediately if the
+>>      console supports "atomic" print (currently the 8250 driver does).
+>>      This output is printed immediately (and visible) even from IRQ-off
+>>      or preempt-disabled regions which wasn't the case earlier. This will
+>>      raise the latency at run-time *but* there should be no WARNING,
+>>      ERROR or PANIC messages at run-time on a fully working system.
+>>      Messages with lower severity are printed "later" by a kthread.
+>
+> Using 5.0.3-rt1, I get some warning message completely mangled with
+> the rest of the output (e.g systemd message) but also between
+> them. Some excerpt of a 500 lines lockdep warning (AFAICT the printk
+> is not related to the printk code):
+>
+> [   52.294547] 005: ... which became HARDIRQ-irq-unsafe at:
+> [   52.294553] 005: ...
+> [   52.294554] 005:   lock_acquire+0xf8/0x318
+> [  OK  ] Reached target
+> t_spin_lock+0x48/0x70  lock_acquire+0xf8/0x318
+> [0;1;39mRemote File Systems.[   52.294570] 005:   iommu_dma_map_msi_msg+0x5c/0x1
+>
+> [   52.296824] 005: CPU: 5 PID: 2108 Comm: ip Not tainted 5.0.3-rt1-00007-g42ede
+> 9a0fed6 #4312] 005:  __sys_sendmsg+0x68/0xb8
+>
+> I understand the new series add support for "atomic" print. So I am
+> wondering whether this issue is related to it? Is there any advice to
+> prevent the mangling?
 
-Thank you!
+The atomic print allows important messages to be print immediately
+(regardless of the context of the printer). This means that if any other
+context was already printing, it will be interrupted. This cannot be
+synchronized without causing significant scheduling delays.
 
+The atomic messages always do the interrupting and will continue to the
+end of the line. So it should be possible to piece the non-atomic
+messages back together. However, I am a bit confused by your output. Is
+it possible that I could see the full boot log?
 
--- 
-Masami Hiramatsu <mhiramat@kernel.org>
+The main goal of the atomic messages is so that you never lose any
+important messages. To help readability, perhaps the atomic messages
+should begin with a '\n' as well?
+
+John Ogness
