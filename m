@@ -2,109 +2,149 @@ Return-Path: <SRS0=5pzl=R4=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+X-Spam-Status: No, score=-4.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,FSL_HELO_FAKE,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_PASS,URIBL_BLOCKED,USER_AGENT_MUTT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D0493C43381
-	for <linux-rt-users@archiver.kernel.org>; Mon, 25 Mar 2019 10:34:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8AF8AC43381
+	for <linux-rt-users@archiver.kernel.org>; Mon, 25 Mar 2019 11:37:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id A73542064A
-	for <linux-rt-users@archiver.kernel.org>; Mon, 25 Mar 2019 10:34:49 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5A3282087E
+	for <linux-rt-users@archiver.kernel.org>; Mon, 25 Mar 2019 11:37:36 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1553513856;
+	bh=sABU5pJFeKsGZzAfz8LSKtGwlpZiWNFGphElSw14hmI=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:List-ID:From;
+	b=Qd9EWkxemuxIq+JVfsr2+25dIg4e5zkaZFLgDd4UCKF1nbJZaW2JyBC5h76FUc0z3
+	 2uGp5+WcIGpTy+KCzmiJMvDQznWB/kwMDDozsAcTHCMJIwz5drRmZ/sX3CdsdsGCtz
+	 99Ni1avap0Ufu5dO2azaMgJieOlYy3wpPu0ivExM=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730611AbfCYKeo (ORCPT
+        id S1730993AbfCYLhb (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 25 Mar 2019 06:34:44 -0400
-Received: from Galois.linutronix.de ([146.0.238.70]:45392 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1730588AbfCYKeo (ORCPT
+        Mon, 25 Mar 2019 07:37:31 -0400
+Received: from mail-pf1-f193.google.com ([209.85.210.193]:44627 "EHLO
+        mail-pf1-f193.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1730730AbfCYLha (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 25 Mar 2019 06:34:44 -0400
-Received: from localhost ([127.0.0.1] helo=vostro.local)
-        by Galois.linutronix.de with esmtp (Exim 4.80)
-        (envelope-from <john.ogness@linutronix.de>)
-        id 1h8MwB-00084h-EH; Mon, 25 Mar 2019 11:34:39 +0100
-From:   John Ogness <john.ogness@linutronix.de>
-To:     Julien Grall <julien.grall@arm.com>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Dave P Martin <Dave.Martin@arm.com>
-Subject: Re: [ANNOUNCE] v5.0.3-rt1
-References: <20190320171511.icjhdlulgal2yeho@linutronix.de>
-        <791056c4-3575-0bd8-031e-44d0e3b21e54@arm.com>
-        <87tvfrs76z.fsf@linutronix.de>
-        <3cb3c190-e804-982a-1c5b-8545a97379b9@arm.com>
-Date:   Mon, 25 Mar 2019 11:34:38 +0100
-In-Reply-To: <3cb3c190-e804-982a-1c5b-8545a97379b9@arm.com> (Julien Grall's
-        message of "Mon, 25 Mar 2019 10:18:36 +0000")
-Message-ID: <87imw7qm2p.fsf@linutronix.de>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/23.4 (gnu/linux)
+        Mon, 25 Mar 2019 07:37:30 -0400
+Received: by mail-pf1-f193.google.com with SMTP id y13so103693pfm.11;
+        Mon, 25 Mar 2019 04:37:30 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:date:from:to:cc:subject:message-id:references:mime-version
+         :content-disposition:in-reply-to:user-agent;
+        bh=VeB+s6gWFMe8AMsJYz9XJ7GxfqU/tchEME0t2nEdTkc=;
+        b=j5Wi1G2g73H6BjfoopYU/Cs+92FhE9yb6X/i+cpoc/k5EqGF9WmSQjFF27UoK5iKiY
+         wkU3c6Vzpe0JHvQF3Mu08ovywIwswyRTRD7hMFyy/aWQo8xuAP/wahXezgJHik40x26y
+         TVa/BoSyuNVpMdkyqFaMFEb21Sw7fyk4zbuHE+UGKr3tjrj946n9iQfGhcqooSTY9L+X
+         tEl+pxuM6LYEeXokxk54+5hW6QLGtr1lcTOH05t/RiEfANriQu/mAK7Gy06qQjkrRGzF
+         rVLSpmzzVOXXNnlukxOf/YMFzXtCFzgQIe5AvaPbC0iNFReIy0+IMB7oPfyFvPmrZcm8
+         ahXg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:date:from:to:cc:subject:message-id
+         :references:mime-version:content-disposition:in-reply-to:user-agent;
+        bh=VeB+s6gWFMe8AMsJYz9XJ7GxfqU/tchEME0t2nEdTkc=;
+        b=ohZgWrhwHZGgcfBCHFsyiIEwqimhbK5xguJS0dFS92s9mq5sb5UirL59L1XVhb+H+2
+         G3+g5Ddpw8mPCpuSxmTUdrV62b5GiWVH7Z7bS+/uxvuXzxLSHk5ZgF7b9T8kYKqWMlmU
+         kCd5upV5XxgYixCXHWWI2HbbO1qcLOzZb7i3Y4ULAZoimVNSNXH3J93HLJuxwfQEODlH
+         m4iJxvjP0/yv7TFjwfqjDwsM3kFeO4mbPdGqrGgmatvV8Abd2v3yMjcpbhJPrj1vJfuC
+         tFs46pF3Nc0OJr+iPNu0PvyT2Pea6elUp3/ZZUmyXkRZdxEk1MKCSmo8rBQLRdT9LJO/
+         FgRw==
+X-Gm-Message-State: APjAAAXBGmvoq0RYabkkQwsSyXuzwqpryfRC66DREhPbzzo6TwHfrS5O
+        gjoXggvmoWf19TdX6loCCbs=
+X-Google-Smtp-Source: APXvYqzW9PuUq4Fjo5ChWDXBx07b4hPLjXXjWCoo7+LTwfQMy26YlLkJJmdgfDQmjuROex8M2N3+wg==
+X-Received: by 2002:a65:4344:: with SMTP id k4mr22478900pgq.20.1553513849985;
+        Mon, 25 Mar 2019 04:37:29 -0700 (PDT)
+Received: from google.com ([2401:fa00:d:10:75ad:a5d:715f:f6d8])
+        by smtp.gmail.com with ESMTPSA id i79sm33798306pfj.28.2019.03.25.04.37.26
+        (version=TLS1_2 cipher=ECDHE-RSA-CHACHA20-POLY1305 bits=256/256);
+        Mon, 25 Mar 2019 04:37:28 -0700 (PDT)
+Date:   Mon, 25 Mar 2019 20:37:23 +0900
+From:   Namhyung Kim <namhyung@kernel.org>
+To:     Tom Zanussi <zanussi@kernel.org>
+Cc:     rostedt@goodmis.org, tglx@linutronix.de, mhiramat@kernel.org,
+        bigeasy@linutronix.de, joel@joelfernandes.org,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH v4 04/11] tracing: Use tracing error_log with trace event
+ filters
+Message-ID: <20190325111724.GB211529@google.com>
+References: <cover.1553268040.git.tom.zanussi@linux.intel.com>
+ <f0895856a61d95aba80f9668d6828234d33b5d7c.1553268040.git.tom.zanussi@linux.intel.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <f0895856a61d95aba80f9668d6828234d33b5d7c.1553268040.git.tom.zanussi@linux.intel.com>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2019-03-25, Julien Grall <julien.grall@arm.com> wrote:
->>> Using 5.0.3-rt1, I get some warning message completely mangled with
->>> the rest of the output (e.g systemd message) but also between
->>> them. Some excerpt of a 500 lines lockdep warning (AFAICT the printk
->>> is not related to the printk code):
->>>
->>> [   52.294547] 005: ... which became HARDIRQ-irq-unsafe at:
->>> [   52.294553] 005: ...
->>> [   52.294554] 005:   lock_acquire+0xf8/0x318
->>> [  OK  ] Reached target
->>> t_spin_lock+0x48/0x70  lock_acquire+0xf8/0x318
->>> [0;1;39mRemote File Systems.[   52.294570] 005:   iommu_dma_map_msi_msg+0x5c/0x1
->>>
->>> [   52.296824] 005: CPU: 5 PID: 2108 Comm: ip Not tainted 5.0.3-rt1-00007-g42ede
->>> 9a0fed6 #4312] 005:  __sys_sendmsg+0x68/0xb8
->>>
->>> I understand the new series add support for "atomic" print. So I am
->>> wondering whether this issue is related to it? Is there any advice
->>> to prevent the mangling?
->> 
->> The atomic print allows important messages to be print immediately
->> (regardless of the context of the printer). This means that if any
->> other context was already printing, it will be interrupted. This
->> cannot be synchronized without causing significant scheduling
->> delays.> The atomic messages always do the interrupting and will
->> continue to the end of the line. So it should be possible to piece
->> the non-atomic messages back together. However, I am a bit confused
->> by your output. Is it possible that I could see the full boot log?
->
-> I seem to have two issues. The first one is what you described above,
-> the other is what looks like spurious print. I have appended the full
-> boot log below.
+Hi Tom,
 
-> [...]
-> [    1.169151] 002: Serial: AMBA PL011 UART driver
-> [    1.254891] 002: 7ff80000.uart: ttyAMA0 at MMIO 0x7ff80000 (irq = 32, base_baud = 0) is a PL011 rev3
-> [    1.255007] 002: printk: console [ttyAMA0] enabled
+On Fri, Mar 22, 2019 at 10:34:30AM -0500, Tom Zanussi wrote:
+> From: Tom Zanussi <tom.zanussi@linux.intel.com>
+> 
+> Use tracing_log_err() from the new tracing error_log mechanism to send
+> filter parse errors to tracing/error_log.
+> 
+> With this change, users will be able to see filter errors by looking
+> at tracing/error_log.
+> 
+> The same errors will also be available in the filter file, as
+> expected.
+> 
+> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> ---
+>  kernel/trace/trace_events_filter.c | 7 +++++--
+>  1 file changed, 5 insertions(+), 2 deletions(-)
+> 
+> diff --git a/kernel/trace/trace_events_filter.c b/kernel/trace/trace_events_filter.c
+> index ade606c33231..3a1ed8631aa0 100644
+> --- a/kernel/trace/trace_events_filter.c
+> +++ b/kernel/trace/trace_events_filter.c
+> @@ -66,7 +66,8 @@ static const char * ops[] = { OPS };
+>  	C(INVALID_FILTER,	"Meaningless filter expression"),	\
+>  	C(IP_FIELD_ONLY,	"Only 'ip' field is supported for function trace"), \
+>  	C(INVALID_VALUE,	"Invalid value (did you forget quotes)?"), \
+> -	C(NO_FILTER,		"No filter found"),
+> +	C(ERRNO,		"Error"),				\
+> +	C(NO_FILTER,		"No filter found")
+>  
+>  #undef C
+>  #define C(a, b)		FILT_ERR_##a
+> @@ -76,7 +77,7 @@ enum { ERRORS };
+>  #undef C
+>  #define C(a, b)		b
+>  
+> -static char *err_text[] = { ERRORS };
+> +static const char *err_text[] = { ERRORS };
+>  
+>  /* Called after a '!' character but "!=" and "!~" are not "not"s */
+>  static bool is_not(const char *str)
+> @@ -947,8 +948,10 @@ static void append_filter_err(struct filter_parse_error *pe,
+>  	if (pe->lasterr > 0) {
+>  		trace_seq_printf(s, "\n%*s", pos, "^");
+>  		trace_seq_printf(s, "\nparse_error: %s\n", err_text[pe->lasterr]);
+> +		tracing_log_err("event filter parse error", filter->filter_string, err_text, pe->lasterr, pe->lasterr_pos);
+>  	} else {
+>  		trace_seq_printf(s, "\nError: (%d)\n", pe->lasterr);
+> +		tracing_log_err("event filter parse error", filter->filter_string, err_text, FILT_ERR_ERRNO, 0);
 
-The ttyAMA drivers do not have support for atomic printing, so it is not
-the new atomic feature that is causing the mangling. For your setup, all
-printk console printing is being handled within a specific context, the
-printk kernel thread.
+These lines are too long, could you please wrap?
+Otherwise, the whole series look good to me.
 
-It looks to me like some userspace application (systemd?) is writing
-directly to /dev/ttyAMA0. If the kernel is also writing to this device
-(because it is setup as a console), then the output will be
-mangled. There is no high-level synchronization between console output
-and directly writing to UART devices. Maybe you need to set your
-loglevel so that the kernel does not do the printing? For example,
-loglevel=1?
+Acked-by: Namhyung Kim <namhyung@kernel.org>
 
-You should see this problem with older kernel versions as well.
+Thanks,
+Namhyung
 
-> Interestingly the dmesg output does not contain any mangling.
 
-dmesg just dumps the kernel log buffer. The log buffer is synchronized
-(even for atomic writes), so it will never show the mangling.
-
-John Ogness
+>  	}
+>  	trace_seq_putc(s, 0);
+>  	buf = kmemdup_nul(s->buffer, s->seq.len, GFP_KERNEL);
+> -- 
+> 2.14.1
+> 
