@@ -6,35 +6,36 @@ X-Spam-Status: No, score=-9.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_PASS,URIBL_BLOCKED,
 	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9E537C43381
-	for <linux-rt-users@archiver.kernel.org>; Wed, 27 Mar 2019 18:33:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BDBA8C43381
+	for <linux-rt-users@archiver.kernel.org>; Wed, 27 Mar 2019 18:33:33 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 78ADF204FD
-	for <linux-rt-users@archiver.kernel.org>; Wed, 27 Mar 2019 18:33:29 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9AD9A2070B
+	for <linux-rt-users@archiver.kernel.org>; Wed, 27 Mar 2019 18:33:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2391724AbfC0SdX (ORCPT
+        id S2391696AbfC0SdR (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 27 Mar 2019 14:33:23 -0400
-Received: from Galois.linutronix.de ([146.0.238.70]:51487 "EHLO
+        Wed, 27 Mar 2019 14:33:17 -0400
+Received: from Galois.linutronix.de ([146.0.238.70]:51484 "EHLO
         Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2390945AbfC0SdX (ORCPT
+        with ESMTP id S2390945AbfC0SdQ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 27 Mar 2019 14:33:23 -0400
+        Wed, 27 Mar 2019 14:33:16 -0400
 Received: from localhost ([127.0.0.1] helo=flow.W.breakpoint.cc)
         by Galois.linutronix.de with esmtp (Exim 4.80)
         (envelope-from <bigeasy@linutronix.de>)
-        id 1h9DMM-0004Tc-OB; Wed, 27 Mar 2019 19:33:10 +0100
+        id 1h9DMO-0004Tc-RQ; Wed, 27 Mar 2019 19:33:13 +0100
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Cc:     Thomas Gleixner <tglx@linutronix.de>,
         Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH 1/4] printk: An all-in-one commit to fix build failures
-Date:   Wed, 27 Mar 2019 19:33:07 +0100
-Message-Id: <20190327183310.1015-1-bigeasy@linutronix.de>
+Subject: [PATCH 4/4] powerpc: reshuffle TIF bits
+Date:   Wed, 27 Mar 2019 19:33:10 +0100
+Message-Id: <20190327183310.1015-4-bigeasy@linutronix.de>
 X-Mailer: git-send-email 2.20.1
-In-Reply-To: <20190320171511.icjhdlulgal2yeho@linutronix.de>
+In-Reply-To: <20190327183310.1015-1-bigeasy@linutronix.de>
 References: <20190320171511.icjhdlulgal2yeho@linutronix.de>
+ <20190327183310.1015-1-bigeasy@linutronix.de>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Sender: linux-rt-users-owner@vger.kernel.org
@@ -42,111 +43,151 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: John Ogness <john.ogness@linutronix.de>
+Powerpc32/64 does not compile because TIF_SYSCALL_TRACE's bit is higher
+than 15 and the assembly instructions don't expect that.
 
-This commit contains addresses several build failures which were
-reported by the kbuild test robot.
-The fixes were folded into the original commits.
+Move TIF_RESTOREALL, TIF_NOERROR to the higher bits and keep
+TIF_NEED_RESCHED_LAZY in the lower range. As a result one split load is
+needed and otherwise we can use immediates.
 
-Reported-by: kbuild test robot <lkp@intel.com>
-Signed-off-by: John Ogness <john.ogness@linutronix.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- arch/powerpc/kernel/traps.c    |  1 -
- arch/powerpc/kernel/watchdog.c |  5 -----
- kernel/printk/printk.c         | 16 ++++++++++++++--
- lib/printk_ringbuffer.c        |  8 +++++++-
- 4 files changed, 21 insertions(+), 9 deletions(-)
+ arch/powerpc/include/asm/thread_info.h | 13 ++++++++-----
+ arch/powerpc/kernel/entry_32.S         | 12 +++++++-----
+ arch/powerpc/kernel/entry_64.S         | 12 +++++++-----
+ 3 files changed, 22 insertions(+), 15 deletions(-)
 
-diff --git a/arch/powerpc/kernel/traps.c b/arch/powerpc/kernel/traps.c
-index 7a1de34f38c85..314be8e39d1fd 100644
---- a/arch/powerpc/kernel/traps.c
-+++ b/arch/powerpc/kernel/traps.c
-@@ -174,7 +174,6 @@ extern void panic_flush_kmsg_start(void)
- 
- extern void panic_flush_kmsg_end(void)
- {
--	printk_safe_flush_on_panic();
- 	kmsg_dump(KMSG_DUMP_PANIC);
- 	bust_spinlocks(0);
- 	debug_locks_off();
-diff --git a/arch/powerpc/kernel/watchdog.c b/arch/powerpc/kernel/watchdog.c
-index 3c6ab22a0c4e3..bf98181c5b309 100644
---- a/arch/powerpc/kernel/watchdog.c
-+++ b/arch/powerpc/kernel/watchdog.c
-@@ -181,11 +181,6 @@ static void watchdog_smp_panic(int cpu, u64 tb)
- 
- 	wd_smp_unlock(&flags);
- 
--	printk_safe_flush();
--	/*
--	 * printk_safe_flush() seems to require another print
--	 * before anything actually goes out to console.
--	 */
- 	if (sysctl_hardlockup_all_cpu_backtrace)
- 		trigger_allbutself_cpu_backtrace();
- 
-diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-index 5cfd8ea445362..997d07b6bf975 100644
---- a/kernel/printk/printk.c
-+++ b/kernel/printk/printk.c
-@@ -370,6 +370,18 @@ static u64 clear_seq;
- #define LOG_LEVEL(v)		((v) & 0x07)
- #define LOG_FACILITY(v)		((v) >> 3 & 0xff)
- 
-+/* Return log buffer address */
-+char *log_buf_addr_get(void)
-+{
-+	return printk_rb.buffer;
-+}
+diff --git a/arch/powerpc/include/asm/thread_info.h b/arch/powerpc/include/asm/thread_info.h
+index 7e542e729f131..f9132398566d9 100644
+--- a/arch/powerpc/include/asm/thread_info.h
++++ b/arch/powerpc/include/asm/thread_info.h
+@@ -90,7 +90,7 @@ void arch_setup_new_exec(void);
+ /*
+  * thread information flag bit numbers
+  */
+-#define TIF_NEED_RESCHED_LAZY	0	/* lazy rescheduling necessary */
++#define TIF_SYSCALL_TRACE	0	/* syscall trace active */
+ #define TIF_SIGPENDING		1	/* signal pending */
+ #define TIF_NEED_RESCHED	2	/* rescheduling necessary */
+ #define TIF_FSCHECK		3	/* Check FS is USER_DS on return */
+@@ -101,11 +101,12 @@ void arch_setup_new_exec(void);
+ #define TIF_SINGLESTEP		8	/* singlestepping active */
+ #define TIF_NOHZ		9	/* in adaptive nohz mode */
+ #define TIF_SECCOMP		10	/* secure computing */
+-#define TIF_RESTOREALL		11	/* Restore all regs (implies NOERROR) */
+-#define TIF_NOERROR		12	/* Force successful syscall return */
 +
-+/* Return log buffer size */
-+u32 log_buf_len_get(void)
-+{
-+	return (1 << printk_rb.size_bits);
-+}
++#define TIF_NEED_RESCHED_LAZY	11	/* lazy rescheduling necessary */
++#define TIF_SYSCALL_TRACEPOINT	12	/* syscall tracepoint instrumentation */
 +
- /* human readable text of the record */
- static char *log_text(const struct printk_log *msg)
- {
-@@ -1910,7 +1922,7 @@ asmlinkage int vprintk_emit(int facility, int level,
- }
- EXPORT_SYMBOL(vprintk_emit);
+ #define TIF_NOTIFY_RESUME	13	/* callback before returning to user */
+ #define TIF_UPROBE		14	/* breakpointed or single-stepping */
+-#define TIF_SYSCALL_TRACEPOINT	15	/* syscall tracepoint instrumentation */
+ #define TIF_EMULATE_STACK_STORE	16	/* Is an instruction emulation
+ 						for stack store? */
+ #define TIF_MEMDIE		17	/* is terminating due to OOM killer */
+@@ -114,7 +115,9 @@ void arch_setup_new_exec(void);
+ #endif
+ #define TIF_POLLING_NRFLAG	19	/* true if poll_idle() is polling TIF_NEED_RESCHED */
+ #define TIF_32BIT		20	/* 32 bit binary */
+-#define TIF_SYSCALL_TRACE	21	/* syscall trace active */
++#define TIF_RESTOREALL		21	/* Restore all regs (implies NOERROR) */
++#define TIF_NOERROR		22	/* Force successful syscall return */
++
  
--__printf(1, 0) int vprintk_func(const char *fmt, va_list args)
-+static __printf(1, 0) int vprintk_func(const char *fmt, va_list args)
- {
- 	return vprintk_emit(0, LOGLEVEL_DEFAULT, NULL, 0, fmt, args);
- }
-@@ -2684,7 +2696,7 @@ static int __init init_printk_kthread(void)
- }
- late_initcall(init_printk_kthread);
+ /* as above, but as bit values */
+ #define _TIF_SYSCALL_TRACE	(1<<TIF_SYSCALL_TRACE)
+diff --git a/arch/powerpc/kernel/entry_32.S b/arch/powerpc/kernel/entry_32.S
+index 553e1ad981c30..1b6c95d49cd23 100644
+--- a/arch/powerpc/kernel/entry_32.S
++++ b/arch/powerpc/kernel/entry_32.S
+@@ -393,7 +393,9 @@ _GLOBAL(DoSyscall)
+ 	MTMSRD(r10)
+ 	lwz	r9,TI_FLAGS(r12)
+ 	li	r8,-MAX_ERRNO
+-	andi.	r0,r9,(_TIF_SYSCALL_DOTRACE|_TIF_SINGLESTEP|_TIF_USER_WORK_MASK|_TIF_PERSYSCALL_MASK)
++	lis	r0,(_TIF_SYSCALL_DOTRACE|_TIF_SINGLESTEP|_TIF_USER_WORK_MASK|_TIF_PERSYSCALL_MASK)@h
++	ori	r0,r0, (_TIF_SYSCALL_DOTRACE|_TIF_SINGLESTEP|_TIF_USER_WORK_MASK|_TIF_PERSYSCALL_MASK)@l
++	and.	r0,r9,r0
+ 	bne-	syscall_exit_work
+ 	cmplw	0,r3,r8
+ 	blt+	syscall_exit_cont
+@@ -511,13 +513,13 @@ END_FTR_SECTION_IFSET(CPU_FTR_NEED_PAIRED_STWCX)
+ 	b	syscall_dotrace_cont
  
--int vprintk_deferred(const char *fmt, va_list args)
-+static int vprintk_deferred(const char *fmt, va_list args)
- {
- 	return vprintk_emit(0, LOGLEVEL_DEFAULT, NULL, 0, fmt, args);
- }
-diff --git a/lib/printk_ringbuffer.c b/lib/printk_ringbuffer.c
-index ce33b5add5a17..9a31d7dbdc005 100644
---- a/lib/printk_ringbuffer.c
-+++ b/lib/printk_ringbuffer.c
-@@ -196,8 +196,14 @@ void prb_commit(struct prb_handle *h)
+ syscall_exit_work:
+-	andi.	r0,r9,_TIF_RESTOREALL
++	andis.	r0,r9,_TIF_RESTOREALL@h
+ 	beq+	0f
+ 	REST_NVGPRS(r1)
+ 	b	2f
+ 0:	cmplw	0,r3,r8
+ 	blt+	1f
+-	andi.	r0,r9,_TIF_NOERROR
++	andis.	r0,r9,_TIF_NOERROR@h
+ 	bne-	1f
+ 	lwz	r11,_CCR(r1)			/* Load CR */
+ 	neg	r3,r3
+@@ -526,12 +528,12 @@ END_FTR_SECTION_IFSET(CPU_FTR_NEED_PAIRED_STWCX)
  
- 	if (changed) {
- 		atomic_long_inc(&rb->wq_counter);
--		if (wq_has_sleeper(rb->wq))
-+		if (wq_has_sleeper(rb->wq)) {
-+#ifdef CONFIG_IRQ_WORK
- 			irq_work_queue(rb->wq_work);
-+#else
-+			if (!in_nmi())
-+				wake_up_interruptible_all(rb->wq);
-+#endif
-+		}
- 	}
- }
+ 1:	stw	r6,RESULT(r1)	/* Save result */
+ 	stw	r3,GPR3(r1)	/* Update return value */
+-2:	andi.	r0,r9,(_TIF_PERSYSCALL_MASK)
++2:	andis.	r0,r9,(_TIF_PERSYSCALL_MASK)@h
+ 	beq	4f
  
+ 	/* Clear per-syscall TIF flags if any are set.  */
+ 
+-	li	r11,_TIF_PERSYSCALL_MASK
++	lis	r11,_TIF_PERSYSCALL_MASK@h
+ 	addi	r12,r12,TI_FLAGS
+ 3:	lwarx	r8,0,r12
+ 	andc	r8,r8,r11
+diff --git a/arch/powerpc/kernel/entry_64.S b/arch/powerpc/kernel/entry_64.S
+index fcf8fe69beb51..d857823e25b2f 100644
+--- a/arch/powerpc/kernel/entry_64.S
++++ b/arch/powerpc/kernel/entry_64.S
+@@ -253,7 +253,9 @@ system_call:			/* label this so stack traces look sane */
+ 
+ 	ld	r9,TI_FLAGS(r12)
+ 	li	r11,-MAX_ERRNO
+-	andi.	r0,r9,(_TIF_SYSCALL_DOTRACE|_TIF_SINGLESTEP|_TIF_USER_WORK_MASK|_TIF_PERSYSCALL_MASK)
++	lis	r0,(_TIF_SYSCALL_DOTRACE|_TIF_SINGLESTEP|_TIF_USER_WORK_MASK|_TIF_PERSYSCALL_MASK)@h
++	ori	r0,r0,(_TIF_SYSCALL_DOTRACE|_TIF_SINGLESTEP|_TIF_USER_WORK_MASK|_TIF_PERSYSCALL_MASK)@l
++	and.	r0,r9,r0
+ 	bne-	.Lsyscall_exit_work
+ 
+ 	andi.	r0,r8,MSR_FP
+@@ -370,25 +372,25 @@ END_FTR_SECTION_IFSET(CPU_FTR_HAS_PPR)
+ 	/* If TIF_RESTOREALL is set, don't scribble on either r3 or ccr.
+ 	 If TIF_NOERROR is set, just save r3 as it is. */
+ 
+-	andi.	r0,r9,_TIF_RESTOREALL
++	andis.	r0,r9,_TIF_RESTOREALL@h
+ 	beq+	0f
+ 	REST_NVGPRS(r1)
+ 	b	2f
+ 0:	cmpld	r3,r11		/* r11 is -MAX_ERRNO */
+ 	blt+	1f
+-	andi.	r0,r9,_TIF_NOERROR
++	andis.	r0,r9,_TIF_NOERROR@h
+ 	bne-	1f
+ 	ld	r5,_CCR(r1)
+ 	neg	r3,r3
+ 	oris	r5,r5,0x1000	/* Set SO bit in CR */
+ 	std	r5,_CCR(r1)
+ 1:	std	r3,GPR3(r1)
+-2:	andi.	r0,r9,(_TIF_PERSYSCALL_MASK)
++2:	andis.	r0,r9,(_TIF_PERSYSCALL_MASK)@h
+ 	beq	4f
+ 
+ 	/* Clear per-syscall TIF flags if any are set.  */
+ 
+-	li	r11,_TIF_PERSYSCALL_MASK
++	lis	r11,(_TIF_PERSYSCALL_MASK)@h
+ 	addi	r12,r12,TI_FLAGS
+ 3:	ldarx	r10,0,r12
+ 	andc	r10,r10,r11
 -- 
 2.20.1
 
