@@ -2,132 +2,83 @@ Return-Path: <SRS0=WElg=R6=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_PASS,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_MUTT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3E3FBC43381
-	for <linux-rt-users@archiver.kernel.org>; Wed, 27 Mar 2019 18:33:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B9E21C43381
+	for <linux-rt-users@archiver.kernel.org>; Wed, 27 Mar 2019 21:35:59 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 1A18E204FD
-	for <linux-rt-users@archiver.kernel.org>; Wed, 27 Mar 2019 18:33:41 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7E1E6206BA
+	for <linux-rt-users@archiver.kernel.org>; Wed, 27 Mar 2019 21:35:59 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=nvidia.com header.i=@nvidia.com header.b="SFml0bLz"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2391359AbfC0SdR (ORCPT
+        id S1726681AbfC0Vf6 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 27 Mar 2019 14:33:17 -0400
-Received: from Galois.linutronix.de ([146.0.238.70]:51482 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2390579AbfC0SdP (ORCPT
+        Wed, 27 Mar 2019 17:35:58 -0400
+Received: from hqemgate14.nvidia.com ([216.228.121.143]:10116 "EHLO
+        hqemgate14.nvidia.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726059AbfC0Vf6 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 27 Mar 2019 14:33:15 -0400
-Received: from localhost ([127.0.0.1] helo=flow.W.breakpoint.cc)
-        by Galois.linutronix.de with esmtp (Exim 4.80)
-        (envelope-from <bigeasy@linutronix.de>)
-        id 1h9DMO-0004Tc-0W; Wed, 27 Mar 2019 19:33:12 +0100
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH 3/4] powerpc/pseries/iommu: Use a locallock instead local_irq_save()
-Date:   Wed, 27 Mar 2019 19:33:09 +0100
-Message-Id: <20190327183310.1015-3-bigeasy@linutronix.de>
-X-Mailer: git-send-email 2.20.1
-In-Reply-To: <20190327183310.1015-1-bigeasy@linutronix.de>
-References: <20190320171511.icjhdlulgal2yeho@linutronix.de>
- <20190327183310.1015-1-bigeasy@linutronix.de>
+        Wed, 27 Mar 2019 17:35:58 -0400
+Received: from hqpgpgate101.nvidia.com (Not Verified[216.228.121.13]) by hqemgate14.nvidia.com (using TLS: TLSv1.2, DES-CBC3-SHA)
+        id <B5c9becc10000>; Wed, 27 Mar 2019 14:36:01 -0700
+Received: from hqmail.nvidia.com ([172.20.161.6])
+  by hqpgpgate101.nvidia.com (PGP Universal service);
+  Wed, 27 Mar 2019 14:35:57 -0700
+X-PGP-Universal: processed;
+        by hqpgpgate101.nvidia.com on Wed, 27 Mar 2019 14:35:57 -0700
+Received: from HQMAIL111.nvidia.com (172.20.187.18) by HQMAIL101.nvidia.com
+ (172.20.187.10) with Microsoft SMTP Server (TLS) id 15.0.1473.3; Wed, 27 Mar
+ 2019 21:35:57 +0000
+Received: from HQMAIL101.nvidia.com (172.20.187.10) by HQMAIL111.nvidia.com
+ (172.20.187.18) with Microsoft SMTP Server (TLS) id 15.0.1473.3; Wed, 27 Mar
+ 2019 21:35:57 +0000
+Received: from hqnvemgw01.nvidia.com (172.20.150.20) by HQMAIL101.nvidia.com
+ (172.20.187.10) with Microsoft SMTP Server (TLS) id 15.0.1473.3 via Frontend
+ Transport; Wed, 27 Mar 2019 21:35:57 +0000
+Received: from nvidia.com (Not Verified[172.17.136.34]) by hqnvemgw01.nvidia.com with Trustwave SEG (v7,5,8,10121) (using TLS: TLSv1.2, AES128-GCM-SHA256)
+        id <B5c9becbd0000>; Wed, 27 Mar 2019 14:35:57 -0700
+Date:   Wed, 27 Mar 2019 14:35:55 -0700
+From:   Allen Martin <amartin@nvidia.com>
+To:     <zanussi@kernel.org>
+CC:     <linux-rt-users@vger.kernel.org>, <anup.pemmaiah@gmail.com>,
+        <bigeasy@linutronix.de>
+Subject: ARMv8 fp register corruption in 4.14 PREEMPT_RT series
+Message-ID: <20190327213555.GA16845@nvidia.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-NVConfidentiality: public
+User-Agent: Mutt/1.5.24 (2015-08-30)
+Content-Type: text/plain; charset="us-ascii"
+Content-Disposition: inline
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nvidia.com; s=n1;
+        t=1553722561; bh=TMrM/xBk3OBjRTlEZuB5TT5goIQRLwrjBoDwsHR178E=;
+        h=X-PGP-Universal:Date:From:To:CC:Subject:Message-ID:MIME-Version:
+         X-NVConfidentiality:User-Agent:Content-Type:Content-Disposition;
+        b=SFml0bLzOYTSwzG4qwbRFdCb1SGLSZpslYAtQJPXdcLYY0m/W+Cs4DulsAKR++IXw
+         Tk7YhT8f0dT91saNnASqd4+OFGSGxn6k03SQA1fRy/+YfxGdeU0JKFSNFIeYz9zde3
+         82Hk8YdB4OrvuUMEt5JcsgjP9rxBe/FAPtYNiLoq/tSTFmQYYwR442LlwFaLZ75QsN
+         Mzdv6R53ySiSjOzfzSVmibzEgNn5MnVM5ChlxkPq0gbTDrCF2tKY9BxCDDOIP8drFc
+         7nUCz4VFByLmE1gjRhEEBVICAFg/3gNJ/p3xKRFNb4jzl+QAlJ8B55iiTCgNi+Cc8S
+         SjCyTglVzWeZw==
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The locallock protects the per-CPU variable tce_page. The function
-attempts to allocate memory while tce_page is protected (by disabling
-interrupts).
+Hi Tom, I can confirm the ARMv8 fp register corruption reported here:
 
-Use local_irq_save() instead of local_irq_disable().
+https://marc.info/?l=linux-rt-users&m=153930857708206&w=2
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- arch/powerpc/platforms/pseries/iommu.c | 16 ++++++++++------
- 1 file changed, 10 insertions(+), 6 deletions(-)
+still exists in 4.14.106-rt56.  I was able to reproduce this on both
+A57 and Carmel ARMv8 CPUs using the float_bessel subtest of LTP.  This
+fix was to backport the following patch from 4.18.y-rt to 4.14-rt:
 
-diff --git a/arch/powerpc/platforms/pseries/iommu.c b/arch/powerpc/platforms/pseries/iommu.c
-index 8fc8fe0b98485..14ecedbd8ff12 100644
---- a/arch/powerpc/platforms/pseries/iommu.c
-+++ b/arch/powerpc/platforms/pseries/iommu.c
-@@ -38,6 +38,7 @@
- #include <linux/of.h>
- #include <linux/iommu.h>
- #include <linux/rculist.h>
-+#include <linux/locallock.h>
- #include <asm/io.h>
- #include <asm/prom.h>
- #include <asm/rtas.h>
-@@ -191,6 +192,7 @@ static int tce_build_pSeriesLP(struct iommu_table *tbl, long tcenum,
- }
- 
- static DEFINE_PER_CPU(__be64 *, tce_page);
-+static DEFINE_LOCAL_IRQ_LOCK(tcp_page_lock);
- 
- static int tce_buildmulti_pSeriesLP(struct iommu_table *tbl, long tcenum,
- 				     long npages, unsigned long uaddr,
-@@ -211,7 +213,8 @@ static int tce_buildmulti_pSeriesLP(struct iommu_table *tbl, long tcenum,
- 		                           direction, attrs);
- 	}
- 
--	local_irq_save(flags);	/* to protect tcep and the page behind it */
-+	/* to protect tcep and the page behind it */
-+	local_lock_irqsave(tcp_page_lock, flags);
- 
- 	tcep = __this_cpu_read(tce_page);
- 
-@@ -222,7 +225,7 @@ static int tce_buildmulti_pSeriesLP(struct iommu_table *tbl, long tcenum,
- 		tcep = (__be64 *)__get_free_page(GFP_ATOMIC);
- 		/* If allocation fails, fall back to the loop implementation */
- 		if (!tcep) {
--			local_irq_restore(flags);
-+			local_unlock_irqrestore(tcp_page_lock, flags);
- 			return tce_build_pSeriesLP(tbl, tcenum, npages, uaddr,
- 					    direction, attrs);
- 		}
-@@ -256,7 +259,7 @@ static int tce_buildmulti_pSeriesLP(struct iommu_table *tbl, long tcenum,
- 		tcenum += limit;
- 	} while (npages > 0 && !rc);
- 
--	local_irq_restore(flags);
-+	local_unlock_irqrestore(tcp_page_lock, flags);
- 
- 	if (unlikely(rc == H_NOT_ENOUGH_RESOURCES)) {
- 		ret = (int)rc;
-@@ -414,13 +417,14 @@ static int tce_setrange_multi_pSeriesLP(unsigned long start_pfn,
- 	u64 rc = 0;
- 	long l, limit;
- 
--	local_irq_disable();	/* to protect tcep and the page behind it */
-+	/* to protect tcep and the page behind it */
-+	local_lock_irq(tcp_page_lock);
- 	tcep = __this_cpu_read(tce_page);
- 
- 	if (!tcep) {
- 		tcep = (__be64 *)__get_free_page(GFP_ATOMIC);
- 		if (!tcep) {
--			local_irq_enable();
-+			local_unlock_irq(tcp_page_lock);
- 			return -ENOMEM;
- 		}
- 		__this_cpu_write(tce_page, tcep);
-@@ -466,7 +470,7 @@ static int tce_setrange_multi_pSeriesLP(unsigned long start_pfn,
- 
- 	/* error cleanup: caller will clear whole range */
- 
--	local_irq_enable();
-+	local_unlock_irq(tcp_page_lock);
- 	return rc;
- }
- 
--- 
-2.20.1
+  3afdfe419c33c1655d0763e070350aad44416594
+  arm64: fpsimd: use preemp_disable in addition to local_bh_disable()
 
+Are you able to pick up this patch into 4.14-rt?  I'm sure Anup and I
+are not the only ones who are hitting this.
+
+-Allen
