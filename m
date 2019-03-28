@@ -2,82 +2,87 @@ Return-Path: <SRS0=3N3c=R7=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_PASS,URIBL_BLOCKED
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_PASS,USER_AGENT_NEOMUTT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DCE82C43381
-	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Mar 2019 14:18:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7746BC43381
+	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Mar 2019 17:39:08 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id A43C221773
-	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Mar 2019 14:18:36 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1553782716;
-	bh=raNP0o0LHAF54cnpBluCD+15Xf5D06acnuWxoMSOBIk=;
-	h=Subject:From:To:Cc:Date:In-Reply-To:References:List-ID:From;
-	b=fRW9f6+Hp/UZTo+Ujjs0IHMw3gL2KhigK3rcNsNwgsnHK6CITterjrvaO7zKY/om6
-	 wtfBwPL1AYEl+rMTOdeihxyP1M+ITw9JghfJCyQo+2RMEKnewTa8bZ6UtQkhSYEM1R
-	 YfEcrcw7Wm3pTqDAzybWsc4i9fsFWCq35tdvfYD8=
+	by mail.kernel.org (Postfix) with ESMTP id 51D7420823
+	for <linux-rt-users@archiver.kernel.org>; Thu, 28 Mar 2019 17:39:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726235AbfC1OSg (ORCPT
+        id S1726648AbfC1RjG convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 28 Mar 2019 10:18:36 -0400
-Received: from mail.kernel.org ([198.145.29.99]:40054 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726076AbfC1OSg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 28 Mar 2019 10:18:36 -0400
-Received: from tzanussi-mobl (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 5355E2075E;
-        Thu, 28 Mar 2019 14:18:35 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1553782715;
-        bh=raNP0o0LHAF54cnpBluCD+15Xf5D06acnuWxoMSOBIk=;
-        h=Subject:From:To:Cc:Date:In-Reply-To:References:From;
-        b=q33SWZVqPCQE9IuzO0uCjCEl81rAIyt7uOV3hJGPLIHNpcxPhCtSgoDD4h7GR8QMg
-         8BGnbRV7x0bnqN/+1BN9ulBmg1LYhyg314C68P4ljGejg9rsTJV9/C6PiLd8XS2QKX
-         SbVy6VUzkI3sPnvVaAJ1Gh3t4dN1c0MJf0FNsNd0=
-Message-ID: <1553782714.2655.2.camel@kernel.org>
-Subject: Re: ARMv8 fp register corruption in 4.14 PREEMPT_RT series
-From:   Tom Zanussi <zanussi@kernel.org>
-To:     Allen Martin <amartin@nvidia.com>
-Cc:     linux-rt-users@vger.kernel.org, anup.pemmaiah@gmail.com,
-        bigeasy@linutronix.de
-Date:   Thu, 28 Mar 2019 09:18:34 -0500
-In-Reply-To: <20190327213555.GA16845@nvidia.com>
-References: <20190327213555.GA16845@nvidia.com>
-Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.26.1-1 
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+        Thu, 28 Mar 2019 13:39:06 -0400
+Received: from Galois.linutronix.de ([146.0.238.70]:53721 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725816AbfC1RjG (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 28 Mar 2019 13:39:06 -0400
+Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
+        (envelope-from <bigeasy@linutronix.de>)
+        id 1h9YzT-00072K-6b; Thu, 28 Mar 2019 18:38:59 +0100
+Date:   Thu, 28 Mar 2019 18:38:59 +0100
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     "Liu, Yongxin" <Yongxin.Liu@windriver.com>
+Cc:     "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        "tglx@linutronix.de" <tglx@linutronix.de>,
+        "rostedt@goodmis.org" <rostedt@goodmis.org>,
+        "dan.j.williams@intel.com" <dan.j.williams@intel.com>,
+        "pagupta@redhat.com" <pagupta@redhat.com>,
+        "Gortmaker, Paul" <Paul.Gortmaker@windriver.com>,
+        "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>
+Subject: Re: [PATCH RT] nvdimm: make lane acquirement RT aware
+Message-ID: <20190328173858.hpbtoep42ucomav2@linutronix.de>
+References: <20190306095709.23138-1-yongxin.liu@windriver.com>
+ <20190307143344.ytsnbmot5tjzjhip@linutronix.de>
+ <597B109EC20B76429F71A8A97770610D12A52669@ALA-MBD.corp.ad.wrs.com>
+ <20190308094131.ge4wbsvz4p6xikdf@linutronix.de>
+ <597B109EC20B76429F71A8A97770610D12A5643B@ALA-MBD.corp.ad.wrs.com>
+ <20190315164236.rzbwe7reeprjv3um@linutronix.de>
+ <597B109EC20B76429F71A8A97770610D12A63C81@ALA-MBD.corp.ad.wrs.com>
+ <20190318114017.tazjaegln2obt3zg@linutronix.de>
+ <597B109EC20B76429F71A8A97770610D12A649C1@ALA-MBD.corp.ad.wrs.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8BIT
+In-Reply-To: <597B109EC20B76429F71A8A97770610D12A649C1@ALA-MBD.corp.ad.wrs.com>
+User-Agent: NeoMutt/20180716
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Allen,
+On 2019-03-18 11:48:28 [+0000], Liu, Yongxin wrote:
+> 
+> > 
+> > Bummer. That would dead lock indeed.
+> > Is it easily possible to recognize the recursive case?
+> 
+> Not easily. I don't have test case for recursive call. 
+> For now, just code analysis.
 
-On Wed, 2019-03-27 at 14:35 -0700, Allen Martin wrote:
-> Hi Tom, I can confirm the ARMv8 fp register corruption reported here:
-> 
-> https://marc.info/?l=linux-rt-users&m=153930857708206&w=2
-> 
-> still exists in 4.14.106-rt56.  I was able to reproduce this on both
-> A57 and Carmel ARMv8 CPUs using the float_bessel subtest of
-> LTP.  This
-> fix was to backport the following patch from 4.18.y-rt to 4.14-rt:
-> 
->   3afdfe419c33c1655d0763e070350aad44416594
->   arm64: fpsimd: use preemp_disable in addition to local_bh_disable()
-> 
-> Are you able to pick up this patch into 4.14-rt?  I'm sure Anup and I
-> are not the only ones who are hitting this.
-> 
+So I've been playing with qemu's nvdimm device. So I *think* the
+recursive case is here not possible because qemu only supports pmem
+while it would require the blk mode to trigger it. It is just a wild
+guess…
 
-Yes, I was just about to start a new 4.14 update and will pull this one
-in.  Thanks for letting me know.
+On top of qemu's nvdimm device I can create a block device via
+	ndctl create-namespace  namespace0.0 --mode=sector
 
-Tom
+and then I trigger the code path in question.
 
-> -Allen
+I would *really* prefer to understand the recursive case and avoid it.
+That way the recursive case is explicitly known and uses another path.
+The lock can then be always acquired which gives you always lockdep
+coverage (which is now missing unless you have more LANEs than CPUs).
+
+The local_lock thingy is completely unneeded: a simple get_cpu_light()
+would do the job.
+
+> Yongxin
+
+Sebastian
