@@ -2,58 +2,76 @@ Return-Path: <SRS0=qNRq=SA=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1281CC43381
-	for <linux-rt-users@archiver.kernel.org>; Fri, 29 Mar 2019 08:38:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2DA17C43381
+	for <linux-rt-users@archiver.kernel.org>; Fri, 29 Mar 2019 10:30:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id E1B4021773
-	for <linux-rt-users@archiver.kernel.org>; Fri, 29 Mar 2019 08:38:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id EDF90206B8
+	for <linux-rt-users@archiver.kernel.org>; Fri, 29 Mar 2019 10:30:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729179AbfC2Iih (ORCPT
+        id S1728951AbfC2KaM (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 29 Mar 2019 04:38:37 -0400
-Received: from mail.manjaro.org ([176.9.38.148]:47618 "EHLO manjaro.org"
+        Fri, 29 Mar 2019 06:30:12 -0400
+Received: from mail.monom.org ([188.138.9.77]:49880 "EHLO mail.monom.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729090AbfC2Iih (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 29 Mar 2019 04:38:37 -0400
-Received: from localhost (localhost [127.0.0.1])
-        by manjaro.org (Postfix) with ESMTP id 4D2043136E89;
-        Fri, 29 Mar 2019 09:38:36 +0100 (CET)
-X-Virus-Scanned: Debian amavisd-new at manjaro.org
-Received: from manjaro.org ([127.0.0.1])
-        by localhost (manjaro.org [127.0.0.1]) (amavisd-new, port 10024)
-        with ESMTP id X6AzBI0qXeep; Fri, 29 Mar 2019 09:38:34 +0100 (CET)
-Subject: Re: firefix core dump with linux 5.0.3_rt1-2
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Ralf Mardorf <ralf.mardorf@alice-dsl.net>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-References: <dcf61b0e-31ca-0848-84c5-b200a15f3a89@manjaro.org>
- <20190328115559.275af3c3@archlinux>
- <f5d4ea60-aa23-a294-3850-42f35ca3d76d@manjaro.org>
- <20190328120022.bhwijbp2roizysiw@linutronix.de>
- <82482272-6912-c1d4-4a11-550a962f632c@manjaro.org>
- <1e1974c5-2ad3-98db-d160-577594a471e1@manjaro.org>
- <4ddfde7a-122b-5f18-f41a-b5e967217510@manjaro.org>
- <20190329083400.m4kx4spuvysoszlm@linutronix.de>
-From:   Bernhard Landauer <bernhard@manjaro.org>
-Message-ID: <4f5db7b4-e129-075a-f5f7-81fc0c0a1d82@manjaro.org>
-Date:   Fri, 29 Mar 2019 09:38:33 +0100
-MIME-Version: 1.0
-In-Reply-To: <20190329083400.m4kx4spuvysoszlm@linutronix.de>
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Content-Language: en-US-large
+        id S1728550AbfC2KaM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 29 Mar 2019 06:30:12 -0400
+X-Greylist: delayed 455 seconds by postgrey-1.27 at vger.kernel.org; Fri, 29 Mar 2019 06:30:11 EDT
+Received: from mail.monom.org (localhost [127.0.0.1])
+        by filter.mynetwork.local (Postfix) with ESMTP id 14872500722;
+        Fri, 29 Mar 2019 11:22:35 +0100 (CET)
+Received: from localhost (ppp-93-104-175-44.dynamic.mnet-online.de [93.104.175.44])
+        by mail.monom.org (Postfix) with ESMTPSA id 7256B5005DA;
+        Fri, 29 Mar 2019 11:22:34 +0100 (CET)
+Date:   Fri, 29 Mar 2019 11:22:33 +0100
+From:   Daniel Wagner <wagi@monom.org>
+Subject: [ANNOUNCE] 4.4.177-rt179
+Data:   Fri, 29 Mar 2019 10:19:48 -0000
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Julia Cartwright <julia@ni.com>
+Message-Id: <20190329102235.14872500722@mail.monom.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+Hello RT Folks!
 
-> How do I reproduce this?
+I'm pleased to announce the 4.4.177-rt179 stable release.
 
-For me this happens reliably when I launch a fresh instance of ff and it
-automatically tries to restore tabs of the previous session.
-Alternatively, when I select 'Restore Previous Session' from the menu.
+This release is just an update to the new stable 4.4.177 version
+and no RT specific changes have been made.
 
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.4-rt
+  Head SHA1: 4dedf3b6419c67c249ead4396cf834b8abaf10a3
+
+Or to build 4.4.177-rt179 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.177.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/4.4/patch-4.4.177-rt179.patch.xz
+
+
+You can also build from 4.4.174-rt178 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.4/4.4/incr/patch-4.4.174-rt178-rt179.patch.xz
+
+Enjoy!
+   Daniel
