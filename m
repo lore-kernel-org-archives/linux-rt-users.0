@@ -1,57 +1,69 @@
-Return-Path: <SRS0=k11Z=SD=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=WXxn=SE=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_PASS autolearn=unavailable
+X-Spam-Status: No, score=-0.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_PASS autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 716E1C43381
-	for <linux-rt-users@archiver.kernel.org>; Mon,  1 Apr 2019 23:59:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 156C6C4360F
+	for <linux-rt-users@archiver.kernel.org>; Tue,  2 Apr 2019 08:38:28 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 3CF702086C
-	for <linux-rt-users@archiver.kernel.org>; Mon,  1 Apr 2019 23:59:37 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1554163177;
-	bh=YZRcFYhEWBkLgDehzmgeUo0fhIZsW9YwoNRnvs1zKtI=;
-	h=Date:From:To:Cc:Subject:In-Reply-To:References:List-ID:From;
-	b=qa2gZ6YMMRDWPq8E+IfU8x6V8cVP4hY/q+OHc5MNAgM/+wB/+ElCEe2hAV0HobB90
-	 e6sARL39EDG4tVxgZB+tDwOnh8xAEhrBRsGm9cj9pQ8cygNIasMEfMJMc13R0zvGEC
-	 LCxFJCP/DSxmrkxfZHV3IMaw3FWeXaFiqMdQWrLk=
+	by mail.kernel.org (Postfix) with ESMTP id BDC612084C
+	for <linux-rt-users@archiver.kernel.org>; Tue,  2 Apr 2019 08:38:27 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="MZ8+yibG"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1725961AbfDAX72 (ORCPT
+        id S1729477AbfDBIi1 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 1 Apr 2019 19:59:28 -0400
-Received: from mail.kernel.org ([198.145.29.99]:45216 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725897AbfDAX72 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 1 Apr 2019 19:59:28 -0400
-Received: from devnote2 (unknown [147.50.13.10])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 264B9206B6;
-        Mon,  1 Apr 2019 23:59:24 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1554163167;
-        bh=YZRcFYhEWBkLgDehzmgeUo0fhIZsW9YwoNRnvs1zKtI=;
-        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
-        b=zaLsZI0KQFLAnn1IJ9SbEEpM4EsGyvIloN3Uu/nZJ2GERQsE7KqlAT1ys3PFvNbkG
-         zsLJ8LWAfnZj+ZhfDkixYndFOXU9CgS7p+iAeYHG1ylIMEf2HZsyEalff1oN2FEA0L
-         20oIVn7co7JrXKaFhDJyLk4bsWm4BuZhWoBWwPJ0=
-Date:   Tue, 2 Apr 2019 06:59:21 +0700
-From:   Masami Hiramatsu <mhiramat@kernel.org>
-To:     Tom Zanussi <zanussi@kernel.org>
-Cc:     rostedt@goodmis.org, tglx@linutronix.de, namhyung@kernel.org,
-        bigeasy@linutronix.de, joel@joelfernandes.org,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v5 00/11] tracing: common error_log for ftrace
-Message-Id: <20190402065921.de4831e2bd2f25f6c0587420@kernel.org>
-In-Reply-To: <1554125468.8693.4.camel@kernel.org>
-References: <cover.1554072478.git.tom.zanussi@linux.intel.com>
-        <20190401091948.0963e7cc4b0116c5d95c4c9c@kernel.org>
-        <1554125468.8693.4.camel@kernel.org>
-X-Mailer: Sylpheed 3.5.1 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
-Mime-Version: 1.0
+        Tue, 2 Apr 2019 04:38:27 -0400
+Received: from mail-ed1-f49.google.com ([209.85.208.49]:39619 "EHLO
+        mail-ed1-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728695AbfDBIi1 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 2 Apr 2019 04:38:27 -0400
+Received: by mail-ed1-f49.google.com with SMTP id p20so10855808eds.6
+        for <linux-rt-users@vger.kernel.org>; Tue, 02 Apr 2019 01:38:25 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=date:from:to:subject:message-id:mime-version
+         :content-transfer-encoding;
+        bh=/1MgZnPHvsBHj03CStUMXNcIpwKSqo0xE2/WEOq88H0=;
+        b=MZ8+yibGR36yOXVGGZ7uU9U1eJTSyg8aX9U31u5y8KDCj76+5mZacg/Gg9+ULosGft
+         7rkIIRZOhK9of5sr1AWaaWGMTKO6i7erS1EjH51yh8HJPTsV09Hc8HUFEb83izdRhcaF
+         Vx3LeJH5MeT2Q3s86iwkX6LbhsTO9x9HDXi+TZ6tNWG/Ar5iKDryaC+BFX3HP3sSEK4k
+         7e+cyDrr9yKvFIaD4+cxpxS39KnowCi7r3RfsU4HpythDz19SWj/JG/ZMq8B3KLH7vyJ
+         yPjAKqgrodFhl+LmZ3FJNfFFMlIWv52+DrW+5ju+RP5eSpzkLxedrI1PBboIseaDuD1M
+         db7w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:date:from:to:subject:message-id:mime-version
+         :content-transfer-encoding;
+        bh=/1MgZnPHvsBHj03CStUMXNcIpwKSqo0xE2/WEOq88H0=;
+        b=hLRX8XjnMbJrxbUopj9oMve9NcHOIPL+QkpueAjRiRooL++JJ5RIt+Vw8/F2r0UpVk
+         waSgCg3cc28EQXffvKSS0t3E+LpDBydss9O/o6Om6vp9zeYd1ousTUluS2Z3l9EUIwXx
+         ZoEeiceYlE/HK0e941QQ/1yTRT+kF4vXJGvCBgZCpPGtbR5uXozt96HMOfCOLCUiDsEN
+         bzNpRRzTT24QaoRgaPw6nTa0y/0gSEaSYlEL7Udv4Hiw/ORDSrg+TxcCA+ay+/DP00kR
+         mIWRQ0SUOuL9eOP8ySjnr0Vrfrn8MklsjNVt/7D2DcCbIOMi8rkdCDw0OSpiNE/1HnaN
+         ocCA==
+X-Gm-Message-State: APjAAAVD21kGB3ZUCA1i9e6T8lNg3HmfAsvbS8TwKlzWyjkfHP8+xOIG
+        6w4yOYTGNmFfp0/pxGGWXCQlJ3Wr
+X-Google-Smtp-Source: APXvYqz51RxZMZDJXSSVVUauDOeCZGGfq2PUho2EduwOCidNx+AkBVwYHXTC/gBoPIYDIW2+z6ZpHA==
+X-Received: by 2002:a50:aa31:: with SMTP id o46mr23709004edc.6.1554194305150;
+        Tue, 02 Apr 2019 01:38:25 -0700 (PDT)
+Received: from localhost (82-197-216-99.dsl.cambrium.nl. [82.197.216.99])
+        by smtp.gmail.com with ESMTPSA id bz3sm2361927ejb.52.2019.04.02.01.38.24
+        for <linux-rt-users@vger.kernel.org>
+        (version=TLS1_2 cipher=ECDHE-RSA-CHACHA20-POLY1305 bits=256/256);
+        Tue, 02 Apr 2019 01:38:24 -0700 (PDT)
+Date:   Tue, 2 Apr 2019 10:38:22 +0200
+From:   Mart van de Wege <mvdwege@gmail.com>
+To:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Subject: EFI and RT incompatible?
+Message-ID: <20190402103822.31608037@gmail.com>
+X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
+MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
@@ -59,23 +71,16 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, 01 Apr 2019 08:31:08 -0500
-Tom Zanussi <zanussi@kernel.org> wrote:
+Hi,
 
-> 
-> > BTW, could you also add a testcase which tests all (or most of)
-> > error cases of hist_err() ?
-> > That will be good to find regressions in future changes.
-> > 
-> 
-> I was going to, but there are a lot of error cases and a lot of them
-> aren't simple one-liners and require some more involved setup to
-> trigger.  I'll submit a follow-on patch to add them as soon as I get
-> the chance.
+I compiled 5.0.5-rt3 last week, and after rebooting I found that
+efivarfs failed to mount. Loading the efivarfs module gave me
+a 'device not found' error.
 
-Agreed, I look forward your testcase :)
+Rebooting into 5.0.0 (no rt) and efivarfs automounted as usual.
 
-Thank you,
+Trouble is, I have no experience with bisecting between two different
+branches, so I have no clue on how to start debugging this. Anybody
+want to throw me some pointers?
 
--- 
-Masami Hiramatsu <mhiramat@kernel.org>
+Mart
