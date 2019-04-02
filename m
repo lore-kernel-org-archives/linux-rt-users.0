@@ -3,75 +3,55 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
 X-Spam-Status: No, score=-1.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
-	version=3.4.0
+	MAILING_LIST_MULTI,SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B3F06C4360F
-	for <linux-rt-users@archiver.kernel.org>; Tue,  2 Apr 2019 13:23:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2DB1EC10F00
+	for <linux-rt-users@archiver.kernel.org>; Tue,  2 Apr 2019 13:49:42 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 8B4C8207E0
-	for <linux-rt-users@archiver.kernel.org>; Tue,  2 Apr 2019 13:23:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 04E5820856
+	for <linux-rt-users@archiver.kernel.org>; Tue,  2 Apr 2019 13:49:42 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730970AbfDBNXs (ORCPT
+        id S1732363AbfDBNtl (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 2 Apr 2019 09:23:48 -0400
-Received: from foss.arm.com ([217.140.101.70]:51212 "EHLO foss.arm.com"
+        Tue, 2 Apr 2019 09:49:41 -0400
+Received: from vdwege.eu ([141.105.121.30]:40986 "EHLO vdwege.eu"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729603AbfDBNXs (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 2 Apr 2019 09:23:48 -0400
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.72.51.249])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id A995C16A3;
-        Tue,  2 Apr 2019 06:23:47 -0700 (PDT)
-Received: from [10.1.196.50] (e108454-lin.cambridge.arm.com [10.1.196.50])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 32CA03F690;
-        Tue,  2 Apr 2019 06:23:47 -0700 (PDT)
+        id S1726903AbfDBNtk (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 2 Apr 2019 09:49:40 -0400
+X-Greylist: delayed 566 seconds by postgrey-1.27 at vger.kernel.org; Tue, 02 Apr 2019 09:49:39 EDT
+Received: from lucan (82-197-216-99.dsl.cambrium.nl [82.197.216.99])
+        by vdwege.eu (Postfix) with ESMTPSA id D380E2F6283;
+        Tue,  2 Apr 2019 15:40:09 +0200 (CEST)
+Message-ID: <901576dfe112a046ba6677696f3a30a3d8cfcb78.camel@vdwege.eu>
 Subject: Re: EFI and RT incompatible?
-To:     Mart van de Wege <mvdwege@gmail.com>,
+From:   Mart van de Wege <mart@vdwege.eu>
+To:     Julien Grall <julien.grall@arm.com>,
+        Mart van de Wege <mvdwege@gmail.com>,
         "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Date:   Tue, 02 Apr 2019 15:40:07 +0200
+In-Reply-To: <23d961a6-b9a2-a4de-a754-b08f668f21fb@arm.com>
 References: <20190402103822.31608037@gmail.com>
-From:   Julien Grall <julien.grall@arm.com>
-Message-ID: <23d961a6-b9a2-a4de-a754-b08f668f21fb@arm.com>
-Date:   Tue, 2 Apr 2019 14:23:45 +0100
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101
- Thunderbird/60.5.1
+         <23d961a6-b9a2-a4de-a754-b08f668f21fb@arm.com>
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.30.5 (3.30.5-1.fc29) 
 MIME-Version: 1.0
-In-Reply-To: <20190402103822.31608037@gmail.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: en-US
 Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 02/04/2019 09:38, Mart van de Wege wrote:
-> Hi,
+On Tue, 2019-04-02 at 14:23 +0100, Julien Grall wrote:
 
-Hello Mart,
-
+> Linux-rt is disabling EFI runtime by default because it may increase
+> the latency of the system (see [1] for more details).
 > 
-> I compiled 5.0.5-rt3 last week, and after rebooting I found that
-> efivarfs failed to mount. Loading the efivarfs module gave me
-> a 'device not found' error.
+> You can override the behavior by adding "efi=runtime" on your kernel
+> command line.
 > 
-> Rebooting into 5.0.0 (no rt) and efivarfs automounted as usual.
-> 
-> Trouble is, I have no experience with bisecting between two different
-> branches, so I have no clue on how to start debugging this. Anybody
-> want to throw me some pointers?
+Yeah, I saw the 22/3 thread too late. 
 
-Linux-rt is disabling EFI runtime by default because it may increase the latency 
-of the system (see [1] for more details).
+Thanks anyway,
 
-You can override the behavior by adding "efi=runtime" on your kernel command line.
+Mart
 
-Cheers,
-
-[1] https://marc.info/?l=linux-rt-users&m=155379809327926&w=2
-
-> 
-> Mart
-> 
-
--- 
-Julien Grall
