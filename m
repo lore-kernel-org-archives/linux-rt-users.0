@@ -2,117 +2,125 @@ Return-Path: <SRS0=J2Xz=SG=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_NEOMUTT autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 586B8C4360F
-	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Apr 2019 15:20:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3A91DC4360F
+	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Apr 2019 15:42:07 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 2736B20882
-	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Apr 2019 15:20:01 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0A2702082E
+	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Apr 2019 15:42:07 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="kTDqVhjg"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728925AbfDDPUA (ORCPT
+        id S1729085AbfDDPmG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 4 Apr 2019 11:20:00 -0400
-Received: from Galois.linutronix.de ([146.0.238.70]:45540 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726952AbfDDPUA (ORCPT
+        Thu, 4 Apr 2019 11:42:06 -0400
+Received: from mail-wm1-f68.google.com ([209.85.128.68]:40682 "EHLO
+        mail-wm1-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727053AbfDDPmG (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 4 Apr 2019 11:20:00 -0400
-Received: from [5.158.153.52] (helo=linutronix.de)
-        by Galois.linutronix.de with esmtpsa (TLS1.2:RSA_AES_256_CBC_SHA1:256)
-        (Exim 4.80)
-        (envelope-from <kurt.kanzenbach@linutronix.de>)
-        id 1hC49m-0004iT-EL; Thu, 04 Apr 2019 17:19:58 +0200
-Date:   Thu, 4 Apr 2019 17:19:58 +0200
-From:   Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
-To:     John Kacur <jkacur@redhat.com>
-Cc:     Clark Williams <williams@redhat.com>,
+        Thu, 4 Apr 2019 11:42:06 -0400
+Received: by mail-wm1-f68.google.com with SMTP id z24so3991022wmi.5
+        for <linux-rt-users@vger.kernel.org>; Thu, 04 Apr 2019 08:42:04 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
+         :user-agent:mime-version;
+        bh=OUFMbaBG3MO2NE7glq3hCZ9Wc+wnJop8M6sKOvcRdXQ=;
+        b=kTDqVhjgdvoo6/7cmw93dGpRcQPpvHPpdZNLyh/+HspvJ1wdAA3qoeks2GuQDx4VKo
+         dHaLETBk2W8gzTzLQ0EVy8NDzIEQB0Qk/+mPjBN5HerhjImkejvmzaYJdpA3hhDtFz0K
+         E27GXfkmBhEGAcM4EZsHHAglB1TrXa/d8ehxmA06d1kRPAGJb8J0MjldrlwCY+/nKTpk
+         sOdfBa7NQiHHsrj+8aB8dBX/s6nr9RC9n0U29FI83EfhivnuFFHGGVjSFQxPNqtqSL6O
+         QujgNT1Aa6Os1PUoPYnuyJ/s1VlDHg+HU7qsYxihGUeY1PtoY+gEasXrgs+/lPUOEm3K
+         aV2A==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
+         :message-id:references:user-agent:mime-version;
+        bh=OUFMbaBG3MO2NE7glq3hCZ9Wc+wnJop8M6sKOvcRdXQ=;
+        b=rdakPqT25MRKEM6wiaGc5/gwARIRLTx0gtNtj9/ktGDg4tOTuLSxv0By2UnZnJ/b1q
+         vNSuA8oOr3KnN8Ak+3NMQzMgTESBMEi0F2Sxc7x4v5NI+EtWBkYPvDbYBZ6+o+ipKFJ0
+         BO34zJxEn05ybOzartCfHW6SJqU6GaMzBtEXEaY+FPknoLhELZY1ukv4DUkw9bfDADPB
+         8dOhZodE44kx1NyyfKAubMcBO5Ap6lVXpAvJRJcoxlr/swSmdYUsn7kqMGt8xdcH27VO
+         qB05198wWh5T3EisoMZ8PltE1POtP5gyXQ3TkBjNsU/czRERSJxbrrp7e5yRJswyWb72
+         jN3g==
+X-Gm-Message-State: APjAAAXzOloCdZEfZmU2sbwc2FfbeyNg6xC7G7QI9uNURXIUTrDuwMyb
+        PB8vuPMns7YPXYaQNQces/M=
+X-Google-Smtp-Source: APXvYqxkax/FcDypGB2GpEuC9f/9C9KdRyX46hBKwbMBytQDwEThVZpazXEeSintprTE9S+HajhbYg==
+X-Received: by 2002:a1c:a70f:: with SMTP id q15mr4455526wme.28.1554392524293;
+        Thu, 04 Apr 2019 08:42:04 -0700 (PDT)
+Received: from planxty ([2a02:8108:1700:1960:91dd:e2f9:ed05:ee2b])
+        by smtp.gmail.com with ESMTPSA id d7sm23515996wmf.31.2019.04.04.08.42.03
+        (version=TLS1_3 cipher=AEAD-AES256-GCM-SHA384 bits=256/256);
+        Thu, 04 Apr 2019 08:42:03 -0700 (PDT)
+Date:   Thu, 4 Apr 2019 17:42:02 +0200 (CEST)
+From:   John Kacur <jkacur@redhat.com>
+X-X-Sender: jkacur@planxty
+To:     Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
+cc:     Clark Williams <williams@redhat.com>,
         rt-users <linux-rt-users@vger.kernel.org>
 Subject: Re: [PATCH 4/4] rt-tests: deadline_test: add missing frees
-Message-ID: <20190404151958.xdo66ytsvpklaqa2@linutronix.de>
-References: <20190404134814.13376-1-kurt@linutronix.de>
- <20190404134814.13376-5-kurt@linutronix.de>
- <alpine.LFD.2.21.1904041712560.11547@planxty>
+In-Reply-To: <20190404151958.xdo66ytsvpklaqa2@linutronix.de>
+Message-ID: <alpine.LFD.2.21.1904041741410.11547@planxty>
+References: <20190404134814.13376-1-kurt@linutronix.de> <20190404134814.13376-5-kurt@linutronix.de> <alpine.LFD.2.21.1904041712560.11547@planxty> <20190404151958.xdo66ytsvpklaqa2@linutronix.de>
+User-Agent: Alpine 2.21 (LFD 202 2017-01-01)
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="4o6flwrrac5wjdsc"
-Content-Disposition: inline
-In-Reply-To: <alpine.LFD.2.21.1904041712560.11547@planxty>
-User-Agent: NeoMutt/20170113 (1.7.2)
+Content-Type: text/plain; charset=US-ASCII
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
 
---4o6flwrrac5wjdsc
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
 
-Hi,
+On Thu, 4 Apr 2019, Kurt Kanzenbach wrote:
 
-On Thu, Apr 04, 2019 at 05:13:51PM +0200, John Kacur wrote:
->
->
-> On Thu, 4 Apr 2019, Kurt Kanzenbach wrote:
->
-> > The threads and thread data structures are allocated using calloc(). But never
-> > free'd. So, free them.
+> Hi,
+> 
+> On Thu, Apr 04, 2019 at 05:13:51PM +0200, John Kacur wrote:
 > >
-> > While here, remove the if statement for setcpu_buf. Free() is NULL safe.
 > >
-> > Signed-off-by: Kurt Kanzenbach <kurt@linutronix.de>
-> > ---
-> >  src/sched_deadline/deadline_test.c | 5 +++--
-> >  1 file changed, 3 insertions(+), 2 deletions(-)
+> > On Thu, 4 Apr 2019, Kurt Kanzenbach wrote:
 > >
-> > diff --git a/src/sched_deadline/deadline_test.c b/src/sched_deadline/deadline_test.c
-> > index 4826557d0624..69e6fd18b73b 100644
-> > --- a/src/sched_deadline/deadline_test.c
-> > +++ b/src/sched_deadline/deadline_test.c
-> > @@ -2092,8 +2092,9 @@ int main (int argc, char **argv)
-> >  		printf("\n");
-> >  	}
+> > > The threads and thread data structures are allocated using calloc(). But never
+> > > free'd. So, free them.
+> > >
+> > > While here, remove the if statement for setcpu_buf. Free() is NULL safe.
+> > >
+> > > Signed-off-by: Kurt Kanzenbach <kurt@linutronix.de>
+> > > ---
+> > >  src/sched_deadline/deadline_test.c | 5 +++--
+> > >  1 file changed, 3 insertions(+), 2 deletions(-)
+> > >
+> > > diff --git a/src/sched_deadline/deadline_test.c b/src/sched_deadline/deadline_test.c
+> > > index 4826557d0624..69e6fd18b73b 100644
+> > > --- a/src/sched_deadline/deadline_test.c
+> > > +++ b/src/sched_deadline/deadline_test.c
+> > > @@ -2092,8 +2092,9 @@ int main (int argc, char **argv)
+> > >  		printf("\n");
+> > >  	}
+> > >
+> > > -	if (!setcpu_buf)
+> > > -		free(setcpu_buf);
+> > > +	free(thread);
+> > > +	free(sched_data);
+> > > +	free(setcpu_buf);
+> > >
+> > >  	return 0;
+> > >  }
+> > > --
+> > > 2.11.0
 > >
-> > -	if (!setcpu_buf)
-> > -		free(setcpu_buf);
-> > +	free(thread);
-> > +	free(sched_data);
-> > +	free(setcpu_buf);
-> >
-> >  	return 0;
-> >  }
-> > --
-> > 2.11.0
->
-> Does this remove your own if statement that I didn't even apply yet?
-> :)
+> > Does this remove your own if statement that I didn't even apply yet?
+> > :)
+> 
+> No. That's a different binary. My patch was made against cyclicdeadline.
+> 
+> Thanks,
+> Kurt
 
-No. That's a different binary. My patch was made against cyclicdeadline.
+Ok, got it, thanks!
 
-Thanks,
-Kurt
-
---4o6flwrrac5wjdsc
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAABCAAdFiEEooWgvezyxHPhdEojeSpbgcuY8KYFAlymIJ0ACgkQeSpbgcuY
-8KZmeA/8D4lpc7siNhcoaRBrAVBaBEf3KS+f1gypI9z4ltC2nCuxebLUndEETlcc
-JUQHcAkTQzQ6/Wkm3hD91YyfReCXDQ/P0oq0Zuscdqm9yKi/DsKqwbT1Cs6G5/2G
-+vPIsMO0oVN1xNHFb62nbnBbB+7DvkXrot4QH0eHDWwo6Be4ByHxLOHKSL9RKdvm
-EbyZ1SFmu0FDrpMCnm+FDbEsSbqbSp+4Db7uhuV0+PwsnGZz3woX7x6tzo9zHTHc
-eLSEskbz57eKmhfLUqspuSg+/4l/oTtjkRdm3oVkFrOR2BHedNchsA1Yl1M5T2CM
-v2vzE75z1MJX7NSjHxjsvCLK6Yjqg4LHLurrLoP6WU9Y9nWN5wLDG0+zukfkszOW
-W2lo/SgcpclNvtLgJqVvQt6fUqS+zfxdxyQ5TYAPkiAU9856lnZRdzzC5e1dYtEO
-yl9zvRZ7OnoXYkTRPu1cufMJOWmSejnnDql5IhAan0NqSC5VeynhZhk2+2uLPTNb
-OalfkjLvz4HVPJd7XpUuh4r+gP3VuLXrqtcLNUZ/ZahjL+KQPlS9IYx4WWnG7zqY
-4REubXp+w0vBGXciwU+Y3PEfLhk2SugbktLlbVaU5uIxHy014HRjSyVAyvnMpK4v
-W+igHgN608pFAES+OJrqaRd8FLEtkcAEBR4BSaLKUYnigH1uY/0=
-=ZJrb
------END PGP SIGNATURE-----
-
---4o6flwrrac5wjdsc--
+John
