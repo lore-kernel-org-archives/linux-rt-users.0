@@ -1,105 +1,79 @@
-Return-Path: <SRS0=QAP4=SF=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=J2Xz=SG=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.8 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_PASS,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 629DCC4360F
-	for <linux-rt-users@archiver.kernel.org>; Wed,  3 Apr 2019 13:53:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7F284C10F0E
+	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Apr 2019 09:50:04 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 2F36520700
-	for <linux-rt-users@archiver.kernel.org>; Wed,  3 Apr 2019 13:53:12 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="BPwYC1ag"
+	by mail.kernel.org (Postfix) with ESMTP id 5816920855
+	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Apr 2019 09:50:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726396AbfDCNxL (ORCPT
+        id S1730337AbfDDJuD (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 3 Apr 2019 09:53:11 -0400
-Received: from mail-wm1-f67.google.com ([209.85.128.67]:36520 "EHLO
-        mail-wm1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725959AbfDCNxL (ORCPT
+        Thu, 4 Apr 2019 05:50:03 -0400
+Received: from Galois.linutronix.de ([146.0.238.70]:44508 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1730603AbfDDJuC (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 3 Apr 2019 09:53:11 -0400
-Received: by mail-wm1-f67.google.com with SMTP id h18so8385617wml.1
-        for <linux-rt-users@vger.kernel.org>; Wed, 03 Apr 2019 06:53:10 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
-         :user-agent:mime-version;
-        bh=fdTfuuQU65xn1x6K8g6RDIUL/5h5c8xtNEswF7JIXbQ=;
-        b=BPwYC1agIE8y3zLXmYPUSDAVPxWpEoyckPNwiST6a4JZSLwQ3rgAUjstwEZhosDKj5
-         QklISJXLmBuscHgR2KsbMzNkVwicMGlhKK7izT+XQpL8LxD8aZhGh/BckOJqQMsV8AUH
-         9gmQqcx7GogoRBPwlGmdd8ghEk40AL/V29TbxsoLNXX2m/AFhfibZyTLNc/64dL3B/d3
-         n+fH5mNAz2xhdpOt3HCAVlUiJHVD+N7BgaEQfxMfHVtkih2ap8f/WC9I/FCMd6Vu98fE
-         SX+rTCkPzgbhOnNUbP5nR1cO/Pj2vl5wb/9CLpvwKG35BkWMBJGYo/eQTC51x0KCww4h
-         ZmyQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
-         :message-id:references:user-agent:mime-version;
-        bh=fdTfuuQU65xn1x6K8g6RDIUL/5h5c8xtNEswF7JIXbQ=;
-        b=DTnBHQmkPW9LIZlNMHpB+XTB7ICiH7iV+FCDPrRAD6ernK9CuEi2zOommIBYYbI4oc
-         exW/xBbXAj27OjVRXfggfP3TM3BDgpepSHF8/p0w2e+BNBKoVq5u5yNg1c8kY6BakRnJ
-         PmT985lkgrD8hwLwoXYA4cxXSFzlEKPXvVQ2sLSEiOTzmYtuvUqjIxLcEiZ1ip1qoD4Y
-         xacIynhIugQ2J5q4tLJIqa6WlytnLwPcXnY3NA3PuMrj6+LzKJqwRQw/fdULU+Xhw/BQ
-         US9TSfj7f0kltL8CIsZOnMp67g/V496D+Eab99GCGbY6PeBn8OxXMj9+2NeI+/IUigiW
-         pACg==
-X-Gm-Message-State: APjAAAWzEBASOl8NI+hHoKSrEh8LfgePtvBCch5hFhyFuQBincRviFdp
-        UIlZnHpuZtC+OgPhG+AQpyA=
-X-Google-Smtp-Source: APXvYqwgdNQUrrUFPYySPmBNftD3TJvtIDVPwDs1ju6FXyR0dYh4TLlrh//WZ9v07IRAPYhQ6f8LsQ==
-X-Received: by 2002:a1c:e90f:: with SMTP id q15mr53531wmc.1.1554299589348;
-        Wed, 03 Apr 2019 06:53:09 -0700 (PDT)
-Received: from planxty ([2a02:8108:1700:1960:91dd:e2f9:ed05:ee2b])
-        by smtp.gmail.com with ESMTPSA id w16sm20616633wrt.84.2019.04.03.06.53.07
-        (version=TLS1_3 cipher=AEAD-AES256-GCM-SHA384 bits=256/256);
-        Wed, 03 Apr 2019 06:53:08 -0700 (PDT)
-Date:   Wed, 3 Apr 2019 15:52:58 +0200 (CEST)
-From:   John Kacur <jkacur@redhat.com>
-X-X-Sender: jkacur@planxty
-To:     Kurt Kanzenbach <kurt@linutronix.de>
-cc:     Clark Williams <williams@redhat.com>,
-        rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: [PATCH] rt-tests: cyclicdeadline: fix getopt string
-In-Reply-To: <20190402094239.21482-1-kurt@linutronix.de>
-Message-ID: <alpine.LFD.2.21.1904031552220.5546@planxty>
-References: <20190402094239.21482-1-kurt@linutronix.de>
-User-Agent: Alpine 2.21 (LFD 202 2017-01-01)
-MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+        Thu, 4 Apr 2019 05:50:02 -0400
+Received: from [5.158.153.52] (helo=kurt.tec.linutronix.de)
+        by Galois.linutronix.de with esmtpsa (TLS1.2:DHE_RSA_AES_256_CBC_SHA1:256)
+        (Exim 4.80)
+        (envelope-from <kurt@linutronix.de>)
+        id 1hBz0R-0006RE-LW; Thu, 04 Apr 2019 11:49:59 +0200
+From:   Kurt Kanzenbach <kurt@linutronix.de>
+To:     Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Cc:     rt-users <linux-rt-users@vger.kernel.org>,
+        Kurt Kanzenbach <kurt@linutronix.de>
+Subject: [PATCH] rt-tests: cyclicdeadline: fix segmentation fault on close
+Date:   Thu,  4 Apr 2019 11:49:48 +0200
+Message-Id: <20190404094948.3516-1-kurt@linutronix.de>
+X-Mailer: git-send-email 2.11.0
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+The setcpu_buf is unconditionally freed at the end of the program. However,
+there are code paths in which it is not allocated:
 
+  $ sudo ./cyclicdeadline
+  Using all CPUS
+  /sys/kernel/debug/sched_features: Success
+  interval: 600:1000
+    Tested at 5us of 600us
+  deadline thread 2963
+  thread[2963] runtime=600us deadline=1000us
+  main thread 2962
+  fail 2 0
+  T: 0 ( 2963) I:1000 C:   1268 Min:      7 Act:   55 Avg:   56 Max:     256
+  [1]    2961 segmentation fault  sudo ./cyclicdeadline
 
-On Tue, 2 Apr 2019, Kurt Kanzenbach wrote:
+Fix it by adding the NULL check.
 
-> There is code to parse the interval and step parameters from the command
-> line. However, these options cannot be set, because the getopt string is
-> incomplete. Adjust it accordingly to make '-i' and '-s' work.
-> 
-> Signed-off-by: Kurt Kanzenbach <kurt@linutronix.de>
-> ---
->  src/sched_deadline/cyclicdeadline.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
-> index 761f8d7d7483..08460107c464 100644
-> --- a/src/sched_deadline/cyclicdeadline.c
-> +++ b/src/sched_deadline/cyclicdeadline.c
-> @@ -1062,7 +1062,7 @@ int main (int argc, char **argv)
->  		exit(-1);
->  	}
->  
-> -	while ((c = getopt(argc, argv, "+hac:t:")) >= 0) {
-> +	while ((c = getopt(argc, argv, "+hac:i:s:t:")) >= 0) {
->  		switch (c) {
->  		case 'a':
->  			all_cpus = 1;
-> -- 
-> 2.11.0
+Signed-off-by: Kurt Kanzenbach <kurt@linutronix.de>
+---
+ src/sched_deadline/cyclicdeadline.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
+index 08460107c464..614ad54c171f 100644
+--- a/src/sched_deadline/cyclicdeadline.c
++++ b/src/sched_deadline/cyclicdeadline.c
+@@ -1261,6 +1261,7 @@ int main (int argc, char **argv)
+ 		}
+ 	}
+ 
+-	free(setcpu_buf);
++	if (setcpu_buf)
++		free(setcpu_buf);
+ 	return 0;
+ }
+-- 
+2.11.0
+
