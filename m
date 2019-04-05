@@ -6,66 +6,65 @@ X-Spam-Status: No, score=-6.8 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
 	SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CC3C6C4360F
-	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Apr 2019 14:33:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7F446C4360F
+	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Apr 2019 14:34:32 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 9707C206DD
-	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Apr 2019 14:33:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4EB0C21726
+	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Apr 2019 14:34:32 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="XawXQLC6"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="IWQi2MIC"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731102AbfDEOdu (ORCPT
+        id S1728683AbfDEOec (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 5 Apr 2019 10:33:50 -0400
-Received: from mail-wr1-f65.google.com ([209.85.221.65]:42600 "EHLO
-        mail-wr1-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726594AbfDEOdu (ORCPT
+        Fri, 5 Apr 2019 10:34:32 -0400
+Received: from mail-wm1-f65.google.com ([209.85.128.65]:39877 "EHLO
+        mail-wm1-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726291AbfDEOeb (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 5 Apr 2019 10:33:50 -0400
-Received: by mail-wr1-f65.google.com with SMTP id g3so8274380wrx.9
-        for <linux-rt-users@vger.kernel.org>; Fri, 05 Apr 2019 07:33:49 -0700 (PDT)
+        Fri, 5 Apr 2019 10:34:31 -0400
+Received: by mail-wm1-f65.google.com with SMTP id n25so7473065wmk.4
+        for <linux-rt-users@vger.kernel.org>; Fri, 05 Apr 2019 07:34:31 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :user-agent:mime-version;
-        bh=tay2HgwzrulyG4rw5zVXJVBK5f04A1peT50eDrQWCc8=;
-        b=XawXQLC6Ha2FOBplNUG0kDpxs+iWk4y9YHATdAFtp0e4AxJz25rgRkhvIQb06wBlDK
-         NBpB5ozd6ThTD8828cbJeZHIo/tGjTJX8usWg26121a3GrAvJh9kVsB/OvgwVP632MNw
-         clo1DP2MOMuGR+Oz2Z1Z4W8eBRgk2awnoRw9CNgsbr+zZ6QQio7OrTPaP8yvMKsK1usz
-         dQ9JDpO8AJppjfLOYf+h7yKggmzO6E5m4S8PjEY2S5vEy/JulbKgbiLD9QsBancAHlol
-         hUd2QXWXIx2DoSbh6woy2WkV+6ErmIBAnOLsReFqNGDVa3dQQPDjcqI4cESVc+LaN9E2
-         jcWw==
+        bh=wtl63FV4tzOLgZbSalnWZn4ofz8OeiDnXPzGd4orEVc=;
+        b=IWQi2MICFLgNjIXGEv+oquZ/zTEag+9gZ6w9GAnjIBG/+VrLBE2ot4s6Vfq7DlV9hl
+         1lGgzND90enmSGXGkAehM7LAiA04/CXUyhTzoqQFdMQaDxPnFPAms1NrQq4JMjNxwhro
+         vRJXe7MXQ2Lwqarc/Fog7nPMCIh68j6igSALyQ2y/AMsxEM2F/hSP9MGNRNzM+Zz0ICG
+         bLICnj0IK83bRlRDVZ96bap4MG8xWjCj2ewCpCj+mtEFKGssbLBszfKpfahGXH44h6li
+         p+HssWBFh4yvrx+TS1cGQcTA3szGgKlAu60Opr+mYD7S0keAfB2N67JdN1quMoJahSaY
+         1UaA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:user-agent:mime-version;
-        bh=tay2HgwzrulyG4rw5zVXJVBK5f04A1peT50eDrQWCc8=;
-        b=lMO5JPjA3hwe7Z2kIY0WTSNoOGT4TP6ch/GClgFT64u4QpcETdHrlXSYCrC6GgG3g+
-         9p1Wbi23n5SIMADXxVvO8ZOr4KUeED0py00navx1NghBLlAuuE/OUjSd+CcoZGs85R9M
-         rTnnMEIdqmF8u1epROMnou9FUKKmKFyvaLt6sTk//4t6d0RUarRC3bHFLxX2aT/Eys52
-         gttDw6h1oDzxQa1JXLaAq5W9XxQqD5XCrjRNHWSmqpxULrMBIkEaG1hdu9gzvYNkKbQq
-         qeIA+V9mvNBMdjIpbzm0HK24lktuRW2EY6clgKjFv2oyDs+tWhKnLr/SS1Y6CsHbkD/b
-         JYQg==
-X-Gm-Message-State: APjAAAVuAnEObiQAwKgr4L1EYb/WN08QAjficJbELOfIiCxFoenGKZbA
-        5DbRSvTPxrPCj7KkES/mK8k=
-X-Google-Smtp-Source: APXvYqy29P8Bhon2Vid32WQkr3mvr80RGKvzJJTnNkjK31KidOj9c0ZCv56Gr4w40bj2DM+biCtzfw==
-X-Received: by 2002:adf:fecb:: with SMTP id q11mr9348500wrs.252.1554474828371;
-        Fri, 05 Apr 2019 07:33:48 -0700 (PDT)
+        bh=wtl63FV4tzOLgZbSalnWZn4ofz8OeiDnXPzGd4orEVc=;
+        b=S3vAjb6RObGl9EvhDBAlYnk0YOeqGFQM/uYpw0E7814y1UJ92ZMdGpHWzsFKfvFh6Z
+         DDnanxYY7R+ZXYl3mFPdFQeGJkPDS/b7TMJmuvrvEHx50t/Uu4chgrbV93lexK4KRk/u
+         JZH1P5DobXTX50QjzLKi2RZXRAJ9OqVHq9VVpiYSUH8RIf6SRsohMNGQyNaw9fsTmQm+
+         cvrJ0mATQNTe7G8v3/Bap1xiOJiJG18fG7VSEs7wKi4jMvxNwM0q72t1dGQMEBib6h6C
+         1KwDI2ZRrXSD3MN4x/rzJCyi19wOZKMmKXDP34uqndeah429Q9WPP42HxOCkbk4wzvFn
+         baxg==
+X-Gm-Message-State: APjAAAVy9A28vTahScCG6AwxnQDedfIBIZmoDaIUuBzqKVv/Qk2tdf12
+        NTyNboWC80DMRSJDNFBBzt4=
+X-Google-Smtp-Source: APXvYqxdo6AE2hTW/OJnpQsk/eNO9h1ZKehOQOxqh+qG7l1aWMta6JDKSFi6BCkHQrq5/OcCraYDYg==
+X-Received: by 2002:a7b:c923:: with SMTP id h3mr8124819wml.34.1554474869815;
+        Fri, 05 Apr 2019 07:34:29 -0700 (PDT)
 Received: from planxty ([2a02:8108:1700:1960:91dd:e2f9:ed05:ee2b])
-        by smtp.gmail.com with ESMTPSA id j3sm47255965wre.51.2019.04.05.07.33.45
+        by smtp.gmail.com with ESMTPSA id w9sm7209363wmi.0.2019.04.05.07.34.24
         (version=TLS1_3 cipher=AEAD-AES256-GCM-SHA384 bits=256/256);
-        Fri, 05 Apr 2019 07:33:47 -0700 (PDT)
-Date:   Fri, 5 Apr 2019 16:33:33 +0200 (CEST)
+        Fri, 05 Apr 2019 07:34:29 -0700 (PDT)
+Date:   Fri, 5 Apr 2019 16:34:18 +0200 (CEST)
 From:   John Kacur <jkacur@redhat.com>
 X-X-Sender: jkacur@planxty
 To:     Kurt Kanzenbach <kurt@linutronix.de>
 cc:     Clark Williams <williams@redhat.com>,
         rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: [PATCH 1/4] rt-tests: cyclicdeadline: fix segmentation fault on
- close
-In-Reply-To: <20190404134814.13376-2-kurt@linutronix.de>
-Message-ID: <alpine.LFD.2.21.1904051633140.8480@planxty>
-References: <20190404134814.13376-1-kurt@linutronix.de> <20190404134814.13376-2-kurt@linutronix.de>
+Subject: Re: [PATCH 2/4] rt-tests: cyclicdeadline: add missing free calls
+In-Reply-To: <20190404134814.13376-3-kurt@linutronix.de>
+Message-ID: <alpine.LFD.2.21.1904051633590.8480@planxty>
+References: <20190404134814.13376-1-kurt@linutronix.de> <20190404134814.13376-3-kurt@linutronix.de>
 User-Agent: Alpine 2.21 (LFD 202 2017-01-01)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
@@ -78,42 +77,27 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 On Thu, 4 Apr 2019, Kurt Kanzenbach wrote:
 
-> The current code generates a segmentation fault in the last free() call.
-> 
->   $ sudo ./cyclicdeadline
->   Using all CPUS
->   /sys/kernel/debug/sched_features: Success
->   interval: 600:1000
->     Tested at 5us of 600us
->   deadline thread 2963
->   thread[2963] runtime=600us deadline=1000us
->   main thread 2962
->   fail 2 0
->   T: 0 ( 2963) I:1000 C:   1268 Min:      7 Act:   55 Avg:   56 Max:     256
->   [1]    2961 segmentation fault  sudo ./cyclicdeadline
-> 
-> This is caused by a buffer overflow in setup_ftrace_marker(). The appended
-> string is 21 not 14 characters wide. Fix it by using strlen() like the other
-> function do.
+> The threads and thread data structures are allocated using calloc(). Free them
+> as well.
 > 
 > Signed-off-by: Kurt Kanzenbach <kurt@linutronix.de>
 > ---
->  src/sched_deadline/cyclicdeadline.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+>  src/sched_deadline/cyclicdeadline.c | 2 ++
+>  1 file changed, 2 insertions(+)
 > 
 > diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
-> index 08460107c464..303b5e96647a 100644
+> index 303b5e96647a..f4dd26a2dba2 100644
 > --- a/src/sched_deadline/cyclicdeadline.c
 > +++ b/src/sched_deadline/cyclicdeadline.c
-> @@ -283,7 +283,7 @@ static void setup_ftrace_marker(void)
->  {
->  	struct stat st;
->  	const char *debugfs = find_debugfs();
-> -	char files[strlen(debugfs) + 14];
-> +	char files[strlen(debugfs) + strlen("/tracing/trace_marker") + 1];
->  	int ret;
+> @@ -1261,6 +1261,8 @@ int main (int argc, char **argv)
+>  		}
+>  	}
 >  
->  	if (strlen(debugfs) == 0)
+> +	free(thread);
+> +	free(sched_data);
+>  	free(setcpu_buf);
+>  	return 0;
+>  }
 > -- 
 > 2.11.0
 > 
