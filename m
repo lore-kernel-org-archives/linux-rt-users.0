@@ -2,315 +2,864 @@ Return-Path: <SRS0=lqhu=SH=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.5 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_PASS,USER_AGENT_MUTT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BF037C4360F
-	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Apr 2019 15:07:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6D2C8C10F00
+	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Apr 2019 15:12:02 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 83FC7217D4
-	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Apr 2019 15:07:32 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1CF5321855
+	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Apr 2019 15:12:02 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="bebFm0GM"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731087AbfDEPH2 (ORCPT
+        id S1731744AbfDEPL7 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 5 Apr 2019 11:07:28 -0400
-Received: from usa-sjc-mx-foss1.foss.arm.com ([217.140.101.70]:51218 "EHLO
-        foss.arm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726291AbfDEPH1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 5 Apr 2019 11:07:27 -0400
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.72.51.249])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id D911316A3;
-        Fri,  5 Apr 2019 08:07:26 -0700 (PDT)
-Received: from e103592.cambridge.arm.com (usa-sjc-imap-foss1.foss.arm.com [10.72.51.249])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 5E1293F68F;
-        Fri,  5 Apr 2019 08:07:25 -0700 (PDT)
-Date:   Fri, 5 Apr 2019 16:07:22 +0100
-From:   Dave Martin <Dave.Martin@arm.com>
-To:     Julien Grall <julien.grall@arm.com>
-Cc:     linux-arm-kernel@lists.infradead.org, bigeasy@linutronix.de,
-        linux-rt-users@vger.kernel.org, catalin.marinas@arm.com,
-        will.deacon@arm.com, ard.biesheuvel@linaro.org,
-        linux-kernel@vger.kernel.org
-Subject: Re: [RFC PATCH] arm64/fpsimd: Don't disable softirq when touching
- FPSIMD/SVE state
-Message-ID: <20190405150722.GE3567@e103592.cambridge.arm.com>
-References: <20190208165513.8435-1-julien.grall@arm.com>
- <20190404105233.GD3567@e103592.cambridge.arm.com>
- <a46f9fd4-dd31-c892-aec1-ae69072be92d@arm.com>
+        Fri, 5 Apr 2019 11:11:59 -0400
+Received: from mail-wm1-f66.google.com ([209.85.128.66]:40648 "EHLO
+        mail-wm1-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1731736AbfDEPL6 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 5 Apr 2019 11:11:58 -0400
+Received: by mail-wm1-f66.google.com with SMTP id z24so7652059wmi.5
+        for <linux-rt-users@vger.kernel.org>; Fri, 05 Apr 2019 08:11:55 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
+         :user-agent:mime-version;
+        bh=Y/fQgnb7/UFT2Dke0qSuy1NFnxYfPyTJDrsA6RArZrU=;
+        b=bebFm0GMFdHz2XS/UsbMGOKEa7CHS8Uz7LbQAlqvZzt9hAp5e3Kim12dJmks3czQmQ
+         C+2ANmkxyX/hOUO4G1M+jMGAOYm2QjH4Uaj8/MOhx6BzzFxbksEQr/06xo3JPKeqso1J
+         EhuSVdRdk3Ee1IPKHCW10nC3lBzuuMh5s1r56YAf5wpXb2/0XYBaEAaz8Kz2T0bWyQT8
+         rCrHZmx2G1iPAMdIiv1rwfx7pbQRyh8BkT92DbCMp0YAKd+SNWA5gxn0J/vq8J09xd4p
+         08tf4Zuuy/p0ipJw1dzNxXt7Red7Ca7UFcUp/KFSizzyat6womBLcfjRCztJQxwpOFcq
+         by9Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
+         :message-id:references:user-agent:mime-version;
+        bh=Y/fQgnb7/UFT2Dke0qSuy1NFnxYfPyTJDrsA6RArZrU=;
+        b=DS+O9TUYTsQXt4W7QdQRqzt+tYMQtxglqVtJ/sjpwOAae6oveomlJWnGKH1DRWjhKa
+         nUO141ffmt8Wht7pf3QiKnFKbHoQMjTYCOTdz4vkJNGgoUOlbXhC1Ftk0sUbBpL1KXZY
+         lVgZml5Rp5zOPVfQC43BeWxhJZbTsMCq3+kT+ckfW+Z96oj4TMXnjJu7X/p3XiQgDioT
+         POOyWKKaLr/os8MQnp7LQ9k6+/XQU27FqDu1QsjySo40qPvEfkVlaJfoYUJ6PJxuynlh
+         GAQrtOa8vE9SOHl/sI/O0yCEjz3T+pHbNmxBmUs2AsNAnU1oysSRbIG4+Zi+nvFlBCao
+         btVQ==
+X-Gm-Message-State: APjAAAW0ebiZqJEtFhQRHmXttuoFf9cfl31c6tzePCx86H+kRzo9I9nQ
+        9+pm+O7S+ZS/rxfJoSgbN6M=
+X-Google-Smtp-Source: APXvYqzW6lVCQU9jEPO9yCuDWOeIfYTaIshkAXRpSDaJspRocVC+I0y8iL7lVG19n6d1T9ifPrx+wQ==
+X-Received: by 2002:a1c:3944:: with SMTP id g65mr8207129wma.34.1554477114586;
+        Fri, 05 Apr 2019 08:11:54 -0700 (PDT)
+Received: from planxty ([2a02:8108:1700:1960:91dd:e2f9:ed05:ee2b])
+        by smtp.gmail.com with ESMTPSA id u17sm4265367wmu.36.2019.04.05.08.11.53
+        (version=TLS1_3 cipher=AEAD-AES256-GCM-SHA384 bits=256/256);
+        Fri, 05 Apr 2019 08:11:53 -0700 (PDT)
+Date:   Fri, 5 Apr 2019 17:11:46 +0200 (CEST)
+From:   John Kacur <jkacur@redhat.com>
+X-X-Sender: jkacur@planxty
+To:     Daniel Wagner <daniel.wagner@siemens.com>
+cc:     Clark Williams <williams@redhat.com>,
+        linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH v1] rt-tests: Add --duration argument to tests
+In-Reply-To: <20190312154738.10925-1-daniel.wagner@siemens.com>
+Message-ID: <alpine.LFD.2.21.1904051709150.8480@planxty>
+References: <20190312154738.10925-1-daniel.wagner@siemens.com>
+User-Agent: Alpine 2.21 (LFD 202 2017-01-01)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <a46f9fd4-dd31-c892-aec1-ae69072be92d@arm.com>
-User-Agent: Mutt/1.5.23 (2014-03-12)
+Content-Type: text/plain; charset=US-ASCII
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, Apr 05, 2019 at 10:02:45AM +0100, Julien Grall wrote:
-> Hi Dave,
-> 
-> Thank you for the review.
-> 
-> On 4/4/19 11:52 AM, Dave Martin wrote:
-> >On Fri, Feb 08, 2019 at 04:55:13PM +0000, Julien Grall wrote:
-> >>For RT-linux, it might be possible to use migrate_{enable, disable}. I
-> >>am quite new with RT and have some trouble to understand the semantics
-> >>of migrate_{enable, disable}. So far, I am still unsure if it is possible
-> >>to run another userspace task on the same CPU while getting preempted
-> >>when the migration is disabled.
-> >
-> >(Leaving aside the RT aspects for now, but if migrate_{enable,disable}
-> >is costly it might not be the best thing to use deep in context switch
-> >paths, even if is technically correct...)
-> 
-> Based on the discussion in this thread, migrate_enable/migrate_disable is
-> not suitable in this context.
-> 
-> The goal of those helpers is to pin the task to the current CPU. On RT, it
-> will not disable the preemption. So the current task can be preempted by a
-> task with higher priority.
-> 
-> The next task may require to use the FPSIMD and will potentially result to
-> corrupt the state.
-> 
-> RT folks already saw this corruption because local_bh_disable() does not
-> preempt on RT. They are carrying a patch (see "arm64: fpsimd: use
-> preemp_disable in addition to local_bh_disable()") to disable preemption
-> along with local_bh_disable().
-> 
-> Alternatively, Julia suggested to introduce a per-cpu lock to protect the
-> state. I am thinking to defer this for a follow-up patch. The changes in
-> this patch should make it easier because we now have helper to mark the
-> critical section.
 
-I'll leave it for the RT folks to comment on this.  (I see Sebastian
-already did.)
 
+On Tue, 12 Mar 2019, Daniel Wagner wrote:
+
+> Many of the test programs have the --loop argument for automatic
+> stopping. The main problem with the --loop argument is how long is
+> --loop 1000?
 > 
-> >
-> >>---
-> >>  arch/arm64/include/asm/simd.h |  4 +--
-> >>  arch/arm64/kernel/fpsimd.c    | 76 +++++++++++++++++++++++++------------------
-> >>  2 files changed, 46 insertions(+), 34 deletions(-)
-> >>
-> >>diff --git a/arch/arm64/include/asm/simd.h b/arch/arm64/include/asm/simd.h
-> >>index 6495cc51246f..94c0dac508aa 100644
-> >>--- a/arch/arm64/include/asm/simd.h
-> >>+++ b/arch/arm64/include/asm/simd.h
-> >>@@ -15,10 +15,10 @@
-> >>  #include <linux/preempt.h>
-> >>  #include <linux/types.h>
-> >>-#ifdef CONFIG_KERNEL_MODE_NEON
-> >>-
-> >>  DECLARE_PER_CPU(bool, kernel_neon_busy);
-> >
-> >Why make this unconditional?  This declaration is only here for
-> >may_use_simd() to use.  The stub version of may_use_simd() for the
-> >!CONFIG_KERNEL_MODE_NEON case doesn't touch it.
+> To simplify automated tests  introduce a --duration argument which
+> allows to set the time how long a test should run. This allows the
+> test suite to define the executation time and also the timeout which a
+> normal human can understand.
 > 
-> kernel_neon_busy will be used in fpsimd.c even when with
-> !CONFIG_KERNEL_MODE_NEON. So it makes sense to also declare it in the header
-> even if not used.
-
-Ah yes, I missed that.
-
-We don't need all this logic in the !CONFIG_KERNEL_MODE_NEON case of
-course, but I'm not sure it's worth optimising that special case.
-Especially so if we don't see any significant impact in ctxsw-heavy
-benchmarks.
-
-> Another solution is to avoid expose kernel_neon_busy outside of fpsimd.c and
-> use an helper.
-
-Probably not worth it for now.
-
-> >>+#ifdef CONFIG_KERNEL_MODE_NEON
-> >>+
-> >>  /*
-> >>   * may_use_simd - whether it is allowable at this time to issue SIMD
-> >>   *                instructions or access the SIMD register file
-> >>diff --git a/arch/arm64/kernel/fpsimd.c b/arch/arm64/kernel/fpsimd.c
-> >>index 5ebe73b69961..b7e5dac26190 100644
-> >>--- a/arch/arm64/kernel/fpsimd.c
-> >>+++ b/arch/arm64/kernel/fpsimd.c
-> >>@@ -90,7 +90,8 @@
-> >>   * To prevent this from racing with the manipulation of the task's FPSIMD state
-> >>   * from task context and thereby corrupting the state, it is necessary to
-> >>   * protect any manipulation of a task's fpsimd_state or TIF_FOREIGN_FPSTATE
-> >>- * flag with local_bh_disable() unless softirqs are already masked.
-> >>+ * flag with kernel_neon_{disable, enable}. This will still allow softirqs to
-> >>+ * run but prevent them to use FPSIMD.
-> >>   *
-> >>   * For a certain task, the sequence may look something like this:
-> >>   * - the task gets scheduled in; if both the task's fpsimd_cpu field
-> >>@@ -142,6 +143,9 @@ extern void __percpu *efi_sve_state;
-> >>  #endif /* ! CONFIG_ARM64_SVE */
-> >>+static void kernel_neon_disable(void);
-> >>+static void kernel_neon_enable(void);
-> >
-> >I find these names a bit confusing: _disable() actualy enables FPSIMD/SVE
-> >context access for the current context (i.e., makes it safe).
-> >
-> >Since these also disable/enable preemption, perhaps we can align them
-> >with the existing get_cpu()/put_cpu(), something like:
-> >
-> >void get_cpu_fpsimd_context();
-> >vold put_cpu_fpsimd_context();
-> >
-> >If you consider it's worth adding the checking helper I alluded to
-> >above, it could then be called something like:
-> >
-> >bool have_cpu_fpsimd_context();
+> For example run the test for 10 minutes and timeout at 11 minutes:
 > 
-> I am not sure where you suggested a checking helper above. Do you refer to
-> exposing kernel_neon_busy even for !CONFIG_KERNEL_MODE_NEON?
-
-Hmmm, looks like I got my reply out of order here.
-
-I meant the helper (if any) to check
-!preemptible() && !__this_cpu_read(kernel_neon_busy).
-
-Looks like you inferred what I meant later on anyway.
-
+>   # timeout 11m sigwaittest --duration 10m
 > 
-> >
-> >>+
-> >>  /*
-> >>   * Call __sve_free() directly only if you know task can't be scheduled
-> >>   * or preempted.
-> >>@@ -213,11 +217,11 @@ static void sve_free(struct task_struct *task)
-> >>   * thread_struct is known to be up to date, when preparing to enter
-> >>   * userspace.
-> >>   *
-> >>- * Softirqs (and preemption) must be disabled.
-> >>+ * Preemption must be disabled.
-> >
-> >[*] That's not enough: we need to be in kernel_neon_disable()...
-> >_enable() (i.e., kernel_neon_busy needs to be true to prevent softirqs
-> >messing with the FPSIMD state).
+> Signed-off-by: Daniel Wagner <daniel.wagner@siemens.com>
+> ---
+> Hi,
 > 
-> How about not mentioning preemption at all and just say:
+> I tried to patch all tests where possible. Not all tests need it,
+> e.g. pip_stress.
 > 
-> "The fpsimd context should be acquired before hand".
+> There are two memory corruption bugs in cyclicdeadline and
+> deadline_test. The setcpu_buf gets corrupted but I haven't figured
+> where it happens. valgrind doesn't help :(
 > 
-> This would help if we ever decide to protect critical section differently.
+> Thanks,
+> Daniel
+> 
+>  src/cyclictest/cyclictest.c           | 33 --------------------------
+>  src/include/rt-utils.h                |  2 ++
+>  src/lib/rt-utils.c                    | 34 +++++++++++++++++++++++++++
+>  src/pi_tests/pi_stress.8              |  4 ++++
+>  src/pi_tests/pi_stress.c              |  9 +++----
+>  src/pmqtest/pmqtest.8                 |  5 ++++
+>  src/pmqtest/pmqtest.c                 | 17 ++++++++++++--
+>  src/ptsematest/ptsematest.8           |  5 ++++
+>  src/ptsematest/ptsematest.c           | 14 ++++++++++-
+>  src/rt-migrate-test/rt-migrate-test.8 |  5 ++++
+>  src/rt-migrate-test/rt-migrate-test.c | 12 +++++++++-
+>  src/sched_deadline/cyclicdeadline.c   | 12 +++++++++-
+>  src/signaltest/signaltest.8           |  5 ++++
+>  src/signaltest/signaltest.c           | 14 ++++++++++-
+>  src/sigwaittest/sigwaittest.8         |  5 ++++
+>  src/sigwaittest/sigwaittest.c         | 15 +++++++++++-
+>  src/svsematest/svsematest.8           |  5 ++++
+>  src/svsematest/svsematest.c           | 15 +++++++++++-
+>  18 files changed, 166 insertions(+), 45 deletions(-)
+> 
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index ed59edefbf97..03d56e4f520c 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -406,39 +406,6 @@ static void enable_trace_mark(void)
+>  	open_tracemark_fd();
+>  }
+>  
+> -/*
+> - * parse an input value as a base10 value followed by an optional
+> - * suffix. The input value is presumed to be in seconds, unless
+> - * followed by a modifier suffix: m=minutes, h=hours, d=days
+> - *
+> - * the return value is a value in seconds
+> - */
+> -static int parse_time_string(char *val)
+> -{
+> -	char *end;
+> -	int t = strtol(val, &end, 10);
+> -	if (end) {
+> -		switch (*end) {
+> -		case 'm':
+> -		case 'M':
+> -			t *= 60;
+> -			break;
+> -
+> -		case 'h':
+> -		case 'H':
+> -			t *= 60*60;
+> -			break;
+> -
+> -		case 'd':
+> -		case 'D':
+> -			t *= 24*60*60;
+> -			break;
+> -
+> -		}
+> -	}
+> -	return t;
+> -}
+> -
+>  /*
+>   * Raise the soft priority limit up to prio, if that is less than or equal
+>   * to the hard limit
+> diff --git a/src/include/rt-utils.h b/src/include/rt-utils.h
+> index ef0f6acf4ab5..405fa7855346 100644
+> --- a/src/include/rt-utils.h
+> +++ b/src/include/rt-utils.h
+> @@ -24,4 +24,6 @@ uint32_t string_to_policy(const char *str);
+>  
+>  pid_t gettid(void);
+>  
+> +int parse_time_string(char *val);
+> +
+>  #endif	/* __RT_UTILS.H */
+> diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
+> index ac6878ccacf1..e1b166afcd6c 100644
+> --- a/src/lib/rt-utils.c
+> +++ b/src/lib/rt-utils.c
+> @@ -13,6 +13,7 @@
+>  #include <sched.h>
+>  #include <stdarg.h>
+>  #include <errno.h>
+> +#include <ctype.h>
+>  #include <fcntl.h>
+>  #include <sys/types.h>
+>  #include <sys/stat.h>
+> @@ -320,3 +321,36 @@ pid_t gettid(void)
+>  {
+>  	return syscall(SYS_gettid);
+>  }
+> +
+> +/*
+> + * parse an input value as a base10 value followed by an optional
+> + * suffix. The input value is presumed to be in seconds, unless
+> + * followed by a modifier suffix: m=minutes, h=hours, d=days
+> + *
+> + * the return value is a value in seconds
+> + */
+> +int parse_time_string(char *val)
+> +{
+> +	char *end;
+> +	int t = strtol(val, &end, 10);
+> +	if (end) {
+> +		switch (*end) {
+> +		case 'm':
+> +		case 'M':
+> +			t *= 60;
+> +			break;
+> +
+> +		case 'h':
+> +		case 'H':
+> +			t *= 60*60;
+> +			break;
+> +
+> +		case 'd':
+> +		case 'D':
+> +			t *= 24*60*60;
+> +			break;
+> +
+> +		}
+> +	}
+> +	return t;
+> +}
+> diff --git a/src/pi_tests/pi_stress.8 b/src/pi_tests/pi_stress.8
+> index c92b4bdf5609..475d3c34f135 100644
+> --- a/src/pi_tests/pi_stress.8
+> +++ b/src/pi_tests/pi_stress.8
+> @@ -57,6 +57,10 @@ seconds and then terminate.
+>  The number of inversion groups to run. Defaults to 10.
+>  .IP \-d|\-\-debug
+>  Run in debug mode; lots of extra prints
+> +.IP "\-D, \-\-duration=TIME"
+> +Specify a length for the test run.
+> +.br
+> +Append 'm', 'h', or 'd' to specify minutes, hours or days.
+>  .IP \-v|\-\-verbose
+>  Run with verbose messages
+>  .IP \-s|\-\-signal
+> diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
+> index ac7646cd2613..eac782a8d355 100644
+> --- a/src/pi_tests/pi_stress.c
+> +++ b/src/pi_tests/pi_stress.c
+> @@ -146,7 +146,7 @@ int lockall = 0;
+>  
+>  /* command line options */
+>  struct option options[] = {
+> -	{"duration", required_argument, NULL, 't'},
+> +	{"duration", required_argument, NULL, 'D'},
+>  	{"verbose", no_argument, NULL, 'v'},
+>  	{"quiet", no_argument, NULL, 'q'},
+>  	{"groups", required_argument, NULL, 'g'},
+> @@ -1027,7 +1027,8 @@ void usage(void)
+>  	printf("\t--verbose\t- lots of output\n");
+>  	printf("\t--quiet\t\t- suppress running output\n");
+>  	printf
+> -	    ("\t--duration=<n>- length of the test run in seconds [infinite]\n");
+> +	    ("\t--duration=<n>\t- length of the test run in seconds [infinite]\n");
+> +	printf("\t\t\t  Append 'm', 'h', or 'd' to specify minutes, hours or days.\n");
+>  	printf("\t--groups=<n>\t- set the number of inversion groups [%d]\n",
+>  	       ngroups);
+>  	printf
+> @@ -1328,8 +1329,8 @@ void process_command_line(int argc, char **argv)
+>  		case 'h':
+>  			usage();
+>  			exit(0);
+> -		case 't':
+> -			duration = strtol(optarg, NULL, 10);
+> +		case 'D':
+> +			duration = parse_time_string(optarg);
+>  			break;
+>  		case 'v':
+>  			verbose = 1;
+> diff --git a/src/pmqtest/pmqtest.8 b/src/pmqtest/pmqtest.8
+> index 05421e01e70b..9108a939b9f7 100644
+> --- a/src/pmqtest/pmqtest.8
+> +++ b/src/pmqtest/pmqtest.8
+> @@ -21,6 +21,11 @@ It is useful to track down unexpected large latencies of a system.
+>  .B \-d, \-\-distance=DIST
+>  Set the distance of thread intervals in microseconds (default is 500 us). When pmqtest is called with the -t option and more than one thread is created, then this distance value is added to the interval of the threads: Interval(thread N) = Interval(thread N-1) + DIST
+>  .TP
+> +.B \-D, \-\-duration=TIME
+> +Specify a length for the test run.
+> +.br
+> +Append 'm', 'h', or 'd' to specify minutes, hours or days.
+> +.TP
+>  .B \-f, \-\-forcetimeout=TO
+>  Set an artificial delay of the send function to force timeout of the receiver, requires the -T option
+>  .TP
+> diff --git a/src/pmqtest/pmqtest.c b/src/pmqtest/pmqtest.c
+> index 75d5ee8185a0..054768d161a7 100644
+> --- a/src/pmqtest/pmqtest.c
+> +++ b/src/pmqtest/pmqtest.c
+> @@ -252,6 +252,8 @@ static void display_help(void)
+>  	"-f TO    --forcetimeout=TO force timeout of mq_timedreceive(), requires -T\n"
+>  	"-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
+>  	"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+> +	"-D       --duration=TIME   specify a length for the test run.\n"
+> +	"                           Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
+>  	"-p PRIO  --prio=PRIO       priority\n"
+>  	"-S       --smp             SMP testing: options -a -t and same priority\n"
+>          "                           of all threads\n"
+> @@ -271,6 +273,7 @@ static int tracelimit;
+>  static int priority;
+>  static int num_threads = 1;
+>  static int max_cycles;
+> +static int duration;
+>  static int interval = 1000;
+>  static int distance = 500;
+>  static int smp;
+> @@ -293,6 +296,7 @@ static void process_options (int argc, char *argv[])
+>  			{"forcetimeout", required_argument, NULL, 'f'},
+>  			{"interval", required_argument, NULL, 'i'},
+>  			{"loops", required_argument, NULL, 'l'},
+> +			{"duration", required_argument, NULL, 'D'},
+>  			{"priority", required_argument, NULL, 'p'},
+>  			{"smp", no_argument, NULL, 'S'},
+>  			{"threads", optional_argument, NULL, 't'},
+> @@ -300,7 +304,7 @@ static void process_options (int argc, char *argv[])
+>  			{"help", no_argument, NULL, '?'},
+>  			{NULL, 0, NULL, 0}
+>  		};
+> -		int c = getopt_long (argc, argv, "a::b:d:f:i:l:p:St::T:",
+> +		int c = getopt_long (argc, argv, "a::b:d:f:i:l:D:p:St::T:",
+>  			long_options, &option_index);
+>  		if (c == -1)
+>  			break;
+> @@ -325,6 +329,7 @@ static void process_options (int argc, char *argv[])
+>  		case 'f': forcetimeout = atoi(optarg); break;
+>  		case 'i': interval = atoi(optarg); break;
+>  		case 'l': max_cycles = atoi(optarg); break;
+> +		case 'D': duration = parse_time_string(optarg); break;
+>  		case 'p': priority = atoi(optarg); break;
+>  		case 'S':
+>  			smp = 1;
+> @@ -369,7 +374,10 @@ static void process_options (int argc, char *argv[])
+>  
+>  	if (forcetimeout && !timeout)
+>  		error = 1;
+> - 
+> +
+> +	if (duration < 0)
+> +		error = 1;
+> +
+>  	if (priority && smp)
+>  		sameprio = 1;
+>  
+> @@ -418,10 +426,15 @@ int main(int argc, char *argv[])
+>  	sigemptyset(&sigset);
+>  	sigaddset(&sigset, SIGTERM);
+>  	sigaddset(&sigset, SIGINT);
+> +	sigaddset(&sigset, SIGALRM);
+>  	pthread_sigmask(SIG_SETMASK, &sigset, NULL);
+>  
+>  	signal(SIGINT, sighand);
+>  	signal(SIGTERM, sighand);
+> +	signal(SIGALRM, sighand);
+> +
+> +	if (duration)
+> +		alarm(duration);
+>  
+>  	receiver = calloc(num_threads, sizeof(struct params));
+>  	sender = calloc(num_threads, sizeof(struct params));
+> diff --git a/src/ptsematest/ptsematest.8 b/src/ptsematest/ptsematest.8
+> index 9d835337ec27..289f3a1d7ae8 100644
+> --- a/src/ptsematest/ptsematest.8
+> +++ b/src/ptsematest/ptsematest.8
+> @@ -21,6 +21,11 @@ It is useful to track down unexpected large latencies of a system.
+>  .B \-d, \-\-distance=DIST
+>  Set the distance of thread intervals in microseconds (default is 500 us). When  cyclictest is called with the -t option and more than one thread is created, then this distance value is added to the interval of the threads: Interval(thread N) = Interval(thread N-1) + DIST
+>  .TP
+> +.B \-D, \-\-duration=TIME
+> +Specify a length for the test run.
+> +.br
+> +Append 'm', 'h', or 'd' to specify minutes, hours or days.
+> +.TP
+>  .B \-i, \-\-interval=INTV
+>  Set the base interval of the thread(s) in microseconds (default is 1000 us). This sets the interval of the first thread. See also -d.
+>  .TP
+> diff --git a/src/ptsematest/ptsematest.c b/src/ptsematest/ptsematest.c
+> index a31c745ec928..6bedbc81b572 100644
+> --- a/src/ptsematest/ptsematest.c
+> +++ b/src/ptsematest/ptsematest.c
+> @@ -173,6 +173,8 @@ static void display_help(void)
+>  	"-d DIST  --distance=DIST   distance of thread intervals in us default=500\n"
+>  	"-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
+>  	"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+> +	"-D       --duration=TIME   specify a length for the test run.\n"
+> +	"                           Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
+>  	"-p PRIO  --prio=PRIO       priority\n"
+>  	"-S       --smp             SMP testing: options -a -t and same priority\n"
+>          "                           of all threads\n"
+> @@ -190,6 +192,7 @@ static int tracelimit;
+>  static int priority;
+>  static int num_threads = 1;
+>  static int max_cycles;
+> +static int duration;
+>  static int interval = 1000;
+>  static int distance = 500;
+>  static int smp;
+> @@ -209,13 +212,14 @@ static void process_options (int argc, char *argv[])
+->  			{"distance", required_argument, NULL, 'd'},
+>  			{"interval", required_argument, NULL, 'i'},
+>  			{"loops", required_argument, NULL, 'l'},
+> +			{"duration", required_argument, NULL, 'D'},
+>  			{"priority", required_argument, NULL, 'p'},
+>  			{"smp", no_argument, NULL, 'S'},
+>  			{"threads", optional_argument, NULL, 't'},
+>  			{"help", no_argument, NULL, '?'},
+>  			{NULL, 0, NULL, 0}
+>  		};
+> -		int c = getopt_long (argc, argv, "a::b:d:i:l:p:St::",
+> +		int c = getopt_long (argc, argv, "a::b:d:i:l:D:p:St::",
+>  			long_options, &option_index);
+>  		if (c == -1)
+>  			break;
+> @@ -239,6 +243,7 @@ static void process_options (int argc, char *argv[])
+>  		case 'd': distance = atoi(optarg); break;
+>  		case 'i': interval = atoi(optarg); break;
+>  		case 'l': max_cycles = atoi(optarg); break;
+> +		case 'D': duration = parse_time_string(optarg); break;
+>  		case 'p': priority = atoi(optarg); break;
+>  		case 'S':
+>  			smp = 1;
+> @@ -280,6 +285,9 @@ static void process_options (int argc, char *argv[])
+>  	if (num_threads < 1)
+>  		error = 1;
+>  
+> +	if (duration < 0)
+> +		error = 1;
+> +
+>  	if (priority && smp)
+>  		sameprio = 1;
+>  
+> @@ -317,6 +325,10 @@ int main(int argc, char *argv[])
+>  
+>  	signal(SIGINT, sighand);
+>  	signal(SIGTERM, sighand);
+> +	signal(SIGALRM, sighand);
+> +
+> +	if (duration)
+> +		alarm(duration);
+>  
+>  	receiver = calloc(num_threads, sizeof(struct params));
+>  	sender = calloc(num_threads, sizeof(struct params));
+> diff --git a/src/rt-migrate-test/rt-migrate-test.8 b/src/rt-migrate-test/rt-migrate-test.8
+> index 8af50e54291d..b9c07f1ed80a 100644
+> --- a/src/rt-migrate-test/rt-migrate-test.8
+> +++ b/src/rt-migrate-test/rt-migrate-test.8
+> @@ -15,6 +15,11 @@ This program follows the usual GNU command line syntax, with long options starti
+>  In the summary of options, a value in brackets (), indicates a default value
+>  .br
+>  .TP
+> +.B \-D, \-\-duration=TIME
+> +Specify a length for the test run.
+> +.br
+> +Append 'm', 'h', or 'd' to specify minutes, hours or days.
+> +.TP
+>  .B \-p, \-\-prio=prio
+>  base priority to start RT tasks with (2)
+>  .br
+> diff --git a/src/rt-migrate-test/rt-migrate-test.c b/src/rt-migrate-test/rt-migrate-test.c
+> index 0a0bb77ab661..8223d6669a37 100644
+> --- a/src/rt-migrate-test/rt-migrate-test.c
+> +++ b/src/rt-migrate-test/rt-migrate-test.c
+> @@ -41,6 +41,7 @@
+>  #include <errno.h>
+>  #include <sched.h>
+>  #include <pthread.h>
+> +#include "rt-utils.h"
+>  
+>  #define gettid() syscall(__NR_gettid)
+>  
+> @@ -115,6 +116,7 @@ static unsigned long long now;
+>  
+>  static int done;
+>  static int loop;
+> +static int duration;
+>  
+>  static pthread_barrier_t start_barrier;
+>  static pthread_barrier_t end_barrier;
+> @@ -180,6 +182,8 @@ static void usage(char **argv)
+>  	       "-s time --sleep-time time   Sleep time (ms) between intervals (100)\n"
+>  	       "-m time --maxerr time       Max allowed error (microsecs)\n"
+>  	       "-l loops --loops loops      Number of iterations to run (50)\n"
+> +	       "-D       --duration=TIME    specify a length for the test run.\n"
+> +	       "                            Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
+>  	       "-e                          Use equal prio for #CPU-1 tasks (requires > 2 CPUS)\n"
+>  	       "-c    --check               Stop if lower prio task is quicker than higher (off)\n"
+>  	       "-h    --help\n"
+> @@ -199,11 +203,12 @@ static void parse_options (int argc, char *argv[])
+>  			{"sleep-time", required_argument, NULL, 's'},
+>  			{"maxerr", required_argument, NULL, 'm'},
+>  			{"loops", required_argument, NULL, 'l'},
+> +			{"duration", required_argument, NULL, 'D'},
+>  			{"check", no_argument, NULL, 'c'},
+>  			{"help", no_argument, NULL, '?'},
+>  			{NULL, 0, NULL, 0}
+>  		};
+> -		int c = getopt_long (argc, argv, "p:r:s:m:l:ech",
+> +		int c = getopt_long (argc, argv, "p:r:s:m:l:D:ech",
+>  			long_options, &option_index);
+>  		if (c == -1)
+>  			break;
+> @@ -214,6 +219,7 @@ static void parse_options (int argc, char *argv[])
+>  			break;
+>  		case 's': interval = atoi(optarg); break;
+>  		case 'l': nr_runs = atoi(optarg); break;
+> +		case 'D': duration = parse_time_string(optarg); break;
+>  		case 'm': max_err = usec2nano(atoi(optarg)); break;
+>  		case 'e': equal = 1; break;
+>  		case 'c': check = 1; break;
+> @@ -472,6 +478,10 @@ int main (int argc, char **argv)
+>  	parse_options(argc, argv);
+>  
+>  	signal(SIGINT, stop_log);
+> +	signal(SIGALRM, stop_log);
+> +
+> +	if (duration)
+> +		alarm(duration);
+>  
+>  	if (argc >= (optind + 1))
+>  		nr_tasks = atoi(argv[optind]);
+> diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
+> index 761f8d7d7483..577ad95cfee1 100644
+> --- a/src/sched_deadline/cyclicdeadline.c
+> +++ b/src/sched_deadline/cyclicdeadline.c
+> @@ -21,6 +21,8 @@
+>  #include <linux/unistd.h>
+>  #include <linux/magic.h>
+>  
+> +#include <rt-utils.h>
+> +
+>  #ifdef __i386__
+>  #ifndef __NR_sched_setattr
+>  #define __NR_sched_setattr		351
+> @@ -1049,6 +1051,7 @@ int main (int argc, char **argv)
+>  	unsigned int interval = 1000;
+>  	unsigned int step = 500;
+>  	int percent = 60;
+> +	int duration = 0;
+>  	u64 runtime;
+>  	u64 start_period;
+>  	u64 end_period;
+> @@ -1062,7 +1065,7 @@ int main (int argc, char **argv)
+>  		exit(-1);
+>  	}
+>  
+> -	while ((c = getopt(argc, argv, "+hac:t:")) >= 0) {
+> +	while ((c = getopt(argc, argv, "+hac:t:D:")) >= 0) {
+>  		switch (c) {
+>  		case 'a':
+>  			all_cpus = 1;
+> @@ -1081,6 +1084,9 @@ int main (int argc, char **argv)
+>  		case 't':
+>  			nr_threads = atoi(optarg);
+>  			break;
+> +		case 'D':
+> +			duration = parse_time_string(optarg);
+> +			break;
+>  		case 'h':
+>  		default:
+>  			usage(argv);
+> @@ -1246,6 +1252,10 @@ int main (int argc, char **argv)
+>  
+>  	signal(SIGINT, sighand);
+>  	signal(SIGTERM, sighand);
+> +	signal(SIGALRM, sighand);
+> +
+> +	if (duration)
+> +		alarm(duration);
+>  
+>  	if (!fail)
+>  		loop(sched_data, nr_threads);
+> diff --git a/src/signaltest/signaltest.8 b/src/signaltest/signaltest.8
+> index 634d392a6da5..bd6ffe5c7a36 100644
+> --- a/src/signaltest/signaltest.8
+> +++ b/src/signaltest/signaltest.8
+> @@ -13,6 +13,11 @@ starting with two dashes ('\-\-').
+>  .B \-b, \-\-breaktrace=USEC
+>  Send break trace command when latency > USEC
+>  .TP
+> +.B \-D, \-\-duration=TIME
+> +Specify a length for the test run.
+> +.br
+> +Append 'm', 'h', or 'd' to specify minutes, hours or days.
+> +.TP
+>  .B \-l, \-\-loops=LOOPS
+>  Number of loops: default=0 (endless)
+>  .TP
+> diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
+> index 59f979ec5ad1..a168191b7573 100644
+> --- a/src/signaltest/signaltest.c
+> +++ b/src/signaltest/signaltest.c
+> @@ -208,6 +208,8 @@ static void display_help(void)
+>  		"signaltest <options>\n\n"
+>  		"-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
+>  		"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+> +		"-D       --duration=TIME   specify a length for the test run.\n"
+> +		"                           Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
+>  		"-p PRIO  --prio=PRIO       priority of highest prio thread\n"
+>  		"-q       --quiet           print a summary only on exit\n"
+>  		"-t NUM   --threads=NUM     number of threads: default=2\n"
+> @@ -221,6 +223,7 @@ static void display_help(void)
+>  static int priority;
+>  static int num_threads = 2;
+>  static int max_cycles;
+> +static int duration;
+>  static int verbose;
+>  static int quiet;
+>  static int lockall = 0;
+> @@ -235,6 +238,7 @@ static void process_options (int argc, char *argv[])
+>  		static struct option long_options[] = {
+>  			{"breaktrace", required_argument, NULL, 'b'},
+>  			{"loops", required_argument, NULL, 'l'},
+> +			{"duration", required_argument, NULL, 'D'},
+>  			{"priority", required_argument, NULL, 'p'},
+>  			{"quiet", no_argument, NULL, 'q'},
+>  			{"threads", required_argument, NULL, 't'},
+> @@ -243,13 +247,14 @@ static void process_options (int argc, char *argv[])
+>  			{"help", no_argument, NULL, '?'},
+>  			{NULL, 0, NULL, 0}
+>  		};
+> -		int c = getopt_long (argc, argv, "b:c:d:i:l:np:qrsmt:v",
+> +		int c = getopt_long (argc, argv, "b:c:d:i:l:D:np:qrsmt:v",
+>  			long_options, &option_index);
+>  		if (c == -1)
+>  			break;
+>  		switch (c) {
+>  		case 'b': tracelimit = atoi(optarg); break;
+>  		case 'l': max_cycles = atoi(optarg); break;
+> +		case 'D': duration = parse_time_string(optarg); break;
+>  		case 'p': priority = atoi(optarg); break;
+>  		case 'q': quiet = 1; break;
+>  		case 't': num_threads = atoi(optarg); break;
+> @@ -259,6 +264,9 @@ static void process_options (int argc, char *argv[])
+>  		}
+>  	}
+>  
+> +	if (duration < 0)
+> +		error = 1;
+> +
+>  	if (priority < 0 || priority > 99)
+>  		error = 1;
+>  
+> @@ -340,6 +348,10 @@ int main(int argc, char **argv)
+>  
+>  	signal(SIGINT, sighand);
+>  	signal(SIGTERM, sighand);
+> +	signal(SIGALRM, sighand);
+> +
+> +	if (duration)
+> +		alarm(duration);
+>  
+>  	par = calloc(num_threads, sizeof(struct thread_param));
+>  	if (!par)
+> diff --git a/src/sigwaittest/sigwaittest.8 b/src/sigwaittest/sigwaittest.8
+> index 2290ca2c76bc..5bedf2ced0dd 100644
+> --- a/src/sigwaittest/sigwaittest.8
+> +++ b/src/sigwaittest/sigwaittest.8
+> @@ -21,6 +21,11 @@ It is useful to track down unexpected large latencies of a system.
+>  .B \-d, \-\-distance=DIST
+>  Set the distance of thread intervals in microseconds (default is 500 us). When  cyclictest is called with the -t option and more than one thread is created, then this distance value is added to the interval of the threads: Interval(thread N) = Interval(thread N-1) + DIST
+>  .TP
+> +.B \-D, \-\-duration=TIME
+> +Specify a length for the test run.
+> +.br
+> +Append 'm', 'h', or 'd' to specify minutes, hours or days.
+> +.TP
+>  .B \-f, \-\-fork
+>  Instead of creating threads (which is the default), fork new processes
+>  .TP
+> diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
+> index 91fcdaa5f185..6e3c28330447 100644
+> --- a/src/sigwaittest/sigwaittest.c
+> +++ b/src/sigwaittest/sigwaittest.c
+> @@ -222,6 +222,8 @@ static void display_help(void)
+>  	"-f       --fork            fork new processes instead of creating threads\n"
+>  	"-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
+>  	"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+> +	"-D       --duration=TIME   specify a length for the test run.\n"
+> +	"                           Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
+>  	"-p PRIO  --prio=PRIO       priority\n"
+>  	"-t       --threads         one thread per available processor\n"
+>  	"-t [NUM] --threads=NUM     number of threads:\n"
+> @@ -236,6 +238,7 @@ static int affinity;
+>  static int priority;
+>  static int num_threads = 1;
+>  static int max_cycles;
+> +static int duration;
+>  static int interval = 1000;
+>  static int distance = 500;
+>  
+> @@ -255,12 +258,13 @@ static void process_options (int argc, char *argv[])
+>  			{"fork", optional_argument, NULL, 'f'},
+>  			{"interval", required_argument, NULL, 'i'},
+>  			{"loops", required_argument, NULL, 'l'},
+> +			{"duration", required_argument, NULL, 'D'},
+>  			{"priority", required_argument, NULL, 'p'},
+>  			{"threads", optional_argument, NULL, 't'},
+>  			{"help", no_argument, NULL, '?'},
+>  			{NULL, 0, NULL, 0}
+>  		};
+> -		int c = getopt_long (argc, argv, "a::b:d:f::i:l:p:t::",
+> +		int c = getopt_long (argc, argv, "a::b:d:f::i:l:D:p:t::",
+>  			long_options, &option_index);
+>  		if (c == -1)
+>  			break;
+> @@ -291,6 +295,7 @@ static void process_options (int argc, char *argv[])
+>  			break;
+>  		case 'i': interval = atoi(optarg); break;
+>  		case 'l': max_cycles = atoi(optarg); break;
+> +		case 'D': duration = parse_time_string(optarg); break;
+>  		case 'p': priority = atoi(optarg); break;
+>  		case 't':
+>  			if (optarg != NULL)
+> @@ -316,6 +321,9 @@ static void process_options (int argc, char *argv[])
+>  			}
+>  		}
+>  
+> +		if (duration < 0)
+> +			error = 1;
+> +
+>  		if (num_threads < 1 || num_threads > 255)
+>  			error = 1;
+>  
+> @@ -433,9 +441,13 @@ int main(int argc, char *argv[])
+>  
+>  	signal(SIGINT, sighand);
+>  	signal(SIGTERM, sighand);
+> +	signal(SIGALRM, sighand);
+>  	sigemptyset(&sigset);
+>  	pthread_sigmask(SIG_SETMASK, &sigset, NULL);
+>  
+> +	if (duration)
+> +		alarm(duration);
+> +
+>  	if (!mustfork && !wasforked) {
+>  		receiver = calloc(num_threads, sizeof(struct params));
+>  		sender = calloc(num_threads, sizeof(struct params));
+> @@ -578,6 +590,7 @@ int main(int argc, char *argv[])
+>  		sigemptyset(&sigset);
+>  		sigaddset(&sigset, SIGTERM);
+>  		sigaddset(&sigset, SIGINT);
+> +		sigaddset(&sigset, SIGALRM);
+>  		pthread_sigmask(SIG_SETMASK, &sigset, NULL);
+>  
+>  		nanosleep(&maindelay, NULL);
+> diff --git a/src/svsematest/svsematest.8 b/src/svsematest/svsematest.8
+> index 0d4eaf3bb7ff..da64e9875d9f 100644
+> --- a/src/svsematest/svsematest.8
+> +++ b/src/svsematest/svsematest.8
+> @@ -21,6 +21,11 @@ It is useful to track down unexpected large latencies of a system.
+>  .B \-d, \-\-distance=DIST
+>  Set the distance of thread intervals in microseconds (default is 500 us). When  cyclictest is called with the -t option and more than one thread is created, then this distance value is added to the interval of the threads: Interval(thread N) = Interval(thread N-1) + DIST
+>  .TP
+> +.B \-D, \-\-duration=TIME
+> +Specify a length for the test run.
+> +.br
+> +Append 'm', 'h', or 'd' to specify minutes, hours or days.
+> +.TP
+>  .B \-f, \-\-fork
+>  Instead of creating threads (which is the default), fork new processes
+>  .TP
+> diff --git a/src/svsematest/svsematest.c b/src/svsematest/svsematest.c
+> index eeb82858720a..dfa4660c0e43 100644
+> --- a/src/svsematest/svsematest.c
+> +++ b/src/svsematest/svsematest.c
+> @@ -248,6 +248,8 @@ static void display_help(void)
+>  	"-f       --fork            fork new processes instead of creating threads\n"
+>  	"-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
+>  	"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+> +	"-D       --duration=TIME   specify a length for the test run.\n"
+> +	"                           Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
+>  	"-p PRIO  --prio=PRIO       priority\n"
+>  	"-S       --smp             SMP testing: options -a -t and same priority\n"
+>          "                           of all threads\n"
+> @@ -264,6 +266,7 @@ static int affinity;
+>  static int priority;
+>  static int num_threads = 1;
+>  static int max_cycles;
+> +static int duration;
+>  static int interval = 1000;
+>  static int distance = 500;
+>  static int smp;
+> @@ -285,13 +288,14 @@ static void process_options (int argc, char *argv[])
+>  			{"fork", optional_argument, NULL, 'f'},
+>  			{"interval", required_argument, NULL, 'i'},
+>  			{"loops", required_argument, NULL, 'l'},
+> +			{"duration", required_argument, NULL, 'D'},
+>  			{"priority", required_argument, NULL, 'p'},
+>  			{"smp", no_argument, NULL, 'S'},
+>  			{"threads", optional_argument, NULL, 't'},
+>  			{"help", no_argument, NULL, '?'},
+>  			{NULL, 0, NULL, 0}
+>  		};
+> -		int c = getopt_long (argc, argv, "a::b:d:f::i:l:p:St::",
+> +		int c = getopt_long (argc, argv, "a::b:d:f::i:l:D:p:St::",
+>  			long_options, &option_index);
+>  		if (c == -1)
+>  			break;
+> @@ -326,6 +330,7 @@ static void process_options (int argc, char *argv[])
+>  			break;
+>  		case 'i': interval = atoi(optarg); break;
+>  		case 'l': max_cycles = atoi(optarg); break;
+> +		case 'D': duration = parse_time_string(optarg); break;
+>  		case 'p': priority = atoi(optarg); break;
+>  		case 'S':
+>  			smp = 1;
+> @@ -360,6 +365,9 @@ static void process_options (int argc, char *argv[])
+>  			}
+>  		}
+>  
+> +		if (duration < 0)
+> +			error = 0;
+> +
+>  		if (num_threads < 1 || num_threads > 255)
+>  			error = 1;
+>  
+> @@ -486,10 +494,14 @@ int main(int argc, char *argv[])
+>  
+>  	signal(SIGINT, sighand);
+>  	signal(SIGTERM, sighand);
+> +	signal(SIGALRM, sighand);
+>  
+>  	sigemptyset(&sigset);
+>  	pthread_sigmask(SIG_SETMASK, &sigset, NULL);
+>  
+> +	if (duration)
+> +		alarm(duration);
+> +
+>  	if (!mustfork && !wasforked) {
+>  		receiver = calloc(num_threads, sizeof(struct params));
+>  		sender = calloc(num_threads, sizeof(struct params));
+> @@ -663,6 +675,7 @@ int main(int argc, char *argv[])
+>  		sigemptyset(&sigset);
+>  		sigaddset(&sigset, SIGTERM);
+>  		sigaddset(&sigset, SIGINT);
+> +		sigaddset(&sigset, SIGALRM);
+>  		pthread_sigmask(SIG_SETMASK, &sigset, NULL);
+>  
+>  		nanosleep(&maindelay, NULL);
+> -- 
+> 2.20.1
+> 
+> 
 
-Yes, or even better, name the function used to do this (i.e.,
-kernel_neon_disable() or get_cpu_fpsimd_context() or whatever it's
-called).
+I like the idea, I am happy to apply it, but 
+this is a huge patch and it isn't applying cleanly
+- could you break it up in separate patches for different tests?
+- somehow (maybe your text editor) has added a few dos style line endings
+- make sure this is against unstable/devel/latest
 
-> >
-> >>   */
-> >>  static void task_fpsimd_load(void)
-> >>  {
-> >>-	WARN_ON(!in_softirq() && !irqs_disabled());
-> >>+	WARN_ON(!preempt_count() && !irqs_disabled());
-> >
-> >Hmmm, looks like we can rewrite this is preemptible().  See
-> >include/linux/preempt.h.
-> >
-> >Since we are checking that nothing can mess with the FPSIMD regs and
-> >associated task metadata, we should also be checking kernel_neon_busy
-> >here.
-> >
-> >For readability, we could wrap all that up in a single helper.
-> 
-> With what I said above, we could replace this check
-> WARN_ON(!have_cpu_fpsimd_context()).
+Thanks
 
-Agreed.
+John
 
-> [...]
-> 
-> >>+static void kernel_neon_disable(void)
-> >>+{
-> >>+	preempt_disable();
-> >>+	WARN_ON(__this_cpu_read(kernel_neon_busy));
-> >>+	__this_cpu_write(kernel_neon_busy, true);
-> >
-> >Can we do this with one __this_cpu_xchg()?
-> 
-> I think so.
 
-OK
 
-> >>+}
-> >>+
-> >>+static void kernel_neon_enable(void)
-> >>+{
-> >>+	bool busy;
-> >>+
-> >>+	busy = __this_cpu_xchg(kernel_neon_busy, false);
-> >>+	WARN_ON(!busy); /* No matching kernel_neon_disable()? */
-> >>+
-> >>+	preempt_enable();
-> >>+}
-> >>+
-> >>+#ifdef CONFIG_KERNEL_MODE_NEON
-> >>+
-> >>  /*
-> >>   * Kernel-side NEON support functions
-> >>   */
-> >>@@ -1084,9 +1105,7 @@ void kernel_neon_begin(void)
-> >>  	BUG_ON(!may_use_simd());
-> >>-	local_bh_disable();
-> >>-
-> >>-	__this_cpu_write(kernel_neon_busy, true);
-> >>+	kernel_neon_disable();
-> >>  	/* Save unsaved fpsimd state, if any: */
-> >>  	fpsimd_save();
-> >>@@ -1094,9 +1113,7 @@ void kernel_neon_begin(void)
-> >>  	/* Invalidate any task state remaining in the fpsimd regs: */
-> >>  	fpsimd_flush_cpu_state();
-> >>-	preempt_disable();
-> >>-
-> >>-	local_bh_enable();
-> >>+	kernel_neon_enable();
-> >
-> >As you commented in your reply elsewhere, we don't want to call
-> >kernel_neon_enable() here.  We need to keep exclusive ownership of the
-> >CPU regs to continue until kernel_neon_end() is called.
-> 
-> I already fixed it in my tree. Thank you for the reminder.
-
-Yes, just confirming my understanding here.
-
-> >Otherwise, this looks reasonable overall.
-> >
-> >One nice feature of this is that is makes it clearer that the code is
-> >grabbing exclusive access to a particular thing (the FPSIMD regs and
-> >context metadata), which is not very obvious from the bare
-> >local_bh_{disable,enable} that was there previously.
-> >
-> >When reposting, you should probably rebase on kvmarm/next [1], since
-> >there is a minor conflict from the SVE KVM series.  It looks
-> >straightforward to fix up though.
-> 
-> I will have a look.
-> 
-> >
-> >[...]
-> >
-> >For testing, can we have a test irritator module that does something
-> >like hooking the timer softirq with a kprobe and trashing the regs
-> >inside kernel_neon_begin()/_end()?
-> 
-> I will see what I can do.
-> 
-> >
-> >It would be nice to have such a thing upstream, but it's OK to test
-> >with local hacks for now.
-> >
-> >
-> >I'm not sure how this patch will affect context switch overhead, so it
-> >would be good to see hackbench numbers (or similar).
-> 
-> I will give a try with hackbench/kernbench.
-
-Thanks.  You can repost the patch before this is done though,
-to help move the review forward.
-
-Cheers
----Dave
