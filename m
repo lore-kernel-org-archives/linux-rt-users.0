@@ -1,126 +1,299 @@
-Return-Path: <SRS0=J2Xz=SG=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=lqhu=SH=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.8 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3A91DC4360F
-	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Apr 2019 15:42:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 156B9C10F0F
+	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Apr 2019 09:02:51 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 0A2702082E
-	for <linux-rt-users@archiver.kernel.org>; Thu,  4 Apr 2019 15:42:07 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="kTDqVhjg"
+	by mail.kernel.org (Postfix) with ESMTP id D7B1321872
+	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Apr 2019 09:02:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729085AbfDDPmG (ORCPT
+        id S1730224AbfDEJCu (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 4 Apr 2019 11:42:06 -0400
-Received: from mail-wm1-f68.google.com ([209.85.128.68]:40682 "EHLO
-        mail-wm1-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727053AbfDDPmG (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 4 Apr 2019 11:42:06 -0400
-Received: by mail-wm1-f68.google.com with SMTP id z24so3991022wmi.5
-        for <linux-rt-users@vger.kernel.org>; Thu, 04 Apr 2019 08:42:04 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
-         :user-agent:mime-version;
-        bh=OUFMbaBG3MO2NE7glq3hCZ9Wc+wnJop8M6sKOvcRdXQ=;
-        b=kTDqVhjgdvoo6/7cmw93dGpRcQPpvHPpdZNLyh/+HspvJ1wdAA3qoeks2GuQDx4VKo
-         dHaLETBk2W8gzTzLQ0EVy8NDzIEQB0Qk/+mPjBN5HerhjImkejvmzaYJdpA3hhDtFz0K
-         E27GXfkmBhEGAcM4EZsHHAglB1TrXa/d8ehxmA06d1kRPAGJb8J0MjldrlwCY+/nKTpk
-         sOdfBa7NQiHHsrj+8aB8dBX/s6nr9RC9n0U29FI83EfhivnuFFHGGVjSFQxPNqtqSL6O
-         QujgNT1Aa6Os1PUoPYnuyJ/s1VlDHg+HU7qsYxihGUeY1PtoY+gEasXrgs+/lPUOEm3K
-         aV2A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
-         :message-id:references:user-agent:mime-version;
-        bh=OUFMbaBG3MO2NE7glq3hCZ9Wc+wnJop8M6sKOvcRdXQ=;
-        b=rdakPqT25MRKEM6wiaGc5/gwARIRLTx0gtNtj9/ktGDg4tOTuLSxv0By2UnZnJ/b1q
-         vNSuA8oOr3KnN8Ak+3NMQzMgTESBMEi0F2Sxc7x4v5NI+EtWBkYPvDbYBZ6+o+ipKFJ0
-         BO34zJxEn05ybOzartCfHW6SJqU6GaMzBtEXEaY+FPknoLhELZY1ukv4DUkw9bfDADPB
-         8dOhZodE44kx1NyyfKAubMcBO5Ap6lVXpAvJRJcoxlr/swSmdYUsn7kqMGt8xdcH27VO
-         qB05198wWh5T3EisoMZ8PltE1POtP5gyXQ3TkBjNsU/czRERSJxbrrp7e5yRJswyWb72
-         jN3g==
-X-Gm-Message-State: APjAAAXzOloCdZEfZmU2sbwc2FfbeyNg6xC7G7QI9uNURXIUTrDuwMyb
-        PB8vuPMns7YPXYaQNQces/M=
-X-Google-Smtp-Source: APXvYqxkax/FcDypGB2GpEuC9f/9C9KdRyX46hBKwbMBytQDwEThVZpazXEeSintprTE9S+HajhbYg==
-X-Received: by 2002:a1c:a70f:: with SMTP id q15mr4455526wme.28.1554392524293;
-        Thu, 04 Apr 2019 08:42:04 -0700 (PDT)
-Received: from planxty ([2a02:8108:1700:1960:91dd:e2f9:ed05:ee2b])
-        by smtp.gmail.com with ESMTPSA id d7sm23515996wmf.31.2019.04.04.08.42.03
-        (version=TLS1_3 cipher=AEAD-AES256-GCM-SHA384 bits=256/256);
-        Thu, 04 Apr 2019 08:42:03 -0700 (PDT)
-Date:   Thu, 4 Apr 2019 17:42:02 +0200 (CEST)
-From:   John Kacur <jkacur@redhat.com>
-X-X-Sender: jkacur@planxty
-To:     Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
-cc:     Clark Williams <williams@redhat.com>,
-        rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: [PATCH 4/4] rt-tests: deadline_test: add missing frees
-In-Reply-To: <20190404151958.xdo66ytsvpklaqa2@linutronix.de>
-Message-ID: <alpine.LFD.2.21.1904041741410.11547@planxty>
-References: <20190404134814.13376-1-kurt@linutronix.de> <20190404134814.13376-5-kurt@linutronix.de> <alpine.LFD.2.21.1904041712560.11547@planxty> <20190404151958.xdo66ytsvpklaqa2@linutronix.de>
-User-Agent: Alpine 2.21 (LFD 202 2017-01-01)
+        Fri, 5 Apr 2019 05:02:50 -0400
+Received: from usa-sjc-mx-foss1.foss.arm.com ([217.140.101.70]:43990 "EHLO
+        foss.arm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1729728AbfDEJCt (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 5 Apr 2019 05:02:49 -0400
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.72.51.249])
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 2B572168F;
+        Fri,  5 Apr 2019 02:02:49 -0700 (PDT)
+Received: from [10.37.12.206] (unknown [10.37.12.206])
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 1E4193F721;
+        Fri,  5 Apr 2019 02:02:46 -0700 (PDT)
+Subject: Re: [RFC PATCH] arm64/fpsimd: Don't disable softirq when touching
+ FPSIMD/SVE state
+To:     Dave Martin <Dave.Martin@arm.com>
+Cc:     linux-arm-kernel@lists.infradead.org, bigeasy@linutronix.de,
+        linux-rt-users@vger.kernel.org, catalin.marinas@arm.com,
+        will.deacon@arm.com, ard.biesheuvel@linaro.org,
+        linux-kernel@vger.kernel.org
+References: <20190208165513.8435-1-julien.grall@arm.com>
+ <20190404105233.GD3567@e103592.cambridge.arm.com>
+From:   Julien Grall <julien.grall@arm.com>
+Message-ID: <a46f9fd4-dd31-c892-aec1-ae69072be92d@arm.com>
+Date:   Fri, 5 Apr 2019 10:02:45 +0100
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101
+ Thunderbird/60.6.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+In-Reply-To: <20190404105233.GD3567@e103592.cambridge.arm.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+Hi Dave,
 
+Thank you for the review.
 
-On Thu, 4 Apr 2019, Kurt Kanzenbach wrote:
-
-> Hi,
+On 4/4/19 11:52 AM, Dave Martin wrote:
+> On Fri, Feb 08, 2019 at 04:55:13PM +0000, Julien Grall wrote:
+>> For RT-linux, it might be possible to use migrate_{enable, disable}. I
+>> am quite new with RT and have some trouble to understand the semantics
+>> of migrate_{enable, disable}. So far, I am still unsure if it is possible
+>> to run another userspace task on the same CPU while getting preempted
+>> when the migration is disabled.
 > 
-> On Thu, Apr 04, 2019 at 05:13:51PM +0200, John Kacur wrote:
-> >
-> >
-> > On Thu, 4 Apr 2019, Kurt Kanzenbach wrote:
-> >
-> > > The threads and thread data structures are allocated using calloc(). But never
-> > > free'd. So, free them.
-> > >
-> > > While here, remove the if statement for setcpu_buf. Free() is NULL safe.
-> > >
-> > > Signed-off-by: Kurt Kanzenbach <kurt@linutronix.de>
-> > > ---
-> > >  src/sched_deadline/deadline_test.c | 5 +++--
-> > >  1 file changed, 3 insertions(+), 2 deletions(-)
-> > >
-> > > diff --git a/src/sched_deadline/deadline_test.c b/src/sched_deadline/deadline_test.c
-> > > index 4826557d0624..69e6fd18b73b 100644
-> > > --- a/src/sched_deadline/deadline_test.c
-> > > +++ b/src/sched_deadline/deadline_test.c
-> > > @@ -2092,8 +2092,9 @@ int main (int argc, char **argv)
-> > >  		printf("\n");
-> > >  	}
-> > >
-> > > -	if (!setcpu_buf)
-> > > -		free(setcpu_buf);
-> > > +	free(thread);
-> > > +	free(sched_data);
-> > > +	free(setcpu_buf);
-> > >
-> > >  	return 0;
-> > >  }
-> > > --
-> > > 2.11.0
-> >
-> > Does this remove your own if statement that I didn't even apply yet?
-> > :)
-> 
-> No. That's a different binary. My patch was made against cyclicdeadline.
-> 
-> Thanks,
-> Kurt
+> (Leaving aside the RT aspects for now, but if migrate_{enable,disable}
+> is costly it might not be the best thing to use deep in context switch
+> paths, even if is technically correct...)
 
-Ok, got it, thanks!
+Based on the discussion in this thread, migrate_enable/migrate_disable 
+is not suitable in this context.
 
-John
+The goal of those helpers is to pin the task to the current CPU. On RT, 
+it will not disable the preemption. So the current task can be preempted 
+by a task with higher priority.
+
+The next task may require to use the FPSIMD and will potentially result 
+to corrupt the state.
+
+RT folks already saw this corruption because local_bh_disable() does not 
+preempt on RT. They are carrying a patch (see "arm64: fpsimd: use 
+preemp_disable in addition to local_bh_disable()") to disable preemption 
+along with local_bh_disable().
+
+Alternatively, Julia suggested to introduce a per-cpu lock to protect 
+the state. I am thinking to defer this for a follow-up patch. The 
+changes in this patch should make it easier because we now have helper 
+to mark the critical section.
+
+> 
+>> ---
+>>   arch/arm64/include/asm/simd.h |  4 +--
+>>   arch/arm64/kernel/fpsimd.c    | 76 +++++++++++++++++++++++++------------------
+>>   2 files changed, 46 insertions(+), 34 deletions(-)
+>>
+>> diff --git a/arch/arm64/include/asm/simd.h b/arch/arm64/include/asm/simd.h
+>> index 6495cc51246f..94c0dac508aa 100644
+>> --- a/arch/arm64/include/asm/simd.h
+>> +++ b/arch/arm64/include/asm/simd.h
+>> @@ -15,10 +15,10 @@
+>>   #include <linux/preempt.h>
+>>   #include <linux/types.h>
+>>   
+>> -#ifdef CONFIG_KERNEL_MODE_NEON
+>> -
+>>   DECLARE_PER_CPU(bool, kernel_neon_busy);
+> 
+> Why make this unconditional?  This declaration is only here for
+> may_use_simd() to use.  The stub version of may_use_simd() for the
+> !CONFIG_KERNEL_MODE_NEON case doesn't touch it.
+
+kernel_neon_busy will be used in fpsimd.c even when with 
+!CONFIG_KERNEL_MODE_NEON. So it makes sense to also declare it in the 
+header even if not used.
+
+Another solution is to avoid expose kernel_neon_busy outside of fpsimd.c 
+and use an helper.
+
+> 
+>>   
+>> +#ifdef CONFIG_KERNEL_MODE_NEON
+>> +
+>>   /*
+>>    * may_use_simd - whether it is allowable at this time to issue SIMD
+>>    *                instructions or access the SIMD register file
+>> diff --git a/arch/arm64/kernel/fpsimd.c b/arch/arm64/kernel/fpsimd.c
+>> index 5ebe73b69961..b7e5dac26190 100644
+>> --- a/arch/arm64/kernel/fpsimd.c
+>> +++ b/arch/arm64/kernel/fpsimd.c
+>> @@ -90,7 +90,8 @@
+>>    * To prevent this from racing with the manipulation of the task's FPSIMD state
+>>    * from task context and thereby corrupting the state, it is necessary to
+>>    * protect any manipulation of a task's fpsimd_state or TIF_FOREIGN_FPSTATE
+>> - * flag with local_bh_disable() unless softirqs are already masked.
+>> + * flag with kernel_neon_{disable, enable}. This will still allow softirqs to
+>> + * run but prevent them to use FPSIMD.
+>>    *
+>>    * For a certain task, the sequence may look something like this:
+>>    * - the task gets scheduled in; if both the task's fpsimd_cpu field
+>> @@ -142,6 +143,9 @@ extern void __percpu *efi_sve_state;
+>>   
+>>   #endif /* ! CONFIG_ARM64_SVE */
+>>   
+>> +static void kernel_neon_disable(void);
+>> +static void kernel_neon_enable(void);
+> 
+> I find these names a bit confusing: _disable() actualy enables FPSIMD/SVE
+> context access for the current context (i.e., makes it safe).
+> 
+> Since these also disable/enable preemption, perhaps we can align them
+> with the existing get_cpu()/put_cpu(), something like:
+> 
+> void get_cpu_fpsimd_context();
+> vold put_cpu_fpsimd_context();
+> 
+> If you consider it's worth adding the checking helper I alluded to
+> above, it could then be called something like:
+> 
+> bool have_cpu_fpsimd_context();
+
+I am not sure where you suggested a checking helper above. Do you refer 
+to exposing kernel_neon_busy even for !CONFIG_KERNEL_MODE_NEON?
+
+> 
+>> +
+>>   /*
+>>    * Call __sve_free() directly only if you know task can't be scheduled
+>>    * or preempted.
+>> @@ -213,11 +217,11 @@ static void sve_free(struct task_struct *task)
+>>    * thread_struct is known to be up to date, when preparing to enter
+>>    * userspace.
+>>    *
+>> - * Softirqs (and preemption) must be disabled.
+>> + * Preemption must be disabled.
+> 
+> [*] That's not enough: we need to be in kernel_neon_disable()...
+> _enable() (i.e., kernel_neon_busy needs to be true to prevent softirqs
+> messing with the FPSIMD state).
+
+How about not mentioning preemption at all and just say:
+
+"The fpsimd context should be acquired before hand".
+
+This would help if we ever decide to protect critical section differently.
+
+> 
+>>    */
+>>   static void task_fpsimd_load(void)
+>>   {
+>> -	WARN_ON(!in_softirq() && !irqs_disabled());
+>> +	WARN_ON(!preempt_count() && !irqs_disabled());
+> 
+> Hmmm, looks like we can rewrite this is preemptible().  See
+> include/linux/preempt.h.
+> 
+> Since we are checking that nothing can mess with the FPSIMD regs and
+> associated task metadata, we should also be checking kernel_neon_busy
+> here.
+> 
+> For readability, we could wrap all that up in a single helper.
+
+With what I said above, we could replace this check 
+WARN_ON(!have_cpu_fpsimd_context()).
+
+[...]
+
+>> +static void kernel_neon_disable(void)
+>> +{
+>> +	preempt_disable();
+>> +	WARN_ON(__this_cpu_read(kernel_neon_busy));
+>> +	__this_cpu_write(kernel_neon_busy, true);
+> 
+> Can we do this with one __this_cpu_xchg()?
+
+I think so.
+
+> 
+>> +}
+>> +
+>> +static void kernel_neon_enable(void)
+>> +{
+>> +	bool busy;
+>> +
+>> +	busy = __this_cpu_xchg(kernel_neon_busy, false);
+>> +	WARN_ON(!busy); /* No matching kernel_neon_disable()? */
+>> +
+>> +	preempt_enable();
+>> +}
+>> +
+>> +#ifdef CONFIG_KERNEL_MODE_NEON
+>> +
+>>   /*
+>>    * Kernel-side NEON support functions
+>>    */
+>> @@ -1084,9 +1105,7 @@ void kernel_neon_begin(void)
+>>   
+>>   	BUG_ON(!may_use_simd());
+>>   
+>> -	local_bh_disable();
+>> -
+>> -	__this_cpu_write(kernel_neon_busy, true);
+>> +	kernel_neon_disable();
+>>   
+>>   	/* Save unsaved fpsimd state, if any: */
+>>   	fpsimd_save();
+>> @@ -1094,9 +1113,7 @@ void kernel_neon_begin(void)
+>>   	/* Invalidate any task state remaining in the fpsimd regs: */
+>>   	fpsimd_flush_cpu_state();
+>>   
+>> -	preempt_disable();
+>> -
+>> -	local_bh_enable();
+>> +	kernel_neon_enable();
+> 
+> As you commented in your reply elsewhere, we don't want to call
+> kernel_neon_enable() here.  We need to keep exclusive ownership of the
+> CPU regs to continue until kernel_neon_end() is called.
+
+I already fixed it in my tree. Thank you for the reminder.
+
+> 
+> Otherwise, this looks reasonable overall.
+> 
+> One nice feature of this is that is makes it clearer that the code is
+> grabbing exclusive access to a particular thing (the FPSIMD regs and
+> context metadata), which is not very obvious from the bare
+> local_bh_{disable,enable} that was there previously.
+> 
+> When reposting, you should probably rebase on kvmarm/next [1], since
+> there is a minor conflict from the SVE KVM series.  It looks
+> straightforward to fix up though.
+
+I will have a look.
+
+> 
+> [...]
+> 
+> For testing, can we have a test irritator module that does something
+> like hooking the timer softirq with a kprobe and trashing the regs
+> inside kernel_neon_begin()/_end()?
+
+I will see what I can do.
+
+> 
+> It would be nice to have such a thing upstream, but it's OK to test
+> with local hacks for now.
+> 
+> 
+> I'm not sure how this patch will affect context switch overhead, so it
+> would be good to see hackbench numbers (or similar).
+
+I will give a try with hackbench/kernbench.
+
+Cheers,
+
+> [1] git://git.kernel.org/pub/scm/linux/kernel/git/kvmarm/kvmarm.git
+> next
+> 
+
+-- 
+Julien Grall
