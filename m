@@ -4,67 +4,67 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-6.8 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
+	SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CE611C282CE
-	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Apr 2019 16:29:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D69B3C282CE
+	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Apr 2019 16:31:42 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 9B8AD2146F
-	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Apr 2019 16:29:17 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A572621852
+	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Apr 2019 16:31:42 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="tppK8yo1"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="BkazXSjj"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731465AbfDEQ3R (ORCPT
+        id S1731592AbfDEQbl (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 5 Apr 2019 12:29:17 -0400
-Received: from mail-wm1-f66.google.com ([209.85.128.66]:36040 "EHLO
-        mail-wm1-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1730554AbfDEQ3R (ORCPT
+        Fri, 5 Apr 2019 12:31:41 -0400
+Received: from mail-wr1-f68.google.com ([209.85.221.68]:35458 "EHLO
+        mail-wr1-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726643AbfDEQbk (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 5 Apr 2019 12:29:17 -0400
-Received: by mail-wm1-f66.google.com with SMTP id h18so7864707wml.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 05 Apr 2019 09:29:16 -0700 (PDT)
+        Fri, 5 Apr 2019 12:31:40 -0400
+Received: by mail-wr1-f68.google.com with SMTP id w1so8775237wrp.2
+        for <linux-rt-users@vger.kernel.org>; Fri, 05 Apr 2019 09:31:39 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :user-agent:mime-version;
-        bh=VoJe8BPbaY26gcBAO50w+hZ6oHgHfEG78c5rLQPstUo=;
-        b=tppK8yo1lDiHR2HytcNfeMlm4gbdr1bnMspzH+BCahXJVXYTtwWl+lFNNbzBflN/W4
-         vI49hFdCSZPKKYQ+Iorp3gOssd/IM06hlwN62JdppsAG1/ECEW7p8AGRkEOquVBsg1oM
-         Zn0D6KsDfasuVf12G8W7xJu+87jBWoOcrgv5mgvdOBgViAWgchZUnBSUOVSN2KIbuzd7
-         6CaWH406i0EJC1IORwtmBacrUTn86qhYRIjqf5yjtvylCeIvnhjL1LCaudwbiqE6z5te
-         xh4rtGrX01q9jvpi7o1bSyJokW0p83XCVLJ8MoRxwr+xhNF5Du53QGOFxmgULQcVWUcn
-         xrkw==
+        bh=pa1M9fcO/RRrRyXGg+BpXGiMA68gNIY2mkqcCUMLjAo=;
+        b=BkazXSjjTswl1NIXsm3FbL+ifp8J8hIPFK9TpnOk3ethY7nUaE03g0QEVKhSUkwjQq
+         VgxRX9Lp865eYrI3arBJHlZAliocFlm65vCa2V2w+XqKviXzvYJ/Vb9Fr7hUX2ryE6kw
+         yYLErEzkrx5lafm4D3q/DNCSu0yQ7uUYGNoqQZGK3GV6yOfAyCdAi8j+TJLVcZNbrKb7
+         5fDXMVVP80CVK3FrEJpvd+21ip/ONUm3u9Yt3vtCyzj3oyEjGclLIJNS0j2IPB5x75mm
+         yt9MFAaOACv4jEDI/VFeXJCNN6myoLKJch5lPS99BhAc5Tnin87k2koVOyYc8FKVjKG/
+         MP7g==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:user-agent:mime-version;
-        bh=VoJe8BPbaY26gcBAO50w+hZ6oHgHfEG78c5rLQPstUo=;
-        b=GrudWN+0LuQiXNG5CXz7YavsQHo8qxHF3HAviZJRAEMhI4YCzEpv1Is8HJySs+AYvr
-         u4skYYGKQeiDZYgewbFDqJmJe2wxFzgS6+WgET6TU6yZOdpVL3BVd65+ta4wC69r+PSY
-         YgUXD4nbK6LnHqwSypckWW2vj5LzD17AwJWAwvFJzc8qSJXvTuD0qwOC7DhI/TjUKoaf
-         DDdRP/DY5nhR+pfqWG/PwILnOsQx5CubGafj4Pe2rWgPDRMCTvr/yXxii0ocxigwB5pS
-         quCMG9owVggsdQ1hGF7u2IP2Rtv8LhOsGWBFPRHLxpa4DFHg5qSpU1C6OqpynnhIYK0u
-         ++dQ==
-X-Gm-Message-State: APjAAAV2ogfMQ11ybndmNzKPRdKI6ktu8EzPIRvi7FWc8rRyJVG8uYeB
-        u8UoniRjrMjXgF1EHTeioLA=
-X-Google-Smtp-Source: APXvYqyuhRGjHoCMAMzm15nuNtUWzjGcojxiXDX8uvKYxIFTzOmYw74WDTTsJWs5jBGVSumTGgbFqA==
-X-Received: by 2002:a1c:3507:: with SMTP id c7mr8499270wma.20.1554481755383;
-        Fri, 05 Apr 2019 09:29:15 -0700 (PDT)
+        bh=pa1M9fcO/RRrRyXGg+BpXGiMA68gNIY2mkqcCUMLjAo=;
+        b=oJO4Dw7Y8TssvCIl0Kp17wA8wX+89taDdi5XxLnw4HXR2AClPJhcJ3VYRagicQWeRO
+         Bcq9RZM+xMtFFUjFBwNClYjTbU3Rd5RqqCB7uNUVi+BDsZYDj+8Dh9538Uv7Lk9ByxkK
+         gnrR4Oqa7LgBjsgu8aeXUvhiWEyLfeNt7jgTaPa+UPZxKyLRresU0goPJglSR+fwhU2x
+         hgcRY3MwbsQODz47DyPO44uiFXJhcj5TlQUZzbX3Al6Ayb+0+mewjNohhNmKXDDeN72Z
+         0DOUnjK0o1uD9ViOhPLcNweH2jIlB2i9rEsCKqo2xyJO/wT8Sj2jtUkOT2YqqHZsBX66
+         d4Dw==
+X-Gm-Message-State: APjAAAWrqnF+iEuLTikIk4Yo7kLMQSnGJQhSASNK/UI52YgmcA3bcX1q
+        F4NYDkFV+y2FedLZHJ11QNDM6qwC
+X-Google-Smtp-Source: APXvYqxr71gVmQTjAa8F/c8nPJtCFpW2l3xgJ0ibVaLDNcXsuhekp/dyM1q1DeFSDInVY/H6Aebi2Q==
+X-Received: by 2002:a5d:4646:: with SMTP id j6mr1031453wrs.56.1554481898616;
+        Fri, 05 Apr 2019 09:31:38 -0700 (PDT)
 Received: from planxty ([2a02:8108:1700:1960:91dd:e2f9:ed05:ee2b])
-        by smtp.gmail.com with ESMTPSA id b10sm33513076wrt.86.2019.04.05.09.29.14
+        by smtp.gmail.com with ESMTPSA id o4sm4953762wmo.20.2019.04.05.09.31.37
         (version=TLS1_3 cipher=AEAD-AES256-GCM-SHA384 bits=256/256);
-        Fri, 05 Apr 2019 09:29:14 -0700 (PDT)
-Date:   Fri, 5 Apr 2019 18:29:13 +0200 (CEST)
+        Fri, 05 Apr 2019 09:31:38 -0700 (PDT)
+Date:   Fri, 5 Apr 2019 18:31:36 +0200 (CEST)
 From:   John Kacur <jkacur@redhat.com>
 X-X-Sender: jkacur@planxty
 To:     Daniel Wagner <daniel.wagner@siemens.com>
 cc:     linux-rt-users@vger.kernel.org,
         Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH 3/4] deadline_test: Free allocated resources at exit
-In-Reply-To: <20190312172436.18314-4-daniel.wagner@siemens.com>
-Message-ID: <alpine.LFD.2.21.1904051828530.8480@planxty>
-References: <20190312172436.18314-1-daniel.wagner@siemens.com> <20190312172436.18314-4-daniel.wagner@siemens.com>
+Subject: Re: [PATCH 4/4] cyclicdeadline: Free allocated resources at exit
+In-Reply-To: <20190312172436.18314-5-daniel.wagner@siemens.com>
+Message-ID: <alpine.LFD.2.21.1904051831210.8480@planxty>
+References: <20190312172436.18314-1-daniel.wagner@siemens.com> <20190312172436.18314-5-daniel.wagner@siemens.com>
 User-Agent: Alpine 2.21 (LFD 202 2017-01-01)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
@@ -79,25 +79,23 @@ On Tue, 12 Mar 2019, Daniel Wagner wrote:
 
 > Signed-off-by: Daniel Wagner <daniel.wagner@siemens.com>
 > ---
->  src/sched_deadline/deadline_test.c | 6 +++++-
+>  src/sched_deadline/cyclicdeadline.c | 6 +++++-
 >  1 file changed, 5 insertions(+), 1 deletion(-)
 > 
-> diff --git a/src/sched_deadline/deadline_test.c b/src/sched_deadline/deadline_test.c
-> index 1b72c6097a87..04984d997f58 100644
-> --- a/src/sched_deadline/deadline_test.c
-> +++ b/src/sched_deadline/deadline_test.c
-> @@ -2092,8 +2092,12 @@ int main (int argc, char **argv)
->  		printf("\n");
+> diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
+> index 095e6ccc166f..e3cc3c74ef68 100644
+> --- a/src/sched_deadline/cyclicdeadline.c
+> +++ b/src/sched_deadline/cyclicdeadline.c
+> @@ -1271,6 +1271,10 @@ int main (int argc, char **argv)
+>  		}
 >  	}
 >  
-> -	if (!setcpu_buf)
+> -	free(setcpu_buf);
 > +	if (setcpu_buf)
->  		free(setcpu_buf);
+> +		free(setcpu_buf);
 > +	free(thread);
 > +	free(sched_data);
 > +
-> +	CPU_FREE(cpusetp);
->  
 >  	return 0;
 >  }
 > -- 
