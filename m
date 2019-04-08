@@ -7,48 +7,48 @@ X-Spam-Status: No, score=-9.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3F738C10F13
-	for <linux-rt-users@archiver.kernel.org>; Mon,  8 Apr 2019 19:15:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 18009C10F13
+	for <linux-rt-users@archiver.kernel.org>; Mon,  8 Apr 2019 19:15:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 1208920879
-	for <linux-rt-users@archiver.kernel.org>; Mon,  8 Apr 2019 19:15:10 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DA2C620880
+	for <linux-rt-users@archiver.kernel.org>; Mon,  8 Apr 2019 19:15:12 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1554750910;
-	bh=XP8f6UkErQBti+a6Kf6jSIfBEuoaOPaxDWYr0P9+J8Y=;
+	s=default; t=1554750912;
+	bh=Ff3TTc+LHwIZFC2i7NyGcQ8qDDWEAIHqM53xhMo5L90=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=0PE5jK5vlixcDIChBknXoDpsFKPSE8kMv1i97DwwMpyLdex/kaZA/88rNPz57kQ2k
-	 TjvA5F6x3NbMQWWvzg+jf2e06LlIpIqqpeXVInWGQvAK9P5Xj6tV6+gEck5qFRk4Oy
-	 jzhEZMyOaSae++sbRYKTD7wuttEzYG5d1yaFOTF0=
+	b=d598kaI3i6vhrO9iEb+4QR7JWgXsExhA5wBZkaxfix1miZ2+El66LYPIANm1KuTPr
+	 qdeWolphBlaizVInHX32ozJd7J3bknOvKKRRDdZ2pFOUYt3oozkmw2A8O6wKhlifAG
+	 SMqExr2rJy7KagjUQzof1mMhSNAQAV22Fk5YlLx8=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727580AbfDHTPE (ORCPT
+        id S1728798AbfDHTOh (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 8 Apr 2019 15:15:04 -0400
-Received: from mail.kernel.org ([198.145.29.99]:45524 "EHLO mail.kernel.org"
+        Mon, 8 Apr 2019 15:14:37 -0400
+Received: from mail.kernel.org ([198.145.29.99]:45498 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728820AbfDHTOj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 8 Apr 2019 15:14:39 -0400
+        id S1728716AbfDHTOh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 8 Apr 2019 15:14:37 -0400
 Received: from tzanussi-mobl.hsd1.il.comcast.net (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 6E08F21906;
-        Mon,  8 Apr 2019 19:14:37 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id B2CAF21909;
+        Mon,  8 Apr 2019 19:14:35 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1554750878;
-        bh=XP8f6UkErQBti+a6Kf6jSIfBEuoaOPaxDWYr0P9+J8Y=;
+        s=default; t=1554750876;
+        bh=Ff3TTc+LHwIZFC2i7NyGcQ8qDDWEAIHqM53xhMo5L90=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=iY/XJHTTsl4atbrhZB7NMhWahIxIphYE0ccmVNDfOditqsQn5JiAgSonGlQShDiS0
-         paFDkE/ea0pSK22N5geIYzy+1m5bOOHfwwL+07i9ABXr8mJrVSrQGOKw9oKJ4wzhCX
-         BaV/H9Qmy58ntVo0AxfDBr4S/pthXK/VtoaisYiE=
+        b=PheQNAhVfmxIdwhrn2FwrE5F/kWjn86zWGPK4U6vGwdcD0DQcBxpFaMB2VvbPxUeB
+         biDzgzvVRRmkK+zct7qg57gfxDPFGk0R4xIsdG2C3Mtq2tgi1oO1DKUTA5fLHrd8vo
+         fsdYvNC3/nkXbF0O7+F+iUUbbO8LgU+ny9j4eYNc=
 From:   Tom Zanussi <zanussi@kernel.org>
 To:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 Cc:     rostedt@goodmis.org, tglx@linutronix.de, C.Emde@osadl.org,
         jkacur@redhat.com, bigeasy@linutronix.de,
         daniel.wagner@siemens.com, julia@ni.com, amartin@nvidia.com
-Subject: [PATCH 12/13] powerpc/pseries/iommu: Use a locallock instead local_irq_save()
-Date:   Mon,  8 Apr 2019 14:14:14 -0500
-Message-Id: <d7bed9f2ba9b6eef76cdcf106d3fc6bd82fddf58.1554737688.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 11/13] tty/sysrq: Convert show_lock to raw_spinlock_t
+Date:   Mon,  8 Apr 2019 14:14:13 -0500
+Message-Id: <835a07298fab3573e7c0973e47b5203ac5b5f5fc.1554737688.git.tom.zanussi@linux.intel.com>
 X-Mailer: git-send-email 2.14.1
 In-Reply-To: <cover.1554737688.git.tom.zanussi@linux.intel.com>
 References: <cover.1554737688.git.tom.zanussi@linux.intel.com>
@@ -64,97 +64,64 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Julien Grall <julien.grall@arm.com>
 
-[ Upstream commit 5c1b4cd70e2ca0c81038b65babe6dc66086322e0 ]
+[ Upstream commit db80c207bffd0f49e984e9889ce62279bc3abd6c ]
 
-The locallock protects the per-CPU variable tce_page. The function
-attempts to allocate memory while tce_page is protected (by disabling
-interrupts).
+Systems which don't provide arch_trigger_cpumask_backtrace() will
+invoke showacpu() from a smp_call_function() function which is invoked
+with disabled interrupts even on -RT systems.
 
-Use local_irq_save() instead of local_irq_disable().
+The function acquires the show_lock lock which only purpose is to
+ensure that the CPUs don't print simultaneously. Otherwise the
+output would clash and it would be hard to tell the output from CPUx
+apart from CPUy.
 
+On -RT the spin_lock() can not be acquired from this context. A
+raw_spin_lock() is required. It will introduce the system's latency
+by performing the sysrq request and other CPUs will block on the lock
+until the request is done. This is okay because the user asked for a
+backtrace of all active CPUs and under "normal circumstances in
+production" this path should not be triggered.
+
+Signed-off-by: Julien Grall <julien.grall@arm.com>
+[bigeasy@linuxtronix.de: commit description]
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Acked-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- arch/powerpc/platforms/pseries/iommu.c | 16 ++++++++++------
- 1 file changed, 10 insertions(+), 6 deletions(-)
+ drivers/tty/sysrq.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/arch/powerpc/platforms/pseries/iommu.c b/arch/powerpc/platforms/pseries/iommu.c
-index 7c181467d0ad..4bd046492c60 100644
---- a/arch/powerpc/platforms/pseries/iommu.c
-+++ b/arch/powerpc/platforms/pseries/iommu.c
-@@ -38,6 +38,7 @@
- #include <linux/of.h>
- #include <linux/iommu.h>
- #include <linux/rculist.h>
-+#include <linux/locallock.h>
- #include <asm/io.h>
- #include <asm/prom.h>
- #include <asm/rtas.h>
-@@ -213,6 +214,7 @@ static int tce_build_pSeriesLP(struct iommu_table *tbl, long tcenum,
+diff --git a/drivers/tty/sysrq.c b/drivers/tty/sysrq.c
+index 377b3592384e..5d1c6d496e2e 100644
+--- a/drivers/tty/sysrq.c
++++ b/drivers/tty/sysrq.c
+@@ -215,7 +215,7 @@ static struct sysrq_key_op sysrq_showlocks_op = {
+ #endif
+ 
+ #ifdef CONFIG_SMP
+-static DEFINE_SPINLOCK(show_lock);
++static DEFINE_RAW_SPINLOCK(show_lock);
+ 
+ static void showacpu(void *dummy)
+ {
+@@ -225,10 +225,10 @@ static void showacpu(void *dummy)
+ 	if (idle_cpu(smp_processor_id()))
+ 		return;
+ 
+-	spin_lock_irqsave(&show_lock, flags);
++	raw_spin_lock_irqsave(&show_lock, flags);
+ 	pr_info("CPU%d:\n", smp_processor_id());
+ 	show_stack(NULL, NULL);
+-	spin_unlock_irqrestore(&show_lock, flags);
++	raw_spin_unlock_irqrestore(&show_lock, flags);
  }
  
- static DEFINE_PER_CPU(__be64 *, tce_page);
-+static DEFINE_LOCAL_IRQ_LOCK(tcp_page_lock);
- 
- static int tce_buildmulti_pSeriesLP(struct iommu_table *tbl, long tcenum,
- 				     long npages, unsigned long uaddr,
-@@ -233,7 +235,8 @@ static int tce_buildmulti_pSeriesLP(struct iommu_table *tbl, long tcenum,
- 		                           direction, attrs);
- 	}
- 
--	local_irq_save(flags);	/* to protect tcep and the page behind it */
-+	/* to protect tcep and the page behind it */
-+	local_lock_irqsave(tcp_page_lock, flags);
- 
- 	tcep = __this_cpu_read(tce_page);
- 
-@@ -244,7 +247,7 @@ static int tce_buildmulti_pSeriesLP(struct iommu_table *tbl, long tcenum,
- 		tcep = (__be64 *)__get_free_page(GFP_ATOMIC);
- 		/* If allocation fails, fall back to the loop implementation */
- 		if (!tcep) {
--			local_irq_restore(flags);
-+			local_unlock_irqrestore(tcp_page_lock, flags);
- 			return tce_build_pSeriesLP(tbl, tcenum, npages, uaddr,
- 					    direction, attrs);
- 		}
-@@ -278,7 +281,7 @@ static int tce_buildmulti_pSeriesLP(struct iommu_table *tbl, long tcenum,
- 		tcenum += limit;
- 	} while (npages > 0 && !rc);
- 
--	local_irq_restore(flags);
-+	local_unlock_irqrestore(tcp_page_lock, flags);
- 
- 	if (unlikely(rc == H_NOT_ENOUGH_RESOURCES)) {
- 		ret = (int)rc;
-@@ -436,13 +439,14 @@ static int tce_setrange_multi_pSeriesLP(unsigned long start_pfn,
- 	u64 rc = 0;
- 	long l, limit;
- 
--	local_irq_disable();	/* to protect tcep and the page behind it */
-+	/* to protect tcep and the page behind it */
-+	local_lock_irq(tcp_page_lock);
- 	tcep = __this_cpu_read(tce_page);
- 
- 	if (!tcep) {
- 		tcep = (__be64 *)__get_free_page(GFP_ATOMIC);
- 		if (!tcep) {
--			local_irq_enable();
-+			local_unlock_irq(tcp_page_lock);
- 			return -ENOMEM;
- 		}
- 		__this_cpu_write(tce_page, tcep);
-@@ -488,7 +492,7 @@ static int tce_setrange_multi_pSeriesLP(unsigned long start_pfn,
- 
- 	/* error cleanup: caller will clear whole range */
- 
--	local_irq_enable();
-+	local_unlock_irq(tcp_page_lock);
- 	return rc;
- }
- 
+ static void sysrq_showregs_othercpus(struct work_struct *dummy)
 -- 
 2.14.1
 
