@@ -5,27 +5,28 @@ X-Spam-Level:
 X-Spam-Status: No, score=-1.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	MAILING_LIST_MULTI,SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 65DA8C10F11
-	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Apr 2019 07:23:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 015C4C10F11
+	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Apr 2019 07:27:59 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 3EA012070D
-	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Apr 2019 07:23:28 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C990720850
+	for <linux-rt-users@archiver.kernel.org>; Wed, 10 Apr 2019 07:27:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728975AbfDJHX0 (ORCPT
+        id S1727721AbfDJH16 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 10 Apr 2019 03:23:26 -0400
-Received: from mail.manjaro.org ([176.9.38.148]:49544 "EHLO manjaro.org"
+        Wed, 10 Apr 2019 03:27:58 -0400
+Received: from mail.manjaro.org ([176.9.38.148]:49884 "EHLO manjaro.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728965AbfDJHX0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 10 Apr 2019 03:23:26 -0400
+        id S1726755AbfDJH16 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 10 Apr 2019 03:27:58 -0400
 Received: from localhost (localhost [127.0.0.1])
-        by manjaro.org (Postfix) with ESMTP id 11567313797E;
-        Wed, 10 Apr 2019 09:23:25 +0200 (CEST)
+        by manjaro.org (Postfix) with ESMTP id 1D9D63137981;
+        Wed, 10 Apr 2019 09:27:57 +0200 (CEST)
 X-Virus-Scanned: Debian amavisd-new at manjaro.org
 Received: from manjaro.org ([127.0.0.1])
         by localhost (manjaro.org [127.0.0.1]) (amavisd-new, port 10024)
-        with ESMTP id skSRou69luGd; Wed, 10 Apr 2019 09:23:22 +0200 (CEST)
+        with ESMTP id z8_Fre6ybU6W; Wed, 10 Apr 2019 09:27:55 +0200 (CEST)
 Subject: Re: firefix core dump with linux 5.0.3_rt1-2
+From:   Bernhard Landauer <bernhard@manjaro.org>
 To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Cc:     Ralf Mardorf <ralf.mardorf@alice-dsl.net>,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -39,11 +40,11 @@ References: <dcf61b0e-31ca-0848-84c5-b200a15f3a89@manjaro.org>
  <20190329083400.m4kx4spuvysoszlm@linutronix.de>
  <4f5db7b4-e129-075a-f5f7-81fc0c0a1d82@manjaro.org>
  <20190408153014.q5hnrz3dwphudeq2@linutronix.de>
-From:   Bernhard Landauer <bernhard@manjaro.org>
-Message-ID: <9c56b47b-042c-d799-5e61-c114b77355fc@manjaro.org>
-Date:   Wed, 10 Apr 2019 09:23:21 +0200
+ <9c56b47b-042c-d799-5e61-c114b77355fc@manjaro.org>
+Message-ID: <1df65102-3ccc-fa4b-635d-262a81133430@manjaro.org>
+Date:   Wed, 10 Apr 2019 09:27:54 +0200
 MIME-Version: 1.0
-In-Reply-To: <20190408153014.q5hnrz3dwphudeq2@linutronix.de>
+In-Reply-To: <9c56b47b-042c-d799-5e61-c114b77355fc@manjaro.org>
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Content-Language: en-US-large
@@ -52,11 +53,14 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+Oh dang! Appologies. I just realize I didn't actually apply the patch ... ;)
+Stay tuned please. Have to rebuild once more. ...
 
-> Does this help?
+On 10.04.19 09:23, Bernhard Landauer wrote:
+>> Does this help?
+>>
+> I'm afraid not. The issue is still unchanged for me.
 >
-I'm afraid not. The issue is still unchanged for me.
-
-regards
-Bernhard
-
+> regards
+> Bernhard
+>
