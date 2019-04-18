@@ -2,105 +2,192 @@ Return-Path: <SRS0=4qQz=SU=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.2 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PULL_REQUEST,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_PASS,USER_AGENT_GIT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4C9F4C10F0E
-	for <linux-rt-users@archiver.kernel.org>; Thu, 18 Apr 2019 15:19:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EE98DC10F0E
+	for <linux-rt-users@archiver.kernel.org>; Thu, 18 Apr 2019 17:26:28 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 0FDC52183E
-	for <linux-rt-users@archiver.kernel.org>; Thu, 18 Apr 2019 15:19:40 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1555600780;
-	bh=US8dhk/bvxhoJlr1h1lgacAnZYxiusdSUPBLuV24eRE=;
-	h=From:To:Cc:Subject:Date:List-ID:From;
-	b=YB73QUmAxG/Mnmh3GsFE6X5FWvecukDMqN0xUXUrgSsuycSsu1VVkzQNrB55cVWa5
-	 9EPnVcDIiimw+9IW1glbnuUDPra+CilIqSmBnF4isRrmooQIH1fSDmuvG9xEBh/KMY
-	 pE3WaWZ8PR8p3qDyF7kD73YegdRFr85sqRzgWqD0=
+	by mail.kernel.org (Postfix) with ESMTP id BD01A217FA
+	for <linux-rt-users@archiver.kernel.org>; Thu, 18 Apr 2019 17:26:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2389381AbfDRPTQ (ORCPT
+        id S2389831AbfDRR01 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 18 Apr 2019 11:19:16 -0400
-Received: from mail.kernel.org ([198.145.29.99]:52942 "EHLO mail.kernel.org"
+        Thu, 18 Apr 2019 13:26:27 -0400
+Received: from foss.arm.com ([217.140.101.70]:38064 "EHLO foss.arm.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2388548AbfDRPTQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 18 Apr 2019 11:19:16 -0400
-Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 6A71D204EC;
-        Thu, 18 Apr 2019 15:19:15 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1555600755;
-        bh=US8dhk/bvxhoJlr1h1lgacAnZYxiusdSUPBLuV24eRE=;
-        h=From:To:Cc:Subject:Date:From;
-        b=JXD0rSpTJ8wEoqu4dL+EyxLIpNl167ZJyxt7WhLZWLgDnklXZL5xiKhFIcgYM2FHU
-         acBoE9g6hB/DJEEpvjkiU2kn4oaIdw1/LyDZSOEO/h6+PhDR59cxTiZ4dZYArIh42A
-         70qmWm1rGiSBpr+KKvJYaexClFydQ4IPxqo0469U=
-From:   Tom Zanussi <zanussi@kernel.org>
-To:     rostedt@goodmis.org
-Cc:     vincent@bernat.ch, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org
-Subject: [PATCH 0/3] A few hist trigger fixes
-Date:   Thu, 18 Apr 2019 10:18:49 -0500
-Message-Id: <cover.1555597045.git.tom.zanussi@linux.intel.com>
-X-Mailer: git-send-email 2.14.1
+        id S2389826AbfDRR00 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 18 Apr 2019 13:26:26 -0400
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.72.51.249])
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 19C9E169E;
+        Thu, 18 Apr 2019 10:26:26 -0700 (PDT)
+Received: from e108454-lin.cambridge.arm.com (e108454-lin.cambridge.arm.com [10.1.196.50])
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id D61FA3F557;
+        Thu, 18 Apr 2019 10:26:23 -0700 (PDT)
+From:   Julien Grall <julien.grall@arm.com>
+To:     linux-kernel@vger.kernel.org, iommu@lists.linux-foundation.org
+Cc:     logang@deltatee.com, douliyangs@gmail.com,
+        miquel.raynal@bootlin.com, marc.zyngier@arm.com,
+        jason@lakedaemon.net, tglx@linutronix.de, joro@8bytes.org,
+        robin.murphy@arm.com, bigeasy@linutronix.de,
+        linux-rt-users@vger.kernel.org, Julien Grall <julien.grall@arm.com>
+Subject: [PATCH 2/7] iommu/dma-iommu: Split iommu_dma_map_msi_msg in two parts
+Date:   Thu, 18 Apr 2019 18:26:06 +0100
+Message-Id: <20190418172611.21561-3-julien.grall@arm.com>
+X-Mailer: git-send-email 2.11.0
+In-Reply-To: <20190418172611.21561-1-julien.grall@arm.com>
+References: <20190418172611.21561-1-julien.grall@arm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Tom Zanussi <tom.zanussi@linux.intel.com>
+On RT, the function iommu_dma_map_msi_msg may be called from
+non-preemptible context. This will lead to a splat with
+CONFIG_DEBUG_ATOMIC_SLEEP as the function is using spin_lock
+(they can sleep on RT).
 
-Hi Steve,
+The function iommu_dma_map_msi_msg is used to map the MSI page in the
+IOMMU PT and update the MSI message with the IOVA.
 
-Here's a fix for a problem I found with the hist trigger snapshot
-action related to the refactoring in the later versions of the
-patchset ('[PATCH 3/3] tracing: Add a check_val() check before updating
-cond_snapshot() track_val').
+Only the part to lookup for the MSI page requires to be called in
+preemptible context. As the MSI page cannot change over the lifecycle
+of the MSI interrupt, the lookup can be cached and re-used later on.
 
-I also added v2 of 2 other patches that I previously submitted [1] but
-realized hadn't gotten picked up. ('[PATCH v2 1/3] tracing: Prevent
-hist_field_var_ref() from accessing NULL tracing_map_elts' and '[PATCH
-v2 2/3] tracing: Check keys for variable references in expressions
-too').
+This patch split the function iommu_dma_map_msi_msg in two new
+functions:
+    - iommu_dma_prepare_msi: This function will prepare the mapping in
+    the IOMMU and store the cookie in the structure msi_desc. This
+    function should be called in preemptible context.
+    - iommu_dma_compose_msi_msg: This function will update the MSI
+    message with the IOVA when the device is behind an IOMMU.
 
-One of them I had to rebase ('[PATCH v2 2/3] tracing: Check keys for
-variable references in expressions too') because of the error_log
-changes since then, but the original ones still apply to versions
-before that).
+Signed-off-by: Julien Grall <julien.grall@arm.com>
+---
+ drivers/iommu/dma-iommu.c | 43 ++++++++++++++++++++++++++++++++-----------
+ include/linux/dma-iommu.h | 21 +++++++++++++++++++++
+ 2 files changed, 53 insertions(+), 11 deletions(-)
 
-So in summary, all of these patches apply to current ftrace/core,
-while only '[PATCH 3/3] tracing: Add a check_val() check before
-updating cond_snapshot() track_val' and the previous 2 original
-patches in [1] apply to mainline.
-
-Thanks,
-
-Tom
-
-[1] https://lore.kernel.org/lkml/cover.1541687121.git.tom.zanussi@linux.intel.com/
-
-The following changes since commit c8faaa4c594f55ddf903d61180029a3ea1da5286:
-
-  rcu: validate arguments for rcu tracepoints (2019-04-03 08:26:38 -0400)
-
-are available in the git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/zanussi/linux-trace.git ftrace/key-ref-fix-v2
-
-Tom Zanussi (3):
-  tracing: Prevent hist_field_var_ref() from accessing NULL
-    tracing_map_elts
-  tracing: Check keys for variable references in expressions too
-  tracing: Add a check_val() check before updating cond_snapshot()
-    track_val
-
- kernel/trace/trace_events_hist.c | 13 +++++++++++--
- 1 file changed, 11 insertions(+), 2 deletions(-)
-
+diff --git a/drivers/iommu/dma-iommu.c b/drivers/iommu/dma-iommu.c
+index 77aabe637a60..f5c1f1685095 100644
+--- a/drivers/iommu/dma-iommu.c
++++ b/drivers/iommu/dma-iommu.c
+@@ -888,17 +888,17 @@ static struct iommu_dma_msi_page *iommu_dma_get_msi_page(struct device *dev,
+ 	return NULL;
+ }
+ 
+-void iommu_dma_map_msi_msg(int irq, struct msi_msg *msg)
++int iommu_dma_prepare_msi(struct msi_desc *desc, phys_addr_t msi_addr)
+ {
+-	struct device *dev = msi_desc_to_dev(irq_get_msi_desc(irq));
++	struct device *dev = msi_desc_to_dev(desc);
+ 	struct iommu_domain *domain = iommu_get_domain_for_dev(dev);
+ 	struct iommu_dma_cookie *cookie;
+-	struct iommu_dma_msi_page *msi_page;
+-	phys_addr_t msi_addr = (u64)msg->address_hi << 32 | msg->address_lo;
+ 	unsigned long flags;
+ 
+-	if (!domain || !domain->iova_cookie)
+-		return;
++	if (!domain || !domain->iova_cookie) {
++		desc->iommu_cookie = NULL;
++		return 0;
++	}
+ 
+ 	cookie = domain->iova_cookie;
+ 
+@@ -908,10 +908,33 @@ void iommu_dma_map_msi_msg(int irq, struct msi_msg *msg)
+ 	 * of an MSI from within an IPI handler.
+ 	 */
+ 	spin_lock_irqsave(&cookie->msi_lock, flags);
+-	msi_page = iommu_dma_get_msi_page(dev, msi_addr, domain);
++	desc->iommu_cookie = iommu_dma_get_msi_page(dev, msi_addr, domain);
+ 	spin_unlock_irqrestore(&cookie->msi_lock, flags);
+ 
+-	if (WARN_ON(!msi_page)) {
++	return (desc->iommu_cookie) ? 0 : -ENOMEM;
++}
++
++void iommu_dma_compose_msi_msg(int irq, struct msi_msg *msg)
++{
++	struct msi_desc *desc = irq_get_msi_desc(irq);
++	struct device *dev = msi_desc_to_dev(desc);
++	const struct iommu_domain *domain = iommu_get_domain_for_dev(dev);
++	const struct iommu_dma_msi_page *msi_page = desc->iommu_cookie;
++
++	if (!domain || !domain->iova_cookie || WARN_ON(!msi_page))
++		return;
++
++	msg->address_hi = upper_32_bits(msi_page->iova);
++	msg->address_lo &= cookie_msi_granule(domain->iova_cookie) - 1;
++	msg->address_lo += lower_32_bits(msi_page->iova);
++}
++
++void iommu_dma_map_msi_msg(int irq, struct msi_msg *msg)
++{
++	struct msi_desc *desc = irq_get_msi_desc(irq);
++	phys_addr_t msi_addr = (u64)msg->address_hi << 32 | msg->address_lo;
++
++	if (WARN_ON(iommu_dma_prepare_msi(desc, msi_addr))) {
+ 		/*
+ 		 * We're called from a void callback, so the best we can do is
+ 		 * 'fail' by filling the message with obviously bogus values.
+@@ -922,8 +945,6 @@ void iommu_dma_map_msi_msg(int irq, struct msi_msg *msg)
+ 		msg->address_lo = ~0U;
+ 		msg->data = ~0U;
+ 	} else {
+-		msg->address_hi = upper_32_bits(msi_page->iova);
+-		msg->address_lo &= cookie_msi_granule(cookie) - 1;
+-		msg->address_lo += lower_32_bits(msi_page->iova);
++		iommu_dma_compose_msi_msg(irq, msg);
+ 	}
+ }
+diff --git a/include/linux/dma-iommu.h b/include/linux/dma-iommu.h
+index e760dc5d1fa8..2f4b2c2cc859 100644
+--- a/include/linux/dma-iommu.h
++++ b/include/linux/dma-iommu.h
+@@ -71,12 +71,23 @@ void iommu_dma_unmap_resource(struct device *dev, dma_addr_t handle,
+ 		size_t size, enum dma_data_direction dir, unsigned long attrs);
+ 
+ /* The DMA API isn't _quite_ the whole story, though... */
++/*
++ * Map the MSI page in the IOMMU device and store it in @desc
++ *
++ * Return 0 if succeeded other an error if the preparation has failed.
++ */
++int iommu_dma_prepare_msi(struct msi_desc *desc, phys_addr_t msi_addr);
++
++/* Update the MSI message if required. */
++void iommu_dma_compose_msi_msg(int irq, struct msi_msg *msg);
++
+ void iommu_dma_map_msi_msg(int irq, struct msi_msg *msg);
+ void iommu_dma_get_resv_regions(struct device *dev, struct list_head *list);
+ 
+ #else
+ 
+ struct iommu_domain;
++struct msi_desc;
+ struct msi_msg;
+ struct device;
+ 
+@@ -99,6 +110,16 @@ static inline void iommu_put_dma_cookie(struct iommu_domain *domain)
+ {
+ }
+ 
++static inline int iommu_dma_prepare_msi(struct msi_desc *desc,
++					phys_addr_t msi_addr)
++{
++	return 0;
++}
++
++static inline void iommu_dma_compose_msi_msg(int irq, struct msi_msg *msg)
++{
++}
++
+ static inline void iommu_dma_map_msi_msg(int irq, struct msi_msg *msg)
+ {
+ }
 -- 
-2.14.1
+2.11.0
 
