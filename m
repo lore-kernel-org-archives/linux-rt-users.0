@@ -2,171 +2,115 @@ Return-Path: <SRS0=0+XQ=SZ=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_PASS,URIBL_BLOCKED
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-1.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5D0FBC10F14
-	for <linux-rt-users@archiver.kernel.org>; Tue, 23 Apr 2019 13:42:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 358B6C10F03
+	for <linux-rt-users@archiver.kernel.org>; Tue, 23 Apr 2019 21:56:27 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 32D5B20693
-	for <linux-rt-users@archiver.kernel.org>; Tue, 23 Apr 2019 13:42:37 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 060E7218D2
+	for <linux-rt-users@archiver.kernel.org>; Tue, 23 Apr 2019 21:56:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727666AbfDWNm0 (ORCPT
+        id S1726665AbfDWV40 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 23 Apr 2019 09:42:26 -0400
-Received: from usa-sjc-mx-foss1.foss.arm.com ([217.140.101.70]:56478 "EHLO
-        foss.arm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726659AbfDWNm0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 23 Apr 2019 09:42:26 -0400
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.72.51.249])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 73B48A78;
-        Tue, 23 Apr 2019 06:42:25 -0700 (PDT)
-Received: from [10.1.196.92] (usa-sjc-imap-foss1.foss.arm.com [10.72.51.249])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 483363F238;
-        Tue, 23 Apr 2019 06:42:20 -0700 (PDT)
-Subject: Re: [PATCH 1/7] genirq/msi: Add a new field in msi_desc to store an
- IOMMU cookie
-To:     Robin Murphy <robin.murphy@arm.com>,
-        Julien Grall <julien.grall@arm.com>,
-        linux-kernel@vger.kernel.org, iommu@lists.linux-foundation.org
-Cc:     logang@deltatee.com, douliyangs@gmail.com,
-        miquel.raynal@bootlin.com, jason@lakedaemon.net,
-        tglx@linutronix.de, joro@8bytes.org, bigeasy@linutronix.de,
-        linux-rt-users@vger.kernel.org
-References: <20190418172611.21561-1-julien.grall@arm.com>
- <20190418172611.21561-2-julien.grall@arm.com>
- <7e77331c-4adf-5bb4-0c23-4d01a6ac5ab4@arm.com>
- <1bcdb72f-2116-756b-b74d-a48f89870782@arm.com>
- <48d14d10-0484-a7dd-cd84-a933158906ff@arm.com>
- <468df11c-fe2a-2584-7306-185531653331@arm.com>
-From:   Marc Zyngier <marc.zyngier@arm.com>
-Openpgp: preference=signencrypt
-Autocrypt: addr=marc.zyngier@arm.com; prefer-encrypt=mutual; keydata=
- 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
-Organization: ARM Ltd
-Message-ID: <6e9fb7c6-ca24-8790-967e-6e01cb6f81da@arm.com>
-Date:   Tue, 23 Apr 2019 14:42:17 +0100
-User-Agent: Mozilla/5.0 (X11; Linux aarch64; rv:60.0) Gecko/20100101
- Thunderbird/60.6.1
+        Tue, 23 Apr 2019 17:56:26 -0400
+Received: from mx1.redhat.com ([209.132.183.28]:33360 "EHLO mx1.redhat.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726029AbfDWV40 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 23 Apr 2019 17:56:26 -0400
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mx1.redhat.com (Postfix) with ESMTPS id E27F030ADBAB;
+        Tue, 23 Apr 2019 21:56:25 +0000 (UTC)
+Received: from ovpn-117-112.phx2.redhat.com (ovpn-117-112.phx2.redhat.com [10.3.117.112])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 82CE25C1B5;
+        Tue, 23 Apr 2019 21:56:25 +0000 (UTC)
+Message-ID: <91d59e3f2074265c834b9a7ea48a7b41292fc9f8.camel@redhat.com>
+Subject: kmsg_dump() sleeping while atomic
+From:   Scott Wood <swood@redhat.com>
+To:     John Ogness <john.ogness@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     linux-rt-users@vger.kernel.org
+Date:   Tue, 23 Apr 2019 16:56:25 -0500
+Organization: Red Hat
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.30.5 (3.30.5-1.fc29) 
 MIME-Version: 1.0
-In-Reply-To: <468df11c-fe2a-2584-7306-185531653331@arm.com>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
 Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Greylist: Sender IP whitelisted, not delayed by milter-greylist-4.5.16 (mx1.redhat.com [10.5.110.47]); Tue, 23 Apr 2019 21:56:25 +0000 (UTC)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 23/04/2019 14:19, Robin Murphy wrote:
-> On 23/04/2019 12:46, Marc Zyngier wrote:
->> On 23/04/2019 11:51, Julien Grall wrote:
->>> On 4/23/19 11:23 AM, Marc Zyngier wrote:
->>>> Hi Julien,
->>>
->>> Hi Marc,
->>>
->>>> On 18/04/2019 18:26, Julien Grall wrote:
->>>>> When an MSI doorbell is located downstream of an IOMMU, it is required
->>>>> to swizzle the physical address with an appropriately-mapped IOVA for any
->>>>> device attached to one of our DMA ops domain.
->>>>>
->>>>> At the moment, the allocation of the mapping may be done when composing
->>>>> the message. However, the composing may be done in non-preemtible
->>>>> context while the allocation requires to be called from preemptible
->>>>> context.
->>>>>
->>>>> A follow-up patch will split the current logic in two functions
->>>>> requiring to keep an IOMMU cookie per MSI.
->>>>>
->>>>> This patch introduces a new field in msi_desc to store an IOMMU cookie
->>>>> when CONFIG_IOMMU_DMA is selected.
->>>>>
->>>>> Signed-off-by: Julien Grall <julien.grall@arm.com>
->>>>> ---
->>>>>    include/linux/msi.h | 3 +++
->>>>>    1 file changed, 3 insertions(+)
->>>>>
->>>>> diff --git a/include/linux/msi.h b/include/linux/msi.h
->>>>> index 7e9b81c3b50d..d7907feef1bb 100644
->>>>> --- a/include/linux/msi.h
->>>>> +++ b/include/linux/msi.h
->>>>> @@ -77,6 +77,9 @@ struct msi_desc {
->>>>>    	struct device			*dev;
->>>>>    	struct msi_msg			msg;
->>>>>    	struct irq_affinity_desc	*affinity;
->>>>> +#ifdef CONFIG_IOMMU_DMA
->>>>> +	const void			*iommu_cookie;
->>>>> +#endif
->>>>>    
->>>>>    	union {
->>>>>    		/* PCI MSI/X specific data */
->>>>>
->>>>
->>>> Given that this is the only member in this structure that is dependent
->>>> on a config option, you could also add a couple of accessors that would
->>>> do nothing when IOMMU_DMA is not selected (and use that in the DMA code).
->>>
->>> I haven't seen any use of the helpers so far because the DMA code is
->>> also protected by IOMMU_DMA.
->>>
->>> I can add the helpers in the next version if you see any use outside of
->>> the DMA code.
->>
->> There may not be any user user yet, but I'd surely like to see the
->> accessors. This isn't very different from the stub functions you add in
->> patch #2.
-> 
-> If you foresee this being useful in general, do you reckon it would be 
-> worth decoupling it under its own irqchip-layer Kconfig which can then 
-> be selected by IOMMU_DMA?
+I got an oops on v5.0.7-rt5 (due to kexec code not properly checking for
+disabled EFI, patch coming) and after the primary oops, I got this:
 
-I think that'd be a useful thing to do, as most architectures do not
-require this dynamic mapping of MSIs.
+[  111.575331] 055: BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:2004
+[  111.584457] 055: in_atomic(): 0, irqs_disabled(): 1, pid: 13289, name: kexec
+[  111.591502] 055: INFO: lockdep is turned off.
+[  111.595862] 055: irq event stamp: 481304
+[  111.599786] 055: hardirqs last  enabled at (481303): [<ffffffff811853b0>] ktime_get_coarse_real_ts64+0x60/0xc0
+[  111.609779] 055: hardirqs last disabled at (481304): [<ffffffff81001ea1>] trace_hardirqs_off_thunk+0x1a/0x1c
+[  111.619599] 055: softirqs last  enabled at (0): [<ffffffff810d13e3>] copy_process.part.30+0x833/0x2680
+[  111.628900] 055: softirqs last disabled at (0): [<0000000000000000>]           (null)
+[  111.636723] 055: CPU: 55 PID: 13289 Comm: kexec Tainted: G      D     E     5.0.7-rt5+ #3
+[  111.644896] 055: Hardware name: Intel Corporation S2600BT/S2600BT, BIOS SE5C620.86B.01.00.0763.022420181017 02/24/2018
+[  111.655582] 055: Call Trace:
+[  111.658468] 055:  dump_stack+0x5e/0x8b
+[  111.662223] 055:  ___might_sleep+0x177/0x1e0
+[  111.666494] 055:  __rt_mutex_lock_state+0x1f/0x80
+[  111.671202] 055:  kmsg_dump+0x88/0x160
+[  111.674951] 055:  ? kmsg_dump+0x1f/0x160
+[  111.678880] 055:  oops_end+0x59/0xd0
+[  111.682459] 055:  no_context+0x185/0x540
+[  111.686383] 055:  ? __do_page_fault+0x1da/0x530
+[  111.690918] 055:  do_page_fault+0x2d/0x290
+[  111.695017] 055:  page_fault+0x1e/0x30
+[  111.698769] 055: RIP: 0010:          (null)
+[  111.702956] 055: Code: Bad RIP value.
+[  111.706618] 055: RSP: 0018:ffffc900754d3ea8 EFLAGS: 00010246
+[  111.712278] 055: 
+[  111.714213] 055: RAX: 0000000000000000 RBX: 0000000000000001 RCX: ffffc900754d3eb8
+[  111.721777] 055: RDX: 0000000000000000 RSI: ffffc900754d3ec0 RDI: ffffc900754d3ed2
+[  111.729342] 055: RBP: ffffc900754d3ef8 R08: ffffc900754d3eb7 R09: 0000000000000000
+[  111.736910] 055: R10: 0000000000000000 R11: 0000000000000005 R12: 0000000000e84950
+[  111.744476] 055: R13: 0000000037f54730 R14: 0000000000000000 R15: 0000000000000000
+[  111.752045] 055:  ? arch_ima_get_secureboot+0x11e/0x190
+[  111.757269] 055:  ? selinux_kernel_read_file+0x20/0x20
+[  111.762406] 055:  ? ima_load_data+0x46/0xa0
+[  111.766593] 055:  ? __x64_sys_kexec_load+0x44/0xd0
+[  111.771384] 055:  ? do_syscall_64+0x5a/0x260
+[  111.775657] 055:  ? entry_SYSCALL_64_after_hwframe+0x49/0xbe
+[  111.791742] 055: RIP: 0010:          (null)
+[  111.795930] 055: Code: Bad RIP value.
+[  111.799595] 055: RSP: 0018:ffffc900754d3ea8 EFLAGS: 00010246
+[  111.805254] 055: 
+[  111.807185] 055: RAX: 0000000000000000 RBX: 0000000000000001 RCX: ffffc900754d3eb8
+[  111.814750] 055: RDX: 0000000000000000 RSI: ffffc900754d3ec0 RDI: ffffc900754d3ed2
+[  111.822309] 055: RBP: ffffc900754d3ef8 R08: ffffc900754d3eb7 R09: 0000000000000000
+[  111.829873] 055: R10: 0000000000000000 R11: 0000000000000005 R12: 0000000000e84950
+[  111.837440] 055: R13: 0000000037f54730 R14: 0000000000000000 R15: 0000000000000000
+[  111.845008] 055: FS:  00007fe31bffa740(0000) GS:ffff8897de200000(0000) knlGS:0000000000000000
+[  111.853525] 055: CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[  111.859704] 055: CR2: ffffffffffffffd6 CR3: 00000017d47da004 CR4: 00000000007606e0
+[  111.867272] 055: DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[  111.874837] 055: DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+[  111.882401] 055: PKRU: 55555554
+[  111.885540] 055: Kernel panic - not syncing: Fatal exception
+[  111.891314] 055: Kernel Offset: disabled
 
-Thanks,
+...plus a bunch of "unexpected reschedule of offline CPU" messages.
 
-	M.
--- 
-Jazz is not dead. It just smells funny...
+kmsg_dump() calls kmsg_dump_rewind(), which calls mutex_lock().  This would
+be broken even on non-RT.
+
+It's not clear what kmsg_dump_lock is even supposed to be protecting --
+kmsg_dump_get_buffer() does not take the lock, and the only caller to the
+locked version of kmsg_dump_get_line() is in arch/um/kernel/kmsg_dump.c.
+
+-Scott
+
+
