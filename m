@@ -6,25 +6,25 @@ X-Spam-Status: No, score=-9.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_PASS,USER_AGENT_GIT
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 36BBEC43219
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CCDBBC04AA6
 	for <linux-rt-users@archiver.kernel.org>; Mon, 29 Apr 2019 14:45:54 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 138B920656
+	by mail.kernel.org (Postfix) with ESMTP id A923020656
 	for <linux-rt-users@archiver.kernel.org>; Mon, 29 Apr 2019 14:45:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728465AbfD2Oot (ORCPT
+        id S1728451AbfD2Ooo (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 29 Apr 2019 10:44:49 -0400
-Received: from usa-sjc-mx-foss1.foss.arm.com ([217.140.101.70]:59004 "EHLO
+        Mon, 29 Apr 2019 10:44:44 -0400
+Received: from usa-sjc-mx-foss1.foss.arm.com ([217.140.101.70]:58962 "EHLO
         foss.arm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728258AbfD2Oos (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 29 Apr 2019 10:44:48 -0400
+        id S1728440AbfD2Oon (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 29 Apr 2019 10:44:43 -0400
 Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.72.51.249])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 0A16DEBD;
-        Mon, 29 Apr 2019 07:44:48 -0700 (PDT)
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id D4877165C;
+        Mon, 29 Apr 2019 07:44:42 -0700 (PDT)
 Received: from e108454-lin.cambridge.arm.com (e108454-lin.cambridge.arm.com [10.1.196.50])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id AF5473F5C1;
-        Mon, 29 Apr 2019 07:44:45 -0700 (PDT)
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 855483F5C1;
+        Mon, 29 Apr 2019 07:44:40 -0700 (PDT)
 From:   Julien Grall <julien.grall@arm.com>
 To:     linux-kernel@vger.kernel.org, iommu@lists.linux-foundation.org
 Cc:     logang@deltatee.com, douliyangs@gmail.com,
@@ -32,9 +32,9 @@ Cc:     logang@deltatee.com, douliyangs@gmail.com,
         jason@lakedaemon.net, tglx@linutronix.de, joro@8bytes.org,
         robin.murphy@arm.com, bigeasy@linutronix.de,
         linux-rt-users@vger.kernel.org, Julien Grall <julien.grall@arm.com>
-Subject: [PATCH v2 4/7] irqchip/gic-v3-its: Don't map the MSI page in its_irq_compose_msi_msg()
-Date:   Mon, 29 Apr 2019 15:44:25 +0100
-Message-Id: <20190429144428.29254-5-julien.grall@arm.com>
+Subject: [PATCH v2 2/7] iommu/dma-iommu: Split iommu_dma_map_msi_msg() in two parts
+Date:   Mon, 29 Apr 2019 15:44:23 +0100
+Message-Id: <20190429144428.29254-3-julien.grall@arm.com>
 X-Mailer: git-send-email 2.11.0
 In-Reply-To: <20190429144428.29254-1-julien.grall@arm.com>
 References: <20190429144428.29254-1-julien.grall@arm.com>
@@ -43,57 +43,175 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-its_irq_compose_msi_msg() may be called from non-preemptible context.
-However, on RT, iommu_dma_map_msi_msg requires to be called from a
-preemptible context.
+On RT, iommu_dma_map_msi_msg() may be called from non-preemptible
+context. This will lead to a splat with CONFIG_DEBUG_ATOMIC_SLEEP as
+the function is using spin_lock (they can sleep on RT).
 
-A recent change split iommu_dma_map_msi_msg() in two new functions:
-one that should be called in preemptible context, the other does
-not have any requirement.
+iommu_dma_map_msi_msg() is used to map the MSI page in the IOMMU PT
+and update the MSI message with the IOVA.
 
-The GICv3 ITS driver is reworked to avoid executing preemptible code in
-non-preemptible context. This can be achieved by preparing the MSI
-maping when allocating the MSI interrupt.
+Only the part to lookup for the MSI page requires to be called in
+preemptible context. As the MSI page cannot change over the lifecycle
+of the MSI interrupt, the lookup can be cached and re-used later on.
+
+iomma_dma_map_msi_msg() is now split in two functions:
+    - iommu_dma_prepare_msi(): This function will prepare the mapping
+    in the IOMMU and store the cookie in the structure msi_desc. This
+    function should be called in preemptible context.
+    - iommu_dma_compose_msi_msg(): This function will update the MSI
+    message with the IOVA when the device is behind an IOMMU.
 
 Signed-off-by: Julien Grall <julien.grall@arm.com>
 
 ---
     Changes in v2:
         - Rework the commit message to use imperative mood
+        - Use the MSI accessor to get/set the iommu cookie
+        - Don't use ternary on return
+        - Select CONFIG_IRQ_MSI_IOMMU
+        - Pass an msi_desc rather than the irq number
 ---
- drivers/irqchip/irq-gic-v3-its.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ drivers/iommu/Kconfig     |  1 +
+ drivers/iommu/dma-iommu.c | 47 ++++++++++++++++++++++++++++++++++++++---------
+ include/linux/dma-iommu.h | 23 +++++++++++++++++++++++
+ 3 files changed, 62 insertions(+), 9 deletions(-)
 
-diff --git a/drivers/irqchip/irq-gic-v3-its.c b/drivers/irqchip/irq-gic-v3-its.c
-index 7577755bdcf4..12ddbcfe1b1e 100644
---- a/drivers/irqchip/irq-gic-v3-its.c
-+++ b/drivers/irqchip/irq-gic-v3-its.c
-@@ -1179,7 +1179,7 @@ static void its_irq_compose_msi_msg(struct irq_data *d, struct msi_msg *msg)
- 	msg->address_hi		= upper_32_bits(addr);
- 	msg->data		= its_get_event_id(d);
+diff --git a/drivers/iommu/Kconfig b/drivers/iommu/Kconfig
+index 6f07f3b21816..eb1c8cd243f9 100644
+--- a/drivers/iommu/Kconfig
++++ b/drivers/iommu/Kconfig
+@@ -94,6 +94,7 @@ config IOMMU_DMA
+ 	bool
+ 	select IOMMU_API
+ 	select IOMMU_IOVA
++	select IRQ_MSI_IOMMU
+ 	select NEED_SG_DMA_LENGTH
  
--	iommu_dma_map_msi_msg(d->irq, msg);
-+	iommu_dma_compose_msi_msg(irq_data_get_msi_desc(d), msg);
+ config FSL_PAMU
+diff --git a/drivers/iommu/dma-iommu.c b/drivers/iommu/dma-iommu.c
+index 77aabe637a60..2309f59cefa4 100644
+--- a/drivers/iommu/dma-iommu.c
++++ b/drivers/iommu/dma-iommu.c
+@@ -888,17 +888,18 @@ static struct iommu_dma_msi_page *iommu_dma_get_msi_page(struct device *dev,
+ 	return NULL;
  }
  
- static int its_irq_set_irqchip_state(struct irq_data *d,
-@@ -2566,6 +2566,7 @@ static int its_irq_domain_alloc(struct irq_domain *domain, unsigned int virq,
+-void iommu_dma_map_msi_msg(int irq, struct msi_msg *msg)
++int iommu_dma_prepare_msi(struct msi_desc *desc, phys_addr_t msi_addr)
  {
- 	msi_alloc_info_t *info = args;
- 	struct its_device *its_dev = info->scratchpad[0].ptr;
-+	struct its_node *its = its_dev->its;
- 	irq_hw_number_t hwirq;
- 	int err;
- 	int i;
-@@ -2574,6 +2575,8 @@ static int its_irq_domain_alloc(struct irq_domain *domain, unsigned int virq,
- 	if (err)
- 		return err;
+-	struct device *dev = msi_desc_to_dev(irq_get_msi_desc(irq));
++	struct device *dev = msi_desc_to_dev(desc);
+ 	struct iommu_domain *domain = iommu_get_domain_for_dev(dev);
+ 	struct iommu_dma_cookie *cookie;
+ 	struct iommu_dma_msi_page *msi_page;
+-	phys_addr_t msi_addr = (u64)msg->address_hi << 32 | msg->address_lo;
+ 	unsigned long flags;
  
-+	err = iommu_dma_prepare_msi(info->desc, its->get_msi_base(its_dev));
+-	if (!domain || !domain->iova_cookie)
+-		return;
++	if (!domain || !domain->iova_cookie) {
++		desc->iommu_cookie = NULL;
++		return 0;
++	}
+ 
+ 	cookie = domain->iova_cookie;
+ 
+@@ -911,7 +912,37 @@ void iommu_dma_map_msi_msg(int irq, struct msi_msg *msg)
+ 	msi_page = iommu_dma_get_msi_page(dev, msi_addr, domain);
+ 	spin_unlock_irqrestore(&cookie->msi_lock, flags);
+ 
+-	if (WARN_ON(!msi_page)) {
++	msi_desc_set_iommu_cookie(desc, msi_page);
 +
- 	for (i = 0; i < nr_irqs; i++) {
- 		err = its_irq_gic_domain_alloc(domain, virq + i, hwirq + i);
- 		if (err)
++	if (!msi_page)
++		return -ENOMEM;
++	else
++		return 0;
++}
++
++void iommu_dma_compose_msi_msg(struct msi_desc *desc,
++			       struct msi_msg *msg)
++{
++	struct device *dev = msi_desc_to_dev(desc);
++	const struct iommu_domain *domain = iommu_get_domain_for_dev(dev);
++	const struct iommu_dma_msi_page *msi_page;
++
++	msi_page = msi_desc_get_iommu_cookie(desc);
++
++	if (!domain || !domain->iova_cookie || WARN_ON(!msi_page))
++		return;
++
++	msg->address_hi = upper_32_bits(msi_page->iova);
++	msg->address_lo &= cookie_msi_granule(domain->iova_cookie) - 1;
++	msg->address_lo += lower_32_bits(msi_page->iova);
++}
++
++void iommu_dma_map_msi_msg(int irq, struct msi_msg *msg)
++{
++	struct msi_desc *desc = irq_get_msi_desc(irq);
++	phys_addr_t msi_addr = (u64)msg->address_hi << 32 | msg->address_lo;
++
++	if (WARN_ON(iommu_dma_prepare_msi(desc, msi_addr))) {
+ 		/*
+ 		 * We're called from a void callback, so the best we can do is
+ 		 * 'fail' by filling the message with obviously bogus values.
+@@ -922,8 +953,6 @@ void iommu_dma_map_msi_msg(int irq, struct msi_msg *msg)
+ 		msg->address_lo = ~0U;
+ 		msg->data = ~0U;
+ 	} else {
+-		msg->address_hi = upper_32_bits(msi_page->iova);
+-		msg->address_lo &= cookie_msi_granule(cookie) - 1;
+-		msg->address_lo += lower_32_bits(msi_page->iova);
++		iommu_dma_compose_msi_msg(desc, msg);
+ 	}
+ }
+diff --git a/include/linux/dma-iommu.h b/include/linux/dma-iommu.h
+index e760dc5d1fa8..3fc48fbd6f63 100644
+--- a/include/linux/dma-iommu.h
++++ b/include/linux/dma-iommu.h
+@@ -71,12 +71,24 @@ void iommu_dma_unmap_resource(struct device *dev, dma_addr_t handle,
+ 		size_t size, enum dma_data_direction dir, unsigned long attrs);
+ 
+ /* The DMA API isn't _quite_ the whole story, though... */
++/*
++ * Map the MSI page in the IOMMU device and store it in @desc
++ *
++ * Return 0 if succeeded other an error if the preparation has failed.
++ */
++int iommu_dma_prepare_msi(struct msi_desc *desc, phys_addr_t msi_addr);
++
++/* Update the MSI message if required. */
++void iommu_dma_compose_msi_msg(struct msi_desc *desc,
++			       struct msi_msg *msg);
++
+ void iommu_dma_map_msi_msg(int irq, struct msi_msg *msg);
+ void iommu_dma_get_resv_regions(struct device *dev, struct list_head *list);
+ 
+ #else
+ 
+ struct iommu_domain;
++struct msi_desc;
+ struct msi_msg;
+ struct device;
+ 
+@@ -99,6 +111,17 @@ static inline void iommu_put_dma_cookie(struct iommu_domain *domain)
+ {
+ }
+ 
++static inline int iommu_dma_prepare_msi(struct msi_desc *desc,
++					phys_addr_t msi_addr)
++{
++	return 0;
++}
++
++static inline void iommu_dma_compose_msi_msg(struct msi_desc *desc,
++					     struct msi_msg *msg)
++{
++}
++
+ static inline void iommu_dma_map_msi_msg(int irq, struct msi_msg *msg)
+ {
+ }
 -- 
 2.11.0
 
