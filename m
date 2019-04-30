@@ -2,235 +2,101 @@ Return-Path: <SRS0=4n46=TA=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.3 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_PASS,USER_AGENT_MUTT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E177DC43219
-	for <linux-rt-users@archiver.kernel.org>; Tue, 30 Apr 2019 12:54:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A4A73C04AA8
+	for <linux-rt-users@archiver.kernel.org>; Tue, 30 Apr 2019 13:28:20 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id B1C3421670
-	for <linux-rt-users@archiver.kernel.org>; Tue, 30 Apr 2019 12:54:24 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 783C221707
+	for <linux-rt-users@archiver.kernel.org>; Tue, 30 Apr 2019 13:28:20 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="P3r2ENEM"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728014AbfD3MyT (ORCPT
+        id S1727722AbfD3N2U (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 30 Apr 2019 08:54:19 -0400
-Received: from mx1.redhat.com ([209.132.183.28]:56438 "EHLO mx1.redhat.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726166AbfD3MyT (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 30 Apr 2019 08:54:19 -0400
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mx1.redhat.com (Postfix) with ESMTPS id 5C632307D983;
-        Tue, 30 Apr 2019 12:54:18 +0000 (UTC)
-Received: from [10.36.116.17] (ovpn-116-17.ams2.redhat.com [10.36.116.17])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id B118010027C6;
-        Tue, 30 Apr 2019 12:54:14 +0000 (UTC)
-Subject: Re: [PATCH v2 2/7] iommu/dma-iommu: Split iommu_dma_map_msi_msg() in
- two parts
-To:     Julien Grall <julien.grall@arm.com>, linux-kernel@vger.kernel.org,
-        iommu@lists.linux-foundation.org
-Cc:     jason@lakedaemon.net, douliyangs@gmail.com, marc.zyngier@arm.com,
-        robin.murphy@arm.com, miquel.raynal@bootlin.com,
-        tglx@linutronix.de, logang@deltatee.com, bigeasy@linutronix.de,
-        linux-rt-users@vger.kernel.org
-References: <20190429144428.29254-1-julien.grall@arm.com>
- <20190429144428.29254-3-julien.grall@arm.com>
-From:   Auger Eric <eric.auger@redhat.com>
-Message-ID: <a2c7f623-2ea6-3ea2-b3a9-de8b72035407@redhat.com>
-Date:   Tue, 30 Apr 2019 14:54:12 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101
- Thunderbird/60.4.0
+        Tue, 30 Apr 2019 09:28:20 -0400
+Received: from bombadil.infradead.org ([198.137.202.133]:51884 "EHLO
+        bombadil.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728070AbfD3N2T (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 30 Apr 2019 09:28:19 -0400
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=bombadil.20170209; h=In-Reply-To:Content-Transfer-Encoding
+        :Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:
+        Sender:Reply-To:Content-ID:Content-Description:Resent-Date:Resent-From:
+        Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:
+        List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+        bh=0bPBTOFNpBp2MO1fCvxuKfo2LNvgc2kNTbVrh41nb/I=; b=P3r2ENEMQBBV468eKrU5YkCBr1
+        kuHidJF1508MoW/ySd8CpyQEMlo7WHC1mrvtiYHJw7SOvrumBDz+tX3jrJ19NliRlMUqTqlJKiZ/j
+        TYFRT60gFbWn3avmhd1/RY0xUOpylbCHBNv7Oa6kYvur3xy3mbD/RB9rPDoErFkkYvXVcX90m/q7z
+        yd3C6d4uVjIJFok1CSIUm0pcm5k8KDvq9hyXDVE6RtfbmWd15bRvxtZRPxc0a89aVLeZ1AX6zeKqi
+        4tVR0Ra+f73OJTL6l2Oc0PDr26TJdnMi2Tyv8DIFdwYaXippoWByBJ/Tjfdc34eceXIriWgBNtLSM
+        6OClJymw==;
+Received: from j217100.upc-j.chello.nl ([24.132.217.100] helo=hirez.programming.kicks-ass.net)
+        by bombadil.infradead.org with esmtpsa (Exim 4.90_1 #2 (Red Hat Linux))
+        id 1hLSnu-0004h1-EJ; Tue, 30 Apr 2019 13:28:14 +0000
+Received: by hirez.programming.kicks-ass.net (Postfix, from userid 1000)
+        id 0888C236F9E80; Tue, 30 Apr 2019 15:28:12 +0200 (CEST)
+Date:   Tue, 30 Apr 2019 15:28:11 +0200
+From:   Peter Zijlstra <peterz@infradead.org>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Clark Williams <williams@redhat.com>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Oleg Nesterov <oleg@redhat.com>, jack@suse.com
+Subject: Re: [RT WARNING] DEBUG_LOCKS_WARN_ON(rt_mutex_owner(lock) !=
+ current) with fsfreeze (4.19.25-rt16)
+Message-ID: <20190430132811.GB2589@hirez.programming.kicks-ass.net>
+References: <20190326093421.GA29508@localhost.localdomain>
+ <20190419085627.GI4742@localhost.localdomain>
+ <20190430125130.uw7mhdnsoqr2v3gf@linutronix.de>
 MIME-Version: 1.0
-In-Reply-To: <20190429144428.29254-3-julien.grall@arm.com>
 Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
-X-Greylist: Sender IP whitelisted, not delayed by milter-greylist-4.5.16 (mx1.redhat.com [10.5.110.48]); Tue, 30 Apr 2019 12:54:18 +0000 (UTC)
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <20190430125130.uw7mhdnsoqr2v3gf@linutronix.de>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hu Julien,
+On Tue, Apr 30, 2019 at 02:51:31PM +0200, Sebastian Andrzej Siewior wrote:
+> On 2019-04-19 10:56:27 [+0200], Juri Lelli wrote:
+> > On 26/03/19 10:34, Juri Lelli wrote:
+> > > Hi,
+> > > 
+> > > Running this reproducer on a 4.19.25-rt16 kernel (with lock debugging
+> > > turned on) produces warning below.
+> > 
+> > And I now think this might lead to an actual crash.
+> 
+> Peter, could you please take a look at the thread:
+>   https://lkml.kernel.org/r/20190419085627.GI4742@localhost.localdomain
+> 
+> I assumed that returning to userland with acquired locks is something we
+> did not want…
 
-On 4/29/19 4:44 PM, Julien Grall wrote:
-> On RT, iommu_dma_map_msi_msg() may be called from non-preemptible
-> context. This will lead to a splat with CONFIG_DEBUG_ATOMIC_SLEEP as
-> the function is using spin_lock (they can sleep on RT).
-> 
-> iommu_dma_map_msi_msg() is used to map the MSI page in the IOMMU PT
-> and update the MSI message with the IOVA.
-> 
-> Only the part to lookup for the MSI page requires to be called in
-> preemptible context. As the MSI page cannot change over the lifecycle
-> of the MSI interrupt, the lookup can be cached and re-used later on.
-> 
-> iomma_dma_map_msi_msg() is now split in two functions:
->     - iommu_dma_prepare_msi(): This function will prepare the mapping
->     in the IOMMU and store the cookie in the structure msi_desc. This
->     function should be called in preemptible context.
->     - iommu_dma_compose_msi_msg(): This function will update the MSI
->     message with the IOVA when the device is behind an IOMMU.
-> 
-> Signed-off-by: Julien Grall <julien.grall@arm.com>
-Besides other's comments,
+Yeah, but AFAIK fs freezing code has a history of doing exactly that..
+This is just the latest incarnation here.
 
-Reviewed-by: Eric Auger <eric.auger@redhat.com>
+So the immediate problem here is that the task doing thaw isn't the same
+that did freeze, right? The thing is, I'm not seeing how that isn't a
+problem with upstream either.
 
-Thanks
+The freeze code seems to do: percpu_down_write() for the various states,
+and then frobs lockdep state.
 
-Eric
-> 
-> ---
->     Changes in v2:
->         - Rework the commit message to use imperative mood
->         - Use the MSI accessor to get/set the iommu cookie
->         - Don't use ternary on return
->         - Select CONFIG_IRQ_MSI_IOMMU
->         - Pass an msi_desc rather than the irq number
-> ---
->  drivers/iommu/Kconfig     |  1 +
->  drivers/iommu/dma-iommu.c | 47 ++++++++++++++++++++++++++++++++++++++---------
->  include/linux/dma-iommu.h | 23 +++++++++++++++++++++++
->  3 files changed, 62 insertions(+), 9 deletions(-)
-> 
-> diff --git a/drivers/iommu/Kconfig b/drivers/iommu/Kconfig
-> index 6f07f3b21816..eb1c8cd243f9 100644
-> --- a/drivers/iommu/Kconfig
-> +++ b/drivers/iommu/Kconfig
-> @@ -94,6 +94,7 @@ config IOMMU_DMA
->  	bool
->  	select IOMMU_API
->  	select IOMMU_IOVA
-> +	select IRQ_MSI_IOMMU
->  	select NEED_SG_DMA_LENGTH
->  
->  config FSL_PAMU
-> diff --git a/drivers/iommu/dma-iommu.c b/drivers/iommu/dma-iommu.c
-> index 77aabe637a60..2309f59cefa4 100644
-> --- a/drivers/iommu/dma-iommu.c
-> +++ b/drivers/iommu/dma-iommu.c
-> @@ -888,17 +888,18 @@ static struct iommu_dma_msi_page *iommu_dma_get_msi_page(struct device *dev,
->  	return NULL;
->  }
->  
-> -void iommu_dma_map_msi_msg(int irq, struct msi_msg *msg)
-> +int iommu_dma_prepare_msi(struct msi_desc *desc, phys_addr_t msi_addr)
->  {
-> -	struct device *dev = msi_desc_to_dev(irq_get_msi_desc(irq));
-> +	struct device *dev = msi_desc_to_dev(desc);
->  	struct iommu_domain *domain = iommu_get_domain_for_dev(dev);
->  	struct iommu_dma_cookie *cookie;
->  	struct iommu_dma_msi_page *msi_page;
-> -	phys_addr_t msi_addr = (u64)msg->address_hi << 32 | msg->address_lo;
->  	unsigned long flags;
->  
-> -	if (!domain || !domain->iova_cookie)
-> -		return;
-> +	if (!domain || !domain->iova_cookie) {
-> +		desc->iommu_cookie = NULL;
-> +		return 0;
-> +	}
->  
->  	cookie = domain->iova_cookie;
->  
-> @@ -911,7 +912,37 @@ void iommu_dma_map_msi_msg(int irq, struct msi_msg *msg)
->  	msi_page = iommu_dma_get_msi_page(dev, msi_addr, domain);
->  	spin_unlock_irqrestore(&cookie->msi_lock, flags);
->  
-> -	if (WARN_ON(!msi_page)) {
-> +	msi_desc_set_iommu_cookie(desc, msi_page);
-> +
-> +	if (!msi_page)
-> +		return -ENOMEM;
-> +	else
-> +		return 0;
-> +}
-> +
-> +void iommu_dma_compose_msi_msg(struct msi_desc *desc,
-> +			       struct msi_msg *msg)
-> +{
-> +	struct device *dev = msi_desc_to_dev(desc);
-> +	const struct iommu_domain *domain = iommu_get_domain_for_dev(dev);
-> +	const struct iommu_dma_msi_page *msi_page;
-> +
-> +	msi_page = msi_desc_get_iommu_cookie(desc);
-> +
-> +	if (!domain || !domain->iova_cookie || WARN_ON(!msi_page))
-> +		return;
-> +
-> +	msg->address_hi = upper_32_bits(msi_page->iova);
-> +	msg->address_lo &= cookie_msi_granule(domain->iova_cookie) - 1;
-> +	msg->address_lo += lower_32_bits(msi_page->iova);
-> +}
-> +
-> +void iommu_dma_map_msi_msg(int irq, struct msi_msg *msg)
-> +{
-> +	struct msi_desc *desc = irq_get_msi_desc(irq);
-> +	phys_addr_t msi_addr = (u64)msg->address_hi << 32 | msg->address_lo;
-> +
-> +	if (WARN_ON(iommu_dma_prepare_msi(desc, msi_addr))) {
->  		/*
->  		 * We're called from a void callback, so the best we can do is
->  		 * 'fail' by filling the message with obviously bogus values.
-> @@ -922,8 +953,6 @@ void iommu_dma_map_msi_msg(int irq, struct msi_msg *msg)
->  		msg->address_lo = ~0U;
->  		msg->data = ~0U;
->  	} else {
-> -		msg->address_hi = upper_32_bits(msi_page->iova);
-> -		msg->address_lo &= cookie_msi_granule(cookie) - 1;
-> -		msg->address_lo += lower_32_bits(msi_page->iova);
-> +		iommu_dma_compose_msi_msg(desc, msg);
->  	}
->  }
-> diff --git a/include/linux/dma-iommu.h b/include/linux/dma-iommu.h
-> index e760dc5d1fa8..3fc48fbd6f63 100644
-> --- a/include/linux/dma-iommu.h
-> +++ b/include/linux/dma-iommu.h
-> @@ -71,12 +71,24 @@ void iommu_dma_unmap_resource(struct device *dev, dma_addr_t handle,
->  		size_t size, enum dma_data_direction dir, unsigned long attrs);
->  
->  /* The DMA API isn't _quite_ the whole story, though... */
-> +/*
-> + * Map the MSI page in the IOMMU device and store it in @desc
-> + *
-> + * Return 0 if succeeded other an error if the preparation has failed.
-> + */
-> +int iommu_dma_prepare_msi(struct msi_desc *desc, phys_addr_t msi_addr);
-> +
-> +/* Update the MSI message if required. */
-> +void iommu_dma_compose_msi_msg(struct msi_desc *desc,
-> +			       struct msi_msg *msg);
-> +
->  void iommu_dma_map_msi_msg(int irq, struct msi_msg *msg);
->  void iommu_dma_get_resv_regions(struct device *dev, struct list_head *list);
->  
->  #else
->  
->  struct iommu_domain;
-> +struct msi_desc;
->  struct msi_msg;
->  struct device;
->  
-> @@ -99,6 +111,17 @@ static inline void iommu_put_dma_cookie(struct iommu_domain *domain)
->  {
->  }
->  
-> +static inline int iommu_dma_prepare_msi(struct msi_desc *desc,
-> +					phys_addr_t msi_addr)
-> +{
-> +	return 0;
-> +}
-> +
-> +static inline void iommu_dma_compose_msi_msg(struct msi_desc *desc,
-> +					     struct msi_msg *msg)
-> +{
-> +}
-> +
->  static inline void iommu_dma_map_msi_msg(int irq, struct msi_msg *msg)
->  {
->  }
-> 
+Thaw then does the reverse, frobs lockdep and then does: percpu_up_write().
+
+percpu_down_write() directly relies on down_write(), and
+percpu_up_write() on up_write(). And note how __up_write() has:
+
+	DEBUG_RWSEMS_WARN_ON(sem->owner != current, sem);
+
+So why isn't this same code coming unstuck in mainline?
