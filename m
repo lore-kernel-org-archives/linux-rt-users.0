@@ -2,84 +2,116 @@ Return-Path: <SRS0=oduH=TC=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.5 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_PASS,USER_AGENT_MUTT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.1 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_PASS,T_DKIMWL_WL_HIGH,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3F2C4C43219
-	for <linux-rt-users@archiver.kernel.org>; Thu,  2 May 2019 11:43:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DDE14C43219
+	for <linux-rt-users@archiver.kernel.org>; Thu,  2 May 2019 19:16:03 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 169692081C
-	for <linux-rt-users@archiver.kernel.org>; Thu,  2 May 2019 11:43:16 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A361220B7C
+	for <linux-rt-users@archiver.kernel.org>; Thu,  2 May 2019 19:16:03 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1556824563;
+	bh=zy/1znpb3qH9WbV7S/PVCYknNXVm9bYSk7gKgBnxCmQ=;
+	h=From:To:Subject:Date:List-ID:From;
+	b=bliHfGftXoaWpBylACBlOIA+Zvwh4F90MC13/1cwuwUvMpSMIToe3c/F062t6AMMz
+	 FBBSNwBZlxCokslDq3YwPO0GqmWMPvApkgDKTAKSQtQ3Ird3WdJPcA2ZEtBf4VZqMp
+	 2xzpfDcOTsCk5sFhYd2QIw4ccTVOUeU/b9EvSVNE=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726411AbfEBLnK (ORCPT
+        id S1726321AbfEBTQC (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 2 May 2019 07:43:10 -0400
-Received: from mx1.redhat.com ([209.132.183.28]:53490 "EHLO mx1.redhat.com"
+        Thu, 2 May 2019 15:16:02 -0400
+Received: from mail.kernel.org ([198.145.29.99]:33160 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726189AbfEBLnK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 2 May 2019 07:43:10 -0400
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        id S1725962AbfEBTQC (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 2 May 2019 15:16:02 -0400
+Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mx1.redhat.com (Postfix) with ESMTPS id 65D8089C42;
-        Thu,  2 May 2019 11:43:10 +0000 (UTC)
-Received: from dhcp-27-174.brq.redhat.com (unknown [10.43.17.159])
-        by smtp.corp.redhat.com (Postfix) with SMTP id 9F51739C1;
-        Thu,  2 May 2019 11:43:01 +0000 (UTC)
-Received: by dhcp-27-174.brq.redhat.com (nbSMTP-1.00) for uid 1000
-        oleg@redhat.com; Thu,  2 May 2019 13:43:08 +0200 (CEST)
-Date:   Thu, 2 May 2019 13:42:59 +0200
-From:   Oleg Nesterov <oleg@redhat.com>
-To:     Peter Zijlstra <peterz@infradead.org>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        by mail.kernel.org (Postfix) with ESMTPSA id E7FC72081C;
+        Thu,  2 May 2019 19:16:00 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1556824561;
+        bh=zy/1znpb3qH9WbV7S/PVCYknNXVm9bYSk7gKgBnxCmQ=;
+        h=From:To:Subject:Date:From;
+        b=cNAzpwKjrX2RNH/V9waM1B2GSTZqxh6ZE3Mmh9l24o49izD1uTEcsu6OX99GSxI9B
+         kzOcbzD3vqY+UeDQbXHgYZznfithLXSaAIdETQH7L3MltTMSxqVVF0I6d02I7oLWO+
+         PvK+nvKlQ7bP5F8FZkjnQo+sYuKyjSyTiaVvgZvo=
+From:   zanussi@kernel.org
+To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        Juri Lelli <juri.lelli@redhat.com>, jack@suse.com,
-        Waiman Long <longman@redhat.com>,
-        Davidlohr Bueso <dave@stgolabs.net>
-Subject: Re: [RT WARNING] DEBUG_LOCKS_WARN_ON(rt_mutex_owner(lock) !=
- current) with fsfreeze (4.19.25-rt16)
-Message-ID: <20190502114258.GB7323@redhat.com>
-References: <20190326093421.GA29508@localhost.localdomain>
- <20190419085627.GI4742@localhost.localdomain>
- <20190430125130.uw7mhdnsoqr2v3gf@linutronix.de>
- <20190430132811.GB2589@hirez.programming.kicks-ass.net>
- <20190501170953.GB2650@hirez.programming.kicks-ass.net>
- <20190502100932.GA7323@redhat.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20190502100932.GA7323@redhat.com>
-User-Agent: Mutt/1.5.24 (2015-08-30)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
-X-Greylist: Sender IP whitelisted, not delayed by milter-greylist-4.5.16 (mx1.redhat.com [10.5.110.27]); Thu, 02 May 2019 11:43:10 +0000 (UTC)
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Julia Cartwright <julia@ni.com>
+Subject: [PATCH RT 0/4] Linux v3.18.138-rt116-rc1
+Date:   Thu,  2 May 2019 14:15:35 -0500
+Message-Id: <cover.1556824516.git.tom.zanussi@linux.intel.com>
+X-Mailer: git-send-email 2.14.1
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 05/02, Oleg Nesterov wrote:
->
-> But this all is cosmetic, it seems that we can remove ->rw_sem altogether
-> but I am not sure...
+From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-I mean, afaics percpu_down_read() can just do
+Dear RT Folks,
 
-	wait_event(readers_block == 0);
+This is the RT stable review cycle of patch 3.18.138-rt116-rc1.
 
-in the slow path, while percpu_down_write()
+Please scream at me if I messed something up. Please test the patches
+too.
 
-	wait_even_exclusive(xchg(readers_block, 1) == 0);
+The -rc release will be uploaded to kernel.org and will be deleted
+when the final release is out. This is just a review release (or
+release candidate).
 
-we do not really need ->rw_sem if we rely on wait_queue_head.
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main
+release on 2019-05-09.
+
+To build 3.18.138-rt116-rc1 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.138.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.138-rt116-rc1.patch.xz
+
+You can also build from 3.18.138-rt115 by applying the incremental patch:
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/3.18/incr/patch-3.18.138-rt115-rt116-rc1.patch.xz
 
 
-But in fact, either way it seems that we going to implement another simple
-"non owner" read/write lock, so perhaps we should do this explicitly?
+Enjoy,
 
-Oleg.
+-- Tom
+
+
+Julien Grall (1):
+  tty/sysrq: Convert show_lock to raw_spinlock_t
+
+Sebastian Andrzej Siewior (2):
+  softirq: Avoid "local_softirq_pending" messages if ksoftirqd is
+    blocked
+  powerpc/pseries/iommu: Use a locallock instead local_irq_save()
+
+Tom Zanussi (1):
+  Linux 3.18.138-rt116-rc1
+
+ arch/powerpc/platforms/pseries/iommu.c | 16 ++++++----
+ drivers/tty/sysrq.c                    |  6 ++--
+ kernel/softirq.c                       | 57 ++++++++++++++++++++++++----------
+ localversion-rt                        |  2 +-
+ 4 files changed, 55 insertions(+), 26 deletions(-)
+
+-- 
+2.14.1
 
