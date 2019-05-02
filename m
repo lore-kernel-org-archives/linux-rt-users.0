@@ -6,46 +6,46 @@ X-Spam-Status: No, score=-9.1 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
 	DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_PASS,
 	T_DKIMWL_WL_HIGH,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 34B9FC43219
-	for <linux-rt-users@archiver.kernel.org>; Thu,  2 May 2019 19:34:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 033D0C04AAA
+	for <linux-rt-users@archiver.kernel.org>; Thu,  2 May 2019 19:34:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id EF7F92085A
-	for <linux-rt-users@archiver.kernel.org>; Thu,  2 May 2019 19:34:45 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BEFA62085A
+	for <linux-rt-users@archiver.kernel.org>; Thu,  2 May 2019 19:34:46 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
 	s=default; t=1556825686;
-	bh=PT2UNay8JQ2ngBdYleeOpIR5sTKkU+SRuTIuGeCXWA0=;
+	bh=YJ6NDJ4NbtvCPJRn3Z5cYLQmH73TgYJJAeBtmRZ8rRk=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=YUiyolJ1xjL7MXgX9QOOAbekKpzIOaO6meFDzS5kKA32d+lyoDfD/Vz6dX7JfVKM1
-	 0M3QQg6nKV8zIoTMcynOYTi5Rz1fxi/huhRzldpnvKKWfDHnnCYOYqYBRNKADiQLZq
-	 AverRJIWQRFUvKCwNgxbcjhr2iG4al6NYP3AvSCY=
+	b=LViSVPG1FpcX0D6jD+fQ6kGLV4lzHmdl/DMZW/9fFpz/ksUy/h9Gi21AkEetQCtR5
+	 RiY3PER9rOK024QjKr9zWU3TO39t8eWMTiQhvXGpYATwIZZTBePSpzqEJVKk1q9HHp
+	 IdQhqGSKNTIIQMVLS3IuR7feF2Gx5g8rlbQNDCbQ=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726387AbfEBTep (ORCPT
+        id S1726403AbfEBTeq (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 2 May 2019 15:34:45 -0400
-Received: from mail.kernel.org ([198.145.29.99]:37444 "EHLO mail.kernel.org"
+        Thu, 2 May 2019 15:34:46 -0400
+Received: from mail.kernel.org ([198.145.29.99]:37454 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726302AbfEBTeo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 2 May 2019 15:34:44 -0400
+        id S1726397AbfEBTep (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 2 May 2019 15:34:45 -0400
 Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 0E40F205F4;
-        Thu,  2 May 2019 19:34:43 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 0B2E42087F;
+        Thu,  2 May 2019 19:34:44 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1556825684;
-        bh=PT2UNay8JQ2ngBdYleeOpIR5sTKkU+SRuTIuGeCXWA0=;
+        s=default; t=1556825685;
+        bh=YJ6NDJ4NbtvCPJRn3Z5cYLQmH73TgYJJAeBtmRZ8rRk=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=dvQW0oVdQ/KLXHOcX1B6VKuoRuOWXFXh6MCudW3F4VIE2slZ4orvZSQ1kp/bZtKF4
-         aapTAEdRLyIm2tNyffhs+pGFKq6rChsp9imhgxb8FZwe7YAkA/UhDNLsWMj8L+fdlw
-         l2Ngcycmq71zO4RpsKctbuA5+ZJGm1aerslG4M94=
+        b=aS6jxLQg34Pwu97aTh7K6+ItlChukUud1Zp2+XjuxwNI2C38p8vYiJW222jBTUIRQ
+         MHKZi0IP4e2HBy9uJklclRCnTAwZOrMOwLHDS9qZuKdFhGUvn8hzCn6xLp5PrTRBkp
+         UKVQJs7AL6pgk1GK1v6r3NYW8I0dkPs/Vd8xLbcc=
 From:   Tom Zanussi <zanussi@kernel.org>
 To:     wagi@monom.org
 Cc:     linux-rt-users@vger.kernel.org
-Subject: [PATCH 09/10] announce-srt: Remove explicit v4.x from upload paths
-Date:   Thu,  2 May 2019 14:34:08 -0500
-Message-Id: <19147fc96ac212ffea86aded76ccdaaaf879bbbd.1556825097.git.tom.zanussi@linux.intel.com>
+Subject: [PATCH 10/10] announce-srt-rc: Add tarball links
+Date:   Thu,  2 May 2019 14:34:09 -0500
+Message-Id: <6c56689c9aee9a9ca965c6f6152bef4c9b24e328.1556825097.git.tom.zanussi@linux.intel.com>
 X-Mailer: git-send-email 2.14.1
 In-Reply-To: <cover.1556825097.git.tom.zanussi@linux.intel.com>
 References: <cover.1556825097.git.tom.zanussi@linux.intel.com>
@@ -58,30 +58,41 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: Tom Zanussi <tom.zanussi@linux.intel.com>
 
-Other major kernel versions are still being maintained (3.x) or will
-be soon maintained (5.x) so remove the explicit v4.x from the paths.
+There should be links in the cover letter pointing to the rc release
+tarballs just as for any other release, so add them.
+
+This also adds the -rc{new_tag_rc} suffix added by the previous patch
+in the series.
 
 Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
 ---
- announce-srt.txt | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ announce-srt-rc.txt | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
-diff --git a/announce-srt.txt b/announce-srt.txt
-index 912affe..4b0950d 100644
---- a/announce-srt.txt
-+++ b/announce-srt.txt
-@@ -16,9 +16,9 @@ You can get this release via the git tree at:
+diff --git a/announce-srt-rc.txt b/announce-srt-rc.txt
+index ca08c4c..89b69d9 100644
+--- a/announce-srt-rc.txt
++++ b/announce-srt-rc.txt
+@@ -15,6 +15,19 @@ final release is.
+ If all goes well, this patch will be converted to the next main
+ release on {release_date}.
  
- Or to build {new_version} directly, the following patches should be applied:
- 
--  https://www.kernel.org/pub/linux/kernel/v4.x/linux-{major}.{minor}.tar.xz
++To build {new_version} directly, the following patches should be applied:
++
 +  https://www.kernel.org/pub/linux/kernel/v{major}.x/linux-{major}.{minor}.tar.xz
- 
--  https://www.kernel.org/pub/linux/kernel/v4.x/patch-{major}.{minor}.{patch}.xz
++
 +  https://www.kernel.org/pub/linux/kernel/v{major}.x/patch-{major}.{minor}.{patch}.xz
++
++  https://www.kernel.org{prj_dir}/patch-{new_version}.patch.xz
++
++
++You can also build from {old_version} by applying the incremental patch:
++
++  https://www.kernel.org{prj_dir}/incr/patch-{old_version}-rt{new_tag_rt}-rc{new_tag_rc}.patch.xz
++
+ Enjoy,
  
-   https://www.kernel.org{prj_dir}/patch-{new_version}.patch.xz
- 
+ -- Daniel
 -- 
 2.14.1
 
