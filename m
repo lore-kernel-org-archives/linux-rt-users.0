@@ -2,117 +2,136 @@ Return-Path: <SRS0=pVaS=TG=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.4 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_PASS,USER_AGENT_MUTT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.9 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 34ED5C04A6B
-	for <linux-rt-users@archiver.kernel.org>; Mon,  6 May 2019 16:50:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2C234C04A6B
+	for <linux-rt-users@archiver.kernel.org>; Mon,  6 May 2019 18:43:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 1195020830
-	for <linux-rt-users@archiver.kernel.org>; Mon,  6 May 2019 16:50:26 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0360320675
+	for <linux-rt-users@archiver.kernel.org>; Mon,  6 May 2019 18:43:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726321AbfEFQuU (ORCPT
+        id S1726504AbfEFSna convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 6 May 2019 12:50:20 -0400
-Received: from mx1.redhat.com ([209.132.183.28]:32938 "EHLO mx1.redhat.com"
+        Mon, 6 May 2019 14:43:30 -0400
+Received: from mga17.intel.com ([192.55.52.151]:12507 "EHLO mga17.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725883AbfEFQuU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 6 May 2019 12:50:20 -0400
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mx1.redhat.com (Postfix) with ESMTPS id C2BB07E43D;
-        Mon,  6 May 2019 16:50:19 +0000 (UTC)
-Received: from dhcp-27-174.brq.redhat.com (unknown [10.43.17.159])
-        by smtp.corp.redhat.com (Postfix) with SMTP id B47F75EDE4;
-        Mon,  6 May 2019 16:50:10 +0000 (UTC)
-Received: by dhcp-27-174.brq.redhat.com (nbSMTP-1.00) for uid 1000
-        oleg@redhat.com; Mon,  6 May 2019 18:50:19 +0200 (CEST)
-Date:   Mon, 6 May 2019 18:50:09 +0200
-From:   Oleg Nesterov <oleg@redhat.com>
-To:     Peter Zijlstra <peterz@infradead.org>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        Juri Lelli <juri.lelli@redhat.com>, jack@suse.com,
-        Waiman Long <longman@redhat.com>,
-        Davidlohr Bueso <dave@stgolabs.net>
-Subject: Re: [RT WARNING] DEBUG_LOCKS_WARN_ON(rt_mutex_owner(lock) !=
- current) with fsfreeze (4.19.25-rt16)
-Message-ID: <20190506165009.GA28959@redhat.com>
-References: <20190326093421.GA29508@localhost.localdomain>
- <20190419085627.GI4742@localhost.localdomain>
- <20190430125130.uw7mhdnsoqr2v3gf@linutronix.de>
- <20190430132811.GB2589@hirez.programming.kicks-ass.net>
- <20190501170953.GB2650@hirez.programming.kicks-ass.net>
- <20190502100932.GA7323@redhat.com>
- <20190502114258.GB7323@redhat.com>
- <20190503145059.GC2606@hirez.programming.kicks-ass.net>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20190503145059.GC2606@hirez.programming.kicks-ass.net>
-User-Agent: Mutt/1.5.24 (2015-08-30)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
-X-Greylist: Sender IP whitelisted, not delayed by milter-greylist-4.5.16 (mx1.redhat.com [10.5.110.27]); Mon, 06 May 2019 16:50:20 +0000 (UTC)
+        id S1726280AbfEFSna (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 6 May 2019 14:43:30 -0400
+X-Amp-Result: SKIPPED(no attachment in message)
+X-Amp-File-Uploaded: False
+Received: from orsmga003.jf.intel.com ([10.7.209.27])
+  by fmsmga107.fm.intel.com with ESMTP/TLS/DHE-RSA-AES256-GCM-SHA384; 06 May 2019 11:43:29 -0700
+X-IronPort-AV: E=Sophos;i="5.60,439,1549958400"; 
+   d="scan'208";a="148910114"
+Received: from svkelley-mac10.jf.intel.com ([10.24.10.119])
+  by orsmga003-auth.jf.intel.com with ESMTP/TLS/DHE-RSA-AES256-GCM-SHA384; 06 May 2019 11:43:29 -0700
+Content-Type: text/plain;
+        charset=utf-8
+Mime-Version: 1.0 (Mac OS X Mail 12.4 \(3445.104.8\))
+Subject: Re: Real-time micro-conference proposal for Linux Plumbers 2019
+From:   Sean V Kelley <sean.v.kelley@linux.intel.com>
+In-Reply-To: <5ef34142-2b55-28ff-612d-0ec7b0c521d1@redhat.com>
+Date:   Mon, 6 May 2019 11:43:28 -0700
+Cc:     linux-rt-users@vger.kernel.org
+Content-Transfer-Encoding: 8BIT
+Message-Id: <1CDDA8A3-356F-4B37-9E2E-5D17C49E6657@linux.intel.com>
+References: <5ef34142-2b55-28ff-612d-0ec7b0c521d1@redhat.com>
+To:     Daniel Bristot de Oliveira <bristot@redhat.com>
+X-Mailer: Apple Mail (2.3445.104.8)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 05/03, Peter Zijlstra wrote:
->
-> -static void lockdep_sb_freeze_release(struct super_block *sb)
-> -{
-> -	int level;
-> -
-> -	for (level = SB_FREEZE_LEVELS - 1; level >= 0; level--)
-> -		percpu_rwsem_release(sb->s_writers.rw_sem + level, 0, _THIS_IP_);
-> -}
-> -
-> -/*
-> - * Tell lockdep we are holding these locks before we call ->unfreeze_fs(sb).
-> - */
-> -static void lockdep_sb_freeze_acquire(struct super_block *sb)
-> -{
-> -	int level;
-> -
-> -	for (level = 0; level < SB_FREEZE_LEVELS; ++level)
-> -		percpu_rwsem_acquire(sb->s_writers.rw_sem + level, 0, _THIS_IP_);
-> +	percpu_down_write_non_owner(sb->s_writers.rw_sem + level-1);
->  }
-
-I'd suggest to not change fs/super.c, keep these helpers, and even not introduce
-xxx_write_non_owner().
-
-freeze_super() takes other locks, it calls sync_filesystem(), freeze_fs(), lockdep
-should know that this task holds SB_FREEZE_XXX locks for writing.
 
 
-> @@ -80,14 +83,8 @@ int __percpu_down_read(struct percpu_rw_
->  	 * and reschedule on the preempt_enable() in percpu_down_read().
->  	 */
->  	preempt_enable_no_resched();
-> -
-> -	/*
-> -	 * Avoid lockdep for the down/up_read() we already have them.
-> -	 */
-> -	__down_read(&sem->rw_sem);
-> +	wait_event(sem->waiters, !atomic_read(&sem->block));
->  	this_cpu_inc(*sem->read_count);
+> On May 2, 2019, at 11:53 PM, Daniel Bristot de Oliveira <bristot@redhat.com> wrote:
+> 
+> Hi all!
+> 
+> Last year we had a very fun and productive real-time micro-conference at the
+> Linux Plumbers Conference, so the idea is to repeat it this year!
+> 
+> Are you interested in participating? Do you have any suggestion of topic? Let us
+> know!
+> 
+> This is the current proposal of micro-conference, we can still edit it and add
+> your thoughts.
+> 
+> ======================== PROPOSAL ==============================
+> Since 2004 a project has improved the Real-time and low-latency features for
+> Linux. This project has become know as PREEMPT_RT, formally the real-time patch.
+> Over the past decade, many parts of the PREEMPT RT became part of the official
+> Linux code base. Examples of what came from PREEMPT_RT include: Real-time
+> mutexes, high-resolution timers, lockdep, ftrace, RT scheduling, SCHED_DEADLINE,
+> RCU_PREEMPT, generic interrupts, priority inheritance futexes, threaded
+> interrupt handlers and more. The number of patches that needs integration has
+> been reduced on the last years, and the pieces left are now mature enough to
+> make its way into mainline Linux. This year could possibly be the year
+> PREEMPT_RT is merged (tm)!
+> 
+> In the final lap of this race, the last patches are on the way to be merged, but
+> there are still some pieces missing. When the merge occurs, the preempt-rt will
+> start to follow a new pace: the Linus one. So, it is possible to raise the
+> following discussions:
+> 
+>  1) The status of the merge, and how can we resolve the last issues that block
+> the merge;
+>  2) How can we improve the testing of the -rt, to follow the problems raised as
+> Linus tree advances;
+>  3) What's next?
+> 
+> Possible topics:
+>   - Status of the PREEMPT_RT Merge
+> 
+>   - Merge - what is missing and who can help?
+> 
+>   - How do we teach the rest of the kernel developers how not to break
+>     PREEMPT_RT?
+> 
+>   - Stable maintainers tools discussion & improvements.
+> 
+>   - Interrupt threads are RT and are not protected by the RT Throttling.
+>     How can we prevent interrupt thread starvation from a rogue RT task?
+> 
+>   - Improvements on full CPU isolation
+> 
+>   - Newer methods like proxy execution, hierarchical scheduler?
+> 
+>   - What tools can we add into tools/ that other kernel developers can use to
+>     test and learn about PREEMMPT_RT?
+> 
+>   - What tests can we add into tools/testing/selftests?
+> 
+>   - New tools for timing regression test, e.g. locking, overheads...
+> 
+>   - What kernel boot self-tests can be added?
+> 
+>   - Discuss various types of failures that can happen with PREEMPT_RT
+>     that normally would not happen in the vanilla kernel, e.g, with lockdep,
+>     preemption model.
 
-Argh, this looks racy :/
 
-Suppose that sem->block == 0 when wait_event() is called, iow the writer released
-the lock.
+I’d definitely be interested in many of these topics at LPC.  Hoping to make it.
 
-Now suppose that this __percpu_down_read() races with another percpu_down_write().
-The new writer can set sem->block == 1 and call readers_active_check() in between,
-after wait_event() and before this_cpu_inc(*sem->read_count).
+Thanks,
 
-Oleg.
+Sean
+
+
+> 
+> I will suggest the continuation of the discussions of the topics I presented
+> last year, based in the results of the work I did this year (spoiler: I am doing
+> model verification in the kernel, and it is very efficient!).
+> 
+> Paul already told that he could talk about ongoing work to make RCU's forward
+> progress be more robust in overloaded cloud deployments. There will be some
+> connection to real-time response involving rcu_poll and the infamous RCU kthread
+> priority!
+> 
+> The continuation of the discussion of topics from last year's micro-conference,
+> including the development done during this (almost) year, are also welcome!
+> 
+> -- Daniel
 
