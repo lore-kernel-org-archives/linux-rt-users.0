@@ -2,151 +2,148 @@ Return-Path: <SRS0=OpkQ=TJ=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.7 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.9 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_PASS,USER_AGENT_NEOMUTT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AE61BC04AB1
-	for <linux-rt-users@archiver.kernel.org>; Thu,  9 May 2019 14:14:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4523BC04AB2
+	for <linux-rt-users@archiver.kernel.org>; Thu,  9 May 2019 16:19:46 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 7D0A12085A
-	for <linux-rt-users@archiver.kernel.org>; Thu,  9 May 2019 14:14:44 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Savv3j6C"
+	by mail.kernel.org (Postfix) with ESMTP id 20D0E21783
+	for <linux-rt-users@archiver.kernel.org>; Thu,  9 May 2019 16:19:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726966AbfEIOOn (ORCPT
+        id S1726561AbfEIQTl (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 9 May 2019 10:14:43 -0400
-Received: from mail-wm1-f68.google.com ([209.85.128.68]:40248 "EHLO
-        mail-wm1-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726600AbfEIOOn (ORCPT
+        Thu, 9 May 2019 12:19:41 -0400
+Received: from Galois.linutronix.de ([146.0.238.70]:50563 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726187AbfEIQTl (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 9 May 2019 10:14:43 -0400
-Received: by mail-wm1-f68.google.com with SMTP id h11so3389624wmb.5
-        for <linux-rt-users@vger.kernel.org>; Thu, 09 May 2019 07:14:42 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
-         :user-agent:mime-version;
-        bh=yJNtysPh8F58RU2XBDT2WZRAJIll7PK/odDSMPSbDcA=;
-        b=Savv3j6CfJDxCrRoAsUiMywJuJW9QD3CBa1cg8cl3wQ9S+HTneUShXGuf0Y/1yPaWM
-         pzp1KGqkYRr+iDy+e/BfLBiNN1X3m+Cd2oYVGAulzQHYmxGoxor1ibeNeflrtp5a3LvI
-         PORU10/2oTx7IAryajappNzVxpaFw02n2knLfQIxC/ipQodIHmTr56rYPhs/yt3Hth/J
-         +m8PfYvQ1J6U50HIPtjLci4ZX7/NlXTUq7O2lqr4i3puFRp+q9XKm5L/Jcksm1Pt33nA
-         PLQbPfcOyYfBPLiege2DtoW5SkgJyFmt9zKUSQ1dQvX5C5AyFzTke+8SAEOvWgT4ygal
-         bsQQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
-         :message-id:references:user-agent:mime-version;
-        bh=yJNtysPh8F58RU2XBDT2WZRAJIll7PK/odDSMPSbDcA=;
-        b=lTybXfFuCVsL3V5nGdmfgjQQ8hFV6MrYiSsvzF+OrsL9T7YHuSHueglNbb9Ts8Od8R
-         wVgQ9Xle4tAFJFARUpkg3f6wetOUULKdQHsKbZK+5DOodik5stpwAwmrI2y+p9SFiZ6H
-         0f6q0iiuXbCNWdAtNloAmYAvprzYiR7enghec8WEAV1Z+6pFL4C8oDdzlIyVmMYNUEZO
-         AlDEnFEdnRk9qS/ad6eSSYFREnk+IgWCo5YjmwC5+fY/GHV3aGffaTRqmCcDdcNKWiP6
-         uRHbDJsxmOWBKWV3QeWQ19A0i3p6EWF12fIZfZDvE+xpyc+zH1e1kD72ZTRG3dHlBS4s
-         ShWA==
-X-Gm-Message-State: APjAAAVnCvIshOmF7P0fU3EgiG0pVryk68a2HjHK8xPyz9iZrVy+UKdg
-        bZ4x6+v2VQe318txgZgx/V0=
-X-Google-Smtp-Source: APXvYqwVrhNAWSGdw+HcP3q+JQfRzdHM/rm8aaLPIZsKEQhzek6UM9VUwSqot3EiiH6BO5hkiJEzeg==
-X-Received: by 2002:a7b:cb85:: with SMTP id m5mr3236236wmi.75.1557411281695;
-        Thu, 09 May 2019 07:14:41 -0700 (PDT)
-Received: from planxty ([2a02:8108:1700:1960:91dd:e2f9:ed05:ee2b])
-        by smtp.gmail.com with ESMTPSA id t18sm4341324wrg.19.2019.05.09.07.14.36
-        (version=TLS1_3 cipher=AEAD-AES256-GCM-SHA384 bits=256/256);
-        Thu, 09 May 2019 07:14:40 -0700 (PDT)
-Date:   Thu, 9 May 2019 16:14:29 +0200 (CEST)
-From:   John Kacur <jkacur@redhat.com>
-X-X-Sender: jkacur@planxty
-To:     Clark Williams <williams@redhat.com>
-cc:     rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: [PATCH] hwlatdetect: disable/enable c-state transitions during
- detection
-In-Reply-To: <20190506194046.13144-1-williams@redhat.com>
-Message-ID: <alpine.LFD.2.21.1905091612180.13440@planxty>
-References: <20190506194046.13144-1-williams@redhat.com>
-User-Agent: Alpine 2.21 (LFD 202 2017-01-01)
+        Thu, 9 May 2019 12:19:41 -0400
+Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
+        (envelope-from <bigeasy@linutronix.de>)
+        id 1hOllW-00029d-0c; Thu, 09 May 2019 18:19:26 +0200
+Date:   Thu, 9 May 2019 18:19:25 +0200
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     minyard@acm.org
+Cc:     linux-rt-users@vger.kernel.org,
+        Corey Minyard <cminyard@mvista.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        linux-kernel@vger.kernel.org, tglx@linutronix.de,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH RT v2] Fix a lockup in wait_for_completion() and friends
+Message-ID: <20190509161925.kul66w54wpjcinuc@linutronix.de>
+References: <20190508205728.25557-1-minyard@acm.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20190508205728.25557-1-minyard@acm.org>
+User-Agent: NeoMutt/20180716
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+Please:
+ - add some RT developers on Cc:
+ - add lkml
+ - use [PATCH RT] instead just [PATCH] so it is visible that you target
+   the RT tree.
 
-
-On Mon, 6 May 2019, Clark Williams wrote:
-
-> Recent performance tuning problems led me to realize that just running
-> at fifo:99 and turning off interrupts isn't enough while looking for
-> BIOS induced latencies. Power savings logic is built into most modern
-> cpus and so must be disabled while looking for BIOS induced (SMI/NMI)
-> latencies.
+On 2019-05-08 15:57:28 [-0500], minyard@acm.org wrote:
+> From: Corey Minyard <cminyard@mvista.com>
 > 
-> Use the /dev/cpu_dma_latency mechanism to disable c-state transitions
-> while running the hardware latency detector. Open the file
-> /dev/cpu_dma_latency and write a 32-bit zero to it, which will prevent
-> c-state transitions while the file is open.
+> The function call do_wait_for_common() has a race condition that
+> can result in lockups waiting for completions.  Adding the thread
+> to (and removing the thread from) the wait queue for the completion
+> is done outside the do loop in that function.  However, if the thread
+> is woken up, the swake_up_locked() function will delete the entry
+> from the wait queue.  If that happens and another thread sneaks
+> in and decrements the done count in the completion to zero, the
+> loop will go around again, but the thread will no longer be in the
+> wait queue, so there is no way to wake it up.
 > 
-> Signed-off-by: Clark Williams <williams@redhat.com>
+> Fix it by adding/removing the thread to/from the wait queue inside
+> the do loop.
+
+So you are saying:
+	T0			T1			    T2
+	wait_for_completion()
+	 do_wait_for_common()
+	  __prepare_to_swait()
+	   schedule()
+	    		       complete()
+			        x->done++ (0 -> 1)
+				raw_spin_lock_irqsave()
+				 swake_up_locked()           wait_for_completion()
+				  wake_up_process(T0)
+				  list_del_init()
+				raw_spin_unlock_irqrestore()
+	                                                      raw_spin_lock_irq(&x->wait.lock)
+	 raw_spin_lock_irq(&x->wait.lock)                      x->done != UINT_MAX, 1 -> 0
+							       return 1
+							      raw_spin_unlock_irq(&x->wait.lock)
+	 while (!x->done && timeout),
+	 continue loop, not enqueued
+	 on &x->wait
+
+The difference compared to the non-swait based implementation is that
+swake_up_locked() removes woken up tasks from the list while the other
+implementation (wait_queue_entry based, default_wake_function()) does
+not. Buh
+
+One question for the upstream completion implementation:
+completion_done() returns true if there are no waiters. It acquires the
+wait.lock to ensure that complete()/complete_all() is done. However,
+once complete releases the lock it is guaranteed that the wake_up() (for
+the waiter) occurred. The waiter task still needs to be remove itself
+from the wait-queue before the completion can be removed.
+Do I miss something?
+
+> Fixes: a04ff6b4ec4ee7e ("completion: Use simple wait queues")
+> Signed-off-by: Corey Minyard <cminyard@mvista.com>
 > ---
->  src/hwlatdetect/hwlatdetect.py | 20 +++++++++++++++++++-
->  1 file changed, 19 insertions(+), 1 deletion(-)
+> I sent the wrong version of this, I had spotted this before but didn't
+> fix it here.  Adding the thread to the wait queue needs to come after
+> the signal check.  Sorry about the noise.
 > 
-> diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
-> index 2c8f9f160419..368079a158b1 100755
-> --- a/src/hwlatdetect/hwlatdetect.py
-> +++ b/src/hwlatdetect/hwlatdetect.py
-> @@ -1,6 +1,6 @@
->  #!/usr/bin/python3
->  
-> -# (C) 2018 Clark Williams <williams@redhat.com>
-> +# (C) 2018,2019 Clark Williams <williams@redhat.com>
->  # (C) 2015,2016 Clark Williams <williams@redhat.com>
->  # (C) 2009 Clark Williams <williams@redhat.com>
->  #
-> @@ -213,6 +213,22 @@ watch = False
->              counts = [ int(x.strip()) for x in p.stdout.readlines()]
->          return counts
->  
-> +    # methods for preventing/enabling c-state transitions
-> +    # openinging /dev/cpu_dma_latency and writeing a 32-bit zero to that file will prevent
-> +    # c-state transitions while the file descriptor is open.
-> +    # use c_states_off() to disable c-state transitions
-> +    # use c_states_on() to close the file descriptor and re-enable c-states
-> +    #
-> +    def c_states_off(self):
-> +        self.dma_latency_handle = os.open("/dev/cpu_dma_latency", os.O_WRONLY)
-> +        os.write(self.dma_latency_handle, b'\x00\x00\x00\x00')
-> +        debug("c-states disabled")
-> +
-> +    def c_states_on(self):
-> +        if self.dma_latency_handle:
-> +            os.close(self.dma_latency_handle)
-> +        debug("c-states enabled")
-> +
->      def cleanup(self):
->          raise RuntimeError("must override base method 'cleanup'!")
->  
-> @@ -235,6 +251,7 @@ watch = False
->      def start(self):
->          count = 0
->          threshold = int(self.get("threshold"))
-> +        self.c_states_off()
->          debug("enabling detector module (threshold: %d)" % threshold)
->          self.set("enable", 1)
->          while self.get("enable") == 0:
-> @@ -258,6 +275,7 @@ watch = False
->              time.sleep(0.1)
->              debug("retrying disable of detector module(%d)" % count)
->              self.set("enable", 0)
-> +        self.c_states_on()
->          debug("detector module disabled")
->  
->      def detect(self):
-> -- 
-> 2.21.0
+>  kernel/sched/completion.c | 8 ++++----
+>  1 file changed, 4 insertions(+), 4 deletions(-)
 > 
-> 
+> diff --git a/kernel/sched/completion.c b/kernel/sched/completion.c
+> index 755a58084978..4f9b4cc0c95a 100644
+> --- a/kernel/sched/completion.c
+> +++ b/kernel/sched/completion.c
+> @@ -70,20 +70,20 @@ do_wait_for_common(struct completion *x,
+>  		   long (*action)(long), long timeout, int state)
+>  {
+>  	if (!x->done) {
+> -		DECLARE_SWAITQUEUE(wait);
+> -
+> -		__prepare_to_swait(&x->wait, &wait);
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+you can keep DECLARE_SWAITQUEUE remove just __prepare_to_swait()
+
+>  		do {
+> +			DECLARE_SWAITQUEUE(wait);
+> +
+>  			if (signal_pending_state(state, current)) {
+>  				timeout = -ERESTARTSYS;
+>  				break;
+>  			}
+> +			__prepare_to_swait(&x->wait, &wait);
+
+add this, yes and you are done.
+
+>  			__set_current_state(state);
+>  			raw_spin_unlock_irq(&x->wait.lock);
+>  			timeout = action(timeout);
+>  			raw_spin_lock_irq(&x->wait.lock);
+> +			__finish_swait(&x->wait, &wait);
+>  		} while (!x->done && timeout);
+> -		__finish_swait(&x->wait, &wait);
+>  		if (!x->done)
+>  			return timeout;
+>  	}
+
+Sebastian
