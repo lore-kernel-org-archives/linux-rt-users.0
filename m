@@ -1,133 +1,94 @@
-Return-Path: <SRS0=V7AE=TP=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=yHHH=TR=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.5 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_PASS,USER_AGENT_MUTT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.5 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_MUTT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2474CC04E53
-	for <linux-rt-users@archiver.kernel.org>; Wed, 15 May 2019 16:22:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B7285C04AB4
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 May 2019 12:53:18 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id E5FD620881
-	for <linux-rt-users@archiver.kernel.org>; Wed, 15 May 2019 16:22:28 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=mvista-com.20150623.gappssmtp.com header.i=@mvista-com.20150623.gappssmtp.com header.b="uOrgnAPc"
+	by mail.kernel.org (Postfix) with ESMTP id 8970E2087B
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 May 2019 12:53:18 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726347AbfEOQWS (ORCPT
+        id S1728918AbfEQMxS (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 15 May 2019 12:22:18 -0400
-Received: from mail-ot1-f65.google.com ([209.85.210.65]:40885 "EHLO
-        mail-ot1-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726084AbfEOQWR (ORCPT
+        Fri, 17 May 2019 08:53:18 -0400
+Received: from mail-wm1-f67.google.com ([209.85.128.67]:50724 "EHLO
+        mail-wm1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728452AbfEQMxR (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 15 May 2019 12:22:17 -0400
-Received: by mail-ot1-f65.google.com with SMTP id u11so555506otq.7
-        for <linux-rt-users@vger.kernel.org>; Wed, 15 May 2019 09:22:15 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=mvista-com.20150623.gappssmtp.com; s=20150623;
-        h=date:from:to:cc:subject:message-id:reply-to:references:mime-version
-         :content-disposition:in-reply-to:user-agent;
-        bh=WYwUsFSH86jSsfL1qchJ6LUvivM63x63FlzlKbdmfas=;
-        b=uOrgnAPc8uE+qBTcPGAZ/2bMJlapwUBTljMhCFiyEwWUGqnQvxXHV8F+8obCeEJm8s
-         4YEBF0qNhKDuYxgiEBDbbH6EhCxggKc1eEW4sDFugrOG2PktbT5uc67ibB2sLTrcPf+5
-         ZhSA3Ngg82GvDbiMSF0TfjCxvmNMjxxAn2XNp3eOw4nhOFt9CDOK010JZ0FTXf2jMdFR
-         NOlzt+CwucWaXURdPwb34To7dVoBPfvl45gkPIpLbI3iacAWIKZ//joKraLZuIchN8It
-         LQY55M8O5+xi3GZO/972ZZM7qsHCyEvyUDOEBFPoUSvVfj8cTfhWkg7X6MFdUOSrPYNd
-         IzOg==
+        Fri, 17 May 2019 08:53:17 -0400
+Received: by mail-wm1-f67.google.com with SMTP id f204so6874937wme.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 17 May 2019 05:53:17 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:reply-to
-         :references:mime-version:content-disposition:in-reply-to:user-agent;
-        bh=WYwUsFSH86jSsfL1qchJ6LUvivM63x63FlzlKbdmfas=;
-        b=NYuTCBDGzaQW/PGm8hOMVZXixP/MgPC2tCEWYI90fGvQKuZJFGcsK/QpvUAQ8I0WM/
-         Pz95ujWM3QxijVqsarPfmzkcwnyijRl8Y5GWkr+nQMUpgETaPRlF+txtknZ+sl0bnsA4
-         GgcZe8Vohwh5/PqFCZr5ABVq68E+dOXrxmt4sLjH78aWIytA2+JrnaCAVgmnmwEohuuJ
-         uJAau3M0lP9x8WR0AP41oYOj5pO4Nbbrnm890bQYjDDZM+SrpRfuYCxLiygu2kgbjyqG
-         R5fBuIdS5SI0GwcH3UZILFyhaM/F3/VuBhuFZPBht6MzNiaftSwqt3SlfOiVifikpTGU
-         C9CA==
-X-Gm-Message-State: APjAAAUcApIL4Z5MXuwpxTCLLctcTgkaNwVAcB1Xbf8VGOpwHiBRpv4Z
-        XhzTfdPxzltTxP0LKhBDctM2Wg==
-X-Google-Smtp-Source: APXvYqx9YX6jALD3ezMYYUSQ97jbTW9srhfNABwloH1YvDooZkHcqR7PZkAP4Lndj8fbIzC9xyZS+w==
-X-Received: by 2002:a9d:7657:: with SMTP id o23mr26614794otl.358.1557937334761;
-        Wed, 15 May 2019 09:22:14 -0700 (PDT)
-Received: from minyard.net ([2001:470:b8f6:1b:9c84:ae86:ff6:562c])
-        by smtp.gmail.com with ESMTPSA id r23sm885582otg.49.2019.05.15.09.22.13
+        h=x-gm-message-state:date:from:to:subject:message-id:references
+         :mime-version:content-disposition:in-reply-to:user-agent;
+        bh=zcYe+aG05w2UO1ZXKc7jrJL+Ovz86Hm2R29bKoYuqSk=;
+        b=ZFx9MuE34uqTqodtE9eCJKpxuf76CyCZHdBlzx5YHK/w1EjgWwXuCLzTPODI49LqaB
+         6OWBmkeFPXh+wlvrSY6Kr7xaAl22ouJrh2enbVB5rqSKyvXREm6RYLjoH0kFyG9uobSd
+         1V9brTGa6ABevz6Z0cxp80dkYBz772ZG7s1UQ/Fjn00Wc64kBBA3xT7LoHI21ah868aw
+         yJOQfA2MIyQp2NKnQMHqOGWXK38V2IxbDp4LAvqFIezj6N1aPRMsVXrqE/QJ6TXwoSHU
+         MjscAmW9QQ46bBtQN3SKkJqCmxVv8kMNGzqpn27Y6Iov6uPP9/l772IT1JRUUGpS5hxg
+         +jDA==
+X-Gm-Message-State: APjAAAVJboiCZNDzJbqnqUAjr26U7OpBrc6sibDGJmUrBrXxBYISterK
+        z9o2plfEUXa4dR1Yp6Zzzhio+g==
+X-Google-Smtp-Source: APXvYqzvQo4PLIOLgEYS45mThRlVYeoSKfB0i310BFOLRFwKSRuu+NOfl46fdrqxPtJzbnmADzwaFw==
+X-Received: by 2002:a1c:7dcf:: with SMTP id y198mr2040524wmc.94.1558097596479;
+        Fri, 17 May 2019 05:53:16 -0700 (PDT)
+Received: from localhost.localdomain ([151.29.174.33])
+        by smtp.gmail.com with ESMTPSA id q3sm6514366wrr.16.2019.05.17.05.53.15
         (version=TLS1_2 cipher=ECDHE-RSA-CHACHA20-POLY1305 bits=256/256);
-        Wed, 15 May 2019 09:22:13 -0700 (PDT)
-Date:   Wed, 15 May 2019 11:22:12 -0500
-From:   Corey Minyard <cminyard@mvista.com>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Peter Zijlstra <peterz@infradead.org>, minyard@acm.org,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        tglx@linutronix.de, Steven Rostedt <rostedt@goodmis.org>,
-        Ingo Molnar <mingo@kernel.org>
-Subject: Re: [PATCH RT v2] Fix a lockup in wait_for_completion() and friends
-Message-ID: <20190515162212.GB6050@minyard.net>
-Reply-To: cminyard@mvista.com
-References: <20190508205728.25557-1-minyard@acm.org>
- <20190509161925.kul66w54wpjcinuc@linutronix.de>
- <20190514084356.GJ2589@hirez.programming.kicks-ass.net>
- <20190514091219.nesriqe7qplk3476@linutronix.de>
- <20190514121350.GA6050@minyard.net>
- <20190514153647.wri6ivffbq7r263y@linutronix.de>
+        Fri, 17 May 2019 05:53:15 -0700 (PDT)
+Date:   Fri, 17 May 2019 14:53:13 +0200
+From:   Juri Lelli <juri.lelli@redhat.com>
+To:     linux-pm@vger.kernel.org, linux-acpi@vger.kernel.org,
+        linux-pci@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        linux-kernel@vger.kernel.org
+Subject: Re: [ANNOUNCE][CFP] Power Management and Scheduling in the Linux
+ Kernel III edition (OSPM-summit 2019)
+Message-ID: <20190517125313.GJ14991@localhost.localdomain>
+References: <20190114161910.GB5581@localhost.localdomain>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20190514153647.wri6ivffbq7r263y@linutronix.de>
-User-Agent: Mutt/1.9.4 (2018-02-28)
+In-Reply-To: <20190114161910.GB5581@localhost.localdomain>
+User-Agent: Mutt/1.11.3 (2019-02-01)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, May 14, 2019 at 05:36:47PM +0200, Sebastian Andrzej Siewior wrote:
-> On 2019-05-14 07:13:50 [-0500], Corey Minyard wrote:
-> > > Corey, would it make any change which waiter is going to be woken up?
-> > 
-> > In the application that found this, the wake order probably isn't
-> > relevant.
-> 
-> what I expected.
-> 
-> > For other applications, I really doubt that very many are using multiple
-> > waiters.  If so, this bug would have been reported sooner, I think.
-> 
-> most other do either one waiter/waker pair or one waker and multiple
-> waiter. And then reinit_completion() is used for the next round.
-> 
-> > As you mention, for RT you would want waiter woken by priority and FIFO
-> > within priority.  I don't think POSIX says anything about FIFO within
-> > priority, but that's probably a good idea.  That's no longer a simple
-> > wait queue  The way it is now is probably closer to that than what Peter
-> > suggested, but not really that close.
-> > 
-> > This is heavily used in drivers and fs code, where it probably doesn't
-> > matter.  I looked through a few users in mm and kernel, and they had
-> > one waiter or were init/shutdown type things where order is not important.
-> > 
-> > So I'm not sure it's important.
-> 
-> Why did you bring POSIX into this? This isn't an API exported to
-> userland which would fall into that category.
+Hi,
 
-My understanding is that POSIX.1b scheduling classes affect everything.
-So if you have two processes blocked on the same things for any reason,
-you need to wake up the higher priority one first.  In reality, it
-probably doesn't matter unless something more critical uses completions. 
-
+On 14/01/19 17:19, Juri Lelli wrote:
+> Power Management and Scheduling in the Linux Kernel (OSPM-summit) III edition
+> May 20-22, 2019
+> Scuola Superiore Sant'Anna
+> Pisa, Italy
 > 
-> Peter's suggestion for FIFO is that we probably don't want to starve one
-> thread/waiter if it is always enqueued at the end of the list. As you
-> said, in your case it does not matter because (I assume) each waiter is
-> equal and the outcome would be the same.
-
-Yeah, my case is not relevant to this, I'm more concerned with the cases
-that are.
-
--corey
-
+> ---
 > 
-> > -corey
+> .:: FOCUS
 > 
-> Sebastian
+> The III edition of the Power Management and Scheduling in the Linux
+> Kernel (OSPM) summit aims at fostering discussions on power management
+> and (real-time) scheduling techniques. Summit will be held in Pisa
+> (Italy) on May 20-22, 2019.
+
+Next week!
+
+FYI, final schedule is online (Italy (GMT+2)):
+
+http://retis.sssup.it/ospm-summit/program.html
+
+Live streaming events have been created and are accessible both from the
+summit schedule ("live streaming" links) and at:
+
+https://bit.ly/2Vz3yKg
+
+Best,
+
+- Juri
