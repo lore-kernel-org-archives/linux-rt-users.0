@@ -1,94 +1,84 @@
-Return-Path: <SRS0=yHHH=TR=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=xO9Y=TS=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.5 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_MUTT
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-1.1 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B7285C04AB4
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 May 2019 12:53:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9CC74C04AAF
+	for <linux-rt-users@archiver.kernel.org>; Sat, 18 May 2019 16:27:48 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 8970E2087B
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 May 2019 12:53:18 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6F1222087B
+	for <linux-rt-users@archiver.kernel.org>; Sat, 18 May 2019 16:27:48 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ietaJiHj"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728918AbfEQMxS (ORCPT
+        id S1729658AbfERQ1r (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 17 May 2019 08:53:18 -0400
-Received: from mail-wm1-f67.google.com ([209.85.128.67]:50724 "EHLO
-        mail-wm1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728452AbfEQMxR (ORCPT
+        Sat, 18 May 2019 12:27:47 -0400
+Received: from mail-ua1-f67.google.com ([209.85.222.67]:40345 "EHLO
+        mail-ua1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728990AbfERQ1r (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 17 May 2019 08:53:17 -0400
-Received: by mail-wm1-f67.google.com with SMTP id f204so6874937wme.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 17 May 2019 05:53:17 -0700 (PDT)
+        Sat, 18 May 2019 12:27:47 -0400
+Received: by mail-ua1-f67.google.com with SMTP id d4so3884420uaj.7
+        for <linux-rt-users@vger.kernel.org>; Sat, 18 May 2019 09:27:46 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:from:date:message-id:subject:to;
+        bh=6XA1DC3gHnj+izQfKSX0Mwr78JnzIMK0cjbsYwQbEo4=;
+        b=ietaJiHj18mI/l13gnEjz0rfg0jI1Hpk8IQ7djbauFztIYWrVqLVu96Xndit8luNFa
+         BOS7ObuCUUMceGRgKPRPKDvKNUggRgtBDelfVaSef1yei0s/Fpd/cIGvD7OrsGBMefI2
+         17qOV+SnOqqpOScQD8wYr5h6/DuQb0zG/dDPQi3yAcM8FFjiJh/B8kFCctG0NcoywjL3
+         Wjba7JD421TkAzFbzEzOGaQs8vUDl78+2oYRrFPpwq76MZhPyvximD2pYmOneRi2CQf1
+         cygGksy5IW/FymF3mLX38bo2n5wKjxA14NPfCCPxdwZAPJaOLjguCX3gxs+TvIP1Wz0A
+         LqVA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to:user-agent;
-        bh=zcYe+aG05w2UO1ZXKc7jrJL+Ovz86Hm2R29bKoYuqSk=;
-        b=ZFx9MuE34uqTqodtE9eCJKpxuf76CyCZHdBlzx5YHK/w1EjgWwXuCLzTPODI49LqaB
-         6OWBmkeFPXh+wlvrSY6Kr7xaAl22ouJrh2enbVB5rqSKyvXREm6RYLjoH0kFyG9uobSd
-         1V9brTGa6ABevz6Z0cxp80dkYBz772ZG7s1UQ/Fjn00Wc64kBBA3xT7LoHI21ah868aw
-         yJOQfA2MIyQp2NKnQMHqOGWXK38V2IxbDp4LAvqFIezj6N1aPRMsVXrqE/QJ6TXwoSHU
-         MjscAmW9QQ46bBtQN3SKkJqCmxVv8kMNGzqpn27Y6Iov6uPP9/l772IT1JRUUGpS5hxg
-         +jDA==
-X-Gm-Message-State: APjAAAVJboiCZNDzJbqnqUAjr26U7OpBrc6sibDGJmUrBrXxBYISterK
-        z9o2plfEUXa4dR1Yp6Zzzhio+g==
-X-Google-Smtp-Source: APXvYqzvQo4PLIOLgEYS45mThRlVYeoSKfB0i310BFOLRFwKSRuu+NOfl46fdrqxPtJzbnmADzwaFw==
-X-Received: by 2002:a1c:7dcf:: with SMTP id y198mr2040524wmc.94.1558097596479;
-        Fri, 17 May 2019 05:53:16 -0700 (PDT)
-Received: from localhost.localdomain ([151.29.174.33])
-        by smtp.gmail.com with ESMTPSA id q3sm6514366wrr.16.2019.05.17.05.53.15
-        (version=TLS1_2 cipher=ECDHE-RSA-CHACHA20-POLY1305 bits=256/256);
-        Fri, 17 May 2019 05:53:15 -0700 (PDT)
-Date:   Fri, 17 May 2019 14:53:13 +0200
-From:   Juri Lelli <juri.lelli@redhat.com>
-To:     linux-pm@vger.kernel.org, linux-acpi@vger.kernel.org,
-        linux-pci@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        linux-kernel@vger.kernel.org
-Subject: Re: [ANNOUNCE][CFP] Power Management and Scheduling in the Linux
- Kernel III edition (OSPM-summit 2019)
-Message-ID: <20190517125313.GJ14991@localhost.localdomain>
-References: <20190114161910.GB5581@localhost.localdomain>
+        h=x-gm-message-state:mime-version:from:date:message-id:subject:to;
+        bh=6XA1DC3gHnj+izQfKSX0Mwr78JnzIMK0cjbsYwQbEo4=;
+        b=QWodQ6WPSjgmc2SMGWoIv58fnf+fnmt4Y3lxG61cJPN5x8Fz5kyCbfRIVehJQSjdPb
+         J8HuiN9ZzVJcMa5UwZy7UITCiKnWcIOW0nZAXX0HTN3ltKZcDjFbFDIs7Z5loufpLccc
+         as9UPccUqr1fNZ+xws/QTM1TRtz+5OAvZvN5VnPqx0oZwrJUPON45vw0q7L0CfwwS/bm
+         pa4jm2CYYu/URjAnvAGQmhrI4hcWVQtqjyeQltpmh3fHaWGnUPjzL8EU5S/Ek57Npgdl
+         HyT8pqckyBLjpJdf964jrbcqgIl8KgTYiI8EFkdOY00to73oe2Sb/F3+ealgs5pyxlbR
+         XKkg==
+X-Gm-Message-State: APjAAAUNA+n9FsQGNjojjfIw/gsLeDyf4neBQHbc2AFk0Amj+Q1UjkcK
+        hRfi+YWY4GoU81hx6Z3byyEQHca5S2TgzW/k3TBZeMVYXEY=
+X-Google-Smtp-Source: APXvYqw4K71BlKOEs2FgReLHTumd+RfU8lvMkrTpZGzW7Es0Stms2/Ct2zx2/d28YGMfT5LAa5bmPY7TfGQZOHD1a7M=
+X-Received: by 2002:a9f:3381:: with SMTP id p1mr3954926uab.40.1558196866049;
+ Sat, 18 May 2019 09:27:46 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20190114161910.GB5581@localhost.localdomain>
-User-Agent: Mutt/1.11.3 (2019-02-01)
+From:   Shawn Landden <slandden@gmail.com>
+Date:   Sat, 18 May 2019 11:27:34 -0500
+Message-ID: <CA+49okpOX5-N33BLPEEeBTW4Wcn7sBWog7cBNT=ENLvOZ_MKVQ@mail.gmail.com>
+Subject: Allowing SIMD in kernel mode without disabling preemption
+To:     linux-rt-users@vger.kernel.org, peterz@infradead.org,
+        wireguard@lists.zx2c4.com
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi,
+I ported the x86 approach to allowing SIMD in kernel mode, even in an
+interrupt, to powerpc[1], but I couldn't help wonder if it would be
+possible without disabling preemption.
 
-On 14/01/19 17:19, Juri Lelli wrote:
-> Power Management and Scheduling in the Linux Kernel (OSPM-summit) III edition
-> May 20-22, 2019
-> Scuola Superiore Sant'Anna
-> Pisa, Italy
-> 
-> ---
-> 
-> .:: FOCUS
-> 
-> The III edition of the Power Management and Scheduling in the Linux
-> Kernel (OSPM) summit aims at fostering discussions on power management
-> and (real-time) scheduling techniques. Summit will be held in Pisa
-> (Italy) on May 20-22, 2019.
+The scheduler just has to check the per-cpu in_kernel_fpu, and if it
+is set, save the fpu state of the kernel thread, similar to what is
+done for user-space threads with use_mode().
 
-Next week!
+This way WireGuard would be fast even on preempt-rt kernels (it
+currently turns off SIMD on them). Other crypto in the kernel is
+woorse, and just unconditionally turns off preempt for each block of
+data (look at arch/x86/crypto/chacha_glue.c ). Note that
+kernel_fpu_begin() disables preemption, but I don't believe it has to.
 
-FYI, final schedule is online (Italy (GMT+2)):
+Is there any complications with this approach that I am missing?
 
-http://retis.sssup.it/ospm-summit/program.html
+-Shawn Landden
 
-Live streaming events have been created and are accessible both from the
-summit schedule ("live streaming" links) and at:
-
-https://bit.ly/2Vz3yKg
-
-Best,
-
-- Juri
+[1] https://lists.ozlabs.org/pipermail/linuxppc-dev/2019-May/190704.html
