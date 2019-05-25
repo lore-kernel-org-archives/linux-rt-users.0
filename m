@@ -4,32 +4,32 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-7.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
+	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 28E06C282E1
-	for <linux-rt-users@archiver.kernel.org>; Sat, 25 May 2019 03:33:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 00E00C282E1
+	for <linux-rt-users@archiver.kernel.org>; Sat, 25 May 2019 03:33:30 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 09AC921871
-	for <linux-rt-users@archiver.kernel.org>; Sat, 25 May 2019 03:33:20 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D237221871
+	for <linux-rt-users@archiver.kernel.org>; Sat, 25 May 2019 03:33:29 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726780AbfEYDdS (ORCPT
+        id S1726762AbfEYDdS (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
         Fri, 24 May 2019 23:33:18 -0400
-Received: from mail.kernel.org ([198.145.29.99]:42850 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.99]:42956 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726622AbfEYDdR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S1726691AbfEYDdR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 24 May 2019 23:33:17 -0400
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 4CE4A2177E;
+        by mail.kernel.org (Postfix) with ESMTPSA id DBFFF2184E;
         Sat, 25 May 2019 03:33:16 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.92)
         (envelope-from <rostedt@goodmis.org>)
-        id 1hUNQp-0002FL-EG; Fri, 24 May 2019 23:33:15 -0400
-Message-Id: <20190525033315.333596820@goodmis.org>
+        id 1hUNQp-0002Go-Sp; Fri, 24 May 2019 23:33:16 -0400
+Message-Id: <20190525033315.775106086@goodmis.org>
 User-Agent: quilt/0.65
-Date:   Fri, 24 May 2019 23:32:33 -0400
+Date:   Fri, 24 May 2019 23:32:36 -0400
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -40,8 +40,8 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com, stable-rt@vger.kernel.org
-Subject: [PATCH RT 1/6] powerpc/pseries/iommu: Use a locallock instead local_irq_save()
+        tom.zanussi@linux.intel.com
+Subject: [PATCH RT 4/6] drm/i915: Dont disable interrupts independently of the lock
 References: <20190525033232.795741612@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -57,93 +57,47 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-The locallock protects the per-CPU variable tce_page. The function
-attempts to allocate memory while tce_page is protected (by disabling
-interrupts).
+The locks (timeline->lock and rq->lock) need to be taken with disabled
+interrupts. This is done in __retire_engine_request() by disabling the
+interrupts independently of the locks itself.
+While local_irq_disable()+spin_lock() equals spin_lock_irq() on vanilla
+it does not on RT. Also, it is not obvious if there is a special reason
+to why the interrupts are disabled independently of the lock.
 
-Use local_irq_save() instead of local_irq_disable().
+Enable/disable interrupts as part of the locking instruction.
 
-Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- arch/powerpc/platforms/pseries/iommu.c | 16 ++++++++++------
- 1 file changed, 10 insertions(+), 6 deletions(-)
+ drivers/gpu/drm/i915/i915_request.c | 8 ++------
+ 1 file changed, 2 insertions(+), 6 deletions(-)
 
-diff --git a/arch/powerpc/platforms/pseries/iommu.c b/arch/powerpc/platforms/pseries/iommu.c
-index 06f02960b439..d80d919c78d3 100644
---- a/arch/powerpc/platforms/pseries/iommu.c
-+++ b/arch/powerpc/platforms/pseries/iommu.c
-@@ -38,6 +38,7 @@
- #include <linux/of.h>
- #include <linux/iommu.h>
- #include <linux/rculist.h>
-+#include <linux/locallock.h>
- #include <asm/io.h>
- #include <asm/prom.h>
- #include <asm/rtas.h>
-@@ -212,6 +213,7 @@ static int tce_build_pSeriesLP(struct iommu_table *tbl, long tcenum,
- }
+diff --git a/drivers/gpu/drm/i915/i915_request.c b/drivers/gpu/drm/i915/i915_request.c
+index 5c2c93cbab12..7124510b9131 100644
+--- a/drivers/gpu/drm/i915/i915_request.c
++++ b/drivers/gpu/drm/i915/i915_request.c
+@@ -356,9 +356,7 @@ static void __retire_engine_request(struct intel_engine_cs *engine,
  
- static DEFINE_PER_CPU(__be64 *, tce_page);
-+static DEFINE_LOCAL_IRQ_LOCK(tcp_page_lock);
+ 	GEM_BUG_ON(!i915_request_completed(rq));
  
- static int tce_buildmulti_pSeriesLP(struct iommu_table *tbl, long tcenum,
- 				     long npages, unsigned long uaddr,
-@@ -232,7 +234,8 @@ static int tce_buildmulti_pSeriesLP(struct iommu_table *tbl, long tcenum,
- 		                           direction, attrs);
+-	local_irq_disable();
+-
+-	spin_lock(&engine->timeline.lock);
++	spin_lock_irq(&engine->timeline.lock);
+ 	GEM_BUG_ON(!list_is_first(&rq->link, &engine->timeline.requests));
+ 	list_del_init(&rq->link);
+ 	spin_unlock(&engine->timeline.lock);
+@@ -372,9 +370,7 @@ static void __retire_engine_request(struct intel_engine_cs *engine,
+ 		GEM_BUG_ON(!atomic_read(&rq->i915->gt_pm.rps.num_waiters));
+ 		atomic_dec(&rq->i915->gt_pm.rps.num_waiters);
  	}
- 
--	local_irq_save(flags);	/* to protect tcep and the page behind it */
-+	/* to protect tcep and the page behind it */
-+	local_lock_irqsave(tcp_page_lock, flags);
- 
- 	tcep = __this_cpu_read(tce_page);
- 
-@@ -243,7 +246,7 @@ static int tce_buildmulti_pSeriesLP(struct iommu_table *tbl, long tcenum,
- 		tcep = (__be64 *)__get_free_page(GFP_ATOMIC);
- 		/* If allocation fails, fall back to the loop implementation */
- 		if (!tcep) {
--			local_irq_restore(flags);
-+			local_unlock_irqrestore(tcp_page_lock, flags);
- 			return tce_build_pSeriesLP(tbl, tcenum, npages, uaddr,
- 					    direction, attrs);
- 		}
-@@ -277,7 +280,7 @@ static int tce_buildmulti_pSeriesLP(struct iommu_table *tbl, long tcenum,
- 		tcenum += limit;
- 	} while (npages > 0 && !rc);
- 
--	local_irq_restore(flags);
-+	local_unlock_irqrestore(tcp_page_lock, flags);
- 
- 	if (unlikely(rc == H_NOT_ENOUGH_RESOURCES)) {
- 		ret = (int)rc;
-@@ -435,13 +438,14 @@ static int tce_setrange_multi_pSeriesLP(unsigned long start_pfn,
- 	u64 rc = 0;
- 	long l, limit;
- 
--	local_irq_disable();	/* to protect tcep and the page behind it */
-+	/* to protect tcep and the page behind it */
-+	local_lock_irq(tcp_page_lock);
- 	tcep = __this_cpu_read(tce_page);
- 
- 	if (!tcep) {
- 		tcep = (__be64 *)__get_free_page(GFP_ATOMIC);
- 		if (!tcep) {
--			local_irq_enable();
-+			local_unlock_irq(tcp_page_lock);
- 			return -ENOMEM;
- 		}
- 		__this_cpu_write(tce_page, tcep);
-@@ -487,7 +491,7 @@ static int tce_setrange_multi_pSeriesLP(unsigned long start_pfn,
- 
- 	/* error cleanup: caller will clear whole range */
- 
+-	spin_unlock(&rq->lock);
+-
 -	local_irq_enable();
-+	local_unlock_irq(tcp_page_lock);
- 	return rc;
- }
++	spin_unlock_irq(&rq->lock);
  
+ 	/*
+ 	 * The backing object for the context is done after switching to the
 -- 
 2.20.1
 
