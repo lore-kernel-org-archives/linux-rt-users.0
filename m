@@ -1,139 +1,150 @@
-Return-Path: <SRS0=XEuX=TY=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=dorw=TZ=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-7.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 33B84C072B5
-	for <linux-rt-users@archiver.kernel.org>; Fri, 24 May 2019 08:38:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 28E06C282E1
+	for <linux-rt-users@archiver.kernel.org>; Sat, 25 May 2019 03:33:20 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id EF6502081C
-	for <linux-rt-users@archiver.kernel.org>; Fri, 24 May 2019 08:38:53 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 09AC921871
+	for <linux-rt-users@archiver.kernel.org>; Sat, 25 May 2019 03:33:20 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2389473AbfEXIix convert rfc822-to-8bit (ORCPT
+        id S1726780AbfEYDdS (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 24 May 2019 04:38:53 -0400
-Received: from mail.numalliance.com ([90.84.246.155]:38801 "EHLO
-        mail.numalliance.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2389324AbfEXIix (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 24 May 2019 04:38:53 -0400
-Received: from localhost (localhost.localdomain [127.0.0.1])
-        by mail.numalliance.com (Postfix) with ESMTP id 8236F23F176F;
-        Fri, 24 May 2019 10:38:50 +0200 (CEST)
-X-Virus-Scanned: Debian amavisd-new at mail.numalliance.com
-Received: from mail.numalliance.com ([127.0.0.1])
-        by localhost (mail.numalliance.com [127.0.0.1]) (amavisd-new, port 10024)
-        with ESMTP id DEU8nhNx6p3i; Fri, 24 May 2019 10:38:42 +0200 (CEST)
-Received: from [192.168.0.139] (retd17.numalliance.com [192.168.0.139])
-        (Authenticated sender: sancelot@numalliance.com)
-        by mail.numalliance.com (Postfix) with ESMTPSA id 6516423F1775;
-        Fri, 24 May 2019 10:38:05 +0200 (CEST)
-From:   =?UTF-8?Q?St=c3=a9phane_Ancelot?= <sancelot@numalliance.com>
-Subject: Re: intel j1900 and i915 realtime problems
-To:     Giuliano Colla <giuliano.colla@fastwebnet.it>,
-        linux-rt-users@vger.kernel.org
-References: <bf7df0b0-64b4-910f-137e-1eba406d3f52@numalliance.com>
- <f1670f5a-6a78-634b-914a-cb26e2ce74aa@fastwebnet.it>
-Message-ID: <dfa8f252-8345-9bb4-6f3e-c95b10f52309@numalliance.com>
-Date:   Fri, 24 May 2019 10:38:05 +0200
-User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.6.1
+        Fri, 24 May 2019 23:33:18 -0400
+Received: from mail.kernel.org ([198.145.29.99]:42850 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726622AbfEYDdR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 24 May 2019 23:33:17 -0400
+Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 4CE4A2177E;
+        Sat, 25 May 2019 03:33:16 +0000 (UTC)
+Received: from rostedt by gandalf.local.home with local (Exim 4.92)
+        (envelope-from <rostedt@goodmis.org>)
+        id 1hUNQp-0002FL-EG; Fri, 24 May 2019 23:33:15 -0400
+Message-Id: <20190525033315.333596820@goodmis.org>
+User-Agent: quilt/0.65
+Date:   Fri, 24 May 2019 23:32:33 -0400
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        John Kacur <jkacur@redhat.com>,
+        Paul Gortmaker <paul.gortmaker@windriver.com>,
+        Julia Cartwright <julia@ni.com>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        tom.zanussi@linux.intel.com, stable-rt@vger.kernel.org
+Subject: [PATCH RT 1/6] powerpc/pseries/iommu: Use a locallock instead local_irq_save()
+References: <20190525033232.795741612@goodmis.org>
 MIME-Version: 1.0
-In-Reply-To: <f1670f5a-6a78-634b-914a-cb26e2ce74aa@fastwebnet.it>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: fr
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=ISO-8859-15
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+4.19.37-rt20-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
->> Hi,
->>
->> I have got a problem with a celeron j1900 platform and i915 driver.
->>
->> I have 3 realtime tasks that are launched sequentially.
->>
->> task1 is clocked periodically at 3ms.
->>
->> task1 wakes up task2 and takes 2 wakes up task 3 using priority 
->> scheduling (and SCHED_FIFO mechanism).
->>
->> everything works well, until I am using graphic applications with 
->> activity (hide/show gui programs...,widgets creation /refresh etc).
->>
->> The task1 always start periodically each 3ms, but the other threads 
->> execution time are delayed.
->>
->> I mean normally, the whole computing processing timing 
->> (task1+task2+task3) takes normally around 800us time execution.
->>
->> When I stress the graphic pages, This time becomes up to 1.6ms.
->>
->> The 3 tasks are isolated on a cpu. I don't think the problem is 
->> involved by the CPU, but more by i915 driver and memory.
->>
->> I have not managed to identify the right reason with perf utility.
->>
->> One thing I am sure :
->>
->> if I run the same gui pages through an ssh shell, the problem has not 
->> appeared. realtime is not "broken"
->>
->> I know that the intel driver is involved.
->>
->> I would need some help to identify the right problem and for finding 
->> solutions.ideas.
->>
->> Regards,
->>
->
-> What priorities you have given to your RT tasks?
->
-my 3 RT Tasks have the following priorities:
+------------------
 
-task1: 47
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-task2 : 48
+The locallock protects the per-CPU variable tce_page. The function
+attempts to allocate memory while tce_page is protected (by disabling
+interrupts).
 
-task3 : 49
+Use local_irq_save() instead of local_irq_disable().
 
-Higher priorities don't solve the problem. It is important to notice my 
-resolution is  1280x1024 /  19inch vertical orientation display,
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+---
+ arch/powerpc/platforms/pseries/iommu.c | 16 ++++++++++------
+ 1 file changed, 10 insertions(+), 6 deletions(-)
+
+diff --git a/arch/powerpc/platforms/pseries/iommu.c b/arch/powerpc/platforms/pseries/iommu.c
+index 06f02960b439..d80d919c78d3 100644
+--- a/arch/powerpc/platforms/pseries/iommu.c
++++ b/arch/powerpc/platforms/pseries/iommu.c
+@@ -38,6 +38,7 @@
+ #include <linux/of.h>
+ #include <linux/iommu.h>
+ #include <linux/rculist.h>
++#include <linux/locallock.h>
+ #include <asm/io.h>
+ #include <asm/prom.h>
+ #include <asm/rtas.h>
+@@ -212,6 +213,7 @@ static int tce_build_pSeriesLP(struct iommu_table *tbl, long tcenum,
+ }
+ 
+ static DEFINE_PER_CPU(__be64 *, tce_page);
++static DEFINE_LOCAL_IRQ_LOCK(tcp_page_lock);
+ 
+ static int tce_buildmulti_pSeriesLP(struct iommu_table *tbl, long tcenum,
+ 				     long npages, unsigned long uaddr,
+@@ -232,7 +234,8 @@ static int tce_buildmulti_pSeriesLP(struct iommu_table *tbl, long tcenum,
+ 		                           direction, attrs);
+ 	}
+ 
+-	local_irq_save(flags);	/* to protect tcep and the page behind it */
++	/* to protect tcep and the page behind it */
++	local_lock_irqsave(tcp_page_lock, flags);
+ 
+ 	tcep = __this_cpu_read(tce_page);
+ 
+@@ -243,7 +246,7 @@ static int tce_buildmulti_pSeriesLP(struct iommu_table *tbl, long tcenum,
+ 		tcep = (__be64 *)__get_free_page(GFP_ATOMIC);
+ 		/* If allocation fails, fall back to the loop implementation */
+ 		if (!tcep) {
+-			local_irq_restore(flags);
++			local_unlock_irqrestore(tcp_page_lock, flags);
+ 			return tce_build_pSeriesLP(tbl, tcenum, npages, uaddr,
+ 					    direction, attrs);
+ 		}
+@@ -277,7 +280,7 @@ static int tce_buildmulti_pSeriesLP(struct iommu_table *tbl, long tcenum,
+ 		tcenum += limit;
+ 	} while (npages > 0 && !rc);
+ 
+-	local_irq_restore(flags);
++	local_unlock_irqrestore(tcp_page_lock, flags);
+ 
+ 	if (unlikely(rc == H_NOT_ENOUGH_RESOURCES)) {
+ 		ret = (int)rc;
+@@ -435,13 +438,14 @@ static int tce_setrange_multi_pSeriesLP(unsigned long start_pfn,
+ 	u64 rc = 0;
+ 	long l, limit;
+ 
+-	local_irq_disable();	/* to protect tcep and the page behind it */
++	/* to protect tcep and the page behind it */
++	local_lock_irq(tcp_page_lock);
+ 	tcep = __this_cpu_read(tce_page);
+ 
+ 	if (!tcep) {
+ 		tcep = (__be64 *)__get_free_page(GFP_ATOMIC);
+ 		if (!tcep) {
+-			local_irq_enable();
++			local_unlock_irq(tcp_page_lock);
+ 			return -ENOMEM;
+ 		}
+ 		__this_cpu_write(tce_page, tcep);
+@@ -487,7 +491,7 @@ static int tce_setrange_multi_pSeriesLP(unsigned long start_pfn,
+ 
+ 	/* error cleanup: caller will clear whole range */
+ 
+-	local_irq_enable();
++	local_unlock_irq(tcp_page_lock);
+ 	return rc;
+ }
+ 
+-- 
+2.20.1
 
 
-> I have experienced that running on an isolated CPU is not enough to 
-> ensure that the scheduling of your tasks is not influenced by other 
-> activities. In order to have my RT tasks running properly, I've been 
-> forced not only to set policy to SCHED_FIFO, but also to set a 
-> priority as high as possible, sort of:
->        mysched.sched_priority = 99;
->          if( sched_setscheduler( 0, policy, &mysched ) == -1 ) {
-> 	......
-> for the first task, and slghtly lower priorities to the others.
->
-> Then with *top *you may see where are positioned your tasks in the 
-> scheduler priority.
->
-> Here's a snapshot of Top output (sorted by priority), with my 15 RT 
-> tasks being, in order of priority, /ymain/ to /erhndl/. Very little 
-> has higher priority, and all the rest has lower. This setup for me is 
-> insensitive to CPU graphic activities.
->
->
->
-> Of course if in your case the i915 driver happens to have a higher 
-> priority than the one you can manage to obtain programmatically for 
-> your tasks, then you're out of luck.
->
-> Hope that it helps,
->
-> Giuliano
->
->
-> -- 
-> Do not do to others as you would have them do to you.They might have different tastes.
