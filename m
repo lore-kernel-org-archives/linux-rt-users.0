@@ -6,30 +6,30 @@ X-Spam-Status: No, score=-7.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
 	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 00E00C282E1
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B155AC282E3
 	for <linux-rt-users@archiver.kernel.org>; Sat, 25 May 2019 03:33:30 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id D237221871
-	for <linux-rt-users@archiver.kernel.org>; Sat, 25 May 2019 03:33:29 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9183121871
+	for <linux-rt-users@archiver.kernel.org>; Sat, 25 May 2019 03:33:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726762AbfEYDdS (ORCPT
+        id S1726752AbfEYDdS (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
         Fri, 24 May 2019 23:33:18 -0400
-Received: from mail.kernel.org ([198.145.29.99]:42956 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.99]:42898 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726691AbfEYDdR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S1726635AbfEYDdR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 24 May 2019 23:33:17 -0400
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id DBFFF2184E;
+        by mail.kernel.org (Postfix) with ESMTPSA id 8D4F921848;
         Sat, 25 May 2019 03:33:16 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.92)
         (envelope-from <rostedt@goodmis.org>)
-        id 1hUNQp-0002Go-Sp; Fri, 24 May 2019 23:33:16 -0400
-Message-Id: <20190525033315.775106086@goodmis.org>
+        id 1hUNQp-0002GK-Nc; Fri, 24 May 2019 23:33:15 -0400
+Message-Id: <20190525033315.621058104@goodmis.org>
 User-Agent: quilt/0.65
-Date:   Fri, 24 May 2019 23:32:36 -0400
+Date:   Fri, 24 May 2019 23:32:35 -0400
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -40,8 +40,10 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <daniel.wagner@siemens.com>,
-        tom.zanussi@linux.intel.com
-Subject: [PATCH RT 4/6] drm/i915: Dont disable interrupts independently of the lock
+        tom.zanussi@linux.intel.com, Julien Grall <julien.grall@arm.com>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        stable-rt@vger.kernel.org
+Subject: [PATCH RT 3/6] tty/sysrq: Convert show_lock to raw_spinlock_t
 References: <20190525033232.795741612@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -55,49 +57,62 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Julien Grall <julien.grall@arm.com>
 
-The locks (timeline->lock and rq->lock) need to be taken with disabled
-interrupts. This is done in __retire_engine_request() by disabling the
-interrupts independently of the locks itself.
-While local_irq_disable()+spin_lock() equals spin_lock_irq() on vanilla
-it does not on RT. Also, it is not obvious if there is a special reason
-to why the interrupts are disabled independently of the lock.
+Systems which don't provide arch_trigger_cpumask_backtrace() will
+invoke showacpu() from a smp_call_function() function which is invoked
+with disabled interrupts even on -RT systems.
 
-Enable/disable interrupts as part of the locking instruction.
+The function acquires the show_lock lock which only purpose is to
+ensure that the CPUs don't print simultaneously. Otherwise the
+output would clash and it would be hard to tell the output from CPUx
+apart from CPUy.
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+On -RT the spin_lock() can not be acquired from this context. A
+raw_spin_lock() is required. It will introduce the system's latency
+by performing the sysrq request and other CPUs will block on the lock
+until the request is done. This is okay because the user asked for a
+backtrace of all active CPUs and under "normal circumstances in
+production" this path should not be triggered.
+
+Signed-off-by: Julien Grall <julien.grall@arm.com>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+[bigeasy@linuxtronix.de: commit description]
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Acked-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- drivers/gpu/drm/i915/i915_request.c | 8 ++------
- 1 file changed, 2 insertions(+), 6 deletions(-)
+ drivers/tty/sysrq.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/gpu/drm/i915/i915_request.c b/drivers/gpu/drm/i915/i915_request.c
-index 5c2c93cbab12..7124510b9131 100644
---- a/drivers/gpu/drm/i915/i915_request.c
-+++ b/drivers/gpu/drm/i915/i915_request.c
-@@ -356,9 +356,7 @@ static void __retire_engine_request(struct intel_engine_cs *engine,
+diff --git a/drivers/tty/sysrq.c b/drivers/tty/sysrq.c
+index 06ed20dd01ba..627517ad55bf 100644
+--- a/drivers/tty/sysrq.c
++++ b/drivers/tty/sysrq.c
+@@ -215,7 +215,7 @@ static struct sysrq_key_op sysrq_showlocks_op = {
+ #endif
  
- 	GEM_BUG_ON(!i915_request_completed(rq));
+ #ifdef CONFIG_SMP
+-static DEFINE_SPINLOCK(show_lock);
++static DEFINE_RAW_SPINLOCK(show_lock);
  
--	local_irq_disable();
--
--	spin_lock(&engine->timeline.lock);
-+	spin_lock_irq(&engine->timeline.lock);
- 	GEM_BUG_ON(!list_is_first(&rq->link, &engine->timeline.requests));
- 	list_del_init(&rq->link);
- 	spin_unlock(&engine->timeline.lock);
-@@ -372,9 +370,7 @@ static void __retire_engine_request(struct intel_engine_cs *engine,
- 		GEM_BUG_ON(!atomic_read(&rq->i915->gt_pm.rps.num_waiters));
- 		atomic_dec(&rq->i915->gt_pm.rps.num_waiters);
- 	}
--	spin_unlock(&rq->lock);
--
--	local_irq_enable();
-+	spin_unlock_irq(&rq->lock);
+ static void showacpu(void *dummy)
+ {
+@@ -225,10 +225,10 @@ static void showacpu(void *dummy)
+ 	if (idle_cpu(smp_processor_id()))
+ 		return;
  
- 	/*
- 	 * The backing object for the context is done after switching to the
+-	spin_lock_irqsave(&show_lock, flags);
++	raw_spin_lock_irqsave(&show_lock, flags);
+ 	pr_info("CPU%d:\n", smp_processor_id());
+ 	show_stack(NULL, NULL);
+-	spin_unlock_irqrestore(&show_lock, flags);
++	raw_spin_unlock_irqrestore(&show_lock, flags);
+ }
+ 
+ static void sysrq_showregs_othercpus(struct work_struct *dummy)
 -- 
 2.20.1
 
