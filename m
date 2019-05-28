@@ -2,54 +2,80 @@ Return-Path: <SRS0=Q2zZ=T4=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_NEOMUTT autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 43305C04AB6
-	for <linux-rt-users@archiver.kernel.org>; Tue, 28 May 2019 16:04:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B53F6C04AB6
+	for <linux-rt-users@archiver.kernel.org>; Tue, 28 May 2019 22:40:32 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 2339021670
-	for <linux-rt-users@archiver.kernel.org>; Tue, 28 May 2019 16:04:44 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9377521670
+	for <linux-rt-users@archiver.kernel.org>; Tue, 28 May 2019 22:40:32 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726439AbfE1QEn (ORCPT
+        id S1726961AbfE1Wk2 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 28 May 2019 12:04:43 -0400
-Received: from Galois.linutronix.de ([146.0.238.70]:51052 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726313AbfE1QEn (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 28 May 2019 12:04:43 -0400
-Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
-        (envelope-from <bigeasy@linutronix.de>)
-        id 1hVeae-0001cm-Hy; Tue, 28 May 2019 18:04:40 +0200
-Date:   Tue, 28 May 2019 18:04:40 +0200
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     ddu <dengke.du@windriver.com>
-Cc:     linux-rt-users@vger.kernel.org
-Subject: Re: rt kernel break printf command's parent process
-Message-ID: <20190528160440.nbrhmchexbz2jh5s@linutronix.de>
-References: <205dd879-fedc-2edf-92b3-0bd8a3ee1870@windriver.com>
- <20190528143329.yxpzhu2ov5piiceb@linutronix.de>
+        Tue, 28 May 2019 18:40:28 -0400
+Received: from mail.kernel.org ([198.145.29.99]:58930 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726463AbfE1Wk2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 28 May 2019 18:40:28 -0400
+Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id AD53120B1F;
+        Tue, 28 May 2019 22:40:26 +0000 (UTC)
+Date:   Tue, 28 May 2019 18:40:25 -0400
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Julia Cartwright <julia@ni.com>,
+        Daniel Wagner <daniel.wagner@siemens.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>
+Subject: [ANNOUNCE] 4.9.178-rt131
+Message-ID: <20190528184025.30a4af92@gandalf.local.home>
+X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <20190528143329.yxpzhu2ov5piiceb@linutronix.de>
-User-Agent: NeoMutt/20180716
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2019-05-28 16:33:29 [+0200], To ddu wrote:
-> On 2019-05-27 17:47:04 [+0800], ddu wrote:
-> > Hi all
-> Hi,
-> 
-> > I use yocto rt-kernel which rebase on rt kernel:
-> > 
-> > http://git.yoctoproject.org/cgit/cgit.cgi/linux-yocto/log/?h=v5.0/standard/preempt-rt/intel-x86
 
-That tree has -rt3. Please update to -rt9.
+Dear RT Folks,
 
-Sebastian
+I'm pleased to announce the 4.9.178-rt131 stable release.
+
+
+This release is just an update to the new stable 4.9.178 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.9-rt
+  Head SHA1: 18b4f7f946eeae9bc06af9bab9afc43faf9f1551
+
+
+Or to build 4.9.178-rt131 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.9.178.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.9/patch-4.9.178-rt131.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
+
