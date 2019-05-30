@@ -2,106 +2,158 @@ Return-Path: <SRS0=CUgu=T6=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.5 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_MUTT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ACBDFC28CC0
-	for <linux-rt-users@archiver.kernel.org>; Thu, 30 May 2019 13:55:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C6C0FC28CC0
+	for <linux-rt-users@archiver.kernel.org>; Thu, 30 May 2019 20:15:50 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 9076E259FB
-	for <linux-rt-users@archiver.kernel.org>; Thu, 30 May 2019 13:55:15 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A48122614E
+	for <linux-rt-users@archiver.kernel.org>; Thu, 30 May 2019 20:15:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726653AbfE3NzM (ORCPT
+        id S1726670AbfE3UPt (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 30 May 2019 09:55:12 -0400
-Received: from foss.arm.com ([217.140.101.70]:36106 "EHLO foss.arm.com"
+        Thu, 30 May 2019 16:15:49 -0400
+Received: from mx1.redhat.com ([209.132.183.28]:58576 "EHLO mx1.redhat.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725870AbfE3NzM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 30 May 2019 09:55:12 -0400
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.72.51.249])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 8600DA78;
-        Thu, 30 May 2019 06:55:09 -0700 (PDT)
-Received: from [10.37.12.213] (unknown [10.37.12.213])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 3A6073F59C;
-        Thu, 30 May 2019 06:55:07 -0700 (PDT)
-Subject: Re: [PATCH] arm64/cpufeature: Convert hook_lock to raw_spin_lock_t in
- cpu_enable_ssbs()
-To:     Will Deacon <will.deacon@arm.com>
+        id S1726080AbfE3UPt (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 30 May 2019 16:15:49 -0400
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mx1.redhat.com (Postfix) with ESMTPS id CBCFA30833AF;
+        Thu, 30 May 2019 20:15:48 +0000 (UTC)
+Received: from amt.cnet (ovpn-112-13.gru2.redhat.com [10.97.112.13])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id CE4DE611A1;
+        Thu, 30 May 2019 20:15:42 +0000 (UTC)
+Received: from amt.cnet (localhost [127.0.0.1])
+        by amt.cnet (Postfix) with ESMTP id 199B210519C;
+        Thu, 30 May 2019 17:15:03 -0300 (BRT)
+Received: (from marcelo@localhost)
+        by amt.cnet (8.14.7/8.14.7/Submit) id x4UKF0jJ028233;
+        Thu, 30 May 2019 17:15:00 -0300
+Date:   Thu, 30 May 2019 17:14:58 -0300
+From:   Marcelo Tosatti <mtosatti@redhat.com>
+To:     Anna-Maria Gleixner <anna-maria@linutronix.de>
 Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        linux-arm-kernel@lists.infradead.org, tglx@linutronix.de,
-        rostedt@goodmis.org, bigeasy@linutronix.de, suzuki.poulose@arm.com,
-        catalin.marinas@arm.com, dave.martin@arm.com
-References: <20190530113058.1988-1-julien.grall@arm.com>
- <20190530120129.GD13751@fuggles.cambridge.arm.com>
-From:   Julien Grall <julien.grall@arm.com>
-Message-ID: <13c15c54-c17f-78bc-ccf7-791e9e901b7b@arm.com>
-Date:   Thu, 30 May 2019 14:55:05 +0100
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101
- Thunderbird/60.6.1
+        Thomas Gleixner <tglx@linutronix.de>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Luiz Capitulino <lcapitulino@redhat.com>,
+        Haris Okanovic <haris.okanovic@ni.com>
+Subject: Re: [patch 2/3] timers: do not raise softirq unconditionally
+ (spinlockless version)
+Message-ID: <20190530201455.GC23199@amt.cnet>
+References: <20190415201213.600254019@amt.cnet>
+ <20190415201429.427759476@amt.cnet>
+ <alpine.DEB.2.21.1905291653120.1395@somnus>
 MIME-Version: 1.0
-In-Reply-To: <20190530120129.GD13751@fuggles.cambridge.arm.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.21.1905291653120.1395@somnus>
+User-Agent: Mutt/1.5.21 (2010-09-15)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Greylist: Sender IP whitelisted, not delayed by milter-greylist-4.5.16 (mx1.redhat.com [10.5.110.44]); Thu, 30 May 2019 20:15:48 +0000 (UTC)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Will,
-
-On 5/30/19 1:01 PM, Will Deacon wrote:
-> On Thu, May 30, 2019 at 12:30:58PM +0100, Julien Grall wrote:
->> cpu_enable_ssbs() is called via stop_machine() as part of the cpu_enable
->> callback. A spin lock is used to ensure the hook is registered before
->> the rest of the callback is executed.
->>
->> On -RT spin_lock() may sleep. However, all the callees in stop_machine()
->> are expected to not sleep. Therefore a raw_spin_lock() is required here.
->>
->> Given this is already done under stop_machine() and the work done under
->> the lock is quite small, the latency should not increase too much.
->>
->> Signed-off-by: Julien Grall <julien.grall@arm.com>
->>
->> ---
->>
->> It was noticed when looking at the current use of spin_lock in
->> arch/arm64. I don't have a platform calling that callback, so I have
->> hacked the code to reproduce the error and check it is now fixed.
->> ---
->>   arch/arm64/kernel/cpufeature.c | 6 +++---
->>   1 file changed, 3 insertions(+), 3 deletions(-)
->>
->> diff --git a/arch/arm64/kernel/cpufeature.c b/arch/arm64/kernel/cpufeature.c
->> index ca27e08e3d8a..2a7159fda3ce 100644
->> --- a/arch/arm64/kernel/cpufeature.c
->> +++ b/arch/arm64/kernel/cpufeature.c
->> @@ -1194,14 +1194,14 @@ static struct undef_hook ssbs_emulation_hook = {
->>   static void cpu_enable_ssbs(const struct arm64_cpu_capabilities *__unused)
->>   {
->>   	static bool undef_hook_registered = false;
->> -	static DEFINE_SPINLOCK(hook_lock);
->> +	static DEFINE_RAW_SPINLOCK(hook_lock);
->>   
->> -	spin_lock(&hook_lock);
->> +	raw_spin_lock(&hook_lock);
->>   	if (!undef_hook_registered) {
->>   		register_undef_hook(&ssbs_emulation_hook);
->>   		undef_hook_registered = true;
->>   	}
->> -	spin_unlock(&hook_lock);
->> +	raw_spin_unlock(&hook_lock);
+On Wed, May 29, 2019 at 04:53:26PM +0200, Anna-Maria Gleixner wrote:
+> On Mon, 15 Apr 2019, Marcelo Tosatti wrote:
 > 
-> Makes sense to me. We could probably avoid the lock entirely if we wanted
-> to (via atomic_dec_if_positive), but I'm not sure it's really worth it.
+> > Check base->pending_map locklessly and skip raising timer softirq 
+> > if empty.
+> > 
+> > What allows the lockless (and potentially racy against mod_timer) 
+> > check is that mod_timer will raise another timer softirq after
+> > modifying base->pending_map.
+> 
+> The raise of the timer softirq after adding the timer is done
+> unconditionally - so there are timer softirqs raised which are not required
+> at all, as mentioned before.
 
-I would prefer to remove the lock if it is possible. However, I was 
-under the impression the lock is necessary so the hook is registered 
-before any CPU attempt to configure the PSTATE.
+Yes. However i can't see a way to avoid that: its not possible to know
+if the race described earlier happened or not. 
 
-Cheers,
+Do you have a suggestion on how to avoid this or a way to avoid
+the IPI+raise softirq ?
 
--- 
-Julien Grall
+> This check is for !CONFIG_PREEMPT_RT_FULL only implemented. The commit
+> message totally igonres that you are implementing something
+> CONFIG_PREEMPT_RT_FULL dependent as well.
+> 
+> > Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
+> > 
+> > ---
+> >  kernel/time/timer.c |   18 ++++++++++++++++++
+> >  1 file changed, 18 insertions(+)
+> > 
+> > Index: linux-rt-devel/kernel/time/timer.c
+> > ===================================================================
+> > --- linux-rt-devel.orig/kernel/time/timer.c	2019-04-15 14:21:02.788704354 -0300
+> > +++ linux-rt-devel/kernel/time/timer.c	2019-04-15 14:22:56.755047354 -0300
+> > @@ -1776,6 +1776,24 @@
+> >  		if (time_before(jiffies, base->clk))
+> >  			return;
+> >  	}
+> > +
+> > +#ifdef CONFIG_PREEMPT_RT_FULL
+> > +/* On RT, irq work runs from softirq */
+> > +	if (irq_work_needs_cpu())
+> > +		goto raise;
+> 
+> So with this patch and the change you made in the patch before, timers on
+> RT are expired only when there is pending irq work or after modifying a
+> timer on a non housekeeping cpu?
+
+Well, run_timer_softirq execute only if pending_map contains a bit set.
+
+> With your patches I could create the following problematic situation on RT
+> (if I understood everything properly): I add a timer which should expire in
+> 50 jiffies to the wheel of a non housekeeping cpu. So it ends up 50 buckets
+> away form now in the first wheel. This timer is the only timer in the wheel
+> and the next timer softirq raise is required in 50 jiffies. After adding
+> the timer, the timer interrupt is raised, and no timer has to be expired,
+> because there is no timer pending.
+
+But the softirq will be raised, because pending_map will be set:
+
++               if (!bitmap_empty(base->pending_map, WHEEL_SIZE))
++                       goto raise;
+
+No?
+
+>  If there is no irq work required during
+> the next 51 jiffies and also no timer changed, the timer I added, will not
+> expire in time. The timer_base will come out of idle but will not forward
+> the base clk. 
+
+> This makes it even worse: When then adding a timer, the timer
+> base is forwarded - but without checking for the next pending timer, so the
+> first added timer will be delayed even more.
+> 
+> So your implementation lacks forwarding the timer_base->clk when timer_base
+> comes out of idle with respect to the next pending timer.
+
+> > +#endif
+> > +	base = this_cpu_ptr(&timer_bases[BASE_STD]);
+> > +	if (!housekeeping_cpu(base->cpu, HK_FLAG_TIMER)) {
+> > +		if (!bitmap_empty(base->pending_map, WHEEL_SIZE))
+> > +			goto raise;
+> > +		base++;
+> > +		if (!bitmap_empty(base->pending_map, WHEEL_SIZE))
+> > +			goto raise;
+> > +
+> > +		return;
+> > +	}
+> > +
+> > +raise:
+> >  	raise_softirq(TIMER_SOFTIRQ);
+> >  }
+> >  
+> >
+> 
+> Thanks,
+> 
+> 	Anna-Maria
