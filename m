@@ -1,131 +1,68 @@
-Return-Path: <SRS0=QNvF=T5=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=CUgu=T6=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 27498C28CC1
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 May 2019 14:53:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 16A7AC28CC0
+	for <linux-rt-users@archiver.kernel.org>; Thu, 30 May 2019 02:19:38 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 0A5E323B05
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 May 2019 14:53:31 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E99AB24430
+	for <linux-rt-users@archiver.kernel.org>; Thu, 30 May 2019 02:19:37 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726807AbfE2Oxa (ORCPT
+        id S1727028AbfE3CTg (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 29 May 2019 10:53:30 -0400
-Received: from Galois.linutronix.de ([146.0.238.70]:54885 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726803AbfE2Ox3 (ORCPT
+        Wed, 29 May 2019 22:19:36 -0400
+Received: from mail1.windriver.com ([147.11.146.13]:65219 "EHLO
+        mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726311AbfE3CTg (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 29 May 2019 10:53:29 -0400
-Received: from p200300d06f28ff00b92b307fdbdaf2b9.dip0.t-ipconnect.de ([2003:d0:6f28:ff00:b92b:307f:dbda:f2b9] helo=somnus.fritz.box)
-        by Galois.linutronix.de with esmtpsa (TLS1.2:DHE_RSA_AES_256_CBC_SHA256:256)
-        (Exim 4.80)
-        (envelope-from <anna-maria@linutronix.de>)
-        id 1hVzxG-00063R-Hd; Wed, 29 May 2019 16:53:26 +0200
-Date:   Wed, 29 May 2019 16:53:26 +0200 (CEST)
-From:   Anna-Maria Gleixner <anna-maria@linutronix.de>
-To:     Marcelo Tosatti <mtosatti@redhat.com>
-cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Luiz Capitulino <lcapitulino@redhat.com>,
-        Haris Okanovic <haris.okanovic@ni.com>
-Subject: Re: [patch 2/3] timers: do not raise softirq unconditionally
- (spinlockless version)
-In-Reply-To: <20190415201429.427759476@amt.cnet>
-Message-ID: <alpine.DEB.2.21.1905291653120.1395@somnus>
-References: <20190415201213.600254019@amt.cnet> <20190415201429.427759476@amt.cnet>
-User-Agent: Alpine 2.21 (DEB 202 2017-01-01)
+        Wed, 29 May 2019 22:19:36 -0400
+Received: from ALA-HCA.corp.ad.wrs.com ([147.11.189.40])
+        by mail1.windriver.com (8.15.2/8.15.1) with ESMTPS id x4U2JIjn006821
+        (version=TLSv1 cipher=AES128-SHA bits=128 verify=FAIL);
+        Wed, 29 May 2019 19:19:19 -0700 (PDT)
+Received: from [128.224.162.135] (128.224.162.135) by ALA-HCA.corp.ad.wrs.com
+ (147.11.189.50) with Microsoft SMTP Server (TLS) id 14.3.439.0; Wed, 29 May
+ 2019 19:19:18 -0700
+Subject: Re: rt kernel break printf command's parent process
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+CC:     <linux-rt-users@vger.kernel.org>
+References: <205dd879-fedc-2edf-92b3-0bd8a3ee1870@windriver.com>
+ <20190528143329.yxpzhu2ov5piiceb@linutronix.de>
+ <20190528160440.nbrhmchexbz2jh5s@linutronix.de>
+From:   ddu <dengke.du@windriver.com>
+Message-ID: <41f5ed4e-5f96-1eeb-b71d-7172c19218d6@windriver.com>
+Date:   Thu, 30 May 2019 10:19:15 +0800
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101
+ Thunderbird/60.6.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Linutronix-Spam-Score: -1.0
-X-Linutronix-Spam-Level: -
-X-Linutronix-Spam-Status: No , -1.0 points, 5.0 required,  ALL_TRUSTED=-1,SHORTCIRCUIT=-0.0001
+In-Reply-To: <20190528160440.nbrhmchexbz2jh5s@linutronix.de>
+Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Transfer-Encoding: 8bit
+Content-Language: en-US
+X-Originating-IP: [128.224.162.135]
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, 15 Apr 2019, Marcelo Tosatti wrote:
+Thanks, after I update to -rt9, this have been fixed.
 
-> Check base->pending_map locklessly and skip raising timer softirq 
-> if empty.
-> 
-> What allows the lockless (and potentially racy against mod_timer) 
-> check is that mod_timer will raise another timer softirq after
-> modifying base->pending_map.
+//dengke
 
-The raise of the timer softirq after adding the timer is done
-unconditionally - so there are timer softirqs raised which are not required
-at all, as mentioned before.
-
-This check is for !CONFIG_PREEMPT_RT_FULL only implemented. The commit
-message totally igonres that you are implementing something
-CONFIG_PREEMPT_RT_FULL dependent as well.
-
-> Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
-> 
-> ---
->  kernel/time/timer.c |   18 ++++++++++++++++++
->  1 file changed, 18 insertions(+)
-> 
-> Index: linux-rt-devel/kernel/time/timer.c
-> ===================================================================
-> --- linux-rt-devel.orig/kernel/time/timer.c	2019-04-15 14:21:02.788704354 -0300
-> +++ linux-rt-devel/kernel/time/timer.c	2019-04-15 14:22:56.755047354 -0300
-> @@ -1776,6 +1776,24 @@
->  		if (time_before(jiffies, base->clk))
->  			return;
->  	}
-> +
-> +#ifdef CONFIG_PREEMPT_RT_FULL
-> +/* On RT, irq work runs from softirq */
-> +	if (irq_work_needs_cpu())
-> +		goto raise;
-
-So with this patch and the change you made in the patch before, timers on
-RT are expired only when there is pending irq work or after modifying a
-timer on a non housekeeping cpu?
-
-With your patches I could create the following problematic situation on RT
-(if I understood everything properly): I add a timer which should expire in
-50 jiffies to the wheel of a non housekeeping cpu. So it ends up 50 buckets
-away form now in the first wheel. This timer is the only timer in the wheel
-and the next timer softirq raise is required in 50 jiffies. After adding
-the timer, the timer interrupt is raised, and no timer has to be expired,
-because there is no timer pending. If there is no irq work required during
-the next 51 jiffies and also no timer changed, the timer I added, will not
-expire in time. The timer_base will come out of idle but will not forward
-the base clk. This makes it even worse: When then adding a timer, the timer
-base is forwarded - but without checking for the next pending timer, so the
-first added timer will be delayed even more.
-
-So your implementation lacks forwarding the timer_base->clk when timer_base
-comes out of idle with respect to the next pending timer.
-
-
-> +#endif
-> +	base = this_cpu_ptr(&timer_bases[BASE_STD]);
-> +	if (!housekeeping_cpu(base->cpu, HK_FLAG_TIMER)) {
-> +		if (!bitmap_empty(base->pending_map, WHEEL_SIZE))
-> +			goto raise;
-> +		base++;
-> +		if (!bitmap_empty(base->pending_map, WHEEL_SIZE))
-> +			goto raise;
-> +
-> +		return;
-> +	}
-> +
-> +raise:
->  	raise_softirq(TIMER_SOFTIRQ);
->  }
->  
+在 2019/5/29 上午12:04, Sebastian Andrzej Siewior 写道:
+> On 2019-05-28 16:33:29 [+0200], To ddu wrote:
+>> On 2019-05-27 17:47:04 [+0800], ddu wrote:
+>>> Hi all
+>> Hi,
+>>
+>>> I use yocto rt-kernel which rebase on rt kernel:
+>>>
+>>> http://git.yoctoproject.org/cgit/cgit.cgi/linux-yocto/log/?h=v5.0/standard/preempt-rt/intel-x86
+> That tree has -rt3. Please update to -rt9.
 >
-
-Thanks,
-
-	Anna-Maria
-
+> Sebastian
+>
