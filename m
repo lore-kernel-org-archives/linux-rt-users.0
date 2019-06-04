@@ -1,74 +1,101 @@
-Return-Path: <SRS0=3uJl=UC=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=a75S=UD=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_NEOMUTT autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.5 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_MUTT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 15A30C04AB5
-	for <linux-rt-users@archiver.kernel.org>; Mon,  3 Jun 2019 16:38:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B336AC282CE
+	for <linux-rt-users@archiver.kernel.org>; Tue,  4 Jun 2019 06:29:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id EAC22272FF
-	for <linux-rt-users@archiver.kernel.org>; Mon,  3 Jun 2019 16:38:57 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 906C623BC0
+	for <linux-rt-users@archiver.kernel.org>; Tue,  4 Jun 2019 06:29:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729365AbfFCQi4 convert rfc822-to-8bit (ORCPT
+        id S1726652AbfFDG3l (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 3 Jun 2019 12:38:56 -0400
-Received: from Galois.linutronix.de ([146.0.238.70]:37374 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727065AbfFCQi4 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 3 Jun 2019 12:38:56 -0400
-Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
-        (envelope-from <bigeasy@linutronix.de>)
-        id 1hXpz3-000471-Cc; Mon, 03 Jun 2019 18:38:53 +0200
-Date:   Mon, 3 Jun 2019 18:38:53 +0200
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     He Zhe <zhe.he@windriver.com>
-Cc:     linux-rt-users@vger.kernel.org
-Subject: Re: glibc nptl tst-robustpi8.c crashes since v5.0.3-rt1
-Message-ID: <20190603163853.psno24qkyrjwspg2@linutronix.de>
-References: <edd7c4be-738e-5b4f-73f4-0ff4b233a281@windriver.com>
+        Tue, 4 Jun 2019 02:29:41 -0400
+Received: from mx1.redhat.com ([209.132.183.28]:36626 "EHLO mx1.redhat.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726595AbfFDG3l (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 4 Jun 2019 02:29:41 -0400
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mx1.redhat.com (Postfix) with ESMTPS id 2A49583F42;
+        Tue,  4 Jun 2019 06:29:41 +0000 (UTC)
+Received: from xz-x1 (dhcp-15-205.nay.redhat.com [10.66.15.205])
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 4DDE9648A9;
+        Tue,  4 Jun 2019 06:29:34 +0000 (UTC)
+Date:   Tue, 4 Jun 2019 14:29:31 +0800
+From:   Peter Xu <peterx@redhat.com>
+To:     Marcelo Tosatti <mtosatti@redhat.com>
+Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Anna-Maria Gleixner <anna-maria@linutronix.de>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Luiz Capitulino <lcapitulino@redhat.com>,
+        Haris Okanovic <haris.okanovic@ni.com>
+Subject: Re: [patch 2/3] timers: do not raise softirq unconditionally
+ (spinlockless version)
+Message-ID: <20190604062931.GC15459@xz-x1>
+References: <20190415201213.600254019@amt.cnet>
+ <20190415201429.427759476@amt.cnet>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: 8BIT
-In-Reply-To: <edd7c4be-738e-5b4f-73f4-0ff4b233a281@windriver.com>
-User-Agent: NeoMutt/20180716
+In-Reply-To: <20190415201429.427759476@amt.cnet>
+User-Agent: Mutt/1.10.1 (2018-07-13)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Greylist: Sender IP whitelisted, not delayed by milter-greylist-4.5.16 (mx1.redhat.com [10.5.110.27]); Tue, 04 Jun 2019 06:29:41 +0000 (UTC)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2019-05-29 18:20:56 [+0800], He Zhe wrote:
-> Hi,
-Hi,
+On Mon, Apr 15, 2019 at 05:12:15PM -0300, Marcelo Tosatti wrote:
+> Check base->pending_map locklessly and skip raising timer softirq 
+> if empty.
+> 
+> What allows the lockless (and potentially racy against mod_timer) 
+> check is that mod_timer will raise another timer softirq after
+> modifying base->pending_map.
+> 
+> Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
+> 
+> ---
+>  kernel/time/timer.c |   18 ++++++++++++++++++
+>  1 file changed, 18 insertions(+)
+> 
+> Index: linux-rt-devel/kernel/time/timer.c
+> ===================================================================
+> --- linux-rt-devel.orig/kernel/time/timer.c	2019-04-15 14:21:02.788704354 -0300
+> +++ linux-rt-devel/kernel/time/timer.c	2019-04-15 14:22:56.755047354 -0300
+> @@ -1776,6 +1776,24 @@
+>  		if (time_before(jiffies, base->clk))
+>  			return;
+>  	}
+> +
+> +#ifdef CONFIG_PREEMPT_RT_FULL
+> +/* On RT, irq work runs from softirq */
+> +	if (irq_work_needs_cpu())
+> +		goto raise;
+> +#endif
+> +	base = this_cpu_ptr(&timer_bases[BASE_STD]);
+> +	if (!housekeeping_cpu(base->cpu, HK_FLAG_TIMER)) {
+> +		if (!bitmap_empty(base->pending_map, WHEEL_SIZE))
+> +			goto raise;
+> +		base++;
 
-> Since v5.0.3-rt1, glibc/nptl/tst-robustpi8.c causes the following crash.
-> https://github.com/lattera/glibc/blob/master/nptl/tst-robustpi8.c
+Shall we check against CONFIG_NO_HZ_COMMON?  Otherwise the base could
+point to something else rather tha the deferred base (NR_BASES==1 if
+without nohz-common).
 
-thank you for the report.
+I see that run_local_timers() has similar pattern, actually I'm
+thinking whether we can put things like "base++" to be inside some
+"if"s of CONFIG_NO_HZ_COMMON to be clear.
 
-> root@intel-x86-64:~# ./tst-robustpi8
-> 007: ------------[ cut here ]------------
-> 007: kernel BUG at /buildarea2/zhe/repo/linux-rt-devel/kernel/locking/rtmutex.c:1336!
-…
-> 007: Call Trace:
-> 007:  rt_spin_lock_slowlock_locked+0x87/0x230
-> 007:  rt_spin_lock_slowlock+0x67/0xa0
-> 007:  rt_spin_lock+0x38/0x40
-> 007:  ? futex_lock_pi+0x2cd/0x490
-> 007:  futex_lock_pi+0x2cd/0x490
-> 007:  do_futex+0x330/0xc40
-> 007:  __se_sys_futex+0x7f/0x170
-…
+Thanks,
 
-this is due to commit
-	1a1fb985f2e2b ("futex: Handle early deadlock return correctly")
-
-let me see what I can do…
-
-> Zhe
-
-Sebastian
+-- 
+Peter Xu
