@@ -1,146 +1,116 @@
-Return-Path: <SRS0=TVKX=UE=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=rgxM=UF=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.0 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.5 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_MUTT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 75B09C28D19
-	for <linux-rt-users@archiver.kernel.org>; Wed,  5 Jun 2019 16:06:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BB43DC04AB5
+	for <linux-rt-users@archiver.kernel.org>; Thu,  6 Jun 2019 15:15:30 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 59CA8206C3
-	for <linux-rt-users@archiver.kernel.org>; Wed,  5 Jun 2019 16:06:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A060B2083E
+	for <linux-rt-users@archiver.kernel.org>; Thu,  6 Jun 2019 15:15:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728648AbfFEQGj (ORCPT
+        id S1729142AbfFFPP0 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 5 Jun 2019 12:06:39 -0400
-Received: from mail.monom.org ([188.138.9.77]:35618 "EHLO mail.monom.org"
+        Thu, 6 Jun 2019 11:15:26 -0400
+Received: from mx1.redhat.com ([209.132.183.28]:36828 "EHLO mx1.redhat.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728560AbfFEQGi (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 5 Jun 2019 12:06:38 -0400
-Received: from mail.monom.org (localhost [127.0.0.1])
-        by filter.mynetwork.local (Postfix) with ESMTP id D375F5009AE;
-        Wed,  5 Jun 2019 18:06:35 +0200 (CEST)
-Received: from localhost (ppp-93-104-174-142.dynamic.mnet-online.de [93.104.174.142])
-        by mail.monom.org (Postfix) with ESMTPSA id 95A95500959;
-        Wed,  5 Jun 2019 18:06:35 +0200 (CEST)
-From:   Daniel Wagner <wagi@monom.org>
-To:     John Kacur <jkacur@redhat.com>
-Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <wagi@monom.org>
-Subject: [PATCH v2 09/12] signaltest: Add duration command line argument
-Date:   Wed,  5 Jun 2019 18:06:14 +0200
-Message-Id: <20190605160617.22987-10-wagi@monom.org>
-X-Mailer: git-send-email 2.20.1
-In-Reply-To: <20190605160617.22987-1-wagi@monom.org>
-References: <20190605160617.22987-1-wagi@monom.org>
+        id S1728797AbfFFPP0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 6 Jun 2019 11:15:26 -0400
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mx1.redhat.com (Postfix) with ESMTPS id 9EE6430F1BC7;
+        Thu,  6 Jun 2019 15:15:25 +0000 (UTC)
+Received: from amt.cnet (ovpn-112-18.gru2.redhat.com [10.97.112.18])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 9D4AC10ABD8D;
+        Thu,  6 Jun 2019 15:15:01 +0000 (UTC)
+Received: from amt.cnet (localhost [127.0.0.1])
+        by amt.cnet (Postfix) with ESMTP id 0679E10514E;
+        Thu,  6 Jun 2019 12:14:40 -0300 (BRT)
+Received: (from marcelo@localhost)
+        by amt.cnet (8.14.7/8.14.7/Submit) id x56FEaSG003248;
+        Thu, 6 Jun 2019 12:14:36 -0300
+Date:   Thu, 6 Jun 2019 12:14:35 -0300
+From:   Marcelo Tosatti <mtosatti@redhat.com>
+To:     Peter Xu <peterx@redhat.com>
+Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Anna-Maria Gleixner <anna-maria@linutronix.de>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Luiz Capitulino <lcapitulino@redhat.com>,
+        Haris Okanovic <haris.okanovic@ni.com>
+Subject: Re: [patch 2/3] timers: do not raise softirq unconditionally
+ (spinlockless version)
+Message-ID: <20190606151433.GA3199@amt.cnet>
+References: <20190415201213.600254019@amt.cnet>
+ <20190415201429.427759476@amt.cnet>
+ <20190604062931.GC15459@xz-x1>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20190604062931.GC15459@xz-x1>
+User-Agent: Mutt/1.5.21 (2010-09-15)
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Greylist: Sender IP whitelisted, not delayed by milter-greylist-4.5.16 (mx1.redhat.com [10.5.110.43]); Thu, 06 Jun 2019 15:15:25 +0000 (UTC)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Many of the test programs have the --loop argument for automatic
-stopping. The main problem with the --loop argument is how long is
---loop 1000?
+On Tue, Jun 04, 2019 at 02:29:31PM +0800, Peter Xu wrote:
+> On Mon, Apr 15, 2019 at 05:12:15PM -0300, Marcelo Tosatti wrote:
+> > Check base->pending_map locklessly and skip raising timer softirq 
+> > if empty.
+> > 
+> > What allows the lockless (and potentially racy against mod_timer) 
+> > check is that mod_timer will raise another timer softirq after
+> > modifying base->pending_map.
+> > 
+> > Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
+> > 
+> > ---
+> >  kernel/time/timer.c |   18 ++++++++++++++++++
+> >  1 file changed, 18 insertions(+)
+> > 
+> > Index: linux-rt-devel/kernel/time/timer.c
+> > ===================================================================
+> > --- linux-rt-devel.orig/kernel/time/timer.c	2019-04-15 14:21:02.788704354 -0300
+> > +++ linux-rt-devel/kernel/time/timer.c	2019-04-15 14:22:56.755047354 -0300
+> > @@ -1776,6 +1776,24 @@
+> >  		if (time_before(jiffies, base->clk))
+> >  			return;
+> >  	}
+> > +
+> > +#ifdef CONFIG_PREEMPT_RT_FULL
+> > +/* On RT, irq work runs from softirq */
+> > +	if (irq_work_needs_cpu())
+> > +		goto raise;
+> > +#endif
+> > +	base = this_cpu_ptr(&timer_bases[BASE_STD]);
+> > +	if (!housekeeping_cpu(base->cpu, HK_FLAG_TIMER)) {
+> > +		if (!bitmap_empty(base->pending_map, WHEEL_SIZE))
+> > +			goto raise;
+> > +		base++;
+> 
+> Shall we check against CONFIG_NO_HZ_COMMON?  Otherwise the base could
+> point to something else rather tha the deferred base (NR_BASES==1 if
+> without nohz-common).
+> 
+> I see that run_local_timers() has similar pattern, actually I'm
+> thinking whether we can put things like "base++" to be inside some
+> "if"s of CONFIG_NO_HZ_COMMON to be clear.
+> 
+> Thanks,
+> 
+> -- 
+> Peter Xu
 
-To simplify automated tests introduce a --duration argument which
-allows to set the time how long a test should run. This allows the
-test suite to define the execution time and also the timeout which a
-normal human can understand.
+Hi Peter,
 
-For example run the test for 10 minutes and timeout at 11 minutes:
+Yes, that is a good point and needs fixing. 
 
-  # timeout 11m signaltest -D 10m
+I'll wait for Anna's comments before posting -v2.
 
-Signed-off-by: Daniel Wagner <wagi@monom.org>
----
- src/signaltest/signaltest.8 |  5 +++++
- src/signaltest/signaltest.c | 14 +++++++++++++-
- 2 files changed, 18 insertions(+), 1 deletion(-)
-
-diff --git a/src/signaltest/signaltest.8 b/src/signaltest/signaltest.8
-index 634d392a6da5..bd6ffe5c7a36 100644
---- a/src/signaltest/signaltest.8
-+++ b/src/signaltest/signaltest.8
-@@ -13,6 +13,11 @@ starting with two dashes ('\-\-').
- .B \-b, \-\-breaktrace=USEC
- Send break trace command when latency > USEC
- .TP
-+.B \-D, \-\-duration=TIME
-+Specify a length for the test run.
-+.br
-+Append 'm', 'h', or 'd' to specify minutes, hours or days.
-+.TP
- .B \-l, \-\-loops=LOOPS
- Number of loops: default=0 (endless)
- .TP
-diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
-index 59f979ec5ad1..a168191b7573 100644
---- a/src/signaltest/signaltest.c
-+++ b/src/signaltest/signaltest.c
-@@ -208,6 +208,8 @@ static void display_help(void)
- 		"signaltest <options>\n\n"
- 		"-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
- 		"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
-+		"-D       --duration=TIME   specify a length for the test run.\n"
-+		"                           Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
- 		"-p PRIO  --prio=PRIO       priority of highest prio thread\n"
- 		"-q       --quiet           print a summary only on exit\n"
- 		"-t NUM   --threads=NUM     number of threads: default=2\n"
-@@ -221,6 +223,7 @@ static void display_help(void)
- static int priority;
- static int num_threads = 2;
- static int max_cycles;
-+static int duration;
- static int verbose;
- static int quiet;
- static int lockall = 0;
-@@ -235,6 +238,7 @@ static void process_options (int argc, char *argv[])
- 		static struct option long_options[] = {
- 			{"breaktrace", required_argument, NULL, 'b'},
- 			{"loops", required_argument, NULL, 'l'},
-+			{"duration", required_argument, NULL, 'D'},
- 			{"priority", required_argument, NULL, 'p'},
- 			{"quiet", no_argument, NULL, 'q'},
- 			{"threads", required_argument, NULL, 't'},
-@@ -243,13 +247,14 @@ static void process_options (int argc, char *argv[])
- 			{"help", no_argument, NULL, '?'},
- 			{NULL, 0, NULL, 0}
- 		};
--		int c = getopt_long (argc, argv, "b:c:d:i:l:np:qrsmt:v",
-+		int c = getopt_long (argc, argv, "b:c:d:i:l:D:np:qrsmt:v",
- 			long_options, &option_index);
- 		if (c == -1)
- 			break;
- 		switch (c) {
- 		case 'b': tracelimit = atoi(optarg); break;
- 		case 'l': max_cycles = atoi(optarg); break;
-+		case 'D': duration = parse_time_string(optarg); break;
- 		case 'p': priority = atoi(optarg); break;
- 		case 'q': quiet = 1; break;
- 		case 't': num_threads = atoi(optarg); break;
-@@ -259,6 +264,9 @@ static void process_options (int argc, char *argv[])
- 		}
- 	}
- 
-+	if (duration < 0)
-+		error = 1;
-+
- 	if (priority < 0 || priority > 99)
- 		error = 1;
- 
-@@ -340,6 +348,10 @@ int main(int argc, char **argv)
- 
- 	signal(SIGINT, sighand);
- 	signal(SIGTERM, sighand);
-+	signal(SIGALRM, sighand);
-+
-+	if (duration)
-+		alarm(duration);
- 
- 	par = calloc(num_threads, sizeof(struct thread_param));
- 	if (!par)
--- 
-2.20.1
