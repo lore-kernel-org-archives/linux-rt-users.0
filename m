@@ -4,66 +4,67 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-6.5 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 79579C31E45
-	for <linux-rt-users@archiver.kernel.org>; Thu, 13 Jun 2019 15:09:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5FAC0C46477
+	for <linux-rt-users@archiver.kernel.org>; Thu, 13 Jun 2019 15:10:41 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 4F3A320896
-	for <linux-rt-users@archiver.kernel.org>; Thu, 13 Jun 2019 15:09:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 393A720896
+	for <linux-rt-users@archiver.kernel.org>; Thu, 13 Jun 2019 15:10:41 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="r121hH9Y"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="qUykEepC"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1732392AbfFMPJj (ORCPT
+        id S1732905AbfFMPKd (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 13 Jun 2019 11:09:39 -0400
-Received: from mail-wm1-f67.google.com ([209.85.128.67]:52514 "EHLO
+        Thu, 13 Jun 2019 11:10:33 -0400
+Received: from mail-wm1-f67.google.com ([209.85.128.67]:52791 "EHLO
         mail-wm1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1732356AbfFMN53 (ORCPT
+        with ESMTP id S1732309AbfFMNvq (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 13 Jun 2019 09:57:29 -0400
-Received: by mail-wm1-f67.google.com with SMTP id s3so10340953wms.2
-        for <linux-rt-users@vger.kernel.org>; Thu, 13 Jun 2019 06:57:27 -0700 (PDT)
+        Thu, 13 Jun 2019 09:51:46 -0400
+Received: by mail-wm1-f67.google.com with SMTP id s3so10319667wms.2
+        for <linux-rt-users@vger.kernel.org>; Thu, 13 Jun 2019 06:51:44 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :user-agent:mime-version;
-        bh=LoluabGLsLt1BMZue6zB2DhV2Iv9NHeKGidvhQcFwhU=;
-        b=r121hH9Yj30knSPvxF2/XKqUl4sWIyNDvB4Tg7FaN9omRp9AOvWN6LFvk2Qo6ncbQ/
-         DtVB/w5P4BYX9UqvCLzANQZ3JbRmctRYBYC66DNRK7kzaXCXX7LStvEn9dHNOPFFZSf5
-         HhDJdXGvHcod9y2Q3qeT7dlChglTtbRutMySjzyH8HLp3kQwj9VS6InaEY73YF5gJJ+A
-         H/Lhv37Bq9faFmgtQ9z12uA5R0eJSfHt3aEwUhG3qsdjVJdIDTtUU3x1GMHGNA9CrvkS
-         3nUJul0bDpTOgJBTCPhbeGthj2IPJV0zcLw5vzxGi1dwIZXBr4xY4DJtxJkytC8Uq+dS
-         ePeQ==
+        bh=SQzvqBHOAeUj+ylwtiHKTAthTJEhDHuR0q2QtC7G0No=;
+        b=qUykEepCMUJEYWk4vDRex9C+25eZVdDmpnztkWNOdoOtp1MHzrLLzDuPMGNrRl8/Ux
+         jFzQCFBdeHl70ffNEZly2YWKqmp3EcotgHX19f75p+GJ3oD0hSGONIa6cxstC5bRoI2w
+         y01qAqYED/W+eL7DjZa7ho9QeL2S5Xq2eooLwhmSw2radQqqCeECFwG/Nj3qN6uVOirb
+         5tI6vR1VjcdsiDm7r/6q0NzYly1CsHDFHe3hZwdc9ekCw23VQVtH9Fs7VTY/OacbVGAK
+         E3ZxNYXtgVNnUv7ziUpmyXERxoY6TOIPCw9xOFdcAKig+YWqvSLWqipzD+njKNqx3XRS
+         irOw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:user-agent:mime-version;
-        bh=LoluabGLsLt1BMZue6zB2DhV2Iv9NHeKGidvhQcFwhU=;
-        b=UdyeI05L/oYGNhZFjcp6XPtXYY57qZRYC5+VEcFZzSx+sWQaiDKjlRnjqA9RtkNClt
-         gY4AzVzzkQYEd1D7a7Z6JNFTmcpc2UjCiXYDmkvfMuP+jiOOG9kI0T4pJz5Aki6Ui+yG
-         UufuniyKiCHgRcqKUk6n5zRBnYK+OTBIaQ3xcinOApJprG6tzW157qUvjIpGoysXBaOZ
-         D2EDpK0MX6/sLkHv9NVRPf5RDEk+F5SCGMxZWprVIrHU167m734lR41CHqSrJe8z/0Sk
-         eq71B5e/eVkyFeBRZQECjjJubObfCzEIJUfPAnpasFJ3NUHbsrnGLJa3OXhqE3yogn1y
-         4VdQ==
-X-Gm-Message-State: APjAAAWT7d3MziFjunxYK4/sbFVa4V8OwBGTC19G9EjgLsLLIcDEhCpW
-        5fEUqHOqULNOOq33Gi/oqL4=
-X-Google-Smtp-Source: APXvYqwkm0C3+DgkPDbUYjv8e055N3PtC/hf+Fug1mKYrCyXowXfCd2grFs7tLBFn2WYXEEtcWAbLA==
-X-Received: by 2002:a1c:b684:: with SMTP id g126mr3889149wmf.176.1560434246745;
-        Thu, 13 Jun 2019 06:57:26 -0700 (PDT)
+        bh=SQzvqBHOAeUj+ylwtiHKTAthTJEhDHuR0q2QtC7G0No=;
+        b=gCa2xdm2R88faLXexOMClxF8c+Y0mVdZJIK4ZdVFDFR5FuVUjo6PQca2E1bJ2lWV9+
+         xZuyK0FdfDYF0nQUd1jqgrGtrxPbeiMFfY/tJyuMGbT9jbZefSBhB0JZQvUkjlaCt6J8
+         JJ83x+emWzE3joTcE8LD0S2+kB4tuID0R7RcP0QpPwEb8+8xFqLUONZDA37B6uKVp2fu
+         8fsp2/KdlQi1pcmjpn4ayc+Q9Gc3ZyootOrZB8zlKtA/qvFTtbcjRBCfSe9C7MJd7s5U
+         Lyg88+uq8WkCvP/Ol4+PlFqMOS0Y40IM9/nNad5vZzLzTIH3Q0Ooy1EJNaZ9hIVCrqGN
+         F9Sw==
+X-Gm-Message-State: APjAAAVzWndDnA6kIAHodHSYG0rq8cgejEJt/yxnxWHfHUo/ZYuFSZ9b
+        lmMx03vVbDi03ofKJhAiys2HWpdz9es=
+X-Google-Smtp-Source: APXvYqzmx1gwhsZ8vJ/EtEE7h3Q1BCFQIjyy4T20iVW4geYFCCWOF/uYdBhUQxxSKSFAdBoMT0fp5w==
+X-Received: by 2002:a7b:c144:: with SMTP id z4mr4122428wmi.50.1560433904250;
+        Thu, 13 Jun 2019 06:51:44 -0700 (PDT)
 Received: from planxty ([2a02:8108:1700:1960:91dd:e2f9:ed05:ee2b])
-        by smtp.gmail.com with ESMTPSA id s10sm3428635wrt.49.2019.06.13.06.57.25
+        by smtp.gmail.com with ESMTPSA id l9sm3656418wrt.13.2019.06.13.06.51.43
         (version=TLS1_3 cipher=AEAD-AES256-GCM-SHA384 bits=256/256);
-        Thu, 13 Jun 2019 06:57:25 -0700 (PDT)
-Date:   Thu, 13 Jun 2019 15:57:19 +0200 (CEST)
+        Thu, 13 Jun 2019 06:51:43 -0700 (PDT)
+Date:   Thu, 13 Jun 2019 15:51:37 +0200 (CEST)
 From:   John Kacur <jkacur@redhat.com>
 X-X-Sender: jkacur@planxty
 To:     Daniel Wagner <wagi@monom.org>
 cc:     linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v2 03/12] rt-utils: Move parse_time_string()
-In-Reply-To: <20190605160617.22987-4-wagi@monom.org>
-Message-ID: <alpine.LFD.2.21.1906131556490.8187@planxty>
-References: <20190605160617.22987-1-wagi@monom.org> <20190605160617.22987-4-wagi@monom.org>
+Subject: Re: [PATCH v2 02/12] queuelat: Use clock syscall for ARM 32 bit
+In-Reply-To: <20190605160617.22987-3-wagi@monom.org>
+Message-ID: <alpine.LFD.2.21.1906131550540.8187@planxty>
+References: <20190605160617.22987-1-wagi@monom.org> <20190605160617.22987-3-wagi@monom.org>
 User-Agent: Alpine 2.21 (LFD 202 2017-01-01)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
@@ -76,119 +77,86 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 On Wed, 5 Jun 2019, Daniel Wagner wrote:
 
-> Move parse_time_string() to rt-utils.c so we can re use it.
+> CPUs such as Cortex-M8 don't have a rdtsc instruction. Fallback using
+> a syscall.
 > 
 > Signed-off-by: Daniel Wagner <wagi@monom.org>
 > ---
->  src/cyclictest/cyclictest.c | 33 ---------------------------------
->  src/include/rt-utils.h      |  2 ++
->  src/lib/rt-utils.c          | 34 ++++++++++++++++++++++++++++++++++
->  3 files changed, 36 insertions(+), 33 deletions(-)
+>  src/queuelat/queuelat.c | 31 ++++++++++++++++++++++++++-----
+>  1 file changed, 26 insertions(+), 5 deletions(-)
 > 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index ed59edefbf97..03d56e4f520c 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -406,39 +406,6 @@ static void enable_trace_mark(void)
->  	open_tracemark_fd();
+> diff --git a/src/queuelat/queuelat.c b/src/queuelat/queuelat.c
+> index 3b291f168768..a5525e41776a 100644
+> --- a/src/queuelat/queuelat.c
+> +++ b/src/queuelat/queuelat.c
+> @@ -7,6 +7,7 @@
+>  #include <stdio.h>
+>  #include <unistd.h>
+>  #include <signal.h>
+> +#include <time.h>
+>  
+>  #define NSEC_PER_SEC 1000000000
+>  
+> @@ -249,6 +250,8 @@ typedef unsigned long long cycles_t;
+>  typedef unsigned long long usecs_t;
+>  typedef unsigned long long u64;
+>  
+> +#if defined __x86_64__ || defined __i386__
+> +
+>  #ifdef __x86_64__
+>  #define DECLARE_ARGS(val, low, high)    unsigned low, high
+>  #define EAX_EDX_VAL(val, low, high)     ((low) | ((u64)(high) << 32))
+> @@ -270,7 +273,25 @@ static inline unsigned long long __rdtscll(void)
+>          return EAX_EDX_VAL(val, low, high);
 >  }
 >  
-> -/*
-> - * parse an input value as a base10 value followed by an optional
-> - * suffix. The input value is presumed to be in seconds, unless
-> - * followed by a modifier suffix: m=minutes, h=hours, d=days
-> - *
-> - * the return value is a value in seconds
-> - */
-> -static int parse_time_string(char *val)
-> -{
-> -	char *end;
-> -	int t = strtol(val, &end, 10);
-> -	if (end) {
-> -		switch (*end) {
-> -		case 'm':
-> -		case 'M':
-> -			t *= 60;
-> -			break;
-> -
-> -		case 'h':
-> -		case 'H':
-> -			t *= 60*60;
-> -			break;
-> -
-> -		case 'd':
-> -		case 'D':
-> -			t *= 24*60*60;
-> -			break;
-> -
-> -		}
-> -	}
-> -	return t;
-> -}
-> -
->  /*
->   * Raise the soft priority limit up to prio, if that is less than or equal
->   * to the hard limit
-> diff --git a/src/include/rt-utils.h b/src/include/rt-utils.h
-> index ef0f6acf4ab5..405fa7855346 100644
-> --- a/src/include/rt-utils.h
-> +++ b/src/include/rt-utils.h
-> @@ -24,4 +24,6 @@ uint32_t string_to_policy(const char *str);
->  
->  pid_t gettid(void);
->  
-> +int parse_time_string(char *val);
+> -#define rdtscll(val) do { (val) = __rdtscll(); } while (0)
+> +#define gettick(val) do { (val) = __rdtscll(); } while (0)
 > +
->  #endif	/* __RT_UTILS.H */
-> diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
-> index ac6878ccacf1..e1b166afcd6c 100644
-> --- a/src/lib/rt-utils.c
-> +++ b/src/lib/rt-utils.c
-> @@ -13,6 +13,7 @@
->  #include <sched.h>
->  #include <stdarg.h>
->  #include <errno.h>
-> +#include <ctype.h>
->  #include <fcntl.h>
->  #include <sys/types.h>
->  #include <sys/stat.h>
-> @@ -320,3 +321,36 @@ pid_t gettid(void)
->  {
->  	return syscall(SYS_gettid);
->  }
+> +#elif defined __arm__
 > +
-> +/*
-> + * parse an input value as a base10 value followed by an optional
-> + * suffix. The input value is presumed to be in seconds, unless
-> + * followed by a modifier suffix: m=minutes, h=hours, d=days
-> + *
-> + * the return value is a value in seconds
-> + */
-> +int parse_time_string(char *val)
+> +static inline unsigned long long __clock_gettime(void)
 > +{
-> +	char *end;
-> +	int t = strtol(val, &end, 10);
-> +	if (end) {
-> +		switch (*end) {
-> +		case 'm':
-> +		case 'M':
-> +			t *= 60;
-> +			break;
+> +	struct timespec now;
+> +	int ret;
 > +
-> +		case 'h':
-> +		case 'H':
-> +			t *= 60*60;
-> +			break;
+> +	ret = clock_gettime(CLOCK_MONOTONIC, &now);
+> +	if (ret < 0)
+> +		return 0;
 > +
-> +		case 'd':
-> +		case 'D':
-> +			t *= 24*60*60;
-> +			break;
-> +
-> +		}
-> +	}
-> +	return t;
+> +	return now.tv_nsec;
 > +}
+> +
+> +#define gettick(val) do { (val) = __clock_gettime(); } while (0)
+> +
+> +#endif
+>  
+>  static void init_buckets(void)
+>  {
+> @@ -348,9 +369,9 @@ static void run_n(int n)
+>  
+>  	memmove(dest, src, n);
+>  	for (i = 0; i < loops; i++) {
+> -		rdtscll(b);
+> +		gettick(b);
+>  		memmove(dest, src, n);
+> -		rdtscll(a);
+> +		gettick(a);
+>  		delta = (a - b) * cycles_to_ns;
+>  		account(delta);
+>  	}
+> @@ -446,9 +467,9 @@ void main_loop(void)
+>  		int ret;
+>  		int nr_packets_fill;
+>  
+> -		rdtscll(b);
+> +		gettick(b);
+>  		memmove(dest, src, default_n);
+> -		rdtscll(a);
+> +		gettick(a);
+>  		delta = (a - b) * cycles_to_ns;
+>  		account(delta);
+>  
 > -- 
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
