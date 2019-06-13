@@ -2,90 +2,184 @@ Return-Path: <SRS0=sIfm=UM=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.5 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C5E5DC31E49
-	for <linux-rt-users@archiver.kernel.org>; Thu, 13 Jun 2019 16:54:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EE41AC31E49
+	for <linux-rt-users@archiver.kernel.org>; Thu, 13 Jun 2019 19:08:00 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 8F41D2080A
-	for <linux-rt-users@archiver.kernel.org>; Thu, 13 Jun 2019 16:54:09 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C97E02173C
+	for <linux-rt-users@archiver.kernel.org>; Thu, 13 Jun 2019 19:08:00 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=vmware.com header.i=@vmware.com header.b="qJhmOfUS"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="qp/AtARy"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730469AbfFMQyC (ORCPT
+        id S1729215AbfFMTIA (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 13 Jun 2019 12:54:02 -0400
-Received: from mail-eopbgr750051.outbound.protection.outlook.com ([40.107.75.51]:39904
-        "EHLO NAM02-BL2-obe.outbound.protection.outlook.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1730069AbfFMC5N (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 12 Jun 2019 22:57:13 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=vmware.com;
- s=selector2;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=NOedVLC6fU8X8QNfUdRw+8M+lp0IdYj0tJJjZUzq8FU=;
- b=qJhmOfUS+2h5h1w9ZAq34PaBVmJlWF2iBr6HJQaHF0WrSWFlpbI12w3YEnM3SBG/4KToHp25qTwxAYWoH9jAMOVtqdHbp1a2y4kfIJKu/HUf7ueZhCHErskBlSNTnTrBM5quItLOkBS3n/lPaWw3lFwJesUUtrvQg72CHYe79fs=
-Received: from BYAPR05MB5878.namprd05.prod.outlook.com (20.178.50.75) by
- BYAPR05MB6392.namprd05.prod.outlook.com (20.178.232.159) with Microsoft SMTP
- Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.20.2008.5; Thu, 13 Jun 2019 02:57:10 +0000
-Received: from BYAPR05MB5878.namprd05.prod.outlook.com
- ([fe80::984c:33af:290b:c712]) by BYAPR05MB5878.namprd05.prod.outlook.com
- ([fe80::984c:33af:290b:c712%7]) with mapi id 15.20.1987.010; Thu, 13 Jun 2019
- 02:57:09 +0000
-From:   Tiejun Chen <tiejunc@vmware.com>
-To:     Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Daniel Bristot de Oliveira <daniel@bristot.me>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Subject: RE: Real-time micro-conference proposal for Linux Plumbers 2019
-Thread-Topic: Real-time micro-conference proposal for Linux Plumbers 2019
-Thread-Index: AQHVAXzgmJ1jlyvGPkKtdSwqQOzUl6ZgqmNwgAHMCYCACDdc0IAAcUkAgC4EkEA=
-Date:   Thu, 13 Jun 2019 02:57:09 +0000
-Message-ID: <BYAPR05MB5878B6B2C3B604BB38126404C5EF0@BYAPR05MB5878.namprd05.prod.outlook.com>
-References: <5ef34142-2b55-28ff-612d-0ec7b0c521d1@redhat.com>
- <BYAPR05MB5878261BB896A489AA521A65C5320@BYAPR05MB5878.namprd05.prod.outlook.com>
- <02b2eb1e-b88b-3ade-1e0d-741bf92939b1@bristot.me>
- <BYAPR05MB5878B8AD281E40A522996975C5080@BYAPR05MB5878.namprd05.prod.outlook.com>
- <19fcfc0f-ea80-1e60-7fb6-f2e40ccca957@redhat.com>
-In-Reply-To: <19fcfc0f-ea80-1e60-7fb6-f2e40ccca957@redhat.com>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-authentication-results: spf=none (sender IP is )
- smtp.mailfrom=tiejunc@vmware.com; 
-x-originating-ip: [66.170.99.2]
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: b641efd1-cc82-46fd-79ef-08d6efaad401
-x-microsoft-antispam: BCL:0;PCL:0;RULEID:(2390118)(7020095)(4652040)(8989299)(4534185)(4627221)(201703031133081)(201702281549075)(8990200)(5600148)(711020)(4605104)(1401327)(2017052603328)(7193020);SRVR:BYAPR05MB6392;
-x-ms-traffictypediagnostic: BYAPR05MB6392:
-x-microsoft-antispam-prvs: <BYAPR05MB6392EF3355073B9C53ED4325C5EF0@BYAPR05MB6392.namprd05.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:813;
-x-forefront-prvs: 0067A8BA2A
-x-forefront-antispam-report: SFV:NSPM;SFS:(10009020)(396003)(376002)(39860400002)(346002)(136003)(366004)(199004)(189003)(6506007)(26005)(102836004)(3846002)(486006)(6116002)(478600001)(7696005)(8936002)(8676002)(186003)(11346002)(476003)(81166006)(446003)(7736002)(74316002)(561944003)(33656002)(81156014)(305945005)(99286004)(2906002)(316002)(86362001)(76176011)(110136005)(2501003)(76116006)(66446008)(64756008)(66556008)(66476007)(66946007)(5660300002)(73956011)(52536014)(68736007)(256004)(25786009)(66066001)(71190400001)(71200400001)(53936002)(14454004)(6246003)(55016002)(6436002)(229853002)(558084003)(9686003);DIR:OUT;SFP:1101;SCL:1;SRVR:BYAPR05MB6392;H:BYAPR05MB5878.namprd05.prod.outlook.com;FPR:;SPF:None;LANG:en;PTR:InfoNoRecords;A:1;MX:1;
-received-spf: None (protection.outlook.com: vmware.com does not designate
- permitted sender hosts)
-x-ms-exchange-senderadcheck: 1
-x-microsoft-antispam-message-info: gP6A89LYLjoie//H5iHjkv9SdlHpD4/sFB1Yd5IBmj4liG5YdDUYmr6/N02ItONk1tjGfS/ew58Ltq+0QMVQiVA/2u4gKnl2WgBdlbK6knTfL7IgNhXgupu6D7KHfImh0/E5KpX0YFn9Ov4Cm58DNr32kzqOdswgXMko5xcTvr0RiGBWCVrVgD1xli7TGEbcrrrea0nbNFCWP1ty6in8/ZkGznHd+QDUyifo/4v7OvOpesFkF2z0u1IkpKuBoJg1vcUYgH9j/EJA/dVk9l4OFwP4z9SqwBqk4Ebad49fWm0gw6P84BgVySzM7qWXjqIGiJzZSzPg+wnScEkfdhTaUkLScvRCwU1A5jhcF1nZFQzX61YNO5CUQN3nL3yfOUOpa71HJsH03V5siN4W9XNhJirpEZHczlKCaS4k1vG6Qe8=
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+        Thu, 13 Jun 2019 15:08:00 -0400
+Received: from mail-wr1-f67.google.com ([209.85.221.67]:40451 "EHLO
+        mail-wr1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725842AbfFMTH7 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 13 Jun 2019 15:07:59 -0400
+Received: by mail-wr1-f67.google.com with SMTP id p11so21962333wre.7
+        for <linux-rt-users@vger.kernel.org>; Thu, 13 Jun 2019 12:07:57 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
+         :user-agent:mime-version;
+        bh=+f5imq8VPizfBpN0BC6do0ZNkBAnwUHTsb46fqlVbBo=;
+        b=qp/AtARyzvGobQKnDlggFrFWW42apfXSK5qkDWJxxMLGy04lcZYbcM1NF3LovA4pEx
+         8m/ZlZEVHsyhFHTEjiI0+5VjQ7pqalw1iMrmTIbHR+3yjsnNYBHxjtU+ZRuKErlzIwF0
+         xzxCi6lfYx4rSJiRfWtI5nXdAWS+Tdi08bVY3JvWr7x4iRJRnH003Q65gOA1Pq6loCNk
+         165jI95ldySFnuQkS3wNdAWGQLU0yR86nTe5J2FLTv5jVxRZslYndJbHpYE06ERm2tFi
+         XA4u4Hovnjq6OILRchbUXUkviQbhP0ce03uq4+hmHZTTEKcWLtNewPGI4pjnllx9dLNJ
+         sp4w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
+         :message-id:references:user-agent:mime-version;
+        bh=+f5imq8VPizfBpN0BC6do0ZNkBAnwUHTsb46fqlVbBo=;
+        b=eKNomJ/qX806CQMbxGvx++831X8sv4BFOsIMDWo1kGZ/6YL90JF9tFm13ImUHDnOvU
+         mAgqWSo3zV4fkJ4i7TUyRHJL+bAg9slnrhhJb4zMIJM2ySPBRgQ9z2Obh1MiwIKGE93X
+         2nXEG7HpyhP8KTyCtif8755fY8JiquyPUXng3r4fKr7w+DM1Egct+NBlxL4lR6kWkHD3
+         RqDwtz0G60BDxKxMVXJICUAmw8hXsqQxNI94/QJ1cChMswuwNnhyVcfxeQ8eRN8IqeWB
+         FS0NOQw3KNr0NdmN9JEoKx17oY8JrWD1b+R+fuySBBibfDXs3Q1jcoGV8Sl7sfrw9OmX
+         mTpA==
+X-Gm-Message-State: APjAAAWOXCUuk8sDxqaD967kg4O2zh6dPsex3GdNzMefE0DZTbj1gqFB
+        RuIptG5Ap0Aw/HpWfPYe+rfR2A9W+74=
+X-Google-Smtp-Source: APXvYqzspFP0Uz9n1A2AutcF0oJu8G4S+LiJvgIhcJQ+8Z0Sjjar3CjnPplBZw5yDe12FOYZ58sp2A==
+X-Received: by 2002:adf:f951:: with SMTP id q17mr33632428wrr.173.1560452877065;
+        Thu, 13 Jun 2019 12:07:57 -0700 (PDT)
+Received: from planxty ([2a02:8108:1740:237c:5dea:4cb8:6516:9736])
+        by smtp.gmail.com with ESMTPSA id l12sm1024257wrb.81.2019.06.13.12.07.55
+        (version=TLS1_3 cipher=AEAD-AES256-GCM-SHA384 bits=256/256);
+        Thu, 13 Jun 2019 12:07:56 -0700 (PDT)
+Date:   Thu, 13 Jun 2019 21:07:49 +0200 (CEST)
+From:   John Kacur <jkacur@redhat.com>
+X-X-Sender: jkacur@planxty
+To:     Daniel Wagner <wagi@monom.org>
+cc:     linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH v2 09/12] signaltest: Add duration command line
+ argument
+In-Reply-To: <20190605160617.22987-10-wagi@monom.org>
+Message-ID: <alpine.LFD.2.21.1906132107300.4541@planxty>
+References: <20190605160617.22987-1-wagi@monom.org> <20190605160617.22987-10-wagi@monom.org>
+User-Agent: Alpine 2.21 (LFD 202 2017-01-01)
 MIME-Version: 1.0
-X-OriginatorOrg: vmware.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: b641efd1-cc82-46fd-79ef-08d6efaad401
-X-MS-Exchange-CrossTenant-originalarrivaltime: 13 Jun 2019 02:57:09.8420
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: b39138ca-3cee-4b4a-a4d6-cd83d9dd62f0
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: tiejunc@vmware.com
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: BYAPR05MB6392
+Content-Type: text/plain; charset=US-ASCII
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-RGFuaWVsLA0KDQpIYXZlIHlvdSBzdWJtaXR0ZWQgeW91ciBwcm9wb3NhbD8gSSBjYW5ub3QgZmlu
-ZCBzdWNoIGEgUlQgTUMgdHJhY2sgdGhyb3VnaCBMUEMgMjAxOSB3ZWJzaXRlLg0KDQpUaGFua3MN
-ClRpZWp1bg0KDQo=
+
+
+On Wed, 5 Jun 2019, Daniel Wagner wrote:
+
+> Many of the test programs have the --loop argument for automatic
+> stopping. The main problem with the --loop argument is how long is
+> --loop 1000?
+> 
+> To simplify automated tests introduce a --duration argument which
+> allows to set the time how long a test should run. This allows the
+> test suite to define the execution time and also the timeout which a
+> normal human can understand.
+> 
+> For example run the test for 10 minutes and timeout at 11 minutes:
+> 
+>   # timeout 11m signaltest -D 10m
+> 
+> Signed-off-by: Daniel Wagner <wagi@monom.org>
+> ---
+>  src/signaltest/signaltest.8 |  5 +++++
+>  src/signaltest/signaltest.c | 14 +++++++++++++-
+>  2 files changed, 18 insertions(+), 1 deletion(-)
+> 
+> diff --git a/src/signaltest/signaltest.8 b/src/signaltest/signaltest.8
+> index 634d392a6da5..bd6ffe5c7a36 100644
+> --- a/src/signaltest/signaltest.8
+> +++ b/src/signaltest/signaltest.8
+> @@ -13,6 +13,11 @@ starting with two dashes ('\-\-').
+>  .B \-b, \-\-breaktrace=USEC
+>  Send break trace command when latency > USEC
+>  .TP
+> +.B \-D, \-\-duration=TIME
+> +Specify a length for the test run.
+> +.br
+> +Append 'm', 'h', or 'd' to specify minutes, hours or days.
+> +.TP
+>  .B \-l, \-\-loops=LOOPS
+>  Number of loops: default=0 (endless)
+>  .TP
+> diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
+> index 59f979ec5ad1..a168191b7573 100644
+> --- a/src/signaltest/signaltest.c
+> +++ b/src/signaltest/signaltest.c
+> @@ -208,6 +208,8 @@ static void display_help(void)
+>  		"signaltest <options>\n\n"
+>  		"-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
+>  		"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+> +		"-D       --duration=TIME   specify a length for the test run.\n"
+> +		"                           Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
+>  		"-p PRIO  --prio=PRIO       priority of highest prio thread\n"
+>  		"-q       --quiet           print a summary only on exit\n"
+>  		"-t NUM   --threads=NUM     number of threads: default=2\n"
+> @@ -221,6 +223,7 @@ static void display_help(void)
+>  static int priority;
+>  static int num_threads = 2;
+>  static int max_cycles;
+> +static int duration;
+>  static int verbose;
+>  static int quiet;
+>  static int lockall = 0;
+> @@ -235,6 +238,7 @@ static void process_options (int argc, char *argv[])
+>  		static struct option long_options[] = {
+>  			{"breaktrace", required_argument, NULL, 'b'},
+>  			{"loops", required_argument, NULL, 'l'},
+> +			{"duration", required_argument, NULL, 'D'},
+>  			{"priority", required_argument, NULL, 'p'},
+>  			{"quiet", no_argument, NULL, 'q'},
+>  			{"threads", required_argument, NULL, 't'},
+> @@ -243,13 +247,14 @@ static void process_options (int argc, char *argv[])
+>  			{"help", no_argument, NULL, '?'},
+>  			{NULL, 0, NULL, 0}
+>  		};
+> -		int c = getopt_long (argc, argv, "b:c:d:i:l:np:qrsmt:v",
+> +		int c = getopt_long (argc, argv, "b:c:d:i:l:D:np:qrsmt:v",
+>  			long_options, &option_index);
+>  		if (c == -1)
+>  			break;
+>  		switch (c) {
+>  		case 'b': tracelimit = atoi(optarg); break;
+>  		case 'l': max_cycles = atoi(optarg); break;
+> +		case 'D': duration = parse_time_string(optarg); break;
+>  		case 'p': priority = atoi(optarg); break;
+>  		case 'q': quiet = 1; break;
+>  		case 't': num_threads = atoi(optarg); break;
+> @@ -259,6 +264,9 @@ static void process_options (int argc, char *argv[])
+>  		}
+>  	}
+>  
+> +	if (duration < 0)
+> +		error = 1;
+> +
+>  	if (priority < 0 || priority > 99)
+>  		error = 1;
+>  
+> @@ -340,6 +348,10 @@ int main(int argc, char **argv)
+>  
+>  	signal(SIGINT, sighand);
+>  	signal(SIGTERM, sighand);
+> +	signal(SIGALRM, sighand);
+> +
+> +	if (duration)
+> +		alarm(duration);
+>  
+>  	par = calloc(num_threads, sizeof(struct thread_param));
+>  	if (!par)
+> -- 
+> 2.20.1
+> 
+Signed-off-by: John Kacur <jkacur@redhat.com>
