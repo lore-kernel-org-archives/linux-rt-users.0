@@ -2,133 +2,108 @@ Return-Path: <SRS0=fTCY=UN=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.6 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,
+	SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3AB50C31E4B
-	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Jun 2019 13:06:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1E005C31E4B
+	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Jun 2019 13:53:55 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 0EE5320850
-	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Jun 2019 13:06:19 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DAEC72084E
+	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Jun 2019 13:53:54 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="RHMM9CqH"
+	dkim=pass (1024-bit key) header.d=concurrentrt.onmicrosoft.com header.i=@concurrentrt.onmicrosoft.com header.b="o8cgXEg4"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727979AbfFNNGS (ORCPT
+        id S1728300AbfFNNxy (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 14 Jun 2019 09:06:18 -0400
-Received: from mail-wr1-f65.google.com ([209.85.221.65]:35540 "EHLO
-        mail-wr1-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726874AbfFNNGS (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 14 Jun 2019 09:06:18 -0400
-Received: by mail-wr1-f65.google.com with SMTP id m3so2491887wrv.2
-        for <linux-rt-users@vger.kernel.org>; Fri, 14 Jun 2019 06:06:17 -0700 (PDT)
+        Fri, 14 Jun 2019 09:53:54 -0400
+Received: from mail-eopbgr720135.outbound.protection.outlook.com ([40.107.72.135]:31178
+        "EHLO NAM05-CO1-obe.outbound.protection.outlook.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S1727382AbfFNNxy (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 14 Jun 2019 09:53:54 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=bs8LX9zf6NOKkal6w5Cv9TruFNjJFVlhNVCCI2kMZFE=;
-        b=RHMM9CqHTNHBPOVEvwkTmMjAhtcHwBeL4DEG/Bi/94eUbdQ3PjUrzoFI3CK3eiNnU3
-         gQlN+WZP3JiB7kcAMkOooE/RIZaVJ5+vNQd+CHQSwn3WI5n8uYIQycS800F2/1CCTaMp
-         d5BMejPbV5UHjZr/8/pcrZrTgn6Pqb4WktBDhqyaUwmI42EW1hAzH1OxcGehizHCGeAQ
-         WruZoPkpNMMdCOIFyfYQN7sZWH7/FUGVohwzRMiBIPD9D5LA7P2De3YKGrDo9yF1vRsN
-         GU3+ytMv097EjCPYNxJGOLZkrzBPz7fWE7PRUSH4+Z5Sa5w/FQFeKe6O1WwrK1pLEIot
-         raDw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
-         :mime-version:content-transfer-encoding;
-        bh=bs8LX9zf6NOKkal6w5Cv9TruFNjJFVlhNVCCI2kMZFE=;
-        b=YNsYeUIg0+/nhcyEah03f1bYkWvVKZ88JG6f2Vv/hLAvwlSeDb0u2Ha7gUzT0hjh9h
-         fdrTIn+yxd/1J74gSR36SwKZpFhRaczCn2RL+v0eD00JLn66Ik0cdjc5r6MgZRoQuj9V
-         aLjTpvX4rCqt/m2CTP5O18kVkwi6hmN/rSFf22uzPslMluncYS9Vc8f/2k+bebYoclDH
-         zLPbt7eQ3uFDGWMgnF28DA2Xtm68Db519dvjoxM9x+vZt9Cq+oHkciNaGbLxl2barOYO
-         Y3GvQ2McifxNhz7OXcdX99Rz+9tYbEV96BaBIgCK20MgC1M3g/2gswkbzTNDIOpFQ4/3
-         6wQw==
-X-Gm-Message-State: APjAAAVQ7JWXgKnl17cJXBioFrQ+cDeFsnO26QlmDEukt/HgZ/hGGJ7m
-        H1tExwFmQkkZhdsiR+CvHDU=
-X-Google-Smtp-Source: APXvYqxVEYID4TuWaq9GxwatXYLMO9SAWvaej/SFjgSnlNRQpPE7xqhAJ4execTK8Okbx7nL8efBdA==
-X-Received: by 2002:adf:df91:: with SMTP id z17mr58553013wrl.336.1560517576383;
-        Fri, 14 Jun 2019 06:06:16 -0700 (PDT)
-Received: from planxty.redhat.com (ip4d14ff42.dynamic.kabel-deutschland.de. [77.20.255.66])
-        by smtp.gmail.com with ESMTPSA id 67sm3178684wmd.38.2019.06.14.06.06.15
-        (version=TLS1_3 cipher=AEAD-AES256-GCM-SHA384 bits=256/256);
-        Fri, 14 Jun 2019 06:06:15 -0700 (PDT)
-From:   John Kacur <jkacur@redhat.com>
-To:     Joe Korty <joe.korty@concurrent-rt.com>
-Cc:     rt-users <linux-rt-users@vger.kernel.org>,
-        Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>
-Subject: [PATCH] rt-tests: ssdd: Add a simple manpage for ssdd
-Date:   Fri, 14 Jun 2019 15:06:06 +0200
-Message-Id: <20190614130606.13829-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.20.1
+ d=concurrentrt.onmicrosoft.com; s=selector1-concurrentrt-onmicrosoft-com;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=HAB4brZEe4f5KMxyjNjrnwApGR/7l5Ji6tbBXmZfpcQ=;
+ b=o8cgXEg4h1zWhCu7UacvaA5i9/AQ7tUSoaFLaNIHs99USTAYhD/5Fp2DXLyf344t1XRgtY77ITMJY3SZMqOMzRpAuhvNQk4+b5E+sY5yCCnTvSD+jSz7yhnJuqqUqSwkG+CFs9QzE94DDiPkeEbLYtWGDbmnd4WFeffeyxbJMAI=
+Received: from DM6PR11MB2570.namprd11.prod.outlook.com (20.176.99.12) by
+ DM6PR11MB2892.namprd11.prod.outlook.com (20.177.216.89) with Microsoft SMTP
+ Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.20.1987.12; Fri, 14 Jun 2019 13:53:52 +0000
+Received: from DM6PR11MB2570.namprd11.prod.outlook.com
+ ([fe80::91ec:580:13d5:fe72]) by DM6PR11MB2570.namprd11.prod.outlook.com
+ ([fe80::91ec:580:13d5:fe72%7]) with mapi id 15.20.1987.013; Fri, 14 Jun 2019
+ 13:53:51 +0000
+From:   Joe Korty <Joe.Korty@concurrent-rt.com>
+To:     John Kacur <jkacur@redhat.com>
+CC:     rt-users <linux-rt-users@vger.kernel.org>,
+        Clark Williams <williams@redhat.com>
+Subject: Re: [PATCH 0/1] *** Make licence explicit for ssdd ***
+Thread-Topic: [PATCH 0/1] *** Make licence explicit for ssdd ***
+Thread-Index: AQHVIriZXs8i2duj20q0/rQaaoSqZg==
+Date:   Fri, 14 Jun 2019 13:53:51 +0000
+Message-ID: <20190614135348.GA4343@zipoli.concurrent-rt.com>
+References: <20190614113747.11565-1-jkacur@redhat.com>
+In-Reply-To: <20190614113747.11565-1-jkacur@redhat.com>
+Reply-To: Joe Korty <Joe.Korty@concurrent-rt.com>
+Accept-Language: en-US
+Content-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-clientproxiedby: BN6PR10CA0027.namprd10.prod.outlook.com
+ (2603:10b6:404:109::13) To DM6PR11MB2570.namprd11.prod.outlook.com
+ (2603:10b6:5:c6::12)
+authentication-results: spf=none (sender IP is )
+ smtp.mailfrom=Joe.Korty@concurrent-rt.com; 
+x-ms-exchange-messagesentrepresentingtype: 1
+x-originating-ip: [12.220.59.2]
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: 970f7ec2-7084-40bd-e2da-08d6f0cfbb73
+x-microsoft-antispam: BCL:0;PCL:0;RULEID:(2390118)(7020095)(4652040)(7021145)(8989299)(4534185)(7022145)(4603075)(4627221)(201702281549075)(8990200)(7048125)(7024125)(7027125)(7023125)(5600148)(711020)(4605104)(1401327)(2017052603328)(7193020);SRVR:DM6PR11MB2892;
+x-ms-traffictypediagnostic: DM6PR11MB2892:
+x-microsoft-antispam-prvs: <DM6PR11MB28929B4E127694BA57A4988DA0EE0@DM6PR11MB2892.namprd11.prod.outlook.com>
+x-ms-oob-tlc-oobclassifiers: OLM:7691;
+x-forefront-prvs: 0068C7E410
+x-forefront-antispam-report: SFV:NSPM;SFS:(10019020)(376002)(346002)(136003)(396003)(366004)(39840400004)(199004)(189003)(66476007)(72206003)(66946007)(54906003)(6512007)(66066001)(25786009)(6486002)(305945005)(53936002)(43066004)(86362001)(6916009)(81166006)(6246003)(2906002)(8676002)(102836004)(8936002)(81156014)(26005)(5660300002)(73956011)(4326008)(1076003)(71190400001)(71200400001)(6116002)(3846002)(4744005)(66556008)(3450700001)(7736002)(66446008)(386003)(476003)(44832011)(256004)(99286004)(486006)(52116002)(64756008)(508600001)(33656002)(316002)(6506007)(229853002)(6436002)(186003)(76176011)(11346002)(14454004)(446003)(68736007);DIR:OUT;SFP:1102;SCL:1;SRVR:DM6PR11MB2892;H:DM6PR11MB2570.namprd11.prod.outlook.com;FPR:;SPF:None;LANG:en;PTR:InfoNoRecords;A:1;MX:1;
+received-spf: None (protection.outlook.com: concurrent-rt.com does not
+ designate permitted sender hosts)
+x-ms-exchange-senderadcheck: 1
+x-microsoft-antispam-message-info: YvORdKDBJeO7AopAGGsIunufstBAFR7FhLBnSutKh+fjc1iDZoLZknRTJ5UjL7w/AvSa8bH1+J+EQ3MMNiD5slR32uz/zoOx0mhWF8q7kKsBp2ekf+BHS+Hwi+uQLYDe4DQVE77KlHg7XOgiwRh/D3yhuF2tEaY06FBm7Mh3h2LZZXL0wywrWFvKnzXFnKC26ZVt5hDsY6qiBwu9JXsqI5A9X/fbSd/dnfYQNJhPs0zTtxf3c9qX+3mtO9kPSdYUJYwpTPC12LJxwmSQfDexrkzp8HDOlsxpP4YKXUiGOMHJEZAqgv6u5/8cCi8m5c6FGNCgu8F4Wpb32qKr+G36mPpntjaRrteLvYccrpMaBxTSl7nBpsXgE/86KwZxUjeS9CfQPodUyK8CblHrIqojG4MiC9PxPPoOAakS+kZYZF8=
+Content-Type: text/plain; charset="us-ascii"
+Content-ID: <56636E7B563E474D99137E859BA7A71F@namprd11.prod.outlook.com>
+Content-Transfer-Encoding: quoted-printable
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-OriginatorOrg: concurrent-rt.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 970f7ec2-7084-40bd-e2da-08d6f0cfbb73
+X-MS-Exchange-CrossTenant-originalarrivaltime: 14 Jun 2019 13:53:51.6122
+ (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: 38747689-e6b0-4933-86c0-1116ee3ef93e
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: Joe.Korty@concurrent-rt.com
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM6PR11MB2892
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Add a simple manpage to rt-tests for ssdd, and modify the manpage to
-install it
+On Fri, Jun 14, 2019 at 01:37:46PM +0200, John Kacur wrote:
+> The default license for programs in the rt-tests suite is GPL version 2
+>=20
+> Joe, I would like to get your signed-off-by for this, or please let us
+> know if this was not your intention.
+>=20
+> thanks
+>=20
+> John Kacur (1):
+>   rt-tests: ssdd: Add Licence information to ssdd
+>=20
+>  src/ssdd/ssdd.c | 7 +++++++
+>  1 file changed, 7 insertions(+)
+>=20
+> --=20
+> 2.20.1
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- Makefile        |  1 +
- src/ssdd/ssdd.8 | 29 +++++++++++++++++++++++++++++
- 2 files changed, 30 insertions(+)
- create mode 100644 src/ssdd/ssdd.8
-
-diff --git a/Makefile b/Makefile
-index ea80923918f7..0258fe9b6dfd 100644
---- a/Makefile
-+++ b/Makefile
-@@ -194,6 +194,7 @@ install: all install_hwlatdetect
- 	gzip -c src/pi_tests/pip_stress.8 >"$(DESTDIR)$(mandir)/man8/pip_stress.8.gz"
- 	gzip -c src/queuelat/queuelat.8 >"$(DESTDIR)$(mandir)/man8/queuelat.8.gz"
- 	gzip -c src/sched_deadline/deadline_test.8 >"$(DESTDIR)$(mandir)/man8/deadline_test.8.gz"
-+	gzip -c src/ssdd/ssdd.8 >"$(DESTDIR)$(mandir)/man8/ssdd.8.gz"
- 
- .PHONY: install_hwlatdetect
- install_hwlatdetect: hwlatdetect
-diff --git a/src/ssdd/ssdd.8 b/src/ssdd/ssdd.8
-new file mode 100644
-index 000000000000..44638489f0d1
---- /dev/null
-+++ b/src/ssdd/ssdd.8
-@@ -0,0 +1,29 @@
-+.TH SSDD 8 "June 13, 2019"
-+.SH NAME
-+ssdd \- have a tracer do a bunch of PTRACE_SINGLESTEPs
-+.SH SYNOPSIS
-+.B ssdd
-+.RI "[nforks] [niters]"
-+.SH DESCRIPTION
-+Have a tracer do a bunch of PTRACE_SINGLESTEPs against
-+a tracee as fast as possible.  Create several of these
-+tracer/tracee pairs and see if they can be made to
-+interfere with each other.
-+The tracer waits on each PTRACE_SINGLESTEP with a waitpid(2)
-+and checks that waitpid's return values for correctness.
-+.SH OPTIONS
-+.B nforks
-+number of tracer/tracee pairs to fork off.
-+Default is 10.
-+.br
-+.TP
-+.B niters
-+number of PTRACE_SINGLESTEP iterations to
-+do before declaring success, for each tracer/
-+tracee pair set up. Default is 10,000.
-+
-+.SH AUTHOR
-+ssdd was written by Joe Korty <joe.korty@concurrent-rt.com>
-+.PP
-+This manual page was written by John Kacur <jkacur@redhat.com>
-+
--- 
-2.20.1
+Signed-off-by: Joe Korty <joe.korty@concurrent-rt.com>
 
