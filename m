@@ -1,126 +1,76 @@
-Return-Path: <SRS0=AADZ=UQ=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=oonB=UR=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.5 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EFEDDC31E5C
-	for <linux-rt-users@archiver.kernel.org>; Mon, 17 Jun 2019 15:05:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 53C63C31E51
+	for <linux-rt-users@archiver.kernel.org>; Tue, 18 Jun 2019 09:47:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id C85412084D
-	for <linux-rt-users@archiver.kernel.org>; Mon, 17 Jun 2019 15:05:49 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 03A952080A
+	for <linux-rt-users@archiver.kernel.org>; Tue, 18 Jun 2019 09:47:15 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="XMPWxjNr"
+	dkim=pass (1024-bit key) header.d=megamailservers.eu header.i=@megamailservers.eu header.b="Kwk/e2PV"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726215AbfFQPFt (ORCPT
+        id S1729612AbfFRJrO (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 17 Jun 2019 11:05:49 -0400
-Received: from mail-wr1-f67.google.com ([209.85.221.67]:44710 "EHLO
-        mail-wr1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726028AbfFQPFt (ORCPT
+        Tue, 18 Jun 2019 05:47:14 -0400
+Received: from mail152c50.megamailservers.eu ([91.136.10.162]:51262 "EHLO
+        mail50c50.megamailservers.eu" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1729203AbfFRJrN (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 17 Jun 2019 11:05:49 -0400
-Received: by mail-wr1-f67.google.com with SMTP id r16so10329555wrl.11
-        for <linux-rt-users@vger.kernel.org>; Mon, 17 Jun 2019 08:05:48 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
-         :user-agent:mime-version;
-        bh=nHoFqmXGhMooxq/cDChn2izH64hKLtgn535u4j/q9yQ=;
-        b=XMPWxjNrD4731Usc1DZGEYM7XcSuxADjk27dlz5cWvy4xGNtKLH/J8XJ4UJYr5rRGe
-         cXgnxr12/kFp2ek1dHnmrlw5rfrb1AgLWM3Q3Lhmi4lpQIN++rvEIFQW7d9Hx0QcFwTo
-         1kyXPC6jltt91UK9I9CFADE/T9WhBswzhWKNBc1Iy/FOzEheU7JzbK25i2wVOq7/L8iH
-         sTVCDcO0Q3LxyJCV1vgbIHUaquiOKv8vYwAnEXmW5HnArH3cK/I5/oxTUINn9OQ0MeYD
-         DAwn28JUlAGbEHGrKLkCxRD+jY3v+eRsD9Nz1ydS8cEvQf+FQsevUGPrmnB/soSMmw6l
-         YR/w==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
-         :message-id:references:user-agent:mime-version;
-        bh=nHoFqmXGhMooxq/cDChn2izH64hKLtgn535u4j/q9yQ=;
-        b=HaVbE6t1Mb4UuyZuxPKq4kDe5jt7JsXBWHQHVUslSdn4hVPc3Fzx+MvoODjOtXqssU
-         C/0TCpcJGrZtbfuVxS5MksL6Vh5g7hilOSW6h63ZUWb+VWnUAbBT5xuegahm1i45gLCY
-         uwvho5RTwFLTRXlSAGciow8pb3Ddudc6GHWqhdyHuyE7nhUN3o5vqanV4g/7iU+EhNxJ
-         Mw77TQ8ksRN5KlTKJ2mWw6nEtZclB2lluRNMwhByDYwkw16XM972FtqLvIsXwmorIVx3
-         X1HnicT6Oii64sgKg5kgcjq7p7Gv6HmOLqYOa1dNWrOuzn9Cn6zd00u8M3nNNf+lEvVW
-         P06A==
-X-Gm-Message-State: APjAAAXKZ61oRrAPUt/2SZ+tfJmDV3KSIfA6mlQHMPSpcRT5E6GAfgL9
-        BwaJ6U2s3WQvPnltHo0NmT0Tu6hSDGg=
-X-Google-Smtp-Source: APXvYqygpGq9c2w4lIgmLsyqvXpCrSuOYzBgTK7s0815uGFqTM1SCBUfjneRouEeyCYAJq6OI5kJvA==
-X-Received: by 2002:adf:b60f:: with SMTP id f15mr10744344wre.283.1560783947435;
-        Mon, 17 Jun 2019 08:05:47 -0700 (PDT)
-Received: from planxty ([2a02:8108:1700:1960:91dd:e2f9:ed05:ee2b])
-        by smtp.gmail.com with ESMTPSA id u1sm11575780wml.14.2019.06.17.08.05.45
-        (version=TLS1_3 cipher=AEAD-AES256-GCM-SHA384 bits=256/256);
-        Mon, 17 Jun 2019 08:05:46 -0700 (PDT)
-Date:   Mon, 17 Jun 2019 17:05:39 +0200 (CEST)
-From:   John Kacur <jkacur@redhat.com>
-X-X-Sender: jkacur@planxty
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-cc:     Joe Korty <joe.korty@concurrent-rt.com>,
-        rt-users <linux-rt-users@vger.kernel.org>,
-        Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH 1/1] rt-tests: ssdd: Add Licence information to ssdd
-In-Reply-To: <20190614193442.wrsbby4jydcoet4c@linutronix.de>
-Message-ID: <alpine.LFD.2.21.1906171705110.10931@planxty>
-References: <20190614113747.11565-1-jkacur@redhat.com> <20190614113747.11565-2-jkacur@redhat.com> <20190614193442.wrsbby4jydcoet4c@linutronix.de>
-User-Agent: Alpine 2.21 (LFD 202 2017-01-01)
+        Tue, 18 Jun 2019 05:47:13 -0400
+X-Authenticated-User: ralf.mardorf@o2mail.de
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=megamailservers.eu;
+        s=maildub; t=1560851231;
+        bh=LywJL7xD8BX/e799uR2LQj5lfJfWHKtZyC4UetZzC9U=;
+        h=Date:From:To:Subject:From;
+        b=Kwk/e2PVybsrbko/OYo/rt7mPEDaHPy2OsrO4BQvvBE69+uZ4+0HWe1TMVnbm8pin
+         ehF2RqYsipGAiocNQO+sqMZAuNB6hRvKM5DxMDN74OvX12Y3Xk1GB1JvhP39DZtWk8
+         fRQwqGCLPKLeAq8qu93deePXOFrb2HcE6KI9UiO0=
+Feedback-ID: ralf.mardorf@al
+Received: from archlinux (x5d876d00.dyn.telefonica.de [93.135.109.0])
+        (authenticated bits=0)
+        by mail50c50.megamailservers.eu (8.14.9/8.13.1) with ESMTP id x5I9l9FH029594
+        (version=TLSv1/SSLv3 cipher=AES256-GCM-SHA384 bits=256 verify=NO)
+        for <linux-rt-users@vger.kernel.org>; Tue, 18 Jun 2019 09:47:10 +0000
+Date:   Tue, 18 Jun 2019 11:46:59 +0200
+From:   Ralf Mardorf <ralf.mardorf@alice-dsl.net>
+To:     linux-rt-users@vger.kernel.org
+Subject: kernel.org slow download speed
+Message-ID: <20190618114513.4e2cfa7f@archlinux>
+X-Mailer: Claws Mail (linux)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+X-CTCH-RefID: str=0001.0A0B0208.5D08B31F.0005,ss=1,re=0.000,recu=0.000,reip=0.000,cl=1,cld=1,fgs=0
+X-CTCH-VOD: Unknown
+X-CTCH-Spam: Unknown
+X-CTCH-Score: 0.000
+X-CTCH-Rules: 
+X-CTCH-Flags: 0
+X-CTCH-ScoreCust: 0.000
+X-CSC:  0
+X-CHA:  v=2.3 cv=VLnzYeHX c=1 sm=1 tr=0 a=FBE1MhIdAX9q/Ny6aTeDuA==:117
+        a=FBE1MhIdAX9q/Ny6aTeDuA==:17 a=VwQbUJbxAAAA:8 a=kj9zAlcOel0A:10
+        a=qEgFrD8PemeKtOPIB6AA:9 a=CjuIK1q_8ugA:10 a=pRQRx_yQ9a0A:10
+        a=fqMFh-b0cAUA:10 a=AjGcO6oz07-iQ99wixmX:22
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+Hi,
 
+for my Arch PKGBUILD I tried https://www.kernel.org/pub/linux/kernel/
+as well as https://mirrors.edge.kernel.org/pub/linux/kernel/ to
+download the sources for 5.0.21-rt12, but download speed is that slow,
+that I manually interrupted the download.
 
-On Fri, 14 Jun 2019, Sebastian Andrzej Siewior wrote:
+Is there an issue with the kernel.org server or is it more likely an
+issue by my ISP, an IXP or whatsoever?
 
-> On 2019-06-14 13:37:47 [+0200], John Kacur wrote:
-> > Add License Information to ssdd
-> 
-> > Signed-off-by: John Kacur <jkacur@redhat.com>
-> > ---
-> >  src/ssdd/ssdd.c | 7 +++++++
-> >  1 file changed, 7 insertions(+)
-> > 
-> > diff --git a/src/ssdd/ssdd.c b/src/ssdd/ssdd.c
-> > index 4e293586526e..2c3a779be9f1 100644
-> > --- a/src/ssdd/ssdd.c
-> > +++ b/src/ssdd/ssdd.c
-> > @@ -15,6 +15,13 @@
-> >   *
-> >   * The tracer waits on each PTRACE_SINGLESTEP with a waitpid(2)
-> >   * and checks that waitpid's return values for correctness.
-> > + *
-> > + * This program was originally written by
-> > + * Joe Korty <joe.korty@concurrent-rt.com>
-> > + * This program is free software; you can redistribute it and / or modify
-> > + * it under the terms of the GNU General Public License Version 2
-> > + * of the licence, or (at your option) any later version
-> > + * see COPYING for more information
-> 
-> SPDX tags is not something that you have in rt-tests, right? Because a
-> standard tag would be kind of better than having yet another unique
-> version of text saying that it is GPLv2-or-later.
-> 
-> So you could reduce this to two lines:
-> - // SPDX-License-Identifier: GPL-2.0-or-later
->   top
-> 
-> - Author: Joe Korty <joe.korty@concurrent-rt.com>
->   Somewhere at top where the comment starts.
-> 
-> >   */
-> >  #include <stdio.h>
-> >  #include <stdlib.h>
-> 
-> Sebastian
-> 
-
-Thanks for the tip Sebastian, looks good to me,
-I'm looking into doing this.
-
-John
+Regards,
+Ralf
