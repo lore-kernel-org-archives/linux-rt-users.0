@@ -6,33 +6,33 @@ X-Spam-Status: No, score=-8.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
 	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1AE67C31E51
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A159FC31E5E
 	for <linux-rt-users@archiver.kernel.org>; Tue, 18 Jun 2019 10:39:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id EEB9F2080C
-	for <linux-rt-users@archiver.kernel.org>; Tue, 18 Jun 2019 10:39:46 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7B3342080C
+	for <linux-rt-users@archiver.kernel.org>; Tue, 18 Jun 2019 10:39:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729367AbfFRKjq (ORCPT
+        id S1729371AbfFRKjr (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 18 Jun 2019 06:39:46 -0400
-Received: from Galois.linutronix.de ([146.0.238.70]:47073 "EHLO
+        Tue, 18 Jun 2019 06:39:47 -0400
+Received: from Galois.linutronix.de ([146.0.238.70]:47076 "EHLO
         Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725934AbfFRKjq (ORCPT
+        with ESMTP id S1729329AbfFRKjr (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 18 Jun 2019 06:39:46 -0400
+        Tue, 18 Jun 2019 06:39:47 -0400
 Received: from [5.158.153.52] (helo=kurt.tec.linutronix.de)
         by Galois.linutronix.de with esmtpsa (TLS1.2:DHE_RSA_AES_256_CBC_SHA1:256)
         (Exim 4.80)
         (envelope-from <kurt@linutronix.de>)
-        id 1hdBWh-0005SS-EM; Tue, 18 Jun 2019 12:39:43 +0200
+        id 1hdBWi-0005SS-ET; Tue, 18 Jun 2019 12:39:44 +0200
 From:   Kurt Kanzenbach <kurt@linutronix.de>
 To:     John Kacur <jkacur@redhat.com>,
         Clark Williams <williams@redhat.com>
 Cc:     rt-users <linux-rt-users@vger.kernel.org>,
         Kurt Kanzenbach <kurt@linutronix.de>
-Subject: [PATCH 2/6] rt-tests: cyclicdeadline: Remove unused getcpu code
-Date:   Tue, 18 Jun 2019 12:38:37 +0200
-Message-Id: <20190618103841.27249-3-kurt@linutronix.de>
+Subject: [PATCH 4/6] rt-tests: cyclicdeadline: Add options to usage
+Date:   Tue, 18 Jun 2019 12:38:39 +0200
+Message-Id: <20190618103841.27249-5-kurt@linutronix.de>
 X-Mailer: git-send-email 2.11.0
 In-Reply-To: <20190618103841.27249-1-kurt@linutronix.de>
 References: <20190618103841.27249-1-kurt@linutronix.de>
@@ -41,43 +41,41 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The getcpu() system call isn't used in the program. Therefore, it can be
-removed.
+The current usage doesn't show the available options:
+
+ $ sudo ./cyclicdeadline -h
+ usage: cyclicdeadline
+
+So, add the options to the help text to see what can be configured.
 
 Signed-off-by: Kurt Kanzenbach <kurt@linutronix.de>
 ---
- src/sched_deadline/cyclicdeadline.c | 11 -----------
- 1 file changed, 11 deletions(-)
+ src/sched_deadline/cyclicdeadline.c | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
 
 diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
-index 754670c4e7d4..2b83665cab66 100644
+index 17786db45612..7cffe826b944 100644
 --- a/src/sched_deadline/cyclicdeadline.c
 +++ b/src/sched_deadline/cyclicdeadline.c
-@@ -24,16 +24,6 @@
- #include <rt-utils.h>
- #include <rt-sched.h>
+@@ -631,8 +631,16 @@ static void usage(char **argv)
+ 		p--;
+ 	p++;
  
--#ifdef __i386__
--#ifndef __NR_getcpu
--#define __NR_getcpu			309
--#endif
--#else /* x86_64 */
--#ifndef __NR_getcpu
--#define __NR_getcpu			309
--#endif
--#endif /* i386 or x86_64 */
--
- #define _STR(x) #x
- #define STR(x) _STR(x)
- #ifndef MAXPATH
-@@ -44,7 +34,6 @@
- #define CPUSET_LOCAL	"my_cpuset"
+-	printf("usage: %s\n"
+-	       "\n",p);
++	printf("usage: %s [options]\n"
++	       " -h - Show this help menu\n"
++	       " -a - Use all CPUs\n"
++	       " -c cpulist - Comma/hyphen separated list of CPUs to run deadline tasks on\n"
++	       " -i interval(us) - The shortest deadline for the tasks (default 1000us)\n"
++	       " -s step(us) - The amount to increase the deadline for each task (default 500us)\n"
++	       " -t threads - The number of threads to run as deadline (default 1)\n"
++	       " -D time - Specify a length for the test run\n"
++	       "           Append 'm', 'h', or 'd' to specify minutes, hours or days\n"
++	       "\n", p);
+ 	exit(-1);
+ }
  
- #define gettid() syscall(__NR_gettid)
--#define getcpu(cpup, nodep, unused) syscall(__NR_getcpu, cpup, nodep, unused)
- 
- typedef unsigned long long u64;
- typedef unsigned int u32;
 -- 
 2.11.0
 
