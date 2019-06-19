@@ -7,66 +7,65 @@ X-Spam-Status: No, score=-6.5 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 46965C31E5B
-	for <linux-rt-users@archiver.kernel.org>; Wed, 19 Jun 2019 15:48:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 28355C31E5B
+	for <linux-rt-users@archiver.kernel.org>; Wed, 19 Jun 2019 15:48:44 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 1CDD721881
-	for <linux-rt-users@archiver.kernel.org>; Wed, 19 Jun 2019 15:48:14 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id F2CC8204FD
+	for <linux-rt-users@archiver.kernel.org>; Wed, 19 Jun 2019 15:48:43 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="JNs1tbap"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="l7N9Kxo+"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729563AbfFSPsN (ORCPT
+        id S1727552AbfFSPsn (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 19 Jun 2019 11:48:13 -0400
-Received: from mail-wm1-f67.google.com ([209.85.128.67]:55052 "EHLO
-        mail-wm1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727144AbfFSPsN (ORCPT
+        Wed, 19 Jun 2019 11:48:43 -0400
+Received: from mail-wr1-f68.google.com ([209.85.221.68]:34058 "EHLO
+        mail-wr1-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726091AbfFSPsn (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 19 Jun 2019 11:48:13 -0400
-Received: by mail-wm1-f67.google.com with SMTP id g135so2358026wme.4
-        for <linux-rt-users@vger.kernel.org>; Wed, 19 Jun 2019 08:48:12 -0700 (PDT)
+        Wed, 19 Jun 2019 11:48:43 -0400
+Received: by mail-wr1-f68.google.com with SMTP id k11so3975424wrl.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 19 Jun 2019 08:48:41 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :user-agent:mime-version;
-        bh=hYA+E+wNEovjsPuVCl4cORiOyNs+aY39rxeSOO/+kms=;
-        b=JNs1tbapE8H6nX5fDV0SZf3lu7GPm36r0EP1fbD8pDYqJHkWqfZStaG9+ND0C0ez36
-         Pskzn3c9MHzbt1G3yGD6mx09qD25qDY+hKyA5cvvj8sapeZW1N101I8HKyVn4jdGtydk
-         kAI46yokYughhAqzLQd6ESyd2RfS4MKemzpK+kwLexhKykpHsM3lCBHBa8zsmJLE7KEt
-         JoY0NbdpkeHwwWhB+XcxUt4wuNW2wrag2jZD4hFovAYI+uxPRHvvaajDfWO5SHBU5DC6
-         LpcxcrRuCxSyqI5Pvo4FBQk2XZ8Wg2lLGYI9lITVHbVKZdkFh2VBUuqsM84LpoCuvZ2c
-         GU6A==
+        bh=aSEUIgUtUCM2YwUs77E1iNbfTBx0uo/Hg3NhgeYW6ao=;
+        b=l7N9Kxo+SkuPNjvyuzAnxr9uVtKIl5K6ag/EqCl8IFZGcx5S6UJcFBjaWNH5441In9
+         CqojUDC38CL4KMIEejT5FjMKuUqffzXj1c5QYqn1Gqzncy7YbyXUyBBxnuM3ArwCY/yK
+         HG7Zo2kdK1RgWriiYx88lP1aiOiu2c3EBvfhDCLjqQcoQiiHo406P0LexV2HPaqq60xN
+         HJ9NOSdT6+hUP05lqO8RpjQM8kPwjyzxXqLIdmjRCuWXnviy+CKLq8oDCeiP5MUjAiF7
+         ad5IGBQDNpzxAIoCDeNrYkXqs3oi8Cy1v/8mmF+aDTT7G3NCQzBBMU5I9wvK9WwzyjpF
+         Jrbw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:user-agent:mime-version;
-        bh=hYA+E+wNEovjsPuVCl4cORiOyNs+aY39rxeSOO/+kms=;
-        b=bgc9TRfbXSFz0YID1Sb35mJn/Et+RuPJjJSagdhopG37J9GmUD496gph5aEPyGtuLX
-         OWdNagu/4NSUHV2mKMPi2pEkK8xs1EVYdaKHhNeRWUmP1o39XETnukYsG4GKKh5YJn8g
-         jIQOE7SvMVoujzYsjayQp4JRcfMO2wu3H/RJhefYGnBbZVxmj/jWYvfX1xRH9Tpxf08s
-         vpBQqZ6Y8a4/Y48IZqODpsa/SLSg5q0jUl+q4SDCeA7AvlHaDIuuKb+aHWbh7/Fp3kNp
-         GZfaTTtU3vYdq+ePBX8dVDRy79hkubbrrq2vyDEz3hjl6s9TjfIf0tbrbTKYZHOfOYso
-         7CvA==
-X-Gm-Message-State: APjAAAVuVZbra9IXqPuUpYm1y2l9noC93VwpXUP8Y+TqjXmma/JVKwxD
-        xWhpgPHzoQCJkKamm1Uf3u0=
-X-Google-Smtp-Source: APXvYqyAQtYelzNaNMkqSJLLzNlwsOCBw7t+j1zqZxcL5Av8m7+9Kghb5cYXul/tjkcRGft4kiaxHQ==
-X-Received: by 2002:a1c:f712:: with SMTP id v18mr9666059wmh.143.1560959291337;
-        Wed, 19 Jun 2019 08:48:11 -0700 (PDT)
+        bh=aSEUIgUtUCM2YwUs77E1iNbfTBx0uo/Hg3NhgeYW6ao=;
+        b=XGZ5IN29G2Azt5gVMMiwHLjJSh1Ih5+VIsuvLvKSFoI1jarMbJjIOdgFZJERKs4MN7
+         +ONSmAKU9I7hHd1b/Vglgdu5OWcf/V1S3KNqRFQEZzOyMh8RzsVwtWD9GsG2XpMEC98o
+         8JG9p+8lzNcA1NOfgAIWqzT8d+uotdd+RdIILfsNtHLEpkOnq7K6C8Q7ZX/bBEXsIQAo
+         sMZj2vlAbeiozpDshMDo1qlUaiUVGsA/VgJLwhYVLxlpApPwBeeoXwzbjmh1AEJH/kKX
+         vpD2aIkGOXQKtOvAYf3m0AesUu8tpCYjvH7fgneWvi3Ma+ir8UVMHKGXBh3dCjRq0tae
+         Y+PA==
+X-Gm-Message-State: APjAAAXfX31+KE0DNxJWmOmwlRtRiy+FN717B1TsTn0+G9K+PAll5PcI
+        hy1epKKwof08Va28gOS9CII03nbL/Dg=
+X-Google-Smtp-Source: APXvYqxA1ivKPN1SydxzhXBSPh1MH/7EokrlVhju/cQztXMW1rN47O56cuI0mJHm/SQDVyPo6y16RA==
+X-Received: by 2002:a5d:6949:: with SMTP id r9mr70190476wrw.73.1560959321162;
+        Wed, 19 Jun 2019 08:48:41 -0700 (PDT)
 Received: from planxty ([2a02:8108:1700:1960:91dd:e2f9:ed05:ee2b])
-        by smtp.gmail.com with ESMTPSA id v204sm2300407wma.20.2019.06.19.08.48.10
+        by smtp.gmail.com with ESMTPSA id l12sm43449424wrb.81.2019.06.19.08.48.40
         (version=TLS1_3 cipher=AEAD-AES256-GCM-SHA384 bits=256/256);
-        Wed, 19 Jun 2019 08:48:10 -0700 (PDT)
-Date:   Wed, 19 Jun 2019 17:48:09 +0200 (CEST)
+        Wed, 19 Jun 2019 08:48:40 -0700 (PDT)
+Date:   Wed, 19 Jun 2019 17:48:38 +0200 (CEST)
 From:   John Kacur <jkacur@redhat.com>
 X-X-Sender: jkacur@planxty
 To:     Kurt Kanzenbach <kurt@linutronix.de>
 cc:     Clark Williams <williams@redhat.com>,
         rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: [PATCH 3/6] rt-tests: deadline: Remove duplicated gettid()
- code
-In-Reply-To: <20190618103841.27249-4-kurt@linutronix.de>
-Message-ID: <alpine.LFD.2.21.1906191747000.12022@planxty>
-References: <20190618103841.27249-1-kurt@linutronix.de> <20190618103841.27249-4-kurt@linutronix.de>
+Subject: Re: [PATCH 4/6] rt-tests: cyclicdeadline: Add options to usage
+In-Reply-To: <20190618103841.27249-5-kurt@linutronix.de>
+Message-ID: <alpine.LFD.2.21.1906191748230.12022@planxty>
+References: <20190618103841.27249-1-kurt@linutronix.de> <20190618103841.27249-5-kurt@linutronix.de>
 User-Agent: Alpine 2.21 (LFD 202 2017-01-01)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
@@ -79,82 +78,43 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 On Tue, 18 Jun 2019, Kurt Kanzenbach wrote:
 
-> gettid() is already implemented in the library code. Use that code instead.
+> The current usage doesn't show the available options:
+> 
+>  $ sudo ./cyclicdeadline -h
+>  usage: cyclicdeadline
+> 
+> So, add the options to the help text to see what can be configured.
 > 
 > Signed-off-by: Kurt Kanzenbach <kurt@linutronix.de>
 > ---
->  src/sched_deadline/cyclicdeadline.c | 6 ++----
->  src/sched_deadline/deadline_test.c  | 6 ++----
->  2 files changed, 4 insertions(+), 8 deletions(-)
+>  src/sched_deadline/cyclicdeadline.c | 12 ++++++++++--
+>  1 file changed, 10 insertions(+), 2 deletions(-)
 > 
 > diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
-> index 2b83665cab66..17786db45612 100644
+> index 17786db45612..7cffe826b944 100644
 > --- a/src/sched_deadline/cyclicdeadline.c
 > +++ b/src/sched_deadline/cyclicdeadline.c
-> @@ -33,8 +33,6 @@
->  #define CPUSET_ALL	"my_cpuset_all"
->  #define CPUSET_LOCAL	"my_cpuset"
+> @@ -631,8 +631,16 @@ static void usage(char **argv)
+>  		p--;
+>  	p++;
 >  
-> -#define gettid() syscall(__NR_gettid)
-> -
->  typedef unsigned long long u64;
->  typedef unsigned int u32;
->  typedef int s32;
-> @@ -755,7 +753,7 @@ void *run_deadline(void *data)
->  	attr.sched_runtime = sd->runtime_us * 1000;
->  	attr.sched_deadline = sd->deadline_us * 1000;
->  
-> -	printf("thread[%ld] runtime=%lldus deadline=%lldus\n",
-> +	printf("thread[%d] runtime=%lldus deadline=%lldus\n",
->  	       gettid(), sd->runtime_us, sd->deadline_us);
->  
->  	pthread_barrier_wait(&barrier);
-> @@ -1195,7 +1193,7 @@ int main (int argc, char **argv)
->  		system("cat /sys/fs/cgroup/cpuset/my_cpuset/tasks");
->  	}
->  
-> -	printf("main thread %ld\n", gettid());
-> +	printf("main thread %d\n", gettid());
->  
->  	pthread_barrier_wait(&barrier);
->  	printf("fail 2 %d\n", fail);
-> diff --git a/src/sched_deadline/deadline_test.c b/src/sched_deadline/deadline_test.c
-> index c3b9dceb5209..e2898de328bb 100644
-> --- a/src/sched_deadline/deadline_test.c
-> +++ b/src/sched_deadline/deadline_test.c
-> @@ -51,6 +51,7 @@
->  #include <linux/unistd.h>
->  #include <linux/magic.h>
->  
-> +#include <rt-utils.h>
->  #include <rt-sched.h>
->  
->  /**
-> @@ -103,9 +104,6 @@ static void usage(char **argv)
->  #define CPUSET_ALL	"my_cpuset_all"
->  #define CPUSET_LOCAL	"my_cpuset"
->  
-> -/* Define the system call interfaces */
-> -#define gettid() syscall(__NR_gettid)
-> -
->  typedef unsigned long long u64;
->  typedef unsigned int u32;
->  typedef int s32;
-> @@ -1267,7 +1265,7 @@ void *run_deadline(void *data)
->  	attr.sched_runtime = sched_data->runtime_us * 1000;
->  	attr.sched_deadline = sched_data->deadline_us * 1000;
->  
-> -	printf("thread[%ld] runtime=%lldus deadline=%lldus loops=%lld\n",
-> +	printf("thread[%d] runtime=%lldus deadline=%lldus loops=%lld\n",
->  	       gettid(), sched_data->runtime_us,
->  	       sched_data->deadline_us, sched_data->loops_per_period);
+> -	printf("usage: %s\n"
+> -	       "\n",p);
+> +	printf("usage: %s [options]\n"
+> +	       " -h - Show this help menu\n"
+> +	       " -a - Use all CPUs\n"
+> +	       " -c cpulist - Comma/hyphen separated list of CPUs to run deadline tasks on\n"
+> +	       " -i interval(us) - The shortest deadline for the tasks (default 1000us)\n"
+> +	       " -s step(us) - The amount to increase the deadline for each task (default 500us)\n"
+> +	       " -t threads - The number of threads to run as deadline (default 1)\n"
+> +	       " -D time - Specify a length for the test run\n"
+> +	       "           Append 'm', 'h', or 'd' to specify minutes, hours or days\n"
+> +	       "\n", p);
+>  	exit(-1);
+>  }
 >  
 > -- 
 > 2.11.0
 > 
 > 
-
-If anyone objects because they are actively using systems that don't have 
-gettid() in the library, please speak-up, for now this is in 
-unstable/devel/latest-devel
- Signed-off-by: John Kacur <jkacur@redhat.com>
+Signed-off-by: John Kacur <jkacur@redhat.com>
