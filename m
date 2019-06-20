@@ -6,50 +6,50 @@ X-Spam-Status: No, score=-8.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
 	USER_AGENT_MUTT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 25868C43613
-	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Jun 2019 21:10:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 49E5BC43613
+	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Jun 2019 21:19:14 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 0308D2070B
-	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Jun 2019 21:10:57 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 18B092070B
+	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Jun 2019 21:19:14 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726402AbfFTVKx (ORCPT
+        id S1726151AbfFTVTI (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 20 Jun 2019 17:10:53 -0400
-Received: from mx0b-001b2d01.pphosted.com ([148.163.158.5]:8142 "EHLO
+        Thu, 20 Jun 2019 17:19:08 -0400
+Received: from mx0b-001b2d01.pphosted.com ([148.163.158.5]:39774 "EHLO
         mx0a-001b2d01.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1726256AbfFTVKw (ORCPT
+        by vger.kernel.org with ESMTP id S1726066AbfFTVTI (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 20 Jun 2019 17:10:52 -0400
-Received: from pps.filterd (m0098419.ppops.net [127.0.0.1])
-        by mx0b-001b2d01.pphosted.com (8.16.0.27/8.16.0.27) with SMTP id x5KL8FFR088897;
-        Thu, 20 Jun 2019 17:10:05 -0400
-Received: from ppma01wdc.us.ibm.com (fd.55.37a9.ip4.static.sl-reverse.com [169.55.85.253])
-        by mx0b-001b2d01.pphosted.com with ESMTP id 2t8hsyg2a1-1
+        Thu, 20 Jun 2019 17:19:08 -0400
+Received: from pps.filterd (m0098413.ppops.net [127.0.0.1])
+        by mx0b-001b2d01.pphosted.com (8.16.0.27/8.16.0.27) with SMTP id x5KL8EAW118843;
+        Thu, 20 Jun 2019 17:18:26 -0400
+Received: from ppma01dal.us.ibm.com (83.d6.3fa9.ip4.static.sl-reverse.com [169.63.214.131])
+        by mx0b-001b2d01.pphosted.com with ESMTP id 2t8hsxgb6y-1
         (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-        Thu, 20 Jun 2019 17:10:04 -0400
-Received: from pps.filterd (ppma01wdc.us.ibm.com [127.0.0.1])
-        by ppma01wdc.us.ibm.com (8.16.0.27/8.16.0.27) with SMTP id x5KL5Utw001317;
-        Thu, 20 Jun 2019 21:10:04 GMT
-Received: from b01cxnp22034.gho.pok.ibm.com (b01cxnp22034.gho.pok.ibm.com [9.57.198.24])
-        by ppma01wdc.us.ibm.com with ESMTP id 2t8hrp00gy-1
+        Thu, 20 Jun 2019 17:18:26 -0400
+Received: from pps.filterd (ppma01dal.us.ibm.com [127.0.0.1])
+        by ppma01dal.us.ibm.com (8.16.0.27/8.16.0.27) with SMTP id x5KL5VfF023304;
+        Thu, 20 Jun 2019 21:18:25 GMT
+Received: from b01cxnp23033.gho.pok.ibm.com (b01cxnp23033.gho.pok.ibm.com [9.57.198.28])
+        by ppma01dal.us.ibm.com with ESMTP id 2t8hrnr1wg-1
         (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-        Thu, 20 Jun 2019 21:10:04 +0000
+        Thu, 20 Jun 2019 21:18:25 +0000
 Received: from b01ledav003.gho.pok.ibm.com (b01ledav003.gho.pok.ibm.com [9.57.199.108])
-        by b01cxnp22034.gho.pok.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id x5KLA3n130474734
+        by b01cxnp23033.gho.pok.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id x5KLIOwC15139216
         (version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-        Thu, 20 Jun 2019 21:10:04 GMT
+        Thu, 20 Jun 2019 21:18:24 GMT
 Received: from b01ledav003.gho.pok.ibm.com (unknown [127.0.0.1])
-        by IMSVA (Postfix) with ESMTP id DF168B2064;
-        Thu, 20 Jun 2019 21:10:03 +0000 (GMT)
+        by IMSVA (Postfix) with ESMTP id 6CA4FB205F;
+        Thu, 20 Jun 2019 21:18:24 +0000 (GMT)
 Received: from b01ledav003.gho.pok.ibm.com (unknown [127.0.0.1])
-        by IMSVA (Postfix) with ESMTP id B181BB205F;
-        Thu, 20 Jun 2019 21:10:03 +0000 (GMT)
+        by IMSVA (Postfix) with ESMTP id 3D44CB2066;
+        Thu, 20 Jun 2019 21:18:24 +0000 (GMT)
 Received: from paulmck-ThinkPad-W541 (unknown [9.70.82.26])
         by b01ledav003.gho.pok.ibm.com (Postfix) with ESMTP;
-        Thu, 20 Jun 2019 21:10:03 +0000 (GMT)
+        Thu, 20 Jun 2019 21:18:24 +0000 (GMT)
 Received: by paulmck-ThinkPad-W541 (Postfix, from userid 1000)
-        id AA5FD16C6B85; Thu, 20 Jun 2019 14:10:05 -0700 (PDT)
-Date:   Thu, 20 Jun 2019 14:10:05 -0700
+        id 34A8616C2A15; Thu, 20 Jun 2019 14:18:26 -0700 (PDT)
+Date:   Thu, 20 Jun 2019 14:18:26 -0700
 From:   "Paul E. McKenney" <paulmck@linux.ibm.com>
 To:     Scott Wood <swood@redhat.com>
 Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -59,16 +59,16 @@ Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Juri Lelli <juri.lelli@redhat.com>,
         Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [RFC PATCH RT 3/4] rcu: unlock special: Treat irq and preempt
- disabled the same
-Message-ID: <20190620211005.GW26519@linux.ibm.com>
+Subject: Re: [RFC PATCH RT 4/4] rcutorture: Avoid problematic critical
+ section nesting
+Message-ID: <20190620211826.GX26519@linux.ibm.com>
 Reply-To: paulmck@linux.ibm.com
 References: <20190619011908.25026-1-swood@redhat.com>
- <20190619011908.25026-4-swood@redhat.com>
+ <20190619011908.25026-5-swood@redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20190619011908.25026-4-swood@redhat.com>
+In-Reply-To: <20190619011908.25026-5-swood@redhat.com>
 User-Agent: Mutt/1.5.21 (2010-09-15)
 X-TM-AS-GCONF: 00
 X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:,, definitions=2019-06-20_14:,,
@@ -83,94 +83,215 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, Jun 18, 2019 at 08:19:07PM -0500, Scott Wood wrote:
-> [Note: Just before posting this I noticed that the invoke_rcu_core stuff
->  is part of the latest RCU pull request, and it has a patch that
->  addresses this in a more complicated way that appears to deal with the
->  bare irq-disabled sequence as well.
+On Tue, Jun 18, 2019 at 08:19:08PM -0500, Scott Wood wrote:
+> rcutorture was generating some nesting scenarios that are not
+> reasonable.  Constrain the state selection to avoid them.
+> 
+> Example #1:
+> 
+> 1. preempt_disable()
+> 2. local_bh_disable()
+> 3. preempt_enable()
+> 4. local_bh_enable()
+> 
+> On PREEMPT_RT, BH disabling takes a local lock only when called in
+> non-atomic context.  Thus, atomic context must be retained until after BH
+> is re-enabled.  Likewise, if BH is initially disabled in non-atomic
+> context, it cannot be re-enabled in atomic context.
+> 
+> Example #2:
+> 
+> 1. rcu_read_lock()
+> 2. local_irq_disable()
+> 3. rcu_read_unlock()
+> 4. local_irq_enable()
+> 
+> If the thread is preempted between steps 1 and 2,
+> rcu_read_unlock_special.b.blocked will be set, but it won't be
+> acted on in step 3 because IRQs are disabled.  Thus, reporting of the
+> quiescent state will be delayed beyond the local_irq_enable().
+> 
+> Example #3:
+> 
+> 1. preempt_disable()
+> 2. local_irq_disable()
+> 3. preempt_enable()
+> 4. local_irq_enable()
+> 
+> If need_resched is set between steps 1 and 2, then the reschedule
+> in step 3 will not happen.
+> 
+> Signed-off-by: Scott Wood <swood@redhat.com>
 
-Far easier to deal with it than to debug the lack of it.  ;-)
+OK for -rt, but as long as people can code those sequences without getting
+their wrists slapped, RCU needs to deal with it.  So I cannot accept
+this in mainline at the current time.  Yes, I will know when it is safe
+to accept it when rcutorture's virtual wrist gets slapped in mainline.
+Why did you ask?  ;-)
 
->  Assuming we need/want to support such sequences, is the
->  invoke_rcu_core() call actually going to result in scheduling any
->  sooner?  resched_curr() just does the same setting of need_resched
->  when it's the same cpu.
-> ]
-
-Yes, invoke_rcu_core() can in some cases invoke the scheduler sooner.
-Setting the CPU-local bits might not have effect until the next interrupt.
-
-So if -rt wants the simpler and slower approach, the change needs to
-use IS_ENABLED(CONFIG_PREEMPT_RT_FULL) or similar.  Not that this is
-an issue until CONFIG_PREEMPT_RT_FULL hits mainline.
+But I have to ask...  With this elaboration, is it time to make this a
+data-driven state machine?  Or is the complexity not yet to the point
+where that would constitute a simplification?
 
 							Thanx, Paul
 
-> Since special should never be getting set inside an irqs-disabled
-> critical section, this is safe as long as there are no sequences of
-> rcu_read_lock()/local_irq_disable()/rcu_read_unlock()/local_irq_enable()
-> (without preempt_disable() wrapped around the IRQ disabling, as spinlocks
-> do).  If there are such sequences, then the grace period may be delayed
-> until the next time need_resched is checked.
-> 
-> This is needed because otherwise, in a sequence such as:
-> 1. rcu_read_lock()
-> 2. *preempt*, set rcu_read_unlock_special.b.blocked
-> 3. preempt_disable()
-> 4. rcu_read_unlock()
-> 5. preempt_enable()
-> 
-> ...rcu_read_unlock_special.b.blocked will not be cleared during
-> step 4, because of the disabled preemption.  If an interrupt is then
-> taken between steps 4 and 5, and that interrupt enters scheduler code
-> that takes pi/rq locks, and an rcu read lock inside that, then when
-> dropping that rcu read lock we will end up in rcu_read_unlock_special()
-> again -- but this time, since irqs are disabled, it will call
-> invoke_rcu_core() in the RT tree (regardless of PREEMPT_RT_FULL), which
-> calls wake_up_process().  This can cause a pi/rq lock deadlock.  An
-> example of interrupt code that does this is scheduler_tick().
-> 
-> The above sequence can be found in (at least) __lock_task_sighand() (for
-> !PREEMPT_RT_FULL) and d_alloc_parallel().
-> 
-> It's potentially an issue on non-RT as well.  While
-> raise_softirq_irqoff() doesn't call wake_up_process() when in_interrupt()
-> is true, if code between steps 4 and 5 directly calls into scheduler
-> code, and that code uses RCU with pi/rq lock held, wake_up_process() can
-> still be called.
-> 
-> On RT, migrate_enable() is such a codepath, so an in_interrupt() check
-> alone would not work on RT.  Instead, keep track of whether we've already
-> had an rcu_read_unlock_special() with preemption disabled but haven't yet
-> scheduled, and rely on the preempt_enable() yet to come instead of
-> calling invoke_rcu_core().
-> 
-> Signed-off-by: Scott Wood <swood@redhat.com>
 > ---
->  kernel/rcu/tree_plugin.h | 10 ++--------
->  1 file changed, 2 insertions(+), 8 deletions(-)
+> TODO: Document restrictions and add debug checks for invalid sequences.
 > 
-> diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
-> index 5d63914b3687..d7ddbcc7231c 100644
-> --- a/kernel/rcu/tree_plugin.h
-> +++ b/kernel/rcu/tree_plugin.h
-> @@ -630,14 +630,8 @@ static void rcu_read_unlock_special(struct task_struct *t)
->  	if (preempt_bh_were_disabled || irqs_were_disabled) {
->  		WRITE_ONCE(t->rcu_read_unlock_special.b.exp_hint, false);
->  		/* Need to defer quiescent state until everything is enabled. */
-> -		if (irqs_were_disabled) {
-> -			/* Enabling irqs does not reschedule, so... */
-> -			invoke_rcu_core();
-> -		} else {
-> -			/* Enabling BH or preempt does reschedule, so... */
-> -			set_tsk_need_resched(current);
-> -			set_preempt_need_resched();
-> -		}
-> +		set_tsk_need_resched(current);
-> +		set_preempt_need_resched();
->  		local_irq_restore(flags);
->  		return;
->  	}
+> I had been planning to resolve #1 (only as shown, not the case of
+> disabling preemption while non-atomic and enabling while atomic) by
+> changing how migrate_disable() works to avoid the split behavior, but
+> recently BH disabling was changed to do the same thing.  I still plan to
+> send the migrate disable changes as a separate patchset, for the sake of
+> the significant performance improvement I saw.
+> ---
+>  kernel/rcu/rcutorture.c | 92 +++++++++++++++++++++++++++++++++++++++++--------
+>  1 file changed, 78 insertions(+), 14 deletions(-)
+> 
+> diff --git a/kernel/rcu/rcutorture.c b/kernel/rcu/rcutorture.c
+> index 584b0d1da0a3..0523d9e78246 100644
+> --- a/kernel/rcu/rcutorture.c
+> +++ b/kernel/rcu/rcutorture.c
+> @@ -73,10 +73,13 @@
+>  #define RCUTORTURE_RDR_RBH	 0x08	/*  ... rcu_read_lock_bh(). */
+>  #define RCUTORTURE_RDR_SCHED	 0x10	/*  ... rcu_read_lock_sched(). */
+>  #define RCUTORTURE_RDR_RCU	 0x20	/*  ... entering another RCU reader. */
+> -#define RCUTORTURE_RDR_NBITS	 6	/* Number of bits defined above. */
+> +#define RCUTORTURE_RDR_ATOM_BH	 0x40	/*  ... disabling bh while atomic */
+> +#define RCUTORTURE_RDR_ATOM_RBH	 0x80	/*  ... RBH while atomic */
+> +#define RCUTORTURE_RDR_NBITS	 8	/* Number of bits defined above. */
+>  #define RCUTORTURE_MAX_EXTEND	 \
+>  	(RCUTORTURE_RDR_BH | RCUTORTURE_RDR_IRQ | RCUTORTURE_RDR_PREEMPT | \
+> -	 RCUTORTURE_RDR_RBH | RCUTORTURE_RDR_SCHED)
+> +	 RCUTORTURE_RDR_RBH | RCUTORTURE_RDR_SCHED | \
+> +	 RCUTORTURE_RDR_ATOM_BH | RCUTORTURE_RDR_ATOM_RBH)
+>  #define RCUTORTURE_RDR_MAX_LOOPS 0x7	/* Maximum reader extensions. */
+>  					/* Must be power of two minus one. */
+>  #define RCUTORTURE_RDR_MAX_SEGS (RCUTORTURE_RDR_MAX_LOOPS + 3)
+> @@ -1111,31 +1114,52 @@ static void rcutorture_one_extend(int *readstate, int newstate,
+>  	WARN_ON_ONCE((idxold >> RCUTORTURE_RDR_SHIFT) > 1);
+>  	rtrsp->rt_readstate = newstate;
+>  
+> -	/* First, put new protection in place to avoid critical-section gap. */
+> +	/*
+> +	 * First, put new protection in place to avoid critical-section gap.
+> +	 * Disable preemption around the ATOM disables to ensure that
+> +	 * in_atomic() is true.
+> +	 */
+>  	if (statesnew & RCUTORTURE_RDR_BH)
+>  		local_bh_disable();
+> +	if (statesnew & RCUTORTURE_RDR_RBH)
+> +		rcu_read_lock_bh();
+>  	if (statesnew & RCUTORTURE_RDR_IRQ)
+>  		local_irq_disable();
+>  	if (statesnew & RCUTORTURE_RDR_PREEMPT)
+>  		preempt_disable();
+> -	if (statesnew & RCUTORTURE_RDR_RBH)
+> -		rcu_read_lock_bh();
+>  	if (statesnew & RCUTORTURE_RDR_SCHED)
+>  		rcu_read_lock_sched();
+> +	preempt_disable();
+> +	if (statesnew & RCUTORTURE_RDR_ATOM_BH)
+> +		local_bh_disable();
+> +	if (statesnew & RCUTORTURE_RDR_ATOM_RBH)
+> +		rcu_read_lock_bh();
+> +	preempt_enable();
+>  	if (statesnew & RCUTORTURE_RDR_RCU)
+>  		idxnew = cur_ops->readlock() << RCUTORTURE_RDR_SHIFT;
+>  
+> -	/* Next, remove old protection, irq first due to bh conflict. */
+> +	/*
+> +	 * Next, remove old protection, in decreasing order of strength
+> +	 * to avoid unlock paths that aren't safe in the stronger
+> +	 * context.  Disable preemption around the ATOM enables in
+> +	 * case the context was only atomic due to IRQ disabling.
+> +	 */
+> +	preempt_disable();
+>  	if (statesold & RCUTORTURE_RDR_IRQ)
+>  		local_irq_enable();
+> -	if (statesold & RCUTORTURE_RDR_BH)
+> +	if (statesold & RCUTORTURE_RDR_ATOM_BH)
+>  		local_bh_enable();
+> +	if (statesold & RCUTORTURE_RDR_ATOM_RBH)
+> +		rcu_read_unlock_bh();
+> +	preempt_enable();
+>  	if (statesold & RCUTORTURE_RDR_PREEMPT)
+>  		preempt_enable();
+> -	if (statesold & RCUTORTURE_RDR_RBH)
+> -		rcu_read_unlock_bh();
+>  	if (statesold & RCUTORTURE_RDR_SCHED)
+>  		rcu_read_unlock_sched();
+> +	if (statesold & RCUTORTURE_RDR_BH)
+> +		local_bh_enable();
+> +	if (statesold & RCUTORTURE_RDR_RBH)
+> +		rcu_read_unlock_bh();
+>  	if (statesold & RCUTORTURE_RDR_RCU)
+>  		cur_ops->readunlock(idxold >> RCUTORTURE_RDR_SHIFT);
+>  
+> @@ -1171,6 +1195,12 @@ static int rcutorture_extend_mask_max(void)
+>  	int mask = rcutorture_extend_mask_max();
+>  	unsigned long randmask1 = torture_random(trsp) >> 8;
+>  	unsigned long randmask2 = randmask1 >> 3;
+> +	unsigned long preempts = RCUTORTURE_RDR_PREEMPT | RCUTORTURE_RDR_SCHED;
+> +	unsigned long preempts_irq = preempts | RCUTORTURE_RDR_IRQ;
+> +	unsigned long nonatomic_bhs = RCUTORTURE_RDR_BH | RCUTORTURE_RDR_RBH;
+> +	unsigned long atomic_bhs = RCUTORTURE_RDR_ATOM_BH |
+> +				   RCUTORTURE_RDR_ATOM_RBH;
+> +	unsigned long tmp;
+>  
+>  	WARN_ON_ONCE(mask >> RCUTORTURE_RDR_SHIFT);
+>  	/* Most of the time lots of bits, half the time only one bit. */
+> @@ -1178,11 +1208,45 @@ static int rcutorture_extend_mask_max(void)
+>  		mask = mask & randmask2;
+>  	else
+>  		mask = mask & (1 << (randmask2 % RCUTORTURE_RDR_NBITS));
+> -	/* Can't enable bh w/irq disabled. */
+> -	if ((mask & RCUTORTURE_RDR_IRQ) &&
+> -	    ((!(mask & RCUTORTURE_RDR_BH) && (oldmask & RCUTORTURE_RDR_BH)) ||
+> -	     (!(mask & RCUTORTURE_RDR_RBH) && (oldmask & RCUTORTURE_RDR_RBH))))
+> -		mask |= RCUTORTURE_RDR_BH | RCUTORTURE_RDR_RBH;
+> +
+> +	/*
+> +	 * Can't enable bh w/irq disabled.
+> +	 *
+> +	 * Can't enable preemption with irqs disabled, if irqs had ever
+> +	 * been enabled during this preempt critical section (could miss
+> +	 * a reschedule).
+> +	 */
+> +	tmp = atomic_bhs | nonatomic_bhs | preempts;
+> +	if (mask & RCUTORTURE_RDR_IRQ)
+> +		mask |= oldmask & tmp;
+> +
+> +	/*
+> +	 * Can't release the outermost rcu lock in an irq disabled
+> +	 * section without preemption also being disabled, if irqs had
+> +	 * ever been enabled during this RCU critical section (could leak
+> +	 * a special flag and delay reporting the qs).
+> +	 */
+> +	if ((oldmask & RCUTORTURE_RDR_RCU) && (mask & RCUTORTURE_RDR_IRQ) &&
+> +	    !(mask & preempts))
+> +		mask |= RCUTORTURE_RDR_RCU;
+> +
+> +	/* Can't modify atomic bh in non-atomic context */
+> +	if ((oldmask & atomic_bhs) && (mask & atomic_bhs) &&
+> +	    !(mask & preempts_irq)) {
+> +		mask |= oldmask & preempts_irq;
+> +		if (mask & RCUTORTURE_RDR_IRQ)
+> +			mask |= oldmask & tmp;
+> +	}
+> +	if ((mask & atomic_bhs) && !(mask & preempts_irq))
+> +		mask |= RCUTORTURE_RDR_PREEMPT;
+> +
+> +	/* Can't modify non-atomic bh in atomic context */
+> +	tmp = nonatomic_bhs;
+> +	if (oldmask & preempts_irq)
+> +		mask &= ~tmp;
+> +	if ((oldmask | mask) & preempts_irq)
+> +		mask |= oldmask & tmp;
+> +
+>  	if ((mask & RCUTORTURE_RDR_IRQ) &&
+>  	    !(mask & cur_ops->ext_irq_conflict) &&
+>  	    (oldmask & cur_ops->ext_irq_conflict))
 > -- 
 > 1.8.3.1
 > 
