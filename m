@@ -2,124 +2,102 @@ Return-Path: <SRS0=3DPx=UT=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
-	SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 449FAC43613
-	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Jun 2019 21:02:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 51944C48BE1
+	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Jun 2019 21:06:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 18FA6206BA
-	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Jun 2019 21:02:02 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Cu7fE+mp"
+	by mail.kernel.org (Postfix) with ESMTP id 341C5206BA
+	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Jun 2019 21:06:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726034AbfFTVCB (ORCPT
+        id S1726034AbfFTVGw (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 20 Jun 2019 17:02:01 -0400
-Received: from mail-ot1-f67.google.com ([209.85.210.67]:43066 "EHLO
-        mail-ot1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725958AbfFTVCB (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 20 Jun 2019 17:02:01 -0400
-Received: by mail-ot1-f67.google.com with SMTP id i8so4116798oth.10
-        for <linux-rt-users@vger.kernel.org>; Thu, 20 Jun 2019 14:02:01 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=YbwLMHJoT9bAMzc7ZVtRowqGV5AriL8qmPCBW9B5Srg=;
-        b=Cu7fE+mpd8fVb80qWrvY4Zy8UpK1/kENtrA5mvosTFZvJci9vB72ylOoeJL7+4LPqM
-         FnLb/ns3e+CgzIJXN5264gbJhGID/qv31OmfpQu2gRIUbeQplX/uU9MMwgZbcUFTPnVP
-         on6vIWcdxodXtzHOnoULocwkL3sA+P5p9BBNmbaZTM7s9CMw7LtS6djVUECbP6ZfjkXn
-         6kDNDfeMk0D63QE4u8r1Ngwk2gtwItjkrM72QP/czWCQ0Hrje02Pe0Re7bCfOqXYaHeA
-         59z+Vfhzopw6Tva3jKL5Fsm5opYErIwglMyg28rJ8LHiCWhIqquGSrvX2wS1GSLRU8La
-         L6xA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=YbwLMHJoT9bAMzc7ZVtRowqGV5AriL8qmPCBW9B5Srg=;
-        b=Ha7WOuJKkK5x7bq1O93QOgzrLo69O8Sxx3RnwLm3EcnLfgaMitMKh/B4OSXWOYrjyQ
-         GwQZHtzNYOYJVoFeHvNc0W9t8qwFAl18xcNXZ2lFywcjxHWUkCzsm5uKfBtBu9RYSiKF
-         uP9GVcX0vZslG4bvPfi39XW+JgobO6WI63bldxys3kq2Xf512gvlIZC86KHjsi2En5ew
-         xo7EjkvtLeC8KKZjSroTy8Z3eBXKFASH9RmOgQxF20S72WsiPl0s6k6ggN9KTQ9exK5b
-         4GdyZQkf5v5q41wMv651x2V7S967menzk111I+n7oC8mhp0orya6zdeSjoJeixrOoFIs
-         B9Gw==
-X-Gm-Message-State: APjAAAV2eNpNFamHaW8YGmO47KpIHlROEoXWrCv0l5cxE21pfz1dAw6m
-        7jlC9VNn/Sk5s4d26ze6kyY9l9avVYweYiAkRuv4Qb+s
-X-Google-Smtp-Source: APXvYqzYl9K34uXzTOcTmy9iGoSQOcgNdag4+njCTT2PUKKCDYRE42YzH4cVGPw/rXJtnwlcuqw7c+9Aa4R/6apv38Q=
-X-Received: by 2002:a9d:66d0:: with SMTP id t16mr40585691otm.153.1561064520832;
- Thu, 20 Jun 2019 14:02:00 -0700 (PDT)
-MIME-Version: 1.0
-References: <CAEVNDXsR03jGXKO5diQbjMQecS=wXxdEW5eGQAAL1PPOQ_RO6Q@mail.gmail.com>
-In-Reply-To: <CAEVNDXsR03jGXKO5diQbjMQecS=wXxdEW5eGQAAL1PPOQ_RO6Q@mail.gmail.com>
-From:   Luca Abeni <lucabe72@gmail.com>
-Date:   Thu, 20 Jun 2019 23:01:49 +0200
-Message-ID: <CAJfkoWqsPJoxeQwxCYAU1kG6ny5BBuiTCpiqM+KgAsZH58trbw@mail.gmail.com>
-Subject: Re: sched_deadline sched_setattr fails after setting cpuset
-To:     Ming Yang <minos.future@gmail.com>
-Cc:     linux-rt-users@vger.kernel.org
+        Thu, 20 Jun 2019 17:06:52 -0400
+Received: from mx1.redhat.com ([209.132.183.28]:42804 "EHLO mx1.redhat.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1725913AbfFTVGv (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 20 Jun 2019 17:06:51 -0400
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mx1.redhat.com (Postfix) with ESMTPS id 55178C05D3F9;
+        Thu, 20 Jun 2019 21:06:43 +0000 (UTC)
+Received: from ovpn-117-83.phx2.redhat.com (ovpn-117-83.phx2.redhat.com [10.3.117.83])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id E5FCF1001B05;
+        Thu, 20 Jun 2019 21:06:37 +0000 (UTC)
+Message-ID: <1b6dfc95bba69aa53e4e84eebf6af60f0b9ed95c.camel@redhat.com>
+Subject: Re: [PATCH RT 1/4] rcu: Acquire RCU lock when disabling BHs
+From:   Scott Wood <swood@redhat.com>
+To:     paulmck@linux.ibm.com
+Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Clark Williams <williams@redhat.com>,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <20190620205352.GV26519@linux.ibm.com>
+References: <20190619011908.25026-1-swood@redhat.com>
+         <20190619011908.25026-2-swood@redhat.com>
+         <20190620205352.GV26519@linux.ibm.com>
+Organization: Red Hat
 Content-Type: text/plain; charset="UTF-8"
+MIME-Version: 1.0
+Date:   Thu, 20 Jun 2019 16:06:02 -0500
+User-Agent: Evolution 3.30.5 (3.30.5-1.fc29) 
+Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Greylist: Sender IP whitelisted, not delayed by milter-greylist-4.5.16 (mx1.redhat.com [10.5.110.32]); Thu, 20 Jun 2019 21:06:51 +0000 (UTC)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi,
+On Thu, 2019-06-20 at 13:53 -0700, Paul E. McKenney wrote:
+> On Tue, Jun 18, 2019 at 08:19:05PM -0500, Scott Wood wrote:
+> > diff --git a/include/linux/rcupdate.h b/include/linux/rcupdate.h
+> > index fb267bc04fdf..aca4e5e25ace 100644
+> > --- a/include/linux/rcupdate.h
+> > +++ b/include/linux/rcupdate.h
+> > @@ -637,10 +637,12 @@ static inline void rcu_read_unlock(void)
+> >  static inline void rcu_read_lock_bh(void)
+> >  {
+> >  	local_bh_disable();
+> > +#ifndef CONFIG_PREEMPT_RT_FULL
+> 
+> How about this instead?
+> 
+> 	if (IS_ENABLED(CONFIG_PREEMPT_RT_FULL))
+> 		return;
 
-On Thu, 20 Jun 2019 at 22:25, Ming Yang <minos.future@gmail.com> wrote:
->
-> Hi,
->
-> sched_setattr for SCHED_DEADLINE fails if it is called after setting
-> cpuset that doesn't include all CPUs. The sched_deadline document
-> states that cgroup/cpuset should be used for task affinity.  But I got
-> errno EPERM when calling sched_setattr, after setting cpuset.
+OK.
 
-Which kernel are you using? I just tried on 5.0.0 (actually, it is
-Ubuntu's 5.0.0-17-lowlatency) and it worked.
-I followed the cpuset instructions from the documentation (except for
-not mounting the cpuset fs: Ubuntu already mounted it for me), and the
-"Minimal main()" from Appendix B of the document.
-The SCHED_DEADLINE thread runs correctly, with the specified runtime
-and period, and is affine to CPU 0 only.
+> > @@ -189,8 +193,10 @@ void __local_bh_enable_ip(unsigned long ip,
+> > unsigned int cnt)
+> >  	WARN_ON_ONCE(count < 0);
+> >  	local_irq_enable();
+> >  
+> > -	if (!in_atomic())
+> > +	if (!in_atomic()) {
+> > +		rcu_read_unlock();
+> >  		local_unlock(bh_lock);
+> > +	}
+> >  
+> >  	preempt_check_resched();
+> >  }
+> 
+> And I have to ask...
+> 
+> What did you do to test this change to kernel/softirq.c?  My past attempts
+> to do this sort of thing have always run afoul of open-coded BH
+> transitions.
 
-What did you exactly do, to get the failure?
+Mostly rcutorture and loads such as kernel builds, on a debug kernel.  By
+"open-coded BH transition" do you mean directly manipulating the preempt
+count?  That would already be broken on RT.
 
-> Section 5.1 example in sched_deadline document is broken. Not only
-> rt-app doesn't run in the way shown in the example anymore, but also
-> other sched_deadline program fails.
-
-Yes, rt-app behaviour changed... But other SCHED_DEADLINE programs
-(for example, the program from Appendix B) seem to work correctly.
-
-
->
-> rt-tests deadline_test.c illustrated a working way to use cpuset for
-> sched_deadline tasks.  It sets cpuset *after* sched_setattr
-> (https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git/tree/src/sched_deadline/deadline_test.c?h=unstable/devel/latest).
-> I suppose this is the only way to assign CPUs for sched_dealine tasks
-> now.
-
-I suspect this is actually a bug... Juri had a patchset to fix it, if
-I remember correctly.
+-Scott
 
 
-> Can anyone please explain why sched_setattr fails after setting
-> cpuset?
-
-It does not fail here... Maybe this is a bug introduced after 5.0.0,
-or maybe there is some other difference between your setup an my one.
-
-
-Luca
-
->  Does the sched_deadline scheduler rejects both affinity mask
-> and cpuset now?
-> Does this mean admission test always assume all CPUs and no admission
-> test would be examined when setting the cpuset of the task?
->
-> Thanks,
-> Ming
