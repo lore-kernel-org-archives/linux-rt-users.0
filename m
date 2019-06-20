@@ -2,201 +2,124 @@ Return-Path: <SRS0=3DPx=UT=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_MUTT autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3CB60C43613
-	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Jun 2019 20:54:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 449FAC43613
+	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Jun 2019 21:02:02 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 203872082C
-	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Jun 2019 20:54:53 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 18FA6206BA
+	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Jun 2019 21:02:02 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Cu7fE+mp"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727276AbfFTUyw (ORCPT
+        id S1726034AbfFTVCB (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 20 Jun 2019 16:54:52 -0400
-Received: from mx0b-001b2d01.pphosted.com ([148.163.158.5]:15468 "EHLO
-        mx0a-001b2d01.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1726045AbfFTUys (ORCPT
+        Thu, 20 Jun 2019 17:02:01 -0400
+Received: from mail-ot1-f67.google.com ([209.85.210.67]:43066 "EHLO
+        mail-ot1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725958AbfFTVCB (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 20 Jun 2019 16:54:48 -0400
-Received: from pps.filterd (m0098419.ppops.net [127.0.0.1])
-        by mx0b-001b2d01.pphosted.com (8.16.0.27/8.16.0.27) with SMTP id x5KKqi34049853;
-        Thu, 20 Jun 2019 16:53:52 -0400
-Received: from ppma03dal.us.ibm.com (b.bd.3ea9.ip4.static.sl-reverse.com [169.62.189.11])
-        by mx0b-001b2d01.pphosted.com with ESMTP id 2t8fwbuvtn-1
-        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-        Thu, 20 Jun 2019 16:53:52 -0400
-Received: from pps.filterd (ppma03dal.us.ibm.com [127.0.0.1])
-        by ppma03dal.us.ibm.com (8.16.0.27/8.16.0.27) with SMTP id x5KKoRjB012616;
-        Thu, 20 Jun 2019 20:53:51 GMT
-Received: from b01cxnp22034.gho.pok.ibm.com (b01cxnp22034.gho.pok.ibm.com [9.57.198.24])
-        by ppma03dal.us.ibm.com with ESMTP id 2t4ra6c0bv-1
-        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-        Thu, 20 Jun 2019 20:53:51 +0000
-Received: from b01ledav003.gho.pok.ibm.com (b01ledav003.gho.pok.ibm.com [9.57.199.108])
-        by b01cxnp22034.gho.pok.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id x5KKroaS25035082
-        (version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-        Thu, 20 Jun 2019 20:53:50 GMT
-Received: from b01ledav003.gho.pok.ibm.com (unknown [127.0.0.1])
-        by IMSVA (Postfix) with ESMTP id A024FB205F;
-        Thu, 20 Jun 2019 20:53:50 +0000 (GMT)
-Received: from b01ledav003.gho.pok.ibm.com (unknown [127.0.0.1])
-        by IMSVA (Postfix) with ESMTP id 735C4B2064;
-        Thu, 20 Jun 2019 20:53:50 +0000 (GMT)
-Received: from paulmck-ThinkPad-W541 (unknown [9.70.82.26])
-        by b01ledav003.gho.pok.ibm.com (Postfix) with ESMTP;
-        Thu, 20 Jun 2019 20:53:50 +0000 (GMT)
-Received: by paulmck-ThinkPad-W541 (Postfix, from userid 1000)
-        id 6A6D716C5DE8; Thu, 20 Jun 2019 13:53:52 -0700 (PDT)
-Date:   Thu, 20 Jun 2019 13:53:52 -0700
-From:   "Paul E. McKenney" <paulmck@linux.ibm.com>
-To:     Scott Wood <swood@redhat.com>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH RT 1/4] rcu: Acquire RCU lock when disabling BHs
-Message-ID: <20190620205352.GV26519@linux.ibm.com>
-Reply-To: paulmck@linux.ibm.com
-References: <20190619011908.25026-1-swood@redhat.com>
- <20190619011908.25026-2-swood@redhat.com>
+        Thu, 20 Jun 2019 17:02:01 -0400
+Received: by mail-ot1-f67.google.com with SMTP id i8so4116798oth.10
+        for <linux-rt-users@vger.kernel.org>; Thu, 20 Jun 2019 14:02:01 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=YbwLMHJoT9bAMzc7ZVtRowqGV5AriL8qmPCBW9B5Srg=;
+        b=Cu7fE+mpd8fVb80qWrvY4Zy8UpK1/kENtrA5mvosTFZvJci9vB72ylOoeJL7+4LPqM
+         FnLb/ns3e+CgzIJXN5264gbJhGID/qv31OmfpQu2gRIUbeQplX/uU9MMwgZbcUFTPnVP
+         on6vIWcdxodXtzHOnoULocwkL3sA+P5p9BBNmbaZTM7s9CMw7LtS6djVUECbP6ZfjkXn
+         6kDNDfeMk0D63QE4u8r1Ngwk2gtwItjkrM72QP/czWCQ0Hrje02Pe0Re7bCfOqXYaHeA
+         59z+Vfhzopw6Tva3jKL5Fsm5opYErIwglMyg28rJ8LHiCWhIqquGSrvX2wS1GSLRU8La
+         L6xA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=YbwLMHJoT9bAMzc7ZVtRowqGV5AriL8qmPCBW9B5Srg=;
+        b=Ha7WOuJKkK5x7bq1O93QOgzrLo69O8Sxx3RnwLm3EcnLfgaMitMKh/B4OSXWOYrjyQ
+         GwQZHtzNYOYJVoFeHvNc0W9t8qwFAl18xcNXZ2lFywcjxHWUkCzsm5uKfBtBu9RYSiKF
+         uP9GVcX0vZslG4bvPfi39XW+JgobO6WI63bldxys3kq2Xf512gvlIZC86KHjsi2En5ew
+         xo7EjkvtLeC8KKZjSroTy8Z3eBXKFASH9RmOgQxF20S72WsiPl0s6k6ggN9KTQ9exK5b
+         4GdyZQkf5v5q41wMv651x2V7S967menzk111I+n7oC8mhp0orya6zdeSjoJeixrOoFIs
+         B9Gw==
+X-Gm-Message-State: APjAAAV2eNpNFamHaW8YGmO47KpIHlROEoXWrCv0l5cxE21pfz1dAw6m
+        7jlC9VNn/Sk5s4d26ze6kyY9l9avVYweYiAkRuv4Qb+s
+X-Google-Smtp-Source: APXvYqzYl9K34uXzTOcTmy9iGoSQOcgNdag4+njCTT2PUKKCDYRE42YzH4cVGPw/rXJtnwlcuqw7c+9Aa4R/6apv38Q=
+X-Received: by 2002:a9d:66d0:: with SMTP id t16mr40585691otm.153.1561064520832;
+ Thu, 20 Jun 2019 14:02:00 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20190619011908.25026-2-swood@redhat.com>
-User-Agent: Mutt/1.5.21 (2010-09-15)
-X-TM-AS-GCONF: 00
-X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:,, definitions=2019-06-20_14:,,
- signatures=0
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 priorityscore=1501
- malwarescore=0 suspectscore=0 phishscore=0 bulkscore=0 spamscore=0
- clxscore=1015 lowpriorityscore=0 mlxscore=0 impostorscore=0
- mlxlogscore=999 adultscore=0 classifier=spam adjust=0 reason=mlx
- scancount=1 engine=8.0.1-1810050000 definitions=main-1906200150
+References: <CAEVNDXsR03jGXKO5diQbjMQecS=wXxdEW5eGQAAL1PPOQ_RO6Q@mail.gmail.com>
+In-Reply-To: <CAEVNDXsR03jGXKO5diQbjMQecS=wXxdEW5eGQAAL1PPOQ_RO6Q@mail.gmail.com>
+From:   Luca Abeni <lucabe72@gmail.com>
+Date:   Thu, 20 Jun 2019 23:01:49 +0200
+Message-ID: <CAJfkoWqsPJoxeQwxCYAU1kG6ny5BBuiTCpiqM+KgAsZH58trbw@mail.gmail.com>
+Subject: Re: sched_deadline sched_setattr fails after setting cpuset
+To:     Ming Yang <minos.future@gmail.com>
+Cc:     linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, Jun 18, 2019 at 08:19:05PM -0500, Scott Wood wrote:
-> A plain local_bh_disable() is documented as creating an RCU critical
-> section, and (at least) rcutorture expects this to be the case.  However,
-> in_softirq() doesn't block a grace period on PREEMPT_RT, since RCU checks
-> preempt_count() directly.  Even if RCU were changed to check
-> in_softirq(), that wouldn't allow blocked BH disablers to be boosted.
-> 
-> Fix this by calling rcu_read_lock() from local_bh_disable(), and update
-> rcu_read_lock_bh_held() accordingly.
-> 
-> Signed-off-by: Scott Wood <swood@redhat.com>
-> ---
->  include/linux/rcupdate.h |  4 ++++
->  kernel/rcu/update.c      |  4 ++++
->  kernel/softirq.c         | 12 +++++++++---
->  3 files changed, 17 insertions(+), 3 deletions(-)
-> 
-> diff --git a/include/linux/rcupdate.h b/include/linux/rcupdate.h
-> index fb267bc04fdf..aca4e5e25ace 100644
-> --- a/include/linux/rcupdate.h
-> +++ b/include/linux/rcupdate.h
-> @@ -637,10 +637,12 @@ static inline void rcu_read_unlock(void)
->  static inline void rcu_read_lock_bh(void)
->  {
->  	local_bh_disable();
-> +#ifndef CONFIG_PREEMPT_RT_FULL
+Hi,
 
-How about this instead?
+On Thu, 20 Jun 2019 at 22:25, Ming Yang <minos.future@gmail.com> wrote:
+>
+> Hi,
+>
+> sched_setattr for SCHED_DEADLINE fails if it is called after setting
+> cpuset that doesn't include all CPUs. The sched_deadline document
+> states that cgroup/cpuset should be used for task affinity.  But I got
+> errno EPERM when calling sched_setattr, after setting cpuset.
 
-	if (IS_ENABLED(CONFIG_PREEMPT_RT_FULL))
-		return;
+Which kernel are you using? I just tried on 5.0.0 (actually, it is
+Ubuntu's 5.0.0-17-lowlatency) and it worked.
+I followed the cpuset instructions from the documentation (except for
+not mounting the cpuset fs: Ubuntu already mounted it for me), and the
+"Minimal main()" from Appendix B of the document.
+The SCHED_DEADLINE thread runs correctly, with the specified runtime
+and period, and is affine to CPU 0 only.
 
-And similarly below.
+What did you exactly do, to get the failure?
 
->  	__acquire(RCU_BH);
->  	rcu_lock_acquire(&rcu_bh_lock_map);
->  	RCU_LOCKDEP_WARN(!rcu_is_watching(),
->  			 "rcu_read_lock_bh() used illegally while idle");
-> +#endif
->  }
->  
->  /*
-> @@ -650,10 +652,12 @@ static inline void rcu_read_lock_bh(void)
->   */
->  static inline void rcu_read_unlock_bh(void)
->  {
-> +#ifndef CONFIG_PREEMPT_RT_FULL
->  	RCU_LOCKDEP_WARN(!rcu_is_watching(),
->  			 "rcu_read_unlock_bh() used illegally while idle");
->  	rcu_lock_release(&rcu_bh_lock_map);
->  	__release(RCU_BH);
-> +#endif
->  	local_bh_enable();
->  }
->  
-> diff --git a/kernel/rcu/update.c b/kernel/rcu/update.c
-> index 3700b730ea55..eb653a329e0b 100644
-> --- a/kernel/rcu/update.c
-> +++ b/kernel/rcu/update.c
-> @@ -307,7 +307,11 @@ int rcu_read_lock_bh_held(void)
->  		return 0;
->  	if (!rcu_lockdep_current_cpu_online())
->  		return 0;
-> +#ifdef CONFIG_PREEMPT_RT_FULL
-> +	return lock_is_held(&rcu_lock_map) || irqs_disabled();
-> +#else
->  	return in_softirq() || irqs_disabled();
-> +#endif
->  }
->  EXPORT_SYMBOL_GPL(rcu_read_lock_bh_held);
->  
-> diff --git a/kernel/softirq.c b/kernel/softirq.c
-> index 473369122ddd..eb46dd3ff92d 100644
-> --- a/kernel/softirq.c
-> +++ b/kernel/softirq.c
-> @@ -121,8 +121,10 @@ void __local_bh_disable_ip(unsigned long ip, unsigned int cnt)
->  	long soft_cnt;
->  
->  	WARN_ON_ONCE(in_irq());
-> -	if (!in_atomic())
-> +	if (!in_atomic()) {
->  		local_lock(bh_lock);
-> +		rcu_read_lock();
-> +	}
->  	soft_cnt = this_cpu_inc_return(softirq_counter);
->  	WARN_ON_ONCE(soft_cnt == 0);
->  
-> @@ -155,8 +157,10 @@ void _local_bh_enable(void)
->  	local_irq_restore(flags);
->  #endif
->  
-> -	if (!in_atomic())
-> +	if (!in_atomic()) {
-> +		rcu_read_unlock();
->  		local_unlock(bh_lock);
-> +	}
->  }
->  
->  void _local_bh_enable_rt(void)
-> @@ -189,8 +193,10 @@ void __local_bh_enable_ip(unsigned long ip, unsigned int cnt)
->  	WARN_ON_ONCE(count < 0);
->  	local_irq_enable();
->  
-> -	if (!in_atomic())
-> +	if (!in_atomic()) {
-> +		rcu_read_unlock();
->  		local_unlock(bh_lock);
-> +	}
->  
->  	preempt_check_resched();
->  }
+> Section 5.1 example in sched_deadline document is broken. Not only
+> rt-app doesn't run in the way shown in the example anymore, but also
+> other sched_deadline program fails.
 
-And I have to ask...
+Yes, rt-app behaviour changed... But other SCHED_DEADLINE programs
+(for example, the program from Appendix B) seem to work correctly.
 
-What did you do to test this change to kernel/softirq.c?  My past attempts
-to do this sort of thing have always run afoul of open-coded BH transitions.
 
-							Thanx, Paul
+>
+> rt-tests deadline_test.c illustrated a working way to use cpuset for
+> sched_deadline tasks.  It sets cpuset *after* sched_setattr
+> (https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git/tree/src/sched_deadline/deadline_test.c?h=unstable/devel/latest).
+> I suppose this is the only way to assign CPUs for sched_dealine tasks
+> now.
+
+I suspect this is actually a bug... Juri had a patchset to fix it, if
+I remember correctly.
+
+
+> Can anyone please explain why sched_setattr fails after setting
+> cpuset?
+
+It does not fail here... Maybe this is a bug introduced after 5.0.0,
+or maybe there is some other difference between your setup an my one.
+
+
+Luca
+
+>  Does the sched_deadline scheduler rejects both affinity mask
+> and cpuset now?
+> Does this mean admission test always assume all CPUs and no admission
+> test would be examined when setting the cpuset of the task?
+>
+> Thanks,
+> Ming
