@@ -6,51 +6,51 @@ X-Spam-Status: No, score=-2.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_MUTT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9308EC43613
-	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Jun 2019 22:16:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 86EB0C43613
+	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Jun 2019 22:25:11 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 6D7D72070B
-	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Jun 2019 22:16:12 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5E37F206BF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Jun 2019 22:25:11 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726178AbfFTWQM (ORCPT
+        id S1726169AbfFTWZK (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 20 Jun 2019 18:16:12 -0400
-Received: from mx0b-001b2d01.pphosted.com ([148.163.158.5]:42716 "EHLO
-        mx0a-001b2d01.pphosted.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1725906AbfFTWQL (ORCPT
+        Thu, 20 Jun 2019 18:25:10 -0400
+Received: from mx0a-001b2d01.pphosted.com ([148.163.156.1]:24858 "EHLO
+        mx0a-001b2d01.pphosted.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1726115AbfFTWZK (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 20 Jun 2019 18:16:11 -0400
-Received: from pps.filterd (m0098414.ppops.net [127.0.0.1])
-        by mx0b-001b2d01.pphosted.com (8.16.0.27/8.16.0.27) with SMTP id x5KM2vhp128720
-        for <linux-rt-users@vger.kernel.org>; Thu, 20 Jun 2019 18:16:10 -0400
-Received: from e11.ny.us.ibm.com (e11.ny.us.ibm.com [129.33.205.201])
-        by mx0b-001b2d01.pphosted.com with ESMTP id 2t8hte1yfd-1
+        Thu, 20 Jun 2019 18:25:10 -0400
+Received: from pps.filterd (m0098410.ppops.net [127.0.0.1])
+        by mx0a-001b2d01.pphosted.com (8.16.0.27/8.16.0.27) with SMTP id x5KMOMcY035463
+        for <linux-rt-users@vger.kernel.org>; Thu, 20 Jun 2019 18:25:09 -0400
+Received: from e13.ny.us.ibm.com (e13.ny.us.ibm.com [129.33.205.203])
+        by mx0a-001b2d01.pphosted.com with ESMTP id 2t8hsx26my-1
         (version=TLSv1.2 cipher=AES256-GCM-SHA384 bits=256 verify=NOT)
-        for <linux-rt-users@vger.kernel.org>; Thu, 20 Jun 2019 18:16:10 -0400
+        for <linux-rt-users@vger.kernel.org>; Thu, 20 Jun 2019 18:25:09 -0400
 Received: from localhost
-        by e11.ny.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
+        by e13.ny.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
         for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
-        Thu, 20 Jun 2019 23:16:09 +0100
-Received: from b01cxnp22033.gho.pok.ibm.com (9.57.198.23)
-        by e11.ny.us.ibm.com (146.89.104.198) with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted;
+        Thu, 20 Jun 2019 23:25:08 +0100
+Received: from b01cxnp23034.gho.pok.ibm.com (9.57.198.29)
+        by e13.ny.us.ibm.com (146.89.104.200) with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted;
         (version=TLSv1/SSLv3 cipher=AES256-GCM-SHA384 bits=256/256)
-        Thu, 20 Jun 2019 23:16:06 +0100
+        Thu, 20 Jun 2019 23:25:04 +0100
 Received: from b01ledav003.gho.pok.ibm.com (b01ledav003.gho.pok.ibm.com [9.57.199.108])
-        by b01cxnp22033.gho.pok.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id x5KMG5Wo31326664
+        by b01cxnp23034.gho.pok.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id x5KMP3O044761490
         (version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-        Thu, 20 Jun 2019 22:16:05 GMT
+        Thu, 20 Jun 2019 22:25:03 GMT
 Received: from b01ledav003.gho.pok.ibm.com (unknown [127.0.0.1])
-        by IMSVA (Postfix) with ESMTP id 52333B20B7;
-        Thu, 20 Jun 2019 22:16:05 +0000 (GMT)
+        by IMSVA (Postfix) with ESMTP id BD847B205F;
+        Thu, 20 Jun 2019 22:25:03 +0000 (GMT)
 Received: from b01ledav003.gho.pok.ibm.com (unknown [127.0.0.1])
-        by IMSVA (Postfix) with ESMTP id 35176B20B4;
-        Thu, 20 Jun 2019 22:16:05 +0000 (GMT)
+        by IMSVA (Postfix) with ESMTP id AA9BDB2067;
+        Thu, 20 Jun 2019 22:25:03 +0000 (GMT)
 Received: from paulmck-ThinkPad-W541 (unknown [9.70.82.26])
         by b01ledav003.gho.pok.ibm.com (Postfix) with ESMTP;
-        Thu, 20 Jun 2019 22:16:05 +0000 (GMT)
+        Thu, 20 Jun 2019 22:25:03 +0000 (GMT)
 Received: by paulmck-ThinkPad-W541 (Postfix, from userid 1000)
-        id 450B216C6AC7; Thu, 20 Jun 2019 15:16:07 -0700 (PDT)
-Date:   Thu, 20 Jun 2019 15:16:07 -0700
+        id B7EF816C2FA6; Thu, 20 Jun 2019 15:25:05 -0700 (PDT)
+Date:   Thu, 20 Jun 2019 15:25:05 -0700
 From:   "Paul E. McKenney" <paulmck@linux.ibm.com>
 To:     Scott Wood <swood@redhat.com>
 Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -60,71 +60,70 @@ Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Juri Lelli <juri.lelli@redhat.com>,
         Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH RT 1/4] rcu: Acquire RCU lock when disabling BHs
+Subject: Re: [RFC PATCH RT 3/4] rcu: unlock special: Treat irq and preempt
+ disabled the same
 Reply-To: paulmck@linux.ibm.com
 References: <20190619011908.25026-1-swood@redhat.com>
- <20190619011908.25026-2-swood@redhat.com>
- <20190620205352.GV26519@linux.ibm.com>
- <1b6dfc95bba69aa53e4e84eebf6af60f0b9ed95c.camel@redhat.com>
- <20190620212035.GY26519@linux.ibm.com>
- <8bcc818b1b08850e109d1cde529ab98c4ed788df.camel@redhat.com>
+ <20190619011908.25026-4-swood@redhat.com>
+ <20190620211005.GW26519@linux.ibm.com>
+ <cf42d8516ac99f69913b1f7a7e8abe578ad27e7f.camel@redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <8bcc818b1b08850e109d1cde529ab98c4ed788df.camel@redhat.com>
+In-Reply-To: <cf42d8516ac99f69913b1f7a7e8abe578ad27e7f.camel@redhat.com>
 User-Agent: Mutt/1.5.21 (2010-09-15)
 X-TM-AS-GCONF: 00
-x-cbid: 19062022-2213-0000-0000-000003A23447
+x-cbid: 19062022-0064-0000-0000-000003F08FA7
 X-IBM-SpamModules-Scores: 
 X-IBM-SpamModules-Versions: BY=3.00011299; HX=3.00000242; KW=3.00000007;
- PH=3.00000004; SC=3.00000286; SDB=6.01220888; UDB=6.00642287; IPR=6.01002027;
- MB=3.00027398; MTD=3.00000008; XFM=3.00000015; UTC=2019-06-20 22:16:08
+ PH=3.00000004; SC=3.00000286; SDB=6.01220891; UDB=6.00642289; IPR=6.01002030;
+ MB=3.00027398; MTD=3.00000008; XFM=3.00000015; UTC=2019-06-20 22:25:07
 X-IBM-AV-DETECTION: SAVI=unused REMOTE=unused XFE=unused
-x-cbparentid: 19062022-2214-0000-0000-00005EEEB679
-Message-Id: <20190620221607.GA26519@linux.ibm.com>
+x-cbparentid: 19062022-0065-0000-0000-00003DF6536E
+Message-Id: <20190620222505.GB26519@linux.ibm.com>
 X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:,, definitions=2019-06-20_15:,,
  signatures=0
 X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 priorityscore=1501
  malwarescore=0 suspectscore=0 phishscore=0 bulkscore=0 spamscore=0
  clxscore=1015 lowpriorityscore=0 mlxscore=0 impostorscore=0
  mlxlogscore=999 adultscore=0 classifier=spam adjust=0 reason=mlx
- scancount=1 engine=8.0.1-1810050000 definitions=main-1906200158
+ scancount=1 engine=8.0.1-1810050000 definitions=main-1906200159
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Jun 20, 2019 at 04:38:47PM -0500, Scott Wood wrote:
-> On Thu, 2019-06-20 at 14:20 -0700, Paul E. McKenney wrote:
-> > On Thu, Jun 20, 2019 at 04:06:02PM -0500, Scott Wood wrote:
-> > > On Thu, 2019-06-20 at 13:53 -0700, Paul E. McKenney wrote:
-> > > > And I have to ask...
-> > > > 
-> > > > What did you do to test this change to kernel/softirq.c?  My past
-> > > > attempts
-> > > > to do this sort of thing have always run afoul of open-coded BH
-> > > > transitions.
-> > > 
-> > > Mostly rcutorture and loads such as kernel builds, on a debug
-> > > kernel.  By
-> > > "open-coded BH transition" do you mean directly manipulating the preempt
-> > > count?  That would already be broken on RT.
+On Thu, Jun 20, 2019 at 04:59:30PM -0500, Scott Wood wrote:
+> On Thu, 2019-06-20 at 14:10 -0700, Paul E. McKenney wrote:
+> > On Tue, Jun 18, 2019 at 08:19:07PM -0500, Scott Wood wrote:
+> > > [Note: Just before posting this I noticed that the invoke_rcu_core stuff
+> > >  is part of the latest RCU pull request, and it has a patch that
+> > >  addresses this in a more complicated way that appears to deal with the
+> > >  bare irq-disabled sequence as well.
 > > 
-> > OK, then maybe you guys have already done the needed cleanup work.  Cool!
+> > Far easier to deal with it than to debug the lack of it.  ;-)
+> > 
+> > >  Assuming we need/want to support such sequences, is the
+> > >  invoke_rcu_core() call actually going to result in scheduling any
+> > >  sooner?  resched_curr() just does the same setting of need_resched
+> > >  when it's the same cpu.
+> > > ]
+> > 
+> > Yes, invoke_rcu_core() can in some cases invoke the scheduler sooner.
+> > Setting the CPU-local bits might not have effect until the next interrupt.
 > 
-> Do you remember what code was doing such things?  Grepping for the obvious
-> things doesn't turn up anything outside the softirq code, even in the
-> earlier non-RT kernels I checked.
+> Maybe I'm missing something, but I don't see how (in the non-use_softirq
+> case).  It just calls wake_up_process(), which in resched_curr() will set
+> need_resched but not do an IPI-to-self.
 
-It was many years ago, and it is quite possible that I am conflating
-irqs with bh or some such.  If it now works, it now works.
+The common non-rt case will be use_softirq.  Or are you referring
+specifically to this block of code in current -rcu?
 
-> > But don't the additions of rcu_read_lock() and rcu_read_unlock() want
-> > to be protected by "!IS_ENABLED(CONFIG_PREEMPT_RT_FULL)" or similar?
-> 
-> This is already a separate PREEMPT_RT_FULL-specific implementation.
+		} else if (exp && irqs_were_disabled && !use_softirq &&
+			   !t->rcu_read_unlock_special.b.deferred_qs) {
+			// Safe to awaken and we get no help from enabling
+			// irqs, unlike bh/preempt.
+			invoke_rcu_core();
 
-Ah, sorry for the noise, then!
-
-							Thanx, Paul
+								Thanx, Paul
 
