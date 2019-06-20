@@ -2,143 +2,88 @@ Return-Path: <SRS0=3DPx=UT=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_MUTT autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 85C85C43613
-	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Jun 2019 19:13:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DFB50C43613
+	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Jun 2019 20:24:02 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 665E02084A
-	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Jun 2019 19:13:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A1558206BF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Jun 2019 20:24:02 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lofmTLn5"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726606AbfFTTNF (ORCPT
+        id S1726098AbfFTUYC (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 20 Jun 2019 15:13:05 -0400
-Received: from mx0a-001b2d01.pphosted.com ([148.163.156.1]:64058 "EHLO
-        mx0a-001b2d01.pphosted.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1726200AbfFTTNF (ORCPT
+        Thu, 20 Jun 2019 16:24:02 -0400
+Received: from mail-ua1-f52.google.com ([209.85.222.52]:46202 "EHLO
+        mail-ua1-f52.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725907AbfFTUYC (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 20 Jun 2019 15:13:05 -0400
-Received: from pps.filterd (m0098404.ppops.net [127.0.0.1])
-        by mx0a-001b2d01.pphosted.com (8.16.0.27/8.16.0.27) with SMTP id x5KIgAQs071240
-        for <linux-rt-users@vger.kernel.org>; Thu, 20 Jun 2019 15:13:04 -0400
-Received: from e14.ny.us.ibm.com (e14.ny.us.ibm.com [129.33.205.204])
-        by mx0a-001b2d01.pphosted.com with ESMTP id 2t8d9ypp2b-1
-        (version=TLSv1.2 cipher=AES256-GCM-SHA384 bits=256 verify=NOT)
-        for <linux-rt-users@vger.kernel.org>; Thu, 20 Jun 2019 15:13:03 -0400
-Received: from localhost
-        by e14.ny.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
-        for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
-        Thu, 20 Jun 2019 20:13:02 +0100
-Received: from b01cxnp23032.gho.pok.ibm.com (9.57.198.27)
-        by e14.ny.us.ibm.com (146.89.104.201) with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted;
-        (version=TLSv1/SSLv3 cipher=AES256-GCM-SHA384 bits=256/256)
-        Thu, 20 Jun 2019 20:12:58 +0100
-Received: from b01ledav003.gho.pok.ibm.com (b01ledav003.gho.pok.ibm.com [9.57.199.108])
-        by b01cxnp23032.gho.pok.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id x5KJCwAR53084670
-        (version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-        Thu, 20 Jun 2019 19:12:58 GMT
-Received: from b01ledav003.gho.pok.ibm.com (unknown [127.0.0.1])
-        by IMSVA (Postfix) with ESMTP id DF170B205F;
-        Thu, 20 Jun 2019 19:12:57 +0000 (GMT)
-Received: from b01ledav003.gho.pok.ibm.com (unknown [127.0.0.1])
-        by IMSVA (Postfix) with ESMTP id CB237B2067;
-        Thu, 20 Jun 2019 19:12:57 +0000 (GMT)
-Received: from paulmck-ThinkPad-W541 (unknown [9.70.82.26])
-        by b01ledav003.gho.pok.ibm.com (Postfix) with ESMTP;
-        Thu, 20 Jun 2019 19:12:57 +0000 (GMT)
-Received: by paulmck-ThinkPad-W541 (Postfix, from userid 1000)
-        id A5F2216C2A15; Thu, 20 Jun 2019 12:12:59 -0700 (PDT)
-Date:   Thu, 20 Jun 2019 12:12:59 -0700
-From:   "Paul E. McKenney" <paulmck@linux.ibm.com>
-To:     Scott Wood <swood@redhat.com>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH RT 0/4] Address rcutorture issues
-Reply-To: paulmck@linux.ibm.com
-References: <20190619011908.25026-1-swood@redhat.com>
+        Thu, 20 Jun 2019 16:24:02 -0400
+Received: by mail-ua1-f52.google.com with SMTP id o19so2096238uap.13
+        for <linux-rt-users@vger.kernel.org>; Thu, 20 Jun 2019 13:24:01 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:from:date:message-id:subject:to;
+        bh=odgC3csqf9apdrL5gEE3knm1hUjHgQ8cyxL/Nv/bQ3M=;
+        b=lofmTLn5A0UucCMnDiJFC/zdfDF1t2Hm9eIJvyNbxE95cZy9yQmCr1CaSm/KS7mcQA
+         F00Ond/4Em4QIql1t2XnZvYFyRKKrywY5xrrnB2uCFgM0A9QWjT1N1Iw5yTocsGgDhn2
+         0vxEwAUBTC7+BMPqlNLwhdmIy9Cyj31QCbrPk1dvysls+Ayx5mewsPUa1gIEV2niJnh1
+         31yA+GnoRX9d/5mNbGBdra2KHPzQBvMdhDz5JotsA6GyWDtpK3cpTpY0N+Ao5OX2lVkE
+         IuMkIAlBVJkpX7t3u+KeS2f2F9NAu71zQY90BCp/L2w+SX51xcTrEH6AD0PFm116ERbO
+         8RCA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:from:date:message-id:subject:to;
+        bh=odgC3csqf9apdrL5gEE3knm1hUjHgQ8cyxL/Nv/bQ3M=;
+        b=TCc+lixLN5rHzphqL3rFVDIZMblwHj6HhFC83h14ewUAHvjLcTAARglCKuF+nNK8Iy
+         qskJiDfqZWHrn84P35ZixVtIRH5oMfQ5INf1yd8Og+1hsTuDG0Ec9To1rSoSjfpzjfWe
+         hg7d6t/5jsyTZTPlL0fL41udTwgTqtzu/KBL18zZM6BGQdWlBYju0IZilCR7QllmfGrQ
+         ayMjoy22pC+EalEYpOGnBgz2JjKTh2EgOYoukq3Ljn7FZNfuBwx7h1LXQamAGa/DX4E1
+         xYufVaCaqDzyRUrUBzua2fBmyflvs27euO1Gd5SWjsKJvwvFds9/tW9Kvf8VU37kdlH6
+         yrHg==
+X-Gm-Message-State: APjAAAWg6qwF6RLOYq7a2/RoVsnu+WL8PkUqF7LZYjsltzaQ28Kuj2yK
+        xE56CdLmqU6iRZseGlkSMotd33ZrGnZG1V+kKI4d22Zh9fs=
+X-Google-Smtp-Source: APXvYqwlbpKQgZt7YbEzc1L/5Ww9pbVccdcIs9Ct9sokgrcra17lWGIPXFBH954GXN+pQT0MKVRYRjoEYnn8WOMDXVg=
+X-Received: by 2002:ab0:66:: with SMTP id 93mr15022541uai.135.1561062240901;
+ Thu, 20 Jun 2019 13:24:00 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20190619011908.25026-1-swood@redhat.com>
-User-Agent: Mutt/1.5.21 (2010-09-15)
-X-TM-AS-GCONF: 00
-x-cbid: 19062019-0052-0000-0000-000003D34D0E
-X-IBM-SpamModules-Scores: 
-X-IBM-SpamModules-Versions: BY=3.00011298; HX=3.00000242; KW=3.00000007;
- PH=3.00000004; SC=3.00000286; SDB=6.01220827; UDB=6.00642250; IPR=6.01001966;
- MB=3.00027396; MTD=3.00000008; XFM=3.00000015; UTC=2019-06-20 19:13:02
-X-IBM-AV-DETECTION: SAVI=unused REMOTE=unused XFE=unused
-x-cbparentid: 19062019-0053-0000-0000-000061654082
-Message-Id: <20190620191259.GT26519@linux.ibm.com>
-X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:,, definitions=2019-06-20_13:,,
- signatures=0
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 priorityscore=1501
- malwarescore=0 suspectscore=0 phishscore=0 bulkscore=0 spamscore=0
- clxscore=1011 lowpriorityscore=0 mlxscore=0 impostorscore=0
- mlxlogscore=999 adultscore=0 classifier=spam adjust=0 reason=mlx
- scancount=1 engine=8.0.1-1810050000 definitions=main-1906200135
+From:   Ming Yang <minos.future@gmail.com>
+Date:   Thu, 20 Jun 2019 13:23:50 -0700
+Message-ID: <CAEVNDXsR03jGXKO5diQbjMQecS=wXxdEW5eGQAAL1PPOQ_RO6Q@mail.gmail.com>
+Subject: sched_deadline sched_setattr fails after setting cpuset
+To:     linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, Jun 18, 2019 at 08:19:04PM -0500, Scott Wood wrote:
-> With these patches, rcutorture mostly works on PREEMPT_RT_FULL.  I still
-> once in a while get forward progress complaints (particularly,
-> rcu_torture_fwd_prog_cr) when a grace period is held up for a few seconds
-> after which point so many callbacks have been enqueued that even making
-> reasonable progress isn't going to beat the timeout.  I believe I've only
-> seen this when running heavy loads in addition to rcutorture (though I've
-> done more testing under load than without); I don't know whether the
-> forward progress tests are expected to work under such load.
+Hi,
 
-With current -rcu, the torture tests are ahead of RCU's forward-progress
-code, so rcu_torture_fwd_prog_cr() failures are expected behavior,
-particularly in the TREE04 and TREE07 scenarios.  This is more of a
-problem for real-time because of callback offloading, which removes the
-backpressure that normally exists from callback processing to whatever
-is running on that same CPU generating so many callbacks.  So this issue
-has been providing me some entertainment.  ;-)
+sched_setattr for SCHED_DEADLINE fails if it is called after setting
+cpuset that doesn't include all CPUs. The sched_deadline document
+states that cgroup/cpuset should be used for task affinity.  But I got
+errno EPERM when calling sched_setattr, after setting cpuset.
 
-If you put lots of load on the system while running rcutorture, but
-leave the CPU running rcu_torture_fwd_prog_cr() otherwise idle, then yes,
-you can eventually force rcu_torture_fwd_prog_cr() pretty much no matter
-what RCU does otherwise.  Particularly given that rcutorture is running
-within a guest OS.  There has been some discussion of RCU asking for help
-from the hypervisor, but it hasn't yet gotten further than discussion.
+Section 5.1 example in sched_deadline document is broken. Not only
+rt-app doesn't run in the way shown in the example anymore, but also
+other sched_deadline program fails.
 
-For another example, if all but one of the CPUs is an no-CBs CPU
-(or, equivalently, a nohz_full CPU), and all of the rcuo kthreads
-are constrained to run on the remaining CPU, it is not hard to create
-workloads that produce more callbacks than that remaining CPU can possibly
-keep up with.  The traditional position has of course been the Spiderman
-principle "With great power comes great responsibility".  ;-)
+rt-tests deadline_test.c illustrated a working way to use cpuset for
+sched_deadline tasks.  It sets cpuset *after* sched_setattr
+(https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git/tree/src/sched_deadline/deadline_test.c?h=unstable/devel/latest).
+I suppose this is the only way to assign CPUs for sched_dealine tasks
+now.
 
-							Thanx, Paul
+Can anyone please explain why sched_setattr fails after setting
+cpuset? Does the sched_deadline scheduler rejects both affinity mask
+and cpuset now?
+Does this mean admission test always assume all CPUs and no admission
+test would be examined when setting the cpuset of the task?
 
-> Scott Wood (4):
->   rcu: Acquire RCU lock when disabling BHs
->   sched: migrate_enable: Use sleeping_lock to indicate involuntary sleep
->   rcu: unlock special: Treat irq and preempt disabled the same
->   rcutorture: Avoid problematic critical section nesting
-> 
->  include/linux/rcupdate.h |  4 +++
->  include/linux/sched.h    |  4 +--
->  kernel/rcu/rcutorture.c  | 92 ++++++++++++++++++++++++++++++++++++++++--------
->  kernel/rcu/tree_plugin.h | 12 ++-----
->  kernel/rcu/update.c      |  4 +++
->  kernel/sched/core.c      |  2 ++
->  kernel/softirq.c         | 12 +++++--
->  7 files changed, 102 insertions(+), 28 deletions(-)
-> 
-> -- 
-> 1.8.3.1
-> 
-
+Thanks,
+Ming
