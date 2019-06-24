@@ -2,92 +2,161 @@ Return-Path: <SRS0=v1XI=UX=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
-	SPF_HELO_NONE,SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A75B3C4646C
-	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Jun 2019 20:52:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ED411C4646C
+	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Jun 2019 23:17:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 7C74220645
-	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Jun 2019 20:52:12 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1561409532;
-	bh=iGNo9f0AIOmNbmZGf7xxru2gwdrvV3R+McATkxfXFHI=;
-	h=Subject:From:To:Date:List-ID:From;
-	b=ByZ84jfSq2Mc8u/pcgq89TB6tjlfJrwDdB3B6tcBiQgyS3mVc3QzIbqCMQN4mYOq7
-	 fQgw8aD+OcNWf2yky84808LOD/lHAFw5zY7wB6uhOgsKifkX1f/YkarTFFQ9Bvx+iy
-	 64PS1fcrMIyWU5Lqw/hVsc1aActN7jwzY4dFPRlA=
+	by mail.kernel.org (Postfix) with ESMTP id C1D33204FD
+	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Jun 2019 23:17:25 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="eQhWOJ5p"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1732113AbfFXUwH (ORCPT
+        id S1728362AbfFXXRZ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 24 Jun 2019 16:52:07 -0400
-Received: from mail.kernel.org ([198.145.29.99]:59254 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1731382AbfFXUwH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 24 Jun 2019 16:52:07 -0400
-Received: from tzanussi-mobl (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id D4A1C20665;
-        Mon, 24 Jun 2019 20:52:05 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1561409526;
-        bh=iGNo9f0AIOmNbmZGf7xxru2gwdrvV3R+McATkxfXFHI=;
-        h=Subject:From:To:Date:From;
-        b=q0yjIW+gA8s/voDgwif9ZDlehtExrfnBhJRvxg88LVclO9K2vsUfybnwzuZqawMus
-         7T2GQESfRqG+noi6+BInkrNZ1xF1scvKAzjPF0qrwS3xs0KGAhK941CKctNpwbNg8t
-         sqAq2ZlhR0pNqfC+HvsYq93ex8rDJqubgMTib79c=
-Message-ID: <1561409524.2683.4.camel@kernel.org>
-Subject: [ANNOUNCE] 4.14.126-rt62
-From:   Tom Zanussi <zanussi@kernel.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>,
-        Julia Cartwright <julia@ni.com>
-Date:   Mon, 24 Jun 2019 15:52:04 -0500
+        Mon, 24 Jun 2019 19:17:25 -0400
+Received: from mail-ua1-f51.google.com ([209.85.222.51]:36525 "EHLO
+        mail-ua1-f51.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726486AbfFXXRZ (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 24 Jun 2019 19:17:25 -0400
+Received: by mail-ua1-f51.google.com with SMTP id v20so6354568uao.3
+        for <linux-rt-users@vger.kernel.org>; Mon, 24 Jun 2019 16:17:24 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=TVg/tfkk+DOkpQEJG7Vvc6MEOT+BuHcV40Cxe7pPlW8=;
+        b=eQhWOJ5pD9nruPsz8eFuLS0WKw0fEniKXIG32ROcsaGoWyb8kL/tmyzWhiXDunWP3X
+         EZpuIYkFFEW+seirKaPZagdJe19LTpNjrk+sjsRQmvbPDoN9+aTn38LDF8Kjbq1wJ41r
+         evxIj22qHmhmMF64hVXX6cGfmevHyJyPMvYVfc2p3SLOMlWUbKrMp6gDeF1JnPEe2GLG
+         jtK1vEOwuQ8AI3rBEOXXURpcuv5R2X/9yI0soZUuKnprHwMSoksbx5j4evMim/OtWPpQ
+         um3sTbUnzWLHv5DX0C9SDlAfBHo7YZ9XJ2U9K4wIlDdj1MSYPbblsrKNox2YB4c8IEgk
+         W8Tw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=TVg/tfkk+DOkpQEJG7Vvc6MEOT+BuHcV40Cxe7pPlW8=;
+        b=KX8VmmuqR/3mV/+3SNELcsjImm29M+1LFyS1UlpvaHI9Ccg6qwTpDu3FJtn36aWpq2
+         47vsG1oU9NPHe74QHLwP4E80p/acsnXyBay7sYKBzk0RDiyWl4omUlDrSoRjgB1mQD/a
+         VOl8caCoD6hER5xm8pH/bETJPtTJfXEK9Cd0zjkgZ+PMfnLwwX8HxzHqgAblZNiPXRu7
+         CRV9TyvzaB1SMW4KyZIPR9gleApEb2szZF/PGZwL76CfrCyEtd0wp2o1JE+6gib3k4q0
+         8l6I+Bn1Q79TEiohQPQzLfuDQmtPkiadVo9cdIWCFxOxVeQtFFV2X7JJPw/vGmFo9LAf
+         qj7A==
+X-Gm-Message-State: APjAAAVKJkX9x00RYVu4F6p1bDWtNw0ictHa9aEJ0q6WZ5+idJFCC1Ju
+        4VDUD6ds7/EbjyxoNftsEmYCQr54VVhK9ArhW5HRr6Cl9K4=
+X-Google-Smtp-Source: APXvYqygDCGc78WJ6VV9WCY5RjdTiLTdzERU99+393R4Ru3XKmsZDxzyw0oBUrFipPmLZG8xO/od/jWgfltD95waA/c=
+X-Received: by 2002:ab0:66:: with SMTP id 93mr26825093uai.135.1561418244305;
+ Mon, 24 Jun 2019 16:17:24 -0700 (PDT)
+MIME-Version: 1.0
+References: <CAEVNDXsR03jGXKO5diQbjMQecS=wXxdEW5eGQAAL1PPOQ_RO6Q@mail.gmail.com>
+ <CAJfkoWqsPJoxeQwxCYAU1kG6ny5BBuiTCpiqM+KgAsZH58trbw@mail.gmail.com>
+ <CAEVNDXv88RvDgWDhxD=3XW=0kO3TSBYy57q0s1u985z1TaaFVg@mail.gmail.com> <CAJfkoWp=eDa86x7EmAdqa1chSsLRMPBg=XnqaeBPP+H2La1XNg@mail.gmail.com>
+In-Reply-To: <CAJfkoWp=eDa86x7EmAdqa1chSsLRMPBg=XnqaeBPP+H2La1XNg@mail.gmail.com>
+From:   Ming Yang <minos.future@gmail.com>
+Date:   Mon, 24 Jun 2019 16:17:13 -0700
+Message-ID: <CAEVNDXt3UhqoCsnN+mcEh9X4hXRvTv6qQbdgkcRprPfBRr9qSg@mail.gmail.com>
+Subject: Re: sched_deadline sched_setattr fails after setting cpuset
+To:     Luca Abeni <lucabe72@gmail.com>
+Cc:     linux-rt-users@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.26.1-1 
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT Folks!
+Hi,
 
-I'm pleased to announce the 4.14.126-rt62 stable release.
+On Fri, Jun 21, 2019 at 3:34 AM Luca Abeni <lucabe72@gmail.com> wrote:
+>
+> Hi,
+>
+> On Fri, 21 Jun 2019 at 02:54, Ming Yang <minos.future@gmail.com> wrote:
+> [...]
+> > I have a question about the admission test with cpuset.  Is the
+> > sched_deadline admission test examined with respect to the CPUs
+> > allowed in the cpuset?
+>
+> Yes, in theory you should be able to use up to 95% (or whatever you
+> configured in /proc/sys/kernel/sched_rt*) of the CPUs contained in the
+> cpuset.
+>
+> I am pretty sure it worked correctly when I tested this, but it was a
+> lot of time ago...
+>
 
-You can get this release via the git tree at:
+Thanks!
+I suppose acceptance test on cpusets that share CPUs doesn't work? For
+example, the following three scenarios:
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+Scenario 1, sub-cpusets:
+cpuset/A/cpuset.cpu_exclusive: 1
+cpuset/A/cpuset.sched_load_balance: 0
+cpuset/A/cpuset.cpus: 0,1,2,3
+cpuset/A/B/cpuset.cpu_exclusive: 1
+cpuset/A/B/cpuset.cpus: 0,1
+cpuset/A/C/cpuset.cpu_exclusive: 1
+cpuset/A/C/cpuset.cpus: 2,3
+Is any acceptance test examined when a task is added to A or B (or C)?
+My experiment results:
+For A, yes, but it fails to utilize more than *two* cores when tasks
+are added to cpuset/A/tasks. Even if all cores are added to
+A/cpuset.cpus, it's still examined against two cores.
+For B (or C), yes, the acceptance test is examined for total
+utilization of two cores when tasks are added to cpuset/A/B(or
+C)/tasks.
 
-  branch: v4.14-rt
-  Head SHA1: 443d081040ed8ad39053c084de4e6c3a54856529
+Scenario 2, identical cpusets:
+cpuset/A/cpuset.cpu_exclusive: 0
+cpuset/A/cpuset.cpus: 0,1
+cpuset/B/cpuset.cpu_exclusive: 0
+cpuset/B/cpuset.cpus: 0,1
+Is any acceptance test examined when a task is added to A (or B)?
+My experiment result:
+Yes, the acceptance test is examined with respect to cpuset {0,1},
+regardless of A or B.
 
-Or to build 4.14.126-rt62 directly, the following patches should be applied:
+Scenario 3, overlapping cpusets:
+cpuset/A/cpuset.cpu_exclusive: 0
+cpuset/A/cpuset.cpus: 0,1
+cpuset/B/cpuset.cpu_exclusive: 0
+cpuset/B/cpuset.cpus: 1,2
+Is any acceptance test examined when a task is added to A (or B)?
+My experiment result:
+Operation not permitted for adding deadline tasks to cpusets that
+overlaps with others.
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
+> > I get deterministic admission test result without cpuset.  m-1 cores
+> > can be utilized (not m?).
+>
+> The maximum SCHED_DEADLINE utilization should be 95% of m (unless you
+> changed the values in /proc/sys/kernel/sched_rt_{runtime,period}_us).
+>
+>
+> > But with cpuset, the total utilization of accepted sched_deadline
+> > tasks seems not respecting the cpuset and changes every run.  For
+> > example, if cpuset contains 4 cores, I can have task sets (bound to
+> > this cpuset) utilizing 400%, 600%, or 300% before failing to add
+> > another task. It could be my program's issue. I'm still looking into
+> > it.
+>
+> If you get this result, I suspect you found a bug... Can you provide a
+> simple testcase for reproducing int?
+>
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.126.xz
+I'll try to send you a test case soon.
+In the meantime, I figured out why I got the EPERM I mentioned in my
+first email. It's because I didn't disable cpuset.sched_load_balance
+at the root domain. It makes sense as allowing tasks to move in and
+out the cpuset violates the acceptance test assumption. But it might
+worth emphasizing this flag in the documentation though.
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.126-rt62.patch.xz
+Thanks,
+Ming
 
-NOTE: This release contains the stable commit 5f138462c396 [genirq:
-Prevent use-after-free and work list corruption] which doesn't apply
-to RT since RT uses swork and doesn't implement the normal cancel
-operation.  So this release doesn't fix that problem, which will
-require backporting a few patches for the next 4.14 stable-rt backport
-release.
-
-
-Enjoy!
-
-   Tom
+>
+> Luca
