@@ -2,201 +2,613 @@ Return-Path: <SRS0=v1XI=UX=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.1 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_MUTT autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-0.5 required=3.0 tests=FREEMAIL_FORGED_FROMDOMAIN,
+	FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E61A4C43613
-	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Jun 2019 18:01:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 41F60C43613
+	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Jun 2019 18:29:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id AFC1E20665
-	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Jun 2019 18:01:21 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="sPIVBwfa"
+	by mail.kernel.org (Postfix) with ESMTP id 0B23C20645
+	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Jun 2019 18:29:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1732521AbfFXSBV (ORCPT
+        id S1728097AbfFXS3X (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 24 Jun 2019 14:01:21 -0400
-Received: from mail-qt1-f193.google.com ([209.85.160.193]:33467 "EHLO
-        mail-qt1-f193.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729644AbfFXSBU (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 24 Jun 2019 14:01:20 -0400
-Received: by mail-qt1-f193.google.com with SMTP id w40so4903878qtk.0
-        for <linux-rt-users@vger.kernel.org>; Mon, 24 Jun 2019 11:01:20 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:from:date:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to:user-agent;
-        bh=AzKsocfXD9AHUppf+uz8A+rYlfuQWDT07arwgMsbt7A=;
-        b=sPIVBwfaPNYKctY+b3ROENV9RRRnVcI0heSi+2PvHvdL1ZEmBvxNNhOEAlG6jlBpTX
-         3CCguQVzn11wNCx5YaUmiQg/gDA12XggGxVzgizjbiblXzu6e6PCOSZ0NUQOrCB2V/e/
-         dHq+tBknhnZbRfRt7cEh7okPC2k0oX1T2Sv3YNnU0vHx95Wk4W3Q9hV3HXsFlixiuFBx
-         Jnjuf2lJ3GfEsCbP0RDHLj1EbNwi+mJZuXWWt7deAMuvQoHd2L6qfjvAW63ZH9OlVzAi
-         MjvVPpNqIybyFPdJo0m1obUM3ZWuuraMba7jVEITyUUvJF+NpowCuh6PeDQKENc/p+r8
-         MBDQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:from:date:to:cc:subject:message-id
-         :references:mime-version:content-disposition:in-reply-to:user-agent;
-        bh=AzKsocfXD9AHUppf+uz8A+rYlfuQWDT07arwgMsbt7A=;
-        b=ZSBhMJHxWupo7BZDL/b79JVtD3xd7kMnUJGzs4AkTFNEvWtdM4kWCBUmKIObu01z6W
-         y8VjD/8Wmq3aCR81HG+eeL6yuEnUmhhne47djh+PMyLipO4yOZa48heF1UW5NOdVkoWy
-         XFFWl2oI1ZWlELSyIJUyxbaz6D5fCEy8FBz6dm9ItZvz30W4BKaDlJGrc0HhovLviQhh
-         W0bg9Ff41Yr6QHnL4xhaBdFY2YGhERGKeZuoD9qfpN/fukK3wXEbpTWfp1Fl8/hAwCU/
-         qGFpbr0w0PI0z59xhr2e7sB3z+/XpyUIxtdts15+ZCbyNelpPbcSmmGBYiV6TpSSTL4b
-         leww==
-X-Gm-Message-State: APjAAAXK4lslREq8po1Sp37SzDa9wPk4YOaBVNz2xjFIpDI6sEBmCewZ
-        f0qfcdvVqBGri7rLlvwqO9CRZgHZ
-X-Google-Smtp-Source: APXvYqyQpU93z/fr+Qf0A1AcUno/YvUS2w5bzZf+Xc5fQoyLkmq8y5/3dROFsXDFg1i+bVDgl2vFVw==
-X-Received: by 2002:ac8:16a2:: with SMTP id r31mr128948082qtj.302.1561399279180;
-        Mon, 24 Jun 2019 11:01:19 -0700 (PDT)
-Received: from lclaudio.dyndns.org ([191.177.181.0])
-        by smtp.gmail.com with ESMTPSA id 47sm8112889qtw.90.2019.06.24.11.01.17
-        (version=TLS1_3 cipher=AEAD-AES256-GCM-SHA384 bits=256/256);
-        Mon, 24 Jun 2019 11:01:18 -0700 (PDT)
-From:   "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-X-Google-Original-From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-Received: by lclaudio.dyndns.org (Postfix, from userid 1000)
-        id 65B963C0017; Mon, 24 Jun 2019 15:01:15 -0300 (-03)
-Date:   Mon, 24 Jun 2019 15:01:15 -0300
+        Mon, 24 Jun 2019 14:29:23 -0400
+Received: from smtp6-g21.free.fr ([212.27.42.6]:18234 "EHLO smtp6-g21.free.fr"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726885AbfFXS3X (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 24 Jun 2019 14:29:23 -0400
+Received: from localhost.localdomain (unknown [IPv6:2a01:e0a:244:b080:7446:96cf:df6:1525])
+        by smtp6-g21.free.fr (Postfix) with ESMTP id 102BD78034D
+        for <linux-rt-users@vger.kernel.org>; Mon, 24 Jun 2019 20:29:15 +0200 (CEST)
+Subject: BUG kernel 5.0.21rt12
 To:     linux-rt-users@vger.kernel.org
-Cc:     Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Ping Fang <pifang@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH RT] mm/zswap: Do not disable preemption in
- zswap_frontswap_store() (V2)
-Message-ID: <20190624180115.GC4902@uudg.org>
-References: <20190530025254.GE23690@uudg.org>
+References: <20190530025254.GE23690@uudg.org> <20190624180115.GC4902@uudg.org>
+From:   Yann COLLETTE <ycollette.nospam@free.fr>
+Message-ID: <58aace7a-295c-c20e-4dc6-5d74a2b58545@free.fr>
+Date:   Mon, 24 Jun 2019 20:29:14 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101
+ Thunderbird/60.7.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20190530025254.GE23690@uudg.org>
-User-Agent: Mutt/1.11.4 (2019-03-13)
+In-Reply-To: <20190624180115.GC4902@uudg.org>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+Content-Language: fr-classic
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Zswap causes "BUG: scheduling while atomic" by blocking on a rt_spin_lock() with
-preemption disabled. The preemption is disabled by get_cpu_var() in
-zswap_frontswap_store() to protect the access of the zswap_dstmem percpu variable.
-
-Use get_locked_var() to protect the percpu zswap_dstmem variable, making the
-code preemptive.
-
-V2: as get_cpu_ptr() also disables preemption, replace it by this_cpu_ptr().
-
-Steps to Reproduce:
-
-    1. # grubby --args "zswap.enabled=1" --update-kernel DEFAULT
-    2. # reboot
-    3. Calculate the amount o memory to be used by the test:
-       ---> grep MemAvailable /proc/meminfo
-       ---> Add 25% ~ 50% to that value
-    4. # stress --vm 1 --vm-bytes ${MemAvailable+25%} --timeout 240s
-
-Usually, in less than 5 minutes the backtrace listed below appears, followed
-by a kernel panic:
-
-[26747.628830] 014: BUG: scheduling while atomic: kswapd1/181/0x00000002
-[26747.834904] 014: 
-[26747.839778] 014: Preemption disabled at:
-[26747.845598] 014: [<ffffffff8b2a6cda>] zswap_frontswap_store+0x21a/0x6e1
-[26747.856103] 014: 
-[26747.864619] 014: Kernel panic - not syncing: scheduling while atomic
-[26747.872859] 014: CPU: 14 PID: 181 Comm: kswapd1 Kdump: loaded Not tainted 5.0.14-rt9 #1
-[26747.880832] 014: Hardware name: AMD Pence/Pence, BIOS WPN2321X_Weekly_12_03_21 03/19/2012
-[26747.888977] 014: Call Trace:
-[26747.891847] 014:  dump_stack+0x85/0xc0
-[26747.895584] 014:  panic+0x106/0x2a7
-[26747.899063] 014:  ? zswap_frontswap_store+0x21a/0x6e1
-[26747.904093] 014:  __schedule_bug.cold+0x3f/0x51
-[26747.908605] 014:  __schedule+0x5cb/0x6f0
-[26747.912513] 014:  schedule+0x43/0xd0
-[26747.916073] 014:  rt_spin_lock_slowlock_locked+0x114/0x2b0
-[26747.921538] 014:  rt_spin_lock_slowlock+0x51/0x80
-[26747.926225] 014:  zbud_alloc+0x1da/0x2d0
-[26747.930132] 014:  zswap_frontswap_store+0x31a/0x6e1
-[26747.934992] 014:  __frontswap_store+0xab/0x130
-[26747.939417] 014:  swap_writepage+0x39/0x70
-[26747.943496] 014:  pageout.isra.0+0xe3/0x320
-[26747.947666] 014:  shrink_page_list+0xa8e/0xd10
-[26747.952092] 014:  shrink_inactive_list+0x251/0x840
-[26747.956866] 014:  shrink_node_memcg+0x213/0x770
-[26747.961379] 014:  ? preempt_count_sub+0x98/0xe0
-[26747.965891] 014:  ? preempt_count_sub+0x98/0xe0
-[26747.970402] 014:  shrink_node+0xd9/0x450
-[26747.974309] 014:  balance_pgdat+0x2d5/0x510
-[26747.978477] 014:  kswapd+0x218/0x470
-[26747.982038] 014:  ? finish_wait+0x70/0x70
-[26747.986033] 014:  kthread+0xfb/0x130
-[26747.989595] 014:  ? balance_pgdat+0x510/0x510
-[26747.993934] 014:  ? kthread_park+0x90/0x90
-[26747.998012] 014:  ret_from_fork+0x27/0x50
-
-Reported-by: Ping Fang <pifang@redhat.com>
-Signed-off-by: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
-Reviewed-by: Daniel Bristot de Oliveira <bristot@redhat.com>
----
-Tested:   Ran 70 consecutive repetitions of the reproducer listed above
-          without any warning. Without this patch, every test run ends in
-          a kernel panic, in less than 6 minutes.
-
-V2:       After Sebastian pointed out that I overlooked the get_cpu_ptr()
-          call, the new patch was subjected to a 2h+ test run, meaning 20
-          successful test repetitions.
+Hello,
 
 
-diff --git a/mm/zswap.c b/mm/zswap.c
-index a4e4d36ec085..488aaec89909 100644
---- a/mm/zswap.c
-+++ b/mm/zswap.c
-@@ -27,6 +27,7 @@
- #include <linux/highmem.h>
- #include <linux/slab.h>
- #include <linux/spinlock.h>
-+#include <linux/locallock.h>
- #include <linux/types.h>
- #include <linux/atomic.h>
- #include <linux/frontswap.h>
-@@ -990,6 +991,8 @@ static void zswap_fill_page(void *ptr, unsigned long value)
- 	memset_l(page, value, PAGE_SIZE / sizeof(unsigned long));
- }
- 
-+/* protect zswap_dstmem from concurrency */
-+DEFINE_LOCAL_IRQ_LOCK(zswap_dstmem_lock);
- /*********************************
- * frontswap hooks
- **********************************/
-@@ -1066,8 +1069,8 @@ static int zswap_frontswap_store(unsigned type, pgoff_t offset,
- 	}
- 
- 	/* compress */
--	dst = get_cpu_var(zswap_dstmem);
--	tfm = *get_cpu_ptr(entry->pool->tfm);
-+	dst = get_locked_var(zswap_dstmem_lock, zswap_dstmem);
-+	tfm = *this_cpu_ptr(entry->pool->tfm);
- 	src = kmap_atomic(page);
- 	ret = crypto_comp_compress(tfm, src, PAGE_SIZE, dst, &dlen);
- 	kunmap_atomic(src);
-@@ -1094,7 +1097,7 @@ static int zswap_frontswap_store(unsigned type, pgoff_t offset,
- 	memcpy(buf, &zhdr, hlen);
- 	memcpy(buf + hlen, dst, dlen);
- 	zpool_unmap_handle(entry->pool->zpool, handle);
--	put_cpu_var(zswap_dstmem);
-+	put_locked_var(zswap_dstmem_lock, zswap_dstmem);
- 
- 	/* populate entry */
- 	entry->offset = offset;
-@@ -1122,7 +1125,7 @@ static int zswap_frontswap_store(unsigned type, pgoff_t offset,
- 	return 0;
- 
- put_dstmem:
--	put_cpu_var(zswap_dstmem);
-+	put_locked_var(zswap_dstmem_lock, zswap_dstmem);
- 	zswap_pool_put(entry->pool);
- freepage:
- 	zswap_entry_cache_free(entry);
+I have compiled a vanilla kernel 5.0.21rt12 on Fedora 30 64 bits.
+
+I use this kernel for music (jack-audio oriented).
+
+I meet a bug with the last RT kernel.
+
+I was just able to get a kernel oops (this is my first "bug report") ...
+
+
+juin 24 18:38:08 localhost.localdomain kernel: BUG: scheduling while 
+atomic: Xorg:rcs0/1129/0x00000003
+juin 24 18:38:08 localhost.localdomain kernel: Modules linked in: 
+snd_seq_midi snd_seq_midi_event snd_seq_dummy fuse xt_CHECKSUM 
+ipt_MASQUERADE tun bridge stp llc cc>
+juin 24 18:38:08 localhost.localdomain kernel:  wmi_bmof mac80211 
+snd_seq snd_seq_device snd_pcm cfg80211 sp5100_tco snd_timer rfkill 
+pcc_cpufreq snd soundcore fam15>
+juin 24 18:38:08 localhost.localdomain kernel: Preemption disabled at:
+juin 24 18:38:08 localhost.localdomain kernel: [<ffffffff8267265e>] 
+reservation_object_add_shared_fence+0x3e/0x1b0
+juin 24 18:38:08 localhost.localdomain kernel: CPU: 1 PID: 1129 Comm: 
+Xorg:rcs0 Not tainted 5.0.21-rt12.fc30.x86_64 #1
+juin 24 18:38:08 localhost.localdomain kernel: Hardware name: HP 
+450-a121nf/2B29, BIOS A0.11 01/15/2016
+juin 24 18:38:08 localhost.localdomain kernel: Call Trace:
+juin 24 18:38:08 localhost.localdomain kernel: dump_stack+0x5c/0x80
+juin 24 18:38:08 localhost.localdomain kernel:  ? 
+reservation_object_add_shared_fence+0x3e/0x1b0
+juin 24 18:38:08 localhost.localdomain kernel: __schedule_bug.cold+0x44/0x51
+juin 24 18:38:08 localhost.localdomain kernel: __schedule+0x5c6/0x6f0
+juin 24 18:38:08 localhost.localdomain kernel:  ? 
+unpin_current_cpu+0x3a/0x80
+juin 24 18:38:08 localhost.localdomain kernel:  schedule+0x43/0xd0
+juin 24 18:38:08 localhost.localdomain kernel: 
+rt_spin_lock_slowlock_locked+0x114/0x2b0
+juin 24 18:38:08 localhost.localdomain kernel: 
+rt_spin_lock_slowlock+0x51/0x80
+juin 24 18:38:08 localhost.localdomain kernel: 
+__wake_up_common_lock+0x61/0xb0
+juin 24 18:38:08 localhost.localdomain kernel: 
+radeon_fence_is_signaled+0x74/0x90 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel: 
+reservation_object_add_shared_fence+0x97/0x1b0
+juin 24 18:38:08 localhost.localdomain kernel: 
+ttm_eu_fence_buffer_objects+0x49/0xa0 [ttm]
+juin 24 18:38:08 localhost.localdomain kernel: 
+radeon_cs_parser_fini+0x10f/0x120 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel: 
+radeon_cs_ioctl+0x22b/0x800 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel:  ? 
+radeon_cs_parser_init+0x20/0x20 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel: 
+drm_ioctl_kernel+0xa7/0xf0 [drm]
+juin 24 18:38:08 localhost.localdomain kernel: drm_ioctl+0x208/0x390 [drm]
+juin 24 18:38:08 localhost.localdomain kernel:  ? 
+radeon_cs_parser_init+0x20/0x20 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel:  ? migrate_enable+0x235/0x400
+juin 24 18:38:08 localhost.localdomain kernel:  ? 
+_raw_spin_unlock_irqrestore+0x1f/0x60
+juin 24 18:38:08 localhost.localdomain kernel: 
+radeon_drm_ioctl+0x49/0x80 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel: do_vfs_ioctl+0x40c/0x670
+juin 24 18:38:08 localhost.localdomain kernel: ksys_ioctl+0x5e/0x90
+juin 24 18:38:08 localhost.localdomain kernel: __x64_sys_ioctl+0x16/0x20
+juin 24 18:38:08 localhost.localdomain kernel: do_syscall_64+0x5b/0x180
+juin 24 18:38:08 localhost.localdomain kernel: 
+entry_SYSCALL_64_after_hwframe+0x44/0xa9
+juin 24 18:38:08 localhost.localdomain kernel: RIP: 0033:0x7f9c10a221fb
+juin 24 18:38:08 localhost.localdomain kernel: Code: 0f 1e fa 48 8b 05 
+8d dc 0c 00 64 c7 00 26 00 00 00 48 c7 c0 ff ff ff ff c3 66 0f 1f 44 00 
+00 f3 0f 1e fa b8 10 0>
+juin 24 18:38:08 localhost.localdomain kernel: RSP: 
+002b:00007f9c0a995a38 EFLAGS: 00003246 ORIG_RAX: 0000000000000010
+juin 24 18:38:08 localhost.localdomain kernel: RAX: ffffffffffffffda 
+RBX: 00007f9c0259f058 RCX: 00007f9c10a221fb
+juin 24 18:38:08 localhost.localdomain kernel: RDX: 00007f9c0259f058 
+RSI: 00000000c0206466 RDI: 0000000000000012
+juin 24 18:38:08 localhost.localdomain kernel: RBP: 00000000c0206466 
+R08: 000055c362cfb980 R09: 0000000000000000
+juin 24 18:38:08 localhost.localdomain kernel: R10: 0000000000000000 
+R11: 0000000000003246 R12: 00007f9c0258f010
+juin 24 18:38:08 localhost.localdomain kernel: R13: 0000000000000012 
+R14: 0000000000000000 R15: 000055c362cfb948
+juin 24 18:38:08 localhost.localdomain kernel: WARNING: CPU: 1 PID: 1129 
+at kernel/sched/core.c:7308 migrate_enable+0x2e7/0x400
+juin 24 18:38:08 localhost.localdomain kernel: Modules linked in: 
+snd_seq_midi snd_seq_midi_event snd_seq_dummy fuse xt_CHECKSUM 
+ipt_MASQUERADE tun bridge stp llc cc>
+juin 24 18:38:08 localhost.localdomain kernel:  wmi_bmof mac80211 
+snd_seq snd_seq_device snd_pcm cfg80211 sp5100_tco snd_timer rfkill 
+pcc_cpufreq snd soundcore fam15>
+juin 24 18:38:08 localhost.localdomain kernel: CPU: 1 PID: 1129 Comm: 
+Xorg:rcs0 Tainted: G        W 5.0.21-rt12.fc30.x86_64 #1
+juin 24 18:38:08 localhost.localdomain kernel: Hardware name: HP 
+450-a121nf/2B29, BIOS A0.11 01/15/2016
+juin 24 18:38:08 localhost.localdomain kernel: RIP: 
+0010:migrate_enable+0x2e7/0x400
+juin 24 18:38:08 localhost.localdomain kernel: Code: fe ff ff e8 7f 17 
+ef ff e9 7b fe ff ff 48 8b 00 a9 00 00 04 00 0f 84 53 ff ff ff e8 67 17 
+ef ff e9 49 ff ff ff e>
+juin 24 18:38:08 localhost.localdomain kernel: RSP: 
+0018:ffffb21c4257b950 EFLAGS: 00010246
+juin 24 18:38:08 localhost.localdomain kernel: RAX: 0000000000000000 
+RBX: ffff8a47cf8e5dc0 RCX: ffff8a47f680ae08
+juin 24 18:38:08 localhost.localdomain kernel: RDX: 0000000000000000 
+RSI: 0000000000100000 RDI: ffff8a47f680ae00
+juin 24 18:38:08 localhost.localdomain kernel: RBP: 0000000000000003 
+R08: ffff8a47e9cd58a0 R09: ffffb21c4257b9a8
+juin 24 18:38:08 localhost.localdomain kernel: R10: 0000000000000000 
+R11: 0000000000000001 R12: 0000000000000000
+juin 24 18:38:08 localhost.localdomain kernel: R13: 0000000000000000 
+R14: 0000000000000000 R15: ffff8a47aa265f00
+juin 24 18:38:08 localhost.localdomain kernel: FS: 
+00007f9c0a996700(0000) GS:ffff8a47f6e80000(0000) knlGS:0000000000000000
+juin 24 18:38:08 localhost.localdomain kernel: CS:  0010 DS: 0000 ES: 
+0000 CR0: 0000000080050033
+juin 24 18:38:08 localhost.localdomain kernel: CR2: 00007fa680652580 
+CR3: 0000000215ab6000 CR4: 00000000000406e0
+juin 24 18:38:08 localhost.localdomain kernel: Call Trace:
+juin 24 18:38:08 localhost.localdomain kernel: rt_spin_unlock+0x23/0x40
+juin 24 18:38:08 localhost.localdomain kernel: 
+__wake_up_common_lock+0x82/0xb0
+juin 24 18:38:08 localhost.localdomain kernel: 
+radeon_fence_is_signaled+0x74/0x90 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel: 
+reservation_object_add_shared_fence+0x97/0x1b0
+juin 24 18:38:08 localhost.localdomain kernel: 
+ttm_eu_fence_buffer_objects+0x49/0xa0 [ttm]
+juin 24 18:38:08 localhost.localdomain kernel: 
+radeon_cs_parser_fini+0x10f/0x120 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel: 
+radeon_cs_ioctl+0x22b/0x800 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel:  ? 
+radeon_cs_parser_init+0x20/0x20 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel: 
+drm_ioctl_kernel+0xa7/0xf0 [drm]
+juin 24 18:38:08 localhost.localdomain kernel: drm_ioctl+0x208/0x390 [drm]
+juin 24 18:38:08 localhost.localdomain kernel:  ? 
+radeon_cs_parser_init+0x20/0x20 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel:  ? migrate_enable+0x235/0x400
+juin 24 18:38:08 localhost.localdomain kernel:  ? 
+_raw_spin_unlock_irqrestore+0x1f/0x60
+juin 24 18:38:08 localhost.localdomain kernel: 
+radeon_drm_ioctl+0x49/0x80 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel: do_vfs_ioctl+0x40c/0x670
+juin 24 18:38:08 localhost.localdomain kernel: ksys_ioctl+0x5e/0x90
+juin 24 18:38:08 localhost.localdomain kernel: __x64_sys_ioctl+0x16/0x20
+juin 24 18:38:08 localhost.localdomain kernel: do_syscall_64+0x5b/0x180
+juin 24 18:38:08 localhost.localdomain kernel: 
+entry_SYSCALL_64_after_hwframe+0x44/0xa9
+juin 24 18:38:08 localhost.localdomain kernel: RIP: 0033:0x7f9c10a221fb
+juin 24 18:38:08 localhost.localdomain kernel: Code: 0f 1e fa 48 8b 05 
+8d dc 0c 00 64 c7 00 26 00 00 00 48 c7 c0 ff ff ff ff c3 66 0f 1f 44 00 
+00 f3 0f 1e fa b8 10 0>
+juin 24 18:38:08 localhost.localdomain kernel: RSP: 
+002b:00007f9c0a995a38 EFLAGS: 00003246 ORIG_RAX: 0000000000000010
+juin 24 18:38:08 localhost.localdomain kernel: RAX: ffffffffffffffda 
+RBX: 00007f9c0259f058 RCX: 00007f9c10a221fb
+juin 24 18:38:08 localhost.localdomain kernel: RDX: 00007f9c0259f058 
+RSI: 00000000c0206466 RDI: 0000000000000012
+juin 24 18:38:08 localhost.localdomain kernel: RBP: 00000000c0206466 
+R08: 000055c362cfb980 R09: 0000000000000000
+juin 24 18:38:08 localhost.localdomain kernel: R10: 0000000000000000 
+R11: 0000000000003246 R12: 00007f9c0258f010
+juin 24 18:38:08 localhost.localdomain kernel: R13: 0000000000000012 
+R14: 0000000000000000 R15: 000055c362cfb948
+juin 24 18:38:08 localhost.localdomain kernel: ---[ end trace 
+0000000000000002 ]---
+juin 24 18:38:08 localhost.localdomain kernel: ------------[ cut here 
+]------------
+juin 24 18:38:08 localhost.localdomain kernel: DEBUG_LOCKS_WARN_ON(val > 
+preempt_count())
+juin 24 18:38:08 localhost.localdomain kernel: WARNING: CPU: 1 PID: 1129 
+at kernel/sched/core.c:3314 preempt_count_sub+0x5e/0xa0
+juin 24 18:38:08 localhost.localdomain kernel: Modules linked in: 
+snd_seq_midi snd_seq_midi_event snd_seq_dummy fuse xt_CHECKSUM 
+ipt_MASQUERADE tun bridge stp llc cc>
+juin 24 18:38:08 localhost.localdomain kernel:  wmi_bmof mac80211 
+snd_seq snd_seq_device snd_pcm cfg80211 sp5100_tco snd_timer rfkill 
+pcc_cpufreq snd soundcore fam15>
+juin 24 18:38:08 localhost.localdomain kernel: CPU: 1 PID: 1129 Comm: 
+Xorg:rcs0 Tainted: G        W 5.0.21-rt12.fc30.x86_64 #1
+juin 24 18:38:08 localhost.localdomain kernel: Hardware name: HP 
+450-a121nf/2B29, BIOS A0.11 01/15/2016
+juin 24 18:38:08 localhost.localdomain kernel: RIP: 
+0010:preempt_count_sub+0x5e/0xa0
+juin 24 18:38:08 localhost.localdomain kernel: Code: 6f f0 7d c3 e8 93 
+0f 3b 00 85 c0 74 f6 8b 15 dd 4e 25 01 85 d2 75 ec 48 c7 c6 61 07 0b 83 
+48 c7 c7 b8 85 09 83 e>
+juin 24 18:38:08 localhost.localdomain kernel: RSP: 
+0018:ffffb21c4257ba30 EFLAGS: 00010286
+juin 24 18:38:08 localhost.localdomain kernel: RAX: 0000000000000000 
+RBX: 0000000000000001 RCX: 0000000000000000
+juin 24 18:38:08 localhost.localdomain kernel: RDX: ffffffff8325c1b0 
+RSI: 00000000ffffffff RDI: 00000000ffffffff
+juin 24 18:38:08 localhost.localdomain kernel: RBP: ffff8a475f1e7e40 
+R08: 0000000000000001 R09: ffffffff8325c140
+juin 24 18:38:08 localhost.localdomain kernel: R10: ffffb21c4257b970 
+R11: ffffffff83990763 R12: ffff8a47b1071f00
+juin 24 18:38:08 localhost.localdomain kernel: R13: 0000000000000001 
+R14: 0000000000000005 R15: ffff8a47aa265f00
+juin 24 18:38:08 localhost.localdomain kernel: FS: 
+00007f9c0a996700(0000) GS:ffff8a47f6e80000(0000) knlGS:0000000000000000
+juin 24 18:38:08 localhost.localdomain kernel: CS:  0010 DS: 0000 ES: 
+0000 CR0: 0000000080050033
+juin 24 18:38:08 localhost.localdomain kernel: CR2: 00007fa680652580 
+CR3: 0000000215ab6000 CR4: 00000000000406e0
+juin 24 18:38:08 localhost.localdomain kernel: Call Trace:
+juin 24 18:38:08 localhost.localdomain kernel: 
+reservation_object_add_shared_fence+0xfa/0x1b0
+juin 24 18:38:08 localhost.localdomain kernel: 
+ttm_eu_fence_buffer_objects+0x49/0xa0 [ttm]
+juin 24 18:38:08 localhost.localdomain kernel: 
+radeon_cs_parser_fini+0x10f/0x120 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel: 
+radeon_cs_ioctl+0x22b/0x800 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel:  ? 
+radeon_cs_parser_init+0x20/0x20 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel: 
+drm_ioctl_kernel+0xa7/0xf0 [drm]
+juin 24 18:38:08 localhost.localdomain kernel: drm_ioctl+0x208/0x390 [drm]
+juin 24 18:38:08 localhost.localdomain kernel:  ? 
+radeon_cs_parser_init+0x20/0x20 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel:  ? migrate_enable+0x235/0x400
+juin 24 18:38:08 localhost.localdomain kernel:  ? 
+_raw_spin_unlock_irqrestore+0x1f/0x60
+juin 24 18:38:08 localhost.localdomain kernel: 
+radeon_drm_ioctl+0x49/0x80 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel: do_vfs_ioctl+0x40c/0x670
+juin 24 18:38:08 localhost.localdomain kernel: ksys_ioctl+0x5e/0x90
+juin 24 18:38:08 localhost.localdomain kernel: __x64_sys_ioctl+0x16/0x20
+juin 24 18:38:08 localhost.localdomain kernel: do_syscall_64+0x5b/0x180
+juin 24 18:38:08 localhost.localdomain kernel: 
+entry_SYSCALL_64_after_hwframe+0x44/0xa9
+juin 24 18:38:08 localhost.localdomain kernel: RIP: 0033:0x7f9c10a221fb
+juin 24 18:38:08 localhost.localdomain kernel: Code: 0f 1e fa 48 8b 05 
+8d dc 0c 00 64 c7 00 26 00 00 00 48 c7 c0 ff ff ff ff c3 66 0f 1f 44 00 
+00 f3 0f 1e fa b8 10 0>
+juin 24 18:38:08 localhost.localdomain kernel: RSP: 
+002b:00007f9c0a995a38 EFLAGS: 00003246 ORIG_RAX: 0000000000000010
+juin 24 18:38:08 localhost.localdomain kernel: RAX: ffffffffffffffda 
+RBX: 00007f9c0259f058 RCX: 00007f9c10a221fb
+juin 24 18:38:08 localhost.localdomain kernel: RDX: 00007f9c0259f058 
+RSI: 00000000c0206466 RDI: 0000000000000012
+juin 24 18:38:08 localhost.localdomain kernel: RBP: 00000000c0206466 
+R08: 000055c362cfb980 R09: 0000000000000000
+juin 24 18:38:08 localhost.localdomain kernel: R10: 0000000000000000 
+R11: 0000000000003246 R12: 00007f9c0258f010
+juin 24 18:38:08 localhost.localdomain kernel: R13: 0000000000000012 
+R14: 0000000000000000 R15: 000055c362cfb948
+juin 24 18:38:08 localhost.localdomain kernel: ---[ end trace 
+0000000000000003 ]---
+juin 24 18:38:08 localhost.localdomain kernel: WARNING: CPU: 1 PID: 1129 
+at kernel/sched/core.c:7312 migrate_enable+0x92/0x400
+juin 24 18:38:08 localhost.localdomain kernel: Modules linked in: 
+snd_seq_midi snd_seq_midi_event snd_seq_dummy fuse xt_CHECKSUM 
+ipt_MASQUERADE tun bridge stp llc cc>
+juin 24 18:38:08 localhost.localdomain kernel:  wmi_bmof mac80211 
+snd_seq snd_seq_device snd_pcm cfg80211 sp5100_tco snd_timer rfkill 
+pcc_cpufreq snd soundcore fam15>
+juin 24 18:38:08 localhost.localdomain kernel: CPU: 1 PID: 1129 Comm: 
+Xorg:rcs0 Tainted: G        W 5.0.21-rt12.fc30.x86_64 #1
+juin 24 18:38:08 localhost.localdomain kernel: Hardware name: HP 
+450-a121nf/2B29, BIOS A0.11 01/15/2016
+juin 24 18:38:08 localhost.localdomain kernel: RIP: 
+0010:migrate_enable+0x92/0x400
+juin 24 18:38:08 localhost.localdomain kernel: Code: 00 00 eb 07 83 ab 
+c4 03 00 00 01 48 8b 44 24 20 65 48 33 04 25 28 00 00 00 0f 85 72 03 00 
+00 48 83 c4 28 5b 5d 4>
+juin 24 18:38:08 localhost.localdomain kernel: RSP: 
+0018:ffffb21c4257ba58 EFLAGS: 00010246
+juin 24 18:38:08 localhost.localdomain kernel: RAX: 0000000000000000 
+RBX: ffff8a47cf8e5dc0 RCX: ffff8a47f680ae08
+juin 24 18:38:08 localhost.localdomain kernel: RDX: 0000000000100000 
+RSI: 0000000000100000 RDI: ffff8a47f680ae00
+juin 24 18:38:08 localhost.localdomain kernel: RBP: ffffb21c4257bb18 
+R08: ffff8a47e9cd4ba8 R09: ffff8a47e9cd4ba8
+juin 24 18:38:08 localhost.localdomain kernel: R10: ffffb21c4257b970 
+R11: 0000000000000001 R12: 0000000000000000
+juin 24 18:38:08 localhost.localdomain kernel: R13: ffffb21c4257bad0 
+R14: ffff8a47e9cd4018 R15: ffff8a47d584e600
+juin 24 18:38:08 localhost.localdomain kernel: FS: 
+00007f9c0a996700(0000) GS:ffff8a47f6e80000(0000) knlGS:0000000000000000
+juin 24 18:38:08 localhost.localdomain kernel: CS:  0010 DS: 0000 ES: 
+0000 CR0: 0000000080050033
+juin 24 18:38:08 localhost.localdomain kernel: CR2: 00007fa680652580 
+CR3: 0000000215ab6000 CR4: 00000000000406e0
+juin 24 18:38:08 localhost.localdomain kernel: Call Trace:
+juin 24 18:38:08 localhost.localdomain kernel: rt_spin_unlock+0x23/0x40
+juin 24 18:38:08 localhost.localdomain kernel: 
+radeon_cs_parser_fini+0x10f/0x120 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel: 
+radeon_cs_ioctl+0x22b/0x800 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel:  ? 
+radeon_cs_parser_init+0x20/0x20 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel: 
+drm_ioctl_kernel+0xa7/0xf0 [drm]
+juin 24 18:38:08 localhost.localdomain kernel: drm_ioctl+0x208/0x390 [drm]
+juin 24 18:38:08 localhost.localdomain kernel:  ? 
+radeon_cs_parser_init+0x20/0x20 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel:  ? migrate_enable+0x235/0x400
+juin 24 18:38:08 localhost.localdomain kernel:  ? 
+_raw_spin_unlock_irqrestore+0x1f/0x60
+juin 24 18:38:08 localhost.localdomain kernel: 
+radeon_drm_ioctl+0x49/0x80 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel: do_vfs_ioctl+0x40c/0x670
+juin 24 18:38:08 localhost.localdomain kernel: ksys_ioctl+0x5e/0x90
+juin 24 18:38:08 localhost.localdomain kernel: __x64_sys_ioctl+0x16/0x20
+juin 24 18:38:08 localhost.localdomain kernel: do_syscall_64+0x5b/0x180
+juin 24 18:38:08 localhost.localdomain kernel: 
+entry_SYSCALL_64_after_hwframe+0x44/0xa9
+juin 24 18:38:08 localhost.localdomain kernel: RIP: 0033:0x7f9c10a221fb
+juin 24 18:38:08 localhost.localdomain kernel: Code: 0f 1e fa 48 8b 05 
+8d dc 0c 00 64 c7 00 26 00 00 00 48 c7 c0 ff ff ff ff c3 66 0f 1f 44 00 
+00 f3 0f 1e fa b8 10 0>
+juin 24 18:38:08 localhost.localdomain kernel: RSP: 
+002b:00007f9c0a995a38 EFLAGS: 00003246 ORIG_RAX: 0000000000000010
+juin 24 18:38:08 localhost.localdomain kernel: RAX: ffffffffffffffda 
+RBX: 00007f9c0259f058 RCX: 00007f9c10a221fb
+juin 24 18:38:08 localhost.localdomain kernel: RDX: 00007f9c0259f058 
+RSI: 00000000c0206466 RDI: 0000000000000012
+juin 24 18:38:08 localhost.localdomain kernel: RBP: 00000000c0206466 
+R08: 000055c362cfb980 R09: 0000000000000000
+juin 24 18:38:08 localhost.localdomain kernel: R10: 0000000000000000 
+R11: 0000000000003246 R12: 00007f9c0258f010
+juin 24 18:38:08 localhost.localdomain kernel: R13: 0000000000000012 
+R14: 0000000000000000 R15: 000055c362cfb948
+juin 24 18:38:08 localhost.localdomain kernel: ---[ end trace 
+0000000000000004 ]---
+juin 24 18:38:08 localhost.localdomain kernel: WARNING: CPU: 1 PID: 1129 
+at kernel/cpu.c:330 unpin_current_cpu+0x60/0x80
+juin 24 18:38:08 localhost.localdomain kernel: Modules linked in: 
+snd_seq_midi snd_seq_midi_event snd_seq_dummy fuse xt_CHECKSUM 
+ipt_MASQUERADE tun bridge stp llc cc>
+juin 24 18:38:08 localhost.localdomain kernel:  wmi_bmof mac80211 
+snd_seq snd_seq_device snd_pcm cfg80211 sp5100_tco snd_timer rfkill 
+pcc_cpufreq snd soundcore fam15>
+juin 24 18:38:08 localhost.localdomain kernel: CPU: 1 PID: 1129 Comm: 
+Xorg:rcs0 Tainted: G        W 5.0.21-rt12.fc30.x86_64 #1
+juin 24 18:38:08 localhost.localdomain kernel: Hardware name: HP 
+450-a121nf/2B29, BIOS A0.11 01/15/2016
+juin 24 18:38:08 localhost.localdomain kernel: RIP: 
+0010:unpin_current_cpu+0x60/0x80
+juin 24 18:38:08 localhost.localdomain kernel: Code: 36 bf 3e 00 41 39 
+c5 75 21 65 48 8b 04 25 c0 5c 01 00 c7 80 c0 03 00 00 ff ff ff ff 48 89 
+ef 5b 5d 41 5c 41 5d e>
+juin 24 18:38:08 localhost.localdomain kernel: RSP: 
+0018:ffffb21c4257ba30 EFLAGS: 00010282
+juin 24 18:38:08 localhost.localdomain kernel: RAX: 0000000000000001 
+RBX: 0000000000016720 RCX: 0000000000000000
+juin 24 18:38:08 localhost.localdomain kernel: RDX: ffffffff82e11380 
+RSI: ffffffff830ea67d RDI: ffffffff830c50f4
+juin 24 18:38:08 localhost.localdomain kernel: RBP: ffff8a47f6e96720 
+R08: ffff8a47e9cd4ba8 R09: 0000000000000000
+juin 24 18:38:08 localhost.localdomain kernel: R10: ffffb21c4257b970 
+R11: 0000000000000001 R12: ffff8a47cf8e5dc0
+juin 24 18:38:08 localhost.localdomain kernel: R13: 00000000ffffffff 
+R14: ffff8a47e9cd4018 R15: ffff8a47d584e600
+juin 24 18:38:08 localhost.localdomain kernel: FS: 
+00007f9c0a996700(0000) GS:ffff8a47f6e80000(0000) knlGS:0000000000000000
+juin 24 18:38:08 localhost.localdomain kernel: CS:  0010 DS: 0000 ES: 
+0000 CR0: 0000000080050033
+juin 24 18:38:08 localhost.localdomain kernel: CR2: 00007fa680652580 
+CR3: 0000000215ab6000 CR4: 00000000000406e0
+juin 24 18:38:08 localhost.localdomain kernel: Call Trace:
+juin 24 18:38:08 localhost.localdomain kernel: migrate_enable+0x1fc/0x400
+juin 24 18:38:08 localhost.localdomain kernel: rt_spin_unlock+0x23/0x40
+juin 24 18:38:08 localhost.localdomain kernel: 
+radeon_cs_parser_fini+0x10f/0x120 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel: 
+radeon_cs_ioctl+0x22b/0x800 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel:  ? 
+radeon_cs_parser_init+0x20/0x20 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel: 
+drm_ioctl_kernel+0xa7/0xf0 [drm]
+juin 24 18:38:08 localhost.localdomain kernel: drm_ioctl+0x208/0x390 [drm]
+juin 24 18:38:08 localhost.localdomain kernel:  ? 
+radeon_cs_parser_init+0x20/0x20 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel:  ? migrate_enable+0x235/0x400
+juin 24 18:38:08 localhost.localdomain kernel:  ? 
+_raw_spin_unlock_irqrestore+0x1f/0x60
+juin 24 18:38:08 localhost.localdomain kernel: 
+radeon_drm_ioctl+0x49/0x80 [radeon]
+juin 24 18:38:08 localhost.localdomain kernel: do_vfs_ioctl+0x40c/0x670
+juin 24 18:38:08 localhost.localdomain kernel: ksys_ioctl+0x5e/0x90
+juin 24 18:38:08 localhost.localdomain kernel: __x64_sys_ioctl+0x16/0x20
+juin 24 18:38:08 localhost.localdomain kernel: do_syscall_64+0x5b/0x180
+juin 24 18:38:08 localhost.localdomain kernel: 
+entry_SYSCALL_64_after_hwframe+0x44/0xa9
+juin 24 18:38:08 localhost.localdomain kernel: RIP: 0033:0x7f9c10a221fb
+juin 24 18:38:08 localhost.localdomain kernel: Code: 0f 1e fa 48 8b 05 
+8d dc 0c 00 64 c7 00 26 00 00 00 48 c7 c0 ff ff ff ff c3 66 0f 1f 44 00 
+00 f3 0f 1e fa b8 10 0>
+juin 24 18:38:08 localhost.localdomain kernel: RSP: 
+002b:00007f9c0a995a38 EFLAGS: 00003246 ORIG_RAX: 0000000000000010
+juin 24 18:38:08 localhost.localdomain kernel: RAX: ffffffffffffffda 
+RBX: 00007f9c0259f058 RCX: 00007f9c10a221fb
+juin 24 18:38:08 localhost.localdomain kernel: RDX: 00007f9c0259f058 
+RSI: 00000000c0206466 RDI: 0000000000000012
+juin 24 18:38:08 localhost.localdomain kernel: RBP: 00000000c0206466 
+R08: 000055c362cfb980 R09: 0000000000000000
+juin 24 18:38:08 localhost.localdomain kernel: R10: 0000000000000000 
+R11: 0000000000003246 R12: 00007f9c0258f010
+juin 24 18:38:08 localhost.localdomain kernel: R13: 0000000000000012 
+R14: 0000000000000000 R15: 000055c362cfb948
+juin 24 18:38:08 localhost.localdomain kernel: ---[ end trace 
+0000000000000005 ]---
+juin 24 18:38:08 localhost.localdomain kernel: BUG: unable to handle 
+kernel paging request at 0000000000016748
+juin 24 18:38:08 localhost.localdomain kernel: #PF error: [WRITE]
+juin 24 18:38:09 localhost.localdomain kernel: PGD 0 P4D 0
+juin 24 18:38:09 localhost.localdomain kernel: Oops: 0002 [#1] PREEMPT 
+SMP NOPTI
+juin 24 18:38:09 localhost.localdomain kernel: CPU: 1 PID: 1129 Comm: 
+Xorg:rcs0 Tainted: G        W 5.0.21-rt12.fc30.x86_64 #1
+juin 24 18:38:09 localhost.localdomain kernel: Hardware name: HP 
+450-a121nf/2B29, BIOS A0.11 01/15/2016
+juin 24 18:38:09 localhost.localdomain kernel: RIP: 
+0010:__read_rt_unlock+0x5/0x40
+juin 24 18:38:09 localhost.localdomain kernel: Code: 18 8d 4a 01 89 d0 
+f0 0f b1 4f 28 39 c2 75 06 b8 01 00 00 00 c3 89 c2 eb e4 31 c0 c3 66 0f 
+1f 84 00 00 00 00 00 0>
+juin 24 18:38:09 localhost.localdomain kernel: RSP: 
+0018:ffffb21c4257ba50 EFLAGS: 00010202
+juin 24 18:38:09 localhost.localdomain kernel: RAX: ffff8a47cf8e5dc0 
+RBX: ffff8a47cf8e5dc0 RCX: 0000000000000000
+juin 24 18:38:09 localhost.localdomain kernel: RDX: ffffffff82e11380 
+RSI: ffffffff830ea67d RDI: 0000000000016720
+juin 24 18:38:09 localhost.localdomain kernel: RBP: ffff8a47f6e9fb40 
+R08: ffff8a47e9cd4ba8 R09: 0000000000000000
+juin 24 18:38:09 localhost.localdomain kernel: R10: ffffb21c4257b970 
+R11: 0000000000000001 R12: ffff8a47cf8e6170
+juin 24 18:38:09 localhost.localdomain kernel: R13: ffff8a47cf8e6610 
+R14: ffff8a47e9cd4018 R15: ffff8a47d584e600
+juin 24 18:38:09 localhost.localdomain kernel: FS: 
+00007f9c0a996700(0000) GS:ffff8a47f6e80000(0000) knlGS:0000000000000000
+juin 24 18:38:09 localhost.localdomain kernel: CS:  0010 DS: 0000 ES: 
+0000 CR0: 0000000080050033
+juin 24 18:38:09 localhost.localdomain kernel: CR2: 0000000000016748 
+CR3: 0000000215ab6000 CR4: 00000000000406e0
+juin 24 18:38:09 localhost.localdomain kernel: Call Trace:
+juin 24 18:38:09 localhost.localdomain kernel: migrate_enable+0x1fc/0x400
+juin 24 18:38:09 localhost.localdomain kernel: rt_spin_unlock+0x23/0x40
+juin 24 18:38:09 localhost.localdomain kernel: 
+radeon_cs_parser_fini+0x10f/0x120 [radeon]
+juin 24 18:38:09 localhost.localdomain kernel: 
+radeon_cs_ioctl+0x22b/0x800 [radeon]
+juin 24 18:38:09 localhost.localdomain kernel:  ? 
+radeon_cs_parser_init+0x20/0x20 [radeon]
+juin 24 18:38:09 localhost.localdomain kernel: 
+drm_ioctl_kernel+0xa7/0xf0 [drm]
+juin 24 18:38:09 localhost.localdomain kernel: drm_ioctl+0x208/0x390 [drm]
+juin 24 18:38:09 localhost.localdomain kernel:  ? 
+radeon_cs_parser_init+0x20/0x20 [radeon]
+juin 24 18:38:09 localhost.localdomain kernel:  ? migrate_enable+0x235/0x400
+juin 24 18:38:09 localhost.localdomain kernel:  ? 
+_raw_spin_unlock_irqrestore+0x1f/0x60
+juin 24 18:38:09 localhost.localdomain kernel: 
+radeon_drm_ioctl+0x49/0x80 [radeon]
+juin 24 18:38:09 localhost.localdomain kernel: do_vfs_ioctl+0x40c/0x670
+juin 24 18:38:09 localhost.localdomain kernel: ksys_ioctl+0x5e/0x90
+juin 24 18:38:09 localhost.localdomain kernel: __x64_sys_ioctl+0x16/0x20
+juin 24 18:38:09 localhost.localdomain kernel: do_syscall_64+0x5b/0x180
+juin 24 18:38:09 localhost.localdomain kernel: 
+entry_SYSCALL_64_after_hwframe+0x44/0xa9
+juin 24 18:38:09 localhost.localdomain kernel: RIP: 0033:0x7f9c10a221fb
+juin 24 18:38:09 localhost.localdomain kernel: Code: 0f 1e fa 48 8b 05 
+8d dc 0c 00 64 c7 00 26 00 00 00 48 c7 c0 ff ff ff ff c3 66 0f 1f 44 00 
+00 f3 0f 1e fa b8 10 0>
+juin 24 18:38:09 localhost.localdomain kernel: RSP: 
+002b:00007f9c0a995a38 EFLAGS: 00003246 ORIG_RAX: 0000000000000010
+juin 24 18:38:09 localhost.localdomain kernel: RAX: ffffffffffffffda 
+RBX: 00007f9c0259f058 RCX: 00007f9c10a221fb
+juin 24 18:38:09 localhost.localdomain kernel: RDX: 00007f9c0259f058 
+RSI: 00000000c0206466 RDI: 0000000000000012
+juin 24 18:38:09 localhost.localdomain kernel: RBP: 00000000c0206466 
+R08: 000055c362cfb980 R09: 0000000000000000
+juin 24 18:38:09 localhost.localdomain kernel: R10: 0000000000000000 
+R11: 0000000000003246 R12: 00007f9c0258f010
+juin 24 18:38:09 localhost.localdomain kernel: R13: 0000000000000012 
+R14: 0000000000000000 R15: 000055c362cfb948
+juin 24 18:38:09 localhost.localdomain kernel: Modules linked in: 
+snd_seq_midi snd_seq_midi_event snd_seq_dummy fuse xt_CHECKSUM 
+ipt_MASQUERADE tun bridge stp llc cc>
+juin 24 18:38:09 localhost.localdomain kernel:  wmi_bmof mac80211 
+snd_seq snd_seq_device snd_pcm cfg80211 sp5100_tco snd_timer rfkill 
+pcc_cpufreq snd soundcore fam15>
+juin 24 18:38:09 localhost.localdomain kernel: CR2: 0000000000016748
+juin 24 18:38:09 localhost.localdomain kernel: ---[ end trace 
+0000000000000006 ]---
+juin 24 18:38:09 localhost.localdomain kernel: RIP: 
+0010:__read_rt_unlock+0x5/0x40
+juin 24 18:38:09 localhost.localdomain kernel: Code: 18 8d 4a 01 89 d0 
+f0 0f b1 4f 28 39 c2 75 06 b8 01 00 00 00 c3 89 c2 eb e4 31 c0 c3 66 0f 
+1f 84 00 00 00 00 00 0>
+juin 24 18:38:09 localhost.localdomain kernel: RSP: 
+0018:ffffb21c4257ba50 EFLAGS: 00010202
+juin 24 18:38:09 localhost.localdomain kernel: RAX: ffff8a47cf8e5dc0 
+RBX: ffff8a47cf8e5dc0 RCX: 0000000000000000
+juin 24 18:38:09 localhost.localdomain kernel: RDX: ffffffff82e11380 
+RSI: ffffffff830ea67d RDI: 0000000000016720
+juin 24 18:38:09 localhost.localdomain kernel: RBP: ffff8a47f6e9fb40 
+R08: ffff8a47e9cd4ba8 R09: 0000000000000000
+juin 24 18:38:09 localhost.localdomain kernel: R10: ffffb21c4257b970 
+R11: 0000000000000001 R12: ffff8a47cf8e6170
+juin 24 18:38:09 localhost.localdomain kernel: R13: ffff8a47cf8e6610 
+R14: ffff8a47e9cd4018 R15: ffff8a47d584e600
+juin 24 18:38:09 localhost.localdomain kernel: FS: 
+00007f9c0a996700(0000) GS:ffff8a47f6e80000(0000) knlGS:0000000000000000
+juin 24 18:38:09 localhost.localdomain kernel: CS:  0010 DS: 0000 ES: 
+0000 CR0: 0000000080050033
+juin 24 18:38:09 localhost.localdomain kernel: CR2: 0000000000016748 
+CR3: 0000000215ab6000 CR4: 00000000000406e0
+juin 24 18:38:09 localhost.localdomain kernel: note: Xorg:rcs0[1129] 
+exited with preempt_count 1
+juin 24 18:38:09 localhost.localdomain kernel: WARNING: CPU: 1 PID: 1129 
+at kernel/sched/core.c:7274 migrate_disable+0x1de/0x220
+juin 24 18:38:09 localhost.localdomain kernel: Modules linked in: 
+snd_seq_midi snd_seq_midi_event snd_seq_dummy fuse xt_CHECKSUM 
+ipt_MASQUERADE tun bridge stp llc cc>
+juin 24 18:38:09 localhost.localdomain kernel:  wmi_bmof mac80211 
+snd_seq snd_seq_device snd_pcm cfg80211 sp5100_tco snd_timer rfkill 
+pcc_cpufreq snd soundcore fam15>
+juin 24 18:38:09 localhost.localdomain kernel: CPU: 1 PID: 1129 Comm: 
+Xorg:rcs0 Tainted: G      D W 5.0.21-rt12.fc30.x86_64 #1
+juin 24 18:38:09 localhost.localdomain kernel: Hardware name: HP 
+450-a121nf/2B29, BIOS A0.11 01/15/2016
+juin 24 18:38:09 localhost.localdomain kernel: RIP: 
+0010:migrate_disable+0x1de/0x220
+juin 24 18:38:09 localhost.localdomain kernel: Code: 0f 8e 2e ff ff ff 
+8b 4b 44 48 c7 c2 40 fb 01 00 48 03 14 cd 20 e8 17 83 48 83 aa a0 08 00 
+00 01 e9 0f ff ff ff e>
+juin 24 18:38:09 localhost.localdomain kernel: RSP: 
+0018:ffffb21c4257be60 EFLAGS: 00010246
+juin 24 18:38:09 localhost.localdomain kernel: RAX: 0000000000100000 
+RBX: ffff8a47cf8e5dc0 RCX: ffff8a47f680ae08
+juin 24 18:38:09 localhost.localdomain kernel: RDX: 0000000000100000 
+RSI: 0000000000100000 RDI: ffff8a47f680ae00
+juin 24 18:38:09 localhost.localdomain kernel: RBP: ffff8a47d5912188 
+R08: ffff8a47d5badf00 R09: ffffffff8325c140
+juin 24 18:38:09 localhost.localdomain kernel: R10: ffffb21c4257be28 
+R11: 0000000000000001 R12: 0000000000000009
+juin 24 18:38:09 localhost.localdomain kernel: R13: ffff8a47cf8e5dc0 
+R14: ffff8a47cf8e5d00 R15: 0000000000000046
+juin 24 18:38:09 localhost.localdomain kernel: FS: 
+00007f9c0a996700(0000) GS:ffff8a47f6e80000(0000) knlGS:0000000000000000
+juin 24 18:38:09 localhost.localdomain kernel: CS:  0010 DS: 0000 ES: 
+0000 CR0: 0000000080050033
+juin 24 18:38:09 localhost.localdomain kernel: CR2: 0000000000016748 
+CR3: 0000000215ab6000 CR4: 00000000000406e0
+juin 24 18:38:09 localhost.localdomain kernel: Call Trace:
+juin 24 18:38:09 localhost.localdomain kernel: rt_spin_lock+0x1f/0x40
+juin 24 18:38:09 localhost.localdomain kernel: acct_collect+0x1b3/0x1d0
+juin 24 18:38:09 localhost.localdomain kernel: do_exit+0x126/0xc40
+juin 24 18:38:09 localhost.localdomain kernel:  ? ksys_ioctl+0x5e/0x90
+juin 24 18:38:09 localhost.localdomain kernel: 
+rewind_stack_do_exit+0x17/0x20
+juin 24 18:38:09 localhost.localdomain kernel: ---[ end trace 
+0000000000000007 ]---
+juin 24 18:38:10 localhost.localdomain abrt-dump-journal-oops[873]: 
+abrt-dump-journal-oops: Found oopses: 7
+juin 24 18:38:10 localhost.localdomain abrt-dump-journal-oops[873]: 
+abrt-dump-journal-oops: Creating problem directories
+
+Best regards,
+
+
+YC
+
