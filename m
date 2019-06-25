@@ -2,46 +2,59 @@ Return-Path: <SRS0=Os7+=UY=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_NEOMUTT autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.5 required=3.0 tests=FREEMAIL_FORGED_FROMDOMAIN,
+	FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6022CC48BD5
-	for <linux-rt-users@archiver.kernel.org>; Tue, 25 Jun 2019 08:08:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9A881C48BD5
+	for <linux-rt-users@archiver.kernel.org>; Tue, 25 Jun 2019 08:19:11 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 3F7D3214DA
-	for <linux-rt-users@archiver.kernel.org>; Tue, 25 Jun 2019 08:08:22 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 767D2215EA
+	for <linux-rt-users@archiver.kernel.org>; Tue, 25 Jun 2019 08:19:11 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728465AbfFYIIV convert rfc822-to-8bit (ORCPT
+        id S1728789AbfFYITL convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 25 Jun 2019 04:08:21 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:41045 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726663AbfFYIIV (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 25 Jun 2019 04:08:21 -0400
-Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
-        (envelope-from <bigeasy@linutronix.de>)
-        id 1hfgV0-0008A6-Fi; Tue, 25 Jun 2019 10:08:18 +0200
-Date:   Tue, 25 Jun 2019 10:08:18 +0200
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Yann COLLETTE <ycollette.nospam@free.fr>
+        Tue, 25 Jun 2019 04:19:11 -0400
+Received: from smtp2-g21.free.fr ([212.27.42.2]:36493 "EHLO smtp2-g21.free.fr"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1727887AbfFYITK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 25 Jun 2019 04:19:10 -0400
+Received: from zimbra35-e6.priv.proxad.net (unknown [172.20.243.185])
+        by smtp2-g21.free.fr (Postfix) with ESMTP id 5D66E200381;
+        Tue, 25 Jun 2019 10:19:06 +0200 (CEST)
+Date:   Tue, 25 Jun 2019 10:19:06 +0200 (CEST)
+From:   ycollette.nospam@free.fr
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Cc:     linux-rt-users@vger.kernel.org
+Message-ID: <2070199003.25338131.1561450746148.JavaMail.root@zimbra35-e6.priv.proxad.net>
+In-Reply-To: <20190625080818.plcqwdhux5nhx3xg@linutronix.de>
 Subject: Re: BUG kernel 5.0.21rt12
-Message-ID: <20190625080818.plcqwdhux5nhx3xg@linutronix.de>
-References: <20190530025254.GE23690@uudg.org>
- <20190624180115.GC4902@uudg.org>
- <58aace7a-295c-c20e-4dc6-5d74a2b58545@free.fr>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
 Content-Transfer-Encoding: 8BIT
-In-Reply-To: <58aace7a-295c-c20e-4dc6-5d74a2b58545@free.fr>
-User-Agent: NeoMutt/20180716
+X-Originating-IP: [82.254.178.175]
+X-Mailer: Zimbra 7.2.0-GA2598 (ZimbraWebClient - FF3.0 (Win)/7.2.0-GA2598)
+X-Authenticated-User: ycollette.nospam@free.fr
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
+
+Thanks for the answer.
+
+I will try to switch to the last 4.19.50 ... I remember I had no problems with the 4.19 branch ...
+I will send some more informations once I have tested.
+
+Best regards,
+
+YC
+
+----- Mail original -----
+De: "Sebastian Andrzej Siewior" <bigeasy@linutronix.de>
+À: "Yann COLLETTE" <ycollette.nospam@free.fr>
+Cc: linux-rt-users@vger.kernel.org
+Envoyé: Mardi 25 Juin 2019 10:08:18
+Objet: Re: BUG kernel 5.0.21rt12
 
 On 2019-06-24 20:29:14 [+0200], Yann COLLETTE wrote:
 > Hello,
