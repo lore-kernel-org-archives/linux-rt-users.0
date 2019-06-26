@@ -1,201 +1,161 @@
-Return-Path: <SRS0=Os7+=UY=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=t/x/=UZ=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.1 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_MUTT autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-0.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3762BC48BD5
-	for <linux-rt-users@archiver.kernel.org>; Tue, 25 Jun 2019 14:28:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 13936C4646B
+	for <linux-rt-users@archiver.kernel.org>; Wed, 26 Jun 2019 07:35:09 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 01E982133F
-	for <linux-rt-users@archiver.kernel.org>; Tue, 25 Jun 2019 14:28:14 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D0010208E3
+	for <linux-rt-users@archiver.kernel.org>; Wed, 26 Jun 2019 07:35:08 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="BAV2X/cj"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="c8Bq644T"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729727AbfFYO2K (ORCPT
+        id S1726648AbfFZHfI (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 25 Jun 2019 10:28:10 -0400
-Received: from mail-qt1-f193.google.com ([209.85.160.193]:35108 "EHLO
-        mail-qt1-f193.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727070AbfFYO2J (ORCPT
+        Wed, 26 Jun 2019 03:35:08 -0400
+Received: from mail-pf1-f195.google.com ([209.85.210.195]:41285 "EHLO
+        mail-pf1-f195.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725797AbfFZHfI (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 25 Jun 2019 10:28:09 -0400
-Received: by mail-qt1-f193.google.com with SMTP id d23so3222895qto.2
-        for <linux-rt-users@vger.kernel.org>; Tue, 25 Jun 2019 07:28:09 -0700 (PDT)
+        Wed, 26 Jun 2019 03:35:08 -0400
+Received: by mail-pf1-f195.google.com with SMTP id m30so871114pff.8
+        for <linux-rt-users@vger.kernel.org>; Wed, 26 Jun 2019 00:35:07 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
-        h=sender:from:date:to:cc:subject:message-id:mime-version
-         :content-disposition:user-agent;
-        bh=LPgAAEytgBUY+/ycdy8MfZLh+wNts6WhNe7WAmvr/t8=;
-        b=BAV2X/cjCK/62pTNwpc+BUKkrNKIIho57F3/d4SEWF6n/fXa02oU88Ze2LXskeF6BH
-         XMQTc/6EiKUl5BtgQNOZLFYyvAHv52wbdhKVBc886cNnh7l4a4M/zUGQdA2Qn19UChdG
-         2R3hjul4DADA/NtscGKqGFIcIHkYdIxjtkqNGthMk5jMXOWe/bYaxDQ8LNjMo5rpIOCq
-         jezUjfVSm2+Ka7bLDSyy4eUEr6Ed5/jCRjrpj9FLY1Zxyu+aXhcbqCRqDh1f497+82u3
-         pIE/dVr1haNCcnmAz4TO2v5WUym6Dh0q+6ix61jseYIR5MxSYg0o3EIRgkJUwUO2erI7
-         Jsow==
+        h=to:from:subject:message-id:date:user-agent:mime-version
+         :content-transfer-encoding:content-language;
+        bh=9cOlOuJsamJMtckMqRhrPsT9WJMRL8uiT/4JdPUn2Z4=;
+        b=c8Bq644T9uooZDUhsR9HalNuKcu+ucT9ZVUGj3fpI1tNJqsRZAfa5uUrLkb/rbPXC7
+         +0cM2RZtN47o7a8HSbZOibof6YvLPq+6GYwAlqLhjYzn4r2g9Z7d5xCZpLWPPXpqqqmP
+         ivCd8UxCtPSIvfwflr0nFydUtCXzHfYdUcu3DSSPT1zyybuB20i0k3yPt/ncQSs6YUa5
+         /pHuNSx/uT1QAtJqu4A3QmBShzJOueEUwchtPWgAHybYKSPsPqorprlFex84Vu+IEQfk
+         CN1hdxcoKr4I5pJnmZ3r+WORRHX+Ce4i6j9J6JqVuaErsyNCy8iym0ISUw8ZCaVTel00
+         VocQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:from:date:to:cc:subject:message-id
-         :mime-version:content-disposition:user-agent;
-        bh=LPgAAEytgBUY+/ycdy8MfZLh+wNts6WhNe7WAmvr/t8=;
-        b=nygmfNCQUbx2EMg8UJYQFkS1rK/w6zQ1PDqYpE7mY89BPvAEYqosI2dxce+6xcESiS
-         TBdttxMHlTPtpVeZNe7JQsF98ot668HVKCeOt1xDlogFZ7ioq0ozHi0XZcxsEHccAEwN
-         VC/59skOaRTtft5b0E4pjN77VSCFTZhVluO2towU2M1WIVTT/9xHh63F0IVduaxU4xlI
-         5k9HqgTCLe39e7y7T4GWb9YpygrnRHh1P7D5UL/Wd+x8QMw8/LHKTAYwhMYgqx1/516y
-         x1ZzCb0ZamwZqjjiLaxgFxx64Ta6N+o+pkbbu4TD0Pc6UDyNtbJXtsjifhHITjQ/wT0b
-         v5nw==
-X-Gm-Message-State: APjAAAUMiRVyJk6ECQX27IJDyO7GpiUBRiorTia04ec3KJHbHYCDoZNv
-        w0WnmNacoQqBZdS3dOmJtkfU8yBu
-X-Google-Smtp-Source: APXvYqxrIN2kjDMkEuYhaz30VWK5Im2lJl/nIJpEwP9lK/e6WISKYv6hTkN5IBnP8UDzszgvdP49nw==
-X-Received: by 2002:a0c:b7a8:: with SMTP id l40mr32170445qve.142.1561472888390;
-        Tue, 25 Jun 2019 07:28:08 -0700 (PDT)
-Received: from lclaudio.dyndns.org ([191.177.181.0])
-        by smtp.gmail.com with ESMTPSA id l5sm8085935qte.9.2019.06.25.07.28.07
-        (version=TLS1_3 cipher=AEAD-AES256-GCM-SHA384 bits=256/256);
-        Tue, 25 Jun 2019 07:28:07 -0700 (PDT)
-From:   "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-X-Google-Original-From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-Received: by lclaudio.dyndns.org (Postfix, from userid 1000)
-        id B3C353C0017; Tue, 25 Jun 2019 11:28:04 -0300 (-03)
-Date:   Tue, 25 Jun 2019 11:28:04 -0300
+        h=x-gm-message-state:to:from:subject:message-id:date:user-agent
+         :mime-version:content-transfer-encoding:content-language;
+        bh=9cOlOuJsamJMtckMqRhrPsT9WJMRL8uiT/4JdPUn2Z4=;
+        b=BQLW131+11rQPKskojRreS+ycWrn+1+L5OjQTontqvtO+5Ax5B34Ra9CjyoU3mf88l
+         WE80Fs90UFtN00NI4qRQHzBdWfJpVm+y2Er9lenyT40LpB+qcvJNG3g6i+EE2z4NEm7+
+         N0ui/lPC3iSoxOuetm60jvaIucx+LE3FJ5FWRzGYt95V5lAqN4JPvhtWg347mzKEv9jd
+         VPqItroWqspfpKAZHsdzI7qiayCU7CXhSpX0UQuYjA1CDlqWvBWVRfjHv1AmBLNxd2Sc
+         FO2ZZLBaouCaWQ1JXZLjNBIZx9zPokPmTBHTGXgUQIIsjO7m6VuGPVQz3qs2zjvFlyb4
+         qimA==
+X-Gm-Message-State: APjAAAV/PjqcwymEoQguR0ifIEk8gGEtfg1L0yYlkTuRLj6774CaMIdP
+        AmioMOcoL2CqIZ+U/dYHOyGMo7rB+Qc=
+X-Google-Smtp-Source: APXvYqz7KEAKRYSXgAR2TEMVYZ/vaB/uDw4jQnMtzgZwQkix1XDWXTk7Kbup6d4Sbv+NzSz1JlZgeA==
+X-Received: by 2002:a17:90a:3270:: with SMTP id k103mr2926247pjb.54.1561534507362;
+        Wed, 26 Jun 2019 00:35:07 -0700 (PDT)
+Received: from [10.11.32.138] ([43.230.89.66])
+        by smtp.gmail.com with ESMTPSA id x25sm17639557pfm.48.2019.06.26.00.35.06
+        for <linux-rt-users@vger.kernel.org>
+        (version=TLS1_3 cipher=AEAD-AES128-GCM-SHA256 bits=128/128);
+        Wed, 26 Jun 2019 00:35:06 -0700 (PDT)
 To:     linux-rt-users@vger.kernel.org
-Cc:     Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Ping Fang <pifang@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH V3 RT] mm/zswap: Do not disable preemption in
- zswap_frontswap_store()
-Message-ID: <20190625142804.GH4902@uudg.org>
+From:   "xiaoqiang.zhao" <zhaoxiaoqiang007@gmail.com>
+Subject: schdule bug in 4.4.38-rt49
+Message-ID: <55c68f08-4160-4bee-fdc5-9fc1ea86cf57@gmail.com>
+Date:   Wed, 26 Jun 2019 15:35:04 +0800
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101
+ Thunderbird/60.7.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-User-Agent: Mutt/1.11.4 (2019-03-13)
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Zswap causes "BUG: scheduling while atomic" by blocking on a rt_spin_lock() with
-preemption disabled. The preemption is disabled by get_cpu_var() in
-zswap_frontswap_store() to protect the access of the zswap_dstmem percpu variable.
+Hi, guys:
 
-Use get_locked_var() to protect the percpu zswap_dstmem variable, making the
-code preemptive.
+     I have built a kernel 4.4.38-rt49 with CONFIG_PREEMPT_RT_FULL=y , 
+the kernel crash when I run the UnixBench of spawn test case.
 
-As get_cpu_ptr() also disables preemption, replace it by this_cpu_ptr() and
-remove the counterpart put_cpu_ptr().
+     Here is the oops info:
 
-Steps to Reproduce:
+[  206.143829] BUG: scheduling while atomic: spawn/27356/0x00000002
+[  206.143839] Modules linked in: bcmdhd pci_tegra bluedroid_pm ip_tables
+[  206.143846] CPU: 5 PID: 27356 Comm: spawn Tainted: G W       
+4.4.38-DATA-RT-g06219d69-dirty #7
+[  206.143848] Hardware name: quill (DT)
+[  206.143850] Call trace:
+[  206.143871] [<ffffffc0000898f0>] dump_backtrace+0x0/0x100
+[  206.143875] [<ffffffc000089ab8>] show_stack+0x14/0x1c
+[  206.143884] [<ffffffc000314120>] dump_stack+0x98/0xc0
+[  206.143902] [<ffffffc00016c330>] __schedule_bug+0x44/0x5c
+[  206.143911] [<ffffffc000afd690>] __schedule+0x418/0x4f4
+[  206.143913] [<ffffffc000afd7b8>] schedule+0x4c/0xe4
+[  206.143918] [<ffffffc000afeeb8>] rt_spin_lock_slowlock+0x194/0x2c4
+[  206.143921] [<ffffffc000b0048c>] rt_spin_lock+0x58/0x5c
+[  206.143926] [<ffffffc0000e4678>] __wake_up+0x20/0x4c
+[  206.143930] [<ffffffc0000e6d58>] __percpu_up_read+0x34/0x3c
+[  206.143939] [<ffffffc0000a2de0>] copy_process.isra.52+0x136c/0x19f0
+[  206.143942] [<ffffffc0000a3590>] _do_fork+0x74/0x39c
+[  206.143945] [<ffffffc0000a3980>] SyS_clone+0x1c/0x24
+[  206.143949] [<ffffffc000084ff0>] el0_svc_naked+0x24/0x28
+[  206.143963] Unable to handle kernel paging request at virtual address 
+7ff31fc040
+[  206.143964] pgd = ffffffc1df8d7000
+[  206.143985] [7ff31fc040] *pgd=0000000262400003, 
+*pud=0000000262400003, *pmd=000000025ff4c003, *pte=00e0000255829f3
+[  206.143989] Internal error: Oops: 9200004f [#1] PREEMPT SMP
+[  206.143996] Modules linked in: bcmdhd pci_tegra bluedroid_pm ip_tables
+[  206.143999] CPU: 5 PID: 27356 Comm: spawn Tainted: G W       
+4.4.38-DATA-RT-g06219d69-dirty #7
+[  206.144000] Hardware name: quill (DT)
+[  206.144002] task: ffffffc1e45bd100 ti: ffffffc1e0320000 task.ti: 
+ffffffc1e0320000
+[  206.144005] PC is at 0x7f9fb6a198
+[  206.144006] LR is at 0x559517b9b0
+[  206.144008] pc : [<0000007f9fb6a198>] lr : [<000000559517b9b0>] 
+pstate: 20000000
+[  206.144009] sp : 0000007ff31fc060
+[  206.144013] x29: 0000007ff31fc0a0 x28: 0000000000000000
+[  206.144016] x27: 0000000000000000 x26: 0000000000000000
+[  206.144018] x25: 0000000000000000 x24: 0000000000000000
+[  206.144021] x23: 0000000000000000 x22: 000000000000001e
+[  206.144023] x21: 000000559518b000 x20: 0000007ff31fc094
+[  206.144026] x19: 000000559518c048 x18: 0000000000000003
+[  206.144028] x17: 0000007f9fb6a198 x16: 000000559518bf90
+[  206.144030] x15: 0000007f9fc4c150 x14: 0000000000000008
+[  206.144033] x13: 0000007f9fc2a34c x12: 0000007ff31fbfa0
+[  206.144035] x11: 0000007f9fc4f740 x10: 0000000000000000
+[  206.144038] x9 : 0000007ff31fc128 x8 : 00000000000000dc
+[  206.144040] x7 : 0000007f9fbee088 x6 : 0000007f9fc4fac8
+[  206.144042] x5 : 0000007f9fc40bb0 x4 : 0000007f9fc40c80
+[  206.144045] x3 : 0000000000000000 x2 : 8c391e6c47b6d000
+[  206.144047] x1 : 0000000000000000 x0 : 0000007ff31fc094
+[  206.144048]
+[  206.144050] Process spawn (pid: 27356, stack limit = 0xffffffc1e0320028)
 
-    1. # grubby --args "zswap.enabled=1" --update-kernel DEFAULT
-    2. # reboot
-    3. Calculate the amount o memory to be used by the test:
-       ---> grep MemAvailable /proc/meminfo
-       ---> Add 25% ~ 50% to that value
-    4. # stress --vm 1 --vm-bytes ${MemAvailable+25%} --timeout 240s
 
-Usually, in less than 5 minutes the backtrace listed below appears, followed
-by a kernel panic:
+The call path is:
 
-[26747.628830] 014: BUG: scheduling while atomic: kswapd1/181/0x00000002
-[26747.834904] 014: 
-[26747.839778] 014: Preemption disabled at:
-[26747.845598] 014: [<ffffffff8b2a6cda>] zswap_frontswap_store+0x21a/0x6e1
-[26747.856103] 014: 
-[26747.864619] 014: Kernel panic - not syncing: scheduling while atomic
-[26747.872859] 014: CPU: 14 PID: 181 Comm: kswapd1 Kdump: loaded Not tainted 5.0.14-rt9 #1
-[26747.880832] 014: Hardware name: AMD Pence/Pence, BIOS WPN2321X_Weekly_12_03_21 03/19/2012
-[26747.888977] 014: Call Trace:
-[26747.891847] 014:  dump_stack+0x85/0xc0
-[26747.895584] 014:  panic+0x106/0x2a7
-[26747.899063] 014:  ? zswap_frontswap_store+0x21a/0x6e1
-[26747.904093] 014:  __schedule_bug.cold+0x3f/0x51
-[26747.908605] 014:  __schedule+0x5cb/0x6f0
-[26747.912513] 014:  schedule+0x43/0xd0
-[26747.916073] 014:  rt_spin_lock_slowlock_locked+0x114/0x2b0
-[26747.921538] 014:  rt_spin_lock_slowlock+0x51/0x80
-[26747.926225] 014:  zbud_alloc+0x1da/0x2d0
-[26747.930132] 014:  zswap_frontswap_store+0x31a/0x6e1
-[26747.934992] 014:  __frontswap_store+0xab/0x130
-[26747.939417] 014:  swap_writepage+0x39/0x70
-[26747.943496] 014:  pageout.isra.0+0xe3/0x320
-[26747.947666] 014:  shrink_page_list+0xa8e/0xd10
-[26747.952092] 014:  shrink_inactive_list+0x251/0x840
-[26747.956866] 014:  shrink_node_memcg+0x213/0x770
-[26747.961379] 014:  ? preempt_count_sub+0x98/0xe0
-[26747.965891] 014:  ? preempt_count_sub+0x98/0xe0
-[26747.970402] 014:  shrink_node+0xd9/0x450
-[26747.974309] 014:  balance_pgdat+0x2d5/0x510
-[26747.978477] 014:  kswapd+0x218/0x470
-[26747.982038] 014:  ? finish_wait+0x70/0x70
-[26747.986033] 014:  kthread+0xfb/0x130
-[26747.989595] 014:  ? balance_pgdat+0x510/0x510
-[26747.993934] 014:  ? kthread_park+0x90/0x90
-[26747.998012] 014:  ret_from_fork+0x27/0x50
+  do_fork-> copy_process -> threadgroup_change_end -> 
+percpu_up_read(call preempt_disable) -> __percpu_up_read
 
-Reported-by: Ping Fang <pifang@redhat.com>
-Signed-off-by: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
-Reviewed-by: Daniel Bristot de Oliveira <bristot@redhat.com>
----
-Tested:   Ran back-to-back repetitions of the reproducer during 10 hours,
-          with the V3 patch applied, and no errors were observed. Without
-          this patch, every test run ends in a kernel panic, in less than
-          5 minutes.
+  -> wake_up -> rt_spin_lock -> rt_spin_lock_slowlock ->  schedule(call 
+preempt_disable again) -> __schedule
 
-diff --git a/mm/zswap.c b/mm/zswap.c
-index a4e4d36ec085..fd5d2d5c9ae9 100644
---- a/mm/zswap.c
-+++ b/mm/zswap.c
-@@ -27,6 +27,7 @@
- #include <linux/highmem.h>
- #include <linux/slab.h>
- #include <linux/spinlock.h>
-+#include <linux/locallock.h>
- #include <linux/types.h>
- #include <linux/atomic.h>
- #include <linux/frontswap.h>
-@@ -990,6 +991,8 @@ static void zswap_fill_page(void *ptr, unsigned long value)
- 	memset_l(page, value, PAGE_SIZE / sizeof(unsigned long));
- }
- 
-+/* protect zswap_dstmem from concurrency */
-+static DEFINE_LOCAL_IRQ_LOCK(zswap_dstmem_lock);
- /*********************************
- * frontswap hooks
- **********************************/
-@@ -1066,12 +1069,11 @@ static int zswap_frontswap_store(unsigned type, pgoff_t offset,
- 	}
- 
- 	/* compress */
--	dst = get_cpu_var(zswap_dstmem);
--	tfm = *get_cpu_ptr(entry->pool->tfm);
-+	dst = get_locked_var(zswap_dstmem_lock, zswap_dstmem);
-+	tfm = *this_cpu_ptr(entry->pool->tfm);
- 	src = kmap_atomic(page);
- 	ret = crypto_comp_compress(tfm, src, PAGE_SIZE, dst, &dlen);
- 	kunmap_atomic(src);
--	put_cpu_ptr(entry->pool->tfm);
- 	if (ret) {
- 		ret = -EINVAL;
- 		goto put_dstmem;
-@@ -1094,7 +1096,7 @@ static int zswap_frontswap_store(unsigned type, pgoff_t offset,
- 	memcpy(buf, &zhdr, hlen);
- 	memcpy(buf + hlen, dst, dlen);
- 	zpool_unmap_handle(entry->pool->zpool, handle);
--	put_cpu_var(zswap_dstmem);
-+	put_locked_var(zswap_dstmem_lock, zswap_dstmem);
- 
- 	/* populate entry */
- 	entry->offset = offset;
-@@ -1122,7 +1124,7 @@ static int zswap_frontswap_store(unsigned type, pgoff_t offset,
- 	return 0;
- 
- put_dstmem:
--	put_cpu_var(zswap_dstmem);
-+	put_locked_var(zswap_dstmem_lock, zswap_dstmem);
- 	zswap_pool_put(entry->pool);
- freepage:
- 	zswap_entry_cache_free(entry);
+  -> schedule_debug -> in_aotmic_preempt_off (return true, preempt_count 
+== 2) -> __schedule_bug ( leads to kernel pagefault exception, OOPS!!)
+
+Before schedule, we have call preempt_disable twice, this will 
+definitely bump preempt_count to 2 and
+
+in_atomic_preempt_off will fail.
+
+I did not figure out:   WHY we call schedule inside 
+rt_spin_lock_slowlock and under what condition this call is correct ?
+
+Any ideas ?
+
+
+
