@@ -2,101 +2,100 @@ Return-Path: <SRS0=OCyy=U3=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C2579C4321A
-	for <linux-rt-users@archiver.kernel.org>; Fri, 28 Jun 2019 10:28:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A7DA8C4321A
+	for <linux-rt-users@archiver.kernel.org>; Fri, 28 Jun 2019 12:51:26 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 959EE208E3
-	for <linux-rt-users@archiver.kernel.org>; Fri, 28 Jun 2019 10:28:58 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ICjnZK3j"
+	by mail.kernel.org (Postfix) with ESMTP id 8A83B20644
+	for <linux-rt-users@archiver.kernel.org>; Fri, 28 Jun 2019 12:51:26 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726657AbfF1K26 (ORCPT
+        id S1726739AbfF1MvW (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 28 Jun 2019 06:28:58 -0400
-Received: from mail-qt1-f193.google.com ([209.85.160.193]:41567 "EHLO
-        mail-qt1-f193.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726574AbfF1K26 (ORCPT
+        Fri, 28 Jun 2019 08:51:22 -0400
+Received: from atrey.karlin.mff.cuni.cz ([195.113.26.193]:58069 "EHLO
+        atrey.karlin.mff.cuni.cz" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726590AbfF1MvW (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 28 Jun 2019 06:28:58 -0400
-Received: by mail-qt1-f193.google.com with SMTP id d17so5652191qtj.8
-        for <linux-rt-users@vger.kernel.org>; Fri, 28 Jun 2019 03:28:57 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to;
-        bh=SGSgk0gA9Kt7i87kof0dmw6rZHV0SJK9Aui4FAJYhRE=;
-        b=ICjnZK3jixYcE0a5H2kgGmQzDEue/5/HhzVKVcswefVCEYVGaqVdfG87nulRVG2/Ky
-         dhDApwCDFR++69JKn5bmO3CLKjMN7c4L/zktouAijnkOMU7DWaeY/2z1JjHdEPouKRnO
-         WCV2TSdxjSGWFNYW9Zyim6+vF47VkMjma9k2AOVRjFDUmocRNS6IXxlWeyBVXvPWg0EB
-         CahF4kPhSfZe+eHc2CwAEZq0F8V/ED37kYOVR6ljWNhhmjdD3BFdmkHqmzChth5+K3P2
-         7DHlTjABSf+jLNo57BeYIKIRw6wKVlyUmLMKkYdoP4EopwhWcTGoTs2FUFxLzuntJB9I
-         JZlw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to;
-        bh=SGSgk0gA9Kt7i87kof0dmw6rZHV0SJK9Aui4FAJYhRE=;
-        b=NRdM8jAPzqqtrQPlKsT+P9Xwh0LFWJ+1yAJFBasPA7WKdm/k1+cWGkhYcAWQty/hiZ
-         ReOHpM0IfKVjNxQDqZdM3BUMMwQYHIjwritWWxXdeNufEnTzH/R8O3zyj6vl6jGKGzcQ
-         df1Anf8Cu19z5HS+KI4v2D3R7O9LoLVQbAPI/lbWs8nsgbjp65j+Ve+DbbaJ7kkre/fa
-         Y/mRJ2BSR0kjYANuvw58lPi/ag9QX8Ci7nSSJwktUzJC6/hPN07Ojrl/p5hw4LP1kLMn
-         ty5Fiw+f8oNoD5MErK6ufi2zRG/zSgRw1gdl3RsXwcL8XLOY17uA4hSOHrf2PUB3kXRy
-         Zc6w==
-X-Gm-Message-State: APjAAAVwJpwgLfE71Iot+seTwLraTIXOz1WWvfQ2c0EFag6z21q9Z/Cm
-        F7ypaB31ACOeUw9U8ZoerylBv0NUNpEIxiAl/kCFCAZH
-X-Google-Smtp-Source: APXvYqwbM0PKwba83WNz/+HvRToZGw/TurNCe3h7g3R0vBtwI5srrkOUVQfKf/uK8nDENLQ/u5yIevxDgHltTVKsUso=
-X-Received: by 2002:a0c:8aaa:: with SMTP id 39mr7380080qvv.17.1561717737109;
- Fri, 28 Jun 2019 03:28:57 -0700 (PDT)
+        Fri, 28 Jun 2019 08:51:22 -0400
+Received: by atrey.karlin.mff.cuni.cz (Postfix, from userid 512)
+        id B13E38067C; Fri, 28 Jun 2019 14:51:09 +0200 (CEST)
+Date:   Fri, 28 Jun 2019 14:51:20 +0200
+From:   Pavel Machek <pavel@ucw.cz>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     Jan Kiszka <jan.kiszka@siemens.com>,
+        linux-rt-users@vger.kernel.org,
+        kernel list <linux-kernel@vger.kernel.org>, mwhitehe@redhat.com
+Subject: Re: PREEMPT_RT_FULL on x86-32 machine
+Message-ID: <20190628125120.GB21311@amd>
+References: <20190622081954.GA10751@amd>
+ <2804bc5b-18c1-2793-171c-045c0725a6a7@siemens.com>
+ <20190624105340.GA21414@amd>
+ <20190624132748.n4lgg4swj4nzirdb@linutronix.de>
 MIME-Version: 1.0
-References: <20190626161843.2c6r2dxeoxeyxce7@linutronix.de>
- <CAJjrzcVMJRya42sZbVsiiHh2dv=Wuy-OouqesfjxUMG9bK1LkQ@mail.gmail.com>
- <20190628103435.0d95ebe8@archlinux> <CAJjrzcUBU5PPSzwXwm6wD8vT_mAakE-mepN1+CQuCoPNMWwgzw@mail.gmail.com>
- <20190628115739.7fec552c@archlinux>
-In-Reply-To: <20190628115739.7fec552c@archlinux>
-From:   Arve Barsnes <arve.barsnes@gmail.com>
-Date:   Fri, 28 Jun 2019 12:28:44 +0200
-Message-ID: <CAJjrzcWdSxHoHFP1THs4_jbFGAOCfds73W0fjFkNFib97TAQ6g@mail.gmail.com>
-Subject: Re: [ANNOUNCE] v5.0.21-rt14
-To:     linux-rt-users <linux-rt-users@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: multipart/signed; micalg=pgp-sha1;
+        protocol="application/pgp-signature"; boundary="/WwmFnJnmDyWGHa4"
+Content-Disposition: inline
+In-Reply-To: <20190624132748.n4lgg4swj4nzirdb@linutronix.de>
+User-Agent: Mutt/1.5.23 (2014-03-12)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, 28 Jun 2019 at 11:58, Ralf Mardorf <ralf.mardorf@alice-dsl.net> wrote:
->
-> On Fri, 28 Jun 2019 11:28:27 +0200, Arve Barsnes wrote:
-> >I don't have those other commands installed, but outside of my trouble
-> >with -rt14, it's interesting that my uname output does not mention
-> >PREEMPT RT.
->
-> Perhaps you accidentally used the wrong config to build the kernel?
->
-> What does
->
->   zgrep PREE /proc/config.gz
->   grep PREE /lib/modules/5.0.21-rt1*/build/.config
->
-> show?
->
-> You might have a config in /boot/ or somewhere else.
 
-This is a relatively new box that haven't really been used much for
-audio work yet, so I seem to have completely failed to set up preempt
-at the moment.
+--/WwmFnJnmDyWGHa4
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-CONFIG_HAVE_PREEMPT_LAZY=y
-CONFIG_PREEMPT_VOLUNTARY=y
+Hi!
 
-Other configs not set.
+> > > >Is full preemption supposed to work on x86-32 machines?
+> > > >
+> > > >Because it does not work for me. It crashes early in boot, no messag=
+es
+> > > >make it to console. Similar configuration for x86-64 boots ok.
+> > > >
+> > >=20
+> > > Maybe you can also tell which version(s) you tried, and in which
+> > > configuration(s), and how the crash looked like.
+> >=20
+> > I wanted to know if the configuration is supposed to work at all
+> > before starting heavy debugging. From your reply I assume that it
+> > should work.
+> >=20
+> > I tried 4.19.13-rt1-cip1 among others. Crash is early in boot, I can
+> > try some early printing...
+>=20
+> The latest is v4.19.50-rt22 I would suggest that one. There was a bug
+> which was fixed either in 4.19.23-rt14 or in the following version.
+>=20
+> If the latest one does not work please let me know and I will have a
+> look.
 
-But before I removed my -rt14 config I did a diff between it and the
--rt13 config, and they were identical, so at least the config is not
-the cause of my boot trouble. I might have done something otherwise
-wrong though, I will try to redo the upgrade from the beginning after
-the weekend.
+Ok, let me try again. It seems the kernel based on the latest one
+works ok. Even suspend/resume works.
+
+Thanks,
+									Pavel
+--=20
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
+
+--/WwmFnJnmDyWGHa4
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iEYEARECAAYFAl0WDUcACgkQMOfwapXb+vK5yQCeNKjG3rGjgsx9KqLkf32RYiJ9
+6QMAnjOqSXA6Nqzzcac6pveqLSi0VimQ
+=luiT
+-----END PGP SIGNATURE-----
+
+--/WwmFnJnmDyWGHa4--
