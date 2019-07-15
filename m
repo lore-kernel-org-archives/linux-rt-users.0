@@ -2,117 +2,153 @@ Return-Path: <SRS0=4wg/=VM=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 03B92C7618F
-	for <linux-rt-users@archiver.kernel.org>; Mon, 15 Jul 2019 11:32:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BF6F6C7618F
+	for <linux-rt-users@archiver.kernel.org>; Mon, 15 Jul 2019 20:25:07 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id DB0832081C
-	for <linux-rt-users@archiver.kernel.org>; Mon, 15 Jul 2019 11:32:02 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A1E6A20665
+	for <linux-rt-users@archiver.kernel.org>; Mon, 15 Jul 2019 20:25:07 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729902AbfGOLcB (ORCPT
+        id S1731621AbfGOUZD (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 15 Jul 2019 07:32:01 -0400
-Received: from mail-wr1-f49.google.com ([209.85.221.49]:46102 "EHLO
-        mail-wr1-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729725AbfGOLb6 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 15 Jul 2019 07:31:58 -0400
-Received: by mail-wr1-f49.google.com with SMTP id z1so16659466wru.13
-        for <linux-rt-users@vger.kernel.org>; Mon, 15 Jul 2019 04:31:57 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:subject:to:message-id:date:user-agent
-         :mime-version:content-language:content-transfer-encoding;
-        bh=sVmx49FetzgtGZuIFy9uIhpnJLTpg0kxTl0UuJEJe7Q=;
-        b=DF9AbKe8qEnvDZwhN+7q4TJhBVqB/zniNN3lb7fz9SZ6Kpr7L6bB2nmixK3A5ygFqi
-         mleOgP36l8ApXoK/mf4BJxT1Ts51NBLma6gAoW2RmBR63fBmRi4zxK1yQxpJ1gK5K0UX
-         Cg5keTLcnomYnzMQs691XEvsraZ8Teao+fMgiXrew/PSe0spIgxkX6o3JOZGd/cs2Ib4
-         U198kz3ihHYL4fOsq/9iB3egfVEkmj+Bumszpca5qiu/kiTgUf5hfFWyMtUV9NLCpOLp
-         N7OFwHLuYesaMceKZRJvTonoxverk5visaf/RDn7KZhvgj2bYER6+44zXiAeOINqtDC6
-         ORVA==
-X-Gm-Message-State: APjAAAV9i82cJHZdjGh+VgL2eEvWX7AVDW0iTw03O9/x7vfF0KEe0zr4
-        DwIEW67ZAA5bkfjsn3kZ9Qi141GKTkE=
-X-Google-Smtp-Source: APXvYqxaMCkFl0KuQs1ITVTLQOOHJiQynNDzXl3QWesjiDgflxX64RiUZDacf3NVNNYHdIVElDAnvQ==
-X-Received: by 2002:a5d:568e:: with SMTP id f14mr27982166wrv.167.1563190316126;
-        Mon, 15 Jul 2019 04:31:56 -0700 (PDT)
-Received: from t460s.bristot.redhat.com (nat-cataldo.sssup.it. [193.205.81.5])
-        by smtp.gmail.com with ESMTPSA id g8sm19621142wme.20.2019.07.15.04.31.55
-        (version=TLS1_3 cipher=AEAD-AES128-GCM-SHA256 bits=128/128);
-        Mon, 15 Jul 2019 04:31:55 -0700 (PDT)
-From:   Daniel Bristot de Oliveira <bristot@redhat.com>
-Subject: [ANNOUNCE] LPC 2019: Submit a topic for the RT Micro-conference
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Message-ID: <c76e9cb4-2c61-797d-bce1-aa504ad51940@redhat.com>
-Date:   Mon, 15 Jul 2019 13:31:53 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101
- Thunderbird/60.7.0
+        Mon, 15 Jul 2019 16:25:03 -0400
+Received: from mx1.redhat.com ([209.132.183.28]:33206 "EHLO mx1.redhat.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1731055AbfGOUZD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 15 Jul 2019 16:25:03 -0400
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mx1.redhat.com (Postfix) with ESMTPS id 62F673081244;
+        Mon, 15 Jul 2019 20:25:02 +0000 (UTC)
+Received: from torg.redhat.com (ovpn-121-239.rdu2.redhat.com [10.10.121.239])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 958225D721;
+        Mon, 15 Jul 2019 20:25:01 +0000 (UTC)
+From:   Clark Williams <williams@redhat.com>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        RT List <linux-rt-users@vger.kernel.org>
+Subject: [PATCH] x86_pkg_temp_thermal: make pkg_temp_lock a raw spinlock
+Date:   Mon, 15 Jul 2019 15:25:00 -0500
+Message-Id: <20190715202500.6742-1-williams@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Greylist: Sender IP whitelisted, not delayed by milter-greylist-4.5.16 (mx1.redhat.com [10.5.110.49]); Mon, 15 Jul 2019 20:25:02 +0000 (UTC)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Since 2004 a project has improved the Real-time and low-latency features
-for Linux. This project has become know as PREEMPT_RT, formally the
-real-time patch. Over the past decade, many parts of the PREEMPT RT
-became part of the official Linux code base. Examples of what came from
-PREEMPT_RT include: Real-time mutexes, high-resolution timers, lockdep,
-ftrace, RT scheduling, SCHED_DEADLINE, RCU_PREEMPT, generic interrupts,
-priority inheritance futexes, threaded interrupt handlers and more. The
-number of patches that need integration has been reduced from previous
-years, and the pieces left are now mature enough to make their way into
-mainline Linux. This year could possibly be the year PREEMPT_RT is
-merged (tm)!
+The spinlock pkg_temp_lock has the potential of being taken in atomic
+context on v5.2-rt PREEMPT_RT. It's static and limited scope so
+go ahead and make it a raw spinlock.
 
-In the final lap of this race, the last patches are on the way to be
-merged, but there are still some pieces missing. When the merge occurs,
-PREEMPT_RT will start to follow a new pace: the Linus one. So, it is
-possible to raise the following discussions:
+Signed-off-by: Clark Williams <williams@redhat.com>
+---
+ drivers/thermal/intel/x86_pkg_temp_thermal.c | 24 ++++++++++----------
+ 1 file changed, 12 insertions(+), 12 deletions(-)
 
-The status of the merge, and how can we resolve the last issues that
-block the merge; How can we improve the testing of the -rt, to follow
-the problems raised as Linus's tree advances;
-
-What's next?
-
-Proposed topics:
- - Real-time Containers
- - Proxy execution discussion
- - Merge - what is missing and who can help?
- - Rework of softirq - what is need for the -rt merge
- - An in-kernel view of Latency
- - Ongoing work on RCU that impacts per-cpu threads
- - How BPF can influence the PREEMPT_RT kernel latency
- - Core-schedule and the RT schedulers
- - Stable maintainers tools discussion & improvements.
- - Improvements on full CPU isolation
- - What tools can we add into tools/ that other kernel developers can
-   use to test and learn about PREEMPT_RT?
- - What tests can we add to tools/testing/selftests?
- - New tools for timing regression test, e.g. locking, overheads...
- - What kernel boot self-tests can be added?
- - Discuss various types of failures that can happen with PREEMPT_RT
-   that normally would not happen in the vanilla kernel, e.g, with
-   lockdep, preemption model.
- - The continuation of the discussion of topics from last year's
-   micro-conference, including the development done during this (almost)
-   year, are also welcome!
-
-If you are interested in participating in this microconference and have
-topics to propose, please use the CfP process here:
-
-https://www.linuxplumbersconf.org/event/4/abstracts/
-
-If you have any doubts, feel free to contact me!
-
-Thanks!
--- Daniel
-
+diff --git a/drivers/thermal/intel/x86_pkg_temp_thermal.c b/drivers/thermal/intel/x86_pkg_temp_thermal.c
+index 319b77126168..92ceed3de6f3 100644
+--- a/drivers/thermal/intel/x86_pkg_temp_thermal.c
++++ b/drivers/thermal/intel/x86_pkg_temp_thermal.c
+@@ -63,7 +63,7 @@ static int max_packages __read_mostly;
+ /* Array of package pointers */
+ static struct pkg_device **packages;
+ /* Serializes interrupt notification, work and hotplug */
+-static DEFINE_SPINLOCK(pkg_temp_lock);
++static DEFINE_RAW_SPINLOCK(pkg_temp_lock);
+ /* Protects zone operation in the work function against hotplug removal */
+ static DEFINE_MUTEX(thermal_zone_mutex);
+ 
+@@ -279,12 +279,12 @@ static void pkg_temp_thermal_threshold_work_fn(struct work_struct *work)
+ 	u64 msr_val, wr_val;
+ 
+ 	mutex_lock(&thermal_zone_mutex);
+-	spin_lock_irq(&pkg_temp_lock);
++	raw_spin_lock_irq(&pkg_temp_lock);
+ 	++pkg_work_cnt;
+ 
+ 	pkgdev = pkg_temp_thermal_get_dev(cpu);
+ 	if (!pkgdev) {
+-		spin_unlock_irq(&pkg_temp_lock);
++		raw_spin_unlock_irq(&pkg_temp_lock);
+ 		mutex_unlock(&thermal_zone_mutex);
+ 		return;
+ 	}
+@@ -298,7 +298,7 @@ static void pkg_temp_thermal_threshold_work_fn(struct work_struct *work)
+ 	}
+ 
+ 	enable_pkg_thres_interrupt();
+-	spin_unlock_irq(&pkg_temp_lock);
++	raw_spin_unlock_irq(&pkg_temp_lock);
+ 
+ 	/*
+ 	 * If tzone is not NULL, then thermal_zone_mutex will prevent the
+@@ -323,7 +323,7 @@ static int pkg_thermal_notify(u64 msr_val)
+ 	struct pkg_device *pkgdev;
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&pkg_temp_lock, flags);
++	raw_spin_lock_irqsave(&pkg_temp_lock, flags);
+ 	++pkg_interrupt_cnt;
+ 
+ 	disable_pkg_thres_interrupt();
+@@ -335,7 +335,7 @@ static int pkg_thermal_notify(u64 msr_val)
+ 		pkg_thermal_schedule_work(pkgdev->cpu, &pkgdev->work);
+ 	}
+ 
+-	spin_unlock_irqrestore(&pkg_temp_lock, flags);
++	raw_spin_unlock_irqrestore(&pkg_temp_lock, flags);
+ 	return 0;
+ }
+ 
+@@ -381,9 +381,9 @@ static int pkg_temp_thermal_device_add(unsigned int cpu)
+ 	      pkgdev->msr_pkg_therm_high);
+ 
+ 	cpumask_set_cpu(cpu, &pkgdev->cpumask);
+-	spin_lock_irq(&pkg_temp_lock);
++	raw_spin_lock_irq(&pkg_temp_lock);
+ 	packages[pkgid] = pkgdev;
+-	spin_unlock_irq(&pkg_temp_lock);
++	raw_spin_unlock_irq(&pkg_temp_lock);
+ 	return 0;
+ }
+ 
+@@ -420,7 +420,7 @@ static int pkg_thermal_cpu_offline(unsigned int cpu)
+ 	}
+ 
+ 	/* Protect against work and interrupts */
+-	spin_lock_irq(&pkg_temp_lock);
++	raw_spin_lock_irq(&pkg_temp_lock);
+ 
+ 	/*
+ 	 * Check whether this cpu was the current target and store the new
+@@ -452,9 +452,9 @@ static int pkg_thermal_cpu_offline(unsigned int cpu)
+ 		 * To cancel the work we need to drop the lock, otherwise
+ 		 * we might deadlock if the work needs to be flushed.
+ 		 */
+-		spin_unlock_irq(&pkg_temp_lock);
++		raw_spin_unlock_irq(&pkg_temp_lock);
+ 		cancel_delayed_work_sync(&pkgdev->work);
+-		spin_lock_irq(&pkg_temp_lock);
++		raw_spin_lock_irq(&pkg_temp_lock);
+ 		/*
+ 		 * If this is not the last cpu in the package and the work
+ 		 * did not run after we dropped the lock above, then we
+@@ -465,7 +465,7 @@ static int pkg_thermal_cpu_offline(unsigned int cpu)
+ 			pkg_thermal_schedule_work(target, &pkgdev->work);
+ 	}
+ 
+-	spin_unlock_irq(&pkg_temp_lock);
++	raw_spin_unlock_irq(&pkg_temp_lock);
+ 
+ 	/* Final cleanup if this is the last cpu */
+ 	if (lastcpu)
+-- 
+2.21.0
 
