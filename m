@@ -4,32 +4,32 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-6.7 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
+	URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C6E0DC7618F
-	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Jul 2019 21:50:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 115A5C76196
+	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Jul 2019 21:50:37 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id A88112184E
-	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Jul 2019 21:50:35 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DBFD72184E
+	for <linux-rt-users@archiver.kernel.org>; Fri, 19 Jul 2019 21:50:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2388796AbfGSVua (ORCPT
+        id S2389061AbfGSVuf (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 19 Jul 2019 17:50:30 -0400
-Received: from mail.kernel.org ([198.145.29.99]:51226 "EHLO mail.kernel.org"
+        Fri, 19 Jul 2019 17:50:35 -0400
+Received: from mail.kernel.org ([198.145.29.99]:51112 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2388794AbfGSVt7 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S2388763AbfGSVt7 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 19 Jul 2019 17:49:59 -0400
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 4347D218AD;
-        Fri, 19 Jul 2019 21:49:59 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 2CCDF2189E;
+        Fri, 19 Jul 2019 21:49:58 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.92)
         (envelope-from <rostedt@goodmis.org>)
-        id 1hoalK-00085c-C1; Fri, 19 Jul 2019 17:49:58 -0400
-Message-Id: <20190719214958.251355108@goodmis.org>
+        id 1hoalJ-00082E-8e; Fri, 19 Jul 2019 17:49:57 -0400
+Message-Id: <20190719214957.155151346@goodmis.org>
 User-Agent: quilt/0.65
-Date:   Fri, 19 Jul 2019 17:49:45 -0400
+Date:   Fri, 19 Jul 2019 17:49:38 -0400
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -40,7 +40,7 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <wagi@monom.org>, tom.zanussi@linux.intel.com
-Subject: [PATCH RT 14/16] futex: Delay deallocation of pi_state
+Subject: [PATCH RT 07/16] sched/core: Drop a preempt_disable_rt() statement
 References: <20190719214931.700049248@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -54,182 +54,49 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-[ Upstream commit d7c7cf8cb68b7df17e6e50be1f25f35d83e686c7 ]
+[ Upstream commit 761126efdcbe3fa3e99c9079fa0ad6eca2f251f2 ]
 
-On -RT we can't invoke kfree() in a non-preemptible context.
+The caller holds a lock which already disables preemption.
+Drop the preempt_disable_rt() statement in get_nohz_timer_target().
 
-Defer the deallocation of pi_state to preemptible context.
-
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/futex.c | 55 ++++++++++++++++++++++++++++++++++++++++----------
- 1 file changed, 44 insertions(+), 11 deletions(-)
+ kernel/sched/core.c | 9 ++-------
+ 1 file changed, 2 insertions(+), 7 deletions(-)
 
-diff --git a/kernel/futex.c b/kernel/futex.c
-index b02d9969330b..688b6fcb79cb 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -822,13 +822,13 @@ static void get_pi_state(struct futex_pi_state *pi_state)
-  * Drops a reference to the pi_state object and frees or caches it
-  * when the last reference is gone.
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 91a9b2556fb0..1b2503b87473 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -558,14 +558,11 @@ void resched_cpu(int cpu)
   */
--static void put_pi_state(struct futex_pi_state *pi_state)
-+static struct futex_pi_state *__put_pi_state(struct futex_pi_state *pi_state)
+ int get_nohz_timer_target(void)
  {
- 	if (!pi_state)
--		return;
-+		return NULL;
+-	int i, cpu;
++	int i, cpu = smp_processor_id();
+ 	struct sched_domain *sd;
  
- 	if (!atomic_dec_and_test(&pi_state->refcount))
--		return;
-+		return NULL;
+-	preempt_disable_rt();
+-	cpu = smp_processor_id();
+-
+ 	if (!idle_cpu(cpu) && housekeeping_cpu(cpu, HK_FLAG_TIMER))
+-		goto preempt_en_rt;
++		return cpu;
  
- 	/*
- 	 * If pi_state->owner is NULL, the owner is most probably dying
-@@ -848,9 +848,7 @@ static void put_pi_state(struct futex_pi_state *pi_state)
- 		raw_spin_unlock_irq(&pi_state->pi_mutex.wait_lock);
- 	}
- 
--	if (current->pi_state_cache) {
--		kfree(pi_state);
--	} else {
-+	if (!current->pi_state_cache) {
- 		/*
- 		 * pi_state->list is already empty.
- 		 * clear pi_state->owner.
-@@ -859,6 +857,30 @@ static void put_pi_state(struct futex_pi_state *pi_state)
- 		pi_state->owner = NULL;
- 		atomic_set(&pi_state->refcount, 1);
- 		current->pi_state_cache = pi_state;
-+		pi_state = NULL;
-+	}
-+	return pi_state;
-+}
-+
-+static void put_pi_state(struct futex_pi_state *pi_state)
-+{
-+	kfree(__put_pi_state(pi_state));
-+}
-+
-+static void put_pi_state_atomic(struct futex_pi_state *pi_state,
-+				struct list_head *to_free)
-+{
-+	if (__put_pi_state(pi_state))
-+		list_add(&pi_state->list, to_free);
-+}
-+
-+static void free_pi_state_list(struct list_head *to_free)
-+{
-+	struct futex_pi_state *p, *next;
-+
-+	list_for_each_entry_safe(p, next, to_free, list) {
-+		list_del(&p->list);
-+		kfree(p);
- 	}
+ 	rcu_read_lock();
+ 	for_each_domain(cpu, sd) {
+@@ -584,8 +581,6 @@ int get_nohz_timer_target(void)
+ 		cpu = housekeeping_any_cpu(HK_FLAG_TIMER);
+ unlock:
+ 	rcu_read_unlock();
+-preempt_en_rt:
+-	preempt_enable_rt();
+ 	return cpu;
  }
  
-@@ -875,6 +897,7 @@ void exit_pi_state_list(struct task_struct *curr)
- 	struct futex_pi_state *pi_state;
- 	struct futex_hash_bucket *hb;
- 	union futex_key key = FUTEX_KEY_INIT;
-+	LIST_HEAD(to_free);
- 
- 	if (!futex_cmpxchg_enabled)
- 		return;
-@@ -919,7 +942,7 @@ void exit_pi_state_list(struct task_struct *curr)
- 			/* retain curr->pi_lock for the loop invariant */
- 			raw_spin_unlock(&pi_state->pi_mutex.wait_lock);
- 			raw_spin_unlock(&hb->lock);
--			put_pi_state(pi_state);
-+			put_pi_state_atomic(pi_state, &to_free);
- 			continue;
- 		}
- 
-@@ -938,6 +961,8 @@ void exit_pi_state_list(struct task_struct *curr)
- 		raw_spin_lock_irq(&curr->pi_lock);
- 	}
- 	raw_spin_unlock_irq(&curr->pi_lock);
-+
-+	free_pi_state_list(&to_free);
- }
- 
- #endif
-@@ -1920,6 +1945,7 @@ static int futex_requeue(u32 __user *uaddr1, unsigned int flags,
- 	struct futex_hash_bucket *hb1, *hb2;
- 	struct futex_q *this, *next;
- 	DEFINE_WAKE_Q(wake_q);
-+	LIST_HEAD(to_free);
- 
- 	if (nr_wake < 0 || nr_requeue < 0)
- 		return -EINVAL;
-@@ -2157,7 +2183,7 @@ static int futex_requeue(u32 __user *uaddr1, unsigned int flags,
- 				 * object.
- 				 */
- 				this->pi_state = NULL;
--				put_pi_state(pi_state);
-+				put_pi_state_atomic(pi_state, &to_free);
- 				/*
- 				 * We stop queueing more waiters and let user
- 				 * space deal with the mess.
-@@ -2174,7 +2200,7 @@ static int futex_requeue(u32 __user *uaddr1, unsigned int flags,
- 	 * in futex_proxy_trylock_atomic() or in lookup_pi_state(). We
- 	 * need to drop it here again.
- 	 */
--	put_pi_state(pi_state);
-+	put_pi_state_atomic(pi_state, &to_free);
- 
- out_unlock:
- 	double_unlock_hb(hb1, hb2);
-@@ -2195,6 +2221,7 @@ static int futex_requeue(u32 __user *uaddr1, unsigned int flags,
- out_put_key1:
- 	put_futex_key(&key1);
- out:
-+	free_pi_state_list(&to_free);
- 	return ret ? ret : task_count;
- }
- 
-@@ -2331,13 +2358,16 @@ static int unqueue_me(struct futex_q *q)
- static void unqueue_me_pi(struct futex_q *q)
- 	__releases(q->lock_ptr)
- {
-+	struct futex_pi_state *ps;
-+
- 	__unqueue_futex(q);
- 
- 	BUG_ON(!q->pi_state);
--	put_pi_state(q->pi_state);
-+	ps = __put_pi_state(q->pi_state);
- 	q->pi_state = NULL;
- 
- 	raw_spin_unlock(q->lock_ptr);
-+	kfree(ps);
- }
- 
- static int fixup_pi_state_owner(u32 __user *uaddr, struct futex_q *q,
-@@ -3286,6 +3316,8 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, unsigned int flags,
- 		 * did a lock-steal - fix up the PI-state in that case.
- 		 */
- 		if (q.pi_state && (q.pi_state->owner != current)) {
-+			struct futex_pi_state *ps_free;
-+
- 			raw_spin_lock(q.lock_ptr);
- 			ret = fixup_pi_state_owner(uaddr2, &q, current);
- 			if (ret && rt_mutex_owner(&q.pi_state->pi_mutex) == current) {
-@@ -3296,8 +3328,9 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, unsigned int flags,
- 			 * Drop the reference to the pi state which
- 			 * the requeue_pi() code acquired for us.
- 			 */
--			put_pi_state(q.pi_state);
-+			ps_free = __put_pi_state(q.pi_state);
- 			raw_spin_unlock(q.lock_ptr);
-+			kfree(ps_free);
- 		}
- 	} else {
- 		struct rt_mutex *pi_mutex;
 -- 
 2.20.1
 
