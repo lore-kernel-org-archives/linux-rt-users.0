@@ -4,29 +4,29 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 96A5EC7618B
-	for <linux-rt-users@archiver.kernel.org>; Sat, 27 Jul 2019 05:56:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7F9D9C7618B
+	for <linux-rt-users@archiver.kernel.org>; Sat, 27 Jul 2019 05:57:10 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 60A4220840
-	for <linux-rt-users@archiver.kernel.org>; Sat, 27 Jul 2019 05:56:58 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6072D20840
+	for <linux-rt-users@archiver.kernel.org>; Sat, 27 Jul 2019 05:57:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728780AbfG0F45 (ORCPT
+        id S1728837AbfG0F5D (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 27 Jul 2019 01:56:57 -0400
-Received: from mx1.redhat.com ([209.132.183.28]:53288 "EHLO mx1.redhat.com"
+        Sat, 27 Jul 2019 01:57:03 -0400
+Received: from mx1.redhat.com ([209.132.183.28]:46658 "EHLO mx1.redhat.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728734AbfG0F4x (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 27 Jul 2019 01:56:53 -0400
+        id S1728664AbfG0F4u (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 27 Jul 2019 01:56:50 -0400
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mx1.redhat.com (Postfix) with ESMTPS id 073792F8BCC;
-        Sat, 27 Jul 2019 05:56:53 +0000 (UTC)
+        by mx1.redhat.com (Postfix) with ESMTPS id BC96730872C5;
+        Sat, 27 Jul 2019 05:56:49 +0000 (UTC)
 Received: from t460p.redhat.com (ovpn-116-73.phx2.redhat.com [10.3.116.73])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id F40BA19C71;
-        Sat, 27 Jul 2019 05:56:51 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id C7CDE19C71;
+        Sat, 27 Jul 2019 05:56:48 +0000 (UTC)
 From:   Scott Wood <swood@redhat.com>
 To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Cc:     Thomas Gleixner <tglx@linutronix.de>,
@@ -37,627 +37,128 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         Clark Williams <williams@redhat.com>,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         Scott Wood <swood@redhat.com>
-Subject: [PATCH RT 8/8] sched: Lazy migrate_disable processing
-Date:   Sat, 27 Jul 2019 00:56:38 -0500
-Message-Id: <20190727055638.20443-9-swood@redhat.com>
+Subject: [PATCH RT 5/8] sched/deadline: Reclaim cpuset bandwidth in .migrate_task_rq()
+Date:   Sat, 27 Jul 2019 00:56:35 -0500
+Message-Id: <20190727055638.20443-6-swood@redhat.com>
 In-Reply-To: <20190727055638.20443-1-swood@redhat.com>
 References: <20190727055638.20443-1-swood@redhat.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
-X-Greylist: Sender IP whitelisted, not delayed by milter-greylist-4.5.16 (mx1.redhat.com [10.5.110.38]); Sat, 27 Jul 2019 05:56:53 +0000 (UTC)
+X-Greylist: Sender IP whitelisted, not delayed by milter-greylist-4.5.16 (mx1.redhat.com [10.5.110.47]); Sat, 27 Jul 2019 05:56:49 +0000 (UTC)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Avoid overhead on the majority of migrate disable/enable sequences
-by only manipulating scheduler data (and grabbing the relevant locks)
-when the task actually schedules while migrate-disabled.  Very large
-speedups were seen during a kernel build.
-
-Instead of cpuhp_pin_lock, CPU hotplug is handled by keeping a per-CPU
-count of the number of pinned tasks (including tasks which have not
-scheduled in the migrate-disabled section); takedown_cpu() will
-wait until that reaches zero (confirmed by take_cpu_down() in stop
-machine context to deal with races) before migrating tasks off of the
-cpu.
-
-To simplify synchronization, updating cpus_mask is no longer deferred
-until migrate_enable().  This lets us not have to worry about
-migrate_enable() missing the update if it's on the fast path (didn't
-schedule during the migrate disabled section).  It also makes the code
-a bit simpler and reduces deviation from mainline.
-
-While the main motivation for this is the performance benefit, lazy
-migrate disable also eliminates the restriction on calling
-migrate_disable() while atomic but leaving the atomic region prior to
-calling migrate_enable() -- though this won't help with local_bh_disable()
-(and thus rcutorture) unless something similar is done with the recently
-added local_lock.
+With the changes to migrate disabling, ->set_cpus_allowed() no longer
+gets deferred until migrate_enable().  To avoid releasing the bandwidth
+while the task may still be executing on the old CPU, move the subtraction
+to ->migrate_task_rq().
 
 Signed-off-by: Scott Wood <swood@redhat.com>
 ---
- include/linux/cpu.h    |   4 --
- include/linux/sched.h  |  11 +--
- init/init_task.c       |   4 ++
- kernel/cpu.c           |  97 +++++++++----------------
- kernel/sched/core.c    | 192 ++++++++++++++++++++-----------------------------
- kernel/sched/sched.h   |   4 ++
- lib/smp_processor_id.c |   3 +
- 7 files changed, 130 insertions(+), 185 deletions(-)
+ kernel/sched/deadline.c | 67 +++++++++++++++++++++++--------------------------
+ 1 file changed, 31 insertions(+), 36 deletions(-)
 
-diff --git a/include/linux/cpu.h b/include/linux/cpu.h
-index f4a772c12d14..2df500fdcbc4 100644
---- a/include/linux/cpu.h
-+++ b/include/linux/cpu.h
-@@ -113,8 +113,6 @@ static inline void cpu_maps_update_done(void)
- extern void cpu_hotplug_enable(void);
- void clear_tasks_mm_cpumask(int cpu);
- int cpu_down(unsigned int cpu);
--extern void pin_current_cpu(void);
--extern void unpin_current_cpu(void);
+diff --git a/kernel/sched/deadline.c b/kernel/sched/deadline.c
+index c18be51f7608..2f18d0cf1b56 100644
+--- a/kernel/sched/deadline.c
++++ b/kernel/sched/deadline.c
+@@ -1606,14 +1606,42 @@ static void yield_task_dl(struct rq *rq)
+ 	return cpu;
+ }
  
- #else /* CONFIG_HOTPLUG_CPU */
- 
-@@ -126,8 +124,6 @@ static inline void cpus_read_unlock(void) { }
- static inline void lockdep_assert_cpus_held(void) { }
- static inline void cpu_hotplug_disable(void) { }
- static inline void cpu_hotplug_enable(void) { }
--static inline void pin_current_cpu(void) { }
--static inline void unpin_current_cpu(void) { }
- 
- #endif	/* !CONFIG_HOTPLUG_CPU */
- 
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index ad23ab939b35..069c46dde15b 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -229,6 +229,8 @@
- extern long io_schedule_timeout(long timeout);
- extern void io_schedule(void);
- 
-+int cpu_nr_pinned(int cpu);
++static void free_old_cpuset_bw_dl(struct rq *rq, struct task_struct *p)
++{
++	struct root_domain *src_rd = rq->rd;
 +
- /**
-  * struct prev_cputime - snapshot of system and user cputime
-  * @utime: time spent in user mode
-@@ -661,16 +663,13 @@ struct task_struct {
- 	cpumask_t			cpus_mask;
- #if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
- 	int				migrate_disable;
--	int				migrate_disable_update;
--	int				pinned_on_cpu;
-+	bool				migrate_disable_scheduled;
- # ifdef CONFIG_SCHED_DEBUG
--	int				migrate_disable_atomic;
-+	int				pinned_on_cpu;
- # endif
--
- #elif !defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
- # ifdef CONFIG_SCHED_DEBUG
- 	int				migrate_disable;
--	int				migrate_disable_atomic;
- # endif
- #endif
- #ifdef CONFIG_PREEMPT_RT_BASE
-@@ -2066,4 +2065,6 @@ static inline void rseq_syscall(struct pt_regs *regs)
- 
- #endif
- 
-+extern struct task_struct *takedown_cpu_task;
-+
- #endif
-diff --git a/init/init_task.c b/init/init_task.c
-index e402413dc47d..c0c7618fd2fb 100644
---- a/init/init_task.c
-+++ b/init/init_task.c
-@@ -81,6 +81,10 @@ struct task_struct init_task
- 	.cpus_ptr	= &init_task.cpus_mask,
- 	.cpus_mask	= CPU_MASK_ALL,
- 	.nr_cpus_allowed= NR_CPUS,
-+#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE) && \
-+    defined(CONFIG_SCHED_DEBUG)
-+	.pinned_on_cpu	= -1,
-+#endif
- 	.mm		= NULL,
- 	.active_mm	= &init_mm,
- 	.restart_block	= {
-diff --git a/kernel/cpu.c b/kernel/cpu.c
-index 885a195dfbe0..0096acf1a692 100644
---- a/kernel/cpu.c
-+++ b/kernel/cpu.c
-@@ -76,11 +76,6 @@ static DEFINE_PER_CPU(struct cpuhp_cpu_state, cpuhp_state) = {
- 	.fail = CPUHP_INVALID,
- };
- 
--#if defined(CONFIG_HOTPLUG_CPU) && defined(CONFIG_PREEMPT_RT_FULL)
--static DEFINE_PER_CPU(struct rt_rw_lock, cpuhp_pin_lock) = \
--	__RWLOCK_RT_INITIALIZER(cpuhp_pin_lock);
--#endif
--
- #if defined(CONFIG_LOCKDEP) && defined(CONFIG_SMP)
- static struct lockdep_map cpuhp_state_up_map =
- 	STATIC_LOCKDEP_MAP_INIT("cpuhp_state-up", &cpuhp_state_up_map);
-@@ -287,55 +282,6 @@ void cpu_maps_update_done(void)
- 
- #ifdef CONFIG_HOTPLUG_CPU
- 
--/**
-- * pin_current_cpu - Prevent the current cpu from being unplugged
-- */
--void pin_current_cpu(void)
--{
--#ifdef CONFIG_PREEMPT_RT_FULL
--	struct rt_rw_lock *cpuhp_pin;
--	unsigned int cpu;
--	int ret;
--
--again:
--	cpuhp_pin = this_cpu_ptr(&cpuhp_pin_lock);
--	ret = __read_rt_trylock(cpuhp_pin);
--	if (ret) {
--		current->pinned_on_cpu = smp_processor_id();
--		return;
--	}
--	cpu = smp_processor_id();
--	preempt_lazy_enable();
--	preempt_enable();
--
--	__read_rt_lock(cpuhp_pin);
--
--	preempt_disable();
--	preempt_lazy_disable();
--	if (cpu != smp_processor_id()) {
--		__read_rt_unlock(cpuhp_pin);
--		goto again;
--	}
--	current->pinned_on_cpu = cpu;
--#endif
--}
--
--/**
-- * unpin_current_cpu - Allow unplug of current cpu
-- */
--void unpin_current_cpu(void)
--{
--#ifdef CONFIG_PREEMPT_RT_FULL
--	struct rt_rw_lock *cpuhp_pin = this_cpu_ptr(&cpuhp_pin_lock);
--
--	if (WARN_ON(current->pinned_on_cpu != smp_processor_id()))
--		cpuhp_pin = per_cpu_ptr(&cpuhp_pin_lock, current->pinned_on_cpu);
--
--	current->pinned_on_cpu = -1;
--	__read_rt_unlock(cpuhp_pin);
--#endif
--}
--
- DEFINE_STATIC_PERCPU_RWSEM(cpu_hotplug_lock);
- 
- void cpus_read_lock(void)
-@@ -893,6 +839,15 @@ static int take_cpu_down(void *_param)
- 	int err, cpu = smp_processor_id();
- 	int ret;
- 
-+#ifdef CONFIG_PREEMPT_RT_BASE
 +	/*
-+	 * If any tasks disabled migration before we got here,
-+	 * go back and sleep again.
++	 * Migrating a SCHED_DEADLINE task between exclusive
++	 * cpusets (different root_domains) entails a bandwidth
++	 * update. We already made space for us in the destination
++	 * domain (see cpuset_can_attach()).
 +	 */
-+	if (cpu_nr_pinned(cpu))
-+		return -EAGAIN;
-+#endif
++	if (!cpumask_intersects(src_rd->span, p->cpus_ptr)) {
++		struct dl_bw *src_dl_b;
 +
- 	/* Ensure this CPU doesn't handle any more interrupts. */
- 	err = __cpu_disable();
- 	if (err < 0)
-@@ -922,11 +877,10 @@ static int take_cpu_down(void *_param)
- 	return 0;
- }
- 
-+struct task_struct *takedown_cpu_task;
-+
- static int takedown_cpu(unsigned int cpu)
- {
--#ifdef CONFIG_PREEMPT_RT_FULL
--	struct rt_rw_lock *cpuhp_pin = per_cpu_ptr(&cpuhp_pin_lock, cpu);
--#endif
- 	struct cpuhp_cpu_state *st = per_cpu_ptr(&cpuhp_state, cpu);
- 	int err;
- 
-@@ -939,17 +893,34 @@ static int takedown_cpu(unsigned int cpu)
- 	 */
- 	irq_lock_sparse();
- 
--#ifdef CONFIG_PREEMPT_RT_FULL
--	__write_rt_lock(cpuhp_pin);
-+#ifdef CONFIG_PREEMPT_RT_BASE
-+	WARN_ON_ONCE(takedown_cpu_task);
-+	takedown_cpu_task = current;
-+
-+again:
-+	for (;;) {
-+		int nr_pinned;
-+
-+		set_current_state(TASK_UNINTERRUPTIBLE);
-+		nr_pinned = cpu_nr_pinned(cpu);
-+		if (nr_pinned == 0)
-+			break;
-+		schedule();
++		src_dl_b = dl_bw_of(cpu_of(rq));
++		/*
++		 * We now free resources of the root_domain we are migrating
++		 * off. In the worst case, sched_setattr() may temporary fail
++		 * until we complete the update.
++		 */
++		raw_spin_lock(&src_dl_b->lock);
++		__dl_sub(src_dl_b, p->dl.dl_bw, dl_bw_cpus(task_cpu(p)));
++		raw_spin_unlock(&src_dl_b->lock);
 +	}
-+	set_current_state(TASK_RUNNING);
- #endif
++}
++
+ static void migrate_task_rq_dl(struct task_struct *p, int new_cpu __maybe_unused)
+ {
+ 	struct rq *rq;
  
+-	if (p->state != TASK_WAKING)
++	rq = task_rq(p);
++
++	if (p->state != TASK_WAKING) {
++		free_old_cpuset_bw_dl(rq, p);
+ 		return;
++	}
+ 
+-	rq = task_rq(p);
  	/*
- 	 * So now all preempt/rcu users must observe !cpu_active().
- 	 */
- 	err = stop_machine_cpuslocked(take_cpu_down, NULL, cpumask_of(cpu));
-+#ifdef CONFIG_PREEMPT_RT_BASE
-+	if (err == -EAGAIN)
-+		goto again;
-+#endif
- 	if (err) {
--#ifdef CONFIG_PREEMPT_RT_FULL
--		__write_rt_unlock(cpuhp_pin);
-+#ifdef CONFIG_PREEMPT_RT_BASE
-+		takedown_cpu_task = NULL;
- #endif
- 		/* CPU refused to die */
- 		irq_unlock_sparse();
-@@ -969,8 +940,8 @@ static int takedown_cpu(unsigned int cpu)
- 	wait_for_ap_thread(st, false);
- 	BUG_ON(st->state != CPUHP_AP_IDLE_DEAD);
- 
--#ifdef CONFIG_PREEMPT_RT_FULL
--	__write_rt_unlock(cpuhp_pin);
-+#ifdef CONFIG_PREEMPT_RT_BASE
-+	takedown_cpu_task = NULL;
- #endif
- 	/* Interrupts are moved away from the dying cpu, reenable alloc/free */
- 	irq_unlock_sparse();
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 3a2d8251a30c..a11bfa7939da 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -1126,7 +1126,8 @@ static int migration_cpu_stop(void *data)
- void set_cpus_allowed_common(struct task_struct *p, const struct cpumask *new_mask)
- {
- 	cpumask_copy(&p->cpus_mask, new_mask);
--	p->nr_cpus_allowed = cpumask_weight(new_mask);
-+	if (p->cpus_ptr == &p->cpus_mask)
-+		p->nr_cpus_allowed = cpumask_weight(new_mask);
+ 	 * Since p->state == TASK_WAKING, set_task_cpu() has been called
+ 	 * from try_to_wake_up(). Hence, p->pi_lock is locked, but
+@@ -2220,39 +2248,6 @@ static void task_woken_dl(struct rq *rq, struct task_struct *p)
+ 	}
  }
  
- #if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
-@@ -1137,8 +1138,7 @@ int __migrate_disabled(struct task_struct *p)
- EXPORT_SYMBOL_GPL(__migrate_disabled);
- #endif
- 
--static void __do_set_cpus_allowed_tail(struct task_struct *p,
--				       const struct cpumask *new_mask)
-+void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
- {
- 	struct rq *rq = task_rq(p);
- 	bool queued, running;
-@@ -1167,20 +1167,6 @@ static void __do_set_cpus_allowed_tail(struct task_struct *p,
- 		set_curr_task(rq, p);
- }
- 
--void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
+-static void set_cpus_allowed_dl(struct task_struct *p,
+-				const struct cpumask *new_mask)
 -{
--#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
--	if (__migrate_disabled(p)) {
--		lockdep_assert_held(&p->pi_lock);
+-	struct root_domain *src_rd;
+-	struct rq *rq;
 -
--		cpumask_copy(&p->cpus_mask, new_mask);
--		p->migrate_disable_update = 1;
--		return;
+-	BUG_ON(!dl_task(p));
+-
+-	rq = task_rq(p);
+-	src_rd = rq->rd;
+-	/*
+-	 * Migrating a SCHED_DEADLINE task between exclusive
+-	 * cpusets (different root_domains) entails a bandwidth
+-	 * update. We already made space for us in the destination
+-	 * domain (see cpuset_can_attach()).
+-	 */
+-	if (!cpumask_intersects(src_rd->span, new_mask)) {
+-		struct dl_bw *src_dl_b;
+-
+-		src_dl_b = dl_bw_of(cpu_of(rq));
+-		/*
+-		 * We now free resources of the root_domain we are migrating
+-		 * off. In the worst case, sched_setattr() may temporary fail
+-		 * until we complete the update.
+-		 */
+-		raw_spin_lock(&src_dl_b->lock);
+-		__dl_sub(src_dl_b, p->dl.dl_bw, dl_bw_cpus(task_cpu(p)));
+-		raw_spin_unlock(&src_dl_b->lock);
 -	}
--#endif
--	__do_set_cpus_allowed_tail(p, new_mask);
+-
+-	set_cpus_allowed_common(p, new_mask);
 -}
 -
- /*
-  * Change a given task's CPU affinity. Migrate the thread to a
-  * proper CPU and schedule it away if the CPU it's executing on
-@@ -1239,7 +1225,8 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
- 	}
- 
- 	/* Can the task run on the task's current CPU? If so, we're done */
--	if (cpumask_test_cpu(task_cpu(p), new_mask) || __migrate_disabled(p))
-+	if (cpumask_test_cpu(task_cpu(p), new_mask) ||
-+	    p->cpus_ptr != &p->cpus_mask)
- 		goto out;
- 
- 	dest_cpu = cpumask_any_and(cpu_valid_mask, new_mask);
-@@ -3461,6 +3448,8 @@ static inline void schedule_debug(struct task_struct *prev)
- 	BUG();
- }
- 
-+static void migrate_disabled_sched(struct task_struct *p);
-+
- /*
-  * __schedule() is the main scheduler function.
-  *
-@@ -3531,6 +3520,9 @@ static void __sched notrace __schedule(bool preempt)
- 	rq_lock(rq, &rf);
- 	smp_mb__after_spinlock();
- 
-+	if (__migrate_disabled(prev))
-+		migrate_disabled_sched(prev);
-+
- 	/* Promote REQ to ACT */
- 	rq->clock_update_flags <<= 1;
- 	update_rq_clock(rq);
-@@ -5781,6 +5773,8 @@ static void migrate_tasks(struct rq *dead_rq, struct rq_flags *rf)
- 		BUG_ON(!next);
- 		put_prev_task(rq, next);
- 
-+		WARN_ON_ONCE(__migrate_disabled(next));
-+
- 		/*
- 		 * Rules for changing task_struct::cpus_mask are holding
- 		 * both pi_lock and rq->lock, such that holding either
-@@ -7280,14 +7274,9 @@ void dump_cpu_task(int cpu)
- static inline void
- migrate_disable_update_cpus_allowed(struct task_struct *p)
+ /* Assumes rq->lock is held */
+ static void rq_online_dl(struct rq *rq)
  {
--	struct rq *rq;
--	struct rq_flags rf;
--
--	rq = task_rq_lock(p, &rf);
- 	p->cpus_ptr = cpumask_of(smp_processor_id());
- 	update_nr_migratory(p, -1);
- 	p->nr_cpus_allowed = 1;
--	task_rq_unlock(rq, p, &rf);
- }
- 
- static inline void
-@@ -7305,54 +7294,35 @@ void dump_cpu_task(int cpu)
- 
- void migrate_disable(void)
- {
--	struct task_struct *p = current;
-+	preempt_disable();
- 
--	if (in_atomic() || irqs_disabled()) {
-+	if (++current->migrate_disable == 1) {
-+		this_rq()->nr_pinned++;
-+		preempt_lazy_disable();
- #ifdef CONFIG_SCHED_DEBUG
--		p->migrate_disable_atomic++;
-+		WARN_ON_ONCE(current->pinned_on_cpu >= 0);
-+		current->pinned_on_cpu = smp_processor_id();
- #endif
--		return;
--	}
--#ifdef CONFIG_SCHED_DEBUG
--	if (unlikely(p->migrate_disable_atomic)) {
--		tracing_off();
--		WARN_ON_ONCE(1);
- 	}
--#endif
- 
--	if (p->migrate_disable) {
--		p->migrate_disable++;
--		return;
--	}
-+	preempt_enable();
-+}
-+EXPORT_SYMBOL(migrate_disable);
- 
--	preempt_disable();
--	preempt_lazy_disable();
--	pin_current_cpu();
-+static void migrate_disabled_sched(struct task_struct *p)
-+{
-+	if (p->migrate_disable_scheduled)
-+		return;
- 
- 	migrate_disable_update_cpus_allowed(p);
--	p->migrate_disable = 1;
--
--	preempt_enable();
-+	p->migrate_disable_scheduled = 1;
- }
--EXPORT_SYMBOL(migrate_disable);
- 
- void migrate_enable(void)
- {
- 	struct task_struct *p = current;
--
--	if (in_atomic() || irqs_disabled()) {
--#ifdef CONFIG_SCHED_DEBUG
--		p->migrate_disable_atomic--;
--#endif
--		return;
--	}
--
--#ifdef CONFIG_SCHED_DEBUG
--	if (unlikely(p->migrate_disable_atomic)) {
--		tracing_off();
--		WARN_ON_ONCE(1);
--	}
--#endif
-+	struct rq *rq = this_rq();
-+	int cpu = task_cpu(p);
- 
- 	WARN_ON_ONCE(p->migrate_disable <= 0);
- 	if (p->migrate_disable > 1) {
-@@ -7362,72 +7332,74 @@ void migrate_enable(void)
- 
- 	preempt_disable();
- 
-+#ifdef CONFIG_SCHED_DEBUG
-+	WARN_ON_ONCE(current->pinned_on_cpu != cpu);
-+	current->pinned_on_cpu = -1;
-+#endif
-+
-+	WARN_ON_ONCE(rq->nr_pinned < 1);
-+
- 	p->migrate_disable = 0;
-+	rq->nr_pinned--;
-+	if (rq->nr_pinned == 0 && unlikely(!cpu_active(cpu)) &&
-+	    takedown_cpu_task)
-+		wake_up_process(takedown_cpu_task);
-+
-+	if (!p->migrate_disable_scheduled)
-+		goto out;
-+
-+	p->migrate_disable_scheduled = 0;
-+
- 	migrate_enable_update_cpus_allowed(p);
- 
--	if (p->migrate_disable_update) {
--		struct rq *rq;
-+	WARN_ON(smp_processor_id() != cpu);
-+	if (!is_cpu_allowed(p, cpu)) {
-+		struct migration_arg arg = { p };
- 		struct rq_flags rf;
--		int cpu = task_cpu(p);
- 
- 		rq = task_rq_lock(p, &rf);
- 		update_rq_clock(rq);
--
--		__do_set_cpus_allowed_tail(p, &p->cpus_mask);
-+		arg.dest_cpu = select_fallback_rq(cpu, p);
- 		task_rq_unlock(rq, p, &rf);
- 
--		p->migrate_disable_update = 0;
--
--		WARN_ON(smp_processor_id() != cpu);
--		if (!cpumask_test_cpu(cpu, &p->cpus_mask)) {
--			struct migration_arg arg = { p };
--			struct rq_flags rf;
--
--			rq = task_rq_lock(p, &rf);
--			update_rq_clock(rq);
--			arg.dest_cpu = select_fallback_rq(cpu, p);
--			task_rq_unlock(rq, p, &rf);
-+		preempt_lazy_enable();
-+		preempt_enable();
- 
--			unpin_current_cpu();
--			preempt_lazy_enable();
--			preempt_enable();
--
--			/*
--			 * Avoid sleeping with an existing non-running
--			 * state.  This will result in a spurious wakeup
--			 * for the calling context.
--			 */
--			__set_current_state(TASK_RUNNING);
-+		/*
-+		 * Avoid sleeping with an existing non-running
-+		 * state.  This will result in a spurious wakeup
-+		 * for the calling context.
-+		 */
-+		__set_current_state(TASK_RUNNING);
- 
--			sleeping_lock_inc();
--			stop_one_cpu(task_cpu(p), migration_cpu_stop, &arg);
--			sleeping_lock_dec();
--			return;
--		}
-+		sleeping_lock_inc();
-+		stop_one_cpu(task_cpu(p), migration_cpu_stop, &arg);
-+		sleeping_lock_dec();
-+		return;
- 	}
--	unpin_current_cpu();
-+
-+out:
- 	preempt_lazy_enable();
- 	preempt_enable();
- }
- EXPORT_SYMBOL(migrate_enable);
- 
--#elif !defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
--void migrate_disable(void)
-+int cpu_nr_pinned(int cpu)
- {
--#ifdef CONFIG_SCHED_DEBUG
--	struct task_struct *p = current;
-+	struct rq *rq = cpu_rq(cpu);
- 
--	if (in_atomic() || irqs_disabled()) {
--		p->migrate_disable_atomic++;
--		return;
--	}
-+	return rq->nr_pinned;
-+}
- 
--	if (unlikely(p->migrate_disable_atomic)) {
--		tracing_off();
--		WARN_ON_ONCE(1);
--	}
-+#elif !defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
-+static void migrate_disabled_sched(struct task_struct *p)
-+{
-+}
- 
--	p->migrate_disable++;
-+void migrate_disable(void)
-+{
-+#ifdef CONFIG_SCHED_DEBUG
-+	current->migrate_disable++;
- #endif
- 	barrier();
- }
-@@ -7438,20 +7410,14 @@ void migrate_enable(void)
- #ifdef CONFIG_SCHED_DEBUG
- 	struct task_struct *p = current;
- 
--	if (in_atomic() || irqs_disabled()) {
--		p->migrate_disable_atomic--;
--		return;
--	}
--
--	if (unlikely(p->migrate_disable_atomic)) {
--		tracing_off();
--		WARN_ON_ONCE(1);
--	}
--
- 	WARN_ON_ONCE(p->migrate_disable <= 0);
- 	p->migrate_disable--;
- #endif
- 	barrier();
- }
- EXPORT_SYMBOL(migrate_enable);
-+#else
-+static void migrate_disabled_sched(struct task_struct *p)
-+{
-+}
- #endif
-diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index 9c1bbd67e971..2e4db417049d 100644
---- a/kernel/sched/sched.h
-+++ b/kernel/sched/sched.h
-@@ -952,6 +952,10 @@ struct rq {
- 	/* Must be inspected within a rcu lock section */
- 	struct cpuidle_state	*idle_state;
- #endif
-+
-+#if defined(CONFIG_PREEMPT_RT_BASE) && defined(CONFIG_SMP)
-+	int			nr_pinned;
-+#endif
- };
- 
- #ifdef CONFIG_FAIR_GROUP_SCHED
-diff --git a/lib/smp_processor_id.c b/lib/smp_processor_id.c
-index 60ba93fc42ce..ded40a11c867 100644
---- a/lib/smp_processor_id.c
-+++ b/lib/smp_processor_id.c
-@@ -23,6 +23,9 @@ unsigned int check_preemption_disabled(const char *what1, const char *what2)
- 	 * Kernel threads bound to a single CPU can safely use
- 	 * smp_processor_id():
- 	 */
-+	if (current->migrate_disable)
-+		goto out;
-+
- 	if (cpumask_equal(current->cpus_ptr, cpumask_of(this_cpu)))
- 		goto out;
- 
+@@ -2407,7 +2402,7 @@ static void prio_changed_dl(struct rq *rq, struct task_struct *p,
+ #ifdef CONFIG_SMP
+ 	.select_task_rq		= select_task_rq_dl,
+ 	.migrate_task_rq	= migrate_task_rq_dl,
+-	.set_cpus_allowed       = set_cpus_allowed_dl,
++	.set_cpus_allowed       = set_cpus_allowed_common,
+ 	.rq_online              = rq_online_dl,
+ 	.rq_offline             = rq_offline_dl,
+ 	.task_woken		= task_woken_dl,
 -- 
 1.8.3.1
 
