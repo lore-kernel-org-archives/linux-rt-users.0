@@ -1,118 +1,79 @@
-Return-Path: <SRS0=S77f=VY=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=IcT/=V2=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EEA07C433FF
-	for <linux-rt-users@archiver.kernel.org>; Sat, 27 Jul 2019 13:37:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 138C1C433FF
+	for <linux-rt-users@archiver.kernel.org>; Mon, 29 Jul 2019 13:27:01 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id C98962084C
-	for <linux-rt-users@archiver.kernel.org>; Sat, 27 Jul 2019 13:37:16 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E7388216C8
+	for <linux-rt-users@archiver.kernel.org>; Mon, 29 Jul 2019 13:27:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2387607AbfG0NhQ (ORCPT
+        id S2387449AbfG2N05 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 27 Jul 2019 09:37:16 -0400
-Received: from foss.arm.com ([217.140.110.172]:53134 "EHLO foss.arm.com"
+        Mon, 29 Jul 2019 09:26:57 -0400
+Received: from mail.kernel.org ([198.145.29.99]:38790 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2387559AbfG0NhP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 27 Jul 2019 09:37:15 -0400
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 0541628;
-        Sat, 27 Jul 2019 06:37:15 -0700 (PDT)
-Received: from [10.37.8.139] (unknown [10.37.8.139])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 08FF83F71F;
-        Sat, 27 Jul 2019 06:37:12 -0700 (PDT)
-Subject: Re: KVM Arm64 and Linux-RT issues
-To:     Marc Zyngier <maz@kernel.org>, Thomas Gleixner <tglx@linutronix.de>
-Cc:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        anna-maria@linutronix.de,
-        "bigeasy@linutronix.de" <bigeasy@linutronix.de>,
-        "kvmarm@lists.cs.columbia.edu" <kvmarm@lists.cs.columbia.edu>,
-        Julien Thierry <julien.thierry@arm.com>,
-        James Morse <james.morse@arm.com>,
-        Suzuki K Poulose <suzuki.poulose@arm.com>
-References: <b9867c43-7fe3-5d64-9939-b1a7ab7f1061@arm.com>
- <cd310858-2c0f-6af1-bf82-ee1e01a2cfb8@arm.com>
- <alpine.DEB.2.21.1907270053360.1791@nanos.tec.linutronix.de>
- <86zhkzn319.wl-maz@kernel.org>
-From:   Julien Grall <julien.grall@arm.com>
-Message-ID: <960b5ed1-6d0f-3cee-da37-6061b4946c1a@arm.com>
-Date:   Sat, 27 Jul 2019 14:37:11 +0100
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
+        id S1726960AbfG2N04 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 29 Jul 2019 09:26:56 -0400
+Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 5A304206E0;
+        Mon, 29 Jul 2019 13:26:55 +0000 (UTC)
+Date:   Mon, 29 Jul 2019 09:26:53 -0400
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     Scott Wood <swood@redhat.com>
+Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Daniel Bristot de Oliveira <bristot@redhat.com>,
+        Clark Williams <williams@redhat.com>,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH RT 1/8] sched: migrate_enable: Use sleeping_lock to
+ indicate involuntary sleep
+Message-ID: <20190729092653.20bcc45e@gandalf.local.home>
+In-Reply-To: <20190727055638.20443-2-swood@redhat.com>
+References: <20190727055638.20443-1-swood@redhat.com>
+        <20190727055638.20443-2-swood@redhat.com>
+X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
-In-Reply-To: <86zhkzn319.wl-maz@kernel.org>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: en-US
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi,
+On Sat, 27 Jul 2019 00:56:31 -0500
+Scott Wood <swood@redhat.com> wrote:
 
-On 7/27/19 12:13 PM, Marc Zyngier wrote:
-> On Fri, 26 Jul 2019 23:58:38 +0100,
-> Thomas Gleixner <tglx@linutronix.de> wrote:
->>
->> On Wed, 24 Jul 2019, Marc Zyngier wrote:
->>> On 23/07/2019 18:58, Julien Grall wrote:
->>> It really feels like a change in hrtimer_cancel semantics. From what I
->>> understand, this is used to avoid racing against the softirq, but boy it
->>> breaks things.
->>>
->>> If this cannot be avoided, this means we can't cancel the background
->>> timer (which is used to emulate the vcpu timer while it is blocked
->>> waiting for an interrupt), then we must move this canceling to the point
->>> where the vcpu is unblocked (instead of scheduled), which may have some
->>> side effects -- I'll have a look.
->>>
->>> But that's not the only problem: We also have hrtimers used to emulate
->>> timers while the vcpu is running, and these timers are canceled in
->>> kvm_timer_vcpu_put(), which is also called from a preempt notifier.
->>> Unfortunately, I don't have a reasonable solution for that (other than
->>> putting this hrtimer_cancel in a workqueue and start chasing the
->>> resulting races).
->>
->> The fix is simple. See below. We'll add that to the next RT release. That
->> will take a while as I'm busy with posting RT stuff for upstream :)
+> Without this, rcu_note_context_switch() will complain if an RCU read
+> lock is held when migrate_enable() calls stop_one_cpu().
 > 
-> Ah, thanks for that! And yes, looking forward to RT upstream, it's
-> just about time! ;-)
-> 
->>
->> Thanks,
->>
->> 	tglx
->>
->> 8<------------
->> --- a/virt/kvm/arm/arch_timer.c
->> +++ b/virt/kvm/arm/arch_timer.c
->> @@ -80,7 +80,7 @@ static inline bool userspace_irqchip(str
->>   static void soft_timer_start(struct hrtimer *hrt, u64 ns)
->>   {
->>   	hrtimer_start(hrt, ktime_add_ns(ktime_get(), ns),
->> -		      HRTIMER_MODE_ABS);
->> +		      HRTIMER_MODE_ABS_HARD);
->>   }
->>   
-> 
-> That's pretty neat, and matches the patch you already have for
-> x86. Feel free to add my
-> 
-> Acked-by: Marc Zyngier <maz@kernel.org>
+> Signed-off-by: Scott Wood <swood@redhat.com>
+>
 
-I can confirm the warning now disappeared. Feel free to added my tested-by:
+> index d3c6542b306f..c3407707e367 100644
+> --- a/kernel/sched/core.c
+> +++ b/kernel/sched/core.c
+> @@ -7405,7 +7405,9 @@ void migrate_enable(void)
+>  			unpin_current_cpu();
+>  			preempt_lazy_enable();
+>  			preempt_enable();
 
-Tested-by: Julien Grall <julien.grall@arm.com>
+This looks like it needs a comment to explain why this is.
 
-Thank you both for the help!
+-- Steve
 
-Cheers,
+> +			sleeping_lock_inc();
+>  			stop_one_cpu(task_cpu(p), migration_cpu_stop, &arg);
+> +			sleeping_lock_dec();
+>  			return;
+>  		}
+>  	}
 
--- 
-Julien Grall
