@@ -7,40 +7,40 @@ X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B3317C433FF
-	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Aug 2019 19:53:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 19B26C433FF
+	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Aug 2019 19:53:54 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 66E992184E
-	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Aug 2019 19:53:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E0C692184E
+	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Aug 2019 19:53:53 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1565294030;
-	bh=E/oTiTnvrAycIGyY2hsfDRlDL+P6gDTmtjJ/6ccoCZ8=;
+	s=default; t=1565294034;
+	bh=0javQJG2N3SRtmKFfgxuYv2z4xXZJpn03rwbSlHoIYI=;
 	h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=FwVsity6gez3ADgEGwIcbtlOgf/uknOSvlh2WknkolbN7DYOgkiHcHJz/AM/B2fhE
-	 I6qB+5KoUAd7zTMKHuyWeKjlKIP34J05sf9NkmX74El2jadolsfU6hOCZqao0frJBV
-	 Ger9zxPVUcPtf4BQadtZ+3eYbEg7Qjjf/cheesvM=
+	b=d9wurqXu3CkF8QBnwJ+qyzKb1bLSIBEDtyYsVNzgXPBacawkQIIEbL7cNDvBqmDLe
+	 tTGTyV6LKselY5w+Bp89jtdUP/4gmi0pG4UsFyZgGFTe12yQM/CcFKKvutSbPDcBIN
+	 QO/dgbr/22I5lyeNxQeA+GLCnpfxdsBqfUWGQz60=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2404590AbfHHTx2 (ORCPT
+        id S1733140AbfHHTxv (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 8 Aug 2019 15:53:28 -0400
-Received: from mail.kernel.org ([198.145.29.99]:58190 "EHLO mail.kernel.org"
+        Thu, 8 Aug 2019 15:53:51 -0400
+Received: from mail.kernel.org ([198.145.29.99]:58228 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2404557AbfHHTx1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 8 Aug 2019 15:53:27 -0400
+        id S2404578AbfHHTx2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 8 Aug 2019 15:53:28 -0400
 Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 1E6A1218D4;
-        Thu,  8 Aug 2019 19:53:24 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 6886C218F0;
+        Thu,  8 Aug 2019 19:53:26 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1565294005;
-        bh=E/oTiTnvrAycIGyY2hsfDRlDL+P6gDTmtjJ/6ccoCZ8=;
+        s=default; t=1565294007;
+        bh=0javQJG2N3SRtmKFfgxuYv2z4xXZJpn03rwbSlHoIYI=;
         h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=o7S943TdzYD1dlgS3JN/P1+6RZWqTiK012jK4YGX3b+Qv/ya8huF/8Cz3OCWfNQ/Y
-         QInZqIAiMm7F1paEMusnSMBrImmfcTx/avyeiMDk54wGvdpZe2jjhKwH4uFWs4+LYl
-         BPQFxiaNQte5k22f4GwMDCVjOOYx7YMXJqH9sNMM=
+        b=AETXDqgdWcwPV8/00USmsuErKGQPUdHnHjBPGE4JmYeGqPXXyLZnKa4buFff9cpNA
+         eElUd6YYElCI90r+2EdKJmMmUvju+X0mGuHp8sTVs3q5vvxGG8NTs9g24yfbEhZz1u
+         wp7usgwid3Md1e8x/bwouZPJlTRl5HtK7Y0l4mBw=
 From:   zanussi@kernel.org
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -52,9 +52,9 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>,
         Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 16/19] futex: Make the futex_hash_bucket lock raw
-Date:   Thu,  8 Aug 2019 14:52:44 -0500
-Message-Id: <5680824ff7ca32b093683c9904ccf0f4eed9ab2a.1565293935.git.zanussi@kernel.org>
+Subject: [PATCH RT 18/19] mm/zswap: Do not disable preemption in zswap_frontswap_store()
+Date:   Thu,  8 Aug 2019 14:52:46 -0500
+Message-Id: <15236d55deeb510c997d4057a4585eb6a755be80.1565293935.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.14.1
 In-Reply-To: <cover.1565293934.git.zanussi@kernel.org>
 References: <cover.1565293934.git.zanussi@kernel.org>
@@ -65,7 +65,7 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
 
 v4.14.137-rt65-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -73,350 +73,126 @@ If anyone has any objections, please let me know.
 -----------
 
 
-[ Upstream commit f646521aadedab78801c9befe193e2e8a0c99298 ]
+[ Upstream commit 4e4cf4be79635e67144632d9135286381acbc95a ]
 
-Since commit 1a1fb985f2e2b ("futex: Handle early deadlock return
-correctly") we can deadlock while we attempt to acquire the HB lock if
-we fail to acquire the lock.
-The RT waiter (for the futex lock) is still enqueued and acquiring the
-HB lock may build up a lock chain which leads to a deadlock if the owner
-of the lock futex-lock holds the HB lock.
+Zswap causes "BUG: scheduling while atomic" by blocking on a rt_spin_lock() with
+preemption disabled. The preemption is disabled by get_cpu_var() in
+zswap_frontswap_store() to protect the access of the zswap_dstmem percpu variable.
 
-Make the hash bucket lock raw so it does not participate in the
-lockchain.
+Use get_locked_var() to protect the percpu zswap_dstmem variable, making the
+code preemptive.
 
+As get_cpu_ptr() also disables preemption, replace it by this_cpu_ptr() and
+remove the counterpart put_cpu_ptr().
+
+Steps to Reproduce:
+
+    1. # grubby --args "zswap.enabled=1" --update-kernel DEFAULT
+    2. # reboot
+    3. Calculate the amount o memory to be used by the test:
+       ---> grep MemAvailable /proc/meminfo
+       ---> Add 25% ~ 50% to that value
+    4. # stress --vm 1 --vm-bytes ${MemAvailable+25%} --timeout 240s
+
+Usually, in less than 5 minutes the backtrace listed below appears, followed
+by a kernel panic:
+
+| BUG: scheduling while atomic: kswapd1/181/0x00000002
+|
+| Preemption disabled at:
+| [<ffffffff8b2a6cda>] zswap_frontswap_store+0x21a/0x6e1
+|
+| Kernel panic - not syncing: scheduling while atomic
+| CPU: 14 PID: 181 Comm: kswapd1 Kdump: loaded Not tainted 5.0.14-rt9 #1
+| Hardware name: AMD Pence/Pence, BIOS WPN2321X_Weekly_12_03_21 03/19/2012
+| Call Trace:
+|  panic+0x106/0x2a7
+|  __schedule_bug.cold+0x3f/0x51
+|  __schedule+0x5cb/0x6f0
+|  schedule+0x43/0xd0
+|  rt_spin_lock_slowlock_locked+0x114/0x2b0
+|  rt_spin_lock_slowlock+0x51/0x80
+|  zbud_alloc+0x1da/0x2d0
+|  zswap_frontswap_store+0x31a/0x6e1
+|  __frontswap_store+0xab/0x130
+|  swap_writepage+0x39/0x70
+|  pageout.isra.0+0xe3/0x320
+|  shrink_page_list+0xa8e/0xd10
+|  shrink_inactive_list+0x251/0x840
+|  shrink_node_memcg+0x213/0x770
+|  shrink_node+0xd9/0x450
+|  balance_pgdat+0x2d5/0x510
+|  kswapd+0x218/0x470
+|  kthread+0xfb/0x130
+|  ret_from_fork+0x27/0x50
+
+Cc: stable-rt@vger.kernel.org
+Reported-by: Ping Fang <pifang@redhat.com>
+Signed-off-by: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
+Reviewed-by: Daniel Bristot de Oliveira <bristot@redhat.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Tom Zanussi <zanussi@kernel.org>
 
  Conflicts:
-	kernel/futex.c
+        mm/zswap.c
 ---
- kernel/futex.c | 89 +++++++++++++++++++++++++++++-----------------------------
- 1 file changed, 45 insertions(+), 44 deletions(-)
+ mm/zswap.c | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
 
-diff --git a/kernel/futex.c b/kernel/futex.c
-index ec90130cd809..0548070cda89 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -240,7 +240,7 @@ struct futex_q {
- 	struct plist_node list;
- 
- 	struct task_struct *task;
--	spinlock_t *lock_ptr;
-+	raw_spinlock_t *lock_ptr;
- 	union futex_key key;
- 	struct futex_pi_state *pi_state;
- 	struct rt_mutex_waiter *rt_waiter;
-@@ -261,7 +261,7 @@ static const struct futex_q futex_q_init = {
-  */
- struct futex_hash_bucket {
- 	atomic_t waiters;
--	spinlock_t lock;
-+	raw_spinlock_t lock;
- 	struct plist_head chain;
- } ____cacheline_aligned_in_smp;
- 
-@@ -926,7 +926,7 @@ void exit_pi_state_list(struct task_struct *curr)
- 		}
- 		raw_spin_unlock_irq(&curr->pi_lock);
- 
--		spin_lock(&hb->lock);
-+		raw_spin_lock(&hb->lock);
- 		raw_spin_lock_irq(&pi_state->pi_mutex.wait_lock);
- 		raw_spin_lock(&curr->pi_lock);
- 		/*
-@@ -936,7 +936,7 @@ void exit_pi_state_list(struct task_struct *curr)
- 		if (head->next != next) {
- 			/* retain curr->pi_lock for the loop invariant */
- 			raw_spin_unlock(&pi_state->pi_mutex.wait_lock);
--			spin_unlock(&hb->lock);
-+			raw_spin_unlock(&hb->lock);
- 			put_pi_state(pi_state);
- 			continue;
- 		}
-@@ -948,7 +948,7 @@ void exit_pi_state_list(struct task_struct *curr)
- 
- 		raw_spin_unlock(&curr->pi_lock);
- 		raw_spin_unlock_irq(&pi_state->pi_mutex.wait_lock);
--		spin_unlock(&hb->lock);
-+		raw_spin_unlock(&hb->lock);
- 
- 		rt_mutex_futex_unlock(&pi_state->pi_mutex);
- 		put_pi_state(pi_state);
-@@ -1442,7 +1442,7 @@ static void __unqueue_futex(struct futex_q *q)
- {
- 	struct futex_hash_bucket *hb;
- 
--	if (WARN_ON_SMP(!q->lock_ptr || !spin_is_locked(q->lock_ptr))
-+	if (WARN_ON_SMP(!q->lock_ptr || !raw_spin_is_locked(q->lock_ptr))
- 	    || WARN_ON(plist_node_empty(&q->list)))
- 		return;
- 
-@@ -1570,21 +1570,21 @@ static inline void
- double_lock_hb(struct futex_hash_bucket *hb1, struct futex_hash_bucket *hb2)
- {
- 	if (hb1 <= hb2) {
--		spin_lock(&hb1->lock);
-+		raw_spin_lock(&hb1->lock);
- 		if (hb1 < hb2)
--			spin_lock_nested(&hb2->lock, SINGLE_DEPTH_NESTING);
-+			raw_spin_lock_nested(&hb2->lock, SINGLE_DEPTH_NESTING);
- 	} else { /* hb1 > hb2 */
--		spin_lock(&hb2->lock);
--		spin_lock_nested(&hb1->lock, SINGLE_DEPTH_NESTING);
-+		raw_spin_lock(&hb2->lock);
-+		raw_spin_lock_nested(&hb1->lock, SINGLE_DEPTH_NESTING);
- 	}
- }
- 
- static inline void
- double_unlock_hb(struct futex_hash_bucket *hb1, struct futex_hash_bucket *hb2)
- {
--	spin_unlock(&hb1->lock);
-+	raw_spin_unlock(&hb1->lock);
- 	if (hb1 != hb2)
--		spin_unlock(&hb2->lock);
-+		raw_spin_unlock(&hb2->lock);
- }
- 
- /*
-@@ -1612,7 +1612,7 @@ futex_wake(u32 __user *uaddr, unsigned int flags, int nr_wake, u32 bitset)
- 	if (!hb_waiters_pending(hb))
- 		goto out_put_key;
- 
--	spin_lock(&hb->lock);
-+	raw_spin_lock(&hb->lock);
- 
- 	plist_for_each_entry_safe(this, next, &hb->chain, list) {
- 		if (match_futex (&this->key, &key)) {
-@@ -1631,7 +1631,7 @@ futex_wake(u32 __user *uaddr, unsigned int flags, int nr_wake, u32 bitset)
- 		}
- 	}
- 
--	spin_unlock(&hb->lock);
-+	raw_spin_unlock(&hb->lock);
- 	wake_up_q(&wake_q);
- out_put_key:
- 	put_futex_key(&key);
-@@ -2236,7 +2236,8 @@ static inline struct futex_hash_bucket *queue_lock(struct futex_q *q)
- 
- 	q->lock_ptr = &hb->lock;
- 
--	spin_lock(&hb->lock); /* implies smp_mb(); (A) */
-+	raw_spin_lock(&hb->lock);
-+
- 	return hb;
- }
- 
-@@ -2244,7 +2245,7 @@ static inline void
- queue_unlock(struct futex_hash_bucket *hb)
- 	__releases(&hb->lock)
- {
--	spin_unlock(&hb->lock);
-+	raw_spin_unlock(&hb->lock);
- 	hb_waiters_dec(hb);
- }
- 
-@@ -2283,7 +2284,7 @@ static inline void queue_me(struct futex_q *q, struct futex_hash_bucket *hb)
- 	__releases(&hb->lock)
- {
- 	__queue_me(q, hb);
--	spin_unlock(&hb->lock);
-+	raw_spin_unlock(&hb->lock);
- }
- 
- /**
-@@ -2299,41 +2300,41 @@ static inline void queue_me(struct futex_q *q, struct futex_hash_bucket *hb)
-  */
- static int unqueue_me(struct futex_q *q)
- {
--	spinlock_t *lock_ptr;
-+	raw_spinlock_t *lock_ptr;
- 	int ret = 0;
- 
- 	/* In the common case we don't take the spinlock, which is nice. */
- retry:
- 	/*
--	 * q->lock_ptr can change between this read and the following spin_lock.
--	 * Use READ_ONCE to forbid the compiler from reloading q->lock_ptr and
--	 * optimizing lock_ptr out of the logic below.
-+	 * q->lock_ptr can change between this read and the following
-+	 * raw_spin_lock. Use READ_ONCE to forbid the compiler from reloading
-+	 * q->lock_ptr and optimizing lock_ptr out of the logic below.
- 	 */
- 	lock_ptr = READ_ONCE(q->lock_ptr);
- 	if (lock_ptr != NULL) {
--		spin_lock(lock_ptr);
-+		raw_spin_lock(lock_ptr);
- 		/*
- 		 * q->lock_ptr can change between reading it and
--		 * spin_lock(), causing us to take the wrong lock.  This
-+		 * raw_spin_lock(), causing us to take the wrong lock.  This
- 		 * corrects the race condition.
- 		 *
- 		 * Reasoning goes like this: if we have the wrong lock,
- 		 * q->lock_ptr must have changed (maybe several times)
--		 * between reading it and the spin_lock().  It can
--		 * change again after the spin_lock() but only if it was
--		 * already changed before the spin_lock().  It cannot,
-+		 * between reading it and the raw_spin_lock().  It can
-+		 * change again after the raw_spin_lock() but only if it was
-+		 * already changed before the raw_spin_lock().  It cannot,
- 		 * however, change back to the original value.  Therefore
- 		 * we can detect whether we acquired the correct lock.
- 		 */
- 		if (unlikely(lock_ptr != q->lock_ptr)) {
--			spin_unlock(lock_ptr);
-+			raw_spin_unlock(lock_ptr);
- 			goto retry;
- 		}
- 		__unqueue_futex(q);
- 
- 		BUG_ON(q->pi_state);
- 
--		spin_unlock(lock_ptr);
-+		raw_spin_unlock(lock_ptr);
- 		ret = 1;
- 	}
- 
-@@ -2355,7 +2356,7 @@ static void unqueue_me_pi(struct futex_q *q)
- 	put_pi_state(q->pi_state);
- 	q->pi_state = NULL;
- 
--	spin_unlock(q->lock_ptr);
-+	raw_spin_unlock(q->lock_ptr);
- }
- 
- static int fixup_pi_state_owner(u32 __user *uaddr, struct futex_q *q,
-@@ -2488,7 +2489,7 @@ static int fixup_pi_state_owner(u32 __user *uaddr, struct futex_q *q,
- 	 */
- handle_err:
- 	raw_spin_unlock_irq(&pi_state->pi_mutex.wait_lock);
--	spin_unlock(q->lock_ptr);
-+	raw_spin_unlock(q->lock_ptr);
- 
- 	switch (err) {
- 	case -EFAULT:
-@@ -2506,7 +2507,7 @@ static int fixup_pi_state_owner(u32 __user *uaddr, struct futex_q *q,
- 		break;
- 	}
- 
--	spin_lock(q->lock_ptr);
-+	raw_spin_lock(q->lock_ptr);
- 	raw_spin_lock_irq(&pi_state->pi_mutex.wait_lock);
- 
- 	/*
-@@ -2602,7 +2603,7 @@ static void futex_wait_queue_me(struct futex_hash_bucket *hb, struct futex_q *q,
- 	/*
- 	 * The task state is guaranteed to be set before another task can
- 	 * wake it. set_current_state() is implemented using smp_store_mb() and
--	 * queue_me() calls spin_unlock() upon completion, both serializing
-+	 * queue_me() calls raw_spin_unlock() upon completion, both serializing
- 	 * access to the hash list and forcing another memory barrier.
- 	 */
- 	set_current_state(TASK_INTERRUPTIBLE);
-@@ -2893,7 +2894,7 @@ static int futex_lock_pi(u32 __user *uaddr, unsigned int flags,
- 	 * before __rt_mutex_start_proxy_lock() is done.
- 	 */
- 	raw_spin_lock_irq(&q.pi_state->pi_mutex.wait_lock);
--	spin_unlock(q.lock_ptr);
-+	raw_spin_unlock(q.lock_ptr);
- 	/*
- 	 * __rt_mutex_start_proxy_lock() unconditionally enqueues the @rt_waiter
- 	 * such that futex_unlock_pi() is guaranteed to observe the waiter when
-@@ -2914,7 +2915,7 @@ static int futex_lock_pi(u32 __user *uaddr, unsigned int flags,
- 	ret = rt_mutex_wait_proxy_lock(&q.pi_state->pi_mutex, to, &rt_waiter);
- 
- cleanup:
--	spin_lock(q.lock_ptr);
-+	raw_spin_lock(q.lock_ptr);
- 	/*
- 	 * If we failed to acquire the lock (deadlock/signal/timeout), we must
- 	 * first acquire the hb->lock before removing the lock from the
-@@ -3015,7 +3016,7 @@ static int futex_unlock_pi(u32 __user *uaddr, unsigned int flags)
- 		return ret;
- 
- 	hb = hash_futex(&key);
--	spin_lock(&hb->lock);
-+	raw_spin_lock(&hb->lock);
- 
- 	/*
- 	 * Check waiters first. We do not trust user space values at
-@@ -3049,7 +3050,7 @@ static int futex_unlock_pi(u32 __user *uaddr, unsigned int flags)
- 		 * rt_waiter. Also see the WARN in wake_futex_pi().
- 		 */
- 		raw_spin_lock_irq(&pi_state->pi_mutex.wait_lock);
--		spin_unlock(&hb->lock);
-+		raw_spin_unlock(&hb->lock);
- 
- 		/* drops pi_state->pi_mutex.wait_lock */
- 		ret = wake_futex_pi(uaddr, uval, pi_state);
-@@ -3088,7 +3089,7 @@ static int futex_unlock_pi(u32 __user *uaddr, unsigned int flags)
- 	 * owner.
- 	 */
- 	if ((ret = cmpxchg_futex_value_locked(&curval, uaddr, uval, 0))) {
--		spin_unlock(&hb->lock);
-+		raw_spin_unlock(&hb->lock);
- 		switch (ret) {
- 		case -EFAULT:
- 			goto pi_faulted;
-@@ -3108,7 +3109,7 @@ static int futex_unlock_pi(u32 __user *uaddr, unsigned int flags)
- 	ret = (curval == uval) ? 0 : -EAGAIN;
- 
- out_unlock:
--	spin_unlock(&hb->lock);
-+	raw_spin_unlock(&hb->lock);
- out_putkey:
- 	put_futex_key(&key);
+diff --git a/mm/zswap.c b/mm/zswap.c
+index ebb0bc88c5f7..a2b4e14f851c 100644
+--- a/mm/zswap.c
++++ b/mm/zswap.c
+@@ -27,6 +27,7 @@
+ #include <linux/highmem.h>
+ #include <linux/slab.h>
+ #include <linux/spinlock.h>
++#include <linux/locallock.h>
+ #include <linux/types.h>
+ #include <linux/atomic.h>
+ #include <linux/frontswap.h>
+@@ -953,6 +954,8 @@ static int zswap_shrink(void)
  	return ret;
-@@ -3282,9 +3283,9 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, unsigned int flags,
- 	/* Queue the futex_q, drop the hb lock, wait for wakeup. */
- 	futex_wait_queue_me(hb, &q, to);
+ }
  
--	spin_lock(&hb->lock);
-+	raw_spin_lock(&hb->lock);
- 	ret = handle_early_requeue_pi_wakeup(hb, &q, &key2, to);
--	spin_unlock(&hb->lock);
-+	raw_spin_unlock(&hb->lock);
- 	if (ret)
- 		goto out_put_keys;
- 
-@@ -3304,7 +3305,7 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, unsigned int flags,
- 		 * did a lock-steal - fix up the PI-state in that case.
- 		 */
- 		if (q.pi_state && (q.pi_state->owner != current)) {
--			spin_lock(q.lock_ptr);
-+			raw_spin_lock(q.lock_ptr);
- 			ret = fixup_pi_state_owner(uaddr2, &q, current);
- 			if (ret && rt_mutex_owner(&q.pi_state->pi_mutex) == current) {
- 				pi_state = q.pi_state;
-@@ -3315,7 +3316,7 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, unsigned int flags,
- 			 * the requeue_pi() code acquired for us.
- 			 */
- 			put_pi_state(q.pi_state);
--			spin_unlock(q.lock_ptr);
-+			raw_spin_unlock(q.lock_ptr);
- 		}
- 	} else {
- 		struct rt_mutex *pi_mutex;
-@@ -3329,7 +3330,7 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, unsigned int flags,
- 		pi_mutex = &q.pi_state->pi_mutex;
- 		ret = rt_mutex_wait_proxy_lock(pi_mutex, to, &rt_waiter);
- 
--		spin_lock(q.lock_ptr);
-+		raw_spin_lock(q.lock_ptr);
- 		if (ret && !rt_mutex_cleanup_proxy_lock(pi_mutex, &rt_waiter))
- 			ret = 0;
- 
-@@ -3764,7 +3765,7 @@ static int __init futex_init(void)
- 	for (i = 0; i < futex_hashsize; i++) {
- 		atomic_set(&futex_queues[i].waiters, 0);
- 		plist_head_init(&futex_queues[i].chain);
--		spin_lock_init(&futex_queues[i].lock);
-+		raw_spin_lock_init(&futex_queues[i].lock);
++/* protect zswap_dstmem from concurrency */
++static DEFINE_LOCAL_IRQ_LOCK(zswap_dstmem_lock);
+ /*********************************
+ * frontswap hooks
+ **********************************/
+@@ -1016,12 +1019,11 @@ static int zswap_frontswap_store(unsigned type, pgoff_t offset,
  	}
  
+ 	/* compress */
+-	dst = get_cpu_var(zswap_dstmem);
+-	tfm = *get_cpu_ptr(entry->pool->tfm);
++	dst = get_locked_var(zswap_dstmem_lock, zswap_dstmem);
++	tfm = *this_cpu_ptr(entry->pool->tfm);
+ 	src = kmap_atomic(page);
+ 	ret = crypto_comp_compress(tfm, src, PAGE_SIZE, dst, &dlen);
+ 	kunmap_atomic(src);
+-	put_cpu_ptr(entry->pool->tfm);
+ 	if (ret) {
+ 		ret = -EINVAL;
+ 		goto put_dstmem;
+@@ -1045,7 +1047,7 @@ static int zswap_frontswap_store(unsigned type, pgoff_t offset,
+ 	buf = (u8 *)(zhdr + 1);
+ 	memcpy(buf, dst, dlen);
+ 	zpool_unmap_handle(entry->pool->zpool, handle);
+-	put_cpu_var(zswap_dstmem);
++	put_locked_var(zswap_dstmem_lock, zswap_dstmem);
+ 
+ 	/* populate entry */
+ 	entry->offset = offset;
+@@ -1072,7 +1074,7 @@ static int zswap_frontswap_store(unsigned type, pgoff_t offset,
  	return 0;
+ 
+ put_dstmem:
+-	put_cpu_var(zswap_dstmem);
++	put_locked_var(zswap_dstmem_lock, zswap_dstmem);
+ 	zswap_pool_put(entry->pool);
+ freepage:
+ 	zswap_entry_cache_free(entry);
 -- 
 2.14.1
 
