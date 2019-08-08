@@ -4,43 +4,43 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ABF36C433FF
-	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Aug 2019 19:54:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2B906C433FF
+	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Aug 2019 19:54:42 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 7C6262184E
-	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Aug 2019 19:54:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 001292189D
+	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Aug 2019 19:54:41 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1565294080;
-	bh=cprIz4EcR1+indvbehlpEArn0qQr/BOY96ETBrplakw=;
+	s=default; t=1565294082;
+	bh=Wl/v+kMqCliTAzEFxqwHO5PoV20HmLtR8YI/gRJZrzg=;
 	h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=w4hZfnvBK1sHHjLoCBtC23qSJWN4PEzT0RmhQgurNkf7MT8tbpids3lKjsfUzNZOT
-	 r8jI3oKYPrm3igKfAXv9tcjnhzdQ39l3nuO6/y5LlxfoWirQuvwJJqDxlSqU0OgSpy
-	 0GqUn9KoqJ6UYsX1lpmDJGpIYYnDHofIUZ3TqMMU=
+	b=xu13gmgAbHa8s33tfEDzDvrgNTpq/kTZhvpKCbo3KT6qlskLG0oUIobjalLpnyE1v
+	 i2Tc+Bj99ZrGX+J5wveBS8u3zbOpuwReL+8n373GUQGc0b/Z810jfoRwW4GrZb3paT
+	 Kl3UYqEDnuRpQU4w3Hp8aNHsq/ZUUVenqqGr9foE=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2404301AbfHHTxM (ORCPT
+        id S2390391AbfHHTyk (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 8 Aug 2019 15:53:12 -0400
-Received: from mail.kernel.org ([198.145.29.99]:57878 "EHLO mail.kernel.org"
+        Thu, 8 Aug 2019 15:54:40 -0400
+Received: from mail.kernel.org ([198.145.29.99]:57888 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2404271AbfHHTxL (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 8 Aug 2019 15:53:11 -0400
+        id S2404296AbfHHTxN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 8 Aug 2019 15:53:13 -0400
 Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 826532189D;
-        Thu,  8 Aug 2019 19:53:10 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 785DB214C6;
+        Thu,  8 Aug 2019 19:53:11 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1565293991;
-        bh=cprIz4EcR1+indvbehlpEArn0qQr/BOY96ETBrplakw=;
+        s=default; t=1565293992;
+        bh=Wl/v+kMqCliTAzEFxqwHO5PoV20HmLtR8YI/gRJZrzg=;
         h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=RR20w0sgsSpExHnmRegf6H6NJ/N0wB+tTU8fMFn+idf693IXdUonAV+PDeF24sdAN
-         IsM4S1JjGJdx1ZEnLMi6f3N4tAo+TohI0lEKeTNFVp3n4QXYtnTWhQC1MKdAN8Ypsg
-         afcaM2g2qUo7U+o4pkb/bK4j+SQ5WmVwfd6AQ2z4=
+        b=Ds/D0d4oB7ZlRWIwUzjkuZx/eERIVktaq70pb0OzVrfcra0M9XY9Oj+RNDAjNABbt
+         HWY6SXtN1AWJMLkwUhVy5qYNjFH0dajNQdyvxZ5Z1ppIGoOKJ2hm9K0LM+kAdLtXw8
+         fjAetiGBA13eLvPlo97SCh9TZnQQajfEuMGHXFbw=
 From:   zanussi@kernel.org
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -52,9 +52,9 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>,
         Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 02/19] kthread: add a global worker thread.
-Date:   Thu,  8 Aug 2019 14:52:30 -0500
-Message-Id: <d09ae14cce43fa3b7f3d93aada149d6d611e6dfb.1565293934.git.zanussi@kernel.org>
+Subject: [PATCH RT 03/19] genirq: Do not invoke the affinity callback via a workqueue on RT
+Date:   Thu,  8 Aug 2019 14:52:31 -0500
+Message-Id: <16a19c7974fd531ce68182de87fc7314db33117b.1565293934.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.14.1
 In-Reply-To: <cover.1565293934.git.zanussi@kernel.org>
 References: <cover.1565293934.git.zanussi@kernel.org>
@@ -73,141 +73,101 @@ If anyone has any objections, please let me know.
 -----------
 
 
-[ Upstream commit 0532e87d9d44795221aa921ba7024bde689cc894 ]
+[ Upstream commit 2122adbe011cdc0eb62ad62494e181005b23c76a ]
 
-Add kthread_schedule_work() which uses a global kthread for all its
-jobs.
-Split the cgroup include to avoid recussive includes from interrupt.h.
-Fixup everything that fails to build (and did not include all header).
+Joe Korty reported, that __irq_set_affinity_locked() schedules a
+workqueue while holding a rawlock which results in a might_sleep()
+warning.
+This patch uses swork_queue() instead.
 
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Tom Zanussi <zanussi@kernel.org>
 
  Conflicts:
-	include/linux/blk-cgroup.h
-	include/linux/kthread.h
-	kernel/kthread.c
+	include/linux/interrupt.h
+	kernel/irq/manage.c
 ---
- drivers/block/loop.c           |  2 +-
- drivers/spi/spi-rockchip.c     |  1 +
- include/linux/blk-cgroup.h     |  1 +
- include/linux/kthread-cgroup.h | 17 +++++++++++++++++
- include/linux/kthread.h        |  8 ++++++++
- init/main.c                    |  1 +
- kernel/kthread.c               | 13 +++++++++++++
- 7 files changed, 42 insertions(+), 1 deletion(-)
- create mode 100644 include/linux/kthread-cgroup.h
+ include/linux/interrupt.h |  5 ++---
+ kernel/irq/manage.c       | 19 ++++---------------
+ 2 files changed, 6 insertions(+), 18 deletions(-)
 
-diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-index bd447de4a5b8..2a07dfc9b3ae 100644
---- a/drivers/block/loop.c
-+++ b/drivers/block/loop.c
-@@ -70,7 +70,7 @@
- #include <linux/writeback.h>
- #include <linux/completion.h>
- #include <linux/highmem.h>
--#include <linux/kthread.h>
-+#include <linux/kthread-cgroup.h>
- #include <linux/splice.h>
- #include <linux/sysfs.h>
- #include <linux/miscdevice.h>
-diff --git a/drivers/spi/spi-rockchip.c b/drivers/spi/spi-rockchip.c
-index fdcf3076681b..b56619418cea 100644
---- a/drivers/spi/spi-rockchip.c
-+++ b/drivers/spi/spi-rockchip.c
-@@ -22,6 +22,7 @@
- #include <linux/spi/spi.h>
- #include <linux/pm_runtime.h>
- #include <linux/scatterlist.h>
-+#include <linux/interrupt.h>
- 
- #define DRIVER_NAME "rockchip-spi"
- 
-diff --git a/include/linux/blk-cgroup.h b/include/linux/blk-cgroup.h
-index 8bbc3716507a..a9454ad4de06 100644
---- a/include/linux/blk-cgroup.h
-+++ b/include/linux/blk-cgroup.h
-@@ -20,6 +20,7 @@
- #include <linux/radix-tree.h>
- #include <linux/blkdev.h>
- #include <linux/atomic.h>
-+#include <linux/kthread-cgroup.h>
- 
- /* percpu_counter batch for blkg_[rw]stats, per-cpu drift doesn't matter */
- #define BLKG_STAT_CPU_BATCH	(INT_MAX / 2)
-diff --git a/include/linux/kthread-cgroup.h b/include/linux/kthread-cgroup.h
-new file mode 100644
-index 000000000000..53d34bca9d72
---- /dev/null
-+++ b/include/linux/kthread-cgroup.h
-@@ -0,0 +1,17 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+#ifndef _LINUX_KTHREAD_CGROUP_H
-+#define _LINUX_KTHREAD_CGROUP_H
+diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
+index 0f25fa19b2d8..233e3c027f53 100644
+--- a/include/linux/interrupt.h
++++ b/include/linux/interrupt.h
+@@ -15,7 +15,7 @@
+ #include <linux/hrtimer.h>
+ #include <linux/kref.h>
+ #include <linux/workqueue.h>
+-#include <linux/swork.h>
 +#include <linux/kthread.h>
-+#include <linux/cgroup.h>
-+
-+#ifdef CONFIG_BLK_CGROUP
-+void kthread_associate_blkcg(struct cgroup_subsys_state *css);
-+struct cgroup_subsys_state *kthread_blkcg(void);
-+#else
-+static inline void kthread_associate_blkcg(struct cgroup_subsys_state *css) { }
-+static inline struct cgroup_subsys_state *kthread_blkcg(void)
-+{
-+	return NULL;
-+}
-+#endif
-+#endif
-diff --git a/include/linux/kthread.h b/include/linux/kthread.h
-index 4e663f407bd7..59b85b01fb8b 100644
---- a/include/linux/kthread.h
-+++ b/include/linux/kthread.h
-@@ -199,4 +199,12 @@ bool kthread_cancel_delayed_work_sync(struct kthread_delayed_work *work);
  
- void kthread_destroy_worker(struct kthread_worker *worker);
+ #include <linux/atomic.h>
+ #include <asm/ptrace.h>
+@@ -230,7 +230,6 @@ extern void resume_device_irqs(void);
+  * struct irq_affinity_notify - context for notification of IRQ affinity changes
+  * @irq:		Interrupt to which notification applies
+  * @kref:		Reference count, for internal use
+- * @swork:		Swork item, for internal use
+  * @work:		Work item, for internal use
+  * @notify:		Function to be called on change.  This will be
+  *			called in process context.
+@@ -243,7 +242,7 @@ struct irq_affinity_notify {
+ 	unsigned int irq;
+ 	struct kref kref;
+ #ifdef CONFIG_PREEMPT_RT_BASE
+-	struct swork_event swork;
++	struct kthread_work work;
+ #else
+ 	struct work_struct work;
+ #endif
+diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
+index f9415590661c..3d5b33fe874b 100644
+--- a/kernel/irq/manage.c
++++ b/kernel/irq/manage.c
+@@ -228,7 +228,7 @@ int irq_set_affinity_locked(struct irq_data *data, const struct cpumask *mask,
+ 		kref_get(&desc->affinity_notify->kref);
  
-+extern struct kthread_worker kthread_global_worker;
-+void kthread_init_global_worker(void);
-+
-+static inline bool kthread_schedule_work(struct kthread_work *work)
-+{
-+	return kthread_queue_work(&kthread_global_worker, work);
-+}
-+
- #endif /* _LINUX_KTHREAD_H */
-diff --git a/init/main.c b/init/main.c
-index f32aebb5ce54..18c1297b2889 100644
---- a/init/main.c
-+++ b/init/main.c
-@@ -1059,6 +1059,7 @@ static noinline void __init kernel_init_freeable(void)
- 	smp_prepare_cpus(setup_max_cpus);
- 
- 	workqueue_init();
-+	kthread_init_global_worker();
- 
- 	init_mm_internals();
- 
-diff --git a/kernel/kthread.c b/kernel/kthread.c
-index 430fd79cd3fe..44498522e5d5 100644
---- a/kernel/kthread.c
-+++ b/kernel/kthread.c
-@@ -1161,3 +1161,16 @@ void kthread_destroy_worker(struct kthread_worker *worker)
- 	kfree(worker);
+ #ifdef CONFIG_PREEMPT_RT_BASE
+-		swork_queue(&desc->affinity_notify->swork);
++		kthread_schedule_work(&desc->affinity_notify->work);
+ #else
+ 		schedule_work(&desc->affinity_notify->work);
+ #endif
+@@ -293,21 +293,11 @@ static void _irq_affinity_notify(struct irq_affinity_notify *notify)
  }
- EXPORT_SYMBOL(kthread_destroy_worker);
-+
-+DEFINE_KTHREAD_WORKER(kthread_global_worker);
-+EXPORT_SYMBOL(kthread_global_worker);
-+
-+__init void kthread_init_global_worker(void)
-+{
-+	kthread_global_worker.task = kthread_create(kthread_worker_fn,
-+						    &kthread_global_worker,
-+						    "kswork");
-+	if (WARN_ON(IS_ERR(kthread_global_worker.task)))
-+		return;
-+	wake_up_process(kthread_global_worker.task);
-+}
+ 
+ #ifdef CONFIG_PREEMPT_RT_BASE
+-static void init_helper_thread(void)
+-{
+-	static int init_sworker_once;
+-
+-	if (init_sworker_once)
+-		return;
+-	if (WARN_ON(swork_get()))
+-		return;
+-	init_sworker_once = 1;
+-}
+ 
+-static void irq_affinity_notify(struct swork_event *swork)
++static void irq_affinity_notify(struct kthread_work *work)
+ {
+ 	struct irq_affinity_notify *notify =
+-		container_of(swork, struct irq_affinity_notify, swork);
++		container_of(work, struct irq_affinity_notify, work);
+ 	_irq_affinity_notify(notify);
+ }
+ 
+@@ -350,8 +340,7 @@ irq_set_affinity_notifier(unsigned int irq, struct irq_affinity_notify *notify)
+ 		notify->irq = irq;
+ 		kref_init(&notify->kref);
+ #ifdef CONFIG_PREEMPT_RT_BASE
+-		INIT_SWORK(&notify->swork, irq_affinity_notify);
+-		init_helper_thread();
++		kthread_init_work(&notify->work, irq_affinity_notify);
+ #else
+ 		INIT_WORK(&notify->work, irq_affinity_notify);
+ #endif
 -- 
 2.14.1
 
