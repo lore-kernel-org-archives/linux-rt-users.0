@@ -7,40 +7,40 @@ X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A08BBC0650F
-	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Aug 2019 19:54:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 57D61C433FF
+	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Aug 2019 19:54:32 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 6B12D2184E
-	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Aug 2019 19:54:19 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1B42E2184E
+	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Aug 2019 19:54:32 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1565294059;
-	bh=XUAqwdMFL0v2xw6bXW2tTsOnay/wYkSspiv610CB660=;
+	s=default; t=1565294072;
+	bh=3qYlaQUl4rjpzfZVaXqFO7psBcZvQ5hQeGTgLfxda/s=;
 	h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=d4gnR2TE+O+mqRResRl1RXTMOY5VV4rhp0NeOwsRl2UWiELq4JfoOCNEz0sODCAst
-	 nXIbfO/A554XgfDw1KI+LZ+Pr6N0PpyYpDoXmCXERGhlImj0I1jlVC3IssiBW5solu
-	 BZAsyYjKCUwNLqh+kUvkdKFVfQFkLTu5qfOMQO4I=
+	b=YnjirnCd5y31PQLLwLf40cOPzsrKdynA3Y5SADU0Ol3ip9DHo5G4ThVwHBd4N0R1K
+	 fI3G5WXRKQmuV1P3x28+zv/pWZ+J0dxFDsACHrbi9s1ndfMdGMq6YPP5zLIpOrlmWd
+	 mPsOQusoqhpJvXnZzRE9Di5C3XIxSJaCT/A/bIVA=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2390354AbfHHTyS (ORCPT
+        id S2403985AbfHHTy3 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 8 Aug 2019 15:54:18 -0400
-Received: from mail.kernel.org ([198.145.29.99]:58016 "EHLO mail.kernel.org"
+        Thu, 8 Aug 2019 15:54:29 -0400
+Received: from mail.kernel.org ([198.145.29.99]:57932 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2404447AbfHHTxR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 8 Aug 2019 15:53:17 -0400
+        id S2404391AbfHHTxP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 8 Aug 2019 15:53:15 -0400
 Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 501AC218A6;
-        Thu,  8 Aug 2019 19:53:16 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 676312189F;
+        Thu,  8 Aug 2019 19:53:13 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1565293997;
-        bh=XUAqwdMFL0v2xw6bXW2tTsOnay/wYkSspiv610CB660=;
+        s=default; t=1565293994;
+        bh=3qYlaQUl4rjpzfZVaXqFO7psBcZvQ5hQeGTgLfxda/s=;
         h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=wHsZAxl0O346hTPIv6diGqaGoIU9tmqGg2f0L7RtDdILJeGR/CGyKqW2qFUU9dK41
-         zSm7rEPJCcj7SIOM/RzJtaVH83x6yPICzPNOrw4KeBis0oYjaGKKXxOxiZKbFf3r6I
-         Wgvce5hf6IbPXd21LJCfaVVX3nylvBFUmgcjgiVM=
+        b=CUtpfZxplnU3Bc0I0mg45vDPMoIX/tZNqviM2fOtcgdD/zio45rwhROxQBAPjO3+W
+         ZQZgFXnbhweeaK3PTeFSuT3nr1jAjLwH7YtUdf1W6WoTQaRoB2+GOIe/KenAW/FWxs
+         p5LrzwKxFjibPlPZYWuxW34b+Q+Lg7dEa5O3mgm0=
 From:   zanussi@kernel.org
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -52,9 +52,9 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>,
         Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 08/19] arm: imx6: cpuidle: Use raw_spinlock_t
-Date:   Thu,  8 Aug 2019 14:52:36 -0500
-Message-Id: <c7f5849d42ff0ab9a447752e66b55ac91193c2fa.1565293934.git.zanussi@kernel.org>
+Subject: [PATCH RT 05/19] locking/rwsem: Rename rwsem_rt.h to rwsem-rt.h
+Date:   Thu,  8 Aug 2019 14:52:33 -0500
+Message-Id: <413840eba0b87756a0bd16b05d4f3ee52f7793ff.1565293934.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.14.1
 In-Reply-To: <cover.1565293934.git.zanussi@kernel.org>
 References: <cover.1565293934.git.zanussi@kernel.org>
@@ -73,49 +73,35 @@ If anyone has any objections, please let me know.
 -----------
 
 
-[ Upstream commit 40d0332ec8312e9c090f0a5414d9c90e12b13611 ]
+[ Upstream commit fc7a6bdcce83ce162c32d991f0ac8e56ea260f5b ]
 
-The idle call back is invoked with disabled interrupts and requires
-raw_spinlock_t locks to work.
+Rename rwsem_rt.h to rwsem-rt.h to remain consistent with rwsem-rt.c.
 
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Tom Zanussi <zanussi@kernel.org>
 ---
- arch/arm/mach-imx/cpuidle-imx6q.c | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+ include/linux/{rwsem_rt.h => rwsem-rt.h} | 0
+ include/linux/rwsem.h                    | 2 +-
+ 2 files changed, 1 insertion(+), 1 deletion(-)
+ rename include/linux/{rwsem_rt.h => rwsem-rt.h} (100%)
 
-diff --git a/arch/arm/mach-imx/cpuidle-imx6q.c b/arch/arm/mach-imx/cpuidle-imx6q.c
-index 326e870d7123..d9ac80aa1eb0 100644
---- a/arch/arm/mach-imx/cpuidle-imx6q.c
-+++ b/arch/arm/mach-imx/cpuidle-imx6q.c
-@@ -17,22 +17,22 @@
- #include "hardware.h"
+diff --git a/include/linux/rwsem_rt.h b/include/linux/rwsem-rt.h
+similarity index 100%
+rename from include/linux/rwsem_rt.h
+rename to include/linux/rwsem-rt.h
+diff --git a/include/linux/rwsem.h b/include/linux/rwsem.h
+index 513df11a364e..ac0857d60e04 100644
+--- a/include/linux/rwsem.h
++++ b/include/linux/rwsem.h
+@@ -21,7 +21,7 @@
+ #endif
  
- static int num_idle_cpus = 0;
--static DEFINE_SPINLOCK(cpuidle_lock);
-+static DEFINE_RAW_SPINLOCK(cpuidle_lock);
+ #ifdef CONFIG_PREEMPT_RT_FULL
+-#include <linux/rwsem_rt.h>
++#include <linux/rwsem-rt.h>
+ #else /* PREEMPT_RT_FULL */
  
- static int imx6q_enter_wait(struct cpuidle_device *dev,
- 			    struct cpuidle_driver *drv, int index)
- {
--	spin_lock(&cpuidle_lock);
-+	raw_spin_lock(&cpuidle_lock);
- 	if (++num_idle_cpus == num_online_cpus())
- 		imx6_set_lpm(WAIT_UNCLOCKED);
--	spin_unlock(&cpuidle_lock);
-+	raw_spin_unlock(&cpuidle_lock);
- 
- 	cpu_do_idle();
- 
--	spin_lock(&cpuidle_lock);
-+	raw_spin_lock(&cpuidle_lock);
- 	if (num_idle_cpus-- == num_online_cpus())
- 		imx6_set_lpm(WAIT_CLOCKED);
--	spin_unlock(&cpuidle_lock);
-+	raw_spin_unlock(&cpuidle_lock);
- 
- 	return index;
- }
+ struct rw_semaphore;
 -- 
 2.14.1
 
