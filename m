@@ -4,43 +4,43 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 197DEC433FF
-	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Aug 2019 19:53:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B3317C433FF
+	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Aug 2019 19:53:50 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id D898D21874
-	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Aug 2019 19:53:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 66E992184E
+	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Aug 2019 19:53:50 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1565294029;
-	bh=+hrevod6U+GRNoraVTplUdmzgZKw6sRo8XrLTpG0oo8=;
+	s=default; t=1565294030;
+	bh=E/oTiTnvrAycIGyY2hsfDRlDL+P6gDTmtjJ/6ccoCZ8=;
 	h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=z30HBMu41W9yiG4paz/Y6ewhtSqREBIHHk1ZnSRjIrnHXiuVk55dQ595DHjfNULjI
-	 XjehBgX/BBK8lNV12qpIVHv/Qq+TpsfKcyTkoFnupRKn+lIxaZABfBg2huhbKlS6wA
-	 6NsX8FnWgld+CCoJ+ti5LhBPNNcgYbAuHaOi0pyU=
+	b=FwVsity6gez3ADgEGwIcbtlOgf/uknOSvlh2WknkolbN7DYOgkiHcHJz/AM/B2fhE
+	 I6qB+5KoUAd7zTMKHuyWeKjlKIP34J05sf9NkmX74El2jadolsfU6hOCZqao0frJBV
+	 Ger9zxPVUcPtf4BQadtZ+3eYbEg7Qjjf/cheesvM=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2404603AbfHHTxa (ORCPT
+        id S2404590AbfHHTx2 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 8 Aug 2019 15:53:30 -0400
-Received: from mail.kernel.org ([198.145.29.99]:58240 "EHLO mail.kernel.org"
+        Thu, 8 Aug 2019 15:53:28 -0400
+Received: from mail.kernel.org ([198.145.29.99]:58190 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2404588AbfHHTx3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 8 Aug 2019 15:53:29 -0400
+        id S2404557AbfHHTx1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 8 Aug 2019 15:53:27 -0400
 Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 61C5F21902;
-        Thu,  8 Aug 2019 19:53:27 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 1E6A1218D4;
+        Thu,  8 Aug 2019 19:53:24 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1565294008;
-        bh=+hrevod6U+GRNoraVTplUdmzgZKw6sRo8XrLTpG0oo8=;
+        s=default; t=1565294005;
+        bh=E/oTiTnvrAycIGyY2hsfDRlDL+P6gDTmtjJ/6ccoCZ8=;
         h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=y4Jz00omwW7RGdmLkLGzb8bYKGx+RAnyYDdzGLXBr0w7IzPytnuyYRe2/K6G83zG+
-         WaewQAkwtto9dect7n8pqYiL9C0YSrS1rhttKmENC++B7d7q2pk3EHhTEJkL72JI+P
-         dM7y8F43lWVO4wPm5+iCVr13tQlBKGWFElpBqI2A=
+        b=o7S943TdzYD1dlgS3JN/P1+6RZWqTiK012jK4YGX3b+Qv/ya8huF/8Cz3OCWfNQ/Y
+         QInZqIAiMm7F1paEMusnSMBrImmfcTx/avyeiMDk54wGvdpZe2jjhKwH4uFWs4+LYl
+         BPQFxiaNQte5k22f4GwMDCVjOOYx7YMXJqH9sNMM=
 From:   zanussi@kernel.org
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -52,9 +52,9 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>,
         Julia Cartwright <julia@ni.com>
-Subject: [PATCH RT 19/19] Linux 4.14.137-rt65-rc1
-Date:   Thu,  8 Aug 2019 14:52:47 -0500
-Message-Id: <97ea70a48ad812c4aa4fda03a76c51a2795f4c75.1565293935.git.zanussi@kernel.org>
+Subject: [PATCH RT 16/19] futex: Make the futex_hash_bucket lock raw
+Date:   Thu,  8 Aug 2019 14:52:44 -0500
+Message-Id: <5680824ff7ca32b093683c9904ccf0f4eed9ab2a.1565293935.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.14.1
 In-Reply-To: <cover.1565293934.git.zanussi@kernel.org>
 References: <cover.1565293934.git.zanussi@kernel.org>
@@ -65,7 +65,7 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Tom Zanussi <zanussi@kernel.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
 v4.14.137-rt65-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -73,18 +73,350 @@ If anyone has any objections, please let me know.
 -----------
 
 
-Signed-off-by: Tom Zanussi <zanussi@kernel.org>
----
- localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+[ Upstream commit f646521aadedab78801c9befe193e2e8a0c99298 ]
 
-diff --git a/localversion-rt b/localversion-rt
-index 10474042df49..03188f3e7d8d 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt64
-+-rt65-rc1
+Since commit 1a1fb985f2e2b ("futex: Handle early deadlock return
+correctly") we can deadlock while we attempt to acquire the HB lock if
+we fail to acquire the lock.
+The RT waiter (for the futex lock) is still enqueued and acquiring the
+HB lock may build up a lock chain which leads to a deadlock if the owner
+of the lock futex-lock holds the HB lock.
+
+Make the hash bucket lock raw so it does not participate in the
+lockchain.
+
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Tom Zanussi <zanussi@kernel.org>
+
+ Conflicts:
+	kernel/futex.c
+---
+ kernel/futex.c | 89 +++++++++++++++++++++++++++++-----------------------------
+ 1 file changed, 45 insertions(+), 44 deletions(-)
+
+diff --git a/kernel/futex.c b/kernel/futex.c
+index ec90130cd809..0548070cda89 100644
+--- a/kernel/futex.c
++++ b/kernel/futex.c
+@@ -240,7 +240,7 @@ struct futex_q {
+ 	struct plist_node list;
+ 
+ 	struct task_struct *task;
+-	spinlock_t *lock_ptr;
++	raw_spinlock_t *lock_ptr;
+ 	union futex_key key;
+ 	struct futex_pi_state *pi_state;
+ 	struct rt_mutex_waiter *rt_waiter;
+@@ -261,7 +261,7 @@ static const struct futex_q futex_q_init = {
+  */
+ struct futex_hash_bucket {
+ 	atomic_t waiters;
+-	spinlock_t lock;
++	raw_spinlock_t lock;
+ 	struct plist_head chain;
+ } ____cacheline_aligned_in_smp;
+ 
+@@ -926,7 +926,7 @@ void exit_pi_state_list(struct task_struct *curr)
+ 		}
+ 		raw_spin_unlock_irq(&curr->pi_lock);
+ 
+-		spin_lock(&hb->lock);
++		raw_spin_lock(&hb->lock);
+ 		raw_spin_lock_irq(&pi_state->pi_mutex.wait_lock);
+ 		raw_spin_lock(&curr->pi_lock);
+ 		/*
+@@ -936,7 +936,7 @@ void exit_pi_state_list(struct task_struct *curr)
+ 		if (head->next != next) {
+ 			/* retain curr->pi_lock for the loop invariant */
+ 			raw_spin_unlock(&pi_state->pi_mutex.wait_lock);
+-			spin_unlock(&hb->lock);
++			raw_spin_unlock(&hb->lock);
+ 			put_pi_state(pi_state);
+ 			continue;
+ 		}
+@@ -948,7 +948,7 @@ void exit_pi_state_list(struct task_struct *curr)
+ 
+ 		raw_spin_unlock(&curr->pi_lock);
+ 		raw_spin_unlock_irq(&pi_state->pi_mutex.wait_lock);
+-		spin_unlock(&hb->lock);
++		raw_spin_unlock(&hb->lock);
+ 
+ 		rt_mutex_futex_unlock(&pi_state->pi_mutex);
+ 		put_pi_state(pi_state);
+@@ -1442,7 +1442,7 @@ static void __unqueue_futex(struct futex_q *q)
+ {
+ 	struct futex_hash_bucket *hb;
+ 
+-	if (WARN_ON_SMP(!q->lock_ptr || !spin_is_locked(q->lock_ptr))
++	if (WARN_ON_SMP(!q->lock_ptr || !raw_spin_is_locked(q->lock_ptr))
+ 	    || WARN_ON(plist_node_empty(&q->list)))
+ 		return;
+ 
+@@ -1570,21 +1570,21 @@ static inline void
+ double_lock_hb(struct futex_hash_bucket *hb1, struct futex_hash_bucket *hb2)
+ {
+ 	if (hb1 <= hb2) {
+-		spin_lock(&hb1->lock);
++		raw_spin_lock(&hb1->lock);
+ 		if (hb1 < hb2)
+-			spin_lock_nested(&hb2->lock, SINGLE_DEPTH_NESTING);
++			raw_spin_lock_nested(&hb2->lock, SINGLE_DEPTH_NESTING);
+ 	} else { /* hb1 > hb2 */
+-		spin_lock(&hb2->lock);
+-		spin_lock_nested(&hb1->lock, SINGLE_DEPTH_NESTING);
++		raw_spin_lock(&hb2->lock);
++		raw_spin_lock_nested(&hb1->lock, SINGLE_DEPTH_NESTING);
+ 	}
+ }
+ 
+ static inline void
+ double_unlock_hb(struct futex_hash_bucket *hb1, struct futex_hash_bucket *hb2)
+ {
+-	spin_unlock(&hb1->lock);
++	raw_spin_unlock(&hb1->lock);
+ 	if (hb1 != hb2)
+-		spin_unlock(&hb2->lock);
++		raw_spin_unlock(&hb2->lock);
+ }
+ 
+ /*
+@@ -1612,7 +1612,7 @@ futex_wake(u32 __user *uaddr, unsigned int flags, int nr_wake, u32 bitset)
+ 	if (!hb_waiters_pending(hb))
+ 		goto out_put_key;
+ 
+-	spin_lock(&hb->lock);
++	raw_spin_lock(&hb->lock);
+ 
+ 	plist_for_each_entry_safe(this, next, &hb->chain, list) {
+ 		if (match_futex (&this->key, &key)) {
+@@ -1631,7 +1631,7 @@ futex_wake(u32 __user *uaddr, unsigned int flags, int nr_wake, u32 bitset)
+ 		}
+ 	}
+ 
+-	spin_unlock(&hb->lock);
++	raw_spin_unlock(&hb->lock);
+ 	wake_up_q(&wake_q);
+ out_put_key:
+ 	put_futex_key(&key);
+@@ -2236,7 +2236,8 @@ static inline struct futex_hash_bucket *queue_lock(struct futex_q *q)
+ 
+ 	q->lock_ptr = &hb->lock;
+ 
+-	spin_lock(&hb->lock); /* implies smp_mb(); (A) */
++	raw_spin_lock(&hb->lock);
++
+ 	return hb;
+ }
+ 
+@@ -2244,7 +2245,7 @@ static inline void
+ queue_unlock(struct futex_hash_bucket *hb)
+ 	__releases(&hb->lock)
+ {
+-	spin_unlock(&hb->lock);
++	raw_spin_unlock(&hb->lock);
+ 	hb_waiters_dec(hb);
+ }
+ 
+@@ -2283,7 +2284,7 @@ static inline void queue_me(struct futex_q *q, struct futex_hash_bucket *hb)
+ 	__releases(&hb->lock)
+ {
+ 	__queue_me(q, hb);
+-	spin_unlock(&hb->lock);
++	raw_spin_unlock(&hb->lock);
+ }
+ 
+ /**
+@@ -2299,41 +2300,41 @@ static inline void queue_me(struct futex_q *q, struct futex_hash_bucket *hb)
+  */
+ static int unqueue_me(struct futex_q *q)
+ {
+-	spinlock_t *lock_ptr;
++	raw_spinlock_t *lock_ptr;
+ 	int ret = 0;
+ 
+ 	/* In the common case we don't take the spinlock, which is nice. */
+ retry:
+ 	/*
+-	 * q->lock_ptr can change between this read and the following spin_lock.
+-	 * Use READ_ONCE to forbid the compiler from reloading q->lock_ptr and
+-	 * optimizing lock_ptr out of the logic below.
++	 * q->lock_ptr can change between this read and the following
++	 * raw_spin_lock. Use READ_ONCE to forbid the compiler from reloading
++	 * q->lock_ptr and optimizing lock_ptr out of the logic below.
+ 	 */
+ 	lock_ptr = READ_ONCE(q->lock_ptr);
+ 	if (lock_ptr != NULL) {
+-		spin_lock(lock_ptr);
++		raw_spin_lock(lock_ptr);
+ 		/*
+ 		 * q->lock_ptr can change between reading it and
+-		 * spin_lock(), causing us to take the wrong lock.  This
++		 * raw_spin_lock(), causing us to take the wrong lock.  This
+ 		 * corrects the race condition.
+ 		 *
+ 		 * Reasoning goes like this: if we have the wrong lock,
+ 		 * q->lock_ptr must have changed (maybe several times)
+-		 * between reading it and the spin_lock().  It can
+-		 * change again after the spin_lock() but only if it was
+-		 * already changed before the spin_lock().  It cannot,
++		 * between reading it and the raw_spin_lock().  It can
++		 * change again after the raw_spin_lock() but only if it was
++		 * already changed before the raw_spin_lock().  It cannot,
+ 		 * however, change back to the original value.  Therefore
+ 		 * we can detect whether we acquired the correct lock.
+ 		 */
+ 		if (unlikely(lock_ptr != q->lock_ptr)) {
+-			spin_unlock(lock_ptr);
++			raw_spin_unlock(lock_ptr);
+ 			goto retry;
+ 		}
+ 		__unqueue_futex(q);
+ 
+ 		BUG_ON(q->pi_state);
+ 
+-		spin_unlock(lock_ptr);
++		raw_spin_unlock(lock_ptr);
+ 		ret = 1;
+ 	}
+ 
+@@ -2355,7 +2356,7 @@ static void unqueue_me_pi(struct futex_q *q)
+ 	put_pi_state(q->pi_state);
+ 	q->pi_state = NULL;
+ 
+-	spin_unlock(q->lock_ptr);
++	raw_spin_unlock(q->lock_ptr);
+ }
+ 
+ static int fixup_pi_state_owner(u32 __user *uaddr, struct futex_q *q,
+@@ -2488,7 +2489,7 @@ static int fixup_pi_state_owner(u32 __user *uaddr, struct futex_q *q,
+ 	 */
+ handle_err:
+ 	raw_spin_unlock_irq(&pi_state->pi_mutex.wait_lock);
+-	spin_unlock(q->lock_ptr);
++	raw_spin_unlock(q->lock_ptr);
+ 
+ 	switch (err) {
+ 	case -EFAULT:
+@@ -2506,7 +2507,7 @@ static int fixup_pi_state_owner(u32 __user *uaddr, struct futex_q *q,
+ 		break;
+ 	}
+ 
+-	spin_lock(q->lock_ptr);
++	raw_spin_lock(q->lock_ptr);
+ 	raw_spin_lock_irq(&pi_state->pi_mutex.wait_lock);
+ 
+ 	/*
+@@ -2602,7 +2603,7 @@ static void futex_wait_queue_me(struct futex_hash_bucket *hb, struct futex_q *q,
+ 	/*
+ 	 * The task state is guaranteed to be set before another task can
+ 	 * wake it. set_current_state() is implemented using smp_store_mb() and
+-	 * queue_me() calls spin_unlock() upon completion, both serializing
++	 * queue_me() calls raw_spin_unlock() upon completion, both serializing
+ 	 * access to the hash list and forcing another memory barrier.
+ 	 */
+ 	set_current_state(TASK_INTERRUPTIBLE);
+@@ -2893,7 +2894,7 @@ static int futex_lock_pi(u32 __user *uaddr, unsigned int flags,
+ 	 * before __rt_mutex_start_proxy_lock() is done.
+ 	 */
+ 	raw_spin_lock_irq(&q.pi_state->pi_mutex.wait_lock);
+-	spin_unlock(q.lock_ptr);
++	raw_spin_unlock(q.lock_ptr);
+ 	/*
+ 	 * __rt_mutex_start_proxy_lock() unconditionally enqueues the @rt_waiter
+ 	 * such that futex_unlock_pi() is guaranteed to observe the waiter when
+@@ -2914,7 +2915,7 @@ static int futex_lock_pi(u32 __user *uaddr, unsigned int flags,
+ 	ret = rt_mutex_wait_proxy_lock(&q.pi_state->pi_mutex, to, &rt_waiter);
+ 
+ cleanup:
+-	spin_lock(q.lock_ptr);
++	raw_spin_lock(q.lock_ptr);
+ 	/*
+ 	 * If we failed to acquire the lock (deadlock/signal/timeout), we must
+ 	 * first acquire the hb->lock before removing the lock from the
+@@ -3015,7 +3016,7 @@ static int futex_unlock_pi(u32 __user *uaddr, unsigned int flags)
+ 		return ret;
+ 
+ 	hb = hash_futex(&key);
+-	spin_lock(&hb->lock);
++	raw_spin_lock(&hb->lock);
+ 
+ 	/*
+ 	 * Check waiters first. We do not trust user space values at
+@@ -3049,7 +3050,7 @@ static int futex_unlock_pi(u32 __user *uaddr, unsigned int flags)
+ 		 * rt_waiter. Also see the WARN in wake_futex_pi().
+ 		 */
+ 		raw_spin_lock_irq(&pi_state->pi_mutex.wait_lock);
+-		spin_unlock(&hb->lock);
++		raw_spin_unlock(&hb->lock);
+ 
+ 		/* drops pi_state->pi_mutex.wait_lock */
+ 		ret = wake_futex_pi(uaddr, uval, pi_state);
+@@ -3088,7 +3089,7 @@ static int futex_unlock_pi(u32 __user *uaddr, unsigned int flags)
+ 	 * owner.
+ 	 */
+ 	if ((ret = cmpxchg_futex_value_locked(&curval, uaddr, uval, 0))) {
+-		spin_unlock(&hb->lock);
++		raw_spin_unlock(&hb->lock);
+ 		switch (ret) {
+ 		case -EFAULT:
+ 			goto pi_faulted;
+@@ -3108,7 +3109,7 @@ static int futex_unlock_pi(u32 __user *uaddr, unsigned int flags)
+ 	ret = (curval == uval) ? 0 : -EAGAIN;
+ 
+ out_unlock:
+-	spin_unlock(&hb->lock);
++	raw_spin_unlock(&hb->lock);
+ out_putkey:
+ 	put_futex_key(&key);
+ 	return ret;
+@@ -3282,9 +3283,9 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, unsigned int flags,
+ 	/* Queue the futex_q, drop the hb lock, wait for wakeup. */
+ 	futex_wait_queue_me(hb, &q, to);
+ 
+-	spin_lock(&hb->lock);
++	raw_spin_lock(&hb->lock);
+ 	ret = handle_early_requeue_pi_wakeup(hb, &q, &key2, to);
+-	spin_unlock(&hb->lock);
++	raw_spin_unlock(&hb->lock);
+ 	if (ret)
+ 		goto out_put_keys;
+ 
+@@ -3304,7 +3305,7 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, unsigned int flags,
+ 		 * did a lock-steal - fix up the PI-state in that case.
+ 		 */
+ 		if (q.pi_state && (q.pi_state->owner != current)) {
+-			spin_lock(q.lock_ptr);
++			raw_spin_lock(q.lock_ptr);
+ 			ret = fixup_pi_state_owner(uaddr2, &q, current);
+ 			if (ret && rt_mutex_owner(&q.pi_state->pi_mutex) == current) {
+ 				pi_state = q.pi_state;
+@@ -3315,7 +3316,7 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, unsigned int flags,
+ 			 * the requeue_pi() code acquired for us.
+ 			 */
+ 			put_pi_state(q.pi_state);
+-			spin_unlock(q.lock_ptr);
++			raw_spin_unlock(q.lock_ptr);
+ 		}
+ 	} else {
+ 		struct rt_mutex *pi_mutex;
+@@ -3329,7 +3330,7 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, unsigned int flags,
+ 		pi_mutex = &q.pi_state->pi_mutex;
+ 		ret = rt_mutex_wait_proxy_lock(pi_mutex, to, &rt_waiter);
+ 
+-		spin_lock(q.lock_ptr);
++		raw_spin_lock(q.lock_ptr);
+ 		if (ret && !rt_mutex_cleanup_proxy_lock(pi_mutex, &rt_waiter))
+ 			ret = 0;
+ 
+@@ -3764,7 +3765,7 @@ static int __init futex_init(void)
+ 	for (i = 0; i < futex_hashsize; i++) {
+ 		atomic_set(&futex_queues[i].waiters, 0);
+ 		plist_head_init(&futex_queues[i].chain);
+-		spin_lock_init(&futex_queues[i].lock);
++		raw_spin_lock_init(&futex_queues[i].lock);
+ 	}
+ 
+ 	return 0;
 -- 
 2.14.1
 
