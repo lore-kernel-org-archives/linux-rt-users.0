@@ -2,46 +2,46 @@ Return-Path: <SRS0=QXCx=WE=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.6 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=unavailable
+X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 13695C433FF
-	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Aug 2019 19:44:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 32C03C0650F
+	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Aug 2019 19:53:20 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id D94E821743
-	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Aug 2019 19:44:20 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 06B4A218BA
+	for <linux-rt-users@archiver.kernel.org>; Thu,  8 Aug 2019 19:53:20 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1565293460;
-	bh=OQrIwJerPWfoySkt0blmJAgpcXMR3umUGbRJrpHLS4U=;
-	h=Subject:From:To:Date:List-ID:From;
-	b=dZnzFHK1u6Wbyo/jdoZKdGUp7iC7HLtKXmcJrPO659ziXQgb4qWncoFRy8oFPdMj/
-	 VrBEBFsN0jisPJBhwfFDTE60nE2Rr0JxaJE/9IhHwM4lHGHFk6x9jkhVL9FfNplr4u
-	 llQT49vvUTm5r91Iqnc8BlswyaDrW1JkbGmsGRps=
+	s=default; t=1565294000;
+	bh=aHv2LDiaGN7dEQiNuFUXYzjr+42/lR/ICUScbvMgjZE=;
+	h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
+	 References:List-ID:From;
+	b=pZCnhuA8NxAChZJeu7hOfd6T3pXQBlUdjWNyzIR1GVRqkrxbzjV8kyVgQe//W545+
+	 PSytbAT/AOkU8f7p6KNUNkaTjZZhRp0PrXrFervr6qf9/orYm1tQ8B9VBGrt61di3F
+	 ZRIabHifni07ebWs6+s3tMWAgXUZBTgIu+CNNPNY=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1732544AbfHHToQ (ORCPT
+        id S2404467AbfHHTxS (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 8 Aug 2019 15:44:16 -0400
-Received: from mail.kernel.org ([198.145.29.99]:55818 "EHLO mail.kernel.org"
+        Thu, 8 Aug 2019 15:53:18 -0400
+Received: from mail.kernel.org ([198.145.29.99]:57980 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1730768AbfHHToQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 8 Aug 2019 15:44:16 -0400
-Received: from tzanussi-mobl (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        id S2404353AbfHHTxQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 8 Aug 2019 15:53:16 -0400
+Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 8ADC62173E;
-        Thu,  8 Aug 2019 19:44:14 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 5773A218B0;
+        Thu,  8 Aug 2019 19:53:15 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1565293455;
-        bh=OQrIwJerPWfoySkt0blmJAgpcXMR3umUGbRJrpHLS4U=;
-        h=Subject:From:To:Date:From;
-        b=pL9LX3dk6VjvCGyLizf4P3MedKWWltByH8Z2N3R6HG8aW/DW0/k/k0PaSjQtYPTJ+
-         gX6QNHuiCbzvDrgBoMXFg/fgobVCqWmWdqKHtanHjKNCx/1WQ0lL6coYkSwCpLJXlE
-         nwai2OElsqq7Az5mBHUUlfVqYX4vP5aq2eHf7JuQ=
-Message-ID: <1565293453.2623.4.camel@kernel.org>
-Subject: [ANNOUNCE] 4.14.137-rt64
-From:   Tom Zanussi <zanussi@kernel.org>
+        s=default; t=1565293996;
+        bh=aHv2LDiaGN7dEQiNuFUXYzjr+42/lR/ICUScbvMgjZE=;
+        h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
+         References:From;
+        b=qRwYvhYQnb7Je8j2HVjxJydJ5BQhQeewfuvHP64AfiIS4ALF3n3k+nAwR1TvP7UxO
+         hLwxo+fTyElm9vAQ8dzH68nls1ocxGI2bIbNaU5HA2vm7KGQ/cIahA2Ih4g4OnsdiQ
+         5z4kw5bZfv30m7KTQxIGAYmN8wEXl2wC2HGQWjic=
+From:   zanussi@kernel.org
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
@@ -52,38 +52,68 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>,
         Julia Cartwright <julia@ni.com>
-Date:   Thu, 08 Aug 2019 14:44:13 -0500
-Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.26.1-1 
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Subject: [PATCH RT 07/19] locking/lockdep: Don't complain about incorrect name for no validate class
+Date:   Thu,  8 Aug 2019 14:52:35 -0500
+Message-Id: <6a31ace7aff17a469ea5f390c8b2ae61695b7159.1565293934.git.zanussi@kernel.org>
+X-Mailer: git-send-email 2.14.1
+In-Reply-To: <cover.1565293934.git.zanussi@kernel.org>
+References: <cover.1565293934.git.zanussi@kernel.org>
+In-Reply-To: <cover.1565293934.git.zanussi@kernel.org>
+References: <cover.1565293934.git.zanussi@kernel.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT Folks!
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-I'm pleased to announce the 4.14.137-rt64 stable release.
+v4.14.137-rt65-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-This release is just an update to the new stable 4.14.137
-version and no RT specific changes have been made.
+-----------
 
-You can get this release via the git tree at:
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+[ Upstream commit 978315462d3ea3cf6cfacd34c563ec1eb02a3aa5 ]
 
-  branch: v4.14-rt
-  Head SHA1: b86042812cec9871bba4a0da843cccdc77682ee3
+It is possible to ignore the validation for a certain lock by using:
 
-Or to build 4.14.137-rt64 directly, the following patches should be applied:
+	lockdep_set_novalidate_class()
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
+on it. Each invocation will assign a new name to the class it created
+for created __lockdep_no_validate__. That means that once
+lockdep_set_novalidate_class() has been used on two locks then
+class->name won't match lock->name for the first lock triggering the
+warning.
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.137.xz
+So ignore changed non-matching ->name pointer for the special
+__lockdep_no_validate__ class.
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.137-rt64.patch.xz
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Will Deacon <will.deacon@arm.com>
+Link: http://lkml.kernel.org/r/20190517212234.32611-1-bigeasy@linutronix.de
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+Signed-off-by: Tom Zanussi <zanussi@kernel.org>
+---
+ kernel/locking/lockdep.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-Enjoy!
+diff --git a/kernel/locking/lockdep.c b/kernel/locking/lockdep.c
+index e576d234f3ea..f194de27123d 100644
+--- a/kernel/locking/lockdep.c
++++ b/kernel/locking/lockdep.c
+@@ -719,7 +719,8 @@ look_up_lock_class(struct lockdep_map *lock, unsigned int subclass)
+ 			 * Huh! same key, different name? Did someone trample
+ 			 * on some memory? We're most confused.
+ 			 */
+-			WARN_ON_ONCE(class->name != lock->name);
++			WARN_ON_ONCE(class->name != lock->name &&
++				     lock->key != &__lockdep_no_validate__);
+ 			return class;
+ 		}
+ 	}
+-- 
+2.14.1
 
-   Tom
