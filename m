@@ -2,60 +2,85 @@ Return-Path: <SRS0=IBCX=WJ=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
+	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B9C87C32750
-	for <linux-rt-users@archiver.kernel.org>; Tue, 13 Aug 2019 09:00:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1B423C433FF
+	for <linux-rt-users@archiver.kernel.org>; Tue, 13 Aug 2019 09:53:09 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 910B720840
-	for <linux-rt-users@archiver.kernel.org>; Tue, 13 Aug 2019 09:00:03 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id EACBE20665
+	for <linux-rt-users@archiver.kernel.org>; Tue, 13 Aug 2019 09:53:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1725869AbfHMJAD (ORCPT
+        id S1727984AbfHMJxI (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 13 Aug 2019 05:00:03 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:33298 "EHLO
+        Tue, 13 Aug 2019 05:53:08 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:33669 "EHLO
         Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725781AbfHMJAD (ORCPT
+        with ESMTP id S1727615AbfHMJxI (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 13 Aug 2019 05:00:03 -0400
+        Tue, 13 Aug 2019 05:53:08 -0400
 Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
         (envelope-from <bigeasy@linutronix.de>)
-        id 1hxSev-0008HV-Mk; Tue, 13 Aug 2019 11:00:01 +0200
-Date:   Tue, 13 Aug 2019 11:00:01 +0200
+        id 1hxTUI-0001OL-8C; Tue, 13 Aug 2019 11:53:06 +0200
+Date:   Tue, 13 Aug 2019 11:53:06 +0200
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Benjamin Rouxel <benjamin.rouxel@uva.nl>
-Cc:     linux-rt-users@vger.kernel.org
-Subject: Re: Boot issue on odroid-XU4
-Message-ID: <20190813090001.youm2uow3slx2tiu@linutronix.de>
-References: <cfa2b805-380d-39fd-2955-ab19c5a11aaa@uva.nl>
- <d6033713-25b7-7ef0-b0ad-8b7100d7d4b0@uva.nl>
+To:     Paul Thomas <pthomas8589@gmail.com>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        dunc.mcphie@gmail.com, Anders Roxell <anders.roxell@linaro.org>
+Subject: Re: poor cyclictest results with 5.0 series rt for arm64
+Message-ID: <20190813095306.xqgq3uusdpj7dhy7@linutronix.de>
+References: <CAD56B7fdr5w0Pk5WHVWXa1ORyM=i+Ew66O+8buBwH0geeX+X0Q@mail.gmail.com>
+ <alpine.DEB.2.21.1907162221350.1767@nanos.tec.linutronix.de>
+ <CAD56B7eF_KhWvg=m6iy5YSJF-81v-zcmX7+8Kd0wGMrALHwU1A@mail.gmail.com>
+ <alpine.DEB.2.21.1907170111160.1767@nanos.tec.linutronix.de>
+ <CAD56B7eswTRxbeA8foXyVVZ7Bd+_y40dtOLkHxuAf4kVge7VDg@mail.gmail.com>
+ <alpine.DEB.2.21.1907171001150.1767@nanos.tec.linutronix.de>
+ <alpine.DEB.2.21.1907171009280.1767@nanos.tec.linutronix.de>
+ <alpine.DEB.2.21.1907171101150.1767@nanos.tec.linutronix.de>
+ <alpine.DEB.2.21.1907171220400.1767@nanos.tec.linutronix.de>
+ <CAD56B7eomeb5Lr2juFWtZmtqSx3SkPijW03QZz8xv39He26PrA@mail.gmail.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <d6033713-25b7-7ef0-b0ad-8b7100d7d4b0@uva.nl>
+In-Reply-To: <CAD56B7eomeb5Lr2juFWtZmtqSx3SkPijW03QZz8xv39He26PrA@mail.gmail.com>
 User-Agent: NeoMutt/20180716
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2019-07-24 19:07:46 [+0200], Benjamin Rouxel wrote:
-> Hi,
+On 2019-07-17 18:28:51 [-0400], Paul Thomas wrote:
+> On Wed, Jul 17, 2019 at 6:21 AM Thomas Gleixner <tglx@linutronix.de> wrote:
+> >
+> > On Wed, 17 Jul 2019, Thomas Gleixner wrote:
+> > > On Wed, 17 Jul 2019, Thomas Gleixner wrote:
+> > >
+> > > The one below should fix it for real.
+> >
+> > That still has an issue which needs deeper investigation. Just keep the
+> > offending patch reverted for now.
 > 
-> I thought it would be harder to debug/fix. Please find attached a patch
-> that corrects this boot issue, the exynos5 i2c driver was still using
-> the "spinlock_t" structure and all initial utility functions, I just
-> changed it to use the "raw_spinlock_t" struct.
-> 
-> Was it the good fix?
+> OK, sounds good.
 
-Could you remove the IRQF_ONESHOT from the devm_request_irq() statement
-and check if this fixes the issue? I don't see the reason for it.
+could you please try the following hunk?
 
-> Best,
-> 
-> Benjamin Rouxel.
+diff --git a/arch/arm64/kernel/entry.S b/arch/arm64/kernel/entry.S
+index 6808cd9526c67..63c6960262861 100644
+--- a/arch/arm64/kernel/entry.S
++++ b/arch/arm64/kernel/entry.S
+@@ -648,7 +648,8 @@ alternative_if ARM64_HAS_IRQ_PRIO_MASKING
+ 	orr	x24, x24, x0
+ alternative_else_nop_endif
+ 
+-	cbnz	x24, 2f					// preempt count != 0
++	cbz	x24, 1f					// (need_resched + count) == 0
++	cbnz	w24, 2f					// count != 0
+ 
+ 	ldr	w24, [tsk, #TSK_TI_PREEMPT_LAZY]	// get preempt lazy count
+ 	cbnz	w24, 2f					// preempt lazy count != 0
+
+> -Paul
 
 Sebastian
