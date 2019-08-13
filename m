@@ -2,83 +2,189 @@ Return-Path: <SRS0=IBCX=WJ=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-7.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9F4A5C32750
-	for <linux-rt-users@archiver.kernel.org>; Tue, 13 Aug 2019 16:17:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E730FC32750
+	for <linux-rt-users@archiver.kernel.org>; Tue, 13 Aug 2019 16:24:44 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 7024B20840
-	for <linux-rt-users@archiver.kernel.org>; Tue, 13 Aug 2019 16:17:22 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id ADFE920679
+	for <linux-rt-users@archiver.kernel.org>; Tue, 13 Aug 2019 16:24:44 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1565713484;
+	bh=ODtO8Ny39z13uqHLprziY+qVFIgKlhwu2XPmdRbXtsk=;
+	h=Date:From:To:Cc:Subject:In-Reply-To:References:List-ID:From;
+	b=OddtqFAFrahzblj1qb/JJa1Eda+on+t1Wryv3YQ5gEVIlRAXktGdXi7DkTuVXw6VN
+	 kWBbdm2po0UmT1UENQGOT8wRCi+ZT1b/R8+EnmlJoBGVQJE0C0tPxJ6e/8HKZIZt9i
+	 U6wxBOP/rs+rcp7cgJTaFozDUL3sa+XfpL39P9N4=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727843AbfHMQRW (ORCPT
+        id S1728533AbfHMQYo convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 13 Aug 2019 12:17:22 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:35447 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727621AbfHMQRW (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 13 Aug 2019 12:17:22 -0400
-Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
-        (envelope-from <bigeasy@linutronix.de>)
-        id 1hxZU7-0002NR-10; Tue, 13 Aug 2019 18:17:19 +0200
-Date:   Tue, 13 Aug 2019 18:17:18 +0200
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-Cc:     Clark Williams <williams@redhat.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        RT <linux-rt-users@vger.kernel.org>
-Subject: Re: v5.2-rt1: kernel: BUG: assuming atomic context at
- net/core/ptp_classifier.c:106 current
-Message-ID: <20190813161718.ki2q24hi2lx57y75@linutronix.de>
-References: <20190718204655.GA4097@uudg.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <20190718204655.GA4097@uudg.org>
-User-Agent: NeoMutt/20180716
+        Tue, 13 Aug 2019 12:24:44 -0400
+Received: from foss.arm.com ([217.140.110.172]:39992 "EHLO foss.arm.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1727714AbfHMQYo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 13 Aug 2019 12:24:44 -0400
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 5195C15AB;
+        Tue, 13 Aug 2019 09:24:43 -0700 (PDT)
+Received: from big-swifty.misterjones.org (unknown [172.31.20.19])
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 0BE293F706;
+        Tue, 13 Aug 2019 09:24:31 -0700 (PDT)
+Date:   Tue, 13 Aug 2019 17:24:10 +0100
+Message-ID: <865zn1nidx.wl-maz@kernel.org>
+From:   Marc Zyngier <maz@kernel.org>
+To:     Julien Grall <julien.grall@arm.com>, <bigeasy@linutronix.de>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        <anna-maria@linutronix.de>,
+        "kvmarm@lists.cs.columbia.edu" <kvmarm@lists.cs.columbia.edu>,
+        Julien Thierry <julien.thierry@arm.com>,
+        James Morse <james.morse@arm.com>,
+        Suzuki K Poulose <suzuki.poulose@arm.com>,
+        Andre Przywara <andre.przywara@arm.com>
+Subject: Re: KVM Arm64 and Linux-RT issues
+In-Reply-To: <adc0b2e2-3a2e-5685-8eb5-2ce927d2139e@arm.com>
+References: <b9867c43-7fe3-5d64-9939-b1a7ab7f1061@arm.com>
+        <cd310858-2c0f-6af1-bf82-ee1e01a2cfb8@arm.com>
+        <alpine.DEB.2.21.1907270053360.1791@nanos.tec.linutronix.de>
+        <86zhkzn319.wl-maz@kernel.org>
+        <960b5ed1-6d0f-3cee-da37-6061b4946c1a@arm.com>
+        <20190813125835.5v26s4iuv44lw2xg@linutronix.de>
+        <adc0b2e2-3a2e-5685-8eb5-2ce927d2139e@arm.com>
+User-Agent: Wanderlust/2.15.9 (Almost Unreal) SEMI-EPG/1.14.7 (Harue)
+ FLIM/1.14.9 (=?UTF-8?B?R29qxY0=?=) APEL/10.8 EasyPG/1.0.0 Emacs/26
+ (aarch64-unknown-linux-gnu) MULE/6.0 (HANACHIRUSATO)
+Organization: Approximate
+MIME-Version: 1.0 (generated by SEMI-EPG 1.14.7 - "Harue")
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2019-07-18 17:46:55 [-0300], Luis Claudio R. Goncalves wrote:
-> Hello,
+On Tue, 13 Aug 2019 16:44:21 +0100,
+Julien Grall <julien.grall@arm.com> wrote:
 > 
-> Sounds like ptp_classify_raw() should be reached with IRQs disabled to
-> safely call BPF_PROG_RUN(). I am just unsure where, down the road, the
-> proper context should have been set.
+> Hi Sebastian,
 > 
-> 08:46:58 darkmatter kernel: BUG: assuming atomic context at net/core/ptp_classifier.c:106
-> Jul 17 08:46:58 darkmatter kernel: in_atomic(): 0, irqs_disabled(): 0, pid: 1129, name: irq/35-enp4s0
-> Jul 17 08:46:58 darkmatter kernel: CPU: 1 PID: 1129 Comm: irq/35-enp4s0 Not tainted 5.2.0-rt1 #1
-> Jul 17 08:46:58 darkmatter kernel: Hardware name: Hewlett-Packard p7-1512/2ADA, BIOS 8.15 02/05/2013
-> Jul 17 08:46:58 darkmatter kernel: Call Trace:
-> Jul 17 08:46:58 darkmatter kernel: dump_stack+0x67/0x90
-> Jul 17 08:46:58 darkmatter kernel: __cant_sleep.cold+0x68/0x74
-> Jul 17 08:46:58 darkmatter kernel: ptp_classify_raw+0x1f/0xa0
-> Jul 17 08:46:58 darkmatter kernel: skb_defer_rx_timestamp+0x5a/0xb0
-> Jul 17 08:46:58 darkmatter kernel: netif_receive_skb_internal+0x34/0xe0
-> Jul 17 08:46:58 darkmatter kernel: napi_gro_receive+0x66/0x1c0
-> Jul 17 08:46:58 darkmatter kernel: rtl8169_poll+0x216/0x610 [r8169]
-> Jul 17 08:46:58 darkmatter kernel: net_rx_action+0x208/0x490
-> Jul 17 08:46:58 darkmatter kernel: __do_softirq+0x140/0x3c9
-> Jul 17 08:46:58 darkmatter kernel: __local_bh_enable_ip+0x13d/0x160
-> Jul 17 08:46:58 darkmatter kernel: irq_forced_thread_fn+0x70/0x80
-> Jul 17 08:46:58 darkmatter kernel: irq_thread+0xf6/0x1d0
-> Jul 17 08:46:58 darkmatter kernel: kthread+0x103/0x140
-> Jul 17 08:46:58 darkmatter kernel: ret_from_fork+0x3a/0x50
-> Jul 17 08:46:58 darkmatter kernel: bpfilter: Loaded bpfilter_umh pid 1160
-> Jul 17 08:46:58 darkmatter kernel: bpfilter: read fail -13
+> On 8/13/19 1:58 PM, bigeasy@linutronix.de wrote:
+> > On 2019-07-27 14:37:11 [+0100], Julien Grall wrote:
+> >>>> 8<------------
+> >>>> --- a/virt/kvm/arm/arch_timer.c
+> >>>> +++ b/virt/kvm/arm/arch_timer.c
+> >>>> @@ -80,7 +80,7 @@ static inline bool userspace_irqchip(str
+> >>>>    static void soft_timer_start(struct hrtimer *hrt, u64 ns)
+> >>>>    {
+> >>>>    	hrtimer_start(hrt, ktime_add_ns(ktime_get(), ns),
+> >>>> -		      HRTIMER_MODE_ABS);
+> >>>> +		      HRTIMER_MODE_ABS_HARD);
+> >>>>    }
+> >>> 
+> >>> That's pretty neat, and matches the patch you already have for
+> >>> x86. Feel free to add my
+> >>> 
+> >>> Acked-by: Marc Zyngier <maz@kernel.org>
+> >> 
+> >> I can confirm the warning now disappeared. Feel free to added my tested-by:
+> >> 
+> >> Tested-by: Julien Grall <julien.grall@arm.com>
+> >> 
+> > 
+> > |kvm_hrtimer_expire()
+> > | kvm_timer_update_irq()
+> > |   kvm_vgic_inject_irq()
+> > |     vgic_lazy_init()
+> > |                if (unlikely(!vgic_initialized(kvm))) {
+> > |                 if (kvm->arch.vgic.vgic_model != KVM_DEV_TYPE_ARM_VGIC_V2)
+> > |                         return -EBUSY;
+> > |
+> > |                 mutex_lock(&kvm->lock);
+> > 
+> > Is this possible path of any concern? This should throw a warning also
+> > for !RT so probably not…
+> 
+> Hmmm, theoretically yes. In practice, it looks like the hrtimer will
+> not be started before kvm_vcpu_first_run_init() is called on the first
+> run.
 
-I would argue that this cant_sleep() thingy is nonsense. On !RT you run
-in softirq and while this check does not trigger (because the preemption
-counter is != 0) you can be preempted by an IRQ.
-I have no idea what it intends to protect. The commit does not explain
-why it is important to keep preemption disabled while invoking a BPF
-program.
+Exactly. Even if you restore the timer in a "firing" configuration,
+you'll have to execute the vgic init before any background timer gets
+programmed, let alone expired.
 
-> Luis
+Yes, the interface is terrible.
 
-Sebastian
+> The function will call kvm_vgic_map_resources() which will initialize
+> the vgic if not already done.
+> 
+> Looking around, I think this is here to cater the case where
+> KVM_IRQ_LINE is called before running.
+> 
+> I am not yet familiar with the vgic, so I may have missed something.
+> 
+> > 
+> > I prepared the patch below. This one could go straight to tglx's timer tree
+> > since he has the _HARD bits there. I *think* it requires to set the bits
+> > _HARD during _init() and _start() otherwise there is (or was) a warning…
+> > 
+> > Sebastian
+> > 8<------------
+> > 
+> > From: Thomas Gleixner <tglx@linutronix.de>
+> > Date: Tue, 13 Aug 2019 14:29:41 +0200
+> > Subject: [PATCH] KVM: arm/arm64: Let the timer expire in hardirq context on RT
+> > 
+> > The timers are canceled from an preempt-notifier which is invoked with
+> > disabled preemption which is not allowed on PREEMPT_RT.
+> > The timer callback is short so in could be invoked in hard-IRQ context
+> > on -RT.
+> > 
+> > Let the timer expire on hard-IRQ context even on -RT.
+> > 
+> > Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+> > Acked-by: Marc Zyngier <maz@kernel.org>
+> > Tested-by: Julien Grall <julien.grall@arm.com>
+> > Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> > ---
+> >   virt/kvm/arm/arch_timer.c | 8 ++++----
+> >   1 file changed, 4 insertions(+), 4 deletions(-)
+> > 
+> > diff --git a/virt/kvm/arm/arch_timer.c b/virt/kvm/arm/arch_timer.c
+> > index 1be486d5d7cb4..0bfa7c5b5c890 100644
+> > --- a/virt/kvm/arm/arch_timer.c
+> > +++ b/virt/kvm/arm/arch_timer.c
+> > @@ -80,7 +80,7 @@ static inline bool userspace_irqchip(struct kvm *kvm)
+> >   static void soft_timer_start(struct hrtimer *hrt, u64 ns)
+> >   {
+> >   	hrtimer_start(hrt, ktime_add_ns(ktime_get(), ns),
+> > -		      HRTIMER_MODE_ABS);
+> > +		      HRTIMER_MODE_ABS_HARD);
+> >   }
+> >     static void soft_timer_cancel(struct hrtimer *hrt)
+> > @@ -697,11 +697,11 @@ void kvm_timer_vcpu_init(struct kvm_vcpu *vcpu)
+> >   	update_vtimer_cntvoff(vcpu, kvm_phys_timer_read());
+> >   	ptimer->cntvoff = 0;
+> >   -	hrtimer_init(&timer->bg_timer, CLOCK_MONOTONIC,
+> > HRTIMER_MODE_ABS);
+> > +	hrtimer_init(&timer->bg_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_HARD);
+> >   	timer->bg_timer.function = kvm_bg_timer_expire;
+> >   -	hrtimer_init(&vtimer->hrtimer, CLOCK_MONOTONIC,
+> > HRTIMER_MODE_ABS);
+> > -	hrtimer_init(&ptimer->hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
+> > +	hrtimer_init(&vtimer->hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_HARD);
+> > +	hrtimer_init(&ptimer->hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_HARD);
+> >   	vtimer->hrtimer.function = kvm_hrtimer_expire;
+> >   	ptimer->hrtimer.function = kvm_hrtimer_expire;
+> >   
+
+Patch looks fine, please add it to the pile of RT stuff! ;-)
+
+Thanks,
+
+	M.
+
+-- 
+Jazz is not dead, it just smells funny.
