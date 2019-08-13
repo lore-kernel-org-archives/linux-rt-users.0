@@ -2,95 +2,83 @@ Return-Path: <SRS0=IBCX=WJ=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0B228C32750
-	for <linux-rt-users@archiver.kernel.org>; Tue, 13 Aug 2019 15:59:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9F4A5C32750
+	for <linux-rt-users@archiver.kernel.org>; Tue, 13 Aug 2019 16:17:22 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id DD7C020578
-	for <linux-rt-users@archiver.kernel.org>; Tue, 13 Aug 2019 15:59:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7024B20840
+	for <linux-rt-users@archiver.kernel.org>; Tue, 13 Aug 2019 16:17:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727944AbfHMP7C convert rfc822-to-8bit (ORCPT
+        id S1727843AbfHMQRW (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 13 Aug 2019 11:59:02 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:35317 "EHLO
+        Tue, 13 Aug 2019 12:17:22 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:35447 "EHLO
         Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727577AbfHMP7C (ORCPT
+        with ESMTP id S1727621AbfHMQRW (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 13 Aug 2019 11:59:02 -0400
+        Tue, 13 Aug 2019 12:17:22 -0400
 Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
         (envelope-from <bigeasy@linutronix.de>)
-        id 1hxZCM-0001z8-BK; Tue, 13 Aug 2019 17:58:58 +0200
-Date:   Tue, 13 Aug 2019 17:58:58 +0200
+        id 1hxZU7-0002NR-10; Tue, 13 Aug 2019 18:17:19 +0200
+Date:   Tue, 13 Aug 2019 18:17:18 +0200
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Juri Lelli <juri.lelli@redhat.com>
-Cc:     rostedt@goodmis.org, tglx@linutronix.de,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        williams@redhat.com
-Subject: Re: [PATCH] net/xfrm/xfrm_ipcomp: Use {get,put}_cpu_light
-Message-ID: <20190813155858.e4bcbkom2vsiafhh@linutronix.de>
-References: <20190717072019.13681-1-juri.lelli@redhat.com>
+To:     "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+Cc:     Clark Williams <williams@redhat.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        RT <linux-rt-users@vger.kernel.org>
+Subject: Re: v5.2-rt1: kernel: BUG: assuming atomic context at
+ net/core/ptp_classifier.c:106 current
+Message-ID: <20190813161718.ki2q24hi2lx57y75@linutronix.de>
+References: <20190718204655.GA4097@uudg.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: 8BIT
-In-Reply-To: <20190717072019.13681-1-juri.lelli@redhat.com>
+In-Reply-To: <20190718204655.GA4097@uudg.org>
 User-Agent: NeoMutt/20180716
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2019-07-17 09:20:19 [+0200], Juri Lelli wrote:
-> The following BUG has been reported while running ipsec tests.
-…
-> Hi,
+On 2019-07-18 17:46:55 [-0300], Luis Claudio R. Goncalves wrote:
+> Hello,
 > 
-> This has been found on a 4.19.x-rt kernel, but 5.x-rt(s) are affected as
-> well.
+> Sounds like ptp_classify_raw() should be reached with IRQs disabled to
+> safely call BPF_PROG_RUN(). I am just unsure where, down the road, the
+> proper context should have been set.
 > 
-> Best,
-> 
-> Juri
-> ---
->  net/xfrm/xfrm_ipcomp.c | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
-> 
-> diff --git a/net/xfrm/xfrm_ipcomp.c b/net/xfrm/xfrm_ipcomp.c
-> index a00ec715aa46..39d9e663384f 100644
-> --- a/net/xfrm/xfrm_ipcomp.c
-> +++ b/net/xfrm/xfrm_ipcomp.c
-> @@ -45,7 +45,7 @@ static int ipcomp_decompress(struct xfrm_state *x, struct sk_buff *skb)
->  	const int plen = skb->len;
->  	int dlen = IPCOMP_SCRATCH_SIZE;
->  	const u8 *start = skb->data;
-> -	const int cpu = get_cpu();
-> +	const int cpu = get_cpu_light();
+> 08:46:58 darkmatter kernel: BUG: assuming atomic context at net/core/ptp_classifier.c:106
+> Jul 17 08:46:58 darkmatter kernel: in_atomic(): 0, irqs_disabled(): 0, pid: 1129, name: irq/35-enp4s0
+> Jul 17 08:46:58 darkmatter kernel: CPU: 1 PID: 1129 Comm: irq/35-enp4s0 Not tainted 5.2.0-rt1 #1
+> Jul 17 08:46:58 darkmatter kernel: Hardware name: Hewlett-Packard p7-1512/2ADA, BIOS 8.15 02/05/2013
+> Jul 17 08:46:58 darkmatter kernel: Call Trace:
+> Jul 17 08:46:58 darkmatter kernel: dump_stack+0x67/0x90
+> Jul 17 08:46:58 darkmatter kernel: __cant_sleep.cold+0x68/0x74
+> Jul 17 08:46:58 darkmatter kernel: ptp_classify_raw+0x1f/0xa0
+> Jul 17 08:46:58 darkmatter kernel: skb_defer_rx_timestamp+0x5a/0xb0
+> Jul 17 08:46:58 darkmatter kernel: netif_receive_skb_internal+0x34/0xe0
+> Jul 17 08:46:58 darkmatter kernel: napi_gro_receive+0x66/0x1c0
+> Jul 17 08:46:58 darkmatter kernel: rtl8169_poll+0x216/0x610 [r8169]
+> Jul 17 08:46:58 darkmatter kernel: net_rx_action+0x208/0x490
+> Jul 17 08:46:58 darkmatter kernel: __do_softirq+0x140/0x3c9
+> Jul 17 08:46:58 darkmatter kernel: __local_bh_enable_ip+0x13d/0x160
+> Jul 17 08:46:58 darkmatter kernel: irq_forced_thread_fn+0x70/0x80
+> Jul 17 08:46:58 darkmatter kernel: irq_thread+0xf6/0x1d0
+> Jul 17 08:46:58 darkmatter kernel: kthread+0x103/0x140
+> Jul 17 08:46:58 darkmatter kernel: ret_from_fork+0x3a/0x50
+> Jul 17 08:46:58 darkmatter kernel: bpfilter: Loaded bpfilter_umh pid 1160
+> Jul 17 08:46:58 darkmatter kernel: bpfilter: read fail -13
 
-By using get_cpu_light() you don't forbid another function to invoke
-ipcomp_decompress() on the same CPU. That means that
+I would argue that this cant_sleep() thingy is nonsense. On !RT you run
+in softirq and while this check does not trigger (because the preemption
+counter is != 0) you can be preempted by an IRQ.
+I have no idea what it intends to protect. The commit does not explain
+why it is important to keep preemption disabled while invoking a BPF
+program.
 
->  	u8 *scratch = *per_cpu_ptr(ipcomp_scratches, cpu);
-
-scratch buffer here could be used by two tasks on the same CPU. You are
-aware of that right?
-According to your backtrace you get here from NAPI which means BH which
-means it is enough to use smp_processor_id() in such a case.
-
-ipcomp_compress() is using the very same buffer while invoking
-local_bh_disable() before using the buffer to ensure nothing else is
-using the buffer on this CPU. This will work in v5.2-RT because the new
-softirq code uses a local_lock() as part of local_bh_disable(). This
-does not work on v4.19-RT and earlier. 
-
-For v4.19 and earlier I suggest to use a local_lock().
-For v5.2 and later I suggest to replace get_cpu() with
-smp_processor_id(). Ideally a with a lockdep annotation to ensure that
-BH is disabled (which we don't have).
-
->  	struct crypto_comp *tfm = *per_cpu_ptr(ipcd->tfms, cpu);
->  	int err = crypto_comp_decompress(tfm, start, plen, scratch, &dlen);
+> Luis
 
 Sebastian
