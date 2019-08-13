@@ -2,165 +2,95 @@ Return-Path: <SRS0=IBCX=WJ=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1671EC32750
-	for <linux-rt-users@archiver.kernel.org>; Tue, 13 Aug 2019 15:44:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0B228C32750
+	for <linux-rt-users@archiver.kernel.org>; Tue, 13 Aug 2019 15:59:07 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id E713620844
-	for <linux-rt-users@archiver.kernel.org>; Tue, 13 Aug 2019 15:44:26 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DD7C020578
+	for <linux-rt-users@archiver.kernel.org>; Tue, 13 Aug 2019 15:59:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727924AbfHMPo0 (ORCPT
+        id S1727944AbfHMP7C convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 13 Aug 2019 11:44:26 -0400
-Received: from foss.arm.com ([217.140.110.172]:39400 "EHLO foss.arm.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727036AbfHMPo0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 13 Aug 2019 11:44:26 -0400
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 7814128;
-        Tue, 13 Aug 2019 08:44:25 -0700 (PDT)
-Received: from [10.37.8.112] (unknown [10.37.8.112])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 5297F3F706;
-        Tue, 13 Aug 2019 08:44:23 -0700 (PDT)
-Subject: Re: KVM Arm64 and Linux-RT issues
-To:     "bigeasy@linutronix.de" <bigeasy@linutronix.de>
-Cc:     Marc Zyngier <maz@kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        anna-maria@linutronix.de,
-        "kvmarm@lists.cs.columbia.edu" <kvmarm@lists.cs.columbia.edu>,
-        Julien Thierry <julien.thierry@arm.com>,
-        James Morse <james.morse@arm.com>,
-        Suzuki K Poulose <suzuki.poulose@arm.com>,
-        Andre Przywara <andre.przywara@arm.com>
-References: <b9867c43-7fe3-5d64-9939-b1a7ab7f1061@arm.com>
- <cd310858-2c0f-6af1-bf82-ee1e01a2cfb8@arm.com>
- <alpine.DEB.2.21.1907270053360.1791@nanos.tec.linutronix.de>
- <86zhkzn319.wl-maz@kernel.org> <960b5ed1-6d0f-3cee-da37-6061b4946c1a@arm.com>
- <20190813125835.5v26s4iuv44lw2xg@linutronix.de>
-From:   Julien Grall <julien.grall@arm.com>
-Message-ID: <adc0b2e2-3a2e-5685-8eb5-2ce927d2139e@arm.com>
-Date:   Tue, 13 Aug 2019 16:44:21 +0100
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
+        Tue, 13 Aug 2019 11:59:02 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:35317 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727577AbfHMP7C (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 13 Aug 2019 11:59:02 -0400
+Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
+        (envelope-from <bigeasy@linutronix.de>)
+        id 1hxZCM-0001z8-BK; Tue, 13 Aug 2019 17:58:58 +0200
+Date:   Tue, 13 Aug 2019 17:58:58 +0200
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Juri Lelli <juri.lelli@redhat.com>
+Cc:     rostedt@goodmis.org, tglx@linutronix.de,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        williams@redhat.com
+Subject: Re: [PATCH] net/xfrm/xfrm_ipcomp: Use {get,put}_cpu_light
+Message-ID: <20190813155858.e4bcbkom2vsiafhh@linutronix.de>
+References: <20190717072019.13681-1-juri.lelli@redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <20190813125835.5v26s4iuv44lw2xg@linutronix.de>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: en-US
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8BIT
+In-Reply-To: <20190717072019.13681-1-juri.lelli@redhat.com>
+User-Agent: NeoMutt/20180716
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Sebastian,
-
-On 8/13/19 1:58 PM, bigeasy@linutronix.de wrote:
-> On 2019-07-27 14:37:11 [+0100], Julien Grall wrote:
->>>> 8<------------
->>>> --- a/virt/kvm/arm/arch_timer.c
->>>> +++ b/virt/kvm/arm/arch_timer.c
->>>> @@ -80,7 +80,7 @@ static inline bool userspace_irqchip(str
->>>>    static void soft_timer_start(struct hrtimer *hrt, u64 ns)
->>>>    {
->>>>    	hrtimer_start(hrt, ktime_add_ns(ktime_get(), ns),
->>>> -		      HRTIMER_MODE_ABS);
->>>> +		      HRTIMER_MODE_ABS_HARD);
->>>>    }
->>>
->>> That's pretty neat, and matches the patch you already have for
->>> x86. Feel free to add my
->>>
->>> Acked-by: Marc Zyngier <maz@kernel.org>
->>
->> I can confirm the warning now disappeared. Feel free to added my tested-by:
->>
->> Tested-by: Julien Grall <julien.grall@arm.com>
->>
+On 2019-07-17 09:20:19 [+0200], Juri Lelli wrote:
+> The following BUG has been reported while running ipsec tests.
+…
+> Hi,
 > 
-> |kvm_hrtimer_expire()
-> | kvm_timer_update_irq()
-> |   kvm_vgic_inject_irq()
-> |     vgic_lazy_init()
-> |                if (unlikely(!vgic_initialized(kvm))) {
-> |                 if (kvm->arch.vgic.vgic_model != KVM_DEV_TYPE_ARM_VGIC_V2)
-> |                         return -EBUSY;
-> |
-> |                 mutex_lock(&kvm->lock);
+> This has been found on a 4.19.x-rt kernel, but 5.x-rt(s) are affected as
+> well.
 > 
-> Is this possible path of any concern? This should throw a warning also
-> for !RT so probably not…
-
-Hmmm, theoretically yes. In practice, it looks like the hrtimer will not 
-be started before kvm_vcpu_first_run_init() is called on the first run.
-
-The function will call kvm_vgic_map_resources() which will initialize 
-the vgic if not already done.
-
-Looking around, I think this is here to cater the case where 
-KVM_IRQ_LINE is called before running.
-
-I am not yet familiar with the vgic, so I may have missed something.
-
+> Best,
 > 
-> I prepared the patch below. This one could go straight to tglx's timer tree
-> since he has the _HARD bits there. I *think* it requires to set the bits
-> _HARD during _init() and _start() otherwise there is (or was) a warning…
-> 
-> Sebastian
-> 8<------------
-> 
-> From: Thomas Gleixner <tglx@linutronix.de>
-> Date: Tue, 13 Aug 2019 14:29:41 +0200
-> Subject: [PATCH] KVM: arm/arm64: Let the timer expire in hardirq context on RT
-> 
-> The timers are canceled from an preempt-notifier which is invoked with
-> disabled preemption which is not allowed on PREEMPT_RT.
-> The timer callback is short so in could be invoked in hard-IRQ context
-> on -RT.
-> 
-> Let the timer expire on hard-IRQ context even on -RT.
-> 
-> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-> Acked-by: Marc Zyngier <maz@kernel.org>
-> Tested-by: Julien Grall <julien.grall@arm.com>
-> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> Juri
 > ---
->   virt/kvm/arm/arch_timer.c | 8 ++++----
->   1 file changed, 4 insertions(+), 4 deletions(-)
+>  net/xfrm/xfrm_ipcomp.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
 > 
-> diff --git a/virt/kvm/arm/arch_timer.c b/virt/kvm/arm/arch_timer.c
-> index 1be486d5d7cb4..0bfa7c5b5c890 100644
-> --- a/virt/kvm/arm/arch_timer.c
-> +++ b/virt/kvm/arm/arch_timer.c
-> @@ -80,7 +80,7 @@ static inline bool userspace_irqchip(struct kvm *kvm)
->   static void soft_timer_start(struct hrtimer *hrt, u64 ns)
->   {
->   	hrtimer_start(hrt, ktime_add_ns(ktime_get(), ns),
-> -		      HRTIMER_MODE_ABS);
-> +		      HRTIMER_MODE_ABS_HARD);
->   }
->   
->   static void soft_timer_cancel(struct hrtimer *hrt)
-> @@ -697,11 +697,11 @@ void kvm_timer_vcpu_init(struct kvm_vcpu *vcpu)
->   	update_vtimer_cntvoff(vcpu, kvm_phys_timer_read());
->   	ptimer->cntvoff = 0;
->   
-> -	hrtimer_init(&timer->bg_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
-> +	hrtimer_init(&timer->bg_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_HARD);
->   	timer->bg_timer.function = kvm_bg_timer_expire;
->   
-> -	hrtimer_init(&vtimer->hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
-> -	hrtimer_init(&ptimer->hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
-> +	hrtimer_init(&vtimer->hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_HARD);
-> +	hrtimer_init(&ptimer->hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_HARD);
->   	vtimer->hrtimer.function = kvm_hrtimer_expire;
->   	ptimer->hrtimer.function = kvm_hrtimer_expire;
->   
-> 
+> diff --git a/net/xfrm/xfrm_ipcomp.c b/net/xfrm/xfrm_ipcomp.c
+> index a00ec715aa46..39d9e663384f 100644
+> --- a/net/xfrm/xfrm_ipcomp.c
+> +++ b/net/xfrm/xfrm_ipcomp.c
+> @@ -45,7 +45,7 @@ static int ipcomp_decompress(struct xfrm_state *x, struct sk_buff *skb)
+>  	const int plen = skb->len;
+>  	int dlen = IPCOMP_SCRATCH_SIZE;
+>  	const u8 *start = skb->data;
+> -	const int cpu = get_cpu();
+> +	const int cpu = get_cpu_light();
 
--- 
-Julien Grall
+By using get_cpu_light() you don't forbid another function to invoke
+ipcomp_decompress() on the same CPU. That means that
+
+>  	u8 *scratch = *per_cpu_ptr(ipcomp_scratches, cpu);
+
+scratch buffer here could be used by two tasks on the same CPU. You are
+aware of that right?
+According to your backtrace you get here from NAPI which means BH which
+means it is enough to use smp_processor_id() in such a case.
+
+ipcomp_compress() is using the very same buffer while invoking
+local_bh_disable() before using the buffer to ensure nothing else is
+using the buffer on this CPU. This will work in v5.2-RT because the new
+softirq code uses a local_lock() as part of local_bh_disable(). This
+does not work on v4.19-RT and earlier. 
+
+For v4.19 and earlier I suggest to use a local_lock().
+For v5.2 and later I suggest to replace get_cpu() with
+smp_processor_id(). Ideally a with a lockdep annotation to ensure that
+BH is disabled (which we don't have).
+
+>  	struct crypto_comp *tfm = *per_cpu_ptr(ipcd->tfms, cpu);
+>  	int err = crypto_comp_decompress(tfm, start, plen, scratch, &dlen);
+
+Sebastian
