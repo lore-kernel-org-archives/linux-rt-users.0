@@ -2,145 +2,132 @@ Return-Path: <SRS0=V9Xa=WK=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.6 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 30AD9C32753
-	for <linux-rt-users@archiver.kernel.org>; Wed, 14 Aug 2019 15:33:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E025DC433FF
+	for <linux-rt-users@archiver.kernel.org>; Wed, 14 Aug 2019 15:49:51 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 066772084F
-	for <linux-rt-users@archiver.kernel.org>; Wed, 14 Aug 2019 15:33:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B6FCE2133F
+	for <linux-rt-users@archiver.kernel.org>; Wed, 14 Aug 2019 15:49:51 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="E68uOgMU"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726931AbfHNPdB (ORCPT
+        id S1728092AbfHNPtr (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 14 Aug 2019 11:33:01 -0400
-Received: from mail-wr1-f65.google.com ([209.85.221.65]:44603 "EHLO
-        mail-wr1-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726585AbfHNPdB (ORCPT
+        Wed, 14 Aug 2019 11:49:47 -0400
+Received: from mail-wm1-f66.google.com ([209.85.128.66]:33283 "EHLO
+        mail-wm1-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727524AbfHNPtq (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 14 Aug 2019 11:33:01 -0400
-Received: by mail-wr1-f65.google.com with SMTP id p17so111490801wrf.11
-        for <linux-rt-users@vger.kernel.org>; Wed, 14 Aug 2019 08:32:59 -0700 (PDT)
+        Wed, 14 Aug 2019 11:49:46 -0400
+Received: by mail-wm1-f66.google.com with SMTP id p77so3610515wme.0;
+        Wed, 14 Aug 2019 08:49:45 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=GgpF7Bn3iLxmnrlzmfTXq5Ybf354IdpR2J0OxIgAaos=;
+        b=E68uOgMU8ez6QYfyKgOF0aUz+R483YEAGnrHG78TwWWLqRfyXaosFyZvuMjED77gpF
+         RYoLcNxdOCkQ9N9Q8ck78j5lekrj1M9x6avQQOMyd0S3O9kpp0LhO3Cj19U7ztzYNPeG
+         8Yh+YN+ZfkDMYYZwb01/Yn0kpQmifXZNG6KPfQVgAQnStDcBLgT1AxNbK4Cum1HR0VoG
+         T8M/ZZG+z4d9FXPlVHGEpdPxdrFA6Lrx2sRy9tqxHP7/P85GLOv/Ua75Ojw4zoIsRdaU
+         soqMu9OT2kwnTPeTREA3x6oFewWg7o6GrlLDibyKykicoaVDm/VTRV+JgjAmWq4bmuh1
+         CofA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:mime-version
-         :content-disposition:user-agent;
-        bh=wezvNzsbPOdhs76UIe/x9RS+uf1SoYjspj4YsVpNZmg=;
-        b=HVA13e5xhBO1+O6C4nacBjUoDb4FEDCxoy9IfpfTPlPVdzmXhKu3bc2W7GPaW49UaM
-         l/NNkBhtPVNJyyTWRt9PD2j/RdKXJh25SrN/5rQx4OMxlr2If0YCnsEXvs62XGpVgXtO
-         cKviMaON55//LigSviHsF/AB8FJRzL0+UugBlvZ22NVtJr7eiaLIwCPvBRZfDq+t06Cp
-         hISwIEr94sjgSnGwqZ/p5ydVsWF77iy9rl0B4yydwcsUHZSYNCPqKSEzshH2VHVt+C7E
-         2GUUCNtdez0NsB1js6Z5CxDD6ag8u9WZfqkOWXaguqAPQVe+y5j1vCliHnYAMYUvtBqD
-         ldjA==
-X-Gm-Message-State: APjAAAXsq8sM8NCSAfM7uw2lePNmakjRXdHx1vkqxKoPhirTDPDXs/ww
-        nq/mw5V7bqv5MdpsFsXtsMtxXA==
-X-Google-Smtp-Source: APXvYqyOqEDB5t53jRfZrYv/H24aoTGfHsRiquBPqEEx+NkHh83e/p0MfWTCyYkV/5EtCai7VdbETA==
-X-Received: by 2002:adf:a48f:: with SMTP id g15mr335053wrb.172.1565796778631;
-        Wed, 14 Aug 2019 08:32:58 -0700 (PDT)
-Received: from localhost.localdomain ([151.36.169.182])
-        by smtp.gmail.com with ESMTPSA id q18sm212768wrw.36.2019.08.14.08.32.56
-        (version=TLS1_2 cipher=ECDHE-RSA-CHACHA20-POLY1305 bits=256/256);
-        Wed, 14 Aug 2019 08:32:57 -0700 (PDT)
-Date:   Wed, 14 Aug 2019 17:32:54 +0200
-From:   Juri Lelli <juri.lelli@redhat.com>
-To:     Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>,
-        Clark Williams <williams@redhat.com>,
-        Arnaldo Carvalho de Melo <acme@redhat.com>
-Subject: [RT] LTP perf_event_open02 fails on v4.19.59-rt24
-Message-ID: <20190814153254.GE5834@localhost.localdomain>
+        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
+         :mime-version:content-transfer-encoding;
+        bh=GgpF7Bn3iLxmnrlzmfTXq5Ybf354IdpR2J0OxIgAaos=;
+        b=FNncLivW+J/NTdydfN8VEQsaXsFQguPdo9Bs/8KIvO0wwpS7s2GZdynjHcMpwYJszr
+         uNyJG3xnIDMZpUkL/gl9vsvxP160ItNIpsVggzjhWLg2tL5JHxV4xbwO12+VoiyrzTJl
+         ndgoKikbsBdpJxdi6po8ZUAlzi6LAbj87iae4KXDEJxwWUpggn5nCLvXDXpdX4EiGJgG
+         SS0wVapxHAw/yB1NRLbzRM0Hv7I+GgP5Sn7+C7S44w7jDomBoGYtnhwVy8eE68DMXkhM
+         XpY9D/p56ciiJ6VthnUy6oSSDKsmEizxsUca2ByIBtxqCoJONpUeTJgwXtxa/3mY1W4+
+         vpnw==
+X-Gm-Message-State: APjAAAWLzhNU/s914XDeQdPg3bXyHty2nevfXTGRA41KuZ/Qd4eQv7SJ
+        2q7iUaVRrM4lztJVeiNFeh5boHMjdd4=
+X-Google-Smtp-Source: APXvYqzmHYv2EUqjBT0QKvTZqMloDV5pIEqjUO6JotbuaOuSFQ46EuBUNff9GAYIkVEc36bwchX0zg==
+X-Received: by 2002:a1c:1a4c:: with SMTP id a73mr9505796wma.109.1565797784296;
+        Wed, 14 Aug 2019 08:49:44 -0700 (PDT)
+Received: from planxty.redhat.com ([2a02:8108:1700:19dc:b567:5617:6bc1:51bb])
+        by smtp.gmail.com with ESMTPSA id r190sm94942wmf.0.2019.08.14.08.49.42
+        (version=TLS1_3 cipher=AEAD-AES256-GCM-SHA384 bits=256/256);
+        Wed, 14 Aug 2019 08:49:43 -0700 (PDT)
+From:   John Kacur <jkacur@redhat.com>
+To:     rt-users <linux-rt-users@vger.kernel.org>,
+        lkml <linux-kernel@vger.kernel.org>
+Cc:     Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Subject: [ANNOUNCE] rt-tests-1.5
+Date:   Wed, 14 Aug 2019 17:49:29 +0200
+Message-Id: <20190814154929.9481-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.20.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-User-Agent: Mutt/1.11.3 (2019-02-01)
+Content-Transfer-Encoding: 8bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi,
+Mostly small clean-ups and bug fixes,
 
-Not sure if this has been reported before, but we noticed that LTP test
-perf_event_open02 [1] fails on 4.19.59-rt24 (and of course passes on the
-corresponding stable kernel):
+There was a fix to a bug where the paramater to -t was being ignored if 
+the user didn't also specify the affinity -a.
 
---- 4.19.59 ---
-# /mnt/tests/ltp-full-20190517/testcases/kernel/syscalls/perf_event_open/perf_event_open02 -v
-at iteration:0 value:300248705 time_enabled:59735349 time_running:59735349
-at iteration:1 value:300257285 time_enabled:61370669 time_running:61370669
-at iteration:2 value:300270267 time_enabled:65415976 time_running:65415976
-at iteration:3 value:300275002 time_enabled:65775683 time_running:65775683
-at iteration:4 value:300279509 time_enabled:67043153 time_running:67043153
-at iteration:5 value:300271722 time_enabled:64872370 time_running:64872370
-at iteration:6 value:300272600 time_enabled:65373637 time_running:65373637
-at iteration:7 value:300269069 time_enabled:63948439 time_running:63948439
-at iteration:8 value:300286123 time_enabled:67285143 time_running:67285143
-at iteration:9 value:265004128 time_enabled:50212657 time_running:44998204
-max hwctrs=9
-perf_event_open02    0  TINFO  :  overall task clock: 44753322
-perf_event_open02    0  TINFO  :  hw sum: 2702062269, task clock sum: 402442898
-hw counters: 194164023 191715624 195214062 201992170 208770596 215560607 218849512 218851570 218851437 217860513 213522050 206742793 199967312
-task clock counters: 28725966 28724910 29224060 30220734 31216660 32211515 32706172 32700336 32693327 32503365 31504015 30505413 29506425
-perf_event_open02    0  TINFO  :  ratio: 8.992470
-perf_event_open02    1  TPASS  :  test passed
----
+This was a bit of fallout from the changes to automatically use numa if
+support for it is available.
 
---- 4.19.59-rt24 ---
-# /mnt/tests/ltp-full-20190517/testcases/kernel/syscalls/perf_event_open/perf_event_open02 -v
-at iteration:0 value:308782766 time_enabled:69987925 time_running:69987925
-at iteration:1 value:307230646 time_enabled:66629165 time_running:66629165
-at iteration:2 value:307127853 time_enabled:64519500 time_running:64519500
-at iteration:3 value:306408195 time_enabled:57616719 time_running:57616719
-at iteration:4 value:306473441 time_enabled:57184704 time_running:57184704
-at iteration:5 value:306324296 time_enabled:56319529 time_running:56319529
-at iteration:6 value:307060120 time_enabled:62417456 time_running:62417456
-at iteration:7 value:307666551 time_enabled:58920211 time_running:58920211
-at iteration:8 value:306415586 time_enabled:56617543 time_running:56617543
-at iteration:9 value:308025740 time_enabled:62503263 time_running:59956753
-max hwctrs=9
-perf_event_open02    0  TINFO  :  overall task clock: 49178216
-perf_event_open02    0  TINFO  :  hw sum: 2773035141, task clock sum: 451529028
-hw counters: 66671274 199200415 204422748 236485504 307467135 307472701 307478266 307483830 307489394 242524983 110001408 104784638 71552845
-task clock counters: 11982838 33102129 33990719 38442306 49748594 49734632 49716493 49695178 49670953 39049846 17924067 17029183 11442090
-perf_event_open02    0  TINFO  :  ratio: 9.181485
-perf_event_open02    1  TFAIL  :  perf_event_open02.c:370: test failed (ratio was greater than )
----
+Bug reports and patches, are always welcome.
 
---- Box info ---
-Architecture:        x86_64
-CPU op-mode(s):      32-bit, 64-bit
-Byte Order:          Little Endian
-CPU(s):              36
-On-line CPU(s) list: 0-35
-Thread(s) per core:  1
-Core(s) per socket:  18
-Socket(s):           2
-NUMA node(s):        2
-Vendor ID:           GenuineIntel
-CPU family:          6
-Model:               63
-Model name:          Intel(R) Xeon(R) CPU E5-2699 v3 @ 2.30GHz
-Stepping:            2
-CPU MHz:             1237.805
-BogoMIPS:            4594.31
-Virtualization:      VT-x
-L1d cache:           32K
-L1i cache:           32K
-L2 cache:            256K
-L3 cache:            46080K
-NUMA node0 CPU(s):   0-8,18-26
-NUMA node1 CPU(s):   9-17,27-35
----
+John Kacur
 
-I just started looking into this issue, but thought to report early as
-to have more eyes on it.
+Clone
+git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
+branches
 
-Best,
+Branches
+unstable/devel/latest (rt-tests: Version 1.5)
+unstable/devel/latest-devel (for latest development of Version 1.5)
 
-Juri
+tarballs are available here
+https://kernel.org/pub/linux/utils/rt-tests
 
-1 - https://github.com/linux-test-project/ltp/blob/master/testcases/kernel/syscalls/perf_event_open/perf_event_open02.c#L21
+older version tarballs are available to in
+https://kernel.org/pub/linux/utils/rt-tests/older
+
+John Kacur (3):
+  rt-tests: Use gettid from rt-utils.c everywhere
+  rt-tests: hwlatdetect: Remove kmodule options and clean-up help
+  rt-tests: cyclictest: Without -t default to 1 thread in numa case
+
+Kurt Kanzenbach (6):
+  rt-tests: deadline: Remove duplicated code for sched_{set,get}_attr
+  rt-tests: cyclicdeadline: Remove unused getcpu code
+  rt-tests: deadline: Remove duplicated gettid() code
+  rt-tests: cyclicdeadline: Add options to usage
+  rt-tests: cyclicdeadline: Print fail only if something failed
+  rt-tests: cyclicdeadline: Fix cgroup setup
+
+Qiao Zhao (1):
+  ptsematest, sigwaittest, pmqtest, svsematest reprot error "Could not
+    access /sys/kernel/debug/tracing/tracing_enabled"
+
+ src/cyclictest/cyclictest.c           | 13 ++---
+ src/hwlatdetect/hwlatdetect.8         | 43 +++++++--------
+ src/hwlatdetect/hwlatdetect.py        | 12 +----
+ src/pmqtest/pmqtest.c                 |  4 +-
+ src/ptsematest/ptsematest.c           |  4 +-
+ src/rt-migrate-test/rt-migrate-test.c |  2 -
+ src/sched_deadline/cyclicdeadline.c   | 71 ++++++------------------
+ src/sched_deadline/deadline_test.c    | 78 ++-------------------------
+ src/signaltest/signaltest.c           |  3 --
+ src/sigwaittest/sigwaittest.c         |  4 +-
+ src/svsematest/svsematest.c           |  4 +-
+ 11 files changed, 51 insertions(+), 187 deletions(-)
+
+-- 
+2.20.1
+
