@@ -2,349 +2,145 @@ Return-Path: <SRS0=V9Xa=WK=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-7.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 86F89C433FF
-	for <linux-rt-users@archiver.kernel.org>; Wed, 14 Aug 2019 14:42:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 30AD9C32753
+	for <linux-rt-users@archiver.kernel.org>; Wed, 14 Aug 2019 15:33:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 5E2382084F
-	for <linux-rt-users@archiver.kernel.org>; Wed, 14 Aug 2019 14:42:12 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 066772084F
+	for <linux-rt-users@archiver.kernel.org>; Wed, 14 Aug 2019 15:33:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727111AbfHNOmM convert rfc822-to-8bit (ORCPT
+        id S1726931AbfHNPdB (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 14 Aug 2019 10:42:12 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:37902 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726157AbfHNOmL (ORCPT
+        Wed, 14 Aug 2019 11:33:01 -0400
+Received: from mail-wr1-f65.google.com ([209.85.221.65]:44603 "EHLO
+        mail-wr1-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726585AbfHNPdB (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 14 Aug 2019 10:42:11 -0400
-Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
-        (envelope-from <bigeasy@linutronix.de>)
-        id 1hxuTY-00077Z-6O; Wed, 14 Aug 2019 16:42:08 +0200
-Date:   Wed, 14 Aug 2019 16:42:08 +0200
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Yann COLLETTE <ycollette.nospam@free.fr>
-Cc:     linux-rt-users@vger.kernel.org
-Subject: Re: Kernel 5.0.21rt16 hangs
-Message-ID: <20190814144207.qi7qtcpvyfpoc7cj@linutronix.de>
-References: <f410b429-db86-f81c-7c67-f563fa808b62@free.fr>
+        Wed, 14 Aug 2019 11:33:01 -0400
+Received: by mail-wr1-f65.google.com with SMTP id p17so111490801wrf.11
+        for <linux-rt-users@vger.kernel.org>; Wed, 14 Aug 2019 08:32:59 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:mime-version
+         :content-disposition:user-agent;
+        bh=wezvNzsbPOdhs76UIe/x9RS+uf1SoYjspj4YsVpNZmg=;
+        b=HVA13e5xhBO1+O6C4nacBjUoDb4FEDCxoy9IfpfTPlPVdzmXhKu3bc2W7GPaW49UaM
+         l/NNkBhtPVNJyyTWRt9PD2j/RdKXJh25SrN/5rQx4OMxlr2If0YCnsEXvs62XGpVgXtO
+         cKviMaON55//LigSviHsF/AB8FJRzL0+UugBlvZ22NVtJr7eiaLIwCPvBRZfDq+t06Cp
+         hISwIEr94sjgSnGwqZ/p5ydVsWF77iy9rl0B4yydwcsUHZSYNCPqKSEzshH2VHVt+C7E
+         2GUUCNtdez0NsB1js6Z5CxDD6ag8u9WZfqkOWXaguqAPQVe+y5j1vCliHnYAMYUvtBqD
+         ldjA==
+X-Gm-Message-State: APjAAAXsq8sM8NCSAfM7uw2lePNmakjRXdHx1vkqxKoPhirTDPDXs/ww
+        nq/mw5V7bqv5MdpsFsXtsMtxXA==
+X-Google-Smtp-Source: APXvYqyOqEDB5t53jRfZrYv/H24aoTGfHsRiquBPqEEx+NkHh83e/p0MfWTCyYkV/5EtCai7VdbETA==
+X-Received: by 2002:adf:a48f:: with SMTP id g15mr335053wrb.172.1565796778631;
+        Wed, 14 Aug 2019 08:32:58 -0700 (PDT)
+Received: from localhost.localdomain ([151.36.169.182])
+        by smtp.gmail.com with ESMTPSA id q18sm212768wrw.36.2019.08.14.08.32.56
+        (version=TLS1_2 cipher=ECDHE-RSA-CHACHA20-POLY1305 bits=256/256);
+        Wed, 14 Aug 2019 08:32:57 -0700 (PDT)
+Date:   Wed, 14 Aug 2019 17:32:54 +0200
+From:   Juri Lelli <juri.lelli@redhat.com>
+To:     Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>,
+        Clark Williams <williams@redhat.com>,
+        Arnaldo Carvalho de Melo <acme@redhat.com>
+Subject: [RT] LTP perf_event_open02 fails on v4.19.59-rt24
+Message-ID: <20190814153254.GE5834@localhost.localdomain>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: 8BIT
-In-Reply-To: <f410b429-db86-f81c-7c67-f563fa808b62@free.fr>
-User-Agent: NeoMutt/20180716
+User-Agent: Mutt/1.11.3 (2019-02-01)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2019-08-09 17:45:13 [+0200], Yann COLLETTE wrote:
-> Hello,
 Hi,
 
-> I am using kernel-rt 5.0.21rt16 on fedora 30.
+Not sure if this has been reported before, but we noticed that LTP test
+perf_event_open02 [1] fails on 4.19.59-rt24 (and of course passes on the
+corresponding stable kernel):
 
-…
-> Aug  9 17:16:35 localhost kernel: Preemption disabled at:
-> Aug  9 17:16:35 localhost kernel: [<ffffffff8c67239e>]
-> reservation_object_add_shared_fence+0x3e/0x1b0
-> Aug  9 17:16:35 localhost kernel: CPU: 3 PID: 1087 Comm: Xorg Not tainted
-> 5.0.21-rt16.fc30.x86_64 #1
-> Aug  9 17:16:35 localhost kernel: Hardware name: HP 450-a121nf/2B29, BIOS
-> A0.11 01/15/2016
-> Aug  9 17:16:35 localhost kernel: Call Trace:
-> Aug  9 17:16:35 localhost kernel: dump_stack+0x5c/0x80
-> Aug  9 17:16:35 localhost kernel: ?
-> reservation_object_add_shared_fence+0x3e/0x1b0
-> Aug  9 17:16:35 localhost kernel: __schedule_bug.cold+0x44/0x51
-> Aug  9 17:16:35 localhost kernel: __schedule+0x5c6/0x6f0
-> Aug  9 17:16:35 localhost kernel: schedule+0x43/0xd0
-> Aug  9 17:16:35 localhost kernel: rt_spin_lock_slowlock_locked+0x114/0x2b0
-> Aug  9 17:16:35 localhost kernel: rt_spin_lock_slowlock+0x51/0x80
-> Aug  9 17:16:35 localhost kernel: __wake_up_common_lock+0x61/0xb0
-> Aug  9 17:16:35 localhost kernel: radeon_fence_is_signaled+0x74/0x90
-> [radeon]
-> Aug  9 17:16:35 localhost kernel:
-> reservation_object_add_shared_fence+0x97/0x1b0
-> Aug  9 17:16:35 localhost kernel: radeon_vm_bo_update+0x409/0x640 [radeon]
-> Aug  9 17:16:35 localhost kernel: radeon_gem_va_ioctl+0x41c/0x500 [radeon]
-…
-> I don't know if this bug is related to the kernel of if this is a mesa
-> problem.
+--- 4.19.59 ---
+# /mnt/tests/ltp-full-20190517/testcases/kernel/syscalls/perf_event_open/perf_event_open02 -v
+at iteration:0 value:300248705 time_enabled:59735349 time_running:59735349
+at iteration:1 value:300257285 time_enabled:61370669 time_running:61370669
+at iteration:2 value:300270267 time_enabled:65415976 time_running:65415976
+at iteration:3 value:300275002 time_enabled:65775683 time_running:65775683
+at iteration:4 value:300279509 time_enabled:67043153 time_running:67043153
+at iteration:5 value:300271722 time_enabled:64872370 time_running:64872370
+at iteration:6 value:300272600 time_enabled:65373637 time_running:65373637
+at iteration:7 value:300269069 time_enabled:63948439 time_running:63948439
+at iteration:8 value:300286123 time_enabled:67285143 time_running:67285143
+at iteration:9 value:265004128 time_enabled:50212657 time_running:44998204
+max hwctrs=9
+perf_event_open02    0  TINFO  :  overall task clock: 44753322
+perf_event_open02    0  TINFO  :  hw sum: 2702062269, task clock sum: 402442898
+hw counters: 194164023 191715624 195214062 201992170 208770596 215560607 218849512 218851570 218851437 217860513 213522050 206742793 199967312
+task clock counters: 28725966 28724910 29224060 30220734 31216660 32211515 32706172 32700336 32693327 32503365 31504015 30505413 29506425
+perf_event_open02    0  TINFO  :  ratio: 8.992470
+perf_event_open02    1  TPASS  :  test passed
+---
 
-That backtrace is kernel related. I'm not sure if this is related to the
-hang up you observe.
-Could you please try the following patch:
+--- 4.19.59-rt24 ---
+# /mnt/tests/ltp-full-20190517/testcases/kernel/syscalls/perf_event_open/perf_event_open02 -v
+at iteration:0 value:308782766 time_enabled:69987925 time_running:69987925
+at iteration:1 value:307230646 time_enabled:66629165 time_running:66629165
+at iteration:2 value:307127853 time_enabled:64519500 time_running:64519500
+at iteration:3 value:306408195 time_enabled:57616719 time_running:57616719
+at iteration:4 value:306473441 time_enabled:57184704 time_running:57184704
+at iteration:5 value:306324296 time_enabled:56319529 time_running:56319529
+at iteration:6 value:307060120 time_enabled:62417456 time_running:62417456
+at iteration:7 value:307666551 time_enabled:58920211 time_running:58920211
+at iteration:8 value:306415586 time_enabled:56617543 time_running:56617543
+at iteration:9 value:308025740 time_enabled:62503263 time_running:59956753
+max hwctrs=9
+perf_event_open02    0  TINFO  :  overall task clock: 49178216
+perf_event_open02    0  TINFO  :  hw sum: 2773035141, task clock sum: 451529028
+hw counters: 66671274 199200415 204422748 236485504 307467135 307472701 307478266 307483830 307489394 242524983 110001408 104784638 71552845
+task clock counters: 11982838 33102129 33990719 38442306 49748594 49734632 49716493 49695178 49670953 39049846 17924067 17029183 11442090
+perf_event_open02    0  TINFO  :  ratio: 9.181485
+perf_event_open02    1  TFAIL  :  perf_event_open02.c:370: test failed (ratio was greater than )
+---
 
+--- Box info ---
+Architecture:        x86_64
+CPU op-mode(s):      32-bit, 64-bit
+Byte Order:          Little Endian
+CPU(s):              36
+On-line CPU(s) list: 0-35
+Thread(s) per core:  1
+Core(s) per socket:  18
+Socket(s):           2
+NUMA node(s):        2
+Vendor ID:           GenuineIntel
+CPU family:          6
+Model:               63
+Model name:          Intel(R) Xeon(R) CPU E5-2699 v3 @ 2.30GHz
+Stepping:            2
+CPU MHz:             1237.805
+BogoMIPS:            4594.31
+Virtualization:      VT-x
+L1d cache:           32K
+L1i cache:           32K
+L2 cache:            256K
+L3 cache:            46080K
+NUMA node0 CPU(s):   0-8,18-26
+NUMA node1 CPU(s):   9-17,27-35
+---
 
-diff --git a/drivers/dma-buf/dma-buf.c b/drivers/dma-buf/dma-buf.c
-index bf4d4c80fbc67..c6370dcdd77d2 100644
---- a/drivers/dma-buf/dma-buf.c
-+++ b/drivers/dma-buf/dma-buf.c
-@@ -168,7 +168,7 @@ static __poll_t dma_buf_poll(struct file *file, poll_table *poll)
- 		return 0;
- 
- retry:
--	seq = read_seqcount_begin(&resv->seq);
-+	seq = read_seqbegin(&resv->seq);
- 	rcu_read_lock();
- 
- 	fobj = rcu_dereference(resv->fence);
-@@ -177,7 +177,7 @@ static __poll_t dma_buf_poll(struct file *file, poll_table *poll)
- 	else
- 		shared_count = 0;
- 	fence_excl = rcu_dereference(resv->fence_excl);
--	if (read_seqcount_retry(&resv->seq, seq)) {
-+	if (read_seqretry(&resv->seq, seq)) {
- 		rcu_read_unlock();
- 		goto retry;
- 	}
-@@ -1034,12 +1034,12 @@ static int dma_buf_debug_show(struct seq_file *s, void *unused)
- 
- 		robj = buf_obj->resv;
- 		while (true) {
--			seq = read_seqcount_begin(&robj->seq);
-+			seq = read_seqbegin(&robj->seq);
- 			rcu_read_lock();
- 			fobj = rcu_dereference(robj->fence);
- 			shared_count = fobj ? fobj->shared_count : 0;
- 			fence = rcu_dereference(robj->fence_excl);
--			if (!read_seqcount_retry(&robj->seq, seq))
-+			if (!read_seqretry(&robj->seq, seq))
- 				break;
- 			rcu_read_unlock();
- 		}
-diff --git a/drivers/dma-buf/reservation.c b/drivers/dma-buf/reservation.c
-index 4d32e2c678626..37d8f6b18ef90 100644
---- a/drivers/dma-buf/reservation.c
-+++ b/drivers/dma-buf/reservation.c
-@@ -110,15 +110,13 @@ int reservation_object_reserve_shared(struct reservation_object *obj,
- 	new->shared_count = j;
- 	new->shared_max = max;
- 
--	preempt_disable();
--	write_seqcount_begin(&obj->seq);
-+	write_seqlock(&obj->seq);
- 	/*
- 	 * RCU_INIT_POINTER can be used here,
- 	 * seqcount provides the necessary barriers
- 	 */
- 	RCU_INIT_POINTER(obj->fence, new);
--	write_seqcount_end(&obj->seq);
--	preempt_enable();
-+	write_sequnlock(&obj->seq);
- 
- 	if (!old)
- 		return 0;
-@@ -158,8 +156,7 @@ void reservation_object_add_shared_fence(struct reservation_object *obj,
- 	fobj = reservation_object_get_list(obj);
- 	count = fobj->shared_count;
- 
--	preempt_disable();
--	write_seqcount_begin(&obj->seq);
-+	write_seqlock(&obj->seq);
- 
- 	for (i = 0; i < count; ++i) {
- 		struct dma_fence *old_fence;
-@@ -181,8 +178,7 @@ void reservation_object_add_shared_fence(struct reservation_object *obj,
- 	/* pointer update must be visible before we extend the shared_count */
- 	smp_store_mb(fobj->shared_count, count);
- 
--	write_seqcount_end(&obj->seq);
--	preempt_enable();
-+	write_sequnlock(&obj->seq);
- }
- EXPORT_SYMBOL(reservation_object_add_shared_fence);
- 
-@@ -209,14 +205,11 @@ void reservation_object_add_excl_fence(struct reservation_object *obj,
- 	if (fence)
- 		dma_fence_get(fence);
- 
--	preempt_disable();
--	write_seqcount_begin(&obj->seq);
--	/* write_seqcount_begin provides the necessary memory barrier */
-+	write_seqlock(&obj->seq);
- 	RCU_INIT_POINTER(obj->fence_excl, fence);
- 	if (old)
- 		old->shared_count = 0;
--	write_seqcount_end(&obj->seq);
--	preempt_enable();
-+	write_sequnlock(&obj->seq);
- 
- 	/* inplace update, no shared fences */
- 	while (i--)
-@@ -298,13 +291,10 @@ int reservation_object_copy_fences(struct reservation_object *dst,
- 	src_list = reservation_object_get_list(dst);
- 	old = reservation_object_get_excl(dst);
- 
--	preempt_disable();
--	write_seqcount_begin(&dst->seq);
--	/* write_seqcount_begin provides the necessary memory barrier */
-+	write_seqlock(&dst->seq);
- 	RCU_INIT_POINTER(dst->fence_excl, new);
- 	RCU_INIT_POINTER(dst->fence, dst_list);
--	write_seqcount_end(&dst->seq);
--	preempt_enable();
-+	write_sequnlock(&dst->seq);
- 
- 	if (src_list)
- 		kfree_rcu(src_list, rcu);
-@@ -345,7 +335,7 @@ int reservation_object_get_fences_rcu(struct reservation_object *obj,
- 		shared_count = i = 0;
- 
- 		rcu_read_lock();
--		seq = read_seqcount_begin(&obj->seq);
-+		seq = read_seqbegin(&obj->seq);
- 
- 		fence_excl = rcu_dereference(obj->fence_excl);
- 		if (fence_excl && !dma_fence_get_rcu(fence_excl))
-@@ -390,7 +380,7 @@ int reservation_object_get_fences_rcu(struct reservation_object *obj,
- 			}
- 		}
- 
--		if (i != shared_count || read_seqcount_retry(&obj->seq, seq)) {
-+		if (i != shared_count || read_seqretry(&obj->seq, seq)) {
- 			while (i--)
- 				dma_fence_put(shared[i]);
- 			dma_fence_put(fence_excl);
-@@ -439,7 +429,7 @@ long reservation_object_wait_timeout_rcu(struct reservation_object *obj,
- 
- retry:
- 	shared_count = 0;
--	seq = read_seqcount_begin(&obj->seq);
-+	seq = read_seqbegin(&obj->seq);
- 	rcu_read_lock();
- 	i = -1;
- 
-@@ -486,7 +476,7 @@ long reservation_object_wait_timeout_rcu(struct reservation_object *obj,
- 
- 	rcu_read_unlock();
- 	if (fence) {
--		if (read_seqcount_retry(&obj->seq, seq)) {
-+		if (read_seqretry(&obj->seq, seq)) {
- 			dma_fence_put(fence);
- 			goto retry;
- 		}
-@@ -542,7 +532,7 @@ bool reservation_object_test_signaled_rcu(struct reservation_object *obj,
- retry:
- 	ret = true;
- 	shared_count = 0;
--	seq = read_seqcount_begin(&obj->seq);
-+	seq = read_seqbegin(&obj->seq);
- 
- 	if (test_all) {
- 		unsigned i;
-@@ -563,7 +553,7 @@ bool reservation_object_test_signaled_rcu(struct reservation_object *obj,
- 				break;
- 		}
- 
--		if (read_seqcount_retry(&obj->seq, seq))
-+		if (read_seqretry(&obj->seq, seq))
- 			goto retry;
- 	}
- 
-@@ -576,7 +566,7 @@ bool reservation_object_test_signaled_rcu(struct reservation_object *obj,
- 			if (ret < 0)
- 				goto retry;
- 
--			if (read_seqcount_retry(&obj->seq, seq))
-+			if (read_seqretry(&obj->seq, seq))
- 				goto retry;
- 		}
- 	}
-diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu_amdkfd_gpuvm.c b/drivers/gpu/drm/amd/amdgpu/amdgpu_amdkfd_gpuvm.c
-index a6e5184d436c9..b5fbd16034122 100644
---- a/drivers/gpu/drm/amd/amdgpu/amdgpu_amdkfd_gpuvm.c
-+++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_amdkfd_gpuvm.c
-@@ -250,11 +250,9 @@ static int amdgpu_amdkfd_remove_eviction_fence(struct amdgpu_bo *bo,
- 	new->shared_count = k;
- 
- 	/* Install the new fence list, seqcount provides the barriers */
--	preempt_disable();
--	write_seqcount_begin(&resv->seq);
-+	write_seqlock(&resv->seq);
- 	RCU_INIT_POINTER(resv->fence, new);
--	write_seqcount_end(&resv->seq);
--	preempt_enable();
-+	write_sequnlock(&resv->seq);
- 
- 	/* Drop the references to the removed fences or move them to ef_list */
- 	for (i = j, k = 0; i < old->shared_count; ++i) {
-diff --git a/drivers/gpu/drm/i915/i915_gem.c b/drivers/gpu/drm/i915/i915_gem.c
-index ad01c92aaf748..2910a133077a3 100644
---- a/drivers/gpu/drm/i915/i915_gem.c
-+++ b/drivers/gpu/drm/i915/i915_gem.c
-@@ -449,7 +449,7 @@ i915_gem_object_wait_reservation(struct reservation_object *resv,
- 				 unsigned int flags,
- 				 long timeout)
- {
--	unsigned int seq = __read_seqcount_begin(&resv->seq);
-+	unsigned int seq = read_seqbegin(&resv->seq);
- 	struct dma_fence *excl;
- 	bool prune_fences = false;
- 
-@@ -500,9 +500,9 @@ i915_gem_object_wait_reservation(struct reservation_object *resv,
- 	 * signaled and that the reservation object has not been changed (i.e.
- 	 * no new fences have been added).
- 	 */
--	if (prune_fences && !__read_seqcount_retry(&resv->seq, seq)) {
-+	if (prune_fences && !read_seqretry(&resv->seq, seq)) {
- 		if (reservation_object_trylock(resv)) {
--			if (!__read_seqcount_retry(&resv->seq, seq))
-+			if (!read_seqretry(&resv->seq, seq))
- 				reservation_object_add_excl_fence(resv, NULL);
- 			reservation_object_unlock(resv);
- 		}
-@@ -3943,7 +3943,7 @@ i915_gem_busy_ioctl(struct drm_device *dev, void *data,
- 	 *
- 	 */
- retry:
--	seq = raw_read_seqcount(&obj->resv->seq);
-+	seq = read_seqbegin(&obj->resv->seq);
- 
- 	/* Translate the exclusive fence to the READ *and* WRITE engine */
- 	args->busy = busy_check_writer(rcu_dereference(obj->resv->fence_excl));
-@@ -3961,7 +3961,7 @@ i915_gem_busy_ioctl(struct drm_device *dev, void *data,
- 		}
- 	}
- 
--	if (args->busy && read_seqcount_retry(&obj->resv->seq, seq))
-+	if (args->busy && read_seqretry(&obj->resv->seq, seq))
- 		goto retry;
- 
- 	err = 0;
-diff --git a/include/linux/reservation.h b/include/linux/reservation.h
-index ee750765cc941..11cc05f489365 100644
---- a/include/linux/reservation.h
-+++ b/include/linux/reservation.h
-@@ -71,7 +71,7 @@ struct reservation_object_list {
-  */
- struct reservation_object {
- 	struct ww_mutex lock;
--	seqcount_t seq;
-+	seqlock_t seq;
- 
- 	struct dma_fence __rcu *fence_excl;
- 	struct reservation_object_list __rcu *fence;
-@@ -90,7 +90,7 @@ reservation_object_init(struct reservation_object *obj)
- {
- 	ww_mutex_init(&obj->lock, &reservation_ww_class);
- 
--	__seqcount_init(&obj->seq, reservation_seqcount_string, &reservation_seqcount_class);
-+	seqlock_init(&obj->seq);
- 	RCU_INIT_POINTER(obj->fence, NULL);
- 	RCU_INIT_POINTER(obj->fence_excl, NULL);
- }
--- 
-2.23.0.rc1
+I just started looking into this issue, but thought to report early as
+to have more eyes on it.
 
+Best,
 
-> Best regards,
-> 
-> 
-> YC
+Juri
 
-Sebastian
+1 - https://github.com/linux-test-project/ltp/blob/master/testcases/kernel/syscalls/perf_event_open/perf_event_open02.c#L21
