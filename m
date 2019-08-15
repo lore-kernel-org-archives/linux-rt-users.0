@@ -2,51 +2,78 @@ Return-Path: <SRS0=hjoW=WL=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.5 required=3.0 tests=FREEMAIL_REPLYTO_END_DIGIT,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B1B6EC3A59C
-	for <linux-rt-users@archiver.kernel.org>; Thu, 15 Aug 2019 12:14:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 33EEAC3A589
+	for <linux-rt-users@archiver.kernel.org>; Thu, 15 Aug 2019 12:33:46 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 8EB6B206C2
-	for <linux-rt-users@archiver.kernel.org>; Thu, 15 Aug 2019 12:14:55 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 04D07208C2
+	for <linux-rt-users@archiver.kernel.org>; Thu, 15 Aug 2019 12:33:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731779AbfHOMOy convert rfc822-to-8bit (ORCPT
+        id S1731808AbfHOMdp (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 15 Aug 2019 08:14:54 -0400
-Received: from 103-28-70-150.static.hvvc.us ([103.28.70.150]:61531 "EHLO
-        Rago47.5d41f4da95c8a" rhost-flags-OK-FAIL-OK-FAIL) by vger.kernel.org
-        with ESMTP id S1730352AbfHOMOy (ORCPT
+        Thu, 15 Aug 2019 08:33:45 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:39707 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1730919AbfHOMdp (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 15 Aug 2019 08:14:54 -0400
-X-Greylist: delayed 1020 seconds by postgrey-1.27 at vger.kernel.org; Thu, 15 Aug 2019 08:14:54 EDT
-Received: from io.com ([127.0.0.1]) by Rago47.5d41f4da95c8a with Microsoft SMTPSVC(8.5.9600.16384);
-         Thu, 15 Aug 2019 13:23:57 +0200
-Reply-To: k4ngu1@gmail.com
-From:   Karen Ngui <k4n@io.com>
-To:     linux-rt-users@vger.kernel.org
-Subject: Re: Fyi
-Date:   15 Aug 2019 13:23:57 +0200
-Message-ID: <20190815132357.A683B6CFD708DEC8@io.com>
+        Thu, 15 Aug 2019 08:33:45 -0400
+Received: from localhost ([127.0.0.1] helo=vostro.local)
+        by Galois.linutronix.de with esmtp (Exim 4.80)
+        (envelope-from <john.ogness@linutronix.de>)
+        id 1hyEwp-00044b-3u; Thu, 15 Aug 2019 14:33:43 +0200
+From:   John Ogness <john.ogness@linutronix.de>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     Paul Thomas <pthomas8589@gmail.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        dunc.mcphie@gmail.com, Anders Roxell <anders.roxell@linaro.org>
+Subject: Re: poor cyclictest results with 5.0 series rt for arm64
+References: <CAD56B7eswTRxbeA8foXyVVZ7Bd+_y40dtOLkHxuAf4kVge7VDg@mail.gmail.com>
+        <alpine.DEB.2.21.1907171001150.1767@nanos.tec.linutronix.de>
+        <alpine.DEB.2.21.1907171009280.1767@nanos.tec.linutronix.de>
+        <alpine.DEB.2.21.1907171101150.1767@nanos.tec.linutronix.de>
+        <alpine.DEB.2.21.1907171220400.1767@nanos.tec.linutronix.de>
+        <CAD56B7eomeb5Lr2juFWtZmtqSx3SkPijW03QZz8xv39He26PrA@mail.gmail.com>
+        <20190813095306.xqgq3uusdpj7dhy7@linutronix.de>
+        <CAD56B7fqosJAhiCLikhcxv_3wY7ETOv++kmQcr-=9NKEGq7Agw@mail.gmail.com>
+        <20190814112656.z3de2rgbqzpaquz5@linutronix.de>
+        <CAD56B7ezpaONhXCddu6RTE33-iXG7+J=xf417xu_uT-YKPV6RQ@mail.gmail.com>
+        <20190815082955.olo3phbqj6disk3q@linutronix.de>
+Date:   Thu, 15 Aug 2019 14:33:41 +0200
+In-Reply-To: <20190815082955.olo3phbqj6disk3q@linutronix.de> (Sebastian
+        Andrzej Siewior's message of "Thu, 15 Aug 2019 10:29:55 +0200")
+Message-ID: <87a7ca4nh6.fsf@linutronix.de>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/23.4 (gnu/linux)
 MIME-Version: 1.0
-Content-Type: text/plain;
-        charset="utf-8"
-Content-Transfer-Encoding: 8BIT
-X-OriginalArrivalTime: 15 Aug 2019 11:23:57.0984 (UTC) FILETIME=[EE252A00:01D5535B]
+Content-Type: text/plain; charset=us-ascii
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello linux-rt-users@vger.kernel.org
+On 2019-08-15, Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+>> The attachment is here:
+>> https://bugzilla.kernel.org/attachment.cgi?id=284391
+>
+> both traces have `printk' in it. Could you please explain what it is
+> doing?  It should print something to the console. The printk code in
+> v4.19 vs later changed and now (by default) ERR levels are printed
+> immediately and will cause latency spikes.
+>
+> This would explain the spike but I don't understand how lazy preempt
+> is related here.
 
-I am Karen Ngui by name got your details based on recommendations 
- from LinkedIn 5 star marketers and its feels good  to be part of 
-your professional network.
- 
-I sent you a proposal via email on the 10th of this month did  
-you get it ? Do reply to my message so I can elaborate more on my 
-proposal.
- 
-Thank You For Your Time.
+Where in this trace is there a latency spike? I could not see one.
+
+Emergency messages are not involved here. You can see at 84239098us that
+systemd is writing to /dev/kmsg, but this is completed (haven only
+written to the ring buffer) by 84239118us (20us).
+
+printk schedules an irq_work to wake the printk thread. The irq_work
+begins at 84241028us. All it does is call wake_up_interruptible_all() on
+the queue.
+
+John Ogness
