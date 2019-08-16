@@ -6,32 +6,32 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
 	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 423B2C3A59C
-	for <linux-rt-users@archiver.kernel.org>; Fri, 16 Aug 2019 06:42:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1F1C5C3A59E
+	for <linux-rt-users@archiver.kernel.org>; Fri, 16 Aug 2019 06:42:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 145422133F
+	by mail.kernel.org (Postfix) with ESMTP id E3FA420644
 	for <linux-rt-users@archiver.kernel.org>; Fri, 16 Aug 2019 06:42:23 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726816AbfHPGmW (ORCPT
+        id S1726880AbfHPGmX (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 16 Aug 2019 02:42:22 -0400
-Received: from mail.monom.org ([188.138.9.77]:52468 "EHLO mail.monom.org"
+        Fri, 16 Aug 2019 02:42:23 -0400
+Received: from mail.monom.org ([188.138.9.77]:52482 "EHLO mail.monom.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725945AbfHPGmW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 16 Aug 2019 02:42:22 -0400
+        id S1726767AbfHPGmX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 16 Aug 2019 02:42:23 -0400
 Received: from mail.monom.org (localhost [127.0.0.1])
-        by filter.mynetwork.local (Postfix) with ESMTP id 9F9DB5006D2;
-        Fri, 16 Aug 2019 08:42:20 +0200 (CEST)
+        by filter.mynetwork.local (Postfix) with ESMTP id 45C8E5006DE;
+        Fri, 16 Aug 2019 08:42:21 +0200 (CEST)
 Received: from localhost (b9168f76.cgn.dg-w.de [185.22.143.118])
-        by mail.monom.org (Postfix) with ESMTPSA id 79A34500665;
+        by mail.monom.org (Postfix) with ESMTPSA id 05F1150093C;
         Fri, 16 Aug 2019 08:42:20 +0200 (CEST)
 From:   Daniel Wagner <wagi@monom.org>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <wagi@monom.org>
-Subject: [PATCH rt-tests v0 1/4] pmqtest: Increase buffer to avoid overflow
-Date:   Fri, 16 Aug 2019 08:42:01 +0200
-Message-Id: <20190816064204.6339-2-wagi@monom.org>
+Subject: [PATCH rt-tests v0 2/4] sigwaittest: Increase buffer to avoid overflow
+Date:   Fri, 16 Aug 2019 08:42:02 +0200
+Message-Id: <20190816064204.6339-3-wagi@monom.org>
 X-Mailer: git-send-email 2.21.0
 In-Reply-To: <20190816064204.6339-1-wagi@monom.org>
 References: <20190816064204.6339-1-wagi@monom.org>
@@ -45,41 +45,30 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 Increase the size of the char buffer. gcc 9.1.1 reports:
 
-src/pmqtest/pmqtest.c: In function ‘main’:
-src/pmqtest/pmqtest.c:46:21: warning: ‘%d’ directive writing between 1 and 10 bytes into a region of size 8 [-Wformat-overflow=]
-   46 | #define SYNCMQ_NAME "/syncmsg%d"
-      |                     ^~~~~~~~~~~~
-
-src/pmqtest/pmqtest.c:445:3: note: ‘sprintf’ output between 10 and 19 bytes into a destination of size 16
-  445 |   sprintf(mqname, SYNCMQ_NAME, i);
-      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/sigwaittest/sigwaittest.c:494:5: note: ‘sprintf’ output between 5 and 14 bytes into a destination of size 8
+  494 |     sprintf(f_opt, "-fr%d", i);
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~
+src/sigwaittest/sigwaittest.c:522:24: warning: ‘%d’ directive writing between 1 and 10 bytes into a region of size 5 [-Wformat-overflow=]
+  522 |     sprintf(f_opt, "-fs%d", i);
+      |                        ^~
 
 Signed-off-by: Daniel Wagner <wagi@monom.org>
 ---
- src/pmqtest/pmqtest.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ src/sigwaittest/sigwaittest.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/src/pmqtest/pmqtest.c b/src/pmqtest/pmqtest.c
-index a04fc49872bf..20164c8d547f 100644
---- a/src/pmqtest/pmqtest.c
-+++ b/src/pmqtest/pmqtest.c
-@@ -440,7 +440,7 @@ int main(int argc, char *argv[])
- 		goto nomem;
+diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
+index 59f28a5babcb..a98332f13e38 100644
+--- a/src/sigwaittest/sigwaittest.c
++++ b/src/sigwaittest/sigwaittest.c
+@@ -352,7 +352,7 @@ int main(int argc, char *argv[])
+ 	struct params *sender = NULL;
+ 	sigset_t sigset;
+ 	void *param = NULL;
+-	char f_opt[8];
++	char f_opt[32];
+ 	struct timespec launchdelay, maindelay;
  
- 	for (i = 0; i < num_threads; i++) {
--		char mqname[16];
-+		char mqname[32];
- 
- 		sprintf(mqname, SYNCMQ_NAME, i);
- 		receiver[i].syncmq = mq_open(mqname, oflag, 0777, &mqstat);
-@@ -567,7 +567,7 @@ int main(int argc, char *argv[])
- 	}
- 	nanosleep(&maindelay, NULL);
- 	for (i = 0; i < num_threads; i++) {
--		char mqname[16];
-+		char mqname[32];
- 
- 		mq_close(receiver[i].syncmq);
- 		sprintf(mqname, SYNCMQ_NAME, i);
+ 	process_options(argc, argv);
 -- 
 2.21.0
