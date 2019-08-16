@@ -1,62 +1,59 @@
-Return-Path: <SRS0=hjoW=WL=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=9Pks=WM=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
+X-Spam-Status: No, score=-3.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=no
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 54F6CC3A59B
-	for <linux-rt-users@archiver.kernel.org>; Thu, 15 Aug 2019 18:57:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C49F9C3A59C
+	for <linux-rt-users@archiver.kernel.org>; Fri, 16 Aug 2019 06:42:18 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 361DD2084D
-	for <linux-rt-users@archiver.kernel.org>; Thu, 15 Aug 2019 18:57:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9F84020644
+	for <linux-rt-users@archiver.kernel.org>; Fri, 16 Aug 2019 06:42:18 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1732081AbfHOS5t (ORCPT
+        id S1726729AbfHPGmS (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 15 Aug 2019 14:57:49 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:40606 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1731649AbfHOS5s (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 15 Aug 2019 14:57:48 -0400
-Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
-        (envelope-from <bigeasy@linutronix.de>)
-        id 1hyKwU-00040W-FK; Thu, 15 Aug 2019 20:57:46 +0200
-Date:   Thu, 15 Aug 2019 20:57:46 +0200
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Paul Thomas <pthomas8589@gmail.com>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        dunc.mcphie@gmail.com, Anders Roxell <anders.roxell@linaro.org>
-Subject: Re: poor cyclictest results with 5.0 series rt for arm64
-Message-ID: <20190815185746.ifo37gd4tdpeivuu@linutronix.de>
-References: <CAD56B7eF_KhWvg=m6iy5YSJF-81v-zcmX7+8Kd0wGMrALHwU1A@mail.gmail.com>
- <alpine.DEB.2.21.1907170111160.1767@nanos.tec.linutronix.de>
- <CAD56B7eswTRxbeA8foXyVVZ7Bd+_y40dtOLkHxuAf4kVge7VDg@mail.gmail.com>
- <alpine.DEB.2.21.1907171001150.1767@nanos.tec.linutronix.de>
- <alpine.DEB.2.21.1907171009280.1767@nanos.tec.linutronix.de>
- <alpine.DEB.2.21.1907171101150.1767@nanos.tec.linutronix.de>
- <alpine.DEB.2.21.1907171220400.1767@nanos.tec.linutronix.de>
- <CAD56B7eomeb5Lr2juFWtZmtqSx3SkPijW03QZz8xv39He26PrA@mail.gmail.com>
- <20190813095306.xqgq3uusdpj7dhy7@linutronix.de>
- <CAD56B7fnVpmiE+m71zHSNuQw49GWJJ0ySGUD3Zc2mih_CxUjpg@mail.gmail.com>
+        Fri, 16 Aug 2019 02:42:18 -0400
+Received: from mail.monom.org ([188.138.9.77]:52450 "EHLO mail.monom.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1725945AbfHPGmS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 16 Aug 2019 02:42:18 -0400
+Received: from mail.monom.org (localhost [127.0.0.1])
+        by filter.mynetwork.local (Postfix) with ESMTP id 7B7A75006AC;
+        Fri, 16 Aug 2019 08:42:16 +0200 (CEST)
+Received: from localhost (b9168f76.cgn.dg-w.de [185.22.143.118])
+        by mail.monom.org (Postfix) with ESMTPSA id 4B98B500665;
+        Fri, 16 Aug 2019 08:42:16 +0200 (CEST)
+From:   Daniel Wagner <wagi@monom.org>
+To:     Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <wagi@monom.org>
+Subject: [PATCH rt-tests v0 0/4] Fix gcc warning
+Date:   Fri, 16 Aug 2019 08:42:00 +0200
+Message-Id: <20190816064204.6339-1-wagi@monom.org>
+X-Mailer: git-send-email 2.21.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <CAD56B7fnVpmiE+m71zHSNuQw49GWJJ0ySGUD3Zc2mih_CxUjpg@mail.gmail.com>
-User-Agent: NeoMutt/20180716
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2019-08-15 14:00:34 [-0400], Paul Thomas wrote:
-> After correctly applying this patch I do not see large latencies, >15M
-> iterations and counting.
-Perfect.
+On F29 and F30 gcc is warning about too small buffers. Let's fix this.
 
-> thanks,
-> Paul
+Daniel Wagner (4):
+  pmqtest: Increase buffer to avoid overflow
+  sigwaittest: Increase buffer to avoid overflow
+  svsematest: Increase buffer to avoid overflow
+  deadline_test: Increase buffer to avoid overflow
 
-Sebastian
+ src/pmqtest/pmqtest.c              | 4 ++--
+ src/sched_deadline/deadline_test.c | 2 +-
+ src/sigwaittest/sigwaittest.c      | 2 +-
+ src/svsematest/svsematest.c        | 2 +-
+ 4 files changed, 5 insertions(+), 5 deletions(-)
+
+-- 
+2.21.0
