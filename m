@@ -2,76 +2,92 @@ Return-Path: <SRS0=6kRx=WP=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.7 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2E01EC3A59F
-	for <linux-rt-users@archiver.kernel.org>; Mon, 19 Aug 2019 06:43:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E0094C3A59B
+	for <linux-rt-users@archiver.kernel.org>; Mon, 19 Aug 2019 07:33:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 033652086C
-	for <linux-rt-users@archiver.kernel.org>; Mon, 19 Aug 2019 06:43:14 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BC9BE21852
+	for <linux-rt-users@archiver.kernel.org>; Mon, 19 Aug 2019 07:33:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726768AbfHSGnN (ORCPT
+        id S1726538AbfHSHdZ convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 19 Aug 2019 02:43:13 -0400
-Received: from mail.monom.org ([188.138.9.77]:33102 "EHLO mail.monom.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726751AbfHSGnM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 19 Aug 2019 02:43:12 -0400
-Received: from mail.monom.org (localhost [127.0.0.1])
-        by filter.mynetwork.local (Postfix) with ESMTP id 3DA3B5007F3;
-        Mon, 19 Aug 2019 08:43:11 +0200 (CEST)
-Received: from localhost (b9168f76.cgn.dg-w.de [185.22.143.118])
-        by mail.monom.org (Postfix) with ESMTPSA id 155CE5007D2;
-        Mon, 19 Aug 2019 08:43:11 +0200 (CEST)
-From:   Daniel Wagner <wagi@monom.org>
-To:     Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>
-Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <wagi@monom.org>
-Subject: [PATCH rt-tests v1 v1 4/4] deadline_test: Increase buffer to avoid overflow
-Date:   Mon, 19 Aug 2019 08:43:04 +0200
-Message-Id: <20190819064304.4676-5-wagi@monom.org>
-X-Mailer: git-send-email 2.21.0
-In-Reply-To: <20190819064304.4676-1-wagi@monom.org>
-References: <20190819064304.4676-1-wagi@monom.org>
+        Mon, 19 Aug 2019 03:33:25 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:46070 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725790AbfHSHdZ (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 19 Aug 2019 03:33:25 -0400
+Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
+        (envelope-from <bigeasy@linutronix.de>)
+        id 1hzcAM-0006WM-3i; Mon, 19 Aug 2019 09:33:22 +0200
+Date:   Mon, 19 Aug 2019 09:33:21 +0200
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Julien Grall <julien.grall@arm.com>
+Cc:     Marc Zyngier <maz@kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        anna-maria@linutronix.de,
+        "kvmarm@lists.cs.columbia.edu" <kvmarm@lists.cs.columbia.edu>,
+        Julien Thierry <julien.thierry@arm.com>,
+        James Morse <james.morse@arm.com>,
+        Suzuki K Poulose <suzuki.poulose@arm.com>,
+        Andre Przywara <andre.przywara@arm.com>
+Subject: Re: KVM Arm64 and Linux-RT issues
+Message-ID: <20190819073321.b3q2bxnslwwmdssn@linutronix.de>
+References: <cd310858-2c0f-6af1-bf82-ee1e01a2cfb8@arm.com>
+ <alpine.DEB.2.21.1907270053360.1791@nanos.tec.linutronix.de>
+ <86zhkzn319.wl-maz@kernel.org>
+ <960b5ed1-6d0f-3cee-da37-6061b4946c1a@arm.com>
+ <20190813125835.5v26s4iuv44lw2xg@linutronix.de>
+ <adc0b2e2-3a2e-5685-8eb5-2ce927d2139e@arm.com>
+ <865zn1nidx.wl-maz@kernel.org>
+ <1f76c277-665a-e962-8cbe-b3c4ecad41b0@arm.com>
+ <20190816152317.pbhctfiyurjrepju@linutronix.de>
+ <e9a77a95-ce0e-27a4-acb0-e997eb656e14@arm.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8BIT
+In-Reply-To: <e9a77a95-ce0e-27a4-acb0-e997eb656e14@arm.com>
+User-Agent: NeoMutt/20180716
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Increase the size of the char buffer. gcc 9.1.1 reports:
+On 2019-08-16 17:32:38 [+0100], Julien Grall wrote:
+> Hi Sebastian,
+Hi Julien,
 
-src/sched_deadline/deadline_test.c:1803:24: warning: ‘%d’ directive writing between 1 and 11 bytes into a region of size 10 [-Wformat-overflow=]
- 1803 |   sprintf(setcpu_buf, "%d", cpu_count - 1);
-      |                        ^~
-src/sched_deadline/deadline_test.c:1803:23: note: directive argument in the range [-2147483648, 2147483646]
- 1803 |   sprintf(setcpu_buf, "%d", cpu_count - 1);
-      |                       ^~~~
-src/sched_deadline/deadline_test.c:1803:3: note: ‘sprintf’ output between 2 and 12 bytes into a destination of size 10
- 1803 |   sprintf(setcpu_buf, "%d", cpu_count - 1);
-      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+> hrtimer_callback_running() will be returning true as the callback is
+> running somewhere else. This means hrtimer_try_to_cancel()
+> would return -1. Therefore hrtimer_grab_expiry_lock() would
+> be called.
+> 
+> Did I miss anything?
 
-Signed-off-by: Daniel Wagner <wagi@monom.org>
----
- src/sched_deadline/deadline_test.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+nope, you are right. I assumed that we had code to deal with this but
+didn't find it…
 
-diff --git a/src/sched_deadline/deadline_test.c b/src/sched_deadline/deadline_test.c
-index e2898de328bb..5b5f40dbb74d 100644
---- a/src/sched_deadline/deadline_test.c
-+++ b/src/sched_deadline/deadline_test.c
-@@ -1795,7 +1795,7 @@ int main (int argc, char **argv)
+diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+index 7d7db88021311..40d83c709503e 100644
+--- a/kernel/time/hrtimer.c
++++ b/kernel/time/hrtimer.c
+@@ -934,7 +934,7 @@ void hrtimer_grab_expiry_lock(const struct hrtimer *timer)
+ {
+ 	struct hrtimer_clock_base *base = timer->base;
  
- 	/* -b has us bind to the last CPU. */
- 	if (!all_cpus && !setcpu) {
--		setcpu_buf = malloc(10);
-+		setcpu_buf = malloc(12);
- 		if (!setcpu_buf) {
- 			perror("malloc");
- 			exit(-1);
--- 
-2.21.0
+-	if (base && base->cpu_base) {
++	if (base && base->cpu_base && base->index < MASK_SHIFT) {
+ 		spin_lock(&base->cpu_base->softirq_expiry_lock);
+ 		spin_unlock(&base->cpu_base->softirq_expiry_lock);
+ 	}
+
+This should deal with it.
+
+> Cheers,
+
+Sebastian
