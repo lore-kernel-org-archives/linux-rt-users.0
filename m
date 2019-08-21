@@ -2,63 +2,84 @@ Return-Path: <SRS0=Iani=WR=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=no
+X-Spam-Status: No, score=-2.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 87DF4C3A59E
-	for <linux-rt-users@archiver.kernel.org>; Wed, 21 Aug 2019 09:24:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5CED8C3A5A1
+	for <linux-rt-users@archiver.kernel.org>; Wed, 21 Aug 2019 13:26:14 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 6735F22D6D
-	for <linux-rt-users@archiver.kernel.org>; Wed, 21 Aug 2019 09:24:32 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 361F42339F
+	for <linux-rt-users@archiver.kernel.org>; Wed, 21 Aug 2019 13:26:14 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727041AbfHUJYP (ORCPT
+        id S1728894AbfHUNZ7 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 21 Aug 2019 05:24:15 -0400
-Received: from foss.arm.com ([217.140.110.172]:55040 "EHLO foss.arm.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726617AbfHUJYP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 21 Aug 2019 05:24:15 -0400
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 9824428;
-        Wed, 21 Aug 2019 02:24:14 -0700 (PDT)
-Received: from e108454-lin.cambridge.arm.com (e108454-lin.cambridge.arm.com [10.1.196.50])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 8AADA3F706;
-        Wed, 21 Aug 2019 02:24:13 -0700 (PDT)
-From:   Julien Grall <julien.grall@arm.com>
-To:     linux-rt-users@vger.kernel.org
-Cc:     tglx@linutronix.de, linux-kernel@vger.kernel.org, maz@kernel.org,
-        bigeasy@linutronix.de, rostedt@goodmis.org,
-        Julien Grall <julien.grall@arm.com>
-Subject: [RT PATCH 0/3] hrtimer: RT fixes for hrtimer_grab_expiry_lock()
-Date:   Wed, 21 Aug 2019 10:24:06 +0100
-Message-Id: <20190821092409.13225-1-julien.grall@arm.com>
-X-Mailer: git-send-email 2.11.0
+        Wed, 21 Aug 2019 09:25:59 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:55714 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728007AbfHUNZ7 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 21 Aug 2019 09:25:59 -0400
+Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
+        (envelope-from <bigeasy@linutronix.de>)
+        id 1i0Qcc-0004vS-8Y; Wed, 21 Aug 2019 15:25:54 +0200
+Date:   Wed, 21 Aug 2019 15:25:54 +0200
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Alexandre Belloni <alexandre.belloni@bootlin.com>
+Cc:     Alexander Dahl <ada@thorsis.com>, linux-rt-users@vger.kernel.org,
+        Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [ANNOUNCE] v5.2.9-rt3
+Message-ID: <20190821132553.gjvya5lu6j2dfyo5@linutronix.de>
+References: <20190816153616.fbridfzjkmfg4dnr@linutronix.de>
+ <2182739.9IRgZpf3R8@ada>
+ <20190820154418.GM3545@piout.net>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20190820154418.GM3545@piout.net>
+User-Agent: NeoMutt/20180716
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi all,
+On 2019-08-20 17:44:18 [+0200], Alexandre Belloni wrote:
+> Hi,
+Hi,
 
-This small series contains a few fixes for the hrtimer code in RT linux
-(v5.2.9-rt3-rebase).
+> On 19/08/2019 13:03:51+0200, Alexander Dahl wrote:
+> > Hei hei,
+> > 
+> > just tried to compile this v5.2.9-rt3 for SAMA5D27-SOM1-EK1 based on 
+> > arch/arm/configs/sama5_defconfig and with running oldconfig and selecting 
+> > defaults, but that fails if CONFIG_ATMEL_TCB_CLKSRC_USE_SLOW_CLOCK is not set. 
+> > 
+> > I think this is due to changes for Atmel TCLIB in v5.2 and the not yet adapted 
+> > RT patch "clocksource: TCLIB: Allow higher clock rates for clock events", 
+> > right?
+> 
+> Patch clocksource-tclib-allow-higher-clockrates.patch needs to be
+> changed so:
+> 
+> ret = setup_clkevents(tc, best_divisor_idx);
+> 
+> becomes
+> 
+> ret = setup_clkevents(&tc, best_divisor_idx);
+> 
 
-The patch #2 contains a error I managed to reproduce. The other two are
-were found while looking at the code.
+I will fix that locally.
 
-Cheers,
+> Also, I would think clocksource-tclib-add-proper-depend.patch could be
+> dropped. Instead, setup_clkevents should use atmel_tcb_divisors. It
+> would then be necessary to move its declaration before the function.
+> 
+> Sebastian, can you take care of that or do you expect a patch? In the
+> latter case, do you want a patch for the patch?
 
-Julien Grall (3):
-  hrtimer: Use READ_ONCE to access timer->base in
-    hrimer_grab_expiry_lock()
-  hrtimer: Don't grab the expiry lock for non-soft hrtimer
-  hrtimer: Prevent using uninitialized spin_lock in
-    hrtimer_grab_expiry_lock()
+For the second part I would appreciate a patch. I can then drop
+clocksource-tclib-add-proper-depend.patch if it is not an issue.
 
- kernel/time/hrtimer.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
--- 
-2.11.0
-
+Sebastian
