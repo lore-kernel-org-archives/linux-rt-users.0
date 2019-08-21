@@ -6,69 +6,92 @@ X-Spam-Status: No, score=-2.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 984D9C3A59E
-	for <linux-rt-users@archiver.kernel.org>; Wed, 21 Aug 2019 14:03:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C4A86C3A59E
+	for <linux-rt-users@archiver.kernel.org>; Wed, 21 Aug 2019 14:21:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 78645206BA
-	for <linux-rt-users@archiver.kernel.org>; Wed, 21 Aug 2019 14:03:01 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A48D1233A2
+	for <linux-rt-users@archiver.kernel.org>; Wed, 21 Aug 2019 14:21:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729117AbfHUOC6 (ORCPT
+        id S1729517AbfHUOVO (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 21 Aug 2019 10:02:58 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:55800 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726484AbfHUOC5 (ORCPT
+        Wed, 21 Aug 2019 10:21:14 -0400
+Received: from relay1-d.mail.gandi.net ([217.70.183.193]:35115 "EHLO
+        relay1-d.mail.gandi.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1729508AbfHUOVM (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 21 Aug 2019 10:02:57 -0400
-Received: from p5de0b6c5.dip0.t-ipconnect.de ([93.224.182.197] helo=nanos)
-        by Galois.linutronix.de with esmtpsa (TLS1.2:DHE_RSA_AES_256_CBC_SHA256:256)
-        (Exim 4.80)
-        (envelope-from <tglx@linutronix.de>)
-        id 1i0RCQ-0005xS-UK; Wed, 21 Aug 2019 16:02:55 +0200
-Date:   Wed, 21 Aug 2019 16:02:54 +0200 (CEST)
-From:   Thomas Gleixner <tglx@linutronix.de>
-To:     Julien Grall <julien.grall@arm.com>
-cc:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        maz@kernel.org, bigeasy@linutronix.de, rostedt@goodmis.org
-Subject: Re: [RT PATCH 3/3] hrtimer: Prevent using uninitialized spin_lock
- in hrtimer_grab_expiry_lock()
-In-Reply-To: <20190821092409.13225-4-julien.grall@arm.com>
-Message-ID: <alpine.DEB.2.21.1908211557420.2223@nanos.tec.linutronix.de>
-References: <20190821092409.13225-1-julien.grall@arm.com> <20190821092409.13225-4-julien.grall@arm.com>
-User-Agent: Alpine 2.21 (DEB 202 2017-01-01)
+        Wed, 21 Aug 2019 10:21:12 -0400
+X-Originating-IP: 86.207.98.53
+Received: from localhost (aclermont-ferrand-651-1-259-53.w86-207.abo.wanadoo.fr [86.207.98.53])
+        (Authenticated sender: alexandre.belloni@bootlin.com)
+        by relay1-d.mail.gandi.net (Postfix) with ESMTPSA id C3576240011;
+        Wed, 21 Aug 2019 14:21:10 +0000 (UTC)
+Date:   Wed, 21 Aug 2019 16:21:10 +0200
+From:   Alexandre Belloni <alexandre.belloni@bootlin.com>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     Alexander Dahl <ada@thorsis.com>, linux-rt-users@vger.kernel.org,
+        Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [ANNOUNCE] v5.2.9-rt3
+Message-ID: <20190821142110.GC27031@piout.net>
+References: <20190816153616.fbridfzjkmfg4dnr@linutronix.de>
+ <2182739.9IRgZpf3R8@ada>
+ <20190820154418.GM3545@piout.net>
+ <20190821132553.gjvya5lu6j2dfyo5@linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Linutronix-Spam-Score: -1.0
-X-Linutronix-Spam-Level: -
-X-Linutronix-Spam-Status: No , -1.0 points, 5.0 required,  ALL_TRUSTED=-1,SHORTCIRCUIT=-0.0001
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20190821132553.gjvya5lu6j2dfyo5@linutronix.de>
+User-Agent: Mutt/1.12.1 (2019-06-15)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, 21 Aug 2019, Julien Grall wrote:
-
-> migration_base is used as a placeholder when an hrtimer is switching
-> between base (see switch_hrtimer_timer_base). It is possible
-> theoritically possible to have timer->base equal to migration_base.
+On 21/08/2019 15:25:54+0200, Sebastian Andrzej Siewior wrote:
+> On 2019-08-20 17:44:18 [+0200], Alexandre Belloni wrote:
+> > Hi,
+> Hi,
 > 
-> Even if it is a placeholder, it would pass all the current check in
-> hrtimer_grab_expiry_lock() leading to use softirq_expiry_lock
-> uninitialized.
->
-> This is can be prevented by checking whether the base is equal to
-> the placeholder (i.e. migration_base).
+> > On 19/08/2019 13:03:51+0200, Alexander Dahl wrote:
+> > > Hei hei,
+> > > 
+> > > just tried to compile this v5.2.9-rt3 for SAMA5D27-SOM1-EK1 based on 
+> > > arch/arm/configs/sama5_defconfig and with running oldconfig and selecting 
+> > > defaults, but that fails if CONFIG_ATMEL_TCB_CLKSRC_USE_SLOW_CLOCK is not set. 
+> > > 
+> > > I think this is due to changes for Atmel TCLIB in v5.2 and the not yet adapted 
+> > > RT patch "clocksource: TCLIB: Allow higher clock rates for clock events", 
+> > > right?
+> > 
+> > Patch clocksource-tclib-allow-higher-clockrates.patch needs to be
+> > changed so:
+> > 
+> > ret = setup_clkevents(tc, best_divisor_idx);
+> > 
+> > becomes
+> > 
+> > ret = setup_clkevents(&tc, best_divisor_idx);
+> > 
+> 
+> I will fix that locally.
+> 
+> > Also, I would think clocksource-tclib-add-proper-depend.patch could be
+> > dropped. Instead, setup_clkevents should use atmel_tcb_divisors. It
+> > would then be necessary to move its declaration before the function.
+> > 
+> > Sebastian, can you take care of that or do you expect a patch? In the
+> > latter case, do you want a patch for the patch?
+> 
+> For the second part I would appreciate a patch. I can then drop
+> clocksource-tclib-add-proper-depend.patch if it is not an issue.
+> 
 
-That's a lame argument. The point is that it does not make sense to do that
-on migration base, but not for the reason you are giving (uninitialized
-lock).
+I'm not sure it is worth it as the issue is introduced by
+clocksource-tclib-allow-higher-clockrates.patch. Shouldn't we fix it
+directly?
 
-If base == migration_base then there is no point to lock soft_expiry_lock
-simply because the timer is not executing the callback in soft irq context
-and the whole lock/unlock dance can be avoided.
-
-But, yes. Good catch.
-
-Thanks,
-
-	tglx
+-- 
+Alexandre Belloni, Bootlin
+Embedded Linux and Kernel engineering
+https://bootlin.com
