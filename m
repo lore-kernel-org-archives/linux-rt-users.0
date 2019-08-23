@@ -2,147 +2,111 @@ Return-Path: <SRS0=4xIy=WT=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.1 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 77980C3A5A1
-	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Aug 2019 03:23:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B6EB4C3A5A2
+	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Aug 2019 15:03:57 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 578C921744
-	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Aug 2019 03:23:32 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 864AD20870
+	for <linux-rt-users@archiver.kernel.org>; Fri, 23 Aug 2019 15:03:57 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Is+h1dUi"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2391472AbfHWDX2 (ORCPT
+        id S1730315AbfHWPD5 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 22 Aug 2019 23:23:28 -0400
-Received: from mx1.redhat.com ([209.132.183.28]:38744 "EHLO mx1.redhat.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1732939AbfHWDX2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 22 Aug 2019 23:23:28 -0400
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mx1.redhat.com (Postfix) with ESMTPS id AA05D83F3C;
-        Fri, 23 Aug 2019 03:23:27 +0000 (UTC)
-Received: from ovpn-117-150.phx2.redhat.com (ovpn-117-150.phx2.redhat.com [10.3.117.150])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 76FD45D784;
-        Fri, 23 Aug 2019 03:23:24 +0000 (UTC)
-Message-ID: <d65032399f66ec85731fdcf4f8c6c7af74687fb2.camel@redhat.com>
-Subject: Re: [PATCH RT v2 1/3] rcu: Acquire RCU lock when disabling BHs
-From:   Scott Wood <swood@redhat.com>
-To:     Joel Fernandes <joel@joelfernandes.org>,
-        "Paul E. McKenney" <paulmck@linux.ibm.com>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Clark Williams <williams@redhat.com>
-Date:   Thu, 22 Aug 2019 22:23:23 -0500
-In-Reply-To: <20190822133955.GA29841@google.com>
-References: <20190821231906.4224-1-swood@redhat.com>
-         <20190821231906.4224-2-swood@redhat.com>
-         <20190821233358.GU28441@linux.ibm.com> <20190822133955.GA29841@google.com>
-Organization: Red Hat
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.30.5 (3.30.5-1.fc29) 
+        Fri, 23 Aug 2019 11:03:57 -0400
+Received: from mail-wm1-f65.google.com ([209.85.128.65]:53573 "EHLO
+        mail-wm1-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725934AbfHWPD5 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 23 Aug 2019 11:03:57 -0400
+Received: by mail-wm1-f65.google.com with SMTP id 10so9182917wmp.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 23 Aug 2019 08:03:55 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
+         :user-agent:mime-version;
+        bh=BovqvL9t+Sfb65f2Cvro+tEpAfqnwe7IxIbLhCPAVf4=;
+        b=Is+h1dUigc3uMFBW1Oe2qVjyh9EMl+rzZRRndfFcI5uIHsPaHWijKvHftnmlBX/CmF
+         zK7d9SZuYkXc8MKdldSmVJcoSbfrRrLpyxmWEt9uCy32WxZTkYspc0ySBD5YSChfAxv2
+         35jfW1oJlElSkqRvN3Y27j4QLyS0dXEalQ2NJ13SFHldez4IMwBy1bdXs3T2c+2+0M0Q
+         e4tOBKbdnlCezN00aXZIhWy13dDFOSITCQZSWu2ght5a2DlAW8PWusn23H63x8gOeMPP
+         9Khj4IhLU/fpQ9g0zTaVKqkcpHvBkHnBFXTg+XeBZKfGOohMQFQtYR41U3GMS6W0tbKP
+         GCsw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
+         :message-id:references:user-agent:mime-version;
+        bh=BovqvL9t+Sfb65f2Cvro+tEpAfqnwe7IxIbLhCPAVf4=;
+        b=XAUY4jQXVAPWJDQQWbn73VLBBD8zRON1TRpnfXXYmuZrebnmdDeyDrD3htRrAEt+O6
+         /smMEDKdpA7GRoUgD6M3/lJL9cgb6O7mpkc/94fz8dvK13o/AUMTbBYKJfTMwyPWNMSc
+         6I3BPQQTTw/K/q7GG+npbyAp6NpK/95bsSpktLyriQWnzj2SQowzXyjPia+YPrts7jKA
+         LjzSYgPdx/+BpuD9beCi1H0fWSVTT96Ou1O4jLh1HIeDwzpCi7ghH6nqtozVywf7xcwY
+         DORWah/lB3zIWUQeoe+iyynOFshW24sqsfPWXjDq5xyZUusBuz0iWLR4gCQQxp9VhWNy
+         jvWQ==
+X-Gm-Message-State: APjAAAX2negSw98H2gkZAtg7qKWukPA8/luGOmePnCFGjhFCZCGU7f91
+        28mDnHBZ2c14491+3XwT7PM=
+X-Google-Smtp-Source: APXvYqzUAg3vrH7SIkX4dXknnER8f2cf1AZ3ZW0XiCXD+b4sZydLBwUHQCl9pw5UBswBiEGCu5JpzQ==
+X-Received: by 2002:a1c:7a10:: with SMTP id v16mr5673437wmc.2.1566572634790;
+        Fri, 23 Aug 2019 08:03:54 -0700 (PDT)
+Received: from planxty ([2a02:8108:1700:19dc:b567:5617:6bc1:51bb])
+        by smtp.gmail.com with ESMTPSA id g65sm5018281wma.21.2019.08.23.08.03.53
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 23 Aug 2019 08:03:54 -0700 (PDT)
+Date:   Fri, 23 Aug 2019 17:03:46 +0200 (CEST)
+From:   John Kacur <jkacur@redhat.com>
+X-X-Sender: jkacur@planxty
+To:     Afzal Mohammed <afzal.mohd.ma@gmail.com>
+cc:     Clark Williams <williams@redhat.com>,
+        rt-users <linux-rt-users@vger.kernel.org>
+Subject: Re: [PATCH 1/2] rt-tests: Allow cross compilation
+In-Reply-To: <eb3b222b7741d16bf45735f59015c40fcbb31ba2.1566455869.git.afzal.mohd.ma@gmail.com>
+Message-ID: <alpine.LFD.2.21.1908231703240.7154@planxty>
+References: <eb3b222b7741d16bf45735f59015c40fcbb31ba2.1566455869.git.afzal.mohd.ma@gmail.com>
+User-Agent: Alpine 2.21 (LFD 202 2017-01-01)
 MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
-X-Greylist: Sender IP whitelisted, not delayed by milter-greylist-4.5.16 (mx1.redhat.com [10.5.110.27]); Fri, 23 Aug 2019 03:23:27 +0000 (UTC)
+Content-Type: text/plain; charset=US-ASCII
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, 2019-08-22 at 09:39 -0400, Joel Fernandes wrote:
-> On Wed, Aug 21, 2019 at 04:33:58PM -0700, Paul E. McKenney wrote:
-> > On Wed, Aug 21, 2019 at 06:19:04PM -0500, Scott Wood wrote:
-> > > Signed-off-by: Scott Wood <swood@redhat.com>
-> > > ---
-> > > Another question is whether non-raw spinlocks are intended to create
-> > > an
-> > > RCU read-side critical section due to implicit preempt disable.
-> > 
-> > Hmmm...  Did non-raw spinlocks act like rcu_read_lock_sched()
-> > and rcu_read_unlock_sched() pairs in -rt prior to the RCU flavor
-> > consolidation?  If not, I don't see why they should do so after that
-> > consolidation in -rt.
+
+
+On Thu, 22 Aug 2019, Afzal Mohammed wrote:
+
+> $ make CROSS_COMPILE=<my-toolchain-prefix>
 > 
-> May be I am missing something, but I didn't see the connection between
-> consolidation and this patch. AFAICS, this patch is so that
-> rcu_read_lock_bh_held() works at all on -rt. Did I badly miss something?
-
-Before consolidation, RT mapped rcu_read_lock_bh_held() to
-rcu_read_lock_bh() and called rcu_read_lock() from rcu_read_lock_bh().  This
-somehow got lost when rebasing on top of 5.0.
-
-> > >  include/linux/rcupdate.h |  4 ++++
-> > >  kernel/rcu/update.c      |  4 ++++
-> > >  kernel/softirq.c         | 12 +++++++++---
-> > >  3 files changed, 17 insertions(+), 3 deletions(-)
-> > > 
-> > > diff --git a/include/linux/rcupdate.h b/include/linux/rcupdate.h
-> > > index 388ace315f32..d6e357378732 100644
-> > > --- a/include/linux/rcupdate.h
-> > > +++ b/include/linux/rcupdate.h
-> > > @@ -615,10 +615,12 @@ static inline void rcu_read_unlock(void)
-> > >  static inline void rcu_read_lock_bh(void)
-> > >  {
-> > >  	local_bh_disable();
-> > > +#ifndef CONFIG_PREEMPT_RT_FULL
-> > >  	__acquire(RCU_BH);
-> > >  	rcu_lock_acquire(&rcu_bh_lock_map);
-> > >  	RCU_LOCKDEP_WARN(!rcu_is_watching(),
-> > >  			 "rcu_read_lock_bh() used illegally while idle");
-> > > +#endif
-> > 
-> > Any chance of this using "if (!IS_ENABLED(CONFIG_PREEMPT_RT_FULL))"?
-> > We should be OK providing a do-nothing __maybe_unused rcu_bh_lock_map
-> > for lockdep-enabled -rt kernels, right?
+> currently does not cause source to be built using the intended
+> toolchain, instead will use the host toolchain.
 > 
-> Since this function is small, I prefer if -rt defines their own
-> rcu_read_lock_bh() which just does the local_bh_disable(). That would be
-> way
-> cleaner IMO. IIRC, -rt does similar things for spinlocks, but it has been
-> sometime since I look at the -rt patchset.
-
-I'll do it whichever way you all decide, though I'm not sure I agree about
-it being cleaner (especially while RT is still out-of-tree and a change to
-the non-RT version that fails to trigger a merge conflict is a concern).
-
-What about moving everything but the local_bh_disable into a separate
-function called from rcu_read_lock_bh, and making that a no-op on RT?
-
-> > >  
-> > > diff --git a/kernel/rcu/update.c b/kernel/rcu/update.c
-> > > index 016c66a98292..a9cdf3d562bc 100644
-> > > --- a/kernel/rcu/update.c
-> > > +++ b/kernel/rcu/update.c
-> > > @@ -296,7 +296,11 @@ int rcu_read_lock_bh_held(void)
-> > >  		return 0;
-> > >  	if (!rcu_lockdep_current_cpu_online())
-> > >  		return 0;
-> > > +#ifdef CONFIG_PREEMPT_RT_FULL
-> > > +	return lock_is_held(&rcu_lock_map) || irqs_disabled();
-> > > +#else
-> > >  	return in_softirq() || irqs_disabled();
-> > > +#endif
-> > 
-> > And globally.
+> CC & AR are not updated with CROSS_COMPILE value since they are
+> predefined make variables (with default cc & ar respectively) combined
+> with the fact that CC & AR variables are updated in the makefile only if
+> not already defined due to the usage of '?='.
 > 
-> And could be untangled a bit as well:
+> Signed-off-by: Afzal Mohammed <afzal.mohd.ma@gmail.com>
+> ---
+>  Makefile | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
 > 
-> if (irqs_disabled())
-> 	return 1;
-> 
-> if (IS_ENABLED(CONFIG_PREEMPT_RT_FULL))
-> 	return lock_is_held(&rcu_lock_map);
-> 
-> return in_softirq();
+> diff --git a/Makefile b/Makefile
+> index 51b8dea..b573408 100644
+> --- a/Makefile
+> +++ b/Makefile
+> @@ -1,6 +1,6 @@
+>  VERSION = 1.5
+> -CC?=$(CROSS_COMPILE)gcc
+> -AR?=$(CROSS_COMPILE)ar
+> +CC = $(CROSS_COMPILE)gcc
+> +AR = $(CROSS_COMPILE)ar
+>  
+>  OBJDIR = bld
+>  
+> -- 
+> 2.23.0
 
-OK.
-
--Scott
-
-
+Signed-off-by: John Kacur <jkacur@redhat.com>
