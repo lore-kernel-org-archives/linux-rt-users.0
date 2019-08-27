@@ -2,120 +2,99 @@ Return-Path: <SRS0=YHoI=WX=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_2 autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 45A06C3A59F
-	for <linux-rt-users@archiver.kernel.org>; Tue, 27 Aug 2019 02:44:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 21B25C3A5A3
+	for <linux-rt-users@archiver.kernel.org>; Tue, 27 Aug 2019 09:23:41 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 2121B206E0
-	for <linux-rt-users@archiver.kernel.org>; Tue, 27 Aug 2019 02:44:42 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0360A217F5
+	for <linux-rt-users@archiver.kernel.org>; Tue, 27 Aug 2019 09:23:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728819AbfH0Coh (ORCPT
+        id S1729225AbfH0JXh (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 26 Aug 2019 22:44:37 -0400
-Received: from mail.kernel.org ([198.145.29.99]:35696 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728345AbfH0Coh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 26 Aug 2019 22:44:37 -0400
-Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id E06BF206E0;
-        Tue, 27 Aug 2019 02:44:35 +0000 (UTC)
-Date:   Mon, 26 Aug 2019 22:44:34 -0400
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     LKML <linux-kernel@vger.kernel.org>
-Cc:     Tom Zanussi <zanussi@kernel.org>,
-        Linux Trace Devel <linux-trace-devel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: [PATCH] tracing: Fix histogram referencing a variable
-Message-ID: <20190826224434.385bc6b5@gandalf.local.home>
-X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
+        Tue, 27 Aug 2019 05:23:37 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:43013 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728711AbfH0JXh (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 27 Aug 2019 05:23:37 -0400
+Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
+        (envelope-from <bigeasy@linutronix.de>)
+        id 1i2XhN-0000lq-DZ; Tue, 27 Aug 2019 11:23:33 +0200
+Date:   Tue, 27 Aug 2019 11:23:33 +0200
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     "Paul E. McKenney" <paulmck@linux.ibm.com>
+Cc:     Joel Fernandes <joel@joelfernandes.org>,
+        Scott Wood <swood@redhat.com>, linux-rt-users@vger.kernel.org,
+        linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Clark Williams <williams@redhat.com>
+Subject: Re: [PATCH RT v2 2/3] sched: migrate_enable: Use sleeping_lock to
+ indicate involuntary sleep
+Message-ID: <20190827092333.jp3darw7teyyw67g@linutronix.de>
+References: <20190821231906.4224-1-swood@redhat.com>
+ <20190821231906.4224-3-swood@redhat.com>
+ <20190823162024.47t7br6ecfclzgkw@linutronix.de>
+ <433936e4c720e6b81f9b297fefaa592fd8a961ad.camel@redhat.com>
+ <20190824031014.GB2731@google.com>
+ <20190826152523.dcjbsgyyir4zjdol@linutronix.de>
+ <20190826162945.GE28441@linux.ibm.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20190826162945.GE28441@linux.ibm.com>
+User-Agent: NeoMutt/20180716
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+On 2019-08-26 09:29:45 [-0700], Paul E. McKenney wrote:
+> > The mechanism that is used here may change in future. I just wanted to
+> > make sure that from RCU's side it is okay to schedule here.
+> 
+> Good point.
+> 
+> The effect from RCU's viewpoint will be to split any non-rcu_read_lock()
+> RCU read-side critical section at this point.  This alrady happens in a
+> few places, for example, rcu_note_context_switch() constitutes an RCU
+> quiescent state despite being invoked with interrupts disabled (as is
+> required!).  The __schedule() function just needs to understand (and does
+> understand) that the RCU read-side critical section that would otherwise
+> span that call to rcu_node_context_switch() is split in two by that call.
 
-From: Steven Rostedt (VMware) <rostedt@goodmis.org>
+Okay. So I read this as invoking schedule() at this point is okay. 
+Looking at this again, this could also happen on a PREEMPT=y kernel if
+the kernel decides to preempt a task within a rcu_read_lock() section
+and put it back later on another CPU.
 
-I performed a three way histogram with the following commands:
+> However, if this was instead an rcu_read_lock() critical section within
+> a PREEMPT=y kernel, then if a schedule() occured within stop_one_task(),
+> RCU would consider that critical section to be preempted.  This means
+> that any RCU grace period that is blocked by this RCU read-side critical
+> section would remain blocked until stop_one_cpu() resumed, returned,
+> and so on until the matching rcu_read_unlock() was reached.  In other
+> words, RCU would consider that RCU read-side critical section to span
+> the call to stop_one_cpu() even if stop_one_cpu() invoked schedule().
 
-echo 'irq_lat u64 lat pid_t pid' > synthetic_events
-echo 'wake_lat u64 lat u64 irqlat pid_t pid' >> synthetic_events
-echo 'hist:keys=common_pid:irqts=common_timestamp.usecs if function == 0xffffffff81200580' > events/timer/hrtimer_start/trigger
-echo 'hist:keys=common_pid:lat=common_timestamp.usecs-$irqts:onmatch(timer.hrtimer_start).irq_lat($lat,pid) if common_flags & 1' > events/sched/sched_waking/trigger
-echo 'hist:keys=pid:wakets=common_timestamp.usecs,irqlat=lat' > events/synthetic/irq_lat/trigger
-echo 'hist:keys=next_pid:lat=common_timestamp.usecs-$wakets,irqlat=$irqlat:onmatch(synthetic.irq_lat).wake_lat($lat,$irqlat,next_pid)' > events/sched/sched_switch/trigger 
-echo 1 > events/synthetic/wake_lat/enable 
+Isn't that my example from above and what we do in RT? My understanding
+is that this is the reason why we need BOOST on RT otherwise the RCU
+critical section could remain blocked for some time.
 
-Basically I wanted to see:
+> On the other hand, within a PREEMPT=n kernel, the call to schedule()
+> would split even an rcu_read_lock() critical section.  Which is why I
+> asked earlier if sleeping_lock_inc() and sleeping_lock_dec() are no-ops
+> in !PREEMPT_RT_BASE kernels.  We would after all want the usual lockdep
+> complaints in that case.
 
- hrtimer_start (calling function tick_sched_timer)
+sleeping_lock_inc() +dec() is only RT specific. It is part of RT's
+spin_lock() implementation and used by RCU (rcu_note_context_switch())
+to not complain if invoked within a critical section.
 
-Note:
-
-  # grep tick_sched_timer /proc/kallsyms
-ffffffff81200580 t tick_sched_timer
-
-And save the time of that, and then record sched_waking if it is called
-in interrupt context and with the same pid as the hrtimer_start, it
-will record the latency between that and the waking event.
-
-I then look at when the task that is woken is scheduled in, and record
-the latency between the wakeup and the task running.
-
-At the end, the wake_lat synthetic event will show the wakeup to
-scheduled latency, as well as the irq latency in from hritmer_start to
-the wakeup. The problem is that I found this:
-
-          <idle>-0     [007] d...   190.485261: wake_lat: lat=27 irqlat=190485230 pid=698
-          <idle>-0     [005] d...   190.485283: wake_lat: lat=40 irqlat=190485239 pid=10
-          <idle>-0     [002] d...   190.488327: wake_lat: lat=56 irqlat=190488266 pid=335
-          <idle>-0     [005] d...   190.489330: wake_lat: lat=64 irqlat=190489262 pid=10
-          <idle>-0     [003] d...   190.490312: wake_lat: lat=43 irqlat=190490265 pid=77
-          <idle>-0     [005] d...   190.493322: wake_lat: lat=54 irqlat=190493262 pid=10
-          <idle>-0     [005] d...   190.497305: wake_lat: lat=35 irqlat=190497267 pid=10
-          <idle>-0     [005] d...   190.501319: wake_lat: lat=50 irqlat=190501264 pid=10
-
-The irqlat seemed quite large! Investigating this further, if I had
-enabled the irq_lat synthetic event, I noticed this:
-
-          <idle>-0     [002] d.s.   249.429308: irq_lat: lat=164968 pid=335
-          <idle>-0     [002] d...   249.429369: wake_lat: lat=55 irqlat=249429308 pid=335
-
-Notice that the timestamp of the irq_lat "249.429308" is awfully
-similar to the reported irqlat variable. In fact, all instances were
-like this. It appeared that:
-
-  irqlat=$irqlat
-
-Wasn't assigning the old $irqlat to the new irqlat variable, but
-instead was assigning the $irqts to it.
-
-The issue is that hist_field_var_ref() is using hist_field->var_ref_idx
-(the ref of the var being assigned) and not the ref of the var that is
-the value (hist_field->var.idx).
-
-Cc: stable@vger.kernel.org
-Fixes: 067fe038e70f6 ("tracing: Add variable reference handling to hist triggers")
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
----
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 65e7d071ed28..329488aeb9dd 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -1858,7 +1858,7 @@ static u64 hist_field_var_ref(struct hist_field *hist_field,
- 		return var_val;
- 
- 	elt_data = elt->private_data;
--	var_val = elt_data->var_ref_vals[hist_field->var_ref_idx];
-+	var_val = elt_data->var_ref_vals[hist_field->var.idx];
- 
- 	return var_val;
- }
+> Does that help, or am I missing the point?
+> 
+> 							Thanx, Paul
+Sebastian
