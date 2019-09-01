@@ -2,134 +2,181 @@ Return-Path: <SRS0=UHH5=W4=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.6 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2EE18C3A5A4
-	for <linux-rt-users@archiver.kernel.org>; Sun,  1 Sep 2019 19:02:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B1CDFC3A5A4
+	for <linux-rt-users@archiver.kernel.org>; Sun,  1 Sep 2019 22:02:07 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 01777217F4
-	for <linux-rt-users@archiver.kernel.org>; Sun,  1 Sep 2019 19:02:25 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="EqHKFzqW"
+	by mail.kernel.org (Postfix) with ESMTP id 7CFFA22D6D
+	for <linux-rt-users@archiver.kernel.org>; Sun,  1 Sep 2019 22:02:07 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1567375327;
+	bh=5Jemhp2lj9/ZQGI4LXDaoA+GALLU78MTTZMQS0wCH3M=;
+	h=Subject:From:To:Cc:Date:In-Reply-To:References:List-ID:From;
+	b=mxeN3nQKZ6p4SkMb98zeps7UkkZKfGZyamsG6PChy0uZKUF+uJsRObBFmaeyUHb7D
+	 Zonb8ZduaPY7WFytz37ZIsJneGSr/6EEoxtoBjckOEbIVZa/uI2lGHqTgDxfPd447Y
+	 dqQssxxMSypd6oA6vPDamB7SDXjbVpcEiE01ENVc=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729141AbfIATCV (ORCPT
+        id S1729147AbfIAWCE (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 1 Sep 2019 15:02:21 -0400
-Received: from mail-ed1-f68.google.com ([209.85.208.68]:46467 "EHLO
-        mail-ed1-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729095AbfIATCU (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 1 Sep 2019 15:02:20 -0400
-Received: by mail-ed1-f68.google.com with SMTP id i8so47450edn.13;
-        Sun, 01 Sep 2019 12:02:19 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:from:date:message-id:subject:to:cc;
-        bh=36RBDfKrASGo4Jp+zlMidmvasdFpFW/8u/aX7fCMv7w=;
-        b=EqHKFzqWmfvXuYas24iS5IxH/0nUz2qwpJ3gxKcRq8y4K1/hpqbWh7LtfY+3q6Lfs3
-         XSPXOrRWDGlLEOZHN/vi2gcsepyw+8ECDjxHz8sr9oFSKFiZ5eWNJBivwF8FluCgWXKK
-         jkiOTHR8mshxKnF7HoHVulF7E2Y3ikS8MQHR1lp+lQHU/0+6r/facu9Ocqzi9ijFdods
-         jtXs20s/21DSrZytlzvSftWMWy+ctX1IIMKOOqAS6mmgJ+qurLJi94oPfqAvdVkTq7DI
-         xmQjl5Ka3Z1P7TD4JkXeeweHQxfp/qtl+FMFoW/2v5qkFEHJKeiOpSjev7I7T6TAMI+T
-         ibpg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:from:date:message-id:subject:to:cc;
-        bh=36RBDfKrASGo4Jp+zlMidmvasdFpFW/8u/aX7fCMv7w=;
-        b=Hcn1lXAmZgzNndEh5EbFUJHKdS84Y45U1ZIulHE0bjpgtedFtQndd95K81Ny+KTaDI
-         ofTTM2iGGA1tiqW/MyxgNAuEbmYvq5Ro1SJInGTr68x4QLyaiPPLyKqt9RCZoYFxj/8g
-         6s5MpuWgRyLKMgAhdV2kEpVcmTTD5qMF5Gt7Eol0Utara0itY23q48hQ8aso2qoKWQLH
-         cQzaXQM0IiFTyll1b0VrE/Cz+UaaLOMpnz6wB44HVAGt9CNeOC85ARQmGWVFFmQGLZ/B
-         7EtbZW42GsFVFSg7Rva+t4nnCrzRidlzyQfpgWQPWWn4iVb/7D1vMeA5kegf1T+IHkOO
-         +r7g==
-X-Gm-Message-State: APjAAAWBMGJxledcHMaqxdpaecL+9bjDRDiNE+VPbSzBTXyB2QBiDQuc
-        pbhm7p1u1w2/v7PMhY0TXIZu9bRTmMGycCKIYlR5iilk
-X-Google-Smtp-Source: APXvYqxrlnoroTWmYh4Y1FKMmSaAbJ0sBTw5mp5/fPUm+IaU4y6d1kskMh55haHTy6rWLLYsAG/A5UaAq78/uKCcovU=
-X-Received: by 2002:a17:906:400c:: with SMTP id v12mr367071ejj.15.1567364538128;
- Sun, 01 Sep 2019 12:02:18 -0700 (PDT)
-MIME-Version: 1.0
-From:   Vladimir Oltean <olteanv@gmail.com>
-Date:   Sun, 1 Sep 2019 22:02:07 +0300
-Message-ID: <CA+h21hqRFGvspMJtn1VDb_JzpRnApLSEARWPcGNvTADXCsou_w@mail.gmail.com>
-Subject: RT and PTP system timestamping
-To:     netdev <netdev@vger.kernel.org>, linux-rt-users@vger.kernel.org,
-        linux-spi@vger.kernel.org
-Cc:     Richard Cochran <richardcochran@gmail.com>,
-        Miroslav Lichvar <mlichvar@redhat.com>,
-        Hubert Feurstein <h.feurstein@gmail.com>
+        Sun, 1 Sep 2019 18:02:04 -0400
+Received: from mail.kernel.org ([198.145.29.99]:52342 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1728942AbfIAWCE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 1 Sep 2019 18:02:04 -0400
+Received: from tzanussi-mobl (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 9B1A821897;
+        Sun,  1 Sep 2019 22:02:02 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1567375323;
+        bh=5Jemhp2lj9/ZQGI4LXDaoA+GALLU78MTTZMQS0wCH3M=;
+        h=Subject:From:To:Cc:Date:In-Reply-To:References:From;
+        b=XmwJkLPBgjplyzLEch8BUQyWULZn07GtOYgNWmh1hH+lNMEPiv1+aHCod3XdVT9k5
+         gVrR0Rr9BwZR+VOTzOGrl/Jx/XRzv+ioAQdTGs0BGCbyoWZaHKeqiP9V4viOq7BAhX
+         HZxZZz5Wksm6qHOX+gyVdt3Fg/28Au+cIKoLEAOY=
+Message-ID: <1567375321.5282.12.camel@kernel.org>
+Subject: Re: [PATCH] tracing: Fix histogram referencing a variable
+From:   Tom Zanussi <zanussi@kernel.org>
+To:     Steven Rostedt <rostedt@goodmis.org>,
+        LKML <linux-kernel@vger.kernel.org>
+Cc:     Linux Trace Devel <linux-trace-devel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Date:   Sun, 01 Sep 2019 17:02:01 -0500
+In-Reply-To: <20190826224434.385bc6b5@gandalf.local.home>
+References: <20190826224434.385bc6b5@gandalf.local.home>
 Content-Type: text/plain; charset="UTF-8"
+X-Mailer: Evolution 3.26.1-1 
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello people of netdev, linux-rt-users and linux-spi,
+Hi Steve,
 
-Apologies in advance for asking a question about something I know nothing about.
+On Mon, 2019-08-26 at 22:44 -0400, Steven Rostedt wrote:
+> From: Steven Rostedt (VMware) <rostedt@goodmis.org>
+> 
+> I performed a three way histogram with the following commands:
+> 
+> echo 'irq_lat u64 lat pid_t pid' > synthetic_events
+> echo 'wake_lat u64 lat u64 irqlat pid_t pid' >> synthetic_events
+> echo 'hist:keys=common_pid:irqts=common_timestamp.usecs if function == 0xffffffff81200580' > events/timer/hrtimer_start/trigger
+> echo 'hist:keys=common_pid:lat=common_timestamp.usecs-$irqts:onmatch(timer.hrtimer_start).irq_lat($lat,pid) if common_flags & 1' > events/sched/sched_waking/trigger
+> echo 'hist:keys=pid:wakets=common_timestamp.usecs,irqlat=lat' > events/synthetic/irq_lat/trigger
+> echo 'hist:keys=next_pid:lat=common_timestamp.usecs-$wakets,irqlat=$irqlat:onmatch(synthetic.irq_lat).wake_lat($lat,$irqlat,next_pid)' > events/sched/sched_switch/trigger 
+> echo 1 > events/synthetic/wake_lat/enable 
+> 
 
-I am playing with a device driver of a SPI-controlled PTP timer. For
-my particular application it is important that the value of the PTP
-timer can be retrieved with an accuracy bound of less than +/- 400 ns.
-Currently that job has been served by the PTP_SYS_OFFSET_EXTENDED [1]
-ioctl (which allows for the timer's and the system's time to be
-correlated) plus some hacks in the SPI core and drivers which were
-submitted for review [2].
+Thanks for digging into this and providing a patch.  Looking into it
+myself, I think the problem is actually in the alias-creation code
+(which gets invoked for where you do irqlat=$irqlat).  In that code,
+the alias's var_ref_idx is always 0, so you get whatever's there rather
+than the correct value if it should be something other than 0.
 
-In the future I would like to evaluate RT on the device I am playing
-with. There are a few dependency patches in flight and I'm not
-actually clear what my current evaluation options as of now are, so I
-think I'll just have to wait until 5.4-rt.
-But at least I need to consider the RT friendliness of the solution I
-am proposing. The gist of it (in the current version) is: put the
-controller in poll mode, disable local IRQs and preemption on the
-local CPU (via a spin_lock_irqsave), then surround the transfer of the
-SPI byte I'm interested in with (basically) calls to
-ktime_get_real_ts64.
+The patch below fixes that - I used your original commit message but
+changed the last sentence and the offending commit that introduced the
+problem, and of course the one-line code change is different too.  Let
+me know if that works for you.
 
-Of course, this approach is completely incompatible with RT:
-- In RT, spin_lock_irqsave does not disable IRQs and preemption. But
-without those disabled, the PTP system timestamps are basically
-throw-away - they should capture the most precise "before" and "after"
-time of when the SPI slave device has received byte N of the transfer
-(that is when it's snapshotting its timer internally). It's true that
-the PTP_SYS_OFFSET_EXTENDED ioctl has a n_samples argument which can
-be used in a sort of "pick shortest readout time" fashion, but there
-is no guarantee that there will always be even 1 out of X readouts
-that complete atomically with no preemption.
-- Forcing the disabling of interrupts and preemption creates the
-opportunity for unbounded latency for the other threads in the system.
-- Disabling interrupts to record the before-and-after time for a TX
-event would also be a contradiction in terms for SPI controllers that
-don't do polling, i.e. DMA-based.
-- In RT, there is no hardirq context at all given to a SPI controller driver.
+Thanks,
 
-The above constraints mean that the problem of timestamping byte N of
-a SPI transfer is intractable from within the SPI controller driver
-itself, at least with RT, as far as I can tell.
-Ensuring the atomicness of one system clock readout with the SPI
-transfer is hard enough I think, doing it for both the "pre" and the
-"post" times is even more so. There have been discussions about only
-taking one of the 2 timestamps, and deducing the other as being a
-constant offset far. That is something I may be open to experiment
-with, as long as there's least one place which can be timestamped,
-that has a known offset relative to the hardware event (e.g. the
-hardirq context - then the "pre" time can be backtraced).
-I noticed the record_irq_time() function call in kernel/irq/handle.c
-[3] and I do wonder whether it can be used for driver consumption?
-I don't love the idea of moving the driver back to interrupt mode
-though, but it's the only way I see currently. The other reason why I
-put it in poll mode is that 50% of the time spent for a transfer is
-simply wasted doing other stuff (an IRQ gets raised after each
-transferred byte). This is secondary however.
+Tom
 
-I am looking forward to comments that will hopefully put me on the right path.
 
-Regards,
--Vladimir
+[PATCH] tracing: Make sure variable reference alias has correct var_ref_idx
 
-[1]: https://www.spinics.net/lists/netdev/msg532765.html
-[2]: https://www.spinics.net/lists/netdev/msg593404.html
-[3]: https://lwn.net/Articles/691297/
+Original changelog from Steve Rostedt (except last sentence which
+explains the problem, and the Fixes: tag):
+
+I performed a three way histogram with the following commands:
+
+echo 'irq_lat u64 lat pid_t pid' > synthetic_events
+echo 'wake_lat u64 lat u64 irqlat pid_t pid' >> synthetic_events
+echo 'hist:keys=common_pid:irqts=common_timestamp.usecs if function == 0xffffffff81200580' > events/timer/hrtimer_start/trigger
+echo 'hist:keys=common_pid:lat=common_timestamp.usecs-$irqts:onmatch(timer.hrtimer_start).irq_lat($lat,pid) if common_flags & 1' > events/sched/sched_waking/trigger
+echo 'hist:keys=pid:wakets=common_timestamp.usecs,irqlat=lat' > events/synthetic/irq_lat/trigger
+echo 'hist:keys=next_pid:lat=common_timestamp.usecs-$wakets,irqlat=$irqlat:onmatch(synthetic.irq_lat).wake_lat($lat,$irqlat,next_pid)' > events/sched/sched_switch/trigger
+echo 1 > events/synthetic/wake_lat/enable
+
+Basically I wanted to see:
+
+ hrtimer_start (calling function tick_sched_timer)
+
+Note:
+
+  # grep tick_sched_timer /proc/kallsyms
+ffffffff81200580 t tick_sched_timer
+
+And save the time of that, and then record sched_waking if it is called
+in interrupt context and with the same pid as the hrtimer_start, it
+will record the latency between that and the waking event.
+
+I then look at when the task that is woken is scheduled in, and record
+the latency between the wakeup and the task running.
+
+At the end, the wake_lat synthetic event will show the wakeup to
+scheduled latency, as well as the irq latency in from hritmer_start to
+the wakeup. The problem is that I found this:
+
+          <idle>-0     [007] d...   190.485261: wake_lat: lat=27 irqlat=190485230 pid=698
+          <idle>-0     [005] d...   190.485283: wake_lat: lat=40 irqlat=190485239 pid=10
+          <idle>-0     [002] d...   190.488327: wake_lat: lat=56 irqlat=190488266 pid=335
+          <idle>-0     [005] d...   190.489330: wake_lat: lat=64 irqlat=190489262 pid=10
+          <idle>-0     [003] d...   190.490312: wake_lat: lat=43 irqlat=190490265 pid=77
+          <idle>-0     [005] d...   190.493322: wake_lat: lat=54 irqlat=190493262 pid=10
+          <idle>-0     [005] d...   190.497305: wake_lat: lat=35 irqlat=190497267 pid=10
+          <idle>-0     [005] d...   190.501319: wake_lat: lat=50 irqlat=190501264 pid=10
+
+The irqlat seemed quite large! Investigating this further, if I had
+enabled the irq_lat synthetic event, I noticed this:
+
+          <idle>-0     [002] d.s.   249.429308: irq_lat: lat=164968 pid=335
+          <idle>-0     [002] d...   249.429369: wake_lat: lat=55 irqlat=249429308 pid=335
+
+Notice that the timestamp of the irq_lat "249.429308" is awfully
+similar to the reported irqlat variable. In fact, all instances were
+like this. It appeared that:
+
+  irqlat=$irqlat
+
+Wasn't assigning the old $irqlat to the new irqlat variable, but
+instead was assigning the $irqts to it.
+
+The issue is that assigning the old $irqlat to the new irqlat variable
+creates a variable reference alias, but the alias creation code
+forgets to make sure the alias uses the same var_ref_idx to access the
+reference.
+
+Cc: stable@vger.kernel.org
+Fixes: 7e8b88a30b085 ("tracing: Add hist trigger support for variable reference aliases")
+Reported-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+Signed-off-by: Tom Zanussi <zanussi@kernel.org>
+---
+ kernel/trace/trace_events_hist.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 65e7d071ed28..dbefd59ba944 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -2785,6 +2785,8 @@ static struct hist_field *create_alias(struct hist_trigger_data *hist_data,
+ 		return NULL;
+ 	}
+ 
++	alias->var_ref_idx = var_ref->var_ref_idx;
++
+ 	return alias;
+ }
+ 
+-- 
+2.14.1
+
+
