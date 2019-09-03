@@ -1,182 +1,105 @@
-Return-Path: <SRS0=UHH5=W4=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=pNo3=W6=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.6 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B1CDFC3A5A4
-	for <linux-rt-users@archiver.kernel.org>; Sun,  1 Sep 2019 22:02:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 83ADCC3A5A2
+	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Sep 2019 07:30:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 7CFFA22D6D
-	for <linux-rt-users@archiver.kernel.org>; Sun,  1 Sep 2019 22:02:07 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1567375327;
-	bh=5Jemhp2lj9/ZQGI4LXDaoA+GALLU78MTTZMQS0wCH3M=;
-	h=Subject:From:To:Cc:Date:In-Reply-To:References:List-ID:From;
-	b=mxeN3nQKZ6p4SkMb98zeps7UkkZKfGZyamsG6PChy0uZKUF+uJsRObBFmaeyUHb7D
-	 Zonb8ZduaPY7WFytz37ZIsJneGSr/6EEoxtoBjckOEbIVZa/uI2lGHqTgDxfPd447Y
-	 dqQssxxMSypd6oA6vPDamB7SDXjbVpcEiE01ENVc=
+	by mail.kernel.org (Postfix) with ESMTP id 626AC22CF8
+	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Sep 2019 07:30:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729147AbfIAWCE (ORCPT
+        id S1727505AbfICHav convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 1 Sep 2019 18:02:04 -0400
-Received: from mail.kernel.org ([198.145.29.99]:52342 "EHLO mail.kernel.org"
+        Tue, 3 Sep 2019 03:30:51 -0400
+Received: from mailin.dlr.de ([194.94.201.12]:37765 "EHLO mailin.dlr.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728942AbfIAWCE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 1 Sep 2019 18:02:04 -0400
-Received: from tzanussi-mobl (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 9B1A821897;
-        Sun,  1 Sep 2019 22:02:02 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1567375323;
-        bh=5Jemhp2lj9/ZQGI4LXDaoA+GALLU78MTTZMQS0wCH3M=;
-        h=Subject:From:To:Cc:Date:In-Reply-To:References:From;
-        b=XmwJkLPBgjplyzLEch8BUQyWULZn07GtOYgNWmh1hH+lNMEPiv1+aHCod3XdVT9k5
-         gVrR0Rr9BwZR+VOTzOGrl/Jx/XRzv+ioAQdTGs0BGCbyoWZaHKeqiP9V4viOq7BAhX
-         HZxZZz5Wksm6qHOX+gyVdt3Fg/28Au+cIKoLEAOY=
-Message-ID: <1567375321.5282.12.camel@kernel.org>
-Subject: Re: [PATCH] tracing: Fix histogram referencing a variable
-From:   Tom Zanussi <zanussi@kernel.org>
-To:     Steven Rostedt <rostedt@goodmis.org>,
-        LKML <linux-kernel@vger.kernel.org>
-Cc:     Linux Trace Devel <linux-trace-devel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Date:   Sun, 01 Sep 2019 17:02:01 -0500
-In-Reply-To: <20190826224434.385bc6b5@gandalf.local.home>
-References: <20190826224434.385bc6b5@gandalf.local.home>
-Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.26.1-1 
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+        id S1725888AbfICHav (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 3 Sep 2019 03:30:51 -0400
+X-Greylist: delayed 431 seconds by postgrey-1.27 at vger.kernel.org; Tue, 03 Sep 2019 03:30:48 EDT
+IronPort-SDR: bBXGLNwqc9sw20/rClLJKOe6Z5Dof8W87Y1Y61au/zcQzJpmm8zGmNa2QhFmyT5pUTVbJZlQza
+ Dq2+mTJZcbZw==
+IronPort-PHdr: =?us-ascii?q?9a23=3AR5hDLxUgxwx8IQukVews4u66DCzV8LGtZVwlr6?=
+ =?us-ascii?q?E/grcLSJyIuqrYbBCCt8tkgFKBZ4jH8fUM07OQ7/m6HzVfuN3Y6S5KWacPfi?=
+ =?us-ascii?q?dNsd8RkQ0kDZzNImzAB9muURYHGt9fXkRu5XCxPBsdMs//Y1rPvi/6tmZKSV?=
+ =?us-ascii?q?3wOgVvO+v6BJPZgdip2OCu4Z3TZBhDiCagbb9oIxi6sBvdutMLjYZgN6o9xQ?=
+ =?us-ascii?q?bFrmZJdu9L2W5mOFWfkgrm6Myt5pBj6SNQu/wg985ET6r3erkzQKJbAjo7LW?=
+ =?us-ascii?q?07/dXnuhbfQwSB4HscSXgWnQFTAwfZ9hH6X4z+vTX8u+FgxSSVJ8z2TbQzWT?=
+ =?us-ascii?q?S/86dmTQLjhSkbOzIl9mzcl8p9h79Zrh28vRxy247abp+IOvpicK3TftIaSn?=
+ =?us-ascii?q?ZOUMleTCFBHpq8Yo8TA+YdIepUsY/wrEYOoxukAgmsAfvixzhPiHDsx606z+?=
+ =?us-ascii?q?UhEQfc0AMgHtIOqmjUrNXuOagPVeC11rPEwijdYP5P3zr29YvGcgg5rP2RQb?=
+ =?us-ascii?q?58a9fdxEogGg/fk1mdp4/oMymI2ukCq2SX8vZsWfiyh2MkpAx9uCWjy8kvh4?=
+ =?us-ascii?q?XTmI4Yyl/J+T1kzIs0IdC0UlB3bN6rHZdKtyyWLY97Tt8kTmp1oig10KcGto?=
+ =?us-ascii?q?S+fCUSzZQnwAPQZOKffoiT5xLjSP6RITBlhHJ5YL6/hwi98UynyuDkWMe61l?=
+ =?us-ascii?q?hEoCVFnNfMsX4D1Bvd5NKbRvZy8Umu2CiC2xrS6uFCPUA0j7DUJ4Q8zb40jJ?=
+ =?us-ascii?q?ofq1nMETHulEX3iq+ZaFkk9/C15+j7eLnqu5yROoBuhg3jPKkjmdazDfk3Pw?=
+ =?us-ascii?q?QWWmiU4+W81Lnt/U3jR7VKi+U7nK7Dv5DAOcQbp6i5DxVV3YYi8Ra/Ezem3c?=
+ =?us-ascii?q?8FknkDNlJJYg+IgJbxN1HUPP/4Feu/g0irkDpzw/DGP7vhAojCL3TairfhYa?=
+ =?us-ascii?q?9x61NHyAUt19Bf/IlZCq8OIP3tQE/9rt/YAQEjMwyy3ennDM9x1oQEWWKAGq?=
+ =?us-ascii?q?WZKr/dsUeU5uIzJOmBfJQauDfyK/c7/fHuln84lEQZfamo25sXdWy4Hu5hI0?=
+ =?us-ascii?q?WfYHrtjc0NHnoUsVl2cOu/3FmDVyNDImyuGr8n6ysgIJypAJ2FRY23hrGFmi?=
+ =?us-ascii?q?ChEcsFSHpBDwXYNH7ya4SCHcgNcj6SCsNliHoIWO7yGMcayRiyuVqimPJcJe?=
+ =?us-ascii?q?3O93hAuA=3D=3D?=
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-Anti-Spam-Result: =?us-ascii?q?A2HjDQCRFG5d/w6KuAplHQEBBQEHBQG?=
+ =?us-ascii?q?BZwKBZwWBA4FNlzGZFgkBAQEBAQEBAQE3AQGEPwKDEjgTAgMIAQEFAQEBAQE?=
+ =?us-ascii?q?GBAEBAoYjQgEQAYFmIoJyAT02CRIBKhRCJgEEDg0TsRaKRoE0AY4OgVeHUEu?=
+ =?us-ascii?q?CcIImBKssbQeBO2qUc41aiwyoTkyBLnGDPIJNF4EEAQeNFoYfiRmBIwEB?=
+X-IronPort-AV: E=Sophos;i="5.64,462,1559512800"; 
+   d="scan'208";a="21516107"
+From:   <Martin.Wirth@dlr.de>
+To:     <linux-rt-users@vger.kernel.org>
+CC:     <bigeasy@linutronix.de>
+Subject: Long latencies during disk-io
+Thread-Topic: Long latencies during disk-io
+Thread-Index: AdViKHO+FfcazwTSRQyE6lOjoeuKGA==
+Date:   Tue, 3 Sep 2019 07:23:35 +0000
+Message-ID: <1A2AF5F768264E479963C4D8C015EB696C50C6BB@DLDEFFMIMP02EXC.intra.dlr.de>
+Accept-Language: de-DE, en-US
+Content-Language: de-DE
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-tm-snts-smtp: 82062BB2F1D5D1DD702506EA1C71D590E9467C1BBFD449F3C01C392F7210BD332000:8
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+MIME-Version: 1.0
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Steve,
+Hi,
 
-On Mon, 2019-08-26 at 22:44 -0400, Steven Rostedt wrote:
-> From: Steven Rostedt (VMware) <rostedt@goodmis.org>
-> 
-> I performed a three way histogram with the following commands:
-> 
-> echo 'irq_lat u64 lat pid_t pid' > synthetic_events
-> echo 'wake_lat u64 lat u64 irqlat pid_t pid' >> synthetic_events
-> echo 'hist:keys=common_pid:irqts=common_timestamp.usecs if function == 0xffffffff81200580' > events/timer/hrtimer_start/trigger
-> echo 'hist:keys=common_pid:lat=common_timestamp.usecs-$irqts:onmatch(timer.hrtimer_start).irq_lat($lat,pid) if common_flags & 1' > events/sched/sched_waking/trigger
-> echo 'hist:keys=pid:wakets=common_timestamp.usecs,irqlat=lat' > events/synthetic/irq_lat/trigger
-> echo 'hist:keys=next_pid:lat=common_timestamp.usecs-$wakets,irqlat=$irqlat:onmatch(synthetic.irq_lat).wake_lat($lat,$irqlat,next_pid)' > events/sched/sched_switch/trigger 
-> echo 1 > events/synthetic/wake_lat/enable 
-> 
+I'm operating a data acquisition system with several digitizer cards and an Adlink  cPCI-6530
+ (i7-4700EQ  / Intel QM87 chipset) cpu card. The digitizer cards are hardware triggered with
+an external low jitter clock at 200 Hz. I monitor the wakeup latencies and with older 
+rt-kernels (4.14) I get maximum latencies of about 24 micro seconds most of the time
+with extremely rare spikes of 50 micro seconds under medium other system load.
 
-Thanks for digging into this and providing a patch.  Looking into it
-myself, I think the problem is actually in the alias-creation code
-(which gets invoked for where you do irqlat=$irqlat).  In that code,
-the alias's var_ref_idx is always 0, so you get whatever's there rather
-than the correct value if it should be something other than 0.
+I now switched to 4.19 and 5.2 rt kernels and suddenly got latencies of 500 micro seconds
+and one time I even noticed 1.5 ms, if there is concurrent SATA disk traffic going on (not
+from the same DAQ-process, but unrelated file copies for example). I played a bit with different
+configurations and found that the long latencies only occur if the ahci interrupt thread is on
+the same processor as the interrupt thread of the digitizer card. If I separate them via the
+ /proc/irq interface the latencies are gone. The real-time priority of the digitizer IRQ handler
+ is set to 53 and that of the corresponding user space thread to 51. The ahci interrupt
+ thread is at the standard value of 50.     
 
-The patch below fixes that - I used your original commit message but
-changed the last sentence and the offending commit that introduced the
-problem, and of course the one-line code change is different too.  Let
-me know if that works for you.
+Although I now have the solution to put the ahci-handler on a different processor, I would
+like to know if it is expected behavior that the ahci interrupt handler blocks other interrupt 
+threads of higher priority for more than one millisecond?
 
-Thanks,
+Another observation which I cannot understand though, is that a concurrent 
+cyclictest -m -Sp98 -i200 -h400 -n
+run does not show the latencies...
 
-Tom
+Does anyone have an explanation for this? As said above this is absent on 4.14-rt and
+I observed it with 4.19.59-rt24, 5.2.9-rt3 and 5.2.10-rt5.
 
+Cheers,
 
-[PATCH] tracing: Make sure variable reference alias has correct var_ref_idx
-
-Original changelog from Steve Rostedt (except last sentence which
-explains the problem, and the Fixes: tag):
-
-I performed a three way histogram with the following commands:
-
-echo 'irq_lat u64 lat pid_t pid' > synthetic_events
-echo 'wake_lat u64 lat u64 irqlat pid_t pid' >> synthetic_events
-echo 'hist:keys=common_pid:irqts=common_timestamp.usecs if function == 0xffffffff81200580' > events/timer/hrtimer_start/trigger
-echo 'hist:keys=common_pid:lat=common_timestamp.usecs-$irqts:onmatch(timer.hrtimer_start).irq_lat($lat,pid) if common_flags & 1' > events/sched/sched_waking/trigger
-echo 'hist:keys=pid:wakets=common_timestamp.usecs,irqlat=lat' > events/synthetic/irq_lat/trigger
-echo 'hist:keys=next_pid:lat=common_timestamp.usecs-$wakets,irqlat=$irqlat:onmatch(synthetic.irq_lat).wake_lat($lat,$irqlat,next_pid)' > events/sched/sched_switch/trigger
-echo 1 > events/synthetic/wake_lat/enable
-
-Basically I wanted to see:
-
- hrtimer_start (calling function tick_sched_timer)
-
-Note:
-
-  # grep tick_sched_timer /proc/kallsyms
-ffffffff81200580 t tick_sched_timer
-
-And save the time of that, and then record sched_waking if it is called
-in interrupt context and with the same pid as the hrtimer_start, it
-will record the latency between that and the waking event.
-
-I then look at when the task that is woken is scheduled in, and record
-the latency between the wakeup and the task running.
-
-At the end, the wake_lat synthetic event will show the wakeup to
-scheduled latency, as well as the irq latency in from hritmer_start to
-the wakeup. The problem is that I found this:
-
-          <idle>-0     [007] d...   190.485261: wake_lat: lat=27 irqlat=190485230 pid=698
-          <idle>-0     [005] d...   190.485283: wake_lat: lat=40 irqlat=190485239 pid=10
-          <idle>-0     [002] d...   190.488327: wake_lat: lat=56 irqlat=190488266 pid=335
-          <idle>-0     [005] d...   190.489330: wake_lat: lat=64 irqlat=190489262 pid=10
-          <idle>-0     [003] d...   190.490312: wake_lat: lat=43 irqlat=190490265 pid=77
-          <idle>-0     [005] d...   190.493322: wake_lat: lat=54 irqlat=190493262 pid=10
-          <idle>-0     [005] d...   190.497305: wake_lat: lat=35 irqlat=190497267 pid=10
-          <idle>-0     [005] d...   190.501319: wake_lat: lat=50 irqlat=190501264 pid=10
-
-The irqlat seemed quite large! Investigating this further, if I had
-enabled the irq_lat synthetic event, I noticed this:
-
-          <idle>-0     [002] d.s.   249.429308: irq_lat: lat=164968 pid=335
-          <idle>-0     [002] d...   249.429369: wake_lat: lat=55 irqlat=249429308 pid=335
-
-Notice that the timestamp of the irq_lat "249.429308" is awfully
-similar to the reported irqlat variable. In fact, all instances were
-like this. It appeared that:
-
-  irqlat=$irqlat
-
-Wasn't assigning the old $irqlat to the new irqlat variable, but
-instead was assigning the $irqts to it.
-
-The issue is that assigning the old $irqlat to the new irqlat variable
-creates a variable reference alias, but the alias creation code
-forgets to make sure the alias uses the same var_ref_idx to access the
-reference.
-
-Cc: stable@vger.kernel.org
-Fixes: 7e8b88a30b085 ("tracing: Add hist trigger support for variable reference aliases")
-Reported-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-Signed-off-by: Tom Zanussi <zanussi@kernel.org>
----
- kernel/trace/trace_events_hist.c | 2 ++
- 1 file changed, 2 insertions(+)
-
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 65e7d071ed28..dbefd59ba944 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -2785,6 +2785,8 @@ static struct hist_field *create_alias(struct hist_trigger_data *hist_data,
- 		return NULL;
- 	}
- 
-+	alias->var_ref_idx = var_ref->var_ref_idx;
-+
- 	return alias;
- }
- 
--- 
-2.14.1
-
+Martin
 
