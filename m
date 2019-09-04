@@ -2,123 +2,108 @@ Return-Path: <SRS0=qyXN=W7=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.4 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.3 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2E431C3A5A7
-	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Sep 2019 13:42:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A542EC3A5A8
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Sep 2019 18:17:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 083BF2339D
-	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Sep 2019 13:42:10 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8103E206B8
+	for <linux-rt-users@archiver.kernel.org>; Wed,  4 Sep 2019 18:17:25 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=joelfernandes.org header.i=@joelfernandes.org header.b="WBZbEbSl"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="L6PKN1h7"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730287AbfIDNmG (ORCPT
+        id S2390334AbfIDSRZ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 4 Sep 2019 09:42:06 -0400
-Received: from mail-pg1-f194.google.com ([209.85.215.194]:44496 "EHLO
-        mail-pg1-f194.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729798AbfIDNmF (ORCPT
+        Wed, 4 Sep 2019 14:17:25 -0400
+Received: from mail-io1-f67.google.com ([209.85.166.67]:42872 "EHLO
+        mail-io1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S2390136AbfIDSRX (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 4 Sep 2019 09:42:05 -0400
-Received: by mail-pg1-f194.google.com with SMTP id i18so11270782pgl.11
-        for <linux-rt-users@vger.kernel.org>; Wed, 04 Sep 2019 06:42:05 -0700 (PDT)
+        Wed, 4 Sep 2019 14:17:23 -0400
+Received: by mail-io1-f67.google.com with SMTP id n197so44404989iod.9;
+        Wed, 04 Sep 2019 11:17:23 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=joelfernandes.org; s=google;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to:user-agent;
-        bh=oklghVAYMBOMwnSSWwCYcajaz+bMy8hr9iKM1Yg7aak=;
-        b=WBZbEbSlW3hA4LPKkYyJzd58HTqckuyI9ruChkezZC6jGsyEyWalm/XID+in4XwAcX
-         ushgsDXIys/3Uyob2lacjzvMhD6NTYshvx5ow8YlhokuvapX6Z8eLwn5GE56kIpHJBwM
-         zlAbyidngWUPtIg1wV2lD3MndKSRQhmq4kLro=
+        d=gmail.com; s=20161025;
+        h=subject:to:cc:references:from:message-id:date:user-agent
+         :mime-version:in-reply-to:content-language:content-transfer-encoding;
+        bh=jnf8E1B10U/rZLorYmCb+yTjJ2/FF27pXtV4pEIHWJ0=;
+        b=L6PKN1h75ntIi1hddTwn5fOXeCxCPppqjd/YrkdL5yYs7EU3vZ5oDR4M/GQBy57/Z8
+         xWRRcnQKszDv1BqJs6/5TuEK2B1akvMvgIgk4YgCAA+0xl6Qx7mrHMtG4BoESAE1T/TP
+         xHD6WT8kfPQDYULdNTUgikCKoz9lIuMFYGZjJOyhnUJagv52rk+qjBvB4VW/Ji+qSvmn
+         5uaNnbHbcRdukqYekxvI5olN9RVutymKyiOnFr4+4940zXpkHjrWCJIKg5uRyqK2DDz5
+         p935Nk511rkIgkcSVB+h6j9EMIW+sSej+2hfpcPEvESvHLSdESvaKuif11AkNtXpNEQU
+         KejA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to:user-agent;
-        bh=oklghVAYMBOMwnSSWwCYcajaz+bMy8hr9iKM1Yg7aak=;
-        b=SEMx9gqAhDpwGmFZCEU6hGMJ+lWOlGCudCCkVVHt4nbAy44IPzr4IfHv4ML+r77ZTY
-         i0edIUyjjcPlbtN/Jul/Or/jyKkSECeE53WZj3KwjjOIH1zO2h1nh3hRylXNC+CNhPPy
-         3gT7bnOo3WJH4PnPfYNtbk/2nLkyqBg5NQtqXcMHsxW6nTCiTylYgft9DEbaa+HO3xbb
-         nHO1JDgFv63nY3w4X2pxsFd/IC2rfu9+gtukwHmZUSJ9u7juAMqXTWSd2ccZHqY3rCl+
-         OzJa6pFppTLi/M/mraTemNa7ghqMEfBZICbosGuN4jOmMEIn9z8X5t1rBRtt/dVxmAmc
-         pTgg==
-X-Gm-Message-State: APjAAAUqn6UfUGskil95PIP86ssJdQIWFD3WjIf0HX6T0AzQpORQGZbH
-        /aRS/WczcJS5nG2M8D3BL1lZng==
-X-Google-Smtp-Source: APXvYqxtMLqjgzNXqwP58ru84p45VRpR0RWa4wbrgf8WB/8ClopE5Mr9NERja4e4k0aI89Ih5g/0wQ==
-X-Received: by 2002:a62:4d41:: with SMTP id a62mr46382478pfb.155.1567604524993;
-        Wed, 04 Sep 2019 06:42:04 -0700 (PDT)
-Received: from localhost ([2620:15c:6:12:9c46:e0da:efbf:69cc])
-        by smtp.gmail.com with ESMTPSA id c2sm11187176pfd.66.2019.09.04.06.42.04
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 04 Sep 2019 06:42:04 -0700 (PDT)
-Date:   Wed, 4 Sep 2019 09:42:03 -0400
-From:   Joel Fernandes <joel@joelfernandes.org>
-To:     Peter Zijlstra <peterz@infradead.org>
-Cc:     Viktor Rosendahl <viktor.rosendahl@gmail.com>, paulmck@kernel.org,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org
+        h=x-gm-message-state:subject:to:cc:references:from:message-id:date
+         :user-agent:mime-version:in-reply-to:content-language
+         :content-transfer-encoding;
+        bh=jnf8E1B10U/rZLorYmCb+yTjJ2/FF27pXtV4pEIHWJ0=;
+        b=WnL8Ii8uLV7+ubRzpuZqR2PtC2VghNKo+PCEjrbipAw4XhK9UIPMzSnqphoVa+BIMo
+         9zYPSa0uhtuf1ev18NYiUojDkoht/Ueqj1jZgMF20EXDngMp/ghBfAQvH8Es5Epv6jDM
+         30p0I7TxGyEQkPAB8A0UPXJ9X4mRSqQJbR38JfaAN0y0a8r1zaF338KpgB2EeGxyg/Ln
+         XbNJvHLNDxg1AdAVFI1W/4Mj3oB0K9QNvRINhW40VPDxO2SxooHnLDW4gduU8pIivBDD
+         f8v9bZ+mvbGxLmmDwjwv9/uC4lpyQSkMGdD58uCABBefL2doDf8qgaT9P/4DijeQb0YD
+         qbGA==
+X-Gm-Message-State: APjAAAUEE4dKH8lgvH6aRmt6CQ7ZKqISZHQz+vcKAie3/92Pohw2mVdp
+        gaD9xU8dbgdUBNxIkIxTHVYE68yuEQ==
+X-Google-Smtp-Source: APXvYqyZAEsHdr+O6sWnZYGZk2KlpCsOIz9qthXXldoAac9Gbaef+GHeHMxDxTgj7gaJf5/xLeJDNw==
+X-Received: by 2002:a02:a516:: with SMTP id e22mr30362312jam.77.1567621042372;
+        Wed, 04 Sep 2019 11:17:22 -0700 (PDT)
+Received: from [192.168.1.99] ([92.117.176.185])
+        by smtp.googlemail.com with ESMTPSA id s201sm28603484ios.83.2019.09.04.11.17.20
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Wed, 04 Sep 2019 11:17:21 -0700 (PDT)
 Subject: Re: [PATCH v5 1/4] ftrace: Implement fs notification for
  tracing_max_latency
-Message-ID: <20190904134203.GA240514@google.com>
+To:     Peter Zijlstra <peterz@infradead.org>,
+        Joel Fernandes <joel@joelfernandes.org>
+Cc:     paulmck@kernel.org, Steven Rostedt <rostedt@goodmis.org>,
+        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
 References: <20190903132602.3440-1-viktor.rosendahl@gmail.com>
  <20190903132602.3440-2-viktor.rosendahl@gmail.com>
  <20190904040039.GB150430@google.com>
  <20190904081919.GA2349@hirez.programming.kicks-ass.net>
+From:   Viktor Rosendahl <viktor.rosendahl@gmail.com>
+Message-ID: <5bd4f538-f205-1134-d491-5a8727855b51@gmail.com>
+Date:   Wed, 4 Sep 2019 20:17:18 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101
+ Thunderbird/60.8.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
 In-Reply-To: <20190904081919.GA2349@hirez.programming.kicks-ass.net>
-User-Agent: Mutt/1.10.1 (2018-07-13)
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, Sep 04, 2019 at 10:19:19AM +0200, Peter Zijlstra wrote:
-> On Wed, Sep 04, 2019 at 12:00:39AM -0400, Joel Fernandes wrote:
-> > [ Resending since I messed up my last email's headers! ]
-> > 
-> > On Tue, Sep 03, 2019 at 03:25:59PM +0200, Viktor Rosendahl wrote:
-> > > This patch implements the feature that the tracing_max_latency file,
-> > > e.g. /sys/kernel/debug/tracing/tracing_max_latency will receive
-> > > notifications through the fsnotify framework when a new latency is
-> > > available.
-> > > 
-> > > One particularly interesting use of this facility is when enabling
-> > > threshold tracing, through /sys/kernel/debug/tracing/tracing_thresh,
-> > > together with the preempt/irqsoff tracers. This makes it possible to
-> > > implement a user space program that can, with equal probability,
-> > > obtain traces of latencies that occur immediately after each other in
-> > > spite of the fact that the preempt/irqsoff tracers operate in overwrite
-> > > mode.
-> > 
-> > Adding Paul since RCU faces similar situations, i.e. raising softirq risks
-> > scheduler deadlock in rcu_read_unlock_special() -- but RCU's solution is to
-> > avoid raising the softirq and instead use irq_work.
+On 9/4/19 10:19 AM, Peter Zijlstra wrote:
+
+>>
+>> Adding Paul since RCU faces similar situations, i.e. raising softirq risks
+>> scheduler deadlock in rcu_read_unlock_special() -- but RCU's solution is to
+>> avoid raising the softirq and instead use irq_work.
 > 
 > Which is right.
-
-Cool.
-
-> > I was wondering, if we can rename __raise_softirq_irqoff() to
-> > raise_softirq_irqoff_no_wake() and call that from places where there is risk
-> > of scheduler related deadlocks. Then I think this can be used from Viktor's
-> > code.  Let us discuss - what would happen if the softirq is raised, but
-> > ksoftirqd is not awakened for this latency notification path? Is this really
-> > an issue considering the softirq will execute during the next interrupt exit?
 > 
-> You'd get unbounded latency for processing the softirq and warnings on
-> going idle with softirqs pending.
 
-Thanks for sharing that.
+Thanks Joel and Peter for suggesting the irq_work facility.
 
-> I really don't see why we should/want to be using softirq here.
+I was ignorant of the existence of this facility.
 
-Sure. makes sense.
+It looks like it is the Holy Grail of deferred work, for this particular 
+type of problem :)
 
-thanks,
+It looks like it will be possible to both avoid deadlock and also avoid 
+the ugly additions to the sched and idle code. In addition, the rest of 
+the code will become a lot simpler.
 
- - Joel
+best regards,
 
+Viktor
