@@ -2,183 +2,177 @@ Return-Path: <SRS0=NMSW=XB=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+X-Spam-Status: No, score=-9.6 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 294F5C43331
-	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Sep 2019 13:23:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C53BCC43331
+	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Sep 2019 19:49:10 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id E9A4D206BB
-	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Sep 2019 13:23:35 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 981972070C
+	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Sep 2019 19:49:10 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="p58J6olF"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2390169AbfIFNXf (ORCPT
+        id S1726635AbfIFTtK (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 6 Sep 2019 09:23:35 -0400
-Received: from mailin.dlr.de ([194.94.201.12]:29639 "EHLO mailin.dlr.de"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726949AbfIFNXe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 6 Sep 2019 09:23:34 -0400
-IronPort-SDR: 6IMzYXcTHH4C4cxvR9KI5ib7nvAS4fIJlHHHi+010hDGlRbzEjeZ2P9wz1Ie8HjvtA58Ig1dc0
- F0CFKq9wz9Lw==
-IronPort-PHdr: =?us-ascii?q?9a23=3AY0jvTxxINeYc42XXCy+O+j09IxM/srCxBDY+r6?=
- =?us-ascii?q?Qd2+0TIJqq85mqBkHD//Il1AaPAdyBrasb2qGK4ujJYi8p2d65qncMcZhBBV?=
- =?us-ascii?q?cuqP49uEgeOvODElDxN/XwbiY3T4xoXV5h+GynYwAOQJ6tL1LdrWev4jEMBx?=
- =?us-ascii?q?7xKRR6JvjvGo7Vks+7y/2+94fcbglVmjaxe65+IReyoAneucQbhZZpJ7osxB?=
- =?us-ascii?q?fOvnZGYfldy3lyJVKUkRb858Ow84Bm/i9Npf8v9NNOXLvjcaggQrNWEDopM2?=
- =?us-ascii?q?Yu5M32rhbDVheA5mEdUmoNjBVFBRXO4QzgUZfwtiv6sfd92DWfMMbrQ704RS?=
- =?us-ascii?q?iu4qF2QxLulSwJNSM28HvPh8JwkqxVvQ6hqRJ8zY7aYo6VNeZxcKzSct4BWW?=
- =?us-ascii?q?pORcJcWzBdDo+gbYYCCfcKM+ZCr4n6olsDtRyzCw62C+P11j9Ih3n20bc63O?=
- =?us-ascii?q?QgCwHGwAwgEskTv3TQttX5LrodXv6swaTO0D7NYfRW2TLn54jJdBAsue2MXb?=
- =?us-ascii?q?JqccXP00YgChnJgUmKpoz5OT6ey+cDs3CD4uZ9Se6jkXMrpgJ+rzS128shhI?=
- =?us-ascii?q?rEipgIxl3L7Sl13Zo5KcelREN4btOoCoZcui+ZOodsXM8vQ25ltD4nxrAHvZ?=
- =?us-ascii?q?O3ZjYGxZQoyhLFa/GLaYyF7g7lWe2MOzl3nmhld6i6hxuq9EigzfDzWdes3V?=
- =?us-ascii?q?ZRqypFjsHMtncQ1xzP8sSHSuVy/kOm2TuX2Q7d7O9KL080m6TbLJAvwbk+mI?=
- =?us-ascii?q?APvUnMESH5mVv7gLWXdkUi5uio8f7obq/7qZ+YLY94kBzxPbo2lsy+B+Q3LB?=
- =?us-ascii?q?QOUnCG9eigzrHv4E70TbpQgvErnKTUs4rWKdkUq6KhBg9ayIcj6xKxDze819?=
- =?us-ascii?q?QYmGEKIlVfdxKdk4jpOlfOLOr4Ave+mVSsjDdryuvbMb3lGJXBNGXMn6n5cb?=
- =?us-ascii?q?Zn90Fc0BYzzcxY559MEb4BIf3zVVHru9zDDh40KAi0w+fhCNVgyoMeQ2WPAq?=
- =?us-ascii?q?mYMKLdq1OH+/wgKfGWZIAJoDb9N+Ql5/n2gH89mF8de7Sp3JQOZHCiAvRqOl?=
- =?us-ascii?q?iZYWHyjdcbCmcHpRQ+TOP0h12YSzJTZGi9X7g65j4lDIKqF4DDRpqigO/J4C?=
- =?us-ascii?q?DuSpdXaW1PEUGkFXbuapmeXPENeGSeL5kyvCYDUO31boY7yRCo8jD70aZnBu?=
- =?us-ascii?q?bQ4GsUuMSwh5BO++TPmERqpnRPBMOH3jTVQg=3D=3D?=
-X-IronPort-Anti-Spam-Filtered: true
-X-IronPort-Anti-Spam-Result: =?us-ascii?q?A2HaCgBbXHJd/w6KuAplHQEBBQEHBQG?=
- =?us-ascii?q?BZwKBbIEDgUMKhBeRG4F/lzCBZwkBAQEBAQEBAQE3AQGEPwIXgkQ4EwIDCQE?=
- =?us-ascii?q?BBQEBAQEBBgQBAQKGI0IBEAGBZiKCcAEBAQIBIxFFBQsCASICBh0DAgICMBQ?=
- =?us-ascii?q?BEAEBBA4FCIJPgkeoeYEyikuBDCgBjg6BEUaDCoQsGhWCdDKCJgSMVIJjhUS?=
- =?us-ascii?q?XPgeBPJVzgjSLMCyKa6hygXpxgzuCTheBBAECBY0Wc4U/ihGBIwEB?=
-X-IronPort-AV: E=Sophos;i="5.64,473,1559512800"; 
-   d="scan'208";a="21696584"
-From:   <Martin.Wirth@dlr.de>
-To:     <bigeasy@linutronix.de>
-CC:     <linux-rt-users@vger.kernel.org>
-Subject: AW: Long latencies during disk-io
-Thread-Topic: Long latencies during disk-io
-Thread-Index: AdViKHO+FfcazwTSRQyE6lOjoeuKGABxyK6AADCJtLA=
-Date:   Fri, 6 Sep 2019 13:23:24 +0000
-Message-ID: <1A2AF5F768264E479963C4D8C015EB696C51159F@DLDEFFMIMP02EXC.intra.dlr.de>
-References: <1A2AF5F768264E479963C4D8C015EB696C50C6BB@DLDEFFMIMP02EXC.intra.dlr.de>
- <20190905154115.mnid6rue65x6vvt6@linutronix.de>
-In-Reply-To: <20190905154115.mnid6rue65x6vvt6@linutronix.de>
-Accept-Language: de-DE, en-US
-Content-Language: de-DE
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-tm-snts-smtp: B4895DD8B31BAC51F5CD853E6386B236DDB542E0BE9CF3BA5B72E1B1D6C2D9BD2000:8
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+        Fri, 6 Sep 2019 15:49:10 -0400
+Received: from mail-qk1-f196.google.com ([209.85.222.196]:41389 "EHLO
+        mail-qk1-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725945AbfIFTtJ (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 6 Sep 2019 15:49:09 -0400
+Received: by mail-qk1-f196.google.com with SMTP id o11so6844556qkg.8
+        for <linux-rt-users@vger.kernel.org>; Fri, 06 Sep 2019 12:49:09 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=q0sH2oDB3nn665gMJenilI1hH1+pIvScxBsyuGnAOXo=;
+        b=p58J6olFRgNWGxynRIBZiiJWFPVHv4G7nohazFP0nYxmskregNl1Tr927JF6jEBXrT
+         P2faoGnguPehkTEtrdKhD0sIBN3IYvbWr3yF/xE29uasUSsC9ajRkAP4Ux6IE5KHb7li
+         OK0oSaHAHtKaRKI7MmWuOMLEJmo9uPf7COEJhwQlUodRsQ9g1K8WBzNTApxHomi7kAmZ
+         Hmd+t95XPvqK0vm4EBi4Q8dR0bX/cAmDGu8k0qdVZOdQD0Gw6R06nbFb18Djx2AjMoPX
+         CqnmnLOWBMkWbonjQTn9gOf+KvmJWZPjlJou9HLFwhNu3hkVSePT2Hrm9QHGfi8+FR6r
+         ZjBA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
+         :mime-version:content-transfer-encoding;
+        bh=q0sH2oDB3nn665gMJenilI1hH1+pIvScxBsyuGnAOXo=;
+        b=DXAvmrERFV6Z1hzH5NTOKJ/1/snCEnuTlXRTgiyqDcZ5ef4i9lgUNov0o0N+cI386o
+         obU8QejkiHzHxXXD0V62odQ0MDV+C5QfYBuvmyu6y6YwsX5ef4MBb9qzGAo//2Jxgfjo
+         B5b21V7LEm6+7B+rcdbNLuc/XKR3b3fC3O0kJ0wMVgSQM6hJKa/vsrPd/RzaqkC3o7AQ
+         imMbVR/xCULFqy9qorcd6mC3k9geH4zcQKehXH4J+VMnuhPSvTXhOohK3XKF8znpF4Re
+         zxc4HxTXkFgJdo3MsUswBwboCch9B4reXpI+4J7NuUmakXXcJRdi3rzL14BJGqucd0/m
+         vj/g==
+X-Gm-Message-State: APjAAAWs+62rNVBC2scvg7LspHoEcEFxlAZR55aULpBsKcXAAB7oxMVS
+        M0wo05TxRkEXBhclRp32M4AY/BzZ
+X-Google-Smtp-Source: APXvYqzJSQN9yQteUVqNxKT/qGfpkb+ElYZ8qIU7iwD79FiQKmKM9JS7a+U462nCh7zH1UPdCgGvNQ==
+X-Received: by 2002:a05:620a:1486:: with SMTP id w6mr10969998qkj.50.1567799348526;
+        Fri, 06 Sep 2019 12:49:08 -0700 (PDT)
+Received: from planxty.redhat.com (rdwyon0600w-lp130-03-64-231-46-127.dsl.bell.ca. [64.231.46.127])
+        by smtp.gmail.com with ESMTPSA id c64sm2985135qkb.21.2019.09.06.12.49.07
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 06 Sep 2019 12:49:08 -0700 (PDT)
+From:   John Kacur <jkacur@redhat.com>
+To:     rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Subject: [PATCH 1/2] rt-tests: Set affinity before applying numa
+Date:   Fri,  6 Sep 2019 21:48:58 +0200
+Message-Id: <20190906194859.24316-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.20.1
 MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-PiBWb246IFNlYmFzdGlhbiBBbmRyemVqIFNpZXdpb3IgW21haWx0bzpiaWdlYXN5QGxpbnV0cm9u
-aXguZGVdDQoNCg0KPiBTbyBiYXNlZCBvbiB0aGF0LCB0aGUgImRpZ2l0aXplciBJUlEgaGFuZGxl
-ciIgc2hvdWxkIHJ1biBmaXJzdCwgZm9sbG93ZWQNCj4gYnkgdGhlIHVzZXIgc3BhY2UgdGhyZWFk
-LCBmb2xsb3dlZCBieSB0aGUgQUhDSSBpbnRlcnJ1cHQuDQoNClllcywgdGhhdCdzIGhvdyBJIHVu
-ZGVyc3Rvb2QgaXQuIEJ1dCB0aGF0IGlzIGFjdHVhbGx5IG5vdCBoYXBwZW5pbmcuIFRoZSBhaGNp
-IGludGVycnVwdCBoYW5kbGVyIA0Kc2VlbXMgbm90IHRvIGJlIGludGVycnVwdGVkIGJ5IHRoZSBo
-aWdoZXIgcHJpbyBEQVEgdGFza3MgKGJvdGggaW50ZXJydXB0IGFuZCB1c2VyIHNwYWNlIHRocmVh
-ZCkuDQpJIGFkZGVkIGEgdGltZXN0YW1wIHJlYWRvdXQgdG8gdGhlIGRpZ2l0aXplciBjYXJkcyBp
-cnEgcm91dGluZSBhbmQgaXQgdHVybmVkIG91dCB0aGF0IHRoZSANCmludGVycnVwdCB0aHJlYWQg
-aXMgYWxyZWFkeSBkZWxheWVkLCBub3Qgb25seSB0aGUgdXNlciBsYW5kIHRocmVhZC4uLg0KDQpK
-dXN0IHRvIGJlIHN1cmUsIHRoaXMgaXMgYSBwcyBvZiB0aGUgcnQgdGFza3MgKHdpdGggc29tZSB1
-bnJlbGF0ZWQgaXJxL3RocmVhZHMgYXQgcnRwcmlvIDUwIHJlbW92ZWQpDQoNCnRpZCwgIHBpZCwg
-IGNwdSwgY2xzLCBydHByaSwgcHJpLCBuaWNlLCAgd2NoYW4sIHRhc2sNCiAgIDEwICAgIDEwICAg
-MCAgRkYgICAgICAxICA0MSAgIC0gLSAgICAgIHJjdWMvMA0KICAgMTEgICAgMTEgICAxICBGRiAg
-ICAgIDEgIDQxICAgLSAtICAgICAgcmN1X3ByZWVtcHQNCiAgIDEyICAgIDEyICAgMCAgRkYgICAg
-ICAxICA0MSAgIC0gLSAgICAgIHJjdWIvMA0KICAgMTMgICAgMTMgICAwICBGRiAgICAgOTkgMTM5
-ICAgLSAtICAgICAgcG9zaXhjcHV0bXIvMA0KICAgMTQgICAgMTQgICAwICBGRiAgICAgOTkgMTM5
-ICAgLSAtICAgICAgbWlncmF0aW9uLzANCiAgIDE3ICAgIDE3ICAgMSAgRkYgICAgIDk5IDEzOSAg
-IC0gLSAgICAgIG1pZ3JhdGlvbi8xDQogICAxOCAgICAxOCAgIDEgIEZGICAgICA5OSAxMzkgICAt
-IC0gICAgICBwb3NpeGNwdXRtci8xDQogICAxOSAgICAxOSAgIDEgIEZGICAgICAgMSAgNDEgICAt
-IC0gICAgICByY3VjLzENCiAgIDI0ICAgIDI0ICAgMiAgRkYgICAgIDk5IDEzOSAgIC0gLSAgICAg
-IG1pZ3JhdGlvbi8yDQogICAyNSAgICAyNSAgIDIgIEZGICAgICA5OSAxMzkgICAtIC0gICAgICBw
-b3NpeGNwdXRtci8yDQogICAyNiAgICAyNiAgIDIgIEZGICAgICAgMSAgNDEgICAtIC0gICAgICBy
-Y3VjLzINCiAgIDMxICAgIDMxICAgMyAgRkYgICAgIDk5IDEzOSAgIC0gLSAgICAgIG1pZ3JhdGlv
-bi8zDQogICAzMiAgICAzMiAgIDMgIEZGICAgICA5OSAxMzkgICAtIC0gICAgICBwb3NpeGNwdXRt
-ci8zDQogICAzMyAgICAzMyAgIDMgIEZGICAgICAgMSAgNDEgICAtIC0gICAgICByY3VjLzMNCiAg
-MTAyICAgMTAyICAgMSAgRkYgICAgIDUwICA5MCAgIC0gLSAgICAgIGlycS85LWFjcGkNCiAgMTA4
-ICAgMTA4ICAgMSAgRkYgICAgIDk5IDEzOSAgIC0gLSAgICAgIHdhdGNoZG9nZA0KICAxMjAgICAx
-MjAgICAxICBGRiAgICAgNTAgIDkwICAgLSAtICAgICAgaXJxLzM0LWk5MTUNCiAgMTIyICAgMTIy
-ICAgMiAgRkYgICAgIDUwICA5MCAgIC0gLSAgICAgIGlycS8zNS1haGNpWzAwMA0KICAzMDAgICAz
-MDAgICAyICBGRiAgICAgNTMgIDkzICAgLSAtICAgICAgaXJxLzIxLXNwZWNfDQogNzAyNyAgNzAy
-NyAgIDAgIEZGICAgICAgMSAgNDEgICAtIC0gICAgICBsaWRhcXNlcnZlcg0KIDcwMzUgIDcwMjcg
-ICAzICBGRiAgICAgNTEgIDkxICAgLSAtICAgICAgQURDQ29udHJvbDANCg0KaXJxLzIxLXNwZWNf
-IGlzIHRoZSBkaWdpdGl6ZXIgaXJxIHRocmVhZCwgd2hpY2ggZG9lcyBhIHNpbXBsZSBoYXJkd2Fy
-ZSByZWdpc3RlciByZWFkIG92ZXIgDQp0aGUgcGNpIGJ1cyBhbmQgdGhlbiBkb2VzIGEgd2FrZV91
-cC4gTm8gbG9ja2luZyBpbnZvbHZlZC4gQURDQ29udHJvbDAgaXMgdGhlIHVzZXIgbGFuZCANCnRh
-c2sgd2hpY2ggaXMgd29rZW4gdXAgYnkgdGhlIGludGVycnVwdCB0aHJlYWQuDQoNCmNhdCAvcHJv
-Yy9pbnRlcnJ1cHQgbG9va3MgbGlrZSB0aGlzICh3aXRob3V0IHRoZSBzZXBhcmF0aW9uIG9mIGly
-cXMgb2YgY291cnNlLi4uKToNCg0KICAgICAgICAgICBDUFUwICAgICAgIENQVTEgICAgICAgQ1BV
-MiAgICAgICBDUFUzDQogIDA6ICAgICAgICAgIDUgICAgICAgICAgMCAgICAgICAgICAwICAgICAg
-ICAgIDAgICBJTy1BUElDICAgMi1lZGdlICAgICAgdGltZXINCiAgODogICAgICAgICAgMSAgICAg
-ICAgICAwICAgICAgICAgIDAgICAgICAgICAgMCAgIElPLUFQSUMgICA4LWVkZ2UgICAgICBydGMw
-DQogIDk6ICAgICAgICAgIDAgICAgICAgICAgNSAgICAgICAgICAwICAgICAgICAgIDAgICBJTy1B
-UElDICAgOS1mYXN0ZW9pICAgYWNwaQ0KIDE2OiAgICAgICAgIDMwICAgICAgICAgIDAgICAgICAg
-ICAgMCAgICAgICAgICAwICAgSU8tQVBJQyAgMTYtZmFzdGVvaSAgIGVoY2lfaGNkOnVzYjENCiAx
-ODogICAgICAgICAgMCAgICAgICAgICAwICAgICAgICAgIDAgICAgICAgICAgMCAgIElPLUFQSUMg
-IDE4LWZhc3Rlb2kgICBpODAxX3NtYnVzDQogMjE6ICAgICAgICAgIDAgICAgICAgICAgMCAgICAg
-NDQ3MzAyICAgICAgICAgIDAgICBJTy1BUElDICAyMS1mYXN0ZW9pICAgc3BlY18NCiAzNDogICAg
-ICAgICAgMCAgICAgICA3NzU4ICAgICAgICAgIDAgICAgICAgICAgMCAgIFBDSS1NU0kgMzI3Njgt
-ZWRnZSAgICAgIGk5MTUNCiAzNTogICAgICAgICAgMCAgICAgICAgICAwICAgICAyNTQyMjUgICAg
-ICAgICAgMCAgIFBDSS1NU0kgNTEyMDAwLWVkZ2UgICAgICBhaGNpWzAwMDA6MDA6MWYuMl0NCiAz
-NjogICAgICAgICAgMCAgICAgICAgICAwICAgICAgICAgIDAgICAgICAgNDIxMSAgIFBDSS1NU0kg
-NDA5NjAwLWVkZ2UgICAgICBldGg1DQo3MDogICAgICAgICAgMCAgICAgICAgICAwICAgIDIyMDY3
-MzcgICAgICAgICAgMCAgIFBDSS1NU0kgMzI3NjgwLWVkZ2UgICAgICB4aGNpX2hjZA0KIDcxOiAg
-ICAgICAgICAwICAgICAgICAgIDAgICAgICAgICAgMCAgICAgMTA5OTM1ICAgUENJLU1TSSAyMDk3
-MTUyLWVkZ2UgICAgICB4aGNpX2hjZA0KIDcyOiAgICAgICAgICAwICAgICAgICAgIDAgICAgICAg
-ICAgMCAgICAgICAgICAwICAgUENJLU1TSSAyMDk3MTUzLWVkZ2UgICAgICB4aGNpX2hjZA0KIDcz
-OiAgICAgICAgICAwICAgICAgICAgIDAgICAgICAgICAgMCAgICAgICAgICAwICAgUENJLU1TSSAy
-MDk3MTU0LWVkZ2UgICAgICB4aGNpX2hjZA0KIDc0OiAgICAgICAgICAwICAgICAgICAgIDAgICAg
-ICAgICAgMCAgICAgICAgICAwICAgUENJLU1TSSAyMDk3MTU1LWVkZ2UgICAgICB4aGNpX2hjZA0K
-IDc1OiAgICAgICAgICAwICAgICAgICAgIDAgICAgICAgICAgMCAgICAgICAgICAwICAgUENJLU1T
-SSAyMDk3MTU2LWVkZ2UgICAgICB4aGNpX2hjZA0KTk1JOiAgICAgICAgICAwICAgICAgICAgIDAg
-ICAgICAgICAgMCAgICAgICAgICAwICAgTm9uLW1hc2thYmxlIGludGVycnVwdHMNCkxPQzogICAg
-MTE5MDg3MCAgICAxMDAwMTM3ICAgICA5MzUxOTggICAgIDk0Nzk5NSAgIExvY2FsIHRpbWVyIGlu
-dGVycnVwdHMNClNQVTogICAgICAgICAgMCAgICAgICAgICAwICAgICAgICAgIDAgICAgICAgICAg
-MCAgIFNwdXJpb3VzIGludGVycnVwdHMNClBNSTogICAgICAgICAgMCAgICAgICAgICAwICAgICAg
-ICAgIDAgICAgICAgICAgMCAgIFBlcmZvcm1hbmNlIG1vbml0b3JpbmcgaW50ZXJydXB0cw0KSVdJ
-OiAgICAgICAgIDkzICAgICAgICAgNjYgICAgICAgICAzNCAgICAgICAgICA0ICAgSVJRIHdvcmsg
-aW50ZXJydXB0cw0KUlRSOiAgICAgICAgICAzICAgICAgICAgIDAgICAgICAgICAgMCAgICAgICAg
-ICAwICAgQVBJQyBJQ1IgcmVhZCByZXRyaWVzDQpSRVM6ICAgICAxNjAzMTggICAgIDEyNTc4OSAg
-ICAgMTA2MzU5ICAgICAxMTAwNDYgICBSZXNjaGVkdWxpbmcgaW50ZXJydXB0cw0KQ0FMOiAgICAg
-ICA1ODAxICAgICAgIDUyMTcgICAgICAgNDMzMCAgICAgICA0Mjc1ICAgRnVuY3Rpb24gY2FsbCBp
-bnRlcnJ1cHRzDQpUTEI6ICAgICAgIDE2MTAgICAgICAgIDQxNSAgICAgICAgMjQ0ICAgICAgICAz
-MzUgICBUTEIgc2hvb3Rkb3ducw0KVFJNOiAgICAgICAgICAwICAgICAgICAgIDAgICAgICAgICAg
-MCAgICAgICAgICAwICAgVGhlcm1hbCBldmVudCBpbnRlcnJ1cHRzDQpUSFI6ICAgICAgICAgIDAg
-ICAgICAgICAgMCAgICAgICAgICAwICAgICAgICAgIDAgICBUaHJlc2hvbGQgQVBJQyBpbnRlcnJ1
-cHRzDQpNQ0U6ICAgICAgICAgIDAgICAgICAgICAgMCAgICAgICAgICAwICAgICAgICAgIDAgICBN
-YWNoaW5lIGNoZWNrIGV4Y2VwdGlvbnMNCk1DUDogICAgICAgICAyOCAgICAgICAgIDI5ICAgICAg
-ICAgMjkgICAgICAgICAyOSAgIE1hY2hpbmUgY2hlY2sgcG9sbHMNCkVSUjogICAgICAgICAgMA0K
-TUlTOiAgICAgICAgICAwDQpQSU46ICAgICAgICAgIDAgICAgICAgICAgMCAgICAgICAgICAwICAg
-ICAgICAgIDAgICBQb3N0ZWQtaW50ZXJydXB0IG5vdGlmaWNhdGlvbiBldmVudA0KTlBJOiAgICAg
-ICAgICAwICAgICAgICAgIDAgICAgICAgICAgMCAgICAgICAgICAwICAgTmVzdGVkIHBvc3RlZC1p
-bnRlcnJ1cHQgZXZlbnQNClBJVzogICAgICAgICAgMCAgICAgICAgICAwICAgICAgICAgIDAgICAg
-ICAgICAgMCAgIFBvc3RlZC1pbnRlcnJ1cHQgd2FrZXVwIGV2ZW50ICANCg0KKEkgcmVtb3ZlZCBh
-IGJ1bmNoIG9mIGludGVycnVwdHMgZnJvbSB0aGUgb24gYm9hcmQgRXRoZXJuZXQgY29udHJvbGxl
-cnMpDQoNCkludGVyZXN0aW5nbHkgZGlzay1pbyB0byBhbiB1c2ItZGlzayBoYW5kbGVkIGJ5IHRo
-ZSB4aGNpX2hjZCBhdCBpcnEgIDcwIGRvZXMgbm90IGNhdXNlIGxhdGVuY2llcywgDQphbHRob3Vn
-aCBpdCBpcyBoYW5kbGVkIGFsc28gYnkgQ1BVMiwgbGlrZSB0aGUgYWhjaSBhbmQgdGhlIGRpZ2l0
-aXplciAoc3BlY18pLg0KU28gSSB0aGluayBpdCBpcyBzb21lIHNwZWNpZmljIHRvIHRoZSBhaGNp
-IQ0KDQo+ID4gQW5vdGhlciBvYnNlcnZhdGlvbiB3aGljaCBJIGNhbm5vdCB1bmRlcnN0YW5kIHRo
-b3VnaCwgaXMgdGhhdCBhDQo+IGNvbmN1cnJlbnQNCj4gPiBjeWNsaWN0ZXN0IC1tIC1TcDk4IC1p
-MjAwIC1oNDAwIC1uDQo+ID4gcnVuIGRvZXMgbm90IHNob3cgdGhlIGxhdGVuY2llcy4uLg0KPiAN
-Cj4geW91IGhhdmUgaGVyZSAiLXA5OCIgd2hpbGUgdGhlIG90aGVyIHR3byB0aHJlYWRzIGhhdmUg
-cHJpb3JpdHkgNTMgYW5kDQo+IDUxLiBTbyB0aGF0IGlzIGEgZGlmZmVyZW5jZSB1bmxlc3MgdGhl
-cmUgaXMgbm90aGluZyBiZXR3ZWVuIDUzIGFuZCA1MS4NCj4gQnV0IGlmIHlvdSBkaXNhYmxlIHRo
-ZSAiZGlnaXRpemVyIGNhcmQocykiIHRoZW4gd2l0aCAtcDUxIHlvdSBzaG91bGQgYmUNCj4gY2xv
-c2UgdG8gdGhhdCBzZXR1cCB3aXRoIGN5Y2xpY3Rlc3QuDQo+IA0KPiBJZiB0aGVyZSBhcmUgbm8g
-c3Bpa2VzIGluIGN5Y2xpY3Rlc3QgdGhlbiB0aGVyZSBtdXN0IGJlIHNvbWV0aGluZw0KPiBhZnRl
-ciB0aGUgdGhyZWFkZWQgaGFuZGxlciBydW5zIHRoYXQgZGVsYXlzIHRoZSB1c2VyIHNwYWNlIHRh
-c2suIFNvbWUNCj4gdHJhY2luZyBzaG91bGQgaGVscCB0byBmaWd1cmUgb3V0IHdoYXQgaGFwcGVu
-cyBiZXR3ZWVuIHRoZSBoYXJkd2FyZQ0KPiBpbnRlcnJ1cHQgYW5kIHRoZSBjb250ZXh0IHN3aXRj
-aCB0byB0aGUgdXNlciB0YXNrLg0KDQpJZiBJIHJ1biBjeWNsaWN0ZXN0IGF0IHByaW8gNTEgdGhl
-cmUgYXJlIG5vIGxhdGVuY2llcy4gT25seSBpZiBJIGdvIHRvIDUwIEkgaW1tZWRpYXRlbHkgDQpz
-ZWUgdGhlIDEgLSAxLjUgbXMgb24gQ1BVMiBpZiBJIHN0YXJ0IGEgZmlsZSBjb3B5ICAtLSB3aGlj
-aCBpcyBvZiBjb3Vyc2UgYXMgZXhwZWN0ZWQuDQoNCkZvciB0aGUgdHJhY2luZywgSSBhdCB0aGUg
-bW9tZW50IGhhdmUgbm8gaWRlYSBob3cgdG8gc2V0IGl0IHVwLiBJIG9ubHkgZGlkIHNvbWUgDQp0
-cmFjaW5nIHdoaWNoIHdhcyB0cmlnZ2VyZWQgYnkgY3ljbGljdGVzdC4gQnV0IHRoYXQgd29uJ3Qg
-aGVscCBoZXJlLi4uDQoNCk1hcnRpbg0K
+There are three changes here.
+
+1. If affinity is not specified, but numa is available, then numa
+implies AFFINITY_USEALL.
+
+2. Move setting affinity before applying numa
+We need to set the affinity before applying numa, so that we don't
+apply numa settings to cpus we don't intend to run on.
+
+3. Allow a greater number of threads than cpus to run in a round robin
+fashion in the case of numa.
+
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ src/cyclictest/cyclictest.c | 34 +++++++++++++++++++++-------------
+ 1 file changed, 21 insertions(+), 13 deletions(-)
+
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index d101e3d14854..52f93da7d074 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -1349,8 +1349,12 @@ static void process_options (int argc, char *argv[], int max_cpus)
+ 	/* if smp wasn't requested, test for numa automatically */
+ 	if (!smp) {
+ #ifdef NUMA
+-		if (numa_available() != -1)
++		if (numa_available() != -1) {
+ 			numa = 1;
++			if (setaffinity == AFFINITY_UNSPECIFIED) {
++				setaffinity = AFFINITY_USEALL;
++			}
++		}
+ #else
+ 		warn("cyclictest was not built with the numa option\n");
+ 		numa = 0;
+@@ -1716,6 +1720,7 @@ int main(int argc, char **argv)
+ 	sigset_t sigset;
+ 	int signum = SIGALRM;
+ 	int mode;
++	int cpu;
+ 	int max_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+ 	int i, ret = -1;
+ 	int status;
+@@ -1877,6 +1882,16 @@ int main(int argc, char **argv)
+ 		if (status != 0)
+ 			fatal("error from pthread_attr_init for thread %d: %s\n", i, strerror(status));
+ 
++		switch (setaffinity) {
++		case AFFINITY_UNSPECIFIED: cpu = -1; break;
++		case AFFINITY_SPECIFIED:
++			cpu = cpu_for_thread(i, max_cpus);
++			if (verbose)
++				printf("Thread %d using cpu %d.\n", i, cpu);
++			break;
++		case AFFINITY_USEALL: cpu = i % max_cpus; break;
++		}
++
+ 		node = -1;
+ 		if (numa) {
+ 			void *stack;
+@@ -1884,7 +1899,7 @@ int main(int argc, char **argv)
+ 			size_t stksize;
+ 
+ 			/* find the memory node associated with the cpu i */
+-			node = rt_numa_numa_node_of_cpu(i);
++			node = rt_numa_numa_node_of_cpu(cpu);
+ 
+ 			/* get the stack size set for for this thread */
+ 			if (pthread_attr_getstack(&attr, &currstk, &stksize))
+@@ -1895,7 +1910,7 @@ int main(int argc, char **argv)
+ 				stksize = PTHREAD_STACK_MIN * 2;
+ 
+ 			/*  allocate memory for a stack on appropriate node */
+-			stack = rt_numa_numa_alloc_onnode(stksize, node, i);
++			stack = rt_numa_numa_alloc_onnode(stksize, node, cpu);
+ 
+ 			/* touch the stack pages to pre-fault them in */
+ 			memset(stack, 0, stksize);
+@@ -1965,20 +1980,13 @@ int main(int argc, char **argv)
+ 			interval += distance;
+ 		if (verbose)
+ 			printf("Thread %d Interval: %d\n", i, interval);
++
+ 		par->max_cycles = max_cycles;
+ 		par->stats = stat;
+ 		par->node = node;
+ 		par->tnum = i;
+-		switch (setaffinity) {
+-		case AFFINITY_UNSPECIFIED: par->cpu = -1; break;
+-		case AFFINITY_SPECIFIED:
+-			par->cpu = cpu_for_thread(i, max_cpus);
+-			if (verbose)
+-				printf("Thread %d using cpu %d.\n", i,
+-					par->cpu);
+-			break;
+-		case AFFINITY_USEALL: par->cpu = i % max_cpus; break;
+-		}
++		par->cpu = cpu;
++
+ 		stat->min = 1000000;
+ 		stat->max = 0;
+ 		stat->avg = 0.0;
+-- 
+2.20.1
+
