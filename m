@@ -1,157 +1,310 @@
-Return-Path: <SRS0=iEIM=XH=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=sGjS=XI=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-2.5 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9147AC4CEC6
-	for <linux-rt-users@archiver.kernel.org>; Thu, 12 Sep 2019 22:19:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 13ED9C49ED7
+	for <linux-rt-users@archiver.kernel.org>; Fri, 13 Sep 2019 13:37:03 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 5DCC1208C2
-	for <linux-rt-users@archiver.kernel.org>; Thu, 12 Sep 2019 22:19:44 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=joelfernandes.org header.i=@joelfernandes.org header.b="aB6FI72F"
+	by mail.kernel.org (Postfix) with ESMTP id D5D5E206BB
+	for <linux-rt-users@archiver.kernel.org>; Fri, 13 Sep 2019 13:37:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726553AbfILWTo (ORCPT
+        id S2388524AbfIMNhC convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 12 Sep 2019 18:19:44 -0400
-Received: from mail-pl1-f195.google.com ([209.85.214.195]:33691 "EHLO
-        mail-pl1-f195.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726303AbfILWTn (ORCPT
+        Fri, 13 Sep 2019 09:37:02 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:34427 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S2387584AbfIMNhB (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 12 Sep 2019 18:19:43 -0400
-Received: by mail-pl1-f195.google.com with SMTP id t11so12370758plo.0
-        for <linux-rt-users@vger.kernel.org>; Thu, 12 Sep 2019 15:19:43 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=joelfernandes.org; s=google;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to:user-agent;
-        bh=VYcaD0CgRaK6iDJ2VeDVxMN7Qlt4v9GgR7dsZ3QROoA=;
-        b=aB6FI72FYFUB6TYj52LB9VxYzjcfuAlJ5r2flFNdTbRg4p1IaVUcTZm3lsv1Vk3MFj
-         d3KPmw3cMHf2xPzsSICJHsynW5UpzDwugYamm6crgk2QXrW+TxfqcPLM4n6CjNHfUsp/
-         gj7eIriG93QDFxaXCjJyW4Dc9tdfuI3kqStOk=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to:user-agent;
-        bh=VYcaD0CgRaK6iDJ2VeDVxMN7Qlt4v9GgR7dsZ3QROoA=;
-        b=M5rsaOMK9+cHEhAN8jiHy5Jtw2UfybYACVkzH0fUIpz/413IarQ5RSyqSQlqecerno
-         ykgkX9YVrAhjSRjDJJa8nJIZ5V7DsKzyD7flanVoqYK7tU+q+M/8d7MTnhjBsU+swDA1
-         OOkaXrbG3y/FTH+BjvK1EGFbu4NyD4nP6Wjqg6ttO4KepdywSPHosFvWp6/kpL82Jwpo
-         8/YcmLyhcDx8DplZjKB3LKYG5JuZHFh383N0u2zcfUoYlWShyPeq/wIy2M30NWpImq1x
-         PYUDtkMiWkRZEuBMiqUWgPj6KZDMgLCHf2ZYXfBwufFav70be7R4QThoAKUsoBHhgCcP
-         6gHg==
-X-Gm-Message-State: APjAAAXfhT6WwWQmpnesxWOpo3kBzznY0jcWzrR5PcvRi8ChQXrsllzC
-        WQ5y0aU+V5kn/3yHcAziwI0VAg==
-X-Google-Smtp-Source: APXvYqxEIAKiH7VoObg5pPCE1OSWvWVPGgLO5md2J4MB25LnCgnALkNSrNECU0GFs+pMubwA5uSWNg==
-X-Received: by 2002:a17:902:8302:: with SMTP id bd2mr46615100plb.9.1568326782713;
-        Thu, 12 Sep 2019 15:19:42 -0700 (PDT)
-Received: from localhost ([2620:15c:6:12:9c46:e0da:efbf:69cc])
-        by smtp.gmail.com with ESMTPSA id 132sm1673199pgg.52.2019.09.12.15.19.41
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 12 Sep 2019 15:19:42 -0700 (PDT)
-Date:   Thu, 12 Sep 2019 18:19:41 -0400
-From:   Joel Fernandes <joel@joelfernandes.org>
-To:     Scott Wood <swood@redhat.com>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        "Paul E . McKenney" <paulmck@linux.ibm.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Clark Williams <williams@redhat.com>, rcu@vger.kernel.org
-Subject: Re: [PATCH RT v3 4/5] rcu: Disable use_softirq on PREEMPT_RT
-Message-ID: <20190912221941.GD150506@google.com>
-References: <20190911165729.11178-1-swood@redhat.com>
- <20190911165729.11178-5-swood@redhat.com>
- <20190912213843.GA150506@google.com>
+        Fri, 13 Sep 2019 09:37:01 -0400
+Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
+        (envelope-from <bigeasy@linutronix.de>)
+        id 1i8lkt-0000VM-Q9; Fri, 13 Sep 2019 15:36:55 +0200
+Date:   Fri, 13 Sep 2019 15:36:55 +0200
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Martin.Wirth@dlr.de
+Cc:     linux-rt-users@vger.kernel.org, austin.linux@gmail.com
+Subject: Re: Long latencies during disk-io
+Message-ID: <20190913133655.2pbhnxm5ndcje3bk@linutronix.de>
+References: <1A2AF5F768264E479963C4D8C015EB696C50C6BB@DLDEFFMIMP02EXC.intra.dlr.de>
+ <20190905154115.mnid6rue65x6vvt6@linutronix.de>
+ <1A2AF5F768264E479963C4D8C015EB696C51159F@DLDEFFMIMP02EXC.intra.dlr.de>
+ <CABsbf=EsGK0-teWZ7vGuKS=edz+uCoxcd6KdoU5Cf_2gdeEhtg@mail.gmail.com>
+ <1A2AF5F768264E479963C4D8C015EB696C515541@DLDEFFMIMP02EXC.intra.dlr.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20190912213843.GA150506@google.com>
-User-Agent: Mutt/1.10.1 (2018-07-13)
+Content-Transfer-Encoding: 8BIT
+In-Reply-To: <1A2AF5F768264E479963C4D8C015EB696C515541@DLDEFFMIMP02EXC.intra.dlr.de>
+User-Agent: NeoMutt/20180716
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Sep 12, 2019 at 05:38:43PM -0400, Joel Fernandes wrote:
-> Hi Scott,
-> 
-> Would you mind CC'ing rcu@vger.kernel.org on RCU related patches? I added it
-> for this time.
-> 
-> On Wed, Sep 11, 2019 at 05:57:28PM +0100, Scott Wood wrote:
-> > Besides restoring behavior that used to be default on RT, this avoids
-> > a deadlock on scheduler locks:
-[snip]
-> > [  136.995194] 039:  May be due to missing lock nesting notation
-> > 
-> > [  137.001115] 039: 3 locks held by rcu_torture_rea/13474:
-> > [  137.006341] 039:  #0:
-> > [  137.008707] 039: 000000005f25146d
-> > [  137.012024] 039:  (
-> > [  137.014131] 039: &p->pi_lock
-> > [  137.017015] 039: ){-...}
-> > [  137.019558] 039: , at: try_to_wake_up+0x39/0x920
-> > [  137.024175] 039:  #1:
-> > [  137.026540] 039: 0000000011c8e51d
-> > [  137.029859] 039:  (
-> > [  137.031966] 039: &rq->lock
-> > [  137.034679] 039: ){-...}
-> > [  137.037217] 039: , at: try_to_wake_up+0x241/0x920
-> > [  137.041924] 039:  #2:
-> > [  137.044291] 039: 00000000098649b9
-> > [  137.047610] 039:  (
-> > [  137.049714] 039: rcu_read_lock
-> > [  137.052774] 039: ){....}
-> > [  137.055314] 039: , at: cpuacct_charge+0x33/0x1e0
-> > [  137.059934] 039:
-> > stack backtrace:
-> > [  137.063425] 039: CPU: 39 PID: 13474 Comm: rcu_torture_rea Kdump: loaded Tainted: G            E     5.2.9-rt3.dbg+ #174
-> > [  137.074197] 039: Hardware name: Intel Corporation S2600BT/S2600BT, BIOS SE5C620.86B.01.00.0763.022420181017 02/24/2018
-> > [  137.084886] 039: Call Trace:
-> > [  137.087773] 039:  <IRQ>
-> > [  137.090226] 039:  dump_stack+0x5e/0x8b
-> > [  137.093997] 039:  __lock_acquire+0x725/0x1100
-> > [  137.098358] 039:  lock_acquire+0xc0/0x240
-> > [  137.102374] 039:  ? try_to_wake_up+0x39/0x920
-> > [  137.106737] 039:  _raw_spin_lock_irqsave+0x47/0x90
-> > [  137.111534] 039:  ? try_to_wake_up+0x39/0x920
-> > [  137.115910] 039:  try_to_wake_up+0x39/0x920
-> > [  137.120098] 039:  rcu_read_unlock_special+0x65/0xb0
-> > [  137.124977] 039:  __rcu_read_unlock+0x5d/0x70
-> > [  137.129337] 039:  cpuacct_charge+0xd9/0x1e0
-> > [  137.133522] 039:  ? cpuacct_charge+0x33/0x1e0
-> > [  137.137880] 039:  update_curr+0x14b/0x420
-> > [  137.141894] 039:  enqueue_entity+0x42/0x370
-> > [  137.146080] 039:  enqueue_task_fair+0xa9/0x490
-> > [  137.150528] 039:  activate_task+0x5a/0xf0
-> > [  137.154539] 039:  ttwu_do_activate+0x4e/0x90
-> > [  137.158813] 039:  try_to_wake_up+0x277/0x920
-> > [  137.163086] 039:  irq_exit+0xb6/0xf0
-[snip]
-> > Signed-off-by: Scott Wood <swood@redhat.com>
-> > ---
-> > The prohibition on use_softirq should be able to be dropped once RT gets
-> > the latest RCU code, but the question of what use_softirq should default
-> > to on PREEMPT_RT remains.
-> > 
-> > v3: Use IS_ENABLED
-> 
-> Out of curiosity, does PREEMPT_RT use the NOCB callback offloading? If no,
-> should it use it? IIUC, that does make the work the softirq have to do less
-> work since the callbacks are executed in threaded context.
-> 
-> If yes, can RT tolerate use_softirq=false and what could a realistic softirq
+On 2019-09-10 12:04:45 [+0000], Martin.Wirth@dlr.de wrote:
+> Thanks to Austin's suggestion I was able to get a race which looks suspicious.
+> # tracer: function
+> #
+> # entries-in-buffer/entries-written: 39893/219671100   #P:4
+> #
+> #                              _-----=> irqs-off
+> #                             / _----=> need-resched
+> #                            | / _----=> need-resched
+> #                            || / _---=> hardirq/softirq
+> #                            ||| / _--=> preempt-depth
+> #                            ||||/     delay
+> #           TASK-PID   CPU#  |||||   TIMESTAMP  FUNCTION
+> #              | |       |   |||||      |         |
+> irq/35-ahci[000-121   [002] ....113 28719.098051: preempt_count_sub <-percpu_counter_add_batch
+>  irq/35-ahci[000-121   [002] .....13 28719.098051: preempt_count_add <-percpu_counter_add_batch
+>  irq/35-ahci[000-121   [002] ....113 28719.098052: preempt_count_sub <-percpu_counter_add_batch
+>  irq/35-ahci[000-121   [002] .....13 28719.098052: preempt_count_add <-percpu_counter_add_batch
+>  irq/35-ahci[000-121   [002] ....113 28719.098052: _raw_spin_lock_irqsave <-percpu_counter_add_batch
+>  irq/35-ahci[000-121   [002] d...113 28719.098052: preempt_count_add <-_raw_spin_lock_irqsave
+>  irq/35-ahci[000-121   [002] d...213 28719.098052: _raw_spin_unlock_irqrestore <-percpu_counter_add_batch
+>  irq/35-ahci[000-121   [002] ....213 28719.098052: preempt_count_sub <-_raw_spin_unlock_irqrestore
+>  irq/35-ahci[000-121   [002] ....113 28719.098052: preempt_count_sub <-percpu_counter_add_batch
+>  irq/35-ahci[000-121   [002] .....13 28719.098052: preempt_count_add <-percpu_counter_add_batch
 
-s/use_softirq=false/use_softirq=true/
+so until here AHCI threaded handler runs. Then the hard-IRQ triggers…
 
-thanks,
+>  irq/35-ahci[000-121   [002] d..h313 28719.098053: handle_irq <-do_IRQ
+>  irq/35-ahci[000-121   [002] d..h313 28719.098053: handle_fasteoi_irq <-handle_irq
+>  irq/35-ahci[000-121   [002] d..h313 28719.098053: _raw_spin_lock <-handle_fasteoi_irq
+>  irq/35-ahci[000-121   [002] d..h313 28719.098053: preempt_count_add <-_raw_spin_lock
+>  irq/35-ahci[000-121   [002] d..h413 28719.098054: mask_irq.part.36 <-handle_fasteoi_irq
+>  irq/35-ahci[000-121   [002] d..h413 28719.098054: mask_ioapic_irq <-mask_irq.part.36
+>  irq/35-ahci[000-121   [002] d..h413 28719.098054: _raw_spin_lock_irqsave <-mask_ioapic_irq
+>  irq/35-ahci[000-121   [002] d..h413 28719.098054: preempt_count_add <-_raw_spin_lock_irqsave
+>  irq/35-ahci[000-121   [002] d..h513 28719.098054: io_apic_modify_irq <-mask_ioapic_irq
+>  irq/35-ahci[000-121   [002] d..h513 28719.098055: io_apic_sync <-io_apic_modify_irq
+>  irq/35-ahci[000-121   [002] d..h513 28719.098056: _raw_spin_unlock_irqrestore <-mask_irq.part.36
+>  irq/35-ahci[000-121   [002] d..h513 28719.098056: preempt_count_sub <-_raw_spin_unlock_irqrestore
+>  irq/35-ahci[000-121   [002] d..h413 28719.098057: handle_irq_event <-handle_fasteoi_irq
+>  irq/35-ahci[000-121   [002] d..h413 28719.098057: preempt_count_sub <-handle_irq_event
+>  irq/35-ahci[000-121   [002] d..h313 28719.098057: handle_irq_event_percpu <-handle_irq_event
+>  irq/35-ahci[000-121   [002] d..h313 28719.098057: __handle_irq_event_percpu <-handle_irq_event_percpu
+>  irq/35-ahci[000-121   [002] d..h313 28719.098057: irq_default_primary_handler <-__handle_irq_event_percpu
 
- - Joel
+The primary handler does a wake of the threaded handler which is still
+ongoing…
 
+>  irq/35-ahci[000-121   [002] d..h313 28719.098057: __irq_wake_thread <-__handle_irq_event_percpu
+>  irq/35-ahci[000-121   [002] d..h313 28719.098057: wake_up_process <-__handle_irq_event_percpu
+>  irq/35-ahci[000-121   [002] d..h313 28719.098058: try_to_wake_up <-__handle_irq_event_percpu
+>  irq/35-ahci[000-121   [002] d..h313 28719.098058: _raw_spin_lock_irqsave <-try_to_wake_up
+>  irq/35-ahci[000-121   [002] d..h313 28719.098058: preempt_count_add <-_raw_spin_lock_irqsave
+>  irq/35-ahci[000-121   [002] d..h413 28719.098058: _raw_spin_lock <-try_to_wake_up
+>  irq/35-ahci[000-121   [002] d..h413 28719.098058: preempt_count_add <-_raw_spin_lock
+>  irq/35-ahci[000-121   [002] d..h513 28719.098058: update_rq_clock <-try_to_wake_up
+>  irq/35-ahci[000-121   [002] d..h513 28719.098058: update_irq_load_avg <-update_rq_clock
+>  irq/35-ahci[000-121   [002] d..h513 28719.098058: __accumulate_pelt_segments <-update_irq_load_avg
+>  irq/35-ahci[000-121   [002] d..h513 28719.098059: ttwu_do_activate <-try_to_wake_up
+>  irq/35-ahci[000-121   [002] d..h513 28719.098059: activate_task <-ttwu_do_activate
+>  irq/35-ahci[000-121   [002] d..h513 28719.098059: enqueue_task_rt <-activate_task
+>  irq/35-ahci[000-121   [002] d..h513 28719.098059: dequeue_rt_stack <-enqueue_task_rt
+>  irq/35-ahci[000-121   [002] d..h513 28719.098059: dequeue_top_rt_rq <-dequeue_rt_stack
+>  irq/35-ahci[000-121   [002] d..h513 28719.098059: cpupri_set <-enqueue_task_rt
+>  irq/35-ahci[000-121   [002] d..h513 28719.098060: update_rt_migration <-enqueue_task_rt
+>  irq/35-ahci[000-121   [002] d..h513 28719.098060: _raw_spin_lock <-enqueue_task_rt
+>  irq/35-ahci[000-121   [002] d..h513 28719.098060: preempt_count_add <-_raw_spin_lock
+>  irq/35-ahci[000-121   [002] d..h613 28719.098060: preempt_count_sub <-enqueue_task_rt
+>  irq/35-ahci[000-121   [002] d..h513 28719.098060: enqueue_top_rt_rq <-enqueue_task_rt
+>  irq/35-ahci[000-121   [002] d..h513 28719.098060: intel_pstate_update_util <-enqueue_task_rt
+>  irq/35-ahci[000-121   [002] d..h513 28719.098060: ttwu_do_wakeup <-try_to_wake_up
+>  irq/35-ahci[000-121   [002] d..h513 28719.098060: check_preempt_curr <-ttwu_do_wakeup
+>  irq/35-ahci[000-121   [002] d..h513 28719.098061: check_preempt_curr_rt <-check_preempt_curr
+>  irq/35-ahci[000-121   [002] d..h513 28719.098061: resched_curr <-check_preempt_curr
+>  irq/35-ahci[000-121   [002] dN.h513 28719.098061: task_woken_rt <-ttwu_do_wakeup
+The scheduler decided that another needs to run on this CPU. This is
+denoted by the capital N (as in need-resched) here.
+
+>  irq/35-ahci[000-121   [002] dN.h413 28719.098061: _raw_spin_unlock_irqrestore <-try_to_wake_up
+>  irq/35-ahci[000-121   [002] dN.h413 28719.098061: preempt_count_sub <-_raw_spin_unlock_irqrestore
+>  irq/35-ahci[000-121   [002] dN.h313 28719.098061: note_interrupt <-handle_irq_event_percpu
+>  irq/35-ahci[000-121   [002] dN.h313 28719.098062: _raw_spin_lock <-handle_irq_event
+>  irq/35-ahci[000-121   [002] dN.h313 28719.098062: preempt_count_add <-_raw_spin_lock
+>  irq/35-ahci[000-121   [002] dN.h413 28719.098062: ioapic_ack_level <-handle_fasteoi_irq
+>  irq/35-ahci[000-121   [002] dN.h413 28719.098062: irqd_cfg <-ioapic_ack_level
+>  irq/35-ahci[000-121   [002] dN.h413 28719.098062: apic_chip_data.part.17 <-ioapic_ack_level
+>  irq/35-ahci[000-121   [002] dN.h413 28719.098062: irq_complete_move <-ioapic_ack_level
+>  irq/35-ahci[000-121   [002] dN.h413 28719.098062: __irq_complete_move <-ioapic_ack_level
+>  irq/35-ahci[000-121   [002] dN.h413 28719.098062: preempt_count_sub <-handle_fasteoi_irq
+>  irq/35-ahci[000-121   [002] dN.h313 28719.098063: irq_exit <-do_IRQ
+>  irq/35-ahci[000-121   [002] dN.h313 28719.098063: irqtime_account_irq <-irq_exit
+>  irq/35-ahci[000-121   [002] dN.h313 28719.098063: preempt_count_sub <-irq_exit
+>  irq/35-ahci[000-121   [002] .N..113 28719.098063: preempt_count_sub <-percpu_counter_add_batch
+
+The CPU is back from hard-IRQ and can't switch right away to the other
+task due to the preempt-disable section. But this happens just one line
+later
+
+>  irq/35-ahci[000-121   [002] dN..113 28719.098064: rcu_note_context_switch <-__schedule
+>  irq/35-ahci[000-121   [002] dN..113 28719.098064: rcu_preempt_deferred_qs <-rcu_note_context_switch
+>  irq/35-ahci[000-121   [002] dN..113 28719.098064: _raw_spin_lock <-__schedule
+>  irq/35-ahci[000-121   [002] dN..113 28719.098064: preempt_count_add <-_raw_spin_lock
+>  irq/35-ahci[000-121   [002] dN..213 28719.098064: update_rq_clock <-__schedule
+>  irq/35-ahci[000-121   [002] dN..213 28719.098064: pick_next_task_stop <-__schedule
+>  irq/35-ahci[000-121   [002] dN..213 28719.098064: pick_next_task_dl <-__schedule
+>  irq/35-ahci[000-121   [002] dN..213 28719.098065: pick_next_task_rt <-__schedule
+>  irq/35-ahci[000-121   [002] dN..213 28719.098065: update_curr_rt <-pick_next_task_rt
+>  irq/35-ahci[000-121   [002] dN..213 28719.098065: __rcu_read_lock <-update_curr_rt
+>  irq/35-ahci[000-121   [002] dN..213 28719.098065: __rcu_read_unlock <-update_curr_rt
+>  irq/35-ahci[000-121   [002] dN..213 28719.098065: _raw_spin_lock <-update_curr_rt
+>  irq/35-ahci[000-121   [002] dN..213 28719.098065: preempt_count_add <-_raw_spin_lock
+>  irq/35-ahci[000-121   [002] dN..313 28719.098065: preempt_count_sub <-update_curr_rt
+>  irq/35-ahci[000-121   [002] dN..213 28719.098065: put_prev_task_rt <-pick_next_task_rt
+>  irq/35-ahci[000-121   [002] dN..213 28719.098065: update_curr_rt <-put_prev_task_rt
+>  irq/35-ahci[000-121   [002] dN..213 28719.098066: update_rt_rq_load_avg <-put_prev_task_rt
+>  irq/35-ahci[000-121   [002] d...213 28719.098066: enter_lazy_tlb <-__schedule
+>     irq/21-spec_-292   [002] d...2.. 28719.098067: finish_task_switch <-__schedule
+>     irq/21-spec_-292   [002] d...2.. 28719.098067: _raw_spin_unlock_irq <-finish_task_switch
+>     irq/21-spec_-292   [002] ....2.. 28719.098067: preempt_count_sub <-_raw_spin_unlock_irq
+>     irq/21-spec_-292   [002] ....... 28719.098067: kthread_should_stop <-irq_thread
+>     irq/21-spec_-292   [002] ....... 28719.098068: irq_thread_check_affinity <-irq_thread
+>     irq/21-spec_-292   [002] ....... 28719.098068: irq_forced_thread_fn <-irq_thread
+>     irq/21-spec_-292   [002] ....... 28719.098068: __local_bh_disable_ip <-irq_forced_thread_fn
+
+before the threaded function of your handler is invoked, it does
+local_bh_disable(). This is required because the hard-irq would not be
+interrupted by the softirq so "this" must be preserved for the handler
+in force-threaded mode.
+However, the lock is held by the ahci thread so what follows is PI-boost
+and a switch to the owner of the lock…
+
+>     irq/21-spec_-292   [002] ....... 28719.098068: migrate_disable <-__local_bh_disable_ip
+>     irq/21-spec_-292   [002] ....11. 28719.098068: pin_current_cpu <-migrate_disable
+>     irq/21-spec_-292   [002] ....11. 28719.098068: __read_rt_trylock <-pin_current_cpu
+>     irq/21-spec_-292   [002] ....11. 28719.098068: task_rq_lock <-migrate_disable
+>     irq/21-spec_-292   [002] ....11. 28719.098069: _raw_spin_lock_irqsave <-task_rq_lock
+>     irq/21-spec_-292   [002] d...11. 28719.098069: preempt_count_add <-_raw_spin_lock_irqsave
+>     irq/21-spec_-292   [002] d...21. 28719.098069: _raw_spin_lock <-task_rq_lock
+>     irq/21-spec_-292   [002] d...21. 28719.098069: preempt_count_add <-_raw_spin_lock
+>     irq/21-spec_-292   [002] d...21. 28719.098069: _raw_spin_unlock_irqrestore <-migrate_disable
+>     irq/21-spec_-292   [002] ....21. 28719.098069: preempt_count_sub <-_raw_spin_unlock_irqrestore
+>     irq/21-spec_-292   [002] .....11 28719.098069: rt_spin_lock <-__local_bh_disable_ip
+>     irq/21-spec_-292   [002] .....11 28719.098069: migrate_disable <-rt_spin_lock
+>     irq/21-spec_-292   [002] .....12 28719.098070: rt_spin_lock_slowlock <-__local_bh_disable_ip
+…
+>  irq/35-ahci[000-121   [002] .....13 28719.098080: rt_spin_unlock <-test_clear_page_writeback
+>  irq/35-ahci[000-121   [002] .....13 28719.098080: migrate_enable <-rt_spin_unlock
+>  irq/35-ahci[000-121   [002] .....12 28719.098081: mod_node_page_state <-test_clear_page_writeback
+>  irq/35-ahci[000-121   [002] .....12 28719.098081: dec_zone_page_state <-test_clear_page_writeback
+>  irq/35-ahci[000-121   [002] .....12 28719.098081: inc_node_page_state <-test_clear_page_writeback
+>  irq/35-ahci[000-121   [002] .....12 28719.098081: rt_spin_lock <-ext4_finish_bio
+>  irq/35-ahci[000-121   [002] .....12 28719.098081: migrate_disable <-rt_spin_lock
+>  irq/35-ahci[000-121   [002] .....13 28719.098081: rt_spin_unlock <-ext4_finish_bio
+>  irq/35-ahci[000-121   [002] .....13 28719.098082: migrate_enable <-rt_spin_unlock
+>  irq/35-ahci[000-121   [002] .....12 28719.098082: end_page_writeback <-ext4_finish_bio
+>  irq/35-ahci[000-121   [002] .....12 28719.098082: test_clear_page_writeback <-end_page_writeback
+>  irq/35-ahci[000-121   [002] .....12 28719.098082: page_mapping <-test_clear_page_writeback
+>  irq/35-ahci[000-121   [002] .....12 28719.098082: rt_spin_lock <-test_clear_page_writeback
+>  irq/35-ahci[000-121   [002] .....12 28719.098082: migrate_disable <-rt_spin_lock
+…
+
+> irq/35-ahci[000-121   [002] ....112 28719.100176: __wake_up_q <-rt_mutex_postunlock
+
+so slightly before this, local_bh_enable() is invoked which drops the
+lock in question. This leads to a de-boost and the lock is obtained by
+the irq-21 threaded handler.
+
+>  irq/35-ahci[000-121   [002] ....112 28719.100176: __wake_up_q <-rt_mutex_postunlock
+>  irq/35-ahci[000-121   [002] ....112 28719.100176: try_to_wake_up <-__wake_up_q
+>  irq/35-ahci[000-121   [002] ....112 28719.100176: _raw_spin_lock_irqsave <-try_to_wake_up
+>  irq/35-ahci[000-121   [002] d...112 28719.100176: preempt_count_add <-_raw_spin_lock_irqsave
+>  irq/35-ahci[000-121   [002] d...212 28719.100176: _raw_spin_lock <-try_to_wake_up
+>  irq/35-ahci[000-121   [002] d...212 28719.100176: preempt_count_add <-_raw_spin_lock
+>  irq/35-ahci[000-121   [002] d...312 28719.100177: update_rq_clock <-try_to_wake_up
+>  irq/35-ahci[000-121   [002] d...312 28719.100177: update_irq_load_avg <-update_rq_clock
+>  irq/35-ahci[000-121   [002] d...312 28719.100177: ttwu_do_activate <-try_to_wake_up
+>  irq/35-ahci[000-121   [002] d...312 28719.100177: activate_task <-ttwu_do_activate
+>  irq/35-ahci[000-121   [002] d...312 28719.100177: enqueue_task_rt <-activate_task
+>  irq/35-ahci[000-121   [002] d...312 28719.100177: dequeue_rt_stack <-enqueue_task_rt
+>  irq/35-ahci[000-121   [002] d...312 28719.100177: dequeue_top_rt_rq <-dequeue_rt_stack
+>  irq/35-ahci[000-121   [002] d...312 28719.100178: cpupri_set <-enqueue_task_rt
+>  irq/35-ahci[000-121   [002] d...312 28719.100178: update_rt_migration <-enqueue_task_rt
+>  irq/35-ahci[000-121   [002] d...312 28719.100178: _raw_spin_lock <-enqueue_task_rt
+>  irq/35-ahci[000-121   [002] d...312 28719.100178: preempt_count_add <-_raw_spin_lock
+>  irq/35-ahci[000-121   [002] d...412 28719.100178: preempt_count_sub <-enqueue_task_rt
+>  irq/35-ahci[000-121   [002] d...312 28719.100178: enqueue_top_rt_rq <-enqueue_task_rt
+>  irq/35-ahci[000-121   [002] d...312 28719.100178: intel_pstate_update_util <-enqueue_task_rt
+>  irq/35-ahci[000-121   [002] d...312 28719.100178: ttwu_do_wakeup <-try_to_wake_up
+>  irq/35-ahci[000-121   [002] d...312 28719.100178: check_preempt_curr <-ttwu_do_wakeup
+>  irq/35-ahci[000-121   [002] d...312 28719.100179: check_preempt_curr_rt <-check_preempt_curr
+>  irq/35-ahci[000-121   [002] d...312 28719.100179: resched_curr <-check_preempt_curr
+>  irq/35-ahci[000-121   [002] dN..312 28719.100179: task_woken_rt <-ttwu_do_wakeup
+>  irq/35-ahci[000-121   [002] dN..212 28719.100179: _raw_spin_unlock_irqrestore <-try_to_wake_up
+>  irq/35-ahci[000-121   [002] .N..212 28719.100179: preempt_count_sub <-_raw_spin_unlock_irqrestore
+>  irq/35-ahci[000-121   [002] .N..112 28719.100179: preempt_count_sub <-rt_mutex_postunlock
+>  irq/35-ahci[000-121   [002] dN..112 28719.100179: rcu_note_context_switch <-__schedule
+>  irq/35-ahci[000-121   [002] dN..112 28719.100180: rcu_preempt_deferred_qs <-rcu_note_context_switch
+>  irq/35-ahci[000-121   [002] dN..112 28719.100180: _raw_spin_lock <-__schedule
+>  irq/35-ahci[000-121   [002] dN..112 28719.100180: preempt_count_add <-_raw_spin_lock
+>  irq/35-ahci[000-121   [002] dN..212 28719.100180: update_rq_clock <-__schedule
+>  irq/35-ahci[000-121   [002] dN..212 28719.100180: pick_next_task_stop <-__schedule
+>  irq/35-ahci[000-121   [002] dN..212 28719.100180: pick_next_task_dl <-__schedule
+>  irq/35-ahci[000-121   [002] dN..212 28719.100180: pick_next_task_rt <-__schedule
+>  irq/35-ahci[000-121   [002] dN..212 28719.100180: update_curr_rt <-pick_next_task_rt
+>  irq/35-ahci[000-121   [002] dN..212 28719.100180: put_prev_task_rt <-pick_next_task_rt
+>  irq/35-ahci[000-121   [002] dN..212 28719.100181: update_curr_rt <-put_prev_task_rt
+>  irq/35-ahci[000-121   [002] dN..212 28719.100181: update_rt_rq_load_avg <-put_prev_task_rt
+>  irq/35-ahci[000-121   [002] d...212 28719.100181: enter_lazy_tlb <-__schedule
+>     irq/21-spec_-292   [002] d...212 28719.100181: finish_task_switch <-__schedule
+>     irq/21-spec_-292   [002] d...212 28719.100182: _raw_spin_unlock_irq <-finish_task_switch
+>     irq/21-spec_-292   [002] ....212 28719.100182: preempt_count_sub <-_raw_spin_unlock_irq
+>     irq/21-spec_-292   [002] .....12 28719.100182: _raw_spin_lock_irqsave <-rt_spin_lock_slowlock_locked
+>     irq/21-spec_-292   [002] d....12 28719.100182: preempt_count_add <-_raw_spin_lock_irqsave
+>     irq/21-spec_-292   [002] d...112 28719.100182: _raw_spin_lock <-rt_spin_lock_slowlock_locked
+>     irq/21-spec_-292   [002] d...112 28719.100182: preempt_count_add <-_raw_spin_lock
+>     irq/21-spec_-292   [002] d...212 28719.100182: preempt_count_sub <-rt_spin_lock_slowlock_locked
+>     irq/21-spec_-292   [002] d...112 28719.100183: __try_to_take_rt_mutex <-rt_spin_lock_slowlock_locked
+>     irq/21-spec_-292   [002] d...112 28719.100183: _raw_spin_lock <-__try_to_take_rt_mutex
+>     irq/21-spec_-292   [002] d...112 28719.100183: preempt_count_add <-_raw_spin_lock
+>     irq/21-spec_-292   [002] d...212 28719.100183: preempt_count_sub <-__try_to_take_rt_mutex
+>     irq/21-spec_-292   [002] d...112 28719.100183: _raw_spin_lock <-rt_spin_lock_slowlock_locked
+>     irq/21-spec_-292   [002] d...112 28719.100183: preempt_count_add <-_raw_spin_lock
+>     irq/21-spec_-292   [002] d...212 28719.100183: preempt_count_sub <-rt_spin_lock_slowlock_locked
+>     irq/21-spec_-292   [002] d...112 28719.100183: fixup_rt_mutex_waiters.part.6 <-rt_spin_lock_slowlock_locked
+>     irq/21-spec_-292   [002] d...112 28719.100184: _raw_spin_unlock_irqrestore <-rt_spin_lock_slowlock
+>     irq/21-spec_-292   [002] ....112 28719.100184: preempt_count_sub <-_raw_spin_unlock_irqrestore
+>     irq/21-spec_-292   [002] .....12 28719.100184: vInterruptService <-irq_forced_thread_fn
+
+lock is owned, the threaded handler (vInterruptService()) can be
+invoked.
+
+>     irq/21-spec_-292   [002] .....12 28719.100185: ktime_get_real_ts64 <-vInterruptService
+>     irq/21-spec_-292   [002] .....12 28719.100189: __wake_up <-vInterruptService
+>     irq/21-spec_-292   [002] .....12 28719.100189: __wake_up_common_lock <-vInterruptService
+> .....
+> 
+> Now suddenly the spec handler is running again and this time the driver supplied IRQ-routine (vInterruptService) 
+> is called, but with the 2 ms of delay. 
+> 
+> Unfortunately I'm not able to interpret the flags correctly. Especially since the ones described in the header 
+> do not match the number of fields in the output...
+
+So this delay is caused by the softirq rework. I didn't think about this
+but now that you show the trace it is obvious.
+
+If you use
+	request_threaded_irq(, NULL, vInterruptService, …);
+
+instead of
+	request_irq(, vInterruptService, …);
+
+then the IRQ will not be force threaded (but threaded on request) and
+there will be no local_bh_disable() before the thread is invoked. So no
+waiting until the AHCI thread is done.
+
+If vInterruptService() does nothing else than just wake up userland then
+you could use swait_event_…() / swake_up_one() instead of the
+wait_event_… / wake_up() combo. That would be allowed from the primary
+handler and you could avoid the switch to the threaded-handler.
+
+> Martin
+
+Sebastian
