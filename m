@@ -2,112 +2,104 @@ Return-Path: <SRS0=2ve0=XL=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-7.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_2 autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 79BBAC4CECD
-	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Sep 2019 21:21:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 85896C49ED7
+	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Sep 2019 21:39:28 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 588C62067B
-	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Sep 2019 21:21:29 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 64F54206C2
+	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Sep 2019 21:39:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2391792AbfIPVVZ convert rfc822-to-8bit (ORCPT
+        id S1727981AbfIPVjY (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 16 Sep 2019 17:21:25 -0400
-Received: from mga04.intel.com ([192.55.52.120]:21872 "EHLO mga04.intel.com"
+        Mon, 16 Sep 2019 17:39:24 -0400
+Received: from mail.kernel.org ([198.145.29.99]:43144 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1730662AbfIPVVZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 16 Sep 2019 17:21:25 -0400
-X-Amp-Result: SKIPPED(no attachment in message)
-X-Amp-File-Uploaded: False
-Received: from orsmga006.jf.intel.com ([10.7.209.51])
-  by fmsmga104.fm.intel.com with ESMTP/TLS/DHE-RSA-AES256-GCM-SHA384; 16 Sep 2019 14:21:24 -0700
-X-IronPort-AV: E=Sophos;i="5.64,514,1559545200"; 
-   d="scan'208";a="191192461"
-Received: from jsanto5x-mobl.amr.corp.intel.com ([10.255.93.114])
-  by orsmga006-auth.jf.intel.com with ESMTP/TLS/DHE-RSA-AES256-GCM-SHA384; 16 Sep 2019 14:21:23 -0700
-Content-Type: text/plain;
-        charset=utf-8
-Mime-Version: 1.0 (Mac OS X Mail 12.4 \(3445.104.11\))
-Subject: Re: [PREEMPT_RT PATCH 2/3] i915: convert all irq_locks spinlocks to
- raw spinlocks
-From:   Sean V Kelley <sean.v.kelley@linux.intel.com>
-In-Reply-To: <20190903080335.pe45dmgmjvdvbyd4@linutronix.de>
-Date:   Mon, 16 Sep 2019 14:21:22 -0700
-Cc:     Clark Williams <clark.williams@gmail.com>, bigeasy@linutronix.com,
-        tglx@linutronix.com, linux-rt-users@vger.kernel.org,
-        linux-kernel@vger.kernel.org
-Content-Transfer-Encoding: 8BIT
-Message-Id: <9EF2695D-3FBD-40E0-BE8A-EB71AF4155A5@linux.intel.com>
-References: <20190820003319.24135-1-clark.williams@gmail.com>
- <20190820003319.24135-3-clark.williams@gmail.com>
- <20190903080335.pe45dmgmjvdvbyd4@linutronix.de>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-X-Mailer: Apple Mail (2.3445.104.11)
+        id S1726125AbfIPVjY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 16 Sep 2019 17:39:24 -0400
+Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 9F0D220644;
+        Mon, 16 Sep 2019 21:39:22 +0000 (UTC)
+Date:   Mon, 16 Sep 2019 17:39:21 -0400
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Julia Cartwright <julia@ni.com>,
+        Daniel Wagner <wagi@monom.org>, tom.zanussi@linux.intel.com
+Subject: [ANNOUNCE] 4.19.72-rt25
+Message-ID: <20190916173921.6368cd62@gandalf.local.home>
+X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
 
+Dear RT Folks,
 
-> On Sep 3, 2019, at 1:03 AM, Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
-> 
-> On 2019-08-19 19:33:18 [-0500], Clark Williams wrote:
->> From: Clark Williams <williams@redhat.com>
->> 
->> The following structures contain a member named 'irq_lock'.
->> These three locks are of type spinlock_t and are used in
->> multiple contexts including atomic:
->> 
->>    struct drm_i915_private
->>    struct intel_breadcrumbs
->>    strict intel_guc
->> 
->> Convert them all to be raw_spinlock_t so that lockdep and the lock
->> debugging code will be happy.
-> 
-> What is your motivation to make the lock raw?
-> I did the following:
-> 
-> void intel_engine_signal_breadcrumbs(struct intel_engine_cs *engine)
-> {
-> -       local_irq_disable();
-> -       intel_engine_breadcrumbs_irq(engine);
-> -       local_irq_enable();
-> +       if (IS_ENABLED(CONFIG_PREEMPT_RT_FULL)) {
-> +               intel_engine_breadcrumbs_irq(engine);
-> +       } else {
-> +               local_irq_disable();
-> +               intel_engine_breadcrumbs_irq(engine);
-> +               local_irq_enable();
-> +       }
-> }
-> 
-> and lockdep was quiet (+ ignoring/patching the lockdep-irq-off-asserts).
-> The local_irq_disable() is here (my interpretation of the situation)
-> because that function is called from process context while the remaining
-> callers invoke intel_engine_breadcrumbs_irq() from the interrupt
-> handler and it acquires irq_lock via a plain spin_lock().  That
-> local_irq_disable() would be required if everyone did a _irqsave().
+I'm pleased to announce the 4.19.72-rt25 stable release.
 
-I’ve tested this also on the v5.2.14-rt7 and can confirm that it avoids the need for making the locks raw.
+**** <NOTE> ****
 
-Tested-by: Sean V Kelley <sean.v.kelley@linux.intel.com>
+As you probably have noticed, it has been a long time since I released
+a stable 4.19-rt. The reason for this delay is that one of my tests
+failed after merging with the latest stable upstream. I refuse to push
+releases with a known bug in it, so I figured I would find the bug
+before releasing. I only spend around 4 to 6 hours a week on upstream
+stable RT as I have other responsibilities, and I could not debug this
+bug during that time (after several weeks of trying).
 
-Thanks,
+The bug is a random NULL pointer dereference that only happens with
+lockdep enabled and on 32bit x86. I also found that this bug existed
+before the latest stable pull release but now it is much easier to
+trigger.
 
-Sean
+I have not been able to trigger this bug in the 64 bit kernel, and as I
+rather do a release than waste more time on this bug and postpone the
+release further, I am now doing that. As a consequence, I am no longer
+supporting 32bit x86, as it is known to have this bug.
 
-> 
-> I tried to check how much worse the latency gets here but I didn't see
-> anything in a brief test. What I saw however is that switching to
-> fullscreen while playing a video gives me ~0.5 to ~2ms latency. This is
-> has nothing to do with this change, I have to dig deeper… It might be
-> one of the preempt_disable() section I just noticed.
-> I would prefer to keep the lock non-raw unless there is actual need for
-> it.
-> 
-> Sebastian
+If you are interested in this, I am willing to send out the config I am
+using and one of the dmesg crashes. Just ask.
+
+**** </NOTE> ****
+
+
+This release is just an update to the new stable 4.19.72 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.19-rt
+  Head SHA1: 9cd04ab6a9a162ac4189a80032261d243563ff45
+
+
+Or to build 4.19.72-rt25 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.72.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.19/patch-4.19.72-rt25.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
 
