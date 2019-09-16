@@ -2,149 +2,112 @@ Return-Path: <SRS0=2ve0=XL=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AC2B5C49ED7
-	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Sep 2019 19:05:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 79BBAC4CECD
+	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Sep 2019 21:21:29 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 8D28820830
-	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Sep 2019 19:05:15 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 588C62067B
+	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Sep 2019 21:21:29 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1733114AbfIPTFO (ORCPT
+        id S2391792AbfIPVVZ convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 16 Sep 2019 15:05:14 -0400
-Received: from mx1.redhat.com ([209.132.183.28]:54974 "EHLO mx1.redhat.com"
+        Mon, 16 Sep 2019 17:21:25 -0400
+Received: from mga04.intel.com ([192.55.52.120]:21872 "EHLO mga04.intel.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727958AbfIPTFO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 16 Sep 2019 15:05:14 -0400
-Received: from mail-wr1-f71.google.com (mail-wr1-f71.google.com [209.85.221.71])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
-        (No client certificate requested)
-        by mx1.redhat.com (Postfix) with ESMTPS id 89497796ED
-        for <linux-rt-users@vger.kernel.org>; Mon, 16 Sep 2019 19:05:13 +0000 (UTC)
-Received: by mail-wr1-f71.google.com with SMTP id w10so321568wrl.5
-        for <linux-rt-users@vger.kernel.org>; Mon, 16 Sep 2019 12:05:13 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:subject:from:to:cc:references:message-id:date
-         :user-agent:mime-version:in-reply-to:content-language
-         :content-transfer-encoding;
-        bh=kwfy3FtDVpFu8a/shnATCDRidOaNKuHQNkUiFx1jDcM=;
-        b=TJL9EVCtgM2J7GQ3VQZ6MdUBg9n3NAFAzi1TgoVA7FrGqlYvMjOWFmAYDxYTqbv5j0
-         A9IYh91FnmvBy0k82aDTRasZIDMNqbBZSPBeX9YUcjoIPeTAhn59kVt15CpUyfrq6H7X
-         dHlq3m3yxWPYucPDkD+ZyO4p6KDnIie4Vb0WnwfhltFRSUPekROBQFQ1FvqtM78a/lMF
-         d/l7wWLF0kqm4zXOVCqj4ArOFpnYjildHCTVjl50YnTNK3zDTsgGVdt3+tCYlr3UXCC7
-         2iKvz+tMzxzHyNkD7UXDiyGLkUkKi0tZw1RR8ZjyOx6CQP080pqAODJ+vsKNty0cIpt/
-         DxdQ==
-X-Gm-Message-State: APjAAAXaZmuV/toGnCKF/HYoaT5cCi1RBcdpMyABWFHw25AMxG2fFml2
-        3qeZCT4239E6uaVo34S/OS4a1876rETKU6fUu3DoWU9EGtwsYhufvB9felwyajAPflG4U8J7YD5
-        TZp7cVqtog8JgBYNS5drJbI5ffI4=
-X-Received: by 2002:a7b:c353:: with SMTP id l19mr389559wmj.173.1568660712165;
-        Mon, 16 Sep 2019 12:05:12 -0700 (PDT)
-X-Google-Smtp-Source: APXvYqwjQ8O1Q4vinHdly+/ODVkUYax3hDGJ/mQpu0y17JrE1oBMvSsIKQ8r2GDRzOhHstpMNTbsog==
-X-Received: by 2002:a7b:c353:: with SMTP id l19mr389538wmj.173.1568660711877;
-        Mon, 16 Sep 2019 12:05:11 -0700 (PDT)
-Received: from t460s.bristot.redhat.com (host198-203-dynamic.18-79-r.retail.telecomitalia.it. [79.18.203.198])
-        by smtp.gmail.com with ESMTPSA id c8sm24608059wrr.49.2019.09.16.12.05.10
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 16 Sep 2019 12:05:11 -0700 (PDT)
-Subject: [CFP] Deadline extension: Real-Time Summit 2019 Call for
- Presentations
-From:   Daniel Bristot de Oliveira <bristot@redhat.com>
-To:     linux-rt-users <linux-rt-users@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Clark Williams <williams@redhat.com>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Kate Stewart <kstewart@linuxfoundation.org>,
-        Ingo Molnar <mingo@redhat.com>, Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Tommaso Cucinotta <tommaso.cucinotta@sssup.it>,
-        "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Anna-Maria Gleixner <anna-maria@linutronix.de>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Luca Abeni <luca.abeni@santannapisa.it>
-References: <6c78f0b0-c124-b8b7-1cb9-7422179a8200@redhat.com>
-Message-ID: <fea220fb-11ea-8ad1-0625-7bc22dc92821@redhat.com>
-Date:   Mon, 16 Sep 2019 21:05:10 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101
- Thunderbird/60.8.0
-MIME-Version: 1.0
-In-Reply-To: <6c78f0b0-c124-b8b7-1cb9-7422179a8200@redhat.com>
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: 8bit
+        id S1730662AbfIPVVZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 16 Sep 2019 17:21:25 -0400
+X-Amp-Result: SKIPPED(no attachment in message)
+X-Amp-File-Uploaded: False
+Received: from orsmga006.jf.intel.com ([10.7.209.51])
+  by fmsmga104.fm.intel.com with ESMTP/TLS/DHE-RSA-AES256-GCM-SHA384; 16 Sep 2019 14:21:24 -0700
+X-IronPort-AV: E=Sophos;i="5.64,514,1559545200"; 
+   d="scan'208";a="191192461"
+Received: from jsanto5x-mobl.amr.corp.intel.com ([10.255.93.114])
+  by orsmga006-auth.jf.intel.com with ESMTP/TLS/DHE-RSA-AES256-GCM-SHA384; 16 Sep 2019 14:21:23 -0700
+Content-Type: text/plain;
+        charset=utf-8
+Mime-Version: 1.0 (Mac OS X Mail 12.4 \(3445.104.11\))
+Subject: Re: [PREEMPT_RT PATCH 2/3] i915: convert all irq_locks spinlocks to
+ raw spinlocks
+From:   Sean V Kelley <sean.v.kelley@linux.intel.com>
+In-Reply-To: <20190903080335.pe45dmgmjvdvbyd4@linutronix.de>
+Date:   Mon, 16 Sep 2019 14:21:22 -0700
+Cc:     Clark Williams <clark.williams@gmail.com>, bigeasy@linutronix.com,
+        tglx@linutronix.com, linux-rt-users@vger.kernel.org,
+        linux-kernel@vger.kernel.org
+Content-Transfer-Encoding: 8BIT
+Message-Id: <9EF2695D-3FBD-40E0-BE8A-EB71AF4155A5@linux.intel.com>
+References: <20190820003319.24135-1-clark.williams@gmail.com>
+ <20190820003319.24135-3-clark.williams@gmail.com>
+ <20190903080335.pe45dmgmjvdvbyd4@linutronix.de>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+X-Mailer: Apple Mail (2.3445.104.11)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The Real-Time Summit is organized by the Linux Foundation Real-Time Linux (RTL)
-collaborative project. The event is intended to gather developers and users of
-Linux as a Real-Time Operating System. The main intent is to provide room for
-discussion between developers, tooling experts, and users.
 
-The summit will take place alongside the Open Source Summit + Embedded Linux
-Conference Europe 2019 in Lyon, France. The summit is planned the day after the
-main conference, Thursday, October 31st, 2019, from 8:00 to 17:00 at the
-conference venue. If you are already considering your travel arrangements for
-the Open Source Summit + Embedded Linux Conference Europe 2019 in Lyon, France,
-and you have a general interest in this topic, please extend your travel by one
-day to be in Lyon on Thursday, 31st.
 
-If you are interested to present, please submit a proposal [1] before September
-14th, 2019, at 23:59 EST. Please provide a title, an abstract describing the
-proposed talk (900 characters maximum), a short biography (900 characters
-maximum), and describe the targeted audience (900 characters maximum). Please
-indicate the slot length you are aiming for: The format is a single track with
-presentation slots of 30, 45 or 60 minutes long. Considering that the
-presentation should use at most half of the slot time, leaving the rest of the
-slot reserved for discussion. The focus of this event is the discussion.
+> On Sep 3, 2019, at 1:03 AM, Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+> 
+> On 2019-08-19 19:33:18 [-0500], Clark Williams wrote:
+>> From: Clark Williams <williams@redhat.com>
+>> 
+>> The following structures contain a member named 'irq_lock'.
+>> These three locks are of type spinlock_t and are used in
+>> multiple contexts including atomic:
+>> 
+>>    struct drm_i915_private
+>>    struct intel_breadcrumbs
+>>    strict intel_guc
+>> 
+>> Convert them all to be raw_spinlock_t so that lockdep and the lock
+>> debugging code will be happy.
+> 
+> What is your motivation to make the lock raw?
+> I did the following:
+> 
+> void intel_engine_signal_breadcrumbs(struct intel_engine_cs *engine)
+> {
+> -       local_irq_disable();
+> -       intel_engine_breadcrumbs_irq(engine);
+> -       local_irq_enable();
+> +       if (IS_ENABLED(CONFIG_PREEMPT_RT_FULL)) {
+> +               intel_engine_breadcrumbs_irq(engine);
+> +       } else {
+> +               local_irq_disable();
+> +               intel_engine_breadcrumbs_irq(engine);
+> +               local_irq_enable();
+> +       }
+> }
+> 
+> and lockdep was quiet (+ ignoring/patching the lockdep-irq-off-asserts).
+> The local_irq_disable() is here (my interpretation of the situation)
+> because that function is called from process context while the remaining
+> callers invoke intel_engine_breadcrumbs_irq() from the interrupt
+> handler and it acquires irq_lock via a plain spin_lock().  That
+> local_irq_disable() would be required if everyone did a _irqsave().
 
-We are welcoming presentations from both end-users and developers, on topics
-covering, but not limited to:
+I’ve tested this also on the v5.2.14-rt7 and can confirm that it avoids the need for making the locks raw.
 
- - Real-time Linux development
- - Real-time Linux evaluation
- - Real-time Linux use cases (Success and failures)
- - Real-time Linux tooling (tracing, configuration, …)
- - Real-time Linux academic work, already presented or under development, for
-   direct feedback from practitioners community.
+Tested-by: Sean V Kelley <sean.v.kelley@linux.intel.com>
 
-Those can cover recently available technologies, ongoing work, and new ideas.
+Thanks,
 
-Important Notes for Speakers:
+Sean
 
- - All speakers are required to adhere to the Linux Foundation events’ Code of
-   Conduct. We also highly recommend that speakers take the Linux Foundation
-   online Inclusive Speaker Orientation Course.
+> 
+> I tried to check how much worse the latency gets here but I didn't see
+> anything in a brief test. What I saw however is that switching to
+> fullscreen while playing a video gives me ~0.5 to ~2ms latency. This is
+> has nothing to do with this change, I have to dig deeper… It might be
+> one of the preempt_disable() section I just noticed.
+> I would prefer to keep the lock non-raw unless there is actual need for
+> it.
+> 
+> Sebastian
 
- - Avoid sales or marketing pitches and discussing unlicensed or potentially
-   closed-source technologies when preparing your proposal; these talks are
-   almost always rejected due to the fact that they take away from the integrity
-   of our events, and are rarely well-received by conference attendees.
-
- - All accepted speakers are required to submit their slides prior to the
-    event.
-
-Submission must be received by 11:59 pm PST on September 14th, 2019
-
-[1] Submission page: https://forms.gle/yQeqyrtJYezM5VRJA
-
-Important Dates:
-
-  - CFP *WAS*: Saturday, September 14th, 2019, 11:59PM PST
-  - CFP *IS*: Saturday, September 21th, 2019, 11:59PM PST
-  - Speaker notification: September 25st, 2019 (was 21)
-  - Conference: Thursday, October 31st, 2019
-
-Questions on submitting a proposal?
-Email Daniel Bristot de Oliveira <bristot@redhat.com>
-
-Thanks!
--- Daniel
