@@ -7,63 +7,65 @@ X-Spam-Status: No, score=-9.6 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 16C5AC49ED7
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C6165C4CECD
 	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Sep 2019 21:51:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id DC72E214AF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Sep 2019 21:51:24 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9CB46214D9
+	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Sep 2019 21:51:25 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="s2J6bFnb"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="P6RtWs3s"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1732092AbfIPVvY (ORCPT
+        id S1732099AbfIPVvZ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 16 Sep 2019 17:51:24 -0400
-Received: from mail-qt1-f182.google.com ([209.85.160.182]:41537 "EHLO
-        mail-qt1-f182.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1732078AbfIPVvY (ORCPT
+        Mon, 16 Sep 2019 17:51:25 -0400
+Received: from mail-qt1-f195.google.com ([209.85.160.195]:47085 "EHLO
+        mail-qt1-f195.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725912AbfIPVvZ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 16 Sep 2019 17:51:24 -0400
-Received: by mail-qt1-f182.google.com with SMTP id x4so1774842qtq.8
-        for <linux-rt-users@vger.kernel.org>; Mon, 16 Sep 2019 14:51:23 -0700 (PDT)
+        Mon, 16 Sep 2019 17:51:25 -0400
+Received: by mail-qt1-f195.google.com with SMTP id u22so1724656qtq.13
+        for <linux-rt-users@vger.kernel.org>; Mon, 16 Sep 2019 14:51:24 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
-        h=sender:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=KaUd9HcUUGA6aLRu+biQBbaLydM6P5e/3FkRJP/2v2s=;
-        b=s2J6bFnbV172uaIt8uVP88WxLE9clFsu3Nx09z108kO0RPbULpNzgFNqGC7YTvdScz
-         hKBfrw65kc4v9jhGmw6/qlClcV7mDolDURVEcE3nqA1U6j9hglFlKNINZPgaYwZC3Jcq
-         6yxB3EKsSkHmWrcb1cEd739FS6OUcKzY5YbbLmGusfsjGsmi9A2fUs3Me+XGWmLKt3sA
-         Xo1F14A7cb5var65lYw17EPT++P57shVIPnf4ahu1ItgACZq7L2wONLLX50DEBQW9+Rx
-         sLXejRKv3d+QUOxeJkgBYvqxXR7lBB3so34vvhN7jfNxQ108eBEhtotsU0lLwtljW7p2
-         kmCQ==
+        h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=XeUh1q60196Av/tEpV5NrhwwxIIZWdHZglCZzL3O2U0=;
+        b=P6RtWs3sltlrsvNNB8bYBzycA8VUppgShcV9IMN0dW67ftrvNWipt9aQu6oioKHEt4
+         rMe1lxDoGvBwKHeyX+KoWP2uqwK6X4jqFfspPAhenUHOMI92Q6OJc7ISDlu3yZ9+TFgv
+         RvgMcY+2lq2V0ROAiIu/S8TEOSuEEgtnmtfruL7RuDIu2BtYel5eEOYnZLgU88V9xewh
+         r1/yI25eNmM3z6RQI49QS6TlbSMBCNO1eSUPCo6JkMzSnWTIAn0j0DlpowIm5M9Hnegd
+         VDwT2iOZE1SgY2hR4VBqLk1u/mGpBqEJpzwxvJiFSYPybyfDvAloVEbuEwnkkJTily36
+         mwfQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
-         :mime-version:content-transfer-encoding;
-        bh=KaUd9HcUUGA6aLRu+biQBbaLydM6P5e/3FkRJP/2v2s=;
-        b=YlpV/T4e9DGHgI+RpIlFNjph0oAKUVEHKGISo5GOV08NHXdAneZwfx9cdR1HIWS4oh
-         BP1cbE7PON4rwUkDAs+vmBWS3W3GONP2CeLDLSMNvtVTdjw5aALK8fy3hqhBsQ4Syldv
-         GbMcJAMsZkuViBKEnIhIY8Ikd/mOScY3+C3dkUcc+085PD/b8QkF8xOKoh9/mMTZlATW
-         pkbLh0S6Z5CQuV6ZLEUQGJa0v+z5vbAXAoFzwVu1QlZsqlIG5QBX/b1qQudyib4n8VUq
-         oiOe1+N9jLBBuqW5D7ayg0EP9xfwibzG09hzVYF2mAgsRUG/gyAUayzq3kR/DURGFeAx
-         y9lw==
-X-Gm-Message-State: APjAAAWVsAlbMusBU0e51+vbTcC26xQEPm48IJ4gWZtz17iOn4hKHbM5
-        iVCFS643mkFIM9paap28Kb6185/8Q2A=
-X-Google-Smtp-Source: APXvYqxhS9qTr4x9O9Hd5DIrCjS2DMydSOPmK3hKH5Ve6dDPadwlKtyz2n0qqEcSM1K4mEhNGbFX3A==
-X-Received: by 2002:ac8:192d:: with SMTP id t42mr610612qtj.358.1568670682678;
-        Mon, 16 Sep 2019 14:51:22 -0700 (PDT)
+         :in-reply-to:references:mime-version:content-transfer-encoding;
+        bh=XeUh1q60196Av/tEpV5NrhwwxIIZWdHZglCZzL3O2U0=;
+        b=Po5KMUzQD0VKd2uAxMmmx6Nbgra8vVLcV3gV9DMN7YcPSGl36I/iOOFqG6dSFwQ0HM
+         jAEryvGsq4hl2b0RklYuX8H4BllKpgTo2rE7s1tU1iT0vHOAV3KmO1slqRce+lI+rhsm
+         FQd3kAB+W24+yw59EIuiXceQOFEChdX5Yk4xAZ7qbvXeorDAhCwIxdXB6w1AzBoUHEox
+         m1IAIVxA21vp8kAuz1Fz8LcExKcUUXbwR3pVcebl33o2KjX2096Fb/hwr8B3jtrRPhAu
+         cF6WGjZ691N0oI3odWHtIPoUnIXAk07ujY6QJPUzERVyiJ+cUgjk5J9QRZhZMvi1aCVF
+         YrLw==
+X-Gm-Message-State: APjAAAVp1jN+ifFF++8DGzMzKytu8t44OVTwibfvx0Q7LpvkNpBQ7FjI
+        4RLxsgljwdlHVSWumvVgwFE1hUYjxPs=
+X-Google-Smtp-Source: APXvYqyXKlWh6k9SItEDUNhGSdF73ITUS/3+Pzg+v9DuBgPzZZCnDpZK134LYywCbexJ1b0Itv3JLQ==
+X-Received: by 2002:ac8:100b:: with SMTP id z11mr571885qti.377.1568670683686;
+        Mon, 16 Sep 2019 14:51:23 -0700 (PDT)
 Received: from planxty.redhat.com (rdwyon0600w-lp130-03-64-231-46-127.dsl.bell.ca. [64.231.46.127])
-        by smtp.gmail.com with ESMTPSA id q126sm120156qkf.47.2019.09.16.14.51.21
+        by smtp.gmail.com with ESMTPSA id q126sm120156qkf.47.2019.09.16.14.51.22
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 16 Sep 2019 14:51:22 -0700 (PDT)
+        Mon, 16 Sep 2019 14:51:23 -0700 (PDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     rt-users <linux-rt-users@vger.kernel.org>
 Cc:     Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>, Tom Rix <trix@redhat.com>
-Subject: [PATCH 1/4] rt-tests: cyclictest.8: Remove invalid tracing options from the manpage
-Date:   Mon, 16 Sep 2019 23:51:08 +0200
-Message-Id: <20190916215111.10193-1-jkacur@redhat.com>
+        John Kacur <jkacur@redhat.com>
+Subject: [PATCH 2/4] rt-tests: cyclictest: Make tracemark work correctly again
+Date:   Mon, 16 Sep 2019 23:51:09 +0200
+Message-Id: <20190916215111.10193-2-jkacur@redhat.com>
 X-Mailer: git-send-email 2.20.1
+In-Reply-To: <20190916215111.10193-1-jkacur@redhat.com>
+References: <20190916215111.10193-1-jkacur@redhat.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Sender: linux-rt-users-owner@vger.kernel.org
@@ -71,113 +73,61 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Most tracing options have been removed from cyclictest since the
-user can now use trace-cmd together with cyclictest to get the same
-functionality. Update the manpage to reflect this.
+commit f5ccfbe4d6641e48f56152be135d901dd31cba7e
+was a little too aggressive removing ftrace code.
 
-Reported-by: Tom Rix <trix@redhat.com>
+We were able to remove ftrace code because this functionality is
+available using trace-cmd, in conjunction with the tracemark option in
+cyclictest. Put back the parts of tracemark needed to make this work
+correctly.
+
+After this patch you can get tracing info like this as an example.
+
+trace-cmd record -p function ./cyclictest -t -b100 --tracemark
+
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- src/cyclictest/cyclictest.8 | 35 -----------------------------------
- 1 file changed, 35 deletions(-)
+ src/cyclictest/cyclictest.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-diff --git a/src/cyclictest/cyclictest.8 b/src/cyclictest/cyclictest.8
-index a05d1f4c9d4a..b64a16ae8bbb 100644
---- a/src/cyclictest/cyclictest.8
-+++ b/src/cyclictest/cyclictest.8
-@@ -52,9 +52,6 @@ Align thread wakeups to a specific offset in microseconds
- .B \-b, \-\-breaktrace=USEC
- Send break trace command when latency > USEC
- .TP
--.B \-B, \-\-preemptirqs
--Both preempt and irqsoff tracing (used with -b)
--.TP
- .B \-c, \-\-clock=CLOCK
- select clock
- .br
-@@ -62,9 +59,6 @@ select clock
- .br
- 1 = CLOCK_REALTIME
- .TP
--.B \-C, \-\-context
--context switch tracing (used with \-b)
--.TP
- .B \-d, \-\-distance=DIST
- Distance of thread intervals in us, default = 500
- .TP
-@@ -73,12 +67,6 @@ Specify a length for the test run.
- .br
- Append 'm', 'h', or 'd' to specify minutes, hours or days.
- .TP
--.B \-E, \-\-event
--event tracing (used with \-b)
--.TP
--.B \-f, \-\-ftrace
--Enable function tracing using ftrace as tracer. This option is available only with \-b.
--.TP
- .B \-F, \-\-fifo=<path>
- Create a named pipe at path and write stats to it
- .TP
-@@ -94,9 +82,6 @@ Dump the latency histogram to <path> instead of stdout.
- .B \-i, \-\-interval=INTV
- Set the base interval of the thread(s) in microseconds (default is 1000us). This sets the interval of the first thread. See also \-d.
- .TP
--.B \-I, \-\-irqsoff
--Irgsoff tracing (used with \-b)
--.TP
- .B \-l, \-\-loops=LOOPS
- Set the number of loops. The default is 0 (endless). This option is useful for automated tests with a given number of test cycles. Cyclictest is stopped once the number of timer intervals has been reached.
- .TP
-@@ -113,26 +98,16 @@ running cyclictest on low-bandwidth connections)
- .B \-n, \-\-nanosleep
- Use clock_nanosleep instead of posix interval timers. Setting this option runs the tests with clock_nanosleep instead of posix interval timers.
- .TP
--.B \-\-notrace
--suppress tracing
--.TP
- .B \-N, \-\-nsecs
- Show results in nanoseconds instead of microseconds, which is the default unit.
- .TP
- .B \-o, \-\-oscope=RED
- Oscilloscope mode, reduce verbose output by RED.
- .TP
--.B \-O, \-\-traceopt=TRACING_OPTION
--Used to pass tracing options to ftrace tracers. May be invoked multiple
--times for multiple trace options. For example trace options look at /sys/kernel/debug/tracing/trace_options
--.TP
- .B \-p, \-\-prio=PRIO
- Set the priority of the first thread. The given priority is set to the first test thread. Each further thread gets a lower priority:
- Priority(Thread N) = max(Priority(Thread N\-1) \- 1, 0)
- .TP
--.B \-P, \-\-preemptoff
--Preempt off tracing (used with -b)
--.TP
- .B \-\-policy=NAME
- set the scheduler policy of the measurement threads
- where NAME is one of: other, normal, batch, idle, fifo, rr
-@@ -178,10 +153,6 @@ the number of available CPUs. See \-d, \-i and \-p for further information.
- .B \-\-tracemark
- write a trace mark when \-b latency is exceeded.
- .TP
--.B \-T, \-\-tracer=TRACEFUNC
--set the ftrace tracer function. Used with the \-b option. Must be one
--of the trace functions available from <debugfs-mountpoint>/kernel/debug/tracing/available_tracers
--.TP
- .B \-u, \-\-unbuffered
- force unbuffered output for live processing
- .TP
-@@ -192,12 +163,6 @@ n:c:v
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 52f93da7d074..45b6041ec1c9 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -184,6 +184,7 @@ static void trigger_update(struct thread_param *par, int diff, int64_t ts);
  
- where n=task number c=count v=latency value in us.
- .TP
--.B \\-w, \-\-wakeup
--task wakeup tracing (used with \-b)
--.TP
--.B \\-W, \-\-wakeuprt
--rt-task wakeup tracing (used with \-b)
--.TP
- .B \-\-dbg_cyclictest
- Print info userful for debugging cyclictest
+ static int shutdown;
+ static int tracelimit = 0;
++static int trace_marker = 9;
+ static int verbose = 0;
+ static int oscope_reduction = 1;
+ static int lockall = 0;
+@@ -400,6 +401,9 @@ static void debugfs_prepare(void)
+ 
+ static void enable_trace_mark(void)
+ {
++	if (!trace_marker)
++		return;
++
+ 	debugfs_prepare();
+ 	open_tracemark_fd();
+ }
+@@ -1167,6 +1171,7 @@ static void process_options (int argc, char *argv[], int max_cpus)
+ 			{"spike",	     required_argument, NULL, OPT_TRIGGER },
+ 			{"spike-nodes",	     required_argument, NULL, OPT_TRIGGER_NODES },
+ 			{"threads",          optional_argument, NULL, OPT_THREADS },
++			{"tracemark",	     no_argument,	NULL, OPT_TRACEMARK },
+ 			{"unbuffered",       no_argument,       NULL, OPT_UNBUFFERED },
+ 			{"verbose",          no_argument,       NULL, OPT_VERBOSE },
+ 			{"dbg_cyclictest",   no_argument,       NULL, OPT_DBGCYCLIC },
+@@ -1343,6 +1348,8 @@ static void process_options (int argc, char *argv[], int max_cpus)
+ 			fatal("--smi is not available on your arch\n");
+ #endif
+ 			break;
++		case OPT_TRACEMARK:
++			trace_marker = 1; break;
+ 		}
+ 	}
  
 -- 
 2.20.1
