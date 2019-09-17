@@ -2,115 +2,92 @@ Return-Path: <SRS0=0Kbd=XM=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3D9B2C4CEC9
-	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Sep 2019 16:00:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E5E0FC4CEC9
+	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Sep 2019 16:13:01 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 1AED1214AF
-	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Sep 2019 16:00:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C433C21852
+	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Sep 2019 16:13:01 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727327AbfIQQAj (ORCPT
+        id S1730188AbfIQQM6 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 17 Sep 2019 12:00:39 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:42604 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727203AbfIQQAj (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 17 Sep 2019 12:00:39 -0400
-Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
-        (envelope-from <bigeasy@linutronix.de>)
-        id 1iAFu2-0002Qp-Ir; Tue, 17 Sep 2019 18:00:30 +0200
-Date:   Tue, 17 Sep 2019 18:00:30 +0200
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Scott Wood <swood@redhat.com>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Tue, 17 Sep 2019 12:12:58 -0400
+Received: from mx1.redhat.com ([209.132.183.28]:30167 "EHLO mx1.redhat.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726965AbfIQQM6 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 17 Sep 2019 12:12:58 -0400
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mx1.redhat.com (Postfix) with ESMTPS id E9374302C08E;
+        Tue, 17 Sep 2019 16:12:57 +0000 (UTC)
+Received: from ovpn-117-172.phx2.redhat.com (ovpn-117-172.phx2.redhat.com [10.3.117.172])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 1811262660;
+        Tue, 17 Sep 2019 16:12:49 +0000 (UTC)
+Message-ID: <ad29574b34aca9ab61d310508f4f21a35cac406e.camel@redhat.com>
+Subject: Re: [PATCH RT v3 1/5] rcu: Acquire RCU lock when disabling BHs
+From:   Scott Wood <swood@redhat.com>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        "Paul E . McKenney" <paulmck@linux.ibm.com>,
+        Joel Fernandes <joel@joelfernandes.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
         Steven Rostedt <rostedt@goodmis.org>,
         Peter Zijlstra <peterz@infradead.org>,
         Juri Lelli <juri.lelli@redhat.com>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH RT 7/8] sched: migrate_enable: Use select_fallback_rq()
-Message-ID: <20190917160030.i24gvyye2bpdykfy@linutronix.de>
-References: <20190727055638.20443-1-swood@redhat.com>
- <20190727055638.20443-8-swood@redhat.com>
+        Clark Williams <williams@redhat.com>
+Date:   Tue, 17 Sep 2019 11:12:48 -0500
+In-Reply-To: <20190917144252.v34ina4z2ydchoit@linutronix.de>
+References: <20190911165729.11178-1-swood@redhat.com>
+         <20190911165729.11178-2-swood@redhat.com>
+         <20190917074456.yj7t3wdwuhn3zcng@linutronix.de>
+         <63b430ca2f067e61bef1c387fad782ab4a2c1ed3.camel@redhat.com>
+         <20190917144252.v34ina4z2ydchoit@linutronix.de>
+Organization: Red Hat
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.30.5 (3.30.5-1.fc29) 
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <20190727055638.20443-8-swood@redhat.com>
-User-Agent: NeoMutt/20180716
+Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Greylist: Sender IP whitelisted, not delayed by milter-greylist-4.5.16 (mx1.redhat.com [10.5.110.46]); Tue, 17 Sep 2019 16:12:58 +0000 (UTC)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2019-07-27 00:56:37 [-0500], Scott Wood wrote:
-> migrate_enable() currently open-codes a variant of select_fallback_rq().
-> However, it does not have the "No more Mr. Nice Guy" fallback and thus
-> it will pass an invalid CPU to the migration thread if cpus_mask only
-> contains a CPU that is !active.
+On Tue, 2019-09-17 at 16:42 +0200, Sebastian Andrzej Siewior wrote:
+> On 2019-09-17 09:06:28 [-0500], Scott Wood wrote:
+> > Sorry, I missed that you were asking about rcu_read_lock_bh() as
+> > well.  I
+> > did remove the change to rcu_read_lock_bh_held().
 > 
-> Signed-off-by: Scott Wood <swood@redhat.com>
-> ---
-> This scenario will be more likely after the next patch, since
-> the migrate_disable_update check goes away.  However, it could happen
-> anyway if cpus_mask was updated to a CPU other than the one we were
-> pinned to, and that CPU subsequently became inactive.
-
-I'm unclear about the problem / side effect this has (before and after
-the change). It is possible (before and after that change) that a CPU is
-selected which is invalid / goes offline after the "preempt_enable()"
-statement and before stop_one_cpu() does its job, correct?
-
-> ---
->  kernel/sched/core.c | 25 ++++++++++---------------
->  1 file changed, 10 insertions(+), 15 deletions(-)
+> Sorry for not being clear here.
 > 
-> diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-> index eb27a9bf70d7..3a2d8251a30c 100644
-> --- a/kernel/sched/core.c
-> +++ b/kernel/sched/core.c
-> @@ -7368,6 +7368,7 @@ void migrate_enable(void)
->  	if (p->migrate_disable_update) {
->  		struct rq *rq;
->  		struct rq_flags rf;
-> +		int cpu = task_cpu(p);
->  
->  		rq = task_rq_lock(p, &rf);
->  		update_rq_clock(rq);
-> @@ -7377,21 +7378,15 @@ void migrate_enable(void)
->  
->  		p->migrate_disable_update = 0;
->  
-> -		WARN_ON(smp_processor_id() != task_cpu(p));
-> -		if (!cpumask_test_cpu(task_cpu(p), &p->cpus_mask)) {
-> -			const struct cpumask *cpu_valid_mask = cpu_active_mask;
-> -			struct migration_arg arg;
-> -			unsigned int dest_cpu;
-> -
-> -			if (p->flags & PF_KTHREAD) {
-> -				/*
-> -				 * Kernel threads are allowed on online && !active CPUs
-> -				 */
-> -				cpu_valid_mask = cpu_online_mask;
-> -			}
-> -			dest_cpu = cpumask_any_and(cpu_valid_mask, &p->cpus_mask);
-> -			arg.task = p;
-> -			arg.dest_cpu = dest_cpu;
-> +		WARN_ON(smp_processor_id() != cpu);
-> +		if (!cpumask_test_cpu(cpu, &p->cpus_mask)) {
-> +			struct migration_arg arg = { p };
-> +			struct rq_flags rf;
-> +
-> +			rq = task_rq_lock(p, &rf);
-> +			update_rq_clock(rq);
-> +			arg.dest_cpu = select_fallback_rq(cpu, p);
-> +			task_rq_unlock(rq, p, &rf);
->  
->  			unpin_current_cpu();
->  			preempt_lazy_enable();
+> > With this patch, local_bh_disable() calls rcu_read_lock() on RT which
+> > handles this debug stuff.  Doing it twice shouldn't be explicitly
+> > harmful,
+> > but it's redundant, and debug kernels are slow enough as is.
+> 
+> rcu_read_lock() does:
+> >         __rcu_read_lock();
+> >         __acquire(RCU);
+> >         rcu_lock_acquire(&rcu_lock_map);
+> >         RCU_LOCKDEP_WARN(!rcu_is_watching(),
+> >                          "rcu_read_lock() used illegally while idle");
+> 
+> __acquire() is removed removed by cpp.
+> That RCU_LOCKDEP_WARN is doing the same thing as above and redundant.
+> Am I right to assume that you consider
+> 	rcu_lock_acquire(&rcu_bh_lock_map);
+> 
+> redundant because the only user of that is also checking for
+> rcu_lock_map?
 
-Sebastian
+Yes.
+
+-Scott
+
+
