@@ -2,136 +2,139 @@ Return-Path: <SRS0=0Kbd=XM=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.6 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B1348C4CEC9
-	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Sep 2019 14:24:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 05923C4CECD
+	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Sep 2019 14:36:29 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 846ED20678
-	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Sep 2019 14:24:17 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="eEZ7t9Aq"
+	by mail.kernel.org (Postfix) with ESMTP id D8E05214AF
+	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Sep 2019 14:36:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727825AbfIQOYR (ORCPT
+        id S1728392AbfIQOgY (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 17 Sep 2019 10:24:17 -0400
-Received: from mail-qk1-f196.google.com ([209.85.222.196]:41531 "EHLO
-        mail-qk1-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725922AbfIQOYQ (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 17 Sep 2019 10:24:16 -0400
-Received: by mail-qk1-f196.google.com with SMTP id p10so4174620qkg.8
-        for <linux-rt-users@vger.kernel.org>; Tue, 17 Sep 2019 07:24:15 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=Ve21N984p7LxgDJe4YyT8Y22JjZsnDiv9gIOiVokrJ4=;
-        b=eEZ7t9AqJqZMU5SDhc/7B3bWMb/g2tjbX61fUE+wm1fuT/9QRqPMJa2PyqYknJLQ6q
-         YS1SnKFR262iHhUkySgwRBddJDItCRXcGTelZHcHTf6NlD3JCb6UobMcy7knfSQgJag/
-         CWcybo3No6qI4vfHMLdoFEH95n2MhxLCWfPltRo3Ek0ODwYBf5YsBbe9JEpW7LaBqOhe
-         EQLusMq41txx1wQ/9uBfNCL6En7JAmUGsS2vehiF1mbtd+GH7Nx1XAJSZKduq3Hgs3/V
-         q+idzYFWzpvHdO+uW6MPt1pj362X5bwue09zk/jPjy/5XtKsEi//2YNzakEyjUoDVAlD
-         0BlA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
-         :mime-version:content-transfer-encoding;
-        bh=Ve21N984p7LxgDJe4YyT8Y22JjZsnDiv9gIOiVokrJ4=;
-        b=dciBStmR7EzBMC7A+IdUrI0nGw9uzLG0WxF+mlgO1lq734KHamPS5E/9/ZRdf/zVV6
-         nZvwGH+u1LU5dash7lY7fBHmsU7Omm38rFBq8f5yZ05MkdnY0dYdUVESeLw8bdyetRzp
-         bzd3AficbmSxTq6V9oMA7HDmL2dc7GnmzcsJ1jgwpShKBHcRrwiwQ9Xq1Qjj+ExzhFVZ
-         uSu4rzJoqxd0pJBVHo5Chd4kUX+eEQ9rzYPvst36h2xeKXH1sPbjSt3aE5+HhCUGmueU
-         MQ9UTZy03gDmYGxjmrZ4uEHUq+xT73xV1HNIE65H3n1F8pbUhWSMgnKYrDXy+rwe/Mjw
-         AbrQ==
-X-Gm-Message-State: APjAAAX61GBcMBXq2yntrygCWW9Cu8Nk3keFwNGRyVGEuWR5XiXWGEi3
-        NKuDdjK9cedh0H1zMSISzqyEf/UIzGE=
-X-Google-Smtp-Source: APXvYqyuiAFf7OIzEX8qPCFvO7nXM0tzd6yV7mPRLRBSuXwbbklLk5aPLrniGcMqevu228yEPybawg==
-X-Received: by 2002:ae9:ee11:: with SMTP id i17mr1625267qkg.312.1568730254667;
-        Tue, 17 Sep 2019 07:24:14 -0700 (PDT)
-Received: from planxty.redhat.com (rdwyon0600w-lp130-03-64-231-46-127.dsl.bell.ca. [64.231.46.127])
-        by smtp.gmail.com with ESMTPSA id d16sm555040qkl.7.2019.09.17.07.24.13
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 17 Sep 2019 07:24:14 -0700 (PDT)
-From:   John Kacur <jkacur@redhat.com>
-To:     rt-users <linux-rt-users@vger.kernel.org>
-Cc:     Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>,
-        Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
-Subject: [PATCH 2/5] rt-tests: cyclictest: Make tracemark work correctly again
-Date:   Tue, 17 Sep 2019 16:24:03 +0200
-Message-Id: <20190917142403.4328-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.20.1
+        Tue, 17 Sep 2019 10:36:24 -0400
+Received: from mx1.redhat.com ([209.132.183.28]:46440 "EHLO mx1.redhat.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1727202AbfIQOgY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 17 Sep 2019 10:36:24 -0400
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mx1.redhat.com (Postfix) with ESMTPS id 283433B46C;
+        Tue, 17 Sep 2019 14:36:24 +0000 (UTC)
+Received: from ovpn-117-172.phx2.redhat.com (ovpn-117-172.phx2.redhat.com [10.3.117.172])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 2821E19C4F;
+        Tue, 17 Sep 2019 14:36:23 +0000 (UTC)
+Message-ID: <26dbecfee2c02456ddfda3647df1bcd56d9cc520.camel@redhat.com>
+Subject: Re: [PATCH RT v3 5/5] rcutorture: Avoid problematic critical
+ section nesting on RT
+From:   Scott Wood <swood@redhat.com>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     Joel Fernandes <joel@joelfernandes.org>,
+        linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        "Paul E . McKenney" <paulmck@linux.ibm.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Clark Williams <williams@redhat.com>
+Date:   Tue, 17 Sep 2019 09:36:22 -0500
+In-Reply-To: <20190917100728.wnhdvmbbzzxolef4@linutronix.de>
+References: <20190911165729.11178-1-swood@redhat.com>
+         <20190911165729.11178-6-swood@redhat.com>
+         <20190912221706.GC150506@google.com>
+         <500cabaa80f250b974409ee4a4fca59bf2e24564.camel@redhat.com>
+         <20190917100728.wnhdvmbbzzxolef4@linutronix.de>
+Organization: Red Hat
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.30.5 (3.30.5-1.fc29) 
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Greylist: Sender IP whitelisted, not delayed by milter-greylist-4.5.16 (mx1.redhat.com [10.5.110.30]); Tue, 17 Sep 2019 14:36:24 +0000 (UTC)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-commit f5ccfbe4d6641e48f56152be135d901dd31cba7e
-was a little too aggressive removing ftrace code.
+On Tue, 2019-09-17 at 12:07 +0200, Sebastian Andrzej Siewior wrote:
+> On 2019-09-16 11:55:57 [-0500], Scott Wood wrote:
+> > On Thu, 2019-09-12 at 18:17 -0400, Joel Fernandes wrote:
+> > > On Wed, Sep 11, 2019 at 05:57:29PM +0100, Scott Wood wrote:
+> > > > rcutorture was generating some nesting scenarios that are not
+> > > > reasonable.  Constrain the state selection to avoid them.
+> > > > 
+> > > > Example #1:
+> > > > 
+> > > > 1. preempt_disable()
+> > > > 2. local_bh_disable()
+> > > > 3. preempt_enable()
+> > > > 4. local_bh_enable()
+> > > > 
+> > > > On PREEMPT_RT, BH disabling takes a local lock only when called in
+> > > > non-atomic context.  Thus, atomic context must be retained until
+> > > > after
+> > > > BH
+> > > > is re-enabled.  Likewise, if BH is initially disabled in non-atomic
+> > > > context, it cannot be re-enabled in atomic context.
+> > > > 
+> > > > Example #2:
+> > > > 
+> > > > 1. rcu_read_lock()
+> > > > 2. local_irq_disable()
+> > > > 3. rcu_read_unlock()
+> > > > 4. local_irq_enable()
+> > > 
+> > > If I understand correctly, these examples are not unrealistic in the
+> > > real
+> > > world unless RCU is used in the scheduler.
+> > 
+> > I hope you mean "not realistic", at least when it comes to explicit
+> > preempt/irq disabling rather than spinlock variants that don't disable
+> > preempt/irqs on PREEMPT_RT.
+> 
+> We have:
+> - local_irq_disable() (+save)
+> - spin_lock()
+> - local_bh_disable()
+> - preempt_disable()
+> 
+> On non-RT you can (but should not) use the counter part of the function
+> in random order like:
+> 	local_bh_disable();
+> 	local_irq_disable();
+> 	local_bh_enable();
+> 	local_irq_enable();
 
-We were able to remove ftrace code because this functionality is
-available using trace-cmd, in conjunction with the tracemark option in
-cyclictest. Put back the parts of tracemark needed to make this work
-correctly.
+Actually even non-RT will assert if you do local_bh_enable() with IRQs
+disabled -- but the other combinations do work, and are used some places via
+spinlocks.  If they are used via direct calls to preempt_disable() or
+local_irq_disable() (or via raw spinlocks), then that will not go away on RT
+and we'll have a problem.
 
-After this patch you can get tracing info like this as an example.
+> The non-RT will survive this. On RT the counterpart functions have to be
+> used in reverse order:
+> 	local_bh_disable();
+> 	local_irq_disable();
+> 	local_irq_enable();
+> 	local_bh_enable();
+> 
+> or the kernel will fall apart.
+> 
+> Since you _can_ use it in random order Paul wants to test that the
+> random use of those function does not break RCU in any way. Since they
+> can not be used on RT in random order it has been agreed that we keep
+> the test for !RT but disable it on RT.
 
-trace-cmd record -p function ./cyclictest -t -b100 --tracemark
+For now, yes.  Long term it would be good to keep track of when
+preemption/irqs would be disabled on RT, even when running a non-RT debug
+kernel, and assert when bad things are done with it (assuming an RT-capable
+arch).  Besides detecting these fairly unusual patterns, it could also
+detect earlier the much more common problem of nesting a non-raw spinlock
+inside a raw spinlock or other RT-atomic context.
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+-Scott
 
-Corrected a typo
-Reported-by: Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- src/cyclictest/cyclictest.c | 7 +++++++
- 1 file changed, 7 insertions(+)
-
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 52f93da7d074..72fb35da3238 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -184,6 +184,7 @@ static void trigger_update(struct thread_param *par, int diff, int64_t ts);
- 
- static int shutdown;
- static int tracelimit = 0;
-+static int trace_marker = 0;
- static int verbose = 0;
- static int oscope_reduction = 1;
- static int lockall = 0;
-@@ -400,6 +401,9 @@ static void debugfs_prepare(void)
- 
- static void enable_trace_mark(void)
- {
-+	if (!trace_marker)
-+		return;
-+
- 	debugfs_prepare();
- 	open_tracemark_fd();
- }
-@@ -1167,6 +1171,7 @@ static void process_options (int argc, char *argv[], int max_cpus)
- 			{"spike",	     required_argument, NULL, OPT_TRIGGER },
- 			{"spike-nodes",	     required_argument, NULL, OPT_TRIGGER_NODES },
- 			{"threads",          optional_argument, NULL, OPT_THREADS },
-+			{"tracemark",	     no_argument,	NULL, OPT_TRACEMARK },
- 			{"unbuffered",       no_argument,       NULL, OPT_UNBUFFERED },
- 			{"verbose",          no_argument,       NULL, OPT_VERBOSE },
- 			{"dbg_cyclictest",   no_argument,       NULL, OPT_DBGCYCLIC },
-@@ -1343,6 +1348,8 @@ static void process_options (int argc, char *argv[], int max_cpus)
- 			fatal("--smi is not available on your arch\n");
- #endif
- 			break;
-+		case OPT_TRACEMARK:
-+			trace_marker = 1; break;
- 		}
- 	}
- 
--- 
-2.20.1
 
