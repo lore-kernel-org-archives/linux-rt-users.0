@@ -2,71 +2,71 @@ Return-Path: <SRS0=0Kbd=XM=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.1 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.1 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7ABADC4CEC9
-	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Sep 2019 14:14:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ED3B4C4CECD
+	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Sep 2019 14:20:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 5020E21852
-	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Sep 2019 14:14:37 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BC9CC21881
+	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Sep 2019 14:20:24 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ASWI4Q3C"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="F5mfFobQ"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727325AbfIQOOd (ORCPT
+        id S1727673AbfIQOUY (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 17 Sep 2019 10:14:33 -0400
-Received: from mail-qk1-f194.google.com ([209.85.222.194]:35334 "EHLO
-        mail-qk1-f194.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726308AbfIQOOc (ORCPT
+        Tue, 17 Sep 2019 10:20:24 -0400
+Received: from mail-qk1-f196.google.com ([209.85.222.196]:44765 "EHLO
+        mail-qk1-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725922AbfIQOUY (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 17 Sep 2019 10:14:32 -0400
-Received: by mail-qk1-f194.google.com with SMTP id w2so4175318qkf.2;
-        Tue, 17 Sep 2019 07:14:31 -0700 (PDT)
+        Tue, 17 Sep 2019 10:20:24 -0400
+Received: by mail-qk1-f196.google.com with SMTP id i78so4116462qke.11
+        for <linux-rt-users@vger.kernel.org>; Tue, 17 Sep 2019 07:20:23 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :user-agent:mime-version;
-        bh=QSCiIQtdw+qUPAvKfQqwKrA3+KoQs7hg9t8yi5+zFjw=;
-        b=ASWI4Q3CUvxYI/rpGXBkKaupvndARiKMb2R6QxzoUfYSQ52zTWv5Kqc1HImsQlGhyr
-         rzUv/1n9GOuddeHOwooJCt45nGT+m2ObQVLpWEY1QQrESWU18K8WX5NH8Byh5KOY06Xn
-         IvCl4nFGCmTBAD3OykmorAC8wGoMjmqB1zbF1+/A2UInP8OXWZaOWQEqDqVGEwgLK968
-         xoiH9g48DX4PeSg+z0t/+nEgWAqpPOi44rckBXowCYcNFraln0B4Szb3/TlPqiPWkKU5
-         zm2pZIcyahWEKkqtzi+aGVdRUoX2Sxbv+g6MxCi+B7OXiVZsNltJLU5K5USxau8u7Sk6
-         CdHA==
+        bh=CKsos+SVsdRFYhHaAEGOrJmisnhcAr+qNMtqjH5zvx0=;
+        b=F5mfFobQXDr12xux94S5VB/zCpROovuIk9sr7kURY26wypswiRcrMILitaSr5oVw2u
+         RUh0IAxAoWBu+vJtC5oJD52qLIwrefxXTTc/MQFNf012++NqeFHF8P+wQflqcwprob3Z
+         EBhm/qavqSNy4+BAtGP8O12DU8fnz258oiFPa4/uRxvSBm2PgGZNWh6PiLV0yP3SLJXQ
+         U1u0KOEcREgB/0QnFuYLrCkHiq7Z8JL+ezBo01syigkv1sfX1NZ4q56Ckm+4qckHW33k
+         K989CwoaYyY+/t6ezL6DktRxGr1K21LlDuqhSOWOS/tzizzVIV0amrEuHHhx5wdVIHZp
+         uGHg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:user-agent:mime-version;
-        bh=QSCiIQtdw+qUPAvKfQqwKrA3+KoQs7hg9t8yi5+zFjw=;
-        b=ixTi0T+h3nsNMKa5kCVlJbZlf24md8krb91hhcHm4VuHwGynhsni1Le8AD3cFpaDZ3
-         8NgTHR2+xvMaRIjxsh2IZSLFXBtGKGh3otTWWBY5Lnzh6wjZsKI/eteXwHzzFVVYWIN/
-         sOcJm+CnmZZc52pXm5otVE2AhdKbX/7q8xTKR2/+pQY+V5M57e2ClqRjlUCcpydJCegz
-         x0eUx5jBj9rCokdWXCwiI9amgbR5q2foptjA/d2s+gQen58VCePSq1rjqVT36HCUGgiO
-         Hcsl4cC4Zu6PbWnn+fbGYcWwEhj1mZQX9NJKx1NlQTQfnYTJ54xfcBSGbHaHWtAE7eQL
-         AYpA==
-X-Gm-Message-State: APjAAAX0b/1lSTpafY2CKLqLnOotjcQIIGiwyhKaYyX68v24J26F9HVl
-        3YQBrSCRRLdCVA+NFqb53Gow58mHkJfIPA==
-X-Google-Smtp-Source: APXvYqyxTuQp3XVsYoB4NNFKSASJ6kU6iUeBF/q+3WtENKOKTZpWfvLfImN4GXB8VBFRkCttpRhVtw==
-X-Received: by 2002:a37:7ac1:: with SMTP id v184mr4069319qkc.129.1568729670950;
-        Tue, 17 Sep 2019 07:14:30 -0700 (PDT)
+        bh=CKsos+SVsdRFYhHaAEGOrJmisnhcAr+qNMtqjH5zvx0=;
+        b=tUicdUTzQoaMWCnaVAGYNtdJc83CRqTzHjJirZ3Ve4zPS9FjtrfxsjvKVtrje2+wi2
+         +wWv/xIj1loYAQ/Nm1eFYU6wYyozFf1zldF/VmR4T1pypSEZQA96xxvasxYpsxR0CSG2
+         ygfI6Om9Hk8pnsw5PMmP9mQRl8vipG9wyo5CLFbAeDX2ClDsWCCl4Awow/s40EUnZ0S6
+         lvoQLOoiBu+DLtP+rqnod6EeHx9E2Ne0eVIl5arabPFjraTrolAIIJvMiQk49FKIt6iI
+         Kay7sVfzahlzON3yGjsRNQQxKR874etz0h/Vgfn6md3uBFtnlZLYSqTH3rTXGluXSRaP
+         Ytfg==
+X-Gm-Message-State: APjAAAUD/ze6SgJvmyNYdzGYzQFIFUQj7N6NQIqtCvQH38WOAL3uO1qD
+        a0Gg6Jj64sJENYVpew6wS+M=
+X-Google-Smtp-Source: APXvYqxmHQKpDsXpNtuwXnFR3f1zJx5ERUCkMjnm9/Y90VbVGA6BGK9E8Oyz0O+iMz7bBtJQxfFxDA==
+X-Received: by 2002:a05:620a:1252:: with SMTP id a18mr4136521qkl.88.1568730023217;
+        Tue, 17 Sep 2019 07:20:23 -0700 (PDT)
 Received: from planxty (rdwyon0600w-lp130-03-64-231-46-127.dsl.bell.ca. [64.231.46.127])
-        by smtp.gmail.com with ESMTPSA id z200sm1353932qkb.5.2019.09.17.07.14.29
+        by smtp.gmail.com with ESMTPSA id q5sm1548858qte.38.2019.09.17.07.20.22
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 17 Sep 2019 07:14:30 -0700 (PDT)
-Date:   Tue, 17 Sep 2019 16:14:29 +0200 (CEST)
+        Tue, 17 Sep 2019 07:20:22 -0700 (PDT)
+Date:   Tue, 17 Sep 2019 16:20:21 +0200 (CEST)
 From:   John Kacur <jkacur@redhat.com>
 X-X-Sender: jkacur@planxty
-To:     Sultan Alsawaf <sultan@kerneltoast.com>
-cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        sebastian@breakpoint.cc, tglx@linutronix.de, rostedt@goodmis.org
-Subject: Re: [PATCH] rt-tests: backfire: Don't include asm/uaccess.h
- directly
-In-Reply-To: <20190917071546.GA27627@sultan-box>
-Message-ID: <alpine.LFD.2.21.1909171613150.3853@planxty>
-References: <20190903191321.6762-1-sultan@kerneltoast.com> <alpine.LFD.2.21.1909162356500.10273@planxty> <20190917071546.GA27627@sultan-box>
+To:     Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
+cc:     rt-users <linux-rt-users@vger.kernel.org>,
+        Clark Williams <williams@redhat.com>
+Subject: Re: [PATCH 2/4] rt-tests: cyclictest: Make tracemark work correctly
+ again
+In-Reply-To: <20190917072125.GA2613@linutronix.de>
+Message-ID: <alpine.LFD.2.21.1909171619460.3853@planxty>
+References: <20190916215111.10193-1-jkacur@redhat.com> <20190916215111.10193-2-jkacur@redhat.com> <20190917072125.GA2613@linutronix.de>
 User-Agent: Alpine 2.21 (LFD 202 2017-01-01)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
@@ -77,34 +77,45 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 
 
-On Tue, 17 Sep 2019, Sultan Alsawaf wrote:
+On Tue, 17 Sep 2019, Kurt Kanzenbach wrote:
 
-> On Mon, Sep 16, 2019 at 11:57:32PM +0200, John Kacur wrote:
+> Hi John,
+> 
+> On Mon, Sep 16, 2019 at 11:51:09PM +0200, John Kacur wrote:
+> > commit f5ccfbe4d6641e48f56152be135d901dd31cba7e
+> > was a little too aggressive removing ftrace code.
+> >
+> > We were able to remove ftrace code because this functionality is
+> > available using trace-cmd, in conjunction with the tracemark option in
+> > cyclictest. Put back the parts of tracemark needed to make this work
+> > correctly.
+> >
+> > After this patch you can get tracing info like this as an example.
+> >
+> > trace-cmd record -p function ./cyclictest -t -b100 --tracemark
+> >
 > > Signed-off-by: John Kacur <jkacur@redhat.com>
-> > But please in the future
-> > 1. Don't cc lkml on this
-> > 2. Include the maintainers in your patch
+> > ---
+> >  src/cyclictest/cyclictest.c | 7 +++++++
+> >  1 file changed, 7 insertions(+)
+> >
+> > diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> > index 52f93da7d074..45b6041ec1c9 100644
+> > --- a/src/cyclictest/cyclictest.c
+> > +++ b/src/cyclictest/cyclictest.c
+> > @@ -184,6 +184,7 @@ static void trigger_update(struct thread_param *par, int diff, int64_t ts);
+> >
+> >  static int shutdown;
+> >  static int tracelimit = 0;
+> > +static int trace_marker = 9;
 > 
-> Hi,
-> 
-> Thanks for the sign-off. I was following the instructions listed here:
-> https://wiki.linuxfoundation.org/realtime/communication/send_rt_patches
-
-Those are the instructions for rt kernel code.
-rt-tests is a users space program to test the performance of the rt 
-kernel.
-
-Always just check if there is a MAINTAINERS file (there is)
-when you clone the git repo.
-
-Thanks
-
-John
-
-> 
-> I couldn't find any documentation of how to send patches for rt-tests. Is there
-> a different set of patch submission instructions on a wiki somewhere I missed?
+> Shouldn't this be 'static int trace_marker = 0'? Otherwise it's always set.
 > 
 > Thanks,
-> Sultan
+> Kurt
 > 
+
+I left my computer glasses in Germany - no seriously I did!
+Thanks for spotting that, respinning the patch
+
+John
