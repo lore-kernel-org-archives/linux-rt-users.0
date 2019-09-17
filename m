@@ -2,104 +2,77 @@ Return-Path: <SRS0=0Kbd=XM=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7A172C4CEC9
-	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Sep 2019 10:28:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 85282C4CECD
+	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Sep 2019 10:52:39 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 5A237214AF
-	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Sep 2019 10:28:46 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6217721670
+	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Sep 2019 10:52:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727968AbfIQK2n (ORCPT
+        id S1726891AbfIQKwj convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 17 Sep 2019 06:28:43 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:41214 "EHLO
+        Tue, 17 Sep 2019 06:52:39 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:41327 "EHLO
         Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725866AbfIQK2n (ORCPT
+        with ESMTP id S1725270AbfIQKwi (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 17 Sep 2019 06:28:43 -0400
-Received: from [5.158.153.52] (helo=linutronix.de)
-        by Galois.linutronix.de with esmtpsa (TLS1.2:RSA_AES_256_CBC_SHA1:256)
-        (Exim 4.80)
-        (envelope-from <kurt.kanzenbach@linutronix.de>)
-        id 1iAAit-0001sO-Mh; Tue, 17 Sep 2019 12:28:39 +0200
-Date:   Tue, 17 Sep 2019 12:28:39 +0200
-From:   Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
-To:     Sultan Alsawaf <sultan@kerneltoast.com>
-Cc:     John Kacur <jkacur@redhat.com>, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org, sebastian@breakpoint.cc,
-        tglx@linutronix.de, rostedt@goodmis.org
-Subject: Re: [PATCH] rt-tests: backfire: Don't include asm/uaccess.h directly
-Message-ID: <20190917102839.GC7439@linutronix.de>
-References: <20190903191321.6762-1-sultan@kerneltoast.com>
- <alpine.LFD.2.21.1909162356500.10273@planxty>
- <20190917071546.GA27627@sultan-box>
+        Tue, 17 Sep 2019 06:52:38 -0400
+Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
+        (envelope-from <bigeasy@linutronix.de>)
+        id 1iAB64-0002Xk-Ty; Tue, 17 Sep 2019 12:52:36 +0200
+Date:   Tue, 17 Sep 2019 12:52:36 +0200
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Martin.Wirth@dlr.de
+Cc:     linux-rt-users@vger.kernel.org
+Subject: Re: Long latencies during disk-io
+Message-ID: <20190917105236.yf5btniiq4bjhimo@linutronix.de>
+References: <1A2AF5F768264E479963C4D8C015EB696C50C6BB@DLDEFFMIMP02EXC.intra.dlr.de>
+ <20190905154115.mnid6rue65x6vvt6@linutronix.de>
+ <1A2AF5F768264E479963C4D8C015EB696C51159F@DLDEFFMIMP02EXC.intra.dlr.de>
+ <CABsbf=EsGK0-teWZ7vGuKS=edz+uCoxcd6KdoU5Cf_2gdeEhtg@mail.gmail.com>
+ <1A2AF5F768264E479963C4D8C015EB696C515541@DLDEFFMIMP02EXC.intra.dlr.de>
+ <20190913133655.2pbhnxm5ndcje3bk@linutronix.de>
+ <1A2AF5F768264E479963C4D8C015EB696C51C1F1@DLDEFFMIMP02EXC.intra.dlr.de>
+ <20190913150645.nqt4ekv466yby2a4@linutronix.de>
+ <1A2AF5F768264E479963C4D8C015EB696C520504@DLDEFFMIMP02EXC.intra.dlr.de>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-        protocol="application/pgp-signature"; boundary="2/5bycvrmDh4d1IB"
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20190917071546.GA27627@sultan-box>
-User-Agent: Mutt/1.10.1 (2018-07-13)
+Content-Transfer-Encoding: 8BIT
+In-Reply-To: <1A2AF5F768264E479963C4D8C015EB696C520504@DLDEFFMIMP02EXC.intra.dlr.de>
+User-Agent: NeoMutt/20180716
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+On 2019-09-16 11:30:30 [+0000], Martin.Wirth@dlr.de wrote:
+> Hi Sebastian,
+Hi Martin,
 
---2/5bycvrmDh4d1IB
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+> But in general I find it not very transparent that with the latest changes softirq work can block
+> higher priority irq threads for several ms or maybe even longer and nothing can be done 
+> against it with normal RT control-knobs, but a change to the driver code is required.
+> Isn't there an automatic way to decide, when it is possible to convert a request_irq to a 
+> request_threaded_irq? 
 
-Hi,
+If something is automatically converted then we need to disable the
+softirq while invoking the handler. This was also the case before
+force-threading and the interrupt thread may assume such behaviour. If
+you explicitly request a threaded IRQ then there is no such need because
+the handler knows what it does and should disable softirq on its own if
+needed.
+Due to the softirq rework we can't have multiple softirqs vectors
+running in parallel _or_ have multiple local_bh_disable() section which
+are executed in parallel on the same CPU. This made the softirq code not
+only simpler but also allowed us to remove a little bit duct tape from
+places which were expecting this kind of behaviour.
+In the long term we need to figure out if we want to go down that road
+again and if so we need to figure out how to avoid that duct tape…
 
-On Tue, Sep 17, 2019 at 09:15:46AM +0200, Sultan Alsawaf wrote:
-> On Mon, Sep 16, 2019 at 11:57:32PM +0200, John Kacur wrote:
-> > Signed-off-by: John Kacur <jkacur@redhat.com>
-> > But please in the future
-> > 1. Don't cc lkml on this
-> > 2. Include the maintainers in your patch
->
-> Hi,
->
-> Thanks for the sign-off. I was following the instructions listed here:
-> https://wiki.linuxfoundation.org/realtime/communication/send_rt_patches
+> Martin
 
-I guess, that's for rt kernel patches.
-
->
-> I couldn't find any documentation of how to send patches for
-> rt-tests. Is there a different set of patch submission instructions on
-> a wiki somewhere I missed?
-
-For rt-tests see the top level MAINTAINERS file on how to send patches.
-
->
-> Thanks,
-> Sultan
-
-Thanks,
-Kurt
-
---2/5bycvrmDh4d1IB
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAABCgAdFiEEooWgvezyxHPhdEojeSpbgcuY8KYFAl2AtVYACgkQeSpbgcuY
-8KbjgRAAqIGAUDYtUX57F1jbDojgEUgq1z5DDSLezvupLgkRKia+vBqIzmjkKOYp
-bPtsSwx/RfjF4XRhxZ/x9oD5Ven+Ph0zEhfpsZSGZ7W6+/tWTHqz6yBFzg5glOgr
-xJRmAgPmeDmFGgaTCgLg0G5iEfBkYmHXVtN2h1ql36lvf1Ugk97jagUL0xKEo3CX
-m5DawfgMFDhvw8jbI2qUmhzWsdkKlgVxn3CF+nlNfnefejOtpTWivLCXhPBLNToO
-+PCej6YOx+8iLKWFfBQiA4/PYUPxefT+tjRnLgIFA3+HyM0ZFZuRReyOVYTSQE8a
-eBRSyfsz3aC6Y1TmAxFQGM9D+Zn/7sfIdnxuRXGwPXdCQ/Rh8Y//iSY3Nz4RmD8t
-UdICtELEket5bvzj7LerCjvqLjbFe0InWG7IjPXFYX6U1EfHhVOZU5C6zO3x9XrY
-R2h1dhnmkjoKquiOUQ09uOVWIUxOEmq+rMLCH+GYFIBWLMby4idnpb7ajXOCOW/I
-EIROSO+YN+GMWFX5XvDIJno0ppewWrtUuK+/gre1HZRBm7JcEGa85QMTvslhQw4E
-14B2Co3eFb1hzrjSSBt4Iovcjz2fxTnAkRrKTPYmP8s+oy0L85dA7PhnDLnwy1wS
-9PXfStGegz3NR14rOsT5KRt/5AXUz//tWm24Jj0UCm5izWfgDio=
-=BQxl
------END PGP SIGNATURE-----
-
---2/5bycvrmDh4d1IB--
+Sebastian
