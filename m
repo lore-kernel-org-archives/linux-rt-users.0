@@ -2,99 +2,141 @@ Return-Path: <SRS0=SCW0=XO=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.6 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E334BC3A5A6
-	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Sep 2019 18:31:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 52FB2C4CEC4
+	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Sep 2019 23:24:23 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id AAA7021924
-	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Sep 2019 18:31:26 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="M/9UYa/1"
+	by mail.kernel.org (Postfix) with ESMTP id 3343121D6C
+	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Sep 2019 23:24:23 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2391518AbfISSb0 (ORCPT
+        id S2405798AbfISXYB (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 19 Sep 2019 14:31:26 -0400
-Received: from mail-qt1-f180.google.com ([209.85.160.180]:41328 "EHLO
-        mail-qt1-f180.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1731022AbfISSb0 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 19 Sep 2019 14:31:26 -0400
-Received: by mail-qt1-f180.google.com with SMTP id x4so5472102qtq.8
-        for <linux-rt-users@vger.kernel.org>; Thu, 19 Sep 2019 11:31:25 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=e3M3wsO+l0xWUAzZPIQnuosYctgJjk93533h/4BGoXQ=;
-        b=M/9UYa/19pj55Pb5KuVWnXZMZDkmMAWnRjuKN2R1DrufP29Xjv/lInA9O5eYwkeTp+
-         ue39eL/yOLRH1UCTVKPBZNgeiGncRCGJfRs3v597w6qUxa0sqSwF9Ki60k4lZhxUNWz4
-         0te47HYPFobM/18kusYXq4a0JNfOWKj39DVjT1pcKiV+gG70wSXu9FyKkY+5f+16jJjW
-         P471GvEm0nP5W9wbYylpBjwTpchu3+9RhNcLlX5qaULzLNDY/GIxkysd4zuUnJLwTwXa
-         Do1DEquGNJwm2eUiHuOpszRwa55u2c2K+hmP4rt9qWCbQ2RrNbqJ0YwVP+ZSytpyxU0R
-         gr3A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
-         :mime-version:content-transfer-encoding;
-        bh=e3M3wsO+l0xWUAzZPIQnuosYctgJjk93533h/4BGoXQ=;
-        b=mjTWdYAbnJC3g6XoOfCdQ/nUtyF0wysWXWK83Fr70FI6DEmeq9mx627VIAJNpgib6k
-         kZ8Rhsx5zsT32bSJS49q+Y2y4yRnF9mdrYFIrrRBMNyLUOceDwAvxDxL/3YGrljUznrq
-         Obpad6aEh5gc52VwAsy90ywsHZoyKFJUGwdu/5OpWmD86jNNa+UHcqyiefyzLEXRMja3
-         yYjfcTIbici1w2g6aWQrEIh5ylXfydJDHwzvkWOrkZUkIUynpeJsxC7HsNNV4PcgTm2r
-         cjtWIY2lbfNDrG7eFqVsmTL/pCXp3XVP2MsviZ7ouWjFd1+z+0iJ+XPZfjHLjALeZZHr
-         aNnw==
-X-Gm-Message-State: APjAAAUlgAJkD2cmg1pXLlHbE6iuanNS8wad4kypujhVsCxqKHnII6oH
-        g53O6ozrw+ztqflw0V6dMtf4Q4esyWg=
-X-Google-Smtp-Source: APXvYqwS+s57k9voicpp92xPBDEpXXdKGgVEqxmg2b0zcau+rS7SfTRoWtynAIVhqttWRtOpYCYDkA==
-X-Received: by 2002:ad4:4708:: with SMTP id k8mr8907935qvz.219.1568917884346;
-        Thu, 19 Sep 2019 11:31:24 -0700 (PDT)
-Received: from planxty.redhat.com (rdwyon0600w-lp130-03-64-231-46-127.dsl.bell.ca. [64.231.46.127])
-        by smtp.gmail.com with ESMTPSA id u186sm4841516qkh.120.2019.09.19.11.31.23
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 19 Sep 2019 11:31:23 -0700 (PDT)
-From:   John Kacur <jkacur@redhat.com>
-To:     rt-users <linux-rt-users@vger.kernel.org>
-Cc:     Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>
-Subject: [PATCH] rt-tests: cyclictest: Assume libnuma version 2 by default
-Date:   Thu, 19 Sep 2019 20:31:14 +0200
-Message-Id: <20190919183114.11569-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.20.1
+        Thu, 19 Sep 2019 19:24:01 -0400
+Received: from mail.kernel.org ([198.145.29.99]:35622 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S2405474AbfISXYB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 19 Sep 2019 19:24:01 -0400
+Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id C0FF6217D6;
+        Thu, 19 Sep 2019 23:24:00 +0000 (UTC)
+Received: from rostedt by gandalf.local.home with local (Exim 4.92)
+        (envelope-from <rostedt@goodmis.org>)
+        id 1iB5mJ-0000g7-UD; Thu, 19 Sep 2019 19:23:59 -0400
+Message-Id: <20190919232359.825502403@goodmis.org>
+User-Agent: quilt/0.65
+Date:   Thu, 19 Sep 2019 19:23:16 -0400
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     linux-kernel@vger.kernel.org
+Cc:     Ingo Molnar <mingo@kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Linux Trace Devel <linux-trace-devel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        stable@vger.kernel.org, Tom Zanussi <zanussi@kernel.org>
+Subject: [for-next][PATCH 3/8] tracing: Make sure variable reference alias has correct var_ref_idx
+References: <20190919232313.198902049@goodmis.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=ISO-8859-15
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Most distributions have used libnuma version 2 for awhile now, so make
-it the default.
+From: Tom Zanussi <zanussi@kernel.org>
 
-This doesn't prevent people from defining it as version 1, or compiling
-without numa.
+Original changelog from Steve Rostedt (except last sentence which
+explains the problem, and the Fixes: tag):
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+I performed a three way histogram with the following commands:
+
+echo 'irq_lat u64 lat pid_t pid' > synthetic_events
+echo 'wake_lat u64 lat u64 irqlat pid_t pid' >> synthetic_events
+echo 'hist:keys=common_pid:irqts=common_timestamp.usecs if function == 0xffffffff81200580' > events/timer/hrtimer_start/trigger
+echo 'hist:keys=common_pid:lat=common_timestamp.usecs-$irqts:onmatch(timer.hrtimer_start).irq_lat($lat,pid) if common_flags & 1' > events/sched/sched_waking/trigger
+echo 'hist:keys=pid:wakets=common_timestamp.usecs,irqlat=lat' > events/synthetic/irq_lat/trigger
+echo 'hist:keys=next_pid:lat=common_timestamp.usecs-$wakets,irqlat=$irqlat:onmatch(synthetic.irq_lat).wake_lat($lat,$irqlat,next_pid)' > events/sched/sched_switch/trigger
+echo 1 > events/synthetic/wake_lat/enable
+
+Basically I wanted to see:
+
+ hrtimer_start (calling function tick_sched_timer)
+
+Note:
+
+  # grep tick_sched_timer /proc/kallsyms
+ffffffff81200580 t tick_sched_timer
+
+And save the time of that, and then record sched_waking if it is called
+in interrupt context and with the same pid as the hrtimer_start, it
+will record the latency between that and the waking event.
+
+I then look at when the task that is woken is scheduled in, and record
+the latency between the wakeup and the task running.
+
+At the end, the wake_lat synthetic event will show the wakeup to
+scheduled latency, as well as the irq latency in from hritmer_start to
+the wakeup. The problem is that I found this:
+
+          <idle>-0     [007] d...   190.485261: wake_lat: lat=27 irqlat=190485230 pid=698
+          <idle>-0     [005] d...   190.485283: wake_lat: lat=40 irqlat=190485239 pid=10
+          <idle>-0     [002] d...   190.488327: wake_lat: lat=56 irqlat=190488266 pid=335
+          <idle>-0     [005] d...   190.489330: wake_lat: lat=64 irqlat=190489262 pid=10
+          <idle>-0     [003] d...   190.490312: wake_lat: lat=43 irqlat=190490265 pid=77
+          <idle>-0     [005] d...   190.493322: wake_lat: lat=54 irqlat=190493262 pid=10
+          <idle>-0     [005] d...   190.497305: wake_lat: lat=35 irqlat=190497267 pid=10
+          <idle>-0     [005] d...   190.501319: wake_lat: lat=50 irqlat=190501264 pid=10
+
+The irqlat seemed quite large! Investigating this further, if I had
+enabled the irq_lat synthetic event, I noticed this:
+
+          <idle>-0     [002] d.s.   249.429308: irq_lat: lat=164968 pid=335
+          <idle>-0     [002] d...   249.429369: wake_lat: lat=55 irqlat=249429308 pid=335
+
+Notice that the timestamp of the irq_lat "249.429308" is awfully
+similar to the reported irqlat variable. In fact, all instances were
+like this. It appeared that:
+
+  irqlat=$irqlat
+
+Wasn't assigning the old $irqlat to the new irqlat variable, but
+instead was assigning the $irqts to it.
+
+The issue is that assigning the old $irqlat to the new irqlat variable
+creates a variable reference alias, but the alias creation code
+forgets to make sure the alias uses the same var_ref_idx to access the
+reference.
+
+Link: http://lkml.kernel.org/r/1567375321.5282.12.camel@kernel.org
+
+Cc: Linux Trace Devel <linux-trace-devel@vger.kernel.org>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: stable@vger.kernel.org
+Fixes: 7e8b88a30b085 ("tracing: Add hist trigger support for variable reference aliases")
+Reported-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+Signed-off-by: Tom Zanussi <zanussi@kernel.org>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- src/cyclictest/rt_numa.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kernel/trace/trace_events_hist.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/src/cyclictest/rt_numa.h b/src/cyclictest/rt_numa.h
-index e0f4b2e9d8b2..7adeb3c01324 100644
---- a/src/cyclictest/rt_numa.h
-+++ b/src/cyclictest/rt_numa.h
-@@ -29,7 +29,7 @@ static int numa = 0;
- #include <numa.h>
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 3a6e42aa08e6..9468bd8d44a2 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -2804,6 +2804,8 @@ static struct hist_field *create_alias(struct hist_trigger_data *hist_data,
+ 		return NULL;
+ 	}
  
- #ifndef LIBNUMA_API_VERSION
--#define LIBNUMA_API_VERSION 1
-+#define LIBNUMA_API_VERSION 2
- #endif
++	alias->var_ref_idx = var_ref->var_ref_idx;
++
+ 	return alias;
+ }
  
- static void *
 -- 
 2.20.1
+
 
