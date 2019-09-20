@@ -6,30 +6,30 @@ X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3BF60C3A5A2
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DC9DDC4CEC9
 	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Sep 2019 21:56:46 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 1448A218AE
+	by mail.kernel.org (Postfix) with ESMTP id AD41D21907
 	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Sep 2019 21:56:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730593AbfITV4i (ORCPT
+        id S1730582AbfITV4i (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
         Fri, 20 Sep 2019 17:56:38 -0400
-Received: from mail.kernel.org ([198.145.29.99]:47104 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.99]:47018 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1730488AbfITV4Y (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S1730461AbfITV4Y (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 20 Sep 2019 17:56:24 -0400
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 5C3822184C;
-        Fri, 20 Sep 2019 21:56:23 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id A558E20C01;
+        Fri, 20 Sep 2019 21:56:22 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.92)
         (envelope-from <rostedt@goodmis.org>)
-        id 1iBQt4-0005Jp-FK; Fri, 20 Sep 2019 17:56:22 -0400
-Message-Id: <20190920215622.351085938@goodmis.org>
+        id 1iBQt3-0005IN-SB; Fri, 20 Sep 2019 17:56:21 -0400
+Message-Id: <20190920215621.753333463@goodmis.org>
 User-Agent: quilt/0.65
-Date:   Fri, 20 Sep 2019 17:53:17 -0400
+Date:   Fri, 20 Sep 2019 17:53:14 -0400
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -40,8 +40,7 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         Paul Gortmaker <paul.gortmaker@windriver.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <wagi@monom.org>, tom.zanussi@linux.intel.com
-Subject: [RFC][PATCH RT 6/7] block: blk-mq: move blk_queue_usage_counter_release() into process
- context
+Subject: [RFC][PATCH RT 3/7] revert-thermal
 References: <20190920215311.165260719@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -50,111 +49,118 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-[ Upstream commit 61c928ecf4fe200bda9b49a0813b5ba0f43995b5 ]
+Revert: thermal: Defer thermal wakups to threads
 
-| BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:914
-| in_atomic(): 1, irqs_disabled(): 0, pid: 255, name: kworker/u257:6
-| 5 locks held by kworker/u257:6/255:
-|  #0:  ("events_unbound"){.+.+.+}, at: [<ffffffff8108edf1>] process_one_work+0x171/0x5e0
-|  #1:  ((&entry->work)){+.+.+.}, at: [<ffffffff8108edf1>] process_one_work+0x171/0x5e0
-|  #2:  (&shost->scan_mutex){+.+.+.}, at: [<ffffffffa000faa3>] __scsi_add_device+0xa3/0x130 [scsi_mod]
-|  #3:  (&set->tag_list_lock){+.+...}, at: [<ffffffff812f09fa>] blk_mq_init_queue+0x96a/0xa50
-|  #4:  (rcu_read_lock_sched){......}, at: [<ffffffff8132887d>] percpu_ref_kill_and_confirm+0x1d/0x120
-| Preemption disabled at:[<ffffffff812eff76>] blk_mq_freeze_queue_start+0x56/0x70
-|
-| CPU: 2 PID: 255 Comm: kworker/u257:6 Not tainted 3.18.7-rt0+ #1
-| Workqueue: events_unbound async_run_entry_fn
-|  0000000000000003 ffff8800bc29f998 ffffffff815b3a12 0000000000000000
-|  0000000000000000 ffff8800bc29f9b8 ffffffff8109aa16 ffff8800bc29fa28
-|  ffff8800bc5d1bc8 ffff8800bc29f9e8 ffffffff815b8dd4 ffff880000000000
-| Call Trace:
-|  [<ffffffff815b3a12>] dump_stack+0x4f/0x7c
-|  [<ffffffff8109aa16>] __might_sleep+0x116/0x190
-|  [<ffffffff815b8dd4>] rt_spin_lock+0x24/0x60
-|  [<ffffffff810b6089>] __wake_up+0x29/0x60
-|  [<ffffffff812ee06e>] blk_mq_usage_counter_release+0x1e/0x20
-|  [<ffffffff81328966>] percpu_ref_kill_and_confirm+0x106/0x120
-|  [<ffffffff812eff76>] blk_mq_freeze_queue_start+0x56/0x70
-|  [<ffffffff812f0000>] blk_mq_update_tag_set_depth+0x40/0xd0
-|  [<ffffffff812f0a1c>] blk_mq_init_queue+0x98c/0xa50
-|  [<ffffffffa000dcf0>] scsi_mq_alloc_queue+0x20/0x60 [scsi_mod]
-|  [<ffffffffa000ea35>] scsi_alloc_sdev+0x2f5/0x370 [scsi_mod]
-|  [<ffffffffa000f494>] scsi_probe_and_add_lun+0x9e4/0xdd0 [scsi_mod]
-|  [<ffffffffa000fb26>] __scsi_add_device+0x126/0x130 [scsi_mod]
-|  [<ffffffffa013033f>] ata_scsi_scan_host+0xaf/0x200 [libata]
-|  [<ffffffffa012b5b6>] async_port_probe+0x46/0x60 [libata]
-|  [<ffffffff810978fb>] async_run_entry_fn+0x3b/0xf0
-|  [<ffffffff8108ee81>] process_one_work+0x201/0x5e0
-
-percpu_ref_kill_and_confirm() invokes blk_mq_usage_counter_release() in
-a rcu-sched region. swait based wake queue can't be used due to
-wake_up_all() usage and disabled interrupts in !RT configs (as reported
-by Corey Minyard).
-The wq_has_sleeper() check has been suggested by Peter Zijlstra.
-
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- block/blk-core.c       | 12 +++++++++++-
- include/linux/blkdev.h |  2 ++
- 2 files changed, 13 insertions(+), 1 deletion(-)
+ drivers/thermal/x86_pkg_temp_thermal.c | 52 ++------------------------
+ 1 file changed, 3 insertions(+), 49 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 3f08d6fd0787..8d4c5d69c5c4 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -969,12 +969,21 @@ void blk_queue_exit(struct request_queue *q)
- 	percpu_ref_put(&q->q_usage_counter);
+diff --git a/drivers/thermal/x86_pkg_temp_thermal.c b/drivers/thermal/x86_pkg_temp_thermal.c
+index a5991cbb408f..1ef937d799e4 100644
+--- a/drivers/thermal/x86_pkg_temp_thermal.c
++++ b/drivers/thermal/x86_pkg_temp_thermal.c
+@@ -29,7 +29,6 @@
+ #include <linux/pm.h>
+ #include <linux/thermal.h>
+ #include <linux/debugfs.h>
+-#include <linux/swork.h>
+ #include <asm/cpu_device_id.h>
+ #include <asm/mce.h>
+ 
+@@ -330,7 +329,7 @@ static void pkg_thermal_schedule_work(int cpu, struct delayed_work *work)
+ 	schedule_delayed_work_on(cpu, work, ms);
  }
  
-+static void blk_queue_usage_counter_release_wrk(struct kthread_work *work)
-+{
-+	struct request_queue *q =
-+		container_of(work, struct request_queue, mq_pcpu_wake);
-+
-+	wake_up_all(&q->mq_freeze_wq);
-+}
-+
- static void blk_queue_usage_counter_release(struct percpu_ref *ref)
+-static void pkg_thermal_notify_work(struct swork_event *event)
++static int pkg_thermal_notify(u64 msr_val)
  {
- 	struct request_queue *q =
- 		container_of(ref, struct request_queue, q_usage_counter);
+ 	int cpu = smp_processor_id();
+ 	struct pkg_device *pkgdev;
+@@ -349,47 +348,9 @@ static void pkg_thermal_notify_work(struct swork_event *event)
+ 	}
  
--	wake_up_all(&q->mq_freeze_wq);
-+	if (wq_has_sleeper(&q->mq_freeze_wq))
-+		kthread_schedule_work(&q->mq_pcpu_wake);
+ 	spin_unlock_irqrestore(&pkg_temp_lock, flags);
+-}
+-
+-#ifdef CONFIG_PREEMPT_RT_FULL
+-static struct swork_event notify_work;
+-
+-static int pkg_thermal_notify_work_init(void)
+-{
+-	int err;
+-
+-	err = swork_get();
+-	if (err)
+-		return err;
+-
+-	INIT_SWORK(&notify_work, pkg_thermal_notify_work);
+ 	return 0;
  }
  
- static void blk_rq_timed_out_timer(struct timer_list *t)
-@@ -1071,6 +1080,7 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id,
- 	queue_flag_set_unlocked(QUEUE_FLAG_BYPASS, q);
+-static void pkg_thermal_notify_work_cleanup(void)
+-{
+-	swork_put();
+-}
+-
+-static int pkg_thermal_notify(u64 msr_val)
+-{
+-	swork_queue(&notify_work);
+-	return 0;
+-}
+-
+-#else  /* !CONFIG_PREEMPT_RT_FULL */
+-
+-static int pkg_thermal_notify_work_init(void) { return 0; }
+-
+-static void pkg_thermal_notify_work_cleanup(void) {  }
+-
+-static int pkg_thermal_notify(u64 msr_val)
+-{
+-	pkg_thermal_notify_work(NULL);
+-	return 0;
+-}
+-#endif /* CONFIG_PREEMPT_RT_FULL */
+-
+ static int pkg_temp_thermal_device_add(unsigned int cpu)
+ {
+ 	int pkgid = topology_logical_package_id(cpu);
+@@ -554,16 +515,11 @@ static int __init pkg_temp_thermal_init(void)
+ 	if (!x86_match_cpu(pkg_temp_thermal_ids))
+ 		return -ENODEV;
  
- 	init_waitqueue_head(&q->mq_freeze_wq);
-+	kthread_init_work(&q->mq_pcpu_wake, blk_queue_usage_counter_release_wrk);
+-	if (!pkg_thermal_notify_work_init())
+-		return -ENODEV;
+-
+ 	max_packages = topology_max_packages();
+ 	packages = kcalloc(max_packages, sizeof(struct pkg_device *),
+ 			   GFP_KERNEL);
+-	if (!packages) {
+-		ret = -ENOMEM;
+-		goto err;
+-	}
++	if (!packages)
++		return -ENOMEM;
  
- 	/*
- 	 * Init percpu_ref in atomic mode so that it's faster to shutdown.
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index f1960add94df..15a489abfb62 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -13,6 +13,7 @@
- #include <linux/llist.h>
- #include <linux/timer.h>
- #include <linux/workqueue.h>
-+#include <linux/kthread.h>
- #include <linux/pagemap.h>
- #include <linux/backing-dev-defs.h>
- #include <linux/wait.h>
-@@ -655,6 +656,7 @@ struct request_queue {
- #endif
- 	struct rcu_head		rcu_head;
- 	wait_queue_head_t	mq_freeze_wq;
-+	struct kthread_work	mq_pcpu_wake;
- 	struct percpu_ref	q_usage_counter;
- 	struct list_head	all_q_node;
+ 	ret = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN, "thermal/x86_pkg:online",
+ 				pkg_thermal_cpu_online,	pkg_thermal_cpu_offline);
+@@ -581,7 +537,6 @@ static int __init pkg_temp_thermal_init(void)
+ 	return 0;
+ 
+ err:
+-	pkg_thermal_notify_work_cleanup();
+ 	kfree(packages);
+ 	return ret;
+ }
+@@ -595,7 +550,6 @@ static void __exit pkg_temp_thermal_exit(void)
+ 	cpuhp_remove_state(pkg_thermal_hp_state);
+ 	debugfs_remove_recursive(debugfs);
+ 	kfree(packages);
+-	pkg_thermal_notify_work_cleanup();
+ }
+ module_exit(pkg_temp_thermal_exit)
  
 -- 
 2.20.1
