@@ -1,126 +1,142 @@
-Return-Path: <SRS0=GKw7=XP=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=Nk0S=XQ=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ACC26C3A5A2
-	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Sep 2019 21:56:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E2508C49ED7
+	for <linux-rt-users@archiver.kernel.org>; Sat, 21 Sep 2019 12:20:42 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 81CAC218AE
-	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Sep 2019 21:56:55 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C2CE820717
+	for <linux-rt-users@archiver.kernel.org>; Sat, 21 Sep 2019 12:20:42 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730486AbfITV4X (ORCPT
+        id S2437834AbfIUMUk (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 20 Sep 2019 17:56:23 -0400
-Received: from mail.kernel.org ([198.145.29.99]:46982 "EHLO mail.kernel.org"
+        Sat, 21 Sep 2019 08:20:40 -0400
+Received: from mail.kernel.org ([198.145.29.99]:58074 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1730459AbfITV4X (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 20 Sep 2019 17:56:23 -0400
-Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        id S2437826AbfIUMUj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 21 Sep 2019 08:20:39 -0400
+Received: from oasis.local.home (rrcs-24-39-165-138.nys.biz.rr.com [24.39.165.138])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 7FC5420B7C;
-        Fri, 20 Sep 2019 21:56:22 +0000 (UTC)
-Received: from rostedt by gandalf.local.home with local (Exim 4.92)
-        (envelope-from <rostedt@goodmis.org>)
-        id 1iBQt3-0005Ht-NB; Fri, 20 Sep 2019 17:56:21 -0400
-Message-Id: <20190920215621.597676075@goodmis.org>
-User-Agent: quilt/0.65
-Date:   Fri, 20 Sep 2019 17:53:13 -0400
+        by mail.kernel.org (Postfix) with ESMTPSA id 8982720717;
+        Sat, 21 Sep 2019 12:20:37 +0000 (UTC)
+Date:   Sat, 21 Sep 2019 08:20:35 -0400
 From:   Steven Rostedt <rostedt@goodmis.org>
-To:     linux-kernel@vger.kernel.org,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        John Kacur <jkacur@redhat.com>,
-        Paul Gortmaker <paul.gortmaker@windriver.com>,
-        Julia Cartwright <julia@ni.com>,
-        Daniel Wagner <wagi@monom.org>, tom.zanussi@linux.intel.com,
-        Mike Galbraith <umgwanakikbuti@gmail.com>,
-        Benjamin LaHaise <bcrl@kvack.org>
-Subject: [RFC][PATCH RT 2/7] fs/aio: simple simple work
-References: <20190920215311.165260719@goodmis.org>
+To:     Sasha Levin <sashal@kernel.org>
+Cc:     Tom Zanussi <zanussi@kernel.org>, linux-kernel@vger.kernel.org,
+        Ingo Molnar <mingo@kernel.org>,
+        Linux Trace Devel <linux-trace-devel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        stable@vger.kernel.org
+Subject: Re: [for-next][PATCH 3/8] tracing: Make sure variable reference
+ alias has correct var_ref_idx
+Message-ID: <20190921082035.4fc9ccc5@oasis.local.home>
+In-Reply-To: <20190921120618.DF81120665@mail.kernel.org>
+References: <20190919232359.825502403@goodmis.org>
+        <20190921120618.DF81120665@mail.kernel.org>
+X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+On Sat, 21 Sep 2019 12:06:18 +0000
+Sasha Levin <sashal@kernel.org> wrote:
 
-[ Upstream commit 1a142116f6435ef070ecebb66d2d599507c10601 ]
+> Hi,
+> 
+> [This is an automated email]
+> 
+> This commit has been processed because it contains a "Fixes:" tag,
+> fixing commit: .
+> 
+> The bot has tested the following trees: v5.2.16, v4.19.74, v4.14.145, v4.9.193, v4.4.193.
 
-|BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:768
-|in_atomic(): 1, irqs_disabled(): 0, pid: 26, name: rcuos/2
-|2 locks held by rcuos/2/26:
-| #0:  (rcu_callback){.+.+..}, at: [<ffffffff810b1a12>] rcu_nocb_kthread+0x1e2/0x380
-| #1:  (rcu_read_lock_sched){.+.+..}, at: [<ffffffff812acd26>] percpu_ref_kill_rcu+0xa6/0x1c0
-|Preemption disabled at:[<ffffffff810b1a93>] rcu_nocb_kthread+0x263/0x380
-|Call Trace:
-| [<ffffffff81582e9e>] dump_stack+0x4e/0x9c
-| [<ffffffff81077aeb>] __might_sleep+0xfb/0x170
-| [<ffffffff81589304>] rt_spin_lock+0x24/0x70
-| [<ffffffff811c5790>] free_ioctx_users+0x30/0x130
-| [<ffffffff812ace34>] percpu_ref_kill_rcu+0x1b4/0x1c0
-| [<ffffffff810b1a93>] rcu_nocb_kthread+0x263/0x380
-| [<ffffffff8106e046>] kthread+0xd6/0xf0
-| [<ffffffff81591eec>] ret_from_fork+0x7c/0xb0
 
-replace this preempt_disable() friendly swork.
+The fixes tag is 7e8b88a30b085 which was added to mainline in 4.17.
+According to this email, it applies fine to 5.2 and 4.19, but fails on
+4.14 and earlier. As the commit was added in 4.17 that makes perfect
+sense. Can you update your scripts to test when the fixes commit was
+added, and not send spam about it not applying to stable trees where
+it's not applicable.
 
-Reported-By: Mike Galbraith <umgwanakikbuti@gmail.com>
-Suggested-by: Benjamin LaHaise <bcrl@kvack.org>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
----
- fs/aio.c | 13 +++++++++++--
- 1 file changed, 11 insertions(+), 2 deletions(-)
+On a git repo containing only Linus's tree, I have:
 
-diff --git a/fs/aio.c b/fs/aio.c
-index 911e23087dfb..0c613d805bf1 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -121,6 +121,7 @@ struct kioctx {
- 	long			nr_pages;
- 
- 	struct rcu_work		free_rwork;	/* see free_ioctx() */
-+	struct kthread_work	free_kwork;	/* see free_ioctx() */
- 
- 	/*
- 	 * signals when all in-flight requests are done
-@@ -606,9 +607,9 @@ static void free_ioctx_reqs(struct percpu_ref *ref)
-  * and ctx->users has dropped to 0, so we know no more kiocbs can be submitted -
-  * now it's safe to cancel any that need to be.
-  */
--static void free_ioctx_users(struct percpu_ref *ref)
-+static void free_ioctx_users_work(struct kthread_work *work)
- {
--	struct kioctx *ctx = container_of(ref, struct kioctx, users);
-+	struct kioctx *ctx = container_of(work, struct kioctx, free_kwork);
- 	struct aio_kiocb *req;
- 
- 	spin_lock_irq(&ctx->ctx_lock);
-@@ -626,6 +627,14 @@ static void free_ioctx_users(struct percpu_ref *ref)
- 	percpu_ref_put(&ctx->reqs);
- }
- 
-+static void free_ioctx_users(struct percpu_ref *ref)
-+{
-+	struct kioctx *ctx = container_of(ref, struct kioctx, users);
-+
-+	kthread_init_work(&ctx->free_kwork, free_ioctx_users_work);
-+	kthread_schedule_work(&ctx->free_kwork);
-+}
-+
- static int ioctx_add_table(struct kioctx *ctx, struct mm_struct *mm)
- {
- 	unsigned i, new_nr;
--- 
-2.20.1
+$ git describe --contains 7e8b88a30b085
+v4.17-rc1~28^2~43
 
+Which shows me when it was applied.
+
+Thanks!
+
+-- Steve
+
+
+
+> 
+> v5.2.16: Build OK!
+> v4.19.74: Build OK!
+> v4.14.145: Failed to apply! Possible dependencies:
+>     00b4145298ae ("ring-buffer: Add interface for setting absolute time stamps")
+>     067fe038e70f ("tracing: Add variable reference handling to hist triggers")
+>     0d7a8325bf33 ("tracing: Clean up hist_field_flags enum")
+>     100719dcef44 ("tracing: Add simple expression support to hist triggers")
+>     30350d65ac56 ("tracing: Add variable support to hist triggers")
+>     442c94846190 ("tracing: Add Documentation for log2 modifier")
+>     5819eaddf35b ("tracing: Reimplement log2")
+>     7e8b88a30b08 ("tracing: Add hist trigger support for variable reference aliases")
+>     85013256cf01 ("tracing: Add hist_field_name() accessor")
+>     860f9f6b02e9 ("tracing: Add usecs modifier for hist trigger timestamps")
+>     8b7622bf94a4 ("tracing: Add cpu field for hist triggers")
+>     ad42febe51ae ("tracing: Add hist trigger timestamp support")
+>     b559d003a226 ("tracing: Add hist_data member to hist_field")
+>     b8df4a3634e0 ("tracing: Move hist trigger Documentation to histogram.txt")
+> 
+> v4.9.193: Failed to apply! Possible dependencies:
+>     00b4145298ae ("ring-buffer: Add interface for setting absolute time stamps")
+>     067fe038e70f ("tracing: Add variable reference handling to hist triggers")
+>     0d7a8325bf33 ("tracing: Clean up hist_field_flags enum")
+>     100719dcef44 ("tracing: Add simple expression support to hist triggers")
+>     30350d65ac56 ("tracing: Add variable support to hist triggers")
+>     442c94846190 ("tracing: Add Documentation for log2 modifier")
+>     5819eaddf35b ("tracing: Reimplement log2")
+>     7e8b88a30b08 ("tracing: Add hist trigger support for variable reference aliases")
+>     85013256cf01 ("tracing: Add hist_field_name() accessor")
+>     860f9f6b02e9 ("tracing: Add usecs modifier for hist trigger timestamps")
+>     8b7622bf94a4 ("tracing: Add cpu field for hist triggers")
+>     ad42febe51ae ("tracing: Add hist trigger timestamp support")
+>     b559d003a226 ("tracing: Add hist_data member to hist_field")
+>     b8df4a3634e0 ("tracing: Move hist trigger Documentation to histogram.txt")
+> 
+> v4.4.193: Failed to apply! Possible dependencies:
+>     08d43a5fa063 ("tracing: Add lock-free tracing_map")
+>     0c4a6b4666e8 ("tracing: Add hist trigger 'hex' modifier for displaying numeric fields")
+>     0fc3813ce103 ("tracing: Add 'hist' trigger Documentation")
+>     52a7f16dedff ("tracing: Add support for multiple hist triggers per event")
+>     5463bfda327b ("tracing: Add support for named hist triggers")
+>     76a3b0c8ac34 ("tracing: Add hist trigger support for compound keys")
+>     7e8b88a30b08 ("tracing: Add hist trigger support for variable reference aliases")
+>     7ef224d1d0e3 ("tracing: Add 'hist' event trigger command")
+>     83e99914c9e2 ("tracing: Add hist trigger support for pausing and continuing a trace")
+>     8b7622bf94a4 ("tracing: Add cpu field for hist triggers")
+>     b8df4a3634e0 ("tracing: Move hist trigger Documentation to histogram.txt")
+>     c6afad49d127 ("tracing: Add hist trigger 'sym' and 'sym-offset' modifiers")
+>     e62347d24534 ("tracing: Add hist trigger support for user-defined sorting ('sort=' param)")
+>     f2606835d70d ("tracing: Add hist trigger support for multiple values ('vals=' param)")
+> 
+> 
+> NOTE: The patch will not be queued to stable trees until it is upstream.
+> 
+> How should we proceed with this patch?
+> 
+> --
+> Thanks,
+> Sasha
 
