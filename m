@@ -2,95 +2,219 @@ Return-Path: <SRS0=UEZv=XT=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-9.5 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C89F2C432C1
-	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Sep 2019 16:35:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 32182C432C1
+	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Sep 2019 17:43:58 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id A5068214AF
-	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Sep 2019 16:35:21 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0D5C020872
+	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Sep 2019 17:43:58 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="mjQFc31Q"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2388583AbfIXQfV (ORCPT
+        id S2395427AbfIXRn5 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 24 Sep 2019 12:35:21 -0400
-Received: from mx1.redhat.com ([209.132.183.28]:33886 "EHLO mx1.redhat.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2387614AbfIXQfU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 24 Sep 2019 12:35:20 -0400
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mx1.redhat.com (Postfix) with ESMTPS id 57B41C04B302;
-        Tue, 24 Sep 2019 16:35:20 +0000 (UTC)
-Received: from ovpn-117-172.phx2.redhat.com (ovpn-117-172.phx2.redhat.com [10.3.117.172])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id B720E10016EB;
-        Tue, 24 Sep 2019 16:35:16 +0000 (UTC)
-Message-ID: <b05494c96c039c348c0d3cb93d92fc1b77fe1dab.camel@redhat.com>
-Subject: Re: [PATCH RT v3 3/5] sched: migrate_dis/enable: Use rt_invol_sleep
-From:   Scott Wood <swood@redhat.com>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        "Paul E . McKenney" <paulmck@linux.ibm.com>,
-        Joel Fernandes <joel@joelfernandes.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Clark Williams <williams@redhat.com>
-Date:   Tue, 24 Sep 2019 11:35:16 -0500
-In-Reply-To: <20190924160554.5esplbmnzm4q4tew@linutronix.de>
-References: <20190911165729.11178-1-swood@redhat.com>
-         <20190911165729.11178-4-swood@redhat.com>
-         <20190917075943.qsaakyent4dxjkq4@linutronix.de>
-         <779eddcc937941e65659a11b1867c6623a2c8890.camel@redhat.com>
-         <404575720cf24765e66020f15ce75352f08a0ddb.camel@redhat.com>
-         <20190923175233.yub32stn3xcwkaml@linutronix.de>
-         <20190924112155.rxeyksetgqmer3pg@linutronix.de>
-         <55dc19fcc44b2e658b71f68206306c8310335564.camel@redhat.com>
-         <20190924152514.enzeuoo5a6o3mgqu@linutronix.de>
-         <1a2234884e55e5ee6df5f32f828a99c1b248933f.camel@redhat.com>
-         <20190924160554.5esplbmnzm4q4tew@linutronix.de>
-Organization: Red Hat
-Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.30.5 (3.30.5-1.fc29) 
+        Tue, 24 Sep 2019 13:43:57 -0400
+Received: from mail-qk1-f195.google.com ([209.85.222.195]:33853 "EHLO
+        mail-qk1-f195.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1732249AbfIXRn5 (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 24 Sep 2019 13:43:57 -0400
+Received: by mail-qk1-f195.google.com with SMTP id q203so2668648qke.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 24 Sep 2019 10:43:56 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=bmQmTOMWHWDaTVchoIgskHB3GFF7Xf4jgOFSEusavxU=;
+        b=mjQFc31QM5UoBuum7RDlOvyzQtOufYY+tUs8C2GT4B+ZPFLhBcv6VW6aS2QupL1FqN
+         Bc87T8WMqElT5mAlqL4eK9Tv5M/JUCztpPIjN5r5KnRYKEBzhgtX7LPp0R15TW33lMKI
+         OZvmFC2LhggCPGIKgyjaiT6Pr+vchOgnA3pLThSOKjulQ7oX3HMVnOAkCSD/WzhXuKRQ
+         i5kc8KH7sZ2g3Q8mWigEA4W8sSaNvEH4F9YBWrihzIvPcMr/xmrccwy9y3UE0X6tFWyM
+         8zKR6kxEEKpLwBt1Ei0MIXtZhneNklI8hEYdbxUgi7nM3mEQ+3Vt0gFlHNcO6SyDB2/T
+         Nmvg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
+         :mime-version:content-transfer-encoding;
+        bh=bmQmTOMWHWDaTVchoIgskHB3GFF7Xf4jgOFSEusavxU=;
+        b=S/z/gybeXLDyceUpsuqML1PIZpRuVM2mJc8BIiddvTLnggcZMarqjrc3Oza/e1HVSD
+         oa+tfzkxOGyxrhxkrpviNdrTj/GZkbIKzE4AeMhrXVCS9f9rUW+cd4cXA+Np/gxddPoi
+         7Bg6EZWb3BJIr7pStqmS1HxSHQ9tY9iWjMVb/djAuiqSh1Cldv0loOKeirQYQz1MAAvH
+         o+/n1pogxVsU332F0AShY10DptXrTzRiFr1fCnsKvsBEcVTCAYMf0mxBwC0uCCMIygwO
+         ctZGyrFhCBLzJ0PsGs6HCkhYc0/KtvBMt4VvqlwUyDh4erEok4VRKOTC/n97n9kZQVoW
+         zJcQ==
+X-Gm-Message-State: APjAAAWYYhFo9giqpBYXoyoosaVi0pVWW39lUcAzkhsDfvBYaEIozCYM
+        WZWoLE8fo17Om7w2jwr6GafYesc2daM=
+X-Google-Smtp-Source: APXvYqw8dvDu30qeiCouGsAF9dtWJFML7bu/gyr15BRYYadrts/TXDe8AMjgqvycYWamLysL3I4yjw==
+X-Received: by 2002:a37:a446:: with SMTP id n67mr3655394qke.132.1569347036231;
+        Tue, 24 Sep 2019 10:43:56 -0700 (PDT)
+Received: from planxty.redhat.com (rdwyon0600w-lp130-03-64-231-46-127.dsl.bell.ca. [64.231.46.127])
+        by smtp.gmail.com with ESMTPSA id l3sm1406768qtc.33.2019.09.24.10.43.55
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 24 Sep 2019 10:43:55 -0700 (PDT)
+From:   John Kacur <jkacur@redhat.com>
+To:     rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Siewior <bigeasy@linutronix.de>
+Subject: [PATCH] rt-tests: cyclictest: Just use LIBNUMA_API_VERSION
+Date:   Tue, 24 Sep 2019 19:43:44 +0200
+Message-Id: <20190924174344.7453-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.20.1
 MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
-X-Greylist: Sender IP whitelisted, not delayed by milter-greylist-4.5.16 (mx1.redhat.com [10.5.110.31]); Tue, 24 Sep 2019 16:35:20 +0000 (UTC)
+Content-Transfer-Encoding: 8bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, 2019-09-24 at 18:05 +0200, Sebastian Andrzej Siewior wrote:
-> On 2019-09-24 10:47:36 [-0500], Scott Wood wrote:
-> > When the stop machine finishes it will do a wake_up_process() via
-> > complete().  Since this does not pass WF_LOCK_SLEEPER, saved_state will
-> > be
-> > cleared, and you'll have TASK_RUNNING when you get to other_func() and
-> > schedule(), regardless of whether CPU1 sends wake_up() -- so this change
-> > doesn't actually accomplish anything.
-> 
-> True, I completely missed that part.
-> 
-> > While as noted in the other thread I don't think these spurious wakeups
-> > are
-> > a huge problem, we could avoid them by doing stop_one_cpu_nowait() and
-> > then
-> > schedule() without messing with task state.  Since we're stopping our
-> > own
-> > cpu, it should be guaranteed that the stopper has finished by the time
-> > we
-> > exit schedule().
-> 
-> I remember loosing a state can be a problem. Lets say it is not "just"
-> TASK_UNINTERRUPTIBLE -> TASK_RUNNING which sounds harmless but it is
-> __TASK_TRACED and you lose it as part of unlocking siglock.
+This removes support for LIBNUMA_API_VERSION 1.
 
-OK, sounds like stop_one_cpu_nowait() is the way to go then.
+You can still build without numa support by doing
+make NUMA=0
 
--Scott
+You can also build with numa and run on machines without numa support.
 
+Suggested-by: Sebastian Siewior <bigeasy@linutronix.de>
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ src/cyclictest/rt_numa.h | 98 +---------------------------------------
+ 1 file changed, 1 insertion(+), 97 deletions(-)
+
+diff --git a/src/cyclictest/rt_numa.h b/src/cyclictest/rt_numa.h
+index 7adeb3c01324..983502d34c94 100644
+--- a/src/cyclictest/rt_numa.h
++++ b/src/cyclictest/rt_numa.h
+@@ -1,16 +1,7 @@
+ /*
+  * A numa library for cyclictest.
+  * The functions here are designed to work whether cyclictest has been
+- * compiled with numa support or not, and whether the user uses the --numa
+- * option or not.
+- * They should also work correctly with older versions of the numactl lib
+- * such as the one found on RHEL5, or with the newer version 2 and above.
+- *
+- * The difference in behavior hinges on whether LIBNUMA_API_VERSION >= 2,
+- * in which case we will employ the bitmask affinity behavior -or-
+- * either LIBNUMA_API_VERSION < 2 or NUMA support is missing altogether,
+- * in which case we retain the older affinity behavior which can either
+- * specify a single CPU core or else use all cores.
++ * compiled with numa support or not.
+  *
+  * (C) 2010 John Kacur <jkacur@redhat.com>
+  * (C) 2010 Clark Williams <williams@redhat.com>
+@@ -28,10 +19,6 @@ static int numa = 0;
+ #ifdef NUMA
+ #include <numa.h>
+ 
+-#ifndef LIBNUMA_API_VERSION
+-#define LIBNUMA_API_VERSION 2
+-#endif
+-
+ static void *
+ threadalloc(size_t size, int node)
+ {
+@@ -69,8 +56,6 @@ static void *rt_numa_numa_alloc_onnode(size_t size, int node, int cpu)
+ 	return stack;
+ }
+ 
+-#if LIBNUMA_API_VERSION >= 2
+-
+ /*
+  * Use new bit mask CPU affinity behavior
+  */
+@@ -110,87 +95,6 @@ static inline void rt_bitmask_free(struct bitmask *mask)
+ 	numa_bitmask_free(mask);
+ }
+ 
+-#else	/* LIBNUMA_API_VERSION == 1 */
+-
+-struct bitmask {
+-	unsigned long size; /* number of bits in the map */
+-	unsigned long *maskp;
+-};
+-#define BITS_PER_LONG	(8*sizeof(long))
+-
+-/*
+- * Map legacy CPU affinity behavior onto bit mask infrastructure
+- */
+-static int rt_numa_numa_node_of_cpu(int cpu)
+-{
+-	unsigned char cpumask[256];
+-	int node, idx, bit;
+-	int max_node, max_cpus;
+-
+-	max_node = numa_max_node();
+-	max_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+-
+-	if (cpu > max_cpus) {
+-		errno = EINVAL;
+-		return -1;
+-	}
+-
+-	/* calculate bitmask index and relative bit position of cpu */
+-	idx = cpu / 8;
+-	bit = cpu % 8;
+-
+-	for (node = 0; node <= max_node; node++) {
+-		if (numa_node_to_cpus(node, (void *) cpumask, sizeof(cpumask)))
+-			return -1;
+-
+-		if (cpumask[idx] & (1<<bit))
+-			return node;
+-	}
+-	errno = EINVAL;
+-	return -1;
+-}
+-
+-static inline unsigned int rt_numa_bitmask_isbitset( const struct bitmask *mask,
+-	unsigned long i)
+-{
+-	long bit = mask->maskp[i/BITS_PER_LONG] & (1<<(i % BITS_PER_LONG));
+-	return (bit != 0);
+-}
+-
+-static inline struct bitmask* rt_numa_parse_cpustring(const char* s,
+-	int max_cpus)
+-{
+-	int cpu;
+-	struct bitmask *mask = NULL;
+-	cpu = atoi(s);
+-	if (0 <= cpu && cpu < max_cpus) {
+-		mask = malloc(sizeof(*mask));
+-		if (mask) {
+-			/* Round up to integral number of longs to contain
+-			 * max_cpus bits */
+-			int nlongs = (max_cpus+BITS_PER_LONG-1)/BITS_PER_LONG;
+-
+-			mask->maskp = calloc(nlongs, sizeof(long));
+-			if (mask->maskp) {
+-				mask->maskp[cpu/BITS_PER_LONG] |=
+-					(1UL << (cpu % BITS_PER_LONG));
+-				mask->size = max_cpus;
+-			} else {
+-				free(mask);
+-				mask = NULL;
+-			}
+-		}
+-	}
+-	return mask;
+-}
+-
+-static inline void rt_bitmask_free(struct bitmask *mask)
+-{
+-	free(mask->maskp);
+-	free(mask);
+-}
+-
+-#endif	/* LIBNUMA_API_VERSION */
+ 
+ #else /* ! NUMA */
+ 
+-- 
+2.20.1
 
