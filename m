@@ -2,153 +2,135 @@ Return-Path: <SRS0=r0FP=XZ=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.5 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 67EA4C4360C
-	for <linux-rt-users@archiver.kernel.org>; Mon, 30 Sep 2019 07:12:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0964FC35280
+	for <linux-rt-users@archiver.kernel.org>; Mon, 30 Sep 2019 16:04:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 4465F21855
-	for <linux-rt-users@archiver.kernel.org>; Mon, 30 Sep 2019 07:12:42 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D359F215EA
+	for <linux-rt-users@archiver.kernel.org>; Mon, 30 Sep 2019 16:04:33 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="BmovvLdE"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729554AbfI3HMj (ORCPT
+        id S1732203AbfI3QEc (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 30 Sep 2019 03:12:39 -0400
-Received: from mx1.redhat.com ([209.132.183.28]:42895 "EHLO mx1.redhat.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729487AbfI3HMj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 30 Sep 2019 03:12:39 -0400
-Received: from mail-wm1-f72.google.com (mail-wm1-f72.google.com [209.85.128.72])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
-        (No client certificate requested)
-        by mx1.redhat.com (Postfix) with ESMTPS id 520F97BDA5
-        for <linux-rt-users@vger.kernel.org>; Mon, 30 Sep 2019 07:12:38 +0000 (UTC)
-Received: by mail-wm1-f72.google.com with SMTP id q9so5518307wmj.9
-        for <linux-rt-users@vger.kernel.org>; Mon, 30 Sep 2019 00:12:38 -0700 (PDT)
+        Mon, 30 Sep 2019 12:04:32 -0400
+Received: from us-smtp-delivery-1.mimecast.com ([207.211.31.120]:40737 "EHLO
+        us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+        with ESMTP id S1732020AbfI3QEb (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 30 Sep 2019 12:04:31 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1569859470;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=fd8RCdIiuKuPAIKnpR2Fl7ZAb8x8CWgSMRglFknIiPs=;
+        b=BmovvLdExiQ4jm2T8/JmHyIj4ikv0Lr4Iqbi5n9VAKjR8Y0F8WRsiaRa2zAF2m7TYviQQD
+        8q4i8sECRQQhx5rO5I6D3+x09PDS0TTj+0k0Lcp5CY/Kp0G+wCuJyDfFGqS4zpmqCk05MU
+        a2GjiJz4DCgOh1dKr4gEx2qmrQzrusQ=
+Received: from mail-io1-f69.google.com (mail-io1-f69.google.com
+ [209.85.166.69]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-107-qeMA5-GgOwapjn6QWBG0Yw-1; Mon, 30 Sep 2019 12:04:27 -0400
+Received: by mail-io1-f69.google.com with SMTP id g126so31283516iof.3
+        for <linux-rt-users@vger.kernel.org>; Mon, 30 Sep 2019 09:04:27 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to:user-agent;
-        bh=FP2wpfwscfcrh0yIlqZA2JxYpIaHnNMXDCjv6Vl/UO4=;
-        b=mRiHJ2u3FmlJAhfMRkAHyLMt0qraJDHA0Rd3rHP0LvIlTbfMQPf7GNmFLPWDsSMX85
-         BHB4B8NPXxGVTIt8BzYX4mwevxe4quf1O4raIwUMrW+Yrr5M8VdSexpP0KHlG3DaX9V1
-         WNhBjipaBqqI6y+RIiQxVY11xxpU+gtHyt4sMdJ9Gtauf9HO4K56uysnd1JXrJ+ooroI
-         bN7WlFqHPOvrvJx3fDIFoV3wUNAJvnMVweEv3ZwOTQte0NMnT5u7vWkfCHMRm7oskCqS
-         7C1E58MUERWQ4cq2PkGcATOyt4H7C89mK9Q4hOwg16xhk+pKp70L7JTjzvnKKQo9rpPS
-         Wf0w==
-X-Gm-Message-State: APjAAAV620a5l+pr4g92DKM5fD749CVxEsLJ6gx4cQIrlqIPX5b8YAZS
-        34RySkjmVlyrCD2SrfLSYpFn2LOAtGknK5Zb+elU5OcwU8IwFVuvHTNro5uP7CNtq342feVHqWR
-        tP9VJoNM+yBEJxC1c41IAQ6QU9Ds=
-X-Received: by 2002:a5d:5229:: with SMTP id i9mr12125130wra.76.1569827556940;
-        Mon, 30 Sep 2019 00:12:36 -0700 (PDT)
-X-Google-Smtp-Source: APXvYqxqe8Praj1uJSmZ7eIEE3Q8SvPMygFHi5RgSDmrPqQs0SPp0+8YQOjPylVkznPdyq+Ndy9H1A==
-X-Received: by 2002:a5d:5229:: with SMTP id i9mr12125104wra.76.1569827556644;
-        Mon, 30 Sep 2019 00:12:36 -0700 (PDT)
-Received: from localhost.localdomain ([151.29.237.241])
-        by smtp.gmail.com with ESMTPSA id e18sm16747075wrv.63.2019.09.30.00.12.35
-        (version=TLS1_2 cipher=ECDHE-RSA-CHACHA20-POLY1305 bits=256/256);
-        Mon, 30 Sep 2019 00:12:35 -0700 (PDT)
-Date:   Mon, 30 Sep 2019 09:12:33 +0200
-From:   Juri Lelli <juri.lelli@redhat.com>
-To:     Scott Wood <swood@redhat.com>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Thomas Gleixner <tglx@linutronix.de>,
+        h=x-gm-message-state:to:cc:from:subject:message-id:date:user-agent
+         :mime-version:content-language:content-transfer-encoding;
+        bh=MJ7SI1Xeajmimsl+pPSYeFks4KQPimMlL+Exps8iuEw=;
+        b=iCv7tRi6S3KbyenHupUykuHlJ0Z2FIjbPQg4QsAqsaH06RVNzvF6F6l8QuqbE4NzB6
+         CaaeNxV46IYB2I8mjdudqn++HfVz2vYsydfKn6tGKUshwaYgIrvWrEA0od+nXJ66psTk
+         mYDELjjnY3DtH6bHMN+aDCy+DGw4HNXXRO1vG4PiDiWG5kcRlM32yI/xVE+TqnDTjd6d
+         Sfj0kdXfYMJm7zr+IyT3V2rBozm5c685O5mFYA8fxF9v2rThaducdKv50ZCdCNiKOvyi
+         P8ZU4zTS9p1Rms39S5BHarhmEWk8J2yT4qF1HXkIfRWJ9yvir0uHF5ZEA1YGnP7OGY2J
+         xJ8w==
+X-Gm-Message-State: APjAAAX0+iomqwfCdGQWLj4IEEYf4Rgo7fZiiO4U2ngNMSzASVQHJ3WR
+        Cnd27H+y1wGJUSUY7FvsaaIV5C9Dvms5GoVyE+L9In/fy31+smqd0X0pBTNFzcvEb5ZkseUAx+S
+        IAlhUe9XZFLIAFFZGgjL6ITnEkFQ=
+X-Received: by 2002:a6b:c402:: with SMTP id y2mr1074726ioa.136.1569859466685;
+        Mon, 30 Sep 2019 09:04:26 -0700 (PDT)
+X-Google-Smtp-Source: APXvYqxpBZOhdcOyM4zFSvj3LJcN+OeR0ytlxUwr+GnrbyPnz+9HcfQfNvuUsXP0YS6X4lWaoA1vWw==
+X-Received: by 2002:a6b:c402:: with SMTP id y2mr1074687ioa.136.1569859466356;
+        Mon, 30 Sep 2019 09:04:26 -0700 (PDT)
+Received: from t460s.bristot.redhat.com (nat-cataldo.sssup.it. [193.205.81.5])
+        by smtp.gmail.com with ESMTPSA id g15sm6266481ile.25.2019.09.30.09.04.23
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 30 Sep 2019 09:04:25 -0700 (PDT)
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     adrien.mahieux@gmail.com,
+        Marco Pagani <marco.pagani@santannapisa.it>,
         Steven Rostedt <rostedt@goodmis.org>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Daniel Bristot de Oliveira <bristot@redhat.com>,
-        Clark Williams <williams@redhat.com>,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH RT 5/8] sched/deadline: Reclaim cpuset bandwidth in
- .migrate_task_rq()
-Message-ID: <20190930071233.GE31660@localhost.localdomain>
-References: <20190727055638.20443-1-swood@redhat.com>
- <20190727055638.20443-6-swood@redhat.com>
- <20190927081141.GB31660@localhost.localdomain>
- <9a4cc499e6de4690c682c03c0c880363fe3c9307.camel@redhat.com>
+        Daniel Wagner <wagi@monom.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Jonathan Corbet <corbet@lwn.net>
+From:   Daniel Bristot de Oliveira <bristot@redhat.com>
+Subject: [ANNOUNCE] Real-time Linux Summit 2019: Schedule
+Message-ID: <fd337639-f218-e632-d384-9858405531c9@redhat.com>
+Date:   Mon, 30 Sep 2019 18:04:19 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.1.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <9a4cc499e6de4690c682c03c0c880363fe3c9307.camel@redhat.com>
-User-Agent: Mutt/1.11.3 (2019-02-01)
+Content-Language: en-US
+X-MC-Unique: qeMA5-GgOwapjn6QWBG0Yw-1
+X-Mimecast-Spam-Score: 0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 27/09/19 11:40, Scott Wood wrote:
-> On Fri, 2019-09-27 at 10:11 +0200, Juri Lelli wrote:
-> > Hi Scott,
-> > 
-> > On 27/07/19 00:56, Scott Wood wrote:
-> > > With the changes to migrate disabling, ->set_cpus_allowed() no longer
-> > > gets deferred until migrate_enable().  To avoid releasing the bandwidth
-> > > while the task may still be executing on the old CPU, move the
-> > > subtraction
-> > > to ->migrate_task_rq().
-> > > 
-> > > Signed-off-by: Scott Wood <swood@redhat.com>
-> > > ---
-> > >  kernel/sched/deadline.c | 67 +++++++++++++++++++++++-------------------
-> > > -------
-> > >  1 file changed, 31 insertions(+), 36 deletions(-)
-> > > 
-> > > diff --git a/kernel/sched/deadline.c b/kernel/sched/deadline.c
-> > > index c18be51f7608..2f18d0cf1b56 100644
-> > > --- a/kernel/sched/deadline.c
-> > > +++ b/kernel/sched/deadline.c
-> > > @@ -1606,14 +1606,42 @@ static void yield_task_dl(struct rq *rq)
-> > >  	return cpu;
-> > >  }
-> > >  
-> > > +static void free_old_cpuset_bw_dl(struct rq *rq, struct task_struct *p)
-> > > +{
-> > > +	struct root_domain *src_rd = rq->rd;
-> > > +
-> > > +	/*
-> > > +	 * Migrating a SCHED_DEADLINE task between exclusive
-> > > +	 * cpusets (different root_domains) entails a bandwidth
-> > > +	 * update. We already made space for us in the destination
-> > > +	 * domain (see cpuset_can_attach()).
-> > > +	 */
-> > > +	if (!cpumask_intersects(src_rd->span, p->cpus_ptr)) {
-> > > +		struct dl_bw *src_dl_b;
-> > > +
-> > > +		src_dl_b = dl_bw_of(cpu_of(rq));
-> > > +		/*
-> > > +		 * We now free resources of the root_domain we are migrating
-> > > +		 * off. In the worst case, sched_setattr() may temporary
-> > > fail
-> > > +		 * until we complete the update.
-> > > +		 */
-> > > +		raw_spin_lock(&src_dl_b->lock);
-> > > +		__dl_sub(src_dl_b, p->dl.dl_bw, dl_bw_cpus(task_cpu(p)));
-> > > +		raw_spin_unlock(&src_dl_b->lock);
-> > > +	}
-> > > +}
-> > > +
-> > >  static void migrate_task_rq_dl(struct task_struct *p, int new_cpu
-> > > __maybe_unused)
-> > >  {
-> > >  	struct rq *rq;
-> > >  
-> > > -	if (p->state != TASK_WAKING)
-> > > +	rq = task_rq(p);
-> > > +
-> > > +	if (p->state != TASK_WAKING) {
-> > > +		free_old_cpuset_bw_dl(rq, p);
-> > 
-> > What happens if a DEADLINE task is moved between cpusets while it was
-> > sleeping? Don't we miss removing from the old cpuset if the task gets
-> > migrated on wakeup?
-> 
-> In that case set_task_cpu() is called by ttwu after setting state to
-> TASK_WAKING.
+Hi!
 
-Right.
+Here is the schedule of the 2019 edition of the Real-time Linux Summit, tha=
+t
+will take place on October 31st, in Lyon - France, along with ELCE 2019!
 
-> I guess it could be annoying if the task doesn't wake up for a
-> long time and therefore doesn't release the bandwidth until then.
+---------------------------------------------------------------------------=
+----
+9:00 =E2=80=93 9:30=09Opening Talk =E2=80=9CReal-time Linux: what is, what =
+is not and what is
+=09=09next!
+=09=09Daniel Bristot de Oliveira, Red Hat.
+9:30 =E2=80=93 10:15=09Real-time Linux in Financial Markets
+=09=09Adrien Mahieux, Orness.
 
-Hummm, I was actually more worried about the fact that we call free_old_
-cpuset_bw_dl() only if p->state != TASK_WAKING.
+10:10 =E2=80=93 10:30=09Pause
+
+10:30 =E2=80=93 11:15=09Supporting Real-Time Hardware Acceleration on Dynam=
+ically
+=09=09Reconfigurable SoC FPGAs
+=09=09Marco Pagani, Scuola Superiore Sant=E2=80=99Anna =E2=80=93 Universit=
+=C3=A9 de Lille.
+11:15 =E2=80=93 12:00=09Real-time usage in the BeagleBone community
+=09=09Drew Fustini, BeagleBoard.org Foundation.
+
+12:00 =E2=80=93 13:30=09Lunch Pause
+
+13:30 =E2=80=93 14:15=09Maintaining out of tree patches over the long term
+=09=09Daniel Wagner, SuSe.
+14:15 =E2=80=93 15:00=09Synthetic events and basic histograms
+=09=09Steven Rostedt, WMware.
+
+15:00 =E2=80=93 15:15=09Pause
+
+15:15 =E2=80=93 16:00=09State of the PREEMPT_RT
+=09=09Sebastian Andrzej Siewior, Linutronix GmbH.
+16:00 =E2=80=93 16:45=09PREEMPT RT is Upstream! Q&A Session
+=09=09Thomas Gleixner, Linutronix GmbH.
+
+16:45 =E2=80=93 17:00=09Closing
+---------------------------------------------------------------------------=
+----
+
+You can find more about the talks here:
+
+http://bristot.me/real-time-linux-summit-2019-schedule/
+
+-- Daniel
+
