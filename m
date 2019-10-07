@@ -6,33 +6,32 @@ X-Spam-Status: No, score=-2.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F0F90C47404
-	for <linux-rt-users@archiver.kernel.org>; Mon,  7 Oct 2019 17:23:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 38524ECE58C
+	for <linux-rt-users@archiver.kernel.org>; Mon,  7 Oct 2019 17:36:53 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id D309321655
-	for <linux-rt-users@archiver.kernel.org>; Mon,  7 Oct 2019 17:23:05 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 19B1220684
+	for <linux-rt-users@archiver.kernel.org>; Mon,  7 Oct 2019 17:36:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728137AbfJGRXC (ORCPT
+        id S1728814AbfJGRgt (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 7 Oct 2019 13:23:02 -0400
-Received: from mx2.suse.de ([195.135.220.15]:35272 "EHLO mx1.suse.de"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1728028AbfJGRXB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 7 Oct 2019 13:23:01 -0400
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.220.254])
-        by mx1.suse.de (Postfix) with ESMTP id 1F1B2AE1A;
-        Mon,  7 Oct 2019 17:23:00 +0000 (UTC)
-Date:   Mon, 7 Oct 2019 19:22:59 +0200
-From:   Daniel Wagner <dwagner@suse.de>
+        Mon, 7 Oct 2019 13:36:49 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:45105 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728371AbfJGRgs (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 7 Oct 2019 13:36:48 -0400
+Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
+        (envelope-from <bigeasy@linutronix.de>)
+        id 1iHWw8-0001MQ-J4; Mon, 07 Oct 2019 19:36:44 +0200
+Date:   Mon, 7 Oct 2019 19:36:44 +0200
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To:     Uladzislau Rezki <urezki@gmail.com>
-Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-mm@kvack.org, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org,
+Cc:     Daniel Wagner <dwagner@suse.de>, linux-mm@kvack.org,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         Andrew Morton <akpm@linux-foundation.org>
 Subject: Re: [PATCH] mm: vmalloc: Use the vmap_area_lock to protect
  ne_fit_preload_node
-Message-ID: <20191007172259.7mdthvqua4wwyold@beryllium.lan>
+Message-ID: <20191007173644.hiiukrl2xryziro3@linutronix.de>
 References: <20191003090906.1261-1-dwagner@suse.de>
  <20191004153728.c5xppuqwqcwecbe6@linutronix.de>
  <20191004162041.GA30806@pc636>
@@ -43,7 +42,7 @@ References: <20191003090906.1261-1-dwagner@suse.de>
  <20191007163443.6owts5jp2frum7cy@beryllium.lan>
  <20191007165611.GA26964@pc636>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
 In-Reply-To: <20191007165611.GA26964@pc636>
 User-Agent: NeoMutt/20180716
@@ -52,27 +51,13 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, Oct 07, 2019 at 06:56:11PM +0200, Uladzislau Rezki wrote:
-> On Mon, Oct 07, 2019 at 06:34:43PM +0200, Daniel Wagner wrote:
-> > I supppose, one thing which would help in this discussion, is what do
-> > you gain by using preempt_disable() instead of moving the lock up?
-> > Do you have performance numbers which could justify the code?
-> >
+On 2019-10-07 18:56:11 [+0200], Uladzislau Rezki wrote:
 > Actually there is a high lock contention on vmap_area_lock, because it
 > is still global. You can have a look at last slide:
 > 
 > https://linuxplumbersconf.org/event/4/contributions/547/attachments/287/479/Reworking_of_KVA_allocator_in_Linux_kernel.pdf
 > 
-> so this change will make it a bit higher.
-
-Thanks! I suspected something like this :(
-
-On the todo-list page you stating that vmap_area_lock could be
-splitted and therefore reduce the contention. If you could avoid those
-preempt_disable() tricks and just use plain spin_locks() to protect it
-would be really helpful.
-
-> From the other hand i agree
+> so this change will make it a bit higher. From the other hand i agree
 > that for rt it should be fixed, probably it could be done like:
 > 
 > ifdef PREEMPT_RT
@@ -83,5 +68,8 @@ would be really helpful.
 > 
 > but i am not sure it is good either.
 
-I don't think this way to go. I guess Sebastian and Thomas have a
-better idea how to address this for PREEMPT_RT.
+What is to be expected on average? Is the lock acquired and then
+released again because the slot is empty and memory needs to be
+allocated or can it be assumed that this hardly happens? 
+
+Sebastian
