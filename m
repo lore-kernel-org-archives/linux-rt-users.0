@@ -2,74 +2,146 @@ Return-Path: <SRS0=Z5tp=YA=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,WEIRD_PORT
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 38524ECE58C
-	for <linux-rt-users@archiver.kernel.org>; Mon,  7 Oct 2019 17:36:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 346D2ECE58E
+	for <linux-rt-users@archiver.kernel.org>; Mon,  7 Oct 2019 19:10:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 19B1220684
-	for <linux-rt-users@archiver.kernel.org>; Mon,  7 Oct 2019 17:36:53 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 16CA22070B
+	for <linux-rt-users@archiver.kernel.org>; Mon,  7 Oct 2019 19:10:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728814AbfJGRgt (ORCPT
+        id S1728530AbfJGTKM (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 7 Oct 2019 13:36:49 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:45105 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728371AbfJGRgs (ORCPT
+        Mon, 7 Oct 2019 15:10:12 -0400
+Received: from barracuda2.shentel.net ([204.111.1.145]:61660 "EHLO
+        barracuda1.shentel.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+        with ESMTP id S1728079AbfJGTKM (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 7 Oct 2019 13:36:48 -0400
-Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
-        (envelope-from <bigeasy@linutronix.de>)
-        id 1iHWw8-0001MQ-J4; Mon, 07 Oct 2019 19:36:44 +0200
-Date:   Mon, 7 Oct 2019 19:36:44 +0200
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Uladzislau Rezki <urezki@gmail.com>
-Cc:     Daniel Wagner <dwagner@suse.de>, linux-mm@kvack.org,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCH] mm: vmalloc: Use the vmap_area_lock to protect
- ne_fit_preload_node
-Message-ID: <20191007173644.hiiukrl2xryziro3@linutronix.de>
-References: <20191003090906.1261-1-dwagner@suse.de>
- <20191004153728.c5xppuqwqcwecbe6@linutronix.de>
- <20191004162041.GA30806@pc636>
- <20191004163042.jpiau6dlxqylbpfh@linutronix.de>
- <20191007083037.zu3n5gindvo7damg@beryllium.lan>
- <20191007105631.iau6zhxqjeuzajnt@linutronix.de>
- <20191007162330.GA26503@pc636>
- <20191007163443.6owts5jp2frum7cy@beryllium.lan>
- <20191007165611.GA26964@pc636>
+        Mon, 7 Oct 2019 15:10:12 -0400
+X-ASG-Debug-ID: 1570475405-0ea5be51261ee1dd0001-YwjLzG
+Received: from mta-out2.edbg.va.oss.shentel.net ([172.26.51.4]) by barracuda1.shentel.net with ESMTP id 4xtCxOTZaGdB0xN9; Mon, 07 Oct 2019 15:10:05 -0400 (EDT)
+X-Barracuda-Envelope-From: gheskett@shentel.net
+Received: from coyote.coyote.den (unknown [204.111.64.149])
+        by mta-out2.edbg.va.oss.shentel.net (Postfix) with ESMTPSA id 8D2961D;
+        Mon,  7 Oct 2019 15:10:05 -0400 (EDT)
+From:   Gene Heskett <gheskett@shentel.net>
+X-Barracuda-Effective-Source-IP: UNKNOWN[204.111.64.149]
+X-Barracuda-Apparent-Source-IP: 204.111.64.149
+Organization: none,nada,zip
+To:     LKML <linux-kernel@vger.kernel.org>,
+        "linux-rt-users" <linux-rt-users@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Julia Cartwright <julia@ni.com>,
+        Daniel Wagner <wagi@monom.org>, tom.zanussi@linux.intel.com
+Subject: Re: [ANNOUNCE] 4.19.72-rt25
+Date:   Mon, 7 Oct 2019 15:10:05 -0400
+X-ASG-Orig-Subj: Re: [ANNOUNCE] 4.19.72-rt25
+User-Agent: KMail/1.9.10
+References: <20190916173921.6368cd62@gandalf.local.home>
+In-Reply-To: <20190916173921.6368cd62@gandalf.local.home>
+X-KMail-QuotePrefix: > 
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: Text/Plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
-In-Reply-To: <20191007165611.GA26964@pc636>
-User-Agent: NeoMutt/20180716
+Message-Id: <201910071510.05101.gheskett@shentel.net>
+X-Barracuda-Connect: UNKNOWN[172.26.51.4]
+X-Barracuda-Start-Time: 1570475405
+X-Barracuda-URL: https://172.26.193.41:443/cgi-mod/mark.cgi
+X-Virus-Scanned: by bsmtpd at shentel.net
+X-Barracuda-Scan-Msg-Size: 2681
+X-Barracuda-BRTS-Status: 1
+X-Barracuda-Spam-Score: 0.50
+X-Barracuda-Spam-Status: No, SCORE=0.50 using global scores of TAG_LEVEL=1000.0 QUARANTINE_LEVEL=1000.0 KILL_LEVEL=6.0 tests=WEIRD_PORT
+X-Barracuda-Spam-Report: Code version 3.2, rules version 3.2.3.77190
+        Rule breakdown below
+         pts rule name              description
+        ---- ---------------------- --------------------------------------------------
+        0.50 WEIRD_PORT             URI: Uses non-standard port number for HTTP
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2019-10-07 18:56:11 [+0200], Uladzislau Rezki wrote:
-> Actually there is a high lock contention on vmap_area_lock, because it
-> is still global. You can have a look at last slide:
-> 
-> https://linuxplumbersconf.org/event/4/contributions/547/attachments/287/479/Reworking_of_KVA_allocator_in_Linux_kernel.pdf
-> 
-> so this change will make it a bit higher. From the other hand i agree
-> that for rt it should be fixed, probably it could be done like:
-> 
-> ifdef PREEMPT_RT
->     migrate_disable()
-> #else
->     preempt_disable()
-> ...
-> 
-> but i am not sure it is good either.
+On Monday 16 September 2019 17:39:21 Steven Rostedt wrote:
 
-What is to be expected on average? Is the lock acquired and then
-released again because the slot is empty and memory needs to be
-allocated or can it be assumed that this hardly happens? 
+> Dear RT Folks,
+>
+> I'm pleased to announce the 4.19.72-rt25 stable release.
+>
+> **** <NOTE> ****
+>
+> As you probably have noticed, it has been a long time since I released
+> a stable 4.19-rt. The reason for this delay is that one of my tests
+> failed after merging with the latest stable upstream. I refuse to push
+> releases with a known bug in it, so I figured I would find the bug
+> before releasing. I only spend around 4 to 6 hours a week on upstream
+> stable RT as I have other responsibilities, and I could not debug this
+> bug during that time (after several weeks of trying).
+>
+> The bug is a random NULL pointer dereference that only happens with
+> lockdep enabled and on 32bit x86. I also found that this bug existed
+> before the latest stable pull release but now it is much easier to
+> trigger.
+>
+> I have not been able to trigger this bug in the 64 bit kernel, and as
+> I rather do a release than waste more time on this bug and postpone
+> the release further, I am now doing that. As a consequence, I am no
+> longer supporting 32bit x86, as it is known to have this bug.
+>
+> If you are interested in this, I am willing to send out the config I
+> am using and one of the dmesg crashes. Just ask.
+>
+> **** </NOTE> ****
+>
+>
+> This release is just an update to the new stable 4.19.72 version
+> and no RT specific changes have been made.
+>
+>
+> You can get this release via the git tree at:
+>
+>   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+>
+>   branch: v4.19-rt
+>   Head SHA1: 9cd04ab6a9a162ac4189a80032261d243563ff45
+>
+=====================================================================
+> Or to build 4.19.72-rt25 directly, the following patches should be
+> applied:
+>
+>   http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
+>
+>   http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.72.xz
+>
+>  
+> http://www.kernel.org/pub/linux/kernel/projects/rt/4.19/patch-4.19.72-
+>rt25.patch.xz
+>
+Unfortunately, this does not work for the pi3-4 family. When its all 
+pulled in and patched, there is no arch/arm/configs bcm2709_defconfig or 
+bcm2711_defconfig for either a pi3b or the new pi4b.
 
-Sebastian
+I'll go find the 5.2.14 announce and see if its any more complete.
+>
+>
+>
+> Enjoy,
+>
+> -- Steve
+
+
+Cheers, Gene Heskett
+-- 
+"There are four boxes to be used in defense of liberty:
+ soap, ballot, jury, and ammo. Please use in that order."
+-Ed Howdershelt (Author)
+If we desire respect for the law, we must first make the law respectable.
+ - Louis D. Brandeis
+Genes Web page <http://geneslinuxbox.net:6309/gene>
