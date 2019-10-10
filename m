@@ -7,38 +7,38 @@ X-Spam-Status: No, score=-6.8 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BAF48C4360C
-	for <linux-rt-users@archiver.kernel.org>; Thu, 10 Oct 2019 08:58:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 64328C10F14
+	for <linux-rt-users@archiver.kernel.org>; Thu, 10 Oct 2019 09:02:37 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 9705421D80
-	for <linux-rt-users@archiver.kernel.org>; Thu, 10 Oct 2019 08:58:35 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3EFFC2067B
+	for <linux-rt-users@archiver.kernel.org>; Thu, 10 Oct 2019 09:02:37 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1570697915;
-	bh=RGbsMYw9+rLEFO5N8Q1T3vut1c+0zUuAmpw9zyAiwcw=;
+	s=default; t=1570698157;
+	bh=kXRkOfBAkQq2qSRWaYK/tWRsdccPsnNMDtyWyCDnW3I=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:List-ID:From;
-	b=kkUbFs2M1jpFfi9H+u03FaOcws9JsZ4VvVnMdfUW0dzr9R31DiEI4xcMxQrBhY9uP
-	 XUma36nKO/EvFSpxIoUpFgK1dF6zaxlL/9KsuRqXDeCMspbBQkGwnYgyR35lDguBzP
-	 Nfeew74S4iqaAAp5C97REl06Wv3gIBSFp3H32dzc=
+	b=0ZZwxiHRe/H5TciXOnUt1btg5kHGvboiN8y3UY/rgdQpu+Ysis2O03Yps8UChvopd
+	 pmfw2uR1gdosqiyeeUEFWqukKJksSr/qKA+Cg7TXeheZyE3SgwMivwndJ7Y70SuxT+
+	 ffvqwn9/nGS7N1cJyafH/6Ro2KKqUPLyr5Yl9m2Q=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2389169AbfJJIph (ORCPT
+        id S2387924AbfJJIjk (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 10 Oct 2019 04:45:37 -0400
-Received: from mail.kernel.org ([198.145.29.99]:51220 "EHLO mail.kernel.org"
+        Thu, 10 Oct 2019 04:39:40 -0400
+Received: from mail.kernel.org ([198.145.29.99]:43334 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2387614AbfJJIpg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 10 Oct 2019 04:45:36 -0400
+        id S2387917AbfJJIjj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 10 Oct 2019 04:39:39 -0400
 Received: from localhost (83-86-89-107.cable.dynamic.v4.ziggo.nl [83.86.89.107])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 20482218AC;
-        Thu, 10 Oct 2019 08:45:34 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id EA0CC2196E;
+        Thu, 10 Oct 2019 08:39:37 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1570697135;
-        bh=RGbsMYw9+rLEFO5N8Q1T3vut1c+0zUuAmpw9zyAiwcw=;
+        s=default; t=1570696778;
+        bh=kXRkOfBAkQq2qSRWaYK/tWRsdccPsnNMDtyWyCDnW3I=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=q0SgKqVO98vP3a/VG8zKQgL8PrUZI5lYxiHkpPoOwvpSkMztle2euKgp9ZCbBD5+u
-         C4iw6nrm42UkhR7e7v77dddH+5rH+lLqo5Oq8h3IVsflg40JrIsxurlL9Yl5Ve+Pc4
-         LGCyJRL35D7hYWG+gONFg/gND8sbXhnOfci7cNMQ=
+        b=I4jktegz18/1QO8eDyBNL6kVjborOoCmYU2Sun9IYFFMrsdS1P362z9WLfxuzPrIr
+         IVQ4vtlV99HFcyHD7GTUMkAmTUdjzr2GZ9uiJlucyLmExZ+1ha1Bl/x4JtLp5l0K6L
+         zXVwQVEcpIWBZf4mIGdTiDni+WdsEDXZALoT/xUE=
 From:   Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 To:     linux-kernel@vger.kernel.org
 Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
@@ -47,12 +47,12 @@ Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         "Steven Rostedt (VMware)" <rostedt@goodmis.org>,
         Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH 4.19 030/114] tracing: Make sure variable reference alias has correct var_ref_idx
-Date:   Thu, 10 Oct 2019 10:35:37 +0200
-Message-Id: <20191010083559.568035880@linuxfoundation.org>
+Subject: [PATCH 5.3 050/148] tracing: Make sure variable reference alias has correct var_ref_idx
+Date:   Thu, 10 Oct 2019 10:35:11 +0200
+Message-Id: <20191010083614.182158465@linuxfoundation.org>
 X-Mailer: git-send-email 2.23.0
-In-Reply-To: <20191010083544.711104709@linuxfoundation.org>
-References: <20191010083544.711104709@linuxfoundation.org>
+In-Reply-To: <20191010083609.660878383@linuxfoundation.org>
+References: <20191010083609.660878383@linuxfoundation.org>
 User-Agent: quilt/0.66
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -145,7 +145,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 
 --- a/kernel/trace/trace_events_hist.c
 +++ b/kernel/trace/trace_events_hist.c
-@@ -2526,6 +2526,8 @@ static struct hist_field *create_alias(s
+@@ -2785,6 +2785,8 @@ static struct hist_field *create_alias(s
  		return NULL;
  	}
  
