@@ -1,158 +1,147 @@
-Return-Path: <SRS0=Ai3V=YD=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=iU+X=YE=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.8 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 64328C10F14
-	for <linux-rt-users@archiver.kernel.org>; Thu, 10 Oct 2019 09:02:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 763F4ECE58C
+	for <linux-rt-users@archiver.kernel.org>; Fri, 11 Oct 2019 14:09:50 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 3EFFC2067B
-	for <linux-rt-users@archiver.kernel.org>; Thu, 10 Oct 2019 09:02:37 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1570698157;
-	bh=kXRkOfBAkQq2qSRWaYK/tWRsdccPsnNMDtyWyCDnW3I=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References:List-ID:From;
-	b=0ZZwxiHRe/H5TciXOnUt1btg5kHGvboiN8y3UY/rgdQpu+Ysis2O03Yps8UChvopd
-	 pmfw2uR1gdosqiyeeUEFWqukKJksSr/qKA+Cg7TXeheZyE3SgwMivwndJ7Y70SuxT+
-	 ffvqwn9/nGS7N1cJyafH/6Ro2KKqUPLyr5Yl9m2Q=
+	by mail.kernel.org (Postfix) with ESMTP id 566D020679
+	for <linux-rt-users@archiver.kernel.org>; Fri, 11 Oct 2019 14:09:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2387924AbfJJIjk (ORCPT
+        id S1728149AbfJKOJr (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 10 Oct 2019 04:39:40 -0400
-Received: from mail.kernel.org ([198.145.29.99]:43334 "EHLO mail.kernel.org"
+        Fri, 11 Oct 2019 10:09:47 -0400
+Received: from mx1.redhat.com ([209.132.183.28]:51880 "EHLO mx1.redhat.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2387917AbfJJIjj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 10 Oct 2019 04:39:39 -0400
-Received: from localhost (83-86-89-107.cable.dynamic.v4.ziggo.nl [83.86.89.107])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        id S1728033AbfJKOJq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 11 Oct 2019 10:09:46 -0400
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id EA0CC2196E;
-        Thu, 10 Oct 2019 08:39:37 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1570696778;
-        bh=kXRkOfBAkQq2qSRWaYK/tWRsdccPsnNMDtyWyCDnW3I=;
-        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=I4jktegz18/1QO8eDyBNL6kVjborOoCmYU2Sun9IYFFMrsdS1P362z9WLfxuzPrIr
-         IVQ4vtlV99HFcyHD7GTUMkAmTUdjzr2GZ9uiJlucyLmExZ+1ha1Bl/x4JtLp5l0K6L
-         zXVwQVEcpIWBZf4mIGdTiDni+WdsEDXZALoT/xUE=
-From:   Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-To:     linux-kernel@vger.kernel.org
-Cc:     Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        stable@vger.kernel.org,
-        Linux Trace Devel <linux-trace-devel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        "Steven Rostedt (VMware)" <rostedt@goodmis.org>,
-        Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH 5.3 050/148] tracing: Make sure variable reference alias has correct var_ref_idx
-Date:   Thu, 10 Oct 2019 10:35:11 +0200
-Message-Id: <20191010083614.182158465@linuxfoundation.org>
-X-Mailer: git-send-email 2.23.0
-In-Reply-To: <20191010083609.660878383@linuxfoundation.org>
-References: <20191010083609.660878383@linuxfoundation.org>
-User-Agent: quilt/0.66
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+        by mx1.redhat.com (Postfix) with ESMTPS id 619E3316D8C8;
+        Fri, 11 Oct 2019 14:09:46 +0000 (UTC)
+Received: from llong.com (dhcp-17-160.bos.redhat.com [10.18.17.160])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 245D360BF4;
+        Fri, 11 Oct 2019 14:09:43 +0000 (UTC)
+From:   Waiman Long <longman@redhat.com>
+To:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Juri Lelli <jlelli@redhat.com>,
+        Waiman Long <longman@redhat.com>
+Subject: [PATCH RT] kernel/sched: Don't recompute cpumask weight in migrate_enable_update_cpus_allowed()
+Date:   Fri, 11 Oct 2019 10:09:08 -0400
+Message-Id: <20191011140908.5161-1-longman@redhat.com>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Greylist: Sender IP whitelisted, not delayed by milter-greylist-4.5.16 (mx1.redhat.com [10.5.110.41]); Fri, 11 Oct 2019 14:09:46 +0000 (UTC)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Tom Zanussi <zanussi@kernel.org>
+At each invocation of rt_spin_unlock(), cpumask_weight() is called
+via migrate_enable_update_cpus_allowed() to recompute the weight of
+cpus_mask which doesn't change that often.
 
-commit 17f8607a1658a8e70415eef67909f990d13017b5 upstream.
+The following is a sample output of perf-record running the testpmd
+microbenchmark on an RT kernel:
 
-Original changelog from Steve Rostedt (except last sentence which
-explains the problem, and the Fixes: tag):
+  34.77%   1.65%  testpmd  [kernel.kallsyms]  [k] rt_spin_unlock
+  34.32%   2.52%  testpmd  [kernel.kallsyms]  [k] migrate_enable
+  21.76%  21.76%  testpmd  [kernel.kallsyms]  [k] __bitmap_weight
 
-I performed a three way histogram with the following commands:
+By adding an extra variable to keep track of the weight of cpus_mask,
+we could eliminate the frequent call to cpumask_weight() and replace
+it with simple assignment.
 
-echo 'irq_lat u64 lat pid_t pid' > synthetic_events
-echo 'wake_lat u64 lat u64 irqlat pid_t pid' >> synthetic_events
-echo 'hist:keys=common_pid:irqts=common_timestamp.usecs if function == 0xffffffff81200580' > events/timer/hrtimer_start/trigger
-echo 'hist:keys=common_pid:lat=common_timestamp.usecs-$irqts:onmatch(timer.hrtimer_start).irq_lat($lat,pid) if common_flags & 1' > events/sched/sched_waking/trigger
-echo 'hist:keys=pid:wakets=common_timestamp.usecs,irqlat=lat' > events/synthetic/irq_lat/trigger
-echo 'hist:keys=next_pid:lat=common_timestamp.usecs-$wakets,irqlat=$irqlat:onmatch(synthetic.irq_lat).wake_lat($lat,$irqlat,next_pid)' > events/sched/sched_switch/trigger
-echo 1 > events/synthetic/wake_lat/enable
-
-Basically I wanted to see:
-
- hrtimer_start (calling function tick_sched_timer)
-
-Note:
-
-  # grep tick_sched_timer /proc/kallsyms
-ffffffff81200580 t tick_sched_timer
-
-And save the time of that, and then record sched_waking if it is called
-in interrupt context and with the same pid as the hrtimer_start, it
-will record the latency between that and the waking event.
-
-I then look at when the task that is woken is scheduled in, and record
-the latency between the wakeup and the task running.
-
-At the end, the wake_lat synthetic event will show the wakeup to
-scheduled latency, as well as the irq latency in from hritmer_start to
-the wakeup. The problem is that I found this:
-
-          <idle>-0     [007] d...   190.485261: wake_lat: lat=27 irqlat=190485230 pid=698
-          <idle>-0     [005] d...   190.485283: wake_lat: lat=40 irqlat=190485239 pid=10
-          <idle>-0     [002] d...   190.488327: wake_lat: lat=56 irqlat=190488266 pid=335
-          <idle>-0     [005] d...   190.489330: wake_lat: lat=64 irqlat=190489262 pid=10
-          <idle>-0     [003] d...   190.490312: wake_lat: lat=43 irqlat=190490265 pid=77
-          <idle>-0     [005] d...   190.493322: wake_lat: lat=54 irqlat=190493262 pid=10
-          <idle>-0     [005] d...   190.497305: wake_lat: lat=35 irqlat=190497267 pid=10
-          <idle>-0     [005] d...   190.501319: wake_lat: lat=50 irqlat=190501264 pid=10
-
-The irqlat seemed quite large! Investigating this further, if I had
-enabled the irq_lat synthetic event, I noticed this:
-
-          <idle>-0     [002] d.s.   249.429308: irq_lat: lat=164968 pid=335
-          <idle>-0     [002] d...   249.429369: wake_lat: lat=55 irqlat=249429308 pid=335
-
-Notice that the timestamp of the irq_lat "249.429308" is awfully
-similar to the reported irqlat variable. In fact, all instances were
-like this. It appeared that:
-
-  irqlat=$irqlat
-
-Wasn't assigning the old $irqlat to the new irqlat variable, but
-instead was assigning the $irqts to it.
-
-The issue is that assigning the old $irqlat to the new irqlat variable
-creates a variable reference alias, but the alias creation code
-forgets to make sure the alias uses the same var_ref_idx to access the
-reference.
-
-Link: http://lkml.kernel.org/r/1567375321.5282.12.camel@kernel.org
-
-Cc: Linux Trace Devel <linux-trace-devel@vger.kernel.org>
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc: stable@vger.kernel.org
-Fixes: 7e8b88a30b085 ("tracing: Add hist trigger support for variable reference aliases")
-Reported-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-Signed-off-by: Tom Zanussi <zanussi@kernel.org>
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-
+Signed-off-by: Waiman Long <longman@redhat.com>
 ---
- kernel/trace/trace_events_hist.c |    2 ++
- 1 file changed, 2 insertions(+)
+ include/linux/sched.h | 3 ++-
+ init/init_task.c      | 1 +
+ kernel/fork.c         | 4 +++-
+ kernel/sched/core.c   | 8 +++++---
+ 4 files changed, 11 insertions(+), 5 deletions(-)
 
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -2785,6 +2785,8 @@ static struct hist_field *create_alias(s
- 		return NULL;
- 	}
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 7e892e727f12..c65c75b82056 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -656,7 +656,8 @@ struct task_struct {
+ #endif
  
-+	alias->var_ref_idx = var_ref->var_ref_idx;
-+
- 	return alias;
+ 	unsigned int			policy;
+-	int				nr_cpus_allowed;
++	unsigned int			nr_cpus_allowed; /* # in cpus_ptr */
++	unsigned int			nr_cpus_mask;	 /* # in cpus_mask */
+ 	const cpumask_t			*cpus_ptr;
+ 	cpumask_t			cpus_mask;
+ #if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+diff --git a/init/init_task.c b/init/init_task.c
+index e402413dc47d..36bc82439ff1 100644
+--- a/init/init_task.c
++++ b/init/init_task.c
+@@ -81,6 +81,7 @@ struct task_struct init_task
+ 	.cpus_ptr	= &init_task.cpus_mask,
+ 	.cpus_mask	= CPU_MASK_ALL,
+ 	.nr_cpus_allowed= NR_CPUS,
++	.nr_cpus_mask   = NR_CPUS,
+ 	.mm		= NULL,
+ 	.active_mm	= &init_mm,
+ 	.restart_block	= {
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 3c7738d87ddb..e00b92a18444 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -935,8 +935,10 @@ static struct task_struct *dup_task_struct(struct task_struct *orig, int node)
+ #ifdef CONFIG_STACKPROTECTOR
+ 	tsk->stack_canary = get_random_canary();
+ #endif
+-	if (orig->cpus_ptr == &orig->cpus_mask)
++	if (orig->cpus_ptr == &orig->cpus_mask) {
+ 		tsk->cpus_ptr = &tsk->cpus_mask;
++		tsk->nr_cpus_allowed = tsk->nr_cpus_mask;
++	}
+ 
+ 	/*
+ 	 * One for us, one for whoever does the "release_task()" (usually
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 93b4ae1ecaff..a299b7dd3de0 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -1126,7 +1126,9 @@ static int migration_cpu_stop(void *data)
+ void set_cpus_allowed_common(struct task_struct *p, const struct cpumask *new_mask)
+ {
+ 	cpumask_copy(&p->cpus_mask, new_mask);
+-	p->nr_cpus_allowed = cpumask_weight(new_mask);
++	p->nr_cpus_mask = cpumask_weight(new_mask);
++	if (p->cpus_ptr == &p->cpus_mask)
++		p->nr_cpus_allowed = p->nr_cpus_mask;
  }
  
-
+ #if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+@@ -1173,7 +1175,7 @@ void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
+ 	if (__migrate_disabled(p)) {
+ 		lockdep_assert_held(&p->pi_lock);
+ 
+-		cpumask_copy(&p->cpus_mask, new_mask);
++		set_cpus_allowed_common(p, new_mask);
+ 		p->migrate_disable_update = 1;
+ 		return;
+ 	}
+@@ -7335,7 +7337,7 @@ migrate_enable_update_cpus_allowed(struct task_struct *p)
+ 
+ 	rq = task_rq_lock(p, &rf);
+ 	p->cpus_ptr = &p->cpus_mask;
+-	p->nr_cpus_allowed = cpumask_weight(&p->cpus_mask);
++	p->nr_cpus_allowed = p->nr_cpus_mask;
+ 	update_nr_migratory(p, 1);
+ 	task_rq_unlock(rq, p, &rf);
+ }
+-- 
+2.18.1
 
