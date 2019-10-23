@@ -1,106 +1,116 @@
-Return-Path: <SRS0=DPdF=YP=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=l7e9=YQ=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.6 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_SANE_2 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 64199CA9EB9
-	for <linux-rt-users@archiver.kernel.org>; Tue, 22 Oct 2019 17:34:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DA373CA9EB9
+	for <linux-rt-users@archiver.kernel.org>; Wed, 23 Oct 2019 07:47:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 400252084B
-	for <linux-rt-users@archiver.kernel.org>; Tue, 22 Oct 2019 17:34:22 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1571765662;
-	bh=YSjJ4F590dYovNyfbb2k7y3t56m687ezX83hs9dGR30=;
-	h=Date:From:To:Cc:Subject:In-Reply-To:References:List-ID:From;
-	b=t0YBXaWORle8SFpxOBdZ3U3ZCKJNmlK6BU0CVTAeoFxGgVXMacTjbA4BsSEIf3Fdg
-	 gNQgoovTTJgt9WHMeS/cZmCbrjD2qLC2GmSjg7gKL/iCUe2lu72ulkCXOhj2DSINPV
-	 ildxtijXSwjBTFSTbmzQLMaizarh7g1WesmUhLB8=
+	by mail.kernel.org (Postfix) with ESMTP id B84322084C
+	for <linux-rt-users@archiver.kernel.org>; Wed, 23 Oct 2019 07:47:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730701AbfJVReR (ORCPT
+        id S2389818AbfJWHr0 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 22 Oct 2019 13:34:17 -0400
-Received: from inca-roads.misterjones.org ([213.251.177.50]:52165 "EHLO
-        inca-roads.misterjones.org" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1727309AbfJVReR (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 22 Oct 2019 13:34:17 -0400
-Received: from 78.163-31-62.static.virginmediabusiness.co.uk ([62.31.163.78] helo=why)
-        by cheepnis.misterjones.org with esmtpsa (TLSv1.2:AES256-GCM-SHA384:256)
-        (Exim 4.80)
-        (envelope-from <maz@kernel.org>)
-        id 1iMy2u-00030U-T5; Tue, 22 Oct 2019 19:34:13 +0200
-Date:   Tue, 22 Oct 2019 18:34:11 +0100
-From:   Marc Zyngier <maz@kernel.org>
+        Wed, 23 Oct 2019 03:47:26 -0400
+Received: from mx2.suse.de ([195.135.220.15]:39440 "EHLO mx1.suse.de"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S2388235AbfJWHr0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 23 Oct 2019 03:47:26 -0400
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+Received: from relay2.suse.de (unknown [195.135.220.254])
+        by mx1.suse.de (Postfix) with ESMTP id 9F558B3FE;
+        Wed, 23 Oct 2019 07:47:23 +0000 (UTC)
+Date:   Wed, 23 Oct 2019 09:47:19 +0200
+From:   Daniel Wagner <dwagner@suse.de>
 To:     Jakub Kicinski <jakub.kicinski@netronome.com>
-Cc:     Daniel Wagner <dwagner@suse.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         UNGLinuxDriver@microchip.com, netdev@vger.kernel.org,
         linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org,
         linux-rt-users@vger.kernel.org,
         Woojung Huh <woojung.huh@microchip.com>,
-        Andrew Lunn <andrew@lunn.ch>, Stefan Wahren <wahrenst@gmx.net>,
+        Marc Zyngier <maz@kernel.org>, Andrew Lunn <andrew@lunn.ch>,
+        Stefan Wahren <wahrenst@gmx.net>,
         Jisheng Zhang <Jisheng.Zhang@synaptics.com>,
         Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH] net: usb: lan78xx: Use phy_mac_interrupt() for
- interrupt handling
-Message-ID: <20191022183411.0e9a7bdc@why>
-In-Reply-To: <20191022101747.001b6d06@cakuba.netronome.com>
+Subject: Re: [PATCH] net: usb: lan78xx: Use phy_mac_interrupt() for interrupt
+ handling
+Message-ID: <20191023074719.gcov5xfrcvns5tlg@beryllium.lan>
 References: <20191018082817.111480-1-dwagner@suse.de>
-        <20191018131532.dsfhyiilsi7cy4cm@linutronix.de>
-        <20191022101747.001b6d06@cakuba.netronome.com>
-Organization: Approximate
-X-Mailer: Claws Mail 3.17.4 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
+ <20191018131532.dsfhyiilsi7cy4cm@linutronix.de>
+ <20191022101747.001b6d06@cakuba.netronome.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-X-SA-Exim-Connect-IP: 62.31.163.78
-X-SA-Exim-Rcpt-To: jakub.kicinski@netronome.com, dwagner@suse.de, bigeasy@linutronix.de, UNGLinuxDriver@microchip.com, netdev@vger.kernel.org, linux-usb@vger.kernel.org, linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org, woojung.huh@microchip.com, andrew@lunn.ch, wahrenst@gmx.net, Jisheng.Zhang@synaptics.com, tglx@linutronix.de
-X-SA-Exim-Mail-From: maz@kernel.org
-X-SA-Exim-Scanned: No (on cheepnis.misterjones.org); SAEximRunCond expanded to false
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20191022101747.001b6d06@cakuba.netronome.com>
+User-Agent: NeoMutt/20180716
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, 22 Oct 2019 10:17:47 -0700
-Jakub Kicinski <jakub.kicinski@netronome.com> wrote:
-
-> On Fri, 18 Oct 2019 15:15:32 +0200, Sebastian Andrzej Siewior wrote:
-> > On 2019-10-18 10:28:17 [+0200], Daniel Wagner wrote:  
-> > > handle_simple_irq() expect interrupts to be disabled. The USB
-> > > framework is using threaded interrupts, which implies that interrupts
-> > > are re-enabled as soon as it has run.    
-> > 
-> > Without threading interrupts, this is invoked in pure softirq context
-> > since commit ed194d1367698 ("usb: core: remove local_irq_save() around  
-> > ->complete() handler") where the local_irq_disable() has been removed.    
-> > 
-> > This is probably not a problem because the lock is never observed with
-> > in IRQ context.
-> > 
-> > Wouldn't handle_nested_irq() work here instead of the simple thingy?  
+> > Wouldn't handle_nested_irq() work here instead of the simple thingy?
 > 
 > Daniel could you try this suggestion? Would it work?
-> 
-> I'm not sure we are at the stage yet where "doesn't work on -rt" is
-> sufficient reason to revert a working upstream patch. Please correct 
-> me if I'm wrong.
 
-But that's the thing: it doesn't work at all, RT or not (it spits an
-awful warning). See the various reports Daniel linked to. Maintainers
-have been completely unresponsive, and the RPI folks have their own out
-of tree hack, I believe (which probably reverts to the previous,
-working situation where the driver uses polling for some of its PHY
-handling business).
 
-Sebastian's suggestion is definitely worth trying if you have the HW
-though.
+[    6.427289] ------------[ cut here ]------------
+[    6.431977] kernel BUG at drivers/net/phy/mdio_bus.c:626!
+[    6.437453] Internal error: Oops - BUG: 0 [#1] PREEMPT SMP
+[    6.443013] Modules linked in:
+[    6.446116] CPU: 0 PID: 0 Comm: swapper/0 Not tainted 5.4.0-rc3-00100-g70cc5ab156c3-dirty #50
+[    6.454763] Hardware name: Raspberry Pi 3 Model B+ (DT)
+[    6.460062] pstate: 00000005 (nzcv daif -PAN -UAO)
+[    6.464928] pc : mdiobus_read+0x68/0x70
+[    6.468821] lr : lan88xx_phy_ack_interrupt+0x1c/0x30
+[    6.473852] sp : ffff800010003d70
+[    6.477208] x29: ffff800010003d70 x28: 0000000000000000 
+[    6.482597] x27: 0000000000000001 x26: 0000000000000060 
+[    6.487985] x25: 00000000000000e0 x24: ffff8000113ca680 
+[    6.493373] x23: ffff0000372ac174 x22: ffff00003768f6d4 
+[    6.498762] x21: ffff00003768f600 x20: 0000000000000000 
+[    6.504149] x19: ffff0000372c1000 x18: 000000000000000e 
+[    6.509537] x17: 0000000000000001 x16: 0000000000000007 
+[    6.514923] x15: 000000000000000e x14: 0000000000000013 
+[    6.520311] x13: 0000000000000000 x12: 0000000000000000 
+[    6.525699] x11: 000000000000057b x10: 0000000000000003 
+[    6.531087] x9 : ffff0000383f4750 x8 : ffff0000383f3dc0 
+[    6.536474] x7 : ffff0000374be100 x6 : ffff0000383f4750 
+[    6.541862] x5 : ffff000037cab700 x4 : 0000000000000008 
+[    6.547249] x3 : 0000000000000101 x2 : 000000000000001a 
+[    6.552636] x1 : 0000000000000001 x0 : ffff0000372c0800 
+[    6.558023] Call trace:
+[    6.560506]  mdiobus_read+0x68/0x70
+[    6.564045]  phy_interrupt+0x5c/0xb0
+[    6.567672]  handle_nested_irq+0xb8/0x130
+[    6.571740]  intr_complete+0xb0/0xe0
+[    6.575368]  __usb_hcd_giveback_urb+0x58/0xf8
+[    6.579787]  usb_giveback_urb_bh+0xac/0x108
+[    6.584032]  tasklet_action_common.isra.0+0x154/0x1a0
+[    6.589155]  tasklet_hi_action+0x24/0x30
+[    6.593134]  __do_softirq+0x120/0x23c
+[    6.596847]  irq_exit+0xb8/0xd8
+[    6.600031]  __handle_domain_irq+0x64/0xb8
+[    6.604183]  bcm2836_arm_irqchip_handle_irq+0x60/0xc0
+[    6.609305]  el1_irq+0xb8/0x180
+[    6.612490]  arch_cpu_idle+0x10/0x18
+[    6.616115]  do_idle+0x200/0x280
+[    6.619387]  cpu_startup_entry+0x20/0x40
+[    6.623366]  rest_init+0xd4/0xe0
+[    6.626642]  arch_call_rest_init+0xc/0x14
+[    6.630706]  start_kernel+0x420/0x44c
+[    6.634425] Code: a94153f3 a9425bf5 a8c37bfd d65f03c0 (d4210000) 
+[    6.640614] ---[ end trace 97efd7bf12ed0c65 ]---
+[    6.645295] Kernel panic - not syncing: Fatal exception in interrupt
+[    6.651740] SMP: stopping secondary CPUs
+[    6.655719] Kernel Offset: disabled
+[    6.659254] CPU features: 0x0002,24002004
+[    6.663315] Memory Limit: none
+[    6.666416] ---[ end Kernel panic - not syncing: Fatal exception in interrupt ]---
 
-Thanks,
 
-	M.
--- 
-Jazz is not dead. It just smells funny...
+Not really. It turns out phy_interrupt() wants to be run in a threaded
+context. As Sebastian says on IRC "but this means, that it was broken from
+the beginning"
