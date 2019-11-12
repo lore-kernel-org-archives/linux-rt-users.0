@@ -2,123 +2,80 @@ Return-Path: <SRS0=ZIbK=ZE=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.7 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-7.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_2 autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 25882C43331
-	for <linux-rt-users@archiver.kernel.org>; Tue, 12 Nov 2019 22:42:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B383EC43331
+	for <linux-rt-users@archiver.kernel.org>; Tue, 12 Nov 2019 23:04:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id F14252196E
-	for <linux-rt-users@archiver.kernel.org>; Tue, 12 Nov 2019 22:42:58 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="UAX4FVzh"
+	by mail.kernel.org (Postfix) with ESMTP id 94FF121A49
+	for <linux-rt-users@archiver.kernel.org>; Tue, 12 Nov 2019 23:04:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726953AbfKLWm5 (ORCPT
+        id S1727004AbfKLXEo (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 12 Nov 2019 17:42:57 -0500
-Received: from mail-lf1-f54.google.com ([209.85.167.54]:44166 "EHLO
-        mail-lf1-f54.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726906AbfKLWm4 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 12 Nov 2019 17:42:56 -0500
-Received: by mail-lf1-f54.google.com with SMTP id z188so192940lfa.11;
-        Tue, 12 Nov 2019 14:42:54 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:from:date:message-id:subject:to;
-        bh=6rfwUBIlHszDeeP+FOVqAKDe8gfyDPoAQ0ZCP7b8JzU=;
-        b=UAX4FVzh0ZrZ0Ahqrn7zURBp/B3kYzEK2di+1KEcgosF71dpMMXb7O1iNxJK13TI06
-         qemGPrXL5Bk5wxCJcE30T0v3gxEi84EF/ofDincC/apyj/7WuT4TSGG0xS5THjFSejCW
-         l1Xm2v71KqCksi6P4G7vHs8sy0+90m9/QI0ARpMhtud/NWYR5OapLkrXF+8Tlnbt6Jd6
-         NlqJXZOXRo24HTTimxhTPRZeaCsg32PAFOPCQjyJtX6GLm+WjRUBhJVT7v9yWFtuoGnH
-         5yEbAcxF950YczVvuICv7C7Vk/QPH8Dj2+juuGAGIb6BoIZYJVKaf+IsSre//1TmSiHh
-         JsZA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:from:date:message-id:subject:to;
-        bh=6rfwUBIlHszDeeP+FOVqAKDe8gfyDPoAQ0ZCP7b8JzU=;
-        b=n17xX2jS5aE0JmYBdIOojz3SQ903nPARnXZT3oF/KMkR1PkvmH2E5EszyzNgE2TT+2
-         8IaKyTj48ulNaIP5j3i2JoaT8yqvxg0aWsT5prJnCjaKFT0bI8rR7Jg8C3koJzDyp+zi
-         rgC0b13FhwsBTFXMJAtuyR9gxCOXY41j/dNCETpjGDHEEj4fMM4xUVMN1vukpUeSCeYL
-         J8VoaOXhYdifM0mKDgX3nevrwlKitQMZjrNd3cCo6oN75CZmmj6MN3jssxiyqFKMN0Uh
-         /im0T4tdW+gQXSK13MrTpPrjnNzQi+ipv37KWuRiNOe8QlXAPPhhnQFn26VF2byEWIhd
-         LBIA==
-X-Gm-Message-State: APjAAAVmUECLS21Fuo+boMmKPlXUxgePm0pekX9NI9Tg/tOP+oX6y1sL
-        GhcyiSsiaQq19muWNgUc9WibxIV071kbKgwR1mU=
-X-Google-Smtp-Source: APXvYqzOvuG/QGq8EED+9U1Hh5IV7qzHK2CHNNAM6wpVOVyj/EPbKTR5v+ClNd9MtV0LHetMwnxeh2Lc5FbOWIVIS0I=
-X-Received: by 2002:ac2:5a11:: with SMTP id q17mr183667lfn.41.1573598573829;
- Tue, 12 Nov 2019 14:42:53 -0800 (PST)
-MIME-Version: 1.0
-From:   Paul Thomas <pthomas8589@gmail.com>
-Date:   Tue, 12 Nov 2019 17:42:42 -0500
-Message-ID: <CAD56B7dwKDKnrCjpGmrnxz2P0QpNWU3CGBvOtqg3RBx3ejPh9g@mail.gmail.com>
-Subject: xdpsock poll with 5.2.21rt kernel
-To:     Alexei Starovoitov <ast@kernel.org>,
-        Daniel Borkmann <daniel@iogearbox.net>,
-        David Miller <davem@davemloft.net>,
-        Jakub Kicinski <jakub.kicinski@netronome.com>,
-        Jesper Dangaard Brouer <hawk@kernel.org>,
-        John Fastabend <john.fastabend@gmail.com>,
-        netdev@vger.kernel.org, xdp-newbies@vger.kernel.org,
-        bpf@vger.kernel.org,
+        Tue, 12 Nov 2019 18:04:44 -0500
+Received: from mail.kernel.org ([198.145.29.99]:35468 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726910AbfKLXEo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 12 Nov 2019 18:04:44 -0500
+Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 26D9220674;
+        Tue, 12 Nov 2019 23:04:43 +0000 (UTC)
+Date:   Tue, 12 Nov 2019 18:04:41 -0500
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Julia Cartwright <julia@ni.com>,
+        Daniel Wagner <wagi@monom.org>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>
+Subject: [ANNOUNCE] 4.19.82-rt30
+Message-ID: <20191112180441.18102760@gandalf.local.home>
+X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello,
 
-I'm doing some testing with AF_XDP, and I'm seeing some behavior I
-don't quite understand. It seems I can get into a situation where
-xdpsock (from samples/bpf/scpsocke_user.c) is using most of the cpu
-even though I'm trying to use poll().
+Dear RT Folks,
 
-To start with I run xdpsock with --rxdrop and --poll. At first this
-behaves nicely, the cpu usage is very low:
-# ps -AL -o pid,lwp,cmd,comm,rtprio,cpuid,pcpu | grep [x]dpsock
- 1932  1932 ./xdpsock -r -p -i eth1     xdpsock              -     3  0.0
- 1932  1933 ./xdpsock -r -p -i eth1     xdpsock              -     2  0.0
+I'm pleased to announce the 4.19.82-rt30 stable release.
 
-And strace shows nice orderly ppoll timeouts every second.
-# strace -p 1932
-strace: Process 1932 attached
-ppoll([{fd=3, events=POLLIN}], 1, {tv_sec=0, tv_nsec=510616211}, NULL,
-0) = 0 (Timeout)
-ppoll([{fd=3, events=POLLIN}], 1, {tv_sec=1, tv_nsec=0}, NULL, 0) = 0 (Timeout)
-ppoll([{fd=3, events=POLLIN}], 1, {tv_sec=1, tv_nsec=0}, NULL, 0) = 0 (Timeout)
-...
 
-Then I generate some traffic and ppoll() is not timing out anymore:
-ppoll([{fd=3, events=POLLIN}], 1, {tv_sec=1, tv_nsec=0}, NULL, 0) = 1
-([{fd=3, revents=POLLIN}], left {tv_sec=0, tv_nsec=999996790})
-ppoll([{fd=3, events=POLLIN}], 1, {tv_sec=1, tv_nsec=0}, NULL, 0) = 1
-([{fd=3, revents=POLLIN}], left {tv_sec=0, tv_nsec=999997260})
-ppoll([{fd=3, events=POLLIN}], 1, {tv_sec=1, tv_nsec=0}, NULL, 0) = 1
-([{fd=3, revents=POLLIN}], left {tv_sec=0, tv_nsec=999997100})
+This release is just an update to the new stable 4.19.82 version
+and no RT specific changes have been made.
 
-This is where it get's strange, if I stop the traffic, then strace no
-longer generates any activity but the xdpsock cpu usage is way up:
-# ps -AL -o pid,lwp,cmd,comm,rtprio,cpuid,pcpu | grep [x]dpsock
- 1932  1932 ./xdpsock -r -p -i eth1     xdpsock              -     3 61.0
- 1932  1933 ./xdpsock -r -p -i eth1     xdpsock              -     2  0.0
 
-So is it getting stuck at while (ret != rcvd) in rx_drop()?
+You can get this release via the git tree at:
 
-Is it a normal case to get past the poll() and then have
-xsk_ring_cons__peek() not equal xsk_ring_prod__reserve()?
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-I see the added xsk_ring_prod__needs_wakeup() with the extra poll() in
-the latest 5.4 kernels, but I don't think any of the needs_wakeup
-stuff is in the 5.2 kernel. Is that needed for this case?
+  branch: v4.19-rt
+  Head SHA1: 0e315bfd29ecc19ecfe22cf9c5e0da7da9d7f573
 
-This is with a 5.2.21 preempt-rt kernel on arm64 using the macb driver
-(so XDP_SKB and not XDP_DRV).
 
-Any thoughts would be appreciated.
+Or to build 4.19.82-rt30 directly, the following patches should be applied:
 
-thanks,
-Paul
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.82.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.19/patch-4.19.82-rt30.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
+
