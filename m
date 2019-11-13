@@ -7,73 +7,72 @@ X-Spam-Status: No, score=-5.2 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
 	SPF_PASS,USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BAEB4C43331
-	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Nov 2019 09:20:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 234F8C43331
+	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Nov 2019 10:29:43 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 8BCF822470
-	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Nov 2019 09:20:44 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id EF0C1222C1
+	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Nov 2019 10:29:42 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=arrikto-com.20150623.gappssmtp.com header.i=@arrikto-com.20150623.gappssmtp.com header.b="lSx2xsky"
+	dkim=pass (2048-bit key) header.d=arrikto-com.20150623.gappssmtp.com header.i=@arrikto-com.20150623.gappssmtp.com header.b="dr9wNmnJ"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727074AbfKMJUk (ORCPT
+        id S1727514AbfKMK3U (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 13 Nov 2019 04:20:40 -0500
-Received: from mail-lj1-f196.google.com ([209.85.208.196]:41179 "EHLO
-        mail-lj1-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726910AbfKMJUk (ORCPT
+        Wed, 13 Nov 2019 05:29:20 -0500
+Received: from mail-lf1-f65.google.com ([209.85.167.65]:40577 "EHLO
+        mail-lf1-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727183AbfKMK3P (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 13 Nov 2019 04:20:40 -0500
-Received: by mail-lj1-f196.google.com with SMTP id d22so1704930lji.8
-        for <linux-rt-users@vger.kernel.org>; Wed, 13 Nov 2019 01:20:39 -0800 (PST)
+        Wed, 13 Nov 2019 05:29:15 -0500
+Received: by mail-lf1-f65.google.com with SMTP id j26so1499019lfh.7
+        for <linux-rt-users@vger.kernel.org>; Wed, 13 Nov 2019 02:29:14 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=arrikto-com.20150623.gappssmtp.com; s=20150623;
         h=subject:to:cc:references:from:message-id:date:user-agent
          :mime-version:in-reply-to:content-language:content-transfer-encoding;
-        bh=oIUwVCoXTRy2Xzc2WTbShQwLgC231DhggYOStvhTE1g=;
-        b=lSx2xskyZOQ4nh+qgQles1LugvACmjIDL4+NSPQoZ0lftWJM0Yz7BGSwn8J/e65eHj
-         fNkcUkR4tIE3elCZ/uAQNqDd19xusilTspuDXzLr/uFrfkTD+EoNbwLyS/618zlav+Xi
-         iRxLIGgp0zqdPG0k9Y4xmbnddDGRDNExZLiP1cTsNuGbR0uWoWaCCTUsK++TihJky9LA
-         wZcBtOqotrhrj4DPLxCP5PCq1uCAvjdD9SEjZe1Du88F4WH1ZyY6x2Woi0fxeVZtfdkh
-         dlb9Oaxx8wgfRDE6HWE7X3FQO0cH40SZ5W0ZB4BJPinujmePJtoVoKnRXASYIfQhqNIm
-         maeg==
+        bh=8U4ilfUNpUqe6+CIAyFMlutnwFO+5K2+9W49ylkKQMM=;
+        b=dr9wNmnJxNrZ9PPJKsPqmMMjxbqIyI5x2JwffJyh6U16UMWChMEkFgavLDzptF0dK8
+         zO//Ya1JQaLrJM5tO/uXc3HglBtN2n7jsPedHsLtfQ9nGDqBXC+sp2084iYPRJ3ul8J4
+         7SvLcN4W/CJ90c2AW+rqSX2aSAty2i9+dHXb3EWCLhCJ3JpG4IcOog+C2T3En8XpxPZB
+         iG1009PHMuXwTfNJX9jyEPOaTk0DKxrctJoL+//up1g5T34tGn2czJR1vJwczFT7lRM+
+         tnw3mNVOG1J7zGsZyujXZFckSrojnr8Mr9ACobYt4d9Ln+1nKkv+dTPBS6u4aoM5eK5q
+         u8YA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:subject:to:cc:references:from:message-id:date
          :user-agent:mime-version:in-reply-to:content-language
          :content-transfer-encoding;
-        bh=oIUwVCoXTRy2Xzc2WTbShQwLgC231DhggYOStvhTE1g=;
-        b=SOSHdANDuv8OGHeneB25XDoL5oSN7+fwiisnwmz7+KE2G4/uZI1tIDNjBlHUdi4/ap
-         gTMzxJxUVKIjKu46VclcYy/Gz13ohAS1zHWW4YQe3JfmL/rM6ZeyV20FzYraBeDtNJrH
-         Ul7yRz2RJpyWDKbswcZ4XflT8BAr5QiL46nktIJwuwAxbiXxMLtSw9HMWfBjZzQv8oN/
-         /j716IItvZATTXumW1UcY7GK4H0y56ad+6+/8EzCa21GgNsRFNgTsoFyc18pHkcdqmf2
-         NPG6pFhHeWVguD0g6CVrYTT1+IX4lJfjZxNf2P+GZJILbXnKQADZBUZfgBR44depwzd4
-         lzNQ==
-X-Gm-Message-State: APjAAAXQrNgLXPq9qteu3TO854/MaCE+BcrBGGCGcilwu/iQpoVNM1sR
-        N5EiUqHSSr6gUtfvmDAL2M2sBg==
-X-Google-Smtp-Source: APXvYqwiY91CbJbr6hD5Oc184++qYLiuxmCMCk29oRW9+ONz55GoBRsdrtel1P2KeRp8x+CEsBTkBA==
-X-Received: by 2002:a2e:9d8d:: with SMTP id c13mr1589644ljj.71.1573636838399;
-        Wed, 13 Nov 2019 01:20:38 -0800 (PST)
+        bh=8U4ilfUNpUqe6+CIAyFMlutnwFO+5K2+9W49ylkKQMM=;
+        b=PyfGIlmhhua6pe9BI6NlXLFpIlBSFQgP7TPaKbVWH+cHUE46UdpqHS1lFwwjJXV+me
+         tR3S04wluAqIK2xtxJ5zU6O6ZOTIHGdy47a91djc+p6E9tB7Dv/o9B63iIIyHFD3niyK
+         d+MXV+EBXYlVX9s5nRMQBCe34w5q0aVDVdJ86BstqSzlOQcsedc+HJh4xgGUEA+aMP6y
+         68S2EE/wL00Rh55CkBPh3/XQvJ2JWZ8JeORxCdd2rI4NUIL7Sw9ni2b+5fXIQ+8DNTzG
+         bIOrdzbwsctEyRZabGvzSWmJpXcuW4G3oZBvQ6ofNrrO3+rIJumWJhWJ5zRpuqaIhZRB
+         TdVw==
+X-Gm-Message-State: APjAAAW1JwW7ebpkHfwG06NYhgti6/bwpu8gjPK48hrPPxclJSLaAlb9
+        u9Uar/VwqL93U88QaJqvgyp1zA==
+X-Google-Smtp-Source: APXvYqxXN3i85bszLn6MncK61pEPk1mQY39Ogn/cplUmKYNpImhuBr+oMEicCOaX6tobbAUTwzcbIA==
+X-Received: by 2002:ac2:4302:: with SMTP id l2mr461322lfh.116.1573640953556;
+        Wed, 13 Nov 2019 02:29:13 -0800 (PST)
 Received: from [10.94.250.119] ([31.177.62.212])
-        by smtp.gmail.com with ESMTPSA id 3sm683657lfq.55.2019.11.13.01.20.36
+        by smtp.gmail.com with ESMTPSA id u5sm826868lfu.4.2019.11.13.02.29.11
         (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
-        Wed, 13 Nov 2019 01:20:37 -0800 (PST)
-Subject: Re: [PATCH RT 1/2 v2] dm-snapshot: fix crash with the realtime kernel
-To:     Mikulas Patocka <mpatocka@redhat.com>,
-        Mike Snitzer <msnitzer@redhat.com>
-Cc:     Scott Wood <swood@redhat.com>,
+        Wed, 13 Nov 2019 02:29:13 -0800 (PST)
+Subject: Re: [PATCH RT 2/2 v2] list_bl: avoid BUG when the list is not locked
+To:     Mikulas Patocka <mpatocka@redhat.com>, tglx@linutronix.de,
+        linux-rt-users@vger.kernel.org
+Cc:     Mike Snitzer <msnitzer@redhat.com>, Scott Wood <swood@redhat.com>,
         Ilias Tsitsimpis <iliastsi@arrikto.com>, dm-devel@redhat.com,
         linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org,
         Daniel Wagner <dwagner@suse.de>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        linux-rt-users@vger.kernel.org, tglx@linutronix.de
-References: <alpine.LRH.2.02.1911121057490.12815@file01.intranet.prod.int.rdu2.redhat.com>
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+References: <alpine.LRH.2.02.1911121110430.12815@file01.intranet.prod.int.rdu2.redhat.com>
 From:   Nikos Tsironis <ntsironis@arrikto.com>
-Message-ID: <ab6fa08d-256a-1f8c-24dd-e5c23b3328bf@arrikto.com>
-Date:   Wed, 13 Nov 2019 11:20:35 +0200
+Message-ID: <335dafcb-5e07-63ed-b288-196516170bde@arrikto.com>
+Date:   Wed, 13 Nov 2019 12:29:08 +0200
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101
  Thunderbird/60.9.0
 MIME-Version: 1.0
-In-Reply-To: <alpine.LRH.2.02.1911121057490.12815@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.1911121110430.12815@file01.intranet.prod.int.rdu2.redhat.com>
 Content-Type: text/plain; charset=windows-1252
 Content-Language: en-US
 Content-Transfer-Encoding: 7bit
@@ -82,99 +81,58 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 11/12/19 6:09 PM, Mikulas Patocka wrote:
-> Snapshot doesn't work with realtime kernels since the commit f79ae415b64c.
-> hlist_bl is implemented as a raw spinlock and the code takes two non-raw
-> spinlocks while holding hlist_bl (non-raw spinlocks are blocking mutexes
-> in the realtime kernel).
+On 11/12/19 6:16 PM, Mikulas Patocka wrote:
+> list_bl would crash with BUG() if we used it without locking. dm-snapshot 
+> uses its own locking on realtime kernels (it can't use list_bl because 
+> list_bl uses raw spinlock and dm-snapshot takes other non-raw spinlocks 
+> while holding bl_lock).
 > 
-> We can't change hlist_bl to use non-raw spinlocks, this triggers warnings 
-> in dentry lookup code, because the dentry lookup code uses hlist_bl while 
-> holding a seqlock.
+> To avoid this BUG, we must set LIST_BL_LOCKMASK = 0.
 > 
-> This patch fixes the problem by using non-raw spinlock 
-> exception_table_lock instead of the hlist_bl lock.
+> This patch is intended only for the realtime kernel patchset, not for the 
+> upstream kernel.
 > 
 > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Fixes: f79ae415b64c ("dm snapshot: Make exception tables scalable")
 > 
-
-Reviewed-by: Nikos Tsironis <ntsironis@arrikto.com>
-
-> ---
->  drivers/md/dm-snap.c |   23 +++++++++++++++++++++++
->  1 file changed, 23 insertions(+)
-> 
-> Index: linux-2.6/drivers/md/dm-snap.c
+> Index: linux-rt-devel/include/linux/list_bl.h
 > ===================================================================
-> --- linux-2.6.orig/drivers/md/dm-snap.c	2019-11-12 16:44:36.000000000 +0100
-> +++ linux-2.6/drivers/md/dm-snap.c	2019-11-12 17:01:46.000000000 +0100
-> @@ -141,6 +141,10 @@ struct dm_snapshot {
->  	 * for them to be committed.
->  	 */
->  	struct bio_list bios_queued_during_merge;
-> +
-> +#ifdef CONFIG_PREEMPT_RT_BASE
-> +	spinlock_t exception_table_lock;
-> +#endif
->  };
+> --- linux-rt-devel.orig/include/linux/list_bl.h	2019-11-07 14:01:51.000000000 +0100
+> +++ linux-rt-devel/include/linux/list_bl.h	2019-11-08 10:12:49.000000000 +0100
+> @@ -19,7 +19,7 @@
+>   * some fast and compact auxiliary data.
+>   */
 >  
->  /*
-> @@ -625,30 +629,46 @@ static uint32_t exception_hash(struct dm
->  
->  /* Lock to protect access to the completed and pending exception hash tables. */
->  struct dm_exception_table_lock {
-> +#ifndef CONFIG_PREEMPT_RT_BASE
->  	struct hlist_bl_head *complete_slot;
->  	struct hlist_bl_head *pending_slot;
-> +#else
-> +	spinlock_t *lock;
-> +#endif
->  };
->  
->  static void dm_exception_table_lock_init(struct dm_snapshot *s, chunk_t chunk,
->  					 struct dm_exception_table_lock *lock)
->  {
-> +#ifndef CONFIG_PREEMPT_RT_BASE
->  	struct dm_exception_table *complete = &s->complete;
->  	struct dm_exception_table *pending = &s->pending;
->  
->  	lock->complete_slot = &complete->table[exception_hash(complete, chunk)];
->  	lock->pending_slot = &pending->table[exception_hash(pending, chunk)];
-> +#else
-> +	lock->lock = &s->exception_table_lock;
-> +#endif
+> -#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+> +#if (defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)) && !defined(CONFIG_PREEMPT_RT_BASE)
+>  #define LIST_BL_LOCKMASK	1UL
+>  #else
+>  #define LIST_BL_LOCKMASK	0UL
+> @@ -161,9 +161,6 @@ static inline void hlist_bl_lock(struct
+>  	bit_spin_lock(0, (unsigned long *)b);
+>  #else
+>  	raw_spin_lock(&b->lock);
+> -#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+> -	__set_bit(0, (unsigned long *)b);
+> -#endif
+>  #endif
 >  }
 >  
->  static void dm_exception_table_lock(struct dm_exception_table_lock *lock)
->  {
-> +#ifndef CONFIG_PREEMPT_RT_BASE
->  	hlist_bl_lock(lock->complete_slot);
->  	hlist_bl_lock(lock->pending_slot);
-> +#else
-> +	spin_lock(lock->lock);
-> +#endif
+
+Hi Mikulas,
+
+I think removing __set_bit()/__clear_bit() breaks hlist_bl_is_locked(),
+which is used by the RCU variant of list_bl.
+
+Nikos
+
+> @@ -172,9 +169,6 @@ static inline void hlist_bl_unlock(struc
+>  #ifndef CONFIG_PREEMPT_RT_BASE
+>  	__bit_spin_unlock(0, (unsigned long *)b);
+>  #else
+> -#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+> -	__clear_bit(0, (unsigned long *)b);
+> -#endif
+>  	raw_spin_unlock(&b->lock);
+>  #endif
 >  }
->  
->  static void dm_exception_table_unlock(struct dm_exception_table_lock *lock)
->  {
-> +#ifndef CONFIG_PREEMPT_RT_BASE
->  	hlist_bl_unlock(lock->pending_slot);
->  	hlist_bl_unlock(lock->complete_slot);
-> +#else
-> +	spin_unlock(lock->lock);
-> +#endif
->  }
->  
->  static int dm_exception_table_init(struct dm_exception_table *et,
-> @@ -1318,6 +1338,9 @@ static int snapshot_ctr(struct dm_target
->  	s->first_merging_chunk = 0;
->  	s->num_merging_chunks = 0;
->  	bio_list_init(&s->bios_queued_during_merge);
-> +#ifdef CONFIG_PREEMPT_RT_BASE
-> +	spin_lock_init(&s->exception_table_lock);
-> +#endif
->  
->  	/* Allocate hash table for COW data */
->  	if (init_hash_tables(s)) {
 > 
