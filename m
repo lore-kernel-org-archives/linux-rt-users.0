@@ -1,81 +1,167 @@
-Return-Path: <SRS0=ZIbK=ZE=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=be3R=ZF=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_2 autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.9 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B383EC43331
-	for <linux-rt-users@archiver.kernel.org>; Tue, 12 Nov 2019 23:04:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 98C87C17447
+	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Nov 2019 06:01:38 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 94FF121A49
-	for <linux-rt-users@archiver.kernel.org>; Tue, 12 Nov 2019 23:04:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6EFC0222D3
+	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Nov 2019 06:01:38 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="J6vyXx5T"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727004AbfKLXEo (ORCPT
+        id S1727078AbfKMGBh (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 12 Nov 2019 18:04:44 -0500
-Received: from mail.kernel.org ([198.145.29.99]:35468 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726910AbfKLXEo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 12 Nov 2019 18:04:44 -0500
-Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        Wed, 13 Nov 2019 01:01:37 -0500
+Received: from us-smtp-2.mimecast.com ([205.139.110.61]:49414 "EHLO
+        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1725866AbfKMGBf (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 13 Nov 2019 01:01:35 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1573624893;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=BI1DBbTBrcq16pSAoz/BMA31HAPi7JaaeyCMiqZAhfE=;
+        b=J6vyXx5TL4SivpuPm9SALV30pua4eYyY280l+uLdUS3cBB1xphJIlh/cU9aV1Z3UhvvNO4
+        I79JPm5fnOBFjrh5iE8cB3msXn6EanIVQlJtxdDBHUFpl1IknPiBzKcBrlPN/5V0IAFDXJ
+        VFXuUwUhFDL9KBgkQqRD/PEU6skUOeM=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-210-ZdQCrH3AO6aLXcu4nSUO7g-1; Wed, 13 Nov 2019 01:01:30 -0500
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 26D9220674;
-        Tue, 12 Nov 2019 23:04:43 +0000 (UTC)
-Date:   Tue, 12 Nov 2019 18:04:41 -0500
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 03C51107ACC7;
+        Wed, 13 Nov 2019 06:01:29 +0000 (UTC)
+Received: from ovpn-116-229.phx2.redhat.com (ovpn-116-229.phx2.redhat.com [10.3.116.229])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 7730C101E3CB;
+        Wed, 13 Nov 2019 06:01:22 +0000 (UTC)
+Message-ID: <048d9e5ea9ea9cebe18aa96d59bd0a67b3429529.camel@redhat.com>
+Subject: Re: [PATCH 1/2] dm-snapshot: fix crash with the realtime kernel
+From:   Scott Wood <swood@redhat.com>
+To:     Nikos Tsironis <ntsironis@arrikto.com>,
+        Mikulas Patocka <mpatocka@redhat.com>,
+        Mike Snitzer <snitzer@redhat.com>
+Cc:     Ilias Tsitsimpis <iliastsi@arrikto.com>, dm-devel@redhat.com,
+        linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Julia Cartwright <julia@ni.com>,
-        Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>
-Subject: [ANNOUNCE] 4.19.82-rt30
-Message-ID: <20191112180441.18102760@gandalf.local.home>
-X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
+        Daniel Wagner <dwagner@suse.de>, tglx@linutronix.de,
+        linux-rt-users@vger.kernel.org,
+        Paul Gortmaker <paul.gortmaker@windriver.com>
+In-Reply-To: <a6f588d3-2403-d50a-70a1-ed644082cc83@arrikto.com>
+References: <alpine.LRH.2.02.1911110811060.28408@file01.intranet.prod.int.rdu2.redhat.com>
+         <c9a772e9-e305-cf0b-1155-fb19bdb84e55@arrikto.com>
+         <20191112011444.GA32220@redhat.com>
+         <alpine.LRH.2.02.1911120240020.25757@file01.intranet.prod.int.rdu2.redhat.com>
+         <a6f588d3-2403-d50a-70a1-ed644082cc83@arrikto.com>
+Organization: Red Hat
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Date:   Wed, 13 Nov 2019 00:01:06 -0600
+User-Agent: Evolution 3.30.5 (3.30.5-1.fc29)
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-MC-Unique: ZdQCrH3AO6aLXcu4nSUO7g-1
+X-Mimecast-Spam-Score: 0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+On Tue, 2019-11-12 at 13:45 +0200, Nikos Tsironis wrote:
+> On 11/12/19 9:50 AM, Mikulas Patocka wrote:
+> >=20
+> > On Mon, 11 Nov 2019, Mike Snitzer wrote:
+> >=20
+> > > On Mon, Nov 11 2019 at 11:37am -0500,
+> > > Nikos Tsironis <ntsironis@arrikto.com> wrote:
+> > >=20
+> > > > On 11/11/19 3:59 PM, Mikulas Patocka wrote:
+> > > > > Snapshot doesn't work with realtime kernels since the commit
+> > > > > f79ae415b64c.
+> > > > > hlist_bl is implemented as a raw spinlock and the code takes two
+> > > > > non-raw
+> > > > > spinlocks while holding hlist_bl (non-raw spinlocks are blocking
+> > > > > mutexes
+> > > > > in the realtime kernel, so they couldn't be taken inside a raw
+> > > > > spinlock).
+> > > > >=20
+> > > > > This patch fixes the problem by using non-raw spinlock
+> > > > > exception_table_lock instead of the hlist_bl lock.
+> > > > >=20
+> > > > > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> > > > > Fixes: f79ae415b64c ("dm snapshot: Make exception tables
+> > > > > scalable")
+> > > > >=20
+> > > >=20
+> > > > Hi Mikulas,
+> > > >=20
+> > > > I wasn't aware that hlist_bl is implemented as a raw spinlock in th=
+e
+> > > > real time kernel. I would expect it to be a standard non-raw
+> > > > spinlock,
+> > > > so everything works as expected. But, after digging further in the
+> > > > real
+> > > > time tree, I found commit ad7675b15fd87f1 ("list_bl: Make list head
+> > > > locking RT safe") which suggests that such a conversion would break
+> > > > other parts of the kernel.
+> > >=20
+> > > Right, the proper fix is to update list_bl to work on realtime (which
+> > > I
+> > > assume the referenced commit does).  I do not want to take this
+> > > dm-snapshot specific workaround that open-codes what should be done
+> > > within hlist_{bl_lock,unlock}, etc.
+> >=20
+> > If we change list_bl to use non-raw spinlock, it fails in dentry lookup=
+=20
+> > code. The dentry code takes a seqlock (which is implemented as preempt=
+=20
+> > disable in the realtime kernel) and then takes a list_bl lock.
+> >=20
+> > This is wrong from the real-time perspective (the chain in the hash
+> > could=20
+> > be arbitrarily long, so using non-raw spinlock could cause unbounded=20
+> > wait), however we can't do anything with it.
+> >=20
+> > I think that fixing dm-snapshot is way easier than fixing the dentry
+> > code.=20
+> > If you have an idea how to fix the dentry code, tell us.
+>=20
+> I too think that it would be better to fix list_bl. dm-snapshot isn't
+> really broken. One should be able to acquire a spinlock while holding
+> another spinlock.
 
-Dear RT Folks,
+That's not universally true -- even in the absence of RT there are nesting
+considerations.  But it would probably be good if raw locks weren't hidden
+inside other locking primitives without making it clear (ideally in the
+function names) that it's a raw lock.
 
-I'm pleased to announce the 4.19.82-rt30 stable release.
+> Moreover, apart from dm-snapshot, anyone ever using list_bl is at risk
+> of breaking the realtime kernel, if he or she is not aware of that
+> particular limitation of list_bl's implementation in the realtime tree.
 
+In particular the non-rcu variant seems inherently bad unless you protect
+traversal with some other lock (in which case why use bl at all?).  Maybe
+fully separate the rcu version of list_bl and keep using raw locks there
+(with the name clearly indicating so), with the side benefit that
+accidentally mixing rcu and non-rcu operations on the same list would becom=
+e
+a build error, and convert the non-rcu list_bl to use non-raw locks on RT.
 
-This release is just an update to the new stable 4.19.82 version
-and no RT specific changes have been made.
+BTW, I'm wondering what makes bit spinlocks worse than raw spinlocks on
+RT...  commit ad7675b15fd87f19 says there's no lockdep visibility, but that
+seems orthogonal to RT, and could be addressed by adding a dep_map on debug
+builds the same way the raw lock is currently added.  The other bit spinloc=
+k
+conversion commits that I could find are replacing them with non-raw locks.
 
+-Scott
 
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.19-rt
-  Head SHA1: 0e315bfd29ecc19ecfe22cf9c5e0da7da9d7f573
-
-
-Or to build 4.19.82-rt30 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.82.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.19/patch-4.19.82-rt30.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
 
