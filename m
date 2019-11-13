@@ -2,166 +2,179 @@ Return-Path: <SRS0=be3R=ZF=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.9 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.2 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 98C87C17447
-	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Nov 2019 06:01:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BAEB4C43331
+	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Nov 2019 09:20:44 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 6EFC0222D3
-	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Nov 2019 06:01:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8BCF822470
+	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Nov 2019 09:20:44 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="J6vyXx5T"
+	dkim=pass (2048-bit key) header.d=arrikto-com.20150623.gappssmtp.com header.i=@arrikto-com.20150623.gappssmtp.com header.b="lSx2xsky"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727078AbfKMGBh (ORCPT
+        id S1727074AbfKMJUk (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 13 Nov 2019 01:01:37 -0500
-Received: from us-smtp-2.mimecast.com ([205.139.110.61]:49414 "EHLO
-        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1725866AbfKMGBf (ORCPT
+        Wed, 13 Nov 2019 04:20:40 -0500
+Received: from mail-lj1-f196.google.com ([209.85.208.196]:41179 "EHLO
+        mail-lj1-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726910AbfKMJUk (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 13 Nov 2019 01:01:35 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1573624893;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=BI1DBbTBrcq16pSAoz/BMA31HAPi7JaaeyCMiqZAhfE=;
-        b=J6vyXx5TL4SivpuPm9SALV30pua4eYyY280l+uLdUS3cBB1xphJIlh/cU9aV1Z3UhvvNO4
-        I79JPm5fnOBFjrh5iE8cB3msXn6EanIVQlJtxdDBHUFpl1IknPiBzKcBrlPN/5V0IAFDXJ
-        VFXuUwUhFDL9KBgkQqRD/PEU6skUOeM=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-210-ZdQCrH3AO6aLXcu4nSUO7g-1; Wed, 13 Nov 2019 01:01:30 -0500
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 03C51107ACC7;
-        Wed, 13 Nov 2019 06:01:29 +0000 (UTC)
-Received: from ovpn-116-229.phx2.redhat.com (ovpn-116-229.phx2.redhat.com [10.3.116.229])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 7730C101E3CB;
-        Wed, 13 Nov 2019 06:01:22 +0000 (UTC)
-Message-ID: <048d9e5ea9ea9cebe18aa96d59bd0a67b3429529.camel@redhat.com>
-Subject: Re: [PATCH 1/2] dm-snapshot: fix crash with the realtime kernel
-From:   Scott Wood <swood@redhat.com>
-To:     Nikos Tsironis <ntsironis@arrikto.com>,
-        Mikulas Patocka <mpatocka@redhat.com>,
-        Mike Snitzer <snitzer@redhat.com>
-Cc:     Ilias Tsitsimpis <iliastsi@arrikto.com>, dm-devel@redhat.com,
+        Wed, 13 Nov 2019 04:20:40 -0500
+Received: by mail-lj1-f196.google.com with SMTP id d22so1704930lji.8
+        for <linux-rt-users@vger.kernel.org>; Wed, 13 Nov 2019 01:20:39 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=arrikto-com.20150623.gappssmtp.com; s=20150623;
+        h=subject:to:cc:references:from:message-id:date:user-agent
+         :mime-version:in-reply-to:content-language:content-transfer-encoding;
+        bh=oIUwVCoXTRy2Xzc2WTbShQwLgC231DhggYOStvhTE1g=;
+        b=lSx2xskyZOQ4nh+qgQles1LugvACmjIDL4+NSPQoZ0lftWJM0Yz7BGSwn8J/e65eHj
+         fNkcUkR4tIE3elCZ/uAQNqDd19xusilTspuDXzLr/uFrfkTD+EoNbwLyS/618zlav+Xi
+         iRxLIGgp0zqdPG0k9Y4xmbnddDGRDNExZLiP1cTsNuGbR0uWoWaCCTUsK++TihJky9LA
+         wZcBtOqotrhrj4DPLxCP5PCq1uCAvjdD9SEjZe1Du88F4WH1ZyY6x2Woi0fxeVZtfdkh
+         dlb9Oaxx8wgfRDE6HWE7X3FQO0cH40SZ5W0ZB4BJPinujmePJtoVoKnRXASYIfQhqNIm
+         maeg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:subject:to:cc:references:from:message-id:date
+         :user-agent:mime-version:in-reply-to:content-language
+         :content-transfer-encoding;
+        bh=oIUwVCoXTRy2Xzc2WTbShQwLgC231DhggYOStvhTE1g=;
+        b=SOSHdANDuv8OGHeneB25XDoL5oSN7+fwiisnwmz7+KE2G4/uZI1tIDNjBlHUdi4/ap
+         gTMzxJxUVKIjKu46VclcYy/Gz13ohAS1zHWW4YQe3JfmL/rM6ZeyV20FzYraBeDtNJrH
+         Ul7yRz2RJpyWDKbswcZ4XflT8BAr5QiL46nktIJwuwAxbiXxMLtSw9HMWfBjZzQv8oN/
+         /j716IItvZATTXumW1UcY7GK4H0y56ad+6+/8EzCa21GgNsRFNgTsoFyc18pHkcdqmf2
+         NPG6pFhHeWVguD0g6CVrYTT1+IX4lJfjZxNf2P+GZJILbXnKQADZBUZfgBR44depwzd4
+         lzNQ==
+X-Gm-Message-State: APjAAAXQrNgLXPq9qteu3TO854/MaCE+BcrBGGCGcilwu/iQpoVNM1sR
+        N5EiUqHSSr6gUtfvmDAL2M2sBg==
+X-Google-Smtp-Source: APXvYqwiY91CbJbr6hD5Oc184++qYLiuxmCMCk29oRW9+ONz55GoBRsdrtel1P2KeRp8x+CEsBTkBA==
+X-Received: by 2002:a2e:9d8d:: with SMTP id c13mr1589644ljj.71.1573636838399;
+        Wed, 13 Nov 2019 01:20:38 -0800 (PST)
+Received: from [10.94.250.119] ([31.177.62.212])
+        by smtp.gmail.com with ESMTPSA id 3sm683657lfq.55.2019.11.13.01.20.36
+        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Wed, 13 Nov 2019 01:20:37 -0800 (PST)
+Subject: Re: [PATCH RT 1/2 v2] dm-snapshot: fix crash with the realtime kernel
+To:     Mikulas Patocka <mpatocka@redhat.com>,
+        Mike Snitzer <msnitzer@redhat.com>
+Cc:     Scott Wood <swood@redhat.com>,
+        Ilias Tsitsimpis <iliastsi@arrikto.com>, dm-devel@redhat.com,
         linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+        Daniel Wagner <dwagner@suse.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <dwagner@suse.de>, tglx@linutronix.de,
-        linux-rt-users@vger.kernel.org,
-        Paul Gortmaker <paul.gortmaker@windriver.com>
-In-Reply-To: <a6f588d3-2403-d50a-70a1-ed644082cc83@arrikto.com>
-References: <alpine.LRH.2.02.1911110811060.28408@file01.intranet.prod.int.rdu2.redhat.com>
-         <c9a772e9-e305-cf0b-1155-fb19bdb84e55@arrikto.com>
-         <20191112011444.GA32220@redhat.com>
-         <alpine.LRH.2.02.1911120240020.25757@file01.intranet.prod.int.rdu2.redhat.com>
-         <a6f588d3-2403-d50a-70a1-ed644082cc83@arrikto.com>
-Organization: Red Hat
+        linux-rt-users@vger.kernel.org, tglx@linutronix.de
+References: <alpine.LRH.2.02.1911121057490.12815@file01.intranet.prod.int.rdu2.redhat.com>
+From:   Nikos Tsironis <ntsironis@arrikto.com>
+Message-ID: <ab6fa08d-256a-1f8c-24dd-e5c23b3328bf@arrikto.com>
+Date:   Wed, 13 Nov 2019 11:20:35 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101
+ Thunderbird/60.9.0
 MIME-Version: 1.0
-Date:   Wed, 13 Nov 2019 00:01:06 -0600
-User-Agent: Evolution 3.30.5 (3.30.5-1.fc29)
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
-X-MC-Unique: ZdQCrH3AO6aLXcu4nSUO7g-1
-X-Mimecast-Spam-Score: 0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <alpine.LRH.2.02.1911121057490.12815@file01.intranet.prod.int.rdu2.redhat.com>
+Content-Type: text/plain; charset=windows-1252
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, 2019-11-12 at 13:45 +0200, Nikos Tsironis wrote:
-> On 11/12/19 9:50 AM, Mikulas Patocka wrote:
-> >=20
-> > On Mon, 11 Nov 2019, Mike Snitzer wrote:
-> >=20
-> > > On Mon, Nov 11 2019 at 11:37am -0500,
-> > > Nikos Tsironis <ntsironis@arrikto.com> wrote:
-> > >=20
-> > > > On 11/11/19 3:59 PM, Mikulas Patocka wrote:
-> > > > > Snapshot doesn't work with realtime kernels since the commit
-> > > > > f79ae415b64c.
-> > > > > hlist_bl is implemented as a raw spinlock and the code takes two
-> > > > > non-raw
-> > > > > spinlocks while holding hlist_bl (non-raw spinlocks are blocking
-> > > > > mutexes
-> > > > > in the realtime kernel, so they couldn't be taken inside a raw
-> > > > > spinlock).
-> > > > >=20
-> > > > > This patch fixes the problem by using non-raw spinlock
-> > > > > exception_table_lock instead of the hlist_bl lock.
-> > > > >=20
-> > > > > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > > > > Fixes: f79ae415b64c ("dm snapshot: Make exception tables
-> > > > > scalable")
-> > > > >=20
-> > > >=20
-> > > > Hi Mikulas,
-> > > >=20
-> > > > I wasn't aware that hlist_bl is implemented as a raw spinlock in th=
-e
-> > > > real time kernel. I would expect it to be a standard non-raw
-> > > > spinlock,
-> > > > so everything works as expected. But, after digging further in the
-> > > > real
-> > > > time tree, I found commit ad7675b15fd87f1 ("list_bl: Make list head
-> > > > locking RT safe") which suggests that such a conversion would break
-> > > > other parts of the kernel.
-> > >=20
-> > > Right, the proper fix is to update list_bl to work on realtime (which
-> > > I
-> > > assume the referenced commit does).  I do not want to take this
-> > > dm-snapshot specific workaround that open-codes what should be done
-> > > within hlist_{bl_lock,unlock}, etc.
-> >=20
-> > If we change list_bl to use non-raw spinlock, it fails in dentry lookup=
-=20
-> > code. The dentry code takes a seqlock (which is implemented as preempt=
-=20
-> > disable in the realtime kernel) and then takes a list_bl lock.
-> >=20
-> > This is wrong from the real-time perspective (the chain in the hash
-> > could=20
-> > be arbitrarily long, so using non-raw spinlock could cause unbounded=20
-> > wait), however we can't do anything with it.
-> >=20
-> > I think that fixing dm-snapshot is way easier than fixing the dentry
-> > code.=20
-> > If you have an idea how to fix the dentry code, tell us.
->=20
-> I too think that it would be better to fix list_bl. dm-snapshot isn't
-> really broken. One should be able to acquire a spinlock while holding
-> another spinlock.
+On 11/12/19 6:09 PM, Mikulas Patocka wrote:
+> Snapshot doesn't work with realtime kernels since the commit f79ae415b64c.
+> hlist_bl is implemented as a raw spinlock and the code takes two non-raw
+> spinlocks while holding hlist_bl (non-raw spinlocks are blocking mutexes
+> in the realtime kernel).
+> 
+> We can't change hlist_bl to use non-raw spinlocks, this triggers warnings 
+> in dentry lookup code, because the dentry lookup code uses hlist_bl while 
+> holding a seqlock.
+> 
+> This patch fixes the problem by using non-raw spinlock 
+> exception_table_lock instead of the hlist_bl lock.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Fixes: f79ae415b64c ("dm snapshot: Make exception tables scalable")
+> 
 
-That's not universally true -- even in the absence of RT there are nesting
-considerations.  But it would probably be good if raw locks weren't hidden
-inside other locking primitives without making it clear (ideally in the
-function names) that it's a raw lock.
+Reviewed-by: Nikos Tsironis <ntsironis@arrikto.com>
 
-> Moreover, apart from dm-snapshot, anyone ever using list_bl is at risk
-> of breaking the realtime kernel, if he or she is not aware of that
-> particular limitation of list_bl's implementation in the realtime tree.
-
-In particular the non-rcu variant seems inherently bad unless you protect
-traversal with some other lock (in which case why use bl at all?).  Maybe
-fully separate the rcu version of list_bl and keep using raw locks there
-(with the name clearly indicating so), with the side benefit that
-accidentally mixing rcu and non-rcu operations on the same list would becom=
-e
-a build error, and convert the non-rcu list_bl to use non-raw locks on RT.
-
-BTW, I'm wondering what makes bit spinlocks worse than raw spinlocks on
-RT...  commit ad7675b15fd87f19 says there's no lockdep visibility, but that
-seems orthogonal to RT, and could be addressed by adding a dep_map on debug
-builds the same way the raw lock is currently added.  The other bit spinloc=
-k
-conversion commits that I could find are replacing them with non-raw locks.
-
--Scott
-
-
+> ---
+>  drivers/md/dm-snap.c |   23 +++++++++++++++++++++++
+>  1 file changed, 23 insertions(+)
+> 
+> Index: linux-2.6/drivers/md/dm-snap.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm-snap.c	2019-11-12 16:44:36.000000000 +0100
+> +++ linux-2.6/drivers/md/dm-snap.c	2019-11-12 17:01:46.000000000 +0100
+> @@ -141,6 +141,10 @@ struct dm_snapshot {
+>  	 * for them to be committed.
+>  	 */
+>  	struct bio_list bios_queued_during_merge;
+> +
+> +#ifdef CONFIG_PREEMPT_RT_BASE
+> +	spinlock_t exception_table_lock;
+> +#endif
+>  };
+>  
+>  /*
+> @@ -625,30 +629,46 @@ static uint32_t exception_hash(struct dm
+>  
+>  /* Lock to protect access to the completed and pending exception hash tables. */
+>  struct dm_exception_table_lock {
+> +#ifndef CONFIG_PREEMPT_RT_BASE
+>  	struct hlist_bl_head *complete_slot;
+>  	struct hlist_bl_head *pending_slot;
+> +#else
+> +	spinlock_t *lock;
+> +#endif
+>  };
+>  
+>  static void dm_exception_table_lock_init(struct dm_snapshot *s, chunk_t chunk,
+>  					 struct dm_exception_table_lock *lock)
+>  {
+> +#ifndef CONFIG_PREEMPT_RT_BASE
+>  	struct dm_exception_table *complete = &s->complete;
+>  	struct dm_exception_table *pending = &s->pending;
+>  
+>  	lock->complete_slot = &complete->table[exception_hash(complete, chunk)];
+>  	lock->pending_slot = &pending->table[exception_hash(pending, chunk)];
+> +#else
+> +	lock->lock = &s->exception_table_lock;
+> +#endif
+>  }
+>  
+>  static void dm_exception_table_lock(struct dm_exception_table_lock *lock)
+>  {
+> +#ifndef CONFIG_PREEMPT_RT_BASE
+>  	hlist_bl_lock(lock->complete_slot);
+>  	hlist_bl_lock(lock->pending_slot);
+> +#else
+> +	spin_lock(lock->lock);
+> +#endif
+>  }
+>  
+>  static void dm_exception_table_unlock(struct dm_exception_table_lock *lock)
+>  {
+> +#ifndef CONFIG_PREEMPT_RT_BASE
+>  	hlist_bl_unlock(lock->pending_slot);
+>  	hlist_bl_unlock(lock->complete_slot);
+> +#else
+> +	spin_unlock(lock->lock);
+> +#endif
+>  }
+>  
+>  static int dm_exception_table_init(struct dm_exception_table *et,
+> @@ -1318,6 +1338,9 @@ static int snapshot_ctr(struct dm_target
+>  	s->first_merging_chunk = 0;
+>  	s->num_merging_chunks = 0;
+>  	bio_list_init(&s->bios_queued_during_merge);
+> +#ifdef CONFIG_PREEMPT_RT_BASE
+> +	spin_lock_init(&s->exception_table_lock);
+> +#endif
+>  
+>  	/* Allocate hash table for COW data */
+>  	if (init_hash_tables(s)) {
+> 
