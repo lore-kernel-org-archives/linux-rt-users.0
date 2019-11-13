@@ -2,106 +2,86 @@ Return-Path: <SRS0=be3R=ZF=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
+X-Spam-Status: No, score=-2.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8A352C43331
-	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Nov 2019 13:11:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 69EEBC432C3
+	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Nov 2019 18:02:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 5F23D22459
-	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Nov 2019 13:11:06 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=arrikto-com.20150623.gappssmtp.com header.i=@arrikto-com.20150623.gappssmtp.com header.b="BAeCjAlz"
+	by mail.kernel.org (Postfix) with ESMTP id 5ED37206CB
+	for <linux-rt-users@archiver.kernel.org>; Wed, 13 Nov 2019 18:02:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727339AbfKMNLC (ORCPT
+        id S1727729AbfKMSCO (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 13 Nov 2019 08:11:02 -0500
-Received: from mail-lf1-f66.google.com ([209.85.167.66]:39073 "EHLO
-        mail-lf1-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727206AbfKMNLC (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 13 Nov 2019 08:11:02 -0500
-Received: by mail-lf1-f66.google.com with SMTP id j14so1916066lfk.6
-        for <linux-rt-users@vger.kernel.org>; Wed, 13 Nov 2019 05:11:01 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=arrikto-com.20150623.gappssmtp.com; s=20150623;
-        h=from:to:cc:subject:date:message-id:in-reply-to:references;
-        bh=APXfuG82A+VYQSkpqfeuJieTcNwnepuIQxnGzHt+UyY=;
-        b=BAeCjAlzwou5Zo9UvZSL2D4JSlacqkT7yTYCtZVUIRNeMaEt3hdYh761eqcGUkI/Yo
-         I9+kvWMLSuScZsn4KcRn9p2zxHd49AvbDJDQusjhSGNQRLQWic3DzLnaWBrpON3B69nD
-         aVDAJ3BCTMD/v+an6y8zO+6Nko1hmKWVLk2aJVx1z30XdkijkPW8Oo9Mxcu/IJuD/+fM
-         A84fvsdtOR9NSSVxTeXmcTMGwIy/fSZA8PSWC5wbLHWpfo03k+8kG4VfIRlyF1SaCLO2
-         VF5At8jflRl18pUJbLsDnR83UOo2nNH/Us1sPEkSPeCTSwXq5zT4raVSZ/wxuqy8xY7a
-         lnDA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
-         :references;
-        bh=APXfuG82A+VYQSkpqfeuJieTcNwnepuIQxnGzHt+UyY=;
-        b=GrzSm41RMH96x0vBRYGHc/duOMN86DptV+7x6ir5mq+fpwGVhU0CFhN/YJr6EzbsTl
-         xvq/XzkH5M9Cr1tVTO4IIVgV3uXVRjBdjgx/en+6aSioHgmlO33/v4fpjX39avIlTDOG
-         S8JppN0I+VfS2x3MbYIdZDfmfBY2b7ykHmqUEd2zxWiZPgKVoA8fkR8Q7sJ0Xz5OBb6H
-         ryWG9CZLPTiiQyB0yBqKi0+U6LIQSlHrn2rv44rHyL3tvNM0vi2bTa6Vi1UcFjPo3UyO
-         HcHwFnOtMv5yB39Gr3meSe/5o8DOBLAOOyKcWvRpjVzVxb9CWB4DPbpiIbJoVb2Mzp9U
-         CkBQ==
-X-Gm-Message-State: APjAAAUWqk465YARn4khpp3M3Acbl9X+A6JMOzb15/5Emv1Jzp8etZ7f
-        97MrgDhDOJAEvtfwBHM/EzEq1g==
-X-Google-Smtp-Source: APXvYqw8acf0sFiW3raGdnG9WRNX75XMtKloLZJBrhpNKGHffyGTzbwc68/x0EVvUMtvNYR9K6RDIA==
-X-Received: by 2002:a19:500d:: with SMTP id e13mr2669462lfb.85.1573650660205;
-        Wed, 13 Nov 2019 05:11:00 -0800 (PST)
-Received: from snf-864.vm.snf.arr ([31.177.62.212])
-        by smtp.gmail.com with ESMTPSA id y75sm1070176lff.58.2019.11.13.05.10.58
-        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
-        Wed, 13 Nov 2019 05:10:59 -0800 (PST)
-From:   Nikos Tsironis <ntsironis@arrikto.com>
-To:     mpatocka@redhat.com, tglx@linutronix.de,
-        linux-rt-users@vger.kernel.org, msnitzer@redhat.com,
-        dm-devel@redhat.com, linux-kernel@vger.kernel.org
-Cc:     swood@redhat.com, linux-fsdevel@vger.kernel.org, dwagner@suse.de,
-        bigeasy@linutronix.de, iliastsi@arrikto.com, ntsironis@arrikto.com
-Subject: [PATCH RT 2/2 v4] list_bl: avoid BUG when the list is not locked
-Date:   Wed, 13 Nov 2019 15:10:42 +0200
-Message-Id: <20191113131042.7719-1-ntsironis@arrikto.com>
-X-Mailer: git-send-email 2.11.0
-In-Reply-To: <alpine.LRH.2.02.1911121110430.12815@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.1911121110430.12815@file01.intranet.prod.int.rdu2.redhat.com>
+        Wed, 13 Nov 2019 13:02:14 -0500
+Received: from mail.softplc.com ([206.126.248.66]:55933 "EHLO mail.softplc.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726120AbfKMSCO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 13 Nov 2019 13:02:14 -0500
+Received: from [192.100.100.3] ([::ffff:107.174.231.239])
+  (AUTH: PLAIN dick@softplc.com, TLS: TLSv1/SSLv3,128bits,AES128-SHA)
+  by mail.softplc.com with ESMTPSA; Wed, 13 Nov 2019 13:02:13 -0500
+  id 00000000001E0003.000000005DCC4525.000075A7
+Subject: Re: Need help building for aarch64 kernel 5.2
+To:     Paul Thomas <pthomas8589@gmail.com>
+Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>
+References: <a0a64a18-5805-de3b-c4f7-537de8fa0508@softplc.com>
+ <CAD56B7cgt704nWrowch8KrcT7e6ASr5Hi9FQ8-xmgztYcdceyA@mail.gmail.com>
+From:   Dick Hollenbeck <dick@softplc.com>
+Message-ID: <adcdeaa2-69e0-9f61-35c9-888e2a281f37@softplc.com>
+Date:   Wed, 13 Nov 2019 12:02:12 -0600
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101
+ Thunderbird/60.9.0
+MIME-Version: 1.0
+In-Reply-To: <CAD56B7cgt704nWrowch8KrcT7e6ASr5Hi9FQ8-xmgztYcdceyA@mail.gmail.com>
+Content-Type: text/plain; charset=utf-8
+Content-Language: en-GB
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-list_bl would crash with BUG() if we used it without locking.
-dm-snapshot uses its own locking on realtime kernels (it can't use
-list_bl because list_bl uses raw spinlock and dm-snapshot takes other
-non-raw spinlocks while holding bl_lock).
+On 11/12/19 2:33 PM, Paul Thomas wrote:
+> I hope this helps. Good luck!
+> 
+> -Paul
 
-To avoid this BUG we deactivate the list debug checks for list_bl on
-realtime kernels.
 
-This patch is intended only for the realtime kernel patchset, not for
-the upstream kernel.
+[PATCH] needed
 
-Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
-Reviewed-by: Mikulas Patocka <mpatocka@redhat.com>
----
- include/linux/list_bl.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Hi Paul,
 
-diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
-index da38433240f5..3585b2f6b948 100644
---- a/include/linux/list_bl.h
-+++ b/include/linux/list_bl.h
-@@ -25,7 +25,7 @@
- #define LIST_BL_LOCKMASK	0UL
- #endif
- 
--#ifdef CONFIG_DEBUG_LIST
-+#if defined(CONFIG_DEBUG_LIST) && !defined(CONFIG_PREEMPT_RT_BASE)
- #define LIST_BL_BUG_ON(x) BUG_ON(x)
- #else
- #define LIST_BL_BUG_ON(x)
--- 
-2.11.0
+A+ for your help.  Thanks very much for your valuable time and excellent post.
 
+The problem is two fold:
+
+1) the configuration variable CONFIG_HOTPLUG_CPU controls the existence of the
+*definition* of 'takedown_cpu_task' at kernel/cpu.c line 880.  (The *declaration* is in a
+header file.) But there's a usage at kernel/sched/core.c line 7399 and following line
+which is not conditioned on that same CONFIG_HOTPLUG_CPU config variable.
+
+3) The linker message is misleading.  All they had to say was that the symbol was
+undefined.  The continued detail about this being an offset out of range issue created
+ambiguity as to whether this was out of range first and foremost, leading to the undefined
+status.  Clearly now it is simply an undefined usage.
+
+I am looking for a low latency transfer of control from a GPIO interrupt handler that I
+wrote in one of my drivers, all the way to a high RT priority wait_queue blocked user
+thread.  And stock (non-RT) 5.1 kernel was atrocious, simply unbelievably bad.  Somewhere
+along the way during the great hunt for improvement I turned off CONFIG_HOTPLUG_CPU just
+to try a simpler config.
+
+
+BTW cyclictest on that same stock 5.1 kernel was showing an intermittent 4 msecs of delay.
+ Yes msecs, not usecs.
+
+
+I would have submitted a patch for this but since its so trivial, it seems somebody with
+commit rights could make this change faster than applying a patch.
+
+
+Thanks all,
+
+Dick
