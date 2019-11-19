@@ -1,122 +1,161 @@
-Return-Path: <SRS0=mQuZ=ZK=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=wgqT=ZL=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.1 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C9EA5C432C0
-	for <linux-rt-users@archiver.kernel.org>; Mon, 18 Nov 2019 19:26:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BE635C432C0
+	for <linux-rt-users@archiver.kernel.org>; Tue, 19 Nov 2019 08:46:48 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id A3A0122304
-	for <linux-rt-users@archiver.kernel.org>; Mon, 18 Nov 2019 19:26:08 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="PFSO8Q0B"
+	by mail.kernel.org (Postfix) with ESMTP id A0455222EF
+	for <linux-rt-users@archiver.kernel.org>; Tue, 19 Nov 2019 08:46:48 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726638AbfKRT0I (ORCPT
+        id S1725904AbfKSIqo (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 18 Nov 2019 14:26:08 -0500
-Received: from mail-wm1-f68.google.com ([209.85.128.68]:40604 "EHLO
-        mail-wm1-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726541AbfKRT0I (ORCPT
+        Tue, 19 Nov 2019 03:46:44 -0500
+Received: from Galois.linutronix.de ([193.142.43.55]:51605 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725798AbfKSIqo (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 18 Nov 2019 14:26:08 -0500
-Received: by mail-wm1-f68.google.com with SMTP id f3so555562wmc.5
-        for <linux-rt-users@vger.kernel.org>; Mon, 18 Nov 2019 11:26:07 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
-         :user-agent:mime-version;
-        bh=kx2aeaW/JXoY5IDkAFq8ZkBBeR5HOrvwDu9oUDhPsXU=;
-        b=PFSO8Q0BZAPiZFp0hAEQHQNlXK8B7F0PAQ8mYG8OGlhsEaxpzIHfzOwfwJjb7Q6OzJ
-         Ag7+uDTXfaUwurgEUf2SX4g3RGZjuO7i6AxdsunJPFiXSIsM/5RhBd23WiQJ2dLg038E
-         Sj/S5ztsGy2SqAm2bOrpJ/N+hGPAZE8i7zZXdMfXKi7VmjgEN2WdS28/SS32W1keb+7s
-         uDYdfGzdb/Gh9luWrDVpVHroRttWRci67tYlpJYkZdf694ZNM5UMjA4E7Y8q1fqC3mAM
-         /OSa2y/SmPjJAb4hIVvw+3jopKFjPOdllUUPwjJy9eUL4SddywN+FhcjbC3T9pbggEkQ
-         1u5g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
-         :message-id:references:user-agent:mime-version;
-        bh=kx2aeaW/JXoY5IDkAFq8ZkBBeR5HOrvwDu9oUDhPsXU=;
-        b=QZDr6UE5LGiWUDleHo7hrWxJ4sLcCJ3gN5LVB5J6iv5h1bgEpEnGjsHvZNhDmDmHo1
-         oOe/QqMnWmHrZR9mHb+4F/ECw+owh1j7bVahOmvz1guDwUIsbVg6b8V/aOyZ4UfyiIYn
-         +yjh1ZriYM4FD2xaHU1Rry1tgrsDpE3Nc7GsqamYfD6qL/7TU2GsRcDWTfBHTpr1FbB8
-         zjSymt6pkRoBKyr4ywEiQgnaXo6YWvaV3+CIOKEm9LefDvAIRUX6tlj0DnNgF+9nd239
-         iC7kIS80frgmRMVVzYyfBWihEInybfF/gPWJldoFNFRaEBmRvOzBZeh/kAbwlRkMFmwh
-         sGiw==
-X-Gm-Message-State: APjAAAV3EjVNmsefRoEKQ+rIwL6LFFxmbaW8N6AOpxJEE64eg6UHIJtI
-        OwKo3siOvVsh9q1B+j3wQrw=
-X-Google-Smtp-Source: APXvYqw91VLXrecf8uVX5IS04/enAYqLublAp6i58D7ajF0ZUZgIIpzdpqYSEBDQC4bNvip18KJvag==
-X-Received: by 2002:a7b:ce86:: with SMTP id q6mr941030wmj.20.1574105166457;
-        Mon, 18 Nov 2019 11:26:06 -0800 (PST)
-Received: from planxty ([2a02:8108:1700:19dc:b567:5617:6bc1:51bb])
-        by smtp.gmail.com with ESMTPSA id u26sm404415wmj.9.2019.11.18.11.26.04
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 18 Nov 2019 11:26:05 -0800 (PST)
-Date:   Mon, 18 Nov 2019 20:26:02 +0100 (CET)
-From:   John Kacur <jkacur@redhat.com>
-X-X-Sender: jkacur@planxty
-To:     =?ISO-8859-15?Q?Uwe_Kleine-K=F6nig?= <ukleinek@debian.org>
-cc:     Clark Williams <williams@redhat.com>,
-        linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH rt-tests] cyclictest: fix typos
-In-Reply-To: <20191117214038.28094-1-ukleinek@debian.org>
-Message-ID: <alpine.LFD.2.21.1911182025450.30318@planxty>
-References: <20191117214038.28094-1-ukleinek@debian.org>
-User-Agent: Alpine 2.21 (LFD 202 2017-01-01)
+        Tue, 19 Nov 2019 03:46:44 -0500
+Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
+        (envelope-from <bigeasy@linutronix.de>)
+        id 1iWz9k-0000CR-Vm; Tue, 19 Nov 2019 09:46:41 +0100
+Date:   Tue, 19 Nov 2019 09:46:40 +0100
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     LKML <linux-kernel@vger.kernel.org>
+Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        "Paul E. McKenney" <paulmck@kernel.org>
+Subject: [PATCH RT] locking: Make spinlock_t and rwlock_t a RCU section on RT
+Message-ID: <20191119084640.wgsxghvc62mxlqc3@linutronix.de>
 MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="-1463804494-1730636893-1574105165=:30318"
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+On !RT a locked spinlock_t and rwlock_t disables preemption which
+implies a RCU read section. There is code that relies on that behaviour.
 
----1463804494-1730636893-1574105165=:30318
-Content-Type: text/plain; charset=ISO-8859-15
-Content-Transfer-Encoding: 8BIT
+Add an explicit RCU read section on RT while a sleeping lock (a lock
+which would disables preemption on !RT) acquired.
 
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ kernel/locking/rtmutex.c   | 6 ++++++
+ kernel/locking/rwlock-rt.c | 6 ++++++
+ 2 files changed, 12 insertions(+)
 
+diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+index cf09f8e7ed0f4..602eb7821a1b1 100644
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -1141,6 +1141,7 @@ void __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
+ void __lockfunc rt_spin_lock(spinlock_t *lock)
+ {
+ 	sleeping_lock_inc();
++	rcu_read_lock();
+ 	migrate_disable();
+ 	spin_acquire(&lock->dep_map, 0, 0, _RET_IP_);
+ 	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
+@@ -1156,6 +1157,7 @@ void __lockfunc __rt_spin_lock(struct rt_mutex *lock)
+ void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subclass)
+ {
+ 	sleeping_lock_inc();
++	rcu_read_lock();
+ 	migrate_disable();
+ 	spin_acquire(&lock->dep_map, subclass, 0, _RET_IP_);
+ 	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
+@@ -1169,6 +1171,7 @@ void __lockfunc rt_spin_unlock(spinlock_t *lock)
+ 	spin_release(&lock->dep_map, 1, _RET_IP_);
+ 	rt_spin_lock_fastunlock(&lock->lock, rt_spin_lock_slowunlock);
+ 	migrate_enable();
++	rcu_read_unlock();
+ 	sleeping_lock_dec();
+ }
+ EXPORT_SYMBOL(rt_spin_unlock);
+@@ -1200,6 +1203,7 @@ int __lockfunc rt_spin_trylock(spinlock_t *lock)
+ 	ret = __rt_mutex_trylock(&lock->lock);
+ 	if (ret) {
+ 		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
++		rcu_read_lock();
+ 	} else {
+ 		migrate_enable();
+ 		sleeping_lock_dec();
+@@ -1216,6 +1220,7 @@ int __lockfunc rt_spin_trylock_bh(spinlock_t *lock)
+ 	ret = __rt_mutex_trylock(&lock->lock);
+ 	if (ret) {
+ 		sleeping_lock_inc();
++		rcu_read_lock();
+ 		migrate_disable();
+ 		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
+ 	} else
+@@ -1232,6 +1237,7 @@ int __lockfunc rt_spin_trylock_irqsave(spinlock_t *lock, unsigned long *flags)
+ 	ret = __rt_mutex_trylock(&lock->lock);
+ 	if (ret) {
+ 		sleeping_lock_inc();
++		rcu_read_lock();
+ 		migrate_disable();
+ 		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
+ 	}
+diff --git a/kernel/locking/rwlock-rt.c b/kernel/locking/rwlock-rt.c
+index c3b91205161cc..0ae8c62ea8320 100644
+--- a/kernel/locking/rwlock-rt.c
++++ b/kernel/locking/rwlock-rt.c
+@@ -310,6 +310,7 @@ int __lockfunc rt_read_trylock(rwlock_t *rwlock)
+ 	ret = do_read_rt_trylock(rwlock);
+ 	if (ret) {
+ 		rwlock_acquire_read(&rwlock->dep_map, 0, 1, _RET_IP_);
++		rcu_read_lock();
+ 	} else {
+ 		migrate_enable();
+ 		sleeping_lock_dec();
+@@ -327,6 +328,7 @@ int __lockfunc rt_write_trylock(rwlock_t *rwlock)
+ 	ret = do_write_rt_trylock(rwlock);
+ 	if (ret) {
+ 		rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
++		rcu_read_lock();
+ 	} else {
+ 		migrate_enable();
+ 		sleeping_lock_dec();
+@@ -338,6 +340,7 @@ EXPORT_SYMBOL(rt_write_trylock);
+ void __lockfunc rt_read_lock(rwlock_t *rwlock)
+ {
+ 	sleeping_lock_inc();
++	rcu_read_lock();
+ 	migrate_disable();
+ 	rwlock_acquire_read(&rwlock->dep_map, 0, 0, _RET_IP_);
+ 	do_read_rt_lock(rwlock);
+@@ -347,6 +350,7 @@ EXPORT_SYMBOL(rt_read_lock);
+ void __lockfunc rt_write_lock(rwlock_t *rwlock)
+ {
+ 	sleeping_lock_inc();
++	rcu_read_lock();
+ 	migrate_disable();
+ 	rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
+ 	do_write_rt_lock(rwlock);
+@@ -358,6 +362,7 @@ void __lockfunc rt_read_unlock(rwlock_t *rwlock)
+ 	rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
+ 	do_read_rt_unlock(rwlock);
+ 	migrate_enable();
++	rcu_read_unlock();
+ 	sleeping_lock_dec();
+ }
+ EXPORT_SYMBOL(rt_read_unlock);
+@@ -367,6 +372,7 @@ void __lockfunc rt_write_unlock(rwlock_t *rwlock)
+ 	rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
+ 	do_write_rt_unlock(rwlock);
+ 	migrate_enable();
++	rcu_read_unlock();
+ 	sleeping_lock_dec();
+ }
+ EXPORT_SYMBOL(rt_write_unlock);
+-- 
+2.24.0
 
-On Sun, 17 Nov 2019, Uwe Kleine-König wrote:
-
-> The called function is called clock_gettime with "only" two t as can be
-> seen tree lines above. Also there was a wrong r in useful.
-> ---
->  src/cyclictest/cyclictest.c | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
-> 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index 6be0525822ca..bca028fedffd 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -802,7 +802,7 @@ static void *timerthread(void *param)
->  		ret = clock_gettime(par->clock, &now);
->  		if (ret != 0) {
->  			if (ret != EINTR)
-> -				warn("clock_getttime() failed. errno: %d\n",
-> +				warn("clock_gettime() failed. errno: %d\n",
->  				     errno);
->  			goto out;
->  		}
-> @@ -964,7 +964,7 @@ static void display_help(int error)
->  	       "			   but will not drain your battery so quickly\n"
->  	       "-m       --mlockall        lock current and future memory allocations\n"
->  	       "-M       --refresh_on_max  delay updating the screen until a new max\n"
-> -	       "			   latency is hit. Userful for low bandwidth.\n"
-> +	       "			   latency is hit. Useful for low bandwidth.\n"
->  	       "-N       --nsecs           print results in ns instead of us (default us)\n"
->  	       "-o RED   --oscope=RED      oscilloscope mode, reduce verbose output by RED\n"
->  	       "-p PRIO  --priority=PRIO   priority of highest prio thread\n"
-> -- 
-> 2.24.0
-> 
-> 
-
-Signed-off-by: John Kacur <jkacur@redhat.com>
----1463804494-1730636893-1574105165=:30318--
