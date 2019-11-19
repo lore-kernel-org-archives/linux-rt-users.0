@@ -2,160 +2,56 @@ Return-Path: <SRS0=wgqT=ZL=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BE635C432C0
-	for <linux-rt-users@archiver.kernel.org>; Tue, 19 Nov 2019 08:46:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 54533C432C0
+	for <linux-rt-users@archiver.kernel.org>; Tue, 19 Nov 2019 08:48:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id A0455222EF
-	for <linux-rt-users@archiver.kernel.org>; Tue, 19 Nov 2019 08:46:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 36D33222DF
+	for <linux-rt-users@archiver.kernel.org>; Tue, 19 Nov 2019 08:48:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1725904AbfKSIqo (ORCPT
+        id S1727445AbfKSIso convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 19 Nov 2019 03:46:44 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:51605 "EHLO
+        Tue, 19 Nov 2019 03:48:44 -0500
+Received: from Galois.linutronix.de ([193.142.43.55]:51612 "EHLO
         Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725798AbfKSIqo (ORCPT
+        with ESMTP id S1727662AbfKSIso (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 19 Nov 2019 03:46:44 -0500
+        Tue, 19 Nov 2019 03:48:44 -0500
 Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
         (envelope-from <bigeasy@linutronix.de>)
-        id 1iWz9k-0000CR-Vm; Tue, 19 Nov 2019 09:46:41 +0100
-Date:   Tue, 19 Nov 2019 09:46:40 +0100
+        id 1iWzBf-0000Gj-5N; Tue, 19 Nov 2019 09:48:39 +0100
+Date:   Tue, 19 Nov 2019 09:48:39 +0100
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     LKML <linux-kernel@vger.kernel.org>
-Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        "Paul E. McKenney" <paulmck@kernel.org>
-Subject: [PATCH RT] locking: Make spinlock_t and rwlock_t a RCU section on RT
-Message-ID: <20191119084640.wgsxghvc62mxlqc3@linutronix.de>
+To:     Mikulas Patocka <mpatocka@redhat.com>
+Cc:     Mike Snitzer <msnitzer@redhat.com>,
+        Nikos Tsironis <ntsironis@arrikto.com>,
+        Scott Wood <swood@redhat.com>,
+        Ilias Tsitsimpis <iliastsi@arrikto.com>, dm-devel@redhat.com,
+        linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+        Daniel Wagner <dwagner@suse.de>,
+        linux-rt-users@vger.kernel.org, tglx@linutronix.de
+Subject: Re: [PATCH RT 1/2 v2] dm-snapshot: fix crash with the realtime kernel
+Message-ID: <20191119084839.dvzfettd6vbvqd4w@linutronix.de>
+References: <alpine.LRH.2.02.1911121057490.12815@file01.intranet.prod.int.rdu2.redhat.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
+Content-Transfer-Encoding: 8BIT
+In-Reply-To: <alpine.LRH.2.02.1911121057490.12815@file01.intranet.prod.int.rdu2.redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On !RT a locked spinlock_t and rwlock_t disables preemption which
-implies a RCU read section. There is code that relies on that behaviour.
+On 2019-11-12 11:09:51 [-0500], Mikulas Patocka wrote:
+> Snapshot doesn't work with realtime kernels since the commit f79ae415b64c.
+> hlist_bl is implemented as a raw spinlock and the code takes two non-raw
+> spinlocks while holding hlist_bl (non-raw spinlocks are blocking mutexes
+> in the realtime kernel).
 
-Add an explicit RCU read section on RT while a sleeping lock (a lock
-which would disables preemption on !RT) acquired.
+this series is still on the list of things for me to look at…
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- kernel/locking/rtmutex.c   | 6 ++++++
- kernel/locking/rwlock-rt.c | 6 ++++++
- 2 files changed, 12 insertions(+)
-
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index cf09f8e7ed0f4..602eb7821a1b1 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -1141,6 +1141,7 @@ void __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
- void __lockfunc rt_spin_lock(spinlock_t *lock)
- {
- 	sleeping_lock_inc();
-+	rcu_read_lock();
- 	migrate_disable();
- 	spin_acquire(&lock->dep_map, 0, 0, _RET_IP_);
- 	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
-@@ -1156,6 +1157,7 @@ void __lockfunc __rt_spin_lock(struct rt_mutex *lock)
- void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subclass)
- {
- 	sleeping_lock_inc();
-+	rcu_read_lock();
- 	migrate_disable();
- 	spin_acquire(&lock->dep_map, subclass, 0, _RET_IP_);
- 	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
-@@ -1169,6 +1171,7 @@ void __lockfunc rt_spin_unlock(spinlock_t *lock)
- 	spin_release(&lock->dep_map, 1, _RET_IP_);
- 	rt_spin_lock_fastunlock(&lock->lock, rt_spin_lock_slowunlock);
- 	migrate_enable();
-+	rcu_read_unlock();
- 	sleeping_lock_dec();
- }
- EXPORT_SYMBOL(rt_spin_unlock);
-@@ -1200,6 +1203,7 @@ int __lockfunc rt_spin_trylock(spinlock_t *lock)
- 	ret = __rt_mutex_trylock(&lock->lock);
- 	if (ret) {
- 		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
-+		rcu_read_lock();
- 	} else {
- 		migrate_enable();
- 		sleeping_lock_dec();
-@@ -1216,6 +1220,7 @@ int __lockfunc rt_spin_trylock_bh(spinlock_t *lock)
- 	ret = __rt_mutex_trylock(&lock->lock);
- 	if (ret) {
- 		sleeping_lock_inc();
-+		rcu_read_lock();
- 		migrate_disable();
- 		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
- 	} else
-@@ -1232,6 +1237,7 @@ int __lockfunc rt_spin_trylock_irqsave(spinlock_t *lock, unsigned long *flags)
- 	ret = __rt_mutex_trylock(&lock->lock);
- 	if (ret) {
- 		sleeping_lock_inc();
-+		rcu_read_lock();
- 		migrate_disable();
- 		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
- 	}
-diff --git a/kernel/locking/rwlock-rt.c b/kernel/locking/rwlock-rt.c
-index c3b91205161cc..0ae8c62ea8320 100644
---- a/kernel/locking/rwlock-rt.c
-+++ b/kernel/locking/rwlock-rt.c
-@@ -310,6 +310,7 @@ int __lockfunc rt_read_trylock(rwlock_t *rwlock)
- 	ret = do_read_rt_trylock(rwlock);
- 	if (ret) {
- 		rwlock_acquire_read(&rwlock->dep_map, 0, 1, _RET_IP_);
-+		rcu_read_lock();
- 	} else {
- 		migrate_enable();
- 		sleeping_lock_dec();
-@@ -327,6 +328,7 @@ int __lockfunc rt_write_trylock(rwlock_t *rwlock)
- 	ret = do_write_rt_trylock(rwlock);
- 	if (ret) {
- 		rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
-+		rcu_read_lock();
- 	} else {
- 		migrate_enable();
- 		sleeping_lock_dec();
-@@ -338,6 +340,7 @@ EXPORT_SYMBOL(rt_write_trylock);
- void __lockfunc rt_read_lock(rwlock_t *rwlock)
- {
- 	sleeping_lock_inc();
-+	rcu_read_lock();
- 	migrate_disable();
- 	rwlock_acquire_read(&rwlock->dep_map, 0, 0, _RET_IP_);
- 	do_read_rt_lock(rwlock);
-@@ -347,6 +350,7 @@ EXPORT_SYMBOL(rt_read_lock);
- void __lockfunc rt_write_lock(rwlock_t *rwlock)
- {
- 	sleeping_lock_inc();
-+	rcu_read_lock();
- 	migrate_disable();
- 	rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
- 	do_write_rt_lock(rwlock);
-@@ -358,6 +362,7 @@ void __lockfunc rt_read_unlock(rwlock_t *rwlock)
- 	rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
- 	do_read_rt_unlock(rwlock);
- 	migrate_enable();
-+	rcu_read_unlock();
- 	sleeping_lock_dec();
- }
- EXPORT_SYMBOL(rt_read_unlock);
-@@ -367,6 +372,7 @@ void __lockfunc rt_write_unlock(rwlock_t *rwlock)
- 	rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
- 	do_write_rt_unlock(rwlock);
- 	migrate_enable();
-+	rcu_read_unlock();
- 	sleeping_lock_dec();
- }
- EXPORT_SYMBOL(rt_write_unlock);
--- 
-2.24.0
-
+Sebastian
