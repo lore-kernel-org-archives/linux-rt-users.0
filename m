@@ -7,62 +7,62 @@ X-Spam-Status: No, score=-9.6 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D26B8C432C3
-	for <linux-rt-users@archiver.kernel.org>; Mon, 25 Nov 2019 14:17:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0226FC432C0
+	for <linux-rt-users@archiver.kernel.org>; Mon, 25 Nov 2019 14:17:14 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id AA8C820748
-	for <linux-rt-users@archiver.kernel.org>; Mon, 25 Nov 2019 14:17:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B32C320748
+	for <linux-rt-users@archiver.kernel.org>; Mon, 25 Nov 2019 14:17:13 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jnXNhiFL"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="A8ZfkM1j"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727998AbfKYORG (ORCPT
+        id S1728000AbfKYORN (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 25 Nov 2019 09:17:06 -0500
-Received: from mail-wr1-f66.google.com ([209.85.221.66]:32959 "EHLO
-        mail-wr1-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727994AbfKYORG (ORCPT
+        Mon, 25 Nov 2019 09:17:13 -0500
+Received: from mail-wm1-f50.google.com ([209.85.128.50]:40243 "EHLO
+        mail-wm1-f50.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727994AbfKYORN (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 25 Nov 2019 09:17:06 -0500
-Received: by mail-wr1-f66.google.com with SMTP id w9so18315886wrr.0
-        for <linux-rt-users@vger.kernel.org>; Mon, 25 Nov 2019 06:17:03 -0800 (PST)
+        Mon, 25 Nov 2019 09:17:13 -0500
+Received: by mail-wm1-f50.google.com with SMTP id y5so16132953wmi.5
+        for <linux-rt-users@vger.kernel.org>; Mon, 25 Nov 2019 06:17:09 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=IIaQlweoYmCyzjVGFuabNtZn2NxU/K8+uosryfgcmdU=;
-        b=jnXNhiFLsd/ELNVJlEqaiIs4fXSjfUACcSZGXUn4R84m7l0hlpMD7rXCOwWub8HUIf
-         AobIqJcUlMeswKiTBoxeuVg7l4v8oLAv2BFXlbum9N9pSjWpDmLARS5TafhlV5De+/t0
-         07mbjoQoJzMUQhEM4uUMteT88Ow/0RHni9ayklUfoscGk5dN5j0c4gsxe+vScHKWvOYJ
-         tVRr1h9EvB19fY4QdhYtWReDY6sHBA8Jq6DO3B1MF5w7o4YQ1TZ2dZ5dLoWO0R6omakO
-         ui2ntrKhz4hUfd7SYCCGtIFxbVFLWs5p3N2HzurtNec+358bixGQFLVuCsn/vvq+ucAC
-         KJ4g==
+        bh=bYuuogb9PEHL9/SnzpuuXcgAaSPvLcTnqf9gfK1ZFF8=;
+        b=A8ZfkM1jPSfWhq1fCl4icvcUdO3g6qjnu4pSiTgCqyOT3U+zj2ZDcLc16o2eDc3k5n
+         0aN22I4JruRTZQtzaIWmLYzXxTv/KpCaq6XpTVYFVaZyqE18EgDjpWMC+ORm+bYZu1Xz
+         lZUPFhfs1hecfbVNY6yAs0Mbo3BkZHRD34K+Ojui3mDEI4iDL2xjbrFOpoNMlMPSKfo4
+         M9ZIwZ0XSX0K4x9iOPNhGn5hurIZmad4w/uhT+vA6rAgESPxhlk7QC4On8wVzAZaPOv6
+         HeGJzjSXG7xnk6nLlWLGFecgkfsjNXMkH3il8teCIwDp+aSYgNo6DXfq/+naWmolsUY4
+         LeJQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
          :in-reply-to:references:mime-version:content-transfer-encoding;
-        bh=IIaQlweoYmCyzjVGFuabNtZn2NxU/K8+uosryfgcmdU=;
-        b=HmY2o24WO3ngcdGEEebEsleekAWWhrOc99tIy0KkIl7ak20Usvf+W9u9wpVqg8AKLq
-         6ey90bROJyxakphiThORr6wJ+Y9cdeGGtp1yVYkodhmwQYQ528Y3yWJ13ogcTxbW5Pp8
-         nZXgFXRP6QsZqhWY0Yhd2OfCzqF2oTPc0f4N1a5h669QrcV1ll+iiB9oeEJHyDH5Zr9b
-         TPUMs1iUnI15fnJX0J0g9XHxxsL5wc3T0NmCHtDufedHvzi4HzXOy7nSf2PJDY88uMnV
-         85Bxk8d7UfSm63YvQFBAosIbMaRiQdveRf/9Ngj41CciM9bysescYtEG+V7woBOPOh+a
-         pOKQ==
-X-Gm-Message-State: APjAAAU52WJY7TBA06yGQPMeefmn97Hf1ZwuxfdZtiikyDmItFhI82Yg
-        q97HAL7KbVLR8/Fk4nvBBGY8gkxGc8k=
-X-Google-Smtp-Source: APXvYqyjiVUvxNYwfGRxMagZWd59WVFOM+t3AlLLIpeP/83npTiQ/bn2UZrlYvPbevlnYxvqmHS6pQ==
-X-Received: by 2002:adf:f987:: with SMTP id f7mr31930486wrr.284.1574691422299;
-        Mon, 25 Nov 2019 06:17:02 -0800 (PST)
+        bh=bYuuogb9PEHL9/SnzpuuXcgAaSPvLcTnqf9gfK1ZFF8=;
+        b=n+NMAvg28zXAsxdtPogP8O3E5pdejLZ9TSzoX7i/LNGO/JfVyczyCFKFCcW9evSmWJ
+         lIsddssHEybn3SGWFuX8jLVmDXRxt2De5n2StirsYqiFd/s2iHVfA+BduYMEpDpE0v8k
+         4Gm7oN8zHWgxujDvCV/oiRKd6WCSWRKnow+zhgOAjeh+U3mwgFjX9UoBZanmH3EzgrMY
+         HFARKTp50t/dC9nS3HUhTixQzUohjjDkuW4ywibvR3Ne2Fc37s5xDE2+k3QKmWkdTu0L
+         BfA0xXVxxtnvlSqh4VtlSfFZldl8AA7f518DCYEYkmXYakOXa7K4CSKmfURUWefvXeyc
+         S2CQ==
+X-Gm-Message-State: APjAAAWxlUqt+73tKsAa+9AcTwA8fXcKVv+S9Y+eQQQzPismv8IneVCa
+        CLnJvlCCLz7QCJDaZAt7QvTx7RgmY7k=
+X-Google-Smtp-Source: APXvYqx8ZC4iPBMJm0Jnd68sLtaamF+0OAZCpaBSjc9pBOLxmMND/s/6mRBdBvVZ1/AwVIbn4aq/HA==
+X-Received: by 2002:a7b:ce12:: with SMTP id m18mr30611882wmc.130.1574691427506;
+        Mon, 25 Nov 2019 06:17:07 -0800 (PST)
 Received: from planxty.redhat.com (ip1f122014.dynamic.kabel-deutschland.de. [31.18.32.20])
-        by smtp.gmail.com with ESMTPSA id q5sm8463456wmc.27.2019.11.25.06.17.01
+        by smtp.gmail.com with ESMTPSA id q5sm8463456wmc.27.2019.11.25.06.17.06
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 25 Nov 2019 06:17:01 -0800 (PST)
+        Mon, 25 Nov 2019 06:17:06 -0800 (PST)
 From:   John Kacur <jkacur@redhat.com>
 To:     rt-users <linux-rt-users@vger.kernel.org>
 Cc:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
-Subject: [PATCH 6/8] cyclictest: Sync manpage with the help option
-Date:   Mon, 25 Nov 2019 15:16:42 +0100
-Message-Id: <20191125141644.4429-4-jkacur@redhat.com>
+Subject: [PATCH 8/8] rt-tests: Add SPDX tags
+Date:   Mon, 25 Nov 2019 15:16:44 +0100
+Message-Id: <20191125141644.4429-6-jkacur@redhat.com>
 X-Mailer: git-send-email 2.20.1
 In-Reply-To: <20191125141644.4429-1-jkacur@redhat.com>
 References: <20191125141644.4429-1-jkacur@redhat.com>
@@ -73,48 +73,696 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Sync the manpage with the help option, as the manpage has not kept-up
-with changes to help
+Add SPDX tags instead of having out-of-date and incomplete licences at
+the top of files
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- src/cyclictest/cyclictest.8 | 9 ++++++---
- 1 file changed, 6 insertions(+), 3 deletions(-)
+ src/backfire/backfire.c                  | 17 +--------------
+ src/cyclictest/cyclictest.c              |  5 +----
+ src/cyclictest/rt_numa.h                 |  1 +
+ src/hackbench/hackbench.c                |  1 +
+ src/hwlatdetect/hwlatdetect.py           |  8 ++-----
+ src/include/bionic.h                     |  1 +
+ src/include/error.h                      |  1 +
+ src/include/pip_stress.h                 |  1 +
+ src/include/rt-get_cpu.h                 |  1 +
+ src/include/rt-sched.h                   | 24 +++++----------------
+ src/include/rt-utils.h                   |  1 +
+ src/lib/error.c                          |  1 +
+ src/lib/rt-get_cpu.c                     |  1 +
+ src/lib/rt-sched.c                       | 25 ++++++----------------
+ src/lib/rt-utils.c                       |  1 +
+ src/pi_tests/classic_pi.c                | 22 ++++---------------
+ src/pi_tests/pi_stress.c                 | 22 ++++---------------
+ src/pi_tests/pip_stress.c                | 14 +-----------
+ src/pi_tests/sigtest.c                   | 22 ++++---------------
+ src/pi_tests/tst-mutexpi10.c             | 27 ++++++------------------
+ src/pmqtest/pmqtest.c                    | 16 +-------------
+ src/ptsematest/ptsematest.c              | 17 +--------------
+ src/queuelat/determine_maximum_mpps.sh   |  3 +++
+ src/queuelat/get_cpuinfo_mhz.sh          |  3 +++
+ src/queuelat/queuelat.c                  |  8 +++++++
+ src/queuelat/targeted-ipi/targeted-ipi.c |  7 ++++++
+ src/rt-migrate-test/rt-migrate-test.c    | 19 +----------------
+ src/sched_deadline/cyclicdeadline.c      |  8 +++++++
+ src/sched_deadline/deadline_test.c       | 24 ++++++---------------
+ src/signaltest/signaltest.c              |  2 ++
+ src/sigwaittest/sigwaittest.c            |  2 ++
+ src/ssdd/ssdd.c                          | 12 +++++------
+ src/svsematest/svsematest.c              | 16 ++------------
+ 33 files changed, 95 insertions(+), 238 deletions(-)
 
-diff --git a/src/cyclictest/cyclictest.8 b/src/cyclictest/cyclictest.8
-index b64a16ae8bbb..00e2d2403996 100644
---- a/src/cyclictest/cyclictest.8
-+++ b/src/cyclictest/cyclictest.8
-@@ -67,6 +67,9 @@ Specify a length for the test run.
- .br
- Append 'm', 'h', or 'd' to specify minutes, hours or days.
- .TP
-+.B \-\-latency=PM_Q0S
-+write PM_Q0S to /dev/cpu_dma_latency
-+.TP
- .B \-F, \-\-fifo=<path>
- Create a named pipe at path and write stats to it
- .TP
-@@ -95,9 +98,6 @@ Lock current and future memory allocations to prevent being paged out
- Delay updating the screen until a new max latency is hit. (useful for
- running cyclictest on low-bandwidth connections)
- .TP
--.B \-n, \-\-nanosleep
--Use clock_nanosleep instead of posix interval timers. Setting this option runs the tests with clock_nanosleep instead of posix interval timers.
--.TP
- .B \-N, \-\-nsecs
- Show results in nanoseconds instead of microseconds, which is the default unit.
- .TP
-@@ -165,6 +165,9 @@ where n=task number c=count v=latency value in us.
- .TP
- .B \-\-dbg_cyclictest
- Print info userful for debugging cyclictest
-+.TP
-+.B \-x, \-\-posix_timers
-+Use POSIX timers instead of clock_nanosleep.
+diff --git a/src/backfire/backfire.c b/src/backfire/backfire.c
+index a8ac9f5e2b28..81a31d49f47b 100644
+--- a/src/backfire/backfire.c
++++ b/src/backfire/backfire.c
+@@ -1,22 +1,7 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ /*
+  * backfire - send signal back to caller
+- *
+  * Copyright (C) 2007  Carsten Emde <C.Emde@osadl.org>
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License as published by
+- * the Free Software Foundation either version 2 of the License, or
+- * (at your option) any later version.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License
+- * along with this program; if not, write to the Free Software
+- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
+- * USA.
+  */
  
- .SH SEE ALSO
- .BR numa (3),
+ #include <linux/module.h>
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 1c515ae1354c..1862435e7a8c 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -1,3 +1,4 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ /*
+  * High resolution timer test software
+  *
+@@ -6,10 +7,6 @@
+  * (C) 2008-2012 Clark Williams <williams@redhat.com>
+  * (C) 2005-2007 Thomas Gleixner <tglx@linutronix.de>
+  *
+- * This program is free software; you can redistribute it and/or
+- * modify it under the terms of the GNU General Public License Version
+- * 2 as published by the Free Software Foundation.
+- *
+  */
+ #include <stdio.h>
+ #include <stdlib.h>
+diff --git a/src/cyclictest/rt_numa.h b/src/cyclictest/rt_numa.h
+index 983502d34c94..1f7c5a482150 100644
+--- a/src/cyclictest/rt_numa.h
++++ b/src/cyclictest/rt_numa.h
+@@ -1,3 +1,4 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ /*
+  * A numa library for cyclictest.
+  * The functions here are designed to work whether cyclictest has been
+diff --git a/src/hackbench/hackbench.c b/src/hackbench/hackbench.c
+index ba804f519950..5a883d341f2e 100644
+--- a/src/hackbench/hackbench.c
++++ b/src/hackbench/hackbench.c
+@@ -1,3 +1,4 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ /*
+  * This is the latest version of hackbench.c, that tests scheduler and
+  * unix-socket (or pipe) performance.
+diff --git a/src/hwlatdetect/hwlatdetect.py b/src/hwlatdetect/hwlatdetect.py
+index c11a6f8ea5b1..b69e660b113a 100755
+--- a/src/hwlatdetect/hwlatdetect.py
++++ b/src/hwlatdetect/hwlatdetect.py
+@@ -1,14 +1,10 @@
+ #!/usr/bin/python3
+ 
++# SPDX-License-Identifier: GPL-2.0-or-later
++
+ # (C) 2018,2019 Clark Williams <williams@redhat.com>
+ # (C) 2015,2016 Clark Williams <williams@redhat.com>
+ # (C) 2009 Clark Williams <williams@redhat.com>
+-#
+-# This program is free software; you can redistribute it and/or
+-# modify it under the terms of the GNU General Public License Version 2
+-# as published by the Free Software Foundation.
+-
+-
+ 
+ import sys
+ import os
+diff --git a/src/include/bionic.h b/src/include/bionic.h
+index 54f9c54b0824..e0433437f5d2 100644
+--- a/src/include/bionic.h
++++ b/src/include/bionic.h
+@@ -1,3 +1,4 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ #ifndef BIONIC_H
+ #define BIONIC_H
+ 
+diff --git a/src/include/error.h b/src/include/error.h
+index 4acff4952dd6..d205e49ff041 100644
+--- a/src/include/error.h
++++ b/src/include/error.h
+@@ -1,3 +1,4 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ #ifndef __ERROR_H
+ #define __ERROR_H
+ 
+diff --git a/src/include/pip_stress.h b/src/include/pip_stress.h
+index 8ed24522851c..ee8b545ab117 100644
+--- a/src/include/pip_stress.h
++++ b/src/include/pip_stress.h
+@@ -1,3 +1,4 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ #ifndef __PIP_STRESS_H
+ #define __PIP_STRESS_H
+ 
+diff --git a/src/include/rt-get_cpu.h b/src/include/rt-get_cpu.h
+index 15d05fcb15fa..74bf8f0fac25 100644
+--- a/src/include/rt-get_cpu.h
++++ b/src/include/rt-get_cpu.h
+@@ -1,3 +1,4 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ #ifndef __RT_GET_CPU_H
+ #define __RT_GET_CPU_H
+ #include <stdio.h>
+diff --git a/src/include/rt-sched.h b/src/include/rt-sched.h
+index 679c4bd10ae2..80171c76e0ee 100644
+--- a/src/include/rt-sched.h
++++ b/src/include/rt-sched.h
+@@ -1,23 +1,9 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ /*
+-   rt-sched.h - sched_setattr() and sched_getattr() API
+-
+-   (C) Dario Faggioli <raistlin@linux.it>, 2009, 2010
+-   Copyright (C) 2014 BMW Car IT GmbH, Daniel Wagner <daniel.wagner@bmw-carit.de
+-
+-   This program is free software; you can redistribute it and/or modify
+-   it under the terms of the GNU General Public License as published by
+-   the Free Software Foundation; either version 2 of the License, or
+-   (at your option) any later version.
+-
+-   This program is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-   GNU General Public License for more details.
+-
+-   You should have received a copy of the GNU General Public License
+-   along with this program; if not, write to the Free Software
+-   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+-   USA */
++ * rt-sched.h - sched_setattr() and sched_getattr() API
++ * (C) Dario Faggioli <raistlin@linux.it>, 2009, 2010
++ * Copyright (C) 2014 BMW Car IT GmbH, Daniel Wagner <daniel.wagner@bmw-carit.de
++ */
+ 
+ /* This file is based on Dario Faggioli's libdl. Eventually it will be
+    replaced by a proper implemenation of this API. */
+diff --git a/src/include/rt-utils.h b/src/include/rt-utils.h
+index 405fa7855346..6ec2b2011959 100644
+--- a/src/include/rt-utils.h
++++ b/src/include/rt-utils.h
+@@ -1,3 +1,4 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ #ifndef __RT_UTILS_H
+ #define __RT_UTILS_H
+ 
+diff --git a/src/lib/error.c b/src/lib/error.c
+index b32aa0270780..4434a842da17 100644
+--- a/src/lib/error.c
++++ b/src/lib/error.c
+@@ -1,3 +1,4 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ /*
+  * Copyright (C) 2009 John Kacur <jkacur@redhat.com>
+  *
+diff --git a/src/lib/rt-get_cpu.c b/src/lib/rt-get_cpu.c
+index 83430dd4d068..608cd9bb76e0 100644
+--- a/src/lib/rt-get_cpu.c
++++ b/src/lib/rt-get_cpu.c
+@@ -1,3 +1,4 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ /*
+  * Copyright (C) 2009 John Kacur <jkacur@redhat.com>
+  */
+diff --git a/src/lib/rt-sched.c b/src/lib/rt-sched.c
+index 4a8e3c42b49f..2aaf02d42aee 100644
+--- a/src/lib/rt-sched.c
++++ b/src/lib/rt-sched.c
+@@ -1,23 +1,10 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ /*
+-   rt-sched.h - sched_setattr() and sched_getattr() API
+-
+-   (C) Dario Faggioli <raistlin@linux.it>, 2009, 2010
+-   Copyright (C) 2014 BMW Car IT GmbH, Daniel Wagner <daniel.wagner@bmw-carit.de
+-
+-   This program is free software; you can redistribute it and/or modify
+-   it under the terms of the GNU General Public License as published by
+-   the Free Software Foundation; either version 2 of the License, or
+-   (at your option) any later version.
+-
+-   This program is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-   GNU General Public License for more details.
+-
+-   You should have received a copy of the GNU General Public License
+-   along with this program; if not, write to the Free Software
+-   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+-   USA */
++ * rt-sched.h - sched_setattr() and sched_getattr() API
++ *
++ * (C) Dario Faggioli <raistlin@linux.it>, 2009, 2010
++ * Copyright (C) 2014 BMW Car IT GmbH, Daniel Wagner <daniel.wagner@bmw-carit.de
++ */
+ 
+ /* This file is based on Dario Faggioli's libdl. Eventually it will be
+    replaced by a proper implemenation of this API. */
+diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
+index e1b166afcd6c..1998a327d036 100644
+--- a/src/lib/rt-utils.c
++++ b/src/lib/rt-utils.c
+@@ -1,3 +1,4 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ /*
+  * Copyright (C) 2009 Carsten Emde <carsten.emde@osadl.org>
+  * Copyright (C) 2010 Clark Williams <williams@redhat.com>
+diff --git a/src/pi_tests/classic_pi.c b/src/pi_tests/classic_pi.c
+index 695ee4c4bd03..64af8890276f 100644
+--- a/src/pi_tests/classic_pi.c
++++ b/src/pi_tests/classic_pi.c
+@@ -1,22 +1,8 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ /*
+-  classic_pi - Classic Priority Inversion deadlock test case
+-  
+-   Copyright (C) 2006, 2007 Clark Williams <williams@redhat.com>
+-  
+-   This program is free software; you can redistribute it and/or modify
+-   it under the terms of the GNU General Public License as published by
+-   the Free Software Foundation; either version 2 of the License, or
+-   (at your option) any later version.
+-
+-   This program is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-   GNU General Public License for more details.
+-
+-   You should have received a copy of the GNU General Public License
+-   along with this program; if not, write to the Free Software
+-   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+-   USA */
++ * classic_pi - Classic Priority Inversion deadlock test case
++ * Copyright (C) 2006, 2007 Clark Williams <williams@redhat.com>
++ */
+ 
+ /* This program tests Priority Inheritance mutexes and their ability
+    to avoid Priority Inversion deadlocks
+diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
+index 1286370c474b..7fa98dfb9ad4 100644
+--- a/src/pi_tests/pi_stress.c
++++ b/src/pi_tests/pi_stress.c
+@@ -1,22 +1,8 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ /*
+-   pi_stress - Priority Inheritance stress test
+-
+-   Copyright (C) 2006, 2007 Clark Williams <williams@redhat.com>
+-
+-   This program is free software; you can redistribute it and/or modify
+-   it under the terms of the GNU General Public License as published by
+-   the Free Software Foundation; either version 2 of the License, or
+-   (at your option) any later version.
+-
+-   This program is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-   GNU General Public License for more details.
+-
+-   You should have received a copy of the GNU General Public License
+-   along with this program; if not, write to the Free Software
+-   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+-   USA */
++ * pi_stress - Priority Inheritance stress test
++ * Copyright (C) 2006, 2007 Clark Williams <williams@redhat.com>
++ */
+ 
+ /* This program stress tests pthreads priority inheritance mutexes
+ 
+diff --git a/src/pi_tests/pip_stress.c b/src/pi_tests/pip_stress.c
+index e6cf0ce940ca..c9dbd992e15d 100644
+--- a/src/pi_tests/pip_stress.c
++++ b/src/pi_tests/pip_stress.c
+@@ -1,20 +1,8 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ /*
+ 	Pip stress - Priority Inheritance with processes
+ 
+     Copyright (C) 2009, John Kacur <jkacur@redhat.com>
+-
+-    This program is free software: you can redistribute it and/or modify
+-    it under the terms of the GNU General Public License as published by
+-    the Free Software Foundation, either version 2 of the License, or
+-    (at your option) any later version.
+-
+-    This program is distributed in the hope that it will be useful,
+-    but WITHOUT ANY WARRANTY; without even the implied warranty of
+-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-    GNU General Public License for more details.
+-
+-    You should have received a copy of the GNU General Public License
+-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ 
+ /*
+diff --git a/src/pi_tests/sigtest.c b/src/pi_tests/sigtest.c
+index 0cf520c01335..17dd0d43bdc6 100644
+--- a/src/pi_tests/sigtest.c
++++ b/src/pi_tests/sigtest.c
+@@ -1,22 +1,8 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ /*
+-  sigtest - simple little program to verify signal behavior
+-  
+-   Copyright (C) 2006, 2007 Clark Williams <williams@redhat.com>
+-  
+-   This program is free software; you can redistribute it and/or modify
+-   it under the terms of the GNU General Public License as published by
+-   the Free Software Foundation; either version 2 of the License, or
+-   (at your option) any later version.
+-
+-   This program is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-   GNU General Public License for more details.
+-
+-   You should have received a copy of the GNU General Public License
+-   along with this program; if not, write to the Free Software
+-   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+-   USA */
++ * sigtest - simple little program to verify signal behavior
++ * Copyright (C) 2006, 2007 Clark Williams <williams@redhat.com>
++*/
+ 
+ #include <stdio.h>
+ #include <signal.h>
+diff --git a/src/pi_tests/tst-mutexpi10.c b/src/pi_tests/tst-mutexpi10.c
+index a63ea23ba621..97a345edd26e 100644
+--- a/src/pi_tests/tst-mutexpi10.c
++++ b/src/pi_tests/tst-mutexpi10.c
+@@ -1,25 +1,10 @@
++// SPDX-License-Identifier: LGPL-2.1-or-later
+ /*
+-   Classic Priority Inversion deadlock test case
+-  
+-   Copyright (C) 2006 Free Software Foundation, Inc.
+-   This file is part of the GNU C Library.
+-     Contributed by Clark Williams<williams@redhat.com>, 2006
+-  
+-   The GNU C Library is free software; you can redistribute it and/or
+-   modify it under the terms of the GNU Lesser General Public License as
+-   published by the Free Software Foundation; either version 2.1 of the
+-   License, or (at your option) any later version.
+-  
+-   The GNU C Library is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-   Lesser General Public License for more details.
+-  
+-   You should have received a copy of the GNU Lesser General Public
+-   License along with the GNU C Library; see the file COPYING.LIB.  If not,
+-   write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+-   Boston, MA 02111-1307, USA.  */
+-
++ * Classic Priority Inversion deadlock test case
++ * Copyright (C) 2006 Free Software Foundation, Inc.
++ * This file is part of the GNU C Library.
++ * Contributed by Clark Williams<williams@redhat.com>, 2006
++ */ 
+ 
+ /* This program tests Priority Inheritance mutexes and their ability
+    to avoid Priority Inversion deadlocks
+diff --git a/src/pmqtest/pmqtest.c b/src/pmqtest/pmqtest.c
+index 3ce799bd6319..3ce29252b9a2 100644
+--- a/src/pmqtest/pmqtest.c
++++ b/src/pmqtest/pmqtest.c
+@@ -1,22 +1,8 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ /*
+  * pmqtest.c
+  *
+  * Copyright (C) 2009 Carsten Emde <C.Emde@osadl.org>
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License as published by
+- * the Free Software Foundation either version 2 of the License, or
+- * (at your option) any later version.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License
+- * along with this program; if not, write to the Free Software
+- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
+- * USA.
+  */
+ 
+ #include <stdio.h>
+diff --git a/src/ptsematest/ptsematest.c b/src/ptsematest/ptsematest.c
+index 553759212ac9..78fa444c5578 100644
+--- a/src/ptsematest/ptsematest.c
++++ b/src/ptsematest/ptsematest.c
+@@ -1,22 +1,7 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ /*
+  * ptsematest.c
+- *
+  * Copyright (C) 2009 Carsten Emde <C.Emde@osadl.org>
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License as published by
+- * the Free Software Foundation either version 2 of the License, or
+- * (at your option) any later version.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License
+- * along with this program; if not, write to the Free Software
+- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
+- * USA.
+  */
+ 
+ #include <stdio.h>
+diff --git a/src/queuelat/determine_maximum_mpps.sh b/src/queuelat/determine_maximum_mpps.sh
+index 3acd6ba2e362..52d54c0f9065 100755
+--- a/src/queuelat/determine_maximum_mpps.sh
++++ b/src/queuelat/determine_maximum_mpps.sh
+@@ -1,5 +1,8 @@
+ #!/bin/bash
+ 
++# SPDX-License-Identifier: GPL-2.0-or-later
++# Copyright (C) 2018 Marcelo Tosatti <mtosatti@redhat.com>
++
+ #  A script to determine the maximum mpps. Logic:
+ #  Increase mpps in 0.5 units 
+ # 
+diff --git a/src/queuelat/get_cpuinfo_mhz.sh b/src/queuelat/get_cpuinfo_mhz.sh
+index fb5158f31040..eafdd9577424 100755
+--- a/src/queuelat/get_cpuinfo_mhz.sh
++++ b/src/queuelat/get_cpuinfo_mhz.sh
+@@ -1,5 +1,8 @@
+ #!/bin/bash
+ 
++# SPDX-License-Identifier: GPL-2.0-or-later
++# Copyright (C) 2018 Marcelo Tosatti <mtosatti@redhat.com>
++
+ mhz=`cat /proc/cpuinfo  | grep "cpu MHz" | uniq | cut -f 3 -d " "`
+ echo $mhz
+ 
+diff --git a/src/queuelat/queuelat.c b/src/queuelat/queuelat.c
+index a5525e41776a..cccb50ef0cc4 100644
+--- a/src/queuelat/queuelat.c
++++ b/src/queuelat/queuelat.c
+@@ -1,3 +1,11 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
++
++/*
++ * Copyright (C) 2018 Marcelo Tosatti <mtosatti@redhat.com>
++ * Copyright (C) 2019 John Kacur <jkacur@redhat.com>
++ * Copyright (C) 2019 Clark Williams <williams@redhat.com>
++ */
++
+ #include <string.h>
+ #include <stdlib.h>
+ #include <sys/types.h>
+diff --git a/src/queuelat/targeted-ipi/targeted-ipi.c b/src/queuelat/targeted-ipi/targeted-ipi.c
+index 4a10e0b24ecb..be2b153260c5 100644
+--- a/src/queuelat/targeted-ipi/targeted-ipi.c
++++ b/src/queuelat/targeted-ipi/targeted-ipi.c
+@@ -1,3 +1,10 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
++/*
++ * Copyright (C) 2018 Marcelo Tosatti <mtosatti@redhat.com>
++ * Copyright (C) 2019 John Kacur <jkacur@redhat.com>
++ * Copyright (C) 2019 Clark Williams <williams@redhat.com>
++ */
++
+ #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+ 
+ #include <linux/module.h>
+diff --git a/src/rt-migrate-test/rt-migrate-test.c b/src/rt-migrate-test/rt-migrate-test.c
+index f0a285d1d45f..4863238edeb4 100644
+--- a/src/rt-migrate-test/rt-migrate-test.c
++++ b/src/rt-migrate-test/rt-migrate-test.c
+@@ -1,24 +1,7 @@
++// SPDX-License-Identifier: GPL-2.0-only
+ /*
+  * rt-migrate-test.c
+- *
+  * Copyright (C) 2007-2009 Steven Rostedt <srostedt@redhat.com>
+- *
+- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License as published by
+- * the Free Software Foundation; version 2 of the License (not later!)
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License
+- * along with this program; if not, write to the Free Software
+- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+- *
+- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  */
+ #include <stdio.h>
+ #ifndef __USE_XOPEN2K
+diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
+index 7b5e8b36c4ea..a08e28e73c42 100644
+--- a/src/sched_deadline/cyclicdeadline.c
++++ b/src/sched_deadline/cyclicdeadline.c
+@@ -1,3 +1,11 @@
++// SPDX-License-Identifier: GPL-2.0-only
++
++/*
++ * Copyright (C) 2016 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
++ * Copyright (C) 2019 John Kacur <jkacur@redhat.com>
++ * Copyright (C) 2019 Clark Williams <williams@redhat.com>
++ */
++
+ #include <pthread.h>
+ #include <stdarg.h>
+ #include <stdlib.h>
+diff --git a/src/sched_deadline/deadline_test.c b/src/sched_deadline/deadline_test.c
+index 5b5f40dbb74d..4cef2609912e 100644
+--- a/src/sched_deadline/deadline_test.c
++++ b/src/sched_deadline/deadline_test.c
+@@ -1,22 +1,12 @@
++// SPDX-License-Identifier: GPL-2.0-only
++
+ /*
+  * Copyright (C) 2016 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
+- *
+- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License as published by
+- * the Free Software Foundation; version 2 of the License (not later!)
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License
+- * along with this program; if not,  see <http://www.gnu.org/licenses>
+- *
+- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- *
++ * Copyright (C) 2019 John Kacur <jkacur@redhat.com>
++ * Copyright (C) 2019 Clark Williams <williams@redhat.com>
++ */
++
++/*
+  * deadline_test.c
+  *
+  * This program is used to test the deadline scheduler (SCHED_DEADLINE tasks).
+diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
+index 4c952561d7f2..b5c86c5635cb 100644
+--- a/src/signaltest/signaltest.c
++++ b/src/signaltest/signaltest.c
+@@ -1,3 +1,5 @@
++// SPDX-License-Identifier: GPL-2.0-only
++
+ /*
+  * RT signal roundtrip test software
+  *
+diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
+index 2d0c04132fa7..4678b68675b2 100644
+--- a/src/sigwaittest/sigwaittest.c
++++ b/src/sigwaittest/sigwaittest.c
+@@ -1,3 +1,5 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
++
+ /*
+  * sigwaittest.c
+  *
+diff --git a/src/ssdd/ssdd.c b/src/ssdd/ssdd.c
+index 080ed17107a8..f165da96e23a 100644
+--- a/src/ssdd/ssdd.c
++++ b/src/ssdd/ssdd.c
+@@ -1,3 +1,9 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
++
++/*
++ * Copyright (C) 2019 Joe Korty <joe.korty@concurrent-rt.com>
++ */
++
+ /*
+  * Have a tracer do a bunch of PTRACE_SINGLESTEPs against
+  * a tracee as fast as possible.  Create several of these
+@@ -16,12 +22,6 @@
+  * The tracer waits on each PTRACE_SINGLESTEP with a waitpid(2)
+  * and checks that waitpid's return values for correctness.
+  *
+- * This program was originally written by
+- * Joe Korty <joe.korty@concurrent-rt.com>
+- * This program is free software; you can redistribute it and / or modify
+- * it under the terms of the GNU General Public License Version 2
+- * of the licence, or (at your option) any later version
+- * see COPYING for more information
+  */
+ #include <stdio.h>
+ #include <stdlib.h>
+diff --git a/src/svsematest/svsematest.c b/src/svsematest/svsematest.c
+index 15e36af76288..7c15393fe1be 100644
+--- a/src/svsematest/svsematest.c
++++ b/src/svsematest/svsematest.c
+@@ -1,22 +1,10 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
++
+ /*
+  * svsematest.c
+  *
+  * Copyright (C) 2009 Carsten Emde <C.Emde@osadl.org>
+  *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License as published by
+- * the Free Software Foundation either version 2 of the License, or
+- * (at your option) any later version.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU General Public License for more details.
+- *
+- * You should have received a copy of the GNU General Public License
+- * along with this program; if not, write to the Free Software
+- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
+- * USA.
+  */
+ 
+ #include <stdio.h>
 -- 
 2.20.1
 
