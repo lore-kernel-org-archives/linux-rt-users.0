@@ -7,62 +7,62 @@ X-Spam-Status: No, score=-9.6 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 503E5C43215
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D26B8C432C3
 	for <linux-rt-users@archiver.kernel.org>; Mon, 25 Nov 2019 14:17:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 29F2320836
+	by mail.kernel.org (Postfix) with ESMTP id AA8C820748
 	for <linux-rt-users@archiver.kernel.org>; Mon, 25 Nov 2019 14:17:06 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="sYMOQjHv"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jnXNhiFL"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727996AbfKYORF (ORCPT
+        id S1727998AbfKYORG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 25 Nov 2019 09:17:05 -0500
-Received: from mail-wr1-f68.google.com ([209.85.221.68]:38308 "EHLO
-        mail-wr1-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727993AbfKYORF (ORCPT
+        Mon, 25 Nov 2019 09:17:06 -0500
+Received: from mail-wr1-f66.google.com ([209.85.221.66]:32959 "EHLO
+        mail-wr1-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727994AbfKYORG (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 25 Nov 2019 09:17:05 -0500
-Received: by mail-wr1-f68.google.com with SMTP id i12so18312810wro.5
-        for <linux-rt-users@vger.kernel.org>; Mon, 25 Nov 2019 06:17:04 -0800 (PST)
+        Mon, 25 Nov 2019 09:17:06 -0500
+Received: by mail-wr1-f66.google.com with SMTP id w9so18315886wrr.0
+        for <linux-rt-users@vger.kernel.org>; Mon, 25 Nov 2019 06:17:03 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=7oNzV75ZoEoiiWZYsHOV3YLNpXRS8r5apimxI1+HrAk=;
-        b=sYMOQjHvNr02ZM+mb0BrUCAMHvuZojKfXfmsNXhMLd3g2Aip/YlXrq7p4U4H2Tz3Cv
-         38PjuJsEwzM0w2bmT/5qm4Ccf6WrttOTT+Gu3ki07ydCu34OPq+mA7kfB8hdFuQoPLq8
-         iKxnM+FrkLQ88HGZruT4+TQ4iSqCWVOzJ0iCjRRN+R3jkTiGeI8y6PmLtiiL8rcCr6Xk
-         YKhtUuBt29jrHlZOC2TEFXHX2LVq3WQ6QRRqsNmi3iYS86dvqjuO6sNCODBXzPx0AAiF
-         ccNPVygTXA3TtCGuhlcEB38hxKNHbFaRM93DPGumOpUIZNY2LPSneLDOeqklTOAt/upH
-         AssA==
+        bh=IIaQlweoYmCyzjVGFuabNtZn2NxU/K8+uosryfgcmdU=;
+        b=jnXNhiFLsd/ELNVJlEqaiIs4fXSjfUACcSZGXUn4R84m7l0hlpMD7rXCOwWub8HUIf
+         AobIqJcUlMeswKiTBoxeuVg7l4v8oLAv2BFXlbum9N9pSjWpDmLARS5TafhlV5De+/t0
+         07mbjoQoJzMUQhEM4uUMteT88Ow/0RHni9ayklUfoscGk5dN5j0c4gsxe+vScHKWvOYJ
+         tVRr1h9EvB19fY4QdhYtWReDY6sHBA8Jq6DO3B1MF5w7o4YQ1TZ2dZ5dLoWO0R6omakO
+         ui2ntrKhz4hUfd7SYCCGtIFxbVFLWs5p3N2HzurtNec+358bixGQFLVuCsn/vvq+ucAC
+         KJ4g==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
          :in-reply-to:references:mime-version:content-transfer-encoding;
-        bh=7oNzV75ZoEoiiWZYsHOV3YLNpXRS8r5apimxI1+HrAk=;
-        b=NiPPOfjEuadRWvEkjahdZolv7omOnonH1jWFVgbWs3l4YdlUMHix5J2AjO2H62QoJM
-         uzIHd7Mf8kx7p6hJ12FFe3vuSmQ+ZeRGGCe/ZwyKUDJqupscGooXpDDxFEvi6pat5/iw
-         /lhKTQsZ2F0LIOqdHTaxy4Ry76dR2Cib7CuQwKIVyX23qbK+ui8vYzr2O1ug6VXRSaUV
-         /LhFKspoBipjEKDqVr0CmplTW5qJXtksS8lglNJ9/xLworZhrI6bm3JZIe7H9tZ5G2jE
-         tKoXa+aLLQvheO5bvHRXw9rB5zUlaKtnwmDZaikd9q2V0lhNra0B/OId1q9VpN5Nlzj/
-         2yEg==
-X-Gm-Message-State: APjAAAUcaC90FPS/wPD8QNGzzwNAVUbKI3S89Um4b2ALwpLKbaHZmLL+
-        e1xgfgUbdEx+B2tyMbcYs/hwwBVqL2E=
-X-Google-Smtp-Source: APXvYqwjCAcxCOMoD8hDtldLI3aJDiu08Mnn6G+uuVVBExnvLAtMYrfPRaEhaz6tLS4Mr5BddHgH5A==
-X-Received: by 2002:adf:e74e:: with SMTP id c14mr31168962wrn.124.1574691423368;
-        Mon, 25 Nov 2019 06:17:03 -0800 (PST)
-Received: from planxty.redhat.com (ip1f122014.dynamic.kabel-deutschland.de. [31.18.32.20])
-        by smtp.gmail.com with ESMTPSA id q5sm8463456wmc.27.2019.11.25.06.17.02
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        bh=IIaQlweoYmCyzjVGFuabNtZn2NxU/K8+uosryfgcmdU=;
+        b=HmY2o24WO3ngcdGEEebEsleekAWWhrOc99tIy0KkIl7ak20Usvf+W9u9wpVqg8AKLq
+         6ey90bROJyxakphiThORr6wJ+Y9cdeGGtp1yVYkodhmwQYQ528Y3yWJ13ogcTxbW5Pp8
+         nZXgFXRP6QsZqhWY0Yhd2OfCzqF2oTPc0f4N1a5h669QrcV1ll+iiB9oeEJHyDH5Zr9b
+         TPUMs1iUnI15fnJX0J0g9XHxxsL5wc3T0NmCHtDufedHvzi4HzXOy7nSf2PJDY88uMnV
+         85Bxk8d7UfSm63YvQFBAosIbMaRiQdveRf/9Ngj41CciM9bysescYtEG+V7woBOPOh+a
+         pOKQ==
+X-Gm-Message-State: APjAAAU52WJY7TBA06yGQPMeefmn97Hf1ZwuxfdZtiikyDmItFhI82Yg
+        q97HAL7KbVLR8/Fk4nvBBGY8gkxGc8k=
+X-Google-Smtp-Source: APXvYqyjiVUvxNYwfGRxMagZWd59WVFOM+t3AlLLIpeP/83npTiQ/bn2UZrlYvPbevlnYxvqmHS6pQ==
+X-Received: by 2002:adf:f987:: with SMTP id f7mr31930486wrr.284.1574691422299;
         Mon, 25 Nov 2019 06:17:02 -0800 (PST)
+Received: from planxty.redhat.com (ip1f122014.dynamic.kabel-deutschland.de. [31.18.32.20])
+        by smtp.gmail.com with ESMTPSA id q5sm8463456wmc.27.2019.11.25.06.17.01
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 25 Nov 2019 06:17:01 -0800 (PST)
 From:   John Kacur <jkacur@redhat.com>
 To:     rt-users <linux-rt-users@vger.kernel.org>
 Cc:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
-Subject: [PATCH 7/8] svsematest: Add -S, --smp option to manpage
-Date:   Mon, 25 Nov 2019 15:16:43 +0100
-Message-Id: <20191125141644.4429-5-jkacur@redhat.com>
+Subject: [PATCH 6/8] cyclictest: Sync manpage with the help option
+Date:   Mon, 25 Nov 2019 15:16:42 +0100
+Message-Id: <20191125141644.4429-4-jkacur@redhat.com>
 X-Mailer: git-send-email 2.20.1
 In-Reply-To: <20191125141644.4429-1-jkacur@redhat.com>
 References: <20191125141644.4429-1-jkacur@redhat.com>
@@ -73,30 +73,48 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The -S, or --smp option is in the help but missing from the manpage.
-
-We should really revisit these tests as these options have changed a bit
-in cyclictest and they are all modeled after cyclictest.
+Sync the manpage with the help option, as the manpage has not kept-up
+with changes to help
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- src/svsematest/svsematest.8 | 3 +++
- 1 file changed, 3 insertions(+)
+ src/cyclictest/cyclictest.8 | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
 
-diff --git a/src/svsematest/svsematest.8 b/src/svsematest/svsematest.8
-index f67ab4c669d3..98322c105803 100644
---- a/src/svsematest/svsematest.8
-+++ b/src/svsematest/svsematest.8
-@@ -38,6 +38,9 @@ Set the number of loops. The default is 0 (endless). This option is useful for a
- .B \-p, \-\-prio=PRIO
- Set the priority of the process.
+diff --git a/src/cyclictest/cyclictest.8 b/src/cyclictest/cyclictest.8
+index b64a16ae8bbb..00e2d2403996 100644
+--- a/src/cyclictest/cyclictest.8
++++ b/src/cyclictest/cyclictest.8
+@@ -67,6 +67,9 @@ Specify a length for the test run.
+ .br
+ Append 'm', 'h', or 'd' to specify minutes, hours or days.
  .TP
-+.B \-S, \-\-smp
-+SMP testing: options -a -t and same priority of all threads
++.B \-\-latency=PM_Q0S
++write PM_Q0S to /dev/cpu_dma_latency
 +.TP
- .B \-t, \-\-threads[=NUM]
- Set the number of test threads (default is 1, if this option is not given). If NUM is specified, create NUM test threads. If NUM is not specified, NUM is set to the number of available CPUs.
- .SH "EXAMPLES"
+ .B \-F, \-\-fifo=<path>
+ Create a named pipe at path and write stats to it
+ .TP
+@@ -95,9 +98,6 @@ Lock current and future memory allocations to prevent being paged out
+ Delay updating the screen until a new max latency is hit. (useful for
+ running cyclictest on low-bandwidth connections)
+ .TP
+-.B \-n, \-\-nanosleep
+-Use clock_nanosleep instead of posix interval timers. Setting this option runs the tests with clock_nanosleep instead of posix interval timers.
+-.TP
+ .B \-N, \-\-nsecs
+ Show results in nanoseconds instead of microseconds, which is the default unit.
+ .TP
+@@ -165,6 +165,9 @@ where n=task number c=count v=latency value in us.
+ .TP
+ .B \-\-dbg_cyclictest
+ Print info userful for debugging cyclictest
++.TP
++.B \-x, \-\-posix_timers
++Use POSIX timers instead of clock_nanosleep.
+ 
+ .SH SEE ALSO
+ .BR numa (3),
 -- 
 2.20.1
 
