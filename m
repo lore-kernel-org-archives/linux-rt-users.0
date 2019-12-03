@@ -1,88 +1,90 @@
-Return-Path: <SRS0=z7AG=ZY=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=kMLq=ZZ=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.6 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 176E6C432C0
-	for <linux-rt-users@archiver.kernel.org>; Mon,  2 Dec 2019 21:47:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BAD83C432C0
+	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Dec 2019 17:37:51 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id D328520718
-	for <linux-rt-users@archiver.kernel.org>; Mon,  2 Dec 2019 21:47:02 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1575323222;
-	bh=bgMgj4k2UecyY3AWQVMc128zn5HGkTSDwtH4A4TuZ6g=;
-	h=Subject:From:To:Date:List-ID:From;
-	b=IXLBTxW1MmPsHGGXcAzHm4rMY90d1T00UDHocJpTU4Rf2MfXKn1yVfmj1OSYMuqib
-	 +tV+Z0tHKebwFfk65jgYEd14exKHpmGlC6qVB9NIxxz9SZ4Ood2D2U/FFcEWJk08K+
-	 GqzMvMQYwJDcStlEBlEAy5YoN4bxLENDLwyWMfzY=
+	by mail.kernel.org (Postfix) with ESMTP id 99A16206EC
+	for <linux-rt-users@archiver.kernel.org>; Tue,  3 Dec 2019 17:37:51 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1725957AbfLBVrC (ORCPT
+        id S1726449AbfLCRhr (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 2 Dec 2019 16:47:02 -0500
-Received: from mail.kernel.org ([198.145.29.99]:39866 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725835AbfLBVrC (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 2 Dec 2019 16:47:02 -0500
-Received: from tzanussi-mobl (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id F3CDE20705;
-        Mon,  2 Dec 2019 21:47:00 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1575323221;
-        bh=bgMgj4k2UecyY3AWQVMc128zn5HGkTSDwtH4A4TuZ6g=;
-        h=Subject:From:To:Date:From;
-        b=hv98VLOQWElQlDECYtAdFXPPVXhBwXw6F3L8cyJ60++7qFsookhq/dizbwRHjIeAA
-         obWT+x4UXjOxGNyNtsNEmI4wMOaxYjDt+XaVrnFQudNg+jIDzlNDH/2v4FTEbq2Zpi
-         I+sNj8e4b9iulGP5+IiuCTq82S+KaZU4xzttPjkU=
-Message-ID: <1575323220.2386.17.camel@kernel.org>
-Subject: [ANNOUNCE] 4.14.155-rt70
-From:   Tom Zanussi <zanussi@kernel.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
+        Tue, 3 Dec 2019 12:37:47 -0500
+Received: from Galois.linutronix.de ([193.142.43.55]:55180 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726074AbfLCRhr (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 3 Dec 2019 12:37:47 -0500
+Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
+        (envelope-from <bigeasy@linutronix.de>)
+        id 1icC7M-000569-03; Tue, 03 Dec 2019 18:37:44 +0100
+Date:   Tue, 3 Dec 2019 18:37:43 +0100
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     LKML <linux-kernel@vger.kernel.org>
+Cc:     Steven Rostedt <rostedt@goodmis.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>
-Date:   Mon, 02 Dec 2019 15:47:00 -0600
-Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.26.1-1 
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+        Thomas Gleixner <tglx@linutronix.de>
+Subject: [PATCH RT] powerpc: Fixup compile and lazy-preempt
+Message-ID: <20191203173743.5mjvmhqfccdhwaon@linutronix.de>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT Folks!
+Since the softirq rework 32bit POWER does not compile because
+get_current() is not provided - just the `current' macro.
+Use the `current' instead.
 
-I'm pleased to announce the 4.14.155-rt70 stable release.
+Since the v5.2-RT series, the lazy-preempt code is broken. It loads the
+lazy-counter and flags from the R9 but R2 should be used.
 
-This release is just an update to the new stable 4.14.155
-version and no RT specific changes have been made.
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ arch/powerpc/kernel/entry_32.S | 4 ++--
+ include/linux/preempt.h        | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
 
-You can get this release via the git tree at:
+diff --git a/arch/powerpc/kernel/entry_32.S b/arch/powerpc/kernel/entry_32.S
+index d37b373104502..004944258387b 100644
+--- a/arch/powerpc/kernel/entry_32.S
++++ b/arch/powerpc/kernel/entry_32.S
+@@ -893,10 +893,10 @@ user_exc_return:		/* r10 contains MSR_KERNEL here */
+ 	bne	restore_kuap
+ 	andi.	r8,r8,_TIF_NEED_RESCHED
+ 	bne+	1f
+-	lwz	r0,TI_PREEMPT_LAZY(r9)
++	lwz	r0,TI_PREEMPT_LAZY(r2)
+ 	cmpwi	0,r0,0          /* if non-zero, just restore regs and return */
+ 	bne	restore_kuap
+-	lwz	r0,TI_FLAGS(r9)
++	lwz	r0,TI_FLAGS(r2)
+ 	andi.	r0,r0,_TIF_NEED_RESCHED_LAZY
+ 	beq+	restore_kuap
+ 1:
+diff --git a/include/linux/preempt.h b/include/linux/preempt.h
+index d559e3a0379c2..7653dd58b4b21 100644
+--- a/include/linux/preempt.h
++++ b/include/linux/preempt.h
+@@ -100,9 +100,9 @@
+ 				   (NMI_MASK | HARDIRQ_MASK | SOFTIRQ_OFFSET)))
+ #ifdef CONFIG_PREEMPT_RT_FULL
+ 
+-#define softirq_count()		((long)get_current()->softirq_count)
++#define softirq_count()		(current->softirq_count)
+ #define in_softirq()		(softirq_count())
+-#define in_serving_softirq()	(get_current()->softirq_count & SOFTIRQ_OFFSET)
++#define in_serving_softirq()	(current->softirq_count & SOFTIRQ_OFFSET)
+ 
+ #else
+ 
+-- 
+2.24.0
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v4.14-rt
-  Head SHA1: 7f79da3081404c0b0118ff4b9a241dbf9cfbe4b4
-
-Or to build 4.14.155-rt70 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.155.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.155-rt70.patch.xz
-
-Enjoy!
-
-   Tom
