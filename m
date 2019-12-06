@@ -1,119 +1,111 @@
 Return-Path: <SRS0=Qk+l=Z4=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-X-Spam-Level: *
-X-Spam-Status: No, score=1.2 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,PDS_TONAME_EQ_TOLOCAL_SHORT,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Level: 
+X-Spam-Status: No, score=-6.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 678D8C43603
-	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Dec 2019 16:44:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6E517C43603
+	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Dec 2019 18:49:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 2A3C821835
-	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Dec 2019 16:44:22 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1924924670
+	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Dec 2019 18:49:19 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=intel.onmicrosoft.com header.i=@intel.onmicrosoft.com header.b="qnkKdPD4"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="AXXS3L/L"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726315AbfLFQoV (ORCPT
+        id S1726370AbfLFStS (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 6 Dec 2019 11:44:21 -0500
-Received: from mga09.intel.com ([134.134.136.24]:30754 "EHLO mga09.intel.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726312AbfLFQoV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 6 Dec 2019 11:44:21 -0500
-X-Amp-Result: SKIPPED(no attachment in message)
-X-Amp-File-Uploaded: False
-Received: from fmsmga004.fm.intel.com ([10.253.24.48])
-  by orsmga102.jf.intel.com with ESMTP/TLS/DHE-RSA-AES256-GCM-SHA384; 06 Dec 2019 08:44:21 -0800
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="5.69,285,1571727600"; 
-   d="scan'208";a="237068168"
-Received: from fmsmsx105.amr.corp.intel.com ([10.18.124.203])
-  by fmsmga004.fm.intel.com with ESMTP; 06 Dec 2019 08:44:20 -0800
-Received: from fmsmsx163.amr.corp.intel.com (10.18.125.72) by
- FMSMSX105.amr.corp.intel.com (10.18.124.203) with Microsoft SMTP Server (TLS)
- id 14.3.439.0; Fri, 6 Dec 2019 08:44:20 -0800
-Received: from FMSEDG002.ED.cps.intel.com (10.1.192.134) by
- fmsmsx163.amr.corp.intel.com (10.18.125.72) with Microsoft SMTP Server (TLS)
- id 14.3.439.0; Fri, 6 Dec 2019 08:44:20 -0800
-Received: from NAM02-SN1-obe.outbound.protection.outlook.com (104.47.36.52) by
- edgegateway.intel.com (192.55.55.69) with Microsoft SMTP Server (TLS) id
- 14.3.439.0; Fri, 6 Dec 2019 08:44:18 -0800
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=d9OijTU3SWsW/gqfPQqYtVXxzsNxRxt7ulg+949l+8eoKfAcHBnu/G50JkRiXPsl9en4OoMRAXAh8DnyUuc7pKtU8vciz3J43qaRSZiP+AT5DJDH5plGaN0ChGnxNk2bkx5Bw77A2rU+741XzYElEfwR2/QM/A4BZLil/+++9YSkwPN9E2RLAEjJ5WPllKH/T7o9ZPsaO64IXrqUKCHMbnOJ8qd71kl+6oVFU9Iip0dFYmN9Ofq5vZo/vuaxlnne2/0jChhD0vF36lvcVFtt9mO6N5TmRzxU9L/v9gptqdVGD5LdolZ18icsp5RY0H8x0tqxKO68rRTWChaewHCv1w==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=DbMjBreH390/ewPIU7liCDycSfC+f5oQGJOUrnpvLoI=;
- b=G3LWQGzsl/E/pzFmBB3PcJJ9k3xgi1NpflJP8iKsJm1oYt8oMZsA/slo8VTrd1Cj7y6TJIi0KmWL52XK8olo5V5zUkrJbDH6qu83r7hY5T3FEapgUVolT4Ffc7vodCE8qXWKBcBcjMZrqJJMyCPn5G2YMXCtlSonPI6rWdaQGEe5DGcpQLJybX7mNiSphCCuzi+s6d/a6G5g/fKvndRf9ZztW5bL5F28vCSHQQjolgBWqRgD8wTxrQukA0Pe2ZkwgiE3wStGtDtRYiusqIhAoCMx+e63gFXzjZdecz0zJlOrTAsuyQwEidPjD/3tBLYyWzBsSXvs4fca/kTmTzmmAw==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=intel.com; dmarc=pass action=none header.from=intel.com;
- dkim=pass header.d=intel.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=intel.onmicrosoft.com;
- s=selector2-intel-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=DbMjBreH390/ewPIU7liCDycSfC+f5oQGJOUrnpvLoI=;
- b=qnkKdPD4FCF12PRJUZ4WuUg1zRuKcS359/6eYkPgYZlAA0lCr5R3l2RrW9BzKqKgflGNRsyZcRJiwBgbP9mAlyXG2JE+5wRoVkLf4WsdQ3ESub8cJiPk0As1+HK17qGJ/Na9T94s0J//cfiMhc55jGCFUIveUgDWYsxsHjGBJSk=
-Received: from BYAPR11MB3062.namprd11.prod.outlook.com (20.177.228.18) by
- BYAPR11MB3750.namprd11.prod.outlook.com (20.178.237.225) with Microsoft SMTP
- Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.20.2516.14; Fri, 6 Dec 2019 16:44:17 +0000
-Received: from BYAPR11MB3062.namprd11.prod.outlook.com
- ([fe80::45c:1188:22bf:5633]) by BYAPR11MB3062.namprd11.prod.outlook.com
- ([fe80::45c:1188:22bf:5633%7]) with mapi id 15.20.2516.013; Fri, 6 Dec 2019
- 16:44:17 +0000
-From:   "Tseng, Kuo-Lang" <kuo-lang.tseng@intel.com>
-To:     linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: ETA for 5.4 rt-devel patch set
-Thread-Topic: ETA for 5.4 rt-devel patch set
-Thread-Index: AdWsVEpdIbMWIjkKQnWa+SKoIGB1tg==
-Date:   Fri, 6 Dec 2019 16:44:17 +0000
-Message-ID: <BYAPR11MB3062ABE980C2E40E759BF49FD25F0@BYAPR11MB3062.namprd11.prod.outlook.com>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-dlp-product: dlpe-windows
-x-titus-metadata-40: eyJDYXRlZ29yeUxhYmVscyI6IiIsIk1ldGFkYXRhIjp7Im5zIjoiaHR0cDpcL1wvd3d3LnRpdHVzLmNvbVwvbnNcL0ludGVsMyIsImlkIjoiN2Y0NGIzNDItN2QwOC00NzE0LWFjNTEtOWYyM2JkOThkNDYxIiwicHJvcHMiOlt7Im4iOiJDVFBDbGFzc2lmaWNhdGlvbiIsInZhbHMiOlt7InZhbHVlIjoiQ1RQX05UIn1dfV19LCJTdWJqZWN0TGFiZWxzIjpbXSwiVE1DVmVyc2lvbiI6IjE3LjEwLjE4MDQuNDkiLCJUcnVzdGVkTGFiZWxIYXNoIjoiV2JVVGduN0EwZ05OeVJzYytZR0VJczJraWViSFpsTW9BeUxHMXQ3WTRkVHVBMFpwSHVFVk9CRkdMMnFPMEQyVCJ9
-x-ctpclassification: CTP_NT
-dlp-reaction: no-action
-dlp-version: 11.2.0.6
-authentication-results: spf=none (sender IP is )
- smtp.mailfrom=kuo-lang.tseng@intel.com; 
-x-originating-ip: [192.55.52.193]
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: 64841435-d1fb-4e2a-130c-08d77a6b88e7
-x-ms-traffictypediagnostic: BYAPR11MB3750:
-x-microsoft-antispam-prvs: <BYAPR11MB37504BF38DEE03681ED55221D25F0@BYAPR11MB3750.namprd11.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:5516;
-x-forefront-prvs: 0243E5FD68
-x-forefront-antispam-report: SFV:NSPM;SFS:(10019020)(396003)(39860400002)(376002)(136003)(366004)(346002)(189003)(199004)(5660300002)(9686003)(71200400001)(71190400001)(52536014)(7696005)(26005)(99286004)(6506007)(102836004)(66946007)(64756008)(66446008)(186003)(66556008)(76116006)(66476007)(558084003)(33656002)(74316002)(86362001)(2906002)(305945005)(478600001)(8676002)(6916009)(55016002)(81166006)(8936002)(81156014)(316002);DIR:OUT;SFP:1102;SCL:1;SRVR:BYAPR11MB3750;H:BYAPR11MB3062.namprd11.prod.outlook.com;FPR:;SPF:None;LANG:en;PTR:InfoNoRecords;MX:1;A:1;
-x-ms-exchange-senderadcheck: 1
-x-microsoft-antispam: BCL:0;
-x-microsoft-antispam-message-info: stXMe1KQnmwyHj0Ob/x7rMSsxcNrpcDjTvoL2qu61WP8uXhugZQDpbO++c4BW8RIUHF70UsyUTeBEV/sWWDM87jE/cDK/uZXufrWbHDX/T/ftKO59l8gkOFG5/YEWHo189+YmiVqofKquu4p2/m18/Yoh2cKOwkyt38inRUHwKIlENgk9f3A9yYgGii7QP42hIO/25tzbEWF3bvcH5xRV1YTWbQ4AIff72kmfPafAltUOMetAUxS9gbMWuuonUZ6GNYA6uOZT798SNIAVBvt6u4EjIzzQ0d8t/x56+07lPbBPrhzYMhhu+qVSd0wWB/oOzTaEXDxfg8Yk357cjW0RkjxBsDRKiHw3QvHv0r/fWD+eGVdmNW+9+TdWwzPgsf6CUkWk2TgGFZlGXFqBr7hFuHtWCaXOiqXhLvLXaxqLDdPF8fCqmyFsIOj0iGaxqil
-x-ms-exchange-transport-forked: True
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+        Fri, 6 Dec 2019 13:49:18 -0500
+Received: from us-smtp-1.mimecast.com ([205.139.110.61]:24443 "EHLO
+        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1726298AbfLFStS (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 6 Dec 2019 13:49:18 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1575658157;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=+RjneYL86zxVRWZ7hSOGs/tSwo4GNBTmrivRcDCeKOE=;
+        b=AXXS3L/Lf7adHf9TeygB1XOIXGKZRVvPNhqyVS8u2XWiO5Xiet4AKPmpr3TLH5meEgWKOz
+        aVuMJUEAYE1bPpzsT5Or+V66FTjKsEhioQIpzcpOFMOZMsBZHgbjX2kzyHBUBeY7H8E1Hp
+        /ckKAYQBmA2o5StVm/MIe3JSt0dPsl8=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-226-8Zk95cTxPoS0kJ4Iuw1mkg-1; Fri, 06 Dec 2019 13:49:14 -0500
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7E31618B6380;
+        Fri,  6 Dec 2019 18:49:13 +0000 (UTC)
+Received: from ovpn-116-192.phx2.redhat.com (ovpn-116-192.phx2.redhat.com [10.3.116.192])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 1C1FC5D9C9;
+        Fri,  6 Dec 2019 18:49:13 +0000 (UTC)
+Message-ID: <4513f4a584586a4c17ef14f7365f6275042c3071.camel@redhat.com>
+Subject: Re: [PATCH] lib: Check for migrate_disable only on SMP systems
+From:   Scott Wood <swood@redhat.com>
+To:     Daniel Wagner <dwagner@suse.de>, linux-rt-users@vger.kernel.org
+Cc:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Date:   Fri, 06 Dec 2019 12:49:12 -0600
+In-Reply-To: <20191206142103.29647-1-dwagner@suse.de>
+References: <20191206142103.29647-1-dwagner@suse.de>
+Organization: Red Hat
+User-Agent: Evolution 3.30.5 (3.30.5-1.fc29)
 MIME-Version: 1.0
-X-MS-Exchange-CrossTenant-Network-Message-Id: 64841435-d1fb-4e2a-130c-08d77a6b88e7
-X-MS-Exchange-CrossTenant-originalarrivaltime: 06 Dec 2019 16:44:17.2209
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 46c98d88-e344-4ed4-8496-4ed7712e255d
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: NinumZSCDPDT6PgQ6Zm1vaOOi8F3dZ1UH0SjCzRxuYCzf9/Xu19u8cP5xaRNg/Vqg1KwcLdjsrspRQWtFbQpsQ+sUfZT9MTVPkrMxTTUuEY=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: BYAPR11MB3750
-X-OriginatorOrg: intel.com
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-MC-Unique: 8Zk95cTxPoS0kJ4Iuw1mkg-1
+X-Mimecast-Spam-Score: 0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi,=20
+On Fri, 2019-12-06 at 15:21 +0100, Daniel Wagner wrote:
+> In case the kernel configuration is UP is, the migrate_disable member
+> in task_struct is missing.
+>=20
+> linux/lib/smp_processor_id.c: In function =E2=80=98check_preemption_disab=
+led=E2=80=99:
+> linux/lib/smp_processor_id.c:26:13: error: =E2=80=98struct task_struct=E2=
+=80=99 has no
+> member named =E2=80=98migrate_disable=E2=80=99
+>     26 |  if (current->migrate_disable)
+>        |             ^~
+>=20
+> Fixes: 425c5b38779a ("sched: Lazy migrate_disable processing")
+> Cc: Scott Wood <swood@redhat.com>
+> Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> Signed-off-by: Daniel Wagner <dwagner@suse.de>
+> ---
+>  lib/smp_processor_id.c | 2 ++
+>  1 file changed, 2 insertions(+)
+>=20
+> diff --git a/lib/smp_processor_id.c b/lib/smp_processor_id.c
+> index 5f2618d346c4..a914f73e3652 100644
+> --- a/lib/smp_processor_id.c
+> +++ b/lib/smp_processor_id.c
+> @@ -23,8 +23,10 @@ unsigned int check_preemption_disabled(const char
+> *what1, const char *what2)
+>  =09 * Kernel threads bound to a single CPU can safely use
+>  =09 * smp_processor_id():
+>  =09 */
+> +#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+>  =09if (current->migrate_disable)
+>  =09=09goto out;
+> +#endif
 
-Will there be 5.4 rt dev patch set and if so, any estimate timeframe on whe=
-n that=20
-might be available?=20
+Won't this give false positives on UP with CONFIG_PREEMPT_RT_BASE and
+CONFIG_DEBUG_PREEMPT?  If we have CONFIG_SCHED_DEBUG then we can still chec=
+k
+migrate_disable.  Without that, we don't have enough information to tell
+whether it's safe to do smp_processor_id() and would have to skip
+check_preemption_disabled() entirely.
 
-Thanks
-Kuo-Lang Tseng
+-Scott
+
+
