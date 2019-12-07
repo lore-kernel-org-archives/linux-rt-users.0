@@ -1,98 +1,128 @@
-Return-Path: <SRS0=Qk+l=Z4=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=/fi4=Z5=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7C359C43603
-	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Dec 2019 19:39:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 69ACEC43603
+	for <linux-rt-users@archiver.kernel.org>; Sat,  7 Dec 2019 03:22:07 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 4EA75205ED
-	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Dec 2019 19:39:57 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2ECF7217BA
+	for <linux-rt-users@archiver.kernel.org>; Sat,  7 Dec 2019 03:22:07 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MpVHNN0+"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726350AbfLFTj5 (ORCPT
+        id S1726388AbfLGDWG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 6 Dec 2019 14:39:57 -0500
-Received: from mx2.suse.de ([195.135.220.15]:58350 "EHLO mx1.suse.de"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1726321AbfLFTj4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 6 Dec 2019 14:39:56 -0500
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.220.254])
-        by mx1.suse.de (Postfix) with ESMTP id 3E70DB2E4;
-        Fri,  6 Dec 2019 19:39:55 +0000 (UTC)
-Date:   Fri, 6 Dec 2019 20:39:54 +0100
-From:   Daniel Wagner <dwagner@suse.de>
-To:     Scott Wood <swood@redhat.com>
+        Fri, 6 Dec 2019 22:22:06 -0500
+Received: from us-smtp-1.mimecast.com ([207.211.31.81]:55049 "EHLO
+        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1726375AbfLGDWG (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 6 Dec 2019 22:22:06 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1575688924;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=nZgY07QMKmwSY8Nsfi7YwpLW8I19jEUzFDdwz/Lb0LU=;
+        b=MpVHNN0+lTVtkc2Od119Lfqb47ERUsTk7cnNyuA5AnNRkJXtkZx8E194pJxp6YepZLC12b
+        JVttky3dDnnYwOQszHQnn8tvUXA9g/XZ26Kp8dOBNggXc+wbz3V3gHVKjvfCDyM/d4sZkp
+        Z+YZHSIcILhZ+U/u6EsfwL3x4ex9D38=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-327-2BJJiplTNjCfxNwD1bXWIg-1; Fri, 06 Dec 2019 22:22:01 -0500
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 83FA61800D45;
+        Sat,  7 Dec 2019 03:22:00 +0000 (UTC)
+Received: from ovpn-116-192.phx2.redhat.com (ovpn-116-192.phx2.redhat.com [10.3.116.192])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 8E0E15D6BE;
+        Sat,  7 Dec 2019 03:21:55 +0000 (UTC)
+Message-ID: <3ce4699f987e784e84b2030aa3a1c529b274b498.camel@redhat.com>
+Subject: Re: [PATCH] lib: Check for migrate_disable only on SMP systems
+From:   Scott Wood <swood@redhat.com>
+To:     Daniel Wagner <dwagner@suse.de>
 Cc:     linux-rt-users@vger.kernel.org,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH] lib: Check for migrate_disable only on SMP systems
-Message-ID: <20191206193954.yi5hac366agt7k3o@beryllium.lan>
+In-Reply-To: <20191206193954.yi5hac366agt7k3o@beryllium.lan>
 References: <20191206142103.29647-1-dwagner@suse.de>
- <4513f4a584586a4c17ef14f7365f6275042c3071.camel@redhat.com>
+         <4513f4a584586a4c17ef14f7365f6275042c3071.camel@redhat.com>
+         <20191206193954.yi5hac366agt7k3o@beryllium.lan>
+Organization: Red Hat
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <4513f4a584586a4c17ef14f7365f6275042c3071.camel@redhat.com>
+Date:   Fri, 06 Dec 2019 21:21:36 -0600
+User-Agent: Evolution 3.30.5 (3.30.5-1.fc29)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-MC-Unique: 2BJJiplTNjCfxNwD1bXWIg-1
+X-Mimecast-Spam-Score: 0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Scott,
+On Fri, 2019-12-06 at 20:39 +0100, Daniel Wagner wrote:
+> Hi Scott,
+>=20
+> On Fri, Dec 06, 2019 at 12:49:12PM -0600, Scott Wood wrote:
+> > On Fri, 2019-12-06 at 15:21 +0100, Daniel Wagner wrote:
+> > > In case the kernel configuration is UP is, the migrate_disable member
+> > > in task_struct is missing.
+> > >=20
+> > > linux/lib/smp_processor_id.c: In function =E2=80=98check_preemption_d=
+isabled=E2=80=99:
+> > > linux/lib/smp_processor_id.c:26:13: error: =E2=80=98struct task_struc=
+t=E2=80=99 has no
+> > > member named =E2=80=98migrate_disable=E2=80=99
+> > >     26 |  if (current->migrate_disable)
+> > >        |             ^~
+> > >=20
+> > > Fixes: 425c5b38779a ("sched: Lazy migrate_disable processing")
+> > > Cc: Scott Wood <swood@redhat.com>
+> > > Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> > > Signed-off-by: Daniel Wagner <dwagner@suse.de>
+> > > ---
+> > >  lib/smp_processor_id.c | 2 ++
+> > >  1 file changed, 2 insertions(+)
+> > >=20
+> > > diff --git a/lib/smp_processor_id.c b/lib/smp_processor_id.c
+> > > index 5f2618d346c4..a914f73e3652 100644
+> > > --- a/lib/smp_processor_id.c
+> > > +++ b/lib/smp_processor_id.c
+> > > @@ -23,8 +23,10 @@ unsigned int check_preemption_disabled(const char
+> > > *what1, const char *what2)
+> > >  =09 * Kernel threads bound to a single CPU can safely use
+> > >  =09 * smp_processor_id():
+> > >  =09 */
+> > > +#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+> > >  =09if (current->migrate_disable)
+> > >  =09=09goto out;
+> > > +#endif
+> >=20
+> > Won't this give false positives on UP with CONFIG_PREEMPT_RT_BASE and
+> > CONFIG_DEBUG_PREEMPT? If we have CONFIG_SCHED_DEBUG then we can still
+> > check
+> > migrate_disable.
+>=20
+> Ohhh, I see what you mean. I didn't realize that migrate_disable is
+> also available with CONFIG_SCHED_DEBUG. So the ifdef should be
+> something like:
+>=20
+> #if defined(CONFIG_PREEMP_RT_BASE) && \
+>     (defined(CONFIG_SMP) || \
+>       (!defined(CONFIG_SMP) && defined(CONFIG_SCHED_DEBUG)))
 
-On Fri, Dec 06, 2019 at 12:49:12PM -0600, Scott Wood wrote:
-> On Fri, 2019-12-06 at 15:21 +0100, Daniel Wagner wrote:
-> > In case the kernel configuration is UP is, the migrate_disable member
-> > in task_struct is missing.
-> > 
-> > linux/lib/smp_processor_id.c: In function ‘check_preemption_disabled’:
-> > linux/lib/smp_processor_id.c:26:13: error: ‘struct task_struct’ has no
-> > member named ‘migrate_disable’
-> >     26 |  if (current->migrate_disable)
-> >        |             ^~
-> > 
-> > Fixes: 425c5b38779a ("sched: Lazy migrate_disable processing")
-> > Cc: Scott Wood <swood@redhat.com>
-> > Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> > Signed-off-by: Daniel Wagner <dwagner@suse.de>
-> > ---
-> >  lib/smp_processor_id.c | 2 ++
-> >  1 file changed, 2 insertions(+)
-> > 
-> > diff --git a/lib/smp_processor_id.c b/lib/smp_processor_id.c
-> > index 5f2618d346c4..a914f73e3652 100644
-> > --- a/lib/smp_processor_id.c
-> > +++ b/lib/smp_processor_id.c
-> > @@ -23,8 +23,10 @@ unsigned int check_preemption_disabled(const char
-> > *what1, const char *what2)
-> >  	 * Kernel threads bound to a single CPU can safely use
-> >  	 * smp_processor_id():
-> >  	 */
-> > +#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
-> >  	if (current->migrate_disable)
-> >  		goto out;
-> > +#endif
-> 
-> Won't this give false positives on UP with CONFIG_PREEMPT_RT_BASE and
-> CONFIG_DEBUG_PREEMPT? If we have CONFIG_SCHED_DEBUG then we can still check
-> migrate_disable.
+That would still leave the issue with false positives if you have
+CONFIG_DEBUG_PREEMPT but not CONFIG_SCHED_DEBUG (which should be the only
+config currently experiencing build problems).
 
-Ohhh, I see what you mean. I didn't realize that migrate_disable is
-also available with CONFIG_SCHED_DEBUG. So the ifdef should be
-something like:
+-Scott
 
-#if defined(CONFIG_PREEMP_RT_BASE) && \
-    (defined(CONFIG_SMP) || \
-      (!defined(CONFIG_SMP) && defined(CONFIG_SCHED_DEBUG)))
 
-?
-
-Hmm, looks a bit ugly but I haven't found a simplification. Long time
-since I did logic algebra...
-
-Thanks,
-Daniel
