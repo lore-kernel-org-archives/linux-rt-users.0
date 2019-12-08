@@ -1,128 +1,63 @@
-Return-Path: <SRS0=/fi4=Z5=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=KLW2=Z6=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=ham
+X-Spam-Status: No, score=-2.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 69ACEC43603
-	for <linux-rt-users@archiver.kernel.org>; Sat,  7 Dec 2019 03:22:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 26C7CC43603
+	for <linux-rt-users@archiver.kernel.org>; Sun,  8 Dec 2019 13:15:37 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 2ECF7217BA
-	for <linux-rt-users@archiver.kernel.org>; Sat,  7 Dec 2019 03:22:07 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MpVHNN0+"
+	by mail.kernel.org (Postfix) with ESMTP id EB8A3206E0
+	for <linux-rt-users@archiver.kernel.org>; Sun,  8 Dec 2019 13:15:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726388AbfLGDWG (ORCPT
+        id S1726425AbfLHNPg (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 6 Dec 2019 22:22:06 -0500
-Received: from us-smtp-1.mimecast.com ([207.211.31.81]:55049 "EHLO
-        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1726375AbfLGDWG (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 6 Dec 2019 22:22:06 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1575688924;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=nZgY07QMKmwSY8Nsfi7YwpLW8I19jEUzFDdwz/Lb0LU=;
-        b=MpVHNN0+lTVtkc2Od119Lfqb47ERUsTk7cnNyuA5AnNRkJXtkZx8E194pJxp6YepZLC12b
-        JVttky3dDnnYwOQszHQnn8tvUXA9g/XZ26Kp8dOBNggXc+wbz3V3gHVKjvfCDyM/d4sZkp
-        Z+YZHSIcILhZ+U/u6EsfwL3x4ex9D38=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-327-2BJJiplTNjCfxNwD1bXWIg-1; Fri, 06 Dec 2019 22:22:01 -0500
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 83FA61800D45;
-        Sat,  7 Dec 2019 03:22:00 +0000 (UTC)
-Received: from ovpn-116-192.phx2.redhat.com (ovpn-116-192.phx2.redhat.com [10.3.116.192])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 8E0E15D6BE;
-        Sat,  7 Dec 2019 03:21:55 +0000 (UTC)
-Message-ID: <3ce4699f987e784e84b2030aa3a1c529b274b498.camel@redhat.com>
-Subject: Re: [PATCH] lib: Check for migrate_disable only on SMP systems
-From:   Scott Wood <swood@redhat.com>
-To:     Daniel Wagner <dwagner@suse.de>
-Cc:     linux-rt-users@vger.kernel.org,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-In-Reply-To: <20191206193954.yi5hac366agt7k3o@beryllium.lan>
-References: <20191206142103.29647-1-dwagner@suse.de>
-         <4513f4a584586a4c17ef14f7365f6275042c3071.camel@redhat.com>
-         <20191206193954.yi5hac366agt7k3o@beryllium.lan>
-Organization: Red Hat
+        Sun, 8 Dec 2019 08:15:36 -0500
+Received: from mga11.intel.com ([192.55.52.93]:13839 "EHLO mga11.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726236AbfLHNPg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 8 Dec 2019 08:15:36 -0500
+X-Amp-Result: SKIPPED(no attachment in message)
+X-Amp-File-Uploaded: False
+Received: from orsmga007.jf.intel.com ([10.7.209.58])
+  by fmsmga102.fm.intel.com with ESMTP/TLS/DHE-RSA-AES256-GCM-SHA384; 08 Dec 2019 05:15:35 -0800
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="5.69,291,1571727600"; 
+   d="scan'208";a="202579954"
+Received: from cvg-ubt08.iil.intel.com (HELO [143.185.152.138]) ([143.185.152.138])
+  by orsmga007.jf.intel.com with ESMTP; 08 Dec 2019 05:15:34 -0800
+To:     linux-rt-users <linux-rt-users@vger.kernel.org>
+From:   Vladimir Kondratiev <vladimir.kondratiev@linux.intel.com>
+Subject: How to use PREEMPT_RT with kernel 5.4
+Message-ID: <7f488716-f294-a21c-4588-6753ff9bd0df@linux.intel.com>
+Date:   Sun, 8 Dec 2019 15:15:33 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.2.1
 MIME-Version: 1.0
-Date:   Fri, 06 Dec 2019 21:21:36 -0600
-User-Agent: Evolution 3.30.5 (3.30.5-1.fc29)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
-X-MC-Unique: 2BJJiplTNjCfxNwD1bXWIg-1
-X-Mimecast-Spam-Score: 0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, 2019-12-06 at 20:39 +0100, Daniel Wagner wrote:
-> Hi Scott,
->=20
-> On Fri, Dec 06, 2019 at 12:49:12PM -0600, Scott Wood wrote:
-> > On Fri, 2019-12-06 at 15:21 +0100, Daniel Wagner wrote:
-> > > In case the kernel configuration is UP is, the migrate_disable member
-> > > in task_struct is missing.
-> > >=20
-> > > linux/lib/smp_processor_id.c: In function =E2=80=98check_preemption_d=
-isabled=E2=80=99:
-> > > linux/lib/smp_processor_id.c:26:13: error: =E2=80=98struct task_struc=
-t=E2=80=99 has no
-> > > member named =E2=80=98migrate_disable=E2=80=99
-> > >     26 |  if (current->migrate_disable)
-> > >        |             ^~
-> > >=20
-> > > Fixes: 425c5b38779a ("sched: Lazy migrate_disable processing")
-> > > Cc: Scott Wood <swood@redhat.com>
-> > > Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> > > Signed-off-by: Daniel Wagner <dwagner@suse.de>
-> > > ---
-> > >  lib/smp_processor_id.c | 2 ++
-> > >  1 file changed, 2 insertions(+)
-> > >=20
-> > > diff --git a/lib/smp_processor_id.c b/lib/smp_processor_id.c
-> > > index 5f2618d346c4..a914f73e3652 100644
-> > > --- a/lib/smp_processor_id.c
-> > > +++ b/lib/smp_processor_id.c
-> > > @@ -23,8 +23,10 @@ unsigned int check_preemption_disabled(const char
-> > > *what1, const char *what2)
-> > >  =09 * Kernel threads bound to a single CPU can safely use
-> > >  =09 * smp_processor_id():
-> > >  =09 */
-> > > +#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
-> > >  =09if (current->migrate_disable)
-> > >  =09=09goto out;
-> > > +#endif
-> >=20
-> > Won't this give false positives on UP with CONFIG_PREEMPT_RT_BASE and
-> > CONFIG_DEBUG_PREEMPT? If we have CONFIG_SCHED_DEBUG then we can still
-> > check
-> > migrate_disable.
->=20
-> Ohhh, I see what you mean. I didn't realize that migrate_disable is
-> also available with CONFIG_SCHED_DEBUG. So the ifdef should be
-> something like:
->=20
-> #if defined(CONFIG_PREEMP_RT_BASE) && \
->     (defined(CONFIG_SMP) || \
->       (!defined(CONFIG_SMP) && defined(CONFIG_SCHED_DEBUG)))
+Hi,
 
-That would still leave the issue with false positives if you have
-CONFIG_DEBUG_PREEMPT but not CONFIG_SCHED_DEBUG (which should be the only
-config currently experiencing build problems).
+I need to build RT enabled kernel.
 
--Scott
+With kernels up to and including 5.2, there was fairly easy procedure
+for building RT enabled kernel - apply patch, then RT features are
+immediately available in "make xxxconfig".
 
+Now, with 5.4. CONFIG_PREEMPT_RT is merged, but it depends_on 
+ARCH_SUPPORTS_RT that, in turn, does not set for any architecture.
 
+How should I proceed from here? Am I supposed to just set 
+ARCH_SUPPORTS_RT for my architecture? Do I need any other patches to 
+start? If yes, where to get it? I see not all patches in the 5.2 bundle 
+are merged mainline.
+
+Thanks, Vladimir
