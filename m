@@ -2,116 +2,123 @@ Return-Path: <SRS0=kQBB=2D=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.7 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.7 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5941EC43603
-	for <linux-rt-users@archiver.kernel.org>; Fri, 13 Dec 2019 09:08:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B3F16C43603
+	for <linux-rt-users@archiver.kernel.org>; Fri, 13 Dec 2019 09:19:20 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 1A9C6206D8
-	for <linux-rt-users@archiver.kernel.org>; Fri, 13 Dec 2019 09:08:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 80B002465A
+	for <linux-rt-users@archiver.kernel.org>; Fri, 13 Dec 2019 09:19:20 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=unikie-com.20150623.gappssmtp.com header.i=@unikie-com.20150623.gappssmtp.com header.b="dINLbjLq"
+	dkim=pass (2048-bit key) header.d=unikie-com.20150623.gappssmtp.com header.i=@unikie-com.20150623.gappssmtp.com header.b="OLnTDxqo"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1725928AbfLMJIr (ORCPT
+        id S1725906AbfLMJTU (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 13 Dec 2019 04:08:47 -0500
-Received: from mail-oi1-f195.google.com ([209.85.167.195]:42386 "EHLO
-        mail-oi1-f195.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725793AbfLMJIr (ORCPT
+        Fri, 13 Dec 2019 04:19:20 -0500
+Received: from mail-lf1-f65.google.com ([209.85.167.65]:35887 "EHLO
+        mail-lf1-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725747AbfLMJTU (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 13 Dec 2019 04:08:47 -0500
-Received: by mail-oi1-f195.google.com with SMTP id j22so663489oij.9
-        for <linux-rt-users@vger.kernel.org>; Fri, 13 Dec 2019 01:08:47 -0800 (PST)
+        Fri, 13 Dec 2019 04:19:20 -0500
+Received: by mail-lf1-f65.google.com with SMTP id n12so1431307lfe.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 13 Dec 2019 01:19:18 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=unikie-com.20150623.gappssmtp.com; s=20150623;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=w9a3SyeXscC+/eNp40AdJwoNa+fEoNsjHvpKHZ3wvcU=;
-        b=dINLbjLqMc8M6k2dGSl9r9kATp2HLc2Dktm1tOAYNBtYnnQeP4eJE2wCFsfigp6iDL
-         tT+ygL3uJDqIajcSs30zMsE4c0Vd5ZtUTQCOxdaI+rmu4YiON7W2csFs9NnN67VFhQRS
-         GvKVaOZSOKrdQWkSIc4WQLDWoYgj0CTVd1RcuOUkgol4e0XqyAokrLwCchTc4ODIdFyT
-         E9LdJ+baJqYjxWDFiIIrHirmxw+cygdbQZXcDolJFmeh2p98u1MP+7WGNhiz6CIZNBhU
-         XRhC9rIXScRcUDjs8t7FXSIMz/mHcrHKQcnzJFLttdr9YTksdLSb87dB11uKDBHCprny
-         AaTg==
+        h=from:to:cc:subject:date:message-id:in-reply-to:references;
+        bh=pGSD3gEjCG5lGw2yJOMoeU/fUrecjnPHPGNLWvh4sxs=;
+        b=OLnTDxqo9rh27oZJgF2NL/U6/gMYF7hOoaTzCss/thLDES4m/GzDsSJLevfkurUDWn
+         OnhuV2m7IIsuRMSKwlKXSu/yMQtz4jMUlGituOf13wgl7fns12TZLSb5dD/GpoqLOM+j
+         4wdMZPFETrLHITygnskr891N9sEaWcKWvlasItNWJTsJckXxU/ZHFLY7CxlvuVTEZ4bq
+         ifoxp8rfcYGoqqCjo9uM1ZHRYiY4lsqvkCLj1TfBDbRcrezaVgbzi20aSMPXn45e4i/k
+         w6TN9BACFXlY854wN/mVyM5+sgB4c4/yTVAWezIBoxc68ZKRJV3cS38yhseKAIKwocT5
+         Kl9A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=w9a3SyeXscC+/eNp40AdJwoNa+fEoNsjHvpKHZ3wvcU=;
-        b=crFdjT/ms347tOv/afQZ2719RQpwPwR+kN/Aq4BOQXjH6INDpk3hKITigGDn5T08M2
-         Tm63PJCCkRTrTZlYu+8/Dr5H4VVFI6Dvk3OZ08MOB5l4kQVZBUztGX6L3m2z2AT/oyN/
-         IkEpZs6YLDVp1z6IuwR+LQ6dvOcFsgDFO8WHhy7iogTXfQUPisKh3R9uQyvKt6CrIfj6
-         ZHHWmYRwg22E58kX/WInf2pPxFKrDeCeZIoMIwjikIIjCfOApwq4GCj2nLNOzSs4qb43
-         TxdwlUxfJehQc88tQXpMU5lOHzC4e2CNbVfHFdCnA7xjHqI9HBYW8BM0ZQhwJpi2l+J4
-         4RyQ==
-X-Gm-Message-State: APjAAAXlnOrKK45SrvSZCw/OHXqypIvDYoldg/yjgYvClWlGth1Kosdx
-        nte/e0wbyk1GS/aDaAiaMMk9oyBQFjqpW9dF3E3jZw==
-X-Google-Smtp-Source: APXvYqx5Sm8UxMNxDsk6Stg/SAQGa1o96E6tw7QlvRFXcbZNQiAudXOQgUCGmLunrNNGZtrtJmfotfBep0QbNZ0fKQA=
-X-Received: by 2002:aca:4ad1:: with SMTP id x200mr6307758oia.104.1576228126543;
- Fri, 13 Dec 2019 01:08:46 -0800 (PST)
-MIME-Version: 1.0
-References: <CAJz2qXnHnw7Z9ftb6Oha5_0-R4YfUL+FhVZPNX1KKHyUkP6KNA@mail.gmail.com>
- <20191212171230.ygveclhr5xqurys7@linutronix.de>
-In-Reply-To: <20191212171230.ygveclhr5xqurys7@linutronix.de>
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references;
+        bh=pGSD3gEjCG5lGw2yJOMoeU/fUrecjnPHPGNLWvh4sxs=;
+        b=KFc4UOldc/EZG7X4aRVIl+lpKB4DzWSWh/jMkIH9J3Y5bicMCHM8ala/oQ3YohV6Nr
+         yU54jIoG0FyQFLt/W6Cx9hDdBMs+tjWfyZqTxd0JltBrSUAX5ytkEw0wYy6Rco2/arhX
+         WkSN179NYb1yOqec4bkSX7hFb3WwLmEGZ7qKC3cW7/mG5AMlmIGUMX3n3P57xhXh3PEM
+         E5xP1MYlM/oR3Gb5/KvTlddQ4TfoudKGGf9qwjWeph592jAmRTrJiAIUp5t9EHEU3lh5
+         YMCK9ZKUj44BxaW9Glp9OXy41MN0i73xXVCW6t6FlRNtbsOeLyLLaIwhG/SEWePkU9HD
+         pwsQ==
+X-Gm-Message-State: APjAAAVJPJss60grB4ARTpNuaV5F717+17KgUfL8WeqcDKf6hK8z3NfO
+        Bo/R1iGhfnemiI6n1cQnBXRr1apaDIyfRA==
+X-Google-Smtp-Source: APXvYqytZW+EDkHow2KaQOekkeP4h+2RwCm3TL+OQzdSiqulV1n69A3qYANinkE/Qe0tm309I+o5lg==
+X-Received: by 2002:a19:7015:: with SMTP id h21mr8044786lfc.68.1576228757479;
+        Fri, 13 Dec 2019 01:19:17 -0800 (PST)
+Received: from localhost.localdomain ([109.204.235.119])
+        by smtp.googlemail.com with ESMTPSA id 207sm5065587ljj.72.2019.12.13.01.19.16
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 13 Dec 2019 01:19:16 -0800 (PST)
 From:   John Mathew <john.mathew@unikie.com>
-Date:   Fri, 13 Dec 2019 11:08:35 +0200
-Message-ID: <CAJz2qXnPquUZSeO9SWSmvLKcdhnT96KnD66F-oatdnotYkxS+A@mail.gmail.com>
-Subject: Re: complete_all() with x waiters in swake_up_all_locked
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     linux-rt-users@vger.kernel.org, lukas.bulwahn@gmail.com
-Content-Type: text/plain; charset="UTF-8"
+To:     linux-rt-users@vger.kernel.org
+Cc:     lukas.bulwahn@gmail.com, John Mathew <john.mathew@unikie.com>
+Subject: [PATCH] Remove redundant wait for completion
+Date:   Fri, 13 Dec 2019 11:18:43 +0200
+Message-Id: <20191213091843.8365-1-john.mathew@unikie.com>
+X-Mailer: git-send-email 2.17.1
+In-Reply-To: <CAJz2qXnPquUZSeO9SWSmvLKcdhnT96KnD66F-oatdnotYkxS+A () mail ! gmail ! com>
+References: <CAJz2qXnPquUZSeO9SWSmvLKcdhnT96KnD66F-oatdnotYkxS+A () mail ! gmail ! com>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Dec 12, 2019 at 7:12 PM Sebastian Andrzej Siewior
-<bigeasy@linutronix.de> wrote:
->
-> On 2019-12-11 09:17:49 [+0200], John Mathew wrote:
-> > Hi,
-> Hi,
->
-> > We are seeing the waring still appearing in the v5.0.3-rt1 tag of the
-> > rt linux kernel.
->
-> I didn't managed to reproduce it at the time. Now you say it works with
-> 5.0-RT. I will try to give it a spin with the latest RT sometime next
-> week.
->
-> >
-> > Has there been any further investigation in to this warning following
-> > the previous discussion?
->
-> Thanks for report. I didn't manage to reproduce it so no. The actual
-> problem is that we are trying to figure out what a sane limit for
-> complete_all() might be. Most users of complete_all() have one two
-> waiters. Based on that report your max was 8 and that occurred a few
-> times.
+Wait and completion was bieng done to
+uninitialized member variable of casted
+pointer. cryptomgr_probe completes all
+the waits when it completes itself. This
+causes the number of wakes to exceed the
+limit of 2.
 
-I was able to reproduce the warning on v5.2.21-rt14 which is the
-latest tag on the rt-devel branch.
-Here is my analysis.
-What I see is that in crypto/algboss.c there is a probe being
-scheduled when a notification arrives.
-The probe will run a thread: cryptomgr_probe and wait for its completion.
-The issue arises because a similar module is also issues a wait for
-completion on the exactly same completion object (larval->completion).
-The similar module is:  crypto_larval_wait in linux-rt-devel/crypto/api.c
-It is casting a crypto_larval struct pointer from a crypto_alg struct
-pointer which doesn't seem to have/init a completion object.
-So it is actually the cryptomgr_probe thread that actually completes
-both its own and the crypto_larval_wait waits and so the number of
-completions exceeds the limit of 2.
+This prevents swake_up_all_locked warnings.
 
-This looks like an error to me.
-So I created patch in the following email.
-I don't think the issue is with the limit, rather a wrong usage of the
-completion object.
+Signed-off-by: John Mathew <john.mathew@unikie.com>
+---
+ crypto/api.c | 13 +------------
+ 1 file changed, 1 insertion(+), 12 deletions(-)
 
->
-> > -John
->
-> Sebastian
+diff --git a/crypto/api.c b/crypto/api.c
+index d8ba54142620..b89c44c11c54 100644
+--- a/crypto/api.c
++++ b/crypto/api.c
+@@ -153,12 +153,9 @@ static struct crypto_alg *crypto_larval_add(const char *name, u32 type,
+ 
+ void crypto_larval_kill(struct crypto_alg *alg)
+ {
+-	struct crypto_larval *larval = (void *)alg;
+-
+ 	down_write(&crypto_alg_sem);
+ 	list_del(&alg->cra_list);
+ 	up_write(&crypto_alg_sem);
+-	complete_all(&larval->completion);
+ 	crypto_alg_put(alg);
+ }
+ EXPORT_SYMBOL_GPL(crypto_larval_kill);
+@@ -166,17 +163,9 @@ EXPORT_SYMBOL_GPL(crypto_larval_kill);
+ static struct crypto_alg *crypto_larval_wait(struct crypto_alg *alg)
+ {
+ 	struct crypto_larval *larval = (void *)alg;
+-	long timeout;
+-
+-	timeout = wait_for_completion_killable_timeout(
+-		&larval->completion, 60 * HZ);
+ 
+ 	alg = larval->adult;
+-	if (timeout < 0)
+-		alg = ERR_PTR(-EINTR);
+-	else if (!timeout)
+-		alg = ERR_PTR(-ETIMEDOUT);
+-	else if (!alg)
++	if (!alg)
+ 		alg = ERR_PTR(-ENOENT);
+ 	else if (crypto_is_test_larval(larval) &&
+ 		 !(alg->cra_flags & CRYPTO_ALG_TESTED))
+-- 
+2.17.1
+
