@@ -2,138 +2,88 @@ Return-Path: <SRS0=aCPW=2H=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.4 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-2.1 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EB0E2C43603
-	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Dec 2019 03:35:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D44F6C43603
+	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Dec 2019 04:45:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id B69F6206E6
-	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Dec 2019 03:35:27 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A93B7206B7
+	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Dec 2019 04:45:56 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cg/Bv0Ac"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="o8W1XlKk"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726767AbfLQDf1 (ORCPT
+        id S1727417AbfLQEpx (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 16 Dec 2019 22:35:27 -0500
-Received: from us-smtp-2.mimecast.com ([205.139.110.61]:24290 "EHLO
-        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1726526AbfLQDf0 (ORCPT
+        Mon, 16 Dec 2019 23:45:53 -0500
+Received: from mail-pl1-f181.google.com ([209.85.214.181]:35821 "EHLO
+        mail-pl1-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725836AbfLQEpx (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 16 Dec 2019 22:35:26 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1576553725;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=mmMjkohQcr4zZA7rYlo+cdoxbamsa0pcjMglzLFiziY=;
-        b=cg/Bv0Ac/LnM1vrj6oJMOSt9PLSrFnVS2zFXWL99vMnRpMZCZEQyU9cOzRLDkgGwDOnvTE
-        y7SWZ12u+WmQxJ60c7jhonsGAvJF+0RmYqFxQInFwU/PSn05hNEYNoxmgNidUixBTD3l8p
-        wB2LWCVjd0DuzGx7/WMF2RFkPaGoqbI=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-68-ofNXmEqlNFG1vQR4gwGkRA-1; Mon, 16 Dec 2019 22:35:22 -0500
-X-MC-Unique: ofNXmEqlNFG1vQR4gwGkRA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 100BADBA3;
-        Tue, 17 Dec 2019 03:35:21 +0000 (UTC)
-Received: from amt.cnet (ovpn-112-4.gru2.redhat.com [10.97.112.4])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id C964710018FF;
-        Tue, 17 Dec 2019 03:35:20 +0000 (UTC)
-Received: from amt.cnet (localhost [127.0.0.1])
-        by amt.cnet (Postfix) with ESMTP id D0AB810266B;
-        Mon, 16 Dec 2019 19:14:45 -0200 (BRST)
-Received: (from marcelo@localhost)
-        by amt.cnet (8.14.7/8.14.7/Submit) id xBGLEgqV003513;
-        Mon, 16 Dec 2019 19:14:42 -0200
-Date:   Mon, 16 Dec 2019 19:14:41 -0200
-From:   Marcelo Tosatti <mtosatti@redhat.com>
+        Mon, 16 Dec 2019 23:45:53 -0500
+Received: by mail-pl1-f181.google.com with SMTP id g6so2879303plt.2;
+        Mon, 16 Dec 2019 20:45:53 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=date:from:to:cc:subject:message-id:references:mime-version
+         :content-disposition:in-reply-to:user-agent;
+        bh=9KPJpeAb0RjAXPPfNOtoDwhhw3DIxIuTplIClbJ1Lgo=;
+        b=o8W1XlKk4iYzwerNhod61tyTizzkxHZy9faPyrnjBHL86pDG0k3AmPCm4rzovw8Gmh
+         ZYxBd386Ryrw2k3h2YrC8GR31qlxGEjlTUU5roI2+WmSqWOWLL4QoJeRxwGxMp7a0G+/
+         1yaXkP2f13Q0hQ4c2tCq51fDbFjINo5PloNDVs2eNjynvaPYd4xe9Ot7ks6p8TZwbXcJ
+         uxdAnZB1HzBYILP1xr+SgnLEmiu34Ch0WsokV5+a8uhZiK4tKYXyZPniaXGlUBG7+oVg
+         /A01e/zpT0mwAaEcYBFGK6VjVq2s+nJ6QGMycZfbNnXwEjRoRCQp5oTQ6EMnVMyX6oik
+         zSsA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:in-reply-to:user-agent;
+        bh=9KPJpeAb0RjAXPPfNOtoDwhhw3DIxIuTplIClbJ1Lgo=;
+        b=DTt5nAk2hIqbbl1GpwtX0rfvQJSXYNmH8YIlxYA+wYS418UEPSceKByqPL002ZRoD/
+         xRsa+qceeCtPb2KOtHDMNg31TjOgui//jOtInw6J/5x1oNwpVkcGVqr1mb/u9zTaD6JJ
+         gft9wDwhoBkcRemd+nlqq1xeCv3TeA5rTAPUCNLXzn5wD8XiVCy7A9PU20/W2J3COJ6v
+         pbPQjyMKqlPQcGpxlSLDvssh5p0vzz+GH36V3gqHuiARP/orspuL7iBmjq/4LCMCbKmo
+         oSYW+NtgsFgt4LLIjVLnl1xoAyVXCESJcT4l0/Iu1feAAUFrDC9WmtGeDeKATskTJrKk
+         raKw==
+X-Gm-Message-State: APjAAAXrk1N4Mx5gV/PzOEwQVP5mYeVj4SYisiZjoF5Kf+tMPNPpo4mF
+        lYaumj+LzX9X1kEl9OVNwrjNQVHw
+X-Google-Smtp-Source: APXvYqwjv+rG89lnfzecThTBffSmvDQCK+Lhix3ZbirGMxUbOD2ASmp7bX5kZJJvApBPLgkUVdsLTg==
+X-Received: by 2002:a17:90a:974a:: with SMTP id i10mr3870722pjw.0.1576557952746;
+        Mon, 16 Dec 2019 20:45:52 -0800 (PST)
+Received: from localhost (c-73-241-114-122.hsd1.ca.comcast.net. [73.241.114.122])
+        by smtp.gmail.com with ESMTPSA id f23sm24121540pgj.76.2019.12.16.20.45.51
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 16 Dec 2019 20:45:51 -0800 (PST)
+Date:   Mon, 16 Dec 2019 20:45:49 -0800
+From:   Richard Cochran <richardcochran@gmail.com>
 To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     John Kacur <jkacur@redhat.com>,
-        Uwe =?iso-8859-1?Q?Kleine-K=F6nig?= <ukleinek@debian.org>,
-        Clark Williams <williams@redhat.com>,
-        Linux RT Users <linux-rt-users@vger.kernel.org>
-Subject: Re: [PATCH rt-tests] queuelat: use ARM implementation of gettick
- also for all !x86 archs
-Message-ID: <20191216211440.GB778@amt.cnet>
-References: <20191208210625.5999-1-ukleinek@debian.org>
- <20191212174604.xa6p46zhhii7qrhw@linutronix.de>
- <alpine.LFD.2.21.1912131550270.7507@planxty>
- <20191213230256.GA20494@amt.cnet>
- <20191216153449.sfxptmlyfthoianp@linutronix.de>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [ANNOUNCE] v5.2.21-rt15
+Message-ID: <20191217044549.GB1363@localhost>
+References: <20191216173416.2dcmfis4xza2dqf5@linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20191216153449.sfxptmlyfthoianp@linutronix.de>
-User-Agent: Mutt/1.5.21 (2010-09-15)
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
-Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <20191216173416.2dcmfis4xza2dqf5@linutronix.de>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Mon, Dec 16, 2019 at 04:34:49PM +0100, Sebastian Andrzej Siewior wrote=
-:
-> On 2019-12-13 21:02:56 [-0200], Marcelo Tosatti wrote:
-> > > > That freq. script reports here:
-> > > > |1555.184 1566.269 1566.498 1560.055 1593.149 1568.185 1583.807 1=
-599.096 2574.546 2572.408 2573.849 2583.862 2619.402 1825.680 1847.264 18=
-70.318 2552.102 1570.552 1589.650 1595.813 1590.253 1573.834 1589.438 159=
-9.439 1770.963 1786.370 1814.918 1811.936 1828.277 1850.905 1861.976 1792=
-.809
-> > > >=20
-> > > > I guess I pick one=E2=80=A6
-> > > >=20
-> > > > Could someone please figure out the actual difference of clock_ge=
-ttime()
-> > > > vs rdtsc() so we know how important it is. Based on its current
-> > > > implementation, if memmove() takes >1sec then it ends up undetect=
-ed
-> > > > because only the ns of the timestamp are considered for.
-> >=20
-> > /* Program parameters:
-> >  * max_queue_len: maximum latency allowed, in nanoseconds (int).
-> >  * cycles_per_packet: number of cycles to process one packet (int).
-> >  * mpps(million-packet-per-sec): million packets per second (float).
-> >  * tsc_freq_mhz: TSC frequency in MHz, as measured by TSC PIT
-> >  * calibration=20
-> >  * (search for "Detected XXX MHz processor" in dmesg, and use the
-> >  * integer part).
-> >  */
-> >=20
-> > So you have to pass it "processor frequency" (you can change the name=
-s,=20
-> > its TSC but thats x86 specific). The script grabs the processor
-> > frequency (so you have to adjust that the script to ARM).
-> >=20
-> > And thats it. Please replace tsc_mhz -> processor_freq.
->=20
-> So the script reports the freq. from 1555.184 Mhz to 2574.546 Mhz.
-> And I doubt the numbers remain steady on today's x86 even with
-> gov=3Dperformance.
-> However, I asked for the frequency to be used on !x86 given the code we
-> have. It was fixed in hurry and you would have to use 1000 so that the
-> math keeps working.
-> Then I asked how much benefit of this complicated TSC calculation vs
-> clock_gettime() has.
-> I tried to use it myself but after 30secs I saw no output, it just ate
-> 100% and it seemed to do nothing. So I gave up.
+On Mon, Dec 16, 2019 at 06:34:16PM +0100, Sebastian Andrzej Siewior wrote:
+> 
+>   - Since the migrate_disable() rework, with heave changing of the
+>     task's affinity mask the kernel could issue a warning in
+>     migrate_enable() and crash later.
 
-Then the simulated queue size was not exceeded, accordingly to
-the parameters you specified:
+What is "heave changing?"
 
-* max_queue_len: maximum latency allowed, in nanoseconds (int).
-* cycles_per_packet: number of cycles to process one packet (int).
-* mpps(million-packet-per-sec): million packets per second (float).
+Just Curious,
 
-If you increase mpps or increase cycles_per_packet (or both),=20
-or decrease max_queue_len, it should fail.
-
-Do you see that?
-
+Richard
