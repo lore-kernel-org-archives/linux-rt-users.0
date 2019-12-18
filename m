@@ -6,31 +6,31 @@ X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D2522C2D0BF
-	for <linux-rt-users@archiver.kernel.org>; Wed, 18 Dec 2019 16:57:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C5D6BC43603
+	for <linux-rt-users@archiver.kernel.org>; Wed, 18 Dec 2019 17:42:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id B088F218AC
-	for <linux-rt-users@archiver.kernel.org>; Wed, 18 Dec 2019 16:57:00 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A93652082E
+	for <linux-rt-users@archiver.kernel.org>; Wed, 18 Dec 2019 17:42:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727648AbfLRQ45 (ORCPT
+        id S1727121AbfLRRmC (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 18 Dec 2019 11:56:57 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:58214 "EHLO
+        Wed, 18 Dec 2019 12:42:02 -0500
+Received: from Galois.linutronix.de ([193.142.43.55]:58321 "EHLO
         Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727594AbfLRQ45 (ORCPT
+        with ESMTP id S1726939AbfLRRmC (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 18 Dec 2019 11:56:57 -0500
+        Wed, 18 Dec 2019 12:42:02 -0500
 Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
         (envelope-from <bigeasy@linutronix.de>)
-        id 1ihcd3-0006oB-7y; Wed, 18 Dec 2019 17:56:53 +0100
-Date:   Wed, 18 Dec 2019 17:56:53 +0100
+        id 1ihdKh-0007b9-K9; Wed, 18 Dec 2019 18:41:59 +0100
+Date:   Wed, 18 Dec 2019 18:41:59 +0100
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To:     LKML <linux-kernel@vger.kernel.org>
 Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>
-Subject: [PATCH RT] userfaultfd: Use a seqlock instead of seqcount
-Message-ID: <20191218165653.eu4il2xxmc2rpllq@linutronix.de>
+Subject: [PATCH RT] Revert "cpumask: Disable CONFIG_CPUMASK_OFFSTACK for RT"
+Message-ID: <20191218174159.ndcvzgqxavpcb37c@linutronix.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
@@ -39,73 +39,44 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On RT write_seqcount_begin() disables preemption which leads to warning
-in add_wait_queue() while the spinlock_t is acquired.
-The waitqueue can't be converted to swait_queue because
-userfaultfd_wake_function() is used as a custom wake function.
+The one x86 case we had was fixed in commit
+	832df3d47badc ("x86/smp: Enhance native_send_call_func_ipi()")
 
-Use seqlock instead seqcount to avoid the preempt_disable() section
-during add_wait_queue().
+I didn't find another in-IRQ user. Most callers use GFP_KERNEL and the
+ATOMIC users are allocating the mask while holding a spinlock_t.
+
+Allow to use CPUMASK_OFFSTACK becauase it no longer is a problem on RT.
 
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- fs/userfaultfd.c | 12 ++++++------
- 1 file changed, 6 insertions(+), 6 deletions(-)
+ arch/x86/Kconfig | 2 +-
+ lib/Kconfig      | 1 -
+ 2 files changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
-index f9fd18670e22d..92871bee05b39 100644
---- a/fs/userfaultfd.c
-+++ b/fs/userfaultfd.c
-@@ -61,7 +61,7 @@ struct userfaultfd_ctx {
- 	/* waitqueue head for events */
- 	wait_queue_head_t event_wqh;
- 	/* a refile sequence protected by fault_pending_wqh lock */
--	struct seqcount refile_seq;
-+	seqlock_t refile_seq;
- 	/* pseudo fd refcounting */
- 	refcount_t refcount;
- 	/* userfaultfd syscall flags */
-@@ -1063,7 +1063,7 @@ static ssize_t userfaultfd_ctx_read(struct userfaultfd_ctx *ctx, int no_wait,
- 			 * waitqueue could become empty if this is the
- 			 * only userfault.
- 			 */
--			write_seqcount_begin(&ctx->refile_seq);
-+			write_seqlock(&ctx->refile_seq);
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 7f359aacf8148..4b77b3273051e 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -967,7 +967,7 @@ config CALGARY_IOMMU_ENABLED_BY_DEFAULT
+ config MAXSMP
+ 	bool "Enable Maximum number of SMP Processors and NUMA Nodes"
+ 	depends on X86_64 && SMP && DEBUG_KERNEL
+-	select CPUMASK_OFFSTACK if !PREEMPT_RT
++	select CPUMASK_OFFSTACK
+ 	---help---
+ 	  Enable maximum number of CPUS and NUMA Nodes for this architecture.
+ 	  If unsure, say N.
+diff --git a/lib/Kconfig b/lib/Kconfig
+index 298b41298e487..3321d04dfa5a5 100644
+--- a/lib/Kconfig
++++ b/lib/Kconfig
+@@ -468,7 +468,6 @@ config CHECK_SIGNATURE
  
- 			/*
- 			 * The fault_pending_wqh.lock prevents the uwq
-@@ -1089,7 +1089,7 @@ static ssize_t userfaultfd_ctx_read(struct userfaultfd_ctx *ctx, int no_wait,
- 			list_del(&uwq->wq.entry);
- 			add_wait_queue(&ctx->fault_wqh, &uwq->wq);
- 
--			write_seqcount_end(&ctx->refile_seq);
-+			write_sequnlock(&ctx->refile_seq);
- 
- 			/* careful to always initialize msg if ret == 0 */
- 			*msg = uwq->msg;
-@@ -1262,11 +1262,11 @@ static __always_inline void wake_userfault(struct userfaultfd_ctx *ctx,
- 	 * sure we've userfaults to wake.
- 	 */
- 	do {
--		seq = read_seqcount_begin(&ctx->refile_seq);
-+		seq = read_seqbegin(&ctx->refile_seq);
- 		need_wakeup = waitqueue_active(&ctx->fault_pending_wqh) ||
- 			waitqueue_active(&ctx->fault_wqh);
- 		cond_resched();
--	} while (read_seqcount_retry(&ctx->refile_seq, seq));
-+	} while (read_seqretry(&ctx->refile_seq, seq));
- 	if (need_wakeup)
- 		__wake_userfault(ctx, range);
- }
-@@ -1935,7 +1935,7 @@ static void init_once_userfaultfd_ctx(void *mem)
- 	init_waitqueue_head(&ctx->fault_wqh);
- 	init_waitqueue_head(&ctx->event_wqh);
- 	init_waitqueue_head(&ctx->fd_wqh);
--	seqcount_init(&ctx->refile_seq);
-+	seqlock_init(&ctx->refile_seq);
- }
- 
- SYSCALL_DEFINE1(userfaultfd, int, flags)
+ config CPUMASK_OFFSTACK
+ 	bool "Force CPU masks off stack" if DEBUG_PER_CPU_MAPS
+-	depends on !PREEMPT_RT
+ 	help
+ 	  Use dynamic allocation for cpumask_var_t, instead of putting
+ 	  them on the stack.  This is a bit more expensive, but avoids
 -- 
 2.24.0
-
