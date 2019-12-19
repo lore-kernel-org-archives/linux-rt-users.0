@@ -1,82 +1,189 @@
-Return-Path: <SRS0=Zbf1=2I=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=MKa8=2J=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.4 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C5D6BC43603
-	for <linux-rt-users@archiver.kernel.org>; Wed, 18 Dec 2019 17:42:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 20A52C2D0D4
+	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Dec 2019 10:35:14 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id A93652082E
-	for <linux-rt-users@archiver.kernel.org>; Wed, 18 Dec 2019 17:42:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E5812222C2
+	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Dec 2019 10:35:13 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="hmzieCX3"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727121AbfLRRmC (ORCPT
+        id S1726778AbfLSKfK (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 18 Dec 2019 12:42:02 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:58321 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726939AbfLRRmC (ORCPT
+        Thu, 19 Dec 2019 05:35:10 -0500
+Received: from us-smtp-2.mimecast.com ([205.139.110.61]:58683 "EHLO
+        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1726656AbfLSKfK (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 18 Dec 2019 12:42:02 -0500
-Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
-        (envelope-from <bigeasy@linutronix.de>)
-        id 1ihdKh-0007b9-K9; Wed, 18 Dec 2019 18:41:59 +0100
-Date:   Wed, 18 Dec 2019 18:41:59 +0100
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     LKML <linux-kernel@vger.kernel.org>
-Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>
-Subject: [PATCH RT] Revert "cpumask: Disable CONFIG_CPUMASK_OFFSTACK for RT"
-Message-ID: <20191218174159.ndcvzgqxavpcb37c@linutronix.de>
+        Thu, 19 Dec 2019 05:35:10 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1576751708;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=grytLlF1DJ8ixVXUMMRXrV+hvL2jNyAGRxO10pwO3Kk=;
+        b=hmzieCX3AmU79KHeblEB7o0cNfKizFm8NtBMXNuENjKts2biAm6oSASpRyUsX/HpaMcgFI
+        70iSvc3ujHihXW8/GNUdCHv0U1Fidr1Q5rFwZYx5EpxDQBFpK/ww8gpvT0dJQsi08p3s5U
+        +Hfb4JXOWU1or41QzaYNZksunEYSDlc=
+Received: from mail-wm1-f71.google.com (mail-wm1-f71.google.com
+ [209.85.128.71]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-308--V8RszoZOEGqY-AjL61i0A-1; Thu, 19 Dec 2019 05:35:07 -0500
+X-MC-Unique: -V8RszoZOEGqY-AjL61i0A-1
+Received: by mail-wm1-f71.google.com with SMTP id f25so1211031wmb.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 19 Dec 2019 02:35:06 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:mime-version
+         :content-disposition:user-agent;
+        bh=grytLlF1DJ8ixVXUMMRXrV+hvL2jNyAGRxO10pwO3Kk=;
+        b=ShVx8vtcEfnDwZRASys8XM6nz+iwBZ5q3W/WAwFYMu7siWJbvOhl0jsUMEsO2V0fqo
+         krcb9XeO+ZQugIKDSa87d+UU1VpF6rSwiEWSzARxkoo29RQIYZlATLlhK2IB6Q+xCAQv
+         9IzbEFPuCdhRYEwj+BsGC4fwR+UDuboIZVOlc3cxgqRlz8Kn9IAPsjwlVgDZdbl8elQG
+         h1YPVeu8B0Xm7+N3o31+wW2l0w+O0T8JX1bltLAriBxxOA86Y/2xelhod6tb48ubJ8BP
+         Cv0TCcDFUPC5ZnXh31wmW1nuFnre7zH9MFbYHVeBKWRN25FNFI4j9wG62+1pUm2MXeCj
+         9T9Q==
+X-Gm-Message-State: APjAAAXUOI7iTWRZLOCklimVCVvGF5i0QaSSi1oxQoA3pH2zYkbx5epp
+        QQDPUn+WL6P27HKtV79pYaxrSmikyeL71XEETSBCaQL8LjBoLOfsSmDq474fNfLvK+zUB3guqDA
+        ce5/ywNE1CEGD2W+DC8jxYyn7/tQ=
+X-Received: by 2002:a5d:690e:: with SMTP id t14mr8532964wru.65.1576751704390;
+        Thu, 19 Dec 2019 02:35:04 -0800 (PST)
+X-Google-Smtp-Source: APXvYqyRIN6jrjB2zwl/YVEf01195wmi63mQXP7jnb1nOJ++QqxEfgXl6pGOygsE+eeyF7zb41K3zQ==
+X-Received: by 2002:a5d:690e:: with SMTP id t14mr8532922wru.65.1576751703925;
+        Thu, 19 Dec 2019 02:35:03 -0800 (PST)
+Received: from localhost.localdomain ([151.29.30.195])
+        by smtp.gmail.com with ESMTPSA id o7sm5513625wmh.11.2019.12.19.02.35.02
+        (version=TLS1_2 cipher=ECDHE-RSA-CHACHA20-POLY1305 bits=256/256);
+        Thu, 19 Dec 2019 02:35:03 -0800 (PST)
+Date:   Thu, 19 Dec 2019 11:35:00 +0100
+From:   Juri Lelli <juri.lelli@redhat.com>
+To:     linux-pm@vger.kernel.org, linux-acpi@vger.kernel.org,
+        linux-pci@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        linux-kernel@vger.kernel.org
+Cc:     Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        Morten Rasmussen <morten.rasmussen@arm.com>,
+        Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>,
+        Sudeep Holla <sudeep.holla@arm.com>,
+        Claudio Scordino <c.scordino@evidence.eu.com>,
+        Luca Abeni <luca.abeni@santannapisa.it>,
+        Tommaso Cucinotta <tommaso.cucinotta@santannapisa.it>,
+        Juri Lelli <juri.lelli@redhat.com>
+Subject: [ANNOUNCE][CFP] Power Management and Scheduling in the Linux Kernel
+ IV edition (OSPM-summit 2020)
+Message-ID: <20191219103500.GC13724@localhost.localdomain>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
+User-Agent: Mutt/1.10.1 (2018-07-13)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The one x86 case we had was fixed in commit
-	832df3d47badc ("x86/smp: Enhance native_send_call_func_ipi()")
+Power Management and Scheduling in the Linux Kernel (OSPM-summit) IV edition
 
-I didn't find another in-IRQ user. Most callers use GFP_KERNEL and the
-ATOMIC users are allocating the mask while holding a spinlock_t.
+May 11-13, 2019
+Scuola Superiore Sant'Anna
+Pisa, Italy
 
-Allow to use CPUMASK_OFFSTACK becauase it no longer is a problem on RT.
-
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- arch/x86/Kconfig | 2 +-
- lib/Kconfig      | 1 -
- 2 files changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 7f359aacf8148..4b77b3273051e 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -967,7 +967,7 @@ config CALGARY_IOMMU_ENABLED_BY_DEFAULT
- config MAXSMP
- 	bool "Enable Maximum number of SMP Processors and NUMA Nodes"
- 	depends on X86_64 && SMP && DEBUG_KERNEL
--	select CPUMASK_OFFSTACK if !PREEMPT_RT
-+	select CPUMASK_OFFSTACK
- 	---help---
- 	  Enable maximum number of CPUS and NUMA Nodes for this architecture.
- 	  If unsure, say N.
-diff --git a/lib/Kconfig b/lib/Kconfig
-index 298b41298e487..3321d04dfa5a5 100644
---- a/lib/Kconfig
-+++ b/lib/Kconfig
-@@ -468,7 +468,6 @@ config CHECK_SIGNATURE
- 
- config CPUMASK_OFFSTACK
- 	bool "Force CPU masks off stack" if DEBUG_PER_CPU_MAPS
--	depends on !PREEMPT_RT
- 	help
- 	  Use dynamic allocation for cpumask_var_t, instead of putting
- 	  them on the stack.  This is a bit more expensive, but avoids
--- 
-2.24.0
+.:: FOCUS
+
+The IV edition of the Power Management and Scheduling in the Linux
+Kernel (OSPM) summit aims at fostering discussions on power management
+and (real-time) scheduling techniques. Summit will be held in Pisa
+(Italy) on May 11-13, 2020.
+
+Although scheduler techniques for reducing energy consumption while
+meeting performance and latency requirements are the prime interest of
+the summit, we welcome anybody interested in having discussions on the
+broader scope of real-time systems, real-time and non-real-time
+scheduling, tooling, debugging and tracing.
+
+Feel free to have a look at what happened previous years:
+
+ I   edition - https://lwn.net/Articles/721573/
+ II  edition - https://lwn.net/Articles/754923/
+ III edition - https://lwn.net/Articles/793281/
+
+.:: FORMAT
+
+The summit is organized to cover three days of discussions and talks.
+
+The list of topics of interest includes (but it is not limited to):
+
+ * Power management techniques
+ * Real-time and non real-time scheduling techniques
+ * Energy consumption and CPU capacity aware scheduling
+ * Real-time virtualization
+ * Mobile/Server power management real-world use cases (successes and
+   failures)
+ * Power management and scheduling tooling (configuration, integration,
+   testing, etc.)
+ * Tracing
+ * Recap/lightning talks
+
+Presentations can cover recently developed technologies, ongoing work
+and new ideas. Please understand that this workshop is not intended for
+presenting sales and marketing pitches.
+
+.:: ATTENDING
+
+Attending the OSPM-summit is free of charge, but registration to the
+event is mandatory. The event can allow a maximum of 50 people (so, be
+sure to register early!). Registrations open on February 24th, 2020.
+
+To register fill in the registration form available at
+https://forms.gle/7LfFY8oNyRxV1wuQ7
+
+While it is not strictly required to submit a topic/presentation (see
+below), registrations with a topic/presentation proposal will take
+precedence.
+
+.:: SUBMIT A TOPIC/PRESENTATION
+
+To submit a topic/presentation add its details to this list:
+https://docs.google.com/spreadsheets/d/1pPU2ybHHoQjqicYLTaNanPz9H5fv6mQTtrzOqwP9uHs/edit?usp=sharing
+
+Or, if you prefer, simply reply (only to me, please :) to this email
+specifying:
+
+- name/surname
+- affiliation
+- short bio
+- email address
+- title
+- abstract
+- 30min or 50min slot
+
+Deadline for submitting topics/presentations is 10th of February 2019.
+Notifications for accepted topics/presentations will be sent out on 24th
+of February 2019.
+
+.:: VENUE
+
+The workshop will take place at ReTiS Lab*, Scuola Superiore Sant'Anna,
+Pisa, Italy. Pisa is a small town, walking distance from the city center
+to the venue is 20 minutes, walking distance from the airport to the
+city center is 30 minutes. More details are available from the summit
+web page: http://retis.sssup.it/ospm-summit/#site
+
+* https://goo.gl/maps/2pPXG2v7Lfp
+
+.:: ORGANIZERS (in alphabetical order)
+
+Luca Abeni (SSSA)
+Tommaso Cucinotta (SSSA)
+Dietmar Eggemann (Arm)
+Sudeep Holla (Arm)
+Juri Lelli (Red Hat)
+Lorenzo Pieralisi (Arm)
+Morten Rasmussen (Arm)
+Claudio Scordino (Evidence SRL)
+
