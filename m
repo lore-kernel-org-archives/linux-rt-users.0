@@ -2,213 +2,97 @@ Return-Path: <SRS0=WSWX=2K=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6318DC2D0C0
-	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Dec 2019 08:41:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C361BC43603
+	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Dec 2019 12:29:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 38A6E20716
-	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Dec 2019 08:41:52 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1576831312;
-	bh=L533QNwMh74aZS7SvQ2sIdrQmds3Wye/rWgJoy5IiyU=;
-	h=Date:From:To:Cc:Subject:In-Reply-To:References:List-ID:From;
-	b=Pc9uHaIMsZXDE6/Qrhuh46jh/eIDxnU0b91ZYgZA+RJQ5G2gy3byNdpxnwra/K/3V
-	 Nhbm37FwSzFo8QbrYi9+PagfxUWlNJ0hMYR1cGK+WODrapzU28f/P3wokE/zLMOCka
-	 uNylEJF2SooHfCcLK5cl9TyhgvANX/Q5cLRAQmwo=
+	by mail.kernel.org (Postfix) with ESMTP id 9EAB72467F
+	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Dec 2019 12:29:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727174AbfLTIls (ORCPT
+        id S1727317AbfLTM3t (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 20 Dec 2019 03:41:48 -0500
-Received: from mail.kernel.org ([198.145.29.99]:52688 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727164AbfLTIls (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 20 Dec 2019 03:41:48 -0500
-Received: from devnote2 (unknown [220.96.9.1])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 91240206EC;
-        Fri, 20 Dec 2019 08:41:45 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1576831307;
-        bh=L533QNwMh74aZS7SvQ2sIdrQmds3Wye/rWgJoy5IiyU=;
-        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
-        b=YPxkxF5jR7HY0LeJOQvPRE2FJN/AksClfApEsiiVuPOakAyNiJ8QOjBB5Z569/oQD
-         nASRWcQt588Xvuz611BZ26ilwRVpcfHiuH9c25LiXCKBLCa1d7SYBCCAedWOnTyl5B
-         0fWjcRC31411XLRVa8tVCbBhZc2u0iiOpbbq7spo=
-Date:   Fri, 20 Dec 2019 17:41:42 +0900
-From:   Masami Hiramatsu <mhiramat@kernel.org>
-To:     Tom Zanussi <zanussi@kernel.org>
-Cc:     rostedt@goodmis.org, artem.bityutskiy@linux.intel.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH 0/7] tracing: Add support for in-kernel synthetic event
- API
-Message-Id: <20191220174142.34b4db9ba8f66e9385826e6b@kernel.org>
-In-Reply-To: <1576772667.2236.17.camel@kernel.org>
-References: <cover.1576679206.git.zanussi@kernel.org>
-        <20191219234511.bb499b3d1590059506db6982@kernel.org>
-        <1576772667.2236.17.camel@kernel.org>
-X-Mailer: Sylpheed 3.5.1 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+        Fri, 20 Dec 2019 07:29:49 -0500
+Received: from pindarots.xs4all.nl ([82.161.210.87]:40048 "EHLO
+        pindarots.xs4all.nl" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727298AbfLTM3t (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 20 Dec 2019 07:29:49 -0500
+Received: from surfplank2.hierzo (localhost.localdomain [127.0.0.1])
+        by pindarots.xs4all.nl (8.15.2/8.14.5) with ESMTPS id xBKCTkMV220749
+        (version=TLSv1.3 cipher=TLS_AES_128_GCM_SHA256 bits=128 verify=NO)
+        for <linux-rt-users@vger.kernel.org>; Fri, 20 Dec 2019 13:29:46 +0100
+From:   Udo van den Heuvel <udovdh@xs4all.nl>
+Subject: 5.4.3-rt1 mutex issue
+To:     RT <linux-rt-users@vger.kernel.org>
+Autocrypt: addr=udovdh@xs4all.nl; prefer-encrypt=mutual; keydata=
+ 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
+ JjyRAfO8kEkwCkTZ6/Mnrxsunx9VNLGDEw==
+Organization: hierzo
+Message-ID: <fd438084-751c-3cb9-6697-d263a730bf91@xs4all.nl>
+Date:   Fri, 20 Dec 2019 13:29:46 +0100
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.3.1
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Tom,
+Hello,
 
-On Thu, 19 Dec 2019 10:24:27 -0600
-Tom Zanussi <zanussi@kernel.org> wrote:
+Just booted into 5.4.3-rt1.
+I noticed that this kernel still shows some mutex-related
+errors/warnings/etc during bootup.
+Unfortunately these are not found in dmesg nor in /var/log/messages at
+this time.
+5.4.3 (sans rt) ran without this issue for over two weeks.
 
-> Hi Masami,
-> 
-> On Thu, 2019-12-19 at 23:45 +0900, Masami Hiramatsu wrote:
-> > Hello Tom,
-> > 
-> > On Wed, 18 Dec 2019 09:27:36 -0600
-> > Tom Zanussi <zanussi@kernel.org> wrote:
-> > 
-> > > Hi,
-> > > 
-> > > I've recently had several requests and suggestions from users to
-> > > add
-> > > support for the creation and generation of synthetic events from
-> > > kernel code such as modules, and not just from the available
-> > > command
-> > > line commands.
-> > 
-> > This reminds me my recent series of patches.
-> > 
-> > Could you use synth_event_run_command() for this purpose as I did
-> > in boot-time tracing series?
-> > 
-> > https://lkml.kernel.org/r/157528179955.22451.16317363776831311868.stg
-> > it@devnote2
-> > 
-> > Above example uses a command string as same as command string, but I
-> > think
-> > we can introduce some macros to construct the command string for
-> > easier
-> > definition.
-> > 
-> > Or maybe it is possible to pass the const char *args[] array to that
-> > API,
-> > instead of single char *cmd. (for dynamic event definiton)
-> > 
-> > Maybe we should consider more generic APIs for modules to
-> > create/delete
-> > dynamic-event including synthetic and probes, and those might reuse
-> > existing command parsers.
-> > 
-> 
-> I'll have to look at your patches more closely, but I think it should
-> be possible to generate the command string synth_event_run_command()
-> needs, or the equivalent const char *args[] array you mentioned, from
-> the higher-level event definition in my patches.
-
-Agreed.
-
-> 
-> So the two ways of defining an event in my patches is 1) from a static
-> array known at build-time defined like this:
-> 
->   static struct synth_field_desc synthtest_fields[] = {
->        { .type = "pid_t",              .name = "next_pid_field" },
->        { .type = "char[16]",           .name = "next_comm_field" },
->        { .type = "u64",                .name = "ts_ns" },
->        { .type = "u64",                .name = "ts_ms" },
->        { .type = "unsigned int",       .name = "cpu" },
->        { .type = "char[64]",           .name = "my_string_field" },
->        { .type = "int",                .name = "my_int_field" },
->   };
-> 
-> which is then passed to create_synth_event(&synthtest_fields)
-> 
-> or 2) at run-time by adding fields individually as they become known:
-> 
->   add_synth_field("type", "name")
-> 
-> which requires some sort of start/end("event name").
-
-I think the 1) API seems a bit redundant IF we can expose the
-single comamnd string interface.
-
-> I think that should all be possible using your patches, and maybe
-> generalizable to not just synth events by removing _synth_ from
-> everything?
-
-If the implementation is enough generic, I think it is better to keep
-"synth" for better usability.
-
-For example, if the API is just generating a command string,
-it would be easy to be reused by probe-events too.
-
-----
-struct dynevent_command {
-  char *cmd_buf;
-  enum dynevent_type type; /* Set by gen_*_cmd and checked on each API */
-};
-
-int gen_synth_cmd(struct dynevent_command *, const char *name, ...);
-int add_synth_field(struct dynevent_command *, const char *type, const char *var);
-int gen_kprobe_cmd(struct dynevent_command *, const char *name, const char *loc, ....);
-int gen_kretprobe_cmd(struct dynevent_command *, const char *name, const char *loc, ....);
-int add_probe_fields(struct dynevent_command *, const char *field, ...);
-int create_dynevent(struct dynevent_command *);
-
-struct dynevent_command cmd;
-
-gen_synth_cmd(&cmd, "synthtest", "pid_t", "next_pid_field");
-add_synth_field(&cmd, "char[16]", "next_comm_field");
-...
-create_dynevent(&cmd);
-
-gen_kprobe_cmd(&cmd, "myprobe", "vfs_read+5", "%ax");
-add_probe_fields(&cmd, "%bx", "%dx");
-create_dynevent(&cmd);
-
-gen_kretprobe_cmd(&cmd, "myretprobe", "vfs_write", "$retval");
-create_dynevent(&cmd);
-----
-
-Actually, these are just wrappers of type verifier & strcat() :P
-And it can provide similar user-experience and generic interface
-with simplar implementation.
-
->  Let me know what you think.  If that's correct, I can go
-> and rewrite the event creation part on top of your patches.
-
-No need to move onto my series. Mine focuses on tracing
-boot process, but your's are providing APIs for modules.
-
-> > > This patchset adds support for that.  The first three patches add
-> > > some
-> > > minor preliminary setup, followed by the two main patches that add
-> > > the
-> > > ability to create and generate synthetic events from the
-> > > kernel.  The
-> > > next patch adds a test module that demonstrates actual use of the
-> > > API
-> > > and verifies that it works as intended, followed by Documentation.
-> > 
-> > Could you also check the locks are correctly acquired? It seems that
-> > your APIs doesn't lock it.
-> > 
-> 
-> I did notice that I said that trace_types_lock and event_mutex should
-> be held for trace_array_find() but it should only be trace_types_lock,
-> and then I missed doing that in get_event_file() in one place.  And I
-> also don't really need the nolock versions, so will simplify and remove
-> them.  I think elsewhere event_mutex is taken where needed.  But if
-> talking about something else, please let me know.
-
-Yes, that is what I found.
-
-Thank you,
-
--- 
-Masami Hiramatsu <mhiramat@kernel.org>
+Kind regards,
+Udo
