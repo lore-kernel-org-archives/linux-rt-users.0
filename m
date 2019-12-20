@@ -6,27 +6,28 @@ X-Spam-Status: No, score=-2.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C361BC43603
-	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Dec 2019 12:29:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8A350C43603
+	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Dec 2019 12:33:29 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 9EAB72467F
-	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Dec 2019 12:29:49 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 64B6421655
+	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Dec 2019 12:33:29 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727317AbfLTM3t (ORCPT
+        id S1727351AbfLTMd3 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 20 Dec 2019 07:29:49 -0500
-Received: from pindarots.xs4all.nl ([82.161.210.87]:40048 "EHLO
+        Fri, 20 Dec 2019 07:33:29 -0500
+Received: from pindarots.xs4all.nl ([82.161.210.87]:40106 "EHLO
         pindarots.xs4all.nl" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727298AbfLTM3t (ORCPT
+        with ESMTP id S1727346AbfLTMd2 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 20 Dec 2019 07:29:49 -0500
+        Fri, 20 Dec 2019 07:33:28 -0500
 Received: from surfplank2.hierzo (localhost.localdomain [127.0.0.1])
-        by pindarots.xs4all.nl (8.15.2/8.14.5) with ESMTPS id xBKCTkMV220749
+        by pindarots.xs4all.nl (8.15.2/8.14.5) with ESMTPS id xBKCXQgX220902
         (version=TLSv1.3 cipher=TLS_AES_128_GCM_SHA256 bits=128 verify=NO)
-        for <linux-rt-users@vger.kernel.org>; Fri, 20 Dec 2019 13:29:46 +0100
+        for <linux-rt-users@vger.kernel.org>; Fri, 20 Dec 2019 13:33:27 +0100
+Subject: Re: 5.4.3-rt1 mutex issue
 From:   Udo van den Heuvel <udovdh@xs4all.nl>
-Subject: 5.4.3-rt1 mutex issue
 To:     RT <linux-rt-users@vger.kernel.org>
+References: <fd438084-751c-3cb9-6697-d263a730bf91@xs4all.nl>
 Autocrypt: addr=udovdh@xs4all.nl; prefer-encrypt=mutual; keydata=
  mQINBFTtuO0BEACwwf5qDINuMWL9poNLJdZh/FM5RxwfCFgfbM29Aip4wAUD3CaQHRLILtNO
  Oo4JwIPtDp7fXZ3MB82tqhBRU3W3HVHodSzvUk2VzV0dE1prJiVizpPtIeYRRDr4KnWTvJOx
@@ -72,11 +73,12 @@ Autocrypt: addr=udovdh@xs4all.nl; prefer-encrypt=mutual; keydata=
  QYrlFbsVCXOM9TvO5ppqJowfdKmqFUjQPAsO40bwbphkt1NBalgZaxMCinpqEggVm/rGqbj2
  JjyRAfO8kEkwCkTZ6/Mnrxsunx9VNLGDEw==
 Organization: hierzo
-Message-ID: <fd438084-751c-3cb9-6697-d263a730bf91@xs4all.nl>
-Date:   Fri, 20 Dec 2019 13:29:46 +0100
+Message-ID: <67d72f0c-d4d0-002e-b61a-0efb3e78d02a@xs4all.nl>
+Date:   Fri, 20 Dec 2019 13:33:26 +0100
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
  Thunderbird/68.3.1
 MIME-Version: 1.0
+In-Reply-To: <fd438084-751c-3cb9-6697-d263a730bf91@xs4all.nl>
 Content-Type: text/plain; charset=utf-8
 Content-Language: en-US
 Content-Transfer-Encoding: 7bit
@@ -87,12 +89,22 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 Hello,
 
-Just booted into 5.4.3-rt1.
-I noticed that this kernel still shows some mutex-related
-errors/warnings/etc during bootup.
-Unfortunately these are not found in dmesg nor in /var/log/messages at
-this time.
-5.4.3 (sans rt) ran without this issue for over two weeks.
+I was slightly mistaken, 5.4.3 (sans rt) also shows this issue...
 
-Kind regards,
+
 Udo
+
+On 20-12-2019 13:29, Udo van den Heuvel wrote:
+> Hello,
+> 
+> Just booted into 5.4.3-rt1.
+> I noticed that this kernel still shows some mutex-related
+> errors/warnings/etc during bootup.
+> Unfortunately these are not found in dmesg nor in /var/log/messages at
+> this time.
+> 5.4.3 (sans rt) ran without this issue for over two weeks.
+> 
+> Kind regards,
+> Udo
+> 
+
