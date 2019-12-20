@@ -2,155 +2,213 @@ Return-Path: <SRS0=WSWX=2K=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-1.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4247DC43603
-	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Dec 2019 08:04:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6318DC2D0C0
+	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Dec 2019 08:41:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 1DD6320716
-	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Dec 2019 08:04:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 38A6E20716
+	for <linux-rt-users@archiver.kernel.org>; Fri, 20 Dec 2019 08:41:52 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1576831312;
+	bh=L533QNwMh74aZS7SvQ2sIdrQmds3Wye/rWgJoy5IiyU=;
+	h=Date:From:To:Cc:Subject:In-Reply-To:References:List-ID:From;
+	b=Pc9uHaIMsZXDE6/Qrhuh46jh/eIDxnU0b91ZYgZA+RJQ5G2gy3byNdpxnwra/K/3V
+	 Nhbm37FwSzFo8QbrYi9+PagfxUWlNJ0hMYR1cGK+WODrapzU28f/P3wokE/zLMOCka
+	 uNylEJF2SooHfCcLK5cl9TyhgvANX/Q5cLRAQmwo=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726651AbfLTIEi (ORCPT
+        id S1727174AbfLTIls (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 20 Dec 2019 03:04:38 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:33040 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725941AbfLTIEi (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 20 Dec 2019 03:04:38 -0500
-Received: from localhost ([127.0.0.1] helo=vostro.local)
-        by Galois.linutronix.de with esmtp (Exim 4.80)
-        (envelope-from <john.ogness@linutronix.de>)
-        id 1iiDGz-00008p-Qn; Fri, 20 Dec 2019 09:04:33 +0100
-From:   John Ogness <john.ogness@linutronix.de>
-To:     Dick Hollenbeck <dick@softplc.com>
-Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Petr Mladek <pmladek@suse.com>,
-        Sergey Senozhatsky <sergey.senozhatsky@gmail.com>
-Subject: Re: 8250: set_ier(), clear_ier() and the concept of atomic console writes
-References: <6e0f459a-d3dc-73cb-679f-6e86008048e1@softplc.com>
-Date:   Fri, 20 Dec 2019 09:04:32 +0100
-In-Reply-To: <6e0f459a-d3dc-73cb-679f-6e86008048e1@softplc.com> (Dick
-        Hollenbeck's message of "Thu, 19 Dec 2019 11:47:19 -0600")
-Message-ID: <87woarjucv.fsf@linutronix.de>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/23.4 (gnu/linux)
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+        Fri, 20 Dec 2019 03:41:48 -0500
+Received: from mail.kernel.org ([198.145.29.99]:52688 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1727164AbfLTIls (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 20 Dec 2019 03:41:48 -0500
+Received: from devnote2 (unknown [220.96.9.1])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 91240206EC;
+        Fri, 20 Dec 2019 08:41:45 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1576831307;
+        bh=L533QNwMh74aZS7SvQ2sIdrQmds3Wye/rWgJoy5IiyU=;
+        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
+        b=YPxkxF5jR7HY0LeJOQvPRE2FJN/AksClfApEsiiVuPOakAyNiJ8QOjBB5Z569/oQD
+         nASRWcQt588Xvuz611BZ26ilwRVpcfHiuH9c25LiXCKBLCa1d7SYBCCAedWOnTyl5B
+         0fWjcRC31411XLRVa8tVCbBhZc2u0iiOpbbq7spo=
+Date:   Fri, 20 Dec 2019 17:41:42 +0900
+From:   Masami Hiramatsu <mhiramat@kernel.org>
+To:     Tom Zanussi <zanussi@kernel.org>
+Cc:     rostedt@goodmis.org, artem.bityutskiy@linux.intel.com,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH 0/7] tracing: Add support for in-kernel synthetic event
+ API
+Message-Id: <20191220174142.34b4db9ba8f66e9385826e6b@kernel.org>
+In-Reply-To: <1576772667.2236.17.camel@kernel.org>
+References: <cover.1576679206.git.zanussi@kernel.org>
+        <20191219234511.bb499b3d1590059506db6982@kernel.org>
+        <1576772667.2236.17.camel@kernel.org>
+X-Mailer: Sylpheed 3.5.1 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-(added printk maintainers CC)
+Hi Tom,
 
-Hi Dick,
+On Thu, 19 Dec 2019 10:24:27 -0600
+Tom Zanussi <zanussi@kernel.org> wrote:
 
-On 2019-12-19, Dick Hollenbeck <dick@softplc.com> wrote:
-> Let's talk serially:
->
-> When using serial port debug printing, I have always dedicated a
-> serial port for that.  In contrast, I have never tried to dovetail
-> debug messages with actual other use of the serial port.  I don't
-> understand the use case for changing to polled mode on the fly and
-> then changing back.  I could not disconnect the normal use (interrupt
-> driven) serial cable and then rapidly attach another serial cable
-> intended for capturing debug messages in time to see a polled debug
-> message interleaved with normal port usage.  So I think the use case
-> contemplated by the current code is rare if non-existent.  And the
-> result is that the code is super ugly.
+> Hi Masami,
+> 
+> On Thu, 2019-12-19 at 23:45 +0900, Masami Hiramatsu wrote:
+> > Hello Tom,
+> > 
+> > On Wed, 18 Dec 2019 09:27:36 -0600
+> > Tom Zanussi <zanussi@kernel.org> wrote:
+> > 
+> > > Hi,
+> > > 
+> > > I've recently had several requests and suggestions from users to
+> > > add
+> > > support for the creation and generation of synthetic events from
+> > > kernel code such as modules, and not just from the available
+> > > command
+> > > line commands.
+> > 
+> > This reminds me my recent series of patches.
+> > 
+> > Could you use synth_event_run_command() for this purpose as I did
+> > in boot-time tracing series?
+> > 
+> > https://lkml.kernel.org/r/157528179955.22451.16317363776831311868.stg
+> > it@devnote2
+> > 
+> > Above example uses a command string as same as command string, but I
+> > think
+> > we can introduce some macros to construct the command string for
+> > easier
+> > definition.
+> > 
+> > Or maybe it is possible to pass the const char *args[] array to that
+> > API,
+> > instead of single char *cmd. (for dynamic event definiton)
+> > 
+> > Maybe we should consider more generic APIs for modules to
+> > create/delete
+> > dynamic-event including synthetic and probes, and those might reuse
+> > existing command parsers.
+> > 
+> 
+> I'll have to look at your patches more closely, but I think it should
+> be possible to generate the command string synth_event_run_command()
+> needs, or the equivalent const char *args[] array you mentioned, from
+> the higher-level event definition in my patches.
 
-In Linux there are consoles, which I dare say is a common use case for
-UARTs (i.e debug messages interleaved with normal port usage is not rare
-and definitely exists).
+Agreed.
 
-> In fact the serial port code is getting uglier by the month. Its
-> gotten too complex and bulkier for weird apparent requirements.  When
-> those corner case requirements are met such that concurrent use is
-> mandated, the solution is always more complex than if requirements can
-> be considered mutually exclusive.  (e.g. Who prints debug statements
-> onto a serial cable that is already in use for a MODBUS driver?  How
-> would you see those print statements easily?)
->
-> But for now, I drill down to a specific complaint.
->
-> I am looking at branch linux-5.2.y-rt-rebase, file:
->   drivers/tty/serial/8250/8250_core.c
->   commit 82dfc28946eacceae by John Ogness.
->
->
-> Here is a belated partial patch review, and would be some of the
-> reasons I could not accept this patch if I was in charge of mainline:
+> 
+> So the two ways of defining an event in my patches is 1) from a static
+> array known at build-time defined like this:
+> 
+>   static struct synth_field_desc synthtest_fields[] = {
+>        { .type = "pid_t",              .name = "next_pid_field" },
+>        { .type = "char[16]",           .name = "next_comm_field" },
+>        { .type = "u64",                .name = "ts_ns" },
+>        { .type = "u64",                .name = "ts_ms" },
+>        { .type = "unsigned int",       .name = "cpu" },
+>        { .type = "char[64]",           .name = "my_string_field" },
+>        { .type = "int",                .name = "my_int_field" },
+>   };
+> 
+> which is then passed to create_synth_event(&synthtest_fields)
+> 
+> or 2) at run-time by adding fields individually as they become known:
+> 
+>   add_synth_field("type", "name")
+> 
+> which requires some sort of start/end("event name").
 
-Thanks. I've been waiting nearly a year for feedback on these patches.
+I think the 1) API seems a bit redundant IF we can expose the
+single comamnd string interface.
 
-> 1) The mutual exclusion used in set_eir() clear_ier() feels like the
-> big kernel lock all over again.  All ports using the same lock....
+> I think that should all be possible using your patches, and maybe
+> generalizable to not just synth events by removing _synth_ from
+> everything?
 
-Yes, this is a problem. Only consoles should be using the cpu-lock. I
-will address this.
+If the implementation is enough generic, I think it is better to keep
+"synth" for better usability.
 
-> 2) Those functions are in an 8250 specific area but do not have 8250
-> specific names, and they are public.
+For example, if the API is just generating a command string,
+it would be easy to be reused by probe-events too.
 
-So you would like to see them renamed to:
+----
+struct dynevent_command {
+  char *cmd_buf;
+  enum dynevent_type type; /* Set by gen_*_cmd and checked on each API */
+};
 
-   serial8250_set_ier()
-   serial8250_clear_ier()
-   serial8250_restore_ier()
+int gen_synth_cmd(struct dynevent_command *, const char *name, ...);
+int add_synth_field(struct dynevent_command *, const char *type, const char *var);
+int gen_kprobe_cmd(struct dynevent_command *, const char *name, const char *loc, ....);
+int gen_kretprobe_cmd(struct dynevent_command *, const char *name, const char *loc, ....);
+int add_probe_fields(struct dynevent_command *, const char *field, ...);
+int create_dynevent(struct dynevent_command *);
 
-> 3) The lock used in set_eir() & clear_eir() puts the CPU into atomic
-> mode and then calls serial_port_out().  This assumes that we know
-> everything there will ever be to know about serial_port_out(), even
-> though it is an abstraction, with multiple implementations now and
-> more in the future.
+struct dynevent_command cmd;
 
-Mainline serial8250_console_write() calls serial_port_out() in atomic
-context as well. So this is already a requirement of serial_port_out(),
-at least for consoles. And if the cpu-lock is only taken for consoles
-(see my response to #1), then this should not introduce any new issues.
+gen_synth_cmd(&cmd, "synthtest", "pid_t", "next_pid_field");
+add_synth_field(&cmd, "char[16]", "next_comm_field");
+...
+create_dynevent(&cmd);
 
-> In fact, the future is now.  I have expanded serial_port_out() to use
-> a spinlock because my UART is in an FPGA, along with other peripherals
-> which share a common FPGA interface.  The spinlock gets remapped to
-> rt_mutex.  When there is a collision on that mutex somebody must get
-> suspended, and then I see the kernel report of:
->
-> BUG: scheduling while atomic: irq/56-ttyS5/592/0x00000002
+gen_kprobe_cmd(&cmd, "myprobe", "vfs_read+5", "%ax");
+add_probe_fields(&cmd, "%bx", "%dx");
+create_dynevent(&cmd);
 
-If your FPGA-UART should be a console, then it is a bug in your
-implementation (for mainline as well). I don't know if non-consoles also
-have atomic requirements.
+gen_kretprobe_cmd(&cmd, "myretprobe", "vfs_write", "$retval");
+create_dynevent(&cmd);
+----
 
-> fpga_write() is where the rt_mutex is, aka spinlock in true source
-> representation.  I can run a couple million bytes through that
-> function for UARTs and other peripherals, but you know RT, if can go
-> wrong it will, and it eventually does.
->
-> The atomic mode was entered in the common (shared_by_all_ports) serial
-> lock in console_atomic_lock().  This is because the author was trying
-> to provide mutual exclusion between debug messages and actual normal
-> serial port use.  I think that is fool's gold.  I have no problem with
-> serial port debug messages, but I don't share a port when I am using
-> them.
+Actually, these are just wrappers of type verifier & strcat() :P
+And it can provide similar user-experience and generic interface
+with simplar implementation.
 
-You don't use your debug serial port as a console. That is a wise
-choice that unfortunately most people will not make.
+>  Let me know what you think.  If that's correct, I can go
+> and rewrite the event creation part on top of your patches.
 
-> So the next question is, do I go to a raw spin lock in my
-> fpga_write(), or do I try and fix the usage of console_atomic_lock()
-> in set_eir() and clear_eir()?
+No need to move onto my series. Mine focuses on tracing
+boot process, but your's are providing APIs for modules.
 
-- I will change the functions to only take the cpu-lock if the 8250 is a
-  console.
+> > > This patchset adds support for that.  The first three patches add
+> > > some
+> > > minor preliminary setup, followed by the two main patches that add
+> > > the
+> > > ability to create and generate synthetic events from the
+> > > kernel.  The
+> > > next patch adds a test module that demonstrates actual use of the
+> > > API
+> > > and verifies that it works as intended, followed by Documentation.
+> > 
+> > Could you also check the locks are correctly acquired? It seems that
+> > your APIs doesn't lock it.
+> > 
+> 
+> I did notice that I said that trace_types_lock and event_mutex should
+> be held for trace_array_find() but it should only be trace_types_lock,
+> and then I missed doing that in get_event_file() in one place.  And I
+> also don't really need the nolock versions, so will simplify and remove
+> them.  I think elsewhere event_mutex is taken where needed.  But if
+> talking about something else, please let me know.
 
-- I will rename the functions to serial8250_*.
+Yes, that is what I found.
 
-I believe that will address your main points. However, if you want to
-use your FPGA-UART as a console, you will need to change to a raw spin
-lock (even for mainline).
+Thank you,
 
-Thanks for the feedback.
-
-John Ogness
+-- 
+Masami Hiramatsu <mhiramat@kernel.org>
