@@ -2,534 +2,380 @@ Return-Path: <SRS0=Qnkb=27=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2F1FAC33CA4
-	for <linux-rt-users@archiver.kernel.org>; Fri, 10 Jan 2020 20:14:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6D39EC282DD
+	for <linux-rt-users@archiver.kernel.org>; Fri, 10 Jan 2020 20:35:35 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 024F22072E
-	for <linux-rt-users@archiver.kernel.org>; Fri, 10 Jan 2020 20:14:41 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2D2C420882
+	for <linux-rt-users@archiver.kernel.org>; Fri, 10 Jan 2020 20:35:35 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1578688535;
+	bh=xKSXu/DgrgAngVtOCSfaBQaKiNx+vMEFoxwMd2Mh4WE=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
+	 References:List-ID:From;
+	b=PFQRlU1gtWWZ9SM4yuasQiqLAg99s0jTtfwYBXLLIP69juHneMubFGuQkHj0CSizW
+	 92eFBPbEDjsUdjub9Ccl/YUxxv/hCaCVwTPidisgJsgSmoShLsJlGakxVg/Pi+ZYat
+	 DxEzurN+bBxz955+9DrNF/9Br+czny1uHFAoykRk=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726129AbgAJUOf (ORCPT
+        id S1726962AbgAJUfe (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 10 Jan 2020 15:14:35 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:59652 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725899AbgAJUOf (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 10 Jan 2020 15:14:35 -0500
-Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
-        (envelope-from <bigeasy@linutronix.de>)
-        id 1iq0fu-00046M-BJ; Fri, 10 Jan 2020 21:14:30 +0100
-Date:   Fri, 10 Jan 2020 21:14:30 +0100
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v5.4.10-rt5
-Message-ID: <20200110201430.vl3sxiwntj5o4z74@linutronix.de>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
+        Fri, 10 Jan 2020 15:35:34 -0500
+Received: from mail.kernel.org ([198.145.29.99]:58220 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726634AbgAJUfd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 10 Jan 2020 15:35:33 -0500
+Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 67CA820848;
+        Fri, 10 Jan 2020 20:35:31 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1578688532;
+        bh=xKSXu/DgrgAngVtOCSfaBQaKiNx+vMEFoxwMd2Mh4WE=;
+        h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
+         References:From;
+        b=ejzNBfWVCd7q9f3vfNi2JWpZbZ6LqsUEBi08JXRFyGrsf8C6IbUhYnjdqLwo0def0
+         y8rgvIIDM05Dc3DiBl68FAerhn0I3EoXVYVKVo02oKbVJDQNd6sfa8VCP4vYGvUpQA
+         rzBiQr7mVXAw+U8PaG9z3vX9IeprUNRwo9DRfaJw=
+From:   Tom Zanussi <zanussi@kernel.org>
+To:     rostedt@goodmis.org
+Cc:     artem.bityutskiy@linux.intel.com, mhiramat@kernel.org,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Subject: [PATCH v2 04/12] tracing: Add dynamic event command creation interface
+Date:   Fri, 10 Jan 2020 14:35:10 -0600
+Message-Id: <b10d5656847c54c51b1496319e0da2764e660458.1578688120.git.zanussi@kernel.org>
+X-Mailer: git-send-email 2.14.1
+In-Reply-To: <cover.1578688120.git.zanussi@kernel.org>
+References: <cover.1578688120.git.zanussi@kernel.org>
+In-Reply-To: <cover.1578688120.git.zanussi@kernel.org>
+References: <cover.1578688120.git.zanussi@kernel.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear RT folks!
+Add an interface used to build up dynamic event creation commands,
+such as synthetic and kprobe events.  Interfaces specific to those
+particular types of events and others can be built on top of this
+interface.
 
-I'm pleased to announce the v5.4.10-rt5 patch set. 
+Command creation is started by first using the dynevent_cmd_init()
+function to initialize the dynevent_cmd object.  Following that, args
+are appended and optionally checked by the add_dynevent_arg() and
+add_dynevent_arg_pair() functions, which use objects representing
+arguments and pairs of arguments, initialized respectively by
+dynevent_arg_init() and dynevent_arg_pair_init().  Finally, once all
+args have been successfully added, the command is finalized and
+actually created using create_dynevent().
 
-Changes since v5.4.10-rt4:
+The code here for actually printing into the dyn_event->cmd buffer
+using snprintf() etc was adapted from v4 of Masami's 'tracing/boot:
+Add synthetic event support' patch.
 
-  - Dick Hollenbeck reported that the printk rework had a negative
-    impact on the 8250 driver if not used as a console. Patch by John
-    Ogness.
+Signed-off-by: Tom Zanussi <zanussi@kernel.org>
+Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
+---
+ include/linux/trace_events.h |  54 +++++++++++
+ kernel/trace/trace_events.c  | 217 +++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 271 insertions(+)
 
-Known issues
-     - None
-
-The delta patch against v5.4.10-rt4 is appended below and can be found here:
+diff --git a/include/linux/trace_events.h b/include/linux/trace_events.h
+index c8038d1a1a48..bf4cc2e56125 100644
+--- a/include/linux/trace_events.h
++++ b/include/linux/trace_events.h
+@@ -353,6 +353,60 @@ extern struct trace_event_file *get_event_file(const char *instance,
+ 					       const char *event);
+ extern void put_event_file(struct trace_event_file *file);
  
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.4/incr/patch-5.4.10-rt4-rt5.patch.xz
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.4.10-rt5
-
-The RT patch against v5.4.10 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.4/older/patch-5.4.10-rt5.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.4/older/patches-5.4.10-rt5.tar.xz
-
-Sebastian
-
-diff --git a/drivers/tty/serial/8250/8250.h b/drivers/tty/serial/8250/8250.h
-index 4e6c74330829d..b29aed97a54dc 100644
---- a/drivers/tty/serial/8250/8250.h
-+++ b/drivers/tty/serial/8250/8250.h
-@@ -96,10 +96,6 @@ struct serial8250_config {
- #define SERIAL8250_SHARE_IRQS 0
- #endif
- 
--void set_ier(struct uart_8250_port *up, unsigned char ier);
--void clear_ier(struct uart_8250_port *up);
--void restore_ier(struct uart_8250_port *up);
--
- #define SERIAL8250_PORT_FLAGS(_base, _irq, _flags)		\
- 	{							\
- 		.iobase		= _base,			\
-@@ -134,21 +130,55 @@ static inline void serial_dl_write(struct uart_8250_port *up, int value)
- 	up->dl_write(up, value);
- }
- 
-+static inline void serial8250_set_IER(struct uart_8250_port *up,
-+				      unsigned char ier)
-+{
-+	struct uart_port *port = &up->port;
-+	unsigned int flags;
-+	bool is_console;
++struct dynevent_cmd;
 +
-+	is_console = uart_console(port);
++typedef int (*dynevent_check_arg_fn_t)(void *data);
++typedef int (*dynevent_create_fn_t)(struct dynevent_cmd *cmd);
 +
-+	if (is_console)
-+		console_atomic_lock(&flags);
++struct dynevent_arg {
++	const char		*str;
++	char			separator; /* e.g. ';', ',', or nothing */
++	dynevent_check_arg_fn_t	check_arg;
++};
 +
-+	serial_out(up, UART_IER, ier);
++extern void dynevent_arg_init(struct dynevent_arg *arg,
++			      dynevent_check_arg_fn_t check_arg,
++			      char separator);
++extern int add_dynevent_arg(struct dynevent_cmd *cmd,
++			    struct dynevent_arg *arg);
 +
-+	if (is_console)
-+		console_atomic_unlock(flags);
-+}
++struct dynevent_arg_pair {
++	const char		*lhs;
++	const char		*rhs;
++	char			operator; /* e.g. '=' or nothing */
++	char			separator; /* e.g. ';', ',', or nothing */
++	dynevent_check_arg_fn_t	check_arg;
++};
 +
-+static inline unsigned char serial8250_clear_IER(struct uart_8250_port *up)
-+{
-+	struct uart_port *port = &up->port;
-+	unsigned int clearval = 0;
-+	unsigned int prior;
-+	unsigned int flags;
-+	bool is_console;
++extern void dynevent_arg_pair_init(struct dynevent_arg_pair *arg_pair,
++				   dynevent_check_arg_fn_t check_arg,
++				   char operator, char separator);
++extern int add_dynevent_arg_pair(struct dynevent_cmd *cmd,
++				 struct dynevent_arg_pair *arg_pair);
 +
-+	is_console = uart_console(port);
++#define MAX_DYNEVENT_CMD_LEN	(2048)
 +
-+	if (up->capabilities & UART_CAP_UUE)
-+		clearval = UART_IER_UUE;
++enum dynevent_type {
++	DYNEVENT_TYPE_SYNTH,
++	DYNEVENT_TYPE_KPROBE,
++};
 +
-+	if (is_console)
-+		console_atomic_lock(&flags);
++struct dynevent_cmd {
++	char			*buf;
++	const char		*event_name;
++	int			maxlen;
++	int			remaining;
++	unsigned int		n_fields;
++	enum dynevent_type	type;
++	dynevent_create_fn_t	run_command;
++	void			*private_data;
++};
 +
-+	prior = serial_port_in(port, UART_IER);
-+	serial_port_out(port, UART_IER, clearval);
++extern void dynevent_cmd_init(struct dynevent_cmd *cmd, char *buf, int maxlen,
++			      enum dynevent_type type,
++			      dynevent_create_fn_t run_command);
++extern int create_dynevent(struct dynevent_cmd *cmd);
 +
-+	if (is_console)
-+		console_atomic_unlock(flags);
-+
-+	return prior;
-+}
-+
- static inline bool serial8250_set_THRI(struct uart_8250_port *up)
- {
- 	if (up->ier & UART_IER_THRI)
- 		return false;
- 	up->ier |= UART_IER_THRI;
--	serial_out(up, UART_IER, up->ier);
--	return true;
--}
--
--static inline bool serial8250_set_THRI_sier(struct uart_8250_port *up)
--{
--	if (up->ier & UART_IER_THRI)
--		return false;
--	up->ier |= UART_IER_THRI;
--	set_ier(up, up->ier);
-+	serial8250_set_IER(up, up->ier);
- 	return true;
- }
+ extern int delete_synth_event(const char *name);
  
-@@ -157,16 +187,7 @@ static inline bool serial8250_clear_THRI(struct uart_8250_port *up)
- 	if (!(up->ier & UART_IER_THRI))
- 		return false;
- 	up->ier &= ~UART_IER_THRI;
--	serial_out(up, UART_IER, up->ier);
--	return true;
--}
--
--static inline bool serial8250_clear_THRI_sier(struct uart_8250_port *up)
--{
--	if (!(up->ier & UART_IER_THRI))
--		return false;
--	up->ier &= ~UART_IER_THRI;
--	set_ier(up, up->ier);
-+	serial8250_set_IER(up, up->ier);
- 	return true;
- }
- 
-diff --git a/drivers/tty/serial/8250/8250_core.c b/drivers/tty/serial/8250/8250_core.c
-index 8c40472eff194..eabb9274c0a9d 100644
---- a/drivers/tty/serial/8250/8250_core.c
-+++ b/drivers/tty/serial/8250/8250_core.c
-@@ -275,7 +275,7 @@ static void serial8250_timeout(struct timer_list *t)
- static void serial8250_backup_timeout(struct timer_list *t)
- {
- 	struct uart_8250_port *up = from_timer(up, t, timer);
--	unsigned int iir, lsr;
-+	unsigned int iir, ier = 0, lsr;
- 	unsigned long flags;
- 
- 	spin_lock_irqsave(&up->port.lock, flags);
-@@ -285,7 +285,7 @@ static void serial8250_backup_timeout(struct timer_list *t)
- 	 * based handler.
- 	 */
- 	if (up->port.irq)
--		clear_ier(up);
-+		ier = serial8250_clear_IER(up);
- 
- 	iir = serial_in(up, UART_IIR);
- 
-@@ -308,7 +308,7 @@ static void serial8250_backup_timeout(struct timer_list *t)
- 		serial8250_tx_chars(up);
- 
- 	if (up->port.irq)
--		restore_ier(up);
-+		serial8250_set_IER(up, ier);
- 
- 	spin_unlock_irqrestore(&up->port.lock, flags);
- 
-diff --git a/drivers/tty/serial/8250/8250_dma.c b/drivers/tty/serial/8250/8250_dma.c
-index c91dafbca57c9..890fa7ddaa7f3 100644
---- a/drivers/tty/serial/8250/8250_dma.c
-+++ b/drivers/tty/serial/8250/8250_dma.c
-@@ -35,7 +35,7 @@ static void __dma_tx_complete(void *param)
- 
- 	ret = serial8250_tx_dma(p);
- 	if (ret)
--		serial8250_set_THRI_sier(p);
-+		serial8250_set_THRI(p);
- 
- 	spin_unlock_irqrestore(&p->port.lock, flags);
- }
-@@ -98,7 +98,7 @@ int serial8250_tx_dma(struct uart_8250_port *p)
- 	dma_async_issue_pending(dma->txchan);
- 	if (dma->tx_err) {
- 		dma->tx_err = 0;
--		serial8250_clear_THRI_sier(p);
-+		serial8250_clear_THRI(p);
- 	}
- 	return 0;
- err:
-diff --git a/drivers/tty/serial/8250/8250_fsl.c b/drivers/tty/serial/8250/8250_fsl.c
-index aa0e216d5eadb..8f711afadd4b5 100644
---- a/drivers/tty/serial/8250/8250_fsl.c
-+++ b/drivers/tty/serial/8250/8250_fsl.c
-@@ -57,9 +57,18 @@ int fsl8250_handle_irq(struct uart_port *port)
- 
- 	/* Stop processing interrupts on input overrun */
- 	if ((orig_lsr & UART_LSR_OE) && (up->overrun_backoff_time_ms > 0)) {
-+		unsigned int ca_flags;
- 		unsigned long delay;
-+		bool is_console;
- 
-+		is_console = uart_console(port);
-+
-+		if (is_console)
-+			console_atomic_lock(&ca_flags);
- 		up->ier = port->serial_in(port, UART_IER);
-+		if (is_console)
-+			console_atomic_unlock(ca_flags);
-+
- 		if (up->ier & (UART_IER_RLSI | UART_IER_RDI)) {
- 			port->ops->stop_rx(port);
- 		} else {
-diff --git a/drivers/tty/serial/8250/8250_ingenic.c b/drivers/tty/serial/8250/8250_ingenic.c
-index 424c07c5f6299..47f1482bd818a 100644
---- a/drivers/tty/serial/8250/8250_ingenic.c
-+++ b/drivers/tty/serial/8250/8250_ingenic.c
-@@ -146,6 +146,8 @@ OF_EARLYCON_DECLARE(x1000_uart, "ingenic,x1000-uart",
- 
- static void ingenic_uart_serial_out(struct uart_port *p, int offset, int value)
- {
-+	unsigned int flags;
-+	bool is_console;
- 	int ier;
- 
- 	switch (offset) {
-@@ -167,7 +169,12 @@ static void ingenic_uart_serial_out(struct uart_port *p, int offset, int value)
- 		 * If we have enabled modem status IRQs we should enable
- 		 * modem mode.
- 		 */
-+		is_console = uart_console(p);
-+		if (is_console)
-+			console_atomic_lock(&flags);
- 		ier = p->serial_in(p, UART_IER);
-+		if (is_console)
-+			console_atomic_unlock(flags);
- 
- 		if (ier & UART_IER_MSI)
- 			value |= UART_MCR_MDCE | UART_MCR_FCM;
-diff --git a/drivers/tty/serial/8250/8250_mtk.c b/drivers/tty/serial/8250/8250_mtk.c
-index 4d067f515f748..b509c3de0301f 100644
---- a/drivers/tty/serial/8250/8250_mtk.c
-+++ b/drivers/tty/serial/8250/8250_mtk.c
-@@ -212,12 +212,37 @@ static void mtk8250_shutdown(struct uart_port *port)
- 
- static void mtk8250_disable_intrs(struct uart_8250_port *up, int mask)
- {
--	serial_out(up, UART_IER, serial_in(up, UART_IER) & (~mask));
-+	struct uart_port *port = &up->port;
-+	unsigned int flags;
-+	unsigned int ier;
-+	bool is_console;
-+
-+	is_console = uart_console(port);
-+
-+	if (is_console)
-+		console_atomic_lock(&flags);
-+
-+	ier = serial_in(up, UART_IER);
-+	serial_out(up, UART_IER, ier & (~mask));
-+
-+	if (is_console)
-+		console_atomic_unlock(flags);
- }
- 
- static void mtk8250_enable_intrs(struct uart_8250_port *up, int mask)
- {
--	serial_out(up, UART_IER, serial_in(up, UART_IER) | mask);
-+	struct uart_port *port = &up->port;
-+	unsigned int flags;
-+	unsigned int ier;
-+
-+	if (uart_console(port))
-+		console_atomic_lock(&flags);
-+
-+	ier = serial_in(up, UART_IER);
-+	serial_out(up, UART_IER, ier | mask);
-+
-+	if (uart_console(port))
-+		console_atomic_unlock(flags);
- }
- 
- static void mtk8250_set_flow_ctrl(struct uart_8250_port *up, int mode)
-diff --git a/drivers/tty/serial/8250/8250_port.c b/drivers/tty/serial/8250/8250_port.c
-index 51d9a79b70db3..7767701122236 100644
---- a/drivers/tty/serial/8250/8250_port.c
-+++ b/drivers/tty/serial/8250/8250_port.c
-@@ -721,7 +721,7 @@ static void serial8250_set_sleep(struct uart_8250_port *p, int sleep)
- 			serial_out(p, UART_EFR, UART_EFR_ECB);
- 			serial_out(p, UART_LCR, 0);
- 		}
--		set_ier(p, sleep ? UART_IERX_SLEEP : 0);
-+		serial8250_set_IER(p, sleep ? UART_IERX_SLEEP : 0);
- 		if (p->capabilities & UART_CAP_EFR) {
- 			serial_out(p, UART_LCR, UART_LCR_CONF_MODE_B);
- 			serial_out(p, UART_EFR, efr);
-@@ -1390,7 +1390,7 @@ static void serial8250_stop_rx(struct uart_port *port)
- 
- 	up->ier &= ~(UART_IER_RLSI | UART_IER_RDI);
- 	up->port.read_status_mask &= ~UART_LSR_DR;
--	set_ier(up, up->ier);
-+	serial8250_set_IER(up, up->ier);
- 
- 	serial8250_rpm_put(up);
- }
-@@ -1408,7 +1408,7 @@ static void __do_stop_tx_rs485(struct uart_8250_port *p)
- 		serial8250_clear_and_reinit_fifos(p);
- 
- 		p->ier |= UART_IER_RLSI | UART_IER_RDI;
--		set_ier(p, p->ier);
-+		serial8250_set_IER(p, p->ier);
- 	}
- }
- static enum hrtimer_restart serial8250_em485_handle_stop_tx(struct hrtimer *t)
-@@ -1459,7 +1459,7 @@ static void __stop_tx_rs485(struct uart_8250_port *p)
- 
- static inline void __do_stop_tx(struct uart_8250_port *p)
- {
--	if (serial8250_clear_THRI_sier(p))
-+	if (serial8250_clear_THRI(p))
- 		serial8250_rpm_put_tx(p);
- }
- 
-@@ -1509,7 +1509,7 @@ static inline void __start_tx(struct uart_port *port)
- 	if (up->dma && !up->dma->tx_dma(up))
- 		return;
- 
--	if (serial8250_set_THRI_sier(up)) {
-+	if (serial8250_set_THRI(up)) {
- 		if (up->bugs & UART_BUG_TXEN) {
- 			unsigned char lsr;
- 
-@@ -1616,7 +1616,7 @@ static void serial8250_disable_ms(struct uart_port *port)
- 	mctrl_gpio_disable_ms(up->gpios);
- 
- 	up->ier &= ~UART_IER_MSI;
--	set_ier(up, up->ier);
-+	serial8250_set_IER(up, up->ier);
- }
- 
- static void serial8250_enable_ms(struct uart_port *port)
-@@ -1632,7 +1632,7 @@ static void serial8250_enable_ms(struct uart_port *port)
- 	up->ier |= UART_IER_MSI;
- 
- 	serial8250_rpm_get(up);
--	set_ier(up, up->ier);
-+	serial8250_set_IER(up, up->ier);
- 	serial8250_rpm_put(up);
- }
- 
-@@ -1991,54 +1991,6 @@ static void wait_for_xmitr(struct uart_8250_port *up, int bits)
- 	}
- }
- 
--static atomic_t ier_counter = ATOMIC_INIT(0);
--static atomic_t ier_value = ATOMIC_INIT(0);
--
--void set_ier(struct uart_8250_port *up, unsigned char ier)
--{
--	struct uart_port *port = &up->port;
--	unsigned int flags;
--
--	console_atomic_lock(&flags);
--	if (atomic_read(&ier_counter) > 0)
--		atomic_set(&ier_value, ier);
--	else
--		serial_port_out(port, UART_IER, ier);
--	console_atomic_unlock(flags);
--}
--
--void clear_ier(struct uart_8250_port *up)
--{
--	struct uart_port *port = &up->port;
--	unsigned int ier_cleared = 0;
--	unsigned int flags;
--	unsigned int ier;
--
--	console_atomic_lock(&flags);
--	atomic_inc(&ier_counter);
--	ier = serial_port_in(port, UART_IER);
--	if (up->capabilities & UART_CAP_UUE)
--		ier_cleared = UART_IER_UUE;
--	if (ier != ier_cleared) {
--		serial_port_out(port, UART_IER, ier_cleared);
--		atomic_set(&ier_value, ier);
--	}
--	console_atomic_unlock(flags);
--}
--EXPORT_SYMBOL_GPL(clear_ier);
--
--void restore_ier(struct uart_8250_port *up)
--{
--	struct uart_port *port = &up->port;
--	unsigned int flags;
--
--	console_atomic_lock(&flags);
--	if (atomic_fetch_dec(&ier_counter) == 1)
--		serial_port_out(port, UART_IER, atomic_read(&ier_value));
--	console_atomic_unlock(flags);
--}
--EXPORT_SYMBOL_GPL(restore_ier);
--
- #ifdef CONFIG_CONSOLE_POLL
  /*
-  * Console polling routines for writing and reading from the uart while
-@@ -2070,10 +2022,11 @@ static int serial8250_get_poll_char(struct uart_port *port)
- static void serial8250_put_poll_char(struct uart_port *port,
- 			 unsigned char c)
- {
-+	unsigned int ier;
- 	struct uart_8250_port *up = up_to_u8250p(port);
- 
- 	serial8250_rpm_get(up);
--	clear_ier(up);
-+	ier = serial8250_clear_IER(up);
- 
- 	wait_for_xmitr(up, BOTH_EMPTY);
- 	/*
-@@ -2086,7 +2039,7 @@ static void serial8250_put_poll_char(struct uart_port *port,
- 	 *	and restore the IER
- 	 */
- 	wait_for_xmitr(up, BOTH_EMPTY);
--	restore_ier(up);
-+	serial8250_set_IER(up, ier);
- 	serial8250_rpm_put(up);
+diff --git a/kernel/trace/trace_events.c b/kernel/trace/trace_events.c
+index 184e10d3772d..751a2c887953 100644
+--- a/kernel/trace/trace_events.c
++++ b/kernel/trace/trace_events.c
+@@ -3301,6 +3301,223 @@ void __init trace_event_init(void)
+ 	event_trace_enable();
  }
  
-@@ -2394,7 +2347,7 @@ void serial8250_do_shutdown(struct uart_port *port)
- 	 */
- 	spin_lock_irqsave(&port->lock, flags);
- 	up->ier = 0;
--	set_ier(up, 0);
-+	serial8250_set_IER(up, 0);
- 	spin_unlock_irqrestore(&port->lock, flags);
++/**
++ * add_dynevent_arg - Add an arg to a dynevent_cmd
++ * @cmd: A pointer to the dynevent_cmd struct representing the new event cmd
++ * @arg: The argument to append to the current cmd
++ *
++ * Append an argument to a dynevent_cmd.  The argument string will be
++ * appended to the current cmd string, followed by a separator, if
++ * applicable.  Before the argument is added, the check_arg()
++ * function, if defined, is called.
++ *
++ * The cmd string, separator, and check_arg() function should be set
++ * using the dynevent_arg_init() before any arguments are added using
++ * this function.
++ *
++ * Return: 0 if successful, error otherwise.
++ */
++int add_dynevent_arg(struct dynevent_cmd *cmd,
++		     struct dynevent_arg *arg)
++{
++	int ret = 0;
++	int delta;
++	char *q;
++
++	if (arg->check_arg) {
++		ret = arg->check_arg(arg);
++		if (ret)
++			return ret;
++	}
++
++	q = cmd->buf + (cmd->maxlen - cmd->remaining);
++
++	delta = snprintf(q, cmd->remaining, " %s%c", arg->str, arg->separator);
++	if (delta >= cmd->remaining) {
++		pr_err("String is too long: %s\n", arg->str);
++		return -E2BIG;
++	}
++	cmd->remaining -= delta;
++
++	return ret;
++}
++EXPORT_SYMBOL_GPL(add_dynevent_arg);
++
++/**
++ * add_dynevent_arg_pair - Add an arg pair to a dynevent_cmd
++ * @cmd: A pointer to the dynevent_cmd struct representing the new event cmd
++ * @arg_pair: The argument pair to append to the current cmd
++ *
++ * Append an argument pair to a dynevent_cmd.  An argument pair
++ * consists of a left-hand-side argument and a right-hand-side
++ * argument separated by an operator, which can be whitespace, all
++ * followed by a separator, if applicable.  This can be used to add
++ * arguments of the form 'type variable_name;' or 'x+y'.
++ *
++ * The lhs argument string will be appended to the current cmd string,
++ * followed by an operator, if applicable, followd by the rhs string,
++ * followed finally by a separator, if applicable.  Before anything is
++ * added, the check_arg() function, if defined, is called.
++ *
++ * The cmd strings, operator, separator, and check_arg() function
++ * should be set using the dynevent_arg_init() before any arguments
++ * are added using this function.
++ *
++ * Return: 0 if successful, error otherwise.
++ */
++int add_dynevent_arg_pair(struct dynevent_cmd *cmd,
++			  struct dynevent_arg_pair *arg_pair)
++{
++	int ret = 0;
++	int delta;
++	char *q;
++
++	if (arg_pair->check_arg) {
++		ret = arg_pair->check_arg(arg_pair);
++		if (ret)
++			return ret;
++	}
++
++	q = cmd->buf + (cmd->maxlen - cmd->remaining);
++
++	delta = snprintf(q, cmd->remaining, " %s%c", arg_pair->lhs,
++			 arg_pair->operator);
++	if (delta >= cmd->remaining) {
++		pr_err("field string is too long: %s\n", arg_pair->lhs);
++		return -E2BIG;
++	}
++	cmd->remaining -= delta; q += delta;
++
++	delta = snprintf(q, cmd->remaining, "%s%c", arg_pair->rhs,
++			 arg_pair->separator);
++	if (delta >= cmd->remaining) {
++		pr_err("field string is too long: %s\n", arg_pair->rhs);
++		return -E2BIG;
++	}
++	cmd->remaining -= delta; q += delta;
++
++	return ret;
++}
++EXPORT_SYMBOL_GPL(add_dynevent_arg_pair);
++
++/**
++ * dynevent_cmd_init - Initialize a dynevent_cmd object
++ * @cmd: A pointer to the dynevent_cmd struct representing the cmd
++ * @buf: A pointer to the buffer to generate the command into
++ * @maxlen: The length of the buffer the command will be generated into
++ * @type: The type of the cmd, checked against further operations
++ * @run_command: The type-specific function that will actually run the command
++ *
++ * Initialize a dynevent_cmd.  A dynevent_cmd is used to build up and
++ * run dynamic event creation commands, such as commands for creating
++ * synthetic and kprobe events.  Before calling any of the functions
++ * used to build the command, a dynevent_cmd object should be
++ * instantiated and initialized using this function.
++ *
++ * The initialization sets things up by saving a pointer to the
++ * user-supplied buffer and its length via the @buf and @maxlen
++ * params, and by saving the cmd-specific @type and @run_command
++ * params which are used to check subsequent dynevent_cmd operations
++ * and actually run the command when complete.
++ */
++void dynevent_cmd_init(struct dynevent_cmd *cmd, char *buf, int maxlen,
++		       enum dynevent_type type,
++		       dynevent_create_fn_t run_command)
++{
++	memset(cmd, '\0', sizeof(*cmd));
++
++	cmd->buf = buf;
++	cmd->maxlen = maxlen;
++	cmd->remaining = cmd->maxlen;
++	cmd->type = type;
++	cmd->run_command = run_command;
++}
++EXPORT_SYMBOL_GPL(dynevent_cmd_init);
++
++/**
++ * dynevent_arg_init - Initialize a dynevent_arg object
++ * @arg: A pointer to the dynevent_arg struct representing the arg
++ * @check_arg: An (optional) pointer to a function checking arg sanity
++ * @separator: An (optional) separator, appended after adding the arg
++ *
++ * Initialize a dynevent_arg object.  A dynevent_arg represents an
++ * object used to append single arguments to the current command
++ * string.  The @check_arg function, if present, will be used to check
++ * the sanity of the current arg string (which is directly set by the
++ * caller).  After the arg string is successfully appended to the
++ * command string, the optional @separator is appended.  If no
++ * separator was specified when initializing the arg, a space will be
++ * appended.
++ */
++void dynevent_arg_init(struct dynevent_arg *arg,
++		       dynevent_check_arg_fn_t check_arg,
++		       char separator)
++{
++	memset(arg, '\0', sizeof(*arg));
++
++	if (!separator)
++		separator = ' ';
++	arg->separator = separator;
++
++	arg->check_arg = check_arg;
++}
++EXPORT_SYMBOL_GPL(dynevent_arg_init);
++
++/**
++ * dynevent_arg_pair_init - Initialize a dynevent_arg_pair object
++ * @arg_pair: A pointer to the dynevent_arg_pair struct representing the arg
++ * @check_arg: An (optional) pointer to a function checking arg sanity
++ * @operator: An (optional) operator, appended after adding the first arg
++ * @separator: An (optional) separator, appended after adding the second arg
++ *
++ * Initialize a dynevent_arg_pair object.  A dynevent_arg_pair
++ * represents an object used to append argument pairs such as 'type
++ * variable_name;' or 'x+y' to the current command string.  An
++ * argument pair consists of a left-hand-side argument and a
++ * right-hand-side argument separated by an operator, which can be
++ * whitespace, all followed by a separator, if applicable. The
++ * @check_arg function, if present, will be used to check the sanity
++ * of the current arg strings (which is directly set by the caller).
++ * After the first arg string is successfully appended to the command
++ * string, the optional @operator is appended, followed by the second
++ * arg and and optional @separator.  If no separator was specified
++ * when initializing the arg, a space will be appended.
++ */
++void dynevent_arg_pair_init(struct dynevent_arg_pair *arg_pair,
++			    dynevent_check_arg_fn_t check_arg,
++			    char operator, char separator)
++{
++	memset(arg_pair, '\0', sizeof(*arg_pair));
++
++	if (!operator)
++		operator = ' ';
++	arg_pair->operator = operator;
++
++	if (!separator)
++		separator = ' ';
++	arg_pair->separator = separator;
++
++	arg_pair->check_arg = check_arg;
++}
++EXPORT_SYMBOL_GPL(dynevent_arg_pair_init);
++
++/**
++ * create_dynevent - Create the dynamic event contained in dynevent_cmd
++ * @cmd: The dynevent_cmd object containing the dynamic event creation command
++ *
++ * Once a dynevent_cmd object has been successfully built up via the
++ * dynevent_cmd_init(), add_dynevent_arg() and add_dynevent_arg_pair()
++ * functions, this function runs the final command to actually create
++ * the event.
++ *
++ * Return: 0 if the event was successfully created, error otherwise.
++ */
++int create_dynevent(struct dynevent_cmd *cmd)
++{
++	return cmd->run_command(cmd);
++}
++EXPORT_SYMBOL_GPL(create_dynevent);
++
+ #ifdef CONFIG_EVENT_TRACE_STARTUP_TEST
  
- 	synchronize_irq(port->irq);
-@@ -2679,7 +2632,7 @@ serial8250_do_set_termios(struct uart_port *port, struct ktermios *termios,
- 	if (up->capabilities & UART_CAP_RTOIE)
- 		up->ier |= UART_IER_RTOIE;
- 
--	set_ier(up, up->ier);
-+	serial8250_set_IER(up, up->ier);
- 
- 	if (up->capabilities & UART_CAP_EFR) {
- 		unsigned char efr = 0;
-@@ -3189,12 +3142,13 @@ void serial8250_console_write_atomic(struct uart_8250_port *up,
- {
- 	struct uart_port *port = &up->port;
- 	unsigned int flags;
-+	unsigned int ier;
- 
- 	console_atomic_lock(&flags);
- 
- 	touch_nmi_watchdog();
- 
--	clear_ier(up);
-+	ier = serial8250_clear_IER(up);
- 
- 	if (atomic_fetch_inc(&up->console_printing)) {
- 		uart_console_write(port, "\n", 1,
-@@ -3204,7 +3158,7 @@ void serial8250_console_write_atomic(struct uart_8250_port *up,
- 	atomic_dec(&up->console_printing);
- 
- 	wait_for_xmitr(up, BOTH_EMPTY);
--	restore_ier(up);
-+	serial8250_set_IER(up, ier);
- 
- 	console_atomic_unlock(flags);
- }
-@@ -3220,13 +3174,14 @@ void serial8250_console_write(struct uart_8250_port *up, const char *s,
- {
- 	struct uart_port *port = &up->port;
- 	unsigned long flags;
-+	unsigned int ier;
- 
- 	touch_nmi_watchdog();
- 
- 	serial8250_rpm_get(up);
- 	spin_lock_irqsave(&port->lock, flags);
- 
--	clear_ier(up);
-+	ier = serial8250_clear_IER(up);
- 
- 	/* check scratch reg to see if port powered off during system sleep */
- 	if (up->canary && (up->canary != serial_port_in(port, UART_SCR))) {
-@@ -3243,7 +3198,7 @@ void serial8250_console_write(struct uart_8250_port *up, const char *s,
- 	 *	and restore the IER
- 	 */
- 	wait_for_xmitr(up, BOTH_EMPTY);
--	restore_ier(up);
-+	serial8250_set_IER(up, ier);
- 
- 	/*
- 	 *	The receive handling will happen properly because the
-diff --git a/localversion-rt b/localversion-rt
-index ad3da1bcab7e8..0efe7ba1930e1 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt4
-+-rt5
+ static DEFINE_SPINLOCK(test_spinlock);
+-- 
+2.14.1
+
