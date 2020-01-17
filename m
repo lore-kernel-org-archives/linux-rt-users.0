@@ -6,30 +6,30 @@ X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 82505C33C9E
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:42:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E9FEFC33C9E
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:42:30 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 645842467D
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:42:19 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id CBDC02467D
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:42:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729496AbgAQRmI (ORCPT
+        id S1729578AbgAQRmV (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 17 Jan 2020 12:42:08 -0500
-Received: from mail.kernel.org ([198.145.29.99]:40600 "EHLO mail.kernel.org"
+        Fri, 17 Jan 2020 12:42:21 -0500
+Received: from mail.kernel.org ([198.145.29.99]:40136 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729274AbgAQRld (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 17 Jan 2020 12:41:33 -0500
+        id S1729203AbgAQRlc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 17 Jan 2020 12:41:32 -0500
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id C3F4D24692;
-        Fri, 17 Jan 2020 17:41:32 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 793E622525;
+        Fri, 17 Jan 2020 17:41:31 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.93)
         (envelope-from <rostedt@goodmis.org>)
-        id 1isVch-000QaX-NX; Fri, 17 Jan 2020 12:41:31 -0500
-Message-Id: <20200117174131.609781576@goodmis.org>
+        id 1isVcg-000QVt-Ce; Fri, 17 Jan 2020 12:41:30 -0500
+Message-Id: <20200117174130.269046903@goodmis.org>
 User-Agent: quilt/0.65
-Date:   Fri, 17 Jan 2020 12:41:39 -0500
+Date:   Fri, 17 Jan 2020 12:41:30 -0500
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -39,8 +39,9 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 28/32] locking: Make spinlock_t and rwlock_t a RCU section on RT
+        Tom Zanussi <zanussi@kernel.org>,
+        "Peter Zijlstra (Intel)" <peterz@infradead.org>
+Subject: [PATCH RT 19/32] locking/rtmutex: Clean ->pi_blocked_on in the error case
 References: <20200117174111.282847363@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -54,127 +55,100 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Peter Zijlstra <peterz@infradead.org>
 
-[ Upstream commit 84440022a0e1c8c936d61f8f97593674a295d409 ]
+[ Upstream commit 0be4ea6e3ce693101be0fbd55a0cc7ce238ab2eb ]
 
-On !RT a locked spinlock_t and rwlock_t disables preemption which
-implies a RCU read section. There is code that relies on that behaviour.
+The function rt_mutex_wait_proxy_lock() cleans ->pi_blocked_on in case
+of failure (timeout, signal). The same cleanup is required in
+__rt_mutex_start_proxy_lock().
+In both the cases the tasks was interrupted by a signal or timeout while
+acquiring the lock and after the interruption it longer blocks on the
+lock.
 
-Add an explicit RCU read section on RT while a sleeping lock (a lock
-which would disables preemption on !RT) acquired.
-
+Fixes: 1a1fb985f2e2b ("futex: Handle early deadlock return correctly")
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/locking/rtmutex.c   | 6 ++++++
- kernel/locking/rwlock-rt.c | 6 ++++++
- 2 files changed, 12 insertions(+)
+ kernel/locking/rtmutex.c | 43 +++++++++++++++++++++++-----------------
+ 1 file changed, 25 insertions(+), 18 deletions(-)
 
 diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index 63b3d6f306fa..c7d3ae01b4e5 100644
+index 2a9bf2443acc..63b3d6f306fa 100644
 --- a/kernel/locking/rtmutex.c
 +++ b/kernel/locking/rtmutex.c
-@@ -1142,6 +1142,7 @@ void __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
- void __lockfunc rt_spin_lock(spinlock_t *lock)
- {
- 	sleeping_lock_inc();
-+	rcu_read_lock();
- 	migrate_disable();
- 	spin_acquire(&lock->dep_map, 0, 0, _RET_IP_);
- 	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
-@@ -1157,6 +1158,7 @@ void __lockfunc __rt_spin_lock(struct rt_mutex *lock)
- void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subclass)
- {
- 	sleeping_lock_inc();
-+	rcu_read_lock();
- 	migrate_disable();
- 	spin_acquire(&lock->dep_map, subclass, 0, _RET_IP_);
- 	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
-@@ -1170,6 +1172,7 @@ void __lockfunc rt_spin_unlock(spinlock_t *lock)
- 	spin_release(&lock->dep_map, 1, _RET_IP_);
- 	rt_spin_lock_fastunlock(&lock->lock, rt_spin_lock_slowunlock);
- 	migrate_enable();
-+	rcu_read_unlock();
- 	sleeping_lock_dec();
+@@ -2320,6 +2320,26 @@ void rt_mutex_proxy_unlock(struct rt_mutex *lock,
+ 	rt_mutex_set_owner(lock, NULL);
  }
- EXPORT_SYMBOL(rt_spin_unlock);
-@@ -1201,6 +1204,7 @@ int __lockfunc rt_spin_trylock(spinlock_t *lock)
- 	ret = __rt_mutex_trylock(&lock->lock);
- 	if (ret) {
- 		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
-+		rcu_read_lock();
- 	} else {
- 		migrate_enable();
- 		sleeping_lock_dec();
-@@ -1217,6 +1221,7 @@ int __lockfunc rt_spin_trylock_bh(spinlock_t *lock)
- 	ret = __rt_mutex_trylock(&lock->lock);
- 	if (ret) {
- 		sleeping_lock_inc();
-+		rcu_read_lock();
- 		migrate_disable();
- 		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
- 	} else
-@@ -1233,6 +1238,7 @@ int __lockfunc rt_spin_trylock_irqsave(spinlock_t *lock, unsigned long *flags)
- 	ret = __rt_mutex_trylock(&lock->lock);
- 	if (ret) {
- 		sleeping_lock_inc();
-+		rcu_read_lock();
- 		migrate_disable();
- 		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
+ 
++static void fixup_rt_mutex_blocked(struct rt_mutex *lock)
++{
++	struct task_struct *tsk = current;
++	/*
++	 * RT has a problem here when the wait got interrupted by a timeout
++	 * or a signal. task->pi_blocked_on is still set. The task must
++	 * acquire the hash bucket lock when returning from this function.
++	 *
++	 * If the hash bucket lock is contended then the
++	 * BUG_ON(rt_mutex_real_waiter(task->pi_blocked_on)) in
++	 * task_blocks_on_rt_mutex() will trigger. This can be avoided by
++	 * clearing task->pi_blocked_on which removes the task from the
++	 * boosting chain of the rtmutex. That's correct because the task
++	 * is not longer blocked on it.
++	 */
++	raw_spin_lock(&tsk->pi_lock);
++	tsk->pi_blocked_on = NULL;
++	raw_spin_unlock(&tsk->pi_lock);
++}
++
+ /**
+  * __rt_mutex_start_proxy_lock() - Start lock acquisition for another task
+  * @lock:		the rt_mutex to take
+@@ -2392,6 +2412,9 @@ int __rt_mutex_start_proxy_lock(struct rt_mutex *lock,
+ 		ret = 0;
  	}
-diff --git a/kernel/locking/rwlock-rt.c b/kernel/locking/rwlock-rt.c
-index c3b91205161c..0ae8c62ea832 100644
---- a/kernel/locking/rwlock-rt.c
-+++ b/kernel/locking/rwlock-rt.c
-@@ -310,6 +310,7 @@ int __lockfunc rt_read_trylock(rwlock_t *rwlock)
- 	ret = do_read_rt_trylock(rwlock);
- 	if (ret) {
- 		rwlock_acquire_read(&rwlock->dep_map, 0, 1, _RET_IP_);
-+		rcu_read_lock();
- 	} else {
- 		migrate_enable();
- 		sleeping_lock_dec();
-@@ -327,6 +328,7 @@ int __lockfunc rt_write_trylock(rwlock_t *rwlock)
- 	ret = do_write_rt_trylock(rwlock);
- 	if (ret) {
- 		rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
-+		rcu_read_lock();
- 	} else {
- 		migrate_enable();
- 		sleeping_lock_dec();
-@@ -338,6 +340,7 @@ EXPORT_SYMBOL(rt_write_trylock);
- void __lockfunc rt_read_lock(rwlock_t *rwlock)
+ 
++	if (ret)
++		fixup_rt_mutex_blocked(lock);
++
+ 	debug_rt_mutex_print_deadlock(waiter);
+ 
+ 	return ret;
+@@ -2472,7 +2495,6 @@ int rt_mutex_wait_proxy_lock(struct rt_mutex *lock,
+ 			       struct hrtimer_sleeper *to,
+ 			       struct rt_mutex_waiter *waiter)
  {
- 	sleeping_lock_inc();
-+	rcu_read_lock();
- 	migrate_disable();
- 	rwlock_acquire_read(&rwlock->dep_map, 0, 0, _RET_IP_);
- 	do_read_rt_lock(rwlock);
-@@ -347,6 +350,7 @@ EXPORT_SYMBOL(rt_read_lock);
- void __lockfunc rt_write_lock(rwlock_t *rwlock)
- {
- 	sleeping_lock_inc();
-+	rcu_read_lock();
- 	migrate_disable();
- 	rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
- 	do_write_rt_lock(rwlock);
-@@ -358,6 +362,7 @@ void __lockfunc rt_read_unlock(rwlock_t *rwlock)
- 	rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
- 	do_read_rt_unlock(rwlock);
- 	migrate_enable();
-+	rcu_read_unlock();
- 	sleeping_lock_dec();
- }
- EXPORT_SYMBOL(rt_read_unlock);
-@@ -367,6 +372,7 @@ void __lockfunc rt_write_unlock(rwlock_t *rwlock)
- 	rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
- 	do_write_rt_unlock(rwlock);
- 	migrate_enable();
-+	rcu_read_unlock();
- 	sleeping_lock_dec();
- }
- EXPORT_SYMBOL(rt_write_unlock);
+-	struct task_struct *tsk = current;
+ 	int ret;
+ 
+ 	raw_spin_lock_irq(&lock->wait_lock);
+@@ -2484,23 +2506,8 @@ int rt_mutex_wait_proxy_lock(struct rt_mutex *lock,
+ 	 * have to fix that up.
+ 	 */
+ 	fixup_rt_mutex_waiters(lock);
+-	/*
+-	 * RT has a problem here when the wait got interrupted by a timeout
+-	 * or a signal. task->pi_blocked_on is still set. The task must
+-	 * acquire the hash bucket lock when returning from this function.
+-	 *
+-	 * If the hash bucket lock is contended then the
+-	 * BUG_ON(rt_mutex_real_waiter(task->pi_blocked_on)) in
+-	 * task_blocks_on_rt_mutex() will trigger. This can be avoided by
+-	 * clearing task->pi_blocked_on which removes the task from the
+-	 * boosting chain of the rtmutex. That's correct because the task
+-	 * is not longer blocked on it.
+-	 */
+-	if (ret) {
+-		raw_spin_lock(&tsk->pi_lock);
+-		tsk->pi_blocked_on = NULL;
+-		raw_spin_unlock(&tsk->pi_lock);
+-	}
++	if (ret)
++		fixup_rt_mutex_blocked(lock);
+ 
+ 	raw_spin_unlock_irq(&lock->wait_lock);
+ 
 -- 
 2.24.1
 
