@@ -6,30 +6,30 @@ X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1C8B4C33CB3
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:42:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1D6A2C33C9E
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:42:53 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id EBDE6246B1
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:42:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id F295B246A5
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:42:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729133AbgAQRlb (ORCPT
+        id S1729335AbgAQRms (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 17 Jan 2020 12:41:31 -0500
-Received: from mail.kernel.org ([198.145.29.99]:40074 "EHLO mail.kernel.org"
+        Fri, 17 Jan 2020 12:42:48 -0500
+Received: from mail.kernel.org ([198.145.29.99]:39994 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729110AbgAQRla (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 17 Jan 2020 12:41:30 -0500
+        id S1729153AbgAQRlb (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 17 Jan 2020 12:41:31 -0500
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 0157D217F4;
+        by mail.kernel.org (Postfix) with ESMTPSA id CB6C121835;
         Fri, 17 Jan 2020 17:41:30 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.93)
         (envelope-from <rostedt@goodmis.org>)
-        id 1isVce-000QRF-TP; Fri, 17 Jan 2020 12:41:28 -0500
-Message-Id: <20200117174128.792272889@goodmis.org>
+        id 1isVcf-000QTp-OG; Fri, 17 Jan 2020 12:41:29 -0500
+Message-Id: <20200117174129.633885497@goodmis.org>
 User-Agent: quilt/0.65
-Date:   Fri, 17 Jan 2020 12:41:21 -0500
+Date:   Fri, 17 Jan 2020 12:41:26 -0500
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -39,9 +39,8 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>,
-        Julien Grall <julien.grall@arm.com>
-Subject: [PATCH RT 10/32] hrtimer: Prevent using hrtimer_grab_expiry_lock() on migration_base
+        Tom Zanussi <zanussi@kernel.org>, Scott Wood <swood@redhat.com>
+Subject: [PATCH RT 15/32] sched: Remove dead __migrate_disabled() check
 References: <20200117174111.282847363@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -55,41 +54,38 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Julien Grall <julien.grall@arm.com>
+From: Scott Wood <swood@redhat.com>
 
-[ Upstream commit cef1b87f98823af923a386f3f69149acb212d4a1 ]
+[ Upstream commit 14d9272d534ea91262e15db99443fc5995c7c016 ]
 
-As tglx puts it:
-|If base == migration_base then there is no point to lock soft_expiry_lock
-|simply because the timer is not executing the callback in soft irq context
-|and the whole lock/unlock dance can be avoided.
+This code was unreachable given the __migrate_disabled() branch
+to "out" immediately beforehand.
 
-Furthermore, all the path leading to hrtimer_grab_expiry_lock() assumes
-timer->base and timer->base->cpu_base are always non-NULL. So it is safe
-to remove the NULL checks here.
-
-Signed-off-by: Julien Grall <julien.grall@arm.com>
-Link: https://lkml.kernel.org/r/alpine.DEB.2.21.1908211557420.2223@nanos.tec.linutronix.de
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-[bigeasy: rewrite changelog]
+Signed-off-by: Scott Wood <swood@redhat.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/time/hrtimer.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kernel/sched/core.c | 7 -------
+ 1 file changed, 7 deletions(-)
 
-diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
-index 49d20fe8570f..1a5167c68310 100644
---- a/kernel/time/hrtimer.c
-+++ b/kernel/time/hrtimer.c
-@@ -943,7 +943,7 @@ void hrtimer_grab_expiry_lock(const struct hrtimer *timer)
- {
- 	struct hrtimer_clock_base *base = READ_ONCE(timer->base);
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index d6bd8129a390..a29f33e776d0 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -1182,13 +1182,6 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
+ 	if (cpumask_test_cpu(task_cpu(p), new_mask) || __migrate_disabled(p))
+ 		goto out;
  
--	if (timer->is_soft && base && base->cpu_base) {
-+	if (timer->is_soft && base != &migration_base) {
- 		spin_lock(&base->cpu_base->softirq_expiry_lock);
- 		spin_unlock(&base->cpu_base->softirq_expiry_lock);
- 	}
+-#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+-	if (__migrate_disabled(p)) {
+-		p->migrate_disable_update = 1;
+-		goto out;
+-	}
+-#endif
+-
+ 	if (task_running(rq, p) || p->state == TASK_WAKING) {
+ 		struct migration_arg arg = { p, dest_cpu };
+ 		/* Need help from migration thread: drop lock and wait. */
 -- 
 2.24.1
 
