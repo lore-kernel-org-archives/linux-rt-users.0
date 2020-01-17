@@ -6,30 +6,30 @@ X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EC457C33C9E
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:42:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1C8B4C33CB3
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:42:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id C6DCF24695
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:42:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id EBDE6246B1
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:42:48 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729238AbgAQRlc (ORCPT
+        id S1729133AbgAQRlb (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 17 Jan 2020 12:41:32 -0500
+        Fri, 17 Jan 2020 12:41:31 -0500
 Received: from mail.kernel.org ([198.145.29.99]:40074 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729188AbgAQRlb (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 17 Jan 2020 12:41:31 -0500
+        id S1729110AbgAQRla (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 17 Jan 2020 12:41:30 -0500
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 26E532467A;
-        Fri, 17 Jan 2020 17:41:31 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 0157D217F4;
+        Fri, 17 Jan 2020 17:41:30 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.93)
         (envelope-from <rostedt@goodmis.org>)
-        id 1isVcg-000QUr-2u; Fri, 17 Jan 2020 12:41:30 -0500
-Message-Id: <20200117174129.945230768@goodmis.org>
+        id 1isVce-000QRF-TP; Fri, 17 Jan 2020 12:41:28 -0500
+Message-Id: <20200117174128.792272889@goodmis.org>
 User-Agent: quilt/0.65
-Date:   Fri, 17 Jan 2020 12:41:28 -0500
+Date:   Fri, 17 Jan 2020 12:41:21 -0500
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -40,8 +40,8 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>,
-        Waiman Long <longman@redhat.com>
-Subject: [PATCH RT 17/32] lib/smp_processor_id: Dont use cpumask_equal()
+        Julien Grall <julien.grall@arm.com>
+Subject: [PATCH RT 10/32] hrtimer: Prevent using hrtimer_grab_expiry_lock() on migration_base
 References: <20200117174111.282847363@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -55,44 +55,41 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Waiman Long <longman@redhat.com>
+From: Julien Grall <julien.grall@arm.com>
 
-[ Upstream commit 659252061477862f45b79e1de169e6030f5c8918 ]
+[ Upstream commit cef1b87f98823af923a386f3f69149acb212d4a1 ]
 
-The check_preemption_disabled() function uses cpumask_equal() to see
-if the task is bounded to the current CPU only. cpumask_equal() calls
-memcmp() to do the comparison. As x86 doesn't have __HAVE_ARCH_MEMCMP,
-the slow memcmp() function in lib/string.c is used.
+As tglx puts it:
+|If base == migration_base then there is no point to lock soft_expiry_lock
+|simply because the timer is not executing the callback in soft irq context
+|and the whole lock/unlock dance can be avoided.
 
-On a RT kernel that call check_preemption_disabled() very frequently,
-below is the perf-record output of a certain microbenchmark:
+Furthermore, all the path leading to hrtimer_grab_expiry_lock() assumes
+timer->base and timer->base->cpu_base are always non-NULL. So it is safe
+to remove the NULL checks here.
 
-  42.75%  2.45%  testpmd [kernel.kallsyms] [k] check_preemption_disabled
-  40.01% 39.97%  testpmd [kernel.kallsyms] [k] memcmp
-
-We should avoid calling memcmp() in performance critical path. So the
-cpumask_equal() call is now replaced with an equivalent simpler check.
-
-Signed-off-by: Waiman Long <longman@redhat.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Julien Grall <julien.grall@arm.com>
+Link: https://lkml.kernel.org/r/alpine.DEB.2.21.1908211557420.2223@nanos.tec.linutronix.de
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+[bigeasy: rewrite changelog]
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- lib/smp_processor_id.c | 2 +-
+ kernel/time/hrtimer.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/lib/smp_processor_id.c b/lib/smp_processor_id.c
-index fb35c45b9421..b8a8a8db2d75 100644
---- a/lib/smp_processor_id.c
-+++ b/lib/smp_processor_id.c
-@@ -22,7 +22,7 @@ notrace static unsigned int check_preemption_disabled(const char *what1,
- 	 * Kernel threads bound to a single CPU can safely use
- 	 * smp_processor_id():
- 	 */
--	if (cpumask_equal(current->cpus_ptr, cpumask_of(this_cpu)))
-+	if (current->nr_cpus_allowed == 1)
- 		goto out;
+diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+index 49d20fe8570f..1a5167c68310 100644
+--- a/kernel/time/hrtimer.c
++++ b/kernel/time/hrtimer.c
+@@ -943,7 +943,7 @@ void hrtimer_grab_expiry_lock(const struct hrtimer *timer)
+ {
+ 	struct hrtimer_clock_base *base = READ_ONCE(timer->base);
  
- 	/*
+-	if (timer->is_soft && base && base->cpu_base) {
++	if (timer->is_soft && base != &migration_base) {
+ 		spin_lock(&base->cpu_base->softirq_expiry_lock);
+ 		spin_unlock(&base->cpu_base->softirq_expiry_lock);
+ 	}
 -- 
 2.24.1
 
