@@ -6,30 +6,30 @@ X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D646BC33CB3
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:43:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 10E4DC33CB3
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:43:11 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id B057B24699
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:43:02 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DB11924691
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:43:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729674AbgAQRm7 (ORCPT
+        id S1729715AbgAQRnE (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 17 Jan 2020 12:42:59 -0500
-Received: from mail.kernel.org ([198.145.29.99]:39980 "EHLO mail.kernel.org"
+        Fri, 17 Jan 2020 12:43:04 -0500
+Received: from mail.kernel.org ([198.145.29.99]:39982 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729148AbgAQRlb (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 17 Jan 2020 12:41:31 -0500
+        id S1728992AbgAQRla (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 17 Jan 2020 12:41:30 -0500
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id A24A6222C3;
-        Fri, 17 Jan 2020 17:41:30 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 42F4C21D7D;
+        Fri, 17 Jan 2020 17:41:29 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.93)
         (envelope-from <rostedt@goodmis.org>)
-        id 1isVcf-000QTJ-J6; Fri, 17 Jan 2020 12:41:29 -0500
-Message-Id: <20200117174129.434057274@goodmis.org>
+        id 1isVce-000QOe-5w; Fri, 17 Jan 2020 12:41:28 -0500
+Message-Id: <20200117174128.066471951@goodmis.org>
 User-Agent: quilt/0.65
-Date:   Fri, 17 Jan 2020 12:41:25 -0500
+Date:   Fri, 17 Jan 2020 12:41:16 -0500
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -39,8 +39,8 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>, Scott Wood <swood@redhat.com>
-Subject: [PATCH RT 14/32] sched: __set_cpus_allowed_ptr: Check cpus_mask, not cpus_ptr
+        Tom Zanussi <zanussi@kernel.org>
+Subject: [PATCH RT 05/32] dma-buf: Use seqlock_t instread disabling preemption
 References: <20200117174111.282847363@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -54,37 +54,295 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Scott Wood <swood@redhat.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-[ Upstream commit e5606fb7b042db634ed62b4dd733d62e050e468f ]
+[ Upstream commit 240610aa31094f51f299f06eb8dae8d4cd8d4500 ]
 
-This function is concerned with the long-term cpu mask, not the
-transitory mask the task might have while migrate disabled.  Before
-this patch, if a task was migrate disabled at the time
-__set_cpus_allowed_ptr() was called, and the new mask happened to be
-equal to the cpu that the task was running on, then the mask update
-would be lost.
+"dma reservation" disables preemption while acquiring the write access
+for "seqcount" and then may acquire a spinlock_t.
 
-Signed-off-by: Scott Wood <swood@redhat.com>
+Replace the seqcount with a seqlock_t which provides seqcount like
+semantic and lock for writer.
+
+Link: https://lkml.kernel.org/r/f410b429-db86-f81c-7c67-f563fa808b62@free.fr
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/sched/core.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/dma-buf/dma-buf.c                     |  8 ++--
+ drivers/dma-buf/reservation.c                 | 43 +++++++------------
+ .../gpu/drm/amd/amdgpu/amdgpu_amdkfd_gpuvm.c  |  6 +--
+ drivers/gpu/drm/i915/i915_gem.c               | 10 ++---
+ include/linux/reservation.h                   |  4 +-
+ 5 files changed, 29 insertions(+), 42 deletions(-)
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 3413b9ebef1f..d6bd8129a390 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -1157,7 +1157,7 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
- 		goto out;
+diff --git a/drivers/dma-buf/dma-buf.c b/drivers/dma-buf/dma-buf.c
+index 69842145c223..4c3ef46e7149 100644
+--- a/drivers/dma-buf/dma-buf.c
++++ b/drivers/dma-buf/dma-buf.c
+@@ -179,7 +179,7 @@ static __poll_t dma_buf_poll(struct file *file, poll_table *poll)
+ 		return 0;
+ 
+ retry:
+-	seq = read_seqcount_begin(&resv->seq);
++	seq = read_seqbegin(&resv->seq);
+ 	rcu_read_lock();
+ 
+ 	fobj = rcu_dereference(resv->fence);
+@@ -188,7 +188,7 @@ static __poll_t dma_buf_poll(struct file *file, poll_table *poll)
+ 	else
+ 		shared_count = 0;
+ 	fence_excl = rcu_dereference(resv->fence_excl);
+-	if (read_seqcount_retry(&resv->seq, seq)) {
++	if (read_seqretry(&resv->seq, seq)) {
+ 		rcu_read_unlock();
+ 		goto retry;
+ 	}
+@@ -1046,12 +1046,12 @@ static int dma_buf_debug_show(struct seq_file *s, void *unused)
+ 
+ 		robj = buf_obj->resv;
+ 		while (true) {
+-			seq = read_seqcount_begin(&robj->seq);
++			seq = read_seqbegin(&robj->seq);
+ 			rcu_read_lock();
+ 			fobj = rcu_dereference(robj->fence);
+ 			shared_count = fobj ? fobj->shared_count : 0;
+ 			fence = rcu_dereference(robj->fence_excl);
+-			if (!read_seqcount_retry(&robj->seq, seq))
++			if (!read_seqretry(&robj->seq, seq))
+ 				break;
+ 			rcu_read_unlock();
+ 		}
+diff --git a/drivers/dma-buf/reservation.c b/drivers/dma-buf/reservation.c
+index 49ab09468ba1..f11d58492216 100644
+--- a/drivers/dma-buf/reservation.c
++++ b/drivers/dma-buf/reservation.c
+@@ -109,8 +109,7 @@ reservation_object_add_shared_inplace(struct reservation_object *obj,
+ 
+ 	dma_fence_get(fence);
+ 
+-	preempt_disable();
+-	write_seqcount_begin(&obj->seq);
++	write_seqlock(&obj->seq);
+ 
+ 	for (i = 0; i < fobj->shared_count; ++i) {
+ 		struct dma_fence *old_fence;
+@@ -121,8 +120,7 @@ reservation_object_add_shared_inplace(struct reservation_object *obj,
+ 		if (old_fence->context == fence->context) {
+ 			/* memory barrier is added by write_seqcount_begin */
+ 			RCU_INIT_POINTER(fobj->shared[i], fence);
+-			write_seqcount_end(&obj->seq);
+-			preempt_enable();
++			write_sequnlock(&obj->seq);
+ 
+ 			dma_fence_put(old_fence);
+ 			return;
+@@ -146,8 +144,7 @@ reservation_object_add_shared_inplace(struct reservation_object *obj,
+ 		fobj->shared_count++;
  	}
  
--	if (cpumask_equal(p->cpus_ptr, new_mask))
-+	if (cpumask_equal(&p->cpus_mask, new_mask))
- 		goto out;
+-	write_seqcount_end(&obj->seq);
+-	preempt_enable();
++	write_sequnlock(&obj->seq);
  
- 	dest_cpu = cpumask_any_and(cpu_valid_mask, new_mask);
+ 	dma_fence_put(signaled);
+ }
+@@ -191,15 +188,13 @@ reservation_object_add_shared_replace(struct reservation_object *obj,
+ 	fobj->shared_count++;
+ 
+ done:
+-	preempt_disable();
+-	write_seqcount_begin(&obj->seq);
++	write_seqlock(&obj->seq);
+ 	/*
+ 	 * RCU_INIT_POINTER can be used here,
+ 	 * seqcount provides the necessary barriers
+ 	 */
+ 	RCU_INIT_POINTER(obj->fence, fobj);
+-	write_seqcount_end(&obj->seq);
+-	preempt_enable();
++	write_sequnlock(&obj->seq);
+ 
+ 	if (!old)
+ 		return;
+@@ -259,14 +254,11 @@ void reservation_object_add_excl_fence(struct reservation_object *obj,
+ 	if (fence)
+ 		dma_fence_get(fence);
+ 
+-	preempt_disable();
+-	write_seqcount_begin(&obj->seq);
+-	/* write_seqcount_begin provides the necessary memory barrier */
++	write_seqlock(&obj->seq);
+ 	RCU_INIT_POINTER(obj->fence_excl, fence);
+ 	if (old)
+ 		old->shared_count = 0;
+-	write_seqcount_end(&obj->seq);
+-	preempt_enable();
++	write_sequnlock(&obj->seq);
+ 
+ 	/* inplace update, no shared fences */
+ 	while (i--)
+@@ -349,13 +341,10 @@ int reservation_object_copy_fences(struct reservation_object *dst,
+ 	src_list = reservation_object_get_list(dst);
+ 	old = reservation_object_get_excl(dst);
+ 
+-	preempt_disable();
+-	write_seqcount_begin(&dst->seq);
+-	/* write_seqcount_begin provides the necessary memory barrier */
++	write_seqlock(&dst->seq);
+ 	RCU_INIT_POINTER(dst->fence_excl, new);
+ 	RCU_INIT_POINTER(dst->fence, dst_list);
+-	write_seqcount_end(&dst->seq);
+-	preempt_enable();
++	write_sequnlock(&dst->seq);
+ 
+ 	if (src_list)
+ 		kfree_rcu(src_list, rcu);
+@@ -396,7 +385,7 @@ int reservation_object_get_fences_rcu(struct reservation_object *obj,
+ 		shared_count = i = 0;
+ 
+ 		rcu_read_lock();
+-		seq = read_seqcount_begin(&obj->seq);
++		seq = read_seqbegin(&obj->seq);
+ 
+ 		fence_excl = rcu_dereference(obj->fence_excl);
+ 		if (fence_excl && !dma_fence_get_rcu(fence_excl))
+@@ -445,7 +434,7 @@ int reservation_object_get_fences_rcu(struct reservation_object *obj,
+ 			}
+ 		}
+ 
+-		if (i != shared_count || read_seqcount_retry(&obj->seq, seq)) {
++		if (i != shared_count || read_seqretry(&obj->seq, seq)) {
+ 			while (i--)
+ 				dma_fence_put(shared[i]);
+ 			dma_fence_put(fence_excl);
+@@ -494,7 +483,7 @@ long reservation_object_wait_timeout_rcu(struct reservation_object *obj,
+ 
+ retry:
+ 	shared_count = 0;
+-	seq = read_seqcount_begin(&obj->seq);
++	seq = read_seqbegin(&obj->seq);
+ 	rcu_read_lock();
+ 	i = -1;
+ 
+@@ -541,7 +530,7 @@ long reservation_object_wait_timeout_rcu(struct reservation_object *obj,
+ 
+ 	rcu_read_unlock();
+ 	if (fence) {
+-		if (read_seqcount_retry(&obj->seq, seq)) {
++		if (read_seqretry(&obj->seq, seq)) {
+ 			dma_fence_put(fence);
+ 			goto retry;
+ 		}
+@@ -597,7 +586,7 @@ bool reservation_object_test_signaled_rcu(struct reservation_object *obj,
+ retry:
+ 	ret = true;
+ 	shared_count = 0;
+-	seq = read_seqcount_begin(&obj->seq);
++	seq = read_seqbegin(&obj->seq);
+ 
+ 	if (test_all) {
+ 		unsigned i;
+@@ -618,7 +607,7 @@ bool reservation_object_test_signaled_rcu(struct reservation_object *obj,
+ 				break;
+ 		}
+ 
+-		if (read_seqcount_retry(&obj->seq, seq))
++		if (read_seqretry(&obj->seq, seq))
+ 			goto retry;
+ 	}
+ 
+@@ -631,7 +620,7 @@ bool reservation_object_test_signaled_rcu(struct reservation_object *obj,
+ 			if (ret < 0)
+ 				goto retry;
+ 
+-			if (read_seqcount_retry(&obj->seq, seq))
++			if (read_seqretry(&obj->seq, seq))
+ 				goto retry;
+ 		}
+ 	}
+diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu_amdkfd_gpuvm.c b/drivers/gpu/drm/amd/amdgpu/amdgpu_amdkfd_gpuvm.c
+index f92597c292fe..10c675850aac 100644
+--- a/drivers/gpu/drm/amd/amdgpu/amdgpu_amdkfd_gpuvm.c
++++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_amdkfd_gpuvm.c
+@@ -261,11 +261,9 @@ static int amdgpu_amdkfd_remove_eviction_fence(struct amdgpu_bo *bo,
+ 	}
+ 
+ 	/* Install the new fence list, seqcount provides the barriers */
+-	preempt_disable();
+-	write_seqcount_begin(&resv->seq);
++	write_seqlock(&resv->seq);
+ 	RCU_INIT_POINTER(resv->fence, new);
+-	write_seqcount_end(&resv->seq);
+-	preempt_enable();
++	write_sequnlock(&resv->seq);
+ 
+ 	/* Drop the references to the removed fences or move them to ef_list */
+ 	for (i = j, k = 0; i < old->shared_count; ++i) {
+diff --git a/drivers/gpu/drm/i915/i915_gem.c b/drivers/gpu/drm/i915/i915_gem.c
+index c7d05ac7af3c..d484e79316bf 100644
+--- a/drivers/gpu/drm/i915/i915_gem.c
++++ b/drivers/gpu/drm/i915/i915_gem.c
+@@ -516,7 +516,7 @@ i915_gem_object_wait_reservation(struct reservation_object *resv,
+ 				 long timeout,
+ 				 struct intel_rps_client *rps_client)
+ {
+-	unsigned int seq = __read_seqcount_begin(&resv->seq);
++	unsigned int seq = read_seqbegin(&resv->seq);
+ 	struct dma_fence *excl;
+ 	bool prune_fences = false;
+ 
+@@ -569,9 +569,9 @@ i915_gem_object_wait_reservation(struct reservation_object *resv,
+ 	 * signaled and that the reservation object has not been changed (i.e.
+ 	 * no new fences have been added).
+ 	 */
+-	if (prune_fences && !__read_seqcount_retry(&resv->seq, seq)) {
++	if (prune_fences && !read_seqretry(&resv->seq, seq)) {
+ 		if (reservation_object_trylock(resv)) {
+-			if (!__read_seqcount_retry(&resv->seq, seq))
++			if (!read_seqretry(&resv->seq, seq))
+ 				reservation_object_add_excl_fence(resv, NULL);
+ 			reservation_object_unlock(resv);
+ 		}
+@@ -4615,7 +4615,7 @@ i915_gem_busy_ioctl(struct drm_device *dev, void *data,
+ 	 *
+ 	 */
+ retry:
+-	seq = raw_read_seqcount(&obj->resv->seq);
++	seq = read_seqbegin(&obj->resv->seq);
+ 
+ 	/* Translate the exclusive fence to the READ *and* WRITE engine */
+ 	args->busy = busy_check_writer(rcu_dereference(obj->resv->fence_excl));
+@@ -4633,7 +4633,7 @@ i915_gem_busy_ioctl(struct drm_device *dev, void *data,
+ 		}
+ 	}
+ 
+-	if (args->busy && read_seqcount_retry(&obj->resv->seq, seq))
++	if (args->busy && read_seqretry(&obj->resv->seq, seq))
+ 		goto retry;
+ 
+ 	err = 0;
+diff --git a/include/linux/reservation.h b/include/linux/reservation.h
+index 02166e815afb..0b31df1af698 100644
+--- a/include/linux/reservation.h
++++ b/include/linux/reservation.h
+@@ -72,7 +72,7 @@ struct reservation_object_list {
+  */
+ struct reservation_object {
+ 	struct ww_mutex lock;
+-	seqcount_t seq;
++	seqlock_t seq;
+ 
+ 	struct dma_fence __rcu *fence_excl;
+ 	struct reservation_object_list __rcu *fence;
+@@ -92,7 +92,7 @@ reservation_object_init(struct reservation_object *obj)
+ {
+ 	ww_mutex_init(&obj->lock, &reservation_ww_class);
+ 
+-	__seqcount_init(&obj->seq, reservation_seqcount_string, &reservation_seqcount_class);
++	seqlock_init(&obj->seq);
+ 	RCU_INIT_POINTER(obj->fence, NULL);
+ 	RCU_INIT_POINTER(obj->fence_excl, NULL);
+ 	obj->staged = NULL;
 -- 
 2.24.1
 
