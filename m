@@ -6,30 +6,30 @@ X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4811FC33C9E
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EFC32C33CB6
 	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:43:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 27C462467D
+	by mail.kernel.org (Postfix) with ESMTP id C8D672467D
 	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:43:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729449AbgAQRnR (ORCPT
+        id S1729096AbgAQRla (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 17 Jan 2020 12:43:17 -0500
-Received: from mail.kernel.org ([198.145.29.99]:39994 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729112AbgAQRla (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 17 Jan 2020 12:41:30 -0500
+Received: from mail.kernel.org ([198.145.29.99]:39878 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1728057AbgAQRl3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 17 Jan 2020 12:41:29 -0500
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 20BDF24653;
-        Fri, 17 Jan 2020 17:41:30 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id EF1862176D;
+        Fri, 17 Jan 2020 17:41:28 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.93)
         (envelope-from <rostedt@goodmis.org>)
-        id 1isVcf-000QRl-1k; Fri, 17 Jan 2020 12:41:29 -0500
-Message-Id: <20200117174128.933104514@goodmis.org>
+        id 1isVcd-000QNc-T2; Fri, 17 Jan 2020 12:41:27 -0500
+Message-Id: <20200117174127.780104410@goodmis.org>
 User-Agent: quilt/0.65
-Date:   Fri, 17 Jan 2020 12:41:22 -0500
+Date:   Fri, 17 Jan 2020 12:41:14 -0500
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -39,8 +39,9 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 11/32] hrtimer: Add a missing bracket and hide `migration_base on !SMP
+        Tom Zanussi <zanussi@kernel.org>,
+        Juri Lelli <juri.lelli@redhat.com>
+Subject: [PATCH RT 03/32] sched/deadline: Ensure inactive_timer runs in hardirq context
 References: <20200117174111.282847363@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -54,73 +55,48 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Juri Lelli <juri.lelli@redhat.com>
 
-[ Upstream commit 47b6de0b7f22c28b40275aeede3993d807668c3b ]
+[ Upstream commit ba94e7aed7405c58251b1380e6e7d73aa8284b41 ]
 
-[ Upstream commit 5d2295f3a93b04986d069ebeaf5b07725f9096c1 ]
+SCHED_DEADLINE inactive timer needs to run in hardirq context (as
+dl_task_timer already does) on PREEMPT_RT
 
-The recent change to avoid taking the expiry lock when a timer is currently
-migrated missed to add a bracket at the end of the if statement leading to
-compile errors.  Since that commit the variable `migration_base' is always
-used but it is only available on SMP configuration thus leading to another
-compile error.  The changelog says "The timer base and base->cpu_base
-cannot be NULL in the code path", so it is safe to limit this check to SMP
-configurations only.
+Change the mode to HRTIMER_MODE_REL_HARD.
 
-Add the missing bracket to the if statement and hide `migration_base'
-behind CONFIG_SMP bars.
+[ tglx: Fixed up the start site, so mode debugging works ]
 
-[ tglx: Mark the functions inline ... ]
-
-Fixes: 68b2c8c1e4210 ("hrtimer: Don't take expiry_lock when timer is currently migrated")
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Juri Lelli <juri.lelli@redhat.com>
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Link: https://lkml.kernel.org/r/20190904145527.eah7z56ntwobqm6j@linutronix.de
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-[bigeasy: port back to RT]
+Link: https://lkml.kernel.org/r/20190731103715.4047-1-juri.lelli@redhat.com
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/time/hrtimer.c | 12 +++++++++++-
- 1 file changed, 11 insertions(+), 1 deletion(-)
+ kernel/sched/deadline.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
-index 1a5167c68310..e54a95de8b79 100644
---- a/kernel/time/hrtimer.c
-+++ b/kernel/time/hrtimer.c
-@@ -150,6 +150,11 @@ static struct hrtimer_cpu_base migration_cpu_base = {
+diff --git a/kernel/sched/deadline.c b/kernel/sched/deadline.c
+index 974a8f9b615a..929167a1d991 100644
+--- a/kernel/sched/deadline.c
++++ b/kernel/sched/deadline.c
+@@ -287,7 +287,7 @@ static void task_non_contending(struct task_struct *p)
  
- #define migration_base	migration_cpu_base.clock_base[0]
+ 	dl_se->dl_non_contending = 1;
+ 	get_task_struct(p);
+-	hrtimer_start(timer, ns_to_ktime(zerolag_time), HRTIMER_MODE_REL);
++	hrtimer_start(timer, ns_to_ktime(zerolag_time), HRTIMER_MODE_REL_HARD);
+ }
  
-+static inline bool is_migration_base(struct hrtimer_clock_base *base)
-+{
-+	return base == &migration_base;
-+}
-+
- /*
-  * We are using hashed locking: holding per_cpu(hrtimer_bases)[n].lock
-  * means that all timers which are tied to this base via timer->base are
-@@ -274,6 +279,11 @@ switch_hrtimer_base(struct hrtimer *timer, struct hrtimer_clock_base *base,
- 
- #else /* CONFIG_SMP */
- 
-+static inline bool is_migration_base(struct hrtimer_clock_base *base)
-+{
-+	return false;
-+}
-+
- static inline struct hrtimer_clock_base *
- lock_hrtimer_base(const struct hrtimer *timer, unsigned long *flags)
+ static void task_contending(struct sched_dl_entity *dl_se, int flags)
+@@ -1325,7 +1325,7 @@ void init_dl_inactive_task_timer(struct sched_dl_entity *dl_se)
  {
-@@ -943,7 +953,7 @@ void hrtimer_grab_expiry_lock(const struct hrtimer *timer)
- {
- 	struct hrtimer_clock_base *base = READ_ONCE(timer->base);
+ 	struct hrtimer *timer = &dl_se->inactive_timer;
  
--	if (timer->is_soft && base != &migration_base) {
-+	if (timer->is_soft && is_migration_base(base)) {
- 		spin_lock(&base->cpu_base->softirq_expiry_lock);
- 		spin_unlock(&base->cpu_base->softirq_expiry_lock);
- 	}
+-	hrtimer_init(timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
++	hrtimer_init(timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
+ 	timer->function = inactive_task_timer;
+ }
+ 
 -- 
 2.24.1
 
