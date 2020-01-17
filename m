@@ -6,30 +6,30 @@ X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EA834C33C9E
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:42:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 99CA2C33CB6
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:42:17 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id CD94A2467D
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:42:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7024424691
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:42:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729423AbgAQRlz (ORCPT
+        id S1729522AbgAQRmJ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 17 Jan 2020 12:41:55 -0500
-Received: from mail.kernel.org ([198.145.29.99]:40136 "EHLO mail.kernel.org"
+        Fri, 17 Jan 2020 12:42:09 -0500
+Received: from mail.kernel.org ([198.145.29.99]:40040 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729285AbgAQRld (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S1729281AbgAQRld (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 17 Jan 2020 12:41:33 -0500
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 3817624694;
+        by mail.kernel.org (Postfix) with ESMTPSA id 14B3524683;
         Fri, 17 Jan 2020 17:41:33 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.93)
         (envelope-from <rostedt@goodmis.org>)
-        id 1isVci-000Qc5-4u; Fri, 17 Jan 2020 12:41:32 -0500
-Message-Id: <20200117174132.033584043@goodmis.org>
+        id 1isVci-000QbZ-0K; Fri, 17 Jan 2020 12:41:32 -0500
+Message-Id: <20200117174131.893547195@goodmis.org>
 User-Agent: quilt/0.65
-Date:   Fri, 17 Jan 2020 12:41:42 -0500
+Date:   Fri, 17 Jan 2020 12:41:41 -0500
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -39,9 +39,9 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 31/32] sched: migrate_enable: Busy loop until the migration request is
- completed
+        Tom Zanussi <zanussi@kernel.org>,
+        Daniel Wagner <dwagner@suse.de>
+Subject: [PATCH RT 30/32] lib/smp_processor_id: Adjust check_preemption_disabled()
 References: <20200117174111.282847363@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -55,55 +55,39 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Daniel Wagner <dwagner@suse.de>
 
-[ Upstream commit 140d7f54a5fff02898d2ca9802b39548bf7455f1 ]
+[ Upstream commit af3c1c5fdf177870fb5e6e16b24e374696ab28f5 ]
 
-If user task changes the CPU affinity mask of a running task it will
-dispatch migration request if the current CPU is no longer allowed. This
-might happen shortly before a task enters a migrate_disable() section.
-Upon leaving the migrate_disable() section, the task will notice that
-the current CPU is no longer allowed and will will dispatch its own
-migration request to move it off the current CPU.
-While invoking __schedule() the first migration request will be
-processed and the task returns on the "new" CPU with "arg.done = 0". Its
-own migration request will be processed shortly after and will result in
-memory corruption if the stack memory, designed for request, was used
-otherwise in the meantime.
+The current->migrate_disable counter is not always defined leading to
+build failures with DEBUG_PREEMPT && !PREEMPT_RT_BASE.
 
-Spin until the migration request has been processed if it was accepted.
+Restrict the access to ->migrate_disable to same set where
+->migrate_disable is modified.
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Daniel Wagner <dwagner@suse.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+[bigeasy: adjust condition + description]
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/sched/core.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+ lib/smp_processor_id.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index cbd76324babd..4616c086dd26 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -7329,7 +7329,7 @@ void migrate_enable(void)
+diff --git a/lib/smp_processor_id.c b/lib/smp_processor_id.c
+index 0c80992aa337..2e7398534b66 100644
+--- a/lib/smp_processor_id.c
++++ b/lib/smp_processor_id.c
+@@ -22,8 +22,10 @@ notrace static unsigned int check_preemption_disabled(const char *what1,
+ 	 * Kernel threads bound to a single CPU can safely use
+ 	 * smp_processor_id():
+ 	 */
++#if defined(CONFIG_PREEMPT_RT_BASE) && (defined(CONFIG_SMP) || defined(CONFIG_SCHED_DEBUG))
+ 	if (current->migrate_disable)
+ 		goto out;
++#endif
  
- 	WARN_ON(smp_processor_id() != cpu);
- 	if (!is_cpu_allowed(p, cpu)) {
--		struct migration_arg arg = { p };
-+		struct migration_arg arg = { .task = p };
- 		struct cpu_stop_work work;
- 		struct rq_flags rf;
- 
-@@ -7342,7 +7342,10 @@ void migrate_enable(void)
- 				    &arg, &work);
- 		tlb_migrate_finish(p->mm);
- 		__schedule(true);
--		WARN_ON_ONCE(!arg.done && !work.disabled);
-+		if (!work.disabled) {
-+			while (!arg.done)
-+				cpu_relax();
-+		}
- 	}
- 
- out:
+ 	if (current->nr_cpus_allowed == 1)
+ 		goto out;
 -- 
 2.24.1
 
