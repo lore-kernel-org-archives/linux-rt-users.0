@@ -4,32 +4,32 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 925E6C33C9E
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:43:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4811FC33C9E
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:43:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 667E12467D
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:43:18 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 27C462467D
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:43:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729022AbgAQRnR (ORCPT
+        id S1729449AbgAQRnR (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
         Fri, 17 Jan 2020 12:43:17 -0500
-Received: from mail.kernel.org ([198.145.29.99]:39980 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.99]:39994 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728984AbgAQRla (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S1729112AbgAQRla (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 17 Jan 2020 12:41:30 -0500
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 6A34322464;
-        Fri, 17 Jan 2020 17:41:29 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 20BDF24653;
+        Fri, 17 Jan 2020 17:41:30 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.93)
         (envelope-from <rostedt@goodmis.org>)
-        id 1isVce-000QPA-Am; Fri, 17 Jan 2020 12:41:28 -0500
-Message-Id: <20200117174128.213232389@goodmis.org>
+        id 1isVcf-000QRl-1k; Fri, 17 Jan 2020 12:41:29 -0500
+Message-Id: <20200117174128.933104514@goodmis.org>
 User-Agent: quilt/0.65
-Date:   Fri, 17 Jan 2020 12:41:17 -0500
+Date:   Fri, 17 Jan 2020 12:41:22 -0500
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -39,10 +39,8 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>,
-        Marc Zyngier <maz@kernel.org>,
-        Julien Grall <julien.grall@arm.com>
-Subject: [PATCH RT 06/32] KVM: arm/arm64: Let the timer expire in hardirq context on RT
+        Tom Zanussi <zanussi@kernel.org>
+Subject: [PATCH RT 11/32] hrtimer: Add a missing bracket and hide `migration_base on !SMP
 References: <20200117174111.282847363@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -56,52 +54,73 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-[ Upstream commit 719cc080c914045a6e35787bf4dc3ba91cfd3efb ]
+[ Upstream commit 47b6de0b7f22c28b40275aeede3993d807668c3b ]
 
-The timers are canceled from an preempt-notifier which is invoked with
-disabled preemption which is not allowed on PREEMPT_RT.
-The timer callback is short so in could be invoked in hard-IRQ context
-on -RT.
+[ Upstream commit 5d2295f3a93b04986d069ebeaf5b07725f9096c1 ]
 
-Let the timer expire on hard-IRQ context even on -RT.
+The recent change to avoid taking the expiry lock when a timer is currently
+migrated missed to add a bracket at the end of the if statement leading to
+compile errors.  Since that commit the variable `migration_base' is always
+used but it is only available on SMP configuration thus leading to another
+compile error.  The changelog says "The timer base and base->cpu_base
+cannot be NULL in the code path", so it is safe to limit this check to SMP
+configurations only.
 
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Acked-by: Marc Zyngier <maz@kernel.org>
-Tested-by: Julien Grall <julien.grall@arm.com>
+Add the missing bracket to the if statement and hide `migration_base'
+behind CONFIG_SMP bars.
+
+[ tglx: Mark the functions inline ... ]
+
+Fixes: 68b2c8c1e4210 ("hrtimer: Don't take expiry_lock when timer is currently migrated")
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Link: https://lkml.kernel.org/r/20190904145527.eah7z56ntwobqm6j@linutronix.de
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+[bigeasy: port back to RT]
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- virt/kvm/arm/arch_timer.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ kernel/time/hrtimer.c | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
 
-diff --git a/virt/kvm/arm/arch_timer.c b/virt/kvm/arm/arch_timer.c
-index 17cecc96f735..217d39f40393 100644
---- a/virt/kvm/arm/arch_timer.c
-+++ b/virt/kvm/arm/arch_timer.c
-@@ -67,7 +67,7 @@ static inline bool userspace_irqchip(struct kvm *kvm)
- static void soft_timer_start(struct hrtimer *hrt, u64 ns)
+diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+index 1a5167c68310..e54a95de8b79 100644
+--- a/kernel/time/hrtimer.c
++++ b/kernel/time/hrtimer.c
+@@ -150,6 +150,11 @@ static struct hrtimer_cpu_base migration_cpu_base = {
+ 
+ #define migration_base	migration_cpu_base.clock_base[0]
+ 
++static inline bool is_migration_base(struct hrtimer_clock_base *base)
++{
++	return base == &migration_base;
++}
++
+ /*
+  * We are using hashed locking: holding per_cpu(hrtimer_bases)[n].lock
+  * means that all timers which are tied to this base via timer->base are
+@@ -274,6 +279,11 @@ switch_hrtimer_base(struct hrtimer *timer, struct hrtimer_clock_base *base,
+ 
+ #else /* CONFIG_SMP */
+ 
++static inline bool is_migration_base(struct hrtimer_clock_base *base)
++{
++	return false;
++}
++
+ static inline struct hrtimer_clock_base *
+ lock_hrtimer_base(const struct hrtimer *timer, unsigned long *flags)
  {
- 	hrtimer_start(hrt, ktime_add_ns(ktime_get(), ns),
--		      HRTIMER_MODE_ABS);
-+		      HRTIMER_MODE_ABS_HARD);
- }
+@@ -943,7 +953,7 @@ void hrtimer_grab_expiry_lock(const struct hrtimer *timer)
+ {
+ 	struct hrtimer_clock_base *base = READ_ONCE(timer->base);
  
- static void soft_timer_cancel(struct hrtimer *hrt, struct work_struct *work)
-@@ -638,10 +638,10 @@ void kvm_timer_vcpu_init(struct kvm_vcpu *vcpu)
- 	vcpu_ptimer(vcpu)->cntvoff = 0;
- 
- 	INIT_WORK(&timer->expired, kvm_timer_inject_irq_work);
--	hrtimer_init(&timer->bg_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
-+	hrtimer_init(&timer->bg_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_HARD);
- 	timer->bg_timer.function = kvm_bg_timer_expire;
- 
--	hrtimer_init(&timer->phys_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
-+	hrtimer_init(&timer->phys_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_HARD);
- 	timer->phys_timer.function = kvm_phys_timer_expire;
- 
- 	vtimer->irq.irq = default_vtimer_irq.irq;
+-	if (timer->is_soft && base != &migration_base) {
++	if (timer->is_soft && is_migration_base(base)) {
+ 		spin_lock(&base->cpu_base->softirq_expiry_lock);
+ 		spin_unlock(&base->cpu_base->softirq_expiry_lock);
+ 	}
 -- 
 2.24.1
 
