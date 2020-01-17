@@ -6,30 +6,30 @@ X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1D6A2C33C9E
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:42:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D646BC33CB3
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:43:02 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id F295B246A5
-	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:42:52 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B057B24699
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:43:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729335AbgAQRms (ORCPT
+        id S1729674AbgAQRm7 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 17 Jan 2020 12:42:48 -0500
-Received: from mail.kernel.org ([198.145.29.99]:39994 "EHLO mail.kernel.org"
+        Fri, 17 Jan 2020 12:42:59 -0500
+Received: from mail.kernel.org ([198.145.29.99]:39980 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729153AbgAQRlb (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S1729148AbgAQRlb (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 17 Jan 2020 12:41:31 -0500
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id CB6C121835;
+        by mail.kernel.org (Postfix) with ESMTPSA id A24A6222C3;
         Fri, 17 Jan 2020 17:41:30 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.93)
         (envelope-from <rostedt@goodmis.org>)
-        id 1isVcf-000QTp-OG; Fri, 17 Jan 2020 12:41:29 -0500
-Message-Id: <20200117174129.633885497@goodmis.org>
+        id 1isVcf-000QTJ-J6; Fri, 17 Jan 2020 12:41:29 -0500
+Message-Id: <20200117174129.434057274@goodmis.org>
 User-Agent: quilt/0.65
-Date:   Fri, 17 Jan 2020 12:41:26 -0500
+Date:   Fri, 17 Jan 2020 12:41:25 -0500
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -40,7 +40,7 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>, Scott Wood <swood@redhat.com>
-Subject: [PATCH RT 15/32] sched: Remove dead __migrate_disabled() check
+Subject: [PATCH RT 14/32] sched: __set_cpus_allowed_ptr: Check cpus_mask, not cpus_ptr
 References: <20200117174111.282847363@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -56,36 +56,35 @@ If anyone has any objections, please let me know.
 
 From: Scott Wood <swood@redhat.com>
 
-[ Upstream commit 14d9272d534ea91262e15db99443fc5995c7c016 ]
+[ Upstream commit e5606fb7b042db634ed62b4dd733d62e050e468f ]
 
-This code was unreachable given the __migrate_disabled() branch
-to "out" immediately beforehand.
+This function is concerned with the long-term cpu mask, not the
+transitory mask the task might have while migrate disabled.  Before
+this patch, if a task was migrate disabled at the time
+__set_cpus_allowed_ptr() was called, and the new mask happened to be
+equal to the cpu that the task was running on, then the mask update
+would be lost.
 
 Signed-off-by: Scott Wood <swood@redhat.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/sched/core.c | 7 -------
- 1 file changed, 7 deletions(-)
+ kernel/sched/core.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index d6bd8129a390..a29f33e776d0 100644
+index 3413b9ebef1f..d6bd8129a390 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -1182,13 +1182,6 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
- 	if (cpumask_test_cpu(task_cpu(p), new_mask) || __migrate_disabled(p))
+@@ -1157,7 +1157,7 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
+ 		goto out;
+ 	}
+ 
+-	if (cpumask_equal(p->cpus_ptr, new_mask))
++	if (cpumask_equal(&p->cpus_mask, new_mask))
  		goto out;
  
--#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
--	if (__migrate_disabled(p)) {
--		p->migrate_disable_update = 1;
--		goto out;
--	}
--#endif
--
- 	if (task_running(rq, p) || p->state == TASK_WAKING) {
- 		struct migration_arg arg = { p, dest_cpu };
- 		/* Need help from migration thread: drop lock and wait. */
+ 	dest_cpu = cpumask_any_and(cpu_valid_mask, new_mask);
 -- 
 2.24.1
 
