@@ -1,104 +1,100 @@
-Return-Path: <SRS0=M6fR=3F=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=Gh4n=3G=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.1 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 09B88C33CB1
-	for <linux-rt-users@archiver.kernel.org>; Thu, 16 Jan 2020 16:00:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2A484C33C9E
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:41:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id D257C2087E
-	for <linux-rt-users@archiver.kernel.org>; Thu, 16 Jan 2020 16:00:43 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="tLl4dSJB"
+	by mail.kernel.org (Postfix) with ESMTP id 0B33624699
+	for <linux-rt-users@archiver.kernel.org>; Fri, 17 Jan 2020 17:41:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726903AbgAPQAn (ORCPT
+        id S1729259AbgAQRlc (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 16 Jan 2020 11:00:43 -0500
-Received: from mail-qt1-f193.google.com ([209.85.160.193]:37725 "EHLO
-        mail-qt1-f193.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726189AbgAPQAn (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 16 Jan 2020 11:00:43 -0500
-Received: by mail-qt1-f193.google.com with SMTP id w47so19242370qtk.4
-        for <linux-rt-users@vger.kernel.org>; Thu, 16 Jan 2020 08:00:42 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
-         :user-agent:mime-version;
-        bh=5guGcHWpqmvlvLPoir8oZVFU3RzuI9bXWQAhV6+tSA0=;
-        b=tLl4dSJBxsimAbIriCToqeGJZWj3Gd4542fxrBoS4oBlybXNSGp0COXjY/++47EWdT
-         8xUgQNkThvbjO+6DkELwlkAPB7BDsl5vb8Nxr2Rom3i+7lfJEHVqbRA95iae6WfiRsJH
-         QQcwpmASYCPwqd4VApQLpEdGJRHqa8Ra65zFRGnqbMQkWU/KFbl9eZUWjih/nrCzc12B
-         HsrEtjC17idte75o/1r1uneXWAIwEEsJ8uMb2x6ABrS0ccANrh3Os2O29l3kwhtZwG4u
-         2Pf0yT9Ke4glyPxqY+Y4qaJ8XdLKZZNZX6f1ECnJqEnEi57iV55a5j2WxshrPLiqr03R
-         1b0g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
-         :message-id:references:user-agent:mime-version;
-        bh=5guGcHWpqmvlvLPoir8oZVFU3RzuI9bXWQAhV6+tSA0=;
-        b=Zp8uP1eJZhjMkbigtJK/amJQlcgUPhREGxC7PNgTKHri1fYzMohDFLd7Hc4aP2LZUD
-         jbPyBCLRo0lHfgHTk5wNq78g15KHD+m04npLg3PkZmkCfcAhcdi34JixzsrawIFHjmvF
-         IVT+MEElTe4FjuyZS8d1xKUnzI4sKH97sMVfJYn8cMPJzGl+O7FY4/RZo5aquNJiqLws
-         LZeRSvIvfWdIASewy/ARlRAFCvMvOozQ35DApPYJwG3mFn5k8FIhSMhxDa+KV2C52D9A
-         2jL3knAW+wVrzRRba1nKl1E0WC8/lk8g6C00MG0v7f9AI6RWQtXRRTz1doJhmcKMeCAA
-         icYQ==
-X-Gm-Message-State: APjAAAW/vbOjrqFQyoBmMY+BnXagF7RSS5qcQ5FHEj7enFexwelPuk3T
-        RZMBDaIW5C1v7sfqo5TQF6GbP0SCUsk=
-X-Google-Smtp-Source: APXvYqx9AbnNMReWIA87fpzwKEsDyzk7U6Pep1E+C25MlV3QyyvHciLTgV0LfObG8QmHeh9hbHzKkA==
-X-Received: by 2002:ac8:4693:: with SMTP id g19mr3113636qto.295.1579190442479;
-        Thu, 16 Jan 2020 08:00:42 -0800 (PST)
-Received: from planxty (rdwyon0600w-lp130-03-64-231-46-127.dsl.bell.ca. [64.231.46.127])
-        by smtp.gmail.com with ESMTPSA id z1sm240959qtq.69.2020.01.16.08.00.41
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 16 Jan 2020 08:00:41 -0800 (PST)
-Date:   Thu, 16 Jan 2020 17:00:34 +0100 (CET)
-From:   John Kacur <jkacur@redhat.com>
-X-X-Sender: jkacur@planxty
-To:     Greg Gallagher <greg@embeddedgreg.com>
-cc:     linux-rt-users@vger.kernel.org
-Subject: Re: Any maintainers or developers looking for help?
-In-Reply-To: <CALLqZ8QK5kJqwxZ-zze-OcwFCAWY5gDOmy_UwqUm89HE3rZ_gQ@mail.gmail.com>
-Message-ID: <alpine.LFD.2.21.2001161659020.7528@planxty>
-References: <CALLqZ8QK5kJqwxZ-zze-OcwFCAWY5gDOmy_UwqUm89HE3rZ_gQ@mail.gmail.com>
-User-Agent: Alpine 2.21 (LFD 202 2017-01-01)
+        Fri, 17 Jan 2020 12:41:32 -0500
+Received: from mail.kernel.org ([198.145.29.99]:40012 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1729174AbgAQRlb (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 17 Jan 2020 12:41:31 -0500
+Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 035542465A;
+        Fri, 17 Jan 2020 17:41:31 +0000 (UTC)
+Received: from rostedt by gandalf.local.home with local (Exim 4.93)
+        (envelope-from <rostedt@goodmis.org>)
+        id 1isVcf-000QUL-TE; Fri, 17 Jan 2020 12:41:29 -0500
+Message-Id: <20200117174129.785425698@goodmis.org>
+User-Agent: quilt/0.65
+Date:   Fri, 17 Jan 2020 12:41:27 -0500
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        John Kacur <jkacur@redhat.com>,
+        Julia Cartwright <julia@ni.com>,
+        Daniel Wagner <wagi@monom.org>,
+        Tom Zanussi <zanussi@kernel.org>, Scott Wood <swood@redhat.com>
+Subject: [PATCH RT 16/32] sched: migrate disable: Protect cpus_ptr with lock
+References: <20200117174111.282847363@goodmis.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-15
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+4.19.94-rt39-rc1 stable review patch.
+If anyone has any objections, please let me know.
+
+------------------
+
+From: Scott Wood <swood@redhat.com>
+
+[ Upstream commit 27ee52a891ed2c7e2e2c8332ccae0de7c2674b09 ]
+
+Various places assume that cpus_ptr is protected by rq/pi locks,
+so don't change it before grabbing those locks.
+
+Signed-off-by: Scott Wood <swood@redhat.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+---
+ kernel/sched/core.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index a29f33e776d0..d9a3f88508ee 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -7250,9 +7250,8 @@ migrate_disable_update_cpus_allowed(struct task_struct *p)
+ 	struct rq *rq;
+ 	struct rq_flags rf;
+ 
+-	p->cpus_ptr = cpumask_of(smp_processor_id());
+-
+ 	rq = task_rq_lock(p, &rf);
++	p->cpus_ptr = cpumask_of(smp_processor_id());
+ 	update_nr_migratory(p, -1);
+ 	p->nr_cpus_allowed = 1;
+ 	task_rq_unlock(rq, p, &rf);
+@@ -7264,9 +7263,8 @@ migrate_enable_update_cpus_allowed(struct task_struct *p)
+ 	struct rq *rq;
+ 	struct rq_flags rf;
+ 
+-	p->cpus_ptr = &p->cpus_mask;
+-
+ 	rq = task_rq_lock(p, &rf);
++	p->cpus_ptr = &p->cpus_mask;
+ 	p->nr_cpus_allowed = cpumask_weight(&p->cpus_mask);
+ 	update_nr_migratory(p, 1);
+ 	task_rq_unlock(rq, p, &rf);
+-- 
+2.24.1
 
 
-On Wed, 15 Jan 2020, Greg Gallagher wrote:
-
-> Hi RT users and developers,
->    I was wondering if any RT maintainers or developers that are on
-> this list need any help with tasks that they haven't had a chance to
-> do (documentation, small fixes, testing etc)?  I've been working with
-> RTOS's, Linux and C for the past ten years, I've contribute to smaller
-> open source projects in the past.  I'm still a novice when it comes to
-> working with the open source community and I'm reaching out to the
-> list since if possible I'd like to work with someone to start.  I know
-> that not everyone has time to help but I thought I would reach out and
-> see if I could help someone clear out some old tasks that need to be
-> completed in exchange for some help getting started contributing to
-> the RT project.
-> 
-> Thanks everyone for their time and sorry to spam the list,
-> 
-> Greg
-> 
-
-This is almost always the wrong approach. If you are interested in 
-real-time then start working with the kernel and supporting software, and 
-then if you see things that don't work the way you would like, or you have 
-ideas for improvements, then submit patches.
-
-Cheers
-
-John
