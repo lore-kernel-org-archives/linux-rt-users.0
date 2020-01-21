@@ -4,36 +4,37 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-8.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_2 autolearn=ham autolearn_force=no version=3.4.0
+	USER_AGENT_SANE_2 autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 59DE1C2D0CE
-	for <linux-rt-users@archiver.kernel.org>; Tue, 21 Jan 2020 16:53:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F12C5C2D0CE
+	for <linux-rt-users@archiver.kernel.org>; Tue, 21 Jan 2020 16:58:04 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 2C15D21569
-	for <linux-rt-users@archiver.kernel.org>; Tue, 21 Jan 2020 16:53:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D185524653
+	for <linux-rt-users@archiver.kernel.org>; Tue, 21 Jan 2020 16:58:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729152AbgAUQxq (ORCPT
+        id S1729207AbgAUQ55 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 21 Jan 2020 11:53:46 -0500
-Received: from mail.kernel.org ([198.145.29.99]:59348 "EHLO mail.kernel.org"
+        Tue, 21 Jan 2020 11:57:57 -0500
+Received: from mail.kernel.org ([198.145.29.99]:35494 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726714AbgAUQxp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 21 Jan 2020 11:53:45 -0500
+        id S1729081AbgAUQ55 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 21 Jan 2020 11:57:57 -0500
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 4F52421569;
-        Tue, 21 Jan 2020 16:53:44 +0000 (UTC)
-Date:   Tue, 21 Jan 2020 11:53:42 -0500
+        by mail.kernel.org (Postfix) with ESMTPSA id B0C5921569;
+        Tue, 21 Jan 2020 16:57:55 +0000 (UTC)
+Date:   Tue, 21 Jan 2020 11:57:54 -0500
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     Tom Zanussi <zanussi@kernel.org>
 Cc:     artem.bityutskiy@linux.intel.com, mhiramat@kernel.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH v2 05/12] tracing: Add synth_event_run_command()
-Message-ID: <20200121115342.03c0fd72@gandalf.local.home>
-In-Reply-To: <646c7f37227e20f3084695aca341892a5ee95fa8.1578688120.git.zanussi@kernel.org>
+Subject: Re: [PATCH v2 06/12] tracing: Add synthetic event command
+ generation functions
+Message-ID: <20200121115754.01efcdfd@gandalf.local.home>
+In-Reply-To: <c731007e4b528f8bcd40d2864979597bd5d91183.1578688120.git.zanussi@kernel.org>
 References: <cover.1578688120.git.zanussi@kernel.org>
-        <646c7f37227e20f3084695aca341892a5ee95fa8.1578688120.git.zanussi@kernel.org>
+        <c731007e4b528f8bcd40d2864979597bd5d91183.1578688120.git.zanussi@kernel.org>
 X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
@@ -43,48 +44,82 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, 10 Jan 2020 14:35:11 -0600
+On Fri, 10 Jan 2020 14:35:12 -0600
 Tom Zanussi <zanussi@kernel.org> wrote:
 
-> From: Masami Hiramatsu <mhiramat@kernel.org>
+> Add functions used to generate synthetic event commands, built on top
+> of the dynevent_cmd interface.
 > 
-> This snippet was taken from v4 of Masami's 'tracing/boot: Add
-> synthetic event support' patch.
+> gen_synth_cmd() is used to create a synthetic event command using a
+> variable arg list and gen_synth_cmd_array() does the same thing but
+> using an array of field descriptors.  add_synth_field() and
+> add_synth_fields() can be used to add single fields one by one or as a
+> group.  Once all desired fields are added, create_dynevent() is used
+> to actually execute the command and create the event.
 > 
-> >From the original: 'The synthetic node requires "fields" string  
-> arraies, which defines the fields as same as tracing/synth_events
-> interface.'
+> create_synth_event() does everything, including creating the event, in
+> a single call.
 > 
-> synth_event_run_command() provides the means to execute the synthetic
-> event create command using the synthetic event command string.
+> Signed-off-by: Tom Zanussi <zanussi@kernel.org>
+> ---
+>  include/linux/trace_events.h     |  30 ++++
+>  kernel/trace/trace_events_hist.c | 325 ++++++++++++++++++++++++++++++++++++++-
+>  2 files changed, 352 insertions(+), 3 deletions(-)
 > 
-> Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
-> Signed-off-by: Tom Zanussi <tom.zanussi@linux.intel.com>
+> diff --git a/include/linux/trace_events.h b/include/linux/trace_events.h
+> index bf4cc2e56125..4228407d4736 100644
+> --- a/include/linux/trace_events.h
+> +++ b/include/linux/trace_events.h
+> @@ -409,6 +409,36 @@ extern int create_dynevent(struct dynevent_cmd *cmd);
+>  
+>  extern int delete_synth_event(const char *name);
+>  
+> +extern void synth_dynevent_cmd_init(struct dynevent_cmd *cmd,
+> +				    char *buf, int maxlen);
+> +
+> +extern int __gen_synth_cmd(struct dynevent_cmd *cmd, const char *name,
+> +			   struct module *mod, ...);
+> +
+> +#define gen_synth_cmd(cmd, name, mod, ...)	\
+> +	__gen_synth_cmd(cmd, name, mod, ## __VA_ARGS__, NULL)
+> +
+> +struct synth_field_desc {
+> +	const char *type;
+> +	const char *name;
+> +};
+> +
+> +extern int gen_synth_cmd_array(struct dynevent_cmd *cmd, const char *name,
+> +			       struct module *mod,
+> +			       struct synth_field_desc *fields,
+> +			       unsigned int n_fields);
+> +extern int create_synth_event(const char *name,
+> +			      struct synth_field_desc *fields,
+> +			      unsigned int n_fields, struct module *mod);
+> +
+> +
+> +extern int add_synth_field(struct dynevent_cmd *cmd,
+> +			   const char *type,
+> +			   const char *name);
+> +extern int add_synth_fields(struct dynevent_cmd *cmd,
+> +			    struct synth_field_desc *fields,
+> +			    unsigned int n_fields);
 
-If you base your next series off of my for-next branch, you wont need
-this patch.
+As these are in a global header and globally visible, let's rename them
+to be more name space aware.
+
+Have them all start with "synth_event_".
+
+synth_event_gen_cmd_array()
+synth_event_create()
+synth_event_add_field()
+synth_event_add_fields()
+
+Makes it easier to grep for synth_event functions too.
 
 -- Steve
 
 
-> ---
->  kernel/trace/trace_events_hist.c | 5 +++++
->  1 file changed, 5 insertions(+)
-> 
-> diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-> index 8c9894681100..0886ca6da255 100644
-> --- a/kernel/trace/trace_events_hist.c
-> +++ b/kernel/trace/trace_events_hist.c
-> @@ -1390,6 +1390,11 @@ static int create_or_delete_synth_event(int argc, char **argv)
->  	return ret == -ECANCELED ? -EINVAL : ret;
->  }
->  
-> +int synth_event_run_command(const char *command)
-> +{
-> +	return trace_run_command(command, create_or_delete_synth_event);
-> +}
 > +
->  static int synth_event_create(int argc, const char **argv)
->  {
->  	const char *name = argv[0];
-
+>  /*
+>   * Event file flags:
+>   *  ENABLED	  - The event is enabled
