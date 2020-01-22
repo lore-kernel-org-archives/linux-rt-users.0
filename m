@@ -2,31 +2,54 @@ Return-Path: <SRS0=RBrU=3L=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6941AC2D0DB
-	for <linux-rt-users@archiver.kernel.org>; Wed, 22 Jan 2020 11:34:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7E080C33CB6
+	for <linux-rt-users@archiver.kernel.org>; Wed, 22 Jan 2020 18:39:26 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 480D42468A
-	for <linux-rt-users@archiver.kernel.org>; Wed, 22 Jan 2020 11:34:42 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6038121734
+	for <linux-rt-users@archiver.kernel.org>; Wed, 22 Jan 2020 18:39:26 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="YdiRBwid"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728890AbgAVLei convert rfc822-to-8bit (ORCPT
+        id S1726205AbgAVSjZ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 22 Jan 2020 06:34:38 -0500
-Received: from mail.kernel.org ([198.145.29.99]:42652 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725911AbgAVLei (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 22 Jan 2020 06:34:38 -0500
-Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        Wed, 22 Jan 2020 13:39:25 -0500
+Received: from us-smtp-delivery-1.mimecast.com ([205.139.110.120]:23948 "EHLO
+        us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+        with ESMTP id S1725884AbgAVSjY (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 22 Jan 2020 13:39:24 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1579718363;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=NXqpEpNaHdzyxb5AsLGKkFd0SaAT+fBnVPbAH2nV/jM=;
+        b=YdiRBwidpxEfsgy8SrXD6Yd7fcPtI+ow4OWiVAOfhFI/1+p05MNA0F+SKQQzSHISU1DlaB
+        fFu2y4Xh5Ze0lOlMAVe1HELNZIyjGFMf6G285GSxrGaEzf6Kmo9fLlp22HByEkXsg5CaUh
+        Fw+jhRRC9uDzZ+14kNGJL/xfO/fG1Cs=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-324-vdZbZsgzNBGhY_r9lCRySQ-1; Wed, 22 Jan 2020 13:39:19 -0500
+X-MC-Unique: vdZbZsgzNBGhY_r9lCRySQ-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id A012524685;
-        Wed, 22 Jan 2020 11:34:35 +0000 (UTC)
-Date:   Wed, 22 Jan 2020 06:34:34 -0500
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7C343100550E;
+        Wed, 22 Jan 2020 18:39:17 +0000 (UTC)
+Received: from ovpn-120-231.rdu2.redhat.com (ovpn-120-231.rdu2.redhat.com [10.10.120.231])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 7664519C5B;
+        Wed, 22 Jan 2020 18:39:15 +0000 (UTC)
+Message-ID: <56d00d663e61abf7df7cdd91d8da98b4f9e5906e.camel@redhat.com>
+Subject: Re: [PATCH RT 24/32] sched: migrate_enable: Use
+ stop_one_cpu_nowait()
+From:   Scott Wood <swood@redhat.com>
+To:     Steven Rostedt <rostedt@goodmis.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Cc:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -34,47 +57,44 @@ Cc:     linux-kernel@vger.kernel.org,
         John Kacur <jkacur@redhat.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>, Borislav Petkov <bp@suse.de>,
-        Rik van Riel <riel@surriel.com>,
-        Aubrey Li <aubrey.li@intel.com>,
-        Austin Clements <austin@google.com>,
-        Barret Rhoden <brho@google.com>,
-        Dave Hansen <dave.hansen@intel.com>,
-        David Chase <drchase@golang.org>,
-        "H. Peter Anvin" <hpa@zytor.com>, ian@airs.com,
-        Ingo Molnar <mingo@redhat.com>,
-        Josh Bleecher Snyder <josharian@gmail.com>,
-        x86-ml <x86@kernel.org>, stable-rt@vger.kernel.org
-Subject: Re: [PATCH RT 27/32] x86/fpu: Dont cache access to
- fpu_fpregs_owner_ctx
-Message-ID: <20200122063434.68a78066@gandalf.local.home>
-In-Reply-To: <20200122084352.nyqnlfaumjgnvgih@linutronix.de>
+        Tom Zanussi <zanussi@kernel.org>
+Date:   Wed, 22 Jan 2020 12:39:14 -0600
+In-Reply-To: <20200122063311.52b68472@gandalf.local.home>
 References: <20200117174111.282847363@goodmis.org>
-        <20200117174131.455165326@goodmis.org>
-        <20200122084352.nyqnlfaumjgnvgih@linutronix.de>
-X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
+         <20200117174131.019724236@goodmis.org>
+         <20200122083130.kuu3yppckhyjrr4u@linutronix.de>
+         <20200122063311.52b68472@gandalf.local.home>
+Organization: Red Hat
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.30.5 (3.30.5-1.fc29) 
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, 22 Jan 2020 09:43:52 +0100
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
-
-> On 2020-01-17 12:41:38 [-0500], Steven Rostedt wrote:
-> > 4.19.94-rt39-rc1 stable review patch.
-> > If anyone has any objections, please let me know.
-> >   
-> …
-> > Fixes: 5f409e20b7945 ("x86/fpu: Defer FPU state load until return to userspace")  
+On Wed, 2020-01-22 at 06:33 -0500, Steven Rostedt wrote:
+> On Wed, 22 Jan 2020 09:31:30 +0100
+> Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 > 
-> This isn't needed for the v4.19 tree. As far as I can tell, there is no
-> "Defer FPU state load until return to userspace" in it.
+> > On 2020-01-17 12:41:35 [-0500], Steven Rostedt wrote:
+> > > 4.19.94-rt39-rc1 stable review patch.
+> > > If anyone has any objections, please let me know.  
+> > 
+> > I don't know how much of this patch and the previous is classified as
+> > "new feature" vs "bug fix". This patch requires patch 31 (of this
+> > series)
+> > as bug fix.
+> > I'm not against it, just pointing out.
+> > 
 > 
+> Hmm, the description looked more of a bug fix than a new feature.
 
-OK, I'll drop this one too.
+Yes, the state clobber was an existing bug.  Patch 23 was a performance
+improvement rather than a bugfix, though.
 
--- Steve
+-Scott
+
+
