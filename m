@@ -7,62 +7,62 @@ X-Spam-Status: No, score=-9.6 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4E963C33CAF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:50:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 07A37C2D0DB
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:50:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 2001E20704
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:50:49 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BEF6620684
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:50:51 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="hn7312Zy"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Z++FPZTq"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728904AbgAWUus (ORCPT
+        id S1729353AbgAWUut (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 23 Jan 2020 15:50:48 -0500
-Received: from mail-qk1-f180.google.com ([209.85.222.180]:42519 "EHLO
-        mail-qk1-f180.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728799AbgAWUuq (ORCPT
+        Thu, 23 Jan 2020 15:50:49 -0500
+Received: from mail-qk1-f194.google.com ([209.85.222.194]:46541 "EHLO
+        mail-qk1-f194.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1729100AbgAWUus (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 23 Jan 2020 15:50:46 -0500
-Received: by mail-qk1-f180.google.com with SMTP id q15so4890249qke.9
-        for <linux-rt-users@vger.kernel.org>; Thu, 23 Jan 2020 12:50:46 -0800 (PST)
+        Thu, 23 Jan 2020 15:50:48 -0500
+Received: by mail-qk1-f194.google.com with SMTP id g195so3488779qke.13
+        for <linux-rt-users@vger.kernel.org>; Thu, 23 Jan 2020 12:50:47 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=mivVD0DzAEBKCAL0rrY4RlgH4oPOxnZhwxutwKKKZlk=;
-        b=hn7312ZyCFufVo8MUgmt3gudG+//uaaCTbPdWwfIdrWecA9jM7lChuxMGAv99jpaLA
-         K5ha0vuRXOrN0NbE34PkW+q68JXdl2OJpPmmdYZf2vOHRWJ45AI+LWQ91brHKMcNunFd
-         8C80mJfePunyTAW4qUn0mf1yOHzOVayeBKgx0vHaKpEkL67rGOiRv2H1zDnzWGBlgPbr
-         o8rYzu2kQsmi6VK7Tg7gzHE7c/UGcnd3Orsib2qV67il9X64HUYmPNXSZUXCk/HTh3TN
-         seVaSuK1iCDF/4zVu6GtIg7wMJRKeYRP9PmFkroOXIYdkp7iGddm9D5y7pITeb/J6vDq
-         mf+A==
+        bh=oYambi9+6gRZ6zd64W8SKJQfnPAUVoiXAO2XPjEnfVU=;
+        b=Z++FPZTqyGAxlN2OEn2BpnvAvFHrA92YLTvs6Cpi19hpi8FSFKhqfeZnLM8vJl+mg/
+         2kGjiFLiqknXEvSp2QCxLtbn0SCztc0n0bmcSeEi9GuM/ZZ4xdcWb5l4Izb+lmump1Ko
+         1APGKVMXcUdr0KbOZeNGExlLZCO+GL3OdcxdxJw8LSYKuEMDI5h07wXRIK/ilCh75eUY
+         +8GXTDRvRA8cfjbkAYzm82Q0/SRjIb+ebOFKoVLPBbboTs3UD3lSDsbJBfPdNoZFO+lw
+         H8kpkTEReYiMCE6PhK2+sTRQ6YAm5HV1PxGQ4RRwFJjSPg937/s/MmvjIxqSnZqhCIxc
+         MWbw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
          :in-reply-to:references:mime-version:content-transfer-encoding;
-        bh=mivVD0DzAEBKCAL0rrY4RlgH4oPOxnZhwxutwKKKZlk=;
-        b=iHH50rEq3OsB4+QJ3pYLmViYZ+K+uf66yBrgOuJMKJLx5diIItkZW6GqVc3BsZkq2N
-         M1z/6WRlcrPChDrjfXGdV34oJedb60TN15ALdiOxcL04vUMX/TZ9nwEtz2J7miR1hsN9
-         kSlGPRWautPgrzfWUYujU9lnuCoXBoE9mCWUTwSTK0uD3qe9atpC884XoVokzvKx+IBu
-         kc2smaViPloF8K2zelB+vDnImLq1nTu1YC3TwVrO5QpTnIDfEbBTrg97cBrgnQ3L9qAQ
-         ywjrDYIVDK4JNA+J6IL2zfxsiXWFryav7kLhbs6rS68hfKMtPdPIEbwh9T2BupSIOCAY
-         SQmA==
-X-Gm-Message-State: APjAAAV2GuB9YpCl0ZKYF3mmicR3zGFYA64TvRopRAKXo2oN+7QZqEk2
-        4yo1H9u38OCKnA+wFjA0LHpLF26RNNY=
-X-Google-Smtp-Source: APXvYqyHm0Bu61VZ4kfyxNfpivhRpMYMxD6CbddIIyERpHsoMNm8OPAch/pif0Rd7hBx48ZaGEpbXA==
-X-Received: by 2002:a37:e317:: with SMTP id y23mr18189137qki.431.1579812645537;
-        Thu, 23 Jan 2020 12:50:45 -0800 (PST)
+        bh=oYambi9+6gRZ6zd64W8SKJQfnPAUVoiXAO2XPjEnfVU=;
+        b=mPvpAXjyGNghQfq6ZpDpWecPQi4YOfPOSIsn/iWmm2XrN1PzunbnK7WmAYXPsp6Xq7
+         13v+pIjYBNTkdedfZ72VYfms0fW8udLWQslFHdx1ekrF4buF5KL7TXxM6ltzSazxBaNb
+         wp2Lryl7iNARKyVlrMZgoEWwU/qPbOeGxa+43AKgN6jo3Vnrph9m10KnSXuQMumfQM87
+         CTmTUIrKixsdI7zj3XydJQI6FsYzbSQq2O7CwQEcPyqaOmv5DNOqkeSDO1iO3nBfuuVN
+         gPuF71GkNpY/jhg/ytnOHL1va9JFYhavR0amAqowMQo31YdYb1KEyOm2yaNlTJSIl3x5
+         1FDg==
+X-Gm-Message-State: APjAAAUokXe/FdAhSzNeOcdXQqJKbxgdD/sDSg7XSQqNIdfCUuP/+aEZ
+        EsDcMDqS/oDwM+6fbg4WsQX5TNgDv/c=
+X-Google-Smtp-Source: APXvYqysdGzcoVdgsJ7OxjNlME5R6eIR+fwBLip27a3Fjsk5QCZLPATexFVWEU4VB5Laxyl+0GexgQ==
+X-Received: by 2002:ae9:e910:: with SMTP id x16mr74155qkf.90.1579812647128;
+        Thu, 23 Jan 2020 12:50:47 -0800 (PST)
 Received: from planxty.redhat.com (rdwyon0600w-lp130-03-64-231-46-127.dsl.bell.ca. [64.231.46.127])
-        by smtp.gmail.com with ESMTPSA id j185sm1518346qkc.96.2020.01.23.12.50.44
+        by smtp.gmail.com with ESMTPSA id j185sm1518346qkc.96.2020.01.23.12.50.46
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 23 Jan 2020 12:50:45 -0800 (PST)
+        Thu, 23 Jan 2020 12:50:46 -0800 (PST)
 From:   John Kacur <jkacur@redhat.com>
 To:     RT <linux-rt-users@vger.kernel.org>
 Cc:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
-Subject: [PATCH 5/9] rt-tests: queuelat: get_cpuinfo_mhz.sh highest value
-Date:   Thu, 23 Jan 2020 21:50:25 +0100
-Message-Id: <20200123205029.20176-6-jkacur@redhat.com>
+Subject: [PATCH 6/9] rt-tests: determine_maximum_mpps.sh: Fix quoting and other shell issue
+Date:   Thu, 23 Jan 2020 21:50:26 +0100
+Message-Id: <20200123205029.20176-7-jkacur@redhat.com>
 X-Mailer: git-send-email 2.20.1
 In-Reply-To: <20200123205029.20176-1-jkacur@redhat.com>
 References: <20200123205029.20176-1-jkacur@redhat.com>
@@ -73,35 +73,162 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-get_cpuinfo_mhz.sh greps for the Mhz from the /proc/cpuinfo file
-It assumes that for multiple cpus the value will be the same, and
-intends to return one value using uniq as a filter.
+Fix a number of issues in the script determine_maximum_mpps.sh such as
+1. Convert legacy backticks to $(...) notation
+2. Double quote where necessary to prevent globbing
+3. Double quote where necessary to prevent word splitting.
 
-Typically the reported Mhz values can all be slightly different though
-It would probably be good enough to simply take the first match as a
-heuristic, but to be safe, take the highest number.
-
-Also replace the legacy backticks with the modern $(...) construct, and
-quote the $mhz variable.
+Note: these fixes are more than just cosmetic, they are needed for the
+script to work correctly.
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- src/queuelat/get_cpuinfo_mhz.sh | 5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
+ src/queuelat/determine_maximum_mpps.sh | 75 +++++++++++++-------------
+ 1 file changed, 38 insertions(+), 37 deletions(-)
 
-diff --git a/src/queuelat/get_cpuinfo_mhz.sh b/src/queuelat/get_cpuinfo_mhz.sh
-index eafdd9577424..14a2c12c478f 100755
---- a/src/queuelat/get_cpuinfo_mhz.sh
-+++ b/src/queuelat/get_cpuinfo_mhz.sh
-@@ -3,6 +3,5 @@
- # SPDX-License-Identifier: GPL-2.0-or-later
- # Copyright (C) 2018 Marcelo Tosatti <mtosatti@redhat.com>
+diff --git a/src/queuelat/determine_maximum_mpps.sh b/src/queuelat/determine_maximum_mpps.sh
+index f6cf1dea27cf..f785147f1bbd 100755
+--- a/src/queuelat/determine_maximum_mpps.sh
++++ b/src/queuelat/determine_maximum_mpps.sh
+@@ -17,65 +17,65 @@ echo "Determining maximum mpps the machine can handle"
+ echo "Will take a few minutes to determine mpps value"
+ echo "And 10 minutes run to confirm the final mpps value is stable"
  
--mhz=`cat /proc/cpuinfo  | grep "cpu MHz" | uniq | cut -f 3 -d " "`
--echo $mhz
--
-+mhz=$(grep "cpu MHz" /proc/cpuinfo | cut -f 3 -d " " | sort -rn | head -n1)
-+echo "$mhz"
+-for mpps in `seq 3 3 50`; do
+-	echo testing $mpps Mpps
++for mpps in $(seq 3 3 50); do
++	echo testing "$mpps" Mpps
+ 
+-	OUTFILE=`mktemp`
+-	$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f `sh get_cpuinfo_mhz.sh` -p "$mpps" -t 30 > $OUTFILE
++	OUTFILE=$(mktemp)
++	$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f "$(sh get_cpuinfo_mhz.sh)" -p "$mpps" -t 30 > "$OUTFILE"
+ 
+-	exceeded=`grep exceeded $OUTFILE`
++	exceeded=$(grep exceeded "$OUTFILE")
+ 	if [ ! -z "$exceeded" ]; then
+-		echo mpps failed: $mpps
++		echo mpps failed: "$mpps"
+ 		break;
+ 	fi
+ 	echo success
+ done
+-echo first loop mpps: $mpps
++echo first loop mpps: "$mpps"
+ 
+ first_mpps=$(($mpps - 1))
+-for mpps in `seq $first_mpps -1 3`; do
+-	echo testing $mpps Mpps
++for mpps in $(seq $first_mpps -1 3); do
++	echo testing "$mpps" Mpps
+ 
+-	OUTFILE=`mktemp`
+-	$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f `sh get_cpuinfo_mhz.sh` -p "$mpps" -t 30 > $OUTFILE
++	OUTFILE=$(mktemp)
++	$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f "$(sh get_cpuinfo_mhz.sh)" -p "$mpps" -t 30 > "$OUTFILE"
+ 
+-	exceeded=`grep exceeded $OUTFILE`
++	exceeded=$(grep exceeded "$OUTFILE")
+ 	if [ -z "$exceeded" ]; then
+-		echo mpps success $mpps
++		echo mpps success "$mpps"
+ 		break;
+ 	fi
+ 	echo failure
+ done
+ 
+-second_mpps=`echo "$mpps + 0.3" | bc`
+-echo second loop mpps: $mpps
++second_mpps=$(echo "$mpps + 0.3" | bc)
++echo second loop mpps: "$mpps"
+ 
+-for mpps in `seq $second_mpps 0.3 $first_mpps`; do
+-	echo testing $mpps Mpps
++for mpps in $(seq "$second_mpps" 0.3 $first_mpps); do
++	echo testing "$mpps" Mpps
+ 
+-	OUTFILE=`mktemp`
+-	$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f `sh get_cpuinfo_mhz.sh` -p "$mpps" -t 30 > $OUTFILE
++	OUTFILE=$(mktemp)
++	$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f "$(sh get_cpuinfo_mhz.sh)" -p "$mpps" -t 30 > "$OUTFILE"
+ 
+-	exceeded=`grep exceeded $OUTFILE`
++	exceeded=$(grep exceeded "$OUTFILE")
+ 	if [ ! -z "$exceeded" ]; then
+-		echo mpps failure $mpps
++		echo mpps failure "$mpps"
+ 		break;
+ 	fi
+ 	echo success
+ done
+ 
+-echo third loop mpps: $mpps
+-third_mpps=`echo "$mpps -0.1" | bc`
++echo third loop mpps: "$mpps"
++third_mpps=$(echo "$mpps -0.1" | bc)
+ 
+-for mpps in `seq $third_mpps -0.1 3`; do
+-	echo testing $mpps Mpps
++for mpps in $(seq "$third_mpps" -0.1 3); do
++	echo testing "$mpps" Mpps
+ 
+-	OUTFILE=`mktemp`
+-	$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f `sh get_cpuinfo_mhz.sh` -p "$mpps" -t 30 > $OUTFILE
++	OUTFILE=$(mktemp)
++	$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f "$(sh get_cpuinfo_mhz.sh)" -p "$mpps" -t 30 > "$OUTFILE"
+ 
+-	exceeded=`grep exceeded $OUTFILE`
++	exceeded=$(grep exceeded "$OUTFILE")
+ 	if [ -z "$exceeded" ]; then
+-		echo mpps success $mpps
++		echo mpps success "$mpps"
+ 		break;
+ 	fi
+ 	echo failure
+@@ -89,14 +89,14 @@ while [ $queuelat_failure == 1 ]; do
+ 	echo -n "Starting 10 runs of 30 seconds with "
+ 	echo "$mpps Mpps"
+ 
+-	for i in `seq 1 10`; do 
+-		$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f `get_cpuinfo_mhz.sh` -p "$mpps" -t 30 > $OUTFILE
+-		exceeded=`grep exceeded $OUTFILE`
++	for i in $(seq 1 10); do
++		$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f "$(get_cpuinfo_mhz.sh)" -p "$mpps" -t 30 > "$OUTFILE"
++		exceeded=$(grep exceeded "$OUTFILE")
+ 
+ 		if [ ! -z "$exceeded" ]; then
+ 			echo "mpps failure (run $i) $mpps"
+ 			export queuelat_failure=1
+-			mpps=`echo $mpps - 0.1 | bc`
++			mpps=$(echo "$mpps" - 0.1 | bc)
+ 			export mpps
+ 			break
+ 		fi
+@@ -113,19 +113,20 @@ while [ $queuelat_failure == 1 ]; do
+ 	echo -n "Starting 10 minutes run with "
+ 	echo "$mpps Mpps"
+ 
+-	$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f `get_cpuinfo_mhz.sh` -p "$mpps" -t 600 > $OUTFILE
+-	exceeded=`grep exceeded $OUTFILE`
++	$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f "$(get_cpuinfo_mhz.sh)" -p "$mpps" -t 600 > "$OUTFILE"
++	exceeded=$(grep exceeded "$OUTFILE")
+ 
+ 	if [ ! -z "$exceeded" ]; then
+ 		echo "mpps failure (run $i) $mpps"
+ 		export queuelat_failure=1
+-		export mpps=`echo $mpps - 0.1 | bc`
++		mpps=$(echo "$mpps" - 0.1 | bc)
++		export mpps
+ 		continue
+ 	fi
+ 	echo "run $i success"
+ done
+ 
+-echo Final mpps is: $mpps
++echo Final mpps is: "$mpps"
+ 
+ unset queuelat_failure
+ unset mpps
 -- 
 2.20.1
 
