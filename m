@@ -7,62 +7,62 @@ X-Spam-Status: No, score=-9.6 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 07A37C2D0DB
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3B2E1C3F68F
 	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:50:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id BEF6620684
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:50:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0AE7A20684
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:50:52 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Z++FPZTq"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="isjHGhtc"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729353AbgAWUut (ORCPT
+        id S1729360AbgAWUuv (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 23 Jan 2020 15:50:49 -0500
-Received: from mail-qk1-f194.google.com ([209.85.222.194]:46541 "EHLO
-        mail-qk1-f194.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729100AbgAWUus (ORCPT
+        Thu, 23 Jan 2020 15:50:51 -0500
+Received: from mail-qv1-f49.google.com ([209.85.219.49]:39325 "EHLO
+        mail-qv1-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728799AbgAWUut (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 23 Jan 2020 15:50:48 -0500
-Received: by mail-qk1-f194.google.com with SMTP id g195so3488779qke.13
-        for <linux-rt-users@vger.kernel.org>; Thu, 23 Jan 2020 12:50:47 -0800 (PST)
+        Thu, 23 Jan 2020 15:50:49 -0500
+Received: by mail-qv1-f49.google.com with SMTP id y8so2180605qvk.6
+        for <linux-rt-users@vger.kernel.org>; Thu, 23 Jan 2020 12:50:49 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=oYambi9+6gRZ6zd64W8SKJQfnPAUVoiXAO2XPjEnfVU=;
-        b=Z++FPZTqyGAxlN2OEn2BpnvAvFHrA92YLTvs6Cpi19hpi8FSFKhqfeZnLM8vJl+mg/
-         2kGjiFLiqknXEvSp2QCxLtbn0SCztc0n0bmcSeEi9GuM/ZZ4xdcWb5l4Izb+lmump1Ko
-         1APGKVMXcUdr0KbOZeNGExlLZCO+GL3OdcxdxJw8LSYKuEMDI5h07wXRIK/ilCh75eUY
-         +8GXTDRvRA8cfjbkAYzm82Q0/SRjIb+ebOFKoVLPBbboTs3UD3lSDsbJBfPdNoZFO+lw
-         H8kpkTEReYiMCE6PhK2+sTRQ6YAm5HV1PxGQ4RRwFJjSPg937/s/MmvjIxqSnZqhCIxc
-         MWbw==
+        bh=LjkWpJ9zCX9zWl/sGpAeKpZFP4O8jYudp8U4OY8rjAI=;
+        b=isjHGhtcnD/A7a3kd5jeCkJkk9V4YVrjx6qcfQvnl4TLcW1bG5HKBdB8XhtHk78wOu
+         kejf1ypJWzBqBKztCZiVfv/lgOWPTk/t9SWPojxTrQpdthqmnVL4AFazA1ot9k6+pAjw
+         HscGGWg3mwQ7pDHapjdUmLXrQ0mqMb72JhGp6UA6ttRLI5iTRsMIB9VngmEkggHcln08
+         C7xV7A27QZMBHzfcNWwa/og10q7+b78F4roIcW9ZShoVyvYSpdmgKVvMR4lsoTLiMBpL
+         kIADtUOvbhvp3/HwF9mkl+jI4AoQtfVkMSPth/xhHa9MBV2wi62L+FE0iYI2wWfRDqjg
+         9Nww==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
          :in-reply-to:references:mime-version:content-transfer-encoding;
-        bh=oYambi9+6gRZ6zd64W8SKJQfnPAUVoiXAO2XPjEnfVU=;
-        b=mPvpAXjyGNghQfq6ZpDpWecPQi4YOfPOSIsn/iWmm2XrN1PzunbnK7WmAYXPsp6Xq7
-         13v+pIjYBNTkdedfZ72VYfms0fW8udLWQslFHdx1ekrF4buF5KL7TXxM6ltzSazxBaNb
-         wp2Lryl7iNARKyVlrMZgoEWwU/qPbOeGxa+43AKgN6jo3Vnrph9m10KnSXuQMumfQM87
-         CTmTUIrKixsdI7zj3XydJQI6FsYzbSQq2O7CwQEcPyqaOmv5DNOqkeSDO1iO3nBfuuVN
-         gPuF71GkNpY/jhg/ytnOHL1va9JFYhavR0amAqowMQo31YdYb1KEyOm2yaNlTJSIl3x5
-         1FDg==
-X-Gm-Message-State: APjAAAUokXe/FdAhSzNeOcdXQqJKbxgdD/sDSg7XSQqNIdfCUuP/+aEZ
-        EsDcMDqS/oDwM+6fbg4WsQX5TNgDv/c=
-X-Google-Smtp-Source: APXvYqysdGzcoVdgsJ7OxjNlME5R6eIR+fwBLip27a3Fjsk5QCZLPATexFVWEU4VB5Laxyl+0GexgQ==
-X-Received: by 2002:ae9:e910:: with SMTP id x16mr74155qkf.90.1579812647128;
-        Thu, 23 Jan 2020 12:50:47 -0800 (PST)
+        bh=LjkWpJ9zCX9zWl/sGpAeKpZFP4O8jYudp8U4OY8rjAI=;
+        b=LDxyc4JRx5E9sNyNuixRVn0wD1KdbKR5qMZRF59GVmJ1x2BkHCrKz3/yiyxEIyfK+1
+         VSErsHfLFpw44oyb18nOemxTD1gqjGO09HiPoHZGSAatuOKyxhfUU/xcj1vF76OobDLE
+         U/wMIBTXXTX383cdX53vron1Qd76V/INU8RFhVl9rQXBX9uktwSDweMqbzC9aoxbUdTF
+         ug8ulmYkjbURDQ0Ug91fSXS/+mvcksXadFrCfWlQHyyhU7GdHwNuMrkReAQ+U1uLEicO
+         ZDtb52tY1XOjcKfuGFR07kUBXGBchxrllyqTa518qC+WVKjY16eCjC/sBzHTeiiN4aVC
+         DXbw==
+X-Gm-Message-State: APjAAAXO7rcrJQnADl+3iCPdzGD1x2EXnunfWkENCYp6uZtv2per2Pz7
+        c2LaFv2ECxJGs3RHdvoEV9BhX9QgTCA=
+X-Google-Smtp-Source: APXvYqzMvaqLFPqKCRXlOfRkoKQ0I3m4CD5vCPIzuz0KK7QAojgKPbXrRCbAj40OID8tDICKv0U5XA==
+X-Received: by 2002:a05:6214:6f0:: with SMTP id bk16mr18520267qvb.23.1579812648455;
+        Thu, 23 Jan 2020 12:50:48 -0800 (PST)
 Received: from planxty.redhat.com (rdwyon0600w-lp130-03-64-231-46-127.dsl.bell.ca. [64.231.46.127])
-        by smtp.gmail.com with ESMTPSA id j185sm1518346qkc.96.2020.01.23.12.50.46
+        by smtp.gmail.com with ESMTPSA id j185sm1518346qkc.96.2020.01.23.12.50.47
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 23 Jan 2020 12:50:46 -0800 (PST)
+        Thu, 23 Jan 2020 12:50:48 -0800 (PST)
 From:   John Kacur <jkacur@redhat.com>
 To:     RT <linux-rt-users@vger.kernel.org>
 Cc:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
-Subject: [PATCH 6/9] rt-tests: determine_maximum_mpps.sh: Fix quoting and other shell issue
-Date:   Thu, 23 Jan 2020 21:50:26 +0100
-Message-Id: <20200123205029.20176-7-jkacur@redhat.com>
+Subject: [PATCH 7/9] rt-tests: ptsematest: Update man page and add -h option
+Date:   Thu, 23 Jan 2020 21:50:27 +0100
+Message-Id: <20200123205029.20176-8-jkacur@redhat.com>
 X-Mailer: git-send-email 2.20.1
 In-Reply-To: <20200123205029.20176-1-jkacur@redhat.com>
 References: <20200123205029.20176-1-jkacur@redhat.com>
@@ -73,162 +73,74 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Fix a number of issues in the script determine_maximum_mpps.sh such as
-1. Convert legacy backticks to $(...) notation
-2. Double quote where necessary to prevent globbing
-3. Double quote where necessary to prevent word splitting.
-
-Note: these fixes are more than just cosmetic, they are needed for the
-script to work correctly.
+- Update the man page with the -s or --smp option
+- Reorder the program help to match the man page
+- Make the -h option work correctly
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- src/queuelat/determine_maximum_mpps.sh | 75 +++++++++++++-------------
- 1 file changed, 38 insertions(+), 37 deletions(-)
+ src/ptsematest/ptsematest.8 |  3 +++
+ src/ptsematest/ptsematest.c | 10 ++++++----
+ 2 files changed, 9 insertions(+), 4 deletions(-)
 
-diff --git a/src/queuelat/determine_maximum_mpps.sh b/src/queuelat/determine_maximum_mpps.sh
-index f6cf1dea27cf..f785147f1bbd 100755
---- a/src/queuelat/determine_maximum_mpps.sh
-+++ b/src/queuelat/determine_maximum_mpps.sh
-@@ -17,65 +17,65 @@ echo "Determining maximum mpps the machine can handle"
- echo "Will take a few minutes to determine mpps value"
- echo "And 10 minutes run to confirm the final mpps value is stable"
+diff --git a/src/ptsematest/ptsematest.8 b/src/ptsematest/ptsematest.8
+index 4bb1434babf4..8f76bca4b6a8 100644
+--- a/src/ptsematest/ptsematest.8
++++ b/src/ptsematest/ptsematest.8
+@@ -35,6 +35,9 @@ Set the number of loops. The default is 0 (endless). This option is useful for a
+ .B \-p, \-\-prio=PRIO
+ Set the priority of the process.
+ .TP
++.B \-s, \-\-smp
++SMP testing: options -a -t and same priority
++.TP
+ .B \-t, \-\-threads[=NUM]
+ Set the number of test threads (default is 1, if this option is not given). If NUM is specified, create NUM test threads. If NUM is not specified, NUM is set to the number of available CPUs.
+ .SH "EXAMPLES"
+diff --git a/src/ptsematest/ptsematest.c b/src/ptsematest/ptsematest.c
+index 78fa444c5578..485c991ec173 100644
+--- a/src/ptsematest/ptsematest.c
++++ b/src/ptsematest/ptsematest.c
+@@ -154,10 +154,10 @@ static void display_help(void)
+ 	"                           with NUM pin all threads to the processor NUM\n"
+ 	"-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
+ 	"-d DIST  --distance=DIST   distance of thread intervals in us default=500\n"
+-	"-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
+-	"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+ 	"-D       --duration=TIME   specify a length for the test run.\n"
+ 	"                           Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
++	"-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
++	"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+ 	"-p PRIO  --prio=PRIO       priority\n"
+ 	"-S       --smp             SMP testing: options -a -t and same priority\n"
+         "                           of all threads\n"
+@@ -202,7 +202,7 @@ static void process_options (int argc, char *argv[])
+ 			{"help", no_argument, NULL, '?'},
+ 			{NULL, 0, NULL, 0}
+ 		};
+-		int c = getopt_long (argc, argv, "a::b:d:i:l:D:p:St::",
++		int c = getopt_long (argc, argv, "a::b:d:i:l:D:p:St::h",
+ 			long_options, &option_index);
+ 		if (c == -1)
+ 			break;
+@@ -245,6 +245,8 @@ static void process_options (int argc, char *argv[])
+ 			else
+ 				num_threads = max_cpus;
+ 			break;
++		case 'h':
++			display_help();
+ 		case '?': error = 1; break;
+ 		}
+ 	}
+@@ -275,7 +277,7 @@ static void process_options (int argc, char *argv[])
+ 		sameprio = 1;
  
--for mpps in `seq 3 3 50`; do
--	echo testing $mpps Mpps
-+for mpps in $(seq 3 3 50); do
-+	echo testing "$mpps" Mpps
+ 	if (error)
+-		display_help ();
++		display_help();
+ }
  
--	OUTFILE=`mktemp`
--	$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f `sh get_cpuinfo_mhz.sh` -p "$mpps" -t 30 > $OUTFILE
-+	OUTFILE=$(mktemp)
-+	$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f "$(sh get_cpuinfo_mhz.sh)" -p "$mpps" -t 30 > "$OUTFILE"
  
--	exceeded=`grep exceeded $OUTFILE`
-+	exceeded=$(grep exceeded "$OUTFILE")
- 	if [ ! -z "$exceeded" ]; then
--		echo mpps failed: $mpps
-+		echo mpps failed: "$mpps"
- 		break;
- 	fi
- 	echo success
- done
--echo first loop mpps: $mpps
-+echo first loop mpps: "$mpps"
- 
- first_mpps=$(($mpps - 1))
--for mpps in `seq $first_mpps -1 3`; do
--	echo testing $mpps Mpps
-+for mpps in $(seq $first_mpps -1 3); do
-+	echo testing "$mpps" Mpps
- 
--	OUTFILE=`mktemp`
--	$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f `sh get_cpuinfo_mhz.sh` -p "$mpps" -t 30 > $OUTFILE
-+	OUTFILE=$(mktemp)
-+	$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f "$(sh get_cpuinfo_mhz.sh)" -p "$mpps" -t 30 > "$OUTFILE"
- 
--	exceeded=`grep exceeded $OUTFILE`
-+	exceeded=$(grep exceeded "$OUTFILE")
- 	if [ -z "$exceeded" ]; then
--		echo mpps success $mpps
-+		echo mpps success "$mpps"
- 		break;
- 	fi
- 	echo failure
- done
- 
--second_mpps=`echo "$mpps + 0.3" | bc`
--echo second loop mpps: $mpps
-+second_mpps=$(echo "$mpps + 0.3" | bc)
-+echo second loop mpps: "$mpps"
- 
--for mpps in `seq $second_mpps 0.3 $first_mpps`; do
--	echo testing $mpps Mpps
-+for mpps in $(seq "$second_mpps" 0.3 $first_mpps); do
-+	echo testing "$mpps" Mpps
- 
--	OUTFILE=`mktemp`
--	$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f `sh get_cpuinfo_mhz.sh` -p "$mpps" -t 30 > $OUTFILE
-+	OUTFILE=$(mktemp)
-+	$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f "$(sh get_cpuinfo_mhz.sh)" -p "$mpps" -t 30 > "$OUTFILE"
- 
--	exceeded=`grep exceeded $OUTFILE`
-+	exceeded=$(grep exceeded "$OUTFILE")
- 	if [ ! -z "$exceeded" ]; then
--		echo mpps failure $mpps
-+		echo mpps failure "$mpps"
- 		break;
- 	fi
- 	echo success
- done
- 
--echo third loop mpps: $mpps
--third_mpps=`echo "$mpps -0.1" | bc`
-+echo third loop mpps: "$mpps"
-+third_mpps=$(echo "$mpps -0.1" | bc)
- 
--for mpps in `seq $third_mpps -0.1 3`; do
--	echo testing $mpps Mpps
-+for mpps in $(seq "$third_mpps" -0.1 3); do
-+	echo testing "$mpps" Mpps
- 
--	OUTFILE=`mktemp`
--	$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f `sh get_cpuinfo_mhz.sh` -p "$mpps" -t 30 > $OUTFILE
-+	OUTFILE=$(mktemp)
-+	$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f "$(sh get_cpuinfo_mhz.sh)" -p "$mpps" -t 30 > "$OUTFILE"
- 
--	exceeded=`grep exceeded $OUTFILE`
-+	exceeded=$(grep exceeded "$OUTFILE")
- 	if [ -z "$exceeded" ]; then
--		echo mpps success $mpps
-+		echo mpps success "$mpps"
- 		break;
- 	fi
- 	echo failure
-@@ -89,14 +89,14 @@ while [ $queuelat_failure == 1 ]; do
- 	echo -n "Starting 10 runs of 30 seconds with "
- 	echo "$mpps Mpps"
- 
--	for i in `seq 1 10`; do 
--		$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f `get_cpuinfo_mhz.sh` -p "$mpps" -t 30 > $OUTFILE
--		exceeded=`grep exceeded $OUTFILE`
-+	for i in $(seq 1 10); do
-+		$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f "$(get_cpuinfo_mhz.sh)" -p "$mpps" -t 30 > "$OUTFILE"
-+		exceeded=$(grep exceeded "$OUTFILE")
- 
- 		if [ ! -z "$exceeded" ]; then
- 			echo "mpps failure (run $i) $mpps"
- 			export queuelat_failure=1
--			mpps=`echo $mpps - 0.1 | bc`
-+			mpps=$(echo "$mpps" - 0.1 | bc)
- 			export mpps
- 			break
- 		fi
-@@ -113,19 +113,20 @@ while [ $queuelat_failure == 1 ]; do
- 	echo -n "Starting 10 minutes run with "
- 	echo "$mpps Mpps"
- 
--	$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f `get_cpuinfo_mhz.sh` -p "$mpps" -t 600 > $OUTFILE
--	exceeded=`grep exceeded $OUTFILE`
-+	$PREAMBLE queuelat -m $MAXLAT -c $CYCLES_PER_PACKET -f "$(get_cpuinfo_mhz.sh)" -p "$mpps" -t 600 > "$OUTFILE"
-+	exceeded=$(grep exceeded "$OUTFILE")
- 
- 	if [ ! -z "$exceeded" ]; then
- 		echo "mpps failure (run $i) $mpps"
- 		export queuelat_failure=1
--		export mpps=`echo $mpps - 0.1 | bc`
-+		mpps=$(echo "$mpps" - 0.1 | bc)
-+		export mpps
- 		continue
- 	fi
- 	echo "run $i success"
- done
- 
--echo Final mpps is: $mpps
-+echo Final mpps is: "$mpps"
- 
- unset queuelat_failure
- unset mpps
 -- 
 2.20.1
 
