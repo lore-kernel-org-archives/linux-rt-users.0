@@ -6,30 +6,30 @@ X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4570EC33CAF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:40:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 48C7AC2D0DB
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:40:45 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 0828D206D4
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:40:44 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1B75C246B2
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:40:45 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729604AbgAWUke (ORCPT
+        id S1729546AbgAWUkd (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 23 Jan 2020 15:40:34 -0500
-Received: from mail.kernel.org ([198.145.29.99]:45990 "EHLO mail.kernel.org"
+        Thu, 23 Jan 2020 15:40:33 -0500
+Received: from mail.kernel.org ([198.145.29.99]:45840 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729318AbgAWUjr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 23 Jan 2020 15:39:47 -0500
+        id S1729360AbgAWUjs (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 23 Jan 2020 15:39:48 -0500
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 8076424698;
-        Thu, 23 Jan 2020 20:39:46 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id A7E4B2469F;
+        Thu, 23 Jan 2020 20:39:47 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.93)
         (envelope-from <rostedt@goodmis.org>)
-        id 1iujGT-000meB-Dw; Thu, 23 Jan 2020 15:39:45 -0500
-Message-Id: <20200123203945.314725398@goodmis.org>
+        id 1iujGU-000mi3-Jk; Thu, 23 Jan 2020 15:39:46 -0500
+Message-Id: <20200123203946.486165030@goodmis.org>
 User-Agent: quilt/0.65
-Date:   Thu, 23 Jan 2020 15:39:51 -0500
+Date:   Thu, 23 Jan 2020 15:39:59 -0500
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -39,10 +39,9 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         John Kacur <jkacur@redhat.com>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>, stable-rt@vger.kernel.org,
-        Liu Haitao <haitao.liu@windriver.com>,
-        Yongxin Liu <yongxin.liu@windriver.com>
-Subject: [PATCH RT 21/30] kmemleak: Change the lock of kmemleak_object to raw_spinlock_t
+        Tom Zanussi <zanussi@kernel.org>
+Subject: [PATCH RT 29/30] sched: migrate_enable: Busy loop until the migration request is
+ completed
 References: <20200123203930.646725253@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -56,291 +55,55 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Liu Haitao <haitao.liu@windriver.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-[ Upstream commit 217847f57119b5fdd377bfa3d344613ddb98d9fc ]
+[ Upstream commit 140d7f54a5fff02898d2ca9802b39548bf7455f1 ]
 
-The commit ("kmemleak: Turn kmemleak_lock to raw spinlock on RT")
-changed the kmemleak_lock to raw spinlock. However the
-kmemleak_object->lock is held after the kmemleak_lock is held in
-scan_block().
+If user task changes the CPU affinity mask of a running task it will
+dispatch migration request if the current CPU is no longer allowed. This
+might happen shortly before a task enters a migrate_disable() section.
+Upon leaving the migrate_disable() section, the task will notice that
+the current CPU is no longer allowed and will will dispatch its own
+migration request to move it off the current CPU.
+While invoking __schedule() the first migration request will be
+processed and the task returns on the "new" CPU with "arg.done = 0". Its
+own migration request will be processed shortly after and will result in
+memory corruption if the stack memory, designed for request, was used
+otherwise in the meantime.
 
-Make the object->lock a raw_spinlock_t.
+Spin until the migration request has been processed if it was accepted.
 
-Cc: stable-rt@vger.kernel.org
-Link: https://lkml.kernel.org/r/20190927082230.34152-1-yongxin.liu@windriver.com
-Signed-off-by: Liu Haitao <haitao.liu@windriver.com>
-Signed-off-by: Yongxin Liu <yongxin.liu@windriver.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- mm/kmemleak.c | 72 +++++++++++++++++++++++++--------------------------
- 1 file changed, 36 insertions(+), 36 deletions(-)
+ kernel/sched/core.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
-diff --git a/mm/kmemleak.c b/mm/kmemleak.c
-index 92ce99b15f2b..e5f5eeed338d 100644
---- a/mm/kmemleak.c
-+++ b/mm/kmemleak.c
-@@ -147,7 +147,7 @@ struct kmemleak_scan_area {
-  * (use_count) and freed using the RCU mechanism.
-  */
- struct kmemleak_object {
--	spinlock_t lock;
-+	raw_spinlock_t lock;
- 	unsigned int flags;		/* object status flags */
- 	struct list_head object_list;
- 	struct list_head gray_list;
-@@ -561,7 +561,7 @@ static struct kmemleak_object *create_object(unsigned long ptr, size_t size,
- 	INIT_LIST_HEAD(&object->object_list);
- 	INIT_LIST_HEAD(&object->gray_list);
- 	INIT_HLIST_HEAD(&object->area_list);
--	spin_lock_init(&object->lock);
-+	raw_spin_lock_init(&object->lock);
- 	atomic_set(&object->use_count, 1);
- 	object->flags = OBJECT_ALLOCATED;
- 	object->pointer = ptr;
-@@ -642,9 +642,9 @@ static void __delete_object(struct kmemleak_object *object)
- 	 * Locking here also ensures that the corresponding memory block
- 	 * cannot be freed when it is being scanned.
- 	 */
--	spin_lock_irqsave(&object->lock, flags);
-+	raw_spin_lock_irqsave(&object->lock, flags);
- 	object->flags &= ~OBJECT_ALLOCATED;
--	spin_unlock_irqrestore(&object->lock, flags);
-+	raw_spin_unlock_irqrestore(&object->lock, flags);
- 	put_object(object);
- }
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index cbd76324babd..4616c086dd26 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -7329,7 +7329,7 @@ void migrate_enable(void)
  
-@@ -716,9 +716,9 @@ static void paint_it(struct kmemleak_object *object, int color)
- {
- 	unsigned long flags;
+ 	WARN_ON(smp_processor_id() != cpu);
+ 	if (!is_cpu_allowed(p, cpu)) {
+-		struct migration_arg arg = { p };
++		struct migration_arg arg = { .task = p };
+ 		struct cpu_stop_work work;
+ 		struct rq_flags rf;
  
--	spin_lock_irqsave(&object->lock, flags);
-+	raw_spin_lock_irqsave(&object->lock, flags);
- 	__paint_it(object, color);
--	spin_unlock_irqrestore(&object->lock, flags);
-+	raw_spin_unlock_irqrestore(&object->lock, flags);
- }
- 
- static void paint_ptr(unsigned long ptr, int color)
-@@ -778,7 +778,7 @@ static void add_scan_area(unsigned long ptr, size_t size, gfp_t gfp)
- 		goto out;
+@@ -7342,7 +7342,10 @@ void migrate_enable(void)
+ 				    &arg, &work);
+ 		tlb_migrate_finish(p->mm);
+ 		__schedule(true);
+-		WARN_ON_ONCE(!arg.done && !work.disabled);
++		if (!work.disabled) {
++			while (!arg.done)
++				cpu_relax();
++		}
  	}
  
--	spin_lock_irqsave(&object->lock, flags);
-+	raw_spin_lock_irqsave(&object->lock, flags);
- 	if (size == SIZE_MAX) {
- 		size = object->pointer + object->size - ptr;
- 	} else if (ptr + size > object->pointer + object->size) {
-@@ -794,7 +794,7 @@ static void add_scan_area(unsigned long ptr, size_t size, gfp_t gfp)
- 
- 	hlist_add_head(&area->node, &object->area_list);
- out_unlock:
--	spin_unlock_irqrestore(&object->lock, flags);
-+	raw_spin_unlock_irqrestore(&object->lock, flags);
  out:
- 	put_object(object);
- }
-@@ -817,9 +817,9 @@ static void object_set_excess_ref(unsigned long ptr, unsigned long excess_ref)
- 		return;
- 	}
- 
--	spin_lock_irqsave(&object->lock, flags);
-+	raw_spin_lock_irqsave(&object->lock, flags);
- 	object->excess_ref = excess_ref;
--	spin_unlock_irqrestore(&object->lock, flags);
-+	raw_spin_unlock_irqrestore(&object->lock, flags);
- 	put_object(object);
- }
- 
-@@ -839,9 +839,9 @@ static void object_no_scan(unsigned long ptr)
- 		return;
- 	}
- 
--	spin_lock_irqsave(&object->lock, flags);
-+	raw_spin_lock_irqsave(&object->lock, flags);
- 	object->flags |= OBJECT_NO_SCAN;
--	spin_unlock_irqrestore(&object->lock, flags);
-+	raw_spin_unlock_irqrestore(&object->lock, flags);
- 	put_object(object);
- }
- 
-@@ -902,11 +902,11 @@ static void early_alloc(struct early_log *log)
- 			       log->min_count, GFP_ATOMIC);
- 	if (!object)
- 		goto out;
--	spin_lock_irqsave(&object->lock, flags);
-+	raw_spin_lock_irqsave(&object->lock, flags);
- 	for (i = 0; i < log->trace_len; i++)
- 		object->trace[i] = log->trace[i];
- 	object->trace_len = log->trace_len;
--	spin_unlock_irqrestore(&object->lock, flags);
-+	raw_spin_unlock_irqrestore(&object->lock, flags);
- out:
- 	rcu_read_unlock();
- }
-@@ -1096,9 +1096,9 @@ void __ref kmemleak_update_trace(const void *ptr)
- 		return;
- 	}
- 
--	spin_lock_irqsave(&object->lock, flags);
-+	raw_spin_lock_irqsave(&object->lock, flags);
- 	object->trace_len = __save_stack_trace(object->trace);
--	spin_unlock_irqrestore(&object->lock, flags);
-+	raw_spin_unlock_irqrestore(&object->lock, flags);
- 
- 	put_object(object);
- }
-@@ -1344,7 +1344,7 @@ static void scan_block(void *_start, void *_end,
- 		 * previously acquired in scan_object(). These locks are
- 		 * enclosed by scan_mutex.
- 		 */
--		spin_lock_nested(&object->lock, SINGLE_DEPTH_NESTING);
-+		raw_spin_lock_nested(&object->lock, SINGLE_DEPTH_NESTING);
- 		/* only pass surplus references (object already gray) */
- 		if (color_gray(object)) {
- 			excess_ref = object->excess_ref;
-@@ -1353,7 +1353,7 @@ static void scan_block(void *_start, void *_end,
- 			excess_ref = 0;
- 			update_refs(object);
- 		}
--		spin_unlock(&object->lock);
-+		raw_spin_unlock(&object->lock);
- 
- 		if (excess_ref) {
- 			object = lookup_object(excess_ref, 0);
-@@ -1362,9 +1362,9 @@ static void scan_block(void *_start, void *_end,
- 			if (object == scanned)
- 				/* circular reference, ignore */
- 				continue;
--			spin_lock_nested(&object->lock, SINGLE_DEPTH_NESTING);
-+			raw_spin_lock_nested(&object->lock, SINGLE_DEPTH_NESTING);
- 			update_refs(object);
--			spin_unlock(&object->lock);
-+			raw_spin_unlock(&object->lock);
- 		}
- 	}
- 	raw_spin_unlock_irqrestore(&kmemleak_lock, flags);
-@@ -1400,7 +1400,7 @@ static void scan_object(struct kmemleak_object *object)
- 	 * Once the object->lock is acquired, the corresponding memory block
- 	 * cannot be freed (the same lock is acquired in delete_object).
- 	 */
--	spin_lock_irqsave(&object->lock, flags);
-+	raw_spin_lock_irqsave(&object->lock, flags);
- 	if (object->flags & OBJECT_NO_SCAN)
- 		goto out;
- 	if (!(object->flags & OBJECT_ALLOCATED))
-@@ -1419,9 +1419,9 @@ static void scan_object(struct kmemleak_object *object)
- 			if (start >= end)
- 				break;
- 
--			spin_unlock_irqrestore(&object->lock, flags);
-+			raw_spin_unlock_irqrestore(&object->lock, flags);
- 			cond_resched();
--			spin_lock_irqsave(&object->lock, flags);
-+			raw_spin_lock_irqsave(&object->lock, flags);
- 		} while (object->flags & OBJECT_ALLOCATED);
- 	} else
- 		hlist_for_each_entry(area, &object->area_list, node)
-@@ -1429,7 +1429,7 @@ static void scan_object(struct kmemleak_object *object)
- 				   (void *)(area->start + area->size),
- 				   object);
- out:
--	spin_unlock_irqrestore(&object->lock, flags);
-+	raw_spin_unlock_irqrestore(&object->lock, flags);
- }
- 
- /*
-@@ -1482,7 +1482,7 @@ static void kmemleak_scan(void)
- 	/* prepare the kmemleak_object's */
- 	rcu_read_lock();
- 	list_for_each_entry_rcu(object, &object_list, object_list) {
--		spin_lock_irqsave(&object->lock, flags);
-+		raw_spin_lock_irqsave(&object->lock, flags);
- #ifdef DEBUG
- 		/*
- 		 * With a few exceptions there should be a maximum of
-@@ -1499,7 +1499,7 @@ static void kmemleak_scan(void)
- 		if (color_gray(object) && get_object(object))
- 			list_add_tail(&object->gray_list, &gray_list);
- 
--		spin_unlock_irqrestore(&object->lock, flags);
-+		raw_spin_unlock_irqrestore(&object->lock, flags);
- 	}
- 	rcu_read_unlock();
- 
-@@ -1564,14 +1564,14 @@ static void kmemleak_scan(void)
- 	 */
- 	rcu_read_lock();
- 	list_for_each_entry_rcu(object, &object_list, object_list) {
--		spin_lock_irqsave(&object->lock, flags);
-+		raw_spin_lock_irqsave(&object->lock, flags);
- 		if (color_white(object) && (object->flags & OBJECT_ALLOCATED)
- 		    && update_checksum(object) && get_object(object)) {
- 			/* color it gray temporarily */
- 			object->count = object->min_count;
- 			list_add_tail(&object->gray_list, &gray_list);
- 		}
--		spin_unlock_irqrestore(&object->lock, flags);
-+		raw_spin_unlock_irqrestore(&object->lock, flags);
- 	}
- 	rcu_read_unlock();
- 
-@@ -1591,13 +1591,13 @@ static void kmemleak_scan(void)
- 	 */
- 	rcu_read_lock();
- 	list_for_each_entry_rcu(object, &object_list, object_list) {
--		spin_lock_irqsave(&object->lock, flags);
-+		raw_spin_lock_irqsave(&object->lock, flags);
- 		if (unreferenced_object(object) &&
- 		    !(object->flags & OBJECT_REPORTED)) {
- 			object->flags |= OBJECT_REPORTED;
- 			new_leaks++;
- 		}
--		spin_unlock_irqrestore(&object->lock, flags);
-+		raw_spin_unlock_irqrestore(&object->lock, flags);
- 	}
- 	rcu_read_unlock();
- 
-@@ -1749,10 +1749,10 @@ static int kmemleak_seq_show(struct seq_file *seq, void *v)
- 	struct kmemleak_object *object = v;
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&object->lock, flags);
-+	raw_spin_lock_irqsave(&object->lock, flags);
- 	if ((object->flags & OBJECT_REPORTED) && unreferenced_object(object))
- 		print_unreferenced(seq, object);
--	spin_unlock_irqrestore(&object->lock, flags);
-+	raw_spin_unlock_irqrestore(&object->lock, flags);
- 	return 0;
- }
- 
-@@ -1782,9 +1782,9 @@ static int dump_str_object_info(const char *str)
- 		return -EINVAL;
- 	}
- 
--	spin_lock_irqsave(&object->lock, flags);
-+	raw_spin_lock_irqsave(&object->lock, flags);
- 	dump_object_info(object);
--	spin_unlock_irqrestore(&object->lock, flags);
-+	raw_spin_unlock_irqrestore(&object->lock, flags);
- 
- 	put_object(object);
- 	return 0;
-@@ -1803,11 +1803,11 @@ static void kmemleak_clear(void)
- 
- 	rcu_read_lock();
- 	list_for_each_entry_rcu(object, &object_list, object_list) {
--		spin_lock_irqsave(&object->lock, flags);
-+		raw_spin_lock_irqsave(&object->lock, flags);
- 		if ((object->flags & OBJECT_REPORTED) &&
- 		    unreferenced_object(object))
- 			__paint_it(object, KMEMLEAK_GREY);
--		spin_unlock_irqrestore(&object->lock, flags);
-+		raw_spin_unlock_irqrestore(&object->lock, flags);
- 	}
- 	rcu_read_unlock();
- 
 -- 
 2.24.1
 
