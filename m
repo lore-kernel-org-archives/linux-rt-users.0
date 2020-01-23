@@ -2,104 +2,111 @@ Return-Path: <SRS0=nn6j=3M=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.5 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_GIT autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7BB4FC33CB8
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:41:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4E7A9C2D0DB
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:50:42 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 4C96A246B2
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:41:48 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1B74D21734
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:50:42 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="akMQ1cnC"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729437AbgAWUlr (ORCPT
+        id S1729263AbgAWUul (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 23 Jan 2020 15:41:47 -0500
-Received: from mail.kernel.org ([198.145.29.99]:45678 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729012AbgAWUjo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 23 Jan 2020 15:39:44 -0500
-Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id A42B421D7D;
-        Thu, 23 Jan 2020 20:39:43 +0000 (UTC)
-Received: from rostedt by gandalf.local.home with local (Exim 4.93)
-        (envelope-from <rostedt@goodmis.org>)
-        id 1iujGQ-000mUV-Io; Thu, 23 Jan 2020 15:39:42 -0500
-Message-Id: <20200123203942.460742840@goodmis.org>
-User-Agent: quilt/0.65
-Date:   Thu, 23 Jan 2020 15:39:31 -0500
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     linux-kernel@vger.kernel.org,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        John Kacur <jkacur@redhat.com>,
-        Julia Cartwright <julia@ni.com>,
-        Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>,
-        Benjamin Rouxel <benjamin.rouxel@uva.nl>,
-        Kukjin Kim <kgene@kernel.org>,
-        Krzysztof Kozlowski <krzk@kernel.org>,
-        linux-samsung-soc@vger.kernel.org
-Subject: [PATCH RT 01/30] i2c: exynos5: Remove IRQF_ONESHOT
-References: <20200123203930.646725253@goodmis.org>
+        Thu, 23 Jan 2020 15:50:41 -0500
+Received: from mail-qk1-f182.google.com ([209.85.222.182]:35237 "EHLO
+        mail-qk1-f182.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728831AbgAWUul (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 23 Jan 2020 15:50:41 -0500
+Received: by mail-qk1-f182.google.com with SMTP id z76so4943604qka.2
+        for <linux-rt-users@vger.kernel.org>; Thu, 23 Jan 2020 12:50:40 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=/n+BG/kL8a4ayV/8eKCyegAiqJ1nocxg/M4Z7WA02rE=;
+        b=akMQ1cnCw3HIkU2VD/Od+vpL84xkp/jAy2NWwcUuWte6Mqht55R9x5cj6OE/OHX6uq
+         QcjUPAOZWJ//Kr3iurD57ai/0W5UhcAg63ir8YPbgv6RQbkbx/g/ldDrcHqK9ly3PHhb
+         tHHnHfQg0p6gpTPnBwo0oe0w11KRm52736SFRd1HJpcsHHyNC7qn/lI6CSjX5CqBmZrJ
+         fdB0lX/WxHIPcbaQUL3Z+PWLk4mdB85Z+AjEYzAVq1vkE4Q5N1cqEFuVyK3OEgfogej0
+         my45kBLXKFMufS0X2KCAJswML8T2OSNqRQ05qoDvsCxhIObGxMKdc3WsvoUO9MCgddf1
+         c3+g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
+         :mime-version:content-transfer-encoding;
+        bh=/n+BG/kL8a4ayV/8eKCyegAiqJ1nocxg/M4Z7WA02rE=;
+        b=GcxpEVjjfKGKAGYDma1czNpACywJH2PEoQsBPColIifGbBMbUTI9x1RT3EVWBWb+/m
+         KQhRO02n4EWGqdSezR8a1d23kjUBItkgN/Kj/Vu38wZgxIaMbsTRYUa9wDHDepnYj79q
+         spt1TP/LRFjbz0DBaZcD/e1yk16VSJFbQ4jHFDGDEePeTIwXnnw87Fi0q+jPI1G5tQD4
+         siVG9+H/qRXBPl4GyTgiZVinjaG5vIv7WxV6Q1Y41bq2qOmRWjO8untWeOFyUkD1MpB8
+         1zhqy8V5y9iTb1BB4sKFsn3VJ7pxeXjgI3e8cIX7OgqmqgihtVGS77fgnVTu1ErS04rg
+         H+ig==
+X-Gm-Message-State: APjAAAU7XWC3S3VxP1i57KuX8zlVQdZYGUz0r3Y1bK+Gql6Yuq7xt9EY
+        rzsyrwL6AuejtOQNUgA0UZch7rCxp04=
+X-Google-Smtp-Source: APXvYqxwWlioKY0AnhC9e1JLPeSBIZTCHoOey5SUpSUSLPYnl2Ug994TypAkLznv0Q9tA5h/WD7rDg==
+X-Received: by 2002:a05:620a:1479:: with SMTP id j25mr18471147qkl.491.1579812640074;
+        Thu, 23 Jan 2020 12:50:40 -0800 (PST)
+Received: from planxty.redhat.com (rdwyon0600w-lp130-03-64-231-46-127.dsl.bell.ca. [64.231.46.127])
+        by smtp.gmail.com with ESMTPSA id j185sm1518346qkc.96.2020.01.23.12.50.39
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 23 Jan 2020 12:50:39 -0800 (PST)
+From:   John Kacur <jkacur@redhat.com>
+To:     RT <linux-rt-users@vger.kernel.org>
+Cc:     Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Subject: [PATCH 0/9] rt-tests: Miscellaneous fixes 
+Date:   Thu, 23 Jan 2020 21:50:20 +0100
+Message-Id: <20200123205029.20176-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.20.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Content-Transfer-Encoding: 8bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-4.19.94-rt39-rc2 stable review patch.
-If anyone has any objections, please let me know.
+Most of the fixes here are just clean-ups to make sure that online help
+or usage message match the man pages according to the current options.
 
-------------------
+Some fixes to the queuelat scripts determine_maximum_mpps.sh and
+get_cpuinfo_mhz.sh are perhaps notable though, as people were having
+trouble using them.
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+getcpuinfo_mhz.sh now only gets one value as was originally intended,
+and it gets the highest value available. The fixes to quoting in
+determine_maximum_mpps.sh should make the program work correctly now -
+and take longer though.
 
-[ Upstream commit 4b217df0ab3f7910c96e42091cc7d9f221d05f01 ]
+John Kacur (9):
+  rt-tests: queuelat: Assume queuelat is in the path
+  rt-tests: cyclicdeadline: Add a simple manpage for cyclicdeadline
+  rt-tests: pi_stress: Add short options to usage message
+  rt-tests: pi_stress: Sync man page with help
+  rt-tests: queuelat: get_cpuinfo_mhz.sh highest value
+  rt-tests: determine_maximum_mpps.sh: Fix quoting and other shell issue
+  rt-tests: ptsematest: Update man page and add -h option
+  rt-tests: queuelat: Fixes to man page and display_help
+  rt-tests: svsematest: Display help with an error message for -h
 
-The drivers sets IRQF_ONESHOT and passes only a primary handler. The IRQ
-is masked while the primary is handler is invoked independently of
-IRQF_ONESHOT.
-With IRQF_ONESHOT the core code will not force-thread the interrupt and
-this is probably not intended. I *assume* that the original author copied
-the IRQ registration from another driver which passed a primary and
-secondary handler and removed the secondary handler but keeping the
-ONESHOT flag.
+ Makefile                               |  1 +
+ src/pi_tests/pi_stress.8               |  9 ++--
+ src/pi_tests/pi_stress.c               | 34 ++++++------
+ src/ptsematest/ptsematest.8            |  3 ++
+ src/ptsematest/ptsematest.c            | 10 ++--
+ src/queuelat/determine_maximum_mpps.sh | 75 +++++++++++++-------------
+ src/queuelat/get_cpuinfo_mhz.sh        |  5 +-
+ src/queuelat/queuelat.8                |  4 +-
+ src/queuelat/queuelat.c                | 22 ++++----
+ src/sched_deadline/cyclicdeadline.8    | 53 ++++++++++++++++++
+ src/svsematest/svsematest.c            |  3 +-
+ 11 files changed, 141 insertions(+), 78 deletions(-)
+ create mode 100644 src/sched_deadline/cyclicdeadline.8
 
-Remove IRQF_ONESHOT.
-
-Reported-by: Benjamin Rouxel <benjamin.rouxel@uva.nl>
-Tested-by: Benjamin Rouxel <benjamin.rouxel@uva.nl>
-Cc: Kukjin Kim <kgene@kernel.org>
-Cc: Krzysztof Kozlowski <krzk@kernel.org>
-Cc: linux-samsung-soc@vger.kernel.org
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
----
- drivers/i2c/busses/i2c-exynos5.c | 4 +---
- 1 file changed, 1 insertion(+), 3 deletions(-)
-
-diff --git a/drivers/i2c/busses/i2c-exynos5.c b/drivers/i2c/busses/i2c-exynos5.c
-index c1ce2299a76e..5c57ecf4b79e 100644
---- a/drivers/i2c/busses/i2c-exynos5.c
-+++ b/drivers/i2c/busses/i2c-exynos5.c
-@@ -800,9 +800,7 @@ static int exynos5_i2c_probe(struct platform_device *pdev)
- 	}
- 
- 	ret = devm_request_irq(&pdev->dev, i2c->irq, exynos5_i2c_irq,
--				IRQF_NO_SUSPEND | IRQF_ONESHOT,
--				dev_name(&pdev->dev), i2c);
--
-+			       IRQF_NO_SUSPEND, dev_name(&pdev->dev), i2c);
- 	if (ret != 0) {
- 		dev_err(&pdev->dev, "cannot request HS-I2C IRQ %d\n", i2c->irq);
- 		goto err_clk;
 -- 
-2.24.1
-
+2.20.1
 
