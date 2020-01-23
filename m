@@ -7,62 +7,62 @@ X-Spam-Status: No, score=-9.6 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1798FC33CAF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:50:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 34029C2D0DB
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:50:48 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id DAE1A20684
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:50:45 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id E432620684
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:50:47 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="m3hagN/F"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Xt656ung"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729340AbgAWUuo (ORCPT
+        id S1729342AbgAWUuq (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 23 Jan 2020 15:50:44 -0500
-Received: from mail-qt1-f196.google.com ([209.85.160.196]:42180 "EHLO
-        mail-qt1-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1729287AbgAWUun (ORCPT
+        Thu, 23 Jan 2020 15:50:46 -0500
+Received: from mail-qk1-f196.google.com ([209.85.222.196]:42385 "EHLO
+        mail-qk1-f196.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728799AbgAWUup (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 23 Jan 2020 15:50:43 -0500
-Received: by mail-qt1-f196.google.com with SMTP id j5so3583987qtq.9
-        for <linux-rt-users@vger.kernel.org>; Thu, 23 Jan 2020 12:50:43 -0800 (PST)
+        Thu, 23 Jan 2020 15:50:45 -0500
+Received: by mail-qk1-f196.google.com with SMTP id q15so4890181qke.9
+        for <linux-rt-users@vger.kernel.org>; Thu, 23 Jan 2020 12:50:45 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=5CEwsRfjMS2Qaq+469FJeEHGfwUNXMQFPX3rJd2gY8Y=;
-        b=m3hagN/FcEBePVBPk1WNcfV7CXNX9P0JbeYzXufSG2u/j7VRCQi0mVgvqyO+NiX7Qb
-         oD0VT8hE71LhrdSAsphF38rrJN0URdMk54o2Z/1ENOh3VNIZ8Awmflp2/eQDgrkRWDLO
-         VJo0WkEwmvKEpx196ZAHYvQIQfOodmdJF/CaZ7RvKsMzAKkU2CKRdZlPBylKGu0OcOSu
-         IhWOpS+wg8UogD9DrRjgr+rDBhFACEwB8hDhWTGeB69vG9aQBS70gtxFLyVeetERXw0f
-         4Zlv8JW3vf2uQg2OcjA2JZBjYCZIO6a3XVl6cZeSNNTrShdiwqjGfW8gTcffwEKzNrir
-         096A==
+        bh=tA6xWF4OiGf3KLjGAKnbOMhD28U+NdPd47NjH9GykIc=;
+        b=Xt656ungzYPuYTE+ahZReHSIc89zIQTCOwgiU61Oa9boEt/l2DrShP+SMdAWwNpi00
+         B47+wu8kRY5rZHBK7U7Asj0juzi8NTaQgCn0LaC8Ul+ZckU70C+l1LOGsB5cXnCtrmG+
+         HkWSktbv6nAkCq7pdPQR1lJycqONnC7XX06zvgiyg4WvObHovftWwAqZW0JIUj9qh09n
+         lbABn04VkMzmDgZjv/KDRE7QeaWELOPdPB2gCa8TXH3cPpRT5ryJY2fNcgJV/DUFxGD4
+         flBHzlqi2Pe0zBROWH7YfyMyRbbUuK1J/ooPcfm9E26uHFNYUzp9Z3zmpXUr4I2Fcmi3
+         9Q4Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
          :in-reply-to:references:mime-version:content-transfer-encoding;
-        bh=5CEwsRfjMS2Qaq+469FJeEHGfwUNXMQFPX3rJd2gY8Y=;
-        b=TACYRcji9VlV8tSGLMaC+24XFFvg65/O5KWfajGtfFMPwZ1F2gZwL+qP7ponWrtekr
-         6gCv6uwan3u5srl8lEFLIdjtXaT4jtgSAABKOG26rGaRswiHbXzapYHJo9+MecpsuDB/
-         Ak7yWqKvMc9/a90MmfCeWH4Ql9BJHa4XdjLnmaKtqA5nC5AhPquWeH63mPCoJ1bitTGA
-         rEpS1W+bvnewDNV9Qo+O8Qr+Q6EyWsb4oZBD8n2PEHGfRuN5kSz58JY4rQLS+aAVZ+BK
-         tfk9szH7tXGVDNsDiDizeNblRZN/M7u6lIrjB4dJ+FRicv5LxZca6LRlktA0ngVPPxYa
-         Jjjg==
-X-Gm-Message-State: APjAAAUnaYz6oA15Ke17WTeQ4hyfS7+RodiT4ij4Ynz6RJcckRAHZWHw
-        /cul7rxQtEM0/MZ8KInI1/LJNh/yiMI=
-X-Google-Smtp-Source: APXvYqyhl0uySGmaWZCzIZfQBw6ouCZW/sGPPXkEF1LL1+vGi5AbtROliHyzxCEPDYX4BObdAKWG3A==
-X-Received: by 2002:aed:2202:: with SMTP id n2mr72629qtc.4.1579812642713;
-        Thu, 23 Jan 2020 12:50:42 -0800 (PST)
+        bh=tA6xWF4OiGf3KLjGAKnbOMhD28U+NdPd47NjH9GykIc=;
+        b=OyAnrjr65umWVNS1a0pxtKUjBsDqP0PSl/iZxURB+V7E5jGMCOEUWAtvuExEb1HOmn
+         /4AthGA5UGfW0MA5umFe75Ba0LYrG4ZDukzaMl1npfNdJcahrLYfBUSoT/j1OxnwOSM2
+         LDHc3TFIao/yyDjpzydxtGlHCDACMM0E90oS5xqlJNdOEH7urSCW594lXeriZ8OZNF9W
+         Os0O4toIKCqI+z6/u0GPqtNjZK8CGZYiP2d8eEtzkbLveLD3JVwJJV8Q/+f8WTXRa7fr
+         hdPzw8Ecmq5O1NTE0lqks1t7coX7Z0JOeQb+q2RoiVS77O71O67r3pwZeCFtugYgGk64
+         MizQ==
+X-Gm-Message-State: APjAAAW9DwT9L0VGRdOdBrOAgGygQuCTsOaYUHj5HBY0uHwRCtTIol60
+        OQqtCdU3jEEHM+PHdvgq7XgeY5tCa/8=
+X-Google-Smtp-Source: APXvYqzOUSHrpO1pi+ATP22OBp2EuatB3ROPng3vJNKR/LVA+D7NFYfTvLrQM1WGf4gpIQJDKwRsGQ==
+X-Received: by 2002:a05:620a:1324:: with SMTP id p4mr18541857qkj.497.1579812644496;
+        Thu, 23 Jan 2020 12:50:44 -0800 (PST)
 Received: from planxty.redhat.com (rdwyon0600w-lp130-03-64-231-46-127.dsl.bell.ca. [64.231.46.127])
-        by smtp.gmail.com with ESMTPSA id j185sm1518346qkc.96.2020.01.23.12.50.41
+        by smtp.gmail.com with ESMTPSA id j185sm1518346qkc.96.2020.01.23.12.50.43
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 23 Jan 2020 12:50:42 -0800 (PST)
+        Thu, 23 Jan 2020 12:50:44 -0800 (PST)
 From:   John Kacur <jkacur@redhat.com>
 To:     RT <linux-rt-users@vger.kernel.org>
 Cc:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
-Subject: [PATCH 2/9] rt-tests: cyclicdeadline: Add a simple manpage for cyclicdeadline
-Date:   Thu, 23 Jan 2020 21:50:22 +0100
-Message-Id: <20200123205029.20176-3-jkacur@redhat.com>
+Subject: [PATCH 4/9] rt-tests: pi_stress: Sync man page with help
+Date:   Thu, 23 Jan 2020 21:50:24 +0100
+Message-Id: <20200123205029.20176-5-jkacur@redhat.com>
 X-Mailer: git-send-email 2.20.1
 In-Reply-To: <20200123205029.20176-1-jkacur@redhat.com>
 References: <20200123205029.20176-1-jkacur@redhat.com>
@@ -73,87 +73,45 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-- Add a simple manpage for cyclicdeadline
-- Install it from the Makefile
+Sync the man page with help.
+Specifically, remove the signal option which is not supported and
+document the sched option
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- Makefile                            |  1 +
- src/sched_deadline/cyclicdeadline.8 | 53 +++++++++++++++++++++++++++++
- 2 files changed, 54 insertions(+)
- create mode 100644 src/sched_deadline/cyclicdeadline.8
+ src/pi_tests/pi_stress.8 | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
 
-diff --git a/Makefile b/Makefile
-index 552b3fe885cc..e2142ba3f4e9 100644
---- a/Makefile
-+++ b/Makefile
-@@ -193,6 +193,7 @@ install: all install_hwlatdetect
- 	gzip -c src/queuelat/queuelat.8 >"$(DESTDIR)$(mandir)/man8/queuelat.8.gz"
- 	gzip -c src/sched_deadline/deadline_test.8 >"$(DESTDIR)$(mandir)/man8/deadline_test.8.gz"
- 	gzip -c src/ssdd/ssdd.8 >"$(DESTDIR)$(mandir)/man8/ssdd.8.gz"
-+	gzip -c src/sched_deadline/cyclicdeadline.8 >"$(DESTDIR)$(mandir)/man8/cyclicdeadline.8.gz"
- 
- .PHONY: install_hwlatdetect
- install_hwlatdetect: hwlatdetect
-diff --git a/src/sched_deadline/cyclicdeadline.8 b/src/sched_deadline/cyclicdeadline.8
-new file mode 100644
-index 000000000000..91766fb391c4
---- /dev/null
-+++ b/src/sched_deadline/cyclicdeadline.8
-@@ -0,0 +1,53 @@
-+.\"                                      Hey, EMACS: -*- nroff -*-
-+.TH CYCLICDEADLINE 8 "January 16, 2020"
-+.\" Please adjust this date whenever revising the manpage.
-+.\"
-+.\" Some roff macros, for reference:
-+.\" .nh        disable hyphenation
-+.\" .hy        enable hyphenation
-+.\" .ad l      left justify
-+.\" .ad b      justify to both left and right margins
-+.\" .nf        disable filling
-+.\" .fi        enable filling
-+.\" .br        insert line break
-+.\" .sp <n>    insert n+1 empty lines
-+.\" for manpage-specific macros, see man(7)
-+.SH NAME
-+cyclicdeadline \- This program is used to test the deadline scheduler (SCHED_DEADLINE) using a cyclictest style program
-+.PP
-+.SH SYNOPSIS
-+.B cyclicdeadline
-+.RI "[-ha] [-c cpulist] [-i interval] [-s step] [-t nr_threads] [-D duration]
-+.PP
-+.SH DESCRIPTION
-+.B cyclicdeadline
-+is a cyclictest style program for testing the deadline scheduler
-+.PP
-+.SH OPTIONS
-+.TP
-+.B \-h
-+Show this help menu
-+.TP
-+.B \-a
-+Use all CPUs
-+.TP
-+.B \-c cpulist
-+Comma / hypen separated list of CPUs to run deadline tasks on
-+.TP
-+.B \-i interval
-+The shortest deadline for the tasks in us. (default 1000us)
-+.TP
-+.B \-s step
-+The amount to increase the deadline for each task in us. (default 500us)
-+.TP
-+.B \-t nr_threads
-+The number of threads to run as deadline (default 1)
-+.TP
-+.B \-D time
-+Specify a length for the test to run
-+.br
-+Append 'm', 'h', or 'd' to specify minutes, hours, or days
-+.SH AUTHOR
-+cyclicdeadline was written by Steven Rostedt <rostedt@goodmis.org>
-+.PP
-+This manual page was written by John Kacur <jkacur@redhat.com>
+diff --git a/src/pi_tests/pi_stress.8 b/src/pi_tests/pi_stress.8
+index 475d3c34f135..5e2af6189ca1 100644
+--- a/src/pi_tests/pi_stress.8
++++ b/src/pi_tests/pi_stress.8
+@@ -21,7 +21,8 @@ pi_stress \- a stress test for POSIX Priority Inheritance mutexes
+ .IR groups
+ .RB [ \-d|\-\-debug ]
+ .RB [ \-v|\-\-verbose ]
+-.RB [ \-s|\-\-signal ]
++.RB [ \-s|\-\-sched
++.IR sched_opts ]
+ .RB [ \-r|\-\-rr ]
+ .RB [ \-p|\-\-prompt ]
+ .RB [ \-m|\-\-mlockall ]
+@@ -63,12 +64,12 @@ Specify a length for the test run.
+ Append 'm', 'h', or 'd' to specify minutes, hours or days.
+ .IP \-v|\-\-verbose
+ Run with verbose messages
+-.IP \-s|\-\-signal
+-Terminate on receipt of SIGTERM (Ctrl-C). Default is to terminate on
+-any keypress.
+ .IP \-r|\-\-rr
+ Run inversion group threads as SCHED_RR (round-robin). The default is
+ to run the inversion threads as SCHED_FIFO.
++.IP \-s|\-\-sched
++scheduling options per thread type:
++id=[high|med|low],policy=[fifo,rr],priority=<n>,policy=deadline,runtime=<n>,deadline=<n>,period=<n>
+ .IP \-p|\-\-prompt
+ Prompt before actually starting the stress test
+ .IP \-u|\-\-uniprocessor
 -- 
 2.20.1
 
