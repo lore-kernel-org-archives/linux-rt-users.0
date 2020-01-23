@@ -1,117 +1,189 @@
-Return-Path: <SRS0=RBrU=3L=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=nn6j=3M=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A1B56C32771
-	for <linux-rt-users@archiver.kernel.org>; Wed, 22 Jan 2020 21:13:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C3C8FC32771
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 01:37:38 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 725C62465B
-	for <linux-rt-users@archiver.kernel.org>; Wed, 22 Jan 2020 21:13:37 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="g9lGQdwg"
+	by mail.kernel.org (Postfix) with ESMTP id A2DA32467A
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 01:37:38 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729108AbgAVVNe (ORCPT
+        id S1726083AbgAWBhe (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 22 Jan 2020 16:13:34 -0500
-Received: from us-smtp-2.mimecast.com ([205.139.110.61]:52749 "EHLO
-        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1725827AbgAVVNe (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 22 Jan 2020 16:13:34 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1579727613;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=gAFkHZvXgFbOOmInMzD/oyrNf29uWQKgC8OYdhvTl4w=;
-        b=g9lGQdwgm/x1mfFpIsDrwwLXJQprbTKpcoQCKks6is30jZAesOw0gkrMHBhrT45oYzdztQ
-        /jFsoadguRQWvTpzYC+ksaILLMrjh+WZ27mv+AjnasxIGyK6GggDM4VDh7LBHbYPgwtEGt
-        m9rGj0vepF3ZQfHpeV/WPrTL8dLAwrQ=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-26-zFjepyucMk2m4lwMXX13wA-1; Wed, 22 Jan 2020 16:13:29 -0500
-X-MC-Unique: zFjepyucMk2m4lwMXX13wA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1B17DDBAB;
-        Wed, 22 Jan 2020 21:13:28 +0000 (UTC)
-Received: from ovpn-120-231.rdu2.redhat.com (ovpn-120-231.rdu2.redhat.com [10.10.120.231])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 3E0691001B03;
-        Wed, 22 Jan 2020 21:13:27 +0000 (UTC)
-Message-ID: <801c5fbbd93e126b8eef7ab0e53550479059a34c.camel@redhat.com>
-Subject: Re: [PATCH RT] sched: migrate_enable: Busy loop until the migration
- request is completed
-From:   Scott Wood <swood@redhat.com>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>
-Date:   Wed, 22 Jan 2020 15:13:26 -0600
-In-Reply-To: <20191213081428.mw6bqjg6m7djwhby@linutronix.de>
-References: <20191212112717.2tzoqbe3xeknoyvs@linutronix.de>
-         <30ab713901ef0e1f23c1ca387373788a4a73639f.camel@redhat.com>
-         <20191213081428.mw6bqjg6m7djwhby@linutronix.de>
-Organization: Red Hat
+        Wed, 22 Jan 2020 20:37:34 -0500
+Received: from mga02.intel.com ([134.134.136.20]:13999 "EHLO mga02.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1725911AbgAWBhe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 22 Jan 2020 20:37:34 -0500
+X-Amp-Result: SKIPPED(no attachment in message)
+X-Amp-File-Uploaded: False
+Received: from fmsmga004.fm.intel.com ([10.253.24.48])
+  by orsmga101.jf.intel.com with ESMTP/TLS/DHE-RSA-AES256-GCM-SHA384; 22 Jan 2020 17:37:33 -0800
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="5.70,352,1574150400"; 
+   d="scan'208";a="250817035"
+Received: from zdeng-mobl.gar.corp.intel.com (HELO arch-ashland-svkelley) ([10.254.47.109])
+  by fmsmga004.fm.intel.com with ESMTP; 22 Jan 2020 17:37:31 -0800
+Message-ID: <8f1e5981b519acb5edf53b5392c81ef7cbf6a3eb.camel@linux.intel.com>
+Subject: Re: RE: Re: "oneshot" interrupt causes another interrupt to be
+ fired erroneously in Haswell system
+From:   Sean V Kelley <sean.v.kelley@linux.intel.com>
+Reply-To: sean.v.kelley@linux.intel.com
+To:     Thomas Gleixner <tglx@linutronix.de>,
+        Kar Hin Ong <kar.hin.ong@ni.com>,
+        Bjorn Helgaas <helgaas@kernel.org>
+Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>,
+        "x86@kernel.org" <x86@kernel.org>,
+        "linux-pci@vger.kernel.org" <linux-pci@vger.kernel.org>,
+        "H. Peter Anvin" <hpa@zytor.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        Julia Cartwright <julia.cartwright@ni.com>,
+        Keng Soon Cheah <keng.soon.cheah@ni.com>,
+        Gratian Crisan <gratian.crisan@ni.com>,
+        Peter Zijlstra <peterz@infradead.org>
+Date:   Wed, 22 Jan 2020 17:37:31 -0800
+In-Reply-To: <87muanwwhb.fsf@nanos.tec.linutronix.de>
+References: <20191031230532.GA170712@google.com>
+         <alpine.DEB.2.21.1911050017410.17054@nanos.tec.linutronix.de>
+         <MN2PR04MB625594021250E0FB92EC955DC3780@MN2PR04MB6255.namprd04.prod.outlook.com>
+         <87a76oxqv1.fsf@nanos.tec.linutronix.de>
+         <MN2PR04MB62551D8B240966B02ED71516C3360@MN2PR04MB6255.namprd04.prod.outlook.com>
+         <87muanwwhb.fsf@nanos.tec.linutronix.de>
+Organization: Intel Corporation
 Content-Type: text/plain; charset="UTF-8"
-User-Agent: Evolution 3.30.5 (3.30.5-1.fc29) 
+User-Agent: Evolution 3.34.3 
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, 2019-12-13 at 09:14 +0100, Sebastian Andrzej Siewior wrote:
-> On 2019-12-13 00:44:22 [-0600], Scott Wood wrote:
-> > > @@ -8239,7 +8239,10 @@ void migrate_enable(void)
-> > >  		stop_one_cpu_nowait(task_cpu(p), migration_cpu_stop,
-> > >  				    &arg, &work);
-> > >  		__schedule(true);
-> > > -		WARN_ON_ONCE(!arg.done && !work.disabled);
-> > > +		if (!work.disabled) {
-> > > +			while (!arg.done)
-> > > +				cpu_relax();
-> > > +		}
-> >=20
-> > We should enable preemption while spinning -- besides the general
-> > badness
-> > of spinning with it disabled, there could be deadlock scenarios if
-> > multiple CPUs are spinning in such a loop.  Long term maybe have a wa=
-y
-> > to
-> > dequeue the no-longer-needed work instead of waiting.
->=20
-> Hmm. My plan was to use per-CPU memory and spin before the request is
-> enqueued if the previous isn't done yet (which should not happen=E2=84=A2=
-).
+On Thu, 2020-01-16 at 11:01 +0100, Thomas Gleixner wrote:
+> Kar Hin Ong <kar.hin.ong@ni.com> writes:
+> > > I don't have access to the document you mentioned, but I know
+> > > that chipsets
+> > > have a knob to control that behaviour. Just checked a few chipset
+> > > docs and they
+> > > contain the same sentence, but then in the next paragraph they
+> > > say:
+> > > 
+> > >  "If the I/OxAPIC entry is masked (via the mask bit in the
+> > > corresponding
+> > >   Redirection Table Entry), then the corresponding PCI Express
+> > >   interrupt(s) is forwarded to the legacy ICH, provided the
+> > > Disable PCI
+> > >   INTx Routing to ICH bit is clear, Section 19.10.2.27,
+> > > QPIPINTRC: Intel
+> > >   QuickPath Interconnect Protocol Interrupt Control."
+> > > 
+> > > That control bit is 0 after reset, so the legacy forwarding
+> > > works.
+> > 
+> > Intel support engineer do provide similar advice to us as a
+> > workaround
+> > to the CPU behaviour.  They said we could enable the
+> > "Don'tRouteToPCH"
+> > bit in the BIOS to block the interrupt from propagating to
+> > PCH.  This
+> > bit is located at "Coherent Interface Protocol Interrupt Control
+> > (cipintrc)" register of "Virtualization" device (Bus 0, Device 5,
+> > Function 0, Offset 0x14C).
+> > 
+> > With the help of our BIOS engineer, after setting this bit in BIOS
+> > does prevent the interrupt forwarding.
+> > 
+> > However, Intel told us that this workaround is not validated, i.e.
+> > the
+> > side effect of setting this bit is unknown.
+> 
+> What? That's ridiculous.
+> 
+> That bit is documented in various chipset documents and that legacy
+> rerouting is really just there to support OSes which do not support
+> multiple IO-APICs properly.
+> 
+> If setting this bit has unknown side effects then someone at Intel
+> should have a close look and fix their documentation.
+> 
+> Can the Intel people on Cc please take care of this?
 
-Either it can't happen (and thus no need to spin) or it can, and we need =
-to
-worry about deadlocks if we're spinning with preemption disabled.  In fac=
-t a
-deadlock is guaranteed if we're spinning with preemption disabled on the =
-cpu
-that's supposed to be running the stopper we're waiting on.
 
-I think you're right that it can't happen though (as long as we queue it
-before enabling preemption, the stopper will be runnable and nothing else
-can run on the cpu before the queue gets drained), so we can just make it=
- a=20
-warning.  I'm testing a patch now.
+I looked into it Thomas.  The issue is as you suggested early in the
+thread.  If an IRQ arrives at line N of a non-primary IO-APIC and that
+line is masked, a new IRQ is generated on the primary IO-APIC/PIC.  
 
-> Then we could remove __schedule() here and rely on preempt_enable()
-> doing that.
+The BIOS setting to address this forwarding is as above Disable INTx
+Route to PCH/ICH/SouthBridge. When this bit is set, local INTx messages
+received from the PCI-E ports are not routed to legacy PCH - they are
+either converted into MSI via the integrated I/OxAPIC (if the I/OxAPIC
+mask bit is clear in the appropriate entries) or cause no further
+action (when mask bit is set).
 
-We could do that regardless.
+This capability is tested and supported fully on Intel platforms.
 
--Scott
+For example, 5520 [1], Xeon E5 4600  [2] , Xeon E7 [3], and so on
+include this bit :
+ 
+[1] 
+https://www.intel.com/content/dam/www/public/us/en/documents/datasheets/5520-5500-chipset-ioh-datasheet.pdf
+page 139
+[2] 
+https://www.intel.com/content/dam/www/public/us/en/documents/datasheets/xeon-e5-1600-2600-vol-2-datasheet.pdf
+, page 280
+[3] 
+https://www.intel.com/content/dam/www/public/us/en/documents/datasheets/xeon-e7-v2-datasheet-vol-2.pdf
+, page 373
+etc..
 
+Once you get to SKX/CLX things change and integrated IOxAPICs in the
+IIO module convert legacy PCI Express interrupt messages into MSI
+interrupts directly.  Beyond SKX/CLX there are no longer IOxAPICs in
+IIO. IOxAPIC is only in the PCH. Devices connected to the
+IIO will use native MSI/MSI-x mechanisms.
+
+The problem is with the absolute lack of useful documentation.  That’s
+not acceptable.  
+
+You recall the work Olaf and Stefan did at SuSE ten years ago (?) on
+boot irq quirks and the amount of research they had to do it learn
+about the behavior.[4]
+
+[4]
+http://lkml.iu.edu/hypermail/linux/kernel/0807.1/3160.html
+ 
+From a Real-Time Linux perspective this is really important to me.  As
+we get closer to fully mainlined we need to have this information
+readily available with greater usage of threaded irqs in combination
+with legacy interrupts on the older platforms.
+
+So I will ensure we actually create useful information pointing to this
+behavior either in kernel docs or online as in a white paper or both.
+
+
+> As we have already quirks in drivers/pci/quirks.c which handle the
+> same
+> issue on older chipsets, we really should add one for these kind of
+> systems to avoid fiddling with the BIOS (which you can, but most
+> people
+> cannot).
+
+Agreed, and I will follow-up with Kar Hin Ong to get them added.
+
+Thanks,
+
+Sean
+
+
+> 
+> 
+> Thanks,
+> 
+>         tglx
+> 
 
