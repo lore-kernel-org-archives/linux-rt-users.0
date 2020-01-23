@@ -4,32 +4,32 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1195EC2D0DB
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:40:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 893C1C2D0DB
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:40:57 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id DB80824691
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:40:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6435D24691
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Jan 2020 20:40:57 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729654AbgAWUkq (ORCPT
+        id S1729641AbgAWUkq (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
         Thu, 23 Jan 2020 15:40:46 -0500
-Received: from mail.kernel.org ([198.145.29.99]:45834 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.99]:45846 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729346AbgAWUjr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S1729347AbgAWUjr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Thu, 23 Jan 2020 15:39:47 -0500
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 17D402469B;
+        by mail.kernel.org (Postfix) with ESMTPSA id 37617246A0;
         Thu, 23 Jan 2020 20:39:47 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.93)
         (envelope-from <rostedt@goodmis.org>)
-        id 1iujGU-000mg7-14; Thu, 23 Jan 2020 15:39:46 -0500
-Message-Id: <20200123203945.906394629@goodmis.org>
+        id 1iujGU-000mgb-5c; Thu, 23 Jan 2020 15:39:46 -0500
+Message-Id: <20200123203946.055628942@goodmis.org>
 User-Agent: quilt/0.65
-Date:   Thu, 23 Jan 2020 15:39:55 -0500
+Date:   Thu, 23 Jan 2020 15:39:56 -0500
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -40,7 +40,7 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 25/30] Revert "ARM: Initialize split page table locks for vector page"
+Subject: [PATCH RT 26/30] locking: Make spinlock_t and rwlock_t a RCU section on RT
 References: <20200123203930.646725253@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -56,83 +56,125 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-[ Upstream commit 247074c44d8c3e619dfde6404a52295d8d671d38 ]
+[ Upstream commit 84440022a0e1c8c936d61f8f97593674a295d409 ]
 
-I'm dropping this patch, with its original description:
+On !RT a locked spinlock_t and rwlock_t disables preemption which
+implies a RCU read section. There is code that relies on that behaviour.
 
-|ARM: Initialize split page table locks for vector page
-|
-|Without this patch, ARM can not use SPLIT_PTLOCK_CPUS if
-|PREEMPT_RT_FULL=y because vectors_user_mapping() creates a
-|VM_ALWAYSDUMP mapping of the vector page (address 0xffff0000), but no
-|ptl->lock has been allocated for the page.  An attempt to coredump
-|that page will result in a kernel NULL pointer dereference when
-|follow_page() attempts to lock the page.
-|
-|The call tree to the NULL pointer dereference is:
-|
-|   do_notify_resume()
-|      get_signal_to_deliver()
-|         do_coredump()
-|            elf_core_dump()
-|               get_dump_page()
-|                  __get_user_pages()
-|                     follow_page()
-|                        pte_offset_map_lock() <----- a #define
-|                           ...
-|                              rt_spin_lock()
-|
-|The underlying problem is exposed by mm-shrink-the-page-frame-to-rt-size.patch.
-
-The patch named mm-shrink-the-page-frame-to-rt-size.patch was dropped
-from the RT queue once the SPLIT_PTLOCK_CPUS feature (in a slightly
-different shape) went upstream (somewhere between v3.12 and v3.14).
-
-I can see that the patch still allocates a lock which wasn't there
-before. However I can't trigger a kernel oops like described in the
-patch by triggering a coredump.
+Add an explicit RCU read section on RT while a sleeping lock (a lock
+which would disables preemption on !RT) acquired.
 
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- arch/arm/kernel/process.c | 24 ------------------------
- 1 file changed, 24 deletions(-)
+ kernel/locking/rtmutex.c   | 6 ++++++
+ kernel/locking/rwlock-rt.c | 6 ++++++
+ 2 files changed, 12 insertions(+)
 
-diff --git a/arch/arm/kernel/process.c b/arch/arm/kernel/process.c
-index 8d3c7ce34c24..82ab015bf42b 100644
---- a/arch/arm/kernel/process.c
-+++ b/arch/arm/kernel/process.c
-@@ -324,30 +324,6 @@ unsigned long arch_randomize_brk(struct mm_struct *mm)
+diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+index 63b3d6f306fa..c7d3ae01b4e5 100644
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -1142,6 +1142,7 @@ void __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
+ void __lockfunc rt_spin_lock(spinlock_t *lock)
+ {
+ 	sleeping_lock_inc();
++	rcu_read_lock();
+ 	migrate_disable();
+ 	spin_acquire(&lock->dep_map, 0, 0, _RET_IP_);
+ 	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
+@@ -1157,6 +1158,7 @@ void __lockfunc __rt_spin_lock(struct rt_mutex *lock)
+ void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subclass)
+ {
+ 	sleeping_lock_inc();
++	rcu_read_lock();
+ 	migrate_disable();
+ 	spin_acquire(&lock->dep_map, subclass, 0, _RET_IP_);
+ 	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
+@@ -1170,6 +1172,7 @@ void __lockfunc rt_spin_unlock(spinlock_t *lock)
+ 	spin_release(&lock->dep_map, 1, _RET_IP_);
+ 	rt_spin_lock_fastunlock(&lock->lock, rt_spin_lock_slowunlock);
+ 	migrate_enable();
++	rcu_read_unlock();
+ 	sleeping_lock_dec();
  }
- 
- #ifdef CONFIG_MMU
--/*
-- * CONFIG_SPLIT_PTLOCK_CPUS results in a page->ptl lock.  If the lock is not
-- * initialized by pgtable_page_ctor() then a coredump of the vector page will
-- * fail.
-- */
--static int __init vectors_user_mapping_init_page(void)
--{
--	struct page *page;
--	unsigned long addr = 0xffff0000;
--	pgd_t *pgd;
--	pud_t *pud;
--	pmd_t *pmd;
--
--	pgd = pgd_offset_k(addr);
--	pud = pud_offset(pgd, addr);
--	pmd = pmd_offset(pud, addr);
--	page = pmd_page(*(pmd));
--
--	pgtable_page_ctor(page);
--
--	return 0;
--}
--late_initcall(vectors_user_mapping_init_page);
--
- #ifdef CONFIG_KUSER_HELPERS
- /*
-  * The vectors page is always readable from user space for the
+ EXPORT_SYMBOL(rt_spin_unlock);
+@@ -1201,6 +1204,7 @@ int __lockfunc rt_spin_trylock(spinlock_t *lock)
+ 	ret = __rt_mutex_trylock(&lock->lock);
+ 	if (ret) {
+ 		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
++		rcu_read_lock();
+ 	} else {
+ 		migrate_enable();
+ 		sleeping_lock_dec();
+@@ -1217,6 +1221,7 @@ int __lockfunc rt_spin_trylock_bh(spinlock_t *lock)
+ 	ret = __rt_mutex_trylock(&lock->lock);
+ 	if (ret) {
+ 		sleeping_lock_inc();
++		rcu_read_lock();
+ 		migrate_disable();
+ 		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
+ 	} else
+@@ -1233,6 +1238,7 @@ int __lockfunc rt_spin_trylock_irqsave(spinlock_t *lock, unsigned long *flags)
+ 	ret = __rt_mutex_trylock(&lock->lock);
+ 	if (ret) {
+ 		sleeping_lock_inc();
++		rcu_read_lock();
+ 		migrate_disable();
+ 		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
+ 	}
+diff --git a/kernel/locking/rwlock-rt.c b/kernel/locking/rwlock-rt.c
+index c3b91205161c..0ae8c62ea832 100644
+--- a/kernel/locking/rwlock-rt.c
++++ b/kernel/locking/rwlock-rt.c
+@@ -310,6 +310,7 @@ int __lockfunc rt_read_trylock(rwlock_t *rwlock)
+ 	ret = do_read_rt_trylock(rwlock);
+ 	if (ret) {
+ 		rwlock_acquire_read(&rwlock->dep_map, 0, 1, _RET_IP_);
++		rcu_read_lock();
+ 	} else {
+ 		migrate_enable();
+ 		sleeping_lock_dec();
+@@ -327,6 +328,7 @@ int __lockfunc rt_write_trylock(rwlock_t *rwlock)
+ 	ret = do_write_rt_trylock(rwlock);
+ 	if (ret) {
+ 		rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
++		rcu_read_lock();
+ 	} else {
+ 		migrate_enable();
+ 		sleeping_lock_dec();
+@@ -338,6 +340,7 @@ EXPORT_SYMBOL(rt_write_trylock);
+ void __lockfunc rt_read_lock(rwlock_t *rwlock)
+ {
+ 	sleeping_lock_inc();
++	rcu_read_lock();
+ 	migrate_disable();
+ 	rwlock_acquire_read(&rwlock->dep_map, 0, 0, _RET_IP_);
+ 	do_read_rt_lock(rwlock);
+@@ -347,6 +350,7 @@ EXPORT_SYMBOL(rt_read_lock);
+ void __lockfunc rt_write_lock(rwlock_t *rwlock)
+ {
+ 	sleeping_lock_inc();
++	rcu_read_lock();
+ 	migrate_disable();
+ 	rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
+ 	do_write_rt_lock(rwlock);
+@@ -358,6 +362,7 @@ void __lockfunc rt_read_unlock(rwlock_t *rwlock)
+ 	rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
+ 	do_read_rt_unlock(rwlock);
+ 	migrate_enable();
++	rcu_read_unlock();
+ 	sleeping_lock_dec();
+ }
+ EXPORT_SYMBOL(rt_read_unlock);
+@@ -367,6 +372,7 @@ void __lockfunc rt_write_unlock(rwlock_t *rwlock)
+ 	rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
+ 	do_write_rt_unlock(rwlock);
+ 	migrate_enable();
++	rcu_read_unlock();
+ 	sleeping_lock_dec();
+ }
+ EXPORT_SYMBOL(rt_write_unlock);
 -- 
 2.24.1
 
