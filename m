@@ -7,48 +7,48 @@ X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 85139C2D0CE
-	for <linux-rt-users@archiver.kernel.org>; Fri, 24 Jan 2020 22:57:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C1A28C35242
+	for <linux-rt-users@archiver.kernel.org>; Fri, 24 Jan 2020 22:57:13 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 4C5FF2087E
-	for <linux-rt-users@archiver.kernel.org>; Fri, 24 Jan 2020 22:57:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 96D462071E
+	for <linux-rt-users@archiver.kernel.org>; Fri, 24 Jan 2020 22:57:13 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1579906626;
-	bh=8Hk1Y9F/Ls8DSUsm356nluzgCL5GFrLYnVVx09cd0ro=;
+	s=default; t=1579906633;
+	bh=ODBbuiZjSW43nINXTys/F+HKMTJnnF8cY98ISo7dXk4=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=OkZGeLXMF560FD5V72wqFpIUGMnA94m/nSguAK+snvQ8qCNisT0z7pW+q7UUOxWIT
-	 wbtIhuc3c6PQzAIrsbSI4Lq5ve0c4Ymljv78Xzw23s1K7lYmDVK836ku+GNMBXV0kM
-	 tmJYJqBTpjzM1dZhC3I5QlDlNmAKHbK+mFwRzpR0=
+	b=Zt7fTlWyoBaARmV03IizX5y0IcFYGyk2QY0tgd4fpdvPvEzgizOs+SJI7CN0EDR4T
+	 oFp47trkxHq02HsA8pIZTDFQdpQNUwrQhEMqZROLFt6aSGnOYSoo6X5C00dc7ex277
+	 BK7xEVJi90yut6KihnXv3Q9o+7CPWxBZnMNs5uHk=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2387459AbgAXW5B (ORCPT
+        id S1729467AbgAXW4m (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 24 Jan 2020 17:57:01 -0500
-Received: from mail.kernel.org ([198.145.29.99]:39828 "EHLO mail.kernel.org"
+        Fri, 24 Jan 2020 17:56:42 -0500
+Received: from mail.kernel.org ([198.145.29.99]:39588 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729550AbgAXW4r (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 24 Jan 2020 17:56:47 -0500
+        id S1729339AbgAXW4k (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 24 Jan 2020 17:56:40 -0500
 Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id E2AB1218AC;
-        Fri, 24 Jan 2020 22:56:45 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 30474208C4;
+        Fri, 24 Jan 2020 22:56:39 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1579906606;
-        bh=8Hk1Y9F/Ls8DSUsm356nluzgCL5GFrLYnVVx09cd0ro=;
+        s=default; t=1579906599;
+        bh=ODBbuiZjSW43nINXTys/F+HKMTJnnF8cY98ISo7dXk4=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=YD81Wn7rFLq1NxC9Wp4tFJWk6L+x5sO+vA2TT1SpDMOJPp2nzype/atkvZ1cSU8I5
-         8KGZb0pLi3gukcJ4WJAwpq+6li9g+MEElUBrGK/0a9v5//ss4fC8oF6fNSjY+uR37p
-         LYcALlLOV7U3OxCUhBJ0a3z67CzoEgloQDu3gEu0=
+        b=s7WdgTYATEHW2T3HrFxDZ/vK8XKrMpHWfYNwPvgxO51oa9Wen9mrouIFMv1DVZrLz
+         Y//fTywjh7n5fMVyd92dES82wApfj/FLjt9Jgzt6OFbrSgwC8uPzPDC5ZX3cQ1gW1F
+         0BfiXh+220Y7dCAjya0MCLoB07IM7GnZibf9CQYk=
 From:   Tom Zanussi <zanussi@kernel.org>
 To:     rostedt@goodmis.org
 Cc:     artem.bityutskiy@linux.intel.com, mhiramat@kernel.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         ndesaulniers@google.com
-Subject: [PATCH v3 11/12] tracing: Add kprobe event command generation test module
-Date:   Fri, 24 Jan 2020 16:56:22 -0600
-Message-Id: <f687f8bd1bf87b96231b1e661aa8cfb64bb33b7b.1579904761.git.zanussi@kernel.org>
+Subject: [PATCH v3 06/12] tracing: Change trace_boot to use synth_event interface
+Date:   Fri, 24 Jan 2020 16:56:17 -0600
+Message-Id: <1b02a8871950a8c1be35a12ac27b8babd2461123.1579904761.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.14.1
 In-Reply-To: <cover.1579904761.git.zanussi@kernel.org>
 References: <cover.1579904761.git.zanussi@kernel.org>
@@ -59,284 +59,99 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Add a test module that checks the basic functionality of the in-kernel
-kprobe event command generation API by creating kprobe events from a
-module.
+Have trace_boot_add_synth_event() use the synth_event interface.
+
+Also, rename synth_event_run_cmd() to synth_event_run_command() now
+that trace_boot's version is gone.
 
 Signed-off-by: Tom Zanussi <zanussi@kernel.org>
 ---
- kernel/trace/Kconfig                 |  12 ++
- kernel/trace/Makefile                |   1 +
- kernel/trace/kprobe_event_gen_test.c | 225 +++++++++++++++++++++++++++++++++++
- 3 files changed, 238 insertions(+)
- create mode 100644 kernel/trace/kprobe_event_gen_test.c
+ kernel/trace/trace_boot.c        | 31 ++++++++++++-------------------
+ kernel/trace/trace_events_hist.c |  9 ++-------
+ 2 files changed, 14 insertions(+), 26 deletions(-)
 
-diff --git a/kernel/trace/Kconfig b/kernel/trace/Kconfig
-index 4f2041166a2f..4484e783f68d 100644
---- a/kernel/trace/Kconfig
-+++ b/kernel/trace/Kconfig
-@@ -787,6 +787,18 @@ config SYNTH_EVENT_GEN_TEST
+diff --git a/kernel/trace/trace_boot.c b/kernel/trace/trace_boot.c
+index cd541ac1cbc1..33665718008c 100644
+--- a/kernel/trace/trace_boot.c
++++ b/kernel/trace/trace_boot.c
+@@ -133,38 +133,31 @@ trace_boot_add_kprobe_event(struct xbc_node *node, const char *event)
+ #endif
  
- 	  If unsure, say N.
+ #ifdef CONFIG_HIST_TRIGGERS
+-extern int synth_event_run_command(const char *command);
+-
+ static int __init
+ trace_boot_add_synth_event(struct xbc_node *node, const char *event)
+ {
++	struct dynevent_cmd cmd;
+ 	struct xbc_node *anode;
+-	char buf[MAX_BUF_LEN], *q;
++	char buf[MAX_BUF_LEN];
+ 	const char *p;
+-	int len, delta, ret;
++	int ret;
  
-+config KPROBE_EVENT_GEN_TEST
-+	tristate "Test module for in-kernel kprobe event generation"
-+	depends on KPROBE_EVENTS
-+	help
-+          This option creates a test module to check the base
-+          functionality of in-kernel kprobe event definition.
+-	len = ARRAY_SIZE(buf);
+-	delta = snprintf(buf, len, "%s", event);
+-	if (delta >= len) {
+-		pr_err("Event name is too long: %s\n", event);
+-		return -E2BIG;
+-	}
+-	len -= delta; q = buf + delta;
++	synth_event_cmd_init(&cmd, buf, MAX_BUF_LEN);
 +
-+          To test, insert the module, and then check the trace buffer
-+	  for the generated kprobe events.
-+
-+	  If unsure, say N.
-+
- config TRACE_EVAL_MAP_FILE
-        bool "Show eval mappings for trace events"
-        depends on TRACING
-diff --git a/kernel/trace/Makefile b/kernel/trace/Makefile
-index 32012f50fb79..f9dcd19165fa 100644
---- a/kernel/trace/Makefile
-+++ b/kernel/trace/Makefile
-@@ -45,6 +45,7 @@ obj-$(CONFIG_TRACING) += trace_printk.o
- obj-$(CONFIG_TRACING_MAP) += tracing_map.o
- obj-$(CONFIG_PREEMPTIRQ_DELAY_TEST) += preemptirq_delay_test.o
- obj-$(CONFIG_SYNTH_EVENT_GEN_TEST) += synth_event_gen_test.o
-+obj-$(CONFIG_KPROBE_EVENT_GEN_TEST) += kprobe_event_gen_test.o
- obj-$(CONFIG_CONTEXT_SWITCH_TRACER) += trace_sched_switch.o
- obj-$(CONFIG_FUNCTION_TRACER) += trace_functions.o
- obj-$(CONFIG_PREEMPTIRQ_TRACEPOINTS) += trace_preemptirq.o
-diff --git a/kernel/trace/kprobe_event_gen_test.c b/kernel/trace/kprobe_event_gen_test.c
-new file mode 100644
-index 000000000000..18b0f1cbb947
---- /dev/null
-+++ b/kernel/trace/kprobe_event_gen_test.c
-@@ -0,0 +1,225 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Test module for in-kernel kprobe event creation and generation.
-+ *
-+ * Copyright (C) 2019 Tom Zanussi <zanussi@kernel.org>
-+ */
-+
-+#include <linux/module.h>
-+#include <linux/trace_events.h>
-+
-+/*
-+ * This module is a simple test of basic functionality for in-kernel
-+ * kprobe/kretprobe event creation.  The first test uses
-+ * kprobe_event_gen_cmd_start(), kprobe_event_add_fields() and
-+ * kprobe_event_gen_cmd_end() to create a kprobe event, which is then
-+ * enabled in order to generate trace output.  The second creates a
-+ * kretprobe event using kretprobe_event_gen_cmd_start() and
-+ * kretprobe_event_gen_cmd_end(), and is also then enabled.
-+ *
-+ * To test, select CONFIG_KPROBE_EVENT_GEN_TEST and build the module.
-+ * Then:
-+ *
-+ * # insmod kernel/trace/kprobe_event_gen_test.ko
-+ * # cat /sys/kernel/debug/tracing/trace
-+ *
-+ * You should see many instances of the "gen_kprobe_test" and
-+ * "gen_kretprobe_test" events in the trace buffer.
-+ *
-+ * To remove the events, remove the module:
-+ *
-+ * # rmmod kprobe_event_gen_test
-+ *
-+ */
-+
-+static struct trace_event_file *gen_kprobe_test;
-+static struct trace_event_file *gen_kretprobe_test;
-+
-+/*
-+ * Test to make sure we can create a kprobe event, then add more
-+ * fields.
-+ */
-+static int __init test_gen_kprobe_cmd(void)
-+{
-+	struct dynevent_cmd cmd;
-+	char *buf;
-+	int ret;
-+
-+	/* Create a buffer to hold the generated command */
-+	buf = kzalloc(MAX_DYNEVENT_CMD_LEN, GFP_KERNEL);
-+	if (!buf)
-+		return -ENOMEM;
-+
-+	/* Before generating the command, initialize the cmd object */
-+	kprobe_event_cmd_init(&cmd, buf, MAX_DYNEVENT_CMD_LEN);
-+
-+	/*
-+	 * Define the gen_kprobe_test event with the first 2 kprobe
-+	 * fields.
-+	 */
-+	ret = kprobe_event_gen_cmd_start(&cmd, "gen_kprobe_test",
-+					 "do_sys_open",
-+					 "dfd=%ax", "filename=%dx");
-+	if (ret)
-+		goto free;
-+
-+	/* Use kprobe_event_add_fields to add the rest of the fields */
-+
-+	ret = kprobe_event_add_fields(&cmd, "flags=%cx", "mode=+4($stack)");
-+	if (ret)
-+		goto free;
-+
-+	/*
-+	 * This actually creates the event.
-+	 */
-+	ret = kprobe_event_gen_cmd_end(&cmd);
-+	if (ret)
-+		goto free;
-+
-+	/*
-+	 * Now get the gen_kprobe_test event file.  We need to prevent
-+	 * the instance and event from disappearing from underneath
-+	 * us, which trace_get_event_file() does (though in this case
-+	 * we're using the top-level instance which never goes away).
-+	 */
-+	gen_kprobe_test = trace_get_event_file(NULL, "kprobes",
-+					       "gen_kprobe_test");
-+	if (IS_ERR(gen_kprobe_test)) {
-+		ret = PTR_ERR(gen_kprobe_test);
-+		goto delete;
-+	}
-+
-+	/* Enable the event or you won't see anything */
-+	ret = trace_array_set_clr_event(gen_kprobe_test->tr,
-+					"kprobes", "gen_kprobe_test", true);
-+	if (ret) {
-+		trace_put_event_file(gen_kprobe_test);
-+		goto delete;
-+	}
-+ out:
-+	return ret;
-+ delete:
-+	/* We got an error after creating the event, delete it */
-+	ret = kprobe_event_delete("gen_kprobe_test");
-+ free:
-+	kfree(buf);
-+
-+	goto out;
-+}
-+
-+/*
-+ * Test to make sure we can create a kretprobe event.
-+ */
-+static int __init test_gen_kretprobe_cmd(void)
-+{
-+	struct dynevent_cmd cmd;
-+	char *buf;
-+	int ret;
-+
-+	/* Create a buffer to hold the generated command */
-+	buf = kzalloc(MAX_DYNEVENT_CMD_LEN, GFP_KERNEL);
-+	if (!buf)
-+		return -ENOMEM;
-+
-+	/* Before generating the command, initialize the cmd object */
-+	kprobe_event_cmd_init(&cmd, buf, MAX_DYNEVENT_CMD_LEN);
-+
-+	/*
-+	 * Define the kretprobe event.
-+	 */
-+	ret = kretprobe_event_gen_cmd_start(&cmd, "gen_kretprobe_test",
-+					    "do_sys_open",
-+					    "$retval");
-+	if (ret)
-+		goto free;
-+
-+	/*
-+	 * This actually creates the event.
-+	 */
-+	ret = kretprobe_event_gen_cmd_end(&cmd);
-+	if (ret)
-+		goto free;
-+
-+	/*
-+	 * Now get the gen_kretprobe_test event file.  We need to
-+	 * prevent the instance and event from disappearing from
-+	 * underneath us, which trace_get_event_file() does (though in
-+	 * this case we're using the top-level instance which never
-+	 * goes away).
-+	 */
-+	gen_kretprobe_test = trace_get_event_file(NULL, "kprobes",
-+						  "gen_kretprobe_test");
-+	if (IS_ERR(gen_kretprobe_test)) {
-+		ret = PTR_ERR(gen_kretprobe_test);
-+		goto delete;
-+	}
-+
-+	/* Enable the event or you won't see anything */
-+	ret = trace_array_set_clr_event(gen_kretprobe_test->tr,
-+					"kprobes", "gen_kretprobe_test", true);
-+	if (ret) {
-+		trace_put_event_file(gen_kretprobe_test);
-+		goto delete;
-+	}
-+ out:
-+	return ret;
-+ delete:
-+	/* We got an error after creating the event, delete it */
-+	ret = kprobe_event_delete("gen_kretprobe_test");
-+ free:
-+	kfree(buf);
-+
-+	goto out;
-+}
-+
-+static int __init kprobe_event_gen_test_init(void)
-+{
-+	int ret;
-+
-+	ret = test_gen_kprobe_cmd();
++	ret = synth_event_gen_cmd_start(&cmd, event, NULL);
 +	if (ret)
 +		return ret;
-+
-+	ret = test_gen_kretprobe_cmd();
-+	if (ret) {
-+		WARN_ON(trace_array_set_clr_event(gen_kretprobe_test->tr,
-+						  "kprobes",
-+						  "gen_kretprobe_test", false));
-+		trace_put_event_file(gen_kretprobe_test);
-+		WARN_ON(kprobe_event_delete("gen_kretprobe_test"));
-+	}
-+
-+	return ret;
-+}
-+
-+static void __exit kprobe_event_gen_test_exit(void)
-+{
-+	/* Disable the event or you can't remove it */
-+	WARN_ON(trace_array_set_clr_event(gen_kprobe_test->tr,
-+					  "kprobes",
-+					  "gen_kprobe_test", false));
-+
-+	/* Now give the file and instance back */
-+	trace_put_event_file(gen_kprobe_test);
-+
-+	/* Now unregister and free the event */
-+	WARN_ON(kprobe_event_delete("gen_kprobe_test"));
-+
-+	/* Disable the event or you can't remove it */
-+	WARN_ON(trace_array_set_clr_event(gen_kprobe_test->tr,
-+					  "kprobes",
-+					  "gen_kretprobe_test", false));
-+
-+	/* Now give the file and instance back */
-+	trace_put_event_file(gen_kretprobe_test);
-+
-+	/* Now unregister and free the event */
-+	WARN_ON(kprobe_event_delete("gen_kretprobe_test"));
-+}
-+
-+module_init(kprobe_event_gen_test_init)
-+module_exit(kprobe_event_gen_test_exit)
-+
-+MODULE_AUTHOR("Tom Zanussi");
-+MODULE_DESCRIPTION("kprobe event generation test");
-+MODULE_LICENSE("GPL v2");
+ 
+ 	xbc_node_for_each_array_value(node, "fields", anode, p) {
+-		delta = snprintf(q, len, " %s;", p);
+-		if (delta >= len) {
+-			pr_err("fields string is too long: %s\n", p);
+-			return -E2BIG;
+-		}
+-		len -= delta; q += delta;
++		ret = synth_event_add_field_str(&cmd, p);
++		if (ret)
++			return ret;
+ 	}
+ 
+-	ret = synth_event_run_command(buf);
++	ret = synth_event_gen_cmd_end(&cmd);
+ 	if (ret < 0)
+ 		pr_err("Failed to add synthetic event: %s\n", buf);
+ 
+-
+ 	return ret;
+ }
+ #else
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index 2e7181ce51aa..41a82f5c5be5 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -1746,12 +1746,7 @@ static int create_or_delete_synth_event(int argc, char **argv)
+ 	return ret == -ECANCELED ? -EINVAL : ret;
+ }
+ 
+-int synth_event_run_command(const char *command)
+-{
+-	return trace_run_command(command, create_or_delete_synth_event);
+-}
+-
+-static int synth_event_run_cmd(struct dynevent_cmd *cmd)
++static int synth_event_run_command(struct dynevent_cmd *cmd)
+ {
+ 	struct synth_event *se;
+ 	int ret;
+@@ -1781,7 +1776,7 @@ static int synth_event_run_cmd(struct dynevent_cmd *cmd)
+ void synth_event_cmd_init(struct dynevent_cmd *cmd, char *buf, int maxlen)
+ {
+ 	dynevent_cmd_init(cmd, buf, maxlen, DYNEVENT_TYPE_SYNTH,
+-			  synth_event_run_cmd);
++			  synth_event_run_command);
+ }
+ EXPORT_SYMBOL_GPL(synth_event_cmd_init);
+ 
 -- 
 2.14.1
 
