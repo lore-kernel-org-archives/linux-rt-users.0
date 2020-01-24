@@ -7,48 +7,48 @@ X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D5574C32771
-	for <linux-rt-users@archiver.kernel.org>; Fri, 24 Jan 2020 22:56:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0B659C32771
+	for <linux-rt-users@archiver.kernel.org>; Fri, 24 Jan 2020 22:56:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 9661D22464
-	for <linux-rt-users@archiver.kernel.org>; Fri, 24 Jan 2020 22:56:42 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id CAA9324658
+	for <linux-rt-users@archiver.kernel.org>; Fri, 24 Jan 2020 22:56:46 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1579906602;
-	bh=BZ24rNXNnEWMgqioQfJk/5pdtgaudTTDXR88DPBdOqE=;
+	s=default; t=1579906606;
+	bh=W+6tpMVA1PCS64LxTfcKEXffGaOg1rFXu6F7TPpjxo0=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=RxqGiPW6MZBzDaQ/FPxzJRVb7ioL4pXBCkNAPqf9jhDXZro4GuStuzI0vHO+stLf+
-	 nX/w74YeUPg5SGctgmomv5DqhrIklQT194PMdBMtg5ZHFSsjgRvIOS0yF7c7E/L3mo
-	 woUCG02ShY3eTIG7fpHYTDd5XOiixFcMi+P+EySo=
+	b=FKLkmxXw1YtJbT2faEdWBNh/c3fjku9hkW/E2DmJqUFdMAlG/Yx3B2AEHPtNad6bE
+	 WZAV5fyUJ3+Ywd4kKz/IZBSNbIL/Oe0QDadhbIL0DA1bwDXbximcgrOSDX9yA2j0JP
+	 Sob/4CR4JGe7lDXVr2bW2Yd96kFqXhfRNetyIze4=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729441AbgAXW4k (ORCPT
+        id S1729530AbgAXW4p (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 24 Jan 2020 17:56:40 -0500
-Received: from mail.kernel.org ([198.145.29.99]:39544 "EHLO mail.kernel.org"
+        Fri, 24 Jan 2020 17:56:45 -0500
+Received: from mail.kernel.org ([198.145.29.99]:39654 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729416AbgAXW4j (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 24 Jan 2020 17:56:39 -0500
+        id S1729521AbgAXW4o (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 24 Jan 2020 17:56:44 -0500
 Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id B070920838;
-        Fri, 24 Jan 2020 22:56:37 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 4660021734;
+        Fri, 24 Jan 2020 22:56:43 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1579906598;
-        bh=BZ24rNXNnEWMgqioQfJk/5pdtgaudTTDXR88DPBdOqE=;
+        s=default; t=1579906603;
+        bh=W+6tpMVA1PCS64LxTfcKEXffGaOg1rFXu6F7TPpjxo0=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=cfZot1Bg5sloimUIK17Wlu23QNJ9SB5Y8NLvC9neQzYJgUQy/vsXfw0qHFMqNuoKR
-         LyCQkeBtya/8du3+l27ZXaexwtJZIxM0Ja+c0cXdO/6Lf3R7fxO2b5fomkQqxex+ex
-         OOPQfmFXynPOhKePPNZC/3Qq9i0umzVH9vPy6/G4=
+        b=wKUGjwSludFCxlWbNu5IkBfa9/Z9W11UBIIAodM3DOvNT1zb56PwwajNuspNzJeWE
+         qPijKbFKdeAwE8wR/oZBeiqoHEcAdoIYnfU7v/yKwtE6XLFzzufkf1ti7/fI6n0EZ+
+         2QkIYl6oiuVu+wAKPrIfxCbuZo8WymamcxA7bW5Q=
 From:   Tom Zanussi <zanussi@kernel.org>
 To:     rostedt@goodmis.org
 Cc:     artem.bityutskiy@linux.intel.com, mhiramat@kernel.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         ndesaulniers@google.com
-Subject: [PATCH v3 05/12] tracing: Add synthetic event command generation functions
-Date:   Fri, 24 Jan 2020 16:56:16 -0600
-Message-Id: <1e76e618a5c5e3cedcda4bbf8ca9f5954ebc44de.1579904761.git.zanussi@kernel.org>
+Subject: [PATCH v3 09/12] tracing: Add kprobe event command generation functions
+Date:   Fri, 24 Jan 2020 16:56:20 -0600
+Message-Id: <aca327ab0dc551cef725ed9b0614450658939c6b.1579904761.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.14.1
 In-Reply-To: <cover.1579904761.git.zanussi@kernel.org>
 References: <cover.1579904761.git.zanussi@kernel.org>
@@ -59,313 +59,162 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Add functions used to generate synthetic event commands, built on top
-of the dynevent_cmd interface.
+Add functions used to generate kprobe event commands, built on top of
+the dynevent_cmd interface.
 
-synth_event_gen_cmd_start() is used to create a synthetic event
-command using a variable arg list and
-synth_event_gen_cmd_array_start() does the same thing but using an
-array of field descriptors.  synth_event_add_field(),
-synth_event_add_field_str() and synth_event_add_fields() can be used
-to add single fields one by one or as a group.  Once all desired
-fields are added, synth_event_gen_cmd_end() is used to actually
+kprobe_event_gen_cmd_start() is used to create a kprobe event command
+using a variable arg list, and kretprobe_event_gen_cmd_start() does
+the same for kretprobe event commands.  kprobe_event_add_fields() can
+be used to add single fields one by one or as a group.  Once all
+desired fields are added, kprobe_event_gen_cmd_end() or
+kretprobe_event_gen_cmd_end() respectively are used to actually
 execute the command and create the event.
-
-synth_event_create() does everything, including creating the event, in
-a single call.
 
 Signed-off-by: Tom Zanussi <zanussi@kernel.org>
 ---
- include/linux/trace_events.h     |  37 ++++
- kernel/trace/trace_events_hist.c | 379 ++++++++++++++++++++++++++++++++++++++-
- 2 files changed, 412 insertions(+), 4 deletions(-)
+ include/linux/trace_events.h |  31 +++++++++
+ kernel/trace/trace_kprobe.c  | 161 +++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 192 insertions(+)
 
 diff --git a/include/linux/trace_events.h b/include/linux/trace_events.h
-index 651b03d5e272..07b83532a3c6 100644
+index bf03d12efb28..7c307a7c9c6a 100644
 --- a/include/linux/trace_events.h
 +++ b/include/linux/trace_events.h
-@@ -357,6 +357,7 @@ extern void trace_put_event_file(struct trace_event_file *file);
- #define MAX_DYNEVENT_CMD_LEN	(2048)
+@@ -358,6 +358,7 @@ extern void trace_put_event_file(struct trace_event_file *file);
  
  enum dynevent_type {
-+	DYNEVENT_TYPE_SYNTH = 1,
+ 	DYNEVENT_TYPE_SYNTH = 1,
++	DYNEVENT_TYPE_KPROBE,
  	DYNEVENT_TYPE_NONE,
  };
  
-@@ -379,6 +380,42 @@ extern int dynevent_create(struct dynevent_cmd *cmd);
+@@ -442,6 +443,36 @@ extern int synth_event_add_val(const char *field_name, u64 val,
+ 			       struct synth_event_trace_state *trace_state);
+ extern int synth_event_trace_end(struct synth_event_trace_state *trace_state);
  
- extern int synth_event_delete(const char *name);
- 
-+extern void synth_event_cmd_init(struct dynevent_cmd *cmd,
-+				 char *buf, int maxlen);
++extern int kprobe_event_delete(const char *name);
 +
-+extern int __synth_event_gen_cmd_start(struct dynevent_cmd *cmd,
-+				       const char *name,
-+				       struct module *mod, ...);
++extern void kprobe_event_cmd_init(struct dynevent_cmd *cmd,
++				  char *buf, int maxlen);
 +
-+#define synth_event_gen_cmd_start(cmd, name, mod, ...)	\
-+	__synth_event_gen_cmd_start(cmd, name, mod, ## __VA_ARGS__, NULL)
++#define kprobe_event_gen_cmd_start(cmd, name, loc, ...)			\
++	__kprobe_event_gen_cmd_start(cmd, false, name, loc, ## __VA_ARGS__, NULL)
 +
-+struct synth_field_desc {
-+	const char *type;
-+	const char *name;
-+};
++#define kretprobe_event_gen_cmd_start(cmd, name, loc, ...)		\
++	__kprobe_event_gen_cmd_start(cmd, true, name, loc, ## __VA_ARGS__, NULL)
 +
-+extern int synth_event_gen_cmd_array_start(struct dynevent_cmd *cmd,
-+					   const char *name,
-+					   struct module *mod,
-+					   struct synth_field_desc *fields,
-+					   unsigned int n_fields);
-+extern int synth_event_create(const char *name,
-+			      struct synth_field_desc *fields,
-+			      unsigned int n_fields, struct module *mod);
++extern int __kprobe_event_gen_cmd_start(struct dynevent_cmd *cmd,
++					bool kretprobe,
++					const char *name,
++					const char *loc, ...);
 +
-+extern int synth_event_add_field(struct dynevent_cmd *cmd,
-+				 const char *type,
-+				 const char *name);
-+extern int synth_event_add_field_str(struct dynevent_cmd *cmd,
-+				     const char *type_name);
-+extern int synth_event_add_fields(struct dynevent_cmd *cmd,
-+				  struct synth_field_desc *fields,
-+				  unsigned int n_fields);
++#define kprobe_event_add_fields(cmd, ...)	\
++	__kprobe_event_add_fields(cmd, ## __VA_ARGS__, NULL)
 +
-+#define synth_event_gen_cmd_end(cmd)	\
++#define kprobe_event_add_field(cmd, field)	\
++	__kprobe_event_add_fields(cmd, field, NULL)
++
++extern int __kprobe_event_add_fields(struct dynevent_cmd *cmd, ...);
++
++#define kprobe_event_gen_cmd_end(cmd)		\
++	dynevent_create(cmd)
++
++#define kretprobe_event_gen_cmd_end(cmd)	\
 +	dynevent_create(cmd)
 +
  /*
   * Event file flags:
   *  ENABLED	  - The event is enabled
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 94ee1e576a1e..2e7181ce51aa 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -374,7 +374,7 @@ struct hist_trigger_data {
- 	unsigned int			n_save_var_str;
- };
+diff --git a/kernel/trace/trace_kprobe.c b/kernel/trace/trace_kprobe.c
+index bf20cd7f2666..f43548b466d0 100644
+--- a/kernel/trace/trace_kprobe.c
++++ b/kernel/trace/trace_kprobe.c
+@@ -906,6 +906,167 @@ int trace_kprobe_run_command(const char *command)
+ 	return trace_run_command(command, create_or_delete_trace_kprobe);
+ }
  
--static int synth_event_create(int argc, const char **argv);
-+static int create_synth_event(int argc, const char **argv);
- static int synth_event_show(struct seq_file *m, struct dyn_event *ev);
- static int synth_event_release(struct dyn_event *ev);
- static bool synth_event_is_busy(struct dyn_event *ev);
-@@ -382,7 +382,7 @@ static bool synth_event_match(const char *system, const char *event,
- 			int argc, const char **argv, struct dyn_event *ev);
- 
- static struct dyn_event_operations synth_event_ops = {
--	.create = synth_event_create,
-+	.create = create_synth_event,
- 	.show = synth_event_show,
- 	.is_busy = synth_event_is_busy,
- 	.free = synth_event_release,
-@@ -407,6 +407,7 @@ struct synth_event {
- 	struct trace_event_class		class;
- 	struct trace_event_call			call;
- 	struct tracepoint			*tp;
-+	struct module				*mod;
- };
- 
- static bool is_synth_event(struct dyn_event *ev)
-@@ -1286,6 +1287,273 @@ struct hist_var_data {
- 	struct hist_trigger_data *hist_data;
- };
- 
-+static int synth_event_check_arg_fn(void *data)
++static int trace_kprobe_run_cmd(struct dynevent_cmd *cmd)
 +{
-+	struct dynevent_arg_pair *arg_pair = data;
-+	int size;
-+
-+	size = synth_field_size((char *)arg_pair->lhs);
-+
-+	return size ? 0 : -EINVAL;
++	return trace_run_command(cmd->buf, create_or_delete_trace_kprobe);
 +}
 +
 +/**
-+ * synth_event_add_field - Add a new field to a synthetic event cmd
++ * kprobe_event_cmd_init - Initialize a kprobe event command object
 + * @cmd: A pointer to the dynevent_cmd struct representing the new event
-+ * @type: The type of the new field to add
-+ * @name: The name of the new field to add
++ * @buf: A pointer to the buffer used to build the command
++ * @maxlen: The length of the buffer passed in @buf
 + *
-+ * Add a new field to a synthetic event cmd object.  Field ordering is in
-+ * the same order the fields are added.
-+ *
-+ * See synth_field_size() for available types. If field_name contains
-+ * [n] the field is considered to be an array.
-+ *
-+ * Return: 0 if successful, error otherwise.
++ * Initialize a synthetic event command object.  Use this before
++ * calling any of the other kprobe_event functions.
 + */
-+int synth_event_add_field(struct dynevent_cmd *cmd, const char *type,
-+			  const char *name)
++void kprobe_event_cmd_init(struct dynevent_cmd *cmd, char *buf, int maxlen)
 +{
-+	struct dynevent_arg_pair arg_pair;
-+	int ret;
-+
-+	if (cmd->type != DYNEVENT_TYPE_SYNTH)
-+		return -EINVAL;
-+
-+	if (!type || !name)
-+		return -EINVAL;
-+
-+	dynevent_arg_pair_init(&arg_pair, synth_event_check_arg_fn, 0, ';');
-+
-+	arg_pair.lhs = type;
-+	arg_pair.rhs = name;
-+
-+	ret = dynevent_arg_pair_add(cmd, &arg_pair);
-+	if (ret)
-+		return ret;
-+
-+	if (++cmd->n_fields > SYNTH_FIELDS_MAX)
-+		ret = -EINVAL;
-+
-+	return ret;
++	dynevent_cmd_init(cmd, buf, maxlen, DYNEVENT_TYPE_KPROBE,
++			  trace_kprobe_run_cmd);
 +}
-+EXPORT_SYMBOL_GPL(synth_event_add_field);
++EXPORT_SYMBOL_GPL(kprobe_event_cmd_init);
 +
 +/**
-+ * synth_event_add_field_str - Add a new field to a synthetic event cmd
++ * __kprobe_event_gen_cmd_start - Generate a kprobe event command from arg list
 + * @cmd: A pointer to the dynevent_cmd struct representing the new event
-+ * @type_name: The type and name of the new field to add, as a single string
-+ *
-+ * Add a new field to a synthetic event cmd object, as a single
-+ * string.  The @type_name string is expected to be of the form 'type
-+ * name', which will be appended by ';'.  No sanity checking is done -
-+ * what's passed in is assumed to already be well-formed.  Field
-+ * ordering is in the same order the fields are added.
-+ *
-+ * See synth_field_size() for available types. If field_name contains
-+ * [n] the field is considered to be an array.
-+ *
-+ * Return: 0 if successful, error otherwise.
-+ */
-+int synth_event_add_field_str(struct dynevent_cmd *cmd, const char *type_name)
-+{
-+	struct dynevent_arg arg;
-+	int ret;
-+
-+	if (cmd->type != DYNEVENT_TYPE_SYNTH)
-+		return -EINVAL;
-+
-+	if (!type_name)
-+		return -EINVAL;
-+
-+	dynevent_arg_init(&arg, NULL, ';');
-+
-+	arg.str = type_name;
-+
-+	ret = dynevent_arg_add(cmd, &arg);
-+	if (ret)
-+		return ret;
-+
-+	if (++cmd->n_fields > SYNTH_FIELDS_MAX)
-+		ret = -EINVAL;
-+
-+	return ret;
-+}
-+EXPORT_SYMBOL_GPL(synth_event_add_field_str);
-+
-+/**
-+ * synth_event_add_fields - Add multiple fields to a synthetic event cmd
-+ * @cmd: A pointer to the dynevent_cmd struct representing the new event
-+ * @fields: An array of type/name field descriptions
-+ * @n_fields: The number of field descriptions contained in the fields array
-+ *
-+ * Add a new set of fields to a synthetic event cmd object.  The event
-+ * fields that will be defined for the event should be passed in as an
-+ * array of struct synth_field_desc, and the number of elements in the
-+ * array passed in as n_fields.  Field ordering will retain the
-+ * ordering given in the fields array.
-+ *
-+ * See synth_field_size() for available types. If field_name contains
-+ * [n] the field is considered to be an array.
-+ *
-+ * Return: 0 if successful, error otherwise.
-+ */
-+int synth_event_add_fields(struct dynevent_cmd *cmd,
-+			   struct synth_field_desc *fields,
-+			   unsigned int n_fields)
-+{
-+	unsigned int i;
-+	int ret = 0;
-+
-+	for (i = 0; i < n_fields; i++) {
-+		if (fields[i].type == NULL || fields[i].name == NULL) {
-+			ret = -EINVAL;
-+			break;
-+		}
-+
-+		ret = synth_event_add_field(cmd, fields[i].type, fields[i].name);
-+		if (ret)
-+			break;
-+	}
-+
-+	return ret;
-+}
-+EXPORT_SYMBOL_GPL(synth_event_add_fields);
-+
-+/**
-+ * __synth_event_gen_cmd_start - Start a synthetic event command from arg list
-+ * @cmd: A pointer to the dynevent_cmd struct representing the new event
-+ * @name: The name of the synthetic event
-+ * @mod: The module creating the event, NULL if not created from a module
++ * @name: The name of the kprobe event
++ * @loc: The location of the kprobe event
++ * @kretprobe: Is this a return probe?
 + * @args: Variable number of arg (pairs), one pair for each field
 + *
 + * NOTE: Users normally won't want to call this function directly, but
-+ * rather use the synth_event_gen_cmd_start() wrapper, which
-+ * automatically adds a NULL to the end of the arg list.  If this
-+ * function is used directly, make sure the last arg in the variable
-+ * arg list is NULL.
++ * rather use the kprobe_event_gen_cmd_start() wrapper, which automatically
++ * adds a NULL to the end of the arg list.  If this function is used
++ * directly, make sure the last arg in the variable arg list is NULL.
 + *
-+ * Generate a synthetic event command to be executed by
-+ * synth_event_gen_cmd_end().  This function can be used to generate
-+ * the complete command or only the first part of it; in the latter
-+ * case, synth_event_add_field(), synth_event_add_field_str(), or
-+ * synth_event_add_fields() can be used to add more fields following
-+ * this.
-+ *
-+ * There should be an even number variable args, each pair consisting
-+ * of a type followed by a field name.
-+ *
-+ * See synth_field_size() for available types. If field_name contains
-+ * [n] the field is considered to be an array.
++ * Generate a kprobe event command to be executed by
++ * kprobe_event_gen_cmd_end().  This function can be used to generate the
++ * complete command or only the first part of it; in the latter case,
++ * kprobe_event_add_fields() can be used to add more fields following this.
 + *
 + * Return: 0 if successful, error otherwise.
 + */
-+int __synth_event_gen_cmd_start(struct dynevent_cmd *cmd, const char *name,
-+				struct module *mod, ...)
++int __kprobe_event_gen_cmd_start(struct dynevent_cmd *cmd, bool kretprobe,
++				 const char *name, const char *loc, ...)
 +{
++	char buf[MAX_EVENT_NAME_LEN];
 +	struct dynevent_arg arg;
 +	va_list args;
 +	int ret;
 +
-+	cmd->event_name = name;
-+	cmd->private_data = mod;
-+
-+	if (cmd->type != DYNEVENT_TYPE_SYNTH)
++	if (cmd->type != DYNEVENT_TYPE_KPROBE)
 +		return -EINVAL;
 +
++	if (kretprobe)
++		snprintf(buf, MAX_EVENT_NAME_LEN, "r:kprobes/%s", name);
++	else
++		snprintf(buf, MAX_EVENT_NAME_LEN, "p:kprobes/%s", name);
++
++	ret = dynevent_str_add(cmd, buf);
++	if (ret)
++		return ret;
++
 +	dynevent_arg_init(&arg, NULL, 0);
-+	arg.str = name;
++	arg.str = loc;
 +	ret = dynevent_arg_add(cmd, &arg);
 +	if (ret)
 +		return ret;
 +
-+	va_start(args, mod);
++	va_start(args, loc);
 +	for (;;) {
-+		const char *type, *name;
++		const char *field;
 +
-+		type = va_arg(args, const char *);
-+		if (!type)
-+			break;
-+		name = va_arg(args, const char *);
-+		if (!name)
++		field = va_arg(args, const char *);
++		if (!field)
 +			break;
 +
-+		if (++cmd->n_fields > SYNTH_FIELDS_MAX) {
++		if (++cmd->n_fields > MAX_TRACE_ARGS) {
 +			ret = -EINVAL;
 +			break;
 +		}
 +
-+		ret = synth_event_add_field(cmd, type, name);
++		arg.str = field;
++		ret = dynevent_arg_add(cmd, &arg);
 +		if (ret)
 +			break;
 +	}
@@ -373,207 +222,81 @@ index 94ee1e576a1e..2e7181ce51aa 100644
 +
 +	return ret;
 +}
-+EXPORT_SYMBOL_GPL(__synth_event_gen_cmd_start);
++EXPORT_SYMBOL_GPL(__kprobe_event_gen_cmd_start);
 +
 +/**
-+ * synth_event_gen_cmd_array_start - Start synthetic event command from an array
++ * __kprobe_event_add_fields - Add probe fields to a kprobe command from arg list
 + * @cmd: A pointer to the dynevent_cmd struct representing the new event
-+ * @name: The name of the synthetic event
-+ * @fields: An array of type/name field descriptions
-+ * @n_fields: The number of field descriptions contained in the fields array
++ * @args: Variable number of arg (pairs), one pair for each field
 + *
-+ * Generate a synthetic event command to be executed by
-+ * synth_event_gen_cmd_end().  This function can be used to generate
-+ * the complete command or only the first part of it; in the latter
-+ * case, synth_event_add_field(), synth_event_add_field_str(), or
-+ * synth_event_add_fields() can be used to add more fields following
-+ * this.
++ * NOTE: Users normally won't want to call this function directly, but
++ * rather use the kprobe_event_add_fields() wrapper, which
++ * automatically adds a NULL to the end of the arg list.  If this
++ * function is used directly, make sure the last arg in the variable
++ * arg list is NULL.
 + *
-+ * The event fields that will be defined for the event should be
-+ * passed in as an array of struct synth_field_desc, and the number of
-+ * elements in the array passed in as n_fields.  Field ordering will
-+ * retain the ordering given in the fields array.
-+ *
-+ * See synth_field_size() for available types. If field_name contains
-+ * [n] the field is considered to be an array.
++ * Add probe fields to an existing kprobe command using a variable
++ * list of args.  Fields are added in the same order they're listed.
 + *
 + * Return: 0 if successful, error otherwise.
 + */
-+int synth_event_gen_cmd_array_start(struct dynevent_cmd *cmd, const char *name,
-+				    struct module *mod,
-+				    struct synth_field_desc *fields,
-+				    unsigned int n_fields)
++int __kprobe_event_add_fields(struct dynevent_cmd *cmd, ...)
 +{
 +	struct dynevent_arg arg;
-+	unsigned int i;
-+	int ret = 0;
++	va_list args;
++	int ret;
 +
-+	cmd->event_name = name;
-+	cmd->private_data = mod;
-+
-+	if (cmd->type != DYNEVENT_TYPE_SYNTH)
-+		return -EINVAL;
-+
-+	if (n_fields > SYNTH_FIELDS_MAX)
++	if (cmd->type != DYNEVENT_TYPE_KPROBE)
 +		return -EINVAL;
 +
 +	dynevent_arg_init(&arg, NULL, 0);
-+	arg.str = name;
-+	ret = dynevent_arg_add(cmd, &arg);
-+	if (ret)
-+		return ret;
 +
-+	for (i = 0; i < n_fields; i++) {
-+		if (fields[i].type == NULL || fields[i].name == NULL)
-+			return -EINVAL;
++	va_start(args, cmd);
++	for (;;) {
++		const char *field;
 +
-+		ret = synth_event_add_field(cmd, fields[i].type, fields[i].name);
++		field = va_arg(args, const char *);
++		if (!field)
++			break;
++
++		if (++cmd->n_fields > MAX_TRACE_ARGS) {
++			ret = -EINVAL;
++			break;
++		}
++
++		arg.str = field;
++		ret = dynevent_arg_add(cmd, &arg);
 +		if (ret)
 +			break;
 +	}
++	va_end(args);
 +
 +	return ret;
 +}
-+EXPORT_SYMBOL_GPL(synth_event_gen_cmd_array_start);
++EXPORT_SYMBOL_GPL(__kprobe_event_add_fields);
 +
- static int __create_synth_event(int argc, const char *name, const char **argv)
- {
- 	struct synth_field *field, *fields[SYNTH_FIELDS_MAX];
-@@ -1354,6 +1622,56 @@ static int __create_synth_event(int argc, const char *name, const char **argv)
- 	goto out;
- }
- 
 +/**
-+ * synth_event_create - Create a new synthetic event
-+ * @name: The name of the new sythetic event
-+ * @fields: An array of type/name field descriptions
-+ * @n_fields: The number of field descriptions contained in the fields array
-+ * @mod: The module creating the event, NULL if not created from a module
++ * kprobe_event_delete - Delete a kprobe event
++ * @name: The name of the kprobe event to delete
 + *
-+ * Create a new synthetic event with the given name under the
-+ * trace/events/synthetic/ directory.  The event fields that will be
-+ * defined for the event should be passed in as an array of struct
-+ * synth_field_desc, and the number elements in the array passed in as
-+ * n_fields. Field ordering will retain the ordering given in the
-+ * fields array.
-+ *
-+ * If the new synthetic event is being created from a module, the mod
-+ * param must be non-NULL.  This will ensure that the trace buffer
-+ * won't contain unreadable events.
-+ *
-+ * The new synth event should be deleted using synth_event_delete()
-+ * function.  The new synthetic event can be generated from modules or
-+ * other kernel code using trace_synth_event() and related functions.
++ * Delete a kprobe event with the give @name from kernel code rather
++ * than directly from the command line.
 + *
 + * Return: 0 if successful, error otherwise.
 + */
-+int synth_event_create(const char *name, struct synth_field_desc *fields,
-+		       unsigned int n_fields, struct module *mod)
++int kprobe_event_delete(const char *name)
 +{
-+	struct dynevent_cmd cmd;
-+	char *buf;
-+	int ret;
++	char buf[MAX_EVENT_NAME_LEN];
 +
-+	buf = kzalloc(MAX_DYNEVENT_CMD_LEN, GFP_KERNEL);
-+	if (!buf)
-+		return -ENOMEM;
++	snprintf(buf, MAX_EVENT_NAME_LEN, "-:%s", name);
 +
-+	synth_event_cmd_init(&cmd, buf, MAX_DYNEVENT_CMD_LEN);
-+
-+	ret = synth_event_gen_cmd_array_start(&cmd, name, mod,
-+					      fields, n_fields);
-+	if (ret)
-+		goto out;
-+
-+	ret = synth_event_gen_cmd_end(&cmd);
-+ out:
-+	kfree(buf);
-+
-+	return ret;
++	return trace_run_command(buf, create_or_delete_trace_kprobe);
 +}
-+EXPORT_SYMBOL_GPL(synth_event_create);
++EXPORT_SYMBOL_GPL(kprobe_event_delete);
 +
- static int destroy_synth_event(struct synth_event *se)
+ static int trace_kprobe_release(struct dyn_event *ev)
  {
- 	int ret;
-@@ -1382,14 +1700,33 @@ static int destroy_synth_event(struct synth_event *se)
- int synth_event_delete(const char *event_name)
- {
- 	struct synth_event *se = NULL;
-+	struct module *mod = NULL;
- 	int ret = -ENOENT;
- 
- 	mutex_lock(&event_mutex);
- 	se = find_synth_event(event_name);
--	if (se)
-+	if (se) {
-+		mod = se->mod;
- 		ret = destroy_synth_event(se);
-+	}
- 	mutex_unlock(&event_mutex);
- 
-+	if (mod) {
-+		mutex_lock(&trace_types_lock);
-+		/*
-+		 * It is safest to reset the ring buffer if the module
-+		 * being unloaded registered any events that were
-+		 * used. The only worry is if a new module gets
-+		 * loaded, and takes on the same id as the events of
-+		 * this module. When printing out the buffer, traced
-+		 * events left over from this module may be passed to
-+		 * the new module events and unexpected results may
-+		 * occur.
-+		 */
-+		tracing_reset_all_online_cpus();
-+		mutex_unlock(&trace_types_lock);
-+	}
-+
- 	return ret;
- }
- EXPORT_SYMBOL_GPL(synth_event_delete);
-@@ -1414,7 +1751,41 @@ int synth_event_run_command(const char *command)
- 	return trace_run_command(command, create_or_delete_synth_event);
- }
- 
--static int synth_event_create(int argc, const char **argv)
-+static int synth_event_run_cmd(struct dynevent_cmd *cmd)
-+{
-+	struct synth_event *se;
-+	int ret;
-+
-+	ret = trace_run_command(cmd->buf, create_or_delete_synth_event);
-+	if (ret)
-+		return ret;
-+
-+	se = find_synth_event(cmd->event_name);
-+	if (WARN_ON(!se))
-+		return -ENOENT;
-+
-+	se->mod = cmd->private_data;
-+
-+	return ret;
-+}
-+
-+/**
-+ * synth_event_cmd_init - Initialize a synthetic event command object
-+ * @cmd: A pointer to the dynevent_cmd struct representing the new event
-+ * @buf: A pointer to the buffer used to build the command
-+ * @maxlen: The length of the buffer passed in @buf
-+ *
-+ * Initialize a synthetic event command object.  Use this before
-+ * calling any of the other dyenvent_cmd functions.
-+ */
-+void synth_event_cmd_init(struct dynevent_cmd *cmd, char *buf, int maxlen)
-+{
-+	dynevent_cmd_init(cmd, buf, maxlen, DYNEVENT_TYPE_SYNTH,
-+			  synth_event_run_cmd);
-+}
-+EXPORT_SYMBOL_GPL(synth_event_cmd_init);
-+
-+static int create_synth_event(int argc, const char **argv)
- {
- 	const char *name = argv[0];
- 	int len;
+ 	struct trace_kprobe *tk = to_trace_kprobe(ev);
 -- 
 2.14.1
 
