@@ -1,97 +1,100 @@
-Return-Path: <SRS0=Ix+H=3P=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=nqJC=3Q=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2575AC2D0DB
-	for <linux-rt-users@archiver.kernel.org>; Sun, 26 Jan 2020 21:19:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EB1EEC32771
+	for <linux-rt-users@archiver.kernel.org>; Mon, 27 Jan 2020 10:45:02 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id ED3A52070A
-	for <linux-rt-users@archiver.kernel.org>; Sun, 26 Jan 2020 21:19:55 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=codeblueprint-co-uk.20150623.gappssmtp.com header.i=@codeblueprint-co-uk.20150623.gappssmtp.com header.b="glGNxF4o"
+	by mail.kernel.org (Postfix) with ESMTP id BD54D207FD
+	for <linux-rt-users@archiver.kernel.org>; Mon, 27 Jan 2020 10:45:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726428AbgAZVTv (ORCPT
+        id S1726155AbgA0KpC (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 26 Jan 2020 16:19:51 -0500
-Received: from mail-wr1-f67.google.com ([209.85.221.67]:46563 "EHLO
-        mail-wr1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726252AbgAZVTv (ORCPT
+        Mon, 27 Jan 2020 05:45:02 -0500
+Received: from Galois.linutronix.de ([193.142.43.55]:46395 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725908AbgA0KpC (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 26 Jan 2020 16:19:51 -0500
-Received: by mail-wr1-f67.google.com with SMTP id z7so8584721wrl.13
-        for <linux-rt-users@vger.kernel.org>; Sun, 26 Jan 2020 13:19:49 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=codeblueprint-co-uk.20150623.gappssmtp.com; s=20150623;
-        h=from:to:cc:subject:date:message-id;
-        bh=W+1nsbVm0cSPeGcNb729QxN1Lx30Mzxix0uBHJsXjEM=;
-        b=glGNxF4orogvIq2I94J2ePvtCI+zr9wr0jLaFxRNWYkP/2fpVeHVaYXFaxJao03hLd
-         pxzDeX+UQ4hcqwhaKU1g/8x/DjmxHsq+/EycB/amBZbaWSfsZ7JARImCBwz5+4Me/YRR
-         o4JgefluHwzDXaOekePkcCD9VmfHA/JlC/ovEFFPxTXa+SCzapTTBfZ1gPVo7sxcp3jJ
-         uYsWPytlwCiO+PFqWOBNy/Giow5ngU7Fl02shok29ZdRJzVbDFJwBeQbhnW5Xzttmde8
-         vCgW1+wMZr1wrGSr5Qqp8hPiGjCv5NaWhuueJmT1W3kyIAEk3ifGy5DiL4ZNcuE7LKD8
-         pdeg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id;
-        bh=W+1nsbVm0cSPeGcNb729QxN1Lx30Mzxix0uBHJsXjEM=;
-        b=QphAoIE/EnI/ytWywp6L2TtqpJzu8wZPyCcKyKswYuZyX3ZMWAhyc2vntUaSxH0avr
-         iFeQo3yd/Sm/IWRk/EOFk4AAW0CrIMrG0WH12OY1nI+gzozJjwpfgSDYo09HSIp2i2Qn
-         dVcrnrmBlmNBjWKntoaIoDOZIT/83Bco3h3WI0PKXidyz/txLXrk5gSF3PUDcmhfoZ6V
-         5PyU6E67bYXUxnW8MgXw89JVAL+D8BC8rtkFlHlUkRE9jlcLCRM2jrGIXJP96BPr1FzP
-         3naIeYpfZnM1Mnr4KltwjIyQuHTkMacAdWlCnp5HzY36A5IgJR6+Rpe0P8bd9WeedKlX
-         0BUA==
-X-Gm-Message-State: APjAAAX2mRM+XGedSDOxo4v5zLGyBBRPGUywK6VVdCNxjgAr1vahF4Zv
-        EzshgDIiiDJJ7m6Thf5eP3S30dinwI4=
-X-Google-Smtp-Source: APXvYqwMe8vSFTGXUaQ4KovzJP158qABoVgugJMpLfobhOJvWw8ltmyEn7rtV/S4BZPXEUj3NxecWg==
-X-Received: by 2002:adf:f8c8:: with SMTP id f8mr17413499wrq.331.1580073589063;
-        Sun, 26 Jan 2020 13:19:49 -0800 (PST)
-Received: from localhost ([90.217.157.96])
-        by smtp.gmail.com with ESMTPSA id l17sm17291292wro.77.2020.01.26.13.19.47
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 26 Jan 2020 13:19:48 -0800 (PST)
-From:   Matt Fleming <matt@codeblueprint.co.uk>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        Matt Fleming <matt@codeblueprint.co.uk>,
-        Daniel Wagner <wagi@monom.org>
-Subject: [PATCH RT] mm/memcontrol: Move misplaced local_unlock_irqrestore()
-Date:   Sun, 26 Jan 2020 21:19:45 +0000
-Message-Id: <20200126211945.28116-1-matt@codeblueprint.co.uk>
-X-Mailer: git-send-email 2.16.4
+        Mon, 27 Jan 2020 05:45:02 -0500
+Received: from [5.158.153.52] (helo=kurt)
+        by Galois.linutronix.de with esmtpsa (TLS1.2:RSA_AES_256_CBC_SHA1:256)
+        (Exim 4.80)
+        (envelope-from <kurt.kanzenbach@linutronix.de>)
+        id 1iw1t5-0000oU-NC; Mon, 27 Jan 2020 11:44:59 +0100
+From:   Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
+To:     John Kacur <jkacur@redhat.com>
+Cc:     Clark Williams <williams@redhat.com>,
+        RT <linux-rt-users@vger.kernel.org>
+Subject: Re: [PATCH 2/9] rt-tests: cyclicdeadline: Add a simple manpage for cyclicdeadline
+In-Reply-To: <20200123205029.20176-3-jkacur@redhat.com>
+References: <20200123205029.20176-1-jkacur@redhat.com> <20200123205029.20176-3-jkacur@redhat.com>
+Date:   Mon, 27 Jan 2020 11:44:59 +0100
+Message-ID: <877e1dxjo4.fsf@kurt>
+MIME-Version: 1.0
+Content-Type: multipart/signed; boundary="=-=-=";
+        micalg=pgp-sha512; protocol="application/pgp-signature"
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-There's no need to leave interrupts disabled when calling css_put_many().
+--=-=-=
+Content-Type: text/plain
 
-Cc: Daniel Wagner <wagi@monom.org>
-Signed-off-by: Matt Fleming <matt@codeblueprint.co.uk>
----
- mm/memcontrol.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Hi John,
 
-diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index 7b6f208c5a6b..1120b9d8dd86 100644
---- a/mm/memcontrol.c
-+++ b/mm/memcontrol.c
-@@ -7062,10 +7062,10 @@ void mem_cgroup_swapout(struct page *page, swp_entry_t entry)
- 	mem_cgroup_charge_statistics(memcg, page, PageTransHuge(page),
- 				     -nr_entries);
- 	memcg_check_events(memcg, page);
-+	local_unlock_irqrestore(event_lock, flags);
- 
- 	if (!mem_cgroup_is_root(memcg))
- 		css_put_many(&memcg->css, nr_entries);
--	local_unlock_irqrestore(event_lock, flags);
- }
- 
- /**
--- 
-2.16.4
+On Thu Jan 23 2020, John Kacur wrote:
+> - Add a simple manpage for cyclicdeadline
+> - Install it from the Makefile
+>
+> Signed-off-by: John Kacur <jkacur@redhat.com>
+> ---
+>  Makefile                            |  1 +
+>  src/sched_deadline/cyclicdeadline.8 | 53 +++++++++++++++++++++++++++++
+>  2 files changed, 54 insertions(+)
+>  create mode 100644 src/sched_deadline/cyclicdeadline.8
+>
+> diff --git a/Makefile b/Makefile
+> index 552b3fe885cc..e2142ba3f4e9 100644
+> --- a/Makefile
+> +++ b/Makefile
+> @@ -193,6 +193,7 @@ install: all install_hwlatdetect
+>  	gzip -c src/queuelat/queuelat.8 >"$(DESTDIR)$(mandir)/man8/queuelat.8.gz"
+>  	gzip -c src/sched_deadline/deadline_test.8 >"$(DESTDIR)$(mandir)/man8/deadline_test.8.gz"
+>  	gzip -c src/ssdd/ssdd.8 >"$(DESTDIR)$(mandir)/man8/ssdd.8.gz"
+> +	gzip -c src/sched_deadline/cyclicdeadline.8 >"$(DESTDIR)$(mandir)/man8/cyclicdeadline.8.gz"
 
+I'm just wondering about this. Why are the man pages compressed in the
+Makefile? Actually most package management systems compress the man
+pages themselves. Users may want to use bz2 or something else.
+
+In fact, I have a patch on top of rt-tests v1.6 in Gentoo which removes
+the compression, because portage complains about it.
+
+Thanks,
+Kurt
+
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCgAdFiEEooWgvezyxHPhdEojeSpbgcuY8KYFAl4uvysACgkQeSpbgcuY
+8Kbznw//Q0CgHnVJVRhVgjNTNPLK/YpitthY+LQhBGtj4jdhZrzy+lvHwpvcfC7n
+etnUFiW916o6XVouzYrNUuq4p8VZyHS2svC6ZvdLT71ubW2UtmrsqKlNw99c0dO5
+8Kr7jysePclKVR7VS4jBXkW4+0AZfREmxXNoYtAEAi4UOxnE95CkXmnCHxB4Qb3K
+/JcULlvopB6l45kifLUIblXPBpfzSj55C/4yZohqYSvO7jwZgIl4/FgDHjwrwF8M
+YeNUxNTn5qipnrHTb3KFG0YAlC5c4iH5UYLc1xAexk3tlK8wtb+230sXtO0xoJcP
+jIHIRD7fT48jsr96xubxtCCFlJ3QVLFbmQW1eq7nV+w50Lr/8wad/iQakvDkiiks
+K0WU3E4PSGoM822pLU0TDCzSz8VY2AHlvMTDsoOocQ7X7yu4PMGDHApaB8gYedga
+NwB79/4mqKH02wW/M1LwN6zMdQ6du8wXhnlsG1dYHdd48BpsjLIYmThlxQjvFTkv
+wr0lw2d+mqwCivgB9XawlDW2gTnO90Q6Z3OofaCzlUHG1UyXa0adrvn25CBLR3T2
+w2MpjGvUltSPHfWVaPJyqCxjr14ZJuPaLP/8PQ8ChyyyZrpnj7ozVDqqieMw14Zq
+2r4/YpQQVXoqNghI7L2ZI+7coDvEHhHQ549S3ObQA1l9BFyW08c=
+=HD39
+-----END PGP SIGNATURE-----
+--=-=-=--
