@@ -2,123 +2,120 @@ Return-Path: <SRS0=nqJC=3Q=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.1 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no
+X-Spam-Status: No, score=-0.8 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0A7FCC2D0DB
-	for <linux-rt-users@archiver.kernel.org>; Mon, 27 Jan 2020 17:40:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D70CBC2D0DB
+	for <linux-rt-users@archiver.kernel.org>; Mon, 27 Jan 2020 21:44:59 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id D35CE21739
-	for <linux-rt-users@archiver.kernel.org>; Mon, 27 Jan 2020 17:40:26 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A99B222527
+	for <linux-rt-users@archiver.kernel.org>; Mon, 27 Jan 2020 21:44:59 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="eTRyDHPV"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MakMO4jX"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726205AbgA0Rk0 (ORCPT
+        id S1726205AbgA0Vo7 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 27 Jan 2020 12:40:26 -0500
-Received: from mail-qk1-f195.google.com ([209.85.222.195]:36415 "EHLO
-        mail-qk1-f195.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725893AbgA0Rk0 (ORCPT
+        Mon, 27 Jan 2020 16:44:59 -0500
+Received: from us-smtp-1.mimecast.com ([205.139.110.61]:28532 "EHLO
+        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1726080AbgA0Vo7 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 27 Jan 2020 12:40:26 -0500
-Received: by mail-qk1-f195.google.com with SMTP id w25so4755080qki.3
-        for <linux-rt-users@vger.kernel.org>; Mon, 27 Jan 2020 09:40:25 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
-         :user-agent:mime-version;
-        bh=bfF13+JBHgYhrj3oIYKgE8F0oBJo3fmTueGn8T4wObY=;
-        b=eTRyDHPVglqnWStLr8NlsY03/ywdLuVvWGqXseYsnlD7bKlIa7lQMAIZKcYvcNZ52S
-         hIXRvcrtb8RdQdG9guxXRCg1KZWTWM8kt8oCCkDxqh9G8unWp/HIou2HK7Q5NIxtQ1qK
-         meHAUAISQUPICYMDxttV2AFjOgCK1nzuwi4+5q5rEh2ll9XmN84CIzt5kcMYG+Uh2B30
-         zRh4eLNTN1hO0QT+wrzy1kx6b9lb4bxwhrpsHqu6DtH0ydQxlvMkHkmjNR+fVHGrwSKf
-         b6nVR/IIR3x0lt+w6UDvpkkO2Nw3i+gTZbJ2kKPu4FjP3YW/YFJeEt/cwXRkI7WOUg2C
-         xmTg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
-         :message-id:references:user-agent:mime-version;
-        bh=bfF13+JBHgYhrj3oIYKgE8F0oBJo3fmTueGn8T4wObY=;
-        b=Zi5MOTIqhzA6jxMlfyt+c2MMyEmdgOjUQeFK6OFli85dmgbww0j6IQh03WtNRPalc1
-         Y7xC8uZuVv+ndIuD0vsspqvGDfLhqxe3JTeC/s1KlT19iOIkmNnfWlBSN+GDPOsO4YSa
-         Tc0MvFiR+tw3LuXBpbcjm3V8lYJ2kbrKprsPGCdAW7Ke9JEUpzu2HrmwNALJXv5LybEC
-         8g9DVdUZybTVw0lOSAzrNjyDjvX9Q4LiNDuoTTzyhQIUyIykw1btH1aYjbIUtrKIjC5G
-         N5x+EgQwTL2HCstkh7QpPq/Y2VmFHxFeAHmofv8SyKcVIpPZLz6d6n1YJtlNqcBYTi/5
-         sYJQ==
-X-Gm-Message-State: APjAAAW064d7Pyr/OLgOxRTdM9nK7XZbWw9yzUfeVYU/HHmWkZqNuLOB
-        e/gHD8nPTOfZhezLgTY5fMI=
-X-Google-Smtp-Source: APXvYqy4N6sOeX8YBl6sj9QZ04tQZ8t4re5irenMH2NoxUNbpGStmyrDd5/+7jZKqbFikI/RAaUfGg==
-X-Received: by 2002:a05:620a:1327:: with SMTP id p7mr17649274qkj.148.1580146825330;
-        Mon, 27 Jan 2020 09:40:25 -0800 (PST)
-Received: from planxty (rdwyon0600w-lp130-03-64-231-46-127.dsl.bell.ca. [64.231.46.127])
-        by smtp.gmail.com with ESMTPSA id u24sm10268541qkm.40.2020.01.27.09.40.22
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 27 Jan 2020 09:40:23 -0800 (PST)
-Date:   Mon, 27 Jan 2020 12:40:15 -0500 (EST)
-From:   John Kacur <jkacur@redhat.com>
-X-X-Sender: jkacur@planxty
-To:     Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
-cc:     Clark Williams <williams@redhat.com>,
-        RT <linux-rt-users@vger.kernel.org>
-Subject: Re: [PATCH 2/9] rt-tests: cyclicdeadline: Add a simple manpage for
- cyclicdeadline
-In-Reply-To: <877e1dxjo4.fsf@kurt>
-Message-ID: <alpine.LFD.2.21.2001271213260.7301@planxty>
-References: <20200123205029.20176-1-jkacur@redhat.com> <20200123205029.20176-3-jkacur@redhat.com> <877e1dxjo4.fsf@kurt>
-User-Agent: Alpine 2.21 (LFD 202 2017-01-01)
+        Mon, 27 Jan 2020 16:44:59 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1580161497;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=Wy35csZmdYzO2X5OBKE6ZvGgflpVvhADtsDDps9NGI4=;
+        b=MakMO4jXP5pzi681uCpaccyUBB83bH+EzgyTRYbZ23HY/4+ASI1MNJRCVc4FF1kXdJqiTJ
+        MbwzILCHOkzd2p+GWhV2ACuB+mHxEwNFngHN4N4BCNuNmUWMe5i+DkTGwafbOTxDsM+GzN
+        bs64sgkVNnNY9QCf7UTx6CRRjcsknJw=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-222-DGlWSHivNaOdBfwuHlRbIA-1; Mon, 27 Jan 2020 16:44:55 -0500
+X-MC-Unique: DGlWSHivNaOdBfwuHlRbIA-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7FC94477
+        for <linux-rt-users@vger.kernel.org>; Mon, 27 Jan 2020 21:44:54 +0000 (UTC)
+Received: from tagon (ovpn-121-194.rdu2.redhat.com [10.10.121.194])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 13D265D9CA;
+        Mon, 27 Jan 2020 21:44:53 +0000 (UTC)
+Date:   Mon, 27 Jan 2020 15:44:52 -0600
+From:   Clark Williams <williams@redhat.com>
+To:     John Kacur <jkacur@redhat.com>
+Cc:     RT <linux-rt-users@vger.kernel.org>
+Subject: Re: [PATCH 0/9] rt-tests: Miscellaneous fixes
+Message-ID: <20200127154452.543c378c@tagon>
+In-Reply-To: <20200123205029.20176-1-jkacur@redhat.com>
+References: <20200123205029.20176-1-jkacur@redhat.com>
+Organization: Red Hat, Inc
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+John,
 
+Thanks for this! I suspect we now need an 8.3 bz for updating the rt-tests
+package to the latest upstream version.
 
-On Mon, 27 Jan 2020, Kurt Kanzenbach wrote:
+Clark
 
-> Hi John,
+On Thu, 23 Jan 2020 21:50:20 +0100
+John Kacur <jkacur@redhat.com> wrote:
+
+> Most of the fixes here are just clean-ups to make sure that online help
+> or usage message match the man pages according to the current options.
 > 
-> On Thu Jan 23 2020, John Kacur wrote:
-> > - Add a simple manpage for cyclicdeadline
-> > - Install it from the Makefile
-> >
-> > Signed-off-by: John Kacur <jkacur@redhat.com>
-> > ---
-> >  Makefile                            |  1 +
-> >  src/sched_deadline/cyclicdeadline.8 | 53 +++++++++++++++++++++++++++++
-> >  2 files changed, 54 insertions(+)
-> >  create mode 100644 src/sched_deadline/cyclicdeadline.8
-> >
-> > diff --git a/Makefile b/Makefile
-> > index 552b3fe885cc..e2142ba3f4e9 100644
-> > --- a/Makefile
-> > +++ b/Makefile
-> > @@ -193,6 +193,7 @@ install: all install_hwlatdetect
-> >  	gzip -c src/queuelat/queuelat.8 >"$(DESTDIR)$(mandir)/man8/queuelat.8.gz"
-> >  	gzip -c src/sched_deadline/deadline_test.8 >"$(DESTDIR)$(mandir)/man8/deadline_test.8.gz"
-> >  	gzip -c src/ssdd/ssdd.8 >"$(DESTDIR)$(mandir)/man8/ssdd.8.gz"
-> > +	gzip -c src/sched_deadline/cyclicdeadline.8 >"$(DESTDIR)$(mandir)/man8/cyclicdeadline.8.gz"
+> Some fixes to the queuelat scripts determine_maximum_mpps.sh and
+> get_cpuinfo_mhz.sh are perhaps notable though, as people were having
+> trouble using them.
 > 
-> I'm just wondering about this. Why are the man pages compressed in the
-> Makefile? Actually most package management systems compress the man
-> pages themselves. Users may want to use bz2 or something else.
+> getcpuinfo_mhz.sh now only gets one value as was originally intended,
+> and it gets the highest value available. The fixes to quoting in
+> determine_maximum_mpps.sh should make the program work correctly now -
+> and take longer though.
 > 
-> In fact, I have a patch on top of rt-tests v1.6 in Gentoo which removes
-> the compression, because portage complains about it.
+> John Kacur (9):
+>   rt-tests: queuelat: Assume queuelat is in the path
+>   rt-tests: cyclicdeadline: Add a simple manpage for cyclicdeadline
+>   rt-tests: pi_stress: Add short options to usage message
+>   rt-tests: pi_stress: Sync man page with help
+>   rt-tests: queuelat: get_cpuinfo_mhz.sh highest value
+>   rt-tests: determine_maximum_mpps.sh: Fix quoting and other shell issue
+>   rt-tests: ptsematest: Update man page and add -h option
+>   rt-tests: queuelat: Fixes to man page and display_help
+>   rt-tests: svsematest: Display help with an error message for -h
 > 
-> Thanks,
-> Kurt
+>  Makefile                               |  1 +
+>  src/pi_tests/pi_stress.8               |  9 ++--
+>  src/pi_tests/pi_stress.c               | 34 ++++++------
+>  src/ptsematest/ptsematest.8            |  3 ++
+>  src/ptsematest/ptsematest.c            | 10 ++--
+>  src/queuelat/determine_maximum_mpps.sh | 75 +++++++++++++-------------
+>  src/queuelat/get_cpuinfo_mhz.sh        |  5 +-
+>  src/queuelat/queuelat.8                |  4 +-
+>  src/queuelat/queuelat.c                | 22 ++++----
+>  src/sched_deadline/cyclicdeadline.8    | 53 ++++++++++++++++++
+>  src/svsematest/svsematest.c            |  3 +-
+>  11 files changed, 141 insertions(+), 78 deletions(-)
+>  create mode 100644 src/sched_deadline/cyclicdeadline.8
+> 
+> -- 
+> 2.20.1
 > 
 
-I think it's because man pages are generally installed as .gz files on 
-most distros. Although the Makefile is designed to work well with package 
-management systems, it should also work correctly stand alone.
 
-If you want to submit a patch that would optionally use a different kind 
-of compression or otherwise handle things without breaking the current 
-defaults, I would likely accept it.
+-- 
+The United States Coast Guard
+Ruining Natural Selection since 1790
 
-John
