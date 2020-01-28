@@ -1,121 +1,98 @@
-Return-Path: <SRS0=nqJC=3Q=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=Q1V1=3R=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no
+X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D70CBC2D0DB
-	for <linux-rt-users@archiver.kernel.org>; Mon, 27 Jan 2020 21:44:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DFC03C33CB3
+	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Jan 2020 07:13:17 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id A99B222527
-	for <linux-rt-users@archiver.kernel.org>; Mon, 27 Jan 2020 21:44:59 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MakMO4jX"
+	by mail.kernel.org (Postfix) with ESMTP id B044E2467B
+	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Jan 2020 07:13:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726205AbgA0Vo7 (ORCPT
+        id S1725829AbgA1HNR (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 27 Jan 2020 16:44:59 -0500
-Received: from us-smtp-1.mimecast.com ([205.139.110.61]:28532 "EHLO
-        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1726080AbgA0Vo7 (ORCPT
+        Tue, 28 Jan 2020 02:13:17 -0500
+Received: from Galois.linutronix.de ([193.142.43.55]:48006 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725825AbgA1HNR (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 27 Jan 2020 16:44:59 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1580161497;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=Wy35csZmdYzO2X5OBKE6ZvGgflpVvhADtsDDps9NGI4=;
-        b=MakMO4jXP5pzi681uCpaccyUBB83bH+EzgyTRYbZ23HY/4+ASI1MNJRCVc4FF1kXdJqiTJ
-        MbwzILCHOkzd2p+GWhV2ACuB+mHxEwNFngHN4N4BCNuNmUWMe5i+DkTGwafbOTxDsM+GzN
-        bs64sgkVNnNY9QCf7UTx6CRRjcsknJw=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-222-DGlWSHivNaOdBfwuHlRbIA-1; Mon, 27 Jan 2020 16:44:55 -0500
-X-MC-Unique: DGlWSHivNaOdBfwuHlRbIA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7FC94477
-        for <linux-rt-users@vger.kernel.org>; Mon, 27 Jan 2020 21:44:54 +0000 (UTC)
-Received: from tagon (ovpn-121-194.rdu2.redhat.com [10.10.121.194])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 13D265D9CA;
-        Mon, 27 Jan 2020 21:44:53 +0000 (UTC)
-Date:   Mon, 27 Jan 2020 15:44:52 -0600
-From:   Clark Williams <williams@redhat.com>
+        Tue, 28 Jan 2020 02:13:17 -0500
+Received: from [5.158.153.52] (helo=kurt)
+        by Galois.linutronix.de with esmtpsa (TLS1.2:RSA_AES_256_CBC_SHA1:256)
+        (Exim 4.80)
+        (envelope-from <kurt.kanzenbach@linutronix.de>)
+        id 1iwL3i-0007LB-KB; Tue, 28 Jan 2020 08:13:14 +0100
+From:   Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
 To:     John Kacur <jkacur@redhat.com>
-Cc:     RT <linux-rt-users@vger.kernel.org>
-Subject: Re: [PATCH 0/9] rt-tests: Miscellaneous fixes
-Message-ID: <20200127154452.543c378c@tagon>
-In-Reply-To: <20200123205029.20176-1-jkacur@redhat.com>
-References: <20200123205029.20176-1-jkacur@redhat.com>
-Organization: Red Hat, Inc
+Cc:     Clark Williams <williams@redhat.com>,
+        RT <linux-rt-users@vger.kernel.org>
+Subject: Re: [PATCH 2/9] rt-tests: cyclicdeadline: Add a simple manpage for cyclicdeadline
+In-Reply-To: <alpine.LFD.2.21.2001271213260.7301@planxty>
+References: <20200123205029.20176-1-jkacur@redhat.com> <20200123205029.20176-3-jkacur@redhat.com> <877e1dxjo4.fsf@kurt> <alpine.LFD.2.21.2001271213260.7301@planxty>
+Date:   Tue, 28 Jan 2020 08:13:04 +0100
+Message-ID: <87y2tsqcjj.fsf@kurt>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+Content-Type: multipart/signed; boundary="=-=-=";
+        micalg=pgp-sha512; protocol="application/pgp-signature"
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-John,
+--=-=-=
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-Thanks for this! I suspect we now need an 8.3 bz for updating the rt-tests
-package to the latest upstream version.
+Hi John,
 
-Clark
+On Mon Jan 27 2020, John Kacur wrote:
+> On Mon, 27 Jan 2020, Kurt Kanzenbach wrote:
+>> I'm just wondering about this. Why are the man pages compressed in the
+>> Makefile? Actually most package management systems compress the man
+>> pages themselves. Users may want to use bz2 or something else.
+>>=20
+>> In fact, I have a patch on top of rt-tests v1.6 in Gentoo which removes
+>> the compression, because portage complains about it.
+>>=20
+>> Thanks,
+>> Kurt
+>>=20
+>
+> I think it's because man pages are generally installed as .gz files on=20
+> most distros. Although the Makefile is designed to work well with package=
+=20
+> management systems, it should also work correctly stand alone.
+>
+> If you want to submit a patch that would optionally use a different kind=
+=20
+> of compression or otherwise handle things without breaking the current=20
+> defaults, I would likely accept it.
 
-On Thu, 23 Jan 2020 21:50:20 +0100
-John Kacur <jkacur@redhat.com> wrote:
+Sounds good. I'll come up with a patch and keeping the existing defaults.
 
-> Most of the fixes here are just clean-ups to make sure that online help
-> or usage message match the man pages according to the current options.
-> 
-> Some fixes to the queuelat scripts determine_maximum_mpps.sh and
-> get_cpuinfo_mhz.sh are perhaps notable though, as people were having
-> trouble using them.
-> 
-> getcpuinfo_mhz.sh now only gets one value as was originally intended,
-> and it gets the highest value available. The fixes to quoting in
-> determine_maximum_mpps.sh should make the program work correctly now -
-> and take longer though.
-> 
-> John Kacur (9):
->   rt-tests: queuelat: Assume queuelat is in the path
->   rt-tests: cyclicdeadline: Add a simple manpage for cyclicdeadline
->   rt-tests: pi_stress: Add short options to usage message
->   rt-tests: pi_stress: Sync man page with help
->   rt-tests: queuelat: get_cpuinfo_mhz.sh highest value
->   rt-tests: determine_maximum_mpps.sh: Fix quoting and other shell issue
->   rt-tests: ptsematest: Update man page and add -h option
->   rt-tests: queuelat: Fixes to man page and display_help
->   rt-tests: svsematest: Display help with an error message for -h
-> 
->  Makefile                               |  1 +
->  src/pi_tests/pi_stress.8               |  9 ++--
->  src/pi_tests/pi_stress.c               | 34 ++++++------
->  src/ptsematest/ptsematest.8            |  3 ++
->  src/ptsematest/ptsematest.c            | 10 ++--
->  src/queuelat/determine_maximum_mpps.sh | 75 +++++++++++++-------------
->  src/queuelat/get_cpuinfo_mhz.sh        |  5 +-
->  src/queuelat/queuelat.8                |  4 +-
->  src/queuelat/queuelat.c                | 22 ++++----
->  src/sched_deadline/cyclicdeadline.8    | 53 ++++++++++++++++++
->  src/svsematest/svsematest.c            |  3 +-
->  11 files changed, 141 insertions(+), 78 deletions(-)
->  create mode 100644 src/sched_deadline/cyclicdeadline.8
-> 
-> -- 
-> 2.20.1
-> 
+Thanks,
+Kurt
 
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
 
--- 
-The United States Coast Guard
-Ruining Natural Selection since 1790
+-----BEGIN PGP SIGNATURE-----
 
+iQIzBAEBCgAdFiEEooWgvezyxHPhdEojeSpbgcuY8KYFAl4v3wAACgkQeSpbgcuY
+8KZJmw//WN+aEB6gUUiQGcYHKvSm5NiVuzHKRzxcKGveH7spqyUeoURQWFWtMtQC
+Ni6XAAHtjySn7VamlpaeHFHgWUlI5bv1tsIq7a01Ud1vqfForzGc/V4hiHgx5UTx
+NW8kmwcDgswoAAacnc/2lATSxUpuZZpWdMVCF7Hv36/bW1Dv8wBCthbuDVuqZC0a
+nkaqVBjvWiWTNNB6i9KjJLIH/RKhlVRhWW9J1Km4kcMF9QOX4cZRZ7ATQKbRmT1v
+g8noqyjQryauyYjRNf8MjoON1YqouZoJ8ZZ8QNMsJxj1PnFe7egBhtdgYzyDIVxb
+sk/IWsbPmOXn9DUBT8U/ZXaSKvzl1+nVrrNQVZ1c+IObzKXBk7VMLY20WtHA5hPW
+ILsfOiZH2T6LsE1VHh1J4PDuLpRZUsGEmWw78pTQbNBcR353fWh/6kOz5VbAhSXs
+8RJ4zW6KJfkVwTt8cdkKsFILTcAsYvkTEEnbR0z600oHj0hgqBxFwKD7vrrUxofw
+JGAuOxbjE0ogZU/obV8ax4lt6opjf63rLDWkbcT63c4XiHdUrnLYx7uPArb54jbA
+pm5OEBDDz0mFb2C1W9sIRIzMhqzGltqPpe3e5MedHJPpuKKgkwuSsqArYRU2dAzT
+fzfy4UOj+Y+NASxhimOXXjV/otImPFR6hW6O2oIHAgaMgetCsyE=
+=ISks
+-----END PGP SIGNATURE-----
+--=-=-=--
