@@ -7,47 +7,47 @@ X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 365CDC2D0DB
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Jan 2020 19:00:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 167F8C2D0DB
+	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Jan 2020 19:00:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id F0FF9206D4
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Jan 2020 19:00:43 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D71752071E
+	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Jan 2020 19:00:48 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1580324444;
-	bh=LcwoL9gAInAcxd5WfnDiYFHsPuVH5Eao+GJZBNDTMXI=;
+	s=default; t=1580324449;
+	bh=Gnju6bIaNL+ELGtFUFOVKR3sJs31YQScKw6VTYakRHo=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=0C0Z/IzD9QoE8QE6LiTKBzslvkjbXozZcmT7gWe2IugdaV4L6SLgjwVkNEmYLt1Fy
-	 Y0A6WAcE1RfCN2d6gRmuGym5yUu4GOQlBJmER0g8r/gsbVXa8Uqmd06qQAKhtXwi9c
-	 TbtHNz94t2Avs3rnbWc6pXS/Hvxcx1GI56A9GyFQ=
+	b=ynDrROVaiG76Rzvnd25PudK+y2c8fZHlIZFvz3PfW/83BOyIK51KqPc5bAjDMlRk/
+	 alX48Q5Q4Svxh+N0vF4I416PmJ2nYgftQ1Yq7t3A1OgglG1CNNFMFaIBlis4lxxjdE
+	 YCNA8Sopcd5nxmS7OGVeNRj0tuiNMBelzhzWymxo=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727854AbgA2S7w (ORCPT
+        id S1728094AbgA2TAo (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 29 Jan 2020 13:59:52 -0500
-Received: from mail.kernel.org ([198.145.29.99]:54246 "EHLO mail.kernel.org"
+        Wed, 29 Jan 2020 14:00:44 -0500
+Received: from mail.kernel.org ([198.145.29.99]:54268 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727848AbgA2S7w (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S1726945AbgA2S7w (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Wed, 29 Jan 2020 13:59:52 -0500
 Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id EF4F3215A4;
-        Wed, 29 Jan 2020 18:59:49 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 50CC524685;
+        Wed, 29 Jan 2020 18:59:51 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1580324390;
-        bh=LcwoL9gAInAcxd5WfnDiYFHsPuVH5Eao+GJZBNDTMXI=;
+        s=default; t=1580324391;
+        bh=Gnju6bIaNL+ELGtFUFOVKR3sJs31YQScKw6VTYakRHo=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=qfIK0Qp4vqPQpQq2z8FhO+whuNwsULUBq7hXLyOP2bH/yjId+RoR1eLixZgqA0vL7
-         rvM9pqZSEAcfWI6v2jnMRTE6E8xWSyd3mi35KduIt7XAGqoYyRzffK+2yuEv2zlo1O
-         pgstZbYqTKG0QdZNqwN4YGskI7q95XEtujiK0XOs=
+        b=CfOdhRh5HIn/tdN4gtBhNwgJ1TWDEW4jA8R1/dwvIdd0fBAyifdizABATCVYuGhfb
+         isB9DAZJwbKiVC/ruDqOiM3U4ilCmBD74xjsvYZYENyK8HkAQ5J5fAgLtwqyJXKZOO
+         tL6B25CDkRk4qy68ocn/z0Ra3gxEUf2JkFIMjgYE=
 From:   Tom Zanussi <zanussi@kernel.org>
 To:     rostedt@goodmis.org
 Cc:     artem.bityutskiy@linux.intel.com, mhiramat@kernel.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: [PATCH v4 08/12] tracing: Add synth event generation test module
-Date:   Wed, 29 Jan 2020 12:59:28 -0600
-Message-Id: <fcb4dd9eb9eefb70ab20538d3529d51642389664.1580323897.git.zanussi@kernel.org>
+Subject: [PATCH v4 09/12] tracing: Add kprobe event command generation functions
+Date:   Wed, 29 Jan 2020 12:59:29 -0600
+Message-Id: <95cc4696502bb6017f9126f306a45ad19b4cc14f.1580323897.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.14.1
 In-Reply-To: <cover.1580323897.git.zanussi@kernel.org>
 References: <cover.1580323897.git.zanussi@kernel.org>
@@ -58,584 +58,245 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Add a test module that checks the basic functionality of the in-kernel
-synthetic event generation API by generating and tracing synthetic
-events from a module.
+Add functions used to generate kprobe event commands, built on top of
+the dynevent_cmd interface.
+
+kprobe_event_gen_cmd_start() is used to create a kprobe event command
+using a variable arg list, and kretprobe_event_gen_cmd_start() does
+the same for kretprobe event commands.  kprobe_event_add_fields() can
+be used to add single fields one by one or as a group.  Once all
+desired fields are added, kprobe_event_gen_cmd_end() or
+kretprobe_event_gen_cmd_end() respectively are used to actually
+execute the command and create the event.
 
 Signed-off-by: Tom Zanussi <zanussi@kernel.org>
 Acked-by: Masami Hiramatsu <mhiramat@kernel.org>
 ---
- kernel/trace/Kconfig                |  13 +
- kernel/trace/Makefile               |   1 +
- kernel/trace/synth_event_gen_test.c | 523 ++++++++++++++++++++++++++++++++++++
- 3 files changed, 537 insertions(+)
- create mode 100644 kernel/trace/synth_event_gen_test.c
+ include/linux/trace_events.h |  31 +++++++++
+ kernel/trace/trace_kprobe.c  | 161 +++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 192 insertions(+)
 
-diff --git a/kernel/trace/Kconfig b/kernel/trace/Kconfig
-index 75326d8ab1af..4f2041166a2f 100644
---- a/kernel/trace/Kconfig
-+++ b/kernel/trace/Kconfig
-@@ -774,6 +774,19 @@ config PREEMPTIRQ_DELAY_TEST
+diff --git a/include/linux/trace_events.h b/include/linux/trace_events.h
+index bf03d12efb28..7c307a7c9c6a 100644
+--- a/include/linux/trace_events.h
++++ b/include/linux/trace_events.h
+@@ -358,6 +358,7 @@ extern void trace_put_event_file(struct trace_event_file *file);
  
- 	  If unsure, say N
+ enum dynevent_type {
+ 	DYNEVENT_TYPE_SYNTH = 1,
++	DYNEVENT_TYPE_KPROBE,
+ 	DYNEVENT_TYPE_NONE,
+ };
  
-+config SYNTH_EVENT_GEN_TEST
-+	tristate "Test module for in-kernel synthetic event generation"
-+	depends on HIST_TRIGGERS
-+	help
-+          This option creates a test module to check the base
-+          functionality of in-kernel synthetic event definition and
-+          generation.
+@@ -442,6 +443,36 @@ extern int synth_event_add_val(const char *field_name, u64 val,
+ 			       struct synth_event_trace_state *trace_state);
+ extern int synth_event_trace_end(struct synth_event_trace_state *trace_state);
+ 
++extern int kprobe_event_delete(const char *name);
 +
-+          To test, insert the module, and then check the trace buffer
-+	  for the generated sample events.
++extern void kprobe_event_cmd_init(struct dynevent_cmd *cmd,
++				  char *buf, int maxlen);
 +
-+	  If unsure, say N.
++#define kprobe_event_gen_cmd_start(cmd, name, loc, ...)			\
++	__kprobe_event_gen_cmd_start(cmd, false, name, loc, ## __VA_ARGS__, NULL)
 +
- config TRACE_EVAL_MAP_FILE
-        bool "Show eval mappings for trace events"
-        depends on TRACING
-diff --git a/kernel/trace/Makefile b/kernel/trace/Makefile
-index 395e2db9c742..32012f50fb79 100644
---- a/kernel/trace/Makefile
-+++ b/kernel/trace/Makefile
-@@ -44,6 +44,7 @@ obj-$(CONFIG_TRACING) += trace_stat.o
- obj-$(CONFIG_TRACING) += trace_printk.o
- obj-$(CONFIG_TRACING_MAP) += tracing_map.o
- obj-$(CONFIG_PREEMPTIRQ_DELAY_TEST) += preemptirq_delay_test.o
-+obj-$(CONFIG_SYNTH_EVENT_GEN_TEST) += synth_event_gen_test.o
- obj-$(CONFIG_CONTEXT_SWITCH_TRACER) += trace_sched_switch.o
- obj-$(CONFIG_FUNCTION_TRACER) += trace_functions.o
- obj-$(CONFIG_PREEMPTIRQ_TRACEPOINTS) += trace_preemptirq.o
-diff --git a/kernel/trace/synth_event_gen_test.c b/kernel/trace/synth_event_gen_test.c
-new file mode 100644
-index 000000000000..4aefe003cb7c
---- /dev/null
-+++ b/kernel/trace/synth_event_gen_test.c
-@@ -0,0 +1,523 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Test module for in-kernel sythetic event creation and generation.
-+ *
-+ * Copyright (C) 2019 Tom Zanussi <zanussi@kernel.org>
-+ */
++#define kretprobe_event_gen_cmd_start(cmd, name, loc, ...)		\
++	__kprobe_event_gen_cmd_start(cmd, true, name, loc, ## __VA_ARGS__, NULL)
 +
-+#include <linux/module.h>
-+#include <linux/trace_events.h>
++extern int __kprobe_event_gen_cmd_start(struct dynevent_cmd *cmd,
++					bool kretprobe,
++					const char *name,
++					const char *loc, ...);
 +
-+/*
-+ * This module is a simple test of basic functionality for in-kernel
-+ * synthetic event creation and generation, the first and second tests
-+ * using synth_event_gen_cmd_start() and synth_event_add_field(), the
-+ * third uses synth_event_create() to do it all at once with a static
-+ * field array.
-+ *
-+ * Following that are a few examples using the created events to test
-+ * various ways of tracing a synthetic event.
-+ *
-+ * To test, select CONFIG_SYNTH_EVENT_GEN_TEST and build the module.
-+ * Then:
-+ *
-+ * # insmod kernel/trace/synth_event_gen_test.ko
-+ * # cat /sys/kernel/debug/tracing/trace
-+ *
-+ * You should see several events in the trace buffer -
-+ * "create_synth_test", "empty_synth_test", and several instances of
-+ * "gen_synth_test".
-+ *
-+ * To remove the events, remove the module:
-+ *
-+ * # rmmod synth_event_gen_test
-+ *
-+ */
++#define kprobe_event_add_fields(cmd, ...)	\
++	__kprobe_event_add_fields(cmd, ## __VA_ARGS__, NULL)
 +
-+static struct trace_event_file *create_synth_test;
-+static struct trace_event_file *empty_synth_test;
-+static struct trace_event_file *gen_synth_test;
++#define kprobe_event_add_field(cmd, field)	\
++	__kprobe_event_add_fields(cmd, field, NULL)
 +
-+/*
-+ * Test to make sure we can create a synthetic event, then add more
-+ * fields.
-+ */
-+static int __init test_gen_synth_cmd(void)
++extern int __kprobe_event_add_fields(struct dynevent_cmd *cmd, ...);
++
++#define kprobe_event_gen_cmd_end(cmd)		\
++	dynevent_create(cmd)
++
++#define kretprobe_event_gen_cmd_end(cmd)	\
++	dynevent_create(cmd)
++
+ /*
+  * Event file flags:
+  *  ENABLED	  - The event is enabled
+diff --git a/kernel/trace/trace_kprobe.c b/kernel/trace/trace_kprobe.c
+index bf20cd7f2666..f43548b466d0 100644
+--- a/kernel/trace/trace_kprobe.c
++++ b/kernel/trace/trace_kprobe.c
+@@ -906,6 +906,167 @@ int trace_kprobe_run_command(const char *command)
+ 	return trace_run_command(command, create_or_delete_trace_kprobe);
+ }
+ 
++static int trace_kprobe_run_cmd(struct dynevent_cmd *cmd)
 +{
-+	struct dynevent_cmd cmd;
-+	u64 vals[7];
-+	char *buf;
-+	int ret;
-+
-+	/* Create a buffer to hold the generated command */
-+	buf = kzalloc(MAX_DYNEVENT_CMD_LEN, GFP_KERNEL);
-+	if (!buf)
-+		return -ENOMEM;
-+
-+	/* Before generating the command, initialize the cmd object */
-+	synth_event_cmd_init(&cmd, buf, MAX_DYNEVENT_CMD_LEN);
-+
-+	/*
-+	 * Create the empty gen_synth_test synthetic event with the
-+	 * first 4 fields.
-+	 */
-+	ret = synth_event_gen_cmd_start(&cmd, "gen_synth_test", THIS_MODULE,
-+					"pid_t", "next_pid_field",
-+					"char[16]", "next_comm_field",
-+					"u64", "ts_ns",
-+					"u64", "ts_ms");
-+	if (ret)
-+		goto free;
-+
-+	/* Use synth_event_add_field to add the rest of the fields */
-+
-+	ret = synth_event_add_field(&cmd, "unsigned int", "cpu");
-+	if (ret)
-+		goto free;
-+
-+	ret = synth_event_add_field(&cmd, "char[64]", "my_string_field");
-+	if (ret)
-+		goto free;
-+
-+	ret = synth_event_add_field(&cmd, "int", "my_int_field");
-+	if (ret)
-+		goto free;
-+
-+	ret = synth_event_gen_cmd_end(&cmd);
-+	if (ret)
-+		goto free;
-+
-+	/*
-+	 * Now get the gen_synth_test event file.  We need to prevent
-+	 * the instance and event from disappearing from underneath
-+	 * us, which trace_get_event_file() does (though in this case
-+	 * we're using the top-level instance which never goes away).
-+	 */
-+	gen_synth_test = trace_get_event_file(NULL, "synthetic",
-+					      "gen_synth_test");
-+	if (IS_ERR(gen_synth_test)) {
-+		ret = PTR_ERR(gen_synth_test);
-+		goto delete;
-+	}
-+
-+	/* Enable the event or you won't see anything */
-+	ret = trace_array_set_clr_event(gen_synth_test->tr,
-+					"synthetic", "gen_synth_test", true);
-+	if (ret) {
-+		trace_put_event_file(gen_synth_test);
-+		goto delete;
-+	}
-+
-+	/* Create some bogus values just for testing */
-+
-+	vals[0] = 777;			/* next_pid_field */
-+	vals[1] = (u64)"hula hoops";	/* next_comm_field */
-+	vals[2] = 1000000;		/* ts_ns */
-+	vals[3] = 1000;			/* ts_ms */
-+	vals[4] = smp_processor_id();	/* cpu */
-+	vals[5] = (u64)"thneed";	/* my_string_field */
-+	vals[6] = 598;			/* my_int_field */
-+
-+	/* Now generate a gen_synth_test event */
-+	ret = synth_event_trace_array(gen_synth_test, vals, ARRAY_SIZE(vals));
-+ out:
-+	return ret;
-+ delete:
-+	/* We got an error after creating the event, delete it */
-+	synth_event_delete("gen_synth_test");
-+ free:
-+	kfree(buf);
-+
-+	goto out;
++	return trace_run_command(cmd->buf, create_or_delete_trace_kprobe);
 +}
 +
-+/*
-+ * Test to make sure we can create an initially empty synthetic event,
-+ * then add all the fields.
++/**
++ * kprobe_event_cmd_init - Initialize a kprobe event command object
++ * @cmd: A pointer to the dynevent_cmd struct representing the new event
++ * @buf: A pointer to the buffer used to build the command
++ * @maxlen: The length of the buffer passed in @buf
++ *
++ * Initialize a synthetic event command object.  Use this before
++ * calling any of the other kprobe_event functions.
 + */
-+static int __init test_empty_synth_event(void)
++void kprobe_event_cmd_init(struct dynevent_cmd *cmd, char *buf, int maxlen)
 +{
-+	struct dynevent_cmd cmd;
-+	u64 vals[7];
-+	char *buf;
-+	int ret;
-+
-+	/* Create a buffer to hold the generated command */
-+	buf = kzalloc(MAX_DYNEVENT_CMD_LEN, GFP_KERNEL);
-+	if (!buf)
-+		return -ENOMEM;
-+
-+	/* Before generating the command, initialize the cmd object */
-+	synth_event_cmd_init(&cmd, buf, MAX_DYNEVENT_CMD_LEN);
-+
-+	/*
-+	 * Create the empty_synth_test synthetic event with no fields.
-+	 */
-+	ret = synth_event_gen_cmd_start(&cmd, "empty_synth_test", THIS_MODULE);
-+	if (ret)
-+		goto free;
-+
-+	/* Use synth_event_add_field to add all of the fields */
-+
-+	ret = synth_event_add_field(&cmd, "pid_t", "next_pid_field");
-+	if (ret)
-+		goto free;
-+
-+	ret = synth_event_add_field(&cmd, "char[16]", "next_comm_field");
-+	if (ret)
-+		goto free;
-+
-+	ret = synth_event_add_field(&cmd, "u64", "ts_ns");
-+	if (ret)
-+		goto free;
-+
-+	ret = synth_event_add_field(&cmd, "u64", "ts_ms");
-+	if (ret)
-+		goto free;
-+
-+	ret = synth_event_add_field(&cmd, "unsigned int", "cpu");
-+	if (ret)
-+		goto free;
-+
-+	ret = synth_event_add_field(&cmd, "char[64]", "my_string_field");
-+	if (ret)
-+		goto free;
-+
-+	ret = synth_event_add_field(&cmd, "int", "my_int_field");
-+	if (ret)
-+		goto free;
-+
-+	/* All fields have been added, close and register the synth event */
-+
-+	ret = synth_event_gen_cmd_end(&cmd);
-+	if (ret)
-+		goto free;
-+
-+	/*
-+	 * Now get the empty_synth_test event file.  We need to
-+	 * prevent the instance and event from disappearing from
-+	 * underneath us, which trace_get_event_file() does (though in
-+	 * this case we're using the top-level instance which never
-+	 * goes away).
-+	 */
-+	empty_synth_test = trace_get_event_file(NULL, "synthetic",
-+						"empty_synth_test");
-+	if (IS_ERR(empty_synth_test)) {
-+		ret = PTR_ERR(empty_synth_test);
-+		goto delete;
-+	}
-+
-+	/* Enable the event or you won't see anything */
-+	ret = trace_array_set_clr_event(empty_synth_test->tr,
-+					"synthetic", "empty_synth_test", true);
-+	if (ret) {
-+		trace_put_event_file(empty_synth_test);
-+		goto delete;
-+	}
-+
-+	/* Create some bogus values just for testing */
-+
-+	vals[0] = 777;			/* next_pid_field */
-+	vals[1] = (u64)"tiddlywinks";	/* next_comm_field */
-+	vals[2] = 1000000;		/* ts_ns */
-+	vals[3] = 1000;			/* ts_ms */
-+	vals[4] = smp_processor_id();	/* cpu */
-+	vals[5] = (u64)"thneed_2.0";	/* my_string_field */
-+	vals[6] = 399;			/* my_int_field */
-+
-+	/* Now trace an empty_synth_test event */
-+	ret = synth_event_trace_array(empty_synth_test, vals, ARRAY_SIZE(vals));
-+ out:
-+	return ret;
-+ delete:
-+	/* We got an error after creating the event, delete it */
-+	synth_event_delete("empty_synth_test");
-+ free:
-+	kfree(buf);
-+
-+	goto out;
++	dynevent_cmd_init(cmd, buf, maxlen, DYNEVENT_TYPE_KPROBE,
++			  trace_kprobe_run_cmd);
 +}
++EXPORT_SYMBOL_GPL(kprobe_event_cmd_init);
 +
-+static struct synth_field_desc create_synth_test_fields[] = {
-+	{ .type = "pid_t",		.name = "next_pid_field" },
-+	{ .type = "char[16]",		.name = "next_comm_field" },
-+	{ .type = "u64",		.name = "ts_ns" },
-+	{ .type = "u64",		.name = "ts_ms" },
-+	{ .type = "unsigned int",	.name = "cpu" },
-+	{ .type = "char[64]",		.name = "my_string_field" },
-+	{ .type = "int",		.name = "my_int_field" },
-+};
-+
-+/*
-+ * Test synthetic event creation all at once from array of field
-+ * descriptors.
++/**
++ * __kprobe_event_gen_cmd_start - Generate a kprobe event command from arg list
++ * @cmd: A pointer to the dynevent_cmd struct representing the new event
++ * @name: The name of the kprobe event
++ * @loc: The location of the kprobe event
++ * @kretprobe: Is this a return probe?
++ * @args: Variable number of arg (pairs), one pair for each field
++ *
++ * NOTE: Users normally won't want to call this function directly, but
++ * rather use the kprobe_event_gen_cmd_start() wrapper, which automatically
++ * adds a NULL to the end of the arg list.  If this function is used
++ * directly, make sure the last arg in the variable arg list is NULL.
++ *
++ * Generate a kprobe event command to be executed by
++ * kprobe_event_gen_cmd_end().  This function can be used to generate the
++ * complete command or only the first part of it; in the latter case,
++ * kprobe_event_add_fields() can be used to add more fields following this.
++ *
++ * Return: 0 if successful, error otherwise.
 + */
-+static int __init test_create_synth_event(void)
++int __kprobe_event_gen_cmd_start(struct dynevent_cmd *cmd, bool kretprobe,
++				 const char *name, const char *loc, ...)
 +{
-+	u64 vals[7];
++	char buf[MAX_EVENT_NAME_LEN];
++	struct dynevent_arg arg;
++	va_list args;
 +	int ret;
 +
-+	/* Create the create_synth_test event with the fields above */
-+	ret = synth_event_create("create_synth_test",
-+				 create_synth_test_fields,
-+				 ARRAY_SIZE(create_synth_test_fields),
-+				 THIS_MODULE);
-+	if (ret)
-+		goto out;
++	if (cmd->type != DYNEVENT_TYPE_KPROBE)
++		return -EINVAL;
 +
-+	/*
-+	 * Now get the create_synth_test event file.  We need to
-+	 * prevent the instance and event from disappearing from
-+	 * underneath us, which trace_get_event_file() does (though in
-+	 * this case we're using the top-level instance which never
-+	 * goes away).
-+	 */
-+	create_synth_test = trace_get_event_file(NULL, "synthetic",
-+						 "create_synth_test");
-+	if (IS_ERR(create_synth_test)) {
-+		ret = PTR_ERR(create_synth_test);
-+		goto delete;
-+	}
++	if (kretprobe)
++		snprintf(buf, MAX_EVENT_NAME_LEN, "r:kprobes/%s", name);
++	else
++		snprintf(buf, MAX_EVENT_NAME_LEN, "p:kprobes/%s", name);
 +
-+	/* Enable the event or you won't see anything */
-+	ret = trace_array_set_clr_event(create_synth_test->tr,
-+					"synthetic", "create_synth_test", true);
-+	if (ret) {
-+		trace_put_event_file(create_synth_test);
-+		goto delete;
-+	}
-+
-+	/* Create some bogus values just for testing */
-+
-+	vals[0] = 777;			/* next_pid_field */
-+	vals[1] = (u64)"tiddlywinks";	/* next_comm_field */
-+	vals[2] = 1000000;		/* ts_ns */
-+	vals[3] = 1000;			/* ts_ms */
-+	vals[4] = smp_processor_id();	/* cpu */
-+	vals[5] = (u64)"thneed";	/* my_string_field */
-+	vals[6] = 398;			/* my_int_field */
-+
-+	/* Now generate a create_synth_test event */
-+	ret = synth_event_trace_array(create_synth_test, vals, ARRAY_SIZE(vals));
-+ out:
-+	return ret;
-+ delete:
-+	/* We got an error after creating the event, delete it */
-+	ret = synth_event_delete("create_synth_test");
-+
-+	goto out;
-+}
-+
-+/*
-+ * Test tracing a synthetic event by reserving trace buffer space,
-+ * then filling in fields one after another.
-+ */
-+static int __init test_add_next_synth_val(void)
-+{
-+	struct synth_event_trace_state trace_state;
-+	int ret;
-+
-+	/* Start by reserving space in the trace buffer */
-+	ret = synth_event_trace_start(gen_synth_test, &trace_state);
++	ret = dynevent_str_add(cmd, buf);
 +	if (ret)
 +		return ret;
 +
-+	/* Write some bogus values into the trace buffer, one after another */
-+
-+	/* next_pid_field */
-+	ret = synth_event_add_next_val(777, &trace_state);
-+	if (ret)
-+		goto out;
-+
-+	/* next_comm_field */
-+	ret = synth_event_add_next_val((u64)"slinky", &trace_state);
-+	if (ret)
-+		goto out;
-+
-+	/* ts_ns */
-+	ret = synth_event_add_next_val(1000000, &trace_state);
-+	if (ret)
-+		goto out;
-+
-+	/* ts_ms */
-+	ret = synth_event_add_next_val(1000, &trace_state);
-+	if (ret)
-+		goto out;
-+
-+	/* cpu */
-+	ret = synth_event_add_next_val(smp_processor_id(), &trace_state);
-+	if (ret)
-+		goto out;
-+
-+	/* my_string_field */
-+	ret = synth_event_add_next_val((u64)"thneed_2.01", &trace_state);
-+	if (ret)
-+		goto out;
-+
-+	/* my_int_field */
-+	ret = synth_event_add_next_val(395, &trace_state);
-+ out:
-+	/* Finally, commit the event */
-+	ret = synth_event_trace_end(&trace_state);
-+
-+	return ret;
-+}
-+
-+/*
-+ * Test tracing a synthetic event by reserving trace buffer space,
-+ * then filling in fields using field names, which can be done in any
-+ * order.
-+ */
-+static int __init test_add_synth_val(void)
-+{
-+	struct synth_event_trace_state trace_state;
-+	int ret;
-+
-+	/* Start by reserving space in the trace buffer */
-+	ret = synth_event_trace_start(gen_synth_test, &trace_state);
++	dynevent_arg_init(&arg, NULL, 0);
++	arg.str = loc;
++	ret = dynevent_arg_add(cmd, &arg);
 +	if (ret)
 +		return ret;
 +
-+	/* Write some bogus values into the trace buffer, using field names */
++	va_start(args, loc);
++	for (;;) {
++		const char *field;
 +
-+	ret = synth_event_add_val("ts_ns", 1000000, &trace_state);
-+	if (ret)
-+		goto out;
++		field = va_arg(args, const char *);
++		if (!field)
++			break;
 +
-+	ret = synth_event_add_val("ts_ms", 1000, &trace_state);
-+	if (ret)
-+		goto out;
++		if (++cmd->n_fields > MAX_TRACE_ARGS) {
++			ret = -EINVAL;
++			break;
++		}
 +
-+	ret = synth_event_add_val("cpu", smp_processor_id(), &trace_state);
-+	if (ret)
-+		goto out;
-+
-+	ret = synth_event_add_val("next_pid_field", 777, &trace_state);
-+	if (ret)
-+		goto out;
-+
-+	ret = synth_event_add_val("next_comm_field", (u64)"silly putty",
-+				  &trace_state);
-+	if (ret)
-+		goto out;
-+
-+	ret = synth_event_add_val("my_string_field", (u64)"thneed_9",
-+				  &trace_state);
-+	if (ret)
-+		goto out;
-+
-+	ret = synth_event_add_val("my_int_field", 3999, &trace_state);
-+ out:
-+	/* Finally, commit the event */
-+	ret = synth_event_trace_end(&trace_state);
++		arg.str = field;
++		ret = dynevent_arg_add(cmd, &arg);
++		if (ret)
++			break;
++	}
++	va_end(args);
 +
 +	return ret;
 +}
++EXPORT_SYMBOL_GPL(__kprobe_event_gen_cmd_start);
 +
-+/*
-+ * Test tracing a synthetic event all at once from array of values.
++/**
++ * __kprobe_event_add_fields - Add probe fields to a kprobe command from arg list
++ * @cmd: A pointer to the dynevent_cmd struct representing the new event
++ * @args: Variable number of arg (pairs), one pair for each field
++ *
++ * NOTE: Users normally won't want to call this function directly, but
++ * rather use the kprobe_event_add_fields() wrapper, which
++ * automatically adds a NULL to the end of the arg list.  If this
++ * function is used directly, make sure the last arg in the variable
++ * arg list is NULL.
++ *
++ * Add probe fields to an existing kprobe command using a variable
++ * list of args.  Fields are added in the same order they're listed.
++ *
++ * Return: 0 if successful, error otherwise.
 + */
-+static int __init test_trace_synth_event(void)
++int __kprobe_event_add_fields(struct dynevent_cmd *cmd, ...)
 +{
++	struct dynevent_arg arg;
++	va_list args;
 +	int ret;
 +
-+	/* Trace some bogus values just for testing */
-+	ret = synth_event_trace(create_synth_test, 7,	/* number of values */
-+				444,			/* next_pid_field */
-+				(u64)"clackers",	/* next_comm_field */
-+				1000000,		/* ts_ns */
-+				1000,			/* ts_ms */
-+				smp_processor_id(),	/* cpu */
-+				(u64)"Thneed",		/* my_string_field */
-+				999);			/* my_int_field */
++	if (cmd->type != DYNEVENT_TYPE_KPROBE)
++		return -EINVAL;
++
++	dynevent_arg_init(&arg, NULL, 0);
++
++	va_start(args, cmd);
++	for (;;) {
++		const char *field;
++
++		field = va_arg(args, const char *);
++		if (!field)
++			break;
++
++		if (++cmd->n_fields > MAX_TRACE_ARGS) {
++			ret = -EINVAL;
++			break;
++		}
++
++		arg.str = field;
++		ret = dynevent_arg_add(cmd, &arg);
++		if (ret)
++			break;
++	}
++	va_end(args);
++
 +	return ret;
 +}
++EXPORT_SYMBOL_GPL(__kprobe_event_add_fields);
 +
-+static int __init synth_event_gen_test_init(void)
++/**
++ * kprobe_event_delete - Delete a kprobe event
++ * @name: The name of the kprobe event to delete
++ *
++ * Delete a kprobe event with the give @name from kernel code rather
++ * than directly from the command line.
++ *
++ * Return: 0 if successful, error otherwise.
++ */
++int kprobe_event_delete(const char *name)
 +{
-+	int ret;
++	char buf[MAX_EVENT_NAME_LEN];
 +
-+	ret = test_gen_synth_cmd();
-+	if (ret)
-+		return ret;
++	snprintf(buf, MAX_EVENT_NAME_LEN, "-:%s", name);
 +
-+	ret = test_empty_synth_event();
-+	if (ret) {
-+		WARN_ON(trace_array_set_clr_event(gen_synth_test->tr,
-+						  "synthetic",
-+						  "gen_synth_test", false));
-+		trace_put_event_file(gen_synth_test);
-+		WARN_ON(synth_event_delete("gen_synth_test"));
-+		goto out;
-+	}
-+
-+	ret = test_create_synth_event();
-+	if (ret) {
-+		WARN_ON(trace_array_set_clr_event(gen_synth_test->tr,
-+						  "synthetic",
-+						  "gen_synth_test", false));
-+		trace_put_event_file(gen_synth_test);
-+		WARN_ON(synth_event_delete("gen_synth_test"));
-+
-+		WARN_ON(trace_array_set_clr_event(empty_synth_test->tr,
-+						  "synthetic",
-+						  "empty_synth_test", false));
-+		trace_put_event_file(empty_synth_test);
-+		WARN_ON(synth_event_delete("empty_synth_test"));
-+		goto out;
-+	}
-+
-+	ret = test_add_next_synth_val();
-+	WARN_ON(ret);
-+
-+	ret = test_add_synth_val();
-+	WARN_ON(ret);
-+
-+	ret = test_trace_synth_event();
-+	WARN_ON(ret);
-+ out:
-+	return ret;
++	return trace_run_command(buf, create_or_delete_trace_kprobe);
 +}
++EXPORT_SYMBOL_GPL(kprobe_event_delete);
 +
-+static void __exit synth_event_gen_test_exit(void)
-+{
-+	/* Disable the event or you can't remove it */
-+	WARN_ON(trace_array_set_clr_event(gen_synth_test->tr,
-+					  "synthetic",
-+					  "gen_synth_test", false));
-+
-+	/* Now give the file and instance back */
-+	trace_put_event_file(gen_synth_test);
-+
-+	/* Now unregister and free the synthetic event */
-+	WARN_ON(synth_event_delete("gen_synth_test"));
-+
-+	/* Disable the event or you can't remove it */
-+	WARN_ON(trace_array_set_clr_event(empty_synth_test->tr,
-+					  "synthetic",
-+					  "empty_synth_test", false));
-+
-+	/* Now give the file and instance back */
-+	trace_put_event_file(empty_synth_test);
-+
-+	/* Now unregister and free the synthetic event */
-+	WARN_ON(synth_event_delete("empty_synth_test"));
-+
-+	/* Disable the event or you can't remove it */
-+	WARN_ON(trace_array_set_clr_event(create_synth_test->tr,
-+					  "synthetic",
-+					  "create_synth_test", false));
-+
-+	/* Now give the file and instance back */
-+	trace_put_event_file(create_synth_test);
-+
-+	/* Now unregister and free the synthetic event */
-+	WARN_ON(synth_event_delete("create_synth_test"));
-+}
-+
-+module_init(synth_event_gen_test_init)
-+module_exit(synth_event_gen_test_exit)
-+
-+MODULE_AUTHOR("Tom Zanussi");
-+MODULE_DESCRIPTION("synthetic event generation test");
-+MODULE_LICENSE("GPL v2");
+ static int trace_kprobe_release(struct dyn_event *ev)
+ {
+ 	struct trace_kprobe *tk = to_trace_kprobe(ev);
 -- 
 2.14.1
 
