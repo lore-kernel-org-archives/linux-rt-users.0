@@ -2,104 +2,65 @@ Return-Path: <SRS0=QF8V=3S=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.6 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_2 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9C66CC2D0DB
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Jan 2020 19:05:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 89FF6C2D0DB
+	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Jan 2020 19:55:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 5ABF220716
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Jan 2020 19:05:09 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1580324709;
-	bh=XLVFFfVGJaj7WKQxYlzuqjirzdJF+F55f9Ukm+Bj8hg=;
-	h=Subject:From:To:Cc:Date:In-Reply-To:References:List-ID:From;
-	b=zVvdr+n9EF3nEmEE7vif1bmer6WcKSVpst3cq6Klh68YyR0J1gwxVbYvrLDnaafSt
-	 qTVOix4y+wD/VKvUchJGEhk5H0ow7oQ68QUav+w2eqT9HsrjODFtCTzDrPq8544igc
-	 4ES3HhfRWLo3H1WNHZ8oqAZSjXPK1vFwJBiLy8WA=
+	by mail.kernel.org (Postfix) with ESMTP id 6ED062067C
+	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Jan 2020 19:55:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728441AbgA2TFJ (ORCPT
+        id S1727199AbgA2TzL (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 29 Jan 2020 14:05:09 -0500
-Received: from mail.kernel.org ([198.145.29.99]:57706 "EHLO mail.kernel.org"
+        Wed, 29 Jan 2020 14:55:11 -0500
+Received: from mail.kernel.org ([198.145.29.99]:40786 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727515AbgA2TFG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 29 Jan 2020 14:05:06 -0500
-Received: from tzanussi-mobl (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
+        id S1726332AbgA2TzL (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 29 Jan 2020 14:55:11 -0500
+Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 6E25A206D4;
-        Wed, 29 Jan 2020 19:05:05 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1580324706;
-        bh=XLVFFfVGJaj7WKQxYlzuqjirzdJF+F55f9Ukm+Bj8hg=;
-        h=Subject:From:To:Cc:Date:In-Reply-To:References:From;
-        b=WiHjYXJE2Ikw8kE24g2s9hN7WkNvPPk0VJZBegoEWjs3Dp/U5VI3Bn+PqUwE/bu2B
-         IQa91z+5mz92hxUYHUIoSYn0MipgU1nn472pjElXA24/NnU4KWATVfbaFrQRfe053O
-         eEdbFPBHmT3F4UWdgiZSUsH5DpgWYYzEUSlRVDZA=
-Message-ID: <1580324704.2757.3.camel@kernel.org>
-Subject: Re: [PATCH v3 02/12] tracing: Add trace_get/put_event_file()
-From:   Tom Zanussi <zanussi@kernel.org>
-To:     Steven Rostedt <rostedt@goodmis.org>
+        by mail.kernel.org (Postfix) with ESMTPSA id 64D072067C;
+        Wed, 29 Jan 2020 19:55:10 +0000 (UTC)
+Date:   Wed, 29 Jan 2020 14:55:08 -0500
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     Tom Zanussi <zanussi@kernel.org>
 Cc:     artem.bityutskiy@linux.intel.com, mhiramat@kernel.org,
         linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         ndesaulniers@google.com
-Date:   Wed, 29 Jan 2020 13:05:04 -0600
-In-Reply-To: <20200129125255.57159f85@gandalf.local.home>
+Subject: Re: [PATCH v3 04/12] tracing: Add dynamic event command creation
+ interface
+Message-ID: <20200129145508.6947fff8@gandalf.local.home>
+In-Reply-To: <1580324572.2757.2.camel@kernel.org>
 References: <cover.1579904761.git.zanussi@kernel.org>
-         <ec82da7de7689bdebbb447c83d9182c05efb0ba6.1579904761.git.zanussi@kernel.org>
-         <20200129125255.57159f85@gandalf.local.home>
-Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.26.1-1 
-Mime-Version: 1.0
+        <4a38478f56b9e831803500f82af896bda92a5370.1579904761.git.zanussi@kernel.org>
+        <20200129130018.230cef12@gandalf.local.home>
+        <1580324572.2757.2.camel@kernel.org>
+X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, 2020-01-29 at 12:52 -0500, Steven Rostedt wrote:
-> On Fri, 24 Jan 2020 16:56:13 -0600
-> Tom Zanussi <zanussi@kernel.org> wrote:
-> 
-> > +/**
-> > + * trace_put_event_file - Release a file from
-> > trace_get_event_file()
-> > + * @file: The trace event file
-> > + *
-> > + * If a file was retrieved using trace_get_event_file(), this
-> > should
-> > + * be called when it's no longer needed.  It will cancel the
-> > previous
-> > + * trace_array_get() called by that function, and decrement the
-> > + * event's module refcount.
-> > + */
-> > +void trace_put_event_file(struct trace_event_file *file)
-> > +{
-> > +	trace_array_put(file->tr);
-> > +
-> > +	mutex_lock(&event_mutex);
-> > +	module_put(file->event_call->mod);
-> > +	mutex_unlock(&event_mutex);
-> 
-> I believe the trace_array_put() needs to be at the end. Otherwise, I
-> believe the file could be freed before the event_mutex is taken.
-> 
-> I'll swap it, as I'm trying to get this into the merge window.
-
-OK, thanks,
-
-Tom
+On Wed, 29 Jan 2020 13:02:52 -0600
+Tom Zanussi <zanussi@kernel.org> wrote:
 
 > 
-> -- Steve
+> OK, I can send a follow-on patch that does this.
+
+Thanks!
+
 > 
-> > +}
-> > +EXPORT_SYMBOL_GPL(trace_put_event_file);
-> > +
-> >  #ifdef CONFIG_DYNAMIC_FTRACE
-> >  
-> >  /* Avoid typos */
-> 
-> 
+> Note that I just sent a v4 series which moves most of the code in this
+> patch to trace_dynevent.{c,h} as requested by Masami.  No other changes
+> from v3 were made other than adding acks.
+
+Luckily, I had a meeting and stopped at patch 5. I reverted and started
+again with your v4 series, and did the swap again too.
+
+-- Steve
