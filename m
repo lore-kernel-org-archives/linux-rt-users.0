@@ -2,218 +2,138 @@ Return-Path: <SRS0=QF8V=3S=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-14.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PULL_REQUEST,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.6 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_2 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E3D2FC33CB7
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Jan 2020 19:01:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E0EBDC2D0DB
+	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Jan 2020 19:02:55 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id B785F20720
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Jan 2020 19:01:10 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B5C0820716
+	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Jan 2020 19:02:55 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1580324470;
-	bh=qpyzBOI9PxcNjKYNateB76k50kAXk+J6ADkXmUZOGnE=;
-	h=From:To:Cc:Subject:Date:List-ID:From;
-	b=FnnwQxguqEP+GuTcip2fl/e83QOMrbAv0/gnkxa/LnVeYQ/5bOp41RAEqgCtXRoPS
-	 5kk0cwxq32UPhHJarrTJKOjClICnndk0+QS2LQcv+kRqVAsuUmuWBxgBZ2txc3zzRK
-	 vYHy6IQ67ZCLT9CIAWxwY42LMHyDDYgs7J3Aetw0=
+	s=default; t=1580324575;
+	bh=QQLziFiL8YYCmRpFavz8eyI/YvvOY3R1GJH7XOORQCE=;
+	h=Subject:From:To:Cc:Date:In-Reply-To:References:List-ID:From;
+	b=az9QlgCvn8VviS7PfObPtdWp71Z+/jiREgkh/iDHBdG7B67bgjPpGI2eRPTsiatdY
+	 WT+UHUVP+99g4+y26R71hsKHfYOZd4m09JNctXbUmPs3j5h+FI4S3SAMl2yvVtnbmO
+	 ur4TC1DWfrulx0ApCxTdJZJYxQBGvcBoWtVlZ8LY=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727454AbgA2S7k (ORCPT
+        id S1728379AbgA2TCz (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 29 Jan 2020 13:59:40 -0500
-Received: from mail.kernel.org ([198.145.29.99]:53910 "EHLO mail.kernel.org"
+        Wed, 29 Jan 2020 14:02:55 -0500
+Received: from mail.kernel.org ([198.145.29.99]:56468 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727763AbgA2S7k (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 29 Jan 2020 13:59:40 -0500
-Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+        id S1728373AbgA2TCy (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 29 Jan 2020 14:02:54 -0500
+Received: from tzanussi-mobl (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id A4B8C2071E;
-        Wed, 29 Jan 2020 18:59:38 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id D9363206D4;
+        Wed, 29 Jan 2020 19:02:53 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1580324379;
-        bh=qpyzBOI9PxcNjKYNateB76k50kAXk+J6ADkXmUZOGnE=;
-        h=From:To:Cc:Subject:Date:From;
-        b=nokTUUXcATMmg3k9c7Q10PabNMCLXOrqsOLDwM9cvjzhUt/PPQqxgC47KECiKC9SX
-         ctbi7kqhbZFGJkdlA2UTY/Mpmnj3NRPocLNKfcgCT7aKIWFeUMZ0GwsU8EyCnPO3SZ
-         ogjANNmpf0KU81shBHL5vALtsFMEFwTvbtCzksg0=
+        s=default; t=1580324574;
+        bh=QQLziFiL8YYCmRpFavz8eyI/YvvOY3R1GJH7XOORQCE=;
+        h=Subject:From:To:Cc:Date:In-Reply-To:References:From;
+        b=MMDhW4eDkXXPkbNXPZ1hh572XtFxMrTeanOOPcD/1dtw0swimQklT3dapRGm7MggR
+         Qmri/RBJ71/DuiZ/U3d1qv4Hn+gmm7RoRgxOXazWOyNaQ57+f3wIVIgfaeRRczXlC5
+         6ZqGOSrnHNMqD3o4c2UioizzaljpuqSvfQXasjjc=
+Message-ID: <1580324572.2757.2.camel@kernel.org>
+Subject: Re: [PATCH v3 04/12] tracing: Add dynamic event command creation
+ interface
 From:   Tom Zanussi <zanussi@kernel.org>
-To:     rostedt@goodmis.org
+To:     Steven Rostedt <rostedt@goodmis.org>
 Cc:     artem.bityutskiy@linux.intel.com, mhiramat@kernel.org,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: [PATCH v4 00/12] tracing: Add support for in-kernel dynamic event API
-Date:   Wed, 29 Jan 2020 12:59:20 -0600
-Message-Id: <cover.1580323897.git.zanussi@kernel.org>
-X-Mailer: git-send-email 2.14.1
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        ndesaulniers@google.com
+Date:   Wed, 29 Jan 2020 13:02:52 -0600
+In-Reply-To: <20200129130018.230cef12@gandalf.local.home>
+References: <cover.1579904761.git.zanussi@kernel.org>
+         <4a38478f56b9e831803500f82af896bda92a5370.1579904761.git.zanussi@kernel.org>
+         <20200129130018.230cef12@gandalf.local.home>
+Content-Type: text/plain; charset="UTF-8"
+X-Mailer: Evolution 3.26.1-1 
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi,
+Hi Steve,
 
-This is v4 of 'tracing: Add support for in-kernel dynamic event API',
-incorporating changes based on suggestions from Masami.
+On Wed, 2020-01-29 at 13:00 -0500, Steven Rostedt wrote:
+> On Fri, 24 Jan 2020 16:56:15 -0600
+> Tom Zanussi <zanussi@kernel.org> wrote:
+> 
+> > +/**
+> > + * dynevent_arg_add - Add an arg to a dynevent_cmd
+> > + * @cmd: A pointer to the dynevent_cmd struct representing the new
+> > event cmd
+> > + * @arg: The argument to append to the current cmd
+> > + *
+> > + * Append an argument to a dynevent_cmd.  The argument string will
+> > be
+> > + * appended to the current cmd string, followed by a separator, if
+> > + * applicable.  Before the argument is added, the check_arg()
+> > + * function, if defined, is called.
+> > + *
+> > + * The cmd string, separator, and check_arg() function should be
+> > set
+> > + * using the dynevent_arg_init() before any arguments are added
+> > using
+> > + * this function.
+> > + *
+> > + * Return: 0 if successful, error otherwise.
+> > + */
+> > +int dynevent_arg_add(struct dynevent_cmd *cmd,
+> > +		     struct dynevent_arg *arg)
+> > +{
+> > +	int ret = 0;
+> > +	int delta;
+> > +	char *q;
+> > +
+> > +	if (arg->check_arg) {
+> > +		ret = arg->check_arg(arg);
+> > +		if (ret)
+> > +			return ret;
+> > +	}
+> > +
+> > +	q = cmd->buf + (cmd->maxlen - cmd->remaining);
+> > +
+> > +	delta = snprintf(q, cmd->remaining, " %s%c", arg->str,
+> > arg->separator);
+> > +	if (delta >= cmd->remaining) {
+> > +		pr_err("String is too long: %s\n", arg->str);
+> > +		return -E2BIG;
+> > +	}
+> > +	cmd->remaining -= delta;
+> 
+> This looks like you can take advantage of the seq_buf code
+> (see /lib/seq_buf.c), as that handles a lot of this for you.
+> 
+> As I'm trying to get this into the merge window, I won't delay this
+> for
+> that (unless I find something else to delay this for), but this
+> should
+> definitely incorporate seq_buf and not handle its own buffering.
+> 
 
-This patchset is the same as the v3 version but add Masami's acks for
-all but '[PATCH 04/12] tracing: Add dynamic event command creation
-interface', which moves the dynevent command interface code to
-trace_dynevent.{c,.h}.
+OK, I can send a follow-on patch that does this.
+
+Note that I just sent a v4 series which moves most of the code in this
+patch to trace_dynevent.{c,h} as requested by Masami.  No other changes
+from v3 were made other than adding acks.
 
 Thanks,
 
-Tom
+Tom  
 
 
-Text from the v3 posting:
-
-This is v3 of 'tracing: Add support for in-kernel dynamic event API',
-incorporating changes based on suggestions from Masami and Steven.
-
-  - Rebased to trace/for-next
-
-  - Regularized the entire API to use synth_event_*, kprobe_event_*,
-    dynevent_*, and added some new macros and functions to make things
-    more consistent
-
-  - Introduced trace_array_find_get() and used it in
-    trace_array_get_file() as suggested
-  
-  - Removed exports from dynevent_cmd functions that didn't need to be
-    exported
-
-  - Switched the param order of __kprobe_event_gen_cmd_start() to fix
-    a problem found building with clang.  Apparently varargs and
-    implicit promotion of types like bool don't mix.  Thanks to Nick
-    Desaulniers for pointing that out.
-
-  - Updated the documentation for all of the above
-
-Text from the v2 posting:
-
-This is v2 of the previous 'tracing: Add support for in-kernel
-synthetic event API', and is largely a rewrite based on suggestions
-from Masami to expand the scope to include other types of dynamic
-events such as kprobe events, in addition to the original sythetic
-event focus.
-
-The functionality of the original API remains available, though it's
-in a slightly different form due to the use of the new dynevent_cmd
-API it's now based on.  The dynevent_cmd API provides a common dynamic
-event command generation capability that both the synthetic event API
-and the kprobe event API are now based on, and there are now test
-modules demonstrating both the synthetic event and kprobes APIs.
-
-A couple of the patches are snippets from Masami's 'tracing:
-bootconfig: Boot-time tracing and Extra boot config' series, and the
-patch implementing the dynevent_cmd API includes some of the
-spnprintf() generating code from that patchset.
-
-Because I used Masami's gen_*_cmd() naming suggestion for generating
-the commands, the previous patchset's generate_*() functions were
-renamed to trace_*() to avoid confusion, and probably is better naming
-anyway.
-
-An overview of the user-visible changes in comparison to v1:
-
-  - create_synth_event() using an array of synth_desc_fields remains
-    unchanged and works the same way as previously
-
-  - gen_synth_cmd() takes a variable-length number of args which
-    represent 'type field;' pairs.  Using this with no field args
-    basically replaces the previous 'create_empty_synth_event()'
-
-  - The 'add_synth_field()' and 'add_synth_fields()' function from v1
-    are essentially the same except that they now take a dynevent_cmd
-    instead of a synth_event pointer
-
-  - The finalize_synth_event() from v1 is replaced by
-    create_dynevent() in the new version.
-  
-  - The new v2 API includes some additional functions to initialize
-    the dynevent_cmd - synth_dynevent_cmd() is used to do that.  While
-    it's an extra step, it makes it easier to do error handling.
-
-  - There's a new trace_synth_event() function that traces a synthetic
-    event using a variable-arg list of values.
-
-  - The original generate_synth_event() using an array of values is
-    now called trace_synth_event_array().
-
-  - For piecewise event tracing, the original
-    generate_synth_event_start() and generate_synth_event_end() have
-    now been renamed to trace_synth_event_end().
-
-  - add_next_synth_val() and add_synth_val() remain the same.
-
-  - A similar API and test module demonstrating the API has been added
-    for kprobe events
-
-  - Both the synthetic events and kprobe events API is based on the
-    dynevent_cmd API, newly added
-
-  - The Documentation for all of the above has been updated
-
-Text from the orginal v1 posting:
-
-I've recently had several requests and suggestions from users to add
-support for the creation and generation of synthetic events from
-kernel code such as modules, and not just from the available command
-line commands.
-
-This patchset adds support for that.  The first three patches add some
-minor preliminary setup, followed by the two main patches that add the
-ability to create and generate synthetic events from the kernel.  The
-next patch adds a test module that demonstrates actual use of the API
-and verifies that it works as intended, followed by Documentation.
-
-Special thanks to Artem Bityutskiy, who worked with me over several
-iterations of the API, and who had many great suggestions on the
-details of the interface, and pointed out several problems with the
-code itself.
-
-The following changes since commit 34f71a4a2de84dde52ccfcb96ce25240ea7981a8:
-
-  tracing: Add new testcases for hist trigger parsing errors (2020-01-28 23:17:31 -0500)
-
-are available in the git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/zanussi/linux-trace.git ftrace/synth-event-gen-v4
-
-Tom Zanussi (12):
-  tracing: Add trace_array_find/_get() to find instance trace arrays
-  tracing: Add trace_get/put_event_file()
-  tracing: Add synth_event_delete()
-  tracing: Add dynamic event command creation interface
-  tracing: Add synthetic event command generation functions
-  tracing: Change trace_boot to use synth_event interface
-  tracing: Add synth_event_trace() and related functions
-  tracing: Add synth event generation test module
-  tracing: Add kprobe event command generation functions
-  tracing: Change trace_boot to use kprobe_event interface
-  tracing: Add kprobe event command generation test module
-  tracing: Documentation for in-kernel synthetic event API
-
- Documentation/trace/events.rst       | 515 ++++++++++++++++++++
- include/linux/trace_events.h         | 124 +++++
- kernel/trace/Kconfig                 |  25 +
- kernel/trace/Makefile                |   2 +
- kernel/trace/kprobe_event_gen_test.c | 225 +++++++++
- kernel/trace/synth_event_gen_test.c  | 523 ++++++++++++++++++++
- kernel/trace/trace.c                 |  43 +-
- kernel/trace/trace.h                 |   2 +
- kernel/trace/trace_boot.c            |  66 ++-
- kernel/trace/trace_dynevent.c        | 240 ++++++++++
- kernel/trace/trace_dynevent.h        |  33 ++
- kernel/trace/trace_events.c          |  85 ++++
- kernel/trace/trace_events_hist.c     | 896 ++++++++++++++++++++++++++++++++++-
- kernel/trace/trace_kprobe.c          | 160 ++++++-
- 14 files changed, 2867 insertions(+), 72 deletions(-)
- create mode 100644 kernel/trace/kprobe_event_gen_test.c
- create mode 100644 kernel/trace/synth_event_gen_test.c
-
--- 
-2.14.1
-
+> -- Steve
+> 
+> 
+> 
+> > +
+> > +	return ret;
+> > +}
