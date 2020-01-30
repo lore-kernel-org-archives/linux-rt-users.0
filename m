@@ -1,108 +1,251 @@
-Return-Path: <SRS0=QF8V=3S=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=DFOT=3T=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.6 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_2 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-7.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AD9B2C2D0DB
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Jan 2020 22:58:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D5B05C35240
+	for <linux-rt-users@archiver.kernel.org>; Thu, 30 Jan 2020 02:40:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 821DE20716
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Jan 2020 22:58:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A154320716
+	for <linux-rt-users@archiver.kernel.org>; Thu, 30 Jan 2020 02:40:36 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1580338731;
-	bh=T3ZG+BiFMo6X7F4+jiwlj/otBc6uDqUqE9kwYeVeogQ=;
-	h=Subject:From:To:Cc:Date:In-Reply-To:References:List-ID:From;
-	b=eNLJ9C9HY2HgzB4QjYiannH0Vg2jeGuGn8Ce5g+5/NVLI6PajsLFsOXydpBlFXsQu
-	 tVC3KV+mhk984V0I4tXk4oPAVn8sx+bZGLfYX5XtNLJdllVsDQvPt442me//nC48Zy
-	 ZLQQgWY9uDaVKG+fwGSOX8k7JqwiCGRzj/6pkTnw=
+	s=default; t=1580352036;
+	bh=1kRFdhkVs1pnRQaGP9CAxOS7QE/HNXSDdU8d+YI+C4c=;
+	h=Date:From:To:Cc:Subject:In-Reply-To:References:List-ID:From;
+	b=nWBruvAPDI0LqEZO+wYopzebObQ2/ghpRaUuDrHTIr0p1441bu1ORkZuq4TQ27Tef
+	 I/UehyuLDWCzrbVbjWyXqPQG2YuBIREEBkUIQgo3nIfzemt76PI7AfUIWwJxh1XGqN
+	 9l4HNqjCU1Ja1r578krU/CEi4izWxCKU39XrSMyY=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726646AbgA2W6q (ORCPT
+        id S1726751AbgA3Cke (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 29 Jan 2020 17:58:46 -0500
-Received: from mail.kernel.org ([198.145.29.99]:50614 "EHLO mail.kernel.org"
+        Wed, 29 Jan 2020 21:40:34 -0500
+Received: from mail.kernel.org ([198.145.29.99]:50580 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726401AbgA2W6q (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 29 Jan 2020 17:58:46 -0500
-Received: from tzanussi-mobl (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
+        id S1726694AbgA3Ckd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 29 Jan 2020 21:40:33 -0500
+Received: from devnote2 (NE2965lan1.rev.em-net.ne.jp [210.141.244.193])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 81E8420702;
-        Wed, 29 Jan 2020 22:58:45 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id E432F206D5;
+        Thu, 30 Jan 2020 02:40:30 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1580338726;
-        bh=T3ZG+BiFMo6X7F4+jiwlj/otBc6uDqUqE9kwYeVeogQ=;
-        h=Subject:From:To:Cc:Date:In-Reply-To:References:From;
-        b=JbArocdkkzakNRvU7e9D+tEBjc1CD+P6/+BPG8qHySpNKI6tqV3tLDjuxkYxcAKpV
-         9GfSAGchQ2jliDY/8OBghdSj+wLfiJGXhtjRQcJfFJOCgwJZoaOrk9jdgXwAszQzKR
-         S5I+2AoOz/gg8bieM1xKPjqzov8beD7zj26G+0wY=
-Message-ID: <1580338724.6220.17.camel@kernel.org>
-Subject: Re: [PATCH v4 07/12] tracing: Add synth_event_trace() and related
- functions
-From:   Tom Zanussi <zanussi@kernel.org>
-To:     Steven Rostedt <rostedt@goodmis.org>
-Cc:     artem.bityutskiy@linux.intel.com, mhiramat@kernel.org,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Date:   Wed, 29 Jan 2020 16:58:44 -0600
-In-Reply-To: <20200129160915.4ebe0f08@gandalf.local.home>
+        s=default; t=1580352032;
+        bh=1kRFdhkVs1pnRQaGP9CAxOS7QE/HNXSDdU8d+YI+C4c=;
+        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
+        b=Dxez+VKFAw1RUBWt+cFqzGD4z/WESnQtkxOWX1ObZgxVJF101/4DhBCFsuTPNnd8m
+         DMDxA07HUAHYe7rCutAqYeImTR02UDq7ulfbLoiY6GWtAvL7V235Aa/7SPtwq7MPaq
+         KD/z2KznrI0sHphjMLPYlVLAdCWALvAuKpb+SWJQ=
+Date:   Thu, 30 Jan 2020 11:40:28 +0900
+From:   Masami Hiramatsu <mhiramat@kernel.org>
+To:     Tom Zanussi <zanussi@kernel.org>
+Cc:     rostedt@goodmis.org, artem.bityutskiy@linux.intel.com,
+        mhiramat@kernel.org, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH v4 04/12] tracing: Add dynamic event command creation
+ interface
+Message-Id: <20200130114028.0c20b193cc3825363369794a@kernel.org>
+In-Reply-To: <1f65fa44390b6f238f6036777c3784ced1dcc6a0.1580323897.git.zanussi@kernel.org>
 References: <cover.1580323897.git.zanussi@kernel.org>
-         <7a84de5f1854acf4144b57efe835ca645afa764f.1580323897.git.zanussi@kernel.org>
-         <20200129160915.4ebe0f08@gandalf.local.home>
-Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.26.1-1 
+        <1f65fa44390b6f238f6036777c3784ced1dcc6a0.1580323897.git.zanussi@kernel.org>
+X-Mailer: Sylpheed 3.5.1 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
 Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Steve,
+Hi Tom
 
-On Wed, 2020-01-29 at 16:09 -0500, Steven Rostedt wrote:
-> On Wed, 29 Jan 2020 12:59:27 -0600
-> Tom Zanussi <zanussi@kernel.org> wrote:
+On Wed, 29 Jan 2020 12:59:24 -0600
+Tom Zanussi <zanussi@kernel.org> wrote:
+
+> Add an interface used to build up dynamic event creation commands,
+> such as synthetic and kprobe events.  Interfaces specific to those
+> particular types of events and others can be built on top of this
+> interface.
 > 
-> > +static struct synth_field *find_synth_field(struct synth_event
-> > *event,
-> > +					    const char
-> > *field_name)
-> > +{
-> > +	struct synth_field *field = NULL;
-> > +	unsigned int i;
-> > +
-> > +	for (i = 0; i < event->n_fields; i++) {
-> > +		field = event->fields[i];
-> > +		if (strcmp(field->name, field_name) == 0)
-> > +			return field;
-> > +	}
-> > +
-> > +	return NULL;
-> > +}
+> Command creation is started by first using the dynevent_cmd_init()
+> function to initialize the dynevent_cmd object.  Following that, args
+> are appended and optionally checked by the dynevent_arg_add() and
+> dynevent_arg_pair_add() functions, which use objects representing
+> arguments and pairs of arguments, initialized respectively by
+> dynevent_arg_init() and dynevent_arg_pair_init().  Finally, once all
+> args have been successfully added, the command is finalized and
+> actually created using dynevent_create().
 > 
-> Why duplicate all theses functions and not use them in the
-> synth_event_trace() directly?
+> The code here for actually printing into the dyn_event->cmd buffer
+> using snprintf() etc was adapted from v4 of Masami's 'tracing/boot:
+> Add synthetic event support' patch.
 > 
+> Signed-off-by: Tom Zanussi <zanussi@kernel.org>
+> Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
+> ---
+>  include/linux/trace_events.h  |  23 ++++
+>  kernel/trace/trace_dynevent.c | 240 ++++++++++++++++++++++++++++++++++++++++++
+>  kernel/trace/trace_dynevent.h |  33 ++++++
+>  3 files changed, 296 insertions(+)
+> 
+> diff --git a/include/linux/trace_events.h b/include/linux/trace_events.h
+> index 25fe743bcbaf..651b03d5e272 100644
+> --- a/include/linux/trace_events.h
+> +++ b/include/linux/trace_events.h
+> @@ -354,6 +354,29 @@ extern struct trace_event_file *trace_get_event_file(const char *instance,
+>  						     const char *event);
+>  extern void trace_put_event_file(struct trace_event_file *file);
+>  
+> +#define MAX_DYNEVENT_CMD_LEN	(2048)
+> +
+> +enum dynevent_type {
+> +	DYNEVENT_TYPE_NONE,
+> +};
+> +
+> +struct dynevent_cmd;
+> +
+> +typedef int (*dynevent_create_fn_t)(struct dynevent_cmd *cmd);
+> +
+> +struct dynevent_cmd {
+> +	char			*buf;
+> +	const char		*event_name;
+> +	int			maxlen;
+> +	int			remaining;
+> +	unsigned int		n_fields;
+> +	enum dynevent_type	type;
+> +	dynevent_create_fn_t	run_command;
+> +	void			*private_data;
+> +};
+> +
+> +extern int dynevent_create(struct dynevent_cmd *cmd);
+> +
+>  extern int synth_event_delete(const char *name);
+>  
+>  /*
+> diff --git a/kernel/trace/trace_dynevent.c b/kernel/trace/trace_dynevent.c
+> index 89779eb84a07..6ffdbc4fda53 100644
+> --- a/kernel/trace/trace_dynevent.c
+> +++ b/kernel/trace/trace_dynevent.c
+> @@ -223,3 +223,243 @@ static __init int init_dynamic_event(void)
+>  	return 0;
+>  }
+>  fs_initcall(init_dynamic_event);
+> +
+> +/**
+> + * dynevent_arg_add - Add an arg to a dynevent_cmd
+> + * @cmd: A pointer to the dynevent_cmd struct representing the new event cmd
+> + * @arg: The argument to append to the current cmd
+> + *
+> + * Append an argument to a dynevent_cmd.  The argument string will be
+> + * appended to the current cmd string, followed by a separator, if
+> + * applicable.  Before the argument is added, the check_arg()
+> + * function, if defined, is called.
+> + *
+> + * The cmd string, separator, and check_arg() function should be set
+> + * using the dynevent_arg_init() before any arguments are added using
+> + * this function.
+> + *
+> + * Return: 0 if successful, error otherwise.
+> + */
+> +int dynevent_arg_add(struct dynevent_cmd *cmd,
+> +		     struct dynevent_arg *arg)
+> +{
+> +	int ret = 0;
+> +	int delta;
+> +	char *q;
+> +
+> +	if (arg->check_arg) {
+> +		ret = arg->check_arg(arg);
 
-Yes, find_synth_field() is used only once and is short, so I can just
-add that into synth_event_add_val() directly.  And looking at
-synth_event_add_val() and synth_event_add_next_val(), they're almost
-identical and so can be made into a single function with a param for
-the different parts (but still need to be exported separately so they
-can be used with the piecewise API).
+Hmm, this seems a bit odd. The check_arg() arg object member check
+the validity of the object itself. What about moving those checker
+into dynevent_cmd instead of dynevent_arg?
+(Or, just pass the appropriate checker as the 3rd parameter of
+ this function)
 
-It would also be possible to have synth_event_trace() and
-synth_event_trace_array() use synth_event_add_next_val() instead of
-writing the fields directly but that would be more overhead for those
-functions, which is why I avoided doing that.
+> +		if (ret)
+> +			return ret;
+> +	}
+> +
+> +	q = cmd->buf + (cmd->maxlen - cmd->remaining);
+> +
+> +	delta = snprintf(q, cmd->remaining, " %s%c", arg->str, arg->separator);
+> +	if (delta >= cmd->remaining) {
+> +		pr_err("String is too long: %s\n", arg->str);
+> +		return -E2BIG;
+> +	}
+> +	cmd->remaining -= delta;
+> +
+> +	return ret;
+> +}
+> +
+> +/**
+> + * dynevent_arg_pair_add - Add an arg pair to a dynevent_cmd
+> + * @cmd: A pointer to the dynevent_cmd struct representing the new event cmd
+> + * @arg_pair: The argument pair to append to the current cmd
+> + *
+> + * Append an argument pair to a dynevent_cmd.  An argument pair
+> + * consists of a left-hand-side argument and a right-hand-side
+> + * argument separated by an operator, which can be whitespace, all
+> + * followed by a separator, if applicable.  This can be used to add
+> + * arguments of the form 'type variable_name;' or 'x+y'.
+> + *
+> + * The lhs argument string will be appended to the current cmd string,
+> + * followed by an operator, if applicable, followd by the rhs string,
+> + * followed finally by a separator, if applicable.  Before anything is
+> + * added, the check_arg() function, if defined, is called.
+> + *
+> + * The cmd strings, operator, separator, and check_arg() function
+> + * should be set using the dynevent_arg_pair_init() before any arguments
+> + * are added using this function.
+> + *
+> + * Return: 0 if successful, error otherwise.
+> + */
+> +int dynevent_arg_pair_add(struct dynevent_cmd *cmd,
+> +			  struct dynevent_arg_pair *arg_pair)
+> +{
+> +	int ret = 0;
+> +	int delta;
+> +	char *q;
+> +
+> +	if (arg_pair->check_arg) {
+> +		ret = arg_pair->check_arg(arg_pair);
 
-Let me know if it's something else you're referring to, or if you want
-me to do a v5 or a follow-on patch to do the first part above.
+Ditto.
 
-Thanks,
+> +		if (ret)
+> +			return ret;
+> +	}
+> +
+> +	q = cmd->buf + (cmd->maxlen - cmd->remaining);
+> +
+> +	delta = snprintf(q, cmd->remaining, " %s%c", arg_pair->lhs,
+> +			 arg_pair->operator);
+> +	if (delta >= cmd->remaining) {
+> +		pr_err("field string is too long: %s\n", arg_pair->lhs);
+> +		return -E2BIG;
+> +	}
+> +	cmd->remaining -= delta; q += delta;
+> +
+> +	delta = snprintf(q, cmd->remaining, "%s%c", arg_pair->rhs,
+> +			 arg_pair->separator);
+> +	if (delta >= cmd->remaining) {
+> +		pr_err("field string is too long: %s\n", arg_pair->rhs);
+> +		return -E2BIG;
+> +	}
+> +	cmd->remaining -= delta; q += delta;
 
-Tom
+Here, q += delta is redundant, because q is not used anymore.
 
-> -- Steve
+> +
+> +	return ret;
+> +}
+> +
+
+Thank you,
+
+
+-- 
+Masami Hiramatsu <mhiramat@kernel.org>
