@@ -2,63 +2,78 @@ Return-Path: <SRS0=b5ha=3X=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4D105C35247
-	for <linux-rt-users@archiver.kernel.org>; Mon,  3 Feb 2020 17:37:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 98CBFC35247
+	for <linux-rt-users@archiver.kernel.org>; Mon,  3 Feb 2020 18:17:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 3147A2080C
-	for <linux-rt-users@archiver.kernel.org>; Mon,  3 Feb 2020 17:37:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7E51821582
+	for <linux-rt-users@archiver.kernel.org>; Mon,  3 Feb 2020 18:17:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728547AbgBCRhg (ORCPT
+        id S1728822AbgBCSRs (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 3 Feb 2020 12:37:36 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:60258 "EHLO
+        Mon, 3 Feb 2020 13:17:48 -0500
+Received: from Galois.linutronix.de ([193.142.43.55]:60331 "EHLO
         Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728212AbgBCRhf (ORCPT
+        with ESMTP id S1728763AbgBCSRs (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 3 Feb 2020 12:37:35 -0500
+        Mon, 3 Feb 2020 13:17:48 -0500
 Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
         (envelope-from <bigeasy@linutronix.de>)
-        id 1iyffA-0005En-7p; Mon, 03 Feb 2020 18:37:32 +0100
-Date:   Mon, 3 Feb 2020 18:37:32 +0100
+        id 1iygI6-000622-9i; Mon, 03 Feb 2020 19:17:46 +0100
+Date:   Mon, 3 Feb 2020 19:17:46 +0100
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Scott Wood <swood@redhat.com>
-Cc:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH RT 1/2] sched: migrate_enable: Use per-cpu cpu_stop_work
-Message-ID: <20200203173732.ldbgbpwao7xm23mm@linutronix.de>
-References: <1579864307-13093-1-git-send-email-swood@redhat.com>
+To:     Matt Fleming <matt@codeblueprint.co.uk>
+Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        Daniel Wagner <wagi@monom.org>
+Subject: Re: [PATCH RT] mm/memcontrol: Move misplaced
+ local_unlock_irqrestore()
+Message-ID: <20200203181746.htlca2aynoqidm3o@linutronix.de>
+References: <20200126211945.28116-1-matt@codeblueprint.co.uk>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <1579864307-13093-1-git-send-email-swood@redhat.com>
+In-Reply-To: <20200126211945.28116-1-matt@codeblueprint.co.uk>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2020-01-24 06:11:46 [-0500], Scott Wood wrote:
-> Commit e6c287b1512d ("sched: migrate_enable: Use stop_one_cpu_nowait()")
-> adds a busy wait to deal with an edge case where the migrated thread
-> can resume running on another CPU before the stopper has consumed
-> cpu_stop_work.  However, this is done with preemption disabled and can
-> potentially lead to deadlock.
-> 
-> While it is not guaranteed that the cpu_stop_work will be consumed before
-> the migrating thread resumes and exits the stack frame, it is guaranteed
-> that nothing other than the stopper can run on the old cpu between the
-> migrating thread scheduling out and the cpu_stop_work being consumed.
-> Thus, we can store cpu_stop_work in per-cpu data without it being
-> reused too early.
-> 
-> Fixes: e6c287b1512d ("sched: migrate_enable: Use stop_one_cpu_nowait()")
-> Suggested-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> Signed-off-by: Scott Wood <swood@redhat.com>
+On 2020-01-26 21:19:45 [+0000], Matt Fleming wrote:
+> There's no need to leave interrupts disabled when calling css_put_many().
 
-Yes, perfect, thank you.
+For RT the interrupts are never actually disabled and for !RT they are
+disabled with or without the change.
+The comment about the disable function mentions just the counters and
+css_put_many()'s callback just invokes a worker so it is probably save
+to move the function as suggested.
+
+May I ask how on earth you managed to open that file on a Sunday
+evening?
+
+> Cc: Daniel Wagner <wagi@monom.org>
+> Signed-off-by: Matt Fleming <matt@codeblueprint.co.uk>
+> ---
+>  mm/memcontrol.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+> index 7b6f208c5a6b..1120b9d8dd86 100644
+> --- a/mm/memcontrol.c
+> +++ b/mm/memcontrol.c
+> @@ -7062,10 +7062,10 @@ void mem_cgroup_swapout(struct page *page, swp_entry_t entry)
+>  	mem_cgroup_charge_statistics(memcg, page, PageTransHuge(page),
+>  				     -nr_entries);
+>  	memcg_check_events(memcg, page);
+> +	local_unlock_irqrestore(event_lock, flags);
+>  
+>  	if (!mem_cgroup_is_root(memcg))
+>  		css_put_many(&memcg->css, nr_entries);
+> -	local_unlock_irqrestore(event_lock, flags);
+>  }
+>  
+>  /**
 
 Sebastian
