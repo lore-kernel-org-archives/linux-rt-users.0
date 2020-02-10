@@ -1,4 +1,4 @@
-Return-Path: <SRS0=d40b=35=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=+Dnv=36=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
@@ -6,75 +6,108 @@ X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B8FC5C352A4
-	for <linux-rt-users@archiver.kernel.org>; Sun,  9 Feb 2020 15:37:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D3ED1C352A3
+	for <linux-rt-users@archiver.kernel.org>; Mon, 10 Feb 2020 16:32:46 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 90C9D20870
-	for <linux-rt-users@archiver.kernel.org>; Sun,  9 Feb 2020 15:37:52 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B7F562080C
+	for <linux-rt-users@archiver.kernel.org>; Mon, 10 Feb 2020 16:32:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727753AbgBIPhs (ORCPT
+        id S1727946AbgBJQcn (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 9 Feb 2020 10:37:48 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:42502 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727661AbgBIPhs (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 9 Feb 2020 10:37:48 -0500
-Received: from p5b06da22.dip0.t-ipconnect.de ([91.6.218.34] helo=nanos.tec.linutronix.de)
-        by Galois.linutronix.de with esmtpsa (TLS1.2:DHE_RSA_AES_256_CBC_SHA256:256)
-        (Exim 4.80)
-        (envelope-from <tglx@linutronix.de>)
-        id 1j0oeO-00053e-Kc; Sun, 09 Feb 2020 16:37:36 +0100
-Received: by nanos.tec.linutronix.de (Postfix, from userid 1000)
-        id AAB4D100F5A; Sun,  9 Feb 2020 16:37:35 +0100 (CET)
-From:   Thomas Gleixner <tglx@linutronix.de>
-To:     sean.v.kelley@linux.intel.com, Kar Hin Ong <kar.hin.ong@ni.com>,
+        Mon, 10 Feb 2020 11:32:43 -0500
+Received: from mga14.intel.com ([192.55.52.115]:63530 "EHLO mga14.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1727640AbgBJQcm (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 10 Feb 2020 11:32:42 -0500
+X-Amp-Result: SKIPPED(no attachment in message)
+X-Amp-File-Uploaded: False
+Received: from orsmga001.jf.intel.com ([10.7.209.18])
+  by fmsmga103.fm.intel.com with ESMTP/TLS/DHE-RSA-AES256-GCM-SHA384; 10 Feb 2020 08:32:42 -0800
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="5.70,425,1574150400"; 
+   d="scan'208";a="312795470"
+Received: from jerjavec-mobl.amr.corp.intel.com (HELO arch-ashland-svkelley) ([10.251.129.77])
+  by orsmga001.jf.intel.com with ESMTP; 10 Feb 2020 08:32:39 -0800
+Message-ID: <088c8f9d07fe4a36125b2f0e5aeb09defb5b5e13.camel@linux.intel.com>
+Subject: Re: RE: Re: "oneshot" interrupt causes another interrupt to be
+ fired erroneously in Haswell system
+From:   Sean V Kelley <sean.v.kelley@linux.intel.com>
+Reply-To: sean.v.kelley@linux.intel.com
+To:     Thomas Gleixner <tglx@linutronix.de>,
+        Kar Hin Ong <kar.hin.ong@ni.com>,
         Bjorn Helgaas <helgaas@kernel.org>
 Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>,
         LKML <linux-kernel@vger.kernel.org>,
-        "x86\@kernel.org" <x86@kernel.org>,
-        "linux-pci\@vger.kernel.org" <linux-pci@vger.kernel.org>,
+        "x86@kernel.org" <x86@kernel.org>,
+        "linux-pci@vger.kernel.org" <linux-pci@vger.kernel.org>,
         "H. Peter Anvin" <hpa@zytor.com>,
         Dave Hansen <dave.hansen@linux.intel.com>,
         Julia Cartwright <julia.cartwright@ni.com>,
         Keng Soon Cheah <keng.soon.cheah@ni.com>,
         Gratian Crisan <gratian.crisan@ni.com>,
         Peter Zijlstra <peterz@infradead.org>
-Subject: Re: RE: Re: "oneshot" interrupt causes another interrupt to be fired erroneously in Haswell system
-In-Reply-To: <87muaetj4p.fsf@nanos.tec.linutronix.de>
-References: <20191031230532.GA170712@google.com> <alpine.DEB.2.21.1911050017410.17054@nanos.tec.linutronix.de> <MN2PR04MB625594021250E0FB92EC955DC3780@MN2PR04MB6255.namprd04.prod.outlook.com> <87a76oxqv1.fsf@nanos.tec.linutronix.de> <MN2PR04MB62551D8B240966B02ED71516C3360@MN2PR04MB6255.namprd04.prod.outlook.com> <87muanwwhb.fsf@nanos.tec.linutronix.de> <8f1e5981b519acb5edf53b5392c81ef7cbf6a3eb.camel@linux.intel.com> <87muaetj4p.fsf@nanos.tec.linutronix.de>
-Date:   Sun, 09 Feb 2020 16:37:35 +0100
-Message-ID: <8736bjlqkg.fsf@nanos.tec.linutronix.de>
+Date:   Mon, 10 Feb 2020 08:32:39 -0800
+In-Reply-To: <8736bjlqkg.fsf@nanos.tec.linutronix.de>
+References: <20191031230532.GA170712@google.com>
+         <alpine.DEB.2.21.1911050017410.17054@nanos.tec.linutronix.de>
+         <MN2PR04MB625594021250E0FB92EC955DC3780@MN2PR04MB6255.namprd04.prod.outlook.com>
+         <87a76oxqv1.fsf@nanos.tec.linutronix.de>
+         <MN2PR04MB62551D8B240966B02ED71516C3360@MN2PR04MB6255.namprd04.prod.outlook.com>
+         <87muanwwhb.fsf@nanos.tec.linutronix.de>
+         <8f1e5981b519acb5edf53b5392c81ef7cbf6a3eb.camel@linux.intel.com>
+         <87muaetj4p.fsf@nanos.tec.linutronix.de>
+         <8736bjlqkg.fsf@nanos.tec.linutronix.de>
+Organization: Intel Corporation
+Content-Type: text/plain; charset="UTF-8"
+User-Agent: Evolution 3.34.3 
 MIME-Version: 1.0
-Content-Type: text/plain
-X-Linutronix-Spam-Score: -1.0
-X-Linutronix-Spam-Level: -
-X-Linutronix-Spam-Status: No , -1.0 points, 5.0 required,  ALL_TRUSTED=-1,SHORTCIRCUIT=-0.0001
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Sean,
+On Sun, 2020-02-09 at 16:37 +0100, Thomas Gleixner wrote:
+> Sean,
+> 
+> Thomas Gleixner <tglx@linutronix.de> writes:
+> > Sean V Kelley <sean.v.kelley@linux.intel.com> writes:
+> > > So I will ensure we actually create useful information pointing
+> > > to this
+> > > behavior either in kernel docs or online as in a white paper or
+> > > both.
+> > 
+> > Great.
+> > 
+> > > > As we have already quirks in drivers/pci/quirks.c which handle
+> > > > the
+> > > > same issue on older chipsets, we really should add one for
+> > > > these kind
+> > > > of systems to avoid fiddling with the BIOS (which you can, but
+> > > > most
+> > > > people cannot).
+> > > Agreed, and I will follow-up with Kar Hin Ong to get them added.
+> > 
+> > Much appreciated.
+> 
+> Any update on this?
 
-Thomas Gleixner <tglx@linutronix.de> writes:
-> Sean V Kelley <sean.v.kelley@linux.intel.com> writes:
->> So I will ensure we actually create useful information pointing to this
->> behavior either in kernel docs or online as in a white paper or both.
->
-> Great.
->
->>> As we have already quirks in drivers/pci/quirks.c which handle the
->>> same issue on older chipsets, we really should add one for these kind
->>> of systems to avoid fiddling with the BIOS (which you can, but most
->>> people cannot).
->
->> Agreed, and I will follow-up with Kar Hin Ong to get them added.
->
-> Much appreciated.
+Hi Thomas,
 
-Any update on this?
+I've been working with Kar Hin in attempting to follow a similar
+pattern to the earlier PCI quirks done with ESB / ESB2 chipsets.
+However, the optional INTX routing table which was a part of the
+original quirk done about 10 years ago changed by the time these
+Haswell PCH arrived.  The later PCH aligned with the BIOS switch
+becoming available and the deprecation of the bypass routing.  We're
+testing a few more things, and I hope to have a conclusion this week.
 
 Thanks,
 
-        tglx
+Sean
+
+> 
+> Thanks,
+> 
+>         tglx
+
