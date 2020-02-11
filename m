@@ -2,100 +2,113 @@ Return-Path: <SRS0=yCAb=37=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.4 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
+X-Spam-Status: No, score=-6.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 17ABFC352A3
-	for <linux-rt-users@archiver.kernel.org>; Tue, 11 Feb 2020 10:24:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3FADCC352A3
+	for <linux-rt-users@archiver.kernel.org>; Tue, 11 Feb 2020 11:49:12 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id D933120714
-	for <linux-rt-users@archiver.kernel.org>; Tue, 11 Feb 2020 10:24:18 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1515520842
+	for <linux-rt-users@archiver.kernel.org>; Tue, 11 Feb 2020 11:49:12 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=ti.com header.i=@ti.com header.b="ieDwTSX3"
+	dkim=pass (2048-bit key) header.d=unikie-com.20150623.gappssmtp.com header.i=@unikie-com.20150623.gappssmtp.com header.b="Zwkrrrop"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728338AbgBKKYK (ORCPT
+        id S1728595AbgBKLtL (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 11 Feb 2020 05:24:10 -0500
-Received: from fllv0015.ext.ti.com ([198.47.19.141]:56092 "EHLO
-        fllv0015.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728236AbgBKKYK (ORCPT
+        Tue, 11 Feb 2020 06:49:11 -0500
+Received: from mail-ot1-f67.google.com ([209.85.210.67]:40372 "EHLO
+        mail-ot1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727686AbgBKLtK (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 11 Feb 2020 05:24:10 -0500
-Received: from fllv0035.itg.ti.com ([10.64.41.0])
-        by fllv0015.ext.ti.com (8.15.2/8.15.2) with ESMTP id 01BAO3JI080604;
-        Tue, 11 Feb 2020 04:24:03 -0600
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ti.com;
-        s=ti-com-17Q1; t=1581416643;
-        bh=IT0XtP14rOcxVvIjEkJLAVhnV8MbpGdBDYqA20Ogvvg=;
-        h=To:CC:From:Subject:Date;
-        b=ieDwTSX3jBi/zU1u4phaOZr/3Ii8HGFTXg5HGFMr7ljayvLceHG8Ur/umMkvypjRh
-         QAQk97bS+itM9Sg0T+qBvIFm/dBtzumU10HinzZarwXkKrmUxTzv/JcfNi8oIXIkIW
-         SvftF7u0/x73WxmsKAgW8ob+31xkdvsU5ZvYCsdk=
-Received: from DLEE114.ent.ti.com (dlee114.ent.ti.com [157.170.170.25])
-        by fllv0035.itg.ti.com (8.15.2/8.15.2) with ESMTP id 01BAO2kT021354;
-        Tue, 11 Feb 2020 04:24:03 -0600
-Received: from DLEE103.ent.ti.com (157.170.170.33) by DLEE114.ent.ti.com
- (157.170.170.25) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1847.3; Tue, 11
- Feb 2020 04:24:02 -0600
-Received: from fllv0040.itg.ti.com (10.64.41.20) by DLEE103.ent.ti.com
- (157.170.170.33) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1847.3 via
- Frontend Transport; Tue, 11 Feb 2020 04:24:03 -0600
-Received: from [10.250.100.73] (ileax41-snat.itg.ti.com [10.172.224.153])
-        by fllv0040.itg.ti.com (8.15.2/8.15.2) with ESMTP id 01BAO08Y044972;
-        Tue, 11 Feb 2020 04:24:01 -0600
-To:     "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        Petr Mladek <pmladek@suse.com>
-CC:     <linux-rt-users@vger.kernel.org>,
-        Linux ARM <linux-arm-kernel@lists.infradead.org>,
-        netdev <netdev@vger.kernel.org>,
-        Richard Cochran <richardcochran@gmail.com>
-From:   Grygorii Strashko <grygorii.strashko@ti.com>
-Subject: Question about kthread_mod_delayed_work() allowed context
-Message-ID: <cfa886ad-e3b7-c0d2-3ff8-58d94170eab5@ti.com>
-Date:   Tue, 11 Feb 2020 12:23:59 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.2.2
+        Tue, 11 Feb 2020 06:49:10 -0500
+Received: by mail-ot1-f67.google.com with SMTP id i6so9742160otr.7
+        for <linux-rt-users@vger.kernel.org>; Tue, 11 Feb 2020 03:49:10 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=unikie-com.20150623.gappssmtp.com; s=20150623;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=CdQ8uyZJp0H7HbBqHOaqMySCKidw3JNLf1nTYreWAoA=;
+        b=ZwkrrropDfUnMaAkHpB/8lbQ7/ApCwfc1qVmd15m9wopEoMrjMQ4BysvAahcRhNR4F
+         nIh9zAgqGwTydNB/Ad58JBorwlVtwPSC5eVhS4Kw0wQDy/SofcWLwBUx1E+KMej0Jj6J
+         sUh5LXNwaIyvAOL9HaUkTq2eorbCxHM8+VG0U04QZBkIQxRggD1KHlnhJL4jLtrwrl87
+         tPrloRjjzVTOD1hbQzdw/xX2LfIq0XzvyzYqUO5NZN/EO5NNB1VNaC0b/GsyiuzTV7bc
+         nZC4S47cm30eAN+I/wXyTOvC4QhEIIFqoQR+de29zWwVnClVuPpWjmIcD387PbO9g7S6
+         KEGw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=CdQ8uyZJp0H7HbBqHOaqMySCKidw3JNLf1nTYreWAoA=;
+        b=e2EH1WqqbqwRGzoEdJf0ec6LFBw75SpSDX+bH9f0Bo+zDhiTGqte0xokwlavagaaL9
+         ACOyfLb9S/j/akUfQhCu1voAWp7kMOGeptvCGOmxBetx7XNSxoO2TsbjdzCkhGAS4NRJ
+         iPOydbYbEZ7WGUnS0MLl84LUlzS0+/1uYKVqDBASg9qLsjMP9gKY7r6GNEjDaEMTRir2
+         kR+jLHKUtyhlv9YMVFoNZIUsejLthcpfqtTqm4mcgF7V/xQRp1Mqw7d77Q4qV+C9KzzX
+         8c73pf2wBG+/iNqyM3sb8cdpyEkX/OatrOa+4U2KG1qd9vAw7Qm8Muwrk9rUHQvd7F69
+         AttA==
+X-Gm-Message-State: APjAAAUswIRGmoBqj3ROl7oA2jzQ+mYaWJP0RFYDFgBENaEgvyTy7QIB
+        OkG7AI+tQbQ2huAWSPFXdbZHvUDHw/7t9Jy9rYsePg==
+X-Google-Smtp-Source: APXvYqygYZuegxVllpAZHMft6m/x995VLdmrte/RWq+SC/H1vlKTgF61aBGvOwmPyrmZmLkunBc5VhVfI20jOIIdQtw=
+X-Received: by 2002:a9d:6b03:: with SMTP id g3mr4886263otp.200.1581421750056;
+ Tue, 11 Feb 2020 03:49:10 -0800 (PST)
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
-X-EXCLAIMER-MD-CONFIG: e1e8a2fd-e40a-4ac6-ac9b-f7e9cc9ee180
+References: <20191218165334.k4suur4gzlu62ibs@linutronix.de>
+ <20191231100051.658-1-john.mathew@unikie.com> <20200114124732.mbw6lfrajmaxjkce@linutronix.de>
+In-Reply-To: <20200114124732.mbw6lfrajmaxjkce@linutronix.de>
+From:   John Mathew <john.mathew@unikie.com>
+Date:   Tue, 11 Feb 2020 13:48:59 +0200
+Message-ID: <CAJz2qXntOC31LcfphJDdotQ2pMZjV8DPECMF-H7dDPWFZbw=VQ@mail.gmail.com>
+Subject: Re: [PATCH] crypto: only wait for completion once
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     linux-rt-users@vger.kernel.org,
+        Lukas Bulwahn <lukas.bulwahn@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi All,
+On Tue, Jan 14, 2020 at 2:47 PM Sebastian Andrzej Siewior
+<bigeasy@linutronix.de> wrote:
+>
+> On 2019-12-31 12:00:51 [+0200], John Mathew wrote:
+> > Proposed fix for the swake_up_all_locked warnings issue discussed in
+> > Link: https://lore.kernel.org/linux-rt-users/20191218165334.k4suur4gzlu62ibs@linutronix.de/T/#t
+> > Currently multiple wait for completions are scheduled for the same algo.
+> > Only one completes and the rest are returned with ENOENT. This patch
+> > checks for the name of the algorithm going to be waited up on, and if
+> > the algorithm is already being waited for completion return EAGAIN ,
+> > without accumulating completions and returning ENOENT.
+>
+> Have you tested this patch and if so how?
+I ran the syzkaller for many days and was not able to reproduce the
+hang, also no new issues were found.
+Do you know any more tests for the crypto functionality?
 
-I'd like to ask question about allowed calling context for kthread_mod_delayed_work().
-
-The comment to kthread_mod_delayed_work() says:
-
-  * This function is safe to call from any context including IRQ handler.
-  * See __kthread_cancel_work() and kthread_delayed_work_timer_fn()
-  * for details.
-  */
-
-But it has del_timer_sync() inside which seems can't be called from hard_irq context:
-kthread_mod_delayed_work()
-   |-__kthread_cancel_work()
-      |- del_timer_sync()
-	|- WARN_ON(in_irq() && !(timer->flags & TIMER_IRQSAFE));
-
-My use case is related to PTP processing using PTP auxiliary worker:
-(commit d9535cb7b760 ("ptp: introduce ptp auxiliary worker")):
-  - periodic work A is started and res-schedules itself for every dtX
-  - on IRQ - the work A need to be scheduled immediately
-
-Any advice on how to proceed?
-Can kthread_queue_work() be used even if there is delayed work is
-scheduled already (in general, don't care if work A will be executed one
-more time after timer expiration)?
-
--- 
-Best regards,
-grygorii
+>
+> > Signed-off-by: John Mathew <john.mathew@unikie.com>
+> > ---
+> >  crypto/api.c | 8 ++++++--
+> >  1 file changed, 6 insertions(+), 2 deletions(-)
+> >
+> > diff --git a/crypto/api.c b/crypto/api.c
+> > index d8ba54142620..1c6004e7ab6c 100644
+> > --- a/crypto/api.c
+> > +++ b/crypto/api.c
+> > @@ -234,8 +234,12 @@ static struct crypto_alg *crypto_larval_lookup(const char *name, u32 type,
+> >               alg = crypto_alg_lookup(name, type, mask);
+> >       }
+> >
+> > -     if (!IS_ERR_OR_NULL(alg) && crypto_is_larval(alg))
+> > -             alg = crypto_larval_wait(alg);
+> > +     if (!IS_ERR_OR_NULL(alg) && crypto_is_larval(alg))      {
+> > +             if (!strcmp(alg->cra_name, name))
+> > +                     alg = ERR_PTR(-EAGAIN);
+> > +             else
+> > +                     alg = crypto_larval_wait(alg);
+> > +     }
+> >       else if (!alg)
+> >               alg = crypto_larval_add(name, type, mask);
+> >
+> Sebastian
