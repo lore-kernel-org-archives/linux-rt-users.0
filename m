@@ -1,92 +1,101 @@
-Return-Path: <SRS0=+Dnv=36=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=yCAb=37=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-14.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PULL_REQUEST,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.4 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0F6AAC352A4
-	for <linux-rt-users@archiver.kernel.org>; Mon, 10 Feb 2020 23:07:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 17ABFC352A3
+	for <linux-rt-users@archiver.kernel.org>; Tue, 11 Feb 2020 10:24:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id CE443214DB
-	for <linux-rt-users@archiver.kernel.org>; Mon, 10 Feb 2020 23:07:13 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1581376033;
-	bh=v4MWXkBpT97z2HJ+pp8eynX39nXyP1+HXNlEmVtHIdI=;
-	h=From:To:Cc:Subject:Date:List-ID:From;
-	b=k4c0EmuvDqzBDnIJXRWoyT8O/emHkWiQXk1SxPkYqYyplusdmDNydo6Gpccx2cOBI
-	 TnkxySBDNAJBmVq9BfEz/QitCst/noihsoHHcwRLCLisVwlI1V9I99SWF6dAMLmhm8
-	 sWcagc2UwcGi6X9u3CUs8NGesdE/jGKQqgs9lXxQ=
+	by mail.kernel.org (Postfix) with ESMTP id D933120714
+	for <linux-rt-users@archiver.kernel.org>; Tue, 11 Feb 2020 10:24:18 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=ti.com header.i=@ti.com header.b="ieDwTSX3"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727455AbgBJXG5 (ORCPT
+        id S1728338AbgBKKYK (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 10 Feb 2020 18:06:57 -0500
-Received: from mail.kernel.org ([198.145.29.99]:46602 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727116AbgBJXG5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 10 Feb 2020 18:06:57 -0500
-Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 1A39120733;
-        Mon, 10 Feb 2020 23:06:56 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1581376016;
-        bh=v4MWXkBpT97z2HJ+pp8eynX39nXyP1+HXNlEmVtHIdI=;
-        h=From:To:Cc:Subject:Date:From;
-        b=jUk8ystgpZdvQuU6x6LqjpbRk0btFuT84cFVc5DQvJaoe/tvGcwJr5H74OL+2F5PN
-         /Fi6nt/4yODkk33RexhL4sqNnFUNCaYhtzHlW2Afc68zQMvQWhreA4jGT6r/piR1YE
-         hpzCSlRRqMxoqRavjemPM5z6hP0AH6mBQXmd1LFE=
-From:   Tom Zanussi <zanussi@kernel.org>
-To:     rostedt@goodmis.org
-Cc:     artem.bityutskiy@linux.intel.com, mhiramat@kernel.org,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: [PATCH 0/3] tracing: Synthetic event fixes and updates
-Date:   Mon, 10 Feb 2020 17:06:47 -0600
-Message-Id: <cover.1581374549.git.zanussi@kernel.org>
-X-Mailer: git-send-email 2.14.1
+        Tue, 11 Feb 2020 05:24:10 -0500
+Received: from fllv0015.ext.ti.com ([198.47.19.141]:56092 "EHLO
+        fllv0015.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728236AbgBKKYK (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 11 Feb 2020 05:24:10 -0500
+Received: from fllv0035.itg.ti.com ([10.64.41.0])
+        by fllv0015.ext.ti.com (8.15.2/8.15.2) with ESMTP id 01BAO3JI080604;
+        Tue, 11 Feb 2020 04:24:03 -0600
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ti.com;
+        s=ti-com-17Q1; t=1581416643;
+        bh=IT0XtP14rOcxVvIjEkJLAVhnV8MbpGdBDYqA20Ogvvg=;
+        h=To:CC:From:Subject:Date;
+        b=ieDwTSX3jBi/zU1u4phaOZr/3Ii8HGFTXg5HGFMr7ljayvLceHG8Ur/umMkvypjRh
+         QAQk97bS+itM9Sg0T+qBvIFm/dBtzumU10HinzZarwXkKrmUxTzv/JcfNi8oIXIkIW
+         SvftF7u0/x73WxmsKAgW8ob+31xkdvsU5ZvYCsdk=
+Received: from DLEE114.ent.ti.com (dlee114.ent.ti.com [157.170.170.25])
+        by fllv0035.itg.ti.com (8.15.2/8.15.2) with ESMTP id 01BAO2kT021354;
+        Tue, 11 Feb 2020 04:24:03 -0600
+Received: from DLEE103.ent.ti.com (157.170.170.33) by DLEE114.ent.ti.com
+ (157.170.170.25) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1847.3; Tue, 11
+ Feb 2020 04:24:02 -0600
+Received: from fllv0040.itg.ti.com (10.64.41.20) by DLEE103.ent.ti.com
+ (157.170.170.33) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1847.3 via
+ Frontend Transport; Tue, 11 Feb 2020 04:24:03 -0600
+Received: from [10.250.100.73] (ileax41-snat.itg.ti.com [10.172.224.153])
+        by fllv0040.itg.ti.com (8.15.2/8.15.2) with ESMTP id 01BAO08Y044972;
+        Tue, 11 Feb 2020 04:24:01 -0600
+To:     "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        Petr Mladek <pmladek@suse.com>
+CC:     <linux-rt-users@vger.kernel.org>,
+        Linux ARM <linux-arm-kernel@lists.infradead.org>,
+        netdev <netdev@vger.kernel.org>,
+        Richard Cochran <richardcochran@gmail.com>
+From:   Grygorii Strashko <grygorii.strashko@ti.com>
+Subject: Question about kthread_mod_delayed_work() allowed context
+Message-ID: <cfa886ad-e3b7-c0d2-3ff8-58d94170eab5@ti.com>
+Date:   Tue, 11 Feb 2020 12:23:59 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.2.2
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
+X-EXCLAIMER-MD-CONFIG: e1e8a2fd-e40a-4ac6-ac9b-f7e9cc9ee180
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Steve,
+Hi All,
 
-I noticed a couple bugs while creating a patch consolidating the
-synthetic event trace() functions.  Here are the two bugfixes along
-with the consolidated trace patch.
+I'd like to ask question about allowed calling context for kthread_mod_delayed_work().
 
-The first patch adds a missing ring_buffer_nest_end() in an error
-case, and the second removes unnecessary error returns when an event
-is soft disabled.
+The comment to kthread_mod_delayed_work() says:
 
-The third patch consolidates the common code in synth_event_trace_array(),
-synth_event_trace() and synth_event_trace_start().
+  * This function is safe to call from any context including IRQ handler.
+  * See __kthread_cancel_work() and kthread_delayed_work_timer_fn()
+  * for details.
+  */
 
-Thanks,
+But it has del_timer_sync() inside which seems can't be called from hard_irq context:
+kthread_mod_delayed_work()
+   |-__kthread_cancel_work()
+      |- del_timer_sync()
+	|- WARN_ON(in_irq() && !(timer->flags & TIMER_IRQSAFE));
 
-Tom
+My use case is related to PTP processing using PTP auxiliary worker:
+(commit d9535cb7b760 ("ptp: introduce ptp auxiliary worker")):
+  - periodic work A is started and res-schedules itself for every dtX
+  - on IRQ - the work A need to be scheduled immediately
 
-
-The following changes since commit 7a1f8097178832627261a16e32973b12a0355dad:
-
-  bootconfig: Use parse_args() to find bootconfig and '--' (2020-02-07 20:51:08 -0500)
-
-are available in the git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/zanussi/linux-trace.git ftrace/synth-event-gen-fixes-v1
-
-Tom Zanussi (3):
-  tracing: Add missing nest end to synth_event_trace_start() error case
-  tracing: Don't return -EINVAL when tracing soft disabled synth events
-  tracing: Consolidate trace() functions
-
- include/linux/trace_events.h     |   2 +-
- kernel/trace/trace_events_hist.c | 227 +++++++++++++++------------------------
- 2 files changed, 87 insertions(+), 142 deletions(-)
+Any advice on how to proceed?
+Can kthread_queue_work() be used even if there is delayed work is
+scheduled already (in general, don't care if work A will be executed one
+more time after timer expiration)?
 
 -- 
-2.14.1
-
+Best regards,
+grygorii
