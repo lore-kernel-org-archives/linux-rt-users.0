@@ -2,90 +2,98 @@ Return-Path: <SRS0=WKTr=4A=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3797DC2BA83
-	for <linux-rt-users@archiver.kernel.org>; Wed, 12 Feb 2020 12:55:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0C61AC2BA83
+	for <linux-rt-users@archiver.kernel.org>; Wed, 12 Feb 2020 15:41:23 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id F320920659
-	for <linux-rt-users@archiver.kernel.org>; Wed, 12 Feb 2020 12:55:41 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=unikie-com.20150623.gappssmtp.com header.i=@unikie-com.20150623.gappssmtp.com header.b="RsJOljxL"
+	by mail.kernel.org (Postfix) with ESMTP id DCD93206ED
+	for <linux-rt-users@archiver.kernel.org>; Wed, 12 Feb 2020 15:41:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727933AbgBLMzl (ORCPT
+        id S1728398AbgBLPlS (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 12 Feb 2020 07:55:41 -0500
-Received: from mail-ot1-f67.google.com ([209.85.210.67]:32868 "EHLO
-        mail-ot1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727904AbgBLMzl (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 12 Feb 2020 07:55:41 -0500
-Received: by mail-ot1-f67.google.com with SMTP id b18so1801272otp.0
-        for <linux-rt-users@vger.kernel.org>; Wed, 12 Feb 2020 04:55:40 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=unikie-com.20150623.gappssmtp.com; s=20150623;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=sgYIL2d4d27MbWyy0k/6/4pfAddFsUUccOuBr5M1J90=;
-        b=RsJOljxLSdeEQ+0uValA16C/pORujdoxQTVXyEzO5lNoB2zdiIf3Kaeqq1u1SukhbD
-         ev7cYIXW3MCDI5HyEMyErpPa1vVfb1z0FsxWOFpWtFYJJEjdADsZck+2c/AX8mrWr/TC
-         /KxMc4/qEcShG1VG65m+8antQgW7aUNNvHTOjB+xpwows+4p7Epu3EmF7tRy41Wp2o5k
-         6dBE+zkCBbZt/p0M8isw2tjShsIjCYSdEg9oaULIfFc7Qaxgvb+63ZelFjV95eShN6jp
-         gqjEdMyk+LOkdZKvykdeKW4BYHG7QoTJojYPp/MVx3KCIAYb5wmPn4mgHFWNORD4t/dA
-         UyLQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=sgYIL2d4d27MbWyy0k/6/4pfAddFsUUccOuBr5M1J90=;
-        b=AyHOMguhEsMDoSV7Zen/U+XJnNLHrTDwjhJTkK4FeaYNG0qA9MHU1PID9+B0EjKriX
-         8cJuULwyRvS2/CgdgEfZDsD+qZC6e14x3om5guFDM+c2yrqciKw6Ze1Al5E75JMpfhfz
-         gWMycsl5objIQS9o1JXhy/ElW4CT2xC+VhHK8h1IPqYPHUphdVdo/N9M3NtB65jzi0Nf
-         7xL+b/qtqdgAYR2jAYbJUbocriHXMEWkc8Os/IQM2L1x9UMepF8+gp18GxvI1G6zXZa9
-         o5pXZf16TJTfmUpa7Vv42uSzUu/gQb2Cd2i6W5QLNDMI0VzH4X2hDII9eTk14p2Qgvlv
-         Ecng==
-X-Gm-Message-State: APjAAAXhmQ0M/UpmgDDrYRPa7p3N4xDnTt7sDI94fzfjXjs78RBCM3ur
-        so7DaNx9jsd4hzl5biGg/iupQIexbxnomdKjwxnt9Q==
-X-Google-Smtp-Source: APXvYqwZcQkOrE1hxfZhAp4a3NyoFos0fxyOXz+PWFatOLDPLSX2R9k1dYn66ir3cizAxhBGo4irnjRR/qZodwsOO8E=
-X-Received: by 2002:a05:6830:155a:: with SMTP id l26mr9291710otp.339.1581512140476;
- Wed, 12 Feb 2020 04:55:40 -0800 (PST)
+        Wed, 12 Feb 2020 10:41:18 -0500
+Received: from mx2.suse.de ([195.135.220.15]:53848 "EHLO mx2.suse.de"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1727458AbgBLPlS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 12 Feb 2020 10:41:18 -0500
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+Received: from relay2.suse.de (unknown [195.135.220.254])
+        by mx2.suse.de (Postfix) with ESMTP id AD517B004;
+        Wed, 12 Feb 2020 15:41:16 +0000 (UTC)
+Date:   Wed, 12 Feb 2020 16:41:16 +0100
+From:   Petr Mladek <pmladek@suse.com>
+To:     Grygorii Strashko <grygorii.strashko@ti.com>
+Cc:     "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Linux ARM <linux-arm-kernel@lists.infradead.org>,
+        netdev <netdev@vger.kernel.org>,
+        Richard Cochran <richardcochran@gmail.com>
+Subject: Re: Question about kthread_mod_delayed_work() allowed context
+Message-ID: <20200212154116.hh2vdyi7e2xflxr5@pathway.suse.cz>
+References: <cfa886ad-e3b7-c0d2-3ff8-58d94170eab5@ti.com>
 MIME-Version: 1.0
-References: <20191218165334.k4suur4gzlu62ibs@linutronix.de>
- <20191231100051.658-1-john.mathew@unikie.com> <20200114124732.mbw6lfrajmaxjkce@linutronix.de>
- <CAJz2qXntOC31LcfphJDdotQ2pMZjV8DPECMF-H7dDPWFZbw=VQ@mail.gmail.com>
- <20200211120443.tpb5feweflnjr72i@linutronix.de> <CAJz2qXn_bSF5iRKZLVfrMxQXYS8cfOs9GqJtrizzpiAXR4kzAg@mail.gmail.com>
- <20200211155925.ctrtxyxh3pfuo2os@linutronix.de>
-In-Reply-To: <20200211155925.ctrtxyxh3pfuo2os@linutronix.de>
-From:   John Mathew <john.mathew@unikie.com>
-Date:   Wed, 12 Feb 2020 14:55:29 +0200
-Message-ID: <CAJz2qXk=OXRFV8XGWbh+pMG3CLX6Htkwi+jR635U4sibNaGdxw@mail.gmail.com>
-Subject: Re: [PATCH] crypto: only wait for completion once
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     linux-rt-users@vger.kernel.org,
-        Lukas Bulwahn <lukas.bulwahn@gmail.com>
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <cfa886ad-e3b7-c0d2-3ff8-58d94170eab5@ti.com>
+User-Agent: NeoMutt/20170912 (1.9.0)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, Feb 11, 2020 at 5:59 PM Sebastian Andrzej Siewior
-<bigeasy@linutronix.de> wrote:
->
-> On 2020-02-11 17:52:44 [+0200], John Mathew wrote:
-> > > crypto/tcrypt.c
-> > I ran the module in a loop with mode ranging from 0..200. The output
-> > is the same (tcrypt: all tests passed ) with and without my patch.
->
-> Try one of the modes which are not built-in but provided by a module.
-> And the module must not be loaded before starting the test.
+On Tue 2020-02-11 12:23:59, Grygorii Strashko wrote:
+> Hi All,
+> 
+> I'd like to ask question about allowed calling context for kthread_mod_delayed_work().
+> 
+> The comment to kthread_mod_delayed_work() says:
+> 
+>  * This function is safe to call from any context including IRQ handler.
+>  * See __kthread_cancel_work() and kthread_delayed_work_timer_fn()
+>  * for details.
+>  */
+> 
+> But it has del_timer_sync() inside which seems can't be called from hard_irq context:
+> kthread_mod_delayed_work()
+>   |-__kthread_cancel_work()
+>      |- del_timer_sync()
+> 	|- WARN_ON(in_irq() && !(timer->flags & TIMER_IRQSAFE));
 
-I tried the mode 26 which tests the "anubis" module. The module is
-loaded dynamically after starting the test.
-Using traces in the code i confirmed that the algo lookup and tfm
-creation works fine.
-alg_test returns 0.
->
-> Sebastian
+It is safe because kthread_delayed_work_timer_fn() is IRQ safe.
+Note that it uses raw_spin_lock_irqsave(). It is the reason why
+the timer could have set TIMER_IRQSAFE flag, see
+KTHREAD_DELAYED_WORK_INIT().
+
+In more details. The timer is either canceled before the callback
+is called. Or it waits for the callback but the callback is safe
+because it can't sleep.
+
+
+> My use case is related to PTP processing using PTP auxiliary worker:
+> (commit d9535cb7b760 ("ptp: introduce ptp auxiliary worker")):
+>  - periodic work A is started and res-schedules itself for every dtX
+>  - on IRQ - the work A need to be scheduled immediately
+
+This is exactly where kthread_mod_delayed_work() need to be used
+in the IRQ context with 0 delay.
+
+
+> Any advice on how to proceed?
+> Can kthread_queue_work() be used even if there is delayed work is
+> scheduled already (in general, don't care if work A will be executed one
+> more time after timer expiration)?
+
+Yes, it can be used this way. It should behave the same way as
+the workqueue API.
+
+I am happy that there are more users for this API. I wanted to
+convert more kthreads but it was just falling down in my TODO.
+
+I hope that I answered all questions. Feel free to ask more
+when in doubts.
+
+Best Regards,
+Petr
