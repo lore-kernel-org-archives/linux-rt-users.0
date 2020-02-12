@@ -2,100 +2,72 @@ Return-Path: <SRS0=WKTr=4A=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.6 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E5EEBC2BA83
-	for <linux-rt-users@archiver.kernel.org>; Wed, 12 Feb 2020 16:03:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 93DE9C2BA83
+	for <linux-rt-users@archiver.kernel.org>; Wed, 12 Feb 2020 17:02:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id BF1EE20873
-	for <linux-rt-users@archiver.kernel.org>; Wed, 12 Feb 2020 16:03:31 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1581523411;
-	bh=GgQY7ZaZhtEOuvcoDyLDV8sSYVstp3cSHDoUNqYh8F8=;
-	h=Subject:From:To:Cc:Date:In-Reply-To:References:List-ID:From;
-	b=mOFOzmYXIfeaJMwOV+BwFelrNePPo/GrEaVwmSiLIte7zqSWa3qohRIlLB+m40/fW
-	 oZ6eji+x4rhUYyy2omd0SJHe4pNfkA043nJrp09ZoDXeDBLWCjeAtamKi03t4Atuac
-	 4TeJf7g22N4mlL4MHohHDmS79+9AHSzby81FwdPg=
+	by mail.kernel.org (Postfix) with ESMTP id 6718C20658
+	for <linux-rt-users@archiver.kernel.org>; Wed, 12 Feb 2020 17:02:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727279AbgBLQD1 (ORCPT
+        id S1728793AbgBLRCw (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 12 Feb 2020 11:03:27 -0500
-Received: from mail.kernel.org ([198.145.29.99]:53356 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726728AbgBLQD1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 12 Feb 2020 11:03:27 -0500
-Received: from tzanussi-mobl (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id A19D42082F;
-        Wed, 12 Feb 2020 16:03:26 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1581523407;
-        bh=GgQY7ZaZhtEOuvcoDyLDV8sSYVstp3cSHDoUNqYh8F8=;
-        h=Subject:From:To:Cc:Date:In-Reply-To:References:From;
-        b=J32RPReRl5bmptQJigmJxVdzaw6zo6EvozBcNpH9ydCsdv7VK7N1216VAs9StTW9t
-         hFjeCBiRoEr696NXGpbTPGAwZK0Wl2Tcx5d/7HnYEva6jqMNGHgaNdKgRJRomfUfZQ
-         Qh9E1ZEWvR1j2kzV2XoNLfPNxUrZ0d62i5Qw20A8=
-Message-ID: <1581523405.8740.10.camel@kernel.org>
-Subject: Re: [PATCH] tracing: Skip software disabled event at
- __synth_event_trace_end()
-From:   Tom Zanussi <zanussi@kernel.org>
-To:     Masami Hiramatsu <mhiramat@kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-Cc:     artem.bityutskiy@linux.intel.com, linux-kernel@vger.kernel.org,
-        linux-rt-users@vger.kernel.org
-Date:   Wed, 12 Feb 2020 10:03:25 -0600
-In-Reply-To: <158148685911.20407.3538292497442671878.stgit@devnote2>
-References: <158148685911.20407.3538292497442671878.stgit@devnote2>
-Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.26.1-1 
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+        Wed, 12 Feb 2020 12:02:52 -0500
+Received: from Galois.linutronix.de ([193.142.43.55]:49725 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727054AbgBLRCv (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 12 Feb 2020 12:02:51 -0500
+Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
+        (envelope-from <bigeasy@linutronix.de>)
+        id 1j1vPV-0000xL-S2; Wed, 12 Feb 2020 18:02:49 +0100
+Date:   Wed, 12 Feb 2020 18:02:49 +0100
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     John Mathew <john.mathew@unikie.com>
+Cc:     linux-rt-users@vger.kernel.org,
+        Lukas Bulwahn <lukas.bulwahn@gmail.com>
+Subject: Re: [PATCH] crypto: only wait for completion once
+Message-ID: <20200212170249.xhped3ohjcnwh52s@linutronix.de>
+References: <20191218165334.k4suur4gzlu62ibs@linutronix.de>
+ <20191231100051.658-1-john.mathew@unikie.com>
+ <20200114124732.mbw6lfrajmaxjkce@linutronix.de>
+ <CAJz2qXntOC31LcfphJDdotQ2pMZjV8DPECMF-H7dDPWFZbw=VQ@mail.gmail.com>
+ <20200211120443.tpb5feweflnjr72i@linutronix.de>
+ <CAJz2qXn_bSF5iRKZLVfrMxQXYS8cfOs9GqJtrizzpiAXR4kzAg@mail.gmail.com>
+ <20200211155925.ctrtxyxh3pfuo2os@linutronix.de>
+ <CAJz2qXk=OXRFV8XGWbh+pMG3CLX6Htkwi+jR635U4sibNaGdxw@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <CAJz2qXk=OXRFV8XGWbh+pMG3CLX6Htkwi+jR635U4sibNaGdxw@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Masami,
-
-You're right, this is a bug, thanks for sending the patch to fix it.
-
-Tom
-
-Reviewed-by: Tom Zanussi <zanussi@kernel.org>
-
-
-On Wed, 2020-02-12 at 14:54 +0900, Masami Hiramatsu wrote:
-> When the synthetic event is software disabled,
-> __synth_event_trace_start() does not allocate an event buffer.
-> In this case __synth_event_trace_end() also should not commit
-> the buffer.
+On 2020-02-12 14:55:29 [+0200], John Mathew wrote:
+> On Tue, Feb 11, 2020 at 5:59 PM Sebastian Andrzej Siewior
+> <bigeasy@linutronix.de> wrote:
+> >
+> > On 2020-02-11 17:52:44 [+0200], John Mathew wrote:
+> > > > crypto/tcrypt.c
+> > > I ran the module in a loop with mode ranging from 0..200. The output
+> > > is the same (tcrypt: all tests passed ) with and without my patch.
+> >
+> > Try one of the modes which are not built-in but provided by a module.
+> > And the module must not be loaded before starting the test.
 > 
-> Check the trace_state->disabled at __synth_event_trace_end()
-> and if it is disabled, skip it.
-> 
-> Signed-off-by: Masami Hiramatsu <mhiramat@kernel.org>
-> ---
->  kernel/trace/trace_events_hist.c |    3 +++
->  1 file changed, 3 insertions(+)
-> 
-> diff --git a/kernel/trace/trace_events_hist.c
-> b/kernel/trace/trace_events_hist.c
-> index 483b3fd1094f..781e4b55e117 100644
-> --- a/kernel/trace/trace_events_hist.c
-> +++ b/kernel/trace/trace_events_hist.c
-> @@ -1847,6 +1847,9 @@ __synth_event_trace_start(struct
-> trace_event_file *file,
->  static inline void
->  __synth_event_trace_end(struct synth_event_trace_state *trace_state)
->  {
-> +	if (trace_state->disabled)
-> +		return;
-> +
->  	trace_event_buffer_commit(&trace_state->fbuffer);
->  
->  	ring_buffer_nest_end(trace_state->buffer);
-> 
+> I tried the mode 26 which tests the "anubis" module. The module is
+> loaded dynamically after starting the test.
+> Using traces in the code i confirmed that the algo lookup and tfm
+> creation works fine.
+> alg_test returns 0.
+
+Something isn't right. So when I took a look at it then the patch then
+every user that waited for a module to be loaded did not wait for the
+algorithm to become available but returned with an error instead.
+Now I'm curious why I had a regression here but you don't.
+
+Sebastian
