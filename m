@@ -1,89 +1,60 @@
-Return-Path: <SRS0=wfJr=4B=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=/68O=4C=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A669CC2BA83
-	for <linux-rt-users@archiver.kernel.org>; Thu, 13 Feb 2020 08:33:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A61C1C2BA83
+	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Feb 2020 12:34:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 7C63021734
-	for <linux-rt-users@archiver.kernel.org>; Thu, 13 Feb 2020 08:33:40 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8209B2086A
+	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Feb 2020 12:34:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729526AbgBMIdg (ORCPT
+        id S1729102AbgBNMed (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 13 Feb 2020 03:33:36 -0500
-Received: from mx2.suse.de ([195.135.220.15]:39770 "EHLO mx2.suse.de"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726232AbgBMIdg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 13 Feb 2020 03:33:36 -0500
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.220.254])
-        by mx2.suse.de (Postfix) with ESMTP id 5767EAB92;
-        Thu, 13 Feb 2020 08:33:34 +0000 (UTC)
-Date:   Thu, 13 Feb 2020 09:33:33 +0100
-From:   Petr Mladek <pmladek@suse.com>
-To:     Grygorii Strashko <grygorii.strashko@ti.com>
-Cc:     "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org,
-        Linux ARM <linux-arm-kernel@lists.infradead.org>,
-        netdev <netdev@vger.kernel.org>,
-        Richard Cochran <richardcochran@gmail.com>
-Subject: Re: Question about kthread_mod_delayed_work() allowed context
-Message-ID: <20200213083333.jglatxs5j76z2634@pathway.suse.cz>
-References: <cfa886ad-e3b7-c0d2-3ff8-58d94170eab5@ti.com>
- <20200212154116.hh2vdyi7e2xflxr5@pathway.suse.cz>
- <59802c56-1013-3042-167d-89f288f51b58@ti.com>
+        Fri, 14 Feb 2020 07:34:33 -0500
+Received: from Galois.linutronix.de ([193.142.43.55]:54474 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726220AbgBNMed (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 14 Feb 2020 07:34:33 -0500
+Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
+        (envelope-from <bigeasy@linutronix.de>)
+        id 1j2aAx-000579-7F; Fri, 14 Feb 2020 13:34:31 +0100
+Date:   Fri, 14 Feb 2020 13:34:31 +0100
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Sebastien Fabre <sebastien.fabre@sigfox.com>
+Cc:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        John Ogness <john.ogness@linutronix.de>
+Subject: Re: Crash tool issue since printk re-implementation
+Message-ID: <20200214123431.rsgw62fftclifs3l@linutronix.de>
+References: <PR2PR08MB4681072153BF9E79416BD305951B0@PR2PR08MB4681.eurprd08.prod.outlook.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <59802c56-1013-3042-167d-89f288f51b58@ti.com>
-User-Agent: NeoMutt/20170912 (1.9.0)
+In-Reply-To: <PR2PR08MB4681072153BF9E79416BD305951B0@PR2PR08MB4681.eurprd08.prod.outlook.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed 2020-02-12 21:17:53, Grygorii Strashko wrote:
-> 
-> 
-> On 12/02/2020 17:41, Petr Mladek wrote:
-> > On Tue 2020-02-11 12:23:59, Grygorii Strashko wrote:
-> > > Hi All,
-> > > 
-> > > I'd like to ask question about allowed calling context for kthread_mod_delayed_work().
-> > > 
-> > > The comment to kthread_mod_delayed_work() says:
-> > > 
-> > >   * This function is safe to call from any context including IRQ handler.
-> > >   * See __kthread_cancel_work() and kthread_delayed_work_timer_fn()
-> > >   * for details.
-> > >   */
-> > > 
-> > > But it has del_timer_sync() inside which seems can't be called from hard_irq context:
-> > > kthread_mod_delayed_work()
-> > >    |-__kthread_cancel_work()
-> > >       |- del_timer_sync()
-> > > 	|- WARN_ON(in_irq() && !(timer->flags & TIMER_IRQSAFE));
-> > 
-> > It is safe because kthread_delayed_work_timer_fn() is IRQ safe.
-> > Note that it uses raw_spin_lock_irqsave(). It is the reason why
-> > the timer could have set TIMER_IRQSAFE flag, see
-> > KTHREAD_DELAYED_WORK_INIT().
-> > 
-> > In more details. The timer is either canceled before the callback
-> > is called. Or it waits for the callback but the callback is safe
-> > because it can't sleep.
-> 
-> I think, my issue (warning) could be related to the fact that kthread_init_delayed_work()
-> is used, which seems doesn't set TIMER_IRQSAFE flag.
+On 2020-02-12 12:10:23 [+0000], Sebastien Fabre wrote:
+> Hello,
+Hi,
 
-Great catch!
+> Since kernel v5.0, PREEMPT_RT patches contain printk re-implementation. This re-implementation removes some log symbols in 
+> VMCOREINFO and crash tool cannot retrieve kernel logs (because symbols no more exist).
+> Is this impact on crash expected? If so, how can we retrieve a functional crash tool with kernel v5.0 (and following) ?
 
-It is a bug. Would you like to send the fix for
-kthread_init_delayed_work() or would you prefer me doing so?
+It is known, yes. I'm aware of crash and the gdb scritps should also
+suffer from this. 
+I'm not sure anyone took a look at it (yet) and I don't think that the
+`crash' tool will accept the patches unless final printk rework is
+merged upstream.
 
-Best Regards,
-Petr
+> Thanks,
+> Fabre Sebastien
+
+Sebastian
