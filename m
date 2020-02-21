@@ -2,138 +2,146 @@ Return-Path: <SRS0=P7c/=4J=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.6 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9E8CBC35669
-	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Feb 2020 21:21:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 727BBC35666
+	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Feb 2020 21:25:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 71B54207FD
-	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Feb 2020 21:21:34 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="RX+9MTfv"
+	by mail.kernel.org (Postfix) with ESMTP id 4173224676
+	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Feb 2020 21:25:19 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1582320319;
+	bh=tO7cRQjKEB4q9bUJsNF2pCQeYGZBUa7kmT640jbVpIY=;
+	h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
+	 References:List-ID:From;
+	b=exwZx/FbiL6AYEsV3P6YNgOAINlRbjk20td0Si+vCDT8CR4OW3IY0N1r7rhWrgtAw
+	 DPpPddtLqJiDa9s35oXJbMv8xwh36lZ/sFJi4ABl36xO+pbR3HNaiUh0U3A7ZcN7r6
+	 hc9/Df90ZVJlDHHm5teaTk/B7/IK0je1W6RKJ2QI=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727998AbgBUVVe (ORCPT
+        id S1728765AbgBUVZS (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 21 Feb 2020 16:21:34 -0500
-Received: from mail-qk1-f193.google.com ([209.85.222.193]:33796 "EHLO
-        mail-qk1-f193.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726707AbgBUVVd (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 21 Feb 2020 16:21:33 -0500
-Received: by mail-qk1-f193.google.com with SMTP id c20so3245756qkm.1;
-        Fri, 21 Feb 2020 13:21:33 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=ElrgyGt3aPABV2nXv5o0YBnfRSrXqTbK+erUkIwFAlc=;
-        b=RX+9MTfvMFTXoGCzukIKGNwP2i+7FGJ23hyyBesjzXr5Tz/g9keibb8Z7GBrOQMXoo
-         OkcePZpYO0hWV2HKgSQAc11KNB+6aAM74aT9zp24RE6ST3DtrwjXFJNWL8FV4k+/w8v/
-         h0Ef0eL+bnCDLG/ZeGkqCdg22fovFAaAGPB7HTlxNk2MNLe9Wb5qlT1iOqTP8c5poxJa
-         C3bt+rtEjnHvPd82Oy+G9SmJelfh1YCZCzFxKaiW+/xIccyPBLFBqgHp0bprl7Yk9Yj7
-         4XZTSIgcAx70MrcgWvZICt3vckfs3Xi+O/v+hb46Y8jml6Ly8qF2+aT16e2XjhRN9pIb
-         jaVg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
-         :mime-version:content-transfer-encoding;
-        bh=ElrgyGt3aPABV2nXv5o0YBnfRSrXqTbK+erUkIwFAlc=;
-        b=Xdks59MzqBy7palm20ZLSBcyzWbPVcg7JmagzOSXntRP8Kt4bUUeHYdw2hoizYOXLr
-         m7eC/Evyzlsr8UQoZHCBuWeQ7PR6Ph+R/oh5/8iy0XoLhfPIX3i1VbS4joeqnHSz//mM
-         d3M+BuG8ljaTZGApD5f+yE39Ad3VUw3bJwsKogjI61IRIlmEoUyD19sMqoQHtoF70LaL
-         nyXR0iT1b9KK4Er7ydzxiDj3dzGDDz9A2miSXEY0Ws13j7iorCBV0CyW3LTIFJ5r2Ss2
-         14TF45B9SvW6+hUisYqKU2G9ZJMzTbcxAkg7HxrpF5CXdIAkqHssm590waqirZPd/0HE
-         lHkg==
-X-Gm-Message-State: APjAAAUAgFySl/iOUiMSwNxpLXh7/lVk0NUCFvQnp3SYq8x/hg2ambHh
-        fgScYfmoeYuh3/bhqYxI89mf60eO5Yk=
-X-Google-Smtp-Source: APXvYqyONOj5SX1/vq3sFT1ak6bHSUAp9rVWLFpOVTNJwIcCfloQ+VTcEC7uGk7pC1mRji5VqD/T2A==
-X-Received: by 2002:ae9:e206:: with SMTP id c6mr35012453qkc.454.1582320092516;
-        Fri, 21 Feb 2020 13:21:32 -0800 (PST)
-Received: from planxty.redhat.com (rdwyon0600w-lp130-03-64-231-46-127.dsl.bell.ca. [64.231.46.127])
-        by smtp.gmail.com with ESMTPSA id o21sm2038829qki.56.2020.02.21.13.21.31
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 21 Feb 2020 13:21:32 -0800 (PST)
-From:   John Kacur <jkacur@redhat.com>
-To:     rt-users <linux-rt-users@vger.kernel.org>,
-        lkml <linux-kernel@vger.kernel.org>
-Cc:     Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>
-Subject: [ANNOUNCE] rt-tests-1.7
-Date:   Fri, 21 Feb 2020 16:21:20 -0500
-Message-Id: <20200221212120.14841-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.20.1
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+        Fri, 21 Feb 2020 16:25:18 -0500
+Received: from mail.kernel.org ([198.145.29.99]:38978 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1728351AbgBUVZQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 21 Feb 2020 16:25:16 -0500
+Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 4D3AA24650;
+        Fri, 21 Feb 2020 21:25:15 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1582320316;
+        bh=tO7cRQjKEB4q9bUJsNF2pCQeYGZBUa7kmT640jbVpIY=;
+        h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
+         References:From;
+        b=bsmdGu/qvwQz+4FyGO7NULsGV5yfozGYy8ejmTY4NMOgE1Q1r0imqtp2XP2IDkGcj
+         /koKPSxw/XAofmq26z/vpeywZC+1I+0E0hInwRV401+18hxwD7UMOixHoZzZioQk83
+         KciDBk9Hkq9jqEg/ivamr9kc0qtgWUzPeTPnubrw=
+From:   zanussi@kernel.org
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <wagi@monom.org>,
+        Tom Zanussi <zanussi@kernel.org>
+Subject: [PATCH RT 01/25] Fix wrong-variable use in irq_set_affinity_notifier
+Date:   Fri, 21 Feb 2020 15:24:29 -0600
+Message-Id: <3c564c6520216babcb5ecbd9268bfd3d2e45492c.1582320278.git.zanussi@kernel.org>
+X-Mailer: git-send-email 2.14.1
+In-Reply-To: <cover.1582320278.git.zanussi@kernel.org>
+References: <cover.1582320278.git.zanussi@kernel.org>
+In-Reply-To: <cover.1582320278.git.zanussi@kernel.org>
+References: <cover.1582320278.git.zanussi@kernel.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-- Fixes to queuelat script
-- Little fixes to options and man pages of various programs in the suite
-- Fixes / changes to the new snapshot feature
-- New script get_cyclictest_snapshot to use the snapshot feature
+From: Joe Korty <joe.korty@concurrent-rt.com>
 
-The snapshot feature gets a snapshot of a running cyclictest instance.
-Imagine you are running one or multiple instances of cyclictest on a
-large machine, perhaps with the -q option so that you would only get
-output at the very end, this feature allows you to see the status so far
-without halting cyclictest.
+v4.14.170-rt75-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Clone
-git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-https://kernel.googlesource.com/pub/scm/utils/rt-tests/rt-tests.git
+-----------
 
-Branch: unstable/devel/latest
 
-Tag: v1.7
+[ Fixes upstream commit 3e4242082f0384311f15ab9c93e2620268c6257f,
+  which erroneously switched old_notify->work to notify->work when
+  fixing a merge conflict ]
 
-Tarballs are available here:
-https://kernel.org/pub/linux/utils/rt-tests
+4.14-rt: Fix wrong-variable use in irq_set_affinity_notifier.
 
-Older version tarballs are available here:
-https://kernel.org/pub/linux/utils/rt-tests/older
+The bug was introduced in the 4.14-rt patch
 
-John Kacur (14):
-  rt-tests: queuelat: Assume queuelat is in the path
-  rt-tests: cyclicdeadline: Add a simple manpage for cyclicdeadline
-  rt-tests: pi_stress: Add short options to usage message
-  rt-tests: pi_stress: Sync man page with help
-  rt-tests: queuelat: get_cpuinfo_mhz.sh highest value
-  rt-tests: determine_maximum_mpps.sh: Fix quoting and other shell issue
-  rt-tests: ptsematest: Update man page and add -h option
-  rt-tests: queuelat: Fixes to man page and display_help
-  rt-tests: svsematest: Display help with an error message for -h
-  rt-tests: Use a distinct shm file for each cyclictest instance
-  rt-tests: cyclictest: truncate shm files to zero when USR2 received
-  rt-tests: Add the get_cyclictest_snapshot.py utility
-  rt-tests: Add get_cyclictest_snapshot to Makefile
-  rt-tests: Makefile - update version
+   0461-genirq-Handle-missing-work_struct-in-irq_set_affinit.patch
 
-Kurt Kanzenbach (1):
-  make: Make man page compression configurable
+The symptom is a NULL pointer panic in the i40e driver on
+system shutdown.
 
- Makefile                                  | 77 +++++++++++++++++------
- src/cyclictest/cyclictest.c               | 25 +++++---
- src/cyclictest/get_cyclictest_snapshot.py | 76 ++++++++++++++++++++++
- src/pi_tests/pi_stress.8                  |  9 +--
- src/pi_tests/pi_stress.c                  | 34 +++++-----
- src/ptsematest/ptsematest.8               |  3 +
- src/ptsematest/ptsematest.c               | 10 +--
- src/queuelat/determine_maximum_mpps.sh    | 75 +++++++++++-----------
- src/queuelat/get_cpuinfo_mhz.sh           |  5 +-
- src/queuelat/queuelat.8                   |  4 +-
- src/queuelat/queuelat.c                   | 22 ++++---
- src/sched_deadline/cyclicdeadline.8       | 53 ++++++++++++++++
- src/svsematest/svsematest.c               |  3 +-
- 13 files changed, 291 insertions(+), 105 deletions(-)
- create mode 100755 src/cyclictest/get_cyclictest_snapshot.py
- create mode 100644 src/sched_deadline/cyclicdeadline.8
+    Rebooting.
+    BUG: unable to handle kernel NULL pointer dereference at 0000000000000020
+    IP: __kthread_cancel_work_sync+0x12/0xa0
+    CPU: 15 PID: 6274 Comm: reboot Not tainted 4.14.155-rt70-RedHawk-8.0.2-prt-trace #1
+    task: ffff9ef0d1a58000 task.stack: ffffbe540c038000
+    RIP: 0010:__kthread_cancel_work_sync+0x12/0xa0
+    RSP: 0018:ffffbe540c03bbd8 EFLAGS: 00010296
+    RAX: 0000084000000020 RBX: 0000000000000000 RCX: 0000000000000034
+    RDX: 0000000000000000 RSI: 0000000000000000 RDI: 0000000000000008
+    RBP: ffffbe540c03bc00 R08: ffff9ee8ccdc3800 R09: ffff9ef0d8c0c000
+    R10: ffff9ef0d8c0c028 R11: 0000000000000040 R12: ffff9ee8ccdc3800
+    R13: 0000000000000000 R14: ffff9ee8ccdc3960 R15: 0000000000000074
+    FS:  00007ffff7fcf380(0000) GS:ffff9ef0ffdc0000(0000) knlGS:0000000000000000
+    CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+    CR2: 0000000000000020 CR3: 000000104b428003 CR4: 00000000005606e0
+    DR0: 00000000006040e0 DR1: 00000000006040e8 DR2: 00000000006040f0
+    DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000600
+    PKRU: 55555554
 
+    Call Trace:
+     kthread_cancel_work_sync+0xb/0x10
+     irq_set_affinity_notifier+0x8e/0xc0
+     i40e_vsi_free_irq+0xbc/0x230 [i40e]
+     i40e_vsi_close+0x24/0xa0 [i40e]
+     i40e_close+0x10/0x20 [i40e]
+     i40e_quiesce_vsi.part.40+0x30/0x40 [i40e]
+     i40e_pf_quiesce_all_vsi.isra.41+0x34/0x50 [i40e]
+     i40e_prep_for_reset+0x67/0x110 [i40e]
+     i40e_shutdown+0x39/0x220 [i40e]
+     pci_device_shutdown+0x2b/0x50
+     device_shutdown+0x147/0x1f0
+     kernel_restart_prepare+0x71/0x74
+     kernel_restart+0xd/0x4e
+     SyS_reboot.cold.1+0x9/0x34
+     do_syscall_64+0x7c/0x150
+
+4.19-rt and above do not have this problem due to a refactoring.
+
+Signed-off-by: Joe Korty <Joe.Korty@concurrent-rt.com>
+Signed-off-by: Tom Zanussi <zanussi@kernel.org>
+---
+ kernel/irq/manage.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
+index 071691963f7b..12702d48aaa3 100644
+--- a/kernel/irq/manage.c
++++ b/kernel/irq/manage.c
+@@ -353,7 +353,7 @@ irq_set_affinity_notifier(unsigned int irq, struct irq_affinity_notify *notify)
+ 
+ 	if (old_notify) {
+ #ifdef CONFIG_PREEMPT_RT_BASE
+-		kthread_cancel_work_sync(&notify->work);
++		kthread_cancel_work_sync(&old_notify->work);
+ #else
+ 		cancel_work_sync(&old_notify->work);
+ #endif
 -- 
-2.20.1
+2.14.1
 
