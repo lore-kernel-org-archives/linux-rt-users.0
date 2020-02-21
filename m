@@ -7,40 +7,40 @@ X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DEFADC3566F
-	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Feb 2020 21:26:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1D289C35669
+	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Feb 2020 21:26:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id B5AB924650
-	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Feb 2020 21:26:43 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DB39924650
+	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Feb 2020 21:26:48 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1582320403;
-	bh=MHumjK1yVCfvgQomt98dZYGGfD2i4oMOy7Azh3SPGE0=;
+	s=default; t=1582320409;
+	bh=BodMjiPO1I2v3+3ZzPoqraWPFok3/J5zp6BF7XhVlKs=;
 	h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=u8yuiYwKstdJ1V5ain/hjBsPdj+lX9fQgGUb4oGJE8h4ZSyDRdd/p4YXldlwgsnS8
-	 /4XkFqnEhfDE8lnDeRElArTqsJXwxU1MtGVznPYq/wBIUfnUD30L/rJ05z1pMeXSkG
-	 g0oK2oYLRFUFRPpJWG2uddUExE7OuhpYeO18Zd+Q=
+	b=D0sdGrFZmMck/u/JSvvwNQNmE/Byh3MXYO5Wov32bwJKugF8zDm9Z/BWV2wYDCE1K
+	 kfGHKaJ51G4+yf02DDZOW8T/DmTR8hGT0gBEYRp6bBsEe4aFjGeQMKSeZ+C3iHYvmJ
+	 op2seHUiNUkRHolr/heJua96KApEjKj0zit+bikg=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729120AbgBUVZX (ORCPT
+        id S1729205AbgBUV0o (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 21 Feb 2020 16:25:23 -0500
-Received: from mail.kernel.org ([198.145.29.99]:39094 "EHLO mail.kernel.org"
+        Fri, 21 Feb 2020 16:26:44 -0500
+Received: from mail.kernel.org ([198.145.29.99]:39142 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728351AbgBUVZV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 21 Feb 2020 16:25:21 -0500
+        id S1729066AbgBUVZX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 21 Feb 2020 16:25:23 -0500
 Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 4920924670;
-        Fri, 21 Feb 2020 21:25:20 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 37E6124676;
+        Fri, 21 Feb 2020 21:25:22 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1582320321;
-        bh=MHumjK1yVCfvgQomt98dZYGGfD2i4oMOy7Azh3SPGE0=;
+        s=default; t=1582320322;
+        bh=BodMjiPO1I2v3+3ZzPoqraWPFok3/J5zp6BF7XhVlKs=;
         h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=L6LI9M2/U7k3Rw9vTL0DoWLZ/y9yWRSsjj+fxw/lMdOf56+Zx46Qn3Bw97pa9c5rr
-         jhjzuXJFQ316oQ4tmgLNydJ6LZDEHVo9CqjMiNKrSdr0dkGrcDd60E+7tZFnCFWzWz
-         oxMwaNN0C/7i4yqC+rQ0/uO4OEVqPa9Qr4CT+91U=
+        b=YTQDf/c7eZQB+xA0PPAl+2ykyp0ZaqYS2zvHOt1LMNkr4TTXkMOHBezmCOZl/x7qy
+         7GWNau/jznJLjpjB0DU3ppNCSZsJgXLExK9BP8M59l1v3EUCY0NnZBDhHia0oPDN1h
+         9Cx55J7YV74WubMTylnpEoIk6+hPfosKBywGKr8o=
 From:   zanussi@kernel.org
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -51,17 +51,14 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 06/25] =?UTF-8?q?sched:=20migrate=5Fdis/enable:=20Use?= =?UTF-8?q?=20sleeping=5Flock=E2=80=A6()=20to=20annotate=20sleeping=20poin?= =?UTF-8?q?ts?=
-Date:   Fri, 21 Feb 2020 15:24:34 -0600
-Message-Id: <882928ccb55265cc9fd76858057faac2c132b280.1582320278.git.zanussi@kernel.org>
+Subject: [PATCH RT 08/25] sched: Remove dead __migrate_disabled() check
+Date:   Fri, 21 Feb 2020 15:24:36 -0600
+Message-Id: <6560961cbc09e41f13267a26f5f0951af292d59d.1582320278.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.14.1
 In-Reply-To: <cover.1582320278.git.zanussi@kernel.org>
 References: <cover.1582320278.git.zanussi@kernel.org>
 In-Reply-To: <cover.1582320278.git.zanussi@kernel.org>
 References: <cover.1582320278.git.zanussi@kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
@@ -75,54 +72,39 @@ If anyone has any objections, please let me know.
 -----------
 
 
-[ Upstream commit 4230dd3824c3e1785504e6f757ce79a4b55651fa ]
+[ Upstream commit 14d9272d534ea91262e15db99443fc5995c7c016 ]
 
-Without this, rcu_note_context_switch() will complain if an RCU read lock
-is held when migrate_enable() calls stop_one_cpu().  Likewise when
-migrate_disable() calls pin_current_cpu() which calls __read_rt_lock() --
-which bypasses the part of the mutex code that calls sleeping_lock_inc().
+This code was unreachable given the __migrate_disabled() branch
+to "out" immediately beforehand.
 
 Signed-off-by: Scott Wood <swood@redhat.com>
-[bigeasy: use sleeping_lock_…() ]
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Tom Zanussi <zanussi@kernel.org>
 
  Conflicts:
 	kernel/sched/core.c
 ---
- kernel/cpu.c        | 2 ++
- kernel/sched/core.c | 3 +++
- 2 files changed, 5 insertions(+)
+ kernel/sched/core.c | 7 -------
+ 1 file changed, 7 deletions(-)
 
-diff --git a/kernel/cpu.c b/kernel/cpu.c
-index 05b93cfa6fd9..9be794896d87 100644
---- a/kernel/cpu.c
-+++ b/kernel/cpu.c
-@@ -314,7 +314,9 @@ void pin_current_cpu(void)
- 	preempt_lazy_enable();
- 	preempt_enable();
- 
-+	sleeping_lock_inc();
- 	__read_rt_lock(cpuhp_pin);
-+	sleeping_lock_dec();
- 
- 	preempt_disable();
- 	preempt_lazy_disable();
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index fde47216af94..fcff75934bdc 100644
+index 8d6badac9225..4708129e8df1 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -7045,7 +7045,10 @@ void migrate_enable(void)
- 			unpin_current_cpu();
- 			preempt_lazy_enable();
- 			preempt_enable();
-+
-+			sleeping_lock_inc();
- 			stop_one_cpu(task_cpu(p), migration_cpu_stop, &arg);
-+			sleeping_lock_dec();
- 			tlb_migrate_finish(p->mm);
+@@ -1217,13 +1217,6 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
+ 	if (cpumask_test_cpu(task_cpu(p), new_mask) || __migrate_disabled(p))
+ 		goto out;
  
- 			return;
+-#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
+-	if (__migrate_disabled(p)) {
+-		p->migrate_disable_update = 1;
+-		goto out;
+-	}
+-#endif
+-
+ 	if (task_running(rq, p) || p->state == TASK_WAKING) {
+ 		struct migration_arg arg = { p, dest_cpu };
+ 		/* Need help from migration thread: drop lock and wait. */
 -- 
 2.14.1
 
