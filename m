@@ -7,40 +7,40 @@ X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 58C79C35666
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9A3AEC3566F
 	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Feb 2020 21:26:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 22403208C4
+	by mail.kernel.org (Postfix) with ESMTP id 63A0F208C4
 	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Feb 2020 21:26:40 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
 	s=default; t=1582320400;
-	bh=46wTLqTtOUL+47Ba5LeJsq9AVdB7uqJCADIyE7DVbo0=;
+	bh=U3QRFgorUSPKmV1pjsKNqZxdmuKqHi6ASTjt45Lygjc=;
 	h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=qDQ09lFsG9AT/tBhDfFJj7ybzyTlgRAy5/5ov5txx+4k3ey9TY5BNewR6HKFbw9jt
-	 fJodKJlJLb+68KAL2W6q9Js+IFKxhDgGB7RHEV0mKY48w67uSiwCaLSqzVm9E+k31i
-	 U7trqlXAz9SnmyYDqvUy0Zplpq0flLqDEyPee4Xc=
+	b=nY12kKRp9hwi6zy/95TYmZpO9vLqaFE1xCyCy/gHp7ikPX/y7PjVl0nIc0fvp56Qt
+	 YW4mFHbgqOd4xGCkmXLTANyxUjtnBGCf/tfmp2Fo+YzCLYWD3rBlHCaT7B4V2ygLnu
+	 bEWtNGQl/uPEht4Cp1zgHE60x6r5M2A/wtZNdrdk=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728894AbgBUV0e (ORCPT
+        id S1729195AbgBUVZY (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 21 Feb 2020 16:26:34 -0500
-Received: from mail.kernel.org ([198.145.29.99]:39190 "EHLO mail.kernel.org"
+        Fri, 21 Feb 2020 16:25:24 -0500
+Received: from mail.kernel.org ([198.145.29.99]:39176 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729205AbgBUVZZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 21 Feb 2020 16:25:25 -0500
+        id S1729172AbgBUVZY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 21 Feb 2020 16:25:24 -0500
 Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 43D8D207FD;
-        Fri, 21 Feb 2020 21:25:24 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 3E5282467A;
+        Fri, 21 Feb 2020 21:25:23 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1582320325;
-        bh=46wTLqTtOUL+47Ba5LeJsq9AVdB7uqJCADIyE7DVbo0=;
+        s=default; t=1582320323;
+        bh=U3QRFgorUSPKmV1pjsKNqZxdmuKqHi6ASTjt45Lygjc=;
         h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=eTf/aGjylq0z/O4zw2ek3xatRDHmMkbqqAIDpbfF6oIaGo74rJ+Qq90cULAgqvg1P
-         f4PC0jmTHqbwfvSma/+ntZp4ewVB+/f+Pm3ZGwNA4vQCq+2dhbM4cMvK7zMNUDoWBi
-         E/7/CJxJ5op2XoIUAZ99xgRx9FHS4kSSnETkEqnI=
+        b=YsRQzxWE3n5HLjDQRcu2WAdQciZkZRIetTpuume5gT0hZ+9OK2dJJHDW/o2FiZrBH
+         qOBTcxdD894Mc+xLGB03o9eEfUTpZnnu3OBGgpP7z8Eo39s5Gcaun9YAqhlkajl8Yf
+         0Lvy21CIr8un8Epg4iPd7YUJOG+1ZWygA2F5C8ZY=
 From:   zanussi@kernel.org
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -51,9 +51,9 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 10/25] lib/smp_processor_id: Don't use cpumask_equal()
-Date:   Fri, 21 Feb 2020 15:24:38 -0600
-Message-Id: <369ed4fc17c81f4dddf50babcc39b07a5be7d741.1582320278.git.zanussi@kernel.org>
+Subject: [PATCH RT 09/25] sched: migrate disable: Protect cpus_ptr with lock
+Date:   Fri, 21 Feb 2020 15:24:37 -0600
+Message-Id: <c58bd5258b0f4f0b9ee767ca91402fd392a8c8db.1582320278.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.14.1
 In-Reply-To: <cover.1582320278.git.zanussi@kernel.org>
 References: <cover.1582320278.git.zanussi@kernel.org>
@@ -64,7 +64,7 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Waiman Long <longman@redhat.com>
+From: Scott Wood <swood@redhat.com>
 
 v4.14.170-rt75-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -72,42 +72,44 @@ If anyone has any objections, please let me know.
 -----------
 
 
-[ Upstream commit 659252061477862f45b79e1de169e6030f5c8918 ]
+[ Upstream commit 27ee52a891ed2c7e2e2c8332ccae0de7c2674b09 ]
 
-The check_preemption_disabled() function uses cpumask_equal() to see
-if the task is bounded to the current CPU only. cpumask_equal() calls
-memcmp() to do the comparison. As x86 doesn't have __HAVE_ARCH_MEMCMP,
-the slow memcmp() function in lib/string.c is used.
+Various places assume that cpus_ptr is protected by rq/pi locks,
+so don't change it before grabbing those locks.
 
-On a RT kernel that call check_preemption_disabled() very frequently,
-below is the perf-record output of a certain microbenchmark:
-
-  42.75%  2.45%  testpmd [kernel.kallsyms] [k] check_preemption_disabled
-  40.01% 39.97%  testpmd [kernel.kallsyms] [k] memcmp
-
-We should avoid calling memcmp() in performance critical path. So the
-cpumask_equal() call is now replaced with an equivalent simpler check.
-
-Signed-off-by: Waiman Long <longman@redhat.com>
+Signed-off-by: Scott Wood <swood@redhat.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Tom Zanussi <zanussi@kernel.org>
 ---
- lib/smp_processor_id.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kernel/sched/core.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
 
-diff --git a/lib/smp_processor_id.c b/lib/smp_processor_id.c
-index 6f4a4ae881c8..9f3c8bb62e57 100644
---- a/lib/smp_processor_id.c
-+++ b/lib/smp_processor_id.c
-@@ -23,7 +23,7 @@ notrace static unsigned int check_preemption_disabled(const char *what1,
- 	 * Kernel threads bound to a single CPU can safely use
- 	 * smp_processor_id():
- 	 */
--	if (cpumask_equal(current->cpus_ptr, cpumask_of(this_cpu)))
-+	if (current->nr_cpus_allowed == 1)
- 		goto out;
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 4708129e8df1..189e6f08575e 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -6923,9 +6923,8 @@ migrate_disable_update_cpus_allowed(struct task_struct *p)
+ 	struct rq *rq;
+ 	struct rq_flags rf;
  
- 	/*
+-	p->cpus_ptr = cpumask_of(smp_processor_id());
+-
+ 	rq = task_rq_lock(p, &rf);
++	p->cpus_ptr = cpumask_of(smp_processor_id());
+ 	update_nr_migratory(p, -1);
+ 	p->nr_cpus_allowed = 1;
+ 	task_rq_unlock(rq, p, &rf);
+@@ -6937,9 +6936,8 @@ migrate_enable_update_cpus_allowed(struct task_struct *p)
+ 	struct rq *rq;
+ 	struct rq_flags rf;
+ 
+-	p->cpus_ptr = &p->cpus_mask;
+-
+ 	rq = task_rq_lock(p, &rf);
++	p->cpus_ptr = &p->cpus_mask;
+ 	p->nr_cpus_allowed = cpumask_weight(&p->cpus_mask);
+ 	update_nr_migratory(p, 1);
+ 	task_rq_unlock(rq, p, &rf);
 -- 
 2.14.1
 
