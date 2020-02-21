@@ -2,103 +2,139 @@ Return-Path: <SRS0=P7c/=4J=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=ham
+X-Spam-Status: No, score=-9.6 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 16677C35669
-	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Feb 2020 20:50:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8661AC35669
+	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Feb 2020 21:00:59 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id D6114206EF
-	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Feb 2020 20:50:10 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5712D2073A
+	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Feb 2020 21:00:59 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XDxJ2bEV"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="b7rsq60N"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726725AbgBUUuK (ORCPT
+        id S1726787AbgBUVA6 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 21 Feb 2020 15:50:10 -0500
-Received: from us-smtp-delivery-1.mimecast.com ([207.211.31.120]:39565 "EHLO
-        us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-        with ESMTP id S1726526AbgBUUuJ (ORCPT
+        Fri, 21 Feb 2020 16:00:58 -0500
+Received: from mail-qk1-f195.google.com ([209.85.222.195]:35116 "EHLO
+        mail-qk1-f195.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726683AbgBUVA6 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 21 Feb 2020 15:50:09 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1582318208;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=PW4bV9owzCR0GrgSI7FyXhQJGcIlBlHHH9mjBSVotEs=;
-        b=XDxJ2bEVsHBgbQDeV8zKM+lgYXnVkfCc9ge1rC9hgR00LvakH0AylkZz9m7iQHuhTWBZJp
-        11Otus4E+FAh/O0aK/bpA9bRRt/aD3Pe9nbGI95ACVE+Y7x2P3uOEClIs0V58NA0zEIhfL
-        TcK5sGDoB6u3tTcAVwdbs5oJx8SAdCs=
-Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-9-XwUH1Eu0PoGYWJzsQ7-TUA-1; Fri, 21 Feb 2020 15:50:07 -0500
-X-MC-Unique: XwUH1Eu0PoGYWJzsQ7-TUA-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 71CC2800D4E;
-        Fri, 21 Feb 2020 20:50:05 +0000 (UTC)
-Received: from krava (ovpn-204-57.brq.redhat.com [10.40.204.57])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id 90CC65C1D4;
-        Fri, 21 Feb 2020 20:50:00 +0000 (UTC)
-Date:   Fri, 21 Feb 2020 21:49:57 +0100
-From:   Jiri Olsa <jolsa@redhat.com>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Steven Rostedt <rostedt@goodmis.org>, Jiri Olsa <jolsa@kernel.org>,
-        linux-rt-users@vger.kernel.org,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Juri Lelli <juri.lelli@redhat.com>,
-        Arnaldo Carvalho de Melo <acme@kernel.org>
-Subject: Re: [PATCH RT] tracing: make preempt_lazy and migrate_disable
- counter smaller
-Message-ID: <20200221204957.GE657629@krava>
-References: <20200221153541.681468-1-jolsa@kernel.org>
- <20200221104922.5ea8bb5f@gandalf.local.home>
- <20200221161030.GC657629@krava>
- <20200221112152.031b4230@gandalf.local.home>
- <20200221163735.53wt2fqoajcuj2js@linutronix.de>
- <20200221174419.7r5zxfkvz4yrndi2@linutronix.de>
+        Fri, 21 Feb 2020 16:00:58 -0500
+Received: by mail-qk1-f195.google.com with SMTP id l13so461345qkk.2
+        for <linux-rt-users@vger.kernel.org>; Fri, 21 Feb 2020 13:00:58 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=/M5YAeNI/RvgOduvJ7pu14nLhLBKZxhvhrYEQBQyAtY=;
+        b=b7rsq60NFLOjmx/onPS2AFGZqeEGZiWLYH/6iBtELyPraeHPTv5TI03gbDeModMZgh
+         lfx6w2oS+2EuLsqMBPhG1ZHS8PjYYMPaoz95YDXkgiDZNz7b/+idY/+1JE6sZSKFqoCw
+         aPm/9mliPwy/+oyBn2U2agxJtcCXhhzqnfpGzgBa5LEx2B62dLifE6ODvZMRu1w3mqWS
+         DgaH/uNmtZ8e8tNiDAlJltcxhdFvug4uPjJQsLWH05Hzo8C+3K30yOL43ocxpydtV3b7
+         FXtkFJEhN6+r1D9ckSjz9wSg36HlC3BRPOCaaPWTN4J7QBpNO/NXy9gXJd1iLeU83s1/
+         MleQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
+         :mime-version:content-transfer-encoding;
+        bh=/M5YAeNI/RvgOduvJ7pu14nLhLBKZxhvhrYEQBQyAtY=;
+        b=BXXmNJdJmUADOPRD8colT+1coohMm7Nvw5tSOVJCMPRkvUFsz893Dx0y+MlWL+2ny7
+         IEwgYqm/UIF47psTC0mbfLc4vl6f/bUInPP4IlPBPkmRQRvwiO8648vh5ibU0BUnvrTd
+         61FRR5CCiCqp81tKMPjGgxkUwNHLL9caXdBJeGJh40vwFZvCxUUr08UIIiGrFi3PpO5q
+         QJSsveP2hhkNA1RALyRhBjpRFbJ209d4ig6/Oa9CrFjYyRSt1Cn0uDCbmnu6tN0SO8un
+         r1RUZvX4iMH+nOjpdifYt8hPr13kEG3USmMEPsipbrohd7gJEGjQFxqdANzH04+Dl9AI
+         OMmw==
+X-Gm-Message-State: APjAAAWtXr87kGGeKf4xQKqeO7iGOGee9Qq5c2W7TCyZ//Lqr/Op0s6o
+        VecZUuqqnEt+f/C4OZ0NcE6gfzM17lo=
+X-Google-Smtp-Source: APXvYqz3GB7I/ob44JZ32yblgl4BnJ2VT5kbn5SjBQJ5X2kncML4f/d+27v9IoCW1BYuaRkhrNQy8A==
+X-Received: by 2002:a05:620a:2159:: with SMTP id m25mr19858513qkm.457.1582318857464;
+        Fri, 21 Feb 2020 13:00:57 -0800 (PST)
+Received: from planxty.redhat.com (rdwyon0600w-lp130-03-64-231-46-127.dsl.bell.ca. [64.231.46.127])
+        by smtp.gmail.com with ESMTPSA id h14sm2018561qke.99.2020.02.21.13.00.56
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 21 Feb 2020 13:00:56 -0800 (PST)
+From:   John Kacur <jkacur@redhat.com>
+To:     rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>
+Subject: [PATCH] rt-tests: Add get_cyclictest_snapshot to Makefile
+Date:   Fri, 21 Feb 2020 16:00:47 -0500
+Message-Id: <20200221210047.14107-1-jkacur@redhat.com>
+X-Mailer: git-send-email 2.20.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20200221174419.7r5zxfkvz4yrndi2@linutronix.de>
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+Content-Transfer-Encoding: 8bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, Feb 21, 2020 at 06:44:19PM +0100, Sebastian Andrzej Siewior wrote:
-> The migrate_disable counter should not exceed 255 so it is enough to
-> store it in an 8bit field.
-> With this change we can move the `preempt_lazy_count' member into the
-> gap so the whole struct shrinks by 4 bytes to 12 bytes in total.
-> 
-> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> ---
->  include/linux/trace_events.h | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
-> 
-> diff --git a/include/linux/trace_events.h b/include/linux/trace_events.h
-> index f3b1ef07e4a5f..c8b3f06cb5ed7 100644
-> --- a/include/linux/trace_events.h
-> +++ b/include/linux/trace_events.h
-> @@ -62,9 +62,9 @@ struct trace_entry {
->  	unsigned char		flags;
->  	unsigned char		preempt_count;
->  	int			pid;
-> -	unsigned short		migrate_disable;
-> -	unsigned short		padding;
-> +	unsigned char		migrate_disable;
->  	unsigned char		preempt_lazy_count;
-> +	unsigned short		padding;
+Add get_cyclictest_snapshot to Makefile
 
-also we still need to put preempt_lazy_count as common field:
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ Makefile | 18 ++++++++++++++++--
+ 1 file changed, 16 insertions(+), 2 deletions(-)
 
-	__common_field(unsigned char,  preempt_lazy_count);
-
-jirka
+diff --git a/Makefile b/Makefile
+index ecbd5b1cb98b..ba73d97cd9b1 100644
+--- a/Makefile
++++ b/Makefile
+@@ -122,7 +122,7 @@ $(OBJDIR)/%.d: %.c | $(OBJDIR)
+ 	@$(CC) -MM $(CFLAGS) $(CPPFLAGS) $< | sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' > $@ || rm -f $@
+ 
+ .PHONY: all
+-all: $(TARGETS) hwlatdetect | $(OBJDIR)
++all: $(TARGETS) hwlatdetect get_cyclictest_snapshot | $(OBJDIR)
+ 
+ $(OBJDIR):
+ 	mkdir $(OBJDIR)
+@@ -149,6 +149,10 @@ hwlatdetect:  src/hwlatdetect/hwlatdetect.py
+ 	chmod +x src/hwlatdetect/hwlatdetect.py
+ 	ln -s src/hwlatdetect/hwlatdetect.py hwlatdetect
+ 
++get_cyclictest_snapshot: src/cyclictest/get_cyclictest_snapshot.py
++	chmod +x src/cyclictest/get_cyclictest_snapshot.py
++	ln -s src/cyclictest/get_cyclictest_snapshot.py get_cyclictest_snapshot
++
+ rt-migrate-test: $(OBJDIR)/rt-migrate-test.o $(OBJDIR)/librttest.a
+ 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(RTTESTLIB)
+ 
+@@ -194,6 +198,7 @@ clean:
+ 	for F in $(CLEANUP); do find -type f -name $$F | xargs rm -f; done
+ 	rm -f rt-tests-*.tar
+ 	rm -f hwlatdetect
++	rm -f get_cyclictest_snapshot
+ 	rm -f tags
+ 
+ RPMDIRS = BUILD BUILDROOT RPMS SRPMS SPECS
+@@ -207,7 +212,7 @@ rebuild:
+ 	$(MAKE) all
+ 
+ .PHONY: install
+-install: all install_manpages install_hwlatdetect
++install: all install_manpages install_hwlatdetect install_get_cyclictest_snapshot
+ 	mkdir -p "$(DESTDIR)$(bindir)"
+ 	cp $(TARGETS) "$(DESTDIR)$(bindir)"
+ 	install src/queuelat/get_cpuinfo_mhz.sh "$(DESTDIR)$(bindir)"
+@@ -222,6 +227,15 @@ install_hwlatdetect: hwlatdetect
+ 		ln -s $(PYLIB)/hwlatdetect.py "$(DESTDIR)$(bindir)/hwlatdetect" ; \
+ 	fi
+ 
++.PHONY: install_get_cyclictest_snapshot
++install_get_cyclictest_snapshot: get_cyclictest_snapshot
++	if test -n "${PYLIB}" ; then \
++		mkdir -p "${DESTDIR}${bindir}" ; \
++		install -D -m 755 src/cyclictest/get_cyclictest_snapshot.py ${DESTDIR}${PYLIB}/get_cyclictest_snapshot.py ; \
++		rm -f "${DESTDIR}${bindir}/get_cyclictest_snapshot" ; \
++		ln -s ${PYLIB}/get_cyclictest_snapshot.py "${DESTDIR}${bindir}/get_cyclictest_snapshot" ; \
++	fi
++
+ .PHONY: install_manpages
+ install_manpages: $(MANPAGES)
+ 	mkdir -p "$(DESTDIR)$(mandir)/man8"
+-- 
+2.20.1
 
