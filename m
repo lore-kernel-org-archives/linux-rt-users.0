@@ -7,40 +7,40 @@ X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DDE66C35669
-	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Feb 2020 21:25:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0D325C3566F
+	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Feb 2020 21:25:38 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id AF3B224692
-	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Feb 2020 21:25:36 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D9A1D24694
+	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Feb 2020 21:25:37 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1582320336;
-	bh=uW3tfUlR4IC1gt95wVGRNkZwAxUbH/UJHPnIk28PIYo=;
+	s=default; t=1582320337;
+	bh=i0N2MrNKZHuX++taw3rFk2nCgTfZGw2eHHT1CJg4TdY=;
 	h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=dA8zHe9u8bnfF+oehxWnXmg0TA1eggxtiL4qrXM7n05XF/P0q+7K0Rt9d9p4NtfEJ
-	 Oj36itpslD2ZH5HqchHHLBNefzo3kjT3bY3FCexmzmRVjC0FM+8R0i139YpBU/3MCh
-	 5TovpWhwiZdxNKQUkOqC4dKSiXQ7+quea3Y9KuAs=
+	b=z2sTDi4cYM/SoDx+bfOIFkGr7mKi0e0sJ7K+kXsrKyh5OVBa0q6W43yOE0pj9U04H
+	 yMxPna5JzKQdWNSwDsZZCKETWfdk+EY54tLUhI8abpm3FtPpDxLGmLqHnHurCj+9kp
+	 yLZTATdZe62e5z4tW1/prRoWzDQ+9BX9tT27mlVU=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729624AbgBUVZf (ORCPT
+        id S1729503AbgBUVZh (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 21 Feb 2020 16:25:35 -0500
-Received: from mail.kernel.org ([198.145.29.99]:39388 "EHLO mail.kernel.org"
+        Fri, 21 Feb 2020 16:25:37 -0500
+Received: from mail.kernel.org ([198.145.29.99]:39406 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1729599AbgBUVZe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 21 Feb 2020 16:25:34 -0500
+        id S1729612AbgBUVZf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 21 Feb 2020 16:25:35 -0500
 Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id F1B192468C;
-        Fri, 21 Feb 2020 21:25:32 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id DD4A12468E;
+        Fri, 21 Feb 2020 21:25:33 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1582320333;
-        bh=uW3tfUlR4IC1gt95wVGRNkZwAxUbH/UJHPnIk28PIYo=;
+        s=default; t=1582320334;
+        bh=i0N2MrNKZHuX++taw3rFk2nCgTfZGw2eHHT1CJg4TdY=;
         h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=TCnwDtU5tuAUa2J6/tovhTcWZziCvRkKAITd6zsleuKVAHBezHAjQxTqwv/hQ/J1L
-         qjqJCj1w/dapVD//F4ngQPjL/xs7nrAhMO+a06MbkEwlDMvtTR/oRfxKrnS/3jFpDp
-         a8f3zmqNfmoOMIpo+AZqPjv2jP/pd3/53B/9GExw=
+        b=loBbQsujoFNjW1nPPgpnThgEU8tmhdQ1wXas44PHwBj+Sxo410qVrrE0AniRmz3OG
+         4g/GjLhatI3Bdekhkp63NakEpEbpIjUGpMhPp8r/EFO/LS++ijDZqgNa7xCpXO3wpE
+         T72oVIIJm/ZSCR6USjLz3/OHO2CeRd0OymwKx7DI=
 From:   zanussi@kernel.org
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -51,9 +51,9 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 19/25] userfaultfd: Use a seqlock instead of seqcount
-Date:   Fri, 21 Feb 2020 15:24:47 -0600
-Message-Id: <889f5b989b28eb7b29f21092432948cd12d97c48.1582320278.git.zanussi@kernel.org>
+Subject: [PATCH RT 20/25] kmemleak: Cosmetic changes
+Date:   Fri, 21 Feb 2020 15:24:48 -0600
+Message-Id: <c3cf47877f79afa92634bf376488c8aa71378a26.1582320278.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.14.1
 In-Reply-To: <cover.1582320278.git.zanussi@kernel.org>
 References: <cover.1582320278.git.zanussi@kernel.org>
@@ -72,77 +72,60 @@ If anyone has any objections, please let me know.
 -----------
 
 
-[ Upstream commit dc952a564d02997330654be9628bbe97ba2a05d3 ]
+[ Upstream commit 65a387a0b45cdd6844b7c6269e6333c9f0113410 ]
 
-On RT write_seqcount_begin() disables preemption which leads to warning
-in add_wait_queue() while the spinlock_t is acquired.
-The waitqueue can't be converted to swait_queue because
-userfaultfd_wake_function() is used as a custom wake function.
+Align with the patch, that got sent upstream for review. Only cosmetic
+changes.
 
-Use seqlock instead seqcount to avoid the preempt_disable() section
-during add_wait_queue().
-
-Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Tom Zanussi <zanussi@kernel.org>
 ---
- fs/userfaultfd.c | 12 ++++++------
- 1 file changed, 6 insertions(+), 6 deletions(-)
+ mm/kmemleak.c | 18 +++++++++---------
+ 1 file changed, 9 insertions(+), 9 deletions(-)
 
-diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
-index e2b2196fd942..71886a8e8f71 100644
---- a/fs/userfaultfd.c
-+++ b/fs/userfaultfd.c
-@@ -51,7 +51,7 @@ struct userfaultfd_ctx {
- 	/* waitqueue head for events */
- 	wait_queue_head_t event_wqh;
- 	/* a refile sequence protected by fault_pending_wqh lock */
--	struct seqcount refile_seq;
-+	seqlock_t refile_seq;
- 	/* pseudo fd refcounting */
- 	atomic_t refcount;
- 	/* userfaultfd syscall flags */
-@@ -1047,7 +1047,7 @@ static ssize_t userfaultfd_ctx_read(struct userfaultfd_ctx *ctx, int no_wait,
- 			 * waitqueue could become empty if this is the
- 			 * only userfault.
- 			 */
--			write_seqcount_begin(&ctx->refile_seq);
-+			write_seqlock(&ctx->refile_seq);
+diff --git a/mm/kmemleak.c b/mm/kmemleak.c
+index 17718a11782b..d7925ee4b052 100644
+--- a/mm/kmemleak.c
++++ b/mm/kmemleak.c
+@@ -26,7 +26,7 @@
+  *
+  * The following locks and mutexes are used by kmemleak:
+  *
+- * - kmemleak_lock (raw spinlock): protects the object_list modifications and
++ * - kmemleak_lock (raw_spinlock_t): protects the object_list modifications and
+  *   accesses to the object_tree_root. The object_list is the main list
+  *   holding the metadata (struct kmemleak_object) for the allocated memory
+  *   blocks. The object_tree_root is a red black tree used to look-up
+@@ -35,13 +35,13 @@
+  *   object_tree_root in the create_object() function called from the
+  *   kmemleak_alloc() callback and removed in delete_object() called from the
+  *   kmemleak_free() callback
+- * - kmemleak_object.lock (spinlock): protects a kmemleak_object. Accesses to
+- *   the metadata (e.g. count) are protected by this lock. Note that some
+- *   members of this structure may be protected by other means (atomic or
+- *   kmemleak_lock). This lock is also held when scanning the corresponding
+- *   memory block to avoid the kernel freeing it via the kmemleak_free()
+- *   callback. This is less heavyweight than holding a global lock like
+- *   kmemleak_lock during scanning
++ * - kmemleak_object.lock (raw_spinlock_t): protects a kmemleak_object.
++ *   Accesses to the metadata (e.g. count) are protected by this lock. Note
++ *   that some members of this structure may be protected by other means
++ *   (atomic or kmemleak_lock). This lock is also held when scanning the
++ *   corresponding memory block to avoid the kernel freeing it via the
++ *   kmemleak_free() callback. This is less heavyweight than holding a global
++ *   lock like kmemleak_lock during scanning.
+  * - scan_mutex (mutex): ensures that only one thread may scan the memory for
+  *   unreferenced objects at a time. The gray_list contains the objects which
+  *   are already referenced or marked as false positives and need to be
+@@ -197,7 +197,7 @@ static LIST_HEAD(object_list);
+ static LIST_HEAD(gray_list);
+ /* search tree for object boundaries */
+ static struct rb_root object_tree_root = RB_ROOT;
+-/* rw_lock protecting the access to object_list and object_tree_root */
++/* protecting the access to object_list and object_tree_root */
+ static DEFINE_RAW_SPINLOCK(kmemleak_lock);
  
- 			/*
- 			 * The fault_pending_wqh.lock prevents the uwq
-@@ -1073,7 +1073,7 @@ static ssize_t userfaultfd_ctx_read(struct userfaultfd_ctx *ctx, int no_wait,
- 			list_del(&uwq->wq.entry);
- 			__add_wait_queue(&ctx->fault_wqh, &uwq->wq);
- 
--			write_seqcount_end(&ctx->refile_seq);
-+			write_sequnlock(&ctx->refile_seq);
- 
- 			/* careful to always initialize msg if ret == 0 */
- 			*msg = uwq->msg;
-@@ -1246,11 +1246,11 @@ static __always_inline void wake_userfault(struct userfaultfd_ctx *ctx,
- 	 * sure we've userfaults to wake.
- 	 */
- 	do {
--		seq = read_seqcount_begin(&ctx->refile_seq);
-+		seq = read_seqbegin(&ctx->refile_seq);
- 		need_wakeup = waitqueue_active(&ctx->fault_pending_wqh) ||
- 			waitqueue_active(&ctx->fault_wqh);
- 		cond_resched();
--	} while (read_seqcount_retry(&ctx->refile_seq, seq));
-+	} while (read_seqretry(&ctx->refile_seq, seq));
- 	if (need_wakeup)
- 		__wake_userfault(ctx, range);
- }
-@@ -1915,7 +1915,7 @@ static void init_once_userfaultfd_ctx(void *mem)
- 	init_waitqueue_head(&ctx->fault_wqh);
- 	init_waitqueue_head(&ctx->event_wqh);
- 	init_waitqueue_head(&ctx->fd_wqh);
--	seqcount_init(&ctx->refile_seq);
-+	seqlock_init(&ctx->refile_seq);
- }
- 
- /**
+ /* allocation caches for kmemleak internal data */
 -- 
 2.14.1
 
