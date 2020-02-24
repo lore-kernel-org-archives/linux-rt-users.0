@@ -2,90 +2,70 @@ Return-Path: <SRS0=opgi=4M=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-2.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8593FC11D30
-	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Feb 2020 16:05:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D1228C11D2F
+	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Feb 2020 16:17:30 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 6577320836
-	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Feb 2020 16:05:35 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A7CB520838
+	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Feb 2020 16:17:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727627AbgBXQFc (ORCPT
+        id S1727498AbgBXQR0 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 24 Feb 2020 11:05:32 -0500
-Received: from Galois.linutronix.de ([193.142.43.55]:50496 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726806AbgBXQFc (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 24 Feb 2020 11:05:32 -0500
-Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
-        (envelope-from <bigeasy@linutronix.de>)
-        id 1j6GEb-000749-M3; Mon, 24 Feb 2020 17:05:29 +0100
-Date:   Mon, 24 Feb 2020 17:05:29 +0100
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Tom Zanussi <zanussi@kernel.org>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
+        Mon, 24 Feb 2020 11:17:26 -0500
+Received: from mail.kernel.org ([198.145.29.99]:33850 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1727177AbgBXQR0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 24 Feb 2020 11:17:26 -0500
+Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 3CEFA20714;
+        Mon, 24 Feb 2020 16:17:25 +0000 (UTC)
+Date:   Mon, 24 Feb 2020 11:17:23 -0500
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     zanussi@kernel.org, LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         John Kacur <jkacur@redhat.com>, Daniel Wagner <wagi@monom.org>
-Subject: Re: [PATCH RT 15/25] sched: migrate_enable: Use select_fallback_rq()
-Message-ID: <20200224160529.f5lg44gyk2mgayd4@linutronix.de>
+Subject: Re: [PATCH RT 19/25] userfaultfd: Use a seqlock instead of seqcount
+Message-ID: <20200224111723.415a940d@gandalf.local.home>
+In-Reply-To: <20200224090317.shfeuxfukkvxvqaf@linutronix.de>
 References: <cover.1582320278.git.zanussi@kernel.org>
- <eb183ce95bb3d92b426bdadf36f0648cda474379.1582320278.git.zanussi@kernel.org>
- <20200224094349.5x6dca4tggtmmbnq@linutronix.de>
- <1582558266.12738.32.camel@kernel.org>
+        <889f5b989b28eb7b29f21092432948cd12d97c48.1582320278.git.zanussi@kernel.org>
+        <20200224090317.shfeuxfukkvxvqaf@linutronix.de>
+X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <1582558266.12738.32.camel@kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2020-02-24 09:31:06 [-0600], Tom Zanussi wrote:
-> On Mon, 2020-02-24 at 10:43 +0100, Sebastian Andrzej Siewior wrote:
-> > On 2020-02-21 15:24:43 [-0600], zanussi@kernel.org wrote:
-> > > From: Scott Wood <swood@redhat.com>
-> > > 
-> > > v4.14.170-rt75-rc1 stable review patch.
-> > > If anyone has any objections, please let me know.
-> > 
-> > This creates bug which is stuffed later via
-> > 	sched: migrate_enable: Busy loop until the migration request is
-> > completed
-> > 
-> > So if apply this, please take the bug fix, too. This is Stevens queue
-> > for reference:
-> > > [PATCH RT 22/30] sched: migrate_enable: Use select_fallback_rq()
-> > 
-> > ^^ bug introduced
-> > 
-> 
-> Hmm, it seemed from the comment on the 4.19 series that it was '24/32
-> sched: migrate_enable: Use stop_one_cpu_nowait()' that required 'sched:
-> migrate_enable: Busy loop until the migration request is
-> completed' as a bug fix.
-> 
->   https://lore.kernel.org/linux-rt-users/20200122083130.kuu3yppckhyjrr4u@linutronix.de/#t
-> 
-> I didn't take the stop_one_cpu_nowait() one, so didn't take the busy
-> loop one either.
+On Mon, 24 Feb 2020 10:03:17 +0100
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 
-Ach, it was the different WARN_ON() then. So this might not introduce
-any bug then. *Might*. 
-Steven backported the whole pile and you took just this one patch. The
-whole set was tested in devel and uncovered a problem which was fixed
-later. Taking only a part *may* expose other problems it *may* be fine.
-
-Steven, any opinion on your side?
-
-> Thanks,
+> On 2020-02-21 15:24:47 [-0600], zanussi@kernel.org wrote:
+> > From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> > 
+> > v4.14.170-rt75-rc1 stable review patch.
+> > If anyone has any objections, please let me know.  
 > 
-> Tom
+> This is required but it is not part of the next "higher" tree
+> (v4.19-RT). Which means if someone moves from v4.14-RT to the next tree
+> (v4.19-RT in this case) that someone would have the bug again.
+> 
+> Could you please wait with such patches or did the I miss the v4.19-RT
+> tree with this change?
+> 
 
-Sebastian
+No, I'm just behind in backporting patches.
+
+We need to work on synchronizing better what gets backported. :-/
+
+-- Steve
