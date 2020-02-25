@@ -2,181 +2,100 @@ Return-Path: <SRS0=1QYP=4N=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.6 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DA911C35E01
-	for <linux-rt-users@archiver.kernel.org>; Tue, 25 Feb 2020 15:59:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C87C2C4BA04
+	for <linux-rt-users@archiver.kernel.org>; Tue, 25 Feb 2020 23:42:39 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id AAD4F2072D
-	for <linux-rt-users@archiver.kernel.org>; Tue, 25 Feb 2020 15:59:25 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 986602072D
+	for <linux-rt-users@archiver.kernel.org>; Tue, 25 Feb 2020 23:42:39 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="uKMiu+Mp"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="cbnm1bGe"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730422AbgBYP7Z (ORCPT
+        id S1728989AbgBYXmj (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 25 Feb 2020 10:59:25 -0500
-Received: from mail-ot1-f68.google.com ([209.85.210.68]:35147 "EHLO
-        mail-ot1-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728443AbgBYP7Z (ORCPT
+        Tue, 25 Feb 2020 18:42:39 -0500
+Received: from mail-pf1-f193.google.com ([209.85.210.193]:47025 "EHLO
+        mail-pf1-f193.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726827AbgBYXmi (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 25 Feb 2020 10:59:25 -0500
-Received: by mail-ot1-f68.google.com with SMTP id r16so12525079otd.2
-        for <linux-rt-users@vger.kernel.org>; Tue, 25 Feb 2020 07:59:23 -0800 (PST)
+        Tue, 25 Feb 2020 18:42:38 -0500
+Received: by mail-pf1-f193.google.com with SMTP id k29so397237pfp.13
+        for <linux-rt-users@vger.kernel.org>; Tue, 25 Feb 2020 15:42:38 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
-        h=mime-version:in-reply-to:references:from:date:message-id:subject:to;
-        bh=N6mOYH9x+NuBRrqX9uUHbBPBZNk0t/K8YZLGj82Hcxs=;
-        b=uKMiu+MpV5Pc70qwQNF0VCygwaqV+0Go3x3wOL2vE7OeJCNYVVXCfv6q92m7gJXZKa
-         FPW3i1jQGFh8XLLyxg1PBzB0f5OG39JHvwcK+ZE7Ivf2yeQDRYGl5wcSaC6jWrTR1FyN
-         GvqArdhS7I8TsNx7zXjQ3aQH7qnM81A0grz/Wsaz2ZyMo6qEyr7by7Nf3q7W7zT3+6fM
-         cKHJdq6dy0skoSm0CTA+2yv8DbboScdFVfYqAP8HR13irhNO+ga6YfnS5hdnCxJzkNAT
-         nUQLygBZ81K7YZqmaXZwWr9iPsrDY4md1qJ/fPx6wEE/uh2AgdcyT60DjmwLz2hfKwsy
-         RMfg==
+        h=sender:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=qTj45sA6m6qjSHvmrkPn9syAMGmwAM/fZ5Y1KhSYL2E=;
+        b=cbnm1bGeww1oQBZKZMvozvGTXKNgyunvKR7JbID8mIxv7MUdwyO3sLZMG7MCjPcPuY
+         OrwYKYoSwDtVa9u7eix3BXOFdSc8eX3uW/fCYx3RWbQt3WS0z0m4I1yDMsZbiLsEkmGD
+         XzCFIjmtMxpDs/o5K6o9C5DmP0gbd14BKvQaYBYQxzTJs4poWwskq6+GXfbn2bqt80tN
+         Ly70En5zSYziKPXufpHk4vHbFLY4qJ9hra3xhKF7iJk43INApEiWBNUeDA9CrGseUoCc
+         pqOmlp6G3m1FOWDBpwslvxoGGPQ3/V/cQlsbt8Rs2SbhH/f++EnWPWJKn3Dtjzo80Lt7
+         ylpQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:in-reply-to:references:from:date
-         :message-id:subject:to;
-        bh=N6mOYH9x+NuBRrqX9uUHbBPBZNk0t/K8YZLGj82Hcxs=;
-        b=VmHGEDBWfUKcOooMGPLAWUkQCvAvrRpPoBoIkMUh/Pxlj2DPN3PdFkVSLrlZlNg8ef
-         H1njf/e7k62Ef0fXw5abGIFgRKTzbVTHLdyXjA5UKRJfrWtZOJ4rLGqBDeeojq1cqCHq
-         xRNiLwLKzrUXnDpJbsRS9SbaY/yCbmzqC9a63oGfdru2la2U35zw/YlyMRhDdA5wZ8K5
-         PJOXs7waqCZPoM1pqvVL63vBSM15sxiIgS/Hw2FuHYlyrIwPY35omEgBX48P4f5KlIp7
-         Wqis2VyWzTGm34FsJcJv78/gykNd5NfN1ZYqUOBYIQk5OfinbygDhdlVfE8wbQCm0Zoo
-         dLfQ==
-X-Gm-Message-State: APjAAAWL1L22tYtm9+p4r/GBENG8PY4fdg5UKx40aCwtqKqZtPf/QQu2
-        6yguAbzvzjTgkIlCb7XJxMmBe8bLzNnopFXQg46XVA==
-X-Google-Smtp-Source: APXvYqzPXTA4CCmtVUICsjT5UuupaujRhS5or5MQ2CMej9HtP1FgIAH6XH5ogQUBWQm7h8A9W28sr0NMrPbXw8r3dwQ=
-X-Received: by 2002:a05:6830:1198:: with SMTP id u24mr44009030otq.215.1582646362522;
- Tue, 25 Feb 2020 07:59:22 -0800 (PST)
+        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
+         :mime-version:content-transfer-encoding;
+        bh=qTj45sA6m6qjSHvmrkPn9syAMGmwAM/fZ5Y1KhSYL2E=;
+        b=m5E7Z2dS1LZdeFUi4PIaF/xaS4w7MmvShW0kpNqjk+46F83+xkfH6MAdFI0OqeVy/I
+         6/6Wo44uNU9WHlz3ODvkiPOsncd1trDSP+liAJI/uiW3Q6jg6zHpHx+vqC5QYGpszZeA
+         obDZfSRBOzEi2rvnwJhc1MB7cRVGJlt0qW2wV3fwZKdFWtjWX5reFD4iGu05kIiFnfZJ
+         pmu25rPXS4SjwXqk7E0O5pezqSEFc9HB6BBBRt8TTn+e7jYeZwoTqJ2HA1mqTUDH9JdM
+         Z6guf42hcb+ipPaD9TFGcn7yDqU4MOTCjL5O5zhpRJujCL8/tGZOgnKd84aqSk+trO1+
+         hYvQ==
+X-Gm-Message-State: APjAAAUtgbHYWtnnW9sW7/j3ZN9fkkvsbFwDI5DEZqrxphRdV+bN/PTM
+        CSoh8VLQT/PpNbx8uKsIsZSqyiyG
+X-Google-Smtp-Source: APXvYqwanqXYQYPlwglJjsHBRxr2RrThOBFh3nzq4abJf3VyKt+O/w6jR7vr7YeV1t1uByPYYoUr7Q==
+X-Received: by 2002:a63:e011:: with SMTP id e17mr938865pgh.49.1582674157706;
+        Tue, 25 Feb 2020 15:42:37 -0800 (PST)
+Received: from workhorse.localdomain (99-14-97-149.lightspeed.frokca.sbcglobal.net. [99.14.97.149])
+        by smtp.gmail.com with ESMTPSA id o36sm119408pgl.24.2020.02.25.15.42.36
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 25 Feb 2020 15:42:37 -0800 (PST)
+Received: by workhorse.localdomain (Postfix, from userid 1000)
+        id 878E72A05A0; Tue, 25 Feb 2020 15:42:35 -0800 (PST)
+From:   "Jeremy A. Puhlman" <jpuhlman@mvista.com>
+To:     williams@redhat.com, jkacur@redhat.com
+Cc:     linux-rt-users@vger.kernel.org,
+        Jeremy Puhlman <jpuhlman@mvista.com>
+Subject: [rt-tests][PATCH] rt-tests: make manpages builds reproducible
+Date:   Tue, 25 Feb 2020 15:42:30 -0800
+Message-Id: <20200225234230.17232-1-jpuhlman@mvista.com>
+X-Mailer: git-send-email 2.20.1
 MIME-Version: 1.0
-Received: by 2002:a4a:9489:0:0:0:0:0 with HTTP; Tue, 25 Feb 2020 07:59:21
- -0800 (PST)
-In-Reply-To: <CAPm8-H4ub6MCgnVeMzZ4Lx9kfS76uDCtQrYKM_iq=vQZRh401A@mail.gmail.com>
-References: <CAPm8-H4ub6MCgnVeMzZ4Lx9kfS76uDCtQrYKM_iq=vQZRh401A@mail.gmail.com>
-From:   Laurentiu-Cristian Duca <laurentiu.duca@gmail.com>
-Date:   Tue, 25 Feb 2020 17:59:21 +0200
-Message-ID: <CAPm8-H4xHe7Vff=6kHgVonOD4UPh7B3ZxDpp9s7WdXzsEgiFPQ@mail.gmail.com>
-Subject: Re: Unexpected high latency on bbb
-To:     linux-rt-users <linux-rt-users@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2/20/20, Laurentiu-Cristian Duca <laurentiu.duca@gmail.com> wrote:
-> Hello,
->
->   I have made a rt-test on kernel preempt-rt 5.4.5
-> and got unexpected high latencies (5ms max).
-> Maybe I am doing something wrong ... please help
-> The same test got 120us max latency on EVL project
-> (on 3 hour test with one million samples)
-> and only the synchronization is different on preempt_rt
-> (referring to rt_gpio module described below).
->
-> scenario between beaglebone black computer and fpga board
-> ====
-> fpga generates an interrupt and counts latency until ack
-> bbb receives and ack interrupt via rt_gpio module
-> fpga sends latency counter value via SPI to bbb
-> bbb prints on the screen
-> result: 5ms max latency.
->
-> rt_gpio.c module
-> ====
-> ...
-> static struct swait_queue_head head_swait;
->
-> static irqreturn_t rt_interrupt_handler(int irq, void *data)
-> {
-> 	n_interrupts++;
->
-> 	/* use swait.h model to signal interrupt arrived */
-> 	interrupt_done = 1;
-> 	smp_mb();
->  	if (swait_active(&head_swait))
-> 		swake_up_one(&head_swait);
->
-> 	return IRQ_HANDLED;
-> }
->
-> static ssize_t rt_gpio_read(struct file *f, char __user *buf, size_t
-> 	len, loff_t *off)
-> {
-> 	int ret;
-> 	DECLARE_SWAITQUEUE(swait);
->
-> 	/* wait for interrupt using swait.h model */
-> 	for (;;) {
-> 		prepare_to_swait_exclusive(&head_swait, &swait, TASK_INTERRUPTIBLE);
->  		/* smp_mb() from set_current_state() */
->  		if (interrupt_done)
->  			break;
->  		schedule();
->  	}
-> 	finish_swait(&head_swait, &swait);
-> 	interrupt_done = 0;
-> 	smp_mb();
-> 	
-> 	gpiod_get_raw_value(gpiod_in)
-> 	copy_to_user(...);
-> }
->
-> static ssize_t rt_gpio_write(struct file *f, const char __user *buf,
-> 	size_t len, loff_t *off)
-> {
->     copy_from_user(...);
-> 	gpiod_set_raw_value(gpiod_out, user_value);
-> }
->
-> static int __init rt_gpio_init(void) /* Constructor */
-> {
-> 	...
-> 	request_irq(irq_line, rt_interrupt_handler,
-> 		IRQ_TYPE_EDGE_RISING | IRQF_NO_THREAD, "rt_gpio interrupt\n", (void
-> *)1));
->
-> 	init_swait_queue_head(&head_swait);
-> 	
-> }
->
-> static void __exit rt_gpio_exit(void)
-> {
-> 	free_irq(irq_line, (void*)1);
-> 	gpio_free(gpio_in_id);
-> 	gpio_free(gpio_out_id);
-> 	...
-> }
->
->
-> userspace
-> ====
->     printf("Setup this thread as a real time thread\n");
->   	if((ret = mlockall(MCL_FUTURE|MCL_CURRENT)) < 0) {
->        	printf("mlockall failed: %s\n", strerror(ret));
->        	return -1;
->    	}
->     sp.sched_priority = 98;
->     if((ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp)) != 0)
-> {
->         printf("Failed to set lat thread to real-time priority: %s\n",
-> strerror(ret));
-> 		return -1;
->     }
+From: Jeremy Puhlman <jpuhlman@mvista.com>
 
-the mistake was corrected by calling:
-	sched_setscheduler(getpid(), SCHED_FIFO, &sp);
+Add -n to gzip call to make the build output
+of the manpages reproducible.
 
+Signed-off-by: Jeremy A. Puhlman <jpuhlman@mvista.com>
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
->     ...
->     use rt_gpio module to receive interrupt and ack.
->
->
->
-> Thank you,
-> L-C
->
+diff --git a/Makefile b/Makefile
+index 8747971..1b37ba7 100644
+--- a/Makefile
++++ b/Makefile
+@@ -181,7 +181,7 @@ ssdd: $(OBJDIR)/ssdd.o $(OBJDIR)/librttest.a
+ 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(RTTESTLIB)
+ 
+ %.8.gz: %.8
+-	gzip -c $< > $@
++	gzip -nc $< > $@
+ 
+ %.8.bz2: %.8
+ 	bzip2 -c $< > $@
+-- 
+2.20.1
+
