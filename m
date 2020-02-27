@@ -7,40 +7,40 @@ X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F0CF8C7657B
-	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Feb 2020 14:35:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 53926C76589
+	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Feb 2020 14:35:30 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id C8A0624697
-	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Feb 2020 14:35:05 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1FE8F2468F
+	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Feb 2020 14:35:30 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1582814105;
-	bh=Zkc7OTubL7ZofJcFmaZdqja1Ms10TSr7KzZjfj/2mig=;
+	s=default; t=1582814130;
+	bh=XC+WPtSkfTm5ePQdr+PHvKYb9iGLo7xCq4HxNroYENU=;
 	h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=G9+ht7hnKdsiXcMyWd/mWyq2VfuBhN96L8W7z+QimRN+iX9SNCkO5s/Y5F3DwVhLg
-	 af3dYtlC36/HRd/2JjdoF2RoacwvcDQUxpp9bgEZzOqt181tmwlxWA61zTxAnJ/wfc
-	 eU6u5PPPkm/TSrLSbMqPPT4ZC+bKk5hAIjx3gMtE=
+	b=HcIZzeLLu3WSWWGpLj7W4rl7W44W0BOWVdSfoSO5K2Eg2msIoanNikt8rlS/Z+7kI
+	 Dkuvdw+GOCSF9HbyJzNArQGGxvlx2cv/0TR96eoQ3gD6bUhKb5s0lsnaJ5zBPgpyXd
+	 d+E/pgBGX7L7wjHXE0wnKRH/lsdlOGqprKcEgZT0=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728503AbgB0OeN (ORCPT
+        id S2387693AbgB0OeG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 27 Feb 2020 09:34:13 -0500
-Received: from mail.kernel.org ([198.145.29.99]:45194 "EHLO mail.kernel.org"
+        Thu, 27 Feb 2020 09:34:06 -0500
+Received: from mail.kernel.org ([198.145.29.99]:45086 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2387774AbgB0OeM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 27 Feb 2020 09:34:12 -0500
+        id S2387434AbgB0OeF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 27 Feb 2020 09:34:05 -0500
 Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id AE913246BA;
-        Thu, 27 Feb 2020 14:34:09 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id EA247246B1;
+        Thu, 27 Feb 2020 14:34:03 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1582814051;
-        bh=Zkc7OTubL7ZofJcFmaZdqja1Ms10TSr7KzZjfj/2mig=;
+        s=default; t=1582814044;
+        bh=XC+WPtSkfTm5ePQdr+PHvKYb9iGLo7xCq4HxNroYENU=;
         h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=ml6+dh+ISU5bWvPtfK+oMIXuMfTuk1i40PQqZt9RySS9tb2PfdKZ4XAOjKRtNZgL0
-         h2hcbykENjr0rMzvZj+SPOv0xD4cArKAbBl5igvhstB9nUK2cBu/61OTAyXqz6yQYf
-         Ow2adBLv1pXHxv+1az2kAKr/wAePz53mnaAeppuM=
+        b=x0B0/y/zBgjCbMsNzn4PMOOwaNeQLcJaRag7kp/vzs+l3GS1X4A9B/5asiEHb349p
+         tta1we1QLW7MGZOK7myu04khcQWUaSNjRzGw6yMxDPFDS4W4I6LxALtBIhRv3I+iRu
+         4D2NC+WYK/OcBRsH7RocNrOt+wRBm/f88GtNHV4M=
 From:   zanussi@kernel.org
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -51,9 +51,9 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 15/23] locking: Make spinlock_t and rwlock_t a RCU section on RT
-Date:   Thu, 27 Feb 2020 08:33:26 -0600
-Message-Id: <186fec3947a0cc8b99cbf8211a91c52140813302.1582814004.git.zanussi@kernel.org>
+Subject: [PATCH RT 09/23] lib/smp_processor_id: Don't use cpumask_equal()
+Date:   Thu, 27 Feb 2020 08:33:20 -0600
+Message-Id: <dc9753ab1be6bcd124b6e96dca353571dbdbaac7.1582814004.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.14.1
 In-Reply-To: <cover.1582814004.git.zanussi@kernel.org>
 References: <cover.1582814004.git.zanussi@kernel.org>
@@ -64,7 +64,7 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Waiman Long <longman@redhat.com>
 
 v4.14.170-rt75-rc2 stable review patch.
 If anyone has any objections, please let me know.
@@ -72,125 +72,42 @@ If anyone has any objections, please let me know.
 -----------
 
 
-[ Upstream commit 84440022a0e1c8c936d61f8f97593674a295d409 ]
+[ Upstream commit 659252061477862f45b79e1de169e6030f5c8918 ]
 
-On !RT a locked spinlock_t and rwlock_t disables preemption which
-implies a RCU read section. There is code that relies on that behaviour.
+The check_preemption_disabled() function uses cpumask_equal() to see
+if the task is bounded to the current CPU only. cpumask_equal() calls
+memcmp() to do the comparison. As x86 doesn't have __HAVE_ARCH_MEMCMP,
+the slow memcmp() function in lib/string.c is used.
 
-Add an explicit RCU read section on RT while a sleeping lock (a lock
-which would disables preemption on !RT) acquired.
+On a RT kernel that call check_preemption_disabled() very frequently,
+below is the perf-record output of a certain microbenchmark:
 
+  42.75%  2.45%  testpmd [kernel.kallsyms] [k] check_preemption_disabled
+  40.01% 39.97%  testpmd [kernel.kallsyms] [k] memcmp
+
+We should avoid calling memcmp() in performance critical path. So the
+cpumask_equal() call is now replaced with an equivalent simpler check.
+
+Signed-off-by: Waiman Long <longman@redhat.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Tom Zanussi <zanussi@kernel.org>
 ---
- kernel/locking/rtmutex.c   | 6 ++++++
- kernel/locking/rwlock-rt.c | 6 ++++++
- 2 files changed, 12 insertions(+)
+ lib/smp_processor_id.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index 4bc01a2a9a88..848d9ed6f053 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -1142,6 +1142,7 @@ void __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
- void __lockfunc rt_spin_lock(spinlock_t *lock)
- {
- 	sleeping_lock_inc();
-+	rcu_read_lock();
- 	migrate_disable();
- 	spin_acquire(&lock->dep_map, 0, 0, _RET_IP_);
- 	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
-@@ -1157,6 +1158,7 @@ void __lockfunc __rt_spin_lock(struct rt_mutex *lock)
- void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subclass)
- {
- 	sleeping_lock_inc();
-+	rcu_read_lock();
- 	migrate_disable();
- 	spin_acquire(&lock->dep_map, subclass, 0, _RET_IP_);
- 	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
-@@ -1170,6 +1172,7 @@ void __lockfunc rt_spin_unlock(spinlock_t *lock)
- 	spin_release(&lock->dep_map, 1, _RET_IP_);
- 	rt_spin_lock_fastunlock(&lock->lock, rt_spin_lock_slowunlock);
- 	migrate_enable();
-+	rcu_read_unlock();
- 	sleeping_lock_dec();
- }
- EXPORT_SYMBOL(rt_spin_unlock);
-@@ -1201,6 +1204,7 @@ int __lockfunc rt_spin_trylock(spinlock_t *lock)
- 	ret = __rt_mutex_trylock(&lock->lock);
- 	if (ret) {
- 		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
-+		rcu_read_lock();
- 	} else {
- 		migrate_enable();
- 		sleeping_lock_dec();
-@@ -1217,6 +1221,7 @@ int __lockfunc rt_spin_trylock_bh(spinlock_t *lock)
- 	ret = __rt_mutex_trylock(&lock->lock);
- 	if (ret) {
- 		sleeping_lock_inc();
-+		rcu_read_lock();
- 		migrate_disable();
- 		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
- 	} else
-@@ -1233,6 +1238,7 @@ int __lockfunc rt_spin_trylock_irqsave(spinlock_t *lock, unsigned long *flags)
- 	ret = __rt_mutex_trylock(&lock->lock);
- 	if (ret) {
- 		sleeping_lock_inc();
-+		rcu_read_lock();
- 		migrate_disable();
- 		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
- 	}
-diff --git a/kernel/locking/rwlock-rt.c b/kernel/locking/rwlock-rt.c
-index c3b91205161c..0ae8c62ea832 100644
---- a/kernel/locking/rwlock-rt.c
-+++ b/kernel/locking/rwlock-rt.c
-@@ -310,6 +310,7 @@ int __lockfunc rt_read_trylock(rwlock_t *rwlock)
- 	ret = do_read_rt_trylock(rwlock);
- 	if (ret) {
- 		rwlock_acquire_read(&rwlock->dep_map, 0, 1, _RET_IP_);
-+		rcu_read_lock();
- 	} else {
- 		migrate_enable();
- 		sleeping_lock_dec();
-@@ -327,6 +328,7 @@ int __lockfunc rt_write_trylock(rwlock_t *rwlock)
- 	ret = do_write_rt_trylock(rwlock);
- 	if (ret) {
- 		rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
-+		rcu_read_lock();
- 	} else {
- 		migrate_enable();
- 		sleeping_lock_dec();
-@@ -338,6 +340,7 @@ EXPORT_SYMBOL(rt_write_trylock);
- void __lockfunc rt_read_lock(rwlock_t *rwlock)
- {
- 	sleeping_lock_inc();
-+	rcu_read_lock();
- 	migrate_disable();
- 	rwlock_acquire_read(&rwlock->dep_map, 0, 0, _RET_IP_);
- 	do_read_rt_lock(rwlock);
-@@ -347,6 +350,7 @@ EXPORT_SYMBOL(rt_read_lock);
- void __lockfunc rt_write_lock(rwlock_t *rwlock)
- {
- 	sleeping_lock_inc();
-+	rcu_read_lock();
- 	migrate_disable();
- 	rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
- 	do_write_rt_lock(rwlock);
-@@ -358,6 +362,7 @@ void __lockfunc rt_read_unlock(rwlock_t *rwlock)
- 	rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
- 	do_read_rt_unlock(rwlock);
- 	migrate_enable();
-+	rcu_read_unlock();
- 	sleeping_lock_dec();
- }
- EXPORT_SYMBOL(rt_read_unlock);
-@@ -367,6 +372,7 @@ void __lockfunc rt_write_unlock(rwlock_t *rwlock)
- 	rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
- 	do_write_rt_unlock(rwlock);
- 	migrate_enable();
-+	rcu_read_unlock();
- 	sleeping_lock_dec();
- }
- EXPORT_SYMBOL(rt_write_unlock);
+diff --git a/lib/smp_processor_id.c b/lib/smp_processor_id.c
+index 6f4a4ae881c8..9f3c8bb62e57 100644
+--- a/lib/smp_processor_id.c
++++ b/lib/smp_processor_id.c
+@@ -23,7 +23,7 @@ notrace static unsigned int check_preemption_disabled(const char *what1,
+ 	 * Kernel threads bound to a single CPU can safely use
+ 	 * smp_processor_id():
+ 	 */
+-	if (cpumask_equal(current->cpus_ptr, cpumask_of(this_cpu)))
++	if (current->nr_cpus_allowed == 1)
+ 		goto out;
+ 
+ 	/*
 -- 
 2.14.1
 
