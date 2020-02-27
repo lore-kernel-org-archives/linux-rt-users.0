@@ -4,43 +4,43 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
-	version=3.4.0
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 512A7C7657E
-	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Feb 2020 14:35:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F0CF8C7657B
+	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Feb 2020 14:35:05 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 26E2624697
-	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Feb 2020 14:35:12 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C8A0624697
+	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Feb 2020 14:35:05 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1582814112;
-	bh=eEY166ta87q0I5Yb9poafq3N1XnniQY60N3Cp98vY/c=;
+	s=default; t=1582814105;
+	bh=Zkc7OTubL7ZofJcFmaZdqja1Ms10TSr7KzZjfj/2mig=;
 	h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=c4IwqaqQpuJM0qBRXG0tYLMyzP37UQlQXfgi5Qmb7P6D2ylzDGpNAudhMkPja6wK/
-	 T0G2oOndxMRb+6HMkwBayQw2+0cgGU7w+Sh81P18KQiS7Ep9rCAjkFhz4edsHZI2U3
-	 WIOA0+FcWYO268iaUtlu30uk90xwlVK8bFUKj5O8=
+	b=G9+ht7hnKdsiXcMyWd/mWyq2VfuBhN96L8W7z+QimRN+iX9SNCkO5s/Y5F3DwVhLg
+	 af3dYtlC36/HRd/2JjdoF2RoacwvcDQUxpp9bgEZzOqt181tmwlxWA61zTxAnJ/wfc
+	 eU6u5PPPkm/TSrLSbMqPPT4ZC+bKk5hAIjx3gMtE=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2387480AbgB0OfK (ORCPT
+        id S1728503AbgB0OeN (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 27 Feb 2020 09:35:10 -0500
-Received: from mail.kernel.org ([198.145.29.99]:45158 "EHLO mail.kernel.org"
+        Thu, 27 Feb 2020 09:34:13 -0500
+Received: from mail.kernel.org ([198.145.29.99]:45194 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2387769AbgB0OeK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 27 Feb 2020 09:34:10 -0500
+        id S2387774AbgB0OeM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 27 Feb 2020 09:34:12 -0500
 Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id C0FA3246B8;
-        Thu, 27 Feb 2020 14:34:08 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id AE913246BA;
+        Thu, 27 Feb 2020 14:34:09 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1582814049;
-        bh=eEY166ta87q0I5Yb9poafq3N1XnniQY60N3Cp98vY/c=;
+        s=default; t=1582814051;
+        bh=Zkc7OTubL7ZofJcFmaZdqja1Ms10TSr7KzZjfj/2mig=;
         h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=Bc+tbI1J5rTPCQEfGflEqZB773VyzsVLDf1Su+OBbz8/YS6P9m9L090GSNKeUdbE6
-         WKrrsMusLA1oATsadBmiNRMmcr/a0aIxJ+LMIIt7fWM2CFq7VUEUExiPL+X9bmlg1z
-         A0NZbSBwWzFFDHboSFzQbEundJ9DZc1k+mSCXXeA=
+        b=ml6+dh+ISU5bWvPtfK+oMIXuMfTuk1i40PQqZt9RySS9tb2PfdKZ4XAOjKRtNZgL0
+         h2hcbykENjr0rMzvZj+SPOv0xD4cArKAbBl5igvhstB9nUK2cBu/61OTAyXqz6yQYf
+         Ow2adBLv1pXHxv+1az2kAKr/wAePz53mnaAeppuM=
 From:   zanussi@kernel.org
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -51,9 +51,9 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 14/23] Revert "ARM: Initialize split page table locks for vector page"
-Date:   Thu, 27 Feb 2020 08:33:25 -0600
-Message-Id: <b1c7e28f28755f6bc202daf3b276f2874ac4c776.1582814004.git.zanussi@kernel.org>
+Subject: [PATCH RT 15/23] locking: Make spinlock_t and rwlock_t a RCU section on RT
+Date:   Thu, 27 Feb 2020 08:33:26 -0600
+Message-Id: <186fec3947a0cc8b99cbf8211a91c52140813302.1582814004.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.14.1
 In-Reply-To: <cover.1582814004.git.zanussi@kernel.org>
 References: <cover.1582814004.git.zanussi@kernel.org>
@@ -72,83 +72,125 @@ If anyone has any objections, please let me know.
 -----------
 
 
-[ Upstream commit 247074c44d8c3e619dfde6404a52295d8d671d38 ]
+[ Upstream commit 84440022a0e1c8c936d61f8f97593674a295d409 ]
 
-I'm dropping this patch, with its original description:
+On !RT a locked spinlock_t and rwlock_t disables preemption which
+implies a RCU read section. There is code that relies on that behaviour.
 
-|ARM: Initialize split page table locks for vector page
-|
-|Without this patch, ARM can not use SPLIT_PTLOCK_CPUS if
-|PREEMPT_RT_FULL=y because vectors_user_mapping() creates a
-|VM_ALWAYSDUMP mapping of the vector page (address 0xffff0000), but no
-|ptl->lock has been allocated for the page.  An attempt to coredump
-|that page will result in a kernel NULL pointer dereference when
-|follow_page() attempts to lock the page.
-|
-|The call tree to the NULL pointer dereference is:
-|
-|   do_notify_resume()
-|      get_signal_to_deliver()
-|         do_coredump()
-|            elf_core_dump()
-|               get_dump_page()
-|                  __get_user_pages()
-|                     follow_page()
-|                        pte_offset_map_lock() <----- a #define
-|                           ...
-|                              rt_spin_lock()
-|
-|The underlying problem is exposed by mm-shrink-the-page-frame-to-rt-size.patch.
-
-The patch named mm-shrink-the-page-frame-to-rt-size.patch was dropped
-from the RT queue once the SPLIT_PTLOCK_CPUS feature (in a slightly
-different shape) went upstream (somewhere between v3.12 and v3.14).
-
-I can see that the patch still allocates a lock which wasn't there
-before. However I can't trigger a kernel oops like described in the
-patch by triggering a coredump.
+Add an explicit RCU read section on RT while a sleeping lock (a lock
+which would disables preemption on !RT) acquired.
 
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Tom Zanussi <zanussi@kernel.org>
 ---
- arch/arm/kernel/process.c | 24 ------------------------
- 1 file changed, 24 deletions(-)
+ kernel/locking/rtmutex.c   | 6 ++++++
+ kernel/locking/rwlock-rt.c | 6 ++++++
+ 2 files changed, 12 insertions(+)
 
-diff --git a/arch/arm/kernel/process.c b/arch/arm/kernel/process.c
-index cf4e1452d4b4..d96714e1858c 100644
---- a/arch/arm/kernel/process.c
-+++ b/arch/arm/kernel/process.c
-@@ -325,30 +325,6 @@ unsigned long arch_randomize_brk(struct mm_struct *mm)
+diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+index 4bc01a2a9a88..848d9ed6f053 100644
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -1142,6 +1142,7 @@ void __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
+ void __lockfunc rt_spin_lock(spinlock_t *lock)
+ {
+ 	sleeping_lock_inc();
++	rcu_read_lock();
+ 	migrate_disable();
+ 	spin_acquire(&lock->dep_map, 0, 0, _RET_IP_);
+ 	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
+@@ -1157,6 +1158,7 @@ void __lockfunc __rt_spin_lock(struct rt_mutex *lock)
+ void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subclass)
+ {
+ 	sleeping_lock_inc();
++	rcu_read_lock();
+ 	migrate_disable();
+ 	spin_acquire(&lock->dep_map, subclass, 0, _RET_IP_);
+ 	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
+@@ -1170,6 +1172,7 @@ void __lockfunc rt_spin_unlock(spinlock_t *lock)
+ 	spin_release(&lock->dep_map, 1, _RET_IP_);
+ 	rt_spin_lock_fastunlock(&lock->lock, rt_spin_lock_slowunlock);
+ 	migrate_enable();
++	rcu_read_unlock();
+ 	sleeping_lock_dec();
  }
- 
- #ifdef CONFIG_MMU
--/*
-- * CONFIG_SPLIT_PTLOCK_CPUS results in a page->ptl lock.  If the lock is not
-- * initialized by pgtable_page_ctor() then a coredump of the vector page will
-- * fail.
-- */
--static int __init vectors_user_mapping_init_page(void)
--{
--	struct page *page;
--	unsigned long addr = 0xffff0000;
--	pgd_t *pgd;
--	pud_t *pud;
--	pmd_t *pmd;
--
--	pgd = pgd_offset_k(addr);
--	pud = pud_offset(pgd, addr);
--	pmd = pmd_offset(pud, addr);
--	page = pmd_page(*(pmd));
--
--	pgtable_page_ctor(page);
--
--	return 0;
--}
--late_initcall(vectors_user_mapping_init_page);
--
- #ifdef CONFIG_KUSER_HELPERS
- /*
-  * The vectors page is always readable from user space for the
+ EXPORT_SYMBOL(rt_spin_unlock);
+@@ -1201,6 +1204,7 @@ int __lockfunc rt_spin_trylock(spinlock_t *lock)
+ 	ret = __rt_mutex_trylock(&lock->lock);
+ 	if (ret) {
+ 		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
++		rcu_read_lock();
+ 	} else {
+ 		migrate_enable();
+ 		sleeping_lock_dec();
+@@ -1217,6 +1221,7 @@ int __lockfunc rt_spin_trylock_bh(spinlock_t *lock)
+ 	ret = __rt_mutex_trylock(&lock->lock);
+ 	if (ret) {
+ 		sleeping_lock_inc();
++		rcu_read_lock();
+ 		migrate_disable();
+ 		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
+ 	} else
+@@ -1233,6 +1238,7 @@ int __lockfunc rt_spin_trylock_irqsave(spinlock_t *lock, unsigned long *flags)
+ 	ret = __rt_mutex_trylock(&lock->lock);
+ 	if (ret) {
+ 		sleeping_lock_inc();
++		rcu_read_lock();
+ 		migrate_disable();
+ 		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
+ 	}
+diff --git a/kernel/locking/rwlock-rt.c b/kernel/locking/rwlock-rt.c
+index c3b91205161c..0ae8c62ea832 100644
+--- a/kernel/locking/rwlock-rt.c
++++ b/kernel/locking/rwlock-rt.c
+@@ -310,6 +310,7 @@ int __lockfunc rt_read_trylock(rwlock_t *rwlock)
+ 	ret = do_read_rt_trylock(rwlock);
+ 	if (ret) {
+ 		rwlock_acquire_read(&rwlock->dep_map, 0, 1, _RET_IP_);
++		rcu_read_lock();
+ 	} else {
+ 		migrate_enable();
+ 		sleeping_lock_dec();
+@@ -327,6 +328,7 @@ int __lockfunc rt_write_trylock(rwlock_t *rwlock)
+ 	ret = do_write_rt_trylock(rwlock);
+ 	if (ret) {
+ 		rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
++		rcu_read_lock();
+ 	} else {
+ 		migrate_enable();
+ 		sleeping_lock_dec();
+@@ -338,6 +340,7 @@ EXPORT_SYMBOL(rt_write_trylock);
+ void __lockfunc rt_read_lock(rwlock_t *rwlock)
+ {
+ 	sleeping_lock_inc();
++	rcu_read_lock();
+ 	migrate_disable();
+ 	rwlock_acquire_read(&rwlock->dep_map, 0, 0, _RET_IP_);
+ 	do_read_rt_lock(rwlock);
+@@ -347,6 +350,7 @@ EXPORT_SYMBOL(rt_read_lock);
+ void __lockfunc rt_write_lock(rwlock_t *rwlock)
+ {
+ 	sleeping_lock_inc();
++	rcu_read_lock();
+ 	migrate_disable();
+ 	rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
+ 	do_write_rt_lock(rwlock);
+@@ -358,6 +362,7 @@ void __lockfunc rt_read_unlock(rwlock_t *rwlock)
+ 	rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
+ 	do_read_rt_unlock(rwlock);
+ 	migrate_enable();
++	rcu_read_unlock();
+ 	sleeping_lock_dec();
+ }
+ EXPORT_SYMBOL(rt_read_unlock);
+@@ -367,6 +372,7 @@ void __lockfunc rt_write_unlock(rwlock_t *rwlock)
+ 	rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
+ 	do_write_rt_unlock(rwlock);
+ 	migrate_enable();
++	rcu_read_unlock();
+ 	sleeping_lock_dec();
+ }
+ EXPORT_SYMBOL(rt_write_unlock);
 -- 
 2.14.1
 
