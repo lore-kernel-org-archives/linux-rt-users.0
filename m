@@ -4,43 +4,43 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
-	version=3.4.0
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 79BEAC76567
-	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Feb 2020 14:34:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4484DC7656A
+	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Feb 2020 14:34:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 48751246B0
-	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Feb 2020 14:34:05 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1183524656
+	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Feb 2020 14:34:31 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1582814045;
-	bh=0cRiHDjg/zFYOP3ScRzQ8pBy26vmofMa73wNOqpm/3I=;
+	s=default; t=1582814071;
+	bh=/wpvT2KXTKwREYtzErr3NN+MGdbBtsYoGaQrIonZXqY=;
 	h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=HcZ7l2BVxtTfBJhwq2ZJ3vIHWUrWDXkyoPv6ScvPE1lwR+uX7vqzPFw4Bw0Ol779x
-	 u8b5hShjthfg9Cii1P4uuY16MH63yYYxKP65DY1+qGMhH06wdDek1kYNeoSBVenwlX
-	 8ms0gwQ4xop/aiG1OAK7d31mrX/cxcWvqbHuqRRs=
+	b=EN2q0XpDTH6QiP0HYrEwXXLyAI4XQUkVlTPptJtuSBkXcpdRJdkb1D9cK5ZilhkZx
+	 op6T1yXnqFvesPHNIxJkFYGJD3DQfcfGO2NoPJ7tl9JQihFZxOyinbXAfoIFQh3bg7
+	 KmoEjnq09xYq/IfWZcHmUuU4YWK5pX+muCSfhx8A=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2387628AbgB0OeE (ORCPT
+        id S2388319AbgB0Oea (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 27 Feb 2020 09:34:04 -0500
-Received: from mail.kernel.org ([198.145.29.99]:45042 "EHLO mail.kernel.org"
+        Thu, 27 Feb 2020 09:34:30 -0500
+Received: from mail.kernel.org ([198.145.29.99]:45332 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S2387559AbgB0OeD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 27 Feb 2020 09:34:03 -0500
+        id S2388584AbgB0OeW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 27 Feb 2020 09:34:22 -0500
 Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id F2CF8246B5;
-        Thu, 27 Feb 2020 14:34:01 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 5E5C6246C1;
+        Thu, 27 Feb 2020 14:34:21 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1582814042;
-        bh=0cRiHDjg/zFYOP3ScRzQ8pBy26vmofMa73wNOqpm/3I=;
+        s=default; t=1582814062;
+        bh=/wpvT2KXTKwREYtzErr3NN+MGdbBtsYoGaQrIonZXqY=;
         h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=dq/9tXPTXZKNhgRaSp+m31BmJwxWtgqxda59Ew4j22PHqixTtNxprSYUjlNG7dmQz
-         tadkNnliJQGNcqCbzOiLHpW8gSa0VxDYuPHgfbT2EzBl0kgm3lQ6jurnEb6qoRzHNG
-         ZAQZBInHqRNoS7VPS7OUclXXeAY+99298c2E/n4c=
+        b=iBZelBUGJFmusjfErvjX2Ojhd1CSpD+6xoIq45Tsbog3v2Ueza+z3fCNFRMr/NDN4
+         OzMlzTNMQvhGggl17G5i1YDsFSNn0fo4X3HTheR6hE7z91ma3jsnengLu32Eegp9UG
+         oo4i3yqQFG7K1aVEzxeBrsDcfzUCEeh3cj2/lirQ=
 From:   zanussi@kernel.org
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -51,9 +51,9 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 07/23] sched: Remove dead __migrate_disabled() check
-Date:   Thu, 27 Feb 2020 08:33:18 -0600
-Message-Id: <20499dc2581f16f080d212e97721992565f57669.1582814004.git.zanussi@kernel.org>
+Subject: [PATCH RT 23/23] Linux 4.14.170-rt75-rc2
+Date:   Thu, 27 Feb 2020 08:33:34 -0600
+Message-Id: <10c5fe4fa61fbc7206eb702e0435bdce6213f90f.1582814004.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.14.1
 In-Reply-To: <cover.1582814004.git.zanussi@kernel.org>
 References: <cover.1582814004.git.zanussi@kernel.org>
@@ -64,7 +64,7 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Scott Wood <swood@redhat.com>
+From: Tom Zanussi <zanussi@kernel.org>
 
 v4.14.170-rt75-rc2 stable review patch.
 If anyone has any objections, please let me know.
@@ -72,39 +72,18 @@ If anyone has any objections, please let me know.
 -----------
 
 
-[ Upstream commit 14d9272d534ea91262e15db99443fc5995c7c016 ]
-
-This code was unreachable given the __migrate_disabled() branch
-to "out" immediately beforehand.
-
-Signed-off-by: Scott Wood <swood@redhat.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Tom Zanussi <zanussi@kernel.org>
-
- Conflicts:
-	kernel/sched/core.c
 ---
- kernel/sched/core.c | 7 -------
- 1 file changed, 7 deletions(-)
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 8d6badac9225..4708129e8df1 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -1217,13 +1217,6 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
- 	if (cpumask_test_cpu(task_cpu(p), new_mask) || __migrate_disabled(p))
- 		goto out;
- 
--#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_BASE)
--	if (__migrate_disabled(p)) {
--		p->migrate_disable_update = 1;
--		goto out;
--	}
--#endif
--
- 	if (task_running(rq, p) || p->state == TASK_WAKING) {
- 		struct migration_arg arg = { p, dest_cpu };
- 		/* Need help from migration thread: drop lock and wait. */
+diff --git a/localversion-rt b/localversion-rt
+index 7d028f4a9e56..2d2ca36685e5 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt74
++-rt75-rc2
 -- 
 2.14.1
 
