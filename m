@@ -7,62 +7,62 @@ X-Spam-Status: No, score=-9.6 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 38019C3F2D7
-	for <linux-rt-users@archiver.kernel.org>; Mon,  2 Mar 2020 21:44:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9D3C1C3F2CD
+	for <linux-rt-users@archiver.kernel.org>; Mon,  2 Mar 2020 21:44:48 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 0991020732
-	for <linux-rt-users@archiver.kernel.org>; Mon,  2 Mar 2020 21:44:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6EE6420732
+	for <linux-rt-users@archiver.kernel.org>; Mon,  2 Mar 2020 21:44:48 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="IUBSu8Bq"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="iCSmjhDQ"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726969AbgCBVoq (ORCPT
+        id S1727097AbgCBVos (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 2 Mar 2020 16:44:46 -0500
-Received: from mail-qk1-f194.google.com ([209.85.222.194]:37081 "EHLO
-        mail-qk1-f194.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726695AbgCBVoq (ORCPT
+        Mon, 2 Mar 2020 16:44:48 -0500
+Received: from mail-qv1-f67.google.com ([209.85.219.67]:39262 "EHLO
+        mail-qv1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727005AbgCBVor (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 2 Mar 2020 16:44:46 -0500
-Received: by mail-qk1-f194.google.com with SMTP id m9so1351962qke.4
-        for <linux-rt-users@vger.kernel.org>; Mon, 02 Mar 2020 13:44:45 -0800 (PST)
+        Mon, 2 Mar 2020 16:44:47 -0500
+Received: by mail-qv1-f67.google.com with SMTP id fc12so698624qvb.6
+        for <linux-rt-users@vger.kernel.org>; Mon, 02 Mar 2020 13:44:46 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=Ter0RuiKxIJWmkmNVK7sC0QBAqg66x2Dni6EBTpo6Y4=;
-        b=IUBSu8BqLe2LcFFt7D6k6C+S8Jt6mS2utcsSUMLgfzTfXpvhmkwI85Ls33enWFSOFj
-         42OsOKYh+V8L0dNg002yl34F5GgP49/J+Ow9gvCGeoSPHdA2+Jvl2/IF3AzIdsVDkuSy
-         kI5tGW/M4ADWbIsbOF1nfVZ6v8VAuhq44BDQpcJfBWqGFdMQd7EH1f3RYuOOHceZxi7A
-         WMkFr617HPzAFaVZr5dL4bz967h+1FIlF4kTtKOcvxeaoT+2Pox6uIRvg2iQXWPpg/5s
-         4xUEYHMYJCrIbYcVXRID1axtQNlG/zFUXwBHbEm2U0SSu2gcPE4V/R8AohLsPNwiJpcs
-         0lyQ==
+        bh=WO2XtG6b/230cSVTe7YJVQjHYZYhWERxQ0/pwxGz9z0=;
+        b=iCSmjhDQFpM9GZ1So+cHg9QDYu7wjAEJZ8EMd6l/9U8RXc6WF3jf5WNhvQ+GfU0Gey
+         Sn047irO+tvvuTDbk493W2Rqnc1avMPQRlDc7rly68HYu9LISFosW5dJ2B4+4atVSaAG
+         p4EM9wc4mcXcHfwnMWFDqaKFJP5KHzSsfUW3W3DjSH6DyFZLCaNEVlrS6tmqL/AjBB19
+         EX1hiEEXxmQZDzZ8ewUPx/XNyxp1tv/nG98scU6rQi17hEnNVHt0RQ+lekFRoOH1o30T
+         lKn/GbejpBFyJXupNcFmC9oTR54JFzS6MLa4QFIuJS+IYAiowEZwG/xmLqWaUrhSUBms
+         LyOg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
          :in-reply-to:references:mime-version:content-transfer-encoding;
-        bh=Ter0RuiKxIJWmkmNVK7sC0QBAqg66x2Dni6EBTpo6Y4=;
-        b=QOJZie09LQEu8BJfbFUcQ73PUUkC+dSDGQuJTAcPoDjAwFWw6NDHAqeb0ZNmEMNdOq
-         ZFWg+hvvUZq2PIRRwjedIxVXEqgW4CjrTlD8EzRMwiR90cQejCyIt2T/ZoMlEpNhncq2
-         w096bGiKwIAddZKuyuGOyn99+UUAMuXJ0WgSq10azqQzy8dEj7hE27Q81lRFocjtZ8Zc
-         AVKkjYq0/KElqH35XaQjixa9FItSCsnTYYdzJdWXcezwElysQLL8lAdDezqXeYsDvZNk
-         y26S4dh8pskY/UcwAZVt+uFXN2MBJz2BAcVr8fKjfKQSQZXLo8+nXCXYx39oZs4fpe/G
-         M5uQ==
-X-Gm-Message-State: ANhLgQ3CdcQAT8vW6oXUXoUjvQt5Bbux14nh32ZRjqhA0fEzTu1fKlep
-        QriP8JHu7bTfTTmzdnw0rz/5Iay5+OY=
-X-Google-Smtp-Source: ADFU+vs4EaqRmZD4mw8pV2G7AkZnBYcFQpq0WT6QymTYWjPBEfSUOi0cJgHn3A/mgqERrKCTfHrIIg==
-X-Received: by 2002:a37:4bd3:: with SMTP id y202mr1311246qka.32.1583185485246;
-        Mon, 02 Mar 2020 13:44:45 -0800 (PST)
+        bh=WO2XtG6b/230cSVTe7YJVQjHYZYhWERxQ0/pwxGz9z0=;
+        b=sBR5x1RODSJTP274BIutjOURSAhxuoFLswFlqamYYCjzNdQXQ+Eii5lATlFPb7vBTQ
+         GUfOxCs0aii7L1B4/g8CDT4kpYmMv1aH6MphtxJXFYOc/mFccGkSRRBdcLQfbN4jlzaF
+         vox+SFXhkMNAa/UNYsgDMp08L2p5YwemILq1iPsp25tl/RfRfayWaFl2+SysR9ryRReK
+         WTMWTVNOAwFQOWItGktHj7k+MyUn2VOTdxmWUcigMRKnk8BCpKq9Q5EloCGfAZBanqET
+         nX395/HHunINkgNDWf0Na3NblwkhI0Bl4vpAerFXCFCfJ0+dA+iXezcYOOlUrDjaLgFP
+         vDsQ==
+X-Gm-Message-State: ANhLgQ0Gje6OMO/Lo9qIow08ApT7sWzK032GXBkEfLEP8KlcjzKorbew
+        kSoNK4aUd8RdxTAS11Bn86U8Olc5pJ4=
+X-Google-Smtp-Source: ADFU+vtr5RcC9AJoKHjoxxpRIlVGkbB50Aol6eCd4oG8NzmipQ/88aEtWdQzUKcTZKmgL53Xt9IFrQ==
+X-Received: by 2002:a0c:cb05:: with SMTP id o5mr1342823qvk.141.1583185486092;
+        Mon, 02 Mar 2020 13:44:46 -0800 (PST)
 Received: from planxty.redhat.com (rdwyon0600w-lp130-03-64-231-46-127.dsl.bell.ca. [64.231.46.127])
-        by smtp.gmail.com with ESMTPSA id n8sm10858796qkn.49.2020.03.02.13.44.44
+        by smtp.gmail.com with ESMTPSA id n8sm10858796qkn.49.2020.03.02.13.44.45
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 02 Mar 2020 13:44:44 -0800 (PST)
+        Mon, 02 Mar 2020 13:44:45 -0800 (PST)
 From:   John Kacur <jkacur@redhat.com>
 To:     rt-users <linux-rt-users@vger.kernel.org>
 Cc:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
-Subject: [PATCH 4/6] rt-tests: cyclictest: Fix parsing affinity with leading exclamation mark
-Date:   Mon,  2 Mar 2020 16:44:28 -0500
-Message-Id: <20200302214430.15825-5-jkacur@redhat.com>
+Subject: [PATCH 5/6] rt-tests: cyclictest: Only run on available cpus according to the affinity
+Date:   Mon,  2 Mar 2020 16:44:29 -0500
+Message-Id: <20200302214430.15825-6-jkacur@redhat.com>
 X-Mailer: git-send-email 2.20.1
 In-Reply-To: <20200302214430.15825-1-jkacur@redhat.com>
 References: <20200302214430.15825-1-jkacur@redhat.com>
@@ -73,33 +73,90 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The case in which the user specifies the affinity with a space and a
-leading exclamation mark was not working. For example
+Right now cyclictest acts as if it owns the machine. If you don't
+specify the affinity with -a [CPUSET] it will run threads on all cpus.
 
-./cyclictest -t -a'!4-5'
-was working correctly, but the following was not.
-./cyclictest -t -a '!4-5'
+Change this to only run on cpus according to the affinity.
 
-Fix this by recognizing this input as a non-error case.
+For example.
+
+taskset -c 0-3 ./cyclictest -t
+will only affect the main thread and limit it that to cpus 0-3 but the
+threads that are spun off can run anywhere, with this change all threads
+will be limited to cpus 0-3
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- src/cyclictest/cyclictest.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ src/cyclictest/cyclictest.c | 39 ++++++++++++++++++++++++++++++++++---
+ 1 file changed, 36 insertions(+), 3 deletions(-)
 
 diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 1d2962fda777..18c383689dc2 100644
+index 18c383689dc2..ce93ad0643cd 100644
 --- a/src/cyclictest/cyclictest.c
 +++ b/src/cyclictest/cyclictest.c
-@@ -1199,7 +1199,7 @@ static void process_options (int argc, char *argv[], int max_cpus)
- 			if (optarg != NULL) {
- 				parse_cpumask(optarg, max_cpus);
- 				setaffinity = AFFINITY_SPECIFIED;
--			} else if (optind<argc && (atoi(argv[optind]) || argv[optind][0] == '0')) {
-+			} else if (optind<argc && (atoi(argv[optind]) || argv[optind][0] == '0' || argv[optind][0] == '!')) {
- 				parse_cpumask(argv[optind], max_cpus);
- 				setaffinity = AFFINITY_SPECIFIED;
- 			} else {
+@@ -1040,7 +1040,8 @@ static unsigned int is_cpumask_zero(const struct bitmask *mask)
+ 	return (rt_numa_bitmask_count(mask) == 0);
+ }
+ 
+-static int cpu_for_thread(int thread_num, int max_cpus)
++/* cpu_for_thread AFFINITY_SPECIFIED */
++static int cpu_for_thread_sp(int thread_num, int max_cpus)
+ {
+ 	unsigned int m, cpu, i, num_cpus;
+ 	num_cpus = rt_numa_bitmask_count(affinity_mask);
+@@ -1059,6 +1060,36 @@ static int cpu_for_thread(int thread_num, int max_cpus)
+ 	return 0;
+ }
+ 
++/* cpu_for_thread AFFINITY_USEALL */
++static int cpu_for_thread_ua(int thread_num, int max_cpus)
++{
++	int res, num_cpus, i, m, cpu;
++	pthread_t thread;
++	cpu_set_t cpuset;
++
++	thread = pthread_self();
++	CPU_ZERO(&cpuset);
++
++	res = pthread_getaffinity_np(thread, sizeof(cpu_set_t), &cpuset);
++	if (res != 0) {
++		fatal("pthread_getaffinity_np failed: %s\n", strerror(res));
++	}
++
++	num_cpus = CPU_COUNT(&cpuset);
++	m = thread_num % num_cpus;
++
++	for (i = 0, cpu = 0; i < max_cpus; i++) {
++		if (CPU_ISSET(i, &cpuset)) {
++			if (cpu == m)
++				return i;
++			cpu++;
++		}
++	}
++
++	fprintf(stderr, "Bug in cpu mask handling code.\n");
++	return 0;
++}
++
+ 
+ static void parse_cpumask(const char *option, const int max_cpus)
+ {
+@@ -2086,11 +2117,13 @@ int main(int argc, char **argv)
+ 		switch (setaffinity) {
+ 		case AFFINITY_UNSPECIFIED: cpu = -1; break;
+ 		case AFFINITY_SPECIFIED:
+-			cpu = cpu_for_thread(i, max_cpus);
++			cpu = cpu_for_thread_sp(i, max_cpus);
+ 			if (verbose)
+ 				printf("Thread %d using cpu %d.\n", i, cpu);
+ 			break;
+-		case AFFINITY_USEALL: cpu = i % max_cpus; break;
++		case AFFINITY_USEALL:
++			cpu = cpu_for_thread_ua(i, max_cpus);
++			break;
+ 		default: cpu = -1;
+ 		}
+ 
 -- 
 2.20.1
 
