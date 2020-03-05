@@ -2,95 +2,70 @@ Return-Path: <SRS0=I6ff=4W=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 43F77C3F2CD
-	for <linux-rt-users@archiver.kernel.org>; Thu,  5 Mar 2020 13:38:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 86C5BC3F2D7
+	for <linux-rt-users@archiver.kernel.org>; Thu,  5 Mar 2020 15:47:33 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 267FA21556
-	for <linux-rt-users@archiver.kernel.org>; Thu,  5 Mar 2020 13:38:57 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6640A2073B
+	for <linux-rt-users@archiver.kernel.org>; Thu,  5 Mar 2020 15:47:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726048AbgCENix convert rfc822-to-8bit (ORCPT
+        id S1726533AbgCEPra (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 5 Mar 2020 08:38:53 -0500
-Received: from eu-smtp-delivery-151.mimecast.com ([207.82.80.151]:55509 "EHLO
-        eu-smtp-delivery-151.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1726007AbgCENix (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 5 Mar 2020 08:38:53 -0500
-Received: from AcuMS.aculab.com (156.67.243.126 [156.67.243.126]) (Using
- TLS) by relay.mimecast.com with ESMTP id uk-mta-8-FRg9kPztOJKu46TlEY-bkw-1;
- Thu, 05 Mar 2020 13:38:49 +0000
-X-MC-Unique: FRg9kPztOJKu46TlEY-bkw-1
-Received: from AcuMS.Aculab.com (fd9f:af1c:a25b:0:43c:695e:880f:8750) by
- AcuMS.aculab.com (fd9f:af1c:a25b:0:43c:695e:880f:8750) with Microsoft SMTP
- Server (TLS) id 15.0.1347.2; Thu, 5 Mar 2020 13:38:48 +0000
-Received: from AcuMS.Aculab.com ([fe80::43c:695e:880f:8750]) by
- AcuMS.aculab.com ([fe80::43c:695e:880f:8750%12]) with mapi id 15.00.1347.000;
- Thu, 5 Mar 2020 13:38:48 +0000
-From:   David Laight <David.Laight@ACULAB.COM>
-To:     "'zanussi@kernel.org'" <zanussi@kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>,
+        Thu, 5 Mar 2020 10:47:30 -0500
+Received: from mail.monom.org ([188.138.9.77]:60182 "EHLO mail.monom.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726179AbgCEPra (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 5 Mar 2020 10:47:30 -0500
+X-Greylist: delayed 547 seconds by postgrey-1.27 at vger.kernel.org; Thu, 05 Mar 2020 10:47:29 EST
+Received: from mail.monom.org (localhost [127.0.0.1])
+        by filter.mynetwork.local (Postfix) with ESMTP id 690A3500535;
+        Thu,  5 Mar 2020 16:38:21 +0100 (CET)
+Received: from localhost (b9168f9a.cgn.dg-w.de [185.22.143.154])
+        by mail.monom.org (Postfix) with ESMTPSA id C21C0500316;
+        Thu,  5 Mar 2020 16:38:20 +0100 (CET)
+Date:   Thu, 05 Mar 2020 16:38:20 +0100
+From:   Daniel Wagner <wagi@monom.org>
+Subject: [ANNOUNCE] 4.4.215-rt192
+Data:   Thu, 05 Mar 2020 15:35:48 -0000
+To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
-        "John Kacur" <jkacur@redhat.com>,
+        John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>
-Subject: RE: [PATCH RT 21/23] sched: migrate_enable: Busy loop until the
- migration request is completed
-Thread-Topic: [PATCH RT 21/23] sched: migrate_enable: Busy loop until the
- migration request is completed
-Thread-Index: AQHV7XsS7F52Pb7Mok2qp7hxLysRG6g57Grw
-Date:   Thu, 5 Mar 2020 13:38:48 +0000
-Message-ID: <9003e4a9e5774ecfa377d218c71c2ad2@AcuMS.aculab.com>
-References: <cover.1582814004.git.zanussi@kernel.org>
- <fd4bda7ad49f46545a03424fd1327dff8a8b8171.1582814004.git.zanussi@kernel.org>
-In-Reply-To: <fd4bda7ad49f46545a03424fd1327dff8a8b8171.1582814004.git.zanussi@kernel.org>
-Accept-Language: en-GB, en-US
-Content-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-ms-exchange-transport-fromentityheader: Hosted
-x-originating-ip: [10.202.205.107]
-MIME-Version: 1.0
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: aculab.com
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Julia Cartwright <julia@ni.com>, Pavel Machek <pavel@denx.de>
+Message-Id: <20200305153821.690A3500535@mail.monom.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: zanussi@kernel.org
-> Sent: 27 February 2020 14:34
-> [ Upstream commit 140d7f54a5fff02898d2ca9802b39548bf7455f1 ]
-> 
-> If user task changes the CPU affinity mask of a running task it will
-> dispatch migration request if the current CPU is no longer allowed. This
-> might happen shortly before a task enters a migrate_disable() section.
-> Upon leaving the migrate_disable() section, the task will notice that
-> the current CPU is no longer allowed and will will dispatch its own
-> migration request to move it off the current CPU.
-> While invoking __schedule() the first migration request will be
-> processed and the task returns on the "new" CPU with "arg.done = 0". Its
-> own migration request will be processed shortly after and will result in
-> memory corruption if the stack memory, designed for request, was used
-> otherwise in the meantime.
-> 
-> Spin until the migration request has been processed if it was accepted.
+Hello RT Folks!
 
-What happens if the process changing the affinity mask is running
-at a higher RT priority than that of the task being changed and
-the new mask requires it run on the same cpu?
+I'm pleased to announce the 4.4.215-rt192 stable release.
 
-	David
+This release is just an update to the new stable 4.4.215 version
+and no RT specific changes have been made.
 
--
-Registered Address Lakeside, Bramley Road, Mount Farm, Milton Keynes, MK1 1PT, UK
-Registration No: 1397386 (Wales)
+You can get this release via the git tree at:
 
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.4-rt
+  Head SHA1: 604d02652563e86888169fd24301c4c3855eb6f2
+
+Or to build 4.4.215-rt192 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.215.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.215-rt192.patch.xz
+
+Enjoy!
+   Daniel
