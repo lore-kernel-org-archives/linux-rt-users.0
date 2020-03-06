@@ -6,30 +6,30 @@ X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2808CC10DCE
-	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Mar 2020 18:41:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D6247C10F25
+	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Mar 2020 18:41:11 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 001762084E
-	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Mar 2020 18:41:05 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B90052084E
+	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Mar 2020 18:41:11 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726990AbgCFSkz (ORCPT
+        id S1726954AbgCFSky (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 6 Mar 2020 13:40:55 -0500
-Received: from mail.kernel.org ([198.145.29.99]:55906 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726781AbgCFSky (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 6 Mar 2020 13:40:54 -0500
+Received: from mail.kernel.org ([198.145.29.99]:55874 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726171AbgCFSkx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 6 Mar 2020 13:40:53 -0500
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id DE8F42072D;
+        by mail.kernel.org (Postfix) with ESMTPSA id 35803206D7;
         Fri,  6 Mar 2020 18:40:53 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.93)
         (envelope-from <rostedt@goodmis.org>)
-        id 1jAHu0-002e0Y-Qy; Fri, 06 Mar 2020 13:40:52 -0500
-Message-Id: <20200306184052.697292686@goodmis.org>
+        id 1jAHu0-002dya-4p; Fri, 06 Mar 2020 13:40:52 -0500
+Message-Id: <20200306184052.026866157@goodmis.org>
 User-Agent: quilt/0.65
-Date:   Fri, 06 Mar 2020 13:40:41 -0500
+Date:   Fri, 06 Mar 2020 13:40:37 -0500
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -40,8 +40,9 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>,
-        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
-Subject: [PATCH RT 6/8] drm/vmwgfx: Drop preempt_disable() in vmw_fifo_ping_host()
+        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>,
+        Scott Wood <swood@redhat.com>
+Subject: [PATCH RT 2/8] sched: migrate_enable: Use per-cpu cpu_stop_work
 References: <20200306184035.948924528@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -55,43 +56,82 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Scott Wood <swood@redhat.com>
 
-[ Upstream commit b901491e7b9b7a676818d84e482b69be72fc142f ]
+[ Upstream commit 2dcd94b443c5dcbc20281666321b7f025f9cc85c ]
 
-vmw_fifo_ping_host() disables preemption around a test and a register
-write via vmw_write(). The write function acquires a spinlock_t typed
-lock which is not allowed in a preempt_disable()ed section on
-PREEMPT_RT. This has been reported in the bugzilla.
+Commit e6c287b1512d ("sched: migrate_enable: Use stop_one_cpu_nowait()")
+adds a busy wait to deal with an edge case where the migrated thread
+can resume running on another CPU before the stopper has consumed
+cpu_stop_work.  However, this is done with preemption disabled and can
+potentially lead to deadlock.
 
-It has been explained by Thomas Hellstrom that this preempt_disable()ed
-section is not required for correctness.
+While it is not guaranteed that the cpu_stop_work will be consumed before
+the migrating thread resumes and exits the stack frame, it is guaranteed
+that nothing other than the stopper can run on the old cpu between the
+migrating thread scheduling out and the cpu_stop_work being consumed.
+Thus, we can store cpu_stop_work in per-cpu data without it being
+reused too early.
 
-Remove the preempt_disable() section.
-
-Link: https://bugzilla.kernel.org/show_bug.cgi?id=206591
-Link: https://lkml.kernel.org/r/0b5e1c65d89951de993deab06d1d197b40fd67aa.camel@vmware.com
+Fixes: e6c287b1512d ("sched: migrate_enable: Use stop_one_cpu_nowait()")
+Suggested-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Scott Wood <swood@redhat.com>
+Reviewed-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- drivers/gpu/drm/vmwgfx/vmwgfx_fifo.c | 2 --
- 1 file changed, 2 deletions(-)
+ kernel/sched/core.c | 22 ++++++++++++++--------
+ 1 file changed, 14 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/gpu/drm/vmwgfx/vmwgfx_fifo.c b/drivers/gpu/drm/vmwgfx/vmwgfx_fifo.c
-index d0fd147ef75f..fb5a3461bb8c 100644
---- a/drivers/gpu/drm/vmwgfx/vmwgfx_fifo.c
-+++ b/drivers/gpu/drm/vmwgfx/vmwgfx_fifo.c
-@@ -167,10 +167,8 @@ void vmw_fifo_ping_host(struct vmw_private *dev_priv, uint32_t reason)
- {
- 	u32 *fifo_mem = dev_priv->mmio_virt;
- 
--	preempt_disable();
- 	if (cmpxchg(fifo_mem + SVGA_FIFO_BUSY, 0, 1) == 0)
- 		vmw_write(dev_priv, SVGA_REG_SYNC, reason);
--	preempt_enable();
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 4616c086dd26..c4290fa5c0b6 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -7291,6 +7291,9 @@ static void migrate_disabled_sched(struct task_struct *p)
+ 	p->migrate_disable_scheduled = 1;
  }
  
- void vmw_fifo_release(struct vmw_private *dev_priv, struct vmw_fifo_state *fifo)
++static DEFINE_PER_CPU(struct cpu_stop_work, migrate_work);
++static DEFINE_PER_CPU(struct migration_arg, migrate_arg);
++
+ void migrate_enable(void)
+ {
+ 	struct task_struct *p = current;
+@@ -7329,23 +7332,26 @@ void migrate_enable(void)
+ 
+ 	WARN_ON(smp_processor_id() != cpu);
+ 	if (!is_cpu_allowed(p, cpu)) {
+-		struct migration_arg arg = { .task = p };
+-		struct cpu_stop_work work;
++		struct migration_arg __percpu *arg;
++		struct cpu_stop_work __percpu *work;
+ 		struct rq_flags rf;
+ 
++		work = this_cpu_ptr(&migrate_work);
++		arg = this_cpu_ptr(&migrate_arg);
++		WARN_ON_ONCE(!arg->done && !work->disabled && work->arg);
++
++		arg->task = p;
++		arg->done = false;
++
+ 		rq = task_rq_lock(p, &rf);
+ 		update_rq_clock(rq);
+-		arg.dest_cpu = select_fallback_rq(cpu, p);
++		arg->dest_cpu = select_fallback_rq(cpu, p);
+ 		task_rq_unlock(rq, p, &rf);
+ 
+ 		stop_one_cpu_nowait(task_cpu(p), migration_cpu_stop,
+-				    &arg, &work);
++				    arg, work);
+ 		tlb_migrate_finish(p->mm);
+ 		__schedule(true);
+-		if (!work.disabled) {
+-			while (!arg.done)
+-				cpu_relax();
+-		}
+ 	}
+ 
+ out:
 -- 
 2.25.0
 
