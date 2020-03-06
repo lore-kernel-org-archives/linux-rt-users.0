@@ -4,32 +4,32 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
-	autolearn=ham autolearn_force=no version=3.4.0
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4FCA5C10F00
-	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Mar 2020 18:41:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9F820C10DCE
+	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Mar 2020 18:41:26 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 2A9B620866
-	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Mar 2020 18:41:22 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 829A020866
+	for <linux-rt-users@archiver.kernel.org>; Fri,  6 Mar 2020 18:41:26 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727217AbgCFSlV (ORCPT
+        id S1726859AbgCFSky (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 6 Mar 2020 13:41:21 -0500
-Received: from mail.kernel.org ([198.145.29.99]:55942 "EHLO mail.kernel.org"
+        Fri, 6 Mar 2020 13:40:54 -0500
+Received: from mail.kernel.org ([198.145.29.99]:55840 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726788AbgCFSky (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        id S1726162AbgCFSky (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 6 Mar 2020 13:40:54 -0500
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 12DD4206E6;
-        Fri,  6 Mar 2020 18:40:54 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 130CA20684;
+        Fri,  6 Mar 2020 18:40:53 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.93)
         (envelope-from <rostedt@goodmis.org>)
-        id 1jAHu0-002e12-Vx; Fri, 06 Mar 2020 13:40:52 -0500
-Message-Id: <20200306184052.862203728@goodmis.org>
+        id 1jAHtz-002dy5-WA; Fri, 06 Mar 2020 13:40:52 -0500
+Message-Id: <20200306184051.873964952@goodmis.org>
 User-Agent: quilt/0.65
-Date:   Fri, 06 Mar 2020 13:40:42 -0500
+Date:   Fri, 06 Mar 2020 13:40:36 -0500
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -40,8 +40,9 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         Julia Cartwright <julia@ni.com>,
         Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>,
-        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
-Subject: [PATCH RT 7/8] tracing: make preempt_lazy and migrate_disable counter smaller
+        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>,
+        stable-rt@vger.kernel.org
+Subject: [PATCH RT 1/8] userfaultfd: Use a seqlock instead of seqcount
 References: <20200306184035.948924528@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -57,52 +58,77 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-[ Upstream commit dd430bf5ecb40f9a89679c85868826475d71de54 ]
+[ Upstream commit dc952a564d02997330654be9628bbe97ba2a05d3 ]
 
-The migrate_disable counter should not exceed 255 so it is enough to
-store it in an 8bit field.
-With this change we can move the `preempt_lazy_count' member into the
-gap so the whole struct shrinks by 4 bytes to 12 bytes in total.
-Remove the `padding' field, it is not needed.
-Update the tracing fields in trace_define_common_fields() (it was
-missing the preempt_lazy_count field).
+On RT write_seqcount_begin() disables preemption which leads to warning
+in add_wait_queue() while the spinlock_t is acquired.
+The waitqueue can't be converted to swait_queue because
+userfaultfd_wake_function() is used as a custom wake function.
 
+Use seqlock instead seqcount to avoid the preempt_disable() section
+during add_wait_queue().
+
+Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- include/linux/trace_events.h | 3 +--
- kernel/trace/trace_events.c  | 4 ++--
- 2 files changed, 3 insertions(+), 4 deletions(-)
+ fs/userfaultfd.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/include/linux/trace_events.h b/include/linux/trace_events.h
-index 72864a11cec0..e26a85c1b7ba 100644
---- a/include/linux/trace_events.h
-+++ b/include/linux/trace_events.h
-@@ -62,8 +62,7 @@ struct trace_entry {
- 	unsigned char		flags;
- 	unsigned char		preempt_count;
- 	int			pid;
--	unsigned short		migrate_disable;
--	unsigned short		padding;
-+	unsigned char		migrate_disable;
- 	unsigned char		preempt_lazy_count;
- };
+diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
+index d269d1139f7f..ff6be687f68e 100644
+--- a/fs/userfaultfd.c
++++ b/fs/userfaultfd.c
+@@ -61,7 +61,7 @@ struct userfaultfd_ctx {
+ 	/* waitqueue head for events */
+ 	wait_queue_head_t event_wqh;
+ 	/* a refile sequence protected by fault_pending_wqh lock */
+-	struct seqcount refile_seq;
++	seqlock_t refile_seq;
+ 	/* pseudo fd refcounting */
+ 	atomic_t refcount;
+ 	/* userfaultfd syscall flags */
+@@ -1064,7 +1064,7 @@ static ssize_t userfaultfd_ctx_read(struct userfaultfd_ctx *ctx, int no_wait,
+ 			 * waitqueue could become empty if this is the
+ 			 * only userfault.
+ 			 */
+-			write_seqcount_begin(&ctx->refile_seq);
++			write_seqlock(&ctx->refile_seq);
  
-diff --git a/kernel/trace/trace_events.c b/kernel/trace/trace_events.c
-index 1febb0ca4c81..07b8f5bfd263 100644
---- a/kernel/trace/trace_events.c
-+++ b/kernel/trace/trace_events.c
-@@ -188,8 +188,8 @@ static int trace_define_common_fields(void)
- 	__common_field(unsigned char, flags);
- 	__common_field(unsigned char, preempt_count);
- 	__common_field(int, pid);
--	__common_field(unsigned short, migrate_disable);
--	__common_field(unsigned short, padding);
-+	__common_field(unsigned char, migrate_disable);
-+	__common_field(unsigned char, preempt_lazy_count);
+ 			/*
+ 			 * The fault_pending_wqh.lock prevents the uwq
+@@ -1090,7 +1090,7 @@ static ssize_t userfaultfd_ctx_read(struct userfaultfd_ctx *ctx, int no_wait,
+ 			list_del(&uwq->wq.entry);
+ 			add_wait_queue(&ctx->fault_wqh, &uwq->wq);
  
- 	return ret;
+-			write_seqcount_end(&ctx->refile_seq);
++			write_sequnlock(&ctx->refile_seq);
+ 
+ 			/* careful to always initialize msg if ret == 0 */
+ 			*msg = uwq->msg;
+@@ -1263,11 +1263,11 @@ static __always_inline void wake_userfault(struct userfaultfd_ctx *ctx,
+ 	 * sure we've userfaults to wake.
+ 	 */
+ 	do {
+-		seq = read_seqcount_begin(&ctx->refile_seq);
++		seq = read_seqbegin(&ctx->refile_seq);
+ 		need_wakeup = waitqueue_active(&ctx->fault_pending_wqh) ||
+ 			waitqueue_active(&ctx->fault_wqh);
+ 		cond_resched();
+-	} while (read_seqcount_retry(&ctx->refile_seq, seq));
++	} while (read_seqretry(&ctx->refile_seq, seq));
+ 	if (need_wakeup)
+ 		__wake_userfault(ctx, range);
  }
+@@ -1938,7 +1938,7 @@ static void init_once_userfaultfd_ctx(void *mem)
+ 	init_waitqueue_head(&ctx->fault_wqh);
+ 	init_waitqueue_head(&ctx->event_wqh);
+ 	init_waitqueue_head(&ctx->fd_wqh);
+-	seqcount_init(&ctx->refile_seq);
++	seqlock_init(&ctx->refile_seq);
+ }
+ 
+ SYSCALL_DEFINE1(userfaultfd, int, flags)
 -- 
 2.25.0
 
