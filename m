@@ -2,129 +2,124 @@ Return-Path: <SRS0=JZDS=42=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.6 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-4.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_GIT autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DEF69C10F25
-	for <linux-rt-users@archiver.kernel.org>; Mon,  9 Mar 2020 19:12:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A2251C10F25
+	for <linux-rt-users@archiver.kernel.org>; Mon,  9 Mar 2020 19:48:16 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id BB91921927
-	for <linux-rt-users@archiver.kernel.org>; Mon,  9 Mar 2020 19:12:09 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="h/MnJubd"
+	by mail.kernel.org (Postfix) with ESMTP id 711A82465A
+	for <linux-rt-users@archiver.kernel.org>; Mon,  9 Mar 2020 19:48:16 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1583783296;
+	bh=jkfB9NPaUoTZdcxqmU3FXV9oQzJGdB+CktplixLqUn0=;
+	h=From:To:Subject:Date:List-ID:From;
+	b=Ei4VOsQZ8QkmC5SMEUY634dsm3lkbDl+I0Tf6gpqDmKabtu83C9t/0ykB3GqYgMo1
+	 hnjvBPFz/ugsKOgX38kQAuhXtX0pCNnQEIiJT8cRB+i2XEXoODuhw+bJ8zC8FaGuCX
+	 xHRX66DK1jST7m2uHJ0wGYMj7sOe1i7oZnw+u9nY=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727431AbgCITMG (ORCPT
+        id S1726391AbgCITsP (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 9 Mar 2020 15:12:06 -0400
-Received: from mail-qt1-f193.google.com ([209.85.160.193]:33937 "EHLO
-        mail-qt1-f193.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727335AbgCITMG (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 9 Mar 2020 15:12:06 -0400
-Received: by mail-qt1-f193.google.com with SMTP id 59so7891287qtb.1;
-        Mon, 09 Mar 2020 12:12:05 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=boJJOMs47hvrAL3gkrOn4XN/mgR+u/alIqrNyZApEIg=;
-        b=h/MnJubdCQn4MyuFiYsI7JSAWiiKdR3lin/guP2E7lnZnbNg7aXiwJ95RRw3HvS+Vp
-         0hvgo3KqnuH+l6rSs/4V6CiDSk09Vfl6Q9skhLuXc/QvWZd1pRMq/ZP9hlj4l8pXZXRZ
-         0bwl5Vkl9UbRfJGGrzuxS/9hGU55EjGdDRvgVQCm13/u7v2QMmKPDkgBD8CJsMc9MhWm
-         RWh3DZYXIp2tjJpYaL3sE0cPbc+DIEI4AVqjBnxyglqkwg2iq62j+3cHIPmkzyFHnl+K
-         oZqEaDNweJwoAA1aBBLSvjU6HiNThJt9/b1FFfA34GuAhk0qTtl/gAaoPm3u0C5AZqof
-         30KA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
-         :mime-version:content-transfer-encoding;
-        bh=boJJOMs47hvrAL3gkrOn4XN/mgR+u/alIqrNyZApEIg=;
-        b=ntBCxX5+6GbLyR22u3uc0ku4Fzb01XGvFuxjd90ANIlb6ns65NPqy16aU/BT6haLem
-         //jarTl7Gt4Wsm4gfEQF7moj7O8cs7ckbLEP6s4LBhqr2XTUrTaq4K0UnL8dSCaZoxMX
-         fVUCOTZIFtYu3dUldHi2OYWwKXti1KXYCeVnRqMUIpXouM3faDqOrj98r6VxapoEy4Pl
-         f9+HlH3I6WNhStRr94ml+kqDV02Uaa3vnIHGWicm39u7yRopM52TRtkk5SN+C9AF9+hg
-         RsiF6yySq5eGFa8uGJJhGFOqzDZ1jLudcXeaY7bm0mR0mawT6BkLzNT5ShjuuCsJaCJx
-         ertQ==
-X-Gm-Message-State: ANhLgQ2aMtZiiefw1Wbxbuts67Uq5fiZ5GuyetpcLFYT2lJbE2ncuPq+
-        mK3BngGdZdgkwLxO1zgQLUQUp+K1wvE=
-X-Google-Smtp-Source: ADFU+vu6M9SEnyXU7z/pERlgjRQZp5KhldfDsYFMhXCwVwr/xBae/49KObGqg87N/dX1WkmFVYKKEw==
-X-Received: by 2002:aed:31c1:: with SMTP id 59mr11517693qth.370.1583781124224;
-        Mon, 09 Mar 2020 12:12:04 -0700 (PDT)
-Received: from planxty.redhat.com (rdwyon0600w-lp130-03-64-231-46-127.dsl.bell.ca. [64.231.46.127])
-        by smtp.gmail.com with ESMTPSA id a84sm1109956qkb.90.2020.03.09.12.12.02
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 09 Mar 2020 12:12:03 -0700 (PDT)
-From:   John Kacur <jkacur@redhat.com>
-To:     rt-users <linux-rt-users@vger.kernel.org>,
-        lkml <linux-kernel@vger.kernel.org>
-Cc:     Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>
-Subject: [ANNOUNCE] rt-tests-1.8
-Date:   Mon,  9 Mar 2020 15:11:34 -0400
-Message-Id: <20200309191134.9062-1-jkacur@redhat.com>
-X-Mailer: git-send-email 2.20.1
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+        Mon, 9 Mar 2020 15:48:15 -0400
+Received: from mail.kernel.org ([198.145.29.99]:38196 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1725992AbgCITsP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 9 Mar 2020 15:48:15 -0400
+Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id F247420828;
+        Mon,  9 Mar 2020 19:48:13 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1583783294;
+        bh=jkfB9NPaUoTZdcxqmU3FXV9oQzJGdB+CktplixLqUn0=;
+        h=From:To:Subject:Date:From;
+        b=EPx3cJuDZgFXVT/4XKvnEAY7Qu7neXFRXmp0rq5aCcB9KLzavlQNjCCdMH0xD/8D2
+         DVH/1S4TMklpDtPhSE5bC2wEg2Iu196aQd5JZYPFvjnISlBCFYLh7GLe13I3TtCjHQ
+         tICvbiHXyjU5PKjNJkIrFbRsEjPFDXKzcJI4gV4g=
+From:   zanussi@kernel.org
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <wagi@monom.org>,
+        Tom Zanussi <zanussi@kernel.org>
+Subject: [PATCH RT 0/8] Linux v4.14.172-rt78-rc1
+Date:   Mon,  9 Mar 2020 14:47:45 -0500
+Message-Id: <cover.1583783251.git.zanussi@kernel.org>
+X-Mailer: git-send-email 2.14.1
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-- Lots of changes to affinity
-- Fixes to the parsing of affinity in cyclictest
-- Changes to cyclictest to obey the affinity of the environment it finds
-  itself running in, instead of acting like it owns the whole machine.
-  This should improve cyclictest running in containers
-- Removal of old unsupported code
-- Fix from Jeremy Puhlman to generate manpages in a cleaner fashion
+From: Tom Zanussi <zanussi@kernel.org>
 
-Bug reports, testing, patches are always appreaciated.
+Dear RT Folks,
 
-Enjoy!
+This is the RT stable review cycle of patch 4.14.172-rt78-rc1.
 
-Clone
-git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-https://kernel.googlesource.com/pub/scm/utils/rt-tests/rt-tests.git
+Please scream at me if I messed something up. Please test the patches
+too.
 
-Branch: unstable/devel/latest
+The -rc release will be uploaded to kernel.org and will be deleted
+when the final release is out. This is just a review release (or
+release candidate).
 
-Tag: v1.8
+The pre-releases will not be pushed to the git repository, only the
+final release is.
 
-Tarballs are available here:
-https://kernel.org/pub/linux/utils/rt-tests
+If all goes well, this patch will be converted to the next main
+release on 2020-03-16.
 
-Older version tarballs are available here:
-https://kernel.org/pub/linux/utils/rt-tests/older
+To build 4.14.172-rt78-rc1 directly, the following patches should be applied:
 
-Jeremy Puhlman (1):
-  rt-tests: make manpages builds reproducible
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
 
-John Kacur (11):
-  rt-tests: cyclictest: Set errno to 0 before call to mlock
-  rt-tests: cyclictest: Report all errors from pthread_setaffinity_np
-  rt-tests: cyclictest: Fix parsing affinity with a space and a leading
-    zero
-  rt-tests: cyclictest: Fix parsing affinity with leading exclamation
-    mark
-  rt-tests: cyclictest: Only run on available cpus according to the
-    affinity
-  rt-tests: cyclictest: Only run on runtime affinity and user supplied
-    affinity
-  rt-tests: cyclictest: Remove HAVE_PARSE_CPUSTRING_ALL
-  rt-tests: cyclictest: Remove support for compiling without NUMA
-  rt-tests: cyclictest: Make the affinity mask apply to the main thread
-    too
-  rt-tests: cyclictest: Fix -t without a user specified [NUM]
-  rt-tests: Makefile - update version
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.172.xz
 
- Makefile                    |  29 ++-------
- src/cyclictest/cyclictest.c | 125 +++++++++++++++++++++++++++++++++---
- src/cyclictest/rt_numa.h    |  77 ----------------------
- 3 files changed, 122 insertions(+), 109 deletions(-)
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.172-rt78-rc1.patch.xz
+
+You can also build from 4.14.172-rt77 by applying the incremental patch:
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/incr/patch-4.14.172-rt77-rt78-rc1.patch.xz
+
+
+Enjoy,
+
+-- Tom
+
+
+Matt Fleming (1):
+  mm/memcontrol: Move misplaced local_unlock_irqrestore()
+
+Scott Wood (2):
+  sched: migrate_enable: Use per-cpu cpu_stop_work
+  sched: migrate_enable: Remove __schedule() call
+
+Sebastian Andrzej Siewior (4):
+  userfaultfd: Use a seqlock instead of seqcount
+  locallock: Include header for the `current' macro
+  drm/vmwgfx: Drop preempt_disable() in vmw_fifo_ping_host()
+  tracing: make preempt_lazy and migrate_disable counter smaller
+
+Tom Zanussi (1):
+  Linux 4.14.172-rt78-rc1
+
+ drivers/gpu/drm/vmwgfx/vmwgfx_fifo.c |  2 --
+ fs/userfaultfd.c                     | 12 ++++++------
+ include/linux/locallock.h            |  1 +
+ include/linux/trace_events.h         |  3 +--
+ kernel/sched/core.c                  | 23 ++++++++++++++---------
+ kernel/trace/trace_events.c          |  4 ++--
+ localversion-rt                      |  2 +-
+ mm/memcontrol.c                      |  2 +-
+ 8 files changed, 26 insertions(+), 23 deletions(-)
 
 -- 
-2.20.1
+2.14.1
 
