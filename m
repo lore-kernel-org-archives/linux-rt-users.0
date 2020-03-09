@@ -2,42 +2,45 @@ Return-Path: <SRS0=JZDS=42=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A2251C10F25
-	for <linux-rt-users@archiver.kernel.org>; Mon,  9 Mar 2020 19:48:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B91BEC10F27
+	for <linux-rt-users@archiver.kernel.org>; Mon,  9 Mar 2020 19:48:21 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 711A82465A
-	for <linux-rt-users@archiver.kernel.org>; Mon,  9 Mar 2020 19:48:16 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 986072467D
+	for <linux-rt-users@archiver.kernel.org>; Mon,  9 Mar 2020 19:48:21 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1583783296;
-	bh=jkfB9NPaUoTZdcxqmU3FXV9oQzJGdB+CktplixLqUn0=;
-	h=From:To:Subject:Date:List-ID:From;
-	b=Ei4VOsQZ8QkmC5SMEUY634dsm3lkbDl+I0Tf6gpqDmKabtu83C9t/0ykB3GqYgMo1
-	 hnjvBPFz/ugsKOgX38kQAuhXtX0pCNnQEIiJT8cRB+i2XEXoODuhw+bJ8zC8FaGuCX
-	 xHRX66DK1jST7m2uHJ0wGYMj7sOe1i7oZnw+u9nY=
+	s=default; t=1583783301;
+	bh=lsMfP3k9nqqOalUYsdvpoPo/rDyn6TAlb80enEyNUoU=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
+	 References:List-ID:From;
+	b=BqUfeDv9IVBsmNOpuNXQ7a1lvMFVP4jC0SFhuB9uUzkDvmZwYz/5/uqGrXKArriXK
+	 1mn7R4mrbA6MzZeta7cnnQdBRyK1mkviBZbM/mVOM9crZx0/gw1FuhC9L0wnjUwy5v
+	 1UL2IQUhtZt+wl1iaHkNof4kqXybjmgTkstEiKYo=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726391AbgCITsP (ORCPT
+        id S1726803AbgCITsU (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 9 Mar 2020 15:48:15 -0400
-Received: from mail.kernel.org ([198.145.29.99]:38196 "EHLO mail.kernel.org"
+        Mon, 9 Mar 2020 15:48:20 -0400
+Received: from mail.kernel.org ([198.145.29.99]:38294 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725992AbgCITsP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 9 Mar 2020 15:48:15 -0400
+        id S1726739AbgCITsT (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 9 Mar 2020 15:48:19 -0400
 Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id F247420828;
-        Mon,  9 Mar 2020 19:48:13 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 1BA742465A;
+        Mon,  9 Mar 2020 19:48:18 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1583783294;
-        bh=jkfB9NPaUoTZdcxqmU3FXV9oQzJGdB+CktplixLqUn0=;
-        h=From:To:Subject:Date:From;
-        b=EPx3cJuDZgFXVT/4XKvnEAY7Qu7neXFRXmp0rq5aCcB9KLzavlQNjCCdMH0xD/8D2
-         DVH/1S4TMklpDtPhSE5bC2wEg2Iu196aQd5JZYPFvjnISlBCFYLh7GLe13I3TtCjHQ
-         tICvbiHXyjU5PKjNJkIrFbRsEjPFDXKzcJI4gV4g=
+        s=default; t=1583783298;
+        bh=lsMfP3k9nqqOalUYsdvpoPo/rDyn6TAlb80enEyNUoU=;
+        h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
+         References:From;
+        b=n6Y2l5ThdUW1TT2tyZooM+zBtPKplMlOY/1Di9xgtM2W0zRt4htjUAZRcvw9bkrHd
+         ULmbmZcnZspko55eTUN6exkXwpmV4i8HqjpL1kYggAMxKbeWOsnPAuwXO5uhqdAgTH
+         zIImgJmaLVhpty9qaqnKo1kUnvW/jIWNeXkSF6tE=
 From:   zanussi@kernel.org
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -48,78 +51,60 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 0/8] Linux v4.14.172-rt78-rc1
-Date:   Mon,  9 Mar 2020 14:47:45 -0500
-Message-Id: <cover.1583783251.git.zanussi@kernel.org>
+Cc:     Matt Fleming <matt@codeblueprint.co.uk>
+Subject: [PATCH RT 4/8] mm/memcontrol: Move misplaced local_unlock_irqrestore()
+Date:   Mon,  9 Mar 2020 14:47:49 -0500
+Message-Id: <41b2fe158cc09157964879dce19e74e1de962f27.1583783251.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.14.1
+In-Reply-To: <cover.1583783251.git.zanussi@kernel.org>
+References: <cover.1583783251.git.zanussi@kernel.org>
+In-Reply-To: <cover.1583783251.git.zanussi@kernel.org>
+References: <cover.1583783251.git.zanussi@kernel.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Tom Zanussi <zanussi@kernel.org>
+From: Matt Fleming <matt@codeblueprint.co.uk>
 
-Dear RT Folks,
+v4.14.172-rt78-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-This is the RT stable review cycle of patch 4.14.172-rt78-rc1.
-
-Please scream at me if I messed something up. Please test the patches
-too.
-
-The -rc release will be uploaded to kernel.org and will be deleted
-when the final release is out. This is just a review release (or
-release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main
-release on 2020-03-16.
-
-To build 4.14.172-rt78-rc1 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.172.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.172-rt78-rc1.patch.xz
-
-You can also build from 4.14.172-rt77 by applying the incremental patch:
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/incr/patch-4.14.172-rt77-rt78-rc1.patch.xz
+-----------
 
 
-Enjoy,
+[ Upstream commit 071a1d6a6e14d0dec240a8c67b425140d7f92f6a ]
 
--- Tom
+The comment about local_lock_irqsave() mentions just the counters and
+css_put_many()'s callback just invokes a worker so it is safe to move the
+unlock function after memcg_check_events() so css_put_many() can be invoked
+without the lock acquired.
 
+Cc: Daniel Wagner <wagi@monom.org>
+Signed-off-by: Matt Fleming <matt@codeblueprint.co.uk>
+[bigeasy: rewrote the patch description]
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Tom Zanussi <zanussi@kernel.org>
+---
+ mm/memcontrol.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Matt Fleming (1):
-  mm/memcontrol: Move misplaced local_unlock_irqrestore()
-
-Scott Wood (2):
-  sched: migrate_enable: Use per-cpu cpu_stop_work
-  sched: migrate_enable: Remove __schedule() call
-
-Sebastian Andrzej Siewior (4):
-  userfaultfd: Use a seqlock instead of seqcount
-  locallock: Include header for the `current' macro
-  drm/vmwgfx: Drop preempt_disable() in vmw_fifo_ping_host()
-  tracing: make preempt_lazy and migrate_disable counter smaller
-
-Tom Zanussi (1):
-  Linux 4.14.172-rt78-rc1
-
- drivers/gpu/drm/vmwgfx/vmwgfx_fifo.c |  2 --
- fs/userfaultfd.c                     | 12 ++++++------
- include/linux/locallock.h            |  1 +
- include/linux/trace_events.h         |  3 +--
- kernel/sched/core.c                  | 23 ++++++++++++++---------
- kernel/trace/trace_events.c          |  4 ++--
- localversion-rt                      |  2 +-
- mm/memcontrol.c                      |  2 +-
- 8 files changed, 26 insertions(+), 23 deletions(-)
-
+diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+index 0503b31e2a873..a359a24ebd9f0 100644
+--- a/mm/memcontrol.c
++++ b/mm/memcontrol.c
+@@ -6102,10 +6102,10 @@ void mem_cgroup_swapout(struct page *page, swp_entry_t entry)
+ 	mem_cgroup_charge_statistics(memcg, page, PageTransHuge(page),
+ 				     -nr_entries);
+ 	memcg_check_events(memcg, page);
++	local_unlock_irqrestore(event_lock, flags);
+ 
+ 	if (!mem_cgroup_is_root(memcg))
+ 		css_put_many(&memcg->css, nr_entries);
+-	local_unlock_irqrestore(event_lock, flags);
+ }
+ 
+ /**
 -- 
 2.14.1
 
