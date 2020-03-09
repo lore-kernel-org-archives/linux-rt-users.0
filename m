@@ -7,40 +7,40 @@ X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0F110C10F27
-	for <linux-rt-users@archiver.kernel.org>; Mon,  9 Mar 2020 19:48:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 31DA6C10F27
+	for <linux-rt-users@archiver.kernel.org>; Mon,  9 Mar 2020 19:48:43 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id D5C0524680
-	for <linux-rt-users@archiver.kernel.org>; Mon,  9 Mar 2020 19:48:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 0BA7F20828
+	for <linux-rt-users@archiver.kernel.org>; Mon,  9 Mar 2020 19:48:43 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1583783319;
-	bh=jk7Pvpx0sd6QCQwzSvQUmXSsA5DYpbI+9cKslUmsgnw=;
-	h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
+	s=default; t=1583783323;
+	bh=mwLZ286x7XYeLHI44bgDH//pIpUrLibz0FHQxNuqI/I=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=Mk4cVF8AfQDd88PBdpEqz+aHT/lMfsDs6m2lfwzP9o6dDaz643MqvU40utwEvp4TI
-	 GRUPqR/vVOQXsWysbcLfhu0BDoodObGj5JLNr/kixaWcoMLPCCoJBgU5q8waljVlPJ
-	 UFwtJiL9Ey8OAb3tyGSET18ZeIXfX4eWMi3SffOM=
+	b=KGIDqqd5SxhVBLJ229tUTDhsMwbwvR8CPqlmm4FmdpejPo83hUBi+vZ/MacFcVTgh
+	 I5T0CQFuDForAPtlJyb7vAoGqbBfHeOPzo4Yt4LczkZlgBIk5hq1hnNQG63MTg/KMg
+	 K7VuLkVbMgIXbllpxHITGdpQ/PNmJ42IRtvF8KWM=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726779AbgCITsU (ORCPT
+        id S1726698AbgCITsS (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 9 Mar 2020 15:48:20 -0400
-Received: from mail.kernel.org ([198.145.29.99]:38314 "EHLO mail.kernel.org"
+        Mon, 9 Mar 2020 15:48:18 -0400
+Received: from mail.kernel.org ([198.145.29.99]:38236 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726647AbgCITsU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 9 Mar 2020 15:48:20 -0400
+        id S1726647AbgCITsR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 9 Mar 2020 15:48:17 -0400
 Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 22A6424673;
-        Mon,  9 Mar 2020 19:48:19 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id E85B624654;
+        Mon,  9 Mar 2020 19:48:15 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1583783299;
-        bh=jk7Pvpx0sd6QCQwzSvQUmXSsA5DYpbI+9cKslUmsgnw=;
-        h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
+        s=default; t=1583783296;
+        bh=mwLZ286x7XYeLHI44bgDH//pIpUrLibz0FHQxNuqI/I=;
+        h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=EjSwCduPsfpPDGQ3IJIy1A7IYqdC8nbDqNFqAkmf6lqW7iS4EBhtXArFa0zWAQ+q1
-         aajLPPBZa9wqSMVf7iEC8mzEsESrQ193C0yfA2OLeo4jrO+6J7ItGt1y67n0UhiwLw
-         V8hKBvAKiRXSCrIuslcUpY7U4gR0W127sKUl01MY=
+        b=TbOS3pSYqRKeQygu0uEMq/KK0vB1VBaL/rVOlycu2UFqMUhVHIfkOAdH7/4QiwRPD
+         ig6g+KVUDhdwT73i6Vo6EtsT4z75/KCir57K7sVsAlgwrbt9oPTiY63Hnd8eDCUyr4
+         pmwk/deyWoZK3IaA/LPlVNvIN0BgmG9EbRDBQ2us=
 From:   zanussi@kernel.org
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -51,9 +51,10 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 5/8] locallock: Include header for the `current' macro
-Date:   Mon,  9 Mar 2020 14:47:50 -0500
-Message-Id: <ac7f08d313acd30e95a4876056fdf62c5654c407.1583783251.git.zanussi@kernel.org>
+Cc:     Scott Wood <swood@redhat.com>
+Subject: [PATCH RT 2/8] sched: migrate_enable: Use per-cpu cpu_stop_work
+Date:   Mon,  9 Mar 2020 14:47:47 -0500
+Message-Id: <22f22176ee9dae01a6f45d9f0064a1a1e9f913a5.1583783251.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.14.1
 In-Reply-To: <cover.1583783251.git.zanussi@kernel.org>
 References: <cover.1583783251.git.zanussi@kernel.org>
@@ -64,7 +65,7 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Scott Wood <swood@redhat.com>
 
 v4.14.172-rt78-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -72,29 +73,83 @@ If anyone has any objections, please let me know.
 -----------
 
 
-[ Upstream commit e693075a5fd852043fa8d2b0467e078d9e5cb782 ]
+[ Upstream commit 2dcd94b443c5dcbc20281666321b7f025f9cc85c ]
 
-Include the header for `current' macro so that
-CONFIG_KERNEL_HEADER_TEST=y passes.
+Commit e6c287b1512d ("sched: migrate_enable: Use stop_one_cpu_nowait()")
+adds a busy wait to deal with an edge case where the migrated thread
+can resume running on another CPU before the stopper has consumed
+cpu_stop_work.  However, this is done with preemption disabled and can
+potentially lead to deadlock.
 
+While it is not guaranteed that the cpu_stop_work will be consumed before
+the migrating thread resumes and exits the stack frame, it is guaranteed
+that nothing other than the stopper can run on the old cpu between the
+migrating thread scheduling out and the cpu_stop_work being consumed.
+Thus, we can store cpu_stop_work in per-cpu data without it being
+reused too early.
+
+Fixes: e6c287b1512d ("sched: migrate_enable: Use stop_one_cpu_nowait()")
+Suggested-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Scott Wood <swood@redhat.com>
+Reviewed-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Tom Zanussi <zanussi@kernel.org>
----
- include/linux/locallock.h | 1 +
- 1 file changed, 1 insertion(+)
 
-diff --git a/include/linux/locallock.h b/include/linux/locallock.h
-index 921eab83cd34a..81c89d87723b5 100644
---- a/include/linux/locallock.h
-+++ b/include/linux/locallock.h
-@@ -3,6 +3,7 @@
+ Conflicts:
+	kernel/sched/core.c
+---
+ kernel/sched/core.c | 22 ++++++++++++++--------
+ 1 file changed, 14 insertions(+), 8 deletions(-)
+
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index f30bb249123b5..960daa6bc7f04 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -6964,6 +6964,9 @@ static void migrate_disabled_sched(struct task_struct *p)
+ 	p->migrate_disable_scheduled = 1;
+ }
  
- #include <linux/percpu.h>
- #include <linux/spinlock.h>
-+#include <asm/current.h>
++static DEFINE_PER_CPU(struct cpu_stop_work, migrate_work);
++static DEFINE_PER_CPU(struct migration_arg, migrate_arg);
++
+ void migrate_enable(void)
+ {
+ 	struct task_struct *p = current;
+@@ -7002,23 +7005,26 @@ void migrate_enable(void)
  
- #ifdef CONFIG_PREEMPT_RT_BASE
+ 	WARN_ON(smp_processor_id() != cpu);
+ 	if (!is_cpu_allowed(p, cpu)) {
+-		struct migration_arg arg = { .task = p };
+-		struct cpu_stop_work work;
++		struct migration_arg __percpu *arg;
++		struct cpu_stop_work __percpu *work;
+ 		struct rq_flags rf;
  
++		work = this_cpu_ptr(&migrate_work);
++		arg = this_cpu_ptr(&migrate_arg);
++		WARN_ON_ONCE(!arg->done && !work->disabled && work->arg);
++
++		arg->task = p;
++		arg->done = false;
++
+ 		rq = task_rq_lock(p, &rf);
+ 		update_rq_clock(rq);
+-		arg.dest_cpu = select_fallback_rq(cpu, p);
++		arg->dest_cpu = select_fallback_rq(cpu, p);
+ 		task_rq_unlock(rq, p, &rf);
+ 
+ 		stop_one_cpu_nowait(task_cpu(p), migration_cpu_stop,
+-				    &arg, &work);
++				    arg, work);
+ 		tlb_migrate_finish(p->mm);
+ 		__schedule(true);
+-		if (!work.disabled) {
+-			while (!arg.done)
+-				cpu_relax();
+-		}
+ 	}
+ 
+ out:
 -- 
 2.14.1
 
