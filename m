@@ -7,40 +7,40 @@ X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 88FB4C10F25
-	for <linux-rt-users@archiver.kernel.org>; Mon,  9 Mar 2020 19:48:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0F110C10F27
+	for <linux-rt-users@archiver.kernel.org>; Mon,  9 Mar 2020 19:48:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 6350C24679
-	for <linux-rt-users@archiver.kernel.org>; Mon,  9 Mar 2020 19:48:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D5C0524680
+	for <linux-rt-users@archiver.kernel.org>; Mon,  9 Mar 2020 19:48:39 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1583783318;
-	bh=DHgaPoXIlY1cM6abocvK6wxA7mw7OuaqdKOLEtP6vNU=;
+	s=default; t=1583783319;
+	bh=jk7Pvpx0sd6QCQwzSvQUmXSsA5DYpbI+9cKslUmsgnw=;
 	h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=Ei795tqrx45tdFd5YduXr8c0/uNJpLoLcJKeaSYn9U0arwkvm1lrGaVjcYYc/Mh27
-	 bNRw97AJAZchiZ0LG+FuQR9ZFyA2yl7PX0HS+OcVBZCqZJfulo6tYsHtH5qgQhJ6DI
-	 a4zxrP2Gur/McYUULk0vbcOokWuOeCGLti6HvksQ=
+	b=Mk4cVF8AfQDd88PBdpEqz+aHT/lMfsDs6m2lfwzP9o6dDaz643MqvU40utwEvp4TI
+	 GRUPqR/vVOQXsWysbcLfhu0BDoodObGj5JLNr/kixaWcoMLPCCoJBgU5q8waljVlPJ
+	 UFwtJiL9Ey8OAb3tyGSET18ZeIXfX4eWMi3SffOM=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726872AbgCITsb (ORCPT
+        id S1726779AbgCITsU (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 9 Mar 2020 15:48:31 -0400
-Received: from mail.kernel.org ([198.145.29.99]:38378 "EHLO mail.kernel.org"
+        Mon, 9 Mar 2020 15:48:20 -0400
+Received: from mail.kernel.org ([198.145.29.99]:38314 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726845AbgCITsW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 9 Mar 2020 15:48:22 -0400
+        id S1726647AbgCITsU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 9 Mar 2020 15:48:20 -0400
 Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 1C0662467C;
-        Mon,  9 Mar 2020 19:48:21 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 22A6424673;
+        Mon,  9 Mar 2020 19:48:19 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1583783301;
-        bh=DHgaPoXIlY1cM6abocvK6wxA7mw7OuaqdKOLEtP6vNU=;
+        s=default; t=1583783299;
+        bh=jk7Pvpx0sd6QCQwzSvQUmXSsA5DYpbI+9cKslUmsgnw=;
         h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=ua/Ua6ibrf8csvzxj3hhjH9wav49bYx3QJ/Hoh7fcSkLLjwGqRslDQPSKLjki2MEm
-         9YibqYrnVHoM4wipswHm3skQMyO9QscYo6y+EJFfmrnyu6uXaNTImpm15Cn5vzWYah
-         Px9wRvor7/x+zRxriayNPUggAKoS1FddpXoB9TiA=
+        b=EjSwCduPsfpPDGQ3IJIy1A7IYqdC8nbDqNFqAkmf6lqW7iS4EBhtXArFa0zWAQ+q1
+         aajLPPBZa9wqSMVf7iEC8mzEsESrQ193C0yfA2OLeo4jrO+6J7ItGt1y67n0UhiwLw
+         V8hKBvAKiRXSCrIuslcUpY7U4gR0W127sKUl01MY=
 From:   zanussi@kernel.org
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -51,9 +51,9 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 7/8] tracing: make preempt_lazy and migrate_disable counter smaller
-Date:   Mon,  9 Mar 2020 14:47:52 -0500
-Message-Id: <0012457a5fe618e36a20b4d1b27265be51c6e8b1.1583783251.git.zanussi@kernel.org>
+Subject: [PATCH RT 5/8] locallock: Include header for the `current' macro
+Date:   Mon,  9 Mar 2020 14:47:50 -0500
+Message-Id: <ac7f08d313acd30e95a4876056fdf62c5654c407.1583783251.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.14.1
 In-Reply-To: <cover.1583783251.git.zanussi@kernel.org>
 References: <cover.1583783251.git.zanussi@kernel.org>
@@ -72,52 +72,29 @@ If anyone has any objections, please let me know.
 -----------
 
 
-[ Upstream commit dd430bf5ecb40f9a89679c85868826475d71de54 ]
+[ Upstream commit e693075a5fd852043fa8d2b0467e078d9e5cb782 ]
 
-The migrate_disable counter should not exceed 255 so it is enough to
-store it in an 8bit field.
-With this change we can move the `preempt_lazy_count' member into the
-gap so the whole struct shrinks by 4 bytes to 12 bytes in total.
-Remove the `padding' field, it is not needed.
-Update the tracing fields in trace_define_common_fields() (it was
-missing the preempt_lazy_count field).
+Include the header for `current' macro so that
+CONFIG_KERNEL_HEADER_TEST=y passes.
 
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Tom Zanussi <zanussi@kernel.org>
 ---
- include/linux/trace_events.h | 3 +--
- kernel/trace/trace_events.c  | 4 ++--
- 2 files changed, 3 insertions(+), 4 deletions(-)
+ include/linux/locallock.h | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/include/linux/trace_events.h b/include/linux/trace_events.h
-index edd1e42e8a2f7..01e9ab3107531 100644
---- a/include/linux/trace_events.h
-+++ b/include/linux/trace_events.h
-@@ -62,8 +62,7 @@ struct trace_entry {
- 	unsigned char		flags;
- 	unsigned char		preempt_count;
- 	int			pid;
--	unsigned short		migrate_disable;
--	unsigned short		padding;
-+	unsigned char		migrate_disable;
- 	unsigned char		preempt_lazy_count;
- };
+diff --git a/include/linux/locallock.h b/include/linux/locallock.h
+index 921eab83cd34a..81c89d87723b5 100644
+--- a/include/linux/locallock.h
++++ b/include/linux/locallock.h
+@@ -3,6 +3,7 @@
  
-diff --git a/kernel/trace/trace_events.c b/kernel/trace/trace_events.c
-index 60e371451ec31..edd43841c94ad 100644
---- a/kernel/trace/trace_events.c
-+++ b/kernel/trace/trace_events.c
-@@ -187,8 +187,8 @@ static int trace_define_common_fields(void)
- 	__common_field(unsigned char, flags);
- 	__common_field(unsigned char, preempt_count);
- 	__common_field(int, pid);
--	__common_field(unsigned short, migrate_disable);
--	__common_field(unsigned short, padding);
-+	__common_field(unsigned char, migrate_disable);
-+	__common_field(unsigned char, preempt_lazy_count);
+ #include <linux/percpu.h>
+ #include <linux/spinlock.h>
++#include <asm/current.h>
  
- 	return ret;
- }
+ #ifdef CONFIG_PREEMPT_RT_BASE
+ 
 -- 
 2.14.1
 
