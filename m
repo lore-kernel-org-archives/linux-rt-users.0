@@ -1,100 +1,139 @@
-Return-Path: <SRS0=JZDS=42=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=zdjp=43=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.3 required=3.0
+	tests=HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9BDF9C10F27
-	for <linux-rt-users@archiver.kernel.org>; Mon,  9 Mar 2020 19:48:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 308F8C18E5A
+	for <linux-rt-users@archiver.kernel.org>; Tue, 10 Mar 2020 17:32:03 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 7979124654
-	for <linux-rt-users@archiver.kernel.org>; Mon,  9 Mar 2020 19:48:47 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1583783327;
-	bh=Qn10r7wDKeypNpswGyjvqlxGn6R2+JzdLyxqbNYaR5A=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
-	 References:List-ID:From;
-	b=Ur9Pp+DtSnUNaCAk0cmE1p3cAHoG9bbrhYls7c4LnFR3XUo3qwvS8wrzDqPW5nitJ
-	 dBuyU6pXBcnB8GGp5rtSMHKrrUs76jjHv65cuQnLDXcq5k6J0ItYwaCgSGLsthQQBh
-	 AHNNTgSzy5xM2h5a3h+x5tmqkCwHHvmjnIcultl8=
+	by mail.kernel.org (Postfix) with ESMTP id 0BBC721927
+	for <linux-rt-users@archiver.kernel.org>; Tue, 10 Mar 2020 17:32:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726670AbgCITsR (ORCPT
+        id S1726605AbgCJRb6 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 9 Mar 2020 15:48:17 -0400
-Received: from mail.kernel.org ([198.145.29.99]:38212 "EHLO mail.kernel.org"
+        Tue, 10 Mar 2020 13:31:58 -0400
+Received: from mail.kernel.org ([198.145.29.99]:37658 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725992AbgCITsQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 9 Mar 2020 15:48:16 -0400
-Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+        id S1726271AbgCJRb6 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 10 Mar 2020 13:31:58 -0400
+Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id E5DE524656;
-        Mon,  9 Mar 2020 19:48:14 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1583783295;
-        bh=Qn10r7wDKeypNpswGyjvqlxGn6R2+JzdLyxqbNYaR5A=;
-        h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
-         References:From;
-        b=ej7ZwgcZQjIGEm4uJBDf7OGbLnonIrkQj41AShxp7CMw0Vz4lm7eggXB4sn/ibb9r
-         A2qR5kejQs/yUCO3GsXD3sbsR12zuGA5FJIYqwXp2xrsEC9Yqp+xz++/nnEsbIGTxZ
-         9bbeRBTi+rdHjPcGF9AHbNf99VyNKYHy0A73Zcbw=
-From:   zanussi@kernel.org
+        by mail.kernel.org (Postfix) with ESMTPSA id 812332146E;
+        Tue, 10 Mar 2020 17:31:56 +0000 (UTC)
+Date:   Tue, 10 Mar 2020 13:31:54 -0400
+From:   Steven Rostedt <rostedt@goodmis.org>
 To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Julia Cartwright <julia@ni.com>,
         Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>
-Cc:     stable-rt@vger.kernel.org
-Subject: [PATCH RT 1/8] userfaultfd: Use a seqlock instead of seqcount
-Date:   Mon,  9 Mar 2020 14:47:46 -0500
-Message-Id: <ef275aaeea4c9c1a75514eed061e29cb78a929c3.1583783251.git.zanussi@kernel.org>
-X-Mailer: git-send-email 2.14.1
-In-Reply-To: <cover.1583783251.git.zanussi@kernel.org>
-References: <cover.1583783251.git.zanussi@kernel.org>
-In-Reply-To: <cover.1583783251.git.zanussi@kernel.org>
-References: <cover.1583783251.git.zanussi@kernel.org>
+        Tom Zanussi <zanussi@kernel.org>,
+        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
+Subject: [ANNOUNCE] 4.19.106-rt45
+Message-ID: <20200310133154.6656b339@gandalf.local.home>
+X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-v4.14.172-rt78-rc1 stable review patch.
-If anyone has any objections, please let me know.
+Dear RT Folks,
 
------------
+I'm pleased to announce the 4.19.106-rt45 stable release.
 
 
-[ Upstream commit dc952a564d02997330654be9628bbe97ba2a05d3 ]
+You can get this release via the git tree at:
 
-On RT write_seqcount_begin() disables preemption which leads to warning
-in add_wait_queue() while the spinlock_t is acquired.
-The waitqueue can't be converted to swait_queue because
-userfaultfd_wake_function() is used as a custom wake function.
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-Use seqlock instead seqcount to avoid the preempt_disable() section
-during add_wait_queue().
+  branch: v4.19-rt
+  Head SHA1: d515995ead09469fbddcb2ffff800caab9cb0c5f
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Tom Zanussi <zanussi@kernel.org>
+
+Or to build 4.19.106-rt45 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.106.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.19/patch-4.19.106-rt45.patch.xz
+
+
+
+You can also build from 4.19.106-rt44 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.19/incr/patch-4.19.106-rt44-rt45.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
+
+
+Changes from v4.19.106-rt44:
+
 ---
- fs/userfaultfd.c | 12 ++++++------
- 1 file changed, 6 insertions(+), 6 deletions(-)
 
+Matt Fleming (1):
+      mm/memcontrol: Move misplaced local_unlock_irqrestore()
+
+Scott Wood (2):
+      sched: migrate_enable: Use per-cpu cpu_stop_work
+      sched: migrate_enable: Remove __schedule() call
+
+Sebastian Andrzej Siewior (4):
+      userfaultfd: Use a seqlock instead of seqcount
+      locallock: Include header for the `current' macro
+      drm/vmwgfx: Drop preempt_disable() in vmw_fifo_ping_host()
+      tracing: make preempt_lazy and migrate_disable counter smaller
+
+Steven Rostedt (VMware) (1):
+      Linux 4.19.106-rt45
+
+----
+ drivers/gpu/drm/vmwgfx/vmwgfx_fifo.c |  2 --
+ fs/userfaultfd.c                     | 12 ++++++------
+ include/linux/locallock.h            |  1 +
+ include/linux/trace_events.h         |  3 +--
+ kernel/sched/core.c                  | 23 ++++++++++++++---------
+ kernel/trace/trace_events.c          |  4 ++--
+ localversion-rt                      |  2 +-
+ mm/memcontrol.c                      |  2 +-
+ 8 files changed, 26 insertions(+), 23 deletions(-)
+---------------------------
+diff --git a/drivers/gpu/drm/vmwgfx/vmwgfx_fifo.c b/drivers/gpu/drm/vmwgfx/vmwgfx_fifo.c
+index d0fd147ef75f..fb5a3461bb8c 100644
+--- a/drivers/gpu/drm/vmwgfx/vmwgfx_fifo.c
++++ b/drivers/gpu/drm/vmwgfx/vmwgfx_fifo.c
+@@ -167,10 +167,8 @@ void vmw_fifo_ping_host(struct vmw_private *dev_priv, uint32_t reason)
+ {
+ 	u32 *fifo_mem = dev_priv->mmio_virt;
+ 
+-	preempt_disable();
+ 	if (cmpxchg(fifo_mem + SVGA_FIFO_BUSY, 0, 1) == 0)
+ 		vmw_write(dev_priv, SVGA_REG_SYNC, reason);
+-	preempt_enable();
+ }
+ 
+ void vmw_fifo_release(struct vmw_private *dev_priv, struct vmw_fifo_state *fifo)
 diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
-index e2b2196fd9428..71886a8e8f71b 100644
+index d269d1139f7f..ff6be687f68e 100644
 --- a/fs/userfaultfd.c
 +++ b/fs/userfaultfd.c
-@@ -51,7 +51,7 @@ struct userfaultfd_ctx {
+@@ -61,7 +61,7 @@ struct userfaultfd_ctx {
  	/* waitqueue head for events */
  	wait_queue_head_t event_wqh;
  	/* a refile sequence protected by fault_pending_wqh lock */
@@ -103,7 +142,7 @@ index e2b2196fd9428..71886a8e8f71b 100644
  	/* pseudo fd refcounting */
  	atomic_t refcount;
  	/* userfaultfd syscall flags */
-@@ -1047,7 +1047,7 @@ static ssize_t userfaultfd_ctx_read(struct userfaultfd_ctx *ctx, int no_wait,
+@@ -1064,7 +1064,7 @@ static ssize_t userfaultfd_ctx_read(struct userfaultfd_ctx *ctx, int no_wait,
  			 * waitqueue could become empty if this is the
  			 * only userfault.
  			 */
@@ -112,16 +151,16 @@ index e2b2196fd9428..71886a8e8f71b 100644
  
  			/*
  			 * The fault_pending_wqh.lock prevents the uwq
-@@ -1073,7 +1073,7 @@ static ssize_t userfaultfd_ctx_read(struct userfaultfd_ctx *ctx, int no_wait,
+@@ -1090,7 +1090,7 @@ static ssize_t userfaultfd_ctx_read(struct userfaultfd_ctx *ctx, int no_wait,
  			list_del(&uwq->wq.entry);
- 			__add_wait_queue(&ctx->fault_wqh, &uwq->wq);
+ 			add_wait_queue(&ctx->fault_wqh, &uwq->wq);
  
 -			write_seqcount_end(&ctx->refile_seq);
 +			write_sequnlock(&ctx->refile_seq);
  
  			/* careful to always initialize msg if ret == 0 */
  			*msg = uwq->msg;
-@@ -1246,11 +1246,11 @@ static __always_inline void wake_userfault(struct userfaultfd_ctx *ctx,
+@@ -1263,11 +1263,11 @@ static __always_inline void wake_userfault(struct userfaultfd_ctx *ctx,
  	 * sure we've userfaults to wake.
  	 */
  	do {
@@ -135,7 +174,7 @@ index e2b2196fd9428..71886a8e8f71b 100644
  	if (need_wakeup)
  		__wake_userfault(ctx, range);
  }
-@@ -1915,7 +1915,7 @@ static void init_once_userfaultfd_ctx(void *mem)
+@@ -1938,7 +1938,7 @@ static void init_once_userfaultfd_ctx(void *mem)
  	init_waitqueue_head(&ctx->fault_wqh);
  	init_waitqueue_head(&ctx->event_wqh);
  	init_waitqueue_head(&ctx->fd_wqh);
@@ -143,7 +182,117 @@ index e2b2196fd9428..71886a8e8f71b 100644
 +	seqlock_init(&ctx->refile_seq);
  }
  
+ SYSCALL_DEFINE1(userfaultfd, int, flags)
+diff --git a/include/linux/locallock.h b/include/linux/locallock.h
+index 921eab83cd34..81c89d87723b 100644
+--- a/include/linux/locallock.h
++++ b/include/linux/locallock.h
+@@ -3,6 +3,7 @@
+ 
+ #include <linux/percpu.h>
+ #include <linux/spinlock.h>
++#include <asm/current.h>
+ 
+ #ifdef CONFIG_PREEMPT_RT_BASE
+ 
+diff --git a/include/linux/trace_events.h b/include/linux/trace_events.h
+index 72864a11cec0..e26a85c1b7ba 100644
+--- a/include/linux/trace_events.h
++++ b/include/linux/trace_events.h
+@@ -62,8 +62,7 @@ struct trace_entry {
+ 	unsigned char		flags;
+ 	unsigned char		preempt_count;
+ 	int			pid;
+-	unsigned short		migrate_disable;
+-	unsigned short		padding;
++	unsigned char		migrate_disable;
+ 	unsigned char		preempt_lazy_count;
+ };
+ 
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 4616c086dd26..02e51c74e0bf 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -7291,6 +7291,9 @@ static void migrate_disabled_sched(struct task_struct *p)
+ 	p->migrate_disable_scheduled = 1;
+ }
+ 
++static DEFINE_PER_CPU(struct cpu_stop_work, migrate_work);
++static DEFINE_PER_CPU(struct migration_arg, migrate_arg);
++
+ void migrate_enable(void)
+ {
+ 	struct task_struct *p = current;
+@@ -7329,23 +7332,25 @@ void migrate_enable(void)
+ 
+ 	WARN_ON(smp_processor_id() != cpu);
+ 	if (!is_cpu_allowed(p, cpu)) {
+-		struct migration_arg arg = { .task = p };
+-		struct cpu_stop_work work;
++		struct migration_arg __percpu *arg;
++		struct cpu_stop_work __percpu *work;
+ 		struct rq_flags rf;
+ 
++		work = this_cpu_ptr(&migrate_work);
++		arg = this_cpu_ptr(&migrate_arg);
++		WARN_ON_ONCE(!arg->done && !work->disabled && work->arg);
++
++		arg->task = p;
++		arg->done = false;
++
+ 		rq = task_rq_lock(p, &rf);
+ 		update_rq_clock(rq);
+-		arg.dest_cpu = select_fallback_rq(cpu, p);
++		arg->dest_cpu = select_fallback_rq(cpu, p);
+ 		task_rq_unlock(rq, p, &rf);
+ 
+ 		stop_one_cpu_nowait(task_cpu(p), migration_cpu_stop,
+-				    &arg, &work);
++				    arg, work);
+ 		tlb_migrate_finish(p->mm);
+-		__schedule(true);
+-		if (!work.disabled) {
+-			while (!arg.done)
+-				cpu_relax();
+-		}
+ 	}
+ 
+ out:
+diff --git a/kernel/trace/trace_events.c b/kernel/trace/trace_events.c
+index 1febb0ca4c81..07b8f5bfd263 100644
+--- a/kernel/trace/trace_events.c
++++ b/kernel/trace/trace_events.c
+@@ -188,8 +188,8 @@ static int trace_define_common_fields(void)
+ 	__common_field(unsigned char, flags);
+ 	__common_field(unsigned char, preempt_count);
+ 	__common_field(int, pid);
+-	__common_field(unsigned short, migrate_disable);
+-	__common_field(unsigned short, padding);
++	__common_field(unsigned char, migrate_disable);
++	__common_field(unsigned char, preempt_lazy_count);
+ 
+ 	return ret;
+ }
+diff --git a/localversion-rt b/localversion-rt
+index ac4d836a809d..38c40b21a885 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt44
++-rt45
+diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+index 421ac74450f6..519528959eef 100644
+--- a/mm/memcontrol.c
++++ b/mm/memcontrol.c
+@@ -6540,10 +6540,10 @@ void mem_cgroup_swapout(struct page *page, swp_entry_t entry)
+ 	mem_cgroup_charge_statistics(memcg, page, PageTransHuge(page),
+ 				     -nr_entries);
+ 	memcg_check_events(memcg, page);
++	local_unlock_irqrestore(event_lock, flags);
+ 
+ 	if (!mem_cgroup_is_root(memcg))
+ 		css_put_many(&memcg->css, nr_entries);
+-	local_unlock_irqrestore(event_lock, flags);
+ }
+ 
  /**
--- 
-2.14.1
-
