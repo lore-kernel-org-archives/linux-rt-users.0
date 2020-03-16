@@ -1,62 +1,101 @@
-Return-Path: <SRS0=VClK=45=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=mD49=5B=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-5.4 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0F669C1975A
-	for <linux-rt-users@archiver.kernel.org>; Thu, 12 Mar 2020 08:10:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 40CC6C18E5B
+	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Mar 2020 12:23:57 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id EB6D020650
-	for <linux-rt-users@archiver.kernel.org>; Thu, 12 Mar 2020 08:10:53 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 150FA2051A
+	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Mar 2020 12:23:57 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=ti.com header.i=@ti.com header.b="vSg0a1+Q"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726481AbgCLIKx (ORCPT
+        id S1730931AbgCPMXw (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 12 Mar 2020 04:10:53 -0400
-Received: from mail.monom.org ([188.138.9.77]:39592 "EHLO mail.monom.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726028AbgCLIKx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 12 Mar 2020 04:10:53 -0400
-Received: from mail.monom.org (localhost [127.0.0.1])
-        by filter.mynetwork.local (Postfix) with ESMTP id CBED15005A3;
-        Thu, 12 Mar 2020 09:10:50 +0100 (CET)
-Received: from localhost (b9168f9a.cgn.dg-w.de [185.22.143.154])
-        by mail.monom.org (Postfix) with ESMTPSA id 9A8A65003BA;
-        Thu, 12 Mar 2020 09:10:50 +0100 (CET)
-Date:   Thu, 12 Mar 2020 09:10:50 +0100
-From:   Daniel Wagner <wagi@monom.org>
-To:     Marouen Ghodhbane <marouen.ghodhbane@nxp.com>
-Cc:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Subject: Re: complete_all warning with 3 waiters
-Message-ID: <20200312081050.ldxfol4yupln7phw@beryllium.lan>
-References: <DB3PR0402MB3708A4D019B384FE29CBDD96F6FC0@DB3PR0402MB3708.eurprd04.prod.outlook.com>
+        Mon, 16 Mar 2020 08:23:52 -0400
+Received: from lelv0143.ext.ti.com ([198.47.23.248]:52740 "EHLO
+        lelv0143.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1730878AbgCPMXw (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 16 Mar 2020 08:23:52 -0400
+Received: from fllv0035.itg.ti.com ([10.64.41.0])
+        by lelv0143.ext.ti.com (8.15.2/8.15.2) with ESMTP id 02GCNWG8055256;
+        Mon, 16 Mar 2020 07:23:32 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ti.com;
+        s=ti-com-17Q1; t=1584361412;
+        bh=/axxTSN4rOjW8bh6Kbh93WtVu/tmmhKSGynWOWCPzuY=;
+        h=Subject:To:CC:References:From:Date:In-Reply-To;
+        b=vSg0a1+QKByxeZQ7KBTjfgkxDI9IEY9zlUWk/fQEdnbGDiw7iS+KNJxMY7pblqv91
+         xcRc9iE/EmWBlfMtFx29z1Q7oLaJDwW3ojWz/gBihLpbblaWUvjPcymhZ6fkd6lTnK
+         L6gF9F4A/jU3aB+ibd8fH0XVfsLOOvs8npPetIlU=
+Received: from DLEE105.ent.ti.com (dlee105.ent.ti.com [157.170.170.35])
+        by fllv0035.itg.ti.com (8.15.2/8.15.2) with ESMTP id 02GCNWpJ082049;
+        Mon, 16 Mar 2020 07:23:32 -0500
+Received: from DLEE111.ent.ti.com (157.170.170.22) by DLEE105.ent.ti.com
+ (157.170.170.35) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1847.3; Mon, 16
+ Mar 2020 07:23:32 -0500
+Received: from lelv0327.itg.ti.com (10.180.67.183) by DLEE111.ent.ti.com
+ (157.170.170.22) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1847.3 via
+ Frontend Transport; Mon, 16 Mar 2020 07:23:32 -0500
+Received: from [10.250.100.73] (ileax41-snat.itg.ti.com [10.172.224.153])
+        by lelv0327.itg.ti.com (8.15.2/8.15.2) with ESMTP id 02GCNS4R121266;
+        Mon, 16 Mar 2020 07:23:29 -0500
+Subject: Re: [PATCH] kthread: Mark timer used by delayed kthread works as IRQ
+ safe
+To:     Tejun Heo <tj@kernel.org>, Petr Mladek <pmladek@suse.com>
+CC:     Andrew Morton <akpm@linux-foundation.org>,
+        <linux-rt-users@vger.kernel.org>,
+        <linux-arm-kernel@lists.infradead.org>, <netdev@vger.kernel.org>,
+        Richard Cochran <richardcochran@gmail.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        <linux-kernel@vger.kernel.org>
+References: <20200217120709.1974-1-pmladek@suse.com>
+ <20200219152248.GC698990@mtj.thefacebook.com>
+From:   Grygorii Strashko <grygorii.strashko@ti.com>
+Message-ID: <6a4c07df-8971-8637-5251-ce177c3a08ce@ti.com>
+Date:   Mon, 16 Mar 2020 14:23:27 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.2.2
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <DB3PR0402MB3708A4D019B384FE29CBDD96F6FC0@DB3PR0402MB3708.eurprd04.prod.outlook.com>
+In-Reply-To: <20200219152248.GC698990@mtj.thefacebook.com>
+Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
+X-EXCLAIMER-MD-CONFIG: e1e8a2fd-e40a-4ac6-ac9b-f7e9cc9ee180
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Marouen,
+Hi Petr,
 
-On Wed, Mar 11, 2020 at 04:32:03PM +0000, Marouen Ghodhbane wrote:
-> My question is: is there any good reason for the value of 2 in the
-> warning condition ? It seems to me like a warning put earlier to
-> check if we trigger this condition and work on some unresolved
-> issues. Do we need another filter like the pm_in_action ?
+On 19/02/2020 17:22, Tejun Heo wrote:
+> On Mon, Feb 17, 2020 at 01:07:09PM +0100, Petr Mladek wrote:
+>> The timer used by delayed kthread works are IRQ safe because the used
+>> kthread_delayed_work_timer_fn() is IRQ safe.
+>>
+>> It is properly marked when initialized by KTHREAD_DELAYED_WORK_INIT().
+>> But TIMER_IRQSAFE flag is missing when initialized by
+>> kthread_init_delayed_work().
+>>
+>> The missing flag might trigger invalid warning from del_timer_sync()
+>> when kthread_mod_delayed_work() is called with interrupts disabled.
+>>
+>> Reported-by: Grygorii Strashko <grygorii.strashko@ti.com>
+>> Signed-off-by: Petr Mladek <pmladek@suse.com>
+>> Tested-by: Grygorii Strashko <grygorii.strashko@ti.com>
+> 
+> Acked-by: Tejun Heo <tj@kernel.org>
 
-The check is there to find code paths which rely on waking many
-waiters. The problem is, swake_up_all_locked() is running while
-holding a raw spin lock with irq disabled which can introduce unbouded
-latencies on the system.
+I'm worry shouldn't this patch have "fixes" tag?
 
-> Any idea/suggestion is definitely appreciated
-
-The warning is harmless in your case though annoying.
-
-Thanks,
-Daniel
+-- 
+Best regards,
+grygorii
