@@ -1,302 +1,155 @@
-Return-Path: <SRS0=mD49=5B=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=iQLd=5C=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.6 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DE101C2BB1D
-	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Mar 2020 16:32:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 30065C2BB1D
+	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Mar 2020 11:47:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id ACCD9206C0
-	for <linux-rt-users@archiver.kernel.org>; Mon, 16 Mar 2020 16:32:20 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1584376340;
-	bh=4StVk6LLQOCHKnL/01kQ1CtcE19qTA3QaaUjaobztQc=;
-	h=Subject:From:To:Date:List-ID:From;
-	b=1PqKba/mUJQ79DVLPvObMS6zwr2707PB2lojQ6nI76cfWOcRadXeQMwqYroZK5WT5
-	 p/Ohtj+LNCA5kWsVC+Tgmoa1MUuFDrba33qcl4RXN1U7b4F2rvUN+HaLtOB184ZIU5
-	 VeM+iJahANRT1uzkzN3PatGM5AX97+pH8sMQ51kM=
+	by mail.kernel.org (Postfix) with ESMTP id 12A1D206EC
+	for <linux-rt-users@archiver.kernel.org>; Tue, 17 Mar 2020 11:47:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1732088AbgCPQcQ (ORCPT
+        id S1726473AbgCQLrs (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 16 Mar 2020 12:32:16 -0400
-Received: from mail.kernel.org ([198.145.29.99]:36944 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1731924AbgCPQcQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 16 Mar 2020 12:32:16 -0400
-Received: from tzanussi-mobl (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 7F17520663;
-        Mon, 16 Mar 2020 16:32:14 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1584376335;
-        bh=4StVk6LLQOCHKnL/01kQ1CtcE19qTA3QaaUjaobztQc=;
-        h=Subject:From:To:Date:From;
-        b=QTmS9C16oLJlrYxlzxfCPS83rbPrLy9wR0hOrZ6642qWlUwTY7ae+WG0duBV9mB9H
-         R2Ru+k9l8cD8AyyYDHteyhMNGT6795v0MZNYm3QZqGFzC9G6gW0pbFawyH4OZ1tWfV
-         CSXvgpj25CoYZTrXeNFdbpNnct3aWON4D0L/JJ38=
-Message-ID: <1584376333.8836.3.camel@kernel.org>
-Subject: [ANNOUNCE] 4.14.172-rt78
-From:   Tom Zanussi <zanussi@kernel.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
+        Tue, 17 Mar 2020 07:47:48 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:54280 "EHLO
+        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1725794AbgCQLrs (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 17 Mar 2020 07:47:48 -0400
+Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
+        (envelope-from <bigeasy@linutronix.de>)
+        id 1jEAhD-0008Rw-BX; Tue, 17 Mar 2020 12:47:43 +0100
+Date:   Tue, 17 Mar 2020 12:47:43 +0100
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     linux-rt-users@vger.kernel.org
+Cc:     Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>
-Date:   Mon, 16 Mar 2020 11:32:13 -0500
-Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.26.1-1 
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+        Zhang Xiao <xiao.zhang@windriver.com>
+Subject: [PATCH RT] tasklet: Address a race resulting in double-enqueue
+Message-ID: <20200317114743.3btcqt6b2a77yhfl@linutronix.de>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT Folks!
+From: Zhang Xiao <xiao.zhang@windriver.com>
 
-I'm pleased to announce the 4.14.172-rt78 stable release.
+The kernel bugzilla has the following race condition reported:
 
-You can get this release via the git tree at:
+CPU0                    CPU1            CPU2
+------------------------------------------------
+test_set SCHED
+ test_set RUN
+   if SCHED
+    add_list
+    raise
+    clear RUN
+<softirq>
+test_set RUN
+test_clear SCHED
+ ->func
+                        test_set SCHED
+tasklet_try_unlock ->0
+test_clear SCHED
+                                        test_set SCHED
+ ->func
+tasklet_try_unlock ->1
+                                        test_set RUN
+                                        if SCHED
+                                        add list
+                                        raise
+                                        clear RUN
+                        test_set RUN
+                        if SCHED
+                         add list
+                         raise
+                         clear RUN
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+As a result the tasklet is enqueued on both CPUs and run on both CPUs. Due
+to the nature of the list used here, it is possible that further
+(different) tasklets, which are enqueued after this double-enqueued
+tasklet, are scheduled on CPU2 but invoked on CPU1. It is also possible
+that these tasklets won't be invoked at all, because during the second
+enqueue process the t->next pointer is set to NULL - dropping everything
+from the list.
 
-  branch: v4.14-rt
-  Head SHA1: 5c41599ad817e04c88d08a46941fbeafdf778e3d
+This race will trigger one or two of the WARN_ON() in
+tasklet_action_common().
+The problem is that the tasklet may be invoked multiple times and clear
+SCHED bit on each invocation. This makes it possible to enqueue the
+very same tasklet on different CPUs.
 
-Or to build 4.14.172-rt78 directly, the following patches should be applied:
+Current RT-devel is using the upstream implementation which does not
+re-run tasklets if they have SCHED set again and so it does not clear
+the SCHED bit multiple times on a single invocation.
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
+Introduce the CHAINED flag. The tasklet will only be enqueued if the
+CHAINED flag has been set successfully.
+If it is possible to exchange the flags (CHAINED | RUN) -> 0 then the
+tasklet won't be re-run. Otherwise the possible SCHED flag is removed
+and the tasklet is re-run again.
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.172.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.172-rt78.patch.xz
-
-
-You can also build from 4.14.172-rt77 by applying the incremental patch:
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/incr/patch-4.14.172-rt77-rt78.patch.xz
-
-Enjoy!
-
-   Tom
-
-Changes from v4.14.172-rt77:
+Bugzilla: https://bugzilla.kernel.org/show_bug.cgi?id=61451
+Not-signed-off-by: Zhang Xiao <xiao.zhang@windriver.com>
+[bigeasy: patch description]
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
+ include/linux/interrupt.h | 5 ++++-
+ kernel/softirq.c          | 6 +++++-
+ 2 files changed, 9 insertions(+), 2 deletions(-)
 
-Matt Fleming (1):
-      mm/memcontrol: Move misplaced local_unlock_irqrestore()
-
-Scott Wood (2):
-      sched: migrate_enable: Use per-cpu cpu_stop_work
-      sched: migrate_enable: Remove __schedule() call
-
-Sebastian Andrzej Siewior (4):
-      userfaultfd: Use a seqlock instead of seqcount
-      locallock: Include header for the `current' macro
-      drm/vmwgfx: Drop preempt_disable() in vmw_fifo_ping_host()
-      tracing: make preempt_lazy and migrate_disable counter smaller
-
-Tom Zanussi (1):
-      Linux 4.14.172-rt78
----
-drivers/gpu/drm/vmwgfx/vmwgfx_fifo.c |  2 --
- fs/userfaultfd.c                     | 12 ++++++------
- include/linux/locallock.h            |  1 +
- include/linux/trace_events.h         |  3 +--
- kernel/sched/core.c                  | 23 ++++++++++++++---------
- kernel/trace/trace_events.c          |  4 ++--
- localversion-rt                      |  2 +-
- mm/memcontrol.c                      |  2 +-
- 8 files changed, 26 insertions(+), 23 deletions(-)
----
-diff --git a/drivers/gpu/drm/vmwgfx/vmwgfx_fifo.c b/drivers/gpu/drm/vmwgfx/vmwgfx_fifo.c
-index a1c68e6a689e3..713f202fca2cd 100644
---- a/drivers/gpu/drm/vmwgfx/vmwgfx_fifo.c
-+++ b/drivers/gpu/drm/vmwgfx/vmwgfx_fifo.c
-@@ -167,10 +167,8 @@ void vmw_fifo_ping_host(struct vmw_private *dev_priv, uint32_t reason)
+diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
+index 97d9ba26915e8..a3b5edb26bc51 100644
+--- a/include/linux/interrupt.h
++++ b/include/linux/interrupt.h
+@@ -579,12 +579,15 @@ enum
  {
- 	u32 *fifo_mem = dev_priv->mmio_virt;
- 
--	preempt_disable();
- 	if (cmpxchg(fifo_mem + SVGA_FIFO_BUSY, 0, 1) == 0)
- 		vmw_write(dev_priv, SVGA_REG_SYNC, reason);
--	preempt_enable();
- }
- 
- void vmw_fifo_release(struct vmw_private *dev_priv, struct vmw_fifo_state *fifo)
-diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
-index e2b2196fd9428..71886a8e8f71b 100644
---- a/fs/userfaultfd.c
-+++ b/fs/userfaultfd.c
-@@ -51,7 +51,7 @@ struct userfaultfd_ctx {
- 	/* waitqueue head for events */
- 	wait_queue_head_t event_wqh;
- 	/* a refile sequence protected by fault_pending_wqh lock */
--	struct seqcount refile_seq;
-+	seqlock_t refile_seq;
- 	/* pseudo fd refcounting */
- 	atomic_t refcount;
- 	/* userfaultfd syscall flags */
-@@ -1047,7 +1047,7 @@ static ssize_t userfaultfd_ctx_read(struct userfaultfd_ctx *ctx, int no_wait,
- 			 * waitqueue could become empty if this is the
- 			 * only userfault.
- 			 */
--			write_seqcount_begin(&ctx->refile_seq);
-+			write_seqlock(&ctx->refile_seq);
- 
- 			/*
- 			 * The fault_pending_wqh.lock prevents the uwq
-@@ -1073,7 +1073,7 @@ static ssize_t userfaultfd_ctx_read(struct userfaultfd_ctx *ctx, int no_wait,
- 			list_del(&uwq->wq.entry);
- 			__add_wait_queue(&ctx->fault_wqh, &uwq->wq);
- 
--			write_seqcount_end(&ctx->refile_seq);
-+			write_sequnlock(&ctx->refile_seq);
- 
- 			/* careful to always initialize msg if ret == 0 */
- 			*msg = uwq->msg;
-@@ -1246,11 +1246,11 @@ static __always_inline void wake_userfault(struct userfaultfd_ctx *ctx,
- 	 * sure we've userfaults to wake.
- 	 */
- 	do {
--		seq = read_seqcount_begin(&ctx->refile_seq);
-+		seq = read_seqbegin(&ctx->refile_seq);
- 		need_wakeup = waitqueue_active(&ctx->fault_pending_wqh) ||
- 			waitqueue_active(&ctx->fault_wqh);
- 		cond_resched();
--	} while (read_seqcount_retry(&ctx->refile_seq, seq));
-+	} while (read_seqretry(&ctx->refile_seq, seq));
- 	if (need_wakeup)
- 		__wake_userfault(ctx, range);
- }
-@@ -1915,7 +1915,7 @@ static void init_once_userfaultfd_ctx(void *mem)
- 	init_waitqueue_head(&ctx->fault_wqh);
- 	init_waitqueue_head(&ctx->event_wqh);
- 	init_waitqueue_head(&ctx->fd_wqh);
--	seqcount_init(&ctx->refile_seq);
-+	seqlock_init(&ctx->refile_seq);
- }
- 
- /**
-diff --git a/include/linux/locallock.h b/include/linux/locallock.h
-index 921eab83cd34a..81c89d87723b5 100644
---- a/include/linux/locallock.h
-+++ b/include/linux/locallock.h
-@@ -3,6 +3,7 @@
- 
- #include <linux/percpu.h>
- #include <linux/spinlock.h>
-+#include <asm/current.h>
- 
- #ifdef CONFIG_PREEMPT_RT_BASE
- 
-diff --git a/include/linux/trace_events.h b/include/linux/trace_events.h
-index edd1e42e8a2f7..01e9ab3107531 100644
---- a/include/linux/trace_events.h
-+++ b/include/linux/trace_events.h
-@@ -62,8 +62,7 @@ struct trace_entry {
- 	unsigned char		flags;
- 	unsigned char		preempt_count;
- 	int			pid;
--	unsigned short		migrate_disable;
--	unsigned short		padding;
-+	unsigned char		migrate_disable;
- 	unsigned char		preempt_lazy_count;
+ 	TASKLET_STATE_SCHED,	/* Tasklet is scheduled for execution */
+ 	TASKLET_STATE_RUN,	/* Tasklet is running (SMP only) */
+-	TASKLET_STATE_PENDING	/* Tasklet is pending */
++	TASKLET_STATE_PENDING,	/* Tasklet is pending */
++	TASKLET_STATE_CHAINED	/* Tasklet is chained */
  };
  
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index f30bb249123b5..3ff48df25cff8 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -6964,6 +6964,9 @@ static void migrate_disabled_sched(struct task_struct *p)
- 	p->migrate_disable_scheduled = 1;
- }
+ #define TASKLET_STATEF_SCHED	(1 << TASKLET_STATE_SCHED)
+ #define TASKLET_STATEF_RUN	(1 << TASKLET_STATE_RUN)
+ #define TASKLET_STATEF_PENDING	(1 << TASKLET_STATE_PENDING)
++#define TASKLET_STATEF_CHAINED	(1 << TASKLET_STATE_CHAINED)
++#define TASKLET_STATEF_RC	(TASKLET_STATEF_RUN | TASKLET_STATEF_CHAINED)
  
-+static DEFINE_PER_CPU(struct cpu_stop_work, migrate_work);
-+static DEFINE_PER_CPU(struct migration_arg, migrate_arg);
-+
- void migrate_enable(void)
- {
- 	struct task_struct *p = current;
-@@ -7002,23 +7005,25 @@ void migrate_enable(void)
+ #if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT_FULL)
+ static inline int tasklet_trylock(struct tasklet_struct *t)
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index 25bcf2f2714ba..73dae64bfc9c2 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -947,6 +947,10 @@ static void __tasklet_schedule_common(struct tasklet_struct *t,
+ 	 * is locked before adding it to the list.
+ 	 */
+ 	if (test_bit(TASKLET_STATE_SCHED, &t->state)) {
++		if (test_and_set_bit(TASKLET_STATE_CHAINED, &t->state)) {
++			tasklet_unlock(t);
++			return;
++		}
+ 		t->next = NULL;
+ 		*head->tail = t;
+ 		head->tail = &(t->next);
+@@ -1040,7 +1044,7 @@ static void tasklet_action_common(struct softirq_action *a,
+ again:
+ 		t->func(t->data);
  
- 	WARN_ON(smp_processor_id() != cpu);
- 	if (!is_cpu_allowed(p, cpu)) {
--		struct migration_arg arg = { .task = p };
--		struct cpu_stop_work work;
-+		struct migration_arg __percpu *arg;
-+		struct cpu_stop_work __percpu *work;
- 		struct rq_flags rf;
- 
-+		work = this_cpu_ptr(&migrate_work);
-+		arg = this_cpu_ptr(&migrate_arg);
-+		WARN_ON_ONCE(!arg->done && !work->disabled && work->arg);
-+
-+		arg->task = p;
-+		arg->done = false;
-+
- 		rq = task_rq_lock(p, &rf);
- 		update_rq_clock(rq);
--		arg.dest_cpu = select_fallback_rq(cpu, p);
-+		arg->dest_cpu = select_fallback_rq(cpu, p);
- 		task_rq_unlock(rq, p, &rf);
- 
- 		stop_one_cpu_nowait(task_cpu(p), migration_cpu_stop,
--				    &arg, &work);
-+				    arg, work);
- 		tlb_migrate_finish(p->mm);
--		__schedule(true);
--		if (!work.disabled) {
--			while (!arg.done)
--				cpu_relax();
--		}
- 	}
- 
- out:
-diff --git a/kernel/trace/trace_events.c b/kernel/trace/trace_events.c
-index 60e371451ec31..edd43841c94ad 100644
---- a/kernel/trace/trace_events.c
-+++ b/kernel/trace/trace_events.c
-@@ -187,8 +187,8 @@ static int trace_define_common_fields(void)
- 	__common_field(unsigned char, flags);
- 	__common_field(unsigned char, preempt_count);
- 	__common_field(int, pid);
--	__common_field(unsigned short, migrate_disable);
--	__common_field(unsigned short, padding);
-+	__common_field(unsigned char, migrate_disable);
-+	__common_field(unsigned char, preempt_lazy_count);
- 
- 	return ret;
- }
-diff --git a/localversion-rt b/localversion-rt
-index 595841feef807..30758e0b2242b 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt77
-+-rt78
-diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index 0503b31e2a873..a359a24ebd9f0 100644
---- a/mm/memcontrol.c
-+++ b/mm/memcontrol.c
-@@ -6102,10 +6102,10 @@ void mem_cgroup_swapout(struct page *page, swp_entry_t entry)
- 	mem_cgroup_charge_statistics(memcg, page, PageTransHuge(page),
- 				     -nr_entries);
- 	memcg_check_events(memcg, page);
-+	local_unlock_irqrestore(event_lock, flags);
- 
- 	if (!mem_cgroup_is_root(memcg))
- 		css_put_many(&memcg->css, nr_entries);
--	local_unlock_irqrestore(event_lock, flags);
- }
- 
- /**
+-		while (!tasklet_tryunlock(t)) {
++		while (cmpxchg(&t->state, TASKLET_STATEF_RC, 0) != TASKLET_STATEF_RC) {
+ 			/*
+ 			 * If it got disabled meanwhile, bail out:
+ 			 */
+-- 
+2.25.1
+
