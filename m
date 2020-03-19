@@ -1,108 +1,114 @@
-Return-Path: <SRS0=/O46=5D=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=GyRq=5E=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 269D8C4332D
-	for <linux-rt-users@archiver.kernel.org>; Wed, 18 Mar 2020 20:37:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BB219C4332D
+	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Mar 2020 00:47:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id F2D722076F
-	for <linux-rt-users@archiver.kernel.org>; Wed, 18 Mar 2020 20:37:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 91BD820767
+	for <linux-rt-users@archiver.kernel.org>; Thu, 19 Mar 2020 00:47:31 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=omicronenergy.com header.i=@omicronenergy.com header.b="AruF/0wj"
+	dkim=pass (1024-bit key) header.d=joelfernandes.org header.i=@joelfernandes.org header.b="UyUB0eHG"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726796AbgCRUhp (ORCPT
+        id S1727069AbgCSArb (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 18 Mar 2020 16:37:45 -0400
-Received: from ns.omicron.at ([212.183.10.25]:53970 "EHLO ns.omicron.at"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726596AbgCRUho (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 18 Mar 2020 16:37:44 -0400
-X-Greylist: delayed 525 seconds by postgrey-1.27 at vger.kernel.org; Wed, 18 Mar 2020 16:37:43 EDT
-Received: from MGW02-ATKLA.omicron.at ([172.25.62.35])
-        by ns.omicron.at (8.15.2/8.15.2) with ESMTPS id 02IKSuVT027520
-        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=FAIL);
-        Wed, 18 Mar 2020 21:28:57 +0100
-DKIM-Filter: OpenDKIM Filter v2.11.0 ns.omicron.at 02IKSuVT027520
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=omicronenergy.com;
-        s=default; t=1584563337;
-        bh=TZ4EahDLI/A01zegYlJj0zs+tkxDyl9TX5N0Nk//S44=;
-        h=From:To:CC:Subject:Date:From;
-        b=AruF/0wjIjJmmgE05JBtlIQsakzGgN4gMj2hNO/uH8c/kQuk1LTO7p+dyikTGrDH5
-         apfDBd36iiSygLaItUAI8r9cScOd15qJS4oBM/JEb0dUx766VjW/aWpd/NVLamuUdp
-         JnV6giHAz2Xh5SEDBO115ZOk0AHJl+M6a+JZGa9A=
-Received: from MGW02-ATKLA.omicron.at (localhost [127.0.0.1])
-        by MGW02-ATKLA.omicron.at (Postfix) with ESMTP id C8614A0141;
-        Wed, 18 Mar 2020 21:28:56 +0100 (CET)
-Received: from MGW01-ATKLA.omicron.at (unknown [172.25.62.34])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by MGW02-ATKLA.omicron.at (Postfix) with ESMTPS id C315AA018C;
-        Wed, 18 Mar 2020 21:28:56 +0100 (CET)
-Received: from EXC03-ATKLA.omicron.at ([172.22.100.188])
-        by MGW01-ATKLA.omicron.at  with ESMTP id 02IKSuYW014882-02IKSuYY014882
-        (version=TLSv1.2 cipher=AES256-SHA256 bits=256 verify=CAFAIL);
-        Wed, 18 Mar 2020 21:28:56 +0100
-Received: from thogra00ll01.omicron.at (172.29.5.144) by
- EXC03-ATKLA.omicron.at (172.22.100.188) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.1713.5; Wed, 18 Mar 2020 21:28:55 +0100
-From:   Thomas Graziadei <thomas.graziadei@omicronenergy.com>
-To:     <linux-kernel@vger.kernel.org>
-CC:     <bigeasy@linutronix.de>, <rostedt@goodmis.org>,
-        <tglx@linutronix.de>, <linux-rt-users@vger.kernel.org>,
-        Thomas Graziadei <thomas.graziadei@omicronenergy.com>
-Subject: [PATCH] powerpc: Fix lazy preemption for powerpc 32bit
-Date:   Wed, 18 Mar 2020 21:26:40 +0100
-X-Mailer: git-send-email 2.17.1
+        Wed, 18 Mar 2020 20:47:31 -0400
+Received: from mail-io1-f67.google.com ([209.85.166.67]:33158 "EHLO
+        mail-io1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726623AbgCSArb (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 18 Mar 2020 20:47:31 -0400
+Received: by mail-io1-f67.google.com with SMTP id o127so545968iof.0
+        for <linux-rt-users@vger.kernel.org>; Wed, 18 Mar 2020 17:47:30 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=joelfernandes.org; s=google;
+        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
+         :cc;
+        bh=Nikfs2mITY1YnXregatCfjsnN0VxQx1MLHWWy5mZepo=;
+        b=UyUB0eHGnGw9m1dq+wwqfipb+e49FVRrNMBxA7casT2HN+Z9yLj4EKGNR9lyGbcx55
+         KkQujx6BOLkfj/DMsoWnz4gc8HQgeuNk7J/Ymzcgcr9a3WZRujV1KBRPHVHqxxFqrHsL
+         rC6cZTsbs2NrBW6LkZ8snTeMclPM8M1h3wAvA=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+         :message-id:subject:to:cc;
+        bh=Nikfs2mITY1YnXregatCfjsnN0VxQx1MLHWWy5mZepo=;
+        b=E0bD6gQwUQ72lAPxIzFVW/wpH0FnuMvDvS+EK3BXmzc6myjaAu/2DnZuvXJm520L0L
+         uzb9kQ2IhMgsxKotW63Tapt1JA2Ap0vH7KcHzlW3pFKURbBdxxQZIBncWsL0v7DGEAI3
+         wjVphuKmDPNLTojWLlJWzAVG47qeCvPMuhbEG8hGRNEa7WCKo0i5DraRY7cL0qx8jDpt
+         9GT/ARIBnQ3JWwvkt49BG/OkEJ+BBP21J8Tx4T7Rgw1Tj28KWmGwXi6nNDuvet8vbynG
+         vaf9L9cKUTqvG+m0LGLIZFEy9QO94iwzlnfUn6Oo4yMfe3ie1KQ2Tkji31Au9uPL9W5D
+         aj6Q==
+X-Gm-Message-State: ANhLgQ1wOEeVOqHN7A1oRgB54AuC5ICQwyyHbhbl0VxOZT5F6cvGfGI2
+        w6KXBIApgFDgppXxa2NyiXWr0FvbDJhUyTS42I/T0w==
+X-Google-Smtp-Source: ADFU+vsUlxX18RINXbTIKk/71K/n1UmMkxX3JU9OJ9HNcL+q/mSD0Gp2PA3I1g/jz2/K2Yt2Ke+h8g36hOL7IzNEeJg=
+X-Received: by 2002:a02:c85a:: with SMTP id r26mr829137jao.74.1584578849973;
+ Wed, 18 Mar 2020 17:47:29 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain
-X-Originating-IP: [172.29.5.144]
-X-ClientProxiedBy: EXC04-ATKLA.omicron.at (172.22.100.189) To
- EXC03-ATKLA.omicron.at (172.22.100.188)
-Message-ID: <0c91d808-b077-408c-b120-99e806efaeb5@EXC03-ATKLA.omicron.at>
+References: <20200305003526.GA20601@paulmck-ThinkPad-P72> <20200305081135.yg7wryd3hrqzocrm@linutronix.de>
+In-Reply-To: <20200305081135.yg7wryd3hrqzocrm@linutronix.de>
+From:   Joel Fernandes <joel@joelfernandes.org>
+Date:   Wed, 18 Mar 2020 20:47:18 -0400
+Message-ID: <CAEXW_YSiKrT50mTR1a4tB5x_jQzZKnuAo6JY-Vc5w7r=XLv+OA@mail.gmail.com>
+Subject: Re: RCU use of swait
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     "Paul E. McKenney" <paulmck@kernel.org>,
+        Josh Triplett <josh@joshtriplett.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Lai Jiangshan <jiangshanlai@gmail.com>,
+        Thomas Glexiner <tglx@linutronix.de>,
+        Scott Wood <swood@redhat.com>,
+        Clark Williams <williams@redhat.com>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        linux-rt-users@vger.kernel.org, rcu <rcu@vger.kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>,
+        Ingo Molnar <mingo@kernel.org>
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Thomas Graziadei <thomas.graziadei@omicronenergy.com>
+On Thu, Mar 5, 2020 at 3:11 AM Sebastian Andrzej Siewior
+<bigeasy@linutronix.de> wrote:
+>
+> On 2020-03-04 16:35:26 [-0800], Paul E. McKenney wrote:
+> > Hello!
+> Hi Paul,
+>
+> > Or is there some other reason why {S,}RCU needs to use swait that I
+> > am forgetting?
+>
+> swait can be used in hardirq-context (on RT) that is in a section within
+> local_irq_save() / raw_spin_lock() and so.
+> wait on the hand uses spinlock_t which can not be used in this context.
+> So if you have no users which fall into that category then you could
+> move back to wait.h.
 
-The 32bit powerpc assembler implementation of the lazy preemption
-set the _TIF_PERSYSCALL_MASK on the low word. This could lead to
-modprobe segfaults and a kernel panic - not syncing: Attempt to
-kill init! issue.
+In RCU, there are some truly-atomic code sections containing an
+swake_upXX() call, which would be considered atomic also on
+PREEMPT_RT, one example is:
 
-Fixed by shifting the mask by 16 bit using andis and lis.
+rcu_core() contains an local_irq_{save,restore}() section.
 
-Signed-off-by: Thomas Graziadei <thomas.graziadei@omicronenergy.com>
----
- arch/powerpc/kernel/entry_32.S | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+        /* No grace period and unregistered callbacks? */
+        if (!rcu_gp_in_progress() &&
+            rcu_segcblist_is_enabled(&rdp->cblist) && !offloaded) {
+                local_irq_save(flags);
+                if (!rcu_segcblist_restempty(&rdp->cblist, RCU_NEXT_READY_TAIL))
+                        rcu_accelerate_cbs_unlocked(rnp, rdp);
+                local_irq_restore(flags);
+        }
 
-diff --git a/arch/powerpc/kernel/entry_32.S b/arch/powerpc/kernel/entry_32.S
-index 172dfb567c25..ab609d63d644 100644
---- a/arch/powerpc/kernel/entry_32.S
-+++ b/arch/powerpc/kernel/entry_32.S
-@@ -533,12 +533,12 @@ syscall_exit_work:
- 
- 1:	stw	r6,RESULT(r1)	/* Save result */
- 	stw	r3,GPR3(r1)	/* Update return value */
--2:	andi.	r0,r9,(_TIF_PERSYSCALL_MASK)@h
-+2:	andis.	r0,r9,(_TIF_PERSYSCALL_MASK)@h
- 	beq	4f
- 
- 	/* Clear per-syscall TIF flags if any are set.  */
- 
--	li	r11,_TIF_PERSYSCALL_MASK@h
-+	lis	r11,(_TIF_PERSYSCALL_MASK)@h
- 	addi	r12,r2,TI_FLAGS
- 3:	lwarx	r8,0,r12
- 	andc	r8,r8,r11
--- 
-2.17.1
+And rcu_accelerate_cbs_unlocked(rnp, rdp) calls rcu_gp_kthread_wake()
+which does an swake_up_one(), so I think we will have to leave it as
+swake_up() the way it is.
 
+thanks,
+
+ - Joel
