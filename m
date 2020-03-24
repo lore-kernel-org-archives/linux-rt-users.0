@@ -1,180 +1,114 @@
-Return-Path: <SRS0=REGa=5G=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=YQYp=5J=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.2 required=3.0
-	tests=HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.4 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E9D19C43332
-	for <linux-rt-users@archiver.kernel.org>; Sat, 21 Mar 2020 23:00:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6AD0CC4332B
+	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Mar 2020 10:47:11 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id C6D8B20776
-	for <linux-rt-users@archiver.kernel.org>; Sat, 21 Mar 2020 23:00:34 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4348520786
+	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Mar 2020 10:47:11 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=ti.com header.i=@ti.com header.b="hpmbjgLo"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727689AbgCUXAb (ORCPT
+        id S1727233AbgCXKrG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 21 Mar 2020 19:00:31 -0400
-Received: from jabberwock.ucw.cz ([46.255.230.98]:39316 "EHLO
-        jabberwock.ucw.cz" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726755AbgCUXAb (ORCPT
+        Tue, 24 Mar 2020 06:47:06 -0400
+Received: from lelv0142.ext.ti.com ([198.47.23.249]:45850 "EHLO
+        lelv0142.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726563AbgCXKrF (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 21 Mar 2020 19:00:31 -0400
-Received: by jabberwock.ucw.cz (Postfix, from userid 1017)
-        id 09D021C031D; Sun, 22 Mar 2020 00:00:29 +0100 (CET)
-Date:   Sun, 22 Mar 2020 00:00:28 +0100
-From:   Pavel Machek <pavel@denx.de>
-To:     Pavel Machek <pavel@denx.de>
-Cc:     Steven Rostedt <rostedt@goodmis.org>,
-        ben.hutchings@codethink.co.uk, Chris.Paterson2@renesas.com,
-        bigeasy@linutronix.de, LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Tue, 24 Mar 2020 06:47:05 -0400
+Received: from lelv0266.itg.ti.com ([10.180.67.225])
+        by lelv0142.ext.ti.com (8.15.2/8.15.2) with ESMTP id 02OAki5v093112;
+        Tue, 24 Mar 2020 05:46:44 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ti.com;
+        s=ti-com-17Q1; t=1585046804;
+        bh=D2ALQtCg+SKfnDlQYR3fcQQukI+ow4R5PvsOSa39z0E=;
+        h=Subject:From:To:CC:References:Date:In-Reply-To;
+        b=hpmbjgLoY8bMHGPi0LXG8dO1pAFHKJNRRZRsF7GbOz9a3z0PC2n89l54fhH5+khmt
+         /1K+exq0Q1+0+RHl71GDR5UEuspxqWF8P60yNonQL1UtXxVZXpbMcQjYI6kO/JeT9A
+         aA5F0oKzFbQKPy6zVZt126tBepHUgU5JDKgynSio=
+Received: from DFLE100.ent.ti.com (dfle100.ent.ti.com [10.64.6.21])
+        by lelv0266.itg.ti.com (8.15.2/8.15.2) with ESMTPS id 02OAkiEp100135
+        (version=TLSv1.2 cipher=AES256-GCM-SHA384 bits=256 verify=FAIL);
+        Tue, 24 Mar 2020 05:46:44 -0500
+Received: from DFLE104.ent.ti.com (10.64.6.25) by DFLE100.ent.ti.com
+ (10.64.6.21) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1847.3; Tue, 24
+ Mar 2020 05:46:44 -0500
+Received: from lelv0326.itg.ti.com (10.180.67.84) by DFLE104.ent.ti.com
+ (10.64.6.25) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1847.3 via
+ Frontend Transport; Tue, 24 Mar 2020 05:46:44 -0500
+Received: from [10.250.100.73] (ileax41-snat.itg.ti.com [10.172.224.153])
+        by lelv0326.itg.ti.com (8.15.2/8.15.2) with ESMTP id 02OAkfLj024660;
+        Tue, 24 Mar 2020 05:46:42 -0500
+Subject: Re: [PATCH] kthread: Mark timer used by delayed kthread works as IRQ
+ safe
+From:   Grygorii Strashko <grygorii.strashko@ti.com>
+To:     Tejun Heo <tj@kernel.org>, Petr Mladek <pmladek@suse.com>
+CC:     <linux-rt-users@vger.kernel.org>, <netdev@vger.kernel.org>,
+        Richard Cochran <richardcochran@gmail.com>,
+        <linux-kernel@vger.kernel.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Julia Cartwright <julia@ni.com>,
-        Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>,
-        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
-Subject: Re: 4.19.106-rt44 -- boot problems with irqwork: push most work into
- softirq context
-Message-ID: <20200321230028.GA22058@duo.ucw.cz>
-References: <20200228170837.3fe8bb57@gandalf.local.home>
- <20200319214835.GA29781@duo.ucw.cz>
- <20200319232225.GA7878@duo.ucw.cz>
- <20200319204859.5011a488@gandalf.local.home>
- <20200320195432.GA12666@duo.ucw.cz>
- <20200320160545.26a65de3@gandalf.local.home>
- <20200321224339.GA20728@duo.ucw.cz>
+        <linux-arm-kernel@lists.infradead.org>
+References: <20200217120709.1974-1-pmladek@suse.com>
+ <20200219152248.GC698990@mtj.thefacebook.com>
+ <6a4c07df-8971-8637-5251-ce177c3a08ce@ti.com>
+Message-ID: <99c75f39-1f27-ad3c-1605-397b69760d07@ti.com>
+Date:   Tue, 24 Mar 2020 12:46:41 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.2.2
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-        protocol="application/pgp-signature"; boundary="opJtzjQTFsWo+cga"
-Content-Disposition: inline
-In-Reply-To: <20200321224339.GA20728@duo.ucw.cz>
-User-Agent: Mutt/1.10.1 (2018-07-13)
+In-Reply-To: <6a4c07df-8971-8637-5251-ce177c3a08ce@ti.com>
+Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
+X-EXCLAIMER-MD-CONFIG: e1e8a2fd-e40a-4ac6-ac9b-f7e9cc9ee180
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+Hi All,
 
---opJtzjQTFsWo+cga
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+On 16/03/2020 14:23, Grygorii Strashko wrote:
+> Hi Petr,
+> 
+> On 19/02/2020 17:22, Tejun Heo wrote:
+>> On Mon, Feb 17, 2020 at 01:07:09PM +0100, Petr Mladek wrote:
+>>> The timer used by delayed kthread works are IRQ safe because the used
+>>> kthread_delayed_work_timer_fn() is IRQ safe.
+>>>
+>>> It is properly marked when initialized by KTHREAD_DELAYED_WORK_INIT().
+>>> But TIMER_IRQSAFE flag is missing when initialized by
+>>> kthread_init_delayed_work().
+>>>
+>>> The missing flag might trigger invalid warning from del_timer_sync()
+>>> when kthread_mod_delayed_work() is called with interrupts disabled.
+>>>
+>>> Reported-by: Grygorii Strashko <grygorii.strashko@ti.com>
+>>> Signed-off-by: Petr Mladek <pmladek@suse.com>
+>>> Tested-by: Grygorii Strashko <grygorii.strashko@ti.com>
+>>
+>> Acked-by: Tejun Heo <tj@kernel.org>
+> 
+> I'm worry shouldn't this patch have "fixes" tag?
+> 
 
-Hi!
+Sorry, the I'm disturbing you, but I have dependency from this path [1].
+I can see it in -next: commit d7c8c7de96de ("kthread: mark timer used by
+delayed kthread works as IRQ safe"), but it does not present in net-next.
 
-> > > > Does this patch help? =20
-> > >=20
-> > > I don't think so. It also failed, and the failure seems to be
-> > > identical to me.
-> > >=20
-> > > https://gitlab.com/cip-project/cip-kernel/linux-cip/tree/ci/pavel/lin=
-ux-cip
-> > > https://lava.ciplatform.org/scheduler/job/13110
-> > >=20
-> >=20
-> > Can you send me a patch that shows the difference between the revert th=
-at
-> > you say works, and the upstream v4.19-rt tree (let me know which version
-> > of v4.19-rt you are basing it on).
->=20
-> I was using -rt44, and yes, I can probably generate better diffs.
->=20
-> But I guess I found it with code review: how does this look to you? I
-> applied it on top of your fix, and am testing. 2 successes so far.
+Any way this can be resolved?
 
-And I'd recommend some kind of cleanup on top. The code is really
-"interesting" and we don't want to have two copies. Totally untested.
-
-Looking at the code, it could be probably cleaned up further.
-
-Signed-off-by: Pavel Machek <pavel@denx.de>
-
+[1] https://patchwork.ozlabs.org/cover/1259207/
+-- 
 Best regards,
-								Pavel
-
-diff --git a/kernel/irq_work.c b/kernel/irq_work.c
-index dd654865c219..88211b87d4e3 100644
---- a/kernel/irq_work.c
-+++ b/kernel/irq_work.c
-@@ -70,10 +70,19 @@ static void __irq_work_queue_local(struct irq_work *wor=
-k, struct llist_head *lis
- 		arch_irq_work_raise();
- }
-=20
-+static struct llist_head *irq_work_get_list(struct irq_work *work)
-+{
-+	if ((IS_ENABLED(CONFIG_PREEMPT_RT_FULL) && !(work->flags & IRQ_WORK_HARD_=
-IRQ))
-+	    || (work->flags & IRQ_WORK_LAZY))
-+		return &lazy_list;
-+	else
-+		return &raised_list;
-+}
-+
- /* Enqueue the irq work @work on the current CPU */
- bool irq_work_queue(struct irq_work *work)
- {
--	struct llist_head *list;
-+    	struct llist_head *list;
-=20
- 	/* Only queue if not already pending */
- 	if (!irq_work_claim(work))
-@@ -81,12 +90,7 @@ bool irq_work_queue(struct irq_work *work)
-=20
- 	/* Queue the entry and raise the IPI if needed. */
- 	preempt_disable();
--	if ((IS_ENABLED(CONFIG_PREEMPT_RT_FULL) && !(work->flags & IRQ_WORK_HARD_=
-IRQ))
--	    || (work->flags & IRQ_WORK_LAZY))
--		list =3D this_cpu_ptr(&lazy_list);
--	else
--		list =3D this_cpu_ptr(&raised_list);
--
-+	list =3D this_cpu_ptr(irq_work_get_list(work));
- 	__irq_work_queue_local(work, list);
- 	preempt_enable();
-=20
-@@ -107,7 +111,6 @@ bool irq_work_queue_on(struct irq_work *work, int cpu)
-=20
- #else /* CONFIG_SMP: */
- 	struct llist_head *list;
--	bool lazy_work, realtime =3D IS_ENABLED(CONFIG_PREEMPT_RT_FULL);
-=20
- 	/* All work should have been flushed before going offline */
- 	WARN_ON_ONCE(cpu_is_offline(cpu));
-@@ -117,13 +120,8 @@ bool irq_work_queue_on(struct irq_work *work, int cpu)
- 		return false;
-=20
- 	preempt_disable();
--
--	lazy_work =3D work->flags & IRQ_WORK_LAZY;
--
--	if (lazy_work || (realtime && !(work->flags & IRQ_WORK_HARD_IRQ)))
--		list =3D &per_cpu(lazy_list, cpu);
--	else
--		list =3D &per_cpu(raised_list, cpu);
-+	list =3D irq_work_get_list(work);
-+	list =3D &per_cpu(list, cpu);
-=20
- 	if (cpu !=3D smp_processor_id()) {
- 		/* Arch remote IPI send/receive backend aren't NMI safe */
-
---=20
-DENX Software Engineering GmbH,      Managing Director: Wolfgang Denk
-HRB 165235 Munich, Office: Kirchenstr.5, D-82194 Groebenzell, Germany
-
---opJtzjQTFsWo+cga
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iF0EABECAB0WIQRPfPO7r0eAhk010v0w5/Bqldv68gUCXnacjAAKCRAw5/Bqldv6
-8u1uAKDColTWBy5Sf9XUN9wBwEEQZNtAIACfd7mBdPEhE4ljF50+So+QdRUKGqo=
-=6Fcv
------END PGP SIGNATURE-----
-
---opJtzjQTFsWo+cga--
+grygorii
