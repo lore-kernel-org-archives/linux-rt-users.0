@@ -1,114 +1,104 @@
-Return-Path: <SRS0=YQYp=5J=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=uvua=5K=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.4 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+X-Spam-Status: No, score=-5.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=unavailable
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6AD0CC4332B
-	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Mar 2020 10:47:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9F028C2D0E7
+	for <linux-rt-users@archiver.kernel.org>; Wed, 25 Mar 2020 21:02:57 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 4348520786
-	for <linux-rt-users@archiver.kernel.org>; Tue, 24 Mar 2020 10:47:11 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7604420737
+	for <linux-rt-users@archiver.kernel.org>; Wed, 25 Mar 2020 21:02:56 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=ti.com header.i=@ti.com header.b="hpmbjgLo"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="SnMuqMmy"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727233AbgCXKrG (ORCPT
+        id S1727399AbgCYVCy (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 24 Mar 2020 06:47:06 -0400
-Received: from lelv0142.ext.ti.com ([198.47.23.249]:45850 "EHLO
-        lelv0142.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726563AbgCXKrF (ORCPT
+        Wed, 25 Mar 2020 17:02:54 -0400
+Received: from us-smtp-delivery-74.mimecast.com ([216.205.24.74]:29568 "EHLO
+        us-smtp-delivery-74.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1727280AbgCYVCy (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 24 Mar 2020 06:47:05 -0400
-Received: from lelv0266.itg.ti.com ([10.180.67.225])
-        by lelv0142.ext.ti.com (8.15.2/8.15.2) with ESMTP id 02OAki5v093112;
-        Tue, 24 Mar 2020 05:46:44 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ti.com;
-        s=ti-com-17Q1; t=1585046804;
-        bh=D2ALQtCg+SKfnDlQYR3fcQQukI+ow4R5PvsOSa39z0E=;
-        h=Subject:From:To:CC:References:Date:In-Reply-To;
-        b=hpmbjgLoY8bMHGPi0LXG8dO1pAFHKJNRRZRsF7GbOz9a3z0PC2n89l54fhH5+khmt
-         /1K+exq0Q1+0+RHl71GDR5UEuspxqWF8P60yNonQL1UtXxVZXpbMcQjYI6kO/JeT9A
-         aA5F0oKzFbQKPy6zVZt126tBepHUgU5JDKgynSio=
-Received: from DFLE100.ent.ti.com (dfle100.ent.ti.com [10.64.6.21])
-        by lelv0266.itg.ti.com (8.15.2/8.15.2) with ESMTPS id 02OAkiEp100135
-        (version=TLSv1.2 cipher=AES256-GCM-SHA384 bits=256 verify=FAIL);
-        Tue, 24 Mar 2020 05:46:44 -0500
-Received: from DFLE104.ent.ti.com (10.64.6.25) by DFLE100.ent.ti.com
- (10.64.6.21) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1847.3; Tue, 24
- Mar 2020 05:46:44 -0500
-Received: from lelv0326.itg.ti.com (10.180.67.84) by DFLE104.ent.ti.com
- (10.64.6.25) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1847.3 via
- Frontend Transport; Tue, 24 Mar 2020 05:46:44 -0500
-Received: from [10.250.100.73] (ileax41-snat.itg.ti.com [10.172.224.153])
-        by lelv0326.itg.ti.com (8.15.2/8.15.2) with ESMTP id 02OAkfLj024660;
-        Tue, 24 Mar 2020 05:46:42 -0500
-Subject: Re: [PATCH] kthread: Mark timer used by delayed kthread works as IRQ
- safe
-From:   Grygorii Strashko <grygorii.strashko@ti.com>
-To:     Tejun Heo <tj@kernel.org>, Petr Mladek <pmladek@suse.com>
-CC:     <linux-rt-users@vger.kernel.org>, <netdev@vger.kernel.org>,
-        Richard Cochran <richardcochran@gmail.com>,
-        <linux-kernel@vger.kernel.org>,
-        Andrew Morton <akpm@linux-foundation.org>,
+        Wed, 25 Mar 2020 17:02:54 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1585170173;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=1kdP9ngOxBVZus1W4Ab/5pM031b8xQowWgA+AhTWqQY=;
+        b=SnMuqMmylORaIiwtv/xO84Qs2ZkJSBHKzlyR5+xBnvrGpmvfo4FuStPYNxw3rx5+Vjm6V3
+        WJWanozZF9WZrL/ILcOh8xL+Tf6n//Fd2wyS+YEavX6nAFKnifmSxZgMrLTR9I2EgnuBPk
+        duaEd83P3pkn0mgIRzzWg7+tykWD6kA=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-79-r1YnDeZJPJudzkd1-U_h5g-1; Wed, 25 Mar 2020 17:02:49 -0400
+X-MC-Unique: r1YnDeZJPJudzkd1-U_h5g-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 62F3C18CA240;
+        Wed, 25 Mar 2020 21:02:47 +0000 (UTC)
+Received: from tagon (ovpn-116-65.rdu2.redhat.com [10.10.116.65])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id E7EBA5C1B0;
+        Wed, 25 Mar 2020 21:02:44 +0000 (UTC)
+Date:   Wed, 25 Mar 2020 16:02:42 -0500
+From:   Clark Williams <williams@redhat.com>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        RT <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        <linux-arm-kernel@lists.infradead.org>
-References: <20200217120709.1974-1-pmladek@suse.com>
- <20200219152248.GC698990@mtj.thefacebook.com>
- <6a4c07df-8971-8637-5251-ce177c3a08ce@ti.com>
-Message-ID: <99c75f39-1f27-ad3c-1605-397b69760d07@ti.com>
-Date:   Tue, 24 Mar 2020 12:46:41 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.2.2
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 4.9.217-rt140
+Message-ID: <20200325160242.6f6ce068@tagon>
+Organization: Red Hat, Inc
 MIME-Version: 1.0
-In-Reply-To: <6a4c07df-8971-8637-5251-ce177c3a08ce@ti.com>
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Language: en-US
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-X-EXCLAIMER-MD-CONFIG: e1e8a2fd-e40a-4ac6-ac9b-f7e9cc9ee180
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi All,
+Hello RT-land!
 
-On 16/03/2020 14:23, Grygorii Strashko wrote:
-> Hi Petr,
-> 
-> On 19/02/2020 17:22, Tejun Heo wrote:
->> On Mon, Feb 17, 2020 at 01:07:09PM +0100, Petr Mladek wrote:
->>> The timer used by delayed kthread works are IRQ safe because the used
->>> kthread_delayed_work_timer_fn() is IRQ safe.
->>>
->>> It is properly marked when initialized by KTHREAD_DELAYED_WORK_INIT().
->>> But TIMER_IRQSAFE flag is missing when initialized by
->>> kthread_init_delayed_work().
->>>
->>> The missing flag might trigger invalid warning from del_timer_sync()
->>> when kthread_mod_delayed_work() is called with interrupts disabled.
->>>
->>> Reported-by: Grygorii Strashko <grygorii.strashko@ti.com>
->>> Signed-off-by: Petr Mladek <pmladek@suse.com>
->>> Tested-by: Grygorii Strashko <grygorii.strashko@ti.com>
->>
->> Acked-by: Tejun Heo <tj@kernel.org>
-> 
-> I'm worry shouldn't this patch have "fixes" tag?
-> 
+I'm pleased to announce the 4.9.217-rt140 stable release.
 
-Sorry, the I'm disturbing you, but I have dependency from this path [1].
-I can see it in -next: commit d7c8c7de96de ("kthread: mark timer used by
-delayed kthread works as IRQ safe"), but it does not present in net-next.
+Note that this is a stable maintenance release, so no changes to the
+actual RT code, just merged in the v4.9.217 stable update.
 
-Any way this can be resolved?
+You can get this release via the git tree at:
 
-[1] https://patchwork.ozlabs.org/cover/1259207/
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.9-rt
+  Head SHA1: 17124a9c60e7d12becb893f35d51d9a5054a13e8
+
+Or to build 4.9.217-rt140 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.9.217.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.9/patch-4.9.217-rt140.patch.xz
+
+
+You can also build from 4.9.216-rt139 by applying the incremental patch:
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.9/incr/patch-4.9.216-rt139-rt140.patch.xz
+
+Enjoy!
+Clark
+
 -- 
-Best regards,
-grygorii
+The United States Coast Guard
+Ruining Natural Selection since 1790
+
