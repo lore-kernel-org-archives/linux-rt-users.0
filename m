@@ -2,116 +2,149 @@ Return-Path: <SRS0=CtTq=5P=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.2 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MSGID_FROM_MTA_HEADER,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-10.2 required=3.0
+	tests=HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 41F08C43331
-	for <linux-rt-users@archiver.kernel.org>; Mon, 30 Mar 2020 15:41:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F41EFC2D0F1
+	for <linux-rt-users@archiver.kernel.org>; Mon, 30 Mar 2020 20:15:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id E989A2073B
-	for <linux-rt-users@archiver.kernel.org>; Mon, 30 Mar 2020 15:41:18 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=concurrentrt.onmicrosoft.com header.i=@concurrentrt.onmicrosoft.com header.b="KcOK2XgG"
+	by mail.kernel.org (Postfix) with ESMTP id D3D89207FF
+	for <linux-rt-users@archiver.kernel.org>; Mon, 30 Mar 2020 20:15:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729616AbgC3PlS (ORCPT
+        id S1728715AbgC3UPj (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 30 Mar 2020 11:41:18 -0400
-Received: from mail-mw2nam12on2123.outbound.protection.outlook.com ([40.107.244.123]:21057
-        "EHLO NAM12-MW2-obe.outbound.protection.outlook.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1729564AbgC3PlS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 30 Mar 2020 11:41:18 -0400
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=nDxwwApqQTGCzpZYNZi0wpyEXKr2e5F4mqFZPeiekIj+ZjhFx3dPyLZqFOuRJCwnPutUitZGwdjQyJNasVP35KmffDoTDKxNPK6b4bAMKVWSc3s9hb/D97SoF+17RrdexgXKYx7wSXIdiJIKW+Y04iO/y2pN21LGGpVoQFbZBgtDlyOENBqcujrTuaoiUIEjr5ay60S9jMavUl4d4muRyIb99PkK3y1SjUB/HiuOIPyvCPfZX0DrpHxjRCqTjk6G7Q4DGtl1BWMVmJ/kESZTCJyvImFpjjkeFSLouqc1nHMFW2/sl7okfZS97h6BV5IMyGLlqh6ws9Q9jZzxgLYmjg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=cwSUmV0Gbk1J2UiGlCd1g2FiO2HGqL1krEKsyo3x/zk=;
- b=J+JKbnziY6si4DSUunt1zczNG3/qQnThqEmMv5grIzmHItyoV/mikvTCQmTl1v3tZT+zEzNy5I78boLvbTHXu3grtfC4MoQpwwYGy2mxvANyVN837G5hGL7yhd2ZbmFwXGkkQBuITENnUDC7y98dqnW4XU8IjGo4n35dviP39qsXVxkqkLoPI4oU2ubwpQ6ggT63VOUHtNWDZhpQCgHNyerKvMj9Xb4V7oIin+zNsWSH7OqHElJenW43QwysD0Y2yi2YHDVd9fiavR0IdQO+ZdVAaM9XpaBk9N18d6jO/3pEZDDcb9E/o99VYqdxWkztG/2guaWVk6zwlQptZaGoJQ==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=concurrent-rt.com; dmarc=pass action=none
- header.from=concurrent-rt.com; dkim=pass header.d=concurrent-rt.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=concurrentrt.onmicrosoft.com; s=selector2-concurrentrt-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=cwSUmV0Gbk1J2UiGlCd1g2FiO2HGqL1krEKsyo3x/zk=;
- b=KcOK2XgGefNTl1bGJq6Wbzo7SeOAilzbN0kBvWxZrx9LkNjJN8VORmyYp4CqOiI9iGQI14dJwJCEoCd8wg0DoO1m+Tv0w1siKm9cSd3EIEi5LyimjWz8qV3PDtEn3sPOpJG2xx3KFpHfAn8tx6UkHlm4atrRDChRTtIDJV0yW8Q=
-Authentication-Results: spf=none (sender IP is )
- smtp.mailfrom=Joe.Korty@concurrent-rt.com; 
-Received: from CH2PR11MB4341.namprd11.prod.outlook.com (2603:10b6:610:3c::19)
- by CH2PR11MB4456.namprd11.prod.outlook.com (2603:10b6:610:48::22) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.2856.20; Mon, 30 Mar
- 2020 15:41:13 +0000
-Received: from CH2PR11MB4341.namprd11.prod.outlook.com
- ([fe80::bd65:23a4:2f16:a20]) by CH2PR11MB4341.namprd11.prod.outlook.com
- ([fe80::bd65:23a4:2f16:a20%5]) with mapi id 15.20.2856.019; Mon, 30 Mar 2020
- 15:41:13 +0000
-Date:   Mon, 30 Mar 2020 11:41:10 -0400
-From:   Joe Korty <joe.korty@concurrent-rt.com>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
+        Mon, 30 Mar 2020 16:15:39 -0400
+Received: from mail.kernel.org ([198.145.29.99]:48194 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1728780AbgC3UPi (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 30 Mar 2020 16:15:38 -0400
+Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 1C2DE20714;
+        Mon, 30 Mar 2020 20:15:36 +0000 (UTC)
+Date:   Mon, 30 Mar 2020 16:15:34 -0400
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     Pavel Machek <pavel@denx.de>
+Cc:     ben.hutchings@codethink.co.uk, Chris.Paterson2@renesas.com,
+        bigeasy@linutronix.de, LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ANNOUNCE] v5.4.26-rt17
-Message-ID: <20200330154110.GA2975@zipoli.concurrent-rt.com>
-Reply-To: Joe Korty <joe.korty@concurrent-rt.com>
-References: <20200320192830.zeci3rhh5bgbareg@linutronix.de>
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20200320192830.zeci3rhh5bgbareg@linutronix.de>
-User-Agent: Mutt/1.5.21 (2010-09-15)
-X-ClientProxiedBy: BN6PR1101CA0004.namprd11.prod.outlook.com
- (2603:10b6:405:4a::14) To CH2PR11MB4341.namprd11.prod.outlook.com
- (2603:10b6:610:3c::19)
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Julia Cartwright <julia@ni.com>,
+        Daniel Wagner <wagi@monom.org>,
+        Tom Zanussi <zanussi@kernel.org>,
+        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
+Subject: Re: 4.19.106-rt44 -- boot problems with irqwork: push most work
+ into softirq context
+Message-ID: <20200330161534.5d4e7174@gandalf.local.home>
+In-Reply-To: <20200321230028.GA22058@duo.ucw.cz>
+References: <20200228170837.3fe8bb57@gandalf.local.home>
+        <20200319214835.GA29781@duo.ucw.cz>
+        <20200319232225.GA7878@duo.ucw.cz>
+        <20200319204859.5011a488@gandalf.local.home>
+        <20200320195432.GA12666@duo.ucw.cz>
+        <20200320160545.26a65de3@gandalf.local.home>
+        <20200321224339.GA20728@duo.ucw.cz>
+        <20200321230028.GA22058@duo.ucw.cz>
+X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
-X-MS-Exchange-MessageSentRepresentingType: 1
-Received: from zipoli.concurrent-rt.com (12.220.59.2) by BN6PR1101CA0004.namprd11.prod.outlook.com (2603:10b6:405:4a::14) with Microsoft SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.2856.20 via Frontend Transport; Mon, 30 Mar 2020 15:41:12 +0000
-X-Originating-IP: [12.220.59.2]
-X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id: 85b5ea04-db6a-401e-1d6e-08d7d4c0c6de
-X-MS-TrafficTypeDiagnostic: CH2PR11MB4456:
-X-Microsoft-Antispam-PRVS: <CH2PR11MB4456ADA77D5828E6B36505F5A0CB0@CH2PR11MB4456.namprd11.prod.outlook.com>
-X-MS-Oob-TLC-OOBClassifiers: OLM:8273;
-X-Forefront-PRVS: 0358535363
-X-Forefront-Antispam-Report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:CH2PR11MB4341.namprd11.prod.outlook.com;PTR:;CAT:NONE;SFTY:;SFS:(10019020)(136003)(376002)(346002)(366004)(39830400003)(396003)(316002)(16526019)(66556008)(6916009)(4326008)(54906003)(66476007)(66946007)(508600001)(956004)(33656002)(26005)(81156014)(8936002)(55016002)(44832011)(2906002)(7696005)(186003)(8676002)(1076003)(5660300002)(4744005)(3450700001)(86362001)(81166006)(52116002);DIR:OUT;SFP:1102;
-Received-SPF: None (protection.outlook.com: concurrent-rt.com does not
- designate permitted sender hosts)
-X-MS-Exchange-SenderADCheck: 1
-X-Microsoft-Antispam: BCL:0;
-X-Microsoft-Antispam-Message-Info: bAwDfbNpX28Ssr0a9nZegFhWm9rPpi9+zEjgwCoc5CAM7uZ6pFMz8wjvdxgSciL9WKrssQQyLtVwmXePLyJ4mHqc1XC51FeO4V/Sp24DOj8U0zhhhwKOM/lo7w12RXDqOFvwHtCpKbJRUgb9J+RZ4WU+o0ZKYTSH7Z2yqBCBQGrRm0idB3zvKamPEBp0UyNqtkvVMFEK5c40V2nZC9aGptJB9EG9EAC9WhrkMjGQ0yII6RAeGe0OrNvWuSEUO0V8Osm2bER2sf5OvoLBACc0BGlW89esrlP90cxCcmSQoyN6D00KiJieFd/xkjhNsTzFqiQX7mROxYhyQU3Agi3ZFQrnschsp5X9LvwR4QFUKDc6ykLW4QEOuwXELCks9IFA0jX/L//71o+VuY7N0ipT7wD+tApG9CvwuPEF2EwXAg503QVYqQBapQ2dn/7QVwJG
-X-MS-Exchange-AntiSpam-MessageData: KL0keY/EBpLQEgn2x9FOdvPwaM1KPHgXWG7f7lRhTSAPUDWFkZo0XYjux+RlM5uy7J61p2Jq0OlM8bBO6rBHMccxOWRVTx/x5j1Ck/EBbtwsyueSfc5NOQPHXHryTKkpGpyZTqAr0cmxg9AyiPNjpQ==
-X-OriginatorOrg: concurrent-rt.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 85b5ea04-db6a-401e-1d6e-08d7d4c0c6de
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 30 Mar 2020 15:41:13.4547
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 38747689-e6b0-4933-86c0-1116ee3ef93e
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: 2ar/Tm2CNhmDZ4av4Gkpennc5vtnkiieZu/ba40sHsaVeah3h6NlZekE9s08x1uWOCzSh/Q5Ht/MnShQLk/fz56YF6HurpdJ+PCYe2RdwI4=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: CH2PR11MB4456
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Fri, Mar 20, 2020 at 08:28:30PM +0100, Sebastian Andrzej Siewior wrote:
-> Dear RT folks!
-> 
-> I'm pleased to announce the v5.4.26-rt17 patch set. 
-> 
-> Changes since v5.4.26-rt16:
-> 
->   - Revert the "cross CPU pagevec" access with a static key switch. The
->     old behaviour has been almost fully restored: There is no cross CPU
->     access of the local_lock. Instead the workqueue is scheduled on
->     remote CPU like in the !RT case.
+On Sun, 22 Mar 2020 00:00:28 +0100
+Pavel Machek <pavel@denx.de> wrote:
 
-[try #2]
-This reversion fixes the oops I was getting when CONFIG_PREEMPT_RT=n,
-CONFIG_PREEMPT=y, with nohz_full operational, when the system is under
-heavy memory pressure (mem=4G on the kernel command line, 8 cpu setup,
-make -j11 kernel build).
+> Hi!
+> 
+> > > > > Does this patch help?    
+> > > > 
+> > > > I don't think so. It also failed, and the failure seems to be
+> > > > identical to me.
+> > > > 
+> > > > https://gitlab.com/cip-project/cip-kernel/linux-cip/tree/ci/pavel/linux-cip
+> > > > https://lava.ciplatform.org/scheduler/job/13110
+> > > >   
+> > > 
+> > > Can you send me a patch that shows the difference between the revert that
+> > > you say works, and the upstream v4.19-rt tree (let me know which version
+> > > of v4.19-rt you are basing it on).  
+> > 
+> > I was using -rt44, and yes, I can probably generate better diffs.
+> > 
+> > But I guess I found it with code review: how does this look to you? I
+> > applied it on top of your fix, and am testing. 2 successes so far.  
+> 
+> And I'd recommend some kind of cleanup on top. The code is really
+> "interesting" and we don't want to have two copies. Totally untested.
+> 
+> Looking at the code, it could be probably cleaned up further.
+> 
+> Signed-off-by: Pavel Machek <pavel@denx.de>
+> 
+> Best regards,
+> 								Pavel
+
+I applied this patch, does this work for you. It's slightly different than
+yours as I thought only the condition needed to be saved, not the lists
+themselves.
+
+-- Steve
+
+Index: stable-rt.git/kernel/irq_work.c
+===================================================================
+--- stable-rt.git.orig/kernel/irq_work.c	2020-03-30 15:11:13.849875145 -0400
++++ stable-rt.git/kernel/irq_work.c	2020-03-30 15:18:54.365242025 -0400
+@@ -70,6 +70,12 @@ static void __irq_work_queue_local(struc
+ 		arch_irq_work_raise();
+ }
+ 
++static inline bool use_lazy_list(struct irq_work *work)
++{
++	return (IS_ENABLED(CONFIG_PREEMPT_RT_FULL) && !(work->flags & IRQ_WORK_HARD_IRQ))
++		|| (work->flags & IRQ_WORK_LAZY);
++}
++
+ /* Enqueue the irq work @work on the current CPU */
+ bool irq_work_queue(struct irq_work *work)
+ {
+@@ -81,11 +87,10 @@ bool irq_work_queue(struct irq_work *wor
+ 
+ 	/* Queue the entry and raise the IPI if needed. */
+ 	preempt_disable();
+-	if (IS_ENABLED(CONFIG_PREEMPT_RT_FULL) && !(work->flags & IRQ_WORK_HARD_IRQ))
++	if (use_lazy_list(work))
+ 		list = this_cpu_ptr(&lazy_list);
+ 	else
+ 		list = this_cpu_ptr(&raised_list);
+-
+ 	__irq_work_queue_local(work, list);
+ 	preempt_enable();
+ 
+@@ -106,7 +111,6 @@ bool irq_work_queue_on(struct irq_work *
+ 
+ #else /* CONFIG_SMP: */
+ 	struct llist_head *list;
+-	bool lazy_work, realtime = IS_ENABLED(CONFIG_PREEMPT_RT_FULL);
+ 
+ 	/* All work should have been flushed before going offline */
+ 	WARN_ON_ONCE(cpu_is_offline(cpu));
+@@ -116,10 +120,7 @@ bool irq_work_queue_on(struct irq_work *
+ 		return false;
+ 
+ 	preempt_disable();
+-
+-	lazy_work = work->flags & IRQ_WORK_LAZY;
+-
+-	if (lazy_work || (realtime && !(work->flags & IRQ_WORK_HARD_IRQ)))
++	if (use_lazy_list(work))
+ 		list = &per_cpu(lazy_list, cpu);
+ 	else
+ 		list = &per_cpu(raised_list, cpu);
