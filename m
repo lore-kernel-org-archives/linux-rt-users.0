@@ -1,112 +1,125 @@
-Return-Path: <SRS0=jf0u=5Q=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=PGN5=5R=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.4 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7E5C6C2D0F1
-	for <linux-rt-users@archiver.kernel.org>; Tue, 31 Mar 2020 16:35:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 91C6DC43331
+	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Apr 2020 15:06:34 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 5ECBF214DB
-	for <linux-rt-users@archiver.kernel.org>; Tue, 31 Mar 2020 16:35:30 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 66F212078C
+	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Apr 2020 15:06:34 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=ti.com header.i=@ti.com header.b="MO5I1n8I"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731178AbgCaQf0 (ORCPT
+        id S1733161AbgDAPGa (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 31 Mar 2020 12:35:26 -0400
-Received: from mail.kernel.org ([198.145.29.99]:41716 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1730677AbgCaQfP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 31 Mar 2020 12:35:15 -0400
-Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id B472920CC7;
-        Tue, 31 Mar 2020 16:35:14 +0000 (UTC)
-Received: from rostedt by gandalf.local.home with local (Exim 4.93)
-        (envelope-from <rostedt@goodmis.org>)
-        id 1jJJr7-002VfA-Kz; Tue, 31 Mar 2020 12:35:13 -0400
-Message-Id: <20200331163513.525283482@goodmis.org>
-User-Agent: quilt/0.65
-Date:   Tue, 31 Mar 2020 12:34:54 -0400
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     linux-kernel@vger.kernel.org,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        John Kacur <jkacur@redhat.com>,
-        Julia Cartwright <julia@ni.com>,
-        Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>,
-        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>,
-        Tiejun Chen <tiejunc@vmware.com>
-Subject: [PATCH RT 1/3] lib/ubsan: Remove flags parameter from calls to ubsan_prologue() and
- ubsan_epilogue()
-References: <20200331163453.805082089@goodmis.org>
+        Wed, 1 Apr 2020 11:06:30 -0400
+Received: from fllv0016.ext.ti.com ([198.47.19.142]:53132 "EHLO
+        fllv0016.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1732551AbgDAPGa (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 1 Apr 2020 11:06:30 -0400
+Received: from fllv0035.itg.ti.com ([10.64.41.0])
+        by fllv0016.ext.ti.com (8.15.2/8.15.2) with ESMTP id 031F6IrT103459;
+        Wed, 1 Apr 2020 10:06:18 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ti.com;
+        s=ti-com-17Q1; t=1585753578;
+        bh=rpGOkl7+au8ZR5Xc81hv83OdjAR+iCGu/F9rpYgq2M4=;
+        h=To:CC:From:Subject:Date;
+        b=MO5I1n8IQO/HQNfC4Nc/PKY9H5Jw5OetvV5ztUszr20sJ9ooYGOAQRz/O1n7w78Hx
+         6XmVOed0vtael3AH6JtsVOLddUaUNr4nLqVT+ravD8aZ1Iz6UXb9jl9vsu1mVj1cXH
+         3a02A+9Pk2c0tFABqwjQNMlmP8B1ocsrhNUZyblQ=
+Received: from DFLE113.ent.ti.com (dfle113.ent.ti.com [10.64.6.34])
+        by fllv0035.itg.ti.com (8.15.2/8.15.2) with ESMTP id 031F6Isx103822;
+        Wed, 1 Apr 2020 10:06:18 -0500
+Received: from DFLE105.ent.ti.com (10.64.6.26) by DFLE113.ent.ti.com
+ (10.64.6.34) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1847.3; Wed, 1 Apr
+ 2020 10:06:18 -0500
+Received: from fllv0040.itg.ti.com (10.64.41.20) by DFLE105.ent.ti.com
+ (10.64.6.26) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id 15.1.1847.3 via
+ Frontend Transport; Wed, 1 Apr 2020 10:06:18 -0500
+Received: from [10.250.100.73] (ileax41-snat.itg.ti.com [10.172.224.153])
+        by fllv0040.itg.ti.com (8.15.2/8.15.2) with ESMTP id 031F6Fc5125236;
+        Wed, 1 Apr 2020 10:06:16 -0500
+To:     <linux-rt-users@vger.kernel.org>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+CC:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        "Nori, Sekhar" <nsekhar@ti.com>
+From:   Grygorii Strashko <grygorii.strashko@ti.com>
+Subject: [v5.4.28-rt19] ARM64: nfs boot issues
+Message-ID: <0d05e716-5575-d4bd-64be-187c85244c12@ti.com>
+Date:   Wed, 1 Apr 2020 18:06:15 +0300
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.2.2
 MIME-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
+X-EXCLAIMER-MD-CONFIG: e1e8a2fd-e40a-4ac6-ac9b-f7e9cc9ee180
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-4.19.106-rt46-rc1 stable review patch.
-If anyone has any objections, please let me know.
+Hi All,
 
-------------------
+We now observe NFS boot issues with TI RT Kernel (last merged tag v5.4.28-rt19) on TI (ARM64) AM654x/J721E platforms.
+It's just stack (100%) silently right after Kernel init (log1) or in the middle of the boot (log2).
 
-From: Tiejun Chen <tiejunc@vmware.com>
+I'm trying to investigate an issue and I'd like to ask if anybody else observed the same?
 
-Fails to build with CONFIG_UBSAN=y
+Few notes:
+- I can not test clear rt-devel/linux-5.4.y-rt as above TI platform not fully supported there
+- ARM32 platforms not affected
+- Disabling CONFIG_PREEMPT_RT=n with CONFIG_PREEMPT=y makes NFS boot work again
+- non RT Kernel has no issues
 
-lib/ubsan.c: In function '__ubsan_handle_vla_bound_not_positive':
-lib/ubsan.c:348:2: error: too many arguments to function 'ubsan_prologue'
-  ubsan_prologue(&data->location, &flags);
-  ^~~~~~~~~~~~~~
-lib/ubsan.c:146:13: note: declared here
- static void ubsan_prologue(struct source_location *location)
-             ^~~~~~~~~~~~~~
-lib/ubsan.c:353:2: error: too many arguments to function 'ubsan_epilogue'
-  ubsan_epilogue(&flags);
-  ^~~~~~~~~~~~~~
-lib/ubsan.c:155:13: note: declared here
- static void ubsan_epilogue(void)
-             ^~~~~~~~~~~~~~
+NFS configuration:
+  rw rootfstype=nfs root=/dev/nfs rw nfsroot=192.168.0.110:/mnt/am65xx-evm,nolock,v3,tcp,rsize=4096,wsize=4096 ip=dhcp
 
-Signed-off-by: Tiejun Chen <tiejunc@vmware.com>
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
----
- lib/ubsan.c | 5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
+===== Log1:
+[   13.423029] 000: am65-cpsw-nuss 46000000.ethernet eth0: Link is Up - 100Mbps/Full - flow control off
+[   13.449187] 003: Sending DHCP requests .
+[   13.457269] 002: ,
+[   13.965284] 001:  OK
+[   13.965769] 001: IP-Config: Got DHCP answer from 192.168.0.1, my address is 192.168.0.105
+[   13.965788] 001: IP-Config: Complete:
+[   13.965794] 001:      device=eth0, hwaddr=f4:84:4c:eb:a0:00, ipaddr=192.168.0.105, mask=255.255.255.0, gw=192.168.0.1
+[   13.965804] 001:      host=192.168.0.105, domain=, nis-domain=(none)
+[   13.965814] 001:      bootserver=0.0.0.0, rootserver=192.168.0.110, rootpath=
+[   13.965821] 001:      nameserver0=192.168.0.1, nameserver1=0.0.0.0
+[   13.999107] 001: ALSA device list:
+[   13.999725] 001:   No soundcards found.
+[   14.121815] 001: VFS: Mounted root (nfs filesystem) on device 0:21.
+[   14.126072] 001: devtmpfs: mounted
+[   14.139110] 001: Freeing unused kernel memory: 2688K
+[   14.150126] 000: Run /sbin/init as init process
+[  195.694278] 002: nfs: server 192.168.0.110 not responding, still trying
+[  195.694314] 003: nfs: server 192.168.0.110 not responding, still trying
+[  195.694875] 000: nfs: server 192.168.0.110 not responding, still trying
+[  195.694921] 003: nfs: server 192.168.0.110 not responding, still trying
+^^^
 
-diff --git a/lib/ubsan.c b/lib/ubsan.c
-index 5830cc9a2164..199c75e03469 100644
---- a/lib/ubsan.c
-+++ b/lib/ubsan.c
-@@ -339,18 +339,17 @@ EXPORT_SYMBOL(__ubsan_handle_type_mismatch_v1);
- void __ubsan_handle_vla_bound_not_positive(struct vla_bound_data *data,
- 					void *bound)
- {
--	unsigned long flags;
- 	char bound_str[VALUE_LENGTH];
- 
- 	if (suppress_report(&data->location))
- 		return;
- 
--	ubsan_prologue(&data->location, &flags);
-+	ubsan_prologue(&data->location);
- 
- 	val_to_string(bound_str, sizeof(bound_str), data->type, bound);
- 	pr_err("variable length array bound value %s <= 0\n", bound_str);
- 
--	ubsan_epilogue(&flags);
-+	ubsan_epilogue();
- }
- EXPORT_SYMBOL(__ubsan_handle_vla_bound_not_positive);
- 
+===== Log2:
+[  OK  ] Stopped Network Time Synchronization.
+          Starting Network Time Synchronization...
+[  OK  ] Found device /dev/ttyS2.
+[  OK  ] Started Network Service.
+[FAILED] Failed to start Network Time Synchronization.
+See 'systemctl status systemd-timesyncd.service' for details.
+[   97.141595] 000: sysrq: This sysrq operation is disabled.
+[  191.511935] 001: nfs: server 192.168.0.110 not responding, still trying
+[  191.511995] 003: nfs: server 192.168.0.110 not responding, still trying
+[  191.512001] 002: nfs: server 192.168.0.110 not responding, still trying
+   
+^^^
+
 -- 
-2.25.1
-
-
+Best regards,
+grygorii
