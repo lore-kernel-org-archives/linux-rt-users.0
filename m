@@ -1,263 +1,105 @@
-Return-Path: <SRS0=PGN5=5R=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=2IhB=5S=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-5.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 49650C2D0F0
-	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Apr 2020 23:02:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 209D5C43331
+	for <linux-rt-users@archiver.kernel.org>; Thu,  2 Apr 2020 17:22:57 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 29078206F5
-	for <linux-rt-users@archiver.kernel.org>; Wed,  1 Apr 2020 23:02:15 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 005DC20757
+	for <linux-rt-users@archiver.kernel.org>; Thu,  2 Apr 2020 17:22:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1733230AbgDAXCO (ORCPT
+        id S2388855AbgDBRWx (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 1 Apr 2020 19:02:14 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:35911 "EHLO
-        Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1732667AbgDAXCO (ORCPT
+        Thu, 2 Apr 2020 13:22:53 -0400
+Received: from jabberwock.ucw.cz ([46.255.230.98]:33866 "EHLO
+        jabberwock.ucw.cz" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1729549AbgDBRWw (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 1 Apr 2020 19:02:14 -0400
-Received: from p5de0bf0b.dip0.t-ipconnect.de ([93.224.191.11] helo=nanos.tec.linutronix.de)
-        by Galois.linutronix.de with esmtpsa (TLS1.2:DHE_RSA_AES_256_CBC_SHA256:256)
-        (Exim 4.80)
-        (envelope-from <tglx@linutronix.de>)
-        id 1jJmN7-00020U-20; Thu, 02 Apr 2020 01:02:09 +0200
-Received: by nanos.tec.linutronix.de (Postfix, from userid 1000)
-        id 92D10100D52; Thu,  2 Apr 2020 01:02:08 +0200 (CEST)
-From:   Thomas Gleixner <tglx@linutronix.de>
-To:     trix@redhat.com, jkacur@rehat.com, williams@redhat.com,
-        lgoncalv@redhat.com
-Cc:     linux-rt-users@vger.kernel.org, Tom Rix <trix@redhat.com>
-Subject: Re: [PATCH] Import a new test, jitterz
-In-Reply-To: <20200401221310.7544-1-trix@redhat.com>
-References: <20200401221310.7544-1-trix@redhat.com>
-Date:   Thu, 02 Apr 2020 01:02:08 +0200
-Message-ID: <871rp6q07j.fsf@nanos.tec.linutronix.de>
+        Thu, 2 Apr 2020 13:22:52 -0400
+Received: by jabberwock.ucw.cz (Postfix, from userid 1017)
+        id D9E941C306B; Thu,  2 Apr 2020 19:22:50 +0200 (CEST)
+Date:   Thu, 2 Apr 2020 19:22:49 +0200
+From:   Pavel Machek <pavel@denx.de>
+To:     Steven Rostedt <rostedt@goodmis.org>
+Cc:     linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        John Kacur <jkacur@redhat.com>,
+        Julia Cartwright <julia@ni.com>,
+        Daniel Wagner <wagi@monom.org>,
+        Tom Zanussi <zanussi@kernel.org>,
+        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>,
+        Pavel Machek <pavel@denx.de>
+Subject: Re: [PATCH RT 2/3] irq_work: Fix checking of IRQ_WORK_LAZY flag set
+ on non PREEMPT_RT
+Message-ID: <20200402172248.GA12483@duo.ucw.cz>
+References: <20200331163453.805082089@goodmis.org>
+ <20200331163513.674653275@goodmis.org>
 MIME-Version: 1.0
-Content-Type: text/plain
-X-Linutronix-Spam-Score: -1.0
-X-Linutronix-Spam-Level: -
-X-Linutronix-Spam-Status: No , -1.0 points, 5.0 required,  ALL_TRUSTED=-1,SHORTCIRCUIT=-0.0001
+Content-Type: multipart/signed; micalg=pgp-sha1;
+        protocol="application/pgp-signature"; boundary="YZ5djTAD1cGYuMQK"
+Content-Disposition: inline
+In-Reply-To: <20200331163513.674653275@goodmis.org>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Tom,
 
-trix@redhat.com writes:
+--YZ5djTAD1cGYuMQK
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-> From: Tom Rix <trix@redhat.com>
->
-> jitterz is a program for measuring system jitter.
+Hi!
 
-The exact purpose of this is?
+> 4.19.106-rt46-rc1 stable review patch.
+> If anyone has any objections, please let me know.
+>=20
+> ------------------
+>=20
+> From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+>=20
+> When CONFIG_PREEMPT_RT_FULL is not set, some of the checks for using
+> lazy_list are not properly made as the IRQ_WORK_LAZY is not checked. Ther=
+e's
+> two locations that need this update, so a use_lazy_list() helper function=
+ is
+> added and used in both locations.
+>=20
+> Link: https://lore.kernel.org/r/20200321230028.GA22058@duo.ucw.cz
+> Reported-by: Pavel Machek <pavel@denx.de>
+> Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 
-> +
-> +#define CHECK_LOST_TIME()					\
-> +	do {							\
-> +		if (d >= dt_min) {				\
-> +			lt += d;				\
-> +			for (j = 16; j > 0; j--) {		\
-> +				if (d >= b[j - 1].s) {		\
-> +					b[j - 1].c =		\
-> +						b[j - 1].c + 1;	\
-> +					break;			\
-> +				}				\
-> +			}					\
-> +		}						\
-> +	} while (0)						\
+Looks okay to me, thank you.
 
-Aside of having a \ at the last line, macros which rely on variable
-names at the call site are broken to begin with. What's so magic to hide
-this in a macro instead of writing a proper function?
+Acked-by: Pavel Machek <pavel@denx.de>
 
-> +static inline uint64_t tsc(void)
-> +{
-> +	uint64_t ret = 0;
-> +	uint32_t l, h;
-> +
-> +	__asm__ __volatile__("lfence");
-> +	__asm__ __volatile__("rdtsc" : "=a"(l), "=d"(h));
-> +	ret = ((uint64_t)h << 32) | l;
-> +	return ret;
-> +}
+I'm currently playing with 4.4.X branch, but I'll eventually test it.
 
-Having x86 specific code in a generic test suite is a non starter.
+Is it possible that 4.4.X branch needs similar patch? My code review
+suggests so...
 
-> +static int move_to_core(int core_i)
-> +{
-> +	cpu_set_t cpus;
-> +
-> +	CPU_ZERO(&cpus);
-> +	CPU_SET(core_i, &cpus);
-> +	return sched_setaffinity(0, sizeof(cpus), &cpus);
-> +}
-> +
-> +static int set_sched(void)
-> +{
-> +	struct sched_param p = { 0 };
-> +
-> +	p.sched_priority = priority;
-> +	return sched_setscheduler(0, policy, &p);
-> +}
-> +
-> +static long read_cpuinfo_cur_freq(int core_i)
-> +{
-> +	uint64_t fs = -1;
-> +	char path[80];
-> +	struct stat sb;
-> +	int i;
-> +	char *freq[2] = {
-> +		"cpuinfo_cur_freq",
-> +		/* assumes a busy wait will be run at the max freq */
+Best regards, 	      	   	 	     	  	     Pavel
+--=20
+DENX Software Engineering GmbH,      Managing Director: Wolfgang Denk
+HRB 165235 Munich, Office: Kirchenstr.5, D-82194 Groebenzell, Germany
 
-Assumptions in tools which are meant to provide useful output are really
-not useful at all.
+--YZ5djTAD1cGYuMQK
+Content-Type: application/pgp-signature; name="signature.asc"
 
-> +		"cpuinfo_max_freq",
-> +	};
-> +	for (i = 0; i < 2; i++) {
-> +		snprintf(path, 80,
-> +			 "/sys/devices/system/cpu/cpu%d/cpufreq/%s",
-> +			 core_i, freq[1]);
-> +		if (!stat(path, &sb)) {
-> +			FILE *f = 0;
-> +
-> +			f = fopen(path, "rt");
-> +			if (f) {
-> +				fscanf(f, "%lu", &fs);
+-----BEGIN PGP SIGNATURE-----
 
-That definitely has never seen a 32bit compile.
+iF0EABECAB0WIQRPfPO7r0eAhk010v0w5/Bqldv68gUCXoYfaAAKCRAw5/Bqldv6
+8rvMAJ9zGqy4ZDx7FvLivm5f2ywl93j8VwCfZLomiXJhxi7ZvJ2OOiqkpaawfN4=
+=fJIu
+-----END PGP SIGNATURE-----
 
-> +				fclose(f);
-> +			} else {
-> +				perror(path);
-> +			}
-> +		} else {
-> +			perror(path);
-> +		}
-> +	}
-> +
-> +	if (fs == (uint64_t) -1) {
-
-So here you have a typecast but at the place where this is initialized
-this is not required, right?
-
-> +		printf("Error reading CPU frequency for core %d\n", core_i);
-> +		exit(1);
-> +	}
-> +	return fs;
-> +}
-> +
-> +int main(int argc, char **argv)
-> +{
-> +	int max_cpus = sysconf(_SC_NPROCESSORS_ONLN);
-> +	struct timespec tvs, tve;
-> +	double sec;
-> +	uint64_t fs, fe, fr;
-> +	unsigned int i, j, rt = 60;
-> +	uint64_t dt = 1500;
-> +	struct bucket {
-> +		uint64_t s;
-> +		uint64_t c;
-> +	} b[16];
-> +	uint64_t frs, fre, lt;
-> +
-> +	process_options(argc, argv, max_cpus);
-> +
-> +	/* return of this function must be tested for success */
-> +	if (move_to_core(cpu) != 0) {
-> +		printf("Error while setting thread affinity to cpu %d!", cpu);
-> +		exit(1);
-> +	}
-> +	if (set_sched() != 0) {
-> +		printf("Error while setting %s policy, priority %d!",
-> +		       policyname(policy), priority);
-> +		exit(1);
-> +	}
-> +
-> +	fr = fs = 0;
-> +	fe = 1;
-> +	while (fs != fe) {
-> +retry:
-> +		if (!fr) {
-> +			fs = read_cpuinfo_cur_freq(cpu);
-> +			fe = 0;
-> +		} else {
-> +			fs = fr;
-> +		}
-> +		uint64_t dt_min = (dt * fs) / 1000000;
-> +
-> +		lt = 0;
-> +		for (j = 0; j < 16; j++) {
-> +			b[j].c = 0;
-> +			if (j == 0)
-> +				b[j].s = dt_min;
-> +			else
-> +				b[j].s = b[j - 1].s * 2;
-> +		}
-> +		fs *= 1000;
-> +
-> +		frs = tsc();
-> +		clock_gettime(CLOCK_MONOTONIC_RAW, &tvs);
-> +
-> +		for (i = 0; i < rt; i++) {
-> +			uint64_t s, e, so;
-> +
-> +			s = tsc();
-> +			e = s;
-> +			e += fs;
-> +			if (e < s)
-> +				goto retry;
-> +			so = s;
-> +
-> +			while (1) {
-> +				uint64_t d;
-> +
-> +				s = tsc();
-> +				if (s == so)
-> +					continue;
-> +
-> +				d = s - so;
-> +				CHECK_LOST_TIME();
-> +				if (s >= e)
-> +					break;
-> +				so = s;
-> +			}
-> +		}
-> +		fre = tsc();
-> +		clock_gettime(CLOCK_MONOTONIC_RAW, &tve);
-> +		sec = tve.tv_sec - tvs.tv_sec +
-> +		      (tve.tv_nsec - tvs.tv_nsec) / 1e9;
-> +		if ((fabs(sec - rt) / (double)rt) > 0.01) {
-> +			if (fre > frs) {
-> +				fr = (fre - frs) / (1000 * sec);
-> +				fe = fr * 1000;
-> +			}
-> +			goto retry;
-> +		}
-> +		if (!fr) {
-> +			fe = read_cpuinfo_cur_freq(cpu);
-> +			fe *= 1000;
-> +		}
-> +	}
-> +	for (j = 0; j < 16; j++)
-> +		printf("%lu\n", b[j].c);
-> +
-> +	if (lt != fs) {
-> +		printf("Lost time %f\n", (double)lt / (double)fs);
-> +		return 1;
-> +	}
-> +
-> +	return 0;
-
-As the above is completely unreadable gibberish I can only assume that I
-wasted time staring at a well done April 1st joke :)
-
-Thanks,
-
-        tglx
+--YZ5djTAD1cGYuMQK--
