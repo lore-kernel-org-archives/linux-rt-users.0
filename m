@@ -2,182 +2,157 @@ Return-Path: <SRS0=GZ+T=5T=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.3 required=3.0
-	tests=HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F16A2C2BA12
-	for <linux-rt-users@archiver.kernel.org>; Fri,  3 Apr 2020 19:22:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EBE44C2BA12
+	for <linux-rt-users@archiver.kernel.org>; Fri,  3 Apr 2020 21:55:10 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id C8FE7207FF
-	for <linux-rt-users@archiver.kernel.org>; Fri,  3 Apr 2020 19:22:12 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C980F2076E
+	for <linux-rt-users@archiver.kernel.org>; Fri,  3 Apr 2020 21:55:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728711AbgDCTWJ (ORCPT
+        id S1727909AbgDCVzH (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 3 Apr 2020 15:22:09 -0400
-Received: from mail.kernel.org ([198.145.29.99]:60656 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728624AbgDCTWJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 3 Apr 2020 15:22:09 -0400
-Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 041902063A;
-        Fri,  3 Apr 2020 19:22:07 +0000 (UTC)
-Date:   Fri, 3 Apr 2020 15:22:06 -0400
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Fri, 3 Apr 2020 17:55:07 -0400
+Received: from jabberwock.ucw.cz ([46.255.230.98]:38482 "EHLO
+        jabberwock.ucw.cz" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726460AbgDCVzH (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 3 Apr 2020 17:55:07 -0400
+Received: by jabberwock.ucw.cz (Postfix, from userid 1017)
+        id 612AB1C3727; Fri,  3 Apr 2020 23:55:05 +0200 (CEST)
+Date:   Fri, 3 Apr 2020 23:55:05 +0200
+From:   Pavel Machek <pavel@denx.de>
+To:     Daniel Wagner <wagi@monom.org>
+Cc:     Pavel Machek <pavel@denx.de>, Steven Rostedt <rostedt@goodmis.org>,
+        linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
+        John Kacur <jkacur@redhat.com>,
+        Julia Cartwright <julia@ni.com>,
         Tom Zanussi <zanussi@kernel.org>,
         "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
-Subject: [ANNOUNCE] 4.19.106-rt46
-Message-ID: <20200403152206.037cc665@gandalf.local.home>
-X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
+Subject: Re: [PATCH RT 2/3] irq_work: Fix checking of IRQ_WORK_LAZY flag set
+ on non PREEMPT_RT
+Message-ID: <20200403215504.GA30386@duo.ucw.cz>
+References: <20200331163453.805082089@goodmis.org>
+ <20200331163513.674653275@goodmis.org>
+ <20200402172248.GA12483@duo.ucw.cz>
+ <20200402173944.jmztz4vjsepjreye@beryllium.lan>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; micalg=pgp-sha1;
+        protocol="application/pgp-signature"; boundary="wRRV7LY7NUeQGEoC"
+Content-Disposition: inline
+In-Reply-To: <20200402173944.jmztz4vjsepjreye@beryllium.lan>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
 
-Dear RT Folks,
+--wRRV7LY7NUeQGEoC
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-I'm pleased to announce the 4.19.106-rt46 stable release.
+Hi!
 
+> On Thu, Apr 02, 2020 at 07:22:49PM +0200, Pavel Machek wrote:
+> > I'm currently playing with 4.4.X branch, but I'll eventually test it.
+> >=20
+> > Is it possible that 4.4.X branch needs similar patch? My code review
+> > suggests so...
+>=20
+> I was waiting for Steven to post the final patch. I'll pick it up for
+> the next v4.4-rt release.
 
-You can get this release via the git tree at:
+It will not apply cleanly...
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+Here is version that applies to 4.4, and should compile. Not sure what
+other branches it should be applied to.
 
-  branch: v4.19-rt
-  Head SHA1: e56eb1424b06c72cd304190c34c2541949dfe41d
+Best regards,
+								Pavel
 
+-- cut --
 
-Or to build 4.19.106-rt46 directly, the following patches should be applied:
+=46rom: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
+   =20
+When CONFIG_PREEMPT_RT_FULL is not set, some of the checks for using
+lazy_list are not properly made as the IRQ_WORK_LAZY is not checked. There's
+two locations that need this update, so a use_lazy_list() helper function is
+added and used in both locations.
+   =20
+Link: https://lore.kernel.org/r/20200321230028.GA22058@duo.ucw.cz
+Reported-by: Pavel Machek <pavel@denx.de>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+[ported to 4.4]
+Signed-off-by: Pavel Machek <pavel@denx.de>
 
-  http://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.106.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.19/patch-4.19.106-rt46.patch.xz
-
-
-
-You can also build from 4.19.106-rt45 by applying the incremental patch:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.19/incr/patch-4.19.106-rt45-rt46.patch.xz
-
-
-
-Enjoy,
-
--- Steve
-
-
-Changes from v4.19.106-rt45:
-
----
-
-Steven Rostedt (VMware) (2):
-      irq_work: Fix checking of IRQ_WORK_LAZY flag set on non PREEMPT_RT
-      Linux 4.19.106-rt46
-
-Tiejun Chen (1):
-      lib/ubsan: Remove flags parameter from calls to ubsan_prologue() and ubsan_epilogue()
-
-----
- kernel/irq_work.c | 15 ++++++++-------
- lib/ubsan.c       |  5 ++---
- localversion-rt   |  2 +-
- 3 files changed, 11 insertions(+), 11 deletions(-)
----------------------------
 diff --git a/kernel/irq_work.c b/kernel/irq_work.c
-index 2940622da5b3..b6d9d35941ac 100644
+index 2899ba0d23d1..abc65de5d793 100644
 --- a/kernel/irq_work.c
 +++ b/kernel/irq_work.c
-@@ -70,6 +70,12 @@ static void __irq_work_queue_local(struct irq_work *work, struct llist_head *lis
- 		arch_irq_work_raise();
+@@ -57,6 +57,12 @@ void __weak arch_irq_work_raise(void)
+ 	 */
  }
- 
+=20
 +static inline bool use_lazy_list(struct irq_work *work)
 +{
-+	return (IS_ENABLED(CONFIG_PREEMPT_RT_FULL) && !(work->flags & IRQ_WORK_HARD_IRQ))
++	return (IS_ENABLED(CONFIG_PREEMPT_RT_FULL) && !(work->flags & IRQ_WORK_HA=
+RD_IRQ))
 +		|| (work->flags & IRQ_WORK_LAZY);
 +}
 +
- /* Enqueue the irq work @work on the current CPU */
+ #ifdef CONFIG_SMP
+ /*
+  * Enqueue the irq_work @work on @cpu unless it's already pending
+@@ -78,7 +84,7 @@ bool irq_work_queue_on(struct irq_work *work, int cpu)
+ 	if (!irq_work_claim(work))
+ 		return false;
+=20
+-	if (IS_ENABLED(CONFIG_PREEMPT_RT_FULL) && !(work->flags & IRQ_WORK_HARD_I=
+RQ))
++	if (use_lazy_list(work))
+ 		list =3D &per_cpu(lazy_list, cpu);
+ 	else
+ 		list =3D &per_cpu(raised_list, cpu);
+@@ -95,7 +101,7 @@ EXPORT_SYMBOL_GPL(irq_work_queue_on);
  bool irq_work_queue(struct irq_work *work)
  {
-@@ -81,11 +87,10 @@ bool irq_work_queue(struct irq_work *work)
- 
- 	/* Queue the entry and raise the IPI if needed. */
- 	preempt_disable();
--	if (IS_ENABLED(CONFIG_PREEMPT_RT_FULL) && !(work->flags & IRQ_WORK_HARD_IRQ))
-+	if (use_lazy_list(work))
- 		list = this_cpu_ptr(&lazy_list);
- 	else
- 		list = this_cpu_ptr(&raised_list);
--
- 	__irq_work_queue_local(work, list);
- 	preempt_enable();
- 
-@@ -106,7 +111,6 @@ bool irq_work_queue_on(struct irq_work *work, int cpu)
- 
- #else /* CONFIG_SMP: */
  	struct llist_head *list;
--	bool lazy_work, realtime = IS_ENABLED(CONFIG_PREEMPT_RT_FULL);
- 
- 	/* All work should have been flushed before going offline */
- 	WARN_ON_ONCE(cpu_is_offline(cpu));
-@@ -116,10 +120,7 @@ bool irq_work_queue_on(struct irq_work *work, int cpu)
- 		return false;
- 
- 	preempt_disable();
--
--	lazy_work = work->flags & IRQ_WORK_LAZY;
--
+-	bool lazy_work, realtime =3D IS_ENABLED(CONFIG_PREEMPT_RT_FULL);
++	int lazy_work;
+=20
+ 	/* Only queue if not already pending */
+ 	if (!irq_work_claim(work))
+@@ -106,7 +112,7 @@ bool irq_work_queue(struct irq_work *work)
+=20
+ 	lazy_work =3D work->flags & IRQ_WORK_LAZY;
+=20
 -	if (lazy_work || (realtime && !(work->flags & IRQ_WORK_HARD_IRQ)))
 +	if (use_lazy_list(work))
- 		list = &per_cpu(lazy_list, cpu);
+ 		list =3D this_cpu_ptr(&lazy_list);
  	else
- 		list = &per_cpu(raised_list, cpu);
-diff --git a/lib/ubsan.c b/lib/ubsan.c
-index 5830cc9a2164..199c75e03469 100644
---- a/lib/ubsan.c
-+++ b/lib/ubsan.c
-@@ -339,18 +339,17 @@ EXPORT_SYMBOL(__ubsan_handle_type_mismatch_v1);
- void __ubsan_handle_vla_bound_not_positive(struct vla_bound_data *data,
- 					void *bound)
- {
--	unsigned long flags;
- 	char bound_str[VALUE_LENGTH];
- 
- 	if (suppress_report(&data->location))
- 		return;
- 
--	ubsan_prologue(&data->location, &flags);
-+	ubsan_prologue(&data->location);
- 
- 	val_to_string(bound_str, sizeof(bound_str), data->type, bound);
- 	pr_err("variable length array bound value %s <= 0\n", bound_str);
- 
--	ubsan_epilogue(&flags);
-+	ubsan_epilogue();
- }
- EXPORT_SYMBOL(__ubsan_handle_vla_bound_not_positive);
- 
-diff --git a/localversion-rt b/localversion-rt
-index 38c40b21a885..272158183778 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt45
-+-rt46
+ 		list =3D this_cpu_ptr(&raised_list);
+
+--=20
+DENX Software Engineering GmbH,      Managing Director: Wolfgang Denk
+HRB 165235 Munich, Office: Kirchenstr.5, D-82194 Groebenzell, Germany
+
+--wRRV7LY7NUeQGEoC
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iF0EABECAB0WIQRPfPO7r0eAhk010v0w5/Bqldv68gUCXoewuAAKCRAw5/Bqldv6
+8vTeAKCQGQAE1YDJl5o4lrii1694NafKzwCgsWfrJmpng+RnTMCaB/MU5sYNvvU=
+=DaDO
+-----END PGP SIGNATURE-----
+
+--wRRV7LY7NUeQGEoC--
