@@ -1,158 +1,91 @@
-Return-Path: <SRS0=GZ+T=5T=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=2W/x=5V=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-2.0 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EBE44C2BA12
-	for <linux-rt-users@archiver.kernel.org>; Fri,  3 Apr 2020 21:55:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0DF7DC2BA1A
+	for <linux-rt-users@archiver.kernel.org>; Sun,  5 Apr 2020 04:54:23 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id C980F2076E
-	for <linux-rt-users@archiver.kernel.org>; Fri,  3 Apr 2020 21:55:10 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id D7F48206F5
+	for <linux-rt-users@archiver.kernel.org>; Sun,  5 Apr 2020 04:54:22 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=gmx.net header.i=@gmx.net header.b="bw1OWVin"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727909AbgDCVzH (ORCPT
+        id S1726386AbgDEEyT (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 3 Apr 2020 17:55:07 -0400
-Received: from jabberwock.ucw.cz ([46.255.230.98]:38482 "EHLO
-        jabberwock.ucw.cz" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726460AbgDCVzH (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 3 Apr 2020 17:55:07 -0400
-Received: by jabberwock.ucw.cz (Postfix, from userid 1017)
-        id 612AB1C3727; Fri,  3 Apr 2020 23:55:05 +0200 (CEST)
-Date:   Fri, 3 Apr 2020 23:55:05 +0200
-From:   Pavel Machek <pavel@denx.de>
-To:     Daniel Wagner <wagi@monom.org>
-Cc:     Pavel Machek <pavel@denx.de>, Steven Rostedt <rostedt@goodmis.org>,
-        linux-kernel@vger.kernel.org,
+        Sun, 5 Apr 2020 00:54:19 -0400
+Received: from mout.gmx.net ([212.227.15.19]:41377 "EHLO mout.gmx.net"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726046AbgDEEyT (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 5 Apr 2020 00:54:19 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
+        s=badeba3b8450; t=1586062425;
+        bh=byFODQgrxw40xFre1c1817q+zVT7pD1Cw7ovMUR5hDA=;
+        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
+        b=bw1OWVinuyeanFIn9lcdVwZO3hUoCh8lde93pZJKCDSyDHOlBXqcdyQUJLOCaAhu+
+         jtVqkmk2sImqAnkGZV+3zDPiEon607no4ujJGJzmoTtCdl//YGdtI22qd+/gjCprFU
+         Vl4NXADnap0EsLqOtJ5i+EjhKzJxWp3IwVMAnuBQ=
+X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
+Received: from homer.simpson.net ([185.191.217.81]) by mail.gmx.com (mrgmx004
+ [212.227.17.190]) with ESMTPSA (Nemesis) id 1MQe5k-1jiY983nJG-00Njf1; Sun, 05
+ Apr 2020 06:53:45 +0200
+Message-ID: <1586062423.4816.15.camel@gmx.de>
+Subject: 0087-rcu-Use-a-raw_spinlock_t-for-kfree-batching.patch
+From:   Mike Galbraith <efault@gmx.de>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        John Kacur <jkacur@redhat.com>,
-        Julia Cartwright <julia@ni.com>,
-        Tom Zanussi <zanussi@kernel.org>,
-        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
-Subject: Re: [PATCH RT 2/3] irq_work: Fix checking of IRQ_WORK_LAZY flag set
- on non PREEMPT_RT
-Message-ID: <20200403215504.GA30386@duo.ucw.cz>
-References: <20200331163453.805082089@goodmis.org>
- <20200331163513.674653275@goodmis.org>
- <20200402172248.GA12483@duo.ucw.cz>
- <20200402173944.jmztz4vjsepjreye@beryllium.lan>
-MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-        protocol="application/pgp-signature"; boundary="wRRV7LY7NUeQGEoC"
-Content-Disposition: inline
-In-Reply-To: <20200402173944.jmztz4vjsepjreye@beryllium.lan>
-User-Agent: Mutt/1.10.1 (2018-07-13)
+        Steven Rostedt <rostedt@goodmis.org>
+Date:   Sun, 05 Apr 2020 06:53:43 +0200
+In-Reply-To: <20200403170443.pzm24672qo4hufcm@linutronix.de>
+References: <20200403170443.pzm24672qo4hufcm@linutronix.de>
+Content-Type: text/plain; charset="ISO-8859-15"
+X-Mailer: Evolution 3.26.6 
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
+X-Provags-ID: V03:K1:3f0yHEzIzs+KNoWjN5qVhmgJOiQ6U59pcTuCVUYmvSs1ZcaxzIE
+ qaRdUN4KosfYoA3Z2BoBw2drzgAuMNfHCCX2B82xGa6GfAY58uZTwjFAUT4BRNPMErwPu8c
+ AxhbWQryeOpT1C3MLdyQCf5lM2KIyDQTDQOTTiuNpgDPjeOj3hma3fC1DgDATw+MViZFUFo
+ HRJKQ6mSlafnt/wBERsvw==
+X-UI-Out-Filterresults: notjunk:1;V03:K0:5SyYYjMWXZk=:Nvq2QZZGLHkIAXeR1oTYsY
+ IfT4bW8Hzqg/nnD3Aceph02I4Qz8LyowhFPV9w+C8hOd8GHhUaN3tlFFG7N+1PkQCN/4CpR+W
+ OHZ1/8twP0X0uS0DcaSGVoWKTSpx3egcO3jzAuMBG+enCw1/1Ir+r/QNYSo+7e2aWEPPNV1ah
+ DVTz1wMOG6wvHCiLtNaID/pevHfGV4AgvvJV9uotDsshzqgSbxYOn1y2laUDnYBQKsQgFQVm2
+ c44lFOQEvxfg9CcRu1UBywKBLlgVdoi9d0s3+eFs0uT282e9xmP1d3Qh7gdEjpa94k7C7SO49
+ mCRJOQ5FntYkC52yWTZD1PHtJRA3FHEy89aJ8l7tsOnzAgIyx7EsMtHVSVUSstiLoqkqHevni
+ LCauBgacrNN0IfugMbTmstztw8O80sFxjnSkUyj2ePm8mpOB6K/j4RVQgw7tJ0oEw5dEm512C
+ L/1C7HXaKlIKAoIgY1tXXsxY/Y9ueFZHOzTywiNl2Q/nAGXYmSco5L3/dtmAishPo5nZ0dEnZ
+ 41iewRHJ9Bpw3Ndyau/ymit1FnrhNHF8FgKPYIEtfC0ln+VbgjotRbQN9o1F+5Qyv6s3FSNrv
+ RCY2yDQyEP0UigbDs+BaNkcqQ6oJ0i5RvoDetSF/gQ0oF0kAh5N3ANZRdzPI2xUEquoNbkZTI
+ YcTLx/8GddTilHvQ7so0k2rI6JRIEIA6I1/13rZu/2XkmJ5YRJzzMvY/6C9QCL5uC4rpPJ/kI
+ 2N8Kgt3SWb2oiTUCy7P5N/8tSzSEacnqJLUJKJxfEnjUPJjYBfF/fHb9dIaF+yuPvv89aloOy
+ QcfhMzIHEODZK7HqL/wHWUB/oHG4nxp5A37EyZD6qtVLrqpeWJgcpGpQBfllvstOoJJq+2Q10
+ YyH/seRZiJcO8k5VRVYPfXD/TiyY5DdUhCMPUWgYi9rdvuDLT3TWuZWIVCoCbp4G1rrjd+K4v
+ Xytec3sNJMZPF2iV4Wbv7nT+xnsdBjUp+H3qdp5VmG+iNzgUz5Wx/OpLTYznA1nAcR3Te4NqL
+ gsF7n2iDmMfOgu0ZPdLTQnFy9CJhncUYD8oNZymu01BHcca44afI9Wi9fw/v2UO1V0MmQjtIK
+ z2sVof44V7H3yaF3t4dLf6vq2RFg0yZD7Q52OLXBSheMDVMwHLX70f2R03+0EHcxFp25ANnUd
+ z/ZVMkMqcQQIdxn8UGQmrrmm62isbD/lBrUTo++Rt6VuACeP5RsenTgNOQlXO6zO7pkfn20wi
+ z3fklczKWTbzdVAd1
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+Hi Sebastian,
 
---wRRV7LY7NUeQGEoC
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Just a heads up wrt $subject...
 
-Hi!
+I had done the same in my 5.6 tree, but then 5.7 came along, and I had
+to revisit due to 34c881745549e adding an allocation under that lock
+with irqs disabled.  The same commit that added the lock added this.
 
-> On Thu, Apr 02, 2020 at 07:22:49PM +0200, Pavel Machek wrote:
-> > I'm currently playing with 4.4.X branch, but I'll eventually test it.
-> >=20
-> > Is it possible that 4.4.X branch needs similar patch? My code review
-> > suggests so...
->=20
-> I was waiting for Steven to post the final patch. I'll pick it up for
-> the next v4.4-rt release.
+	local_irq_save(flags);  // For safely calling this_cpu_ptr().
 
-It will not apply cleanly...
+Whacking that instead of converting the lock cures 5.6 and 5.7 woes.
 
-Here is version that applies to 4.4, and should compile. Not sure what
-other branches it should be applied to.
-
-Best regards,
-								Pavel
-
--- cut --
-
-=46rom: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
-   =20
-When CONFIG_PREEMPT_RT_FULL is not set, some of the checks for using
-lazy_list are not properly made as the IRQ_WORK_LAZY is not checked. There's
-two locations that need this update, so a use_lazy_list() helper function is
-added and used in both locations.
-   =20
-Link: https://lore.kernel.org/r/20200321230028.GA22058@duo.ucw.cz
-Reported-by: Pavel Machek <pavel@denx.de>
-Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-[ported to 4.4]
-Signed-off-by: Pavel Machek <pavel@denx.de>
-
-diff --git a/kernel/irq_work.c b/kernel/irq_work.c
-index 2899ba0d23d1..abc65de5d793 100644
---- a/kernel/irq_work.c
-+++ b/kernel/irq_work.c
-@@ -57,6 +57,12 @@ void __weak arch_irq_work_raise(void)
- 	 */
- }
-=20
-+static inline bool use_lazy_list(struct irq_work *work)
-+{
-+	return (IS_ENABLED(CONFIG_PREEMPT_RT_FULL) && !(work->flags & IRQ_WORK_HA=
-RD_IRQ))
-+		|| (work->flags & IRQ_WORK_LAZY);
-+}
-+
- #ifdef CONFIG_SMP
- /*
-  * Enqueue the irq_work @work on @cpu unless it's already pending
-@@ -78,7 +84,7 @@ bool irq_work_queue_on(struct irq_work *work, int cpu)
- 	if (!irq_work_claim(work))
- 		return false;
-=20
--	if (IS_ENABLED(CONFIG_PREEMPT_RT_FULL) && !(work->flags & IRQ_WORK_HARD_I=
-RQ))
-+	if (use_lazy_list(work))
- 		list =3D &per_cpu(lazy_list, cpu);
- 	else
- 		list =3D &per_cpu(raised_list, cpu);
-@@ -95,7 +101,7 @@ EXPORT_SYMBOL_GPL(irq_work_queue_on);
- bool irq_work_queue(struct irq_work *work)
- {
- 	struct llist_head *list;
--	bool lazy_work, realtime =3D IS_ENABLED(CONFIG_PREEMPT_RT_FULL);
-+	int lazy_work;
-=20
- 	/* Only queue if not already pending */
- 	if (!irq_work_claim(work))
-@@ -106,7 +112,7 @@ bool irq_work_queue(struct irq_work *work)
-=20
- 	lazy_work =3D work->flags & IRQ_WORK_LAZY;
-=20
--	if (lazy_work || (realtime && !(work->flags & IRQ_WORK_HARD_IRQ)))
-+	if (use_lazy_list(work))
- 		list =3D this_cpu_ptr(&lazy_list);
- 	else
- 		list =3D this_cpu_ptr(&raised_list);
-
---=20
-DENX Software Engineering GmbH,      Managing Director: Wolfgang Denk
-HRB 165235 Munich, Office: Kirchenstr.5, D-82194 Groebenzell, Germany
-
---wRRV7LY7NUeQGEoC
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iF0EABECAB0WIQRPfPO7r0eAhk010v0w5/Bqldv68gUCXoewuAAKCRAw5/Bqldv6
-8vTeAKCQGQAE1YDJl5o4lrii1694NafKzwCgsWfrJmpng+RnTMCaB/MU5sYNvvU=
-=DaDO
------END PGP SIGNATURE-----
-
---wRRV7LY7NUeQGEoC--
+	-Mike
