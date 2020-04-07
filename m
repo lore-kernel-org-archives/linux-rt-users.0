@@ -2,125 +2,152 @@ Return-Path: <SRS0=ghNa=5X=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.0 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
+	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 36B05C2BB1D
-	for <linux-rt-users@archiver.kernel.org>; Tue,  7 Apr 2020 10:22:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 624ABC2BA2B
+	for <linux-rt-users@archiver.kernel.org>; Tue,  7 Apr 2020 14:53:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id E519220644
-	for <linux-rt-users@archiver.kernel.org>; Tue,  7 Apr 2020 10:22:06 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2A85E20747
+	for <linux-rt-users@archiver.kernel.org>; Tue,  7 Apr 2020 14:53:49 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=ch.abb.com header.i=@ch.abb.com header.b="e6BOiZxO"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Frennx1b"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728075AbgDGKWG (ORCPT
+        id S1729081AbgDGOxs (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 7 Apr 2020 06:22:06 -0400
-Received: from mail-eopbgr70083.outbound.protection.outlook.com ([40.107.7.83]:25758
-        "EHLO EUR04-HE1-obe.outbound.protection.outlook.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1726562AbgDGKWG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 7 Apr 2020 06:22:06 -0400
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=Fp7FJQQnjduYsMyxwLsiYtcNNQSg3gtXUGUJgTruI19kQKM85IUxFiak7wIFFsJ9OaT+cxD58YYxeMt9nq3Al5Rw29cHNFDz7HFH55WVKOAUv9D2Y7edOggLloT+OrL7wuInzLdrpGN+QwLLJyqkAJP9adDzgYX95VDMDjmRHvGru5FwS4Lw71ALZDTsS8qZU8zd3R6UZx7NcuRI7shdgoQ1Cwn1B8mi/wPmMHN24jSHMKDsnjUortHVs54XUrzivGujt/RTWrMWNCv3Wf8VSXbZHKGb7+vr5R12cfrGPRv6oy/Cr5JD1p2Fe/YWW2fel4JvsyBAFtD/TxwgmLMVfw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=L47xWH5bK/cprac1D+6Dirnn+UQg2LOlWWa0cRTxEUg=;
- b=OcV16+ULxhzaut7GJ0LSpZ8E+TFLLcdOcenCU8FcAGdAgXjEeB+QEjse+VW0Ak4QbnhUIlGQJvrH9PoV2YZ6gOcRZZrZdvYAD4CPfrhBe4tFGpa0UC6rzUrsbvFnRwEAGpGxpp0/280Vd2IiM6xH+QTTel2oab3WL81eUzHoQeESlhifK3JnDNe5yO+Jd62dS6S3kchLxwt+241VVaaUdI0EFwPvC7kVcLOe9T4QB405cDQG07bXNOH9Wcj9TrYBf65Gkpfjewej7EVLK8V70gLEGyj42cnixtoudLQgYK01wKygPQIRP/c30nGgRKYMB0/WN4qXDnQZ37w68NVCuQ==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=ch.abb.com; dmarc=pass action=none header.from=ch.abb.com;
- dkim=pass header.d=ch.abb.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ch.abb.com;
- s=selector2;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=L47xWH5bK/cprac1D+6Dirnn+UQg2LOlWWa0cRTxEUg=;
- b=e6BOiZxOVsjjtmGqNiIybuinOQwu4qqYg6+LZj8mdyP2o4oFUcwa6L/xGkBSkWzrwIq+NGMBqDfGGyLX94UnTieL4ShiWxwEctvhcaKUiT1RXzlTiCgpef1zFBg1o9/6FbDGYhWjS1E4Nn+f9OgjEGvLpan2hqHmUDqWrVJdhUY=
-Received: from AM0PR06MB4196.eurprd06.prod.outlook.com (2603:10a6:208:74::19)
- by AM0PR06MB6228.eurprd06.prod.outlook.com (2603:10a6:208:179::13) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.2878.19; Tue, 7 Apr
- 2020 10:22:03 +0000
-Received: from AM0PR06MB4196.eurprd06.prod.outlook.com
- ([fe80::b4ee:a825:3f3f:f2c3]) by AM0PR06MB4196.eurprd06.prod.outlook.com
- ([fe80::b4ee:a825:3f3f:f2c3%7]) with mapi id 15.20.2878.018; Tue, 7 Apr 2020
- 10:22:03 +0000
-From:   Andreas Hoefler <andreas.hoefler@ch.abb.com>
-To:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-CC:     Sebastian Andrzej Siewior <sebastian.siewior@linutronix.de>
-Subject: pthread_mutex_timedlock can not be used with CLOCK_MONOTONIC?
-Thread-Topic: pthread_mutex_timedlock can not be used with CLOCK_MONOTONIC?
-Thread-Index: AdYMxmD4jBgaKjiBQ9+IXU0k2O0pgg==
-Date:   Tue, 7 Apr 2020 10:22:03 +0000
-Message-ID: <AM0PR06MB41964EB6F36427417BDB3F91CEC30@AM0PR06MB4196.eurprd06.prod.outlook.com>
-Accept-Language: de-CH, en-US
-Content-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-authentication-results: spf=none (sender IP is )
- smtp.mailfrom=andreas.hoefler@ch.abb.com; 
-x-originating-ip: [31.24.13.79]
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-ht: Tenant
-x-ms-office365-filtering-correlation-id: b46bd127-337c-4511-441c-08d7dadd8419
-x-ms-traffictypediagnostic: AM0PR06MB6228:
-x-microsoft-antispam-prvs: <AM0PR06MB62282D29C60DB709788E5A75CEC30@AM0PR06MB6228.eurprd06.prod.outlook.com>
-x-abb-o365-outbound: ABBOUTBOUND1
-x-ms-oob-tlc-oobclassifiers: OLM:8882;
-x-forefront-prvs: 036614DD9C
-x-forefront-antispam-report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AM0PR06MB4196.eurprd06.prod.outlook.com;PTR:;CAT:NONE;SFTY:;SFS:(10009020)(4636009)(366004)(346002)(376002)(39860400002)(396003)(136003)(81166006)(52536014)(66946007)(64756008)(2906002)(7696005)(66556008)(316002)(478600001)(6506007)(66476007)(76116006)(66446008)(6916009)(86362001)(81156014)(9686003)(186003)(33656002)(26005)(8676002)(55016002)(4744005)(71200400001)(44832011)(8936002)(4326008)(5660300002);DIR:OUT;SFP:1101;
-received-spf: None (protection.outlook.com: ch.abb.com does not designate
- permitted sender hosts)
-x-ms-exchange-senderadcheck: 1
-x-microsoft-antispam: BCL:0;
-x-microsoft-antispam-message-info: nGz5zvg+n6ngHSlCAB6tROsdySZ4VMqBMco0TdKDwxbMNUK0Cx3Z66ep53uk42mbnYJ8cw2wtDu7psTBaIFXJcp7o5QdtdKGJTHUcsTZkQyPPRoBeC/ZXoyV+y/Nf4++Tkcggrrh2w9A3dOMTC5NBwkLvfaey+jcwl5rur8VVKa1BObFtaIFjCHukHrC6P7Gx1TzjIk+ykrR9L3IFTz/OMX8JPZFOY8vjU1CiefBMkDyRHk6uibOGfc+VzvY9c/3yS4xRvc7VCeheqLxBmu8SyRFVfu5TqubGnIZM82loW83mGnU2v9vGT+5NlWUi+ReA0Ku5WYDE2Fbi4O5Ogr4xII/1oga7rP5h6P5u4BZ0zDQFu7KJR45WVBVNdJLwkAE2jMjZhSsnt8zRQjmvUV4bUb9HyWWCx6y2bNGkgVA3HVmZw3ROJXXkrClp9pSGek6
-x-ms-exchange-antispam-messagedata: ogWXfAaojeLDmqgoCN7ewAhG3yyFLlQeR/eE/FIo7SlTxoX9ZLEbD3MvGLSaxyDXzsAMy+r3LnMpjiS+JFJQHpZlK+WOjCZHYr7L2nETZnoxtZJGHT20Q9/3oWVGuLKJjuAAzPsyDreFK1P9fOTJHg==
-x-ms-exchange-transport-forked: True
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+        Tue, 7 Apr 2020 10:53:48 -0400
+Received: from mail-qv1-f67.google.com ([209.85.219.67]:34934 "EHLO
+        mail-qv1-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728855AbgDGOxs (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 7 Apr 2020 10:53:48 -0400
+Received: by mail-qv1-f67.google.com with SMTP id q73so1950256qvq.2
+        for <linux-rt-users@vger.kernel.org>; Tue, 07 Apr 2020 07:53:48 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
+         :user-agent:mime-version;
+        bh=6z0NPls12wcMgwtAkXUAT3Q/BFMbbbG0KEAAze6CSBw=;
+        b=Frennx1b019J1WIR99vdxURLOciSF/I3EeW+mtfGviMQHyhRhDve1c3UWv1UiSD5Kc
+         8j5D77D2p//fIrR2acnruMRRhdLsa78JwzV2ojS7TyXeYLyK7Hh+PUFASNt01SyKxvp3
+         h9FELwptVjM+Ozufwy9ExQx5q9r3OU+Jc8T4SQsYNzxkV2GxesX5sDikyq/DIY5ETOLR
+         3AzOVffeCO6++V3LDdbxKXUsBibR/1G2d2p5cktgn0kpqB3O9V6MSAwVRrttTaxR2D0U
+         Fwqg6i4nwa1+8NB7S5s+QV/uxnXnIvTTpoA7/K8wNH0bv4ixyERZ6eao1vssokiKtsl5
+         /7kg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
+         :message-id:references:user-agent:mime-version;
+        bh=6z0NPls12wcMgwtAkXUAT3Q/BFMbbbG0KEAAze6CSBw=;
+        b=G5DN8G+XA0eScvhi0lnW6U33NBD4hGmP3qME6Nizf4w8ux0dZ7TsJusjdSygsKmGua
+         ru5XwWW7+r+awQ8kz7ZucM+w4pfuGasivjJLuGR6+kmwdOJKT076zdbcEuQZuatTTA2t
+         qp/BHP/hYzygaFuv1tybwxBs6CZBa71IDdJo3hNxFQbVjvgy/pdCJGTJXhLWimc4YbXv
+         FAQkA+wa04ry4ZClzFQociUDt3p4nbZmMcOa/dBtaG0UOWCpnMrVt0nJVLkal7h7C7Uf
+         XS37P5d6UiCnbVyO/0BF8kFecETIWyATkSsFNiW9N0VR2klACTI2oLuY3gmUWJc8eL+y
+         ZfjQ==
+X-Gm-Message-State: AGi0PuYpqrNMNM1yQhV03R8Y4jUDhYzWxjdQoKEdeDdW3vYXAsCIblpG
+        OCCh554QlK6Ihw6Np06Zllo=
+X-Google-Smtp-Source: APiQypK6K92gx/RzM+UKTRFHTD4rAKYeB9bM7VKNwLnHTyV5OYffmL4TqflKGMq7OEZKhze761r9uQ==
+X-Received: by 2002:ad4:5141:: with SMTP id g1mr2462855qvq.79.1586271227833;
+        Tue, 07 Apr 2020 07:53:47 -0700 (PDT)
+Received: from planxty (rdwyon0600w-lp130-03-64-231-46-127.dsl.bell.ca. [64.231.46.127])
+        by smtp.gmail.com with ESMTPSA id b195sm800675qkg.108.2020.04.07.07.53.46
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 07 Apr 2020 07:53:46 -0700 (PDT)
+Date:   Tue, 7 Apr 2020 10:53:40 -0400 (EDT)
+From:   John Kacur <jkacur@redhat.com>
+X-X-Sender: jkacur@planxty
+To:     Scott Wood <swood@redhat.com>
+cc:     Clark Williams <williams@redhat.com>,
+        linux-rt-users@vger.kernel.org
+Subject: Re: [RTEVAL PATCH 1/3] Makefile: Remove non-distutil install
+ leftovers
+In-Reply-To: <20200406221405.3043-1-swood@redhat.com>
+Message-ID: <alpine.LFD.2.21.2004071045030.6907@planxty>
+References: <20200406221405.3043-1-swood@redhat.com>
+User-Agent: Alpine 2.21 (LFD 202 2017-01-01)
 MIME-Version: 1.0
-X-OriginatorOrg: ch.abb.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: b46bd127-337c-4511-441c-08d7dadd8419
-X-MS-Exchange-CrossTenant-originalarrivaltime: 07 Apr 2020 10:22:03.3781
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 372ee9e0-9ce0-4033-a64a-c07073a91ecd
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: ytjTjNXVSCqudH6HtGPqNYJtY3G+LIoFPYHCyTyUF5pgTATisvYHxUyQZCJ8z1j/4zq4RhMOpu0A5QRa/vKM+iCX9qxQtv63owUOIuixyWc=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM0PR06MB6228
+Content-Type: text/plain; charset=US-ASCII
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi all
-
-I have a question regarding pthread_mutex:
-
-Currently I am utilizing the pthread library. Everything seems to work fine=
- with the exception of timeouts when attempting to set the CLOCK_REALTIME t=
-o a different time. This will cause the timeout to trigger later/earlier th=
-an expected depending on if you set the time forwards of backwards, changin=
-g the time is done by settimeofday(...).
-=A0
-The first attempt of a solution was to use a different clock (CLOCK_MONOTON=
-IC), which works fine when using conditional attributes (pthread_condattr_s=
-etclock in combination with pthread_cond_init) but unfortunately there does=
- not seem to be a corresponding pthread_mutex_setclock(MISSING) for pthread=
-_mutex_init.
-=A0
-Is there an good alternative for pthread or can the pthread library somehow=
- be utilized for this purpose?
-
-4.19.79-rt28-g5baf382c8f #1 SMP PREEMPT RT Tue Mar 10 07:30:26 UTC 2020 arm=
-v7l armv7l armv7l GNU/Linux
-
-Any help is highly appreciated.
-
-Thanx
-Andy
 
 
+On Mon, 6 Apr 2020, Scott Wood wrote:
 
+> setup.py installs into /usr/local by default, but the makefile
+> is still creating directories in /usr that it doesn't install
+> anything into.  Worse, the uninstall target removes things
+> from /usr rather than what was installed by "make install".
+> 
+> Signed-off-by: Scott Wood <swood@redhat.com>
+> ---
+>  Makefile | 14 --------------
+>  1 file changed, 14 deletions(-)
+> 
+> diff --git a/Makefile b/Makefile
+> index f784ba778bc3..f91e6e06a9a4 100644
+> --- a/Makefile
+> +++ b/Makefile
+> @@ -15,9 +15,6 @@ XMLRPCDIR := server
+>  DESTDIR	:=
+>  PREFIX  :=      /usr
+>  DATADIR	:=	$(DESTDIR)/$(PREFIX)/share
+> -CONFDIR	:=	$(DESTDIR)/etc
+> -MANDIR	:=	$(DESTDIR)/$(PREFIX)/share/man
+> -PYLIB	:= 	$(DESTDIR)$(shell $(PYTHON) -c 'import distutils.sysconfig;  print distutils.sysconfig.get_python_lib()')
+>  LOADDIR	:=	loadsource
+>  
+>  KLOAD	:=	$(LOADDIR)/linux-5.1.tar.xz
+> @@ -60,17 +57,6 @@ install_loads:	$(LOADS)
+>  
+>  installdirs:
+>  	[ -d $(DATADIR)/rteval ] || mkdir -p $(DATADIR)/rteval
+> -	[ -d $(CONFDIR) ] || mkdir -p $(CONFDIR)
+> -	[ -d $(MANDIR)/man8 ]  || mkdir -p $(MANDIR)/man8
+> -	[ -d $(PYLIB) ]   || mkdir -p $(PYLIB)
+> -	[ -d $(DESTDIR)/usr/bin ] || mkdir -p $(DESTDIR)/usr/bin
+> -
+> -uninstall:
+> -	rm -f /usr/bin/rteval
+> -	rm -f $(CONFDIR)/rteval.conf
+> -	rm -f $(MANDIR)/man8/rteval.8.gz
+> -	rm -rf $(PYLIB)/rteval
+> -	rm -rf $(DATADIR)/rteval
+>  
+>  tarfile: rteval-$(VERSION).tar.bz2
+>  
+> -- 
+> 2.18.2
+> 
+> 
+
+As you've probably guessed, the distribution spec file doesn't use the 
+Makefile at all when installing, just setup.py
+This is left over from when Clark and David were first writing this.
+
+The default target in the Makefile is runit
+Which is a great way to do sanity check after creating patches, so I
+would like that to work - which your next patch does do. This stuff
+should be cleaned-up though, so
+ 
+Signed-off-by: John Kacur <jkacur@redhat.com>
+
+For people who are reading this and don't know what rteval is, it's a 
+program that runs cyclictest as a measurement thread on various cpus while 
+running various programs a loads at the same time.
+
+Mostly it works quite well, but in some spots the code is pretty rough.
+Not all of the upstream code is packaged for distributing, so if you see
+code that doesn't work in python3, that's probably why, it's not currently 
+shipped.
+
+This is all open source, so anyone is welcome to look at it and send us 
+patches. It's available at 
+
+git://git.kernel.org/pub/scm/utils/rteval/rteval
 
