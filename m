@@ -1,44 +1,50 @@
-Return-Path: <SRS0=Yj13=52=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=f+xt=53=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.5 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 46CB7C2BB85
-	for <linux-rt-users@archiver.kernel.org>; Fri, 10 Apr 2020 20:15:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1074DC2BA19
+	for <linux-rt-users@archiver.kernel.org>; Sat, 11 Apr 2020 21:27:03 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [209.132.180.67])
-	by mail.kernel.org (Postfix) with ESMTP id 202B52084D
-	for <linux-rt-users@archiver.kernel.org>; Fri, 10 Apr 2020 20:15:16 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1586549716;
-	bh=yo+6fYCu0++Y9+eNTxSwJiBUzd4rBhPyaXFFLb325J0=;
-	h=From:To:Subject:Date:List-ID:From;
-	b=U+Rf5/MEZiEOao+4ET0egy+F5afFnSqETLIan5gB+wd0Be6YRUgJK/aLp6PqAgHnl
-	 v83cEgYz8GIf44KUPrOc1fyQHjq3t9UiZ25w0s5iyJMlke/ubkaJviFHgbTjUiIXvf
-	 yd/s4Da/mP3EQbJyBcOMBFyX8EOC9r3MSLo4QPJA=
+	by mail.kernel.org (Postfix) with ESMTP id C056320787
+	for <linux-rt-users@archiver.kernel.org>; Sat, 11 Apr 2020 21:27:02 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=fail reason="signature verification failed" (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="iDjwmzrV"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726669AbgDJUPE (ORCPT
+        id S1726563AbgDKV1B (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 10 Apr 2020 16:15:04 -0400
-Received: from mail.kernel.org ([198.145.29.99]:35564 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726203AbgDJUPE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 10 Apr 2020 16:15:04 -0400
-Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+        Sat, 11 Apr 2020 17:27:01 -0400
+Received: from us-smtp-2.mimecast.com ([207.211.31.81]:42996 "EHLO
+        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1726182AbgDKV1B (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 11 Apr 2020 17:27:01 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1586640420;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc; bh=OQrsw5L6zYIgHHkl59IcfAMFT3R9AZwVHuHRpnA7cco=;
+        b=iDjwmzrVC3cjXEgSa9deCfJ3QA09fbp3MllSDtnjQolG1aO2OlFBMqvmVC/mrJ12F4NlIw
+        aLtCoI20wwTDM9rPGWyytYPbOgT8xAlBXE0y2Cf5d9IYmUai5h12x6eouddWL8XzM6cAX9
+        6lnql1KwZUBPPglrOi+h2UIsANkYZQQ=
+Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
+ [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-187-rI7tbsEBOkK_ebbFkhdebw-1; Sat, 11 Apr 2020 17:26:58 -0400
+X-MC-Unique: rI7tbsEBOkK_ebbFkhdebw-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 9694A20732;
-        Fri, 10 Apr 2020 20:15:03 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1586549704;
-        bh=yo+6fYCu0++Y9+eNTxSwJiBUzd4rBhPyaXFFLb325J0=;
-        h=From:To:Subject:Date:From;
-        b=bmJPmlxGsoRCIPO9DE5a6GNFyOGl/qxnFT8YIhHg7V+Wu1Y09N72dEwtv1rUyi++i
-         fGp7baLEn7NgVNQT/oAB6L+kftFQ/zu/vvBxRduRl+kXnmEA+cCsm47C4IWqxk/GCd
-         +MXV8i6F4STug8eiOq+X7PL6EOK7GfFGl9iBsu0Y=
-From:   zanussi@kernel.org
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8D14613FC;
+        Sat, 11 Apr 2020 21:26:56 +0000 (UTC)
+Received: from localhost (ovpn-112-176.rdu2.redhat.com [10.10.112.176])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 1EA49CFDF6;
+        Sat, 11 Apr 2020 21:26:55 +0000 (UTC)
+From:   Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 4.9.218-rt141
+Date:   Sat, 11 Apr 2020 21:23:09 -0000
+Message-ID: <158664018976.267470.9190420949400202455@tagon>
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>,
@@ -46,64 +52,42 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Carsten Emde <C.Emde@osadl.org>,
         John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
-        Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 0/2] Linux v4.14.175-rt81-rc1
-Date:   Fri, 10 Apr 2020 15:15:00 -0500
-Message-Id: <cover.1586549682.git.zanussi@kernel.org>
-X-Mailer: git-send-email 2.17.1
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Tom Zanussi <zanussi@kernel.org>
+Hello RT-list!
 
-Dear RT Folks,
+I'm pleased to announce the 4.9.218-rt141 stable release.
 
-This is the RT stable review cycle of patch 4.14.175-rt81-rc1.
+Note that this is a maintenance release only. It is just the application
+of the 4.9.218 stable release and no updates to the RT patchset.
 
-Please scream at me if I messed something up. Please test the patches
-too.
+You can get this release via the git tree at:
 
-The -rc release will be uploaded to kernel.org and will be deleted
-when the final release is out. This is just a review release (or
-release candidate).
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
+  branch: v4.9-rt
+  Head SHA1: ec9810c2b626cded51bb6fd0473f1e25f7ec60b8
 
-If all goes well, this patch will be converted to the next main
-release on 2020-04-17.
+Or to build 4.9.218-rt141 directly, the following patches should be applied:
 
-To build 4.14.175-rt81-rc1 directly, the following patches should be applied:
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.tar.xz
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.14.tar.xz
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.9.218.xz
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.14.175.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.175-rt81-rc1.patch.xz
-
-You can also build from 4.14.175-rt80 by applying the incremental patch:
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/incr/patch-4.14.175-rt80-rt81-rc1.patch.xz
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.9/patch-4.9.218-rt141.patch.xz
 
 
-Enjoy,
+You can also build from 4.9.217-rt140 by applying the incremental patch:
 
--- Tom
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.9/incr/patch-4.9.217-rt140-rt141.patch.xz
 
-
-Steven Rostedt (VMware) (1):
-  irq_work: Fix checking of IRQ_WORK_LAZY flag set on non PREEMPT_RT
-
-Tom Zanussi (1):
-  Linux 4.14.175-rt81-rc1
-
- kernel/irq_work.c | 12 +++++++++---
- localversion-rt   |  2 +-
- 2 files changed, 10 insertions(+), 4 deletions(-)
-
--- 
-2.17.1
+Enjoy!
+Clark
 
