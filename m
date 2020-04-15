@@ -2,116 +2,81 @@ Return-Path: <SRS0=USbd=57=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CD991C2BA19
-	for <linux-rt-users@archiver.kernel.org>; Wed, 15 Apr 2020 13:37:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0897FC3815B
+	for <linux-rt-users@archiver.kernel.org>; Wed, 15 Apr 2020 16:34:26 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A864220767
-	for <linux-rt-users@archiver.kernel.org>; Wed, 15 Apr 2020 13:37:37 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="UFIONclS"
+	by mail.kernel.org (Postfix) with ESMTP id E42FF2051A
+	for <linux-rt-users@archiver.kernel.org>; Wed, 15 Apr 2020 16:34:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2636167AbgDONhf (ORCPT
+        id S1416145AbgDOQeV (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 15 Apr 2020 09:37:35 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58918 "EHLO
+        Wed, 15 Apr 2020 12:34:21 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58362 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-FAIL-OK-FAIL)
-        by vger.kernel.org with ESMTP id S2636147AbgDONhK (ORCPT
+        by vger.kernel.org with ESMTP id S1416090AbgDOQeT (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 15 Apr 2020 09:37:10 -0400
-Received: from mail-wm1-x344.google.com (mail-wm1-x344.google.com [IPv6:2a00:1450:4864:20::344])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D132FC061A0C;
-        Wed, 15 Apr 2020 06:37:09 -0700 (PDT)
-Received: by mail-wm1-x344.google.com with SMTP id g12so11255762wmh.3;
-        Wed, 15 Apr 2020 06:37:09 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:in-reply-to;
-        bh=pa4UHfY2/aSNPt2X2jGFb1KTFp1Ae6IbH0975jzZgos=;
-        b=UFIONclS26VhRCUUT3L94esG6sHKSSxeu0B0RIPlexIIFi4hqm3TyDtiDUGKLcKRbC
-         WRTJ74OJ+Kx5NXQrtvbclxCbBNeOJKHUVERX0v1ph7DY69qjNzxN05cd1aa3+SORd1zN
-         yM6HvbOsjEZid7wEVE43d+wA+hMLntwAMPV33PdSm4j4VVQ6A4i0gtjvDwv7sZEAZLla
-         unNO3Ge77+31zTDTDZTY24Y0h5GOxTt5GARtJuGZyc/tV1g3CmznSFZxNna1aHgaVyb1
-         87XooU9yiDhS5J+WJFUqFU4/3Wpnr0LhDaLGH4SDzMfXJwjC2xHPByJpQ9K0Axr08OTz
-         RzxQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=pa4UHfY2/aSNPt2X2jGFb1KTFp1Ae6IbH0975jzZgos=;
-        b=sgN0DysRkiTQqd8+HfoYKbGwsplkiBfOfQgc3wT7Vbv08gSaO7fVePYf++5ismWC58
-         bP7lH2nWMtZ0XJWm8F05crRAbqGcTUUrVssQvkviR4uU3r+nVdqvUXbsSZa71+prXc1s
-         O4hg1cjgpIiBIPJfZCJChV98I1GxqtM1mnAgFbuMFy/o1QVCkJB6zLRhfpH3ZrrnbCMI
-         NAsmbWw1A0Ak+Q3vflrHklPzRUc7i4aXajuQiN5wmWvPngqm4GBdCYR7kAzVMsmmGSec
-         Bw+YMh7JFgsH56FnAyUjGUOomdRZePbWZ6/oaIVY84okoESfiV3EZtjKWCoM5WHQqUno
-         OpOQ==
-X-Gm-Message-State: AGi0Puay5GPS4VLjex/6CHkys8TLxXZ5q0724onE+we23kUiPo/lHwKp
-        w9mczcm630vcT9aaoodxCMH5Icq/IMs=
-X-Google-Smtp-Source: APiQypLNk8T6f4p+TzUVzRkkQMgmXTc/G+NMBWXmDW1uDgwgfwaRQv3mDBfAx4pQl3KDMPLaQokoSw==
-X-Received: by 2002:a1c:750a:: with SMTP id o10mr5230330wmc.161.1586957828498;
-        Wed, 15 Apr 2020 06:37:08 -0700 (PDT)
-Received: from localhost.localdomain ([151.29.194.179])
-        by smtp.gmail.com with ESMTPSA id l5sm9843280wmi.22.2020.04.15.06.37.06
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 15 Apr 2020 06:37:06 -0700 (PDT)
-Date:   Wed, 15 Apr 2020 15:37:04 +0200
-From:   Juri Lelli <juri.lelli@gmail.com>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ANNOUNCE] v5.6.2-rt1
-Message-ID: <20200415133704.GG9767@localhost.localdomain>
-References: <20200403170443.pzm24672qo4hufcm@linutronix.de>
- <20200408070013.GB14300@localhost.localdomain>
- <20200415111235.6gomftgifn62dylp@linutronix.de>
+        Wed, 15 Apr 2020 12:34:19 -0400
+Received: from Galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 80F90C061A0C;
+        Wed, 15 Apr 2020 09:34:19 -0700 (PDT)
+Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
+        (envelope-from <bigeasy@linutronix.de>)
+        id 1jOkzQ-0006Uc-V3; Wed, 15 Apr 2020 18:34:17 +0200
+Date:   Wed, 15 Apr 2020 18:34:16 +0200
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     John Ogness <john.ogness@linutronix.de>
+Cc:     Petr Mladek <pmladek@suse.com>,
+        Sergey Senozhatsky <sergey.senozhatsky@gmail.com>,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH RT] printk: console must not schedule for drivers
+Message-ID: <20200415163416.r3fce3g5kokm4bub@linutronix.de>
+References: <20200406212217.2323-1-john.ogness@linutronix.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20200415111235.6gomftgifn62dylp@linutronix.de>
+In-Reply-To: <20200406212217.2323-1-john.ogness@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 15/04/20 13:12, Sebastian Andrzej Siewior wrote:
-> On 2020-04-08 09:00:13 [+0200], Juri Lelli wrote:
-> > Hi,
-> Hi,
+On 2020-04-06 23:22:17 [+0200], John Ogness wrote:
+> Even though the printk kthread is always preemptible, it is still not
+> allowed to call cond_resched() from within console drivers. The
+> task may become non-preemptible in the console driver call chain. For
+> example, vt_console_print() takes a spinlock and then can call into
+> fbcon_redraw(), which can conditionally invoke cond_resched():
 > 
-> > On 03/04/20 19:04, Sebastian Andrzej Siewior wrote:
-> > > Dear RT folks!
-> > > 
-> > > I'm pleased to announce the v5.6.2-rt1 patch set. 
-> > > 
-> > > Changes since v5.4.28-rt19:
-> > > 
-> > >   - Rebase to v5.6.2
-> > 
-> > I was reviewing the new set and I couldn't find v5.4.28-rt19
-> > 6dbbc833c99f ("mm: perform lru_add_drain_all() remotely"). Don't think
-> > it has been squashed either.
-> > 
-> > Am I wrong? If not, why was that left out?
+> BUG: sleeping function called from invalid context at kernel/printk/printk.c:2322
+> in_atomic(): 1, irqs_disabled(): 0, non_block: 0, pid: 177, name: printk
+> CPU: 0 PID: 177 Comm: printk Not tainted 5.6.2-00011-ga536059557f1d9 #1
+> Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.12.0-1 04/01/2014
+> Call Trace:
+>  dump_stack+0x66/0x8b
+>  ___might_sleep+0x102/0x120
+>  console_conditional_schedule+0x24/0x30
+>  fbcon_redraw+0x96/0x1c0
+>  ? fbcon_cursor+0x100/0x190
+>  fbcon_scroll+0x556/0xd70
+>  con_scroll+0x147/0x1e0
+>  lf+0x9e/0xb0
+>  vt_console_print+0x253/0x3d0
+>  printk_kthread_func+0x1d5/0x3b0
 > 
-> I was going to drop it from v5.4 but kept it last minute. I announced in
-> 	https://lkml.kernel.org/r/20200309171350.kjb3pdjazhxm2li2@linutronix.de
-> 
-> that the problem it fixes is not limited to RT so we need a solution for
-> both config switches. The current plan for local-locks is not to work
-> cross CPU because it breaks the local_irq_save() / preempt_disable()
-> replacement which is something this patch relies on.
-> The worker triggered via vmstat_update() is also blocked if the user
-> task runs at an elevated priority for longer time.
+> Disable cond_resched() for the call into the console drivers.
 
-OK. Thanks for clarifying.
+Interesting. So you get a report and I don't?
 
-Best,
+I have also patch related questions :)
+- So before the re-rewrite, console_unlock() set this 0 before invoking
+  the console drivers so it was always 0. I assume it was called with
+  disabled interrupts.
 
-Juri
+- Is there a scenario in fbcon where this function is invoked and
+  console_may_schedule is not 0?
+
+Sebastian
