@@ -2,67 +2,61 @@ Return-Path: <SRS0=egP0=6A=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 813C2C352BE
-	for <linux-rt-users@archiver.kernel.org>; Thu, 16 Apr 2020 11:13:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 107B2C2BB85
+	for <linux-rt-users@archiver.kernel.org>; Thu, 16 Apr 2020 11:34:49 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 67554206E9
-	for <linux-rt-users@archiver.kernel.org>; Thu, 16 Apr 2020 11:13:01 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id EF97421BE5
+	for <linux-rt-users@archiver.kernel.org>; Thu, 16 Apr 2020 11:34:48 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2506086AbgDPLMJ (ORCPT
+        id S2506335AbgDPLeq convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 16 Apr 2020 07:12:09 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34168 "EHLO
+        Thu, 16 Apr 2020 07:34:46 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33416 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2506197AbgDPLJr (ORCPT
+        with ESMTP id S2506050AbgDPLEx (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 16 Apr 2020 07:09:47 -0400
+        Thu, 16 Apr 2020 07:04:53 -0400
 Received: from Galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2334BC03C1A6
-        for <linux-rt-users@vger.kernel.org>; Thu, 16 Apr 2020 03:45:57 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9E158C061A0C;
+        Thu, 16 Apr 2020 04:04:50 -0700 (PDT)
 Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
         (envelope-from <bigeasy@linutronix.de>)
-        id 1jP21n-0005GQ-Fc; Thu, 16 Apr 2020 12:45:51 +0200
-Date:   Thu, 16 Apr 2020 12:45:51 +0200
+        id 1jP2K6-0005gw-Uc; Thu, 16 Apr 2020 13:04:47 +0200
+Date:   Thu, 16 Apr 2020 13:04:46 +0200
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     kbuild test robot <lkp@intel.com>
-Cc:     kbuild-all@lists.01.org, linux-rt-users@vger.kernel.org
-Subject: [PATCH RT] fs/dcache: Include swait.h header
-Message-ID: <20200416104551.a3dp6xw6uq6fys6k@linutronix.de>
-References: <202004040343.XDNZhW4N%lkp@intel.com>
+To:     John Ogness <john.ogness@linutronix.de>
+Cc:     Petr Mladek <pmladek@suse.com>,
+        Sergey Senozhatsky <sergey.senozhatsky@gmail.com>,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH RT] printk: console must not schedule for drivers
+Message-ID: <20200416110446.fjw3yhav73bxxtro@linutronix.de>
+References: <20200406212217.2323-1-john.ogness@linutronix.de>
+ <20200415163416.r3fce3g5kokm4bub@linutronix.de>
+ <87o8rrg864.fsf@vostro.fn.ogness.net>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <202004040343.XDNZhW4N%lkp@intel.com>
+Content-Transfer-Encoding: 8BIT
+In-Reply-To: <87o8rrg864.fsf@vostro.fn.ogness.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Include the swait.h header so it compiles even if not all patches are
-applied.
+On 2020-04-16 10:13:23 [+0200], John Ogness wrote:
+> > - So before the re-rewrite, console_unlock() set this 0 before
+> >   invoking the console drivers so it was always 0. I assume it was
+> >   called with disabled interrupts.
+> 
+> Correct.
 
-Reported-by: kbuild test robot <lkp@intel.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- fs/proc/base.c | 1 +
- 1 file changed, 1 insertion(+)
+le me apply that even if it looks like a fix at the wrong spot. However,
+it only affects PREEMPT_VOLUNTARY so…
 
-diff --git a/fs/proc/base.c b/fs/proc/base.c
-index 8c2a84fc4986d..eb8285ca344f3 100644
---- a/fs/proc/base.c
-+++ b/fs/proc/base.c
-@@ -96,6 +96,7 @@
- #include <linux/posix-timers.h>
- #include <linux/time_namespace.h>
- #include <linux/resctrl.h>
-+#include <linux/swait.h>
- #include <trace/events/oom.h>
- #include "internal.h"
- #include "fd.h"
--- 
-2.26.1
+> John Ogness
 
+Sebastian
