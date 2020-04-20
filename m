@@ -2,101 +2,113 @@ Return-Path: <SRS0=MBx+=6E=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.4 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B58B4C54FCF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 20 Apr 2020 18:38:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 46E15C3A5A0
+	for <linux-rt-users@archiver.kernel.org>; Mon, 20 Apr 2020 18:54:33 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 97DE72071C
-	for <linux-rt-users@archiver.kernel.org>; Mon, 20 Apr 2020 18:38:44 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="M3A7HWXb"
+	by mail.kernel.org (Postfix) with ESMTP id 317622078C
+	for <linux-rt-users@archiver.kernel.org>; Mon, 20 Apr 2020 18:54:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726838AbgDTSio (ORCPT
+        id S1726432AbgDTSyc (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 20 Apr 2020 14:38:44 -0400
-Received: from us-smtp-delivery-1.mimecast.com ([207.211.31.120]:39847 "EHLO
-        us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-        with ESMTP id S1726825AbgDTSin (ORCPT
+        Mon, 20 Apr 2020 14:54:32 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34836 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726017AbgDTSyc (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 20 Apr 2020 14:38:43 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1587407922;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=Nn0H7bEuwLkn9EYwnqa9XbAdRyVqZTz7T4mh9M23lKc=;
-        b=M3A7HWXbE/+n/dwoWfQ6z0tYyA0NRmu4iy5+57pl1f9nyEyap/pHmypGFqiycnBSUaSywy
-        hqRCJbHRFypqHg7oMsadu5BJRr6N8lizKxj3rhAyC/4zfTu1TC+ty6kO2/GAeNKrhDkZ7B
-        zfj9e0UfjevzJjsRytpdu4/MHidbFn8=
-Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
- [209.85.222.200]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-407-odvNOALoPjekGbilXYMlag-1; Mon, 20 Apr 2020 14:38:39 -0400
-X-MC-Unique: odvNOALoPjekGbilXYMlag-1
-Received: by mail-qk1-f200.google.com with SMTP id x5so11347567qkn.20
-        for <linux-rt-users@vger.kernel.org>; Mon, 20 Apr 2020 11:38:39 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:subject:to:cc:references:from:message-id:date
-         :user-agent:mime-version:in-reply-to:content-transfer-encoding
-         :content-language;
-        bh=Nn0H7bEuwLkn9EYwnqa9XbAdRyVqZTz7T4mh9M23lKc=;
-        b=C4eQI7lVspBaYrZsQ170Iv+tegdqrS9Rn+9yWPr7CS3dpWNCOw8IMXpu6N7JfF9dJz
-         rGnVKZ+HA8GHjviGju629b44o2ouQJuus7Q6t/Ka1OA8mNE0oh77kmgrQTrpxiS9wTeH
-         c7pzkiI/pdbOTgDe+g37CEX45zOtSz3zeJhC0C9s4ePBNFQ8pHnhCYowPa6H283F6CcN
-         BxmP+6GNyTeJPjr7jkToxfIZGvlW43VgUAwc5OnZsl4h9dggJ4J757fTinQbKeXRl2Mb
-         TT3EmFhuwqBRQ7DE492M/R/mhh/M8TYRNew++6T88VUaWR0yfyWmIwNw9ba4U3ebqXy/
-         Drqg==
-X-Gm-Message-State: AGi0PuZlID8zdLWzUFyqQ4SPz1EMVwZ15lMoesxOalM4gYRjWk6uI1Y1
-        dzwu1mWrx5RuKXFhOYHQ6evC09jU71JpsSG13KWqbff/QKhTo1RfsGlpkBmQphX1UmpaaQBlNpB
-        BUM/zbh2qvHPoN/7ATJ54RdHHrB4=
-X-Received: by 2002:a05:6214:885:: with SMTP id cz5mr16756260qvb.43.1587407918437;
-        Mon, 20 Apr 2020 11:38:38 -0700 (PDT)
-X-Google-Smtp-Source: APiQypIAPl29KD06eTAiSyB7GVK95Q1RztWyjhIrhjXNXKsvcN/IJHPn/laUX3Zx5Zr95ZE6jQ/vhQ==
-X-Received: by 2002:a05:6214:885:: with SMTP id cz5mr16756239qvb.43.1587407918227;
-        Mon, 20 Apr 2020 11:38:38 -0700 (PDT)
-Received: from trix.remote.csb ([75.142.250.213])
-        by smtp.gmail.com with ESMTPSA id 65sm234506qkf.79.2020.04.20.11.38.36
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 20 Apr 2020 11:38:37 -0700 (PDT)
+        Mon, 20 Apr 2020 14:54:32 -0400
+Received: from Galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 685D5C061A0C
+        for <linux-rt-users@vger.kernel.org>; Mon, 20 Apr 2020 11:54:32 -0700 (PDT)
+Received: from p5de0bf0b.dip0.t-ipconnect.de ([93.224.191.11] helo=nanos.tec.linutronix.de)
+        by Galois.linutronix.de with esmtpsa (TLS1.2:DHE_RSA_AES_256_CBC_SHA256:256)
+        (Exim 4.80)
+        (envelope-from <tglx@linutronix.de>)
+        id 1jQbYs-0004pE-OP; Mon, 20 Apr 2020 20:54:30 +0200
+Received: by nanos.tec.linutronix.de (Postfix, from userid 1000)
+        id 0AE41101623; Mon, 20 Apr 2020 20:54:30 +0200 (CEST)
+From:   Thomas Gleixner <tglx@linutronix.de>
+To:     trix@redhat.com, williams@redhat.com, jkacur@redhat.com
+Cc:     linux-rt-users@vger.kernel.org, Tom Rix <trix@redhat.com>
 Subject: Re: [PATCH v2] Import a new test, jitterz
-To:     John Kacur <jkacur@redhat.com>
-Cc:     williams@redhat.com, tglx@linutronix.de,
-        linux-rt-users@vger.kernel.org
+In-Reply-To: <20200418141449.19293-1-trix@redhat.com>
 References: <20200418141449.19293-1-trix@redhat.com>
- <alpine.LFD.2.21.2004201255350.4545@planxty>
-From:   Tom Rix <trix@redhat.com>
-Message-ID: <d4ddb418-c1ad-b468-1ec8-604676c18284@redhat.com>
-Date:   Mon, 20 Apr 2020 11:38:36 -0700
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.6.0
+Date:   Mon, 20 Apr 2020 20:54:29 +0200
+Message-ID: <875zduvvh6.fsf@nanos.tec.linutronix.de>
 MIME-Version: 1.0
-In-Reply-To: <alpine.LFD.2.21.2004201255350.4545@planxty>
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Content-Language: en-US
+Content-Type: text/plain
+X-Linutronix-Spam-Score: -1.0
+X-Linutronix-Spam-Level: -
+X-Linutronix-Spam-Status: No , -1.0 points, 5.0 required,  ALL_TRUSTED=-1,SHORTCIRCUIT=-0.0001
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-John,
->> + *
->> + * Copyright 2019-2020 Tom Rix <trix@redhat.com>
->> + *
->> + */
-> Should the manpage mention that the original idea comes from sysjitter?
-> While I'm asking that, just to play devil's advocate, why are we not just
-> forking sysjitter and adapting it to our needs? What advantage to we get
-> by re-implemnting this?
+Tom,
 
-sysjitter is not a well known nor a well supported tool, the attribution in the commit log is enough.
+trix@redhat.com writes:
+> From: Tom Rix <trix@redhat.com>
 
-jitterz was started because of limitations in sysjitter. So the effort would be to fork and address those limitations and upstream.
+it seems you are serious about this.
 
-Tom
+> jitterz is a program for measuring system jitter.
 
+Aside of that not being accurate, there is neither a proper description
+of the functionality nor a reasoning why this is useful and should
+therefore be part of rt-tests.
+
+> diff --git a/src/jitterz/jitterz.8 b/src/jitterz/jitterz.8
+> new file mode 100644
+> index 0000000..5b85640
+> --- /dev/null
+> +++ b/src/jitterz/jitterz.8
+> @@ -0,0 +1,39 @@
+> +.TH JIITERZ 8 "April 1, 2020"
+> +.SH NAME
+> +jitterz \- inference of stalls by looking for gaps in executing a tight loop
+> +.SH SYNOPSIS
+> +.B jitterz
+> +.RI "<options>"
+> +.SH DESCRIPTION
+> +In a tight loop, measure the time between iterations.
+> +If the time exceeds a theshold, increment a count in a time
+> +bucket.  At the end of test print out the buckets.
+
+Jitter is the deviation from true periodicity of a periodic event.
+
+But that's not what you are measuring here. You try to find gaps in
+tight loop execution, which is something completely different.
+
+Now again the question is what's the purpose and the value of this
+measurement?
+
+> +/* Returns clock ticks */
+> +static inline uint64_t time_stamp_counter(void)
+> +{
+> +	uint64_t ret = -1;
+> +#if defined(__i386__) || defined(__x86_64__)
+> +	uint32_t l, h;
+
+First of all. What's wrong with using clock_gettime() ?
+
+> +	__asm__ __volatile__("lfence");
+> +	__asm__ __volatile__("rdtsc" : "=a"(l), "=d"(h));
+
+Aside of that x86-ism here, what guarantees that the CPU has lfence?
+
+> +	ret = ((uint64_t)h << 32) | l;
+> +#else
+> +	fprintf(stderr,
+> +		"Add a time_stamp_counter function for your arch here %s:%d\n",
+> +		__FILE__, __LINE__);
+
+This is brilliant. You know already at compile time that this can't
+work, but instead of failing the build you print an error at runtime.
+
+Thanks,
+
+        tglx
