@@ -2,369 +2,118 @@ Return-Path: <SRS0=xzyi=6G=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-4.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4C946C5518C
-	for <linux-rt-users@archiver.kernel.org>; Wed, 22 Apr 2020 20:04:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D3F76C55189
+	for <linux-rt-users@archiver.kernel.org>; Wed, 22 Apr 2020 22:39:30 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1C0362076E
-	for <linux-rt-users@archiver.kernel.org>; Wed, 22 Apr 2020 20:04:06 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=zx2c4.com header.i=@zx2c4.com header.b="Zc/6MAGL"
+	by mail.kernel.org (Postfix) with ESMTP id B02982076E
+	for <linux-rt-users@archiver.kernel.org>; Wed, 22 Apr 2020 22:39:30 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1587595170;
+	bh=B1OMz7UfF+OAm1f+P6P94nyMDSYUzhidt60KZJsSkwY=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:List-ID:From;
+	b=Kl6Mxx2OE/xTaK5puqBP/YgtibigJAwGFZvEYIRbdV11i0SEIAbkNcqwfJitUvdVm
+	 RRXFjFsz4Y3SQ8AzCIjZsoD2eHOeYb/rYzt1LkL7ZY49/aIazyXopyEiDwkkOnmxx1
+	 eebC8fRYUlBNs29EIlhN8KO/dThxLwns0MtqUQeU=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726512AbgDVUED (ORCPT
+        id S1726372AbgDVWj1 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 22 Apr 2020 16:04:03 -0400
-Received: from mail.zx2c4.com ([192.95.5.64]:38701 "EHLO mail.zx2c4.com"
+        Wed, 22 Apr 2020 18:39:27 -0400
+Received: from mail.kernel.org ([198.145.29.99]:51388 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725779AbgDVUED (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 22 Apr 2020 16:04:03 -0400
-Received: by mail.zx2c4.com (ZX2C4 Mail Server) with ESMTP id 61659f37;
-        Wed, 22 Apr 2020 19:53:07 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha1; c=relaxed; d=zx2c4.com; h=from:to:cc
-        :subject:date:message-id:in-reply-to:references:mime-version
-        :content-transfer-encoding; s=mail; bh=xTSCmSNDbHYYybm8zrBKAkhBJ
-        kw=; b=Zc/6MAGLTyNiY7+Wma+ETAW7L7AxKuuJhiRC0YIPh50PalDYQATC2jqIN
-        aA/wcZZMMLZS+P6jQxFYo0Yo8ufjSNbeGp1pnN7Wk0y5ZcRNn3KrdWhvz2fip++w
-        0CPgJOIVrJjQLECwG7pqtlizg/ZuHgiRrnr9XFFrJOnxUTrXgrAhWBgsvR6pYgS8
-        hBqzBIOKTlgfv770htcXY0hFTMwVd/w4Jo06Eu6Kw+rU6v/aPOArPR8das4UC10a
-        6LqHyaYdUKETLINpS+eMaCZO0F9G1G+jJDmnUSafLDUFHDVjE12LoKKPmArITuB1
-        wASGin6u98wuES6oBbnDJSXNaDoZQ==
-Received: by mail.zx2c4.com (ZX2C4 Mail Server) with ESMTPSA id 93510734 (TLSv1.3:TLS_AES_256_GCM_SHA384:256:NO);
-        Wed, 22 Apr 2020 19:53:07 +0000 (UTC)
-From:   "Jason A. Donenfeld" <Jason@zx2c4.com>
-To:     herbert@gondor.apana.org.au, linux-crypto@vger.kernel.org,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Cc:     "Jason A. Donenfeld" <Jason@zx2c4.com>,
-        Eric Biggers <ebiggers@google.com>,
+        id S1725968AbgDVWj1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 22 Apr 2020 18:39:27 -0400
+Received: from gmail.com (unknown [104.132.1.76])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 8BE0B2074B;
+        Wed, 22 Apr 2020 22:39:26 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1587595166;
+        bh=B1OMz7UfF+OAm1f+P6P94nyMDSYUzhidt60KZJsSkwY=;
+        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+        b=2ej6Ofj79uPkck7o02D/ClisI64VURrJUQ7lx87XI4EuhjurRaq88cM8IwT+JQ6Mf
+         t0YGDNMsLjXX1JjKnIpjkz5gFz0fELWKOOLN9JNrtsTWzKT3Xl6zYwXcYUfAeVaN2n
+         sriGlQW9SGPIrH1Lmwc+4Nkfqbovrf7e/hy8hzuw=
+Date:   Wed, 22 Apr 2020 15:39:25 -0700
+From:   Eric Biggers <ebiggers@kernel.org>
+To:     "Jason A. Donenfeld" <Jason@zx2c4.com>
+Cc:     herbert@gondor.apana.org.au, linux-crypto@vger.kernel.org,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
         Ard Biesheuvel <ardb@kernel.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         stable@vger.kernel.org
-Subject: [PATCH crypto-stable v2] crypto: arch - limit simd usage to 4k chunks
-Date:   Wed, 22 Apr 2020 14:03:44 -0600
-Message-Id: <20200422200344.239462-1-Jason@zx2c4.com>
-In-Reply-To: <20200420075711.2385190-1-Jason@zx2c4.com>
+Subject: Re: [PATCH crypto-stable v2] crypto: arch - limit simd usage to 4k
+ chunks
+Message-ID: <20200422223925.GA96474@gmail.com>
 References: <20200420075711.2385190-1-Jason@zx2c4.com>
+ <20200422200344.239462-1-Jason@zx2c4.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20200422200344.239462-1-Jason@zx2c4.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The initial Zinc patchset, after some mailing list discussion, contained
-code to ensure that kernel_fpu_enable would not be kept on for more than
-a 4k chunk, since it disables preemption. The choice of 4k isn't totally
-scientific, but it's not a bad guess either, and it's what's used in
-both the x86 poly1305, blake2s, and nhpoly1305 code already (in the form
-of PAGE_SIZE, which this commit corrects to be explicitly 4k).
+On Wed, Apr 22, 2020 at 02:03:44PM -0600, Jason A. Donenfeld wrote:
+> The initial Zinc patchset, after some mailing list discussion, contained
+> code to ensure that kernel_fpu_enable would not be kept on for more than
+> a 4k chunk, since it disables preemption. The choice of 4k isn't totally
+> scientific, but it's not a bad guess either, and it's what's used in
+> both the x86 poly1305, blake2s, and nhpoly1305 code already (in the form
+> of PAGE_SIZE, which this commit corrects to be explicitly 4k).
+> 
+> Ard did some back of the envelope calculations and found that
+> at 5 cycles/byte (overestimate) on a 1ghz processor (pretty slow), 4k
+> means we have a maximum preemption disabling of 20us, which Sebastian
+> confirmed was probably a good limit.
+> 
+> Unfortunately the chunking appears to have been left out of the final
+> patchset that added the glue code. So, this commit adds it back in.
+> 
+> Fixes: 84e03fa39fbe ("crypto: x86/chacha - expose SIMD ChaCha routine as library function")
+> Fixes: b3aad5bad26a ("crypto: arm64/chacha - expose arm64 ChaCha routine as library function")
+> Fixes: a44a3430d71b ("crypto: arm/chacha - expose ARM ChaCha routine as library function")
+> Fixes: d7d7b8535662 ("crypto: x86/poly1305 - wire up faster implementations for kernel")
+> Fixes: f569ca164751 ("crypto: arm64/poly1305 - incorporate OpenSSL/CRYPTOGAMS NEON implementation")
+> Fixes: a6b803b3ddc7 ("crypto: arm/poly1305 - incorporate OpenSSL/CRYPTOGAMS NEON implementation")
+> Fixes: 0f961f9f670e ("crypto: x86/nhpoly1305 - add AVX2 accelerated NHPoly1305")
+> Fixes: 012c82388c03 ("crypto: x86/nhpoly1305 - add SSE2 accelerated NHPoly1305")
+> Fixes: a00fa0c88774 ("crypto: arm64/nhpoly1305 - add NEON-accelerated NHPoly1305")
+> Fixes: 16aae3595a9d ("crypto: arm/nhpoly1305 - add NEON-accelerated NHPoly1305")
+> Fixes: ed0356eda153 ("crypto: blake2s - x86_64 SIMD implementation")
+> Cc: Eric Biggers <ebiggers@google.com>
+> Cc: Ard Biesheuvel <ardb@kernel.org>
+> Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Jason A. Donenfeld <Jason@zx2c4.com>
+> ---
+> Changes v1->v2:
+>  - [Ard] Use explicit 4k chunks instead of PAGE_SIZE.
+>  - [Eric] Prefer do-while over for (;;).
+> 
+>  arch/arm/crypto/chacha-glue.c            | 14 +++++++++++---
+>  arch/arm/crypto/nhpoly1305-neon-glue.c   |  2 +-
+>  arch/arm/crypto/poly1305-glue.c          | 15 +++++++++++----
+>  arch/arm64/crypto/chacha-neon-glue.c     | 14 +++++++++++---
+>  arch/arm64/crypto/nhpoly1305-neon-glue.c |  2 +-
+>  arch/arm64/crypto/poly1305-glue.c        | 15 +++++++++++----
+>  arch/x86/crypto/blake2s-glue.c           | 10 ++++------
+>  arch/x86/crypto/chacha_glue.c            | 14 +++++++++++---
+>  arch/x86/crypto/nhpoly1305-avx2-glue.c   |  2 +-
+>  arch/x86/crypto/nhpoly1305-sse2-glue.c   |  2 +-
+>  arch/x86/crypto/poly1305_glue.c          | 13 ++++++-------
+>  11 files changed, 69 insertions(+), 34 deletions(-)
 
-Ard did some back of the envelope calculations and found that
-at 5 cycles/byte (overestimate) on a 1ghz processor (pretty slow), 4k
-means we have a maximum preemption disabling of 20us, which Sebastian
-confirmed was probably a good limit.
+Can you split the nhpoly1305 changes into a separate patch?  They're a bit
+different from the rest of this patch, which is fixing up the crypto library
+interface that's new in v5.5.  The nhpoly1305 changes apply to v5.0 and don't
+have anything to do with the crypto library interface, and they're also a bit
+different since they replace PAGE_SIZE with 4K rather than unlimited with 4K.
 
-Unfortunately the chunking appears to have been left out of the final
-patchset that added the glue code. So, this commit adds it back in.
-
-Fixes: 84e03fa39fbe ("crypto: x86/chacha - expose SIMD ChaCha routine as library function")
-Fixes: b3aad5bad26a ("crypto: arm64/chacha - expose arm64 ChaCha routine as library function")
-Fixes: a44a3430d71b ("crypto: arm/chacha - expose ARM ChaCha routine as library function")
-Fixes: d7d7b8535662 ("crypto: x86/poly1305 - wire up faster implementations for kernel")
-Fixes: f569ca164751 ("crypto: arm64/poly1305 - incorporate OpenSSL/CRYPTOGAMS NEON implementation")
-Fixes: a6b803b3ddc7 ("crypto: arm/poly1305 - incorporate OpenSSL/CRYPTOGAMS NEON implementation")
-Fixes: 0f961f9f670e ("crypto: x86/nhpoly1305 - add AVX2 accelerated NHPoly1305")
-Fixes: 012c82388c03 ("crypto: x86/nhpoly1305 - add SSE2 accelerated NHPoly1305")
-Fixes: a00fa0c88774 ("crypto: arm64/nhpoly1305 - add NEON-accelerated NHPoly1305")
-Fixes: 16aae3595a9d ("crypto: arm/nhpoly1305 - add NEON-accelerated NHPoly1305")
-Fixes: ed0356eda153 ("crypto: blake2s - x86_64 SIMD implementation")
-Cc: Eric Biggers <ebiggers@google.com>
-Cc: Ard Biesheuvel <ardb@kernel.org>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: stable@vger.kernel.org
-Signed-off-by: Jason A. Donenfeld <Jason@zx2c4.com>
----
-Changes v1->v2:
- - [Ard] Use explicit 4k chunks instead of PAGE_SIZE.
- - [Eric] Prefer do-while over for (;;).
-
- arch/arm/crypto/chacha-glue.c            | 14 +++++++++++---
- arch/arm/crypto/nhpoly1305-neon-glue.c   |  2 +-
- arch/arm/crypto/poly1305-glue.c          | 15 +++++++++++----
- arch/arm64/crypto/chacha-neon-glue.c     | 14 +++++++++++---
- arch/arm64/crypto/nhpoly1305-neon-glue.c |  2 +-
- arch/arm64/crypto/poly1305-glue.c        | 15 +++++++++++----
- arch/x86/crypto/blake2s-glue.c           | 10 ++++------
- arch/x86/crypto/chacha_glue.c            | 14 +++++++++++---
- arch/x86/crypto/nhpoly1305-avx2-glue.c   |  2 +-
- arch/x86/crypto/nhpoly1305-sse2-glue.c   |  2 +-
- arch/x86/crypto/poly1305_glue.c          | 13 ++++++-------
- 11 files changed, 69 insertions(+), 34 deletions(-)
-
-diff --git a/arch/arm/crypto/chacha-glue.c b/arch/arm/crypto/chacha-glue.c
-index 6fdb0ac62b3d..59da6c0b63b6 100644
---- a/arch/arm/crypto/chacha-glue.c
-+++ b/arch/arm/crypto/chacha-glue.c
-@@ -91,9 +91,17 @@ void chacha_crypt_arch(u32 *state, u8 *dst, const u8 *src, unsigned int bytes,
- 		return;
- 	}
- 
--	kernel_neon_begin();
--	chacha_doneon(state, dst, src, bytes, nrounds);
--	kernel_neon_end();
-+	do {
-+		unsigned int todo = min_t(unsigned int, bytes, SZ_4K);
-+
-+		kernel_neon_begin();
-+		chacha_doneon(state, dst, src, todo, nrounds);
-+		kernel_neon_end();
-+
-+		bytes -= todo;
-+		src += todo;
-+		dst += todo;
-+	} while (bytes);
- }
- EXPORT_SYMBOL(chacha_crypt_arch);
- 
-diff --git a/arch/arm/crypto/nhpoly1305-neon-glue.c b/arch/arm/crypto/nhpoly1305-neon-glue.c
-index ae5aefc44a4d..ffa8d73fe722 100644
---- a/arch/arm/crypto/nhpoly1305-neon-glue.c
-+++ b/arch/arm/crypto/nhpoly1305-neon-glue.c
-@@ -30,7 +30,7 @@ static int nhpoly1305_neon_update(struct shash_desc *desc,
- 		return crypto_nhpoly1305_update(desc, src, srclen);
- 
- 	do {
--		unsigned int n = min_t(unsigned int, srclen, PAGE_SIZE);
-+		unsigned int n = min_t(unsigned int, srclen, SZ_4K);
- 
- 		kernel_neon_begin();
- 		crypto_nhpoly1305_update_helper(desc, src, n, _nh_neon);
-diff --git a/arch/arm/crypto/poly1305-glue.c b/arch/arm/crypto/poly1305-glue.c
-index ceec04ec2f40..13cfef4ae22e 100644
---- a/arch/arm/crypto/poly1305-glue.c
-+++ b/arch/arm/crypto/poly1305-glue.c
-@@ -160,13 +160,20 @@ void poly1305_update_arch(struct poly1305_desc_ctx *dctx, const u8 *src,
- 		unsigned int len = round_down(nbytes, POLY1305_BLOCK_SIZE);
- 
- 		if (static_branch_likely(&have_neon) && do_neon) {
--			kernel_neon_begin();
--			poly1305_blocks_neon(&dctx->h, src, len, 1);
--			kernel_neon_end();
-+			do {
-+				unsigned int todo = min_t(unsigned int, len, SZ_4K);
-+
-+				kernel_neon_begin();
-+				poly1305_blocks_neon(&dctx->h, src, todo, 1);
-+				kernel_neon_end();
-+
-+				len -= todo;
-+				src += todo;
-+			} while (len);
- 		} else {
- 			poly1305_blocks_arm(&dctx->h, src, len, 1);
-+			src += len;
- 		}
--		src += len;
- 		nbytes %= POLY1305_BLOCK_SIZE;
- 	}
- 
-diff --git a/arch/arm64/crypto/chacha-neon-glue.c b/arch/arm64/crypto/chacha-neon-glue.c
-index 37ca3e889848..af2bbca38e70 100644
---- a/arch/arm64/crypto/chacha-neon-glue.c
-+++ b/arch/arm64/crypto/chacha-neon-glue.c
-@@ -87,9 +87,17 @@ void chacha_crypt_arch(u32 *state, u8 *dst, const u8 *src, unsigned int bytes,
- 	    !crypto_simd_usable())
- 		return chacha_crypt_generic(state, dst, src, bytes, nrounds);
- 
--	kernel_neon_begin();
--	chacha_doneon(state, dst, src, bytes, nrounds);
--	kernel_neon_end();
-+	do {
-+		unsigned int todo = min_t(unsigned int, bytes, SZ_4K);
-+
-+		kernel_neon_begin();
-+		chacha_doneon(state, dst, src, todo, nrounds);
-+		kernel_neon_end();
-+
-+		bytes -= todo;
-+		src += todo;
-+		dst += todo;
-+	} while (bytes);
- }
- EXPORT_SYMBOL(chacha_crypt_arch);
- 
-diff --git a/arch/arm64/crypto/nhpoly1305-neon-glue.c b/arch/arm64/crypto/nhpoly1305-neon-glue.c
-index 895d3727c1fb..c5405e6a6db7 100644
---- a/arch/arm64/crypto/nhpoly1305-neon-glue.c
-+++ b/arch/arm64/crypto/nhpoly1305-neon-glue.c
-@@ -30,7 +30,7 @@ static int nhpoly1305_neon_update(struct shash_desc *desc,
- 		return crypto_nhpoly1305_update(desc, src, srclen);
- 
- 	do {
--		unsigned int n = min_t(unsigned int, srclen, PAGE_SIZE);
-+		unsigned int n = min_t(unsigned int, srclen, SZ_4K);
- 
- 		kernel_neon_begin();
- 		crypto_nhpoly1305_update_helper(desc, src, n, _nh_neon);
-diff --git a/arch/arm64/crypto/poly1305-glue.c b/arch/arm64/crypto/poly1305-glue.c
-index e97b092f56b8..f33ada70c4ed 100644
---- a/arch/arm64/crypto/poly1305-glue.c
-+++ b/arch/arm64/crypto/poly1305-glue.c
-@@ -143,13 +143,20 @@ void poly1305_update_arch(struct poly1305_desc_ctx *dctx, const u8 *src,
- 		unsigned int len = round_down(nbytes, POLY1305_BLOCK_SIZE);
- 
- 		if (static_branch_likely(&have_neon) && crypto_simd_usable()) {
--			kernel_neon_begin();
--			poly1305_blocks_neon(&dctx->h, src, len, 1);
--			kernel_neon_end();
-+			do {
-+				unsigned int todo = min_t(unsigned int, len, SZ_4K);
-+
-+				kernel_neon_begin();
-+				poly1305_blocks_neon(&dctx->h, src, todo, 1);
-+				kernel_neon_end();
-+
-+				len -= todo;
-+				src += todo;
-+			} while (len);
- 		} else {
- 			poly1305_blocks(&dctx->h, src, len, 1);
-+			src += len;
- 		}
--		src += len;
- 		nbytes %= POLY1305_BLOCK_SIZE;
- 	}
- 
-diff --git a/arch/x86/crypto/blake2s-glue.c b/arch/x86/crypto/blake2s-glue.c
-index 06ef2d4a4701..6737bcea1fa1 100644
---- a/arch/x86/crypto/blake2s-glue.c
-+++ b/arch/x86/crypto/blake2s-glue.c
-@@ -32,16 +32,16 @@ void blake2s_compress_arch(struct blake2s_state *state,
- 			   const u32 inc)
- {
- 	/* SIMD disables preemption, so relax after processing each page. */
--	BUILD_BUG_ON(PAGE_SIZE / BLAKE2S_BLOCK_SIZE < 8);
-+	BUILD_BUG_ON(SZ_4K / BLAKE2S_BLOCK_SIZE < 8);
- 
- 	if (!static_branch_likely(&blake2s_use_ssse3) || !crypto_simd_usable()) {
- 		blake2s_compress_generic(state, block, nblocks, inc);
- 		return;
- 	}
- 
--	for (;;) {
-+	do {
- 		const size_t blocks = min_t(size_t, nblocks,
--					    PAGE_SIZE / BLAKE2S_BLOCK_SIZE);
-+					    SZ_4K / BLAKE2S_BLOCK_SIZE);
- 
- 		kernel_fpu_begin();
- 		if (IS_ENABLED(CONFIG_AS_AVX512) &&
-@@ -52,10 +52,8 @@ void blake2s_compress_arch(struct blake2s_state *state,
- 		kernel_fpu_end();
- 
- 		nblocks -= blocks;
--		if (!nblocks)
--			break;
- 		block += blocks * BLAKE2S_BLOCK_SIZE;
--	}
-+	} while (nblocks);
- }
- EXPORT_SYMBOL(blake2s_compress_arch);
- 
-diff --git a/arch/x86/crypto/chacha_glue.c b/arch/x86/crypto/chacha_glue.c
-index b412c21ee06e..22250091cdbe 100644
---- a/arch/x86/crypto/chacha_glue.c
-+++ b/arch/x86/crypto/chacha_glue.c
-@@ -153,9 +153,17 @@ void chacha_crypt_arch(u32 *state, u8 *dst, const u8 *src, unsigned int bytes,
- 	    bytes <= CHACHA_BLOCK_SIZE)
- 		return chacha_crypt_generic(state, dst, src, bytes, nrounds);
- 
--	kernel_fpu_begin();
--	chacha_dosimd(state, dst, src, bytes, nrounds);
--	kernel_fpu_end();
-+	do {
-+		unsigned int todo = min_t(unsigned int, bytes, SZ_4K);
-+
-+		kernel_fpu_begin();
-+		chacha_dosimd(state, dst, src, todo, nrounds);
-+		kernel_fpu_end();
-+
-+		bytes -= todo;
-+		src += todo;
-+		dst += todo;
-+	} while (bytes);
- }
- EXPORT_SYMBOL(chacha_crypt_arch);
- 
-diff --git a/arch/x86/crypto/nhpoly1305-avx2-glue.c b/arch/x86/crypto/nhpoly1305-avx2-glue.c
-index f7567cbd35b6..80fcb85736e1 100644
---- a/arch/x86/crypto/nhpoly1305-avx2-glue.c
-+++ b/arch/x86/crypto/nhpoly1305-avx2-glue.c
-@@ -29,7 +29,7 @@ static int nhpoly1305_avx2_update(struct shash_desc *desc,
- 		return crypto_nhpoly1305_update(desc, src, srclen);
- 
- 	do {
--		unsigned int n = min_t(unsigned int, srclen, PAGE_SIZE);
-+		unsigned int n = min_t(unsigned int, srclen, SZ_4K);
- 
- 		kernel_fpu_begin();
- 		crypto_nhpoly1305_update_helper(desc, src, n, _nh_avx2);
-diff --git a/arch/x86/crypto/nhpoly1305-sse2-glue.c b/arch/x86/crypto/nhpoly1305-sse2-glue.c
-index a661ede3b5cf..cc6b7c1a2705 100644
---- a/arch/x86/crypto/nhpoly1305-sse2-glue.c
-+++ b/arch/x86/crypto/nhpoly1305-sse2-glue.c
-@@ -29,7 +29,7 @@ static int nhpoly1305_sse2_update(struct shash_desc *desc,
- 		return crypto_nhpoly1305_update(desc, src, srclen);
- 
- 	do {
--		unsigned int n = min_t(unsigned int, srclen, PAGE_SIZE);
-+		unsigned int n = min_t(unsigned int, srclen, SZ_4K);
- 
- 		kernel_fpu_begin();
- 		crypto_nhpoly1305_update_helper(desc, src, n, _nh_sse2);
-diff --git a/arch/x86/crypto/poly1305_glue.c b/arch/x86/crypto/poly1305_glue.c
-index 6dfec19f7d57..dfe921efa9b2 100644
---- a/arch/x86/crypto/poly1305_glue.c
-+++ b/arch/x86/crypto/poly1305_glue.c
-@@ -91,8 +91,8 @@ static void poly1305_simd_blocks(void *ctx, const u8 *inp, size_t len,
- 	struct poly1305_arch_internal *state = ctx;
- 
- 	/* SIMD disables preemption, so relax after processing each page. */
--	BUILD_BUG_ON(PAGE_SIZE < POLY1305_BLOCK_SIZE ||
--		     PAGE_SIZE % POLY1305_BLOCK_SIZE);
-+	BUILD_BUG_ON(SZ_4K < POLY1305_BLOCK_SIZE ||
-+		     SZ_4K % POLY1305_BLOCK_SIZE);
- 
- 	if (!static_branch_likely(&poly1305_use_avx) ||
- 	    (len < (POLY1305_BLOCK_SIZE * 18) && !state->is_base2_26) ||
-@@ -102,8 +102,8 @@ static void poly1305_simd_blocks(void *ctx, const u8 *inp, size_t len,
- 		return;
- 	}
- 
--	for (;;) {
--		const size_t bytes = min_t(size_t, len, PAGE_SIZE);
-+	do {
-+		const size_t bytes = min_t(size_t, len, SZ_4K);
- 
- 		kernel_fpu_begin();
- 		if (IS_ENABLED(CONFIG_AS_AVX512) && static_branch_likely(&poly1305_use_avx512))
-@@ -113,11 +113,10 @@ static void poly1305_simd_blocks(void *ctx, const u8 *inp, size_t len,
- 		else
- 			poly1305_blocks_avx(ctx, inp, bytes, padbit);
- 		kernel_fpu_end();
-+
- 		len -= bytes;
--		if (!len)
--			break;
- 		inp += bytes;
--	}
-+	} while (len);
- }
- 
- static void poly1305_simd_emit(void *ctx, u8 mac[POLY1305_DIGEST_SIZE],
--- 
-2.26.2
-
+- Eric
