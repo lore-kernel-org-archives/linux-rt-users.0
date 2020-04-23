@@ -2,118 +2,110 @@ Return-Path: <SRS0=c0v5=6H=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+X-Spam-Status: No, score=-4.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+	USER_AGENT_GIT autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7C118C54FCB
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Apr 2020 20:49:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A06B5C54FCB
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Apr 2020 20:54:30 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 56B162073A
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Apr 2020 20:49:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 75BFB20767
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Apr 2020 20:54:30 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1587674990;
-	bh=MSlxj3FTC3nvLdjAv5FJt6Di8Yjgc404KV1QceXr2gI=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc:List-ID:From;
-	b=ycHY0TiIXn7kTlGiKJvEiTSiivPcbJLp+YhwE2janU2WsY9XMEs6Qgwduj456whE8
-	 mN+QxfdUSuNzoqmPZk8OO6WUQm+ysXSH1ROc3KleQTs0Zx/XKhauc6wgMny/IWAaik
-	 0b7teLFMuXF5XJ6NtV9axE8/3eY124Vfl2/f0SBQ=
+	s=default; t=1587675270;
+	bh=Z2kbebwq8Q0QlBboMLPWtnkVj9pDsV4a9O/CCn91B7M=;
+	h=From:To:Subject:Date:List-ID:From;
+	b=p2xD2u/LuSh1/PbyesNBsA2Di19Did3Xftvfs0JqMqzyTvSjWcdkaJUXu/5YrBI8g
+	 A2iRAuE3+r8/9+Uf5iAFE2y5/IfELMch7byfNt0HOEs+EhQ5pE14qO1jzxIPITY0rf
+	 q/H1pj6yMYIMPG+fMuKezS2PvA1nFNnhuvfi2Teg=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726713AbgDWUtq (ORCPT
+        id S1726456AbgDWUy3 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 23 Apr 2020 16:49:46 -0400
-Received: from mail.kernel.org ([198.145.29.99]:46456 "EHLO mail.kernel.org"
+        Thu, 23 Apr 2020 16:54:29 -0400
+Received: from mail.kernel.org ([198.145.29.99]:47544 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725934AbgDWUtq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 23 Apr 2020 16:49:46 -0400
-Received: from mail-il1-f182.google.com (mail-il1-f182.google.com [209.85.166.182])
+        id S1725877AbgDWUy2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 23 Apr 2020 16:54:28 -0400
+Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 463F721473;
-        Thu, 23 Apr 2020 20:49:45 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 89B0F2073A;
+        Thu, 23 Apr 2020 20:54:27 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1587674985;
-        bh=MSlxj3FTC3nvLdjAv5FJt6Di8Yjgc404KV1QceXr2gI=;
-        h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-        b=UicUjR+a4xpbgRR+RESVsg4TX92eq4fXd03Apr7YUXTTQLfjlwJD0+vlrfCPxCu8E
-         Oe6PEnEYeTV7VVF5e5SbN/XV9jcI74Dr+IPLZlhDZDXE4srwpr7dJfe8mzvEm8gPeb
-         o6epNkCAuG3YCRgONcfhTaTmu9I9/wBzDEaoryJ4=
-Received: by mail-il1-f182.google.com with SMTP id f82so7200949ilh.8;
-        Thu, 23 Apr 2020 13:49:45 -0700 (PDT)
-X-Gm-Message-State: AGi0Pub5dXv2N7mSPLsInzfceKDIj1daEzoZ8M9z6Ob57gpxHX+e0x14
-        aIhNygSxYhbFsgZH+xtOXR6mhmNCbjW0TrBhw84=
-X-Google-Smtp-Source: APiQypI98P4YREZggeC8yAufVgd3Z1NcZrt0gB1INf8LQJiS0Q+a9x8mlmZViFeOMli+kJL5XCPNMdRFYd5e33KnizU=
-X-Received: by 2002:a02:6a1e:: with SMTP id l30mr4929086jac.98.1587674984585;
- Thu, 23 Apr 2020 13:49:44 -0700 (PDT)
-MIME-Version: 1.0
-References: <20200422200344.239462-1-Jason@zx2c4.com> <20200422231854.675965-1-Jason@zx2c4.com>
- <CAMj1kXHV=ryaFmj0jhQVGBd31nfHs7q5RtSyu7dY6GdEJJsr7A@mail.gmail.com>
- <20200423184219.GA80650@kroah.com> <CAMj1kXF9uLUE3=rX1i_yYoigB7j-nLMZpGc35ve2KV+NxjRhVQ@mail.gmail.com>
- <20200423202348.GA2796@gmail.com>
-In-Reply-To: <20200423202348.GA2796@gmail.com>
-From:   Ard Biesheuvel <ardb@kernel.org>
-Date:   Thu, 23 Apr 2020 22:49:33 +0200
-X-Gmail-Original-Message-ID: <CAMj1kXGAUQ3DT-9roymODC20+GPFv4R280r1BrN=juHtYhnq7g@mail.gmail.com>
-Message-ID: <CAMj1kXGAUQ3DT-9roymODC20+GPFv4R280r1BrN=juHtYhnq7g@mail.gmail.com>
-Subject: Re: [PATCH crypto-stable v3 1/2] crypto: arch/lib - limit simd usage
- to 4k chunks
-To:     Eric Biggers <ebiggers@kernel.org>
-Cc:     Greg KH <gregkh@linuxfoundation.org>,
-        "Jason A. Donenfeld" <Jason@zx2c4.com>,
-        Herbert Xu <herbert@gondor.apana.org.au>,
-        Linux Crypto Mailing List <linux-crypto@vger.kernel.org>,
-        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Content-Type: text/plain; charset="UTF-8"
+        s=default; t=1587675268;
+        bh=Z2kbebwq8Q0QlBboMLPWtnkVj9pDsV4a9O/CCn91B7M=;
+        h=From:To:Subject:Date:From;
+        b=mXfSuoHrfrz1NeFYSE6i39ry/uDNoLTbiiYfz81+dWa4svz1yOa551SJ+fIJlq1Sm
+         2uUHT3zEQ6n1yd4x2R/Q14PA5PAzgj5vIo7/8r/yM4tgD45vWUQtUNFbt9Bw8s8OkZ
+         Na2RW07AWH60lvbbKkEfcnFT15kROMAd+DGPzOIc=
+From:   zanussi@kernel.org
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <wagi@monom.org>,
+        Clark Williams <williams@redhat.com>,
+        Tom Zanussi <zanussi@kernel.org>
+Subject: [PATCH RT 0/2] Linux v4.19.115-rt49-rc1
+Date:   Thu, 23 Apr 2020 15:54:24 -0500
+Message-Id: <cover.1587675252.git.zanussi@kernel.org>
+X-Mailer: git-send-email 2.17.1
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, 23 Apr 2020 at 22:23, Eric Biggers <ebiggers@kernel.org> wrote:
->
-> On Thu, Apr 23, 2020 at 08:47:00PM +0200, Ard Biesheuvel wrote:
-> > On Thu, 23 Apr 2020 at 20:42, Greg KH <gregkh@linuxfoundation.org> wrote:
-> > >
-> > > On Thu, Apr 23, 2020 at 09:18:15AM +0200, Ard Biesheuvel wrote:
-> > > > FYI: you shouldn't cc stable@vger.kernel.org directly on your patches,
-> > > > or add the cc: line. Only patches that are already in Linus' tree
-> > > > should be sent there.
-> > >
-> > > Not true at all, please read:
-> > >     https://www.kernel.org/doc/html/latest/process/stable-kernel-rules.html
-> > > for how to do this properly.  Please do not spread incorrect
-> > > information.
-> > >
-> > > And Jason did this properly, he put cc: stable@ in the s-o-b area and
-> > > all is good, I will pick up this patch once it hits Linus's tree.
-> > >
-> > > And there is no problem actually sending the patch to stable@vger while
-> > > under development like this, as it gives me a heads-up that something is
-> > > coming, and is trivial to filter out.
-> > >
-> > > If you really want to be nice, you can just do:
-> > >         cc: stable@kernel.org
-> > > which goes to /dev/null on kernel.org, so no email will be sent to any
-> > > list, but my scripts still pick it up.  But no real need to do that,
-> > > it's fine.
-> > >
-> >
-> > OK, thanks for clearing this up.
-> >
-> > So does this mean you have stopped sending out 'formletter'
-> > auto-replies for patches that were sent out to stable@vger.kernel.org
-> > directly, telling people not to do that?
-> >
->
-> I often leave stable@vger.kernel.org in the email Cc list, and no one has ever
-> complained.  It's only sending patches directly "To:" stable@vger.kernel.org
-> that isn't allowed, except when actually sending out backports.
->
-> If there were people who had an actual issue with Cc, then I think the rules
-> would have changed long ago to using some other tag like Backport-to that
-> doesn't get picked up by git send-email.
->
+From: Tom Zanussi <zanussi@kernel.org>
 
-OK, good to know.
+Dear RT Folks,
+
+This is the RT stable review cycle of patch 4.19.115-rt49-rc1.
+
+Please scream at me if I messed something up. Please test the patches
+too.
+
+The -rc release will be uploaded to kernel.org and will be deleted
+when the final release is out. This is just a review release (or
+release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main
+release on 2020-04-27.
+
+To build 4.19.115-rt49-rc1 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.115.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/patch-4.19.115-rt49-rc1.patch.xz
+
+You can also build from 4.19.115-rt48 by applying the incremental patch:
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/incr/patch-4.19.115-rt48-rt49-rc1.patch.xz
+
+
+Enjoy,
+
+-- Tom
+
+
+Tom Zanussi (1):
+  Linux 4.19.115-rt49-rc1
+
+Zhang Xiao (1):
+  tasklet: Address a race resulting in double-enqueue
+
+ include/linux/interrupt.h | 5 ++++-
+ kernel/softirq.c          | 6 +++++-
+ localversion-rt           | 2 +-
+ 3 files changed, 10 insertions(+), 3 deletions(-)
+
+-- 
+2.17.1
+
