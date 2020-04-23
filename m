@@ -2,69 +2,104 @@ Return-Path: <SRS0=c0v5=6H=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BFFF2C54FCB
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Apr 2020 18:34:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 75770C54FCB
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Apr 2020 18:42:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A49BE20767
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Apr 2020 18:34:43 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 57B57205C9
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Apr 2020 18:42:25 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1587667345;
+	bh=KTRpfyPod8ejKBCyWiqd7QJfSaijbGNvBmsswJMm/aE=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:List-ID:From;
+	b=QAZlscoEbjTX+PCir9KJEu+eCg4UbxX6wW0cBfpDfNAm2is371q6OJ7KkobUW4N6W
+	 ptbKS4hIW2lQw6cSk0+YNEeN9xa7r6GQXaWZHqwsYolR1ZEeODwPULpOvjKONl/Bby
+	 5OT6iKPG7W0A3jUS6Uvxknyug5jzU6x1V6Nj5SZA=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730239AbgDWSek (ORCPT
+        id S1730221AbgDWSmW (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 23 Apr 2020 14:34:40 -0400
-Received: from mail.kernel.org ([198.145.29.99]:59736 "EHLO mail.kernel.org"
+        Thu, 23 Apr 2020 14:42:22 -0400
+Received: from mail.kernel.org ([198.145.29.99]:33184 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1730102AbgDWSek (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 23 Apr 2020 14:34:40 -0400
-Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        id S1730056AbgDWSmV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 23 Apr 2020 14:42:21 -0400
+Received: from localhost (83-86-89-107.cable.dynamic.v4.ziggo.nl [83.86.89.107])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 4AEFD2071C;
-        Thu, 23 Apr 2020 18:34:39 +0000 (UTC)
-Date:   Thu, 23 Apr 2020 14:34:37 -0400
-From:   Steven Rostedt <rostedt@goodmis.org>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Jiri Kosina <jikos@kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Frederic Weisbecker <fweisbec@gmail.com>,
-        Matt Fleming <matt@codeblueprint.co.uk>,
-        Daniel Wagner <dwagner@suse.de>
-Subject: Re: [PREEMPT_RT] 8250 IRQ lockup when flooding serial console (was
- Re: [ANNOUNCE] v5.4.28-rt19)
-Message-ID: <20200423143437.3d82c3ea@gandalf.local.home>
-In-Reply-To: <20200423090601.2439e64f@gandalf.local.home>
-References: <20200330144712.cwcz5ejal4ankeoi@linutronix.de>
-        <nycvar.YEU.7.76.2004231017470.4730@gjva.wvxbf.pm>
-        <nycvar.YFH.7.76.2004231111550.19713@cbobk.fhfr.pm>
-        <20200423104559.rgplz6rqk6sg4kz7@linutronix.de>
-        <20200423090601.2439e64f@gandalf.local.home>
-X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
+        by mail.kernel.org (Postfix) with ESMTPSA id 2539620767;
+        Thu, 23 Apr 2020 18:42:20 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1587667341;
+        bh=KTRpfyPod8ejKBCyWiqd7QJfSaijbGNvBmsswJMm/aE=;
+        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+        b=lveQQ7gD0dQ/MhOmjoshXFCS858WXugSCMY6l4GddrgQZiVxr3OL5ROkape22+k30
+         CgTEclyNwiD4ZkKzVLUzUCju6vyiI0t0hKU8AGs9s/S/dIn1wAXtlWA4WHl0stzKqW
+         UZcQSq9NLKF01lI0xEDGphDk+/3hYwo8jK5+tJ6s=
+Date:   Thu, 23 Apr 2020 20:42:19 +0200
+From:   Greg KH <gregkh@linuxfoundation.org>
+To:     Ard Biesheuvel <ardb@kernel.org>
+Cc:     "Jason A. Donenfeld" <Jason@zx2c4.com>,
+        Herbert Xu <herbert@gondor.apana.org.au>,
+        Linux Crypto Mailing List <linux-crypto@vger.kernel.org>,
+        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org, Eric Biggers <ebiggers@google.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH crypto-stable v3 1/2] crypto: arch/lib - limit simd usage
+ to 4k chunks
+Message-ID: <20200423184219.GA80650@kroah.com>
+References: <20200422200344.239462-1-Jason@zx2c4.com>
+ <20200422231854.675965-1-Jason@zx2c4.com>
+ <CAMj1kXHV=ryaFmj0jhQVGBd31nfHs7q5RtSyu7dY6GdEJJsr7A@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <CAMj1kXHV=ryaFmj0jhQVGBd31nfHs7q5RtSyu7dY6GdEJJsr7A@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, 23 Apr 2020 09:06:01 -0400
-Steven Rostedt <rostedt@goodmis.org> wrote:
+On Thu, Apr 23, 2020 at 09:18:15AM +0200, Ard Biesheuvel wrote:
+> FYI: you shouldn't cc stable@vger.kernel.org directly on your patches,
+> or add the cc: line. Only patches that are already in Linus' tree
+> should be sent there.
 
-> BTW, I haven't released a new 5.4-rt because the default one is triggering
-> a large latency somewhere, and makes my tests fail. I'm trying to dig into
-> the cause when I get time.
+Not true at all, please read:
+    https://www.kernel.org/doc/html/latest/process/stable-kernel-rules.html
+for how to do this properly.  Please do not spread incorrect
+information.
 
-Figured it out. Seems that starting with 5.4-rt, PREEMPT_RT now depends on
-CONFIG_EXPERT, which I didn't have set, and PREEMPT_RT was disabled when
-using my default config.
+And Jason did this properly, he put cc: stable@ in the s-o-b area and
+all is good, I will pick up this patch once it hits Linus's tree.
 
-Had to add CONFIG_EXPERT to my default config to make it work again.
+And there is no problem actually sending the patch to stable@vger while
+under development like this, as it gives me a heads-up that something is
+coming, and is trivial to filter out.
 
-Starting the tests over....
+If you really want to be nice, you can just do:
+	cc: stable@kernel.org
+which goes to /dev/null on kernel.org, so no email will be sent to any
+list, but my scripts still pick it up.  But no real need to do that,
+it's fine.
 
--- Steve
+> Also, the fixes tags are really quite sufficient.
+
+No it is not, I have had to dig out patches more and more because people
+do NOT put the cc: stable and only put Fixes:, which is not a good thing
+as I then have to "guess" what the maintainer/developer ment.
+
+Be explicit if you know it, cc: stable please.
+
+> In fact, it is
+> actually rather difficult these days to prevent something from being
+> taken into -stable if the bots notice that it applies cleanly.
+
+Those "bots" are still driven by a lot of human work, please make it
+easy on us whenever possible.
+
+thanks,
+
+greg k-h
