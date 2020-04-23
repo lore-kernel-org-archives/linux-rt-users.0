@@ -2,121 +2,76 @@ Return-Path: <SRS0=c0v5=6H=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DE817C55191
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Apr 2020 18:47:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2C9F9C54FCB
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Apr 2020 18:47:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BE82620781
-	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Apr 2020 18:47:18 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1587667638;
-	bh=IdJFdAGIXST8Snulp++rKWFCxXADaCE4jG/SKoSzfEw=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc:List-ID:From;
-	b=aGqHpjdTRgSQ+fG9Ko/XfhOxqMj6SEVPGcR6hBnuktJ3VC8DMe0iNBTijDZszZH4Q
-	 tY9EnJM8yPqy+ja9B8QXhPMsp4zTTUVpjA6Jc7hX9nyDprs2lQnjS9L3fxlC4SX0ZE
-	 bdCpHqlR8s7nvP0YjSer/1cCrFGP0l2Mpu8TOX9s=
+	by mail.kernel.org (Postfix) with ESMTP id 12C5220780
+	for <linux-rt-users@archiver.kernel.org>; Thu, 23 Apr 2020 18:47:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730251AbgDWSrM (ORCPT
+        id S1730271AbgDWSrX (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 23 Apr 2020 14:47:12 -0400
-Received: from mail.kernel.org ([198.145.29.99]:35476 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726994AbgDWSrM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 23 Apr 2020 14:47:12 -0400
-Received: from mail-io1-f43.google.com (mail-io1-f43.google.com [209.85.166.43])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 0606D20704;
-        Thu, 23 Apr 2020 18:47:12 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1587667632;
-        bh=IdJFdAGIXST8Snulp++rKWFCxXADaCE4jG/SKoSzfEw=;
-        h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-        b=hyCNA1wB/aJ5hsc4a67e/5wUVylpnYQ/h8r0S815V/7XPaNC2dRDVUG5PBdltbIs5
-         QH3uVOITwNvike7zKIklrXyUZsY8BptTf+xgvxPonofNti+ilxq0ES6JECn5omx/Jl
-         RwDkTsIHagrfBRS4ewGnV3rmDJvkbI/D7Ryni4IU=
-Received: by mail-io1-f43.google.com with SMTP id w20so7610397iob.2;
-        Thu, 23 Apr 2020 11:47:12 -0700 (PDT)
-X-Gm-Message-State: AGi0PubFWzttxOF1lO9noKXgTRVXMcdYNNfsb6yK6H2Y3p7H36VL5Rr5
-        kEahWzybW0NfGtrMGkIR72kdWUBGI8FSaEWdDRs=
-X-Google-Smtp-Source: APiQypLK7CqRqF014KuvChdtuujDAqDdGvytjo4xYTra2PCbmXRM12cuo33sm28ipCfEhCwR6Ki0SVghpWg8+Pq5u0M=
-X-Received: by 2002:a5d:9b8a:: with SMTP id r10mr5085026iom.171.1587667631436;
- Thu, 23 Apr 2020 11:47:11 -0700 (PDT)
+        Thu, 23 Apr 2020 14:47:23 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56056 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728082AbgDWSrX (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 23 Apr 2020 14:47:23 -0400
+Received: from Galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 40ED3C09B043;
+        Thu, 23 Apr 2020 11:47:23 -0700 (PDT)
+Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
+        (envelope-from <bigeasy@linutronix.de>)
+        id 1jRgsX-0003Hz-KU; Thu, 23 Apr 2020 20:47:17 +0200
+Date:   Thu, 23 Apr 2020 20:47:17 +0200
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Steven Rostedt <rostedt@goodmis.org>
+Cc:     Jiri Kosina <jikos@kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Frederic Weisbecker <fweisbec@gmail.com>,
+        Matt Fleming <matt@codeblueprint.co.uk>,
+        Daniel Wagner <dwagner@suse.de>
+Subject: Re: [PREEMPT_RT] 8250 IRQ lockup when flooding serial console (was
+ Re: [ANNOUNCE] v5.4.28-rt19)
+Message-ID: <20200423184717.w3c6eymkic5wnlix@linutronix.de>
+References: <20200330144712.cwcz5ejal4ankeoi@linutronix.de>
+ <nycvar.YEU.7.76.2004231017470.4730@gjva.wvxbf.pm>
+ <nycvar.YFH.7.76.2004231111550.19713@cbobk.fhfr.pm>
+ <20200423104559.rgplz6rqk6sg4kz7@linutronix.de>
+ <20200423090601.2439e64f@gandalf.local.home>
+ <20200423143437.3d82c3ea@gandalf.local.home>
 MIME-Version: 1.0
-References: <20200422200344.239462-1-Jason@zx2c4.com> <20200422231854.675965-1-Jason@zx2c4.com>
- <CAMj1kXHV=ryaFmj0jhQVGBd31nfHs7q5RtSyu7dY6GdEJJsr7A@mail.gmail.com> <20200423184219.GA80650@kroah.com>
-In-Reply-To: <20200423184219.GA80650@kroah.com>
-From:   Ard Biesheuvel <ardb@kernel.org>
-Date:   Thu, 23 Apr 2020 20:47:00 +0200
-X-Gmail-Original-Message-ID: <CAMj1kXF9uLUE3=rX1i_yYoigB7j-nLMZpGc35ve2KV+NxjRhVQ@mail.gmail.com>
-Message-ID: <CAMj1kXF9uLUE3=rX1i_yYoigB7j-nLMZpGc35ve2KV+NxjRhVQ@mail.gmail.com>
-Subject: Re: [PATCH crypto-stable v3 1/2] crypto: arch/lib - limit simd usage
- to 4k chunks
-To:     Greg KH <gregkh@linuxfoundation.org>
-Cc:     "Jason A. Donenfeld" <Jason@zx2c4.com>,
-        Herbert Xu <herbert@gondor.apana.org.au>,
-        Linux Crypto Mailing List <linux-crypto@vger.kernel.org>,
-        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-        linux-rt-users@vger.kernel.org, Eric Biggers <ebiggers@google.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20200423143437.3d82c3ea@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, 23 Apr 2020 at 20:42, Greg KH <gregkh@linuxfoundation.org> wrote:
->
-> On Thu, Apr 23, 2020 at 09:18:15AM +0200, Ard Biesheuvel wrote:
-> > FYI: you shouldn't cc stable@vger.kernel.org directly on your patches,
-> > or add the cc: line. Only patches that are already in Linus' tree
-> > should be sent there.
->
-> Not true at all, please read:
->     https://www.kernel.org/doc/html/latest/process/stable-kernel-rules.html
-> for how to do this properly.  Please do not spread incorrect
-> information.
->
-> And Jason did this properly, he put cc: stable@ in the s-o-b area and
-> all is good, I will pick up this patch once it hits Linus's tree.
->
-> And there is no problem actually sending the patch to stable@vger while
-> under development like this, as it gives me a heads-up that something is
-> coming, and is trivial to filter out.
->
-> If you really want to be nice, you can just do:
->         cc: stable@kernel.org
-> which goes to /dev/null on kernel.org, so no email will be sent to any
-> list, but my scripts still pick it up.  But no real need to do that,
-> it's fine.
->
+On 2020-04-23 14:34:37 [-0400], Steven Rostedt wrote:
+> On Thu, 23 Apr 2020 09:06:01 -0400
+> Steven Rostedt <rostedt@goodmis.org> wrote:
+> 
+> > BTW, I haven't released a new 5.4-rt because the default one is triggering
+> > a large latency somewhere, and makes my tests fail. I'm trying to dig into
+> > the cause when I get time.
+> 
+> Figured it out. Seems that starting with 5.4-rt, PREEMPT_RT now depends on
+> CONFIG_EXPERT, which I didn't have set, and PREEMPT_RT was disabled when
+> using my default config.
+> 
+> Had to add CONFIG_EXPERT to my default config to make it work again.
 
-OK, thanks for clearing this up.
+Yes, this changed upstream.
 
-So does this mean you have stopped sending out 'formletter'
-auto-replies for patches that were sent out to stable@vger.kernel.org
-directly, telling people not to do that?
+> Starting the tests over....
+> 
+> -- Steve
 
-> > Also, the fixes tags are really quite sufficient.
->
-> No it is not, I have had to dig out patches more and more because people
-> do NOT put the cc: stable and only put Fixes:, which is not a good thing
-> as I then have to "guess" what the maintainer/developer ment.
->
-> Be explicit if you know it, cc: stable please.
->
-
-OK
-
-> > In fact, it is
-> > actually rather difficult these days to prevent something from being
-> > taken into -stable if the bots notice that it applies cleanly.
->
-> Those "bots" are still driven by a lot of human work, please make it
-> easy on us whenever possible.
->
-
-Sure.
+Sebastian
