@@ -2,110 +2,112 @@ Return-Path: <SRS0=fi+z=6M=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 922C5C83000
-	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Apr 2020 19:53:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 566B6C83004
+	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Apr 2020 21:37:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6865821707
-	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Apr 2020 19:53:08 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1588103588;
-	bh=IpBlN6HeObjTA1Yvcaj1sRW4yDq8TR4oZlFFeD5QcHs=;
-	h=From:To:Subject:Date:List-ID:From;
-	b=EiF7/Pz9aankI+UqUthH0BM4YKeTMXPyslf50euCIcY6FVa+nQ5b7IN2Va0zUbTEn
-	 jJhnk+YlVNDZhw3O5cmPiAZGsQhPYnVhMcG7RePKXZHYSRBJDjO1eBOUhc7T2gTM8f
-	 OsG8z0kKMfFZT+azaO7cyYbesCmlRXLRX2n98eQ8=
+	by mail.kernel.org (Postfix) with ESMTP id 3E10A20731
+	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Apr 2020 21:37:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728812AbgD1Tw7 (ORCPT
+        id S1726893AbgD1Vh0 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 28 Apr 2020 15:52:59 -0400
-Received: from mail.kernel.org ([198.145.29.99]:49428 "EHLO mail.kernel.org"
+        Tue, 28 Apr 2020 17:37:26 -0400
+Received: from foss.arm.com ([217.140.110.172]:59422 "EHLO foss.arm.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728474AbgD1Tw6 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 28 Apr 2020 15:52:58 -0400
-Received: from localhost.localdomain (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 8CC3220730;
-        Tue, 28 Apr 2020 19:52:57 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1588103578;
-        bh=IpBlN6HeObjTA1Yvcaj1sRW4yDq8TR4oZlFFeD5QcHs=;
-        h=From:To:Subject:Date:From;
-        b=hFR+vSbRrWjoUOpDnqTbolnmEYxnQWk4d2o+j5YEOswNHPdPrUWLrFdYNctDZaIUq
-         H45hAvhmcFxCzEyF7z/cakX9R9kGHyLSqIq/ExLgu7zB0TRSQ91sILEODhQss4a8N/
-         mzmaanPfzc2aZEXGRhUHozT89qUNvT4Lq60L8DVM=
-From:   zanussi@kernel.org
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
-        Clark Williams <williams@redhat.com>,
-        Tom Zanussi <zanussi@kernel.org>,
-        Rasmus Villemoes <rasmus.villemoes@prevas.dk>
-Subject: [PATCH RT 0/2] Linux v4.19.115-rt50-rc1
-Date:   Tue, 28 Apr 2020 14:52:54 -0500
-Message-Id: <cover.1588103561.git.zanussi@kernel.org>
-X-Mailer: git-send-email 2.17.1
+        id S1726274AbgD1Vh0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 28 Apr 2020 17:37:26 -0400
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id C2CBD31B;
+        Tue, 28 Apr 2020 14:37:25 -0700 (PDT)
+Received: from e113632-lin (e113632-lin.cambridge.arm.com [10.1.194.46])
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 71FA13F68F;
+        Tue, 28 Apr 2020 14:37:24 -0700 (PDT)
+References: <20200428050242.17717-1-swood@redhat.com> <20200428050242.17717-2-swood@redhat.com>
+User-agent: mu4e 0.9.17; emacs 26.3
+From:   Valentin Schneider <valentin.schneider@arm.com>
+To:     Scott Wood <swood@redhat.com>
+Cc:     Steven Rostedt <rostedt@goodmis.org>,
+        Ingo Molnar <mingo@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Vincent Guittot <vincent.guittot@linaro.org>,
+        Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        Rik van Riel <riel@surriel.com>,
+        Mel Gorman <mgorman@suse.de>, linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Subject: Re: [RFC PATCH 1/3] sched/fair: Call newidle_balance() from finish_task_switch()
+In-reply-to: <20200428050242.17717-2-swood@redhat.com>
+Date:   Tue, 28 Apr 2020 22:37:18 +0100
+Message-ID: <jhjftcns35d.mognet@arm.com>
+MIME-Version: 1.0
+Content-Type: text/plain
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Tom Zanussi <zanussi@kernel.org>
 
-Dear RT Folks,
+On 28/04/20 06:02, Scott Wood wrote:
+> Thus, newidle_balance() is entered with interrupts enabled, which allows
+> (in the next patch) enabling interrupts when the lock is dropped.
+>
+> Signed-off-by: Scott Wood <swood@redhat.com>
+> ---
+>  kernel/sched/core.c  |  7 ++++---
+>  kernel/sched/fair.c  | 45 ++++++++++++++++----------------------------
+>  kernel/sched/sched.h |  6 ++----
+>  3 files changed, 22 insertions(+), 36 deletions(-)
+>
+> diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+> index 9a2fbf98fd6f..0294beb8d16c 100644
+> --- a/kernel/sched/core.c
+> +++ b/kernel/sched/core.c
+> @@ -3241,6 +3241,10 @@ static struct rq *finish_task_switch(struct task_struct *prev)
+>       }
+>
+>       tick_nohz_task_switch();
+> +
+> +	if (is_idle_task(current))
+> +		newidle_balance();
+> +
 
-This is the RT stable review cycle of patch 4.19.115-rt50-rc1.
+This means we must go through a switch_to(idle) before figuring out we
+could've switched to a CFS task, and do it then. I'm curious to see the
+performance impact of that.
 
-Please scream at me if I messed something up. Please test the patches
-too.
+>       return rq;
+>  }
+>
+> @@ -10425,14 +10408,23 @@ static inline void nohz_newidle_balance(struct rq *this_rq) { }
+>   *     0 - failed, no new tasks
+>   *   > 0 - success, new (fair) tasks present
+>   */
+> -int newidle_balance(struct rq *this_rq, struct rq_flags *rf)
+> +int newidle_balance(void)
+>  {
+>       unsigned long next_balance = jiffies + HZ;
+> -	int this_cpu = this_rq->cpu;
+> +	int this_cpu;
+>       struct sched_domain *sd;
+> +	struct rq *this_rq;
+>       int pulled_task = 0;
+>       u64 curr_cost = 0;
+>
+> +	preempt_disable();
+> +	this_rq = this_rq();
+> +	this_cpu = this_rq->cpu;
+> +	local_bh_disable();
+> +	raw_spin_lock_irq(&this_rq->lock);
+> +
+> +	update_rq_clock(this_rq);
+> +
+>       update_misfit_status(NULL, this_rq);
 
-The -rc release will be uploaded to kernel.org and will be deleted
-when the final release is out. This is just a review release (or
-release candidate).
+I'm thinking this should be moved to where newidle_balance() used to be,
+otherwise we have a window where the rq is flagged as having a misfit
+task despite not having any runnable CFS tasks.
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main
-release on 2020-05-01.
-
-To build 4.19.115-rt50-rc1 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.115.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/patch-4.19.115-rt50-rc1.patch.xz
-
-You can also build from 4.19.115-rt49 by applying the incremental patch:
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/incr/patch-4.19.115-rt49-rt50-rc1.patch.xz
-
-
-Enjoy,
-
--- Tom
-
-
-Rasmus Villemoes (1):
-  hrtimer: fix logic for when grabbing softirq_expiry_lock can be elided
-
-Tom Zanussi (1):
-  Linux 4.19.115-rt50-rc1
-
- kernel/time/hrtimer.c | 2 +-
- localversion-rt       | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
-
--- 
-2.17.1
-
+>       /*
+>        * We must set idle_stamp _before_ calling idle_balance(), such that we
