@@ -2,171 +2,152 @@ Return-Path: <SRS0=fi+z=6M=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.3 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	MSGID_FROM_MTA_HEADER,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.3 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	MSGID_FROM_MTA_HEADER,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2ED6FC83004
-	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Apr 2020 06:51:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B5DE0C83004
+	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Apr 2020 07:03:18 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 088C3206D6
-	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Apr 2020 06:51:45 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8F25F206A5
+	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Apr 2020 07:03:18 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=prevas.dk header.i=@prevas.dk header.b="ivyKn759"
+	dkim=pass (1024-bit key) header.d=prevas.dk header.i=@prevas.dk header.b="cxeQbMuC"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726377AbgD1Gvl (ORCPT
+        id S1726505AbgD1HDP (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 28 Apr 2020 02:51:41 -0400
-Received: from mail-eopbgr80129.outbound.protection.outlook.com ([40.107.8.129]:37088
+        Tue, 28 Apr 2020 03:03:15 -0400
+Received: from mail-eopbgr80103.outbound.protection.outlook.com ([40.107.8.103]:59277
         "EHLO EUR04-VI1-obe.outbound.protection.outlook.com"
         rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1725867AbgD1Gvl (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 28 Apr 2020 02:51:41 -0400
+        id S1726291AbgD1HDO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 28 Apr 2020 03:03:14 -0400
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=F+nBdhOyaq0OgCpKOZS2a9LA7nWH743zis7B/Y2ACtTNsA72ysNlO7XbFQIMarhCFg9C/07TPSZkRarOW9Gje5Zhb+hJBdm6PmNXMUHGMednGJIfQlW5CGaLGD4J9lHCM7NoCRy3HHC/aXYAR9LJrJ8Gzf2KYN5VPdfW2ghAOfj/0h0fdJPS/ZCmY8khN3DcNRdOLLukLiZCmvjeANxfng9B+huK+ONdsb3jTn7aVbV3tlsl218llyb+aJcui/zRFlS959Fy6ERvvWBTeqwu0kXtEbVL3/yIOowNudNSCJDrnn+nqX4T/XJE39V/0Nc/3TjncN0+J6mEs2CwvLsN6w==
+ b=TXAqeqTOZEO4tleXQP4Ehbsh+Cehk00pr91cWHOOoTtWSIWYRyixneRLNvwW4+923MF/ep41ZDt21REF1llOmlUkJhbQ/XMiUgA5RCj7hfZPicXDIZiHjx8W2HzgZ/9+448ACrUT4tWc29tCZehVuwuvL2N8ewS22UxzSaBSWmV7INXdKXF+CuvTaMfzVo48flF+mp/5+rjf0GkYZ3kMNDZzV7aJu0NWNr2Eb2M+8YybB6fTlVVe9RvaYPmaWauMqMDd537lDziK7kcC5G5oEaf/flea4Chpa2yD4P5r9tSHQTz6vGe+BuEmQ/CvL+4rI0xSuQIM32+bc/J3ryjwJQ==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector9901;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=7RdK95B8GgeP7PLzdmwLP6jwW3fvq5zYRxu6M6WGixY=;
- b=dWbI2gL8vMr1Wxs0rBYyu2rda37H2/bDztEpzpy11s/fqa0I5lJ9T9OfxCFx+yfG/JSbKnNBlNC/zDqWM+/mgYziKKfNrbheyoY98e5J94v5B9iCC5VOuWdyC5OE8W7prYcF8gon/yJYHjYkcO3zYs3iLLo3OtaulxP82Uwsz1AMWAnKYOOW46BsxM0qDMpu5rkTDOJ8byS8RXzOcg02sAyXV0prng061L5luQ55oVLnduru5VcN8GMgheymYKxZTGyZhPE/b5By6j5/GKgtKSzrgQ3Hz0IjxsEyKy+Lws+uJETdtZlBHsJhJFq3E596BdrGLkKN3IDIQFKwGBtucg==
+ bh=ijAOCe8U6hc6KJscqxtUgTFs3vEMqx/lAfnYru7ZgOs=;
+ b=oQQEGYjB+/MpsEGykc/wLvBEYoKwdj+cOdC5E6DV13DMYMuyVKJs1m8hlCXch2g1RJVop+tuR5Sjvti2SkLoBdW6Sfq2LEaEg+ch36QUvXESO9FB5YJieZCnW1MefGprLS4eG08ea/Qe9CbdtbqSwabp2CSHu2uhrkYJnFCNrOmRQ10DAMMF9PtoQORXs20AZ2IuUAjJcbloez2nzskd6q2CUImArGPnIW7CnHh1xdzLCs0rYrnOLGBm/0iUI7BS0IIxdaZrRcpweQ1sjq7H8CNrVCeRly+712diTrOZmZYqVYBFHP4V84YCKvJw3/RgMGnz82y3hcPxDQOtNzPZUw==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
  smtp.mailfrom=prevas.dk; dmarc=pass action=none header.from=prevas.dk;
  dkim=pass header.d=prevas.dk; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=prevas.dk;
  s=selector1;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=7RdK95B8GgeP7PLzdmwLP6jwW3fvq5zYRxu6M6WGixY=;
- b=ivyKn759WIXhUc3VLwkUdnDs0fX4UhtmGqL/AzD+d3DUwH4AB2SGMnK+A/6449kAqfZBsmlzOtmDXk65/sjE/9hqClkWjV3we4obtgM1jAXH/DqNXcU9P0GPLm9MyYBp0+nitgPKRQO+x5glarGPwgS9prZ84hcmAjeORXfVdA0=
+ bh=ijAOCe8U6hc6KJscqxtUgTFs3vEMqx/lAfnYru7ZgOs=;
+ b=cxeQbMuCQkt6wc9J/XOX2dM0N4/7iUg/q4Dgi3jVe/vTN5/7UzIGbwMbFpYILjHFxqgfRYoq5QTqaihF6jm+fMp05O9lZVjBRCJ6yUcusTSDp+WxIRfg/zSBt/rstrTpWxyKAH91lGzEHxUG+6jKVjfGbn6D3itvt13K7CBMaM4=
 Authentication-Results: arm.com; dkim=none (message not signed)
  header.d=none;arm.com; dmarc=none action=none header.from=prevas.dk;
 Received: from VI1PR10MB2765.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:803:e1::21)
- by VI1PR10MB2381.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:803:89::33) with
+ by VI1PR10MB2606.EURPRD10.PROD.OUTLOOK.COM (2603:10a6:803:df::23) with
  Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.2937.22; Tue, 28 Apr
- 2020 06:51:37 +0000
+ 2020 07:03:11 +0000
 Received: from VI1PR10MB2765.EURPRD10.PROD.OUTLOOK.COM
  ([fe80::f0ac:4e97:2536:faa]) by VI1PR10MB2765.EURPRD10.PROD.OUTLOOK.COM
  ([fe80::f0ac:4e97:2536:faa%7]) with mapi id 15.20.2937.023; Tue, 28 Apr 2020
- 06:51:37 +0000
+ 07:03:11 +0000
 Subject: Re: [PATCH RT 10/30] hrtimer: Prevent using
  hrtimer_grab_expiry_lock() on migration_base
-To:     Tom Zanussi <zanussi@kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-Cc:     linux-kernel@vger.kernel.org,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
+To:     Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        John Kacur <jkacur@redhat.com>,
-        Julia Cartwright <julia@ni.com>,
-        Daniel Wagner <wagi@monom.org>,
+        John Kacur <jkacur@redhat.com>, Daniel Wagner <wagi@monom.org>,
+        Tom Zanussi <zanussi@kernel.org>,
         Julien Grall <julien.grall@arm.com>
 References: <20200123203930.646725253@goodmis.org>
  <20200123203943.749508731@goodmis.org>
- <ac4168c7-68d6-e558-644e-e0daceea1f61@prevas.dk>
- <20200427150626.4f217c82@gandalf.local.home>
- <2535a046bc15f28478c5289742e617a468becbd6.camel@kernel.org>
 From:   Rasmus Villemoes <rasmus.villemoes@prevas.dk>
-Message-ID: <48699adb-73f9-225c-c8f4-959f4b3008b3@prevas.dk>
-Date:   Tue, 28 Apr 2020 08:51:35 +0200
+Message-ID: <1a5e52a6-39e4-ac9a-e11a-5df261e83068@prevas.dk>
+Date:   Tue, 28 Apr 2020 09:03:09 +0200
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
  Thunderbird/68.7.0
-In-Reply-To: <2535a046bc15f28478c5289742e617a468becbd6.camel@kernel.org>
-Content-Type: text/plain; charset=utf-8
+In-Reply-To: <20200123203943.749508731@goodmis.org>
+Content-Type: text/plain; charset=iso-8859-15
 Content-Language: en-US
 Content-Transfer-Encoding: 7bit
-X-ClientProxiedBy: AM6P192CA0011.EURP192.PROD.OUTLOOK.COM
- (2603:10a6:209:83::24) To VI1PR10MB2765.EURPRD10.PROD.OUTLOOK.COM
+X-ClientProxiedBy: AM6PR04CA0036.eurprd04.prod.outlook.com
+ (2603:10a6:20b:92::49) To VI1PR10MB2765.EURPRD10.PROD.OUTLOOK.COM
  (2603:10a6:803:e1::21)
 MIME-Version: 1.0
 X-MS-Exchange-MessageSentRepresentingType: 1
-Received: from [192.168.1.149] (5.186.116.45) by AM6P192CA0011.EURP192.PROD.OUTLOOK.COM (2603:10a6:209:83::24) with Microsoft SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.2937.13 via Frontend Transport; Tue, 28 Apr 2020 06:51:36 +0000
+Received: from [192.168.1.149] (5.186.116.45) by AM6PR04CA0036.eurprd04.prod.outlook.com (2603:10a6:20b:92::49) with Microsoft SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.2937.13 via Frontend Transport; Tue, 28 Apr 2020 07:03:10 +0000
 X-Originating-IP: [5.186.116.45]
 X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id: 99744508-7a50-419a-2523-08d7eb4098e2
-X-MS-TrafficTypeDiagnostic: VI1PR10MB2381:
-X-Microsoft-Antispam-PRVS: <VI1PR10MB23817ACBB2DCE8B29C039A9F93AC0@VI1PR10MB2381.EURPRD10.PROD.OUTLOOK.COM>
-X-MS-Oob-TLC-OOBClassifiers: OLM:5236;
+X-MS-Office365-Filtering-Correlation-Id: 11a4c24f-f622-45e2-9fb5-08d7eb4236b1
+X-MS-TrafficTypeDiagnostic: VI1PR10MB2606:
+X-Microsoft-Antispam-PRVS: <VI1PR10MB2606C576E3B81D70EF02E72993AC0@VI1PR10MB2606.EURPRD10.PROD.OUTLOOK.COM>
+X-MS-Oob-TLC-OOBClassifiers: OLM:10000;
 X-Forefront-PRVS: 0387D64A71
-X-Forefront-Antispam-Report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:VI1PR10MB2765.EURPRD10.PROD.OUTLOOK.COM;PTR:;CAT:NONE;SFTY:;SFS:(366004)(346002)(136003)(396003)(376002)(39850400004)(2906002)(478600001)(2616005)(36756003)(66946007)(7416002)(81156014)(26005)(8936002)(186003)(16526019)(66556008)(66476007)(6486002)(8976002)(52116002)(956004)(54906003)(31686004)(110136005)(31696002)(4326008)(5660300002)(8676002)(16576012)(86362001)(44832011)(316002);DIR:OUT;SFP:1102;
+X-Forefront-Antispam-Report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:VI1PR10MB2765.EURPRD10.PROD.OUTLOOK.COM;PTR:;CAT:NONE;SFTY:;SFS:(396003)(346002)(136003)(366004)(39850400004)(376002)(5660300002)(478600001)(956004)(2616005)(26005)(81156014)(6486002)(8676002)(4326008)(44832011)(86362001)(31696002)(52116002)(7416002)(54906003)(8936002)(31686004)(2906002)(66946007)(186003)(66556008)(66476007)(36756003)(16526019)(16576012)(110136005)(316002)(8976002);DIR:OUT;SFP:1102;
 X-MS-Exchange-SenderADCheck: 1
 X-Microsoft-Antispam: BCL:0;
-X-Microsoft-Antispam-Message-Info: T+q4xnSd8n4Yr7f6Pe6uQeTh0dz0UMtVAlMQ9RhmtGiZmr/+XtL2gjoEK3mgdERUbquNl1oFgz8663t9dMSsmBpoMkZHnXLu6NVTH9lBqhpG5shPKHvKW2keKdJIas4FWcEnS/LpAyg4ZBkT5cZLJhjBAzQcHoZOcw2g85FShbfPeI+yTS7JdMFUUe7MgU/+sDfoqzxIPjAp7ShvECT0/fDUZnKzvglqJpWZ3gs1YeBCoUIBZVgkAyj95r7rUjbETmSaV76hJHnGY5v2njV1cbLvfLWXEYhwOSxCnZCqYnfoD4Ctov3yLHQUxW7Oi+neUuYuf/EzCMbSVb6U6Y/pOXo765OW27Hp2Vm73sVFe+UR8uN1tSEXLv8i4y1u9WffDDsVPuCkSOvGVCsj9vtfBjRB+OAHe3F0wl3jWvWIi7phdPiAjZqprnIBBdSIxKpR
-X-MS-Exchange-AntiSpam-MessageData: W9I96igBUr00mu7FjEwK1UZynlG+LO8dJpxYLhOpevrCopAxpm3wFJyXIDGe6JCNj+7pfx5E8gLZYXO+EkT/SZZYLX7Ksy/VBZtP25NdTysYfelcs54HweU3D3tPiKTCX6I5pyyr7ObtXBxm7pk39AwU3y4NertQF3qhaXrK5+vd9rvsdiFNIKm84TIOXTmJjP+Xc1MGthCqPTvJxN+/mQWEy0opjGEVL9ZhjjhaXNBf/6NTCq61na6a5veVGhV3XYlmmkLv4YvOlHDOTzQ4OS7QpvY637oLDO1qc+vnONz1dnwxsUaG90tOL03++zmGjTHw0eJ60EhGDd8nzMKMubKdn2iNp9UUkrSfUf15N2gNeUpgDT9johKcDg8yaqUC3Y36tiE9DoU9EYzZMRbajIwoeY91aRCnaMxM/73H1y0R6YhvOH65X1a7jo3kpizs34VFrBacP2bkEp0BYIoDhjVfBhG+t/q0XHQ4F+2dwrwC/zfiqheUEw00oV3mdlxg0XdG1CO7Vh90mnkevlvYuGCIG/G7YwXO2Vv+owTmuABp1zwctYTiHVLmzDJUg17id6+Inccn2M7FRG1bbvYI1BujI5t4NLKTd6OrqAXuU9pJxBByPLM2IKnyc7NzTKNduPWIzIJ+nPs1JjmjuRfw/6zzimVWQWDAzXDMJzsMI6IqMhkhSVhUQRZTZhAVRf4h56dWQ5gynTQqdE6cGN3H0/4ibJi8/wm/S7JEXt3JQ9IynLLJgn4kXSE1mg1T2SozilHp4g/hRRvS9/vjBENKoOkC9dg2/qtsNrQVuaGVE0I=
+X-Microsoft-Antispam-Message-Info: foXKJ59VW1tLc4Txr1IeIFcCTy6ymIT/qlruPumPzcCUPtXrrKaSa87bEqTgFla55vL//n7DyJBZo53HLmfCSGwZ/LQe6Aev+WLGQR2XbHq9iHH0wS73xMr1T/aIf2x1WCc3AXKjmPATBjS75BHyrAxEO9PUQHeEGucbTq4CyjYGQE7Cu6vcM4IGV5fj1kLa4o98TVNI41PMn1vwRcHny4c1VKH9go7vbosYDFYUBpqV45/usjtTvu+T/c4JtLptGy5Wrp5jZWhEcyabMo+yCnkpnC2tfb3PwB0JSj2dC0CFpp6kGr3+7RU848sdmeg/fCO2mYRWlkMF38xttLvrv3BJ9xAuD3sGXgf62FBU3P6l/gaqkFvGPuQHVBoSe+RSTk+zpdnDyEa0n0/lA3IvV2sAYBVn7pmFsVtFoq+ks4EKOt5rFla3piaSjIDhR/3c
+X-MS-Exchange-AntiSpam-MessageData: g0BNCR/xF3rb2PIubZuHSpUjKMBx9BLRqwW5rq9Qvst1/8HHxxgdsEarItxIF1sb8EykoSEmcWuGgSNQZaMLgGbUOR4OFj/cSyo3zREPl4BjnDibIa925vRGqe3EVltEj/biOV6z0m3Dou3fAjSn8RJPzUA/pPyz7x9UgtciEa/TbMSgTc6KXA5xxQH0CKZfzGzY0JgvGH3Rj2jdFP7JuYGixLxZ4D9YK1/sJjGJ7QOpWNSHx4F5THUYIaUneXOT37oHIFsycJeOzL5xnMWnaTKKv+tdfrAnMAu+0AWmCzHPQxf+W/UVnEXtE7HqKCkly5krl10PdfPrMkLpWP0EPzu1gV3vT+1B84627iHXiBAcFLZQ00wRtj5AymH2tkb52aeL0rVaSojuhj9DOysnRGVL55obOvfEomzlIveaDQCA3GIKttMrbeS5TPFK3Xrcq9pmKDwgU/hNPnbaef73x22uuffd4rc75VFddZs22Cp/9q6Y+1v52nU4no4b2OABx7o/KylT1FSOqDQd4BVU34h1YHEFtfDQhNaw/A1T0vRkYWXI3EZbZx4LkXv//bEEeeWOrT3MST/La5jL4mQ/1S/UXNeCu3j029djoEah6gGxxvqwh/7O/l9nPq3JDr85yBJJPmDclOkQsLatncqs7gEJw+9kK3ozsb8RDC5oMitzYhq49GYwa/V/6B+s4ETGDPNq2J4ZIoD5EL0NP11b/WOIpeMywwsJH+0hAQ1YAsZ2+6BFYA1T2GPh2wVKr9RTB9MwAtI+JtXhsiUNQb/aHRQpQs2Ugf+OPHAMfgq6eSw=
 X-OriginatorOrg: prevas.dk
-X-MS-Exchange-CrossTenant-Network-Message-Id: 99744508-7a50-419a-2523-08d7eb4098e2
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 28 Apr 2020 06:51:37.4424
+X-MS-Exchange-CrossTenant-Network-Message-Id: 11a4c24f-f622-45e2-9fb5-08d7eb4236b1
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 28 Apr 2020 07:03:11.5643
  (UTC)
 X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
 X-MS-Exchange-CrossTenant-Id: d350cf71-778d-4780-88f5-071a4cb1ed61
 X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: RH0pMtmK+nnorT1jtuUKgQdOUoTZ+AvgQee98V8G1KgF10hRqxQDXDXsaFeQ2C/sJ824FEnoXf3NiqhNDgKMpchwztLwL9ywOXqI78yqJV0=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: VI1PR10MB2381
+X-MS-Exchange-CrossTenant-UserPrincipalName: OTGRhDEuI6UpWUa0tJ2EQU00655Kp73gc5bc9e6nKZuQpc1+ojrCo5m1xz0+aHJiR86R+RovWAyWEQpga9o08rTMKlEYsZLHgtVsM5IHQes=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: VI1PR10MB2606
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 27/04/2020 21.26, Tom Zanussi wrote:
-> On Mon, 2020-04-27 at 15:06 -0400, Steven Rostedt wrote:
->> On Mon, 27 Apr 2020 15:10:00 +0200
->> Rasmus Villemoes <rasmus.villemoes@prevas.dk> wrote:
->>
->>> Reverting
->>>
->>> b1a471ec4df1 - hrtimer: Prevent using hrtimer_grab_expiry_lock() on
->>> migration_base
->>> 40aae5708e7a - hrtimer: Add a missing bracket and hide
->>> `migration_base'
->>> on !SMP
->>>
->>> on top of v4.19.94-rt39 makes that problem go away, i.e. the board
->>> reboots as expected.
->>>
->> Thanks Rasmus for looking into this. Tom now maintains 4.19-rt.
->>
->> Tom, care to pull in these patches on top of 4.19-rt?
->>
+On 23/01/2020 21.39, Steven Rostedt wrote:
+> 4.19.94-rt39-rc2 stable review patch.
+> If anyone has any objections, please let me know.
+>
+> ------------------
 > 
-> Those patches are already in 4.19-rt - he's saying that reverting them
-> fixes the problem.
+> From: Julien Grall <julien.grall@arm.com>
 > 
-> I'm guessing that the assumption of base or base->cpu_base always being
-> non-NULL in those patches might be wrong.  If so, the below patch
-> should fix the problem:
+> [ Upstream commit cef1b87f98823af923a386f3f69149acb212d4a1 ]
 > 
-> Subject: [PATCH] hrtimer: Add back base and base->cpu_base checks in
->  hrtimer_grab_expiry_lock()
-> 
-> 4.19 commit b1a471ec4df1 [hrtimer: Prevent using
-> hrtimer_grab_expiry_lock() on migration_base] removed the NULL checks
-> for timer->base and timer->base->cpu_base on the assumption that
-> they're always non-NULL.  That assumption is apparently not to be
-> true, so add the checks back.
-> 
-> Signed-off-by: Tom Zanussi <zanussi@kernel.org>
-> ---
->  kernel/time/hrtimer.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
-> index e54a95de8b79..6f20cf23008b 100644
-> --- a/kernel/time/hrtimer.c
-> +++ b/kernel/time/hrtimer.c
-> @@ -953,7 +953,7 @@ void hrtimer_grab_expiry_lock(const struct hrtimer *timer)
->  {
->  	struct hrtimer_clock_base *base = READ_ONCE(timer->base);
->  
-> -	if (timer->is_soft && is_migration_base(base)) {
-> +	if (timer->is_soft && base && base->cpu_base && is_migration_base(base)) {
+> As tglx puts it:
+> |If base == migration_base then there is no point to lock soft_expiry_lock
+> |simply because the timer is not executing the callback in soft irq context
+> |and the whole lock/unlock dance can be avoided.
 
-I'm sorry, but no, I don't think that can be it. For !SMP (my case),
-is_migration_base() is always false, so with or without the above, the
-whole if() is false. Also, the symptoms do not look like a NULL pointer
-deref, but more like a dead (or live) lock - so I'm guessing (and that's
-just a wild guess) that the lock/unlock sequence is needed to give some
-other thread a priority boost to make the whole machine make forward
-progress.
+Hold on a second. This patch (hrtimer: Prevent using
+hrtimer_grab_expiry_lock() on migration_base) indeed seems to implement
+the optimization implied by the above, namely avoid the lock/unlock in
+case base == migration_base:
 
+> -	if (timer->is_soft && base && base->cpu_base) {
+> +	if (timer->is_soft && base != &migration_base) {
+
+But the followup patch (hrtimer: Add a missing bracket and hide
+`migration_base on !SMP) to fix the build on !SMP [the missing bracket
+part seems to have been fixed when backporting the above to 4.19-rt]
+replaces that logic by
+
++static inline bool is_migration_base(struct hrtimer_clock_base *base)
++{
++	return base == &migration_base;
++}
++
+...
+-	if (timer->is_soft && base != &migration_base) {
++	if (timer->is_soft && is_migration_base(base)) {
+
+in the SMP case, i.e. the exact opposite condition. One of these can't
+be correct.
+
+Assuming the followup patch was wrong and the condition should have read
+
+  timer->is_soft && !is_migration_base(base)
+
+while keeping is_migration_base() false on !SMP might explain the
+problem I see. But I'd like someone who knows this code to chime in.
+
+Thanks,
 Rasmus
