@@ -2,94 +2,75 @@ Return-Path: <SRS0=fi+z=6M=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.6 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.9 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 587E7C83004
-	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Apr 2020 23:02:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 12E9BC83008
+	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Apr 2020 23:10:12 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 393BF206A1
-	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Apr 2020 23:02:54 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DDAC320656
+	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Apr 2020 23:10:11 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="thRXx1m2"
+	dkim=pass (2048-bit key) header.d=zx2c4.com header.i=@zx2c4.com header.b="qlxGJYWG"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726472AbgD1XCw (ORCPT
+        id S1726431AbgD1XKD (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 28 Apr 2020 19:02:52 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58172 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-FAIL-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1726343AbgD1XCv (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 28 Apr 2020 19:02:51 -0400
-Received: from merlin.infradead.org (unknown [IPv6:2001:8b0:10b:1231::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 632F7C03C1AC;
-        Tue, 28 Apr 2020 16:02:51 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=merlin.20170209; h=In-Reply-To:Content-Type:MIME-Version:
-        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=AIu07HAj/AGrMk6ZycUKbLgO7uQhu/8EqeWjT0+uzss=; b=thRXx1m2QR0nYaAuVcc/ntn9As
-        h/QSxVIT6/nGdm0M7C501bF5GnnX81xbd/jZHBBuT1q0d3ucFzUzI0Z1Uz03kKGhv4qkEtc2bcWTh
-        GS65J4aMfLxF7PONFoTRashCsbog5RHU4F7PsB9IuVmWtu4t/pL046rv+7dIfGco1NcIejiJOgLkw
-        /Lq7LUz31RzkCgaJkhdZa1xp11tGcQe1FhiT6CoiP/+yWecjefEqsBd3Fd/BJy46lPocoFQtQc8hh
-        6YIwFuv3LtL3NaKeS4jJXXostKoGxWafOLcN3t0MNiITkG4ugjDFlyB9A+Dobxi+3FpoQmjmcucvl
-        W7PRb+Vg==;
-Received: from j217100.upc-j.chello.nl ([24.132.217.100] helo=noisy.programming.kicks-ass.net)
-        by merlin.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-        id 1jTZEt-0004TY-7Y; Tue, 28 Apr 2020 23:02:07 +0000
-Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 54444304121;
-        Wed, 29 Apr 2020 01:02:04 +0200 (CEST)
-Received: by hirez.programming.kicks-ass.net (Postfix, from userid 1000)
-        id 3BCE22392F89E; Wed, 29 Apr 2020 01:02:04 +0200 (CEST)
-Date:   Wed, 29 Apr 2020 01:02:04 +0200
-From:   Peter Zijlstra <peterz@infradead.org>
-To:     Scott Wood <swood@redhat.com>
-Cc:     Valentin Schneider <valentin.schneider@arm.com>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Ingo Molnar <mingo@redhat.com>,
-        Vincent Guittot <vincent.guittot@linaro.org>,
-        Dietmar Eggemann <dietmar.eggemann@arm.com>,
-        Rik van Riel <riel@surriel.com>,
-        Mel Gorman <mgorman@suse.de>, linux-kernel@vger.kernel.org,
-        linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: [RFC PATCH 1/3] sched/fair: Call newidle_balance() from
- finish_task_switch()
-Message-ID: <20200428230204.GE16027@hirez.programming.kicks-ass.net>
-References: <20200428050242.17717-1-swood@redhat.com>
- <20200428050242.17717-2-swood@redhat.com>
- <jhjftcns35d.mognet@arm.com>
- <20200428220917.GB16027@hirez.programming.kicks-ass.net>
- <c4a8d1f044b721a2c396fa00a0244eff0b851ae4.camel@redhat.com>
+        Tue, 28 Apr 2020 19:10:03 -0400
+Received: from mail.zx2c4.com ([192.95.5.64]:41199 "EHLO mail.zx2c4.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726044AbgD1XKD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 28 Apr 2020 19:10:03 -0400
+Received: by mail.zx2c4.com (ZX2C4 Mail Server) with ESMTP id 078fe6c1;
+        Tue, 28 Apr 2020 22:58:16 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha1; c=relaxed; d=zx2c4.com; h=mime-version
+        :references:in-reply-to:from:date:message-id:subject:to:cc
+        :content-type; s=mail; bh=+pPISQMqFxTrP0qCf0FuggC3lus=; b=qlxGJY
+        WGjse5gcNmibU1zg7WYgXb0/RjibCS2lWFDFwOItuz2ICRpA6pP0XgSMX4oSK2zI
+        lPDjZtg1823vzUmS/wNxKGv/1AW1mgsNsKRHlvMhIStABHh00tHR2SVgwtN80vGU
+        nTeqnfescZsyFbCOg+ghbdROG++vJYRIR0fX2SC4pgsMdb0GiHkbMLiDjuNTqwIy
+        bjKMFdkfiPCSAt2Wfek/OUSww8nGcOyXtJHZUIHP0zXxYF3WOMjoU0EHmCPBoCV+
+        1W3q4C6nw8oRFR+jMXRPySL+F1bAhZdoZQYkLhsZgUUZjBxaYYIFcdSf0mx29lqb
+        a1FRnbEGywcJKFbQ==
+Received: by mail.zx2c4.com (ZX2C4 Mail Server) with ESMTPSA id 55194e36 (TLSv1.3:TLS_AES_256_GCM_SHA384:256:NO);
+        Tue, 28 Apr 2020 22:58:16 +0000 (UTC)
+Received: by mail-il1-f178.google.com with SMTP id q10so662516ile.0;
+        Tue, 28 Apr 2020 16:09:57 -0700 (PDT)
+X-Gm-Message-State: AGi0Pua390tvs2fRci/PorK/38awMqBJvIVnTHB8PX0V5j6ORUhcPMMT
+        O/1dWJH64BVmphlZIUgnfllkg++9dMaP8xVEaHA=
+X-Google-Smtp-Source: APiQypLFBTEqzIsMWL5IIDmD+RjrMKuT2Kwxq90aLIbknJdICxwCpdyDqftd7SMlsayBnczg1Do3aTutqcTKnU4j77Y=
+X-Received: by 2002:a92:d98c:: with SMTP id r12mr29411687iln.224.1588115397226;
+ Tue, 28 Apr 2020 16:09:57 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <c4a8d1f044b721a2c396fa00a0244eff0b851ae4.camel@redhat.com>
+References: <20200422200344.239462-1-Jason@zx2c4.com> <20200422231854.675965-1-Jason@zx2c4.com>
+ <CAMj1kXHV=ryaFmj0jhQVGBd31nfHs7q5RtSyu7dY6GdEJJsr7A@mail.gmail.com>
+ <20200423184219.GA80650@kroah.com> <CAMj1kXF9uLUE3=rX1i_yYoigB7j-nLMZpGc35ve2KV+NxjRhVQ@mail.gmail.com>
+ <20200423202348.GA2796@gmail.com> <CAMj1kXGAUQ3DT-9roymODC20+GPFv4R280r1BrN=juHtYhnq7g@mail.gmail.com>
+In-Reply-To: <CAMj1kXGAUQ3DT-9roymODC20+GPFv4R280r1BrN=juHtYhnq7g@mail.gmail.com>
+From:   "Jason A. Donenfeld" <Jason@zx2c4.com>
+Date:   Tue, 28 Apr 2020 17:09:46 -0600
+X-Gmail-Original-Message-ID: <CAHmME9oS5L0GXAUvBAuz7a2WtRT=nBQk6H7-iHKnspao4ckgjA@mail.gmail.com>
+Message-ID: <CAHmME9oS5L0GXAUvBAuz7a2WtRT=nBQk6H7-iHKnspao4ckgjA@mail.gmail.com>
+Subject: Re: [PATCH crypto-stable v3 1/2] crypto: arch/lib - limit simd usage
+ to 4k chunks
+To:     Herbert Xu <herbert@gondor.apana.org.au>
+Cc:     Eric Biggers <ebiggers@kernel.org>,
+        Ard Biesheuvel <ardb@kernel.org>,
+        Greg KH <gregkh@linuxfoundation.org>,
+        Linux Crypto Mailing List <linux-crypto@vger.kernel.org>,
+        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+        linux-rt-users@vger.kernel.org,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset="UTF-8"
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, Apr 28, 2020 at 05:55:03PM -0500, Scott Wood wrote:
-> On Wed, 2020-04-29 at 00:09 +0200, Peter Zijlstra wrote:
+Hi Herbert,
 
-> > Also, if you move it this late, this is entirely the wrong place. If you
-> > do it after the context switch either use the balance_callback or put it
-> > in the idle path.
-> > 
-> > But what Valentin said; this needs a fair bit of support, the whole
-> > reason we've never done this is to avoid that double context switch...
-> > 
-> 
-> balance_callback() enters with the rq lock held but BH not separately
+This v3 patchset has a Reviewed-by from Ard for 1/2 and from Eric for
+2/2, from last week. Could you submit this to Linus for rc4?
 
-BH? softirqs you mean? Pray tell more.
-
-> disabled, which interferes with the ability to enable interrupts but not BH.
-> It also gets called from rt_mutex_setprio() and __sched_setscheduler(), and
-> I didn't want the caller of those to be stuck with the latency.
-
-You're not reading it right.
+Thanks,
+Jason
