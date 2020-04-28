@@ -2,97 +2,133 @@ Return-Path: <SRS0=fi+z=6M=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.6 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_2 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3256BC83000
-	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Apr 2020 07:11:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D5F17C83006
+	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Apr 2020 12:59:32 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1660A206A5
-	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Apr 2020 07:11:18 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B5C4C2075E
+	for <linux-rt-users@archiver.kernel.org>; Tue, 28 Apr 2020 12:59:32 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1588078772;
+	bh=UzdGhjHtfG1ERnaW9K3xUYidX61ZE5q/Gct7TlnXdMo=;
+	h=Subject:From:To:Cc:Date:In-Reply-To:References:List-ID:From;
+	b=NBnZmCefrQOHvJL7YLuygrrZMHFbizOp5Q2YGZ5em4h+8FdyyOxJHrY5BtdkvaDzP
+	 IH8L0UlyYVaCcyx3P1ECDwPxLWfpNRQbCYY9jyunPXpQEBAHyUrIPB12oHQcwMyStC
+	 WEQTFfetF2l9AfMD2+CHk22NWNTGwQhLjBfftRLA=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726487AbgD1HLR (ORCPT
+        id S1726859AbgD1M72 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 28 Apr 2020 03:11:17 -0400
-Received: from szxga07-in.huawei.com ([45.249.212.35]:39158 "EHLO huawei.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1726272AbgD1HLR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 28 Apr 2020 03:11:17 -0400
-Received: from DGGEMS412-HUB.china.huawei.com (unknown [172.30.72.60])
-        by Forcepoint Email with ESMTP id 0962517394A83E3EDDE9;
-        Tue, 28 Apr 2020 15:11:15 +0800 (CST)
-Received: from [127.0.0.1] (10.166.215.237) by DGGEMS412-HUB.china.huawei.com
- (10.3.19.212) with Microsoft SMTP Server id 14.3.487.0; Tue, 28 Apr 2020
- 15:11:04 +0800
-To:     <williams@redhat.com>, <jkacur@redhat.com>,
-        <linux-rt-users@vger.kernel.org>, <hushiyuan@huawei.com>,
-        <hewenliang4@huawei.com>
-From:   Yunfeng Ye <yeyunfeng@huawei.com>
-Subject: [PATCH] rt-tests: hachbench: Update the usage and man page for
- -F|--fifo option
-Message-ID: <19489849-88a9-bc3d-38c1-e39c43d80d8d@huawei.com>
-Date:   Tue, 28 Apr 2020 15:11:04 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.6.1
-MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Language: en-US
+        Tue, 28 Apr 2020 08:59:28 -0400
+Received: from mail.kernel.org ([198.145.29.99]:44644 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726746AbgD1M72 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 28 Apr 2020 08:59:28 -0400
+Received: from tzanussi-mobl (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 629D9206A1;
+        Tue, 28 Apr 2020 12:59:27 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1588078768;
+        bh=UzdGhjHtfG1ERnaW9K3xUYidX61ZE5q/Gct7TlnXdMo=;
+        h=Subject:From:To:Cc:Date:In-Reply-To:References:From;
+        b=FFkhrdh1/qimqjyerdP5AUZRaJ9BFPa3KvosJDc0tZuYtKtDX8vV2nLerWxCVFzSc
+         OtoiRyTwkwRXQ5PFRuUf8Un5dTd3XtOQotweFIEJWb0ZBRbEyiW+/TNt+ksZMV9pe4
+         +NCuIkiV4mxhDD7HZPURacBXSmDlxuWZ4FPGyJ7g=
+Message-ID: <7fce15e17cd3bef1216473386718e3cfd67349a4.camel@kernel.org>
+Subject: Re: [PATCH RT 10/30] hrtimer: Prevent using
+ hrtimer_grab_expiry_lock() on migration_base
+From:   Tom Zanussi <zanussi@kernel.org>
+To:     Rasmus Villemoes <rasmus.villemoes@prevas.dk>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        linux-kernel@vger.kernel.org,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        John Kacur <jkacur@redhat.com>, Daniel Wagner <wagi@monom.org>,
+        Julien Grall <julien.grall@arm.com>
+Date:   Tue, 28 Apr 2020 07:59:26 -0500
+In-Reply-To: <1a5e52a6-39e4-ac9a-e11a-5df261e83068@prevas.dk>
+References: <20200123203930.646725253@goodmis.org>
+         <20200123203943.749508731@goodmis.org>
+         <1a5e52a6-39e4-ac9a-e11a-5df261e83068@prevas.dk>
+Content-Type: text/plain; charset="UTF-8"
+X-Mailer: Evolution 3.28.5-0ubuntu0.18.04.1 
+Mime-Version: 1.0
 Content-Transfer-Encoding: 7bit
-X-Originating-IP: [10.166.215.237]
-X-CFilter-Loop: Reflected
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The commit 6c0c79b5152a ("hackbench mods to work better under stress")
-add -F|--fifo option, but not update the usage and man page, so this
-patch fix it.
+On Tue, 2020-04-28 at 09:03 +0200, Rasmus Villemoes wrote:
+> On 23/01/2020 21.39, Steven Rostedt wrote:
+> > 4.19.94-rt39-rc2 stable review patch.
+> > If anyone has any objections, please let me know.
+> > 
+> > ------------------
+> > 
+> > From: Julien Grall <julien.grall@arm.com>
+> > 
+> > [ Upstream commit cef1b87f98823af923a386f3f69149acb212d4a1 ]
+> > 
+> > As tglx puts it:
+> > > If base == migration_base then there is no point to lock
+> > > soft_expiry_lock
+> > > simply because the timer is not executing the callback in soft
+> > > irq context
+> > > and the whole lock/unlock dance can be avoided.
+> 
+> Hold on a second. This patch (hrtimer: Prevent using
+> hrtimer_grab_expiry_lock() on migration_base) indeed seems to
+> implement
+> the optimization implied by the above, namely avoid the lock/unlock
+> in
+> case base == migration_base:
+> 
+> > -	if (timer->is_soft && base && base->cpu_base) {
+> > +	if (timer->is_soft && base != &migration_base) {
+> 
+> But the followup patch (hrtimer: Add a missing bracket and hide
+> `migration_base on !SMP) to fix the build on !SMP [the missing
+> bracket
+> part seems to have been fixed when backporting the above to 4.19-rt]
+> replaces that logic by
+> 
+> +static inline bool is_migration_base(struct hrtimer_clock_base
+> *base)
+> +{
+> +	return base == &migration_base;
+> +}
+> +
+> ...
+> -	if (timer->is_soft && base != &migration_base) {
+> +	if (timer->is_soft && is_migration_base(base)) {
+> 
+> in the SMP case, i.e. the exact opposite condition. One of these
+> can't
+> be correct.
+> 
+> Assuming the followup patch was wrong and the condition should have
+> read
+> 
+>   timer->is_soft && !is_migration_base(base)
+> 
+> while keeping is_migration_base() false on !SMP might explain the
+> problem I see. But I'd like someone who knows this code to chime in.
+> 
 
-Signed-off-by: Yunfeng Ye <yeyunfeng@huawei.com>
----
- src/hackbench/hackbench.8 | 6 +++++-
- src/hackbench/hackbench.c | 2 +-
- 2 files changed, 6 insertions(+), 2 deletions(-)
+I don't know this code, but I think you're correct - the followup patch
+reversed the condition by forgetting the !.
 
-diff --git a/src/hackbench/hackbench.8 b/src/hackbench/hackbench.8
-index d86c52f27a2e..dadf070e1135 100644
---- a/src/hackbench/hackbench.8
-+++ b/src/hackbench/hackbench.8
-@@ -7,7 +7,7 @@ hackbench \- scheduler benchmark/stress test
- .RI "[\-l|\-\-loops " <num\-loops> "] "
- .RI "[\-g|\-\-groups "<num\-groups> "] "
- .RI "[\-f|\-\-fds <num\-fds>] "
--.RI "[\-T|\-\-threads] [\-P|\-\-process] [\-\-help]"
-+.RI "[\-T|\-\-threads] [\-P|\-\-process] [\-F|\-\-fifo] [\-\-help]"
+So, does your problem go away when you make that change?
 
- .SH "DESCRIPTION"
- Hackbench is both a benchmark and a stress test for the Linux kernel
-@@ -45,6 +45,10 @@ Each sender/receiver child will be a POSIX thread of the parent.
- .TP
- .B \-P, \-\-process
- Hackbench will use fork() on all children (default behaviour)
-+.TP
-+.B \-F, \-\-fifo
-+Support to change the main thread to a SCHED_FIFO realtime thread
-+after creating the workers
- .TP
- .B \-\-help
- .br
-diff --git a/src/hackbench/hackbench.c b/src/hackbench/hackbench.c
-index 5a883d341f2e..2cddff654df6 100644
---- a/src/hackbench/hackbench.c
-+++ b/src/hackbench/hackbench.c
-@@ -92,7 +92,7 @@ static void print_usage_exit()
- {
- 	printf("Usage: hackbench [-p|--pipe] [-s|--datasize <bytes>] [-l|--loops <num loops>]\n"
- 	       "\t\t [-g|--groups <num groups] [-f|--fds <num fds>]\n"
--	       "\t\t [-T|--threads] [-P|--process] [--help]\n");
-+	       "\t\t [-T|--threads] [-P|--process] [-F|--fifo] [--help]\n");
- 	exit(1);
- }
+Tom
 
--- 
-1.8.3.1
+> Thanks,
+> Rasmus
 
