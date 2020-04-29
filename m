@@ -6,26 +6,26 @@ X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6587EC83003
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Apr 2020 12:01:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7DE57C83004
+	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Apr 2020 23:13:27 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4E3FB208FE
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Apr 2020 12:01:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 676DF206D9
+	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Apr 2020 23:13:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726832AbgD2MBn (ORCPT
+        id S1726871AbgD2XNX (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 29 Apr 2020 08:01:43 -0400
-Received: from foss.arm.com ([217.140.110.172]:37862 "EHLO foss.arm.com"
+        Wed, 29 Apr 2020 19:13:23 -0400
+Received: from foss.arm.com ([217.140.110.172]:46848 "EHLO foss.arm.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726426AbgD2MBn (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 29 Apr 2020 08:01:43 -0400
+        id S1726164AbgD2XNX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 29 Apr 2020 19:13:23 -0400
 Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 09DC9106F;
-        Wed, 29 Apr 2020 05:01:43 -0700 (PDT)
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id C93E01045;
+        Wed, 29 Apr 2020 16:13:22 -0700 (PDT)
 Received: from e113632-lin (e113632-lin.cambridge.arm.com [10.1.194.46])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id AC3693F73D;
-        Wed, 29 Apr 2020 05:01:41 -0700 (PDT)
-References: <20200428050242.17717-1-swood@redhat.com> <20200428050242.17717-4-swood@redhat.com> <jhjees7s29u.mognet@arm.com> <fa406883f0eace37fe7f658814e29f82a4f0addf.camel@redhat.com>
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 757B03F73D;
+        Wed, 29 Apr 2020 16:13:21 -0700 (PDT)
+References: <20200428050242.17717-1-swood@redhat.com>
 User-agent: mu4e 0.9.17; emacs 26.3
 From:   Valentin Schneider <valentin.schneider@arm.com>
 To:     Scott Wood <swood@redhat.com>
@@ -37,10 +37,10 @@ Cc:     Steven Rostedt <rostedt@goodmis.org>,
         Rik van Riel <riel@surriel.com>,
         Mel Gorman <mgorman@suse.de>, linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: [RFC PATCH 3/3] sched,rt: break out of load balancing if an RT task appears
-In-reply-to: <fa406883f0eace37fe7f658814e29f82a4f0addf.camel@redhat.com>
-Date:   Wed, 29 Apr 2020 13:01:39 +0100
-Message-ID: <jhjr1w6pkkc.mognet@arm.com>
+Subject: Re: [RFC PATCH 0/3] newidle_balance() latency mitigation
+In-reply-to: <20200428050242.17717-1-swood@redhat.com>
+Date:   Thu, 30 Apr 2020 00:13:14 +0100
+Message-ID: <jhjzhatdgxh.mognet@arm.com>
 MIME-Version: 1.0
 Content-Type: text/plain
 Sender: linux-rt-users-owner@vger.kernel.org
@@ -49,20 +49,36 @@ List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
 
-On 28/04/20 23:33, Scott Wood wrote:
->> > +
->> > +/* Is there a task of a high priority class? */
->> > +static inline bool rq_has_runnable_rt_task(struct rq *rq)
->> > +{
->> > +	return unlikely(rq->nr_running != rq->cfs.h_nr_running);
->>
->> Seeing as that can be RT, DL or stopper, that name is somewhat misleading.
+On 28/04/20 06:02, Scott Wood wrote:
+> These patches mitigate latency caused by newidle_balance() on large
+> systems, by enabling interrupts when the lock is dropped, and exiting
+> early at various points if an RT task is runnable on the current CPU.
 >
-> rq_has_runnable_rt_dl_task()?  Or is there some term that unambiguously
-> encompasses both?
+> When applied to an RT kernel on a 72-core machine (2 threads per core), I
+> saw significant reductions in latency as reported by rteval -- from
+> over 500us to around 160us with hyperthreading disabled, and from
+> over 1400us to around 380us with hyperthreading enabled.
+>
+> This isn't the first time something like this has been tried:
+> https://lore.kernel.org/lkml/20121222003019.433916240@goodmis.org/
+> That attempt ended up being reverted:
+> https://lore.kernel.org/lkml/5122CD9C.9070702@oracle.com/
+>
+> The problem in that case was the failure to keep BH disabled, and the
+> difficulty of fixing that when called from the post_schedule() hook.
+> This patchset uses finish_task_switch() to call newidle_balance(), which
+> enters in non-atomic context so we have full control over what we disable
+> and when.
+>
+> There was a note at the end about wanting further discussion on the matter --
+> does anyone remember if that ever happened and what the conclusion was?
+> Are there any other issues with enabling interrupts here and/or moving
+> the newidle_balance() call?
 >
 
-Naming is a pain as always; I'd shove it in fair.c as
-"rq_has_higher_tasks()" or similar.
+Random thought that just occurred to me; in the grand scheme of things,
+with something in the same spirit as task-stealing (i.e. don't bother with
+a full fledged balance at newidle, just pick one spare task somewhere),
+none of this would be required.
 
-> -Scott
+Sadly I don't think anyone has been looking at it any recently.
