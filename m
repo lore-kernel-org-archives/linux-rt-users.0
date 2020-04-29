@@ -2,30 +2,30 @@ Return-Path: <SRS0=P+nX=6N=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C3DDFC83007
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Apr 2020 12:01:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6587EC83003
+	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Apr 2020 12:01:47 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A82BB2083B
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Apr 2020 12:01:09 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 4E3FB208FE
+	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Apr 2020 12:01:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726763AbgD2MBG (ORCPT
+        id S1726832AbgD2MBn (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 29 Apr 2020 08:01:06 -0400
-Received: from foss.arm.com ([217.140.110.172]:37838 "EHLO foss.arm.com"
+        Wed, 29 Apr 2020 08:01:43 -0400
+Received: from foss.arm.com ([217.140.110.172]:37862 "EHLO foss.arm.com"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726426AbgD2MBG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 29 Apr 2020 08:01:06 -0400
+        id S1726426AbgD2MBn (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 29 Apr 2020 08:01:43 -0400
 Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id CCB321063;
-        Wed, 29 Apr 2020 05:01:05 -0700 (PDT)
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 09DC9106F;
+        Wed, 29 Apr 2020 05:01:43 -0700 (PDT)
 Received: from e113632-lin (e113632-lin.cambridge.arm.com [10.1.194.46])
-        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 7B6583F73D;
-        Wed, 29 Apr 2020 05:01:04 -0700 (PDT)
-References: <20200428050242.17717-1-swood@redhat.com> <20200428050242.17717-2-swood@redhat.com> <jhjftcns35d.mognet@arm.com> <2a30101cc0adb63ee7ce7b32119579d78de24b71.camel@redhat.com>
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id AC3693F73D;
+        Wed, 29 Apr 2020 05:01:41 -0700 (PDT)
+References: <20200428050242.17717-1-swood@redhat.com> <20200428050242.17717-4-swood@redhat.com> <jhjees7s29u.mognet@arm.com> <fa406883f0eace37fe7f658814e29f82a4f0addf.camel@redhat.com>
 User-agent: mu4e 0.9.17; emacs 26.3
 From:   Valentin Schneider <valentin.schneider@arm.com>
 To:     Scott Wood <swood@redhat.com>
@@ -37,10 +37,10 @@ Cc:     Steven Rostedt <rostedt@goodmis.org>,
         Rik van Riel <riel@surriel.com>,
         Mel Gorman <mgorman@suse.de>, linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: [RFC PATCH 1/3] sched/fair: Call newidle_balance() from finish_task_switch()
-Message-ID: <jhjtv12pklx.mognet@arm.com>
-In-reply-to: <2a30101cc0adb63ee7ce7b32119579d78de24b71.camel@redhat.com>
-Date:   Wed, 29 Apr 2020 13:00:58 +0100
+Subject: Re: [RFC PATCH 3/3] sched,rt: break out of load balancing if an RT task appears
+In-reply-to: <fa406883f0eace37fe7f658814e29f82a4f0addf.camel@redhat.com>
+Date:   Wed, 29 Apr 2020 13:01:39 +0100
+Message-ID: <jhjr1w6pkkc.mognet@arm.com>
 MIME-Version: 1.0
 Content-Type: text/plain
 Sender: linux-rt-users-owner@vger.kernel.org
@@ -50,45 +50,19 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 
 On 28/04/20 23:33, Scott Wood wrote:
-> On Tue, 2020-04-28 at 22:37 +0100, Valentin Schneider wrote:
->> On 28/04/20 06:02, Scott Wood wrote:
->> > Thus, newidle_balance() is entered with interrupts enabled, which allows
->> > (in the next patch) enabling interrupts when the lock is dropped.
->> >
->> > Signed-off-by: Scott Wood <swood@redhat.com>
->> > ---
->> >  kernel/sched/core.c  |  7 ++++---
->> >  kernel/sched/fair.c  | 45 ++++++++++++++++----------------------------
->> >  kernel/sched/sched.h |  6 ++----
->> >  3 files changed, 22 insertions(+), 36 deletions(-)
->> >
->> > diff --git a/kernel/sched/core.c b/kernel/sched/core.c
->> > index 9a2fbf98fd6f..0294beb8d16c 100644
->> > --- a/kernel/sched/core.c
->> > +++ b/kernel/sched/core.c
->> > @@ -3241,6 +3241,10 @@ static struct rq *finish_task_switch(struct
->> > task_struct *prev)
->> >       }
->> >
->> >       tick_nohz_task_switch();
 >> > +
->> > +	if (is_idle_task(current))
->> > +		newidle_balance();
->> > +
+>> > +/* Is there a task of a high priority class? */
+>> > +static inline bool rq_has_runnable_rt_task(struct rq *rq)
+>> > +{
+>> > +	return unlikely(rq->nr_running != rq->cfs.h_nr_running);
 >>
->> This means we must go through a switch_to(idle) before figuring out we
->> could've switched to a CFS task, and do it then. I'm curious to see the
->> performance impact of that.
+>> Seeing as that can be RT, DL or stopper, that name is somewhat misleading.
 >
-> Any particular benchmark I should try?
+> rq_has_runnable_rt_dl_task()?  Or is there some term that unambiguously
+> encompasses both?
 >
 
-I'm going to be very original and suggest hackbench :-)
+Naming is a pain as always; I'd shove it in fair.c as
+"rq_has_higher_tasks()" or similar.
 
-That would just be the first stop however, you would also want to try
-something less wakeup-intensive, maybe sysbench and the like - I'm thinking
-if you spawn ~1.5*nr_cpu_ids CPU-hogs, you'll hit that double switch fairly
-easily.
-
-And then there's always the big boys benchmarks like specjbb and co - I'd
-suggest having a look at Mel's mmtests.
+> -Scott
