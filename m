@@ -2,118 +2,93 @@ Return-Path: <SRS0=P+nX=6N=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.6 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CF25BC83004
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Apr 2020 09:05:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C3DDFC83007
+	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Apr 2020 12:01:09 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id AB7DE20775
-	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Apr 2020 09:05:58 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="EZpoaZAf"
+	by mail.kernel.org (Postfix) with ESMTP id A82BB2083B
+	for <linux-rt-users@archiver.kernel.org>; Wed, 29 Apr 2020 12:01:09 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726691AbgD2JF6 (ORCPT
+        id S1726763AbgD2MBG (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 29 Apr 2020 05:05:58 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38864 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-FAIL-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1726423AbgD2JF5 (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 29 Apr 2020 05:05:57 -0400
-Received: from bombadil.infradead.org (bombadil.infradead.org [IPv6:2607:7c80:54:e::133])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 01D34C03C1AD;
-        Wed, 29 Apr 2020 02:05:58 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20170209; h=In-Reply-To:Content-Type:MIME-Version
-        :References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=XlD1+AvJfZeuuQwUQ9zHNy+2swxAxqsHpj/K9yi6CiM=; b=EZpoaZAfMPr1EACN+PajqhaSMa
-        6B0TPq9Ch62/wPf1hf+KHHNPAjStZHmGqTBzAP1qzVyAJboFPqCyLv6cRXhfX2YCrLmSpxSDrokhK
-        kVExjadPyagDkJ/pkzcULs7cUtnrAPixDNbfiVN5vpJlGRWtja8dDJNNJI+cZko5DHLZDu4+J+IJO
-        RZf/SpXptIWWbZvahGcVJgLX/ny8hlX2l+p+6Bpjr4KAwQD9pmr+uhcVN28FFB3Z2oCGxJcXMF8nF
-        sZ6/4kUQ7QBcpptD6auavUCnnapT2ZYp4bY832A3++ccW/O4fqAFHpQ+2ujqaHar90mh3Oc669/Op
-        ndRGfKqA==;
-Received: from j217100.upc-j.chello.nl ([24.132.217.100] helo=noisy.programming.kicks-ass.net)
-        by bombadil.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-        id 1jTieu-0008JI-C1; Wed, 29 Apr 2020 09:05:36 +0000
-Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id A9CB7300130;
-        Wed, 29 Apr 2020 11:05:33 +0200 (CEST)
-Received: by hirez.programming.kicks-ass.net (Postfix, from userid 1000)
-        id 784EC20BD8FF8; Wed, 29 Apr 2020 11:05:33 +0200 (CEST)
-Date:   Wed, 29 Apr 2020 11:05:33 +0200
-From:   Peter Zijlstra <peterz@infradead.org>
+        Wed, 29 Apr 2020 08:01:06 -0400
+Received: from foss.arm.com ([217.140.110.172]:37838 "EHLO foss.arm.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726426AbgD2MBG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 29 Apr 2020 08:01:06 -0400
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+        by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id CCB321063;
+        Wed, 29 Apr 2020 05:01:05 -0700 (PDT)
+Received: from e113632-lin (e113632-lin.cambridge.arm.com [10.1.194.46])
+        by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 7B6583F73D;
+        Wed, 29 Apr 2020 05:01:04 -0700 (PDT)
+References: <20200428050242.17717-1-swood@redhat.com> <20200428050242.17717-2-swood@redhat.com> <jhjftcns35d.mognet@arm.com> <2a30101cc0adb63ee7ce7b32119579d78de24b71.camel@redhat.com>
+User-agent: mu4e 0.9.17; emacs 26.3
+From:   Valentin Schneider <valentin.schneider@arm.com>
 To:     Scott Wood <swood@redhat.com>
-Cc:     Valentin Schneider <valentin.schneider@arm.com>,
-        Steven Rostedt <rostedt@goodmis.org>,
+Cc:     Steven Rostedt <rostedt@goodmis.org>,
         Ingo Molnar <mingo@redhat.com>,
+        Peter Zijlstra <peterz@infradead.org>,
         Vincent Guittot <vincent.guittot@linaro.org>,
         Dietmar Eggemann <dietmar.eggemann@arm.com>,
         Rik van Riel <riel@surriel.com>,
         Mel Gorman <mgorman@suse.de>, linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: [RFC PATCH 1/3] sched/fair: Call newidle_balance() from
- finish_task_switch()
-Message-ID: <20200429090533.GH13592@hirez.programming.kicks-ass.net>
-References: <20200428050242.17717-1-swood@redhat.com>
- <20200428050242.17717-2-swood@redhat.com>
- <jhjftcns35d.mognet@arm.com>
- <20200428220917.GB16027@hirez.programming.kicks-ass.net>
- <c4a8d1f044b721a2c396fa00a0244eff0b851ae4.camel@redhat.com>
- <20200428230204.GE16027@hirez.programming.kicks-ass.net>
- <89043649a64fc97dd90eb25c85bcc8f65483cf4f.camel@redhat.com>
+Subject: Re: [RFC PATCH 1/3] sched/fair: Call newidle_balance() from finish_task_switch()
+Message-ID: <jhjtv12pklx.mognet@arm.com>
+In-reply-to: <2a30101cc0adb63ee7ce7b32119579d78de24b71.camel@redhat.com>
+Date:   Wed, 29 Apr 2020 13:00:58 +0100
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <89043649a64fc97dd90eb25c85bcc8f65483cf4f.camel@redhat.com>
+Content-Type: text/plain
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, Apr 28, 2020 at 06:20:32PM -0500, Scott Wood wrote:
-> On Wed, 2020-04-29 at 01:02 +0200, Peter Zijlstra wrote:
-> > On Tue, Apr 28, 2020 at 05:55:03PM -0500, Scott Wood wrote:
-> > > On Wed, 2020-04-29 at 00:09 +0200, Peter Zijlstra wrote:
-> > > > Also, if you move it this late, this is entirely the wrong place. If
-> > > > you
-> > > > do it after the context switch either use the balance_callback or put
-> > > > it
-> > > > in the idle path.
-> > > > 
-> > > > But what Valentin said; this needs a fair bit of support, the whole
-> > > > reason we've never done this is to avoid that double context switch...
-> > > > 
-> > > 
-> > > balance_callback() enters with the rq lock held but BH not separately
-> > 
-> > BH? softirqs you mean? Pray tell more.
-> 
-> In https://lore.kernel.org/lkml/5122CD9C.9070702@oracle.com/ the need to
-> keep softirqs disabled during rebalance was brought up, but simply wrapping
-> the lock dropping in local_bh_enable()/local_bh_disable() meant that
-> local_bh_enable() would be called with interrupts disabled, which isn't
-> allowed.
 
-That thread, nor your explanation make any sense -- why do we care about
-softirqs?, nor do I see how placing it in finish_task_switch() helps
-with any of this.
+On 28/04/20 23:33, Scott Wood wrote:
+> On Tue, 2020-04-28 at 22:37 +0100, Valentin Schneider wrote:
+>> On 28/04/20 06:02, Scott Wood wrote:
+>> > Thus, newidle_balance() is entered with interrupts enabled, which allows
+>> > (in the next patch) enabling interrupts when the lock is dropped.
+>> >
+>> > Signed-off-by: Scott Wood <swood@redhat.com>
+>> > ---
+>> >  kernel/sched/core.c  |  7 ++++---
+>> >  kernel/sched/fair.c  | 45 ++++++++++++++++----------------------------
+>> >  kernel/sched/sched.h |  6 ++----
+>> >  3 files changed, 22 insertions(+), 36 deletions(-)
+>> >
+>> > diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+>> > index 9a2fbf98fd6f..0294beb8d16c 100644
+>> > --- a/kernel/sched/core.c
+>> > +++ b/kernel/sched/core.c
+>> > @@ -3241,6 +3241,10 @@ static struct rq *finish_task_switch(struct
+>> > task_struct *prev)
+>> >       }
+>> >
+>> >       tick_nohz_task_switch();
+>> > +
+>> > +	if (is_idle_task(current))
+>> > +		newidle_balance();
+>> > +
+>>
+>> This means we must go through a switch_to(idle) before figuring out we
+>> could've switched to a CFS task, and do it then. I'm curious to see the
+>> performance impact of that.
+>
+> Any particular benchmark I should try?
+>
 
-> > > disabled, which interferes with the ability to enable interrupts but not
-> > > BH.
-> > > It also gets called from rt_mutex_setprio() and __sched_setscheduler(),
-> > > and
-> > > I didn't want the caller of those to be stuck with the latency.
-> > 
-> > You're not reading it right.
-> 
-> Could you elaborate?
+I'm going to be very original and suggest hackbench :-)
 
-If you were to do a queue_balance_callback() from somewhere in the
-pick_next_task() machinery, then the balance_callback() at the end of
-__schedule() would run it, and it'd be gone. How would
-rt_mutex_setprio() / __sched_setscheduler() be affected?
+That would just be the first stop however, you would also want to try
+something less wakeup-intensive, maybe sysbench and the like - I'm thinking
+if you spawn ~1.5*nr_cpu_ids CPU-hogs, you'll hit that double switch fairly
+easily.
+
+And then there's always the big boys benchmarks like specjbb and co - I'd
+suggest having a look at Mel's mmtests.
