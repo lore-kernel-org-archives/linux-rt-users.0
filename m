@@ -4,67 +4,65 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-0.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
 	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 887C8C8300B
-	for <linux-rt-users@archiver.kernel.org>; Thu, 30 Apr 2020 12:43:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5E548C8300A
+	for <linux-rt-users@archiver.kernel.org>; Thu, 30 Apr 2020 12:48:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6570B20870
-	for <linux-rt-users@archiver.kernel.org>; Thu, 30 Apr 2020 12:43:07 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3BFAF2074A
+	for <linux-rt-users@archiver.kernel.org>; Thu, 30 Apr 2020 12:48:36 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b="KdDsdhzG"
+	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b="d29VIYMn"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726677AbgD3MnE (ORCPT
+        id S1726661AbgD3Ms2 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 30 Apr 2020 08:43:04 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44044 "EHLO
+        Thu, 30 Apr 2020 08:48:28 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44884 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-FAIL-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1726531AbgD3MnD (ORCPT
+        by vger.kernel.org with ESMTP id S1726500AbgD3MsZ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 30 Apr 2020 08:43:03 -0400
-Received: from mail-lf1-x142.google.com (mail-lf1-x142.google.com [IPv6:2a00:1450:4864:20::142])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EA9B4C035495
-        for <linux-rt-users@vger.kernel.org>; Thu, 30 Apr 2020 05:43:02 -0700 (PDT)
-Received: by mail-lf1-x142.google.com with SMTP id l11so1088314lfc.5
-        for <linux-rt-users@vger.kernel.org>; Thu, 30 Apr 2020 05:43:02 -0700 (PDT)
+        Thu, 30 Apr 2020 08:48:25 -0400
+Received: from mail-lj1-x241.google.com (mail-lj1-x241.google.com [IPv6:2a00:1450:4864:20::241])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B0A65C035495
+        for <linux-rt-users@vger.kernel.org>; Thu, 30 Apr 2020 05:48:24 -0700 (PDT)
+Received: by mail-lj1-x241.google.com with SMTP id a21so6290291ljj.11
+        for <linux-rt-users@vger.kernel.org>; Thu, 30 Apr 2020 05:48:24 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=linaro.org; s=google;
         h=mime-version:references:in-reply-to:from:date:message-id:subject:to
          :cc;
-        bh=yumFUMI4249WSXzPR5V8YGUqtmGI9DD0x2OLnA0cDLs=;
-        b=KdDsdhzGLrYgimJfZZEx2eF9JO3+vXrJDCCyg2oLnXyV21m1T5GaQnN9reCiJZLVeU
-         SFS+4h4iZ3hVadXJCwKLrbUOBvVEP8R0kSWGduLVKwuQeNAzrHW76gFSq0HwXyd/L8V9
-         /GfHGAaHyBl7SO2CWZqNCVw7ogKQ6cUYCtq+1+xSTHDhjefdtltnpdNrxTK961Kf1T7j
-         O2qsrBiIKIeUWxrIME5UQ0zDVN36ratrdn7Nxq7HmPJV51QZXoABVzTf5xxb1jRLDF7h
-         lQGM7JTRIsFXKDn7jTV+XFm5+oQRHIU8q7tZw+RIPO0+BsOQOAqhcJ0lOmTNB0Gthear
-         Z1yA==
+        bh=JnO667q5c5E7TSSxaDJD1U38vb/xALkbQXSs3IL9b34=;
+        b=d29VIYMn01wGpc1r/vfro9ApyZNaBYF3i+SxZZyi12h4HX6RzcOIQ6KfYrlUzsqqBA
+         3XDTMLY3AMK+tn6GAuWbrbqlxxAG0z5/hHr0T4Rs/PV34bcQNSX9yxHFOAlZXnUAA8ls
+         8hdsBwfWbtzOU+qRvpDOpr+srM6wrn2YA9oBjWb0X6uXZOmtbkPktRVaJUi0VhNEx/qr
+         CtwhZ9cxUVfGldn7kxVWBnMm+1OwmoYQA/q2Y8Fx0WeXyAVe4piDrWkg7wyNdNijkE1J
+         W3sJDCnpeOn44Osjqq/klQLUAAbXnNfQze1e8+tn6d+DXlmneIpxILPKMklLOsv91P+r
+         1/og==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:mime-version:references:in-reply-to:from:date
          :message-id:subject:to:cc;
-        bh=yumFUMI4249WSXzPR5V8YGUqtmGI9DD0x2OLnA0cDLs=;
-        b=dCF4pOiKMU7CwP3ruhh+rO/XrIsIYlaf1k7NC7AEmJE2kleOhPDLNqxj3Kvj0vnqW+
-         d0vLEbpHInpDLWbT8Wk8yRnYkkWzYDrFZL8+5/VV0gFsBeZzoEV1FpiWXn3VrIFEj6Sx
-         sh3MAYGSRaiSKbB/bMQXvNTXWI5nJoY2LtpB2pyvFbeXuy4vEWUBl7/bivuOxBCkYLQ7
-         S65J9uCznuy0E+201ictxmJTb0USTz8X0eyQSl0bhDr8LebmFA+PcYI5tlooOBxXz4qh
-         Ov06V+m4XhXxNnSVeMTWZv2+IUN4kcqbpkPMgxbSyHhqPtsgPzb1bmrZSGwqIx28Sl09
-         gZsA==
-X-Gm-Message-State: AGi0PuaNJkRBuu5QHKKgT6KTpBNO9813yO1Wpb300BFF9oLazuOIjhzd
-        V38bhpkg5IyhHmxAsXwMFOeHPt6AXmtHSCPFatgS7Q==
-X-Google-Smtp-Source: APiQypJekjcGgPXZsen7oTWtrMSl8LNdd5NgzZz+7x/cBDOlIlwEtuDvRS04xXh/mklX3ikBcToqDcSTP+2TCkhdBo4=
-X-Received: by 2002:ac2:5e65:: with SMTP id a5mr2039989lfr.189.1588250581343;
- Thu, 30 Apr 2020 05:43:01 -0700 (PDT)
+        bh=JnO667q5c5E7TSSxaDJD1U38vb/xALkbQXSs3IL9b34=;
+        b=aT1tx6xY1VLUwAnAVrhBKcbpEDee5f3itPPpXmBK5yFsAOIMuY+sVFBpi4uCFBrKA6
+         rodiZvjdOxzf22QpxPgz2DoWsVwEZNQEm1xri8WnshIEL7p8EoXUekC33fEsfaZmG2X7
+         Wzu3PINUIocwV4LmDdsDT+9+fuQvWyxkAQOelgxU7I2gheJn8fjdCcSNL8TCbPhvRTQ6
+         6SKgm7OfvvS8Y6KGuG8F5i42iYoDT6z/CWHfFhI/p1slLDscQXnOXBCyI915gRqjDhgK
+         Nm6aiGvmygkybRxEuexZyngDbekgoab6ShAjX/oyzNHgPC2i2zN1ZXh8PvsAUCNcCfN9
+         vJww==
+X-Gm-Message-State: AGi0PuYLsyzKqasdqwZQ+vpuDqkFM2M3AGedpe0I/VDtmmuh6FOrF5OK
+        b5iwRqowrLr23PXO2Stt3YsbiFx5JgmOHdJ9HxES0NHQ
+X-Google-Smtp-Source: APiQypK5f0ixXmra0GXhuiax3wj9oASqR/v35hM1Y2OypnXRwuvd+a02m5i8KuNhlCYPTunNiv/q34DZvAXy3ITgzNI=
+X-Received: by 2002:a05:651c:319:: with SMTP id a25mr1984790ljp.209.1588250902213;
+ Thu, 30 Apr 2020 05:48:22 -0700 (PDT)
 MIME-Version: 1.0
-References: <20200428050242.17717-1-swood@redhat.com> <jhjzhatdgxh.mognet@arm.com>
- <CAKfTPtDktpTB7d6qhmcX0HtryezzFygk4kOC22Qf=OM77QpLYg@mail.gmail.com> <jhjy2qdcmc2.mognet@arm.com>
-In-Reply-To: <jhjy2qdcmc2.mognet@arm.com>
+References: <20200428050242.17717-1-swood@redhat.com>
+In-Reply-To: <20200428050242.17717-1-swood@redhat.com>
 From:   Vincent Guittot <vincent.guittot@linaro.org>
-Date:   Thu, 30 Apr 2020 14:42:50 +0200
-Message-ID: <CAKfTPtA_duZpnvMx+czAosCikVL=cESKhPQcRrQUdKWKobZBaA@mail.gmail.com>
+Date:   Thu, 30 Apr 2020 14:48:11 +0200
+Message-ID: <CAKfTPtDfk-aq7PTVmMgJcZSOupXb0SGHS8Fc2k+qTZTsnfiV=A@mail.gmail.com>
 Subject: Re: [RFC PATCH 0/3] newidle_balance() latency mitigation
-To:     Valentin Schneider <valentin.schneider@arm.com>
-Cc:     Scott Wood <swood@redhat.com>,
-        Steven Rostedt <rostedt@goodmis.org>,
+To:     Scott Wood <swood@redhat.com>
+Cc:     Steven Rostedt <rostedt@goodmis.org>,
         Ingo Molnar <mingo@redhat.com>,
         Peter Zijlstra <peterz@infradead.org>,
         Dietmar Eggemann <dietmar.eggemann@arm.com>,
@@ -78,65 +76,52 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, 30 Apr 2020 at 12:14, Valentin Schneider
-<valentin.schneider@arm.com> wrote:
+On Tue, 28 Apr 2020 at 07:02, Scott Wood <swood@redhat.com> wrote:
 >
+> These patches mitigate latency caused by newidle_balance() on large
+> systems, by enabling interrupts when the lock is dropped, and exiting
+> early at various points if an RT task is runnable on the current CPU.
 >
-> On 30/04/20 08:44, Vincent Guittot wrote:
-> > On Thu, 30 Apr 2020 at 01:13, Valentin Schneider
-> > <valentin.schneider@arm.com> wrote:
-> >>
-> >>
-> >> On 28/04/20 06:02, Scott Wood wrote:
-> >> > These patches mitigate latency caused by newidle_balance() on large
-> >> > systems, by enabling interrupts when the lock is dropped, and exiting
-> >> > early at various points if an RT task is runnable on the current CPU.
-> >> >
-> >> > When applied to an RT kernel on a 72-core machine (2 threads per core), I
-> >> > saw significant reductions in latency as reported by rteval -- from
-> >> > over 500us to around 160us with hyperthreading disabled, and from
-> >> > over 1400us to around 380us with hyperthreading enabled.
-> >> >
-> >> > This isn't the first time something like this has been tried:
-> >> > https://lore.kernel.org/lkml/20121222003019.433916240@goodmis.org/
-> >> > That attempt ended up being reverted:
-> >> > https://lore.kernel.org/lkml/5122CD9C.9070702@oracle.com/
-> >> >
-> >> > The problem in that case was the failure to keep BH disabled, and the
-> >> > difficulty of fixing that when called from the post_schedule() hook.
-> >> > This patchset uses finish_task_switch() to call newidle_balance(), which
-> >> > enters in non-atomic context so we have full control over what we disable
-> >> > and when.
-> >> >
-> >> > There was a note at the end about wanting further discussion on the matter --
-> >> > does anyone remember if that ever happened and what the conclusion was?
-> >> > Are there any other issues with enabling interrupts here and/or moving
-> >> > the newidle_balance() call?
-> >> >
-> >>
-> >> Random thought that just occurred to me; in the grand scheme of things,
-> >> with something in the same spirit as task-stealing (i.e. don't bother with
-> >> a full fledged balance at newidle, just pick one spare task somewhere),
-> >> none of this would be required.
-> >
-> > newly idle load balance already stops after picking 1 task
->
-> Mph, I had already forgotten your changes there. Is that really always the
-> case for newidle? In e.g. the busiest->group_type == group_fully_busy case,
-> I think we can pull more than one task.
+> When applied to an RT kernel on a 72-core machine (2 threads per core), I
+> saw significant reductions in latency as reported by rteval -- from
+> over 500us to around 160us with hyperthreading disabled, and from
+> over 1400us to around 380us with hyperthreading enabled.
 
-for newly_idle load balance, detach_tasks stops after finding 1 suitable task
+Do you know how each patch contributes to the decrease ? Because patch
+3 not only impacts newly idle lb but each and every lb. So most of the
+decrease might come from aborting the busy or idle lb at the highest
+sched_domai level which scan all cpus and moving newly idle load
+balance is not a major part.
 
 >
-> > Now if your proposal is to pick one random task on one random cpu, I'm
-> > clearly not sure that's a good idea
-> >
+> This isn't the first time something like this has been tried:
+> https://lore.kernel.org/lkml/20121222003019.433916240@goodmis.org/
+> That attempt ended up being reverted:
+> https://lore.kernel.org/lkml/5122CD9C.9070702@oracle.com/
 >
-> IIRC Steve's implementation was to "simply" pull one task from any CPU
-> within the LLC domain that had > 1 runnable tasks. I quite like this since
-> picking any one task is almost always better than switching to the idle
-> task, but it wasn't a complete newidle_balance() replacement just yet.
+> The problem in that case was the failure to keep BH disabled, and the
+> difficulty of fixing that when called from the post_schedule() hook.
+> This patchset uses finish_task_switch() to call newidle_balance(), which
+> enters in non-atomic context so we have full control over what we disable
+> and when.
 >
-> >
-> >>
-> >> Sadly I don't think anyone has been looking at it any recently.
+> There was a note at the end about wanting further discussion on the matter --
+> does anyone remember if that ever happened and what the conclusion was?
+> Are there any other issues with enabling interrupts here and/or moving
+> the newidle_balance() call?
+>
+> Rik van Riel (1):
+>   sched,rt: break out of load balancing if an RT task appears
+>
+> Scott Wood (2):
+>   sched/fair: Call newidle_balance() from finish_task_switch()
+>   sched/fair: Enable interrupts when dropping lock in newidle_balance()
+>
+>  kernel/sched/core.c  |  7 +++--
+>  kernel/sched/fair.c  | 72 +++++++++++++++++++++++---------------------
+>  kernel/sched/sched.h | 12 +++++---
+>  3 files changed, 49 insertions(+), 42 deletions(-)
+>
+> --
+> 2.18.2
+>
