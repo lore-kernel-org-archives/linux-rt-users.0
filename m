@@ -1,90 +1,160 @@
-Return-Path: <SRS0=CmHT=6U=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=ggjn=6V=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.6 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ED2EFC28CBC
-	for <linux-rt-users@archiver.kernel.org>; Wed,  6 May 2020 21:11:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 68529C38A24
+	for <linux-rt-users@archiver.kernel.org>; Thu,  7 May 2020 07:29:51 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C9C7F2078C
-	for <linux-rt-users@archiver.kernel.org>; Wed,  6 May 2020 21:11:07 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1588799467;
-	bh=co9Gra5cR72CT4e3jHvuVVeJJ7RZIRnAiDSBNmDN5Rc=;
-	h=Subject:From:To:Date:List-ID:From;
-	b=Ja7LMgjhl15X/SwAe3R8vRQcIvkYVqfnqBcFihSa6F/pBNCPST6eSVHHF5KOpUALa
-	 1wRS/EkPtJ8bDdYeZX110s/WhL1Hlh8qgYjMwIaKszg50JAg2TvbT/L66jskYgHEqt
-	 p9cnQGvJ4yWCUlZjFfPvbsJDdWCTB6XOE5JlX2hw=
+	by mail.kernel.org (Postfix) with ESMTP id 3E63C2083B
+	for <linux-rt-users@archiver.kernel.org>; Thu,  7 May 2020 07:29:51 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NAgBmfK9"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729654AbgEFVLB (ORCPT
+        id S1725923AbgEGH3u (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 6 May 2020 17:11:01 -0400
-Received: from mail.kernel.org ([198.145.29.99]:44010 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728621AbgEFVLB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 6 May 2020 17:11:01 -0400
-Received: from tzanussi-mobl (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id E87D82076D;
-        Wed,  6 May 2020 21:10:59 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1588799460;
-        bh=co9Gra5cR72CT4e3jHvuVVeJJ7RZIRnAiDSBNmDN5Rc=;
-        h=Subject:From:To:Date:From;
-        b=sWEgKcNqMsmVg/xv1WhNIiFKCnvD5ALN8GoBV9oCIvrVhG5FbMT/R6fQz1wEOSrnG
-         K4llbe+bWJRaH2AvSBXblP8HTM4gKKnWUOh/xmAKwvJZfuxefjwiwOVbA9bKk44Nk1
-         SXetJdWsnnXb4/vc8/LUw2CD8C+ztXntS/RwVvus=
-Message-ID: <1140500a306348653f20938d6ebc06bf6cb8b9dd.camel@kernel.org>
-Subject: [ANNOUNCE] 4.19.120-rt52
-From:   Tom Zanussi <zanussi@kernel.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
-        Clark Williams <williams@redhat.com>,
-        Tom Zanussi <zanussi@kernel.org>
-Date:   Wed, 06 May 2020 16:10:58 -0500
-Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.28.5-0ubuntu0.18.04.1 
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+        Thu, 7 May 2020 03:29:50 -0400
+Received: from us-smtp-1.mimecast.com ([205.139.110.61]:51162 "EHLO
+        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1725858AbgEGH3t (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 7 May 2020 03:29:49 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1588836587;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=WqHWm03cdWE9AeodDX2gtE5xAzgCwXmdJaTKNX0BlUA=;
+        b=NAgBmfK9VCO87KgPMEKsZR6iZa8eozjL8KB+WiwFjABf186ZdA3e/xvyphlt3M/AhGVZ4k
+        axwHangILqgciVCxuzZbhXpSFt+L8ugsH5NaPHJXIhx012INOrGAkmuF/GW5pc9f0gQQgP
+        0LlBQSk6LC0fHceQ+TV6T2fdYzZGoUs=
+Received: from mail-wm1-f69.google.com (mail-wm1-f69.google.com
+ [209.85.128.69]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-26-odDgnQ3WNqK-2li3_UJKCg-1; Thu, 07 May 2020 03:29:35 -0400
+X-MC-Unique: odDgnQ3WNqK-2li3_UJKCg-1
+Received: by mail-wm1-f69.google.com with SMTP id h22so2826426wml.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 07 May 2020 00:29:35 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:in-reply-to;
+        bh=WqHWm03cdWE9AeodDX2gtE5xAzgCwXmdJaTKNX0BlUA=;
+        b=R4AnFqOyZ0SK1GsDbZHsqjvP/JeyCVTtvx0GRz16h/JP/oVlUJUEdlb7VdkEGiSB/n
+         8cri3NBjXi6nilGOQ6laYXshIybxFzapzh0KXTupFODCf1venDbkq4hsXqmmSHnpM1zf
+         K8oJzTHt10P7vhVjA423+HoT7xbo/mPsD8Ik2tGtNu9013Col2WhhOreoILsZUt1AtjN
+         6EJ1Khp79GxqDaJ06O6y/WD/aoYrGN+SHcDBn/ps2HThBxS9ZGiB51hajrburOJQEX0J
+         SgO3W2OPdyLthKAFCxY72Zw4chkZ5SiGi4Y9mWvM7nR94WQ6cncY3a8aDTvnMlhxXZPp
+         iOQw==
+X-Gm-Message-State: AGi0PuZ6JDCZepyESw42jOzHpL8t2KQ/Q68h3fXMoIx5KgB6b1kocE6c
+        TsTahjTXNGNJGgjrwqI1y45WlJhf/8FdhUbNfnzgnicYalg3PUNQCSitz5Xw4jARHn2JKv4/m3+
+        k6FcTuW/ENq7HzIUD7qEcG4GY/Ug=
+X-Received: by 2002:a5d:49cb:: with SMTP id t11mr13722762wrs.91.1588836574140;
+        Thu, 07 May 2020 00:29:34 -0700 (PDT)
+X-Google-Smtp-Source: APiQypKW/afKgcN6Ys3SlaqvJeC2tMA76ui4ITX8WaKt12BBr/x/h/A/RJ6Rv71x5W9jITqlLYoytg==
+X-Received: by 2002:a5d:49cb:: with SMTP id t11mr13722718wrs.91.1588836573396;
+        Thu, 07 May 2020 00:29:33 -0700 (PDT)
+Received: from localhost.localdomain ([151.29.188.60])
+        by smtp.gmail.com with ESMTPSA id z11sm6487512wro.48.2020.05.07.00.29.31
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 07 May 2020 00:29:32 -0700 (PDT)
+Date:   Thu, 7 May 2020 09:29:30 +0200
+From:   Juri Lelli <juri.lelli@redhat.com>
+To:     linux-pm@vger.kernel.org, linux-acpi@vger.kernel.org,
+        linux-pci@vger.kernel.org, linux-rt-users@vger.kernel.org,
+        linux-kernel@vger.kernel.org
+Cc:     Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        Morten Rasmussen <morten.rasmussen@arm.com>,
+        Lorenzo Pieralisi <Lorenzo.Pieralisi@arm.com>,
+        Sudeep Holla <sudeep.holla@arm.com>,
+        Claudio Scordino <c.scordino@evidence.eu.com>,
+        Luca Abeni <luca.abeni@santannapisa.it>,
+        Tommaso Cucinotta <tommaso.cucinotta@santannapisa.it>
+Subject: Re: [ANNOUNCE][CFP] Power Management and Scheduling in the Linux
+ Kernel IV edition (OSPM-summit 2020)
+Message-ID: <20200507072930.GM17381@localhost.localdomain>
+References: <20191219103500.GC13724@localhost.localdomain>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20191219103500.GC13724@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT Folks!
+Hello,
 
-I'm pleased to announce the 4.19.120-rt52 stable release.
+On 19/12/19 11:35, Juri Lelli wrote:
+> Power Management and Scheduling in the Linux Kernel (OSPM-summit) IV edition
+> 
+> May 11-13, 2019
+> Scuola Superiore Sant'Anna
+> Pisa, Italy
+> 
 
-This release is just an update to the new stable 4.19.120
-version and no RT specific changes have been made.
+Quick reminder that OSPM-summit IV edition is happening next week!
 
-You can get this release via the git tree at:
+Not in Pisa (for obvious reasons :-/), but online, kindly hosted on LWN
+BigBlueButton server. Thanks a lot to Jon and LWN for this opportunity.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+> .:: FOCUS
+> 
+> The IV edition of the Power Management and Scheduling in the Linux
+> Kernel (OSPM) summit aims at fostering discussions on power management
+> and (real-time) scheduling techniques. Summit will be held in Pisa
+> (Italy) on May 11-13, 2020.
+> 
+> Although scheduler techniques for reducing energy consumption while
+> meeting performance and latency requirements are the prime interest of
+> the summit, we welcome anybody interested in having discussions on the
+> broader scope of real-time systems, real-time and non-real-time
+> scheduling, tooling, debugging and tracing.
+> 
+> Feel free to have a look at what happened previous years:
+> 
+>  I   edition - https://lwn.net/Articles/721573/
+>  II  edition - https://lwn.net/Articles/754923/
+>  III edition - https://lwn.net/Articles/793281/
 
-  branch: v4.19-rt
-  Head SHA1: 39b4ecd5455033f6ba60e84199ebf6d9454b2efb
+[...]
 
-Or to build 4.19.120-rt52 directly, the following patches should be applied:
+> .:: ATTENDING
+> 
+> Attending the OSPM-summit is free of charge, but registration to the
+> event is mandatory. The event can allow a maximum of 50 people (so, be
+> sure to register early!). Registrations open on February 24th, 2020.
+> 
+> To register fill in the registration form available at
+> https://forms.gle/7LfFY8oNyRxV1wuQ7
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
+Since we don't have real rooms constraints, registration is still open.
+Everybody is more then welcome to join us. Please use the form above to
+register. Details about how to join will be provided after registration
+completes. You can also reach out to me directly.
 
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.120.xz
+Schedule (still subject to small changes) is available at
+https://bit.ly/2WAtsjy (CEST tz).
 
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/patch-4.19.120-rt52.patch.xz
+> .:: ORGANIZERS (in alphabetical order)
+> 
+> Luca Abeni (SSSA)
+> Tommaso Cucinotta (SSSA)
+> Dietmar Eggemann (Arm)
+> Sudeep Holla (Arm)
+> Juri Lelli (Red Hat)
+> Lorenzo Pieralisi (Arm)
+> Morten Rasmussen (Arm)
+> Claudio Scordino (Evidence SRL)
 
-Enjoy!
+Thanks also a lot to Scuola Superiore Sant'Anna of Pisa, Arm and
+Evidence for helping put this together for the 4th consecutive year.
 
-   Tom
+Looking forward to meet you all soon.. virtually. :-)
+
+Best,
+
+Juri
 
