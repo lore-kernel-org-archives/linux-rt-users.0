@@ -2,207 +2,115 @@ Return-Path: <SRS0=ggjn=6V=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+X-Spam-Status: No, score=-0.8 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3A26CC38A24
-	for <linux-rt-users@archiver.kernel.org>; Thu,  7 May 2020 08:56:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BE68FC38A2A
+	for <linux-rt-users@archiver.kernel.org>; Thu,  7 May 2020 19:08:25 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 01B2120747
-	for <linux-rt-users@archiver.kernel.org>; Thu,  7 May 2020 08:56:43 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 85FFD20870
+	for <linux-rt-users@archiver.kernel.org>; Thu,  7 May 2020 19:08:25 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="UKkx3La5"
+	dkim=pass (1024-bit key) header.d=Mobileye.onmicrosoft.com header.i=@Mobileye.onmicrosoft.com header.b="m+5K5DCh"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1725900AbgEGI4m (ORCPT
+        id S1726491AbgEGTIZ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 7 May 2020 04:56:42 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53470 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725809AbgEGI4m (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 7 May 2020 04:56:42 -0400
-Received: from mail-ot1-x330.google.com (mail-ot1-x330.google.com [IPv6:2607:f8b0:4864:20::330])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3022EC061A10
-        for <linux-rt-users@vger.kernel.org>; Thu,  7 May 2020 01:56:42 -0700 (PDT)
-Received: by mail-ot1-x330.google.com with SMTP id j4so3847667otr.11
-        for <linux-rt-users@vger.kernel.org>; Thu, 07 May 2020 01:56:42 -0700 (PDT)
+        Thu, 7 May 2020 15:08:25 -0400
+Received: from mail-eopbgr130077.outbound.protection.outlook.com ([40.107.13.77]:50561
+        "EHLO EUR01-HE1-obe.outbound.protection.outlook.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S1726320AbgEGTIY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 7 May 2020 15:08:24 -0400
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
+ b=DUenU94O+bdwnqlYionvtiq7j44qEz33W130EuprXYQ2c6tNjwAI8jWZ21QOB27H4zn0QpmfI6urDc1BGQ559k7Gd4HKKio0iDoj4T/MAb2qkJNGYdP061Y8UCJ09SggYkIiJQid3pGSEZg1waasIjMnx2oQX7bTYW5QmGK6zcObUqo1Px3CCoLGmeRV+KZ9hLAk1yRhcb9ZrASfWKnjcrN1yTkvYC1BzvZkJAQlcWbZPPPOsxrS1V6/IBD1oXwcUuN3O7AsAtK3+nKfluu7QVn8loEqMsUH0uVfRj8PMJFyRZr9dOA7BEkLnibOUenY7U3fTveI2XEYj2QB+Nzyyg==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector9901;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=Eh5w2wmeyGPS4Ujmpx04eZZ+QtVqw7PIY2grsZvYnwc=;
+ b=GIDgr5BmRZgqRF5fHK5MjQ9Cu58VCPqmorsl5O08SgJQ2g+bc3Q8ufZVKumSW+Xr4khTk5CEYtEKSzios8GaaMFykel/WyvnRP9iVuTvA5aE6vQle3T2iqn++2E6Vq+E6opt+79TLcPdZ8QS/0EQP13LkhaPNdAt2cW9kqCQHyBvKUxHXdqXl5USKfElmqgqKzu++okTVs3wc8XjBIgBIme/D3RbA/uxHGPi37lWynFIde1pSJwP+VtiNw+r/q+ixTVFkWhtaeMCF0GN2bruXadC1PRdAQ77SoQMQzY2KVnBi6YAfecvs1OkbPY+sVr41iCtyfDUd0aQvtbYlk02cg==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=mobileye.com; dmarc=pass action=none header.from=mobileye.com;
+ dkim=pass header.d=mobileye.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:from:date:message-id:subject:to;
-        bh=4ItZSX4Lo5tP/75IYSdQzX4hlvvY6QNX3KC6oW8lTmE=;
-        b=UKkx3La50whsInS9TyDE35ybaU2Ndw79Uyocx/a3NAJCZ67/jn1fEhpeGbLbp50xWv
-         j9CfAR2DJj/QLVM3AturWl9hRE57lcFDF2VMC7TwlzHK+YEMLoFRFHCM82dHGG8jSU6N
-         L2J5rC1nu6kW/RiZhByU+bQwZSXocyFAqq/k+eiqSQEyJBIWJzTXTfNbv+CpvB3USA4g
-         qv9sc7arj01xylHhEwWeuww/LeQC6DddLzJE41eA3ngevwH/w+v/cjT/q4GPaKgZE4wS
-         1E4FdIH8qgnYnsHb81nD9XGwrKOYloiEfNVc5P7NZ2dNskasFxuT4SpxwLmPzYRVkHw/
-         eECQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:from:date:message-id:subject:to;
-        bh=4ItZSX4Lo5tP/75IYSdQzX4hlvvY6QNX3KC6oW8lTmE=;
-        b=O1Bh+QIX9ADbjdM1YwwFDc/VXG3ONBPMgn+FbYNH6ucxE8Bp2OtVqpuqdvY7jzSJZu
-         x+6/39tW/7pykJirVA3+7NMPzbUGhZEVi2M77UQ9qrBxGTKfSFEKS87awsFb0Cwwe/n5
-         WHfwd2pDegAzsVKQevfxi6ADZs5zZb2NHX4aLyLM6zyZ5w45+/Du4FmU1gpYZKdaj+q9
-         KhWXwtW/4xCWQkTOgG8BCneeR17a+PD3zz9PGVlPTNHSzWjC1xelkSTm8CG5JqB4vTeV
-         LZUvMtk1Y4y0FTGT88sjlCSuTRbifPEOvtgo0ABykKlmLyO7ZADZU31UTW0GKWB93QFf
-         BJ9w==
-X-Gm-Message-State: AGi0PuZfE0LGoDidzjFXf3Qyo6Xp0Iw6zl/tuQ8UVTaFz+e7N+fOy3CT
-        ntR6lFdur4RSJIsoRKui0irs2pd1SRq6BoOh7V456LT4IQw=
-X-Google-Smtp-Source: APiQypIwBIC2iQIuKe0gS+w3uxic/62ZMVCZt3WwKE4tjnnAYOuVqXOB3FKyH/kEHl+tfm0mPd29NKyPzoKpSKLfJSE=
-X-Received: by 2002:a05:6830:1446:: with SMTP id w6mr1516451otp.99.1588841800522;
- Thu, 07 May 2020 01:56:40 -0700 (PDT)
+ d=Mobileye.onmicrosoft.com; s=selector2-Mobileye-onmicrosoft-com;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=Eh5w2wmeyGPS4Ujmpx04eZZ+QtVqw7PIY2grsZvYnwc=;
+ b=m+5K5DChtqsz/QCIGFeWkWO1sdSUedjiddYw9twMNk5/Xx8z5SElDPFyfcXNEgAq+6RSDv5uF0ujtyZAA8l0LNS5P/cvcigMfCVzcl6LEcQpRjhNyn2Mo/+f9Xx9yelOGE0yeNnt0IUGhEd5rhCWjXcNcMj2emheiynLf0TPUGE=
+Received: from AM0PR09MB3794.eurprd09.prod.outlook.com (2603:10a6:208:181::15)
+ by AM0PR09MB2259.eurprd09.prod.outlook.com (2603:10a6:208:e4::31) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.2958.29; Thu, 7 May
+ 2020 19:08:21 +0000
+Received: from AM0PR09MB3794.eurprd09.prod.outlook.com
+ ([fe80::684a:f459:15f6:3e1c]) by AM0PR09MB3794.eurprd09.prod.outlook.com
+ ([fe80::684a:f459:15f6:3e1c%5]) with mapi id 15.20.2979.030; Thu, 7 May 2020
+ 19:08:21 +0000
+From:   Elana Copperman <Elana.Copperman@mobileye.com>
+To:     linux-rt-users <linux-rt-users@vger.kernel.org>,
+        "Vladimir Kondratiev (Mobileye)" 
+        <63dc4b5d-c467-4bfb-bce5-74485907c850@intel.mail.onmicrosoft.com>
+Subject: RE: cgroups CPU time management + PREEMPT_RT
+Thread-Topic: cgroups CPU time management + PREEMPT_RT
+Thread-Index: AdYkm/M/lU1yRRU5Sia9bqNtzqcgHQABswyw
+Date:   Thu, 7 May 2020 19:08:21 +0000
+Message-ID: <AM0PR09MB3794E9CFE8BA31852B712DAD99A50@AM0PR09MB3794.eurprd09.prod.outlook.com>
+References: <AM0PR09MB3794D873EEAE20CD9201D14299A50@AM0PR09MB3794.eurprd09.prod.outlook.com>
+In-Reply-To: <AM0PR09MB3794D873EEAE20CD9201D14299A50@AM0PR09MB3794.eurprd09.prod.outlook.com>
+Accept-Language: en-US
+Content-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+authentication-results: vger.kernel.org; dkim=none (message not signed)
+ header.d=none;vger.kernel.org; dmarc=none action=none
+ header.from=mobileye.com;
+x-originating-ip: [134.191.232.72]
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: a117efe9-c551-4ff2-171d-08d7f2ba028e
+x-ms-traffictypediagnostic: AM0PR09MB2259:
+x-ld-processed: 4f85ba13-6953-46a6-9c5b-7599fd80e9aa,ExtAddr
+x-microsoft-antispam-prvs: <AM0PR09MB225963D04D512A76834ABEDF99A50@AM0PR09MB2259.eurprd09.prod.outlook.com>
+x-ms-oob-tlc-oobclassifiers: OLM:9508;
+x-forefront-prvs: 03965EFC76
+x-ms-exchange-senderadcheck: 1
+x-microsoft-antispam: BCL:0;
+x-microsoft-antispam-message-info: YmfUTeXxJYxH15sH0eKEGuRJErzjEjmHgjqIdB/Woe4F03rLcgG4SIWgXXsdPwIgIyCrTkSQuK0zWosfm9kiZgj3K+8d0hlSZcDCJqhSaFbuM4dZhfUaBcGfZ1KCq3rOuc3mzxcgsURbaW8+2AocL4Z+jZiR4H6Q5Gd8SiXOA/jglDmeSkgARgTKu2/O8LAGBBpHJFo8DMfZZC+3XBAXMPF+bQrQYmS+IJR7bQmVxrglQZr+To7hq35N8jFU/TiT5aVKCJ9nfBNzoQV3jZg4RapQCSTEfNJmCJ4Q3SU2QEgwnSLRRjOfACsTEE6HFdEDVs7/bladlGPgAoJtfHFNewRXl2gCGH8H8zbbEbEQcyq/iriIpRWtwU9uZzHKktXLHNKET1ycGVkAvmSMkzWV7azOCOe889TusjdpgXgslhEuHkgS01+lgw0+lcnRZ4l6qEjcI8Lkwf5KIprHZi1sHh4kgNKHKuSIw9ZNJlQEen3v7p5vc67PX6GA4unC/czqC9K6jK8A86wKrdaNjoy2iA==
+x-forefront-antispam-report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AM0PR09MB3794.eurprd09.prod.outlook.com;PTR:;CAT:NONE;SFTY:;SFS:(39850400004)(396003)(136003)(346002)(376002)(366004)(33430700001)(52536014)(186003)(110136005)(26005)(66446008)(64756008)(66556008)(6506007)(86362001)(66476007)(66946007)(9686003)(2906002)(4744005)(7696005)(83280400001)(83310400001)(76116006)(83300400001)(33440700001)(83290400001)(8676002)(33656002)(55016002)(478600001)(83320400001)(8936002)(2940100002)(5660300002)(316002)(71200400001);DIR:OUT;SFP:1101;
+x-ms-exchange-antispam-messagedata: MCfkHytAM0yaj6ZDUNVpS74kxddFtz6LXbZXvhRJ3PkS72o3nlyRmDoIxAeugtsYkW/Ze3bT1ko7D1gEQWuFdO76f3zxJnBIkfKQiYMaZucpqKRfr3YsYztGRq7N1zWclllYjxar7oOdGPLvbzkSsbCY0Lm6tdeZxmpxiYZcsK2ANHsUroWaJ1hN2Y8xQpXwsaiOSH8PvU5jmbvRoDpuycce7CWddmZdw5TuPuMDIMAPBdJpOkO69fWYqql2fy6KIm/njyB9h0I2ncUaBxdS15aC9Du8/iCgGitlMC2Je7y1qx1dKAZ7ig4fsnutWVn0ZRjQntAZA4hOY2H/aMIdJvGtf2MYjLv342kpEPGUVzmlWf179LqIaetF6L+BbUF8AzTJeOB/iH+DfXjuQgE65s89PTEVVsYmCNz8RAitz7LWIFhmYVsZMQ2Mvw4AqwEBUMoYCdACcOvaoZJgNC2OVag36GjHLocErTJxLsTSAOS6pP5Y76/d5tNDWnoimafSvm+fCSHyUxMnC3kBfG/LEmaivZBIPIry7YRfwCwnzJINtInYtnZXBSiv1hRIyen2DG0TQEyaqXk2N03T9PVPJzzmTaBvabUhgTORjmVmRxMv8rLW8rKHBoYp11Kcd5WZHJKbS3NzPbuYqLixB0G9/r0bBoNZEEgyiakjr8woHmKQPTWHbzlOE9cC6aFxEFIz/50WJ8KmZ8Rc5BQc5PZiGNbv5UQuBo39eyv/CUnJjQmXVKXjtIa4LVq0aSLTr/d8M93ZdtwK8vEhayjPXGEFfz91hE9Ghd0ygQRt8lyLLXk=
+x-ms-exchange-transport-forked: True
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 MIME-Version: 1.0
-From:   chen song <lhcs2008@gmail.com>
-Date:   Thu, 7 May 2020 16:56:29 +0800
-Message-ID: <CANAMpFTrYiiYoXSGVbVsNYqn-7W1v3qn8awUe=0Yv2SPepvTPg@mail.gmail.com>
-Subject: High latency when running cyclictest
-To:     linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+X-OriginatorOrg: mobileye.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: a117efe9-c551-4ff2-171d-08d7f2ba028e
+X-MS-Exchange-CrossTenant-originalarrivaltime: 07 May 2020 19:08:21.5695
+ (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: 4f85ba13-6953-46a6-9c5b-7599fd80e9aa
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: 5j1X1mIS7oITM4eQqpqv8ejfGqecv6fvIsnVQSUIpanfphfGhJaAD4ewgA5tlW61TdtQV0TaIm1mMcae5Yws7w==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM0PR09MB2259
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear experts,
+Hi,
+We are new to the mailing list, and new to PREEMPT_RT.
+We are working on a project with a safety requirement to configure cgroups =
+for resource management, as well as functional requirement for deployment o=
+f PREEMPT_RT patch.
+cgroups in general can be used in this context, in particular for managing =
+resources such as memory; and even for managing CPU time for non-RT tasks.=
+=A0=20
+However, we do see a potential problem with RT tasks, and how the CPU contr=
+oller would work with the RT scheduling.
+There is some obvious concern here, and this seems to be backed by what I f=
+ind online regarding this question.
 
-I had a 4.14.4 kernel with its rtpatch running on a dual-core arm64
-device, the desktop is ubuntu.
+Can you help us to clarify what is the current state of implementation, and=
+ if there is any support for cgroup CPU controller configuration to work ef=
+fectively with PREEMPT_RT for RT tasks?=A0=20
+Thanks=20
+Elana
 
-In general, the max latency of cyclictest is around 50us in empty load
-which is acceptable. However, if i open a firefox duing cyclictest is
-running, the max latency becomes higher up to 200us.
-
-I tried to use ftrace to debug this issue,"cyclictest -p 90 -m -c 0 -i
-10 -n -h 100 -q -l 10000000 -b 80", "-b 80" means enable ftrace event
-and terminate cyclictest when latency is higher than 80us.
-
-Here is a piece of log:
-
-6034916919us+: cpu_idle: state=1 cpu_id=1
-6034916981us+: hrtimer_cancel: hrtimer=ffffff8012663dc8
-6034916994us+: sched_waking: comm=cyclictest pid=2321 prio=9 target_cpu=001
-6034917032us+: cpu_idle: state=4294967295 cpu_id=1
-6034917044us+: hrtimer_start: hrtimer=ffffffc07ffd5960
-function=tick_sched_timer expires=6034920000000
-softexpires=6034920000000 mode=ABS|PINNED
-6034917066us+: sys_clock_nanosleep -> 0x0
-
-In this case, I can only see it's stalled in some points but i could'n
-find what happens, in other words, the root cause of the latency.
-
-Is there any better way to debug this issue? I guess some of you might
-meet the same issue, how did you approach to the root cause? I would
-appreciate it so much if you could give me some advice, many thanks.
-
-Best regards,
-
-/Song
-
-
-============================================================
-Here is the log for reference:
-   <idle>-0       1d..h1.. 6034916878us : irq_handler_entry: irq=3
-name=arch_timer    -- this is a normal routine
-   <idle>-0       1d..h2.. 6034916879us : hrtimer_cancel:
-hrtimer=ffffff8012663dc8
-   <idle>-0       1d..h1.. 6034916879us : hrtimer_expire_entry:
-hrtimer=ffffff8012663dc8 function=hrtimer_wakeup now=6034916525493
-   <idle>-0       1d..h2.. 6034916880us : sched_waking: comm=cyclictest
-pid=2321 prio=9 target_cpu=001
-   <idle>-0       1dn.h3.. 6034916882us : sched_wakeup: comm=cyclictest
-pid=2321 prio=9 target_cpu=001
-   <idle>-0       1dn.h1.. 6034916883us : hrtimer_expire_exit:
-hrtimer=ffffff8012663dc8
-   <idle>-0       1dn.h1.. 6034916884us : irq_handler_exit: irq=3
-ret=handled
-   <idle>-0       1.n..1.. 6034916886us : cpu_idle: state=4294967295
-cpu_id=1
-   <idle>-0       1dn..2.. 6034916888us : hrtimer_cancel:
-hrtimer=ffffffc07ffd5960
-   <idle>-0       1dn..2.. 6034916890us : hrtimer_start:
-hrtimer=ffffffc07ffd5960 function=tick_sched_timer expires=6034920000000
-softexpires=6034920000000 mode=ABS|PINNED
-   <idle>-0       1dn..1.. 6034916891us : rcu_utilization: Start context
-switch
-   <idle>-0       1dn..1.. 6034916892us : rcu_utilization: End context
-switch
-   <idle>-0       1d...2.. 6034916894us : sched_switch:
-prev_comm=swapper/1 prev_pid=0 prev_prio=120 prev_state=R ==>
-next_comm=cyclictest next_pid=2321 next_prio=9
-cyclicte-2321    1....... 6034916897us : kfree:
-call_site=ffffff80081501f0 ptr=          (null)
-cyclicte-2321    1....... 6034916898us : sys_exit: NR 115 = 0
-cyclicte-2321    1....1.. 6034916898us : sys_clock_nanosleep -> 0x0
-cyclicte-2321    1....... 6034916902us : sys_enter: NR 115 (1, 1,
-7fbd20b448, 0, 0, 7fbd20be00)
-cyclicte-2321    1....1.. 6034916903us :
-sys_clock_nanosleep(which_clock: 1, flags: 1, rqtp: 7fbd20b448, rmtp: 0)
-cyclicte-2321    1....... 6034916904us : hrtimer_init:
-hrtimer=ffffff8012663dc8 clockid=CLOCK_MONOTONIC mode=ABS
-cyclicte-2321    1d...1.. 6034916906us : hrtimer_start:
-hrtimer=ffffff8012663dc8 function=hrtimer_wakeup expires=6034916622448
-softexpires=6034916622448 mode=ABS
-cyclicte-2321    1d...1.. 6034916907us : rcu_utilization: Start context
-switch
-cyclicte-2321    1d...1.. 6034916908us : rcu_utilization: End context switch
-cyclicte-2321    1d...2.. 6034916911us : sched_switch:
-prev_comm=cyclictest prev_pid=2321 prev_prio=9 prev_state=S ==>
-next_comm=swapper/1 next_pid=0 next_prio=120
-   <idle>-0       1d...1.. 6034916915us : tick_stop: success=1
-dependency=NONE
-   <idle>-0       1d...2.. 6034916916us : hrtimer_cancel:
-hrtimer=ffffffc07ffd5960
-   <idle>-0       1d...2.. 6034916917us : hrtimer_start:
-hrtimer=ffffffc07ffd5960 function=tick_sched_timer expires=6035010000000
-softexpires=6035010000000 mode=ABS|PINNED
-   <idle>-0       1d...1.. 6034916919us+: cpu_idle: state=1 cpu_id=1
-                                     --(1)
-   <idle>-0       1d..h1.. 6034916977us : irq_handler_entry: irq=3
-name=arch_timer
-   <idle>-0       1d..h2.. 6034916981us+: hrtimer_cancel:
-hrtimer=ffffff8012663dc8                          --(2)
-   <idle>-0       1d..h1.. 6034916993us : hrtimer_expire_entry:
-hrtimer=ffffff8012663dc8 function=hrtimer_wakeup now=6034916628193
-   <idle>-0       1d..h2.. 6034916994us+: sched_waking: comm=cyclictest
-pid=2321 prio=9 target_cpu=001      --(3)
-   <idle>-0       1dn.h3.. 6034917016us : sched_wakeup: comm=cyclictest
-pid=2321 prio=9 target_cpu=001
-   <idle>-0       1dn.h1.. 6034917016us : hrtimer_expire_exit:
-hrtimer=ffffff8012663dc8
-   <idle>-0       1dn.h1.. 6034917026us : irq_handler_exit: irq=3
-ret=handled
-   <idle>-0       1.n..1.. 6034917032us+: cpu_idle: state=4294967295
-cpu_id=1                               --(4)
-   <idle>-0       1dn..2.. 6034917043us : hrtimer_cancel:
-hrtimer=ffffffc07ffd5960
-   <idle>-0       1dn..2.. 6034917044us+: hrtimer_start:
-hrtimer=ffffffc07ffd5960 function=tick_sched_timer expires=6034920000000
-softexpires=6034920000000 mode=ABS|PINNED  --(5)
-   <idle>-0       1dn..1.. 6034917056us : rcu_utilization: Start context
-switch
-   <idle>-0       1dn..1.. 6034917057us : rcu_utilization: End context
-switch
-   <idle>-0       1d...2.. 6034917062us : sched_switch:
-prev_comm=swapper/1 prev_pid=0 prev_prio=120 prev_state=R ==>
-next_comm=cyclictest next_pid=2321 next_prio=9
-cyclicte-2321    1....... 6034917065us : kfree:
-call_site=ffffff80081501f0 ptr=          (null)
-cyclicte-2321    1....... 6034917066us : sys_exit: NR 115 = 0
-cyclicte-2321    1....1.. 6034917066us+: sys_clock_nanosleep -> 0x0
-                                                     --(5)
-cyclicte-2321    1....... 6034917142us : sys_enter: NR 64 (5,
-7fbd20c500, 1f, 7fbd20bf08, 2, 7fbd20be00)
-cyclicte-2321    1....1.. 6034917143us : sys_write(fd: 5, buf:
-7fbd20c500, count: 1f)
-cyclicte-2321    1....... 6034917151us : tracing_mark_write: hit latency
-threshold (91 > 80)
-cyclicte-2321    1....... 6034917155us : kfree:
-call_site=ffffff80081501f0 ptr=          (null)
-cyclicte-2321    1....... 6034917156us : sys_exit: NR 64 = 31
-cyclicte-2321    1....1.. 6034917157us : sys_write -> 0x1f
-cyclicte-2321    1....... 6034917159us : sys_enter: NR 64 (4, 408650, 1,
-7fbd20bf08, 2, 7fbd20be00)
-cyclicte-2321    1....1.. 6034917160us : sys_write(fd: 4, buf: 408650,
-count: 1)
