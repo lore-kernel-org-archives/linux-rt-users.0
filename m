@@ -2,84 +2,132 @@ Return-Path: <SRS0=3PEr=66=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AE7EBC433DF
-	for <linux-rt-users@archiver.kernel.org>; Sat, 16 May 2020 16:35:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C1BFFC433E0
+	for <linux-rt-users@archiver.kernel.org>; Sat, 16 May 2020 18:53:39 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 80A5320671
-	for <linux-rt-users@archiver.kernel.org>; Sat, 16 May 2020 16:35:20 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="S+uDCpkw"
+	by mail.kernel.org (Postfix) with ESMTP id AE0722065C
+	for <linux-rt-users@archiver.kernel.org>; Sat, 16 May 2020 18:53:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726290AbgEPQfU (ORCPT
+        id S1726550AbgEPSxh (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 16 May 2020 12:35:20 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54234 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726233AbgEPQfT (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 16 May 2020 12:35:19 -0400
-Received: from mail-ej1-x643.google.com (mail-ej1-x643.google.com [IPv6:2a00:1450:4864:20::643])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 54175C061A0C
-        for <linux-rt-users@vger.kernel.org>; Sat, 16 May 2020 09:35:19 -0700 (PDT)
-Received: by mail-ej1-x643.google.com with SMTP id z5so5017749ejb.3
-        for <linux-rt-users@vger.kernel.org>; Sat, 16 May 2020 09:35:19 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:from:date:message-id:subject:to
-         :content-transfer-encoding;
-        bh=tLMSMYYDuyVv+WaF+2QNTbGzAlaAIfSljTTrYEYFOMI=;
-        b=S+uDCpkwA/d16DbvZc4MS2WeI6rkf7TrQxqqh3j5VIpp7bfIJk/qPdpw0GhWJVgP/R
-         uJ75/vcsU66wMqImV6+vUfwhKAiIqyW8JMCvnO68uFjiK0xZhV8U0G0GHDtREwvjluWz
-         tPbVzGHLSJn4/haijFZ+tblyqMYhO9ctqPa2YNzHDzhIUa4KxrGxxEd/CmkmCA3G6xyO
-         FF0Jx10ErweJbNdGQ+vZsCzH9ZKpoNBlwKc3f2aHSy3iWknRKtJnjrJTmrDViId3MTJ5
-         N5ddem9WEJIUSoLEVVbfrhhaEJHfX5fD5VHyiO+5dwyHNRH4L5/OmoIABxYulP/nopsW
-         XV0g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:from:date:message-id:subject:to
-         :content-transfer-encoding;
-        bh=tLMSMYYDuyVv+WaF+2QNTbGzAlaAIfSljTTrYEYFOMI=;
-        b=OE4kZQqJjnpTz8fCKTGeZb+Lz7rKjH/0r/WsptBkj1GHfMpGQVm9UQtyH5zRKk43Jr
-         rFKu191PymNrCYr4ijOlZT8nK8hkBEpf6oVNW0iw1LqnmnHZ2JJcJp/syGT01rSyE7Xl
-         33sFt2FKL3jA+WykgL4cbDXEi3J0S+VzqS9gk2HlpOBtg+Eq/cihsYB5kmJg//iah/hZ
-         ih9JGsmtdIFPedgzKD8g80eydNRPXymLRmqNUIcN3/ik1xXd1XQuzByqdbe7F1S7w+af
-         IoslutwdI7BkeGp6EzTno5pRursQ746WC9Jl2MoauHrIpJPom7SCsrpKeRm3F5fE165V
-         vJKQ==
-X-Gm-Message-State: AOAM530B3Ug7W1GOmhc0e2UNNFN6irGv/4NzvPZnxWYlK6sYJby+25k3
-        v1bz8QCbqyTQCerGmRm97x+tYIVa1LHEaBtcVWkjZoTcURZE+899Boc=
-X-Google-Smtp-Source: ABdhPJylNw8kQkUkwfFC60gnu3Q2SmzacStVYGMZ5tnvVkefjfFjFjNYfjKrJ7vlSVyd9rUKfAw2dRg14V0z/c+z7s4=
-X-Received: by 2002:a17:907:40f1:: with SMTP id no1mr8469631ejb.178.1589646917403;
- Sat, 16 May 2020 09:35:17 -0700 (PDT)
-MIME-Version: 1.0
-From:   =?UTF-8?B?5byg5oms?= <andyzheung@gmail.com>
-Date:   Sun, 17 May 2020 00:35:07 +0800
-Message-ID: <CAN-npu9MViEKYCNmTnGSAxngWhzevOH=T5rg+t+wVMShKagMCg@mail.gmail.com>
-Subject: About RT patch can run kvm virtual machine?
-To:     linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+        Sat, 16 May 2020 14:53:37 -0400
+Received: from mail.monom.org ([188.138.9.77]:59972 "EHLO mail.monom.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726532AbgEPSxh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 16 May 2020 14:53:37 -0400
+Received: from mail.monom.org (localhost [127.0.0.1])
+        by filter.mynetwork.local (Postfix) with ESMTP id A8D49500402;
+        Sat, 16 May 2020 20:53:34 +0200 (CEST)
+Received: from localhost (b9168f17.cgn.dg-w.de [185.22.143.23])
+        by mail.monom.org (Postfix) with ESMTPSA id 24730500190;
+        Sat, 16 May 2020 20:53:34 +0200 (CEST)
+From:   Daniel Wagner <dwagner@suse.de>
+Subject: [ANNOUNCE] 4.4.220-rt197
+Date:   Sat, 16 May 2020 18:52:44 -0000
+Message-ID: <158965516435.9929.783847792525662706@beryllium>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>,
+        Pavel Machek <pavel@denx.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi all:
-      I'm trying to run RT system with kvm on ARM architecture,based
-on the kernel of version 4.19.98. But I found that as soon as I start
-a guest OS(within around 1min), the host get restarted(maybe crashed,
-I'm not quite sure), no useful message found in/var/log/. So, I'm
-wondering whether it supports running KVM with RT patch on ARM?(It
-seems works well on x86)=EF=BC=8Cany suggestion?
-     Thanks!
-     BTW,   the patches  I'm applied are downloaded from:
-     https://mirrors.edge.kernel.org/pub/linux/kernel/v4.x/
-     https://mirrors.edge.kernel.org/pub/linux/kernel/projects/rt/4.19/olde=
-r/
+Hello RT-list!
 
-yours
-Andy
+I'm pleased to announce the 4.4.220-rt197 stable release.
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.4-rt
+  Head SHA1: 375a1effc06c4f59c65c6fa8657e44539d997680
+
+Or to build 4.4.220-rt197 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.4.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.4.220.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.220-rt197.patch.xz
+
+
+Enjoy!
+Daniel
+
+Changes from v4.4.220-rt196:
+---
+
+Daniel Wagner (1):
+      Linux 4.4.220-rt197
+
+Steven Rostedt (VMware) (1):
+      irq_work: Fix checking of IRQ_WORK_LAZY flag set on non PREEMPT_RT
+---
+kernel/irq_work.c | 12 +++++++++---
+ localversion-rt   |  2 +-
+ 2 files changed, 10 insertions(+), 4 deletions(-)
+---
+diff --git a/kernel/irq_work.c b/kernel/irq_work.c
+index 2899ba0d23d1..abc65de5d793 100644
+--- a/kernel/irq_work.c
++++ b/kernel/irq_work.c
+@@ -57,6 +57,12 @@ void __weak arch_irq_work_raise(void)
+ 	 */
+ }
+ 
++static inline bool use_lazy_list(struct irq_work *work)
++{
++	return (IS_ENABLED(CONFIG_PREEMPT_RT_FULL) && !(work->flags & IRQ_WORK_HARD_IRQ))
++		|| (work->flags & IRQ_WORK_LAZY);
++}
++
+ #ifdef CONFIG_SMP
+ /*
+  * Enqueue the irq_work @work on @cpu unless it's already pending
+@@ -78,7 +84,7 @@ bool irq_work_queue_on(struct irq_work *work, int cpu)
+ 	if (!irq_work_claim(work))
+ 		return false;
+ 
+-	if (IS_ENABLED(CONFIG_PREEMPT_RT_FULL) && !(work->flags & IRQ_WORK_HARD_IRQ))
++	if (use_lazy_list(work))
+ 		list = &per_cpu(lazy_list, cpu);
+ 	else
+ 		list = &per_cpu(raised_list, cpu);
+@@ -95,7 +101,7 @@ EXPORT_SYMBOL_GPL(irq_work_queue_on);
+ bool irq_work_queue(struct irq_work *work)
+ {
+ 	struct llist_head *list;
+-	bool lazy_work, realtime = IS_ENABLED(CONFIG_PREEMPT_RT_FULL);
++	int lazy_work;
+ 
+ 	/* Only queue if not already pending */
+ 	if (!irq_work_claim(work))
+@@ -106,7 +112,7 @@ bool irq_work_queue(struct irq_work *work)
+ 
+ 	lazy_work = work->flags & IRQ_WORK_LAZY;
+ 
+-	if (lazy_work || (realtime && !(work->flags & IRQ_WORK_HARD_IRQ)))
++	if (use_lazy_list(work))
+ 		list = this_cpu_ptr(&lazy_list);
+ 	else
+ 		list = this_cpu_ptr(&raised_list);
+diff --git a/localversion-rt b/localversion-rt
+index 9bc39cfc747c..7cbd4fa29217 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt196
++-rt197
