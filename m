@@ -1,538 +1,242 @@
-Return-Path: <SRS0=nNG0=7A=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=RNtb=7C=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-14.9 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_GIT autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 35399C433DF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 18 May 2020 02:46:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 02001C433E0
+	for <linux-rt-users@archiver.kernel.org>; Wed, 20 May 2020 14:04:29 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id F418E20657
-	for <linux-rt-users@archiver.kernel.org>; Mon, 18 May 2020 02:46:21 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C7A3320756
+	for <linux-rt-users@archiver.kernel.org>; Wed, 20 May 2020 14:04:28 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="nTuNXTqY"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="f7mZU9ne"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726717AbgERCqV (ORCPT
+        id S1726856AbgETOEY (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 17 May 2020 22:46:21 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60930 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726675AbgERCqU (ORCPT
+        Wed, 20 May 2020 10:04:24 -0400
+Received: from us-smtp-delivery-1.mimecast.com ([207.211.31.120]:54533 "EHLO
+        us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+        with ESMTP id S1726439AbgETOEY (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 17 May 2020 22:46:20 -0400
-Received: from mail-oi1-x242.google.com (mail-oi1-x242.google.com [IPv6:2607:f8b0:4864:20::242])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A9F54C061A0C
-        for <linux-rt-users@vger.kernel.org>; Sun, 17 May 2020 19:46:20 -0700 (PDT)
-Received: by mail-oi1-x242.google.com with SMTP id y85so3011266oie.11
-        for <linux-rt-users@vger.kernel.org>; Sun, 17 May 2020 19:46:20 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=mime-version:references:in-reply-to:from:date:message-id:subject:to
-         :cc;
-        bh=tYgp+0islXutrcg3Qb8Mhd3j1esIJgjKo/gYGxLiVcw=;
-        b=nTuNXTqYE2xsn03eJ0CkzGPlcUm6gf0HviJJb64QDVKMgY0O9ckBL4O5IwNqX+UDtm
-         PEazSM+gr/J7nSuWkOnsg2q4fVubbCxs0tEPjn9R487B7My5EBvgdV+UBUuvKx4haNCO
-         lwpP+6/oHUY4XpbIBjYt3hjC6vWC8JtgwF9u0lS0HKIX+16wU4VBYR3Gl/X2sIV85y6F
-         qW0liThsiHfm+YGhyzKRJ1+tB1pG/64P+nb1rhtHc7elHzUrpPxVZQIWycxxeBIhYkEL
-         1W5jOC7WSm4CAPaFoppLpShB1kP3vYXvTMsH8+sKQk3SPpahNti0NvTC4zXcdo11uWsg
-         md2w==
+        Wed, 20 May 2020 10:04:24 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1589983461;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=xTGlqq0w081BobQNfRL2NqghydaELJw3UKoGzWbyJpk=;
+        b=f7mZU9nem8GE+fqjbTzU9AuKvQuXyZhtnrg8MOrGpIoqaBXwyW9k8fxtQ0bVyVraOOQbjB
+        Y+DoswVj8s8pjO3qpoEqLukj6AJboxm4XpJwm/clxcHrWwR1jOJgbS0vp+QZD9csjk6KPE
+        nKZSiQZ96G+CEP7R2PSMtwOZVGHJIZ4=
+Received: from mail-wr1-f70.google.com (mail-wr1-f70.google.com
+ [209.85.221.70]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-431-h7SmPQBpMOKtJ1irtGaH_g-1; Wed, 20 May 2020 10:04:19 -0400
+X-MC-Unique: h7SmPQBpMOKtJ1irtGaH_g-1
+Received: by mail-wr1-f70.google.com with SMTP id h12so1440230wrr.19
+        for <linux-rt-users@vger.kernel.org>; Wed, 20 May 2020 07:04:19 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-         :message-id:subject:to:cc;
-        bh=tYgp+0islXutrcg3Qb8Mhd3j1esIJgjKo/gYGxLiVcw=;
-        b=AFZiACo2ma4usoyHIWv0Y0+1HTkYEelMlA/Tpf6gZ0cVF2u25o9Xe94pGw9rywdasC
-         GDUF1QQYmOO5B/+Aa1o9C7DxBNswaVFtN60difjofuRZ84+UFCtXNaOWQKUd3fEUgxz9
-         d7Y+vvDq4z6wcNunbKKWSURyrg0U/GtjvtZ76p1EbVpJL2RIqyybDx9khZU3vKMlKlSo
-         D3fq8H7Bl0Us+idZCFJPIbfisOaftBKSFCoL3ePcOrcBbjqejd5uHhKazg9PIcpKgn95
-         V+zex2QZpQsmNpT3Ob/Xb1xHn94mfyZcSGdiXRKsSFjYTF4FtYKPSIJNK+VO1HxYteFy
-         qOeA==
-X-Gm-Message-State: AOAM532pdSfI+Cfn1+OqSCZOPxWJHnNIB9BL02FgpGYLhrW9r9N4adav
-        3Mwf4tYNtbv9ksnqBrtmuuJOgjA3IDQMHSq/Hhjp0OpL
-X-Google-Smtp-Source: ABdhPJwr675J3oAQ9XTaT4Tr05+ty9/uzy1amykRWs3mdeA66jwOMY2Cdcgh9++9Uz8hwWfKlbOFbI4gNHe2Y4Wzm8g=
-X-Received: by 2002:a05:6808:b07:: with SMTP id s7mr9252325oij.42.1589769979861;
- Sun, 17 May 2020 19:46:19 -0700 (PDT)
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=xTGlqq0w081BobQNfRL2NqghydaELJw3UKoGzWbyJpk=;
+        b=WmT1gp+oOItOWQynEHyXKqUUz3/cv3cN981PvzMUK+IMVx6Pt3mGVSh5/wg63lTtKc
+         BngVAXwP1NrALCDc8FXwrbdc+n/RQfUlKqW1ejlcQ4bQVzVfpwvGkDKk1cn3UdjEmbzy
+         ulFVzucDcmwEo84GU5srBd96iA9v1uquiLn1I0oYV/jCxtXacSWygfaIFSY7eRg14Chq
+         pABph0zJuqd0dz5w/2gWPcDLLNQb9p+oOcQqkjxaYRnPrnEgHsoWRvb3ipAf02uK8w/f
+         blMhITyN5WJ554Ug2yx06sMxhv7t4jA+Dvn01FjnipjuYy5RCBwU+/Udua8YTY4+DFgb
+         2lUQ==
+X-Gm-Message-State: AOAM53221amci+gS1dafDC8MYDQNdv1uktFjsLPlqwDHruHg5oZ2bewA
+        +k0Uz9VbYe3dGHXRAQIYnT12V43lydND63PwIn/Z05o1n6kcStJU6iBiJk4kAqjvQDnUbqDfS4B
+        684JuIPr/rntIgwhCuiJasT+4MRw=
+X-Received: by 2002:adf:82ab:: with SMTP id 40mr1435268wrc.85.1589983458488;
+        Wed, 20 May 2020 07:04:18 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJyu0MqZibcZwm0TugA9lSrlYHRFVkt44fdqu7Gy6ljrDMmGQ6iF6IJ+Tw+6grygO2EOUDDaFA==
+X-Received: by 2002:adf:82ab:: with SMTP id 40mr1435250wrc.85.1589983458178;
+        Wed, 20 May 2020 07:04:18 -0700 (PDT)
+Received: from localhost.localdomain.com ([151.29.188.60])
+        by smtp.gmail.com with ESMTPSA id q4sm3293174wma.9.2020.05.20.07.04.17
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 20 May 2020 07:04:17 -0700 (PDT)
+From:   Juri Lelli <juri.lelli@redhat.com>
+To:     fweisbec@gmail.com, tglx@linutronix.de, mingo@kernel.org
+Cc:     linux-rt-users@vger.kernel.org, peterz@infradead.org,
+        linux-kernel@vger.kernel.org, Juri Lelli <juri.lelli@redhat.com>
+Subject: [RFC PATCH] tick/sched: update full_nohz status after SCHED dep is cleared
+Date:   Wed, 20 May 2020 16:04:02 +0200
+Message-Id: <20200520140402.358880-1-juri.lelli@redhat.com>
+X-Mailer: git-send-email 2.25.3
 MIME-Version: 1.0
-References: <CANAMpFTrYiiYoXSGVbVsNYqn-7W1v3qn8awUe=0Yv2SPepvTPg@mail.gmail.com>
- <CANAMpFTwp-8RJHzd5ab=3pDJPMxjvh3dArxNrw_kN0L5MOB8jA@mail.gmail.com>
- <20200512091423.56ed5dea@gandalf.local.home> <CANAMpFSy14e0WCd5Kz_FQkJv-XGYYx8Zp3WRv1TrUNSMBd=NSQ@mail.gmail.com>
-In-Reply-To: <CANAMpFSy14e0WCd5Kz_FQkJv-XGYYx8Zp3WRv1TrUNSMBd=NSQ@mail.gmail.com>
-From:   chen song <lhcs2008@gmail.com>
-Date:   Mon, 18 May 2020 10:46:08 +0800
-Message-ID: <CANAMpFSSCOEyd9wZ=FnO7KXAgh9w4fwXCs1_fWX=w_M9OLBf5w@mail.gmail.com>
-Subject: Re: High latency when running cyclictest
-To:     Steven Rostedt <rostedt@goodmis.org>
-Cc:     linux-rt-users@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Mr. Rostedt,
+After tasks enter or leave a runqueue (wakeup/block) SCHED full_nohz
+dependency is checked (via sched_update_tick_dependency()). In case tick
+can be stopped on a CPU (see sched_can_stop_tick() for details), SCHED
+dependency for such CPU is cleared. However, this new information is not
+used right away to actually stop the tick.
 
-I sent you trace.data last week and i looked into it in kernelshark meanwhile.I
-found it took more than 20us in _raw_spin_unlock_irq.
+In CONFIG_PREEMPT systems booted with threadirqs option, sched clock
+tick is serviced by an actual task (ksoftirqd corresponding to the CPU
+where tick timer fired). So, in case a CPU was running a single task,
+servicing the timer involves exiting full nozh mode. Problem at this
+point is that we might lose chances to enter back into full nozh mode,
+since info about ksoftirqd thread going back to sleep is not used (as
+mentioned above).
 
-I looked into the code, the call stack is like that:
+Fix it by calling tick_nozh_full_update_tick(_cpu)() right after SCHED
+dependency is cleared, so that tick can be promptly stopped.
 
-hrtimer_try_to_cancel -->
-unlock_hrtimer_base -->
-raw_spin_unlock_irqrestore -->
-do_raw_spin_unlock -->
-arch_spin_unlock
+Signed-off-by: Juri Lelli <juri.lelli@redhat.com>
+---
+Hi,
 
-or
+I noticed what seems to be the problem described in the changelog while
+running sysjitter [1] on a PREEMPT system setup for isolation and full
+nozh, i.e. ... skew_tick=1 nohz=on nohz_full=4-35 rcu_nocbs=4-35
+threadirqs (36 CPUs box).
 
-finish_task_switch -->
-finish_lock_switch -->
-raw_spin_unlock_irq -->
-do_raw_spin_unlock -->
-arch_spin_unlock
+Starting sysjitter with something like the following
 
-Normally, it's working fine, however it will be reproduced when a app is
-being opened like firefox.
+perf stat -C 4-35 -e irq_vectors:local_timer_entry taskset \
+--cpu-list 4-35 ./sysjitter/sysjitter --runtime 30 200
 
-Have you ever had the same problem like latency from a spinlock?Could
-you please share me some of
-your experience in this case? many thanks.
+with vanilla kernel was returning ~5k local_timer_entry events, while
+that number goes down to ~100 or so with the proposed patch applied.
 
-PS:arch_spin_unlock in arch/arm64/include/asm/spinlock.h
+The following trace snippet also highlight the problematic situation:
 
-#define arch_spin_lock_flags(lock, flags) arch_spin_lock(lock)
+...
+ksoftirqd/19-125   [019]   170.700754: softirq_entry:        vec=1 [action=TIMER]
+ksoftirqd/19-125   [019]   170.700755: softirq_exit:         vec=1 [action=TIMER]
+ksoftirqd/19-125   [019]   170.700756: softirq_entry:        vec=7 [action=SCHED]
+ksoftirqd/19-125   [019]   170.700757: softirq_exit:         vec=7 [action=SCHED]
+ksoftirqd/19-125   [019]   170.700759: sched_switch:         ksoftirqd/19:125 [120] S ==> sysjitter:2459 [120]
+   sysjitter-2459  [019]   170.701740: local_timer_entry:    vector=236
+   sysjitter-2459  [019]   170.701742: softirq_raise:        vec=1 [action=TIMER]
+   sysjitter-2459  [019]   170.701743: softirq_raise:        vec=7 [action=SCHED]
+   sysjitter-2459  [019]   170.701744: local_timer_exit:     vector=236
+   sysjitter-2459  [019]   170.701747: sched_wakeup:         ksoftirqd/19:125 [120] success=1 CPU:019
+   sysjitter-2459  [019]   170.701748: tick_stop:            success=0 dependency=SCHED
+   sysjitter-2459  [019]   170.701749: irq_work_entry:       vector=246
+   sysjitter-2459  [019]   170.701750: irq_work_exit:        vector=246
+   sysjitter-2459  [019]   170.701751: tick_stop:            success=0 dependency=SCHED
+   sysjitter-2459  [019]   170.701753: sched_switch:         sysjitter:2459 [120] R ==> ksoftirqd/19:125 [120]
+ksoftirqd/19-125   [019]   170.701754: softirq_entry:        vec=1 [action=TIMER]
+ksoftirqd/19-125   [019]   170.701756: softirq_exit:         vec=1 [action=TIMER]
+ksoftirqd/19-125   [019]   170.701756: softirq_entry:        vec=7 [action=SCHED]
+ksoftirqd/19-125   [019]   170.701758: softirq_exit:         vec=7 [action=SCHED]
+ksoftirqd/19-125   [019]   170.701759: sched_switch:         ksoftirqd/19:125 [120] S ==> sysjitter:2459 [120]
+   sysjitter-2459  [019]   170.702740: local_timer_entry:    vector=236
+   sysjitter-2459  [019]   170.702742: softirq_raise:        vec=1 [action=TIMER]
+   sysjitter-2459  [019]   170.702743: softirq_raise:        vec=7 [action=SCHED]
+   sysjitter-2459  [019]   170.702744: local_timer_exit:     vector=236
+   sysjitter-2459  [019]   170.702747: sched_wakeup:         ksoftirqd/19:125 [120] success=1 CPU:019
+   sysjitter-2459  [019]   170.702748: tick_stop:            success=0 dependency=SCHED
+   sysjitter-2459  [019]   170.702749: irq_work_entry:       vector=246
+   sysjitter-2459  [019]   170.702750: irq_work_exit:        vector=246
+   sysjitter-2459  [019]   170.702751: tick_stop:            success=0 dependency=SCHED
+   sysjitter-2459  [019]   170.702753: sched_switch:         sysjitter:2459 [120] R ==> ksoftirqd/19:125 [120]
+ksoftirqd/19-125   [019]   170.702755: softirq_entry:        vec=1 [action=TIMER]
+ksoftirqd/19-125   [019]   170.702756: softirq_exit:         vec=1 [action=TIMER]
+ksoftirqd/19-125   [019]   170.702757: softirq_entry:        vec=7 [action=SCHED]
+ksoftirqd/19-125   [019]   170.702758: softirq_exit:         vec=7 [action=SCHED]
+ksoftirqd/19-125   [019]   170.702760: sched_switch:         ksoftirqd/19:125 [120] S ==> sysjitter:2459 [120]
+   sysjitter-2459  [019]   170.703740: local_timer_entry:    vector=236
+   sysjitter-2459  [019]   170.703742: softirq_raise:        vec=1 [action=TIMER]
+   sysjitter-2459  [019]   170.703743: softirq_raise:        vec=7 [action=SCHED]
+   sysjitter-2459  [019]   170.703745: local_timer_exit:     vector=236
+   sysjitter-2459  [019]   170.703747: sched_wakeup:         ksoftirqd/19:125 [120] success=1 CPU:019
+   sysjitter-2459  [019]   170.703748: tick_stop:            success=0 dependency=SCHED
+   sysjitter-2459  [019]   170.703749: irq_work_entry:       vector=246
+   sysjitter-2459  [019]   170.703750: irq_work_exit:        vector=246
+   sysjitter-2459  [019]   170.703751: tick_stop:            success=0 dependency=SCHED
+   sysjitter-2459  [019]   170.703753: sched_switch:         sysjitter:2459 [120] R ==> ksoftirqd/19:125 [120]
+ksoftirqd/19-125   [019]   170.703755: softirq_entry:        vec=1 [action=TIMER]
+ksoftirqd/19-125   [019]   170.703756: softirq_exit:         vec=1 [action=TIMER]
+ksoftirqd/19-125   [019]   170.703757: softirq_entry:        vec=7 [action=SCHED]
+ksoftirqd/19-125   [019]   170.703758: softirq_exit:         vec=7 [action=SCHED]
+ksoftirqd/19-125   [019]   170.703759: sched_switch:         ksoftirqd/19:125 [120] S ==> sysjitter:2459 [120]
+   sysjitter-2459  [019]   170.704500: call_function_single_entry: vector=251
+   sysjitter-2459  [019]   170.704502: call_function_single_exit: vector=251
+   sysjitter-2459  [019]   170.704504: tick_stop:            success=1 dependency=NONE
+...
 
-static inline void arch_spin_lock(arch_spinlock_t *lock)
-{
-        unsigned int tmp;
-        arch_spinlock_t lockval, newval;
+Luckily sometimes it happens (like in the above) that an interrupt fires
+on a CPU while ksoftirqd is not executing, SCHED dep is seen as cleared
+and the CPU enters full nohz. I've however observed pathological cases
+where CPUs aren't able to enter back full nohz for a long time.
 
-        asm volatile(
-        /* Atomically increment the next ticket. */
-        ARM64_LSE_ATOMIC_INSN(
-        /* LL/SC */
-"       prfm    pstl1strm, %3\n"
-"1:     ldaxr   %w0, %3\n"
-"       add     %w1, %w0, %w5\n"
-"       stxr    %w2, %w1, %3\n"
-"       cbnz    %w2, 1b\n",
-        /* LSE atomics */
-"       mov     %w2, %w5\n"
-"       ldadda  %w2, %w0, %3\n"
-        __nops(3)
-        )
+Hope my understanding is correct. Please find below a naive attempt to
+fix the problem. I'm pretty sure I'm missing details, e.g. I'm not sure
+it is safe to possibly stop the tick remotely. Consider the following as
+not more than another way of pointing the problem out. :-)
 
-        /* Did we get the lock? */
-"       eor     %w1, %w0, %w0, ror #16\n"
-"       cbz     %w1, 3f\n"
-        /*
-         * No: spin on the owner. Send a local event to avoid missing an
-         * unlock before the exclusive load.
-         */
-"       sevl\n"
-"2:     wfe\n"
-"       ldaxrh  %w2, %4\n"
-"       eor     %w1, %w2, %w0, lsr #16\n"
-"       cbnz    %w1, 2b\n"
-        /* We got the lock. Critical section starts here. */
-"3:"
-        : "=&r" (lockval), "=&r" (newval), "=&r" (tmp), "+Q" (*lock)
-        : "Q" (lock->owner), "I" (1 << TICKET_SHIFT)
-        : "memory");
-}
+Best,
 
-static inline int arch_spin_trylock(arch_spinlock_t *lock)
-{
-        unsigned int tmp;
-        arch_spinlock_t lockval;
+Juri
 
-        asm volatile(ARM64_LSE_ATOMIC_INSN(
-        /* LL/SC */
-        "       prfm    pstl1strm, %2\n"
-        "1:     ldaxr   %w0, %2\n"
-        "       eor     %w1, %w0, %w0, ror #16\n"
-        "       cbnz    %w1, 2f\n"
-        "       add     %w0, %w0, %3\n"
-        "       stxr    %w1, %w0, %2\n"
-        "       cbnz    %w1, 1b\n"
-        "2:",
-        /* LSE atomics */
-        "       ldr     %w0, %2\n"
-        "       eor     %w1, %w0, %w0, ror #16\n"
-        "       cbnz    %w1, 1f\n"
-        "       add     %w1, %w0, %3\n"
-        "       casa    %w0, %w1, %2\n"
-        "       and     %w1, %w1, #0xffff\n"
-        "       eor     %w1, %w1, %w0, lsr #16\n"
-        "1:")
-        : "=&r" (lockval), "=&r" (tmp), "+Q" (*lock)
-        : "I" (1 << TICKET_SHIFT)
-        : "memory");
+1 - https://github.com/alexeiz/sysjitter
+---
+ kernel/time/tick-sched.c | 18 +++++++++++++++---
+ 1 file changed, 15 insertions(+), 3 deletions(-)
 
-        return !tmp;
-}
+diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
+index 3e2dc9b8858c..0d696e55d774 100644
+--- a/kernel/time/tick-sched.c
++++ b/kernel/time/tick-sched.c
+@@ -342,11 +342,16 @@ void tick_nohz_dep_set_cpu(int cpu, enum tick_dep_bits bit)
+ }
+ EXPORT_SYMBOL_GPL(tick_nohz_dep_set_cpu);
+ 
++static void tick_nohz_full_update_tick_cpu(struct tick_sched *ts, int cpu);
++
+ void tick_nohz_dep_clear_cpu(int cpu, enum tick_dep_bits bit)
+ {
+ 	struct tick_sched *ts = per_cpu_ptr(&tick_cpu_sched, cpu);
+ 
+ 	atomic_andnot(BIT(bit), &ts->tick_dep_mask);
++
++	if (!in_irq())
++		tick_nohz_full_update_tick_cpu(ts, cpu);
+ }
+ EXPORT_SYMBOL_GPL(tick_nohz_dep_clear_cpu);
+ 
+@@ -870,11 +875,9 @@ static void tick_nohz_restart_sched_tick(struct tick_sched *ts, ktime_t now)
+ 	tick_nohz_restart(ts, now);
+ }
+ 
+-static void tick_nohz_full_update_tick(struct tick_sched *ts)
++static void tick_nohz_full_update_tick_cpu(struct tick_sched *ts, int cpu)
+ {
+ #ifdef CONFIG_NO_HZ_FULL
+-	int cpu = smp_processor_id();
+-
+ 	if (!tick_nohz_full_cpu(cpu))
+ 		return;
+ 
+@@ -888,6 +891,15 @@ static void tick_nohz_full_update_tick(struct tick_sched *ts)
+ #endif
+ }
+ 
++static void tick_nohz_full_update_tick(struct tick_sched *ts)
++{
++#ifdef CONFIG_NO_HZ_FULL
++	int cpu = smp_processor_id();
++
++	tick_nohz_full_update_tick_cpu(ts, cpu);
++#endif
++}
++
+ static bool can_stop_idle_tick(int cpu, struct tick_sched *ts)
+ {
+ 	/*
+-- 
+2.25.3
 
-static inline void arch_spin_unlock(arch_spinlock_t *lock)
-{
-        unsigned long tmp;
-
-        asm volatile(ARM64_LSE_ATOMIC_INSN(
-        /* LL/SC */
-        "       ldrh    %w1, %0\n"
-        "       add     %w1, %w1, #1\n"
-        "       stlrh   %w1, %0",
-        /* LSE atomics */
-        "       mov     %w1, #1\n"
-        "       staddlh %w1, %0\n"
-        __nops(1))
-        : "=Q" (lock->owner), "=&r" (tmp)
-        :
-        : "memory");
-}
-
-BR
-
-chensong
-
-On Wed, May 13, 2020 at 9:27 AM chen song <lhcs2008@gmail.com> wrote:
->
-> Mr. Rostedt,
->
-> The compressed trace.dat is in the attachment with trace-cmd report
-> followed with "-l". Thanks again for helping me with this. Please let
-> me know if there is anything i can do for further investigation.
->
-> BR
->
-> /Song
->
-> On Tue, May 12, 2020 at 9:14 PM Steven Rostedt <rostedt@goodmis.org> wrote:
-> >
-> > On Tue, 12 May 2020 18:56:10 +0800
-> > chen song <lhcs2008@gmail.com> wrote:
-> >
-> > > Dear Rostedt,
-> > >
-> > > This is chensong who was asking question in #linux-rt channel. I
-> > > upgrated my rt-tests to the lastest version (cyclictest V 1.80) and
-> > > trace-cmd as well(trace-cmd version 2.9.dev).
-> > >
-> > > I ran commands like these:
-> > > trace-cmd start -e irq -e sched -e timer -p function -l '*spin*';
-> > > cyclictest -p 90 -m -c 0 -i 100 -h 100 -q -l 1000000 -b 80 --tracemark
-> > > trace-cmd extract
-> > > trace-cmd report
-> > >
-> >
-> > BTW, trace-cmd report -l, will show the preemption numbers.
-> >
-> > > The log of last cycle before cyclictest reached the threshold and quit
-> > > is like that:
-> >
-> > Your email client line wrapped everything, and it's unreadable.
-> >
-> > Can you send my the trace.dat file. Compress it first.
-> >
-> > Thanks,
-> >
-> > -- Steve
-> >
-> > >
-> > >
-> > > <idle>-0     [000]   130.330659: irq_handler_entry:    irq=4 name=arch_timer
-> > > <idle>-0     [000]   130.330665: function:
-> > > _raw_spin_lock_irqsave
-> > > <idle>-0     [000]   130.330666: hrtimer_cancel:
-> > > hrtimer=0xffffff801234bdc8
-> > > <idle>-0     [000]   130.330667: function:
-> > > _raw_spin_unlock_irqrestore
-> > > <idle>-0     [000]   130.330668: hrtimer_expire_entry:
-> > > hrtimer=0xffffff801234bdc8 now=130207149982 function=hrtimer_wakeup/0x0
-> > > <idle>-0     [000]   130.330669: function:
-> > > _raw_spin_lock_irqsave
-> > > <idle>-0     [000]   130.330682: sched_waking:         comm=cyclictest
-> > > pid=1720 prio=9 target_cpu=000
-> > > <idle>-0     [000]   130.330695: function:             _raw_spin_lock
-> > > <idle>-0     [000]   130.330697: function:             _raw_spin_lock
-> > > <idle>-0     [000]   130.330699: sched_wakeup:         cyclictest:1720
-> > > [9] success=1 CPU:000
-> > > <idle>-0     [000]   130.330699: function:
-> > > _raw_spin_unlock_irqrestore
-> > > <idle>-0     [000]   130.330700: hrtimer_expire_exit:
-> > > hrtimer=0xffffff801234bdc8
-> > > <idle>-0     [000]   130.330701: function:             _raw_spin_lock_irq
-> > > <idle>-0     [000]   130.330702: function:
-> > > _raw_spin_unlock_irqrestore
-> > > <idle>-0     [000]   130.330703: irq_handler_exit:     irq=4 ret=handled
-> > >
-> > > It took 44us from irq_handler_entry to irq_handler_exit, compare to
-> > > normal case which generally took only around 15us, it produced around
-> > > 30us extra latency. I also found something wrong like
-> > > "_raw_spin_lock_irqsave from 130.330669 to 130.330682" and "sched_waking
-> > > from 130.330682 to 130.330695".
-> > >
-> > > PS: cyclictest was running on CPU0 and a firefox was running on CPU1
-> > > meanwhile.
-> > >
-> > > I tried to dig deeper, is there any way to find more information, please
-> > > let me know, many thanks.
-> > >
-> > > Here is more log for reference:
-> > >
-> > > <idle>-0     [000]   130.330659: irq_handler_entry:    irq=4 name=arch_timer
-> > >            <idle>-0     [000]   130.330665: function:
-> > > _raw_spin_lock_irqsave
-> > >            <idle>-0     [000]   130.330666: hrtimer_cancel:
-> > > hrtimer=0xffffff801234bdc8
-> > >            <idle>-0     [000]   130.330667: function:
-> > > _raw_spin_unlock_irqrestore
-> > >            <idle>-0     [000]   130.330668: hrtimer_expire_entry:
-> > > hrtimer=0xffffff801234bdc8 now=130207149982 function=hrtimer_wakeup/0x0
-> > >            <idle>-0     [000]   130.330669: function:
-> > > _raw_spin_lock_irqsave
-> > >            <idle>-0     [000]   130.330682: sched_waking:
-> > > comm=cyclictest pid=1720 prio=9 target_cpu=000
-> > >            <idle>-0     [000]   130.330695: function:
-> > > _raw_spin_lock
-> > >            <idle>-0     [000]   130.330697: function:
-> > > _raw_spin_lock
-> > >            <idle>-0     [000]   130.330699: sched_wakeup:
-> > > cyclictest:1720 [9] success=1 CPU:000
-> > >
-> > >
-> > >            <idle>-0     [000]   130.330699: function:
-> > > _raw_spin_unlock_irqrestore
-> > >            <idle>-0     [000]   130.330700: hrtimer_expire_exit:
-> > > hrtimer=0xffffff801234bdc8
-> > >            <idle>-0     [000]   130.330701: function:
-> > > _raw_spin_lock_irq
-> > >            <idle>-0     [000]   130.330702: function:
-> > > _raw_spin_unlock_irqrestore
-> > >            <idle>-0     [000]   130.330703: irq_handler_exit:     irq=4
-> > > ret=handled
-> > >
-> > >           firefox-1722  [001]   130.330705: function:
-> > > _raw_spin_lock_irqsave
-> > >            <idle>-0     [000]   130.330706: function:
-> > > _raw_spin_lock_irqsave
-> > >            <idle>-0     [000]   130.330706: hrtimer_cancel:
-> > > hrtimer=0xffffffc07ffbe960
-> > >           firefox-1722  [001]   130.330706: function:
-> > > _raw_spin_lock
-> > >           firefox-1722  [001]   130.330707: function:
-> > > _raw_spin_unlock_irqrestore
-> > >            <idle>-0     [000]   130.330708: function:
-> > > _raw_spin_unlock_irqrestore
-> > >           firefox-1722  [001]   130.330708: function:
-> > > rt_spin_lock
-> > >            <idle>-0     [000]   130.330709: function:
-> > > _raw_spin_lock_irqsave
-> > >            <idle>-0     [000]   130.330709: hrtimer_start:
-> > > hrtimer=0xffffffc07ffbe960 function=tick_sched_timer/0x0
-> > > expires=130210000000 softexpires=130210000000
-> > >            <idle>-0     [000]   130.330711: function:
-> > > _raw_spin_unlock_irqrestore
-> > >           firefox-1722  [001]   130.330711: function:
-> > > rt_spin_unlock
-> > >           firefox-1722  [001]   130.330712: function:
-> > > _raw_spin_lock_irqsave
-> > >            <idle>-0     [000]   130.330712: function:
-> > > _raw_spin_lock
-> > >           firefox-1722  [001]   130.330712: function:
-> > > _raw_spin_lock
-> > >           firefox-1722  [001]   130.330713: function:
-> > > _raw_spin_unlock_irqrestore
-> > >            <idle>-0     [000]   130.330713: sched_switch:
-> > > swapper/0:0 [120] R ==> cyclictest:1720 [9]
-> > >           firefox-1722  [001]   130.330714: function:
-> > > _raw_spin_lock_irqsave
-> > >
-> > >        cyclictest-1720  [000]   130.330715: function:
-> > > _raw_spin_unlock_irq
-> > >           firefox-1722  [001]   130.330715: function:
-> > > _raw_spin_lock
-> > >           firefox-1722  [001]   130.330716: function:
-> > > _raw_spin_unlock_irqrestore
-> > >           firefox-1722  [001]   130.330718: function:
-> > > _raw_spin_lock_irqsave
-> > >           firefox-1722  [001]   130.330719: function:
-> > > _raw_spin_lock
-> > >           firefox-1722  [001]   130.330719: function:
-> > > _raw_spin_unlock_irqrestore
-> > >           firefox-1722  [001]   130.330722: function:
-> > > rt_spin_lock
-> > >           firefox-1722  [001]   130.330722: function:
-> > > _raw_spin_lock_irqsave
-> > >           firefox-1722  [001]   130.330723: function:
-> > > _raw_spin_lock
-> > >           firefox-1722  [001]   130.330724: function:
-> > > _raw_spin_unlock_irqrestore
-> > >           firefox-1722  [001]   130.330726: function:
-> > > rt_spin_lock
-> > >           firefox-1722  [001]   130.330727: function:
-> > > rt_spin_unlock
-> > >           firefox-1722  [001]   130.330728: function:
-> > > rt_spin_lock
-> > >           firefox-1722  [001]   130.330729: function:
-> > > rt_spin_unlock
-> > >           firefox-1722  [001]   130.330730: function:
-> > > rt_spin_unlock
-> > >           firefox-1722  [001]   130.330731: function:
-> > > _raw_spin_lock_irqsave
-> > >           firefox-1722  [001]   130.330732: function:
-> > > _raw_spin_lock
-> > >           firefox-1722  [001]   130.330733: function:
-> > > _raw_spin_unlock_irqrestore
-> > >        cyclictest-1720  [000]   130.330749: print:
-> > > tracing_mark_write: hit latency threshold (84 > 80)
-> > >
-> > > BR
-> > >
-> > > /Song
-> > >
-> > > On Thu, May 7, 2020 at 4:56 PM chen song <lhcs2008@gmail.com> wrote:
-> > > >
-> > > > Dear experts,
-> > > >
-> > > > I had a 4.14.4 kernel with its rtpatch running on a dual-core arm64
-> > > > device, the desktop is ubuntu.
-> > > >
-> > > > In general, the max latency of cyclictest is around 50us in empty load
-> > > > which is acceptable. However, if i open a firefox duing cyclictest is
-> > > > running, the max latency becomes higher up to 200us.
-> > > >
-> > > > I tried to use ftrace to debug this issue,"cyclictest -p 90 -m -c 0 -i
-> > > > 10 -n -h 100 -q -l 10000000 -b 80", "-b 80" means enable ftrace event
-> > > > and terminate cyclictest when latency is higher than 80us.
-> > > >
-> > > > Here is a piece of log:
-> > > >
-> > > > 6034916919us+: cpu_idle: state=1 cpu_id=1
-> > > > 6034916981us+: hrtimer_cancel: hrtimer=ffffff8012663dc8
-> > > > 6034916994us+: sched_waking: comm=cyclictest pid=2321 prio=9 target_cpu=001
-> > > > 6034917032us+: cpu_idle: state=4294967295 cpu_id=1
-> > > > 6034917044us+: hrtimer_start: hrtimer=ffffffc07ffd5960
-> > > > function=tick_sched_timer expires=6034920000000
-> > > > softexpires=6034920000000 mode=ABS|PINNED
-> > > > 6034917066us+: sys_clock_nanosleep -> 0x0
-> > > >
-> > > > In this case, I can only see it's stalled in some points but i could'n
-> > > > find what happens, in other words, the root cause of the latency.
-> > > >
-> > > > Is there any better way to debug this issue? I guess some of you might
-> > > > meet the same issue, how did you approach to the root cause? I would
-> > > > appreciate it so much if you could give me some advice, many thanks.
-> > > >
-> > > > Best regards,
-> > > >
-> > > > /Song
-> > > >
-> > > >
-> > > > ============================================================
-> > > > Here is the log for reference:
-> > > >    <idle>-0       1d..h1.. 6034916878us : irq_handler_entry: irq=3
-> > > > name=arch_timer    -- this is a normal routine
-> > > >    <idle>-0       1d..h2.. 6034916879us : hrtimer_cancel:
-> > > > hrtimer=ffffff8012663dc8
-> > > >    <idle>-0       1d..h1.. 6034916879us : hrtimer_expire_entry:
-> > > > hrtimer=ffffff8012663dc8 function=hrtimer_wakeup now=6034916525493
-> > > >    <idle>-0       1d..h2.. 6034916880us : sched_waking: comm=cyclictest
-> > > > pid=2321 prio=9 target_cpu=001
-> > > >    <idle>-0       1dn.h3.. 6034916882us : sched_wakeup: comm=cyclictest
-> > > > pid=2321 prio=9 target_cpu=001
-> > > >    <idle>-0       1dn.h1.. 6034916883us : hrtimer_expire_exit:
-> > > > hrtimer=ffffff8012663dc8
-> > > >    <idle>-0       1dn.h1.. 6034916884us : irq_handler_exit: irq=3
-> > > > ret=handled
-> > > >    <idle>-0       1.n..1.. 6034916886us : cpu_idle: state=4294967295
-> > > > cpu_id=1
-> > > >    <idle>-0       1dn..2.. 6034916888us : hrtimer_cancel:
-> > > > hrtimer=ffffffc07ffd5960
-> > > >    <idle>-0       1dn..2.. 6034916890us : hrtimer_start:
-> > > > hrtimer=ffffffc07ffd5960 function=tick_sched_timer expires=6034920000000
-> > > > softexpires=6034920000000 mode=ABS|PINNED
-> > > >    <idle>-0       1dn..1.. 6034916891us : rcu_utilization: Start context
-> > > > switch
-> > > >    <idle>-0       1dn..1.. 6034916892us : rcu_utilization: End context
-> > > > switch
-> > > >    <idle>-0       1d...2.. 6034916894us : sched_switch:
-> > > > prev_comm=swapper/1 prev_pid=0 prev_prio=120 prev_state=R ==>
-> > > > next_comm=cyclictest next_pid=2321 next_prio=9
-> > > > cyclicte-2321    1....... 6034916897us : kfree:
-> > > > call_site=ffffff80081501f0 ptr=          (null)
-> > > > cyclicte-2321    1....... 6034916898us : sys_exit: NR 115 = 0
-> > > > cyclicte-2321    1....1.. 6034916898us : sys_clock_nanosleep -> 0x0
-> > > > cyclicte-2321    1....... 6034916902us : sys_enter: NR 115 (1, 1,
-> > > > 7fbd20b448, 0, 0, 7fbd20be00)
-> > > > cyclicte-2321    1....1.. 6034916903us :
-> > > > sys_clock_nanosleep(which_clock: 1, flags: 1, rqtp: 7fbd20b448, rmtp: 0)
-> > > > cyclicte-2321    1....... 6034916904us : hrtimer_init:
-> > > > hrtimer=ffffff8012663dc8 clockid=CLOCK_MONOTONIC mode=ABS
-> > > > cyclicte-2321    1d...1.. 6034916906us : hrtimer_start:
-> > > > hrtimer=ffffff8012663dc8 function=hrtimer_wakeup expires=6034916622448
-> > > > softexpires=6034916622448 mode=ABS
-> > > > cyclicte-2321    1d...1.. 6034916907us : rcu_utilization: Start context
-> > > > switch
-> > > > cyclicte-2321    1d...1.. 6034916908us : rcu_utilization: End context switch
-> > > > cyclicte-2321    1d...2.. 6034916911us : sched_switch:
-> > > > prev_comm=cyclictest prev_pid=2321 prev_prio=9 prev_state=S ==>
-> > > > next_comm=swapper/1 next_pid=0 next_prio=120
-> > > >    <idle>-0       1d...1.. 6034916915us : tick_stop: success=1
-> > > > dependency=NONE
-> > > >    <idle>-0       1d...2.. 6034916916us : hrtimer_cancel:
-> > > > hrtimer=ffffffc07ffd5960
-> > > >    <idle>-0       1d...2.. 6034916917us : hrtimer_start:
-> > > > hrtimer=ffffffc07ffd5960 function=tick_sched_timer expires=6035010000000
-> > > > softexpires=6035010000000 mode=ABS|PINNED
-> > > >    <idle>-0       1d...1.. 6034916919us+: cpu_idle: state=1 cpu_id=1
-> > > >                                      --(1)
-> > > >    <idle>-0       1d..h1.. 6034916977us : irq_handler_entry: irq=3
-> > > > name=arch_timer
-> > > >    <idle>-0       1d..h2.. 6034916981us+: hrtimer_cancel:
-> > > > hrtimer=ffffff8012663dc8                          --(2)
-> > > >    <idle>-0       1d..h1.. 6034916993us : hrtimer_expire_entry:
-> > > > hrtimer=ffffff8012663dc8 function=hrtimer_wakeup now=6034916628193
-> > > >    <idle>-0       1d..h2.. 6034916994us+: sched_waking: comm=cyclictest
-> > > > pid=2321 prio=9 target_cpu=001      --(3)
-> > > >    <idle>-0       1dn.h3.. 6034917016us : sched_wakeup: comm=cyclictest
-> > > > pid=2321 prio=9 target_cpu=001
-> > > >    <idle>-0       1dn.h1.. 6034917016us : hrtimer_expire_exit:
-> > > > hrtimer=ffffff8012663dc8
-> > > >    <idle>-0       1dn.h1.. 6034917026us : irq_handler_exit: irq=3
-> > > > ret=handled
-> > > >    <idle>-0       1.n..1.. 6034917032us+: cpu_idle: state=4294967295
-> > > > cpu_id=1                               --(4)
-> > > >    <idle>-0       1dn..2.. 6034917043us : hrtimer_cancel:
-> > > > hrtimer=ffffffc07ffd5960
-> > > >    <idle>-0       1dn..2.. 6034917044us+: hrtimer_start:
-> > > > hrtimer=ffffffc07ffd5960 function=tick_sched_timer expires=6034920000000
-> > > > softexpires=6034920000000 mode=ABS|PINNED  --(5)
-> > > >    <idle>-0       1dn..1.. 6034917056us : rcu_utilization: Start context
-> > > > switch
-> > > >    <idle>-0       1dn..1.. 6034917057us : rcu_utilization: End context
-> > > > switch
-> > > >    <idle>-0       1d...2.. 6034917062us : sched_switch:
-> > > > prev_comm=swapper/1 prev_pid=0 prev_prio=120 prev_state=R ==>
-> > > > next_comm=cyclictest next_pid=2321 next_prio=9
-> > > > cyclicte-2321    1....... 6034917065us : kfree:
-> > > > call_site=ffffff80081501f0 ptr=          (null)
-> > > > cyclicte-2321    1....... 6034917066us : sys_exit: NR 115 = 0
-> > > > cyclicte-2321    1....1.. 6034917066us+: sys_clock_nanosleep -> 0x0
-> > > >                                                      --(5)
-> > > > cyclicte-2321    1....... 6034917142us : sys_enter: NR 64 (5,
-> > > > 7fbd20c500, 1f, 7fbd20bf08, 2, 7fbd20be00)
-> > > > cyclicte-2321    1....1.. 6034917143us : sys_write(fd: 5, buf:
-> > > > 7fbd20c500, count: 1f)
-> > > > cyclicte-2321    1....... 6034917151us : tracing_mark_write: hit latency
-> > > > threshold (91 > 80)
-> > > > cyclicte-2321    1....... 6034917155us : kfree:
-> > > > call_site=ffffff80081501f0 ptr=          (null)
-> > > > cyclicte-2321    1....... 6034917156us : sys_exit: NR 64 = 31
-> > > > cyclicte-2321    1....1.. 6034917157us : sys_write -> 0x1f
-> > > > cyclicte-2321    1....... 6034917159us : sys_enter: NR 64 (4, 408650, 1,
-> > > > 7fbd20bf08, 2, 7fbd20be00)
-> > > > cyclicte-2321    1....1.. 6034917160us : sys_write(fd: 4, buf: 408650,
-> > > > count: 1)
-> >
