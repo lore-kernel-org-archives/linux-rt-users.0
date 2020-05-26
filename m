@@ -6,63 +6,59 @@ X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C1645C433DF
-	for <linux-rt-users@archiver.kernel.org>; Tue, 26 May 2020 14:24:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 75217C433E0
+	for <linux-rt-users@archiver.kernel.org>; Tue, 26 May 2020 14:33:44 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id AA384206C3
-	for <linux-rt-users@archiver.kernel.org>; Tue, 26 May 2020 14:24:37 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 58A732065F
+	for <linux-rt-users@archiver.kernel.org>; Tue, 26 May 2020 14:33:44 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727091AbgEZOYg (ORCPT
+        id S1727990AbgEZOdo (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 26 May 2020 10:24:36 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45762 "EHLO
+        Tue, 26 May 2020 10:33:44 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47222 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726939AbgEZOYg (ORCPT
+        with ESMTP id S1726882AbgEZOdn (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 26 May 2020 10:24:36 -0400
+        Tue, 26 May 2020 10:33:43 -0400
 Received: from Galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 77B57C03E96D
-        for <linux-rt-users@vger.kernel.org>; Tue, 26 May 2020 07:24:36 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 92045C03E96D
+        for <linux-rt-users@vger.kernel.org>; Tue, 26 May 2020 07:33:43 -0700 (PDT)
 Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
         (envelope-from <bigeasy@linutronix.de>)
-        id 1jdaVO-000465-PQ; Tue, 26 May 2020 16:24:34 +0200
-Date:   Tue, 26 May 2020 16:24:34 +0200
+        id 1jdaeC-0004Bs-AK; Tue, 26 May 2020 16:33:40 +0200
+Date:   Tue, 26 May 2020 16:33:40 +0200
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Alison Chaiken <achaiken@aurora.tech>
-Cc:     linux-rt-users@vger.kernel.org
-Subject: Re: remove of ktimersoftd in linux-rt-devel 5.0
-Message-ID: <20200526142434.4lmv5drdjkklqcu2@linutronix.de>
-References: <CAFzL-7tzwnBEnt_q2f0BPSAO3To_Zaxt4bLtfzKVOiyJTua45g@mail.gmail.com>
+To:     Elana Copperman <Elana.Copperman@mobileye.com>
+Cc:     Steven Rostedt <rostedt@goodmis.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        "Vladimir Kondratiev (Mobileye)" 
+        <63dc4b5d-c467-4bfb-bce5-74485907c850@intel.mail.onmicrosoft.com>
+Subject: Re: cgroups CPU time management + PREEMPT_RT
+Message-ID: <20200526143340.ooykhoszyd4lxi2g@linutronix.de>
+References: <AM0PR09MB3794D873EEAE20CD9201D14299A50@AM0PR09MB3794.eurprd09.prod.outlook.com>
+ <AM0PR09MB3794E9CFE8BA31852B712DAD99A50@AM0PR09MB3794.eurprd09.prod.outlook.com>
+ <AM0PR09MB3794F5E857CB761859BBEF0B99BE0@AM0PR09MB3794.eurprd09.prod.outlook.com>
+ <AM0PR09MB3794A1DA3C38B31A4A16E9DD99BE0@AM0PR09MB3794.eurprd09.prod.outlook.com>
+ <20200512093612.416899e1@gandalf.local.home>
+ <AM0PR09MB3794A35CEC4017897544E40999BE0@AM0PR09MB3794.eurprd09.prod.outlook.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <CAFzL-7tzwnBEnt_q2f0BPSAO3To_Zaxt4bLtfzKVOiyJTua45g@mail.gmail.com>
+In-Reply-To: <AM0PR09MB3794A35CEC4017897544E40999BE0@AM0PR09MB3794.eurprd09.prod.outlook.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2020-05-15 16:46:48 [-0700], Alison Chaiken wrote:
-> About a year ago the following commit greatly simplified softirqs:
+On 2020-05-12 13:41:03 [+0000], Elana Copperman wrote:
 > 
-> commit 6f6ba7715a91877cf5fd2b357db3799baa331d9b
-> Author: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> Date:   Wed May 29 18:47:32 2019 +0200
->     softirq: rework
 > 
-> It also removed ktimersoftd, without comment as far as I can see.  Is
-> it obvious that performance improvements due to lockless
-> synchronization render useless the earlier split of ktimersoftd from
-> ksoftirqd?   Is it now less likely that a large number of other
-> softirqs that are run immediately when hard IRQs terminate will use up
-> ksoftirqd's time slice and prevent the timer softirqs from getting a
-> chance to run?
 
-When hard IRQs terminate and raise the softirq then the ksoftirqd is
-woken up. The softirq may be processed by the thread _or_ by anything
-else that is running happens to process softirqs. That can be any
-force-threaded interrupt handler.
-In general nothing raises softirqs from hardirq context. One exception
-here are POSIX timer. The plan was to rework POSIX-timer code.
+I think you missed to write a reply or I didn't find it.
+So if this is about RT_GROUP_SCHED then it is disabled in RT because it
+was once broken. Since then people asked about it and I told them to
+please test it and report back what the results are but I never got a
+reply back.
 
 Sebastian
