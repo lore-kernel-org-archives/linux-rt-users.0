@@ -1,100 +1,114 @@
-Return-Path: <SRS0=+jQa=7J=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=bT+0=7K=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.6 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-14.1 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PULL_REQUEST,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 521D4C433E0
-	for <linux-rt-users@archiver.kernel.org>; Wed, 27 May 2020 17:40:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 92A1DC433E1
+	for <linux-rt-users@archiver.kernel.org>; Thu, 28 May 2020 19:32:48 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 20DE320663
-	for <linux-rt-users@archiver.kernel.org>; Wed, 27 May 2020 17:40:22 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="YfNxENM0"
+	by mail.kernel.org (Postfix) with ESMTP id 76964208B8
+	for <linux-rt-users@archiver.kernel.org>; Thu, 28 May 2020 19:32:48 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1590694368;
+	bh=zJpylzLgZEMK9lfVhE0Zem979bgMVdVmXzgOmkZ3VFU=;
+	h=From:To:Cc:Subject:Date:List-ID:From;
+	b=fDbquCjbqC1sjiux+qc9JYd/SPmXlMJnMKl5DQFdR5X9ExQbfXdnni/y2O8HlfQgx
+	 ZMHtvaJPtQ5lXpiOcmT+yq1JMpI4aaAmra7m+qaYxDe+7wQ5StFVwby2C+hclfgWLM
+	 Y2ruoia0Ic2EfMgZdSgH2IIoEH06+HW8LNEhObMs=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S2388343AbgE0RkV (ORCPT
+        id S2406536AbgE1Tco (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 27 May 2020 13:40:21 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46100 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S2387564AbgE0RkU (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 27 May 2020 13:40:20 -0400
-Received: from mail-qk1-x744.google.com (mail-qk1-x744.google.com [IPv6:2607:f8b0:4864:20::744])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6545EC03E97D
-        for <linux-rt-users@vger.kernel.org>; Wed, 27 May 2020 10:40:20 -0700 (PDT)
-Received: by mail-qk1-x744.google.com with SMTP id c185so296070qke.7
-        for <linux-rt-users@vger.kernel.org>; Wed, 27 May 2020 10:40:20 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:from:date:to:cc:subject:message-id:references:mime-version
-         :content-disposition:content-transfer-encoding:in-reply-to;
-        bh=c8oaw0N6fdetP2NuOyPxkLrwPteO0Eq8MeHRLnh41/I=;
-        b=YfNxENM0I/ABf1rC/j8FUuC81I+ju64ViUg1cI5jlUBSgdkj1B4Yf6PJr+gv0DzeYa
-         oH5782W/em/KPa+48d8oyM6DHV1v1BoJTClGifrBObMgFMsCb0B6faPmPOn163MGsFyo
-         +h+qzW02r4d1SGouG7jj5HGYa0MXk8QUDXKww2HOkjqfvcdJkYGa5ZpRU+YImyxS7fHa
-         PoWXO48L77uJxd96VtwnWZc2HCFCzMeks2NKZFLRzIhrYMjZ0ImnELZ4fIeGhwYOIb0o
-         2X0fL5mAF5MMU8fJ84P6YCet3GtdftyqSpKFd5iHdRvJz+91LfM4PuDbzS2whSONQ58c
-         05vA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:from:date:to:cc:subject:message-id
-         :references:mime-version:content-disposition
-         :content-transfer-encoding:in-reply-to;
-        bh=c8oaw0N6fdetP2NuOyPxkLrwPteO0Eq8MeHRLnh41/I=;
-        b=ZDjrURjgDcPRoMvH6l3LmS7LYSZ9ZJbR1da26AiwYzokF6UARViOPqyIsY6j7RYUL1
-         Iqc7b95RIykh4ulq9B8y44L3bd1Mpwqjsaa0wBIBcOnbASjGoM43XCmkkEX8W1iViO2C
-         g/a42l/zr83wtUh1RJdCnGjQY/kO2EQ6vnP3AJqzht85SbOZrzsIIHP78G996zXoPiBK
-         ERxd/e/TRJYmXe8gU0p2OisAkmxLN6+hUIfzbzElWW+bg0E3eLOhEhJF8fz89rIEHBTn
-         lctQ5aD/yCbZ3n3e1c5C8+h366BgPORq805XkajWLFLZC02wvZ56+yKBhlSY4JzhmdLN
-         Y79Q==
-X-Gm-Message-State: AOAM533FQvEglTL3ItzpR6CyzPPeAV4xb6YAUBA0I81kzJEuJyPBXYCE
-        x6OyDWpfzhUcy80CNeqG+VJuKSxZ
-X-Google-Smtp-Source: ABdhPJzE9vYO02H86Rh6D+aSrRA87LSvAJex6A3sI1jfjfepQM/wukNaBP/XvE5bVL4w3gTLpnmYBw==
-X-Received: by 2002:a05:620a:346:: with SMTP id t6mr5199032qkm.210.1590601219576;
-        Wed, 27 May 2020 10:40:19 -0700 (PDT)
-Received: from lclaudio.dyndns.org ([191.177.186.218])
-        by smtp.gmail.com with ESMTPSA id c3sm2899718qtp.24.2020.05.27.10.40.18
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 27 May 2020 10:40:18 -0700 (PDT)
-From:   "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-X-Google-Original-From: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-Received: by lclaudio.dyndns.org (Postfix, from userid 1000)
-        id 580713C01F5; Wed, 27 May 2020 14:40:16 -0300 (-03)
-Date:   Wed, 27 May 2020 14:40:16 -0300
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: [PATCH v5.6.4-rt3] rfcomm/bluetooth: avoid disabling interrupts
- on RT
-Message-ID: <20200527174016.GZ5108@uudg.org>
-References: <20200423193155.GD75343@uudg.org>
- <20200527094858.qqbctvdgr6bvjfqn@linutronix.de>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <20200527094858.qqbctvdgr6bvjfqn@linutronix.de>
+        Thu, 28 May 2020 15:32:44 -0400
+Received: from mail.kernel.org ([198.145.29.99]:57626 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S2406316AbgE1Tcl (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 28 May 2020 15:32:41 -0400
+Received: from tzanussi-mobl.hsd1.il.comcast.net (c-98-220-238-81.hsd1.il.comcast.net [98.220.238.81])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id CDFD02078C;
+        Thu, 28 May 2020 19:32:40 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1590694361;
+        bh=zJpylzLgZEMK9lfVhE0Zem979bgMVdVmXzgOmkZ3VFU=;
+        h=From:To:Cc:Subject:Date:From;
+        b=tKgGw5uOgdbmF/jWJxr1Tx/4pxYjk9/k3348mZJ76Rmz4UHQFWEl3QpRSzJDRfXU7
+         EaMfmEkcb6UFNV2chF8L6MZLcH5shjF3X8x8lQMH0Ixr3PHZ8W0QFbBXHWOI9c5JA6
+         XKttAoCjwubuBoCreYj1/A5/cabjtmK4hTpGkkmo=
+From:   Tom Zanussi <zanussi@kernel.org>
+To:     rostedt@goodmis.org
+Cc:     mhiramat@kernel.org, skhan@linuxfoundation.org,
+        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Subject: [PATCH v2 0/2] tracing: Make synthetic events a separate option
+Date:   Thu, 28 May 2020 14:32:36 -0500
+Message-Id: <cover.1590693308.git.zanussi@kernel.org>
+X-Mailer: git-send-email 2.17.1
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Wed, May 27, 2020 at 11:48:58AM +0200, Sebastian Andrzej Siewior wrote:
-> On 2020-04-23 16:31:55 [-0300], Luis Claudio R. Goncalves wrote:
-> …
-> > Replacing local_irq_save()/bh_lock_sock() by spin_lock_bh() keeps the semantics
-> > and does the right thing under PREEMPT_RT.
-> 
-> Nope. The irq-off was introduced in commit
->    fad003b6c8e3d ("Bluetooth: Fix inconsistent lock state with RFCOMM")
-> 
-> It doesn't look right. Could you please revert that commit and check if
-> lockdep still complains?
+Hi Steve,
 
-Thanks, Sebastian! I built a kernel with commit fad003b6c8e3d reverted and
-the lockdep complaints are gone.
+These are the same patches as v1, but after posting v1 I realized that
+if you applied them on top of the other patchset I posted awhile back
+("[PATCH 0/3] tracing: histogram internals doc, hist_debug, and misc")
+[1], you wouldn't be able to apply these.
 
-Luis
+So assuming you apply the other patchset first, these should apply
+cleanly on top of those.
+
+Thanks,
+
+Tom
+
+[1] https://lore.kernel.org/lkml/cover.1585941485.git.zanussi@kernel.org/
+
+
+v1 text:
+
+Since synthetic events can now be used separately from hist triggers,
+it makes sense to actually separate them into different options.  It
+also makes sense in terms of file bloat - trace_events_hist.c was
+getting very large and this makes it smaller and easier to follow.
+
+Thanks,
+
+Tom
+
+The following changes since commit 77914c22b0ba493d9783c53bbfbc6087d6a7e1b1:
+
+  tracing: Add hist_debug trace event files for histogram debugging (2020-04-03 13:46:05 -0500)
+
+are available in the Git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/zanussi/linux-trace.git ftrace/separate-synth-v2
+
+Tom Zanussi (2):
+  tracing: Move synthetic events to a separate file
+  selftests/ftrace: Distinguish between hist and synthetic event checks
+
+ kernel/trace/Kconfig                          |   20 +-
+ kernel/trace/Makefile                         |    1 +
+ kernel/trace/trace_events_hist.c              | 2071 ++---------------
+ kernel/trace/trace_events_synth.c             | 1789 ++++++++++++++
+ kernel/trace/trace_synth.h                    |   36 +
+ .../trigger-field-variable-support.tc         |    5 +
+ .../trigger-inter-event-combined-hist.tc      |    5 +
+ .../trigger-multi-actions-accept.tc           |    5 +
+ .../trigger-onmatch-action-hist.tc            |    5 +
+ .../trigger-onmatch-onmax-action-hist.tc      |    5 +
+ .../inter-event/trigger-onmax-action-hist.tc  |    5 +
+ .../trigger-snapshot-action-hist.tc           |    5 +
+ .../inter-event/trigger-trace-action-hist.tc  |    5 +
+ 13 files changed, 2029 insertions(+), 1928 deletions(-)
+ create mode 100644 kernel/trace/trace_events_synth.c
+ create mode 100644 kernel/trace/trace_synth.h
+
+-- 
+2.17.1
 
