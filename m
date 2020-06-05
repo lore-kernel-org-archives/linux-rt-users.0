@@ -4,32 +4,32 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
+	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 93908C433E1
-	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Jun 2020 23:42:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AA322C433E0
+	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Jun 2020 23:42:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 726E420810
-	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Jun 2020 23:42:24 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8F3C32074B
+	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Jun 2020 23:42:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728493AbgFEXmY (ORCPT
+        id S1728523AbgFEXmZ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 5 Jun 2020 19:42:24 -0400
-Received: from mail.kernel.org ([198.145.29.99]:57472 "EHLO mail.kernel.org"
+        Fri, 5 Jun 2020 19:42:25 -0400
+Received: from mail.kernel.org ([198.145.29.99]:57610 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728370AbgFEXmX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 5 Jun 2020 19:42:23 -0400
+        id S1728439AbgFEXmY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 5 Jun 2020 19:42:24 -0400
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id E8316206FA;
-        Fri,  5 Jun 2020 23:42:22 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 8B894207F7;
+        Fri,  5 Jun 2020 23:42:23 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.93)
         (envelope-from <rostedt@goodmis.org>)
-        id 1jhLyf-002sAr-W7; Fri, 05 Jun 2020 19:42:22 -0400
-Message-ID: <20200605234221.847811418@goodmis.org>
+        id 1jhLyg-002sCv-JC; Fri, 05 Jun 2020 19:42:22 -0400
+Message-ID: <20200605234222.459959297@goodmis.org>
 User-Agent: quilt/0.66
-Date:   Fri, 05 Jun 2020 19:41:50 -0400
+Date:   Fri, 05 Jun 2020 19:41:54 -0400
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -39,9 +39,8 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         John Kacur <jkacur@redhat.com>, Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>,
         "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>,
-        kernel test robot <rong.a.chen@intel.com>,
-        John Ogness <john.ogness@linutronix.de>
-Subject: [PATCH RT 1/8] printk: console must not schedule for drivers
+        Kevin Hao <haokexin@gmail.com>, stable-rt@vger.kernel.org
+Subject: [PATCH RT 5/8] mm: slub: Always flush the delayed empty slubs in flush_all()
 References: <20200605234149.965509211@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -55,51 +54,60 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: John Ogness <john.ogness@linutronix.de>
+From: Kevin Hao <haokexin@gmail.com>
 
-Even though the printk kthread is always preemptible, it is still not
-allowed to call cond_resched() from within console drivers. The
-task may become non-preemptible in the console driver call chain. For
-example, vt_console_print() takes a spinlock and then can call into
-fbcon_redraw(), which can conditionally invoke cond_resched():
+After commit f0b231101c94 ("mm/SLUB: delay giving back empty slubs to
+IRQ enabled regions"), when the free_slab() is invoked with the IRQ
+disabled, the empty slubs are moved to a per-CPU list and will be
+freed after IRQ enabled later. But in the current codes, there is
+a check to see if there really has the cpu slub on a specific cpu
+before flushing the delayed empty slubs, this may cause a reference
+of already released kmem_cache in a scenario like below:
+	cpu 0				cpu 1
+  kmem_cache_destroy()
+    flush_all()
+                         --->IPI       flush_cpu_slab()
+                                         flush_slab()
+                                           deactivate_slab()
+                                             discard_slab()
+                                               free_slab()
+                                             c->page = NULL;
+      for_each_online_cpu(cpu)
+        if (!has_cpu_slab(1, s))
+          continue
+        this skip to flush the delayed
+        empty slub released by cpu1
+    kmem_cache_free(kmem_cache, s)
 
-|BUG: sleeping function called from invalid context at kernel/printk/printk.c:2322
-|in_atomic(): 1, irqs_disabled(): 0, non_block: 0, pid: 177, name: printk
-|CPU: 0 PID: 177 Comm: printk Not tainted 5.6.2-00011-ga536059557f1d9 #1
-|Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.12.0-1 04/01/2014
-|Call Trace:
-| dump_stack+0x66/0x8b
-| ___might_sleep+0x102/0x120
-| console_conditional_schedule+0x24/0x30
-| fbcon_redraw+0x96/0x1c0
-| fbcon_scroll+0x556/0xd70
-| con_scroll+0x147/0x1e0
-| lf+0x9e/0xb0
-| vt_console_print+0x253/0x3d0
-| printk_kthread_func+0x1d5/0x3b0
+                                       kmalloc()
+                                         __slab_alloc()
+                                            free_delayed()
+                                            __free_slab()
+                                            reference to released kmem_cache
 
-Disable cond_resched() for the call into the console drivers.
-
-Reported-by: kernel test robot <rong.a.chen@intel.com>
-Signed-off-by: John Ogness <john.ogness@linutronix.de>
+Fixes: f0b231101c94 ("mm/SLUB: delay giving back empty slubs to IRQ enabled regions")
+Signed-off-by: Kevin Hao <haokexin@gmail.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: stable-rt@vger.kernel.org
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/printk/printk.c | 1 +
- 1 file changed, 1 insertion(+)
+ mm/slub.c | 3 ---
+ 1 file changed, 3 deletions(-)
 
-diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-index 2affe95866a4..9600373bcf55 100644
---- a/kernel/printk/printk.c
-+++ b/kernel/printk/printk.c
-@@ -2746,6 +2746,7 @@ static int printk_kthread_func(void *data)
- 			    &len, printk_time);
+diff --git a/mm/slub.c b/mm/slub.c
+index bea18bbae247..b2809a9ca8f8 100644
+--- a/mm/slub.c
++++ b/mm/slub.c
+@@ -2382,9 +2382,6 @@ static void flush_all(struct kmem_cache *s)
+ 	for_each_online_cpu(cpu) {
+ 		struct slub_free_list *f;
  
- 		console_lock();
-+		console_may_schedule = 0;
- 		call_console_drivers(master_seq, ext_text, ext_len, text, len,
- 				     msg->level, msg->facility);
- 		if (len > 0 || ext_len > 0)
+-		if (!has_cpu_slab(cpu, s))
+-			continue;
+-
+ 		f = &per_cpu(slub_free_list, cpu);
+ 		raw_spin_lock_irq(&f->lock);
+ 		list_splice_init(&f->list, &tofree);
 -- 
 2.26.2
 
