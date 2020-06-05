@@ -6,30 +6,30 @@ X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
 	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AA322C433E0
-	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Jun 2020 23:42:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4DD66C433E1
+	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Jun 2020 23:42:38 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8F3C32074B
-	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Jun 2020 23:42:36 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3415D207F9
+	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Jun 2020 23:42:38 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728523AbgFEXmZ (ORCPT
+        id S1728507AbgFEXmY (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 5 Jun 2020 19:42:25 -0400
-Received: from mail.kernel.org ([198.145.29.99]:57610 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728439AbgFEXmY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 5 Jun 2020 19:42:24 -0400
+Received: from mail.kernel.org ([198.145.29.99]:57542 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1728378AbgFEXmX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 5 Jun 2020 19:42:23 -0400
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 8B894207F7;
+        by mail.kernel.org (Postfix) with ESMTPSA id 3DEB8207D8;
         Fri,  5 Jun 2020 23:42:23 +0000 (UTC)
 Received: from rostedt by gandalf.local.home with local (Exim 4.93)
         (envelope-from <rostedt@goodmis.org>)
-        id 1jhLyg-002sCv-JC; Fri, 05 Jun 2020 19:42:22 -0400
-Message-ID: <20200605234222.459959297@goodmis.org>
+        id 1jhLyg-002sBt-9U; Fri, 05 Jun 2020 19:42:22 -0400
+Message-ID: <20200605234222.155657946@goodmis.org>
 User-Agent: quilt/0.66
-Date:   Fri, 05 Jun 2020 19:41:54 -0400
+Date:   Fri, 05 Jun 2020 19:41:52 -0400
 From:   Steven Rostedt <rostedt@goodmis.org>
 To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -38,9 +38,8 @@ Cc:     Thomas Gleixner <tglx@linutronix.de>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
         John Kacur <jkacur@redhat.com>, Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>,
-        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>,
-        Kevin Hao <haokexin@gmail.com>, stable-rt@vger.kernel.org
-Subject: [PATCH RT 5/8] mm: slub: Always flush the delayed empty slubs in flush_all()
+        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
+Subject: [PATCH RT 3/8] Revert "rt: Improve the serial console PASS_LIMIT"
 References: <20200605234149.965509211@goodmis.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -54,60 +53,40 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Kevin Hao <haokexin@gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-After commit f0b231101c94 ("mm/SLUB: delay giving back empty slubs to
-IRQ enabled regions"), when the free_slab() is invoked with the IRQ
-disabled, the empty slubs are moved to a per-CPU list and will be
-freed after IRQ enabled later. But in the current codes, there is
-a check to see if there really has the cpu slub on a specific cpu
-before flushing the delayed empty slubs, this may cause a reference
-of already released kmem_cache in a scenario like below:
-	cpu 0				cpu 1
-  kmem_cache_destroy()
-    flush_all()
-                         --->IPI       flush_cpu_slab()
-                                         flush_slab()
-                                           deactivate_slab()
-                                             discard_slab()
-                                               free_slab()
-                                             c->page = NULL;
-      for_each_online_cpu(cpu)
-        if (!has_cpu_slab(1, s))
-          continue
-        this skip to flush the delayed
-        empty slub released by cpu1
-    kmem_cache_free(kmem_cache, s)
+There is no need to loop for longer. The message of too much work was
+removed in commit
+    9d7c249a1ef9b ("serial: 8250: drop the printk from serial8250_interrupt()")
 
-                                       kmalloc()
-                                         __slab_alloc()
-                                            free_delayed()
-                                            __free_slab()
-                                            reference to released kmem_cache
-
-Fixes: f0b231101c94 ("mm/SLUB: delay giving back empty slubs to IRQ enabled regions")
-Signed-off-by: Kevin Hao <haokexin@gmail.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: stable-rt@vger.kernel.org
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- mm/slub.c | 3 ---
- 1 file changed, 3 deletions(-)
+ drivers/tty/serial/8250/8250_core.c | 11 +----------
+ 1 file changed, 1 insertion(+), 10 deletions(-)
 
-diff --git a/mm/slub.c b/mm/slub.c
-index bea18bbae247..b2809a9ca8f8 100644
---- a/mm/slub.c
-+++ b/mm/slub.c
-@@ -2382,9 +2382,6 @@ static void flush_all(struct kmem_cache *s)
- 	for_each_online_cpu(cpu) {
- 		struct slub_free_list *f;
+diff --git a/drivers/tty/serial/8250/8250_core.c b/drivers/tty/serial/8250/8250_core.c
+index 809a65f68028..02bfafa8a672 100644
+--- a/drivers/tty/serial/8250/8250_core.c
++++ b/drivers/tty/serial/8250/8250_core.c
+@@ -55,16 +55,7 @@ static struct uart_driver serial8250_reg;
  
--		if (!has_cpu_slab(cpu, s))
--			continue;
--
- 		f = &per_cpu(slub_free_list, cpu);
- 		raw_spin_lock_irq(&f->lock);
- 		list_splice_init(&f->list, &tofree);
+ static unsigned int skip_txen_test; /* force skip of txen test at init time */
+ 
+-/*
+- * On -rt we can have a more delays, and legitimately
+- * so - so don't drop work spuriously and spam the
+- * syslog:
+- */
+-#ifdef CONFIG_PREEMPT_RT
+-# define PASS_LIMIT	1000000
+-#else
+-# define PASS_LIMIT	512
+-#endif
++#define PASS_LIMIT	512
+ 
+ #include <asm/serial.h>
+ /*
 -- 
 2.26.2
 
