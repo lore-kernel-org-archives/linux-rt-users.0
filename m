@@ -2,80 +2,83 @@ Return-Path: <SRS0=m88/=7S=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.3 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_2 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 034B8C433E0
-	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Jun 2020 15:22:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8ACCBC433DF
+	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Jun 2020 23:42:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D5396206DB
-	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Jun 2020 15:22:46 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5F2E12074B
+	for <linux-rt-users@archiver.kernel.org>; Fri,  5 Jun 2020 23:42:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727119AbgFEPWq (ORCPT
+        id S1728411AbgFEXmX (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 5 Jun 2020 11:22:46 -0400
-Received: from mail.kernel.org ([198.145.29.99]:52394 "EHLO mail.kernel.org"
+        Fri, 5 Jun 2020 19:42:23 -0400
+Received: from mail.kernel.org ([198.145.29.99]:57496 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726551AbgFEPWq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 5 Jun 2020 11:22:46 -0400
+        id S1728374AbgFEXmX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 5 Jun 2020 19:42:23 -0400
 Received: from gandalf.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id DD7CE20663;
-        Fri,  5 Jun 2020 15:22:44 +0000 (UTC)
-Date:   Fri, 5 Jun 2020 11:22:43 -0400
+        by mail.kernel.org (Postfix) with ESMTPSA id 16B5720772;
+        Fri,  5 Jun 2020 23:42:23 +0000 (UTC)
+Received: from rostedt by gandalf.local.home with local (Exim 4.93)
+        (envelope-from <rostedt@goodmis.org>)
+        id 1jhLyg-002sBN-4I; Fri, 05 Jun 2020 19:42:22 -0400
+Message-ID: <20200605234222.017604168@goodmis.org>
+User-Agent: quilt/0.66
+Date:   Fri, 05 Jun 2020 19:41:51 -0400
 From:   Steven Rostedt <rostedt@goodmis.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
+To:     linux-kernel@vger.kernel.org,
         linux-rt-users <linux-rt-users@vger.kernel.org>
 Cc:     Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
+        John Kacur <jkacur@redhat.com>, Daniel Wagner <wagi@monom.org>,
         Tom Zanussi <zanussi@kernel.org>,
-        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
-Subject: [ANNOUNCE] 5.4.44-rt26
-Message-ID: <20200605112243.367db4ac@gandalf.local.home>
-X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
+        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>,
+        kbuild test robot <lkp@intel.com>
+Subject: [PATCH RT 2/8] fs/dcache: Include swait.h header
+References: <20200605234149.965509211@goodmis.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+5.4.44-rt27-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-I'm pleased to announce the 5.4.44-rt26 stable release.
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
+Include the swait.h header so it compiles even if not all patches are
+applied.
 
-This release is just an update to the new stable 5.4.44 version
-and no RT specific changes have been made.
+Reported-by: kbuild test robot <lkp@intel.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+---
+ fs/proc/base.c | 1 +
+ 1 file changed, 1 insertion(+)
 
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index 2dcd8fb3abb5..dc6cfa5de1df 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -95,6 +95,7 @@
+ #include <linux/sched/stat.h>
+ #include <linux/posix-timers.h>
+ #include <trace/events/oom.h>
++#include <linux/swait.h>
+ #include "internal.h"
+ #include "fd.h"
+ 
+-- 
+2.26.2
 
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v5.4-rt
-  Head SHA1: 81126a281d45db9a0bd6f8ec93f77f9b85237e67
-
-
-Or to build 5.4.44-rt26 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v5.x/linux-5.4.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v5.x/patch-5.4.44.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/5.4/patch-5.4.44-rt26.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
 
