@@ -7,53 +7,53 @@ X-Spam-Status: No, score=-2.4 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 77C86C433E1
-	for <linux-rt-users@archiver.kernel.org>; Tue, 16 Jun 2020 16:56:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BFE61C433DF
+	for <linux-rt-users@archiver.kernel.org>; Tue, 16 Jun 2020 17:05:00 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5B3CB208E4
-	for <linux-rt-users@archiver.kernel.org>; Tue, 16 Jun 2020 16:56:07 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 9A0FB20882
+	for <linux-rt-users@archiver.kernel.org>; Tue, 16 Jun 2020 17:05:00 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="PNE5/gIn"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="DBgmdMRx"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729841AbgFPQ4H (ORCPT
+        id S1730635AbgFPRFA (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 16 Jun 2020 12:56:07 -0400
-Received: from us-smtp-2.mimecast.com ([207.211.31.81]:43205 "EHLO
-        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1728928AbgFPQ4G (ORCPT
+        Tue, 16 Jun 2020 13:05:00 -0400
+Received: from us-smtp-delivery-1.mimecast.com ([207.211.31.120]:40711 "EHLO
+        us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+        with ESMTP id S1730613AbgFPRE7 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 16 Jun 2020 12:56:06 -0400
+        Tue, 16 Jun 2020 13:04:59 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1592326565;
+        s=mimecast20190719; t=1592327097;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=FS3foYLDgEIuyyL0EuO5oCfVqCy/HMc82T2VkkcoP1w=;
-        b=PNE5/gIntshsjVz2AOzGh8g8C9YuA9aqt6GOpamh65KbAWJM/Bj/DlcE26doOK8XcO1F/W
-        D5Yg10p2TB94GxVu4EkN0vRAySg3gAdOkMd3ht6yn+cr+IocNABsjbrwtyY5e/U81xMxLX
-        ljKW+FeDamB9Gcgax6M950kv8SmIAEU=
+        bh=SQw+UFxN5DZFPam2oKMGGVyVcPpoQl3xU3v1u5lp85g=;
+        b=DBgmdMRxhjGku65nj7C95CvTAs0mb5ahXaYEeFqjcUbP/IoH7iQE++cZunSnd/2p4Eg8Z/
+        ocCi0OFzmddS9uw0+fr6xe4kZLeHAQDGBHOj4+LYOtgvBouR0mborbTReFMyEzivnU4T9C
+        ouP1doFqLjS+Hv9rizgBBQqS5Ls99WY=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-443-lK8kCORLNaCHnC2MK4YIfQ-1; Tue, 16 Jun 2020 12:56:03 -0400
-X-MC-Unique: lK8kCORLNaCHnC2MK4YIfQ-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-147-y3P_yXU6PDO_xcu6_o4CCA-1; Tue, 16 Jun 2020 13:04:53 -0400
+X-MC-Unique: y3P_yXU6PDO_xcu6_o4CCA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A8C73E919;
-        Tue, 16 Jun 2020 16:56:02 +0000 (UTC)
+        by mimecast-mx01.redhat.com (Postfix) with ESMTPS id AD34887342B;
+        Tue, 16 Jun 2020 17:04:52 +0000 (UTC)
 Received: from fuller.cnet (ovpn-112-9.gru2.redhat.com [10.97.112.9])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id 71BC719C71;
-        Tue, 16 Jun 2020 16:55:59 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id 94D0B1C4;
+        Tue, 16 Jun 2020 17:04:49 +0000 (UTC)
 Received: by fuller.cnet (Postfix, from userid 1000)
-        id C71E9412EF4E; Tue, 16 Jun 2020 13:55:36 -0300 (-03)
-Date:   Tue, 16 Jun 2020 13:55:36 -0300
+        id 3AAF141887FC; Tue, 16 Jun 2020 14:04:25 -0300 (-03)
+Date:   Tue, 16 Jun 2020 14:04:25 -0300
 From:   Marcelo Tosatti <mtosatti@redhat.com>
 To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Cc:     linux-rt-users@vger.kernel.org, Juri Lelli <juri.lelli@redhat.com>,
         Thomas Gleixner <tglx@linutronix.de>,
         Frederic Weisbecker <frederic@kernel.org>
 Subject: Re: [patch 2/2] mm: page_alloc: drain pages remotely
-Message-ID: <20200616165536.GA306273@fuller.cnet>
+Message-ID: <20200616170425.GA324900@fuller.cnet>
 References: <20200616161149.392213902@fuller.cnet>
  <20200616161409.299575008@fuller.cnet>
  <20200616163248.z5bdrx7gj2sf7d3m@linutronix.de>
@@ -62,7 +62,7 @@ Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 In-Reply-To: <20200616163248.z5bdrx7gj2sf7d3m@linutronix.de>
 User-Agent: Mutt/1.10.1 (2018-07-13)
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
@@ -103,57 +103,8 @@ On Tue, Jun 16, 2020 at 06:32:48PM +0200, Sebastian Andrzej Siewior wrote:
 > > So enable remote draining again.
 > 
 > Is upstream affected by this? And if not, why not?
-> 
-> > Index: linux-rt-devel/mm/page_alloc.c
-> > ===================================================================
-> > --- linux-rt-devel.orig/mm/page_alloc.c
-> > +++ linux-rt-devel/mm/page_alloc.c
-> > @@ -360,6 +360,16 @@ EXPORT_SYMBOL(nr_online_nodes);
-> >  
-> >  static DEFINE_LOCAL_IRQ_LOCK(pa_lock);
-> >  
-> > +#ifdef CONFIG_PREEMPT_RT
-> > +# define cpu_lock_irqsave(cpu, flags)          \
-> > +	local_lock_irqsave_on(pa_lock, flags, cpu)
-> > +# define cpu_unlock_irqrestore(cpu, flags)     \
-> > +	local_unlock_irqrestore_on(pa_lock, flags, cpu)
-> > +#else
-> > +# define cpu_lock_irqsave(cpu, flags)		local_irq_save(flags)
-> > +# define cpu_unlock_irqrestore(cpu, flags)	local_irq_restore(flags)
-> > +#endif
-> 
-> This is going to be tough. I removed the cross-CPU local-locks from RT
-> because it does something different for !RT. Furthermore we have
-> local_locks in upstream as of v5.8-rc1, see commit
->    91710728d1725 ("locking: Introduce local_lock()")
-> 
-> so whatever happens here should have upstream blessing or I will be
-> forced to drop the patch again while moving forward.
 
-Understood. 
+It is affected. The workqueue thread for a given CPU is SCHED_OTHER, which can't
+interrupt a SCHED_FIFO task which does not sleep.
 
-> Before this, I looked for cases where remote drain is useful / needed
-> and didn't find one. 
-
-Just pointed out one.
-
-> I talked to Frederick and for the NO_HZ_FULL people
-> it is not a problem because they don't go to kernel and so they never
-> got anything on their per-CPU list.
-
-People are using NOHZ_FULL CPUs to run both SCHED_FIFO realtime
-workloads and normal workloads. Moreover, even with syscall-less
-applications:
-
-1) Setup application (malloc buffers, etc).
-2) Set SCHED_FIFO priority.
-3) sched_setaffinity() to NOHZ_FULL CPU.
-
-Per-CPU buffers will be large and must be shrunk.
-
-> We had this
->   https://lore.kernel.org/linux-mm/20190424111208.24459-1-bigeasy@linutronix.de/
-
-Will reply to that thread. Do you want to refresh/resend that patchset or
-should I?
 
