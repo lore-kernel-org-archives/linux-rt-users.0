@@ -2,71 +2,64 @@ Return-Path: <SRS0=Kj7U=AB=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.8 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-0.5 required=3.0 tests=FREEMAIL_FORGED_FROMDOMAIN,
+	FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1D565C433E1
-	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Jun 2020 08:08:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E981BC433DF
+	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Jun 2020 10:10:15 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 07D8B23A32
-	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Jun 2020 08:08:44 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id CB04F20757
+	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Jun 2020 10:10:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726196AbgFTIIk (ORCPT
+        id S1727955AbgFTKKP (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 20 Jun 2020 04:08:40 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44266 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725835AbgFTIIk (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 20 Jun 2020 04:08:40 -0400
-Received: from Galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EE496C06174E;
-        Sat, 20 Jun 2020 01:08:39 -0700 (PDT)
-Received: from p200300d06f23b4e5c41e49015ae3a59e.dip0.t-ipconnect.de ([2003:d0:6f23:b4e5:c41e:4901:5ae3:a59e] helo=kmk0.localnet)
-        by Galois.linutronix.de with esmtpsa (TLS1.2:DHE_RSA_AES_256_CBC_SHA256:256)
-        (Exim 4.80)
-        (envelope-from <kurt.kanzenbach@linutronix.de>)
-        id 1jmYYH-0008Kf-2s; Sat, 20 Jun 2020 10:08:37 +0200
-From:   Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>
-To:     Vladimir Oltean <olteanv@gmail.com>,
-        Jiafei Pan <jiafei.pan@nxp.com>
-Cc:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        lkml <linux-kernel@vger.kernel.org>,
-        "rcu@vger.kernel.org" <rcu@vger.kernel.org>,
-        Colin King <colin.king@canonical.com>,
-        Jiafei Pan <jiafei.pan@nxp.com>
-Subject: Re: [EXT] Re: stress-ng --hrtimers hangs system
-Date:   Sat, 20 Jun 2020 10:08:29 +0200
-Message-ID: <11546107.O9o76ZdvQC@kmk0>
-Organization: Linutronix GmbH
-In-Reply-To: <AM0PR04MB47726B40110E1B02471EEEDF8A810@AM0PR04MB4772.eurprd04.prod.outlook.com>
-References: <4781d250-9a29-cef3-268d-7d83c98bf16a@gmail.com> <87y2ovzcmd.fsf@kurt> <AM0PR04MB47726B40110E1B02471EEEDF8A810@AM0PR04MB4772.eurprd04.prod.outlook.com>
+        Sat, 20 Jun 2020 06:10:15 -0400
+Received: from smtp2-g21.free.fr ([212.27.42.2]:13371 "EHLO smtp2-g21.free.fr"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1727861AbgFTKKP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 20 Jun 2020 06:10:15 -0400
+Received: from zimbra35-e6.priv.proxad.net (unknown [172.20.243.185])
+        by smtp2-g21.free.fr (Postfix) with ESMTP id 712A92003F2
+        for <linux-rt-users@vger.kernel.org>; Sat, 20 Jun 2020 12:09:43 +0200 (CEST)
+Date:   Sat, 20 Jun 2020 12:09:43 +0200 (CEST)
+From:   ycollette.nospam@free.fr
+Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>
+Message-ID: <238119586.495839939.1592647783365.JavaMail.root@zimbra35-e6.priv.proxad.net>
+In-Reply-To: <1581058605.7924.15.camel@gmx.de>
+Subject: v5.4.17-rt10 does not boot on intel
 MIME-Version: 1.0
-Content-Transfer-Encoding: 7Bit
-Content-Type: text/plain; charset="us-ascii"
-X-Linutronix-Spam-Score: -1.0
-X-Linutronix-Spam-Level: -
-X-Linutronix-Spam-Status: No , -1.0 points, 5.0 required,  ALL_TRUSTED=-1,SHORTCIRCUIT=-0.0001
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+X-Originating-IP: [79.83.134.110]
+X-Mailer: Zimbra 7.2.0-GA2598 (ZimbraWebClient - FF3.0 (Win)/7.2.0-GA2598)
+X-Authenticated-User: ycollette.nospam@free.fr
+To:     unlisted-recipients:; (no To-header on input)
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Jiafei,
+Hello,
 
-On Friday, June 12, 2020 2:49:17 AM CEST Jiafei Pan wrote:
-> Hi, Kurt,
-> 
-> May I know whether you used "root" user to run stress-ng? using "root"
-> user will change the scheduler to be "SCHED_RR", so would you please
-> share test result with root and non-root users? Thanks.
+I am trying to build the last RT kernel on Fedora.
 
-Performed the test now as root and non-root user. Same result: No 
-problem.
+So, I've downloaded linux-5.6.17 and the last rt patch from kernel.org
+I apply the RT patch to the linux sources.
+I clone https://src.fedoraproject.org/rpms/kernel.git and checked out to f32 branch
+I run $ ./build_configs.sh linux-5.6.17
+I copy linux-5.6.17.x86_64-fedora.config as .config in the linux-5.6.17 directory.
+Then, I do a make xconfig
+I check "General Setup -> Configure standard kernel features (expert users)" to be able to check "Fully preemptible kernel".
+I save the conf and copy the .config file to be able to build the kernel via a spec file.
 
-Thanks,
-Kurt
+I used to build regularly the RT kernel via this procedure (the check "General Setup -> Configure standard kernel features (expert users) is new to 5.6) and it was working fine with 5.4 kernels. Now, the installed kernel doesn't boot.
 
+Is there something new I am missing to be able to boot the kernel ?
 
+Maybe it's the options selected by the fedora script which have a problem.
+I doesn't apply any patches to the RT kernel. I just wanted a "vanilla RT kernel" with fedora options but without fedora patches.
 
+Best regards,
+
+YC
