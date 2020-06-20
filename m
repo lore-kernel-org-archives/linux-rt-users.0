@@ -6,31 +6,31 @@ X-Spam-Status: No, score=-0.5 required=3.0 tests=FREEMAIL_FORGED_FROMDOMAIN,
 	FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
 	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E981BC433DF
-	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Jun 2020 10:10:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3786BC433DF
+	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Jun 2020 12:35:58 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CB04F20757
-	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Jun 2020 10:10:15 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 11B0522DA7
+	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Jun 2020 12:35:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727955AbgFTKKP (ORCPT
+        id S1728095AbgFTMf5 convert rfc822-to-8bit (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 20 Jun 2020 06:10:15 -0400
-Received: from smtp2-g21.free.fr ([212.27.42.2]:13371 "EHLO smtp2-g21.free.fr"
+        Sat, 20 Jun 2020 08:35:57 -0400
+Received: from smtp4-g21.free.fr ([212.27.42.4]:43190 "EHLO smtp4-g21.free.fr"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1727861AbgFTKKP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 20 Jun 2020 06:10:15 -0400
+        id S1728064AbgFTMf5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 20 Jun 2020 08:35:57 -0400
 Received: from zimbra35-e6.priv.proxad.net (unknown [172.20.243.185])
-        by smtp2-g21.free.fr (Postfix) with ESMTP id 712A92003F2
-        for <linux-rt-users@vger.kernel.org>; Sat, 20 Jun 2020 12:09:43 +0200 (CEST)
-Date:   Sat, 20 Jun 2020 12:09:43 +0200 (CEST)
+        by smtp4-g21.free.fr (Postfix) with ESMTP id D7CC519F5A1
+        for <linux-rt-users@vger.kernel.org>; Sat, 20 Jun 2020 14:35:25 +0200 (CEST)
+Date:   Sat, 20 Jun 2020 14:35:25 +0200 (CEST)
 From:   ycollette.nospam@free.fr
 Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>
-Message-ID: <238119586.495839939.1592647783365.JavaMail.root@zimbra35-e6.priv.proxad.net>
-In-Reply-To: <1581058605.7924.15.camel@gmx.de>
-Subject: v5.4.17-rt10 does not boot on intel
+Message-ID: <827480934.496190376.1592656525756.JavaMail.root@zimbra35-e6.priv.proxad.net>
+In-Reply-To: <238119586.495839939.1592647783365.JavaMail.root@zimbra35-e6.priv.proxad.net>
+Subject: Re: v5.4.17-rt10 does not boot on intel
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8BIT
 X-Originating-IP: [79.83.134.110]
 X-Mailer: Zimbra 7.2.0-GA2598 (ZimbraWebClient - FF3.0 (Win)/7.2.0-GA2598)
 X-Authenticated-User: ycollette.nospam@free.fr
@@ -39,6 +39,15 @@ Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
+
+I manage to build a pure vanilla RT kernel (without the fedora options) and it works.
+An option in the set of fedora options makes the kernel-rt unbootable.
+
+----- Mail original -----
+De: "ycollette nospam" <ycollette.nospam@free.fr>
+Cc: "linux-rt-users" <linux-rt-users@vger.kernel.org>
+Envoyé: Samedi 20 Juin 2020 12:09:43
+Objet: v5.4.17-rt10 does not boot on intel
 
 Hello,
 
