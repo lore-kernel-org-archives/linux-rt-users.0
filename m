@@ -1,66 +1,75 @@
-Return-Path: <SRS0=83CY=76=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=Kj7U=AB=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.7 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.2 required=3.0 tests=HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 88239C433E0
-	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Jun 2020 12:01:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CDA18C433DF
+	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Jun 2020 01:48:20 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 69C972082F
-	for <linux-rt-users@archiver.kernel.org>; Wed, 17 Jun 2020 12:01:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B349922D02
+	for <linux-rt-users@archiver.kernel.org>; Sat, 20 Jun 2020 01:48:20 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726282AbgFQMBi (ORCPT
+        id S1731532AbgFTBsU (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 17 Jun 2020 08:01:38 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36038 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726271AbgFQMBh (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 17 Jun 2020 08:01:37 -0400
-Received: from Galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AB843C061573
-        for <linux-rt-users@vger.kernel.org>; Wed, 17 Jun 2020 05:01:37 -0700 (PDT)
-Received: from bigeasy by Galois.linutronix.de with local (Exim 4.80)
-        (envelope-from <bigeasy@linutronix.de>)
-        id 1jlWl5-00008R-PH; Wed, 17 Jun 2020 14:01:35 +0200
-Date:   Wed, 17 Jun 2020 14:01:35 +0200
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Marcelo Tosatti <mtosatti@redhat.com>
-Cc:     linux-rt-users@vger.kernel.org, Juri Lelli <juri.lelli@redhat.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Frederic Weisbecker <frederic@kernel.org>
-Subject: Re: [patch 2/2] mm: page_alloc: drain pages remotely
-Message-ID: <20200617120135.s6ze2qa7yjrzqyxy@linutronix.de>
-References: <20200616161149.392213902@fuller.cnet>
- <20200616161409.299575008@fuller.cnet>
- <20200616163248.z5bdrx7gj2sf7d3m@linutronix.de>
- <20200616165536.GA306273@fuller.cnet>
- <20200617074223.wtd5lsxbpvqvbxs7@linutronix.de>
- <20200617101136.GA392445@fuller.cnet>
+        Fri, 19 Jun 2020 21:48:20 -0400
+Received: from szxga06-in.huawei.com ([45.249.212.32]:49332 "EHLO huawei.com"
+        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+        id S1731502AbgFTBsU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 19 Jun 2020 21:48:20 -0400
+Received: from DGGEMS413-HUB.china.huawei.com (unknown [172.30.72.58])
+        by Forcepoint Email with ESMTP id 9CE00943EC51CCC8F15C;
+        Sat, 20 Jun 2020 09:48:18 +0800 (CST)
+Received: from [127.0.0.1] (10.166.215.237) by DGGEMS413-HUB.china.huawei.com
+ (10.3.19.213) with Microsoft SMTP Server id 14.3.487.0; Sat, 20 Jun 2020
+ 09:48:08 +0800
+To:     <williams@redhat.com>, <jkacur@redhat.com>
+CC:     <linux-rt-users@vger.kernel.org>,
+        Shiyuan Hu <hushiyuan@huawei.com>,
+        Hewenliang <hewenliang4@huawei.com>
+From:   Yunfeng Ye <yeyunfeng@huawei.com>
+Subject: [PATCH] rt-tests: cyclictest: try not to share the same cpu with main
+ thread
+Message-ID: <60c13be0-76ad-5d95-f8d5-124cb13d0561@huawei.com>
+Date:   Sat, 20 Jun 2020 09:48:07 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.6.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <20200617101136.GA392445@fuller.cnet>
+Content-Type: text/plain; charset="utf-8"
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
+X-Originating-IP: [10.166.215.237]
+X-CFilter-Loop: Reflected
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2020-06-17 07:11:36 [-0300], Marcelo Tosatti wrote:
-> If your application busy-spins with DPDK (such as FlexRAN does):
-> 
-> https://www.slideshare.net/LuminaNetworks/osn-bay-area-feb-2019-meetup-intel-5g-flexran-solution-131647692
+The main thread will interfere with the test thread and try not to share
+the same CPU with the main thread when the number of thread is less than
+max_cpus.
 
-I see.
+Signed-off-by: yeyunfeng <yeyunfeng@huawei.com>
+---
+ src/cyclictest/cyclictest.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-> Then v5.8-rc1 does not work, right? (remote pagevec locking + remote
-> draining would be necessary).
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 989113fb3483..b3d72caa10ce 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -1080,7 +1080,8 @@ static int cpu_for_thread_sp(int thread_num, int max_cpus)
+ 		fatal("No allowable cpus to run on\n");
+ 	}
 
-No, it is what we have in latest rt-devel: A per-CPU spinlock
-replacement for preempt_disable() on CONFIG_PREEMPT_RT. We use the
-schedule_work_on() as mainline does.
+-	m = thread_num % num_cpus;
++	/* just don't try to share the same cpu with main thread */
++	m = (thread_num + 1) % num_cpus;
 
-Sebastian
+ 	/* there are num_cpus bits set, we want position of m'th one */
+ 	for (i = 0, cpu = 0; i < max_cpus; i++) {
+-- 
+1.8.3.1
+
