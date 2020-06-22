@@ -2,134 +2,173 @@ Return-Path: <SRS0=LZsy=AD=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.1 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
-	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.6 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B04E5C433DF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 22 Jun 2020 02:31:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2FF4BC433DF
+	for <linux-rt-users@archiver.kernel.org>; Mon, 22 Jun 2020 21:31:28 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8F43120888
-	for <linux-rt-users@archiver.kernel.org>; Mon, 22 Jun 2020 02:31:02 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=nxp.com header.i=@nxp.com header.b="JFIZ6jAv"
+	by mail.kernel.org (Postfix) with ESMTP id 0F8792075A
+	for <linux-rt-users@archiver.kernel.org>; Mon, 22 Jun 2020 21:31:28 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1592861488;
+	bh=4sT7eZEB6XM8BOpQM25ecgxPmctC3tU6l4OI5GReTXs=;
+	h=Subject:From:To:Date:List-ID:From;
+	b=glQFW1eMKpTGAYO69miVjyWN6jvU8zf6wtnHl8FUFQbGrsUmGFLG6Er90Xd+DMTOM
+	 8HOHCtHobZ4qwwOLu0aWRFowy4RMu13oVUI+oRc8qYdL9Na0veQ9fUpX5FoJ/b2HzG
+	 FlV6CkCL2RQnoiMyT6rfwz6vYOzardCTERsWtJAE=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726992AbgFVCa6 (ORCPT
+        id S1730637AbgFVVbY (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 21 Jun 2020 22:30:58 -0400
-Received: from mail-eopbgr80079.outbound.protection.outlook.com ([40.107.8.79]:54145
-        "EHLO EUR04-VI1-obe.outbound.protection.outlook.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1726673AbgFVCa5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 21 Jun 2020 22:30:57 -0400
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=aQcQcz400JEaexoGPij60ae34UwvcdUeyeP/j+DZfGwMhErWz2/F6KRvEYqbsyUxpO8rdwbMCzbXeNxqW/S/ftzWAAoQ0mTSfy5b8HsAUF4nOwVJKkqWM3EbxI3SqRLaJmq7Z0g/xm0Uf/w76bjxaldKQ52kNOEYNthQJ0zNLwaewdu4ASUq9EqL6H0z6tnsS5usf0VczwIOly9mSvNsjRQ6fNasjM2m21h3CG9tDr2mEYdy+ihUEfbpl8Te5IuM4/B0xRpDSeLVKL67QBNarPlgW4PqYFSH8tqROw2BjUnF0AUVirr+lqtg8StJbSaOZ7Eqflf3pHmPZTOPwWII4w==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=73jt1F3KV88NMeCNyBvm/hoCJDumCGLgq5gvnGZw4EI=;
- b=a6ofFqGFuniLtPxWYW4Lb5nC1QwtHPC5IB/MVF4Szjvl2iW/N/JG+ijs5kD+3+kCqiwVi88rCxY+zaXDkLjMfl8ZzSlrCp7TM50UWIOkWWTpilKP9JEmQ5v1fl8gc/znmubvz5aj/j2zM+LCCYdgoDV5exwuMHw27PjNGt9knk8cGnkE/lDlFaaiiveXfdj39HvVWQJuTnZmVx8sHL01CGVBU2pHpFzUvDIEJW/ihvkVycFW/jMBa+o8CxJxeJwFA82fkUX5N93NVNwGCFnb+BxLrAp1lL6sULD6GTjHuoVrLucQsxXn3bPNyR2vmU/uI4eTfMrKzHujwfJHNTSJ+Q==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=nxp.com; dmarc=pass action=none header.from=nxp.com; dkim=pass
- header.d=nxp.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nxp.com; s=selector2;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=73jt1F3KV88NMeCNyBvm/hoCJDumCGLgq5gvnGZw4EI=;
- b=JFIZ6jAvx3jJQcqIlCR6vA9XkDGzxVjKkS3Sqd3PbmuFbKrDeZ2XYWQLXJmRHTqEVCNdXtCrAi1ZFJKPsIek1rKRJJ6r0K9yLXdOFc5Y4a97mExQZm0xpGuzFHbyLDTgezimcuM5OZIuXeNgmHCv8acxzuAQfMSL7wH9bMi2ml4=
-Received: from AM0PR04MB4772.eurprd04.prod.outlook.com (2603:10a6:208:c2::17)
- by AM0PR04MB6804.eurprd04.prod.outlook.com (2603:10a6:208:189::24) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3109.21; Mon, 22 Jun
- 2020 02:30:54 +0000
-Received: from AM0PR04MB4772.eurprd04.prod.outlook.com
- ([fe80::e906:2df6:5f0f:8c01]) by AM0PR04MB4772.eurprd04.prod.outlook.com
- ([fe80::e906:2df6:5f0f:8c01%2]) with mapi id 15.20.3109.027; Mon, 22 Jun 2020
- 02:30:54 +0000
-From:   Jiafei Pan <jiafei.pan@nxp.com>
-To:     Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>,
-        Vladimir Oltean <olteanv@gmail.com>
-CC:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        lkml <linux-kernel@vger.kernel.org>,
-        "rcu@vger.kernel.org" <rcu@vger.kernel.org>,
-        Colin King <colin.king@canonical.com>,
-        Jiafei Pan <jiafei.pan@nxp.com>
-Subject: RE: [EXT] Re: stress-ng --hrtimers hangs system
-Thread-Topic: [EXT] Re: stress-ng --hrtimers hangs system
-Thread-Index: AQHWOzjXl4hxTFW9UUeYcrHfuUnL/6jKAZSAgAaAYICAAN+6AIACzZKQgA0ORICAAsYkQA==
-Date:   Mon, 22 Jun 2020 02:30:53 +0000
-Message-ID: <AM0PR04MB4772E9C0733F81FACF24C58D8A970@AM0PR04MB4772.eurprd04.prod.outlook.com>
-References: <4781d250-9a29-cef3-268d-7d83c98bf16a@gmail.com>
- <87y2ovzcmd.fsf@kurt>
- <AM0PR04MB47726B40110E1B02471EEEDF8A810@AM0PR04MB4772.eurprd04.prod.outlook.com>
- <11546107.O9o76ZdvQC@kmk0>
-In-Reply-To: <11546107.O9o76ZdvQC@kmk0>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-authentication-results: linutronix.de; dkim=none (message not signed)
- header.d=none;linutronix.de; dmarc=none action=none header.from=nxp.com;
-x-originating-ip: [92.121.68.129]
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-ht: Tenant
-x-ms-office365-filtering-correlation-id: 50126e90-4720-458b-98b3-08d816544994
-x-ms-traffictypediagnostic: AM0PR04MB6804:
-x-ld-processed: 686ea1d3-bc2b-4c6f-a92c-d99c5c301635,ExtAddr
-x-ms-exchange-transport-forked: True
-x-microsoft-antispam-prvs: <AM0PR04MB6804A5E2DC3BBB4B23F2720C8A970@AM0PR04MB6804.eurprd04.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:5797;
-x-forefront-prvs: 0442E569BC
-x-ms-exchange-senderadcheck: 1
-x-microsoft-antispam: BCL:0;
-x-microsoft-antispam-message-info: rKf0L/P2VlmrzcfVo8hzWfgMdXPAAYy2GBMtm9Mzo/NXkS1kFlOaohpJpGIeX9fTJPfI5lxG7RB2zTAgwqWPsslGQIx0U25bd4GnVNoQNrqATlYpWcsXlcrTIylmMuXq+X03QakUm+6VA+PBaRnxIRvEdrGo+IhWeZZa81kKSc3oyPZRTAkNui86zK/GOaVoyyoNsxrT79f2IFYFSF74OhQnVVKzalspqYy9Q/GuQTN428DHd7rvbeno0ZOUL7cPFHCxHzXOcETaRhwq60KB2pZ+aXZgFKQfbs6wKjDvkplEHmhPOXFNZ/Hs+oTw6oVI
-x-forefront-antispam-report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AM0PR04MB4772.eurprd04.prod.outlook.com;PTR:;CAT:NONE;SFTY:;SFS:(4636009)(136003)(396003)(346002)(39860400002)(376002)(366004)(66946007)(54906003)(86362001)(110136005)(4326008)(7696005)(316002)(66446008)(64756008)(478600001)(2906002)(71200400001)(66556008)(52536014)(33656002)(53546011)(6506007)(44832011)(8676002)(8936002)(4744005)(5660300002)(66476007)(76116006)(26005)(186003)(9686003)(55016002)(83380400001);DIR:OUT;SFP:1101;
-x-ms-exchange-antispam-messagedata: JhG85oJBsEU3jYnpeuSorIngFeSUaVDb55l9FQ3G+IEP3FSxc2vtqMQIbzFn7xReB8nW78fWBHyIhQ+/TZCyl6FSVoW1Kb2FwWJhefwH7CrXzB2uZIpiVhIM+uIbkkfIOQaDAVHHVF4NTgnwJ571HbN5JUpht+UgLizizaSwTfcEAfhj8sQ7wJUXrk2UAYw8iQ7RxHjHBZwPUoAQt2v6ILl2K/5IE29La+NFM93SmIsXSYv/HNE3j2+QR5vqPk5+Z3zlJpG2nG1Wj+XF4TUk0r5peB0GZS+OIsyuE5khGCptTAs01HkELWJJSFCnmgYmMuFJcyXNer0aiXoHMjza08h1V5cVJJiTNnoZgVDuFj24HIwLg7OSy41JeMZYMeZcl+azveIgNLp2SI5qCeelQAilYbPyxw9vScoHqWrq62GPFUPO/IIr3mznM79YLH1EfR9a/H0jAfyf7hVkJl1mKLWsso4Z4lWIo0aGq8WahN4=
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-MIME-Version: 1.0
-X-OriginatorOrg: nxp.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 50126e90-4720-458b-98b3-08d816544994
-X-MS-Exchange-CrossTenant-originalarrivaltime: 22 Jun 2020 02:30:53.9914
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 686ea1d3-bc2b-4c6f-a92c-d99c5c301635
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: gFr5mHAN6AvojbpaIgLl+h154USEmKZ1S6N0krfoB6BcIXWmLastZlmYwhD7aahYHN014o86Uc+CBGyygen9wA==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM0PR04MB6804
+        Mon, 22 Jun 2020 17:31:24 -0400
+Received: from mail.kernel.org ([198.145.29.99]:55960 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1727006AbgFVVbY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 22 Jun 2020 17:31:24 -0400
+Received: from tzanussi-mobl (c-73-211-240-131.hsd1.il.comcast.net [73.211.240.131])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id EA56120716;
+        Mon, 22 Jun 2020 21:31:22 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1592861483;
+        bh=4sT7eZEB6XM8BOpQM25ecgxPmctC3tU6l4OI5GReTXs=;
+        h=Subject:From:To:Date:From;
+        b=MujtR9AVvL8ZNm3+g3Dr8lO80bOOEW+QYNOUJDQJKEJu3fkGjCRQq+5hz/SVOX57/
+         9kLiFQRun2rZb6XSbYlIInrTQHa5/V1Yajyu/ru7UosqrdUmVHYIDOUAwGRqKLe5uF
+         +c01TKGR9Be2ZO69TE/pRbBH1nNlGpz4dk9ijpAY=
+Message-ID: <6ad783612f118bdec28260a2a3562f5a5fa596cf.camel@kernel.org>
+Subject: [ANNOUNCE] 4.19.127-rt55
+From:   Tom Zanussi <zanussi@kernel.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <wagi@monom.org>,
+        Clark Williams <williams@redhat.com>,
+        Pavel Machek <pavel@denx.de>, Tom Zanussi <zanussi@kernel.org>
+Date:   Mon, 22 Jun 2020 16:31:21 -0500
+Content-Type: text/plain; charset="UTF-8"
+X-Mailer: Evolution 3.28.5-0ubuntu0.18.04.1 
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Thanks Kurt for your confirmation.
+Hello RT Folks!
 
-Best Regards,
-Jiafei.
+I'm pleased to announce the 4.19.127-rt55 stable release.
 
------Original Message-----
-From: Kurt Kanzenbach <kurt.kanzenbach@linutronix.de>=20
-Sent: Saturday, June 20, 2020 4:08 PM
-To: Vladimir Oltean <olteanv@gmail.com>; Jiafei Pan <jiafei.pan@nxp.com>
-Cc: linux-rt-users@vger.kernel.org; lkml <linux-kernel@vger.kernel.org>; rc=
-u@vger.kernel.org; Colin King <colin.king@canonical.com>; Jiafei Pan <jiafe=
-i.pan@nxp.com>
-Subject: Re: [EXT] Re: stress-ng --hrtimers hangs system
+You can get this release via the git tree at:
 
-Caution: EXT Email
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-Hi Jiafei,
+  branch: v4.19-rt
+  Head SHA1: f297d3d16170bd3af56f7310963c727ce2cab5c7
 
-On Friday, June 12, 2020 2:49:17 AM CEST Jiafei Pan wrote:
-> Hi, Kurt,
->
-> May I know whether you used "root" user to run stress-ng? using "root"
-> user will change the scheduler to be "SCHED_RR", so would you please=20
-> share test result with root and non-root users? Thanks.
+Or to build 4.19.127-rt55 directly, the following patches should be applied:
 
-Performed the test now as root and non-root user. Same result: No problem.
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
 
-Thanks,
-Kurt
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.127.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/patch-4.19.127-rt55.patch.xz
 
 
+You can also build from 4.19.127-rt54 by applying the incremental patch:
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/incr/patch-4.19.127-rt54-rt55.patch.xz
+
+Enjoy!
+
+   Tom
+
+Changes from v4.19.127-rt54:
+---
+
+Kevin Hao (1):
+      mm: slub: Always flush the delayed empty slubs in flush_all()
+
+Sebastian Andrzej Siewior (1):
+      fs/dcache: Include swait.h header
+
+Tom Zanussi (2):
+      tasklet: Fix UP case for tasklet CHAINED state
+      Linux 4.19.127-rt55
+---
+fs/proc/base.c   | 1 +
+ kernel/softirq.c | 6 ++++++
+ localversion-rt  | 2 +-
+ mm/slub.c        | 3 ---
+ 4 files changed, 8 insertions(+), 4 deletions(-)
+---
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index a45d4d640f01..56b1c4f1e8c0 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -95,6 +95,7 @@
+ #include <linux/flex_array.h>
+ #include <linux/posix-timers.h>
+ #include <trace/events/oom.h>
++#include <linux/swait.h>
+ #include "internal.h"
+ #include "fd.h"
+ 
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index 73dae64bfc9c..9bad7a16dc61 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -947,10 +947,12 @@ static void __tasklet_schedule_common(struct tasklet_struct *t,
+ 	 * is locked before adding it to the list.
+ 	 */
+ 	if (test_bit(TASKLET_STATE_SCHED, &t->state)) {
++#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT_FULL)
+ 		if (test_and_set_bit(TASKLET_STATE_CHAINED, &t->state)) {
+ 			tasklet_unlock(t);
+ 			return;
+ 		}
++#endif
+ 		t->next = NULL;
+ 		*head->tail = t;
+ 		head->tail = &(t->next);
+@@ -1044,7 +1046,11 @@ static void tasklet_action_common(struct softirq_action *a,
+ again:
+ 		t->func(t->data);
+ 
++#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT_FULL)
+ 		while (cmpxchg(&t->state, TASKLET_STATEF_RC, 0) != TASKLET_STATEF_RC) {
++#else
++		while (!tasklet_tryunlock(t)) {
++#endif
+ 			/*
+ 			 * If it got disabled meanwhile, bail out:
+ 			 */
+diff --git a/localversion-rt b/localversion-rt
+index 3165a8781ff5..51b05e9abe6f 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt54
++-rt55
+diff --git a/mm/slub.c b/mm/slub.c
+index d243c6ef7fc9..a9473bbb1338 100644
+--- a/mm/slub.c
++++ b/mm/slub.c
+@@ -2341,9 +2341,6 @@ static void flush_all(struct kmem_cache *s)
+ 	for_each_online_cpu(cpu) {
+ 		struct slub_free_list *f;
+ 
+-		if (!has_cpu_slab(cpu, s))
+-			continue;
+-
+ 		f = &per_cpu(slub_free_list, cpu);
+ 		raw_spin_lock_irq(&f->lock);
+ 		list_splice_init(&f->list, &tofree);
 
