@@ -1,116 +1,174 @@
-Return-Path: <SRS0=9hME=AN=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=rnfU=AO=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.3 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-2.6 required=3.0 tests=DKIMWL_WL_HIGH,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 01A03C433DF
-	for <linux-rt-users@archiver.kernel.org>; Thu,  2 Jul 2020 18:40:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D9EFFC433E0
+	for <linux-rt-users@archiver.kernel.org>; Fri,  3 Jul 2020 16:51:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id CC4E020772
-	for <linux-rt-users@archiver.kernel.org>; Thu,  2 Jul 2020 18:40:50 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B2F792186A
+	for <linux-rt-users@archiver.kernel.org>; Fri,  3 Jul 2020 16:51:52 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="MGPyqmlg"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="BARYOUiZ"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726082AbgGBSku (ORCPT
+        id S1726147AbgGCQvv (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 2 Jul 2020 14:40:50 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58202 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726003AbgGBSkt (ORCPT
+        Fri, 3 Jul 2020 12:51:51 -0400
+Received: from us-smtp-delivery-1.mimecast.com ([207.211.31.120]:57560 "EHLO
+        us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+        with ESMTP id S1726111AbgGCQvu (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 2 Jul 2020 14:40:49 -0400
-Received: from mail-qt1-x843.google.com (mail-qt1-x843.google.com [IPv6:2607:f8b0:4864:20::843])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C67F6C08C5C1
-        for <linux-rt-users@vger.kernel.org>; Thu,  2 Jul 2020 11:40:49 -0700 (PDT)
-Received: by mail-qt1-x843.google.com with SMTP id g13so22052493qtv.8
-        for <linux-rt-users@vger.kernel.org>; Thu, 02 Jul 2020 11:40:49 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
-         :user-agent:mime-version;
-        bh=nE28S4ikk/2uIhEX0j1rCt27uBSNQzr54IH4m73vb2c=;
-        b=MGPyqmlg+U9ntCdGV7g7oO2B6r0ViJmTa5up5y192nAVcPsRqOYQy02j1+TzizU6wu
-         3hVY1DDFbbBGk2FUBCKNRAe6PzFDJKTUmdKNpfqqvSfZteRBA4gbR/nJ3I4LfausiIj2
-         X4KWxWXNH/lDlRDcHREmk1mC5KIGv16rC5loydIcptN7plgISEkKJg1p2vpRJqqoarKx
-         Mrf5rCbvS2MB+5XecrcBAiX4+fYy0+HPSL3WVEF9BYZ+zIkPPlYoc1W/21+44ayPQj/e
-         UZpjK0te1d5mawgTOEnYH3yusBvYX3lVwLajwo7id+Ll0bFEH2GWQzBWEhQ7zgSUQtFE
-         F1uA==
+        Fri, 3 Jul 2020 12:51:50 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1593795108;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=K41RwyHIydU6qmwjScGmq28Lh7mWIXkEeRHuEE+wuaE=;
+        b=BARYOUiZ/E8fMLHN0KWZJTRCpXmK9XFd39/ELBNEzV6PKW6+ZhvtvzNVeRWbLBQkgqkrl0
+        0cj55B2OpBz+pi/9tfO3dihSvbIBfvrkT3Iv6z6glryqmBqvaiWOpryFvDNKRdVS72GBhv
+        KfbO1LO2Z/aD8k9C4Py6uAoMaPutTmQ=
+Received: from mail-qt1-f200.google.com (mail-qt1-f200.google.com
+ [209.85.160.200]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-235-v7Xi9JloO-K4S9W9wstMXA-1; Fri, 03 Jul 2020 12:51:41 -0400
+X-MC-Unique: v7Xi9JloO-K4S9W9wstMXA-1
+Received: by mail-qt1-f200.google.com with SMTP id r25so22129326qtj.11
+        for <linux-rt-users@vger.kernel.org>; Fri, 03 Jul 2020 09:51:41 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
-         :message-id:references:user-agent:mime-version;
-        bh=nE28S4ikk/2uIhEX0j1rCt27uBSNQzr54IH4m73vb2c=;
-        b=KiSz6U/Jd+d33RF54HN7Jy4JlIAQfZwXmztMgSPolBADd8FJjHmz6xP36aSXm0YLS8
-         XlLLzXBm5wrKLOIx1K+pZQ6uh0SHKCVy9w21lone92leHtAWiCi+Im9HpcJm4Lhe1Ajt
-         vnQoHiyyg61XTI10xdI7Pj6FMqFYCzNXOpBUyDRajl35K8DYkRmeC+4bShg40G+ihhzf
-         NRNlceyj6F252wuGgkKssrduLq2v1fXE6DLVJSs4NlrxI9YdRhEM3otW4yyKLcl1jRPN
-         j2106kTtEylK/xgqTXGpFUlvg32hyii+0L9ny/nlJv0if19kmdPMjRTGdDko2Jmu09Tl
-         MNdw==
-X-Gm-Message-State: AOAM533rgftIQMRAPo314tPotYbaGzXc+hTqe8tIr76pkAZugndza1Tb
-        +rut5Eu/6El09jwSjE+lrWw=
-X-Google-Smtp-Source: ABdhPJyst/d9r1sNo0roMuf+lhRvPDebmh3zImzM7NTgIXBRjlXNupaq9sw3vE7vsG2KSP/DrhmGRw==
-X-Received: by 2002:ac8:3893:: with SMTP id f19mr33532764qtc.184.1593715249104;
-        Thu, 02 Jul 2020 11:40:49 -0700 (PDT)
-Received: from planxty (rdwyon0600w-lp130-04-70-29-134-36.dsl.bell.ca. [70.29.134.36])
-        by smtp.gmail.com with ESMTPSA id s46sm10145071qts.85.2020.07.02.11.40.48
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 02 Jul 2020 11:40:48 -0700 (PDT)
-Date:   Thu, 2 Jul 2020 14:40:39 -0400 (EDT)
-From:   John Kacur <jkacur@redhat.com>
-X-X-Sender: jkacur@planxty
-To:     Yunfeng Ye <yeyunfeng@huawei.com>
-cc:     williams@redhat.com, linux-rt-users@vger.kernel.org,
-        Shiyuan Hu <hushiyuan@huawei.com>,
-        Hewenliang <hewenliang4@huawei.com>
-Subject: Re: [PATCH v2] rt-tests: cyclictest: remove the debug log "pid =
- xxx" in rstat_shm_open()
-In-Reply-To: <62b7d30b-14ce-b340-a6f7-cf6abcf3a6f9@huawei.com>
-Message-ID: <alpine.LFD.2.21.2007021439180.7503@planxty>
-References: <62b7d30b-14ce-b340-a6f7-cf6abcf3a6f9@huawei.com>
-User-Agent: Alpine 2.21 (LFD 202 2017-01-01)
+        h=x-gm-message-state:from:subject:to:cc:message-id:date:user-agent
+         :mime-version:content-language:content-transfer-encoding;
+        bh=K41RwyHIydU6qmwjScGmq28Lh7mWIXkEeRHuEE+wuaE=;
+        b=cwHs0MZYgtkj2aBrZKZt5RdQV64xvfVfbEyjeZcxSr02YlIyN5yDjpa321N9yhsxFs
+         fTTYVq57KNAvcJCeqTpGKxEs9Wl33SjjtfZ4cjnr3Oc23HttBvvrdS/+iP57uqqIFqc1
+         OLp34ZApoi12wJnXLB1OxaRVwwi5wz2W4XddFntDPALDNvT9Bj5mxUDjNziELxH0m6dr
+         ecWQcUlXW1xW2YyCHthcflTbTRUA82lofzfYnuYF7fokmhFnnOk1Gg2mljKRe2tNtWWY
+         10huvg9J+rVW45mVs5Geez6m/lDquis13tJo//P/mN38KxSCXEg+ZYd7ALUY06ab6Bq+
+         D/YQ==
+X-Gm-Message-State: AOAM532ejBh2nsnmTuRijfql0p4tpSrUEQnSMoZMrCbUviHcpH158EIf
+        OISYq/NrEF8t0SGOdl7LivSwkiiHsL/rkBmaGMx6g4697Ng5UbbCsknUhGeGZFuL4GDTdHgbKJq
+        CyPyk1huSfexOfuNyiY5l8uVLD3s=
+X-Received: by 2002:a37:2c41:: with SMTP id s62mr29769861qkh.165.1593795100715;
+        Fri, 03 Jul 2020 09:51:40 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJw1RP7VET+D3eXC8Ok2q/QrrPziPN8VOU/hxcUrPvcZJEBzLh6UL49H1rZSn59ozW+6dyUVBQ==
+X-Received: by 2002:a37:2c41:: with SMTP id s62mr29769830qkh.165.1593795100436;
+        Fri, 03 Jul 2020 09:51:40 -0700 (PDT)
+Received: from x1.bristot.me (host-87-16-204-193.retail.telecomitalia.it. [87.16.204.193])
+        by smtp.gmail.com with ESMTPSA id m4sm12860911qtf.43.2020.07.03.09.51.34
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 03 Jul 2020 09:51:39 -0700 (PDT)
+From:   Daniel Bristot de Oliveira <bristot@redhat.com>
+Subject: [ANNOUNCE][CFP] Real-Time Micro Conference at LPC 2020
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Steven Rostedt <rostedt@goodmis.org>,
+        Dhaval Giani <dhaval.giani@gmail.com>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Clark Williams <williams@redhat.com>,
+        John Kacur <jkacur@redhat.com>,
+        Arnaldo Carvalho de Melo <acme@redhat.com>,
+        =?UTF-8?Q?Luis_Claudio_R=2e_Gon=c3=a7alves?= <lclaudio@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <wagi@monom.org>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Kate Stewart <kstewart@linuxfoundation.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        "Joel Fernandes (Google)" <joel@joelfernandes.org>,
+        Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+        Vincent Guittot <vincent.guittot@linaro.org>,
+        "Wysocki, Rafael J" <rafael.j.wysocki@intel.com>,
+        Tom Rix <trix@redhat.com>,
+        John Ogness <john.ogness@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>,
+        Marcelo Tosatti <mtosatti@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Christian Brauner <christian.brauner@canonical.com>,
+        Valentin Schneider <valentin.schneider@arm.com>
+Message-ID: <72353caf-c2aa-f2e4-fe2d-778f04625b70@redhat.com>
+Date:   Fri, 3 Jul 2020 18:51:31 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.9.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8
+Content-Language: en-US
+Content-Transfer-Encoding: 8bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+This is the call for proposals for the Real-Time Micro Conference (RT-MC) at the
+Linux Plumbers Conference 2020. It will take place online during the Linux
+Plumbers Conference on August 24th-28th, 2020.
 
+The real-time micro-conference targets discussions about new features or open
+problems related to real-time Linux ecosystem. Each accepted topic will receive
+a 30 minutes slot. The presenter - or mediator - will introduce the problem in
+the first 10 minutes with a short presentation and then promote the discussion
+in the next 20 minutes.
 
-On Thu, 2 Jul 2020, Yunfeng Ye wrote:
+We encourage submissions that do not present a final solution. Instead, that
+serves to get feedback from the community, to point to action items for future
+development, and that can result in patches for the real-time Linux ecosystem in
+the future.
 
-> The infomation "pid = xxx" is printed with other infomation on the same
-> line. so remove this debug log in rstat_shm_open().
-> 
-> Signed-off-by: yeyunfeng <yeyunfeng@huawei.com>
-> ---
-> v1 -> v2:
->  - remove the debug code
-> 
->  src/cyclictest/cyclictest.c | 1 -
->  1 file changed, 1 deletion(-)
-> 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index b3d72caa10ce..8353f561bb46 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -1910,7 +1910,6 @@ static int rstat_shm_open(void)
->  	pid_t pid;
-> 
->  	pid = getpid();
-> -	printf("pid = %d", pid);
-> 
->  	snprintf(shm_name, SHM_BUF_SIZE, "%s%d", "/cyclictest", pid);
-> 
-> -- 
-> 1.8.3.1
-> 
-> 
+Please submit your proposals on the LPC website at:
 
-Applied, thanks
+https://www.linuxplumbersconf.org/event/7/abstracts/#submit-abstract
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+And be sure to select "Real-time MC" in the Track pulldown menu.
+
+Proposals must be submitted by August 2nd, and submitters will be notified of
+acceptance by August 9th.
+
+About the real-time MC:
+
+Since 2004 a project has improved the Real-time and low-latency features for
+Linux. This project has become know as PREEMPT_RT, formally the real-time patch.
+Over the past decade, many parts of the PREEMPT RT became part of the official
+Linux codebase. Examples of what came from PREEMPT_RT include: Mutexes,
+high-resolution timers, lockdep, ftrace, RT scheduling, SCHED_DEADLINE,
+RCU_PREEMPT, generic interrupts, priority inheritance futexes, threaded
+interrupt handlers and more. The number of patches that needs integration has
+been reduced in the last years, and the pieces left are now mature enough to
+make its way into mainline Linux. For real, this year could possibly be the year
+PREEMPT_RT is merged™!
+
+In the final lap of this race, the last patches are on the way to be merged, but
+there are still some very few pieces missing. When the merge occurs, the
+PREEMPT_RT will start to follow a new pace: the Linus one. So, it is possible to
+raise the following discussions:
+
+	- The status of the merge, and how can we resolve the last issues that
+	  block the merge
+	- How can we improve the testing of the -rt, to follow the problems
+	  raised as Linus tree advances
+	- What’s next?
+
+Other possible topics:
+
+	- Merge – what is missing and who can help?
+	- New tools for PREEMPT_RT analysis
+	- How do we teach the rest of the kernel developers how not to break
+	  PREEMPT_RT?
+	- Stable maintainers tools discussion & improvements
+	- The usage of PREEMPT_RT on safety critical-systems: what do we need to
+	  do?
+	- Interrupt threads are RT and are not protected by the RT Throttling
+	- How can we prevent interrupt thread starvation from a rogue RT task?
+
+If your topic is not listed here, it is a good sign that you need to propose
+your talk! This micro-conference is about new things, not things that people
+already know, so go ahead and fill a proposal!
+
+If you have any further doubt, feel free to contact me.
+
+Thanks!
+-- Daniel
+
