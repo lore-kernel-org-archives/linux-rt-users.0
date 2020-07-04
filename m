@@ -1,124 +1,127 @@
-Return-Path: <SRS0=rnfU=AO=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=JYyF=AP=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.1 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
+X-Spam-Status: No, score=-2.6 required=3.0 tests=DKIM_SIGNED,DKIM_VALID,
 	DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2AAB8C433E0
-	for <linux-rt-users@archiver.kernel.org>; Fri,  3 Jul 2020 19:49:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7820EC433E0
+	for <linux-rt-users@archiver.kernel.org>; Sat,  4 Jul 2020 03:43:37 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id F3585208C7
-	for <linux-rt-users@archiver.kernel.org>; Fri,  3 Jul 2020 19:49:37 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 51A45208D5
+	for <linux-rt-users@archiver.kernel.org>; Sat,  4 Jul 2020 03:43:37 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="mvqttFzP";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="ltMM7nm+"
+	dkim=pass (2048-bit key) header.d=xs4all.nl header.i=@xs4all.nl header.b="TsmBpq6T"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726638AbgGCTth (ORCPT
+        id S1726738AbgGDDng (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 3 Jul 2020 15:49:37 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:34984 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726379AbgGCTth (ORCPT
+        Fri, 3 Jul 2020 23:43:36 -0400
+Received: from lb1-smtp-cloud8.xs4all.net ([194.109.24.21]:34847 "EHLO
+        lb1-smtp-cloud8.xs4all.net" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1726501AbgGDDnf (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 3 Jul 2020 15:49:37 -0400
-Date:   Fri, 3 Jul 2020 21:49:34 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1593805775;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=tIaTpq38MmojOSvR1P9sTtaDp4YhCE3qrNpkc2QM/Gs=;
-        b=mvqttFzP7xSAl9mlui3zGWq7XZbcYrz4jJOxlzNe0pjDb4vDOAoj0nAE/QtmPzjCr6uZNZ
-        YXcxkRijwSWWJbdDqS66t9CdEs82ie3u8fwfOOfVD5WYw9m0G2V7PCxb+jji9OBf64cvq8
-        0QMKtzBbxWRsftceLxX+17kTUzORbmWFSdObhjbZh90iOEYtV6Gu42nXh33WZFO3vYu0NI
-        +eJFMa2BzdwPakyncuVfdyDNRV9IS/Jm5zeRx9O9DnvA8/KVmG79sUCt3/ANUt2TsgBk8C
-        ybN+2AI21N+3tSwZXmfj+1Q3e1NUsOamGy7mPtJdrfdVpxE7qLy/oiFdoK9paA==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1593805775;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=tIaTpq38MmojOSvR1P9sTtaDp4YhCE3qrNpkc2QM/Gs=;
-        b=ltMM7nm+CQXwhcFlvvf5Z/cicSWbYLwGxYiAFuZj25m0mGIwIhX8JdzcpCDv7C1DW/46VV
-        Lv6NhWcVmQYND+CQ==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Udo van den Heuvel <udovdh@xs4all.nl>
-Cc:     RT <linux-rt-users@vger.kernel.org>
+        Fri, 3 Jul 2020 23:43:35 -0400
+Received: from cust-57f2be97 ([IPv6:fc0c:c196:c6c4:fdf1:aa47:ab6:e251:d2a8])
+        by smtp-cloud8.xs4all.net with ESMTPA
+        id rZ5QjCOhemVFqrZ5Rj94oC; Sat, 04 Jul 2020 05:43:33 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=xs4all.nl; s=s1;
+        t=1593834213; bh=SjDJjlzxS027rkh4BFmieAC7Bbyj/QK9gh8PFowQBqo=;
+        h=Subject:To:From:Message-ID:Date:MIME-Version:Content-Type:From:
+         Subject;
+        b=TsmBpq6TWln+3F4NtVLqvn0kSwPwva8Jv0bkcLD5eww6seJx8k4lkHHQyRGsPly0Q
+         +wl58trr68Thu/F634da9Et1TdTfEhrfMIRcrbIze/CGrvv24wTRPj6MpaGs75/5tF
+         jWUvgSvlBR9KB9Hts9Pw+qEH1Arn/j13oU86vkTp1ZyjJpug6CKHJIa/TOhhjLe+1x
+         MTCNDp7Rge5qwVAiS3tz9JZU/Mk6gfvG/gcMxp/26RycLlcoaw2RsmEiymcNWUqxiF
+         a9eH8sIqh9+anfyiqnM8drR2CfplHkJlSvrFsbsNgOeVnO70vY5ntQQrSnYX3zYnZk
+         H00H94uQID6yQ==
 Subject: Re: 5.4.13-rt7 stall on CPU?
-Message-ID: <20200703194934.c5sdqwxwgzmgobtq@linutronix.de>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc:     RT <linux-rt-users@vger.kernel.org>
 References: <3ef1ba37-6b83-e12a-e493-9c45fa3bb3c1@xs4all.nl>
+ <20200703194934.c5sdqwxwgzmgobtq@linutronix.de>
+From:   Udo van den Heuvel <udovdh@xs4all.nl>
+Autocrypt: addr=udovdh@xs4all.nl; prefer-encrypt=mutual; keydata=
+ mQINBFTtuO0BEACwwf5qDINuMWL9poNLJdZh/FM5RxwfCFgfbM29Aip4wAUD3CaQHRLILtNO
+ Oo4JwIPtDp7fXZ3MB82tqhBRU3W3HVHodSzvUk2VzV0dE1prJiVizpPtIeYRRDr4KnWTvJOx
+ Fd3I7CiLv8oTH9j5yPTMfZ58Prp6Fgssarv66EdPWpKjQMY4mS8sl7/3SytvXiACeFTYPBON
+ 1I2yPIeYK4pKoMq9y/zQ9RjGai5dg2nuiCvvHANzKLJJ2dzfnQNGaCTxdEAuCbmMQDb5M+Gs
+ 8AT+cf0IWNO4xpExo61aRDT9N7dUPm/URcLjCAGenX10kPdeJP6I3RauEUU+QEDReYCMRnOM
+ +nSiW7C/hUIIbiVEBn9QlgmoFINO3o5uAxpQ2mYViNbG76fnsEgxySnasVQ57ROXdEfgBcgv
+ YSl4anSKyCVLoFUFCUif4NznkbrKkh7gi26aNmD8umK94E3a9kPWwXV9LkbEucFne/B7jHnH
+ QM6rZImF+I/Xm5qiwo3p2MU4XjWJ1hhf4RBA3ZN9QVgn5zqluGHjGChg/WxhZVRdBl8Un3AY
+ uixd0Rd9jFSUhZm/rcgoKyeW6c1Vkh8a2F+joZ/8wzxk6A8keiWq/pE00Lo9/Ed2w5dVBe1p
+ N7rNh2+7DjAqpCSshYIsHYs0l5Q2W+0zYfuPM1kRbUdQF1PK0wARAQABtCVVZG8gdmFuIGRl
+ biBIZXV2ZWwgPHVkb3ZkaEB4czRhbGwubmw+iQJiBBMBAgBMJhpodHRwOi8vcGluZGFyb3Rz
+ LnhzNGFsbC5ubC9wb2xpY3kudHh0AhsDBgsJCAcDAgYVCAIJCgsEFgIDAQIeAQIXgAUCVkiW
+ pwIZAQAKCRCOFcDCBOMObsjdD/oDH+DvcAFakVThGdFi00o1W0j7fFcPhrP34Ulf+5idkgJm
+ RzarJrz7Av7L6fwCS3JtrzfEJ+qoP84ONxnhNhj5ItHpVUlxyRWPBisklNlGJWK277Naw3BT
+ mql2edPRIcR5Ypd8O7DBXIypG0CigjOVWfWLspjLmEGlinqpjHWuv4/LJ3qwSbbpW0rXpb44
+ xSWB+u605pfrO3vDox5ORGCLktN8IXWISm9mS6vSXAi797KHwVX55OsiKqCbNkSM3bl6XfHh
+ CPUpbOHXHzZXvP7JTINZfSfTPJx0iWCn3KArcsy7MzSwpUpUpDizrWwVRW1XySQydb8m+lnl
+ 8IVpJFiXiFEYGhFYU9HbUFSNGku134O5tf3VurfpOXmxGyeoyXWt4m9l7fcSaBAZq21iJT+S
+ VCSmsI0JfhxMHjMbwdghPQ3UYK4q95TOcVRUkH0h+b2cZPirol4htc+ZCSzPKI++AGjXWIc5
+ ZyQbthmFesrYGGttNIFFWsj3RUkyB58toDE7gXmarkhBg74tsSGbCyJp8/foy5hrci5sSi5P
+ cygZxEDytCTNw1Dno/EAHUOpI2lJsVN8ACws16a6vh/UgQnBPsVFgVd0HSnlEX9XLO65lHlX
+ aXo0zXomy+DDYD1sKARt8sKJk/H/VGs3SMRH3QtSBtWcUQKyJXMafWP/8A1Bz7kCDQRU7bjt
+ ARAAwdK6VLsLLfyqYuA2/X+agquHh3U44IVxuRGAjQ7NSec9il+ENpbsaK6QGFBlyaWHkqcL
+ e2u7DWTmG1uBqU9XqXGgeQJiOY8aof0rMsOVd1yYZsQO7+t2yfMOuS9+eRDxxj5l8gZXOKl3
+ eQ5akqlKIWJy4G4D5pwCKuA5XFphpikPLm84Fb4V8IgRuiHaeHjeZyfkwYhKqxiyneGZ387b
+ S3r4pMKprXlvFzWTr+x2TxexAECP3Tjg9ZakOIaVmgvFtl8L12ib6YJke7HxY/a3P3Glt+Zl
+ 5r/qcbWQoqyKBX+flWAjCPw+9EbdQNjBnIes3sPTTZ4YP4s2qC9rd/afeTSy3iUJhjGrEF+5
+ d0AB1F+ZipmnZkGFF7tlvu6T/66JzsndOiEaLBYUa4VqJ+T0pvgX+MkbueYaQlsDl9eB24sC
+ HTwfexUnvK5sUKnFFn5ZYZoIein2XHXb8EjbiT1G3G0Yj/q/DrRH1T7EiP6JPIIFdVVccnth
+ j6rinWVJPiXRC8Gby/uSZP8t7HmQRYKV+xCESfRb4ZEfZqVm1/3wo3wYL5ek71yLEZC57+Hb
+ RWgjaZuQg7Pn59Bh+M6cx5xTdyQ3PSeR14uXWLvMnVO2yF5pd6Ou2ySWatgtqmeTd77MpJ9+
+ mPZTSG/lDGXpL2s1P6GiroiY0g3aicCgObwzr/MAEQEAAYkCRgQYAQIAMAUCVO247SYaaHR0
+ cDovL3BpbmRhcm90cy54czRhbGwubmwvcG9saWN5LnR4dAIbDAAKCRCOFcDCBOMObqXID/9+
+ lT7u4VJlreAFpSXOxwRlAtN88rzap3sZyQ1Z4YCxEZLHg4Ew2X0xS8w6t5jM4atOiuUW6fHY
+ nI5KiYV7GARWWhZe/zsTjSs/tZVC68Q9qNwE1Ck+tuBV7d59l8qLBgQITsl6HCiYBaGJR2BF
+ RdhP8a/aC6i3MWP8umK0yLJrV7gvP0sL8EKuz1zBARL5WuvzgsTA72QsilEQ/ZGYXwWnPOiI
+ vTrGxZHD9apKOacSoY+CT+W+xe+tAKT0I8k4Ejda/hg6jMnaNNONX6rtiQEoUxv3R+iRhnaA
+ NIsdTpUoZAbvFwStnRWgn+LgIMvKa5uW0Mjk0ynd14UxFluPs7J3saUukF4jXJGiWS2APD2K
+ nNc7sAZraeSk/JFy0Y0WFCCr/UHzVLZnwdWpdw3inoIQeKtN2jWpuPP2l+4fgLybHJVnrDAs
+ jujgAUTyaLDYoUryBiodY8G8gdZxTZvXk0RA9ux2TnFJJvdw8rR1sej5Lax1CZnQYwXNLvIi
+ OcFUtIrTXnUj2uK2teab0RBIE4QedGoTGGHPuua8WqFpvVzC9iCIQlVtfGw6CVvq92icqbdz
+ QYrlFbsVCXOM9TvO5ppqJowfdKmqFUjQPAsO40bwbphkt1NBalgZaxMCinpqEggVm/rGqbj2
+ JjyRAfO8kEkwCkTZ6/Mnrxsunx9VNLGDEw==
+Organization: hierzo
+Message-ID: <875822d3-6fcd-1ab0-4ede-ee5134e6211b@xs4all.nl>
+Date:   Sat, 4 Jul 2020 05:43:32 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.9.0
 MIME-Version: 1.0
+In-Reply-To: <20200703194934.c5sdqwxwgzmgobtq@linutronix.de>
 Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <3ef1ba37-6b83-e12a-e493-9c45fa3bb3c1@xs4all.nl>
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
+X-CMAE-Envelope: MS4wfMDbt5KzbyyoCPmTApcb4T6In+vKu1mZ+7B9H5pRic7xyKw4cfmzaJh2SxNGXWSwb39/8LmP0kYjggkduooTz4ur6x9gfgBrScgqQZw/gOZHLhLGtDqG
+ MKNSDv9oTt9EK666349D2cP6k4Wqsr2RsLEOq0qPZ1nAMjtic+K4BzL2zUtDHaH14Mtep+De4euk/c9RnTX9YRGafxBR2Ebkg2YbtXF/jOAHWfI2Z+EyWg0u
+ mpGMw0bFHd7CempmUGTBsJLtB5CLamAGUtU6E3bhqZk=
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2020-06-27 15:30:20 [+0200], Udo van den Heuvel wrote:
-> Hello,
-Hi,
+On 03-07-2020 21:49, Sebastian Andrzej Siewior wrote:
+>> How to avoid?
+> Can you reproduce this or was this one a time thing?
 
-> Found this in /var/log/messages:
->=20
-> Jun 25 16:31:39 vuurmuur pppd[1522583]: local  LL address fe80::ed36:3ac4=
-:4115:e23e
-> Jun 25 16:31:39 vuurmuur pppd[1522583]: remote LL address fe80::2a8a:1cff=
-:fee0:9484
-> Jun 26 04:50:24 vuurmuur kernel: 002: rcu: INFO: rcu_preempt self-detecte=
-d stall on CPU
-> Jun 26 04:50:24 vuurmuur kernel: 002: rcu:      2-....: (5336 ticks this =
-GP) idle=3Df6a/1/0x4000000000000002 softirq=3D347363113/347363115 fqs=3D2430
-> Jun 26 04:50:24 vuurmuur kernel: 002:   (t=3D5250 jiffies g=3D608224341 q=
-=3D1297)
-> Jun 26 04:50:24 vuurmuur kernel: 002: NMI backtrace for cpu 2
-=E2=80=A6
-> Jun 26 04:50:24 vuurmuur kernel: 002: RIP: 0010:__fget_light+0x3d/0x60
-> Jun 26 04:50:24 vuurmuur kernel: 002: Code: ca 75 2e 48 8b 50 50 8b 02 39=
- c7 73 21 89 f9 48 39 c1 48 19 c0 21 c7 48 8b 42 08 48 8d 04 f8 48 8b 00 48=
- 85 c0 74 07 85 70 7c <75> 02 f3 c3 31 c0 c3 ba 01 00 00 00 e8 22 fe ff ff =
-48 85 c0 74 ee
-=E2=80=A6
-> Jun 26 04:50:24 vuurmuur kernel: 002:  do_select+0x350/0x7a0
-> Jun 26 04:50:24 vuurmuur kernel: 002:  core_sys_select+0x1d0/0x380
-> Jun 26 04:50:24 vuurmuur kernel: 002:  __x64_sys_pselect6+0x141/0x190
-=E2=80=A6
-> Jun 26 05:03:01 vuurmuur named[1433212]: received control channel command=
- 'flush'
->=20
->=20
-> What went wrong?
+So far one time.
 
-ntpq entered into kernel via pselect(). In that syscall it looped at
-somepoint and RCU couldn't make any progress. Assuming you have
-CONFIG_HZ=3D250 then it didn't make any progress for 5250/250 =3D 21
-seconds. This stall piled 1297 callbacks up. The situation resolved by
-itself later because this "rcu_preempt self-detected stall" did not
-appear again.
+> I *think* this happened within the loop in __fget_files(). This function
+> is inlined by __fget_light() and the loop has a RCU-section so it would
+> make sense.
+> Do you run something at an elevated priority in the system? 
 
-> How bad is this?
-Each callback would free a data structure i.e. give back memory to the
-system. Since ntpq lead to a RCU stall, the system could no release
-memory. You will run eventually out of memory if this situation does not
-get resolved.
+ntpd (ntpsec) elevates itself.
 
-> How to avoid?
-Can you reproduce this or was this one a time thing?
-I *think* this happened within the loop in __fget_files(). This function
-is inlined by __fget_light() and the loop has a RCU-section so it would
-make sense.
-Do you run something at an elevated priority in the system? I don't know
-what the other part was doing but somehow one of the file descriptors
-(network sockets probably) was about to be closed while the other side
-tried to poll() on it.
+> I don't know
+> what the other part was doing but somehow one of the file descriptors
+> (network sockets probably) was about to be closed while the other side
+> tried to poll() on it.
 
-> Kind regards,
-> Udo
+Thanks for explaining.
 
-Sebastian
+Kind regards,
+Udo
