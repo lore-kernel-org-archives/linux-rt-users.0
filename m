@@ -7,65 +7,65 @@ X-Spam-Status: No, score=-9.6 required=3.0 tests=DKIM_INVALID,DKIM_SIGNED,
 	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B8D3BC433DF
-	for <linux-rt-users@archiver.kernel.org>; Mon,  6 Jul 2020 20:17:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 10F92C433E0
+	for <linux-rt-users@archiver.kernel.org>; Mon,  6 Jul 2020 20:17:42 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 96010206B6
+	by mail.kernel.org (Postfix) with ESMTP id DACBC206B6
 	for <linux-rt-users@archiver.kernel.org>; Mon,  6 Jul 2020 20:17:41 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="UampZlR/"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ZXOzrGW7"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726869AbgGFURk (ORCPT
+        id S1727088AbgGFURk (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
         Mon, 6 Jul 2020 16:17:40 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53360 "EHLO
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53322 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726936AbgGFURi (ORCPT
+        with ESMTP id S1726280AbgGFURj (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 6 Jul 2020 16:17:38 -0400
-Received: from mail-qt1-x843.google.com (mail-qt1-x843.google.com [IPv6:2607:f8b0:4864:20::843])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B3E81C08C5DF
-        for <linux-rt-users@vger.kernel.org>; Mon,  6 Jul 2020 13:17:38 -0700 (PDT)
-Received: by mail-qt1-x843.google.com with SMTP id o38so30051678qtf.6
-        for <linux-rt-users@vger.kernel.org>; Mon, 06 Jul 2020 13:17:38 -0700 (PDT)
+        Mon, 6 Jul 2020 16:17:39 -0400
+Received: from mail-qt1-x841.google.com (mail-qt1-x841.google.com [IPv6:2607:f8b0:4864:20::841])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7BFCBC061755
+        for <linux-rt-users@vger.kernel.org>; Mon,  6 Jul 2020 13:17:39 -0700 (PDT)
+Received: by mail-qt1-x841.google.com with SMTP id u12so30016800qth.12
+        for <linux-rt-users@vger.kernel.org>; Mon, 06 Jul 2020 13:17:39 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:from:to:cc:subject:date:message-id:in-reply-to:references
          :mime-version:content-transfer-encoding;
-        bh=cOlXBKNatoE8C8L3loxU9qaJz977b13REqfbqBaJuus=;
-        b=UampZlR/cMVCP2c4EYYyxjhcqpIBof35TIMzZrOk0YVa3aqMnXv7V64N32QfxfxwrY
-         wmoI86cxi3qLRGED5+ybJyqoERD7WcOGqleloFJUzdTLs7WTCNTHzxTngqmZD0pVq8a7
-         g1xgEb+ySCpMuJ3l1QBCQY39MdQn8FsrKrf4o3AXmHt2IZzCe2JwJ+7M0fiNbWgIPKfD
-         9rpmCof09WRh6b/P6wBiQota35vUJJfwCQIT+KpvELvkltWIrcN0GSIvWCztAZXBnd7b
-         DlHdB0IeJXyxb57+etgQ0G2BlSc3NRwRFI+vVlqrb/3yjJmMr5SeqpQ9a/tKnW0EEW4L
-         9qFw==
+        bh=UApLotKODZfZLt+vWcpyJlxdyK9dxCCJ5XqFGIiJ4mw=;
+        b=ZXOzrGW7J06AyArNHIoBP2QnhE9fRdsNrI/mokNriOIHyi7F+78KI+WsaGU6Bqub9S
+         bswnGHt5cE57nIDQbQWDXWh6GzK7vpwHWqpjE3+NeCuOzAXvAvltyB1ikKdmGCtqXlQr
+         dqSuZ6NsL55i6ENIpZSo5nsBbUEVR4Ozv1JMxfWIK0rVB1tXBm6nEKxOWOUU9y1K2C4c
+         MtUDDp+QWjqWLIR0TD8LkPXTnd796GplwOcxhqlDtLdAxB1SKl+lJnxGk5kRrum2+tD4
+         URi48H8M2PC2+Io411EizZhagaJKYnqVN/u3vP2w7C0hOyCdBta7gbbDv876YP11SA1Z
+         caPQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
          :in-reply-to:references:mime-version:content-transfer-encoding;
-        bh=cOlXBKNatoE8C8L3loxU9qaJz977b13REqfbqBaJuus=;
-        b=rbUrvKT7hrQimktlUFYpPKhzPhsdo9Kf8jeCU3tMcsCg2wvfURbo3Gsy2dA/kuNn8g
-         cp/LaMaa1/7U5EnJC1nqRNFSbMKLM3edgVp9LyodrWkQU6Mmwi5KJMe9HPpZi6XHnES9
-         zvWxYlQGwju4nvIJ6aKFArDTX38JdB2OMQ4VfG9k2q/vU0ZYbIC6XVp9FETdoje+QcZR
-         WvLdZaLtS4hOH6BuLgbn8LWL0DzQy+cx/NllToId03AwBts2NXGtWgRwmlFbSCemf4n6
-         XLF5ubv85N21BfBS1G23RDr9Pxa7MSgjvysoCD3IX0gLOEIcWs0/fdB7+/okPMloOLcj
-         w4uQ==
-X-Gm-Message-State: AOAM531pLAl4rlrpd/muDjl0bzhPrNe6Ateg9lzrPi6X2bfpf7nYXkM5
-        Hb8389Oww5WaC2bnrTnm+yK9sgLKTEM=
-X-Google-Smtp-Source: ABdhPJy8VOCU2LU66FREOpWGcAy8b7GZk6PQwj6pHwDIko6Tdzr9EWuCrfAvlQDNLESo25Y1ywplRg==
-X-Received: by 2002:aed:2492:: with SMTP id t18mr52270946qtc.353.1594066657816;
-        Mon, 06 Jul 2020 13:17:37 -0700 (PDT)
+        bh=UApLotKODZfZLt+vWcpyJlxdyK9dxCCJ5XqFGIiJ4mw=;
+        b=S2ntLczVe0u4+vl6hQUgBOIgDKDmeSYPKn+szUIAUOLvvW5n1tYQnjmQ2jTSQcuNp1
+         xkPFGPxp1gtJfE7n3phxrKjYF3uvdvlBaeee2rOmd0wsJhZ5fOIEOGp7ozFe3KORh8YT
+         YaH0rMPQ8o316+8STeEfk/nsy+09dxOb2SaUHjMUKsxJVb/4tBTcQuE67yqr7EATHiDb
+         imU8LiUFJGxXiI5OtamSGUO5DmwY4HwFsTqfULQjOd0xExo3k3zXLtTL1LPMNsrgLPwc
+         DvbSP4YYAet1zm7aH5EeplCvccJA47Oyb/zw5bdPkV0wQcMWLTMJz/KchyAk0bgZoU+j
+         KkeA==
+X-Gm-Message-State: AOAM5315p+3XNcDR9ZUNSXZ+FCCvtvkwD4TL38JTE5biAnoy/hhRFn7Y
+        bLDYI0awXPJpZ7BGq6dIW6jZnFZqX4s=
+X-Google-Smtp-Source: ABdhPJz2SxkOB9BMHA7FgFsarXlkJNIRvbeYXuoygbMEASwhSl4cOeUTZBO+yhC9ssHQ9uMt6KPEKQ==
+X-Received: by 2002:ac8:7ca1:: with SMTP id z1mr47941799qtv.334.1594066658633;
+        Mon, 06 Jul 2020 13:17:38 -0700 (PDT)
 Received: from planxty.redhat.com (rdwyon0600w-lp130-04-70-29-134-36.dsl.bell.ca. [70.29.134.36])
-        by smtp.gmail.com with ESMTPSA id 73sm21551692qkk.38.2020.07.06.13.17.36
+        by smtp.gmail.com with ESMTPSA id 73sm21551692qkk.38.2020.07.06.13.17.37
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 06 Jul 2020 13:17:37 -0700 (PDT)
+        Mon, 06 Jul 2020 13:17:38 -0700 (PDT)
 From:   John Kacur <jkacur@redhat.com>
 To:     RT <linux-rt-users@vger.kernel.org>
 Cc:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
-Subject: [PATCH 5/7] rt-tests: Tweak the cyclictest man page
-Date:   Mon,  6 Jul 2020 16:17:20 -0400
-Message-Id: <20200706201722.13400-5-jkacur@redhat.com>
+Subject: [PATCH 6/7] rt-tests: Add some files like get_cyclictest_snapshot to .gitignore
+Date:   Mon,  6 Jul 2020 16:17:21 -0400
+Message-Id: <20200706201722.13400-6-jkacur@redhat.com>
 X-Mailer: git-send-email 2.21.3
 In-Reply-To: <20200706201722.13400-1-jkacur@redhat.com>
 References: <20200706201722.13400-1-jkacur@redhat.com>
@@ -76,27 +76,39 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Tweak the cyclictest man page with the .SY macro to make the cyclictest
-command stand out apart from the options
+Add some files like get_cyclictest_snapshot and .xz files etc
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- src/cyclictest/cyclictest.8 | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ .gitignore | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-diff --git a/src/cyclictest/cyclictest.8 b/src/cyclictest/cyclictest.8
-index 00e2d2403996..44b5d0dbcc4a 100644
---- a/src/cyclictest/cyclictest.8
-+++ b/src/cyclictest/cyclictest.8
-@@ -15,7 +15,7 @@
- .SH NAME
- cyclictest \- High resolution test program
- .SH SYNOPSIS
--.B cyclictest
-+.SY cyclictest
- .RI "[ \-hfmnqrsvMS ] [\-a " proc " ] [\-A " align " ] [\-b " usec " ] [\-c " clock " ] [\-d " dist " ] \
- [\-h " histogram " ] [\-i " intv " ] [\-l " loop " ] [\-o " red " ] [\-p " prio " ] \
- [\-t " num " ] [\-D " time "] [\-w] [\-W] [\-y " policy " ] [ \-S | \-U ]"
+diff --git a/.gitignore b/.gitignore
+index f7574ef94900..bc01575141bb 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -6,6 +6,10 @@
+ *.d
+ *.patch
+ *.a
++*.gz
++*.bz2
++*.xz
++*.asc
+ tmp
+ patches
+ ChangeLog
+@@ -34,8 +38,10 @@ SRPMS
+ /deadline_test
+ /queuelat
+ /ssdd
++/get_cyclictest_snapshot
+ 
+ rt-tests.spec
+ tags
+ TAGS
+ cscope.*
++src/cyclictest/__pycache__/
 -- 
 2.21.3
 
