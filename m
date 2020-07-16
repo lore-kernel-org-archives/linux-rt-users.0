@@ -2,76 +2,99 @@ Return-Path: <SRS0=vtwn=A3=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.0 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-4.1 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 90A2EC433E5
-	for <linux-rt-users@archiver.kernel.org>; Thu, 16 Jul 2020 17:29:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6E1D3C433E2
+	for <linux-rt-users@archiver.kernel.org>; Thu, 16 Jul 2020 19:26:27 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6C3BD2067D
-	for <linux-rt-users@archiver.kernel.org>; Thu, 16 Jul 2020 17:29:26 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2BA222074B
+	for <linux-rt-users@archiver.kernel.org>; Thu, 16 Jul 2020 19:26:27 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=austral-dynamics-com.20150623.gappssmtp.com header.i=@austral-dynamics-com.20150623.gappssmtp.com header.b="dfIT/ZqH"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="l6V/ZjkL"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1729119AbgGPR3Z (ORCPT
+        id S1729010AbgGPT00 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 16 Jul 2020 13:29:25 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47358 "EHLO
+        Thu, 16 Jul 2020 15:26:26 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37192 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726986AbgGPR3Y (ORCPT
+        with ESMTP id S1728788AbgGPT0Z (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 16 Jul 2020 13:29:24 -0400
-Received: from mail-io1-xd36.google.com (mail-io1-xd36.google.com [IPv6:2607:f8b0:4864:20::d36])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A1642C061755
-        for <linux-rt-users@vger.kernel.org>; Thu, 16 Jul 2020 10:29:24 -0700 (PDT)
-Received: by mail-io1-xd36.google.com with SMTP id k23so6841080iom.10
-        for <linux-rt-users@vger.kernel.org>; Thu, 16 Jul 2020 10:29:24 -0700 (PDT)
+        Thu, 16 Jul 2020 15:26:25 -0400
+Received: from mail-ua1-x92b.google.com (mail-ua1-x92b.google.com [IPv6:2607:f8b0:4864:20::92b])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DBBCDC061755
+        for <linux-rt-users@vger.kernel.org>; Thu, 16 Jul 2020 12:26:24 -0700 (PDT)
+Received: by mail-ua1-x92b.google.com with SMTP id k7so2120433uan.13
+        for <linux-rt-users@vger.kernel.org>; Thu, 16 Jul 2020 12:26:24 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=austral-dynamics-com.20150623.gappssmtp.com; s=20150623;
-        h=mime-version:from:date:message-id:subject:to;
-        bh=ewErMFcwzMpYjgOszqbuRFY0jrAQOjd/DNqaBpbeczk=;
-        b=dfIT/ZqHLk2mnoFJyUnWNdMWkZo2vX6GO3xFJJAqP3uTrp+Dv7FHUN8UmTVvLJqhqH
-         8IpMK2rchs2+hqO1FgsVAi3c/mJ/rymQALcDu88rqbHRVzGe//j+Ob/+Lhd6sYc7RSp2
-         GHsBChN8xmX8Kw0xGFpJtaPKLWZG8ZC0Q2xryz0jZqE/Ev9B55NcIkRDkjddcRUe4yf2
-         RHrHVIbJj96V0+zDxV1TgIlXWb1n38Pejodb1oZL93J8MUvNjdkg/j7gQhwdb4jtfwlz
-         de/XvFQUw2Y1OVrMB1TEl9qsBgCzHK/8UuEmM66FCC+/yfz3fzhTYbP5vnzRhclyzgjf
-         NOiA==
+        d=gmail.com; s=20161025;
+        h=mime-version:in-reply-to:references:from:date:message-id:subject:to
+         :cc;
+        bh=mMbgdwDtP27CXsZjfhivFu9jhDR9mwGH1nJkgK5VWA4=;
+        b=l6V/ZjkLcriHPckaGAhCydz/u19BsZgYcCww8XquYbbpy5LwQvsEWbqNtQ9EHakqEW
+         vXH9XTjUY4vxOFStBVSXVpm6d3Jdn27EKaGP30cCRQRoYAuETmq0ozpX+VS9nhMH9rb2
+         MOazxwCuiazGuB3DfmDvxEd4oX7NFNcL+Ebtw+JyABM5qVCmJGvS88PZ33uoL66o5RjE
+         DHUXc4md7s5yo7o1e7NnC71uCaRCAquHQ8jn1UiupyKnXgfEWaOGIMpGKCCMlcNVtdxT
+         NI0DLeDDQLr+iDd0LlmVV6L1CF2MMf1uKeiaxNBaEfYUQLXsLJWDdY8nPE3EGrZFkqWn
+         0K/Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:mime-version:from:date:message-id:subject:to;
-        bh=ewErMFcwzMpYjgOszqbuRFY0jrAQOjd/DNqaBpbeczk=;
-        b=jtoItQ3uN/GZTzxOfH3noYDBhgIT/IXMXu0LHGH+rSpNuUiNTdELP3F1/KQode6nnJ
-         MuYLgZELG4e1y5QnGiYOBqHHhfzGH127AJ43tZfbe7IXRVkwuNdZq/Y584d/iT9bi31/
-         XRTw3HqJyX8u2HcgWnzs/LWW8QAGntwxvJUUDexAnJ7yfR5JxU4kBEEV7qIoUVE6BW7K
-         8Ma23Xirgv2rA+TGAGG+5tvwrw9JXmWYZHv/vJgv540MXhIOphngr2/DdLRYOdsY8Vb0
-         APcbShOxLOSxEqHYOiVebUHatl5XQ5+h4ve2pjJ/MlVbWGMTJ2sHb7wjfUWvbbmI0URS
-         L3IQ==
-X-Gm-Message-State: AOAM532sTRmj/XFYM/0M+4lHcPp9ldYkQs2uWq7uM9X4ly/iCf1X+Tv+
-        9JICEqF/+AqjJRdV2nD4LZ3R8cgit+lLeOSRmbphL1jJ
-X-Google-Smtp-Source: ABdhPJwZZF/97U+7DOjlx2FTufT7n5O+xxS67PeQwxNc9JPcgFnWuFIv0D2da0/KjCjwp3UvOlpG76SO8fkW8EL73vM=
-X-Received: by 2002:a02:5b83:: with SMTP id g125mr6319604jab.91.1594920563886;
- Thu, 16 Jul 2020 10:29:23 -0700 (PDT)
+        h=x-gm-message-state:mime-version:in-reply-to:references:from:date
+         :message-id:subject:to:cc;
+        bh=mMbgdwDtP27CXsZjfhivFu9jhDR9mwGH1nJkgK5VWA4=;
+        b=Zta5aiV5LbbPYbfvDYb6tkjuc8V5/LtaXeGycLU4L8jAcwli2SED1svNbvZ1Ez1lN1
+         m3+0pUZVfTB2vrCx6QB3KgctBiniy8LGtH6NuymjG4v4u3bcUbZhD+sjJaH0Ilum3jYH
+         72XRPEtIvUY0k/r9gN/yyyzO7mx6/RuoRsQ6bPon3XzCn1GTWRKCgvNtbhA3CMBN8Yqt
+         ggJPIN/sf6zHnnvfVm6awoj0gbcv4m7A4S6btyiMf6bFVi5MTXx0QJIGgouKKOc3FeB9
+         zS1pyDrDyrYXkqyYLkMZVyNHx4U7HeDYiyz2UgqwLq8hjy/C7QY61ha8xoikteXaRHFV
+         aPZQ==
+X-Gm-Message-State: AOAM530rLwHUdrrLTSucmp5CakTe1lo3XCZnaFlcM/JeW6mjfza/Xv3D
+        orxwuLnBnt/K4/tlq6r28kFs8/z4AQeht9mmZqPYXg==
+X-Google-Smtp-Source: ABdhPJxI27D2ZjgmllSiN9CyNj2NIN/I6IAP4IKY7/3C7HSigJuRY8/xn/dM8qDCzz1k5QaZPDzYGw5UVzYmXAI4ZSg=
+X-Received: by 2002:ab0:55da:: with SMTP id w26mr4372735uaa.28.1594927584029;
+ Thu, 16 Jul 2020 12:26:24 -0700 (PDT)
 MIME-Version: 1.0
-From:   Michel Macena Oliveira <michel@austral-dynamics.com>
-Date:   Thu, 16 Jul 2020 14:29:13 -0300
-Message-ID: <CAKkbJ-yB4XGuexzmwfkR8g76HR8iCkXaHsXaLaS6V+Wfy86bvg@mail.gmail.com>
-Subject: Serial port driver usage and status
-To:     linux-rt-users@vger.kernel.org
+Received: by 2002:a67:fd69:0:0:0:0:0 with HTTP; Thu, 16 Jul 2020 12:26:23
+ -0700 (PDT)
+In-Reply-To: <CAKkbJ-yB4XGuexzmwfkR8g76HR8iCkXaHsXaLaS6V+Wfy86bvg@mail.gmail.com>
+References: <CAKkbJ-yB4XGuexzmwfkR8g76HR8iCkXaHsXaLaS6V+Wfy86bvg@mail.gmail.com>
+From:   Itai Handler <itai.handler@gmail.com>
+Date:   Thu, 16 Jul 2020 22:26:23 +0300
+Message-ID: <CAFpOueQm5MhbrV53=kAcw=ES2LzsZPkmX2SqTVKuYTf0QDt=7w@mail.gmail.com>
+Subject: Re: Serial port driver usage and status
+To:     Michel Macena Oliveira <michel@austral-dynamics.com>
+Cc:     linux-rt-users@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi, sorry for my newbie question,
-What is the status of the serial port driver?
-I've written some code to use serial ports  for the generic kernel linux,
-And now I want to write something similar for the real time kernel, do
-I have to use some specific library, flags or something or is it just
-the same settings?
+Hi Michel,
 
-I'm asking because now I need to take into account the serial access
-in the scheduler to ensure a real time behavior .
+On 7/16/20, Michel Macena Oliveira <michel@austral-dynamics.com> wrote:
+> Hi, sorry for my newbie question,
+> What is the status of the serial port driver?
+> I've written some code to use serial ports  for the generic kernel linux,
+> And now I want to write something similar for the real time kernel, do
+> I have to use some specific library, flags or something or is it just
+> the same settings?
+>
+> I'm asking because now I need to take into account the serial access
+> in the scheduler to ensure a real time behavior .
+>
+> Any help, advice, hint or tips would be appreciated.
+>
 
-Any help, advice, hint or tips would be appreciated.
+Do you mean that you wrote some code that works with a /dev/tty* serial port?
+
+In some kernel versions (e.g 4.19) we saw high latencies in the rx
+path of serial drivers.
+I think that this is due to rx handled in the context of a workqueue
+which also handles other system activities.
+We found a workaround to this problem. If I remember correctly we
+create a dedicated thread for the port and assign it a high priority.
+
+Itai Handler
