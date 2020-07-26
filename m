@@ -2,74 +2,72 @@ Return-Path: <SRS0=AdNn=BF=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	SPF_HELO_NONE,SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A0511C433E3
-	for <linux-rt-users@archiver.kernel.org>; Sun, 26 Jul 2020 11:55:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E0F9EC433E4
+	for <linux-rt-users@archiver.kernel.org>; Sun, 26 Jul 2020 16:51:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8A21020715
-	for <linux-rt-users@archiver.kernel.org>; Sun, 26 Jul 2020 11:55:20 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id C855820714
+	for <linux-rt-users@archiver.kernel.org>; Sun, 26 Jul 2020 16:51:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726112AbgGZLzQ (ORCPT
+        id S1726838AbgGZQvV (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sun, 26 Jul 2020 07:55:16 -0400
-Received: from mx2.suse.de ([195.135.220.15]:47388 "EHLO mx2.suse.de"
+        Sun, 26 Jul 2020 12:51:21 -0400
+Received: from mail.kernel.org ([198.145.29.99]:57772 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1725972AbgGZLzP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sun, 26 Jul 2020 07:55:15 -0400
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 383DAAFD2;
-        Sun, 26 Jul 2020 11:55:23 +0000 (UTC)
-Subject: Re: [ANNOUNCE] v4.4.231-rt202
-From:   Daniel Wagner <dwagner@suse.de>
-To:     Steven Rostedt <rostedt@goodmis.org>,
-        Tom Zanussi <tom.zanussi@linux.intel.com>,
-        Clark Williams <williams@redhat.com>
-References: <159559806551.29587.13643956941367278015@beryllium>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
+        id S1726042AbgGZQvV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Sun, 26 Jul 2020 12:51:21 -0400
+Received: from localhost (173-25-40-8.client.mchsi.com [173.25.40.8])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 7B431206D8;
+        Sun, 26 Jul 2020 16:51:20 +0000 (UTC)
+From:   Clark Williams <williams@redhat.com>
+Subject: [ANNOUNCE] 4.9.231-rt149
+Date:   Sun, 26 Jul 2020 16:49:58 -0000
+Message-ID: <159578219818.2295221.9568985218739028497@theseus.lan>
+To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
         Thomas Gleixner <tglx@linutronix.de>,
         Carsten Emde <C.Emde@osadl.org>,
         John Kacur <jkacur@redhat.com>,
         Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Pavel Machek <pavel@denx.de>,
-        Joe Korty <joe.korty@concurrent-rt.com>
-Message-ID: <3732c1c4-36d4-2cdc-677a-cb58a9507df1@suse.de>
-Date:   Sun, 26 Jul 2020 13:55:12 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.10.0
-MIME-Version: 1.0
-In-Reply-To: <159559806551.29587.13643956941367278015@beryllium>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
+        Daniel Wagner <daniel.wagner@suse.com>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Clark Williams <williams@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi,
+Hello RT-list!
 
-On 24.07.20 15:41, Daniel Wagner wrote:
-> Known issues:
-> 
->     sigwaittest with hackbench as workload is able to trigger a crash on x86_64,
->     the same as reported for the v4.4.220-rt196 release. As it turns
->     out it was not triggered by BPF.
->     https://paste.opensuse.org/view/raw/58939248
+I'm pleased to announce the 4.9.231-rt149 stable release. Note that since
+v4.9-rt is in maintenance mode, this is strictly a merge of the latest
+stable updates for 4.9 and there are no changes to the PREEMPT_RT code.
 
-Joe pointed out [1] that v4.4-rt is missing 9567db2ebe56 ("signal: 
-Prevent double-free of user struct") from devel-rt. With this
-patch all my tests pass.
+You can get this release via the git tree at:
 
-@stable-rt team: Can you please add it to the missing trees?
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-Thanks,
-Daniel
+  branch: v4.9-rt
+  Head SHA1: 87b1607f518ea558e96d8862e8b244a41dbe108b
 
-[1] 
-https://lore.kernel.org/linux-rt-users/20200626130544.GA37967@zipoli.concurrent-rt.com/
+Or to build 4.9.231-rt149 directly, the following patches should be applied:
 
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.9.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.9.231.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.9/patch-4.9.231-rt149.patch.xz
+
+
+You can also build from 4.9.230-rt148 by applying the incremental patch:
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.9/incr/patch-4.9.230-rt148-rt149.patch.xz
+
+Enjoy!
+Clark
