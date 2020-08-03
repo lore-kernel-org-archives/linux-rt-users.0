@@ -2,89 +2,123 @@ Return-Path: <SRS0=buBN=BN=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.6 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=unavailable
+X-Spam-Status: No, score=-13.1 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 66F3FC433E0
-	for <linux-rt-users@archiver.kernel.org>; Mon,  3 Aug 2020 17:36:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E13CEC433E3
+	for <linux-rt-users@archiver.kernel.org>; Mon,  3 Aug 2020 20:10:50 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 59C8422B45
-	for <linux-rt-users@archiver.kernel.org>; Mon,  3 Aug 2020 17:36:49 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1596476209;
-	bh=67N2tzt5DQ+tX2Tpqo7KKJqnR0/AUDmNT48UpbDpHkA=;
-	h=Subject:From:To:Date:List-ID:From;
-	b=oRFfdGZdH4heE+vR3EwpgoW1wgwDvUyLzMZYBYLD+nui2HJV/rsW9+TKUBTCcbpyb
-	 ad12uVp/4M+vHvuZqc1pAX5oSd/J5zg8gulkwYYRJ+zVnbNfzN8/+eIX9zC7Q51d1o
-	 uqbbxDDc00rbYjlyLyV3ei4JRE5WvEkQi943IFQg=
+	by mail.kernel.org (Postfix) with ESMTP id 931142075A
+	for <linux-rt-users@archiver.kernel.org>; Mon,  3 Aug 2020 20:10:50 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="OKAfvfOh"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727959AbgHCRgq (ORCPT
+        id S1726933AbgHCUKt (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 3 Aug 2020 13:36:46 -0400
-Received: from mail.kernel.org ([198.145.29.99]:47842 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726398AbgHCRgq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 3 Aug 2020 13:36:46 -0400
-Received: from tzanussi-mobl (c-73-211-240-131.hsd1.il.comcast.net [73.211.240.131])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 0567320775;
-        Mon,  3 Aug 2020 17:36:43 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1596476205;
-        bh=67N2tzt5DQ+tX2Tpqo7KKJqnR0/AUDmNT48UpbDpHkA=;
-        h=Subject:From:To:Date:From;
-        b=RKmvt10JQ5SXxxWKkLb4F0v8Df6kRk/3+W+cNudvaDuToGerSMn4qlcNicgYP0WN4
-         +1T/whDkPCbUQiIDzg+YvoPZgVVEguSFHNhF3Yh7JeyLYQpiReB3aTLo1Lpv2eOnyZ
-         hsadqtYCFvxaz/suTxJkqZDd9g+yvsqy/H3ob1oA=
-Message-ID: <aaf34316c15fcd4bb89767d695e7a26611790931.camel@kernel.org>
-Subject: [ANNOUNCE] 4.19.135-rt60
-From:   Tom Zanussi <zanussi@kernel.org>
-To:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Carsten Emde <C.Emde@osadl.org>,
-        John Kacur <jkacur@redhat.com>,
-        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Daniel Wagner <wagi@monom.org>,
-        Clark Williams <williams@redhat.com>,
-        Pavel Machek <pavel@denx.de>, Tom Zanussi <zanussi@kernel.org>
-Date:   Mon, 03 Aug 2020 12:36:43 -0500
-Content-Type: text/plain; charset="UTF-8"
-X-Mailer: Evolution 3.28.5-0ubuntu0.18.04.1 
-Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+        Mon, 3 Aug 2020 16:10:49 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57584 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726130AbgHCUKs (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Mon, 3 Aug 2020 16:10:48 -0400
+Received: from mail-ed1-x544.google.com (mail-ed1-x544.google.com [IPv6:2a00:1450:4864:20::544])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9762EC06174A;
+        Mon,  3 Aug 2020 13:10:47 -0700 (PDT)
+Received: by mail-ed1-x544.google.com with SMTP id l23so14447363edv.11;
+        Mon, 03 Aug 2020 13:10:47 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=from:to:cc:subject:date:message-id:in-reply-to:references
+         :mime-version:content-transfer-encoding;
+        bh=l2Svs2xsap0D+iwtzqAAgZhsDZhRE16VZFPPIiVLOyI=;
+        b=OKAfvfOhKSj8fz49Grbl8Li0cDjorqzgzVm2Q967F1W8m6Iw9gp5iF2XpbgLWuB7J/
+         Y0O/C3Lv9x+ILkKzxX9Ml/jS3RYXx3YDZ2T5IRekGreFvZME+6LUxk1fpHDqwpYwve5E
+         koBP6W/wCk7gH8cPi2mIut44yWA+6njzvtW+cFapzUtCJs8DOJkNabsOIcI0/3zIG9x1
+         6uJA66QsyVbqKNVlXHl7xmMjM/SfVA8usqCKS8uJm5nVme156upp0PrqWpuuGNlVgGRk
+         s4fOODmFce+uTWTcbH2oUeUvkZDhC+e5NJUGWHCBMMwxsc+rbcof8HSOFmD7OasIqq9x
+         c6bA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+         :references:mime-version:content-transfer-encoding;
+        bh=l2Svs2xsap0D+iwtzqAAgZhsDZhRE16VZFPPIiVLOyI=;
+        b=oXmnsDaJH1IgRXmicPGo75ZYEaI9r+Lwgt2St2ZaUmQqOOBS++zShYyK/qux9ZOdNV
+         3cPZSRHXhxgN1tMjpPnHxyiM7deYgNs7HWyaLhksMVp6V3DzCA9Z+sI8U3BcrnfWQcrX
+         dua1UR6hX1aX1w7M0P0PLjmfZVKttSCJaG/8nuHQphRxWBngS+2kTqf3sGYK/+4IelPN
+         ndYP9bhLq/owyUwiE/L9wdH4qR4PGMBL2NMl6K8/L3eGzalALeC77SQVYC4WoQz1Mw21
+         XK/EkDjPux9MgAAUhgFD7RLiBXdeZ1ccb3+R1ULjAfVLQmcYqqYGWaIE/P79KIKJHgQp
+         Z11Q==
+X-Gm-Message-State: AOAM532lEiHad+7wkMYe8SKPm/uvj/jMyvFHYo3w1Uz/W/brJkcHOL8s
+        e6FoGgJxdRCKkQO5JBZZK7U=
+X-Google-Smtp-Source: ABdhPJwkPI3VHwYVx+Px/6s55ydN+BQ2b/egkO4hNXXHgidFYr6woFBBt2M+SBze6UblPYPiBuidjQ==
+X-Received: by 2002:a50:8ace:: with SMTP id k14mr18036474edk.0.1596485446273;
+        Mon, 03 Aug 2020 13:10:46 -0700 (PDT)
+Received: from localhost.localdomain ([188.26.57.97])
+        by smtp.gmail.com with ESMTPSA id u8sm16664049ejm.65.2020.08.03.13.10.45
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 03 Aug 2020 13:10:45 -0700 (PDT)
+From:   Vladimir Oltean <olteanv@gmail.com>
+To:     davem@davemloft.net, kuba@kernel.org, netdev@vger.kernel.org
+Cc:     claudiu.manoil@nxp.com, ioana.ciornei@nxp.com, Jiafei.Pan@nxp.com,
+        yangbo.lu@nxp.com, linux-kernel@vger.kernel.org,
+        linux-rt-users@vger.kernel.org
+Subject: [PATCH net-next 2/2] enetc: use napi_schedule to be compatible with PREEMPT_RT
+Date:   Mon,  3 Aug 2020 23:10:09 +0300
+Message-Id: <20200803201009.613147-2-olteanv@gmail.com>
+X-Mailer: git-send-email 2.25.1
+In-Reply-To: <20200803201009.613147-1-olteanv@gmail.com>
+References: <20200803201009.613147-1-olteanv@gmail.com>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hello RT Folks!
+From: Jiafei Pan <Jiafei.Pan@nxp.com>
 
-I'm pleased to announce the 4.19.135-rt60 stable release.
+The driver calls napi_schedule_irqoff() from a context where, in RT,
+hardirqs are not disabled, since the IRQ handler is force-threaded.
 
-This release is just an update to the new stable 4.19.135
-version and no RT specific changes have been made.
+In the call path of this function, __raise_softirq_irqoff() is modifying
+its per-CPU mask of pending softirqs that must be processed, using
+or_softirq_pending(). The or_softirq_pending() function is not atomic,
+but since interrupts are supposed to be disabled, nobody should be
+preempting it, and the operation should be safe.
 
-You can get this release via the git tree at:
+Nonetheless, when running with hardirqs on, as in the PREEMPT_RT case,
+it isn't safe, and the pending softirqs mask can get corrupted,
+resulting in softirqs being lost and never processed.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+To have common code that works with PREEMPT_RT and with mainline Linux,
+we can use plain napi_schedule() instead. The difference is that
+napi_schedule() (via __napi_schedule) also calls local_irq_save, which
+disables hardirqs if they aren't already. But, since they already are
+disabled in non-RT, this means that in practice we don't see any
+measurable difference in throughput or latency with this patch.
 
-  branch: v4.19-rt
-  Head SHA1: 0d1dd4fe57de5977a6d966ec644c2668d1b01979
+Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
+Signed-off-by: Vladimir Oltean <vladimir.oltean@nxp.com>
+---
+ drivers/net/ethernet/freescale/enetc/enetc.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Or to build 4.19.135-rt60 directly, the following patches should be applied:
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
-
-  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.135.xz
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/patch-4.19.135-rt60.patch.xz
-
-Enjoy!
-
-   Tom
+diff --git a/drivers/net/ethernet/freescale/enetc/enetc.c b/drivers/net/ethernet/freescale/enetc/enetc.c
+index f50353cbb4db..f78ca7b343d2 100644
+--- a/drivers/net/ethernet/freescale/enetc/enetc.c
++++ b/drivers/net/ethernet/freescale/enetc/enetc.c
+@@ -270,7 +270,7 @@ static irqreturn_t enetc_msix(int irq, void *data)
+ 	for_each_set_bit(i, &v->tx_rings_map, ENETC_MAX_NUM_TXQS)
+ 		enetc_wr_reg(v->tbier_base + ENETC_BDR_OFF(i), 0);
+ 
+-	napi_schedule_irqoff(&v->napi);
++	napi_schedule(&v->napi);
+ 
+ 	return IRQ_HANDLED;
+ }
+-- 
+2.25.1
 
