@@ -5,63 +5,64 @@ X-Spam-Level:
 X-Spam-Status: No, score=-13.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
+	URIBL_BLOCKED,USER_AGENT_GIT autolearn=unavailable autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D6684C433E0
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 Aug 2020 09:51:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 431DBC433E0
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 Aug 2020 09:51:50 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B46B82177B
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 Aug 2020 09:51:42 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 1C67122CAF
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 Aug 2020 09:51:49 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ccII5+/Z"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="I+juc2rl"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728300AbgHGJvg (ORCPT
+        id S1728330AbgHGJvr (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 7 Aug 2020 05:51:36 -0400
-Received: from us-smtp-delivery-1.mimecast.com ([205.139.110.120]:46125 "EHLO
-        us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-        with ESMTP id S1727820AbgHGJvf (ORCPT
+        Fri, 7 Aug 2020 05:51:47 -0400
+Received: from us-smtp-1.mimecast.com ([207.211.31.81]:40664 "EHLO
+        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1727989AbgHGJva (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 7 Aug 2020 05:51:35 -0400
+        Fri, 7 Aug 2020 05:51:30 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1596793892;
+        s=mimecast20190719; t=1596793887;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=Z8tgJTs+X+8vEZKUl5jq8+JAws3cxDj6P8K3XwwrUrQ=;
-        b=ccII5+/Za3BwGxsRqqUMJVeGj8lLrijfSF9+VgxgsRGyQRaDZkotKa6pB9GwgnqoXLb6/A
-        3LNgTAAo0HVC5UXOONvy0otPaNEdRJbCTSll89aVixeeyyvb8D2geVliXSc6Zn2rmccAuM
-        h//O5c28n1C49arfmBLiOJ06aFlY7qI=
-Received: from mail-wr1-f71.google.com (mail-wr1-f71.google.com
- [209.85.221.71]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-438-C29s-3rNOPCiTuVjJ9zamA-1; Fri, 07 Aug 2020 05:51:31 -0400
-X-MC-Unique: C29s-3rNOPCiTuVjJ9zamA-1
-Received: by mail-wr1-f71.google.com with SMTP id b13so535322wrq.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 07 Aug 2020 02:51:31 -0700 (PDT)
+        bh=zlmTabovXZ2fgjLtcolsd78Ty7R3ImRLaiM37Al4fII=;
+        b=I+juc2rlm00Cyr1eiYMoJjn9yWd7i8RranJ7Pqsd5D5f06Z1IUZDjkKHb49WoShcXRmRbb
+        AWJiXxC3NXLS29Adgkk5Dg5jGZsmPHRrKaOhA4b5C43Wvm6fHSdAu19qDnrHkSvhZ+XO90
+        37PbTm9Tw02r0n/wO0D2gKiE/ol66P0=
+Received: from mail-wm1-f69.google.com (mail-wm1-f69.google.com
+ [209.85.128.69]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-237-mR9JUJpfMNi0aBdIQigk9Q-1; Fri, 07 Aug 2020 05:51:26 -0400
+X-MC-Unique: mR9JUJpfMNi0aBdIQigk9Q-1
+Received: by mail-wm1-f69.google.com with SMTP id a5so579222wmj.5
+        for <linux-rt-users@vger.kernel.org>; Fri, 07 Aug 2020 02:51:26 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
          :references:mime-version:content-transfer-encoding;
-        bh=Z8tgJTs+X+8vEZKUl5jq8+JAws3cxDj6P8K3XwwrUrQ=;
-        b=bXDjtq5E+Hfs2QY5gV5HKYr5OZ3bIM6oZL+c6M/xkbzFy6U0mBxkEu57RBaNvTqeDQ
-         n/lgT+Kh/4NlEhDjdgaDiF4t3nZdofLkhGc2DxihBqbhREQU2UeFLMx5d6Wq9U1/N0WV
-         zAjYkGT9nomMpNsliWHFYEnIKwjHprxaK0M1FhUTYQzGbNdjBJpEuV0YdalPvV6tbXTv
-         8SjaNeBe3TkfrU1kB21L2DQmsEg63ArVelQwCUF99GcOsUjzqtDWzC4rG52raEbXwbFA
-         mP2QCZ0VOF1C3E2E3kuV0GKHUuOZJ8ZvEb6B6KxEwmd+b4TjPj0gMJ2hD4C5VgKuIWfP
-         RIcg==
-X-Gm-Message-State: AOAM532HbDIFD53VoML8RYp2AEygxQeMKRgdoMD9WH8igP/Q65f7lIfL
-        bOhEvZnnNmLczPsv1vXTVy3WxY9VQpByLS+WxBWwWYzzlcoiHvmU+bMa0mY5tft42UBJXABSVFG
-        xuXtoWURqG0FcbajXEYujvqmMmNI=
-X-Received: by 2002:a05:6000:12c1:: with SMTP id l1mr10782164wrx.270.1596793888628;
-        Fri, 07 Aug 2020 02:51:28 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJzoF/IgfG/wrZaT1KmhKuf9rOoHeqn6nVwIPqkddHT7tcqpp9p7N0WOqR+WS+JPz4qdSbwJ7A==
-X-Received: by 2002:a05:6000:12c1:: with SMTP id l1mr10782157wrx.270.1596793888413;
-        Fri, 07 Aug 2020 02:51:28 -0700 (PDT)
+        bh=zlmTabovXZ2fgjLtcolsd78Ty7R3ImRLaiM37Al4fII=;
+        b=hhWbYgwZkkOIezBTKO3Vo249uqYE2fSg2gF7xFQyDuG8kDBnTQ+kzY4mSmp1s52ahZ
+         B5WCaQ2waONco+n6YXvVwE8hLnQcFkcIVIVfvojqyoQ4haVpYw5Srt7nW+raCSGezlsI
+         dgH3J4VpJW8jCyqqWV+vpF+tezYK4NXGxXUDxYGerzCSjz5ndaqkzWwhyk/jphqehUuy
+         yhdLyy28vEiy0Avh+NWBZbr7eaN9h4oguBg8+HJNV/euq1UGDoSSeqK1l7JaxzTAukvT
+         xn753zWZN7LGP/kaBPxNb1vo0VEGt+FgMSXvlcU7zfmaxDcyUmColVB9IwDj2Qv+wOGe
+         3RjA==
+X-Gm-Message-State: AOAM533Iw43Vz2N9SBIrQQPoQOJrhUaAm+CpT2UjGrkU4eigWklj+fNn
+        YBuk4xE/4eyaCTG+CU6JNwF4P4U/bDf8gkRwf8p1mY4ZOK6bkrwgBN+OhzHAVy2okjLX8isGfvk
+        jgMQpt+da3OLTQuEAVj9BuYHvW3U=
+X-Received: by 2002:adf:bc13:: with SMTP id s19mr11310634wrg.412.1596793885094;
+        Fri, 07 Aug 2020 02:51:25 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJylQnElTj7b7gZGH/WtYS0FK/MtmHyuLL9MvzxAkcJAbc6UMM9KREiGoVELmDlyGkfAE5uonQ==
+X-Received: by 2002:adf:bc13:: with SMTP id s19mr11310594wrg.412.1596793884582;
+        Fri, 07 Aug 2020 02:51:24 -0700 (PDT)
 Received: from localhost.localdomain.com ([151.29.36.84])
-        by smtp.gmail.com with ESMTPSA id h14sm9388396wml.30.2020.08.07.02.51.26
+        by smtp.gmail.com with ESMTPSA id h14sm9388396wml.30.2020.08.07.02.51.22
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 07 Aug 2020 02:51:27 -0700 (PDT)
+        Fri, 07 Aug 2020 02:51:23 -0700 (PDT)
 From:   Juri Lelli <juri.lelli@redhat.com>
 To:     peterz@infradead.org, mingo@redhat.com
 Cc:     rostedt@goodmis.org, tglx@linutronix.de,
@@ -70,9 +71,9 @@ Cc:     rostedt@goodmis.org, tglx@linutronix.de,
         bristot@redhat.com, dietmar.eggemann@arm.com,
         linux-rt-users@vger.kernel.org, mtosatti@redhat.com,
         williams@redhat.com, valentin.schneider@arm.com
-Subject: [RFC PATCH v2 5/6] sched/fair: Add trivial fair server
-Date:   Fri,  7 Aug 2020 11:50:50 +0200
-Message-Id: <20200807095051.385985-6-juri.lelli@redhat.com>
+Subject: [RFC PATCH v2 3/6] sched/deadline: Move bandwidth accounting into {en,de}queue_dl_entity
+Date:   Fri,  7 Aug 2020 11:50:48 +0200
+Message-Id: <20200807095051.385985-4-juri.lelli@redhat.com>
 X-Mailer: git-send-email 2.26.2
 In-Reply-To: <20200807095051.385985-1-juri.lelli@redhat.com>
 References: <20200807095051.385985-1-juri.lelli@redhat.com>
@@ -85,107 +86,246 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 From: Peter Zijlstra <peterz@infradead.org>
 
-Use deadline servers to service fair tasks.
-
-This patch adds a fair_server deadline entity which acts as a container
-for fair entities and can be used to fix starvation when higher priority
-(wrt fair) tasks are monopolizing CPU(s).
+In preparation of introducing !task sched_dl_entity; move the
+bandwidth accounting into {en.de}queue_dl_entity().
 
 Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
 ---
- kernel/sched/core.c  |  1 +
- kernel/sched/fair.c  | 29 +++++++++++++++++++++++++++++
- kernel/sched/sched.h |  4 ++++
- 3 files changed, 34 insertions(+)
+ kernel/sched/deadline.c | 128 ++++++++++++++++++++++------------------
+ kernel/sched/sched.h    |   6 ++
+ 2 files changed, 77 insertions(+), 57 deletions(-)
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 7c471961fd0b8..6537637139c63 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -7170,6 +7170,7 @@ void __init sched_init(void)
- #endif /* CONFIG_SMP */
- 		hrtick_rq_init(rq);
- 		atomic_set(&rq->nr_iowait, 0);
-+		fair_server_init(rq);
- 	}
+diff --git a/kernel/sched/deadline.c b/kernel/sched/deadline.c
+index 8d909bdb9a119..d4007d1461522 100644
+--- a/kernel/sched/deadline.c
++++ b/kernel/sched/deadline.c
+@@ -275,12 +275,12 @@ static void __dl_clear_params(struct sched_dl_entity *dl_se);
+  * up, and checks if the task is still in the "ACTIVE non contending"
+  * state or not (in the second case, it updates running_bw).
+  */
+-static void task_non_contending(struct task_struct *p)
++static void task_non_contending(struct sched_dl_entity *dl_se)
+ {
+-	struct sched_dl_entity *dl_se = &p->dl;
+ 	struct hrtimer *timer = &dl_se->inactive_timer;
+ 	struct dl_rq *dl_rq = dl_rq_of_se(dl_se);
+ 	struct rq *rq = rq_of_dl_rq(dl_rq);
++	struct task_struct *p = dl_task_of(dl_se);
+ 	s64 zerolag_time;
  
- 	set_load_weight(&init_task, false);
-diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 5130239c0e1e5..6a97ee2a4e26d 100644
---- a/kernel/sched/fair.c
-+++ b/kernel/sched/fair.c
-@@ -5514,6 +5514,9 @@ enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)
- 	 */
- 	util_est_enqueue(&rq->cfs, p);
+ 	/*
+@@ -312,13 +312,14 @@ static void task_non_contending(struct task_struct *p)
+ 	if ((zerolag_time < 0) || hrtimer_active(&dl_se->inactive_timer)) {
+ 		if (dl_task(p))
+ 			sub_running_bw(dl_se, dl_rq);
++
+ 		if (!dl_task(p) || p->state == TASK_DEAD) {
+ 			struct dl_bw *dl_b = dl_bw_of(task_cpu(p));
  
-+	if (!rq->cfs.h_nr_running)
-+		dl_server_start(&rq->fair_server);
+ 			if (p->state == TASK_DEAD)
+-				sub_rq_bw(&p->dl, &rq->dl);
++				sub_rq_bw(dl_se, &rq->dl);
+ 			raw_spin_lock(&dl_b->lock);
+-			__dl_sub(dl_b, p->dl.dl_bw, dl_bw_cpus(task_cpu(p)));
++			__dl_sub(dl_b, dl_se->dl_bw, dl_bw_cpus(task_cpu(p)));
+ 			__dl_clear_params(dl_se);
+ 			raw_spin_unlock(&dl_b->lock);
+ 		}
+@@ -1477,6 +1478,41 @@ enqueue_dl_entity(struct sched_dl_entity *dl_se,
+ {
+ 	BUG_ON(on_dl_rq(dl_se));
+ 
++	/*
++	 * Check if a constrained deadline task was activated
++	 * after the deadline but before the next period.
++	 * If that is the case, the task will be throttled and
++	 * the replenishment timer will be set to the next period.
++	 */
++	if (!dl_se->dl_throttled && !dl_is_implicit(dl_se))
++		dl_check_constrained_dl(dl_se);
++
++	if (flags & (ENQUEUE_RESTORE|ENQUEUE_MIGRATING)) {
++		struct dl_rq *dl_rq = dl_rq_of_se(dl_se);
++
++		add_rq_bw(dl_se, dl_rq);
++		add_running_bw(dl_se, dl_rq);
++	}
++
++	/*
++	 * If p is throttled, we do not enqueue it. In fact, if it exhausted
++	 * its budget it needs a replenishment and, since it now is on
++	 * its rq, the bandwidth timer callback (which clearly has not
++	 * run yet) will take care of this.
++	 * However, the active utilization does not depend on the fact
++	 * that the task is on the runqueue or not (but depends on the
++	 * task's state - in GRUB parlance, "inactive" vs "active contending").
++	 * In other words, even if a task is throttled its utilization must
++	 * be counted in the active utilization; hence, we need to call
++	 * add_running_bw().
++	 */
++	if (dl_se->dl_throttled && !(flags & ENQUEUE_REPLENISH)) {
++		if (flags & ENQUEUE_WAKEUP)
++			task_contending(dl_se, flags);
++
++		return;
++	}
 +
  	/*
- 	 * If in_iowait is set, the code below may not trigger any cpufreq
- 	 * utilization updates, so do it here explicitly with the IOWAIT flag
-@@ -5666,6 +5669,9 @@ static void dequeue_task_fair(struct rq *rq, struct task_struct *p, int flags)
- 		rq->next_balance = jiffies;
- 
- dequeue_throttle:
-+	if (!rq->cfs.h_nr_running)
-+		dl_server_stop(&rq->fair_server);
-+
- 	util_est_dequeue(&rq->cfs, p, task_sleep);
- 	hrtick_update(rq);
- }
-@@ -7151,6 +7157,29 @@ static struct task_struct *__pick_next_task_fair(struct rq *rq)
- 	return pick_next_task_fair(rq, NULL, NULL);
+ 	 * If this is a wakeup or a new instance, the scheduling
+ 	 * parameters of the task might need updating. Otherwise,
+@@ -1496,9 +1532,28 @@ enqueue_dl_entity(struct sched_dl_entity *dl_se,
+ 	__enqueue_dl_entity(dl_se);
  }
  
-+static bool fair_server_has_tasks(struct sched_dl_entity *dl_se)
-+{
-+	return !!dl_se->rq->cfs.nr_running;
-+}
+-static void dequeue_dl_entity(struct sched_dl_entity *dl_se)
++static void dequeue_dl_entity(struct sched_dl_entity *dl_se, int flags)
+ {
+ 	__dequeue_dl_entity(dl_se);
 +
-+static struct task_struct *fair_server_pick(struct sched_dl_entity *dl_se)
-+{
-+	return pick_next_task_fair(dl_se->rq, NULL, NULL);
-+}
++	if (flags & (DEQUEUE_SAVE|DEQUEUE_MIGRATING)) {
++		struct dl_rq *dl_rq = dl_rq_of_se(dl_se);
 +
-+void fair_server_init(struct rq *rq)
-+{
-+	struct sched_dl_entity *dl_se = &rq->fair_server;
++		sub_running_bw(dl_se, dl_rq);
++		sub_rq_bw(dl_se, dl_rq);
++	}
 +
-+	init_dl_entity(dl_se);
++	/*
++	 * This check allows to start the inactive timer (or to immediately
++	 * decrease the active utilization, if needed) in two cases:
++	 * when the task blocks and when it is terminating
++	 * (p->state == TASK_DEAD). We can handle the two cases in the same
++	 * way, because from GRUB's point of view the same thing is happening
++	 * (the task moves from "active contending" to "active non contending"
++	 * or "inactive")
++	 */
++	if (flags & DEQUEUE_SLEEP)
++		task_non_contending(dl_se);
+ }
+ 
+ static void enqueue_task_dl(struct rq *rq, struct task_struct *p, int flags)
+@@ -1528,72 +1583,31 @@ static void enqueue_task_dl(struct rq *rq, struct task_struct *p, int flags)
+ 		return;
+ 	}
+ 
+-	/*
+-	 * Check if a constrained deadline task was activated
+-	 * after the deadline but before the next period.
+-	 * If that is the case, the task will be throttled and
+-	 * the replenishment timer will be set to the next period.
+-	 */
+-	if (!p->dl.dl_throttled && !dl_is_implicit(&p->dl))
+-		dl_check_constrained_dl(&p->dl);
+-
+-	if (p->on_rq == TASK_ON_RQ_MIGRATING || flags & ENQUEUE_RESTORE) {
+-		add_rq_bw(&p->dl, &rq->dl);
+-		add_running_bw(&p->dl, &rq->dl);
+-	}
+-
+-	/*
+-	 * If p is throttled, we do not enqueue it. In fact, if it exhausted
+-	 * its budget it needs a replenishment and, since it now is on
+-	 * its rq, the bandwidth timer callback (which clearly has not
+-	 * run yet) will take care of this.
+-	 * However, the active utilization does not depend on the fact
+-	 * that the task is on the runqueue or not (but depends on the
+-	 * task's state - in GRUB parlance, "inactive" vs "active contending").
+-	 * In other words, even if a task is throttled its utilization must
+-	 * be counted in the active utilization; hence, we need to call
+-	 * add_running_bw().
+-	 */
+-	if (p->dl.dl_throttled && !(flags & ENQUEUE_REPLENISH)) {
+-		if (flags & ENQUEUE_WAKEUP)
+-			task_contending(&p->dl, flags);
+-
+-		return;
+-	}
++	if (p->on_rq == TASK_ON_RQ_MIGRATING)
++		flags |= ENQUEUE_MIGRATING;
+ 
+ 	enqueue_dl_entity(&p->dl, pi_se, flags);
+ 
+-	if (!task_current(rq, p) && p->nr_cpus_allowed > 1)
++	if (!task_current(rq, p) && !p->dl.dl_throttled && p->nr_cpus_allowed > 1)
+ 		enqueue_pushable_dl_task(rq, p);
+ }
+ 
+ static void __dequeue_task_dl(struct rq *rq, struct task_struct *p, int flags)
+ {
+-	dequeue_dl_entity(&p->dl);
+-	dequeue_pushable_dl_task(rq, p);
++	dequeue_dl_entity(&p->dl, flags);
 +
-+	dl_se->dl_runtime = TICK_NSEC;
-+	dl_se->dl_deadline = 20 * TICK_NSEC;
-+	dl_se->dl_period = 20 * TICK_NSEC;
-+
-+	dl_server_init(dl_se, rq, fair_server_has_tasks, fair_server_pick);
-+}
-+
++	if (!p->dl.dl_throttled)
++		dequeue_pushable_dl_task(rq, p);
+ }
+ 
+ static void dequeue_task_dl(struct rq *rq, struct task_struct *p, int flags)
+ {
+ 	update_curr_dl(rq);
+-	__dequeue_task_dl(rq, p, flags);
+ 
+-	if (p->on_rq == TASK_ON_RQ_MIGRATING || flags & DEQUEUE_SAVE) {
+-		sub_running_bw(&p->dl, &rq->dl);
+-		sub_rq_bw(&p->dl, &rq->dl);
+-	}
++	if (p->on_rq == TASK_ON_RQ_MIGRATING)
++		flags |= DEQUEUE_MIGRATING;
+ 
+-	/*
+-	 * This check allows to start the inactive timer (or to immediately
+-	 * decrease the active utilization, if needed) in two cases:
+-	 * when the task blocks and when it is terminating
+-	 * (p->state == TASK_DEAD). We can handle the two cases in the same
+-	 * way, because from GRUB's point of view the same thing is happening
+-	 * (the task moves from "active contending" to "active non contending"
+-	 * or "inactive")
+-	 */
+-	if (flags & DEQUEUE_SLEEP)
+-		task_non_contending(p);
++	__dequeue_task_dl(rq, p, flags);
+ }
+ 
  /*
-  * Account for a descheduled task:
-  */
+@@ -2373,7 +2387,7 @@ static void switched_from_dl(struct rq *rq, struct task_struct *p)
+ 	 * will reset the task parameters.
+ 	 */
+ 	if (task_on_rq_queued(p) && p->dl.dl_runtime)
+-		task_non_contending(p);
++		task_non_contending(&p->dl);
+ 
+ 	if (!task_on_rq_queued(p)) {
+ 		/*
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index f035cd8ccd224..bf8c9c07705c9 100644
+index 62304d4de99cc..d3db8c7d8b641 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
-@@ -375,6 +375,8 @@ extern void dl_server_init(struct sched_dl_entity *dl_se, struct rq *rq,
- 		    dl_server_has_tasks_f has_tasks,
- 		    dl_server_pick_f pick);
+@@ -1741,6 +1741,10 @@ extern const u32		sched_prio_to_wmult[40];
+  * MOVE - paired with SAVE/RESTORE, explicitly does not preserve the location
+  *        in the runqueue.
+  *
++ * NOCLOCK - skip the update_rq_clock() (avoids double updates)
++ *
++ * MIGRATION - p->on_rq == TASK_ON_RQ_MIGRATING (used for DEADLINE)
++ *
+  * ENQUEUE_HEAD      - place at front of runqueue (tail if not specified)
+  * ENQUEUE_REPLENISH - CBS (replenish runtime and postpone deadline)
+  * ENQUEUE_MIGRATED  - the task was migrated during wakeup
+@@ -1751,6 +1755,7 @@ extern const u32		sched_prio_to_wmult[40];
+ #define DEQUEUE_SAVE		0x02 /* Matches ENQUEUE_RESTORE */
+ #define DEQUEUE_MOVE		0x04 /* Matches ENQUEUE_MOVE */
+ #define DEQUEUE_NOCLOCK		0x08 /* Matches ENQUEUE_NOCLOCK */
++#define DEQUEUE_MIGRATING	0x80 /* Matches ENQUEUE_MIGRATING */
  
-+extern void fair_server_init(struct rq *);
-+
- #ifdef CONFIG_CGROUP_SCHED
+ #define ENQUEUE_WAKEUP		0x01
+ #define ENQUEUE_RESTORE		0x02
+@@ -1764,6 +1769,7 @@ extern const u32		sched_prio_to_wmult[40];
+ #else
+ #define ENQUEUE_MIGRATED	0x00
+ #endif
++#define ENQUEUE_MIGRATING	0x80
  
- #include <linux/cgroup.h>
-@@ -959,6 +961,8 @@ struct rq {
- 	struct rt_rq		rt;
- 	struct dl_rq		dl;
+ #define RETRY_TASK		((void *)-1UL)
  
-+	struct sched_dl_entity	fair_server;
-+
- #ifdef CONFIG_FAIR_GROUP_SCHED
- 	/* list of leaf cfs_rq on this CPU: */
- 	struct list_head	leaf_cfs_rq_list;
 -- 
 2.26.2
 
