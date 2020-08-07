@@ -2,133 +2,216 @@ Return-Path: <SRS0=EtfJ=BR=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-11.5 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8BD93C433E0
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 Aug 2020 12:50:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 82363C433E1
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 Aug 2020 13:28:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 673D420866
-	for <linux-rt-users@archiver.kernel.org>; Fri,  7 Aug 2020 12:50:38 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="SJfiH1Jz"
+	by mail.kernel.org (Postfix) with ESMTP id 62EC02224D
+	for <linux-rt-users@archiver.kernel.org>; Fri,  7 Aug 2020 13:28:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726095AbgHGMug (ORCPT
+        id S1726204AbgHGN2x (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 7 Aug 2020 08:50:36 -0400
-Received: from us-smtp-1.mimecast.com ([207.211.31.81]:50935 "EHLO
-        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
-        by vger.kernel.org with ESMTP id S1725792AbgHGMuf (ORCPT
+        Fri, 7 Aug 2020 09:28:53 -0400
+Received: from mail.santannapisa.it ([193.205.80.98]:54489 "EHLO
+        mail.santannapisa.it" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726167AbgHGN2v (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 7 Aug 2020 08:50:35 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1596804633;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=UQm1qyBf5aIqiZDpDRmY+FAOebMcwqNMHmnssREb4eI=;
-        b=SJfiH1Jz9f0I6Lt7BU6YzFyCDBz+G8UsCFo1IvZOO+JhZremrx5lqYjuw6Z2uKx9JuuFIO
-        VC7WAdygWVDtx6F8de2QaBItUv3C0r6k9OfMn5lI7gH2Hzgt49aKbsonBiHd8jXbI6hSig
-        ajcfAuVlNYM4pTKJLayNpp2zpSe6vB8=
-Received: from mail-wr1-f70.google.com (mail-wr1-f70.google.com
- [209.85.221.70]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-429-g38KoM8eNOqXpTi_tsi7uA-1; Fri, 07 Aug 2020 08:50:32 -0400
-X-MC-Unique: g38KoM8eNOqXpTi_tsi7uA-1
-Received: by mail-wr1-f70.google.com with SMTP id r14so727672wrq.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 07 Aug 2020 05:50:32 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=UQm1qyBf5aIqiZDpDRmY+FAOebMcwqNMHmnssREb4eI=;
-        b=Km8nbvTLMkYUdZEfnj1KmHPb4DnN6DJUOyDXF1wrMgOCCDynfiMp9naS7mk7+Ksx6B
-         +rc1hrW8pnah6sQLoGPSQOBSXjUeoN1Dkt7OVszfYLnvf3CXXcWAtX/ne2/8x3Hz2mZW
-         9Q2HNvoKA1ntq5+Rb+d9NaJqM3B30omu6kLV0+5ajIdo+AvYYokBcfBv4cwkXA8Iof2r
-         iJBFWEPwjubyxrBq211BdXrFMIN/CmThoqDI4IKMAO+WLcMzp6P/AzfV9fNF3dHSfGHY
-         Oy+X+9Q79DAIo0QJU+FMA6LKv4U2mlOQhpdHs+YP6qeqFPggJuPY6dJPrbIJF1OoMMpC
-         NxUQ==
-X-Gm-Message-State: AOAM531MLc7BHUzAe4QShIaJiR6WEjqvxS459R9bhDLsFnj58va4hU5w
-        HBjHL4z4EhgHK3gupGAH+riFCIjICqrBRqYrXGl5CMaptT5WNf7qknRwpw1dXSmeRiu/JudsFu1
-        FYfO/8HFoJsjd1ctBrRoal1x7EnM=
-X-Received: by 2002:a7b:c084:: with SMTP id r4mr12467060wmh.20.1596804631079;
-        Fri, 07 Aug 2020 05:50:31 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJzr3ELnnmaJebo+idGp6Bb4hQr4sKtgd7JLurmS4zIJg+LW2KlBmQL0sEv4yiipWRet9yHFEQ==
-X-Received: by 2002:a7b:c084:: with SMTP id r4mr12467043wmh.20.1596804630765;
-        Fri, 07 Aug 2020 05:50:30 -0700 (PDT)
-Received: from localhost.localdomain ([151.29.36.84])
-        by smtp.gmail.com with ESMTPSA id b8sm10108132wrv.4.2020.08.07.05.50.29
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 07 Aug 2020 05:50:29 -0700 (PDT)
-Date:   Fri, 7 Aug 2020 14:50:27 +0200
-From:   Juri Lelli <juri.lelli@redhat.com>
-To:     Daniel Bristot de Oliveira <bristot@redhat.com>
+        Fri, 7 Aug 2020 09:28:51 -0400
+X-Greylist: delayed 719 seconds by postgrey-1.27 at vger.kernel.org; Fri, 07 Aug 2020 09:28:49 EDT
+Received: from [94.37.192.58] (account l.abeni@santannapisa.it HELO nowhere)
+  by santannapisa.it (CommuniGate Pro SMTP 6.1.11)
+  with ESMTPSA id 150296837; Fri, 07 Aug 2020 15:28:43 +0200
+Date:   Fri, 7 Aug 2020 15:28:32 +0200
+From:   luca abeni <luca.abeni@santannapisa.it>
+To:     Juri Lelli <juri.lelli@redhat.com>
 Cc:     peterz@infradead.org, mingo@redhat.com, rostedt@goodmis.org,
         tglx@linutronix.de, linux-kernel@vger.kernel.org,
-        luca.abeni@santannapisa.it, tommaso.cucinotta@santannapisa.it,
-        alessio.balsini@gmail.com, dietmar.eggemann@arm.com,
+        tommaso.cucinotta@santannapisa.it, alessio.balsini@gmail.com,
+        bristot@redhat.com, dietmar.eggemann@arm.com,
         linux-rt-users@vger.kernel.org, mtosatti@redhat.com,
         williams@redhat.com, valentin.schneider@arm.com
 Subject: Re: [RFC PATCH v2 6/6] sched/fair: Implement starvation monitor
-Message-ID: <20200807125027.GP42956@localhost.localdomain>
+Message-ID: <20200807152832.591f462e@nowhere>
+In-Reply-To: <20200807095604.GO42956@localhost.localdomain>
 References: <20200807095051.385985-1-juri.lelli@redhat.com>
- <20200807095604.GO42956@localhost.localdomain>
- <20200807104618.GH2674@hirez.programming.kicks-ass.net>
- <383e33a0-bace-a387-b47e-30fbec4f18db@redhat.com>
+        <20200807095604.GO42956@localhost.localdomain>
+Organization: Scuola Superiore S.Anna
+X-Mailer: Claws Mail 3.17.5 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <383e33a0-bace-a387-b47e-30fbec4f18db@redhat.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 07/08/20 13:30, Daniel Bristot de Oliveira wrote:
-> On 8/7/20 12:46 PM, peterz@infradead.org wrote:
-> > On Fri, Aug 07, 2020 at 11:56:04AM +0200, Juri Lelli wrote:
-> >> Starting deadline server for lower priority classes right away when
-> >> first task is enqueued might break guarantees, as tasks belonging to
-> >> intermediate priority classes could be uselessly preempted. E.g., a well
-> >> behaving (non hog) FIFO task can be preempted by NORMAL tasks even if
-> >> there are still CPU cycles available for NORMAL tasks to run, as they'll
-> >> be running inside the fair deadline server for some period of time.
-> >>
-> >> To prevent this issue, implement a starvation monitor mechanism that
-> >> starts the deadline server only if a (fair in this case) task hasn't
-> >> been scheduled for some interval of time after it has been enqueued.
-> >> Use pick/put functions to manage starvation monitor status.
-> > One thing I considerd was scheduling this as a least-laxity entity --
-> > such that it runs late, not early -- and start the server when
-> > rq->nr_running != rq->cfs.h_nr_running, IOW when there's !fair tasks
-> > around.
+Hi Juri,
 
-IIUC, this would still require programming a timer to fire when laxity
-is 0, but doing that only when there are !fair tasks around (so when
-enqueuing the first !fair or if there are !fair already when first fair
-is enqueued) would probably save us some overhead, I agree (as no timer
-and no enqueue of deadline server would be needed in the common "only
-fair" case).
+On Fri, 7 Aug 2020 11:56:04 +0200
+Juri Lelli <juri.lelli@redhat.com> wrote:
 
-> > 
-> > Not saying we should do it like that, but that's perhaps more
-> > deterministic than this.
-> > 
-> 
-> I agree, what we want here is something that schedules the server if it still
-> retains some runtime when the laxity is 0. But this is easier said than done, as
-> this would require another scheduler (other pros and cons and analysis (and
-> hours of work)...).
-> 
-> But, for the starvation monitor purpose, the goal is not (necessarily) to
-> provide a deterministic guarantee for the starving task, but to avoid system
-> issues while minimizing the damage to the "real" real-time workload. With that
-> in mind, we could relax our ambitions...
-> 
-> Thoughts?
+> Starting deadline server for lower priority classes right away when
+> first task is enqueued might break guarantees
 
-I agree that we don't probably want to develop an additional scheduler/
-policy for this, but I'll think a bit more about Peter's idea. Maybe
-it's already a viable optimization w/o changing EDF/CBS.
+Which guarantees are you thinking about, here? Response times of fixed
+priority tasks?
+
+If fixed priority tasks are also scheduled through deadline servers,
+then you can provide response-time guarantees to them even when
+lower-priority/non-real-time tasks are scheduled through deadline
+servers.
+
+
+			Thanks,
+				Luca
+
+> as tasks belonging to
+> intermediate priority classes could be uselessly preempted. E.g., a
+> well behaving (non hog) FIFO task can be preempted by NORMAL tasks
+> even if there are still CPU cycles available for NORMAL tasks to run,
+> as they'll be running inside the fair deadline server for some period
+> of time.
+> 
+> To prevent this issue, implement a starvation monitor mechanism that
+> starts the deadline server only if a (fair in this case) task hasn't
+> been scheduled for some interval of time after it has been enqueued.
+> Use pick/put functions to manage starvation monitor status.
+> 
+> Signed-off-by: Juri Lelli <juri.lelli@redhat.com>
+> ---
+>  kernel/sched/fair.c  | 57
+> ++++++++++++++++++++++++++++++++++++++++++-- kernel/sched/sched.h |
+> 4 ++++ 2 files changed, 59 insertions(+), 2 deletions(-)
+> 
+> diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
+> index 6a97ee2a4e26d..5cdf76e508074 100644
+> --- a/kernel/sched/fair.c
+> +++ b/kernel/sched/fair.c
+> @@ -5494,6 +5494,53 @@ static int sched_idle_cpu(int cpu)
+>  }
+>  #endif
+>  
+> +
+> +static void fair_server_watchdog(struct timer_list *list)
+> +{
+> +	struct rq *rq = container_of(list, struct rq,
+> fair_server_wd);
+> +	struct rq_flags rf;
+> +
+> +	rq_lock_irqsave(rq, &rf);
+> +	rq->fair_server_wd_running = 0;
+> +
+> +	if (!rq->cfs.h_nr_running)
+> +		goto out;
+> +
+> +	update_rq_clock(rq);
+> +	dl_server_start(&rq->fair_server);
+> +	rq->fair_server_active = 1;
+> +	resched_curr(rq);
+> +
+> +out:
+> +	rq_unlock_irqrestore(rq, &rf);
+> +}
+> +
+> +static inline void fair_server_watchdog_start(struct rq *rq)
+> +{
+> +	if (rq->fair_server_wd_running || rq->fair_server_active)
+> +		return;
+> +
+> +	timer_setup(&rq->fair_server_wd, fair_server_watchdog, 0);
+> +	rq->fair_server_wd.expires = jiffies +
+> FAIR_SERVER_WATCHDOG_INTERVAL;
+> +	add_timer_on(&rq->fair_server_wd, cpu_of(rq));
+> +	rq->fair_server_active = 0;
+> +	rq->fair_server_wd_running = 1;
+> +}
+> +
+> +static inline void fair_server_watchdog_stop(struct rq *rq, bool
+> stop_server) +{
+> +	if (!rq->fair_server_wd_running && !stop_server)
+> +		return;
+> +
+> +	del_timer(&rq->fair_server_wd);
+> +	rq->fair_server_wd_running = 0;
+> +
+> +	if (stop_server && rq->fair_server_active) {
+> +		dl_server_stop(&rq->fair_server);
+> +		rq->fair_server_active = 0;
+> +	}
+> +}
+> +
+>  /*
+>   * The enqueue_task method is called before nr_running is
+>   * increased. Here we update the fair scheduling stats and
+> @@ -5515,7 +5562,7 @@ enqueue_task_fair(struct rq *rq, struct
+> task_struct *p, int flags) util_est_enqueue(&rq->cfs, p);
+>  
+>  	if (!rq->cfs.h_nr_running)
+> -		dl_server_start(&rq->fair_server);
+> +		fair_server_watchdog_start(rq);
+>  
+>  	/*
+>  	 * If in_iowait is set, the code below may not trigger any
+> cpufreq @@ -5670,7 +5717,7 @@ static void dequeue_task_fair(struct rq
+> *rq, struct task_struct *p, int flags) 
+>  dequeue_throttle:
+>  	if (!rq->cfs.h_nr_running)
+> -		dl_server_stop(&rq->fair_server);
+> +		fair_server_watchdog_stop(rq, true);
+>  
+>  	util_est_dequeue(&rq->cfs, p, task_sleep);
+>  	hrtick_update(rq);
+> @@ -7123,6 +7170,7 @@ done: __maybe_unused;
+>  		hrtick_start_fair(rq, p);
+>  
+>  	update_misfit_status(p, rq);
+> +	fair_server_watchdog_stop(rq, false);
+>  
+>  	return p;
+>  
+> @@ -7178,6 +7226,8 @@ void fair_server_init(struct rq *rq)
+>  	dl_se->dl_period = 20 * TICK_NSEC;
+>  
+>  	dl_server_init(dl_se, rq, fair_server_has_tasks,
+> fair_server_pick); +
+> +	rq->fair_server_wd_running = 0;
+>  }
+>  
+>  /*
+> @@ -7192,6 +7242,9 @@ static void put_prev_task_fair(struct rq *rq,
+> struct task_struct *prev) cfs_rq = cfs_rq_of(se);
+>  		put_prev_entity(cfs_rq, se);
+>  	}
+> +
+> +	if (rq->cfs.h_nr_running)
+> +		fair_server_watchdog_start(rq);
+>  }
+>  
+>  /*
+> diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
+> index bf8c9c07705c9..1e1a5436be725 100644
+> --- a/kernel/sched/sched.h
+> +++ b/kernel/sched/sched.h
+> @@ -375,6 +375,7 @@ extern void dl_server_init(struct sched_dl_entity
+> *dl_se, struct rq *rq, dl_server_has_tasks_f has_tasks,
+>  		    dl_server_pick_f pick);
+>  
+> +#define FAIR_SERVER_WATCHDOG_INTERVAL (HZ >> 1)
+>  extern void fair_server_init(struct rq *);
+>  
+>  #ifdef CONFIG_CGROUP_SCHED
+> @@ -962,6 +963,9 @@ struct rq {
+>  	struct dl_rq		dl;
+>  
+>  	struct sched_dl_entity	fair_server;
+> +	int			fair_server_active;
+> +	struct timer_list	fair_server_wd;
+> +	int			fair_server_wd_running;
+>  
+>  #ifdef CONFIG_FAIR_GROUP_SCHED
+>  	/* list of leaf cfs_rq on this CPU: */
 
