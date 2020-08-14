@@ -7,50 +7,50 @@ X-Spam-Status: No, score=-10.1 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F28D7C433E3
-	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Aug 2020 03:29:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CFDEEC433E1
+	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Aug 2020 04:17:28 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D2DBE20715
-	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Aug 2020 03:29:04 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A74DB20708
+	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Aug 2020 04:17:28 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=nxp.com header.i=@nxp.com header.b="rSYP0Ptm"
+	dkim=pass (1024-bit key) header.d=nxp.com header.i=@nxp.com header.b="arLxz/Fq"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726587AbgHND3C (ORCPT
+        id S1726091AbgHNERZ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 13 Aug 2020 23:29:02 -0400
-Received: from mail-eopbgr40062.outbound.protection.outlook.com ([40.107.4.62]:54478
-        "EHLO EUR03-DB5-obe.outbound.protection.outlook.com"
+        Fri, 14 Aug 2020 00:17:25 -0400
+Received: from mail-eopbgr30069.outbound.protection.outlook.com ([40.107.3.69]:43143
+        "EHLO EUR03-AM5-obe.outbound.protection.outlook.com"
         rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1726567AbgHND3B (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 13 Aug 2020 23:29:01 -0400
+        id S1725930AbgHNERY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 14 Aug 2020 00:17:24 -0400
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=fvqBhBdEV64xGvBctVzeZsXUjyQ3uiM/35BLJKsc6ilqKpe2CplsRmxkUXe3xpyvXmBS7vYL865E+PE/TwuCRgEZ+H4jWeKQ0bKmNQxlusQmgAzA0/e/UvI+DOI6DhUCuXkRuNDpySNF8uYwE8Bwv6C0MtnbeuwBH7ibXgVDLLPDVJWHir6hwB+uhHI0XOMmdgpdDD837HIt05McGr03J5wyXSnhCPtTgNJVkv0+4s4fKDXJt3mJPwAx90u0VITHQGENhnISTwqiACOCuwW70gc1JdcxybsSZTaU0PvAG1FWZ+6XAmMmdBQOvPCZ++fNakr3f9AMYnWywL7uJl6veA==
+ b=B2MiIZgvChV+atjSriUQzc12qBJpuAPUh1HTuLDcFDKTYqWvI/V+d08COUbxtEyQ26SfS76x6mGdJIWCh9F8uMuIjpxdGXz7bHEGZzOEPojjKLBpXWJ1CNJzMGZrwHLabQJmjKYZJoEzzGrhYwU8/MgxD457L7wlombAuJLODAY1fV9VXQ3Znj14RdHtOUgv0cRLpulzoRJoxhvKt5/n+HIC7riWuqBKpLAddPRFXlHJBme9Tg6Oi6S6JwWRRNRMCs3ykGcAilAi/Optg/yMp7pCGKCRywd8VGGvHxqWPlI2s3MJpZ1g6Aw0PmnjV7NB0oVOhDsGaNhNd134wZmDYQ==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector9901;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=5eR/Y7GURvsUm4RJmxqoTvO9r4C6clW5odAvQd14ldk=;
- b=FziOgmtHKXIL085SoeorWZmLRYvDStJxNZXz8i9HbuGNhKI3rByNgdyY93SB/3i60MwrR2AYnX/22RLW6v2JVoW9GTAR82zRxZEM25/AS55EdeBY6HHplDYrbzbHCx9nNNZnjLkVmoSx8es95pe88wYlt71znXTbm/DICxzIoNFvoWm3ve+qhYx0CMwz6IdrkQ1vAdWexvXx3ZDcOlMOwsH9QKCsOoAVm8pKnxF/zB2AmJ2UnWi40b1Pd0cgW1rJ2Jr4gQOnED2brQ+t7SM2GUyMyH9xFzzHVbdFvuUeaM9Erw69h+8VZj+d/6ztvFh7WWl6c9IqIqjOypBWSoxo3w==
+ bh=iNIzHwoms5ymuJW8SJ65vCLgTZBFIHTctNu0hC8KzUg=;
+ b=KMFczt6kY/kArah+cQp6UdMEc/O6cl3Qkw5clkrEysO9FAP5D6mOlW/VyGnkenJRRWffUhLQ1VOX98HmrA2nVMfWyicgd3xLRjMAhAQVXvSyyBvywFmwVvyKMF3T+doiyT+do0Ah4tqStlTJ2oHGHk2cHX1Qn7u5xPjiOFmWO6prG5EZNouUHg/tPo9vMJeme52/YkyFVSeKgLCXDWPing0B5Orli1e5YemIV2023zvu0NFgixX+X3fe9XxaFTNJDSvkTX3thrSkMo6UxvKPTBdwys6f7uoUJnNZJY55TcN9nLJx3pEXBj0RubviS6zlaR9Uy1hu8PlZpKlwymZpNw==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
  smtp.mailfrom=nxp.com; dmarc=pass action=none header.from=nxp.com; dkim=pass
  header.d=nxp.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nxp.com; s=selector2;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=5eR/Y7GURvsUm4RJmxqoTvO9r4C6clW5odAvQd14ldk=;
- b=rSYP0Ptmv2ztVjaImNltrtjEk+tfwg7LTokL7O1haDexKFDh5mAAOtJJZQ6nH4RimYeAedYGlXfstK0ccJ5KN1L3MVVayhQ9STWC3xzTa4+TfJySxgfKOGw4C16RSRM08w/LaH+9jCIoiMY3m2qS+oUu1r8R6ER6uL65e6MXuLo=
+ bh=iNIzHwoms5ymuJW8SJ65vCLgTZBFIHTctNu0hC8KzUg=;
+ b=arLxz/FqcK2WYEX/+5R8LsmG3IMveJcyMSyi1ezN7k6cXBdZtkx3T3mRjIUIQqLO0+JOKU8ArjN7j416FdFXuLPd8EA/B0VmyG3dRmWJSQpjJPrCdDuFpHpMiNepUL4rHBkgC33j2PP1rjiVl8gMz2aJ6TasM0kW1HhRcdNE65o=
 Received: from AM0PR04MB4772.eurprd04.prod.outlook.com (2603:10a6:208:c2::17)
- by AM0PR04MB6212.eurprd04.prod.outlook.com (2603:10a6:208:148::22) with
+ by AM0PR04MB6898.eurprd04.prod.outlook.com (2603:10a6:208:185::11) with
  Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3283.15; Fri, 14 Aug
- 2020 03:28:58 +0000
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3283.22; Fri, 14 Aug
+ 2020 04:17:19 +0000
 Received: from AM0PR04MB4772.eurprd04.prod.outlook.com
  ([fe80::b00e:440a:6ac6:b3c4]) by AM0PR04MB4772.eurprd04.prod.outlook.com
  ([fe80::b00e:440a:6ac6:b3c4%3]) with mapi id 15.20.3283.016; Fri, 14 Aug 2020
- 03:28:58 +0000
+ 04:17:19 +0000
 From:   Jiafei Pan <jiafei.pan@nxp.com>
-To:     Peter Zijlstra <peterz@infradead.org>
-CC:     "mingo@kernel.org" <mingo@kernel.org>,
+To:     Steven Rostedt <rostedt@goodmis.org>
+CC:     "peterz@infradead.org" <peterz@infradead.org>,
+        "mingo@kernel.org" <mingo@kernel.org>,
         "tglx@linutronix.de" <tglx@linutronix.de>,
-        "rostedt@goodmis.org" <rostedt@goodmis.org>,
         "romain.perier@gmail.com" <romain.perier@gmail.com>,
         "will@kernel.org" <will@kernel.org>,
         "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
@@ -62,61 +62,115 @@ Subject: RE: [EXT] Re: [PATCH] softirq: add irq off checking for
  __raise_softirq_irqoff
 Thread-Topic: [EXT] Re: [PATCH] softirq: add irq off checking for
  __raise_softirq_irqoff
-Thread-Index: AQHWa6gdrPnfNrtYpEW7p3l8OUGNa6k1ljAAgAFoBhA=
-Date:   Fri, 14 Aug 2020 03:28:58 +0000
-Message-ID: <AM0PR04MB47726683A69EE5ED162A1D328A400@AM0PR04MB4772.eurprd04.prod.outlook.com>
+Thread-Index: AQHWa6gdrPnfNrtYpEW7p3l8OUGNa6k1YJYQgADMBQCAAN9u0A==
+Date:   Fri, 14 Aug 2020 04:17:19 +0000
+Message-ID: <AM0PR04MB47728EEAE7457ADC1F29F47D8A400@AM0PR04MB4772.eurprd04.prod.outlook.com>
 References: <20200806040729.39186-1-Jiafei.Pan@nxp.com>
- <20200813055822.GC3982@worktop.programming.kicks-ass.net>
-In-Reply-To: <20200813055822.GC3982@worktop.programming.kicks-ass.net>
+        <AM0PR04MB4772B1B6D3391BAEAD4411808A430@AM0PR04MB4772.eurprd04.prod.outlook.com>
+ <20200813105644.1eb6f2cd@oasis.local.home>
+In-Reply-To: <20200813105644.1eb6f2cd@oasis.local.home>
 Accept-Language: en-US
 Content-Language: en-US
 X-MS-Has-Attach: 
 X-MS-TNEF-Correlator: 
-authentication-results: infradead.org; dkim=none (message not signed)
- header.d=none;infradead.org; dmarc=none action=none header.from=nxp.com;
+authentication-results: goodmis.org; dkim=none (message not signed)
+ header.d=none;goodmis.org; dmarc=none action=none header.from=nxp.com;
 x-originating-ip: [119.31.174.73]
 x-ms-publictraffictype: Email
 x-ms-office365-filtering-ht: Tenant
-x-ms-office365-filtering-correlation-id: e8a51dab-171b-4846-8075-08d840022e8d
-x-ms-traffictypediagnostic: AM0PR04MB6212:
+x-ms-office365-filtering-correlation-id: b9038b64-2334-4bc5-aed9-08d84008ef52
+x-ms-traffictypediagnostic: AM0PR04MB6898:
 x-ms-exchange-transport-forked: True
-x-microsoft-antispam-prvs: <AM0PR04MB6212CED5B99EC607DFF9B0238A400@AM0PR04MB6212.eurprd04.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:8882;
+x-microsoft-antispam-prvs: <AM0PR04MB68983AE48477A755FFE279618A400@AM0PR04MB6898.eurprd04.prod.outlook.com>
+x-ms-oob-tlc-oobclassifiers: OLM:10000;
 x-ms-exchange-senderadcheck: 1
 x-microsoft-antispam: BCL:0;
-x-forefront-antispam-report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AM0PR04MB4772.eurprd04.prod.outlook.com;PTR:;CAT:NONE;SFS:(4636009)(346002)(39860400002)(396003)(366004)(136003)(376002)(86362001)(9686003)(54906003)(316002)(8936002)(5660300002)(7696005)(6916009)(52536014)(83380400001)(55016002)(186003)(26005)(6506007)(44832011)(71200400001)(66476007)(478600001)(66446008)(66556008)(66946007)(64756008)(2906002)(33656002)(4326008)(8676002)(76116006);DIR:OUT;SFP:1101;
+x-microsoft-antispam-message-info: NbC9grVfG2SEtZoXWkVEavlLQWjn1YWcZ97YuhyyFHivHHdAEW2UOQmZTl4LzMWNWjvtX8RL0lhaszd5LZbzNEFgULlKPqP3VH7CLLsxXRKXMhHB5ZdWlN9/z5zRb83k4wBDxgKnwm8veS5WNv0YX0NZqIFX4cXE3ckyB9pQJzrxK7th9Flb3+/PebDDjB7a8Rgj4pZJOeQG/AW/h26X50+5XRve4NB5M6qWZufyGiGK2vmdjw4gCKVun/sMACF9N+WpJ7KcsR2OSiSLxzP2hZqQDXChpKFYu4MMdJ0HDhWU+25aEvnSKas5bV+Xy5f8DtIb4s8B/tMt1j8HV3sy9Q==
+x-forefront-antispam-report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AM0PR04MB4772.eurprd04.prod.outlook.com;PTR:;CAT:NONE;SFS:(4636009)(376002)(366004)(39860400002)(396003)(346002)(136003)(71200400001)(7696005)(26005)(9686003)(44832011)(8936002)(8676002)(6916009)(83380400001)(86362001)(186003)(478600001)(52536014)(33656002)(66446008)(64756008)(66476007)(66556008)(76116006)(66946007)(55016002)(4326008)(6506007)(54906003)(316002)(53546011)(5660300002)(2906002);DIR:OUT;SFP:1101;
+x-ms-exchange-antispam-messagedata: dX4NalV65Xs6nrFMbaeMWbIgi/Ffd9TrydYqjQ0IafK1VcJEsfDpiOaP3KwuaAEm6mXuA/zZKPjTYUmab3bOk5PFAz9qtXHq+VkuSImHc5C3SjCtXKWNcHsC9PQNZSXSHxEyub47NQ23afaRy8BONZawiN04muZx7qiWgZUjhDnRoM8ZBvS1wlDhU9g/E6ALv/zhArh+WQtKu2PFuLUokvrhKnXGlHD0KhNf9s09IsLGPlbxgiBbljz9TsixBCf+UdvVP7RR3vVRCO3ipd19hsPH2QFJf5lQUCYPJno49/wAauHHLZVeM6JC0wKAWdNK4zaLVprUICj+b8pTBt2dE8vtVuqJZtH1ysUhF8tvfRGnvFFMHSdbynzRlHTBMZuyLnFEhznd7vkCxuj19wkK91miE6bC6RpFfGdNNkpDZV4T4+40v4fzKqb2WB0HnrxHvjkpmwnb7r/oXsN0mJ+Qk9KYFU1Mm2fOQHw8t8smTIeCVqwyjYNVLYL/T5OAeB+tN1JiW/g+s/JIEJ8ufvr0cePDS5rCl69wwXZ5/Vj5Jr4n25MEBrXAC/0EEYKfwav6+BR4zYJ3Lbcf4rf/TKles+v+XsMjueFq+JOMD7wZ7X0T3K9lrmTVbb3UCeBAvakSzj/7nO+y+FhJf9/OfKesew==
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 MIME-Version: 1.0
 X-OriginatorOrg: nxp.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
 X-MS-Exchange-CrossTenant-AuthSource: AM0PR04MB4772.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: e8a51dab-171b-4846-8075-08d840022e8d
-X-MS-Exchange-CrossTenant-originalarrivaltime: 14 Aug 2020 03:28:58.7073
+X-MS-Exchange-CrossTenant-Network-Message-Id: b9038b64-2334-4bc5-aed9-08d84008ef52
+X-MS-Exchange-CrossTenant-originalarrivaltime: 14 Aug 2020 04:17:19.0665
  (UTC)
 X-MS-Exchange-CrossTenant-fromentityheader: Hosted
 X-MS-Exchange-CrossTenant-id: 686ea1d3-bc2b-4c6f-a92c-d99c5c301635
 X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: wecn0xeWSXyEg1AhaYcqahl9KUobTBEJBiNwxfQZmyqUPex5t/CsQPymUcjs8M50vezrviO9SvKpwn0036u+CQ==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM0PR04MB6212
+X-MS-Exchange-CrossTenant-userprincipalname: HX8UUanWhVomwwOi5EdcPOWBiKhAUDCJ+uSZDdobgqB8zenlQxa4f9DgDgYsuVrlFWhUr0vrshtUOg1x6Ocleg==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM0PR04MB6898
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-> From: Peter Zijlstra <peterz@infradead.org>
-> Sent: Thursday, August 13, 2020 1:58 PM
+> From: Steven Rostedt <rostedt@goodmis.org>
+> Sent: Thursday, August 13, 2020 10:57 PM
 >=20
-> On Thu, Aug 06, 2020 at 12:07:29PM +0800, Jiafei Pan wrote:
-> > __raise_softirq_irqoff will update per-CPU mask of pending softirqs,
-> > it need to be called in irq disabled context in order to keep it
-> > atomic operation, otherwise it will be interrupted by hardware
-> > interrupt, and per-CPU softirqs pending mask will be corrupted, the
-> > result is there will be unexpected issue, for example hrtimer soft irq
-> > will be losed and soft hrtimer will never be expire and handled.
+> On Thu, 13 Aug 2020 03:03:46 +0000
+> Jiafei Pan <jiafei.pan@nxp.com> wrote:
+>=20
+> > Any comments? Thanks.
+> >
+> > @Steven Rostedt, I thinks irq off checking is necessary especially
+>=20
+> This is probably more for Thomas Gleixner.
+>=20
+> > for Preempt-RT kernel, because some context may be changed from irq
+> > off to irq on when enable Preempt RT, I once met a issue that hrtimer
+> > soft irq is lost when enabled Preempt RT, finally I found
+> > napi_schedule_irqoff is called in hardware interrupt handler, there
+> > maybe no issue for non RT kernel, but for Preempt RT, interrupt is
+> > threaded, so irq is on in interrupt handler, the result is
+> > __raise_softirq_irqoff is called in irq on context, so that per-CPU
+> > softirq masking is corrupted because of the process of updating of
+> > soft irq masking is interrupted and not a atomic operation , and then
+> > caused hrtimer soft irq is lost. So I think adding irq status checking
+> > in __raise_softirq_irqoff can report such issue directly and help us
+> > to find the root cause of such issue.
+> >
+> > I know that there may be performance impaction to add extra checking
+> > here, if it is the case, how about to include it in some debug
+> > configuration items? Such as CONFIG_DEBUG_PREEMPT or other debug
+> > items?
+> >
+>=20
+>=20
+> > Best Regards,
+> > Jiafei.
+> >
+> > -----Original Message-----
+> > From: Jiafei Pan <Jiafei.Pan@nxp.com>
+> > Sent: Thursday, August 6, 2020 12:07 PM
+> > To: peterz@infradead.org; mingo@kernel.org; tglx@linutronix.de;
+> > rostedt@goodmis.org; romain.perier@gmail.com; will@kernel.org
+> > Cc: linux-kernel@vger.kernel.org; linux-rt-users@vger.kernel.org;
+> > Jiafei Pan <jiafei.pan@nxp.com>; Leo Li <leoyang.li@nxp.com>; Vladimir
+> > Oltean <vladimir.oltean@nxp.com>; Jiafei Pan <jiafei.pan@nxp.com>
+> > Subject: [PATCH] softirq: add irq off checking for
+> > __raise_softirq_irqoff
+> >
+> > __raise_softirq_irqoff will update per-CPU mask of pending softirqs, it=
+ need
+> to be called in irq disabled context in order to keep it atomic operation=
+,
+> otherwise it will be interrupted by hardware interrupt, and per-CPU softi=
+rqs
+> pending mask will be corrupted, the result is there will be unexpected is=
+sue,
+> for example hrtimer soft irq will be losed and soft hrtimer will never be=
+ expire
+> and handled.
+>=20
+> Please wrap your change logs.
+[Jiafei Pan] Thanks, will update it.
+>=20
 > >
 > > Adding irqs disabled checking here to provide warning in irqs enabled
-> > context.
+> context.
 > >
 > > Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
 > > ---
@@ -134,17 +188,19 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 > > +      * otherwise or_softirq_pending will be interrupted by hardware
 > > +      * interrupt, so that there will be unexpected issue.
 > > +      */
->=20
-> Comment style is wrong, also I'm not sure the comment is really helpfull.
-[Jiafei Pan] Thanks for your comments, yes, function name already indicate =
-the function
-Should be called in irq off context, will remove the comment in next versio=
-n.
->=20
 > > +     WARN_ON_ONCE(!irqs_disabled());
 >=20
->         lockdep_assert_irqs_disabled();
+> Perhaps: lockdep_assert_irqs_disabled() is more appropriate, and doesn't =
+add
+> extra overhead on production systems.
+>=20
+> -- Steve
+[Jiafei Pan] Thanks, will update it.
+>=20
 >=20
 > >       trace_softirq_raise(nr);
 > >       or_softirq_pending(1UL << nr);
 > >  }
+> > --
+> > 2.17.1
+
