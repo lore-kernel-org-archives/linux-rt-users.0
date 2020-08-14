@@ -6,90 +6,86 @@ X-Spam-Status: No, score=-4.1 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
 	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D83D8C433E1
-	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Aug 2020 11:41:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4AD86C433DF
+	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Aug 2020 11:58:54 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id A8CE520771
-	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Aug 2020 11:41:38 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 24427207DA
+	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Aug 2020 11:58:54 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="z2cLJOge";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="25C2XuDi"
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="RlIJGJTA";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="NovBDUKQ"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726680AbgHNLlh (ORCPT
+        id S1726538AbgHNL6x (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 14 Aug 2020 07:41:37 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40026 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726268AbgHNLlg (ORCPT
+        Fri, 14 Aug 2020 07:58:53 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:36410 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726185AbgHNL6x (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 14 Aug 2020 07:41:36 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5628EC061384
-        for <linux-rt-users@vger.kernel.org>; Fri, 14 Aug 2020 04:41:36 -0700 (PDT)
-Date:   Fri, 14 Aug 2020 13:41:32 +0200
+        Fri, 14 Aug 2020 07:58:53 -0400
+Date:   Fri, 14 Aug 2020 13:58:48 +0200
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1597405293;
+        s=2020; t=1597406330;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=Icf7rtcdV62iG4ikVKmuk0Wimxc7ZBSdHw9knKcGB7A=;
-        b=z2cLJOgeL6UH/js6tFpqgX4/7sFGagkAmGqGMFOk2QNZgvTAlX6B34IIFxQ5dv9l5IcnQz
-        UrJtbqr5s6piaR6rat/kxzIrajT1tIjkp7Wr2T+PuQd+/eMwoDXw6YINCWvxCKecXsLYLW
-        rJr+Kju21fGXdbFaHCZMPIrqtsS6FqqL7Z92XjuBCi8n5H9VGgZ3qUKJitsFj0KzzW0p7u
-        mF11Oj6RSDiBrPeF2BmrGkTotH0PQdrJt11HnZyd6QAoK3ZNcPKFpYSIfEFL9htrVUnoRb
-        y/yS02MktGWW6mPw9jEKnmg5Fm4NDtlQ1gRJ96fZr860y2PCl/JHMCJkuJ9MaQ==
+        bh=GcCjjjpshN+VO1dI+U0IUtgW/jCZhOJYWs5NIGoP2mc=;
+        b=RlIJGJTArMiAifulo1TBtaON6WivdnirLfUy66WgbeWdSs6i3jjQDJ2Ih61d2FHjHJCBUB
+        FDpN3pBKr1fkbfTnhGYqHnZfV9lFNyz4LomYGRW5NNwWF3YNHFivdSjn9/Gv1hv+5lDT6r
+        OG+g7z6RKBI1Zj0rOFekWuLpm8uiCyidr6yevQwuZKnKTkYqincx8TMnD0fB0y6lg8ZLab
+        jHFoo7rUX8EXcgR7PJxlZXKz1ZV9f4m6OCmr3pKntRV7jkWPi9fU2JciNYu9qz06miA2gl
+        2JMMtD46wqsYQ7jhAjQmllzvT2jAj3+zdBaR6OexhA3Zv+0DXoI3WRmd7HIQkQ==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1597405293;
+        s=2020e; t=1597406330;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=Icf7rtcdV62iG4ikVKmuk0Wimxc7ZBSdHw9knKcGB7A=;
-        b=25C2XuDi7/lrOhluXHVUfaI+Ry5oe5P6fxO6mjtPW0FCWIqNp0rMgqaP6JpCGsonw5ffhK
-        92yLuFiq8fPbRsAw==
+        bh=GcCjjjpshN+VO1dI+U0IUtgW/jCZhOJYWs5NIGoP2mc=;
+        b=NovBDUKQqfOHJRdqlEuuLt5DPuNfXkNuKG/DT5VYDlfFoIryvb8uevOj5cDK8qD427UHOZ
+        0P8vkqUH54vSAyDA==
 From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Juri Lelli <juri.lelli@redhat.com>
-Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>
-Subject: Re: [BUG] stress-ng close causes kernel oops(es) v5.6-rt and v5.4-rt
-Message-ID: <20200814114132.rq7ygkexdqn5aqgg@linutronix.de>
-References: <20200810133639.GA59705@localhost.localdomain>
+To:     Roosen Henri <Henri.Roosen@ginzinger.com>
+Cc:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        Clark Williams <williams@redhat.com>
+Subject: Re: RT kernel v4.14 NULL pointer dereferences
+Message-ID: <20200814115848.w4m2bfqttkid6woi@linutronix.de>
+References: <fd9d435b3f6a5f4ffd7ef93763e78c087871d565.camel@ginzinger.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20200810133639.GA59705@localhost.localdomain>
+In-Reply-To: <fd9d435b3f6a5f4ffd7ef93763e78c087871d565.camel@ginzinger.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2020-08-10 15:36:39 [+0200], Juri Lelli wrote:
-> Hi,
-Hi,
-
-> As per subject, the following test
+On 2020-06-16 07:30:33 [+0000], Roosen Henri wrote:
+> Hi RT-experts,
 > 
-> # stress-ng --close 0 --verbose --timeout 60 --metrics-brief
+> Duration tests with RT enabled v4.14 kernels on our ARM iMX6Q systems
+> are showing "Unable to handle kernel NULL pointer dereference at
+> virtual address" after running for some months. The same tests on NON-
+> RT kernels don't show any problem and have been running without any
+> problems for more than 20 months now.
 > 
-> Causes kernel crashes for both v5.6.19-rt11 and v5.4.28-rt19 (splats
-> follow). Will try to dig deeper, but wanted to report early as this
-> seems to be very easy to reproduce and maybe someone already saw it and
-> might have suggestions.
+> I've been updating the tests from time to time with more recent
+> kernels. Testing is basically done with cyclictest, in parallel with
+> some load scripts/hackbench. Please have a look at the kernel traces:
+> 4.14.71-rt44  -> https://paste.debian.net/1152206/
+> 4.14.106-rt56 -> https://paste.debian.net/1152204/
+> 4.14.146-rt67 -> https://paste.debian.net/1152202/
 > 
+> I've seen the v4.14-rt branch got some fixes, so my questions are:
+> 1) is problem I'm facing known and fixed in v4.14-rt, or
+> 2) is the problem I'm seeing a new issue probably still unfixed in
+> 4.14.183-rt83 (which I'm testing right now)?
+> 
+> Any help is highly appreciated!
 
-kvm:
-|stress-ng: info:  [2067] successful run completed in 60.03s (1 min, 0.03 secs)
-|stress-ng: info:  [2067] stressor       bogo ops real time  usr time  sys time   bogo ops/s   bogo ops/s
-|stress-ng: info:  [2067]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-|stress-ng: info:  [2067] close            903449     60.02     22.68    182.01     15053.52      4413.74
+So this has not fixed all by itself?
+Is the 4.14 series the only one that is affected?
 
-real HW, no debug:
-|stress-ng: info:  [50376] successful run completed in 60.01s (1 min, 0.01 secs)
-|stress-ng: info:  [50376] stressor       bogo ops real time  usr time  sys time   bogo ops/s   bogo ops/s
-|stress-ng: info:  [50376]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
-|stress-ng: info:  [50376] close           9937122     60.00    129.59    352.74    165614.20     20602.33
-
-Can you reproduce this in kvm and send me a .config? As of now I can't
-reproduce it.
-
-> Juri
+> Thanks,
+> Henri
 
 Sebastian
