@@ -2,211 +2,362 @@ Return-Path: <SRS0=y2gO=BY=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.0 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.5 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A6A32C433E1
-	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Aug 2020 17:50:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 41CB5C433E3
+	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Aug 2020 22:26:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 80BAA20791
-	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Aug 2020 17:50:05 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 2335F20838
+	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Aug 2020 22:26:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728502AbgHNRuF (ORCPT
+        id S1727890AbgHNW0C (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 14 Aug 2020 13:50:05 -0400
-Received: from mx2.suse.de ([195.135.220.15]:46682 "EHLO mx2.suse.de"
+        Fri, 14 Aug 2020 18:26:02 -0400
+Received: from mail.kernel.org ([198.145.29.99]:33664 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726463AbgHNRuE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 14 Aug 2020 13:50:04 -0400
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 33FD7B69F;
-        Fri, 14 Aug 2020 17:50:24 +0000 (UTC)
-From:   Davidlohr Bueso <dave@stgolabs.net>
-To:     bigeasy@linutronix.de
-Cc:     linux-rt-users@vger.kernel.org,
-        Davidlohr Bueso <dave@stgolabs.net>,
-        Davidlohr Bueso <dbueso@suse.de>
-Subject: [PATCH -RT] net: xfrm: fix compress vs decompress serialization
-Date:   Fri, 14 Aug 2020 10:37:00 -0700
-Message-Id: <20200814173700.1532-1-dave@stgolabs.net>
-X-Mailer: git-send-email 2.26.2
+        id S1726596AbgHNW0C (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 14 Aug 2020 18:26:02 -0400
+Received: from oasis.local.home (cpe-66-24-58-225.stny.res.rr.com [66.24.58.225])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id B8B8220768;
+        Fri, 14 Aug 2020 22:26:00 +0000 (UTC)
+Date:   Fri, 14 Aug 2020 18:25:59 -0400
+From:   Steven Rostedt <rostedt@goodmis.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <wagi@monom.org>,
+        Tom Zanussi <zanussi@kernel.org>,
+        "Srivatsa S. Bhat" <srivatsa@csail.mit.edu>
+Subject: [ANNOUNCE] 5.4.54-rt33
+Message-ID: <20200814182559.536b5ef3@oasis.local.home>
+X-Mailer: Claws Mail 3.17.3 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-The following splat was seen when running ltp's 'tcp4_ipsec06' stresser on v4.x
-based RT kernels:
 
-[   82.523064] BUG: unable to handle kernel paging request at ffffbfbec0c0bf64
-[   82.523085] IP: deflate_slow+0x32/0x400
-[   82.523086] PGD 3e10d067 P4D 3e10d067 PUD 3e10e067 PMD 3a5ea067 PTE 0
-[   82.523091] Oops: 0000 [#1] PREEMPT SMP PTI
-[   82.523101] CPU: 0 PID: 5883 Comm: netstress Not tainted 4.12.14-14.26-rt #1 SLE15-SP1
-[   82.523102] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS rel-1.12.0-0-ga698c89-rebuilt.opensuse.org 04/01/2014
-[   82.523105] task: ffff9c703731cc40 task.stack: ffffbfbec0fc4000
-[   82.523108] RIP: 0010:deflate_slow+0x32/0x400
-[   82.523112] RSP: 0018:ffffbfbec0fc7a48 EFLAGS: 00010202
-[   82.523114] RAX: 000000000008581c RBX: ffffbfbec0b85000 RCX: 0000000000000005
-[   82.523115] RDX: ffffbfbec0b86748 RSI: 000000000000001a RDI: 000000000008c660
-[   82.523116] RBP: 0000000000000005 R08: 0000000000000027 R09: 0000000000000027
-[   82.523117] R10: ffffbfbec0b86748 R11: 0000000000000053 R12: 00000000000005c5
-[   82.523118] R13: 00000000000005c5 R14: ffffbfbec0b85000 R15: 00000000000005c8
-[   82.523120] FS:  00007fc9da6ec700(0000) GS:ffff9c703fc00000(0000) knlGS:0000000000000000
-[   82.523121] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-[   82.523122] CR2: ffffbfbec0c0bf64 CR3: 000000002fd16000 CR4: 00000000000006f0
-[   82.523126] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-[   82.523127] DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
-[   82.523127] Call Trace:
-[   82.523168]  zlib_deflate+0xae/0x3b0
-[   82.523181]  deflate_compress+0x5d/0x90 [deflate]
-[   82.523186]  ipcomp_output+0xf0/0x1b0 [xfrm_ipcomp]
-[   82.523191]  xfrm_output_resume+0x391/0x480
-[   82.523199]  ? skb_mac_gso_segment+0xad/0x110
-[   82.523202]  xfrm_output+0xd4/0x1d0
-[   82.523206]  xfrm4_output+0x2c/0xc0
-[   82.523209]  ? xfrm4_udp_encap_rcv+0x1a0/0x1a0
-[   82.523213]  ip_queue_xmit+0x145/0x3e0
-[   82.523217]  __tcp_transmit_skb+0x513/0x9c0
-[   82.523220]  tcp_write_xmit+0x1ba/0xf00
-[   82.523223]  __tcp_push_pending_frames+0x31/0xd0
-[   82.523225]  tcp_sendmsg_locked+0x395/0xbd0
-[   82.523228]  tcp_sendmsg+0x27/0x40
-[   82.523231]  sock_sendmsg+0x36/0x40
-[   82.523237]  SYSC_sendto+0x10e/0x140
-[   82.523240]  ? sock_setsockopt+0x2aa/0xa30
-[   82.523245]  ? kvm_clock_read+0x21/0x50
-[   82.523249]  ? ktime_get_ts64+0x4c/0xe0
-[   82.523253]  ? SyS_poll+0x70/0x100
-[   82.523257]  do_syscall_64+0x74/0x150
-[   82.523267]  entry_SYSCALL_64_after_hwframe+0x59/0xbe
-[   82.523279] RIP: 0033:0x7fc9db4c348a
-[   82.523280] RSP: 002b:00007fc9da6cbd00 EFLAGS: 00000246 ORIG_RAX: 000000000000002c
-[   82.523282] RAX: ffffffffffffffda RBX: 0000000000000000 RCX: 00007fc9db4c348a
-[   82.523283] RDX: 000000000000ffff RSI: 00007fc9da6dbd90 RDI: 0000000000000007
-[   82.523284] RBP: 00007fc9da6dbd90 R08: 0000000000000000 R09: 0000000000000000
-[   82.523285] R10: 0000000000004000 R11: 0000000000000246 R12: 000000000000ffff
-[   82.523286] R13: 0000556d7d69fca4 R14: 0000000000000259 R15: 0000000000000001
-[   82.523287] Code: 55 53 89 f5 8b 87 9c 00 00 00 48 89 fb 3d 05 01 00 00 0f 86 04 01 00 00 8b b3 94 00 00 00 48 8b 53 48 8d 46 02 8b 4b 78 23 73 40 <0f> b6 04 02 8b 53 68 d3 e2 31 d0 23 43 74 48 8b 53 60 89 43 68
-[   82.523314] Modules linked in: ipcomp xfrm_ipcomp deflate authenc echainiv esp4 des3_ede_x86_64 des_generic xfrm4_mode_tunnel ah4 xfrm4_mode_transport ip6table_mangle ip6table_nat nf_conntrack_ipv6 nf_defrag_ipv6 nf_nat_ipv6 ip6table_filter ip6_tables iptable_mangle iptable_nat nf_conntrack_ipv4 nf_defrag_ipv4 nf_nat_ipv4 nf_nat nf_conntrack libcrc32c iptable_filter ip_tables x_tables xfrm_user xfrm_algo veth af_packet iscsi_ibft iscsi_boot_sysfs snd_hda_codec_generic ledtrig_audio snd_hda_intel ppdev snd_hda_codec snd_hda_core snd_hwdep pcspkr snd_pcm snd_timer joydev virtio_net snd net_failover failover parport_pc soundcore parport qemu_fw_cfg button i2c_piix4 nfsd auth_rpcgss nfs_acl lockd grace sunrpc btrfs xor zstd_decompress zstd_compress xxhash raid6_pq virtio_blk virtio_console virtio_scsi
-[   82.523355]  hid_generic usbhid sr_mod cdrom ata_generic bochs_drm drm_kms_helper ata_piix ahci syscopyarea sysfillrect sysimgblt fb_sys_fops ehci_pci libahci ttm ehci_hcd drm libata serio_raw usbcore floppy virtio_pci virtio_ring virtio drm_panel_orientation_quirks sg dm_multipath dm_mod scsi_dh_rdac scsi_dh_emc scsi_dh_alua scsi_mod autofs4
-[   82.523376] Supported: Yes
-[   82.523379] CR2: ffffbfbec0c0bf64
-[   82.582750] ---[ end trace 0000000000000002 ]---
-[   82.582763] RIP: 0010:deflate_slow+0x32/0x400
-[   82.582764] RSP: 0018:ffffbfbec0fc7a48 EFLAGS: 00010202
-[   82.582765] RAX: 000000000008581c RBX: ffffbfbec0b85000 RCX: 0000000000000005
-[   82.582765] RDX: ffffbfbec0b86748 RSI: 000000000000001a RDI: 000000000008c660
-[   82.582766] RBP: 0000000000000005 R08: 0000000000000027 R09: 0000000000000027
-[   82.582766] R10: ffffbfbec0b86748 R11: 0000000000000053 R12: 00000000000005c5
-[   82.582767] R13: 00000000000005c5 R14: ffffbfbec0b85000 R15: 00000000000005c8
-[   82.582768] FS:  00007fc9da6ec700(0000) GS:ffff9c703fc00000(0000) knlGS:0000000000000000
-[   82.582769] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-[   82.582770] CR2: ffffbfbec0c0bf64 CR3: 000000002fd16000 CR4: 00000000000006f0
-[   82.582772] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-[   82.582773] DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
+Dear RT Folks,
 
-ipcomp_compress() will serialize access to the ipcomp_scratches percpu buffer by
-disabling BH and preventing a softirq from coming in and running ipcom_decompress(),
-which is never called from process context. This of course won't work on RT and
-the buffer can get corrupted; there have been similar issues with in the past with
-such assumptions, ie: ebf255ed6c44 (net: add back the missing serialization in
-ip_send_unicast_reply()).
+I'm pleased to announce the 5.4.54-rt33 stable release.
 
-Similarly, this patch addresses the issue with locallocks allowing RT to have a
-percpu spinlock and do the correct serialization.
 
-Addressing such races on an individual basis seemed like a game of whack a mole,
-until afaict local_bh_enable() was reworked to use locallocks in 96fac673174
-(softirq: Add preemptible softirq) which is why the BUG is not seen in newer kernels.
+You can get this release via the git tree at:
 
-Signed-off-by: Davidlohr Bueso <dbueso@suse.de>
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v5.4-rt
+  Head SHA1: 8b0dbd94090c0b782f374bb645a93517b6b8d887
+
+
+Or to build 5.4.54-rt33 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v5.x/linux-5.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v5.x/patch-5.4.54.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/5.4/patch-5.4.54-rt33.patch.xz
+
+
+
+You can also build from 5.4.54-rt32 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/5.4/incr/patch-5.4.54-rt32-rt33.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
+
+
+Changes from v5.4.54-rt32:
+
 ---
 
-This applies on top of all v4.x based kernels -rt.
+Ahmed S. Darwish (1):
+      net: phy: fixed_phy: Remove unused seqcount
 
- net/xfrm/xfrm_ipcomp.c | 21 +++++++++++++++------
- 1 file changed, 15 insertions(+), 6 deletions(-)
+Matt Fleming (1):
+      signal: Prevent double-free of user struct
 
-diff --git a/net/xfrm/xfrm_ipcomp.c b/net/xfrm/xfrm_ipcomp.c
-index ccfdc7115a83..f13871de6e0d 100644
---- a/net/xfrm/xfrm_ipcomp.c
-+++ b/net/xfrm/xfrm_ipcomp.c
-@@ -20,6 +20,7 @@
- #include <linux/list.h>
- #include <linux/module.h>
- #include <linux/mutex.h>
-+#include <linux/locallock.h>
- #include <linux/percpu.h>
+Sebastian Andrzej Siewior (3):
+      workqueue: Sync with upstream
+      Bluetooth: Acquire sk_lock.slock without disabling interrupts
+      rwsem: Provide down_read_non_owner() and up_read_non_owner() for -RT
+
+Steven Rostedt (VMware) (1):
+      Linux 5.4.54-rt33
+
+----
+ drivers/net/phy/fixed_phy.c | 28 +++++++++++-----------------
+ include/linux/swait.h       | 14 --------------
+ kernel/locking/rwsem.c      |  8 ++++----
+ kernel/signal.c             |  4 ++--
+ kernel/workqueue.c          | 28 +++++++++++++++++++---------
+ localversion-rt             |  2 +-
+ net/bluetooth/rfcomm/sock.c |  7 ++-----
+ 7 files changed, 39 insertions(+), 52 deletions(-)
+---------------------------
+diff --git a/drivers/net/phy/fixed_phy.c b/drivers/net/phy/fixed_phy.c
+index 4190f9ed5313..9ed715e9be40 100644
+--- a/drivers/net/phy/fixed_phy.c
++++ b/drivers/net/phy/fixed_phy.c
+@@ -19,7 +19,6 @@
  #include <linux/slab.h>
- #include <linux/smp.h>
-@@ -36,6 +37,7 @@ struct ipcomp_tfms {
- 
- static DEFINE_MUTEX(ipcomp_resource_mutex);
- static void * __percpu *ipcomp_scratches;
-+static DEFINE_LOCAL_IRQ_LOCK(ipcomp_scratches_lock);
- static int ipcomp_scratch_users;
- static LIST_HEAD(ipcomp_tfms_list);
- 
-@@ -45,12 +47,15 @@ static int ipcomp_decompress(struct xfrm_state *x, struct sk_buff *skb)
- 	const int plen = skb->len;
- 	int dlen = IPCOMP_SCRATCH_SIZE;
- 	const u8 *start = skb->data;
--	const int cpu = get_cpu();
--	u8 *scratch = *per_cpu_ptr(ipcomp_scratches, cpu);
--	struct crypto_comp *tfm = *per_cpu_ptr(ipcd->tfms, cpu);
--	int err = crypto_comp_decompress(tfm, start, plen, scratch, &dlen);
--	int len;
-+	u8 *scratch;
-+	struct crypto_comp *tfm;
-+	int err, len;
+ #include <linux/of.h>
+ #include <linux/gpio/consumer.h>
+-#include <linux/seqlock.h>
+ #include <linux/idr.h>
+ #include <linux/netdevice.h>
+ #include <linux/linkmode.h>
+@@ -34,7 +33,6 @@ struct fixed_mdio_bus {
+ struct fixed_phy {
+ 	int addr;
+ 	struct phy_device *phydev;
+-	seqcount_t seqcount;
+ 	struct fixed_phy_status status;
+ 	bool no_carrier;
+ 	int (*link_update)(struct net_device *, struct fixed_phy_status *);
+@@ -80,19 +78,17 @@ static int fixed_mdio_read(struct mii_bus *bus, int phy_addr, int reg_num)
+ 	list_for_each_entry(fp, &fmb->phys, node) {
+ 		if (fp->addr == phy_addr) {
+ 			struct fixed_phy_status state;
+-			int s;
+-
+-			do {
+-				s = read_seqcount_begin(&fp->seqcount);
+-				fp->status.link = !fp->no_carrier;
+-				/* Issue callback if user registered it. */
+-				if (fp->link_update)
+-					fp->link_update(fp->phydev->attached_dev,
+-							&fp->status);
+-				/* Check the GPIO for change in status */
+-				fixed_phy_update(fp);
+-				state = fp->status;
+-			} while (read_seqcount_retry(&fp->seqcount, s));
 +
-+	local_lock(ipcomp_scratches_lock);
++			fp->status.link = !fp->no_carrier;
++
++			/* Issue callback if user registered it. */
++			if (fp->link_update)
++				fp->link_update(fp->phydev->attached_dev,
++						&fp->status);
++
++			/* Check the GPIO for change in status */
++			fixed_phy_update(fp);
++			state = fp->status;
  
-+	scratch = *this_cpu_ptr(ipcomp_scratches);
-+	tfm = *this_cpu_ptr(ipcd->tfms);
-+	err = crypto_comp_decompress(tfm, start, plen, scratch, &dlen);
- 	if (err)
- 		goto out;
+ 			return swphy_read_reg(reg_num, &state);
+ 		}
+@@ -150,8 +146,6 @@ static int fixed_phy_add_gpiod(unsigned int irq, int phy_addr,
+ 	if (!fp)
+ 		return -ENOMEM;
  
-@@ -103,7 +108,7 @@ static int ipcomp_decompress(struct xfrm_state *x, struct sk_buff *skb)
- 	err = 0;
+-	seqcount_init(&fp->seqcount);
+-
+ 	if (irq != PHY_POLL)
+ 		fmb->mii_bus->irq[phy_addr] = irq;
  
- out:
--	put_cpu();
-+	local_unlock(ipcomp_scratches_lock);
- 	return err;
+diff --git a/include/linux/swait.h b/include/linux/swait.h
+index 21ae66cd41d3..f426a0661aa0 100644
+--- a/include/linux/swait.h
++++ b/include/linux/swait.h
+@@ -299,18 +299,4 @@ do {									\
+ 	__ret;								\
+ })
+ 
+-#define __swait_event_lock_irq(wq, condition, lock, cmd)		\
+-	___swait_event(wq, condition, TASK_UNINTERRUPTIBLE, 0,		\
+-		       raw_spin_unlock_irq(&lock);			\
+-		       cmd;						\
+-		       schedule();					\
+-		       raw_spin_lock_irq(&lock))
+-
+-#define swait_event_lock_irq(wq_head, condition, lock)			\
+-	do {								\
+-		if (condition)						\
+-			break;						\
+-		__swait_event_lock_irq(wq_head, condition, lock, );	\
+-	} while (0)
+-
+ #endif /* _LINUX_SWAIT_H */
+diff --git a/kernel/locking/rwsem.c b/kernel/locking/rwsem.c
+index 0d11ba11a32a..0325c721f9b3 100644
+--- a/kernel/locking/rwsem.c
++++ b/kernel/locking/rwsem.c
+@@ -1616,15 +1616,15 @@ void _down_write_nest_lock(struct rw_semaphore *sem, struct lockdep_map *nest)
+ }
+ EXPORT_SYMBOL(_down_write_nest_lock);
+ 
+-#ifndef CONFIG_PREEMPT_RT
+ void down_read_non_owner(struct rw_semaphore *sem)
+ {
+ 	might_sleep();
+ 	__down_read(sem);
++#ifndef CONFIG_PREEMPT_RT
+ 	__rwsem_set_reader_owned(sem, NULL);
++#endif
+ }
+ EXPORT_SYMBOL(down_read_non_owner);
+-#endif
+ 
+ void down_write_nested(struct rw_semaphore *sem, int subclass)
+ {
+@@ -1649,13 +1649,13 @@ int __sched down_write_killable_nested(struct rw_semaphore *sem, int subclass)
+ }
+ EXPORT_SYMBOL(down_write_killable_nested);
+ 
+-#ifndef CONFIG_PREEMPT_RT
+ void up_read_non_owner(struct rw_semaphore *sem)
+ {
++#ifndef CONFIG_PREEMPT_RT
+ 	DEBUG_RWSEMS_WARN_ON(!is_rwsem_reader_owned(sem), sem);
++#endif
+ 	__up_read(sem);
+ }
+ EXPORT_SYMBOL(up_read_non_owner);
+-#endif
+ 
+ #endif
+diff --git a/kernel/signal.c b/kernel/signal.c
+index def2e8e37f1f..aa924f0141cf 100644
+--- a/kernel/signal.c
++++ b/kernel/signal.c
+@@ -494,8 +494,8 @@ static void sigqueue_free_current(struct sigqueue *q)
+ 
+ 	up = q->user;
+ 	if (rt_prio(current->normal_prio) && !put_task_cache(current, q)) {
+-		atomic_dec(&up->sigpending);
+-		free_uid(up);
++		if (atomic_dec_and_test(&up->sigpending))
++			free_uid(up);
+ 	} else
+ 		  __sigqueue_free(q);
+ }
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index 26341e8101ee..7c968aea01e1 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -50,7 +50,6 @@
+ #include <linux/uaccess.h>
+ #include <linux/sched/isolation.h>
+ #include <linux/nmi.h>
+-#include <linux/swait.h>
+ 
+ #include "workqueue_internal.h"
+ 
+@@ -302,7 +301,8 @@ static struct workqueue_attrs *wq_update_unbound_numa_attrs_buf;
+ static DEFINE_MUTEX(wq_pool_mutex);	/* protects pools and workqueues list */
+ static DEFINE_MUTEX(wq_pool_attach_mutex); /* protects worker attach/detach */
+ static DEFINE_RAW_SPINLOCK(wq_mayday_lock);	/* protects wq->maydays list */
+-static DECLARE_SWAIT_QUEUE_HEAD(wq_manager_wait); /* wait for manager to go away */
++/* wait for manager to go away */
++static struct rcuwait manager_wait = __RCUWAIT_INITIALIZER(manager_wait);
+ 
+ static LIST_HEAD(workqueues);		/* PR: list of all workqueues */
+ static bool workqueue_freezing;		/* PL: have wqs started freezing? */
+@@ -1615,11 +1615,9 @@ EXPORT_SYMBOL_GPL(queue_work_node);
+ void delayed_work_timer_fn(struct timer_list *t)
+ {
+ 	struct delayed_work *dwork = from_timer(dwork, t, timer);
+-	unsigned long flags;
+ 
+-	local_irq_save(flags);
++	/* should have been called from irqsafe timer with irq already off */
+ 	__queue_work(dwork->cpu, dwork->wq, &dwork->work);
+-	local_irq_restore(flags);
+ }
+ EXPORT_SYMBOL(delayed_work_timer_fn);
+ 
+@@ -2147,7 +2145,7 @@ static bool manage_workers(struct worker *worker)
+ 
+ 	pool->manager = NULL;
+ 	pool->flags &= ~POOL_MANAGER_ACTIVE;
+-	swake_up_one(&wq_manager_wait);
++	rcuwait_wake_up(&manager_wait);
+ 	return true;
  }
  
-@@ -146,6 +151,8 @@ static int ipcomp_compress(struct xfrm_state *x, struct sk_buff *skb)
- 	int err;
+@@ -3511,6 +3509,18 @@ static void rcu_free_pool(struct rcu_head *rcu)
+ 	kfree(pool);
+ }
  
- 	local_bh_disable();
-+	local_lock(ipcomp_scratches_lock);
++/* This returns with the lock held on success (pool manager is inactive). */
++static bool wq_manager_inactive(struct worker_pool *pool)
++{
++	raw_spin_lock_irq(&pool->lock);
 +
- 	scratch = *this_cpu_ptr(ipcomp_scratches);
- 	tfm = *this_cpu_ptr(ipcd->tfms);
- 	err = crypto_comp_compress(tfm, start, plen, scratch, &dlen);
-@@ -158,12 +165,14 @@ static int ipcomp_compress(struct xfrm_state *x, struct sk_buff *skb)
++	if (pool->flags & POOL_MANAGER_ACTIVE) {
++		raw_spin_unlock_irq(&pool->lock);
++		return false;
++	}
++	return true;
++}
++
+ /**
+  * put_unbound_pool - put a worker_pool
+  * @pool: worker_pool to put
+@@ -3546,10 +3556,10 @@ static void put_unbound_pool(struct worker_pool *pool)
+ 	 * Become the manager and destroy all workers.  This prevents
+ 	 * @pool's workers from blocking on attach_mutex.  We're the last
+ 	 * manager and @pool gets freed with the flag set.
++	 * Because of how wq_manager_inactive() works, we will hold the
++	 * spinlock after a successful wait.
+ 	 */
+-	raw_spin_lock_irq(&pool->lock);
+-	swait_event_lock_irq(wq_manager_wait,
+-			    !(pool->flags & POOL_MANAGER_ACTIVE), pool->lock);
++	rcuwait_wait_event(&manager_wait, wq_manager_inactive(pool));
+ 	pool->flags |= POOL_MANAGER_ACTIVE;
+ 
+ 	while ((worker = first_idle_worker(pool)))
+diff --git a/localversion-rt b/localversion-rt
+index ce6a482618d5..e1d836252017 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt32
++-rt33
+diff --git a/net/bluetooth/rfcomm/sock.c b/net/bluetooth/rfcomm/sock.c
+index 90bb53aa4bee..2c27aa2acf1c 100644
+--- a/net/bluetooth/rfcomm/sock.c
++++ b/net/bluetooth/rfcomm/sock.c
+@@ -64,15 +64,13 @@ static void rfcomm_sk_data_ready(struct rfcomm_dlc *d, struct sk_buff *skb)
+ static void rfcomm_sk_state_change(struct rfcomm_dlc *d, int err)
+ {
+ 	struct sock *sk = d->owner, *parent;
+-	unsigned long flags;
+ 
+ 	if (!sk)
+ 		return;
+ 
+ 	BT_DBG("dlc %p state %ld err %d", d, d->state, err);
+ 
+-	local_irq_save(flags);
+-	bh_lock_sock(sk);
++	spin_lock_bh(&sk->sk_lock.slock);
+ 
+ 	if (err)
+ 		sk->sk_err = err;
+@@ -93,8 +91,7 @@ static void rfcomm_sk_state_change(struct rfcomm_dlc *d, int err)
+ 		sk->sk_state_change(sk);
  	}
  
- 	memcpy(start + sizeof(struct ip_comp_hdr), scratch, dlen);
-+	local_unlock(ipcomp_scratches_lock);
- 	local_bh_enable();
+-	bh_unlock_sock(sk);
+-	local_irq_restore(flags);
++	spin_unlock_bh(&sk->sk_lock.slock);
  
- 	pskb_trim(skb, dlen + sizeof(struct ip_comp_hdr));
- 	return 0;
- 
- out:
-+	local_unlock(ipcomp_scratches_lock);
- 	local_bh_enable();
- 	return err;
- }
--- 
-2.26.2
-
+ 	if (parent && sock_flag(sk, SOCK_ZAPPED)) {
+ 		/* We have to drop DLC lock here, otherwise
