@@ -2,82 +2,94 @@ Return-Path: <SRS0=y2gO=BY=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.0 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-4.1 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 21E0AC433E1
-	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Aug 2020 05:03:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D83D8C433E1
+	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Aug 2020 11:41:38 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BCC5F20656
-	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Aug 2020 05:03:05 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A8CE520771
+	for <linux-rt-users@archiver.kernel.org>; Fri, 14 Aug 2020 11:41:38 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="z2cLJOge";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="25C2XuDi"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726324AbgHNFDB (ORCPT
+        id S1726680AbgHNLlh (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 14 Aug 2020 01:03:01 -0400
-Received: from inva020.nxp.com ([92.121.34.13]:55214 "EHLO inva020.nxp.com"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726116AbgHNFDB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 14 Aug 2020 01:03:01 -0400
-Received: from inva020.nxp.com (localhost [127.0.0.1])
-        by inva020.eu-rdc02.nxp.com (Postfix) with ESMTP id 9D0C61A018C;
-        Fri, 14 Aug 2020 07:02:58 +0200 (CEST)
-Received: from invc005.ap-rdc01.nxp.com (invc005.ap-rdc01.nxp.com [165.114.16.14])
-        by inva020.eu-rdc02.nxp.com (Postfix) with ESMTP id C7E931A01FB;
-        Fri, 14 Aug 2020 07:02:53 +0200 (CEST)
-Received: from localhost.localdomain (mega.ap.freescale.net [10.192.208.232])
-        by invc005.ap-rdc01.nxp.com (Postfix) with ESMTP id DCDA2402C9;
-        Fri, 14 Aug 2020 07:02:47 +0200 (CEST)
-From:   Jiafei Pan <Jiafei.Pan@nxp.com>
-To:     peterz@infradead.org, mingo@kernel.org, tglx@linutronix.de,
-        rostedt@goodmis.org, romain.perier@gmail.com, will@kernel.org
-Cc:     linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-        jiafei.pan@nxp.com, leoyang.li@nxp.com, vladimir.oltean@nxp.com,
-        Jiafei Pan <Jiafei.Pan@nxp.com>
-Subject: [PATCH v2] softirq: add irq off checking for __raise_softirq_irqoff
-Date:   Fri, 14 Aug 2020 12:55:22 +0800
-Message-Id: <20200814045522.45719-1-Jiafei.Pan@nxp.com>
-X-Mailer: git-send-email 2.17.1
-X-Virus-Scanned: ClamAV using ClamSMTP
+        Fri, 14 Aug 2020 07:41:37 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40026 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726268AbgHNLlg (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 14 Aug 2020 07:41:36 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5628EC061384
+        for <linux-rt-users@vger.kernel.org>; Fri, 14 Aug 2020 04:41:36 -0700 (PDT)
+Date:   Fri, 14 Aug 2020 13:41:32 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1597405293;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=Icf7rtcdV62iG4ikVKmuk0Wimxc7ZBSdHw9knKcGB7A=;
+        b=z2cLJOgeL6UH/js6tFpqgX4/7sFGagkAmGqGMFOk2QNZgvTAlX6B34IIFxQ5dv9l5IcnQz
+        UrJtbqr5s6piaR6rat/kxzIrajT1tIjkp7Wr2T+PuQd+/eMwoDXw6YINCWvxCKecXsLYLW
+        rJr+Kju21fGXdbFaHCZMPIrqtsS6FqqL7Z92XjuBCi8n5H9VGgZ3qUKJitsFj0KzzW0p7u
+        mF11Oj6RSDiBrPeF2BmrGkTotH0PQdrJt11HnZyd6QAoK3ZNcPKFpYSIfEFL9htrVUnoRb
+        y/yS02MktGWW6mPw9jEKnmg5Fm4NDtlQ1gRJ96fZr860y2PCl/JHMCJkuJ9MaQ==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1597405293;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=Icf7rtcdV62iG4ikVKmuk0Wimxc7ZBSdHw9knKcGB7A=;
+        b=25C2XuDi7/lrOhluXHVUfaI+Ry5oe5P6fxO6mjtPW0FCWIqNp0rMgqaP6JpCGsonw5ffhK
+        92yLuFiq8fPbRsAw==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Juri Lelli <juri.lelli@redhat.com>
+Cc:     linux-rt-users <linux-rt-users@vger.kernel.org>
+Subject: Re: [BUG] stress-ng close causes kernel oops(es) v5.6-rt and v5.4-rt
+Message-ID: <20200814114132.rq7ygkexdqn5aqgg@linutronix.de>
+References: <20200810133639.GA59705@localhost.localdomain>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20200810133639.GA59705@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-__raise_softirq_irqoff() will update per-CPU mask of pending softirqs,
-it need to be called in irq disabled context in order to keep it atomic
-operation, otherwise it will be interrupted by hardware interrupt,
-and per-CPU softirqs pending mask will be corrupted, the result is
-there will be unexpected issue, for example hrtimer soft irq will
-be losed and soft hrtimer will never be expire and handled.
+On 2020-08-10 15:36:39 [+0200], Juri Lelli wrote:
+> Hi,
+Hi,
 
-Enable CONFIG_PROVE_LOCKING to use lockdep_assert_irqs_disabled() to
-check hardirqs and softirqs status, and provide warning in irqs enabled
-context.
+> As per subject, the following test
+> 
+> # stress-ng --close 0 --verbose --timeout 60 --metrics-brief
+> 
+> Causes kernel crashes for both v5.6.19-rt11 and v5.4.28-rt19 (splats
+> follow). Will try to dig deeper, but wanted to report early as this
+> seems to be very easy to reproduce and maybe someone already saw it and
+> might have suggestions.
+> 
 
-Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
----
-Changes in v2:
-- use lockdep_assert_irqs_disabled()
-- removed extra comments
-- changed commit message
+kvm:
+|stress-ng: info:  [2067] successful run completed in 60.03s (1 min, 0.03 secs)
+|stress-ng: info:  [2067] stressor       bogo ops real time  usr time  sys time   bogo ops/s   bogo ops/s
+|stress-ng: info:  [2067]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+|stress-ng: info:  [2067] close            903449     60.02     22.68    182.01     15053.52      4413.74
 
- kernel/softirq.c | 1 +
- 1 file changed, 1 insertion(+)
+real HW, no debug:
+|stress-ng: info:  [50376] successful run completed in 60.01s (1 min, 0.01 secs)
+|stress-ng: info:  [50376] stressor       bogo ops real time  usr time  sys time   bogo ops/s   bogo ops/s
+|stress-ng: info:  [50376]                           (secs)    (secs)    (secs)   (real time) (usr+sys time)
+|stress-ng: info:  [50376] close           9937122     60.00    129.59    352.74    165614.20     20602.33
 
-diff --git a/kernel/softirq.c b/kernel/softirq.c
-index bf88d7f62433..09229ad82209 100644
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -481,6 +481,7 @@ void raise_softirq(unsigned int nr)
- 
- void __raise_softirq_irqoff(unsigned int nr)
- {
-+	lockdep_assert_irqs_disabled();
- 	trace_softirq_raise(nr);
- 	or_softirq_pending(1UL << nr);
- }
--- 
-2.17.1
+Can you reproduce this in kvm and send me a .config? As of now I can't
+reproduce it.
 
+> Juri
+
+Sebastian
