@@ -2,202 +2,91 @@ Return-Path: <SRS0=mgec=B3=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EB8C3C433DF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 17 Aug 2020 08:18:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 920F8C433E1
+	for <linux-rt-users@archiver.kernel.org>; Mon, 17 Aug 2020 11:13:26 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C93072078D
-	for <linux-rt-users@archiver.kernel.org>; Mon, 17 Aug 2020 08:18:25 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 695CF20674
+	for <linux-rt-users@archiver.kernel.org>; Mon, 17 Aug 2020 11:13:26 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="qg7MPqCZ";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="aU2XoWuL"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727116AbgHQISN (ORCPT
+        id S1726953AbgHQLNY (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 17 Aug 2020 04:18:13 -0400
-Received: from mx-ginzinger.sigmacloud.services ([185.154.235.147]:34649 "EHLO
-        mx-ginzinger.sigmacloud.services" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1727097AbgHQISE (ORCPT
+        Mon, 17 Aug 2020 07:13:24 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50538 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726385AbgHQLNX (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 17 Aug 2020 04:18:04 -0400
-X-Greylist: delayed 321 seconds by postgrey-1.27 at vger.kernel.org; Mon, 17 Aug 2020 04:18:02 EDT
-Received: from [31.193.165.228] (port=4386 helo=mx-ginzinger.sigmacloud.services)
-        by mx-ginzinger.sigmacloud.services with esmtps (TLSv1.2:AES256-GCM-SHA384:256)
-        (Exim 4.82_1-5b7a7c0-XX)
-        (envelope-from <Henri.Roosen@ginzinger.com>)
-        id 1k7aFs-0001DQ-0P; Mon, 17 Aug 2020 10:12:32 +0200
-Received: from exc1.buero.ginzinger.com (10.1.1.204) by
- exc1.buero.ginzinger.com (10.1.1.204) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.1466.3; Mon, 17 Aug 2020 10:12:31 +0200
-Received: from exc1.buero.ginzinger.com ([fe80::ad39:a353:4517:a5c4]) by
- exc1.buero.ginzinger.com ([fe80::ad39:a353:4517:a5c4%3]) with mapi id
- 15.01.1466.012; Mon, 17 Aug 2020 10:12:31 +0200
-X-CTCH-RefID: str=0001.0A090207.5F3A3BF0.0038,ss=1,re=0.000,recu=0.000,reip=0.000,cl=1,cld=1,fgs=0
-From:   Roosen Henri <Henri.Roosen@ginzinger.com>
-To:     "bigeasy@linutronix.de" <bigeasy@linutronix.de>
-CC:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+        Mon, 17 Aug 2020 07:13:23 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 089ACC061389
+        for <linux-rt-users@vger.kernel.org>; Mon, 17 Aug 2020 04:13:16 -0700 (PDT)
+Date:   Mon, 17 Aug 2020 13:13:11 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1597662793;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=+bC3mA4F5q/xXTF9Q3+3pp3zhtUrEAPuelVH3Xf9TSM=;
+        b=qg7MPqCZXSG/NOn/t3faCgx8GMj/xjw4NvB8HY7HpFMsl+LhpsIVsU5tfA+oYYK7bzgUcX
+        ui5LMklzPBAP1bbagAsUJkiDqufRSJSCul8gt2Dh1vEqv+Y3P/KYmJs0ePk/gtvEnvqjk7
+        sc/drMkfCDpUIKAf1dDvAMHMRAStE6CzQKOe39db8a3nu4/i1o27DEgGBN6Ie5AUhHVB9p
+        sIlhTHUEuesVYNpOdGCg/OWODmzHMjMqwBv7ZVHBK5TUQFsHrscuiEJkYRCI60BFL98cw7
+        weupnBJBdWYNk3luOB9Sw/qLqqK4uLR/ilOBexDHR0H1udSZTPmyDLekUeXQ2g==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1597662793;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=+bC3mA4F5q/xXTF9Q3+3pp3zhtUrEAPuelVH3Xf9TSM=;
+        b=aU2XoWuLSOMZyndfpiXZ/xHy9ZUKnrlJXPytmhqMz0Mb3r4DfOo0iHRm3heBda/J6zVzYN
+        wYmxARGjDfIXjvAQ==
+From:   "bigeasy@linutronix.de" <bigeasy@linutronix.de>
+To:     Roosen Henri <Henri.Roosen@ginzinger.com>
+Cc:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
         "williams@redhat.com" <williams@redhat.com>
 Subject: Re: RT kernel v4.14 NULL pointer dereferences
-Thread-Topic: RT kernel v4.14 NULL pointer dereferences
-Thread-Index: AQHWcjJMcwTnsC+ddke4u3BMdVP/nKk71mOA
-Date:   Mon, 17 Aug 2020 08:12:31 +0000
-Message-ID: <25412beffb96ab8c2b8f869bdac5a66c49faa5ca.camel@ginzinger.com>
+Message-ID: <20200817111311.zyqjznhferoqqxkh@linutronix.de>
 References: <fd9d435b3f6a5f4ffd7ef93763e78c087871d565.camel@ginzinger.com>
-         <20200814115848.w4m2bfqttkid6woi@linutronix.de>
-In-Reply-To: <20200814115848.w4m2bfqttkid6woi@linutronix.de>
-Accept-Language: en-US, de-DE
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-originating-ip: [10.2.1.65]
-x-exclaimer-md-config: 9dd172f7-de2e-4231-b886-ec11f46e03b3
-x-exclaimer-md-bifurcation-instance: 0
-x-exclaimer-md-search-key: I31rsmVJyUea87P3S8FhOw==
+ <20200814115848.w4m2bfqttkid6woi@linutronix.de>
+ <25412beffb96ab8c2b8f869bdac5a66c49faa5ca.camel@ginzinger.com>
 MIME-Version: 1.0
-Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----091B82EE90BEEBDB2A774ECAE7026290"
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <25412beffb96ab8c2b8f869bdac5a66c49faa5ca.camel@ginzinger.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-This is an S/MIME signed message
+On 2020-08-17 08:12:31 [+0000], Roosen Henri wrote:
+> > Is the 4.14 series the only one that is affected?
+> 
+> No, unfortunately not.
+> 
+> I ended up testing the v4.14.184-rt84 on two systems and the v5.4.45-
+> rt27 on another system, all iMX6Q. Only one of the v4.14 systems is
+> still running, the other v4.14 system dumping backtraces until
+> eventually reset, the v5.4 system endlessly dumping backtraces:
+> 
+> v4.14: https://paste.ubuntu.com/p/ZdFYhs4pjx/
+> v5.4: https://paste.ubuntu.com/p/wZPCQv8KjX/
 
-------091B82EE90BEEBDB2A774ECAE7026290
-Content-Language: de-DE
-Content-Type: text/plain; charset="utf-8"
-Content-ID: <749D3286A26E4544867D4C0441228918@ginzinger.com>
-Content-Transfer-Encoding: base64
-MIME-Version: 1.0
+So the 5.4 has an uptime of 45 days until this start?
 
-DQoNCkhlbnJpIFJvb3NlbiB8IEVudHdpY2tsdW5nIFNvZnR3YXJlDQoNCkdJTlpJTkdFUiBFTEVD
-VFJPTklDIFNZU1RFTVMgR01CSA0KDQpUZWwuOiArNDMgNzcyMyA1NDIyIDE2MQ0KTWFpbDogaGVu
-cmkucm9vc2VuQGdpbnppbmdlci5jb20NCldlYjogd3d3Lmdpbnppbmdlci5jb20NCg0KDQoNCg0K
-T24gRnJpLCAyMDIwLTA4LTE0IGF0IDEzOjU4ICswMjAwLCBTZWJhc3RpYW4gQW5kcnplaiBTaWV3
-aW9yIHdyb3RlOg0KPiBPbiAyMDIwLTA2LTE2IDA3OjMwOjMzIFsrMDAwMF0sIFJvb3NlbiBIZW5y
-aSB3cm90ZToNCj4gPiBIaSBSVC1leHBlcnRzLA0KPiA+DQo+ID4gRHVyYXRpb24gdGVzdHMgd2l0
-aCBSVCBlbmFibGVkIHY0LjE0IGtlcm5lbHMgb24gb3VyIEFSTSBpTVg2UQ0KPiA+IHN5c3RlbXMN
-Cj4gPiBhcmUgc2hvd2luZyAiVW5hYmxlIHRvIGhhbmRsZSBrZXJuZWwgTlVMTCBwb2ludGVyIGRl
-cmVmZXJlbmNlIGF0DQo+ID4gdmlydHVhbCBhZGRyZXNzIiBhZnRlciBydW5uaW5nIGZvciBzb21l
-IG1vbnRocy4gVGhlIHNhbWUgdGVzdHMgb24NCj4gPiBOT04tDQo+ID4gUlQga2VybmVscyBkb24n
-dCBzaG93IGFueSBwcm9ibGVtIGFuZCBoYXZlIGJlZW4gcnVubmluZyB3aXRob3V0IGFueQ0KPiA+
-IHByb2JsZW1zIGZvciBtb3JlIHRoYW4gMjAgbW9udGhzIG5vdy4NCj4gPg0KPiA+IEkndmUgYmVl
-biB1cGRhdGluZyB0aGUgdGVzdHMgZnJvbSB0aW1lIHRvIHRpbWUgd2l0aCBtb3JlIHJlY2VudA0K
-PiA+IGtlcm5lbHMuIFRlc3RpbmcgaXMgYmFzaWNhbGx5IGRvbmUgd2l0aCBjeWNsaWN0ZXN0LCBp
-biBwYXJhbGxlbA0KPiA+IHdpdGgNCj4gPiBzb21lIGxvYWQgc2NyaXB0cy9oYWNrYmVuY2guIFBs
-ZWFzZSBoYXZlIGEgbG9vayBhdCB0aGUga2VybmVsDQo+ID4gdHJhY2VzOg0KPiA+IDQuMTQuNzEt
-cnQ0NCAgLT4gaHR0cHM6Ly9wYXN0ZS5kZWJpYW4ubmV0LzExNTIyMDYvDQo+ID4gNC4xNC4xMDYt
-cnQ1NiAtPiBodHRwczovL3Bhc3RlLmRlYmlhbi5uZXQvMTE1MjIwNC8NCj4gPiA0LjE0LjE0Ni1y
-dDY3IC0+IGh0dHBzOi8vcGFzdGUuZGViaWFuLm5ldC8xMTUyMjAyLw0KPiA+DQo+ID4gSSd2ZSBz
-ZWVuIHRoZSB2NC4xNC1ydCBicmFuY2ggZ290IHNvbWUgZml4ZXMsIHNvIG15IHF1ZXN0aW9ucyBh
-cmU6DQo+ID4gMSkgaXMgcHJvYmxlbSBJJ20gZmFjaW5nIGtub3duIGFuZCBmaXhlZCBpbiB2NC4x
-NC1ydCwgb3INCj4gPiAyKSBpcyB0aGUgcHJvYmxlbSBJJ20gc2VlaW5nIGEgbmV3IGlzc3VlIHBy
-b2JhYmx5IHN0aWxsIHVuZml4ZWQgaW4NCj4gPiA0LjE0LjE4My1ydDgzICh3aGljaCBJJ20gdGVz
-dGluZyByaWdodCBub3cpPw0KPiA+DQo+ID4gQW55IGhlbHAgaXMgaGlnaGx5IGFwcHJlY2lhdGVk
-IQ0KPg0KPiBTbyB0aGlzIGhhcyBub3QgZml4ZWQgYWxsIGJ5IGl0c2VsZj8NCj4gSXMgdGhlIDQu
-MTQgc2VyaWVzIHRoZSBvbmx5IG9uZSB0aGF0IGlzIGFmZmVjdGVkPw0KDQpObywgdW5mb3J0dW5h
-dGVseSBub3QuDQoNCkkgZW5kZWQgdXAgdGVzdGluZyB0aGUgdjQuMTQuMTg0LXJ0ODQgb24gdHdv
-IHN5c3RlbXMgYW5kIHRoZSB2NS40LjQ1LQ0KcnQyNyBvbiBhbm90aGVyIHN5c3RlbSwgYWxsIGlN
-WDZRLiBPbmx5IG9uZSBvZiB0aGUgdjQuMTQgc3lzdGVtcyBpcw0Kc3RpbGwgcnVubmluZywgdGhl
-IG90aGVyIHY0LjE0IHN5c3RlbSBkdW1waW5nIGJhY2t0cmFjZXMgdW50aWwNCmV2ZW50dWFsbHkg
-cmVzZXQsIHRoZSB2NS40IHN5c3RlbSBlbmRsZXNzbHkgZHVtcGluZyBiYWNrdHJhY2VzOg0KDQp2
-NC4xNDogaHR0cHM6Ly9wYXN0ZS51YnVudHUuY29tL3AvWmRGWWhzNHBqeC8NCnY1LjQ6IGh0dHBz
-Oi8vcGFzdGUudWJ1bnR1LmNvbS9wL3daUENRdjhLalgvDQoNCklmIHRoZSBiYWNrdHJhY2VzIGRv
-bid0IHBvaW50IHRvIGEgcm9vdC1jYXVzZSwgYXJlIHRoZXJlIGFueSBrZXJuZWwNCmNvbmZpZ3Vy
-YXRpb24gb3B0aW9ucyB3aGljaCBhcmUgdXNlZnVsbCB0byB0cmFjayB0aGlzIGlzc3VlIGRvd24/
-DQoNClRoYW5rcyENCg0KPg0KPiA+IFRoYW5rcywNCj4gPiBIZW5yaQ0KPg0KPiBTZWJhc3RpYW4N
-Cg0KDQoNCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18NCg0KR2luemlu
-Z2VyIGVsZWN0cm9uaWMgc3lzdGVtcyBHbWJIDQpHZXdlcmJlZ2ViaWV0IFBpcmF0aCAxNg0KNDk1
-MiBXZW5nIGltIElubmtyZWlzDQp3d3cuZ2luemluZ2VyLmNvbQ0KDQpGaXJtZW5idWNobnVtbWVy
-OiBGTiAzNjQ5NThkDQpGaXJtZW5idWNoZ2VyaWNodDogUmllZCBpbSBJbm5rcmVpcw0KVUlELU5y
-LjogQVRVNjY1MjEwODkNCg0KDQpEaWVzZSBOYWNocmljaHQgaXN0IHZlcnRyYXVsaWNoIHVuZCBk
-YXJmIG5pY2h0IGFuIGFuZGVyZSBQZXJzb25lbiB3ZWl0ZXJnZWdlYmVuIG9kZXIgdm9uIGRpZXNl
-biB2ZXJ3ZW5kZXQgd2VyZGVuLiBWZXJzdMOkbmRpZ2VuIFNpZSB1bnMsIHdlbm4gU2llIGlycnTD
-vG1saWNoIGVpbmUgTWl0dGVpbHVuZyBlbXBmYW5nZW4gaGFiZW4uDQoNClRoaXMgbWVzc2FnZSBp
-cyBjb25maWRlbnRpYWwuIEl0IG1heSBub3QgYmUgZGlzY2xvc2VkIHRvLCBvciB1c2VkIGJ5LCBh
-bnlvbmUgb3RoZXIgdGhhbiB0aGUgYWRkcmVzc2VlLiBJZiB5b3UgcmVjZWl2ZSB0aGlzIG1lc3Nh
-Z2UgYnkgbWlzdGFrZSwgcGxlYXNlIGFkdmlzZSB0aGUgc2VuZGVyLg0K
+> If the backtraces don't point to a root-cause, are there any kernel
+> configuration options which are usefull to track this issue down?
 
-------091B82EE90BEEBDB2A774ECAE7026290
-Content-Type: application/x-pkcs7-signature; name="smime.p7s"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="smime.p7s"
+The 5.4 is not complete, it started earlier and this might be a
+follow-up problem (it seems to originate in die()).
+You could send me the config, I have an imx6q somewhere so I might be
+able to take a look. However I want sort another ppc issue first.
 
-MIIOFAYJKoZIhvcNAQcCoIIOBTCCDgECAQExDzANBglghkgBZQMEAgEFADALBgkq
-hkiG9w0BBwGgggsYMIIF5jCCA86gAwIBAgIQapvhODv/K2ufAdXZuKdSVjANBgkq
-hkiG9w0BAQwFADCBhTELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFu
-Y2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExp
-bWl0ZWQxKzApBgNVBAMTIkNPTU9ETyBSU0EgQ2VydGlmaWNhdGlvbiBBdXRob3Jp
-dHkwHhcNMTMwMTEwMDAwMDAwWhcNMjgwMTA5MjM1OTU5WjCBlzELMAkGA1UEBhMC
-R0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9y
-ZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxPTA7BgNVBAMTNENPTU9ETyBS
-U0EgQ2xpZW50IEF1dGhlbnRpY2F0aW9uIGFuZCBTZWN1cmUgRW1haWwgQ0EwggEi
-MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC+s55XrCh2dUAWxzgDmNPGGHYh
-UPMleQtMtaDRfTpYPpynMS6n9jR22YRq2tA9NEjk6vW7rN/5sYFLIP1of3l0NKZ6
-fLWfF2VgJ5cijKYy/qlAckY1wgOkUMgzKlWlVJGyK+UlNEQ1/5ErCsHq9x9aU/x1
-KwTdF/LCrT03Rl/FwFrf1XTCwa2QZYL55AqLPikFlgqOtzk06kb2qvGlnHJvijjI
-03BOrNpo+kZGpcHsgyO1/u1OZTaOo8wvEU17VVeP1cHWse9tGKTDyUGg2hJZjrqc
-k39UIm/nKbpDSZ0JsMoIw/JtOOg0JC56VzQgBo7ictReTQE5LFLG3yQK+xS1AgMB
-AAGjggE8MIIBODAfBgNVHSMEGDAWgBS7r34CPfqm8TyEjq3uOJjs2TIy1DAdBgNV
-HQ4EFgQUgq9sjPjF/pZhfOgfPStxSF7Ei8AwDgYDVR0PAQH/BAQDAgGGMBIGA1Ud
-EwEB/wQIMAYBAf8CAQAwEQYDVR0gBAowCDAGBgRVHSAAMEwGA1UdHwRFMEMwQaA/
-oD2GO2h0dHA6Ly9jcmwuY29tb2RvY2EuY29tL0NPTU9ET1JTQUNlcnRpZmljYXRp
-b25BdXRob3JpdHkuY3JsMHEGCCsGAQUFBwEBBGUwYzA7BggrBgEFBQcwAoYvaHR0
-cDovL2NydC5jb21vZG9jYS5jb20vQ09NT0RPUlNBQWRkVHJ1c3RDQS5jcnQwJAYI
-KwYBBQUHMAGGGGh0dHA6Ly9vY3NwLmNvbW9kb2NhLmNvbTANBgkqhkiG9w0BAQwF
-AAOCAgEAeFyygSg0TzzuX1bOn5dW7I+iaxf28/ZJCAbU2C81zd9A/tNx4+jsQgwR
-GiHjZrAYayZrrm78hOx7aEpkfNPQIHGG6Fvq3EzWf/Lvx7/hk6zSPwIal9v5IkDc
-ZoFD7f3iT7PdkHJY9B51csvU50rxpEg1OyOT8fk2zvvPBuM4qQNqbGWlnhMpIMwp
-WZT89RY0wpJO+2V6eXEGGHsROs3njeP9DqqqAJaBa4wBeKOdGCWn1/Jp2oY6dyNm
-NppI4ZNMUH4Tam85S1j6E95u4+1Nuru84OrMIzqvISE2HN/56ebTOWlcrurffade
-2022O/tUU1gb4jfWCcyvB8czm12FgX/y/lRjmDbEA08QJNB2729Y+io1IYO3ztve
-BdvUCIYZojTq/OCR6MvnzS6X72HP0PRLRTiOSEmIDsS5N5w/8IW1Hva5hEFy6fDA
-fd9yI+O+IMMAj1KcL/Zo9jzJ16HO5m60ttl1Enk8MQkz/W3JlHaeI5iKFn4UJu1/
-cP2YHXYPiWf2JyBzsLBrGk1II+3yL8aorYew6CQvdVifC3HtwlSam9V1niiCfOBe
-2C12TdKGu05LWIA3ZkFcWJGaNXOZ6Ggyh/TqvXG5v7zmEVDNXFnHn9tFpMpOUvxh
-csjycBtH0dZ0WrNw6gH+HF8TIhCnH3+zzWuDN0Rk6h9KVkfKehIwggUqMIIEEqAD
-AgECAhEAgK6FAFOiNDdgM5+lyjA8gTANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UE
-BhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2Fs
-Zm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxPTA7BgNVBAMTNENPTU9E
-TyBSU0EgQ2xpZW50IEF1dGhlbnRpY2F0aW9uIGFuZCBTZWN1cmUgRW1haWwgQ0Ew
-HhcNMTgwNzE4MDAwMDAwWhcNMjEwNzE3MjM1OTU5WjArMSkwJwYJKoZIhvcNAQkB
-FhpoZW5yaS5yb29zZW5AZ2luemluZ2VyLmNvbTCCASIwDQYJKoZIhvcNAQEBBQAD
-ggEPADCCAQoCggEBAMmwBmquEWhoUH5WNJe7bQRLBAccBq0ZBVQbLAbJQwN5bg9i
-wSsPG7mveXqXYWpuHhbb7lbs3zFTS4H511nWurRqcvVceVOs5vtsbVMHjfuNmHo8
-WrMCJPFBw64uBUoGdsiwuAvA0CeFpPyA/CsAuvIbmvEF+GxMjaeQhqQ9d5K4z4I6
-w6R3wFtNJiSUMUSdgtnNPDYnUIKILR3mfbSCHWA7Pepe1dh+S9JFWhcoNv1h6D/R
-SAKVdUtC2GS0vt3nk4cEg8Z0s4/OvVDRm2jluvPK+fEeUfGahwHFrk68nYTq3v2P
-dMxHg93+Li+jYAX6R3XXGbdcjZJ3UM5MGEKq+u0CAwEAAaOCAdowggHWMB8GA1Ud
-IwQYMBaAFIKvbIz4xf6WYXzoHz0rcUhexIvAMB0GA1UdDgQWBBQ9s9JCcV1JOI2I
-/oXSyF8VIj2VhTAOBgNVHQ8BAf8EBAMCBaAwDAYDVR0TAQH/BAIwADAdBgNVHSUE
-FjAUBggrBgEFBQcDBAYIKwYBBQUHAwIwRgYDVR0gBD8wPTA7BgwrBgEEAbIxAQIB
-AwUwKzApBggrBgEFBQcCARYdaHR0cHM6Ly9zZWN1cmUuY29tb2RvLm5ldC9DUFMw
-WgYDVR0fBFMwUTBPoE2gS4ZJaHR0cDovL2NybC5jb21vZG9jYS5jb20vQ09NT0RP
-UlNBQ2xpZW50QXV0aGVudGljYXRpb25hbmRTZWN1cmVFbWFpbENBLmNybDCBiwYI
-KwYBBQUHAQEEfzB9MFUGCCsGAQUFBzAChklodHRwOi8vY3J0LmNvbW9kb2NhLmNv
-bS9DT01PRE9SU0FDbGllbnRBdXRoZW50aWNhdGlvbmFuZFNlY3VyZUVtYWlsQ0Eu
-Y3J0MCQGCCsGAQUFBzABhhhodHRwOi8vb2NzcC5jb21vZG9jYS5jb20wJQYDVR0R
-BB4wHIEaaGVucmkucm9vc2VuQGdpbnppbmdlci5jb20wDQYJKoZIhvcNAQELBQAD
-ggEBAKdv6bSTLlu63Ckq7aibIwJCE0hhs83Z6Jr5G2wWrwVdFB9Dkb6l2NmdGRoq
-qbSz3Remg5qamURXec3XdEBxO1FPMcZJrHKAZuNjYdj1tzYA/rbTdYmVbno1TG5/
-O6rVb7A624UZHoucW+NpfNCrxfQY+BliMbCKJEWqQE0P6vyDenSYa76NLt1699B5
-vyHbYLrJHAjFzHe7BqSkP815C47KpJFXuGYasewJDOpvyINtn6kBlrAIanoVfDFa
-W9aUjUeNjqmcCEN4TpuSZCf1L8oWAjv5oH0R87orEAFZnSVWDIW8i7TMiFtCiF3D
-LYmN6J96LCNCs0iQIFqcnJnkHAkxggLAMIICvAIBATCBrTCBlzELMAkGA1UEBhMC
-R0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9y
-ZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxPTA7BgNVBAMTNENPTU9ETyBS
-U0EgQ2xpZW50IEF1dGhlbnRpY2F0aW9uIGFuZCBTZWN1cmUgRW1haWwgQ0ECEQCA
-roUAU6I0N2Azn6XKMDyBMA0GCWCGSAFlAwQCAQUAoIHkMBgGCSqGSIb3DQEJAzEL
-BgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTIwMDgxNzA4MTI0MFowLwYJKoZI
-hvcNAQkEMSIEIJFcg1RWulwdp61Ej1neBRA7IiRSkwDiGl2OiV38MAghMHkGCSqG
-SIb3DQEJDzFsMGowCwYJYIZIAWUDBAEqMAsGCWCGSAFlAwQBFjALBglghkgBZQME
-AQIwCgYIKoZIhvcNAwcwDgYIKoZIhvcNAwICAgCAMA0GCCqGSIb3DQMCAgFAMAcG
-BSsOAwIHMA0GCCqGSIb3DQMCAgEoMA0GCSqGSIb3DQEBAQUABIIBAGFVYYTUX7/r
-x+6rlAgtGJHAk0JL1L/Im/cPSot20Px9soiEnf6Vg9J6FrSvM1f+scCmx+CHu/Jo
-LG3/bb7DQRT7Y5atH3xPNRX96A+8IM8fFBixkNnXWLhRisDgFJ8/EbVudnJ9JEBr
-PxjXJxik9FJI80AIRvTOsq+4Yi9KARJWkMC+sB/Fw5fFjgIPvhkd7tlNER1SyIkL
-3vNWiOtZmKUGoyTrKS4n3PGkXJvWHHyBN9M1ELnxcAca+mesgts5F6Id9EjUItGU
-rfaadIqsav4upG99T1oSZzxmwC2t6NL4vW0NRKa+yhdNGWgQkhA9kq7DdBTBB/VY
-+VeLHIM7Jv0=
+> Thanks!
 
-------091B82EE90BEEBDB2A774ECAE7026290--
-
+Sebastian
