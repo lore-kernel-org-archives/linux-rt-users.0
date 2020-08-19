@@ -2,98 +2,1156 @@ Return-Path: <SRS0=6FAt=B5=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-14.5 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 176E5C433DF
-	for <linux-rt-users@archiver.kernel.org>; Wed, 19 Aug 2020 07:12:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8E2BFC433DF
+	for <linux-rt-users@archiver.kernel.org>; Wed, 19 Aug 2020 18:58:44 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id D06102054F
-	for <linux-rt-users@archiver.kernel.org>; Wed, 19 Aug 2020 07:12:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 29E142083B
+	for <linux-rt-users@archiver.kernel.org>; Wed, 19 Aug 2020 18:58:44 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="UXqfqdhf";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="mGmT0S3y"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jobfyuAj"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726982AbgHSHMe (ORCPT
+        id S1726578AbgHSS6m (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 19 Aug 2020 03:12:34 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38988 "EHLO
+        Wed, 19 Aug 2020 14:58:42 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35608 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728012AbgHSHLl (ORCPT
+        with ESMTP id S1725804AbgHSS6k (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 19 Aug 2020 03:11:41 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 48F15C061389;
-        Wed, 19 Aug 2020 00:11:41 -0700 (PDT)
-Date:   Wed, 19 Aug 2020 09:11:38 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1597821099;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=9LpC0XaRf4DGoIdiCEBe93B/70c29C6ZKL34lno4gEY=;
-        b=UXqfqdhf3Nhc9cOurrtA2TRVB6hnQsJeLc4jDdGaJls1pj/UsfWp+nGO/gwk5XDW0Iu8tO
-        RVoOH4Vga+sEvnrLZmAUHMdrlpBkWRGmXH+5hh34iT48YYmNGeoDQ8rxwQtUh1A8CA1tYD
-        NP4DEWE6NsL1zok6BvhOiKnhJHAL/hCvc1UT933OjtS0wC6yfYLifyi51vj5ChOhhNd8hj
-        L4ZxGPfb2gzWAf842Pua2ljeoqxvjjZp5JYU/rXA2zKpMOAfocuEW6To/qWTc429MnOrgM
-        MUl7DATUcska8ZGULDPv58gkPUBtYWYQGYnFsp5zAj3xEwDuuLkrMpMmwSacEg==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1597821099;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=9LpC0XaRf4DGoIdiCEBe93B/70c29C6ZKL34lno4gEY=;
-        b=mGmT0S3ySWU3Bb20vrlRlEUdsOchhjk/u4nsbuHBDIZ1O9b0/EizMooUkP9DSV0AITT7um
-        XzuYUqq/jYVDGkCQ==
-From:   'Sebastian Andrzej Siewior' <bigeasy@linutronix.de>
-To:     Thomas Graziadei <thomas.graziadei@omicronenergy.com>
-Cc:     Mark Marshall <markmarshall14@gmail.com>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Mark Marshall <mark.marshall@omicronenergy.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "rostedt@goodmis.org" <rostedt@goodmis.org>
-Subject: Re: Kernel crash due to memory corruption with v5.4.26-rt17 and
- PowerPC e500
-Message-ID: <20200819071138.bypg3slqhw7r577r@linutronix.de>
-References: <CAD4b4WK9W+dNZZ_WPt-9ZNpSHvyxdwPW86Rtq4AKOONuvyR37A@mail.gmail.com>
- <20200529131452.pgj7mx7xaz7n4kz3@linutronix.de>
- <CAD4b4WLS36JKepz31m98Z3Ve05d63GnfBGsuuWRXpjXZqPoBrA@mail.gmail.com>
- <20200529161518.svpxhkeljafbtdz2@linutronix.de>
- <20200529163722.mdxzrj4n3lyzjtfu@linutronix.de>
- <20200706165004.7m57fvspmwnjcjxh@linutronix.de>
- <eeeae7d9-c028-47f0-ab5b-7983e32f36cb@EXC03-ATKLA.omicron.at>
- <c1ef757b-4cd6-410e-a647-a3303cef4b1b@EXC03-ATKLA.omicron.at>
+        Wed, 19 Aug 2020 14:58:40 -0400
+Received: from mail-qt1-x841.google.com (mail-qt1-x841.google.com [IPv6:2607:f8b0:4864:20::841])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2ECA5C061757
+        for <linux-rt-users@vger.kernel.org>; Wed, 19 Aug 2020 11:58:40 -0700 (PDT)
+Received: by mail-qt1-x841.google.com with SMTP id x12so18646901qtp.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 19 Aug 2020 11:58:40 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
+         :mime-version;
+        bh=p2zAX2OraCOZIRw2V35mGBuweZZaJCqUDEE4tfevOqI=;
+        b=jobfyuAjVpVmTHuLKafyyw1FJdSWt9TLbUzR8KIGLetTBGZxnCD/3duzjO+eISloh7
+         mKgko/AC3seeiQLovjl+SfTce0kMz3i+eJ6M0Bz+PmOhLuLPa6VrM7jMqfrAIwW0+W3w
+         oXQOd0Xts+69o5HfBkzCkjLGit2JDIjvHXGLGl8I5dLI5PQb+5cY69mqzG6QleQWQG1Y
+         UUxgfyxYKGpyqjvL/qBxVd3Xo682RReUc/YCHJh1iqGbDy4jzHc187BXLA6lcjBeg/b4
+         DKNFUA25Z//3W/aUC+jei9+VtApGuK0KehwJuCVJXpiONCKbkPSFaGQRSaCTccaJgQI8
+         1knw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
+         :message-id:references:mime-version;
+        bh=p2zAX2OraCOZIRw2V35mGBuweZZaJCqUDEE4tfevOqI=;
+        b=AvnjesDzxsN+ORTi4wihi10rsGBBbkXUz8Nwb8iwxkJa5QrFfmWz7bzNLrIkXETFqC
+         +7cmOtbWu3qQAGymPDUzE2tzXBGgC2ihn5NlRTMtyxWflFPcdoDffD2DRrg8kdxDZEU0
+         XjtVt2MjxPeH9yWUm44s0wjDQJqPzvW7rdeFNCo+YDsdxMTBnP+LD5CrRzkK+UUHu7ru
+         oJdaL52w4xCVU7OtuwcSmbwQVz96tztVyYJG/ZsjLyxz6ZdQMXOpvI4v6jlQYz6m9gOQ
+         pScH2Wqxf5SoMRtrqIiji+7Ya5gtG/8N6GIU8EcpQcNh+RuIn8tQ3l44MTPJFS9cjWIt
+         wqSw==
+X-Gm-Message-State: AOAM5322HaXqnpqrO4qMXg3epNUnhC/emPgPGBrK4WQf07iElqi84zqC
+        WCjC0zUI5mIzA0j1wUNL9xs=
+X-Google-Smtp-Source: ABdhPJzZiCjFAg2t1FiaQRfLsEv6dBKQVX9mhQyR4z41OHPCHv7BT6cu3Uuj4nrP2t5Ys1gMO+vweg==
+X-Received: by 2002:ac8:478e:: with SMTP id k14mr23794396qtq.21.1597863518970;
+        Wed, 19 Aug 2020 11:58:38 -0700 (PDT)
+Received: from fionn (rdwyon0600w-lp140-02-142-113-120-236.dsl.bell.ca. [142.113.120.236])
+        by smtp.gmail.com with ESMTPSA id y3sm25366491qkd.132.2020.08.19.11.58.37
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 19 Aug 2020 11:58:38 -0700 (PDT)
+Date:   Wed, 19 Aug 2020 14:58:31 -0400 (EDT)
+From:   John Kacur <jkacur@redhat.com>
+X-X-Sender: jkacur@fionn
+To:     Peter Xu <peterx@redhat.com>
+cc:     linux-rt-users@vger.kernel.org,
+        Luiz Capitulino <lcapitulino@redhat.com>,
+        Marcelo Tosatti <mtosatti@redhat.com>,
+        Andrew Theurer <atheurer@redhat.com>,
+        Clark Williams <williams@redhat.com>
+Subject: Re: [PATCH 2/2] rt-tests: oslat: Init commit
+In-Reply-To: <alpine.LFD.2.23.451.2008181651430.26982@fionn>
+Message-ID: <alpine.LFD.2.23.451.2008191450130.18549@fionn>
+References: <20200817215505.227046-1-peterx@redhat.com> <20200817215505.227046-3-peterx@redhat.com> <alpine.LFD.2.23.451.2008181651430.26982@fionn>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <c1ef757b-4cd6-410e-a647-a3303cef4b1b@EXC03-ATKLA.omicron.at>
+Content-Type: text/plain; charset=US-ASCII
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2020-08-12 14:45:22 [+0200], Thomas Graziadei wrote:
-> Hi Sebastian,
-Hi Thomas,
 
-> any progress on your side?
 
-due to lack of time none. But I am on it=E2=80=A6
+On Tue, 18 Aug 2020, John Kacur wrote:
 
-> Do you think the patch could be applied for the next versions?
+> 
+> 
+> On Mon, 17 Aug 2020, Peter Xu wrote:
+> 
+> > oslat was initially a standalone program [1].  This patch merges oslat into
+> > rt-tests repo.
+> > 
+> > This is a direct port of oslat v0.1.7 into rt-tests.  It naturally bumps the
+> > version to latest rt-tests version.
+> > 
+> > [1] https://github.com/xzpeter/oslat
+> > 
+> > Signed-off-by: Peter Xu <peterx@redhat.com>
+> > ---
+> >  .gitignore        |   1 +
+> >  Makefile          |  10 +-
+> >  src/oslat/oslat.8 |  66 ++++
+> >  src/oslat/oslat.c | 896 ++++++++++++++++++++++++++++++++++++++++++++++
+> >  4 files changed, 971 insertions(+), 2 deletions(-)
+> >  create mode 100644 src/oslat/oslat.8
+> >  create mode 100644 src/oslat/oslat.c
+> > 
+> > diff --git a/.gitignore b/.gitignore
+> > index bc01575..a975c4b 100644
+> > --- a/.gitignore
+> > +++ b/.gitignore
+> > @@ -39,6 +39,7 @@ SRPMS
+> >  /queuelat
+> >  /ssdd
+> >  /get_cyclictest_snapshot
+> > +/oslat
+> >  
+> >  rt-tests.spec
+> >  tags
+> > diff --git a/Makefile b/Makefile
+> > index be78312..3f59efb 100644
+> > --- a/Makefile
+> > +++ b/Makefile
+> > @@ -17,7 +17,8 @@ sources = cyclictest.c \
+> >  	  cyclicdeadline.c \
+> >  	  deadline_test.c \
+> >  	  queuelat.c \
+> > -	  ssdd.c
+> > +	  ssdd.c \
+> > +	  oslat.c
+> >  
+> >  TARGETS = $(sources:.c=)
+> >  LIBS	= -lrt -lpthread
+> > @@ -48,7 +49,8 @@ MANPAGES = src/cyclictest/cyclictest.8 \
+> >  	   src/sched_deadline/deadline_test.8 \
+> >  	   src/ssdd/ssdd.8 \
+> >  	   src/sched_deadline/cyclicdeadline.8 \
+> > -	   src/cyclictest/get_cyclictest_snapshot.8
+> > +	   src/cyclictest/get_cyclictest_snapshot.8 \
+> > +	   src/oslat/oslat.8
+> >  
+> >  ifdef PYLIB
+> >  	MANPAGES += src/hwlatdetect/hwlatdetect.8
+> > @@ -97,6 +99,7 @@ VPATH	+= src/hackbench:
+> >  VPATH	+= src/sched_deadline:
+> >  VPATH	+= src/queuelat:	
+> >  VPATH	+= src/ssdd:
+> > +VPATH	+= src/oslat:
+> >  
+> >  $(OBJDIR)/%.o: %.c | $(OBJDIR)
+> >  	$(CC) -D VERSION=$(VERSION) -c $< $(CFLAGS) $(CPPFLAGS) -o $@
+> > @@ -164,6 +167,9 @@ queuelat: $(OBJDIR)/queuelat.o $(OBJDIR)/librttest.a
+> >  ssdd: $(OBJDIR)/ssdd.o $(OBJDIR)/librttest.a
+> >  	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(RTTESTLIB)
+> >  
+> > +oslat: $(OBJDIR)/oslat.o $(OBJDIR)/librttest.a
+> > +	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(RTTESTLIB) $(NUMA_LIBS)
+> > +
+> >  %.8.gz: %.8
+> >  	gzip -nc $< > $@
+> >  
+> > diff --git a/src/oslat/oslat.8 b/src/oslat/oslat.8
+> > new file mode 100644
+> > index 0000000..83257c6
+> > --- /dev/null
+> > +++ b/src/oslat/oslat.8
+> > @@ -0,0 +1,66 @@
+> > +.TH OSLAT 8 "August 17, 2020"
+> > +.\" for manpage-specific macros, see man(7)
+> > +.SH NAME
+> > +oslat \- OS Latency Detector
+> > +.SH SYNOPSIS
+> > +.SY oslat
+> > +.RI "[ \-shvz ] [ \-b " bucket-size " ] [ \-B " bias " ] [ \-c " cpu-list " ] \
+> > +[ \-C " cpu-main-thread " ] [ \-f " rt-prio " ] [ \-m " workload-mem " ] \
+> > +[\-t " runtime " ] [ \-T " trace-threshold " ] [ \-w " workload " ]"
+> > +.SH DESCRIPTION
+> > +.B oslat
+> > +is an open source userspace polling mode stress program to detect OS level
+> > +latency.  The program runs a busy loop with no or various workload, collecting
+> > +TSC information and measure the time frequently during the process.
+> > +.SH OPTIONS
+> > +.TP
+> > +.B \-b, \-\-bucket-size=N
+> > +Specify the number of the buckets (4-1024).
+> > +.TP
+> > +.B \-B, \-\-bias=USEC
+> > +Add a bias to all the buckets using the estimated mininum.
+> > +.TP
+> > +.B \-c, \-\-cpu-list=CPULIST
+> > +Specify CPUs to run on.  For example, '1,3,5,7-15'.
+> > +.TP
+> > +.B \-C, \-\-cpu-main-thread=CORE
+> > +Specify which CPU the main thread runs on.  Default is cpu0.
+> > +.TP
+> > +.B \-f, \-\-rtprio=PRIORITY
+> > +Using specific SCHED_FIFO priority (1-99).  Otherwise use the default
+> > +priority, normally it will be SCHED_OTHER.
+> > +.TP
+> > +.B \-m, \-\-workload-mem=SIZE
+> > +Size of the memory to use for the workload (e.g., 4K, 1M).
+> > +Total memory usage will be this value multiplies 2*N,
+> > +because there will be src/dst buffers for each thread, and
+> > +N is the number of processors for testing.
+> > +.TP
+> > +.B \-t, \-\-runtime=SEC
+> > +Specify test duration, e.g., 60, 20m, 2H (m/M: minutes, h/H: hours, d/D: days).
+> > +By default the unit is s/second.
+> > +.TP
+> > +.B \-T, \-\-trace-threshold=THRESHOLD
+> > +Stop the test when threshold triggered (in USEC).  At the meantime, print a
+> > +marker in ftrace and stop ftrace too.
+> > +.TP
+> > +.B \-w, \-\-workload=WORKLOAD
+> > +Specify a kind of workload, default is no workload.  Options: "no", "memmove".
+> > +.TP
+> > +.B \-s, \-\-single-preheat
+> > +Use a single thread when measuring latency at preheat stage
+> > +NOTE: please make sure the CPU frequency on all testing cores
+> > +are locked before using this parmater.  If you don't know how
+> > +to lock the freq then please don't use this parameter.
+> > +.TP
+> > +.B \-h, \-\-help
+> > +Show the help message.
+> > +.TP
+> > +.B \-v, \-\-version
+> > +Show the version of the program.
+> > +.TP
+> > +.B \-z, \-\-zero-omit
+> > +Don't display buckets in the output histogram if all zeros.
+> > +.SH AUTHOR
+> > +.B oslat
+> > +was written by Peter Xu <peterx@redhat.com>.
+> > diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+> > new file mode 100644
+> > index 0000000..d796919
+> > --- /dev/null
+> > +++ b/src/oslat/oslat.c
+> > @@ -0,0 +1,896 @@
+> > +/*
+> > + * oslat - OS latency detector
+> > + *
+> > + * Copyright 2020 Red Hat Inc.
+> > + *
+> > + * Authors: Peter Xu <peterx@redhat.com>
+> > + *
+> > + * Some of the utility code based on sysjitter-1.3:
+> > + * Copyright 2010-2015 David Riddoch <david@riddoch.org.uk>
+> > + *
+> > + * This program is free software: you can redistribute it and/or modify it
+> > + * under the terms of version 3 of the GNU General Public License as
+> > + * published by the Free Software Foundation.
+> > + *
+> > + * This program is distributed in the hope that it will be useful, but
+> > + * WITHOUT ANY WARRANTY; without even the implied warranty of
+> > + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+> > + * General Public License for more details.
+> > + *
+> > + * You should have received a copy of the GNU General Public License along
+> > + * with this program.  If not, see <http://www.gnu.org/licenses/>.
+> > + */
+> > +
+> > +#include <assert.h>
+> > +#include <inttypes.h>
+> > +#include <ctype.h>
+> > +#include <stdio.h>
+> > +#include <stdlib.h>
+> > +#include <stdint.h>
+> > +#include <stdarg.h>
+> > +#include <unistd.h>
+> > +#include <fcntl.h>
+> > +#include <getopt.h>
+> > +#include <pthread.h>
+> > +#include <signal.h>
+> > +#include <sched.h>
+> > +#include <string.h>
+> > +#include <time.h>
+> > +#include <errno.h>
+> > +#include <numa.h>
+> > +#include <math.h>
+> > +#include <limits.h>
+> > +#include <linux/unistd.h>
+> > +
+> > +#include <sys/prctl.h>
+> > +#include <sys/stat.h>
+> > +#include <sys/sysinfo.h>
+> > +#include <sys/types.h>
+> > +#include <sys/time.h>
+> > +#include <sys/resource.h>
+> > +#include <sys/utsname.h>
+> > +#include <sys/mman.h>
+> > +#include <sys/syscall.h>
+> > +
+> > +#include "rt-utils.h"
+> > +#include "error.h"
+> > +
+> > +#ifdef __GNUC__
+> > +# define atomic_inc(ptr)   __sync_add_and_fetch((ptr), 1)
+> > +# if defined(__x86_64__)
+> > +#  define relax()          __asm__ __volatile__("pause" ::: "memory")
+> > +static inline void frc(uint64_t* pval)
+> > +{
+> > +    uint32_t low, high;
+> > +    /* See rdtsc_ordered() of Linux */
+> > +    __asm__ __volatile__("lfence");
+> > +    __asm__ __volatile__("rdtsc" : "=a" (low) , "=d" (high));
+> > +    *pval = ((uint64_t) high << 32) | low;
+> > +}
+> > +# elif defined(__i386__)
+> > +#  define relax()          __asm__ __volatile__("pause" ::: "memory")
+> > +static inline void frc(uint64_t* pval)
+> > +{
+> > +    __asm__ __volatile__("rdtsc" : "=A" (*pval));
+> > +}
+> > +# elif defined(__PPC64__)
+> > +#  define relax()          do{}while(0)
+> > +static inline void frc(uint64_t* pval)
+> > +{
+> > +    __asm__ __volatile__("mfspr %0, 268\n" : "=r" (*pval));
+> > +}
+> > +# else
+> > +#  error Need frc() for this platform.
+> > +# endif
+> > +#else
+> > +# error Need to add support for this compiler.
+> > +#endif
+> > +
+> > +typedef uint64_t stamp_t;   /* timestamp */
+> > +typedef uint64_t cycles_t;  /* number of cycles */
+> > +typedef unsigned char bool;
+> > +
+> > +#define  true   1
+> > +#define  false  0
+> > +
+> > +enum command {
+> > +    WAIT,
+> > +    GO,
+> > +    STOP
+> > +};
+> > +
+> > +enum workload_type {
+> > +    WORKLOAD_NONE = 0,
+> > +    WORKLOAD_MEMMOVE,
+> > +    WORKLOAD_NUM,
+> > +};
+> > +
+> > +/* This workload needs pre-allocated memory */
+> > +#define  WORK_NEED_MEM  (1UL << 0)
+> > +
+> > +typedef void (*workload_fn)(char *src, char *dst, size_t size);
+> > +
+> > +struct workload {
+> > +    const char *w_name;
+> > +    uint64_t w_flags;
+> > +    workload_fn w_fn;
+> > +};
+> > +
+> > +/* We'll have buckets 1us, 2us, ..., (BUCKET_SIZE) us. */
+> > +#define  BUCKET_SIZE  (32)
+> > +
+> > +/* Default size of the workloads per thread (in bytes, which is 16KB) */
+> > +#define  WORKLOAD_MEM_SIZE  (16UL << 10)
+> > +
+> > +/* By default, no workload */
+> > +#define  WORKLOAD_DEFUALT  WORKLOAD_NONE
+> > +
+> > +struct thread {
+> > +    int                  core_i;
+> > +    pthread_t            thread_id;
+> > +
+> > +    /* NOTE! this is also how many ticks per us */
+> > +    unsigned             cpu_mhz;
+> > +    cycles_t             int_total;
+> > +    stamp_t              frc_start;
+> > +    stamp_t              frc_stop;
+> > +    cycles_t             runtime;
+> > +    stamp_t             *buckets;
+> > +    uint64_t             minlat;
+> > +    /* Maximum latency detected */
+> > +    uint64_t             maxlat;
+> > +    /*
+> > +     * The extra part of the interruptions that cannot be put into even the
+> > +     * biggest bucket.  We'll use this to calculate a more accurate average at
+> > +     * the end of the tests.
+> > +     */
+> > +    uint64_t             overflow_sum;
+> > +    int                  memory_allocated;
+> > +
+> > +    /* Buffers used for the workloads */
+> > +    char *               src_buf;
+> > +    char *               dst_buf;
+> > +
+> > +    /* These variables are calculated after the test */
+> > +    double               average;
+> > +};
+> > +
+> > +struct global {
+> > +    /* Configuration. */
+> > +    unsigned              runtime_secs;
+> > +    /* Number of threads running for current test (either pre heat or real run) */
+> > +    unsigned              n_threads;
+> > +    /* Number of threads to test for the real run */
+> > +    unsigned              n_threads_total;
+> > +    struct timeval        tv_start;
+> > +    int                   rtprio;
+> > +    int                   bucket_size;
+> > +    int                   trace_threshold;
+> > +    int                   runtime;
+> > +    /* The core that we run the main thread.  Default is cpu0 */
+> > +    int                   cpu_main_thread;
+> > +    char *                cpu_list;
+> > +    char *                app_name;
+> > +    struct workload *     workload;
+> > +    uint64_t              workload_mem_size;
+> > +    int                   enable_bias;
+> > +    uint64_t              bias;
+> > +    bool                  single_preheat_thread;
+> > +    bool                  output_omit_zero_buckets;
+> > +
+> > +    /* Mutable state. */
+> > +    volatile enum command cmd;
+> > +    volatile unsigned     n_threads_started;
+> > +    volatile unsigned     n_threads_ready;
+> > +    volatile unsigned     n_threads_running;
+> > +    volatile unsigned     n_threads_finished;
+> > +};
+> > +
+> > +static struct global g;
+> > +
+> > +static void workload_nop(char *dst, char *src, size_t size)
+> > +{
+> > +    /* Nop */
+> > +}
+> > +
+> > +static void workload_memmove(char *dst, char *src, size_t size)
+> > +{
+> > +    memmove(dst, src, size);
+> > +}
+> > +
+> > +struct workload workload_list[WORKLOAD_NUM] = {
+> > +    { "no", 0, workload_nop },
+> > +    { "memmove", WORK_NEED_MEM, workload_memmove },
+> > +};
+> > +
+> > +#define TEST(x)                                 \
+> > +    do {                                        \
+> > +        if( ! (x) )                             \
+> > +            test_fail(#x, __LINE__);            \
+> > +    } while( 0 )
+> > +
+> > +#define TEST0(x)  TEST((x) == 0)
+> > +
+> > +static void test_fail(const char* what, int line)
+> > +{
+> > +    fprintf(stderr, "ERROR:\n");
+> > +    fprintf(stderr, "ERROR: TEST(%s)\n", what);
+> > +    fprintf(stderr, "ERROR: at line %d\n", line);
+> > +    fprintf(stderr, "ERROR: errno=%d (%s)\n", errno, strerror(errno));
+> > +    fprintf(stderr, "ERROR:\n");
+> > +    exit(1);
+> > +}
+> > +
+> > +static int move_to_core(int core_i)
+> > +{
+> > +    cpu_set_t cpus;
+> > +    CPU_ZERO(&cpus);
+> > +    CPU_SET(core_i, &cpus);
+> > +    return sched_setaffinity(0, sizeof(cpus), &cpus);
+> > +}
+> > +
+> > +static cycles_t __measure_cpu_hz(void)
+> > +{
+> > +    struct timeval tvs, tve;
+> > +    stamp_t s, e;
+> > +    double sec;
+> > +
+> > +    frc(&s);
+> > +    e = s;
+> > +    gettimeofday(&tvs, NULL);
+> > +    while( e - s < 1000000 )
+> > +        frc(&e);
+> > +    gettimeofday(&tve, NULL);
+> > +    sec = tve.tv_sec - tvs.tv_sec + (tve.tv_usec - tvs.tv_usec) / 1e6;
+> > +    return (cycles_t) ((e - s) / sec);
+> > +}
+> > +
+> > +static unsigned measure_cpu_mhz(void)
+> > +{
+> > +    cycles_t m, mprev, d;
+> > +
+> > +    mprev = __measure_cpu_hz();
+> > +    do {
+> > +        m = __measure_cpu_hz();
+> > +        if( m > mprev )  d = m - mprev;
+> > +        else             d = mprev - m;
+> > +        mprev = m;
+> > +    } while( d > m / 1000 );
+> > +
+> > +    return (unsigned) (m / 1000000);
+> > +}
+> > +
+> > +static void thread_init(struct thread* t)
+> > +{
+> > +    t->cpu_mhz = measure_cpu_mhz();
+> > +    t->maxlat = 0;
+> > +    t->overflow_sum = 0;
+> > +    t->minlat = (uint64_t)-1;
+> > +
+> > +    /* NOTE: all the buffers are not freed until the process quits. */
+> > +    if (!t->memory_allocated) {
+> > +        TEST(t->buckets = calloc(1, sizeof(t->buckets[0]) * g.bucket_size));
+> > +        if (g.workload->w_flags & WORK_NEED_MEM) {
+> > +            TEST0(posix_memalign((void **)&t->src_buf, getpagesize(),
+> > +                                 g.workload_mem_size));
+> > +            memset(t->src_buf, 0, g.workload_mem_size);
+> > +            TEST0(posix_memalign((void **)&t->dst_buf, getpagesize(),
+> > +                                 g.workload_mem_size));
+> > +            memset(t->dst_buf, 0, g.workload_mem_size);
+> > +        }
+> > +        t->memory_allocated = 1;
+> > +    } else {
+> > +        /* Clear the buckets */
+> > +        memset(t->buckets, 0, sizeof(t->buckets[0]) * g.bucket_size);
+> > +    }
+> > +}
+> > +
+> > +static float cycles_to_sec(const struct thread* t, uint64_t cycles)
+> > +{
+> > +    return cycles / (t->cpu_mhz * 1e6);
+> > +}
+> > +
+> > +static void insert_bucket(struct thread *t, stamp_t value)
+> > +{
+> > +    int index, us;
+> > +    uint64_t extra;
+> > +
+> > +    index = value / t->cpu_mhz;
+> > +    assert(index >= 0);
+> > +    us = index + 1;
+> > +    assert(us > 0);
+> > +
+> > +    if (g.trace_threshold && us >= g.trace_threshold) {
+> > +        char *line = "%s: Trace threshold (%d us) triggered with %u us!  "
+> > +            "Stopping the test.\n";
+> > +        tracemark(line, g.app_name, g.trace_threshold, us);
+> > +        err_quit(line, g.app_name, g.trace_threshold, us);
+> > +    }
+> > +
+> > +    /* Update max latency */
+> > +    if (us > t->maxlat) {
+> > +        t->maxlat = us;
+> > +    }
+> > +
+> > +    if (us < t->minlat) {
+> > +        t->minlat = us;
+> > +    }
+> > +
+> > +    if (g.bias) {
+> > +        /* t->bias will be set after pre-heat if user enabled it */
+> > +        us -= g.bias;
+> > +        /*
+> > +         * Negative should hardly happen, but if it happens, we assume we're in
+> > +         * the smallest bucket, which is 1us.  Same to index.
+> > +         */
+> > +        if (us <= 0) {
+> > +            us = 1;
+> > +        }
+> > +        index -= g.bias;
+> > +        if (index < 0) {
+> > +            index = 0;
+> > +        }
+> > +    }
+> > +
+> > +    /* Too big the jitter; put into the last bucket */
+> > +    if (index >= g.bucket_size) {
+> > +        /* Keep the extra bit (in us) */
+> > +        extra = index - g.bucket_size;
+> > +        if (t->overflow_sum + extra < t->overflow_sum) {
+> > +            /* The uint64_t even overflowed itself; bail out */
+> > +            printf("Accumulated overflow too much!\n");
+> > +            exit(1);
+> > +        }
+> > +        t->overflow_sum += extra;
+> > +        index = g.bucket_size - 1;
+> > +    }
+> > +
+> > +    t->buckets[index]++;
+> > +    if (t->buckets[index] == 0) {
+> > +        printf("Bucket %d overflowed\n", index);
+> > +        exit(1);
+> > +    }
+> > +}
+> > +
+> > +static void doit(struct thread* t)
+> > +{
+> > +    stamp_t ts1, ts2;
+> > +    workload_fn workload_fn = g.workload->w_fn;
+> > +
+> > +    frc(&ts2);
+> > +    do {
+> > +        workload_fn(t->dst_buf, t->src_buf, g.workload_mem_size);
+> > +        frc(&ts1);
+> > +        insert_bucket(t, ts1 - ts2);
+> > +        ts2 = ts1;
+> > +    } while (g.cmd == GO);
+> > +}
+> > +
+> > +static int set_fifo_prio(int prio)
+> > +{
+> > +    struct sched_param param;
+> > +
+> > +    memset(&param, 0, sizeof(param));
+> > +    param.sched_priority = prio;
+> > +    return sched_setscheduler(0, SCHED_FIFO, &param);
+> > +}
+> > +
+> > +static void* thread_main(void* arg)
+> > +{
+> > +    /* Important thing to note here is that once we start bashing the CPU, we
+> > +     * need to keep doing so to prevent the core from changing frequency or
+> > +     * dropping into a low power state.
+> > +     */
+> > +    struct thread* t = arg;
+> > +
+> > +    /* Alloc memory in the thread itself after setting affinity to get the
+> > +     * best chance of getting numa-local memory.  Doesn't matter so much for
+> > +     * the "struct thread" since we expect that to stay cache resident.
+> > +     */
+> > +    TEST(move_to_core(t->core_i) == 0);
+> > +    if (g.rtprio)
+> > +        TEST(set_fifo_prio(g.rtprio) == 0);
+> > +
+> > +    /* Don't bash the cpu until all threads have got going. */
+> > +    atomic_inc(&g.n_threads_started);
+> > +    while( g.cmd == WAIT )
+> > +        usleep(1000);
+> > +
+> > +    thread_init(t);
+> > +
+> > +    /* Ensure we all start at the same time. */
+> > +    atomic_inc(&g.n_threads_running);
+> > +    while( g.n_threads_running != g.n_threads )
+> > +        relax();
+> > +
+> > +    frc(&t->frc_start);
+> > +    doit(t);
+> > +    frc(&t->frc_stop);
+> > +
+> > +    t->runtime = t->frc_stop - t->frc_start;
+> > +
+> > +    /* Wait for everyone to finish so we don't disturb them by exiting and
+> > +     * waking the main thread.
+> > +     */
+> > +    atomic_inc(&g.n_threads_finished);
+> > +    while( g.n_threads_finished != g.n_threads )
+> > +        relax();
+> > +
+> > +    return NULL;
+> > +}
+> > +
+> > +#define putfield(label, val, fmt, end) do {     \
+> > +        printf("%12s:\t", label);               \
+> > +        for (i = 0; i < g.n_threads; ++i)       \
+> > +            printf(" %"fmt, val);               \
+> > +        printf("%s\n", end);                    \
+> > +    } while (0)
+> > +
+> > +void calculate(struct thread *t)
+> > +{
+> > +    int i, j;
+> > +    double sum;
+> > +    uint64_t count;
+> > +
+> > +    for (i = 0; i < g.n_threads; ++i) {
+> > +        /* Calculate average */
+> > +        sum = count = 0;
+> > +        for (j = 0; j < g.bucket_size; j++) {
+> > +            sum += 1.0 * t[i].buckets[j] * (g.bias+j+1);
+> > +            count += t[i].buckets[j];
+> > +        }
+> > +        /* Add the extra amount of huge spikes in */
+> > +        sum += t->overflow_sum;
+> > +        t[i].average = sum / count;
+> > +    }
+> > +}
+> > +
+> > +static void write_summary(struct thread* t)
+> > +{
+> > +    int i, j, k, print_dotdotdot = 0;
+> > +    char bucket_name[64];
+> > +
+> > +    calculate(t);
+> > +
+> > +    putfield("Core", t[i].core_i, "d", "");
+> > +    putfield("CPU Freq", t[i].cpu_mhz, "u", " (Mhz)");
+> > +
+> > +    for (j = 0; j < g.bucket_size; j++) {
+> > +        if (j < g.bucket_size-1 && g.output_omit_zero_buckets) {
+> > +            for (k = 0; k < g.n_threads; k++) {
+> > +                if (t[k].buckets[j] != 0)
+> > +                    break;
+> > +            }
+> > +            if (k == g.n_threads) {
+> > +                print_dotdotdot = 1;
+> > +                continue;
+> > +            }
+> > +        }
+> > +
+> > +        if (print_dotdotdot) {
+> > +            printf("    ...\n");
+> > +            print_dotdotdot = 0;
+> > +        }
+> > +
+> > +        snprintf(bucket_name, sizeof(bucket_name), "%03"PRIu64
+> > +                 " (us)", g.bias+j+1);
+> > +        putfield(bucket_name, t[i].buckets[j], PRIu64,
+> > +                 (j==g.bucket_size-1) ? " (including overflows)" : "");
+> > +    }
+> > +
+> > +    putfield("Minimum", t[i].minlat, PRIu64, " (us)");
+> > +    putfield("Average", t[i].average, ".3lf", " (us)");
+> > +    putfield("Maximum", t[i].maxlat, PRIu64, " (us)");
+> > +    putfield("Max-Min", t[i].maxlat - t[i].minlat, PRIu64, " (us)");
+> > +    putfield("Duration", cycles_to_sec(&(t[i]), t[i].runtime),
+> > +             ".3f", " (sec)");
+> > +    printf("\n");
+> > +}
+> > +
+> > +static void run_expt(struct thread* threads, int runtime_secs)
+> > +{
+> > +    int i;
+> > +
+> > +    g.runtime_secs = runtime_secs;
+> > +    g.n_threads_started = 0;
+> > +    g.n_threads_ready = 0;
+> > +    g.n_threads_running = 0;
+> > +    g.n_threads_finished = 0;
+> > +    g.cmd = WAIT;
+> > +
+> > +    for( i = 0; i < g.n_threads; ++i ) {
+> > +        TEST0(pthread_create(&(threads[i].thread_id), NULL,
+> > +                             thread_main, &(threads[i])));
+> > +    }
+> > +    while( g.n_threads_started != g.n_threads ) {
+> > +        usleep(1000);
+> > +    }
+> > +
+> > +    gettimeofday(&g.tv_start, NULL);
+> > +    g.cmd = GO;
+> > +
+> > +    alarm(runtime_secs);
+> > +
+> > +    /* Go to sleep until the threads have done their stuff. */
+> > +    for( i = 0; i < g.n_threads; ++i ) {
+> > +        pthread_join(threads[i].thread_id, NULL);
+> > +    }
+> > +}
+> > +
+> > +static void handle_alarm(int code)
+> > +{
+> > +    g.cmd = STOP;
+> > +}
+> > +
+> > +const char *helpmsg =
+> > +    "Usage: %s [options]\n"
+> > +    "\n"
+> > +    "This is an OS latency detector by running busy loops on specified cores.\n"
+> > +    "Please run this tool using root.\n"
+> > +    "\n"
+> > +    "Available options:\n"
+> > +    "\n"
+> > +    "  -b, --bucket-size      Specify the number of the buckets (4-1024)\n"
+> > +    "  -B, --bias             Add a bias to all the buckets using the estimated mininum\n"
+> > +    "  -c, --cpu-list         Specify CPUs to run on, e.g. '1,3,5,7-15'\n"
+> > +    "  -C, --cpu-main-thread  Specify which CPU the main thread runs on.  Default is cpu0.\n"
+> > +    "  -f, --rtprio           Using SCHED_FIFO priority (1-99)\n"
+> > +    "  -m, --workload-mem     Size of the memory to use for the workload (e.g., 4K, 1M).\n"
+> > +    "                         Total memory usage will be this value multiplies 2*N,\n"
+> > +    "                         because there will be src/dst buffers for each thread, and\n"
+> > +    "                         N is the number of processors for testing.\n"
+> > +    "  -s, --single-preheat   Use a single thread when measuring latency at preheat stage\n"
+> > +    "                         NOTE: please make sure the CPU frequency on all testing cores\n"
+> > +    "                         are locked before using this parmater.  If you don't know how\n"
+> > +    "                         to lock the freq then please don't use this parameter.\n"
+> > +    "  -t, --runtime          Specify test duration, e.g., 60, 20m, 2H\n"
+> > +    "                         (m/M: minutes, h/H: hours, d/D: days)\n"
+> > +    "  -T, --trace-threshold  Stop the test when threshold triggered (in us),\n"
+> > +    "                         print a marker in ftrace and stop ftrace too.\n"
+> > +    "  -v, --version          Display the version of the software.\n"
+> > +    "  -w, --workload         Specify a kind of workload, default is no workload\n"
+> > +    "                         (options: no, memmove)\n"
+> > +    "  -z, --zero-omit        Don't display buckets in the output histogram if all zeros.\n"
+> > +    "\n"
+> > +    ;
+> > +
+> > +static void usage(void)
+> > +{
+> > +    printf(helpmsg, g.app_name);
+> > +    exit(1);
+> > +}
+> > +
+> > +/* TODO: use libnuma? */
+> > +static int parse_cpu_list(char *cpu_list, cpu_set_t *cpu_set)
+> > +{
+> > +    struct bitmask *cpu_mask;
+> > +    int i, n_cores;
+> > +
+> > +    n_cores = sysconf(_SC_NPROCESSORS_CONF);
+> > +
+> > +    if (!cpu_list) {
+> > +        for (i = 0; i < n_cores; i++)
+> > +            CPU_SET(i, cpu_set);
+> > +        return n_cores;
+> > +    }
+> > +
+> > +    cpu_mask = numa_parse_cpustring_all(cpu_list);
+> > +    if (cpu_mask) {
+> > +        for (i = 0; i < n_cores; i++) {
+> > +            if (numa_bitmask_isbitset(cpu_mask, i)) {
+> > +                CPU_SET(i, cpu_set);
+> > +            }
+> > +        }
+> > +        numa_bitmask_free(cpu_mask);
+> > +    } else {
+> > +        warn("Unknown cpu-list: %s, using all available cpus\n", cpu_list);
+> > +        for (i = 0; i < n_cores; i++)
+> > +            CPU_SET(i, cpu_set);
+> > +    }
+> > +
+> > +    return n_cores;
+> > +}
+> > +
+> > +static int parse_runtime(const char *str)
+> > +{
+> > +    char *endptr;
+> > +    int v = strtol(str, &endptr, 10);
+> > +
+> > +    if (!*endptr) {
+> > +        return v;
+> > +    }
+> > +
+> > +    switch (*endptr) {
+> > +    case 'd':
+> > +    case 'D':
+> > +        /* Days */
+> > +        v *= 24;
+> > +    case 'h':
+> > +    case 'H':
+> > +        /* Hours */
+> > +        v *= 60;
+> > +    case 'm':
+> > +    case 'M':
+> > +        /* Minutes */
+> > +        v *= 60;
+> > +    case 's':
+> > +    case 'S':
+> > +        /* Seconds */
+> > +        break;
+> > +    default:
+> > +        printf("Unknown runtime suffix: %s\n", endptr);
+> > +        v = 0;
+> > +        break;
+> > +    }
+> > +
+> > +    return v;
+> > +}
+> > +
+> > +static int parse_mem_size(char *str, uint64_t *val)
+> > +{
+> > +    char *endptr;
+> > +    int v = strtol(str, &endptr, 10);
+> > +
+> > +    if (!*endptr) {
+> > +        return v;
+> > +    }
+> > +
+> > +    switch (*endptr) {
+> > +    case 'g':
+> > +    case 'G':
+> > +        v *= 1024;
+> > +    case 'm':
+> > +    case 'M':
+> > +        v *= 1024;
+> > +    case 'k':
+> > +    case 'K':
+> > +        v *= 1024;
+> > +    case 'b':
+> > +    case 'B':
+> > +        break;
+> > +    default:
+> > +        return -1;
+> > +    }
+> > +
+> > +    *val = v;
+> > +
+> > +    return 0;
+> > +}
+> > +
+> > +static int workload_select(char *name)
+> > +{
+> > +    int i = 0;
+> > +
+> > +    for (i = 0; i < WORKLOAD_NUM; i++) {
+> > +        if (!strcmp(name, workload_list[i].w_name)) {
+> > +            g.workload = &workload_list[i];
+> > +            return 0;
+> > +        }
+> > +    }
+> > +
+> > +    return -1;
+> > +}
+> > +
+> > +/* Process commandline options */
+> > +static void parse_options(int argc, char *argv[])
+> > +{
+> > +    while (1) {
+> > +        static struct option options[] = {
+> > +            { "bucket-size", required_argument, NULL, 'b' },
+> > +            { "cpu-list", required_argument, NULL, 'c' },
+> > +            { "cpu-main-thread", required_argument, NULL, 'C'},
+> > +            { "runtime", required_argument, NULL, 't' },
+> > +            { "rtprio", required_argument, NULL, 'f' },
+> > +            { "help", no_argument, NULL, 'h' },
+> > +            { "trace-threshold", required_argument, NULL, 'T' },
+> > +            { "workload", required_argument, NULL, 'w'},
+> > +            { "workload-mem", required_argument, NULL, 'm'},
+> > +            { "bias", no_argument, NULL, 'B'},
+> > +            { "single-preheat", no_argument, NULL, 's'},
+> > +            { "zero-omit", no_argument, NULL, 'u'},
+> > +            { "version", no_argument, NULL, 'v'},
+> > +            { NULL, 0, NULL, 0 },
+> > +        };
+> > +        int i, c = getopt_long(argc, argv, "b:Bc:C:f:hm:st:w:T:vz",
+> > +                               options, NULL);
+> > +        long ncores;
+> > +
+> > +        if (c == -1)
+> > +            break;
+> > +
+> > +        switch (c) {
+> > +        case 'b':
+> > +            g.bucket_size = strtol(optarg, NULL, 10);
+> > +            if (g.bucket_size > 1024 || g.bucket_size <= 4) {
+> > +                printf("Illegal bucket size: %s (should be: 4-1024)\n",
+> > +                       optarg);
+> > +                exit(1);
+> > +            }
+> > +            break;
+> > +        case 'B':
+> > +            g.enable_bias = 1;
+> > +            break;
+> > +        case 'c':
+> > +            g.cpu_list = strdup(optarg);
+> > +            break;
+> > +        case 'C':
+> > +            ncores = sysconf(_SC_NPROCESSORS_CONF);
+> > +            g.cpu_main_thread = strtol(optarg, NULL, 10);
+> > +            if (g.cpu_main_thread < 0 || g.cpu_main_thread > ncores) {
+> > +                printf("Illegal core for main thread: %s (should be: 0-%ld)\n",
+> > +                       optarg, ncores);
+> > +                exit(1);
+> > +            }
+> > +            break;
+> > +        case 't':
+> > +            g.runtime = parse_runtime(optarg);
+> > +            if (!g.runtime) {
+> > +                printf("Illegal runtime: %s\n", optarg);
+> > +                exit(1);
+> > +            }
+> > +            break;
+> > +        case 'f':
+> > +            g.rtprio = strtol(optarg, NULL, 10);
+> > +            if (g.rtprio < 1 || g.rtprio > 99) {
+> > +                printf("Illegal RT priority: %s (should be: 1-99)\n", optarg);
+> > +                exit(1);
+> > +            }
+> > +            break;
+> > +        case 'T':
+> > +            g.trace_threshold = strtol(optarg, NULL, 10);
+> > +            if (g.trace_threshold <= 0) {
+> > +                printf("Parameter --trace-threshold needs to be positive\n");
+> > +                exit(1);
+> > +            }
+> > +            enable_trace_mark();
+> > +            break;
+> > +        case 'w':
+> > +            if (workload_select(optarg)) {
+> > +                printf("Unknown workload '%s'.  Please choose from: ", optarg);
+> > +                for (i = 0; i < WORKLOAD_NUM; i++) {
+> > +                    printf("'%s'", workload_list[i].w_name);
+> > +                    if (i != WORKLOAD_NUM - 1) {
+> > +                        printf(", ");
+> > +                    }
+> > +                }
+> > +                printf("\n\n");
+> > +                exit(1);
+> > +            }
+> > +            break;
+> > +        case 'm':
+> > +            if (parse_mem_size(optarg, &g.workload_mem_size)) {
+> > +                printf("Unknown workload memory size '%s'.\n\n", optarg);
+> > +                exit(1);
+> > +            }
+> > +            break;
+> > +        case 's':
+> > +            /*
+> > +             * Only use one core for pre-heat.  Then if --bias is used, the
+> > +             * bias will be exactly the min value of the pre-heat core.
+> > +             */
+> > +            g.single_preheat_thread = true;
+> > +            break;
+> > +        case 'v':
+> > +            /*
+> > +             * Because we always dump the version even before parsing options,
+> > +             * what we need to do is to quit..
+> > +             */
+> > +            exit(0);
+> > +            break;
+> > +        case 'z':
+> > +            g.output_omit_zero_buckets = 1;
+> > +            break;
+> > +        default:
+> > +            usage();
+> > +            break;
+> > +        }
+> > +    }
+> > +}
+> > +
+> > +void dump_globals(void)
+> > +{
+> > +    printf("Total runtime: \t\t%d seconds\n", g.runtime);
+> > +    printf("Thread priority: \t");
+> > +    if (g.rtprio) {
+> > +        printf("SCHED_FIFO:%d\n", g.rtprio);
+> > +    } else {
+> > +        printf("default\n");
+> > +    }
+> > +    printf("CPU list: \t\t%s\n", g.cpu_list ?: "(all cores)");
+> > +    printf("CPU for main thread: \t%d\n", g.cpu_main_thread);
+> > +    printf("Workload: \t\t%s\n", g.workload->w_name);
+> > +    printf("Workload mem: \t\t%"PRIu64" (KiB)\n",
+> > +           (g.workload->w_flags & WORK_NEED_MEM) ?
+> > +           (g.workload_mem_size / 1024) : 0);
+> > +    printf("Preheat cores: \t\t%d\n", g.single_preheat_thread ?
+> > +           1 : g.n_threads_total);
+> > +    printf("\n");
+> > +}
+> > +
+> > +static void record_bias(struct thread *t)
+> > +{
+> > +    int i;
+> > +    uint64_t bias = (uint64_t)-1;
+> > +
+> > +    if (!g.enable_bias) {
+> > +        return;
+> > +    }
+> > +
+> > +    /* Record the min value of minlat on all the threads */
+> > +    for( i = 0; i < g.n_threads; ++i ) {
+> > +        if (t[i].minlat < bias) {
+> > +            bias = t[i].minlat;
+> > +        }
+> > +    }
+> > +    g.bias = bias;
+> > +    printf("Global bias set to %" PRId64 " (us)\n", bias);
+> > +}
+> > +
+> > +int main(int argc, char* argv[])
+> > +{
+> > +    struct thread* threads;
+> > +    int i, n_cores;
+> > +    cpu_set_t cpu_set;
+> > +
+> > +    CPU_ZERO(&cpu_set);
+> > +
+> > +    g.app_name = argv[0];
+> > +    g.rtprio = 0;
+> > +    g.bucket_size = BUCKET_SIZE;
+> > +    g.runtime = 1;
+> > +    g.workload = &workload_list[WORKLOAD_DEFUALT];
+> > +    g.workload_mem_size = WORKLOAD_MEM_SIZE;
+> > +    /* Run the main thread on cpu0 by default */
+> > +    g.cpu_main_thread = 0;
+> > +
+> > +    printf("\nVersion: %1.2f\n\n", VERSION);
+> > +
+> > +    parse_options(argc, argv);
+> > +
+> > +    TEST(mlockall(MCL_CURRENT | MCL_FUTURE) == 0);
+> > +
+> > +    n_cores = parse_cpu_list(g.cpu_list, &cpu_set);
+> > +
+> > +    TEST( threads = calloc(1, CPU_COUNT(&cpu_set) * sizeof(threads[0])) );
+> > +    for( i = 0; i < n_cores; ++i )
+> > +        if (CPU_ISSET(i, &cpu_set) && move_to_core(i) == 0)
+> > +            threads[g.n_threads_total++].core_i = i;
+> > +
+> > +    if (CPU_ISSET(0, &cpu_set) && g.rtprio) {
+> > +        printf("WARNING: Running SCHED_FIFO workload on CPU 0 "
+> > +               "may hang the main thread\n");
+> > +    }
+> > +
+> > +    TEST(move_to_core(g.cpu_main_thread) == 0);
+> > +
+> > +    signal(SIGALRM, handle_alarm);
+> > +    signal(SIGINT, handle_alarm);
+> > +    signal(SIGTERM, handle_alarm);
+> > +
+> > +    dump_globals();
+> > +
+> > +    printf("Pre-heat for 1 seconds...\n");
+> > +    if (g.single_preheat_thread) {
+> > +        g.n_threads = 1;
+> > +    } else {
+> > +        g.n_threads = g.n_threads_total;
+> > +    }
+> > +    run_expt(threads, 1);
+> > +    record_bias(threads);
+> > +
+> > +    printf("Test starts...\n");
+> > +    /* Reset n_threads to always run on all the cores */
+> > +    g.n_threads = g.n_threads_total;
+> > +    run_expt(threads, g.runtime);
+> > +
+> > +    printf("Test completed.\n\n");
+> > +
+> > +    write_summary(threads);
+> > +
+> > +    if (g.cpu_list) {
+> > +        free(g.cpu_list);
+> > +        g.cpu_list = NULL;
+> > +    }
+> > +
+> > +    return 0;
+> > +}
+> > -- 
+> > 2.26.2
+> > 
+> > 
+> 
+> - I made a few quick edits to the grammar in the man page, but other than 
+> that
+> Signed-off-by: John Kacur <jkacur@redhat.com>
+> 
 
-So I had a theory why it happens but then you said no so now I need
-to figure out why it happens so I can write it in the changelog.
+- Please submit a patch to add an SPDX-License-Identifier tag to oslat.c
+- In this suite we try to conform (perhaps not quite as strictly) to the 
+Linux Kernel programming style, so please also submit a patch to use 8-space 
+tabs, and use tabs and not just spaces, this is not a python program!
+- Also, it would be good to run checkpatch.pl from the kernel on your 
+programs, and clean-up the code from that, you can do this with multiple
+patches, not all at once. btw, oslat is not the only program that could 
+use some of these checks.
 
-I believe you made it happen in qemu and you sent a .config and
-everything so I will stare into it as soon as I can.
+Thanks for your submission
 
-> Regards,
-> Thomas
-
-Sebastian
+John
