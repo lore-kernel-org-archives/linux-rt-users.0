@@ -1,1600 +1,1615 @@
-Return-Path: <SRS0=6FAt=B5=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=8WjD=B6=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.5 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 86792C433E1
-	for <linux-rt-users@archiver.kernel.org>; Wed, 19 Aug 2020 20:19:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D0720C433E1
+	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Aug 2020 14:06:18 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 41748207FF
-	for <linux-rt-users@archiver.kernel.org>; Wed, 19 Aug 2020 20:19:58 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8781320724
+	for <linux-rt-users@archiver.kernel.org>; Thu, 20 Aug 2020 14:06:18 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Dkfse1dH"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Kr+OyG6D"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726948AbgHSUT5 (ORCPT
+        id S1727878AbgHTOGQ (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 19 Aug 2020 16:19:57 -0400
-Received: from us-smtp-delivery-1.mimecast.com ([207.211.31.120]:39719 "EHLO
-        us-smtp-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-        with ESMTP id S1727013AbgHSUTz (ORCPT
+        Thu, 20 Aug 2020 10:06:16 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43216 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726998AbgHTOFm (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 19 Aug 2020 16:19:55 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1597868390;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=s85gZIQekBvvjaPpfxkRxxQUUbnzhBZmMYlwZhJBDHo=;
-        b=Dkfse1dHHtYT9jj5JQiKQJO541cG88F46PLPAePZigBos8Yer1+S0FrsfN6NBp0P24o1Z8
-        w2pogewTAoP5fYL55IRf728IK4BWp1NF6e5UR8zkryTum01WzhjgalOy5zBTMDC6SL1zbk
-        aUKOiCq+2EpLFXf7OL99d+BzykDcX1Q=
-Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
- [209.85.222.198]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-359-WrEjWBOAPnGnSBzlMvgOCw-1; Wed, 19 Aug 2020 16:19:47 -0400
-X-MC-Unique: WrEjWBOAPnGnSBzlMvgOCw-1
-Received: by mail-qk1-f198.google.com with SMTP id c191so16236189qkb.4
-        for <linux-rt-users@vger.kernel.org>; Wed, 19 Aug 2020 13:19:47 -0700 (PDT)
+        Thu, 20 Aug 2020 10:05:42 -0400
+Received: from mail-qv1-xf43.google.com (mail-qv1-xf43.google.com [IPv6:2607:f8b0:4864:20::f43])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7DDEBC061385
+        for <linux-rt-users@vger.kernel.org>; Thu, 20 Aug 2020 07:05:27 -0700 (PDT)
+Received: by mail-qv1-xf43.google.com with SMTP id l13so918796qvt.10
+        for <linux-rt-users@vger.kernel.org>; Thu, 20 Aug 2020 07:05:27 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
+         :mime-version;
+        bh=F/DYE6udgooo2up/PhUqNWxMKIGD73cddKG/XHtWgY0=;
+        b=Kr+OyG6DUK37iTL9xLAKqjtbHvnDJ8RC4FnEsliJYx3qLj5EdTMLw+ACY6tj65e1xI
+         SwIdZJOE5ZxjofdNQnCxlGfYcrIZS/TD/fQ8cgaJ66TKClB1oTDBsuEXjwpqUOC4ZK+A
+         MVvxHD29iy4+PR59DeSusHdrWNxGOrQHxCWiP4oK0zBd8AbvtludImg1AfhWJBEvBuGu
+         3HmfOgaLERpEJB5cI0I501aLYIaVZZ2m0Vvmr3u+5wgNP/t1rV5ezFKLzgu0kJddgfzc
+         MHGFFOEtDTIEl+uaQrJ8Ib3llWysbXDVa006sOXKe9/lJyrdZVaALFm2rKdNi4ywHwvP
+         lq1Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
-         :references:mime-version:content-transfer-encoding;
-        bh=s85gZIQekBvvjaPpfxkRxxQUUbnzhBZmMYlwZhJBDHo=;
-        b=pyEAzhRUyondsFZkNSuldC3e4PNkHj8VccpvDtFoQYDa6k+hw31e2cpC7DBvjStkEO
-         UKJuTI3tKkxqUgfW0GtNPQPhL1nzQ+sj7d5PSdJLGn3ILvzILKFcSdSsb9TX9YyccNCC
-         c3k22tbmEG3YgPq7TaJlO8IGWJMdZ/Itb9I138oQoOOAsE5rRCPlG0cGNRQcvnG7lbRj
-         Hk94wD8wDfYNLYJqw1bkQA18LbC/n507jugllN1yAv+JqmcGx666ITFU3IgDw66w60yE
-         3usNqzjqTVCzB+KA0G68sl3kf8ijLhDH7EIgdThbvd4+EV32r96+3MHVPr+nxo1S6qXi
-         amgw==
-X-Gm-Message-State: AOAM533/U6PCtnEdyoEgvTBLfiY4We3Wv+xPNO3CGSNZkIvwYceB0V1z
-        WmGkmZrmFyxQtfJuBqcFqdHtB7vygmqu3UTtgggvP95+uAeA1lWs/Y61H3sIg/YO1N2Qhry1LuS
-        IYKNRIUeRnUCwCFl4KEKmeJ/upXQ=
-X-Received: by 2002:ac8:550f:: with SMTP id j15mr24004362qtq.26.1597868385479;
-        Wed, 19 Aug 2020 13:19:45 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJwznxWtLE3mzgkfxvqrpd7UjvDgkidVPWETMAdTzzCETRF2gu5LUg8Saoijaaxr3rjSWwyk9Q==
-X-Received: by 2002:ac8:550f:: with SMTP id j15mr24004304qtq.26.1597868384632;
-        Wed, 19 Aug 2020 13:19:44 -0700 (PDT)
-Received: from xz-x1.redhat.com (bras-vprn-toroon474qw-lp130-11-70-53-122-15.dsl.bell.ca. [70.53.122.15])
-        by smtp.gmail.com with ESMTPSA id k1sm25363289qkf.12.2020.08.19.13.19.42
+        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
+         :message-id:references:mime-version;
+        bh=F/DYE6udgooo2up/PhUqNWxMKIGD73cddKG/XHtWgY0=;
+        b=dzPdjuoXJz83wDOZFVh8Em4BM0thzqtMBoP/4cC4LF3piNSL79k/z/5IPvSmp3MEpn
+         LLmqk81Civo+/pDk/vbPmYIEt0xunSHb73Tp0FmxVK3TdNt2m3FEv3CymGHEQkH5COJs
+         MjK5XgswbJTyzwbHroVz2Sk2wNC77l68iMBSLSAc+njaHrcoJyKJFvwFNO1UiWH0JJZb
+         HpTJftJ9GbGv0Irn8x0Py5nsEBJ7Rsh1PjOAuKkqJbux+pESaAZetQF3X1EyFHuhcPFJ
+         WG3hxcqf8oKRvcBGwNUgIfx0U3o4yQS+sMkB2aSpxjUjAOLmIo6/JnTe14kBm4UUSLM1
+         ciNw==
+X-Gm-Message-State: AOAM533UqJpw4/f+vq3iqhlCdSQdNp+O865k1bIscNfK4LMT9MsH+JnK
+        OIj1mEYU5bxK1QILZWpelBBuofgW8cs=
+X-Google-Smtp-Source: ABdhPJzWepbss7acAbBhiv+GlYg91dSA85BfYoVM+FSb+uflOhHdjCpcJNItvuy73Ql3JhciLBaBHw==
+X-Received: by 2002:ad4:4482:: with SMTP id m2mr3181981qvt.102.1597932324146;
+        Thu, 20 Aug 2020 07:05:24 -0700 (PDT)
+Received: from fionn (rdwyon0600w-lp140-02-142-113-120-236.dsl.bell.ca. [142.113.120.236])
+        by smtp.gmail.com with ESMTPSA id g61sm3043782qtd.65.2020.08.20.07.05.23
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 19 Aug 2020 13:19:43 -0700 (PDT)
-From:   Peter Xu <peterx@redhat.com>
-To:     linux-rt-users@vger.kernel.org
-Cc:     peterx@redhat.com, John Kacur <jkacur@redhat.com>
-Subject: [PATCH 1/1] rt-tests: oslat: Proper reformat of code
-Date:   Wed, 19 Aug 2020 16:19:40 -0400
-Message-Id: <20200819201940.317257-2-peterx@redhat.com>
-X-Mailer: git-send-email 2.26.2
-In-Reply-To: <20200819201940.317257-1-peterx@redhat.com>
-References: <20200819201940.317257-1-peterx@redhat.com>
+        Thu, 20 Aug 2020 07:05:23 -0700 (PDT)
+Date:   Thu, 20 Aug 2020 10:05:16 -0400 (EDT)
+From:   John Kacur <jkacur@redhat.com>
+X-X-Sender: jkacur@fionn
+To:     Peter Xu <peterx@redhat.com>
+cc:     linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH 1/1] rt-tests: oslat: Proper reformat of code
+In-Reply-To: <20200819201940.317257-2-peterx@redhat.com>
+Message-ID: <alpine.LFD.2.23.451.2008201001420.5703@fionn>
+References: <20200819201940.317257-1-peterx@redhat.com> <20200819201940.317257-2-peterx@redhat.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Format the code with kernel coding style.  Meanwhile use spdx license
-identifier as suggested by John.
 
-Signed-off-by: Peter Xu <peterx@redhat.com>
----
- src/oslat/oslat.c | 1323 ++++++++++++++++++++++-----------------------
- 1 file changed, 649 insertions(+), 674 deletions(-)
 
-diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
-index d796919..f1a82f2 100644
---- a/src/oslat/oslat.c
-+++ b/src/oslat/oslat.c
-@@ -1,3 +1,4 @@
-+// SPDX-License-Identifier: GPL-3.0-only
- /*
-  * oslat - OS latency detector
-  *
-@@ -7,18 +8,6 @@
-  *
-  * Some of the utility code based on sysjitter-1.3:
-  * Copyright 2010-2015 David Riddoch <david@riddoch.org.uk>
-- *
-- * This program is free software: you can redistribute it and/or modify it
-- * under the terms of version 3 of the GNU General Public License as
-- * published by the Free Software Foundation.
-- *
-- * This program is distributed in the hope that it will be useful, but
-- * WITHOUT ANY WARRANTY; without even the implied warranty of
-- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-- * General Public License for more details.
-- *
-- * You should have received a copy of the GNU General Public License along
-- * with this program.  If not, see <http://www.gnu.org/licenses/>.
-  */
- 
- #include <assert.h>
-@@ -59,25 +48,25 @@
- # define atomic_inc(ptr)   __sync_add_and_fetch((ptr), 1)
- # if defined(__x86_64__)
- #  define relax()          __asm__ __volatile__("pause" ::: "memory")
--static inline void frc(uint64_t* pval)
-+static inline void frc(uint64_t *pval)
- {
--    uint32_t low, high;
--    /* See rdtsc_ordered() of Linux */
--    __asm__ __volatile__("lfence");
--    __asm__ __volatile__("rdtsc" : "=a" (low) , "=d" (high));
--    *pval = ((uint64_t) high << 32) | low;
-+	uint32_t low, high;
-+	/* See rdtsc_ordered() of Linux */
-+	__asm__ __volatile__("lfence");
-+	__asm__ __volatile__("rdtsc" : "=a" (low), "=d" (high));
-+	*pval = ((uint64_t) high << 32) | low;
- }
- # elif defined(__i386__)
- #  define relax()          __asm__ __volatile__("pause" ::: "memory")
--static inline void frc(uint64_t* pval)
-+static inline void frc(uint64_t *pval)
- {
--    __asm__ __volatile__("rdtsc" : "=A" (*pval));
-+	__asm__ __volatile__("rdtsc" : "=A" (*pval));
- }
- # elif defined(__PPC64__)
--#  define relax()          do{}while(0)
--static inline void frc(uint64_t* pval)
-+#  define relax()          do { } while (0)
-+static inline void frc(uint64_t *pval)
- {
--    __asm__ __volatile__("mfspr %0, 268\n" : "=r" (*pval));
-+	__asm__ __volatile__("mfspr %0, 268\n" : "=r" (*pval));
- }
- # else
- #  error Need frc() for this platform.
-@@ -88,21 +77,20 @@ static inline void frc(uint64_t* pval)
- 
- typedef uint64_t stamp_t;   /* timestamp */
- typedef uint64_t cycles_t;  /* number of cycles */
--typedef unsigned char bool;
- 
- #define  true   1
- #define  false  0
- 
- enum command {
--    WAIT,
--    GO,
--    STOP
-+	WAIT,
-+	GO,
-+	STOP
- };
- 
- enum workload_type {
--    WORKLOAD_NONE = 0,
--    WORKLOAD_MEMMOVE,
--    WORKLOAD_NUM,
-+	WORKLOAD_NONE = 0,
-+	WORKLOAD_MEMMOVE,
-+	WORKLOAD_NUM,
- };
- 
- /* This workload needs pre-allocated memory */
-@@ -111,9 +99,9 @@ enum workload_type {
- typedef void (*workload_fn)(char *src, char *dst, size_t size);
- 
- struct workload {
--    const char *w_name;
--    uint64_t w_flags;
--    workload_fn w_fn;
-+	const char *w_name;
-+	uint64_t w_flags;
-+	workload_fn w_fn;
- };
- 
- /* We'll have buckets 1us, 2us, ..., (BUCKET_SIZE) us. */
-@@ -123,774 +111,761 @@ struct workload {
- #define  WORKLOAD_MEM_SIZE  (16UL << 10)
- 
- /* By default, no workload */
--#define  WORKLOAD_DEFUALT  WORKLOAD_NONE
-+#define  WORKLOAD_DEFAULT  WORKLOAD_NONE
- 
- struct thread {
--    int                  core_i;
--    pthread_t            thread_id;
--
--    /* NOTE! this is also how many ticks per us */
--    unsigned             cpu_mhz;
--    cycles_t             int_total;
--    stamp_t              frc_start;
--    stamp_t              frc_stop;
--    cycles_t             runtime;
--    stamp_t             *buckets;
--    uint64_t             minlat;
--    /* Maximum latency detected */
--    uint64_t             maxlat;
--    /*
--     * The extra part of the interruptions that cannot be put into even the
--     * biggest bucket.  We'll use this to calculate a more accurate average at
--     * the end of the tests.
--     */
--    uint64_t             overflow_sum;
--    int                  memory_allocated;
--
--    /* Buffers used for the workloads */
--    char *               src_buf;
--    char *               dst_buf;
--
--    /* These variables are calculated after the test */
--    double               average;
-+	int                  core_i;
-+	pthread_t            thread_id;
-+
-+	/* NOTE! this is also how many ticks per us */
-+	unsigned int         cpu_mhz;
-+	cycles_t             int_total;
-+	stamp_t              frc_start;
-+	stamp_t              frc_stop;
-+	cycles_t             runtime;
-+	stamp_t              *buckets;
-+	uint64_t             minlat;
-+	/* Maximum latency detected */
-+	uint64_t             maxlat;
-+	/*
-+	 * The extra part of the interruptions that cannot be put into even the
-+	 * biggest bucket.  We'll use this to calculate a more accurate average at
-+	 * the end of the tests.
-+	 */
-+	uint64_t             overflow_sum;
-+	int                  memory_allocated;
-+
-+	/* Buffers used for the workloads */
-+	char                 *src_buf;
-+	char                 *dst_buf;
-+
-+	/* These variables are calculated after the test */
-+	double               average;
- };
- 
- struct global {
--    /* Configuration. */
--    unsigned              runtime_secs;
--    /* Number of threads running for current test (either pre heat or real run) */
--    unsigned              n_threads;
--    /* Number of threads to test for the real run */
--    unsigned              n_threads_total;
--    struct timeval        tv_start;
--    int                   rtprio;
--    int                   bucket_size;
--    int                   trace_threshold;
--    int                   runtime;
--    /* The core that we run the main thread.  Default is cpu0 */
--    int                   cpu_main_thread;
--    char *                cpu_list;
--    char *                app_name;
--    struct workload *     workload;
--    uint64_t              workload_mem_size;
--    int                   enable_bias;
--    uint64_t              bias;
--    bool                  single_preheat_thread;
--    bool                  output_omit_zero_buckets;
--
--    /* Mutable state. */
--    volatile enum command cmd;
--    volatile unsigned     n_threads_started;
--    volatile unsigned     n_threads_ready;
--    volatile unsigned     n_threads_running;
--    volatile unsigned     n_threads_finished;
-+	/* Configuration. */
-+	unsigned int          runtime_secs;
-+	/*
-+	 * Number of threads running for current test
-+	 * (either pre heat or real run)
-+	 */
-+	unsigned int          n_threads;
-+	/* Number of threads to test for the real run */
-+	unsigned int          n_threads_total;
-+	struct timeval        tv_start;
-+	int                   rtprio;
-+	int                   bucket_size;
-+	int                   trace_threshold;
-+	int                   runtime;
-+	/* The core that we run the main thread.  Default is cpu0 */
-+	int                   cpu_main_thread;
-+	char                  *cpu_list;
-+	char                  *app_name;
-+	struct workload       *workload;
-+	uint64_t              workload_mem_size;
-+	int                   enable_bias;
-+	uint64_t              bias;
-+	int                   single_preheat_thread;
-+	int                   output_omit_zero_buckets;
-+
-+	/* Mutable state. */
-+	volatile enum command cmd;
-+	volatile unsigned int n_threads_started;
-+	volatile unsigned int n_threads_running;
-+	volatile unsigned int n_threads_finished;
- };
- 
- static struct global g;
- 
- static void workload_nop(char *dst, char *src, size_t size)
- {
--    /* Nop */
-+	/* Nop */
- }
- 
- static void workload_memmove(char *dst, char *src, size_t size)
- {
--    memmove(dst, src, size);
-+	memmove(dst, src, size);
- }
- 
- struct workload workload_list[WORKLOAD_NUM] = {
--    { "no", 0, workload_nop },
--    { "memmove", WORK_NEED_MEM, workload_memmove },
-+	{ "no", 0, workload_nop },
-+	{ "memmove", WORK_NEED_MEM, workload_memmove },
- };
- 
--#define TEST(x)                                 \
--    do {                                        \
--        if( ! (x) )                             \
--            test_fail(#x, __LINE__);            \
--    } while( 0 )
-+#define TEST(x)						\
-+	do {						\
-+		if (!(x))                             \
-+			test_fail(#x, __LINE__);	\
-+	} while (0)
- 
- #define TEST0(x)  TEST((x) == 0)
- 
--static void test_fail(const char* what, int line)
-+static void test_fail(const char *what, int line)
- {
--    fprintf(stderr, "ERROR:\n");
--    fprintf(stderr, "ERROR: TEST(%s)\n", what);
--    fprintf(stderr, "ERROR: at line %d\n", line);
--    fprintf(stderr, "ERROR: errno=%d (%s)\n", errno, strerror(errno));
--    fprintf(stderr, "ERROR:\n");
--    exit(1);
-+	fprintf(stderr, "ERROR:\n");
-+	fprintf(stderr, "ERROR: TEST(%s)\n", what);
-+	fprintf(stderr, "ERROR: at line %d\n", line);
-+	fprintf(stderr, "ERROR: errno=%d (%s)\n", errno, strerror(errno));
-+	fprintf(stderr, "ERROR:\n");
-+	exit(1);
- }
- 
- static int move_to_core(int core_i)
- {
--    cpu_set_t cpus;
--    CPU_ZERO(&cpus);
--    CPU_SET(core_i, &cpus);
--    return sched_setaffinity(0, sizeof(cpus), &cpus);
-+	cpu_set_t cpus;
-+
-+	CPU_ZERO(&cpus);
-+	CPU_SET(core_i, &cpus);
-+	return sched_setaffinity(0, sizeof(cpus), &cpus);
- }
- 
- static cycles_t __measure_cpu_hz(void)
- {
--    struct timeval tvs, tve;
--    stamp_t s, e;
--    double sec;
--
--    frc(&s);
--    e = s;
--    gettimeofday(&tvs, NULL);
--    while( e - s < 1000000 )
--        frc(&e);
--    gettimeofday(&tve, NULL);
--    sec = tve.tv_sec - tvs.tv_sec + (tve.tv_usec - tvs.tv_usec) / 1e6;
--    return (cycles_t) ((e - s) / sec);
-+	struct timeval tvs, tve;
-+	stamp_t s, e;
-+	double sec;
-+
-+	frc(&s);
-+	e = s;
-+	gettimeofday(&tvs, NULL);
-+	while (e - s < 1000000)
-+		frc(&e);
-+	gettimeofday(&tve, NULL);
-+	sec = tve.tv_sec - tvs.tv_sec + (tve.tv_usec - tvs.tv_usec) / 1e6;
-+	return (cycles_t) ((e - s) / sec);
- }
- 
--static unsigned measure_cpu_mhz(void)
-+static unsigned int measure_cpu_mhz(void)
- {
--    cycles_t m, mprev, d;
--
--    mprev = __measure_cpu_hz();
--    do {
--        m = __measure_cpu_hz();
--        if( m > mprev )  d = m - mprev;
--        else             d = mprev - m;
--        mprev = m;
--    } while( d > m / 1000 );
--
--    return (unsigned) (m / 1000000);
-+	cycles_t m, mprev, d;
-+
-+	mprev = __measure_cpu_hz();
-+	do {
-+		m = __measure_cpu_hz();
-+		if (m > mprev)
-+			d = m - mprev;
-+		else
-+			d = mprev - m;
-+		mprev = m;
-+	} while (d > m / 1000);
-+
-+	return (unsigned int) (m / 1000000);
- }
- 
--static void thread_init(struct thread* t)
-+static void thread_init(struct thread *t)
- {
--    t->cpu_mhz = measure_cpu_mhz();
--    t->maxlat = 0;
--    t->overflow_sum = 0;
--    t->minlat = (uint64_t)-1;
--
--    /* NOTE: all the buffers are not freed until the process quits. */
--    if (!t->memory_allocated) {
--        TEST(t->buckets = calloc(1, sizeof(t->buckets[0]) * g.bucket_size));
--        if (g.workload->w_flags & WORK_NEED_MEM) {
--            TEST0(posix_memalign((void **)&t->src_buf, getpagesize(),
--                                 g.workload_mem_size));
--            memset(t->src_buf, 0, g.workload_mem_size);
--            TEST0(posix_memalign((void **)&t->dst_buf, getpagesize(),
--                                 g.workload_mem_size));
--            memset(t->dst_buf, 0, g.workload_mem_size);
--        }
--        t->memory_allocated = 1;
--    } else {
--        /* Clear the buckets */
--        memset(t->buckets, 0, sizeof(t->buckets[0]) * g.bucket_size);
--    }
-+	t->cpu_mhz = measure_cpu_mhz();
-+	t->maxlat = 0;
-+	t->overflow_sum = 0;
-+	t->minlat = (uint64_t)-1;
-+
-+	/* NOTE: all the buffers are not freed until the process quits. */
-+	if (!t->memory_allocated) {
-+		TEST(t->buckets = calloc(1, sizeof(t->buckets[0]) * g.bucket_size));
-+		if (g.workload->w_flags & WORK_NEED_MEM) {
-+			TEST0(posix_memalign((void **)&t->src_buf, getpagesize(),
-+					     g.workload_mem_size));
-+			memset(t->src_buf, 0, g.workload_mem_size);
-+			TEST0(posix_memalign((void **)&t->dst_buf, getpagesize(),
-+					     g.workload_mem_size));
-+			memset(t->dst_buf, 0, g.workload_mem_size);
-+		}
-+		t->memory_allocated = 1;
-+	} else {
-+		/* Clear the buckets */
-+		memset(t->buckets, 0, sizeof(t->buckets[0]) * g.bucket_size);
-+	}
- }
- 
--static float cycles_to_sec(const struct thread* t, uint64_t cycles)
-+static float cycles_to_sec(const struct thread *t, uint64_t cycles)
- {
--    return cycles / (t->cpu_mhz * 1e6);
-+	return cycles / (t->cpu_mhz * 1e6);
- }
- 
- static void insert_bucket(struct thread *t, stamp_t value)
- {
--    int index, us;
--    uint64_t extra;
--
--    index = value / t->cpu_mhz;
--    assert(index >= 0);
--    us = index + 1;
--    assert(us > 0);
--
--    if (g.trace_threshold && us >= g.trace_threshold) {
--        char *line = "%s: Trace threshold (%d us) triggered with %u us!  "
--            "Stopping the test.\n";
--        tracemark(line, g.app_name, g.trace_threshold, us);
--        err_quit(line, g.app_name, g.trace_threshold, us);
--    }
--
--    /* Update max latency */
--    if (us > t->maxlat) {
--        t->maxlat = us;
--    }
--
--    if (us < t->minlat) {
--        t->minlat = us;
--    }
--
--    if (g.bias) {
--        /* t->bias will be set after pre-heat if user enabled it */
--        us -= g.bias;
--        /*
--         * Negative should hardly happen, but if it happens, we assume we're in
--         * the smallest bucket, which is 1us.  Same to index.
--         */
--        if (us <= 0) {
--            us = 1;
--        }
--        index -= g.bias;
--        if (index < 0) {
--            index = 0;
--        }
--    }
--
--    /* Too big the jitter; put into the last bucket */
--    if (index >= g.bucket_size) {
--        /* Keep the extra bit (in us) */
--        extra = index - g.bucket_size;
--        if (t->overflow_sum + extra < t->overflow_sum) {
--            /* The uint64_t even overflowed itself; bail out */
--            printf("Accumulated overflow too much!\n");
--            exit(1);
--        }
--        t->overflow_sum += extra;
--        index = g.bucket_size - 1;
--    }
--
--    t->buckets[index]++;
--    if (t->buckets[index] == 0) {
--        printf("Bucket %d overflowed\n", index);
--        exit(1);
--    }
-+	int index, us;
-+	uint64_t extra;
-+
-+	index = value / t->cpu_mhz;
-+	assert(index >= 0);
-+	us = index + 1;
-+	assert(us > 0);
-+
-+	if (g.trace_threshold && us >= g.trace_threshold) {
-+		char *line = "%s: Trace threshold (%d us) triggered with %u us!\n"
-+		    "Stopping the test.\n";
-+		tracemark(line, g.app_name, g.trace_threshold, us);
-+		err_quit(line, g.app_name, g.trace_threshold, us);
-+	}
-+
-+	/* Update max latency */
-+	if (us > t->maxlat)
-+		t->maxlat = us;
-+
-+	if (us < t->minlat)
-+		t->minlat = us;
-+
-+	if (g.bias) {
-+		/* t->bias will be set after pre-heat if user enabled it */
-+		us -= g.bias;
-+		/*
-+		 * Negative should hardly happen, but if it happens, we assume we're in
-+		 * the smallest bucket, which is 1us.  Same to index.
-+		 */
-+		if (us <= 0)
-+			us = 1;
-+		index -= g.bias;
-+		if (index < 0)
-+			index = 0;
-+	}
-+
-+	/* Too big the jitter; put into the last bucket */
-+	if (index >= g.bucket_size) {
-+		/* Keep the extra bit (in us) */
-+		extra = index - g.bucket_size;
-+		if (t->overflow_sum + extra < t->overflow_sum) {
-+			/* The uint64_t even overflowed itself; bail out */
-+			printf("Accumulated overflow too much!\n");
-+			exit(1);
-+		}
-+		t->overflow_sum += extra;
-+		index = g.bucket_size - 1;
-+	}
-+
-+	t->buckets[index]++;
-+	if (t->buckets[index] == 0) {
-+		printf("Bucket %d overflowed\n", index);
-+		exit(1);
-+	}
- }
- 
--static void doit(struct thread* t)
-+static void doit(struct thread *t)
- {
--    stamp_t ts1, ts2;
--    workload_fn workload_fn = g.workload->w_fn;
--
--    frc(&ts2);
--    do {
--        workload_fn(t->dst_buf, t->src_buf, g.workload_mem_size);
--        frc(&ts1);
--        insert_bucket(t, ts1 - ts2);
--        ts2 = ts1;
--    } while (g.cmd == GO);
-+	stamp_t ts1, ts2;
-+	workload_fn workload_fn = g.workload->w_fn;
-+
-+	frc(&ts2);
-+	do {
-+		workload_fn(t->dst_buf, t->src_buf, g.workload_mem_size);
-+		frc(&ts1);
-+		insert_bucket(t, ts1 - ts2);
-+		ts2 = ts1;
-+	} while (g.cmd == GO);
- }
- 
- static int set_fifo_prio(int prio)
- {
--    struct sched_param param;
-+	struct sched_param param;
- 
--    memset(&param, 0, sizeof(param));
--    param.sched_priority = prio;
--    return sched_setscheduler(0, SCHED_FIFO, &param);
-+	memset(&param, 0, sizeof(param));
-+	param.sched_priority = prio;
-+	return sched_setscheduler(0, SCHED_FIFO, &param);
- }
- 
--static void* thread_main(void* arg)
-+static void *thread_main(void *arg)
- {
--    /* Important thing to note here is that once we start bashing the CPU, we
--     * need to keep doing so to prevent the core from changing frequency or
--     * dropping into a low power state.
--     */
--    struct thread* t = arg;
--
--    /* Alloc memory in the thread itself after setting affinity to get the
--     * best chance of getting numa-local memory.  Doesn't matter so much for
--     * the "struct thread" since we expect that to stay cache resident.
--     */
--    TEST(move_to_core(t->core_i) == 0);
--    if (g.rtprio)
--        TEST(set_fifo_prio(g.rtprio) == 0);
--
--    /* Don't bash the cpu until all threads have got going. */
--    atomic_inc(&g.n_threads_started);
--    while( g.cmd == WAIT )
--        usleep(1000);
--
--    thread_init(t);
--
--    /* Ensure we all start at the same time. */
--    atomic_inc(&g.n_threads_running);
--    while( g.n_threads_running != g.n_threads )
--        relax();
--
--    frc(&t->frc_start);
--    doit(t);
--    frc(&t->frc_stop);
--
--    t->runtime = t->frc_stop - t->frc_start;
--
--    /* Wait for everyone to finish so we don't disturb them by exiting and
--     * waking the main thread.
--     */
--    atomic_inc(&g.n_threads_finished);
--    while( g.n_threads_finished != g.n_threads )
--        relax();
--
--    return NULL;
-+	/* Important thing to note here is that once we start bashing the CPU, we
-+	 * need to keep doing so to prevent the core from changing frequency or
-+	 * dropping into a low power state.
-+	 */
-+	struct thread *t = arg;
-+
-+	/* Alloc memory in the thread itself after setting affinity to get the
-+	 * best chance of getting numa-local memory.  Doesn't matter so much for
-+	 * the "struct thread" since we expect that to stay cache resident.
-+	 */
-+	TEST(move_to_core(t->core_i) == 0);
-+	if (g.rtprio)
-+		TEST(set_fifo_prio(g.rtprio) == 0);
-+
-+	/* Don't bash the cpu until all threads have got going. */
-+	atomic_inc(&g.n_threads_started);
-+	while (g.cmd == WAIT)
-+		usleep(1000);
-+
-+	thread_init(t);
-+
-+	/* Ensure we all start at the same time. */
-+	atomic_inc(&g.n_threads_running);
-+	while (g.n_threads_running != g.n_threads)
-+		relax();
-+
-+	frc(&t->frc_start);
-+	doit(t);
-+	frc(&t->frc_stop);
-+
-+	t->runtime = t->frc_stop - t->frc_start;
-+
-+	/* Wait for everyone to finish so we don't disturb them by exiting and
-+	 * waking the main thread.
-+	 */
-+	atomic_inc(&g.n_threads_finished);
-+	while (g.n_threads_finished != g.n_threads)
-+		relax();
-+
-+	return NULL;
- }
- 
--#define putfield(label, val, fmt, end) do {     \
--        printf("%12s:\t", label);               \
--        for (i = 0; i < g.n_threads; ++i)       \
--            printf(" %"fmt, val);               \
--        printf("%s\n", end);                    \
--    } while (0)
-+#define putfield(label, val, fmt, end) do {		\
-+		printf("%12s:\t", label);               \
-+		for (i = 0; i < g.n_threads; ++i)       \
-+			printf(" %"fmt, val);		\
-+		printf("%s\n", end);                    \
-+	} while (0)
- 
- void calculate(struct thread *t)
- {
--    int i, j;
--    double sum;
--    uint64_t count;
--
--    for (i = 0; i < g.n_threads; ++i) {
--        /* Calculate average */
--        sum = count = 0;
--        for (j = 0; j < g.bucket_size; j++) {
--            sum += 1.0 * t[i].buckets[j] * (g.bias+j+1);
--            count += t[i].buckets[j];
--        }
--        /* Add the extra amount of huge spikes in */
--        sum += t->overflow_sum;
--        t[i].average = sum / count;
--    }
-+	int i, j;
-+	double sum;
-+	uint64_t count;
-+
-+	for (i = 0; i < g.n_threads; ++i) {
-+		/* Calculate average */
-+		sum = count = 0;
-+		for (j = 0; j < g.bucket_size; j++) {
-+			sum += 1.0 * t[i].buckets[j] * (g.bias+j+1);
-+			count += t[i].buckets[j];
-+		}
-+		/* Add the extra amount of huge spikes in */
-+		sum += t->overflow_sum;
-+		t[i].average = sum / count;
-+	}
- }
- 
--static void write_summary(struct thread* t)
-+static void write_summary(struct thread *t)
- {
--    int i, j, k, print_dotdotdot = 0;
--    char bucket_name[64];
--
--    calculate(t);
--
--    putfield("Core", t[i].core_i, "d", "");
--    putfield("CPU Freq", t[i].cpu_mhz, "u", " (Mhz)");
--
--    for (j = 0; j < g.bucket_size; j++) {
--        if (j < g.bucket_size-1 && g.output_omit_zero_buckets) {
--            for (k = 0; k < g.n_threads; k++) {
--                if (t[k].buckets[j] != 0)
--                    break;
--            }
--            if (k == g.n_threads) {
--                print_dotdotdot = 1;
--                continue;
--            }
--        }
--
--        if (print_dotdotdot) {
--            printf("    ...\n");
--            print_dotdotdot = 0;
--        }
--
--        snprintf(bucket_name, sizeof(bucket_name), "%03"PRIu64
--                 " (us)", g.bias+j+1);
--        putfield(bucket_name, t[i].buckets[j], PRIu64,
--                 (j==g.bucket_size-1) ? " (including overflows)" : "");
--    }
--
--    putfield("Minimum", t[i].minlat, PRIu64, " (us)");
--    putfield("Average", t[i].average, ".3lf", " (us)");
--    putfield("Maximum", t[i].maxlat, PRIu64, " (us)");
--    putfield("Max-Min", t[i].maxlat - t[i].minlat, PRIu64, " (us)");
--    putfield("Duration", cycles_to_sec(&(t[i]), t[i].runtime),
--             ".3f", " (sec)");
--    printf("\n");
-+	int i, j, k, print_dotdotdot = 0;
-+	char bucket_name[64];
-+
-+	calculate(t);
-+
-+	putfield("Core", t[i].core_i, "d", "");
-+	putfield("CPU Freq", t[i].cpu_mhz, "u", " (Mhz)");
-+
-+	for (j = 0; j < g.bucket_size; j++) {
-+		if (j < g.bucket_size-1 && g.output_omit_zero_buckets) {
-+			for (k = 0; k < g.n_threads; k++) {
-+				if (t[k].buckets[j] != 0)
-+					break;
-+			}
-+			if (k == g.n_threads) {
-+				print_dotdotdot = 1;
-+				continue;
-+			}
-+		}
-+
-+		if (print_dotdotdot) {
-+			printf("    ...\n");
-+			print_dotdotdot = 0;
-+		}
-+
-+		snprintf(bucket_name, sizeof(bucket_name), "%03"PRIu64
-+			 " (us)", g.bias+j+1);
-+		putfield(bucket_name, t[i].buckets[j], PRIu64,
-+			 (j == g.bucket_size - 1) ? " (including overflows)" : "");
-+	}
-+
-+	putfield("Minimum", t[i].minlat, PRIu64, " (us)");
-+	putfield("Average", t[i].average, ".3lf", " (us)");
-+	putfield("Maximum", t[i].maxlat, PRIu64, " (us)");
-+	putfield("Max-Min", t[i].maxlat - t[i].minlat, PRIu64, " (us)");
-+	putfield("Duration", cycles_to_sec(&(t[i]), t[i].runtime),
-+		 ".3f", " (sec)");
-+	printf("\n");
- }
- 
--static void run_expt(struct thread* threads, int runtime_secs)
-+static void run_expt(struct thread *threads, int runtime_secs)
- {
--    int i;
--
--    g.runtime_secs = runtime_secs;
--    g.n_threads_started = 0;
--    g.n_threads_ready = 0;
--    g.n_threads_running = 0;
--    g.n_threads_finished = 0;
--    g.cmd = WAIT;
--
--    for( i = 0; i < g.n_threads; ++i ) {
--        TEST0(pthread_create(&(threads[i].thread_id), NULL,
--                             thread_main, &(threads[i])));
--    }
--    while( g.n_threads_started != g.n_threads ) {
--        usleep(1000);
--    }
--
--    gettimeofday(&g.tv_start, NULL);
--    g.cmd = GO;
--
--    alarm(runtime_secs);
--
--    /* Go to sleep until the threads have done their stuff. */
--    for( i = 0; i < g.n_threads; ++i ) {
--        pthread_join(threads[i].thread_id, NULL);
--    }
-+	int i;
-+
-+	g.runtime_secs = runtime_secs;
-+	g.n_threads_started = 0;
-+	g.n_threads_running = 0;
-+	g.n_threads_finished = 0;
-+	g.cmd = WAIT;
-+
-+	for (i = 0; i < g.n_threads; ++i)
-+		TEST0(pthread_create(&(threads[i].thread_id), NULL,
-+				     thread_main, &(threads[i])));
-+	while (g.n_threads_started != g.n_threads)
-+		usleep(1000);
-+
-+	gettimeofday(&g.tv_start, NULL);
-+	g.cmd = GO;
-+
-+	alarm(runtime_secs);
-+
-+	/* Go to sleep until the threads have done their stuff. */
-+	for (i = 0; i < g.n_threads; ++i)
-+		pthread_join(threads[i].thread_id, NULL);
- }
- 
- static void handle_alarm(int code)
- {
--    g.cmd = STOP;
-+	g.cmd = STOP;
- }
- 
- const char *helpmsg =
--    "Usage: %s [options]\n"
--    "\n"
--    "This is an OS latency detector by running busy loops on specified cores.\n"
--    "Please run this tool using root.\n"
--    "\n"
--    "Available options:\n"
--    "\n"
--    "  -b, --bucket-size      Specify the number of the buckets (4-1024)\n"
--    "  -B, --bias             Add a bias to all the buckets using the estimated mininum\n"
--    "  -c, --cpu-list         Specify CPUs to run on, e.g. '1,3,5,7-15'\n"
--    "  -C, --cpu-main-thread  Specify which CPU the main thread runs on.  Default is cpu0.\n"
--    "  -f, --rtprio           Using SCHED_FIFO priority (1-99)\n"
--    "  -m, --workload-mem     Size of the memory to use for the workload (e.g., 4K, 1M).\n"
--    "                         Total memory usage will be this value multiplies 2*N,\n"
--    "                         because there will be src/dst buffers for each thread, and\n"
--    "                         N is the number of processors for testing.\n"
--    "  -s, --single-preheat   Use a single thread when measuring latency at preheat stage\n"
--    "                         NOTE: please make sure the CPU frequency on all testing cores\n"
--    "                         are locked before using this parmater.  If you don't know how\n"
--    "                         to lock the freq then please don't use this parameter.\n"
--    "  -t, --runtime          Specify test duration, e.g., 60, 20m, 2H\n"
--    "                         (m/M: minutes, h/H: hours, d/D: days)\n"
--    "  -T, --trace-threshold  Stop the test when threshold triggered (in us),\n"
--    "                         print a marker in ftrace and stop ftrace too.\n"
--    "  -v, --version          Display the version of the software.\n"
--    "  -w, --workload         Specify a kind of workload, default is no workload\n"
--    "                         (options: no, memmove)\n"
--    "  -z, --zero-omit        Don't display buckets in the output histogram if all zeros.\n"
--    "\n"
--    ;
-+"Usage: %s [options]\n"
-+"\n"
-+"This is an OS latency detector by running busy loops on specified cores.\n"
-+"Please run this tool using root.\n"
-+"\n"
-+"Available options:\n"
-+"\n"
-+"  -b, --bucket-size      Specify the number of the buckets (4-1024)\n"
-+"  -B, --bias             Add a bias to all the buckets using the estimated mininum\n"
-+"  -c, --cpu-list         Specify CPUs to run on, e.g. '1,3,5,7-15'\n"
-+"  -C, --cpu-main-thread  Specify which CPU the main thread runs on.  Default is cpu0.\n"
-+"  -f, --rtprio           Using SCHED_FIFO priority (1-99)\n"
-+"  -m, --workload-mem     Size of the memory to use for the workload (e.g., 4K, 1M).\n"
-+"                         Total memory usage will be this value multiplies 2*N,\n"
-+"                         because there will be src/dst buffers for each thread, and\n"
-+"                         N is the number of processors for testing.\n"
-+"  -s, --single-preheat   Use a single thread when measuring latency at preheat stage\n"
-+"                         NOTE: please make sure the CPU frequency on all testing cores\n"
-+"                         are locked before using this parmater.  If you don't know how\n"
-+"                         to lock the freq then please don't use this parameter.\n"
-+"  -t, --runtime          Specify test duration, e.g., 60, 20m, 2H\n"
-+"                         (m/M: minutes, h/H: hours, d/D: days)\n"
-+"  -T, --trace-threshold  Stop the test when threshold triggered (in us),\n"
-+"                         print a marker in ftrace and stop ftrace too.\n"
-+"  -v, --version          Display the version of the software.\n"
-+"  -w, --workload         Specify a kind of workload, default is no workload\n"
-+"                         (options: no, memmove)\n"
-+"  -z, --zero-omit        Don't display buckets in the output histogram if all zeros.\n"
-+"\n"
-+;
- 
- static void usage(void)
- {
--    printf(helpmsg, g.app_name);
--    exit(1);
-+	printf(helpmsg, g.app_name);
-+	exit(1);
- }
- 
- /* TODO: use libnuma? */
- static int parse_cpu_list(char *cpu_list, cpu_set_t *cpu_set)
- {
--    struct bitmask *cpu_mask;
--    int i, n_cores;
--
--    n_cores = sysconf(_SC_NPROCESSORS_CONF);
--
--    if (!cpu_list) {
--        for (i = 0; i < n_cores; i++)
--            CPU_SET(i, cpu_set);
--        return n_cores;
--    }
--
--    cpu_mask = numa_parse_cpustring_all(cpu_list);
--    if (cpu_mask) {
--        for (i = 0; i < n_cores; i++) {
--            if (numa_bitmask_isbitset(cpu_mask, i)) {
--                CPU_SET(i, cpu_set);
--            }
--        }
--        numa_bitmask_free(cpu_mask);
--    } else {
--        warn("Unknown cpu-list: %s, using all available cpus\n", cpu_list);
--        for (i = 0; i < n_cores; i++)
--            CPU_SET(i, cpu_set);
--    }
--
--    return n_cores;
-+	struct bitmask *cpu_mask;
-+	int i, n_cores;
-+
-+	n_cores = sysconf(_SC_NPROCESSORS_CONF);
-+
-+	if (!cpu_list) {
-+		for (i = 0; i < n_cores; i++)
-+			CPU_SET(i, cpu_set);
-+		return n_cores;
-+	}
-+
-+	cpu_mask = numa_parse_cpustring_all(cpu_list);
-+	if (cpu_mask) {
-+		for (i = 0; i < n_cores; i++) {
-+			if (numa_bitmask_isbitset(cpu_mask, i))
-+				CPU_SET(i, cpu_set);
-+		}
-+		numa_bitmask_free(cpu_mask);
-+	} else {
-+		warn("Unknown cpu-list: %s, using all available cpus\n", cpu_list);
-+		for (i = 0; i < n_cores; i++)
-+			CPU_SET(i, cpu_set);
-+	}
-+
-+	return n_cores;
- }
- 
- static int parse_runtime(const char *str)
- {
--    char *endptr;
--    int v = strtol(str, &endptr, 10);
--
--    if (!*endptr) {
--        return v;
--    }
--
--    switch (*endptr) {
--    case 'd':
--    case 'D':
--        /* Days */
--        v *= 24;
--    case 'h':
--    case 'H':
--        /* Hours */
--        v *= 60;
--    case 'm':
--    case 'M':
--        /* Minutes */
--        v *= 60;
--    case 's':
--    case 'S':
--        /* Seconds */
--        break;
--    default:
--        printf("Unknown runtime suffix: %s\n", endptr);
--        v = 0;
--        break;
--    }
--
--    return v;
-+	char *endptr;
-+	int v = strtol(str, &endptr, 10);
-+
-+	if (!*endptr)
-+		return v;
-+
-+	switch (*endptr) {
-+	case 'd':
-+	case 'D':
-+		/* Days */
-+		v *= 24;
-+	case 'h':
-+	case 'H':
-+		/* Hours */
-+		v *= 60;
-+	case 'm':
-+	case 'M':
-+		/* Minutes */
-+		v *= 60;
-+	case 's':
-+	case 'S':
-+		/* Seconds */
-+		break;
-+	default:
-+		printf("Unknown runtime suffix: %s\n", endptr);
-+		v = 0;
-+		break;
-+	}
-+
-+	return v;
- }
- 
- static int parse_mem_size(char *str, uint64_t *val)
- {
--    char *endptr;
--    int v = strtol(str, &endptr, 10);
--
--    if (!*endptr) {
--        return v;
--    }
--
--    switch (*endptr) {
--    case 'g':
--    case 'G':
--        v *= 1024;
--    case 'm':
--    case 'M':
--        v *= 1024;
--    case 'k':
--    case 'K':
--        v *= 1024;
--    case 'b':
--    case 'B':
--        break;
--    default:
--        return -1;
--    }
--
--    *val = v;
--
--    return 0;
-+	char *endptr;
-+	int v = strtol(str, &endptr, 10);
-+
-+	if (!*endptr)
-+		return v;
-+
-+	switch (*endptr) {
-+	case 'g':
-+	case 'G':
-+		v *= 1024;
-+	case 'm':
-+	case 'M':
-+		v *= 1024;
-+	case 'k':
-+	case 'K':
-+		v *= 1024;
-+	case 'b':
-+	case 'B':
-+		break;
-+	default:
-+		return -1;
-+	}
-+
-+	*val = v;
-+
-+	return 0;
- }
- 
- static int workload_select(char *name)
- {
--    int i = 0;
-+	int i = 0;
- 
--    for (i = 0; i < WORKLOAD_NUM; i++) {
--        if (!strcmp(name, workload_list[i].w_name)) {
--            g.workload = &workload_list[i];
--            return 0;
--        }
--    }
-+	for (i = 0; i < WORKLOAD_NUM; i++) {
-+		if (!strcmp(name, workload_list[i].w_name)) {
-+			g.workload = &workload_list[i];
-+			return 0;
-+		}
-+	}
- 
--    return -1;
-+	return -1;
- }
- 
- /* Process commandline options */
- static void parse_options(int argc, char *argv[])
- {
--    while (1) {
--        static struct option options[] = {
--            { "bucket-size", required_argument, NULL, 'b' },
--            { "cpu-list", required_argument, NULL, 'c' },
--            { "cpu-main-thread", required_argument, NULL, 'C'},
--            { "runtime", required_argument, NULL, 't' },
--            { "rtprio", required_argument, NULL, 'f' },
--            { "help", no_argument, NULL, 'h' },
--            { "trace-threshold", required_argument, NULL, 'T' },
--            { "workload", required_argument, NULL, 'w'},
--            { "workload-mem", required_argument, NULL, 'm'},
--            { "bias", no_argument, NULL, 'B'},
--            { "single-preheat", no_argument, NULL, 's'},
--            { "zero-omit", no_argument, NULL, 'u'},
--            { "version", no_argument, NULL, 'v'},
--            { NULL, 0, NULL, 0 },
--        };
--        int i, c = getopt_long(argc, argv, "b:Bc:C:f:hm:st:w:T:vz",
--                               options, NULL);
--        long ncores;
--
--        if (c == -1)
--            break;
--
--        switch (c) {
--        case 'b':
--            g.bucket_size = strtol(optarg, NULL, 10);
--            if (g.bucket_size > 1024 || g.bucket_size <= 4) {
--                printf("Illegal bucket size: %s (should be: 4-1024)\n",
--                       optarg);
--                exit(1);
--            }
--            break;
--        case 'B':
--            g.enable_bias = 1;
--            break;
--        case 'c':
--            g.cpu_list = strdup(optarg);
--            break;
--        case 'C':
--            ncores = sysconf(_SC_NPROCESSORS_CONF);
--            g.cpu_main_thread = strtol(optarg, NULL, 10);
--            if (g.cpu_main_thread < 0 || g.cpu_main_thread > ncores) {
--                printf("Illegal core for main thread: %s (should be: 0-%ld)\n",
--                       optarg, ncores);
--                exit(1);
--            }
--            break;
--        case 't':
--            g.runtime = parse_runtime(optarg);
--            if (!g.runtime) {
--                printf("Illegal runtime: %s\n", optarg);
--                exit(1);
--            }
--            break;
--        case 'f':
--            g.rtprio = strtol(optarg, NULL, 10);
--            if (g.rtprio < 1 || g.rtprio > 99) {
--                printf("Illegal RT priority: %s (should be: 1-99)\n", optarg);
--                exit(1);
--            }
--            break;
--        case 'T':
--            g.trace_threshold = strtol(optarg, NULL, 10);
--            if (g.trace_threshold <= 0) {
--                printf("Parameter --trace-threshold needs to be positive\n");
--                exit(1);
--            }
--            enable_trace_mark();
--            break;
--        case 'w':
--            if (workload_select(optarg)) {
--                printf("Unknown workload '%s'.  Please choose from: ", optarg);
--                for (i = 0; i < WORKLOAD_NUM; i++) {
--                    printf("'%s'", workload_list[i].w_name);
--                    if (i != WORKLOAD_NUM - 1) {
--                        printf(", ");
--                    }
--                }
--                printf("\n\n");
--                exit(1);
--            }
--            break;
--        case 'm':
--            if (parse_mem_size(optarg, &g.workload_mem_size)) {
--                printf("Unknown workload memory size '%s'.\n\n", optarg);
--                exit(1);
--            }
--            break;
--        case 's':
--            /*
--             * Only use one core for pre-heat.  Then if --bias is used, the
--             * bias will be exactly the min value of the pre-heat core.
--             */
--            g.single_preheat_thread = true;
--            break;
--        case 'v':
--            /*
--             * Because we always dump the version even before parsing options,
--             * what we need to do is to quit..
--             */
--            exit(0);
--            break;
--        case 'z':
--            g.output_omit_zero_buckets = 1;
--            break;
--        default:
--            usage();
--            break;
--        }
--    }
-+	while (1) {
-+		static struct option options[] = {
-+			{ "bucket-size", required_argument, NULL, 'b' },
-+			{ "cpu-list", required_argument, NULL, 'c' },
-+			{ "cpu-main-thread", required_argument, NULL, 'C'},
-+			{ "runtime", required_argument, NULL, 't' },
-+			{ "rtprio", required_argument, NULL, 'f' },
-+			{ "help", no_argument, NULL, 'h' },
-+			{ "trace-threshold", required_argument, NULL, 'T' },
-+			{ "workload", required_argument, NULL, 'w'},
-+			{ "workload-mem", required_argument, NULL, 'm'},
-+			{ "bias", no_argument, NULL, 'B'},
-+			{ "single-preheat", no_argument, NULL, 's'},
-+			{ "zero-omit", no_argument, NULL, 'u'},
-+			{ "version", no_argument, NULL, 'v'},
-+			{ NULL, 0, NULL, 0 },
-+		};
-+		int i, c = getopt_long(argc, argv, "b:Bc:C:f:hm:st:w:T:vz",
-+				       options, NULL);
-+		long ncores;
-+
-+		if (c == -1)
-+			break;
-+
-+		switch (c) {
-+		case 'b':
-+			g.bucket_size = strtol(optarg, NULL, 10);
-+			if (g.bucket_size > 1024 || g.bucket_size <= 4) {
-+				printf("Illegal bucket size: %s (should be: 4-1024)\n",
-+				       optarg);
-+				exit(1);
-+			}
-+			break;
-+		case 'B':
-+			g.enable_bias = 1;
-+			break;
-+		case 'c':
-+			g.cpu_list = strdup(optarg);
-+			break;
-+		case 'C':
-+			ncores = sysconf(_SC_NPROCESSORS_CONF);
-+			g.cpu_main_thread = strtol(optarg, NULL, 10);
-+			if (g.cpu_main_thread < 0 || g.cpu_main_thread > ncores) {
-+				printf("Illegal core for main thread: %s (should be: 0-%ld)\n",
-+				       optarg, ncores);
-+				exit(1);
-+			}
-+			break;
-+		case 't':
-+			g.runtime = parse_runtime(optarg);
-+			if (!g.runtime) {
-+				printf("Illegal runtime: %s\n", optarg);
-+				exit(1);
-+			}
-+			break;
-+		case 'f':
-+			g.rtprio = strtol(optarg, NULL, 10);
-+			if (g.rtprio < 1 || g.rtprio > 99) {
-+				printf("Illegal RT priority: %s (should be: 1-99)\n", optarg);
-+				exit(1);
-+			}
-+			break;
-+		case 'T':
-+			g.trace_threshold = strtol(optarg, NULL, 10);
-+			if (g.trace_threshold <= 0) {
-+				printf("Parameter --trace-threshold needs to be positive\n");
-+				exit(1);
-+			}
-+			enable_trace_mark();
-+			break;
-+		case 'w':
-+			if (workload_select(optarg)) {
-+				printf("Unknown workload '%s'.  Please choose from: ", optarg);
-+				for (i = 0; i < WORKLOAD_NUM; i++) {
-+					printf("'%s'", workload_list[i].w_name);
-+					if (i != WORKLOAD_NUM - 1)
-+						printf(", ");
-+				}
-+				printf("\n\n");
-+				exit(1);
-+			}
-+			break;
-+		case 'm':
-+			if (parse_mem_size(optarg, &g.workload_mem_size)) {
-+				printf("Unknown workload memory size '%s'.\n\n", optarg);
-+				exit(1);
-+			}
-+			break;
-+		case 's':
-+			/*
-+			 * Only use one core for pre-heat.  Then if --bias is used, the
-+			 * bias will be exactly the min value of the pre-heat core.
-+			 */
-+			g.single_preheat_thread = true;
-+			break;
-+		case 'v':
-+			/*
-+			 * Because we always dump the version even before parsing options,
-+			 * what we need to do is to quit..
-+			 */
-+			exit(0);
-+			break;
-+		case 'z':
-+			g.output_omit_zero_buckets = 1;
-+			break;
-+		default:
-+			usage();
-+			break;
-+		}
-+	}
- }
- 
- void dump_globals(void)
- {
--    printf("Total runtime: \t\t%d seconds\n", g.runtime);
--    printf("Thread priority: \t");
--    if (g.rtprio) {
--        printf("SCHED_FIFO:%d\n", g.rtprio);
--    } else {
--        printf("default\n");
--    }
--    printf("CPU list: \t\t%s\n", g.cpu_list ?: "(all cores)");
--    printf("CPU for main thread: \t%d\n", g.cpu_main_thread);
--    printf("Workload: \t\t%s\n", g.workload->w_name);
--    printf("Workload mem: \t\t%"PRIu64" (KiB)\n",
--           (g.workload->w_flags & WORK_NEED_MEM) ?
--           (g.workload_mem_size / 1024) : 0);
--    printf("Preheat cores: \t\t%d\n", g.single_preheat_thread ?
--           1 : g.n_threads_total);
--    printf("\n");
-+	printf("Total runtime: \t\t%d seconds\n", g.runtime);
-+	printf("Thread priority: \t");
-+	if (g.rtprio)
-+		printf("SCHED_FIFO:%d\n", g.rtprio);
-+	else
-+		printf("default\n");
-+	printf("CPU list: \t\t%s\n", g.cpu_list ?: "(all cores)");
-+	printf("CPU for main thread: \t%d\n", g.cpu_main_thread);
-+	printf("Workload: \t\t%s\n", g.workload->w_name);
-+	printf("Workload mem: \t\t%"PRIu64" (KiB)\n",
-+	       (g.workload->w_flags & WORK_NEED_MEM) ?
-+	       (g.workload_mem_size / 1024) : 0);
-+	printf("Preheat cores: \t\t%d\n", g.single_preheat_thread ?
-+	       1 : g.n_threads_total);
-+	printf("\n");
- }
- 
- static void record_bias(struct thread *t)
- {
--    int i;
--    uint64_t bias = (uint64_t)-1;
--
--    if (!g.enable_bias) {
--        return;
--    }
--
--    /* Record the min value of minlat on all the threads */
--    for( i = 0; i < g.n_threads; ++i ) {
--        if (t[i].minlat < bias) {
--            bias = t[i].minlat;
--        }
--    }
--    g.bias = bias;
--    printf("Global bias set to %" PRId64 " (us)\n", bias);
-+	int i;
-+	uint64_t bias = (uint64_t)-1;
-+
-+	if (!g.enable_bias)
-+		return;
-+
-+	/* Record the min value of minlat on all the threads */
-+	for (i = 0; i < g.n_threads; ++i) {
-+		if (t[i].minlat < bias)
-+			bias = t[i].minlat;
-+	}
-+	g.bias = bias;
-+	printf("Global bias set to %" PRId64 " (us)\n", bias);
- }
- 
--int main(int argc, char* argv[])
-+int main(int argc, char *argv[])
- {
--    struct thread* threads;
--    int i, n_cores;
--    cpu_set_t cpu_set;
-+	struct thread *threads;
-+	int i, n_cores;
-+	cpu_set_t cpu_set;
- 
--    CPU_ZERO(&cpu_set);
-+	CPU_ZERO(&cpu_set);
- 
--    g.app_name = argv[0];
--    g.rtprio = 0;
--    g.bucket_size = BUCKET_SIZE;
--    g.runtime = 1;
--    g.workload = &workload_list[WORKLOAD_DEFUALT];
--    g.workload_mem_size = WORKLOAD_MEM_SIZE;
--    /* Run the main thread on cpu0 by default */
--    g.cpu_main_thread = 0;
-+	g.app_name = argv[0];
-+	g.rtprio = 0;
-+	g.bucket_size = BUCKET_SIZE;
-+	g.runtime = 1;
-+	g.workload = &workload_list[WORKLOAD_DEFAULT];
-+	g.workload_mem_size = WORKLOAD_MEM_SIZE;
-+	/* Run the main thread on cpu0 by default */
-+	g.cpu_main_thread = 0;
- 
--    printf("\nVersion: %1.2f\n\n", VERSION);
-+	printf("\nVersion: %1.2f\n\n", VERSION);
- 
--    parse_options(argc, argv);
-+	parse_options(argc, argv);
- 
--    TEST(mlockall(MCL_CURRENT | MCL_FUTURE) == 0);
-+	TEST(mlockall(MCL_CURRENT | MCL_FUTURE) == 0);
- 
--    n_cores = parse_cpu_list(g.cpu_list, &cpu_set);
-+	n_cores = parse_cpu_list(g.cpu_list, &cpu_set);
- 
--    TEST( threads = calloc(1, CPU_COUNT(&cpu_set) * sizeof(threads[0])) );
--    for( i = 0; i < n_cores; ++i )
--        if (CPU_ISSET(i, &cpu_set) && move_to_core(i) == 0)
--            threads[g.n_threads_total++].core_i = i;
-+	TEST(threads = calloc(1, CPU_COUNT(&cpu_set) * sizeof(threads[0])));
-+	for (i = 0; i < n_cores; ++i)
-+		if (CPU_ISSET(i, &cpu_set) && move_to_core(i) == 0)
-+			threads[g.n_threads_total++].core_i = i;
- 
--    if (CPU_ISSET(0, &cpu_set) && g.rtprio) {
--        printf("WARNING: Running SCHED_FIFO workload on CPU 0 "
--               "may hang the main thread\n");
--    }
-+	if (CPU_ISSET(0, &cpu_set) && g.rtprio)
-+		printf("WARNING: Running SCHED_FIFO workload on CPU 0 may hang the thread\n");
- 
--    TEST(move_to_core(g.cpu_main_thread) == 0);
-+	TEST(move_to_core(g.cpu_main_thread) == 0);
- 
--    signal(SIGALRM, handle_alarm);
--    signal(SIGINT, handle_alarm);
--    signal(SIGTERM, handle_alarm);
-+	signal(SIGALRM, handle_alarm);
-+	signal(SIGINT, handle_alarm);
-+	signal(SIGTERM, handle_alarm);
- 
--    dump_globals();
-+	dump_globals();
- 
--    printf("Pre-heat for 1 seconds...\n");
--    if (g.single_preheat_thread) {
--        g.n_threads = 1;
--    } else {
--        g.n_threads = g.n_threads_total;
--    }
--    run_expt(threads, 1);
--    record_bias(threads);
-+	printf("Pre-heat for 1 seconds...\n");
-+	if (g.single_preheat_thread)
-+		g.n_threads = 1;
-+	else
-+		g.n_threads = g.n_threads_total;
-+	run_expt(threads, 1);
-+	record_bias(threads);
- 
--    printf("Test starts...\n");
--    /* Reset n_threads to always run on all the cores */
--    g.n_threads = g.n_threads_total;
--    run_expt(threads, g.runtime);
-+	printf("Test starts...\n");
-+	/* Reset n_threads to always run on all the cores */
-+	g.n_threads = g.n_threads_total;
-+	run_expt(threads, g.runtime);
- 
--    printf("Test completed.\n\n");
-+	printf("Test completed.\n\n");
- 
--    write_summary(threads);
-+	write_summary(threads);
- 
--    if (g.cpu_list) {
--        free(g.cpu_list);
--        g.cpu_list = NULL;
--    }
-+	if (g.cpu_list) {
-+		free(g.cpu_list);
-+		g.cpu_list = NULL;
-+	}
- 
--    return 0;
-+	return 0;
- }
--- 
-2.26.2
+On Wed, 19 Aug 2020, Peter Xu wrote:
 
+> Format the code with kernel coding style.  Meanwhile use spdx license
+> identifier as suggested by John.
+> 
+> Signed-off-by: Peter Xu <peterx@redhat.com>
+> ---
+>  src/oslat/oslat.c | 1323 ++++++++++++++++++++++-----------------------
+>  1 file changed, 649 insertions(+), 674 deletions(-)
+> 
+> diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+> index d796919..f1a82f2 100644
+> --- a/src/oslat/oslat.c
+> +++ b/src/oslat/oslat.c
+> @@ -1,3 +1,4 @@
+> +// SPDX-License-Identifier: GPL-3.0-only
+>  /*
+>   * oslat - OS latency detector
+>   *
+> @@ -7,18 +8,6 @@
+>   *
+>   * Some of the utility code based on sysjitter-1.3:
+>   * Copyright 2010-2015 David Riddoch <david@riddoch.org.uk>
+> - *
+> - * This program is free software: you can redistribute it and/or modify it
+> - * under the terms of version 3 of the GNU General Public License as
+> - * published by the Free Software Foundation.
+> - *
+> - * This program is distributed in the hope that it will be useful, but
+> - * WITHOUT ANY WARRANTY; without even the implied warranty of
+> - * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+> - * General Public License for more details.
+> - *
+> - * You should have received a copy of the GNU General Public License along
+> - * with this program.  If not, see <http://www.gnu.org/licenses/>.
+>   */
+>  
+>  #include <assert.h>
+> @@ -59,25 +48,25 @@
+>  # define atomic_inc(ptr)   __sync_add_and_fetch((ptr), 1)
+>  # if defined(__x86_64__)
+>  #  define relax()          __asm__ __volatile__("pause" ::: "memory")
+> -static inline void frc(uint64_t* pval)
+> +static inline void frc(uint64_t *pval)
+>  {
+> -    uint32_t low, high;
+> -    /* See rdtsc_ordered() of Linux */
+> -    __asm__ __volatile__("lfence");
+> -    __asm__ __volatile__("rdtsc" : "=a" (low) , "=d" (high));
+> -    *pval = ((uint64_t) high << 32) | low;
+> +	uint32_t low, high;
+> +	/* See rdtsc_ordered() of Linux */
+> +	__asm__ __volatile__("lfence");
+> +	__asm__ __volatile__("rdtsc" : "=a" (low), "=d" (high));
+> +	*pval = ((uint64_t) high << 32) | low;
+>  }
+>  # elif defined(__i386__)
+>  #  define relax()          __asm__ __volatile__("pause" ::: "memory")
+> -static inline void frc(uint64_t* pval)
+> +static inline void frc(uint64_t *pval)
+>  {
+> -    __asm__ __volatile__("rdtsc" : "=A" (*pval));
+> +	__asm__ __volatile__("rdtsc" : "=A" (*pval));
+>  }
+>  # elif defined(__PPC64__)
+> -#  define relax()          do{}while(0)
+> -static inline void frc(uint64_t* pval)
+> +#  define relax()          do { } while (0)
+> +static inline void frc(uint64_t *pval)
+>  {
+> -    __asm__ __volatile__("mfspr %0, 268\n" : "=r" (*pval));
+> +	__asm__ __volatile__("mfspr %0, 268\n" : "=r" (*pval));
+>  }
+>  # else
+>  #  error Need frc() for this platform.
+> @@ -88,21 +77,20 @@ static inline void frc(uint64_t* pval)
+>  
+>  typedef uint64_t stamp_t;   /* timestamp */
+>  typedef uint64_t cycles_t;  /* number of cycles */
+> -typedef unsigned char bool;
+>  
+>  #define  true   1
+>  #define  false  0
+>  
+>  enum command {
+> -    WAIT,
+> -    GO,
+> -    STOP
+> +	WAIT,
+> +	GO,
+> +	STOP
+>  };
+>  
+>  enum workload_type {
+> -    WORKLOAD_NONE = 0,
+> -    WORKLOAD_MEMMOVE,
+> -    WORKLOAD_NUM,
+> +	WORKLOAD_NONE = 0,
+> +	WORKLOAD_MEMMOVE,
+> +	WORKLOAD_NUM,
+>  };
+>  
+>  /* This workload needs pre-allocated memory */
+> @@ -111,9 +99,9 @@ enum workload_type {
+>  typedef void (*workload_fn)(char *src, char *dst, size_t size);
+>  
+>  struct workload {
+> -    const char *w_name;
+> -    uint64_t w_flags;
+> -    workload_fn w_fn;
+> +	const char *w_name;
+> +	uint64_t w_flags;
+> +	workload_fn w_fn;
+>  };
+>  
+>  /* We'll have buckets 1us, 2us, ..., (BUCKET_SIZE) us. */
+> @@ -123,774 +111,761 @@ struct workload {
+>  #define  WORKLOAD_MEM_SIZE  (16UL << 10)
+>  
+>  /* By default, no workload */
+> -#define  WORKLOAD_DEFUALT  WORKLOAD_NONE
+> +#define  WORKLOAD_DEFAULT  WORKLOAD_NONE
+>  
+>  struct thread {
+> -    int                  core_i;
+> -    pthread_t            thread_id;
+> -
+> -    /* NOTE! this is also how many ticks per us */
+> -    unsigned             cpu_mhz;
+> -    cycles_t             int_total;
+> -    stamp_t              frc_start;
+> -    stamp_t              frc_stop;
+> -    cycles_t             runtime;
+> -    stamp_t             *buckets;
+> -    uint64_t             minlat;
+> -    /* Maximum latency detected */
+> -    uint64_t             maxlat;
+> -    /*
+> -     * The extra part of the interruptions that cannot be put into even the
+> -     * biggest bucket.  We'll use this to calculate a more accurate average at
+> -     * the end of the tests.
+> -     */
+> -    uint64_t             overflow_sum;
+> -    int                  memory_allocated;
+> -
+> -    /* Buffers used for the workloads */
+> -    char *               src_buf;
+> -    char *               dst_buf;
+> -
+> -    /* These variables are calculated after the test */
+> -    double               average;
+> +	int                  core_i;
+> +	pthread_t            thread_id;
+> +
+> +	/* NOTE! this is also how many ticks per us */
+> +	unsigned int         cpu_mhz;
+> +	cycles_t             int_total;
+> +	stamp_t              frc_start;
+> +	stamp_t              frc_stop;
+> +	cycles_t             runtime;
+> +	stamp_t              *buckets;
+> +	uint64_t             minlat;
+> +	/* Maximum latency detected */
+> +	uint64_t             maxlat;
+> +	/*
+> +	 * The extra part of the interruptions that cannot be put into even the
+> +	 * biggest bucket.  We'll use this to calculate a more accurate average at
+> +	 * the end of the tests.
+> +	 */
+> +	uint64_t             overflow_sum;
+> +	int                  memory_allocated;
+> +
+> +	/* Buffers used for the workloads */
+> +	char                 *src_buf;
+> +	char                 *dst_buf;
+> +
+> +	/* These variables are calculated after the test */
+> +	double               average;
+>  };
+>  
+>  struct global {
+> -    /* Configuration. */
+> -    unsigned              runtime_secs;
+> -    /* Number of threads running for current test (either pre heat or real run) */
+> -    unsigned              n_threads;
+> -    /* Number of threads to test for the real run */
+> -    unsigned              n_threads_total;
+> -    struct timeval        tv_start;
+> -    int                   rtprio;
+> -    int                   bucket_size;
+> -    int                   trace_threshold;
+> -    int                   runtime;
+> -    /* The core that we run the main thread.  Default is cpu0 */
+> -    int                   cpu_main_thread;
+> -    char *                cpu_list;
+> -    char *                app_name;
+> -    struct workload *     workload;
+> -    uint64_t              workload_mem_size;
+> -    int                   enable_bias;
+> -    uint64_t              bias;
+> -    bool                  single_preheat_thread;
+> -    bool                  output_omit_zero_buckets;
+> -
+> -    /* Mutable state. */
+> -    volatile enum command cmd;
+> -    volatile unsigned     n_threads_started;
+> -    volatile unsigned     n_threads_ready;
+> -    volatile unsigned     n_threads_running;
+> -    volatile unsigned     n_threads_finished;
+> +	/* Configuration. */
+> +	unsigned int          runtime_secs;
+> +	/*
+> +	 * Number of threads running for current test
+> +	 * (either pre heat or real run)
+> +	 */
+> +	unsigned int          n_threads;
+> +	/* Number of threads to test for the real run */
+> +	unsigned int          n_threads_total;
+> +	struct timeval        tv_start;
+> +	int                   rtprio;
+> +	int                   bucket_size;
+> +	int                   trace_threshold;
+> +	int                   runtime;
+> +	/* The core that we run the main thread.  Default is cpu0 */
+> +	int                   cpu_main_thread;
+> +	char                  *cpu_list;
+> +	char                  *app_name;
+> +	struct workload       *workload;
+> +	uint64_t              workload_mem_size;
+> +	int                   enable_bias;
+> +	uint64_t              bias;
+> +	int                   single_preheat_thread;
+> +	int                   output_omit_zero_buckets;
+> +
+> +	/* Mutable state. */
+> +	volatile enum command cmd;
+> +	volatile unsigned int n_threads_started;
+> +	volatile unsigned int n_threads_running;
+> +	volatile unsigned int n_threads_finished;
+>  };
+>  
+>  static struct global g;
+>  
+>  static void workload_nop(char *dst, char *src, size_t size)
+>  {
+> -    /* Nop */
+> +	/* Nop */
+>  }
+>  
+>  static void workload_memmove(char *dst, char *src, size_t size)
+>  {
+> -    memmove(dst, src, size);
+> +	memmove(dst, src, size);
+>  }
+>  
+>  struct workload workload_list[WORKLOAD_NUM] = {
+> -    { "no", 0, workload_nop },
+> -    { "memmove", WORK_NEED_MEM, workload_memmove },
+> +	{ "no", 0, workload_nop },
+> +	{ "memmove", WORK_NEED_MEM, workload_memmove },
+>  };
+>  
+> -#define TEST(x)                                 \
+> -    do {                                        \
+> -        if( ! (x) )                             \
+> -            test_fail(#x, __LINE__);            \
+> -    } while( 0 )
+> +#define TEST(x)						\
+> +	do {						\
+> +		if (!(x))                             \
+> +			test_fail(#x, __LINE__);	\
+> +	} while (0)
+>  
+>  #define TEST0(x)  TEST((x) == 0)
+>  
+> -static void test_fail(const char* what, int line)
+> +static void test_fail(const char *what, int line)
+>  {
+> -    fprintf(stderr, "ERROR:\n");
+> -    fprintf(stderr, "ERROR: TEST(%s)\n", what);
+> -    fprintf(stderr, "ERROR: at line %d\n", line);
+> -    fprintf(stderr, "ERROR: errno=%d (%s)\n", errno, strerror(errno));
+> -    fprintf(stderr, "ERROR:\n");
+> -    exit(1);
+> +	fprintf(stderr, "ERROR:\n");
+> +	fprintf(stderr, "ERROR: TEST(%s)\n", what);
+> +	fprintf(stderr, "ERROR: at line %d\n", line);
+> +	fprintf(stderr, "ERROR: errno=%d (%s)\n", errno, strerror(errno));
+> +	fprintf(stderr, "ERROR:\n");
+> +	exit(1);
+>  }
+>  
+>  static int move_to_core(int core_i)
+>  {
+> -    cpu_set_t cpus;
+> -    CPU_ZERO(&cpus);
+> -    CPU_SET(core_i, &cpus);
+> -    return sched_setaffinity(0, sizeof(cpus), &cpus);
+> +	cpu_set_t cpus;
+> +
+> +	CPU_ZERO(&cpus);
+> +	CPU_SET(core_i, &cpus);
+> +	return sched_setaffinity(0, sizeof(cpus), &cpus);
+>  }
+>  
+>  static cycles_t __measure_cpu_hz(void)
+>  {
+> -    struct timeval tvs, tve;
+> -    stamp_t s, e;
+> -    double sec;
+> -
+> -    frc(&s);
+> -    e = s;
+> -    gettimeofday(&tvs, NULL);
+> -    while( e - s < 1000000 )
+> -        frc(&e);
+> -    gettimeofday(&tve, NULL);
+> -    sec = tve.tv_sec - tvs.tv_sec + (tve.tv_usec - tvs.tv_usec) / 1e6;
+> -    return (cycles_t) ((e - s) / sec);
+> +	struct timeval tvs, tve;
+> +	stamp_t s, e;
+> +	double sec;
+> +
+> +	frc(&s);
+> +	e = s;
+> +	gettimeofday(&tvs, NULL);
+> +	while (e - s < 1000000)
+> +		frc(&e);
+> +	gettimeofday(&tve, NULL);
+> +	sec = tve.tv_sec - tvs.tv_sec + (tve.tv_usec - tvs.tv_usec) / 1e6;
+> +	return (cycles_t) ((e - s) / sec);
+>  }
+>  
+> -static unsigned measure_cpu_mhz(void)
+> +static unsigned int measure_cpu_mhz(void)
+>  {
+> -    cycles_t m, mprev, d;
+> -
+> -    mprev = __measure_cpu_hz();
+> -    do {
+> -        m = __measure_cpu_hz();
+> -        if( m > mprev )  d = m - mprev;
+> -        else             d = mprev - m;
+> -        mprev = m;
+> -    } while( d > m / 1000 );
+> -
+> -    return (unsigned) (m / 1000000);
+> +	cycles_t m, mprev, d;
+> +
+> +	mprev = __measure_cpu_hz();
+> +	do {
+> +		m = __measure_cpu_hz();
+> +		if (m > mprev)
+> +			d = m - mprev;
+> +		else
+> +			d = mprev - m;
+> +		mprev = m;
+> +	} while (d > m / 1000);
+> +
+> +	return (unsigned int) (m / 1000000);
+>  }
+>  
+> -static void thread_init(struct thread* t)
+> +static void thread_init(struct thread *t)
+>  {
+> -    t->cpu_mhz = measure_cpu_mhz();
+> -    t->maxlat = 0;
+> -    t->overflow_sum = 0;
+> -    t->minlat = (uint64_t)-1;
+> -
+> -    /* NOTE: all the buffers are not freed until the process quits. */
+> -    if (!t->memory_allocated) {
+> -        TEST(t->buckets = calloc(1, sizeof(t->buckets[0]) * g.bucket_size));
+> -        if (g.workload->w_flags & WORK_NEED_MEM) {
+> -            TEST0(posix_memalign((void **)&t->src_buf, getpagesize(),
+> -                                 g.workload_mem_size));
+> -            memset(t->src_buf, 0, g.workload_mem_size);
+> -            TEST0(posix_memalign((void **)&t->dst_buf, getpagesize(),
+> -                                 g.workload_mem_size));
+> -            memset(t->dst_buf, 0, g.workload_mem_size);
+> -        }
+> -        t->memory_allocated = 1;
+> -    } else {
+> -        /* Clear the buckets */
+> -        memset(t->buckets, 0, sizeof(t->buckets[0]) * g.bucket_size);
+> -    }
+> +	t->cpu_mhz = measure_cpu_mhz();
+> +	t->maxlat = 0;
+> +	t->overflow_sum = 0;
+> +	t->minlat = (uint64_t)-1;
+> +
+> +	/* NOTE: all the buffers are not freed until the process quits. */
+> +	if (!t->memory_allocated) {
+> +		TEST(t->buckets = calloc(1, sizeof(t->buckets[0]) * g.bucket_size));
+> +		if (g.workload->w_flags & WORK_NEED_MEM) {
+> +			TEST0(posix_memalign((void **)&t->src_buf, getpagesize(),
+> +					     g.workload_mem_size));
+> +			memset(t->src_buf, 0, g.workload_mem_size);
+> +			TEST0(posix_memalign((void **)&t->dst_buf, getpagesize(),
+> +					     g.workload_mem_size));
+> +			memset(t->dst_buf, 0, g.workload_mem_size);
+> +		}
+> +		t->memory_allocated = 1;
+> +	} else {
+> +		/* Clear the buckets */
+> +		memset(t->buckets, 0, sizeof(t->buckets[0]) * g.bucket_size);
+> +	}
+>  }
+>  
+> -static float cycles_to_sec(const struct thread* t, uint64_t cycles)
+> +static float cycles_to_sec(const struct thread *t, uint64_t cycles)
+>  {
+> -    return cycles / (t->cpu_mhz * 1e6);
+> +	return cycles / (t->cpu_mhz * 1e6);
+>  }
+>  
+>  static void insert_bucket(struct thread *t, stamp_t value)
+>  {
+> -    int index, us;
+> -    uint64_t extra;
+> -
+> -    index = value / t->cpu_mhz;
+> -    assert(index >= 0);
+> -    us = index + 1;
+> -    assert(us > 0);
+> -
+> -    if (g.trace_threshold && us >= g.trace_threshold) {
+> -        char *line = "%s: Trace threshold (%d us) triggered with %u us!  "
+> -            "Stopping the test.\n";
+> -        tracemark(line, g.app_name, g.trace_threshold, us);
+> -        err_quit(line, g.app_name, g.trace_threshold, us);
+> -    }
+> -
+> -    /* Update max latency */
+> -    if (us > t->maxlat) {
+> -        t->maxlat = us;
+> -    }
+> -
+> -    if (us < t->minlat) {
+> -        t->minlat = us;
+> -    }
+> -
+> -    if (g.bias) {
+> -        /* t->bias will be set after pre-heat if user enabled it */
+> -        us -= g.bias;
+> -        /*
+> -         * Negative should hardly happen, but if it happens, we assume we're in
+> -         * the smallest bucket, which is 1us.  Same to index.
+> -         */
+> -        if (us <= 0) {
+> -            us = 1;
+> -        }
+> -        index -= g.bias;
+> -        if (index < 0) {
+> -            index = 0;
+> -        }
+> -    }
+> -
+> -    /* Too big the jitter; put into the last bucket */
+> -    if (index >= g.bucket_size) {
+> -        /* Keep the extra bit (in us) */
+> -        extra = index - g.bucket_size;
+> -        if (t->overflow_sum + extra < t->overflow_sum) {
+> -            /* The uint64_t even overflowed itself; bail out */
+> -            printf("Accumulated overflow too much!\n");
+> -            exit(1);
+> -        }
+> -        t->overflow_sum += extra;
+> -        index = g.bucket_size - 1;
+> -    }
+> -
+> -    t->buckets[index]++;
+> -    if (t->buckets[index] == 0) {
+> -        printf("Bucket %d overflowed\n", index);
+> -        exit(1);
+> -    }
+> +	int index, us;
+> +	uint64_t extra;
+> +
+> +	index = value / t->cpu_mhz;
+> +	assert(index >= 0);
+> +	us = index + 1;
+> +	assert(us > 0);
+> +
+> +	if (g.trace_threshold && us >= g.trace_threshold) {
+> +		char *line = "%s: Trace threshold (%d us) triggered with %u us!\n"
+> +		    "Stopping the test.\n";
+> +		tracemark(line, g.app_name, g.trace_threshold, us);
+> +		err_quit(line, g.app_name, g.trace_threshold, us);
+> +	}
+> +
+> +	/* Update max latency */
+> +	if (us > t->maxlat)
+> +		t->maxlat = us;
+> +
+> +	if (us < t->minlat)
+> +		t->minlat = us;
+> +
+> +	if (g.bias) {
+> +		/* t->bias will be set after pre-heat if user enabled it */
+> +		us -= g.bias;
+> +		/*
+> +		 * Negative should hardly happen, but if it happens, we assume we're in
+> +		 * the smallest bucket, which is 1us.  Same to index.
+> +		 */
+> +		if (us <= 0)
+> +			us = 1;
+> +		index -= g.bias;
+> +		if (index < 0)
+> +			index = 0;
+> +	}
+> +
+> +	/* Too big the jitter; put into the last bucket */
+> +	if (index >= g.bucket_size) {
+> +		/* Keep the extra bit (in us) */
+> +		extra = index - g.bucket_size;
+> +		if (t->overflow_sum + extra < t->overflow_sum) {
+> +			/* The uint64_t even overflowed itself; bail out */
+> +			printf("Accumulated overflow too much!\n");
+> +			exit(1);
+> +		}
+> +		t->overflow_sum += extra;
+> +		index = g.bucket_size - 1;
+> +	}
+> +
+> +	t->buckets[index]++;
+> +	if (t->buckets[index] == 0) {
+> +		printf("Bucket %d overflowed\n", index);
+> +		exit(1);
+> +	}
+>  }
+>  
+> -static void doit(struct thread* t)
+> +static void doit(struct thread *t)
+>  {
+> -    stamp_t ts1, ts2;
+> -    workload_fn workload_fn = g.workload->w_fn;
+> -
+> -    frc(&ts2);
+> -    do {
+> -        workload_fn(t->dst_buf, t->src_buf, g.workload_mem_size);
+> -        frc(&ts1);
+> -        insert_bucket(t, ts1 - ts2);
+> -        ts2 = ts1;
+> -    } while (g.cmd == GO);
+> +	stamp_t ts1, ts2;
+> +	workload_fn workload_fn = g.workload->w_fn;
+> +
+> +	frc(&ts2);
+> +	do {
+> +		workload_fn(t->dst_buf, t->src_buf, g.workload_mem_size);
+> +		frc(&ts1);
+> +		insert_bucket(t, ts1 - ts2);
+> +		ts2 = ts1;
+> +	} while (g.cmd == GO);
+>  }
+>  
+>  static int set_fifo_prio(int prio)
+>  {
+> -    struct sched_param param;
+> +	struct sched_param param;
+>  
+> -    memset(&param, 0, sizeof(param));
+> -    param.sched_priority = prio;
+> -    return sched_setscheduler(0, SCHED_FIFO, &param);
+> +	memset(&param, 0, sizeof(param));
+> +	param.sched_priority = prio;
+> +	return sched_setscheduler(0, SCHED_FIFO, &param);
+>  }
+>  
+> -static void* thread_main(void* arg)
+> +static void *thread_main(void *arg)
+>  {
+> -    /* Important thing to note here is that once we start bashing the CPU, we
+> -     * need to keep doing so to prevent the core from changing frequency or
+> -     * dropping into a low power state.
+> -     */
+> -    struct thread* t = arg;
+> -
+> -    /* Alloc memory in the thread itself after setting affinity to get the
+> -     * best chance of getting numa-local memory.  Doesn't matter so much for
+> -     * the "struct thread" since we expect that to stay cache resident.
+> -     */
+> -    TEST(move_to_core(t->core_i) == 0);
+> -    if (g.rtprio)
+> -        TEST(set_fifo_prio(g.rtprio) == 0);
+> -
+> -    /* Don't bash the cpu until all threads have got going. */
+> -    atomic_inc(&g.n_threads_started);
+> -    while( g.cmd == WAIT )
+> -        usleep(1000);
+> -
+> -    thread_init(t);
+> -
+> -    /* Ensure we all start at the same time. */
+> -    atomic_inc(&g.n_threads_running);
+> -    while( g.n_threads_running != g.n_threads )
+> -        relax();
+> -
+> -    frc(&t->frc_start);
+> -    doit(t);
+> -    frc(&t->frc_stop);
+> -
+> -    t->runtime = t->frc_stop - t->frc_start;
+> -
+> -    /* Wait for everyone to finish so we don't disturb them by exiting and
+> -     * waking the main thread.
+> -     */
+> -    atomic_inc(&g.n_threads_finished);
+> -    while( g.n_threads_finished != g.n_threads )
+> -        relax();
+> -
+> -    return NULL;
+> +	/* Important thing to note here is that once we start bashing the CPU, we
+> +	 * need to keep doing so to prevent the core from changing frequency or
+> +	 * dropping into a low power state.
+> +	 */
+> +	struct thread *t = arg;
+> +
+> +	/* Alloc memory in the thread itself after setting affinity to get the
+> +	 * best chance of getting numa-local memory.  Doesn't matter so much for
+> +	 * the "struct thread" since we expect that to stay cache resident.
+> +	 */
+> +	TEST(move_to_core(t->core_i) == 0);
+> +	if (g.rtprio)
+> +		TEST(set_fifo_prio(g.rtprio) == 0);
+> +
+> +	/* Don't bash the cpu until all threads have got going. */
+> +	atomic_inc(&g.n_threads_started);
+> +	while (g.cmd == WAIT)
+> +		usleep(1000);
+> +
+> +	thread_init(t);
+> +
+> +	/* Ensure we all start at the same time. */
+> +	atomic_inc(&g.n_threads_running);
+> +	while (g.n_threads_running != g.n_threads)
+> +		relax();
+> +
+> +	frc(&t->frc_start);
+> +	doit(t);
+> +	frc(&t->frc_stop);
+> +
+> +	t->runtime = t->frc_stop - t->frc_start;
+> +
+> +	/* Wait for everyone to finish so we don't disturb them by exiting and
+> +	 * waking the main thread.
+> +	 */
+> +	atomic_inc(&g.n_threads_finished);
+> +	while (g.n_threads_finished != g.n_threads)
+> +		relax();
+> +
+> +	return NULL;
+>  }
+>  
+> -#define putfield(label, val, fmt, end) do {     \
+> -        printf("%12s:\t", label);               \
+> -        for (i = 0; i < g.n_threads; ++i)       \
+> -            printf(" %"fmt, val);               \
+> -        printf("%s\n", end);                    \
+> -    } while (0)
+> +#define putfield(label, val, fmt, end) do {		\
+> +		printf("%12s:\t", label);               \
+> +		for (i = 0; i < g.n_threads; ++i)       \
+> +			printf(" %"fmt, val);		\
+> +		printf("%s\n", end);                    \
+> +	} while (0)
+>  
+>  void calculate(struct thread *t)
+>  {
+> -    int i, j;
+> -    double sum;
+> -    uint64_t count;
+> -
+> -    for (i = 0; i < g.n_threads; ++i) {
+> -        /* Calculate average */
+> -        sum = count = 0;
+> -        for (j = 0; j < g.bucket_size; j++) {
+> -            sum += 1.0 * t[i].buckets[j] * (g.bias+j+1);
+> -            count += t[i].buckets[j];
+> -        }
+> -        /* Add the extra amount of huge spikes in */
+> -        sum += t->overflow_sum;
+> -        t[i].average = sum / count;
+> -    }
+> +	int i, j;
+> +	double sum;
+> +	uint64_t count;
+> +
+> +	for (i = 0; i < g.n_threads; ++i) {
+> +		/* Calculate average */
+> +		sum = count = 0;
+> +		for (j = 0; j < g.bucket_size; j++) {
+> +			sum += 1.0 * t[i].buckets[j] * (g.bias+j+1);
+> +			count += t[i].buckets[j];
+> +		}
+> +		/* Add the extra amount of huge spikes in */
+> +		sum += t->overflow_sum;
+> +		t[i].average = sum / count;
+> +	}
+>  }
+>  
+> -static void write_summary(struct thread* t)
+> +static void write_summary(struct thread *t)
+>  {
+> -    int i, j, k, print_dotdotdot = 0;
+> -    char bucket_name[64];
+> -
+> -    calculate(t);
+> -
+> -    putfield("Core", t[i].core_i, "d", "");
+> -    putfield("CPU Freq", t[i].cpu_mhz, "u", " (Mhz)");
+> -
+> -    for (j = 0; j < g.bucket_size; j++) {
+> -        if (j < g.bucket_size-1 && g.output_omit_zero_buckets) {
+> -            for (k = 0; k < g.n_threads; k++) {
+> -                if (t[k].buckets[j] != 0)
+> -                    break;
+> -            }
+> -            if (k == g.n_threads) {
+> -                print_dotdotdot = 1;
+> -                continue;
+> -            }
+> -        }
+> -
+> -        if (print_dotdotdot) {
+> -            printf("    ...\n");
+> -            print_dotdotdot = 0;
+> -        }
+> -
+> -        snprintf(bucket_name, sizeof(bucket_name), "%03"PRIu64
+> -                 " (us)", g.bias+j+1);
+> -        putfield(bucket_name, t[i].buckets[j], PRIu64,
+> -                 (j==g.bucket_size-1) ? " (including overflows)" : "");
+> -    }
+> -
+> -    putfield("Minimum", t[i].minlat, PRIu64, " (us)");
+> -    putfield("Average", t[i].average, ".3lf", " (us)");
+> -    putfield("Maximum", t[i].maxlat, PRIu64, " (us)");
+> -    putfield("Max-Min", t[i].maxlat - t[i].minlat, PRIu64, " (us)");
+> -    putfield("Duration", cycles_to_sec(&(t[i]), t[i].runtime),
+> -             ".3f", " (sec)");
+> -    printf("\n");
+> +	int i, j, k, print_dotdotdot = 0;
+> +	char bucket_name[64];
+> +
+> +	calculate(t);
+> +
+> +	putfield("Core", t[i].core_i, "d", "");
+> +	putfield("CPU Freq", t[i].cpu_mhz, "u", " (Mhz)");
+> +
+> +	for (j = 0; j < g.bucket_size; j++) {
+> +		if (j < g.bucket_size-1 && g.output_omit_zero_buckets) {
+> +			for (k = 0; k < g.n_threads; k++) {
+> +				if (t[k].buckets[j] != 0)
+> +					break;
+> +			}
+> +			if (k == g.n_threads) {
+> +				print_dotdotdot = 1;
+> +				continue;
+> +			}
+> +		}
+> +
+> +		if (print_dotdotdot) {
+> +			printf("    ...\n");
+> +			print_dotdotdot = 0;
+> +		}
+> +
+> +		snprintf(bucket_name, sizeof(bucket_name), "%03"PRIu64
+> +			 " (us)", g.bias+j+1);
+> +		putfield(bucket_name, t[i].buckets[j], PRIu64,
+> +			 (j == g.bucket_size - 1) ? " (including overflows)" : "");
+> +	}
+> +
+> +	putfield("Minimum", t[i].minlat, PRIu64, " (us)");
+> +	putfield("Average", t[i].average, ".3lf", " (us)");
+> +	putfield("Maximum", t[i].maxlat, PRIu64, " (us)");
+> +	putfield("Max-Min", t[i].maxlat - t[i].minlat, PRIu64, " (us)");
+> +	putfield("Duration", cycles_to_sec(&(t[i]), t[i].runtime),
+> +		 ".3f", " (sec)");
+> +	printf("\n");
+>  }
+>  
+> -static void run_expt(struct thread* threads, int runtime_secs)
+> +static void run_expt(struct thread *threads, int runtime_secs)
+>  {
+> -    int i;
+> -
+> -    g.runtime_secs = runtime_secs;
+> -    g.n_threads_started = 0;
+> -    g.n_threads_ready = 0;
+> -    g.n_threads_running = 0;
+> -    g.n_threads_finished = 0;
+> -    g.cmd = WAIT;
+> -
+> -    for( i = 0; i < g.n_threads; ++i ) {
+> -        TEST0(pthread_create(&(threads[i].thread_id), NULL,
+> -                             thread_main, &(threads[i])));
+> -    }
+> -    while( g.n_threads_started != g.n_threads ) {
+> -        usleep(1000);
+> -    }
+> -
+> -    gettimeofday(&g.tv_start, NULL);
+> -    g.cmd = GO;
+> -
+> -    alarm(runtime_secs);
+> -
+> -    /* Go to sleep until the threads have done their stuff. */
+> -    for( i = 0; i < g.n_threads; ++i ) {
+> -        pthread_join(threads[i].thread_id, NULL);
+> -    }
+> +	int i;
+> +
+> +	g.runtime_secs = runtime_secs;
+> +	g.n_threads_started = 0;
+> +	g.n_threads_running = 0;
+> +	g.n_threads_finished = 0;
+> +	g.cmd = WAIT;
+> +
+> +	for (i = 0; i < g.n_threads; ++i)
+> +		TEST0(pthread_create(&(threads[i].thread_id), NULL,
+> +				     thread_main, &(threads[i])));
+> +	while (g.n_threads_started != g.n_threads)
+> +		usleep(1000);
+> +
+> +	gettimeofday(&g.tv_start, NULL);
+> +	g.cmd = GO;
+> +
+> +	alarm(runtime_secs);
+> +
+> +	/* Go to sleep until the threads have done their stuff. */
+> +	for (i = 0; i < g.n_threads; ++i)
+> +		pthread_join(threads[i].thread_id, NULL);
+>  }
+>  
+>  static void handle_alarm(int code)
+>  {
+> -    g.cmd = STOP;
+> +	g.cmd = STOP;
+>  }
+>  
+>  const char *helpmsg =
+> -    "Usage: %s [options]\n"
+> -    "\n"
+> -    "This is an OS latency detector by running busy loops on specified cores.\n"
+> -    "Please run this tool using root.\n"
+> -    "\n"
+> -    "Available options:\n"
+> -    "\n"
+> -    "  -b, --bucket-size      Specify the number of the buckets (4-1024)\n"
+> -    "  -B, --bias             Add a bias to all the buckets using the estimated mininum\n"
+> -    "  -c, --cpu-list         Specify CPUs to run on, e.g. '1,3,5,7-15'\n"
+> -    "  -C, --cpu-main-thread  Specify which CPU the main thread runs on.  Default is cpu0.\n"
+> -    "  -f, --rtprio           Using SCHED_FIFO priority (1-99)\n"
+> -    "  -m, --workload-mem     Size of the memory to use for the workload (e.g., 4K, 1M).\n"
+> -    "                         Total memory usage will be this value multiplies 2*N,\n"
+> -    "                         because there will be src/dst buffers for each thread, and\n"
+> -    "                         N is the number of processors for testing.\n"
+> -    "  -s, --single-preheat   Use a single thread when measuring latency at preheat stage\n"
+> -    "                         NOTE: please make sure the CPU frequency on all testing cores\n"
+> -    "                         are locked before using this parmater.  If you don't know how\n"
+> -    "                         to lock the freq then please don't use this parameter.\n"
+> -    "  -t, --runtime          Specify test duration, e.g., 60, 20m, 2H\n"
+> -    "                         (m/M: minutes, h/H: hours, d/D: days)\n"
+> -    "  -T, --trace-threshold  Stop the test when threshold triggered (in us),\n"
+> -    "                         print a marker in ftrace and stop ftrace too.\n"
+> -    "  -v, --version          Display the version of the software.\n"
+> -    "  -w, --workload         Specify a kind of workload, default is no workload\n"
+> -    "                         (options: no, memmove)\n"
+> -    "  -z, --zero-omit        Don't display buckets in the output histogram if all zeros.\n"
+> -    "\n"
+> -    ;
+> +"Usage: %s [options]\n"
+> +"\n"
+> +"This is an OS latency detector by running busy loops on specified cores.\n"
+> +"Please run this tool using root.\n"
+> +"\n"
+> +"Available options:\n"
+> +"\n"
+> +"  -b, --bucket-size      Specify the number of the buckets (4-1024)\n"
+> +"  -B, --bias             Add a bias to all the buckets using the estimated mininum\n"
+> +"  -c, --cpu-list         Specify CPUs to run on, e.g. '1,3,5,7-15'\n"
+> +"  -C, --cpu-main-thread  Specify which CPU the main thread runs on.  Default is cpu0.\n"
+> +"  -f, --rtprio           Using SCHED_FIFO priority (1-99)\n"
+> +"  -m, --workload-mem     Size of the memory to use for the workload (e.g., 4K, 1M).\n"
+> +"                         Total memory usage will be this value multiplies 2*N,\n"
+> +"                         because there will be src/dst buffers for each thread, and\n"
+> +"                         N is the number of processors for testing.\n"
+> +"  -s, --single-preheat   Use a single thread when measuring latency at preheat stage\n"
+> +"                         NOTE: please make sure the CPU frequency on all testing cores\n"
+> +"                         are locked before using this parmater.  If you don't know how\n"
+> +"                         to lock the freq then please don't use this parameter.\n"
+> +"  -t, --runtime          Specify test duration, e.g., 60, 20m, 2H\n"
+> +"                         (m/M: minutes, h/H: hours, d/D: days)\n"
+> +"  -T, --trace-threshold  Stop the test when threshold triggered (in us),\n"
+> +"                         print a marker in ftrace and stop ftrace too.\n"
+> +"  -v, --version          Display the version of the software.\n"
+> +"  -w, --workload         Specify a kind of workload, default is no workload\n"
+> +"                         (options: no, memmove)\n"
+> +"  -z, --zero-omit        Don't display buckets in the output histogram if all zeros.\n"
+> +"\n"
+> +;
+>  
+>  static void usage(void)
+>  {
+> -    printf(helpmsg, g.app_name);
+> -    exit(1);
+> +	printf(helpmsg, g.app_name);
+> +	exit(1);
+>  }
+>  
+>  /* TODO: use libnuma? */
+>  static int parse_cpu_list(char *cpu_list, cpu_set_t *cpu_set)
+>  {
+> -    struct bitmask *cpu_mask;
+> -    int i, n_cores;
+> -
+> -    n_cores = sysconf(_SC_NPROCESSORS_CONF);
+> -
+> -    if (!cpu_list) {
+> -        for (i = 0; i < n_cores; i++)
+> -            CPU_SET(i, cpu_set);
+> -        return n_cores;
+> -    }
+> -
+> -    cpu_mask = numa_parse_cpustring_all(cpu_list);
+> -    if (cpu_mask) {
+> -        for (i = 0; i < n_cores; i++) {
+> -            if (numa_bitmask_isbitset(cpu_mask, i)) {
+> -                CPU_SET(i, cpu_set);
+> -            }
+> -        }
+> -        numa_bitmask_free(cpu_mask);
+> -    } else {
+> -        warn("Unknown cpu-list: %s, using all available cpus\n", cpu_list);
+> -        for (i = 0; i < n_cores; i++)
+> -            CPU_SET(i, cpu_set);
+> -    }
+> -
+> -    return n_cores;
+> +	struct bitmask *cpu_mask;
+> +	int i, n_cores;
+> +
+> +	n_cores = sysconf(_SC_NPROCESSORS_CONF);
+> +
+> +	if (!cpu_list) {
+> +		for (i = 0; i < n_cores; i++)
+> +			CPU_SET(i, cpu_set);
+> +		return n_cores;
+> +	}
+> +
+> +	cpu_mask = numa_parse_cpustring_all(cpu_list);
+> +	if (cpu_mask) {
+> +		for (i = 0; i < n_cores; i++) {
+> +			if (numa_bitmask_isbitset(cpu_mask, i))
+> +				CPU_SET(i, cpu_set);
+> +		}
+> +		numa_bitmask_free(cpu_mask);
+> +	} else {
+> +		warn("Unknown cpu-list: %s, using all available cpus\n", cpu_list);
+> +		for (i = 0; i < n_cores; i++)
+> +			CPU_SET(i, cpu_set);
+> +	}
+> +
+> +	return n_cores;
+>  }
+>  
+>  static int parse_runtime(const char *str)
+>  {
+> -    char *endptr;
+> -    int v = strtol(str, &endptr, 10);
+> -
+> -    if (!*endptr) {
+> -        return v;
+> -    }
+> -
+> -    switch (*endptr) {
+> -    case 'd':
+> -    case 'D':
+> -        /* Days */
+> -        v *= 24;
+> -    case 'h':
+> -    case 'H':
+> -        /* Hours */
+> -        v *= 60;
+> -    case 'm':
+> -    case 'M':
+> -        /* Minutes */
+> -        v *= 60;
+> -    case 's':
+> -    case 'S':
+> -        /* Seconds */
+> -        break;
+> -    default:
+> -        printf("Unknown runtime suffix: %s\n", endptr);
+> -        v = 0;
+> -        break;
+> -    }
+> -
+> -    return v;
+> +	char *endptr;
+> +	int v = strtol(str, &endptr, 10);
+> +
+> +	if (!*endptr)
+> +		return v;
+> +
+> +	switch (*endptr) {
+> +	case 'd':
+> +	case 'D':
+> +		/* Days */
+> +		v *= 24;
+> +	case 'h':
+> +	case 'H':
+> +		/* Hours */
+> +		v *= 60;
+> +	case 'm':
+> +	case 'M':
+> +		/* Minutes */
+> +		v *= 60;
+> +	case 's':
+> +	case 'S':
+> +		/* Seconds */
+> +		break;
+> +	default:
+> +		printf("Unknown runtime suffix: %s\n", endptr);
+> +		v = 0;
+> +		break;
+> +	}
+> +
+> +	return v;
+>  }
+>  
+>  static int parse_mem_size(char *str, uint64_t *val)
+>  {
+> -    char *endptr;
+> -    int v = strtol(str, &endptr, 10);
+> -
+> -    if (!*endptr) {
+> -        return v;
+> -    }
+> -
+> -    switch (*endptr) {
+> -    case 'g':
+> -    case 'G':
+> -        v *= 1024;
+> -    case 'm':
+> -    case 'M':
+> -        v *= 1024;
+> -    case 'k':
+> -    case 'K':
+> -        v *= 1024;
+> -    case 'b':
+> -    case 'B':
+> -        break;
+> -    default:
+> -        return -1;
+> -    }
+> -
+> -    *val = v;
+> -
+> -    return 0;
+> +	char *endptr;
+> +	int v = strtol(str, &endptr, 10);
+> +
+> +	if (!*endptr)
+> +		return v;
+> +
+> +	switch (*endptr) {
+> +	case 'g':
+> +	case 'G':
+> +		v *= 1024;
+> +	case 'm':
+> +	case 'M':
+> +		v *= 1024;
+> +	case 'k':
+> +	case 'K':
+> +		v *= 1024;
+> +	case 'b':
+> +	case 'B':
+> +		break;
+> +	default:
+> +		return -1;
+> +	}
+> +
+> +	*val = v;
+> +
+> +	return 0;
+>  }
+>  
+>  static int workload_select(char *name)
+>  {
+> -    int i = 0;
+> +	int i = 0;
+>  
+> -    for (i = 0; i < WORKLOAD_NUM; i++) {
+> -        if (!strcmp(name, workload_list[i].w_name)) {
+> -            g.workload = &workload_list[i];
+> -            return 0;
+> -        }
+> -    }
+> +	for (i = 0; i < WORKLOAD_NUM; i++) {
+> +		if (!strcmp(name, workload_list[i].w_name)) {
+> +			g.workload = &workload_list[i];
+> +			return 0;
+> +		}
+> +	}
+>  
+> -    return -1;
+> +	return -1;
+>  }
+>  
+>  /* Process commandline options */
+>  static void parse_options(int argc, char *argv[])
+>  {
+> -    while (1) {
+> -        static struct option options[] = {
+> -            { "bucket-size", required_argument, NULL, 'b' },
+> -            { "cpu-list", required_argument, NULL, 'c' },
+> -            { "cpu-main-thread", required_argument, NULL, 'C'},
+> -            { "runtime", required_argument, NULL, 't' },
+> -            { "rtprio", required_argument, NULL, 'f' },
+> -            { "help", no_argument, NULL, 'h' },
+> -            { "trace-threshold", required_argument, NULL, 'T' },
+> -            { "workload", required_argument, NULL, 'w'},
+> -            { "workload-mem", required_argument, NULL, 'm'},
+> -            { "bias", no_argument, NULL, 'B'},
+> -            { "single-preheat", no_argument, NULL, 's'},
+> -            { "zero-omit", no_argument, NULL, 'u'},
+> -            { "version", no_argument, NULL, 'v'},
+> -            { NULL, 0, NULL, 0 },
+> -        };
+> -        int i, c = getopt_long(argc, argv, "b:Bc:C:f:hm:st:w:T:vz",
+> -                               options, NULL);
+> -        long ncores;
+> -
+> -        if (c == -1)
+> -            break;
+> -
+> -        switch (c) {
+> -        case 'b':
+> -            g.bucket_size = strtol(optarg, NULL, 10);
+> -            if (g.bucket_size > 1024 || g.bucket_size <= 4) {
+> -                printf("Illegal bucket size: %s (should be: 4-1024)\n",
+> -                       optarg);
+> -                exit(1);
+> -            }
+> -            break;
+> -        case 'B':
+> -            g.enable_bias = 1;
+> -            break;
+> -        case 'c':
+> -            g.cpu_list = strdup(optarg);
+> -            break;
+> -        case 'C':
+> -            ncores = sysconf(_SC_NPROCESSORS_CONF);
+> -            g.cpu_main_thread = strtol(optarg, NULL, 10);
+> -            if (g.cpu_main_thread < 0 || g.cpu_main_thread > ncores) {
+> -                printf("Illegal core for main thread: %s (should be: 0-%ld)\n",
+> -                       optarg, ncores);
+> -                exit(1);
+> -            }
+> -            break;
+> -        case 't':
+> -            g.runtime = parse_runtime(optarg);
+> -            if (!g.runtime) {
+> -                printf("Illegal runtime: %s\n", optarg);
+> -                exit(1);
+> -            }
+> -            break;
+> -        case 'f':
+> -            g.rtprio = strtol(optarg, NULL, 10);
+> -            if (g.rtprio < 1 || g.rtprio > 99) {
+> -                printf("Illegal RT priority: %s (should be: 1-99)\n", optarg);
+> -                exit(1);
+> -            }
+> -            break;
+> -        case 'T':
+> -            g.trace_threshold = strtol(optarg, NULL, 10);
+> -            if (g.trace_threshold <= 0) {
+> -                printf("Parameter --trace-threshold needs to be positive\n");
+> -                exit(1);
+> -            }
+> -            enable_trace_mark();
+> -            break;
+> -        case 'w':
+> -            if (workload_select(optarg)) {
+> -                printf("Unknown workload '%s'.  Please choose from: ", optarg);
+> -                for (i = 0; i < WORKLOAD_NUM; i++) {
+> -                    printf("'%s'", workload_list[i].w_name);
+> -                    if (i != WORKLOAD_NUM - 1) {
+> -                        printf(", ");
+> -                    }
+> -                }
+> -                printf("\n\n");
+> -                exit(1);
+> -            }
+> -            break;
+> -        case 'm':
+> -            if (parse_mem_size(optarg, &g.workload_mem_size)) {
+> -                printf("Unknown workload memory size '%s'.\n\n", optarg);
+> -                exit(1);
+> -            }
+> -            break;
+> -        case 's':
+> -            /*
+> -             * Only use one core for pre-heat.  Then if --bias is used, the
+> -             * bias will be exactly the min value of the pre-heat core.
+> -             */
+> -            g.single_preheat_thread = true;
+> -            break;
+> -        case 'v':
+> -            /*
+> -             * Because we always dump the version even before parsing options,
+> -             * what we need to do is to quit..
+> -             */
+> -            exit(0);
+> -            break;
+> -        case 'z':
+> -            g.output_omit_zero_buckets = 1;
+> -            break;
+> -        default:
+> -            usage();
+> -            break;
+> -        }
+> -    }
+> +	while (1) {
+> +		static struct option options[] = {
+> +			{ "bucket-size", required_argument, NULL, 'b' },
+> +			{ "cpu-list", required_argument, NULL, 'c' },
+> +			{ "cpu-main-thread", required_argument, NULL, 'C'},
+> +			{ "runtime", required_argument, NULL, 't' },
+> +			{ "rtprio", required_argument, NULL, 'f' },
+> +			{ "help", no_argument, NULL, 'h' },
+> +			{ "trace-threshold", required_argument, NULL, 'T' },
+> +			{ "workload", required_argument, NULL, 'w'},
+> +			{ "workload-mem", required_argument, NULL, 'm'},
+> +			{ "bias", no_argument, NULL, 'B'},
+> +			{ "single-preheat", no_argument, NULL, 's'},
+> +			{ "zero-omit", no_argument, NULL, 'u'},
+> +			{ "version", no_argument, NULL, 'v'},
+> +			{ NULL, 0, NULL, 0 },
+> +		};
+> +		int i, c = getopt_long(argc, argv, "b:Bc:C:f:hm:st:w:T:vz",
+> +				       options, NULL);
+> +		long ncores;
+> +
+> +		if (c == -1)
+> +			break;
+> +
+> +		switch (c) {
+> +		case 'b':
+> +			g.bucket_size = strtol(optarg, NULL, 10);
+> +			if (g.bucket_size > 1024 || g.bucket_size <= 4) {
+> +				printf("Illegal bucket size: %s (should be: 4-1024)\n",
+> +				       optarg);
+> +				exit(1);
+> +			}
+> +			break;
+> +		case 'B':
+> +			g.enable_bias = 1;
+> +			break;
+> +		case 'c':
+> +			g.cpu_list = strdup(optarg);
+> +			break;
+> +		case 'C':
+> +			ncores = sysconf(_SC_NPROCESSORS_CONF);
+> +			g.cpu_main_thread = strtol(optarg, NULL, 10);
+> +			if (g.cpu_main_thread < 0 || g.cpu_main_thread > ncores) {
+> +				printf("Illegal core for main thread: %s (should be: 0-%ld)\n",
+> +				       optarg, ncores);
+> +				exit(1);
+> +			}
+> +			break;
+> +		case 't':
+> +			g.runtime = parse_runtime(optarg);
+> +			if (!g.runtime) {
+> +				printf("Illegal runtime: %s\n", optarg);
+> +				exit(1);
+> +			}
+> +			break;
+> +		case 'f':
+> +			g.rtprio = strtol(optarg, NULL, 10);
+> +			if (g.rtprio < 1 || g.rtprio > 99) {
+> +				printf("Illegal RT priority: %s (should be: 1-99)\n", optarg);
+> +				exit(1);
+> +			}
+> +			break;
+> +		case 'T':
+> +			g.trace_threshold = strtol(optarg, NULL, 10);
+> +			if (g.trace_threshold <= 0) {
+> +				printf("Parameter --trace-threshold needs to be positive\n");
+> +				exit(1);
+> +			}
+> +			enable_trace_mark();
+> +			break;
+> +		case 'w':
+> +			if (workload_select(optarg)) {
+> +				printf("Unknown workload '%s'.  Please choose from: ", optarg);
+> +				for (i = 0; i < WORKLOAD_NUM; i++) {
+> +					printf("'%s'", workload_list[i].w_name);
+> +					if (i != WORKLOAD_NUM - 1)
+> +						printf(", ");
+> +				}
+> +				printf("\n\n");
+> +				exit(1);
+> +			}
+> +			break;
+> +		case 'm':
+> +			if (parse_mem_size(optarg, &g.workload_mem_size)) {
+> +				printf("Unknown workload memory size '%s'.\n\n", optarg);
+> +				exit(1);
+> +			}
+> +			break;
+> +		case 's':
+> +			/*
+> +			 * Only use one core for pre-heat.  Then if --bias is used, the
+> +			 * bias will be exactly the min value of the pre-heat core.
+> +			 */
+> +			g.single_preheat_thread = true;
+> +			break;
+> +		case 'v':
+> +			/*
+> +			 * Because we always dump the version even before parsing options,
+> +			 * what we need to do is to quit..
+> +			 */
+> +			exit(0);
+> +			break;
+> +		case 'z':
+> +			g.output_omit_zero_buckets = 1;
+> +			break;
+> +		default:
+> +			usage();
+> +			break;
+> +		}
+> +	}
+>  }
+>  
+>  void dump_globals(void)
+>  {
+> -    printf("Total runtime: \t\t%d seconds\n", g.runtime);
+> -    printf("Thread priority: \t");
+> -    if (g.rtprio) {
+> -        printf("SCHED_FIFO:%d\n", g.rtprio);
+> -    } else {
+> -        printf("default\n");
+> -    }
+> -    printf("CPU list: \t\t%s\n", g.cpu_list ?: "(all cores)");
+> -    printf("CPU for main thread: \t%d\n", g.cpu_main_thread);
+> -    printf("Workload: \t\t%s\n", g.workload->w_name);
+> -    printf("Workload mem: \t\t%"PRIu64" (KiB)\n",
+> -           (g.workload->w_flags & WORK_NEED_MEM) ?
+> -           (g.workload_mem_size / 1024) : 0);
+> -    printf("Preheat cores: \t\t%d\n", g.single_preheat_thread ?
+> -           1 : g.n_threads_total);
+> -    printf("\n");
+> +	printf("Total runtime: \t\t%d seconds\n", g.runtime);
+> +	printf("Thread priority: \t");
+> +	if (g.rtprio)
+> +		printf("SCHED_FIFO:%d\n", g.rtprio);
+> +	else
+> +		printf("default\n");
+> +	printf("CPU list: \t\t%s\n", g.cpu_list ?: "(all cores)");
+> +	printf("CPU for main thread: \t%d\n", g.cpu_main_thread);
+> +	printf("Workload: \t\t%s\n", g.workload->w_name);
+> +	printf("Workload mem: \t\t%"PRIu64" (KiB)\n",
+> +	       (g.workload->w_flags & WORK_NEED_MEM) ?
+> +	       (g.workload_mem_size / 1024) : 0);
+> +	printf("Preheat cores: \t\t%d\n", g.single_preheat_thread ?
+> +	       1 : g.n_threads_total);
+> +	printf("\n");
+>  }
+>  
+>  static void record_bias(struct thread *t)
+>  {
+> -    int i;
+> -    uint64_t bias = (uint64_t)-1;
+> -
+> -    if (!g.enable_bias) {
+> -        return;
+> -    }
+> -
+> -    /* Record the min value of minlat on all the threads */
+> -    for( i = 0; i < g.n_threads; ++i ) {
+> -        if (t[i].minlat < bias) {
+> -            bias = t[i].minlat;
+> -        }
+> -    }
+> -    g.bias = bias;
+> -    printf("Global bias set to %" PRId64 " (us)\n", bias);
+> +	int i;
+> +	uint64_t bias = (uint64_t)-1;
+> +
+> +	if (!g.enable_bias)
+> +		return;
+> +
+> +	/* Record the min value of minlat on all the threads */
+> +	for (i = 0; i < g.n_threads; ++i) {
+> +		if (t[i].minlat < bias)
+> +			bias = t[i].minlat;
+> +	}
+> +	g.bias = bias;
+> +	printf("Global bias set to %" PRId64 " (us)\n", bias);
+>  }
+>  
+> -int main(int argc, char* argv[])
+> +int main(int argc, char *argv[])
+>  {
+> -    struct thread* threads;
+> -    int i, n_cores;
+> -    cpu_set_t cpu_set;
+> +	struct thread *threads;
+> +	int i, n_cores;
+> +	cpu_set_t cpu_set;
+>  
+> -    CPU_ZERO(&cpu_set);
+> +	CPU_ZERO(&cpu_set);
+>  
+> -    g.app_name = argv[0];
+> -    g.rtprio = 0;
+> -    g.bucket_size = BUCKET_SIZE;
+> -    g.runtime = 1;
+> -    g.workload = &workload_list[WORKLOAD_DEFUALT];
+> -    g.workload_mem_size = WORKLOAD_MEM_SIZE;
+> -    /* Run the main thread on cpu0 by default */
+> -    g.cpu_main_thread = 0;
+> +	g.app_name = argv[0];
+> +	g.rtprio = 0;
+> +	g.bucket_size = BUCKET_SIZE;
+> +	g.runtime = 1;
+> +	g.workload = &workload_list[WORKLOAD_DEFAULT];
+> +	g.workload_mem_size = WORKLOAD_MEM_SIZE;
+> +	/* Run the main thread on cpu0 by default */
+> +	g.cpu_main_thread = 0;
+>  
+> -    printf("\nVersion: %1.2f\n\n", VERSION);
+> +	printf("\nVersion: %1.2f\n\n", VERSION);
+>  
+> -    parse_options(argc, argv);
+> +	parse_options(argc, argv);
+>  
+> -    TEST(mlockall(MCL_CURRENT | MCL_FUTURE) == 0);
+> +	TEST(mlockall(MCL_CURRENT | MCL_FUTURE) == 0);
+>  
+> -    n_cores = parse_cpu_list(g.cpu_list, &cpu_set);
+> +	n_cores = parse_cpu_list(g.cpu_list, &cpu_set);
+>  
+> -    TEST( threads = calloc(1, CPU_COUNT(&cpu_set) * sizeof(threads[0])) );
+> -    for( i = 0; i < n_cores; ++i )
+> -        if (CPU_ISSET(i, &cpu_set) && move_to_core(i) == 0)
+> -            threads[g.n_threads_total++].core_i = i;
+> +	TEST(threads = calloc(1, CPU_COUNT(&cpu_set) * sizeof(threads[0])));
+> +	for (i = 0; i < n_cores; ++i)
+> +		if (CPU_ISSET(i, &cpu_set) && move_to_core(i) == 0)
+> +			threads[g.n_threads_total++].core_i = i;
+>  
+> -    if (CPU_ISSET(0, &cpu_set) && g.rtprio) {
+> -        printf("WARNING: Running SCHED_FIFO workload on CPU 0 "
+> -               "may hang the main thread\n");
+> -    }
+> +	if (CPU_ISSET(0, &cpu_set) && g.rtprio)
+> +		printf("WARNING: Running SCHED_FIFO workload on CPU 0 may hang the thread\n");
+>  
+> -    TEST(move_to_core(g.cpu_main_thread) == 0);
+> +	TEST(move_to_core(g.cpu_main_thread) == 0);
+>  
+> -    signal(SIGALRM, handle_alarm);
+> -    signal(SIGINT, handle_alarm);
+> -    signal(SIGTERM, handle_alarm);
+> +	signal(SIGALRM, handle_alarm);
+> +	signal(SIGINT, handle_alarm);
+> +	signal(SIGTERM, handle_alarm);
+>  
+> -    dump_globals();
+> +	dump_globals();
+>  
+> -    printf("Pre-heat for 1 seconds...\n");
+> -    if (g.single_preheat_thread) {
+> -        g.n_threads = 1;
+> -    } else {
+> -        g.n_threads = g.n_threads_total;
+> -    }
+> -    run_expt(threads, 1);
+> -    record_bias(threads);
+> +	printf("Pre-heat for 1 seconds...\n");
+> +	if (g.single_preheat_thread)
+> +		g.n_threads = 1;
+> +	else
+> +		g.n_threads = g.n_threads_total;
+> +	run_expt(threads, 1);
+> +	record_bias(threads);
+>  
+> -    printf("Test starts...\n");
+> -    /* Reset n_threads to always run on all the cores */
+> -    g.n_threads = g.n_threads_total;
+> -    run_expt(threads, g.runtime);
+> +	printf("Test starts...\n");
+> +	/* Reset n_threads to always run on all the cores */
+> +	g.n_threads = g.n_threads_total;
+> +	run_expt(threads, g.runtime);
+>  
+> -    printf("Test completed.\n\n");
+> +	printf("Test completed.\n\n");
+>  
+> -    write_summary(threads);
+> +	write_summary(threads);
+>  
+> -    if (g.cpu_list) {
+> -        free(g.cpu_list);
+> -        g.cpu_list = NULL;
+> -    }
+> +	if (g.cpu_list) {
+> +		free(g.cpu_list);
+> +		g.cpu_list = NULL;
+> +	}
+>  
+> -    return 0;
+> +	return 0;
+>  }
+> -- 
+> 2.26.2
+> 
+> 
+
+Signed-off-by: John Kacur <jkacur@redhat.com.
+
+But, in the future, please break your patches down into
+smaller patches that do one thing, and are bisectable. This will also
+make it easier for me to review.
+
+For example, one patch for the SPDX license, one patch to fix the spacing 
+format, one patch for each checkpatch identified problem, and so on.
+
+Thanks
+
+John
