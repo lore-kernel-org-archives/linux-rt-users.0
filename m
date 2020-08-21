@@ -7,40 +7,40 @@ X-Spam-Status: No, score=-13.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 38AE5C433DF
-	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Aug 2020 19:47:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D1932C433E5
+	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Aug 2020 19:47:33 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 13BDF20FC3
-	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Aug 2020 19:47:32 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B11DA20FC3
+	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Aug 2020 19:47:33 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1598039252;
-	bh=gFqOD0U26drtgdxA4LsBWsBNukOx3mLYjKZya5hw0rA=;
-	h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
+	s=default; t=1598039253;
+	bh=8xJ0F7JbD2VxF2kbGN+MXw9TdxCSx05LiKE9CoRfqKg=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=VdXucXMv7y+49+aVRhMwDdeu6P+oxcAAfbLdzlMrtf+I5XDe9rEycZeRulcHsaR2O
-	 VuMJp1cZxxSN3p0kbATtNg0rou0exHjNhPbfofwNFeimbXC5kIRcGiGGgEfYDFFdib
-	 xM/MB/+urOx32qshaat3yCEvT8WLRVAqzw8jwyzI=
+	b=Cu7YM4dmX57cXOlmyyF7ttKvWyFmthPlL0/pbADRrmquTISK08p2MoISizIRpLxKr
+	 hvPdd/ZtjHUUKQIlVCogxxsbnB6rNPSlh/Abz/9drIp1P2JtF8MQ4hFTHq4drc7XdM
+	 sK6mOVb3S/X6kMlBJUIqrQURMa7rh7O/LAQaoTig=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727097AbgHUTrQ (ORCPT
+        id S1727082AbgHUTrL (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 21 Aug 2020 15:47:16 -0400
-Received: from mail.kernel.org ([198.145.29.99]:41092 "EHLO mail.kernel.org"
+        Fri, 21 Aug 2020 15:47:11 -0400
+Received: from mail.kernel.org ([198.145.29.99]:40930 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726804AbgHUTrN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 21 Aug 2020 15:47:13 -0400
+        id S1726433AbgHUTrJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 21 Aug 2020 15:47:09 -0400
 Received: from localhost.localdomain (c-73-211-240-131.hsd1.il.comcast.net [73.211.240.131])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id 54AE220838;
-        Fri, 21 Aug 2020 19:47:11 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id A30342076E;
+        Fri, 21 Aug 2020 19:47:07 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1598039232;
-        bh=gFqOD0U26drtgdxA4LsBWsBNukOx3mLYjKZya5hw0rA=;
-        h=From:To:Subject:Date:In-Reply-To:References:In-Reply-To:
+        s=default; t=1598039228;
+        bh=8xJ0F7JbD2VxF2kbGN+MXw9TdxCSx05LiKE9CoRfqKg=;
+        h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=VGR1w4uxwraxff6F0/nbGvFcCAvg9FdrR87htSQH3T3ziqKQHdyYGYrsytbZXgG3U
-         DsqMm+HQDPxSngqOmwPvrcGWMkoeCOHfyPox5OTKXYQ0xkfqBwav7HyPaG+v8YQSMi
-         ZwzJg0KTjhSiXSCyNpNLRJ5QoO2ZBLNw5CfA3UQE=
+        b=eTMkRU87bRSvnmgnc/fY78cBPJrPL5PoZqQe5avnCStmV8lGqte14CePOIJKig4Xg
+         GeeFzux17WPw1fntGUADKoKfFxC0kXAwLx5IJtWI3E0MLLB/x119VeLsHcOKH5GXWP
+         uTapAbHwfsBdoIa8l3rp/qL4OO+nf7peSx7aTsWM=
 From:   zanussi@kernel.org
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -52,9 +52,10 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Daniel Wagner <wagi@monom.org>,
         Clark Williams <williams@redhat.com>,
         Pavel Machek <pavel@denx.de>, Tom Zanussi <zanussi@kernel.org>
-Subject: [PATCH RT 5/5] Linux 4.19.135-rt61-rc1
-Date:   Fri, 21 Aug 2020 14:47:04 -0500
-Message-Id: <d975f7e45b5787e2d45fcf0fa654304c85cdba2b.1598039186.git.zanussi@kernel.org>
+Cc:     Marcel Holtmann <marcel@holtmann.org>
+Subject: [PATCH RT 2/5] Bluetooth: Acquire sk_lock.slock without disabling interrupts
+Date:   Fri, 21 Aug 2020 14:47:01 -0500
+Message-Id: <964fd3a30eb7d0ac0c0f89f9f9a11c38bb8dfec9.1598039186.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <cover.1598039186.git.zanussi@kernel.org>
 References: <cover.1598039186.git.zanussi@kernel.org>
@@ -65,7 +66,7 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Tom Zanussi <zanussi@kernel.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
 v4.19.135-rt61-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -73,18 +74,61 @@ If anyone has any objections, please let me know.
 -----------
 
 
+[ Upstream commit e6da0edc24eecef2f6964d92fa9044e1821deace ]
+
+There was a lockdep which led to commit
+   fad003b6c8e3d ("Bluetooth: Fix inconsistent lock state with RFCOMM")
+
+Lockdep noticed that `sk->sk_lock.slock' was acquired without disabling
+the softirq while the lock was also used in softirq context.
+Unfortunately the solution back then was to disable interrupts before
+acquiring the lock which however made lockdep happy.
+It would have been enough to simply disable the softirq. Disabling
+interrupts before acquiring a spinlock_t is not allowed on PREEMPT_RT
+because these locks are converted to 'sleeping' spinlocks.
+
+Use spin_lock_bh() in order to acquire the `sk_lock.slock'.
+
+Reported-by: Luis Claudio R. Goncalves <lclaudio@uudg.org>
+Reported-by: kbuild test robot <lkp@intel.com> [missing unlock]
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
 Signed-off-by: Tom Zanussi <zanussi@kernel.org>
 ---
- localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ net/bluetooth/rfcomm/sock.c | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
 
-diff --git a/localversion-rt b/localversion-rt
-index 66fa05e70f29..c04074665349 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt60
-+-rt61-rc1
+diff --git a/net/bluetooth/rfcomm/sock.c b/net/bluetooth/rfcomm/sock.c
+index c044ff2f73e6..75bc8102cdd7 100644
+--- a/net/bluetooth/rfcomm/sock.c
++++ b/net/bluetooth/rfcomm/sock.c
+@@ -64,15 +64,13 @@ static void rfcomm_sk_data_ready(struct rfcomm_dlc *d, struct sk_buff *skb)
+ static void rfcomm_sk_state_change(struct rfcomm_dlc *d, int err)
+ {
+ 	struct sock *sk = d->owner, *parent;
+-	unsigned long flags;
+ 
+ 	if (!sk)
+ 		return;
+ 
+ 	BT_DBG("dlc %p state %ld err %d", d, d->state, err);
+ 
+-	local_irq_save(flags);
+-	bh_lock_sock(sk);
++	spin_lock_bh(&sk->sk_lock.slock);
+ 
+ 	if (err)
+ 		sk->sk_err = err;
+@@ -93,8 +91,7 @@ static void rfcomm_sk_state_change(struct rfcomm_dlc *d, int err)
+ 		sk->sk_state_change(sk);
+ 	}
+ 
+-	bh_unlock_sock(sk);
+-	local_irq_restore(flags);
++	spin_unlock_bh(&sk->sk_lock.slock);
+ 
+ 	if (parent && sock_flag(sk, SOCK_ZAPPED)) {
+ 		/* We have to drop DLC lock here, otherwise
 -- 
 2.17.1
 
