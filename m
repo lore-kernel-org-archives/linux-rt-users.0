@@ -7,40 +7,40 @@ X-Spam-Status: No, score=-13.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 95D71C433E1
-	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Aug 2020 19:47:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D0CE3C433E3
+	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Aug 2020 19:47:40 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6F86420FC3
-	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Aug 2020 19:47:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A5DBE20FC3
+	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Aug 2020 19:47:40 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1598039259;
-	bh=S6dcRAdeTpUdhqBralYNBKRs92bvR5wAJJq1s5WcS70=;
+	s=default; t=1598039260;
+	bh=f3yVDNBJvnGh5Iokm9/PFcobvsO5ALwAD6QUltmqU44=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=rdHtpogvWkV24QbQoJ23y82nt7xUAjfdZpMkP4IyvIyn83PGvXJn5MFYE2LxTOJOd
-	 838qHToRgRAy4XQh0RNQtL7qDxjv/X3RTV+gvklUXU4CZtUXPkcpflcaL/yrabEQFA
-	 PiFmvN1L0dgcIgkiBlIIbQ/G/lgdgo7U95ffgAlQ=
+	b=AnUXIv9LIxLHar+Bf6KogwwY3AOIkoDvZDU//CsWt8+idusMsgrFRsZI4YqiNkDHx
+	 Iw9lDxsNo2p/MoUFFRLTB/BtlgCKXtUHE7XiqlY6dyPyVJaxPEQLGKpfuOtsuuPq3J
+	 ppJ2jtPbv/nqCPTpouthtsdtOQQH9ioLBm+NGp/I=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726676AbgHUTre (ORCPT
+        id S1726705AbgHUTrK (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 21 Aug 2020 15:47:34 -0400
-Received: from mail.kernel.org ([198.145.29.99]:40990 "EHLO mail.kernel.org"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726440AbgHUTrK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
         Fri, 21 Aug 2020 15:47:10 -0400
+Received: from mail.kernel.org ([198.145.29.99]:40876 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1726431AbgHUTrH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 21 Aug 2020 15:47:07 -0400
 Received: from localhost.localdomain (c-73-211-240-131.hsd1.il.comcast.net [73.211.240.131])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id D4399207BB;
-        Fri, 21 Aug 2020 19:47:08 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id 751F9207CD;
+        Fri, 21 Aug 2020 19:47:06 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1598039229;
-        bh=S6dcRAdeTpUdhqBralYNBKRs92bvR5wAJJq1s5WcS70=;
+        s=default; t=1598039227;
+        bh=f3yVDNBJvnGh5Iokm9/PFcobvsO5ALwAD6QUltmqU44=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=umhRCS1Kl07lT3+NNeROkgKekyNrIwxAmSo1a7/CnyH7pkY7OHda+JObTUT4VYvXu
-         DF7aTbG6NpKJm0wpZJ4sUoI0AuVXcPtCvFxxRpj76Ac37Q3YUoCjtgwWrQQNlx1BA1
-         eCvZb8l11X9Kq9tD7D4pgzR4wkh7+YhjKNcPHYTo=
+        b=ROw4/dA9/I7gR7iBcQaILUsDT3BjeLbI0NaqMjjSuJ6Hp1tnzfH43aW232ggfONWu
+         klj1gm3NJFLaEepo/RXDEUtf9ERdfs/InGgqpGDxRsv4bjgQUVxLSxkSsIv6oArWuh
+         8Zzr/3p8R7ywfPqL57iwZyHzya1i2lHYrbZRhIDE=
 From:   zanussi@kernel.org
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -52,11 +52,10 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Daniel Wagner <wagi@monom.org>,
         Clark Williams <williams@redhat.com>,
         Pavel Machek <pavel@denx.de>, Tom Zanussi <zanussi@kernel.org>
-Cc:     "Ahmed S. Darwish" <a.darwish@linutronix.de>,
-        "David S . Miller" <davem@davemloft.net>
-Subject: [PATCH RT 3/5] net: phy: fixed_phy: Remove unused seqcount
-Date:   Fri, 21 Aug 2020 14:47:02 -0500
-Message-Id: <31cc35dc4938fe8f94631327ab9e9966de09dd50.1598039186.git.zanussi@kernel.org>
+Cc:     Matt Fleming <matt@codeblueprint.co.uk>
+Subject: [PATCH RT 1/5] signal: Prevent double-free of user struct
+Date:   Fri, 21 Aug 2020 14:47:00 -0500
+Message-Id: <544fad9036a21c60dc68278fa302cc5cdf477098.1598039186.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <cover.1598039186.git.zanussi@kernel.org>
 References: <cover.1598039186.git.zanussi@kernel.org>
@@ -67,7 +66,7 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: "Ahmed S. Darwish" <a.darwish@linutronix.de>
+From: Matt Fleming <matt@codeblueprint.co.uk>
 
 v4.19.135-rt61-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -75,86 +74,52 @@ If anyone has any objections, please let me know.
 -----------
 
 
-[ Upstream commit 6554eac9ef2bd1c968886b31cc7266b49258a463 ]
+[ Upsteam commit 9567db2ebe566a93485e1a27d8759969d0002d7a ]
 
-Commit bf7afb29d545 ("phy: improve safety of fixed-phy MII register
-reading") protected the fixed PHY status with a sequence counter.
+The way user struct reference counting works changed significantly with,
 
-Two years later, commit d2b977939b18 ("net: phy: fixed-phy: remove
-fixed_phy_update_state()") removed the sequence counter's write side
-critical section -- neutralizing its read side retry loop.
+  fda31c50292a ("signal: avoid double atomic counter increments for user accounting")
 
-Remove the unused seqcount.
+Now user structs are only freed once the last pending signal is
+dequeued. Make sigqueue_free_current() follow this new convention to
+avoid freeing the user struct multiple times and triggering this
+warning:
 
-Signed-off-by: Ahmed S. Darwish <a.darwish@linutronix.de>
-Reviewed-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Reviewed-by: Andrew Lunn <andrew@lunn.ch>
-Signed-off-by: David S. Miller <davem@davemloft.net>
-(cherry picked from v5.8-rc1 commit 79cbb6bc3332da7162c2581e151659ab8ebaa528)
-Signed-off-by: Ahmed S. Darwish <a.darwish@linutronix.de>
+ refcount_t: underflow; use-after-free.
+ WARNING: CPU: 0 PID: 6794 at lib/refcount.c:288 refcount_dec_not_one+0x45/0x50
+ Call Trace:
+  refcount_dec_and_lock_irqsave+0x16/0x60
+  free_uid+0x31/0xa0
+  __dequeue_signal+0x17c/0x190
+  dequeue_signal+0x5a/0x1b0
+  do_sigtimedwait+0x208/0x250
+  __x64_sys_rt_sigtimedwait+0x6f/0xd0
+  do_syscall_64+0x72/0x200
+  entry_SYSCALL_64_after_hwframe+0x49/0xbe
+
+Signed-off-by: Matt Fleming <matt@codeblueprint.co.uk>
+Reported-by: Daniel Wagner <wagi@monom.org>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Tom Zanussi <zanussi@kernel.org>
 ---
- drivers/net/phy/fixed_phy.c | 25 +++++++++----------------
- 1 file changed, 9 insertions(+), 16 deletions(-)
+ kernel/signal.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/net/phy/fixed_phy.c b/drivers/net/phy/fixed_phy.c
-index 59820164502e..953ff54dd5df 100644
---- a/drivers/net/phy/fixed_phy.c
-+++ b/drivers/net/phy/fixed_phy.c
-@@ -23,7 +23,6 @@
- #include <linux/slab.h>
- #include <linux/of.h>
- #include <linux/gpio.h>
--#include <linux/seqlock.h>
- #include <linux/idr.h>
+diff --git a/kernel/signal.c b/kernel/signal.c
+index 45748993f777..05c9b5a6b3ae 100644
+--- a/kernel/signal.c
++++ b/kernel/signal.c
+@@ -488,8 +488,8 @@ static void sigqueue_free_current(struct sigqueue *q)
  
- #include "swphy.h"
-@@ -36,7 +35,6 @@ struct fixed_mdio_bus {
- struct fixed_phy {
- 	int addr;
- 	struct phy_device *phydev;
--	seqcount_t seqcount;
- 	struct fixed_phy_status status;
- 	int (*link_update)(struct net_device *, struct fixed_phy_status *);
- 	struct list_head node;
-@@ -62,18 +60,15 @@ static int fixed_mdio_read(struct mii_bus *bus, int phy_addr, int reg_num)
- 	list_for_each_entry(fp, &fmb->phys, node) {
- 		if (fp->addr == phy_addr) {
- 			struct fixed_phy_status state;
--			int s;
--
--			do {
--				s = read_seqcount_begin(&fp->seqcount);
--				/* Issue callback if user registered it. */
--				if (fp->link_update)
--					fp->link_update(fp->phydev->attached_dev,
--							&fp->status);
--				/* Check the GPIO for change in status */
--				fixed_phy_update(fp);
--				state = fp->status;
--			} while (read_seqcount_retry(&fp->seqcount, s));
-+
-+			/* Issue callback if user registered it. */
-+			if (fp->link_update)
-+				fp->link_update(fp->phydev->attached_dev,
-+						&fp->status);
-+
-+			/* Check the GPIO for change in status */
-+			fixed_phy_update(fp);
-+			state = fp->status;
- 
- 			return swphy_read_reg(reg_num, &state);
- 		}
-@@ -131,8 +126,6 @@ int fixed_phy_add(unsigned int irq, int phy_addr,
- 	if (!fp)
- 		return -ENOMEM;
- 
--	seqcount_init(&fp->seqcount);
--
- 	if (irq != PHY_POLL)
- 		fmb->mii_bus->irq[phy_addr] = irq;
- 
+ 	up = q->user;
+ 	if (rt_prio(current->normal_prio) && !put_task_cache(current, q)) {
+-		atomic_dec(&up->sigpending);
+-		free_uid(up);
++		if (atomic_dec_and_test(&up->sigpending))
++			free_uid(up);
+ 	} else
+ 		  __sigqueue_free(q);
+ }
 -- 
 2.17.1
 
