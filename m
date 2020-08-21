@@ -7,40 +7,40 @@ X-Spam-Status: No, score=-13.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D1932C433E5
-	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Aug 2020 19:47:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 95D71C433E1
+	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Aug 2020 19:47:39 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id B11DA20FC3
-	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Aug 2020 19:47:33 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 6F86420FC3
+	for <linux-rt-users@archiver.kernel.org>; Fri, 21 Aug 2020 19:47:39 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=default; t=1598039253;
-	bh=8xJ0F7JbD2VxF2kbGN+MXw9TdxCSx05LiKE9CoRfqKg=;
+	s=default; t=1598039259;
+	bh=S6dcRAdeTpUdhqBralYNBKRs92bvR5wAJJq1s5WcS70=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
 	 References:List-ID:From;
-	b=Cu7YM4dmX57cXOlmyyF7ttKvWyFmthPlL0/pbADRrmquTISK08p2MoISizIRpLxKr
-	 hvPdd/ZtjHUUKQIlVCogxxsbnB6rNPSlh/Abz/9drIp1P2JtF8MQ4hFTHq4drc7XdM
-	 sK6mOVb3S/X6kMlBJUIqrQURMa7rh7O/LAQaoTig=
+	b=rdHtpogvWkV24QbQoJ23y82nt7xUAjfdZpMkP4IyvIyn83PGvXJn5MFYE2LxTOJOd
+	 838qHToRgRAy4XQh0RNQtL7qDxjv/X3RTV+gvklUXU4CZtUXPkcpflcaL/yrabEQFA
+	 PiFmvN1L0dgcIgkiBlIIbQ/G/lgdgo7U95ffgAlQ=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727082AbgHUTrL (ORCPT
+        id S1726676AbgHUTre (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 21 Aug 2020 15:47:11 -0400
-Received: from mail.kernel.org ([198.145.29.99]:40930 "EHLO mail.kernel.org"
+        Fri, 21 Aug 2020 15:47:34 -0400
+Received: from mail.kernel.org ([198.145.29.99]:40990 "EHLO mail.kernel.org"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726433AbgHUTrJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 21 Aug 2020 15:47:09 -0400
+        id S1726440AbgHUTrK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 21 Aug 2020 15:47:10 -0400
 Received: from localhost.localdomain (c-73-211-240-131.hsd1.il.comcast.net [73.211.240.131])
         (using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
         (No client certificate requested)
-        by mail.kernel.org (Postfix) with ESMTPSA id A30342076E;
-        Fri, 21 Aug 2020 19:47:07 +0000 (UTC)
+        by mail.kernel.org (Postfix) with ESMTPSA id D4399207BB;
+        Fri, 21 Aug 2020 19:47:08 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=default; t=1598039228;
-        bh=8xJ0F7JbD2VxF2kbGN+MXw9TdxCSx05LiKE9CoRfqKg=;
+        s=default; t=1598039229;
+        bh=S6dcRAdeTpUdhqBralYNBKRs92bvR5wAJJq1s5WcS70=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:In-Reply-To:
          References:From;
-        b=eTMkRU87bRSvnmgnc/fY78cBPJrPL5PoZqQe5avnCStmV8lGqte14CePOIJKig4Xg
-         GeeFzux17WPw1fntGUADKoKfFxC0kXAwLx5IJtWI3E0MLLB/x119VeLsHcOKH5GXWP
-         uTapAbHwfsBdoIa8l3rp/qL4OO+nf7peSx7aTsWM=
+        b=umhRCS1Kl07lT3+NNeROkgKekyNrIwxAmSo1a7/CnyH7pkY7OHda+JObTUT4VYvXu
+         DF7aTbG6NpKJm0wpZJ4sUoI0AuVXcPtCvFxxRpj76Ac37Q3YUoCjtgwWrQQNlx1BA1
+         eCvZb8l11X9Kq9tD7D4pgzR4wkh7+YhjKNcPHYTo=
 From:   zanussi@kernel.org
 To:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -52,10 +52,11 @@ To:     LKML <linux-kernel@vger.kernel.org>,
         Daniel Wagner <wagi@monom.org>,
         Clark Williams <williams@redhat.com>,
         Pavel Machek <pavel@denx.de>, Tom Zanussi <zanussi@kernel.org>
-Cc:     Marcel Holtmann <marcel@holtmann.org>
-Subject: [PATCH RT 2/5] Bluetooth: Acquire sk_lock.slock without disabling interrupts
-Date:   Fri, 21 Aug 2020 14:47:01 -0500
-Message-Id: <964fd3a30eb7d0ac0c0f89f9f9a11c38bb8dfec9.1598039186.git.zanussi@kernel.org>
+Cc:     "Ahmed S. Darwish" <a.darwish@linutronix.de>,
+        "David S . Miller" <davem@davemloft.net>
+Subject: [PATCH RT 3/5] net: phy: fixed_phy: Remove unused seqcount
+Date:   Fri, 21 Aug 2020 14:47:02 -0500
+Message-Id: <31cc35dc4938fe8f94631327ab9e9966de09dd50.1598039186.git.zanussi@kernel.org>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <cover.1598039186.git.zanussi@kernel.org>
 References: <cover.1598039186.git.zanussi@kernel.org>
@@ -66,7 +67,7 @@ Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: "Ahmed S. Darwish" <a.darwish@linutronix.de>
 
 v4.19.135-rt61-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -74,61 +75,86 @@ If anyone has any objections, please let me know.
 -----------
 
 
-[ Upstream commit e6da0edc24eecef2f6964d92fa9044e1821deace ]
+[ Upstream commit 6554eac9ef2bd1c968886b31cc7266b49258a463 ]
 
-There was a lockdep which led to commit
-   fad003b6c8e3d ("Bluetooth: Fix inconsistent lock state with RFCOMM")
+Commit bf7afb29d545 ("phy: improve safety of fixed-phy MII register
+reading") protected the fixed PHY status with a sequence counter.
 
-Lockdep noticed that `sk->sk_lock.slock' was acquired without disabling
-the softirq while the lock was also used in softirq context.
-Unfortunately the solution back then was to disable interrupts before
-acquiring the lock which however made lockdep happy.
-It would have been enough to simply disable the softirq. Disabling
-interrupts before acquiring a spinlock_t is not allowed on PREEMPT_RT
-because these locks are converted to 'sleeping' spinlocks.
+Two years later, commit d2b977939b18 ("net: phy: fixed-phy: remove
+fixed_phy_update_state()") removed the sequence counter's write side
+critical section -- neutralizing its read side retry loop.
 
-Use spin_lock_bh() in order to acquire the `sk_lock.slock'.
+Remove the unused seqcount.
 
-Reported-by: Luis Claudio R. Goncalves <lclaudio@uudg.org>
-Reported-by: kbuild test robot <lkp@intel.com> [missing unlock]
+Signed-off-by: Ahmed S. Darwish <a.darwish@linutronix.de>
+Reviewed-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Reviewed-by: Andrew Lunn <andrew@lunn.ch>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+(cherry picked from v5.8-rc1 commit 79cbb6bc3332da7162c2581e151659ab8ebaa528)
+Signed-off-by: Ahmed S. Darwish <a.darwish@linutronix.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
 Signed-off-by: Tom Zanussi <zanussi@kernel.org>
 ---
- net/bluetooth/rfcomm/sock.c | 7 ++-----
- 1 file changed, 2 insertions(+), 5 deletions(-)
+ drivers/net/phy/fixed_phy.c | 25 +++++++++----------------
+ 1 file changed, 9 insertions(+), 16 deletions(-)
 
-diff --git a/net/bluetooth/rfcomm/sock.c b/net/bluetooth/rfcomm/sock.c
-index c044ff2f73e6..75bc8102cdd7 100644
---- a/net/bluetooth/rfcomm/sock.c
-+++ b/net/bluetooth/rfcomm/sock.c
-@@ -64,15 +64,13 @@ static void rfcomm_sk_data_ready(struct rfcomm_dlc *d, struct sk_buff *skb)
- static void rfcomm_sk_state_change(struct rfcomm_dlc *d, int err)
- {
- 	struct sock *sk = d->owner, *parent;
--	unsigned long flags;
+diff --git a/drivers/net/phy/fixed_phy.c b/drivers/net/phy/fixed_phy.c
+index 59820164502e..953ff54dd5df 100644
+--- a/drivers/net/phy/fixed_phy.c
++++ b/drivers/net/phy/fixed_phy.c
+@@ -23,7 +23,6 @@
+ #include <linux/slab.h>
+ #include <linux/of.h>
+ #include <linux/gpio.h>
+-#include <linux/seqlock.h>
+ #include <linux/idr.h>
  
- 	if (!sk)
- 		return;
+ #include "swphy.h"
+@@ -36,7 +35,6 @@ struct fixed_mdio_bus {
+ struct fixed_phy {
+ 	int addr;
+ 	struct phy_device *phydev;
+-	seqcount_t seqcount;
+ 	struct fixed_phy_status status;
+ 	int (*link_update)(struct net_device *, struct fixed_phy_status *);
+ 	struct list_head node;
+@@ -62,18 +60,15 @@ static int fixed_mdio_read(struct mii_bus *bus, int phy_addr, int reg_num)
+ 	list_for_each_entry(fp, &fmb->phys, node) {
+ 		if (fp->addr == phy_addr) {
+ 			struct fixed_phy_status state;
+-			int s;
+-
+-			do {
+-				s = read_seqcount_begin(&fp->seqcount);
+-				/* Issue callback if user registered it. */
+-				if (fp->link_update)
+-					fp->link_update(fp->phydev->attached_dev,
+-							&fp->status);
+-				/* Check the GPIO for change in status */
+-				fixed_phy_update(fp);
+-				state = fp->status;
+-			} while (read_seqcount_retry(&fp->seqcount, s));
++
++			/* Issue callback if user registered it. */
++			if (fp->link_update)
++				fp->link_update(fp->phydev->attached_dev,
++						&fp->status);
++
++			/* Check the GPIO for change in status */
++			fixed_phy_update(fp);
++			state = fp->status;
  
- 	BT_DBG("dlc %p state %ld err %d", d, d->state, err);
+ 			return swphy_read_reg(reg_num, &state);
+ 		}
+@@ -131,8 +126,6 @@ int fixed_phy_add(unsigned int irq, int phy_addr,
+ 	if (!fp)
+ 		return -ENOMEM;
  
--	local_irq_save(flags);
--	bh_lock_sock(sk);
-+	spin_lock_bh(&sk->sk_lock.slock);
+-	seqcount_init(&fp->seqcount);
+-
+ 	if (irq != PHY_POLL)
+ 		fmb->mii_bus->irq[phy_addr] = irq;
  
- 	if (err)
- 		sk->sk_err = err;
-@@ -93,8 +91,7 @@ static void rfcomm_sk_state_change(struct rfcomm_dlc *d, int err)
- 		sk->sk_state_change(sk);
- 	}
- 
--	bh_unlock_sock(sk);
--	local_irq_restore(flags);
-+	spin_unlock_bh(&sk->sk_lock.slock);
- 
- 	if (parent && sock_flag(sk, SOCK_ZAPPED)) {
- 		/* We have to drop DLC lock here, otherwise
 -- 
 2.17.1
 
