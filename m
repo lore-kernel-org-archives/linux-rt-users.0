@@ -2,123 +2,98 @@ Return-Path: <SRS0=wzCU=CC=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.6 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6841FC433DF
-	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Aug 2020 11:00:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4C22DC433E3
+	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Aug 2020 15:46:24 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 3BDBB206B5
-	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Aug 2020 11:00:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 24ACC205CB
+	for <linux-rt-users@archiver.kernel.org>; Mon, 24 Aug 2020 15:46:24 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="EQVbPJt2"
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="dk17feOT";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="uoxPrnEi"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726257AbgHXLAY (ORCPT
+        id S1728030AbgHXPqP (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Mon, 24 Aug 2020 07:00:24 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57552 "EHLO
+        Mon, 24 Aug 2020 11:46:15 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45904 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725998AbgHXLAB (ORCPT
+        with ESMTP id S1727909AbgHXPqJ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Mon, 24 Aug 2020 07:00:01 -0400
-Received: from mail-ej1-x643.google.com (mail-ej1-x643.google.com [IPv6:2a00:1450:4864:20::643])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AF3B7C061573;
-        Mon, 24 Aug 2020 04:00:00 -0700 (PDT)
-Received: by mail-ej1-x643.google.com with SMTP id j25so2125030ejk.9;
-        Mon, 24 Aug 2020 04:00:00 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=date:from:to:cc:subject:message-id:references:mime-version
-         :content-disposition:content-transfer-encoding:in-reply-to;
-        bh=wURfUL1E5T5G5zAtpp5gFw8NGNP7EBRkkT26Hn99rX4=;
-        b=EQVbPJt2lR/3QwZovyxFsOzDX8o+E46tU9mik1qQ++52BWgAfjcjbjF9tQ3fzLBiF8
-         Wn8i+XI/Rx6tKExYWM7XK+3XmWqcQ4Gf191vbyFMDoxKDWXYkh50R6ZkO/K8vWbbV2ia
-         QElt81XQGHqyUVhTUO2vOBJGDHkl7cbtcaHVGL3F8cRSUjAA4IacPAb1MopfZ+Uhgx1O
-         8UgoSZgOFmhw4xEc0JLcI/kRGxRjxh+cz6QzYPrFCPY0n/I082ojwal4MVamqTQsh3TR
-         /bDhxLVQyqLLgri9IEbaDhQeY+ddEUZYB9DfOeBtx4BPj50Xd8mi735rb1zgsLQ7MrqW
-         SL0g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:content-transfer-encoding
-         :in-reply-to;
-        bh=wURfUL1E5T5G5zAtpp5gFw8NGNP7EBRkkT26Hn99rX4=;
-        b=BAmJNu+Q6nzslxD0I0ea+XEipK1qCNavfCcLpw3/Hu7ZVT7JNke06txBeXK2/KhNJQ
-         sifrcMB93xIC48meOfI29xKDZN6igrlZy+BHt16S63nNp4/+cuLndere/f35iUtraKsM
-         iKjLl16YWjIDPqtSiO0BR5UjfDcNEq4+Q+8LkJMcXVhLIcpS3yafdml3WRDemT9JrqC0
-         x3Z+bUkiBYRTBAnIVBiKz3tBo5dMlDXJqP0CW6m/ZgQ3C8D4VNdDyApalfC+a+w/AN0m
-         LeQNo8O7raap0lppzEYzq5azivwRW65tVZOpkj/5G5zaO0CNV0gQFYuRndIpBM5zzoZv
-         i8qw==
-X-Gm-Message-State: AOAM531WjxAbdEkbXPA8jvL62bEBRdlEwQx0l4+G9D23VemcPzybjjZl
-        UU8FFYVqCw6Ci8kjXlOHLCM=
-X-Google-Smtp-Source: ABdhPJwzRYW0prDIEUuFJxaVv29Jwxwx6HiYbSRC4xi8TfKhYZC2RVakGKAGITZuJS41xlZzsc0BlQ==
-X-Received: by 2002:a17:906:403:: with SMTP id d3mr4881944eja.522.1598266799343;
-        Mon, 24 Aug 2020 03:59:59 -0700 (PDT)
-Received: from skbuf ([86.126.22.216])
-        by smtp.gmail.com with ESMTPSA id l7sm8926447edn.45.2020.08.24.03.59.58
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 24 Aug 2020 03:59:58 -0700 (PDT)
-Date:   Mon, 24 Aug 2020 13:59:56 +0300
-From:   Vladimir Oltean <olteanv@gmail.com>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-        Sasha Levin <sashal@kernel.org>
-Cc:     David Miller <davem@davemloft.net>, Jiafei.Pan@nxp.com,
-        kuba@kernel.org, netdev@vger.kernel.org, claudiu.manoil@nxp.com,
-        ioana.ciornei@nxp.com, yangbo.lu@nxp.com,
-        linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Subject: Re: [PATCH net-next 2/2] enetc: use napi_schedule to be compatible
- with PREEMPT_RT
-Message-ID: <20200824105956.7urh3wkzd45ror3r@skbuf>
-References: <20200803201009.613147-1-olteanv@gmail.com>
- <20200803201009.613147-2-olteanv@gmail.com>
- <20200803.182145.2300252460016431673.davem@davemloft.net>
- <20200812135144.hpsfgxusojdrsewl@linutronix.de>
- <20200812143430.xuzg2ddsl7ouhn5m@skbuf>
+        Mon, 24 Aug 2020 11:46:09 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 01417C061575;
+        Mon, 24 Aug 2020 08:46:08 -0700 (PDT)
+Date:   Mon, 24 Aug 2020 17:46:05 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1598283966;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=XW44TtTM39puFK29r2Z1U/n2rm1H4SidXLcRJnMMlmA=;
+        b=dk17feOTeW+1t5Q/8v7UsiKCKLnvXMcdkw/NRcBOjStCnViSBi2PLuh2RgtdYvtnuhe5hN
+        AaQ2+dMoRBrjz5CL+iWWlkXQFTtUdqgPzoyLX7u5u+6EH7murKCuffAtn3dlNyia/S/sYU
+        /lHuPSoVpxEm8zY9Fz//rXmbwqeFdfD1jX1yyyVPqJi/xdzKbcO5r0CylSmCdBb/pZd9/s
+        eblSFmhZR8Q6HBh1dxO//24ofbQvVSh/SIicYVBIesjozQOQ7SmySAf2BnCZzgRd2d+as5
+        6tHEUslyN/zCxDa3nx2TZgVCmW0EQDZz7aBH+HbcVhEcNsYD+B2bWTgFsJofEQ==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1598283966;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=XW44TtTM39puFK29r2Z1U/n2rm1H4SidXLcRJnMMlmA=;
+        b=uoxPrnEimQi6WRdAXuN/Xr3MXTD5nNxslAPBCH0UvkXxxTgtLxmePw/Yzz+GlKR0nHNh9J
+        hMsGaUBbbUgUSEDQ==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v5.9-rc2-rt1
+Message-ID: <20200824154605.v66t2rsxobt3r5jg@linutronix.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <20200812143430.xuzg2ddsl7ouhn5m@skbuf>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Sasha,
+Dear RT folks!
 
-On Wed, Aug 12, 2020 at 05:34:30PM +0300, Vladimir Oltean wrote:
-> On Wed, Aug 12, 2020 at 03:51:44PM +0200, Sebastian Andrzej Siewior wrote:
-> > On 2020-08-03 18:21:45 [-0700], David Miller wrote:
-> > > From: Vladimir Oltean <olteanv@gmail.com>
-> > > > The driver calls napi_schedule_irqoff() from a context where, in RT,
-> > > > hardirqs are not disabled, since the IRQ handler is force-threaded.
-> > …
-> > > > 
-> > > > Signed-off-by: Jiafei Pan <Jiafei.Pan@nxp.com>
-> > > > Signed-off-by: Vladimir Oltean <vladimir.oltean@nxp.com>
-> > > 
-> > > Applied.
-> > 
-> > Could these two patches be forwarded -stable, please? The changelog
-> > describes this as a problem on PREEMPT_RT but this also happens on !RT
-> > with the `threadirqs' commandline switch.
-> > 
-> > Sebastian
-> 
-> I expect the driver maintainers to have something to say about this. I
-> didn't test on stable kernels, and at least for dpaa2-eth, the change
-> would need to go pretty deep down the stable line.
-> 
-> Also, not really sure who is using the threadirqs option except for
-> testing purposes.
-> 
-> Thanks,
-> -Vladimir
+I'm pleased to announce the v5.9-rc2-rt1 patch set. 
 
-Do you think that this type of request is something that AUTOSEL can
-handle?
+Changes since v5.6.19-rt12:
 
-Thanks,
--Vladimir
+  - Rebase to v5.9-rc2
+
+  - The seqcount related patches have been replaced on top of the
+    seqcount series by Ahmed S. Darwis which landed mainline. 
+
+  - The posix-timer patches have been dropped because upstream changes
+    cover all of was needed on RT's side. As a result RT relies on
+    HAVE_POSIX_CPU_TIMERS_TASK_WORK. This is provided only by x86.
+    The RT patch provides this option for ARM/ARM64/POWERPC as long as
+    KVM is disabled. The reason is that the task work must be handled
+    before KVM returns to guest.
+
+Known issues
+     - It has been pointed out that due to changes to the printk code the
+       internal buffer representation changed. This is only an issue if tools
+       like `crash' are used to extract the printk buffer from a kernel memory
+       image.
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.9-rc2-rt1
+
+The RT patch against v5.9-rc2 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.9/older/patch-5.9-rc2-rt1.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.9/older/patches-5.9-rc2-rt1.tar.xz
+
+Sebastian
