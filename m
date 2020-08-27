@@ -2,57 +2,38 @@ Return-Path: <SRS0=N+eC=CF=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 88023C433DF
-	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Aug 2020 10:28:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 91780C433E1
+	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Aug 2020 12:46:54 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 62C4C22BF3
-	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Aug 2020 10:28:48 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="jvRB5DRS";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="jsDsEYmc"
+	by mail.kernel.org (Postfix) with ESMTP id 6D9A222CAF
+	for <linux-rt-users@archiver.kernel.org>; Thu, 27 Aug 2020 12:46:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727814AbgH0K2o (ORCPT
+        id S1728994AbgH0Mqv (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 27 Aug 2020 06:28:44 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:37824 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726938AbgH0K2n (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 27 Aug 2020 06:28:43 -0400
-Date:   Thu, 27 Aug 2020 12:28:40 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1598524121;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=WTklcD731Fi5e0+Pn8+aeun1glrmN2Z4cLid14mp7hg=;
-        b=jvRB5DRS73xHplCub+07++kcQR/4YFSUqp48DlhPDSo5Naa8XEygsQQA7RRAh39vwlJArD
-        VNGkkAn8N24D0Qk+MKBTywdtSXjgC9wpeqBYJdLorlVq7XYA8o/2LXEOko+3vonvb1mutZ
-        3KV/6S8mTPn/yliJLpyxe6iIB2aOoF3Gfcn9WL1wA5u4R2+an2ZSn8dMXHmL3605LiYzgh
-        jZWnJZz807XqvlNGEIC2QAGlGqwgte0C0N0rpNvGz9Jhlpzvm4aEFc4lz2UOrFYJ8qHj0s
-        PASVOwBgsLygORknoefvtdUt7dSHQGExa+JEC19VNPuKFnwGbw8WHvknjAFi6g==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1598524121;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=WTklcD731Fi5e0+Pn8+aeun1glrmN2Z4cLid14mp7hg=;
-        b=jsDsEYmc+jw1ktijJrmJ3LNXx66BP0w8X63N1xyFq21A/D+B+J7LWkw0uUbNSqY7g9K/QZ
-        TgpOXxFPCZx6xZAQ==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Daniel Wagner <wagi@monom.org>
+        Thu, 27 Aug 2020 08:46:51 -0400
+Received: from mail.monom.org ([188.138.9.77]:50542 "EHLO mail.monom.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1729075AbgH0MqY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 27 Aug 2020 08:46:24 -0400
+Received: from mail.monom.org (localhost [127.0.0.1])
+        by filter.mynetwork.local (Postfix) with ESMTP id 80B1150035A;
+        Thu, 27 Aug 2020 14:46:12 +0200 (CEST)
+Received: from localhost (unknown [94.31.100.251])
+        by mail.monom.org (Postfix) with ESMTPSA id 3DC6F500103;
+        Thu, 27 Aug 2020 14:46:12 +0200 (CEST)
+Date:   Thu, 27 Aug 2020 14:46:11 +0200
+From:   Daniel Wagner <wagi@monom.org>
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Cc:     Thomas Gleixner <tglx@linutronix.de>,
         LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [ANNOUNCE] v5.9-rc2-rt1
-Message-ID: <20200827102840.msv556nrah4h4vmq@linutronix.de>
+Message-ID: <20200827124611.tsivo4xopvoenfmy@beryllium.lan>
 References: <20200824154605.v66t2rsxobt3r5jg@linutronix.de>
  <20200826080802.5lnnf5wh3kcwfykz@beryllium.lan>
  <20200826081211.bvk5kfuzh4vlbh5k@linutronix.de>
@@ -61,21 +42,36 @@ References: <20200824154605.v66t2rsxobt3r5jg@linutronix.de>
  <20200827091910.ibuyr53qprb7qmju@beryllium.lan>
  <20200827092743.kjl6hkaephx3a64a@linutronix.de>
  <20200827101622.xx4jzecouxrlwbii@beryllium.lan>
+ <20200827102840.msv556nrah4h4vmq@linutronix.de>
+ <20200827112705.uleixtdmx3pacr5u@beryllium.lan>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <20200827101622.xx4jzecouxrlwbii@beryllium.lan>
+In-Reply-To: <20200827112705.uleixtdmx3pacr5u@beryllium.lan>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2020-08-27 12:16:22 [+0200], Daniel Wagner wrote:
-> The -rt kernel is roughly 6MB larger. Just need to check the memory
-> ranges u-boot is using.
+> Would be interesting to see the size numbers for v5.6-rt? Hmm, I'll
+> just start the compiler. It's all scripted anyway :)
 
-so that 6MiB sounded bad but then it is ~36MiB in total so=E2=80=A6.
-Is this full debug and so on?
+v5.6-rt:
 
-Sebastian
+-rw-r--r-- 1 wagi users 28688896 Aug 27 13:38 rpi3-image-ll-v5.6.19-rt12
+-rw-r--r-- 1 wagi users 28688896 Aug 27 13:34 rpi3-image-nohz-v5.6.19-rt12
+-rw-r--r-- 1 wagi users 29669888 Aug 27 13:32 rpi3-image-none-v5.6.19-rt12
+-rw-r--r-- 1 wagi users 33438208 Aug 27 13:30 rpi3-image-rt-v5.6.19-rt12
+-rw-r--r-- 1 wagi users 28688896 Aug 27 13:38 rpi3-image-up-v5.6.19-rt12
+-rw-r--r-- 1 wagi users 29669888 Aug 27 13:36 rpi3-image-vp-v5.6.19-rt12
+
+v5.4-rt:
+
+-rw-r--r-- 1 wagi users 27525632 Aug 27 14:40 rpi3-image-ll-v5.4.59-rt36
+-rw-r--r-- 1 wagi users 27525632 Aug 27 14:36 rpi3-image-nohz-v5.4.59-rt36
+-rw-r--r-- 1 wagi users 28506624 Aug 27 14:34 rpi3-image-none-v5.4.59-rt36
+-rw-r--r-- 1 wagi users 32360960 Aug 27 14:32 rpi3-image-rt-v5.4.59-rt36
+-rw-r--r-- 1 wagi users 27525632 Aug 27 14:40 rpi3-image-up-v5.4.59-rt36
+-rw-r--r-- 1 wagi users 28506624 Aug 27 14:38 rpi3-image-vp-v5.4.59-rt36
+
+So in previous releases the size offset was roughly around 4MB.
