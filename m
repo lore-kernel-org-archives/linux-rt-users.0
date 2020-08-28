@@ -2,189 +2,301 @@ Return-Path: <SRS0=BfXC=CG=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-14.6 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 66B8BC433E6
-	for <linux-rt-users@archiver.kernel.org>; Fri, 28 Aug 2020 08:48:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5D357C433E2
+	for <linux-rt-users@archiver.kernel.org>; Fri, 28 Aug 2020 16:15:36 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 2E2F62071B
-	for <linux-rt-users@archiver.kernel.org>; Fri, 28 Aug 2020 08:48:00 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 347E3208D5
+	for <linux-rt-users@archiver.kernel.org>; Fri, 28 Aug 2020 16:15:36 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1598631336;
+	bh=3u/LPNb0fGuW7vBTTs5VHyvcaV1t8KUbPhUALXc8e3A=;
+	h=Subject:From:To:Date:List-ID:From;
+	b=Cex2dMgw/AC33ktJudYvy5UmTG21UgG4zzrG6zaYBSl3pEN06EOG6YoDSMqrDK7k/
+	 fm45qbh6qh4+2t4PNM1G1caC+w/pyORGaj2Tc0IanPtPBhcnS9sppeUm0tj/eny7/C
+	 f9Xpzef3cGBPVZLdzg2GRer1/yN/x97YvxEPikF0=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728269AbgH1Ir7 (ORCPT
+        id S1727904AbgH1QP3 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 28 Aug 2020 04:47:59 -0400
-Received: from mx-ginzinger.sigmacloud.services ([185.154.235.147]:60996 "EHLO
-        mx-ginzinger.sigmacloud.services" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1726834AbgH1Irx (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 28 Aug 2020 04:47:53 -0400
-Received: from [31.193.165.228] (port=22397 helo=mx-ginzinger.sigmacloud.services)
-        by mx-ginzinger.sigmacloud.services with esmtps (TLSv1.2:AES256-GCM-SHA384:256)
-        (Exim 4.82_1-5b7a7c0-XX)
-        (envelope-from <Henri.Roosen@ginzinger.com>)
-        id 1kBa31-0000Va-0V; Fri, 28 Aug 2020 10:47:47 +0200
-Received: from exc1.buero.ginzinger.com (10.1.1.204) by
- exc1.buero.ginzinger.com (10.1.1.204) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.1466.3; Fri, 28 Aug 2020 10:47:46 +0200
-Received: from exc1.buero.ginzinger.com ([fe80::ad39:a353:4517:a5c4]) by
- exc1.buero.ginzinger.com ([fe80::ad39:a353:4517:a5c4%3]) with mapi id
- 15.01.1466.012; Fri, 28 Aug 2020 10:47:46 +0200
-X-CTCH-RefID: str=0001.0A090213.5F48C4B3.0060,ss=1,re=0.000,recu=0.000,reip=0.000,cl=1,cld=1,fgs=0
-From:   Roosen Henri <Henri.Roosen@ginzinger.com>
-To:     "bigeasy@linutronix.de" <bigeasy@linutronix.de>
-CC:     "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-        "williams@redhat.com" <williams@redhat.com>
-Subject: Re: RT kernel v4.14 NULL pointer dereferences
-Thread-Topic: RT kernel v4.14 NULL pointer dereferences
-Thread-Index: AQHWfHD/vw22G4yAUUaodEFUYa16lqlLzMYAgAFIngA=
-Date:   Fri, 28 Aug 2020 08:47:46 +0000
-Message-ID: <1394d73cab1d99f9276e9799923d15f5a1d4bc91.camel@ginzinger.com>
-References: <fd9d435b3f6a5f4ffd7ef93763e78c087871d565.camel@ginzinger.com>
-         <20200814115848.w4m2bfqttkid6woi@linutronix.de>
-         <25412beffb96ab8c2b8f869bdac5a66c49faa5ca.camel@ginzinger.com>
-         <20200817111311.zyqjznhferoqqxkh@linutronix.de>
-         <05cc3d6085641c7f0425e45358451b05c5e9fc07.camel@ginzinger.com>
-         <1ffc7e58e5fdc26c60f403e454d4077241605a7b.camel@ginzinger.com>
-         <be2424198cd899ca182b38c51f97f5b9acc16131.camel@ginzinger.com>
-         <20200827125256.etg57uakct2gobl3@linutronix.de>
-         <20200827131136.aepfkssev6psio3c@linutronix.de>
-In-Reply-To: <20200827131136.aepfkssev6psio3c@linutronix.de>
-Accept-Language: en-US, de-DE
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-originating-ip: [10.2.1.65]
-x-exclaimer-md-original-subject: [NOSIG][NODISC]Re: RT kernel v4.14 NULL
- pointer dereferences
-x-exclaimer-md-config: 9dd172f7-de2e-4231-b886-ec11f46e03b3
-MIME-Version: 1.0
-Content-Type: multipart/signed; protocol="application/x-pkcs7-signature"; micalg="sha-256"; boundary="----C4317505A665A6DDF16433194C5F7271"
+        Fri, 28 Aug 2020 12:15:29 -0400
+Received: from mail.kernel.org ([198.145.29.99]:57866 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1725814AbgH1QPY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 28 Aug 2020 12:15:24 -0400
+Received: from tzanussi-mobl (c-73-211-240-131.hsd1.il.comcast.net [73.211.240.131])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id 6B897208C9;
+        Fri, 28 Aug 2020 16:15:22 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1598631323;
+        bh=3u/LPNb0fGuW7vBTTs5VHyvcaV1t8KUbPhUALXc8e3A=;
+        h=Subject:From:To:Date:From;
+        b=z7XR+qqDgFv6kiaduZRACjyssqnRHdiXbynU9kznA9RFxfdhNS7hE8cK45w8Xnr+o
+         yuVvhecroVBZacR0B0zlbU+jhqBudOu3OxLV3SxFomDDY93C2JvtIxzfUs0TAgaaE+
+         8uNVxMZ19VafX+S4OHZlymUk6W/WBlZlL+sn5z4o=
+Message-ID: <e23cc4a1d0678083ed3304565e663c9ad9a6f1f8.camel@kernel.org>
+Subject: [ANNOUNCE] 4.19.135-rt61
+From:   Tom Zanussi <zanussi@kernel.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <wagi@monom.org>,
+        Clark Williams <williams@redhat.com>,
+        Pavel Machek <pavel@denx.de>, Tom Zanussi <zanussi@kernel.org>
+Date:   Fri, 28 Aug 2020 11:15:21 -0500
+Content-Type: text/plain; charset="UTF-8"
+X-Mailer: Evolution 3.28.5-0ubuntu0.18.04.1 
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-This is an S/MIME signed message
+Hello RT Folks!
 
-------C4317505A665A6DDF16433194C5F7271
-Content-Language: de-DE
-Content-Type: text/plain; charset="utf-8"
-Content-ID: <08EB3103D8492E45A65B5F5AC15C200C@ginzinger.com>
-Content-Transfer-Encoding: base64
-MIME-Version: 1.0
+I'm pleased to announce the 4.19.135-rt61 stable release.
 
-T24gVGh1LCAyMDIwLTA4LTI3IGF0IDE1OjExICswMjAwLCBiaWdlYXN5QGxpbnV0cm9uaXguZGUg
-d3JvdGU6DQo+IE9uIDIwMjAtMDgtMjcgMTQ6NTI6NTggWyswMjAwXSwgVG8gUm9vc2VuIEhlbnJp
-IHdyb3RlOg0KPiA+IE9uIDIwMjAtMDgtMjYgMDk6NTY6MTYgWyswMDAwXSwgUm9vc2VuIEhlbnJp
-IHdyb3RlOg0KPiA+ID4gUGxlYXNlIGxldCBtZSBrbm93IGlmIHRoZXJlIHlvdSBmaW5kIGFueSB1
-bnJlZ3VsYXJpdGllcyBpbiBteQ0KPiA+ID4gY29uZmlnIG9yDQo+ID4gPiBzdWdnZXN0aW9ucyBv
-biBhbnkgdXNlZnVsbCBkZWJ1Z2dpbmctL2ZvcmVuc2ljLWNvbmZpZy1vcHRpb25zLg0KPiA+IA0K
-PiA+IEkgaGF2ZSBubyBzdWdnZXN0aW9ucy4gV2VsbCBiZXNpZGVzIG1lbW9yeSBkZWJ1Z2dpbmcs
-IGxvY2tkZXAgYW5kDQo+ID4gdGhlc2UNCj4gPiBraW5kIG9mIHRoaW5ncy4NCj4gDQo+IFlvdSBu
-ZXZlciBzZW50IGEgYmFja3RyYWNlLCBkaWQgeW91PyBJIHJlbWVtYmVyIHlvdSBwb3N0ZWQgYSBs
-aW5rIGENCj4gcGFzdGViaW4gd2hpY2ggY29udGFpbiBvbmx5IHRoZSAibWlkZGxlIiBvZiB0aGUg
-dHJhY2UsIG5vdCB3aGVyZSBpdA0KPiBzdGFydGVkLg0KDQpDb3JyZWN0LCBwbGVhc2Ugc2VlIA0K
-aHR0cHM6Ly9sb3JlLmtlcm5lbC5vcmcvbGludXgtcnQtdXNlcnMvMjU0MTJiZWZmYjk2YWI4YzJi
-OGY4NjliZGFjNWE2NmM0OWZhYTVjYS5jYW1lbEBnaW56aW5nZXIuY29tLw0KDQpVbmZvcnR1bmF0
-ZWx5IHRoZSBvbmx5IHY1LjQgYmFja3RyYWNlIEkgY3VycmVudGx5IGhhdmUsIHRoZSBrZXJuZWwg
-d2FzDQpjb250aW51b3VzbHkgZHVtcGluZyBiYWNrdHJhY2VzLCB0aGVyZWZvcmUgb25seSB0aGUg
-Im1pZGRsZSIgb2YgdGhlDQp0cmFjZSBpcyBhdmFpbGFibGUgKGh0dHBzOi8vcGFzdGUudWJ1bnR1
-LmNvbS9wL3daUENRdjhLalgvKS4NCg0KQ3VycmVudGx5IHRlc3RpbmcgMiBzeXN0ZW1zIHdpdGgg
-djUuNC41OC1ydDM1IGZvciAyIHdlZWtzIG5vdy4gTWlnaHQNCnRha2UgYW5vdGhlciA2IHdlZWtz
-IG9yIG1vcmUgYmVmb3JlIGJhY2t0cmFjZXMgYmVjb21lIGF2YWlsYWJsZS4NCg0KVGhlIHBhc3Rl
-YmlucyBvZiB0aGUgdjQuMTQga2VybmVscyBmcm9tIHRoZSBmaXJzdCBwb3N0IGluIHRoaXMgdGhy
-ZWFkDQpkb24ndCB3b3JrIGFueW1vcmUsIEkgcmUtcG9zdGVkIHRoZW0gaGVyZToNCg0KNC4xNC43
-MS1ydDQ0ICAtPiBodHRwczovL3Bhc3RlLnVidW50dS5jb20vcC9yZ1NOcjk3dzZrLw0KNC4xNC4x
-MDYtcnQ1NiAtPiBodHRwczovL3Bhc3RlLnVidW50dS5jb20vcC9jc1Z2SmNZR3J0Lw0KNC4xNC4x
-NDYtcnQ2NyAtPiBodHRwczovL3Bhc3RlLnVidW50dS5jb20vcC9jcnlicDZGNkhiLw0KDQpUaGUg
-djQuMTQgbG9ncyBoYXZlIGEgbW9yZSBjb21wbGV0ZSBiYWNrdHJhY2UuIFNlZW1zIHRoZSB2NC4x
-NCBsb2cgYXJlDQphbGwgc2hvd2luZyBiYWNrdHJhY2VzIG9mIFN5U19yZWFkL1N5U193cml0ZSBz
-eXNjYWxscyBvbiB1bml4LXN0cmVhbS0NCnNvY2tldHMsIGJ1dCB0aGF0IG1pZ2h0IGJlIGp1c3Qg
-YSByZWQtaGVycmluZy4NCg0KVGhhbmtzIQ0KSGVucmkNCg==
+You can get this release via the git tree at:
 
-------C4317505A665A6DDF16433194C5F7271
-Content-Type: application/x-pkcs7-signature; name="smime.p7s"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="smime.p7s"
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-MIIOFAYJKoZIhvcNAQcCoIIOBTCCDgECAQExDzANBglghkgBZQMEAgEFADALBgkq
-hkiG9w0BBwGgggsYMIIF5jCCA86gAwIBAgIQapvhODv/K2ufAdXZuKdSVjANBgkq
-hkiG9w0BAQwFADCBhTELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFu
-Y2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExp
-bWl0ZWQxKzApBgNVBAMTIkNPTU9ETyBSU0EgQ2VydGlmaWNhdGlvbiBBdXRob3Jp
-dHkwHhcNMTMwMTEwMDAwMDAwWhcNMjgwMTA5MjM1OTU5WjCBlzELMAkGA1UEBhMC
-R0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9y
-ZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxPTA7BgNVBAMTNENPTU9ETyBS
-U0EgQ2xpZW50IEF1dGhlbnRpY2F0aW9uIGFuZCBTZWN1cmUgRW1haWwgQ0EwggEi
-MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC+s55XrCh2dUAWxzgDmNPGGHYh
-UPMleQtMtaDRfTpYPpynMS6n9jR22YRq2tA9NEjk6vW7rN/5sYFLIP1of3l0NKZ6
-fLWfF2VgJ5cijKYy/qlAckY1wgOkUMgzKlWlVJGyK+UlNEQ1/5ErCsHq9x9aU/x1
-KwTdF/LCrT03Rl/FwFrf1XTCwa2QZYL55AqLPikFlgqOtzk06kb2qvGlnHJvijjI
-03BOrNpo+kZGpcHsgyO1/u1OZTaOo8wvEU17VVeP1cHWse9tGKTDyUGg2hJZjrqc
-k39UIm/nKbpDSZ0JsMoIw/JtOOg0JC56VzQgBo7ictReTQE5LFLG3yQK+xS1AgMB
-AAGjggE8MIIBODAfBgNVHSMEGDAWgBS7r34CPfqm8TyEjq3uOJjs2TIy1DAdBgNV
-HQ4EFgQUgq9sjPjF/pZhfOgfPStxSF7Ei8AwDgYDVR0PAQH/BAQDAgGGMBIGA1Ud
-EwEB/wQIMAYBAf8CAQAwEQYDVR0gBAowCDAGBgRVHSAAMEwGA1UdHwRFMEMwQaA/
-oD2GO2h0dHA6Ly9jcmwuY29tb2RvY2EuY29tL0NPTU9ET1JTQUNlcnRpZmljYXRp
-b25BdXRob3JpdHkuY3JsMHEGCCsGAQUFBwEBBGUwYzA7BggrBgEFBQcwAoYvaHR0
-cDovL2NydC5jb21vZG9jYS5jb20vQ09NT0RPUlNBQWRkVHJ1c3RDQS5jcnQwJAYI
-KwYBBQUHMAGGGGh0dHA6Ly9vY3NwLmNvbW9kb2NhLmNvbTANBgkqhkiG9w0BAQwF
-AAOCAgEAeFyygSg0TzzuX1bOn5dW7I+iaxf28/ZJCAbU2C81zd9A/tNx4+jsQgwR
-GiHjZrAYayZrrm78hOx7aEpkfNPQIHGG6Fvq3EzWf/Lvx7/hk6zSPwIal9v5IkDc
-ZoFD7f3iT7PdkHJY9B51csvU50rxpEg1OyOT8fk2zvvPBuM4qQNqbGWlnhMpIMwp
-WZT89RY0wpJO+2V6eXEGGHsROs3njeP9DqqqAJaBa4wBeKOdGCWn1/Jp2oY6dyNm
-NppI4ZNMUH4Tam85S1j6E95u4+1Nuru84OrMIzqvISE2HN/56ebTOWlcrurffade
-2022O/tUU1gb4jfWCcyvB8czm12FgX/y/lRjmDbEA08QJNB2729Y+io1IYO3ztve
-BdvUCIYZojTq/OCR6MvnzS6X72HP0PRLRTiOSEmIDsS5N5w/8IW1Hva5hEFy6fDA
-fd9yI+O+IMMAj1KcL/Zo9jzJ16HO5m60ttl1Enk8MQkz/W3JlHaeI5iKFn4UJu1/
-cP2YHXYPiWf2JyBzsLBrGk1II+3yL8aorYew6CQvdVifC3HtwlSam9V1niiCfOBe
-2C12TdKGu05LWIA3ZkFcWJGaNXOZ6Ggyh/TqvXG5v7zmEVDNXFnHn9tFpMpOUvxh
-csjycBtH0dZ0WrNw6gH+HF8TIhCnH3+zzWuDN0Rk6h9KVkfKehIwggUqMIIEEqAD
-AgECAhEAgK6FAFOiNDdgM5+lyjA8gTANBgkqhkiG9w0BAQsFADCBlzELMAkGA1UE
-BhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2Fs
-Zm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxPTA7BgNVBAMTNENPTU9E
-TyBSU0EgQ2xpZW50IEF1dGhlbnRpY2F0aW9uIGFuZCBTZWN1cmUgRW1haWwgQ0Ew
-HhcNMTgwNzE4MDAwMDAwWhcNMjEwNzE3MjM1OTU5WjArMSkwJwYJKoZIhvcNAQkB
-FhpoZW5yaS5yb29zZW5AZ2luemluZ2VyLmNvbTCCASIwDQYJKoZIhvcNAQEBBQAD
-ggEPADCCAQoCggEBAMmwBmquEWhoUH5WNJe7bQRLBAccBq0ZBVQbLAbJQwN5bg9i
-wSsPG7mveXqXYWpuHhbb7lbs3zFTS4H511nWurRqcvVceVOs5vtsbVMHjfuNmHo8
-WrMCJPFBw64uBUoGdsiwuAvA0CeFpPyA/CsAuvIbmvEF+GxMjaeQhqQ9d5K4z4I6
-w6R3wFtNJiSUMUSdgtnNPDYnUIKILR3mfbSCHWA7Pepe1dh+S9JFWhcoNv1h6D/R
-SAKVdUtC2GS0vt3nk4cEg8Z0s4/OvVDRm2jluvPK+fEeUfGahwHFrk68nYTq3v2P
-dMxHg93+Li+jYAX6R3XXGbdcjZJ3UM5MGEKq+u0CAwEAAaOCAdowggHWMB8GA1Ud
-IwQYMBaAFIKvbIz4xf6WYXzoHz0rcUhexIvAMB0GA1UdDgQWBBQ9s9JCcV1JOI2I
-/oXSyF8VIj2VhTAOBgNVHQ8BAf8EBAMCBaAwDAYDVR0TAQH/BAIwADAdBgNVHSUE
-FjAUBggrBgEFBQcDBAYIKwYBBQUHAwIwRgYDVR0gBD8wPTA7BgwrBgEEAbIxAQIB
-AwUwKzApBggrBgEFBQcCARYdaHR0cHM6Ly9zZWN1cmUuY29tb2RvLm5ldC9DUFMw
-WgYDVR0fBFMwUTBPoE2gS4ZJaHR0cDovL2NybC5jb21vZG9jYS5jb20vQ09NT0RP
-UlNBQ2xpZW50QXV0aGVudGljYXRpb25hbmRTZWN1cmVFbWFpbENBLmNybDCBiwYI
-KwYBBQUHAQEEfzB9MFUGCCsGAQUFBzAChklodHRwOi8vY3J0LmNvbW9kb2NhLmNv
-bS9DT01PRE9SU0FDbGllbnRBdXRoZW50aWNhdGlvbmFuZFNlY3VyZUVtYWlsQ0Eu
-Y3J0MCQGCCsGAQUFBzABhhhodHRwOi8vb2NzcC5jb21vZG9jYS5jb20wJQYDVR0R
-BB4wHIEaaGVucmkucm9vc2VuQGdpbnppbmdlci5jb20wDQYJKoZIhvcNAQELBQAD
-ggEBAKdv6bSTLlu63Ckq7aibIwJCE0hhs83Z6Jr5G2wWrwVdFB9Dkb6l2NmdGRoq
-qbSz3Remg5qamURXec3XdEBxO1FPMcZJrHKAZuNjYdj1tzYA/rbTdYmVbno1TG5/
-O6rVb7A624UZHoucW+NpfNCrxfQY+BliMbCKJEWqQE0P6vyDenSYa76NLt1699B5
-vyHbYLrJHAjFzHe7BqSkP815C47KpJFXuGYasewJDOpvyINtn6kBlrAIanoVfDFa
-W9aUjUeNjqmcCEN4TpuSZCf1L8oWAjv5oH0R87orEAFZnSVWDIW8i7TMiFtCiF3D
-LYmN6J96LCNCs0iQIFqcnJnkHAkxggLAMIICvAIBATCBrTCBlzELMAkGA1UEBhMC
-R0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9y
-ZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxPTA7BgNVBAMTNENPTU9ETyBS
-U0EgQ2xpZW50IEF1dGhlbnRpY2F0aW9uIGFuZCBTZWN1cmUgRW1haWwgQ0ECEQCA
-roUAU6I0N2Azn6XKMDyBMA0GCWCGSAFlAwQCAQUAoIHkMBgGCSqGSIb3DQEJAzEL
-BgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTIwMDgyODA4NDc1MVowLwYJKoZI
-hvcNAQkEMSIEIGG+hb8hr17UzfYn1xp38a0ncNl5Qbz0+LRaW1rpKofiMHkGCSqG
-SIb3DQEJDzFsMGowCwYJYIZIAWUDBAEqMAsGCWCGSAFlAwQBFjALBglghkgBZQME
-AQIwCgYIKoZIhvcNAwcwDgYIKoZIhvcNAwICAgCAMA0GCCqGSIb3DQMCAgFAMAcG
-BSsOAwIHMA0GCCqGSIb3DQMCAgEoMA0GCSqGSIb3DQEBAQUABIIBAGwoe66cWoLN
-8XvG0uiYTevQz/FFMFXIZ1cwjHDZcNh2i7wnh3ZzRFVgHzrfkCsklYx/lwQstKM0
-GK6a/tFqOW1qqehJgEFps+Qz49WU3rwftj0cDflB6ckv8/wT63/c09Cz+aeZYASU
-IZQu0QFUiiJzAD4nfxDNoc2bGonp5YsQ8siN2PSnH/1ASqDLFYS+gAuqdv6pW/uT
-oLSM3zNhR4JpVwI8pNlJfkP3DNayZkfPAQ7V7pMbzLJwyIBRu/Mk7hSyxI1FFdFA
-S8EgNlZnikMz/6GY3pGO2f2IxsjtYJ0KmgW2ZuADIlWNeumYtQSLLqL19re8pVsJ
-UlPxqOkOeeo=
+  branch: v4.19-rt
+  Head SHA1: 237039436c788beac75762aafe7a377a8498342f
 
-------C4317505A665A6DDF16433194C5F7271--
+Or to build 4.19.135-rt61 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.135.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/patch-4.19.135-rt61.patch.xz
+
+
+You can also build from 4.19.135-rt60 by applying the incremental patch:
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/incr/patch-4.19.135-rt60-rt61.patch.xz
+
+Enjoy!
+
+   Tom
+
+Changes from v4.19.135-rt60:
+---
+
+Ahmed S. Darwish (1):
+      net: phy: fixed_phy: Remove unused seqcount
+
+Davidlohr Bueso (1):
+      net: xfrm: fix compress vs decompress serialization
+
+Matt Fleming (1):
+      signal: Prevent double-free of user struct
+
+Sebastian Andrzej Siewior (1):
+      Bluetooth: Acquire sk_lock.slock without disabling interrupts
+
+Tom Zanussi (1):
+      Linux 4.19.135-rt61
+---
+drivers/net/phy/fixed_phy.c | 25 +++++++++----------------
+ kernel/signal.c             |  4 ++--
+ localversion-rt             |  2 +-
+ net/bluetooth/rfcomm/sock.c |  7 ++-----
+ net/xfrm/xfrm_ipcomp.c      | 21 +++++++++++++++------
+ 5 files changed, 29 insertions(+), 30 deletions(-)
+---
+diff --git a/drivers/net/phy/fixed_phy.c b/drivers/net/phy/fixed_phy.c
+index 59820164502e..953ff54dd5df 100644
+--- a/drivers/net/phy/fixed_phy.c
++++ b/drivers/net/phy/fixed_phy.c
+@@ -23,7 +23,6 @@
+ #include <linux/slab.h>
+ #include <linux/of.h>
+ #include <linux/gpio.h>
+-#include <linux/seqlock.h>
+ #include <linux/idr.h>
+ 
+ #include "swphy.h"
+@@ -36,7 +35,6 @@ struct fixed_mdio_bus {
+ struct fixed_phy {
+ 	int addr;
+ 	struct phy_device *phydev;
+-	seqcount_t seqcount;
+ 	struct fixed_phy_status status;
+ 	int (*link_update)(struct net_device *, struct fixed_phy_status *);
+ 	struct list_head node;
+@@ -62,18 +60,15 @@ static int fixed_mdio_read(struct mii_bus *bus, int phy_addr, int reg_num)
+ 	list_for_each_entry(fp, &fmb->phys, node) {
+ 		if (fp->addr == phy_addr) {
+ 			struct fixed_phy_status state;
+-			int s;
+-
+-			do {
+-				s = read_seqcount_begin(&fp->seqcount);
+-				/* Issue callback if user registered it. */
+-				if (fp->link_update)
+-					fp->link_update(fp->phydev->attached_dev,
+-							&fp->status);
+-				/* Check the GPIO for change in status */
+-				fixed_phy_update(fp);
+-				state = fp->status;
+-			} while (read_seqcount_retry(&fp->seqcount, s));
++
++			/* Issue callback if user registered it. */
++			if (fp->link_update)
++				fp->link_update(fp->phydev->attached_dev,
++						&fp->status);
++
++			/* Check the GPIO for change in status */
++			fixed_phy_update(fp);
++			state = fp->status;
+ 
+ 			return swphy_read_reg(reg_num, &state);
+ 		}
+@@ -131,8 +126,6 @@ int fixed_phy_add(unsigned int irq, int phy_addr,
+ 	if (!fp)
+ 		return -ENOMEM;
+ 
+-	seqcount_init(&fp->seqcount);
+-
+ 	if (irq != PHY_POLL)
+ 		fmb->mii_bus->irq[phy_addr] = irq;
+ 
+diff --git a/kernel/signal.c b/kernel/signal.c
+index 45748993f777..05c9b5a6b3ae 100644
+--- a/kernel/signal.c
++++ b/kernel/signal.c
+@@ -488,8 +488,8 @@ static void sigqueue_free_current(struct sigqueue *q)
+ 
+ 	up = q->user;
+ 	if (rt_prio(current->normal_prio) && !put_task_cache(current, q)) {
+-		atomic_dec(&up->sigpending);
+-		free_uid(up);
++		if (atomic_dec_and_test(&up->sigpending))
++			free_uid(up);
+ 	} else
+ 		  __sigqueue_free(q);
+ }
+diff --git a/localversion-rt b/localversion-rt
+index 66fa05e70f29..9b7de9345ef4 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt60
++-rt61
+diff --git a/net/bluetooth/rfcomm/sock.c b/net/bluetooth/rfcomm/sock.c
+index c044ff2f73e6..75bc8102cdd7 100644
+--- a/net/bluetooth/rfcomm/sock.c
++++ b/net/bluetooth/rfcomm/sock.c
+@@ -64,15 +64,13 @@ static void rfcomm_sk_data_ready(struct rfcomm_dlc *d, struct sk_buff *skb)
+ static void rfcomm_sk_state_change(struct rfcomm_dlc *d, int err)
+ {
+ 	struct sock *sk = d->owner, *parent;
+-	unsigned long flags;
+ 
+ 	if (!sk)
+ 		return;
+ 
+ 	BT_DBG("dlc %p state %ld err %d", d, d->state, err);
+ 
+-	local_irq_save(flags);
+-	bh_lock_sock(sk);
++	spin_lock_bh(&sk->sk_lock.slock);
+ 
+ 	if (err)
+ 		sk->sk_err = err;
+@@ -93,8 +91,7 @@ static void rfcomm_sk_state_change(struct rfcomm_dlc *d, int err)
+ 		sk->sk_state_change(sk);
+ 	}
+ 
+-	bh_unlock_sock(sk);
+-	local_irq_restore(flags);
++	spin_unlock_bh(&sk->sk_lock.slock);
+ 
+ 	if (parent && sock_flag(sk, SOCK_ZAPPED)) {
+ 		/* We have to drop DLC lock here, otherwise
+diff --git a/net/xfrm/xfrm_ipcomp.c b/net/xfrm/xfrm_ipcomp.c
+index a00ec715aa46..a97997385423 100644
+--- a/net/xfrm/xfrm_ipcomp.c
++++ b/net/xfrm/xfrm_ipcomp.c
+@@ -20,6 +20,7 @@
+ #include <linux/list.h>
+ #include <linux/module.h>
+ #include <linux/mutex.h>
++#include <linux/locallock.h>
+ #include <linux/percpu.h>
+ #include <linux/slab.h>
+ #include <linux/smp.h>
+@@ -36,6 +37,7 @@ struct ipcomp_tfms {
+ 
+ static DEFINE_MUTEX(ipcomp_resource_mutex);
+ static void * __percpu *ipcomp_scratches;
++static DEFINE_LOCAL_IRQ_LOCK(ipcomp_scratches_lock);
+ static int ipcomp_scratch_users;
+ static LIST_HEAD(ipcomp_tfms_list);
+ 
+@@ -45,12 +47,15 @@ static int ipcomp_decompress(struct xfrm_state *x, struct sk_buff *skb)
+ 	const int plen = skb->len;
+ 	int dlen = IPCOMP_SCRATCH_SIZE;
+ 	const u8 *start = skb->data;
+-	const int cpu = get_cpu();
+-	u8 *scratch = *per_cpu_ptr(ipcomp_scratches, cpu);
+-	struct crypto_comp *tfm = *per_cpu_ptr(ipcd->tfms, cpu);
+-	int err = crypto_comp_decompress(tfm, start, plen, scratch, &dlen);
+-	int len;
++	u8 *scratch;
++	struct crypto_comp *tfm;
++	int err, len;
++
++	local_lock(ipcomp_scratches_lock);
+ 
++	scratch = *this_cpu_ptr(ipcomp_scratches);
++	tfm = *this_cpu_ptr(ipcd->tfms);
++	err = crypto_comp_decompress(tfm, start, plen, scratch, &dlen);
+ 	if (err)
+ 		goto out;
+ 
+@@ -103,7 +108,7 @@ static int ipcomp_decompress(struct xfrm_state *x, struct sk_buff *skb)
+ 	err = 0;
+ 
+ out:
+-	put_cpu();
++	local_unlock(ipcomp_scratches_lock);
+ 	return err;
+ }
+ 
+@@ -146,6 +151,8 @@ static int ipcomp_compress(struct xfrm_state *x, struct sk_buff *skb)
+ 	int err;
+ 
+ 	local_bh_disable();
++	local_lock(ipcomp_scratches_lock);
++
+ 	scratch = *this_cpu_ptr(ipcomp_scratches);
+ 	tfm = *this_cpu_ptr(ipcd->tfms);
+ 	err = crypto_comp_compress(tfm, start, plen, scratch, &dlen);
+@@ -158,12 +165,14 @@ static int ipcomp_compress(struct xfrm_state *x, struct sk_buff *skb)
+ 	}
+ 
+ 	memcpy(start + sizeof(struct ip_comp_hdr), scratch, dlen);
++	local_unlock(ipcomp_scratches_lock);
+ 	local_bh_enable();
+ 
+ 	pskb_trim(skb, dlen + sizeof(struct ip_comp_hdr));
+ 	return 0;
+ 
+ out:
++	local_unlock(ipcomp_scratches_lock);
+ 	local_bh_enable();
+ 	return err;
+ }
 
