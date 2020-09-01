@@ -2,93 +2,86 @@ Return-Path: <SRS0=uG0Q=CK=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.1 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.5 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	SUBJ_ALL_CAPS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 53E04C433E2
-	for <linux-rt-users@archiver.kernel.org>; Tue,  1 Sep 2020 07:41:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CD835C433E2
+	for <linux-rt-users@archiver.kernel.org>; Tue,  1 Sep 2020 10:02:27 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 28C23204EC
-	for <linux-rt-users@archiver.kernel.org>; Tue,  1 Sep 2020 07:41:21 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="qPIad0Ut";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="dzQfVqij"
+	by mail.kernel.org (Postfix) with ESMTP id A50E0206A5
+	for <linux-rt-users@archiver.kernel.org>; Tue,  1 Sep 2020 10:02:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726946AbgIAHlL (ORCPT
+        id S1726044AbgIAKC1 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 1 Sep 2020 03:41:11 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:38234 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726006AbgIAHlK (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 1 Sep 2020 03:41:10 -0400
-Date:   Tue, 1 Sep 2020 09:41:07 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1598946068;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=a01kqMrBzYwGWYv4WxVBdnaGp0snBWtL5mk5Fkm/jbY=;
-        b=qPIad0UtNn8RTBtF3CXfebJPPt+gcYg1t7+1ElChHoimY7RMJEH6O1WuR/TLS8zR9PiH+D
-        wpdMySRyZuHWkFPzzYFMx/c1Qf6EBAyY6Tw+FXPZTy98E0+gLswtz/O7w4x35rqFwac4Vh
-        Gt3SeCtWi1RaqhFTqUY/vS3CLZ7PTvQIFL4gTgBSzzQ3j5mU5yxpD1+fj35oIxNLJPaQYE
-        L5jges1a3/9lRoE9PyZSUvaIQUkHfLCNQxXE1hOnetzoV3HtuhlEhfhBSjXVJb4WVVxw1E
-        FdoW26NsM+EMHC2fipMpvBjF6xdhQkRaPcxUf1icWcwCL7Du6UYwQQFsTEKdBQ==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1598946068;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=a01kqMrBzYwGWYv4WxVBdnaGp0snBWtL5mk5Fkm/jbY=;
-        b=dzQfVqijbKR/LqN87VCh+3Qhf2zUfonRqlSZGtnvN+/1fi25PRA5zq4OBL0hANnS6wVtLK
-        KKVOkOZVjvRci3DQ==
-From:   'Sebastian Andrzej Siewior' <bigeasy@linutronix.de>
-To:     Thomas Graziadei <thomas.graziadei@omicronenergy.com>
-Cc:     Mark Marshall <markmarshall14@gmail.com>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Mark Marshall <mark.marshall@omicronenergy.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "rostedt@goodmis.org" <rostedt@goodmis.org>
-Subject: Re: Kernel crash due to memory corruption with v5.4.26-rt17 and
- PowerPC e500
-Message-ID: <20200901074107.ozrthr5piqu723pa@linutronix.de>
-References: <CAD4b4WK9W+dNZZ_WPt-9ZNpSHvyxdwPW86Rtq4AKOONuvyR37A@mail.gmail.com>
- <20200529131452.pgj7mx7xaz7n4kz3@linutronix.de>
- <CAD4b4WLS36JKepz31m98Z3Ve05d63GnfBGsuuWRXpjXZqPoBrA@mail.gmail.com>
- <20200529161518.svpxhkeljafbtdz2@linutronix.de>
- <20200529163722.mdxzrj4n3lyzjtfu@linutronix.de>
- <20200706165004.7m57fvspmwnjcjxh@linutronix.de>
- <eeeae7d9-c028-47f0-ab5b-7983e32f36cb@EXC03-ATKLA.omicron.at>
- <c1ef757b-4cd6-410e-a647-a3303cef4b1b@EXC03-ATKLA.omicron.at>
+        Tue, 1 Sep 2020 06:02:27 -0400
+Received: from mail.monom.org ([188.138.9.77]:40670 "EHLO mail.monom.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1725848AbgIAKC0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 1 Sep 2020 06:02:26 -0400
+Received: from mail.monom.org (localhost [127.0.0.1])
+        by filter.mynetwork.local (Postfix) with ESMTP id B6730500650;
+        Tue,  1 Sep 2020 12:02:24 +0200 (CEST)
+Received: from localhost (unknown [94.31.100.251])
+        by mail.monom.org (Postfix) with ESMTPSA id E1351500322;
+        Tue,  1 Sep 2020 12:02:22 +0200 (CEST)
+Date:   Tue, 1 Sep 2020 12:02:22 +0200
+From:   Daniel Wagner <wagi@monom.org>
+To:     linux-rt-users@vger.kernel.org
+Cc:     Christoph Hellwig <hch@infradead.org>,
+        Richard Weinberger <richard@sigma-star.at>,
+        Johannes Thumshirn <Johannes.Thumshirn@wdc.com>
+Subject: [ANNOUNCE] ALPSS+ART 2020
+Message-ID: <20200901100222.547s4264liwrxup5@beryllium.lan>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <c1ef757b-4cd6-410e-a647-a3303cef4b1b@EXC03-ATKLA.omicron.at>
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On 2020-08-12 14:45:22 [+0200], Thomas Graziadei wrote:
-> Hi Sebastian,
-Hi Thomas,
+We proudly announce the co-hosted Alpine Linux Persistence and Storage
+Summit (ALPSS) + Alpine Real Time Treffen (ART), which will be held
+October 2nd to October 4th 2020 at the Lizumerhuette [1][2] in Austria.
 
-> any progress on your side?
-> 
-> Do you think the patch could be applied for the next versions?
+This is a scaled down replacement event for ALPSS and The Realtime
+Community summit, allowing the discussion of Linux storage and realtime
+related topics in a relaxed alpine environment.
 
-Yes.  The ->active_mm change needs to be protected against scheduling
-regardless of the arch/mmu. Otherwise the mm will be put twice. For this
-to trigger you need to exec from a kernel thread and get preempted.
-This will be addressed in use_mm() by commit
-    38cf307c1f201 ("mm: fix kthread_use_mm() vs TLB invalidate")
+We plan to have a small selection of short and to the point talks with
+lots of room for discussion in small groups, as well as ample downtime
+to enjoy the surrounding.
 
-which is in v5.9-rc1 and exec_mmap() is under discussion at
-    https://lore.kernel.org/linux-arch/20200828100022.1099682-2-npiggin@gmail.com/
+Attendance is free except for the accommodation and food at the lodge [3],
+but the number of seats is strictly limited.  If you are interested in
+attending please reserve a seat by mailing your favorite topic(s) to:
 
-> Regards,
-> Thomas
+        alpss-pc@lists.infradead.org
 
-Sebastian
+If you are interested in giving a short and crisp talk please also send
+an abstract to the same address.
+
+The Lizumerhuette is an Alpine Society lodge in a high alpine environment.
+A hike of approximately 2 hours is required to the lodge, and no other
+accommodations are available within walking distance.
+
+Due to the COVID-19 outbreak we will put a special emphasis on social
+distancing.  Current rules for alpine society huts in Austria can be
+found here [4].  There are travel restrictions in place that may not
+allow for travel to Austria for the residents of many countries.  See
+here for a current list [5].
+
+Thank you on behalf of the program committee:
+
+    Christoph Hellwig
+    Johannes Thumshirn
+    Daniel Wagner
+    Richard Weinberger
+
+[1] http://www.tyrol.com/things-to-do/sports/hiking/refuge-huts/a-lizumer-hut
+[2] https://www.glungezer.at/l-i-z-u-m-e-r-h-%C3%BC-t-t-e/
+[3] approx. EUR 40-60 per person and night, depending on the room
+    category
+[4] https://translate.google.co.uk/translate?hl=en&sl=de&tl=en&u=https%3A%2F%2Fwww.alpenverein.at%2Fportal%2Fnews%2Faktuelle_news%2F2020%2F2020_03_13_coronavirus-alpenverein.php&prev=search
+[5] https://www.austria.info/en/service-and-facts/coronavirus-information
