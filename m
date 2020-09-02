@@ -2,165 +2,229 @@ Return-Path: <SRS0=5+M/=CL=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.0 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_GIT autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-12.1 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 79E6CC43461
-	for <linux-rt-users@archiver.kernel.org>; Wed,  2 Sep 2020 08:27:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BC9E6C433E7
+	for <linux-rt-users@archiver.kernel.org>; Wed,  2 Sep 2020 15:56:04 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5FDE420709
-	for <linux-rt-users@archiver.kernel.org>; Wed,  2 Sep 2020 08:27:45 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8D2DD207EA
+	for <linux-rt-users@archiver.kernel.org>; Wed,  2 Sep 2020 15:56:04 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="i/ve32Wu";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="eOasIUQu"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726310AbgIBI1g (ORCPT
+        id S1726979AbgIBP4D (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 2 Sep 2020 04:27:36 -0400
-Received: from mx2.suse.de ([195.135.220.15]:43778 "EHLO mx2.suse.de"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726167AbgIBI1f (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 2 Sep 2020 04:27:35 -0400
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 67C0FB1DD;
-        Wed,  2 Sep 2020 08:27:34 +0000 (UTC)
-From:   Daniel Wagner <dwagner@suse.de>
-To:     Clark Williams <williams@redhat.com>,
-        John Kacur <jkacur@redhat.com>
-Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [rt-tests 1/4] cyclicdeadline: Streamline usage output and man page
-Date:   Wed,  2 Sep 2020 10:27:22 +0200
-Message-Id: <20200902082725.20037-2-dwagner@suse.de>
-X-Mailer: git-send-email 2.28.0
-In-Reply-To: <20200902082725.20037-1-dwagner@suse.de>
-References: <20200902082725.20037-1-dwagner@suse.de>
+        Wed, 2 Sep 2020 11:56:03 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:48176 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726380AbgIBP4B (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 2 Sep 2020 11:56:01 -0400
+Date:   Wed, 2 Sep 2020 17:55:57 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1599062158;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=QbRUtG+xCqrG5ewBG4h2tqjAQOFvW6yIUDtQ1Zk6KEo=;
+        b=i/ve32Wug0QHbc0SmvAHR8yZTjuXKFgKaxvULb0jiUOPuu8EXW3JDmps15BQtJIGqpV5Q9
+        ptEp6MV8wG72LFEwbwvh6ln5K/Y6AE2wyAEnt+FRr/U0dqDqkAhc4+SKa+4Gqdel0JjmLI
+        CFhSeRq96iWl5scdSN4ApHkwjkql8pbYSKUX+duxXNeymHYnc3JJ5GDFRe/ZNQBCHfOnfx
+        7vWgEiYaqZSTASIdZenRjuIMLKFPR2kjj+Qy4tKxenJ1a2uJFBVnHuNDyXljge+r+k1zoS
+        TeBAnRYMKYn/DYiKLz5mwPKMR+7vCPJtDLfBmBm63f/4XEbJrjyJ3k034YgbFg==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1599062158;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+        bh=QbRUtG+xCqrG5ewBG4h2tqjAQOFvW6yIUDtQ1Zk6KEo=;
+        b=eOasIUQuWdBOcJRYzrZwGs9ha/d4h2nTopn9F3q97dkZQnqb0xCH8KGCP/pMqqflB5nBYh
+        9cI/5zei8xgJz5CA==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Thomas Gleixner <tglx@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] v5.9-rc3-rt3
+Message-ID: <20200902155557.h2wl2qpfn2rwsofw@linutronix.de>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Signed-off-by: Daniel Wagner <dwagner@suse.de>
----
- src/sched_deadline/cyclicdeadline.8 | 24 ++++++++---------
- src/sched_deadline/cyclicdeadline.c | 41 +++++++++++++++--------------
- 2 files changed, 33 insertions(+), 32 deletions(-)
+Dear RT folks!
 
-diff --git a/src/sched_deadline/cyclicdeadline.8 b/src/sched_deadline/cyclicdeadline.8
-index 91766fb391c4..6df7faf445f9 100644
---- a/src/sched_deadline/cyclicdeadline.8
-+++ b/src/sched_deadline/cyclicdeadline.8
-@@ -17,7 +17,7 @@ cyclicdeadline \- This program is used to test the deadline scheduler (SCHED_DEA
- .PP
- .SH SYNOPSIS
- .B cyclicdeadline
--.RI "[-ha] [-c cpulist] [-i interval] [-s step] [-t nr_threads] [-D duration]
-+.RI "[-ha] [-c CPUSET] [-D TIME] [-i INTV] [-s STEP] [-t NUM]"
- .PP
- .SH DESCRIPTION
- .B cyclicdeadline
-@@ -25,28 +25,28 @@ is a cyclictest style program for testing the deadline scheduler
- .PP
- .SH OPTIONS
- .TP
--.B \-h
--Show this help menu
--.TP
- .B \-a
- Use all CPUs
- .TP
--.B \-c cpulist
-+.B \-c CPUSET
- Comma / hypen separated list of CPUs to run deadline tasks on
- .TP
--.B \-i interval
-+.B \-D TIME
-+Specify a length for the test to run
-+Append 'm', 'h', or 'd' to specify minutes, hours, or days
-+.TP
-+.B \-h
-+Show this help menu
-+.TP
-+.B \-i INTV
- The shortest deadline for the tasks in us. (default 1000us)
- .TP
--.B \-s step
-+.B \-s STEP
- The amount to increase the deadline for each task in us. (default 500us)
- .TP
--.B \-t nr_threads
-+.B \-t NUM
- The number of threads to run as deadline (default 1)
--.TP
--.B \-D time
--Specify a length for the test to run
- .br
--Append 'm', 'h', or 'd' to specify minutes, hours, or days
- .SH AUTHOR
- cyclicdeadline was written by Steven Rostedt <rostedt@goodmis.org>
- .PP
-diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
-index a08e28e73c42..310880805553 100644
---- a/src/sched_deadline/cyclicdeadline.c
-+++ b/src/sched_deadline/cyclicdeadline.c
-@@ -630,26 +630,25 @@ static void teardown(void)
- 	destroy_cpuset(CPUSET_LOCAL, 1);
- }
+I'm pleased to announce the v5.9-rc3-rt3 patch set. 
+
+Changes since v5.9-rc3-rt2:
+
+  - Correct a compile issue in the i915 driver. Reported by Carsten Emde
+    and Daniel Wagner.
+
+  - Mark Marshall reported a crash on PowerPC. The reason for the crash
+    is a race in exec_mmap() vs a context switch and is not limited to
+    PowerPC. This race is present since v5.4.3-rt1 and is addressed in
+    two changes:
+
+    - commit 38cf307c1f201 ("mm: fix kthread_use_mm() vs TLB invalidate")
+      which is part of v5.9-rc1.
+
+    - patch "mm: fix exec activate_mm vs TLB shootdown and lazy tlb switching race"
+      by Nicholas Piggin which has been posted for review and is not yet
+      merged upstream.
+
+Known issues
+     - It has been pointed out that due to changes to the printk code the
+       internal buffer representation changed. This is only an issue if tools
+       like `crash' are used to extract the printk buffer from a kernel memory
+       image.
+
+The delta patch against v5.9-rc3-rt2 is appended below and can be found here:
  
--static void usage(char **argv)
-+static void usage(int error)
- {
--	char *arg = argv[0];
--	char *p = arg+strlen(arg);
--
--	while (p >= arg && *p != '/')
--		p--;
--	p++;
--
--	printf("usage: %s [options]\n"
--	       " -h - Show this help menu\n"
--	       " -a - Use all CPUs\n"
--	       " -c cpulist - Comma/hyphen separated list of CPUs to run deadline tasks on\n"
--	       " -i interval(us) - The shortest deadline for the tasks (default 1000us)\n"
--	       " -s step(us) - The amount to increase the deadline for each task (default 500us)\n"
--	       " -t threads - The number of threads to run as deadline (default 1)\n"
--	       " -D time - Specify a length for the test run\n"
--	       "           Append 'm', 'h', or 'd' to specify minutes, hours or days\n"
--	       "\n", p);
--	exit(-1);
-+	printf("cyclicdeadline V %1.2f\n", VERSION);
-+	printf("Usage:\n"
-+	       "cyclicdeadline <options>\n\n"
-+	       "-a                         Use all CPUs\n"
-+	       "-c CPUSET                  Comma/hyphen separated list of CPUs to run deadline\n"
-+	       "                           tasks on.\n"
-+	       "-D TIME                    Specify a length for the test run.\n"
-+	       "                           Append 'm', 'h', or 'd' to specify minutes, hours or\n"
-+	       "                           days\n"
-+	       "-h                         Show this help menu.\n"
-+	       "-i INTV                    The shortest deadline for the tasks in us\n"
-+	       "                           (default 1000us).\n"
-+	       "-s STEP                    The amount to increase the deadline for each task in us\n"
-+	       "                           (default 500us).\n"
-+	       "-t NUM                     The number of threads to run as deadline (default 1).\n"
-+	       );
-+	exit(error);
- }
+     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.9/incr/patch-5.9-rc3-rt2-rt3.patch.xz
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.9-rc3-rt3
+
+The RT patch against v5.9-rc3 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.9/older/patch-5.9-rc3-rt3.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.9/older/patches-5.9-rc3-rt3.tar.xz
+
+Sebastian
+
+diff --git a/arch/Kconfig b/arch/Kconfig
+index 222e553f3cf50..5c8e173dc7c2b 100644
+--- a/arch/Kconfig
++++ b/arch/Kconfig
+@@ -415,6 +415,13 @@ config MMU_GATHER_NO_GATHER
+ 	bool
+ 	depends on MMU_GATHER_TABLE_FREE
  
- static int fail;
-@@ -1057,8 +1056,10 @@ int main (int argc, char **argv)
- 			duration = parse_time_string(optarg);
++config ARCH_WANT_IRQS_OFF_ACTIVATE_MM
++	bool
++	help
++	  Temporary select until all architectures can be converted to have
++	  irqs disabled over activate_mm. Architectures that do IPI based TLB
++	  shootdowns should enable this.
++
+ config ARCH_HAVE_NMI_SAFE_CMPXCHG
+ 	bool
+ 
+diff --git a/drivers/gpu/drm/i915/display/intel_display_types.h b/drivers/gpu/drm/i915/display/intel_display_types.h
+index c5700f44422ec..e8f809161c75f 100644
+--- a/drivers/gpu/drm/i915/display/intel_display_types.h
++++ b/drivers/gpu/drm/i915/display/intel_display_types.h
+@@ -29,7 +29,6 @@
+ #include <linux/async.h>
+ #include <linux/i2c.h>
+ #include <linux/sched/clock.h>
+-#include <linux/local_lock.h>
+ 
+ #include <drm/drm_atomic.h>
+ #include <drm/drm_crtc.h>
+@@ -1150,7 +1149,6 @@ struct intel_crtc {
+ #ifdef CONFIG_DEBUG_FS
+ 	struct intel_pipe_crc pipe_crc;
+ #endif
+-	local_lock_t pipe_update_lock;
+ };
+ 
+ struct intel_plane {
+diff --git a/drivers/gpu/drm/i915/display/intel_sprite.c b/drivers/gpu/drm/i915/display/intel_sprite.c
+index 62b8248d2ee79..1b9d5e690a9f0 100644
+--- a/drivers/gpu/drm/i915/display/intel_sprite.c
++++ b/drivers/gpu/drm/i915/display/intel_sprite.c
+@@ -118,7 +118,8 @@ void intel_pipe_update_start(const struct intel_crtc_state *new_crtc_state)
+ 			"PSR idle timed out 0x%x, atomic update may fail\n",
+ 			psr_status);
+ 
+-	local_lock_irq(&crtc->pipe_update_lock);
++	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
++		local_irq_disable();
+ 
+ 	crtc->debug.min_vbl = min;
+ 	crtc->debug.max_vbl = max;
+@@ -143,11 +144,13 @@ void intel_pipe_update_start(const struct intel_crtc_state *new_crtc_state)
  			break;
- 		case 'h':
-+			usage(0);
-+			break;
- 		default:
--			usage(argv);
-+			usage(1);
  		}
+ 
+-		local_unlock_irq(&crtc->pipe_update_lock);
++		if (!IS_ENABLED(CONFIG_PREEMPT_RT))
++			local_irq_enable();
+ 
+ 		timeout = schedule_timeout(timeout);
+ 
+-		local_lock_irq(&crtc->pipe_update_lock);
++		if (!IS_ENABLED(CONFIG_PREEMPT_RT))
++			local_irq_disable();
  	}
  
--- 
-2.28.0
-
+ 	finish_wait(wq, &wait);
+@@ -180,7 +183,8 @@ void intel_pipe_update_start(const struct intel_crtc_state *new_crtc_state)
+ 	return;
+ 
+ irq_disable:
+-	local_lock_irq(&crtc->pipe_update_lock);
++	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
++		local_irq_disable();
+ }
+ 
+ /**
+@@ -218,7 +222,8 @@ void intel_pipe_update_end(struct intel_crtc_state *new_crtc_state)
+ 		new_crtc_state->uapi.event = NULL;
+ 	}
+ 
+-	local_unlock_irq(&crtc->pipe_update_lock);
++	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
++		local_irq_enable();
+ 
+ 	if (intel_vgpu_active(dev_priv))
+ 		return;
+diff --git a/fs/exec.c b/fs/exec.c
+index a91003e28eaae..d4fb18baf1fb1 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -1130,11 +1130,24 @@ static int exec_mmap(struct mm_struct *mm)
+ 	}
+ 
+ 	task_lock(tsk);
+-	active_mm = tsk->active_mm;
+ 	membarrier_exec_mmap(mm);
+-	tsk->mm = mm;
++
++	local_irq_disable();
++	active_mm = tsk->active_mm;
+ 	tsk->active_mm = mm;
++	tsk->mm = mm;
++	/*
++	 * This prevents preemption while active_mm is being loaded and
++	 * it and mm are being updated, which could cause problems for
++	 * lazy tlb mm refcounting when these are updated by context
++	 * switches. Not all architectures can handle irqs off over
++	 * activate_mm yet.
++	 */
++	if (!IS_ENABLED(CONFIG_ARCH_WANT_IRQS_OFF_ACTIVATE_MM))
++		local_irq_enable();
+ 	activate_mm(active_mm, mm);
++	if (IS_ENABLED(CONFIG_ARCH_WANT_IRQS_OFF_ACTIVATE_MM))
++		local_irq_enable();
+ 	tsk->mm->vmacache_seqnum = 0;
+ 	vmacache_flush(tsk);
+ 	task_unlock(tsk);
+diff --git a/localversion-rt b/localversion-rt
+index c3054d08a1129..1445cd65885cd 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt2
++-rt3
