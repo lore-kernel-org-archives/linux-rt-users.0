@@ -7,69 +7,68 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=BAYES_00,DKIM_INVALID,
 	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 82BD7C433E9
-	for <linux-rt-users@archiver.kernel.org>; Thu,  3 Sep 2020 16:37:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CCFFBC433E2
+	for <linux-rt-users@archiver.kernel.org>; Thu,  3 Sep 2020 16:38:19 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5F3522072A
-	for <linux-rt-users@archiver.kernel.org>; Thu,  3 Sep 2020 16:37:31 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A42B920578
+	for <linux-rt-users@archiver.kernel.org>; Thu,  3 Sep 2020 16:38:19 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="PJ9egl1g"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="G6/+YUVq"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728818AbgICQh3 (ORCPT
+        id S1728468AbgICQiT (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 3 Sep 2020 12:37:29 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55892 "EHLO
+        Thu, 3 Sep 2020 12:38:19 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56024 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728129AbgICQhZ (ORCPT
+        with ESMTP id S1728129AbgICQiR (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 3 Sep 2020 12:37:25 -0400
-Received: from mail-qk1-x730.google.com (mail-qk1-x730.google.com [IPv6:2607:f8b0:4864:20::730])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 08819C061244
-        for <linux-rt-users@vger.kernel.org>; Thu,  3 Sep 2020 09:37:25 -0700 (PDT)
-Received: by mail-qk1-x730.google.com with SMTP id o64so3614636qkb.10
-        for <linux-rt-users@vger.kernel.org>; Thu, 03 Sep 2020 09:37:24 -0700 (PDT)
+        Thu, 3 Sep 2020 12:38:17 -0400
+Received: from mail-qv1-xf29.google.com (mail-qv1-xf29.google.com [IPv6:2607:f8b0:4864:20::f29])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 195ECC061244
+        for <linux-rt-users@vger.kernel.org>; Thu,  3 Sep 2020 09:38:17 -0700 (PDT)
+Received: by mail-qv1-xf29.google.com with SMTP id x7so1617053qvi.5
+        for <linux-rt-users@vger.kernel.org>; Thu, 03 Sep 2020 09:38:17 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=qmCwmoKpF5sVfM/zRiHoTaBVfD96YnZ3qB0mLs473xM=;
-        b=PJ9egl1gqVOW+/fuG24usw3QWouwKkqh3+ZWMH8vZ7l/Beu42y6UE0r6SLSFhpk1zz
-         2kQ5IMM7TNFbq0T7Gq4BScIzPHDS6k/piqsy5QicBh42WpO1n3pLO0lFDZLmd1IMSKBq
-         jBV4padZKrpWLnTGWXovHeUp1pyntt54pciQydk3dcopQKTswNBa49ltXpl9qY7u4G+Z
-         70JtzzY+lwQlkohVwVA6D0phUcxW5AqVNU6QcwFKvqik9ewKeBU68h40uht7P57pzjQa
-         qbUdKtMwDLtER2hTXI2S499gmGxl+fqWYsmtr5b7v4b+8liw7sL8nPfd/PqwC9gixk8k
-         k6aQ==
+        bh=/4V23CakI6rWEzBxK9QxO+w0eAlRx45owF4ub/qA2so=;
+        b=G6/+YUVqbRkEYxEgDH2BHtizXkShNxyRV9+ciZnDqh3CK1pHj3xAHgiPTHTvz4VhMc
+         7smODz2AMhhP0/x5PTdDLEQ9Rdu7acWbrPJ24vQlPin/Xq8f/42WICGit7ME3JVy9/J0
+         uGEQrcpSXH1bl12nrX9D6/Rjq6sa0x08YFeDUI6LsufhYGh4q+LwgW4Zi4VBYUpa35dd
+         h9BKypT+1RxFgjF2+gHbPRM7Vj4mYvmYLjG7vnM3oaVIuuXXfZfEYX9HxFi0bwYdXeuf
+         YHnlqpdwt26Q/L4UO6BNwlo8IeVp2mX1m/slCJYjM5ftzZt+gOfbHuW1PUP7+5I+ztcp
+         CgwA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=qmCwmoKpF5sVfM/zRiHoTaBVfD96YnZ3qB0mLs473xM=;
-        b=if4i7kyRZzlzYLLoVdhuc8/hpT9BYiVBFdWyvTrw+/TB4LoBuNTyDUcI8XQ3+7t8Er
-         AYF5+t1vzveZpbKFSO6V0YKZB2mbDhBgdN3M10DlZqX4TupxRiDfA/vDvwOedAhCCyc6
-         SXgwlvD9ovCVjrCrBUcDxZ3MhcgLvu4fjG/QPepE+U9mcQCbtxcRybSH5F2rxihY2LC3
-         UkmjrYzWYagFWGSQrEd2c7E/l5a2VandeXYBup3ULtiBuH+uTa6CG55rOA/GUJhtxIoi
-         w+bYrmgph+H1MwpSkoVEsYwwS1rzv7YNy4axWBu+LXUinWpcu5trFhUQ38WIBtQEvbMK
-         C4Qw==
-X-Gm-Message-State: AOAM531tHFQoxYdp/vSCHmEwrtVf6urTf9Ydo8XVV0NL9u6P68jUjP94
-        WAgZWzXzhiCKpjlB3nzva14=
-X-Google-Smtp-Source: ABdhPJxiLfjMaYdBVboK0z1xfyS0C10VN1My2P8Us8kv0VeCd5WN8Eq1tVuR0COHV6G/LQtfHjtmww==
-X-Received: by 2002:a05:620a:200b:: with SMTP id c11mr3825320qka.92.1599151043797;
-        Thu, 03 Sep 2020 09:37:23 -0700 (PDT)
+        bh=/4V23CakI6rWEzBxK9QxO+w0eAlRx45owF4ub/qA2so=;
+        b=EdBNveowothzDNpNgycsKtd4ygRoE8t4n0cjPOHJRLr2iP3XOQJBDgHEymbBRRVFJa
+         9dVqx+7Nk0e3OFfsQxH4AVxG2V7c0ZqLkDXSnA7E7p/Fy/XgmMc1KPSYcBCqq7QZHyvl
+         Mb9kRTTcQ/1YXKynFI4OVcGciLzQ/29Bg5IGrVGn1zi7otYZDLp7aBfLAe8W5pqGJ7+V
+         BBQ9ICsG6BKiys1JuNsWie0cD8ztqbnHyOQb7Bt5he4+hO1YDWf+laqMYhExqD1izwa0
+         el/Q8q+cSkUnDYvMmBQ37uOyzO/bYTQWAWej5ZrjQo/fxGRHHySXJ16KpHP5tS/iCuv0
+         HM3w==
+X-Gm-Message-State: AOAM530PdcvAnPOxTqLYUTu6T62eOebOAtfCvvHQEvl10PA/zK09t1mr
+        YaUP9GXNwtbjaguzBWzjtqfXgbhdklw=
+X-Google-Smtp-Source: ABdhPJyRHU1pSE62Sh3QEHWSozBVmKdx5bnyEKuY+Hb+eLTpPHKd6aTyI/zwInCGtzh7tqN+b8n4CA==
+X-Received: by 2002:a05:6214:180d:: with SMTP id o13mr3767599qvw.87.1599151096083;
+        Thu, 03 Sep 2020 09:38:16 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-180.dsl.bell.ca. [184.147.140.180])
-        by smtp.gmail.com with ESMTPSA id d10sm2437790qkk.1.2020.09.03.09.37.22
+        by smtp.gmail.com with ESMTPSA id q35sm2381639qtd.75.2020.09.03.09.38.15
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 03 Sep 2020 09:37:23 -0700 (PDT)
-Date:   Thu, 3 Sep 2020 12:37:22 -0400 (EDT)
+        Thu, 03 Sep 2020 09:38:15 -0700 (PDT)
+Date:   Thu, 3 Sep 2020 12:38:14 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 X-X-Sender: jkacur@fionn
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [rt-tests 2/4] rt-utils: Move time defininitions to common
- header
-In-Reply-To: <20200901154657.30198-3-dwagner@suse.de>
-Message-ID: <alpine.LFD.2.23.451.2009031236550.4001@fionn>
-References: <20200901154657.30198-1-dwagner@suse.de> <20200901154657.30198-3-dwagner@suse.de>
+Subject: Re: [rt-tests 3/4] rt-utils: Move ARRAY_SIZE to common header
+In-Reply-To: <20200901154657.30198-4-dwagner@suse.de>
+Message-ID: <alpine.LFD.2.23.451.2009031237410.4001@fionn>
+References: <20200901154657.30198-1-dwagner@suse.de> <20200901154657.30198-4-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Sender: linux-rt-users-owner@vger.kernel.org
@@ -81,158 +80,54 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 On Tue, 1 Sep 2020, Daniel Wagner wrote:
 
-> Several tests define the same time values. Move them all to
-> common header to avoid code duplication.
+> Move the ARRAY_SIZE macro to a common header to avoid code
+> duplication.
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/backfire/sendme.c         | 3 ---
->  src/include/rt-utils.h        | 6 ++++++
->  src/pi_tests/pi_stress.c      | 9 ---------
->  src/pmqtest/pmqtest.c         | 4 ----
->  src/ptsematest/ptsematest.c   | 2 --
->  src/queuelat/queuelat.c       | 2 +-
->  src/signaltest/signaltest.c   | 3 ---
->  src/sigwaittest/sigwaittest.c | 2 --
->  src/svsematest/svsematest.c   | 2 --
->  9 files changed, 7 insertions(+), 26 deletions(-)
+>  src/cyclictest/cyclictest.c | 2 --
+>  src/include/rt-utils.h      | 2 ++
+>  src/signaltest/signaltest.c | 2 --
+>  3 files changed, 2 insertions(+), 4 deletions(-)
 > 
-> diff --git a/src/backfire/sendme.c b/src/backfire/sendme.c
-> index c1854d9660cb..d963723b1c93 100644
-> --- a/src/backfire/sendme.c
-> +++ b/src/backfire/sendme.c
-> @@ -38,9 +38,6 @@
->  #include <sys/time.h>
->  #include <sys/mman.h>
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index ae1d64a46b21..b41d42f13f24 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -49,8 +49,6 @@
+>  #define SCHED_NORMAL SCHED_OTHER
+>  #endif
 >  
-> -#define USEC_PER_SEC		1000000
-> -#define NSEC_PER_SEC		1000000000
+> -#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 > -
->  #define SIGTEST SIGHUP
+>  #define sigev_notify_thread_id _sigev_un._tid
 >  
->  enum {
+>  #ifdef __UCLIBC__
 > diff --git a/src/include/rt-utils.h b/src/include/rt-utils.h
-> index fdd790600d68..f7b98d9605a0 100644
+> index f7b98d9605a0..4ed1cbc53ece 100644
 > --- a/src/include/rt-utils.h
 > +++ b/src/include/rt-utils.h
-> @@ -30,8 +30,14 @@ int parse_time_string(char *val);
->  void enable_trace_mark(void);
->  void tracemark(char *fmt, ...) __attribute__((format(printf, 1, 2)));
+> @@ -8,6 +8,8 @@
+>  #define STR(x) _STR(x)
+>  #define MAX_PATH 256
 >  
-> +#define MSEC_PER_SEC		1000
->  #define USEC_PER_SEC		1000000
->  #define NSEC_PER_SEC		1000000000
-> +#define USEC_TO_NSEC(u)		((u) * 1000)
-> +#define USEC_TO_SEC(u)		(u) / USEC_PER_SEC)
-> +#define NSEC_TO_USEC(n)		((n) / 1000)
-> +#define SEC_TO_NSEC(s)		((s) * NSEC_PER_SEC)
-> +#define SEC_TO_USEC(s)		((s) * USEC_PER_SEC)
->  
->  static inline void tsnorm(struct timespec *ts)
->  {
-> diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
-> index 93d7044c9f22..e03cca25b933 100644
-> --- a/src/pi_tests/pi_stress.c
-> +++ b/src/pi_tests/pi_stress.c
-> @@ -50,15 +50,6 @@
->  
->  #include "error.h"
->  
-> -/* conversions */
-> -#define USEC_PER_SEC 	1000000
-> -#define NSEC_PER_SEC 	1000000000
-> -#define USEC_TO_NSEC(u) ((u) * 1000)
-> -#define USEC_TO_SEC(u) 	((u) / USEC_PER_SEC)
-> -#define NSEC_TO_USEC(n) ((n) / 1000)
-> -#define SEC_TO_NSEC(s) 	((s) * NSEC_PER_SEC)
-> -#define SEC_TO_USEC(s) 	((s) * USEC_PER_SEC)
-> -
->  /* test timeout */
->  #define TIMEOUT 2
->  
-> diff --git a/src/pmqtest/pmqtest.c b/src/pmqtest/pmqtest.c
-> index 3ce29252b9a2..5db8d348cdf8 100644
-> --- a/src/pmqtest/pmqtest.c
-> +++ b/src/pmqtest/pmqtest.c
-> @@ -27,13 +27,9 @@
->  
->  #include <pthread.h>
->  
-> -#define USEC_PER_SEC 1000000
-> -
->  #define SYNCMQ_NAME "/syncmsg%d"
->  #define TESTMQ_NAME "/testmsg%d"
->  #define MSG_SIZE 8
-> -#define MSEC_PER_SEC 1000
-> -#define NSEC_PER_SEC 1000000000
->  
->  char *syncmsg = "Syncing";
->  char *testmsg = "Testing";
-> diff --git a/src/ptsematest/ptsematest.c b/src/ptsematest/ptsematest.c
-> index 485c991ec173..de8ea2fe1b0c 100644
-> --- a/src/ptsematest/ptsematest.c
-> +++ b/src/ptsematest/ptsematest.c
-> @@ -25,8 +25,6 @@
->  
->  #include <pthread.h>
->  
-> -#define USEC_PER_SEC 1000000
-> -
->  enum {
->  	AFFINITY_UNSPECIFIED,
->  	AFFINITY_SPECIFIED,
-> diff --git a/src/queuelat/queuelat.c b/src/queuelat/queuelat.c
-> index 22b68a84d6ae..2b9118d8a8a5 100644
-> --- a/src/queuelat/queuelat.c
-> +++ b/src/queuelat/queuelat.c
-> @@ -17,7 +17,7 @@
->  #include <signal.h>
->  #include <time.h>
->  
-> -#define NSEC_PER_SEC 1000000000
-> +#include "rt-utils.h"
->  
->  /* Program parameters:
->   * max_queue_len: maximum latency allowed, in nanoseconds (int).
+> +#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+> +
+>  int check_privs(void);
+>  char *get_debugfileprefix(void);
+>  int mount_debugfs(char *);
 > diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
-> index 42a70facc6b3..49d42ff20b6f 100644
+> index 49d42ff20b6f..0bf075456ab6 100644
 > --- a/src/signaltest/signaltest.c
 > +++ b/src/signaltest/signaltest.c
-> @@ -34,9 +34,6 @@
+> @@ -32,8 +32,6 @@
+>  #include "error.h"
+>  #include "rt-utils.h"
 >  
->  #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
->  
-> -#define USEC_PER_SEC		1000000
-> -#define NSEC_PER_SEC		1000000000
+> -#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 > -
 >  /* Must be power of 2 ! */
 >  #define VALBUF_SIZE		16384
->  
-> diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
-> index 4678b68675b2..e7393f791519 100644
-> --- a/src/sigwaittest/sigwaittest.c
-> +++ b/src/sigwaittest/sigwaittest.c
-> @@ -43,8 +43,6 @@
->  
->  #include <pthread.h>
->  
-> -#define USEC_PER_SEC 1000000
-> -
->  enum {
->  	AFFINITY_UNSPECIFIED,
->  	AFFINITY_SPECIFIED,
-> diff --git a/src/svsematest/svsematest.c b/src/svsematest/svsematest.c
-> index 023a303fd7df..607b397bf39e 100644
-> --- a/src/svsematest/svsematest.c
-> +++ b/src/svsematest/svsematest.c
-> @@ -32,8 +32,6 @@
->  #include "rt-get_cpu.h"
->  #include "error.h"
->  
-> -#define USEC_PER_SEC 1000000
-> -
->  #define SEM_WAIT_FOR_RECEIVER 0
->  #define SEM_WAIT_FOR_SENDER 1
 >  
 > -- 
 > 2.28.0
