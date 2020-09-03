@@ -1,230 +1,251 @@
-Return-Path: <SRS0=5+M/=CL=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=hc4Q=CM=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.1 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham
+X-Spam-Status: No, score=-9.8 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BC9E6C433E7
-	for <linux-rt-users@archiver.kernel.org>; Wed,  2 Sep 2020 15:56:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 71320C433E9
+	for <linux-rt-users@archiver.kernel.org>; Thu,  3 Sep 2020 16:36:52 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 8D2DD207EA
-	for <linux-rt-users@archiver.kernel.org>; Wed,  2 Sep 2020 15:56:04 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 41EE92072A
+	for <linux-rt-users@archiver.kernel.org>; Thu,  3 Sep 2020 16:36:52 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="i/ve32Wu";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="eOasIUQu"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="EaCzu1wz"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726979AbgIBP4D (ORCPT
+        id S1728401AbgICQgu (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 2 Sep 2020 11:56:03 -0400
-Received: from Galois.linutronix.de ([193.142.43.55]:48176 "EHLO
-        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1726380AbgIBP4B (ORCPT
+        Thu, 3 Sep 2020 12:36:50 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55790 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1728129AbgICQgs (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 2 Sep 2020 11:56:01 -0400
-Date:   Wed, 2 Sep 2020 17:55:57 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1599062158;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=QbRUtG+xCqrG5ewBG4h2tqjAQOFvW6yIUDtQ1Zk6KEo=;
-        b=i/ve32Wug0QHbc0SmvAHR8yZTjuXKFgKaxvULb0jiUOPuu8EXW3JDmps15BQtJIGqpV5Q9
-        ptEp6MV8wG72LFEwbwvh6ln5K/Y6AE2wyAEnt+FRr/U0dqDqkAhc4+SKa+4Gqdel0JjmLI
-        CFhSeRq96iWl5scdSN4ApHkwjkql8pbYSKUX+duxXNeymHYnc3JJ5GDFRe/ZNQBCHfOnfx
-        7vWgEiYaqZSTASIdZenRjuIMLKFPR2kjj+Qy4tKxenJ1a2uJFBVnHuNDyXljge+r+k1zoS
-        TeBAnRYMKYn/DYiKLz5mwPKMR+7vCPJtDLfBmBm63f/4XEbJrjyJ3k034YgbFg==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1599062158;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=QbRUtG+xCqrG5ewBG4h2tqjAQOFvW6yIUDtQ1Zk6KEo=;
-        b=eOasIUQuWdBOcJRYzrZwGs9ha/d4h2nTopn9F3q97dkZQnqb0xCH8KGCP/pMqqflB5nBYh
-        9cI/5zei8xgJz5CA==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v5.9-rc3-rt3
-Message-ID: <20200902155557.h2wl2qpfn2rwsofw@linutronix.de>
+        Thu, 3 Sep 2020 12:36:48 -0400
+Received: from mail-qv1-xf2e.google.com (mail-qv1-xf2e.google.com [IPv6:2607:f8b0:4864:20::f2e])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 486EAC061244
+        for <linux-rt-users@vger.kernel.org>; Thu,  3 Sep 2020 09:36:46 -0700 (PDT)
+Received: by mail-qv1-xf2e.google.com with SMTP id x7so1614820qvi.5
+        for <linux-rt-users@vger.kernel.org>; Thu, 03 Sep 2020 09:36:46 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
+         :mime-version;
+        bh=V+z2MB5uaQB9eQ/LI4a9lDmnVWJ620KDz9+9ky//TFI=;
+        b=EaCzu1wzNo5scRXTam0uMxNuSHA8ngYmuLZLm5rPuree+6mKZlFqqDzUBlSQGQbSNn
+         mdgp9j8LI5gNsSA3JwTUvWuZLC57MlQkrWmTA87swvWzMgKiMQGxG5VHz/CWo1dwmpH0
+         8h11ASK4Mx075c61yApW8RnsBICu9RXS28eE+77FVBd2Wu1ZTffQUo+WVSMAfSU5iS7H
+         m4WfFUwuIkViyH5mH79aUwcRA1JCEvidTfI/TkEO4crDav1ZL0n7XHNZvqkttLo/WXCk
+         6GBgfiYgAFHnMz7uVY2apa9kwTo32QOuaEdSRwta0Fzs/7H9WI1HKKmMnt9tSYUQ9YYr
+         JSjA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
+         :message-id:references:mime-version;
+        bh=V+z2MB5uaQB9eQ/LI4a9lDmnVWJ620KDz9+9ky//TFI=;
+        b=dx+imtniLqOe1vkMRz60FBOjTMXdVRjVaW/t5yD1FVe8vNbgpmcnWuwzkoJCCHUC6k
+         bCFUhU5orMIV/0LkJOEOHblJ9iWUTeorEYXGIbUT/dEguTDfKgCxPj2Q3OL7miEv7zZU
+         CRZvZ7XNkxNNGbslrLknEsW7E71pQJjOUQYHMIGefKdIlXPf+6JYrWTaSvjyhu44frsu
+         jorNO9quzATQOzPJvRXxJEKiZzBRibxC1l+50ofr9i5W0P9iiakybDNDSKzJJdZXFdys
+         JYrILAC9jnOeQ5ZK1sdbTr9B7nHBtHjhED+RBKnhPRoCjJcZb0CJyoBcvqmy0pRgpVrZ
+         I3Tw==
+X-Gm-Message-State: AOAM530/Oqp3VPvMXcIUrbVkF9jADToco8vnXy9xEeFJbLQxeyxV57YN
+        +tMs5kVVhpLRZBzA3BKCObD3f1Xxt6g=
+X-Google-Smtp-Source: ABdhPJzejstkhTCFY8gMy5ANPqg2VGpNt1vD7PIXIpH4T5jNWGQu6Qx0pRDTCTs1X5Md1T9mmduUcQ==
+X-Received: by 2002:a05:6214:10c9:: with SMTP id r9mr2803828qvs.0.1599151004840;
+        Thu, 03 Sep 2020 09:36:44 -0700 (PDT)
+Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-180.dsl.bell.ca. [184.147.140.180])
+        by smtp.gmail.com with ESMTPSA id i7sm2519499qkb.131.2020.09.03.09.36.43
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 03 Sep 2020 09:36:44 -0700 (PDT)
+Date:   Thu, 3 Sep 2020 12:36:36 -0400 (EDT)
+From:   John Kacur <jkacur@redhat.com>
+X-X-Sender: jkacur@fionn
+To:     Daniel Wagner <dwagner@suse.de>
+cc:     Clark Williams <williams@redhat.com>,
+        linux-rt-users@vger.kernel.org
+Subject: Re: [rt-tests 1/4] rt-utils: Move timestamp calc helper to common
+ header
+In-Reply-To: <20200901154657.30198-2-dwagner@suse.de>
+Message-ID: <alpine.LFD.2.23.451.2009031236060.4001@fionn>
+References: <20200901154657.30198-1-dwagner@suse.de> <20200901154657.30198-2-dwagner@suse.de>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
+Content-Type: text/plain; charset=US-ASCII
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear RT folks!
 
-I'm pleased to announce the v5.9-rc3-rt3 patch set. 
 
-Changes since v5.9-rc3-rt2:
+On Tue, 1 Sep 2020, Daniel Wagner wrote:
 
-  - Correct a compile issue in the i915 driver. Reported by Carsten Emde
-    and Daniel Wagner.
-
-  - Mark Marshall reported a crash on PowerPC. The reason for the crash
-    is a race in exec_mmap() vs a context switch and is not limited to
-    PowerPC. This race is present since v5.4.3-rt1 and is addressed in
-    two changes:
-
-    - commit 38cf307c1f201 ("mm: fix kthread_use_mm() vs TLB invalidate")
-      which is part of v5.9-rc1.
-
-    - patch "mm: fix exec activate_mm vs TLB shootdown and lazy tlb switching race"
-      by Nicholas Piggin which has been posted for review and is not yet
-      merged upstream.
-
-Known issues
-     - It has been pointed out that due to changes to the printk code the
-       internal buffer representation changed. This is only an issue if tools
-       like `crash' are used to extract the printk buffer from a kernel memory
-       image.
-
-The delta patch against v5.9-rc3-rt2 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.9/incr/patch-5.9-rc3-rt2-rt3.patch.xz
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.9-rc3-rt3
-
-The RT patch against v5.9-rc3 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.9/older/patch-5.9-rc3-rt3.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.9/older/patches-5.9-rc3-rt3.tar.xz
-
-Sebastian
-
-diff --git a/arch/Kconfig b/arch/Kconfig
-index 222e553f3cf50..5c8e173dc7c2b 100644
---- a/arch/Kconfig
-+++ b/arch/Kconfig
-@@ -415,6 +415,13 @@ config MMU_GATHER_NO_GATHER
- 	bool
- 	depends on MMU_GATHER_TABLE_FREE
- 
-+config ARCH_WANT_IRQS_OFF_ACTIVATE_MM
-+	bool
-+	help
-+	  Temporary select until all architectures can be converted to have
-+	  irqs disabled over activate_mm. Architectures that do IPI based TLB
-+	  shootdowns should enable this.
-+
- config ARCH_HAVE_NMI_SAFE_CMPXCHG
- 	bool
- 
-diff --git a/drivers/gpu/drm/i915/display/intel_display_types.h b/drivers/gpu/drm/i915/display/intel_display_types.h
-index c5700f44422ec..e8f809161c75f 100644
---- a/drivers/gpu/drm/i915/display/intel_display_types.h
-+++ b/drivers/gpu/drm/i915/display/intel_display_types.h
-@@ -29,7 +29,6 @@
- #include <linux/async.h>
- #include <linux/i2c.h>
- #include <linux/sched/clock.h>
--#include <linux/local_lock.h>
- 
- #include <drm/drm_atomic.h>
- #include <drm/drm_crtc.h>
-@@ -1150,7 +1149,6 @@ struct intel_crtc {
- #ifdef CONFIG_DEBUG_FS
- 	struct intel_pipe_crc pipe_crc;
- #endif
--	local_lock_t pipe_update_lock;
- };
- 
- struct intel_plane {
-diff --git a/drivers/gpu/drm/i915/display/intel_sprite.c b/drivers/gpu/drm/i915/display/intel_sprite.c
-index 62b8248d2ee79..1b9d5e690a9f0 100644
---- a/drivers/gpu/drm/i915/display/intel_sprite.c
-+++ b/drivers/gpu/drm/i915/display/intel_sprite.c
-@@ -118,7 +118,8 @@ void intel_pipe_update_start(const struct intel_crtc_state *new_crtc_state)
- 			"PSR idle timed out 0x%x, atomic update may fail\n",
- 			psr_status);
- 
--	local_lock_irq(&crtc->pipe_update_lock);
-+	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
-+		local_irq_disable();
- 
- 	crtc->debug.min_vbl = min;
- 	crtc->debug.max_vbl = max;
-@@ -143,11 +144,13 @@ void intel_pipe_update_start(const struct intel_crtc_state *new_crtc_state)
- 			break;
- 		}
- 
--		local_unlock_irq(&crtc->pipe_update_lock);
-+		if (!IS_ENABLED(CONFIG_PREEMPT_RT))
-+			local_irq_enable();
- 
- 		timeout = schedule_timeout(timeout);
- 
--		local_lock_irq(&crtc->pipe_update_lock);
-+		if (!IS_ENABLED(CONFIG_PREEMPT_RT))
-+			local_irq_disable();
- 	}
- 
- 	finish_wait(wq, &wait);
-@@ -180,7 +183,8 @@ void intel_pipe_update_start(const struct intel_crtc_state *new_crtc_state)
- 	return;
- 
- irq_disable:
--	local_lock_irq(&crtc->pipe_update_lock);
-+	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
-+		local_irq_disable();
- }
- 
- /**
-@@ -218,7 +222,8 @@ void intel_pipe_update_end(struct intel_crtc_state *new_crtc_state)
- 		new_crtc_state->uapi.event = NULL;
- 	}
- 
--	local_unlock_irq(&crtc->pipe_update_lock);
-+	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
-+		local_irq_enable();
- 
- 	if (intel_vgpu_active(dev_priv))
- 		return;
-diff --git a/fs/exec.c b/fs/exec.c
-index a91003e28eaae..d4fb18baf1fb1 100644
---- a/fs/exec.c
-+++ b/fs/exec.c
-@@ -1130,11 +1130,24 @@ static int exec_mmap(struct mm_struct *mm)
- 	}
- 
- 	task_lock(tsk);
--	active_mm = tsk->active_mm;
- 	membarrier_exec_mmap(mm);
--	tsk->mm = mm;
-+
-+	local_irq_disable();
-+	active_mm = tsk->active_mm;
- 	tsk->active_mm = mm;
-+	tsk->mm = mm;
-+	/*
-+	 * This prevents preemption while active_mm is being loaded and
-+	 * it and mm are being updated, which could cause problems for
-+	 * lazy tlb mm refcounting when these are updated by context
-+	 * switches. Not all architectures can handle irqs off over
-+	 * activate_mm yet.
-+	 */
-+	if (!IS_ENABLED(CONFIG_ARCH_WANT_IRQS_OFF_ACTIVATE_MM))
-+		local_irq_enable();
- 	activate_mm(active_mm, mm);
-+	if (IS_ENABLED(CONFIG_ARCH_WANT_IRQS_OFF_ACTIVATE_MM))
-+		local_irq_enable();
- 	tsk->mm->vmacache_seqnum = 0;
- 	vmacache_flush(tsk);
- 	task_unlock(tsk);
-diff --git a/localversion-rt b/localversion-rt
-index c3054d08a1129..1445cd65885cd 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt2
-+-rt3
+> Several test implement the same helpers. Move it to a
+> common header to avoid code duplication.
+> 
+> Signed-off-by: Daniel Wagner <dwagner@suse.de>
+> ---
+>  src/cyclictest/cyclictest.c | 40 -------------------------------------
+>  src/include/rt-utils.h      | 40 +++++++++++++++++++++++++++++++++++++
+>  src/pi_tests/pi_stress.c    |  8 --------
+>  src/signaltest/signaltest.c | 15 --------------
+>  4 files changed, 40 insertions(+), 63 deletions(-)
+> 
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index dd418939a0c2..ae1d64a46b21 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -86,9 +86,6 @@ extern int clock_nanosleep(clockid_t __clock_id, int __flags,
+>  			   struct timespec *__rem);
+>  #endif	/* __UCLIBC__ */
+>  
+> -#define USEC_PER_SEC		1000000
+> -#define NSEC_PER_SEC		1000000000
+> -
+>  #define HIST_MAX		1000000
+>  
+>  #define MODE_CYCLIC		0
+> @@ -291,43 +288,6 @@ enum {
+>  static int trace_fd     = -1;
+>  static int tracemark_fd = -1;
+>  
+> -static inline void tsnorm(struct timespec *ts)
+> -{
+> -	while (ts->tv_nsec >= NSEC_PER_SEC) {
+> -		ts->tv_nsec -= NSEC_PER_SEC;
+> -		ts->tv_sec++;
+> -	}
+> -}
+> -
+> -static inline int tsgreater(struct timespec *a, struct timespec *b)
+> -{
+> -	return ((a->tv_sec > b->tv_sec) ||
+> -		(a->tv_sec == b->tv_sec && a->tv_nsec > b->tv_nsec));
+> -}
+> -
+> -static inline int64_t calcdiff(struct timespec t1, struct timespec t2)
+> -{
+> -	int64_t diff = USEC_PER_SEC * (long long)((int) t1.tv_sec - (int) t2.tv_sec);
+> -	diff += ((int) t1.tv_nsec - (int) t2.tv_nsec) / 1000;
+> -	return diff;
+> -}
+> -
+> -static inline int64_t calcdiff_ns(struct timespec t1, struct timespec t2)
+> -{
+> -	int64_t diff;
+> -	diff = NSEC_PER_SEC * (int64_t)((int) t1.tv_sec - (int) t2.tv_sec);
+> -	diff += ((int) t1.tv_nsec - (int) t2.tv_nsec);
+> -	return diff;
+> -}
+> -
+> -static inline int64_t calctime(struct timespec t)
+> -{
+> -	int64_t time;
+> -	time = USEC_PER_SEC * t.tv_sec;
+> -	time += ((int) t.tv_nsec) / 1000;
+> -	return time;
+> -}
+> -
+>  /*
+>   * Raise the soft priority limit up to prio, if that is less than or equal
+>   * to the hard limit
+> diff --git a/src/include/rt-utils.h b/src/include/rt-utils.h
+> index 51489b408e6c..fdd790600d68 100644
+> --- a/src/include/rt-utils.h
+> +++ b/src/include/rt-utils.h
+> @@ -30,4 +30,44 @@ int parse_time_string(char *val);
+>  void enable_trace_mark(void);
+>  void tracemark(char *fmt, ...) __attribute__((format(printf, 1, 2)));
+>  
+> +#define USEC_PER_SEC		1000000
+> +#define NSEC_PER_SEC		1000000000
+> +
+> +static inline void tsnorm(struct timespec *ts)
+> +{
+> +	while (ts->tv_nsec >= NSEC_PER_SEC) {
+> +		ts->tv_nsec -= NSEC_PER_SEC;
+> +		ts->tv_sec++;
+> +	}
+> +}
+> +
+> +static inline int tsgreater(struct timespec *a, struct timespec *b)
+> +{
+> +	return ((a->tv_sec > b->tv_sec) ||
+> +		(a->tv_sec == b->tv_sec && a->tv_nsec > b->tv_nsec));
+> +}
+> +
+> +static inline int64_t calcdiff(struct timespec t1, struct timespec t2)
+> +{
+> +	int64_t diff = USEC_PER_SEC * (long long)((int) t1.tv_sec - (int) t2.tv_sec);
+> +	diff += ((int) t1.tv_nsec - (int) t2.tv_nsec) / 1000;
+> +	return diff;
+> +}
+> +
+> +static inline int64_t calcdiff_ns(struct timespec t1, struct timespec t2)
+> +{
+> +	int64_t diff;
+> +	diff = NSEC_PER_SEC * (int64_t)((int) t1.tv_sec - (int) t2.tv_sec);
+> +	diff += ((int) t1.tv_nsec - (int) t2.tv_nsec);
+> +	return diff;
+> +}
+> +
+> +static inline int64_t calctime(struct timespec t)
+> +{
+> +	int64_t time;
+> +	time = USEC_PER_SEC * t.tv_sec;
+> +	time += ((int) t.tv_nsec) / 1000;
+> +	return time;
+> +}
+> +
+>  #endif	/* __RT_UTILS.H */
+> diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
+> index eba21d7727bc..93d7044c9f22 100644
+> --- a/src/pi_tests/pi_stress.c
+> +++ b/src/pi_tests/pi_stress.c
+> @@ -519,14 +519,6 @@ int pending_interrupt(void)
+>  	return interrupted = sigismember(&pending, SIGINT);
+>  }
+>  
+> -static inline void tsnorm(struct timespec *ts)
+> -{
+> -	while (ts->tv_nsec >= NSEC_PER_SEC) {
+> -		ts->tv_nsec -= NSEC_PER_SEC;
+> -		ts->tv_sec++;
+> -	}
+> -}
+> -
+>  /*
+>   * this routine serves two purposes:
+>   *   1. report progress
+> diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
+> index b5c86c5635cb..42a70facc6b3 100644
+> --- a/src/signaltest/signaltest.c
+> +++ b/src/signaltest/signaltest.c
+> @@ -69,21 +69,6 @@ static int shutdown;
+>  static int tracelimit = 0;
+>  static int oldtrace = 0;
+>  
+> -static inline void tsnorm(struct timespec *ts)
+> -{
+> -	while (ts->tv_nsec >= NSEC_PER_SEC) {
+> -		ts->tv_nsec -= NSEC_PER_SEC;
+> -		ts->tv_sec++;
+> -	}
+> -}
+> -
+> -static inline long calcdiff(struct timespec t1, struct timespec t2)
+> -{
+> -	long diff;
+> -	diff = USEC_PER_SEC * ((int) t1.tv_sec - (int) t2.tv_sec);
+> -	diff += ((int) t1.tv_nsec - (int) t2.tv_nsec) / 1000;
+> -	return diff;
+> -}
+>  
+>  /*
+>   * signal thread
+> -- 
+> 2.28.0
+> 
+> 
+Signed-off-by: John Kacur <jkacur@redhat.com>
