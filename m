@@ -7,69 +7,69 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=BAYES_00,DKIM_INVALID,
 	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 71320C433E9
-	for <linux-rt-users@archiver.kernel.org>; Thu,  3 Sep 2020 16:36:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 82BD7C433E9
+	for <linux-rt-users@archiver.kernel.org>; Thu,  3 Sep 2020 16:37:31 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 41EE92072A
-	for <linux-rt-users@archiver.kernel.org>; Thu,  3 Sep 2020 16:36:52 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 5F3522072A
+	for <linux-rt-users@archiver.kernel.org>; Thu,  3 Sep 2020 16:37:31 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="EaCzu1wz"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="PJ9egl1g"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728401AbgICQgu (ORCPT
+        id S1728818AbgICQh3 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 3 Sep 2020 12:36:50 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55790 "EHLO
+        Thu, 3 Sep 2020 12:37:29 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55892 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728129AbgICQgs (ORCPT
+        with ESMTP id S1728129AbgICQhZ (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 3 Sep 2020 12:36:48 -0400
-Received: from mail-qv1-xf2e.google.com (mail-qv1-xf2e.google.com [IPv6:2607:f8b0:4864:20::f2e])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 486EAC061244
-        for <linux-rt-users@vger.kernel.org>; Thu,  3 Sep 2020 09:36:46 -0700 (PDT)
-Received: by mail-qv1-xf2e.google.com with SMTP id x7so1614820qvi.5
-        for <linux-rt-users@vger.kernel.org>; Thu, 03 Sep 2020 09:36:46 -0700 (PDT)
+        Thu, 3 Sep 2020 12:37:25 -0400
+Received: from mail-qk1-x730.google.com (mail-qk1-x730.google.com [IPv6:2607:f8b0:4864:20::730])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 08819C061244
+        for <linux-rt-users@vger.kernel.org>; Thu,  3 Sep 2020 09:37:25 -0700 (PDT)
+Received: by mail-qk1-x730.google.com with SMTP id o64so3614636qkb.10
+        for <linux-rt-users@vger.kernel.org>; Thu, 03 Sep 2020 09:37:24 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20161025;
         h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
          :mime-version;
-        bh=V+z2MB5uaQB9eQ/LI4a9lDmnVWJ620KDz9+9ky//TFI=;
-        b=EaCzu1wzNo5scRXTam0uMxNuSHA8ngYmuLZLm5rPuree+6mKZlFqqDzUBlSQGQbSNn
-         mdgp9j8LI5gNsSA3JwTUvWuZLC57MlQkrWmTA87swvWzMgKiMQGxG5VHz/CWo1dwmpH0
-         8h11ASK4Mx075c61yApW8RnsBICu9RXS28eE+77FVBd2Wu1ZTffQUo+WVSMAfSU5iS7H
-         m4WfFUwuIkViyH5mH79aUwcRA1JCEvidTfI/TkEO4crDav1ZL0n7XHNZvqkttLo/WXCk
-         6GBgfiYgAFHnMz7uVY2apa9kwTo32QOuaEdSRwta0Fzs/7H9WI1HKKmMnt9tSYUQ9YYr
-         JSjA==
+        bh=qmCwmoKpF5sVfM/zRiHoTaBVfD96YnZ3qB0mLs473xM=;
+        b=PJ9egl1gqVOW+/fuG24usw3QWouwKkqh3+ZWMH8vZ7l/Beu42y6UE0r6SLSFhpk1zz
+         2kQ5IMM7TNFbq0T7Gq4BScIzPHDS6k/piqsy5QicBh42WpO1n3pLO0lFDZLmd1IMSKBq
+         jBV4padZKrpWLnTGWXovHeUp1pyntt54pciQydk3dcopQKTswNBa49ltXpl9qY7u4G+Z
+         70JtzzY+lwQlkohVwVA6D0phUcxW5AqVNU6QcwFKvqik9ewKeBU68h40uht7P57pzjQa
+         qbUdKtMwDLtER2hTXI2S499gmGxl+fqWYsmtr5b7v4b+8liw7sL8nPfd/PqwC9gixk8k
+         k6aQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
         h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
          :message-id:references:mime-version;
-        bh=V+z2MB5uaQB9eQ/LI4a9lDmnVWJ620KDz9+9ky//TFI=;
-        b=dx+imtniLqOe1vkMRz60FBOjTMXdVRjVaW/t5yD1FVe8vNbgpmcnWuwzkoJCCHUC6k
-         bCFUhU5orMIV/0LkJOEOHblJ9iWUTeorEYXGIbUT/dEguTDfKgCxPj2Q3OL7miEv7zZU
-         CRZvZ7XNkxNNGbslrLknEsW7E71pQJjOUQYHMIGefKdIlXPf+6JYrWTaSvjyhu44frsu
-         jorNO9quzATQOzPJvRXxJEKiZzBRibxC1l+50ofr9i5W0P9iiakybDNDSKzJJdZXFdys
-         JYrILAC9jnOeQ5ZK1sdbTr9B7nHBtHjhED+RBKnhPRoCjJcZb0CJyoBcvqmy0pRgpVrZ
-         I3Tw==
-X-Gm-Message-State: AOAM530/Oqp3VPvMXcIUrbVkF9jADToco8vnXy9xEeFJbLQxeyxV57YN
-        +tMs5kVVhpLRZBzA3BKCObD3f1Xxt6g=
-X-Google-Smtp-Source: ABdhPJzejstkhTCFY8gMy5ANPqg2VGpNt1vD7PIXIpH4T5jNWGQu6Qx0pRDTCTs1X5Md1T9mmduUcQ==
-X-Received: by 2002:a05:6214:10c9:: with SMTP id r9mr2803828qvs.0.1599151004840;
-        Thu, 03 Sep 2020 09:36:44 -0700 (PDT)
+        bh=qmCwmoKpF5sVfM/zRiHoTaBVfD96YnZ3qB0mLs473xM=;
+        b=if4i7kyRZzlzYLLoVdhuc8/hpT9BYiVBFdWyvTrw+/TB4LoBuNTyDUcI8XQ3+7t8Er
+         AYF5+t1vzveZpbKFSO6V0YKZB2mbDhBgdN3M10DlZqX4TupxRiDfA/vDvwOedAhCCyc6
+         SXgwlvD9ovCVjrCrBUcDxZ3MhcgLvu4fjG/QPepE+U9mcQCbtxcRybSH5F2rxihY2LC3
+         UkmjrYzWYagFWGSQrEd2c7E/l5a2VandeXYBup3ULtiBuH+uTa6CG55rOA/GUJhtxIoi
+         w+bYrmgph+H1MwpSkoVEsYwwS1rzv7YNy4axWBu+LXUinWpcu5trFhUQ38WIBtQEvbMK
+         C4Qw==
+X-Gm-Message-State: AOAM531tHFQoxYdp/vSCHmEwrtVf6urTf9Ydo8XVV0NL9u6P68jUjP94
+        WAgZWzXzhiCKpjlB3nzva14=
+X-Google-Smtp-Source: ABdhPJxiLfjMaYdBVboK0z1xfyS0C10VN1My2P8Us8kv0VeCd5WN8Eq1tVuR0COHV6G/LQtfHjtmww==
+X-Received: by 2002:a05:620a:200b:: with SMTP id c11mr3825320qka.92.1599151043797;
+        Thu, 03 Sep 2020 09:37:23 -0700 (PDT)
 Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-180.dsl.bell.ca. [184.147.140.180])
-        by smtp.gmail.com with ESMTPSA id i7sm2519499qkb.131.2020.09.03.09.36.43
+        by smtp.gmail.com with ESMTPSA id d10sm2437790qkk.1.2020.09.03.09.37.22
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 03 Sep 2020 09:36:44 -0700 (PDT)
-Date:   Thu, 3 Sep 2020 12:36:36 -0400 (EDT)
+        Thu, 03 Sep 2020 09:37:23 -0700 (PDT)
+Date:   Thu, 3 Sep 2020 12:37:22 -0400 (EDT)
 From:   John Kacur <jkacur@redhat.com>
 X-X-Sender: jkacur@fionn
 To:     Daniel Wagner <dwagner@suse.de>
 cc:     Clark Williams <williams@redhat.com>,
         linux-rt-users@vger.kernel.org
-Subject: Re: [rt-tests 1/4] rt-utils: Move timestamp calc helper to common
+Subject: Re: [rt-tests 2/4] rt-utils: Move time defininitions to common
  header
-In-Reply-To: <20200901154657.30198-2-dwagner@suse.de>
-Message-ID: <alpine.LFD.2.23.451.2009031236060.4001@fionn>
-References: <20200901154657.30198-1-dwagner@suse.de> <20200901154657.30198-2-dwagner@suse.de>
+In-Reply-To: <20200901154657.30198-3-dwagner@suse.de>
+Message-ID: <alpine.LFD.2.23.451.2009031236550.4001@fionn>
+References: <20200901154657.30198-1-dwagner@suse.de> <20200901154657.30198-3-dwagner@suse.de>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Sender: linux-rt-users-owner@vger.kernel.org
@@ -81,169 +81,159 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 On Tue, 1 Sep 2020, Daniel Wagner wrote:
 
-> Several test implement the same helpers. Move it to a
+> Several tests define the same time values. Move them all to
 > common header to avoid code duplication.
 > 
 > Signed-off-by: Daniel Wagner <dwagner@suse.de>
 > ---
->  src/cyclictest/cyclictest.c | 40 -------------------------------------
->  src/include/rt-utils.h      | 40 +++++++++++++++++++++++++++++++++++++
->  src/pi_tests/pi_stress.c    |  8 --------
->  src/signaltest/signaltest.c | 15 --------------
->  4 files changed, 40 insertions(+), 63 deletions(-)
+>  src/backfire/sendme.c         | 3 ---
+>  src/include/rt-utils.h        | 6 ++++++
+>  src/pi_tests/pi_stress.c      | 9 ---------
+>  src/pmqtest/pmqtest.c         | 4 ----
+>  src/ptsematest/ptsematest.c   | 2 --
+>  src/queuelat/queuelat.c       | 2 +-
+>  src/signaltest/signaltest.c   | 3 ---
+>  src/sigwaittest/sigwaittest.c | 2 --
+>  src/svsematest/svsematest.c   | 2 --
+>  9 files changed, 7 insertions(+), 26 deletions(-)
 > 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index dd418939a0c2..ae1d64a46b21 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -86,9 +86,6 @@ extern int clock_nanosleep(clockid_t __clock_id, int __flags,
->  			   struct timespec *__rem);
->  #endif	/* __UCLIBC__ */
+> diff --git a/src/backfire/sendme.c b/src/backfire/sendme.c
+> index c1854d9660cb..d963723b1c93 100644
+> --- a/src/backfire/sendme.c
+> +++ b/src/backfire/sendme.c
+> @@ -38,9 +38,6 @@
+>  #include <sys/time.h>
+>  #include <sys/mman.h>
 >  
 > -#define USEC_PER_SEC		1000000
 > -#define NSEC_PER_SEC		1000000000
 > -
->  #define HIST_MAX		1000000
+>  #define SIGTEST SIGHUP
 >  
->  #define MODE_CYCLIC		0
-> @@ -291,43 +288,6 @@ enum {
->  static int trace_fd     = -1;
->  static int tracemark_fd = -1;
->  
-> -static inline void tsnorm(struct timespec *ts)
-> -{
-> -	while (ts->tv_nsec >= NSEC_PER_SEC) {
-> -		ts->tv_nsec -= NSEC_PER_SEC;
-> -		ts->tv_sec++;
-> -	}
-> -}
-> -
-> -static inline int tsgreater(struct timespec *a, struct timespec *b)
-> -{
-> -	return ((a->tv_sec > b->tv_sec) ||
-> -		(a->tv_sec == b->tv_sec && a->tv_nsec > b->tv_nsec));
-> -}
-> -
-> -static inline int64_t calcdiff(struct timespec t1, struct timespec t2)
-> -{
-> -	int64_t diff = USEC_PER_SEC * (long long)((int) t1.tv_sec - (int) t2.tv_sec);
-> -	diff += ((int) t1.tv_nsec - (int) t2.tv_nsec) / 1000;
-> -	return diff;
-> -}
-> -
-> -static inline int64_t calcdiff_ns(struct timespec t1, struct timespec t2)
-> -{
-> -	int64_t diff;
-> -	diff = NSEC_PER_SEC * (int64_t)((int) t1.tv_sec - (int) t2.tv_sec);
-> -	diff += ((int) t1.tv_nsec - (int) t2.tv_nsec);
-> -	return diff;
-> -}
-> -
-> -static inline int64_t calctime(struct timespec t)
-> -{
-> -	int64_t time;
-> -	time = USEC_PER_SEC * t.tv_sec;
-> -	time += ((int) t.tv_nsec) / 1000;
-> -	return time;
-> -}
-> -
->  /*
->   * Raise the soft priority limit up to prio, if that is less than or equal
->   * to the hard limit
+>  enum {
 > diff --git a/src/include/rt-utils.h b/src/include/rt-utils.h
-> index 51489b408e6c..fdd790600d68 100644
+> index fdd790600d68..f7b98d9605a0 100644
 > --- a/src/include/rt-utils.h
 > +++ b/src/include/rt-utils.h
-> @@ -30,4 +30,44 @@ int parse_time_string(char *val);
+> @@ -30,8 +30,14 @@ int parse_time_string(char *val);
 >  void enable_trace_mark(void);
 >  void tracemark(char *fmt, ...) __attribute__((format(printf, 1, 2)));
 >  
-> +#define USEC_PER_SEC		1000000
-> +#define NSEC_PER_SEC		1000000000
-> +
-> +static inline void tsnorm(struct timespec *ts)
-> +{
-> +	while (ts->tv_nsec >= NSEC_PER_SEC) {
-> +		ts->tv_nsec -= NSEC_PER_SEC;
-> +		ts->tv_sec++;
-> +	}
-> +}
-> +
-> +static inline int tsgreater(struct timespec *a, struct timespec *b)
-> +{
-> +	return ((a->tv_sec > b->tv_sec) ||
-> +		(a->tv_sec == b->tv_sec && a->tv_nsec > b->tv_nsec));
-> +}
-> +
-> +static inline int64_t calcdiff(struct timespec t1, struct timespec t2)
-> +{
-> +	int64_t diff = USEC_PER_SEC * (long long)((int) t1.tv_sec - (int) t2.tv_sec);
-> +	diff += ((int) t1.tv_nsec - (int) t2.tv_nsec) / 1000;
-> +	return diff;
-> +}
-> +
-> +static inline int64_t calcdiff_ns(struct timespec t1, struct timespec t2)
-> +{
-> +	int64_t diff;
-> +	diff = NSEC_PER_SEC * (int64_t)((int) t1.tv_sec - (int) t2.tv_sec);
-> +	diff += ((int) t1.tv_nsec - (int) t2.tv_nsec);
-> +	return diff;
-> +}
-> +
-> +static inline int64_t calctime(struct timespec t)
-> +{
-> +	int64_t time;
-> +	time = USEC_PER_SEC * t.tv_sec;
-> +	time += ((int) t.tv_nsec) / 1000;
-> +	return time;
-> +}
-> +
->  #endif	/* __RT_UTILS.H */
+> +#define MSEC_PER_SEC		1000
+>  #define USEC_PER_SEC		1000000
+>  #define NSEC_PER_SEC		1000000000
+> +#define USEC_TO_NSEC(u)		((u) * 1000)
+> +#define USEC_TO_SEC(u)		(u) / USEC_PER_SEC)
+> +#define NSEC_TO_USEC(n)		((n) / 1000)
+> +#define SEC_TO_NSEC(s)		((s) * NSEC_PER_SEC)
+> +#define SEC_TO_USEC(s)		((s) * USEC_PER_SEC)
+>  
+>  static inline void tsnorm(struct timespec *ts)
+>  {
 > diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
-> index eba21d7727bc..93d7044c9f22 100644
+> index 93d7044c9f22..e03cca25b933 100644
 > --- a/src/pi_tests/pi_stress.c
 > +++ b/src/pi_tests/pi_stress.c
-> @@ -519,14 +519,6 @@ int pending_interrupt(void)
->  	return interrupted = sigismember(&pending, SIGINT);
->  }
+> @@ -50,15 +50,6 @@
 >  
-> -static inline void tsnorm(struct timespec *ts)
-> -{
-> -	while (ts->tv_nsec >= NSEC_PER_SEC) {
-> -		ts->tv_nsec -= NSEC_PER_SEC;
-> -		ts->tv_sec++;
-> -	}
-> -}
+>  #include "error.h"
+>  
+> -/* conversions */
+> -#define USEC_PER_SEC 	1000000
+> -#define NSEC_PER_SEC 	1000000000
+> -#define USEC_TO_NSEC(u) ((u) * 1000)
+> -#define USEC_TO_SEC(u) 	((u) / USEC_PER_SEC)
+> -#define NSEC_TO_USEC(n) ((n) / 1000)
+> -#define SEC_TO_NSEC(s) 	((s) * NSEC_PER_SEC)
+> -#define SEC_TO_USEC(s) 	((s) * USEC_PER_SEC)
 > -
->  /*
->   * this routine serves two purposes:
->   *   1. report progress
+>  /* test timeout */
+>  #define TIMEOUT 2
+>  
+> diff --git a/src/pmqtest/pmqtest.c b/src/pmqtest/pmqtest.c
+> index 3ce29252b9a2..5db8d348cdf8 100644
+> --- a/src/pmqtest/pmqtest.c
+> +++ b/src/pmqtest/pmqtest.c
+> @@ -27,13 +27,9 @@
+>  
+>  #include <pthread.h>
+>  
+> -#define USEC_PER_SEC 1000000
+> -
+>  #define SYNCMQ_NAME "/syncmsg%d"
+>  #define TESTMQ_NAME "/testmsg%d"
+>  #define MSG_SIZE 8
+> -#define MSEC_PER_SEC 1000
+> -#define NSEC_PER_SEC 1000000000
+>  
+>  char *syncmsg = "Syncing";
+>  char *testmsg = "Testing";
+> diff --git a/src/ptsematest/ptsematest.c b/src/ptsematest/ptsematest.c
+> index 485c991ec173..de8ea2fe1b0c 100644
+> --- a/src/ptsematest/ptsematest.c
+> +++ b/src/ptsematest/ptsematest.c
+> @@ -25,8 +25,6 @@
+>  
+>  #include <pthread.h>
+>  
+> -#define USEC_PER_SEC 1000000
+> -
+>  enum {
+>  	AFFINITY_UNSPECIFIED,
+>  	AFFINITY_SPECIFIED,
+> diff --git a/src/queuelat/queuelat.c b/src/queuelat/queuelat.c
+> index 22b68a84d6ae..2b9118d8a8a5 100644
+> --- a/src/queuelat/queuelat.c
+> +++ b/src/queuelat/queuelat.c
+> @@ -17,7 +17,7 @@
+>  #include <signal.h>
+>  #include <time.h>
+>  
+> -#define NSEC_PER_SEC 1000000000
+> +#include "rt-utils.h"
+>  
+>  /* Program parameters:
+>   * max_queue_len: maximum latency allowed, in nanoseconds (int).
 > diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
-> index b5c86c5635cb..42a70facc6b3 100644
+> index 42a70facc6b3..49d42ff20b6f 100644
 > --- a/src/signaltest/signaltest.c
 > +++ b/src/signaltest/signaltest.c
-> @@ -69,21 +69,6 @@ static int shutdown;
->  static int tracelimit = 0;
->  static int oldtrace = 0;
+> @@ -34,9 +34,6 @@
 >  
-> -static inline void tsnorm(struct timespec *ts)
-> -{
-> -	while (ts->tv_nsec >= NSEC_PER_SEC) {
-> -		ts->tv_nsec -= NSEC_PER_SEC;
-> -		ts->tv_sec++;
-> -	}
-> -}
+>  #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+>  
+> -#define USEC_PER_SEC		1000000
+> -#define NSEC_PER_SEC		1000000000
 > -
-> -static inline long calcdiff(struct timespec t1, struct timespec t2)
-> -{
-> -	long diff;
-> -	diff = USEC_PER_SEC * ((int) t1.tv_sec - (int) t2.tv_sec);
-> -	diff += ((int) t1.tv_nsec - (int) t2.tv_nsec) / 1000;
-> -	return diff;
-> -}
+>  /* Must be power of 2 ! */
+>  #define VALBUF_SIZE		16384
 >  
->  /*
->   * signal thread
+> diff --git a/src/sigwaittest/sigwaittest.c b/src/sigwaittest/sigwaittest.c
+> index 4678b68675b2..e7393f791519 100644
+> --- a/src/sigwaittest/sigwaittest.c
+> +++ b/src/sigwaittest/sigwaittest.c
+> @@ -43,8 +43,6 @@
+>  
+>  #include <pthread.h>
+>  
+> -#define USEC_PER_SEC 1000000
+> -
+>  enum {
+>  	AFFINITY_UNSPECIFIED,
+>  	AFFINITY_SPECIFIED,
+> diff --git a/src/svsematest/svsematest.c b/src/svsematest/svsematest.c
+> index 023a303fd7df..607b397bf39e 100644
+> --- a/src/svsematest/svsematest.c
+> +++ b/src/svsematest/svsematest.c
+> @@ -32,8 +32,6 @@
+>  #include "rt-get_cpu.h"
+>  #include "error.h"
+>  
+> -#define USEC_PER_SEC 1000000
+> -
+>  #define SEM_WAIT_FOR_RECEIVER 0
+>  #define SEM_WAIT_FOR_SENDER 1
+>  
 > -- 
 > 2.28.0
 > 
