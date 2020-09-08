@@ -2,111 +2,111 @@ Return-Path: <SRS0=F8C2=CR=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.5 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A5B9DC2BC11
-	for <linux-rt-users@archiver.kernel.org>; Tue,  8 Sep 2020 19:26:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E2DFCC43461
+	for <linux-rt-users@archiver.kernel.org>; Tue,  8 Sep 2020 19:55:05 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6820E2098B
-	for <linux-rt-users@archiver.kernel.org>; Tue,  8 Sep 2020 19:26:23 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id AA58C20768
+	for <linux-rt-users@archiver.kernel.org>; Tue,  8 Sep 2020 19:55:05 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=gmx.net header.i=@gmx.net header.b="Hb83dQ9Y"
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="oqfrOgtw"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1731082AbgIHTZo (ORCPT
+        id S1732473AbgIHTzD (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 8 Sep 2020 15:25:44 -0400
-Received: from mout.gmx.net ([212.227.15.15]:57997 "EHLO mout.gmx.net"
-        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1731022AbgIHQAn (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 8 Sep 2020 12:00:43 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1599580772;
-        bh=oKw/yzYD6eOW39I8U2TosMiSpWSrS9JUrnApsFbd3ks=;
-        h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
-        b=Hb83dQ9YTcTOvkLigukuawO5OCt08jdArJZ08Sq7E+LBXEmeiaBr05ZcKv/ndZQOB
-         Pb7bbyA3xu/1NpUvJZnMh8bLOgqQeyXeRSyvRtPzuPTIPlDL31IXuBQPgKa90gfLRu
-         KPWFiD1P+eiQq6rRQwNSUR4nkKo6A2n1+RoXnFyg=
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from homer.simpson.net ([185.191.217.72]) by mail.gmx.com (mrgmx005
- [212.227.17.190]) with ESMTPSA (Nemesis) id 1MPXhA-1jtDCY0Kri-00MbOz; Tue, 08
- Sep 2020 17:59:32 +0200
-Message-ID: <a79815352e2f238b7f108e6e7202f6655f26159d.camel@gmx.de>
-Subject: Re: v5.9-rc3-rt3 boot time networking lockdep splat
-From:   Mike Galbraith <efault@gmx.de>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-Date:   Tue, 08 Sep 2020 17:59:31 +0200
-In-Reply-To: <20200908151229.g24j4n4fderlm2pe@linutronix.de>
-References: <20200902155557.h2wl2qpfn2rwsofw@linutronix.de>
-         <46a2b89ec8d953a4be18c7389c7d8c66310a7ff0.camel@gmx.de>
-         <b989e196a8b9cceda35152de9202d7a67ca32196.camel@gmx.de>
-         <20200908151229.g24j4n4fderlm2pe@linutronix.de>
-Content-Type: text/plain; charset="ISO-8859-15"
-User-Agent: Evolution 3.34.4 
+        Tue, 8 Sep 2020 15:55:03 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51036 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1730637AbgIHPhg (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 8 Sep 2020 11:37:36 -0400
+Received: from mail-qt1-x843.google.com (mail-qt1-x843.google.com [IPv6:2607:f8b0:4864:20::843])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DCA87C0612F5
+        for <linux-rt-users@vger.kernel.org>; Tue,  8 Sep 2020 08:23:30 -0700 (PDT)
+Received: by mail-qt1-x843.google.com with SMTP id c18so1330187qtw.5
+        for <linux-rt-users@vger.kernel.org>; Tue, 08 Sep 2020 08:23:30 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=sender:date:from:to:cc:subject:in-reply-to:message-id:references
+         :mime-version;
+        bh=iwbHfJoHiXM6iXxBEfFwyfhgP+5mNTO8+IO5bljLYwA=;
+        b=oqfrOgtwEAjx3eqwkXvSAAydQEBUHNOPCaNoK6PFrz2ntPkXhq1tyH8PH0jh+7OxYx
+         olUTifChrn9viSEVHvJUEyo0ub4iJHqm7Vorx4NMWDU900YCooZSXzMKBrUfk7Y7tVKt
+         9dJSaLGWnRuSJ2mL9DLRtNwXNDQQi5Gb1d0jdF1vJhIktasIFd5vdB6pvw0HLCbggJXE
+         zeS0Wes6DJ1zh7o+H/9LEeTXUtm/G1w7VzaJegQ62g0EX+UpC6GXMxgMDMB8fM5VPTM/
+         Tavj5J/f2RoEdVwvN9i0z0MnCyQMC9QnPXJhn4EAxI7SJYEp+PKqBzhx1gQBWiWW78fs
+         K/mQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:sender:date:from:to:cc:subject:in-reply-to
+         :message-id:references:mime-version;
+        bh=iwbHfJoHiXM6iXxBEfFwyfhgP+5mNTO8+IO5bljLYwA=;
+        b=MJKweTnkHGuHdE1ENQUziVD9zeZuB5kX9gLBp5u5Q1Qe/7PV2rsd3iwB3O6xdru6pi
+         Y/+lsqVEuHVTzNr+sDINCc7mEeofAPrJzGALe5JzGgEj8UujRkAzY8NvOmkx4x9eJjoI
+         +FHjpunDCYXQP8zS9P0HMrAaxctp6dOAgDYnCZPTx94ZnZ5grBmiTuOlSoyw1uOoFQmR
+         u+0jvarDW4Uxc/jtXVo2e5ATtobvJZY5Cevy+RjvG65nosXh8dnuVRbBP/C1vNc9iGc3
+         dpTbGsoVxtNDAX0ndQZSiHlDIzAnh5xj5aVdJ+5n8s07sWYPGmu5ei34kmgPQPYgbuAk
+         wWLQ==
+X-Gm-Message-State: AOAM5322YPmIlFTX7KuUXI6Mh8fNUroO3SMLEZ9IdV6JRcjCT/UIoKxI
+        YO2RzsL55x9/IWgbkpGuf2z5vQii4s4=
+X-Google-Smtp-Source: ABdhPJwIoVdjd0liIwZJ1qAXbKsosNDtLmG9PqlnAIMmJXPg3QnpaFOo6vcmCw19tuGClv7JXsPQFQ==
+X-Received: by 2002:ac8:4c8e:: with SMTP id j14mr610803qtv.340.1599578610171;
+        Tue, 08 Sep 2020 08:23:30 -0700 (PDT)
+Received: from fionn (bras-base-rdwyon0600w-grc-06-184-147-140-180.dsl.bell.ca. [184.147.140.180])
+        by smtp.gmail.com with ESMTPSA id g18sm14487193qtu.69.2020.09.08.08.23.29
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 08 Sep 2020 08:23:29 -0700 (PDT)
+Date:   Tue, 8 Sep 2020 11:23:21 -0400 (EDT)
+From:   John Kacur <jkacur@redhat.com>
+X-X-Sender: jkacur@fionn
+To:     Daniel Wagner <wagi@monom.org>
+cc:     Clark Williams <williams@redhat.com>,
+        Daniel Wagner <dwagner@suse.de>, linux-rt-users@vger.kernel.org
+Subject: Re: [rt-tests 0/4] Streamlining code base?
+In-Reply-To: <20200907081313.vyw2ykaio6abfxfx@beryllium.lan>
+Message-ID: <alpine.LFD.2.23.451.2009081104480.3804@fionn>
+References: <20200902082725.20037-1-dwagner@suse.de> <20200903203948.4d2e5370@tagon> <20200904063123.uu37gp4ipom64ao6@beryllium.lan> <alpine.LFD.2.23.451.2009041112370.4562@fionn> <20200907081313.vyw2ykaio6abfxfx@beryllium.lan>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:dpbJGdyniN1L8GgtVO9C42d9xu0vTjB2nNyE9vu9ukXbtho5I7V
- 3g3nNwehyDv1LlKRhz2iBO+CoPaS2JC+NQEjExZ8lAR/BgwIs2qGR0ouuiijgb4r3GBmPl/
- HVNLR8CGpRGT0HihPMrs9G/J+bxbrUbAk62tZEUY0oUlOuCiCHCoHHDDTmoTE43eR7xcx/+
- m6rLsKSq6JKLRw6GGAegg==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:bBQiVy6+LQg=:yQDEL/dplQfSmsutFc7m8V
- OXvgj0VTwHR0PVbycsGQQtwxJZaYYeNup5Xa4TFu+Lb4Kr3/ZK4bwKYd8wDBg6yAqlREHg/5f
- J/V+aNnxANtj8yYGgCTPjXz4CxvXKU2gIlTlqE4HHbAIOk/kL5C9TxW7VDqtSooFPdAiVG5jc
- fTwOVU28LVzFlc55iG+85DAiGd6UWSUP0lpCQzVBQAu7n83Fv5QgQNQmcnvLmSa7VhOyvmvNb
- 5UDkpj9VjEM0ydQOVxf52U25ApynjvjPVVcJ56/atAbgr8sV3p4yWk8TfOBylBnrWaNY2+uPA
- InhMEomAG43bQjyGlPf2hcopVN3SqrqsGqcqytWp+nxoLr8PR2A7YOoySzal1VQ7YRIDQA4Xj
- DVuK5rn19tiy9ccFuCRT4jNad3RwYPFc2UBBPV/fa8/ga8MKcPX3AjWxDRuxv+4LrR435dmmZ
- 6IaQjG8q0btTXq5aV7SU9ZeK/CEJuFZvlMxX99M2sD7neLLbVfdJDyz5f2HNJR98IA2K6vU83
- nAll1UgzuH3vASsMNeAvKU2D+OxKx4nXGMjMgTMwHRss4+r6W/CEFbJvlB8N80v8EsWTywgHu
- AZ4pY4dX9yD8702AmcfKanHOyX1MTx4LLyTpTJAEQC3jB7XbneqdZ2oINzCfzjuCCiYNNVc3/
- bnJHhplbIYWyJ3ityd/cOvLuUT8MTn6KqJXMh+EQPyowey0NzvuUk+rvovPrZRw481YC2ViPU
- VlcHnP7cOaAQFT3C1XOZRRRC3+7SFaSA9i6t5T6pEKtUlJBg13jKSvsQMJh+kYQR3YJ9bDrei
- 92F2qGB6lh0IxixrEknzaCb1qa7SoLWPk8ty+VaEnZ0ylOQJOxr5fGcpypNYZMB6x3QCsaA7L
- t79lXMdlXiDxewO2aVor2fN4JcKnbqbAYuZuQBK32t/sL0Qtr9L/eljc/mWsI+NWvZJuqQrDq
- 11+Qe/173cI+WgS4oaFJzik0bbVMTUKPlBjnD9L3TnwFBp8eYZsVi+PEHrRjI10h6g6p3EtzH
- JMemM5B1n5K4VgDaMomabAiLLK4Fl4/BTVHqvP6FIGd3DPqhntmIbesrG6bK909axlWO14L/i
- XqyryG9+EVza5H9VhPYXl/AGnIX438JVNxEp7YKp6zGNiwunj+Rvi7ws23DrvKScm280vCfo1
- 3euTjN6pyCsSQrMPO49WRagdRf+xZmgTWmHsomNxzLMlYiogod+sGaW5/lTrEufSAb8Coi3qt
- /hFlu/JxuXRM8Fpbm
+Content-Type: text/plain; charset=US-ASCII
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, 2020-09-08 at 17:12 +0200, Sebastian Andrzej Siewior wrote:
-> On 2020-09-05 07:19:10 [+0200], Mike Galbraith wrote:
-> > Lappy, which does not use bridge, boots clean... but lock leakage
-> > pretty darn quickly inspires lockdep to craps its drawers.
-> >
-> > [  209.001111] BUG: MAX_LOCKDEP_CHAIN_HLOCKS too low!
-> > [  209.001113] turning off the locking correctness validator.
-> > [  209.001114] CPU: 2 PID: 3773 Comm: Socket Thread Tainted: G S      =
-  I E     5.9.0.gc70672d-rt3-rt #8
-> > [  209.001117] Hardware name: HP HP Spectre x360 Convertible/804F, BIO=
-S F.47 11/22/2017
-> > [  209.001118] Call Trace:
-> > [  209.001123]  dump_stack+0x77/0x9b
-> > [  209.001129]  validate_chain+0xf60/0x1230
->
-> I have no idea how to debug this based on this report. Can you narrow
-> it down to something?
 
-I instrumented what I presume is still this problem once upon a time,
-structures containing locks are allocated/initialized/freed again and
-again with no cleanup until we increment into the wall.
 
-> Is Lappy new, got a new something or has a new config switch? I'm just
-> curious if this something or something that was always there but
-> remained undetected.
+On Mon, 7 Sep 2020, Daniel Wagner wrote:
 
-Nah, this is nothing new.  Turn lockdep on in RT, it's just a matter of
-time before it turns itself off.  It's usually just not _that_ quick.
+> On Fri, Sep 04, 2020 at 11:40:06AM -0400, John Kacur wrote:
+> > I'm not saying this is the only legitimate approach, but I would like to 
+> > keep the individual tools lightweight in rt-tests, so that you could run 
+> > them individually in the embedded space as well as on large machines.
+> 
+> Sure, though I still think it would make sense to keep it flexible and
+> have a compile switch if needed. I'd like to avoid additional steps
+> between the measurement and interpretation. Any time we want to
+> add/change a thing, we need to touch more places.
+> 
+> Furthermore, if you look at my implementation for the JSON output of
+> jitterdebugger is really small:
+> 
+> https://github.com/igaw/jitterdebugger/blob/master/jitterdebugger.c#L158
+> 
+> Adding a XML version for this should be in the same size.
+> 
+> If you insist on a single format (XML) that's also okay for me. Python
+> ships all the necessary libraries these days. Though the JSON format is
+> simpler to transform into native data types such as dictionaries and
+> lists, IMO.
 
-	-Mike
+If you just read a text stream like rteval does, and store in a native 
+data type, then it is trivial to output any data format.
 
+However, your implementation for your jitterdebugger is truly small,
+I don't want to stomp on your creativity, so spin off a git branch and go 
+to it. I can be persuaded.
+
+John
