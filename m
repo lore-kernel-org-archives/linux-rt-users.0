@@ -7,84 +7,88 @@ X-Spam-Status: No, score=-3.5 required=3.0 tests=BAYES_00,DKIM_SIGNED,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AFF52C43461
-	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Sep 2020 02:40:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D9CDCC433E2
+	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Sep 2020 03:12:56 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 5926621D24
-	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Sep 2020 02:40:07 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id A505D21941
+	for <linux-rt-users@archiver.kernel.org>; Wed,  9 Sep 2020 03:12:56 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=gmx.net header.i=@gmx.net header.b="PD2foST8"
+	dkim=pass (1024-bit key) header.d=gmx.net header.i=@gmx.net header.b="UOa7HWIY"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728405AbgIICkD (ORCPT
+        id S1729014AbgIIDMo (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 8 Sep 2020 22:40:03 -0400
-Received: from mout.gmx.net ([212.227.17.21]:34037 "EHLO mout.gmx.net"
+        Tue, 8 Sep 2020 23:12:44 -0400
+Received: from mout.gmx.net ([212.227.15.15]:46379 "EHLO mout.gmx.net"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726605AbgIICkA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 8 Sep 2020 22:40:00 -0400
+        id S1726714AbgIIDMk (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 8 Sep 2020 23:12:40 -0400
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=gmx.net;
-        s=badeba3b8450; t=1599619161;
-        bh=7JR4k3M+f91YpKQkJyCiYOLKXQWgm9AD9avtoW/wwn8=;
+        s=badeba3b8450; t=1599621130;
+        bh=hGzYd8QpKUeVsLHhGXXCngHsrpy2Tys7KhO2nnK2y2k=;
         h=X-UI-Sender-Class:Subject:From:To:Cc:Date:In-Reply-To:References;
-        b=PD2foST8q8hykP0jVDeAuTelc3wEKIcJ6Lh2iwwlc+WQpMkiTw5j2+2DsXv/xgym3
-         YEsrODh4o3UlcS5TZ+y1+UXrjSJADGCyBQ6K2lZ0DJDo2QedEMqV3LSISLWfU5nJ/D
-         sizzTqVvHP/REHavk+9zf8tlsbOc5WljT86xvH24=
+        b=UOa7HWIYogwZOYyid2Aw4O4w+K4NQYMUAs1K5njswP8cA8KNwLmHfGmNwBcMsmHry
+         TTSbtMJFT3YWiGeoR8aA4oBJkvdIeTo+bkpk2mpWI6pLMML0DZhilW3sC2ahe3MaZ5
+         xK62ojsoFJ7Ny0VyT94gErgIfe4/fCK/NEN/XD5E=
 X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from homer.simpson.net ([185.191.217.72]) by mail.gmx.com (mrgmx105
- [212.227.17.168]) with ESMTPSA (Nemesis) id 1MRTNF-1jvASq2Zmv-00NUwB; Wed, 09
- Sep 2020 04:39:21 +0200
-Message-ID: <fb56b88424482baca8a2f178092a0de634256c59.camel@gmx.de>
-Subject: Re: v5.9-rc3-rt3 boot time networking lockdep splat
+Received: from homer.simpson.net ([185.191.217.72]) by mail.gmx.com (mrgmx005
+ [212.227.17.190]) with ESMTPSA (Nemesis) id 1MiaY9-1kmjRV2GYh-00fmbX; Wed, 09
+ Sep 2020 05:12:10 +0200
+Message-ID: <6ed14b9743f5ce400137a4ae5561604575e72b13.camel@gmx.de>
+Subject: Re: [ANNOUNCE] v5.9-rc3-rt3
 From:   Mike Galbraith <efault@gmx.de>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc:     Thomas Gleixner <tglx@linutronix.de>,
-        LKML <linux-kernel@vger.kernel.org>,
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
         linux-rt-users <linux-rt-users@vger.kernel.org>,
         Steven Rostedt <rostedt@goodmis.org>
-Date:   Wed, 09 Sep 2020 04:39:20 +0200
-In-Reply-To: <20200908150612.6qlygag7e7pzhr22@linutronix.de>
+Date:   Wed, 09 Sep 2020 05:12:09 +0200
+In-Reply-To: <20200902155557.h2wl2qpfn2rwsofw@linutronix.de>
 References: <20200902155557.h2wl2qpfn2rwsofw@linutronix.de>
-         <46a2b89ec8d953a4be18c7389c7d8c66310a7ff0.camel@gmx.de>
-         <20200908121902.zlfd3balosnu7ies@linutronix.de>
-         <3471761a379062a474ba32f9d0157eb3020244cf.camel@gmx.de>
-         <20200908150612.6qlygag7e7pzhr22@linutronix.de>
 Content-Type: text/plain; charset="ISO-8859-15"
 User-Agent: Evolution 3.34.4 
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:Ve4zNWrfY1ZdbKJPjsbxxp4H+fkftsXodXClmEfoxh92vdoNwVk
- jNDJ5ftnKRJvoivQDEUFa4y3KyCXZ21MZF1vq4XFbDAbI9Tk20Rw7WaOC1dL6DdtNIyH/Y4
- F0Tbyb808MFMOGTCYyFDD6pMtd5jEy34AyuVbHERRV3+7NAUI3O0CKOBlWdwUUyrlMLQ1qF
- rke+faN4Gu6+XoHfOcxZQ==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:94VbXjfdyNs=:bAoK3I3lJT+v57nnMdfXwv
- iP5e4hNZMW45S3dAzHORon3+RTqeEENR/M53+41gYHR1teDXPXch/9F8jTco1xeIQIQWZkDJR
- UjU23SIzsX6mVs2I/XQ4RoQROKTbpLOula9FvtgJe/eBZgHweYd7LwxrWiC97LdPKyv7DgoHJ
- Y+ef3vmB7lDzhDkv30jINlIYGocjVvazVDR31AKtStznwZruD553oddNfl3Ccq6f4cY11C4Zb
- KTUptK2b0eqQkNYDh5/FZrl04qRlbuoBZVW6YnRCjs9VmGy7pzMILUJb+rRUCLGHfGZ9YHuC+
- LC0pdIyFXwQCZmz4x0YfvmuEJXhxWxjALDaHC6tI5vGYYrV8aQCjmdhKjAVqV/yI5Ejzmabrk
- tWOnZHPXDmywFKtmeLeWMw6yUH+WJXJdHC8p98cUsKhNjkzmnCvHXlt0Nh1aLypBVfKeW1vne
- epst72kzlPArH+6fIp69NwQct5ezckrlouhOwdohctYrf4IZIzwoaNhlRShVBvEbNUBlGKvkg
- vWwVfvkcbtXOSv7KylKuadFPhCZqItJQXA31m0UNCi5iZNK+RvYmY9qWMQVABj5jhWCP6yhID
- jsl9lgvVFSxcocH/XcEwPYbxRsw82QIC1rUDDKnGPCCy562qWX6b38JDsoxViYxuEjZPWdbRf
- pdQ6eQ3R0fLjnkk9cGTg7rGBXlqk5PCQd4xGtY4n8WBEbBJbsebWz+jZJSKFCh5qQRTsqjIjN
- 7W7Kh/2zYKY/fhE1sOZwy8gtEv2qG89gWHrRvPRtzUICKjYNinTmZTbi3XQQAfu6B+YIe20U2
- 35Ra2nAI2WuKdoxQtjCrKj43G9uker11Jci4yuWSZ90VGc8AFp7kXVbHnJZZrPJlwri31saOa
- ouc0bXGjPKxylqsKdOerL43MdrA+u65RJci1GItmPXqVjSwA7qjpl42slDPGK453tNwn641xA
- OMNHxuhqx3AtNcgAotxGpICkAetkwIDyxq9YnNCBuNwn6/e+yQxXoudOzkMSyssPM+YF/QECW
- CAYGI+nZJok++fAsrNwJsZfYw09+gw3wlO5nrj0byv6W6njjw2XRW/GVTAAJSDvZR3jX1Oj79
- FSDuCdkEWY+JHpQVEWlQuUl+7Jj4IHJw2SC++lQpJECPjo28gnkeaszZEnI0bX+32zKXuvtpU
- fURc63etiM/c4VmjSBOcMg8b9T6oTxxp2fbCvozDOvHhzSoq8wVfMw4RE5V/yXumAEn1EuHwu
- uj8k9sc2mWAxHmr2T
+X-Provags-ID: V03:K1:boqi8g3uyHFft8vQoTCT7Tae8b9yFScO9vIXQtA5vdNwUGkSkkY
+ pcfliwQ7+tQlGkSPDnzzccUdCuiPmcNGQZpPbS5hasTkORDoV7zCnUoYzIHSn9G0MFx3WNe
+ KJAFZVNqW3YnRPHc5YLOb1AJDNb4icC8TQ4siMzdlsDJMEArKYVRWRm6l7+4vDmHQUPih1j
+ UbgGK5X6fLVwNOlq5BA7w==
+X-UI-Out-Filterresults: notjunk:1;V03:K0:OuPKnAqCiVM=:hZKEQaiNbCRFprLbfqHCg7
+ C1JzFw6g6o6Jck5InrRAJxMWIB+NaoFVM1yxOwWenSYlFQR85CeOvK5xzmphPHFABaL7m3OFp
+ XRHeWc3u2pOOM1Jd8LwyiE0z0piWXUSxaW7xl5P+5+OPx3LYiknryM2esEt6aWfgvcHFHOY3S
+ y0T4NcioeXxyszlY/KiWh/Ar/OzPtbxU/0rIcsdcHZsfwCS30pqL/iI8V/txaXMRWJ8UTcPhh
+ 2NlgLnL/UrfGrKDRnQ+I8UL4qckYR4iDzi+/lBSQLmCZJhIr+hyc26UIhjlZ+MNu3lw3RT03D
+ scO9UaMINM8E8dOMjEWb2fQSBD75Blf7Vg7SGJ28lE5bCFa7jvshj6ZLm7XP06OL9i5Ee/hC/
+ Oe1Q0cU6dAuD+sxji9+pxHy1ROsbyDj28ZFTRvWwCzsyI7mfPw3pFK78n0Je+O6rtwjgWdXQM
+ m2y+c6nV/cp0V2IxNmhmw+J2XToeWkf6ZpjDQb0/RqdapbFijQ39kVFgpjuqaPg2VWJiniEmw
+ SALpQrD+rFoh5zchadMpVlq4cZ2Nfaz3hZyvxBuxGO1khFpwMstlM/oM3szA2XTvaCyOSYY7N
+ ADSX0mZrkTUHZRjr4K0O/VvhRNWfsXb9cSBvlGovv5viSS9r03iCYsv9Lk+Cg07zlC8uwkU8Y
+ yivIulQLRiH7AaA5bZH6iSoO+Ki8VJ0qToQVWBP2px66s+sdX/PtdrfI7w2RiJxZ+KUwcNJun
+ h/4Z3tEOzHZb5CB8qZlbvhSpYCG/rTcMgK4vVCt+lnt3Jn9Ecn3FodgEswIwx81HlWBI1m76/
+ iOxu9dvi5w0MPxuJCVFoyIHI/bU7XF7m0ZtS3i4pEmeJE9JodLNckMIrBdHDVn+T/qbuvjLa9
+ jhbz07iCsN/Bwv2KT/a6WLRjgwg7YiCGk4irXlwjBgltFCtpRbaOGstZPjxr3aQJygm0JRqaP
+ fLhBa+voeagBhQIqdDXwBDR8x+Uy1JhTjpolzUtWN1ZgUkKjg8mWccaOaVuMXxP0/sbQlhWJ3
+ OIMjJXu27aVU1hMOgKus6thhFoaPwDzgx30AgTd3L9ZjjLLNBvsE6fL7iG2j4VY0NF9A6a4ti
+ tztd/rv6onmNmeyi0X2RSXKX4VNuZPEHftAa9YWag4QtbPOK27UjrbcL1f1ZyhGzuYLhWFnXY
+ +Lu4GtHzTFNRlD4kUkVQrOzPR05OjZc05QteBieGPAd+jbvzb+7ziPA7AsgrXhLuOWIpHCeGj
+ uSK3Qy5pHAShf001h
 Sender: linux-rt-users-owner@vger.kernel.org
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, 2020-09-08 at 17:06 +0200, Sebastian Andrzej Siewior wrote:
+On Wed, 2020-09-02 at 17:55 +0200, Sebastian Andrzej Siewior wrote:
 >
-> This should cure it:
+> Known issues
+>      - It has been pointed out that due to changes to the printk code th=
+e
+>        internal buffer representation changed. This is only an issue if =
+tools
+>        like `crash' are used to extract the printk buffer from a kernel =
+memory
+>        image.
 
-It did.
+Ouch.  While installing -rt5 on lappy via nfs, -rt5 server box exploded
+leaving nada in logs.  I have a nifty crash dump of the event, but...
 
 	-Mike
 
