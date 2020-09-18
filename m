@@ -1,118 +1,158 @@
-Return-Path: <SRS0=TxdF=CZ=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=gXCI=C3=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.3 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 437BAC433E2
-	for <linux-rt-users@archiver.kernel.org>; Wed, 16 Sep 2020 18:38:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4088FC43464
+	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Sep 2020 15:18:04 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id E9A68206B5
-	for <linux-rt-users@archiver.kernel.org>; Wed, 16 Sep 2020 18:38:05 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id DBE902388B
+	for <linux-rt-users@archiver.kernel.org>; Fri, 18 Sep 2020 15:18:03 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="t0muO0TA";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="YpG409Yd"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="SjI078n/"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728020AbgIPSiC (ORCPT
+        id S1726130AbgIRPSC (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 16 Sep 2020 14:38:02 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42150 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728078AbgIPS3N (ORCPT
+        Fri, 18 Sep 2020 11:18:02 -0400
+Received: from us-smtp-1.mimecast.com ([207.211.31.81]:57977 "EHLO
+        us-smtp-delivery-1.mimecast.com" rhost-flags-OK-OK-OK-FAIL)
+        by vger.kernel.org with ESMTP id S1726121AbgIRPSC (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 16 Sep 2020 14:29:13 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 56B3FC00867E;
-        Wed, 16 Sep 2020 06:48:44 -0700 (PDT)
-Date:   Wed, 16 Sep 2020 15:48:41 +0200
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1600264122;
+        Fri, 18 Sep 2020 11:18:02 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1600442280;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=0/VZg6wbWAvukFWWQ0elkbfFN5Dw6CkfsHF1d+jr2R8=;
-        b=t0muO0TACNMhOXxHgjIvsMKzaUknk0Al3nS1cqUlikYW7QKLWGtYSzr23MgCDzRGYyBrB0
-        Extf/f2GbyEqEX6DZ8zYC5XL8/nQb+JLmUIThRSbL3lZuXDARla82U7hjJRVUyVVwaziX9
-        sVVH5c4V1F0L6LSOkuZJU4o/lriQv3Ckj1gfCxnwl/O7sLC+14aEp9vPWaHOaF/Zoqeulw
-        PL8N3SAn61RxjLn3FaQuWcIV2+G8vDW5LXtibH2696wHY+02n3lUWTLWQ4t1q1K/57+or5
-        U5Z308J5VCOhJ79fTBZuDnzRUikjOHAm5PcRRpTvYgl5BlMeuc5Vf7SkGDApFg==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1600264122;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-        bh=0/VZg6wbWAvukFWWQ0elkbfFN5Dw6CkfsHF1d+jr2R8=;
-        b=YpG409YdI/4Y5u0Iidig6cPwSnngsC+oBFfhw0ktYjYRVPlnWGfYZg1ELo1a36qVtw5bR3
-        gGpkNAEq95b7PSDg==
-From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To:     Thomas Gleixner <tglx@linutronix.de>
-Cc:     LKML <linux-kernel@vger.kernel.org>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] v5.9-rc5-rt7
-Message-ID: <20200916134841.gykarzgc4xowiv5w@linutronix.de>
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:content-transfer-encoding;
+        bh=7mtqSUbu+54NUsHIS8lGB99Ry9oi3NNVPcFM9QRKAzs=;
+        b=SjI078n/IqDL5+cFqX4gJk+6NkfSNLWHptYkzbcg6/EmfwA/AxBbBx+960M0faalrriheK
+        +oqly7A+J/TRFG0jCAPm7oVkEvMNqup/qoe9gQfNevnhFEIHlk5w9SDCk769/PpHp31tPd
+        PnG20nCg++b0M6ZCRV1p8WMEArLscQ4=
+Received: from mail-ed1-f69.google.com (mail-ed1-f69.google.com
+ [209.85.208.69]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-425-wjCsJ3SPOe-7p9Zb5nnUJA-1; Fri, 18 Sep 2020 11:17:53 -0400
+X-MC-Unique: wjCsJ3SPOe-7p9Zb5nnUJA-1
+Received: by mail-ed1-f69.google.com with SMTP id c3so2424986edm.7
+        for <linux-rt-users@vger.kernel.org>; Fri, 18 Sep 2020 08:17:53 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:from:subject:to:cc:message-id:date:user-agent
+         :mime-version:content-language:content-transfer-encoding;
+        bh=7mtqSUbu+54NUsHIS8lGB99Ry9oi3NNVPcFM9QRKAzs=;
+        b=uDLplE4f/eQEVirZf2Es9MfxLNf23bze1sfRubuWKq7ZeNEokknUa55HBRhUrNI/al
+         0UNIFYyqozK/QxOHc/IK7nhti6A0clcPWl3w7g0DU1yXpVqav95BqZ+KozoitDkydBpK
+         u5Q2nka8YjLSIrHgK2paQP2Lue9UIABKKv7y7/TUS+jIoISZSSmlf1Fchozx79WVLwkD
+         DNzxtHzeUV7TnhgQyPXhIzKdyrXD2hBDr84U67nYvXD2XLZuoxR7HRaXQk4BPjctOpoH
+         Khe4Z0ggcEOoOVrDDmTSK2ie4dES3Iu4fsTf+gNExGLPwkcOZYI84YzKGzL9MFNvB0yI
+         o4oQ==
+X-Gm-Message-State: AOAM53395uuVEyAttJB57pCwb6wyOT1gt1iU6K++8T8Li6B1GpM8Sl3+
+        MQMRkbTegvYXHy2e9P9lrwfqvT9ACYBymPgGQUXpLhv905tZhSSs1VQ3aVoxIOpbJeZ7AvrdBRB
+        Xd/gTEcCGiXVw3L708YLzpTsWcpE=
+X-Received: by 2002:a17:906:a4b:: with SMTP id x11mr38585217ejf.368.1600442272167;
+        Fri, 18 Sep 2020 08:17:52 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJzfo0YDjVjtJ+pQTj+NgRkk4cAjYvUb1VnxC1oLEltJgbwaBGHWJB8W7BEWojwanT3DME3z2A==
+X-Received: by 2002:a17:906:a4b:: with SMTP id x11mr38585167ejf.368.1600442271911;
+        Fri, 18 Sep 2020 08:17:51 -0700 (PDT)
+Received: from x1.bristot.me (host-87-17-196-109.retail.telecomitalia.it. [87.17.196.109])
+        by smtp.gmail.com with ESMTPSA id f4sm2354993edm.76.2020.09.18.08.17.49
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 18 Sep 2020 08:17:51 -0700 (PDT)
+From:   Daniel Bristot de Oliveira <bristot@redhat.com>
+Subject: [ANNOUNCE][CFP] Real-Time Linux Mini-Summit 2020 - Virtual
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc:     Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Clark Williams <williams@redhat.com>,
+        John Ogness <john.ogness@linutronix.de>,
+        bastian.germann@linutronix.de,
+        Anna-Maria <anna-maria@linutronix.de>,
+        Tom Zanussi <tom.zanussi@linux.intel.com>,
+        Mark Brown <broonie@sirena.org.uk>,
+        Daniel Wagner <wagi@monom.org>,
+        Dietmar Eggemann <dietmar.eggemann@arm.com>,
+        Vincent Guittot <vincent.guittot@linaro.org>,
+        Juri Lelli <juri.lelli@redhat.com>,
+        Mel Gorman <mgorman@suse.de>, Julia Cartwright <julia@ni.com>,
+        Julia Lawall <julia.lawall@inria.fr>,
+        Tom Rix <trix@redhat.com>, Scott Wood <swood@redhat.com>,
+        =?UTF-8?Q?Luis_Claudio_R=2e_Gon=c3=a7alves?= <lclaudio@redhat.com>,
+        "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+        "Joel Fernandes (Google)" <joel@joelfernandes.org>,
+        Dario Faggioli <raistlin@linux.it>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Drew Fustini <drew@beagleboard.org>,
+        Valentin Schneider <valentin.schneider@arm.com>,
+        Qais Yousef <qais.yousef@arm.com>,
+        Marcelo Tosatti <mtosatti@redhat.com>,
+        Luiz Capitulino <lcapitulino@redhat.com>,
+        Kate Carcia <kcarcia@redhat.com>,
+        Scott Wood <swood@redhat.com>,
+        Arnaldo Carvalho de Melo <acme@redhat.com>,
+        Kate Stewart <kstewart@linuxfoundation.org>
+Message-ID: <2a4608f6-f2b1-efaf-3370-ffd7e62cdbbc@redhat.com>
+Date:   Fri, 18 Sep 2020 17:17:49 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.11.0
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Sender: linux-rt-users-owner@vger.kernel.org
+Content-Language: en-US
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Dear RT folks!
+The Real-Time Mini-Summit is organized by the Linux Foundation Real-Time Linux
+(RTL) collaborative project. The event is intended to gather developers and
+users of Linux as a Real-Time Operating System. The main intent is to provide
+room for discussion between developers, tooling experts, and users.
 
-I'm pleased to announce the v5.9-rc5-rt7 patch set. 
+The mini-summit will take place alongside the Open Source Summit + Embedded
+Linux Conference Europe 2020, virtually. The summit is planned last day of the
+main conference, Friday, October 30th, 2020.
 
-Changes since v5.9-rc5-rt6:
+If you are interested to present, please submit a proposal [1] before September
+30th, 2020, at 23:59 EST. Please provide a title, an abstract describing the
+proposed talk, a short biography, and describe the targeted audience. Please
+indicate the slot length you are aiming for: The format is a single track with
+presentation slots of 15, 30 minutes long. Considering that the presentation
+should leave a space for discussion.
 
-  - Modem Host Interface (MHI) bus failed to compile. Patch by Clark
-    Williams.
+We are welcoming presentations from both end-users and developers, on topics
+covering, but not limited to:
 
-Known issues
-     - It has been pointed out that due to changes to the printk code the
-       internal buffer representation changed. This is only an issue if tools
-       like `crash' are used to extract the printk buffer from a kernel memory
-       image.
+ - Real-time Linux development
+ - Real-time Linux evaluation
+ - Real-time Linux use cases (Success and failures)
+ - Real-time Linux tooling (tracing, configuration, …)
 
-The delta patch against v5.9-rc5-rt6 is appended below and can be found here:
- 
-     https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.9/incr/patch-5.9-rc5-rt6-rt7.patch.xz
+Those can cover recently available technologies, ongoing work, and new ideas.
 
-You can get this release via the git tree at:
+Important Notes for Speakers:
 
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v5.9-rc5-rt7
+All speakers are required to adhere to the Linux Foundation events’ Code of
+Conduct. We also highly recommend that speakers take the Linux Foundation online
+Inclusive Speaker Orientation Course. Avoid sales or marketing pitches and
+discussing unlicensed or potentially closed-source technologies when preparing
+your proposal; these talks are almost always rejected due to the fact that they
+take away from the integrity of our events, and are rarely well-received by
+conference attendees.
 
-The RT patch against v5.9-rc5 can be found here:
+All accepted speakers are required to submit their slides prior to the event.
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.9/older/patch-5.9-rc5-rt7.patch.xz
+[1] Submission page: https://forms.gle/yQeqyrtJYezM5VRJA
 
-The split quilt queue is available at:
+Important Dates:
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/5.9/older/patches-5.9-rc5-rt7.tar.xz
+CFP Close: Saturday, September 30th, 2020, at 23:59 PST
+Speaker notification: October 10th, 2020
+Conference: Friday, October 30th, 2020
 
-Sebastian
+Questions on submitting a proposal?
+Email Daniel Bristot de Oliveira <bristot@redhat.com>
 
-diff --git a/include/linux/mhi.h b/include/linux/mhi.h
-index c4a940d989121..2b4ed30d47294 100644
---- a/include/linux/mhi.h
-+++ b/include/linux/mhi.h
-@@ -9,10 +9,9 @@
- #include <linux/device.h>
- #include <linux/dma-direction.h>
- #include <linux/mutex.h>
--#include <linux/rwlock_types.h>
- #include <linux/skbuff.h>
- #include <linux/slab.h>
--#include <linux/spinlock_types.h>
-+#include <linux/spinlock.h>
- #include <linux/wait.h>
- #include <linux/workqueue.h>
- 
-diff --git a/localversion-rt b/localversion-rt
-index 8fc605d806670..045478966e9f1 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt6
-+-rt7
