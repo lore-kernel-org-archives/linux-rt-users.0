@@ -2,101 +2,162 @@ Return-Path: <SRS0=aBkN=DB=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3C6D3C4363D
-	for <linux-rt-users@archiver.kernel.org>; Thu, 24 Sep 2020 10:07:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E4E9CC4727D
+	for <linux-rt-users@archiver.kernel.org>; Thu, 24 Sep 2020 17:01:45 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id BBEC6239A1
-	for <linux-rt-users@archiver.kernel.org>; Thu, 24 Sep 2020 10:07:13 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 8E8382311A
+	for <linux-rt-users@archiver.kernel.org>; Thu, 24 Sep 2020 17:01:45 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=nxp.com header.i=@nxp.com header.b="YTLnyBWT"
+	dkim=pass (2048-bit key) header.d=baylibre-com.20150623.gappssmtp.com header.i=@baylibre-com.20150623.gappssmtp.com header.b="OGaeaq59"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727330AbgIXKHN (ORCPT
+        id S1728563AbgIXRBn (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 24 Sep 2020 06:07:13 -0400
-Received: from mail-am6eur05on2045.outbound.protection.outlook.com ([40.107.22.45]:58469
-        "EHLO EUR05-AM6-obe.outbound.protection.outlook.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1727325AbgIXKHN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 24 Sep 2020 06:07:13 -0400
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=H128sFHn1UqJQqFfgGKyYIL1BTcH1DCQaRsgdMfErMIQjaEJH05nRtlM5tkLvIN4iHFfDdvBCswIAuxtF/HC6h+xnhKYCPCgV2fRL7KoxoGnH6QD+lSH89mJpzkNGeOboZgg434CPMu16QTnV4WSVR28CRtcf+0G4Pn+tQxeuGzK7J8009bOxxkB5iXWesfv6pNllDotw7saX92ceZ1cFBoMaN59Ly/n/nXx3E9glhj2rqhKAh+g1MI8J4q0XQItaTreG1yFwQWJf8pGj9/d3BeBSVOP9BYlMNPdsgbClpX5HZLUUjwU59zAsiW88/uJieILKZT35FxI+ZOG9HChtg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=A/dlWmDyUVxGIpcZB7u0s3IofT5GC4+/uM+A2Fm6rzk=;
- b=DtukOhR08lCVMJ1AfCVsqrhC5TW5vHfLJcGQub6on5Gw569cg/iYH3lcjOOk2MOfw46VElOjypLYUDppfThZDSaeUIXy6Kd3VJ6CxX6G7P773vgDIhDznUBv2IUSwAeKV+WAL4jnG/39FfezchA/PLDwHK3LsZ9tjKX38J8HiuVFYfYHroRfdGr0YbYBYalo7XvkQ4GsmdmiFIVonCmRnu5UIAoOEaArKZiNubCrZ2SlaBDpNgE/Mn2CbuDWJbhP4GUgqztKw7iCFDFgZvenJPxUKd6s7h5O6qvr0OacxHZuuROZbMsqwcEu02/FwYqT/FPyNU5h+GZKft7ufqTPtw==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=nxp.com; dmarc=pass action=none header.from=nxp.com; dkim=pass
- header.d=nxp.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nxp.com; s=selector2;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=A/dlWmDyUVxGIpcZB7u0s3IofT5GC4+/uM+A2Fm6rzk=;
- b=YTLnyBWTwNjcmOz5R+zBuC/cOsaEvl4sD0XxTVwadjF9rP5MLc7GNvVe/eiKNpwUe+nsjv3vsZ3PExVwEU9sdVrhhsJpxpxf67BIF0ej623HEsBMYS+TtBEvXDfBCWoVSYxnhdpqubIxs8g4Vhc6kBYdEj+lRje5Y60CQRn4RRM=
-Received: from DB6PR0402MB2760.eurprd04.prod.outlook.com (2603:10a6:4:a1::14)
- by DB7PR04MB4091.eurprd04.prod.outlook.com (2603:10a6:5:1e::16) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3412.22; Thu, 24 Sep
- 2020 10:07:10 +0000
-Received: from DB6PR0402MB2760.eurprd04.prod.outlook.com
- ([fe80::35c5:8c71:91f3:6bc6]) by DB6PR0402MB2760.eurprd04.prod.outlook.com
- ([fe80::35c5:8c71:91f3:6bc6%12]) with mapi id 15.20.3412.022; Thu, 24 Sep
- 2020 10:07:10 +0000
-From:   Peng Fan <peng.fan@nxp.com>
-To:     =?utf-8?B?U3TDqXBoYW5lIEFuY2Vsb3Q=?= <sancelot@numalliance.com>,
-        linux-rt-users <linux-rt-users@vger.kernel.org>,
-        Jailhouse <jailhouse-dev@googlegroups.com>
-Subject: RE: running it in an hypervisor
-Thread-Topic: running it in an hypervisor
-Thread-Index: AQHWklolRNXOvO/1PUGbAGg5M+1orKl3j+Mw
-Date:   Thu, 24 Sep 2020 10:07:10 +0000
-Message-ID: <DB6PR0402MB27604D6E2BF8080D40BCA6A788390@DB6PR0402MB2760.eurprd04.prod.outlook.com>
-References: <bed0a3c7-6b1e-117b-0dd6-f91230161bd3@numalliance.com>
-In-Reply-To: <bed0a3c7-6b1e-117b-0dd6-f91230161bd3@numalliance.com>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-authentication-results: numalliance.com; dkim=none (message not signed)
- header.d=none;numalliance.com; dmarc=none action=none header.from=nxp.com;
-x-originating-ip: [119.31.174.71]
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-ht: Tenant
-x-ms-office365-filtering-correlation-id: 4a44d4d4-f31a-4da0-10e8-08d860719a14
-x-ms-traffictypediagnostic: DB7PR04MB4091:
-x-microsoft-antispam-prvs: <DB7PR04MB40915C4909FB89D7DECCACF688390@DB7PR04MB4091.eurprd04.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:3826;
-x-ms-exchange-senderadcheck: 1
-x-microsoft-antispam: BCL:0;
-x-microsoft-antispam-message-info: GeLK9aQrNG8i1GVnfMDBKxwHtnUCva1tVdAusR+oSxnHA0VvvtdDcMpstWqOfwBBz3oYUDlF/2tcCMB+1Gb2eLNI74ILHroN8jmjfJ3FQKh5vedydnH//r+xX7+z30hbUNrWCFubhpf9Yt9E1xXHYfbVlZrmf4V0JqvkRoM0DiXUy6mF3+X+t/t32ZCEjUdRmdwIu8S2x59r2xVGKXpoIVj4FcSft/dpvvEarGu+z8bkxv/4ucLPC1pB2fqMx+aN/BXFaC6WjKWaYP/whiHksCqaFvT/fazBwDqRJeWz6HWW2NhNMQkS2Gqa1Bs5DcsxlNSxYbovueHCHWtLEFy93w==
-x-forefront-antispam-report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DB6PR0402MB2760.eurprd04.prod.outlook.com;PTR:;CAT:NONE;SFS:(4636009)(136003)(366004)(346002)(396003)(376002)(39860400002)(110136005)(86362001)(9686003)(44832011)(5660300002)(316002)(52536014)(478600001)(66556008)(26005)(186003)(66446008)(71200400001)(6506007)(76116006)(33656002)(7696005)(64756008)(66476007)(8676002)(55016002)(2906002)(8936002)(4744005)(66946007);DIR:OUT;SFP:1101;
-x-ms-exchange-antispam-messagedata: wzz/hdWAwApwKKjg1jyINuvg/9GXcb2d0r/e3IxvxomGlGyDb3F9yvNQqVbgAMHyln8qPnPhFpRr6zs0en8gohFLWss+m6y/sp0P6vjBFElR1kn9z65NktIJqotMS0h7grRSUB/uKaUObkbfTierQvnJxSco8tIt4BpgxJ26NQ/3uULWcfevy5Zlf+qKjmykcsIThxSDLVJn3Ytou21dgN0pF8hWlyhd1piCTkBA5kyjc1/q1gyYinaAGwDRHT2m7jXt4mdGr99dIxyvFKIqAC3LVuu1KjY2koZ4z5fzcUzyTgEBZP6rxXzoHGC9dMlaaF3uuQ3TRVgG5MP/+ZE8jE54kfyPvAqMSSqvS49MCN88Bx+GqObDl87TqK270nevUurd9KoEys1Hw+A8XG5gsag2Ub20JMtoxpOxQdlD1tVQuMvwQp2JKb5jHRZDGCao/TwtNJqarzgTa//wnhrHyaGUwtxiDKSmwgjiM9dMCMQwX3+wo7HNFQbndMcEpv0PYKlRJBHdZ+arTnWoFAh3PgXPzX+TRrQIArfuwLuY3P3nX8tSc6i4u4JgftnekMErB89KZ5HJeAYwu+k7EjKu2AT7pzvxqSyA6dV8am/MqDnOcxr9y+GWGaMke3LvM9N5jzwu9eY4HQ+AnFoslalbZg==
-x-ms-exchange-transport-forked: True
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+        Thu, 24 Sep 2020 13:01:43 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53252 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726915AbgIXRBn (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 24 Sep 2020 13:01:43 -0400
+Received: from mail-pj1-x1041.google.com (mail-pj1-x1041.google.com [IPv6:2607:f8b0:4864:20::1041])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0C454C0613D3
+        for <linux-rt-users@vger.kernel.org>; Thu, 24 Sep 2020 10:01:43 -0700 (PDT)
+Received: by mail-pj1-x1041.google.com with SMTP id jw11so26859pjb.0
+        for <linux-rt-users@vger.kernel.org>; Thu, 24 Sep 2020 10:01:43 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=baylibre-com.20150623.gappssmtp.com; s=20150623;
+        h=from:to:cc:subject:in-reply-to:references:date:message-id
+         :mime-version:content-transfer-encoding;
+        bh=wai6nrMcHMtaGESKTBMiyp6BzMJao/GERxFZZ1c+mrw=;
+        b=OGaeaq59Tt/XijT63cFNXsWFUc7pRwS0n/R2QRbOGJnV7bvG3CXlKdq5J2kzaa78ME
+         jbn6h+cKePv+nZUfj0dYZ/naRD1fpMeky67EjyNkTg//e+k2ICFEfpU8OpvLHodqmlsc
+         e6Ly9/IjuYRLIh38hb9NRmaTWGZNwKnUqdSJcvhAoqJ+bkDsOq9MIKX2VARxrCjwg0q4
+         3ou7RuM3Gjr8Xlz90Nu7tGCgohzhEADNN4nastiusrywUCf0Vc2eGX41ssiAock84bPQ
+         FN7QmWmVC1S0RrKu5AL4uq0oDrScIks1DNrv6FZkIz5O5Zw4cWRsea78whS2daP/WxbN
+         ZByA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:from:to:cc:subject:in-reply-to:references:date
+         :message-id:mime-version:content-transfer-encoding;
+        bh=wai6nrMcHMtaGESKTBMiyp6BzMJao/GERxFZZ1c+mrw=;
+        b=ic5FOlOBSRIm73Pxk8rqPLzUgEj8QfT2lrlMOdBHxBm8XDddZT8AVbvbVAlQFbdjKF
+         Epk/FGQINTxXHWrzEcDGI9QBOCf3wUT8rAanZzv9bJEfMC2ATwP37J0vqdsrrbYOOePg
+         0OaMqD1sbJLs1VE2glIfUKm7rRHGf4b0Y8KzU91jftxGMOPKZNTDg04wFLcngs3n3Q+V
+         SaNLDZGv9VDRsWCdVLDv1KX8LXjRTNoyV/y27WrUP1mVYShHg1c0ok93/k1x3eEGsUGO
+         EPUXH53MrS47TuKWXcB8LU1BCrHgruY/h4bl6gOvRg9zO7RWOrt55ai7kXYW85S4/Pnq
+         YYjA==
+X-Gm-Message-State: AOAM532NrHyagfbQUQJrlBisxqYlMeNJVsEq55b8idY5e+w/Iafg9h56
+        tMznWYx7qoU71YSYSZqfdQ6rVw==
+X-Google-Smtp-Source: ABdhPJyB4E6oTZ+1qw0qVBGbrUxEy2hRIRjCoD2OsburrUv+ugcG2SoS9sHIe6Pl0ettoc5fKwLfFg==
+X-Received: by 2002:a17:90a:c20f:: with SMTP id e15mr102859pjt.163.1600966902382;
+        Thu, 24 Sep 2020 10:01:42 -0700 (PDT)
+Received: from localhost (c-71-197-186-152.hsd1.wa.comcast.net. [71.197.186.152])
+        by smtp.gmail.com with ESMTPSA id y13sm51996pfr.141.2020.09.24.10.01.41
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 24 Sep 2020 10:01:41 -0700 (PDT)
+From:   Kevin Hilman <khilman@baylibre.com>
+To:     Brad Harper <bjharper@gmail.com>,
+        linux-amlogic@lists.infradead.org, linux-mmc@vger.kernel.org
+Cc:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-arm-kernel@lists.infradead.org
+Subject: Re: [PATCH] mmc: host: meson-gx-mmc: fix possible deadlock condition for preempt_rt
+In-Reply-To: <24a844c3-c2e0-c735-ccb7-83736218b548@gmail.com>
+References: <24a844c3-c2e0-c735-ccb7-83736218b548@gmail.com>
+Date:   Thu, 24 Sep 2020 10:01:41 -0700
+Message-ID: <7hk0wj9ki2.fsf@baylibre.com>
 MIME-Version: 1.0
-X-OriginatorOrg: nxp.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: DB6PR0402MB2760.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 4a44d4d4-f31a-4da0-10e8-08d860719a14
-X-MS-Exchange-CrossTenant-originalarrivaltime: 24 Sep 2020 10:07:10.4632
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 686ea1d3-bc2b-4c6f-a92c-d99c5c301635
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: NT7nqjCxyjCQBFTiEaMc2TBBSespRQPRoAng4iRUrwoQKrUJZhBn9zH9OoOqAgBNRUVESj87CEZS3MGyG9ykAQ==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DB7PR04MB4091
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-PiBTdWJqZWN0OiBydW5uaW5nIGl0IGluIGFuIGh5cGVydmlzb3INCj4gDQo+IEhpLA0KPiANCj4g
-SSB3b3VsZCBsaWtlIHRvIGtub3cgd2hpY2ggaHlwZXJ2aXNvciBhcmUga25vd24gdG8gd29yayB3
-aXRoIHJ0LXByZWVtcHQgPw0KDQpNaWdodCBnaXZlIGEgdHJ5IG9uIGphaWxob3VzZSBoeXBlcnZp
-c29yLiBJIHJhbiBBUk02NCBSVC1MaW51eCB3aXRoIGphaWxob3VzZS4NCg0KUmVnYXJkcywNClBl
-bmcuDQoNCj4gDQo+IEluIHBhcmFsbGVsIEnCoCB3b3VsZCBsaWtlIHRvIHJ1biBobWkgaW4gYSB3
-aW5kb3dzIGVudmlyb25tZW50IHdpdGggM0QgLg0KPiANCj4gUmVnYXJkcywNCj4gDQo+IFMuQW5j
-ZWxvdA0KPiANCg0K
+Hi Brad,
+
+Brad Harper <bjharper@gmail.com> writes:
+
+> Force threaded interrupts for meson_mmc_irq to prevent possible deadlock=
+=20
+> condition
+> during mmc operations when using preempt_rt with 5.9.0-rc3-rt3 patches=20
+> on arm64.
+>
+> Using meson-gx-mmc with an emmc device on Hardkernel Odroid N2+=20
+> configured with
+> preempt_rt resulted in the soc becoming unresponsive.=C2=A0 With lock=20
+> checking enabled
+> the below inconsistent lock state was observed during boot.
+>
+> After some discussions with tglx in IRC #linux-rt the attached patch was=
+=20
+> suggested
+> to remove IRQF_ONESHOT from request_threaded_irq.
+> This has been tested and confirmed by me to resolve both the=20
+> unresponsive soc and
+> the inconsistent lock state warning when using 5.9.0-rc3-rt3 on arm64=20
+> Odroid N2+.
+>
+> Further review and testing is required to ensure there are no adverse=20
+> impacts or
+> concerns and that is the correct method to resolve the problem.=C2=A0 I w=
+ill=20
+> continue
+> to test on various amlogic devices with both standard mainline low=20
+> latency kernel
+> and preempt_rt kernel with -rt patches.
+
+This looks right to me, thanks for sending a fix.
+
+For broader testing, I can add this to my testing branch so it gets
+booted on a bunch more platform in KernelCI also.
+
+However...
+
+[...]
+
+> Signed-off-by: Brad Harper <bjharper@gmail.com>
+> ---
+>  =C2=A0drivers/mmc/host/meson-gx-mmc.c | 2 +-
+>  =C2=A01 file changed, 1 insertion(+), 1 deletion(-)
+>
+> diff --git a/drivers/mmc/host/meson-gx-mmc.c=20
+> b/drivers/mmc/host/meson-gx-mmc.c
+> index 08a3b1c05..130ac134d 100644
+> --- a/drivers/mmc/host/meson-gx-mmc.c
+> +++ b/drivers/mmc/host/meson-gx-mmc.c
+> @@ -1139,7 +1139,7 @@ static int meson_mmc_probe(struct platform_device=20
+> *pdev)
+>  =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0 host->regs + SD_EMMC_IRQ_EN);
+>
+>  =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 ret =3D request_threaded_irq(=
+host->irq, meson_mmc_irq,
+> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 meson_mmc_irq_thread, I=
+RQF_ONESHOT,
+> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 meson_mmc_irq_thread, 0,
+>  =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 dev_name(&pdev->d=
+ev), host);
+>  =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (ret)
+>  =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 goto err_init_clk;
+
+This patch has been mangled by your mailer, so it doesn't apply cleanly.
+If you're using the gmail web UI, this is a common problem.
+
+I strongly recommend using git-send-email to send directly via gmail
+SMTP.  The git-send-email docs[1] give some examples on how to set this
+up.
+
+Kevin
+
+[1] https://git-scm.com/docs/git-send-email#_examples
