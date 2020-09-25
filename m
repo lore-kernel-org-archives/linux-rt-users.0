@@ -2,122 +2,119 @@ Return-Path: <SRS0=gYFm=DC=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6A9DFC47420
-	for <linux-rt-users@archiver.kernel.org>; Fri, 25 Sep 2020 14:14:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 29E64C4727C
+	for <linux-rt-users@archiver.kernel.org>; Fri, 25 Sep 2020 15:05:27 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 1FE0220936
-	for <linux-rt-users@archiver.kernel.org>; Fri, 25 Sep 2020 14:14:20 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 97F362344C
+	for <linux-rt-users@archiver.kernel.org>; Fri, 25 Sep 2020 15:05:26 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=baylibre-com.20150623.gappssmtp.com header.i=@baylibre-com.20150623.gappssmtp.com header.b="jJuocI/b"
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="MJOGbF86";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="Yeohw/JX"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728941AbgIYOOS (ORCPT
+        id S1728964AbgIYPFX (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 25 Sep 2020 10:14:18 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51338 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1728199AbgIYOOS (ORCPT
+        Fri, 25 Sep 2020 11:05:23 -0400
+Received: from Galois.linutronix.de ([193.142.43.55]:56864 "EHLO
+        galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1727749AbgIYPFX (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 25 Sep 2020 10:14:18 -0400
-Received: from mail-ed1-x544.google.com (mail-ed1-x544.google.com [IPv6:2a00:1450:4864:20::544])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 74159C0613CE
-        for <linux-rt-users@vger.kernel.org>; Fri, 25 Sep 2020 07:14:17 -0700 (PDT)
-Received: by mail-ed1-x544.google.com with SMTP id k14so2668314edo.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 25 Sep 2020 07:14:17 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=baylibre-com.20150623.gappssmtp.com; s=20150623;
-        h=references:user-agent:from:to:cc:subject:in-reply-to:date
-         :message-id:mime-version;
-        bh=wM9M9SzefD5gqh6rUe+GGK3P8rbYWiC3a0TiUA4Suek=;
-        b=jJuocI/bplwYAWFLuhGNb/1qgyrDnRkMLJAlZdkhGDJJsUt4ok2/cyUbysJMmCGDKA
-         KXH9ftBquli+ARnXX4BDOeYilgqtVQ7ln8kOH1qXr48cU4hrWRFBhEuWYUrLzLgpp2PB
-         gdPfZa3GoCJ0u2CVL/zGIo1yn3QawYh7274Sgw53RbqpDTyn45QUqUixesApHD9H7wY6
-         BQaVd+GhKSE+N6ed7ZcaylKPV1wNGLOhJurEGTLlHszLFU1245uSjl0dJvrxnWiPPUXC
-         sLzmP+bB360gkGoyR6jEcWZw2nlmWDuw+ZuNC1pfQxRBpzatPZkbcAmcIW5ixv9QfZmo
-         wdHg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:references:user-agent:from:to:cc:subject
-         :in-reply-to:date:message-id:mime-version;
-        bh=wM9M9SzefD5gqh6rUe+GGK3P8rbYWiC3a0TiUA4Suek=;
-        b=qJ1JS+yD4oWZXs3GIiPSqzpyXwNva1wgF7d9QMQIDbigfjntv/JmXD0pIFsrsdL0Fs
-         i+Gi2iDtJaduaE5BsXxOh/8pwq+x385Vcnu+M/O5mtYSschiNWb37JJfY8Z66ql2+5HU
-         cnm6C/VTKh5taj9Q3VvLU0P4s2tuBPp9uIAtjJUV/QOblsLzEirLpYmZDzOAU30mS9jJ
-         YP1ZtjaB2tj2KNbYrf/pEkQDNN67nXr1sgUSCymnuxnpa+pIEx46chvYQ5pKuVOD1BFy
-         W1k7jVQN//OhWNQY+7KoGIoROJPls9zs3Q2A332ChQW36O4ptXFycuSJXoPr980lqYSb
-         +ovA==
-X-Gm-Message-State: AOAM533qGxqi54rIpuzGwpDn14u95OaqAP4fXYpgw8rS/jGifn4K0szV
-        TVFdPilBHU/0UnoWlBfHKHBTQg==
-X-Google-Smtp-Source: ABdhPJzwIPCGQ+75gzlRe/ufSmeKulNDnlPMmGvgzb28BYKfC4imiU3i9M+FUIyU2tCF/soD6aW5iQ==
-X-Received: by 2002:a50:bb62:: with SMTP id y89mr1551879ede.261.1601043252055;
-        Fri, 25 Sep 2020 07:14:12 -0700 (PDT)
-Received: from localhost (cag06-3-82-243-161-21.fbx.proxad.net. [82.243.161.21])
-        by smtp.gmail.com with ESMTPSA id k6sm1934617ejr.104.2020.09.25.07.14.10
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 25 Sep 2020 07:14:11 -0700 (PDT)
-References: <24a844c3-c2e0-c735-ccb7-83736218b548@gmail.com> <7hk0wj9ki2.fsf@baylibre.com> <1jzh5e8bld.fsf@starbuckisacylon.baylibre.com> <20200925134445.rk366jip5ne4x7em@linutronix.de>
-User-agent: mu4e 1.3.3; emacs 26.3
-From:   Jerome Brunet <jbrunet@baylibre.com>
-To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+        Fri, 25 Sep 2020 11:05:23 -0400
+Date:   Fri, 25 Sep 2020 17:05:19 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1601046320;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=W7es1yDj9/zjzMxs06+Vww2hrDHmTr8lqczgB9WnfFc=;
+        b=MJOGbF86s4ulg2dwLhyiFpUwrUbKsXPpOgobXLou3xqdRJeQXF7Q5OF6REbbYec3Vqu7nG
+        L4riyBPLz5XB1Ozl7X5ifiwO+7PCNFDaRPoXdXhrWEZIPM1QR2O7oB2AV93Dyv4rY8X8WC
+        UoPw1uv74YznaDnkKwaMc2NdHO58KjnpX+VlC6Frp34l8Z1DYxMj36zhLz0624go36UEcc
+        KXlNrxkFJhNhBAVAd9BaYatyUJakQdhnr8gObRGNN75Amz+I1EQ9tNZM+Uye1drKCANkgj
+        LJ8/BpTX4Tod1gIMvXsCaPQku0HUM0YfkPYr8Ez5y/7n9Oo2xtQkuRvtGNcQeA==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1601046320;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=W7es1yDj9/zjzMxs06+Vww2hrDHmTr8lqczgB9WnfFc=;
+        b=Yeohw/JXSR/26e4gGcNvnZlx7fiU8zt28HJO4pvel3a9b/BmscppNEfuRvko8R4VPwr27D
+        GqUr3aC7ybFLnQBw==
+From:   Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To:     Jerome Brunet <jbrunet@baylibre.com>
 Cc:     Kevin Hilman <khilman@baylibre.com>,
         Brad Harper <bjharper@gmail.com>,
         linux-amlogic@lists.infradead.org, linux-mmc@vger.kernel.org,
         linux-rt-users@vger.kernel.org,
         linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH] mmc: host: meson-gx-mmc: fix possible deadlock condition for preempt_rt
-In-reply-to: <20200925134445.rk366jip5ne4x7em@linutronix.de>
-Date:   Fri, 25 Sep 2020 16:14:09 +0200
-Message-ID: <1jh7rmj64u.fsf@starbuckisacylon.baylibre.com>
+Subject: Re: [PATCH] mmc: host: meson-gx-mmc: fix possible deadlock condition
+ for preempt_rt
+Message-ID: <20200925150519.sbzq57qphvzrdro3@linutronix.de>
+References: <24a844c3-c2e0-c735-ccb7-83736218b548@gmail.com>
+ <7hk0wj9ki2.fsf@baylibre.com>
+ <1jzh5e8bld.fsf@starbuckisacylon.baylibre.com>
+ <20200925134445.rk366jip5ne4x7em@linutronix.de>
+ <1jh7rmj64u.fsf@starbuckisacylon.baylibre.com>
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <1jh7rmj64u.fsf@starbuckisacylon.baylibre.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
+On 2020-09-25 16:14:09 [+0200], Jerome Brunet wrote:
+> Looks like we need to do manually what IRQF_ONESHOT was doing for us :(
 
-On Fri 25 Sep 2020 at 15:44, Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+IRQF_ONESHOT disables the IRQ at the irqchip level. You must ensure that
+the device keeps quite. Usually you mast the interrupt source at the
+device lee.
 
-> On 2020-09-25 11:11:42 [+0200], Jerome Brunet wrote:
->> I'm not sure about this.
->> As you have explained on IRC, I understand that IRQF_ONESHOT is causing
->> trouble with RT as the hard IRQ part of the thread will not be migrated
->> to a thread. That was certainly not the intent when putting this flag.
->
-> That is my understanding as well.
->
->> This seems pretty unsafe to me. Maybe we could improve the driver so it
->> copes with this case gracefully. ATM, I don't think it would.
->
-> Running the primary handler in hardirq context is bad, because it
-> invokes meson_mmc_request_done() at the very end. And here:
-> - mmc_complete_cmd() -> complete_all()
->   There is a lockdep_assert_RT_in_threaded_ctx() which should trigger.
->
-> - led_trigger_event() -> led_trigger_event()
->   This should trigger a might_sleep() warning somewhere.
->
-> So removing IRQF_ONESHOT is okay but it should additionally disable the
-> IRQ source in meson_mmc_irq() and re-enable back in
-> meson_mmc_irq_thread(). Otherwise the IRQ remains asserted and may fire
-> multiple times before the thread has a chance to run.
+> This brings a few questions:
+> 
+> * The consideration you described is not mentioned near the description
+>   of IRQF_ONESHOT. Maybe it should so other drivers with same intent
+>   don't end up in the same pitfall ?
 
-Looks like we need to do manually what IRQF_ONESHOT was doing for us :(
-This brings a few questions:
+From request_threaded_irq() ->
+|  *      If you want to set up a threaded irq handler for your device
+|  *      then you need to supply @handler and @thread_fn. @handler is
+|  *      still called in hard interrupt context and has to check
+|  *      whether the interrupt originates from the device. If yes it
+|  *      needs to disable the interrupt on the device and return
+|  *      IRQ_WAKE_THREAD which will wake up the handler thread and run
+|  *      @thread_fn. This split handler design is necessary to support
+|  *      shared interrupts.
 
-* The consideration you described is not mentioned near the description
-  of IRQF_ONESHOT. Maybe it should so other drivers with same intent
-  don't end up in the same pitfall ?
+Just the line that saying what needs to be done before returning
+IRQ_WAKE_THREAD.
 
-* Why doesn't RT move the IRQ with this flag ? Seems completly unrelated
-  to RT (maybe it is the same documentation problem) 
+> * Why doesn't RT move the IRQ with this flag ? Seems completly unrelated
+>   to RT (maybe it is the same documentation problem) 
 
-* Can't we have flag doing the irq disable in the same way while still
-  allowing to RT to do its magic ? seems better than open coding it in
-  the driver ?
+It is unrelated to RT. Mostly. You end up with the same problem booting
+with `threadirqs'. RT has the additional restrictions that you may not
+acquire any sleeping locks in hardirq context. This you can see with
+addinional lockdep magic.
 
->
-> Sebastian
+> * Can't we have flag doing the irq disable in the same way while still
+>   allowing to RT to do its magic ? seems better than open coding it in
+>   the driver ?
 
+Puh. That should be forwarded the IRQ department.
+So we have IRQF_NO_THREAD to avoid force threading. This is documented
+as such. Then we have IRQF_TIMER and IRQF_PERCPU which are also not
+force threaded and it is not documented as such. However it is used for
+the timer-IRQ, IPI, perf and such - things you obviously don't want to
+thread and need to run in hard-IRQ context.
+
+What you have ist a primary and secondary and IRQF_ONESHOT and don't
+want the primary handler to be force-threaded. I can't answer why we
+don't.
+However, drivers usually disable the source themself if they providing
+both handler.
+
+Sebastian
