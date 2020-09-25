@@ -6,37 +6,36 @@ X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7A24FC4363D
-	for <linux-rt-users@archiver.kernel.org>; Fri, 25 Sep 2020 10:04:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4B204C4363D
+	for <linux-rt-users@archiver.kernel.org>; Fri, 25 Sep 2020 10:04:58 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 20CED20BED
-	for <linux-rt-users@archiver.kernel.org>; Fri, 25 Sep 2020 10:04:53 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id EEBA920BED
+	for <linux-rt-users@archiver.kernel.org>; Fri, 25 Sep 2020 10:04:57 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727520AbgIYKEw (ORCPT
+        id S1727521AbgIYKE5 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Fri, 25 Sep 2020 06:04:52 -0400
-Received: from lilium.sigma-star.at ([109.75.188.150]:42360 "EHLO
+        Fri, 25 Sep 2020 06:04:57 -0400
+Received: from lilium.sigma-star.at ([109.75.188.150]:42368 "EHLO
         lilium.sigma-star.at" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1727324AbgIYKEw (ORCPT
+        with ESMTP id S1727324AbgIYKE5 (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Fri, 25 Sep 2020 06:04:52 -0400
-X-Greylist: delayed 454 seconds by postgrey-1.27 at vger.kernel.org; Fri, 25 Sep 2020 06:04:51 EDT
+        Fri, 25 Sep 2020 06:04:57 -0400
 Received: from localhost (localhost [127.0.0.1])
-        by lilium.sigma-star.at (Postfix) with ESMTP id 2BFBA1812609B
-        for <linux-rt-users@vger.kernel.org>; Fri, 25 Sep 2020 12:04:51 +0200 (CEST)
+        by lilium.sigma-star.at (Postfix) with ESMTP id BAEC91819104B
+        for <linux-rt-users@vger.kernel.org>; Fri, 25 Sep 2020 11:57:16 +0200 (CEST)
 Received: from lilium.sigma-star.at ([127.0.0.1])
         by localhost (lilium.sigma-star.at [127.0.0.1]) (amavisd-new, port 10032)
-        with ESMTP id 5ND5t5sOj8Xp for <linux-rt-users@vger.kernel.org>;
-        Fri, 25 Sep 2020 12:04:50 +0200 (CEST)
+        with ESMTP id dlsQfRsYYGy7 for <linux-rt-users@vger.kernel.org>;
+        Fri, 25 Sep 2020 11:57:16 +0200 (CEST)
 Received: from lilium.sigma-star.at ([127.0.0.1])
         by localhost (lilium.sigma-star.at [127.0.0.1]) (amavisd-new, port 10026)
-        with ESMTP id fa-C8EFlch0P for <linux-rt-users@vger.kernel.org>;
-        Fri, 25 Sep 2020 12:04:50 +0200 (CEST)
-Date:   Fri, 25 Sep 2020 12:04:50 +0200
+        with ESMTP id NBIkPysQeQmT for <linux-rt-users@vger.kernel.org>;
+        Fri, 25 Sep 2020 11:57:16 +0200 (CEST)
+Date:   Fri, 25 Sep 2020 11:57:15 +0200
 From:   Aaron Marcher <aaron@sigma-star.at>
 To:     linux-rt-users@vger.kernel.org
 Subject: Debugging reboot freeze
-Message-ID: <20200925100450.3t3xrwwb22fac7ti@linux-8csb>
+Message-ID: <20200925095715.poa62noo7dq2zyyp@linux-8csb>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii; format=flowed
 Content-Disposition: inline
@@ -51,8 +50,8 @@ with PREEMPT_RT enabled on i.mx8mm hardware.
 Unfortunately, debugging is difficult in this situation as the only
 related output we get during reboot (via serial console) is:
 
-    Rebooting...
-    Segmentation fault
+   Rebooting...
+   Segmentation fault
 
 However, the second line is not shown on every reboot; the freeze
 happens everytime.
