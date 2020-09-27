@@ -2,141 +2,191 @@ Return-Path: <SRS0=SWPK=DE=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.8 required=3.0 tests=BAYES_00,DKIM_SIGNED,
+	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_GIT autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EBAEAC2D0A8
-	for <linux-rt-users@archiver.kernel.org>; Sun, 27 Sep 2020 00:59:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 13BBFC2D0A8
+	for <linux-rt-users@archiver.kernel.org>; Sun, 27 Sep 2020 02:55:09 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 9769323719
-	for <linux-rt-users@archiver.kernel.org>; Sun, 27 Sep 2020 00:59:51 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id B4004238E6
+	for <linux-rt-users@archiver.kernel.org>; Sun, 27 Sep 2020 02:55:08 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=nxp.com header.i=@nxp.com header.b="ZGBcnBw1"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="BsgegHhV"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726840AbgI0A7u (ORCPT
+        id S1729291AbgI0CzF (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Sat, 26 Sep 2020 20:59:50 -0400
-Received: from mail-am6eur05on2047.outbound.protection.outlook.com ([40.107.22.47]:40737
-        "EHLO EUR05-AM6-obe.outbound.protection.outlook.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S1726311AbgI0A7u (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Sat, 26 Sep 2020 20:59:50 -0400
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=aNU080iyMJusMxZSy6u4CScLizogZ9C3PGAF9r7UK+kGfdYC0c26pWMPHAfLCyLvyz/sU9Rj0bp7XAuGlyvClE6OtK0sCkvO5uv4pkedfF9gWewr0JDCJ/2VzyHqPwX22bEux6pzAG9lDL8q/YUP/iFwvKkFXjsaiXk2tpzG4HxcelWgy/e7tpE4UItBNMHksd+14nGyEwZD6VgscHD8UycQSsdOxOaUTfa0/REjVShWZjxw3EzEiMgwjQqV9yxQdiQnAKoyVn1Hla9vM4gnKXYtarLgylnqibfket9CTo4VnZDqt3xfFh2xkrq8sIaEkrC9MnS5HiNOxYYSlxR/Fg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=6vKDYXyKsqDkG0CUP7hglMfBChpCeOe2tm8eKZkdNIE=;
- b=Ruf15lzCCh0PQ4cOeqbPizPnQHzhoLWCT9AZG89EgjcGBdREAbCc5fV/8dPbLva3MeHKlmPaZjGItosasimiu/fbhxJS5WQ9ESfH52HfySR6ciUNRjoUZvy4dq2PW92Ui9ErRLMvgB/5Vev5DT1joZ9zwxB6/gjPlusnSfJb2D1hPic0Xewnsjcuyo6LzeSVoTFTGzcHT5+cw1VkHmtnxXx5GEMT/JajVi86Q8eTJVwW8y6KXOzvH6PcO5Wm8BESiDjTwrhK3WNllDux5zUF23n4Vh6dyFeiSLJV5TUPdsMF3AZ+8v850kI+UTOE0EhTzvOawjQymDDPvBc+GdL9QQ==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=nxp.com; dmarc=pass action=none header.from=nxp.com; dkim=pass
- header.d=nxp.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=nxp.com; s=selector2;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=6vKDYXyKsqDkG0CUP7hglMfBChpCeOe2tm8eKZkdNIE=;
- b=ZGBcnBw1XxgcIEkvQIOQHTdzou67pMEaUSH00kLstNst4HjBKDnMiGQAZSJtM+AAtNeNdSGBF5oKNTs6PeZHnIozCciFUieSgdOW7lxHO4nhYYliWZMx9rOOxbbHwHjjHG3BFV2BA23wlsK+1stuRB/ugXsBW7v+2Qs3JFMly7U=
-Received: from DB6PR0402MB2760.eurprd04.prod.outlook.com (2603:10a6:4:a1::14)
- by DB6PR0402MB2935.eurprd04.prod.outlook.com (2603:10a6:4:9d::23) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3412.25; Sun, 27 Sep
- 2020 00:59:47 +0000
-Received: from DB6PR0402MB2760.eurprd04.prod.outlook.com
- ([fe80::35c5:8c71:91f3:6bc6]) by DB6PR0402MB2760.eurprd04.prod.outlook.com
- ([fe80::35c5:8c71:91f3:6bc6%12]) with mapi id 15.20.3412.028; Sun, 27 Sep
- 2020 00:59:46 +0000
-From:   Peng Fan <peng.fan@nxp.com>
-To:     Aaron Marcher <aaron@sigma-star.at>,
-        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Subject: RE: Debugging reboot freeze
-Thread-Topic: Debugging reboot freeze
-Thread-Index: AQHWkyNcgPqUGjL190yCUeRpYfxpc6l7q9wg
-Date:   Sun, 27 Sep 2020 00:59:46 +0000
-Message-ID: <DB6PR0402MB276028AE4CC27F2ACC5D96FC88340@DB6PR0402MB2760.eurprd04.prod.outlook.com>
-References: <20200925100450.3t3xrwwb22fac7ti@linux-8csb>
-In-Reply-To: <20200925100450.3t3xrwwb22fac7ti@linux-8csb>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-authentication-results: sigma-star.at; dkim=none (message not signed)
- header.d=none;sigma-star.at; dmarc=none action=none header.from=nxp.com;
-x-originating-ip: [119.31.174.71]
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-ht: Tenant
-x-ms-office365-filtering-correlation-id: cd3d5a74-efa9-4b30-5c0b-08d86280a108
-x-ms-traffictypediagnostic: DB6PR0402MB2935:
-x-microsoft-antispam-prvs: <DB6PR0402MB2935718F8E79021301C796D288340@DB6PR0402MB2935.eurprd04.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:9508;
-x-ms-exchange-senderadcheck: 1
-x-microsoft-antispam: BCL:0;
-x-microsoft-antispam-message-info: vFLGhvBMCCwISUoT1WO+E1qsJke0l+40lE921omoWfbzWDptdHC05/K4oC6J0g9V+ddSvQ/tAPyxSZ02MwNUwB6s6VXF2acfTHhgPmqlxDgX1ey4x/MAMYSaLs0bBSNchSZmEus9hmoAlUUNYFoSIEvITg018od0bJhc/3rVzWAEB+30DLDQiLaqU4kwCCvvsLIGzNJO1rJjvrHljgJRd/H9ChyT2SgYcczlntMqlxb/kqJ7sXJcMZFxMhhVm846QZf14FQccDnnmBeYviVnmOUlY4aV61kjZ0uBDEPy67wV8dYkeiq50WF4AfpG2fEoLFgqk4m6f4NqHoTG8C7eZI1W7gc7CaqICoXk9nGdjAYYwQZc+TiAl/jAbbQrNoPs
-x-forefront-antispam-report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DB6PR0402MB2760.eurprd04.prod.outlook.com;PTR:;CAT:NONE;SFS:(4636009)(39860400002)(366004)(346002)(376002)(396003)(136003)(86362001)(8936002)(64756008)(66556008)(66476007)(5660300002)(2906002)(316002)(478600001)(26005)(186003)(7696005)(55016002)(9686003)(52536014)(71200400001)(110136005)(8676002)(7116003)(83380400001)(6506007)(76116006)(66946007)(33656002)(3480700007)(44832011)(66446008);DIR:OUT;SFP:1101;
-x-ms-exchange-antispam-messagedata: Sh1ZGsCgK/oKE1VZlo7xVjYlISQJlHsx2yN8wQj7djtL+zCBQRhMqglddBzqxPEXrcQ1zRL+p4pIkCga3WWi4/c3WfrmpChiRxGgKKBvuv0/FsC+Ghgm8wCdpgG4uy1bJV3UoO4Cllm4TjCwi6JLB0Gs0xpFzh1U39m/42QgrnHYW/zJomjNQtn51zsoutswX2SwWODGEbE5VM7bQn+emABOfubkITQDyHoRi+fVhHqtHEqe64jzT6TihDIXoo//OcXknsBmagFWyUc+5gLjdn7ShfHRR8hf8T6njsuZ3uLGM8U6e6m9vj1JF0WYucIZ5C0FFuLM3g4SnTSuIGAC0IUaBaLFGouaMMJk3LAFhxxgXQoBExRFif3WI6pa6bEL0ntZbIEivchnPdjxWKtAz1l3b3HGo+yOFMXQvPxc9xMJM2z+UUd+edX+V0f5FqKgKcrpjOLmcI6+Ld+PtNZJKYko71nM3Uoryp4rFhKDp5sWwbiKI1uKDykl0hgHnRtpJ4vh1P+MHRl+BK7fI895yaKGrXfifx0615ueDN5z7ZF1ts2ZAouYZJYM0vToLqJP4GIpCBKDJIkmKRPXKvQ+M+fFediw8w9zLTVK8K61dSVM+dmQV8SPKHqbuToKwHWxqK98cpXMIkh+LdCzmXZXWA==
-x-ms-exchange-transport-forked: True
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+        Sat, 26 Sep 2020 22:55:05 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51350 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S1726478AbgI0CzF (ORCPT
+        <rfc822;linux-rt-users@vger.kernel.org>);
+        Sat, 26 Sep 2020 22:55:05 -0400
+Received: from mail-pl1-x642.google.com (mail-pl1-x642.google.com [IPv6:2607:f8b0:4864:20::642])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id DF405C0613CE;
+        Sat, 26 Sep 2020 19:55:04 -0700 (PDT)
+Received: by mail-pl1-x642.google.com with SMTP id m15so1469635pls.8;
+        Sat, 26 Sep 2020 19:55:04 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=CdI7d+rqTIus/Dk9IPQIHfyY4/Pg7193PjaOocT5lDU=;
+        b=BsgegHhV3kefxn2D8GvNrxhp0LxzvLSwSKkojhRVVzWb71cHzJQrp5Cmopy5sYghVw
+         LKs6ZGlZHINXlRyyoW+vB1qtQHcIXfKiNWDpDAYs8npfTxh4FXABfra/r9yRIlEVdRN2
+         F8Uc7hjz8n4VKGlU462m+IPQdEVtPHqXsWFcbLbdh3SwGASXdn0daDd5usbT17c2JpNs
+         j/OXWCWXWikHzVz1F5xrDDxbBIt+A1Ol9VVpfEBj6xrhKes+0QFk/GyZHk3jhNpoiUyO
+         ESlWSmw/HGHrSHRtEr+Gz44oTd/fmHMjiJV9mwdkklwutPvBtGHsmH+v01LTUHjvsCpM
+         Uwxg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+         :content-transfer-encoding;
+        bh=CdI7d+rqTIus/Dk9IPQIHfyY4/Pg7193PjaOocT5lDU=;
+        b=FRugR8FF124NlXYAN2dmTZ+EygJg6PdzOD2WN+1QmHXSqdmGFFioUKPia7lunC0x0o
+         +AgdPuhnUaOSgKwQF7M2X6i1hsMt/ooaHSN0DDmQ2BaHUlkkkyHvQNO6xT7UCbXJ4Xy9
+         yodVo5dT6NDDY4qMCkiOfCSVEhBBVsRBQ25MupqhracW489xract2dqu41sBsJ4P8UmZ
+         nhzdfdICGLuAO0Ukcs2tIJ2gpPSea+HkotndA2jG6yY1vN0CcnAnPNlmyPSRVaptPu67
+         ScnitCK7Spgz/GbWDGEPoBrOL5m9pGf1QzYc2/1VnKI4pImNnbInMfa5Vu7zGOYqh0ZG
+         yktA==
+X-Gm-Message-State: AOAM5310PQHp2WwWZdKOCT9kZorZUPHdaeVd6EMYxAfm3bkUjPj7wk2L
+        Monyi+u7FbBSOnRiBciwhLw=
+X-Google-Smtp-Source: ABdhPJy8i2o3+umP00g/fisYoUR9aq+h9qENz1zxtHXrPf0UF0Oc1U9Hi2JEZOQs2ZFMccMPAhQESw==
+X-Received: by 2002:a17:902:7c8d:b029:d2:80bd:2f30 with SMTP id y13-20020a1709027c8db02900d280bd2f30mr3826797pll.22.1601175304211;
+        Sat, 26 Sep 2020 19:55:04 -0700 (PDT)
+Received: from buster.buster.your.domain ([2402:b801:2840:8200:21e:6ff:fe42:5032])
+        by smtp.gmail.com with ESMTPSA id x13sm6685025pfj.199.2020.09.26.19.55.01
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sat, 26 Sep 2020 19:55:03 -0700 (PDT)
+From:   Brad Harper <bjharper@gmail.com>
+To:     linux-amlogic@lists.infradead.org, linux-mmc@vger.kernel.org
+Cc:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-arm-kernel@lists.infradead.org,
+        Brad Harper <bjharper@gmail.com>
+Subject: [PATCH v2 0/1] mmc: host: meson-gx-mmc: fix possible deadlock condition for preempt_rt
+Date:   Sat, 26 Sep 2020 22:54:17 -0400
+Message-Id: <20200927025418.12382-1-bjharper@gmail.com>
+X-Mailer: git-send-email 2.20.1
 MIME-Version: 1.0
-X-OriginatorOrg: nxp.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: DB6PR0402MB2760.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: cd3d5a74-efa9-4b30-5c0b-08d86280a108
-X-MS-Exchange-CrossTenant-originalarrivaltime: 27 Sep 2020 00:59:46.9460
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 686ea1d3-bc2b-4c6f-a92c-d99c5c301635
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: aX04Iyb4MMRz68dTEOThvZl+OPwYUvNLUppI0Dvsyt14XE8Ne/5EfYPcRjeln6R73z5FHFqYUTbYB99M0xNT7Q==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DB6PR0402MB2935
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Aaron,
+This is a updated experiamental patch for review following discussions
+with Jerome / Sebastian regarding the usage of threadded interupts in
+meson-gx-mmc.  I don't have a complete understanding or am I a kernel
+developer but this is my best efforts attempt to address this issue.
 
-> Subject: Debugging reboot freeze
->=20
-> Hi,
->=20
-> we are encountering reboot freezes on the current 5.4.66-rt38 kernel with
-> PREEMPT_RT enabled on i.mx8mm hardware.
+Also thanks to both of of them for opening up the discussions and 
+Kevin for pointing me in the right direction for patch formatting. 
 
-Where do you get the kernel source code and which version?
-NXP release or Linux kernel upstream?
+Force threaded interrupts for meson_mmc_irq to prevent possible deadlock
+condition during mmc operations when using preempt_rt with 5.9.0-rc3-rt3
+patches on arm64.
 
-Also ATF/U-Boot version?
+Using meson-gx-mmc with an emmc device on Hardkernel Odroid N2+
+configured with preempt_rt resulted in the soc becoming unresponsive.  
+With lock checking enabled the below inconsistent lock state was 
+observed during boot.
 
-> Unfortunately, debugging is difficult in this situation as the only relat=
-ed output
-> we get during reboot (via serial console) is:
->=20
->     Rebooting...
->     Segmentation fault
+After some discussions with tglx in IRC #linux-rt a patch was suggested
+to remove IRQF_ONESHOT from request_threaded_irq.
+This has been tested and confirmed by me to resolve both the 
+unresponsive soc and the inconsistent lock state warning when using 
+5.9.0-rc3-rt3 on arm64 Odroid N2+.
 
-Do you have a debugger to see where it hangs?
+Further review and testing is required to ensure there are no adverse 
+impacts or concerns and that is the correct method to resolve the 
+problem.  I will continue to test on various amlogic devices with both 
+standard mainline low latency kernel and preempt_rt kernel with -rt 
+patches.
 
->=20
-> However, the second line is not shown on every reboot; the freeze happens
-> everytime.
->=20
-> We already tried various kernel command line options
-> (print-fatal-signals=3D1 oops=3Dpanic), earlyprintk/earlycon and a lot of=
- debug
-> printk's in the kernel source.
-> However it seems that there is no output after
-> `kernel_restart_prepare(cmd);` in kernel/reboot.c.
->=20
-> When using the same kernel version without PREEMPT_RT, the issue does not
-> occur.
->=20
-> Do you have any hints for further debugging?
+Changes since v1:
+- Add spinlock_t lock to meson_host structure
+- Add spin_lock_init to driver probe for the host lock to ensure the 
+  irq will not attempt to fire again if the threaded irq component
+  is not complete
 
-If you point me your version, and source, I could give a try in my side.
 
-Regards,
-Peng.
+[    7.858446] ================================
+[    7.858448] WARNING: inconsistent lock state
+[    7.858450] 5.9.0-rc3-rt3+ #33 Not tainted
+[    7.858453] --------------------------------
+[    7.858456] inconsistent {IN-HARDIRQ-R} -> {HARDIRQ-ON-W} usage.
+[    7.858459] swapper/0/1 [HC0[0]:SC0[0]:HE1:SE1] takes:
+[    7.858465] ffff80001219f4d8 (&trig->leddev_list_lock){+?.+}-{0:0}, at: led_trigger_set+0x104/0x270
+[    7.858482] {IN-HARDIRQ-R} state was registered at:
+[    7.858484]   lock_acquire+0xec/0x468
+[    7.858491]   rt_read_lock+0xb0/0x108
+[    7.858497]   led_trigger_event+0x34/0x88
+[    7.858501]   mmc_request_done+0x3f0/0x450
+[    7.858505]   meson_mmc_irq+0x284/0x378
+[    7.858511]   __handle_irq_event_percpu+0xcc/0x4a8
+[    7.858515]   handle_irq_event_percpu+0x60/0xb0
+[    7.858519]   handle_irq_event+0x50/0x108
+[    7.858522]   handle_fasteoi_irq+0xd0/0x180
+[    7.858527]   generic_handle_irq+0x38/0x50
+[    7.858530]   __handle_domain_irq+0x6c/0xc8
+[    7.858533]   gic_handle_irq+0x5c/0xb8
+[    7.858537]   el1_irq+0xbc/0x180
+[    7.858540]   arch_cpu_idle+0x28/0x38
+[    7.858544]   default_idle_call+0x90/0x3f0
+[    7.858547]   do_idle+0x250/0x268
+[    7.858551]   cpu_startup_entry+0x2c/0x78
+[    7.858554]   rest_init+0x1b0/0x284
+[    7.858559]   arch_call_rest_init+0x18/0x24
+[    7.858565]   start_kernel+0x550/0x588
+[    7.858569] irq event stamp: 1925495
+[    7.858571] hardirqs last  enabled at (1925495): [<ffff8000111e3ba4>] _raw_spin_unlock_irqrestore+0xa4/0xb0
+[    7.858576] hardirqs last disabled at (1925494): [<ffff8000111e3c58>] _raw_spin_lock_irqsave+0xa8/0xb8
+[    7.858580] softirqs last  enabled at (1857856): [<ffff80001024705c>] bdi_register_va+0x114/0x368
+[    7.858586] softirqs last disabled at (1857849): [<ffff80001024705c>] bdi_register_va+0x114/0x368
+[    7.858590] 
+               other info that might help us debug this:
+[    7.858592]  Possible unsafe locking scenario:
 
-> Thank you very much in advance.
->=20
-> Regards,
-> Aaron Marcher
+[    7.858594]        CPU0
+[    7.858595]        ----
+[    7.858597]   lock(&trig->leddev_list_lock);
+[    7.858600]   <Interrupt>
+[    7.858602]     lock(&trig->leddev_list_lock);
+[    7.858604] 
+                *** DEADLOCK ***
+
+[    7.858606] 3 locks held by swapper/0/1:
+[    7.858609]  #0: ffff80001219eb30 (leds_list_lock){++++}-{0:0}, at: led_trigger_register+0xf4/0x1c0
+[    7.858619]  #1: ffff0000b0696a70 (&led_cdev->trigger_lock){+.+.}-{0:0}, at: led_trigger_register+0x134/0x1c0
+[    7.858629]  #2: ffff800011fb83d0 (rcu_read_lock){....}-{1:2}, at: rt_write_lock+0x8/0x108
+[    7.858637] 
+               stack backtrace:
+[    7.858640] CPU: 5 PID: 1 Comm: swapper/0 Not tainted 5.9.0-rc3-rt3+ #33
+[    7.858643] Hardware name: Hardkernel ODROID-N2Plus (DT)
+[    7.858646] Call trace:
+[    7.858647]  dump_backtrace+0x0/0x1e8
+[    7.858650]  show_stack+0x20/0x30
+[    7.858653]  dump_stack+0xf0/0x164
+[    7.858659]  print_usage_bug+0x2b4/0x2c0
+[    7.858662]  mark_lock+0x2e8/0x360
+[    7.858665]  __lock_acquire+0x238/0x1858
+[    7.858669]  lock_acquire+0xec/0x468
+[    7.858672]  rt_write_lock+0xb0/0x108
+[    7.858675]  led_trigger_set+0x104/0x270
+[    7.858678]  led_trigger_register+0x180/0x1c0
+[    7.858681]  heartbeat_trig_init+0x28/0x5c
+[    7.858686]  do_one_initcall+0x90/0x4bc
+[    7.858690]  kernel_init_freeable+0x2cc/0x338
+[    7.858694]  kernel_init+0x1c/0x11c
+[    7.858697]  ret_from_fork+0x10/0x34
+
+Brad Harper (1):
+  mmc: host: meson-gx-mmc: fix possible deadlock condition for
+    preempt_rt
+
+ drivers/mmc/host/meson-gx-mmc.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+-- 
+2.20.1
+
