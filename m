@@ -1,146 +1,170 @@
-Return-Path: <SRS0=3NFy=DG=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=8Glo=DH=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.2 required=3.0 tests=BAYES_00,DKIM_SIGNED,
-	DKIM_VALID,DKIM_VALID_AU,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,NICE_REPLY_A,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-15.6 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 921BAC4346E
-	for <linux-rt-users@archiver.kernel.org>; Tue, 29 Sep 2020 08:32:34 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D8284C4727C
+	for <linux-rt-users@archiver.kernel.org>; Wed, 30 Sep 2020 15:45:33 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 40DDF20897
-	for <linux-rt-users@archiver.kernel.org>; Tue, 29 Sep 2020 08:32:34 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 7F37320739
+	for <linux-rt-users@archiver.kernel.org>; Wed, 30 Sep 2020 15:45:33 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="FeWdKp0c"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="PJEsWNhW"
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1727795AbgI2Icb (ORCPT
+        id S1726476AbgI3Ppc (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 29 Sep 2020 04:32:31 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37474 "EHLO
-        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725554AbgI2Ica (ORCPT
+        Wed, 30 Sep 2020 11:45:32 -0400
+Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:48267 "EHLO
+        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
+        by vger.kernel.org with ESMTP id S1725372AbgI3Ppc (ORCPT
         <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 29 Sep 2020 04:32:30 -0400
-Received: from mail-pf1-x444.google.com (mail-pf1-x444.google.com [IPv6:2607:f8b0:4864:20::444])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BBF52C061755;
-        Tue, 29 Sep 2020 01:32:30 -0700 (PDT)
-Received: by mail-pf1-x444.google.com with SMTP id d6so3793061pfn.9;
-        Tue, 29 Sep 2020 01:32:30 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20161025;
-        h=subject:to:cc:references:from:message-id:date:user-agent
-         :mime-version:in-reply-to:content-transfer-encoding:content-language;
-        bh=DYjZtwFq2L9ODgZVruIDHZD1toUiu3MKxRUMakYMWRU=;
-        b=FeWdKp0cQSjJN/b3lNofZspZaUqJ1xmZBCJeFWNVxJK5m1jFEWKLosAu+xzSYXaXls
-         KsAyM70BbFfxL/t8kG4vNnfIcVTBJcT8H1yXoWaNWSry/ANWA1tDgGX6Qv9tOO/NnWIb
-         AftK/Br/DTPtTMgcNJGwERcEQU1JAj+Us3f3JNg6hCYauFca444Er8KnADs6e58ppwBv
-         +n1eBdHmo+IZY7/XqbNPahtqvImr5u5d9f4iwWd2arv4Bi11HaMUzrjQUXaAhPMbaVTc
-         PZOrjholSfG83IPmUP+ve7USkuxIrQE3ccqNkvu1OmrWH+xnzO9++NvaM+G1JPLiTktc
-         eV/g==
+        Wed, 30 Sep 2020 11:45:32 -0400
+Dkim-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1601480730;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=HO8sWT9IfgxNgQahgacDFKLH43vjjOJL8xgtGofXVbk=;
+        b=PJEsWNhW9tBd9/U+mP5G5t4i1aupkdf1X6YeBcvOQBnpsfwtLXdxz7RWMZ8D39Pu9MaD/E
+        fTgE0CABO0gFl205nePN+4jscYfXG1uGIGvOs0OUFdQWAtuI80QXNbwbw+a3beZO80QtA6
+        nhpEehIJdcJufNkzln/buWpMt4lScro=
+Received: from mail-qt1-f197.google.com (mail-qt1-f197.google.com
+ [209.85.160.197]) (Using TLS) by relay.mimecast.com with ESMTP id
+ us-mta-167-xJoqerEWPwScjX0uY4C_IA-1; Wed, 30 Sep 2020 11:45:26 -0400
+X-MC-Unique: xJoqerEWPwScjX0uY4C_IA-1
+Received: by mail-qt1-f197.google.com with SMTP id e6so1502219qtg.13
+        for <linux-rt-users@vger.kernel.org>; Wed, 30 Sep 2020 08:45:26 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20161025;
-        h=x-gm-message-state:subject:to:cc:references:from:message-id:date
-         :user-agent:mime-version:in-reply-to:content-transfer-encoding
-         :content-language;
-        bh=DYjZtwFq2L9ODgZVruIDHZD1toUiu3MKxRUMakYMWRU=;
-        b=kZGrXl91xQcxekaG3He4dsLCHAgn5SSXpJIu9B9crg69o6YG2g62gTjnMazC+Ot0jl
-         Yozo0si6IXzw/9VwgMT8+Y5wt10MPrLy+Vc/4HG2XP45YqagJg1njeyHxYtKrzo6Qm1g
-         hTcPO1CuxsOd3QhhsOLRMWSPg0Z87CzFgs7dpMFBWKM5yqX1FMj3kuxW0vaoVwNG2o53
-         YGurZ76RjEh9HnK1bPlA2ah27Blxx4GJS+Yj3SKLz10tl/+6MN08v0Zu6f+VF9F5gdlq
-         fF+S7yPJoBR3iGWhtNARy3k6t29t7a+awDzVQ6aXXaKDaeZ2E+jQYBBrVrLawjDsvFjb
-         iGnA==
-X-Gm-Message-State: AOAM533rc15HCOCdonFyGTPvDBS3NP/1t4ewFuJMuoUcTSoDF1M1aFC+
-        6qi5zgX4wm6/92Bjk1tBr+o=
-X-Google-Smtp-Source: ABdhPJw2nceW5g+34FtHTjROn02MB3Gw+F0Nr3MztE6s2E9M+UpdsMe5B99y7mflzmBMfmU4S8/COA==
-X-Received: by 2002:a65:410c:: with SMTP id w12mr2390169pgp.411.1601368350179;
-        Tue, 29 Sep 2020 01:32:30 -0700 (PDT)
-Received: from ?IPv6:2402:b801:2840:8200:cc15:dbc:89f1:a9a5? ([2402:b801:2840:8200:cc15:dbc:89f1:a9a5])
-        by smtp.gmail.com with ESMTPSA id 22sm4425686pfw.17.2020.09.29.01.32.26
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 29 Sep 2020 01:32:29 -0700 (PDT)
-Subject: Re: [PATCH v2 1/1] mmc: host: meson-gx-mmc: fix possible deadlock
- condition for preempt_rt
-To:     Kevin Hilman <khilman@baylibre.com>,
-        linux-amlogic@lists.infradead.org, linux-mmc@vger.kernel.org
-Cc:     linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-        linux-arm-kernel@lists.infradead.org, bigeasy@linutronix.de
-References: <20200927025418.12382-1-bjharper@gmail.com>
- <20200927025418.12382-2-bjharper@gmail.com> <7hwo0dmnbt.fsf@baylibre.com>
-From:   Brad Harper <bjharper@gmail.com>
-Message-ID: <aaf796cc-7e6e-2831-5b13-9654f8e6fc77@gmail.com>
-Date:   Tue, 29 Sep 2020 18:32:24 +1000
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101
- Thunderbird/78.2.2
+        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+         :mime-version:content-disposition:in-reply-to;
+        bh=HO8sWT9IfgxNgQahgacDFKLH43vjjOJL8xgtGofXVbk=;
+        b=l4Qbpb3lFezhlzCI2ziWvJPseRibNE7y4bOSEW/ZgBIbdXSfX/DFuUSZgasgPVij/Z
+         MnPtbyxIE9unfO/imp0g+yFYaD19FlGyNEnSFD2faxdUaWkarE07cW+chiDjdZGm2YCl
+         yfbAehm9w1/dEE1yNRSr0l3mcbjisq1GNgFCo6k6H4SLB94Me3i6b/rViaiYo3uyiaE1
+         dfo75CMWx6wztL6WYzbYSiRf+ww/ScgyQZvqEwaRJRYEZdzkMtOM3G8Kgx5J4nHC/cv0
+         SXLaJmK31DmhNM5AbeH545z+heub5g5OSeUmXC7lpWLh2xQjX5cVv84JC1ZQoTPCTPC/
+         M6XA==
+X-Gm-Message-State: AOAM530jzWDlVXXNMlhrVswsYmQdnDaT5k1u1zmeKhyP94aK4b1hyp1e
+        e5w6KTWBdDQ9GNPwJ0NhH0HKCJcEirvblm2n0Jln78kRAFs5Wtnyz8ejMh5Yx4c8IsICQEl8q++
+        1hXAHctz7HC8MU+jhI00ckChyWwQ=
+X-Received: by 2002:ac8:1b6a:: with SMTP id p39mr2836555qtk.260.1601480725140;
+        Wed, 30 Sep 2020 08:45:25 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJydlsD1/DVKsBawgKh7G5rakSAprPSO7NZ8wENeITz2zkjQQugsJOZBjUXiFOa6c6qwWgYMnQ==
+X-Received: by 2002:ac8:1b6a:: with SMTP id p39mr2836529qtk.260.1601480724832;
+        Wed, 30 Sep 2020 08:45:24 -0700 (PDT)
+Received: from xz-x1 (toroon474qw-lp130-09-184-147-14-204.dsl.bell.ca. [184.147.14.204])
+        by smtp.gmail.com with ESMTPSA id h199sm2504730qke.112.2020.09.30.08.45.23
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 30 Sep 2020 08:45:24 -0700 (PDT)
+Date:   Wed, 30 Sep 2020 11:45:22 -0400
+From:   Peter Xu <peterx@redhat.com>
+To:     Randy Witt <randy.e.witt@linux.intel.com>
+Cc:     linux-rt-users@vger.kernel.org, John Kacur <jkacur@redhat.com>
+Subject: Re: rt-tests v1.9 fails to compile on architectures that aren't
+ x86_64, i386 or PPC64
+Message-ID: <20200930154522.GD107801@xz-x1>
+References: <62cb6195-7116-db1d-2af2-264dbd854ddb@linux.intel.com>
 MIME-Version: 1.0
-In-Reply-To: <7hwo0dmnbt.fsf@baylibre.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
-Content-Language: en-US
+Content-Type: multipart/mixed; boundary="eJnRUKwClWJh1Khz"
+Content-Disposition: inline
+In-Reply-To: <62cb6195-7116-db1d-2af2-264dbd854ddb@linux.intel.com>
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Hi Kevin,
 
-     I think you are right,  I don't have a good enough understanding to 
-make this work so please disregard the patch.  I will take on 
-Sebastian's advice and do some testing with 'threadirqs' parameter 
-enabled in standard kernel to see if I can reproduce my original issue 
-there.  I'm hoping Jerome might also be able to help with some time to 
-find proper solution.
+--eJnRUKwClWJh1Khz
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 
-Many Thanks,
+Hi, Randy,
 
-Brad.
+On Mon, Sep 28, 2020 at 03:14:23PM -0700, Randy Witt wrote:
+> With the addition of the oslat test in v1.9, "make" with no arguments will
+> fail on any architecture that isn't x86_64, i386 or PPC64. This is due to
+> the #error added here https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git/tree/src/oslat/oslat.c?h=v1.9#n72.
+> 
+> Since there is no build time configuration to turn off particular tests, is
+> the expected workflow to specify the set of desired tests as make arguments?
+> 
+> In the absence of some sort of configure script, should there be a variable
+> that allows for tests to be removed from the set of TARGETS?
 
-On 29/09/2020 10:35 am, Kevin Hilman wrote:
-> Brad Harper <bjharper@gmail.com> writes:
->
->> ---
->>   drivers/mmc/host/meson-gx-mmc.c | 4 +++-
->>   1 file changed, 3 insertions(+), 1 deletion(-)
->
-> This patch still needs changelog summarizing the problem and what is
-> being fixed by the patch.  Most of what's in the cover letter belongs
-> here.
->
-> The cover letter can be used to describe the history/background that you
-> don't want in the patch itself.  Alternatviely, you could include that
-> information in the a single patch email also because everything after
-> the "---" line does not end up in git history.
->
->> diff --git a/drivers/mmc/host/meson-gx-mmc.c b/drivers/mmc/host/meson-gx-mmc.c
->> index 08a3b1c05..3ba8f988d 100644
->> --- a/drivers/mmc/host/meson-gx-mmc.c
->> +++ b/drivers/mmc/host/meson-gx-mmc.c
->> @@ -146,6 +146,7 @@ struct sd_emmc_desc {
->>   };
->>   
->>   struct meson_host {
->> +	spinlock_t		lock;
->>   	struct	device		*dev;
->>   	struct	meson_mmc_data *data;
->>   	struct	mmc_host	*mmc;
->> @@ -1051,6 +1052,7 @@ static int meson_mmc_probe(struct platform_device *pdev)
->>   	host->mmc = mmc;
->>   	host->dev = &pdev->dev;
->>   	dev_set_drvdata(&pdev->dev, host);
->> +	spin_lock_init(&host->lock);
-> I'm confused about what this lock is intended to do.  You init it here,
-> but it's never used anywhere.
->
->>   	/* The G12A SDIO Controller needs an SRAM bounce buffer */
->>   	host->dram_access_quirk = device_property_read_bool(&pdev->dev,
->> @@ -1139,7 +1141,7 @@ static int meson_mmc_probe(struct platform_device *pdev)
->>   	       host->regs + SD_EMMC_IRQ_EN);
->>   
->>   	ret = request_threaded_irq(host->irq, meson_mmc_irq,
->> -				   meson_mmc_irq_thread, IRQF_ONESHOT,
->> +				   meson_mmc_irq_thread, 0,
->>   				   dev_name(&pdev->dev), host);
->>   	if (ret)
->>   		goto err_init_clk;
-> Kevin
+I think we can, but instead of maintaining this knowledge both in the build
+system and in oslat.c, I'm thinking maybe we can simply do that in oslat.c, let
+it build but dump an error message for any unsupported archs.  Patch attached.
+
+Another solution (as mentioned by John offlist) is we implement a common frc()
+like fetching the time.  However since the __measure_cpu_hz() will always try
+to calculate the cpu HZ, then the HZ could be confusing then.  Considering the
+"read the processor clock" operation should still be the ideal implementation
+for frc() (and I really doubt whether there'll be real need to run oslat on
+other archs...), maybe we can use the simple way for now.
+
+What do you think?
+
+Thanks,
+
+-- 
+Peter Xu
+
+--eJnRUKwClWJh1Khz
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: attachment;
+	filename="0001-rt-tests-oslat-Allow-build-for-not-supported-archs.patch"
+
+From 40eeae690c1560632ac6160ad8056960216a9a43 Mon Sep 17 00:00:00 2001
+From: Peter Xu <peterx@redhat.com>
+Date: Wed, 30 Sep 2020 11:30:15 -0400
+Subject: [PATCH] rt-tests: oslat: Allow build for not supported archs
+
+Now rt-tests won't build for archs other than x86/i386/ppc64 after oslat is
+merged.  Instead of failing the build, let's make it pass.  However, whenever
+oslat is executed, instead of running the real program, dump an error message,
+so that people can try to implement the frc() function for it when there's a
+real need for the new arch.
+
+Signed-off-by: Peter Xu <peterx@redhat.com>
+---
+ src/oslat/oslat.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+index f1a82f2..a8b6155 100644
+--- a/src/oslat/oslat.c
++++ b/src/oslat/oslat.c
+@@ -69,7 +69,9 @@ static inline void frc(uint64_t *pval)
+ 	__asm__ __volatile__("mfspr %0, 268\n" : "=r" (*pval));
+ }
+ # else
+-#  error Need frc() for this platform.
++#  define relax()          do { } while (0)
++#  define frc(x)
++#  define FRC_MISSING
+ # endif
+ #else
+ # error Need to add support for this compiler.
+@@ -810,6 +812,12 @@ int main(int argc, char *argv[])
+ 	int i, n_cores;
+ 	cpu_set_t cpu_set;
+ 
++#ifdef FRC_MISSING
++	printf("This architecture is not yet supported. "
++	       "Please implement frc() function first for %s.\n", argv[0]);
++	return 0;
++#endif
++
+ 	CPU_ZERO(&cpu_set);
+ 
+ 	g.app_name = argv[0];
+-- 
+2.26.2
+
+
+--eJnRUKwClWJh1Khz--
+
