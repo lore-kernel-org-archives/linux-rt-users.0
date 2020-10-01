@@ -2,123 +2,92 @@ Return-Path: <SRS0=koMT=DI=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.9 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_GIT autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.5 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D5431C4727E
-	for <linux-rt-users@archiver.kernel.org>; Thu,  1 Oct 2020 18:47:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1F712C4727E
+	for <linux-rt-users@archiver.kernel.org>; Thu,  1 Oct 2020 19:01:05 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7833F20878
-	for <linux-rt-users@archiver.kernel.org>; Thu,  1 Oct 2020 18:47:32 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="GSeHoepk"
+	by mail.kernel.org (Postfix) with ESMTP id DCDD520872
+	for <linux-rt-users@archiver.kernel.org>; Thu,  1 Oct 2020 19:01:04 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730093AbgJASrc (ORCPT
+        id S1730064AbgJATA5 (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 1 Oct 2020 14:47:32 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:44517 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1729047AbgJASrb (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 1 Oct 2020 14:47:31 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1601578050;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:
-         content-transfer-encoding:content-transfer-encoding;
-        bh=A74w525Zeg3xx9WHLGSc4tGo1AFv8WB69yoQ0fuAJZE=;
-        b=GSeHoepkonSQywJRuBAj/NduiPip0g81/JijMp+YMnwKfeYvIohb2W4+aG2prJVdd8rd/L
-        svNIQBB2CqgGw8tWoiNBjADfEZGesmtr5AFuzrCpb9pSwU/sn/e5Ice8Red2SuO8EsrpOc
-        NimNShWH9EqdcNpZQXrcaQmDEBSWtsY=
-Received: from mail-qt1-f199.google.com (mail-qt1-f199.google.com
- [209.85.160.199]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-159-X8pkUGd1OTK9w2PtqbJmrA-1; Thu, 01 Oct 2020 14:47:29 -0400
-X-MC-Unique: X8pkUGd1OTK9w2PtqbJmrA-1
-Received: by mail-qt1-f199.google.com with SMTP id m13so4393773qtu.10
-        for <linux-rt-users@vger.kernel.org>; Thu, 01 Oct 2020 11:47:29 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
-         :content-transfer-encoding;
-        bh=A74w525Zeg3xx9WHLGSc4tGo1AFv8WB69yoQ0fuAJZE=;
-        b=XnmXaTLW3QMl4QcERJYXmHQ1ba+Oixwf9PvURkaqmm+QjX2oestnqQNX6SuJgnO59T
-         xMbS/afnYXE9Kr3fPAJTJZPEFVNRf3T6mSdmjMJkOq+b12R4VZI6EoZxrYqhCxaA1RiA
-         tvCUk3AV9pAXJq+Qcp6wZck48Z692gFlmrzU//imtLcYTo+AlxBsYkdk/OIsKTWB4Kk0
-         KTSf9rgamosRt5A7ijq7ZAGvjaUpchiu+ln2sSyBVS+cNDOfLT15SAjTLa24EsbzgI4T
-         WJSAZ1S0pfW09q6g0lGhdbfmXGHpHFvMj2bWkl6fNRToticSWXGzudRBw+zFN1pREZyg
-         WNfQ==
-X-Gm-Message-State: AOAM5320Xa2lCMcJI4CxQnXb0wrKRz92yYwC/MTo1FVQ5zEs4ubCJ5Lo
-        vgQkhrw1+r4WUExKzReHw6CGqFqYt4cVJb+6q6ttZ16zaI47Z9cXfW9ntptFkjkXoATpDSnaX+w
-        hU9+a7T1iuJd+Qu4nI59Zx6RRwH8=
-X-Received: by 2002:a05:620a:1341:: with SMTP id c1mr8762629qkl.460.1601578048607;
-        Thu, 01 Oct 2020 11:47:28 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJysI1b4Qd4MRKJdxZIF7Lfq1nXU7l2JbminiwBOhZo0R+lettDzDWQfvWOsoNUxwPv0wGaKRA==
-X-Received: by 2002:a05:620a:1341:: with SMTP id c1mr8762605qkl.460.1601578048340;
-        Thu, 01 Oct 2020 11:47:28 -0700 (PDT)
-Received: from xz-x1.redhat.com (toroon474qw-lp130-09-184-147-14-204.dsl.bell.ca. [184.147.14.204])
-        by smtp.gmail.com with ESMTPSA id p30sm7397121qtd.89.2020.10.01.11.47.27
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 01 Oct 2020 11:47:27 -0700 (PDT)
-From:   Peter Xu <peterx@redhat.com>
-To:     linux-rt-users@vger.kernel.org
-Cc:     Clark Williams <williams@redhat.com>,
-        Randy Witt <randy.e.witt@linux.intel.com>,
-        John Kacur <jkacur@redhat.com>, peterx@redhat.com
-Subject: [PATCH] rt-tests: oslat: Allow build for not supported archs
-Date:   Thu,  1 Oct 2020 14:47:26 -0400
-Message-Id: <20201001184726.82245-1-peterx@redhat.com>
-X-Mailer: git-send-email 2.26.2
+        Thu, 1 Oct 2020 15:00:57 -0400
+Received: from mga09.intel.com ([134.134.136.24]:20875 "EHLO mga09.intel.com"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1729412AbgJATAc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Thu, 1 Oct 2020 15:00:32 -0400
+IronPort-SDR: KZmjeRMchhajMpUuijoZyjoev2AusVJH7TeFKqz3pnUgm+Df8Y9QN9SCxe5OI3Qqxzalq2+r/2
+ Am60HSBYpgIw==
+X-IronPort-AV: E=McAfee;i="6000,8403,9761"; a="163668663"
+X-IronPort-AV: E=Sophos;i="5.77,324,1596524400"; 
+   d="scan'208";a="163668663"
+X-Amp-Result: SKIPPED(no attachment in message)
+X-Amp-File-Uploaded: False
+Received: from orsmga003.jf.intel.com ([10.7.209.27])
+  by orsmga102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 01 Oct 2020 12:00:27 -0700
+IronPort-SDR: nY1GFRypI+1AIb8+Ahqe2yjqXnsClG69KKtVAbVxwgQLunkeKIJaZskeB+s/hSGriFa+0ZZ9GQ
+ 12TAxr1qg5Uw==
+X-IronPort-AV: E=Sophos;i="5.77,324,1596524400"; 
+   d="scan'208";a="308753859"
+Received: from akshayka-mobl.amr.corp.intel.com ([10.251.155.101])
+  by orsmga003-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 01 Oct 2020 12:00:25 -0700
+Subject: Re: rt-tests v1.9 fails to compile on architectures that aren't
+ x86_64, i386 or PPC64
+To:     Peter Xu <peterx@redhat.com>
+Cc:     linux-rt-users@vger.kernel.org, John Kacur <jkacur@redhat.com>
+References: <62cb6195-7116-db1d-2af2-264dbd854ddb@linux.intel.com>
+ <20200930154522.GD107801@xz-x1>
+From:   Randy Witt <randy.e.witt@linux.intel.com>
+Message-ID: <a7cfa682-af20-6b7c-ccd8-cb9ef6303fa8@linux.intel.com>
+Date:   Thu, 1 Oct 2020 12:00:20 -0700
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0)
+ Gecko/20100101 Thunderbird/78.3.1
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+In-Reply-To: <20200930154522.GD107801@xz-x1>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Language: en-US
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-Now rt-tests won't build for archs other than x86/i386/ppc64 after oslat is
-merged.  Instead of failing the build, let's make it pass.  However, whenever
-oslat is executed, instead of running the real program, dump an error message,
-so that people can try to implement the frc() function for it when there's a
-real need for the new arch.
+On 9/30/20 8:45 AM, Peter Xu wrote:
+> Hi, Randy,
+> 
+> On Mon, Sep 28, 2020 at 03:14:23PM -0700, Randy Witt wrote:
+>> With the addition of the oslat test in v1.9, "make" with no arguments will
+>> fail on any architecture that isn't x86_64, i386 or PPC64. This is due to
+>> the #error added here https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git/tree/src/oslat/oslat.c?h=v1.9#n72.
+>>
+>> Since there is no build time configuration to turn off particular tests, is
+>> the expected workflow to specify the set of desired tests as make arguments?
+>>
+>> In the absence of some sort of configure script, should there be a variable
+>> that allows for tests to be removed from the set of TARGETS?
+> 
+> I think we can, but instead of maintaining this knowledge both in the build
+> system and in oslat.c, I'm thinking maybe we can simply do that in oslat.c, let
+> it build but dump an error message for any unsupported archs.  Patch attached.
 
-Signed-off-by: Peter Xu <peterx@redhat.com>
----
+Sorry I didn't have time to respond yesterday. I think this patch is a good 
+solution. It's much better than having to know the set of compatible tests.
 
-Just in case this got lost - I'm posting as a formal patch.  Please feel free
-to comment here directly.
----
- src/oslat/oslat.c | 10 +++++++++-
- 1 file changed, 9 insertions(+), 1 deletion(-)
+> Another solution (as mentioned by John offlist) is we implement a common frc()
+> like fetching the time.  However since the __measure_cpu_hz() will always try
+> to calculate the cpu HZ, then the HZ could be confusing then.  Considering the
+> "read the processor clock" operation should still be the ideal implementation
+> for frc() (and I really doubt whether there'll be real need to run oslat on
+> other archs...), maybe we can use the simple way for now.
 
-diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
-index f1a82f2..a8b6155 100644
---- a/src/oslat/oslat.c
-+++ b/src/oslat/oslat.c
-@@ -69,7 +69,9 @@ static inline void frc(uint64_t *pval)
- 	__asm__ __volatile__("mfspr %0, 268\n" : "=r" (*pval));
- }
- # else
--#  error Need frc() for this platform.
-+#  define relax()          do { } while (0)
-+#  define frc(x)
-+#  define FRC_MISSING
- # endif
- #else
- # error Need to add support for this compiler.
-@@ -810,6 +812,12 @@ int main(int argc, char *argv[])
- 	int i, n_cores;
- 	cpu_set_t cpu_set;
- 
-+#ifdef FRC_MISSING
-+	printf("This architecture is not yet supported. "
-+	       "Please implement frc() function first for %s.\n", argv[0]);
-+	return 0;
-+#endif
-+
- 	CPU_ZERO(&cpu_set);
- 
- 	g.app_name = argv[0];
--- 
-2.26.2
+Would you be willing to help me understand why it wouldn't be useful for other 
+archs? I am most likely missing something obvious, and apologize if that's the case.
+
+> What do you think?
+> 
+> Thanks,
+> 
 
