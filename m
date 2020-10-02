@@ -1,107 +1,89 @@
-Return-Path: <SRS0=koMT=DI=vger.kernel.org=linux-rt-users-owner@kernel.org>
+Return-Path: <SRS0=LIBJ=DJ=vger.kernel.org=linux-rt-users-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-10.6 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_2 autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 99DA8C4727E
-	for <linux-rt-users@archiver.kernel.org>; Thu,  1 Oct 2020 20:05:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 829C1C35257
+	for <linux-rt-users@archiver.kernel.org>; Fri,  2 Oct 2020 22:04:08 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 4EA1E207FB
-	for <linux-rt-users@archiver.kernel.org>; Thu,  1 Oct 2020 20:05:14 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KEio7Tn1"
+	by mail.kernel.org (Postfix) with ESMTP id 49EDA2072E
+	for <linux-rt-users@archiver.kernel.org>; Fri,  2 Oct 2020 22:04:08 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=default; t=1601676248;
+	bh=yybcndHOjmfwLTmM0mu6h5cJAPUOEJCSW1Ob8kRd5Pc=;
+	h=Subject:From:To:Date:List-ID:From;
+	b=axF5QRXFY/SPdYdX7Ni0BlyF4VreTftM/LGSwoPTCbvT7P3QsnjR9/9jY+1nmE8se
+	 ygMdnmwvxc2jdf7woAvOwLG6ywvX3GH3dPmh8SOWlDOghncblb87V1nwscCtmuMXF4
+	 ErXqBUtcHszFfKhKKCDy/BHO5JrrOSeXtpWWBmZo=
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1730008AbgJAUFN (ORCPT
+        id S1725446AbgJBWED (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Thu, 1 Oct 2020 16:05:13 -0400
-Received: from us-smtp-delivery-124.mimecast.com ([216.205.24.124]:60829 "EHLO
-        us-smtp-delivery-124.mimecast.com" rhost-flags-OK-OK-OK-OK)
-        by vger.kernel.org with ESMTP id S1726606AbgJAUFM (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Thu, 1 Oct 2020 16:05:12 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1601582711;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=69752MlpGhETXXcfjzDcYflLtqisEJ18KkBk/F/GFkc=;
-        b=KEio7Tn1IwS+IWq8DyMhlBMgzKY5VEcMeA+9X1Lhy7cGyhsfU8ydDtKoOkg8sPVDKyzOEL
-        58cIpa3ghWcY+UuDiGEHCDu3auTV52xmHo1YBBYAg7C6yG6Od4BDPUVSMEWa8maRtWGgz6
-        jirrt70wV7bL7r9hhSzgPWx7bQDoS90=
-Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
- [209.85.219.69]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-569-cd-UBGrSNlKNeF5SAxnA7g-1; Thu, 01 Oct 2020 16:05:09 -0400
-X-MC-Unique: cd-UBGrSNlKNeF5SAxnA7g-1
-Received: by mail-qv1-f69.google.com with SMTP id 99so3846841qva.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 01 Oct 2020 13:05:09 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20161025;
-        h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-         :mime-version:content-disposition:in-reply-to;
-        bh=69752MlpGhETXXcfjzDcYflLtqisEJ18KkBk/F/GFkc=;
-        b=Md+TXbUuK9p6TVY75OF6iQQUZ8kScfYsZlxikg7DbNcosUYEiX/iU936tnnyEoToJO
-         7UjlYV5KgXp27rvWhb1p7+oUG/FVwfq1AH30MIwS8k1vJhjKFwNWrh9Ny+9J6Dk26PTx
-         3ieMvheq0KNltsSQkXk/1EITTzAmH+krfotHGs4XKVQ359jiBqWxQ8gFCTEPbvj7xeNx
-         L7K0/Z872uTG4Xaj2DU+rI/swzKavdzP7sNBjButiE2cx4NBjDfmlJsbxN1KKH7ArvxR
-         wOJtVAyVPmBpqmyucV1UJGZpKiC9+4s/pkmG0Niak6/ZJYw+La9bB0qkKcAmcEy3cBZL
-         2HrQ==
-X-Gm-Message-State: AOAM530iD3b39EKztuC8Kfpn3II40OLzHaAlVI4mCNentIj6Qi1BgBcC
-        IXbl/LOa/PlRL7C/C2Gmx5uo0ycRhjkAuXZI/Zy1eDgQ2dwglw1rF7TqUsHzdOsod9qefJgbPOB
-        KyRkA0NV4fJzDqvjqHOgQ84VkAV0=
-X-Received: by 2002:a37:a88a:: with SMTP id r132mr9067817qke.270.1601582708370;
-        Thu, 01 Oct 2020 13:05:08 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJyo/8tFfnMT+cP/8hwYEnaYaZ9SAUogSlX0rdLT91Q6Jk7VW9yJ5aEdbaKiIaiStgwfj5kE4w==
-X-Received: by 2002:a37:a88a:: with SMTP id r132mr9067779qke.270.1601582707921;
-        Thu, 01 Oct 2020 13:05:07 -0700 (PDT)
-Received: from xz-x1 (toroon474qw-lp130-09-184-147-14-204.dsl.bell.ca. [184.147.14.204])
-        by smtp.gmail.com with ESMTPSA id e23sm7062572qkl.67.2020.10.01.13.05.06
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 01 Oct 2020 13:05:07 -0700 (PDT)
-Date:   Thu, 1 Oct 2020 16:05:05 -0400
-From:   Peter Xu <peterx@redhat.com>
-To:     Randy Witt <randy.e.witt@linux.intel.com>
-Cc:     linux-rt-users@vger.kernel.org, John Kacur <jkacur@redhat.com>
-Subject: Re: rt-tests v1.9 fails to compile on architectures that aren't
- x86_64, i386 or PPC64
-Message-ID: <20201001200505.GB3538@xz-x1>
-References: <62cb6195-7116-db1d-2af2-264dbd854ddb@linux.intel.com>
- <20200930154522.GD107801@xz-x1>
- <a7cfa682-af20-6b7c-ccd8-cb9ef6303fa8@linux.intel.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <a7cfa682-af20-6b7c-ccd8-cb9ef6303fa8@linux.intel.com>
+        Fri, 2 Oct 2020 18:04:03 -0400
+Received: from mail.kernel.org ([198.145.29.99]:34024 "EHLO mail.kernel.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1725283AbgJBWED (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Fri, 2 Oct 2020 18:04:03 -0400
+Received: from tzanussi-mobl (c-73-209-127-30.hsd1.il.comcast.net [73.209.127.30])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by mail.kernel.org (Postfix) with ESMTPSA id CA89420719;
+        Fri,  2 Oct 2020 22:04:01 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=default; t=1601676242;
+        bh=yybcndHOjmfwLTmM0mu6h5cJAPUOEJCSW1Ob8kRd5Pc=;
+        h=Subject:From:To:Date:From;
+        b=A4l5ehT6vbvxEWmJ4sNkUQv9cHJu4XKqHpL6YX1GlpN3NwElu6P5xzjj8tlZaRELZ
+         SW0umMCTZZAPRZRydfsq95mnZeR3KBUOMVD0z+N+lYSWOI7mD5i9NPA+lSedXwATMN
+         ZFpjSj8lBUA3Y+c2tgGysk0Pa2YpVpuPZOh0TeRU=
+Message-ID: <ee85ed63067c9b681e62735d0491e25819da5dd0.camel@kernel.org>
+Subject: [ANNOUNCE] 4.19.148-rt64
+From:   Tom Zanussi <zanussi@kernel.org>
+To:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Carsten Emde <C.Emde@osadl.org>,
+        John Kacur <jkacur@redhat.com>,
+        Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Daniel Wagner <wagi@monom.org>,
+        Clark Williams <williams@redhat.com>,
+        Pavel Machek <pavel@denx.de>, Tom Zanussi <zanussi@kernel.org>
+Date:   Fri, 02 Oct 2020 17:04:00 -0500
+Content-Type: text/plain; charset="UTF-8"
+X-Mailer: Evolution 3.28.5-0ubuntu0.18.04.1 
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Thu, Oct 01, 2020 at 12:00:20PM -0700, Randy Witt wrote:
-> > Another solution (as mentioned by John offlist) is we implement a common frc()
-> > like fetching the time.  However since the __measure_cpu_hz() will always try
-> > to calculate the cpu HZ, then the HZ could be confusing then.  Considering the
-> > "read the processor clock" operation should still be the ideal implementation
-> > for frc() (and I really doubt whether there'll be real need to run oslat on
-> > other archs...), maybe we can use the simple way for now.
-> 
-> Would you be willing to help me understand why it wouldn't be useful for
-> other archs?
+Hello RT Folks!
 
-Sorry if I confused you... I never meant that. :)
+I'm pleased to announce the 4.19.148-rt64 stable release.
 
-I tried to dump that error message just to make sure when some other arch
-wanted to run this program, then people will know what they need to do is
-simply to implement the frc() function on that arch for oslat.c.  I just feel
-like providing a common implementation for frc() could be slightly confusing
-(as mentioned above, e.g. on hz information).  So maybe it's better to wait for
-someone to implement that (I believe shouldn't be hard for a genuine RT user
-anyways...).
+This release is just an update to the new stable 4.19.148
+version and no RT specific changes have been made.
 
-Thanks,
+You can get this release via the git tree at:
 
--- 
-Peter Xu
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.19-rt
+  Head SHA1: 0f0eda46246e76215f9056d17df7d964a2047cb8
+
+Or to build 4.19.148-rt64 directly, the following patches should be applied:
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/linux-4.19.tar.xz
+
+  https://www.kernel.org/pub/linux/kernel/v4.x/patch-4.19.148.xz
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/4.19/patch-4.19.148-rt64.patch.xz
+
+Enjoy!
+
+   Tom
 
