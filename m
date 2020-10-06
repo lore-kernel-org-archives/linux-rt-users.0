@@ -3,83 +3,60 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
 X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_2 autolearn=no autolearn_force=no version=3.4.0
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4FAFEC4727E
-	for <linux-rt-users@archiver.kernel.org>; Tue,  6 Oct 2020 09:51:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D2AE8C41604
+	for <linux-rt-users@archiver.kernel.org>; Tue,  6 Oct 2020 14:44:12 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 08226206B5
-	for <linux-rt-users@archiver.kernel.org>; Tue,  6 Oct 2020 09:51:36 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 970F9208B8
+	for <linux-rt-users@archiver.kernel.org>; Tue,  6 Oct 2020 14:44:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1726137AbgJFJvd (ORCPT
+        id S1726139AbgJFOoD (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Tue, 6 Oct 2020 05:51:33 -0400
-Received: from ms01.santannapisa.it ([193.205.80.98]:63816 "EHLO
-        mail.santannapisa.it" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S1725939AbgJFJvd (ORCPT
-        <rfc822;linux-rt-users@vger.kernel.org>);
-        Tue, 6 Oct 2020 05:51:33 -0400
-Received: from [151.61.51.211] (account l.abeni@santannapisa.it HELO sweethome)
-  by santannapisa.it (CommuniGate Pro SMTP 6.1.11)
-  with ESMTPSA id 151709920; Tue, 06 Oct 2020 11:51:31 +0200
-Date:   Tue, 6 Oct 2020 11:51:26 +0200
-From:   luca abeni <luca.abeni@santannapisa.it>
-To:     Juri Lelli <juri.lelli@redhat.com>
-Cc:     peterz@infradead.org, mingo@redhat.com, rostedt@goodmis.org,
-        tglx@linutronix.de, linux-kernel@vger.kernel.org,
-        tommaso.cucinotta@santannapisa.it, alessio.balsini@gmail.com,
-        bristot@redhat.com, dietmar.eggemann@arm.com,
-        linux-rt-users@vger.kernel.org, mtosatti@redhat.com,
-        williams@redhat.com, valentin.schneider@arm.com
-Subject: Re: [RFC PATCH v2 4/6] sched/deadline: Introduce deadline servers
-Message-ID: <20201006115126.453db362@sweethome>
-In-Reply-To: <20201006093523.GD4352@localhost.localdomain>
-References: <20200807095051.385985-1-juri.lelli@redhat.com>
-        <20200807095051.385985-5-juri.lelli@redhat.com>
-        <20201006095612.381d806f@sweethome>
-        <20201006093523.GD4352@localhost.localdomain>
-X-Mailer: Claws Mail 3.17.5 (GTK+ 2.24.32; x86_64-pc-linux-gnu)
+        Tue, 6 Oct 2020 10:44:03 -0400
+Received: from mail.monom.org ([188.138.9.77]:50458 "EHLO mail.monom.org"
+        rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+        id S1725981AbgJFOoD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Tue, 6 Oct 2020 10:44:03 -0400
+X-Greylist: delayed 398 seconds by postgrey-1.27 at vger.kernel.org; Tue, 06 Oct 2020 10:44:02 EDT
+Received: from mail.monom.org (localhost [127.0.0.1])
+        by filter.mynetwork.local (Postfix) with ESMTP id 8B68B5004AF;
+        Tue,  6 Oct 2020 16:37:22 +0200 (CEST)
+Received: from [192.168.154.220] (unknown [94.31.100.251])
+        by mail.monom.org (Postfix) with ESMTPSA id 47C4F500103;
+        Tue,  6 Oct 2020 16:37:22 +0200 (CEST)
+Subject: Re: [ANNOUNCE] v5.9-rc8-rt12
+To:     Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+        Thomas Gleixner <tglx@linutronix.de>
+Cc:     LKML <linux-kernel@vger.kernel.org>,
+        linux-rt-users <linux-rt-users@vger.kernel.org>,
+        Steven Rostedt <rostedt@goodmis.org>
+References: <20201006085811.mtizrfff6k5r3me7@linutronix.de>
+From:   Daniel Wagner <wagi@monom.org>
+Message-ID: <6c5bce4f-1c7f-a9e4-6707-2cda54141d8e@monom.org>
+Date:   Tue, 6 Oct 2020 16:37:21 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+ Thunderbird/68.12.0
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+In-Reply-To: <20201006085811.mtizrfff6k5r3me7@linutronix.de>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-rt-users.vger.kernel.org>
 X-Mailing-List: linux-rt-users@vger.kernel.org
 
-On Tue, 6 Oct 2020 11:35:23 +0200
-Juri Lelli <juri.lelli@redhat.com> wrote:
-[...]
-> > > +			if (dl_se->server_has_tasks(dl_se)) {
-> > > +				enqueue_dl_entity(dl_se, dl_se, ENQUEUE_REPLENISH);
-> > > +				resched_curr(rq);
-> > > +				__push_dl_task(rq, &rf);
-> > > +			} else {
-> > > +				replenish_dl_entity(dl_se, dl_se);  
-> > 
-> > I am wondering if here we need a "task_non_contending(dl_se)" after
-> > "replenish_dl_entity(dl_se, dl_se);"...
-> > 
-> > Basically, what happened is that all the served tasks blocked while the
-> > server was throttled... So, now the server should be disabled (so, we
-> > replenish the dl entity but we do not insert it in runqueue).
-> > But when the server finished its budget and has been throttled, it has
-> > not been disabled (so, its utilization is still in running_bw).  
+Hi Sebastian,
+
+On 06.10.20 10:58, Sebastian Andrzej Siewior wrote:
+> Dear RT folks!
 > 
-> Hummm. For CFS, we call dl_server_stop() after the last CFS task blocks
-> and that calls dequeue_dl(SLEEP), which should be calling
-> task_non_contending(). That should be happening also while the server is
-> throttled and CFS tasks are running outside of it, no?
+> I'm pleased to announce the v5.9-rc8-rt12 patch set.
 
-You are right... I somehow lost this detail.
+Just as heads up. I just tried to build for arm64 but PREEMPT_RT
+is not available anymore. Looks like ARCH_SUPPORTS_RT is only
+available for !KVM.
 
-
-> Guess I'm missing something.
-
-No, I was the one missing something :)
-Sorry about the noise.
-
-
-
-			Thanks,
-				Luca
+Thanks,
+Daniel
