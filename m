@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C1162C4727E
-	for <linux-rt-users@archiver.kernel.org>; Wed,  7 Oct 2020 08:57:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8E2FEC4727F
+	for <linux-rt-users@archiver.kernel.org>; Wed,  7 Oct 2020 08:57:02 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 6EE4D20870
-	for <linux-rt-users@archiver.kernel.org>; Wed,  7 Oct 2020 08:57:01 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 3CDEC2083B
+	for <linux-rt-users@archiver.kernel.org>; Wed,  7 Oct 2020 08:57:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728009AbgJGI5A (ORCPT
+        id S1728021AbgJGI5B (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 7 Oct 2020 04:57:00 -0400
-Received: from mx2.suse.de ([195.135.220.15]:57570 "EHLO mx2.suse.de"
+        Wed, 7 Oct 2020 04:57:01 -0400
+Received: from mx2.suse.de ([195.135.220.15]:57608 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1726218AbgJGI47 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 7 Oct 2020 04:56:59 -0400
+        id S1727878AbgJGI5B (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 7 Oct 2020 04:57:01 -0400
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id DC869ACF5;
-        Wed,  7 Oct 2020 08:56:57 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id 1B425B165;
+        Wed,  7 Oct 2020 08:56:59 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [rt-tests v2 03/18] cyclicdeadline: Streamline usage output and man page
-Date:   Wed,  7 Oct 2020 10:56:38 +0200
-Message-Id: <20201007085653.11961-4-dwagner@suse.de>
+Subject: [rt-tests v2 06/18] oslat: Streamline usage output and man page
+Date:   Wed,  7 Oct 2020 10:56:41 +0200
+Message-Id: <20201007085653.11961-7-dwagner@suse.de>
 X-Mailer: git-send-email 2.28.0
 In-Reply-To: <20201007085653.11961-1-dwagner@suse.de>
 References: <20201007085653.11961-1-dwagner@suse.de>
@@ -42,124 +42,149 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/sched_deadline/cyclicdeadline.8 | 24 ++++++++---------
- src/sched_deadline/cyclicdeadline.c | 41 +++++++++++++++--------------
- 2 files changed, 33 insertions(+), 32 deletions(-)
+ src/oslat/oslat.8 |  2 +-
+ src/oslat/oslat.c | 78 ++++++++++++++++++++++-------------------------
+ 2 files changed, 38 insertions(+), 42 deletions(-)
 
-diff --git a/src/sched_deadline/cyclicdeadline.8 b/src/sched_deadline/cyclicdeadline.8
-index 91766fb391c4..6df7faf445f9 100644
---- a/src/sched_deadline/cyclicdeadline.8
-+++ b/src/sched_deadline/cyclicdeadline.8
-@@ -17,7 +17,7 @@ cyclicdeadline \- This program is used to test the deadline scheduler (SCHED_DEA
- .PP
- .SH SYNOPSIS
- .B cyclicdeadline
--.RI "[-ha] [-c cpulist] [-i interval] [-s step] [-t nr_threads] [-D duration]
-+.RI "[-ha] [-c CPUSET] [-D TIME] [-i INTV] [-s STEP] [-t NUM]"
- .PP
- .SH DESCRIPTION
- .B cyclicdeadline
-@@ -25,28 +25,28 @@ is a cyclictest style program for testing the deadline scheduler
- .PP
- .SH OPTIONS
+diff --git a/src/oslat/oslat.8 b/src/oslat/oslat.8
+index 85f2c5bcdf5c..b481d8d82783 100644
+--- a/src/oslat/oslat.8
++++ b/src/oslat/oslat.8
+@@ -36,7 +36,7 @@ Total memory usage will be this value multiplies 2*N,
+ because there will be src/dst buffers for each thread, and
+ N is the number of processors for testing.
  .TP
--.B \-h
--Show this help menu
--.TP
- .B \-a
- Use all CPUs
+-.B \-t, \-\-runtime=SEC
++.B \-D, \-\-duration=TIME
+ Specify test duration, e.g., 60, 20m, 2H (m/M: minutes, h/H: hours, d/D: days).
+ By default the unit is s/second.
  .TP
--.B \-c cpulist
-+.B \-c CPUSET
- Comma / hypen separated list of CPUs to run deadline tasks on
- .TP
--.B \-i interval
-+.B \-D TIME
-+Specify a length for the test to run
-+Append 'm', 'h', or 'd' to specify minutes, hours, or days
-+.TP
-+.B \-h
-+Show this help menu
-+.TP
-+.B \-i INTV
- The shortest deadline for the tasks in us. (default 1000us)
- .TP
--.B \-s step
-+.B \-s STEP
- The amount to increase the deadline for each task in us. (default 500us)
- .TP
--.B \-t nr_threads
-+.B \-t NUM
- The number of threads to run as deadline (default 1)
--.TP
--.B \-D time
--Specify a length for the test to run
- .br
--Append 'm', 'h', or 'd' to specify minutes, hours, or days
- .SH AUTHOR
- cyclicdeadline was written by Steven Rostedt <rostedt@goodmis.org>
- .PP
-diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
-index a08e28e73c42..310880805553 100644
---- a/src/sched_deadline/cyclicdeadline.c
-+++ b/src/sched_deadline/cyclicdeadline.c
-@@ -630,26 +630,25 @@ static void teardown(void)
- 	destroy_cpuset(CPUSET_LOCAL, 1);
+diff --git a/src/oslat/oslat.c b/src/oslat/oslat.c
+index f1a82f2367d2..fafbdd694326 100644
+--- a/src/oslat/oslat.c
++++ b/src/oslat/oslat.c
+@@ -507,42 +507,37 @@ static void handle_alarm(int code)
+ 	g.cmd = STOP;
  }
  
--static void usage(char **argv)
+-const char *helpmsg =
+-"Usage: %s [options]\n"
+-"\n"
+-"This is an OS latency detector by running busy loops on specified cores.\n"
+-"Please run this tool using root.\n"
+-"\n"
+-"Available options:\n"
+-"\n"
+-"  -b, --bucket-size      Specify the number of the buckets (4-1024)\n"
+-"  -B, --bias             Add a bias to all the buckets using the estimated mininum\n"
+-"  -c, --cpu-list         Specify CPUs to run on, e.g. '1,3,5,7-15'\n"
+-"  -C, --cpu-main-thread  Specify which CPU the main thread runs on.  Default is cpu0.\n"
+-"  -f, --rtprio           Using SCHED_FIFO priority (1-99)\n"
+-"  -m, --workload-mem     Size of the memory to use for the workload (e.g., 4K, 1M).\n"
+-"                         Total memory usage will be this value multiplies 2*N,\n"
+-"                         because there will be src/dst buffers for each thread, and\n"
+-"                         N is the number of processors for testing.\n"
+-"  -s, --single-preheat   Use a single thread when measuring latency at preheat stage\n"
+-"                         NOTE: please make sure the CPU frequency on all testing cores\n"
+-"                         are locked before using this parmater.  If you don't know how\n"
+-"                         to lock the freq then please don't use this parameter.\n"
+-"  -t, --runtime          Specify test duration, e.g., 60, 20m, 2H\n"
+-"                         (m/M: minutes, h/H: hours, d/D: days)\n"
+-"  -T, --trace-threshold  Stop the test when threshold triggered (in us),\n"
+-"                         print a marker in ftrace and stop ftrace too.\n"
+-"  -v, --version          Display the version of the software.\n"
+-"  -w, --workload         Specify a kind of workload, default is no workload\n"
+-"                         (options: no, memmove)\n"
+-"  -z, --zero-omit        Don't display buckets in the output histogram if all zeros.\n"
+-"\n"
+-;
+-
+-static void usage(void)
 +static void usage(int error)
  {
--	char *arg = argv[0];
--	char *p = arg+strlen(arg);
--
--	while (p >= arg && *p != '/')
--		p--;
--	p++;
--
--	printf("usage: %s [options]\n"
--	       " -h - Show this help menu\n"
--	       " -a - Use all CPUs\n"
--	       " -c cpulist - Comma/hyphen separated list of CPUs to run deadline tasks on\n"
--	       " -i interval(us) - The shortest deadline for the tasks (default 1000us)\n"
--	       " -s step(us) - The amount to increase the deadline for each task (default 500us)\n"
--	       " -t threads - The number of threads to run as deadline (default 1)\n"
--	       " -D time - Specify a length for the test run\n"
--	       "           Append 'm', 'h', or 'd' to specify minutes, hours or days\n"
--	       "\n", p);
--	exit(-1);
-+	printf("cyclicdeadline V %1.2f\n", VERSION);
+-	printf(helpmsg, g.app_name);
+-	exit(1);
++	printf("oslat V %1.2f\n", VERSION);
 +	printf("Usage:\n"
-+	       "cyclicdeadline <options>\n\n"
-+	       "-a                         Use all CPUs\n"
-+	       "-c CPUSET                  Comma/hyphen separated list of CPUs to run deadline\n"
-+	       "                           tasks on.\n"
-+	       "-D TIME                    Specify a length for the test run.\n"
-+	       "                           Append 'm', 'h', or 'd' to specify minutes, hours or\n"
-+	       "                           days\n"
-+	       "-h                         Show this help menu.\n"
-+	       "-i INTV                    The shortest deadline for the tasks in us\n"
-+	       "                           (default 1000us).\n"
-+	       "-s STEP                    The amount to increase the deadline for each task in us\n"
-+	       "                           (default 500us).\n"
-+	       "-t NUM                     The number of threads to run as deadline (default 1).\n"
++	       "oslat <options>\n\n"
++	       "This is an OS latency detector by running busy loops on specified cores.\n"
++	       "Please run this tool using root.\n\n"
++	       "Available options:\n\n"
++	       "-b, --bucket-size      Specify the number of the buckets (4-1024)\n"
++	       "-B, --bias             Add a bias to all the buckets using the estimated mininum\n"
++	       "-c, --cpu-list         Specify CPUs to run on, e.g. '1,3,5,7-15'\n"
++	       "-C, --cpu-main-thread  Specify which CPU the main thread runs on.  Default is cpu0.\n"
++	       "-D, --duration         Specify test duration, e.g., 60, 20m, 2H\n"
++	       "                       (m/M: minutes, h/H: hours, d/D: days)\n"
++	       "-f, --rtprio           Using SCHED_FIFO priority (1-99)\n"
++	       "-m, --workload-mem     Size of the memory to use for the workload (e.g., 4K, 1M).\n"
++	       "                       Total memory usage will be this value multiplies 2*N,\n"
++	       "                       because there will be src/dst buffers for each thread, and\n"
++	       "                       N is the number of processors for testing.\n"
++	       "-s, --single-preheat   Use a single thread when measuring latency at preheat stage\n"
++	       "                       NOTE: please make sure the CPU frequency on all testing cores\n"
++	       "                       are locked before using this parmater.  If you don't know how\n"
++	       "                       to lock the freq then please don't use this parameter.\n"
++	       "-T, --trace-threshold  Stop the test when threshold triggered (in us),\n"
++	       "                       print a marker in ftrace and stop ftrace too.\n"
++	       "-v, --version          Display the version of the software.\n"
++	       "-w, --workload         Specify a kind of workload, default is no workload\n"
++	       "                       (options: no, memmove)\n"
++	       "-z, --zero-omit        Don't display buckets in the output histogram if all zeros.\n"
 +	       );
 +	exit(error);
  }
  
- static int fail;
-@@ -1057,8 +1056,10 @@ int main (int argc, char **argv)
- 			duration = parse_time_string(optarg);
+ /* TODO: use libnuma? */
+@@ -661,7 +656,7 @@ static void parse_options(int argc, char *argv[])
+ 			{ "bucket-size", required_argument, NULL, 'b' },
+ 			{ "cpu-list", required_argument, NULL, 'c' },
+ 			{ "cpu-main-thread", required_argument, NULL, 'C'},
+-			{ "runtime", required_argument, NULL, 't' },
++			{ "duration", required_argument, NULL, 'D' },
+ 			{ "rtprio", required_argument, NULL, 'f' },
+ 			{ "help", no_argument, NULL, 'h' },
+ 			{ "trace-threshold", required_argument, NULL, 'T' },
+@@ -673,7 +668,7 @@ static void parse_options(int argc, char *argv[])
+ 			{ "version", no_argument, NULL, 'v'},
+ 			{ NULL, 0, NULL, 0 },
+ 		};
+-		int i, c = getopt_long(argc, argv, "b:Bc:C:f:hm:st:w:T:vz",
++		int i, c = getopt_long(argc, argv, "b:Bc:C:D:f:hm:sw:T:vz",
+ 				       options, NULL);
+ 		long ncores;
+ 
+@@ -704,7 +699,7 @@ static void parse_options(int argc, char *argv[])
+ 				exit(1);
+ 			}
  			break;
- 		case 'h':
+-		case 't':
++		case 'D':
+ 			g.runtime = parse_runtime(optarg);
+ 			if (!g.runtime) {
+ 				printf("Illegal runtime: %s\n", optarg);
+@@ -761,8 +756,11 @@ static void parse_options(int argc, char *argv[])
+ 		case 'z':
+ 			g.output_omit_zero_buckets = 1;
+ 			break;
++		case 'h':
 +			usage(0);
 +			break;
  		default:
--			usage(argv);
+-			usage();
 +			usage(1);
+ 			break;
  		}
  	}
+@@ -821,8 +819,6 @@ int main(int argc, char *argv[])
+ 	/* Run the main thread on cpu0 by default */
+ 	g.cpu_main_thread = 0;
  
+-	printf("\nVersion: %1.2f\n\n", VERSION);
+-
+ 	parse_options(argc, argv);
+ 
+ 	TEST(mlockall(MCL_CURRENT | MCL_FUTURE) == 0);
 -- 
 2.28.0
 
