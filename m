@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2066FC41604
-	for <linux-rt-users@archiver.kernel.org>; Wed,  7 Oct 2020 08:57:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C1FB6C4727E
+	for <linux-rt-users@archiver.kernel.org>; Wed,  7 Oct 2020 08:57:06 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id C916C20870
-	for <linux-rt-users@archiver.kernel.org>; Wed,  7 Oct 2020 08:57:04 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id 77E762083B
+	for <linux-rt-users@archiver.kernel.org>; Wed,  7 Oct 2020 08:57:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728040AbgJGI5E (ORCPT
+        id S1728045AbgJGI5F (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 7 Oct 2020 04:57:04 -0400
-Received: from mx2.suse.de ([195.135.220.15]:57636 "EHLO mx2.suse.de"
+        Wed, 7 Oct 2020 04:57:05 -0400
+Received: from mx2.suse.de ([195.135.220.15]:57608 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728022AbgJGI5D (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 7 Oct 2020 04:57:03 -0400
+        id S1728033AbgJGI5E (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 7 Oct 2020 04:57:04 -0400
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id C699BB182;
-        Wed,  7 Oct 2020 08:57:01 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id 58B3FB299;
+        Wed,  7 Oct 2020 08:57:03 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [rt-tests v2 13/18] rt-migrate-test: Streamline usage and man page
-Date:   Wed,  7 Oct 2020 10:56:48 +0200
-Message-Id: <20201007085653.11961-14-dwagner@suse.de>
+Subject: [rt-tests v2 17/18] svsematest: Streamline usage and man page
+Date:   Wed,  7 Oct 2020 10:56:52 +0200
+Message-Id: <20201007085653.11961-18-dwagner@suse.de>
 X-Mailer: git-send-email 2.28.0
 In-Reply-To: <20201007085653.11961-1-dwagner@suse.de>
 References: <20201007085653.11961-1-dwagner@suse.de>
@@ -42,206 +42,177 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/rt-migrate-test/rt-migrate-test.8 | 41 +++++++-------
- src/rt-migrate-test/rt-migrate-test.c | 82 +++++++++++++--------------
- 2 files changed, 59 insertions(+), 64 deletions(-)
+ src/svsematest/svsematest.8 |  6 +--
+ src/svsematest/svsematest.c | 83 +++++++++++++++++++------------------
+ 2 files changed, 46 insertions(+), 43 deletions(-)
 
-diff --git a/src/rt-migrate-test/rt-migrate-test.8 b/src/rt-migrate-test/rt-migrate-test.8
-index b9c07f1ed80a..5bbacb5333b8 100644
---- a/src/rt-migrate-test/rt-migrate-test.8
-+++ b/src/rt-migrate-test/rt-migrate-test.8
-@@ -1,11 +1,11 @@
- .\"
--.TH RT-MIGRATE-TEST 8 "April 21, 2016"
-+.TH RT-MIGRATE-TEST 8 "September 18, 2020"
- .\" Please adjust this date whenever editing this manpage
- .SH NAME
- rt-migrate-test \- real-time task migration program
- .SH SYNOPSIS
--.B rt-migrate-test 
--.RI "[\-ceh] [\-p prio] [\-r time] [\-s time] [\-m time] [\-l loops] [nr_tasks]
-+.LP
-+rt-migrate-test [-c|--check] [-D|--duration TIME] [-e|--equal] [-h|--help] [-l|--loops LOOPS] [-m|--maxerr TIME] [-p|--prio PRIO] [-r|--run-time TIME] [-s|--sleep-time TIME] [NR_TASKS]
- .SH DESCRIPTION
- Test real-time multiprocessor scheduling of tasks to ensure the highest priority tasks are running on all available CPUs
- .SH OPTIONS
-@@ -15,44 +15,43 @@ This program follows the usual GNU command line syntax, with long options starti
- In the summary of options, a value in brackets (), indicates a default value
+diff --git a/src/svsematest/svsematest.8 b/src/svsematest/svsematest.8
+index 98322c105803..5fcb96149bdd 100644
+--- a/src/svsematest/svsematest.8
++++ b/src/svsematest/svsematest.8
+@@ -4,15 +4,15 @@
+ \fBsvsematest\fR \- Start two threads or fork two processes and measure the latency of SYSV semaphores
+ .SH "SYNTAX"
+ .LP
+-svsematest [-a|-a PROC] [-b USEC] [-d DIST] [-f] [-i INTV] [-l loops] [-p PRIO] [-t|-t NUM]
++svsematest [-a|--affinity NUM] [-b|--breaktrace USEC] [-d|--distance DIST] [-D|--duration TIME] [-f|--fork [OPT]] [-i|--interval INTV] [-l|--loops LOOPS] [-p|--prio PRIO] [-S|--smp] [-t|--threads [NUM]]
  .br
+ .SH "DESCRIPTION"
+ .LP
+ The program \fBsvsematest\fR starts two threads or, optionally, forks two processes that are synchronized via SYSV semaphores and measures the latency between releasing a semaphore on one side and getting it on the other side.
+ .SH "OPTIONS"
  .TP
-+.B \-c, \-\-check
-+Stop if lower prio task is quicker than higher (off)
-+.TP
- .B \-D, \-\-duration=TIME
- Specify a length for the test run.
- .br
- Append 'm', 'h', or 'd' to specify minutes, hours or days.
+-.B \-a, \-\-affinity[=PROC]
+-Run on processor number PROC. If PROC is not specified, run on current processor.
++.B \-a, \-\-affinity[=NUM]
++Run on processor number NUM. If PROC is not specified, run on current processor.
  .TP
--.B \-p, \-\-prio=prio
--base priority to start RT tasks with (2)
-+.B \-e, \-\-equal
-+Use equal prio for #CPU-1 tasks (requires > 2 CPUS)
- .br
- .TP
--.B \-r, \-\-run\-time=time
--Run time (ms) to busy loop the threads (20)
-+.B \-h, \-\-help
-+Display usage
- .br
- .TP
--.B \-s, \-\-sleep\-time=time
--Sleep time (ms) between intervals (100)
-+.B \-l \-\-loops=LOOPS
-+Number of iterations to run (50)
- .br
- .TP
--.B \-m, \-\-maxerr=time
-+.B \-m, \-\-maxerr=TIME
- Max allowed error (microsecs)
- .br
- .TP
--.B \-l \-\-loops=loops
--Number of iterations to run (50)
--.br
--.TP
--.B \-e
--Use equal prio for #CPU-1 tasks (requires > 2 CPUS)
-+.B \-p, \-\-prio=PRIO
-+base priority to start RT tasks with (2)
- .br
- .TP
--.B \-c, \-\-check
--Stop if lower prio task is quicker than higher (off)
-+.B \-r, \-\-run\-time=TIME
-+Run time (ms) to busy loop the threads (20)
- .br
- .TP
--.B \-h, \-\-help
--Display usage
-+.B \-s, \-\-sleep\-time=TIME
-+Sleep time (ms) between intervals (100)
- .br
- .TP
--.B [nr\-tasks]
-+.B [NR_TASKS]
- number of tasks to run (number of cpus + 1)
- .br
- .SH AUTHOR
-diff --git a/src/rt-migrate-test/rt-migrate-test.c b/src/rt-migrate-test/rt-migrate-test.c
-index 4863238edeb4..68824606faf1 100644
---- a/src/rt-migrate-test/rt-migrate-test.c
-+++ b/src/rt-migrate-test/rt-migrate-test.c
-@@ -146,71 +146,67 @@ static void print_progress_bar(int percent)
- 	fflush(stderr);
- }
+ .B \-b, \-\-breaktrace=USEC
+ Send break trace command when latency > USEC. This is a debugging option to control the latency tracer in the realtime preemption patch.
+diff --git a/src/svsematest/svsematest.c b/src/svsematest/svsematest.c
+index 607b397bf39e..7412168bd98a 100644
+--- a/src/svsematest/svsematest.c
++++ b/src/svsematest/svsematest.c
+@@ -218,33 +218,34 @@ union semun {
+ };
  
--static void usage(char **argv)
-+static void usage(int error)
+ 
+-static void display_help(void)
++static void display_help(int error)
  {
--	char *arg = argv[0];
--	char *p = arg+strlen(arg);
--
--	while (p >= arg && *p != '/')
--		p--;
--	p++;
--
--	printf("%s %1.2f\n", p, VERSION);
-+	printf("rt-migrate-test %1.2f\n", VERSION);
- 	printf("Usage:\n"
--	       "%s <options> nr_tasks\n\n"
--	       "-p prio --prio  prio        base priority to start RT tasks with (2)\n"
--	       "-r time --run-time time     Run time (ms) to busy loop the threads (20)\n"
--	       "-s time --sleep-time time   Sleep time (ms) between intervals (100)\n"
--	       "-m time --maxerr time       Max allowed error (microsecs)\n"
--	       "-l loops --loops loops      Number of iterations to run (50)\n"
--	       "-D       --duration=TIME    specify a length for the test run.\n"
--	       "                            Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
--	       "-e                          Use equal prio for #CPU-1 tasks (requires > 2 CPUS)\n"
--	       "-c    --check               Stop if lower prio task is quicker than higher (off)\n"
--	       "-h    --help\n"
--	       "  () above are defaults \n",
--		p);
--	exit(0);
-+	       "rt-migrate-test <options> [NR_TASKS]\n\n"
-+	       "-c       --check           Stop if lower prio task is quicker than higher (off)\n"
-+	       "-D TIME  --duration=TIME   Specify a length for the test run.\n"
+ 	printf("svsematest V %1.2f\n", VERSION);
+-	puts("Usage: svsematest <options>");
+-	puts("Function: test SYSV semaphore latency");
+-	puts(
+-	"Options:\n"
+-	"-a [NUM] --affinity        run thread #N on processor #N, if possible\n"
+-	"                           with NUM pin all threads to the processor NUM\n"
+-	"-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
+-	"-d DIST  --distance=DIST   distance of thread intervals in us default=500\n"
+-	"-f       --fork            fork new processes instead of creating threads\n"
+-	"-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
+-	"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+-	"-D       --duration=TIME   specify a length for the test run.\n"
+-	"                           Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
+-	"-p PRIO  --prio=PRIO       priority\n"
+-	"-S       --smp             SMP testing: options -a -t and same priority\n"
+-        "                           of all threads\n"
+-	"-t       --threads         one thread per available processor\n"
+-	"-t [NUM] --threads=NUM     number of threads:\n"
+-	"                           without NUM, threads = max_cpus\n"
+-	"                           without -t default = 1\n");
+-	exit(1);
++	printf("Usage:\n"
++	       "svsematest <options>\n\n"
++	       "Function: test SYSV semaphore latency\n\n"
++	       "Avaiable options:\n"
++	       "-a [NUM] --affinity        run thread #N on processor #N, if possible\n"
++	       "                           with NUM pin all threads to the processor NUM\n"
++	       "-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
++	       "-d DIST  --distance=DIST   distance of thread intervals in us default=500\n"
++	       "-D       --duration=TIME   specify a length for the test run.\n"
 +	       "                           Append 'm', 'h', or 'd' to specify minutes, hours or\n"
 +	       "                           days.\n"
-+	       "-e       --equal           Use equal prio for #CPU-1 tasks (requires > 2 CPUS)\n"
-+	       "-h       --help            Print this help message\n"
-+	       "-l LOOPS --loops=LOOPS     Number of iterations to run (50)\n"
-+	       "-m TIME  --maxerr=TIME     Max allowed error (microsecs)\n"
-+	       "-p PRIO  --prio=PRIO       base priority to start RT tasks with (2)\n"
-+	       "-r TIME  --run-time=TIME   Run time (ms) to busy loop the threads (20)\n"
-+	       "-s TIME  --sleep-time=TIME Sleep time (ms) between intervals (100)\n\n"
-+	       "  () above are defaults \n"
++	       "-f [OPT] --fork[=OPT]      fork new processes instead of creating threads\n"
++	       "-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
++	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
++	       "-p PRIO  --prio=PRIO       priority\n"
++	       "-S       --smp             SMP testing: options -a -t and same priority\n"
++	       "                           of all threads\n"
++	       "-t       --threads         one thread per available processor\n"
++	       "-t [NUM] --threads[=NUM]   number of threads:\n"
++	       "                           without NUM, threads = max_cpus\n"
++	       "                           without -t default = 1\n"
 +	       );
 +	exit(error);
  }
  
--static void parse_options (int argc, char *argv[])
-+static void parse_options(int argc, char *argv[])
+-
+ static int setaffinity = AFFINITY_UNSPECIFIED;
+ static int affinity;
+ static int priority;
+@@ -256,7 +257,7 @@ static int distance = 500;
+ static int smp;
+ static int sameprio;
+ 
+-static void process_options (int argc, char *argv[])
++static void process_options(int argc, char *argv[])
  {
- 	for (;;) {
+ 	int error = 0;
+ 	int max_cpus = sysconf(_SC_NPROCESSORS_CONF);
+@@ -266,20 +267,20 @@ static void process_options (int argc, char *argv[])
  		int option_index = 0;
  		/** Options for getopt */
  		static struct option long_options[] = {
--			{"prio", required_argument, NULL, 'p'},
--			{"run-time", required_argument, NULL, 'r'},
--			{"sleep-time", required_argument, NULL, 's'},
--			{"maxerr", required_argument, NULL, 'm'},
+-			{"affinity", optional_argument, NULL, 'a'},
+-			{"breaktrace", required_argument, NULL, 'b'},
+-			{"distance", required_argument, NULL, 'd'},
+-			{"fork", optional_argument, NULL, 'f'},
+-			{"interval", required_argument, NULL, 'i'},
 -			{"loops", required_argument, NULL, 'l'},
 -			{"duration", required_argument, NULL, 'D'},
--			{"check", no_argument, NULL, 'c'},
+-			{"priority", required_argument, NULL, 'p'},
+-			{"smp", no_argument, NULL, 'S'},
+-			{"threads", optional_argument, NULL, 't'},
 -			{"help", no_argument, NULL, '?'},
-+			{"check",	no_argument,		NULL, 'c'},
-+			{"duration",	required_argument,	NULL, 'D'},
-+			{"equal",	no_argument,		NULL, 'e'},
-+			{"help",	no_argument,		NULL, 'h'},
-+			{"loops",	required_argument,	NULL, 'l'},
-+			{"maxerr",	required_argument,	NULL, 'm'},
-+			{"prio",	required_argument,	NULL, 'p'},
-+			{"run-time",	required_argument,	NULL, 'r'},
-+			{"sleep-time",	required_argument,	NULL, 's'},
++			{"affinity",		optional_argument,	NULL, 'a'},
++			{"breaktrace",		required_argument,	NULL, 'b'},
++			{"distance",		required_argument,	NULL, 'd'},
++			{"duration",		required_argument,	NULL, 'D'},
++			{"fork",		optional_argument,	NULL, 'f'},
++			{"help",		no_argument,		NULL, 'h'},
++			{"interval",		required_argument,	NULL, 'i'},
++			{"loops",		required_argument,	NULL, 'l'},
++			{"priority",		required_argument,	NULL, 'p'},
++			{"smp",			no_argument,		NULL, 'S'},
++			{"threads",		optional_argument,	NULL, 't'},
  			{NULL, 0, NULL, 0}
  		};
--		int c = getopt_long (argc, argv, "p:r:s:m:l:D:ech",
-+		int c = getopt_long(argc, argv, "cD:ehl:m:p:r:s:",
+-		int c = getopt_long (argc, argv, "a::b:d:f::i:l:D:p:St::h",
++		int c = getopt_long (argc, argv, "a::b:d:D:f::hi:l:p:St::",
  			long_options, &option_index);
  		if (c == -1)
  			break;
- 		switch (c) {
--		case 'p': prio_start = atoi(optarg); break;
--		case 'r':
--			run_interval = atoi(optarg);
--			break;
--		case 's': interval = atoi(optarg); break;
--		case 'l': nr_runs = atoi(optarg); break;
-+		case 'c': check = 1; break;
- 		case 'D': duration = parse_time_string(optarg); break;
--		case 'm': max_err = usec2nano(atoi(optarg)); break;
- 		case 'e': equal = 1; break;
--		case 'c': check = 1; break;
- 		case '?':
- 		case 'h':
--			usage(argv);
-+			usage(0);
+@@ -301,6 +302,7 @@ static void process_options (int argc, char *argv[])
  			break;
-+		case 'l': nr_runs = atoi(optarg); break;
-+		case 'm': max_err = usec2nano(atoi(optarg)); break;
-+		case 'p': prio_start = atoi(optarg); break;
-+		case 'r':
-+			run_interval = atoi(optarg);
-+			break;
-+		case 's': interval = atoi(optarg); break;
+ 		case 'b': thistracelimit = atoi(optarg); break;
+ 		case 'd': distance = atoi(optarg); break;
++		case 'D': duration = parse_time_string(optarg); break;
+ 		case 'f':
+ 			if (optarg != NULL) {
+ 				wasforked = 1;
+@@ -312,9 +314,9 @@ static void process_options (int argc, char *argv[])
+ 			} else
+ 				mustfork = 1;
+ 			break;
++		case 'h': display_help(0); break;
+ 		case 'i': interval = atoi(optarg); break;
+ 		case 'l': max_cycles = atoi(optarg); break;
+-		case 'D': duration = parse_time_string(optarg); break;
+ 		case 'p': priority = atoi(optarg); break;
+ 		case 'S':
+ 			smp = 1;
+@@ -333,8 +335,9 @@ static void process_options (int argc, char *argv[])
+ 			else
+ 				num_threads = max_cpus;
+ 			break;
+-		case 'h': error = 1; break;
+-		case '?': error = 1; break;
 +		default:
-+			usage(1);
++			display_help(1);
++			break;
  		}
  	}
--
+ 
+@@ -365,7 +368,7 @@ static void process_options (int argc, char *argv[])
+ 		tracelimit = thistracelimit;
+ 	}
+ 	if (error)
+-		display_help ();
++		display_help(error);
  }
  
- static unsigned long long get_time(void)
+ 
 -- 
 2.28.0
 
