@@ -7,30 +7,30 @@ X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_GIT autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BC5B9C4727F
-	for <linux-rt-users@archiver.kernel.org>; Wed,  7 Oct 2020 08:57:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0A223C4727E
+	for <linux-rt-users@archiver.kernel.org>; Wed,  7 Oct 2020 08:57:14 +0000 (UTC)
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by mail.kernel.org (Postfix) with ESMTP id 7E24E2080A
-	for <linux-rt-users@archiver.kernel.org>; Wed,  7 Oct 2020 08:57:12 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTP id BF86C20870
+	for <linux-rt-users@archiver.kernel.org>; Wed,  7 Oct 2020 08:57:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1728056AbgJGI5J (ORCPT
+        id S1728052AbgJGI5I (ORCPT
         <rfc822;linux-rt-users@archiver.kernel.org>);
-        Wed, 7 Oct 2020 04:57:09 -0400
-Received: from mx2.suse.de ([195.135.220.15]:57594 "EHLO mx2.suse.de"
+        Wed, 7 Oct 2020 04:57:08 -0400
+Received: from mx2.suse.de ([195.135.220.15]:57620 "EHLO mx2.suse.de"
         rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-        id S1728014AbgJGI5B (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-        Wed, 7 Oct 2020 04:57:01 -0400
+        id S1728011AbgJGI5C (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+        Wed, 7 Oct 2020 04:57:02 -0400
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-        by mx2.suse.de (Postfix) with ESMTP id 0BD15B171;
-        Wed,  7 Oct 2020 08:57:01 +0000 (UTC)
+        by mx2.suse.de (Postfix) with ESMTP id 9D0A9B176;
+        Wed,  7 Oct 2020 08:57:00 +0000 (UTC)
 From:   Daniel Wagner <dwagner@suse.de>
 To:     Clark Williams <williams@redhat.com>,
         John Kacur <jkacur@redhat.com>
 Cc:     linux-rt-users@vger.kernel.org, Daniel Wagner <dwagner@suse.de>
-Subject: [rt-tests v2 11/18] ptsematest: Streamline usage output and man page
-Date:   Wed,  7 Oct 2020 10:56:46 +0200
-Message-Id: <20201007085653.11961-12-dwagner@suse.de>
+Subject: [rt-tests v2 10/18] pmqtest: Streamline usage output and man page
+Date:   Wed,  7 Oct 2020 10:56:45 +0200
+Message-Id: <20201007085653.11961-11-dwagner@suse.de>
 X-Mailer: git-send-email 2.28.0
 In-Reply-To: <20201007085653.11961-1-dwagner@suse.de>
 References: <20201007085653.11961-1-dwagner@suse.de>
@@ -42,20 +42,20 @@ X-Mailing-List: linux-rt-users@vger.kernel.org
 
 Signed-off-by: Daniel Wagner <dwagner@suse.de>
 ---
- src/ptsematest/ptsematest.8 |  5 ++-
- src/ptsematest/ptsematest.c | 76 +++++++++++++++++++------------------
- 2 files changed, 44 insertions(+), 37 deletions(-)
+ src/pmqtest/pmqtest.8 |  5 ++-
+ src/pmqtest/pmqtest.c | 88 ++++++++++++++++++++++---------------------
+ 2 files changed, 50 insertions(+), 43 deletions(-)
 
-diff --git a/src/ptsematest/ptsematest.8 b/src/ptsematest/ptsematest.8
-index 5ee7d694d50d..05a0cdfd3657 100644
---- a/src/ptsematest/ptsematest.8
-+++ b/src/ptsematest/ptsematest.8
+diff --git a/src/pmqtest/pmqtest.8 b/src/pmqtest/pmqtest.8
+index 9108a939b9f7..e44411ce0ef3 100644
+--- a/src/pmqtest/pmqtest.8
++++ b/src/pmqtest/pmqtest.8
 @@ -4,7 +4,7 @@
- \fBptsematest\fR \- Start two threads and measure the latency of interprocess communication with POSIX mutex.
- .SH "SYNOPSIS"
+ \fBpmqtest\fR \- Start pairs of threads and measure the latency of interprocess communication with POSIX messages queues
+ .SH "SYNTAX"
  .LP
--ptsematest [-a|--affinity [PROC]] [-b|--breaktrace USEC] [-d|--distance DIST] [-D|--duration TIME][-i|--interval INTV] [-l|--loops LOOPS] [-p|--prio PRIO] [-S|--smp] [-t|--threads [NUM]]
-+ptsematest [-a|--affinity [PROC]] [-b|--breaktrace USEC] [-d|--distance DIST] [-D|--duration TIME] [-h|--help] [-i|--interval INTV] [-l|--loops LOOPS] [-p|--prio PRIO] [-S|--smp] [-t|--threads [NUM]]
+-pmqtest [-a|-a PROC] [-b USEC] [-d DIST] [-i INTV] [-l loops] [-p PRIO] [-S] [-t|-t NUM] [-T TO]
++pmqtest [-a|-a PROC] [-b USEC] [-d DIST] [-D TIME] [-f TO] [-h] [-i INTV] [-l LOOPS] [-p PRIO] [-S] [-t|-t NUM]
  .br
  .SH "DESCRIPTION"
  .LP
@@ -64,54 +64,60 @@ index 5ee7d694d50d..05a0cdfd3657 100644
  Append 'm', 'h', or 'd' to specify minutes, hours or days.
  .TP
 +.B \-h, \-\-help
-+Print help message.
++Print help message
 +.TP
- .B \-i, \-\-interval=INTV
- Set the base interval of the thread(s) in microseconds (default is 1000 us). This sets the interval of the first thread. See also -d.
+ .B \-f, \-\-forcetimeout=TO
+ Set an artificial delay of the send function to force timeout of the receiver, requires the -T option
  .TP
-diff --git a/src/ptsematest/ptsematest.c b/src/ptsematest/ptsematest.c
-index de8ea2fe1b0c..02919e3f5eef 100644
---- a/src/ptsematest/ptsematest.c
-+++ b/src/ptsematest/ptsematest.c
-@@ -141,29 +141,31 @@ void *semathread(void *param)
+diff --git a/src/pmqtest/pmqtest.c b/src/pmqtest/pmqtest.c
+index 5db8d348cdf8..938dc8d93c3f 100644
+--- a/src/pmqtest/pmqtest.c
++++ b/src/pmqtest/pmqtest.c
+@@ -217,36 +217,36 @@ void *pmqthread(void *param)
+ 	return NULL;
  }
  
- 
+-
 -static void display_help(void)
 +static void display_help(int error)
  {
- 	printf("ptsematest V %1.2f\n", VERSION);
--	puts("Usage: ptsematest <options>");
--	puts("Function: test POSIX threads mutex latency");
+ 	printf("pmqtest V %1.2f\n", VERSION);
+-	puts("Usage: pmqtest <options>");
+-	puts("Function: test POSIX message queue latency");
 -	puts(
 -	"Options:\n"
 -	"-a [NUM] --affinity        run thread #N on processor #N, if possible\n"
 -	"                           with NUM pin all threads to the processor NUM\n"
 -	"-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
 -	"-d DIST  --distance=DIST   distance of thread intervals in us default=500\n"
--	"-D       --duration=TIME   specify a length for the test run.\n"
--	"                           Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
+-	"-f TO    --forcetimeout=TO force timeout of mq_timedreceive(), requires -T\n"
 -	"-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
 -	"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+-	"-D       --duration=TIME   specify a length for the test run.\n"
+-	"                           Append 'm', 'h', or 'd' to specify minutes, hours or days.\n"
 -	"-p PRIO  --prio=PRIO       priority\n"
 -	"-S       --smp             SMP testing: options -a -t and same priority\n"
 -        "                           of all threads\n"
 -	"-t       --threads         one thread per available processor\n"
 -	"-t [NUM] --threads=NUM     number of threads:\n"
 -	"                           without NUM, threads = max_cpus\n"
--	"                           without -t default = 1\n");
+-	"                           without -t default = 1\n"
+-	"-T TO    --timeout=TO      use mq_timedreceive() instead of mq_receive()\n"
+-	"                           with timeout TO in seconds\n");
 -	exit(1);
 +	printf("Usage:\n"
-+	       "ptsematest <options>\n\n"
-+	       "Function: test POSIX threads mutex latency\n\n"
-+	       "Available options:\n"
++	       "pmqtest <options>\n\n"
++	       "Function: test POSIX message queue latency\n\n"
++	       "Available options:\n\n"
 +	       "-a [NUM] --affinity        run thread #N on processor #N, if possible\n"
 +	       "                           with NUM pin all threads to the processor NUM\n"
 +	       "-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
 +	       "-d DIST  --distance=DIST   distance of thread intervals in us default=500\n"
-+	       "-D       --duration=TIME   specify a length for the test run.\n"
-+	       "                           Append 'm', 'h', or 'd' to specify minutes, hours or\n"
-+	       "                           days.\n"
++	       "-D TIME  --duration=TIME   specify a length for the test run.\n"
++	       "                           Append 'm', 'h', or 'd' to specify\n"
++	       "                           minutes, hours or days.\n"
++	       "-f TO    --forcetimeout=TO force timeout of mq_timedreceive(), requires -T\n"
++	       "-h       --help            print this help message\n"
 +	       "-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
 +	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
 +	       "-p PRIO  --prio=PRIO       priority\n"
@@ -121,57 +127,68 @@ index de8ea2fe1b0c..02919e3f5eef 100644
 +	       "-t [NUM] --threads=NUM     number of threads:\n"
 +	       "                           without NUM, threads = max_cpus\n"
 +	       "                           without -t default = 1\n"
-+	       );
-+	exit(0);
++	       "-T TO    --timeout=TO      use mq_timedreceive() instead of mq_receive()\n"
++	       "                           with timeout TO in seconds\n");
++	exit(error);
  }
  
- 
-@@ -188,16 +190,16 @@ static void process_options (int argc, char *argv[])
+-
+ static int setaffinity = AFFINITY_UNSPECIFIED;
+ static int affinity;
+ static int tracelimit;
+@@ -270,21 +270,21 @@ static void process_options (int argc, char *argv[])
  		int option_index = 0;
  		/** Options for getopt */
  		static struct option long_options[] = {
 -			{"affinity", optional_argument, NULL, 'a'},
 -			{"breaktrace", required_argument, NULL, 'b'},
 -			{"distance", required_argument, NULL, 'd'},
+-			{"forcetimeout", required_argument, NULL, 'f'},
 -			{"interval", required_argument, NULL, 'i'},
 -			{"loops", required_argument, NULL, 'l'},
 -			{"duration", required_argument, NULL, 'D'},
 -			{"priority", required_argument, NULL, 'p'},
 -			{"smp", no_argument, NULL, 'S'},
 -			{"threads", optional_argument, NULL, 't'},
+-			{"timeout", required_argument, NULL, 'T'},
 -			{"help", no_argument, NULL, '?'},
-+			{"affinity",	optional_argument,	NULL, 'a'},
-+			{"breaktrace",	required_argument,	NULL, 'b'},
-+			{"distance",	required_argument,	NULL, 'd'},
-+			{"duration",	required_argument,	NULL, 'D'},
-+			{"help",	no_argument,		NULL, 'h'},
-+			{"interval",	required_argument,	NULL, 'i'},
-+			{"loops",	required_argument,	NULL, 'l'},
-+			{"priority",	required_argument,	NULL, 'p'},
-+			{"smp",		no_argument,		NULL, 'S'},
-+			{"threads",	optional_argument,	NULL, 't'},
++			{"affinity",		optional_argument,	NULL, 'a'},
++			{"breaktrace",		required_argument,	NULL, 'b'},
++			{"distance",		required_argument,	NULL, 'd'},
++			{"duration",		required_argument,	NULL, 'D'},
++			{"forcetimeout",	required_argument,	NULL, 'f'},
++			{"help",		no_argument,		NULL, 'h'},
++			{"interval",		required_argument,	NULL, 'i'},
++			{"loops",		required_argument,	NULL, 'l'},
++			{"priority",		required_argument,	NULL, 'p'},
++			{"smp",			no_argument,		NULL, 'S'},
++			{"threads",		optional_argument,	NULL, 't'},
++			{"timeout",		required_argument,	NULL, 'T'},
  			{NULL, 0, NULL, 0}
  		};
- 		int c = getopt_long (argc, argv, "a::b:d:i:l:D:p:St::h",
-@@ -222,9 +224,11 @@ static void process_options (int argc, char *argv[])
+-		int c = getopt_long (argc, argv, "a::b:d:f:i:l:D:p:St::T:",
++		int c = getopt_long (argc, argv, "a::b:d:D:f:i:l:p:St::T:",
+ 			long_options, &option_index);
+ 		if (c == -1)
+ 			break;
+@@ -306,10 +306,12 @@ static void process_options (int argc, char *argv[])
  			break;
  		case 'b': tracelimit = atoi(optarg); break;
  		case 'd': distance = atoi(optarg); break;
 +		case 'D': duration = parse_time_string(optarg); break;
- 		case 'i': interval = atoi(optarg); break;
+ 		case 'f': forcetimeout = atoi(optarg); break;
 +		case '?':
 +		case 'h': display_help(0); break;
+ 		case 'i': interval = atoi(optarg); break;
  		case 'l': max_cycles = atoi(optarg); break;
 -		case 'D': duration = parse_time_string(optarg); break;
  		case 'p': priority = atoi(optarg); break;
  		case 'S':
  			smp = 1;
-@@ -243,9 +247,9 @@ static void process_options (int argc, char *argv[])
- 			else
+@@ -329,7 +331,9 @@ static void process_options (int argc, char *argv[])
  				num_threads = max_cpus;
  			break;
--		case 'h':
--			display_help();
+ 		case 'T': timeout = atoi(optarg); break;
 -		case '?': error = 1; break;
 +		default:
 +			display_help(1);
@@ -179,12 +196,12 @@ index de8ea2fe1b0c..02919e3f5eef 100644
  		}
  	}
  
-@@ -275,7 +279,7 @@ static void process_options (int argc, char *argv[])
+@@ -362,7 +366,7 @@ static void process_options (int argc, char *argv[])
  		sameprio = 1;
  
  	if (error)
--		display_help();
-+		display_help(error);
+-		display_help ();
++		display_help (error);
  }
  
  
